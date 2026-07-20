@@ -95,9 +95,44 @@ class ZoomToCursorGlobeController extends GlobeController {
           return this;
         }
 
+        const currentProps = (this as any).getViewportProps();
         const zoom = (this as any)._constrainZoom(startZoom + Math.log2(scale));
+
+        // Zoom-out (scale < 1): exact cursor anchoring is unstable on a globe (the
+        // geo point under an off-center pixel moves non-linearly near the limb and
+        // drags the view toward the poles). Instead, gently steer the CENTER toward
+        // the geo location under the cursor — the map recenters on the cursor as you
+        // zoom out, similar in spirit to zoom-in, but without the pole-ward spin.
+        if (scale < 1) {
+          const cursorLngLat = startZoomLngLat;
+          const cursorValid =
+            Array.isArray(cursorLngLat) &&
+            Number.isFinite(cursorLngLat[0]) &&
+            Number.isFinite(cursorLngLat[1]);
+          if (!cursorValid) {
+            return (this as any)._getUpdatedState({zoom});
+          }
+
+          // Fraction of the way to move the center toward the cursor per tick.
+          // Scales with how much we zoomed out this tick so a bigger step moves
+          // more. Clamped so a single large tick can't overshoot.
+          const RECENTER_STRENGTH = 0.11;
+          const t = Math.min(1, (1 - scale) * RECENTER_STRENGTH);
+
+          // Shortest-path longitude interpolation (handle antimeridian wrap).
+          let dLng = cursorLngLat[0] - currentProps.longitude;
+          if (dLng > 180) dLng -= 360;
+          if (dLng < -180) dLng += 360;
+
+          return (this as any)._getUpdatedState({
+            zoom,
+            longitude: currentProps.longitude + dLng * t,
+            latitude: currentProps.latitude + (cursorLngLat[1] - currentProps.latitude) * t
+          });
+        }
+
         const zoomedViewport = (this as any).makeViewport({
-          ...(this as any).getViewportProps(),
+          ...currentProps,
           zoom
         });
 
@@ -106,6 +141,17 @@ class ZoomToCursorGlobeController extends GlobeController {
         //   longitude = startZoomLngLat[0] - fromPosition[0] + viewport.longitude
         //   latitude  = startZoomLngLat[1] - fromPosition[1] + viewport.latitude
         const fromPosition = zoomedViewport.unproject(pos);
+
+        // Guard: unproject can return NaN/undefined for a pixel off the sphere
+        // silhouette; in that case just apply the new zoom about the center.
+        const anchorValid =
+          Array.isArray(fromPosition) &&
+          Number.isFinite(fromPosition[0]) &&
+          Number.isFinite(fromPosition[1]);
+        if (!anchorValid) {
+          return (this as any)._getUpdatedState({zoom});
+        }
+
         return (this as any)._getUpdatedState({
           zoom,
           longitude: startZoomLngLat[0] - fromPosition[0] + zoomedViewport.longitude,
