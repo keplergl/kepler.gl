@@ -44,6 +44,8 @@ You can add an effect from the **Effects** panel in the side bar. Multiple effec
 
 Simulates realistic sun lighting and shadow casting based on time of day and geographic location. Useful for visualizing how sunlight and shadows interact with 3D buildings or extruded layers throughout the day.
 
+> **Not supported in [globe view](./m-map-settings.md#globe-view).** The Light & Shadow effect only applies to the flat (web-mercator) map.
+
 | Parameter | Type | Range | Default | Description |
 | --- | --- | --- | --- | --- |
 | timestamp | number | 0 – MAX | — | The point in time used to compute sun position. Controlled via the date/time picker and timezone selector in the UI. |
@@ -224,6 +226,8 @@ Replaces the image with a grid of hexagonal tiles, each filled with the average 
 
 Fades distant objects into a fog color based on their depth from the camera. Enhances the perception of depth and distance, and can be used to de-emphasize background layers or create atmospheric haze. Requires a 3D view (pitch > 0).
 
+> **Not supported in [globe view](./m-map-settings.md#globe-view).** Distance Fog only applies to the flat (web-mercator) map.
+
 | Parameter | Type | Range | Default | Description |
 | --- | --- | --- | --- | --- |
 | density | number | 0 – 1 | 0.5 | Overall opacity of the fog. `0` is invisible; `1` is fully opaque at maximum distance. |
@@ -236,6 +240,8 @@ Fades distant objects into a fog color based on their depth from the camera. Enh
 ## Surface Fog
 
 Renders a fog layer at a specific elevation above the terrain surface. Unlike distance fog, surface fog stays at a fixed altitude and is visible from all camera angles. Useful for simulating low-lying clouds, ground mist, or valley fog. Requires a 3D view (pitch > 0).
+
+> **Not supported in [globe view](./m-map-settings.md#globe-view).** Surface Fog only applies to the flat (web-mercator) map.
 
 | Parameter | Type | Range | Default | Description |
 | --- | --- | --- | --- | --- |

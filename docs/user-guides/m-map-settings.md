@@ -60,10 +60,15 @@ To keep the basemap and interactions coherent, globe view applies a few
 constraints that do not exist in the flat map:
 
 - __Zoom range is limited__ (roughly zoom `2`–`12`). You can pull the globe
-  further back than the flat map so the whole planet fits on screen, but zoom-in
-  is capped. Beyond the cap the vector basemap tiles stop loading (they render as
-  empty rectangles) and the camera can drift while panning/zooming — a known
-  deck.gl 9.x globe issue that the cap works around.
+  further back than the flat map so the whole planet fits on screen, but
+  __zooming in past zoom level `12` is currently disabled.__ This cap is in place
+  because, past that level in the current deck.gl 9.x globe projection, the
+  vector basemap tileset (Mapbox Streets vector tiles) stops loading and renders
+  as empty rectangles, and the camera becomes unstable — it drifts while panning
+  and zooming, and zoom-to-cursor becomes inaccurate. Capping the zoom keeps the
+  basemap and interactions coherent until the underlying tile/controller issue is
+  resolved upstream. Satellite/raster basemaps hold up better at closer zoom, so
+  the cap may be relaxed as globe support matures.
 - __The camera can't be centered on the poles.__ The center latitude is
   constrained to a band around the equator (about ±75°) so you can't stare
   straight down at a pole.
