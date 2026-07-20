@@ -76,6 +76,7 @@ export type SwipeExportVideoPreviewProps = {
   swipeEndPct: number;
   swipeEasing: SwipeEasing;
   currentTimeMs: number;
+  backgroundColor?: string;
 };
 
 type SwipeExportVideoPreviewState = {
@@ -173,7 +174,14 @@ export class SwipeExportVideoPreview extends Component<
     if (!leftCanvas || !rightCanvas || !outputCanvas) return;
 
     const percentage = this._getCurrentSwipePercentage();
-    compositeSwipeFrame(leftCanvas, rightCanvas, outputCanvas, percentage, true);
+    compositeSwipeFrame(
+      leftCanvas,
+      rightCanvas,
+      outputCanvas,
+      percentage,
+      true,
+      this.props.backgroundColor
+    );
   }
 
   /**

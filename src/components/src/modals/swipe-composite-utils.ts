@@ -90,7 +90,8 @@ export function compositeSwipeFrame(
   rightCanvas: HTMLCanvasElement,
   outputCanvas: HTMLCanvasElement,
   percentage: number,
-  showDivider: boolean = true
+  showDivider: boolean = true,
+  backgroundColor?: string
 ): void {
   const ctx = outputCanvas.getContext('2d');
   if (!ctx) return;
@@ -100,6 +101,15 @@ export function compositeSwipeFrame(
   const splitX = Math.round((w * percentage) / 100);
 
   ctx.clearRect(0, 0, w, h);
+
+  // In globe mode the deck canvases are transparent where the globe isn't
+  // drawn (clearColor is disabled to keep picking intact), so paint the
+  // configured background first. Non-globe swipe passes no color and keeps the
+  // previous transparent-clear behavior (the base map is already opaque).
+  if (backgroundColor) {
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, w, h);
+  }
 
   // Draw right (background) canvas fully
   ctx.drawImage(rightCanvas, 0, 0, w, h);
