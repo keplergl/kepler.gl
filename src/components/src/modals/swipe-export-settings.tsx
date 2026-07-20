@@ -143,6 +143,8 @@ export type SwipeExportSettingsProps = {
   onChangeStartPct: (value: number) => void;
   onChangeEndPct: (value: number) => void;
   onChangeEasing: (value: SwipeEasing) => void;
+  // When true, hide the swipe-specific controls (used by single-map globe export).
+  hideSwipe?: boolean;
 };
 
 // --- Utilities ---
@@ -210,6 +212,7 @@ const AnimationTab: React.FC<{
   swipeEndPct: number;
   swipeEasing: SwipeEasing;
   disabled: boolean;
+  hideSwipe?: boolean;
   onChangeDuration: (value: number) => void;
   onChangeCameraPreset: (value: string) => void;
   onChangeStartPct: (value: number) => void;
@@ -222,6 +225,7 @@ const AnimationTab: React.FC<{
   swipeEndPct,
   swipeEasing,
   disabled,
+  hideSwipe,
   onChangeDuration,
   onChangeCameraPreset,
   onChangeStartPct,
@@ -259,44 +263,48 @@ const AnimationTab: React.FC<{
       />
     </InputGrid>
 
-    <SectionDivider>Swipe</SectionDivider>
-    <InputGrid>
-      <StyledLabelCell>Start ({Math.round(swipeStartPct)}%)</StyledLabelCell>
-      <LightSlider
-        showValues={false}
-        isRanged={false}
-        value1={swipeStartPct}
-        minValue={0}
-        maxValue={100}
-        step={1}
-        onSlider1Change={(v: number) => { if (!disabled) onChangeStartPct(v); }}
-        disabled={disabled}
-      />
+    {!hideSwipe && (
+      <>
+        <SectionDivider>Swipe</SectionDivider>
+        <InputGrid>
+          <StyledLabelCell>Start ({Math.round(swipeStartPct)}%)</StyledLabelCell>
+          <LightSlider
+            showValues={false}
+            isRanged={false}
+            value1={swipeStartPct}
+            minValue={0}
+            maxValue={100}
+            step={1}
+            onSlider1Change={(v: number) => { if (!disabled) onChangeStartPct(v); }}
+            disabled={disabled}
+          />
 
-      <StyledLabelCell>End ({Math.round(swipeEndPct)}%)</StyledLabelCell>
-      <LightSlider
-        showValues={false}
-        isRanged={false}
-        value1={swipeEndPct}
-        minValue={0}
-        maxValue={100}
-        step={1}
-        onSlider1Change={(v: number) => { if (!disabled) onChangeEndPct(v); }}
-        disabled={disabled}
-      />
+          <StyledLabelCell>End ({Math.round(swipeEndPct)}%)</StyledLabelCell>
+          <LightSlider
+            showValues={false}
+            isRanged={false}
+            value1={swipeEndPct}
+            minValue={0}
+            maxValue={100}
+            step={1}
+            onSlider1Change={(v: number) => { if (!disabled) onChangeEndPct(v); }}
+            disabled={disabled}
+          />
 
-      <StyledLabelCell>Easing</StyledLabelCell>
-      <LightItemSelector
-        selectedItems={EASING_OPTIONS.find(o => o.id === swipeEasing) || EASING_OPTIONS[0]}
-        options={EASING_OPTIONS}
-        multiSelect={false}
-        searchable={false}
-        onChange={(val: any) => onChangeEasing(val?.id || val)}
-        disabled={disabled}
-        getOptionValue={(o: any) => o.id}
-        displayOption={(o: any) => o.label}
-      />
-    </InputGrid>
+          <StyledLabelCell>Easing</StyledLabelCell>
+          <LightItemSelector
+            selectedItems={EASING_OPTIONS.find(o => o.id === swipeEasing) || EASING_OPTIONS[0]}
+            options={EASING_OPTIONS}
+            multiSelect={false}
+            searchable={false}
+            onChange={(val: any) => onChangeEasing(val?.id || val)}
+            disabled={disabled}
+            getOptionValue={(o: any) => o.id}
+            displayOption={(o: any) => o.label}
+          />
+        </InputGrid>
+      </>
+    )}
   </>
 );
 
@@ -405,7 +413,8 @@ const SwipeExportSettings: React.FC<SwipeExportSettingsProps> = ({
   disabled,
   onChangeStartPct,
   onChangeEndPct,
-  onChangeEasing
+  onChangeEasing,
+  hideSwipe
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('animation');
 
@@ -434,6 +443,7 @@ const SwipeExportSettings: React.FC<SwipeExportSettingsProps> = ({
           swipeEndPct={swipeEndPct}
           swipeEasing={swipeEasing}
           disabled={disabled}
+          hideSwipe={hideSwipe}
           onChangeDuration={onChangeDuration}
           onChangeCameraPreset={onChangeCameraPreset}
           onChangeStartPct={onChangeStartPct}

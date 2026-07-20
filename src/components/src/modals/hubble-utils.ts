@@ -2,8 +2,17 @@
 // Copyright contributors to the kepler.gl project
 
 import {MapView, WebMercatorViewport, type MapViewState} from '@deck.gl/core';
-import {DEFAULT_MAPBOX_API_URL, FILTER_VIEW_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
+import {
+  DEFAULT_MAPBOX_API_URL,
+  EMPTY_MAPBOX_STYLE,
+  FILTER_VIEW_TYPES,
+  FILTER_TYPES,
+  GLOBE_MIN_ZOOM,
+  GLOBE_MAX_ZOOM
+} from '@kepler.gl/constants';
 import {getLayerBlendingParameters, getBaseMapLibrary} from '@kepler.gl/utils';
+import {getGlobeBaseLayers, getGlobeTopLayers, KeplerGlobeView} from '@kepler.gl/deckgl-layers';
+import {computeDeckLayers} from '@kepler.gl/reducers';
 import {isMapboxURL, transformMapboxUrl} from 'maplibregl-mapbox-request-transformer';
 import {point} from '@turf/helpers';
 import {transformTranslate} from '@turf/transform-translate';
@@ -114,6 +123,7 @@ export function getStaticMapProps(
   const currentStyle = keplerState.mapStyle?.mapStyles?.[keplerState.mapStyle.styleType];
   const accessToken = currentStyle?.accessToken || mapboxApiAccessToken;
   const isMapbox = getBaseMapLibrary(currentStyle) === 'mapbox';
+  const isGlobe = Boolean(keplerState.mapState?.globe?.enabled);
 
   const mapboxTransformRequest = (url: string, resourceType: string) => {
     if (isMapboxURL(url)) {
@@ -122,15 +132,22 @@ export function getStaticMapProps(
     return {url};
   };
 
+  // In globe mode the deck.gl GlobeView renders the planet + basemap tiles as
+  // deck layers on a transparent canvas, so the flat maplibre base map must be
+  // suppressed (otherwise a 2D Mercator basemap would render behind the globe).
+  const bottomMapStyle = isGlobe
+    ? EMPTY_MAPBOX_STYLE
+    : isMapbox
+    ? convertMapboxStyleUrls(keplerState.mapStyle?.bottomMapStyle, accessToken)
+    : keplerState.mapStyle?.bottomMapStyle;
+
   return {
     ...keplerState.mapState,
     preserveDrawingBuffer: true,
     mapboxApiAccessToken: accessToken,
     mapboxApiUrl,
     transformRequest: mapboxTransformRequest,
-    mapStyle: isMapbox
-      ? convertMapboxStyleUrls(keplerState.mapStyle?.bottomMapStyle, accessToken)
-      : keplerState.mapStyle?.bottomMapStyle,
+    mapStyle: bottomMapStyle,
     onViewportChange: onViewChange,
     mapLib: import('maplibre-gl')
   };
@@ -177,17 +194,121 @@ function getHubbleParameters(keplerState: KeplerState): Record<string, any> {
 
 export function getHubbleDeckGlProps(
   keplerState: KeplerState,
-  _mapboxApiAccessToken: string,
-  _mapboxApiUrl: string = DEFAULT_MAPBOX_API_URL
+  mapboxApiAccessToken: string,
+  mapboxApiUrl: string = DEFAULT_MAPBOX_API_URL
 ): Record<string, any> {
-  return {
-    parameters: getHubbleParameters(keplerState),
-    controller: true,
-    views: new MapView({
-      id: 'mapbox',
-      farZMultiplier: 1.2
-    })
+  const globe = keplerState.mapState?.globe;
+  const isGlobe = Boolean(globe?.enabled);
+
+  if (!isGlobe) {
+    return {
+      parameters: getHubbleParameters(keplerState),
+      controller: true,
+      views: new MapView({
+        id: 'mapbox',
+        farZMultiplier: 1.2
+      })
+    };
+  }
+
+  // Globe video export: mirror the interactive globe render path in map-container.
+  // - Use a GlobeView so the camera/projection curve data around the sphere.
+  // - Provide layers explicitly (globe base layers + kepler data layers + globe
+  //   top layers). When `deckProps.layers` is set, hubble's preview uses them
+  //   verbatim (skipping its internal 2D-only createKeplerLayers path), and the
+  //   kepler layers are built from `mapState.globe`, so composite layers (e.g.
+  //   the heatmap) emit their globe-conforming sublayers.
+  const globeBaseLayers = getGlobeBaseLayers({
+    mapboxApiAccessToken: mapboxApiAccessToken || '',
+    globe,
+    mapStyleType: keplerState.mapStyle?.styleType
+  });
+  const globeTopLayers = getGlobeTopLayers({globe});
+  const dataLayers = computeDeckLayers(keplerState, {
+    primaryMap: true,
+    mapboxApiAccessToken,
+    mapboxApiUrl
+  });
+
+  // hubble's video-export preview renders a bare <DeckGL> in the disableBaseMap
+  // (globe) branch and — unlike its mapbox branch — never forwards a viewState.
+  // With `controller: true` deck.gl then constructs a controller state from an
+  // empty view state, and GlobeState/MapState assert on the missing
+  // latitude/longitude/zoom ("assertion failed at new MapState/GlobeState").
+  // That degenerate viewport also leaves tile/MVT base layers permanently
+  // "not loaded", so hubble's `layers.every(l => l.isLoaded)` capture gate never
+  // fires and the export hangs. Provide an explicit initialViewState (deck.gl
+  // uses it to seed the controller when no controlled viewState is supplied) so
+  // the globe camera is valid, tiles resolve, and interaction works.
+  const {longitude, latitude, zoom, pitch, bearing} = keplerState.mapState || {};
+  const initialViewState = {
+    longitude,
+    latitude,
+    zoom,
+    pitch: pitch || 0,
+    bearing: bearing || 0,
+    minZoom: GLOBE_MIN_ZOOM,
+    maxZoom: GLOBE_MAX_ZOOM
   };
+
+  return {
+    parameters: {
+      ...getHubbleParameters(keplerState),
+      cull: true
+    },
+    // Match the interactive globe controller bounds so panning/zoom feels the
+    // same in the preview as on the main map.
+    controller: {
+      minZoom: GLOBE_MIN_ZOOM,
+      maxZoom: GLOBE_MAX_ZOOM
+    },
+    initialViewState,
+    views: new KeplerGlobeView({
+      resolution: 5,
+      // clearColor:false (not a solid color) is deliberate and mirrors the
+      // interactive map: deck.gl applies a View's clearColor in EVERY pass
+      // including the picking pass, forcing alpha to 255. In the picking buffer
+      // the alpha byte encodes the layer index, so a solid clear makes deck.gl
+      // decode every pixel as a non-existent layer ("Picked non-existent layer.
+      // Is picking buffer corrupt?") whenever the controller picks on hover.
+      // Skipping the color clear keeps the picking buffer's 0 alpha intact; the
+      // sphere itself stays opaque via the globe-background SolidPolygonLayer.
+      clear: true,
+      clearColor: false
+    }),
+    layers: [...globeBaseLayers, ...dataLayers, ...globeTopLayers]
+  };
+}
+
+/**
+ * Build a fresh set of globe layers (base + data + top) for a given split-map
+ * index. Used by the swipe export preview, which mounts two independent Deck
+ * instances: each side needs its OWN layer instances (deck.gl Layer objects are
+ * stateful and bound to a single Deck) and its own `mapIndex` so the split-map
+ * layer visibility is respected on each half of the swipe.
+ */
+export function getGlobeExportLayers(
+  keplerState: KeplerState,
+  {
+    mapIndex,
+    mapboxApiAccessToken,
+    mapboxApiUrl
+  }: {mapIndex: number; mapboxApiAccessToken?: string; mapboxApiUrl?: string}
+) {
+  const globe = keplerState.mapState?.globe;
+  const globeBaseLayers = getGlobeBaseLayers({
+    mapboxApiAccessToken: mapboxApiAccessToken || '',
+    globe,
+    mapStyleType: keplerState.mapStyle?.styleType
+  });
+  const globeTopLayers = getGlobeTopLayers({globe});
+  const dataLayers = computeDeckLayers(keplerState, {
+    mapIndex,
+    primaryMap: mapIndex === 0,
+    mapboxApiAccessToken,
+    mapboxApiUrl
+  });
+  return [...globeBaseLayers, ...dataLayers, ...globeTopLayers];
 }
 
 export function getAnimatableFilters(keplerState: KeplerState): TimeRangeFilter[] {
@@ -205,25 +326,37 @@ export function scaleToVideoExport(
   viewState: MapViewState,
   container: {width: number; height: number}
 ): MapViewState & {width: number; height: number} {
-  const viewport = new WebMercatorViewport(viewState);
-  const nw = viewport.unproject([0, 0]) as [number, number];
-  const se = viewport.unproject([viewport.width, viewport.height]) as [number, number];
-  const videoViewport = new WebMercatorViewport({
-    ...viewState,
-    width: container.width,
-    height: container.height
-  }).fitBounds([nw, se]);
-  const {height, width, latitude, longitude, zoom, altitude} = videoViewport;
-  return {
-    height,
-    width,
-    latitude,
-    longitude,
-    pitch: viewState.pitch,
-    zoom,
-    bearing: viewState.bearing,
-    altitude
-  } as any;
+  // In globe mode (and at extreme zooms) the WebMercatorViewport used below can
+  // produce a non-invertible projection matrix, making `unproject` throw. The
+  // Mercator fit-bounds rescaling only makes sense for the flat MapView anyway,
+  // so fall back to simply resizing the viewport to the export container.
+  try {
+    const viewport = new WebMercatorViewport(viewState);
+    const nw = viewport.unproject([0, 0]) as [number, number];
+    const se = viewport.unproject([viewport.width, viewport.height]) as [number, number];
+    const videoViewport = new WebMercatorViewport({
+      ...viewState,
+      width: container.width,
+      height: container.height
+    }).fitBounds([nw, se]);
+    const {height, width, latitude, longitude, zoom, altitude} = videoViewport;
+    return {
+      height,
+      width,
+      latitude,
+      longitude,
+      pitch: viewState.pitch,
+      zoom,
+      bearing: viewState.bearing,
+      altitude
+    } as any;
+  } catch (e) {
+    return {
+      ...viewState,
+      width: container.width,
+      height: container.height
+    } as any;
+  }
 }
 
 export function parseSetCameraType(strCameraType: string, viewState: MapViewState): MapViewState {

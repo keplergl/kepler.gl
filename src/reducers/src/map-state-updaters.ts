@@ -224,7 +224,11 @@ export const togglePerspectiveUpdater = (state: MapState): MapState => {
     },
     dragRotate: !state.dragRotate,
     mapViewMode: state.dragRotate ? MapViewMode.MODE_2D : MapViewMode.MODE_3D,
-    globe: {...state.globe!, enabled: false}
+    globe: {...state.globe!, enabled: false},
+    // Leaving globe mode: drop globe-only zoom bounds so the flat map (and
+    // consumers of mapState such as video export) aren't left clamped.
+    minZoom: undefined,
+    maxZoom: undefined
   };
 
   // if toggling 3d and 2d while split and unsynced
@@ -261,7 +265,11 @@ export const setMapViewModeUpdater = (
         pitch: 0,
         bearing: 0,
         dragRotate: false,
+        // Clear the globe-only zoom bounds so the flat map (and anything that
+        // reads mapState, e.g. video export) is not left with globe's
+        // min/maxZoom after leaving globe mode.
         minZoom: undefined,
+        maxZoom: undefined,
         mapViewMode
       };
       break;
@@ -273,6 +281,7 @@ export const setMapViewModeUpdater = (
         bearing: 24,
         dragRotate: true,
         minZoom: undefined,
+        maxZoom: undefined,
         mapViewMode
       };
       break;
