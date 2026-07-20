@@ -1434,7 +1434,7 @@ export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
   line: true,
   trip: true,
   rasterTile: true,
-  heatmap: false,
+  heatmap: true,
   s2: false,
   tile3d: false,
   // Flow arrows are flat quads in common space (equatorial plane) and collapse when

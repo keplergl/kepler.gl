@@ -79,6 +79,17 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   private _globeMesh: HeatmapMesh | null = null;
   private _globeMeshKey: string | null = null;
 
+  // World bounds [w, s, e, n] the density texture is currently framed to. In
+  // globe mode this is normally the data bounds, but when the camera is zoomed
+  // in far enough that the visible area sits fully inside the data, we frame the
+  // density texture around the *visible* area to improve level-of-detail.
+  private _densityBounds: [number, number, number, number] | null = null;
+  // Quantized key of `_densityBounds`, so small camera moves don't re-frame.
+  private _densityBoundsFrameKey: string | null = null;
+  // Cached reference viewport framing the full data bounds (for radius scaling).
+  private _referenceViewport: WebMercatorViewport | null = null;
+  private _referenceViewportKey: string | null = null;
+
   _createWeightsTransform(shaders: any) {
     if (shaders.fs?.includes('gaussianKDE')) {
       let fs = editShader(
@@ -132,19 +143,108 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   }
 
   /**
-   * Build (and cache) a fixed WebMercator viewport framing the data bounds.
+   * Decide which world bounds the density texture should be framed to for the
+   * current camera.
    *
-   * This viewport is completely independent of the current globe camera. It is
-   * used only to drive the offscreen density texture render, so the density
-   * texture is stable while the user rotates/zooms the globe.
+   * When zoomed out (we can see the whole globe, or the visible area extends
+   * past the data), we frame the density texture around the entire data extent
+   * so the whole heatmap is covered. When zoomed in far enough that the visible
+   * area sits fully inside the data bounds, we frame the density texture around
+   * the *visible* area instead — the same fixed-size texture then covers a much
+   * smaller region, dramatically improving level-of-detail as the user zooms.
    */
-  _getDensityViewport(): WebMercatorViewport | null {
+  _computeDensityBounds(globeViewport: any): [number, number, number, number] | null {
     const {densityBounds} = this.props as any;
-    if (!densityBounds) {
+    if (!densityBounds || densityBounds.length !== 4) {
       return null;
     }
+    const [dW, dS, dE, dN] = densityBounds as [number, number, number, number];
+    if (![dW, dS, dE, dN].every(Number.isFinite)) {
+      return null;
+    }
+    const dataBounds: [number, number, number, number] = [
+      Math.min(dW, dE),
+      Math.min(dS, dN),
+      Math.max(dW, dE),
+      Math.max(dS, dN)
+    ];
 
-    const [minLng, minLat, maxLng, maxLat] = densityBounds;
+    const viewBounds = this._getGlobeViewBounds(globeViewport);
+    if (viewBounds && this._boundsInside(viewBounds, dataBounds)) {
+      // `getBounds()` samples edge-midpoints, so the true visible extent
+      // (screen corners) is a bit larger. Pad generously so the heatmap isn't
+      // clipped at the corners, and clamp back into the data bounds.
+      return this._padBounds(viewBounds, 0.25, dataBounds);
+    }
+
+    return dataBounds;
+  }
+
+  /**
+   * Visible lng/lat bounds of the globe viewport, or null if they can't be
+   * determined reliably (e.g. the whole globe is visible / edges miss the
+   * sphere / the span is degenerate or wraps around the planet).
+   */
+  _getGlobeViewBounds(globeViewport: any): [number, number, number, number] | null {
+    if (!globeViewport || typeof globeViewport.getBounds !== 'function') {
+      return null;
+    }
+    let bounds: number[];
+    try {
+      bounds = globeViewport.getBounds();
+    } catch (e) {
+      return null;
+    }
+    if (!bounds || bounds.length !== 4 || !bounds.every(Number.isFinite)) {
+      return null;
+    }
+    const [w, s, e, n] = bounds;
+    const lngSpan = e - w;
+    const latSpan = n - s;
+    // Reject degenerate or globe-spanning views: if we see (nearly) the whole
+    // planet, framing to the view is pointless and error-prone.
+    if (lngSpan <= 0 || latSpan <= 0 || lngSpan >= 350 || latSpan >= 170) {
+      return null;
+    }
+    return [w, s, e, n];
+  }
+
+  _boundsInside(
+    inner: [number, number, number, number],
+    outer: [number, number, number, number]
+  ): boolean {
+    return (
+      inner[0] >= outer[0] &&
+      inner[1] >= outer[1] &&
+      inner[2] <= outer[2] &&
+      inner[3] <= outer[3]
+    );
+  }
+
+  _padBounds(
+    bounds: [number, number, number, number],
+    ratio: number,
+    clampTo: [number, number, number, number]
+  ): [number, number, number, number] {
+    const [w, s, e, n] = bounds;
+    const padX = (e - w) * ratio;
+    const padY = (n - s) * ratio;
+    return [
+      Math.max(w - padX, clampTo[0]),
+      Math.max(s - padY, clampTo[1]),
+      Math.min(e + padX, clampTo[2]),
+      Math.min(n + padY, clampTo[3])
+    ];
+  }
+
+  /**
+   * Build a plain WebMercator viewport that exactly frames `bounds`
+   * ([w, s, e, n]) into a fixed offscreen size. Returns null for invalid bounds.
+   */
+  _buildMercatorViewport(
+    bounds: [number, number, number, number]
+  ): WebMercatorViewport | null {
+    const [minLng, minLat, maxLng, maxLat] = bounds;
     if (![minLng, minLat, maxLng, maxLat].every(Number.isFinite)) {
       return null;
     }
@@ -156,19 +256,13 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     const west = Math.min(minLng, maxLng);
     const east = Math.max(minLng, maxLng);
 
-    const cacheKey = `${west},${south},${east},${north}`;
-    if (this._densityViewportKey === cacheKey && this._densityViewport) {
-      return this._densityViewport;
-    }
-
     // Use a reasonably large offscreen frame so the density render has enough
     // resolution regardless of the current globe zoom.
     const width = 1024;
     const height = 1024;
 
-    let viewport: WebMercatorViewport;
     try {
-      viewport = new WebMercatorViewport({
+      return new WebMercatorViewport({
         width,
         height,
         longitude: (west + east) / 2,
@@ -184,21 +278,129 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     } catch (e) {
       return null;
     }
+  }
+
+  /**
+   * Build (and cache) the WebMercator viewport that frames `_densityBounds`.
+   *
+   * This viewport is completely independent of the current globe camera
+   * *projection* — it is always a plain WebMercator frame — but the region it
+   * covers (`_densityBounds`) follows the camera for level-of-detail (see
+   * `_computeDensityBounds`). It drives the offscreen density texture render.
+   */
+  _getDensityViewport(): WebMercatorViewport | null {
+    const bounds = this._densityBounds || (this.props as any).densityBounds;
+    if (!bounds || bounds.length !== 4) {
+      return null;
+    }
+
+    const cacheKey = bounds.join(',');
+    if (this._densityViewportKey === cacheKey && this._densityViewport) {
+      return this._densityViewport;
+    }
+
+    const viewport = this._buildMercatorViewport(bounds as [number, number, number, number]);
+    if (!viewport) {
+      return null;
+    }
 
     this._densityViewport = viewport;
     this._densityViewportKey = cacheKey;
     return viewport;
   }
 
+  /**
+   * Reference WebMercator viewport framing the FULL data bounds. Used to keep
+   * the effective heatmap radius constant (in world terms) when the density
+   * texture is reframed to a smaller, zoomed-in region: as the frame shrinks the
+   * texture resolution increases, so `radiusPixels` must be scaled up by the
+   * ratio of viewport scales to avoid a visible jump in blob size / detail.
+   */
+  _getReferenceViewport(): WebMercatorViewport | null {
+    const dataBounds = (this.props as any).densityBounds;
+    if (!dataBounds || dataBounds.length !== 4) {
+      return null;
+    }
+    const key = dataBounds.join(',');
+    if (this._referenceViewportKey === key && this._referenceViewport) {
+      return this._referenceViewport;
+    }
+    const viewport = this._buildMercatorViewport(dataBounds as [number, number, number, number]);
+    this._referenceViewport = viewport;
+    this._referenceViewportKey = key;
+    return viewport;
+  }
+
+  /**
+   * Factor to multiply `radiusPixels` by so the heatmap's world-space radius
+   * matches what it would be when framed to the full data bounds. Equals the
+   * ratio of the current density viewport scale to the reference (data-bounds)
+   * viewport scale (scale ∝ 2^zoom, larger for the tighter frame).
+   */
+  _getRadiusScale(): number {
+    const current = this._getDensityViewport();
+    const reference = this._getReferenceViewport();
+    if (!current || !reference || !reference.scale || !current.scale) {
+      return 1;
+    }
+    const scale = current.scale / reference.scale;
+    return Number.isFinite(scale) && scale > 0 ? scale : 1;
+  }
+
+  /**
+   * Quantize world bounds into a stable string key. Small camera movements
+   * should NOT re-frame the density texture (that would thrash the GPU and
+   * flicker), so we snap the bounds to a grid proportional to their span.
+   */
+  _densityBoundsKey(bounds: [number, number, number, number]): string {
+    const [w, s, e, n] = bounds;
+    const lngSpan = Math.max(1e-6, e - w);
+    const latSpan = Math.max(1e-6, n - s);
+    // ~12 steps across the current span; re-frame only when the view has moved
+    // or zoomed by roughly one twelfth of the frame.
+    const stepX = lngSpan / 12;
+    const stepY = latSpan / 12;
+    const q = (v: number, step: number) => Math.round(v / step) * step;
+    return [q(w, stepX), q(s, stepY), q(e, stepX), q(n, stepY)]
+      .map(v => v.toFixed(4))
+      .join(',');
+  }
+
   updateState(opts: any) {
+    const {globeMode, densityBounds} = this.props as any;
+    if (!globeMode || !densityBounds) {
+      super.updateState(opts);
+      return;
+    }
+
+    // The globe viewport (live camera) is available on the update context. Use
+    // it to decide how to frame the density texture (whole data vs. zoomed-in
+    // visible area) for level-of-detail. Do this BEFORE swapping the viewport.
+    const globeViewport = opts.context?.viewport || this.context.viewport;
+    const nextBounds = this._computeDensityBounds(globeViewport);
+    if (nextBounds) {
+      const nextKey = this._densityBoundsKey(nextBounds);
+      if (nextKey !== this._densityBoundsFrameKey) {
+        this._densityBounds = nextBounds;
+        this._densityBoundsFrameKey = nextKey;
+        // Invalidate the cached mercator viewport so it is rebuilt for the new
+        // frame, and force the base layer to recompute its density bounds +
+        // regenerate the weightmap (it would otherwise keep the old, coarser
+        // texture because the new visible bounds are contained in the old ones).
+        this._densityViewport = null;
+        this._densityViewportKey = null;
+        (this.state as any).worldBounds = null;
+      }
+    }
+
     if (!this._isGlobeHeatmap()) {
       super.updateState(opts);
       return;
     }
 
-    // In globe mode the density texture is framed by the fixed data-bounds
-    // viewport, not the live globe camera. Swap the viewport everywhere the base
-    // layer reads it from during update:
+    // In globe mode the density texture is framed by a fixed WebMercator
+    // viewport (see `_getDensityViewport`), not the live globe camera. Swap the
+    // viewport everywhere the base layer reads it from during update:
     //   - `this.context.viewport` and `opts.context.viewport`: used by the
     //     density math (`_updateBounds`, `_worldToCommonBounds`) and by change
     //     detection (`_getChangeFlags` reads `opts.context.viewport.zoom`).
@@ -242,6 +444,38 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
       if (internalState) {
         internalState.viewport = originalInternalViewport;
       }
+    }
+  }
+
+  /**
+   * When the density texture is reframed to a smaller (zoomed-in) region, its
+   * resolution increases, so a fixed `radiusPixels` would suddenly cover a
+   * smaller world area — a visible jump in detail. Scale `radiusPixels` by the
+   * viewport-scale ratio so the effective world-space radius stays constant as
+   * the frame changes. Only applies in globe mode; otherwise defers to super.
+   */
+  _updateWeightmap() {
+    if (!this._isGlobeHeatmap()) {
+      super._updateWeightmap();
+      return;
+    }
+
+    const radiusScale = this._getRadiusScale();
+    if (radiusScale === 1) {
+      super._updateWeightmap();
+      return;
+    }
+
+    const originalProps = this.props;
+    const scaledRadius = Math.max(1, (originalProps as any).radiusPixels * radiusScale);
+    // Shallow-override radiusPixels without mutating the (possibly frozen) props.
+    this.props = Object.create(originalProps, {
+      radiusPixels: {value: scaledRadius, enumerable: true}
+    });
+    try {
+      super._updateWeightmap();
+    } finally {
+      this.props = originalProps;
     }
   }
 
