@@ -45,7 +45,7 @@ export default {
     building: 'Edifícios',
     water: 'Água',
     land: 'Terra',
-    '3dBuilding': 'Edifícios em 3d',
+    '3dBuilding': 'Edifícios em 3D',
     background: 'Fundo'
   },
   panel: {

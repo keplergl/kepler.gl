@@ -45,7 +45,7 @@ export default {
     building: 'Здания',
     water: 'Вода',
     land: 'Земля',
-    '3dBuilding': '3d здания',
+    '3dBuilding': '3D здания',
     background: 'Фон'
   },
   panel: {
