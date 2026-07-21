@@ -40,9 +40,9 @@ function addGlobeScaling(vs: string) {
   return editShader(
     vs,
     'hexagon cell vs globe scale mod',
-    'vec2 offset = (rotationMatrix * positions.xy * strokeOffsetRatio + offset) * dotRadius;',
+    'vec2 offset = (rotationMatrix * positions.xy * strokeOffsetRatio + column.offset) * dotRadius;',
     `float radiusGlobeMod = globeModeProps.globeMode > 0.5 ? sin((90.0 - abs(geometry.worldPosition.y)) * PI / 180.0) * PI : 1.0;
-      vec2 offset = (rotationMatrix * positions.xy * strokeOffsetRatio + offset) * dotRadius * radiusGlobeMod;`
+      vec2 offset = (rotationMatrix * positions.xy * strokeOffsetRatio + column.offset) * dotRadius * radiusGlobeMod;`
   );
 }
 
@@ -93,7 +93,7 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
     const wireframeModel = this.state.wireframeModel;
     const {fillVertexCount, edgeDistance} = this.state;
 
-    const globeMode = Boolean((this.context.viewport as any).resolution) ? 1.0 : 0.0;
+    const globeMode = (this.context.viewport as any).resolution ? 1.0 : 0.0;
 
     const columnProps = {
       radius,

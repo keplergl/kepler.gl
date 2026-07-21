@@ -69,9 +69,7 @@ vec3 kepler_lngLatToGlobe(vec2 lngLat, float elevationCommon) {
  */
 export function addGlobeCellProjection(vs: string, type: string): string {
   const decl = `${GLOBE_CELL_DECL}\nvoid main(void) {`;
-  const withDecl = vs.includes('void main(void) {')
-    ? vs.replace('void main(void) {', decl)
-    : vs;
+  const withDecl = vs.includes('void main(void) {') ? vs.replace('void main(void) {', decl) : vs;
 
   const target = 'gl_Position = project_common_position_to_clipspace(geometry.position);';
   if (!withDecl.includes(target)) {
@@ -148,7 +146,10 @@ const globeCellClassCache = new WeakMap<object, object>();
 
 type LayerConstructor = {new (...args: any[]): any; layerName?: string};
 
-export function makeGlobeCellLayerClass<T extends LayerConstructor>(BaseCellLayer: T, type: string): T {
+export function makeGlobeCellLayerClass<T extends LayerConstructor>(
+  BaseCellLayer: T,
+  type: string
+): T {
   const cached = globeCellClassCache.get(BaseCellLayer);
   if (cached) {
     return cached as T;
@@ -165,7 +166,7 @@ export function makeGlobeCellLayerClass<T extends LayerConstructor>(BaseCellLaye
     }
 
     draw(opts: any) {
-      const globeMode = Boolean((this.context.viewport as any).resolution) ? 1.0 : 0.0;
+      const globeMode = (this.context.viewport as any).resolution ? 1.0 : 0.0;
       // GridCellLayer / HexagonCellLayer render through a single fillModel and set
       // their own module props in draw(); set ours first so it merges (setProps is
       // per-module). deck.gl 9 has no Model.setUniforms — uniforms go through

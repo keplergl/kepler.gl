@@ -202,11 +202,19 @@ test('MapControlFactory - click options', t => {
   // click split Map - now opens mode menu since enableSwipeMode is true
   wrapper.find('.map-control-button.split-map').at(0).simulate('click');
   // onToggleSplitMap is not called directly when mode menu is available
-  t.notOk(onToggleSplitMap.calledOnce, 'should not call onToggleSplitMap when mode menu is enabled');
+  t.notOk(
+    onToggleSplitMap.calledOnce,
+    'should not call onToggleSplitMap when mode menu is enabled'
+  );
 
-  // click toggle3d
+  // click toggle3d - now opens the view-mode menu (Top/3D/Globe) instead of
+  // toggling perspective directly, mirroring the split-map mode menu above.
   wrapper.find('.map-control-button.toggle-3d').at(0).simulate('click');
-  t.ok(onTogglePerspective.calledOnce, 'should call onTogglePerspective');
+  // onTogglePerspective is not called directly when the view-mode menu is available
+  t.notOk(
+    onTogglePerspective.calledOnce,
+    'should not call onTogglePerspective directly when view-mode menu is enabled'
+  );
 
   // click map legend
   wrapper.find('.map-control-button.show-legend').at(0).simulate('click');
