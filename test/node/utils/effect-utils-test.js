@@ -12,7 +12,6 @@ import {
   POSTPROCESSING_EFFECTS,
   LIGHT_AND_SHADOW_EFFECT,
   DISTANCE_FOG_TYPE,
-  SURFACE_FOG_TYPE,
   DEFAULT_POST_PROCESSING_EFFECT_TYPE
 } from '@kepler.gl/constants';
 
@@ -73,29 +72,36 @@ test('effectUtils -> computeDeckEffects in globe mode', t => {
       parameters: {timestamp: 1689415852635} // daytime
     })
   );
+  // Only one fog effect can exist at a time (enforced by addEffectUpdater), so
+  // add just the distance fog effect.
   nextState = visStateReducer(
     nextState,
     VisStateActions.addEffect({id: 'e_distance_fog', type: DISTANCE_FOG_TYPE})
   );
-  nextState = visStateReducer(
-    nextState,
-    VisStateActions.addEffect({id: 'e_surface_fog', type: SURFACE_FOG_TYPE})
-  );
 
-  const globeEffects = computeDeckEffects({
-    visState: nextState,
-    mapState: {latitude: 51.033105, longitude: 0.348512, globe: {enabled: true}}
-  });
+  // Flat mode first: keeps ink + lighting + distance fog = 3 effects. Assert on
+  // flat mode before globe mode because both calls share (and mutate) the same
+  // lighting deckEffect instance.
   const flatEffects = computeDeckEffects({
     visState: nextState,
     mapState: {latitude: 51.033105, longitude: 0.348512}
   });
+  t.equal(flatEffects.length, 3, 'flat mode keeps ink, lighting and the fog effect');
+  t.ok(
+    flatEffects.some(e => e.id === 'distance-fog-effect'),
+    'flat mode keeps the distance fog effect'
+  );
 
-  // In flat mode all four effects are present (ink, lighting, distance fog,
-  // surface fog). In globe mode both fog effects are dropped, so exactly two
-  // fewer effects are produced.
-  t.equal(flatEffects.length, 4, 'flat mode keeps ink, lighting and both fog effects');
-  t.equal(globeEffects.length, 2, 'globe mode drops both fog effects');
+  // Globe mode: drops the fog effect, keeps ink + lighting (shadow disabled).
+  const globeEffects = computeDeckEffects({
+    visState: nextState,
+    mapState: {latitude: 51.033105, longitude: 0.348512, globe: {enabled: true}}
+  });
+  t.equal(globeEffects.length, 2, 'globe mode drops the fog effect');
+  t.notOk(
+    globeEffects.some(e => e.id === 'distance-fog-effect'),
+    'globe mode drops the distance fog effect'
+  );
 
   const lightingEffects = globeEffects.filter(e => e instanceof LightingEffect);
   t.equal(lightingEffects.length, 1, 'lighting effect should be kept in globe mode');
