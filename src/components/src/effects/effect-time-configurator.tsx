@@ -150,8 +150,15 @@ const TextBlock = styled.div<TextBlockProps>`
  * @returns Timestamp or null if case of bad inputs.
  */
 const getTimestamp = (dateStr: string, timeStr: string, timezone: string): number | null => {
+  // Bail out early on malformed inputs (e.g. partially edited date/time fields
+  // that produce values like "NaN:NaN"). Otherwise moment falls back to
+  // `new Date()` and logs a deprecation warning while still returning invalid.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || !/^\d{2}:\d{2}$/.test(timeStr)) {
+    return null;
+  }
+
   let timestamp: number | null = null;
-  const curr = moment.tz(`${dateStr}T${timeStr}:00`, timezone);
+  const curr = moment.tz(`${dateStr}T${timeStr}:00`, 'YYYY-MM-DDTHH:mm:ss', true, timezone);
   if (curr.isValid()) {
     timestamp = curr.utc().valueOf();
   }
@@ -192,7 +199,10 @@ export default function EffectTimeConfiguratorFactory(
 
     const [datePickerDate, fullDate, formattedTime, formattedDate, dayTimeProgress] =
       useMemo(() => {
-        const currentMoment = moment.tz(timestamp, timezone);
+        // Guard against an invalid stored timestamp so we never build an
+        // "Invalid Date" for the date picker (react-date-picker throws on it).
+        const safeTimestamp = Number.isFinite(timestamp) ? timestamp : Date.now();
+        const currentMoment = moment.tz(safeTimestamp, timezone);
 
         // Slider value from 0 to 1
         const dayProgress = getDayRatio(currentMoment);
@@ -327,7 +337,8 @@ export default function EffectTimeConfiguratorFactory(
               <DatePicker
                 value={datePickerDate}
                 onChange={setDate}
-                {...({minDetail: 'month', formatShortWeekday} as any)}
+                maxDetail="month"
+                {...({calendarProps: {minDetail: 'month', formatShortWeekday}} as any)}
               />
             </StyledDatePicker>
             <StyledExtraIcon>
