@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-ignore _GlobeView is an experimental, underscore-prefixed deck.gl export whose named type binding isn't reliably resolvable through the package barrel under this project's module resolution. Access it off the namespace with a loose type.
-import {_GlobeView as DeckGlobeView, _GlobeController as GlobeController} from '@deck.gl/core';
+import * as DeckCore from '@deck.gl/core';
 import {clamp} from '@math.gl/core';
 import {GLOBE_MAX_LATITUDE} from '@kepler.gl/constants';
+
+// deck.gl exposes GlobeView / GlobeController as experimental, underscore-prefixed
+// members. Their named type bindings aren't reliably resolvable through the
+// package barrel under this project's module resolution, so we pull them off the
+// namespace with a loose type. Runtime behavior is unchanged.
+const DeckGlobeView = (DeckCore as any)._GlobeView as any;
+const GlobeController = (DeckCore as any)._GlobeController as any;
 
 /**
  * Latitude-based zoom adjustment used by deck.gl's GlobeViewport, replicated
