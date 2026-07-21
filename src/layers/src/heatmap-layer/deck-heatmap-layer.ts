@@ -214,10 +214,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     outer: [number, number, number, number]
   ): boolean {
     return (
-      inner[0] >= outer[0] &&
-      inner[1] >= outer[1] &&
-      inner[2] <= outer[2] &&
-      inner[3] <= outer[3]
+      inner[0] >= outer[0] && inner[1] >= outer[1] && inner[2] <= outer[2] && inner[3] <= outer[3]
     );
   }
 
@@ -241,9 +238,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
    * Build a plain WebMercator viewport that exactly frames `bounds`
    * ([w, s, e, n]) into a fixed offscreen size. Returns null for invalid bounds.
    */
-  _buildMercatorViewport(
-    bounds: [number, number, number, number]
-  ): WebMercatorViewport | null {
+  _buildMercatorViewport(bounds: [number, number, number, number]): WebMercatorViewport | null {
     const [minLng, minLat, maxLng, maxLat] = bounds;
     if (![minLng, minLat, maxLng, maxLat].every(Number.isFinite)) {
       return null;
@@ -361,15 +356,49 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     const stepX = lngSpan / 12;
     const stepY = latSpan / 12;
     const q = (v: number, step: number) => Math.round(v / step) * step;
-    return [q(w, stepX), q(s, stepY), q(e, stepX), q(n, stepY)]
-      .map(v => v.toFixed(4))
-      .join(',');
+    return [q(w, stepX), q(s, stepY), q(e, stepX), q(n, stepY)].map(v => v.toFixed(4)).join(',');
   }
+
+  // Tracks whether the previous update ran in globe mode, so we can detect the
+  // globe→2D (and 2D→globe) transition and reset stale density framing state.
+  private _wasGlobeHeatmap = false;
 
   updateState(opts: any) {
     const {globeMode, densityBounds} = this.props as any;
+
+    // Detect a transition out of globe mode. In globe mode we frame the density
+    // texture to a FIXED WebMercator viewport built from the data bounds and
+    // cache the resulting `worldBounds` on the base layer's state. When we
+    // switch back to 2D the base layer's `_updateBounds` only recomputes
+    // `worldBounds` when the new visible bounds are NOT contained in the cached
+    // ones (`boundsContain`). The stale globe frame usually still "contains" the
+    // 2D view, so the base layer keeps the globe framing and the heatmap renders
+    // in the wrong place (and stays wrong while panning). Clear the cached
+    // framing + our globe caches so the 2D path rebuilds from scratch.
+    const isGlobeNow = Boolean(globeMode && densityBounds);
+    const leftGlobe = this._wasGlobeHeatmap && !isGlobeNow;
+    if (leftGlobe) {
+      this._resetGlobeState();
+    }
+    this._wasGlobeHeatmap = isGlobeNow;
+
     if (!globeMode || !densityBounds) {
       super.updateState(opts);
+      // On the globe→2D transition, the base layer's viewport-change detection
+      // may not fire (the mode toggle can arrive without a viewport diff in the
+      // same cycle). Force a fresh bounds + weightmap computation against the
+      // live 2D viewport so the heatmap doesn't keep the stale globe framing.
+      if (leftGlobe && this.context?.viewport && !(this.context.viewport as any).resolution) {
+        try {
+          this._updateBounds(true);
+          this._updateTextureRenderingBounds();
+          (this.state as any).isWeightMapDirty = true;
+          this._updateWeightmap();
+        } catch (e) {
+          // Defensive: if the live viewport isn't ready this frame, the next
+          // regular update will recompute (worldBounds was cleared).
+        }
+      }
       return;
     }
 
@@ -444,6 +473,35 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
       if (internalState) {
         internalState.viewport = originalInternalViewport;
       }
+    }
+  }
+
+  /**
+   * Clear all globe-mode density framing state, both our own caches and the
+   * base deck.gl HeatmapLayer's cached bounds, so the next (2D) update recomputes
+   * `worldBounds` / `normalizedCommonBounds` from the live viewport instead of
+   * reusing the fixed globe frame. Also resets the base layer's cached `zoom` so
+   * its viewport-change detection fires, and marks the weight map dirty.
+   */
+  _resetGlobeState() {
+    this._densityViewport = null;
+    this._densityViewportKey = null;
+    this._densityBounds = null;
+    this._densityBoundsFrameKey = null;
+    this._referenceViewport = null;
+    this._referenceViewportKey = null;
+    this._globeMesh = null;
+    this._globeMeshKey = null;
+
+    const state = this.state as any;
+    if (state) {
+      // Force base `_updateBounds` to recompute (it skips when the new visible
+      // bounds are contained in the stale globe `worldBounds`).
+      state.worldBounds = null;
+      state.normalizedCommonBounds = null;
+      // Force base `_getChangeFlags` to report a viewport/zoom change so it
+      // recomputes bounds and regenerates the weight map on this update.
+      state.zoom = null;
     }
   }
 
