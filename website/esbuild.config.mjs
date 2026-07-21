@@ -5,8 +5,9 @@ import esbuild from 'esbuild';
 import { replace } from 'esbuild-plugin-replace';
 import process from 'node:process';
 import { dirname, join } from 'node:path';
+import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import WebsitePackage from '../package.json' with {type: 'json'};
 
 const require = createRequire(import.meta.url);
@@ -18,6 +19,41 @@ const WEBSITE_NODE_MODULES_DIR = './node_modules';
 const SRC_DIR = join(LIB_DIR, 'src');
 
 const port = 3003;
+
+// The SQLRooms AI chat UI (rendered from the demo-app sources the website
+// bundles) is styled entirely with Tailwind utility classes. Those classes are
+// not part of esbuild's JS/CSS graph, so we compile them separately with the
+// Tailwind CLI, exactly like the demo-app build does, and link the output from
+// index.html. `@source` globs inside this stylesheet are resolved relative to
+// the stylesheet itself, so pointing at the demo-app copy keeps them valid.
+const TAILWIND_INPUT = '../examples/demo-app/src/ai-assistant-v2/styles.css';
+const TAILWIND_OUTPUT = 'dist/tailwind.css';
+
+// The tailwindcss CLI is a dependency of the demo-app workspace; locate its
+// binary regardless of how node_modules are hoisted.
+function resolveTailwindBin() {
+  const candidates = [
+    join(LIB_DIR, 'examples/demo-app/node_modules/.bin/tailwindcss'),
+    join(LIB_DIR, 'node_modules/.bin/tailwindcss'),
+    join(WEBSITE_NODE_MODULES_DIR, '.bin/tailwindcss')
+  ];
+  return candidates.find(p => existsSync(p)) || 'tailwindcss';
+}
+
+function buildTailwind({watch}) {
+  const bin = resolveTailwindBin();
+  const cliArgs = ['-i', TAILWIND_INPUT, '-o', TAILWIND_OUTPUT];
+  if (watch) {
+    spawn(bin, [...cliArgs, '--watch'], {stdio: 'inherit'});
+    return;
+  }
+  // Minify for production and fail the build if Tailwind cannot compile.
+  const result = spawnSync(bin, [...cliArgs, '--minify'], {stdio: 'inherit'});
+  if (result.status !== 0) {
+    logError('Tailwind CSS build failed');
+    process.exit(1);
+  }
+}
 
 const RESOLVE_LOCAL_ALIASES = {
   react: `${NODE_MODULES_DIR}/react`,
@@ -93,7 +129,7 @@ const config = {
           });
           // entry === <pkgRoot>/dist/index.js -> dist dir is its parent
           const distDir = dirname(entry);
-          return {path: join(distDir, subpath) + '.js'};
+          return {path: `${join(distDir, subpath)}.js`};
         });
       }
     }
@@ -148,6 +184,10 @@ function validateEnvVariable(variable, instruction) {
       validateEnvVariable(variable, instruction);
     });
 
+    // Compile the SQLRooms/Tailwind stylesheet before bundling so
+    // dist/tailwind.css exists alongside the JS bundle.
+    buildTailwind({watch: false});
+
     await esbuild
       .build({
         ...config,
@@ -162,6 +202,9 @@ function validateEnvVariable(variable, instruction) {
   }
 
   if (args.includes('--start')) {
+    // Watch & compile the Tailwind stylesheet during dev too.
+    buildTailwind({watch: true});
+
     await esbuild
       .context({
         ...config,
