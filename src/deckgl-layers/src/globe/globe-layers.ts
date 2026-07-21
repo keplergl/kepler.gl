@@ -298,6 +298,32 @@ const BASEMAP_MVT_PARAMETERS = {
  */
 export type GlobeBasemapProvider = 'mapbox' | 'carto';
 
+/**
+ * Resolve which globe basemap tile provider to use.
+ *
+ * The globe should follow the *selected basemap style's* rendering library so
+ * it stays consistent with the flat 2D map: a MapLibre/CARTO style uses the
+ * free CARTO tiles (even when a Mapbox token is available), and a Mapbox style
+ * uses Mapbox tiles. A Mapbox style with no token falls back to CARTO so the
+ * globe still renders instead of showing a bare colored sphere.
+ *
+ * @param baseMapLibrary the selected style's library ('mapbox' | 'maplibre'),
+ *   e.g. from `getBaseMapLibrary(currentStyle)`.
+ */
+export const resolveGlobeBasemapProvider = (
+  baseMapLibrary: 'mapbox' | 'maplibre' | undefined,
+  mapboxApiAccessToken?: string
+): GlobeBasemapProvider => {
+  if (baseMapLibrary === 'maplibre') {
+    return 'carto';
+  }
+  if (baseMapLibrary === 'mapbox') {
+    return mapboxApiAccessToken ? 'mapbox' : 'carto';
+  }
+  // Unknown library: prefer Mapbox when a token exists, otherwise CARTO.
+  return mapboxApiAccessToken ? 'mapbox' : 'carto';
+};
+
 // CARTO free vector tiles (OpenMapTiles schema, no API key required).
 const CARTO_VECTOR_TILE_URLS = [
   'https://tiles-a.basemaps.cartocdn.com/vectortiles/carto.streets/v1/{z}/{x}/{y}.mvt',
@@ -338,6 +364,60 @@ function getBasemapLayerKind(layerName?: string): BasemapLayerKind {
   }
 }
 
+export type GlobeAttribution = {label: string; href: string};
+
+const MAPBOX_ATTRIBUTION: GlobeAttribution = {
+  label: '© Mapbox',
+  href: 'https://www.mapbox.com/about/maps/'
+};
+const OSM_ATTRIBUTION: GlobeAttribution = {
+  label: '© OpenStreetMap',
+  href: 'https://www.openstreetmap.org/copyright'
+};
+const CARTO_ATTRIBUTION: GlobeAttribution = {
+  label: '© CARTO',
+  href: 'https://carto.com/attributions'
+};
+const ESRI_ATTRIBUTION: GlobeAttribution = {
+  label: 'Powered by Esri',
+  href: 'https://www.esri.com/'
+};
+
+/**
+ * Resolve the tile-source attribution entries for the globe basemap. deck.gl
+ * renders the globe basemap tiles itself (not the base Maplibre/Mapbox map), so
+ * the base map's attribution machinery never sees them. This lets the UI credit
+ * the actual tile provider(s) in globe mode.
+ */
+export const getGlobeBasemapAttributions = ({
+  globe,
+  mapboxApiAccessToken,
+  mapStyleType,
+  basemapProvider
+}: {
+  globe?: Globe;
+  mapboxApiAccessToken?: string;
+  mapStyleType?: string;
+  basemapProvider?: GlobeBasemapProvider;
+}): GlobeAttribution[] => {
+  if (!globe?.enabled || !globe.config?.basemap) {
+    return [];
+  }
+
+  const provider: GlobeBasemapProvider =
+    basemapProvider ?? resolveGlobeBasemapProvider(undefined, mapboxApiAccessToken);
+
+  if (provider === 'mapbox') {
+    return mapboxApiAccessToken ? [MAPBOX_ATTRIBUTION, OSM_ATTRIBUTION] : [];
+  }
+
+  const isSatellite = mapStyleType === 'satellite' || mapStyleType === 'satellite-street';
+  // CARTO vector tiles are OpenStreetMap-derived; Esri imagery is credited separately.
+  return isSatellite
+    ? [ESRI_ATTRIBUTION, CARTO_ATTRIBUTION, OSM_ATTRIBUTION]
+    : [CARTO_ATTRIBUTION, OSM_ATTRIBUTION];
+};
+
 // eslint-disable-next-line complexity
 export const getGlobeBaseLayers = ({
   mapboxApiAccessToken,
@@ -361,9 +441,10 @@ export const getGlobeBaseLayers = ({
 
   // Fall back to the free CARTO tiles whenever no Mapbox token is available so
   // the globe basemap still renders (matches kepler's default token-free
-  // MapLibre/CARTO basemaps).
+  // MapLibre/CARTO basemaps). Callers should pass an explicit `basemapProvider`
+  // (derived from the selected style) so the globe follows the 2D basemap.
   const provider: GlobeBasemapProvider =
-    basemapProvider ?? (mapboxApiAccessToken ? 'mapbox' : 'carto');
+    basemapProvider ?? resolveGlobeBasemapProvider(undefined, mapboxApiAccessToken);
   const useCarto = provider === 'carto';
   const hasTileAccess = useCarto || Boolean(mapboxApiAccessToken);
 

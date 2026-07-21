@@ -40,11 +40,13 @@ export {
   getGlobeBaseLayers,
   getGlobeTopLayers,
   getGlobeClearColor,
+  getGlobeBasemapAttributions,
+  resolveGlobeBasemapProvider,
   DEFAULT_BASEMAP_COLOR,
   getBasemapColors,
   getBasemapColorsForStyle
 } from './globe-layers';
-export type {GlobeBasemapProvider} from './globe-layers';
+export type {GlobeBasemapProvider, GlobeAttribution} from './globe-layers';
 export {MVTLabelLayer} from './mvt-label-layer';
 export {default as EnhancedMultiIconLayer} from './enhanced-multi-icon-layer';
 export {KeplerGlobeView} from './globe-view';

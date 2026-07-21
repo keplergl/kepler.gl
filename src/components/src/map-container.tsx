@@ -87,8 +87,11 @@ import {
   getGlobeBaseLayers,
   getGlobeTopLayers,
   getGlobeClearColor,
+  getGlobeBasemapAttributions,
+  resolveGlobeBasemapProvider,
   KeplerGlobeView
 } from '@kepler.gl/deckgl-layers';
+import type {GlobeAttribution} from '@kepler.gl/deckgl-layers';
 
 import {DROPPABLE_MAP_CONTAINER_TYPE} from './common/dnd-layer-items';
 // Contexts
@@ -250,17 +253,32 @@ type AttributionProps = {
   showOsmBasemapAttribution: boolean;
   datasetAttributions: DatasetAttribution[];
   baseMapLibraryConfig: BaseMapLibraryConfig;
+  globeAttributions?: GlobeAttribution[];
 };
 
 export const Attribution: React.FC<AttributionProps> = ({
   showBaseMapLibLogo = true,
   showOsmBasemapAttribution = false,
   datasetAttributions,
-  baseMapLibraryConfig
+  baseMapLibraryConfig,
+  globeAttributions = []
 }: AttributionProps) => {
   const isPalm = hasMobileWidth(breakPointValues);
 
   const memoizedComponents = useMemo(() => {
+    const globeAttributionNodes = globeAttributions.length ? (
+      <>
+        {globeAttributions.map(attr => (
+          <React.Fragment key={attr.label}>
+            <span className="pipe-separator">|</span>
+            <a href={attr.href} target="_blank" rel="noopener noreferrer">
+              {attr.label}
+            </a>
+          </React.Fragment>
+        ))}
+      </>
+    ) : null;
+
     if (!showBaseMapLibLogo) {
       return (
         <StyledAttribution
@@ -271,9 +289,17 @@ export const Attribution: React.FC<AttributionProps> = ({
             <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
             <div className="attrition-link">
               {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
+              {globeAttributions.length && isPalm ? (
+                <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} />
+              ) : null}
               <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
                 © kepler.gl
               </a>
+              {globeAttributionNodes}
+              {globeAttributions.length ? <span className="pipe-separator">|</span> : null}
+              {globeAttributions.length && !isPalm ? (
+                <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} />
+              ) : null}
             </div>
           </EndHorizontalFlexbox>
         </StyledAttribution>
@@ -305,6 +331,7 @@ export const Attribution: React.FC<AttributionProps> = ({
                 </a>
               </>
             ) : null}
+            {globeAttributionNodes}
             <span className="pipe-separator">|</span>
             {!isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
           </div>
@@ -316,7 +343,8 @@ export const Attribution: React.FC<AttributionProps> = ({
     showOsmBasemapAttribution,
     datasetAttributions,
     isPalm,
-    baseMapLibraryConfig
+    baseMapLibraryConfig,
+    globeAttributions
   ]);
 
   return memoizedComponents;
@@ -1104,17 +1132,26 @@ export default function MapContainerFactory(
 
       const isGlobeMode = mapState.globe?.enabled;
 
+      // Follow the selected basemap style's library so the globe uses the same
+      // provider as the flat 2D map (CARTO tiles for MapLibre styles, Mapbox
+      // tiles for Mapbox styles).
+      const globeBasemapProvider = resolveGlobeBasemapProvider(
+        getBaseMapLibrary(mapStyle?.mapStyles?.[mapStyle?.styleType]),
+        mapboxApiAccessToken || ''
+      );
+
       // In globe mode, prepend globe base layers and append top layers
-      const globeBaseLayers = isGlobeMode && mapState.globe
-        ? getGlobeBaseLayers({
-            mapboxApiAccessToken: mapboxApiAccessToken || '',
-            globe: mapState.globe,
-            mapStyleType: mapStyle?.styleType
-          })
-        : [];
-      const globeTopLayers = isGlobeMode && mapState.globe
-        ? getGlobeTopLayers({globe: mapState.globe})
-        : [];
+      const globeBaseLayers =
+        isGlobeMode && mapState.globe
+          ? getGlobeBaseLayers({
+              mapboxApiAccessToken: mapboxApiAccessToken || '',
+              globe: mapState.globe,
+              mapStyleType: mapStyle?.styleType,
+              basemapProvider: globeBasemapProvider
+            })
+          : [];
+      const globeTopLayers =
+        isGlobeMode && mapState.globe ? getGlobeTopLayers({globe: mapState.globe}) : [];
       const finalDeckGlLayers = isGlobeMode
         ? [...globeBaseLayers, ...deckGlLayers, ...globeTopLayers]
         : deckGlLayers;
@@ -1122,22 +1159,22 @@ export default function MapContainerFactory(
       const views = deckGlProps?.views
         ? deckGlProps?.views()
         : isGlobeMode
-          ? new KeplerGlobeView({
-              resolution: 5,
-              // The visible background around the globe is painted by the map
-              // container's CSS background (see styleSelector), NOT by a per-view
-              // color clear. deck.gl applies a View's `clearColor` in *every* pass,
-              // including the picking pass, and it forces the cleared alpha to 255
-              // (`clearColor[3] || 255`). In the picking buffer the alpha byte encodes
-              // the layer index, so a 255 clear makes deck.gl decode every pixel as a
-              // non-existent layer ("Picked non-existent layer. Is picking buffer
-              // corrupt?") on hover. `clearColor: false` skips the per-view color
-              // clear so the picking buffer keeps its 0 alpha; the canvas stays
-              // transparent and the CSS background shows through.
-              clear: true,
-              clearColor: false
-            })
-          : new MapView({farZMultiplier: 1.2});
+        ? new KeplerGlobeView({
+            resolution: 5,
+            // The visible background around the globe is painted by the map
+            // container's CSS background (see styleSelector), NOT by a per-view
+            // color clear. deck.gl applies a View's `clearColor` in *every* pass,
+            // including the picking pass, and it forces the cleared alpha to 255
+            // (`clearColor[3] || 255`). In the picking buffer the alpha byte encodes
+            // the layer index, so a 255 clear makes deck.gl decode every pixel as a
+            // non-existent layer ("Picked non-existent layer. Is picking buffer
+            // corrupt?") on hover. `clearColor: false` skips the per-view color
+            // clear so the picking buffer keeps its 0 alpha; the canvas stays
+            // transparent and the CSS background shows through.
+            clear: true,
+            clearColor: false
+          })
+        : new MapView({farZMultiplier: 1.2});
 
       let allDeckGlProps = {
         ...deckGlProps,
@@ -1145,9 +1182,7 @@ export default function MapContainerFactory(
         views,
         layers: finalDeckGlLayers,
         effects,
-        parameters: isGlobeMode
-          ? {cull: true}
-          : getLayerBlendingParameters(visState.layerBlending)
+        parameters: isGlobeMode ? {cull: true} : getLayerBlendingParameters(visState.layerBlending)
       };
 
       if (typeof deckRenderCallbacks?.onDeckRender === 'function') {
@@ -1455,7 +1490,11 @@ export default function MapContainerFactory(
           <ResolvedMapComponent
             key={`bottom-${baseMapLibraryName}`}
             {...mapProps}
-            mapStyle={mapState.globe?.enabled ? EMPTY_MAPBOX_STYLE : (mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE)}
+            mapStyle={
+              mapState.globe?.enabled
+                ? EMPTY_MAPBOX_STYLE
+                : mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE
+            }
             {...bottomMapContainerProps}
             ref={this._setMapRef}
           />
@@ -1586,6 +1625,15 @@ export default function MapContainerFactory(
               showOsmBasemapAttribution={this.state.showOsmAttribution}
               datasetAttributions={datasetAttributions}
               baseMapLibraryConfig={baseMapLibraryConfig}
+              globeAttributions={getGlobeBasemapAttributions({
+                globe: mapState.globe,
+                mapboxApiAccessToken,
+                mapStyleType: mapStyle?.styleType,
+                basemapProvider: resolveGlobeBasemapProvider(
+                  baseMapLibraryName,
+                  mapboxApiAccessToken
+                )
+              })}
             />
           ) : null}
           {this.props.primary ? (
