@@ -287,20 +287,85 @@ const BASEMAP_MVT_PARAMETERS = {
   depthMask: false
 };
 
+/**
+ * Globe basemap tile provider.
+ *
+ * - `mapbox` uses Mapbox vector/raster tiles and requires an access token.
+ * - `carto` uses CARTO's free OpenMapTiles vector tiles + Esri World Imagery
+ *   raster, and needs no token. Used as an automatic fallback when no Mapbox
+ *   token is available (e.g. MapLibre / CARTO basemap setups), so the globe
+ *   basemap still renders instead of showing a solid-color sphere.
+ */
+export type GlobeBasemapProvider = 'mapbox' | 'carto';
+
+// CARTO free vector tiles (OpenMapTiles schema, no API key required).
+const CARTO_VECTOR_TILE_URLS = [
+  'https://tiles-a.basemaps.cartocdn.com/vectortiles/carto.streets/v1/{z}/{x}/{y}.mvt',
+  'https://tiles-b.basemaps.cartocdn.com/vectortiles/carto.streets/v1/{z}/{x}/{y}.mvt',
+  'https://tiles-c.basemaps.cartocdn.com/vectortiles/carto.streets/v1/{z}/{x}/{y}.mvt',
+  'https://tiles-d.basemaps.cartocdn.com/vectortiles/carto.streets/v1/{z}/{x}/{y}.mvt'
+];
+
+// Free satellite raster fallback (Esri World Imagery, no API key required).
+const ESRI_WORLD_IMAGERY_URL =
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
+/**
+ * Maps a raw MVT source-layer name to a normalized semantic layer kind, so the
+ * fill/line/label accessors work across both the Mapbox (`mapbox-streets-v8`)
+ * and CARTO/OpenMapTiles schemas.
+ *
+ * | semantic | mapbox        | openmaptiles |
+ * | -------- | ------------- | ------------ |
+ * | water    | `water`       | `water`      |
+ * | admin    | `admin`       | `boundary`   |
+ * | label    | `place_label` | `place`      |
+ */
+type BasemapLayerKind = 'water' | 'admin' | 'label' | 'other';
+
+function getBasemapLayerKind(layerName?: string): BasemapLayerKind {
+  switch (layerName) {
+    case 'water':
+      return 'water';
+    case 'admin':
+    case 'boundary':
+      return 'admin';
+    case 'place_label':
+    case 'place':
+      return 'label';
+    default:
+      return 'other';
+  }
+}
+
 // eslint-disable-next-line complexity
 export const getGlobeBaseLayers = ({
   mapboxApiAccessToken,
   globe,
-  mapStyleType
+  mapStyleType,
+  basemapProvider
 }: {
   mapboxApiAccessToken: string;
   globe: Globe;
   mapStyleType?: string;
+  /**
+   * Which tile provider to use for the globe basemap. Defaults to `mapbox` when
+   * a token is present, otherwise falls back to the token-free `carto` tiles.
+   */
+  basemapProvider?: GlobeBasemapProvider;
 }): Layer[] => {
   const {config} = globe;
 
   const isSatellite = mapStyleType === 'satellite';
   const isSatelliteStreet = mapStyleType === 'satellite-street';
+
+  // Fall back to the free CARTO tiles whenever no Mapbox token is available so
+  // the globe basemap still renders (matches kepler's default token-free
+  // MapLibre/CARTO basemaps).
+  const provider: GlobeBasemapProvider =
+    basemapProvider ?? (mapboxApiAccessToken ? 'mapbox' : 'carto');
+  const useCarto = provider === 'carto';
+  const hasTileAccess = useCarto || Boolean(mapboxApiAccessToken);
 
   return [
     config.atmosphere ? getGlobeAtmosphereSkyLayer({config}) : null,
@@ -334,15 +399,18 @@ export const getGlobeBaseLayers = ({
     // Satellite tiles
     config.basemap &&
       (isSatellite || isSatelliteStreet) &&
-      mapboxApiAccessToken &&
+      hasTileAccess &&
       new TileLayer({
-        id: 'globe-satellite-tiles',
-        data: [
-          `https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.png?access_token=${mapboxApiAccessToken}`
-        ],
+        id: `globe-satellite-tiles-${provider}`,
+        data: useCarto
+          ? [ESRI_WORLD_IMAGERY_URL]
+          : [
+              `https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.png?access_token=${mapboxApiAccessToken}`
+            ],
         minZoom: 0,
-        maxZoom: 19,
-        tileSize: 512 / devicePixelRatio,
+        maxZoom: useCarto ? 18 : 19,
+        // Esri tiles are 256px; Mapbox @2x tiles are 512px.
+        tileSize: useCarto ? 256 : 512 / devicePixelRatio,
         renderSubLayers: (props: any) => {
           const {
             bbox: {west, south, east, north}
@@ -363,27 +431,38 @@ export const getGlobeBaseLayers = ({
     // Vector basemap (MVT labels/admin/water)
     config.basemap &&
       !isSatellite &&
-      mapboxApiAccessToken &&
+      hasTileAccess &&
       new MVTLayer({
-        // force the layer to update when the style/label config changes
-        id: `globe-basemap-mvt-layer-${mapStyleType}`,
-        data: `https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=${mapboxApiAccessToken}`,
+        // force the layer to update when the style/label/provider config changes
+        id: `globe-basemap-mvt-layer-${provider}-${mapStyleType}`,
+        data: useCarto
+          ? CARTO_VECTOR_TILE_URLS
+          : `https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=${mapboxApiAccessToken}`,
         minZoom: 0,
         maxZoom: 23,
         binary: false,
         parameters: BASEMAP_MVT_PARAMETERS,
-        loadOptions: {
-          mvt: {
-            layers: isSatelliteStreet
-              ? ['place_label', 'admin']
-              : ['place_label', 'admin', 'water', 'road']
-          }
-        },
+        loadOptions: useCarto
+          ? {
+              // OpenMapTiles schema: `boundary` = admin lines, `place` = labels.
+              mvt: {
+                layers: isSatelliteStreet
+                  ? ['place', 'boundary']
+                  : ['place', 'boundary', 'water', 'transportation']
+              }
+            }
+          : {
+              mvt: {
+                layers: isSatelliteStreet
+                  ? ['place_label', 'admin']
+                  : ['place_label', 'admin', 'water', 'road']
+              }
+            },
         // Render admin/water via GeoJsonLayer and place labels via TextLayer.
         config,
         renderSubLayers: (props: any) => new MVTLabelLayer(props),
         getFillColor: (f: any) => {
-          switch (f.properties.layerName) {
+          switch (getBasemapLayerKind(f.properties.layerName)) {
             case 'water':
               return config.water ? config.waterColor : INVISIBLE_COLOR;
             default:
@@ -391,7 +470,7 @@ export const getGlobeBaseLayers = ({
           }
         },
         getLineColor: (f: any) => {
-          switch (f.properties.layerName) {
+          switch (getBasemapLayerKind(f.properties.layerName)) {
             case 'admin':
               return config.adminLines ? config.adminLinesColor : INVISIBLE_COLOR;
             default:
@@ -399,10 +478,11 @@ export const getGlobeBaseLayers = ({
           }
         },
         getLineWidth: (f: any) => {
-          switch (f.properties.layerName) {
+          switch (getBasemapLayerKind(f.properties.layerName)) {
             case 'admin':
               switch (f.properties.admin_level) {
                 case 0:
+                case 2:
                   return 1;
                 default:
                   return 0.75;

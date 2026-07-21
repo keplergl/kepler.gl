@@ -29,9 +29,22 @@
 //   don't show through the planet. Implemented as a GLSL inject rather than the deck.gl
 //   8.x per-vertex hook studio relied on.
 
-export {AtmosphereLayerRealistic, AtmosphereSkyLayerRealistic, getGlobeAtmosphereLayer, getGlobeAtmosphereSkyLayer} from './atmosphere-layer';
+export {
+  AtmosphereLayerRealistic,
+  AtmosphereSkyLayerRealistic,
+  getGlobeAtmosphereLayer,
+  getGlobeAtmosphereSkyLayer
+} from './atmosphere-layer';
 export {GlobeDepthDiskLayer, getGlobeDepthDiskLayer} from './globe-depth-disk-layer';
-export {getGlobeBaseLayers, getGlobeTopLayers, getGlobeClearColor, DEFAULT_BASEMAP_COLOR, getBasemapColors, getBasemapColorsForStyle} from './globe-layers';
+export {
+  getGlobeBaseLayers,
+  getGlobeTopLayers,
+  getGlobeClearColor,
+  DEFAULT_BASEMAP_COLOR,
+  getBasemapColors,
+  getBasemapColorsForStyle
+} from './globe-layers';
+export type {GlobeBasemapProvider} from './globe-layers';
 export {MVTLabelLayer} from './mvt-label-layer';
 export {default as EnhancedMultiIconLayer} from './enhanced-multi-icon-layer';
 export {KeplerGlobeView} from './globe-view';

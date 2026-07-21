@@ -42,10 +42,19 @@ export class MVTLabelLayer extends CompositeLayer<MVTLabelLayerProps> {
     const {properties} = feature;
 
     switch (properties?.layerName) {
+      // Mapbox `mapbox-streets-v8` schema.
       case 'place_label':
         switch (properties.class) {
           case 'country':
             return properties.name_en || properties.name || '';
+          default:
+            return '';
+        }
+      // CARTO / OpenMapTiles schema.
+      case 'place':
+        switch (properties.class) {
+          case 'country':
+            return properties['name:en'] || properties.name_en || properties.name || '';
           default:
             return '';
         }
