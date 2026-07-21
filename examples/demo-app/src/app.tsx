@@ -5,20 +5,20 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
 import Window from 'global/window';
-import {connect, useDispatch} from 'react-redux';
+import {connect, useDispatch, useStore} from 'react-redux';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
 import {useParams, useSearchParams, useLocation} from 'react-router-dom';
 import {WebMercatorViewport} from '@deck.gl/core';
-import {ScreenshotWrapper} from '@openassistant/ui';
+import {ScreenshotWrapper} from './components/screenshot-wrapper';
 import {
   setStartScreenCapture,
   setScreenCaptured,
-  AiAssistantPanel,
   setMapBoundary
-} from './ai-assistant';
+} from './ai-assistant-v2/screenshot-actions';
+import {AiAssistantPanel} from './ai-assistant-v2/index.tsx';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -159,6 +159,7 @@ const App = props => {
   const location = useLocation();
   const query = Object.fromEntries(searchParams.entries());
   const dispatch = useDispatch();
+  const reduxStore = useStore();
 
   // TODO find another way to check for existence of duckDb plugin
   const duckDbPluginEnabled = (getApplicationConfig().plugins || []).some(p => p.name === 'duckdb');
@@ -920,7 +921,7 @@ const App = props => {
                   <>
                     <StyledVerticalResizeHandle />
                     <Panel defaultSize={30} minSize={20}>
-                      <AiAssistantPanel />
+                      <AiAssistantPanel reduxStore={reduxStore} />
                     </Panel>
                   </>
                 )}

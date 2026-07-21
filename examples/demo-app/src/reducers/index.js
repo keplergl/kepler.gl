@@ -5,7 +5,7 @@ import {combineReducers} from 'redux';
 import {handleActions} from 'redux-actions';
 import Task, {withTask} from 'react-palm/tasks';
 
-import {aiAssistantReducer} from '../ai-assistant';
+import {aiAssistantReducer} from '../ai-assistant-v2/reducer';
 import {EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/processors';
 import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/reducers';

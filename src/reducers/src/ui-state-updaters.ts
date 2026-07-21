@@ -37,6 +37,7 @@ import {
   ExportImage,
   ExportVideo,
   MapControlItem,
+  MapControlMapLegend,
   MapControls,
   UiState
 } from '@kepler.gl/types';
@@ -418,7 +419,7 @@ export const toggleMapControlUpdater = (
       mapControls: {
         ...updatedState.mapControls,
         [dropdownToDeactivate]: {
-          ...updatedState.mapControls[dropdownToDeactivate],
+          ...(updatedState.mapControls[dropdownToDeactivate] as MapControlItem),
           active: false
         }
       }
@@ -430,8 +431,8 @@ export const toggleMapControlUpdater = (
     mapControls: {
       ...updatedState.mapControls,
       [panelId]: {
-        ...updatedState.mapControls[panelId],
-        active: !updatedState.mapControls[panelId].active,
+        ...(updatedState.mapControls[panelId] as MapControlItem),
+        active: !updatedState.mapControls[panelId]?.active,
         activeMapIndex: index
       }
     }
@@ -480,7 +481,7 @@ export const setMapControlSettingsUpdater = (
   state: UiState,
   {payload: {panelId, settings}}: UIStateActions.setMapControlSettingsUpdaterAction
 ): UiState => {
-  const mapControl = state.mapControls?.[panelId];
+  const mapControl = state.mapControls?.[panelId] as MapControlMapLegend | undefined;
   if (!mapControl) {
     return state;
   }
@@ -489,7 +490,10 @@ export const setMapControlSettingsUpdater = (
     ...state,
     mapControls: {
       ...state.mapControls,
-      [panelId]: {...mapControl, settings: {...mapControl.settings, ...settings}}
+      [panelId]: {
+        ...mapControl,
+        settings: {...mapControl.settings, ...settings}
+      } as MapControlMapLegend
     }
   };
 };
@@ -893,7 +897,7 @@ export const toggleSplitMapUpdater = (state: UiState): UiState => ({
     (acc, entry) => ({
       ...acc,
       [entry[0]]: {
-        ...entry[1],
+        ...(entry[1] as MapControlItem),
         activeMapIndex: 0
       }
     }),
