@@ -4,9 +4,12 @@
 import esbuild from 'esbuild';
 import { replace } from 'esbuild-plugin-replace';
 import process from 'node:process';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import WebsitePackage from '../package.json' with {type: 'json'};
+
+const require = createRequire(import.meta.url);
 
 const args = process.argv;
 const LIB_DIR = '../';
@@ -72,7 +75,28 @@ const config = {
     replace({
       __PACKAGE_VERSION__: WebsitePackage.version,
       include: /constants\/src\/default-settings\.ts/
-    })
+    }),
+    // Resolve @sqlrooms/ai-core internal component imports that bypass the
+    // package `exports` map (mirrors the demo-app esbuild config). The website
+    // bundles demo-app sources that deep-import these modules; esbuild honors
+    // the package `exports` field strictly and would otherwise fail to resolve.
+    {
+      name: 'resolve-sqlrooms-ai-core-internals',
+      setup(build) {
+        build.onResolve({filter: /^@sqlrooms\/ai-core\/components\//}, args => {
+          const subpath = args.path.replace('@sqlrooms/ai-core/', '');
+          // Resolve the package's public entry (always exported) to locate its
+          // install dir, then map to the internal dist file. Avoids relying on
+          // `./package.json` being exported, which it is not.
+          const entry = require.resolve('@sqlrooms/ai-core', {
+            paths: [args.resolveDir, process.cwd()]
+          });
+          // entry === <pkgRoot>/dist/index.js -> dist dir is its parent
+          const distDir = dirname(entry);
+          return {path: join(distDir, subpath) + '.js'};
+        });
+      }
+    }
   ]
 };
 
