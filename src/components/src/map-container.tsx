@@ -50,6 +50,7 @@ import {
   isStyleUsingMapboxTiles,
   isStyleUsingOpenStreetMapTiles,
   mapHasOpenStreetMapAttribution,
+  getBaseMapAttributions,
   getBaseMapLibrary,
   BaseMapLibraryConfig,
   transformRequest,
@@ -251,14 +252,76 @@ const DatasetAttributions = ({
 type AttributionProps = {
   showBaseMapLibLogo: boolean;
   showOsmBasemapAttribution: boolean;
+  basemapAttributions?: string[];
   datasetAttributions: DatasetAttribution[];
   baseMapLibraryConfig: BaseMapLibraryConfig;
   globeAttributions?: GlobeAttribution[];
 };
 
+const ATTRIBUTION_ANCHOR_REGEX = /<a\b[^>]*?href=["']([^"']*)["'][^>]*?>(.*?)<\/a>/gi;
+const ATTRIBUTION_SAFE_HREF_REGEX = /^(https?:|mailto:)/i;
+
+// Decode the handful of HTML entities that commonly appear in basemap
+// attribution strings, so they render as text rather than raw entities.
+function decodeAttributionEntities(text: string): string {
+  return text
+    .replace(/&copy;/gi, '©')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0*39;/gi, "'");
+}
+
+function attributionTextNode(raw: string, key: string): React.ReactNode {
+  // strip any residual markup, then decode entities
+  const text = decodeAttributionEntities(raw.replace(/<[^>]*>/g, ''));
+  return text ? <React.Fragment key={key}>{text}</React.Fragment> : null;
+}
+
+/**
+ * Parse a basemap attribution HTML string into safe React nodes. Only anchor
+ * tags with http(s)/mailto hrefs become links; everything else is rendered as
+ * plain text. This avoids dangerouslySetInnerHTML while preserving the links
+ * custom basemap styles (e.g. OpenFreeMap) declare in their attribution.
+ */
+export function renderBasemapAttribution(html: string, keyPrefix: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let index = 0;
+  // regex has global flag; reset before use
+  ATTRIBUTION_ANCHOR_REGEX.lastIndex = 0;
+  while ((match = ATTRIBUTION_ANCHOR_REGEX.exec(html)) !== null) {
+    const [full, href, label] = match;
+    if (match.index > lastIndex) {
+      nodes.push(attributionTextNode(html.slice(lastIndex, match.index), `${keyPrefix}-t${index}`));
+    }
+    const text = decodeAttributionEntities(label.replace(/<[^>]*>/g, ''));
+    if (ATTRIBUTION_SAFE_HREF_REGEX.test(href) && text) {
+      nodes.push(
+        <a key={`${keyPrefix}-a${index}`} href={href} target="_blank" rel="noopener noreferrer">
+          {text}
+        </a>
+      );
+    } else if (text) {
+      // drop unsafe hrefs (e.g. javascript:) but keep the link text
+      nodes.push(<React.Fragment key={`${keyPrefix}-a${index}`}>{text}</React.Fragment>);
+    }
+    lastIndex = match.index + full.length;
+    index++;
+  }
+  if (lastIndex < html.length) {
+    nodes.push(attributionTextNode(html.slice(lastIndex), `${keyPrefix}-t${index}`));
+  }
+  return nodes.filter(Boolean);
+}
+
 export const Attribution: React.FC<AttributionProps> = ({
   showBaseMapLibLogo = true,
   showOsmBasemapAttribution = false,
+  basemapAttributions = [],
   datasetAttributions,
   baseMapLibraryConfig,
   globeAttributions = []
@@ -266,6 +329,22 @@ export const Attribution: React.FC<AttributionProps> = ({
   const isPalm = hasMobileWidth(breakPointValues);
 
   const memoizedComponents = useMemo(() => {
+    // attributions declared by custom basemap styles, rendered as safe links
+    const basemapAttributionNodes = basemapAttributions.length ? (
+      <>
+        {basemapAttributions.map((attribution, idx) => (
+          <React.Fragment key={`basemap-attr-${idx}`}>
+            <span className="pipe-separator">|</span>
+            {renderBasemapAttribution(attribution, `basemap-attr-${idx}`)}
+          </React.Fragment>
+        ))}
+      </>
+    ) : null;
+
+    // fall back to the generic OSM link only when no explicit attribution was
+    // collected from the resolved sources (avoids double-rendering)
+    const showOsmFallback = showOsmBasemapAttribution && !basemapAttributions.length;
+
     const globeAttributionNodes = globeAttributions.length ? (
       <>
         {globeAttributions.map(attr => (
@@ -295,6 +374,7 @@ export const Attribution: React.FC<AttributionProps> = ({
               <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
                 © kepler.gl
               </a>
+              {basemapAttributionNodes}
               {globeAttributionNodes}
               {globeAttributions.length ? <span className="pipe-separator">|</span> : null}
               {globeAttributions.length && !isPalm ? (
@@ -319,7 +399,8 @@ export const Attribution: React.FC<AttributionProps> = ({
             <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
               © kepler.gl
             </a>
-            {showOsmBasemapAttribution ? (
+            {basemapAttributionNodes}
+            {showOsmFallback ? (
               <>
                 <span className="pipe-separator">|</span>
                 <a
@@ -341,6 +422,7 @@ export const Attribution: React.FC<AttributionProps> = ({
   }, [
     showBaseMapLibLogo,
     showOsmBasemapAttribution,
+    basemapAttributions,
     datasetAttributions,
     isPalm,
     baseMapLibraryConfig,
@@ -497,7 +579,9 @@ export default function MapContainerFactory(
 
     state = {
       showBaseMapAttribution: true,
-      showOsmAttribution: false
+      showOsmAttribution: false,
+      // attribution strings declared by custom basemap styles (e.g. OpenFreeMap)
+      basemapAttributions: [] as string[]
     };
 
     componentDidMount() {
@@ -525,7 +609,8 @@ export default function MapContainerFactory(
         if (this.props.mapStyle.styleType === NO_MAP_ID) {
           this.setState({
             showBaseMapAttribution: false,
-            showOsmAttribution: false
+            showOsmAttribution: false,
+            basemapAttributions: []
           });
         } else {
           this._updateAttribution();
@@ -737,16 +822,19 @@ export default function MapContainerFactory(
       }
       const usesMapbox = styleObj ? isStyleUsingMapboxTiles(styleObj) : false;
       const usesOsm = styleObj ? isStyleUsingOpenStreetMapTiles(styleObj) : false;
+      const basemapAttributions = getBaseMapAttributions(this._map);
 
-      if (usesMapbox || usesOsm) {
+      if (usesMapbox || usesOsm || basemapAttributions.length) {
         this.setState({
           showBaseMapAttribution: true,
-          showOsmAttribution: usesOsm
+          showOsmAttribution: usesOsm,
+          basemapAttributions
         });
       } else {
         this.setState({
           showBaseMapAttribution: false,
-          showOsmAttribution: false
+          showOsmAttribution: false,
+          basemapAttributions
         });
         this._checkOsmAttributionOnSourceLoad();
       }
@@ -767,11 +855,16 @@ export default function MapContainerFactory(
       const onSourceData = (e: any) => {
         if (!e?.isSourceLoaded) return;
         attempts++;
-        if (mapHasOpenStreetMapAttribution(this._map)) {
+        // TileJSON resolves asynchronously; re-collect attributions once a
+        // source is loaded so custom basemap attributions are not lost.
+        const basemapAttributions = getBaseMapAttributions(this._map);
+        const usesOsm = mapHasOpenStreetMapAttribution(this._map);
+        if (basemapAttributions.length || usesOsm) {
           this._removeOsmSourceDataListener();
           this.setState({
             showBaseMapAttribution: true,
-            showOsmAttribution: true
+            showOsmAttribution: usesOsm,
+            basemapAttributions
           });
         } else if (attempts >= MAX_ATTEMPTS) {
           this._removeOsmSourceDataListener();
@@ -1623,6 +1716,7 @@ export default function MapContainerFactory(
             <Attribution
               showBaseMapLibLogo={this.state.showBaseMapAttribution}
               showOsmBasemapAttribution={this.state.showOsmAttribution}
+              basemapAttributions={this.state.basemapAttributions}
               datasetAttributions={datasetAttributions}
               baseMapLibraryConfig={baseMapLibraryConfig}
               globeAttributions={getGlobeBasemapAttributions({
