@@ -59,6 +59,14 @@ import {editShader, insertBefore} from '@kepler.gl/deckgl-layers';
  *    the same data bounds, so that each vertex is projected onto the globe by
  *    deck.gl's `project_position_to_clipspace`. This is the same technique
  *    deck.gl's BitmapLayer uses to bend a flat image around the sphere.
+ *
+ * # 2D antimeridian / zoom-out fix
+ *
+ * `densityBounds` is also used in flat 2D (non-globe) mode: `_updateTextureRenderingBounds`
+ * frames the final render quad to the data extent, pinned to a single world
+ * copy, instead of deck.gl's screen-corner quad. This keeps the heatmap from
+ * disappearing or mirroring when zoomed out (multiple world copies) or panned
+ * across the antimeridian. See that method for details.
  */
 // Pack an array of [x,y,(z)] points into a flat Float32Array (matches deck.gl's
 // internal `packVertices`). Local copies so we don't depend on deck.gl's
@@ -687,7 +695,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   getSubLayerProps(sublayerProps?: any): any {
     const props = super.getSubLayerProps(sublayerProps);
     if (!this._isGlobeHeatmap()) {
-      props.wrapLongitude = false;
+      return {...props, wrapLongitude: false};
     }
     return props;
   }
