@@ -627,8 +627,7 @@ export default function MapContainerFactory(
     mapStyleBackgroundColorSelector = props => props.mapStyle.backgroundColor;
     globeModeSelector = props => Boolean(props.mapState?.globe?.enabled);
     globeBackgroundColorSelector = props => props.mapState?.globe?.config?.backgroundColor;
-    // Stars are enabled by default; only an explicit `false` disables them.
-    globeStarsSelector = props => props.mapState?.globe?.config?.stars !== false;
+    globeStarsSelector = props => Boolean(props.mapState?.globe?.config?.stars);
     styleSelector = createSelector(
       this.mapStyleTypeSelector,
       this.mapStyleBackgroundColorSelector,

@@ -1418,7 +1418,7 @@ export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
   // Color of the empty space rendered around the globe (deck.gl clear color).
   // Matches the previous hardcoded clear color [0.015, 0.035, 0.065] in 0-1 space.
   backgroundColor: [4, 9, 17],
-  stars: true
+  stars: false
 };
 
 export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
