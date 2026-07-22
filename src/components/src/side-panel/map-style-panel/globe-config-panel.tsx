@@ -342,6 +342,24 @@ function GlobeConfigPanelFactory(
               disabled={false}
             />
           </StyledConfigRow>
+
+          {/* Stars (rendered behind the globe in 3D space) */}
+          <StyledConfigRow>
+            <PanelLabelWrapper>
+              <PanelHeaderAction
+                className="layer-group__visibility-toggle"
+                id="globe-stars-toggle"
+                tooltip={globeConfig.stars ? 'tooltip.hide' : 'tooltip.show'}
+                onClick={() => onToggle('stars')}
+                IconComponent={globeConfig.stars ? EyeSeen : EyeUnseen}
+                active={globeConfig.stars}
+                flush
+              />
+              <LayerLabel $active={globeConfig.stars}>
+                <FormattedMessage id="mapLayers.stars" />
+              </LayerLabel>
+            </PanelLabelWrapper>
+          </StyledConfigRow>
         </PanelContent>
       </StyledGlobeConfigPanel>
     );

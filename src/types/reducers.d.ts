@@ -58,6 +58,7 @@ export type MapState = {
       surfaceColor: [number, number, number];
       surface: boolean;
       backgroundColor: [number, number, number];
+      stars: boolean;
     };
   };
   /** The current split map mode (single, dual, swipe) */

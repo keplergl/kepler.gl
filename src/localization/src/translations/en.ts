@@ -52,7 +52,8 @@ export default {
     adminBorders: 'Admin Borders',
     terminator: 'Day/Night',
     sunAzimuth: 'Sun Azimuth',
-    surface: 'Globe Surface'
+    surface: 'Globe Surface',
+    stars: 'Stars'
   },
   panel: {
     text: {

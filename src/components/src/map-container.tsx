@@ -89,6 +89,7 @@ import {
   getGlobeClearColor,
   getGlobeBasemapAttributions,
   resolveGlobeBasemapProvider,
+  getStarsBackgroundImage,
   KeplerGlobeView
 } from '@kepler.gl/deckgl-layers';
 import type {GlobeAttribution} from '@kepler.gl/deckgl-layers';
@@ -626,12 +627,14 @@ export default function MapContainerFactory(
     mapStyleBackgroundColorSelector = props => props.mapStyle.backgroundColor;
     globeModeSelector = props => Boolean(props.mapState?.globe?.enabled);
     globeBackgroundColorSelector = props => props.mapState?.globe?.config?.backgroundColor;
+    globeStarsSelector = props => Boolean(props.mapState?.globe?.config?.stars);
     styleSelector = createSelector(
       this.mapStyleTypeSelector,
       this.mapStyleBackgroundColorSelector,
       this.globeModeSelector,
       this.globeBackgroundColorSelector,
-      (styleType, backgroundColor, isGlobeMode, globeBackgroundColor) => ({
+      this.globeStarsSelector,
+      (styleType, backgroundColor, isGlobeMode, globeBackgroundColor, globeStars) => ({
         ...MAP_STYLE.container,
         ...(styleType === NO_MAP_ID ? {backgroundColor: rgbToHex(backgroundColor)} : {}),
         // In globe mode the deck.gl canvas is transparent (the globe View uses
@@ -643,7 +646,14 @@ export default function MapContainerFactory(
               backgroundColor: rgbToHex(
                 (globeBackgroundColor as [number, number, number]) ||
                   (getGlobeClearColor().slice(0, 3) as [number, number, number])
-              )
+              ),
+              // Optionally overlay a tileable star-field pattern on the background.
+              ...(globeStars
+                ? {
+                    backgroundImage: `url(${getStarsBackgroundImage()})`,
+                    backgroundRepeat: 'repeat'
+                  }
+                : {})
             }
           : {})
       })

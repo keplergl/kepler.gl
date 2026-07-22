@@ -1392,6 +1392,7 @@ export type GlobeConfig = {
   surfaceColor: [number, number, number];
   surface: boolean;
   backgroundColor: [number, number, number];
+  stars: boolean;
 };
 
 export type Globe = {
@@ -1416,7 +1417,8 @@ export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
   surfaceColor: [9, 16, 29],
   // Color of the empty space rendered around the globe (deck.gl clear color).
   // Matches the previous hardcoded clear color [0.015, 0.035, 0.065] in 0-1 space.
-  backgroundColor: [4, 9, 17]
+  backgroundColor: [4, 9, 17],
+  stars: true
 };
 
 export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
