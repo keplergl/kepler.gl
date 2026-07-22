@@ -24,6 +24,18 @@ jobs:
       - name: Install Dependencies
         run: yarn install && yarn bootstrap
 
+      # Install dependencies for the standalone example apps and website so
+      # that `yarn typescript:examples` (run by `yarn lint`) can resolve their
+      # third-party modules. These projects are NOT yarn workspaces of the
+      # root package and therefore need their own `yarn install`.
+      - name: Install Example & Website Dependencies
+        run: |
+          yarn install:example
+          cd website && yarn && cd ..
+          for d in examples/custom-reducer examples/custom-theme examples/open-modal examples/replace-component examples/node-app; do
+            (cd "$d" && yarn)
+          done
+
       # - name: Install Puppeteer
       #   run: yarn dlx "puppeteer@23.1.0"
 
