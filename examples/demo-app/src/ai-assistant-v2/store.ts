@@ -8,18 +8,15 @@ import {
   createDefaultAiTools,
   createDefaultAiToolRenderers,
   createDefaultAiSettingsConfig,
-  createDefaultAiConfig,
+  createDefaultAiConfig
 } from '@sqlrooms/ai';
 import {
   createRoomStore,
   persistSliceConfigs,
   BaseRoomStoreState,
-  createBaseRoomSlice,
+  createBaseRoomSlice
 } from '@sqlrooms/room-store';
-import {
-  createDuckDbSlice,
-  DuckDbSliceState,
-} from '@sqlrooms/duckdb';
+import {createDuckDbSlice, DuckDbSliceState} from '@sqlrooms/duckdb';
 import {z} from 'zod';
 import type {ToolRendererRegistry} from '@sqlrooms/ai';
 import {AI_SETTINGS} from './config';
@@ -71,7 +68,7 @@ function getKeplerContext(): KeplerContext {
       const apiKey = typeof window !== 'undefined' ? localStorage.getItem('mapbox-token') : null;
       return apiKey || undefined;
     },
-    dispatch: (action: any) => reduxStore?.dispatch(action),
+    dispatch: (action: any) => reduxStore?.dispatch(action)
   };
 }
 
@@ -95,14 +92,14 @@ export const {roomStore, useRoomStore} = createRoomStore<RoomState>(
           ...state,
           aiSettings: AiSettingsSliceConfig.parse({
             defaults,
-            persisted: state.aiSettings,
-          }),
+            persisted: state.aiSettings
+          })
         } as unknown as RoomState;
       },
       sliceConfigSchemas: {
         ai: AiSliceConfig,
-        aiSettings: AiSettingsSliceConfig,
-      },
+        aiSettings: AiSettingsSliceConfig
+      }
     },
     (set, get, store) => ({
       ...createBaseRoomSlice()(set, get, store),
@@ -120,14 +117,14 @@ export const {roomStore, useRoomStore} = createRoomStore<RoomState>(
 
         toolRenderers: {
           ...createDefaultAiToolRenderers(),
-          ...getEchartsToolRenderers(),
+          ...getEchartsToolRenderers()
         } as ToolRendererRegistry,
 
         tools: {
           ...createDefaultAiTools(store, {query: {}, commands: false, tables: false}),
-          ...getAllTools(getKeplerContext()),
-        },
-      })(set, get, store),
-    }),
-  ),
+          ...getAllTools(getKeplerContext())
+        } as any
+      })(set, get, store)
+    })
+  )
 );

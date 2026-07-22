@@ -24,7 +24,7 @@
     "@kepler.gl/cloud-providers": "^3.2.0",
     "@kepler.gl/components": "^3.2.0",
     "@kepler.gl/constants": "^3.2.0",
-    "@kepler.gl/duckdb": "^3.2.0",
+    "@kepler.gl/duckdb": "^3.2.6",
     "@kepler.gl/layers": "^3.2.0",
     "@kepler.gl/localization": "^3.2.0",
     "@kepler.gl/processors": "^3.2.0",
@@ -93,7 +93,8 @@
     "@luma.gl/core": "8.5.21",
     "@luma.gl/webgl": "8.5.21",
     "@deck.gl/core": "8.9.27",
-    "@deck.gl/extensions": "8.9.27"
+    "@deck.gl/extensions": "8.9.27",
+    "styled-components": "6.4.3"
   },
   "engines": {
     "node": ">=20"
@@ -106,6 +107,8 @@
   "devDependencies": {
     "@dotenv-run/esbuild": "^1.5.0",
     "@tailwindcss/cli": "^4.3.3",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
     "esbuild-plugin-replace": "^1.4.0"
   }
 }

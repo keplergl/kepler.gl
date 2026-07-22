@@ -1,5 +1,4 @@
-
-import {tool} from 'ai';
+import {tool} from '../ai-tool-shim';
 import {z} from 'zod';
 import {KeplerContext} from '../../types';
 import {loadTableToKepler} from '../duckdb-cache';
@@ -9,7 +8,9 @@ export function getSaveDataTool(ctx: KeplerContext) {
     description:
       'Save a DuckDB table to kepler.gl as a map dataset. Works with any table including those from buffer, zipcode, county, state, isochrone, routing, query results, etc.',
     inputSchema: z.object({
-      datasetNames: z.array(z.string()).describe('The names of the DuckDB tables to load into kepler.gl.')
+      datasetNames: z
+        .array(z.string())
+        .describe('The names of the DuckDB tables to load into kepler.gl.')
     }),
     execute: async ({datasetNames}, {abortSignal}) => {
       try {

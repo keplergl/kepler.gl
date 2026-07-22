@@ -1,4 +1,3 @@
-
 import {KeplerContext} from '../types';
 import {getEchartsTools} from './echarts-tools';
 import {getGeoTools} from './geo-tools';

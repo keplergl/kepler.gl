@@ -8,7 +8,7 @@ import {
   GridComponent,
   TooltipComponent,
   BrushComponent,
-  ToolboxComponent,
+  ToolboxComponent
 } from 'echarts/components';
 import {CanvasRenderer} from 'echarts/renderers';
 
@@ -21,7 +21,7 @@ echartsUse([
   TooltipComponent,
   BrushComponent,
   ToolboxComponent,
-  CanvasRenderer,
+  CanvasRenderer
 ]);
 
 echartsRegisterTheme('dark', ECHARTS_DARK_THEME);
@@ -54,7 +54,7 @@ export function HistogramComponent({
   variableName,
   onSelected,
   theme,
-  height = 260,
+  height = 260
 }: HistogramOutputData): React.JSX.Element | null {
   const option = useMemo(() => {
     try {
@@ -84,9 +84,7 @@ export function HistogramComponent({
         }
 
         const filteredIndex =
-          brushed.length > 0
-            ? brushed.map((idx: number) => barDataIndexes[idx]).flat()
-            : [];
+          brushed.length > 0 ? brushed.map((idx: number) => barDataIndexes[idx]).flat() : [];
 
         if (brushed.length === 0) {
           const chart = eChartsRef.current;
@@ -102,7 +100,7 @@ export function HistogramComponent({
         }
 
         onSelected?.(datasetName ?? '', filteredIndex);
-      },
+      }
     };
   }, [datasetName, onSelected, histogramData, barDataIndexes]);
 

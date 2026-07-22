@@ -1,5 +1,4 @@
-
-import {tool} from 'ai';
+import {tool} from './ai-tool-shim';
 import {z} from 'zod';
 import {Feature} from 'geojson';
 import {createWeights, CreateWeightsProps, WeightsMeta} from '@geoda/core';
@@ -21,11 +20,7 @@ import {
   spatialLag,
   LocalMoranResult
 } from '@geoda/lisa';
-import {
-  linearRegression,
-  spatialLagRegression,
-  spatialError
-} from '@geoda/regression';
+import {linearRegression, spatialLagRegression, spatialError} from '@geoda/regression';
 import {SpatialGeometry} from '@geoda/core';
 import {KeplerContext} from '../types';
 import {getValuesFromDataset, getGeometriesFromDataset} from './utils';
@@ -42,10 +37,7 @@ type WeightsCache = Record<
 
 const globalWeightsCache: WeightsCache = {};
 
-function getWeightsId(
-  datasetId: string,
-  weightsProps: CreateWeightsProps
-): string {
+function getWeightsId(datasetId: string, weightsProps: CreateWeightsProps): string {
   const parts = ['w', datasetId, weightsProps.weightsType];
 
   if (weightsProps.weightsType === 'queen' || weightsProps.weightsType === 'rook') {
@@ -277,15 +269,14 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
 
         let globalMoranI: number | null = null;
         if (method === 'localMoran') {
-          globalMoranI =
-            lm.lisaValues.reduce((a, b) => a + b, 0) / lm.lisaValues.length;
+          globalMoranI = lm.lisaValues.reduce((a, b) => a + b, 0) / lm.lisaValues.length;
         }
 
         const clusterColorAndLabels = lm.labels.map((label, i) => ({
           value: i,
           label,
           color: lm.colors[i],
-          numberOfObservations: lm.clusters.filter((c) => c === i).length
+          numberOfObservations: lm.clusters.filter(c => c === i).length
         }));
 
         return {
@@ -296,7 +287,9 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
           significanceThreshold,
           clusterColorAndLabels,
           totalObservations: values.length,
-          details: `LISA (${method}) analysis completed for ${variableName} on ${datasetName}. ${clusterColorAndLabels.map(c => `${c.label}: ${c.numberOfObservations}`).join(', ')}`
+          details: `LISA (${method}) analysis completed for ${variableName} on ${datasetName}. ${clusterColorAndLabels
+            .map(c => `${c.label}: ${c.numberOfObservations}`)
+            .join(', ')}`
         };
       } catch (error) {
         return {
@@ -411,10 +404,7 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
             breaks = await percentileBreaks(values);
             break;
           case 'box':
-            breaks =
-              hinge === 3.0
-                ? await hinge30Breaks(values)
-                : await hinge15Breaks(values);
+            breaks = hinge === 3.0 ? await hinge30Breaks(values) : await hinge15Breaks(values);
             break;
           case 'standard deviation':
             breaks = await standardDeviationBreaks(values);
@@ -468,7 +458,7 @@ Note: Run spatial diagnostics with OLS first to determine if a spatial regressio
 
         const yValues = await getValues(datasetName, dependentVariable);
         const xValues = await Promise.all(
-          independentVariables.map((varName) => getValues(datasetName, varName))
+          independentVariables.map(varName => getValues(datasetName, varName))
         );
 
         let weights: number[][] | undefined;
@@ -507,7 +497,9 @@ Note: Run spatial diagnostics with OLS first to determine if a spatial regressio
           dependentVariable,
           independentVariables,
           result,
-          details: `${modelType} regression completed for ${dependentVariable} ~ ${independentVariables.join(' + ')} on ${datasetName}.`
+          details: `${modelType} regression completed for ${dependentVariable} ~ ${independentVariables.join(
+            ' + '
+          )} on ${datasetName}.`
         };
       } catch (error) {
         return {

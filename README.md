@@ -382,7 +382,7 @@ return (
 Everyone wants the flexibility to render custom kepler.gl components. Kepler.gl has a dependency injection system that allow you to inject
 components to KeplerGl replacing existing ones. All you need to do is to create a component factory for the one you want to replace, import the original component factory
 and call `injectComponents` at the root component of your app where `KeplerGl` is mounted.
-Take a look at `examples/demo-app/src/app.js` and see how it renders a custom side panel header in kepler.gl
+Take a look at `examples/demo-app/src/app.tsx` and see how it renders a custom side panel header in kepler.gl
 
 ```javascript
 import {injectComponents, PanelHeaderFactory} from '@kepler.gl/components';

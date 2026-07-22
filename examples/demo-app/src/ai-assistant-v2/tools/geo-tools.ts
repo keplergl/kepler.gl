@@ -1,5 +1,4 @@
-
-import {tool} from 'ai';
+import {tool} from './ai-tool-shim';
 import {z} from 'zod';
 import {FeatureCollection, Feature} from 'geojson';
 import {
@@ -18,7 +17,19 @@ import {
 import {bbox} from '@turf/bbox';
 import {polygon} from '@turf/helpers';
 import {KeplerContext} from '../types';
-import {getValuesFromDataset, getGeometriesFromDataset, getConnector, ensureSpatialExtension, FETCH_TIMEOUT_MS, combineSignals, mapboxRateLimiter, nominatimRateLimiter, overpassRateLimiter, githubRateLimiter, datasetNameToTableName} from './utils';
+import {
+  getValuesFromDataset,
+  getGeometriesFromDataset,
+  getConnector,
+  ensureSpatialExtension,
+  FETCH_TIMEOUT_MS,
+  combineSignals,
+  mapboxRateLimiter,
+  nominatimRateLimiter,
+  overpassRateLimiter,
+  githubRateLimiter,
+  datasetNameToTableName
+} from './utils';
 import {saveToDuckdb, saveGeojsonToDuckdb, getTableAsGeoJSON} from './duckdb-cache';
 import {getRoutingTool} from './routing';
 
@@ -177,11 +188,18 @@ export function getGeoTools(ctx: KeplerContext) {
   });
 
   const spatialQueryTool = tool({
-    description: 'Run a DuckDB spatial SQL query on one or more datasets. Use ST_* functions for spatial operations (ST_Intersects, ST_Within, ST_Buffer, ST_Centroid, ST_Union_Agg, ST_Length, ST_Area, ST_Perimeter, ST_AsGeoJSON, ST_GeomFromGeoJSON, etc). The geometry column stores GeoJSON strings — wrap with ST_GeomFromGeoJSON(geometry) for spatial ops. Reference tables using __tbl0__, __tbl1__, ... placeholders (mapped to datasetNames in order).',
+    description:
+      'Run a DuckDB spatial SQL query on one or more datasets. Use ST_* functions for spatial operations (ST_Intersects, ST_Within, ST_Buffer, ST_Centroid, ST_Union_Agg, ST_Length, ST_Area, ST_Perimeter, ST_AsGeoJSON, ST_GeomFromGeoJSON, etc). The geometry column stores GeoJSON strings — wrap with ST_GeomFromGeoJSON(geometry) for spatial ops. Reference tables using __tbl0__, __tbl1__, ... placeholders (mapped to datasetNames in order).',
     inputSchema: z.object({
-      datasetNames: z.array(z.string()).describe('Dataset names to load into DuckDB before querying (order matches __tbl0__, __tbl1__, ...)'),
+      datasetNames: z
+        .array(z.string())
+        .describe(
+          'Dataset names to load into DuckDB before querying (order matches __tbl0__, __tbl1__, ...)'
+        ),
       outputDatasetName: z.string().describe('Name for the output GeoJSON dataset'),
-      sqlQuery: z.string().describe('DuckDB spatial SQL query using __tbl0__, __tbl1__, ... as table placeholders'),
+      sqlQuery: z
+        .string()
+        .describe('DuckDB spatial SQL query using __tbl0__, __tbl1__, ... as table placeholders'),
       reasoning: z.string().describe('Explanation of what this spatial query does')
     }),
     execute: async ({datasetNames, outputDatasetName, sqlQuery, reasoning}, {abortSignal}) => {
@@ -203,12 +221,13 @@ export function getGeoTools(ctx: KeplerContext) {
         });
 
         const result = await db.query(resolvedSql);
-        const rows = result.toArray().map((row: any) =>
-          typeof row.toJSON === 'function' ? row.toJSON() : row
-        );
+        const rows = result
+          .toArray()
+          .map((row: any) => (typeof row.toJSON === 'function' ? row.toJSON() : row));
 
         const features = rows.map((row: any) => {
-          const geometry = typeof row.geometry === 'string' ? JSON.parse(row.geometry) : row.geometry;
+          const geometry =
+            typeof row.geometry === 'string' ? JSON.parse(row.geometry) : row.geometry;
           const props = {...row};
           delete props.geometry;
           return {type: 'Feature' as const, geometry, properties: props};
@@ -228,7 +247,8 @@ export function getGeoTools(ctx: KeplerContext) {
   });
 
   const gridTool = tool({
-    description: 'Create a rectangular grid of polygons that divides a given area into rows and columns.',
+    description:
+      'Create a rectangular grid of polygons that divides a given area into rows and columns.',
     inputSchema: z.object({
       datasetName: z.string().describe('Dataset whose bounding box defines the grid extent'),
       rows: z.number().positive().describe('Number of rows in the grid'),
@@ -239,7 +259,8 @@ export function getGeoTools(ctx: KeplerContext) {
       try {
         abortSignal?.throwIfAborted();
         const geometries = await getGeometries(datasetName);
-        if (!geometries || geometries.length === 0) throw new Error(`Dataset ${datasetName} is empty or not found`);
+        if (!geometries || geometries.length === 0)
+          throw new Error(`Dataset ${datasetName} is empty or not found`);
 
         const featureCollection: FeatureCollection = {
           type: 'FeatureCollection',
@@ -261,9 +282,20 @@ export function getGeoTools(ctx: KeplerContext) {
             const y1 = minY + row * cellHeight;
             const x2 = x1 + cellWidth;
             const y2 = y1 + cellHeight;
-            gridFeatures.push(polygon([[
-              [x1, y1], [x2, y1], [x2, y2], [x1, y2], [x1, y1]
-            ]], {row, column: col, gridId: `${row}_${col}`}));
+            gridFeatures.push(
+              polygon(
+                [
+                  [
+                    [x1, y1],
+                    [x2, y1],
+                    [x2, y2],
+                    [x1, y2],
+                    [x1, y1]
+                  ]
+                ],
+                {row, column: col, gridId: `${row}_${col}`}
+              )
+            );
           }
         }
 
@@ -290,7 +322,8 @@ export function getGeoTools(ctx: KeplerContext) {
       try {
         abortSignal?.throwIfAborted();
         const geometries = await getGeometries(datasetName);
-        if (!geometries || geometries.length === 0) throw new Error(`Dataset ${datasetName} is empty or not found`);
+        if (!geometries || geometries.length === 0)
+          throw new Error(`Dataset ${datasetName} is empty or not found`);
 
         const thiessenFeatures = await getThiessenPolygons({geoms: geometries});
         const geojson: FeatureCollection = {
@@ -319,7 +352,8 @@ export function getGeoTools(ctx: KeplerContext) {
       try {
         abortSignal?.throwIfAborted();
         const geometries = await getGeometries(datasetName);
-        if (!geometries || geometries.length === 0) throw new Error(`Dataset ${datasetName} is empty or not found`);
+        if (!geometries || geometries.length === 0)
+          throw new Error(`Dataset ${datasetName} is empty or not found`);
 
         const mstFeatures = await getMinimumSpanningTree({geoms: geometries});
         const geojson: FeatureCollection = {
@@ -339,18 +373,26 @@ export function getGeoTools(ctx: KeplerContext) {
   });
 
   const cartogramTool = tool({
-    description: 'Create a Dorling cartogram from polygon geometries using a weight variable (GeoDa).',
+    description:
+      'Create a Dorling cartogram from polygon geometries using a weight variable (GeoDa).',
     inputSchema: z.object({
       datasetName: z.string(),
       weightVariable: z.string().describe('Property name to use as weight'),
-      iterations: z.number().optional().describe('Number of iterations for cartogram optimization (default 100)'),
+      iterations: z
+        .number()
+        .optional()
+        .describe('Number of iterations for cartogram optimization (default 100)'),
       outputDatasetName: z.string()
     }),
-    execute: async ({datasetName, weightVariable, iterations = 100, outputDatasetName}, {abortSignal}) => {
+    execute: async (
+      {datasetName, weightVariable, iterations = 100, outputDatasetName},
+      {abortSignal}
+    ) => {
       try {
         abortSignal?.throwIfAborted();
         const geometries = await getGeometries(datasetName);
-        if (!geometries || geometries.length === 0) throw new Error(`Dataset ${datasetName} is empty or not found`);
+        if (!geometries || geometries.length === 0)
+          throw new Error(`Dataset ${datasetName} is empty or not found`);
 
         const values = await getValues(datasetName, weightVariable);
         const cartogramFeatures: Feature[] = await getCartogram(geometries, values, iterations);
@@ -380,7 +422,9 @@ export function getGeoTools(ctx: KeplerContext) {
   const getUsStateTool = tool({
     description: 'Fetch US state GeoJSON boundaries from GitHub (glynnbird/usstatesgeojson).',
     inputSchema: z.object({
-      stateNames: z.array(z.string().describe('US state name in lowercase (e.g. "california", "north dakota")')),
+      stateNames: z.array(
+        z.string().describe('US state name in lowercase (e.g. "california", "north dakota")')
+      ),
       datasetName: z.string().describe('Name for the output dataset')
     }),
     execute: async ({stateNames, datasetName}, {abortSignal}) => {
@@ -393,7 +437,8 @@ export function getGeoTools(ctx: KeplerContext) {
             `https://raw.githubusercontent.com/glynnbird/usstatesgeojson/master/${stateName.toLowerCase()}.geojson`,
             {signal: abortSignal}
           );
-          if (!response.ok) throw new Error(`Failed to fetch state ${stateName}: ${response.statusText}`);
+          if (!response.ok)
+            throw new Error(`Failed to fetch state ${stateName}: ${response.statusText}`);
           const geojson = await response.json();
           if (geojson) features.push(geojson);
         }
@@ -411,9 +456,12 @@ export function getGeoTools(ctx: KeplerContext) {
   });
 
   const getUsCountyTool = tool({
-    description: 'Fetch US county GeoJSON boundaries by FIPS codes (from hyperknot/country-levels-export).',
+    description:
+      'Fetch US county GeoJSON boundaries by FIPS codes (from hyperknot/country-levels-export).',
     inputSchema: z.object({
-      fipsCodes: z.array(z.string().describe('5-digit FIPS code (e.g. "01001" for Autauga County, Alabama)')),
+      fipsCodes: z.array(
+        z.string().describe('5-digit FIPS code (e.g. "01001" for Autauga County, Alabama)')
+      ),
       datasetName: z.string().describe('Name for the output dataset')
     }),
     execute: async ({fipsCodes, datasetName}, {abortSignal}) => {
@@ -427,7 +475,8 @@ export function getGeoTools(ctx: KeplerContext) {
             `https://raw.githubusercontent.com/hyperknot/country-levels-export/master/geojson/medium/fips/${stateCode}/${fips}.geojson`,
             {signal: abortSignal}
           );
-          if (!response.ok) throw new Error(`Failed to fetch county ${fips}: ${response.statusText}`);
+          if (!response.ok)
+            throw new Error(`Failed to fetch county ${fips}: ${response.statusText}`);
           const geojson = await response.json();
           if (geojson) features.push(geojson);
         }
@@ -468,10 +517,22 @@ export function getGeoTools(ctx: KeplerContext) {
           }
           if (!stateCode) {
             const stateMap: Record<string, string> = {
-              '006': 'PR', '007': 'PR', '008': 'PR', '009': 'PR',
-              '010': 'AL', '011': 'AL', '012': 'AL', '013': 'AL',
-              '100': 'NY', '101': 'NY', '102': 'NY', '103': 'NY',
-              '900': 'CA', '901': 'CA', '902': 'CA', '903': 'CA'
+              '006': 'PR',
+              '007': 'PR',
+              '008': 'PR',
+              '009': 'PR',
+              '010': 'AL',
+              '011': 'AL',
+              '012': 'AL',
+              '013': 'AL',
+              '100': 'NY',
+              '101': 'NY',
+              '102': 'NY',
+              '103': 'NY',
+              '900': 'CA',
+              '901': 'CA',
+              '902': 'CA',
+              '903': 'CA'
             };
             stateCode = stateMap[prefix] || 'unknown';
           }
@@ -480,7 +541,8 @@ export function getGeoTools(ctx: KeplerContext) {
             `https://raw.githubusercontent.com/greencoder/us-zipcode-to-geojson/refs/heads/master/data/${stateCode}/${zipcode}.geojson`,
             {signal: abortSignal}
           );
-          if (!response.ok) throw new Error(`Failed to fetch zipcode ${zipcode}: ${response.statusText}`);
+          if (!response.ok)
+            throw new Error(`Failed to fetch zipcode ${zipcode}: ${response.statusText}`);
           const geojson = await response.json();
           if (geojson && 'features' in geojson) {
             geojson.features.shift();
@@ -503,11 +565,16 @@ export function getGeoTools(ctx: KeplerContext) {
   const roadsTool = tool({
     description: 'Fetch road network data from OpenStreetMap Overpass API for a given area.',
     inputSchema: z.object({
-      mapBounds: z.object({
-        northwest: z.object({longitude: z.number(), latitude: z.number()}),
-        southeast: z.object({longitude: z.number(), latitude: z.number()})
-      }).optional(),
-      datasetName: z.string().optional().describe('Name of an existing dataset whose boundary will be used to fetch roads'),
+      mapBounds: z
+        .object({
+          northwest: z.object({longitude: z.number(), latitude: z.number()}),
+          southeast: z.object({longitude: z.number(), latitude: z.number()})
+        })
+        .optional(),
+      datasetName: z
+        .string()
+        .optional()
+        .describe('Name of an existing dataset whose boundary will be used to fetch roads'),
       outputDatasetName: z.string().describe('Name for the output dataset')
     }),
     execute: async ({mapBounds, datasetName, outputDatasetName}, {abortSignal}) => {
@@ -521,7 +588,10 @@ export function getGeoTools(ctx: KeplerContext) {
         if (datasetName) {
           const geometries = await getGeometries(datasetName);
           if (geometries && geometries.length > 0) {
-            let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
+            let minLat = 90,
+              maxLat = -90,
+              minLon = 180,
+              maxLon = -180;
             for (const feat of geometries as any[]) {
               const geom = feat.geometry || feat;
               const coords = extractAllCoordinates(geom);
@@ -608,7 +678,13 @@ export function getGeoTools(ctx: KeplerContext) {
     inputSchema: z.object({
       datasetName: z.string(),
       variableName: z.string(),
-      method: z.enum(['deviationFromMean', 'standardizeMAD', 'rangeAdjust', 'rangeStandardize', 'standardize']),
+      method: z.enum([
+        'deviationFromMean',
+        'standardizeMAD',
+        'rangeAdjust',
+        'rangeStandardize',
+        'standardize'
+      ]),
       outputDatasetName: z.string()
     }),
     execute: async ({datasetName, variableName, method, outputDatasetName}, {abortSignal}) => {
@@ -661,15 +737,22 @@ export function getGeoTools(ctx: KeplerContext) {
   });
 
   const rateTool = tool({
-    description: 'Calculate rate from an event variable and a base variable using excess risk or empirical Bayes smoothing.',
+    description:
+      'Calculate rate from an event variable and a base variable using excess risk or empirical Bayes smoothing.',
     inputSchema: z.object({
       datasetName: z.string(),
       eventVariable: z.string(),
       baseVariable: z.string(),
-      method: z.enum(['excessRisk', 'empiricalBayes']).optional().describe('Rate method (default: excessRisk)'),
+      method: z
+        .enum(['excessRisk', 'empiricalBayes'])
+        .optional()
+        .describe('Rate method (default: excessRisk)'),
       outputDatasetName: z.string()
     }),
-    execute: async ({datasetName, eventVariable, baseVariable, method = 'excessRisk', outputDatasetName}, {abortSignal}) => {
+    execute: async (
+      {datasetName, eventVariable, baseVariable, method = 'excessRisk', outputDatasetName},
+      {abortSignal}
+    ) => {
       try {
         abortSignal?.throwIfAborted();
         const eventValues = await getValues(datasetName, eventVariable);

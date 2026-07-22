@@ -1,4 +1,3 @@
-
 import interpolate from 'color-interpolate';
 import {Feature} from 'geojson';
 import {Layer, VectorTileLayer} from '@kepler.gl/layers';

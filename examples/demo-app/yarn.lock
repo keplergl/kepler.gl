@@ -771,15 +771,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/is-prop-valid@npm:1.2.1":
-  version: 1.2.1
-  resolution: "@emotion/is-prop-valid@npm:1.2.1"
-  dependencies:
-    "@emotion/memoize": "npm:^0.8.1"
-  checksum: 10c0/7c2aabdf0ca9986ca25abc9dae711348308cf18d418d64ffa4c8ffd2114806c47f2e06ba8ee769f38ec67d65bd59ec73f34d94023e81baa1c43510ac86ccd5e6
-  languageName: node
-  linkType: hard
-
 "@emotion/is-prop-valid@npm:1.4.0":
   version: 1.4.0
   resolution: "@emotion/is-prop-valid@npm:1.4.0"
@@ -798,24 +789,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/memoize@npm:^0.8.1":
-  version: 0.8.1
-  resolution: "@emotion/memoize@npm:0.8.1"
-  checksum: 10c0/dffed372fc3b9fa2ba411e76af22b6bb686fb0cb07694fdfaa6dd2baeb0d5e4968c1a7caa472bfcf06a5997d5e7c7d16b90e993f9a6ffae79a2c3dbdc76dfe78
-  languageName: node
-  linkType: hard
-
 "@emotion/memoize@npm:^0.9.0":
   version: 0.9.0
   resolution: "@emotion/memoize@npm:0.9.0"
   checksum: 10c0/13f474a9201c7f88b543e6ea42f55c04fb2fdc05e6c5a3108aced2f7e7aa7eda7794c56bba02985a46d8aaa914fcdde238727a98341a96e2aec750d372dadd15
-  languageName: node
-  linkType: hard
-
-"@emotion/unitless@npm:0.8.0":
-  version: 0.8.0
-  resolution: "@emotion/unitless@npm:0.8.0"
-  checksum: 10c0/1f2cfb7c0ccb83c20b1c6d8d92a74a93da4b2a440f9a0d49ded08647faf299065a2ffde17e1335920fa10397b85f8635bbfe14f3cd29222a59ea81d978478072
   languageName: node
   linkType: hard
 
@@ -1690,22 +1667,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kepler.gl/duckdb@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "@kepler.gl/duckdb@npm:3.2.0"
+"@kepler.gl/duckdb@npm:^3.2.6":
+  version: 3.2.6
+  resolution: "@kepler.gl/duckdb@npm:3.2.6"
   dependencies:
     "@duckdb/duckdb-wasm": "npm:^1.28.0"
-    "@kepler.gl/common-utils": "npm:3.2.0"
-    "@kepler.gl/constants": "npm:3.2.0"
-    "@kepler.gl/processors": "npm:3.2.0"
-    "@kepler.gl/table": "npm:3.2.0"
-    "@kepler.gl/types": "npm:3.2.0"
+    "@kepler.gl/common-utils": "npm:3.2.6"
+    "@kepler.gl/constants": "npm:3.2.6"
+    "@kepler.gl/processors": "npm:3.2.6"
+    "@kepler.gl/table": "npm:3.2.6"
+    "@kepler.gl/types": "npm:3.2.6"
+    "@kepler.gl/utils": "npm:3.2.6"
     "@monaco-editor/react": "npm:^4.6.0"
     "@radix-ui/react-collapsible": "npm:^1.1.0"
     apache-arrow: "npm:>=15.0.0"
     monaco-editor: "npm:^0.52.0"
     react-resizable-panels: "npm:^2.1.7"
-  checksum: 10c0/3cf7a69b9249ad721f7dc1aaafd17893579786a3ce6de499760d92ca0e9c4ea6b78919e898a1acbcbc79b78a82eb0df72593462364267660964a198fbd56b945
+  checksum: 10c0/36bf0e3f91bf65307523421cca6dfc5f1c1662633478b900554ab9665ec949f4a8dda87c32c41a95e8e45eae946b5e5efafe788d43be65656a4dac00ba343348
   languageName: node
   linkType: hard
 
@@ -1786,7 +1764,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kepler.gl/layers@npm:^3.2.0":
+"@kepler.gl/layers@npm:3.2.6, @kepler.gl/layers@npm:^3.2.0":
   version: 3.2.6
   resolution: "@kepler.gl/layers@npm:3.2.6"
   dependencies:
@@ -1898,6 +1876,36 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@kepler.gl/processors@npm:3.2.6":
+  version: 3.2.6
+  resolution: "@kepler.gl/processors@npm:3.2.6"
+  dependencies:
+    "@danmarshall/deckgl-typings": "npm:4.9.22"
+    "@kepler.gl/common-utils": "npm:3.2.6"
+    "@kepler.gl/constants": "npm:3.2.6"
+    "@kepler.gl/schemas": "npm:3.2.6"
+    "@kepler.gl/table": "npm:3.2.6"
+    "@kepler.gl/types": "npm:3.2.6"
+    "@kepler.gl/utils": "npm:3.2.6"
+    "@loaders.gl/arrow": "npm:^4.3.2"
+    "@loaders.gl/core": "npm:^4.3.2"
+    "@loaders.gl/csv": "npm:^4.3.2"
+    "@loaders.gl/gis": "npm:^4.3.2"
+    "@loaders.gl/json": "npm:^4.3.2"
+    "@loaders.gl/loader-utils": "npm:^4.3.2"
+    "@loaders.gl/parquet": "npm:^4.3.2"
+    "@loaders.gl/schema": "npm:^4.3.2"
+    "@loaders.gl/wkt": "npm:^4.3.2"
+    "@mapbox/geojson-normalize": "npm:0.0.1"
+    "@nebula.gl/edit-modes": "npm:1.0.2-alpha.1"
+    "@turf/helpers": "npm:^6.1.4"
+    apache-arrow: "npm:>=15.0.0"
+    d3-dsv: "npm:^2.0.0"
+    type-analyzer: "npm:0.4.0"
+  checksum: 10c0/c703e98f262a1dd8d8e90802aeb26df2e7aac572175f6ac011a0699b22f99fa5de04aeb2674bed1a35986f386b82367613add515c8f0e014c507c1aef314479e
+  languageName: node
+  linkType: hard
+
 "@kepler.gl/reducers@npm:3.2.0, @kepler.gl/reducers@npm:^3.2.0":
   version: 3.2.0
   resolution: "@kepler.gl/reducers@npm:3.2.0"
@@ -1957,6 +1965,27 @@ __metadata:
     keymirror: "npm:^0.1.1"
     lodash: "npm:4.17.21"
   checksum: 10c0/7809bb356d2faa0591f5f79928aaa563effc9867dff7863ec7755dd85436fac83bb93fc910095121e4052c459cf882eb26df2f1884bd2f5d6a7e3d252920bbd1
+  languageName: node
+  linkType: hard
+
+"@kepler.gl/schemas@npm:3.2.6":
+  version: 3.2.6
+  resolution: "@kepler.gl/schemas@npm:3.2.6"
+  dependencies:
+    "@kepler.gl/common-utils": "npm:3.2.6"
+    "@kepler.gl/constants": "npm:3.2.6"
+    "@kepler.gl/layers": "npm:3.2.6"
+    "@kepler.gl/table": "npm:3.2.6"
+    "@kepler.gl/types": "npm:3.2.6"
+    "@kepler.gl/utils": "npm:3.2.6"
+    "@loaders.gl/loader-utils": "npm:^4.3.2"
+    "@types/keymirror": "npm:^0.1.1"
+    "@types/lodash": "npm:4.17.5"
+    apache-arrow: "npm:>=15.0.0"
+    global: "npm:^4.3.0"
+    keymirror: "npm:^0.1.1"
+    lodash: "npm:4.17.21"
+  checksum: 10c0/c9578e90842aa2307ff6928ff956e006e480b3c2e3ab0c904aefe47b86091d9b1155f94f04bab9d47101f5c18049f31a56b6de173f6362ceff286456d607e3f3
   languageName: node
   linkType: hard
 
@@ -6842,6 +6871,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-dom@npm:19.2.3":
+  version: 19.2.3
+  resolution: "@types/react-dom@npm:19.2.3"
+  peerDependencies:
+    "@types/react": ^19.2.0
+  checksum: 10c0/b486ebe0f4e2fb35e2e108df1d8fc0927ca5d6002d5771e8a739de11239fe62d0e207c50886185253c99eb9dedfeeb956ea7429e5ba17f6693c7acb4c02f8cd1
+  languageName: node
+  linkType: hard
+
 "@types/react-dom@npm:^18.0.11":
   version: 18.3.0
   resolution: "@types/react-dom@npm:18.3.0"
@@ -6922,7 +6960,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:16 || 17 || 18 || 19":
+"@types/react@npm:16 || 17 || 18 || 19, @types/react@npm:19.2.17":
   version: 19.2.17
   resolution: "@types/react@npm:19.2.17"
   dependencies:
@@ -6955,13 +6993,6 @@ __metadata:
     "@types/react": "npm:*"
     csstype: "npm:^3.0.2"
   checksum: 10c0/5bce93ea2c6161fc45daaf863eefdc20672e839ae486597c40b95e7978e249c160c1bc9706f56cb5152a7ef63cf485d15a9502889169ef945281f511e4b2d5a0
-  languageName: node
-  linkType: hard
-
-"@types/stylis@npm:4.2.0":
-  version: 4.2.0
-  resolution: "@types/stylis@npm:4.2.0"
-  checksum: 10c0/c76c13e76ca485f598a13984cfb5e07bb88a851da5bee213587424a5f101f182c74f4f92d633cebf9abcec40ccebb645d600d184b7e4b42793e3eeca8729b110
   languageName: node
   linkType: hard
 
@@ -7922,13 +7953,6 @@ __metadata:
   bin:
     cssesc: bin/cssesc
   checksum: 10c0/6bcfd898662671be15ae7827120472c5667afb3d7429f1f917737f3bf84c4176003228131b643ae74543f17a394446247df090c597bb9a728cce298606ed0aa7
-  languageName: node
-  linkType: hard
-
-"csstype@npm:3.1.2":
-  version: 3.1.2
-  resolution: "csstype@npm:3.1.2"
-  checksum: 10c0/32c038af259897c807ac738d9eab16b3d86747c72b09d5c740978e06f067f9b7b1737e1b75e407c7ab1fe1543dc95f20e202b4786aeb1b8d3bdf5d5ce655e6c6
   languageName: node
   linkType: hard
 
@@ -11904,7 +11928,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.3.6, nanoid@npm:^3.3.8":
+"nanoid@npm:^3.3.8":
   version: 3.3.8
   resolution: "nanoid@npm:3.3.8"
   bin:
@@ -12333,17 +12357,6 @@ __metadata:
   version: 4.2.0
   resolution: "postcss-value-parser@npm:4.2.0"
   checksum: 10c0/f4142a4f56565f77c1831168e04e3effd9ffcc5aebaf0f538eee4b2d465adfd4b85a44257bb48418202a63806a7da7fe9f56c330aebb3cac898e46b4cbf49161
-  languageName: node
-  linkType: hard
-
-"postcss@npm:8.4.31":
-  version: 8.4.31
-  resolution: "postcss@npm:8.4.31"
-  dependencies:
-    nanoid: "npm:^3.3.6"
-    picocolors: "npm:^1.0.0"
-    source-map-js: "npm:^1.0.2"
-  checksum: 10c0/748b82e6e5fc34034dcf2ae88ea3d11fd09f69b6c50ecdd3b4a875cfc7cdca435c958b211e2cb52355422ab6fccb7d8f2f2923161d7a1b281029e4a913d59acf
   languageName: node
   linkType: hard
 
@@ -13525,7 +13538,7 @@ __metadata:
     "@kepler.gl/cloud-providers": "npm:^3.2.0"
     "@kepler.gl/components": "npm:^3.2.0"
     "@kepler.gl/constants": "npm:^3.2.0"
-    "@kepler.gl/duckdb": "npm:^3.2.0"
+    "@kepler.gl/duckdb": "npm:^3.2.6"
     "@kepler.gl/layers": "npm:^3.2.0"
     "@kepler.gl/localization": "npm:^3.2.0"
     "@kepler.gl/processors": "npm:^3.2.0"
@@ -13555,6 +13568,8 @@ __metadata:
     "@turf/helpers": "npm:^7.0.0"
     "@types/classnames": "npm:^2.3.1"
     "@types/keymirror": "npm:^0.1.1"
+    "@types/react": "npm:19.2.17"
+    "@types/react-dom": "npm:19.2.3"
     ai: "npm:^7.0.31"
     apache-arrow: "npm:>=15.0.0"
     classnames: "npm:^2.2.1"
@@ -13736,13 +13751,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shallowequal@npm:1.1.0":
-  version: 1.1.0
-  resolution: "shallowequal@npm:1.1.0"
-  checksum: 10c0/b926efb51cd0f47aa9bc061add788a4a650550bbe50647962113a4579b60af2abe7b62f9b02314acc6f97151d4cf87033a2b15fc20852fae306d1a095215396c
-  languageName: node
-  linkType: hard
-
 "shebang-command@npm:^2.0.0":
   version: 2.0.0
   resolution: "shebang-command@npm:2.0.0"
@@ -13858,7 +13866,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-js@npm:^1.0.2, source-map-js@npm:^1.2.1":
+"source-map-js@npm:^1.2.1":
   version: 1.2.1
   resolution: "source-map-js@npm:1.2.1"
   checksum: 10c0/7bda1fc4c197e3c6ff17de1b8b2c20e60af81b63a52cb32ec5a5d67a20a7d42651e2cb34ebe93833c5a2a084377e17455854fee3e21e7925c64a51b6a52b0faf
@@ -14084,26 +14092,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"styled-components@npm:6.1.8":
-  version: 6.1.8
-  resolution: "styled-components@npm:6.1.8"
-  dependencies:
-    "@emotion/is-prop-valid": "npm:1.2.1"
-    "@emotion/unitless": "npm:0.8.0"
-    "@types/stylis": "npm:4.2.0"
-    css-to-react-native: "npm:3.2.0"
-    csstype: "npm:3.1.2"
-    postcss: "npm:8.4.31"
-    shallowequal: "npm:1.1.0"
-    stylis: "npm:4.3.1"
-    tslib: "npm:2.5.0"
-  peerDependencies:
-    react: ">= 16.8.0"
-    react-dom: ">= 16.8.0"
-  checksum: 10c0/fafe4b9198d5d7980c2358821d1a89f86200d55c8eec03670cf12cf43b8a05a77eafaf0872cd85821f68238308e0f5c9d9aa43a62e6987c65b70baa2c3277ab8
-  languageName: node
-  linkType: hard
-
 "styled-components@npm:6.4.3":
   version: 6.4.3
   resolution: "styled-components@npm:6.4.3"
@@ -14125,13 +14113,6 @@ __metadata:
     react-native:
       optional: true
   checksum: 10c0/158514feb0a502dfa7f95610a8270faa56be2572c12902b7bf5c2855bf9fdd5d76a5909d67dcbecf627ee40511f4161f8016b23f9fef22c14f7911337359647c
-  languageName: node
-  linkType: hard
-
-"stylis@npm:4.3.1":
-  version: 4.3.1
-  resolution: "stylis@npm:4.3.1"
-  checksum: 10c0/33e8ebd2bfa5f0bd0215f718dc2d3be896e1d00c5bcaeb9a4ae03cf239db6867af9eee230f57229bf1c29499357073ba3e6b547484ba1db2f5de1e8be7d4eee9
   languageName: node
   linkType: hard
 
@@ -14449,13 +14430,6 @@ __metadata:
   version: 2.3.0
   resolution: "tslib@npm:2.3.0"
   checksum: 10c0/a845aed84e7e7dbb4c774582da60d7030ea39d67307250442d35c4c5dd77e4b44007098c37dd079e100029c76055f2a362734b8442ba828f8cc934f15ed9be61
-  languageName: node
-  linkType: hard
-
-"tslib@npm:2.5.0":
-  version: 2.5.0
-  resolution: "tslib@npm:2.5.0"
-  checksum: 10c0/e32fc99cc730dd514e53c44e668d76016e738f0bcc726aad5dbd2d335cf19b87a95a9b1e4f0a9993e370f1d702b5e471cdd4acabcac428a3099d496b9af2021e
   languageName: node
   linkType: hard
 

@@ -94,13 +94,13 @@ export function MainView() {
 
         <div className="grow overflow-auto">
           <ChatErrorBoundary>
-          {isDataAvailable ? (
-            <Chat.Messages key={currentSessionId} hoistedRenderers={HOISTED_RENDERERS} />
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm opacity-50">
-              Initializing...
-            </div>
-          )}
+            {isDataAvailable ? (
+              <Chat.Messages key={currentSessionId} hoistedRenderers={HOISTED_RENDERERS} />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm opacity-50">
+                Initializing...
+              </div>
+            )}
           </ChatErrorBoundary>
         </div>
 

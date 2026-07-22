@@ -8,16 +8,11 @@ import {HistogramComponent} from '../charts/histogram-component';
  * standalone component in the registry and has no access to the kepler context,
  * so the store registers a handler here that highlights the selected rows.
  */
-type HistogramSelectionHandler = (
-  datasetName: string,
-  selectedIndices: number[]
-) => void;
+type HistogramSelectionHandler = (datasetName: string, selectedIndices: number[]) => void;
 
 let histogramSelectionHandler: HistogramSelectionHandler | undefined;
 
-export function setHistogramSelectionHandler(
-  handler: HistogramSelectionHandler | undefined
-) {
+export function setHistogramSelectionHandler(handler: HistogramSelectionHandler | undefined) {
   histogramSelectionHandler = handler;
 }
 
@@ -32,7 +27,7 @@ export function setHistogramSelectionHandler(
 export const HistogramToolResult: ToolRenderer<HistogramToolOutput> = ({
   output,
   state,
-  errorText,
+  errorText
 }) => {
   if (state === 'output-error') {
     return (
@@ -78,6 +73,6 @@ export const HistogramToolResult: ToolRenderer<HistogramToolOutput> = ({
  */
 export function getEchartsToolRenderers(): ToolRendererRegistry {
   return {
-    histogramTool: HistogramToolResult as ToolRenderer<any>,
+    histogramTool: HistogramToolResult as ToolRenderer<any>
   };
 }

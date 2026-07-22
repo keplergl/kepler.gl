@@ -1,4 +1,4 @@
-import {tool} from 'ai';
+import {tool} from '../ai-tool-shim';
 import {z} from 'zod';
 import {tableFromArrays, Table as ArrowTable} from 'apache-arrow';
 import {addDataToMap} from '@kepler.gl/actions';
@@ -41,7 +41,9 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
       variableNames: z
         .array(z.string())
         .describe('Only use variable names that already exist in the dataset.'),
-      sql: z.string().describe('The SQL query to execute. Use __TABLE__ as the table name placeholder.'),
+      sql: z
+        .string()
+        .describe('The SQL query to execute. Use __TABLE__ as the table name placeholder.'),
       resultDatasetName: z.string().describe('The name for the new dataset')
     }),
     execute: async ({datasetName, variableNames, sql, resultDatasetName}, {abortSignal}) => {

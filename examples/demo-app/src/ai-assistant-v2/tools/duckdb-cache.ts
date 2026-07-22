@@ -4,7 +4,7 @@ import {processFileData} from '@kepler.gl/processors';
 import {getConnector} from './utils';
 import type {KeplerContext} from '../types';
 
-let _cachedTableContext: string = '';
+let _cachedTableContext = '';
 
 async function refreshTableContext(): Promise<void> {
   _cachedTableContext = await getDuckdbTableContext();
@@ -219,9 +219,9 @@ export async function queryTable(
   const db = await getConnector();
   const query = sql ?? `SELECT * FROM "${tableName}"`;
   const result = await db.query(query);
-  return result.toArray().map((row: any) =>
-    typeof row.toJSON === 'function' ? row.toJSON() : row
-  );
+  return result
+    .toArray()
+    .map((row: any) => (typeof row.toJSON === 'function' ? row.toJSON() : row));
 }
 
 /**
@@ -317,7 +317,9 @@ export async function loadTableToKepler(
   } catch (error) {
     return {
       success: false,
-      error: `Failed to load table to kepler.gl: ${error instanceof Error ? error.message : String(error)}`
+      error: `Failed to load table to kepler.gl: ${
+        error instanceof Error ? error.message : String(error)
+      }`
     };
   }
 }

@@ -1,5 +1,4 @@
-
-import {tool} from 'ai';
+import {tool} from '../ai-tool-shim';
 import {z} from 'zod';
 import {addDataToMap} from '@kepler.gl/actions';
 import {readFileInBatches, processFileData, ProcessFileDataContent} from '@kepler.gl/processors';

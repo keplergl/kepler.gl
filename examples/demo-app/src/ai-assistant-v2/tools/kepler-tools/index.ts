@@ -1,4 +1,3 @@
-
 import {KeplerContext} from '../../types';
 import {getBasemapTool} from './basemap-tool';
 import {getMapBoundaryTool} from './boundary-tool';

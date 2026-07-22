@@ -1,4 +1,4 @@
-import {tool} from 'ai';
+import {tool} from '../ai-tool-shim';
 import {z} from 'zod';
 import {LayerClasses} from '@kepler.gl/layers';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
@@ -45,7 +45,7 @@ export function guessDefaultLayer(dataset: KeplerTable, layerType: string) {
       `Failed to create a trip layer. Trip layer requires id, lat, lng, and timestamp columns.`
     );
   }
-  const defaultLayers = findDefaultLayer(dataset, LayerClasses);
+  const defaultLayers = findDefaultLayer(dataset, LayerClasses as any);
   const layer = defaultLayers.find(l => l.type === layerType);
   return layer || (defaultLayers.length > 0 ? defaultLayers[0] : null);
 }
@@ -280,7 +280,9 @@ For geojson datasets:
           details: `Map layer ${newLayer.id} has been added to the map.`,
           dateTimeColumns: hasTemporalFields ? temporalFields : undefined,
           dateTimeHint: hasTemporalFields
-            ? `DateTime columns detected: ${temporalFields.join(', ')}. You can call addTimeFilter with one of these columns to enable time-range animation on the map.`
+            ? `DateTime columns detected: ${temporalFields.join(
+                ', '
+              )}. You can call addTimeFilter with one of these columns to enable time-range animation on the map.`
             : undefined
         };
       } catch (error) {

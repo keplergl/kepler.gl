@@ -1,5 +1,4 @@
-
-import {tool} from 'ai';
+import {tool} from '../ai-tool-shim';
 import {z} from 'zod';
 import {DEFAULT_MAP_STYLES} from '@kepler.gl/constants';
 import {mapStyleChange} from '@kepler.gl/actions';

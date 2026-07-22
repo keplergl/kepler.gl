@@ -1,15 +1,12 @@
-import { tool, generateId } from 'ai';
-import { z } from 'zod';
-import { tableFromArrays, Table as ArrowTable } from 'apache-arrow';
-import { addDataToMap } from '@kepler.gl/actions';
-import { processFileData } from '@kepler.gl/processors';
-import { KeplerContext } from '../types';
-import {
-  getValuesFromDataset,
-  getConnector,
-  datasetNameToTableName,
-} from './utils';
-import { saveToDuckdb, loadTableToKepler } from './duckdb-cache';
+import {generateId} from 'ai';
+import {tool} from './ai-tool-shim';
+import {z} from 'zod';
+import {tableFromArrays, Table as ArrowTable} from 'apache-arrow';
+import {addDataToMap} from '@kepler.gl/actions';
+import {processFileData} from '@kepler.gl/processors';
+import {KeplerContext} from '../types';
+import {getValuesFromDataset, getConnector, datasetNameToTableName} from './utils';
+import {saveToDuckdb, loadTableToKepler} from './duckdb-cache';
 
 /**
  * Recursively convert an Arrow row (which uses proxy objects) into a plain JS object.
@@ -25,7 +22,7 @@ function convertArrowRowToObject(row: any): Record<string, unknown> {
       if (val && typeof val === 'object' && typeof val.toJSON === 'function') {
         json[key] = convertArrowRowToObject(val);
       } else if (Array.isArray(val)) {
-        json[key] = val.map((v) => convertArrowRowToObject(v));
+        json[key] = val.map(v => convertArrowRowToObject(v));
       } else if (typeof val === 'bigint') {
         json[key] = val.toString();
       }
@@ -46,8 +43,8 @@ function convertArrowRowToObject(row: any): Record<string, unknown> {
  */
 function tableToLLMResult(
   table: Record<string, unknown>[],
-  maxTotalLength: number = 2000,
-  maxValueLength: number = 80
+  maxTotalLength = 2000,
+  maxValueLength = 80
 ): string {
   if (table.length === 0) return 'No rows returned';
 
@@ -58,37 +55,29 @@ function tableToLLMResult(
       str = value.toString();
     } else if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer) {
       const byteLen =
-        value instanceof ArrayBuffer
-          ? value.byteLength
-          : (value as ArrayBufferView).byteLength;
+        value instanceof ArrayBuffer ? value.byteLength : (value as ArrayBufferView).byteLength;
       str = `<${byteLen} bytes>`;
     } else if (Array.isArray(value)) {
-      str = value
-        .map((v) => (typeof v === 'string' ? v : String(v)))
-        .join(', ');
+      str = value.map(v => (typeof v === 'string' ? v : String(v))).join(', ');
     } else if (typeof value === 'object') {
       try {
-        str = JSON.stringify(value, (_k, v) =>
-          typeof v === 'bigint' ? v.toString() : v
-        );
+        str = JSON.stringify(value, (_k, v) => (typeof v === 'bigint' ? v.toString() : v));
       } catch {
         str = String(value);
       }
     } else {
       str = String(value);
     }
-    return str.length > maxValueLength
-      ? str.slice(0, maxValueLength) + '...'
-      : str;
+    return str.length > maxValueLength ? `${str.slice(0, maxValueLength)}...` : str;
   };
 
   const columns = Object.keys(table[0] || {});
-  const headerRow = '| ' + columns.join(' | ') + ' |';
+  const headerRow = `| ${columns.join(' | ')} |`;
   const lines = [headerRow];
 
   for (const row of table) {
-    const values = columns.map((col) => truncateValue(row[col]));
-    lines.push('| ' + values.join(' | ') + ' |');
+    const values = columns.map(col => truncateValue(row[col]));
+    lines.push(`| ${values.join(' | ')} |`);
 
     const currentLength = lines.join('\n').length;
     if (currentLength > maxTotalLength - 100) {
@@ -132,7 +121,7 @@ async function loadTableIntoDuckDB(
     // Table doesn't exist yet
   }
 
-  const missingVars = variableNames.filter((v) => !existingColumns.has(v));
+  const missingVars = variableNames.filter(v => !existingColumns.has(v));
 
   if (missingVars.length === 0 && existingColumns.size > 0) {
     return db;
@@ -172,12 +161,7 @@ async function loadTableIntoDuckDB(
 export function getQueryTools(ctx: KeplerContext) {
   const getValues = async (datasetName: string, variableName: string) => {
     const visState = ctx.getVisState();
-    return getValuesFromDataset(
-      visState.datasets,
-      visState.layers,
-      datasetName,
-      variableName
-    );
+    return getValuesFromDataset(visState.datasets, visState.layers, datasetName, variableName);
   };
 
   const genericQuery = tool({
@@ -192,29 +176,17 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         .describe('Only use variable names that already exist in the dataset.'),
       sql: z
         .string()
-        .describe(
-          'The SQL query to execute. Use __TABLE__ as the table name placeholder.'
-        ),
+        .describe('The SQL query to execute. Use __TABLE__ as the table name placeholder.'),
       resultDatasetName: z
         .string()
-        .describe(
-          'A short, unique snake_case name describing the query result.'
-        ),
+        .describe('A short, unique snake_case name describing the query result.')
     }),
-    execute: async (
-      { datasetName, variableNames, sql, resultDatasetName },
-      { abortSignal }
-    ) => {
+    execute: async ({datasetName, variableNames, sql, resultDatasetName}, {abortSignal}) => {
       try {
         abortSignal?.throwIfAborted();
         const dbTableName = datasetNameToTableName(datasetName);
         const resolvedSql = sql.replace(/__TABLE__/g, `"${dbTableName}"`);
-        const db = await loadTableIntoDuckDB(
-          getValues,
-          datasetName,
-          variableNames,
-          dbTableName
-        );
+        const db = await loadTableIntoDuckDB(getValues, datasetName, variableNames, dbTableName);
         const arrowResult = await db.query(resolvedSql);
 
         const jsonResult: Record<string, unknown>[] = arrowResult
@@ -225,7 +197,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
 
         await saveToDuckdb(resultDatasetName, {
           type: 'rowObjects',
-          content: jsonResult,
+          content: jsonResult
         });
 
         return {
@@ -236,18 +208,18 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
           instruction: `Query executed successfully. The complete result is in dataset ${resultDatasetName} (${jsonResult.length} rows). The truncated result is just a preview.`,
           nextStep: `You can visualize this result on a map by calling createKeplerDatasetFromTable with datasetName="${resultDatasetName}".`,
           sql: resolvedSql,
-          dbTableName,
+          dbTableName
         };
       } catch (error) {
         return {
           success: false as const,
           error: error instanceof Error ? error.message : String(error),
           instruction:
-            'Please explain the error and give a plan to fix it. Then try again with a different query.',
+            'Please explain the error and give a plan to fix it. Then try again with a different query.'
         };
       }
     },
-    toModelOutput: ({ output }: any) => {
+    toModelOutput: ({output}: any) => {
       if (!output.success) return output;
       return {
         success: output.success,
@@ -255,9 +227,9 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         truncatedQueryResult: output.truncatedQueryResult,
         totalRows: output.totalRows,
         instruction: output.instruction,
-        nextStep: output.nextStep,
+        nextStep: output.nextStep
       };
-    },
+    }
   });
 
   const filterDataset = tool({
@@ -271,27 +243,15 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         .describe('Only use variable names that already exist in the dataset.'),
       sql: z
         .string()
-        .describe(
-          'The SQL query to execute. Use __TABLE__ as the table name placeholder.'
-        ),
-      resultDatasetName: z
-        .string()
-        .describe('Name for the new filtered dataset.'),
+        .describe('The SQL query to execute. Use __TABLE__ as the table name placeholder.'),
+      resultDatasetName: z.string().describe('Name for the new filtered dataset.')
     }),
-    execute: async (
-      { datasetName, variableNames, sql, resultDatasetName },
-      { abortSignal }
-    ) => {
+    execute: async ({datasetName, variableNames, sql, resultDatasetName}, {abortSignal}) => {
       try {
         abortSignal?.throwIfAborted();
         const dbTableName = datasetNameToTableName(datasetName);
         const resolvedSql = sql.replace(/__TABLE__/g, `"${dbTableName}"`);
-        const db = await loadTableIntoDuckDB(
-          getValues,
-          datasetName,
-          variableNames,
-          dbTableName
-        );
+        const db = await loadTableIntoDuckDB(getValues, datasetName, variableNames, dbTableName);
         const arrowResult = await db.query(resolvedSql);
 
         const jsonResult: Record<string, unknown>[] = arrowResult
@@ -300,18 +260,18 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
 
         await saveToDuckdb(resultDatasetName, {
           type: 'rowObjects',
-          content: jsonResult,
+          content: jsonResult
         });
 
         const parsedData = await processFileData({
-          content: { data: jsonResult, fileName: resultDatasetName },
-          fileCache: [],
+          content: {data: jsonResult, fileName: resultDatasetName},
+          fileCache: []
         });
 
         ctx.dispatch(
           addDataToMap({
             datasets: parsedData,
-            options: { autoCreateLayers: true, centerMap: true },
+            options: {autoCreateLayers: true, centerMap: true}
           })
         );
 
@@ -321,26 +281,26 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
           resultDatasetName,
           firstFiveRows: tableToLLMResult(jsonResult.slice(0, 5)),
           sql: resolvedSql,
-          dbTableName,
+          dbTableName
         };
       } catch (error) {
         return {
           success: false as const,
           error: error instanceof Error ? error.message : String(error),
           instruction:
-            'Please explain the error and give a plan to fix it. Then try again with a different query.',
+            'Please explain the error and give a plan to fix it. Then try again with a different query.'
         };
       }
     },
-    toModelOutput: ({ output }: any) => {
+    toModelOutput: ({output}: any) => {
       if (!output.success) return output;
       return {
         success: output.success,
         details: output.details,
         resultDatasetName: output.resultDatasetName,
-        firstFiveRows: output.firstFiveRows,
+        firstFiveRows: output.firstFiveRows
       };
-    },
+    }
   });
 
   const tableTool = tool({
@@ -356,25 +316,15 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         .describe('Only use variable names that already exist in the dataset.'),
       sql: z
         .string()
-        .describe(
-          'The SQL query to execute. Use __TABLE__ as the table name placeholder.'
-        ),
-      resultDatasetName: z.string().describe('Name for the new dataset.'),
+        .describe('The SQL query to execute. Use __TABLE__ as the table name placeholder.'),
+      resultDatasetName: z.string().describe('Name for the new dataset.')
     }),
-    execute: async (
-      { datasetName, variableNames, sql, resultDatasetName },
-      { abortSignal }
-    ) => {
+    execute: async ({datasetName, variableNames, sql, resultDatasetName}, {abortSignal}) => {
       try {
         abortSignal?.throwIfAborted();
         const dbTableName = datasetNameToTableName(datasetName);
         const resolvedSql = sql.replace(/__TABLE__/g, `"${dbTableName}"`);
-        const db = await loadTableIntoDuckDB(
-          getValues,
-          datasetName,
-          variableNames,
-          dbTableName
-        );
+        const db = await loadTableIntoDuckDB(getValues, datasetName, variableNames, dbTableName);
         const arrowResult = await db.query(resolvedSql);
 
         const jsonResult: Record<string, unknown>[] = arrowResult
@@ -383,7 +333,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
 
         await saveToDuckdb(resultDatasetName, {
           type: 'rowObjects',
-          content: jsonResult,
+          content: jsonResult
         });
 
         return {
@@ -393,27 +343,27 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
           firstFiveRows: tableToLLMResult(jsonResult.slice(0, 5)),
           nextStep: `You can visualize this table on a map by calling createKeplerDatasetFromTable with datasetName="${resultDatasetName}".`,
           sql: resolvedSql,
-          dbTableName,
+          dbTableName
         };
       } catch (error) {
         return {
           success: false as const,
           error: error instanceof Error ? error.message : String(error),
           instruction:
-            'Please explain the error and give a plan to fix it. Then try again with a different query.',
+            'Please explain the error and give a plan to fix it. Then try again with a different query.'
         };
       }
     },
-    toModelOutput: ({ output }: any) => {
+    toModelOutput: ({output}: any) => {
       if (!output.success) return output;
       return {
         success: output.success,
         details: output.details,
         resultDatasetName: output.resultDatasetName,
         firstFiveRows: output.firstFiveRows,
-        nextStep: output.nextStep,
+        nextStep: output.nextStep
       };
-    },
+    }
   });
 
   const mergeTablesTool = tool({
@@ -428,48 +378,28 @@ IMPORTANT: Use __TABLE_A__ and __TABLE_B__ as table name placeholders in SQL. Th
         .string()
         .describe(
           'The SQL query to merge the tables. Use __TABLE_A__ and __TABLE_B__ as table name placeholders.'
-        ),
+        )
     }),
-    execute: async ({ datasetNameA, datasetNameB, sql }, { abortSignal }) => {
+    execute: async ({datasetNameA, datasetNameB, sql}, {abortSignal}) => {
       try {
         abortSignal?.throwIfAborted();
 
         const visState = ctx.getVisState();
         const datasets = visState.datasets;
 
-        const datasetIdA = Object.keys(datasets).find(
-          (id) => datasets[id].label === datasetNameA
-        );
-        const datasetIdB = Object.keys(datasets).find(
-          (id) => datasets[id].label === datasetNameB
-        );
-        if (!datasetIdA)
-          throw new Error(`Dataset "${datasetNameA}" not found.`);
-        if (!datasetIdB)
-          throw new Error(`Dataset "${datasetNameB}" not found.`);
+        const datasetIdA = Object.keys(datasets).find(id => datasets[id].label === datasetNameA);
+        const datasetIdB = Object.keys(datasets).find(id => datasets[id].label === datasetNameB);
+        if (!datasetIdA) throw new Error(`Dataset "${datasetNameA}" not found.`);
+        if (!datasetIdB) throw new Error(`Dataset "${datasetNameB}" not found.`);
 
-        const columnNamesA = datasets[datasetIdA].fields.map(
-          (f: any) => f.name
-        );
-        const columnNamesB = datasets[datasetIdB].fields.map(
-          (f: any) => f.name
-        );
+        const columnNamesA = datasets[datasetIdA].fields.map((f: any) => f.name);
+        const columnNamesB = datasets[datasetIdB].fields.map((f: any) => f.name);
 
         const dbTableNameA = datasetNameToTableName(datasetNameA);
         const dbTableNameB = datasetNameToTableName(datasetNameB);
 
-        const db = await loadTableIntoDuckDB(
-          getValues,
-          datasetNameA,
-          columnNamesA,
-          dbTableNameA
-        );
-        await loadTableIntoDuckDB(
-          getValues,
-          datasetNameB,
-          columnNamesB,
-          dbTableNameB
-        );
+        const db = await loadTableIntoDuckDB(getValues, datasetNameA, columnNamesA, dbTableNameA);
+        await loadTableIntoDuckDB(getValues, datasetNameB, columnNamesB, dbTableNameB);
 
         const resolvedSql = sql
           .replace(/__TABLE_A__/g, `"${dbTableNameA}"`)
@@ -484,7 +414,7 @@ IMPORTANT: Use __TABLE_A__ and __TABLE_B__ as table name placeholders in SQL. Th
 
         await saveToDuckdb(resultDatasetName, {
           type: 'rowObjects',
-          content: jsonResult,
+          content: jsonResult
         });
 
         return {
@@ -493,27 +423,27 @@ IMPORTANT: Use __TABLE_A__ and __TABLE_B__ as table name placeholders in SQL. Th
           resultDatasetName,
           firstTwoRows: jsonResult.slice(0, 2),
           nextStep: `You can visualize this merged table on a map by calling createKeplerDatasetFromTable with datasetName="${resultDatasetName}".`,
-          sql: resolvedSql,
+          sql: resolvedSql
         };
       } catch (error) {
         return {
           success: false as const,
           error: error instanceof Error ? error.message : String(error),
           instruction:
-            'Please explain the error and give a plan to fix it. Then try again with a different query.',
+            'Please explain the error and give a plan to fix it. Then try again with a different query.'
         };
       }
     },
-    toModelOutput: ({ output }: any) => {
+    toModelOutput: ({output}: any) => {
       if (!output.success) return output;
       return {
         success: output.success,
         details: output.details,
         resultDatasetName: output.resultDatasetName,
         firstTwoRows: output.firstTwoRows,
-        nextStep: output.nextStep,
+        nextStep: output.nextStep
       };
-    },
+    }
   });
 
   const createKeplerDatasetFromTable = tool({
@@ -524,9 +454,9 @@ Use this tool after running a query (genericQuery, tableTool, mergeTablesTool) t
         .string()
         .describe(
           'The name of the DuckDB table (e.g. the resultDatasetName from a previous query tool).'
-        ),
+        )
     }),
-    execute: async ({ datasetName }, { abortSignal }) => {
+    execute: async ({datasetName}, {abortSignal}) => {
       try {
         abortSignal?.throwIfAborted();
 
@@ -538,15 +468,15 @@ Use this tool after running a query (genericQuery, tableTool, mergeTablesTool) t
         return {
           success: true as const,
           details: `Dataset "${datasetName}" has been added to kepler.gl map.`,
-          datasetName,
+          datasetName
         };
       } catch (error) {
         return {
           success: false as const,
-          error: error instanceof Error ? error.message : String(error),
+          error: error instanceof Error ? error.message : String(error)
         };
       }
-    },
+    }
   });
 
   return {
@@ -554,6 +484,6 @@ Use this tool after running a query (genericQuery, tableTool, mergeTablesTool) t
     filterDataset,
     tableTool,
     mergeTablesTool,
-    createKeplerDatasetFromTable,
+    createKeplerDatasetFromTable
   };
 }

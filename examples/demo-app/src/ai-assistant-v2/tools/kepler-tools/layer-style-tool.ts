@@ -1,5 +1,4 @@
-
-import {tool} from 'ai';
+import {tool} from '../ai-tool-shim';
 import {z} from 'zod';
 import {layerVisualChannelConfigChange} from '@kepler.gl/actions';
 import {KeplerContext} from '../../types';
@@ -39,7 +38,9 @@ export function getUpdateLayerColorTool(ctx: KeplerContext) {
           colors: customColors,
           ...(oldColorRange.colorMap
             ? {
-                colorMap: [...oldColorRange.colorMap.map((c: any, i: number) => [c[0], customColors[i]])]
+                colorMap: [
+                  ...oldColorRange.colorMap.map((c: any, i: number) => [c[0], customColors[i]])
+                ]
               }
             : {})
         };

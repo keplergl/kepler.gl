@@ -93,7 +93,7 @@ const config = {
   logOverride: {
     'unsupported-jsx-comment': 'silent'
   },
-  inject: ['src/react19-shim.js'],
+  inject: ['src/react19-shim.ts'],
   loader: {
     '.js': 'jsx',
     '.css': 'css',
@@ -101,7 +101,7 @@ const config = {
     '.woff': 'file',
     '.woff2': 'file'
   },
-  entryPoints: ['src/main.js'],
+  entryPoints: ['src/main.tsx'],
   outfile: 'dist/bundle.js',
   bundle: true,
   define: {

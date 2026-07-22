@@ -51,7 +51,7 @@ const config = {
     '.woff': 'file',
     '.woff2': 'file'
   },
-  entryPoints: ['src/main.js'],
+  entryPoints: ['src/main.tsx'],
   outfile: 'dist/bundle.js',
   bundle: true,
   define: {

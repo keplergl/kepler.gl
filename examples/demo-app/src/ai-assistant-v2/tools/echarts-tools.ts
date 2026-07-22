@@ -1,5 +1,4 @@
-
-import {tool} from 'ai';
+import {tool} from './ai-tool-shim';
 import {z} from 'zod';
 import {layerSetIsValid} from '@kepler.gl/actions';
 import {KeplerContext} from '../types';
@@ -147,9 +146,7 @@ function computePCPData(rawData: Record<string, number[]>) {
     const min = Math.min(...values);
     const max = Math.max(...values);
     const mean = values.reduce((s, v) => s + v, 0) / values.length;
-    const std = Math.sqrt(
-      values.reduce((s, v) => s + (v - mean) ** 2, 0) / (values.length - 1)
-    );
+    const std = Math.sqrt(values.reduce((s, v) => s + (v - mean) ** 2, 0) / (values.length - 1));
     return {name, min, max, mean, std};
   });
 }
@@ -170,7 +167,13 @@ export function getEchartsTools(ctx: KeplerContext) {
     const triggerLayerReRender = (layer: any, isValid: boolean) => {
       ctx.dispatch(layerSetIsValid(layer, isValid));
     };
-    highlightRows(visState.datasets, visState.layers, datasetName, selectedIndices, triggerLayerReRender);
+    highlightRows(
+      visState.datasets,
+      visState.layers,
+      datasetName,
+      selectedIndices,
+      triggerLayerReRender
+    );
   };
 
   const histogramTool = tool({
@@ -178,7 +181,10 @@ export function getEchartsTools(ctx: KeplerContext) {
     inputSchema: z.object({
       datasetName: z.string().describe('The name of the dataset'),
       variableName: z.string().describe('The name of the numeric variable'),
-      numberOfBins: z.number().optional().describe('Number of bins for the histogram. Default is 7.')
+      numberOfBins: z
+        .number()
+        .optional()
+        .describe('Number of bins for the histogram. Default is 7.')
     }),
     execute: async ({datasetName, variableName, numberOfBins = 7}, {abortSignal}) => {
       try {
@@ -196,7 +202,12 @@ export function getEchartsTools(ctx: KeplerContext) {
             count: barDataIndexes[i].length
           })),
           barDataIndexes,
-          details: `Histogram for ${variableName}: ${histogramData.map((b, i) => `[${b.binStart.toFixed(2)}-${b.binEnd.toFixed(2)}]: ${barDataIndexes[i].length}`).join(', ')}`
+          details: `Histogram for ${variableName}: ${histogramData
+            .map(
+              (b, i) =>
+                `[${b.binStart.toFixed(2)}-${b.binEnd.toFixed(2)}]: ${barDataIndexes[i].length}`
+            )
+            .join(', ')}`
         };
       } catch (error) {
         return {
@@ -210,8 +221,7 @@ export function getEchartsTools(ctx: KeplerContext) {
   });
 
   const boxplotTool = tool({
-    description:
-      'Create a boxplot chart to show the distribution of numeric variables.',
+    description: 'Create a boxplot chart to show the distribution of numeric variables.',
     inputSchema: z.object({
       datasetName: z.string().describe('The name of the dataset'),
       variableNames: z
@@ -232,7 +242,9 @@ export function getEchartsTools(ctx: KeplerContext) {
           variables: variableNames,
           boxplots,
           meanPoint,
-          details: `Boxplot for ${variableNames.join(', ')}: ${boxplots.map(b => `${b.name} (median=${b.q2.toFixed(2)}, IQR=${b.iqr.toFixed(2)})`).join('; ')}`
+          details: `Boxplot for ${variableNames.join(', ')}: ${boxplots
+            .map(b => `${b.name} (median=${b.q2.toFixed(2)}, IQR=${b.iqr.toFixed(2)})`)
+            .join('; ')}`
         };
       } catch (error) {
         return {
@@ -248,7 +260,8 @@ export function getEchartsTools(ctx: KeplerContext) {
   });
 
   const scatterplotTool = tool({
-    description: 'Create a scatterplot to visualize the relationship between two numeric variables.',
+    description:
+      'Create a scatterplot to visualize the relationship between two numeric variables.',
     inputSchema: z.object({
       datasetName: z.string().describe('The name of the dataset'),
       xVariableName: z.string().describe('X-axis variable'),
@@ -260,7 +273,11 @@ export function getEchartsTools(ctx: KeplerContext) {
         const xData = await getValues(datasetName, xVariableName);
         const yData = await getValues(datasetName, yVariableName);
         const n = Math.min(xData.length, yData.length);
-        let sumXY = 0, sumX = 0, sumY = 0, sumX2 = 0, sumY2 = 0;
+        let sumXY = 0,
+          sumX = 0,
+          sumY = 0,
+          sumX2 = 0,
+          sumY2 = 0;
         for (let i = 0; i < n; i++) {
           sumX += xData[i];
           sumY += yData[i];
@@ -280,7 +297,9 @@ export function getEchartsTools(ctx: KeplerContext) {
           correlation: Math.round(correlation * 1000) / 1000,
           xStats: {min: Math.min(...xData), max: Math.max(...xData), mean: sumX / n},
           yStats: {min: Math.min(...yData), max: Math.max(...yData), mean: sumY / n},
-          details: `Scatterplot for ${xVariableName} vs ${yVariableName} (${n} points, r=${(Math.round(correlation * 1000) / 1000).toFixed(3)})`
+          details: `Scatterplot for ${xVariableName} vs ${yVariableName} (${n} points, r=${(
+            Math.round(correlation * 1000) / 1000
+          ).toFixed(3)})`
         };
       } catch (error) {
         return {
@@ -303,7 +322,10 @@ export function getEchartsTools(ctx: KeplerContext) {
       yVariableName: z.string().describe('Y-axis variable'),
       sizeVariableName: z.string().describe('Variable for bubble size')
     }),
-    execute: async ({datasetName, xVariableName, yVariableName, sizeVariableName}, {abortSignal}) => {
+    execute: async (
+      {datasetName, xVariableName, yVariableName, sizeVariableName},
+      {abortSignal}
+    ) => {
       try {
         abortSignal?.throwIfAborted();
         const xValues = await getValues(datasetName, xVariableName);
@@ -317,9 +339,21 @@ export function getEchartsTools(ctx: KeplerContext) {
           yVariableName,
           sizeVariableName,
           totalPoints: n,
-          xStats: {min: Math.min(...xValues), max: Math.max(...xValues), mean: xValues.reduce((a, b) => a + b, 0) / n},
-          yStats: {min: Math.min(...yValues), max: Math.max(...yValues), mean: yValues.reduce((a, b) => a + b, 0) / n},
-          sizeStats: {min: Math.min(...sizeValues), max: Math.max(...sizeValues), mean: sizeValues.reduce((a, b) => a + b, 0) / n},
+          xStats: {
+            min: Math.min(...xValues),
+            max: Math.max(...xValues),
+            mean: xValues.reduce((a, b) => a + b, 0) / n
+          },
+          yStats: {
+            min: Math.min(...yValues),
+            max: Math.max(...yValues),
+            mean: yValues.reduce((a, b) => a + b, 0) / n
+          },
+          sizeStats: {
+            min: Math.min(...sizeValues),
+            max: Math.max(...sizeValues),
+            mean: sizeValues.reduce((a, b) => a + b, 0) / n
+          },
           details: `Bubble chart: ${xVariableName} vs ${yVariableName} (size: ${sizeVariableName}, ${n} points)`
         };
       } catch (error) {
@@ -352,7 +386,9 @@ export function getEchartsTools(ctx: KeplerContext) {
           variables: variableNames,
           pcp,
           totalRows: rawData[variableNames[0]]?.length || 0,
-          details: `Parallel coordinates for ${variableNames.join(', ')}: ${pcp.map(p => `${p.name} [${p.min.toFixed(2)}, ${p.max.toFixed(2)}]`).join('; ')}`
+          details: `Parallel coordinates for ${variableNames.join(', ')}: ${pcp
+            .map(p => `${p.name} [${p.min.toFixed(2)}, ${p.max.toFixed(2)}]`)
+            .join('; ')}`
         };
       } catch (error) {
         return {

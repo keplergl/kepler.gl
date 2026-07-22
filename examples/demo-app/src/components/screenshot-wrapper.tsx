@@ -159,9 +159,16 @@ export function ScreenshotWrapper({
   }, [startScreenCapture, captureRegion, setStartScreenCapture]);
 
   return (
-    <div ref={containerRef} onMouseMove={handleMouseMove} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp}>
+    <div
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+    >
       <div
-        className={`min-w-100 relative flex w-screen ${startScreenCapture ? 'h-screen' : 'h-full'} flex-row items-start border-none ${className || ''}`}
+        className={`min-w-100 relative flex w-screen ${
+          startScreenCapture ? 'h-screen' : 'h-full'
+        } flex-row items-start border-none ${className || ''}`}
       >
         {children}
       </div>

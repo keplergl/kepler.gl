@@ -1,5 +1,4 @@
-
-import {tool} from 'ai';
+import {tool} from '../ai-tool-shim';
 import {z} from 'zod';
 import {KeplerContext} from '../../types';
 

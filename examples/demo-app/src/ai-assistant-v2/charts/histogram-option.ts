@@ -1,8 +1,5 @@
 import type {EChartsOption} from 'echarts';
-import type {
-  TopLevelFormatterParams,
-  CallbackDataParams,
-} from 'echarts/types/dist/shared';
+import type {TopLevelFormatterParams, CallbackDataParams} from 'echarts/types/dist/shared';
 
 /**
  * Histogram bin descriptor consumed by the ECharts option builder.
@@ -21,7 +18,7 @@ export type HistogramDataProps = {
 export const numericFormatter = (value: number): string =>
   Intl.NumberFormat('en-US', {
     notation: 'compact',
-    maximumFractionDigits: 1,
+    maximumFractionDigits: 1
   }).format(value);
 
 const defaultBarColors = ['#FF6B6B', '#48BB78', '#4299E1', '#ED64A6', '#F6E05E'];
@@ -45,25 +42,21 @@ export function getHistogramChartOption(
     });
   }
 
-  const highlightedBars = histogramData.map(
-    (d: HistogramDataProps, i: number) => {
-      const highlightedIds = barDataIndexes[i].filter(
-        (idx: number) => filteredIndexDict[idx] === true
-      );
+  const highlightedBars = histogramData.map((d: HistogramDataProps, i: number) => {
+    const highlightedIds = barDataIndexes[i].filter(
+      (idx: number) => filteredIndexDict[idx] === true
+    );
 
-      return {
-        value: hasHighlighted ? highlightedIds?.length : 0,
-        itemStyle: {
-          color: defaultBarColors[i % defaultBarColors.length],
-          opacity: 1,
-        },
-        name: `[${numericFormatter(d.binStart)} - ${numericFormatter(
-          d.binEnd
-        )}]`,
-        ids: hasHighlighted ? highlightedIds : [],
-      };
-    }
-  );
+    return {
+      value: hasHighlighted ? highlightedIds?.length : 0,
+      itemStyle: {
+        color: defaultBarColors[i % defaultBarColors.length],
+        opacity: 1
+      },
+      name: `[${numericFormatter(d.binStart)} - ${numericFormatter(d.binEnd)}]`,
+      ids: hasHighlighted ? highlightedIds : []
+    };
+  });
 
   const minValue = histogramData[0].binStart;
   const maxValue = histogramData[histogramData.length - 1].binEnd;
@@ -78,10 +71,10 @@ export function getHistogramChartOption(
       color: defaultBarColors[i % defaultBarColors.length],
       opacity: hasHighlighted ? 0.5 : 1,
       shadowBlur: 10,
-      shadowColor: 'rgba(0,0,0,0.3)',
+      shadowColor: 'rgba(0,0,0,0.3)'
     },
     name: `[${numericFormatter(d.binStart)} - ${numericFormatter(d.binEnd)}]`,
-    ids: barDataIndexes[i],
+    ids: barDataIndexes[i]
   }));
 
   const series = [
@@ -90,7 +83,7 @@ export function getHistogramChartOption(
       type: 'bar' as const,
       barWidth: '90%',
       stack: 'total',
-      xAxisIndex: 0,
+      xAxisIndex: 0
     },
     {
       data: barData,
@@ -102,10 +95,10 @@ export function getHistogramChartOption(
         show: false,
         position: [0, -15] as [number, number],
         formatter: function (params: CallbackDataParams): string {
-          return (params.value as number) + '';
-        },
-      },
-    },
+          return `${params.value as number}`;
+        }
+      }
+    }
   ];
 
   const option: EChartsOption = {
@@ -117,8 +110,8 @@ export function getHistogramChartOption(
         axisLine: {show: false},
         position: 'bottom',
         splitLine: {
-          show: true,
-        },
+          show: true
+        }
       },
       {
         scale: true,
@@ -130,43 +123,41 @@ export function getHistogramChartOption(
           hideOverlap: true,
           rotate: 35,
           overflow: 'truncate',
-          formatter: numericFormatter,
+          formatter: numericFormatter
         },
         splitLine: {
-          show: false,
+          show: false
         },
-        position: 'bottom',
-      },
+        position: 'bottom'
+      }
     ],
     yAxis: {
       type: 'value',
       axisLabel: {
-        formatter: numericFormatter,
+        formatter: numericFormatter
       },
       splitLine: {
-        show: false,
+        show: false
       },
       axisTick: {show: false},
-      axisLine: {show: false},
+      axisLine: {show: false}
     },
     series,
     tooltip: {
       trigger: 'axis',
       axisPointer: {
-        type: 'shadow',
+        type: 'shadow'
       },
-      formatter: function (
-        params: TopLevelFormatterParams | TopLevelFormatterParams[]
-      ) {
+      formatter: function (params: TopLevelFormatterParams | TopLevelFormatterParams[]) {
         const paramsArray = Array.isArray(params) ? params : [params];
         const range = (paramsArray[1] as {data: {name: string}}).data.name;
         const count = (paramsArray[1] as {value: number}).value;
         return `Range: ${range}<br/> # Items: ${count}`;
-      },
+      }
     },
     brush: {
       toolbox: ['rect', 'keep', 'clear'],
-      xAxisIndex: 0,
+      xAxisIndex: 0
     },
     grid: [
       {
@@ -175,9 +166,9 @@ export function getHistogramChartOption(
         top: '20%',
         bottom: '0%',
         containLabel: true,
-        height: 'auto',
-      },
-    ],
+        height: 'auto'
+      }
+    ]
   };
 
   return option;

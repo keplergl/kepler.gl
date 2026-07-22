@@ -80,7 +80,7 @@ const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
-  inject: ['../examples/demo-app/src/react19-shim.js'],
+  inject: ['../examples/demo-app/src/react19-shim.ts'],
   loader: {
     '.js': 'jsx',
     '.css': 'css',
@@ -92,7 +92,7 @@ const config = {
     '.woff2': 'file'
   },
   entryPoints: [
-    'src/main.js',
+    'src/main.tsx',
   ],
   outfile: 'dist/bundle.js',
   bundle: true,

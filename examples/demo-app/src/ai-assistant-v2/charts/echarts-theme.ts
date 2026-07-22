@@ -14,136 +14,136 @@ export const ECHARTS_DARK_THEME = {
     '#73b9bc',
     '#7289ab',
     '#91ca8c',
-    '#f49f42',
+    '#f49f42'
   ],
   backgroundColor: 'rgba(14,14,14,1)',
   textStyle: {},
   title: {
     textStyle: {
-      color: '#eeeeee',
+      color: '#eeeeee'
     },
     subtextStyle: {
-      color: '#aaaaaa',
-    },
+      color: '#aaaaaa'
+    }
   },
   line: {
     itemStyle: {
-      borderWidth: 1,
+      borderWidth: 1
     },
     lineStyle: {
-      width: 2,
+      width: 2
     },
     symbolSize: 4,
     symbol: 'circle',
-    smooth: false,
+    smooth: false
   },
   bar: {
     itemStyle: {
       barBorderWidth: 0,
-      barBorderColor: '#ccc',
-    },
+      barBorderColor: '#ccc'
+    }
   },
   scatter: {
     itemStyle: {
       borderWidth: 0,
-      borderColor: '#ccc',
-    },
+      borderColor: '#ccc'
+    }
   },
   boxplot: {
     itemStyle: {
       borderColor: '#ccc',
       color: '#CCC',
-      opacity: 1,
-    },
+      opacity: 1
+    }
   },
   categoryAxis: {
     axisLine: {
       show: true,
       lineStyle: {
-        color: '#eeeeee',
-      },
+        color: '#eeeeee'
+      }
     },
     axisTick: {
       show: true,
       lineStyle: {
-        color: '#eeeeee',
-      },
+        color: '#eeeeee'
+      }
     },
     axisLabel: {
       show: true,
-      color: '#eeeeee',
+      color: '#eeeeee'
     },
     splitLine: {
       show: true,
       lineStyle: {
-        color: ['#333'],
-      },
+        color: ['#333']
+      }
     },
     splitArea: {
       show: false,
       areaStyle: {
-        color: ['#eeeeee'],
-      },
-    },
+        color: ['#eeeeee']
+      }
+    }
   },
   valueAxis: {
     axisLine: {
       show: true,
       lineStyle: {
-        color: '#eeeeee',
-      },
+        color: '#eeeeee'
+      }
     },
     axisTick: {
       show: true,
       lineStyle: {
-        color: '#eeeeee',
-      },
+        color: '#eeeeee'
+      }
     },
     axisLabel: {
       show: true,
-      color: '#eeeeee',
+      color: '#eeeeee'
     },
     splitLine: {
       show: true,
       lineStyle: {
-        color: ['#333'],
-      },
+        color: ['#333']
+      }
     },
     splitArea: {
       show: false,
       areaStyle: {
-        color: ['#eeeeee'],
-      },
-    },
+        color: ['#eeeeee']
+      }
+    }
   },
   toolbox: {
     iconStyle: {
-      borderColor: '#999999',
+      borderColor: '#999999'
     },
     emphasis: {
       iconStyle: {
-        borderColor: '#666666',
-      },
-    },
+        borderColor: '#666666'
+      }
+    }
   },
   legend: {
     textStyle: {
-      color: '#eeeeee',
-    },
+      color: '#eeeeee'
+    }
   },
   tooltip: {
     axisPointer: {
       label: {
-        color: '#333333',
+        color: '#333333'
       },
       lineStyle: {
         color: '#cccccc',
-        width: '1',
+        width: '1'
       },
       crossStyle: {
         color: '#cccccc',
-        width: '1',
-      },
-    },
-  },
+        width: '1'
+      }
+    }
+  }
 };
