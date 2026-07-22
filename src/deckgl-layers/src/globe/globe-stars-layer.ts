@@ -20,6 +20,12 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+// Transparent 1x1 PNG used as a fallback when a canvas context is unavailable
+// (SSR or unsupported browser), so that `url(...)` never resolves to an empty
+// value that could trigger a request for the current document.
+const TRANSPARENT_PIXEL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
 let cachedDataUrl: string | null = null;
 
 /**
@@ -31,14 +37,14 @@ export function getStarsBackgroundImage(): string {
 
   if (typeof document === 'undefined') {
     // SSR fallback: return a transparent 1x1 pixel to avoid url() triggering a page request
-    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+    return TRANSPARENT_PIXEL;
   }
 
   const canvas = document.createElement('canvas');
   canvas.width = STAR_CANVAS_SIZE;
   canvas.height = STAR_CANVAS_SIZE;
   const ctx = canvas.getContext('2d');
-  if (!ctx) return '';
+  if (!ctx) return (cachedDataUrl = TRANSPARENT_PIXEL);
 
   // Transparent background so CSS backgroundColor shows through
   ctx.clearRect(0, 0, STAR_CANVAS_SIZE, STAR_CANVAS_SIZE);

@@ -627,7 +627,8 @@ export default function MapContainerFactory(
     mapStyleBackgroundColorSelector = props => props.mapStyle.backgroundColor;
     globeModeSelector = props => Boolean(props.mapState?.globe?.enabled);
     globeBackgroundColorSelector = props => props.mapState?.globe?.config?.backgroundColor;
-    globeStarsSelector = props => Boolean(props.mapState?.globe?.config?.stars);
+    // Stars are enabled by default; only an explicit `false` disables them.
+    globeStarsSelector = props => props.mapState?.globe?.config?.stars !== false;
     styleSelector = createSelector(
       this.mapStyleTypeSelector,
       this.mapStyleBackgroundColorSelector,
@@ -650,7 +651,7 @@ export default function MapContainerFactory(
               // Optionally overlay a tileable star-field pattern on the background.
               ...(globeStars
                 ? {
-                    backgroundImage: `url(${getStarsBackgroundImage()})`,
+                    backgroundImage: `url('${getStarsBackgroundImage()}')`,
                     backgroundRepeat: 'repeat'
                   }
                 : {})
