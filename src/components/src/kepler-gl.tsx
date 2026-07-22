@@ -212,6 +212,7 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
   version: props.version ? props.version : DEFAULT_KEPLER_GL_PROPS.version,
   appWebsite: props.appWebsite,
   mapStyle: props.mapStyle,
+  mapState: props.mapState,
   onSaveMap: props.onSaveMap,
   uiState: props.uiState,
   mapStyleActions: props.mapStyleActions,

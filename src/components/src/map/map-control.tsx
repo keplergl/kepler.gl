@@ -17,6 +17,7 @@ import {Editor, LayerVisConfig, LayerOrder, MapControls, MapState} from '@kepler
 import {Datasets} from '@kepler.gl/table';
 import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
 import {getApplicationConfig} from '@kepler.gl/utils';
+import {MapViewMode} from '@kepler.gl/constants';
 
 import AnnotationControlFactory from './annotations/annotation-control';
 
@@ -53,6 +54,8 @@ export type MapControlProps = {
   mapIndex: number;
   mapControls: MapControls;
   onTogglePerspective: () => void;
+  onSetMapViewMode?: (mode: MapViewMode) => void;
+  mapViewMode?: MapViewMode;
   onToggleSplitMap: typeof MapStateActions.toggleSplitMap;
   onSetMapSplitMode?: typeof MapStateActions.setMapSplitMode;
   onToggleSplitMapViewport: ({

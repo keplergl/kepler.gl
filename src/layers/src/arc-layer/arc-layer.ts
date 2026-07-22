@@ -501,7 +501,7 @@ export default class ArcLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, interactionConfig, dataset} = opts;
+    const {data, gpuFilter, objectHovered, interactionConfig, dataset, mapState} = opts;
     const updateTriggers = {
       getPosition: this.config.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
@@ -511,6 +511,15 @@ export default class ArcLayer extends Layer {
     const widthScale = this.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER;
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
+
+    // In globe mode deck.gl is configured with a global `cull: true` to backface-
+    // cull the globe surface. The arc is drawn as a billboarded triangle-strip
+    // ribbon whose back-facing triangles then get culled too, making arcs partly
+    // or fully invisible on the globe. Disable culling just for this layer so the
+    // whole ribbon renders, without changing the global culling that the globe
+    // surface relies on.
+    const isGlobeMode = Boolean(mapState?.globe?.enabled);
+    const globeParameters = isGlobeMode ? {parameters: {cull: false}} : {};
 
     const useArrowLayer = Boolean(this.geoArrowVector0);
 
@@ -537,6 +546,7 @@ export default class ArcLayer extends Layer {
         ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
         ...experimentalPropOverrides,
+        ...globeParameters,
         widthScale,
         updateTriggers,
         extensions: [
@@ -550,6 +560,7 @@ export default class ArcLayer extends Layer {
         ? [
             new DeckArcLayer({
               ...this.getDefaultHoverLayerProps(),
+              ...globeParameters,
               visible: defaultLayerProps.visible,
               data: [hoveredObject],
               widthScale,

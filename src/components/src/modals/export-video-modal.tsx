@@ -4,7 +4,12 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled, {ThemeProvider, useTheme} from 'styled-components';
 
-import {DEFAULT_MAPBOX_API_URL, NO_MAP_ID, EMPTY_MAPBOX_STYLE, MapSplitMode} from '@kepler.gl/constants';
+import {
+  DEFAULT_MAPBOX_API_URL,
+  NO_MAP_ID,
+  EMPTY_MAPBOX_STYLE,
+  MapSplitMode
+} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Viewport, ExportVideo, Effect} from '@kepler.gl/types';
 import {
@@ -41,6 +46,7 @@ type HubbleModule = {
 let _hubbleModule: HubbleModule | null = null;
 let _hubblePromise: Promise<HubbleModule> | null = null;
 let _swipeContainer: SwipeContainerType | null = null;
+let _globeContainer: SwipeContainerType | null = null;
 
 function loadHubble(): Promise<HubbleModule> {
   if (_hubbleModule) return Promise.resolve(_hubbleModule);
@@ -53,6 +59,12 @@ function loadHubble(): Promise<HubbleModule> {
         _swipeContainer = swipeMod.SwipeExportVideoPanelContainer;
       } catch (_err) {
         // swipe export unavailable; regular export still works
+      }
+      try {
+        const globeMod = await import('./globe-export-video-container');
+        _globeContainer = globeMod.GlobeExportVideoPanelContainer;
+      } catch (_err) {
+        // globe export container unavailable; falls back to hubble's container
       }
       return _hubbleModule;
     },
@@ -324,7 +336,11 @@ const ExportVideoModalFactory = () => {
     const onUpdateVideoConfiguration = useCallback(
       (values: VideoConfiguration) => {
         setVideoConfiguration(prev => ({...prev, ...values}));
-        if (values.swipeStartPct !== undefined || values.swipeEndPct !== undefined || values.swipeEasing !== undefined) {
+        if (
+          values.swipeStartPct !== undefined ||
+          values.swipeEndPct !== undefined ||
+          values.swipeEasing !== undefined
+        ) {
           uiStateActions.setExportVideoSetting(values as any);
         }
       },
@@ -378,6 +394,11 @@ const ExportVideoModalFactory = () => {
 
     const isSwipeMode = mapState.mapSplitMode === MapSplitMode.SWIPE_COMPARE && mapState.isSplit;
 
+    // In globe mode the deck.gl GlobeView renders the planet (and basemap tiles)
+    // itself; the flat maplibre base map must be disabled so it doesn't render a
+    // 2D Mercator map behind/around the globe (mirrors studio's disableStaticMap).
+    const isGlobeEnabled = Boolean(mapState?.globe?.enabled);
+
     const onFilterFrameUpdate = useCallback(
       (filterIdx: number, name: string, value: any) => {
         visStateActions.setFilterAnimationTime(filterIdx, name, value);
@@ -423,6 +444,7 @@ const ExportVideoModalFactory = () => {
     const {ExportVideoPanelContainer, KeplerUIContext} = hubble;
 
     const SwipeContainer = _swipeContainer;
+    const GlobeContainer = _globeContainer;
 
     return (
       <KeplerUIContext.Provider value={KEPLER_UI}>
@@ -439,7 +461,7 @@ const ExportVideoModalFactory = () => {
               onTripFrameUpdate={onTripFrameUpdate}
               deckProps={deckPropsWithEffects}
               mapProps={staticMapProps}
-              disableBaseMap={false}
+              disableBaseMap={isGlobeEnabled}
               mapboxLayerBeforeId={topLayer?.id}
               defaultFileName={DEFAULT_FILENAME}
               animatableFilters={animatableFilters}
@@ -447,6 +469,27 @@ const ExportVideoModalFactory = () => {
               swipeStartPct={exportVideo.swipeStartPct}
               swipeEndPct={exportVideo.swipeEndPct}
               swipeEasing={exportVideo.swipeEasing}
+            />
+          ) : isGlobeEnabled && GlobeContainer ? (
+            // Globe (non-swipe) export uses a dedicated container that drives its
+            // own capture loop. hubble's built-in container only advances frames
+            // from the mapbox base map's render event, which doesn't fire in
+            // globe mode (base map disabled), so its export would hang.
+            <GlobeContainer
+              ref={hubbleContainerRef}
+              initialState={videoConfiguration}
+              mapData={keplerState}
+              onSettingsChange={onUpdateVideoConfiguration}
+              header={false}
+              handleClose={onClose}
+              exportVideoWidth={exportVideoWidth}
+              onFilterFrameUpdate={onFilterFrameUpdate}
+              onTripFrameUpdate={onTripFrameUpdate}
+              deckProps={deckPropsWithEffects}
+              mapProps={staticMapProps}
+              defaultFileName={DEFAULT_FILENAME}
+              animatableFilters={animatableFilters}
+              getTimeRangeFilterKeyframes={getTimeRangeFilterKeyframes}
             />
           ) : (
             <ExportVideoPanelContainer
@@ -461,7 +504,7 @@ const ExportVideoModalFactory = () => {
               onTripFrameUpdate={onTripFrameUpdate}
               deckProps={deckPropsWithEffects}
               mapProps={staticMapProps}
-              disableBaseMap={false}
+              disableBaseMap={isGlobeEnabled}
               mapboxLayerBeforeId={topLayer?.id}
               defaultFileName={DEFAULT_FILENAME}
               animatableFilters={animatableFilters}

@@ -607,7 +607,8 @@ export function computeDeckLayers(
   if (editorInfo) {
     editorLayer.push(
       getEditorLayer({
-        ...editorInfo
+        ...editorInfo,
+        mapState
       })
     );
   }

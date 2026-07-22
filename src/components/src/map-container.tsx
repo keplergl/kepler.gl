@@ -78,8 +78,20 @@ import {
   NO_MAP_ID,
   EMPTY_MAPBOX_STYLE,
   MAPBOX_MAX_PITCH,
-  MAP_LIB_OPTIONS
+  MAP_LIB_OPTIONS,
+  GLOBE_MIN_ZOOM,
+  GLOBE_MAX_ZOOM
 } from '@kepler.gl/constants';
+
+import {
+  getGlobeBaseLayers,
+  getGlobeTopLayers,
+  getGlobeClearColor,
+  getGlobeBasemapAttributions,
+  resolveGlobeBasemapProvider,
+  KeplerGlobeView
+} from '@kepler.gl/deckgl-layers';
+import type {GlobeAttribution} from '@kepler.gl/deckgl-layers';
 
 import {DROPPABLE_MAP_CONTAINER_TYPE} from './common/dnd-layer-items';
 // Contexts
@@ -241,17 +253,32 @@ type AttributionProps = {
   showOsmBasemapAttribution: boolean;
   datasetAttributions: DatasetAttribution[];
   baseMapLibraryConfig: BaseMapLibraryConfig;
+  globeAttributions?: GlobeAttribution[];
 };
 
 export const Attribution: React.FC<AttributionProps> = ({
   showBaseMapLibLogo = true,
   showOsmBasemapAttribution = false,
   datasetAttributions,
-  baseMapLibraryConfig
+  baseMapLibraryConfig,
+  globeAttributions = []
 }: AttributionProps) => {
   const isPalm = hasMobileWidth(breakPointValues);
 
   const memoizedComponents = useMemo(() => {
+    const globeAttributionNodes = globeAttributions.length ? (
+      <>
+        {globeAttributions.map(attr => (
+          <React.Fragment key={attr.label}>
+            <span className="pipe-separator">|</span>
+            <a href={attr.href} target="_blank" rel="noopener noreferrer">
+              {attr.label}
+            </a>
+          </React.Fragment>
+        ))}
+      </>
+    ) : null;
+
     if (!showBaseMapLibLogo) {
       return (
         <StyledAttribution
@@ -262,9 +289,17 @@ export const Attribution: React.FC<AttributionProps> = ({
             <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
             <div className="attrition-link">
               {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
+              {globeAttributions.length && isPalm ? (
+                <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} />
+              ) : null}
               <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
                 © kepler.gl
               </a>
+              {globeAttributionNodes}
+              {globeAttributions.length ? <span className="pipe-separator">|</span> : null}
+              {globeAttributions.length && !isPalm ? (
+                <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} />
+              ) : null}
             </div>
           </EndHorizontalFlexbox>
         </StyledAttribution>
@@ -296,6 +331,7 @@ export const Attribution: React.FC<AttributionProps> = ({
                 </a>
               </>
             ) : null}
+            {globeAttributionNodes}
             <span className="pipe-separator">|</span>
             {!isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
           </div>
@@ -307,7 +343,8 @@ export const Attribution: React.FC<AttributionProps> = ({
     showOsmBasemapAttribution,
     datasetAttributions,
     isPalm,
-    baseMapLibraryConfig
+    baseMapLibraryConfig,
+    globeAttributions
   ]);
 
   return memoizedComponents;
@@ -587,12 +624,28 @@ export default function MapContainerFactory(
     // used by <StyledMap> inline style prop
     mapStyleTypeSelector = props => props.mapStyle.styleType;
     mapStyleBackgroundColorSelector = props => props.mapStyle.backgroundColor;
+    globeModeSelector = props => Boolean(props.mapState?.globe?.enabled);
+    globeBackgroundColorSelector = props => props.mapState?.globe?.config?.backgroundColor;
     styleSelector = createSelector(
       this.mapStyleTypeSelector,
       this.mapStyleBackgroundColorSelector,
-      (styleType, backgroundColor) => ({
+      this.globeModeSelector,
+      this.globeBackgroundColorSelector,
+      (styleType, backgroundColor, isGlobeMode, globeBackgroundColor) => ({
         ...MAP_STYLE.container,
-        ...(styleType === NO_MAP_ID ? {backgroundColor: rgbToHex(backgroundColor)} : {})
+        ...(styleType === NO_MAP_ID ? {backgroundColor: rgbToHex(backgroundColor)} : {}),
+        // In globe mode the deck.gl canvas is transparent (the globe View uses
+        // `clearColor: false` to avoid corrupting the picking buffer), so the
+        // background around the globe is painted here on the container instead.
+        ...(isGlobeMode
+          ? {
+              // Fall back to the default globe background when none is configured.
+              backgroundColor: rgbToHex(
+                (globeBackgroundColor as [number, number, number]) ||
+                  (getGlobeClearColor().slice(0, 3) as [number, number, number])
+              )
+            }
+          : {})
       })
     );
 
@@ -780,6 +833,8 @@ export default function MapContainerFactory(
     };
 
     _annotationViewportCache: {key: string; viewport: any} | null = null;
+
+    _wasInteracting = false;
 
     _getAnnotationViewport(mapState: any, internalViewState: any) {
       const longitude = internalViewState?.longitude ?? mapState.longitude;
@@ -1075,15 +1130,59 @@ export default function MapContainerFactory(
         ? computeDeckEffects({visState, mapState, isExport: this.props.isExport})
         : [];
 
-      const views = deckGlProps?.views ? deckGlProps?.views() : new MapView({farZMultiplier: 1.2});
+      const isGlobeMode = mapState.globe?.enabled;
+
+      // Follow the selected basemap style's library so the globe uses the same
+      // provider as the flat 2D map (CARTO tiles for MapLibre styles, Mapbox
+      // tiles for Mapbox styles).
+      const globeBasemapProvider = resolveGlobeBasemapProvider(
+        getBaseMapLibrary(mapStyle?.mapStyles?.[mapStyle?.styleType]),
+        mapboxApiAccessToken || ''
+      );
+
+      // In globe mode, prepend globe base layers and append top layers
+      const globeBaseLayers =
+        isGlobeMode && mapState.globe
+          ? getGlobeBaseLayers({
+              mapboxApiAccessToken: mapboxApiAccessToken || '',
+              globe: mapState.globe,
+              mapStyleType: mapStyle?.styleType,
+              basemapProvider: globeBasemapProvider
+            })
+          : [];
+      const globeTopLayers =
+        isGlobeMode && mapState.globe ? getGlobeTopLayers({globe: mapState.globe}) : [];
+      const finalDeckGlLayers = isGlobeMode
+        ? [...globeBaseLayers, ...deckGlLayers, ...globeTopLayers]
+        : deckGlLayers;
+
+      const views = deckGlProps?.views
+        ? deckGlProps?.views()
+        : isGlobeMode
+        ? new KeplerGlobeView({
+            resolution: 5,
+            // The visible background around the globe is painted by the map
+            // container's CSS background (see styleSelector), NOT by a per-view
+            // color clear. deck.gl applies a View's `clearColor` in *every* pass,
+            // including the picking pass, and it forces the cleared alpha to 255
+            // (`clearColor[3] || 255`). In the picking buffer the alpha byte encodes
+            // the layer index, so a 255 clear makes deck.gl decode every pixel as a
+            // non-existent layer ("Picked non-existent layer. Is picking buffer
+            // corrupt?") on hover. `clearColor: false` skips the per-view color
+            // clear so the picking buffer keeps its 0 alpha; the canvas stays
+            // transparent and the CSS background shows through.
+            clear: true,
+            clearColor: false
+          })
+        : new MapView({farZMultiplier: 1.2});
 
       let allDeckGlProps = {
         ...deckGlProps,
         pickingRadius: DEFAULT_PICKING_RADIUS,
         views,
-        layers: deckGlLayers,
+        layers: finalDeckGlLayers,
         effects,
-        parameters: getLayerBlendingParameters(visState.layerBlending)
+        parameters: isGlobeMode ? {cull: true} : getLayerBlendingParameters(visState.layerBlending)
       };
 
       if (typeof deckRenderCallbacks?.onDeckRender === 'function') {
@@ -1120,11 +1219,21 @@ export default function MapContainerFactory(
                 ? {
                     doubleClickZoom: !isEditorDrawingMode,
                     dragRotate: this.props.mapState.dragRotate,
-                    maxPitch: this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch
+                    maxPitch: this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch,
+                    // In globe mode allow zooming out further than deck.gl's default
+                    // of 0 so the whole globe can be pulled back on screen. Set on the
+                    // controller so it stays authoritative regardless of the viewState
+                    // round-trip through Redux/local context. Cap the max zoom too so
+                    // the basemap tiles don't break down at high globe zoom.
+                    ...(isGlobeMode ? {minZoom: GLOBE_MIN_ZOOM, maxZoom: GLOBE_MAX_ZOOM} : {})
                   }
                 : false
             }
-            initialViewState={internalViewState}
+            viewState={
+              isGlobeMode
+                ? {...internalViewState, minZoom: GLOBE_MIN_ZOOM, maxZoom: GLOBE_MAX_ZOOM}
+                : internalViewState
+            }
             onBeforeRender={this._onBeforeRender}
             onViewStateChange={isInteractive ? this._onViewportChange : undefined}
             {...extraDeckParams}
@@ -1225,14 +1334,54 @@ export default function MapContainerFactory(
     }, DEBOUNCE_VIEWPORT_PROPAGATE);
 
     _onViewportChange = viewport => {
-      const {viewState} = viewport;
+      const {viewState, interactionState} = viewport;
       if (this.props.isExport) {
         // Image export map shouldn't be interactive (otherwise this callback can
         // lead to inadvertent changes to the state of the main map)
         return;
       }
       const {setInternalViewState} = this.context;
-      setInternalViewState(viewState, this.props.index);
+
+      // Flat map (2D/3D): keep the original, always-synchronous behavior. The
+      // interaction-aware timing below exists purely to fix globe-specific
+      // controlled-viewState, so it must not change the main 2D logic.
+      if (!this.props.mapState?.globe?.enabled) {
+        setInternalViewState(viewState, this.props.index);
+        this._wasInteracting = false;
+        this._onViewportChangePropagateDebounced();
+        return;
+      }
+
+      const isUserInteraction =
+        interactionState &&
+        (interactionState.isZooming ||
+          interactionState.isPanning ||
+          interactionState.isRotating ||
+          interactionState.isDragging ||
+          interactionState.inTransition);
+      // The emit that ends a gesture (panend/rotateEnd, or a fling transition
+      // ending) arrives with all interaction flags false. If we defer it, the
+      // controlled `viewState` fed back to deck lags a frame behind the
+      // controller's committed state and deck re-seeds from the stale value,
+      // making the globe visibly "jump back" to where the drag was released -
+      // most noticeable on a throw/fling release. Treat the first all-false emit
+      // right after an active gesture as part of that gesture and apply it
+      // synchronously too.
+      const isInteractionSettle = !isUserInteraction && this._wasInteracting;
+      this._wasInteracting = Boolean(isUserInteraction);
+      if (isUserInteraction || isInteractionSettle) {
+        // For interactive gestures (pan/zoom/rotate) and their end-of-gesture
+        // settle, update synchronously so the controlled `viewState` stays in
+        // lockstep with the controller and there's no stale re-seed.
+        setInternalViewState(viewState, this.props.index);
+      } else {
+        // deck.gl can fire onViewStateChange synchronously during its own render
+        // (e.g. when switching view types like MapView -> GlobeView). Updating React
+        // state during render throws a warning, so defer non-interactive updates.
+        setTimeout(() => {
+          setInternalViewState(viewState, this.props.index);
+        }, 0);
+      }
       this._onViewportChangePropagateDebounced();
     };
 
@@ -1341,7 +1490,11 @@ export default function MapContainerFactory(
           <ResolvedMapComponent
             key={`bottom-${baseMapLibraryName}`}
             {...mapProps}
-            mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
+            mapStyle={
+              mapState.globe?.enabled
+                ? EMPTY_MAPBOX_STYLE
+                : mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE
+            }
             {...bottomMapContainerProps}
             ref={this._setMapRef}
           />
@@ -1379,6 +1532,8 @@ export default function MapContainerFactory(
             editor={editor}
             locale={locale}
             onTogglePerspective={mapStateActions.togglePerspective}
+            onSetMapViewMode={mapStateActions.setMapViewMode}
+            mapViewMode={mapState.mapViewMode}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
             onToggleMapControl={this._toggleMapControl}
@@ -1425,7 +1580,7 @@ export default function MapContainerFactory(
             setSelectedAnnotation={visStateActions.setSelectedAnnotation}
           />
           {this.props.children}
-          {mapStyle.topMapStyle ? (
+          {mapStyle.topMapStyle && !mapState.globe?.enabled ? (
             <ResolvedMapComponent
               key={`top-${baseMapLibraryName}`}
               viewState={internalViewState}
@@ -1470,6 +1625,15 @@ export default function MapContainerFactory(
               showOsmBasemapAttribution={this.state.showOsmAttribution}
               datasetAttributions={datasetAttributions}
               baseMapLibraryConfig={baseMapLibraryConfig}
+              globeAttributions={getGlobeBasemapAttributions({
+                globe: mapState.globe,
+                mapboxApiAccessToken,
+                mapStyleType: mapStyle?.styleType,
+                basemapProvider: resolveGlobeBasemapProvider(
+                  baseMapLibraryName,
+                  mapboxApiAccessToken
+                )
+              })}
             />
           ) : null}
           {this.props.primary ? (

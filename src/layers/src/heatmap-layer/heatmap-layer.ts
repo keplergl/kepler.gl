@@ -596,6 +596,16 @@ class HeatmapLayer extends Layer {
     visible: boolean;
   }): KeplerHeatmapLayer[] {
     const {data, mapState} = opts;
+
+    const globeMode = Boolean(mapState?.globe?.enabled);
+
+    // In globe mode the density texture is framed around the data bounds rather
+    // than the visible screen, so we need valid data bounds to render at all.
+    const densityBounds = this.meta?.bounds as [number, number, number, number] | undefined;
+    if (globeMode && (!densityBounds || densityBounds.length !== 4)) {
+      return [];
+    }
+
     const {_unfiltered, ...deckData} = data;
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
@@ -629,7 +639,10 @@ class HeatmapLayer extends Layer {
         updateTriggers,
         colorRange,
         weightsTextureSize: 512,
-        debounceTimeout: 0
+        debounceTimeout: 0,
+        // globe-mode extensions
+        globeMode,
+        densityBounds: globeMode ? densityBounds : null
       })
     ];
   }

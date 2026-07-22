@@ -75,6 +75,19 @@ export default function MapNavigationControlFactory() {
     const handleCompassClick = useCallback(() => {
       const currentBearing = viewState?.bearing ?? mapState.bearing;
       const currentPitch = viewState?.pitch ?? mapState.pitch;
+      const isGlobe = Boolean(mapState.globe?.enabled);
+
+      // In globe mode bearing/pitch stay at 0, so a compass reset instead recenters
+      // the camera target back onto the equator (latitude 0), keeping longitude/zoom.
+      if (isGlobe) {
+        const currentLatitude = viewState?.latitude ?? mapState.latitude;
+        if (currentBearing === 0 && currentPitch === 0 && currentLatitude === 0) {
+          return;
+        }
+        mapStateActions.updateMap({bearing: 0, pitch: 0, latitude: 0}, mapIndex);
+        return;
+      }
+
       if (currentBearing === 0 && currentPitch === 0) {
         return;
       }

@@ -46,7 +46,13 @@ export default {
     water: 'Water',
     land: 'Land',
     '3dBuilding': '3D Building',
-    background: 'Background'
+    background: 'Background',
+    atmosphere: 'Atmosphere',
+    basemap: 'Basemap',
+    adminBorders: 'Admin Borders',
+    terminator: 'Day/Night',
+    sunAzimuth: 'Sun Azimuth',
+    surface: 'Globe Surface'
   },
   panel: {
     text: {
@@ -245,13 +251,15 @@ export default {
     addData: 'Add Data',
     addLayer: 'Add Layer',
     layerBlending: 'Layer Blending',
-    overlayBlending: 'Overlay Blending'
+    overlayBlending: 'Overlay Blending',
+    globeUnsupported: '{layerType} layer is not supported in Globe mode'
   },
   mapManager: {
     mapStyle: 'Map style',
     addMapStyle: 'Add Map Style',
     '3dBuildingColor': '3D Building Color',
-    backgroundColor: 'Background Color'
+    backgroundColor: 'Background Color',
+    globeLayers: 'Globe Layers'
   },
   effectManager: {
     effects: 'Effects',
@@ -349,6 +357,10 @@ export default {
     selectSplitMode: 'Select map view mode',
     showLegend: 'Show legend',
     disable3DMap: 'Disable 3D Map',
+    globeMap: 'Globe Map',
+    disableGlobeMap: 'Disable Globe Map',
+    viewMode: 'View Mode',
+    top: 'Top',
     DrawOnMap: 'Draw on map',
     selectLocale: 'Select locale',
     hideLayerPanel: 'Hide layer panel',

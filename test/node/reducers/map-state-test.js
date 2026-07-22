@@ -11,7 +11,9 @@ import {
   toggleSplitMapViewport,
   receiveMapConfig,
   setMapSplitMode,
-  setSwipeComparePercentage
+  setSwipeComparePercentage,
+  setMapViewMode,
+  globeConfigChange
 } from '@kepler.gl/actions';
 
 import {
@@ -19,6 +21,13 @@ import {
   mapStateReducerFactory,
   INITIAL_MAP_STATE
 } from '@kepler.gl/reducers';
+
+import {
+  MapViewMode,
+  GLOBE_MIN_ZOOM,
+  GLOBE_MAX_ZOOM,
+  DEFAULT_GLOBE_CONFIG
+} from '@kepler.gl/constants';
 
 const InitialMapState = reducer(undefined, {});
 test('#mapStateReducer', t => {
@@ -739,11 +748,144 @@ test('#mapStateReducer -> toggleSplitMapViewport in SWIPE_COMPARE mode', t => {
   const stateBeforeToggle = state;
   state = reducer(state, toggleSplitMapViewport({isViewportSynced: false}));
 
-  t.equal(
-    state,
-    stateBeforeToggle,
-    'should not allow unsyncing viewports in swipe mode'
+  t.equal(state, stateBeforeToggle, 'should not allow unsyncing viewports in swipe mode');
+
+  t.end();
+});
+
+test('#mapStateReducer -> SET_MAP_VIEW_MODE: enter globe mode', t => {
+  const state = reducer(INITIAL_MAP_STATE, setMapViewMode(MapViewMode.MODE_GLOBE));
+
+  t.equal(state.mapViewMode, MapViewMode.MODE_GLOBE, 'should set mapViewMode to globe');
+  t.equal(state.globe.enabled, true, 'should enable globe');
+  t.equal(state.pitch, 0, 'should reset pitch entering globe');
+  t.equal(state.bearing, 0, 'should reset bearing entering globe');
+  t.equal(state.dragRotate, true, 'should enable dragRotate in globe');
+  t.equal(state.minZoom, GLOBE_MIN_ZOOM, 'should apply globe minZoom');
+  t.equal(state.maxZoom, GLOBE_MAX_ZOOM, 'should apply globe maxZoom');
+
+  t.end();
+});
+
+test('#mapStateReducer -> SET_MAP_VIEW_MODE: globe clamps zoom into range', t => {
+  // zoom above the cap should clamp down to GLOBE_MAX_ZOOM
+  let state = reducer(
+    {...INITIAL_MAP_STATE, zoom: GLOBE_MAX_ZOOM + 5},
+    setMapViewMode(MapViewMode.MODE_GLOBE)
   );
+  t.equal(state.zoom, GLOBE_MAX_ZOOM, 'zoom above cap should clamp to GLOBE_MAX_ZOOM');
+
+  // zoom below the floor should clamp up to GLOBE_MIN_ZOOM
+  state = reducer(
+    {...INITIAL_MAP_STATE, zoom: GLOBE_MIN_ZOOM - 5},
+    setMapViewMode(MapViewMode.MODE_GLOBE)
+  );
+  t.equal(state.zoom, GLOBE_MIN_ZOOM, 'zoom below floor should clamp to GLOBE_MIN_ZOOM');
+
+  // zoom already in range should be preserved
+  state = reducer({...INITIAL_MAP_STATE, zoom: 6}, setMapViewMode(MapViewMode.MODE_GLOBE));
+  t.equal(state.zoom, 6, 'zoom within range should be preserved');
+
+  t.end();
+});
+
+test('#mapStateReducer -> SET_MAP_VIEW_MODE: leaving globe clears globe zoom bounds', t => {
+  // enter globe (which sets min/maxZoom to globe bounds)
+  const globeState = reducer(INITIAL_MAP_STATE, setMapViewMode(MapViewMode.MODE_GLOBE));
+  t.equal(globeState.minZoom, GLOBE_MIN_ZOOM, 'sanity: globe minZoom set');
+  t.equal(globeState.maxZoom, GLOBE_MAX_ZOOM, 'sanity: globe maxZoom set');
+
+  // globe -> 2D should clear the globe-only bounds so the flat map isn't clamped
+  const to2d = reducer(globeState, setMapViewMode(MapViewMode.MODE_2D));
+  t.equal(to2d.globe.enabled, false, '2D should disable globe');
+  t.equal(to2d.minZoom, undefined, 'globe -> 2D should clear minZoom');
+  t.equal(to2d.maxZoom, undefined, 'globe -> 2D should clear maxZoom');
+  t.equal(to2d.pitch, 0, 'globe -> 2D should reset pitch');
+  t.equal(to2d.bearing, 0, 'globe -> 2D should reset bearing');
+
+  // globe -> 3D should also clear the globe-only bounds
+  const to3d = reducer(globeState, setMapViewMode(MapViewMode.MODE_3D));
+  t.equal(to3d.globe.enabled, false, '3D should disable globe');
+  t.equal(to3d.minZoom, undefined, 'globe -> 3D should clear minZoom');
+  t.equal(to3d.maxZoom, undefined, 'globe -> 3D should clear maxZoom');
+  t.equal(to3d.pitch, 50, 'globe -> 3D should set 3D pitch');
+  t.equal(to3d.bearing, 24, 'globe -> 3D should set 3D bearing');
+
+  t.end();
+});
+
+test('#mapStateReducer -> SET_MAP_VIEW_MODE: preserves custom zoom bounds when globe never enabled', t => {
+  // App configured custom bounds and never entered globe: switching 2D/3D must
+  // NOT wipe those bounds (only leaving globe clears them).
+  const customState = {...INITIAL_MAP_STATE, minZoom: 3, maxZoom: 15};
+
+  const to3d = reducer(customState, setMapViewMode(MapViewMode.MODE_3D));
+  t.equal(to3d.minZoom, 3, '2D -> 3D should preserve custom minZoom');
+  t.equal(to3d.maxZoom, 15, '2D -> 3D should preserve custom maxZoom');
+
+  const to2d = reducer(
+    {...customState, mapViewMode: MapViewMode.MODE_3D},
+    setMapViewMode(MapViewMode.MODE_2D)
+  );
+  t.equal(to2d.minZoom, 3, '3D -> 2D should preserve custom minZoom');
+  t.equal(to2d.maxZoom, 15, '3D -> 2D should preserve custom maxZoom');
+
+  t.end();
+});
+
+test('#mapStateReducer -> SET_MAP_VIEW_MODE: invalid mode is no-op', t => {
+  const state = reducer(INITIAL_MAP_STATE, setMapViewMode('NOT_A_MODE'));
+  t.equal(state, INITIAL_MAP_STATE, 'unknown view mode should return same state reference');
+
+  t.end();
+});
+
+test('#mapStateReducer -> TOGGLE_PERSPECTIVE: leaving globe clears globe zoom bounds', t => {
+  // enter globe first, then toggle perspective (which forces globe off)
+  const globeState = reducer(INITIAL_MAP_STATE, setMapViewMode(MapViewMode.MODE_GLOBE));
+  const toggled = reducer(globeState, togglePerspective());
+
+  t.equal(toggled.globe.enabled, false, 'togglePerspective should disable globe');
+  t.equal(toggled.minZoom, undefined, 'leaving globe via togglePerspective should clear minZoom');
+  t.equal(toggled.maxZoom, undefined, 'leaving globe via togglePerspective should clear maxZoom');
+
+  t.end();
+});
+
+test('#mapStateReducer -> TOGGLE_PERSPECTIVE: preserves custom zoom bounds when globe never enabled', t => {
+  const customState = {...INITIAL_MAP_STATE, minZoom: 4, maxZoom: 14};
+  const toggled = reducer(customState, togglePerspective());
+
+  t.equal(toggled.minZoom, 4, 'togglePerspective without globe should preserve custom minZoom');
+  t.equal(toggled.maxZoom, 14, 'togglePerspective without globe should preserve custom maxZoom');
+  t.equal(toggled.dragRotate, true, 'togglePerspective should still flip dragRotate');
+
+  t.end();
+});
+
+test('#mapStateReducer -> GLOBE_CONFIG_CHANGE: merges partial config', t => {
+  const globeState = reducer(INITIAL_MAP_STATE, setMapViewMode(MapViewMode.MODE_GLOBE));
+
+  const updated = reducer(
+    globeState,
+    globeConfigChange({atmosphere: false, backgroundColor: [10, 20, 30]})
+  );
+
+  t.equal(updated.globe.config.atmosphere, false, 'should update atmosphere');
+  t.deepEqual(updated.globe.config.backgroundColor, [10, 20, 30], 'should update backgroundColor');
+  // untouched keys should be preserved from the defaults
+  t.equal(
+    updated.globe.config.terminator,
+    DEFAULT_GLOBE_CONFIG.terminator,
+    'should preserve unrelated config keys'
+  );
+  t.equal(
+    updated.globe.config.water,
+    DEFAULT_GLOBE_CONFIG.water,
+    'should preserve unrelated config keys'
+  );
+  // changing config must not toggle globe enabled state
+  t.equal(updated.globe.enabled, true, 'should not change globe enabled flag');
 
   t.end();
 });

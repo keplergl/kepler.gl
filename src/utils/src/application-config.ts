@@ -128,6 +128,9 @@ export type KeplerApplicationConfig = {
   /** Whether to enable the swipe compare mode in split map view. Enabled by default. */
   enableSwipeMode?: boolean;
 
+  /** Whether to show the option to switch to the globe view. Enabled by default. */
+  enableGlobeView?: boolean;
+
   /** Whether to enable the layer groups feature. Enabled by default. */
   enableLayerGroups?: boolean;
   
@@ -239,6 +242,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableMapNavigationControl: true,
 
   enableSwipeMode: true,
+
+  enableGlobeView: true,
 
   enableLayerGroups: true,
 

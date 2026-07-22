@@ -1343,6 +1343,104 @@ export const MAP_CONTROLS = keyMirror({
   annotation: null
 });
 
+export enum MapViewMode {
+  MODE_2D = 'MODE_2D',
+  MODE_3D = 'MODE_3D',
+  MODE_GLOBE = 'MODE_GLOBE'
+}
+
+/**
+ * Minimum zoom level allowed in globe mode. Negative values let the user zoom
+ * out further than the web-mercator default of 0, so the whole globe can be
+ * pulled back to appear smaller on screen.
+ */
+export const GLOBE_MIN_ZOOM = 2;
+
+/**
+ * Maximum zoom in globe mode.
+ *
+ * TODO: investigate further. Past this level the globe basemap breaks down in
+ * deck.gl 9.x: the vector basemap tileset (mapbox-streets vector tiles) stops
+ * loading / renders as empty rectangles, and there are interaction issues on
+ * zoom in and panning (the camera drifts). Capping zoom here keeps the basemap
+ * and interactions coherent until the underlying tile/controller issue is fixed.
+ */
+export const GLOBE_MAX_ZOOM = 12;
+
+/**
+ * Maximum absolute center latitude allowed in globe mode. Constrains the camera
+ * target to a band around the equator so the view can't be centered on the
+ * poles (deck.gl's default clamps to ~85°, which lets the camera stare straight
+ * down at a pole). Applies symmetrically to the northern and southern hemisphere.
+ */
+export const GLOBE_MAX_LATITUDE = 75;
+
+export type GlobeConfig = {
+  atmosphere: boolean;
+  azimuth: boolean;
+  azimuthAngle: number;
+  terminator: boolean;
+  terminatorOpacity: number;
+  basemap: boolean;
+  labels: boolean;
+  labelsColor: [number, number, number];
+  adminLines: boolean;
+  adminLinesColor: [number, number, number];
+  water: boolean;
+  waterColor: [number, number, number];
+  surfaceColor: [number, number, number];
+  surface: boolean;
+  backgroundColor: [number, number, number];
+};
+
+export type Globe = {
+  enabled: boolean;
+  config: GlobeConfig;
+};
+
+export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
+  atmosphere: true,
+  azimuth: false,
+  azimuthAngle: 45,
+  terminator: true,
+  terminatorOpacity: 0.35,
+  basemap: true,
+  labels: false,
+  labelsColor: [114.75, 114.75, 114.75],
+  adminLines: true,
+  adminLinesColor: [40, 63, 93],
+  water: true,
+  waterColor: [17, 35, 48],
+  surface: true,
+  surfaceColor: [9, 16, 29],
+  // Color of the empty space rendered around the globe (deck.gl clear color).
+  // Matches the previous hardcoded clear color [0.015, 0.035, 0.065] in 0-1 space.
+  backgroundColor: [4, 9, 17]
+};
+
+export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
+  point: true,
+  arc: true,
+  grid: true,
+  hexagon: true,
+  geojson: true,
+  cluster: true,
+  icon: true,
+  hexagonId: true,
+  '3D': true,
+  vectorTile: true,
+  hexTile: true,
+  line: true,
+  trip: true,
+  rasterTile: true,
+  heatmap: true,
+  s2: false,
+  tile3d: false,
+  // Flow arrows are flat quads in common space (equatorial plane) and collapse when
+  // viewed edge-on on the globe, so the flow layer is not supported in Globe mode.
+  flow: false
+};
+
 export enum MapSplitMode {
   SINGLE_MAP = 'SINGLE_MAP',
   DUAL_MAP = 'DUAL_MAP',

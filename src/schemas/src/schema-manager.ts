@@ -27,6 +27,27 @@ export type SavedMapState = {
   isViewportSynced?: true;
   isZoomLocked?: false;
   splitMapViewports?: [];
+  mapViewMode?: string;
+  globe?: {
+    enabled: boolean;
+    config: {
+      atmosphere: boolean;
+      azimuth: boolean;
+      azimuthAngle: number;
+      terminator: boolean;
+      terminatorOpacity: number;
+      basemap: boolean;
+      labels: boolean;
+      labelsColor: [number, number, number];
+      adminLines: boolean;
+      adminLinesColor: [number, number, number];
+      water: boolean;
+      waterColor: [number, number, number];
+      surface: boolean;
+      surfaceColor: [number, number, number];
+      backgroundColor: [number, number, number];
+    };
+  };
 };
 
 export type SavedLayerGroups = {

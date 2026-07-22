@@ -7,7 +7,7 @@ import DatasetLayerSectionFactory from './dataset-layer-section';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, ActionHandler, MapStateActions} from '@kepler.gl/actions';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
-import {LayerOrder} from '@kepler.gl/types';
+import {LayerOrder, MapState} from '@kepler.gl/types';
 
 type DatasetLayerGroupProps = {
   datasets: Datasets;
@@ -21,6 +21,7 @@ type DatasetLayerGroupProps = {
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
+  mapState?: MapState;
 };
 
 DatasetLayerGroupFactory.deps = [DatasetLayerSectionFactory];
@@ -40,7 +41,8 @@ function DatasetLayerGroupFactory(
       layerClasses,
       uiStateActions,
       visStateActions,
-      mapStateActions
+      mapStateActions,
+      mapState
     } = props;
 
     const datasetLayerSectionData = useMemo(() => {
@@ -73,6 +75,7 @@ function DatasetLayerGroupFactory(
             uiStateActions={uiStateActions}
             visStateActions={visStateActions}
             mapStateActions={mapStateActions}
+            mapState={mapState}
           />
         ))}
       </>

@@ -44,7 +44,7 @@ import {
 } from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/utils';
 
-import {MVTLayer as CustomMVTLayer} from './mvt-layer';
+import {MVTLayer as CustomMVTLayer, GlobeClipExtension} from './mvt-layer';
 import VectorTileIcon from './vector-tile-icon';
 import {
   default as KeplerLayer,
@@ -593,7 +593,11 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       const perTileOverlays = this._getPerTileOverlays(hoveredObject, {
         defaultLayerProps,
         visConfig,
-        uniqueIdProperty
+        uniqueIdProperty,
+        // In globe mode use the lng/lat-based GlobeClipExtension for the hover
+        // outline (see mvt-layer.ts: the stock common-space clip slices diagonally
+        // through the sphere geometry).
+        isGlobeMode: Boolean((mapState as any)?.globe?.enabled)
       });
 
       const layers = [
@@ -726,7 +730,12 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
    */
   _getPerTileOverlays(
     hoveredObject: Feature,
-    options: {defaultLayerProps: any; visConfig: any; uniqueIdProperty?: string}
+    options: {
+      defaultLayerProps: any;
+      visConfig: any;
+      uniqueIdProperty?: string;
+      isGlobeMode?: boolean;
+    }
   ): DeckLayer[] {
     let perTileOverlays: DeckLayer[] = [];
     if (hoveredObject) {
@@ -774,7 +783,9 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
             stroked: true,
             filled: false,
             clipBounds: bounds,
-            extensions: bounds ? [new ClipExtension()] : []
+            extensions: bounds
+              ? [options.isGlobeMode ? new GlobeClipExtension() : new ClipExtension()]
+              : []
           });
         });
       } catch {

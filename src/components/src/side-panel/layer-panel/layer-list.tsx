@@ -8,7 +8,7 @@ import classnames from 'classnames';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
 import {UIStateActions, VisStateActions, MapStateActions} from '@kepler.gl/actions';
-import {LayerOrderGroup, LayerOrder, LayerOrderHierarchy} from '@kepler.gl/types';
+import {LayerOrderGroup, LayerOrder, LayerOrderHierarchy, MapState} from '@kepler.gl/types';
 
 import {useDroppable} from '@dnd-kit/core';
 import {
@@ -39,6 +39,7 @@ export type LayerListProps = {
   layerClasses: LayerClassesType;
   isSortable?: boolean;
   splitMap?: SplitMap;
+  mapState?: MapState;
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
@@ -315,6 +316,7 @@ function LayerListFactory(
       uiStateActions,
       visStateActions,
       mapStateActions,
+      mapState,
       layerClasses,
       isSortable = true,
       splitMap
@@ -368,9 +370,10 @@ function LayerListFactory(
         datasets,
         openModal,
         layerTypeOptions,
-        splitMap
+        splitMap,
+        mapState
       }),
-      [datasets, openModal, layerTypeOptions, splitMap]
+      [datasets, openModal, layerTypeOptions, splitMap, mapState]
     );
 
     return (

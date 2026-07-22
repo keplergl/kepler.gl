@@ -11,6 +11,7 @@ import {createEffect} from '@kepler.gl/effects';
 import {
   POSTPROCESSING_EFFECTS,
   LIGHT_AND_SHADOW_EFFECT,
+  DISTANCE_FOG_TYPE,
   DEFAULT_POST_PROCESSING_EFFECT_TYPE
 } from '@kepler.gl/constants';
 
@@ -53,6 +54,62 @@ test('effectUtils -> computeDeckEffects', t => {
   });
   t.equal(deckEffects[0].shadowColor[3], 0.5, 'shadows should be enabled');
   t.equal(deckEffects[0].directionalLights[0].intensity, 1, 'directional light should be enabled');
+
+  t.end();
+});
+
+test('effectUtils -> computeDeckEffects in globe mode', t => {
+  const initialState = InitialState.visState;
+  let nextState = visStateReducer(
+    initialState,
+    VisStateActions.addEffect({id: 'e_ink', type: 'ink'})
+  );
+  nextState = visStateReducer(
+    nextState,
+    VisStateActions.addEffect({
+      id: 'e_shadow',
+      type: LIGHT_AND_SHADOW_EFFECT.type,
+      parameters: {timestamp: 1689415852635} // daytime
+    })
+  );
+  // Only one fog effect can exist at a time (enforced by addEffectUpdater), so
+  // add just the distance fog effect.
+  nextState = visStateReducer(
+    nextState,
+    VisStateActions.addEffect({id: 'e_distance_fog', type: DISTANCE_FOG_TYPE})
+  );
+
+  // Flat mode first: keeps ink + lighting + distance fog = 3 effects. Assert on
+  // flat mode before globe mode because both calls share (and mutate) the same
+  // lighting deckEffect instance.
+  const flatEffects = computeDeckEffects({
+    visState: nextState,
+    mapState: {latitude: 51.033105, longitude: 0.348512}
+  });
+  t.equal(flatEffects.length, 3, 'flat mode keeps ink, lighting and the fog effect');
+  t.ok(
+    flatEffects.some(e => e.id === 'distance-fog-effect'),
+    'flat mode keeps the distance fog effect'
+  );
+
+  // Globe mode: drops the fog effect, keeps ink + lighting (shadow disabled).
+  const globeEffects = computeDeckEffects({
+    visState: nextState,
+    mapState: {latitude: 51.033105, longitude: 0.348512, globe: {enabled: true}}
+  });
+  t.equal(globeEffects.length, 2, 'globe mode drops the fog effect');
+  t.notOk(
+    globeEffects.some(e => e.id === 'distance-fog-effect'),
+    'globe mode drops the distance fog effect'
+  );
+
+  const lightingEffects = globeEffects.filter(e => e instanceof LightingEffect);
+  t.equal(lightingEffects.length, 1, 'lighting effect should be kept in globe mode');
+  t.equal(
+    lightingEffects[0].shadow,
+    false,
+    'shadows should be disabled on the lighting effect in globe mode'
+  );
 
   t.end();
 });

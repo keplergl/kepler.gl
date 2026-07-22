@@ -20,10 +20,13 @@ import type {DeckProps, MapViewState} from '@deck.gl/core';
 import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 
 import {parseSetCameraType, scaleToVideoExport, getResolutionSetting} from './hubble-utils';
-import {SwipeExportVideoPreview} from './swipe-export-video-preview';
+import {GlobeExportVideoPreview} from './globe-export-video-preview';
 import SwipeExportSettings from './swipe-export-settings';
-import {SwipeEasing} from './swipe-composite-utils';
 import {getGlobeClearColor} from '@kepler.gl/deckgl-layers';
+
+// No-op for the swipe-specific settings callbacks that this single-map globe
+// exporter doesn't use (the swipe controls are hidden via `hideSwipe`).
+const noop = () => undefined;
 
 const ENCODERS = {
   gif: GifEncoder,
@@ -32,19 +35,16 @@ const ENCODERS = {
   png: PNGSequenceEncoder
 };
 
-export type SwipeExportVideoSettings = {
+export type GlobeExportVideoSettings = {
   mediaType?: string;
   cameraPreset?: string;
   fileName?: string;
   resolution?: string;
   durationMs?: number;
-  swipeStartPct?: number;
-  swipeEndPct?: number;
-  swipeEasing?: SwipeEasing;
 };
 
-type SwipeExportVideoPanelContainerProps = {
-  initialState?: Partial<SwipeExportVideoPanelContainerState>;
+type GlobeExportVideoPanelContainerProps = {
+  initialState?: Partial<GlobeExportVideoPanelContainerState>;
   glContext?: WebGL2RenderingContext;
   exportVideoWidth: number;
   handleClose: () => void;
@@ -52,20 +52,15 @@ type SwipeExportVideoPanelContainerProps = {
   header: boolean;
   deckProps?: DeckProps;
   mapProps: Record<string, any>;
-  disableBaseMap: boolean;
-  mapboxLayerBeforeId?: string;
   defaultFileName: string;
   animatableFilters: any;
   onTripFrameUpdate: (value: any) => void;
   onFilterFrameUpdate: (filterIdx: number, name: string, value: any) => void;
   getTimeRangeFilterKeyframes: (args: any) => any;
-  onSettingsChange: (settings: SwipeExportVideoSettings) => void;
-  swipeStartPct: number;
-  swipeEndPct: number;
-  swipeEasing: SwipeEasing;
+  onSettingsChange: (settings: GlobeExportVideoSettings) => void;
 };
 
-type SwipeExportVideoPanelContainerState = {
+type GlobeExportVideoPanelContainerState = {
   adapter?: DeckAdapter;
   durationMs: number;
   mediaType: string;
@@ -112,44 +107,47 @@ const StatusText = styled.div`
   margin-top: 4px;
 `;
 
-const PlayIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({style, onClick}) => (
-  <svg
-    className="data-ex-icons-play"
-    viewBox="0 0 24 24"
-    style={style}
-    onClick={onClick}
-  >
+const PlayIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({
+  style,
+  onClick
+}) => (
+  <svg className="data-ex-icons-play" viewBox="0 0 24 24" style={style} onClick={onClick}>
     <path fill="none" d="M0 0h24v24H0z" />
     <path d="M19.376 12.416L8.777 19.482A.5.5 0 0 1 8 19.066V4.934a.5.5 0 0 1 .777-.416l10.599 7.066a.5.5 0 0 1 0 .832z" />
   </svg>
 );
 
-const StopIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({style, onClick}) => (
-  <svg
-    className="data-ex-icons-stop"
-    viewBox="0 0 24 24"
-    style={style}
-    onClick={onClick}
-  >
+const StopIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({
+  style,
+  onClick
+}) => (
+  <svg className="data-ex-icons-stop" viewBox="0 0 24 24" style={style} onClick={onClick}>
     <path fill="none" d="M0 0h24v24H0z" />
     <path d="M6 5h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />
   </svg>
 );
 
 /**
- * Orchestrates swipe video export recording.
- * Manages a DeckAdapter but overrides the capture pipeline to
- * composite left/right canvases with an animated swipe divider.
+ * Video export container for globe mode.
+ *
+ * hubble's built-in ExportVideoPanelContainer only drives its frame-capture
+ * loop from the mapbox base map's 'render' event; in globe mode the base map is
+ * disabled so that loop never fires and the export hangs. This container mirrors
+ * the swipe-export approach: it owns a requestAnimationFrame capture loop and
+ * reads the globe deck canvas directly, so recording works without a base map.
  */
-export class SwipeExportVideoPanelContainer extends Component<
-  SwipeExportVideoPanelContainerProps,
-  SwipeExportVideoPanelContainerState
+export class GlobeExportVideoPanelContainer extends Component<
+  GlobeExportVideoPanelContainerProps,
+  GlobeExportVideoPanelContainerState
 > {
-  previewRef = createRef<SwipeExportVideoPreview>();
+  previewRef = createRef<GlobeExportVideoPreview>();
   animationFrameId: number | null = null;
   activeEncoder: any | null = null;
+  // Reused across all captured frames to avoid allocating a full-resolution
+  // canvas per frame (GC pressure/jank during a multi-second export).
+  compositeCanvas: HTMLCanvasElement | null = null;
 
-  constructor(props: SwipeExportVideoPanelContainerProps) {
+  constructor(props: GlobeExportVideoPanelContainerProps) {
     super(props);
 
     const {
@@ -258,14 +256,18 @@ export class SwipeExportVideoPanelContainer extends Component<
 
   getFilterKeyframes() {
     const {
-      mapData: {visState: {filters}},
+      mapData: {
+        visState: {filters}
+      },
       animatableFilters
     } = this.props;
 
     const filterKeyframes = (
       Array.isArray(animatableFilters) && animatableFilters.length
         ? animatableFilters
-        : filters.filter((f: any) => f.type === 'timeRange' && f.view === FILTER_VIEW_TYPES.enlarged)
+        : filters.filter(
+            (f: any) => f.type === 'timeRange' && f.view === FILTER_VIEW_TYPES.enlarged
+          )
     ).map((f: any) => ({
       id: f.id,
       timings: [0, this.state.durationMs]
@@ -279,7 +281,9 @@ export class SwipeExportVideoPanelContainer extends Component<
 
   getTripKeyframes() {
     const {
-      mapData: {visState: {layers, animationConfig}}
+      mapData: {
+        visState: {layers, animationConfig}
+      }
     } = this.props;
 
     const animatableLayer = layers.filter(
@@ -300,21 +304,14 @@ export class SwipeExportVideoPanelContainer extends Component<
     this.setState({viewState});
   };
 
-  /**
-   * CSS background color for globe swipe (the area the globe doesn't cover).
-   * Returns undefined outside globe mode so non-globe swipe keeps its previous
-   * transparent-clear compositing (the opaque base map already fills the frame).
-   */
-  getBackgroundColor(): string | undefined {
-    if (!this.props.mapData?.mapState?.globe?.enabled) {
-      return undefined;
-    }
+  /** CSS background color (area the globe doesn't cover), from globe config. */
+  getBackgroundColor(): string {
     const bg = this.props.mapData?.mapState?.globe?.config?.backgroundColor;
     const [r, g, b] = getGlobeClearColor(bg);
     return `rgb(${r}, ${g}, ${b})`;
   }
 
-  setStateAndNotify(update: SwipeExportVideoSettings) {
+  setStateAndNotify(update: GlobeExportVideoSettings) {
     const {onSettingsChange} = this.props;
     const {mediaType, cameraPreset, fileName, resolution, durationMs} = this.state;
     this.setState({...this.state, ...update} as any);
@@ -329,9 +326,7 @@ export class SwipeExportVideoPanelContainer extends Component<
   setResolution = (resolution: string) => this.setStateAndNotify({resolution});
   setDuration = (durationMs: number) => this.setStateAndNotify({durationMs});
 
-  /**
-   * Start a preview playback — animates the swipe without encoding.
-   */
+  /** Preview playback — animate the camera without encoding. */
   onPreviewVideo = () => {
     const {adapter, durationMs} = this.state;
     this.setState({
@@ -370,9 +365,8 @@ export class SwipeExportVideoPanelContainer extends Component<
   };
 
   /**
-   * Start actual recording — captures composited frames into the encoder.
-   * Uses a timer-based approach: updates currentTimeMs, waits for the preview
-   * to composite, then captures the composite canvas.
+   * Record — drive our own capture loop (hubble's built-in loop never fires
+   * without a base map) and encode the globe deck canvas frame by frame.
    */
   onRenderVideo = () => {
     const {adapter} = this.state;
@@ -402,7 +396,7 @@ export class SwipeExportVideoPanelContainer extends Component<
     const frameLengthMs = Math.floor(1000 / timecode.framerate);
     let timeMs = timecode.start;
     let retryCount = 0;
-    const MAX_RETRIES = 10;
+    const MAX_RETRIES = 60;
 
     const captureNextFrame = () => {
       if (!this.state.rendering || this.activeEncoder !== encoder) return;
@@ -411,72 +405,68 @@ export class SwipeExportVideoPanelContainer extends Component<
       adapter!.animationManager.draw();
       this.setState({currentTimeMs: timeMs});
 
-      // Allow 3 frames for state update → preview re-render → composite
+      // Allow state update → preview re-render → deck redraw before capturing.
       const waitAndCapture = () => {
         requestAnimationFrame(() => {
           if (this.activeEncoder !== encoder) return;
           requestAnimationFrame(() => {
             if (this.activeEncoder !== encoder) return;
-            requestAnimationFrame(() => {
-              if (this.activeEncoder !== encoder) return;
-              const preview = this.previewRef.current;
-              if (!preview) return;
+            const preview = this.previewRef.current;
+            if (!preview) return;
 
-              // Use the composite canvas that the preview already updates
-              const compositeCanvas = preview.getCompositeCanvas();
-              if (!compositeCanvas) return;
+            // Wait for globe base/data layers (tiles included) to finish before
+            // the first frame so we don't record a half-loaded planet.
+            if (!preview.areLayersLoaded() && retryCount < MAX_RETRIES) {
+              retryCount++;
+              requestAnimationFrame(waitAndCapture);
+              return;
+            }
+            retryCount = 0;
 
-              // Check if the canvas has any content (not blank)
-              const ctx = compositeCanvas.getContext('2d');
-              if (!ctx) return;
+            const deckCanvas = preview.getCanvas();
+            if (!deckCanvas) return;
 
-              let hasContent = true;
-              try {
-                const pixel = ctx.getImageData(0, 0, 1, 1).data;
-                hasContent = pixel[0] !== 0 || pixel[1] !== 0 || pixel[2] !== 0 || pixel[3] !== 0;
-              } catch {
-                // Canvas may be tainted by cross-origin resources; assume content exists
-              }
-
-              if (!hasContent && retryCount < MAX_RETRIES) {
-                retryCount++;
-                // Trigger composite manually and retry
-                preview._compositeFrame();
-                requestAnimationFrame(waitAndCapture);
-                return;
-              }
-              retryCount = 0;
-
-              // Capture the composite canvas at target resolution
-              const offscreen = document.createElement('canvas');
+            // Reuse a single offscreen canvas across frames (resized only when
+            // the output dimensions change) instead of allocating one per frame.
+            let offscreen = this.compositeCanvas;
+            if (!offscreen) {
+              offscreen = document.createElement('canvas');
+              this.compositeCanvas = offscreen;
+            }
+            if (offscreen.width !== width || offscreen.height !== height) {
               offscreen.width = width;
               offscreen.height = height;
-              const offCtx = offscreen.getContext('2d');
-              if (offCtx) {
-                offCtx.drawImage(compositeCanvas, 0, 0, width, height);
-              }
+            }
+            const offCtx = offscreen.getContext('2d');
+            if (offCtx) {
+              // deck's canvas is transparent where the globe isn't drawn
+              // (clearColor is disabled to keep picking intact), so fill the
+              // configured background first, then composite the deck frame.
+              offCtx.fillStyle = this.getBackgroundColor();
+              offCtx.fillRect(0, 0, width, height);
+              offCtx.drawImage(deckCanvas, 0, 0, width, height);
+            }
 
-              encoder.add(offscreen).then(() => {
-                if (this.activeEncoder !== encoder) return;
-                timeMs += frameLengthMs;
-                if (timeMs > timecode.end) {
-                  this.setState({saving: true});
-                  encoder.save().then((blob: Blob | null) => {
-                    if (this.activeEncoder !== encoder) return;
-                    if (blob) {
-                      download(blob, filename + encoder.extension, encoder.mimeType);
-                    }
-                    this.setState({
-                      rendering: false,
-                      saving: false,
-                      currentTimeMs: 0,
-                      viewState: {...this.state.memo!.viewState}
-                    });
+            encoder.add(offscreen).then(() => {
+              if (this.activeEncoder !== encoder) return;
+              timeMs += frameLengthMs;
+              if (timeMs > timecode.end) {
+                this.setState({saving: true});
+                encoder.save().then((blob: Blob | null) => {
+                  if (this.activeEncoder !== encoder) return;
+                  if (blob) {
+                    download(blob, filename + encoder.extension, encoder.mimeType);
+                  }
+                  this.setState({
+                    rendering: false,
+                    saving: false,
+                    currentTimeMs: 0,
+                    viewState: {...this.state.memo!.viewState}
                   });
-                } else {
-                  captureNextFrame();
-                }
-              });
+                });
+              } else {
+                captureNextFrame();
+              }
             });
           });
         });
@@ -485,7 +475,7 @@ export class SwipeExportVideoPanelContainer extends Component<
       waitAndCapture();
     };
 
-    // Wait for maps to be ready before starting capture
+    // Give the deck a moment to mount/draw before the first capture.
     setTimeout(() => captureNextFrame(), 500);
   };
 
@@ -506,18 +496,7 @@ export class SwipeExportVideoPanelContainer extends Component<
   };
 
   render() {
-    const {
-      exportVideoWidth,
-      mapData,
-      deckProps,
-      mapProps,
-      disableBaseMap,
-      mapboxLayerBeforeId,
-      swipeStartPct,
-      swipeEndPct,
-      swipeEasing,
-      onSettingsChange
-    } = this.props;
+    const {exportVideoWidth, mapData, deckProps} = this.props;
 
     const {
       adapter,
@@ -544,7 +523,7 @@ export class SwipeExportVideoPanelContainer extends Component<
     return (
       <div className="export-video-panel">
         <PanelBody $exportVideoWidth={exportVideoWidth}>
-          <SwipeExportVideoPreview
+          <GlobeExportVideoPreview
             ref={this.previewRef}
             mapData={mapData}
             adapter={adapter!}
@@ -556,13 +535,6 @@ export class SwipeExportVideoPanelContainer extends Component<
             saving={saving}
             durationMs={durationMs}
             deckProps={deckProps}
-            mapProps={mapProps}
-            disableBaseMap={disableBaseMap}
-            mapboxLayerBeforeId={mapboxLayerBeforeId}
-            swipeStartPct={swipeStartPct}
-            swipeEndPct={swipeEndPct}
-            swipeEasing={swipeEasing}
-            currentTimeMs={currentTimeMs}
             backgroundColor={this.getBackgroundColor()}
           />
           <SwipeExportSettings
@@ -577,19 +549,14 @@ export class SwipeExportVideoPanelContainer extends Component<
             onChangeResolution={this.setResolution}
             onChangeFileName={this.setFileName}
             onChangeCameraPreset={this.setCameraPreset}
-            swipeStartPct={swipeStartPct}
-            swipeEndPct={swipeEndPct}
-            swipeEasing={swipeEasing}
+            swipeStartPct={0}
+            swipeEndPct={100}
+            swipeEasing={'ease-in-out'}
             disabled={isActive}
-            onChangeStartPct={(value: number) =>
-              onSettingsChange({swipeStartPct: value})
-            }
-            onChangeEndPct={(value: number) =>
-              onSettingsChange({swipeEndPct: value})
-            }
-            onChangeEasing={(value: SwipeEasing) =>
-              onSettingsChange({swipeEasing: value})
-            }
+            onChangeStartPct={noop}
+            onChangeEndPct={noop}
+            onChangeEasing={noop}
+            hideSwipe
           />
           <TimelineControls className="timeline-controls">
             {isActive ? (

@@ -4,7 +4,7 @@
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
 import {Bounds, Merge, Viewport} from '@kepler.gl/types';
-import {MapSplitMode} from '@kepler.gl/constants';
+import {MapSplitMode, MapViewMode, GlobeConfig} from '@kepler.gl/constants';
 
 export type TogglePerspectiveUpdaterAction = void;
 /**
@@ -115,6 +115,33 @@ export const toggleSplitMapViewport: (payload: {
   (syncInfo: ToggleSplitMapViewportUpdaterAction['payload']) => ({payload: syncInfo})
 );
 
+export type SetMapViewModeUpdaterAction = {payload: {mapViewMode: MapViewMode}};
+/**
+ * Set map view mode (2D, 3D, or Globe)
+ * @memberof mapStateActions
+ * @param mapViewMode - One of MapViewMode values
+ * @public
+ */
+export const setMapViewMode: (
+  mapViewMode: MapViewMode
+) => Merge<SetMapViewModeUpdaterAction, {type: typeof ActionTypes.SET_MAP_VIEW_MODE}> = createAction(
+  ActionTypes.SET_MAP_VIEW_MODE,
+  (mapViewMode: MapViewMode) => ({payload: {mapViewMode}})
+);
+
+export type GlobeConfigChangeUpdaterAction = {payload: Partial<GlobeConfig>};
+/**
+ * Update globe configuration
+ * @memberof mapStateActions
+ * @param config - Partial globe config to merge
+ * @public
+ */
+export const globeConfigChange: (
+  config: Partial<GlobeConfig>
+) => Merge<GlobeConfigChangeUpdaterAction, {type: typeof ActionTypes.GLOBE_CONFIG_CHANGE}> =
+  createAction(ActionTypes.GLOBE_CONFIG_CHANGE, (config: Partial<GlobeConfig>) => ({
+    payload: config
+  }));
 export type SetMapSplitModeUpdaterAction = {
   payload: {
     mapSplitMode: MapSplitMode;

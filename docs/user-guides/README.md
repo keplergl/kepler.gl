@@ -59,6 +59,7 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Map Settings](./m-map-settings.md)
 * [View maps in 3d](./m-map-settings.md#view-maps-in-3d)
+* [Globe view](./m-map-settings.md#globe-view)
 * [Display legend](./m-map-settings.md#display-legend)
 * [Split maps](./m-map-settings.md#split-maps)
 

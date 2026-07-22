@@ -16,7 +16,7 @@ import {
 } from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
 import {MapState, Bounds, Viewport} from '@kepler.gl/types';
-import {MapSplitMode} from '@kepler.gl/constants';
+import {MapSplitMode, MapViewMode, DEFAULT_GLOBE_CONFIG, GLOBE_MIN_ZOOM, GLOBE_MAX_ZOOM, GLOBE_MAX_LATITUDE} from '@kepler.gl/constants';
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
@@ -97,6 +97,11 @@ export const INITIAL_MAP_STATE: MapState = {
   isViewportSynced: true,
   isZoomLocked: false,
   splitMapViewports: [],
+  mapViewMode: MapViewMode.MODE_2D,
+  globe: {
+    enabled: false,
+    config: DEFAULT_GLOBE_CONFIG
+  },
   mapSplitMode: MapSplitMode.SINGLE_MAP,
   swipeComparePercentage: 50
 };
@@ -211,13 +216,24 @@ export const fitBoundsUpdater = (
  * @public
  */
 export const togglePerspectiveUpdater = (state: MapState): MapState => {
+  // Only drop min/maxZoom when we're actually leaving globe mode, where those
+  // bounds are set to globe-only values. If globe was never enabled these are
+  // the app's own custom bounds and must be preserved.
+  const wasGlobeEnabled = Boolean(state.globe?.enabled);
+
   const newState = {
     ...state,
     ...{
       pitch: state.dragRotate ? 0 : 50,
       bearing: state.dragRotate ? 0 : 24
     },
-    dragRotate: !state.dragRotate
+    dragRotate: !state.dragRotate,
+    mapViewMode: state.dragRotate ? MapViewMode.MODE_2D : MapViewMode.MODE_3D,
+    globe: {...state.globe!, enabled: false},
+    // Leaving globe mode: drop globe-only zoom bounds so the flat map (and
+    // consumers of mapState such as video export) aren't left clamped. When
+    // globe was never on, keep whatever min/maxZoom the app configured.
+    ...(wasGlobeEnabled ? {minZoom: undefined, maxZoom: undefined} : {})
   };
 
   // if toggling 3d and 2d while split and unsynced
@@ -232,6 +248,101 @@ export const togglePerspectiveUpdater = (state: MapState): MapState => {
   }
 
   return newState;
+};
+
+/**
+ * Set map view mode (2D, 3D, Globe)
+ * @memberof mapStateUpdaters
+ * @public
+ */
+export const setMapViewModeUpdater = (
+  state: MapState,
+  action: MapStateActions.SetMapViewModeUpdaterAction
+): MapState => {
+  const {mapViewMode} = action.payload;
+  let nextState: MapState;
+
+  // Only clear min/maxZoom when leaving globe mode (where they hold globe-only
+  // bounds). Otherwise preserve the app's custom bounds.
+  const wasGlobeEnabled = Boolean(state.globe?.enabled);
+
+  switch (mapViewMode) {
+    case MapViewMode.MODE_2D:
+      nextState = {
+        ...state,
+        globe: {...state.globe!, enabled: false},
+        pitch: 0,
+        bearing: 0,
+        dragRotate: false,
+        // Clear the globe-only zoom bounds so the flat map (and anything that
+        // reads mapState, e.g. video export) is not left with globe's
+        // min/maxZoom after leaving globe mode. Only when globe was actually on.
+        ...(wasGlobeEnabled ? {minZoom: undefined, maxZoom: undefined} : {}),
+        mapViewMode
+      };
+      break;
+    case MapViewMode.MODE_3D:
+      nextState = {
+        ...state,
+        globe: {...state.globe!, enabled: false},
+        pitch: 50,
+        bearing: 24,
+        dragRotate: true,
+        ...(wasGlobeEnabled ? {minZoom: undefined, maxZoom: undefined} : {}),
+        mapViewMode
+      };
+      break;
+    case MapViewMode.MODE_GLOBE:
+      nextState = {
+        ...state,
+        globe: {...state.globe!, enabled: true},
+        dragRotate: true,
+        pitch: 0,
+        bearing: 0,
+        // Allow zooming out further than the default so the whole globe can be
+        // pulled back on screen. Cap the max zoom so the basemap tiles stay
+        // coherent (they break down at high globe zoom in deck.gl 9.x).
+        minZoom: GLOBE_MIN_ZOOM,
+        maxZoom: GLOBE_MAX_ZOOM,
+        zoom: Math.min(Math.max(state.zoom, GLOBE_MIN_ZOOM), GLOBE_MAX_ZOOM),
+        mapViewMode
+      };
+      break;
+    default:
+      return state;
+  }
+
+  if (nextState.splitMapViewports.length) {
+    nextState.splitMapViewports = nextState.splitMapViewports.map(currentViewport => ({
+      ...currentViewport,
+      pitch: nextState.pitch,
+      bearing: nextState.bearing,
+      dragRotate: nextState.dragRotate
+    }));
+  }
+
+  return nextState;
+};
+
+/**
+ * Update globe config
+ * @memberof mapStateUpdaters
+ * @public
+ */
+export const globeConfigChangeUpdater = (
+  state: MapState,
+  action: MapStateActions.GlobeConfigChangeUpdaterAction
+): MapState => {
+  return {
+    ...state,
+    globe: {
+      ...state.globe!,
+      config: {
+        ...state.globe!.config,
+        ...action.payload
+      }
+    }
+  };
 };
 
 /**
@@ -578,13 +689,49 @@ function updateViewport(originalViewport: Viewport, viewportUpdates: Viewport): 
     ...(definedProps(viewportUpdates) || {})
   };
 
-  // Make sure zoom level doesn't go bellow minZoom if defined
-  if (newViewport.minZoom && newViewport.zoom && newViewport.zoom < newViewport.minZoom) {
-    newViewport.zoom = newViewport.minZoom;
-  }
-  // Make sure zoom level doesn't go above maxZoom if defined
-  if (newViewport.maxZoom && newViewport.zoom && newViewport.zoom > newViewport.maxZoom) {
-    newViewport.zoom = newViewport.maxZoom;
+  // deck.gl's globe controller applies a latitude-dependent adjustment to the
+  // zoom range (see KeplerGlobeView._constrainZoom). If we clamp the propagated
+  // zoom here against the raw minZoom/maxZoom (without that adjustment), Redux
+  // ends up disagreeing with the controller: the controller lets the user pull
+  // the globe further out, but this clamp snaps zoom back to `minZoom` when the
+  // interaction's inertia transition ends. Apply the same adjustment in globe
+  // mode so Redux stays consistent with the controller and there's no snap-back.
+  const isGlobe = (newViewport as any).globe?.enabled;
+
+  if (isGlobe) {
+    // Keep the camera target within a latitude band around the equator so the
+    // stored viewport can't be centered on the poles (matches the globe
+    // controller's applyConstraints so geocoder/programmatic updates agree).
+    if (typeof newViewport.latitude === 'number') {
+      newViewport.latitude = Math.min(
+        GLOBE_MAX_LATITUDE,
+        Math.max(-GLOBE_MAX_LATITUDE, newViewport.latitude)
+      );
+    }
+    const zoomAdjustment = Math.log2(Math.cos(((newViewport.latitude ?? 0) * Math.PI) / 180));
+    if (
+      typeof newViewport.minZoom === 'number' &&
+      typeof newViewport.zoom === 'number' &&
+      newViewport.zoom < newViewport.minZoom + zoomAdjustment
+    ) {
+      newViewport.zoom = newViewport.minZoom + zoomAdjustment;
+    }
+    if (
+      typeof newViewport.maxZoom === 'number' &&
+      typeof newViewport.zoom === 'number' &&
+      newViewport.zoom > newViewport.maxZoom + zoomAdjustment
+    ) {
+      newViewport.zoom = newViewport.maxZoom + zoomAdjustment;
+    }
+  } else {
+    // Make sure zoom level doesn't go bellow minZoom if defined
+    if (newViewport.minZoom && newViewport.zoom && newViewport.zoom < newViewport.minZoom) {
+      newViewport.zoom = newViewport.minZoom;
+    }
+    // Make sure zoom level doesn't go above maxZoom if defined
+    if (newViewport.maxZoom && newViewport.zoom && newViewport.zoom > newViewport.maxZoom) {
+      newViewport.zoom = newViewport.maxZoom;
+    }
   }
   // Limit viewport update based on maxBounds
   if (newViewport.maxBounds && validateBounds(newViewport.maxBounds)) {
