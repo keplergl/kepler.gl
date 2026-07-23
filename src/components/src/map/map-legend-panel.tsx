@@ -19,7 +19,6 @@ import {CSS} from '@dnd-kit/utilities';
 import {useMergeRefs} from '@floating-ui/react';
 
 import {ActionHandler, setMapControlSettings, toggleSplitMapViewport} from '@kepler.gl/actions';
-import {MapSplitMode} from '@kepler.gl/constants';
 import {Layer} from '@kepler.gl/layers';
 import {breakPointValues} from '@kepler.gl/styles';
 import {LayerVisConfig, LayerOrder, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
@@ -375,7 +374,6 @@ const MapLegendPanelComponent = ({
   MapControlPanel,
   MapLegend
 }: MapLegendPanelProps & MapLegendPanelComponents) => {
-  const isSwipeMode = mapState?.mapSplitMode === MapSplitMode.SWIPE_COMPARE;
   const isSidePanelShown = Boolean(activeSidePanel);
   const settings = mapControls?.mapLegend?.settings;
 
@@ -398,10 +396,10 @@ const MapLegendPanelComponent = ({
     [onToggleMapControl]
   );
 
-  if (isSplit && !isSwipeMode && mapIndex !== 0) {
-    return null;
-  }
-  if (isSwipeMode && mapIndex !== 1) {
+  // In split view (both dual and swipe-compare modes) the map controls are only
+  // rendered on the right-side map (mapIndex === 1), so the legend must render
+  // there too. Rendering on any other index would hide the legend entirely.
+  if (isSplit && mapIndex !== 1) {
     return null;
   }
 

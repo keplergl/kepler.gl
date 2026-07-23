@@ -1515,50 +1515,56 @@ export default function MapContainerFactory(
         // in this case we don't want to render the map
         return null;
       }
+      // In split (dual) view mode, only render the map control buttons on the
+      // right-side map (primary === true, i.e. index === 1). Otherwise the same
+      // buttons are duplicated on both maps and any opened menu appears mirrored.
+      const showMapControl = !isSplit || Boolean(primary);
       return (
         <>
-          <MapControl
-            mapState={mapState}
-            mapStateActions={mapStateActions}
-            datasets={datasets}
-            availableLocales={LOCALE_CODES_ARRAY}
-            dragRotate={mapState.dragRotate}
-            isSplit={isSplit}
-            primary={Boolean(primary)}
-            isExport={isExport}
-            layers={layers}
-            layerOrder={layerOrder}
-            layersToRender={layersToRender}
-            mapIndex={index || 0}
-            mapControls={mapControls}
-            readOnly={this.props.readOnly}
-            scale={mapState.scale || 1}
-            logoComponent={this.props.logoComponent}
-            top={
-              interactionConfig.geocoder && interactionConfig.geocoder.enabled
-                ? theme.mapControlTop
-                : 0
-            }
-            editor={editor}
-            locale={locale}
-            onTogglePerspective={mapStateActions.togglePerspective}
-            onSetMapViewMode={mapStateActions.setMapViewMode}
-            mapViewMode={mapState.mapViewMode}
-            onToggleSplitMap={mapStateActions.toggleSplitMap}
-            onMapToggleLayer={this._handleMapToggleLayer}
-            onToggleMapControl={this._toggleMapControl}
-            onToggleSplitMapViewport={mapStateActions.toggleSplitMapViewport}
-            onSetEditorMode={visStateActions.setEditorMode}
-            onSetLocale={uiStateActions.setLocale}
-            onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
-            onLayerVisConfigChange={visStateActions.layerVisConfigChange}
-            onToggleLayerVisibility={this._handleToggleLayerVisibility}
-            mapHeight={mapState.height}
-            setMapControlSettings={uiStateActions.setMapControlSettings}
-            activeSidePanel={activeSidePanel}
-            splitMaps={this.props.visState.splitMaps}
-            onToggleLayerForMap={visStateActions.toggleLayerForMap}
-          />
+          {showMapControl && (
+            <MapControl
+              mapState={mapState}
+              mapStateActions={mapStateActions}
+              datasets={datasets}
+              availableLocales={LOCALE_CODES_ARRAY}
+              dragRotate={mapState.dragRotate}
+              isSplit={isSplit}
+              primary={Boolean(primary)}
+              isExport={isExport}
+              layers={layers}
+              layerOrder={layerOrder}
+              layersToRender={layersToRender}
+              mapIndex={index || 0}
+              mapControls={mapControls}
+              readOnly={this.props.readOnly}
+              scale={mapState.scale || 1}
+              logoComponent={this.props.logoComponent}
+              top={
+                interactionConfig.geocoder && interactionConfig.geocoder.enabled
+                  ? theme.mapControlTop
+                  : 0
+              }
+              editor={editor}
+              locale={locale}
+              onTogglePerspective={mapStateActions.togglePerspective}
+              onSetMapViewMode={mapStateActions.setMapViewMode}
+              mapViewMode={mapState.mapViewMode}
+              onToggleSplitMap={mapStateActions.toggleSplitMap}
+              onMapToggleLayer={this._handleMapToggleLayer}
+              onToggleMapControl={this._toggleMapControl}
+              onToggleSplitMapViewport={mapStateActions.toggleSplitMapViewport}
+              onSetEditorMode={visStateActions.setEditorMode}
+              onSetLocale={uiStateActions.setLocale}
+              onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
+              onLayerVisConfigChange={visStateActions.layerVisConfigChange}
+              onToggleLayerVisibility={this._handleToggleLayerVisibility}
+              mapHeight={mapState.height}
+              setMapControlSettings={uiStateActions.setMapControlSettings}
+              activeSidePanel={activeSidePanel}
+              splitMaps={this.props.visState.splitMaps}
+              onToggleLayerForMap={visStateActions.toggleLayerForMap}
+            />
+          )}
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}
 
           {deck}
