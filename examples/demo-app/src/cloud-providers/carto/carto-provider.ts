@@ -33,10 +33,14 @@ export default class CartoProvider extends Provider {
     this._folderLink = `https://{user}.${DOMAIN}/dashboard/maps/external`;
 
     // Initialize CARTO API
+    // NOTE: `clientID` is intentionally omitted from the constructor options.
+    // OAuthApp's constructor calls `initOauth` (which sets `this._oauth`) only when
+    // `oauthOptions.clientID` is truthy. `setClientID` below throws
+    // 'Cannot set the client ID more than once' if `_oauth` is already set, so the
+    // client ID must be passed via `setClientID` only — not via the constructor.
     this._carto = new OAuthApp(
       {
         authorization: `https://${DOMAIN}/oauth2`,
-        clientID: clientId,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         scopes: 'schemas:c datasets:rw:*' as any
       } as any,
