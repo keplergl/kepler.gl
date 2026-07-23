@@ -369,7 +369,6 @@ const MapLegendPanelComponent = ({
   isSplit,
   splitMaps,
   onToggleLayerForMap,
-  mapIndex,
   MapControlTooltip,
   MapControlPanel,
   MapLegend
@@ -396,12 +395,9 @@ const MapLegendPanelComponent = ({
     [onToggleMapControl]
   );
 
-  // In split view (both dual and swipe-compare modes) the map controls are only
-  // rendered on the right-side map (mapIndex === 1), so the legend must render
-  // there too. Rendering on any other index would hide the legend entirely.
-  if (isSplit && mapIndex !== 1) {
-    return null;
-  }
+  // In split view the map controls (and therefore this legend) are only
+  // rendered once, on the right-side / primary map. That gating happens in
+  // MapContainer, so no per-index suppression is needed here anymore.
 
   if (!mapLegend.show) {
     return null;
