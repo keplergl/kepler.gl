@@ -382,6 +382,9 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
   switch (layer.type) {
     case LAYER_TYPES.point:
     case LAYER_TYPES.icon:
+    case LAYER_TYPES.grid:
+    case LAYER_TYPES.hexagon:
+    case LAYER_TYPES.cluster:
       if (layer.config?.columnMode === 'geojson' && layer.dataToFeature?.length) {
         return data => {
           const coordinates = layer.dataToFeature[data.index];
