@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {ComponentType, useCallback, useMemo, useState, useRef, useEffect} from 'react';
+import React, {ComponentType, useCallback, useMemo, useRef, useEffect} from 'react';
 import classnames from 'classnames';
-import styled from 'styled-components';
 import {MapControlButton} from '../common/styled-components';
 import {Delete, Split} from '../common/icons';
+import ToolbarItem from '../common/toolbar-item';
 import MapControlTooltipFactory from './map-control-tooltip';
+import MapControlToolbarFactory from './map-control-toolbar';
 import {MapControlItem, MapControls, MapState} from '@kepler.gl/types';
 import {MapSplitMode} from '@kepler.gl/constants';
 
-SplitMapButtonFactory.deps = [MapControlTooltipFactory];
+SplitMapButtonFactory.deps = [MapControlTooltipFactory, MapControlToolbarFactory];
 
 interface SplitMapButtonIcons {
   delete: ComponentType<any>;
@@ -22,38 +23,12 @@ export type SplitMapButtonProps = {
   mapIndex: number;
   onToggleSplitMap: (index?: number) => void;
   onSetMapSplitMode?: (payload: {mapSplitMode: MapSplitMode}) => void;
+  onToggleMapControl?: (control: string) => void;
   actionIcons: SplitMapButtonIcons;
   readOnly: boolean;
   mapControls: MapControls;
   mapState?: MapState;
 };
-
-const StyledSplitModeMenu = styled.div`
-  position: absolute;
-  top: 0;
-  left: -160px;
-  background: ${props => props.theme.dropdownListBgd || '#3A414C'};
-  border-radius: 4px;
-  box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
-  padding: 4px 0;
-  z-index: 1000;
-  min-width: 140px;
-`;
-
-const StyledMenuItem = styled.div<{$active?: boolean}>`
-  padding: 8px 16px;
-  color: ${props =>
-    props.$active
-      ? props.theme.activeColor || '#1FBAD6'
-      : props.theme.textColor || '#A0A7B4'};
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: ${props => (props.$active ? 500 : 400)};
-  &:hover {
-    background: ${props => props.theme.dropdownListHighlightBg || '#4B5464'};
-    color: ${props => props.theme.textColorHl || '#FFFFFF'};
-  }
-`;
 
 const SwipeCompareIcon: React.FC<{height?: string}> = ({height = '18px'}) => (
   <svg height={height} viewBox="0 0 16 16" fill="currentColor">
@@ -69,12 +44,15 @@ const SwipeCompareIcon: React.FC<{height?: string}> = ({height = '18px'}) => (
 );
 
 const SPLIT_MODE_OPTIONS = [
-  {id: MapSplitMode.SINGLE_MAP, label: 'Single'},
-  {id: MapSplitMode.DUAL_MAP, label: 'Dual'},
-  {id: MapSplitMode.SWIPE_COMPARE, label: 'Swipe'}
+  {id: MapSplitMode.SINGLE_MAP, label: 'tooltip.singleView'},
+  {id: MapSplitMode.DUAL_MAP, label: 'tooltip.dualView'},
+  {id: MapSplitMode.SWIPE_COMPARE, label: 'tooltip.swipeView'}
 ];
 
-function SplitMapButtonFactory(MapControlTooltip) {
+function SplitMapButtonFactory(
+  MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>,
+  MapControlToolbar: ReturnType<typeof MapControlToolbarFactory>
+) {
   const defaultActionIcons = {
     delete: Delete,
     split: Split
@@ -86,14 +64,19 @@ function SplitMapButtonFactory(MapControlTooltip) {
     mapIndex,
     onToggleSplitMap,
     onSetMapSplitMode,
+    onToggleMapControl,
     actionIcons = defaultActionIcons,
     mapControls,
     readOnly,
     mapState
   }) => {
     const splitMap = mapControls?.splitMap || ({} as MapControlItem);
-    const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+
+    // The split-mode menu open state is kept in redux (mapControls.splitMap.active)
+    // so it participates in the "only one map-control menu open at a time" logic in
+    // toggleMapControlUpdater. Opening any other control closes this one and vice versa.
+    const menuOpen = Boolean(splitMap.active) && Boolean(onSetMapSplitMode);
 
     const currentMode = mapState?.mapSplitMode || MapSplitMode.SINGLE_MAP;
 
@@ -101,12 +84,12 @@ function SplitMapButtonFactory(MapControlTooltip) {
       event => {
         event.preventDefault();
         if (onSetMapSplitMode) {
-          setMenuOpen(prev => !prev);
+          onToggleMapControl?.('splitMap');
         } else {
           onToggleSplitMap(isSplit ? mapIndex : undefined);
         }
       },
-      [isSplit, mapIndex, onToggleSplitMap, onSetMapSplitMode]
+      [isSplit, mapIndex, onToggleSplitMap, onSetMapSplitMode, onToggleMapControl]
     );
 
     const handleModeSelect = useCallback(
@@ -114,15 +97,17 @@ function SplitMapButtonFactory(MapControlTooltip) {
         if (onSetMapSplitMode) {
           onSetMapSplitMode({mapSplitMode: mode as MapSplitMode});
         }
-        setMenuOpen(false);
+        if (splitMap.active) {
+          onToggleMapControl?.('splitMap');
+        }
       },
-      [onSetMapSplitMode]
+      [onSetMapSplitMode, onToggleMapControl, splitMap.active]
     );
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
         if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-          setMenuOpen(false);
+          onToggleMapControl?.('splitMap');
         }
       };
       if (menuOpen) {
@@ -131,7 +116,7 @@ function SplitMapButtonFactory(MapControlTooltip) {
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
-    }, [menuOpen]);
+    }, [menuOpen, onToggleMapControl]);
 
     const isVisible = useMemo(() => splitMap.show && readOnly !== true, [splitMap.show, readOnly]);
 
@@ -139,7 +124,19 @@ function SplitMapButtonFactory(MapControlTooltip) {
       return null;
     }
     return isVisible ? (
-      <div style={{position: 'relative'}} ref={menuRef}>
+      <div className="split-map-controls" style={{position: 'relative'}} ref={menuRef}>
+        {menuOpen && onSetMapSplitMode ? (
+          <MapControlToolbar $show={menuOpen}>
+            {SPLIT_MODE_OPTIONS.map(option => (
+              <ToolbarItem
+                key={option.id}
+                onClick={() => handleModeSelect(option.id)}
+                label={option.label}
+                active={currentMode === option.id}
+              />
+            ))}
+          </MapControlToolbar>
+        ) : null}
         <MapControlTooltip
           id="action-toggle"
           message={
@@ -164,19 +161,6 @@ function SplitMapButtonFactory(MapControlTooltip) {
             )}
           </MapControlButton>
         </MapControlTooltip>
-        {menuOpen && onSetMapSplitMode && (
-          <StyledSplitModeMenu>
-            {SPLIT_MODE_OPTIONS.map(option => (
-              <StyledMenuItem
-                key={option.id}
-                $active={currentMode === option.id}
-                onClick={() => handleModeSelect(option.id)}
-              >
-                {option.label}
-              </StyledMenuItem>
-            ))}
-          </StyledSplitModeMenu>
-        )}
       </div>
     ) : null;
   };
