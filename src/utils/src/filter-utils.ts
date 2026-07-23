@@ -382,9 +382,6 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
   switch (layer.type) {
     case LAYER_TYPES.point:
     case LAYER_TYPES.icon:
-    case LAYER_TYPES.grid:
-    case LAYER_TYPES.hexagon:
-    case LAYER_TYPES.cluster:
       if (layer.config?.columnMode === 'geojson' && layer.dataToFeature?.length) {
         return data => {
           const coordinates = layer.dataToFeature[data.index];
@@ -402,6 +399,21 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
             coordinates.every(Number.isFinite) &&
             isInPolygon(coordinates, filter.value)
           );
+        };
+      }
+      return data => {
+        const pos = getPosition(data);
+        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+      };
+    case LAYER_TYPES.grid:
+    case LAYER_TYPES.hexagon:
+    case LAYER_TYPES.cluster:
+      // Aggregation layers store parsed GeoJSON Features (not coordinate arrays)
+      // in dataToFeature, but precompute per-row centroids for both column modes.
+      if (layer.centroids?.length) {
+        return data => {
+          const centroid = layer.centroids[data.index];
+          return centroid && isInPolygon(centroid, filter.value);
         };
       }
       return data => {
