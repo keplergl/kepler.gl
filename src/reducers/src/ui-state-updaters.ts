@@ -387,6 +387,16 @@ export const toggleSidePanelCloseButtonUpdater = (
   isSidePanelCloseButtonVisible: show
 });
 
+// Map control dropdowns/menus that overlap each other visually and therefore
+// should be mutually exclusive: opening one closes all the others.
+// (split/view-mode menu, top/3d/globe menu, polygon draw tool, language menu)
+export const MUTUALLY_EXCLUSIVE_MAP_CONTROLS: string[] = [
+  MAP_CONTROLS.splitMap,
+  MAP_CONTROLS.toggle3d,
+  MAP_CONTROLS.mapDraw,
+  MAP_CONTROLS.mapLocale
+];
+
 /**
  * Toggle active map control panel
  * @memberof uiStateUpdaters
@@ -396,16 +406,6 @@ export const toggleSidePanelCloseButtonUpdater = (
  * @returns nextState
  * @public
  */
-// Map control dropdowns/menus that overlap each other visually and therefore
-// should be mutually exclusive: opening one closes all the others.
-// (split/view-mode menu, top/3d/globe menu, polygon draw tool, language menu)
-export const MUTUALLY_EXCLUSIVE_MAP_CONTROLS = [
-  MAP_CONTROLS.splitMap,
-  MAP_CONTROLS.toggle3d,
-  MAP_CONTROLS.mapDraw,
-  MAP_CONTROLS.mapLocale
-];
-
 export const toggleMapControlUpdater = (
   state: UiState,
   {payload: {panelId, index = 0}}: UIStateActions.ToggleMapControlUpdaterAction

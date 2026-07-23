@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {ComponentType, useCallback, useMemo, useRef, useEffect} from 'react';
+import React, {ComponentType, useCallback, useMemo, useState, useRef, useEffect} from 'react';
 import classnames from 'classnames';
 import {MapControlButton} from '../common/styled-components';
 import {Delete, Split} from '../common/icons';
@@ -73,10 +73,34 @@ function SplitMapButtonFactory(
     const splitMap = mapControls?.splitMap || ({} as MapControlItem);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    // The split-mode menu open state is kept in redux (mapControls.splitMap.active)
-    // so it participates in the "only one map-control menu open at a time" logic in
-    // toggleMapControlUpdater. Opening any other control closes this one and vice versa.
-    const menuOpen = Boolean(splitMap.active) && Boolean(onSetMapSplitMode);
+    // The split-mode menu open state is normally kept in redux
+    // (mapControls.splitMap.active) so it participates in the "only one
+    // map-control menu open at a time" logic in toggleMapControlUpdater.
+    // If a consumer supplies onSetMapSplitMode without onToggleMapControl, we
+    // fall back to local component state so the menu still opens/closes.
+    const useReduxMenuState = Boolean(onToggleMapControl);
+    const [localMenuOpen, setLocalMenuOpen] = useState(false);
+
+    const toggleMenu = useCallback(() => {
+      if (useReduxMenuState) {
+        onToggleMapControl?.('splitMap');
+      } else {
+        setLocalMenuOpen(prev => !prev);
+      }
+    }, [useReduxMenuState, onToggleMapControl]);
+
+    const closeMenu = useCallback(() => {
+      if (useReduxMenuState) {
+        if (splitMap.active) {
+          onToggleMapControl?.('splitMap');
+        }
+      } else {
+        setLocalMenuOpen(false);
+      }
+    }, [useReduxMenuState, onToggleMapControl, splitMap.active]);
+
+    const menuOpen =
+      Boolean(onSetMapSplitMode) && (useReduxMenuState ? Boolean(splitMap.active) : localMenuOpen);
 
     const currentMode = mapState?.mapSplitMode || MapSplitMode.SINGLE_MAP;
 
@@ -84,12 +108,12 @@ function SplitMapButtonFactory(
       event => {
         event.preventDefault();
         if (onSetMapSplitMode) {
-          onToggleMapControl?.('splitMap');
+          toggleMenu();
         } else {
           onToggleSplitMap(isSplit ? mapIndex : undefined);
         }
       },
-      [isSplit, mapIndex, onToggleSplitMap, onSetMapSplitMode, onToggleMapControl]
+      [isSplit, mapIndex, onToggleSplitMap, onSetMapSplitMode, toggleMenu]
     );
 
     const handleModeSelect = useCallback(
@@ -97,17 +121,15 @@ function SplitMapButtonFactory(
         if (onSetMapSplitMode) {
           onSetMapSplitMode({mapSplitMode: mode as MapSplitMode});
         }
-        if (splitMap.active) {
-          onToggleMapControl?.('splitMap');
-        }
+        closeMenu();
       },
-      [onSetMapSplitMode, onToggleMapControl, splitMap.active]
+      [onSetMapSplitMode, closeMenu]
     );
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
         if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-          onToggleMapControl?.('splitMap');
+          closeMenu();
         }
       };
       if (menuOpen) {
@@ -116,7 +138,7 @@ function SplitMapButtonFactory(
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
-    }, [menuOpen, onToggleMapControl]);
+    }, [menuOpen, closeMenu]);
 
     const isVisible = useMemo(() => splitMap.show && readOnly !== true, [splitMap.show, readOnly]);
 
