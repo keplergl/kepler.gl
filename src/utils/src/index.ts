@@ -122,6 +122,7 @@ export {
   getBaseMapLibrary,
   transformRequest
 } from './map-style-utils/mapbox-utils';
+export type {AttributionMapLike} from './map-style-utils/mapbox-utils';
 
 // Map
 export * from './map-utils';
