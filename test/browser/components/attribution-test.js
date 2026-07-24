@@ -96,15 +96,27 @@ test('renderBasemapAttribution -> empty / whitespace', t => {
   t.end();
 });
 
-test('renderBasemapAttribution -> whitespace-only fragments between links are dropped', t => {
-  // whitespace-only text nodes sitting between two links should not produce
-  // empty-ish fragments
+test('renderBasemapAttribution -> single space preserved between adjacent links', t => {
+  // whitespace between two links must collapse to a single space (not be
+  // dropped), so links don't run together (e.g. OpenFreeMap-style strings)
   const html = '<a href="https://a.com">A</a>   <a href="https://b.com">B</a>';
-  const nodes = renderBasemapAttribution(html, 'k');
   const wrapper = mountAttribution(html);
   t.equal(wrapper.find('a').length, 2, 'both links rendered');
-  // only two nodes: the two anchors, no whitespace fragment in between
-  t.equal(nodes.length, 2, 'no whitespace-only fragment emitted between the links');
+  t.equal(wrapper.text(), 'A B', 'a single separating space is preserved');
+  t.end();
+});
+
+test('renderBasemapAttribution -> collapses whitespace runs but keeps inter-link spacing', t => {
+  const html =
+    '<a href="https://openfreemap.org">OpenFreeMap</a> ' +
+    '<a href="https://www.openmaptiles.org/">© OpenMapTiles</a> ' +
+    'Data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+  const wrapper = mountAttribution(html);
+  t.equal(
+    wrapper.text(),
+    'OpenFreeMap © OpenMapTiles Data from OpenStreetMap',
+    'links stay separated by single spaces'
+  );
   t.end();
 });
 
@@ -121,6 +133,136 @@ test('renderBasemapAttribution -> nested <a> inside <a> does not produce link-in
   });
   t.ok(wrapper.text().includes('inner'), 'inner link text preserved');
   t.ok(wrapper.text().includes('outer'), 'outer link text preserved');
+  t.end();
+});
+
+test('renderBasemapAttribution -> script/style/template/noscript content is not rendered', t => {
+  const cases = [
+    'before<script>alert(1)</script>after',
+    'a<style>.x{color:red}</style>b',
+    'c<template><span>hidden</span></template>d',
+    'e<noscript>noscript-text</noscript>f'
+  ];
+  cases.forEach(html => {
+    const wrapper = mountAttribution(html);
+    t.equal(wrapper.find('script').length, 0, `no script element rendered: ${html}`);
+    t.equal(wrapper.find('style').length, 0, `no style element rendered: ${html}`);
+    t.notOk(wrapper.text().includes('alert(1)'), 'script source not surfaced as text');
+    t.notOk(wrapper.text().includes('color:red'), 'style source not surfaced as text');
+    t.notOk(wrapper.text().includes('hidden'), 'template content not surfaced as text');
+    t.notOk(wrapper.text().includes('noscript-text'), 'noscript content not surfaced as text');
+  });
+  t.end();
+});
+
+test('renderBasemapAttribution -> unsafe/non-allowlisted schemes are dropped, text kept', t => {
+  const cases = [
+    {href: '//evil.com', label: 'protocol-relative'},
+    {href: '/relative/path', label: 'relative'},
+    {href: 'tel:12345', label: 'tel'},
+    {href: 'ftp://host/file', label: 'ftp'},
+    {href: 'data:text/html,<b>x</b>', label: 'data'},
+    // eslint-disable-next-line no-script-url
+    {href: '  javascript:alert(1)', label: 'js with leading space'},
+    // eslint-disable-next-line no-script-url
+    {href: 'JAVASCRIPT:alert(1)', label: 'uppercase js'},
+    {href: 'vbscript:msgbox(1)', label: 'vbscript'}
+  ];
+  cases.forEach(({href, label}) => {
+    const wrapper = mountAttribution(`<a href="${href}">click ${label}</a>`);
+    t.equal(wrapper.find('a').length, 0, `no link rendered for ${label}`);
+    t.ok(wrapper.text().includes(`click ${label}`), `text preserved for ${label}`);
+  });
+  t.end();
+});
+
+test('renderBasemapAttribution -> allowlisted schemes are kept (incl. uppercase, http)', t => {
+  const cases = [
+    'http://plain.com',
+    'https://secure.com',
+    'HTTPS://UPPER.COM',
+    'mailto:hi@example.com',
+    'MAILTO:hi@example.com'
+  ];
+  cases.forEach(href => {
+    const wrapper = mountAttribution(`<a href="${href}">x</a>`);
+    const anchors = wrapper.find('a');
+    t.equal(anchors.length, 1, `link rendered for ${href}`);
+    t.equal(anchors.at(0).prop('href'), href, `href preserved for ${href}`);
+    t.equal(anchors.at(0).prop('rel'), 'noopener noreferrer', `safe rel for ${href}`);
+    t.equal(anchors.at(0).prop('target'), '_blank', `target _blank for ${href}`);
+  });
+  t.end();
+});
+
+test('renderBasemapAttribution -> empty and whitespace-only anchors are dropped', t => {
+  const empty = mountAttribution('<a href="https://x.com"></a>tail');
+  t.equal(empty.find('a').length, 0, 'empty anchor is not rendered as a link');
+  t.ok(empty.text().includes('tail'), 'surrounding text kept');
+
+  const wsOnly = mountAttribution('<a href="https://x.com">   </a>keep');
+  t.equal(wsOnly.find('a').length, 0, 'whitespace-only anchor is not rendered as a link');
+  t.ok(wsOnly.text().includes('keep'), 'surrounding text kept');
+  t.end();
+});
+
+test('renderBasemapAttribution -> event-handler attributes are never carried to output', t => {
+  // even for a safe href, only href/target/rel are set; inline handlers dropped
+  const wrapper = mountAttribution(
+    '<a href="https://x.com" onclick="alert(1)" onmouseover="x()" style="color:red">y</a>'
+  );
+  const anchors = wrapper.find('a');
+  t.equal(anchors.length, 1, 'safe anchor rendered');
+  t.notOk(anchors.at(0).prop('onClick'), 'no onClick handler');
+  t.notOk(anchors.at(0).prop('onclick'), 'no onclick attribute');
+  t.notOk(anchors.at(0).prop('style'), 'no inline style carried over');
+  t.end();
+});
+
+test('renderBasemapAttribution -> img/onerror payload does not render an image or execute', t => {
+  const wrapper = mountAttribution('<img src="x" onerror="alert(1)">visible');
+  t.equal(wrapper.find('img').length, 0, 'no img element rendered');
+  t.equal(wrapper.text(), 'visible', 'only surrounding text is rendered');
+  t.end();
+});
+
+test('renderBasemapAttribution -> deeply nested non-anchor markup flattens to text', t => {
+  const html =
+    '<div><span><b>Deep</b> <i>text</i></span> and <a href="https://x.com">link</a></div>';
+  const wrapper = mountAttribution(html);
+  const anchors = wrapper.find('a');
+  t.equal(anchors.length, 1, 'the single link is preserved');
+  t.equal(anchors.at(0).prop('href'), 'https://x.com', 'href preserved through nesting');
+  t.ok(wrapper.text().includes('Deep text'), 'nested formatting flattened to text');
+  t.end();
+});
+
+test('renderBasemapAttribution -> always returns an array, never throws', t => {
+  const inputs = [
+    '',
+    '   ',
+    'plain',
+    '<a>no href</a>',
+    '<a href="">empty href</a>',
+    '<<<malformed>>>',
+    '<a href="https://x.com">unclosed',
+    '&copy; &amp; &lt; &gt; entities'
+  ];
+  inputs.forEach(html => {
+    const out = renderBasemapAttribution(html, 'k');
+    t.ok(Array.isArray(out), `array returned for ${JSON.stringify(html)}`);
+  });
+  t.end();
+});
+
+test('renderBasemapAttribution -> keys are unique across produced nodes', t => {
+  const html =
+    'a <a href="https://one.com">one</a> b <a href="https://two.com">two</a> c ' +
+    '<a href="https://three.com">three</a>';
+  const nodes = renderBasemapAttribution(html, 'k');
+  const keys = nodes.map(n => n.key);
+  t.equal(new Set(keys).size, keys.length, 'no duplicate React keys');
+  t.ok(keys.every(Boolean), 'every node has a key');
   t.end();
 });
 
@@ -205,5 +347,95 @@ test('dedupeBasemapAttributions -> synthesized OSM entry is subsumed by CARTO', 
     [carto],
     'canonical OSM entry dropped when CARTO already links OSM'
   );
+  t.end();
+});
+
+test('dedupeBasemapAttributions -> empty and single-entry inputs', t => {
+  t.deepEqual(dedupeBasemapAttributions([]), [], 'empty input yields empty output');
+  t.deepEqual(dedupeBasemapAttributions(['© Solo']), ['© Solo'], 'single entry is kept');
+  t.end();
+});
+
+test('dedupeBasemapAttributions -> order is preserved', t => {
+  const a = '<a href="https://a.com">Alpha</a>';
+  const b = '<a href="https://b.com">Beta</a>';
+  const c = '<a href="https://c.com">Gamma</a>';
+  t.deepEqual(dedupeBasemapAttributions([c, a, b]), [c, a, b], 'input order preserved');
+  t.end();
+});
+
+test('dedupeBasemapAttributions -> shorter-first: fuller variant adds no new tokens, collapses', t => {
+  // "© OpenStreetMap" comes first and is kept; the fuller "... contributors"
+  // normalizes to the same token set ("contributors" is boilerplate), so it is
+  // subsumed and the shorter (first) entry wins
+  const osm = '© OpenStreetMap';
+  const osmFull = '© OpenStreetMap contributors';
+  t.deepEqual(
+    dedupeBasemapAttributions([osm, osmFull]),
+    [osm],
+    'fuller variant with only boilerplate difference collapses to the first'
+  );
+  t.end();
+});
+
+test('dedupeBasemapAttributions -> fuller entry with new tokens after a shorter one is kept', t => {
+  // shorter first; the later entry introduces a genuinely new token (carto), so
+  // it is NOT subsumed and both are kept
+  const osm = '© OpenStreetMap';
+  const both = '© CARTO, © OpenStreetMap';
+  t.deepEqual(
+    dedupeBasemapAttributions([osm, both]),
+    [osm, both],
+    'later entry with an additional provider is preserved'
+  );
+  t.end();
+});
+
+test('dedupeBasemapAttributions -> is idempotent', t => {
+  const carto =
+    '© <a href="https://carto.com/attributions">CARTO</a>, © ' +
+    '<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  const osm = '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>';
+  const once = dedupeBasemapAttributions([carto, osm]);
+  const twice = dedupeBasemapAttributions(once);
+  t.deepEqual(twice, once, 'running dedupe again changes nothing');
+  t.end();
+});
+
+test('dedupeBasemapAttributions -> does not mutate its input array', t => {
+  const input = ['© OpenStreetMap contributors', '© OpenStreetMap'];
+  const snapshot = [...input];
+  dedupeBasemapAttributions(input);
+  t.deepEqual(input, snapshot, 'input array is unchanged');
+  t.end();
+});
+
+test('dedupeBasemapAttributions -> different link hosts are not merged', t => {
+  const a = '<a href="https://openstreetmap.org">Map</a>';
+  const b = '<a href="https://openmaptiles.org">Map</a>';
+  // same visible text "Map" but different hosts -> both kept (host token differs)
+  t.deepEqual(
+    dedupeBasemapAttributions([a, b]),
+    [a, b],
+    'same text but distinct hosts are preserved'
+  );
+  t.end();
+});
+
+test('dedupeBasemapAttributions -> punctuation/casing/whitespace normalized in text', t => {
+  const a = '©  OpenStreetMap   Contributors';
+  const b = '© openstreetmap, contributors';
+  t.deepEqual(
+    dedupeBasemapAttributions([a, b]),
+    [a],
+    'text normalized (case, punctuation, whitespace, "contributors") collapses'
+  );
+  t.end();
+});
+
+test('dedupeBasemapAttributions -> whitespace-only entries are dropped as empty signatures', t => {
+  // exact-dup path keeps the first; a second identical whitespace entry is a
+  // duplicate string so it is removed
+  t.deepEqual(dedupeBasemapAttributions(['   ', '   ']), ['   '], 'duplicate blank collapses');
   t.end();
 });

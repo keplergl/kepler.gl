@@ -85,20 +85,39 @@ type AttributionProps = {
 const ATTRIBUTION_SAFE_HREF_REGEX = /^(https?:|mailto:)/i;
 
 /**
+ * Decode the handful of HTML entities that commonly appear in basemap
+ * attribution strings, so they render as text rather than raw entities. Only
+ * needed on the SSR / no-DOM fallback path; in the browser DOMParser decodes
+ * entities for us.
+ */
+function decodeAttributionEntities(text: string): string {
+  return text
+    .replace(/&copy;/gi, '©')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0*39;/gi, "'")
+    .replace(/&amp;/gi, '&');
+}
+
+/**
  * Strip all markup from a string as a fallback for environments without a DOM
- * (e.g. SSR). Uses a non-greedy tag matcher; only used when DOMParser is
- * unavailable, so it never has to be perfectly correct.
+ * (e.g. SSR), then decode common HTML entities. Uses a non-greedy tag matcher;
+ * only used when DOMParser is unavailable, so it never has to be perfectly
+ * correct.
  */
 function stripTags(html: string): string {
-  return html.replace(/<[^>]*>/g, '').trim();
+  return decodeAttributionEntities(html.replace(/<[^>]*>/g, '')).trim();
 }
 
 /**
  * Recursively convert parsed DOM nodes into safe React nodes. Only anchor
  * elements with http(s)/mailto hrefs become links; every other element is
- * flattened to its text content. Text nodes are emitted verbatim (the DOM has
- * already decoded HTML entities for us), except whitespace-only text nodes,
- * which are dropped so we don't emit empty-ish fragments between separators.
+ * flattened to its text content. Text nodes are emitted with internal
+ * whitespace collapsed to single spaces (matching HTML rendering), so the
+ * meaningful single space between adjacent links is preserved while we avoid
+ * emitting large whitespace blobs.
  *
  * Anchors are collapsed to their `textContent`, so any markup nested inside an
  * anchor (including an invalid nested `<a>`) becomes plain text — a link can
@@ -112,9 +131,10 @@ function domNodesToReact(
   const result: React.ReactNode[] = [];
   nodes.forEach(node => {
     if (node.nodeType === 3 /* TEXT_NODE */) {
-      const text = node.textContent;
-      // drop whitespace-only fragments (noise between separators/links)
-      if (text && text.trim()) {
+      // collapse whitespace runs to a single space (HTML-like), keeping a
+      // meaningful separating space between adjacent inline links
+      const text = (node.textContent || '').replace(/\s+/g, ' ');
+      if (text) {
         result.push(<React.Fragment key={`${keyPrefix}-t${counter.i++}`}>{text}</React.Fragment>);
       }
       return;
@@ -123,7 +143,12 @@ function domNodesToReact(
       return;
     }
     const el = node as Element;
-    if (el.tagName.toLowerCase() === 'a') {
+    const tag = el.tagName.toLowerCase();
+    // never surface the source of script/style/template elements as text
+    if (tag === 'script' || tag === 'style' || tag === 'template' || tag === 'noscript') {
+      return;
+    }
+    if (tag === 'a') {
       const href = el.getAttribute('href') || '';
       // textContent flattens any nested markup (incl. a nested <a>) to text, so
       // the rendered link can never contain another link
