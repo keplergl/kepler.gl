@@ -63,6 +63,37 @@ export function mapHasOpenStreetMapAttribution(map: any): boolean {
 }
 
 /**
+ * Collects the attribution strings declared by the resolved map sources.
+ * Custom basemap styles (e.g. OpenFreeMap, OpenMapTiles) declare their own
+ * attribution in the source's TileJSON, which only becomes available after
+ * MapLibre resolves it. Unlike {@link mapHasOpenStreetMapAttribution}, this
+ * preserves the full attribution text instead of collapsing it to a boolean,
+ * so custom attributions are not lost.
+ * @param map the resolved MapLibre/Mapbox map instance
+ * @returns de-duplicated list of attribution HTML strings, order preserved
+ */
+export function getBaseMapAttributions(map: any): string[] {
+  try {
+    const style = map?.getStyle?.();
+    if (!style?.sources) return [];
+    const seen = new Set<string>();
+    Object.keys(style.sources).forEach(sourceId => {
+      const source = map.getSource?.(sourceId);
+      const attribution = source?.attribution;
+      if (typeof attribution === 'string') {
+        const trimmed = attribution.trim();
+        if (trimmed) {
+          seen.add(trimmed);
+        }
+      }
+    });
+    return [...seen];
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Transform mapbox protocol so can be used with maplibre
  * @param mapboxKey mapbox api key
  * @returns transformed url
