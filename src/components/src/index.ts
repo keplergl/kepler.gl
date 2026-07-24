@@ -55,7 +55,11 @@ export {
   geoCoderPanelSelector
 } from './kepler-gl';
 export {default as LayerAnimationControllerFactory} from './layer-animation-controller';
-export {Attribution, default as MapContainerFactory} from './map-container';
+export {
+  Attribution,
+  renderBasemapAttribution,
+  default as MapContainerFactory
+} from './map-container';
 export {default as MapsLayoutFactory} from './maps-layout';
 export {default as LayoutSplitter, LayoutSplitterMode} from './common/layout-splitter';
 export {default as ModalContainerFactory} from './modal-container';

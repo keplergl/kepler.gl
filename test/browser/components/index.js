@@ -14,6 +14,7 @@ import './editor';
 import './filters';
 import './geocoder-panel-test';
 import './tooltip-config-test';
+import './attribution-test';
 import './bottom-widget-test';
 import './plot-container-test';
 import './effects';
