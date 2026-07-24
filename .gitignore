@@ -16,6 +16,11 @@ typedoc/
 
 examples/**/yarn.lock
 !examples/demo-app/yarn.lock
+!examples/custom-reducer/yarn.lock
+!examples/custom-theme/yarn.lock
+!examples/open-modal/yarn.lock
+!examples/replace-component/yarn.lock
+!examples/node-app/yarn.lock
 
 yarn-error.log
 */**/package-lock.json

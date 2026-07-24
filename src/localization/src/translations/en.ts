@@ -364,8 +364,6 @@ export default {
     top: 'Top',
     DrawOnMap: 'Draw on map',
     selectLocale: 'Select locale',
-    showAiAssistantPanel: 'Show AI Assistant',
-    hideAiAssistantPanel: 'Hide AI Assistant',
     hideLayerPanel: 'Hide layer panel',
     showLayerPanel: 'Show layer panel',
     moveToTop: 'Move to top of data layers',

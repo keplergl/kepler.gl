@@ -37,6 +37,7 @@ import {
   ExportImage,
   ExportVideo,
   MapControlItem,
+  MapControlMapLegend,
   MapControls,
   UiState
 } from '@kepler.gl/types';
@@ -401,14 +402,6 @@ export const toggleMapControlUpdater = (
   {payload: {panelId, index = 0}}: UIStateActions.ToggleMapControlUpdaterAction
 ): UiState => {
   let updatedState = state;
-  // The effect panel and ai assistant panel can not be active at the same time
-  // so we need to deactivate the other panel when one is activated
-  const panelToDeactivate =
-    panelId === MAP_CONTROLS.effect
-      ? MAP_CONTROLS.aiAssistant
-      : panelId === MAP_CONTROLS.aiAssistant
-      ? MAP_CONTROLS.effect
-      : null;
 
   // To to toggle the mapDraw and mapLocal dropdowns
   // We have to deactivate the other active dropdown
@@ -419,20 +412,6 @@ export const toggleMapControlUpdater = (
       ? MAP_CONTROLS.mapDraw
       : null;
 
-  // If we need to deactivate a competing panel and it's currently active
-  if (panelToDeactivate && state.mapControls[panelToDeactivate]?.active) {
-    updatedState = {
-      ...state,
-      mapControls: {
-        ...updatedState.mapControls,
-        [panelToDeactivate]: {
-          ...updatedState.mapControls[panelToDeactivate],
-          active: false
-        }
-      }
-    };
-  }
-
   // If we need to deactivate a competing dropdown and it's currently active
   if (dropdownToDeactivate && state.mapControls[dropdownToDeactivate]?.active) {
     updatedState = {
@@ -440,7 +419,7 @@ export const toggleMapControlUpdater = (
       mapControls: {
         ...updatedState.mapControls,
         [dropdownToDeactivate]: {
-          ...updatedState.mapControls[dropdownToDeactivate],
+          ...(updatedState.mapControls[dropdownToDeactivate] as MapControlItem),
           active: false
         }
       }
@@ -452,8 +431,8 @@ export const toggleMapControlUpdater = (
     mapControls: {
       ...updatedState.mapControls,
       [panelId]: {
-        ...updatedState.mapControls[panelId],
-        active: !updatedState.mapControls[panelId].active,
+        ...(updatedState.mapControls[panelId] as MapControlItem),
+        active: !updatedState.mapControls[panelId]?.active,
         activeMapIndex: index
       }
     }
@@ -502,7 +481,7 @@ export const setMapControlSettingsUpdater = (
   state: UiState,
   {payload: {panelId, settings}}: UIStateActions.setMapControlSettingsUpdaterAction
 ): UiState => {
-  const mapControl = state.mapControls?.[panelId];
+  const mapControl = state.mapControls?.[panelId] as MapControlMapLegend | undefined;
   if (!mapControl) {
     return state;
   }
@@ -511,7 +490,10 @@ export const setMapControlSettingsUpdater = (
     ...state,
     mapControls: {
       ...state.mapControls,
-      [panelId]: {...mapControl, settings: {...mapControl.settings, ...settings}}
+      [panelId]: {
+        ...mapControl,
+        settings: {...mapControl.settings, ...settings}
+      } as MapControlMapLegend
     }
   };
 };
@@ -915,7 +897,7 @@ export const toggleSplitMapUpdater = (state: UiState): UiState => ({
     (acc, entry) => ({
       ...acc,
       [entry[0]]: {
-        ...entry[1],
+        ...(entry[1] as MapControlItem),
         activeMapIndex: 0
       }
     }),

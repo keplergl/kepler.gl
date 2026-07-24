@@ -39,7 +39,7 @@ const BABEL_CONFIG = {
 };
 
 const COMMON_CONFIG = {
-  entry: ['../examples/demo-app/src/react19-shim.js', './src/main'],
+  entry: ['../examples/demo-app/src/react19-shim.ts', './src/main'],
   output: {
     path: resolve(__dirname, 'build'),
     filename: 'bundle.js',
@@ -72,7 +72,7 @@ const COMMON_CONFIG = {
         ],
         exclude: [/node_modules\/(?!(@monaco-editor|@radix-ui))/]
       },
-      // Add css loader for ai-assistant
+      // css loader
       {
         test: /\.css$/,
         use: ['style-loader', 'css-loader']

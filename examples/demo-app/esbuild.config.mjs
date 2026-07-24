@@ -88,10 +88,12 @@ const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
+  // Silence noisy warnings from prebuilt third-party deps (e.g. @deck.gl-community
+  // editable-layers ships files with a Preact `@jsxImportSource` pragma).
   logOverride: {
     'unsupported-jsx-comment': 'silent'
   },
-  inject: ['src/react19-shim.js'],
+  inject: ['src/react19-shim.ts'],
   loader: {
     '.js': 'jsx',
     '.css': 'css',
@@ -99,7 +101,7 @@ const config = {
     '.woff': 'file',
     '.woff2': 'file'
   },
-  entryPoints: ['src/main.js'],
+  entryPoints: ['src/main.tsx'],
   outfile: 'dist/bundle.js',
   bundle: true,
   define: {
@@ -125,7 +127,34 @@ const config = {
     replace({
       __PACKAGE_VERSION__: KeplerPackage.version,
       include: /constants\/src\/default-settings\.ts/
-    })
+    }),
+    // Resolve monaco-editor subpath imports (missing .js extension) used by @sqlrooms packages
+    {
+      name: 'resolve-monaco-editor',
+      setup(build) {
+        build.onResolve({filter: /^monaco-editor\/esm\//}, args => {
+          if (args.path.endsWith('.js') || args.path.endsWith('.css')) return null;
+          const subpath = args.path + '.js';
+          const resolved = join(process.cwd(), BASE_NODE_MODULES_DIR, subpath);
+          return {path: resolved};
+        });
+      }
+    },
+    // Resolve @sqlrooms/ai-core internal component imports that bypass the package exports map
+    {
+      name: 'resolve-sqlrooms-ai-core-internals',
+      setup(build) {
+        build.onResolve({filter: /^@sqlrooms\/ai-core\/components\//}, args => {
+          const subpath =
+            args.path.replace(
+              '@sqlrooms/ai-core/components/',
+              '@sqlrooms/ai-core/dist/components/'
+            ) + '.js';
+          const resolved = join(process.cwd(), BASE_NODE_MODULES_DIR, subpath);
+          return {path: resolved};
+        });
+      }
+    }
   ]
 };
 
@@ -135,36 +164,6 @@ function addAliases(externals, args) {
   // Combine flags
   const useLocalDeck = args.includes('--env.deck');
   const useRepoDeck = args.includes('--env.deck_src');
-  const useLocalAiAssistant = args.includes('--env.ai');
-
-  // resolve ai-assistant from local dir
-  if (useLocalAiAssistant) {
-    resolveAlias['@openassistant/core'] = join(LIB_DIR, '../openassistant/packages/core/src');
-    resolveAlias['@openassistant/ui'] = join(LIB_DIR, '../openassistant/packages/ui/src');
-    resolveAlias['@openassistant/echarts'] = join(
-      LIB_DIR,
-      '../openassistant/packages/components/echarts/src'
-    );
-    resolveAlias['@openassistant/tables'] = join(
-      LIB_DIR,
-      '../openassistant/packages/components/tables/src'
-    );
-    resolveAlias['@openassistant/geoda'] = join(
-      LIB_DIR,
-      '../openassistant/packages/tools/geoda/src'
-    );
-    resolveAlias['@openassistant/duckdb'] = join(
-      LIB_DIR,
-      '../openassistant/packages/tools/duckdb/src'
-    );
-    resolveAlias['@openassistant/plots'] = join(
-      LIB_DIR,
-      '../openassistant/packages/tools/plots/src'
-    );
-    resolveAlias['@openassistant/osm'] = join(LIB_DIR, '../openassistant/packages/tools/osm/src');
-    resolveAlias['@openassistant/utils'] = join(LIB_DIR, '../openassistant/packages/utils/src');
-    resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
-  }
 
   // resolve deck.gl from local dir
   if (useLocalDeck || useRepoDeck) {
@@ -304,10 +303,17 @@ function openURL(url) {
 
   if (args.includes('--start')) {
     const isLocal = process.env.NODE_ENV === 'local';
-    const baseAliases = isLocal
-      ? localAliases
-      : getThirdPartyLibraryAliases(false);
+    const baseAliases = isLocal ? localAliases : getThirdPartyLibraryAliases(false);
     const nodeModulesDir = isLocal ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
+
+    // Start Tailwind CSS watcher for sqlrooms UI components
+    spawn(
+      './node_modules/.bin/tailwindcss',
+      ['-i', 'src/ai-assistant-v2/styles.css', '-o', 'dist/tailwind.css', '--watch'],
+      {
+        stdio: 'inherit'
+      }
+    );
 
     await esbuild
       .context({

@@ -17,12 +17,33 @@ jobs:
       - uses: actions/checkout@v4
       # use Volta to manage yarn/node versions
       - uses: volta-cli/action@v4
+      # Enable Corepack so the `packageManager` field in each project's
+      # package.json is honored when `yarn` is invoked inside nested
+      # example/website directories. Volta pins yarn at the root, but
+      # nested installs (e.g. examples/custom-reducer) without a local
+      # `volta` config can fall back to the system yarn 1.x and fail with
+      # "packageManager ... However the current global version of Yarn is
+      # 1.22.22". Corepack closes that gap.
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Install XVFB
         run: sudo apt-get install xvfb
 
       - name: Install Dependencies
         run: yarn install && yarn bootstrap
+
+      # Install dependencies for the standalone example apps and website so
+      # that `yarn typescript:examples` (run by `yarn lint`) can resolve their
+      # third-party modules. These projects are NOT yarn workspaces of the
+      # root package and therefore need their own `yarn install`.
+      - name: Install Example & Website Dependencies
+        run: |
+          yarn install:example
+          cd website && yarn && cd ..
+          for d in examples/custom-reducer examples/custom-theme examples/open-modal examples/replace-component examples/node-app; do
+            (cd "$d" && yarn)
+          done
 
       # - name: Install Puppeteer
       #   run: yarn dlx "puppeteer@23.1.0"

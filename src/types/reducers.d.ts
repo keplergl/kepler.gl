@@ -505,7 +505,7 @@ export type MapControls = {
   mapLocale?: MapControlItem;
   effect?: MapControlItem;
   annotation?: MapControlItem;
-  aiAssistant?: MapControlItem;
+  [key: string]: MapControlItem | MapControlMapLegend | undefined;
 };
 
 export type LoadFiles = {

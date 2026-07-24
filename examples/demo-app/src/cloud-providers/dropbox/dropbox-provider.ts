@@ -1,0 +1,502 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
+// DROPBOX
+import {Dropbox} from 'dropbox';
+import Window from 'global/window';
+import DropboxIcon from './dropbox-icon';
+import {MAP_URI} from '../../constants/default-settings';
+import {KEPLER_FORMAT, Provider} from '@kepler.gl/cloud-providers';
+
+const NAME = 'dropbox';
+const DISPLAY_NAME = 'Dropbox';
+const DOMAIN = 'www.dropbox.com';
+const KEPLER_DROPBOX_FOLDER_LINK = `//${DOMAIN}/home/Apps`;
+const CORS_FREE_DOMAIN = 'dl.dropboxusercontent.com';
+const PRIVATE_STORAGE_ENABLED = true;
+const SHARING_ENABLED = true;
+const MAX_THUMBNAIL_BATCH = 25;
+const IMAGE_URL_PREFIX = 'data:image/gif;base64,';
+
+function parseQueryString(query: string): Record<string, string> {
+  const searchParams = new URLSearchParams(query);
+  const params: Record<string, string> = {};
+  for (const p of searchParams) {
+    if (p && p.length === 2 && p[0]) params[p[0]] = p[1];
+  }
+
+  return params;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isConfigFile(err: any): boolean {
+  const summary = err.error && err.error.error_summary;
+  return typeof summary === 'string' && Boolean(summary.match(/path\/conflict\/file\//g));
+}
+
+export default class DropboxProvider extends Provider {
+  clientId: string;
+  appName: string;
+  _folderLink: string;
+  _path: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _dropbox: any;
+  _shareUrl?: string;
+  _cursor?: string;
+
+  constructor(clientId: string, appName: string) {
+    super({name: NAME, displayName: DISPLAY_NAME, icon: DropboxIcon});
+    // All cloud-providers providers must implement the following properties
+
+    this.clientId = clientId;
+    this.appName = appName;
+
+    this._folderLink = `${KEPLER_DROPBOX_FOLDER_LINK}/${appName}`;
+    this._path = '';
+
+    // Initialize Dropbox API
+    this._initializeDropbox();
+  }
+
+  /**
+   * This method will handle the oauth flow by performing the following steps:
+   * - Opening a new window
+   * - Subscribe to message channel
+   * - Receive the token when ready
+   * - Close the opened tab
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // @ts-expect-error base Provider.login() return type will be widened to Promise<CloudUser | void> in a future @kepler.gl/cloud-providers release
+  async login(): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const link = this._authLink();
+
+      const authWindow = Window.open(link, '_blank', 'width=1024,height=716');
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const handleToken = async (event: any) => {
+        // if user has dev tools this will skip all the react-devtools events
+        if (!event.data.token) {
+          return;
+        }
+
+        if (authWindow) {
+          authWindow.close();
+          Window.removeEventListener('message', handleToken);
+        }
+
+        const {token} = event.data;
+
+        if (!token) {
+          reject('Failed to login to Dropbox');
+          return;
+        }
+
+        this._dropbox.setAccessToken(token);
+        // save user name
+        const user = await this.getUser();
+
+        if (Window.localStorage) {
+          Window.localStorage.setItem(
+            'dropbox',
+            JSON.stringify({
+              // dropbox token doesn't expire unless revoked by the user
+              token,
+              user,
+              timestamp: new Date()
+            })
+          );
+        }
+
+        resolve(user);
+      };
+
+      Window.addEventListener('message', handleToken);
+    });
+  }
+
+  /**
+   * returns a list of maps
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async listMaps(): Promise<any[]> {
+    // list files
+    try {
+      // https://dropbox.github.io/dropbox-sdk-js/Dropbox.html#filesListFolder__anchor
+      const response = await this._dropbox.filesListFolder({
+        path: `${this._path}`
+      });
+      const {pngs, visualizations} = this._parseEntries(response);
+      // https://dropbox.github.io/dropbox-sdk-js/Dropbox.html#filesGetThumbnailBatch__anchor
+      // up to 25 per request
+      // TODO: implement pagination, so we don't need to get all the thumbs all at once
+      const thumbnails = await Promise.all(this._getThumbnailRequests(pngs)).then(results =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (results as any[]).reduce((accu, r) => [...accu, ...(r.entries || [])], [])
+      );
+
+      // append to visualizations
+      (thumbnails || []).forEach((thb: any) => {
+        if (thb['.tag'] === 'success' && thb.thumbnail) {
+          const matchViz = visualizations[pngs[thb.metadata.id] && pngs[thb.metadata.id].name];
+          if (matchViz) {
+            matchViz.thumbnail = `${IMAGE_URL_PREFIX}${thb.thumbnail}`;
+          }
+        }
+      });
+
+      // dropbox returns
+      return Object.values(visualizations).reverse();
+    } catch (error) {
+      // made the error message human readable for provider updater
+      throw this._handleDropboxError(error);
+    }
+  }
+
+  /**
+   *
+   * @param mapData map data and config in one json object {map: {datasets: Array<Object>, config: Object, info: Object}
+   * @param blob json file blob to upload
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async uploadMap({mapData, options = {}}: {mapData: any; options?: any}): Promise<any> {
+    const {isPublic} = options;
+    const {map, thumbnail} = mapData;
+
+    // generate file name if is not provided
+    const name = map.info && map.info.title;
+    const fileName = `${name}.json`;
+    const fileContent = map;
+    // FileWriteMode: Selects what to do if the file already exists.
+    // Always overwrite if sharing
+    const mode = options.overwrite || isPublic ? 'overwrite' : 'add';
+    const path = `${this._path}/${fileName}`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let metadata: any;
+    try {
+      metadata = await this._dropbox.filesUpload({
+        path,
+        contents: JSON.stringify(fileContent),
+        mode
+      });
+    } catch (err) {
+      if (isConfigFile(err)) {
+        throw this.getFileConflictError();
+      }
+    }
+
+    // save a thumbnail image
+    if (thumbnail) {
+      await this._dropbox.filesUpload({
+        path: path.replace(/\.json$/, '.png'),
+        contents: thumbnail,
+        mode
+      });
+    }
+
+    // keep on create shareUrl
+    if (isPublic) {
+      return await this._shareFile(metadata);
+    }
+
+    return {id: metadata.id, path: metadata.path_lower};
+  }
+
+  /**
+   * download the map content
+   * @param loadParams
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async downloadMap(loadParams: any): Promise<any> {
+    const {path} = loadParams;
+    const result = await this._dropbox.filesDownload({path});
+    const json = await this._readFile(result.fileBlob);
+
+    const response = {
+      map: json,
+      format: KEPLER_FORMAT
+    };
+
+    return Promise.resolve(response);
+  }
+
+  getUserName(): string {
+    // load user from
+    if (Window.localStorage) {
+      const jsonString = Window.localStorage.getItem('dropbox');
+      return jsonString && JSON.parse(jsonString).user;
+    }
+    return '';
+  }
+
+  async logout(): Promise<void> {
+    await this._dropbox.authTokenRevoke();
+    if (Window.localStorage) {
+      Window.localStorage.removeItem('dropbox');
+    }
+    // re instantiate dropbox
+    this._initializeDropbox();
+  }
+
+  isEnabled(): boolean {
+    return Boolean(this.clientId);
+  }
+
+  hasPrivateStorage(): boolean {
+    return PRIVATE_STORAGE_ENABLED;
+  }
+
+  hasSharingUrl(): boolean {
+    return SHARING_ENABLED;
+  }
+
+  /**
+   * Get the share url of current map, this url can be accessed by anyone
+   * @param {boolean} fullUrl
+   */
+  getShareUrl(fullUrl = true): string {
+    return fullUrl
+      ? `${Window.location.protocol}//${Window.location.host}/${MAP_URI}${this._shareUrl}`
+      : `/${MAP_URI}${this._shareUrl}`;
+  }
+
+  /**
+   * Get the map url of current map, this url can only be accessed by current logged in user
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getMapUrl(loadParams: any): string {
+    const {path} = loadParams;
+    return path;
+  }
+
+  getManagementUrl(): string {
+    return this._folderLink;
+  }
+
+  /**
+   * Provides the current dropbox auth token. If stored in localStorage is set onto dropbox handler and returned
+   * @returns {any}
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getAccessToken(): any {
+    let token = this._dropbox.getAccessToken();
+    if (!token && Window.localStorage) {
+      const jsonString = Window.localStorage.getItem('dropbox');
+      token = jsonString && JSON.parse(jsonString).token;
+      if (token) {
+        this._dropbox.setAccessToken(token);
+      }
+    }
+    return (token || '') !== '' ? token : null;
+  }
+
+  /**
+   * This method will extract the auth token from the third party service callback url.
+   * @param {object} location the window location provided by react router
+   * @returns {?string} the token extracted from the oauth 2 callback URL
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getAccessTokenFromLocation(location: any): string | null {
+    if (!(location && location.hash.length)) {
+      return null;
+    }
+    // dropbox token usually start with # therefore we want to remove the '#'
+    const query = Window.location.hash.substring(1);
+    return parseQueryString(query).access_token;
+  }
+
+  // PRIVATE
+  _initializeDropbox(): void {
+    this._dropbox = new Dropbox({fetch: Window.fetch});
+    this._dropbox.setClientId(this.clientId);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getUser(): Promise<any> {
+    const response = await this._dropbox.usersGetCurrentAccount();
+    return this._getUserFromAccount(response);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _handleDropboxError(error: any): Error {
+    // dropbox list_folder error
+    if (error && error.error && error.error.error_summary) {
+      return new Error(`Dropbox Error: ${error.error.error_summary}`);
+    }
+
+    return error;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _readFile(fileBlob: Blob): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const fileReader = new FileReader();
+      fileReader.onload = ({target}) => {
+        try {
+          const result = target?.result;
+          const json = JSON.parse(result as string);
+          resolve(json);
+        } catch (err) {
+          reject(err);
+        }
+      };
+
+      fileReader.readAsText(fileBlob, 'utf-8');
+    });
+  }
+
+  // append url after map sharing
+  _getMapPermalink(mapLink: string, fullUrl = true): string {
+    return fullUrl
+      ? `${Window.location.protocol}//${Window.location.host}/${MAP_URI}${mapLink}`
+      : `/${MAP_URI}${mapLink}`;
+  }
+
+  // append map url after load map from storage, this url is not meant
+  // to be directly shared with others
+  _getMapPermalinkFromParams({path}: {path: string}, fullURL = true): string {
+    const mapLink = `demo/map/dropbox?path=${path}`;
+    return fullURL
+      ? `${Window.location.protocol}//${Window.location.host}/${mapLink}`
+      : `/${mapLink}`;
+  }
+  /**
+   * It will set access to file to public
+   * @param {Object} metadata metadata response from uploading the file
+   * @returns {Promise<DropboxTypes.sharing.FileLinkMetadataReference | DropboxTypes.sharing.FolderLinkMetadataReference | DropboxTypes.sharing.SharedLinkMetadataReference>}
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _shareFile(metadata: any): Promise<any> {
+    const shareArgs = {
+      path: metadata.path_display || metadata.path_lower
+    };
+
+    return this._dropbox
+      .sharingListSharedLinks(shareArgs)
+      .then(({links}: {links?: any[]} = {}) => {
+        if (links && links.length) {
+          return links[0];
+        }
+        return this._dropbox.sharingCreateSharedLinkWithSettings(shareArgs);
+      })
+      .then((result: any) => {
+        // Update URL to avoid CORS issue
+        // Unfortunately this is not the ideal scenario but it will make sure people
+        // can share dropbox urls with users without the dropbox account (publish on twitter, facebook)
+        this._shareUrl = this._overrideUrl(result.url) || undefined;
+
+        return {
+          // the full url to be displayed
+          shareUrl: this.getShareUrl(true),
+          folderLink: this._folderLink
+        };
+      });
+  }
+
+  /**
+   * Generate auth link url to open to be used to handle OAuth2
+   * @param {string} path
+   */
+  _authLink(path = 'auth'): string {
+    return this._dropbox.getAuthenticationUrl(
+      `${Window.location.origin}/${path}`,
+      btoa(JSON.stringify({handler: 'dropbox', origin: Window.location.origin}))
+    );
+  }
+
+  /**
+   * Override dropbox cloud-providers url
+   * https://www.dropbox.com/s/bxwwdb81z0jg7pb/keplergl_2018-11-01T23%3A22%3A43.940Z.json?rlkey=xxx&dl=0
+   * ->
+   * https://dl.dropboxusercontent.com/s/bxwwdb81z0jg7pb/keplergl_2018-11-01T23%3A22%3A43.940Z.json?rlkey=xxx&dl=0
+   * @param metadata
+   * @returns {DropboxTypes.sharing.FileLinkMetadataReference}
+   */
+  _overrideUrl(url?: string): string | null {
+    return url ? url.replace(DOMAIN, CORS_FREE_DOMAIN) : null;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _getUserFromAccount(response: any) {
+    const {name} = response;
+    return {
+      name: name.display_name,
+      email: response.email,
+      abbreviated: name.abbreviated_name
+    };
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _getThumbnailRequests(pngs: Record<string, any>) {
+    const batches = Object.values(pngs).reduce((accu: any[], c) => {
+      const lastBatch = accu.length && accu[accu.length - 1];
+      if (!lastBatch || lastBatch.length >= MAX_THUMBNAIL_BATCH) {
+        // add new batch
+        accu.push([c]);
+      } else {
+        lastBatch.push(c);
+      }
+      return accu;
+    }, []);
+
+    return batches.map((batch: any[]) =>
+      this._dropbox.filesGetThumbnailBatch({
+        entries: batch.map(img => ({
+          path: img.path_lower,
+          format: 'png',
+          size: 'w128h128'
+        }))
+      })
+    );
+  }
+
+  /**
+   * Parse fileListFolder result as visualizations to be shown in load storage map modal
+   * @param {*} response
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _parseEntries(response: any): {visualizations: Record<string, any>; pngs: Record<string, any>} {
+    const {entries, cursor, has_more} = response;
+
+    if (has_more) {
+      this._cursor = cursor;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pngs: Record<string, any> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const visualizations: Record<string, any> = {};
+
+    entries.forEach((entry: any) => {
+      const {name, path_lower, id, client_modified} = entry;
+      if (name && name.endsWith('.json')) {
+        // find json
+        const title = name.replace(/\.json$/, '');
+        const viz = {
+          name,
+          title,
+          id,
+          updatedAt: new Date(client_modified).getTime(),
+          loadParams: {
+            id,
+            path: path_lower
+          }
+        };
+
+        visualizations[title] = viz;
+      } else if (name && name.endsWith('.png')) {
+        const title = name.replace(/\.png$/, '');
+
+        pngs[id] = {
+          name: title,
+          path_lower,
+          id
+        };
+      }
+    });
+
+    return {
+      visualizations,
+      pngs
+    };
+  }
+}

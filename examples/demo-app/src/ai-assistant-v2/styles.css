@@ -1,0 +1,37 @@
+@import 'tailwindcss';
+
+@import '@sqlrooms/ui/tailwind-preset.css';
+
+/* Scan our local components. Include the whole demo-app `src` tree (not just
+ * ai-assistant-v2) so app-level Tailwind classes like the `h-screen`/`w-screen`
+ * layout on the ScreenshotWrapper in app.tsx are also generated. */
+@source "../**/*.{ts,tsx}";
+
+/* Scan @sqlrooms package dist files for their Tailwind classes */
+@source "../../node_modules/@sqlrooms/ui/dist/**/*.js";
+@source "../../node_modules/@sqlrooms/ai/dist/**/*.js";
+@source "../../node_modules/@sqlrooms/ai-core/dist/**/*.js";
+@source "../../node_modules/@sqlrooms/ai-settings/dist/**/*.js";
+@source "../../node_modules/@sqlrooms/duckdb/dist/**/*.js";
+@source "../../node_modules/@sqlrooms/room-store/dist/**/*.js";
+
+/*
+ * Override kepler.gl's Tailwind v3 preflight which sets a global
+ * `*, ::before, ::after { border-color: ... }` outside of any CSS layer.
+ * Since unlayered styles beat @layer, we scope to .dark for higher specificity.
+ */
+.dark *, .dark ::before, .dark ::after {
+  border-color: hsl(var(--border));
+}
+
+/*
+ * Scale prose (markdown) content to match kepler.gl's ~12px base font.
+ * The prose plugin uses rem units relative to the 16px root, so text-sm prose
+ * renders at 14px. Override to 12px to stay consistent with the rest of the UI.
+ */
+.dark .prose {
+  font-size: 12px;
+}
+.dark .prose :where(p, li, blockquote) {
+  line-height: 1.6;
+}

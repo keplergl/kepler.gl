@@ -4,9 +4,13 @@
 import esbuild from 'esbuild';
 import { replace } from 'esbuild-plugin-replace';
 import process from 'node:process';
-import { join } from 'node:path';
-import { spawn } from 'node:child_process';
+import { dirname, join } from 'node:path';
+import { existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { spawn, spawnSync } from 'node:child_process';
 import WebsitePackage from '../package.json' with {type: 'json'};
+
+const require = createRequire(import.meta.url);
 
 const args = process.argv;
 const LIB_DIR = '../';
@@ -15,6 +19,41 @@ const WEBSITE_NODE_MODULES_DIR = './node_modules';
 const SRC_DIR = join(LIB_DIR, 'src');
 
 const port = 3003;
+
+// The SQLRooms AI chat UI (rendered from the demo-app sources the website
+// bundles) is styled entirely with Tailwind utility classes. Those classes are
+// not part of esbuild's JS/CSS graph, so we compile them separately with the
+// Tailwind CLI, exactly like the demo-app build does, and link the output from
+// index.html. `@source` globs inside this stylesheet are resolved relative to
+// the stylesheet itself, so pointing at the demo-app copy keeps them valid.
+const TAILWIND_INPUT = '../examples/demo-app/src/ai-assistant-v2/styles.css';
+const TAILWIND_OUTPUT = 'dist/tailwind.css';
+
+// The tailwindcss CLI is a dependency of the demo-app workspace; locate its
+// binary regardless of how node_modules are hoisted.
+function resolveTailwindBin() {
+  const candidates = [
+    join(LIB_DIR, 'examples/demo-app/node_modules/.bin/tailwindcss'),
+    join(LIB_DIR, 'node_modules/.bin/tailwindcss'),
+    join(WEBSITE_NODE_MODULES_DIR, '.bin/tailwindcss')
+  ];
+  return candidates.find(p => existsSync(p)) || 'tailwindcss';
+}
+
+function buildTailwind({watch}) {
+  const bin = resolveTailwindBin();
+  const cliArgs = ['-i', TAILWIND_INPUT, '-o', TAILWIND_OUTPUT];
+  if (watch) {
+    spawn(bin, [...cliArgs, '--watch'], {stdio: 'inherit'});
+    return;
+  }
+  // Minify for production and fail the build if Tailwind cannot compile.
+  const result = spawnSync(bin, [...cliArgs, '--minify'], {stdio: 'inherit'});
+  if (result.status !== 0) {
+    logError('Tailwind CSS build failed');
+    process.exit(1);
+  }
+}
 
 const RESOLVE_LOCAL_ALIASES = {
   react: `${NODE_MODULES_DIR}/react`,
@@ -41,7 +80,7 @@ const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
-  inject: ['../examples/demo-app/src/react19-shim.js'],
+  inject: ['../examples/demo-app/src/react19-shim.ts'],
   loader: {
     '.js': 'jsx',
     '.css': 'css',
@@ -53,7 +92,7 @@ const config = {
     '.woff2': 'file'
   },
   entryPoints: [
-    'src/main.js',
+    'src/main.tsx',
   ],
   outfile: 'dist/bundle.js',
   bundle: true,
@@ -72,7 +111,28 @@ const config = {
     replace({
       __PACKAGE_VERSION__: WebsitePackage.version,
       include: /constants\/src\/default-settings\.ts/
-    })
+    }),
+    // Resolve @sqlrooms/ai-core internal component imports that bypass the
+    // package `exports` map (mirrors the demo-app esbuild config). The website
+    // bundles demo-app sources that deep-import these modules; esbuild honors
+    // the package `exports` field strictly and would otherwise fail to resolve.
+    {
+      name: 'resolve-sqlrooms-ai-core-internals',
+      setup(build) {
+        build.onResolve({filter: /^@sqlrooms\/ai-core\/components\//}, args => {
+          const subpath = args.path.replace('@sqlrooms/ai-core/', '');
+          // Resolve the package's public entry (always exported) to locate its
+          // install dir, then map to the internal dist file. Avoids relying on
+          // `./package.json` being exported, which it is not.
+          const entry = require.resolve('@sqlrooms/ai-core', {
+            paths: [args.resolveDir, process.cwd()]
+          });
+          // entry === <pkgRoot>/dist/index.js -> dist dir is its parent
+          const distDir = dirname(entry);
+          return {path: `${join(distDir, subpath)}.js`};
+        });
+      }
+    }
   ]
 };
 
@@ -124,6 +184,10 @@ function validateEnvVariable(variable, instruction) {
       validateEnvVariable(variable, instruction);
     });
 
+    // Compile the SQLRooms/Tailwind stylesheet before bundling so
+    // dist/tailwind.css exists alongside the JS bundle.
+    buildTailwind({watch: false});
+
     await esbuild
       .build({
         ...config,
@@ -138,6 +202,9 @@ function validateEnvVariable(variable, instruction) {
   }
 
   if (args.includes('--start')) {
+    // Watch & compile the Tailwind stylesheet during dev too.
+    buildTailwind({watch: true});
+
     await esbuild
       .context({
         ...config,
