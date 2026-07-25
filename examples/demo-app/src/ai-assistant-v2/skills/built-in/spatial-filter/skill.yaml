@@ -1,0 +1,4 @@
+id: spatial-filter
+version: 0.1.0
+name: Spatial filter (points in polygons)
+description: Filter points that fall within a set of polygons using a DuckDB spatial SQL query, then keep only the matching points.

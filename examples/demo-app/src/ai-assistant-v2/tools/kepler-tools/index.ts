@@ -6,6 +6,9 @@ import {getUpdateLayerColorTool} from './layer-style-tool';
 import {getLoadDataTool} from './load-data-tool';
 import {getSaveDataTool} from './save-data-tool';
 import {getTableTool} from './table-tool';
+import {getAddTimeFilterTool} from './time-filter-tool';
+import {getToggleTimeFilterTool} from './toggle-time-filter-tool';
+import {getSplitViewTool} from './split-view-tool';
 
 export function getKeplerTools(ctx: KeplerContext) {
   return {
@@ -15,7 +18,10 @@ export function getKeplerTools(ctx: KeplerContext) {
     loadData: getLoadDataTool(ctx),
     mapBoundary: getMapBoundaryTool(ctx),
     saveDataToMap: getSaveDataTool(ctx),
-    tableTool: getTableTool(ctx)
+    tableTool: getTableTool(ctx),
+    addTimeFilter: getAddTimeFilterTool(ctx),
+    toggleTimeFilter: getToggleTimeFilterTool(ctx),
+    splitView: getSplitViewTool(ctx)
   };
 }
 
@@ -26,3 +32,6 @@ export {getUpdateLayerColorTool} from './layer-style-tool';
 export {getLoadDataTool} from './load-data-tool';
 export {getSaveDataTool} from './save-data-tool';
 export {getTableTool} from './table-tool';
+export {getAddTimeFilterTool} from './time-filter-tool';
+export {getToggleTimeFilterTool} from './toggle-time-filter-tool';
+export {getSplitViewTool} from './split-view-tool';

@@ -17,15 +17,20 @@ import {
   createBaseRoomSlice
 } from '@sqlrooms/room-store';
 import {createDuckDbSlice, DuckDbSliceState} from '@sqlrooms/duckdb';
-import {z} from 'zod';
 import type {ToolRendererRegistry} from '@sqlrooms/ai';
 import {AI_SETTINGS} from './config';
 import {createKeplerAiInstructions} from './instructions';
-import {getAllTools} from './tools/tools';
 import {getEchartsToolRenderers, setHistogramSelectionHandler} from './tools/echarts-renderers';
-import {highlightRows} from './tools/utils';
+import {highlightRows, setStoreConnectorProvider} from './tools/utils';
+import {createWrappedQueryTool} from './tools/query-tool-wrapper';
 import {layerSetIsValid} from '@kepler.gl/actions';
 import type {KeplerContext} from './types';
+import type {SkillListing} from '@sqlrooms/ai';
+import {KeplerSkillStorage} from './skills/KeplerSkillStorage';
+import {createRunSkillTool} from './skills/runSkillTool';
+import {createDiscoverSkillTool} from './skills/discoverSkillTool';
+import {buildSkillsPromptFromListings} from './skills/skillPrompt';
+import {getModel} from './skills/getModel';
 
 export type RoomState = BaseRoomStoreState & DuckDbSliceState & AiSliceState & AiSettingsSliceState;
 
@@ -35,6 +40,7 @@ export function setReduxStore(store: any) {
   reduxStore = store;
   // Wire the histogram brush-selection callback now that redux is available, so
   // the standalone chart renderer can highlight the brushed rows on the map.
+  // The histogram renderer surfaces tool output produced by skill sub-agents.
   setHistogramSelectionHandler((datasetName, selectedIndices) => {
     const visState = reduxStore?.getState()?.demo?.keplerGl?.map?.visState;
     if (!visState) return;
@@ -71,6 +77,37 @@ function getKeplerContext(): KeplerContext {
     dispatch: (action: any) => reduxStore?.dispatch(action)
   };
 }
+
+/**
+ * Singleton skill storage for the assistant. Lives for the page's lifetime.
+ * Exported so future skill-authoring UI can reach it directly.
+ */
+export const skillStorage = new KeplerSkillStorage();
+
+/**
+ * Cached skill listings used when building the orchestrator's system prompt.
+ * Kept outside the store so the prompt read path stays synchronous; the cache
+ * is refreshed whenever storage mutates.
+ */
+let cachedListings: SkillListing[] = [];
+
+let refreshSeq = 0;
+async function refreshSkillListings() {
+  const seq = ++refreshSeq;
+  try {
+    const next = await skillStorage.listSkills();
+    if (seq === refreshSeq) cachedListings = next;
+  } catch (err) {
+    console.error('[store] Failed to refresh skill listings:', err);
+  }
+}
+
+// Initial seed — fire-and-forget is safe, the storage constructor already
+// populated the built-in root synchronously.
+void refreshSkillListings();
+skillStorage.subscribe?.(() => {
+  void refreshSkillListings();
+});
 
 export const {roomStore, useRoomStore} = createRoomStore<RoomState>(
   persistSliceConfigs<RoomState>(
@@ -112,7 +149,9 @@ export const {roomStore, useRoomStore} = createRoomStore<RoomState>(
         config: createDefaultAiConfig(),
 
         getInstructions: () => {
-          return createKeplerAiInstructions(store);
+          const base = createKeplerAiInstructions(store);
+          const skillsBlock = buildSkillsPromptFromListings(cachedListings);
+          return skillsBlock ? `${base}\n\n${skillsBlock}` : base;
         },
 
         toolRenderers: {
@@ -122,9 +161,31 @@ export const {roomStore, useRoomStore} = createRoomStore<RoomState>(
 
         tools: {
           ...createDefaultAiTools(store, {query: {}, commands: false, tables: false}),
-          ...getAllTools(getKeplerContext())
+          // Override the stock `query` tool (which hides all rows from the LLM
+          // because numberOfRowsToShareWithLLM defaults to 0) with a wrapper
+          // that runs against the kepler tools' DuckDB connector and surfaces
+          // the first N rows as a ~1000-char preview. See query-tool-wrapper.ts.
+          query: createWrappedQueryTool(),
+          discoverSkill: createDiscoverSkillTool({store, storage: skillStorage}),
+          runSkill: createRunSkillTool({
+            store,
+            storage: skillStorage,
+            getKeplerContext,
+            getModel: () => getModel(store)
+          })
         } as any
       })(set, get, store)
     })
   )
 );
+
+// Wire the room store's DuckDB connector into the kepler tools layer so that
+// skills (which materialize kepler datasets into DuckDB via tools/utils.ts
+// `getConnector`) and the main-agent wrapped `query` tool share ONE DuckDB
+// instance. Without this, the two connectors diverge: skills write tables the
+// query tool can't see, and the query tool reads an empty DB. This is the root
+// cause of the "DESCRIBE county_unemployment does not exist" error — the
+// dataset lived in kepler's in-memory visState and was never materialized into
+// the query tool's DuckDB. `getConnector()` in tools/utils.ts now resolves to
+// this connector. Must run after `roomStore` exists.
+setStoreConnectorProvider(async () => roomStore.getState().db.getConnector());

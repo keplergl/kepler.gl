@@ -5,89 +5,14 @@ import {tableFromArrays, Table as ArrowTable} from 'apache-arrow';
 import {addDataToMap} from '@kepler.gl/actions';
 import {processFileData} from '@kepler.gl/processors';
 import {KeplerContext} from '../types';
-import {getValuesFromDataset, getConnector, datasetNameToTableName} from './utils';
+import {
+  getValuesFromDataset,
+  getConnector,
+  datasetNameToTableName,
+  convertArrowRowToObject,
+  tableToLLMResult
+} from './utils';
 import {saveToDuckdb, loadTableToKepler} from './duckdb-cache';
-
-/**
- * Recursively convert an Arrow row (which uses proxy objects) into a plain JS object.
- * Handles nested toJSON(), arrays, and bigint values.
- */
-function convertArrowRowToObject(row: any): Record<string, unknown> {
-  if (row === null || typeof row !== 'object') return row;
-
-  if (typeof row.toJSON === 'function') {
-    const json = row.toJSON();
-    for (const key in json) {
-      const val = json[key];
-      if (val && typeof val === 'object' && typeof val.toJSON === 'function') {
-        json[key] = convertArrowRowToObject(val);
-      } else if (Array.isArray(val)) {
-        json[key] = val.map(v => convertArrowRowToObject(v));
-      } else if (typeof val === 'bigint') {
-        json[key] = val.toString();
-      }
-    }
-    return json;
-  }
-
-  if (Array.isArray(row)) {
-    return row.map(convertArrowRowToObject) as any;
-  }
-
-  return row;
-}
-
-/**
- * Format a query result table as a pipe-delimited string suitable for LLM consumption.
- * Truncates individual cell values and total output to stay within token budget.
- */
-function tableToLLMResult(
-  table: Record<string, unknown>[],
-  maxTotalLength = 2000,
-  maxValueLength = 80
-): string {
-  if (table.length === 0) return 'No rows returned';
-
-  const truncateValue = (value: unknown): string => {
-    if (value === null || value === undefined) return '';
-    let str: string;
-    if (typeof value === 'bigint') {
-      str = value.toString();
-    } else if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer) {
-      const byteLen =
-        value instanceof ArrayBuffer ? value.byteLength : (value as ArrayBufferView).byteLength;
-      str = `<${byteLen} bytes>`;
-    } else if (Array.isArray(value)) {
-      str = value.map(v => (typeof v === 'string' ? v : String(v))).join(', ');
-    } else if (typeof value === 'object') {
-      try {
-        str = JSON.stringify(value, (_k, v) => (typeof v === 'bigint' ? v.toString() : v));
-      } catch {
-        str = String(value);
-      }
-    } else {
-      str = String(value);
-    }
-    return str.length > maxValueLength ? `${str.slice(0, maxValueLength)}...` : str;
-  };
-
-  const columns = Object.keys(table[0] || {});
-  const headerRow = `| ${columns.join(' | ')} |`;
-  const lines = [headerRow];
-
-  for (const row of table) {
-    const values = columns.map(col => truncateValue(row[col]));
-    lines.push(`| ${values.join(' | ')} |`);
-
-    const currentLength = lines.join('\n').length;
-    if (currentLength > maxTotalLength - 100) {
-      lines.push('...');
-      break;
-    }
-  }
-
-  return lines.join('\n');
-}
 
 /**
  * Load dataset columns into a DuckDB table, incrementally adding only missing columns.

@@ -13526,6 +13526,7 @@ __metadata:
     "@ai-sdk/anthropic": "npm:^1.2.11"
     "@ai-sdk/deepseek": "npm:^0.2.14"
     "@ai-sdk/google": "npm:^1.2.18"
+    "@ai-sdk/openai-compatible": "npm:^1.0.18"
     "@ai-sdk/xai": "npm:^1.2.16"
     "@auth0/auth0-spa-js": "npm:^2.1.2"
     "@carto/toolkit": "npm:0.0.1-rc.18"

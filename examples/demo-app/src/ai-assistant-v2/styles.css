@@ -35,3 +35,34 @@
 .dark .prose :where(p, li, blockquote) {
   line-height: 1.6;
 }
+
+/*
+ * The "Show Query Result" modal (Radix Dialog from @sqlrooms/ui, opened by the
+ * QueryToolResult renderer) portals its overlay + content to <body> at
+ * Tailwind's z-50 (z-index: 50). kepler.gl's left side panel sits at z-index:
+ * 99 and other stacked map UI reaches 10000 (e.g. notification-panel). Because
+ * the kepler container (CONTAINER_STYLE in app.tsx) is position:absolute with
+ * no z-index, it does not create a stacking context, so those internal
+ * z-indices compete directly in the body's root stacking context and cover
+ * the z-50 popup.
+ *
+ * Hoist any Radix layer portaled to <body> (the dialog overlay + content both
+ * carry data-state="open" and live directly under body, outside #root where
+ * kepler.gl is mounted) above all kepler.gl layers. Unlayered CSS beats
+ * Tailwind's layered .z-50, so no !important is needed.
+ */
+body > [data-state='open'] {
+  z-index: 10001;
+}
+
+/*
+ * The "Show Query Result" dialog content (Radix DialogContent portaled to
+ * <body>) is sized by @sqlrooms/data-table as max-w-[75vw]. Override to 80vw
+ * so the table fills 80% of the screen width. Targets only the dialog content
+ * (role="dialog"), not the overlay. Unlayered CSS beats Tailwind's layered
+ * max-w-*, so no !important is needed.
+ */
+body > [data-state='open'][role='dialog'] {
+  width: 80vw;
+  max-width: 80vw;
+}

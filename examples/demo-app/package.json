@@ -1,18 +1,21 @@
 {
   "scripts": {
-    "start": "node esbuild.config.mjs --start",
+    "generate-skills": "node scripts/generate-skills.mjs",
+    "prebuild": "node scripts/generate-skills.mjs",
+    "start": "node scripts/generate-skills.mjs && node esbuild.config.mjs --start",
     "build": "node esbuild.config.mjs --build",
     "deploy": "yarn build && netlify deploy -d dist",
     "deploy:prod": "yarn build && netlify deploy -d dist --prod",
-    "start:local": "NODE_ENV=local node esbuild.config.mjs --start",
-    "start:local-deck": "NODE_ENV=local node esbuild.config.mjs --start --env.deck",
-    "start:local-deck-src": "NODE_ENV=local node esbuild.config.mjs --start --env.deck_src",
-    "start:local-loaders-src": "NODE_ENV=local node esbuild.config.mjs --start --env.loaders_src"
+    "start:local": "node scripts/generate-skills.mjs && NODE_ENV=local node esbuild.config.mjs --start",
+    "start:local-deck": "node scripts/generate-skills.mjs && NODE_ENV=local node esbuild.config.mjs --start --env.deck",
+    "start:local-deck-src": "node scripts/generate-skills.mjs && NODE_ENV=local node esbuild.config.mjs --start --env.deck_src",
+    "start:local-loaders-src": "node scripts/generate-skills.mjs && NODE_ENV=local node esbuild.config.mjs --start --env.loaders_src"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.11",
     "@ai-sdk/deepseek": "^0.2.14",
     "@ai-sdk/google": "^1.2.18",
+    "@ai-sdk/openai-compatible": "^1.0.18",
     "@ai-sdk/xai": "^1.2.16",
     "@auth0/auth0-spa-js": "^2.1.2",
     "@carto/toolkit": "0.0.1-rc.18",

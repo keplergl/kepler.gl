@@ -1,0 +1,4 @@
+id: colocation
+version: 0.1.0
+name: Colocation map
+description: Build a colocation map showing the co-location of two variables V1 and V2 from a dataset, by categorizing each variable then comparing the categories.
