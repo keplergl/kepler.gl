@@ -287,6 +287,50 @@ const BASEMAP_MVT_PARAMETERS = {
   depthMask: false
 };
 
+// TODO: Investigate if this is needed. 
+// Looks like deck.gl 9 loads high zoom levels too early,
+// so we offset the zoom level for better performance.
+const MAPBOX_GLOBE_VECTOR_ZOOM_OFFSET = -2;
+const CARTO_GLOBE_VECTOR_ZOOM_OFFSET = -2;
+const GLOBE_SATELLITE_ZOOM_OFFSET = 0;
+
+// Whole-world tile extent (Web Mercator latitude limit). Required whenever a
+// negative `zoomOffset` is used: deck's `getTileIndices` returns NO tiles when
+// the target zoom drops below `minZoom` *unless* an `extent` is set (in which
+// case it clamps to `minZoom` instead). Without this, zooming out or panning
+// toward the poles (where deck 9's globe controller lowers the effective zoom)
+// makes the whole globe basemap disappear.
+const GLOBE_TILE_EXTENT: [number, number, number, number] = [
+  -180, -85.051129, 180, 85.051129
+];
+
+/**
+ * deck.gl 9's globe couples zoom to latitude via `zoomAdjust` (see
+ * globe-viewport.js): `scale = 2^(zoom - zoomAdjust(lat))`, and its controller
+ * *lowers* the stored `zoom` as you pan toward the poles to keep the globe's
+ * on-screen size constant. Tile LOD, however, is selected from the raw `zoom`,
+ * so rotating toward a pole silently drops the LOD and thins out labels.
+ * Replicated from `@deck.gl/core` globe-viewport.js `zoomAdjust`.
+ */
+function zoomAdjust(latitude: number): number {
+  return Math.log2(Math.PI * Math.cos((latitude * Math.PI) / 180));
+}
+
+/**
+ * Latitude compensation to add to a globe tile layer's `zoomOffset`, so tile LOD
+ * tracks the *visual* (on-screen) scale instead of the latitude-adjusted mercator
+ * zoom. This cancels the pan-induced zoom drop, keeping tile detail/labels
+ * constant while rotating toward the poles — matching deck 8 / studio-monorepo.
+ */
+function globeLatitudeZoomCompensation(latitude?: number): number {
+  if (latitude == null || !Number.isFinite(latitude)) {
+    return 0;
+  }
+  // Clamp away from the poles to avoid log2(0) = -Infinity at |lat| = 90.
+  const clamped = Math.max(-85, Math.min(85, latitude));
+  return zoomAdjust(0) - zoomAdjust(clamped);
+}
+
 /**
  * Globe basemap tile provider.
  *
@@ -423,7 +467,8 @@ export const getGlobeBaseLayers = ({
   mapboxApiAccessToken,
   globe,
   mapStyleType,
-  basemapProvider
+  basemapProvider,
+  latitude
 }: {
   mapboxApiAccessToken: string;
   globe: Globe;
@@ -433,11 +478,19 @@ export const getGlobeBaseLayers = ({
    * a token is present, otherwise falls back to the token-free `carto` tiles.
    */
   basemapProvider?: GlobeBasemapProvider;
+  /**
+   * Current camera center latitude. Used to keep tile LOD constant while rotating
+   * toward the poles (deck.gl 9 lowers the effective zoom near the poles). When
+   * omitted, no latitude compensation is applied (equator behavior).
+   */
+  latitude?: number;
 }): Layer[] => {
   const {config} = globe;
 
   const isSatellite = mapStyleType === 'satellite';
   const isSatelliteStreet = mapStyleType === 'satellite-street';
+
+  const latZoomCompensation = globeLatitudeZoomCompensation(latitude);
 
   // Fall back to the free CARTO tiles whenever no Mapbox token is available so
   // the globe basemap still renders (matches kepler's default token-free
@@ -490,6 +543,8 @@ export const getGlobeBaseLayers = ({
             ],
         minZoom: 0,
         maxZoom: useCarto ? 18 : 19,
+        zoomOffset: GLOBE_SATELLITE_ZOOM_OFFSET + latZoomCompensation,
+        extent: GLOBE_TILE_EXTENT,
         // Esri tiles are 256px; Mapbox @2x tiles are 512px.
         tileSize: useCarto ? 256 : 512 / devicePixelRatio,
         renderSubLayers: (props: any) => {
@@ -521,6 +576,10 @@ export const getGlobeBaseLayers = ({
           : `https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=${mapboxApiAccessToken}`,
         minZoom: 0,
         maxZoom: 23,
+        zoomOffset:
+          (useCarto ? CARTO_GLOBE_VECTOR_ZOOM_OFFSET : MAPBOX_GLOBE_VECTOR_ZOOM_OFFSET) +
+          latZoomCompensation,
+        extent: GLOBE_TILE_EXTENT,
         binary: false,
         parameters: BASEMAP_MVT_PARAMETERS,
         loadOptions: useCarto
