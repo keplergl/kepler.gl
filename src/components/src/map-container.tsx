@@ -51,7 +51,6 @@ import {
   errorNotification,
   isStyleUsingMapboxTiles,
   isStyleUsingOpenStreetMapTiles,
-  mapHasOpenStreetMapAttribution,
   getBaseMapAttributions,
   getBaseMapLibrary,
   transformRequest,
@@ -573,17 +572,18 @@ export default function MapContainerFactory(
       if (!this._map) return;
       this._removeOsmSourceDataListener();
       let attempts = 0;
+      // Cap retries so a style that never yields attributions doesn't leave a
+      // permanent sourcedata listener attached.
       const MAX_ATTEMPTS = 50;
       const onSourceData = (e: any) => {
         if (!e?.isSourceLoaded) return;
         attempts++;
         // TileJSON resolves asynchronously; re-collect attributions once a
         // source is loaded so custom basemap attributions are not lost.
+        // (Unlike the sync path, OSM detection here reads the same resolved
+        // sources as getBaseMapAttributions, so a separate OSM fold-in is
+        // unreachable — any OSM string would already be in the collected list.)
         const basemapAttributions = getBaseMapAttributions(this._map);
-        const usesOsm = mapHasOpenStreetMapAttribution(this._map);
-        if (usesOsm && !basemapAttributions.length) {
-          basemapAttributions.push(OSM_ATTRIBUTION_HTML);
-        }
         if (basemapAttributions.length) {
           this._removeOsmSourceDataListener();
           this.setState({
