@@ -2,8 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 // libraries
-import React, {Component, createRef, useMemo} from 'react';
-import styled, {withTheme, useTheme} from 'styled-components';
+import React, {Component, createRef} from 'react';
+import styled, {withTheme} from 'styled-components';
 import {Map as MapboxLegacyMap, MapRef} from 'react-map-gl/mapbox-legacy';
 import {Map as MaplibreMap} from '@vis.gl/react-maplibre';
 import {PickingInfo, MapView} from '@deck.gl/core';
@@ -17,11 +17,13 @@ import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actio
 // components
 import MapPopoverFactory from './map/map-popover';
 import MapControlFactory from './map/map-control';
+import {StyledMapContainer} from './common/styled-components';
 import {
-  StyledMapContainer,
-  StyledAttribution,
-  EndHorizontalFlexbox
-} from './common/styled-components';
+  Attribution,
+  AttributionLogos,
+  renderBasemapAttribution,
+  dedupeBasemapAttributions
+} from './map/attribution';
 
 import EditorFactory from './editor/editor';
 import {AnnotationOverlay} from './annotations';
@@ -49,14 +51,11 @@ import {
   errorNotification,
   isStyleUsingMapboxTiles,
   isStyleUsingOpenStreetMapTiles,
-  mapHasOpenStreetMapAttribution,
   getBaseMapAttributions,
   getBaseMapLibrary,
-  BaseMapLibraryConfig,
   transformRequest,
   observeDimensions,
   unobserveDimensions,
-  hasMobileWidth,
   getMapLayersFromSplitMaps,
   onViewPortChange,
   getViewportFromMapState,
@@ -68,7 +67,6 @@ import {
   getLayerBlendingParameters,
   patchDeckRendererForPostProcessing
 } from '@kepler.gl/utils';
-import {breakPointValues} from '@kepler.gl/styles';
 
 // default-settings
 import {
@@ -93,7 +91,6 @@ import {
   getStarsBackgroundImage,
   KeplerGlobeView
 } from '@kepler.gl/deckgl-layers';
-import type {GlobeAttribution} from '@kepler.gl/deckgl-layers';
 
 import {DROPPABLE_MAP_CONTAINER_TYPE} from './common/dnd-layer-items';
 // Contexts
@@ -161,23 +158,13 @@ const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
 
-type MapLibLogoProps = {
-  baseMapLibraryConfig: BaseMapLibraryConfig;
-};
-
-const MapLibLogo = ({baseMapLibraryConfig}: MapLibLogoProps) => (
-  <div className="attrition-logo">
-    Basemap by:
-    <a
-      style={{marginLeft: '5px'}}
-      className={`${baseMapLibraryConfig.mapLibCssClass}-ctrl-logo`}
-      target="_blank"
-      rel="noopener noreferrer"
-      href={baseMapLibraryConfig.mapLibUrl}
-      aria-label={`${baseMapLibraryConfig.mapLibName} logo`}
-    />
-  </div>
-);
+// Canonical OpenStreetMap attribution, injected into the collected list when a
+// style is detected to use OSM tiles but the resolved sources haven't yielded
+// an attribution string of their own (e.g. raw style declares OSM but the
+// TileJSON hasn't exposed it). Rendered through the same safe link parser as
+// every other collected attribution.
+const OSM_ATTRIBUTION_HTML =
+  '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 interface StyledDroppableProps {
   $isOver: boolean;
@@ -205,287 +192,9 @@ export const Droppable = ({containerId}) => {
   return <StyledDroppable ref={setNodeRef} $isOver={isOver} />;
 };
 
-interface StyledDatasetAttributionsContainerProps {
-  isPalm: boolean;
-}
-
-const StyledDatasetAttributionsContainer = styled.div<StyledDatasetAttributionsContainerProps>`
-  max-width: ${props => (props.isPalm ? '200px' : '300px')};
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-  color: ${props => props.theme.labelColor};
-  margin-right: 2px;
-  margin-bottom: 1px;
-  line-height: ${props => (props.isPalm ? '1em' : '1.4em')};
-
-  &:hover {
-    white-space: inherit;
-  }
-`;
-
-const DatasetAttributions = ({
-  datasetAttributions,
-  isPalm
-}: {
-  datasetAttributions: DatasetAttribution[];
-  isPalm: boolean;
-}) => (
-  <>
-    {datasetAttributions?.length ? (
-      <StyledDatasetAttributionsContainer isPalm={isPalm}>
-        {datasetAttributions.map((ds, idx) => (
-          <a
-            {...(ds.url ? {href: ds.url} : null)}
-            target="_blank"
-            rel="noopener noreferrer"
-            key={`${ds.title}_${idx}`}
-          >
-            {ds.title}
-            {idx !== datasetAttributions.length - 1 ? ', ' : null}
-          </a>
-        ))}
-      </StyledDatasetAttributionsContainer>
-    ) : null}
-  </>
-);
-
-type AttributionProps = {
-  showBaseMapLibLogo: boolean;
-  showOsmBasemapAttribution: boolean;
-  basemapAttributions?: string[];
-  datasetAttributions: DatasetAttribution[];
-  baseMapLibraryConfig: BaseMapLibraryConfig;
-  globeAttributions?: GlobeAttribution[];
-};
-
-const ATTRIBUTION_ANCHOR_REGEX = /<a\b[^>]*?href=["']([^"']*)["'][^>]*?>(.*?)<\/a>/gi;
-const ATTRIBUTION_SAFE_HREF_REGEX = /^(https?:|mailto:)/i;
-
-// Decode the handful of HTML entities that commonly appear in basemap
-// attribution strings, so they render as text rather than raw entities.
-function decodeAttributionEntities(text: string): string {
-  return text
-    .replace(/&copy;/gi, '©')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#0*39;/gi, "'");
-}
-
-function attributionTextNode(raw: string, key: string): React.ReactNode {
-  // strip any residual markup, then decode entities
-  const text = decodeAttributionEntities(raw.replace(/<[^>]*>/g, ''));
-  return text ? <React.Fragment key={key}>{text}</React.Fragment> : null;
-}
-
-/**
- * Parse a basemap attribution HTML string into safe React nodes. Only anchor
- * tags with http(s)/mailto hrefs become links; everything else is rendered as
- * plain text. This avoids dangerouslySetInnerHTML while preserving the links
- * custom basemap styles (e.g. OpenFreeMap) declare in their attribution.
- */
-export function renderBasemapAttribution(html: string, keyPrefix: string): React.ReactNode[] {
-  const nodes: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  let index = 0;
-  // regex has global flag; reset before use
-  ATTRIBUTION_ANCHOR_REGEX.lastIndex = 0;
-  while ((match = ATTRIBUTION_ANCHOR_REGEX.exec(html)) !== null) {
-    const [full, href, label] = match;
-    if (match.index > lastIndex) {
-      nodes.push(attributionTextNode(html.slice(lastIndex, match.index), `${keyPrefix}-t${index}`));
-    }
-    const text = decodeAttributionEntities(label.replace(/<[^>]*>/g, ''));
-    if (ATTRIBUTION_SAFE_HREF_REGEX.test(href) && text) {
-      nodes.push(
-        <a key={`${keyPrefix}-a${index}`} href={href} target="_blank" rel="noopener noreferrer">
-          {text}
-        </a>
-      );
-    } else if (text) {
-      // drop unsafe hrefs (e.g. javascript:) but keep the link text
-      nodes.push(<React.Fragment key={`${keyPrefix}-a${index}`}>{text}</React.Fragment>);
-    }
-    lastIndex = match.index + full.length;
-    index++;
-  }
-  if (lastIndex < html.length) {
-    nodes.push(attributionTextNode(html.slice(lastIndex), `${keyPrefix}-t${index}`));
-  }
-  return nodes.filter(Boolean);
-}
-
-export const Attribution: React.FC<AttributionProps> = ({
-  showBaseMapLibLogo = true,
-  showOsmBasemapAttribution = false,
-  basemapAttributions = [],
-  datasetAttributions,
-  baseMapLibraryConfig,
-  globeAttributions = []
-}: AttributionProps) => {
-  const isPalm = hasMobileWidth(breakPointValues);
-
-  const memoizedComponents = useMemo(() => {
-    // attributions declared by custom basemap styles, rendered as safe links
-    const basemapAttributionNodes = basemapAttributions.length ? (
-      <>
-        {basemapAttributions.map((attribution, idx) => (
-          <React.Fragment key={`basemap-attr-${idx}`}>
-            <span className="pipe-separator">|</span>
-            {renderBasemapAttribution(attribution, `basemap-attr-${idx}`)}
-          </React.Fragment>
-        ))}
-      </>
-    ) : null;
-
-    // fall back to the generic OSM link only when no explicit attribution was
-    // collected from the resolved sources (avoids double-rendering)
-    const showOsmFallback = showOsmBasemapAttribution && !basemapAttributions.length;
-
-    const globeAttributionNodes = globeAttributions.length ? (
-      <>
-        {globeAttributions.map(attr => (
-          <React.Fragment key={attr.label}>
-            <span className="pipe-separator">|</span>
-            <a href={attr.href} target="_blank" rel="noopener noreferrer">
-              {attr.label}
-            </a>
-          </React.Fragment>
-        ))}
-      </>
-    ) : null;
-
-    if (!showBaseMapLibLogo) {
-      return (
-        <StyledAttribution
-          mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
-          mapLibAttributionCssClass={baseMapLibraryConfig.mapLibAttributionCssClass}
-        >
-          <EndHorizontalFlexbox>
-            <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
-            <div className="attrition-link">
-              {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
-              {globeAttributions.length && isPalm ? (
-                <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} />
-              ) : null}
-              <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
-                © kepler.gl
-              </a>
-              {basemapAttributionNodes}
-              {globeAttributionNodes}
-              {globeAttributions.length ? <span className="pipe-separator">|</span> : null}
-              {globeAttributions.length && !isPalm ? (
-                <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} />
-              ) : null}
-            </div>
-          </EndHorizontalFlexbox>
-        </StyledAttribution>
-      );
-    }
-
-    return (
-      <StyledAttribution
-        mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
-        mapLibAttributionCssClass={baseMapLibraryConfig.mapLibAttributionCssClass}
-      >
-        <EndHorizontalFlexbox>
-          <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
-          <div className="attrition-link">
-            {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
-            {isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
-            <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
-              © kepler.gl
-            </a>
-            {basemapAttributionNodes}
-            {showOsmFallback ? (
-              <>
-                <span className="pipe-separator">|</span>
-                <a
-                  href="https://www.openstreetmap.org/copyright"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  © OpenStreetMap
-                </a>
-              </>
-            ) : null}
-            {globeAttributionNodes}
-            <span className="pipe-separator">|</span>
-            {!isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
-          </div>
-        </EndHorizontalFlexbox>
-      </StyledAttribution>
-    );
-  }, [
-    showBaseMapLibLogo,
-    showOsmBasemapAttribution,
-    basemapAttributions,
-    datasetAttributions,
-    isPalm,
-    baseMapLibraryConfig,
-    globeAttributions
-  ]);
-
-  return memoizedComponents;
-};
-
-const StyledAttributionLogoContainer = styled.div<{$left: number}>`
-  position: absolute;
-  bottom: ${props => props.theme.sidePanel.margin.left}px;
-  left: ${props => props.$left}px;
-  z-index: 1;
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  pointer-events: auto;
-  transition: left 250ms ease-in-out;
-`;
-
-const StyledLogoLink = styled.a<{$enabled: boolean}>`
-  cursor: ${props => (props.$enabled ? 'pointer' : 'default')};
-  display: flex;
-  align-items: flex-end;
-`;
-
-type AttributionLogosProps = {
-  logos: AttributionWithStyle[];
-  activeSidePanel?: boolean;
-  sidePanelWidth?: number;
-};
-
-const LOGO_LEFT_ADJUSTMENT = 3;
-
-export const AttributionLogos: React.FC<AttributionLogosProps> = ({
-  logos,
-  activeSidePanel,
-  sidePanelWidth
-}) => {
-  const theme = useTheme() as any;
-  const left =
-    (activeSidePanel ? (sidePanelWidth || 0) + LOGO_LEFT_ADJUSTMENT : 0) +
-    theme.sidePanel.margin.left;
-
-  if (!logos?.length) return null;
-  return (
-    <StyledAttributionLogoContainer $left={left}>
-      {logos.map((logo, idx) => (
-        <StyledLogoLink
-          key={logo.logoUrl || idx}
-          href={logo.url || undefined}
-          {...(logo.url ? {target: '_blank', rel: 'noopener noreferrer'} : {})}
-          $enabled={Boolean(logo.url)}
-          style={logo.bottom ? {marginBottom: logo.bottom} : undefined}
-        >
-          <img src={logo.logoUrl} style={{height: logo.height || 12}} alt={logo.title} />
-        </StyledLogoLink>
-      ))}
-    </StyledAttributionLogoContainer>
-  );
-};
+// Attribution UI (parser + components) lives in ./map/attribution and is
+// re-exported here to preserve the public import path (@kepler.gl/components).
+export {Attribution, AttributionLogos, renderBasemapAttribution, dedupeBasemapAttributions};
 
 MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
 
@@ -580,7 +289,6 @@ export default function MapContainerFactory(
 
     state = {
       showBaseMapAttribution: true,
-      showOsmAttribution: false,
       // attribution strings declared by custom basemap styles (e.g. OpenFreeMap)
       basemapAttributions: [] as string[]
     };
@@ -610,7 +318,6 @@ export default function MapContainerFactory(
         if (this.props.mapStyle.styleType === NO_MAP_ID) {
           this.setState({
             showBaseMapAttribution: false,
-            showOsmAttribution: false,
             basemapAttributions: []
           });
         } else {
@@ -833,17 +540,21 @@ export default function MapContainerFactory(
       const usesMapbox = styleObj ? isStyleUsingMapboxTiles(styleObj) : false;
       const usesOsm = styleObj ? isStyleUsingOpenStreetMapTiles(styleObj) : false;
       const basemapAttributions = getBaseMapAttributions(this._map);
+      // if OSM tiles are detected but no source-level attribution string was
+      // collected, fold in the canonical OSM attribution so the render path
+      // stays uniform (no separate hardcoded fallback link)
+      if (usesOsm && !basemapAttributions.length) {
+        basemapAttributions.push(OSM_ATTRIBUTION_HTML);
+      }
 
       if (usesMapbox || usesOsm || basemapAttributions.length) {
         this.setState({
           showBaseMapAttribution: true,
-          showOsmAttribution: usesOsm,
           basemapAttributions
         });
       } else {
         this.setState({
           showBaseMapAttribution: false,
-          showOsmAttribution: false,
           basemapAttributions
         });
         this._checkOsmAttributionOnSourceLoad();
@@ -861,19 +572,22 @@ export default function MapContainerFactory(
       if (!this._map) return;
       this._removeOsmSourceDataListener();
       let attempts = 0;
+      // Cap retries so a style that never yields attributions doesn't leave a
+      // permanent sourcedata listener attached.
       const MAX_ATTEMPTS = 50;
       const onSourceData = (e: any) => {
         if (!e?.isSourceLoaded) return;
         attempts++;
         // TileJSON resolves asynchronously; re-collect attributions once a
         // source is loaded so custom basemap attributions are not lost.
+        // (Unlike the sync path, OSM detection here reads the same resolved
+        // sources as getBaseMapAttributions, so a separate OSM fold-in is
+        // unreachable — any OSM string would already be in the collected list.)
         const basemapAttributions = getBaseMapAttributions(this._map);
-        const usesOsm = mapHasOpenStreetMapAttribution(this._map);
-        if (basemapAttributions.length || usesOsm) {
+        if (basemapAttributions.length) {
           this._removeOsmSourceDataListener();
           this.setState({
             showBaseMapAttribution: true,
-            showOsmAttribution: usesOsm,
             basemapAttributions
           });
         } else if (attempts >= MAX_ATTEMPTS) {
@@ -1731,7 +1445,6 @@ export default function MapContainerFactory(
           {this.props.primary ? (
             <Attribution
               showBaseMapLibLogo={this.state.showBaseMapAttribution}
-              showOsmBasemapAttribution={this.state.showOsmAttribution}
               basemapAttributions={this.state.basemapAttributions}
               datasetAttributions={datasetAttributions}
               baseMapLibraryConfig={baseMapLibraryConfig}
