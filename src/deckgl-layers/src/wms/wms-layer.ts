@@ -356,9 +356,11 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       return false;
     }
 
-    // Ground resolution is proportional to bbox span / pixel count (width/height
-    // are equal here). Only skip while the new view isn't much finer than what we
-    // already fetched, otherwise the cached image would look stretched/blurry.
+    // Ground resolution is proportional to bbox span / pixel count. The guard
+    // above already ensured prev and next share the same width/height, so equal
+    // pixel counts let us compare spans directly. Only skip while the new view
+    // isn't much finer than what we already fetched, otherwise the cached image
+    // would look stretched/blurry.
     const prevSpanX = p[2] - p[0];
     const nextSpanX = n[2] - n[0];
     const prevSpanY = p[3] - p[1];
