@@ -129,7 +129,7 @@
     "@babel/preset-react": "^7.12.1",
     "@babel/preset-typescript": "^7.16.7",
     "@babel/register": "^7.12.1",
-    "@babel/runtime": "^7.12.1",
+    "@babel/runtime": "^7.26.10",
     "@babel/traverse": "^7.12.1",
     "@deck.gl-community/editable-layers": "9.3.7",
     "@deck.gl-community/layers": "9.2.8",
