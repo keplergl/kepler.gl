@@ -308,7 +308,10 @@ const BASEMAP_MVT_PARAMETERS = {
 // vector tile selection coarser to keep the tile count — and thus performance —
 // in check. This trades a little detail for far fewer tiles; make it less negative
 // (toward 0) for sharper detail, or more negative for more perf.
-// Satellite raster stays at 0 (a coarser raster tile only looks softer).
+// These are *base* offsets: globeLatitudeZoomCompensation is added on top at draw
+// time, so the effective zoomOffset only equals these exact values at the equator.
+// Satellite raster uses base 0 — it doesn't need the vector bias (a coarser raster
+// tile just looks softer rather than dropping features).
 const MAPBOX_GLOBE_VECTOR_ZOOM_OFFSET = -2;
 const CARTO_GLOBE_VECTOR_ZOOM_OFFSET = -2;
 const GLOBE_SATELLITE_ZOOM_OFFSET = 0;
