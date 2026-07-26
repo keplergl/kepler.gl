@@ -253,6 +253,8 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
       layers: [wmsLayerName],
       opacity: visConfig.opacity,
       transparent: visConfig.transparent,
+      // layer should be visible and, if splitMap, shown in one of the panels
+      visible: defaultLayerProps.visible,
       pickable,
       // @ts-ignore
       onClick: pickable ? this._onClick.bind(this, layerCallbacks) : null
