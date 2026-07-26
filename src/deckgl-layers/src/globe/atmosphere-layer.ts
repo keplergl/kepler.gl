@@ -165,6 +165,17 @@ export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, AtmosphereLay
 
           fragColor = vec4(c1, 1.0 - c0 * fTerminatorAttenuateFactor);
           fragColor.a *= fTerminatorOpacityFactor;
+
+          // Keep the day hemisphere completely unshaded — the attenuation-based
+          // alpha above is non-zero even at noon, which slightly darkens the lit
+          // side. Gate it with a day/night mask so darkening only appears across
+          // the terminator and onto the night side.
+          // fLightAngle = dot(sunDir, surfaceNormal): +1 at the subsolar point
+          // (noon), 0 at the terminator, -1 at midnight. smoothstep maps the day
+          // side (>= 0.2) to 0 (no darkening), ramps through the terminator, and
+          // reaches full darkening on the night side (<= -0.2).
+          float fNightMask = smoothstep(0.2, -0.2, fLightAngle);
+          fragColor.a *= fNightMask;
         `,
         'fs:DECKGL_FILTER_COLOR': ``
       }

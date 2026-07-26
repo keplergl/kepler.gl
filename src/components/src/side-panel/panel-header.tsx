@@ -223,6 +223,12 @@ export const SaveExportDropdownFactory = (
       onClick: props => props.onExportImage
     },
     {
+      label: 'toolbar.exportVideo',
+      icon: Play,
+      key: 'video',
+      onClick: props => props.onExportVideo
+    },
+    {
       label: 'toolbar.exportData',
       icon: DataTable,
       key: 'data',
@@ -233,12 +239,6 @@ export const SaveExportDropdownFactory = (
       icon: BaseMap,
       key: 'map',
       onClick: props => props.onExportMap
-    },
-    {
-      label: 'toolbar.exportVideo',
-      icon: Play,
-      key: 'video',
-      onClick: props => props.onExportVideo
     },
     {
       label: 'toolbar.saveMap',
