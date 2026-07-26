@@ -72,9 +72,9 @@ class ZoomToCursorGlobeController extends GlobeController {
       }
 
       // Zoom-to-cursor, ported verbatim from deck.gl 8.9.x MapState.zoom() +
-      // GlobeViewport.panByPosition(coords, pixel) — which is what studio-monorepo
-      // uses and where zoom-to-cursor tracks the cursor accurately over a whole
-      // gesture. deck.gl 9.x regressed this in two ways that we avoid here:
+      // GlobeViewport.panByPosition(coords, pixel), where zoom-to-cursor tracks the
+      // cursor accurately over a whole gesture. deck.gl 9.x regressed this in two
+      // ways that we avoid here:
       //   1. Its GlobeState.zoom() ignores the cursor and zooms toward the center.
       //   2. Its GlobeViewport.panByPosition became a lossy, *linearized* 3-arg
       //      rotation (longitude += (0.25/scale)*(startPixel-pixel), re-derives
@@ -180,7 +180,7 @@ class ZoomToCursorGlobeController extends GlobeController {
         });
       }
 
-      // Pan, ported from deck.gl 8.9.x (studio-monorepo) MapState.pan() +
+      // Pan, ported from deck.gl 8.9.x MapState.pan() +
       // GlobeViewport.panByPosition(coords, pixel) — an *exact, cursor-anchored*
       // translation: the geo point grabbed on mousedown stays locked under the
       // cursor for the whole drag.
@@ -262,13 +262,13 @@ export class KeplerGlobeView extends DeckGlobeView {
   // reselect tiles inconsistently across the boundary — mixed LODs (e.g. a z4 tile
   // next to z11), a visible "flicker" at 12, and tiles that get dropped and stick
   // as black/empty quads (most often crossing 12 on the way *out*). deck.gl 8.x
-  // (studio-monorepo) always used GlobeViewport (`get ViewportType()`), which is
-  // why the same basemap is stable there at high zoom.
+  // always used GlobeViewport (`get ViewportType()`), which is why the same
+  // basemap is stable there at high zoom.
   //
   // Force GlobeViewport at every zoom to eliminate the z=12 viewport swap. The
   // trade-off is that zoom > 12 now uses float32 globe precision (deck's documented
   // "no high-precision rendering > 12" limit) instead of switching to mercator —
-  // exactly deck 8 / studio behavior, and far preferable to the black quads.
+  // exactly deck 8 behavior, and far preferable to the black quads.
   getViewportType() {
     return DeckGlobeViewport;
   }

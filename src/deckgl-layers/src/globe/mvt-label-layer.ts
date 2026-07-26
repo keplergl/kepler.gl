@@ -9,7 +9,7 @@ import type {Feature} from 'geojson';
 
 import EnhancedMultiIconLayer from './enhanced-multi-icon-layer';
 
-// Ported from studio-monorepo (modules/studio/src/components/globe/mvt-label-layer.ts).
+// Custom globe basemap label layer.
 //
 // This composite is used as the `renderSubLayers` of the globe basemap MVTLayer.
 // It renders two things per tile:
@@ -18,7 +18,7 @@ import EnhancedMultiIconLayer from './enhanced-multi-icon-layer';
 //
 // The TextLayer uses a custom `EnhancedMultiIconLayer` as its glyph (characters)
 // sublayer, which culls labels on the far side of the globe so they aren't drawn
-// through the planet (ported from studio-monorepo).
+// through the planet.
 
 type MVTLabelLayerProps = {
   data: {features: Feature[]} | Feature[];
