@@ -284,12 +284,33 @@ export function getGlobeClearColor(
 const INVISIBLE_COLOR: [number, number, number, number] = [0, 0, 0, 0];
 
 const BASEMAP_MVT_PARAMETERS = {
-  depthMask: false
+  // Occlude the far side of the globe via the DEPTH DISK (getGlobeDepthDiskLayer)
+  // rather than back-face culling. Globe mode sets a global `cull: true` for the
+  // opaque sphere surface, but back-face culling relies on stable triangle
+  // winding — and deck.gl 9's globe projection loses precision at high zoom
+  // (float32), flipping the winding of the small admin/water triangles so they
+  // get wrongly culled and the geometry vanishes past ~zoom 12 (you then see
+  // through to the far side / "different geometry"). deck.gl 8 (studio-monorepo)
+  // kept enough precision for culling to work, which is why the same vector
+  // basemap renders fine there at high zoom. Depth testing against the disk is a
+  // precision-robust occluder that works at any zoom, so:
+  //   - cull: false     → don't winding-cull the near-side geometry
+  //   - depthTest: true → far-side geometry (behind the disk) fails depth, hidden
+  //   - depthMask: false → don't write depth (avoid self z-fighting on the shell)
+  // Raster tiles are unaffected (their 4-corner quads keep stable winding), which
+  // is why satellite already zooms to max cleanly. Labels disable cull for the
+  // same reason (see mvt-label-layer.ts).
+  depthTest: true,
+  depthMask: false,
+  cull: false
 };
 
-// TODO: Investigate if this is needed. 
-// Looks like deck.gl 9 loads high zoom levels too early,
-// so we offset the zoom level for better performance.
+// deck.gl 9's globe selects finer tiles than deck 8 did for the same view (its
+// GlobeViewport scale is ~3x smaller), so bias vector tile selection coarser to
+// keep the tile count — and thus performance — closer to deck 8 / studio-monorepo.
+// This trades a little detail for far fewer tiles; make it less negative (toward 0,
+// which is studio's value) for sharper detail, or more negative for more perf.
+// Satellite raster stays at 0 (a coarser raster tile only looks softer).
 const MAPBOX_GLOBE_VECTOR_ZOOM_OFFSET = -2;
 const CARTO_GLOBE_VECTOR_ZOOM_OFFSET = -2;
 const GLOBE_SATELLITE_ZOOM_OFFSET = 0;
@@ -303,6 +324,16 @@ const GLOBE_SATELLITE_ZOOM_OFFSET = 0;
 const GLOBE_TILE_EXTENT: [number, number, number, number] = [
   -180, -85.051129, 180, 85.051129
 ];
+
+// Max *native* zoom of each vector tile source. Set this (not an arbitrarily
+// high number) so deck overzooms — i.e. keeps rendering the deepest real tile
+// when the view zooms past it — instead of requesting tiles that don't exist
+// and 404 (which shows up as empty rectangles). The raw `.vector.pbf` /`.mvt`
+// endpoints do NOT auto-overzoom the way Mapbox GL does.
+//   - mapbox-streets-v8 has data up to z16
+//   - CARTO carto.streets v1 has data up to z14
+const MAPBOX_VECTOR_MAX_DATA_ZOOM = 16;
+const CARTO_VECTOR_MAX_DATA_ZOOM = 14;
 
 /**
  * deck.gl 9's globe couples zoom to latitude via `zoomAdjust` (see
@@ -575,7 +606,9 @@ export const getGlobeBaseLayers = ({
           ? CARTO_VECTOR_TILE_URLS
           : `https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=${mapboxApiAccessToken}`,
         minZoom: 0,
-        maxZoom: 23,
+        // Overzoom past the source's native max instead of 404-ing on tiles that
+        // don't exist (which renders as empty rectangles at high zoom).
+        maxZoom: useCarto ? CARTO_VECTOR_MAX_DATA_ZOOM : MAPBOX_VECTOR_MAX_DATA_ZOOM,
         zoomOffset:
           (useCarto ? CARTO_GLOBE_VECTOR_ZOOM_OFFSET : MAPBOX_GLOBE_VECTOR_ZOOM_OFFSET) +
           latZoomCompensation,
