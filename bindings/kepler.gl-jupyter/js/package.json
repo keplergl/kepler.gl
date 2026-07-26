@@ -60,7 +60,7 @@
     "eslint-plugin-react": "~7.12.4",
     "html-webpack-plugin": "^4.3.0",
     "process": "^0.11.10",
-    "react-dev-utils": "^10.2.1",
+    "react-dev-utils": "^11.0.4",
     "rimraf": "^2.6.1",
     "webpack": "^5.102.1",
     "webpack-cli": "^6.0.1",
