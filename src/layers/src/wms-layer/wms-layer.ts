@@ -236,7 +236,7 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
 
   renderLayer(opts) {
     const {visConfig} = this.config;
-    const {data, interactionConfig, layerCallbacks} = opts;
+    const {data, interactionConfig, layerCallbacks, mapState} = opts;
     const wmsLayer = this._getCurrentServiceLayer();
     if (!wmsLayer) {
       return [];
@@ -245,8 +245,14 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const pickable = interactionConfig?.tooltip?.enabled && queryable;
 
+    // Append `-globe` to the id in globe mode so switching view modes remounts the
+    // deck layer. deck.gl's BitmapLayer only re-tessellates its mesh when `bounds`
+    // change, so without a remount a WMS image loaded in 2D keeps its flat quad and
+    // cuts straight through the sphere until the next image happens to load.
+    const globeSuffix = mapState?.globe?.enabled ? '-globe' : '';
+
     const deckLayer = new DeckWMSLayer({
-      id: `${this.id}-WMSLayer` as string,
+      id: `${this.id}-WMSLayer${globeSuffix}` as string,
       idx: defaultLayerProps.idx,
       serviceType: 'wms',
       data: data.tilesetDataUrl,

@@ -38,6 +38,14 @@ type _WMSLayerProps = {
   onImageLoadError?: (requestId: unknown, error: Error) => void;
 };
 
+/**
+ * How much the user may zoom in (shrinking the visible span) before a view that
+ * is still contained in the last requested extent triggers a fresh, higher
+ * resolution request. `2` means the cached image may be stretched up to ~2x
+ * before refetching; higher values mean fewer requests but blurrier zoom-ins.
+ */
+const COVERAGE_REFETCH_ZOOM_FACTOR = 2;
+
 const defaultProps: DefaultProps<WMSLayerProps> = {
   id: 'imagery-layer',
   data: '',
@@ -202,7 +210,15 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       return;
     }
 
-    const bounds = viewport.getBounds();
+    // In globe mode deck's GlobeViewport.getBounds() only unprojects 4 edge
+    // midpoints and takes their min/max. That misses the screen corners, the
+    // curved limb, and (most importantly) the case where a pole is in view when
+    // looking from a high latitude — where every meridian and part of the far
+    // hemisphere become visible. Compute a fuller visible bounding box instead so
+    // the requested WMS image covers everything on screen.
+    const bounds = viewport.resolution
+      ? getGlobeVisibleBounds(viewport)
+      : viewport.getBounds();
     const {width, height} = viewport;
     let {srs} = this.props;
     if (srs === 'auto') {
@@ -237,6 +253,20 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     if (
       this.state.lastRequestParameters &&
       this._areRequestParamsEqual(this.state.lastRequestParameters, requestParams)
+    ) {
+      return;
+    }
+
+    // Skip request if the new view is already fully covered by the last requested
+    // image at comparable resolution. This is very common while panning (and small
+    // zoom-ins) within a larger, recently fetched extent — e.g. on the globe a
+    // single request can cover the whole visible hemisphere, so rotating around it
+    // shouldn't hit the network again. The existing image is simply repositioned by
+    // the BitmapLayer. We still refetch once the user zooms in enough that the
+    // cached image would be visibly stretched (see COVERAGE_REFETCH_ZOOM_FACTOR).
+    if (
+      this.state.lastRequestParameters &&
+      this._isViewCoveredByLastRequest(this.state.lastRequestParameters, requestParams)
     ) {
       return;
     }
@@ -297,6 +327,49 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     this.state._timeoutId = setTimeout(() => fn(), ms);
   }
 
+  /**
+   * Returns true when the `next` view is fully inside the `prev` (last requested)
+   * extent AND not meaningfully higher resolution, so the cached image already
+   * covers the screen and no new request is needed.
+   */
+  private _isViewCoveredByLastRequest(prev: any, next: any): boolean {
+    // Coverage only makes sense within the same projection / dataset / canvas size.
+    if (
+      prev.srs !== next.srs ||
+      prev.width !== next.width ||
+      prev.height !== next.height ||
+      prev.transparent !== next.transparent ||
+      !deepEqual(prev.layers, next.layers)
+    ) {
+      return false;
+    }
+
+    const p = prev.bbox;
+    const n = next.bbox;
+    if (!p || !n) {
+      return false;
+    }
+
+    // Is the new bbox fully contained within the previously requested bbox?
+    const contained = n[0] >= p[0] && n[1] >= p[1] && n[2] <= p[2] && n[3] <= p[3];
+    if (!contained) {
+      return false;
+    }
+
+    // Ground resolution is proportional to bbox span / pixel count (width/height
+    // are equal here). Only skip while the new view isn't much finer than what we
+    // already fetched, otherwise the cached image would look stretched/blurry.
+    const prevSpanX = p[2] - p[0];
+    const nextSpanX = n[2] - n[0];
+    const prevSpanY = p[3] - p[1];
+    const nextSpanY = n[3] - n[1];
+
+    return (
+      nextSpanX >= prevSpanX / COVERAGE_REFETCH_ZOOM_FACTOR &&
+      nextSpanY >= prevSpanY / COVERAGE_REFETCH_ZOOM_FACTOR
+    );
+  }
+
   /** Compare request parameters to determine if a new request is needed */
   private _areRequestParamsEqual(prev: any, next: any): boolean {
     // Compare dimensions
@@ -334,6 +407,128 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
 
     return true;
   }
+}
+
+/**
+ * Compute the [minLng, minLat, maxLng, maxLat] bounding box of the part of the
+ * globe that is actually visible on screen.
+ *
+ * Unlike `GlobeViewport.getBounds()` (4 edge midpoints), this samples a grid of
+ * screen pixels, unprojects each onto the sphere (deck.gl clamps rays that miss
+ * the globe to the silhouette/limb, which is exactly the boundary we want), and
+ * takes the extent. It additionally detects when a pole is in view: at a pole all
+ * meridians converge, so we widen the box to the full longitude range and extend
+ * the latitude up to the pole, which is what makes viewing from near a pole
+ * (seeing across to the far hemisphere) work.
+ */
+export function getGlobeVisibleBounds(viewport: Viewport): [number, number, number, number] {
+  const {width, height} = viewport;
+  const centerLng = (viewport as any).longitude ?? 0;
+
+  const SAMPLES = 8; // 8x8 cells => 9x9 = 81 sample points
+  const lats: number[] = [];
+  // Longitudes tracked as signed offsets from the center longitude, unwrapped to
+  // (-180, 180], so an antimeridian-crossing view stays a contiguous range.
+  const lngOffsets: number[] = [];
+
+  for (let i = 0; i <= SAMPLES; i++) {
+    for (let j = 0; j <= SAMPLES; j++) {
+      const px = (i / SAMPLES) * width;
+      const py = (j / SAMPLES) * height;
+      const coord = viewport.unproject([px, py]);
+      const lng = coord[0];
+      const lat = coord[1];
+      if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+        continue;
+      }
+      lats.push(lat);
+      // Wrap the offset into (-180, 180].
+      const offset = ((lng - centerLng + 540) % 360) - 180;
+      lngOffsets.push(offset);
+    }
+  }
+
+  // Extremely degenerate viewport: fall back to deck's default.
+  if (lats.length === 0) {
+    return viewport.getBounds();
+  }
+
+  let minLat = Math.min(...lats);
+  let maxLat = Math.max(...lats);
+
+  const northPoleVisible = isGlobeSurfacePointVisible(viewport, 90);
+  const southPoleVisible = isGlobeSurfacePointVisible(viewport, -90);
+
+  let minLng: number;
+  let maxLng: number;
+
+  if (northPoleVisible || southPoleVisible) {
+    // A pole is on screen: every meridian is visible, so cover all longitudes and
+    // extend latitude up to the visible pole.
+    minLng = -180;
+    maxLng = 180;
+    if (northPoleVisible) {
+      maxLat = 90;
+    }
+    if (southPoleVisible) {
+      minLat = -90;
+    }
+  } else {
+    minLng = centerLng + Math.min(...lngOffsets);
+    maxLng = centerLng + Math.max(...lngOffsets);
+  }
+
+  // Pad slightly so the discrete sampling doesn't clip the true limb.
+  const latPad = Math.min(5, (maxLat - minLat) * 0.05 + 0.5);
+  minLat = Math.max(-90, minLat - latPad);
+  maxLat = Math.min(90, maxLat + latPad);
+
+  if (maxLng - minLng < 360) {
+    const lngPad = Math.min(5, (maxLng - minLng) * 0.05 + 0.5);
+    minLng -= lngPad;
+    maxLng += lngPad;
+  }
+
+  // A single EPSG:4326 rectangle can't cross the antimeridian, so if the visible
+  // span wraps past ±180 (or covers the whole world) request the full longitude
+  // range. This over-covers only near the dateline, which is an acceptable
+  // trade-off for a valid, gap-free request.
+  if (maxLng - minLng >= 360 || minLng < -180 || maxLng > 180) {
+    minLng = -180;
+    maxLng = 180;
+  }
+
+  return [minLng, minLat, maxLng, maxLat];
+}
+
+/**
+ * Whether a point on the globe surface at the given latitude (longitude is
+ * irrelevant at the poles) is both front-facing (not occluded by the globe) and
+ * inside the screen. Uses the sphere-horizon test in deck.gl common space:
+ * a surface point is front-facing when the angle between its outward normal and
+ * the camera direction is within the horizon half-angle, i.e.
+ *   dot(normalize(pointCommon), normalize(cameraPosition)) >= radius / cameraDist
+ */
+function isGlobeSurfacePointVisible(viewport: Viewport, lat: number): boolean {
+  const {width, height} = viewport;
+  const point = viewport.projectPosition([0, lat, 0]);
+  const camera = viewport.cameraPosition;
+
+  const rPoint = Math.hypot(point[0], point[1], point[2]);
+  const rCam = Math.hypot(camera[0], camera[1], camera[2]);
+  if (rPoint === 0 || rCam === 0 || rCam <= rPoint) {
+    return false;
+  }
+
+  const cosSurface =
+    (point[0] * camera[0] + point[1] * camera[1] + point[2] * camera[2]) / (rPoint * rCam);
+  const cosHorizon = rPoint / rCam;
+  if (cosSurface < cosHorizon) {
+    return false;
+  }
+
+  const screen = viewport.project([0, lat, 0]);
+  return screen[0] >= 0 && screen[0] <= width && screen[1] >= 0 && screen[1] <= height;
 }
 
 // https://epsg.io/3857
