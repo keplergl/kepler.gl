@@ -290,10 +290,8 @@ const BASEMAP_MVT_PARAMETERS = {
   // winding — and deck.gl 9's globe projection loses precision at high zoom
   // (float32), flipping the winding of the small admin/water triangles so they
   // get wrongly culled and the geometry vanishes past ~zoom 12 (you then see
-  // through to the far side / "different geometry"). deck.gl 8 kept enough
-  // precision for culling to work, which is why the same vector basemap renders
-  // fine there at high zoom. Depth testing against the disk is a
-  // precision-robust occluder that works at any zoom, so:
+  // through to the far side / "different geometry"). Depth testing against the disk
+  // is a precision-robust occluder that works at any zoom, so:
   //   - cull: false     → don't winding-cull the near-side geometry
   //   - depthTest: true → far-side geometry (behind the disk) fails depth, hidden
   //   - depthMask: false → don't write depth (avoid self z-fighting on the shell)
@@ -305,11 +303,11 @@ const BASEMAP_MVT_PARAMETERS = {
   cull: false
 };
 
-// deck.gl 9's globe selects finer tiles than deck 8 did for the same view (its
-// GlobeViewport scale is ~3x smaller), so bias vector tile selection coarser to
-// keep the tile count — and thus performance — closer to deck 8. This trades a
-// little detail for far fewer tiles; make it less negative (toward 0, deck 8's
-// effective value) for sharper detail, or more negative for more perf.
+// deck.gl 9's globe selects finer tiles than needed for a given view (its
+// GlobeViewport scale is ~3x smaller than the equivalent mercator zoom), so bias
+// vector tile selection coarser to keep the tile count — and thus performance —
+// in check. This trades a little detail for far fewer tiles; make it less negative
+// (toward 0) for sharper detail, or more negative for more perf.
 // Satellite raster stays at 0 (a coarser raster tile only looks softer).
 const MAPBOX_GLOBE_VECTOR_ZOOM_OFFSET = -2;
 const CARTO_GLOBE_VECTOR_ZOOM_OFFSET = -2;
@@ -351,7 +349,7 @@ function zoomAdjust(latitude: number): number {
  * Latitude compensation to add to a globe tile layer's `zoomOffset`, so tile LOD
  * tracks the *visual* (on-screen) scale instead of the latitude-adjusted mercator
  * zoom. This cancels the pan-induced zoom drop, keeping tile detail/labels
- * constant while rotating toward the poles — matching deck 8.
+ * constant while rotating toward the poles.
  */
 function globeLatitudeZoomCompensation(latitude?: number): number {
   if (latitude == null || !Number.isFinite(latitude)) {

@@ -28,8 +28,8 @@ function zoomAdjust(latitude: number): number {
  * In deck.gl 9.x, the default GlobeController's GlobeState.zoom() ignores the
  * cursor position and always zooms toward the center. This controller patches
  * that behavior by overriding the ControllerState's zoom method to pan the
- * globe under the cursor while zooming, matching the behavior of deck.gl 8.x
- * and MapController.
+ * globe under the cursor while zooming, so zoom-to-cursor works the same way it
+ * does for the 2D MapController.
  */
 class ZoomToCursorGlobeController extends GlobeController {
   constructor(...args: any[]) {
@@ -71,17 +71,15 @@ class ZoomToCursorGlobeController extends GlobeController {
         return clamp(zoom, minZoom + zoomAdjustment, maxZoom + zoomAdjustment);
       }
 
-      // Zoom-to-cursor, ported verbatim from deck.gl 8.9.x MapState.zoom() +
-      // GlobeViewport.panByPosition(coords, pixel), where zoom-to-cursor tracks the
-      // cursor accurately over a whole gesture. deck.gl 9.x regressed this in two
-      // ways that we avoid here:
+      // Exact zoom-to-cursor. deck.gl 9.x's GlobeController does not keep the point
+      // under the cursor fixed while zooming, in two ways we work around here:
       //   1. Its GlobeState.zoom() ignores the cursor and zooms toward the center.
-      //   2. Its GlobeViewport.panByPosition became a lossy, *linearized* 3-arg
+      //   2. Its GlobeViewport.panByPosition is a lossy, *linearized* 3-arg
       //      rotation (longitude += (0.25/scale)*(startPixel-pixel), re-derives
       //      zoom). Using it per wheel tick accumulates error, so after a long
       //      continuous zoom the point ends up noticeably shifted from what was
       //      originally under the cursor.
-      // The 8.9.x recenter below is an *exact absolute* translation: unproject the
+      // The recenter below is an *exact absolute* translation: unproject the
       // cursor pixel in the zoomed viewport to get the geo point currently under it,
       // then shift the center by (anchor - thatPoint). No zoom coupling, no
       // rotationSpeed, and it applies to zoom-in and zoom-out symmetrically, so
@@ -149,7 +147,7 @@ class ZoomToCursorGlobeController extends GlobeController {
           zoom
         });
 
-        // 8.9.x GlobeViewport.panByPosition(startZoomLngLat, pos):
+        // Anchor the grabbed geo point back under the cursor:
         //   fromPosition = viewport.unproject(pos)   // geo point now under the cursor
         //   longitude = startZoomLngLat[0] - fromPosition[0] + viewport.longitude
         //   latitude  = startZoomLngLat[1] - fromPosition[1] + viewport.latitude
@@ -172,7 +170,7 @@ class ZoomToCursorGlobeController extends GlobeController {
         });
       }
 
-      // Clear the persisted pinch anchor at gesture end (matches 8.9.x).
+      // Clear the persisted pinch anchor at gesture end.
       zoomEnd() {
         return (this as any)._getUpdatedState({
           startZoom: null,
@@ -180,13 +178,11 @@ class ZoomToCursorGlobeController extends GlobeController {
         });
       }
 
-      // Pan, ported from deck.gl 8.9.x MapState.pan() +
-      // GlobeViewport.panByPosition(coords, pixel) — an *exact, cursor-anchored*
-      // translation: the geo point grabbed on mousedown stays locked under the
-      // cursor for the whole drag.
+      // Exact, cursor-anchored pan: the geo point grabbed on mousedown stays
+      // locked under the cursor for the whole drag.
       //
-      // deck.gl 9.x replaced this with a *linearized, center-anchored* rotation
-      // (GlobeViewport.panByPosition([lng,lat,zoom], pixel, startPixel):
+      // deck.gl 9.x's GlobeController pans with a *linearized, center-anchored*
+      // rotation (GlobeViewport.panByPosition([lng,lat,zoom], pixel, startPixel):
       // longitude += (0.25/scale)*(startPixel-pixel)). Because the anchor is the
       // view CENTER rather than the grabbed point, the first drag frame snaps the
       // center to satisfy the linear approximation, producing the visible "jump to
@@ -261,14 +257,12 @@ export class KeplerGlobeView extends DeckGlobeView {
   // projection math (globe vs flat mercator). That makes deck's TileLayer/MVTLayer
   // reselect tiles inconsistently across the boundary — mixed LODs (e.g. a z4 tile
   // next to z11), a visible "flicker" at 12, and tiles that get dropped and stick
-  // as black/empty quads (most often crossing 12 on the way *out*). deck.gl 8.x
-  // always used GlobeViewport (`get ViewportType()`), which is why the same
-  // basemap is stable there at high zoom.
+  // as black/empty quads (most often crossing 12 on the way *out*).
   //
-  // Force GlobeViewport at every zoom to eliminate the z=12 viewport swap. The
-  // trade-off is that zoom > 12 now uses float32 globe precision (deck's documented
-  // "no high-precision rendering > 12" limit) instead of switching to mercator —
-  // exactly deck 8 behavior, and far preferable to the black quads.
+  // Force GlobeViewport at every zoom to eliminate the z=12 viewport swap so tile
+  // selection stays consistent. The trade-off is that zoom > 12 now uses float32
+  // globe precision (deck's documented "no high-precision rendering > 12" limit)
+  // instead of switching to mercator — far preferable to the black quads.
   getViewportType() {
     return DeckGlobeViewport;
   }
