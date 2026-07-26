@@ -964,7 +964,11 @@ export default function MapContainerFactory(
               mapboxApiAccessToken: mapboxApiAccessToken || '',
               globe: mapState.globe,
               mapStyleType: mapStyle?.styleType,
-              basemapProvider: globeBasemapProvider
+              basemapProvider: globeBasemapProvider,
+              // Use the live (internal) latitude so the tile LOD compensation
+              // stays in sync with the deck viewport during a drag; mapState
+              // latitude lags behind while rotating.
+              latitude: internalMapState.latitude
             })
           : [];
       const globeTopLayers =
@@ -1399,6 +1403,7 @@ export default function MapContainerFactory(
             isAnnotationMode={Boolean(mapControls?.annotation?.active)}
             mapIndex={index || 0}
             viewport={this._getAnnotationViewport(mapState, internalViewState)}
+            isGlobeEnabled={Boolean(mapState.globe?.enabled)}
             updateAnnotation={visStateActions.updateAnnotation}
             setSelectedAnnotation={visStateActions.setSelectedAnnotation}
           />

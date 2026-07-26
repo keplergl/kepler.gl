@@ -403,7 +403,7 @@ export default class RasterTileLayer extends KeplerLayer {
 
   /**
    * Update zRange of viewport. This is necessary so that tiles in extruded mode are shown properly
-   * at high elevations: https://github.com/foursquare/studio-monorepo/pull/1892/files
+   * at high elevations.
    * Derived from https://github.com/visgl/deck.gl/blob/8d824a4b836fee3bfebe6fc962e0f03d8c1dbd0d/modules/geo-layers/src/terrain-layer/terrain-layer.js#L173-L196
    *
    * @param tiles Array of tiles in current viewport
