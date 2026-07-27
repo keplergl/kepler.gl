@@ -6,12 +6,15 @@ const join = require('path').join;
 
 // Import package.json to read version
 const KeplerPackage = require('../package');
+const webpack = require('webpack');
 
 const SRC_DIR = resolve(__dirname, '../src');
 const NODE_MODULES_DIR = resolve(__dirname, '../node_modules');
 const OUTPUT_DIR = resolve(__dirname, '../umd');
 
 const LIBRARY_BUNDLE_CONFIG = () => ({
+  mode: 'production',
+
   entry: {
     KeplerGl: join(SRC_DIR, 'index.js')
   },
@@ -77,6 +80,13 @@ const LIBRARY_BUNDLE_CONFIG = () => ({
   module: {
     rules: [
       {
+        // webpack 5 requires explicit opt-out for node_modules that use
+        // extension-less relative imports in strict ESM context.
+        test: /\.m?js$/,
+        include: [/node_modules/],
+        resolve: {fullySpecified: false}
+      },
+      {
         test: /\.(js|ts|tsx)$/,
         loader: 'babel-loader',
         include: [
@@ -119,7 +129,13 @@ const LIBRARY_BUNDLE_CONFIG = () => ({
         include: [/node_modules\/parquet-wasm/]
       }
     ]
-  }
+  },
+
+  plugins: [
+    new webpack.ProvidePlugin({
+      process: require.resolve('process/browser')
+    })
+  ]
 });
 
 module.exports = env => LIBRARY_BUNDLE_CONFIG(env);
