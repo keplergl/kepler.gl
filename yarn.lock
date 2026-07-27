@@ -5340,7 +5340,7 @@ __metadata:
     fuzzy: "npm:^0.1.3"
     global: "npm:^4.3.0"
     lexical: "npm:^0.9.0"
-    lodash: "npm:4.17.23"
+    lodash: "npm:4.18.1"
     mapbox-gl: "npm:1.13.1"
     maplibre-gl: "npm:^4.0.0"
     maplibregl-mapbox-request-transformer: "npm:^0.0.2"
