@@ -55,8 +55,10 @@ const COMMON_CONFIG = {
       },
       {
         // webpack 5 treats some node_modules (e.g. @flowmap.gl) as strict ESM and
-        // rejects their extension-less relative imports. Relax fullySpecified for them.
+        // rejects their extension-less relative imports. Relax fullySpecified only
+        // for node_modules so local ESM resolution is left unchanged.
         test: /\.m?js$/,
+        include: [/node_modules/],
         resolve: {
           fullySpecified: false
         }
