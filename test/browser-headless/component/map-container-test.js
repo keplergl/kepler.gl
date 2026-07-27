@@ -220,3 +220,78 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
     })
     .then(() => t.end());
 });
+
+// ---------------------------------------------------------------------------
+// MapPopover rendering
+// ---------------------------------------------------------------------------
+// This test constructs a mock hoverInfo directly from deterministic mock data
+// instead of relying on GPU picking, so it runs reliably in headless CI.
+// It replaces the enzyme-based MapPopover assertions that were nested inside
+// the InteractionTestRunner onAfterEvents callback in the original test file.
+
+test('MapContainerFactory - MapPopover', t => {
+  const store = mockStore(initialState);
+
+  // Render MapPopover directly with the known layerHoverProp fixture.
+  // This is more reliable than going through MapContainer + getLayerHoverProp
+  // (which requires an exact DeckGL hoverInfo structure) and still exercises
+  // the same tooltip rendering path.
+  t.doesNotThrow(() => {
+    renderWithTheme(
+      <Provider store={store}>
+        <IntlWrapper>
+          <MapPopover
+            x={200}
+            y={200}
+            zoom={13}
+            frozen={false}
+            coordinate={false}
+            layerHoverProp={expectedLayerHoverProp}
+            onClose={() => {}}
+            onSetFeatures={() => {}}
+            setSelectedFeature={() => {}}
+            featureCollection={{type: 'FeatureCollection', features: []}}
+          />
+        </IntlWrapper>
+      </Provider>
+    );
+  }, 'render MapPopover should not fail');
+
+  // MapPopover renders via FloatingPortal into document.body,
+  // outside the RTL container div — query at document level.
+  const popover = document.querySelector('.map-popover');
+  t.ok(popover !== null, 'should render .map-popover');
+
+  const tableCount = popover ? popover.querySelectorAll('table').length : 0;
+  t.equal(tableCount, 1, 'should render 1 table');
+
+  const rows = popover ? popover.querySelectorAll('.layer-hover-info__row') : [];
+  t.equal(rows.length, 5, 'should render 5 tooltip rows');
+
+  // These field names / values come from the CSV fixture in mock-state.js.
+  // The timestamp field (gps_data.utc_timestamp) is displayed as a raw epoch
+  // millisecond string because FIELD_DISPLAY_FORMAT[timestamp] = defaultFormatter.
+  const expectedTooltips = [
+    ['gps_data.utc_timestamp', '1474071864000'],
+    ['gps_data.types', 'driver_analytics'],
+    ['epoch', '1472754400000'],
+    ['has_result', ''],
+    ['uid', '1']
+  ];
+
+  for (let i = 0; i < expectedTooltips.length; i++) {
+    const row = rows[i];
+    t.equal(
+      row ? row.querySelector('.row__name')?.textContent : undefined,
+      expectedTooltips[i][0],
+      `tooltip row ${i} name should be correct`
+    );
+    t.equal(
+      row ? row.querySelector('.row__value')?.textContent : undefined,
+      expectedTooltips[i][1],
+      `tooltip row ${i} value should be correct`
+    );
+  }
+
+  t.end();
+});
