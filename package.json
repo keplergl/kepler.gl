@@ -93,7 +93,8 @@
     "deploy": "yarn install:web && cd website && yarn build",
     "clean": "rm -rf node_modules examples/**/node_modules website/node_modules .nyc_output coverage jest-coverage tape-coverage",
     "release:patch": "git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags",
-    "fix-dependencies": "./scripts/fix-dependencies.sh"
+    "fix-dependencies": "./scripts/fix-dependencies.sh",
+    "bump-version": "node ./scripts/bump-version.js"
   },
   "files": [
     "dist",
@@ -188,6 +189,7 @@
     "jest-environment-jsdom": "^29.5.0",
     "jsdom": "^24.1.1",
     "json-loader": "^0.5.4",
+    "lerna": "8",
     "mapbox-gl": "1.13.1",
     "maplibre-gl": "^4.0.0",
     "minimist": "^1.2.6",
