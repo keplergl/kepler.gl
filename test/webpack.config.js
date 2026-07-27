@@ -15,6 +15,13 @@ const COMMON_CONFIG = {
     warnings: false
   },
 
+  // @turf/jsts ships a minified build that references a .map file it doesn't
+  // include — suppress the resulting source-map-loader noise so real warnings
+  // are not lost in the output.
+  ignoreWarnings: [
+    {module: /@turf\/jsts/}
+  ],
+
   devServer: {
     client: {
       logging: 'verbose',
@@ -30,7 +37,16 @@ const COMMON_CONFIG = {
     extensions: ['.tsx', '.ts', '.js'],
     modules: [SRC_DIR, 'node_modules'],
     // resolve @kepler.gl/* to source (aliases shared with the website build)
-    alias: RESOLVE_ALIASES,
+    // enzyme is not compatible with React 19; alias to the no-op stub so the
+    // bundle compiles. Tests that still use Enzyme's API will need to be
+    // migrated to @testing-library/react (see test/helpers/rtl-utils.js).
+    alias: {
+      ...RESOLVE_ALIASES,
+      enzyme: resolve(TEST_DIR, 'helpers/enzyme-mock.js'),
+      // @probe.gl/test-utils only exports "." in its exports map; webpack 5 blocks
+      // the /polyfill subpath. Alias directly to the file to bypass the restriction.
+      '@probe.gl/test-utils/polyfill': resolve(__dirname, '../node_modules/@probe.gl/test-utils/polyfill.js')
+    },
     // webpack 5 no longer ships node core polyfills; the browser test bundle
     // (tape, pngjs, etc.) still relies on a handful of them.
     fallback: {
