@@ -20,7 +20,7 @@
   },
   "scripts": {
     "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
-    "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
+    "build:umd": "webpack --config ./webpack/umd.js --progress --env prod",
     "build:types": "tsc --project ./tsconfig.production.json",
     "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
     "stab": "mkdir -p dist && touch dist/index.js"
@@ -53,7 +53,7 @@
     "h3-js": "^4.4.0",
     "keymirror": "^0.1.1",
     "lodash": "4.17.23",
-    "mapbox-gl": "^1.13.1",
+    "mapbox-gl": "1.13.1",
     "maplibre-gl": "^4.0.0",
     "maplibregl-mapbox-request-transformer": "^0.0.2",
     "moment": "^2.10.6",

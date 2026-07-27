@@ -15,7 +15,10 @@ const LIBRARY_BUNDLE_CONFIG = () => ({
 
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    modules: ['node_modules', SRC_DIR]
+    modules: ['node_modules', SRC_DIR],
+    fallback: {
+      fs: false
+    }
   },
 
   // let's put everything in
@@ -27,10 +30,6 @@ const LIBRARY_BUNDLE_CONFIG = () => ({
         include: [SRC_DIR]
       }
     ]
-  },
-
-  node: {
-    fs: 'empty'
   },
 
   plugins: [
