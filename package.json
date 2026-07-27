@@ -154,7 +154,7 @@
     "@types/supercluster": "^7.1.0",
     "@typescript-eslint/eslint-plugin": "5.57.0",
     "@typescript-eslint/parser": "^5.57.1",
-    "assert": "^2.1.0",
+    "assert": "^1.4.0",
     "babel-loader": "^8.0.0",
     "babel-plugin-istanbul": "^6.0.0",
     "babel-plugin-module-resolver": "^4.0.0",
