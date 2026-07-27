@@ -69,7 +69,10 @@ const LIBRARY_BUNDLE_CONFIG = () => ({
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    modules: ['node_modules', SRC_DIR]
+    modules: ['node_modules', SRC_DIR],
+    fallback: {
+      fs: false
+    }
   },
   module: {
     rules: [
@@ -116,10 +119,6 @@ const LIBRARY_BUNDLE_CONFIG = () => ({
         include: [/node_modules\/parquet-wasm/]
       }
     ]
-  },
-
-  node: {
-    fs: 'empty'
   }
 });
 
