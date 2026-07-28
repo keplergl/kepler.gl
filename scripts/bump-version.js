@@ -5,6 +5,7 @@ const {execSync} = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+const repoRoot = path.resolve(__dirname, '..');
 const newVersion = process.argv[2];
 
 if (!newVersion) {
@@ -17,7 +18,7 @@ if (!newVersion) {
 console.log(`\nBumping workspace packages to ${newVersion}...`);
 execSync(
   `yarn lerna version ${newVersion} --no-git-tag-version --no-push --exact --yes --sync-dist-version --allow-branch '**'`,
-  {stdio: 'inherit'}
+  {stdio: 'inherit', cwd: repoRoot}
 );
 
 // Update root package.json: version + any @kepler.gl/* dependency references
@@ -43,5 +44,5 @@ console.log(`Updated root package.json: ${oldVersion} => ${newVersion}`);
 // Re-run yarn install so the lockfile is properly resolved (Lerna's internal
 // lockfile sync creates imperfect entries for workspace packages; this cleans them up)
 console.log('\nRunning yarn install to clean up yarn.lock...');
-execSync('yarn install', {stdio: 'inherit'});
+execSync('yarn install', {stdio: 'inherit', cwd: repoRoot});
 console.log('\nDone. Review the changes, then commit and push.');
