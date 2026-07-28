@@ -162,6 +162,99 @@ class TestGeoDataFrameSerialization:
         assert result["format"] == "geoarrow"
         assert "data" in result
 
+    def test_serialize_geodataframe_multiple_geometry_columns(self):
+        """GeoDataFrame with multiple geometry columns must not raise.
+
+        Regression test for the serialization error reported in
+        https://github.com/keplergl/kepler.gl/issues/2283 — when a GeoDataFrame
+        has more than one geometry-typed column, pa.array() would fail on the
+        non-active geometry columns.  The active geometry column is encoded as
+        GeoArrow; secondary ones are converted to WKT strings.
+        """
+        import base64
+        import pyarrow as pa
+
+        gdf = gpd.GeoDataFrame(
+            {"name": ["SF", "LA"], "value": [1, 2]},
+            geometry=[Point(-122.4194, 37.7749), Point(-118.2437, 34.0522)],
+            crs="EPSG:4326",
+        )
+        # buffer() on a geographic CRS gives imprecise results — acceptable here
+        # since we only care about serialization, not geometric accuracy.
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            gdf["buffer"] = gdf.geometry.buffer(0.01)
+
+        result = serialize_dataset(gdf, "multi_geom")
+        assert result["id"] == "multi_geom"
+        assert result["format"] == "geoarrow"
+
+        # Decode the Arrow table and verify all columns survived
+        arrow_bytes = base64.b64decode(result["data"])
+        table = pa.ipc.open_stream(arrow_bytes).read_all()
+        assert "name" in table.column_names
+        assert "value" in table.column_names
+        assert "geometry" in table.column_names
+        assert "buffer" in table.column_names
+        assert table.num_rows == 2
+
+        # The secondary geometry column must be WKT strings, not raw geometry objects
+        buffer_col = table.column("buffer")
+        assert pa.types.is_string(buffer_col.type) or pa.types.is_large_string(buffer_col.type), (
+            f"Expected secondary geometry column to be WKT string, got {buffer_col.type}"
+        )
+        assert buffer_col[0].as_py().startswith("POLYGON")
+
+    def test_serialize_geodataframe_non_default_active_geometry(self):
+        """Active geometry column with non-default name is encoded as GeoArrow.
+
+        When a GeoDataFrame has two geometry columns and the active one is
+        not named 'geometry', the active column must still be GeoArrow-encoded
+        and the other must be WKT.
+        """
+        import base64
+        import pyarrow as pa
+
+        gdf = gpd.GeoDataFrame(
+            {"name": ["A", "B"]},
+            geometry=[Point(0, 0), Point(1, 1)],
+        )
+        gdf["secondary"] = gdf.geometry.buffer(0.1)
+        # Switch the active geometry to the buffered column
+        gdf = gdf.set_geometry("secondary")
+
+        result = serialize_dataset(gdf, "swapped")
+        assert result["format"] == "geoarrow"
+
+        arrow_bytes = base64.b64decode(result["data"])
+        table = pa.ipc.open_stream(arrow_bytes).read_all()
+        assert "geometry" in table.column_names
+        assert "secondary" in table.column_names
+
+        # Original (now non-active) column must be WKT
+        orig_col = table.column("geometry")
+        assert pa.types.is_string(orig_col.type) or pa.types.is_large_string(orig_col.type)
+
+    def test_serialize_geodataframe_null_secondary_geometry(self):
+        """A secondary geometry column that is all-null serializes as WKT nulls."""
+        import base64
+        import pyarrow as pa
+
+        gdf = gpd.GeoDataFrame(
+            {"name": ["A", "B"]},
+            geometry=[Point(0, 0), Point(1, 1)],
+        )
+        gdf["empty_geom"] = gpd.GeoSeries([None, None])
+
+        result = serialize_dataset(gdf, "null_secondary")
+        assert result["format"] == "geoarrow"
+
+        arrow_bytes = base64.b64decode(result["data"])
+        table = pa.ipc.open_stream(arrow_bytes).read_all()
+        assert "empty_geom" in table.column_names
+        assert table.num_rows == 2
+
 
 class TestGeoJSONSerialization:
     """Tests for GeoJSON serialization (from GeoJSON.ipynb)."""
