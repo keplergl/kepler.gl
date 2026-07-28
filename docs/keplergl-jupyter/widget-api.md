@@ -14,9 +14,13 @@ Create a kepler.gl map widget.
 
     Datasets as a dictionary, key is the name of the dataset. Read more on [Accepted data formats](data-formats.md).
 
+- __`mapbox_token`__ `str` _optional_ default: `""`
+
+    Mapbox API access token. Required for Mapbox basemap styles (e.g. "Dark", "Muted Light"). Leave empty to use free MapLibre styles.
+
 - __`use_arrow`__ `bool` _optional_ default: `False`
 
-    Allow load and render data faster using GeoArrow.
+    If `True`, serialize DataFrames as Arrow IPC for better performance on large datasets. Has no effect on GeoDataFrames, which always use GeoArrow serialization.
 
 - __`config`__ `dict` _optional_
 

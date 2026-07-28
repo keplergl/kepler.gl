@@ -10,9 +10,9 @@ Export the map to a standalone HTML file.
 
 ### Parameters
 
+- **`file_name`**: _optional_ The HTML file name, default is `keplergl_map.html`.
 - **`data`**: _optional_ A data dictionary `{"name": data}`. If not provided, will use current map data.
 - **`config`**: _optional_ Map config dictionary. If not provided, will use current map config.
-- **`file_name`**: _optional_ The HTML file name, default is `keplergl_map.html`.
 - **`read_only`**: _optional_ If `True`, hide side panel to disable map customization.
 - **`center_map`**: _optional_ If `True`, fit map bounds to the data (default: `True`).
 - **`mapbox_token`**: _optional_ Mapbox access token. Required for Mapbox basemap styles (e.g. "Dark", "Muted Light"). Leave empty for free MapLibre styles.
