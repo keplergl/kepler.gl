@@ -32,6 +32,8 @@ const getPlugins = isTest => {
         root: ['./src'],
         alias: {
           test: './test',
+          enzyme: './test/helpers/enzyme-adapter.js',
+          '@cfaester/enzyme-adapter-react-18': './test/helpers/enzyme-mock.js',
           // We explicitly transpile this ESM library in scripts/fix-dependencies.js and consume the transpiled version here
           // This may not be needed once switch to Jest is complete as it is handled by transformIgnorePatterns
           '@mapbox/tiny-sdf': `${nodeModules}/@mapbox/tiny-sdf/index.cjs`,

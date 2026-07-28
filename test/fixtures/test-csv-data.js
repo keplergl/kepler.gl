@@ -662,7 +662,7 @@ export const mergedTimeFilter = {
     interval: '1-hour',
     defaultTimeFormat: 'L  H A',
     type: 'histogram',
-    aggregation: 'sum'
+    aggregation: 'average'
   },
   yAxis: null,
   value: [1474606800000, 1474617600000],
@@ -712,7 +712,7 @@ export const mergedEpochFilter = {
     interval: '15-minute',
     defaultTimeFormat: 'L  LT',
     type: 'histogram',
-    aggregation: 'sum'
+    aggregation: 'average'
   },
   yAxis: null,
   value: [1472700000000, 1472760000000],
@@ -751,7 +751,7 @@ export const expectedSyncedTsFilter = {
     interval: '15-second',
     defaultTimeFormat: 'L  LTS',
     type: 'histogram',
-    aggregation: 'sum',
+    aggregation: 'average',
     colorsByDataId: {
       'test-csv-data-1': '#FF0000',
       'test-csv-data-2': '#00FF00'

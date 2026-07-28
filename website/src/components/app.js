@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import {connect} from 'react-redux';
+import {Outlet} from 'react-router-dom';
 
 const GlobalStyleDiv = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
@@ -33,10 +34,12 @@ const GlobalStyleDiv = styled.div`
   }
 `;
 
-class App extends Component {
-  render() {
-    return <GlobalStyleDiv className="kg-web-content">{this.props.children}</GlobalStyleDiv>;
-  }
+function App() {
+  return (
+    <GlobalStyleDiv className="kg-web-content">
+      <Outlet />
+    </GlobalStyleDiv>
+  );
 }
 
 export default connect(state => state)(App);

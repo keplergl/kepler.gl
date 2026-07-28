@@ -11,6 +11,7 @@ import WebsitePackage from '../package.json' with {type: 'json'};
 const args = process.argv;
 const LIB_DIR = '../';
 const NODE_MODULES_DIR = join(LIB_DIR, 'node_modules');
+const WEBSITE_NODE_MODULES_DIR = './node_modules';
 const SRC_DIR = join(LIB_DIR, 'src');
 
 const port = 3003;
@@ -22,6 +23,8 @@ const RESOLVE_LOCAL_ALIASES = {
   'styled-components': `${NODE_MODULES_DIR}/styled-components`,
   'react-intl': `${NODE_MODULES_DIR}/react-intl`,
   'react-palm': `${NODE_MODULES_DIR}/react-palm`,
+  'react-router-dom': `${WEBSITE_NODE_MODULES_DIR}/react-router-dom`,
+  'react-router': `${WEBSITE_NODE_MODULES_DIR}/react-router`,
   'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
   'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
 };
@@ -38,6 +41,7 @@ const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
+  inject: ['../examples/demo-app/src/react19-shim.js'],
   loader: {
     '.js': 'jsx',
     '.css': 'css',

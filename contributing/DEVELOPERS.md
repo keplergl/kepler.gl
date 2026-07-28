@@ -392,7 +392,15 @@ Setup `gh-release` with your github api token ([instructions](https://www.npmjs.
 
 In order to publish a new version of kepler.gl a developer must perform the following steps:
 
-1. Update **package.json** file with the new version value. Run `npm version major | minor | patch` to update version accordingly.
+1. Bump the version across all workspace packages and the root `package.json`:
+
+```bash
+yarn bump-version <new-version>
+# e.g. yarn bump-version 3.3.0
+```
+
+This updates `"version"` and all `@kepler.gl/*` cross-references in every `src/*/package.json` and in the root `package.json`.
+
 2. Update **CHANGELOG.md** with the latest commit changes. Print commits with `git log --pretty=oneline --abbrev-commit`
 3. Create a new PR for review.
 4. Once the PR is reviewed and merged, pull the latest changes locally.
@@ -401,10 +409,10 @@ In order to publish a new version of kepler.gl a developer must perform the foll
 
 **After Release is completed and pushed**
 
-- Update each of the example folder package.json kepler.gl dependency with the newer. To update all examples, run
+- Update each of the example folder `package.json` kepler.gl dependency with the new version. To update all examples, run:
 
 ```bash
-npm run example-version
+yarn example-version
 ```
 
 This step is required after the new version is published otherwise it would fail.

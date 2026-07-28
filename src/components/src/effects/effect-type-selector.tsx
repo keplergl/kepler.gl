@@ -41,6 +41,7 @@ const DropdownWrapper = styled.div`
 const StyledEffectTypeSelector = styled.div`
   .item-selector .item-selector__dropdown {
     padding: 4px 10px 4px 10px;
+    width: fit-content;
     background-color: ${props => props.theme.secondaryBtnBgd};
     border-radius: ${props => props.theme.primaryBtnRadius};
     font-size: ${props => props.theme.primaryBtnFontSizeDefault};

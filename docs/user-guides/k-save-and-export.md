@@ -112,6 +112,16 @@ If your map has time-range filters in the *enlarged* (time-slider) view or filte
 - Position your camera in the preview *before* clicking Render. If you selected a camera preset like *Orbit (360°)*, the orbit starts from whatever position you set.
 - All active [effects](./effects.md) (post-processing filters, fog, lighting) are included in the recording.
 
+> **Limited support for feature combinations:** [Globe view](./m-map-settings.md#globe-view),
+> [swipe/split comparison](./m-map-settings.md#split-maps), video export, and
+> post-processing [effects](./effects.md) each work on their own, but combining
+> several at once (for example recording a video of a globe in swipe mode with
+> effects active) has **limited support** and may not preview or export exactly
+> as expected. If the preview looks wrong or the export fails, disable one of the
+> features (turn off effects, exit swipe mode, or switch back to the flat map)
+> and record again. Support for these combinations is expected to improve over
+> time.
+
 
 ## <a href="#export-dropbox">Share Public URL (Dropbox) </a>
 ![Export Map to Dropbox](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-5.png "activate interactions")

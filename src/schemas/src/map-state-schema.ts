@@ -20,7 +20,13 @@ export const propertiesV1 = {
   isViewportSynced: null,
   isZoomLocked: null,
   splitMapViewports: null,
-  maxPitch: null
+  maxPitch: null,
+  mapSplitMode: null,
+  swipeComparePercentage: null,
+  // Persist the current view mode (2D / 3D / Globe) and the full globe config
+  // (colors, toggles, background) so globe maps round-trip through save/load.
+  mapViewMode: null,
+  globe: null
 };
 
 const mapStateSchema = {

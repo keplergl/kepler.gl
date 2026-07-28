@@ -18,7 +18,7 @@ import {generateHashId} from '@kepler.gl/common-utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {AddDataToMapPayload, Feature, LoadedMap, ProcessorResult} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
-import {FeatureCollection} from '@turf/helpers';
+import type {FeatureCollection} from 'geojson';
 
 import {
   processArrowBatches,

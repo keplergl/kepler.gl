@@ -39,6 +39,8 @@ export default function DatasetInfoFactory() {
             ? 'datasetInfo.wmsTile'
             : dataset.type === DatasetType.TILE_3D
             ? 'datasetInfo.tile3d'
+            : dataset.type === DatasetType.BITMAP
+            ? 'datasetInfo.bitmap'
             : 'datasetInfo.rowCount'
         }
         values={{rowCount: numFormat(dataset.dataContainer.numRows())}}

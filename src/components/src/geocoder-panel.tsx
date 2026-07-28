@@ -14,7 +14,7 @@ import {
   GEOCODER_ICON_COLOR,
   GEOCODER_ICON_SIZE
 } from '@kepler.gl/constants';
-import {AddDataToMapOptions, MapState, ProtoDataset, UiState, Viewport} from '@kepler.gl/types';
+import {AddDataToMapOptions, LayerOrder, MapState, ProtoDataset, UiState, Viewport} from '@kepler.gl/types';
 import {ActionHandler, removeDataset, updateMap, updateVisData} from '@kepler.gl/actions';
 
 import Geocoder, {Result} from './geocoder/geocoder';
@@ -51,11 +51,11 @@ const ICON_LAYER = {
   }
 };
 
-function generateConfig(layerOrder) {
+function generateConfig() {
   return {
     visState: {
       layers: [ICON_LAYER],
-      layerOrder: [ICON_LAYER.id, ...layerOrder]
+      layerOrder: [ICON_LAYER.id]
     }
   };
 }
@@ -137,7 +137,7 @@ interface GeocoderPanelProps {
   updateVisData: ActionHandler<typeof updateVisData>;
   removeDataset: ActionHandler<typeof removeDataset>;
   updateMap: ActionHandler<typeof updateMap>;
-  layerOrder: string[];
+  layerOrder: LayerOrder;
   limitSearch?: boolean;
 
   transitionDuration?: MapViewState['transitionDuration'];
@@ -155,7 +155,6 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
     updateVisData,
     removeDataset,
     updateMap,
-    layerOrder,
     limitSearch = false,
     transitionDuration = 3000,
     width,
@@ -178,7 +177,7 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
         const updateVisDataPayload = getUpdateVisDataPayload(lat, lon, text);
         if (updateVisDataPayload) {
           removeGeocoderDataset();
-          updateVisData(...updateVisDataPayload, generateConfig(layerOrder));
+          updateVisData(...updateVisDataPayload, generateConfig());
         }
 
         const bounds = bbox || [
@@ -214,7 +213,6 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
       },
       [
         index,
-        layerOrder,
         mapState,
         removeGeocoderDataset,
         transitionDuration,

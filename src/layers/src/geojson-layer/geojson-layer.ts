@@ -3,7 +3,7 @@
 
 import * as arrow from 'apache-arrow';
 import {point as turfPoint} from '@turf/helpers';
-import booleanWithin from '@turf/boolean-within';
+import {booleanWithin} from '@turf/boolean-within';
 import {Feature, Polygon} from 'geojson';
 import uniq from 'lodash/uniq';
 import {DATA_TYPES} from 'type-analyzer';
@@ -33,6 +33,7 @@ import {
   isLayerHoveredFromArrow,
   getHoveredObjectFromArrow
 } from '../layer-utils';
+import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {
   GEOJSON_FIELDS,
@@ -76,7 +77,7 @@ export const geojsonVisConfigs: {
   sizeRange: 'strokeWidthRange';
   radiusRange: 'radiusRange';
   heightRange: 'elevationRange';
-  elevationScale: 'elevationScale';
+  elevationScale: VisConfigNumber;
   stroked: 'stroked';
   filled: 'filled';
   enable3d: 'enable3d';
@@ -91,7 +92,9 @@ export const geojsonVisConfigs: {
   },
   thickness: {
     ...LAYER_VIS_CONFIGS.thickness,
-    defaultValue: 0.5
+    defaultValue: 0.5,
+    focusRange: [0, 1],
+    focusWeight: 0.3
   },
   strokeColor: 'strokeColor',
   colorRange: 'colorRange',
@@ -101,7 +104,11 @@ export const geojsonVisConfigs: {
   sizeRange: 'strokeWidthRange',
   radiusRange: 'radiusRange',
   heightRange: 'elevationRange',
-  elevationScale: 'elevationScale',
+  elevationScale: {
+    ...LAYER_VIS_CONFIGS.elevationScale,
+    focusRange: [0, 1],
+    focusWeight: 0.3
+  },
   stroked: 'stroked',
   filled: 'filled',
   enable3d: 'enable3d',
@@ -512,8 +519,30 @@ export default class GeoJsonLayer extends Layer {
     if (this.config.dataId === null) {
       return {};
     }
+    const {textLabel} = this.config;
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
-    const {data} = this.updateData(datasets, oldLayerData);
+    const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
+
+    // Text labels are only supported in GEOJSON column mode where properties.index
+    // is the actual row index in the data container. In TABLE mode, properties.index
+    // is a feature index (not a row index), so text label value lookups would be wrong.
+    const supportsTextLabels =
+      this.config.columnMode === COLUMN_MODE_GEOJSON && this.centroids.length > 0;
+
+    const textLabelData = supportsTextLabels
+      ? ((data as GeojsonDataMaps) || [])
+          .filter(d => d && 'properties' in d)
+          .map(d => ({index: (d as Feature).properties?.index}))
+      : [];
+
+    const textLabels = formatTextLabelData({
+      textLabel,
+      triggerChanged,
+      oldLayerData,
+      data: textLabelData,
+      dataContainer,
+      filteredIndex: this.filteredIndex
+    });
 
     let filterValueAccessor;
     let dataAccessor;
@@ -529,19 +558,32 @@ export default class GeoJsonLayer extends Layer {
     }
 
     const indexAccessor = f => f.properties.index;
+    const textLabelIndexAccessor = f => f.index;
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
 
     const isFilteredAccessor = d => {
       return this.filteredIndex ? this.filteredIndex[d.properties.index] : 1;
     };
 
+    const textLabelFilteredAccessor = d => {
+      return this.filteredIndex ? this.filteredIndex[d.index] : 1;
+    };
+
     return {
       data,
+      textLabelData,
+      getPosition: d => this.centroids[d.index] || [0, 0],
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
         indexAccessor,
         filterValueAccessor
       ),
+      textLabelFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
+        textLabelIndexAccessor,
+        (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex)
+      ),
       getFiltered: isFilteredAccessor,
+      textLabelFiltered: textLabelFilteredAccessor,
+      textLabels,
       ...accessors
     };
   }
@@ -708,6 +750,14 @@ export default class GeoJsonLayer extends Layer {
 
     const {data, ...props} = dataProps;
 
+    const getPixelOffset = getTextOffsetByRadius(radiusScale, dataProps.getRadius, mapState);
+    const sharedProps = {
+      getFilterValue: dataProps.getFilterValue,
+      extensions: [...defaultLayerProps.extensions, new FilterArrowExtension()],
+      filterRange: defaultLayerProps.filterRange,
+      visible: defaultLayerProps.visible
+    };
+
     // arrow table can have multiple chunks, a deck.gl layer is created for each chunk
     const deckLayerData = this.geoArrowMode ? data : [data];
     const deckLayers = deckLayerData.map((d, i) => {
@@ -765,6 +815,26 @@ export default class GeoJsonLayer extends Layer {
               filled: false
             } as unknown as GeoJsonLayerProps)
           ]
+        : []),
+      // text label layer
+      ...(dataProps.textLabelData.length > 0
+        ? this.renderTextLabelLayer(
+            {
+              getPosition: dataProps.getPosition,
+              sharedProps,
+              getPixelOffset,
+              updateTriggers,
+              getFiltered: dataProps.textLabelFiltered
+            },
+            {
+              ...opts,
+              data: {
+                ...dataProps,
+                data: dataProps.textLabelData,
+                getFilterValue: dataProps.textLabelFilterValue
+              }
+            }
+          )
         : [])
     ];
   }

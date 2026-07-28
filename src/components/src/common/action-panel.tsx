@@ -101,7 +101,7 @@ const StyledCheckedbox = styled(Checkbox)`
 
 const renderChildren = (child: ReactNode, index: number) =>
   child &&
-  React.isValidElement<any>(child) &&
+  React.isValidElement<{onClick?: (i: number) => void; className?: string}>(child) &&
   React.cloneElement(child, {
     onClick: () => {
       if (child.props.onClick) {

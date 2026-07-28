@@ -653,7 +653,8 @@ export const CHANNEL_SCALES = keyMirror({
   radius: null,
   size: null,
   colorAggr: null,
-  sizeAggr: null
+  sizeAggr: null,
+  angle: null
 });
 
 export const AGGREGATION_TYPES: {
@@ -703,7 +704,8 @@ export const AGGREGATION_TYPE_OPTIONS: {id: string; label: string}[] = Object.en
 export const linearFieldScaleFunctions = {
   [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.custom],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt],
-  [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
+  [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+  [CHANNEL_SCALES.angle]: [SCALE_TYPES.linear]
 };
 
 const DEFAULT_AGGREGATION_COLOR_SCALES = [
@@ -1275,7 +1277,10 @@ export const GEOCODER_DATASET_NAME = 'geocoder_dataset';
 export const GEOCODER_LAYER_ID = 'geocoder_layer';
 export const GEOCODER_GEO_OFFSET = 0.05;
 export const GEOCODER_ICON_COLOR: [number, number, number] = [255, 0, 0];
-export const GEOCODER_ICON_SIZE = 80;
+// Base icon size before anchor normalization. The geocoder pin icon is bottom-anchored
+// and scaled to fit the ScatterplotLayer unit circle (~0.5x), so the rendered size is
+// compensated here (80 * 2 = 160).
+export const GEOCODER_ICON_SIZE = 160;
 
 // Editor
 export const EDITOR_LAYER_ID = 'kepler_editor_layer';
@@ -1335,8 +1340,120 @@ export const MAP_CONTROLS = keyMirror({
   mapDraw: null,
   mapLocale: null,
   effect: null,
+  annotation: null,
   aiAssistant: null
 });
+
+export enum MapViewMode {
+  MODE_2D = 'MODE_2D',
+  MODE_3D = 'MODE_3D',
+  MODE_GLOBE = 'MODE_GLOBE'
+}
+
+/**
+ * Minimum zoom level allowed in globe mode. Negative values let the user zoom
+ * out further than the web-mercator default of 0, so the whole globe can be
+ * pulled back to appear smaller on screen.
+ */
+export const GLOBE_MIN_ZOOM = 2;
+
+/**
+ * Maximum zoom in globe mode.
+ *
+ * The previous "empty rectangles" at high zoom were caused by the vector basemap
+ * layer declaring `maxZoom: 23` while the raw tile endpoints only have data to
+ * z16 (mapbox-streets-v8) / z14 (CARTO) — deck then requested non-existent tiles
+ * that 404. That is fixed in `getGlobeBaseLayers` by setting `maxZoom` to each
+ * source's true data max so deck overzooms instead.
+ *
+ * The remaining practical ceiling is float32 precision: deck's globe places
+ * geometry in common space on a sphere of radius 256 with no fp64/relative-to-
+ * center trick, so beyond ~visual-zoom 16 (roughly this mapState zoom minus
+ * `zoomAdjust(lat)` ≈ 1.65 at the equator) geometry starts to jitter/drift.
+ */
+export const GLOBE_MAX_ZOOM = 16;
+
+/**
+ * Maximum absolute center latitude allowed in globe mode. Constrains the camera
+ * target to a band around the equator so the view can't be centered on the
+ * poles (deck.gl's default clamps to ~85°, which lets the camera stare straight
+ * down at a pole). Applies symmetrically to the northern and southern hemisphere.
+ */
+export const GLOBE_MAX_LATITUDE = 75;
+
+export type GlobeConfig = {
+  atmosphere: boolean;
+  azimuth: boolean;
+  azimuthAngle: number;
+  terminator: boolean;
+  terminatorOpacity: number;
+  basemap: boolean;
+  labels: boolean;
+  labelsColor: [number, number, number];
+  adminLines: boolean;
+  adminLinesColor: [number, number, number];
+  water: boolean;
+  waterColor: [number, number, number];
+  surfaceColor: [number, number, number];
+  surface: boolean;
+  backgroundColor: [number, number, number];
+  stars: boolean;
+};
+
+export type Globe = {
+  enabled: boolean;
+  config: GlobeConfig;
+};
+
+export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
+  atmosphere: true,
+  azimuth: false,
+  azimuthAngle: 45,
+  terminator: true,
+  terminatorOpacity: 0.35,
+  basemap: true,
+  labels: false,
+  labelsColor: [114.75, 114.75, 114.75],
+  adminLines: true,
+  adminLinesColor: [40, 63, 93],
+  water: true,
+  waterColor: [17, 35, 48],
+  surface: true,
+  surfaceColor: [9, 16, 29],
+  // Color of the empty space rendered around the globe (deck.gl clear color).
+  // Matches the previous hardcoded clear color [0.015, 0.035, 0.065] in 0-1 space.
+  backgroundColor: [4, 9, 17],
+  stars: false
+};
+
+export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
+  point: true,
+  arc: true,
+  grid: true,
+  hexagon: true,
+  geojson: true,
+  cluster: true,
+  icon: true,
+  hexagonId: true,
+  '3D': true,
+  vectorTile: true,
+  hexTile: true,
+  line: true,
+  trip: true,
+  rasterTile: true,
+  heatmap: true,
+  s2: false,
+  tile3d: false,
+  // Flow arrows are flat quads in common space (equatorial plane) and collapse when
+  // viewed edge-on on the globe, so the flow layer is not supported in Globe mode.
+  flow: false
+};
+
+export enum MapSplitMode {
+  SINGLE_MAP = 'SINGLE_MAP',
+  DUAL_MAP = 'DUAL_MAP',
+  SWIPE_COMPARE = 'SWIPE_COMPARE'
+}
 
 /**
  * A multiplier for screen-space width/scale for Arc, Line, Icon and Text layers.
@@ -1754,3 +1871,113 @@ export const getLoaderOptions = () => {
     }
   };
 };
+
+export const CUSTOM_SCENEGRAPH_MODEL_ID = 'custom';
+const MODELS_BASE_URL =
+  'https://studio-public-data.foursquare.com/statics/keplergl/3d-models.2022-06-13';
+
+export const TRIP_LAYER_SCENEGRAPH_MODELS: {
+  id: string;
+  label: string;
+  icon: any;
+  url: string | null;
+  angles: [number, number, number];
+  scale: number;
+}[] = [
+  {
+    id: 'airplane',
+    label: 'Airplane',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Plane.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'boeing777',
+    label: 'Airliner',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Airliner.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'uber-evtol',
+    label: 'VTOL',
+    icon: null,
+    url: `${MODELS_BASE_URL}/evtol.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'hang-glider',
+    label: 'Glider',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Hangglider.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'helicopter',
+    label: 'Helicopter',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Helicopter.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'bicycle',
+    label: 'Bicycle',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Bicycle.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'scooter',
+    label: 'Scooter',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Scooter.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'car',
+    label: 'Car',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Car.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'truck',
+    label: 'Truck',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Truck.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'semitruck',
+    label: 'Semitruck',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Semitruck.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'cargoship',
+    label: 'Cargoship',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Cargoship.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: CUSTOM_SCENEGRAPH_MODEL_ID,
+    label: 'Custom',
+    icon: null,
+    url: null,
+    angles: [0, 0, 0],
+    scale: 1.0
+  }
+];

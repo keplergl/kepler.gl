@@ -13,7 +13,6 @@ import FieldSelectorFactory from '../../common/field-selector';
 import ChannelByValueSelectorFactory from './channel-by-value-selector';
 import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import {LayerColorRangeSelectorFactory, LayerColorSelectorFactory} from './layer-color-selector';
-import VisConfigByZoomInput from './radius-by-zoom-input';
 import VisConfigSliderFactory from './vis-config-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
 
@@ -168,21 +167,11 @@ function VectorTileLayerConfiguratorFactory(
           description="Point radius in pixels or meters"
           collapsible
         >
-          {layer.config.visConfig.radiusByZoom?.enabled && visConfiguratorProps.onChange ? (
-            <VisConfigByZoomInput
-              config={layer.config.visConfig.radiusByZoom}
-              onChange={visConfiguratorProps.onChange}
-              label="Radius"
-              property="radiusByZoom"
-              unit="px"
-            />
-          ) : (
-            <VisConfigSlider
-              {...layer.visConfigSettings.radius}
-              {...visConfiguratorProps}
-              label={false}
-            />
-          )}
+          <VisConfigSlider
+            {...layer.visConfigSettings.radius}
+            {...visConfiguratorProps}
+            label={false}
+          />
 
           <ConfigGroupCollapsibleContent>
             {layerChannelConfigProps.fields ? (

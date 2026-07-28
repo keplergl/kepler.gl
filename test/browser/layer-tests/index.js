@@ -3,6 +3,7 @@
 
 import './base-layer-specs';
 import './arc-layer-specs';
+import './bitmap-layer-specs';
 import './cluster-layer-specs';
 import './geojson-layer-specs';
 import './grid-layer-specs';
@@ -18,3 +19,4 @@ import './trip-layer-specs';
 import './s2-geometry-layer-specs';
 import './wms-layer-specs';
 import './flow-layer-specs';
+import './aggregation-layer-geojson-specs';

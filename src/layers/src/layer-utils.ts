@@ -39,6 +39,7 @@ export type FindDefaultLayerProps = {
   isVisible?: boolean;
   columns?: Record<string, LayerColumn>;
   columnMode?: string;
+  visConfig?: Record<string, any>;
 };
 
 export type FindDefaultLayerPropsReturnValue = {

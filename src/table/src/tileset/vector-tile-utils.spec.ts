@@ -6,7 +6,11 @@ import {DATA_TYPES} from 'type-analyzer';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 
 import {getTileUrl, getMetaUrl, parseVectorMetadata as parseMetadata} from './vector-tile-utils';
-import {PMTILES_METADATA, MVT_METADATA} from '../../../../test/fixtures/tile-metadata';
+import {
+  PMTILES_METADATA,
+  PMTILES_METADATA_NUMERIC_TYPES,
+  MVT_METADATA
+} from '../../../../test/fixtures/tile-metadata';
 
 describe('getTileUrl', () => {
   [
@@ -154,6 +158,86 @@ test('parseMetadata, PMTiles from PMTileSource', () => {
           value: ['Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America'],
           type: FILTER_TYPES.multiSelect,
           gpu: false
+        }
+      }
+    ],
+    pmtilesType: 'mvt'
+  });
+});
+
+test('parseMetadata, PMTiles with numeric type aliases (float64, int32, uint64, bool)', () => {
+  const result = parseMetadata(PMTILES_METADATA_NUMERIC_TYPES, {
+    tileUrl: 'https://example.com/numeric_types.pmtiles'
+  });
+
+  expect(result).toEqual({
+    attributions: [],
+    name: 'Numeric Types Tiles',
+    description: 'Tiles with various numeric type aliases',
+    metaJson: null,
+    bounds: [-180, -90, 180, 90],
+    center: [0, 0, 3],
+    maxZoom: 10,
+    minZoom: 0,
+    fields: [
+      {
+        id: 'score',
+        name: 'score',
+        format: '',
+        type: ALL_FIELD_TYPES.real,
+        analyzerType: DATA_TYPES.FLOAT,
+        filterProps: {
+          domain: [0, 100],
+          value: [0, 100],
+          type: FILTER_TYPES.range,
+          typeOptions: [FILTER_TYPES.range],
+          gpu: true,
+          step: 0.01
+        }
+      },
+      {
+        id: 'count',
+        name: 'count',
+        format: '',
+        type: ALL_FIELD_TYPES.integer,
+        analyzerType: DATA_TYPES.INT,
+        filterProps: {
+          domain: [1, 999],
+          value: [1, 999],
+          type: FILTER_TYPES.range,
+          typeOptions: [FILTER_TYPES.range],
+          gpu: true,
+          step: 1
+        }
+      },
+      {
+        id: 'big_id',
+        name: 'big_id',
+        format: '',
+        type: ALL_FIELD_TYPES.integer,
+        analyzerType: DATA_TYPES.INT,
+        filterProps: {
+          domain: [0, 1000000],
+          value: [0, 1000000],
+          type: FILTER_TYPES.range,
+          typeOptions: [FILTER_TYPES.range],
+          gpu: true,
+          step: 1
+        }
+      },
+      {
+        id: 'active',
+        name: 'active',
+        format: '',
+        type: ALL_FIELD_TYPES.boolean,
+        analyzerType: DATA_TYPES.BOOLEAN,
+        filterProps: {
+          domain: [0, 1],
+          value: [0, 1],
+          type: FILTER_TYPES.range,
+          typeOptions: [FILTER_TYPES.range],
+          gpu: true,
+          step: 1
         }
       }
     ],

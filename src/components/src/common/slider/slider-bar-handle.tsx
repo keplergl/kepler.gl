@@ -34,7 +34,7 @@ type SliderBarHandleProps = {
   sliderBarListener: (distance: number) => void;
   enableBarDrag: boolean;
   vertical: boolean;
-  track: RefObject<StyleRangeSliderType>;
+  track: RefObject<StyleRangeSliderType | null>;
   setAnchor: (distance: number) => void;
 };
 

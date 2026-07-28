@@ -162,7 +162,7 @@ function TextLabelPanelFactory(
                   <ColorSelector
                     colorSets={[
                       {
-                        selectedColor: tl.backgroundColor,
+                        selectedColor: tl.backgroundColor ?? [0, 0, 0, 255],
                         setColor: v => updateLayerTextLabel(idx, 'backgroundColor', v)
                       }
                     ]}

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-/* eslint-disable enzyme-deprecation/no-mount */
 import test from 'tape';
 import React from 'react';
 import {mount} from 'enzyme';

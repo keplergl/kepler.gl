@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-/*
- THIS FILE IS DEPRECATED: do not use enzyme for your tests but only jest.
- Use component-test-utils.js
- */
-
-/* eslint-disable enzyme-deprecation/no-mount */
 import React from 'react';
 import sinon from 'sinon';
 import {mount} from 'enzyme';
@@ -16,12 +10,12 @@ import {IntlProvider} from 'react-intl';
 import {messages} from '@kepler.gl/localization';
 import {Typeahead} from '@kepler.gl/components';
 
-export function mountWithTheme(node, options) {
-  return mount(node, {
-    wrappingComponent: ThemeProvider,
-    wrappingComponentProps: {theme},
-    ...options
-  });
+export function mountWithTheme(node, _options) {
+  return mount(
+    <ThemeProvider theme={theme}>
+      {node}
+    </ThemeProvider>
+  );
 }
 
 export const IntlWrapper = ({children, locale = 'en'}) => (

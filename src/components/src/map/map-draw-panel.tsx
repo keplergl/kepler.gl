@@ -58,7 +58,7 @@ function MapDrawPanelFactory(
       return (
         <div className="map-draw-controls" style={{position: 'relative'}}>
           {isActive ? (
-            <MapControlToolbar show={isActive}>
+            <MapControlToolbar $show={isActive}>
               <ToolbarItem
                 className="edit-feature"
                 onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}

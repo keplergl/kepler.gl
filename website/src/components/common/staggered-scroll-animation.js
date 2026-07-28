@@ -7,8 +7,8 @@ import {Waypoint} from 'react-waypoint';
 import styled from 'styled-components';
 
 const FadeIn = styled.div`
-  opacity: ${props => (props.isVisible ? '1.0' : '0.0')};
-  transform: ${props => (props.isVisible ? undefined : 'translateY(10px)')};
+  opacity: ${props => (props.$isVisible ? '1.0' : '0.0')};
+  transform: ${props => (props.$isVisible ? undefined : 'translateY(10px)')};
   transition: ${props => `opacity 350ms ${props.delay}ms, transform 350ms ${props.delay}ms`};
 `;
 
@@ -58,13 +58,15 @@ export default class StaggeredScrollAnimation extends PureComponent {
         onLeave={this._onWaypointLeave}
         topOffset={scrollOffsetTop}
       >
-        <Container>
-          {React.Children.map(children, (item, i) => (
-            <FadeIn key={i} isVisible={isVisible} delay={delay * i}>
-              {item}
-            </FadeIn>
-          ))}
-        </Container>
+        <div>
+          <Container>
+            {React.Children.map(children, (item, i) => (
+              <FadeIn key={i} $isVisible={isVisible} delay={delay * i}>
+                {item}
+              </FadeIn>
+            ))}
+          </Container>
+        </div>
       </Waypoint>
     );
   }
