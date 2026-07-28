@@ -1,5 +1,15 @@
 # kepler.gl for Jupyter
 
+> **Upgrading from v0.3.x?**
+> `keplergl` v0.4 switched to [anywidget](https://anywidget.dev/) — no JupyterLab extension install is needed anymore. Just `pip install keplergl` and go.
+>
+> If you are pinned to **v0.3.x**, the old setup was:
+> ```bash
+> pip install "keplergl<0.4"
+> jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupyter
+> ```
+> JupyterLab 1–3 with Node > 10 was required. The old docs are preserved in [git history](https://github.com/keplergl/kepler.gl/blob/a54aef56/docs/keplergl-jupyter/README.md).
+
 kepler.gl for Jupyter is an advanced geospatial visualization widget for rendering large-scale interactive maps in Jupyter Notebook and JupyterLab.
 
 ## Documentation

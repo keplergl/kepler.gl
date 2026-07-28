@@ -113,6 +113,7 @@ export default function SidePanelFactory(
       panels = fullPanels,
       mapInfo = {},
       mapSaved,
+      mapState,
       mapStateActions,
       mapStyle,
       mapStyleActions,
@@ -216,6 +217,7 @@ export default function SidePanelFactory(
                 layerBlending={layerBlending}
                 overlayBlending={overlayBlending}
                 mapStyle={mapStyle}
+                mapState={mapState}
                 mapStyleActions={mapStyleActions}
                 mapStateActions={mapStateActions}
                 interactionConfig={interactionConfig}

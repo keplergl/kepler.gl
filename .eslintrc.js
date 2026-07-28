@@ -13,7 +13,7 @@ module.exports = {
   },
   parser: '@typescript-eslint/parser',
   extends: ['eslint:recommended', 'plugin:prettier/recommended', 'plugin:react-hooks/recommended'],
-  plugins: ['babel', 'prettier', 'react', 'enzyme-deprecation'],
+  plugins: ['babel', 'prettier', 'react'],
   rules: {
     'valid-jsdoc': 0,
     'no-var': 0,
@@ -37,8 +37,6 @@ module.exports = {
     camelcase: 0,
     'consistent-return': 0,
     'comma-dangle': 1,
-    'enzyme-deprecation/no-shallow': 2,
-    'enzyme-deprecation/no-mount': 2,
     'no-constant-condition': ['error', {checkLoops: false}],
     'no-unused-vars': ['warn', {argsIgnorePattern: '^_', varsIgnorePattern: '^_'}],
     '@typescript-eslint/no-unused-vars': [

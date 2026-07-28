@@ -9,11 +9,6 @@ export type DomainStops = {
   interpolation: 'interpolate';
 };
 
-export type ZoomStopsConfig = {
-  enabled?: boolean;
-  stops: ZoomStops | null;
-};
-
 export type DatasetAttribution = {
   title: string;
   url: string | null;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useMemo} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import throttle from 'lodash/throttle';
 import styled, {IStyledComponent} from 'styled-components';
 
@@ -48,7 +48,7 @@ type TimeRangeSliderProps = {
 };
 
 export type StyledSliderContainerProps = BaseComponentProps & {
-  isEnlarged?: boolean;
+  $isEnlarged?: boolean;
 };
 
 const StyledSliderContainer: IStyledComponent<
@@ -59,7 +59,7 @@ const StyledSliderContainer: IStyledComponent<
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding-left: ${props => (props.isEnlarged ? 24 : 0)}px;
+  padding-left: ${props => (props.$isEnlarged ? 24 : 0)}px;
 
   .timeline-container .kg-slider {
     display: none;
@@ -70,7 +70,7 @@ const StyledSliderContainer: IStyledComponent<
   }
 `;
 
-const ANIMATION_CONTROL_STYLE = {flex: 1};
+const ANIMATION_CONTROL_STYLE = {flex: 1, padding: 0, marginTop: 0};
 
 TimeRangeSliderFactory.deps = [
   PlaybackControlsFactory,
@@ -124,6 +124,8 @@ export default function TimeRangeSliderFactory(
     } = props;
 
     const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
+    useEffect(() => () => throttledOnchange.cancel(), [throttledOnchange]);
+
     const binsForInterval = useMemo(
       () => getTimeBinsForInterval(timeBins, plotType?.interval),
       [timeBins, plotType?.interval]
@@ -149,7 +151,7 @@ export default function TimeRangeSliderFactory(
             />
           </div>
         ) : null}
-        <StyledSliderContainer className="time-range-slider__container" isEnlarged={isEnlarged}>
+        <StyledSliderContainer className="time-range-slider__container" $isEnlarged={isEnlarged}>
           {!isMinified ? (
             <div className="timeline-container" style={style}>
               <RangeSlider

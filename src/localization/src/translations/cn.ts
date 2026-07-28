@@ -68,7 +68,8 @@ export default {
       layer: '图层',
       filter: '过滤器',
       interaction: '交互',
-      basemap: '底图'
+      basemap: '底图',
+      annotation: '注释'
     },
     panelViewToggle: {
       list: '查看列表',
@@ -227,6 +228,13 @@ export default {
     time: '时间',
     timezone: '时区'
   },
+  annotationManager: {
+    title: '注释',
+    addAnnotation: '添加',
+    type: '类型',
+    lineWidth: '线宽',
+    color: '颜色'
+  },
   effectDescription: {
     lightAndShadow:
       '根据一天中的时间和地理位置模拟逼真的阳光照射和阴影投射。可调节阴影强度、阳光和环境光颜色。',
@@ -292,6 +300,10 @@ export default {
     layerSettings: '图层设置',
     closePanel: '关闭当前面板',
     switchToDualView: '切换到双地图视图',
+    selectSplitMode: '选择地图视图模式',
+    singleView: '单个',
+    dualView: '双屏',
+    swipeView: '对比',
     showLegend: '显示图例',
     disable3DMap: '禁用 3D 地图',
     DrawOnMap: '在地图上绘制',
@@ -321,6 +333,13 @@ export default {
     syncTimelineEnd: '当前过滤时间段的结束',
     showEffectPanel: '显示效果面板',
     hideEffectPanel: '隐藏效果面板',
+    showAnnotationPanel: '显示注释',
+    hideAnnotationPanel: '隐藏注释',
+    removeAnnotation: '删除注释',
+    duplicateAnnotation: '复制注释',
+    hideAnnotation: '隐藏注释',
+    showAnnotation: '显示注释',
+    annotationSettings: '注释设置',
     removeEffect: '移除效果',
     disableEffect: '禁用效果',
     effectSettings: '效果设置'
@@ -535,7 +554,8 @@ export default {
   },
   header: {
     visibleLayers: '可见图层',
-    layerLegend: '图层图例'
+    layerLegend: '图层图例',
+    annotations: '注释'
   },
   interactions: {
     tooltip: '工具提示',

@@ -176,7 +176,7 @@ export const PanelHeaderDropdownFactory = () => {
   const PanelHeaderDropdown: React.FC<PanelHeaderDropdownProps> = ({items, show, onClose, id}) => {
     const ref = useOnClickOutside<HTMLDivElement>(onClose);
     return (
-      <StyledToolbar show={show} className={`${id}-dropdown`}>
+      <StyledToolbar $show={show} className={`${id}-dropdown`}>
         {show ? (
           <StyledPanelDropdown type="dark" ref={ref} className="panel-header-dropdown__inner">
             {items.map(item => (
@@ -223,6 +223,12 @@ export const SaveExportDropdownFactory = (
       onClick: props => props.onExportImage
     },
     {
+      label: 'toolbar.exportVideo',
+      icon: Play,
+      key: 'video',
+      onClick: props => props.onExportVideo
+    },
+    {
       label: 'toolbar.exportData',
       icon: DataTable,
       key: 'data',
@@ -233,12 +239,6 @@ export const SaveExportDropdownFactory = (
       icon: BaseMap,
       key: 'map',
       onClick: props => props.onExportMap
-    },
-    {
-      label: 'toolbar.exportVideo',
-      icon: Play,
-      key: 'video',
-      onClick: props => props.onExportVideo
     },
     {
       label: 'toolbar.saveMap',

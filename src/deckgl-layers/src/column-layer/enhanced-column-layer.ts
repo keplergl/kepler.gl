@@ -6,6 +6,19 @@ import {UNIT} from '@deck.gl/core';
 
 import {editShader} from '../';
 
+// deck.gl 9 / luma 9 sets custom uniforms via UBO-backed shader modules (Model has
+// no setUniforms). This module exposes the globe-mode flag to the shader.
+const globeModeUniforms = {
+  name: 'globeMode',
+  vs: `layout(std140) uniform globeModeUniforms {
+  float globeMode;
+} globeModeProps;
+`,
+  uniformTypes: {
+    globeMode: 'f32'
+  }
+} as const;
+
 function addInstanceCoverage(vs: string) {
   const addDecl = editShader(
     vs,
@@ -23,6 +36,16 @@ function addInstanceCoverage(vs: string) {
   );
 }
 
+function addGlobeScaling(vs: string) {
+  return editShader(
+    vs,
+    'hexagon cell vs globe scale mod',
+    'vec2 offset = (rotationMatrix * positions.xy * strokeOffsetRatio + column.offset) * dotRadius;',
+    `float radiusGlobeMod = globeModeProps.globeMode > 0.5 ? sin((90.0 - abs(geometry.worldPosition.y)) * PI / 180.0) * PI : 1.0;
+      vec2 offset = (rotationMatrix * positions.xy * strokeOffsetRatio + column.offset) * dotRadius * radiusGlobeMod;`
+  );
+}
+
 type EnhancedColumnLayerProps = ColumnLayerProps<any> & {
   strokeOpacity: number;
 };
@@ -31,9 +54,12 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
   getShaders() {
     const shaders = super.getShaders();
 
+    const vs = addGlobeScaling(addInstanceCoverage(shaders.vs));
+
     return {
       ...shaders,
-      vs: addInstanceCoverage(shaders.vs)
+      vs,
+      modules: [...(shaders.modules || []), globeModeUniforms]
     };
   }
 
@@ -67,6 +93,8 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
     const wireframeModel = this.state.wireframeModel;
     const {fillVertexCount, edgeDistance} = this.state;
 
+    const globeMode = (this.context.viewport as any).resolution ? 1.0 : 0.0;
+
     const columnProps = {
       radius,
       angle: (angle / 180) * Math.PI,
@@ -85,14 +113,16 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
 
     if (extruded && wireframe && wireframeModel) {
       wireframeModel.shaderInputs.setProps({
-        column: {...columnProps, isStroke: true}
+        column: {...columnProps, isStroke: true},
+        globeMode: {globeMode}
       });
       wireframeModel.draw(this.context.renderPass);
     }
     if (filled && fillModel) {
       fillModel.setVertexCount(fillVertexCount);
       fillModel.shaderInputs.setProps({
-        column: {...columnProps, isStroke: false}
+        column: {...columnProps, isStroke: false},
+        globeMode: {globeMode}
       });
       fillModel.draw(this.context.renderPass);
     }
@@ -100,7 +130,8 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
       fillModel.setVertexCount((fillVertexCount * 2) / 3);
       fillModel.shaderInputs.setProps({
         column: {...columnProps, isStroke: true},
-        layer: {opacity: strokeOpacity ?? this.props.opacity}
+        layer: {opacity: strokeOpacity ?? this.props.opacity},
+        globeMode: {globeMode}
       });
       fillModel.draw(this.context.renderPass);
       // Restore original vertex count and opacity so subsequent passes are unaffected

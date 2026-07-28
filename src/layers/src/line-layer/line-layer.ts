@@ -4,6 +4,7 @@
 import * as arrow from 'apache-arrow';
 
 import {BrushingExtension} from '@deck.gl/extensions';
+import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
 
 import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
@@ -267,7 +268,7 @@ export default class LineLayer extends ArcLayer {
   }
 
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, interactionConfig, dataset} = opts;
+    const {data, gpuFilter, objectHovered, interactionConfig, dataset, mapState} = opts;
 
     const layerProps = {
       widthScale: this.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER,
@@ -282,6 +283,54 @@ export default class LineLayer extends ArcLayer {
     };
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
+
+    const globeMode = mapState?.globe?.enabled;
+
+    if (globeMode) {
+      const id = `${defaultLayerProps.id}-globe`;
+      return [
+        new DeckArcLayer({
+          ...defaultLayerProps,
+          ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
+          ...data,
+          ...layerProps,
+          id,
+          updateTriggers,
+          extensions: [...defaultLayerProps.extensions, brushingExtension],
+          // On a globe a "line" is drawn as a flat ArcLayer: getHeight 0 keeps the
+          // geometry on the sphere surface (no raised paraboloid arc, which would
+          // otherwise pop up as spikes sticking out perpendicular to the surface).
+          // Match the ArcLayer's globe params exactly (cull:false so the ribbon's
+          // back-facing triangles aren't culled by globe mode's global cull, and
+          // otherwise deck.gl defaults: depth test on + depth write on, so the
+          // depth disk occludes segments on the far side of the globe).
+          getHeight: 0,
+          parameters: {cull: false},
+          // A Kepler line has a single color channel; an ArcLayer interpolates
+          // between source and target colors, so feed the same color to both
+          // ends (otherwise the target end falls back to deck.gl's default).
+          getSourceColor: data.getColor,
+          getTargetColor: data.getColor,
+          widthUnits: 'pixels' as const
+        }),
+        ...(hoveredObject
+          ? [
+              new DeckArcLayer({
+                ...this.getDefaultHoverLayerProps(),
+                ...layerProps,
+                id: `${id}-hovered`,
+                data: [hoveredObject],
+                getHeight: 0,
+                parameters: {cull: false},
+                getSourceColor: this.config.highlightColor,
+                getTargetColor: this.config.highlightColor,
+                getWidth: data.getWidth,
+                widthUnits: 'pixels' as const
+              })
+            ]
+          : [])
+      ];
+    }
 
     const useArrowLayer = Boolean(this.geoArrowVector0);
 

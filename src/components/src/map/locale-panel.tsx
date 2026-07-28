@@ -50,7 +50,7 @@ function LocalePanelFactory(
       return (
         <div className="locale-panel-controls" style={{position: 'relative'}}>
           {isActive ? (
-            <MapControlToolbar show={isActive}>
+            <MapControlToolbar $show={isActive}>
               {availableLocales.map(locale => (
                 <ToolbarItem
                   key={locale}

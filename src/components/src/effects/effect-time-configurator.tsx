@@ -39,12 +39,12 @@ export type EffectTimeConfiguratorProps = {
   }) => void;
 };
 
-type StyledWrapperProps = {disabled?: boolean; marginBottom?: number};
+type StyledWrapperProps = {disabled?: boolean; $marginBottom?: number};
 const StyledWrapper = styled.div<StyledWrapperProps>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${props => props.marginBottom ?? 9}px;
+  margin-bottom: ${props => props.$marginBottom ?? 9}px;
   ${props => (props.hidden ? 'display: none;' : '')}
 `;
 
@@ -150,8 +150,15 @@ const TextBlock = styled.div<TextBlockProps>`
  * @returns Timestamp or null if case of bad inputs.
  */
 const getTimestamp = (dateStr: string, timeStr: string, timezone: string): number | null => {
+  // Bail out early on malformed inputs (e.g. partially edited date/time fields
+  // that produce values like "NaN:NaN"). Otherwise moment falls back to
+  // `new Date()` and logs a deprecation warning while still returning invalid.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || !/^\d{2}:\d{2}$/.test(timeStr)) {
+    return null;
+  }
+
   let timestamp: number | null = null;
-  const curr = moment.tz(`${dateStr}T${timeStr}:00`, timezone);
+  const curr = moment.tz(`${dateStr}T${timeStr}:00`, 'YYYY-MM-DDTHH:mm:ss', true, timezone);
   if (curr.isValid()) {
     timestamp = curr.utc().valueOf();
   }
@@ -192,7 +199,10 @@ export default function EffectTimeConfiguratorFactory(
 
     const [datePickerDate, fullDate, formattedTime, formattedDate, dayTimeProgress] =
       useMemo(() => {
-        const currentMoment = moment.tz(timestamp, timezone);
+        // Guard against an invalid stored timestamp so we never build an
+        // "Invalid Date" for the date picker (react-date-picker throws on it).
+        const safeTimestamp = Number.isFinite(timestamp) ? timestamp : Date.now();
+        const currentMoment = moment.tz(safeTimestamp, timezone);
 
         // Slider value from 0 to 1
         const dayProgress = getDayRatio(currentMoment);
@@ -283,7 +293,7 @@ export default function EffectTimeConfiguratorFactory(
 
     return (
       <StyledEffectTimeConfigurator>
-        <StyledWrapper marginBottom={16}>
+        <StyledWrapper $marginBottom={16}>
           <StyledRadio
             type="radio"
             checked={timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick}
@@ -305,7 +315,7 @@ export default function EffectTimeConfiguratorFactory(
           />
         </SliderWrapper>
 
-        <StyledWrapper hidden={disableDateTimePick} marginBottom={2}>
+        <StyledWrapper hidden={disableDateTimePick} $marginBottom={2}>
           <TextBlock width="32px" />
           <TextBlock width="110px">
             <FormattedMessage id={'effectManager.date'} />
@@ -315,7 +325,7 @@ export default function EffectTimeConfiguratorFactory(
           </TextBlock>
         </StyledWrapper>
 
-        <StyledWrapper hidden={disableDateTimePick} marginBottom={16}>
+        <StyledWrapper hidden={disableDateTimePick} $marginBottom={16}>
           <StyledButton onClick={setCurrentDateTime} data-for="pick-time-button" data-tip>
             <LocationMarker height="16px" />
             <Tooltip id="pick-time-button" effect="solid" place="top" delayShow={500}>
@@ -327,8 +337,8 @@ export default function EffectTimeConfiguratorFactory(
               <DatePicker
                 value={datePickerDate}
                 onChange={setDate}
-                minDetail={'month'}
-                formatShortWeekday={formatShortWeekday}
+                maxDetail="month"
+                {...({calendarProps: {minDetail: 'month', formatShortWeekday}} as any)}
               />
             </StyledDatePicker>
             <StyledExtraIcon>
@@ -343,13 +353,13 @@ export default function EffectTimeConfiguratorFactory(
           </WithIconWrapper>
         </StyledWrapper>
 
-        <StyledWrapper hidden={disableDateTimePick} marginBottom={2}>
+        <StyledWrapper hidden={disableDateTimePick} $marginBottom={2}>
           <TextBlock>
             <FormattedMessage id={'effectManager.timezone'} />
           </TextBlock>
         </StyledWrapper>
 
-        <StyledWrapper hidden={disableDateTimePick} marginBottom={24}>
+        <StyledWrapper hidden={disableDateTimePick} $marginBottom={24}>
           <WithIconWrapper width={'100%'}>
             <TimezoneSelector selected={timezone} onSelect={setTimezone} />
             <StyledExtraIcon>
@@ -358,7 +368,7 @@ export default function EffectTimeConfiguratorFactory(
           </WithIconWrapper>
         </StyledWrapper>
 
-        <StyledWrapper marginBottom={16}>
+        <StyledWrapper $marginBottom={16}>
           <StyledRadio
             type="radio"
             checked={timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current}
@@ -372,7 +382,7 @@ export default function EffectTimeConfiguratorFactory(
           />
         </StyledWrapper>
 
-        <StyledWrapper marginBottom={16}>
+        <StyledWrapper $marginBottom={16}>
           <StyledRadio
             type="radio"
             checked={timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation}

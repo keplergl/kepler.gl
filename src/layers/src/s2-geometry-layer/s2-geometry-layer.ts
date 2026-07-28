@@ -29,7 +29,7 @@ import {
   LayerColumn
 } from '@kepler.gl/types';
 import S2LayerIcon from './s2-layer-icon';
-import {getS2Center, validS2Token} from './s2-utils';
+import {getS2Center, validS2Token, maybeStripQuotes} from './s2-utils';
 import {DataContainerInterface, createDataContainer} from '@kepler.gl/utils';
 
 export type S2GeometryLayerVisConfigSettings = {
@@ -270,7 +270,7 @@ export default class S2GeometryLayer extends Layer {
       if (validS2Token(token)) {
         data.push({
           index,
-          token
+          token: maybeStripQuotes(token)
         });
       }
     }
@@ -279,12 +279,14 @@ export default class S2GeometryLayer extends Layer {
 
   updateLayerMeta(dataset: KeplerTable, getS2Token) {
     const {dataContainer} = dataset;
-    // add safe row flag
     const centroids = dataContainer.reduce(
       (acc, entry, index) => {
         const s2Token = getS2Token({index});
         if (validS2Token(s2Token)) {
-          acc.push(getS2Center(s2Token));
+          const center = getS2Center(s2Token);
+          if (center) {
+            acc.push(center);
+          }
         }
 
         return acc;

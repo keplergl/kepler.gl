@@ -902,7 +902,7 @@ export const mergedFilters = [
       interval: '5-second',
       defaultTimeFormat: 'L  LTS',
       type: 'histogram',
-      aggregation: 'sum'
+      aggregation: 'average'
     },
     yAxis: null,
     domain: [1453770124000, 1453770810000],
@@ -1238,6 +1238,7 @@ mergedLayer3.config = {
   dataId: '9h10t7fyb',
   label: 'begintrip_hex',
   color: [241, 92, 23],
+  columnMode: 'points',
   columns: {
     lat: {
       value: 'begintrip_lat',

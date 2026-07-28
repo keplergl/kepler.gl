@@ -25,8 +25,7 @@ import {
   Filter,
   Field as KeplerField,
   MapState,
-  Merge,
-  ZoomStopsConfig
+  Merge
 } from '@kepler.gl/types';
 import {findDefaultColorField, DataContainerInterface} from '@kepler.gl/utils';
 
@@ -57,8 +56,6 @@ export type AbstractTileLayerVisConfigSettings = {
   elevationScale: VisConfigNumber;
   opacity: VisConfigNumber;
   colorRange: VisConfigColorRange;
-  // TODO: figure out type for radiusByZoom vis config
-  radiusByZoom: any;
   dynamicColor: VisConfigBoolean;
 };
 
@@ -118,14 +115,6 @@ export const commonTileVisConfigs = {
   elevationScale: {...LAYER_VIS_CONFIGS.elevationScale, allowCustomValue: false},
   opacity: 'opacity' as const,
   colorRange: 'colorRange' as const,
-  // TODO: figure out type for radiusByZoom vis config
-  radiusByZoom: {
-    ...LAYER_VIS_CONFIGS.radius,
-    defaultValue: {
-      enabled: false,
-      stops: null
-    } as ZoomStopsConfig
-  } as any,
   dynamicColor: {
     type: 'boolean',
     defaultValue: false,
@@ -185,6 +174,21 @@ export default abstract class AbstractTileLayer<
 
   get requiredLayerColumns(): string[] {
     return [];
+  }
+
+  get noneLayerDataAffectingProps() {
+    return [
+      ...super.noneLayerDataAffectingProps,
+      // For tile layers, domain changes only affect how tile features are colorized/sized
+      // at render time (via deck.gl accessors/uniforms). They do NOT require re-creating
+      // the tile source or re-fetching tiles. Without this, every domain update from
+      // setDynamicColorDomain() would trigger formatLayerData → new tileSource → tile
+      // reload → onViewportLoad → setDynamicColorDomain() in a feedback loop.
+      // Safe for both VectorTileLayer and WMSLayer (which doesn't use these domains).
+      'colorDomain',
+      'sizeDomain',
+      'heightDomain'
+    ];
   }
 
   get visualChannels(): Record<string, VisualChannel> {
@@ -285,6 +289,8 @@ export default abstract class AbstractTileLayer<
     const next = newConfig.visConfig?.dynamicColor ?? old;
     const scaleTypeChanged =
       newConfig.colorScale && this.config.colorScale !== newConfig.colorScale;
+    const colorFieldChanged =
+      newConfig.colorField !== undefined && newConfig.colorField !== this.config.colorField;
 
     super.updateLayerConfig(newConfig);
     const {colorField} = this.config;
@@ -293,7 +299,7 @@ export default abstract class AbstractTileLayer<
       // When we switch from dynamic to non-dynamic or vice versa, we need to update
       // the color domain. This is downstream from a dispatch call, so we use
       // setTimeout to avoid "reducers may not dispatch actions" errors
-      if (next && (!old || scaleTypeChanged)) {
+      if (next && (!old || scaleTypeChanged || colorFieldChanged)) {
         setTimeout(() => this.setDynamicColorDomain(), 0);
       } else if (old && !next) {
         setTimeout(() => this.resetColorDomain(), 0);

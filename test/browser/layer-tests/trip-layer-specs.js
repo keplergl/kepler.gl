@@ -79,7 +79,11 @@ test('#TripLayer -> formatLayerData', t => {
           'getTimestamps',
           'getFilterValue',
           'getColor',
-          'getWidth'
+          'getWidth',
+          'getAdjustRoll',
+          'getAdjustPitch',
+          'getAdjustYaw',
+          'textLabels'
         ];
 
         t.deepEqual(

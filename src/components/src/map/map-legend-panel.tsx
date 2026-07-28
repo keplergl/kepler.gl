@@ -21,7 +21,7 @@ import {useMergeRefs} from '@floating-ui/react';
 import {ActionHandler, setMapControlSettings, toggleSplitMapViewport} from '@kepler.gl/actions';
 import {Layer} from '@kepler.gl/layers';
 import {breakPointValues} from '@kepler.gl/styles';
-import {LayerVisConfig, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
+import {LayerVisConfig, LayerOrder, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
 import {hasPortableWidth} from '@kepler.gl/utils';
 import {MapLegendControlSettings} from '@kepler.gl/types';
 
@@ -38,8 +38,8 @@ const DRAG_RESIZE_ID = 'map-legend-resize';
 const DRAG_MOVE_ID = 'map-legend-move';
 
 const StyledDraggableLegendContent = styled.div<{
-  contentHeight?: number;
-  maxContentHeight?: number;
+  $contentHeight?: number;
+  $maxContentHeight?: number;
 }>`
   position: absolute;
   outline: none;
@@ -71,8 +71,8 @@ const StyledDraggableLegendContent = styled.div<{
   }
   .map-control__panel-content {
     max-height: ${props =>
-      props.maxContentHeight ? `${props.maxContentHeight}px` : 'calc(100vh - 100px)'};
-    ${props => (props.contentHeight ? `height: ${props.contentHeight}px;` : '')};
+      props.$maxContentHeight ? `${props.$maxContentHeight}px` : 'calc(100vh - 100px)'};
+    ${props => (props.$contentHeight ? `height: ${props.$contentHeight}px;` : '')};
   }
   border-radius: 4px;
   z-index: 2;
@@ -120,10 +120,10 @@ const StyledResizeHandle = styled.div`
   cursor: ns-resize;
 `;
 
-const StyledFixedLegendContent = styled.div<{contentHeight?: number}>`
+const StyledFixedLegendContent = styled.div<{$contentHeight?: number}>`
   .map-control__panel-content {
     max-height: calc(100vh - 100px);
-    ${props => (props.contentHeight ? `height: ${props.contentHeight}px;` : '')};
+    ${props => (props.$contentHeight ? `height: ${props.$contentHeight}px;` : '')};
   }
 
   /* Hide scrollbars in export to avoid OS default styling differences */
@@ -161,8 +161,8 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
       ref={refs}
       className={classnames('draggable-legend', {'is-dragging': isDragging})}
       style={{...positionStyles, transform: CSS.Translate.toString(draggableMove.transform)}}
-      contentHeight={contentHeight}
-      maxContentHeight={maxContentHeight}
+      $contentHeight={contentHeight}
+      $maxContentHeight={maxContentHeight}
       {...draggableMove.attributes}
     >
       {children}
@@ -292,7 +292,7 @@ const ImageExportLegend = withTheme(({settings, isSidePanelShown, theme, childre
               ref={legendContentRef}
               style={{...positionStyles, position: 'absolute'}}
             >
-              <StyledFixedLegendContent contentHeight={contentHeight}>
+              <StyledFixedLegendContent $contentHeight={contentHeight}>
                 {children}
               </StyledFixedLegendContent>
             </div>,
@@ -312,6 +312,7 @@ interface MapLegendPanelIcons {
 export type MapLegendPanelProps = {
   theme: any;
   layers: ReadonlyArray<Layer>;
+  layerOrder?: LayerOrder;
   scale: number;
   onToggleMapControl: (control: string) => void;
   isExport: boolean;
@@ -329,6 +330,10 @@ export type MapLegendPanelProps = {
   isSidePanelShown: boolean;
   activeSidePanel: string | null;
   setMapControlSettings: any;
+  isSplit?: boolean;
+  splitMaps?: {layers: {[key: string]: boolean}}[];
+  onToggleLayerForMap?: (mapIndex: number, layerId: string) => void;
+  mapIndex?: number;
 };
 
 type MapLegendPanelComponents = {
@@ -345,6 +350,7 @@ const defaultActionIcons = {
 
 const MapLegendPanelComponent = ({
   layers,
+  layerOrder,
   mapControls,
   scale,
   onToggleMapControl,
@@ -360,6 +366,9 @@ const MapLegendPanelComponent = ({
   setMapControlSettings,
   isViewportUnsyncAllowed = true,
   className,
+  isSplit,
+  splitMaps,
+  onToggleLayerForMap,
   MapControlTooltip,
   MapControlPanel,
   MapLegend
@@ -386,6 +395,10 @@ const MapLegendPanelComponent = ({
     [onToggleMapControl]
   );
 
+  // In split view the map controls (and therefore this legend) are only
+  // rendered once, on the right-side / primary map. That gating happens in
+  // MapContainer, so no per-index suppression is needed here anymore.
+
   if (!mapLegend.show) {
     return null;
   }
@@ -404,11 +417,15 @@ const MapLegendPanelComponent = ({
     >
       <MapLegend
         layers={layers}
+        layerOrder={layerOrder}
         mapState={mapState}
         disableEdit={disableEdit}
         isExport={isExport}
         onLayerVisConfigChange={onLayerVisConfigChange}
         onToggleLayerVisibility={onToggleLayerVisibility}
+        isSplit={isSplit}
+        splitMaps={splitMaps}
+        onMapToggleLayer={onToggleLayerForMap}
       />
     </MapControlPanel>
   ) : null;

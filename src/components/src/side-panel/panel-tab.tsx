@@ -8,7 +8,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {BaseProps} from '../common/icons';
 
 type StyledPanelTabProps = {
-  active?: boolean;
+  $active?: boolean;
 };
 
 export type PanelItem = {
@@ -30,8 +30,8 @@ export const StyledPanelTab = styled.div.attrs({
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: ${props =>
-    props.active ? props.theme.panelToggleBorderColor : 'transparent'};
-  color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.panelTabColor)};
+    props.$active ? props.theme.panelToggleBorderColor : 'transparent'};
+  color: ${props => (props.$active ? props.theme.subtextColorActive : props.theme.panelTabColor)};
   display: flex;
   justify-content: center;
   margin-right: ${props => props.theme.panelToggleMarginRight}px;
@@ -46,7 +46,7 @@ export const StyledPanelTab = styled.div.attrs({
 
 export function PanelTabFactory() {
   const PanelTab: React.FC<PanelTabProps> = ({isActive, onClick, panel}) => (
-    <StyledPanelTab data-tip data-for={`${panel.id}-nav`} active={isActive} onClick={onClick}>
+    <StyledPanelTab data-tip data-for={`${panel.id}-nav`} $active={isActive} onClick={onClick}>
       <panel.iconComponent height="20px" />
       <Tooltip id={`${panel.id}-nav`} effect="solid" delayShow={500} place="bottom">
         <span>

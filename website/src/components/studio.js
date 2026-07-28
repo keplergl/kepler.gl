@@ -222,7 +222,7 @@ const Studio = () => {
           <CardSection key={index} cards={cards} />
         ))}
       </Swipeable>
-      <WhiteLinkButton outline large href={LEARN_MORE_LINK} target="_blank">
+      <WhiteLinkButton $outline $large href={LEARN_MORE_LINK} target="_blank">
         Learn More
       </WhiteLinkButton>
     </StudioContainer>

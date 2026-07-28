@@ -4,6 +4,7 @@
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
 import {Bounds, Merge, Viewport} from '@kepler.gl/types';
+import {MapSplitMode, MapViewMode, GlobeConfig} from '@kepler.gl/constants';
 
 export type TogglePerspectiveUpdaterAction = void;
 /**
@@ -113,6 +114,73 @@ export const toggleSplitMapViewport: (payload: {
   ActionTypes.TOGGLE_SPLIT_MAP_VIEWPORT,
   (syncInfo: ToggleSplitMapViewportUpdaterAction['payload']) => ({payload: syncInfo})
 );
+
+export type SetMapViewModeUpdaterAction = {payload: {mapViewMode: MapViewMode}};
+/**
+ * Set map view mode (2D, 3D, or Globe)
+ * @memberof mapStateActions
+ * @param mapViewMode - One of MapViewMode values
+ * @public
+ */
+export const setMapViewMode: (
+  mapViewMode: MapViewMode
+) => Merge<SetMapViewModeUpdaterAction, {type: typeof ActionTypes.SET_MAP_VIEW_MODE}> = createAction(
+  ActionTypes.SET_MAP_VIEW_MODE,
+  (mapViewMode: MapViewMode) => ({payload: {mapViewMode}})
+);
+
+export type GlobeConfigChangeUpdaterAction = {payload: Partial<GlobeConfig>};
+/**
+ * Update globe configuration
+ * @memberof mapStateActions
+ * @param config - Partial globe config to merge
+ * @public
+ */
+export const globeConfigChange: (
+  config: Partial<GlobeConfig>
+) => Merge<GlobeConfigChangeUpdaterAction, {type: typeof ActionTypes.GLOBE_CONFIG_CHANGE}> =
+  createAction(ActionTypes.GLOBE_CONFIG_CHANGE, (config: Partial<GlobeConfig>) => ({
+    payload: config
+  }));
+export type SetMapSplitModeUpdaterAction = {
+  payload: {
+    mapSplitMode: MapSplitMode;
+  };
+};
+/**
+ * Set map split mode (single, dual, or swipe)
+ * @memberof mapStateActions
+ * @param {Object} payload
+ * @param {MapSplitMode} payload.mapSplitMode The split mode to set
+ * @public
+ */
+export const setMapSplitMode: (payload: {
+  mapSplitMode: MapSplitMode;
+}) => Merge<SetMapSplitModeUpdaterAction, {type: typeof ActionTypes.SET_MAP_SPLIT_MODE}> =
+  createAction(ActionTypes.SET_MAP_SPLIT_MODE, (payload: {mapSplitMode: MapSplitMode}) => ({payload}));
+
+export type SetSwipeComparePercentageUpdaterAction = {
+  payload: {
+    percentage: number;
+  };
+};
+/**
+ * Set the swipe compare divider position
+ * @memberof mapStateActions
+ * @param {Object} payload
+ * @param {number} payload.percentage The percentage position (0-100)
+ * @public
+ */
+export const setSwipeComparePercentage: (payload: {
+  percentage: number;
+}) => Merge<
+  SetSwipeComparePercentageUpdaterAction,
+  {type: typeof ActionTypes.SET_SWIPE_COMPARE_PERCENTAGE}
+> =
+  createAction(
+    ActionTypes.SET_SWIPE_COMPARE_PERCENTAGE,
+    (payload: {percentage: number}) => ({payload})
+  );
 
 /**
  * This declaration is needed to group actions in docs

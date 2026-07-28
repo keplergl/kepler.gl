@@ -2,8 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {routerReducer, routerMiddleware} from 'react-router-redux';
-import {browserHistory} from 'react-router';
 import {createLogger} from 'redux-logger';
 import thunk from 'redux-thunk';
 
@@ -15,11 +13,10 @@ import Window from 'global/window';
 import demoReducer from './reducers/index';
 
 const reducers = combineReducers({
-  demo: demoReducer,
-  routing: routerReducer
+  demo: demoReducer
 });
 
-export const middlewares = enhanceReduxMiddleware([thunk, routerMiddleware(browserHistory)]);
+export const middlewares = enhanceReduxMiddleware([thunk]);
 
 const NOISY_ACTIONS = new Set(['@@kepler.gl/MOUSE_MOVE', '@@kepler.gl/LAYER_HOVER']);
 

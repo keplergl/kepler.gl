@@ -44,7 +44,7 @@ const DropdownMenu = styled.div.attrs({
   max-width: 240px;
   position: absolute;
   top: 100%;
-  left: -53px;
+  left: -120px;
   z-index: 5;
 `;
 
@@ -149,7 +149,7 @@ const AddByDatasetButton: React.FC<AddByDatasetButtonProps> = ({
           trigger="click"
           arrow={false}
           interactive
-          placement="bottom"
+          placement="left-end"
           appendTo={context?.current || 'parent'}
           // @ts-ignore
           onCreate={setTippyInstance}

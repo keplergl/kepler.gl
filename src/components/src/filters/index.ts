@@ -8,3 +8,4 @@ export {default as RangeFilter} from './range-filter';
 export {default as PolygonFilter} from './polygon-filter';
 export {default as TimeWidget} from './time-widget';
 export {default as TimeWidgetTop} from './time-widget-top';
+export {default as TimeWidgetSettings} from './time-widget-settings';

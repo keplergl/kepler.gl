@@ -44,7 +44,7 @@ export default {
     building: 'Rakennukset',
     water: 'Vesi',
     land: 'Maa',
-    '3dBuilding': '3d-rakennukset',
+    '3dBuilding': '3D-rakennukset',
     background: 'Tausta'
   },
   panel: {
@@ -67,7 +67,8 @@ export default {
       layer: 'Tasot',
       filter: 'Suodattimet',
       interaction: 'Interaktiot',
-      basemap: 'Taustakartta'
+      basemap: 'Taustakartta',
+      annotation: 'Merkinnät'
     },
     panelViewToggle: {
       list: 'Näytä lista',
@@ -229,6 +230,13 @@ export default {
     time: 'Aika',
     timezone: 'Aikavyöhyke'
   },
+  annotationManager: {
+    title: 'Merkinnät',
+    addAnnotation: 'Lisää',
+    type: 'Tyyppi',
+    lineWidth: 'Viivan leveys',
+    color: 'Väri'
+  },
   effectDescription: {
     lightAndShadow:
       'Simuloi realistista auringonvaloa ja varjojen heijastusta vuorokaudenajan ja maantieteellisen sijainnin perusteella. Säädettävä varjon voimakkuus, auringon- ja ympäristövalon värit.',
@@ -304,6 +312,10 @@ export default {
     layerSettings: 'Tason asetukset',
     closePanel: 'Sulje paneeli',
     switchToDualView: 'Vaihda kaksoiskarrtanäkymään',
+    selectSplitMode: 'Valitse karttanäkymätila',
+    singleView: 'Yksi',
+    dualView: 'Kaksois',
+    swipeView: 'Vertaa',
     showLegend: 'Näytä selite',
     disable3DMap: 'Poistu 3D-näkymästä',
     DrawOnMap: 'Piirrä kartalle',
@@ -331,6 +343,13 @@ export default {
     syncTimelineEnd: 'Nykyisen suodattimen aikajakson loppu',
     showEffectPanel: 'Näytä efektipaneeli',
     hideEffectPanel: 'Piilota efektipaneeli',
+    showAnnotationPanel: 'Näytä merkinnät',
+    hideAnnotationPanel: 'Piilota merkinnät',
+    removeAnnotation: 'Poista merkintä',
+    duplicateAnnotation: 'Kopioi merkintä',
+    hideAnnotation: 'Piilota merkintä',
+    showAnnotation: 'Näytä merkintä',
+    annotationSettings: 'Merkinnän asetukset',
     removeEffect: 'Poista efekti',
     disableEffect: 'Poista efekti käytöstä',
     effectSettings: 'Efektiasetukset',
@@ -549,7 +568,8 @@ export default {
   },
   header: {
     visibleLayers: 'Näkyvissä olevat tasot',
-    layerLegend: 'Tason selite'
+    layerLegend: 'Tason selite',
+    annotations: 'Merkinnät'
   },
   interactions: {
     tooltip: 'Vihje',
