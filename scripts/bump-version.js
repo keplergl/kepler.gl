@@ -16,7 +16,7 @@ if (!newVersion) {
 // Run lerna to bump all src/* workspace packages
 console.log(`\nBumping workspace packages to ${newVersion}...`);
 execSync(
-  `yarn lerna version ${newVersion} --no-git-tag-version --no-push --exact --yes --sync-dist-version`,
+  `yarn lerna version ${newVersion} --no-git-tag-version --no-push --exact --yes --sync-dist-version --allow-branch '**'`,
   {stdio: 'inherit'}
 );
 
