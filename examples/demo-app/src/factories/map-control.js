@@ -8,7 +8,8 @@ import {
   withState,
   MapControlFactory,
   EffectControlFactory,
-  EffectManagerFactory
+  EffectManagerFactory,
+  AnnotationManagerFactory
 } from '@kepler.gl/components';
 import {AiAssistantControlFactory} from '@kepler.gl/ai-assistant';
 
@@ -58,6 +59,7 @@ const StyledMapControlOverlay = styled.div`
 CustomMapControlFactory.deps = [
   EffectControlFactory,
   EffectManagerFactory,
+  AnnotationManagerFactory,
   SqlPanelControlFactory,
   AiAssistantControlFactory,
   ...MapControlFactory.deps
@@ -65,6 +67,7 @@ CustomMapControlFactory.deps = [
 function CustomMapControlFactory(
   EffectControl,
   EffectManager,
+  AnnotationManager,
   SqlPanelControl,
   AiAssistantControl,
   ...deps
@@ -79,8 +82,10 @@ function CustomMapControlFactory(
 
   const CustomMapControl = props => {
     const showEffects = Boolean(props.mapControls?.effect?.active);
+    const showAnnotations = Boolean(props.mapControls?.annotation?.active);
+    const rightPanelVisible = showEffects || showAnnotations;
     return (
-      <StyledMapControlOverlay top={props.top} rightPanelVisible={showEffects}>
+      <StyledMapControlOverlay top={props.top} rightPanelVisible={rightPanelVisible}>
         <StyledMapControlPanel>
           {<BannerMapPanel {...props} />}
           {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
@@ -88,6 +93,7 @@ function CustomMapControlFactory(
         </StyledMapControlPanel>
         <StyledMapControlContextPanel>
           {showEffects ? <EffectManager /> : null}
+          {showAnnotations ? <AnnotationManager /> : null}
         </StyledMapControlContextPanel>
       </StyledMapControlOverlay>
     );

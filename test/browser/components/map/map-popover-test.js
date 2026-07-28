@@ -15,8 +15,11 @@ import {
 } from '@kepler.gl/components';
 import {
   expectedLayerHoverProp as layerHoverProp,
-  expectedGeojsonLayerHoverProp as geojsonLayerHoverProp
+  expectedGeojsonLayerHoverProp as geojsonLayerHoverProp,
+  testCsvDataId,
+  mockKeplerProps
 } from 'test/helpers/mock-state';
+import {COMPARE_TYPES} from '@kepler.gl/constants';
 
 const {Pin} = Icons;
 const MapPopover = appInjector.get(MapPopoverFactory);
@@ -172,6 +175,42 @@ test('Map Popover - render with geojsonLayerHoverProp', t => {
   t.equal(wrapper.find('.row__value').at(1).text(), '127.123457,', 'should render longitude');
 
   t.equal(wrapper.find('.row__value').at(2).text(), '12.1z', 'should render zoom');
+
+  t.end();
+});
+
+test('Map Popover - render comparison mode with delta column', t => {
+  const comparisonLayerHoverProp = {
+    ...layerHoverProp,
+    primaryData: mockKeplerProps.visState.datasets[testCsvDataId].dataContainer.row(14),
+    compareType: COMPARE_TYPES.ABSOLUTE
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <MapPopover {...defaultProps} layerHoverProp={comparisonLayerHoverProp} />
+      </IntlWrapper>
+    );
+  }, 'Should render map popover in comparison mode');
+
+  t.equal(wrapper.find(LayerHoverInfo).length, 1, 'Should render LayerHoverInfo');
+  t.equal(wrapper.find('table').length, 1, 'Should render 1 table');
+
+  const table = wrapper.find('table').at(0);
+  t.ok(
+    table.hasClass('comparing'),
+    'Table should have "comparing" class when primaryData is present'
+  );
+
+  const rows = table.find('.layer-hover-info__row');
+  t.ok(rows.length > 0, 'Should render tooltip rows');
+
+  for (let i = 0; i < rows.length; i++) {
+    const deltaCell = rows.at(i).find('td.row__delta-value');
+    t.equal(deltaCell.length, 1, `Row ${i} should render a delta value cell`);
+  }
 
   t.end();
 });

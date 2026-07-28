@@ -155,11 +155,6 @@ const RASTER_TILE_EXAMPLES = [
   },
   {
     label: 'PMTiles',
-    name: 'Mt Whitney',
-    url: 'https://pmtiles.io/usgs-mt-whitney-8-15-webp-512.pmtiles'
-  },
-  {
-    label: 'PMTiles',
     name: 'Swiss Historical',
     url: 'https://public-bucket-for-tests.s3.us-east-1.amazonaws.com/historic-swis-18xx.pmtiles'
   },

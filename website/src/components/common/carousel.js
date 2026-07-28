@@ -25,7 +25,7 @@ const Item = styled.div`
   position: absolute;
   transition: transform 1s;
   cursor: pointer;
-  transform: perspective(600px) translate3d(${props => props.tX}%, 0, ${props => props.tZ}px);
+  transform: perspective(600px) translate3d(${props => props.$tX}%, 0, ${props => props.$tZ}px);
 `;
 
 export default class Carousel extends PureComponent {
@@ -58,26 +58,28 @@ export default class Carousel extends PureComponent {
     const {isVisible} = this.state;
     return (
       <Waypoint onEnter={this._onWaypointEnter} onLeave={this._onWaypointLeave}>
-        <Container>
-          <Content>
-            {children.map((item, i) => {
-              const translateX = isVisible ? (i - selectedIndex) * xOffset : 0;
-              const translateZ = -Math.abs(i - selectedIndex) * zOffset;
-              return (
-                <Item
-                  key={`carousel-item-${i}`}
-                  tX={translateX}
-                  tZ={translateZ}
-                  onClick={() => {
-                    this.props.onChange(i);
-                  }}
-                >
-                  {item}
-                </Item>
-              );
-            })}
-          </Content>
-        </Container>
+        <div>
+          <Container>
+            <Content>
+              {children.map((item, i) => {
+                const translateX = isVisible ? (i - selectedIndex) * xOffset : 0;
+                const translateZ = -Math.abs(i - selectedIndex) * zOffset;
+                return (
+                  <Item
+                    key={`carousel-item-${i}`}
+                    $tX={translateX}
+                    $tZ={translateZ}
+                    onClick={() => {
+                      this.props.onChange(i);
+                    }}
+                  >
+                    {item}
+                  </Item>
+                );
+              })}
+            </Content>
+          </Container>
+        </div>
       </Waypoint>
     );
   }

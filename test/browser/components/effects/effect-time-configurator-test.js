@@ -130,7 +130,7 @@ test('Components -> EffectTimeConfigurator -> pick time', t => {
     .simulate('change', {target: {value: '2022', name: 'year'}});
 
   t.deepEqual(
-    onDateTimeChange.getCall(3).args[0],
+    onDateTimeChange.lastCall.args[0],
     {timestamp: 1643820360000},
     `Date should be updated`
   );
@@ -148,7 +148,7 @@ test('Components -> EffectTimeConfigurator -> pick time', t => {
     .simulate('change', {target: {value: '30', name: 'minute'}});
 
   t.deepEqual(
-    onDateTimeChange.getCall(6).args[0],
+    onDateTimeChange.lastCall.args[0],
     {timestamp: 1690317000000},
     `Time should be updated`
   );
@@ -156,7 +156,7 @@ test('Components -> EffectTimeConfigurator -> pick time', t => {
   // pick current time button
   wrapper.find('Button').at(0).simulate('click');
   t.ok(
-    Math.abs(onDateTimeChange.getCall(7).args[0].timestamp - Date.now()) < 1000,
+    Math.abs(onDateTimeChange.lastCall.args[0].timestamp - Date.now()) < 1000,
     `Should pick current date & time`
   );
 
@@ -261,7 +261,7 @@ test('Components -> EffectTimeConfigurator -> time with custom timezone update',
     // Call twice to propagate chagne in date-time-picker
     .simulate('change', {target: {value: '20', name: 'hour24'}});
   t.deepEqual(
-    onDateTimeChange.getCall(1).args[0],
+    onDateTimeChange.lastCall.args[0],
     {timestamp: 1690848180000},
     `time changed & timezone taken into account`
   );
@@ -301,7 +301,7 @@ test('Components -> EffectTimeConfigurator -> date with custom timezone update',
     .simulate('change', {target: {value: '10', name: 'day'}});
 
   t.deepEqual(
-    onDateTimeChange.getCall(1).args[0],
+    onDateTimeChange.lastCall.args[0],
     {timestamp: 1689026580000},
     `date changed & timezone taken into account`
   );

@@ -2,8 +2,12 @@
 // Copyright contributors to the kepler.gl project
 
 import {GridLayer, GridLayerPickingInfo} from '@deck.gl/aggregation-layers';
-import {GetPickingInfoParams, PickingInfo, Viewport} from '@deck.gl/core';
+import {GetPickingInfoParams, Layer, PickingInfo, Viewport} from '@deck.gl/core';
 import {enrichedAggregationUpdate, enrichedRenderLayers} from '../layer-utils/aggregation-utils';
+import {
+  makeGlobeCellLayerClass,
+  runBinOptionsWithMercatorViewport
+} from '../layer-utils/globe-cell-utils';
 
 interface GridInternalState {
   cellOriginCommon?: [number, number];
@@ -46,6 +50,31 @@ export default class ScaleEnhancedGridLayer extends GridLayer<any> {
 
   renderLayers() {
     return enrichedRenderLayers(this, GridLayer);
+  }
+
+  // In globe mode, run deck.gl's bin/common-space setup under a WebMercatorViewport
+  // so binning and the cell shader's flat common space are genuine Web Mercator, which
+  // the globe cell subclass then remaps onto the sphere surface. No-op in 2D/3D mode.
+  _updateBinOptions() {
+    runBinOptionsWithMercatorViewport(this, () =>
+      (GridLayer.prototype as any)._updateBinOptions.call(this)
+    );
+  }
+
+  // deck.gl's GridCellLayer positions cells in flat common space, which lands them
+  // on the XY plane through the globe center. Swap in a globe-aware subclass that
+  // curves cells onto the sphere surface (no-op in 2D/3D mode).
+  getSubLayerClass<T extends Layer>(subLayerId: string, DefaultLayerClass: {new (...args: any[]): T}) {
+    const resolved = super.getSubLayerClass(subLayerId, DefaultLayerClass);
+    if (subLayerId === 'cells') {
+      return makeGlobeCellLayerClass(
+        resolved as unknown as {new (...args: any[]): T},
+        'grid'
+      ) as unknown as {
+        new (...args: any[]): T;
+      };
+    }
+    return resolved;
   }
 
   getPickingInfo(params: GetPickingInfoParams): PickingInfo {

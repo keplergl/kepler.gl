@@ -65,7 +65,7 @@ PlotContainerFactory.deps = [MapContainerFactory, MapsLayoutFactory];
 // Remove mapbox logo in exported map, because it contains non-ascii characters
 // Remove split viewport UI controls from exported images when the legend is shown
 interface StyledPlotContainerProps {
-  legendZoom?: number;
+  $legendZoom?: number;
 }
 
 const StyledPlotContainer = styled.div<StyledPlotContainerProps>`
@@ -85,7 +85,7 @@ const StyledPlotContainer = styled.div<StyledPlotContainerProps>`
 
   /* Apply zoom to legend panel based on export height */
   .map-control-panel {
-    zoom: ${props => props.legendZoom || 1} !important;
+    zoom: ${props => props.$legendZoom || 1} !important;
   }
 `;
 
@@ -400,7 +400,7 @@ export default function PlotContainerFactory(
     );
 
     return (
-      <StyledPlotContainer className="export-map-instance" legendZoom={legendZoom}>
+      <StyledPlotContainer className="export-map-instance" $legendZoom={legendZoom}>
         <StyledMapContainer ref={plottingAreaRef} width={size.width} height={size.height}>
           <MapViewStateContextProvider mapState={newMapState}>
             {mapContainers}

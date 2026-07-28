@@ -1,0 +1,18 @@
+services:
+  kepler-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../.env
+    environment:
+      - NODE_ENV=local
+
+  kepler-prod:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"

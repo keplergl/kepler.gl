@@ -340,7 +340,7 @@ export const InlineInput = styled(Input)`
 `;
 
 export interface StyledPanelHeaderProps {
-  active?: boolean;
+  $active?: boolean;
   labelRCGColorValues?: RGBColor | null;
   warning?: boolean;
   isValid?: boolean;
@@ -348,7 +348,7 @@ export interface StyledPanelHeaderProps {
 
 export const StyledPanelHeader = styled.div.withConfig({shouldForwardProp})<StyledPanelHeaderProps>`
   background-color: ${props =>
-    props.active ? props.theme.panelBackgroundHover : props.theme.panelBackground};
+    props.$active ? props.theme.panelBackgroundHover : props.theme.panelBackground};
   border-left: 3px solid
     rgb(
       ${props => (props.labelRCGColorValues ? props.labelRCGColorValues.join(',') : 'transparent')}
@@ -583,6 +583,29 @@ export const StyledAttribution = styled.div
       color: ${props => props.theme.labelColor};
     }
 
+    .basemap-attribution {
+      display: inline-block;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      vertical-align: bottom;
+      margin-right: 2px;
+      font-size: 10px;
+      line-height: normal;
+      color: ${props => props.theme.labelColor};
+
+      &:hover {
+        max-width: none;
+        white-space: normal;
+      }
+    }
+
+    .basemap-attribution a {
+      font-size: 10px;
+      color: ${props => props.theme.labelColor};
+    }
+
     .pipe-separator {
       text-decoration: none;
     }
@@ -613,6 +636,10 @@ export const StyledAttribution = styled.div
 
     .attrition-link {
       line-height: 1em;
+    }
+
+    .basemap-attribution {
+      max-width: 140px;
     }
   `};
 `;

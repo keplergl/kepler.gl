@@ -117,12 +117,12 @@ test('GeocoderPanel - render', t => {
               isVisible: true,
               hidden: true,
               visConfig: {
-                radius: 80
+                radius: 160
               }
             }
           }
         ],
-        layerOrder: ['geocoder_layer', 'layer_1', 'layer_2']
+        layerOrder: ['geocoder_layer']
       }
     }
   ];

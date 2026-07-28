@@ -84,3 +84,74 @@ export const PMTILES_METADATA = {
     ]
   }
 };
+
+export const PMTILES_METADATA_NUMERIC_TYPES = {
+  name: 'Numeric Types Tiles',
+  format: 'pmtiles' as const,
+  formatVersion: 3,
+  attributions: [],
+  tileMIMEType: 'application/vnd.mapbox-vector-tile' as const,
+  minZoom: 0,
+  maxZoom: 10,
+  boundingBox: [
+    [-180, -90],
+    [180, 90]
+  ] as [[number, number], [number, number]],
+  center: [0, 0],
+  centerZoom: 3,
+  tilejson: {
+    name: 'Numeric Types Tiles',
+    description: 'Tiles with various numeric type aliases',
+    generator: 'tippecanoe v2.37.1',
+    generatorOptions: '',
+    boundingBox: [
+      [-180, -90],
+      [180, 90]
+    ],
+    center: null,
+    maxZoom: null,
+    minZoom: null,
+    layers: [
+      {
+        name: 'test_layer',
+        id: 'test_layer',
+        description: '',
+        minzoom: 0,
+        maxzoom: 10,
+        dominantGeometry: 'Point',
+        fields: [
+          {
+            name: 'score',
+            type: 'float64',
+            min: 0,
+            max: 100,
+            uniqueValueCount: 50,
+            values: [0, 100]
+          },
+          {
+            name: 'count',
+            type: 'int32',
+            min: 1,
+            max: 999,
+            uniqueValueCount: 100,
+            values: [1, 999]
+          },
+          {
+            name: 'big_id',
+            type: 'uint64',
+            min: 0,
+            max: 1000000,
+            uniqueValueCount: 500,
+            values: [0, 1000000]
+          },
+          {
+            name: 'active',
+            type: 'bool',
+            uniqueValueCount: 2,
+            values: [0, 1]
+          }
+        ]
+      }
+    ]
+  }
+};

@@ -5,7 +5,7 @@ import styled, {IStyledComponent} from 'styled-components';
 import {BaseComponentProps} from '../types';
 
 export type ToolbarProps = {
-  show?: boolean;
+  $show?: boolean;
 } & BaseComponentProps;
 
 const Toolbar: IStyledComponent<'web', ToolbarProps> = styled.div<ToolbarProps>`
@@ -15,10 +15,10 @@ const Toolbar: IStyledComponent<'web', ToolbarProps> = styled.div<ToolbarProps>`
   box-shadow: ${props => props.theme.dropdownListShadow};
   font-size: 12px;
   transition: ${props => props.theme.transitionSlow};
-  margin-top: ${props => (props.show ? '6px' : '20px')};
-  opacity: ${props => (props.show ? 1 : 0)};
+  margin-top: ${props => (props.$show ? '6px' : '20px')};
+  opacity: ${props => (props.$show ? 1 : 0)};
   transform: translateX(calc(-50% + 20px));
-  pointer-events: ${props => (props.show ? 'all' : 'none')};
+  pointer-events: ${props => (props.$show ? 'all' : 'none')};
   z-index: 1000;
 
   .panel-header-dropdown__inner {

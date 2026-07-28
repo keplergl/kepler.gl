@@ -6,7 +6,7 @@ import {BrushingExtension} from '@deck.gl/extensions';
 
 import {SvgIconLayer} from '@kepler.gl/deckgl-layers';
 import IconLayerIcon from './icon-layer-icon';
-import {ICON_FIELDS, CULL_MODE} from '@kepler.gl/constants';
+import {ICON_FIELDS, CULL_MODE, GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerBaseConfigPartial} from '../base-layer';
 import {assignPointPairToLayerColumn, FindDefaultLayerPropsReturnValue} from '../layer-utils';
@@ -14,6 +14,7 @@ import {isTest} from '@kepler.gl/utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {getApplicationConfig, DataContainerInterface} from '@kepler.gl/utils';
+import type {SvgIcon} from '@kepler.gl/utils';
 import {
   ColorRange,
   VisConfigBoolean,
@@ -95,6 +96,8 @@ export const pointVisConfigs: {
   billboard: 'billboard'
 };
 
+const BOTTOM_ANCHOR_ICONS = ['place'];
+
 function flatterIconPositions(icon) {
   // had to flip y, since @luma modal has changed
   return icon.mesh.cells.reduce((prev, cell) => {
@@ -105,6 +108,41 @@ function flatterIconPositions(icon) {
     });
     return prev;
   }, []);
+}
+
+/**
+ * Anchors icon geometry at its bottom tip and normalizes it to fit within the
+ * ScatterplotLayer unit circle (radius ≤ 1). After shifting the tip to y=0,
+ * computes a uniform scale so the farthest vertex stays within the unit disk.
+ * GEOCODER_ICON_SIZE must compensate for this scale (original_size / scale).
+ */
+function anchorIconAtBottom(positions: number[]): number[] {
+  const anchored = positions.slice();
+  let minY = Infinity;
+  for (let i = 1; i < anchored.length; i += 3) {
+    if (anchored[i] < minY) minY = anchored[i];
+  }
+  // Shift tip to y=0
+  for (let i = 1; i < anchored.length; i += 3) {
+    anchored[i] -= minY;
+  }
+  // Compute the maximum distance from origin across all vertices
+  let maxDist = 0;
+  for (let i = 0; i < anchored.length; i += 3) {
+    const x = anchored[i];
+    const y = anchored[i + 1];
+    const dist = Math.sqrt(x * x + y * y);
+    if (dist > maxDist) maxDist = dist;
+  }
+  // Normalize so all vertices fit within the unit circle
+  if (maxDist > 1) {
+    const scale = 1 / maxDist;
+    for (let i = 0; i < anchored.length; i += 3) {
+      anchored[i] *= scale;
+      anchored[i + 1] *= scale;
+    }
+  }
+  return anchored;
 }
 
 export default class IconLayer extends Layer {
@@ -122,7 +160,7 @@ export default class IconLayer extends Layer {
     props: {
       id?: string;
       iconGeometry?: IconGeometry;
-      svgIcons?: any[];
+      svgIcons?: SvgIcon[];
     } & LayerBaseConfigPartial
   ) {
     super(props);
@@ -211,32 +249,54 @@ export default class IconLayer extends Layer {
       cache: 'no-cache'
     };
 
-    if (Window.fetch && this.svgIconUrl) {
-      Window.fetch(this.svgIconUrl, fetchConfig)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Failed to load svg-icons.json: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((parsed: {svgIcons?: any[]} = {}) => {
-          this.setSvgIcons(parsed.svgIcons);
-        })
-        .catch(err => {
-          console.error('Error fetching or parsing svg-icons.json:', err);
-          // Fallback to empty geometry to allow default icon rendering
-          this.iconGeometry = {};
-          this.iconGeometryVersion += 1;
-        });
-    } else {
-      // No fetch available; set empty geometry so layer can render default icons
-      this.iconGeometry = {};
-      this.iconGeometryVersion += 1;
-    }
+    const appConfig = getApplicationConfig();
+    const customIconUrl = appConfig.customIconUrl;
+
+    const cdnPromise =
+      Window.fetch && this.svgIconUrl
+        ? Window.fetch(this.svgIconUrl, fetchConfig)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`Failed to load svg-icons.json: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then((parsed: {svgIcons?: SvgIcon[]} = {}) => parsed.svgIcons || [])
+            .catch(err => {
+              console.error('Error fetching or parsing svg-icons.json:', err);
+              return [] as SvgIcon[];
+            })
+        : Promise.resolve([] as SvgIcon[]);
+
+    const customUrlPromise =
+      Window.fetch && customIconUrl
+        ? Window.fetch(customIconUrl, fetchConfig)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`Failed to load custom icons from ${customIconUrl}: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then((parsed: {svgIcons?: SvgIcon[]} = {}) => parsed.svgIcons || [])
+            .catch(err => {
+              console.error(`Error fetching custom icons from ${customIconUrl}:`, err);
+              return [] as SvgIcon[];
+            })
+        : Promise.resolve([] as SvgIcon[]);
+
+    Promise.all([cdnPromise, customUrlPromise]).then(([cdnIcons, remoteCustomIcons]) => {
+      const mergedCdnAndRemote = this.mergeIcons(cdnIcons, remoteCustomIcons);
+      this.setSvgIcons(mergedCdnAndRemote);
+    }).catch(() => {
+      this.setSvgIcons([]);
+    });
   }
 
-  setSvgIcons(svgIcons: any[] = []) {
-    this.iconGeometry = svgIcons.reduce(
+  setSvgIcons(svgIcons: SvgIcon[] = []) {
+    const customIcons = getApplicationConfig().customIcons || [];
+    const allIcons = this.mergeIcons(svgIcons, customIcons);
+
+    this.iconGeometry = allIcons.reduce(
       (accu, curr) => ({
         ...accu,
         [curr.id]: flatterIconPositions(curr)
@@ -247,10 +307,27 @@ export default class IconLayer extends Layer {
     // Increment version when SVG icons are loaded to trigger layer re-render
     this.iconGeometryVersion += 1;
 
-    this._layerInfoModal = IconInfoModalFactory(svgIcons);
+    this._layerInfoModal = IconInfoModalFactory(allIcons);
 
     // Trigger a map redraw so deck.gl picks up the new geometry
     this.onRedrawNeeded?.();
+  }
+
+  /**
+   * Merge default icons with custom icons. Custom icons with the same id
+   * as a default icon will override the default.
+   */
+  mergeIcons(defaultIcons: SvgIcon[], customIcons: SvgIcon[]): SvgIcon[] {
+    if (!customIcons.length) return defaultIcons;
+
+    const iconMap = new Map<string, SvgIcon>();
+    for (const icon of defaultIcons) {
+      iconMap.set(icon.id, icon);
+    }
+    for (const icon of customIcons) {
+      iconMap.set(icon.id, icon);
+    }
+    return Array.from(iconMap.values());
   }
 
   static findDefaultLayerProps({
@@ -421,6 +498,14 @@ export default class IconLayer extends Layer {
     const baseLayerId = defaultLayerProps.id || this.id;
     const layerIdWithVersion = `${baseLayerId}_${this.iconGeometryVersion}`;
 
+    const isGeocoderLayer = this.id === GEOCODER_LAYER_ID;
+    const getIconGeometry = isGeocoderLayer
+      ? (id: string) => {
+          const geo = this.iconGeometry?.[id];
+          return geo && BOTTOM_ANCHOR_ICONS.includes(id) ? anchorIconAtBottom(geo) : geo;
+        }
+      : (id: string) => this.iconGeometry?.[id];
+
     return [
       new SvgIconLayer({
         ...defaultLayerProps,
@@ -429,7 +514,7 @@ export default class IconLayer extends Layer {
         ...layerProps,
         ...data,
         parameters,
-        getIconGeometry: id => this.iconGeometry?.[id],
+        getIconGeometry,
 
         // update triggers
         updateTriggers,
@@ -449,7 +534,7 @@ export default class IconLayer extends Layer {
               getPosition: data.getPosition,
               getRadius: data.getRadius,
               getFillColor: this.config.highlightColor,
-              getIconGeometry: id => this.iconGeometry?.[id]
+              getIconGeometry
             })
           ]
         : []),

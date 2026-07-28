@@ -10,7 +10,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {KeyEvent} from '@kepler.gl/constants';
 import {Checkbox} from '../..';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {isInRange, clamp} from '@kepler.gl/utils';
+import {isInRange, clamp, createSliderScale} from '@kepler.gl/utils';
 
 type LazyInputProps = {
   value: string | [string, string];
@@ -35,6 +35,8 @@ type VisConfigSliderProps = {
   disabled?: boolean;
   inputTheme?: string;
   allowCustomValue?: boolean;
+  focusRange?: [number, number];
+  focusWeight?: number;
 };
 
 const InputWrapper = styled.div`
@@ -162,10 +164,13 @@ export default function VisConfigSliderFactory(RangeSlider: ReturnType<typeof Ra
     allowCustomValue,
     disabled,
     onChange,
-    inputTheme
+    inputTheme,
+    focusRange,
+    focusWeight
   }) => {
     const value = config.visConfig[property];
     const [custom, setCustom] = useState(false || !isInRange(value, range));
+    const scaleConfig = createSliderScale(focusRange, focusWeight);
 
     const onChangeCheckbox = useCallback(() => {
       if (custom) {
@@ -210,6 +215,7 @@ export default function VisConfigSliderFactory(RangeSlider: ReturnType<typeof Ra
             onChange={v => onChange({[property]: isRanged ? v : v[1]})}
             inputTheme={inputTheme}
             showInput
+            scaleConfig={scaleConfig}
           />
         ) : (
           <CustomInput

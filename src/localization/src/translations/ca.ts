@@ -68,7 +68,8 @@ export default {
       layer: 'Capes',
       filter: 'Filtres',
       interaction: 'Interaccions',
-      basemap: 'Mapa base'
+      basemap: 'Mapa base',
+      annotation: 'Anotacions'
     },
     panelViewToggle: {
       list: 'Visualitza Llista',
@@ -230,6 +231,13 @@ export default {
     time: 'Hora',
     timezone: 'Zona horària'
   },
+  annotationManager: {
+    title: 'Anotacions',
+    addAnnotation: 'Afegir',
+    type: 'Tipus',
+    lineWidth: "Amplada de línia",
+    color: 'Color'
+  },
   effectDescription: {
     lightAndShadow:
       "Simula il·luminació solar realista i ombres basades en l'hora del dia i la ubicació geogràfica. Intensitat d'ombra, colors de llum solar i ambiental ajustables.",
@@ -305,6 +313,10 @@ export default {
     layerSettings: 'Configuració de capa',
     closePanel: 'Tanca panel actual',
     switchToDualView: 'Canvia a la vista de mapa dual',
+    selectSplitMode: "Selecciona el mode de vista del mapa",
+    singleView: "Únic",
+    dualView: "Doble",
+    swipeView: "Comparar",
     showLegend: 'mostra llegenda',
     disable3DMap: 'Desactiva mapa 3D',
     DrawOnMap: 'Dibuixa al mapa',
@@ -334,6 +346,13 @@ export default {
     syncTimelineEnd: 'Fi del període de temps del filtre actual',
     showEffectPanel: "Mostra el panell d'efectes",
     hideEffectPanel: "Amaga el panell d'efectes",
+    showAnnotationPanel: "Mostra les anotacions",
+    hideAnnotationPanel: "Amaga les anotacions",
+    removeAnnotation: "Elimina l'anotació",
+    duplicateAnnotation: "Duplica l'anotació",
+    hideAnnotation: "Amaga l'anotació",
+    showAnnotation: "Mostra l'anotació",
+    annotationSettings: "Configuració de l'anotació",
     removeEffect: "Elimina l'efecte",
     disableEffect: "Desactiva l'efecte",
     effectSettings: "Configuració de l'efecte"
@@ -551,7 +570,8 @@ export default {
   },
   header: {
     visibleLayers: 'Capes visibles',
-    layerLegend: 'Llegenda de capes'
+    layerLegend: 'Llegenda de capes',
+    annotations: 'Anotacions'
   },
   interactions: {
     tooltip: 'Suggeriment',

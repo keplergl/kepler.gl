@@ -8,13 +8,14 @@ import React, {
   MouseEventHandler,
   TouchEventHandler
 } from 'react';
+import {FormattedMessage} from '@kepler.gl/localization';
 import styled from 'styled-components';
 
 import {ActionHandler, MapStateActions, VisStateActions, toggleModal} from '@kepler.gl/actions';
-import {dataTestIds} from '@kepler.gl/constants';
+import {dataTestIds, GLOBE_SUPPORTED_LAYERS} from '@kepler.gl/constants';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
-import {ColorUI, LayerVisConfig, NestedPartial, SplitMap} from '@kepler.gl/types';
+import {ColorUI, LayerVisConfig, MapState, NestedPartial, SplitMap} from '@kepler.gl/types';
 import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
 
@@ -33,6 +34,7 @@ type LayerPanelProps = {
   }[];
   isDraggable?: boolean;
   idx: number;
+  mapState?: MapState;
   openModal: ActionHandler<typeof toggleModal>;
   layerColorUIChange: ActionHandler<typeof VisStateActions.layerColorUIChange>;
   layerConfigChange: ActionHandler<typeof VisStateActions.layerConfigChange>;
@@ -138,12 +140,21 @@ function LayerPanelFactory(
     };
 
     render() {
-      const {layer, datasets, isDraggable, layerTypeOptions, listeners, splitMap} = this.props;
+      const {layer, datasets, isDraggable, layerTypeOptions, listeners, splitMap, mapState} =
+        this.props;
       const {config, isValid} = layer;
       const {isConfigActive} = config;
       const allowDuplicate =
         typeof layer.isValidToSave === 'function' && layer.isValidToSave() && isValid;
       const layerVisInSplitMap = splitMap?.layers?.[layer.id];
+
+      const isVisible = layerVisInSplitMap ?? config.isVisible;
+      const globeWarning =
+        mapState?.globe?.enabled &&
+        isVisible &&
+        GLOBE_SUPPORTED_LAYERS[layer.type ?? ''] === false ? (
+          <FormattedMessage id={'layerManager.globeUnsupported'} values={{layerType: layer.type}} />
+        ) : undefined;
 
       return (
         <PanelWrapper
@@ -156,12 +167,13 @@ function LayerPanelFactory(
           <LayerPanelHeader
             isConfigActive={isConfigActive}
             layerId={layer.id}
-            isVisible={layerVisInSplitMap ?? config.isVisible}
+            isVisible={isVisible}
             isValid={isValid}
             label={config.label}
             labelRCGColorValues={config.dataId ? datasets[config.dataId].color : null}
             layerType={layer.type}
             allowDuplicate={allowDuplicate}
+            warning={globeWarning}
             onToggleEnableConfig={this._toggleEnableConfig}
             onToggleVisibility={this._toggleVisibility}
             onResetIsValid={this._resetIsValid}

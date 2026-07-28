@@ -13,9 +13,9 @@ const buttonStyles = css`
       ? props.theme.negativeBtnBgd
       : props.secondary
       ? props.theme.secondaryBtnBgd
-      : props.outline
+      : props.$outline
       ? props.theme.outlineBtnBgd
-      : props.outlineDark
+      : props.$outlineDark
       ? props.outlineDarkBtnBgd
       : props.link
       ? props.theme.linkBtnBgd
@@ -26,28 +26,28 @@ const buttonStyles = css`
       ? props.theme.negativeBtnColor
       : props.secondary
       ? props.theme.secondaryBtnColor
-      : props.outline
+      : props.$outline
       ? props.outlineBtnColor
-      : props.outlineDark
+      : props.$outlineDark
       ? props.theme.outlineDarkBtnColor
       : props.link
       ? props.theme.linkBtnColor
       : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
-  font-size: ${props => (props.large ? '14px' : '11px')};
+  font-size: ${props => (props.$large ? '14px' : '11px')};
   font-weight: 500;
   justify-content: center;
   letter-spacing: 0.3px;
   line-height: 14px;
   outline: 0;
   border: ${props =>
-    props.outline
+    props.$outline
       ? `1px solid ${props.theme.outlineBtnColor}`
-      : props.outlineDark
+      : props.$outlineDark
       ? `1px solid ${props.theme.outlineDarkBtnColor}`
       : 'none'};
-  padding: ${props => (props.large ? '14px 32px' : '9px 12px')};
+  padding: ${props => (props.$large ? '14px 32px' : '9px 12px')};
   text-align: center;
   transition: ${props => props.theme.btnTransition};
   vertical-align: middle;
@@ -64,9 +64,9 @@ const buttonStyles = css`
         ? props.theme.negativeBtnBgdHover
         : props.secondary
         ? props.theme.secondaryBtnBgdHover
-        : props.outline
+        : props.$outline
         ? props.theme.outlineBtnBgdHover
-        : props.outlineDark
+        : props.$outlineDark
         ? props.theme.outlineDarkBtnBgdHover
         : props.link
         ? props.theme.linkBtnActBgdHover
@@ -76,9 +76,9 @@ const buttonStyles = css`
         ? props.theme.negativeBtnActColor
         : props.secondary
         ? props.theme.secondaryBtnActColor
-        : props.outline
+        : props.$outline
         ? props.theme.outlineBtnActColor
-        : props.outlineDark
+        : props.$outlineDark
         ? props.theme.outlineDarkBtnActColor
         : props.link
         ? props.theme.linkBtnActColor
@@ -115,7 +115,7 @@ export const CenteredContent = styled.div`
 `;
 
 export const GithubButton = ({href, style}) => (
-  <LinkButton large outlineDark href={href} style={style}>
+  <LinkButton $large $outlineDark href={href} style={style}>
     <img src={cdnUrl('icons/github.svg')} /> Github
   </LinkButton>
 );

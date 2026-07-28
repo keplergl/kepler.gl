@@ -45,8 +45,15 @@ export default {
     building: 'Building',
     water: 'Water',
     land: 'Land',
-    '3dBuilding': '3d Building',
-    background: 'Background'
+    '3dBuilding': '3D Building',
+    background: 'Background',
+    atmosphere: 'Atmosphere',
+    basemap: 'Basemap',
+    adminBorders: 'Admin Borders',
+    terminator: 'Day/Night',
+    sunAzimuth: 'Sun Azimuth',
+    surface: 'Globe Surface',
+    stars: 'Stars'
   },
   panel: {
     text: {
@@ -68,7 +75,8 @@ export default {
       layer: 'Layers',
       filter: 'Filters',
       interaction: 'Interactions',
-      basemap: 'Base map'
+      basemap: 'Base map',
+      annotation: 'Annotations'
     },
     panelViewToggle: {
       list: 'View List',
@@ -96,10 +104,15 @@ export default {
     colorByDescription: 'When off, color is based on count of points',
     aggregateBy: 'Aggregate {field} by',
     '3DModel': '3D Model',
+    '3DModelURL': 'Custom 3D Model URL',
+    '3DModelURLDescription': 'URL of a .glb or .glTF file with the 3D model.',
     '3DModelOptions': '3D Model Options',
     service: 'Service',
     layer: 'Layer',
     appearance: 'Appearance',
+    bounds: 'Bounds',
+    imageSource: 'Image Source',
+    alignment: 'Alignment',
     uniqueIdField: 'Unique ID Field',
     type: {
       point: 'point',
@@ -121,7 +134,8 @@ export default {
       vectortile: 'vector tile',
       rastertile: 'raster tile',
       wms: 'WMS',
-      tile3d: '3D tile'
+      tile3d: '3D tile',
+      bitmap: 'bitmap'
     },
     wms: {
       hover: 'Value:'
@@ -146,6 +160,14 @@ export default {
     billboardDescription: 'Orient geometry towards the camera',
     fadeTrail: 'Fade trail',
     opacity: 'Opacity',
+    imageUrl: 'Image URL',
+    showBounds: 'Show Bounds',
+    editBounds: 'Drag corners to resize',
+    alignMode: 'Align to map',
+    boundsWest: 'West',
+    boundsSouth: 'South',
+    boundsEast: 'East',
+    boundsNorth: 'North',
     pointSize: 'Point Size',
     coverage: 'Coverage',
     outline: 'Outline',
@@ -187,6 +209,26 @@ export default {
     showHighlightColor: 'Show highlight Color',
     darkModeEnabled: 'Dark base map',
     transparentBackground: 'Transparent Background',
+    scenegraphColorEnabled: 'Apply color',
+    scenegraphUseTrailColor: 'Use trail color',
+    adjustRoll: 'Adjust Roll',
+    adjustPitch: 'Adjust Pitch',
+    adjustYaw: 'Adjust Yaw',
+    adjustSize: 'Size Scale',
+    adjustSizeDescription:
+      'Size is scaled by factor of 2^x where x is the slider value. Zero means no scaling.',
+    invertRoll: 'Invert Roll',
+    invertPitch: 'Invert Pitch',
+    invertYaw: 'Invert Yaw',
+    fixedRoll: 'Roll based on',
+    fixedPitch: 'Pitch based on',
+    fixedYaw: 'Yaw based on',
+    fixedRollDescription:
+      'Select a column with the values for Roll. Zero is level. Positive is rolled right.',
+    fixedPitchDescription:
+      'Select a column with the values for Pitch. Zero is level. Positive is Pitch up.',
+    fixedYawDescription:
+      'Select a column with the values for Yaw. Zero is north. Positive is clockwise from north.',
     flow: {
       fade: 'Fade',
       fadeEnabled: 'Fade',
@@ -210,23 +252,32 @@ export default {
     addData: 'Add Data',
     addLayer: 'Add Layer',
     layerBlending: 'Layer Blending',
-    overlayBlending: 'Overlay Blending'
+    overlayBlending: 'Overlay Blending',
+    globeUnsupported: '{layerType} layer is not supported in Globe mode'
   },
   mapManager: {
     mapStyle: 'Map style',
     addMapStyle: 'Add Map Style',
     '3dBuildingColor': '3D Building Color',
-    backgroundColor: 'Background Color'
+    backgroundColor: 'Background Color',
+    globeLayers: 'Globe Layers'
   },
   effectManager: {
     effects: 'Effects',
-    addEffect: 'Add effect',
+    addEffect: 'Add',
     pickDateTime: 'Pick date/time',
     currentTime: 'Current time',
     pickCurrrentTime: 'Pick current time',
     date: 'Date',
     time: 'Time',
     timezone: 'Timezone'
+  },
+  annotationManager: {
+    title: 'Annotations',
+    addAnnotation: 'Add',
+    type: 'Type',
+    lineWidth: 'Line Width',
+    color: 'Color'
   },
   effectDescription: {
     lightAndShadow:
@@ -287,15 +338,16 @@ export default {
     vectorTile: 'Vector tile',
     rasterTile: 'Raster tile',
     wmsTile: 'WMS tile',
-    tile3d: '3D tile'
+    tile3d: '3D tile',
+    bitmap: 'Bitmap image'
   },
   tooltip: {
     hideLayer: 'Hide layer',
     showLayer: 'Show layer',
     hideFeature: 'Hide feature',
     showFeature: 'Show feature',
-    hide: 'hide',
-    show: 'show',
+    hide: 'Hide',
+    show: 'Show',
     removeLayer: 'Remove layer',
     duplicateLayer: 'Duplicate layer',
     zoomToLayer: 'Zoom to layer',
@@ -303,8 +355,16 @@ export default {
     layerSettings: 'Layer settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',
+    selectSplitMode: 'Select map view mode',
+    singleView: 'Single',
+    dualView: 'Dual',
+    swipeView: 'Swipe',
     showLegend: 'Show legend',
     disable3DMap: 'Disable 3D Map',
+    globeMap: 'Globe Map',
+    disableGlobeMap: 'Disable Globe Map',
+    viewMode: 'View Mode',
+    top: 'Top',
     DrawOnMap: 'Draw on map',
     selectLocale: 'Select locale',
     showAiAssistantPanel: 'Show AI Assistant',
@@ -321,17 +381,24 @@ export default {
     '3DMap': '3D Map',
     animationByWindow: 'Moving Time Window',
     animationByIncremental: 'Incremental Time Window',
-    speed: 'speed',
-    play: 'play',
-    pause: 'pause',
-    reset: 'reset',
-    export: 'export',
+    speed: 'Speed',
+    play: 'Play',
+    pause: 'Pause',
+    reset: 'Reset',
+    export: 'Export',
     timeLayerSync: 'Link with the layer timeline',
     timeLayerUnsync: 'Unlink with the layer timeline',
     syncTimelineStart: 'Start of current filter timeframe',
     syncTimelineEnd: 'End of current filter timeframe',
     showEffectPanel: 'Show effect panel',
     hideEffectPanel: 'Hide effect panel',
+    showAnnotationPanel: 'Show annotations',
+    hideAnnotationPanel: 'Hide annotations',
+    removeAnnotation: 'Remove annotation',
+    duplicateAnnotation: 'Duplicate annotation',
+    hideAnnotation: 'Hide annotation',
+    showAnnotation: 'Show annotation',
+    annotationSettings: 'Annotation settings',
     removeEffect: 'Remove effect',
     disableEffect: 'Disable effect',
     effectSettings: 'Effect settings'
@@ -610,7 +677,8 @@ ${'```'}
   },
   header: {
     visibleLayers: 'Visible layers',
-    layerLegend: 'Legend'
+    layerLegend: 'Legend',
+    annotations: 'Annotations'
   },
   interactions: {
     tooltip: 'Tooltip',
