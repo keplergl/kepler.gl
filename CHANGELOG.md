@@ -15,6 +15,8 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.4] - July 28 2026
+
 ## [3.3.0-alpha.3] - July 12 2026
 
 - 9e027002 chore(deps): upgrade editable-layers to 9.3.7, h3-js to v4, turf to v7 (#3526)

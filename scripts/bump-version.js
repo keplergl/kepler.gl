@@ -39,3 +39,9 @@ for (const field of depFields) {
 
 fs.writeFileSync(rootPkgPath, JSON.stringify(rootPkg, null, 2) + '\n');
 console.log(`Updated root package.json: ${oldVersion} => ${newVersion}`);
+
+// Re-run yarn install so the lockfile is properly resolved (Lerna's internal
+// lockfile sync creates imperfect entries for workspace packages; this cleans them up)
+console.log('\nRunning yarn install to clean up yarn.lock...');
+execSync('yarn install', {stdio: 'inherit'});
+console.log('\nDone. Review the changes, then commit and push.');
