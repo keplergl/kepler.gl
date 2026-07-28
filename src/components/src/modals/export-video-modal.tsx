@@ -396,7 +396,7 @@ const ExportVideoModalFactory = () => {
 
     // In globe mode the deck.gl GlobeView renders the planet (and basemap tiles)
     // itself; the flat maplibre base map must be disabled so it doesn't render a
-    // 2D Mercator map behind/around the globe (mirrors studio's disableStaticMap).
+    // 2D Mercator map behind/around the globe.
     const isGlobeEnabled = Boolean(mapState?.globe?.enabled);
 
     const onFilterFrameUpdate = useCallback(

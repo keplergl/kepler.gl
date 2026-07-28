@@ -388,6 +388,16 @@ export const toggleSidePanelCloseButtonUpdater = (
   isSidePanelCloseButtonVisible: show
 });
 
+// Map control dropdowns/menus that overlap each other visually and therefore
+// should be mutually exclusive: opening one closes all the others.
+// (split/view-mode menu, top/3d/globe menu, polygon draw tool, language menu)
+export const MUTUALLY_EXCLUSIVE_MAP_CONTROLS: string[] = [
+  MAP_CONTROLS.splitMap,
+  MAP_CONTROLS.toggle3d,
+  MAP_CONTROLS.mapDraw,
+  MAP_CONTROLS.mapLocale
+];
+
 /**
  * Toggle active map control panel
  * @memberof uiStateUpdaters
@@ -403,27 +413,22 @@ export const toggleMapControlUpdater = (
 ): UiState => {
   let updatedState = state;
 
-  // To to toggle the mapDraw and mapLocal dropdowns
-  // We have to deactivate the other active dropdown
-  const dropdownToDeactivate =
-    panelId === MAP_CONTROLS.mapDraw
-      ? MAP_CONTROLS.mapLocale
-      : panelId === MAP_CONTROLS.mapLocale
-      ? MAP_CONTROLS.mapDraw
-      : null;
-
-  // If we need to deactivate a competing dropdown and it's currently active
-  if (dropdownToDeactivate && state.mapControls[dropdownToDeactivate]?.active) {
-    updatedState = {
-      ...state,
-      mapControls: {
-        ...updatedState.mapControls,
-        [dropdownToDeactivate]: {
-          ...(updatedState.mapControls[dropdownToDeactivate] as MapControlItem),
-          active: false
-        }
+  // The overlapping map control menus should be mutually exclusive: when one of
+  // them is being opened, deactivate every other one that is currently active
+  // so their dropdowns never overlap on screen.
+  const isOpening = !updatedState.mapControls[panelId]?.active;
+  if (isOpening && MUTUALLY_EXCLUSIVE_MAP_CONTROLS.includes(panelId)) {
+    const nextMapControls = {...updatedState.mapControls};
+    let didDeactivate = false;
+    MUTUALLY_EXCLUSIVE_MAP_CONTROLS.forEach(controlId => {
+      if (controlId !== panelId && nextMapControls[controlId]?.active) {
+        nextMapControls[controlId] = {...nextMapControls[controlId], active: false};
+        didDeactivate = true;
       }
-    };
+    });
+    if (didDeactivate) {
+      updatedState = {...updatedState, mapControls: nextMapControls};
+    }
   }
 
   return {

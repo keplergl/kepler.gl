@@ -6,11 +6,14 @@ const join = require('path').join;
 
 // Import package.json to read version
 const KeplerPackage = require('../package');
+const webpack = require('webpack');
 
 const SRC_DIR = resolve(__dirname, '../src');
 const OUTPUT_DIR = resolve(__dirname, '../umd');
 
 const LIBRARY_BUNDLE_CONFIG = () => ({
+  mode: 'production',
+
   entry: {
     KeplerGl: join(SRC_DIR, 'index.ts')
   },
@@ -68,10 +71,20 @@ const LIBRARY_BUNDLE_CONFIG = () => ({
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    modules: ['node_modules', SRC_DIR]
+    modules: ['node_modules', SRC_DIR],
+    fallback: {
+      fs: false
+    }
   },
   module: {
     rules: [
+      {
+        // webpack 5 requires explicit opt-out for node_modules that use
+        // extension-less relative imports in strict ESM context.
+        test: /\.m?js$/,
+        include: [/node_modules/],
+        resolve: {fullySpecified: false}
+      },
       {
         test: /\.(js|ts|tsx)$/,
         loader: 'babel-loader',
@@ -95,9 +108,11 @@ const LIBRARY_BUNDLE_CONFIG = () => ({
     ]
   },
 
-  node: {
-    fs: 'empty'
-  }
+  plugins: [
+    new webpack.ProvidePlugin({
+      process: require.resolve('process/browser')
+    })
+  ]
 });
 
 module.exports = env => LIBRARY_BUNDLE_CONFIG(env);

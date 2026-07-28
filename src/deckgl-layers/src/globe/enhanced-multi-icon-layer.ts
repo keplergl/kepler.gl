@@ -6,9 +6,9 @@ import {_MultiIconLayer as MultiIconLayer} from '@deck.gl/layers';
 
 // Back-face culling for globe-mode text labels.
 //
-// Ported from studio-monorepo's EnhancedMultiIconLayer. deck.gl's TextLayer uses a
-// MultiIconLayer to render glyphs; on a globe, labels anchored on the far hemisphere
-// would otherwise be drawn "through" the planet. This subclass injects a small GLSL
+// deck.gl's TextLayer uses a MultiIconLayer to render glyphs; on a globe, labels
+// anchored on the far hemisphere would otherwise be drawn "through" the planet.
+// This subclass injects a small GLSL
 // snippet into the icon vertex shader that degenerates (collapses) glyph vertices
 // whose anchor is facing away from the camera, so back-side labels disappear.
 //

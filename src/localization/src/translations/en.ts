@@ -52,7 +52,8 @@ export default {
     adminBorders: 'Admin Borders',
     terminator: 'Day/Night',
     sunAzimuth: 'Sun Azimuth',
-    surface: 'Globe Surface'
+    surface: 'Globe Surface',
+    stars: 'Stars'
   },
   panel: {
     text: {
@@ -355,6 +356,9 @@ export default {
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',
     selectSplitMode: 'Select map view mode',
+    singleView: 'Single',
+    dualView: 'Dual',
+    swipeView: 'Swipe',
     showLegend: 'Show legend',
     disable3DMap: 'Disable 3D Map',
     globeMap: 'Globe Map',

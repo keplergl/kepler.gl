@@ -33,7 +33,7 @@
     "styled-components": "6.4.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.1",
+    "@babel/core": "^7.29.6",
     "@babel/plugin-transform-class-properties": "^7.12.1",
     "@babel/plugin-transform-export-namespace-from": "^7.12.1",
     "@babel/plugin-transform-modules-commonjs": "^7.12.1",
@@ -47,7 +47,7 @@
     "babel-loader": "^8.0.0",
     "babel-plugin-module-resolver": "^3.0.0",
     "css-loader": "^6.8.1",
-    "esbuild": "^0.23.1",
+    "esbuild": "^0.28.1",
     "esbuild-plugin-replace": "^1.4.0",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^6.3.0",

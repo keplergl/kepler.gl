@@ -284,8 +284,84 @@ export function getGlobeClearColor(
 const INVISIBLE_COLOR: [number, number, number, number] = [0, 0, 0, 0];
 
 const BASEMAP_MVT_PARAMETERS = {
-  depthMask: false
+  // Occlude the far side of the globe via the DEPTH DISK (getGlobeDepthDiskLayer)
+  // rather than back-face culling. Globe mode sets a global `cull: true` for the
+  // opaque sphere surface, but back-face culling relies on stable triangle
+  // winding — and deck.gl 9's globe projection loses precision at high zoom
+  // (float32), flipping the winding of the small admin/water triangles so they
+  // get wrongly culled and the geometry vanishes past ~zoom 12 (you then see
+  // through to the far side / "different geometry"). Depth testing against the disk
+  // is a precision-robust occluder that works at any zoom, so:
+  //   - cull: false     → don't winding-cull the near-side geometry
+  //   - depthTest: true → far-side geometry (behind the disk) fails depth, hidden
+  //   - depthMask: false → don't write depth (avoid self z-fighting on the shell)
+  // Raster tiles are unaffected (their 4-corner quads keep stable winding), which
+  // is why satellite already zooms to max cleanly. Labels disable cull for the
+  // same reason (see mvt-label-layer.ts).
+  depthTest: true,
+  depthMask: false,
+  cull: false
 };
+
+// deck.gl 9's globe selects finer tiles than needed for a given view (its
+// GlobeViewport scale is ~3x smaller than the equivalent mercator zoom), so bias
+// vector tile selection coarser to keep the tile count — and thus performance —
+// in check. This trades a little detail for far fewer tiles; make it less negative
+// (toward 0) for sharper detail, or more negative for more perf.
+// These are *base* offsets: globeLatitudeZoomCompensation is added on top at draw
+// time, so the effective zoomOffset only equals these exact values at the equator.
+// Satellite raster uses base 0 — it doesn't need the vector bias (a coarser raster
+// tile just looks softer rather than dropping features).
+const MAPBOX_GLOBE_VECTOR_ZOOM_OFFSET = -2;
+const CARTO_GLOBE_VECTOR_ZOOM_OFFSET = -2;
+const GLOBE_SATELLITE_ZOOM_OFFSET = 0;
+
+// Whole-world tile extent (Web Mercator latitude limit). Required whenever a
+// negative `zoomOffset` is used: deck's `getTileIndices` returns NO tiles when
+// the target zoom drops below `minZoom` *unless* an `extent` is set (in which
+// case it clamps to `minZoom` instead). Without this, zooming out or panning
+// toward the poles (where deck 9's globe controller lowers the effective zoom)
+// makes the whole globe basemap disappear.
+const GLOBE_TILE_EXTENT: [number, number, number, number] = [
+  -180, -85.051129, 180, 85.051129
+];
+
+// Max *native* zoom of each vector tile source. Set this (not an arbitrarily
+// high number) so deck overzooms — i.e. keeps rendering the deepest real tile
+// when the view zooms past it — instead of requesting tiles that don't exist
+// and 404 (which shows up as empty rectangles). The raw `.vector.pbf` /`.mvt`
+// endpoints do NOT auto-overzoom the way Mapbox GL does.
+//   - mapbox-streets-v8 has data up to z16
+//   - CARTO carto.streets v1 has data up to z14
+const MAPBOX_VECTOR_MAX_DATA_ZOOM = 16;
+const CARTO_VECTOR_MAX_DATA_ZOOM = 14;
+
+/**
+ * deck.gl 9's globe couples zoom to latitude via `zoomAdjust` (see
+ * globe-viewport.js): `scale = 2^(zoom - zoomAdjust(lat))`, and its controller
+ * *lowers* the stored `zoom` as you pan toward the poles to keep the globe's
+ * on-screen size constant. Tile LOD, however, is selected from the raw `zoom`,
+ * so rotating toward a pole silently drops the LOD and thins out labels.
+ * Replicated from `@deck.gl/core` globe-viewport.js `zoomAdjust`.
+ */
+function zoomAdjust(latitude: number): number {
+  return Math.log2(Math.PI * Math.cos((latitude * Math.PI) / 180));
+}
+
+/**
+ * Latitude compensation to add to a globe tile layer's `zoomOffset`, so tile LOD
+ * tracks the *visual* (on-screen) scale instead of the latitude-adjusted mercator
+ * zoom. This cancels the pan-induced zoom drop, keeping tile detail/labels
+ * constant while rotating toward the poles.
+ */
+function globeLatitudeZoomCompensation(latitude?: number): number {
+  if (latitude == null || !Number.isFinite(latitude)) {
+    return 0;
+  }
+  // Clamp away from the poles to avoid log2(0) = -Infinity at |lat| = 90.
+  const clamped = Math.max(-85, Math.min(85, latitude));
+  return zoomAdjust(0) - zoomAdjust(clamped);
+}
 
 /**
  * Globe basemap tile provider.
@@ -423,7 +499,8 @@ export const getGlobeBaseLayers = ({
   mapboxApiAccessToken,
   globe,
   mapStyleType,
-  basemapProvider
+  basemapProvider,
+  latitude
 }: {
   mapboxApiAccessToken: string;
   globe: Globe;
@@ -433,11 +510,19 @@ export const getGlobeBaseLayers = ({
    * a token is present, otherwise falls back to the token-free `carto` tiles.
    */
   basemapProvider?: GlobeBasemapProvider;
+  /**
+   * Current camera center latitude. Used to keep tile LOD constant while rotating
+   * toward the poles (deck.gl 9 lowers the effective zoom near the poles). When
+   * omitted, no latitude compensation is applied (equator behavior).
+   */
+  latitude?: number;
 }): Layer[] => {
   const {config} = globe;
 
   const isSatellite = mapStyleType === 'satellite';
   const isSatelliteStreet = mapStyleType === 'satellite-street';
+
+  const latZoomCompensation = globeLatitudeZoomCompensation(latitude);
 
   // Fall back to the free CARTO tiles whenever no Mapbox token is available so
   // the globe basemap still renders (matches kepler's default token-free
@@ -490,6 +575,8 @@ export const getGlobeBaseLayers = ({
             ],
         minZoom: 0,
         maxZoom: useCarto ? 18 : 19,
+        zoomOffset: GLOBE_SATELLITE_ZOOM_OFFSET + latZoomCompensation,
+        extent: GLOBE_TILE_EXTENT,
         // Esri tiles are 256px; Mapbox @2x tiles are 512px.
         tileSize: useCarto ? 256 : 512 / devicePixelRatio,
         renderSubLayers: (props: any) => {
@@ -520,7 +607,13 @@ export const getGlobeBaseLayers = ({
           ? CARTO_VECTOR_TILE_URLS
           : `https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=${mapboxApiAccessToken}`,
         minZoom: 0,
-        maxZoom: 23,
+        // Overzoom past the source's native max instead of 404-ing on tiles that
+        // don't exist (which renders as empty rectangles at high zoom).
+        maxZoom: useCarto ? CARTO_VECTOR_MAX_DATA_ZOOM : MAPBOX_VECTOR_MAX_DATA_ZOOM,
+        zoomOffset:
+          (useCarto ? CARTO_GLOBE_VECTOR_ZOOM_OFFSET : MAPBOX_GLOBE_VECTOR_ZOOM_OFFSET) +
+          latZoomCompensation,
+        extent: GLOBE_TILE_EXTENT,
         binary: false,
         parameters: BASEMAP_MVT_PARAMETERS,
         loadOptions: useCarto

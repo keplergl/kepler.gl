@@ -59,7 +59,39 @@ import {editShader, insertBefore} from '@kepler.gl/deckgl-layers';
  *    the same data bounds, so that each vertex is projected onto the globe by
  *    deck.gl's `project_position_to_clipspace`. This is the same technique
  *    deck.gl's BitmapLayer uses to bend a flat image around the sphere.
+ *
+ * # 2D antimeridian / zoom-out fix
+ *
+ * `densityBounds` is also used in flat 2D (non-globe) mode: `_updateTextureRenderingBounds`
+ * frames the final render quad to the data extent, pinned to a single world
+ * copy, instead of deck.gl's screen-corner quad. This keeps the heatmap from
+ * disappearing or mirroring when zoomed out (multiple world copies) or panned
+ * across the antimeridian. See that method for details.
  */
+// Pack an array of [x,y,(z)] points into a flat Float32Array (matches deck.gl's
+// internal `packVertices`). Local copies so we don't depend on deck.gl's
+// internal, non-public heatmap-layer-utils module.
+function packVertices2(points: number[][]): Float32Array {
+  const out = new Float32Array(points.length * 2);
+  let i = 0;
+  for (const p of points) {
+    out[i++] = p[0] || 0;
+    out[i++] = p[1] || 0;
+  }
+  return out;
+}
+
+function packVertices3(points: number[][]): Float32Array {
+  const out = new Float32Array(points.length * 3);
+  let i = 0;
+  for (const p of points) {
+    out[i++] = p[0] || 0;
+    out[i++] = p[1] || 0;
+    out[i++] = p[2] || 0;
+  }
+  return out;
+}
+
 export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   static defaultProps = {
     ...DeckGLHeatmapLayer.defaultProps,
@@ -535,6 +567,137 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     } finally {
       this.props = originalProps;
     }
+  }
+
+  _updateTextureRenderingBounds() {
+    // Globe mode uses its own rendering path.
+    if (this._isGlobeHeatmap()) {
+      super._updateTextureRenderingBounds();
+      return;
+    }
+
+    const state = this.state as any;
+    const {triPositionBuffer, triTexCoordBuffer, normalizedCommonBounds} = state;
+    if (!triPositionBuffer || !triTexCoordBuffer || !normalizedCommonBounds) {
+      super._updateTextureRenderingBounds();
+      return;
+    }
+    const {viewport} = this.context;
+    const {densityBounds} = this.props as any;
+
+    // Fix for 2D (non-globe) mode: the heatmap disappears / jumps when the view
+    // is zoomed out (multiple world copies visible) and/or panned across the
+    // antimeridian.
+    //
+    // deck.gl frames the render quad to the four unprojected screen corners.
+    // When zoomed out those corners span multiple world copies and, once they
+    // step past ±180°, the single 4-vertex quad straddles the antimeridian seam,
+    // its GPU-projected vertices collapse, and nothing is drawn. Every other
+    // kepler layer avoids this because it renders its geometry once, pinned to a
+    // single world copy (deck.gl's `wrapLongitude`).
+    //
+    // To match that behaviour we stop tying the quad to the screen. Instead we
+    // render the quad over the DATA's own extent (`densityBounds`), pinned to a
+    // single world copy. The density texture already covers the data, so the
+    // heatmap renders at one stable basemap location like every other layer,
+    // regardless of zoom or how far the camera has panned.
+    if (densityBounds && densityBounds.length === 4) {
+      const corners = this._dataQuadCorners(densityBounds);
+      if (corners) {
+        // Pin the quad to the world copy nearest the camera so it stays on
+        // screen as the user pans across world copies — the same visual result
+        // as `wrapLongitude` gives point layers. The quad is narrow (data
+        // extent) so shifting it by whole world-widths never straddles the seam.
+        const centerLng = Number.isFinite((viewport as any)?.longitude)
+          ? (viewport as any).longitude
+          : 0;
+        const quadCenterLng = (corners[0][0] + corners[1][0]) / 2;
+        const copyShift = Math.round((centerLng - quadCenterLng) / 360) * 360;
+
+        const positions = corners.map((p: number[]) => [p[0] + copyShift, p[1], p[2]]);
+        triPositionBuffer.write(packVertices3(positions));
+
+        // Texture coordinates come from the data's canonical geography (no
+        // shift) projected against the framed common-space window.
+        const [xMin, yMin, xMax, yMax] = normalizedCommonBounds;
+        const textureBounds = corners.map((p: number[]) => {
+          const common = viewport.projectPosition(p);
+          return [(common[0] - xMin) / (xMax - xMin), (common[1] - yMin) / (yMax - yMin)];
+        });
+        triTexCoordBuffer.write(packVertices2(textureBounds));
+        return;
+      }
+    }
+
+    // Fallback (no data bounds): stock behaviour.
+    super._updateTextureRenderingBounds();
+  }
+
+  /**
+   * Build the four corners [TL, TR, BL, BR] of a flat quad covering the data
+   * extent (`densityBounds`), padded slightly so the heatmap's Gaussian falloff
+   * isn't clipped at the edges. Latitude is clamped to the Web Mercator limit.
+   * The quad is emitted in the canonical world copy (data longitudes as-is),
+   * matching how other layers pin geometry to a single basemap.
+   */
+  private _dataQuadCorners(
+    densityBounds: [number, number, number, number]
+  ): number[][] | null {
+    const [dW, dS, dE, dN] = densityBounds;
+    if (![dW, dS, dE, dN].every(Number.isFinite)) {
+      return null;
+    }
+    let w = Math.min(dW, dE);
+    let e = Math.max(dW, dE);
+    let s = Math.min(dS, dN);
+    let n = Math.max(dS, dN);
+
+    // Pad so the Gaussian falloff isn't clipped at the edges. Use a small
+    // fraction of the extent, capped, so wide/global datasets don't get a huge
+    // pad that pushes the quad past a full world width (which would make the
+    // texture wrap and mirror).
+    const lngSpan = e - w;
+    const latSpan = n - s;
+    const padLng = Math.min(10, Math.max(1, lngSpan * 0.05));
+    const padLat = Math.min(10, Math.max(1, latSpan * 0.05));
+    w -= padLng;
+    e += padLng;
+    s = Math.max(-85.051129, s - padLat);
+    n = Math.min(85.051129, n + padLat);
+
+    // A heatmap quad can never sensibly be wider than one world (360°). If the
+    // (padded) data extent spans the whole globe, clamp it to exactly [-180,
+    // 180] so the texture maps 1:1 across the world without wrapping/mirroring
+    // or leaking pixels past the antimeridian.
+    if (e - w >= 360) {
+      w = -180;
+      e = 180;
+    }
+
+    // [topLeft, topRight, bottomLeft, bottomRight] to match deck's corner order.
+    return [
+      [w, n, 0],
+      [e, n, 0],
+      [w, s, 0],
+      [e, s, 0]
+    ];
+  }
+
+  /**
+   * In 2D mode we position the flat heatmap quad ourselves (see
+   * `_updateTextureRenderingBounds`), pinning it to a single world copy. The GPU
+   * render shader must therefore NOT independently wrap longitude: with
+   * `wrapLongitude: true` (kepler's default) a full-world quad has its +180°
+   * edge wrapped back to -180°, collapsing / mirroring the quad and leaking
+   * pixels past the antimeridian. Force it off for our sublayers in 2D; globe
+   * mode is unaffected.
+   */
+  getSubLayerProps(sublayerProps?: any): any {
+    const props = super.getSubLayerProps(sublayerProps);
+    if (!this._isGlobeHeatmap()) {
+      return {...props, wrapLongitude: false};
+    }
+    return props;
   }
 
   renderLayers(): any {

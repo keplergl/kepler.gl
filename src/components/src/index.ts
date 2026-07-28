@@ -55,7 +55,12 @@ export {
   geoCoderPanelSelector
 } from './kepler-gl';
 export {default as LayerAnimationControllerFactory} from './layer-animation-controller';
-export {Attribution, default as MapContainerFactory} from './map-container';
+export {
+  Attribution,
+  renderBasemapAttribution,
+  dedupeBasemapAttributions,
+  default as MapContainerFactory
+} from './map-container';
 export {default as MapsLayoutFactory} from './maps-layout';
 export {default as LayoutSplitter, LayoutSplitterMode} from './common/layout-splitter';
 export {default as ModalContainerFactory} from './modal-container';
@@ -100,7 +105,6 @@ export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel
 export {default as SingleColorPalette} from './side-panel/layer-panel/single-color-palette';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 export {default as ScenegraphModelSelectorFactory} from './side-panel/layer-panel/scenegraph-model-selector';
-
 
 export {default as AddLayerButtonFactory} from './side-panel/layer-panel/add-layer-button';
 export * from './side-panel/layer-panel/channel-by-value-selector';
@@ -364,7 +368,14 @@ export {default as AnnotationManagerFactory} from './annotations/annotation-pane
 export {AnnotationOverlay} from './annotations';
 export {AnnotationNode} from './annotations';
 export {AnnotationText} from './annotations';
-export {makeMarker, movePoint, moveText, resizeCircle, isLeftOriented} from './annotations';
+export {
+  makeMarker,
+  movePoint,
+  moveText,
+  resizeCircle,
+  isLeftOriented,
+  isPointVisibleOnGlobe
+} from './annotations';
 export type {MapViewport, AnnotationMarker} from './annotations';
 export {default as AnnotationControlFactory} from './map/annotations/annotation-control';
 

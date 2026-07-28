@@ -1359,13 +1359,18 @@ export const GLOBE_MIN_ZOOM = 2;
 /**
  * Maximum zoom in globe mode.
  *
- * TODO: investigate further. Past this level the globe basemap breaks down in
- * deck.gl 9.x: the vector basemap tileset (mapbox-streets vector tiles) stops
- * loading / renders as empty rectangles, and there are interaction issues on
- * zoom in and panning (the camera drifts). Capping zoom here keeps the basemap
- * and interactions coherent until the underlying tile/controller issue is fixed.
+ * The previous "empty rectangles" at high zoom were caused by the vector basemap
+ * layer declaring `maxZoom: 23` while the raw tile endpoints only have data to
+ * z16 (mapbox-streets-v8) / z14 (CARTO) — deck then requested non-existent tiles
+ * that 404. That is fixed in `getGlobeBaseLayers` by setting `maxZoom` to each
+ * source's true data max so deck overzooms instead.
+ *
+ * The remaining practical ceiling is float32 precision: deck's globe places
+ * geometry in common space on a sphere of radius 256 with no fp64/relative-to-
+ * center trick, so beyond ~visual-zoom 16 (roughly this mapState zoom minus
+ * `zoomAdjust(lat)` ≈ 1.65 at the equator) geometry starts to jitter/drift.
  */
-export const GLOBE_MAX_ZOOM = 12;
+export const GLOBE_MAX_ZOOM = 16;
 
 /**
  * Maximum absolute center latitude allowed in globe mode. Constrains the camera
@@ -1391,6 +1396,7 @@ export type GlobeConfig = {
   surfaceColor: [number, number, number];
   surface: boolean;
   backgroundColor: [number, number, number];
+  stars: boolean;
 };
 
 export type Globe = {
@@ -1415,7 +1421,8 @@ export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
   surfaceColor: [9, 16, 29],
   // Color of the empty space rendered around the globe (deck.gl clear color).
   // Matches the previous hardcoded clear color [0.015, 0.035, 0.065] in 0-1 space.
-  backgroundColor: [4, 9, 17]
+  backgroundColor: [4, 9, 17],
+  stars: false
 };
 
 export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {

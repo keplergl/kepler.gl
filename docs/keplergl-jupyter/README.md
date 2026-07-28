@@ -1,5 +1,15 @@
 # Jupyter Notebook
 
+> **Upgrading from v0.3.x?**
+> `keplergl` v0.4 switched to [anywidget](https://anywidget.dev/) — no JupyterLab extension install is needed anymore. Just `pip install keplergl` and go.
+>
+> If you are pinned to **v0.3.x**, the old setup was:
+> ```bash
+> pip install "keplergl<0.4"
+> jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupyter
+> ```
+> JupyterLab 1–3 with Node > 10 was required. The old docs are preserved in [git history](https://github.com/keplergl/kepler.gl/blob/a54aef56/docs/keplergl-jupyter/README.md).
+
 ## kepler.gl for Jupyter User Guide
 
 ### Table of contents
@@ -21,7 +31,6 @@
 - [6. Match config with data](#6-match-config-with-data)
 - [7. Save Map](#7-save-map)
   - [`.save_to_html()`](#save_to_html)
-  - [`._repr_html_()`](#_repr_html_)
 - [Demo Notebooks](#demo-notebooks)
 - [FAQ & Troubleshoot](#faq--troubleshoot)
 
@@ -30,38 +39,15 @@
 
 ### Prerequisites
 
-- Python >= 3
-- ipywidgets >= 7.0.0
+- Python >= 3.9
+- JupyterLab >= 4.0 or Notebook >= 7.0
 
 To install use pip:
 ```bash
-$ pip install keplergl
+pip install keplergl
 ```
 
-If you're on Mac, used `pip install`, and you're running Notebook 5.3 and above, you don't need to run the following:
-
-```bash
-$ jupyter nbextension install --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
-$ jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
-```
-
-If you are using Jupyter Lab, you will also need to install the JupyterLab extension. This require [node](https://nodejs.org/en/download/package-manager/#macos) `> 10.15.0`
-
-If you use [Homebrew](https://brew.sh/) on Mac:
-```bash
-$ brew install node@10
-```
-
-Then install jupyter labextension.
-
-```bash
-$ jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupyter
-```
-
-### Prerequisites for JupyterLab
-- Node > 10.15.0
-- Python 3
-- JupyterLab>=1.0.0
+No additional JupyterLab extension installation is required. The widget uses [anywidget](https://anywidget.dev/) which works out of the box in JupyterLab, classic Notebook, and VS Code Jupyter.
 
 ## 1. Load keplergl map
 ### `KeplerGl()`
@@ -75,17 +61,29 @@ $ jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupy
 
       Datasets as a dictionary, key is the name of the dataset. Read more on [Accepted data format][data_format]
 
-  - __`use_arrow`__ `bool` _optional_ default: `False`
-
-      Allow load and render data faster using GeoArrow
-
   - __`config`__ `dict` _optional_
 
       Map config as a dictionary. The `dataId` in the layer and filter settings should match the `name` of the dataset they are created under
 
-  - __`show_docs`__ `bool` _optional_
+  - __`use_arrow`__ `bool` _optional_ default: `False`
 
-      By default, the User Guide URL (<https://docs.kepler.gl/docs/keplergl-jupyter>) will be printed when a map is created. To hide the User Guide URL, set `show_docs=False`.
+      Serialize DataFrames and GeoDataFrames as Arrow IPC for better performance on large datasets
+
+  - __`mapbox_token`__ `str` _optional_ default: `""`
+
+      Mapbox API access token. Required for Mapbox basemap styles (e.g. "Dark", "Muted Light"). Leave empty to use free MapLibre styles.
+
+  - __`theme`__ `str` _optional_ default: `""`
+
+      UI theme. Accepted values: `"light"`, `"dark"`, `"base"`, or `""` (default dark theme).
+
+  - __`app_name`__ `str` _optional_ default: `"kepler.gl"`
+
+      Application name shown in the side panel header and used as the HTML `<title>` when exporting.
+
+  - __`show_docs`__ `bool` _optional_ default: `False`
+
+      Deprecated, kept for backwards compatibility. Has no effect.
 
 The following command will load kepler.gl widget below a cell.
 **The map object created here is `map_1` it will be used throughout the code example in this doc.**
@@ -117,7 +115,7 @@ map_2
 - Inputs
     - __`data`__ _required_ CSV, GeoJSON or DataFrame. Read more on [Accepted data format][data_format]
     - __`name`__ _required_ Name of the data entry.
-    - __`use_arrow`__ _optional_ Allow load and render data faster using GeoArrow.
+    - __`use_arrow`__ _optional_ Serialize this dataset as Arrow IPC. Overrides the widget-level `use_arrow` setting for this call.
 
 `name` of the dataset will be the saved to the `dataId` property of each `layer`, `filter` and `interactionConfig` in the config.
 
@@ -224,7 +222,7 @@ w1.add_data(data=df, name='cities')
 ```
 
 ### `GeoDataFrame`
-kepler.gl accepts [geopandas.GeoDataFrame][geo_data_frame], it automatically converts the current `geometry` column from shapely to wkt string and re-projects geometries to latitude and longitude (EPSG:4326) if the active `geometry` column is in a different projection.
+kepler.gl accepts [geopandas.GeoDataFrame][geo_data_frame]. Geometries are serialized using GeoArrow and re-projected to latitude and longitude (EPSG:4326) if the active `geometry` column is in a different projection.
 ```python
 url = 'http://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_040_00_500k.json'
 country_gdf = geopandas.read_file(url)
@@ -323,10 +321,14 @@ When you click in the map and change settings, config is saved to widget state. 
 ### `.save_to_html()`
 
 - input
-  - **`data`**: _optional_  A data dictionary {"name": data}, if not provided, will use current map data
-  - **`config`**: _optional_ map config dictionary, if not provided, will use current map config
   - **`file_name`**: _optional_ the html file name, default is `keplergl_map.html`
-  - **`read_only`**: _optional_ if `read_only` is `True`, hide side panel to disable map customization
+  - **`data`**: _optional_  A data dictionary `{"name": data}`, if not provided, will use current map data
+  - **`config`**: _optional_ map config dictionary, if not provided, will use current map config
+  - **`read_only`**: _optional_ if `True`, hide side panel to disable map customization
+  - **`center_map`**: _optional_ default `True` — fit map bounds to the data on export
+  - **`mapbox_token`**: _optional_ Mapbox access token for Mapbox basemap styles. Falls back to the token set on the widget.
+  - **`app_name`**: _optional_ overrides the widget-level `app_name` for this export
+  - **`theme`**: _optional_ overrides the widget-level `theme` for this export
 
 You can export your current map as an interactive html file.
 
@@ -339,94 +341,37 @@ map_1.save_to_html(data={'data_1': df}, config=config, file_name='first_map.html
 
 # this will save map with the interaction panel disabled
 map_1.save_to_html(file_name='first_map.html', read_only=True)
-```
 
-### `._repr_html_()`
-
-- input
-  - **`data`**: _optional_  A data dictionary {"name": data}, if not provided, will use current map data
-  - **`config`**: _optional_ map config dictionary, if not provided, will use current map config
-  - **`read_only`**: _optional_ if `read_only` is `True`, hide side panel to disable map customization
-
-You can also directly serve the current map via a flask app. To do that return kepler’s map HTML representation. Here is an example on how to do that:
-
-```python
-from flask import Flask
-
-app = Flask(__name__)
-
-@app.route('/')
-def index():
-    return map_1._repr_html_()
-
-if __name__ == '__main__':
-    app.run(debug=True)
+# export with a custom theme and app name
+map_1.save_to_html(file_name='light_map.html', theme='light', app_name='My Map')
 ```
 
 # Demo Notebooks
-- [Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Load%20kepler.gl.ipynb): Load kepler.gl widget, add data and config
-- [Geometry as String](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Geometry%20as%20String.ipynb): Embed Polygon geometries as `GeoJson` and `WKT` inside a `CSV`
-- [GeoJSON](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/GeoJSON.ipynb): Load GeoJSON to kepler.gl
-- [DataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/DataFrame.ipynb): Load DataFrame to kepler.gl
-- [GeoDataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/GeoDataFrame.ipynb): Load GeoDataFrame to kepler.gl
+- [Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/Load%20kepler.gl.ipynb): Load kepler.gl widget, add data and config
+- [GeoJSON](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/GeoJSON.ipynb): Load GeoJSON to kepler.gl
+- [DataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/DataFrame.ipynb): Load DataFrame to kepler.gl
+- [GeoDataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/GeoDataFrame.ipynb): Load GeoDataFrame to kepler.gl
+- [GeoDataFrame with Datetime](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/GeoDataFrame%20with%20Datetime.ipynb): Load GeoDataFrame with datetime columns
+- [Empty GeoDataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/Empty%20GeoDataFrame.ipynb): Handle empty GeoDataFrames
+- [Theme and App Name](https://github.com/keplergl/kepler.gl/blob/master/bindings/python/notebooks/Theme%20and%20App%20Name.ipynb): Customize theme and app name
 
 # FAQ & Troubleshoot
 
 #### 1. What about Microsoft Windows?
-keplergl is currently only published to PyPI, and unfortunately I use a Mac. If you encounter errors installing it on windows, [this issue](https://github.com/keplergl/kepler.gl/issues/557) might shed some light. Follow this issue for [conda](https://github.com/keplergl/kepler.gl/issues/646) support.
+keplergl is published to PyPI and works on Windows. If you encounter install issues, check [this issue](https://github.com/keplergl/kepler.gl/issues/557).
 
-#### 2. Install keplergl-jupyter on Jupyter Lab failed?
+#### 2. The widget doesn't display in JupyterLab / Notebook
 
-Make sure you are using node 8.15.0. and you have installed `@jupyter-widgets/jupyterlab-manager`. Depends on your JupyterLab version. You might need to install the specific version of [jupyterlab-manager](https://github.com/jupyter-widgets/ipywidgets/tree/master/packages/jupyterlab-manager). with `jupyter labextension install @jupyter-widgets/jupyterlab-manager@0.31`. When use it in Jupyter lab, keplergl is only supported in JupyterLab > 1.0 and Python 3.
+Make sure you are using JupyterLab >= 4.0 or Notebook >= 7.0. The new `keplergl` package uses [anywidget](https://anywidget.dev/) and does **not** require installing a separate JupyterLab extension — no `jupyter labextension install` step is needed.
 
-Run `jupyter labextension install keplergl-jupyter --debug` and copy console output before creating an issue.
+If the widget shows as a plain text object (`KeplerGl(...)`) instead of rendering, try restarting the kernel and re-running the cell.
 
-If you are running `install` and `uninstall` several times. You should run.
-
-```
-jupyter lab clean
-jupyter lab build
-```
-
-#### 2.1 JavaScript heap out of memory when installing lab extension
-If you see this error during install labextension
-
-```bash
-$ FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
-```
-
-run
-
-```bash
-$ export NODE_OPTIONS=--max-old-space-size=4096
-```
-
-#### 3. Is my lab extension successfully installed?
-Run `jupyter labextension list` You should see below. (Version may vary)
-
-```bash
-JupyterLab v1.1.4
-Known labextensions:
-   app dir: /Users/xxx/jupyter-python3/ENV3/share/jupyter/lab
-        @jupyter-widgets/jupyterlab-manager v1.0.2  enabled  OK
-        keplergl-jupyter v0.1.0  enabled  OK
-```
-
-#### 4. What's your python and node env
-
-Python
-```text
-python==3.7.4
-notebook==6.0.3
-jupyterlab==2.1.2
-ipywidgets==7.5.1
-```
-
-Node (Only for JupyterLab)
+#### 3. What's your python env
 
 ```text
-node==8.15.0
-yarn==1.7.0
+python >= 3.9
+jupyterlab >= 4.0  (or notebook >= 7.0)
+keplergl >= 0.4.0
 ```
 
 [jupyter_widget]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_widget.png
@@ -447,4 +392,3 @@ yarn==1.7.0
 
 [match-config-w-data]: #6-match-config-with-data
 [data_format]: #3-data-format
-

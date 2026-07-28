@@ -617,7 +617,10 @@ export const LAYER_TYPES = keyMirror({
 
 export const EDITOR_AVAILABLE_LAYERS: string[] = [
   LAYER_TYPES.point,
+  LAYER_TYPES.icon,
+  LAYER_TYPES.grid,
   LAYER_TYPES.hexagon,
+  LAYER_TYPES.cluster,
   LAYER_TYPES.arc,
   LAYER_TYPES.line,
   LAYER_TYPES.hexagonId,

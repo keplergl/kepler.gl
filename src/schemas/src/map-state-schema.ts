@@ -24,8 +24,7 @@ export const propertiesV1 = {
   mapSplitMode: null,
   swipeComparePercentage: null,
   // Persist the current view mode (2D / 3D / Globe) and the full globe config
-  // (colors, toggles, background) so globe maps round-trip through save/load,
-  // matching studio-monorepo's persisted map state.
+  // (colors, toggles, background) so globe maps round-trip through save/load.
   mapViewMode: null,
   globe: null
 };

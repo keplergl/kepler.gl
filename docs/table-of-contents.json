@@ -116,7 +116,7 @@
       ]
     },
     {
-      "title": "kepler.gl-jupyter",
+      "title": "Python Bindings",
       "entries": [
         {"entry": "docs/keplergl-jupyter/user-guide"}
       ]

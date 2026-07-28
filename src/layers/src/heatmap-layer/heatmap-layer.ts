@@ -642,7 +642,7 @@ class HeatmapLayer extends Layer {
         debounceTimeout: 0,
         // globe-mode extensions
         globeMode,
-        densityBounds: globeMode ? densityBounds : null
+        densityBounds: densityBounds && densityBounds.length === 4 ? densityBounds : null
       })
     ];
   }

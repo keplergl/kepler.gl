@@ -46,6 +46,7 @@ export type SavedMapState = {
       surface: boolean;
       surfaceColor: [number, number, number];
       backgroundColor: [number, number, number];
+      stars?: boolean;
     };
   };
 };

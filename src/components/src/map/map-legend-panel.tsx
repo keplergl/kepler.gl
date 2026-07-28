@@ -19,7 +19,6 @@ import {CSS} from '@dnd-kit/utilities';
 import {useMergeRefs} from '@floating-ui/react';
 
 import {ActionHandler, setMapControlSettings, toggleSplitMapViewport} from '@kepler.gl/actions';
-import {MapSplitMode} from '@kepler.gl/constants';
 import {Layer} from '@kepler.gl/layers';
 import {breakPointValues} from '@kepler.gl/styles';
 import {LayerVisConfig, LayerOrder, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
@@ -370,12 +369,10 @@ const MapLegendPanelComponent = ({
   isSplit,
   splitMaps,
   onToggleLayerForMap,
-  mapIndex,
   MapControlTooltip,
   MapControlPanel,
   MapLegend
 }: MapLegendPanelProps & MapLegendPanelComponents) => {
-  const isSwipeMode = mapState?.mapSplitMode === MapSplitMode.SWIPE_COMPARE;
   const isSidePanelShown = Boolean(activeSidePanel);
   const settings = mapControls?.mapLegend?.settings;
 
@@ -398,12 +395,9 @@ const MapLegendPanelComponent = ({
     [onToggleMapControl]
   );
 
-  if (isSplit && !isSwipeMode && mapIndex !== 0) {
-    return null;
-  }
-  if (isSwipeMode && mapIndex !== 1) {
-    return null;
-  }
+  // In split view the map controls (and therefore this legend) are only
+  // rendered once, on the right-side / primary map. That gating happens in
+  // MapContainer, so no per-index suppression is needed here anymore.
 
   if (!mapLegend.show) {
     return null;

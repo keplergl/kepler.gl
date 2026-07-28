@@ -51,9 +51,8 @@ const SliderWrapper = styled.div<{$enabled?: boolean}>`
 
 // Slider rows (Day/Night, Sun Azimuth) put the label and the slider side by side.
 // Give the label only the width its (short) text needs so the slider gets the
-// rest of the row, matching studio-monorepo's usable slider width. The child
-// indent is kept small (~half an eye-icon width) so the sub-row eye icon lines
-// up close to the parent (atmosphere) row like it does in studio, rather than
+// rest of the row. The child indent is kept small (~half an eye-icon width) so the
+// sub-row eye icon lines up close to the parent (atmosphere) row, rather than
 // being pushed ~1.5 icon widths to the right.
 const SliderRow = styled(StyledConfigRow)`
   align-items: center;
@@ -341,6 +340,24 @@ function GlobeConfigPanelFactory(
               extraMarginRight={false}
               disabled={false}
             />
+          </StyledConfigRow>
+
+          {/* Stars (rendered behind the globe in 3D space) */}
+          <StyledConfigRow>
+            <PanelLabelWrapper>
+              <PanelHeaderAction
+                className="layer-group__visibility-toggle"
+                id="globe-stars-toggle"
+                tooltip={globeConfig.stars ? 'tooltip.hide' : 'tooltip.show'}
+                onClick={() => onToggle('stars')}
+                IconComponent={globeConfig.stars ? EyeSeen : EyeUnseen}
+                active={globeConfig.stars}
+                flush
+              />
+              <LayerLabel $active={globeConfig.stars}>
+                <FormattedMessage id="mapLayers.stars" />
+              </LayerLabel>
+            </PanelLabelWrapper>
           </StyledConfigRow>
         </PanelContent>
       </StyledGlobeConfigPanel>
