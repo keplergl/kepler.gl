@@ -39,3 +39,5 @@ The agent will generate a Python script and run it, producing a standalone HTML 
 ## Versioning
 
 The skill version is tracked in [`plugin.json`](plugin.json). Releases use the tag pattern `skill-v*` (e.g. `skill-v1.0.0`).
+
+> **Note:** The download links above will return 404 until the first skill release is published. To publish, push a `skill-v*` tag (e.g. `git tag skill-v0.0.1 && git push origin skill-v0.0.1`) which triggers the `.github/workflows/publish-skill.yml` workflow to build and attach the zip packages to the GitHub release.

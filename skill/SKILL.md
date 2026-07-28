@@ -13,7 +13,7 @@ Use the `keplergl` Python package to create standalone, interactive HTML map fil
 pip install keplergl
 ```
 
-Requires `kepler.gl-jupyter >= 0.4.0`. Earlier versions use a different widget/serialization API and the examples in this skill will not work. Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are installed automatically.
+Requires `keplergl >= 0.4.0`. Earlier versions use a different widget/serialization API and the examples in this skill will not work. Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are installed automatically.
 
 ## Instructions
 
@@ -39,19 +39,20 @@ Requires `kepler.gl-jupyter >= 0.4.0`. Earlier versions use a different widget/s
 | `theme` | str | "" | `"light"`, `"dark"`, `"base"`, or `""` (default dark) |
 | `app_name` | str | "kepler.gl" | App name in header and HTML title |
 
-### `.add_data(data, name)`
+### `.add_data(data, name="data", use_arrow=None)`
 
 - `data`: DataFrame, GeoDataFrame, CSV string, GeoJSON dict, or GeoJSON string
-- `name`: Dataset identifier — must match `dataId` in config if using a config
+- `name`: Dataset identifier (default: `"data"`) — must match `dataId` in config if using a config
+- `use_arrow`: If `True`, serialize this DataFrame as Arrow IPC. If `None` (default), falls back to the widget-level `use_arrow` setting. Has no effect on GeoDataFrames.
 
 ### `.save_to_html(file_name="keplergl_map.html", data=None, config=None, read_only=False, center_map=True, mapbox_token="", json_encoder=str, app_name=None, theme=None)`
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `file_name` | str | required | Output file path |
+| `file_name` | str | `"keplergl_map.html"` | Output file path |
 | `data` | dict | None | Data override for export (uses current widget data when None) |
 | `config` | dict | None | Config override for export (uses current widget config when None) |
-| `read_only` | bool | True | True = hide side panel |
+| `read_only` | bool | False | True = hide side panel |
 | `center_map` | bool | True | True = auto-fit map to data bounds |
 | `mapbox_token` | str | "" | Mapbox token override for export |
 | `json_encoder` | callable | str | Fallback encoder for non-JSON-native values in GeoDataFrames |

@@ -1,7 +1,7 @@
 {
   "name": "kepler.gl",
   "displayName": "kepler.gl Map",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Create interactive map visualizations and export to standalone HTML using the keplergl Python package.",
   "publisher": "keplergl",
   "icon": "agents/assets/icon-large.svg",
