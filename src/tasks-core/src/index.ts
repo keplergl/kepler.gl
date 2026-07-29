@@ -132,9 +132,10 @@ function wrapWithInstrumentation(
   // so the binding is fully initialised before any closure body executes.
   const self: TaskDescriptor = buildTask(
     payload,
-    (_runner, resolve, reject, ctx) => {
+    (runner, resolve, reject, ctx) => {
       instrumentHook('start', self, payload);
-      return effect(
+      return runner(
+        effect,
         value => {
           instrumentHook('success', self, value);
           return resolve(value);
