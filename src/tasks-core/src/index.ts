@@ -199,7 +199,7 @@ export function fromCallback(
  * `(arg, resolve, reject)` parameters.
  */
 export function taskCreator(
-  fn: (arg?: any, resolve?: ResolveFn, reject?: RejectFn) => any,
+  fn: (arg: any, resolve: ResolveFn, reject: RejectFn) => any,
   label: string
 ): TaskFactory {
   return Object.assign(
