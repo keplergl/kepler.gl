@@ -5,7 +5,7 @@ This guide explains how to set up kepler.gl for Jupyter for local development.
 ## Prerequisites
 
 - Python >= 3.9
-- Node.js (for building the frontend)
+- Node.js >= 20 (for building the frontend)
 - JupyterLab >= 4.0 or Notebook >= 7.0
 
 ## Installation

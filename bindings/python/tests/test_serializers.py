@@ -467,3 +467,68 @@ class TestEdgeCases:
         result = serialize_dataset(df, "mixed")
         assert result["format"] == "df"
         assert len(result["data"]["columns"]) == 4
+
+    def test_serialize_geojson_string_is_detected(self):
+        """A valid GeoJSON string should be routed to geojson format, not csv."""
+        import json
+        geojson_str = json.dumps({
+            "type": "FeatureCollection",
+            "features": [],
+        })
+        result = serialize_dataset(geojson_str, "geo")
+        assert result["format"] == "geojson"
+        assert result["data"]["type"] == "FeatureCollection"
+
+    def test_serialize_plain_csv_string_is_csv(self):
+        """A plain CSV string should not be confused with GeoJSON."""
+        csv = "lat,lng\n37.77,-122.42"
+        result = serialize_dataset(csv, "csv")
+        assert result["format"] == "csv"
+        assert result["data"] == csv
+
+    def test_serialize_dataframe_with_nan(self):
+        """NaN values in a DataFrame should not raise during serialization,
+        and the row containing NaN should be preserved (not dropped)."""
+        import math
+        df = pd.DataFrame({'a': [1.0, float('nan'), 3.0]})
+        result = serialize_dataset(df, "nan_test")
+        assert result["format"] == "df"
+        rows = result["data"]["data"]
+        assert len(rows) == 3
+        assert rows[0][0] == pytest.approx(1.0)
+        assert math.isnan(rows[1][0])
+        assert rows[2][0] == pytest.approx(3.0)
+
+    def test_serialize_dataframe_arrow_with_nan(self):
+        """Arrow serialization of a DataFrame containing NaN should not raise,
+        and NaN should round-trip as null in Arrow."""
+        import base64
+        import pyarrow as pa
+        df = pd.DataFrame({'a': [1.0, float('nan'), 3.0]})
+        result = serialize_dataset(df, "nan_arrow", use_arrow=True)
+        assert result["format"] == "arrow"
+        table = pa.ipc.open_stream(base64.b64decode(result["data"])).read_all()
+        assert table.num_rows == 3
+        values = table.column('a').to_pylist()
+        assert values[0] == pytest.approx(1.0)
+        assert values[1] is None  # NaN becomes null in Arrow
+        assert values[2] == pytest.approx(3.0)
+
+    def test_data_to_json_returns_all_datasets(self, sample_df, sample_gdf):
+        """data_to_json should serialize every dataset in the dict."""
+        from keplergl.serializers import data_to_json
+
+        class FakeWidget:
+            _use_arrow = False
+
+        result = data_to_json({"tab": sample_df, "geo": sample_gdf}, FakeWidget())
+        assert "tab" in result
+        assert "geo" in result
+        assert result["tab"]["format"] == "df"
+        assert result["geo"]["format"] == "geoarrow"
+
+    def test_data_from_json_passthrough(self, sample_df):
+        """data_from_json is a passthrough — returned value equals input."""
+        from keplergl.serializers import data_from_json
+        payload = {"foo": {"id": "foo", "format": "csv", "data": "a,b\n1,2"}}
+        assert data_from_json(payload, None) is payload
