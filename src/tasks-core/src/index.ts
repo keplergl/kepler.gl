@@ -62,7 +62,7 @@ type InstrumentHook = (
 // Instrumentation (test hook)
 // ---------------------------------------------------------------------------
 
-let instrumentHook: InstrumentHook = () => {};
+let instrumentHook: InstrumentHook = (_event, _task, _value) => undefined;
 
 /**
  * Override the instrumentation hook — used in tests to observe task
@@ -128,9 +128,11 @@ function wrapWithInstrumentation(
   payload: any,
   label: string
 ): TaskDescriptor {
-  let self: TaskDescriptor;
-  const traced = Object.assign(
-    (resolve: ResolveFn, reject: RejectFn, ctx?: ProgressCtx) => {
+  // `self` is const; the closures below only run after buildTask() returns,
+  // so the binding is fully initialised before any closure body executes.
+  const self: TaskDescriptor = buildTask(
+    payload,
+    (_runner, resolve, reject, ctx) => {
       instrumentHook('start', self, payload);
       return effect(
         value => {
@@ -144,11 +146,6 @@ function wrapWithInstrumentation(
         ctx
       );
     },
-    {payload, label}
-  );
-  self = buildTask(
-    payload,
-    (runner, resolve, reject, ctx) => runner(traced, resolve, reject, ctx),
     label
   );
   return self;
@@ -201,7 +198,10 @@ export function fromCallback(
  * Create a task factory from a function that accepts explicit
  * `(arg, resolve, reject)` parameters.
  */
-export function taskCreator(fn: Function, label: string): TaskFactory {
+export function taskCreator(
+  fn: (arg?: any, resolve?: ResolveFn, reject?: RejectFn) => any,
+  label: string
+): TaskFactory {
   return Object.assign(
     (arg?: any) =>
       wrapWithInstrumentation(
