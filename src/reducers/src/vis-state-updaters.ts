@@ -12,7 +12,7 @@ import isEqual from 'lodash/isEqual';
 import pick from 'lodash/pick';
 import uniq from 'lodash/uniq';
 import xor from 'lodash/xor';
-import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
+import Task, {disableStackCapturing, withTask} from '@kepler.gl/tasks';
 // Tasks
 import {
   DELAY_TASK,
@@ -190,8 +190,7 @@ import {PayloadAction} from '@reduxjs/toolkit';
 
 import {findMapBounds} from './data-utils';
 
-// react-palm
-// disable capture exception for react-palm call to withTask
+// disable stack capture for withTask calls that happen outside strict reducer context
 disableStackCapturing();
 
 /**

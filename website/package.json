@@ -23,7 +23,6 @@
     "prop-types": "^15.6.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-palm": "^3.1.2",
     "react-redux": "^9.1.0",
     "react-router-dom": "^6.30.0",
     "react-waypoint": "^9.0.1",

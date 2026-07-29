@@ -202,7 +202,7 @@ Type: [Object][164]
 // store.js
 import {handleActions} from 'redux-actions';
 import {createStore, combineReducers, applyMiddleware} from 'redux';
-import {taskMiddleware} from 'react-palm/tasks';
+import {taskMiddleware} from '@kepler.gl/tasks';
 
 import keplerGlReducer from '@kepler.gl/reducers';
 import {ActionTypes} from '@kepler.gl/actions';

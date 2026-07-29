@@ -28,8 +28,7 @@
     "dist"
   ],
   "dependencies": {
-    "@kepler.gl/processors": "3.3.0-alpha.4",
-    "react-palm": "^3.3.8"
+    "@kepler.gl/processors": "3.3.0-alpha.4"
   },
   "nyc": {
     "sourceMap": false,

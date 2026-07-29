@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {drainTasksForTesting, succeedTaskWithValues, errorTaskInTest} from 'react-palm/tasks';
+import {drainTasksForTesting, succeedTaskWithValues, errorTaskInTest} from '@kepler.gl/tasks';
 
 import {
   mapStyleReducer as reducer,

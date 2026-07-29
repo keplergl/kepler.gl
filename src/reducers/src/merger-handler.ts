@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {getGlobalTaskQueue} from 'react-palm/tasks';
+import {getGlobalTaskQueue} from '@kepler.gl/tasks';
 import {isObject} from '@kepler.gl/utils';
 import {toArray} from '@kepler.gl/common-utils';
 import {ValueOf} from '@kepler.gl/types';
