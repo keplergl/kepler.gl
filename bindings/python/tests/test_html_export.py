@@ -14,8 +14,13 @@ from keplergl import KeplerGl
 from keplergl._html_export import (
     _dataset_to_csv,
     _dataset_to_geojson,
+    _geojson_dataset_names,
+    _fixup_geojson_columns,
     _serialize_datasets_for_html,
     export_map_html,
+    ES_MODULE_SHIMS_VERSION,
+    REACT_VERSION,
+    REDUX_VERSION,
 )
 
 
@@ -229,6 +234,97 @@ class TestSerializeDatasetsForHtml:
         assert "2024" in js
 
 
+class TestGeojsonDatasetNames:
+    """Tests for _geojson_dataset_names."""
+
+    def test_identifies_geodataframe(self, sample_gdf):
+        names = _geojson_dataset_names({"geo": sample_gdf})
+        assert "geo" in names
+
+    def test_identifies_geojson_dict(self):
+        geojson = {"type": "FeatureCollection", "features": []}
+        names = _geojson_dataset_names({"fc": geojson})
+        assert "fc" in names
+
+    def test_excludes_dataframe(self, sample_df):
+        names = _geojson_dataset_names({"df": sample_df})
+        assert "df" not in names
+
+    def test_excludes_csv_string(self):
+        names = _geojson_dataset_names({"csv": "a,b\n1,2"})
+        assert "csv" not in names
+
+    def test_mixed_datasets(self, sample_df, sample_gdf):
+        names = _geojson_dataset_names({"tab": sample_df, "geo": sample_gdf})
+        assert "geo" in names
+        assert "tab" not in names
+
+    def test_empty_dict(self):
+        assert _geojson_dataset_names({}) == set()
+
+
+class TestFixupGeojsonColumns:
+    """Tests for _fixup_geojson_columns."""
+
+    def _layer(self, data_id, geojson_col="geometry"):
+        return {
+            "id": "layer1",
+            "config": {
+                "dataId": data_id,
+                "columns": {"geojson": geojson_col},
+            },
+        }
+
+    def _config(self, layers):
+        return {"config": {"visState": {"layers": layers}}}
+
+    def test_patches_geometry_column(self):
+        config = self._config([self._layer("geo")])
+        result = _fixup_geojson_columns(config, {"geo"})
+        col = result["config"]["visState"]["layers"][0]["config"]["columns"]["geojson"]
+        assert col == "_geojson"
+
+    def test_skips_non_geojson_dataset(self, sample_df):
+        config = self._config([self._layer("tabular")])
+        result = _fixup_geojson_columns(config, {"geo"})
+        col = result["config"]["visState"]["layers"][0]["config"]["columns"]["geojson"]
+        assert col == "geometry"
+
+    def test_skips_already_correct_column(self):
+        config = self._config([self._layer("geo", "_geojson")])
+        result = _fixup_geojson_columns(config, {"geo"})
+        col = result["config"]["visState"]["layers"][0]["config"]["columns"]["geojson"]
+        assert col == "_geojson"
+
+    def test_returns_none_config_unchanged(self):
+        assert _fixup_geojson_columns(None, {"geo"}) is None
+
+    def test_returns_empty_config_unchanged(self):
+        result = _fixup_geojson_columns({}, {"geo"})
+        assert result == {}
+
+    def test_returns_config_unchanged_for_empty_geojson_names(self):
+        config = self._config([self._layer("geo")])
+        result = _fixup_geojson_columns(config, set())
+        col = result["config"]["visState"]["layers"][0]["config"]["columns"]["geojson"]
+        assert col == "geometry"
+
+    def test_does_not_mutate_original(self):
+        config = self._config([self._layer("geo")])
+        original_col = config["config"]["visState"]["layers"][0]["config"]["columns"]["geojson"]
+        _fixup_geojson_columns(config, {"geo"})
+        assert config["config"]["visState"]["layers"][0]["config"]["columns"]["geojson"] == original_col
+
+    def test_multiple_layers(self):
+        layers = [self._layer("geo"), self._layer("other", "geometry")]
+        config = self._config(layers)
+        result = _fixup_geojson_columns(config, {"geo"})
+        patched = result["config"]["visState"]["layers"][0]["config"]["columns"]["geojson"]
+        skipped = result["config"]["visState"]["layers"][1]["config"]["columns"]["geojson"]
+        assert patched == "_geojson"
+        assert skipped == "geometry"
+
+
 class TestExportMapHtml:
     """Tests for the full export_map_html function."""
 
@@ -343,6 +439,61 @@ class TestExportMapHtml:
     def test_default_app_name(self, sample_df):
         html = export_map_html(data={"d": sample_df}, config={})
         assert "<title>kepler.gl embedded map</title>" in html
+
+    def test_esm_shims_version_in_html(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={})
+        assert ES_MODULE_SHIMS_VERSION in html
+        assert f"es-module-shims@{ES_MODULE_SHIMS_VERSION}" in html
+
+    def test_react_version_in_importmap(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={})
+        assert f"esm.sh/react@{REACT_VERSION}" in html
+
+    def test_redux_version_in_importmap(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={})
+        assert f"esm.sh/redux@{REDUX_VERSION}" in html
+
+    def test_module_shim_bootstrap_type(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={})
+        assert 'type="text/kepler-bootstrap"' in html
+        assert 'type="module-shim"' in html
+
+    def test_app_name_html_escaped_in_title(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={}, app_name="<My & Map>")
+        assert "<title>&lt;My &amp; Map&gt; embedded map</title>" in html
+
+    def test_no_datasets(self):
+        html = export_map_html(data={}, config={})
+        assert "<!DOCTYPE html>" in html
+        assert "var datasets = [];" in html
+
+    def test_fixup_geojson_columns_applied_in_export(self):
+        """GeoDataFrame export should patch geometry column ref to _geojson."""
+        gdf = gpd.GeoDataFrame(
+            {"name": ["SF"]},
+            geometry=[Point(-122.4, 37.8)],
+            crs="EPSG:4326",
+        )
+        config = {
+            "config": {"visState": {"layers": [{
+                "id": "l1",
+                "config": {
+                    "dataId": "places",
+                    "columns": {"geojson": "geometry"},
+                },
+            }]}}
+        }
+        html = export_map_html(data={"places": gdf}, config=config)
+        assert '"_geojson"' in html
+        assert '"geometry"' not in html.split("var config =")[1]
+
+    def test_center_map_false_by_default(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={})
+        assert "centerMap: false" in html
+
+    def test_empty_mapbox_token(self, sample_df):
+        html = export_map_html(data={"d": sample_df}, config={}, mapbox_token="")
+        assert 'MAPBOX_TOKEN = ""' in html
 
 
 class TestSaveToHtml:
@@ -480,3 +631,30 @@ class TestSaveToHtml:
             content = f.read()
         assert "<title>Override embedded map</title>" in content
         assert '"Override"' in content
+
+    def test_center_map_default_true_in_save_to_html(self, sample_df, tmp_path):
+        """save_to_html defaults center_map=True (unlike export_map_html's False)."""
+        widget = KeplerGl(data={"d": sample_df})
+        out = str(tmp_path / "map.html")
+        widget.save_to_html(file_name=out)
+        with open(out) as f:
+            content = f.read()
+        assert "centerMap: true" in content
+
+    def test_mapbox_token_inherited_from_widget(self, sample_df, tmp_path):
+        widget = KeplerGl(data={"d": sample_df}, mapbox_token="pk.widget_token")
+        out = str(tmp_path / "map.html")
+        widget.save_to_html(file_name=out)
+        with open(out) as f:
+            content = f.read()
+        assert "pk.widget_token" in content
+
+    def test_mapbox_token_override_in_save(self, sample_df, tmp_path):
+        widget = KeplerGl(data={"d": sample_df}, mapbox_token="pk.widget_token")
+        out = str(tmp_path / "map.html")
+        widget.save_to_html(file_name=out, mapbox_token="pk.override_token")
+        with open(out) as f:
+            content = f.read()
+        assert "pk.override_token" in content
+        assert "pk.widget_token" not in content
+
