@@ -4,7 +4,8 @@
 import uniq from 'lodash/uniq';
 import KeplerTable, {Datasets} from './kepler-table';
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
-import Task from '@kepler.gl/tasks';
+import Task from '@kepler.gl/tasks-core';
+
 
 import {
   DatasetType,

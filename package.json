@@ -29,6 +29,7 @@
     "./src/schemas",
     "./src/cloud-providers",
     "./src/processors",
+    "./src/tasks-core",
     "./src/tasks",
     "./src/actions",
     "./src/effects",

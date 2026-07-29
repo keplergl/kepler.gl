@@ -1,8 +1,8 @@
 {
-  "name": "@kepler.gl/table",
+  "name": "@kepler.gl/tasks-core",
   "author": "Shan He <shan@uber.com>",
   "version": "3.3.0-alpha.4",
-  "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
+  "description": "Lightweight built-in task runtime for kepler.gl async side effects",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -27,22 +27,6 @@
   "files": [
     "dist"
   ],
-  "dependencies": {
-    "@kepler.gl/common-utils": "3.3.0-alpha.4",
-    "@kepler.gl/constants": "3.3.0-alpha.4",
-    "@kepler.gl/tasks-core": "3.3.0-alpha.4",
-    "@kepler.gl/types": "3.3.0-alpha.4",
-    "@kepler.gl/utils": "3.3.0-alpha.4",
-    "@loaders.gl/mvt": "^4.4.1",
-    "@loaders.gl/pmtiles": "^4.4.1",
-    "@types/d3-array": "^2.8.0",
-    "@types/lodash": "4.17.5",
-    "d3-array": "^2.8.0",
-    "global": "^4.3.0",
-    "lodash": "4.17.23",
-    "moment": "^2.10.6",
-    "type-analyzer": "0.4.0"
-  },
   "nyc": {
     "sourceMap": false,
     "instrument": false

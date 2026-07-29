@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Task, {taskCreator} from './task-runtime';
+import Task, {taskCreator} from '@kepler.gl/tasks-core';
 import {readFileInBatches, processFileData} from '@kepler.gl/processors';
 
 export {
@@ -20,8 +20,8 @@ export {
   reportTasksForTesting,
   all,
   allSettled
-} from './task-runtime';
-export type {TaskDescriptor} from './task-runtime';
+} from '@kepler.gl/tasks-core';
+export type {TaskDescriptor} from '@kepler.gl/tasks-core';
 
 export const LOAD_FILE_TASK = Task.fromPromise(
   ({file, fileCache, loaders, loadOptions}) =>

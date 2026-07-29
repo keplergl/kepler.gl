@@ -28,7 +28,8 @@
     "dist"
   ],
   "dependencies": {
-    "@kepler.gl/processors": "3.3.0-alpha.4"
+    "@kepler.gl/processors": "3.3.0-alpha.4",
+    "@kepler.gl/tasks-core": "3.3.0-alpha.4"
   },
   "nyc": {
     "sourceMap": false,
