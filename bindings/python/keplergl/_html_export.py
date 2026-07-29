@@ -299,7 +299,7 @@ def export_map_html(
       }}(Redux, middleWares));
 
       const store = (function createStore(redux, enhancers) {{
-        return redux.createStore(reducers, {{}}, redux.compose(enhancers));
+        return redux.legacy_createStore(reducers, {{}}, redux.compose(enhancers));
       }}(Redux, enhancers));
       /** END STORE **/
 

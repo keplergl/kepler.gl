@@ -342,7 +342,7 @@ class TestExportMapHtml:
         assert "unpkg.com/kepler.gl@3.2.6/umd/keplergl.min.js" in html
         assert "unpkg.com/kepler.gl@3.2.6/umd/keplergl.min.css" in html
 
-    def test_default_uses_latest_stable_cdn_tag(self, sample_df):
+    def test_default_cdn_version(self, sample_df):
         html = export_map_html(data={"test": sample_df}, config={})
         assert "unpkg.com/kepler.gl@3.3.0-alpha.4/umd/keplergl.min.js" in html
         assert "unpkg.com/kepler.gl@3.3.0-alpha.4/umd/keplergl.min.css" in html
