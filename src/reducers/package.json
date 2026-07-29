@@ -57,7 +57,6 @@
     "deepmerge": "^4.2.2",
     "global": "^4.3.0",
     "lodash": "4.17.23",
-    "react-palm": "^3.3.8",
     "redux": "^5.0.0",
     "redux-actions": "^2.2.1",
     "reselect": "^5.0.0"

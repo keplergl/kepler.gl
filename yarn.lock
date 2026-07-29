@@ -5665,7 +5665,6 @@ __metadata:
     "@types/react-redux": "npm:^7.1.23"
     "@types/redux-actions": "npm:^2.6.2"
     lodash: "npm:4.17.23"
-    react-palm: "npm:^3.3.8"
     react-redux: "npm:^8.0.5"
     redux: "npm:^5.0.0"
     redux-actions: "npm:^2.2.1"
@@ -6099,7 +6098,6 @@ __metadata:
     deepmerge: "npm:^4.2.2"
     global: "npm:^4.3.0"
     lodash: "npm:4.17.23"
-    react-palm: "npm:^3.3.8"
     redux: "npm:^5.0.0"
     redux-actions: "npm:^2.2.1"
     reselect: "npm:^5.0.0"
@@ -6142,6 +6140,7 @@ __metadata:
   dependencies:
     "@kepler.gl/common-utils": "npm:3.3.0-alpha.4"
     "@kepler.gl/constants": "npm:3.3.0-alpha.4"
+    "@kepler.gl/tasks-core": "npm:3.3.0-alpha.4"
     "@kepler.gl/types": "npm:3.3.0-alpha.4"
     "@kepler.gl/utils": "npm:3.3.0-alpha.4"
     "@loaders.gl/mvt": "npm:^4.4.1"
@@ -6152,8 +6151,13 @@ __metadata:
     global: "npm:^4.3.0"
     lodash: "npm:4.17.23"
     moment: "npm:^2.10.6"
-    react-palm: "npm:^3.3.8"
     type-analyzer: "npm:0.4.0"
+  languageName: unknown
+  linkType: soft
+
+"@kepler.gl/tasks-core@npm:3.3.0-alpha.4, @kepler.gl/tasks-core@workspace:src/tasks-core":
+  version: 0.0.0-use.local
+  resolution: "@kepler.gl/tasks-core@workspace:src/tasks-core"
   languageName: unknown
   linkType: soft
 
@@ -6162,7 +6166,7 @@ __metadata:
   resolution: "@kepler.gl/tasks@workspace:src/tasks"
   dependencies:
     "@kepler.gl/processors": "npm:3.3.0-alpha.4"
-    react-palm: "npm:^3.3.8"
+    "@kepler.gl/tasks-core": "npm:3.3.0-alpha.4"
   languageName: unknown
   linkType: soft
 
@@ -13801,13 +13805,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"asap@npm:~2.0.3":
-  version: 2.0.6
-  resolution: "asap@npm:2.0.6"
-  checksum: 10c0/c6d5e39fe1f15e4b87677460bd66b66050cd14c772269cee6688824c1410a08ab20254bb6784f9afb75af9144a9f9a7692d49547f4d19d715aeb7c0318f3136d
-  languageName: node
-  linkType: hard
-
 "asn1.js@npm:^4.10.1":
   version: 4.10.1
   resolution: "asn1.js@npm:4.10.1"
@@ -16348,13 +16345,6 @@ __metadata:
   dependencies:
     browserslist: "npm:^4.23.0"
   checksum: 10c0/4e2da9c900f2951a57947af7aeef4d16f2c75d7f7e966c0d0b62953f65225003ade5e84d3ae98847f65b24c109c606821d9dc925db8ca418fb761e7c81963c2a
-  languageName: node
-  linkType: hard
-
-"core-js@npm:^1.0.0":
-  version: 1.2.7
-  resolution: "core-js@npm:1.2.7"
-  checksum: 10c0/2b2966e40833f522129da4cc979688760654e9b38e32b06517a94c0edf2882d8990c4b1b0087cb2abfbe6219fdb21dc64343fa264a6b6280ec88c3682b8eee66
   languageName: node
   linkType: hard
 
@@ -19458,21 +19448,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fbjs@npm:^0.8.16":
-  version: 0.8.18
-  resolution: "fbjs@npm:0.8.18"
-  dependencies:
-    core-js: "npm:^1.0.0"
-    isomorphic-fetch: "npm:^2.1.1"
-    loose-envify: "npm:^1.0.0"
-    object-assign: "npm:^4.1.0"
-    promise: "npm:^7.1.1"
-    setimmediate: "npm:^1.0.5"
-    ua-parser-js: "npm:^0.7.30"
-  checksum: 10c0/a7e1c64c349cde000e5d94ce0289c59b725a95fbdacc22529155c4dacea1dde37a4dae7e16f0f6602dca566f15978b42acd7ee973b620eaac612b5228687ffe0
-  languageName: node
-  linkType: hard
-
 "fd-slicer@npm:~1.1.0":
   version: 1.1.0
   resolution: "fd-slicer@npm:1.1.0"
@@ -20083,7 +20058,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"function.prototype.name@npm:^1.1.0, function.prototype.name@npm:^1.1.5, function.prototype.name@npm:^1.1.6":
+"function.prototype.name@npm:^1.1.5, function.prototype.name@npm:^1.1.6":
   version: 1.1.6
   resolution: "function.prototype.name@npm:1.1.6"
   dependencies:
@@ -22770,16 +22745,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"isomorphic-fetch@npm:^2.1.1":
-  version: 2.2.1
-  resolution: "isomorphic-fetch@npm:2.2.1"
-  dependencies:
-    node-fetch: "npm:^1.0.1"
-    whatwg-fetch: "npm:>=0.10.0"
-  checksum: 10c0/ea9fd37d31ec7b35b82180e1946d4a2f512506d0559fa567ec6ee6701ff1c6d924be90e75499c50982274b707e03ecd9eaa21d618872dd0deff530e4c3bdb074
-  languageName: node
-  linkType: hard
-
 "isomorphic-ws@npm:^4.0.1":
   version: 4.0.1
   resolution: "isomorphic-ws@npm:4.0.1"
@@ -24549,7 +24514,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0, loose-envify@npm:^1.4.0":
+"loose-envify@npm:^1.0.0, loose-envify@npm:^1.4.0":
   version: 1.4.0
   resolution: "loose-envify@npm:1.4.0"
   dependencies:
@@ -28748,15 +28713,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"promise@npm:^7.1.1":
-  version: 7.3.1
-  resolution: "promise@npm:7.3.1"
-  dependencies:
-    asap: "npm:~2.0.3"
-  checksum: 10c0/742e5c0cc646af1f0746963b8776299701ad561ce2c70b49365d62c8db8ea3681b0a1bf0d4e2fe07910bf72f02d39e51e8e73dc8d7503c3501206ac908be107f
-  languageName: node
-  linkType: hard
-
 "prompts@npm:^2.0.1":
   version: 2.4.2
   resolution: "prompts@npm:2.4.2"
@@ -29279,20 +29235,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:^16.4.2":
-  version: 16.14.0
-  resolution: "react-dom@npm:16.14.0"
-  dependencies:
-    loose-envify: "npm:^1.1.0"
-    object-assign: "npm:^4.1.1"
-    prop-types: "npm:^15.6.2"
-    scheduler: "npm:^0.19.1"
-  peerDependencies:
-    react: ^16.14.0
-  checksum: 10c0/ca146e780631672a2d57c8d77775d38f394a6cd67db30c6af7964d0b3574ef7edccb1de8d592e990b98f4f5f8d1c8460b0691f04e7a45799962a51dcbaaa1371
-  languageName: node
-  linkType: hard
-
 "react-dom@npm:^19.0.0":
   version: 19.2.7
   resolution: "react-dom@npm:19.2.7"
@@ -29378,7 +29320,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-is@npm:^16.13.1, react-is@npm:^16.7.0, react-is@npm:^16.8.6":
+"react-is@npm:^16.13.1, react-is@npm:^16.7.0":
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
   checksum: 10c0/33977da7a5f1a287936a0c85639fec6ca74f4f15ef1e59a6bc20338fc73dc69555381e211f7a3529b8150a1f71e4225525b41b60b52965bda53ce7d47377ada1
@@ -29505,37 +29447,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-palm@npm:^3.3.8":
-  version: 3.3.8
-  resolution: "react-palm@npm:3.3.8"
-  dependencies:
-    function.prototype.name: "npm:^1.1.0"
-    react-dom: "npm:^16.4.2"
-    react-reconciler: "npm:^0.12.0"
-    react-test-renderer: "npm:^16.4.2"
-  peerDependencies:
-    enzyme: ^3.6.0
-    enzyme-adapter-utils: ^1.13.0
-    react: ^16.4.1
-    react-test-renderer: ^16.4.1
-  checksum: 10c0/dd052acbeff68e55f184f2c181d5ceb9aa129598ff3116fa9e5921b4d720957e0314efe7346620e6f1971cbfc574f39fd3d79b1659b8bf560feb5f54fe03a7c5
-  languageName: node
-  linkType: hard
-
-"react-reconciler@npm:^0.12.0":
-  version: 0.12.0
-  resolution: "react-reconciler@npm:0.12.0"
-  dependencies:
-    fbjs: "npm:^0.8.16"
-    loose-envify: "npm:^1.1.0"
-    object-assign: "npm:^4.1.1"
-    prop-types: "npm:^15.6.0"
-  peerDependencies:
-    react: ^16.0.0
-  checksum: 10c0/2e3262b276751465fb833ef6c989cee0716742c2d90a1bafe574f19d8cacefdc3b94dda0f25c3e664711ca8b25d35a033a3bafa21d733d7334c2611d81a54694
-  languageName: node
-  linkType: hard
-
 "react-redux@npm:^8.0.5":
   version: 8.1.3
   resolution: "react-redux@npm:8.1.3"
@@ -29594,20 +29505,6 @@ __metadata:
     react: ^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc
     react-dom: ^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc
   checksum: 10c0/644a57960507b809f571bf8c95f07a04e3aeb9b20405a1d9d8cb6deb72d2462192e6e5e9751237347e7818179a619a6f65de4b355e276334d10b8cfe737ca4e1
-  languageName: node
-  linkType: hard
-
-"react-test-renderer@npm:^16.4.2":
-  version: 16.14.0
-  resolution: "react-test-renderer@npm:16.14.0"
-  dependencies:
-    object-assign: "npm:^4.1.1"
-    prop-types: "npm:^15.6.2"
-    react-is: "npm:^16.8.6"
-    scheduler: "npm:^0.19.1"
-  peerDependencies:
-    react: ^16.14.0
-  checksum: 10c0/119e3ce5509c3443393ca750e39dd4ac9ee9ddfaafca58c9067b477447edc2badb75660b9fea7e9ddef012e37bbba427681cf6f8d3fde61b8054655a133bfbf5
   languageName: node
   linkType: hard
 
@@ -30861,16 +30758,6 @@ __metadata:
   dependencies:
     xmlchars: "npm:^2.2.0"
   checksum: 10c0/3847b839f060ef3476eb8623d099aa502ad658f5c40fd60c105ebce86d244389b0d76fcae30f4d0c728d7705ceb2f7e9b34bb54717b6a7dbedaf5dad2d9a4b74
-  languageName: node
-  linkType: hard
-
-"scheduler@npm:^0.19.1":
-  version: 0.19.1
-  resolution: "scheduler@npm:0.19.1"
-  dependencies:
-    loose-envify: "npm:^1.1.0"
-    object-assign: "npm:^4.1.1"
-  checksum: 10c0/9658932a73148a93d791c064b331d9690ddfecc4de25bcd6c9b89f5f1166e3d23d9c31c1595d66565e5ffbb34d47035cb14841aba6444bc266bfcd215cefe9c0
   languageName: node
   linkType: hard
 
@@ -33766,13 +33653,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ua-parser-js@npm:^0.7.30":
-  version: 0.7.38
-  resolution: "ua-parser-js@npm:0.7.38"
-  checksum: 10c0/da963eae1618f0c60d0812851a4d478fb8bb127ee6e5c566b8dac27eeb25757d818d9ade2c312d73018f2bb3c3e629d26c066fcda3cb9d55a31289c9566198df
-  languageName: node
-  linkType: hard
-
 "uglify-js@npm:^3.1.4":
   version: 3.19.0
   resolution: "uglify-js@npm:3.19.0"
@@ -35016,13 +34896,6 @@ __metadata:
   dependencies:
     iconv-lite: "npm:0.6.3"
   checksum: 10c0/273b5f441c2f7fda3368a496c3009edbaa5e43b71b09728f90425e7f487e5cef9eb2b846a31bd760dd8077739c26faf6b5ca43a5f24033172b003b72cf61a93e
-  languageName: node
-  linkType: hard
-
-"whatwg-fetch@npm:>=0.10.0":
-  version: 3.6.20
-  resolution: "whatwg-fetch@npm:3.6.20"
-  checksum: 10c0/fa972dd14091321d38f36a4d062298df58c2248393ef9e8b154493c347c62e2756e25be29c16277396046d6eaa4b11bd174f34e6403fff6aaca9fb30fa1ff46d
   languageName: node
   linkType: hard
 

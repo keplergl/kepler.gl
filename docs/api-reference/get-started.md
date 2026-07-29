@@ -91,12 +91,11 @@ export default Root;
 
 #### 1. Mount reducer
 
-Kepler.gl uses [Redux](https://redux.js.org/) to manage its internal state, along with [react-palm](https://github.com/btford/react-palm) middleware to handle side effects. Mount kepler.gl reducer in your store, apply  `taskMiddleware`.
+Kepler.gl uses [Redux](https://redux.js.org/) to manage its internal state, along with a built-in task middleware to handle async side effects. Mount kepler.gl reducer in your store and apply the middleware using `enhanceReduxMiddleware`:
 
 ```js
-import keplerGlReducer from '@kepler.gl/reducers';
+import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware} from 'redux';
-import {taskMiddleware} from 'react-palm/tasks';
 
 const reducer = combineReducers({
   // <-- mount kepler.gl reducer in your app
@@ -106,9 +105,14 @@ const reducer = combineReducers({
   app: appReducer
 });
 
+const middlewares = enhanceReduxMiddleware([
+  // Add other middlewares here
+]);
+
 // create store
-const store = createStore(reducer, {}, applyMiddleware(taskMiddleware));
+const store = createStore(reducer, {}, applyMiddleware(...middlewares));
 ```
+
 If you mount `keplerGlReducer` in another address instead of `keplerGl`, or it is not
 mounted at root of your reducer, you will need to specify the path to it when you mount the component with the `getState` prop.
 

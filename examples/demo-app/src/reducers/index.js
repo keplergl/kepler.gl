@@ -3,7 +3,7 @@
 
 import {combineReducers} from 'redux';
 import {handleActions} from 'redux-actions';
-import Task, {withTask} from 'react-palm/tasks';
+import Task, {withTask} from '@kepler.gl/tasks';
 
 import {aiAssistantReducer} from '@kepler.gl/ai-assistant';
 import {EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
