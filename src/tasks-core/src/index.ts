@@ -247,11 +247,7 @@ function combineParallel(tasks: TaskDescriptor[], settled: boolean): TaskDescrip
         if (remaining === 0) resolve(results);
       };
 
-      return Promise.allSettled(
-        tasks.map((task, i) =>
-          task.run(runner, onResolved(i), onRejected(i), ctx)
-        )
-      );
+      tasks.forEach((task, i) => task.run(runner, onResolved(i), onRejected(i), ctx));
     },
     label
   );
