@@ -87,3 +87,5 @@ export const UNWRAP_TASK = Task.fromPromise(
 
   'UNWRAP'
 );
+
+export default Task;

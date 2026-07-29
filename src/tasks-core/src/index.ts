@@ -49,8 +49,8 @@ export type TaskDescriptor = {
   chain: (fn: (value: any) => TaskDescriptor) => TaskDescriptor;
 };
 
-/** A factory function that creates a TaskDescriptor from an argument */
-export type TaskFactory = ((arg: any) => TaskDescriptor) & {label?: string; type?: string};
+/** A factory function that creates a TaskDescriptor from an optional argument */
+export type TaskFactory = ((arg?: any) => TaskDescriptor) & {label?: string; type?: string};
 
 type InstrumentHook = (
   event: 'start' | 'success' | 'error',
@@ -166,9 +166,9 @@ function wrapWithInstrumentation(
  * // in a reducer:
  * return withTask(newState, FETCH_DATA(url).bimap(onSuccess, onError));
  */
-export function fromPromise(fn: (arg: any) => Promise<any>, label: string): TaskFactory {
+export function fromPromise(fn: (arg?: any) => Promise<any>, label: string): TaskFactory {
   return Object.assign(
-    (arg: any) =>
+    (arg?: any) =>
       wrapWithInstrumentation(
         (resolve, reject) => fn(arg).then(resolve, reject),
         arg,
@@ -183,11 +183,11 @@ export function fromPromise(fn: (arg: any) => Promise<any>, label: string): Task
  * The callback receives `(error, result)`.
  */
 export function fromCallback(
-  fn: (arg: any, done: (err: any, result?: any) => void) => any,
+  fn: (arg: any, done: (err?: any, result?: any) => void) => any,
   label: string
 ): TaskFactory {
   return Object.assign(
-    (arg: any) =>
+    (arg?: any) =>
       wrapWithInstrumentation(
         (resolve, reject) => fn(arg, (err, result) => (err ? reject(err) : resolve(result))),
         arg,
@@ -203,7 +203,7 @@ export function fromCallback(
  */
 export function taskCreator(fn: Function, label: string): TaskFactory {
   return Object.assign(
-    (arg: any) =>
+    (arg?: any) =>
       wrapWithInstrumentation(
         (resolve, reject) => fn(arg, resolve, reject),
         arg,

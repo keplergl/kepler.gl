@@ -13,6 +13,7 @@ import pick from 'lodash/pick';
 import uniq from 'lodash/uniq';
 import xor from 'lodash/xor';
 import Task, {disableStackCapturing, withTask} from '@kepler.gl/tasks';
+import type {TaskDescriptor} from '@kepler.gl/tasks';
 // Tasks
 import {
   DELAY_TASK,
@@ -2901,8 +2902,8 @@ export const updateVisDataUpdater = (
     return updatedState;
   }
 
-  const createDatasetTasks: Task[] = [];
-  const notificationTasks: Task[] = [];
+  const createDatasetTasks: TaskDescriptor[] = [];
+  const notificationTasks: TaskDescriptor[] = [];
 
   datasets.forEach(({info = {}, ...rest}, datasetIndex) => {
     const task = createNewDataEntry({info, ...rest}, state.datasets);
@@ -2943,7 +2944,7 @@ export const createNewDatasetSuccessUpdater = (
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
   const {results, addToMapOptions} = action.payload;
-  const notificationTasks: Task[] = [];
+  const notificationTasks: TaskDescriptor[] = [];
 
   const newDataEntries = results.reduce((accu, result, idx) => {
     if (result.status === 'fulfilled') {
