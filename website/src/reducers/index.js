@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {taskMiddleware} from '@kepler.gl/reducers';
+import {taskMiddleware} from '@kepler.gl/tasks';
 import thunk from 'redux-thunk';
 
 import appReducer from './app';
