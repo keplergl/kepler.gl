@@ -826,10 +826,9 @@ export default class TripLayer extends Layer {
           _animations: {
             '*': {speed: 5}
           },
-          parameters: {depthTest: true, blend: false},
+          parameters: {depthTest: true, blend: false, ...(mapState?.layerParameters ?? {})},
           updateTriggers: {
             getTransformMatrix: {
-              ...this.config.columns,
               currentTime: animationConfig.currentTime,
               rollField,
               pitchField,
