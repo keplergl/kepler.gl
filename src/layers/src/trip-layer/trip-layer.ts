@@ -788,7 +788,8 @@ export default class TripLayer extends Layer {
       wrapLongitude: false,
       parameters: {
         depthTest: mapState.dragRotate,
-        depthMask: false
+        depthMask: false,
+        ...(mapState?.layerParameters ?? {})
       },
       trailLength: visConfig.trailLength * 1000,
       fadeTrail: visConfig.fadeTrail,

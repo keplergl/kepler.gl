@@ -1630,7 +1630,8 @@ class Layer implements KeplerLayer {
             },
             parameters: {
               // text will always show on top of all layers
-              depthTest: false
+              depthTest: false,
+              ...(mapState?.layerParameters ?? {})
             },
 
             getFilterValue: data.getFilterValue,
