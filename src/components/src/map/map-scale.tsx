@@ -138,8 +138,6 @@ MapScaleFactory.deps = [];
 
 export default function MapScaleFactory() {
   const MapScale: FC<MapScaleProps> = ({mapState, mapIndex = 0}) => {
-    if (!getApplicationConfig().enableMapScale) return null;
-
     const {getInternalViewState} = useContext<MapViewStateContextType>(MapViewStateContext);
     const viewState = getInternalViewState(mapIndex);
 
@@ -154,6 +152,8 @@ export default function MapScaleFactory() {
         return next;
       });
     }, []);
+
+    if (!getApplicationConfig().enableMapScale) return null;
 
     const mergedState = {...mapState, ...viewState};
     const viewport = getViewportFromMapState(mergedState as MapState) as WebMercatorViewport;
