@@ -968,11 +968,14 @@ export default function MapContainerFactory(
               // Use the live (internal) latitude so the tile LOD compensation
               // stays in sync with the deck viewport during a drag; mapState
               // latitude lags behind while rotating.
-              latitude: internalMapState.latitude
+              latitude: internalMapState.latitude,
+              zoom: internalMapState.zoom
             })
           : [];
       const globeTopLayers =
-        isGlobeMode && mapState.globe ? getGlobeTopLayers({globe: mapState.globe}) : [];
+        isGlobeMode && mapState.globe
+          ? getGlobeTopLayers({globe: mapState.globe, zoom: internalMapState.zoom})
+          : [];
       const finalDeckGlLayers = isGlobeMode
         ? [...globeBaseLayers, ...deckGlLayers, ...globeTopLayers]
         : deckGlLayers;
