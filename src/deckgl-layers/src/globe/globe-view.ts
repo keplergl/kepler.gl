@@ -24,58 +24,37 @@ function zoomAdjust(latitude: number): number {
 }
 
 /**
- * Transform a homogeneous 4-vector by a column-major 4×4 matrix and apply
- * the perspective divide.  Uses @math.gl/core's vec4.transformMat4 for the
- * multiply, then divides by w.  Returns null when w is zero (degenerate
- * projection) so callers can treat the pixel as off-globe rather than
- * producing Infinity/NaN.
- */
-function transformAndDivide(
-  matrix: number[],
-  v: [number, number, number, number]
-): [number, number, number] | null {
-  const out = vec4.transformMat4([], v, matrix);
-  const w = out[3];
-  if (w === 0) return null;
-  return [out[0] / w, out[1] / w, out[2] / w];
-}
-
-/**
  * Returns true if the screen pixel `pos` lies within the visible globe
  * silhouette.
  *
- * GlobeViewport.unproject() does a ray–sphere intersection but uses
- * `Math.max(0, r² - d²)` to clamp the discriminant, so it *always* returns a
- * valid lng/lat even for pixels outside the sphere silhouette (it snaps to the
- * nearest point on the limb).  We replicate the same ray–sphere math here but
- * check the discriminant *before* the clamp: if d² > r² the ray misses the
- * sphere entirely and the pixel is outside the globe.
- *
- * The viewport's `pixelUnprojectionMatrix` is used exactly as deck.gl does
- * internally, so the test stays accurate across all zoom levels and viewport
- * sizes.
+ * GlobeViewport.unproject() clamps the ray–sphere discriminant with
+ * Math.max(0, r²−d²), so it always returns a valid lng/lat even for
+ * off-globe pixels (snapping to the limb).  We replicate the same ray cast
+ * but check the discriminant before the clamp using the standard
+ * squared-distance-from-origin-to-ray formula: |P₀ × dir|² / |dir|².
  */
 function isPixelOnGlobe(viewport: any, pos: [number, number]): boolean {
-  const [x, y] = pos;
   const m: number[] = viewport.pixelUnprojectionMatrix;
-  if (!m) return true; // conservative: allow if matrix unavailable
+  if (!m) return true; // conservative fallback if matrix unavailable
 
-  // Cast a ray through the pixel (near and far plane points in world space).
-  const coord0 = transformAndDivide(m, [x, y, -1, 1]);
-  const coord1 = transformAndDivide(m, [x, y, 1, 1]);
+  // Cast a ray through the pixel at the near and far planes.
+  const p0 = vec4.transformMat4([], [pos[0], pos[1], -1, 1], m);
+  const p1 = vec4.transformMat4([], [pos[0], pos[1], 1, 1], m);
+  if (p0[3] === 0 || p1[3] === 0) return true; // degenerate projection
 
-  // Degenerate projection — treat conservatively as on-globe.
-  if (!coord0 || !coord1) return true;
+  // Perspective-divide to world space.
+  const ax = p0[0] / p0[3], ay = p0[1] / p0[3], az = p0[2] / p0[3];
+  const bx = p1[0] / p1[3], by = p1[1] / p1[3], bz = p1[2] / p1[3];
 
-  // Distance² from the ray to the sphere center (origin) — mirror of deck's math.
-  const dx = coord0[0] - coord1[0];
-  const dy = coord0[1] - coord1[1];
-  const dz = coord0[2] - coord1[2];
-  const lSqr = dx * dx + dy * dy + dz * dz;
-  const l0Sqr = coord0[0] ** 2 + coord0[1] ** 2 + coord0[2] ** 2;
-  const l1Sqr = coord1[0] ** 2 + coord1[1] ** 2 + coord1[2] ** 2;
-  const sSqr = (4 * l0Sqr * l1Sqr - (lSqr - l0Sqr - l1Sqr) ** 2) / 16;
-  const dSqr = (4 * sSqr) / lSqr;
+  // Ray direction.
+  const dx = bx - ax, dy = by - ay, dz = bz - az;
+
+  // Squared distance from the origin (globe center) to the ray:
+  //   d² = |P₀ × dir|² / |dir|²
+  const cx = ay * dz - az * dy;
+  const cy = az * dx - ax * dz;
+  const cz = ax * dy - ay * dx;
+  const dSqr = (cx * cx + cy * cy + cz * cz) / (dx * dx + dy * dy + dz * dz);
 
   return dSqr <= GLOBE_COMMON_RADIUS * GLOBE_COMMON_RADIUS;
 }
@@ -161,47 +140,29 @@ class ZoomToCursorGlobeController extends GlobeController {
         startPos?: [number, number];
         scale: number;
       }) {
-        const state = (this as any).getState();
-        let {startZoom, startZoomLngLat} = state;
-
+        let {startZoom, startZoomLngLat} = (this as any).getState();
         const currentProps = (this as any).getViewportProps();
 
-        // `false` sentinel: pinch zoom started off-globe.
-        // (For wheel zoom we use the closure variable `offGlobeZoomAt` instead,
-        // because deck.gl never calls zoomEnd() for wheel events.)
-        if (startZoomLngLat === false) {
-          const zoom = (this as any)._constrainZoom(
-            (startZoom ?? currentProps.zoom) + Math.log2(scale)
-          );
-          return (this as any)._getUpdatedState({zoom, startZoomLngLat: false});
-        }
-
         if (!startZoomLngLat) {
-          // Wheel zoom: re-derive each tick. For pinch,
-          // startZoom/startZoomLngLat are set once by zoomStart.
+          // Wheel zoom: re-derive anchor each tick (pinch sets it once in zoomStart).
           startZoom = currentProps.zoom;
 
+          // Suppress cursor-anchoring when the cursor is off-globe or when a
+          // recent tick was off-globe (within BURST_TIMEOUT_MS).  deck.gl never
+          // calls zoomEnd() for wheel events so we track the session with the
+          // closure variable `offGlobeZoomAt` rather than ViewState.
           const BURST_TIMEOUT_MS = 200;
           const now = Date.now();
           const anchorViewport = (this as any).makeViewport(currentProps);
-          const anchorPos: [number, number] = startPos || pos;
-          const onGlobe = isPixelOnGlobe(anchorViewport, anchorPos);
+          const onGlobe = isPixelOnGlobe(anchorViewport, startPos || pos);
 
-          // Keep track of when we last saw an off-globe tick. While the session
-          // is recent (< BURST_TIMEOUT_MS), stay in center-zoom even if the
-          // cursor has since entered the globe, to prevent a snap to the edge.
-          if (!onGlobe) {
-            offGlobeZoomAt = now; // refresh the session clock
-          }
-          const inOffGlobeSession =
-            offGlobeZoomAt !== null && now - offGlobeZoomAt < BURST_TIMEOUT_MS;
+          if (!onGlobe) offGlobeZoomAt = now;
 
-          if (!onGlobe || inOffGlobeSession) {
+          if (!onGlobe || (offGlobeZoomAt !== null && now - offGlobeZoomAt < BURST_TIMEOUT_MS)) {
             const zoom = (this as any)._constrainZoom(startZoom + Math.log2(scale));
             return (this as any)._getUpdatedState({zoom});
           }
 
-          // New burst that started on-globe — clear the session flag.
           offGlobeZoomAt = null;
           startZoomLngLat = (this as any)._unproject(startPos) || (this as any)._unproject(pos);
         }
@@ -212,36 +173,30 @@ class ZoomToCursorGlobeController extends GlobeController {
           return (this as any)._getUpdatedState({zoom});
         }
 
-        // Zoom-out (scale < 1): exact cursor anchoring is unstable on a globe (the
-        // geo point under an off-center pixel moves non-linearly near the limb and
-        // drags the view toward the poles). Instead, gently steer the CENTER toward
-        // the geo location under the cursor — the map recenters on the cursor as you
-        // zoom out, similar in spirit to zoom-in, but without the pole-ward spin.
+        // Zoom-out (scale < 1): exact cursor anchoring is unstable near the limb
+        // (non-linear geo-to-pixel mapping pulls the view toward the poles).
+        // Instead, gently steer the center toward the cursor location per tick.
         if (scale < 1) {
-          const cursorLngLat = startZoomLngLat;
-          const cursorValid =
-            Array.isArray(cursorLngLat) &&
-            Number.isFinite(cursorLngLat[0]) &&
-            Number.isFinite(cursorLngLat[1]);
-          if (!cursorValid) {
+          if (
+            !Array.isArray(startZoomLngLat) ||
+            !Number.isFinite(startZoomLngLat[0]) ||
+            !Number.isFinite(startZoomLngLat[1])
+          ) {
             return (this as any)._getUpdatedState({zoom});
           }
 
-          // Fraction of the way to move the center toward the cursor per tick.
-          // Scales with how much we zoomed out this tick so a bigger step moves
-          // more. Clamped so a single large tick can't overshoot.
-          const RECENTER_STRENGTH = 0.11;
-          const t = Math.min(1, (1 - scale) * RECENTER_STRENGTH);
+          // Per-tick lerp strength scales with zoom-out amount; clamped to avoid overshoot.
+          const t = Math.min(1, (1 - scale) * 0.11);
 
-          // Shortest-path longitude interpolation (handle antimeridian wrap).
-          let dLng = cursorLngLat[0] - currentProps.longitude;
+          // Shortest-path longitude interpolation (handles antimeridian wrap).
+          let dLng = startZoomLngLat[0] - currentProps.longitude;
           if (dLng > 180) dLng -= 360;
           if (dLng < -180) dLng += 360;
 
           return (this as any)._getUpdatedState({
             zoom,
             longitude: currentProps.longitude + dLng * t,
-            latitude: currentProps.latitude + (cursorLngLat[1] - currentProps.latitude) * t
+            latitude: currentProps.latitude + (startZoomLngLat[1] - currentProps.latitude) * t
           });
         }
 
@@ -250,12 +205,10 @@ class ZoomToCursorGlobeController extends GlobeController {
           zoom
         });
 
-        // Anchor the grabbed geo point back under the cursor:
-        //   fromPosition = viewport.unproject(pos)   // geo point now under the cursor
-        //   longitude = startZoomLngLat[0] - fromPosition[0] + viewport.longitude
-        //   latitude  = startZoomLngLat[1] - fromPosition[1] + viewport.latitude
-        // Guard with isPixelOnGlobe: if pos has moved off-globe since the anchor
-        // was set (e.g. during a fast pinch), just apply the zoom toward center.
+        // Zoom-in: exact anchor — unproject the cursor in the post-zoom viewport and
+        // shift the center so the grabbed geo point lands back under the cursor.
+        // Guard with isPixelOnGlobe: if pos moved off-globe during a fast pinch,
+        // fall back to center zoom.
         if (!isPixelOnGlobe(zoomedViewport, pos)) {
           return (this as any)._getUpdatedState({zoom});
         }
