@@ -4,6 +4,7 @@
 import * as DeckCore from '@deck.gl/core';
 import {clamp} from '@math.gl/core';
 import {GLOBE_MAX_LATITUDE} from '@kepler.gl/constants';
+import {GLOBE_COMMON_RADIUS} from './globe-depth-disk-layer';
 
 // deck.gl exposes GlobeView / GlobeController as experimental, underscore-prefixed
 // members. Their named type bindings aren't reliably resolvable through the
@@ -23,22 +24,22 @@ function zoomAdjust(latitude: number): number {
 }
 
 /**
- * The internal world-space radius that deck.gl's GlobeViewport uses for the
- * sphere (see GLOBE_RADIUS in @deck.gl/core globe-viewport.ts).
- */
-const DECK_GLOBE_RADIUS = 256;
-
-/**
  * Transform a homogeneous 4-vector by a column-major 4×4 matrix and
  * divide by w (perspective divide).  Mirrors deck.gl's transformVector().
+ * Returns null when rw is zero (degenerate projection) so callers can
+ * treat the pixel as off-globe rather than producing Infinity/NaN.
  */
-function transformVector(matrix: number[], v: [number, number, number, number]): [number, number, number] {
+function transformVector(
+  matrix: number[],
+  v: [number, number, number, number]
+): [number, number, number] | null {
   const [m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15] = matrix;
   const [vx, vy, vz, vw] = v;
   const rx = m0 * vx + m4 * vy + m8 * vz + m12 * vw;
   const ry = m1 * vx + m5 * vy + m9 * vz + m13 * vw;
   const rz = m2 * vx + m6 * vy + m10 * vz + m14 * vw;
   const rw = m3 * vx + m7 * vy + m11 * vz + m15 * vw;
+  if (rw === 0) return null;
   return [rx / rw, ry / rw, rz / rw];
 }
 
@@ -66,6 +67,9 @@ function isPixelOnGlobe(viewport: any, pos: [number, number]): boolean {
   const coord0 = transformVector(m, [x, y, -1, 1]);
   const coord1 = transformVector(m, [x, y, 1, 1]);
 
+  // Degenerate projection — treat conservatively as on-globe.
+  if (!coord0 || !coord1) return true;
+
   // Distance² from the ray to the sphere center (origin) — mirror of deck's math.
   const dx = coord0[0] - coord1[0];
   const dy = coord0[1] - coord1[1];
@@ -76,7 +80,7 @@ function isPixelOnGlobe(viewport: any, pos: [number, number]): boolean {
   const sSqr = (4 * l0Sqr * l1Sqr - (lSqr - l0Sqr - l1Sqr) ** 2) / 16;
   const dSqr = (4 * sSqr) / lSqr;
 
-  return dSqr <= DECK_GLOBE_RADIUS * DECK_GLOBE_RADIUS;
+  return dSqr <= GLOBE_COMMON_RADIUS * GLOBE_COMMON_RADIUS;
 }
 
 /**
