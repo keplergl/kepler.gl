@@ -94,6 +94,16 @@ class ZoomToCursorGlobeController extends GlobeController {
     super(...args);
     const OriginalGlobeState = this.ControllerState;
 
+    // Tracks when the most recent off-globe wheel-zoom tick fired.
+    // Stored as a controller-level closure variable rather than in ViewState
+    // because deck.gl's Controller never calls zoomEnd() for wheel events —
+    // only for pinch/touch — so there is no reliable hook to clear a
+    // ViewState-based sentinel after a wheel scroll session ends.
+    // A simple timestamp lets us detect when a new scroll burst has started
+    // (> BURST_TIMEOUT_MS since the last off-globe tick) so cursor-anchored
+    // zoom can resume naturally on the next independent scroll.
+    let offGlobeZoomAt: number | null = null;
+
     // Create patched GlobeState that supports zoom-to-cursor
     this.ControllerState = class PatchedGlobeState extends OriginalGlobeState {
       // Constrain the camera target to a latitude band around the equator so the
@@ -151,21 +161,56 @@ class ZoomToCursorGlobeController extends GlobeController {
         startPos?: [number, number];
         scale: number;
       }) {
-        let {startZoom, startZoomLngLat} = (this as any).getState();
-
-        if (!startZoomLngLat) {
-          // Discrete (wheel) zoom: re-derive the anchor each tick from the current
-          // view. For pinch, startZoom/startZoomLngLat are set once by zoomStart and
-          // preserved across ticks by _getUpdatedState (which spreads getState()).
-          startZoom = (this as any).getViewportProps().zoom;
-          startZoomLngLat = (this as any)._unproject(startPos) || (this as any)._unproject(pos);
-        }
-        if (!startZoomLngLat) {
-          return this;
-        }
+        const state = (this as any).getState();
+        let {startZoom, startZoomLngLat} = state;
 
         const currentProps = (this as any).getViewportProps();
+
+        // `false` sentinel: pinch zoom started off-globe.
+        // (For wheel zoom we use the closure variable `offGlobeZoomAt` instead,
+        // because deck.gl never calls zoomEnd() for wheel events.)
+        if (startZoomLngLat === false) {
+          const zoom = (this as any)._constrainZoom(
+            (startZoom ?? currentProps.zoom) + Math.log2(scale)
+          );
+          return (this as any)._getUpdatedState({zoom, startZoomLngLat: false});
+        }
+
+        if (!startZoomLngLat) {
+          // Wheel zoom: re-derive each tick. For pinch,
+          // startZoom/startZoomLngLat are set once by zoomStart.
+          startZoom = currentProps.zoom;
+
+          const BURST_TIMEOUT_MS = 200;
+          const now = Date.now();
+          const anchorViewport = (this as any).makeViewport(currentProps);
+          const anchorPos: [number, number] = startPos || pos;
+          const onGlobe = isPixelOnGlobe(anchorViewport, anchorPos);
+
+          // Keep track of when we last saw an off-globe tick. While the session
+          // is recent (< BURST_TIMEOUT_MS), stay in center-zoom even if the
+          // cursor has since entered the globe, to prevent a snap to the edge.
+          if (!onGlobe) {
+            offGlobeZoomAt = now; // refresh the session clock
+          }
+          const inOffGlobeSession =
+            offGlobeZoomAt !== null && now - offGlobeZoomAt < BURST_TIMEOUT_MS;
+
+          if (!onGlobe || inOffGlobeSession) {
+            const zoom = (this as any)._constrainZoom(startZoom + Math.log2(scale));
+            return (this as any)._getUpdatedState({zoom});
+          }
+
+          // New burst that started on-globe — clear the session flag.
+          offGlobeZoomAt = null;
+          startZoomLngLat = (this as any)._unproject(startPos) || (this as any)._unproject(pos);
+        }
+
         const zoom = (this as any)._constrainZoom(startZoom + Math.log2(scale));
+
+        if (!startZoomLngLat) {
+          return (this as any)._getUpdatedState({zoom});
+        }
 
         // Zoom-out (scale < 1): exact cursor anchoring is unstable on a globe (the
         // geo point under an off-center pixel moves non-linearly near the limb and
@@ -209,17 +254,13 @@ class ZoomToCursorGlobeController extends GlobeController {
         //   fromPosition = viewport.unproject(pos)   // geo point now under the cursor
         //   longitude = startZoomLngLat[0] - fromPosition[0] + viewport.longitude
         //   latitude  = startZoomLngLat[1] - fromPosition[1] + viewport.latitude
-        const fromPosition = zoomedViewport.unproject(pos);
-
-        // Guard: unproject can return NaN/undefined for a pixel off the sphere
-        // silhouette; in that case just apply the new zoom about the center.
-        const anchorValid =
-          Array.isArray(fromPosition) &&
-          Number.isFinite(fromPosition[0]) &&
-          Number.isFinite(fromPosition[1]);
-        if (!anchorValid) {
+        // Guard with isPixelOnGlobe: if pos has moved off-globe since the anchor
+        // was set (e.g. during a fast pinch), just apply the zoom toward center.
+        if (!isPixelOnGlobe(zoomedViewport, pos)) {
           return (this as any)._getUpdatedState({zoom});
         }
+
+        const fromPosition = zoomedViewport.unproject(pos);
 
         return (this as any)._getUpdatedState({
           zoom,
