@@ -24,7 +24,7 @@ import {
   LayerColumn
 } from '@kepler.gl/types';
 import {default as KeplerTable} from '@kepler.gl/table';
-import {DataContainerInterface, maybeHexToGeo, getLayerBlendingParameters} from '@kepler.gl/utils';
+import {DataContainerInterface, maybeHexToGeo} from '@kepler.gl/utils';
 
 export type LineLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -285,7 +285,7 @@ export default class LineLayer extends ArcLayer {
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     const globeMode = mapState?.globe?.enabled;
-    const blendingParameters = getLayerBlendingParameters(mapState?.layerBlending);
+    const blendingParameters = mapState?.layerParameters ?? {};
 
     if (globeMode) {
       const id = `${defaultLayerProps.id}-globe`;

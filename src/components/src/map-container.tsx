@@ -910,12 +910,14 @@ export default function MapContainerFactory(
 
       const isGlobeMode = mapState.globe?.enabled;
 
-      // In globe mode, forward layerBlending into mapState so individual layers
-      // can include it in their own parameters objects (the global DeckGL parameters
-      // cannot be used in globe mode because they bleed into globe system layers).
+      // In globe mode, forward pre-computed layer rendering parameters into mapState
+      // so individual layers can merge them into their own parameters objects.
+      // The global DeckGL parameters cannot be used in globe mode because they are
+      // merged into globe system layers (atmosphere, surface, etc.) and alter their
+      // carefully tuned blend/depth state.
       const deckLayersMapState =
         isGlobeMode && visState.layerBlending
-          ? {...internalMapState, layerBlending: visState.layerBlending}
+          ? {...internalMapState, layerParameters: getLayerBlendingParameters(visState.layerBlending)}
           : internalMapState;
 
       const deckGlLayers = generateDeckGLLayersMethod(

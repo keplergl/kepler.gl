@@ -20,8 +20,7 @@ import {
   hexToRgb,
   findDefaultColorField,
   DataContainerInterface,
-  ArrowDataContainer,
-  getLayerBlendingParameters
+  ArrowDataContainer
 } from '@kepler.gl/utils';
 import {default as KeplerTable} from '@kepler.gl/table';
 import PointLayerIcon from './point-layer-icon';
@@ -596,7 +595,7 @@ export default class PointLayer extends Layer {
         parameters: {
           // circles will be flat on the map when the altitude column is not used
           depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1,
-          ...getLayerBlendingParameters(mapState?.layerBlending)
+          ...(mapState?.layerParameters ?? {})
         },
         lineWidthUnits: 'pixels',
         updateTriggers,

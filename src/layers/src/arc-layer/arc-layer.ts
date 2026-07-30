@@ -20,8 +20,7 @@ import {
   hexToRgb,
   DataContainerInterface,
   maybeHexToGeo,
-  ArrowDataContainer,
-  getLayerBlendingParameters
+  ArrowDataContainer
 } from '@kepler.gl/utils';
 import ArcLayerIcon from './arc-layer-icon';
 import {isLayerHoveredFromArrow, createGeoArrowPointVector, getFilteredIndex} from '../layer-utils';
@@ -520,7 +519,7 @@ export default class ArcLayer extends Layer {
     // whole ribbon renders, without changing the global culling that the globe
     // surface relies on.
     const isGlobeMode = Boolean(mapState?.globe?.enabled);
-    const blendingParameters = getLayerBlendingParameters(mapState?.layerBlending);
+    const blendingParameters = mapState?.layerParameters ?? {};
     const globeParameters = isGlobeMode ? {parameters: {cull: false, ...blendingParameters}} : {};
 
     const useArrowLayer = Boolean(this.geoArrowVector0);

@@ -77,8 +77,7 @@ import {
   getScaleFunction,
   initializeLayerColorMap,
   getCategoricalColorScale,
-  updateCustomColorRangeByColorUI,
-  getLayerBlendingParameters
+  updateCustomColorRangeByColorUI
 } from '@kepler.gl/utils';
 import memoize from 'lodash/memoize';
 import {
@@ -1532,9 +1531,7 @@ class Layer implements KeplerLayer {
     layerCallbacks: any;
     visible: boolean;
   }) {
-    const blendingParameters = mapState.layerBlending
-      ? getLayerBlendingParameters(mapState.layerBlending)
-      : {};
+    const blendingParameters = mapState.layerParameters ?? {};
     return {
       id: this.id,
       idx,
@@ -1659,7 +1656,7 @@ class Layer implements KeplerLayer {
                     background: {
                       parameters: {
                         cull: false,
-                        ...getLayerBlendingParameters(mapState?.layerBlending)
+                        ...(mapState?.layerParameters ?? {})
                       }
                     }
                   }

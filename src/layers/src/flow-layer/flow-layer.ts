@@ -11,7 +11,7 @@ import {FlowmapLayer, PickingType} from '@flowmap.gl/layers';
 import {format as d3Format} from 'd3-format';
 
 import {TOOLTIP_FORMATS, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
-import {DataContainerInterface, maybeHexToGeo, getPositionFromHexValue, getLayerBlendingParameters} from '@kepler.gl/utils';
+import {DataContainerInterface, maybeHexToGeo, getPositionFromHexValue} from '@kepler.gl/utils';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {
   ColumnLabels,
@@ -531,7 +531,7 @@ export default class FlowLayer extends Layer {
     // a top-level `parameters` won't reach them — we override via _subLayerProps, which
     // getSubLayerProps applies last. cullMode 'none' keeps both faces (arrows are flat).
     const isGlobeMode = Boolean(opts.mapState?.globe?.enabled);
-    const blendingParameters = getLayerBlendingParameters(opts.mapState?.layerBlending);
+    const blendingParameters = opts.mapState?.layerParameters ?? {};
     const globeSubLayerProps = isGlobeMode
       ? (() => {
           const depthParams = {
