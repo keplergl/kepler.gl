@@ -101,7 +101,7 @@ export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, AtmosphereLay
         ...ATMOSPHERE_UNIFORMS,
         fTerminatorOpacityFactor: config.terminator ? config.terminatorOpacity : 0,
         v3SunPos: config.azimuth ? angleToSunPos(toRadians(config.azimuthAngle)) : v3SunPosNow,
-        fAtmosphereZoomFade: zoomFade ?? 1
+        fAtmosphereZoomFade: zoomFade
       };
     }
     super.draw({uniforms});
@@ -229,7 +229,7 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, Atmosphere
         ...(model as any).props.uniforms,
         ...ATMOSPHERE_UNIFORMS,
         v3SunPos: config.azimuth ? angleToSunPos(toRadians(config.azimuthAngle)) : v3SunPosNow,
-        fAtmosphereZoomFade: zoomFade ?? 1
+        fAtmosphereZoomFade: zoomFade
       };
     }
     super.draw({uniforms});
