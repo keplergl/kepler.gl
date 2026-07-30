@@ -29,6 +29,8 @@ export type MapState = {
   maxBounds?: Bounds;
   initialState?: any;
   scale?: number;
+  /** Layer blending mode forwarded from visState for use during layer rendering. */
+  layerBlending?: string;
 
   // the following 4 properties assist with split viewports that can optionally have (un)synced viewports and zooms
   /**  Is the application split into 2 maps? */

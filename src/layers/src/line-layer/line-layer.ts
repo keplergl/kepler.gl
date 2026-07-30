@@ -24,7 +24,7 @@ import {
   LayerColumn
 } from '@kepler.gl/types';
 import {default as KeplerTable} from '@kepler.gl/table';
-import {DataContainerInterface, maybeHexToGeo} from '@kepler.gl/utils';
+import {DataContainerInterface, maybeHexToGeo, getLayerBlendingParameters} from '@kepler.gl/utils';
 
 export type LineLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -285,6 +285,7 @@ export default class LineLayer extends ArcLayer {
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     const globeMode = mapState?.globe?.enabled;
+    const blendingParameters = getLayerBlendingParameters(mapState?.layerBlending);
 
     if (globeMode) {
       const id = `${defaultLayerProps.id}-globe`;
@@ -305,7 +306,7 @@ export default class LineLayer extends ArcLayer {
           // otherwise deck.gl defaults: depth test on + depth write on, so the
           // depth disk occludes segments on the far side of the globe).
           getHeight: 0,
-          parameters: {cull: false},
+          parameters: {cull: false, ...blendingParameters},
           // A Kepler line has a single color channel; an ArcLayer interpolates
           // between source and target colors, so feed the same color to both
           // ends (otherwise the target end falls back to deck.gl's default).
@@ -321,7 +322,7 @@ export default class LineLayer extends ArcLayer {
                 id: `${id}-hovered`,
                 data: [hoveredObject],
                 getHeight: 0,
-                parameters: {cull: false},
+                parameters: {cull: false, ...blendingParameters},
                 getSourceColor: this.config.highlightColor,
                 getTargetColor: this.config.highlightColor,
                 getWidth: data.getWidth,

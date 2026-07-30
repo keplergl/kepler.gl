@@ -14,6 +14,7 @@ import {PathStyleExtension} from '@deck.gl/extensions';
 import {EDITOR_LAYER_ID, EDITOR_MODES, EDITOR_LAYER_PICKING_RADIUS} from '@kepler.gl/constants';
 import {Viewport, Editor, Feature, FeatureSelectionContext} from '@kepler.gl/types';
 import {generateHashId} from '@kepler.gl/common-utils';
+import {getLayerBlendingParameters} from '@kepler.gl/utils';
 
 import {EDIT_TYPES} from './constants';
 import {LINE_STYLE, FEATURE_STYLE, EDIT_HANDLE_STYLE} from './feature-styles';
@@ -38,7 +39,7 @@ export type GetEditorLayerProps = {
     features: Feature[];
   };
   selectedFeatureIndexes: number[];
-  mapState?: {globe?: {enabled: boolean}};
+  mapState?: {globe?: {enabled: boolean}; layerBlending?: string};
 };
 
 /**
@@ -177,7 +178,9 @@ export function getEditorLayer({
     // Globe mode needs explicit depth testing so the editor overlay is occluded
     // by the sphere; in flat 2D/3D keep deck.gl's default (empty parameters) so
     // this matches the pre-globe behavior exactly.
-    parameters: mapState?.globe?.enabled ? {depthTest: true} : {},
+    parameters: mapState?.globe?.enabled
+      ? {depthTest: true, ...getLayerBlendingParameters(mapState?.layerBlending)}
+      : {},
     shadowEnabled: false,
     _subLayerProps: {
       geojson: {shadowEnabled: false},

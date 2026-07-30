@@ -77,7 +77,8 @@ import {
   getScaleFunction,
   initializeLayerColorMap,
   getCategoricalColorScale,
-  updateCustomColorRangeByColorUI
+  updateCustomColorRangeByColorUI,
+  getLayerBlendingParameters
 } from '@kepler.gl/utils';
 import memoize from 'lodash/memoize';
 import {
@@ -1531,13 +1532,19 @@ class Layer implements KeplerLayer {
     layerCallbacks: any;
     visible: boolean;
   }) {
+    const blendingParameters = mapState.layerBlending
+      ? getLayerBlendingParameters(mapState.layerBlending)
+      : {};
     return {
       id: this.id,
       idx,
       coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
       pickable: true,
       wrapLongitude: true,
-      parameters: {depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d)},
+      parameters: {
+        depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d),
+        ...blendingParameters
+      },
       hidden: this.config.hidden,
       // visconfig
       opacity: this.config.visConfig.opacity,
@@ -1651,7 +1658,8 @@ class Layer implements KeplerLayer {
                 ? {
                     background: {
                       parameters: {
-                        cull: false
+                        cull: false,
+                        ...getLayerBlendingParameters(mapState?.layerBlending)
                       }
                     }
                   }
