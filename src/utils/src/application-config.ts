@@ -125,6 +125,9 @@ export type KeplerApplicationConfig = {
   /** Whether to show the map navigation control (zoom buttons and compass). Enabled by default. */
   enableMapNavigationControl?: boolean;
 
+  /** Whether to show the map scale bar at the bottom-left of the map. Enabled by default. */
+  enableMapScale?: boolean;
+
   /** Whether to enable the swipe compare mode in split map view. Enabled by default. */
   enableSwipeMode?: boolean;
 
@@ -240,6 +243,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableAnnotations: true,
 
   enableMapNavigationControl: true,
+
+  enableMapScale: true,
 
   enableSwipeMode: true,
 
