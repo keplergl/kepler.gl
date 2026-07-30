@@ -180,9 +180,9 @@ const StyledDroppable = styled.div<StyledDroppableProps>`
   z-index: 1;
 `;
 
-const StyledMapScaleContainer = styled.div<{$left: number}>`
+const StyledMapScaleContainer = styled.div<{$left: number; $bottomOffset: number}>`
   position: absolute;
-  bottom: ${props => props.theme.sidePanel.margin.left}px;
+  bottom: ${props => props.theme.sidePanel.margin.left + props.$bottomOffset}px;
   left: ${props => props.$left}px;
   z-index: 1;
   pointer-events: auto;
@@ -1489,6 +1489,7 @@ export default function MapContainerFactory(
                   ? (sidePanelWidth || 0) + (theme?.sidePanel?.margin?.left ?? 9)
                   : theme?.sidePanel?.margin?.left ?? 9
               }
+              $bottomOffset={primary && attributionLogos.length > 0 ? 24 : 0}
             >
               <MapScale mapState={mapState} mapIndex={index ?? 0} />
             </StyledMapScaleContainer>
