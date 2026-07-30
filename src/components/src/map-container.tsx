@@ -910,15 +910,20 @@ export default function MapContainerFactory(
 
       const isGlobeMode = mapState.globe?.enabled;
 
-      // In globe mode, forward pre-computed layer rendering parameters into mapState
-      // so individual layers can merge them into their own parameters objects.
-      // The global DeckGL parameters cannot be used in globe mode because they are
-      // merged into globe system layers (atmosphere, surface, etc.) and alter their
-      // carefully tuned blend/depth state.
-      const deckLayersMapState =
-        isGlobeMode && visState.layerBlending
-          ? {...internalMapState, layerParameters: getLayerBlendingParameters(visState.layerBlending)}
-          : internalMapState;
+      // In globe mode with a non-default blend mode, forward pre-computed layer
+      // rendering parameters into mapState so individual layers can merge them into
+      // their own parameters objects. The global DeckGL parameters cannot be used in
+      // globe mode because they are merged into globe system layers (atmosphere,
+      // surface, etc.) and alter their carefully tuned blend/depth state.
+      // 'normal' is omitted — it is the WebGL default and injecting it would
+      // override intentional blend:false settings on layers like trip/scenegraph.
+      const layerBlendingParams =
+        isGlobeMode && visState.layerBlending && visState.layerBlending !== 'normal'
+          ? getLayerBlendingParameters(visState.layerBlending)
+          : undefined;
+      const deckLayersMapState = layerBlendingParams
+        ? {...internalMapState, layerParameters: layerBlendingParams}
+        : internalMapState;
 
       const deckGlLayers = generateDeckGLLayersMethod(
         {
