@@ -23,6 +23,63 @@ function zoomAdjust(latitude: number): number {
 }
 
 /**
+ * The internal world-space radius that deck.gl's GlobeViewport uses for the
+ * sphere (see GLOBE_RADIUS in @deck.gl/core globe-viewport.ts).
+ */
+const DECK_GLOBE_RADIUS = 256;
+
+/**
+ * Transform a homogeneous 4-vector by a column-major 4×4 matrix and
+ * divide by w (perspective divide).  Mirrors deck.gl's transformVector().
+ */
+function transformVector(matrix: number[], v: [number, number, number, number]): [number, number, number] {
+  const [m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15] = matrix;
+  const [vx, vy, vz, vw] = v;
+  const rx = m0 * vx + m4 * vy + m8 * vz + m12 * vw;
+  const ry = m1 * vx + m5 * vy + m9 * vz + m13 * vw;
+  const rz = m2 * vx + m6 * vy + m10 * vz + m14 * vw;
+  const rw = m3 * vx + m7 * vy + m11 * vz + m15 * vw;
+  return [rx / rw, ry / rw, rz / rw];
+}
+
+/**
+ * Returns true if the screen pixel `pos` lies within the visible globe
+ * silhouette.
+ *
+ * GlobeViewport.unproject() does a ray–sphere intersection but uses
+ * `Math.max(0, r² - d²)` to clamp the discriminant, so it *always* returns a
+ * valid lng/lat even for pixels outside the sphere silhouette (it snaps to the
+ * nearest point on the limb).  We replicate the same ray–sphere math here but
+ * check the discriminant *before* the clamp: if d² > r² the ray misses the
+ * sphere entirely and the pixel is outside the globe.
+ *
+ * The viewport's `pixelUnprojectionMatrix` is used exactly as deck.gl does
+ * internally, so the test stays accurate across all zoom levels and viewport
+ * sizes.
+ */
+function isPixelOnGlobe(viewport: any, pos: [number, number]): boolean {
+  const [x, y] = pos;
+  const m: number[] = viewport.pixelUnprojectionMatrix;
+  if (!m) return true; // conservative: allow if matrix unavailable
+
+  // Cast a ray through the pixel (near and far plane points in world space).
+  const coord0 = transformVector(m, [x, y, -1, 1]);
+  const coord1 = transformVector(m, [x, y, 1, 1]);
+
+  // Distance² from the ray to the sphere center (origin) — mirror of deck's math.
+  const dx = coord0[0] - coord1[0];
+  const dy = coord0[1] - coord1[1];
+  const dz = coord0[2] - coord1[2];
+  const lSqr = dx * dx + dy * dy + dz * dz;
+  const l0Sqr = coord0[0] ** 2 + coord0[1] ** 2 + coord0[2] ** 2;
+  const l1Sqr = coord1[0] ** 2 + coord1[1] ** 2 + coord1[2] ** 2;
+  const sSqr = (4 * l0Sqr * l1Sqr - (lSqr - l0Sqr - l1Sqr) ** 2) / 16;
+  const dSqr = (4 * sSqr) / lSqr;
+
+  return dSqr <= DECK_GLOBE_RADIUS * DECK_GLOBE_RADIUS;
+}
+
+/**
  * Custom GlobeController that restores zoom-to-cursor behavior.
  *
  * In deck.gl 9.x, the default GlobeController's GlobeState.zoom() ignores the
@@ -190,30 +247,47 @@ class ZoomToCursorGlobeController extends GlobeController {
       // which incremental deltas track fine. The exact anchor below removes that
       // first-frame snap.
       panStart({pos}: {pos: [number, number]}) {
+        const viewport = (this as any).makeViewport((this as any).getViewportProps());
+        // If the mousedown pixel is outside the globe silhouette, store `false`
+        // as an explicit sentinel so that every subsequent `pan` call for this
+        // gesture is a no-op.  We can't rely on `_unproject(pos)` returning
+        // undefined here because GlobeViewport.unproject clamps the
+        // ray–sphere discriminant to 0 via Math.max(0, …), which means it
+        // always returns a valid-looking lng/lat even for off-globe pixels.
+        if (!isPixelOnGlobe(viewport, pos)) {
+          return (this as any)._getUpdatedState({startPanLngLat: false});
+        }
         return (this as any)._getUpdatedState({
           startPanLngLat: (this as any)._unproject(pos)
         });
       }
 
       pan({pos, startPos}: {pos: [number, number]; startPos?: [number, number]}) {
-        const startPanLngLat =
-          (this as any).getState().startPanLngLat || (this as any)._unproject(startPos);
+        const storedStart = (this as any).getState().startPanLngLat;
+
+        // `false` means the drag was initiated outside the globe — do not rotate.
+        if (storedStart === false) {
+          return this;
+        }
+
+        const startPanLngLat = storedStart || (this as any)._unproject(startPos);
         if (!startPanLngLat) {
           return this;
         }
 
         const props = (this as any).getViewportProps();
         const viewport = (this as any).makeViewport(props);
-        const fromPosition = viewport.unproject(pos);
 
-        // Guard: pixels off the sphere silhouette unproject to NaN/undefined.
-        const valid =
-          Array.isArray(fromPosition) &&
-          Number.isFinite(fromPosition[0]) &&
-          Number.isFinite(fromPosition[1]);
-        if (!valid) {
+        // Once the cursor leaves the globe silhouette mid-drag, freeze the view.
+        // viewport.unproject() snaps off-globe pixels to the nearest limb point
+        // (via Math.max(0, …) in its ray–sphere discriminant), so without this
+        // guard the globe would keep rotating toward the edge as the cursor moves
+        // further outside.
+        if (!isPixelOnGlobe(viewport, pos)) {
           return this;
         }
+
+        const fromPosition = viewport.unproject(pos);
 
         const longitude = startPanLngLat[0] - fromPosition[0] + props.longitude;
         let latitude = startPanLngLat[1] - fromPosition[1] + props.latitude;
