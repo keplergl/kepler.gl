@@ -5,6 +5,7 @@ import distance from '@turf/distance';
 import {range} from 'd3-array';
 import React, {FC, useCallback, useContext, useState} from 'react';
 import styled from 'styled-components';
+import {WebMercatorViewport} from 'viewport-mercator-project';
 
 import {MapViewStateContext, MapViewStateContextType} from '../map-view-state-context';
 import {getViewportFromMapState, getApplicationConfig} from '@kepler.gl/utils';
@@ -155,7 +156,7 @@ export default function MapScaleFactory() {
     }, []);
 
     const mergedState = {...mapState, ...viewState};
-    const viewport = getViewportFromMapState(mergedState as MapState);
+    const viewport = getViewportFromMapState(mergedState as MapState) as WebMercatorViewport;
 
     const cx = (mapState.width || 0) / 2;
     const cy = (mapState.height || 0) / 2;
