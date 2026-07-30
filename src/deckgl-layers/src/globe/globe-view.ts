@@ -269,18 +269,27 @@ class ZoomToCursorGlobeController extends GlobeController {
       pan({pos, startPos}: {pos: [number, number]; startPos?: [number, number]}) {
         const storedStart = (this as any).getState().startPanLngLat;
 
-        // `false` means the drag was initiated outside the globe — do not rotate.
+        const props = (this as any).getViewportProps();
+        const viewport = (this as any).makeViewport(props);
+
+        // `false` means the drag started outside the globe. If the cursor has
+        // now moved onto the globe, latch the current position as the anchor
+        // so rotation begins from the entry point. Otherwise stay frozen.
         if (storedStart === false) {
-          return this;
+          if (!isPixelOnGlobe(viewport, pos)) {
+            return this;
+          }
+          // Cursor just entered the globe — establish the anchor and return
+          // without moving; the next pan event will apply the first delta.
+          return (this as any)._getUpdatedState({
+            startPanLngLat: (this as any)._unproject(pos)
+          });
         }
 
         const startPanLngLat = storedStart || (this as any)._unproject(startPos);
         if (!startPanLngLat) {
           return this;
         }
-
-        const props = (this as any).getViewportProps();
-        const viewport = (this as any).makeViewport(props);
 
         // Once the cursor leaves the globe silhouette mid-drag, freeze the view.
         // viewport.unproject() snaps off-globe pixels to the nearest limb point
