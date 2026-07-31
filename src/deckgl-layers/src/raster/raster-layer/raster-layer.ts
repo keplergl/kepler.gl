@@ -32,6 +32,9 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
 
   _redrawScheduled = false;
   _pendingImageRetry: RasterLayerAddedProps['images'] | null = null;
+  /** How many consecutive frames have retried a failed texture upload. */
+  _imageRetryCount = 0;
+  static readonly MAX_IMAGE_RETRY_ATTEMPTS = 3;
 
   initializeState(): void {
     patchPipelineValidation();
@@ -44,6 +47,8 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     // If a previous frame had failed texture uploads, retry them now before
     // checking whether the images state is complete. Pass oldImagesData: {} so
     // all keys are treated as new and bypass the isEqual skip-check.
+    // Retries are bounded to MAX_IMAGE_RETRY_ATTEMPTS to avoid an infinite
+    // redraw loop when image data is permanently invalid.
     if (this._pendingImageRetry) {
       const retry = this._pendingImageRetry;
       this._pendingImageRetry = null;
@@ -58,8 +63,18 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
         this.setState({images: newImages});
       }
       if (hasPendingUploads) {
-        this._pendingImageRetry = retry;
-        this._scheduleRedraw();
+        this._imageRetryCount++;
+        if (this._imageRetryCount < RasterLayer.MAX_IMAGE_RETRY_ATTEMPTS) {
+          this._pendingImageRetry = retry;
+          this._scheduleRedraw();
+        } else {
+          console.warn(
+            `RasterLayer: texture upload failed after ${RasterLayer.MAX_IMAGE_RETRY_ATTEMPTS} attempts, giving up.`
+          );
+          this._imageRetryCount = 0;
+        }
+      } else {
+        this._imageRetryCount = 0;
       }
     }
 
@@ -196,6 +211,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     // oldImagesData: {} so all keys bypass the isEqual skip-check.
     if (hasPendingUploads) {
       this._pendingImageRetry = props.images;
+      this._imageRetryCount = 0;
       this._scheduleRedraw();
     }
   }

@@ -900,7 +900,7 @@ function buildTileDebugLayer(
     backgroundPadding: [3, 2, 3, 2],
     fontWeight: 'bold',
     fontFamily: 'monospace',
-    multilineHeight: 1.3,
+    lineHeight: 1.3,
     billboard: true,
     sizeUnits: 'pixels',
     getTextAnchor: 'middle',
