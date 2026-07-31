@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {COORDINATE_SYSTEM, Layer as DeckLayer} from '@deck.gl/core';
-import {TileLayer, GeoBoundingBox, TileBoundingBox} from '@deck.gl/geo-layers';
+import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 import type {TypedArray} from '@loaders.gl/loader-utils';
 import type {TextureProps} from '@luma.gl/core';
@@ -877,7 +877,7 @@ export default class RasterTileLayer extends KeplerLayer {
  */
 function buildTileDebugLayer(
   id: string,
-  tile: {index: {x: number; y: number; z: number}; bbox: TileBoundingBox},
+  tile: {index: {x: number; y: number; z: number}; bbox: unknown},
   status: string,
   extra: string
 ): TextLayer {
