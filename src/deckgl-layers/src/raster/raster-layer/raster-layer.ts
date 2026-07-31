@@ -31,6 +31,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
   };
 
   _redrawScheduled = false;
+  _pendingImageRetry: RasterLayerAddedProps['images'] | null = null;
 
   initializeState(): void {
     patchPipelineValidation();
@@ -40,6 +41,28 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
   }
 
   draw(_opts: {shaderModuleProps: Record<string, unknown>}): void {
+    // If a previous frame had failed texture uploads, retry them now before
+    // checking whether the images state is complete. Pass oldImagesData: {} so
+    // all keys are treated as new and bypass the isEqual skip-check.
+    if (this._pendingImageRetry) {
+      const retry = this._pendingImageRetry;
+      this._pendingImageRetry = null;
+      const {images: newImages, hasPendingUploads} = loadImages({
+        gl: this.context.device?.gl || this.context.gl,
+        device: this.context.device,
+        images: this.state.images,
+        imagesData: retry,
+        oldImagesData: {}
+      });
+      if (newImages) {
+        this.setState({images: newImages});
+      }
+      if (hasPendingUploads) {
+        this._pendingImageRetry = retry;
+        this._scheduleRedraw();
+      }
+    }
+
     const {model, images, coordinateConversion, bounds} = this.state;
     const {desaturate, transparentColor, tintColor, moduleProps} = this.props;
 
@@ -158,7 +181,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     const device = this.context.device;
     const gl = device?.gl || this.context.gl;
 
-    const newImages = loadImages({
+    const {images: newImages, hasPendingUploads} = loadImages({
       gl,
       device,
       images,
@@ -167,6 +190,13 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     });
     if (newImages) {
       this.setState({images: newImages});
+    }
+    // If any texture upload failed (device not ready / createTexture threw),
+    // stash the imagesData and schedule a retry next frame. The retry passes
+    // oldImagesData: {} so all keys bypass the isEqual skip-check.
+    if (hasPendingUploads) {
+      this._pendingImageRetry = props.images;
+      this._scheduleRedraw();
     }
   }
 

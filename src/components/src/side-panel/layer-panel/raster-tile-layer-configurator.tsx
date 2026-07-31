@@ -474,6 +474,10 @@ function RasterTileLayerConfiguratorFactory(
                 {...visConfiguratorProps}
                 {...layer.visConfigSettings.showTileBorders}
               />
+              <VisConfigSwitch
+                {...visConfiguratorProps}
+                {...layer.visConfigSettings.showTileDebugInfo}
+              />
               <VisConfigSlider {...visConfiguratorProps} {...layer.visConfigSettings.zoomOffset} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
@@ -708,6 +712,10 @@ function RasterTileLayerConfiguratorFactory(
             <VisConfigSwitch
               {...visConfiguratorProps}
               {...layer.visConfigSettings.showTileBorders}
+            />
+            <VisConfigSwitch
+              {...visConfiguratorProps}
+              {...layer.visConfigSettings.showTileDebugInfo}
             />
             <VisConfigSlider {...visConfiguratorProps} {...layer.visConfigSettings.zoomOffset} />
           </ConfigGroupCollapsibleContent>
