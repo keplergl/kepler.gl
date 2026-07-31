@@ -148,15 +148,28 @@ function AddMapStyleModalFactory() {
       if (map && mapRef.current !== map) {
         mapRef.current = map;
 
-        map.on('style.load', () => {
+        // Keep a reference to the pending onIdle listener so it can be removed
+        // before registering a new one when style.load fires again (e.g. the
+        // user edits the URL while the same map instance is reused).
+        let pendingOnIdle: (() => void) | null = null;
+
+        const onStyleLoad = () => {
+          // Cancel any previous idle capture that hasn't fired yet.
+          if (pendingOnIdle) {
+            map.off('idle', pendingOnIdle);
+            pendingOnIdle = null;
+          }
+
           const style = map.getStyle();
           loadCustomMapStyleRef.current({style, error: false});
+
           // Capture a thumbnail once the map finishes its first full render
           // (tiles loaded + painted).  We use a one-shot `idle` listener so we
           // get a real screenshot instead of a blank canvas.
           // preserveDrawingBuffer is set to true on this map instance, so
           // getCanvas().toDataURL() is safe to call synchronously here.
           const onIdle = () => {
+            pendingOnIdle = null;
             map.off('idle', onIdle);
             try {
               const icon = map.getCanvas().toDataURL('image/png');
@@ -167,8 +180,11 @@ function AddMapStyleModalFactory() {
               // stays and is good enough.
             }
           };
+          pendingOnIdle = onIdle;
           map.on('idle', onIdle);
-        });
+        };
+
+        map.on('style.load', onStyleLoad);
 
         map.on('error', () => {
           loadCustomMapStyleRef.current({error: true});
