@@ -52,7 +52,7 @@
     "@types/lodash": "4.17.5",
     "@types/redux-actions": "^2.6.2",
     "copy-to-clipboard": "^3.3.1",
-    "d3-color": "^2.0.0",
+    "d3-color": "^3.1.0",
     "d3-dsv": "^2.0.0",
     "deepmerge": "^4.2.2",
     "global": "^4.3.0",

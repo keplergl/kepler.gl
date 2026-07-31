@@ -43,7 +43,7 @@
     "@types/lodash": "4.17.5",
     "apache-arrow": ">=15.0.0",
     "d3-array": "^2.8.0",
-    "d3-color": "^2.0.0",
+    "d3-color": "^3.1.0",
     "d3-format": "^2.0.0",
     "d3-interpolate": "^2.0.1",
     "decimal.js": "^10.2.0",
