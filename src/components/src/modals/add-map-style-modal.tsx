@@ -151,6 +151,23 @@ function AddMapStyleModalFactory() {
         map.on('style.load', () => {
           const style = map.getStyle();
           loadCustomMapStyleRef.current({style, error: false});
+          // Capture a thumbnail once the map finishes its first full render
+          // (tiles loaded + painted).  We use a one-shot `idle` listener so we
+          // get a real screenshot instead of a blank canvas.
+          // preserveDrawingBuffer is set to true on this map instance, so
+          // getCanvas().toDataURL() is safe to call synchronously here.
+          const onIdle = () => {
+            map.off('idle', onIdle);
+            try {
+              const icon = map.getCanvas().toDataURL('image/png');
+              loadCustomMapStyleRef.current({icon});
+            } catch {
+              // toDataURL can fail if the canvas is cross-origin tainted; in
+              // that case the no-icon placeholder set by inputMapStyleAction
+              // stays and is good enough.
+            }
+          };
+          map.on('idle', onIdle);
         });
 
         map.on('error', () => {
