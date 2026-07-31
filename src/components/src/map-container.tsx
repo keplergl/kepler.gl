@@ -288,10 +288,11 @@ export default function MapContainerFactory(
     }
 
     state = {
-      // true only when the basemap uses Mapbox-hosted tiles (mapbox:// sources).
-      // For any other provider (CARTO, OpenFreeMap, OSM …) MapLibre is merely the
-      // rendering engine, not the tile provider, so the "Basemap by: MapLibre" logo
-      // should not appear.
+      // true for built-in kepler.gl styles (dark-matter, positron, …) and when the
+      // basemap uses Mapbox-hosted tiles (mapbox:// sources).
+      // For user-added custom styles (OpenFreeMap, CARTO self-hosted, …) MapLibre is
+      // merely the rendering engine, not the tile provider, so the logo is hidden and
+      // the basemap's own TileJSON attribution is shown instead.
       showBaseMapLibLogo: false,
       // attribution strings collected from the resolved map sources (e.g. CARTO,
       // OpenFreeMap).  Populated after TileJSON resolves.
@@ -309,7 +310,7 @@ export default function MapContainerFactory(
       if (this._map) {
         this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
         this._map.off(MAPBOXGL_RENDER, this._onMapRender);
-        this._removeOsmSourceDataListener();
+        this._removeBasemapAttributionListeners();
       }
       if (!this._ref.current) {
         return;
@@ -319,7 +320,7 @@ export default function MapContainerFactory(
 
     componentDidUpdate(prevProps) {
       if (prevProps.mapStyle.styleType !== this.props.mapStyle.styleType) {
-        this._removeOsmSourceDataListener();
+        this._removeBasemapAttributionListeners();
         if (this.props.mapStyle.styleType === NO_MAP_ID) {
           this.setState({
             showBaseMapLibLogo: false,
@@ -335,8 +336,8 @@ export default function MapContainerFactory(
     _map: GetMapRef | null = null;
     _ref = createRef<HTMLDivElement>();
     _deckGLErrorsElapsed: {[id: string]: number} = {};
-    _osmSourceDataListener: ((e: any) => void) | null = null;
-    _osmIdleListener: (() => void) | null = null;
+    _basemapSourceDataListener: ((e: any) => void) | null = null;
+    _basemapIdleListener: (() => void) | null = null;
 
     _onMapRender = () => {
       if (typeof this.props.onMapRender === 'function') {
@@ -530,7 +531,7 @@ export default function MapContainerFactory(
     };
 
     _updateAttribution = (update?: any) => {
-      this._removeOsmSourceDataListener();
+      this._removeBasemapAttributionListeners();
 
       let styleObj = update?.style || null;
       if (!styleObj && this._map) {
@@ -577,24 +578,24 @@ export default function MapContainerFactory(
       // after style.load.  Start a listener so we can update basemapAttributions
       // as soon as the sources resolve their TileJSON.
       if (!usesMapbox) {
-        this._checkOsmAttributionOnSourceLoad();
+        this._collectBasemapAttributions();
       }
     };
 
-    _removeOsmSourceDataListener = () => {
-      if (this._osmSourceDataListener && this._map) {
-        this._map.off('sourcedata', this._osmSourceDataListener);
-        this._osmSourceDataListener = null;
+    _removeBasemapAttributionListeners = () => {
+      if (this._basemapSourceDataListener && this._map) {
+        this._map.off('sourcedata', this._basemapSourceDataListener);
+        this._basemapSourceDataListener = null;
       }
-      if (this._osmIdleListener && this._map) {
-        this._map.off('idle', this._osmIdleListener);
-        this._osmIdleListener = null;
+      if (this._basemapIdleListener && this._map) {
+        this._map.off('idle', this._basemapIdleListener);
+        this._basemapIdleListener = null;
       }
     };
 
-    _checkOsmAttributionOnSourceLoad = () => {
+    _collectBasemapAttributions = () => {
       if (!this._map) return;
-      this._removeOsmSourceDataListener();
+      this._removeBasemapAttributionListeners();
       let attempts = 0;
       // Cap retries so a style that never yields attributions doesn't leave a
       // permanent sourcedata listener attached.
@@ -605,7 +606,7 @@ export default function MapContainerFactory(
         // source's metadata is available so custom basemap attributions are not lost.
         const basemapAttributions = getBaseMapAttributions(this._map);
         if (basemapAttributions.length) {
-          this._removeOsmSourceDataListener();
+          this._removeBasemapAttributionListeners();
           // Don't change showBaseMapLibLogo here — it is fixed at style.load time
           // based on whether the style uses Mapbox tiles.  We only update the
           // provider attributions collected from the resolved TileJSON.
@@ -626,7 +627,7 @@ export default function MapContainerFactory(
         attempts++;
         tryCollect();
         if (attempts >= MAX_ATTEMPTS) {
-          this._removeOsmSourceDataListener();
+          this._removeBasemapAttributionListeners();
         }
       };
 
@@ -636,15 +637,15 @@ export default function MapContainerFactory(
       // one-shot fallback that catches cases where the sourcedata metadata
       // events are missed or the source never reaches isSourceLoaded.
       const onIdle = () => {
-        this._removeOsmSourceDataListener();
+        this._removeBasemapAttributionListeners();
         const basemapAttributions = getBaseMapAttributions(this._map);
         if (basemapAttributions.length) {
           this.setState({basemapAttributions});
         }
       };
 
-      this._osmSourceDataListener = onSourceData;
-      this._osmIdleListener = onIdle;
+      this._basemapSourceDataListener = onSourceData;
+      this._basemapIdleListener = onIdle;
       this._map.on('sourcedata', onSourceData);
       this._map.on('idle', onIdle);
     };
@@ -656,7 +657,7 @@ export default function MapContainerFactory(
         if (map && this._map !== map) {
           this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
           this._map.off(MAPBOXGL_RENDER, this._onMapRender);
-          this._removeOsmSourceDataListener();
+          this._removeBasemapAttributionListeners();
           this._map = null;
         }
       }
