@@ -61,7 +61,11 @@ export type BaseMapLibraryConfig = {
  *          LOAD_MAP_STYLES, UPDATE_MAP, LAYER_VISUAL_CHANGE,
  *          ON_MAP_CLICK, FILTER_CHANGE, MAP_LOAD_STARTED
  *
- * Only has an effect when NODE_ENV === 'local' (i.e. `yarn start`).
+ * Effects by context:
+ * - **redux-logger** (console output): only active when `NODE_ENV === 'local'` (i.e. `yarn start`)
+ * - **Redux DevTools** (`actionsBlacklist`): active whenever the browser extension is present,
+ *   regardless of `NODE_ENV`
+ *
  * Default: `1`
  *
  * @example
