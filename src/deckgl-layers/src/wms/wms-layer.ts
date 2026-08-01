@@ -146,17 +146,6 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
   override renderLayers(): Layer<any> {
     const {bounds, image, lastRequestParameters} = this.state;
 
-    if (bounds) {
-      console.log('[WMS Render]', {
-        hasBounds: !!bounds,
-        bounds: bounds.map(b => b.toFixed(2)),
-        boundsSpan: [(bounds[2] - bounds[0]).toFixed(2), (bounds[3] - bounds[1]).toFixed(2)],
-        hasImage: !!image,
-        srs: lastRequestParameters?.srs,
-        coordinateSystem: lastRequestParameters?.srs === 'EPSG:4326' ? 'LNGLAT' : 'CARTESIAN'
-      });
-    }
-
     return (
       image &&
       new BitmapLayer({
@@ -275,7 +264,6 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       this.state.inFlightRequestParameters &&
       this._areRequestParamsEqual(this.state.inFlightRequestParameters, requestParams)
     ) {
-      console.log('[WMS Skip] In-flight duplicate');
       return;
     }
 
@@ -290,10 +278,6 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       this.state.lastRequestParameters &&
       this._isViewCoveredByLastRequest(this.state.lastRequestParameters, requestParams)
     ) {
-      console.log('[WMS Skip] Covered by last request', {
-        lastBounds: this.state.lastRequestParameters.bbox,
-        currentBounds: requestParams.bbox
-      });
       return;
     }
 
@@ -302,13 +286,6 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     // However, always allow requests if the new view isn't fully covered by the last image.
     const gl = this.context.gl;
     const isExporting = gl?.getContextAttributes?.()?.preserveDrawingBuffer;
-    
-    console.log('[WMS Export Check]', {
-      isExporting,
-      hasGL: !!gl,
-      lastRequestZoom: this.state._lastRequestZoom,
-      currentZoom: viewport.zoom
-    });
     
     if (isExporting && this.state._lastRequestZoom >= 0) {
       const currentZoom = viewport.zoom;
@@ -329,25 +306,11 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
           currentBbox[3] <= lastBbox[3];
       }
       
-      console.log('[WMS Export Throttle Check]', {
-        currentZoom,
-        lastZoom,
-        isZoomingIn,
-        floorCurrent: Math.floor(currentZoom),
-        floorLast: Math.floor(lastZoom),
-        sameFloor: Math.floor(currentZoom) === Math.floor(lastZoom),
-        fullyContained,
-        lastBbox,
-        currentBbox,
-        willThrottle: isZoomingIn && Math.floor(currentZoom) === Math.floor(lastZoom) && fullyContained
-      });
-      
       // Only throttle if:
       // 1. Zooming in (not zooming out or panning at same zoom)
       // 2. Same zoom floor (haven't crossed an integer zoom level)
       // 3. New view is fully contained in the last loaded image (no uncovered areas)
       if (isZoomingIn && Math.floor(currentZoom) === Math.floor(lastZoom) && fullyContained) {
-        console.log('[WMS Skip] Export throttle');
         return;
       }
     }
@@ -355,131 +318,18 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     // Mark request as in-flight to prevent duplicate requests
     this.state.inFlightRequestParameters = requestParams;
 
-    // Debug logging: track WMS requests
-    const isGlobe = Boolean(viewport.resolution);
-    console.log('[WMS Request]', {
-      reason: _reason,
-      isGlobe,
-      viewportZoom: viewport.zoom,
-      bounds,
-      srs,
-      width,
-      height,
-      bbox: requestParams.bbox
-    });
-
     const requestId = this.getRequestId();
     try {
       this.state.loadCounter++;
-      console.log('[WMS Loading] Started, loadCounter:', this.state.loadCounter, 'isLoaded:', this.isLoaded);
       // Trigger a redraw to update the UI loading indicator
       this.setNeedsRedraw();
       this.props.onImageLoadStart(requestId);
 
-      // Log the WMS request URL for debugging
-      let wmsUrl = 'unknown';
-      if (this.state.imageSource) {
-        try {
-          // Try to get the URL from the image source
-          if ((this.state.imageSource as any).getUrl) {
-            wmsUrl = (this.state.imageSource as any).getUrl(requestParams);
-          } else if ((this.state.imageSource as any).url) {
-            wmsUrl = (this.state.imageSource as any).url;
-          }
-          console.log('[WMS Request URL] Copy and paste in browser to see raw server response:');
-          console.log(wmsUrl);
-          console.log('[WMS Request Params]', requestParams);
-        } catch (e) {
-          console.log('[WMS Request URL] Could not extract URL:', e);
-        }
-      }
-
       const image = await this.state.imageSource.getImage(requestParams);
 
-      // Log the returned image details
-      if (image) {
-        console.log('[WMS Image Details]', {
-          requestId,
-          width: (image as any).width || 'unknown',
-          height: (image as any).height || 'unknown',
-          type: image.constructor.name,
-          image: image, // You can inspect this in the console
-          requestedBounds: bounds,
-          requestedSize: {width: requestParams.width, height: requestParams.height}
-        });
-        
-        // Convert ImageBitmap to viewable image and auto-open
-        if (image instanceof ImageBitmap || (image as any).width !== undefined) {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = (image as any).width;
-            canvas.height = (image as any).height;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.drawImage(image as any, 0, 0);
-              
-              // Convert to blob URL (works better than data URL)
-              canvas.toBlob((blob) => {
-                if (blob) {
-                  const blobUrl = URL.createObjectURL(blob);
-                  (window as any)[`__wmsImage_${requestId}`] = blobUrl;
-                  (window as any).__lastWMSImageUrl = blobUrl;
-                  
-                  console.log(`[WMS Image Debug] Request ${requestId} image saved. To view: window.open(window.__wmsImage_${requestId})`);
-                  
-                  // Auto-open if debug flag is set
-                  if ((window as any).WMS_DEBUG_AUTO_OPEN) {
-                    // Add a small delay to avoid popup blocker
-                    setTimeout(() => {
-                      console.log(`[WMS Image Debug] Opening Request ${requestId} in new tab...`);
-                      const newWindow = window.open('', `wms_image_${requestId}`);
-                      if (newWindow) {
-                        newWindow.document.write(`
-                          <html>
-                            <head><title>WMS Image Preview - Request ${requestId}</title></head>
-                            <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#333;">
-                              <div style="text-align:center;">
-                                <img src="${blobUrl}" style="max-width:100%;max-height:100vh;border:2px solid lime;"/>
-                                <div style="color:white;font-family:monospace;padding:20px;background:#222;">
-                                  <strong>Request ID: ${requestId}</strong><br/>
-                                  Bounds: [${bounds.map(b => b.toFixed(2)).join(', ')}]<br/>
-                                  Image Size: ${canvas.width} x ${canvas.height}px<br/>
-                                  Aspect Ratio: ${(canvas.width / canvas.height).toFixed(2)}<br/>
-                                  Bounds Span: ${(bounds[2] - bounds[0]).toFixed(2)}° x ${(bounds[3] - bounds[1]).toFixed(2)}°<br/>
-                                  Viewport Zoom: ${viewport.zoom.toFixed(2)}
-                                </div>
-                              </div>
-                            </body>
-                          </html>
-                        `);
-                        console.log(`[WMS Image Debug] ✅ Successfully opened Request ${requestId} in tab`);
-                      } else {
-                        console.log(`[WMS Image Debug] ❌ Popup blocked for Request ${requestId}. Run: window.open(window.__wmsImage_${requestId})`);
-                      }
-                    }, requestId * 100); // Stagger by 100ms per request
-                  }
-                }
-              });
-            }
-          } catch (e) {
-            console.log('[WMS Image Preview] Could not convert to viewable format:', e);
-          }
-        } else if (image instanceof HTMLImageElement || image instanceof Image) {
-          console.log('[WMS Image Preview] Image element:', image);
-          console.log('[WMS Image Preview] Image src:', (image as any).src);
-        }
-      }
-
       // If a request takes a long time, later requests may have already loaded.
-      console.log('[WMS Image Received]', {
-        requestId,
-        currentLastRequestId: this.state.lastRequestId,
-        willUpdate: this.state.lastRequestId < requestId,
-        bounds
-      });
       if (this.state.lastRequestId < requestId) {
         this.getCurrentLayer()?.props.onImageLoad(requestId);
-        console.log('[WMS Loaded]', {requestId, bounds});
         // Update lastRequestParameters only after successful load
         // This ensures coverage checks only use successfully loaded images
         this.state.lastRequestParameters = requestParams;
@@ -490,21 +340,14 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
           bounds,
           lastRequestId: requestId
         });
-      } else {
-        console.log('[WMS Skipped Update] Older request loaded late', {
-          requestId,
-          currentLastRequestId: this.state.lastRequestId
-        });
       }
     } catch (error) {
-      console.log('[WMS Loading] Error:', error);
       this.context.onError?.(error as Error, this);
       this.getCurrentLayer()?.props.onImageLoadError(requestId, error as Error);
     } finally {
       // Clear in-flight marker when request completes (success or error)
       this.state.inFlightRequestParameters = undefined;
       this.state.loadCounter--;
-      console.log('[WMS Loading] Finished, loadCounter:', this.state.loadCounter, 'isLoaded:', this.isLoaded);
       // Trigger a redraw to update the UI loading indicator
       this.setNeedsRedraw();
     }
@@ -519,18 +362,8 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
 
   /** Runs an action in the future, cancels it if the new action is issued before it executes */
   private debounce(fn: () => void, ms = 500): void {
-    const hadPending = this.state._timeoutId !== undefined;
     clearTimeout(this.state._timeoutId);
-    this.state._timeoutId = setTimeout(() => {
-      console.log('[WMS Debounce] Executing after', ms, 'ms');
-      fn();
-    }, ms);
-    
-    if (hadPending) {
-      console.log('[WMS Debounce] Cancelled previous, scheduling new with', ms, 'ms delay');
-    } else {
-      console.log('[WMS Debounce] Scheduled with', ms, 'ms delay');
-    }
+    this.state._timeoutId = setTimeout(() => fn(), ms);
   }
 
   /**
@@ -547,12 +380,6 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       prev.transparent !== next.transparent ||
       !deepEqual(prev.layers, next.layers)
     ) {
-      console.log('[WMS Coverage] Different params', {
-        srsDiff: prev.srs !== next.srs,
-        sizeDiff: prev.width !== next.width || prev.height !== next.height,
-        transparentDiff: prev.transparent !== next.transparent,
-        layersDiff: !deepEqual(prev.layers, next.layers)
-      });
       return false;
     }
 
@@ -564,18 +391,6 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
 
     // Is the new bbox fully contained within the previously requested bbox?
     const contained = n[0] >= p[0] && n[1] >= p[1] && n[2] <= p[2] && n[3] <= p[3];
-    
-    console.log('[WMS Coverage] Containment check', {
-      prevBbox: p,
-      nextBbox: n,
-      contained,
-      checks: {
-        minLng: n[0] >= p[0],
-        minLat: n[1] >= p[1],
-        maxLng: n[2] <= p[2],
-        maxLat: n[3] <= p[3]
-      }
-    });
     
     if (!contained) {
       return false;
@@ -591,20 +406,10 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     const prevSpanY = p[3] - p[1];
     const nextSpanY = n[3] - n[1];
 
-    const covered = (
+    return (
       nextSpanX >= prevSpanX / COVERAGE_REFETCH_ZOOM_FACTOR &&
       nextSpanY >= prevSpanY / COVERAGE_REFETCH_ZOOM_FACTOR
     );
-    
-    console.log('[WMS Coverage] Resolution check', {
-      prevSpan: [prevSpanX, prevSpanY],
-      nextSpan: [nextSpanX, nextSpanY],
-      refetchFactor: COVERAGE_REFETCH_ZOOM_FACTOR,
-      threshold: [prevSpanX / COVERAGE_REFETCH_ZOOM_FACTOR, prevSpanY / COVERAGE_REFETCH_ZOOM_FACTOR],
-      covered
-    });
-
-    return covered;
   }
 
   /** Compare request parameters to determine if a new request is needed */
@@ -734,12 +539,6 @@ export function getGlobeVisibleBounds(viewport: Viewport): [number, number, numb
     minLng = -180;
     maxLng = 180;
   }
-
-  console.log('[WMS Globe Bounds]', {
-    bounds: [minLng, minLat, maxLng, maxLat],
-    lngSpan: maxLng - minLng,
-    latSpan: maxLat - minLat
-  });
 
   return [minLng, minLat, maxLng, maxLat];
 }
