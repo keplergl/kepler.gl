@@ -45,10 +45,6 @@ const NUM_SAMPLE_RAYS = 3;
  * Zoom range over which the atmosphere effect fades out.
  * Below ATMOSPHERE_FADE_ZOOM_START the effect is fully visible.
  * Above ATMOSPHERE_FADE_ZOOM_END the effect is completely hidden.
- * This mirrors Google Maps globe behaviour: the atmospheric halo and day/night
- * shading are only meaningful when the full globe is in view; once the user has
- * zoomed in past continent-level the effect becomes a flat colour wash that
- * obscures the map detail, so we fade it to zero.
  */
 const ATMOSPHERE_FADE_ZOOM_START = 3.5;
 const ATMOSPHERE_FADE_ZOOM_END = 6;
