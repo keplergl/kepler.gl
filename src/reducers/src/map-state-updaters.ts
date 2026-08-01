@@ -187,13 +187,21 @@ export const fitBoundsUpdater = (
     return state;
   }
 
+  // In globe mode, clamp zoom to globe's allowed range
+  const isGlobeMode = Boolean(state.globe?.enabled);
+  const zoom = Number.isFinite(centerAndZoom.zoom)
+    ? isGlobeMode
+      ? Math.min(Math.max(centerAndZoom.zoom, GLOBE_MIN_ZOOM), GLOBE_MAX_ZOOM)
+      : centerAndZoom.zoom
+    : undefined;
+
   const newState = {
     ...state,
     latitude: centerAndZoom.center[1],
     longitude: centerAndZoom.center[0],
     // For marginal or invalid bounds, zoom may be NaN. Make sure to provide a valid value in order
     // to avoid corrupt state and potential crashes as zoom is expected to be a number
-    ...(Number.isFinite(centerAndZoom.zoom) ? {zoom: centerAndZoom.zoom} : {})
+    ...(zoom !== undefined ? {zoom} : {})
   };
 
   // if fitting to bounds while split and unsynced
