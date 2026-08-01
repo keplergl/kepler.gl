@@ -4,12 +4,18 @@
  *   1. Resolve `skillId` via `SkillStorage.resolveSkillId`.
  *   2. Read the skill record (manifest + instructions).
  *   3. Spin up a fresh `ToolLoopAgent` seeded with the skill's `SKILL.md` as
- *      instructions and the single `executeApi` tool built from the shared
- *      `KeplerContext`. The `executeApi` tool exposes a unified command
- *      dispatcher: `executeCommand` routes a `commandId` (e.g.
- *      "map.get-boundary", "data.query", "geoda.lisa") to the underlying
- *      kepler / DuckDB / GeoDa / geo tools, and `listCommands` enumerates
- *      the available command ids.
+ *      instructions and a tool set built from the shared `KeplerContext`:
+ *      `executeApi` (the unified command dispatcher — `executeCommand` routes
+ *      a `commandId` such as "map.get-boundary", "data.query", "geoda.lisa"
+ *      to the underlying kepler / DuckDB / GeoDa / geo tools, and
+ *      `listCommands` enumerates the available command ids) PLUS the five
+ *      ECharts analytical tools (`histogramTool`, `boxplotTool`,
+ *      `scatterplotTool`, `bubbleChartTool`, `pcpTool`). The ECharts tools are
+ *      exposed as named tools rather than `executeApi` commands because a
+ *      chart's deliverable is the React component and its tool name must
+ *      survive to the UI for the right renderer to be selected. They are
+ *      injected into every skill, not just `charts`, so e.g. the LISA and
+ *      classify skills can draw a histogram mid-workflow.
  *   4. Stream that sub-agent via `streamSubAgent` so its tool calls surface in
  *      the parent's activity log.
  */
@@ -21,6 +27,7 @@ import {ToolLoopAgent, stepCountIs, tool, type LanguageModel} from 'ai';
 import {z} from 'zod';
 import type {KeplerContext} from '../types';
 import {createExecuteApiTool} from './executeApi';
+import {getEchartsTools} from '../tools/echarts-tools';
 
 export interface CreateRunSkillToolOptions {
   store: StoreApi<AiSliceState>;
@@ -68,6 +75,7 @@ export function createRunSkillTool({
 
         const skillTools = {
           executeApi: createExecuteApiTool(getKeplerContext()),
+          ...getEchartsTools(getKeplerContext())
         };
 
         const subAgent = new ToolLoopAgent({

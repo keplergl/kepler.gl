@@ -1,10 +1,14 @@
 import React from 'react';
 import {Chat, AiSettingsPanel} from '@sqlrooms/ai';
 import {useRoomStore} from '../store';
+import {getEchartsToolRenderers} from '../tools/echarts-renderers';
 import {useDisclosure} from '@sqlrooms/ui';
 import {Settings2} from 'lucide-react';
 
-const HOISTED_RENDERERS: string[] = ['histogramTool'];
+// Hoist every registered ECharts renderer. Deriving the list from the
+// renderer registry (rather than hardcoding tool names) makes a registered-
+// but-unhoisted renderer — which silently draws nothing — impossible.
+const HOISTED_RENDERERS: string[] = Object.keys(getEchartsToolRenderers());
 
 let _internalComponentsLoaded = false;
 let SessionChatRuntimeProvider: React.FC<{children: React.ReactNode}>;

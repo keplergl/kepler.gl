@@ -39,7 +39,7 @@ export function defineHandler<TArgs>(handler: {
 }): ApiHandler {
   return {
     argsSchema: handler.argsSchema,
-    run: (ctx) => handler.run({...ctx, args: handler.argsSchema.parse(ctx.args)}),
+    run: ctx => handler.run({...ctx, args: handler.argsSchema.parse(ctx.args)})
   };
 }
 
@@ -113,4 +113,7 @@ export type ExecuteApiOutput = {
   dateTimeHint?: string;
   integerTemporalColumns?: string[];
   integerTemporalHint?: string;
+
+  // dataset-context-tool
+  datasets?: unknown[];
 };

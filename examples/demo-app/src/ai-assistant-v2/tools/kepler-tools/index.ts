@@ -9,6 +9,7 @@ import {getTableTool} from './table-tool';
 import {getAddTimeFilterTool} from './time-filter-tool';
 import {getToggleTimeFilterTool} from './toggle-time-filter-tool';
 import {getSplitViewTool} from './split-view-tool';
+import {getDatasetContextTool} from './dataset-context-tool';
 
 export function getKeplerTools(ctx: KeplerContext) {
   return {
@@ -21,7 +22,8 @@ export function getKeplerTools(ctx: KeplerContext) {
     tableTool: getTableTool(ctx),
     addTimeFilter: getAddTimeFilterTool(ctx),
     toggleTimeFilter: getToggleTimeFilterTool(ctx),
-    splitView: getSplitViewTool(ctx)
+    splitView: getSplitViewTool(ctx),
+    datasetContext: getDatasetContextTool(ctx)
   };
 }
 
@@ -35,3 +37,4 @@ export {getTableTool} from './table-tool';
 export {getAddTimeFilterTool} from './time-filter-tool';
 export {getToggleTimeFilterTool} from './toggle-time-filter-tool';
 export {getSplitViewTool} from './split-view-tool';
+export {getDatasetContextTool} from './dataset-context-tool';

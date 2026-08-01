@@ -12,9 +12,11 @@ A time filter must already exist on the map (created via map.add-time-filter).
 - action: "show" — enlarge the time controller so it is visible at the bottom of the map.
 - action: "hide" — collapse the time controller back to the side panel.`,
     inputSchema: z.object({
-      action: z.enum(['show', 'hide']).describe(
-        '"show" enlarges the time controller at the bottom of the map; "hide" collapses it to the side panel.'
-      ),
+      action: z
+        .enum(['show', 'hide'])
+        .describe(
+          '"show" enlarges the time controller at the bottom of the map; "hide" collapses it to the side panel.'
+        ),
       filterIndex: z
         .number()
         .optional()
@@ -31,17 +33,14 @@ A time filter must already exist on the map (created via map.add-time-filter).
         if (filters.length === 0) {
           return {
             success: false,
-            error:
-              'No filters found on the map. Add a time filter first via map.add-time-filter.',
+            error: 'No filters found on the map. Add a time filter first via map.add-time-filter.',
             instruction: 'Call map.add-time-filter before map.toggle-time-filter.'
           };
         }
 
         let targetIdx: number;
         if (filterIndex === undefined) {
-          const found = filters.findIndex(
-            (f: any) => f.type === 'timeRange' || f.type === 'time'
-          );
+          const found = filters.findIndex((f: any) => f.type === 'timeRange' || f.type === 'time');
           targetIdx = found < 0 ? 0 : found;
         } else {
           targetIdx = filterIndex;

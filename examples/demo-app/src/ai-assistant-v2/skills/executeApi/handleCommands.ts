@@ -83,8 +83,8 @@ function forwardToTool(tool: AnyTool): ApiHandler {
  * Command id conventions:
  *  - `map.*`   — kepler.gl map-mutation tools (basemap, layers, data, boundary)
  *  - `data.*`  — DuckDB SQL tools (query, filter, table, merge, load-to-map)
- *  - `geoda.*` — GeoDa spatial-analysis tools (lisa, moran, weights, regression, standardize, rate)
- *  - `geo.*`   — geo tools (routing, isochrone, geocode, spatial-query, grid, boundaries, roads)
+ *  - `geoda.*` — GeoDa (@geoda/core) spatial-analysis tools (lisa, moran, weights, regression, standardize, rate, thiessen-polygons, mst, cartogram)
+ *  - `geo.*`   — geo tools (routing, isochrone, geocode, spatial-query, grid)
  */
 function buildCommandHandlerMap(ctx: KeplerContext): Record<string, ApiHandler> {
   const queryTools = getQueryTools(ctx) as Record<string, AnyTool>;
@@ -103,7 +103,8 @@ function buildCommandHandlerMap(ctx: KeplerContext): Record<string, ApiHandler> 
     'map.create-table': forwardToTool(keplerTools.tableTool),
     'map.add-time-filter': forwardToTool(keplerTools.addTimeFilter),
     'map.toggle-time-filter': forwardToTool(keplerTools.toggleTimeFilter),
-    'map.split-view': forwardToTool(keplerTools.splitView)
+    'map.split-view': forwardToTool(keplerTools.splitView),
+    'map.get-dataset-context': forwardToTool(keplerTools.datasetContext)
   };
 
   // data.* — DuckDB SQL tools
@@ -123,7 +124,13 @@ function buildCommandHandlerMap(ctx: KeplerContext): Record<string, ApiHandler> 
     'geoda.regression': forwardToTool(spatialTools.regressionTool),
     'data.classify': forwardToTool(spatialTools.classifyTool),
     'geoda.standardize': forwardToTool(geoTools.standardizeVariable),
-    'geoda.rate': forwardToTool(geoTools.rate)
+    'geoda.rate': forwardToTool(geoTools.rate),
+    // Geometry-generation ops backed by the GeoDa JS library (@geoda/core).
+    // They live in geo-tools.ts but belong under geoda.* by the same rule as
+    // standardize/rate (calls @geoda/core → geoda.*); grid stays geo.* (Turf).
+    'geoda.thiessen-polygons': forwardToTool(geoTools.thiessenPolygons),
+    'geoda.mst': forwardToTool(geoTools.minimumSpanningTree),
+    'geoda.cartogram': forwardToTool(geoTools.cartogram)
   };
 
   // geo.* — geo tools
@@ -132,14 +139,7 @@ function buildCommandHandlerMap(ctx: KeplerContext): Record<string, ApiHandler> 
     'geo.isochrone': forwardToTool(geoTools.isochrone),
     'geo.geocode': forwardToTool(geoTools.geocoding),
     'geo.spatial-query': forwardToTool(geoTools.spatialQuery),
-    'geo.grid': forwardToTool(geoTools.gridTool),
-    'geo.thiessen-polygons': forwardToTool(geoTools.thiessenPolygons),
-    'geo.mst': forwardToTool(geoTools.minimumSpanningTree),
-    'geo.cartogram': forwardToTool(geoTools.cartogram),
-    'geo.us-state': forwardToTool(geoTools.getUsStateTool),
-    'geo.us-county': forwardToTool(geoTools.getUsCountyTool),
-    'geo.us-zipcode': forwardToTool(geoTools.getUsZipcodeTool),
-    'geo.roads': forwardToTool(geoTools.roads)
+    'geo.grid': forwardToTool(geoTools.gridTool)
   };
 
   return {...map, ...data, ...geoda, ...geo};

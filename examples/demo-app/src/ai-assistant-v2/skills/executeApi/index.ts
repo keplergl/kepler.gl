@@ -66,6 +66,7 @@ export const EXECUTE_API_GUIDANCE = `Always call as: { call: { apiName: "<name>"
   - "map.add-time-filter": Animate a NON-trip layer over a TIMESTAMP/DATE column. input: { datasetName, dateTimeColumn, interval? }. interval: 1-second|1-minute|1-hour|1-day|1-week|1-month|3-month|1-year (auto-detected when omitted). DO NOT use for trip layers (they have built-in animation). Returns { filterIndex, interval }.
   - "map.toggle-time-filter": Show/hide the enlarged time controller at the bottom of the map. input: { action: "show"|"hide", filterIndex? }. A time filter must already exist (create via map.add-time-filter).
   - "map.split-view": Enable/disable dual-map comparison. input: { action: "enable"|"disable", layerIdsForMap0?, layerIdsForMap1? }. Provide layer-id arrays to assign layers per panel; without them all layers show on both panels.
+  - "map.get-dataset-context": Get all loaded datasets with their fields and layer configurations. input: {} (empty). Returns { datasets: [{datasetName, datasetId, fields, layers}] }.
 
   DATA commands (DuckDB SQL):
   - "data.query": Execute a generic SELECT SQL query and save the result. input: { datasetName, variableNames, sql, resultDatasetName }. Use __TABLE__ as the table-name placeholder. Returns a truncated preview + totalRows.
@@ -82,20 +83,18 @@ export const EXECUTE_API_GUIDANCE = `Always call as: { call: { apiName: "<name>"
   - "geoda.regression": Spatial regression (classic / spatial-lag / spatial-error). input: { datasetName, dependentVariable, independentVariables, modelType, weightsId? }. modelType: classic|spatial-lag|spatial-error.
   - "geoda.standardize": Standardize a variable. input: { datasetName, variableName, method, outputDatasetName }. method: deviationFromMean|standardizeMAD|rangeAdjust|rangeStandardize|standardize.
   - "geoda.rate": Rate calculation (excess risk / empirical Bayes). input: { datasetName, eventVariable, baseVariable, method?, outputDatasetName }.
+  - "geoda.thiessen-polygons": Voronoi polygons from geometries (GeoDa). input: { datasetName, outputDatasetName }.
+  - "geoda.mst": Minimum spanning tree from geometries (GeoDa). input: { datasetName, outputDatasetName }.
+  - "geoda.cartogram": Dorling cartogram from polygons + weight variable (GeoDa). input: { datasetName, weightVariable, iterations?, outputDatasetName }.
 
   GEO commands (geo tools):
   - "geo.routing": Mapbox routing directions between two points. input: { origin: {longitude, latitude}, destination: {longitude, latitude}, mode?, datasetName }.
   - "geo.isochrone": Mapbox isochrone polygons from a point. input: { origin: {longitude, latitude}, timeLimit?, distanceLimit?, profile?, datasetName }.
   - "geo.geocode": Geocode an address to lat/lng. input: { address, datasetName }.
   - "geo.spatial-query": DuckDB spatial SQL (ST_* functions). input: { datasetNames: string[], outputDatasetName, sqlQuery, reasoning }. Use __tbl0__, __tbl1__, ... as table placeholders. The geometry column stores GeoJSON strings — wrap with ST_GeomFromGeoJSON(geometry).
-  - "geo.grid": Rectangular grid of polygons over a dataset's bbox. input: { datasetName, rows, columns, outputDatasetName }.
-  - "geo.thiessen-polygons": Voronoi polygons from geometries. input: { datasetName, outputDatasetName }.
-  - "geo.mst": Minimum spanning tree from geometries. input: { datasetName, outputDatasetName }.
-  - "geo.cartogram": Dorling cartogram from polygons + weight variable. input: { datasetName, weightVariable, iterations?, outputDatasetName }.
-  - "geo.us-state": Fetch US state GeoJSON boundaries. input: { stateNames: string[], datasetName }.
-  - "geo.us-county": Fetch US county GeoJSON boundaries by FIPS. input: { fipsCodes: string[], datasetName }.
-  - "geo.us-zipcode": Fetch US zipcode GeoJSON boundaries. input: { zipcodes: string[], datasetName }.
-  - "geo.roads": Fetch OSM road network for an area. input: { mapBounds?: {northwest, southeast}, datasetName?, outputDatasetName }.`;
+  - "geo.grid": Rectangular grid of polygons over a dataset's bbox (Turf). input: { datasetName, rows, columns, outputDatasetName }.
+
+  Reference geography (US state/county/zipcode boundaries, road networks, building footprints, POIs) is NOT fetched by a built-in command — the user loads such data into kepler.gl via map.load-data (a URL) or by importing files directly. If a task needs boundaries/roads the user has not provided, ask the user to load that data first.`;
 
 /**
  * Build the `executeApi` tool parameterized by `KeplerContext`. The command
@@ -184,6 +183,7 @@ export function createExecuteApiTool(ctx: KeplerContext) {
         modelResult.outputVariableName = output.outputVariableName;
       if (output.dateTimeColumns != null) modelResult.dateTimeColumns = output.dateTimeColumns;
       if (output.dateTimeHint != null) modelResult.dateTimeHint = output.dateTimeHint;
+      if (output.datasets != null) modelResult.datasets = output.datasets;
       if (output.integerTemporalColumns != null)
         modelResult.integerTemporalColumns = output.integerTemporalColumns;
       if (output.integerTemporalHint != null)

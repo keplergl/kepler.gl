@@ -1,0 +1,4 @@
+id: charts
+version: 0.1.0
+name: Charts & summary statistics
+description: Draw a histogram of one numeric variable, or compute boxplot, scatterplot, bubble-chart, and parallel-coordinates summary statistics for kepler datasets and DuckDB tables.

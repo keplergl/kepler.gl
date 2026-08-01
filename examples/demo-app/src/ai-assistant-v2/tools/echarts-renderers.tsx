@@ -52,6 +52,12 @@ export const HistogramToolResult: ToolRenderer<HistogramToolOutput> = ({
     return <div className="text-xs opacity-60">No values to plot.</div>;
   }
 
+  // Only kepler-sourced rows line up with the map, so brush-selection is only
+  // wired in that case. DuckDB-only tables have no kepler layer to highlight,
+  // so the brush is inert — surface that as a one-line note instead of a
+  // silent dead interaction.
+  const isKepler = output.source !== 'duckdb';
+
   return (
     <div className="my-2 w-full">
       <HistogramComponent
@@ -59,10 +65,18 @@ export const HistogramToolResult: ToolRenderer<HistogramToolOutput> = ({
         variableName={output.variableName}
         histogramData={output.histogramData}
         barDataIndexes={output.barDataIndexes}
-        onSelected={(datasetName, selectedIndices) =>
-          histogramSelectionHandler?.(datasetName, selectedIndices)
+        onSelected={
+          isKepler
+            ? (datasetName, selectedIndices) =>
+                histogramSelectionHandler?.(datasetName, selectedIndices)
+            : undefined
         }
       />
+      {!isKepler && (
+        <div className="mt-1 text-[10px] opacity-60">
+          Data is from a DuckDB-only table; brushing is not linked to the map.
+        </div>
+      )}
     </div>
   );
 };

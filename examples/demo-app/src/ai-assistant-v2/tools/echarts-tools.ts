@@ -2,7 +2,8 @@ import {tool} from './ai-tool-shim';
 import {z} from 'zod';
 import {layerSetIsValid} from '@kepler.gl/actions';
 import {KeplerContext} from '../types';
-import {getValuesFromDataset, highlightRows} from './utils';
+import {getValuesFromDataset, highlightRows, getConnector, datasetNameToTableName} from './utils';
+import {tableExists} from './duckdb-cache';
 
 /**
  * Histogram bin data used by the renderer.
@@ -26,6 +27,13 @@ export type HistogramToolOutput = {
    * the LLM to read.
    */
   barDataIndexes?: number[][];
+  /**
+   * Which data source the values came from. `'kepler'` rows line up with the
+   * map so brush-selection highlights features; `'duckdb'` rows don't, so the
+   * brush is inert. The renderer uses this to decide whether to wire the
+   * selection callback and whether to show the inert-brush note.
+   */
+  source?: 'kepler' | 'duckdb';
   details?: string;
   error?: string;
 };
@@ -152,15 +160,62 @@ function computePCPData(rawData: Record<string, number[]>) {
 }
 
 export function getEchartsTools(ctx: KeplerContext) {
-  const getValues = async (datasetName: string, variableName: string) => {
+  /**
+   * Resolve a single column of numeric values from a kepler dataset, falling
+   * back to DuckDB when the dataset isn't loaded in kepler (e.g. a table
+   * created via SQL). Two DuckDB naming conventions coexist, so both are
+   * probed: the verbatim name (used by `saveToDuckdb`, which writes
+   * `resultDatasetName` directly) and `datasetNameToTableName(datasetName)`
+   * → `tbl_<sanitized>` (used by `ensureKeplerDatasetsMaterialized` and
+   * `loadTableIntoDuckDB`). Returns the values plus the source so the
+   * histogram can decide whether brush-selection maps to map rows.
+   */
+  const resolveValues = async (
+    datasetName: string,
+    variableName: string
+  ): Promise<{values: number[]; source: 'kepler' | 'duckdb'}> => {
     const visState = ctx.getVisState();
-    return getValuesFromDataset(
-      visState.datasets,
-      visState.layers,
-      datasetName,
-      variableName
-    ) as number[];
+    try {
+      const values = getValuesFromDataset(
+        visState.datasets,
+        visState.layers,
+        datasetName,
+        variableName
+      ) as number[];
+      return {values, source: 'kepler'};
+    } catch (keplerErr) {
+      // Not found in kepler — try DuckDB under both naming conventions.
+      const verbatim = datasetName;
+      const sanitized = datasetNameToTableName(datasetName);
+      for (const tableName of [verbatim, sanitized]) {
+        if (!(await tableExists(tableName))) continue;
+        try {
+          const db = await getConnector();
+          const quotedVar = `"${String(variableName).replace(/"/g, '""')}"`;
+          const quotedTable = `"${tableName.replace(/"/g, '""')}"`;
+          const result = await db.query(`SELECT ${quotedVar} AS v FROM ${quotedTable}`);
+          const values = result.toArray().map((row: any) => {
+            const j = typeof row.toJSON === 'function' ? row.toJSON() : row;
+            return j.v;
+          }) as number[];
+          return {values, source: 'duckdb'};
+        } catch {
+          // Table exists but the column doesn't — keep probing the other name.
+        }
+      }
+      throw new Error(
+        `Could not find variable "${variableName}". It is not in kepler ` +
+          `dataset "${datasetName}" (${
+            keplerErr instanceof Error ? keplerErr.message : 'not found'
+          }), and was not found in DuckDB tables "${verbatim}" or ` +
+          `"${sanitized}". Confirm the dataset/variable name via data.query / ` +
+          `SHOW TABLES rather than guessing.`
+      );
+    }
   };
+
+  const getValues = async (datasetName: string, variableName: string) =>
+    (await resolveValues(datasetName, variableName)).values;
 
   const onSelected = (datasetName: string, selectedIndices: number[]) => {
     const visState = ctx.getVisState();
@@ -189,7 +244,7 @@ export function getEchartsTools(ctx: KeplerContext) {
     execute: async ({datasetName, variableName, numberOfBins = 7}, {abortSignal}) => {
       try {
         abortSignal?.throwIfAborted();
-        const values = await getValues(datasetName, variableName);
+        const {values, source} = await resolveValues(datasetName, variableName);
         const {histogramData, barDataIndexes} = createHistogramBins(values, numberOfBins);
         return {
           success: true,
@@ -202,7 +257,8 @@ export function getEchartsTools(ctx: KeplerContext) {
             count: barDataIndexes[i].length
           })),
           barDataIndexes,
-          details: `Histogram for ${variableName}: ${histogramData
+          source,
+          details: `Histogram for ${variableName} (source: ${source}): ${histogramData
             .map(
               (b, i) =>
                 `[${b.binStart.toFixed(2)}-${b.binEnd.toFixed(2)}]: ${barDataIndexes[i].length}`

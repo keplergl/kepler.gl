@@ -93,16 +93,7 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
           'A TIMESTAMP or DATE column in the dataset. Do NOT pass an integer/string epoch column — build a real TIMESTAMP column first.'
         ),
       interval: z
-        .enum([
-          '1-second',
-          '1-minute',
-          '1-hour',
-          '1-day',
-          '1-week',
-          '1-month',
-          '3-month',
-          '1-year'
-        ])
+        .enum(['1-second', '1-minute', '1-hour', '1-day', '1-week', '1-month', '3-month', '1-year'])
         .optional()
         .describe(
           'Animation step. Auto-detected from the data span and distinct timestamps when omitted.'
@@ -125,7 +116,9 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
         const filterField = dataset.fields?.find(f => f.name === dateTimeColumn);
         if (!filterField) {
           throw new Error(
-            `Column ${dateTimeColumn} not found in dataset ${datasetName}. Available: ${dataset.fields?.map(f => f.name).join(', ')}`
+            `Column ${dateTimeColumn} not found in dataset ${datasetName}. Available: ${dataset.fields
+              ?.map(f => f.name)
+              .join(', ')}`
           );
         }
         if (filterField.type !== 'timestamp' && filterField.type !== 'date') {
@@ -137,9 +130,7 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
         const filters = visState.filters ?? [];
         const existingFilterIdx = filters.findIndex(
           f =>
-            (Array.isArray(f.dataId)
-              ? f.dataId.includes(datasetId)
-              : f.dataId === datasetId) &&
+            (Array.isArray(f.dataId) ? f.dataId.includes(datasetId) : f.dataId === datasetId) &&
             (Array.isArray(f.name) ? f.name.includes(dateTimeColumn) : f.name === dateTimeColumn)
         );
 
@@ -185,9 +176,7 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
           }
 
           ctx.dispatch(setFilter(filterIdx, 'plotType', {interval: resolvedInterval}));
-          ctx.dispatch(
-            setFilterAnimationWindow({id: filterId, animationWindow: 'free'})
-          );
+          ctx.dispatch(setFilterAnimationWindow({id: filterId, animationWindow: 'free'}));
 
           // Poll for timeBins to become available (kepler computes them async).
           let datasetBins: {x0: number; x1: number}[] | undefined;
@@ -211,20 +200,13 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
           if (finalFilter?.domain && finalFilter.domain.length === 2) {
             if (datasetBins && datasetBins.length > 0) {
               ctx.dispatch(
-                setFilterAnimationTime(filterIdx, 'value', [
-                  datasetBins[0].x0,
-                  datasetBins[0].x1
-                ])
+                setFilterAnimationTime(filterIdx, 'value', [datasetBins[0].x0, datasetBins[0].x1])
               );
             } else {
               const domainStart = (finalFilter.domain as number[])[0];
-              const windowSize =
-                INTERVAL_MILLIS[resolvedInterval as IntervalKey] ?? MILLIS_YEAR;
+              const windowSize = INTERVAL_MILLIS[resolvedInterval as IntervalKey] ?? MILLIS_YEAR;
               ctx.dispatch(
-                setFilterAnimationTime(filterIdx, 'value', [
-                  domainStart,
-                  domainStart + windowSize
-                ])
+                setFilterAnimationTime(filterIdx, 'value', [domainStart, domainStart + windowSize])
               );
             }
           }
@@ -232,7 +214,9 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
 
         return {
           success: true,
-          details: `Time filter added on column "${dateTimeColumn}" for dataset "${datasetName}" (interval: ${resolvedInterval ?? 'auto'}, filter index: ${filterIdx}). The time controller is now visible at the bottom of the map.`,
+          details: `Time filter added on column "${dateTimeColumn}" for dataset "${datasetName}" (interval: ${
+            resolvedInterval ?? 'auto'
+          }, filter index: ${filterIdx}). The time controller is now visible at the bottom of the map.`,
           filterIndex: filterIdx,
           interval: resolvedInterval
         };

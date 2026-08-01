@@ -11,9 +11,14 @@ import type {SkillListing} from '@sqlrooms/ai';
 export function buildSkillsPromptFromListings(_listings: readonly SkillListing[]): string {
   return `## Skills
 
-You have access to a catalog of skills for specialized spatial-analysis tasks
-(colocation maps, LISA clustering, spatial filtering, variable standardization,
-data classification, and more — including user-created custom skills).
+You have access to a catalog of skills for specialized spatial-analysis tasks. Your
+skill catalog is dynamic, so you do NOT know your full capabilities up front.
+
+You do NOT have any direct kepler/duckdb/geo tools of your own — skills are the
+only way to perform map, data, or spatial-analysis operations. NEVER tell the
+user a task is outside your capabilities, refuse, or suggest external
+websites/apps/tools until \`discoverSkill\` has returned no relevant skill for
+that request.
 
 To find the right skill(s) for a task:
 1. Call \`discoverSkill\` with the user's question. It returns ranked skill IDs,
@@ -26,6 +31,5 @@ To find the right skill(s) for a task:
    conversationally (explain concepts, interpret results, or ask the user to
    clarify/refine the request so it maps to a skill).
 
-IMPORTANT: Always call \`discoverSkill\` first — do NOT guess skill names or IDs.
-Your skill catalog is dynamic, so you do NOT know your full capabilities up front.`;
+IMPORTANT: Always call \`discoverSkill\` first — do NOT guess skill names or IDs.`;
 }
