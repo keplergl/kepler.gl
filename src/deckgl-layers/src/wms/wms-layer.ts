@@ -229,6 +229,18 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       : viewport.getBounds();
     const {width, height} = viewport;
     
+    // Edge case: when bounds are perfectly symmetric around 0° (both longitude and latitude),
+    // it can cause rendering artifacts with EPSG:4326 on the globe.
+    // Add asymmetry to avoid this issue.
+    if (viewport.resolution && bounds) {
+      const minLat = bounds[1];
+      const maxLat = bounds[3];
+      // Check if latitude bounds are symmetric around 0° (within 0.1° tolerance)
+      if (Math.abs(minLat + maxLat) < 0.1 && Math.abs(minLat) > 1) {
+        bounds[3] += 0.1;
+      }
+    }
+    
     let {srs} = this.props;
     if (srs === 'auto') {
       // Always use Web Mercator for consistency
