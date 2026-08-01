@@ -870,45 +870,6 @@ export default function MapContainerFactory(
       const {setFeatures, onLayerClick, setSelectedFeature} = visStateActions;
 
       const generateDeckGLLayersMethod = generateDeckGLLayers ?? computeDeckLayers;
-      const deckGlLayers = generateDeckGLLayersMethod(
-        {
-          visState,
-          mapState: internalMapState,
-          mapStyle
-        },
-        {
-          mapIndex: index,
-          primaryMap,
-          mapboxApiAccessToken,
-          mapboxApiUrl,
-          layersForDeck,
-          editorInfo: primaryMap
-            ? {
-                editor,
-                editorMenuActive,
-                onSetFeatures: setFeatures,
-                setSelectedFeature,
-                onApplyPolygonFilterAll: visStateActions.setPolygonFilterAllLayers,
-                // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
-                featureCollection: this.featureCollectionSelector(this.props),
-                selectedFeatureIndexes: this.selectedFeatureIndexArraySelector(
-                  // @ts-ignore Argument of type 'unknown' is not assignable to parameter of type 'number'.
-                  editorFeatureSelectedIndex
-                ),
-                viewport
-              }
-            : undefined
-        },
-        {
-          onLayerHover: this._onLayerHover,
-          onSetLayerDomain: this._onLayerSetDomain,
-          onFilteredItemsChange: this._onLayerFilteredItemsChange,
-          onWMSFeatureInfo: this._onWMSFeatureInfo,
-          onRedrawNeeded: this._onRedrawNeeded,
-          onFitBounds: this._onFitBounds
-        },
-        deckGlProps
-      );
 
       const extraDeckParams: {
         getTooltip?: (info: any) => object | null;
@@ -948,6 +909,61 @@ export default function MapContainerFactory(
         : [];
 
       const isGlobeMode = mapState.globe?.enabled;
+
+      // In globe mode with a non-default blend mode, forward pre-computed layer
+      // rendering parameters into mapState so individual layers can merge them into
+      // their own parameters objects. The global DeckGL parameters cannot be used in
+      // globe mode because they are merged into globe system layers (atmosphere,
+      // surface, etc.) and alter their carefully tuned blend/depth state.
+      // 'normal' is omitted — it is the WebGL default and injecting it would
+      // override intentional blend:false settings on layers like trip/scenegraph.
+      const layerBlendingParams =
+        isGlobeMode && visState.layerBlending && visState.layerBlending !== 'normal'
+          ? getLayerBlendingParameters(visState.layerBlending)
+          : undefined;
+      const deckLayersMapState = layerBlendingParams
+        ? {...internalMapState, layerParameters: layerBlendingParams}
+        : internalMapState;
+
+      const deckGlLayers = generateDeckGLLayersMethod(
+        {
+          visState,
+          mapState: deckLayersMapState,
+          mapStyle
+        },
+        {
+          mapIndex: index,
+          primaryMap,
+          mapboxApiAccessToken,
+          mapboxApiUrl,
+          layersForDeck,
+          editorInfo: primaryMap
+            ? {
+                editor,
+                editorMenuActive,
+                onSetFeatures: setFeatures,
+                setSelectedFeature,
+                onApplyPolygonFilterAll: visStateActions.setPolygonFilterAllLayers,
+                // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
+                featureCollection: this.featureCollectionSelector(this.props),
+                selectedFeatureIndexes: this.selectedFeatureIndexArraySelector(
+                  // @ts-ignore Argument of type 'unknown' is not assignable to parameter of type 'number'.
+                  editorFeatureSelectedIndex
+                ),
+                viewport
+              }
+            : undefined
+        },
+        {
+          onLayerHover: this._onLayerHover,
+          onSetLayerDomain: this._onLayerSetDomain,
+          onFilteredItemsChange: this._onLayerFilteredItemsChange,
+          onWMSFeatureInfo: this._onWMSFeatureInfo,
+          onRedrawNeeded: this._onRedrawNeeded,
+          onFitBounds: this._onFitBounds
+        },
+        deckGlProps
+      );
 
       // Follow the selected basemap style's library so the globe uses the same
       // provider as the flat 2D map (CARTO tiles for MapLibre styles, Mapbox

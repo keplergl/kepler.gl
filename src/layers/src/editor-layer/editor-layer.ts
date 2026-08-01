@@ -38,7 +38,7 @@ export type GetEditorLayerProps = {
     features: Feature[];
   };
   selectedFeatureIndexes: number[];
-  mapState?: {globe?: {enabled: boolean}};
+  mapState?: {globe?: {enabled: boolean}; layerParameters?: Record<string, string | boolean>};
 };
 
 /**
@@ -177,7 +177,9 @@ export function getEditorLayer({
     // Globe mode needs explicit depth testing so the editor overlay is occluded
     // by the sphere; in flat 2D/3D keep deck.gl's default (empty parameters) so
     // this matches the pre-globe behavior exactly.
-    parameters: mapState?.globe?.enabled ? {depthTest: true} : {},
+    parameters: mapState?.globe?.enabled
+      ? {depthTest: true, ...(mapState?.layerParameters ?? {})}
+      : {},
     shadowEnabled: false,
     _subLayerProps: {
       geojson: {shadowEnabled: false},

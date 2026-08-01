@@ -220,7 +220,7 @@ export default class ScenegraphLayer extends Layer {
         getOrientation: [angleX, adjustedAngleY, angleZ],
         getColor: DEFAULT_COLOR,
         // parameters
-        parameters: {depthTest: true, blend: false},
+        parameters: {depthTest: true, blend: false, ...(mapState?.layerParameters ?? {})},
         // update triggers
         updateTriggers: {
           getOrientation: {angleX, adjustedAngleY, angleZ},

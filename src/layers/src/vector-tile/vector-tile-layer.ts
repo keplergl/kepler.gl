@@ -688,7 +688,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
             'polygons-stroke': {opacity: visConfig.strokeOpacity},
             'polygons-fill': {
               parameters: {
-                cullMode: CULL_MODE.BACK
+                cullMode: CULL_MODE.BACK,
+                ...(mapState?.layerParameters ?? {})
               }
             }
           },
