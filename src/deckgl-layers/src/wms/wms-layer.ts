@@ -243,8 +243,7 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     
     let {srs} = this.props;
     if (srs === 'auto') {
-      // Always use Web Mercator for consistency
-      // Note: In globe mode, we'll use EPSG:4326 data but CARTESIAN coordinate system
+      // BitmapLayer only supports LNGLAT or CARTESIAN (Web-Mercator)
       srs = viewport.resolution ? 'EPSG:4326' : 'EPSG:3857';
     }
     const requestParams = {
