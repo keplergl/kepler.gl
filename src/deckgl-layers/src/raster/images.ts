@@ -84,6 +84,16 @@ function loadImageItem(
   return result;
 }
 
+/**
+ * Load image items to webgl context
+ */
+type LoadImagesResult = {
+  /** Updated images state, or null if nothing changed */
+  images: ImageState | null;
+  /** True when at least one texture upload failed and should be retried */
+  hasPendingUploads: boolean;
+};
+
 // eslint-disable-next-line complexity
 export function loadImages({
   gl,
@@ -91,8 +101,9 @@ export function loadImages({
   images,
   imagesData,
   oldImagesData
-}: LoadImagesOptions): ImageState | null {
+}: LoadImagesOptions): LoadImagesResult {
   let imagesDirty = false;
+  let hasPendingUploads = false;
 
   if (oldImagesData) {
     for (const key in oldImagesData) {
@@ -124,15 +135,18 @@ export function loadImages({
     const loadedItem = loadImageItem(gl, device, imageData);
     if (loadedItem) {
       images[key] = loadedItem;
+      // Only mark dirty when the texture was actually uploaded.
+      imagesDirty = true;
+    } else {
+      // Upload failed (device not ready or createTexture threw). Signal that
+      // the caller should retry next frame — do NOT set imagesDirty so we
+      // don't propagate an images object with a missing key that causes
+      // draw() to bail permanently.
+      hasPendingUploads = true;
     }
-    imagesDirty = true;
   }
 
-  if (imagesDirty) {
-    return images;
-  }
-
-  return null;
+  return {images: imagesDirty ? images : null, hasPendingUploads};
 }
 
 /**

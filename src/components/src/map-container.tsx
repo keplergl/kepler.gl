@@ -17,6 +17,7 @@ import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actio
 // components
 import MapPopoverFactory from './map/map-popover';
 import MapControlFactory from './map/map-control';
+import MapScaleFactory from './map/map-scale';
 import {StyledMapContainer} from './common/styled-components';
 import {
   Attribution,
@@ -179,6 +180,14 @@ const StyledDroppable = styled.div<StyledDroppableProps>`
   z-index: 1;
 `;
 
+const StyledMapScaleContainer = styled.div<{$left: number; $bottomOffset: number}>`
+  position: absolute;
+  bottom: ${props => props.theme.sidePanel.margin.left + props.$bottomOffset}px;
+  left: ${props => props.$left}px;
+  z-index: 1;
+  pointer-events: auto;
+`;
+
 export const isSplitSelector = props =>
   props.visState.splitMaps && props.visState.splitMaps.length > 1;
 
@@ -196,7 +205,7 @@ export const Droppable = ({containerId}) => {
 // re-exported here to preserve the public import path (@kepler.gl/components).
 export {Attribution, AttributionLogos, renderBasemapAttribution, dedupeBasemapAttributions};
 
-MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
+MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory, MapScaleFactory];
 
 type MapboxStyle = string | object | undefined;
 type PropSelector<R> = Selector<MapContainerProps, R>;
@@ -265,7 +274,8 @@ export interface MapContainerProps {
 export default function MapContainerFactory(
   MapPopover: ReturnType<typeof MapPopoverFactory>,
   MapControl: ReturnType<typeof MapControlFactory>,
-  Editor: ReturnType<typeof EditorFactory>
+  Editor: ReturnType<typeof EditorFactory>,
+  MapScale: ReturnType<typeof MapScaleFactory>
 ): React.ComponentType<MapContainerProps> {
   class MapContainer extends Component<MapContainerProps> {
     displayName = 'MapContainer';
@@ -922,45 +932,6 @@ export default function MapContainerFactory(
       const {setFeatures, onLayerClick, setSelectedFeature} = visStateActions;
 
       const generateDeckGLLayersMethod = generateDeckGLLayers ?? computeDeckLayers;
-      const deckGlLayers = generateDeckGLLayersMethod(
-        {
-          visState,
-          mapState: internalMapState,
-          mapStyle
-        },
-        {
-          mapIndex: index,
-          primaryMap,
-          mapboxApiAccessToken,
-          mapboxApiUrl,
-          layersForDeck,
-          editorInfo: primaryMap
-            ? {
-                editor,
-                editorMenuActive,
-                onSetFeatures: setFeatures,
-                setSelectedFeature,
-                onApplyPolygonFilterAll: visStateActions.setPolygonFilterAllLayers,
-                // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
-                featureCollection: this.featureCollectionSelector(this.props),
-                selectedFeatureIndexes: this.selectedFeatureIndexArraySelector(
-                  // @ts-ignore Argument of type 'unknown' is not assignable to parameter of type 'number'.
-                  editorFeatureSelectedIndex
-                ),
-                viewport
-              }
-            : undefined
-        },
-        {
-          onLayerHover: this._onLayerHover,
-          onSetLayerDomain: this._onLayerSetDomain,
-          onFilteredItemsChange: this._onLayerFilteredItemsChange,
-          onWMSFeatureInfo: this._onWMSFeatureInfo,
-          onRedrawNeeded: this._onRedrawNeeded,
-          onFitBounds: this._onFitBounds
-        },
-        deckGlProps
-      );
 
       const extraDeckParams: {
         getTooltip?: (info: any) => object | null;
@@ -1001,6 +972,61 @@ export default function MapContainerFactory(
 
       const isGlobeMode = mapState.globe?.enabled;
 
+      // In globe mode with a non-default blend mode, forward pre-computed layer
+      // rendering parameters into mapState so individual layers can merge them into
+      // their own parameters objects. The global DeckGL parameters cannot be used in
+      // globe mode because they are merged into globe system layers (atmosphere,
+      // surface, etc.) and alter their carefully tuned blend/depth state.
+      // 'normal' is omitted — it is the WebGL default and injecting it would
+      // override intentional blend:false settings on layers like trip/scenegraph.
+      const layerBlendingParams =
+        isGlobeMode && visState.layerBlending && visState.layerBlending !== 'normal'
+          ? getLayerBlendingParameters(visState.layerBlending)
+          : undefined;
+      const deckLayersMapState = layerBlendingParams
+        ? {...internalMapState, layerParameters: layerBlendingParams}
+        : internalMapState;
+
+      const deckGlLayers = generateDeckGLLayersMethod(
+        {
+          visState,
+          mapState: deckLayersMapState,
+          mapStyle
+        },
+        {
+          mapIndex: index,
+          primaryMap,
+          mapboxApiAccessToken,
+          mapboxApiUrl,
+          layersForDeck,
+          editorInfo: primaryMap
+            ? {
+                editor,
+                editorMenuActive,
+                onSetFeatures: setFeatures,
+                setSelectedFeature,
+                onApplyPolygonFilterAll: visStateActions.setPolygonFilterAllLayers,
+                // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
+                featureCollection: this.featureCollectionSelector(this.props),
+                selectedFeatureIndexes: this.selectedFeatureIndexArraySelector(
+                  // @ts-ignore Argument of type 'unknown' is not assignable to parameter of type 'number'.
+                  editorFeatureSelectedIndex
+                ),
+                viewport
+              }
+            : undefined
+        },
+        {
+          onLayerHover: this._onLayerHover,
+          onSetLayerDomain: this._onLayerSetDomain,
+          onFilteredItemsChange: this._onLayerFilteredItemsChange,
+          onWMSFeatureInfo: this._onWMSFeatureInfo,
+          onRedrawNeeded: this._onRedrawNeeded,
+          onFitBounds: this._onFitBounds
+        },
+        deckGlProps
+      );
+
       // Follow the selected basemap style's library so the globe uses the same
       // provider as the flat 2D map (CARTO tiles for MapLibre styles, Mapbox
       // tiles for Mapbox styles).
@@ -1020,11 +1046,14 @@ export default function MapContainerFactory(
               // Use the live (internal) latitude so the tile LOD compensation
               // stays in sync with the deck viewport during a drag; mapState
               // latitude lags behind while rotating.
-              latitude: internalMapState.latitude
+              latitude: internalMapState.latitude,
+              zoom: internalMapState.zoom
             })
           : [];
       const globeTopLayers =
-        isGlobeMode && mapState.globe ? getGlobeTopLayers({globe: mapState.globe}) : [];
+        isGlobeMode && mapState.globe
+          ? getGlobeTopLayers({globe: mapState.globe, zoom: internalMapState.zoom})
+          : [];
       const finalDeckGlLayers = isGlobeMode
         ? [...globeBaseLayers, ...deckGlLayers, ...globeTopLayers]
         : deckGlLayers;
@@ -1497,6 +1526,7 @@ export default function MapContainerFactory(
               activeSidePanel={Boolean(activeSidePanel)}
               sidePanelWidth={sidePanelWidth}
               hasAttributionLogos={attributionLogos.length > 0}
+              hasMapScale={getApplicationConfig().enableMapScale}
             />
           ) : null}
           {this.props.primary ? (
@@ -1522,6 +1552,18 @@ export default function MapContainerFactory(
               activeSidePanel={Boolean(activeSidePanel)}
               sidePanelWidth={sidePanelWidth}
             />
+          ) : null}
+          {!isExport && getApplicationConfig().enableMapScale ? (
+            <StyledMapScaleContainer
+              $left={
+                primary && activeSidePanel
+                  ? (sidePanelWidth || 0) + (theme?.sidePanel?.margin?.left ?? 9)
+                  : theme?.sidePanel?.margin?.left ?? 9
+              }
+              $bottomOffset={primary && attributionLogos.length > 0 ? 24 : 0}
+            >
+              <MapScale mapState={mapState} mapIndex={index ?? 0} />
+            </StyledMapScaleContainer>
           ) : null}
         </>
       );

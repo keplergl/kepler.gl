@@ -186,7 +186,8 @@ export type {
   BaseMapLibraryConfig,
   MapLibInstance,
   GetMapRef,
-  SvgIcon
+  SvgIcon,
+  ReduxLogLevel
 } from './application-config';
 export type {DatabaseAdapter, DatabaseConnection} from './application-config-types';
 

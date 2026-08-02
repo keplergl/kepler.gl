@@ -65,6 +65,7 @@
     "@mapbox/mapbox-sdk": "^0.15.3",
     "@math.gl/web-mercator": "^4.1.0",
     "@tippyjs/react": "^4.2.0",
+    "@turf/distance": "^7.2.0",
     "@turf/helpers": "^7.2.0",
     "@turf/transform-translate": "^7.2.0",
     "@types/classnames": "^2.3.1",

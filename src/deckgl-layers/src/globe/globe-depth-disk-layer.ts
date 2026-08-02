@@ -35,7 +35,7 @@ const DEPTH_DISK_FULL_RADIUS = 6.371e6;
 // The disk orientation math is done in that 256-unit common space (matching
 // viewport.cameraPosition), then the resulting radius/shift ratios are converted to
 // meters for the shader, since the disk geometry is expressed in meters.
-const GLOBE_COMMON_RADIUS = 256;
+export const GLOBE_COMMON_RADIUS = 256;
 
 /**
  * Creates a view-oriented disk positioned along the direction from the globe's center to the camera.

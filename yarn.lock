@@ -5766,6 +5766,7 @@ __metadata:
     "@mapbox/mapbox-sdk": "npm:^0.15.3"
     "@math.gl/web-mercator": "npm:^4.1.0"
     "@tippyjs/react": "npm:^4.2.0"
+    "@turf/distance": "npm:^7.2.0"
     "@turf/helpers": "npm:^7.2.0"
     "@turf/transform-translate": "npm:^7.2.0"
     "@types/classnames": "npm:^2.3.1"
