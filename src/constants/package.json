@@ -34,7 +34,7 @@
     "chroma-js": "2.1.2",
     "colorbrewer": "^1.5.0",
     "d3-array": "^2.8.0",
-    "d3-color": "^2.0.0",
+    "d3-color": "^3.1.0",
     "d3-scale": "^3.2.3",
     "d3-scale-chromatic": "2.0.0",
     "d3-time": "^2.0.0",
