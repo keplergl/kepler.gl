@@ -120,6 +120,7 @@ function AddMapStyleModalFactory() {
     const [reRenderKey, setReRenderKey] = useState(0);
     const [previousToken, setPreviousToken] = useState<string | null>(null);
     const mapRef = useRef<MapInstance | null>(null);
+    const isMountedRef = useRef(true);
     const mapListenersRef = useRef<{
       onStyleLoad?: () => void;
       onError?: () => void;
@@ -134,6 +135,13 @@ function AddMapStyleModalFactory() {
         setPreviousToken(inputStyle.accessToken);
       }
     }, [inputStyle?.accessToken, previousToken]);
+
+    useEffect(() => {
+      return () => {
+        // Mark as unmounted to prevent callbacks from firing after cleanup
+        isMountedRef.current = false;
+      };
+    }, []);
 
     const setMapRefCallback = useCallback((mapRefInstance: MapRef | null) => {
       // Remove listeners from the previous map instance
@@ -176,6 +184,8 @@ function AddMapStyleModalFactory() {
           const onIdle = () => {
             mapListenersRef.current.pendingOnIdle = null;
             map.off('idle', onIdle);
+            // Guard against unmounted component
+            if (!isMountedRef.current) return;
             try {
               const icon = map.getCanvas().toDataURL('image/png');
               loadCustomMapStyleRef.current({icon});
