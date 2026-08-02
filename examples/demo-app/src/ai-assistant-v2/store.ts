@@ -14,7 +14,10 @@ import {
   createRoomStore,
   persistSliceConfigs,
   BaseRoomStoreState,
-  createBaseRoomSlice
+  createBaseRoomSlice,
+  createCommandSlice,
+  CommandSliceState,
+  registerCommandsForOwner
 } from '@sqlrooms/room-store';
 import {createDuckDbSlice, DuckDbSliceState} from '@sqlrooms/duckdb';
 import type {ToolRendererRegistry} from '@sqlrooms/ai';
@@ -23,6 +26,7 @@ import {createKeplerAiInstructions} from './instructions';
 import {getEchartsToolRenderers, setHistogramSelectionHandler} from './tools/echarts-renderers';
 import {highlightRows, setStoreConnectorProvider} from './tools/utils';
 import {createWrappedQueryTool} from './tools/query-tool-wrapper';
+import {getAllCommands, KEPLER_COMMAND_OWNER} from './tools/tools';
 import {layerSetIsValid} from '@kepler.gl/actions';
 import type {KeplerContext} from './types';
 import type {SkillListing} from '@sqlrooms/ai';
@@ -32,7 +36,11 @@ import {createDiscoverSkillTool} from './skills/discoverSkillTool';
 import {buildSkillsPromptFromListings} from './skills/skillPrompt';
 import {getModel} from './skills/getModel';
 
-export type RoomState = BaseRoomStoreState & DuckDbSliceState & AiSliceState & AiSettingsSliceState;
+export type RoomState = BaseRoomStoreState &
+  DuckDbSliceState &
+  AiSliceState &
+  AiSettingsSliceState &
+  CommandSliceState;
 
 let reduxStore: any = null;
 
@@ -143,6 +151,8 @@ export const {roomStore, useRoomStore} = createRoomStore<RoomState>(
 
       ...createDuckDbSlice()(set, get, store),
 
+      ...createCommandSlice()(set, get, store),
+
       ...createAiSettingsSlice({config: AI_SETTINGS})(set, get, store),
 
       ...createAiSlice({
@@ -160,7 +170,7 @@ export const {roomStore, useRoomStore} = createRoomStore<RoomState>(
         } as ToolRendererRegistry,
 
         tools: {
-          ...createDefaultAiTools(store, {query: {}, commands: false, tables: false}),
+          ...createDefaultAiTools(store, {query: {}, commands: {}, tables: false}),
           // Override the stock `query` tool (which hides all rows from the LLM
           // because numberOfRowsToShareWithLLM defaults to 0) with a wrapper
           // that runs against the kepler tools' DuckDB connector and surfaces
@@ -189,3 +199,44 @@ export const {roomStore, useRoomStore} = createRoomStore<RoomState>(
 // the query tool's DuckDB. `getConnector()` in tools/utils.ts now resolves to
 // this connector. Must run after `roomStore` exists.
 setStoreConnectorProvider(async () => roomStore.getState().db.getConnector());
+
+// Register the kepler-ai command catalog (kepler / query / geo / spatial-analysis)
+// into the room-store command registry. The same `RoomCommand` definitions then
+// serve every surface that reads the registry — the AI skill `executeApi` tool
+// (which delegates to `store.commands.invokeCommand`), the stock
+// `search_commands` / `get_command` / `list_commands` / `execute_command` AI
+// tools, the command palette UI, the CLI adapter, and the MCP adapter.
+//
+// `KeplerContext` is a singleton built from `reduxStore`, so a one-time
+// registration is sufficient. If `KeplerContext` ever becomes per-session,
+// re-register on swap with `unregisterCommandsForOwner` + `registerCommandsForOwner`.
+registerCommandsForOwner(
+  roomStore,
+  KEPLER_COMMAND_OWNER,
+  Object.values(getAllCommands(getKeplerContext()))
+);
+
+// Register the kepler-ai command catalog in the room-store command registry.
+// This makes the same command definitions (map.*, data.*, geoda.*, geo.*)
+// available to every surface that reads the registry: the AI skill layer
+// (`executeApi` delegates to `store.commands.invokeCommand`), the command
+// palette UI, the CLI adapter, and the MCP adapter. `KeplerContext` is a
+// singleton built from `reduxStore`, so a one-time registration is correct;
+// if it ever becomes per-session, re-register on swap.
+registerCommandsForOwner(
+  roomStore,
+  KEPLER_COMMAND_OWNER,
+  Object.values(getAllCommands(getKeplerContext()))
+);
+
+// Register the kepler-ai commands (map / data / geoda / geo) in the room-store
+// command registry so every surface — AI skill `executeApi`, command palette,
+// CLI, MCP — reads from one source of truth. `KeplerContext` is a singleton
+// built from `reduxStore`, so a one-time registration is correct; if it ever
+// becomes per-session, re-register on swap via `unregisterCommandsForOwner` +
+// `registerCommandsForOwner`.
+registerCommandsForOwner(
+  roomStore,
+  KEPLER_COMMAND_OWNER,
+  Object.values(getAllCommands(getKeplerContext()))
+);

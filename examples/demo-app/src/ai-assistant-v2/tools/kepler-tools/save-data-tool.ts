@@ -1,20 +1,25 @@
-import {tool} from '../ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {KeplerContext} from '../../types';
 import {loadTableToKepler} from '../duckdb-cache';
 
-export function getSaveDataTool(ctx: KeplerContext) {
-  return tool({
+export const saveDataCommandId = 'map.save-data' as const;
+
+export function getSaveDataTool(ctx: KeplerContext): RoomCommand {
+  return {
+    id: saveDataCommandId,
+    name: 'Save DuckDB table to map',
+    group: 'Map',
     description:
       'Save a DuckDB table to kepler.gl as a map dataset. Works with any table including those from buffer, zipcode, county, state, isochrone, routing, query results, etc.',
     inputSchema: z.object({
       datasetNames: z
         .array(z.string())
         .describe('The names of the DuckDB tables to load into kepler.gl.')
-    }),
-    execute: async ({datasetNames}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetNames} = (input ?? {}) as {datasetNames: string[]};
       try {
-        abortSignal?.throwIfAborted();
         const loadedDatasetNames: string[] = [];
 
         for (const datasetName of datasetNames) {
@@ -31,15 +36,19 @@ export function getSaveDataTool(ctx: KeplerContext) {
 
         return {
           success: true,
-          savedDatasetNames: loadedDatasetNames,
-          details: `Successfully saved dataset(s): ${loadedDatasetNames.join(', ')} in kepler.gl`
+          commandId: saveDataCommandId,
+          data: {
+            savedDatasetNames: loadedDatasetNames,
+            details: `Successfully saved dataset(s): ${loadedDatasetNames.join(', ')} in kepler.gl`
+          }
         };
       } catch (error) {
         return {
           success: false,
+          commandId: saveDataCommandId,
           error: `Cannot save data to kepler.gl: ${error}`
         };
       }
     }
-  });
+  };
 }

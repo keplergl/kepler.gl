@@ -1,4 +1,4 @@
-import {tool} from '../ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
 import {
@@ -76,8 +76,13 @@ export function detectIntervalFromDomain(
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export function getAddTimeFilterTool(ctx: KeplerContext) {
-  return tool({
+export const addTimeFilterCommandId = 'map.add-time-filter' as const;
+
+export function getAddTimeFilterTool(ctx: KeplerContext): RoomCommand {
+  return {
+    id: addTimeFilterCommandId,
+    name: 'Add time filter',
+    group: 'Map',
     description: `Add a time-range filter to animate a NON-trip layer over a TIMESTAMP/DATE column. The time controller appears at the bottom of the map.
 
 DO NOT call this for a trip layer — trips have built-in time animation.
@@ -98,10 +103,14 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
         .describe(
           'Animation step. Auto-detected from the data span and distinct timestamps when omitted.'
         )
-    }),
-    execute: async ({datasetName, dateTimeColumn, interval}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, dateTimeColumn, interval} = (input ?? {}) as {
+        datasetName: string;
+        dateTimeColumn: string;
+        interval?: IntervalKey;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const visState = ctx.getVisState();
         const datasets: Datasets = visState.datasets;
 
@@ -214,20 +223,26 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
 
         return {
           success: true,
-          details: `Time filter added on column "${dateTimeColumn}" for dataset "${datasetName}" (interval: ${
-            resolvedInterval ?? 'auto'
-          }, filter index: ${filterIdx}). The time controller is now visible at the bottom of the map.`,
-          filterIndex: filterIdx,
-          interval: resolvedInterval
+          commandId: addTimeFilterCommandId,
+          data: {
+            details: `Time filter added on column "${dateTimeColumn}" for dataset "${datasetName}" (interval: ${
+              resolvedInterval ?? 'auto'
+            }, filter index: ${filterIdx}). The time controller is now visible at the bottom of the map.`,
+            filterIndex: filterIdx,
+            interval: resolvedInterval
+          }
         };
       } catch (error) {
         return {
           success: false,
+          commandId: addTimeFilterCommandId,
           error: error instanceof Error ? error.message : 'Unknown error',
-          instruction:
-            'Check that the dataset exists, the column is a TIMESTAMP/DATE, and a layer for the dataset is already on the map. Do not retry more than once.'
+          data: {
+            instruction:
+              'Check that the dataset exists, the column is a TIMESTAMP/DATE, and a layer for the dataset is already on the map. Do not retry more than once.'
+          }
         };
       }
     }
-  });
+  };
 }

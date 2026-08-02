@@ -1,5 +1,5 @@
 import {generateId} from 'ai';
-import {tool} from './ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {tableFromArrays, Table as ArrowTable} from 'apache-arrow';
 import {addDataToMap} from '@kepler.gl/actions';
@@ -83,13 +83,16 @@ async function loadTableIntoDuckDB(
   return db;
 }
 
-export function getQueryTools(ctx: KeplerContext) {
+export function getQueryTools(ctx: KeplerContext): Record<string, RoomCommand> {
   const getValues = async (datasetName: string, variableName: string) => {
     const visState = ctx.getVisState();
     return getValuesFromDataset(visState.datasets, visState.layers, datasetName, variableName);
   };
 
-  const genericQuery = tool({
+  const genericQuery: RoomCommand = {
+    id: 'data.query',
+    name: 'Query (SELECT SQL)',
+    group: 'Data',
     description: `Execute a generic SELECT SQL query in DuckDB to answer user's question.
 1. This tool is NOT for filtering the user dataset.
 2. There is no need to add a sub-query to add an auto-increment column 'row_index' to the original dataset.
@@ -105,10 +108,15 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
       resultDatasetName: z
         .string()
         .describe('A short, unique snake_case name describing the query result.')
-    }),
-    execute: async ({datasetName, variableNames, sql, resultDatasetName}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, variableNames, sql, resultDatasetName} = (input ?? {}) as {
+        datasetName: string;
+        variableNames: string[];
+        sql: string;
+        resultDatasetName: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const dbTableName = datasetNameToTableName(datasetName);
         const resolvedSql = sql.replace(/__TABLE__/g, `"${dbTableName}"`);
         const db = await loadTableIntoDuckDB(getValues, datasetName, variableNames, dbTableName);
@@ -125,39 +133,38 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
           content: jsonResult
         });
 
+        // Trimmed, model-facing subset (ported from the old `toModelOutput`).
         return {
-          success: true as const,
-          datasetName: resultDatasetName,
-          truncatedQueryResult,
-          totalRows: jsonResult.length,
-          instruction: `Query executed successfully. The complete result is in dataset ${resultDatasetName} (${jsonResult.length} rows). The truncated result is just a preview.`,
-          nextStep: `You can visualize this result on a map by calling createKeplerDatasetFromTable with datasetName="${resultDatasetName}".`,
-          sql: resolvedSql,
-          dbTableName
+          success: true,
+          commandId: 'data.query',
+          data: {
+            datasetName: resultDatasetName,
+            truncatedQueryResult,
+            totalRows: jsonResult.length,
+            instruction: `Query executed successfully. The complete result is in dataset ${resultDatasetName} (${jsonResult.length} rows). The truncated result is just a preview.`,
+            nextStep: `You can visualize this result on a map by calling createKeplerDatasetFromTable with datasetName="${resultDatasetName}".`,
+            sql: resolvedSql,
+            dbTableName
+          }
         };
       } catch (error) {
         return {
-          success: false as const,
+          success: false,
+          commandId: 'data.query',
           error: error instanceof Error ? error.message : String(error),
-          instruction:
-            'Please explain the error and give a plan to fix it. Then try again with a different query.'
+          data: {
+            instruction:
+              'Please explain the error and give a plan to fix it. Then try again with a different query.'
+          }
         };
       }
-    },
-    toModelOutput: ({output}: any) => {
-      if (!output.success) return output;
-      return {
-        success: output.success,
-        datasetName: output.datasetName,
-        truncatedQueryResult: output.truncatedQueryResult,
-        totalRows: output.totalRows,
-        instruction: output.instruction,
-        nextStep: output.nextStep
-      };
     }
-  });
+  };
 
-  const filterDataset = tool({
+  const filterDataset: RoomCommand = {
+    id: 'data.filter',
+    name: 'Filter dataset via SQL',
+    group: 'Data',
     description: `Filter the user dataset using a SELECT SQL query in DuckDB and save as new dataset.
 Do not use * to select all columns, use all column names.
 IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replaced with the actual DuckDB table name at runtime.`,
@@ -170,10 +177,15 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         .string()
         .describe('The SQL query to execute. Use __TABLE__ as the table name placeholder.'),
       resultDatasetName: z.string().describe('Name for the new filtered dataset.')
-    }),
-    execute: async ({datasetName, variableNames, sql, resultDatasetName}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, variableNames, sql, resultDatasetName} = (input ?? {}) as {
+        datasetName: string;
+        variableNames: string[];
+        sql: string;
+        resultDatasetName: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const dbTableName = datasetNameToTableName(datasetName);
         const resolvedSql = sql.replace(/__TABLE__/g, `"${dbTableName}"`);
         const db = await loadTableIntoDuckDB(getValues, datasetName, variableNames, dbTableName);
@@ -200,35 +212,36 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
           })
         );
 
+        // Trimmed, model-facing subset (ported from the old `toModelOutput`).
         return {
-          success: true as const,
-          details: `Filter query result saved as ${resultDatasetName} (${jsonResult.length} rows) and added to kepler.gl.`,
-          resultDatasetName,
-          firstFiveRows: tableToLLMResult(jsonResult.slice(0, 5)),
-          sql: resolvedSql,
-          dbTableName
+          success: true,
+          commandId: 'data.filter',
+          data: {
+            details: `Filter query result saved as ${resultDatasetName} (${jsonResult.length} rows) and added to kepler.gl.`,
+            resultDatasetName,
+            firstFiveRows: tableToLLMResult(jsonResult.slice(0, 5)),
+            sql: resolvedSql,
+            dbTableName
+          }
         };
       } catch (error) {
         return {
-          success: false as const,
+          success: false,
+          commandId: 'data.filter',
           error: error instanceof Error ? error.message : String(error),
-          instruction:
-            'Please explain the error and give a plan to fix it. Then try again with a different query.'
+          data: {
+            instruction:
+              'Please explain the error and give a plan to fix it. Then try again with a different query.'
+          }
         };
       }
-    },
-    toModelOutput: ({output}: any) => {
-      if (!output.success) return output;
-      return {
-        success: output.success,
-        details: output.details,
-        resultDatasetName: output.resultDatasetName,
-        firstFiveRows: output.firstFiveRows
-      };
     }
-  });
+  };
 
-  const tableTool = tool({
+  const tableTool: RoomCommand = {
+    id: 'data.create-table',
+    name: 'Create table via SQL',
+    group: 'Data',
     description: `Create a new table/dataset in kepler.gl using SQL query.
 1. Add/delete/rename columns or change column types.
 2. Do not use * to select all columns.
@@ -243,10 +256,15 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         .string()
         .describe('The SQL query to execute. Use __TABLE__ as the table name placeholder.'),
       resultDatasetName: z.string().describe('Name for the new dataset.')
-    }),
-    execute: async ({datasetName, variableNames, sql, resultDatasetName}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, variableNames, sql, resultDatasetName} = (input ?? {}) as {
+        datasetName: string;
+        variableNames: string[];
+        sql: string;
+        resultDatasetName: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const dbTableName = datasetNameToTableName(datasetName);
         const resolvedSql = sql.replace(/__TABLE__/g, `"${dbTableName}"`);
         const db = await loadTableIntoDuckDB(getValues, datasetName, variableNames, dbTableName);
@@ -261,37 +279,37 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
           content: jsonResult
         });
 
+        // Trimmed, model-facing subset (ported from the old `toModelOutput`).
         return {
-          success: true as const,
-          details: `Table created as ${resultDatasetName} (${jsonResult.length} rows).`,
-          resultDatasetName,
-          firstFiveRows: tableToLLMResult(jsonResult.slice(0, 5)),
-          nextStep: `You can visualize this table on a map by calling createKeplerDatasetFromTable with datasetName="${resultDatasetName}".`,
-          sql: resolvedSql,
-          dbTableName
+          success: true,
+          commandId: 'data.create-table',
+          data: {
+            details: `Table created as ${resultDatasetName} (${jsonResult.length} rows).`,
+            resultDatasetName,
+            firstFiveRows: tableToLLMResult(jsonResult.slice(0, 5)),
+            nextStep: `You can visualize this table on a map by calling createKeplerDatasetFromTable with datasetName="${resultDatasetName}".`,
+            sql: resolvedSql,
+            dbTableName
+          }
         };
       } catch (error) {
         return {
-          success: false as const,
+          success: false,
+          commandId: 'data.create-table',
           error: error instanceof Error ? error.message : String(error),
-          instruction:
-            'Please explain the error and give a plan to fix it. Then try again with a different query.'
+          data: {
+            instruction:
+              'Please explain the error and give a plan to fix it. Then try again with a different query.'
+          }
         };
       }
-    },
-    toModelOutput: ({output}: any) => {
-      if (!output.success) return output;
-      return {
-        success: output.success,
-        details: output.details,
-        resultDatasetName: output.resultDatasetName,
-        firstFiveRows: output.firstFiveRows,
-        nextStep: output.nextStep
-      };
     }
-  });
+  };
 
-  const mergeTablesTool = tool({
+  const mergeTablesTool: RoomCommand = {
+    id: 'data.merge-tables',
+    name: 'Merge tables via SQL',
+    group: 'Data',
     description: `Merge two tables into a new table using SQL in DuckDB.
 - Horizontal merge (JOIN): SELECT A.id, A.name, B.pop FROM __TABLE_A__ A JOIN __TABLE_B__ B USING (id)
 - Vertical merge (UNION): SELECT id, name FROM __TABLE_A__ UNION ALL SELECT id, name FROM __TABLE_B__
@@ -304,11 +322,14 @@ IMPORTANT: Use __TABLE_A__ and __TABLE_B__ as table name placeholders in SQL. Th
         .describe(
           'The SQL query to merge the tables. Use __TABLE_A__ and __TABLE_B__ as table name placeholders.'
         )
-    }),
-    execute: async ({datasetNameA, datasetNameB, sql}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetNameA, datasetNameB, sql} = (input ?? {}) as {
+        datasetNameA: string;
+        datasetNameB: string;
+        sql: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
-
         const visState = ctx.getVisState();
         const datasets = visState.datasets;
 
@@ -342,36 +363,36 @@ IMPORTANT: Use __TABLE_A__ and __TABLE_B__ as table name placeholders in SQL. Th
           content: jsonResult
         });
 
+        // Trimmed, model-facing subset (ported from the old `toModelOutput`).
         return {
-          success: true as const,
-          details: `Merged ${datasetNameA} and ${datasetNameB} into ${resultDatasetName} (${jsonResult.length} rows).`,
-          resultDatasetName,
-          firstTwoRows: jsonResult.slice(0, 2),
-          nextStep: `You can visualize this merged table on a map by calling createKeplerDatasetFromTable with datasetName="${resultDatasetName}".`,
-          sql: resolvedSql
+          success: true,
+          commandId: 'data.merge-tables',
+          data: {
+            details: `Merged ${datasetNameA} and ${datasetNameB} into ${resultDatasetName} (${jsonResult.length} rows).`,
+            resultDatasetName,
+            firstTwoRows: jsonResult.slice(0, 2),
+            nextStep: `You can visualize this merged table on a map by calling createKeplerDatasetFromTable with datasetName="${resultDatasetName}".`,
+            sql: resolvedSql
+          }
         };
       } catch (error) {
         return {
-          success: false as const,
+          success: false,
+          commandId: 'data.merge-tables',
           error: error instanceof Error ? error.message : String(error),
-          instruction:
-            'Please explain the error and give a plan to fix it. Then try again with a different query.'
+          data: {
+            instruction:
+              'Please explain the error and give a plan to fix it. Then try again with a different query.'
+          }
         };
       }
-    },
-    toModelOutput: ({output}: any) => {
-      if (!output.success) return output;
-      return {
-        success: output.success,
-        details: output.details,
-        resultDatasetName: output.resultDatasetName,
-        firstTwoRows: output.firstTwoRows,
-        nextStep: output.nextStep
-      };
     }
-  });
+  };
 
-  const createKeplerDatasetFromTable = tool({
+  const createKeplerDatasetFromTable: RoomCommand = {
+    id: 'data.load-to-map',
+    name: 'Load DuckDB table to map',
+    group: 'Data',
     description: `Create a new kepler.gl map dataset from a DuckDB table.
 Use this tool after running a query (genericQuery, tableTool, mergeTablesTool) to visualize the result on a kepler.gl map.`,
     inputSchema: z.object({
@@ -380,35 +401,38 @@ Use this tool after running a query (genericQuery, tableTool, mergeTablesTool) t
         .describe(
           'The name of the DuckDB table (e.g. the resultDatasetName from a previous query tool).'
         )
-    }),
-    execute: async ({datasetName}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName} = (input ?? {}) as {datasetName: string};
       try {
-        abortSignal?.throwIfAborted();
-
         const result = await loadTableToKepler(ctx, datasetName);
         if (!result.success) {
           throw new Error(result.error);
         }
 
         return {
-          success: true as const,
-          details: `Dataset "${datasetName}" has been added to kepler.gl map.`,
-          datasetName
+          success: true,
+          commandId: 'data.load-to-map',
+          data: {
+            details: `Dataset "${datasetName}" has been added to kepler.gl map.`,
+            datasetName
+          }
         };
       } catch (error) {
         return {
-          success: false as const,
+          success: false,
+          commandId: 'data.load-to-map',
           error: error instanceof Error ? error.message : String(error)
         };
       }
     }
-  });
+  };
 
   return {
-    genericQuery,
-    filterDataset,
-    tableTool,
-    mergeTablesTool,
-    createKeplerDatasetFromTable
+    'data.query': genericQuery,
+    'data.filter': filterDataset,
+    'data.create-table': tableTool,
+    'data.merge-tables': mergeTablesTool,
+    'data.load-to-map': createKeplerDatasetFromTable
   };
 }

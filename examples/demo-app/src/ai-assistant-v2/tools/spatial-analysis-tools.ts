@@ -1,4 +1,4 @@
-import {tool} from './ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {Feature} from 'geojson';
 import {createWeights, CreateWeightsProps, WeightsMeta} from '@geoda/core';
@@ -62,7 +62,7 @@ function getCachedWeightsById(weightsId: string) {
   return globalWeightsCache[weightsId] || null;
 }
 
-export function getSpatialAnalysisTools(ctx: KeplerContext) {
+export function getSpatialAnalysisTools(ctx: KeplerContext): Record<string, RoomCommand> {
   const getValues = async (datasetName: string, variableName: string) => {
     const visState = ctx.getVisState();
     return getValuesFromDataset(
@@ -90,7 +90,10 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
     return geoms as Feature[];
   };
 
-  const spatialWeightsTool = tool({
+  const spatialWeights: RoomCommand = {
+    id: 'geoda.spatial-weights',
+    name: 'Spatial weights matrix',
+    group: 'GeoDa',
     description: 'Create a spatial weights matrix for spatial analysis.',
     inputSchema: z.object({
       datasetName: z.string(),
@@ -105,9 +108,9 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
         .describe('Distance threshold for threshold-based weights'),
       isMile: z.boolean().optional(),
       useCentroids: z.boolean().optional()
-    }),
-    execute: async (
-      {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {
         datasetName,
         type,
         k,
@@ -117,11 +120,18 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
         distanceThreshold,
         isMile,
         useCentroids
-      },
-      {abortSignal}
-    ) => {
+      } = (input ?? {}) as {
+        datasetName: string;
+        type: 'queen' | 'rook' | 'knn' | 'threshold';
+        k?: number;
+        orderOfContiguity?: number;
+        includeLowerOrder?: boolean;
+        precisionThreshold?: number;
+        distanceThreshold?: number;
+        isMile?: boolean;
+        useCentroids?: boolean;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const geometries = await getGeometries(datasetName);
         if (!geometries || (geometries as unknown[]).length === 0) {
           throw new Error(`Dataset ${datasetName} has no geometries`);
@@ -158,20 +168,27 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
 
         return {
           success: true,
-          weightsId: id,
-          weightsMeta: w.weightsMeta,
-          details: `Weights created using ${type} for ${datasetName}. weightsId: ${id}`
+          commandId: 'geoda.spatial-weights',
+          data: {
+            weightsId: id,
+            weightsMeta: w.weightsMeta,
+            details: `Weights created using ${type} for ${datasetName}. weightsId: ${id}`
+          }
         };
       } catch (error) {
         return {
           success: false,
+          commandId: 'geoda.spatial-weights',
           error: error instanceof Error ? error.message : 'Unknown error'
         };
       }
     }
-  });
+  };
 
-  const lisaTool = tool({
+  const lisa: RoomCommand = {
+    id: 'geoda.lisa',
+    name: 'LISA cluster analysis',
+    group: 'GeoDa',
     description:
       'Apply Local Indicators of Spatial Association (LISA) statistics to identify local clusters and spatial outliers.',
     inputSchema: z.object({
@@ -188,9 +205,9 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
         .describe('Significance threshold for filtering results (default 0.05)'),
       k: z.number().optional().describe('Number of quantiles for quantile LISA'),
       quantile: z.number().optional().describe('Quantile value for quantile LISA')
-    }),
-    execute: async (
-      {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {
         datasetName,
         variableName,
         method,
@@ -199,12 +216,17 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
         significanceThreshold = 0.05,
         k,
         quantile
-      },
-      {abortSignal}
-    ) => {
+      } = (input ?? {}) as {
+        datasetName: string;
+        variableName: string;
+        method: 'localMoran' | 'localGeary' | 'localG' | 'localGStar' | 'quantileLisa';
+        weightsId?: string;
+        permutation?: number;
+        significanceThreshold?: number;
+        k?: number;
+        quantile?: number;
+      };
       try {
-        abortSignal?.throwIfAborted();
-
         let weights: number[][] | null = null;
         if (weightsId) {
           const cached = getCachedWeightsById(weightsId);
@@ -281,26 +303,33 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
 
         return {
           success: true,
-          ...(globalMoranI != null ? {globalMoranI} : {}),
-          datasetName,
-          variableName,
-          significanceThreshold,
-          clusterColorAndLabels,
-          totalObservations: values.length,
-          details: `LISA (${method}) analysis completed for ${variableName} on ${datasetName}. ${clusterColorAndLabels
-            .map(c => `${c.label}: ${c.numberOfObservations}`)
-            .join(', ')}`
+          commandId: 'geoda.lisa',
+          data: {
+            ...(globalMoranI != null ? {globalMoranI} : {}),
+            datasetName,
+            variableName,
+            significanceThreshold,
+            clusterColorAndLabels,
+            totalObservations: values.length,
+            details: `LISA (${method}) analysis completed for ${variableName} on ${datasetName}. ${clusterColorAndLabels
+              .map(c => `${c.label}: ${c.numberOfObservations}`)
+              .join(', ')}`
+          }
         };
       } catch (error) {
         return {
           success: false,
+          commandId: 'geoda.lisa',
           error: error instanceof Error ? error.message : 'Unknown error'
         };
       }
     }
-  });
+  };
 
-  const globalMoranTool = tool({
+  const globalMoran: RoomCommand = {
+    id: 'geoda.global-moran',
+    name: "Global Moran's I",
+    group: 'GeoDa',
     description:
       "Calculate Global Moran's I for a given variable to test for spatial autocorrelation.",
     inputSchema: z.object({
@@ -310,11 +339,14 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
         .string()
         .optional()
         .describe('ID of spatial weights. If not provided, create weights first.')
-    }),
-    execute: async ({datasetName, variableName, weightsId}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, variableName, weightsId} = (input ?? {}) as {
+        datasetName: string;
+        variableName: string;
+        weightsId?: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
-
         let weights: number[][] | null = null;
         if (weightsId) {
           const cached = getCachedWeightsById(weightsId);
@@ -346,22 +378,29 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
 
         return {
           success: true,
-          globalMoranI: slope,
-          details: `Global Moran's I is ${slope.toFixed(4)} for ${variableName} on ${datasetName}.`,
-          datasetName,
-          variableName,
-          totalObservations: values.length
+          commandId: 'geoda.global-moran',
+          data: {
+            globalMoranI: slope,
+            details: `Global Moran's I is ${slope.toFixed(4)} for ${variableName} on ${datasetName}.`,
+            datasetName,
+            variableName,
+            totalObservations: values.length
+          }
         };
       } catch (error) {
         return {
           success: false,
+          commandId: 'geoda.global-moran',
           error: error instanceof Error ? error.message : 'Unknown error'
         };
       }
     }
-  });
+  };
 
-  const classifyTool = tool({
+  const classify: RoomCommand = {
+    id: 'data.classify',
+    name: 'Classify numeric variable',
+    group: 'Data',
     description:
       'Classify numerical data into bins using various statistical methods (quantile, natural breaks, equal interval, etc.).',
     inputSchema: z.object({
@@ -381,10 +420,23 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
         .optional()
         .describe('Number of bins (required for quantile, natural breaks, equal interval)'),
       hinge: z.number().optional().describe('Hinge value for box method (default 1.5)')
-    }),
-    execute: async ({datasetName, variableName, method, k, hinge = 1.5}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, variableName, method, k, hinge = 1.5} = (input ?? {}) as {
+        datasetName: string;
+        variableName: string;
+        method:
+          | 'quantile'
+          | 'natural breaks'
+          | 'equal interval'
+          | 'percentile'
+          | 'box'
+          | 'standard deviation'
+          | 'unique values';
+        k?: number;
+        hinge?: number;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const values = await getValues(datasetName, variableName);
 
         let breaks: number[] | undefined;
@@ -419,24 +471,31 @@ export function getSpatialAnalysisTools(ctx: KeplerContext) {
 
         return {
           success: true,
-          datasetName,
-          variableName,
-          method,
-          ...(k != null ? {k} : {}),
-          ...(breaks ? {breaks} : {}),
-          ...(uniqueValues ? {uniqueValues} : {}),
-          details: `Classified ${variableName} using ${method}${k ? ` with ${k} bins` : ''}.`
+          commandId: 'data.classify',
+          data: {
+            datasetName,
+            variableName,
+            method,
+            ...(k != null ? {k} : {}),
+            ...(breaks ? {breaks} : {}),
+            ...(uniqueValues ? {uniqueValues} : {}),
+            details: `Classified ${variableName} using ${method}${k ? ` with ${k} bins` : ''}.`
+          }
         };
       } catch (error) {
         return {
           success: false,
+          commandId: 'data.classify',
           error: error instanceof Error ? error.message : 'Unknown error'
         };
       }
     }
-  });
+  };
 
-  const regressionTool = tool({
+  const regression: RoomCommand = {
+    id: 'geoda.regression',
+    name: 'Spatial regression',
+    group: 'GeoDa',
     description: `Apply spatial regression analysis. Supports OLS (classic), spatial-lag, and spatial-error models.
 Note: Run spatial diagnostics with OLS first to determine if a spatial regression model is needed.`,
     inputSchema: z.object({
@@ -448,14 +507,16 @@ Note: Run spatial diagnostics with OLS first to determine if a spatial regressio
         .string()
         .optional()
         .describe('ID of spatial weights (required for spatial models)')
-    }),
-    execute: async (
-      {datasetName, dependentVariable, independentVariables, modelType, weightsId},
-      {abortSignal}
-    ) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, dependentVariable, independentVariables, modelType, weightsId} = (input ?? {}) as {
+        datasetName: string;
+        dependentVariable: string;
+        independentVariables: string[];
+        modelType: 'classic' | 'spatial-lag' | 'spatial-error';
+        weightsId?: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
-
         const yValues = await getValues(datasetName, dependentVariable);
         const xValues = await Promise.all(
           independentVariables.map(varName => getValues(datasetName, varName))
@@ -493,28 +554,32 @@ Note: Run spatial diagnostics with OLS first to determine if a spatial regressio
 
         return {
           success: true,
-          modelType,
-          dependentVariable,
-          independentVariables,
-          result,
-          details: `${modelType} regression completed for ${dependentVariable} ~ ${independentVariables.join(
-            ' + '
-          )} on ${datasetName}.`
+          commandId: 'geoda.regression',
+          data: {
+            modelType,
+            dependentVariable,
+            independentVariables,
+            result,
+            details: `${modelType} regression completed for ${dependentVariable} ~ ${independentVariables.join(
+              ' + '
+            )} on ${datasetName}.`
+          }
         };
       } catch (error) {
         return {
           success: false,
+          commandId: 'geoda.regression',
           error: error instanceof Error ? error.message : 'Unknown error'
         };
       }
     }
-  });
+  };
 
   return {
-    lisaTool,
-    globalMoranTool,
-    weightsTool: spatialWeightsTool,
-    regressionTool,
-    classifyTool
+    'geoda.lisa': lisa,
+    'geoda.global-moran': globalMoran,
+    'geoda.spatial-weights': spatialWeights,
+    'geoda.regression': regression,
+    'data.classify': classify
   };
 }

@@ -1,18 +1,23 @@
-import {tool} from '../ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {addDataToMap} from '@kepler.gl/actions';
 import {readFileInBatches, processFileData, ProcessFileDataContent} from '@kepler.gl/processors';
 import {KeplerContext} from '../../types';
 
-export function getLoadDataTool(ctx: KeplerContext) {
-  return tool({
+export const loadDataCommandId = 'map.load-data' as const;
+
+export function getLoadDataTool(ctx: KeplerContext): RoomCommand {
+  return {
+    id: loadDataCommandId,
+    name: 'Load data from URL',
+    group: 'Map',
     description: 'Load dataset from a URL into kepler.gl.',
     inputSchema: z.object({
       url: z.string().describe('The URL to load data from')
-    }),
-    execute: async ({url}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {url} = (input ?? {}) as {url: string};
       try {
-        abortSignal?.throwIfAborted();
         try {
           new URL(url);
         } catch {
@@ -20,7 +25,7 @@ export function getLoadDataTool(ctx: KeplerContext) {
         }
 
         const visState = ctx.getVisState();
-        const response = await fetch(url, {signal: abortSignal});
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`Failed to fetch data from ${url}: ${response.statusText}`);
         }
@@ -59,17 +64,20 @@ export function getLoadDataTool(ctx: KeplerContext) {
         const dataInfo = parsedData[0]?.info;
         return {
           success: true,
-          details: `Successfully loaded data from ${url}`,
-          dataInfo
+          commandId: loadDataCommandId,
+          data: {details: `Successfully loaded data from ${url}`, dataInfo}
         };
       } catch (error) {
         return {
           success: false,
+          commandId: loadDataCommandId,
           error: error instanceof Error ? error.message : 'Unknown error',
-          instruction:
-            'Try to fix the error. If the error persists, ask the user to try with a different URL or format.'
+          data: {
+            instruction:
+              'Try to fix the error. If the error persists, ask the user to try with a different URL or format.'
+          }
         };
       }
     }
-  });
+  };
 }

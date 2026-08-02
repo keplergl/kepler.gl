@@ -1,4 +1,4 @@
-import {tool} from '../ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {LayerClasses} from '@kepler.gl/layers';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
@@ -136,8 +136,13 @@ function applyColorConfig(
   }
 }
 
-export function getAddLayerTool(ctx: KeplerContext) {
-  return tool({
+export const addLayerCommandId = 'map.add-layer' as const;
+
+export function getAddLayerTool(ctx: KeplerContext): RoomCommand {
+  return {
+    id: addLayerCommandId,
+    name: 'Add map layer',
+    group: 'Map',
     description: `Add a kepler.gl map layer from a dataset.
 IMPORTANT: generated layer names must be unique.
 
@@ -207,22 +212,31 @@ For geojson datasets:
           })
         )
         .optional()
-    }),
-    execute: async (args, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const args = (input ?? {}) as {
+        datasetName: string;
+        layerName?: string;
+        latitudeColumn?: string;
+        longitudeColumn?: string;
+        layerType: string;
+        simpleColor?: string;
+        colorBy?: string;
+        colorType?: 'breaks' | 'unique';
+        colorMap?: Array<{value: string | number | null; color: string}>;
+      };
+      const {
+        datasetName,
+        layerName,
+        latitudeColumn,
+        longitudeColumn,
+        layerType,
+        simpleColor,
+        colorBy,
+        colorType,
+        colorMap
+      } = args;
       try {
-        abortSignal?.throwIfAborted();
-        const {
-          datasetName,
-          layerName,
-          latitudeColumn,
-          longitudeColumn,
-          layerType,
-          simpleColor,
-          colorBy,
-          colorType,
-          colorMap
-        } = args;
-
         const visState = ctx.getVisState();
         const datasets: Datasets = visState.datasets;
 
@@ -277,22 +291,28 @@ For geojson datasets:
 
         return {
           success: true,
-          details: `Map layer ${newLayer.id} has been added to the map.`,
-          dateTimeColumns: hasTemporalFields ? temporalFields : undefined,
-          dateTimeHint: hasTemporalFields
-            ? `DateTime columns detected: ${temporalFields.join(
-                ', '
-              )}. You can call addTimeFilter with one of these columns to enable time-range animation on the map.`
-            : undefined
+          commandId: addLayerCommandId,
+          data: {
+            details: `Map layer ${newLayer.id} has been added to the map.`,
+            dateTimeColumns: hasTemporalFields ? temporalFields : undefined,
+            dateTimeHint: hasTemporalFields
+              ? `DateTime columns detected: ${temporalFields.join(
+                  ', '
+                )}. You can call addTimeFilter with one of these columns to enable time-range animation on the map.`
+              : undefined
+          }
         };
       } catch (error) {
         return {
           success: false,
+          commandId: addLayerCommandId,
           error: error instanceof Error ? error.message : 'Unknown error',
-          instruction:
-            'Try to fix the error. If the error persists, ask the user to try with different parameters.'
+          data: {
+            instruction:
+              'Try to fix the error. If the error persists, ask the user to try with different parameters.'
+          }
         };
       }
     }
-  });
+  };
 }

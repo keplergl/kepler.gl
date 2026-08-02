@@ -12,8 +12,13 @@ import type {KeplerContext} from '../../types';
 
 /** Everything a handler may read while servicing one `executeApi` call. */
 export type ExecuteApiContext<TArgs = unknown> = {
-  /** Shared kepler.gl redux bridge; tools read/write the map through it. */
-  keplerContext: KeplerContext;
+  /**
+   * Shared kepler.gl redux bridge. Optional now that handlers delegate to the
+   * room-store command registry instead of closing over `KeplerContext`
+   * directly; kept on the type for back-compat with any custom handler that
+   * still reads it.
+   */
+  keplerContext?: KeplerContext;
   args: TArgs;
   abortSignal?: AbortSignal;
 };

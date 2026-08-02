@@ -1,4 +1,4 @@
-import {tool} from '../ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {tableFromArrays, Table as ArrowTable} from 'apache-arrow';
 import {addDataToMap} from '@kepler.gl/actions';
@@ -25,8 +25,13 @@ function convertArrowRowToObject(row: any): Record<string, unknown> {
   return row;
 }
 
-export function getTableTool(ctx: KeplerContext) {
-  return tool({
+export const tableCommandId = 'map.create-table' as const;
+
+export function getTableTool(ctx: KeplerContext): RoomCommand {
+  return {
+    id: tableCommandId,
+    name: 'Create map dataset via SQL',
+    group: 'Map',
     description: `Create a new table/dataset in kepler.gl using a SQL query which will:
 1. Add a new column to the original dataset
 2. Delete a column from the original dataset
@@ -45,10 +50,15 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         .string()
         .describe('The SQL query to execute. Use __TABLE__ as the table name placeholder.'),
       resultDatasetName: z.string().describe('The name for the new dataset')
-    }),
-    execute: async ({datasetName, variableNames, sql, resultDatasetName}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, variableNames, sql, resultDatasetName} = (input ?? {}) as {
+        datasetName: string;
+        variableNames: string[];
+        sql: string;
+        resultDatasetName: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const dbTableName = datasetNameToTableName(datasetName);
         const resolvedSql = sql.replace(/__TABLE__/g, `"${dbTableName}"`);
         const visState = ctx.getVisState();
@@ -86,29 +96,28 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
           })
         );
 
+        // Trimmed, model-facing subset (ported from the old `toModelOutput`).
+        const firstFiveRows = jsonResult.slice(0, 5);
         return {
-          success: true as const,
-          details: `Table created as ${resultDatasetName} (${jsonResult.length} rows) and added to kepler.gl.`,
-          resultDatasetName,
-          firstFiveRows: jsonResult.slice(0, 5)
+          success: true,
+          commandId: tableCommandId,
+          data: {
+            details: `Table created as ${resultDatasetName} (${jsonResult.length} rows) and added to kepler.gl.`,
+            resultDatasetName,
+            firstFiveRows
+          }
         };
       } catch (error) {
         return {
-          success: false as const,
+          success: false,
+          commandId: tableCommandId,
           error: error instanceof Error ? error.message : String(error),
-          instruction:
-            'Please explain the error and give a plan to fix it. Then try again with a different query.'
+          data: {
+            instruction:
+              'Please explain the error and give a plan to fix it. Then try again with a different query.'
+          }
         };
       }
-    },
-    toModelOutput: ({output}: any) => {
-      if (!output.success) return output;
-      return {
-        success: output.success,
-        details: output.details,
-        resultDatasetName: output.resultDatasetName,
-        firstFiveRows: output.firstFiveRows
-      };
     }
-  });
+  };
 }

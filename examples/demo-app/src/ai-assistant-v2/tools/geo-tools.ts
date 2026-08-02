@@ -1,4 +1,4 @@
-import {tool} from './ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {FeatureCollection, Feature} from 'geojson';
 import {
@@ -31,7 +31,7 @@ import {
 import {saveToDuckdb, saveGeojsonToDuckdb, getTableAsGeoJSON} from './duckdb-cache';
 import {getRoutingTool} from './routing';
 
-export function getGeoTools(ctx: KeplerContext) {
+export function getGeoTools(ctx: KeplerContext): Record<string, RoomCommand> {
   const getValues = async (datasetName: string, variableName: string) => {
     const visState = ctx.getVisState();
     return getValuesFromDataset(
@@ -83,9 +83,12 @@ export function getGeoTools(ctx: KeplerContext) {
     return geojson;
   };
 
-  const routingTool = getRoutingTool(ctx, onToolCompleted);
+  const routing = getRoutingTool(ctx, onToolCompleted);
 
-  const isochroneTool = tool({
+  const isochrone: RoomCommand = {
+    id: 'geo.isochrone',
+    name: 'Isochrone polygons',
+    group: 'Geo',
     description:
       'Get isochrone polygons showing reachable areas within a time/distance from a point.',
     inputSchema: z.object({
@@ -94,12 +97,16 @@ export function getGeoTools(ctx: KeplerContext) {
       distanceLimit: z.number().optional().describe('Distance limit in meters'),
       profile: z.enum(['driving', 'walking', 'cycling']).optional(),
       datasetName: z.string().describe('Name for the output dataset')
-    }),
-    execute: async (
-      {origin, timeLimit, distanceLimit, profile = 'driving', datasetName},
-      {abortSignal}
-    ) => {
-      const {signal, cleanup} = combineSignals(FETCH_TIMEOUT_MS, abortSignal);
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {origin, timeLimit, distanceLimit, profile = 'driving', datasetName} = (input ?? {}) as {
+        origin: {longitude: number; latitude: number};
+        timeLimit?: number;
+        distanceLimit?: number;
+        profile?: 'driving' | 'walking' | 'cycling';
+        datasetName: string;
+      };
+      const {signal, cleanup} = combineSignals(FETCH_TIMEOUT_MS, undefined);
       try {
         const mapboxToken = ctx.getMapboxToken();
         if (!mapboxToken) throw new Error('Mapbox token is not configured');
@@ -113,8 +120,9 @@ export function getGeoTools(ctx: KeplerContext) {
         const response = await fetch(url, {signal});
         if (!response.ok) throw new Error(`Mapbox Isochrone API error: ${response.status}`);
         const data = await response.json();
-        if (!data.features || data.features.length === 0)
-          return {success: false, error: 'No isochrone data returned'};
+        if (!data.features || data.features.length === 0) {
+          return {success: false, commandId: 'geo.isochrone', error: 'No isochrone data returned'};
+        }
         const geojson = {
           type: 'FeatureCollection' as const,
           features: data.features.map((f: any) => ({
@@ -124,31 +132,41 @@ export function getGeoTools(ctx: KeplerContext) {
           }))
         };
         await onToolCompleted(datasetName, {type: 'geojson', content: geojson});
-        return {success: true, datasetName, details: `Isochrone polygons saved as ${datasetName}.`};
+        return {
+          success: true,
+          commandId: 'geo.isochrone',
+          data: {datasetName, details: `Isochrone polygons saved as ${datasetName}.`}
+        };
       } catch (error) {
-        return {success: false, error: `Failed to generate isochrone: ${error}`};
+        return {
+          success: false,
+          commandId: 'geo.isochrone',
+          error: `Failed to generate isochrone: ${error}`
+        };
       } finally {
         cleanup();
       }
     }
-  });
+  };
 
-  const geocodingTool = tool({
+  const geocoding: RoomCommand = {
+    id: 'geo.geocode',
+    name: 'Geocode address',
+    group: 'Geo',
     description: 'Geocode an address to get latitude and longitude.',
     inputSchema: z.object({
       address: z.string().describe('The address to geocode'),
       datasetName: z.string().describe('Name for the output dataset')
-    }),
-    execute: async ({address, datasetName}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {address, datasetName} = (input ?? {}) as {address: string; datasetName: string};
       try {
-        abortSignal?.throwIfAborted();
         await nominatimRateLimiter.waitForNextCall();
         const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
           address
         )}&format=json`;
         const response = await fetch(url, {
-          headers: {Accept: 'application/json', 'User-Agent': 'kepler-gl-ai-assistant/1.0'},
-          signal: abortSignal
+          headers: {Accept: 'application/json', 'User-Agent': 'kepler-gl-ai-assistant/1.0'}
         });
         if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
         const data = await response.json();
@@ -165,16 +183,26 @@ export function getGeoTools(ctx: KeplerContext) {
         await onToolCompleted(datasetName, {type: 'geojson', content: geojson});
         return {
           success: true,
-          datasetName,
-          details: `Geocoded address: ${address}. Saved as ${datasetName}.`
+          commandId: 'geo.geocode',
+          data: {
+            datasetName,
+            details: `Geocoded address: ${address}. Saved as ${datasetName}.`
+          }
         };
       } catch (error) {
-        return {success: false, error: `Failed to geocode: ${error}`};
+        return {
+          success: false,
+          commandId: 'geo.geocode',
+          error: `Failed to geocode: ${error}`
+        };
       }
     }
-  });
+  };
 
-  const spatialQueryTool = tool({
+  const spatialQuery: RoomCommand = {
+    id: 'geo.spatial-query',
+    name: 'Spatial SQL query',
+    group: 'Geo',
     description:
       'Run a DuckDB spatial SQL query on one or more datasets. Use ST_* functions for spatial operations (ST_Intersects, ST_Within, ST_Buffer, ST_Centroid, ST_Union_Agg, ST_Length, ST_Area, ST_Perimeter, ST_AsGeoJSON, ST_GeomFromGeoJSON, etc). The geometry column stores GeoJSON strings — wrap with ST_GeomFromGeoJSON(geometry) for spatial ops. Reference tables using __tbl0__, __tbl1__, ... placeholders (mapped to datasetNames in order).',
     inputSchema: z.object({
@@ -188,11 +216,15 @@ export function getGeoTools(ctx: KeplerContext) {
         .string()
         .describe('DuckDB spatial SQL query using __tbl0__, __tbl1__, ... as table placeholders'),
       reasoning: z.string().describe('Explanation of what this spatial query does')
-    }),
-    execute: async ({datasetNames, outputDatasetName, sqlQuery, reasoning}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetNames, outputDatasetName, sqlQuery, reasoning} = (input ?? {}) as {
+        datasetNames: string[];
+        outputDatasetName: string;
+        sqlQuery: string;
+        reasoning: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
-
         for (const name of datasetNames) {
           const loaded = await ensureDatasetInDuckdb(name);
           if (!loaded) throw new Error(`Dataset ${name} is empty or not found`);
@@ -224,16 +256,26 @@ export function getGeoTools(ctx: KeplerContext) {
         await onToolCompleted(outputDatasetName, {type: 'geojson', content: geojson});
         return {
           success: true,
-          details: `${reasoning} — ${features.length} features -> ${outputDatasetName}.`,
-          outputDatasetName
+          commandId: 'geo.spatial-query',
+          data: {
+            details: `${reasoning} — ${features.length} features -> ${outputDatasetName}.`,
+            outputDatasetName
+          }
         };
       } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : 'Unknown error'};
+        return {
+          success: false,
+          commandId: 'geo.spatial-query',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
       }
     }
-  });
+  };
 
-  const gridTool = tool({
+  const gridTool: RoomCommand = {
+    id: 'geo.grid',
+    name: 'Rectangular grid',
+    group: 'Geo',
     description:
       'Create a rectangular grid of polygons that divides a given area into rows and columns.',
     inputSchema: z.object({
@@ -241,10 +283,15 @@ export function getGeoTools(ctx: KeplerContext) {
       rows: z.number().positive().describe('Number of rows in the grid'),
       columns: z.number().positive().describe('Number of columns in the grid'),
       outputDatasetName: z.string()
-    }),
-    execute: async ({datasetName, rows, columns, outputDatasetName}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, rows, columns, outputDatasetName} = (input ?? {}) as {
+        datasetName: string;
+        rows: number;
+        columns: number;
+        outputDatasetName: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const geometries = await getGeometries(datasetName);
         if (!geometries || geometries.length === 0)
           throw new Error(`Dataset ${datasetName} is empty or not found`);
@@ -290,24 +337,37 @@ export function getGeoTools(ctx: KeplerContext) {
         await onToolCompleted(outputDatasetName, {type: 'geojson', content: geojson});
         return {
           success: true,
-          details: `Grid of ${rows}x${columns} (${gridFeatures.length} cells) from ${datasetName} -> ${outputDatasetName}.`,
-          outputDatasetName
+          commandId: 'geo.grid',
+          data: {
+            details: `Grid of ${rows}x${columns} (${gridFeatures.length} cells) from ${datasetName} -> ${outputDatasetName}.`,
+            outputDatasetName
+          }
         };
       } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : 'Unknown error'};
+        return {
+          success: false,
+          commandId: 'geo.grid',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
       }
     }
-  });
+  };
 
-  const thiessenPolygonsTool = tool({
+  const thiessenPolygons: RoomCommand = {
+    id: 'geoda.thiessen-polygons',
+    name: 'Thiessen (Voronoi) polygons',
+    group: 'GeoDa',
     description: 'Create Thiessen (Voronoi) polygons from geometries using GeoDa.',
     inputSchema: z.object({
       datasetName: z.string(),
       outputDatasetName: z.string()
-    }),
-    execute: async ({datasetName, outputDatasetName}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, outputDatasetName} = (input ?? {}) as {
+        datasetName: string;
+        outputDatasetName: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const geometries = await getGeometries(datasetName);
         if (!geometries || geometries.length === 0)
           throw new Error(`Dataset ${datasetName} is empty or not found`);
@@ -320,24 +380,37 @@ export function getGeoTools(ctx: KeplerContext) {
         await onToolCompleted(outputDatasetName, {type: 'geojson', content: geojson});
         return {
           success: true,
-          details: `Thiessen polygons from ${geometries.length} features -> ${outputDatasetName}.`,
-          outputDatasetName
+          commandId: 'geoda.thiessen-polygons',
+          data: {
+            details: `Thiessen polygons from ${geometries.length} features -> ${outputDatasetName}.`,
+            outputDatasetName
+          }
         };
       } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : 'Unknown error'};
+        return {
+          success: false,
+          commandId: 'geoda.thiessen-polygons',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
       }
     }
-  });
+  };
 
-  const minimumSpanningTreeTool = tool({
+  const minimumSpanningTree: RoomCommand = {
+    id: 'geoda.mst',
+    name: 'Minimum spanning tree',
+    group: 'GeoDa',
     description: 'Create a minimum spanning tree (MST) from geometries using GeoDa.',
     inputSchema: z.object({
       datasetName: z.string(),
       outputDatasetName: z.string()
-    }),
-    execute: async ({datasetName, outputDatasetName}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, outputDatasetName} = (input ?? {}) as {
+        datasetName: string;
+        outputDatasetName: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const geometries = await getGeometries(datasetName);
         if (!geometries || geometries.length === 0)
           throw new Error(`Dataset ${datasetName} is empty or not found`);
@@ -350,16 +423,26 @@ export function getGeoTools(ctx: KeplerContext) {
         await onToolCompleted(outputDatasetName, {type: 'geojson', content: geojson});
         return {
           success: true,
-          details: `MST with ${mstFeatures.length} edges from ${geometries.length} features -> ${outputDatasetName}.`,
-          outputDatasetName
+          commandId: 'geoda.mst',
+          data: {
+            details: `MST with ${mstFeatures.length} edges from ${geometries.length} features -> ${outputDatasetName}.`,
+            outputDatasetName
+          }
         };
       } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : 'Unknown error'};
+        return {
+          success: false,
+          commandId: 'geoda.mst',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
       }
     }
-  });
+  };
 
-  const cartogramTool = tool({
+  const cartogram: RoomCommand = {
+    id: 'geoda.cartogram',
+    name: 'Dorling cartogram',
+    group: 'GeoDa',
     description:
       'Create a Dorling cartogram from polygon geometries using a weight variable (GeoDa).',
     inputSchema: z.object({
@@ -370,13 +453,15 @@ export function getGeoTools(ctx: KeplerContext) {
         .optional()
         .describe('Number of iterations for cartogram optimization (default 100)'),
       outputDatasetName: z.string()
-    }),
-    execute: async (
-      {datasetName, weightVariable, iterations = 100, outputDatasetName},
-      {abortSignal}
-    ) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, weightVariable, iterations = 100, outputDatasetName} = (input ?? {}) as {
+        datasetName: string;
+        weightVariable: string;
+        iterations?: number;
+        outputDatasetName: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const geometries = await getGeometries(datasetName);
         if (!geometries || geometries.length === 0)
           throw new Error(`Dataset ${datasetName} is empty or not found`);
@@ -397,16 +482,26 @@ export function getGeoTools(ctx: KeplerContext) {
         await onToolCompleted(outputDatasetName, {type: 'geojson', content: geojson});
         return {
           success: true,
-          details: `Cartogram from ${cartogramFeatures.length} features (${weightVariable}) -> ${outputDatasetName}.`,
-          outputDatasetName
+          commandId: 'geoda.cartogram',
+          data: {
+            details: `Cartogram from ${cartogramFeatures.length} features (${weightVariable}) -> ${outputDatasetName}.`,
+            outputDatasetName
+          }
         };
       } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : 'Unknown error'};
+        return {
+          success: false,
+          commandId: 'geoda.cartogram',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
       }
     }
-  });
+  };
 
-  const standardizeVariableTool = tool({
+  const standardizeVariable: RoomCommand = {
+    id: 'geoda.standardize',
+    name: 'Standardize variable',
+    group: 'GeoDa',
     description:
       'Standardize a variable using statistical methods: deviationFromMean, standardizeMAD, rangeAdjust, rangeStandardize, or standardize (Z-score).',
     inputSchema: z.object({
@@ -420,10 +515,20 @@ export function getGeoTools(ctx: KeplerContext) {
         'standardize'
       ]),
       outputDatasetName: z.string()
-    }),
-    execute: async ({datasetName, variableName, method, outputDatasetName}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {datasetName, variableName, method, outputDatasetName} = (input ?? {}) as {
+        datasetName: string;
+        variableName: string;
+        method:
+          | 'deviationFromMean'
+          | 'standardizeMAD'
+          | 'rangeAdjust'
+          | 'rangeStandardize'
+          | 'standardize';
+        outputDatasetName: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const values = await getValues(datasetName, variableName);
 
         let standardizedValues: number[] | undefined;
@@ -459,18 +564,28 @@ export function getGeoTools(ctx: KeplerContext) {
 
         return {
           success: true,
-          details: `Standardized ${variableName} using ${method} -> ${outputDatasetName} (column: ${outputVariableName}).`,
-          outputDatasetName,
-          outputVariableName,
-          count: standardizedValues.length
+          commandId: 'geoda.standardize',
+          data: {
+            details: `Standardized ${variableName} using ${method} -> ${outputDatasetName} (column: ${outputVariableName}).`,
+            outputDatasetName,
+            outputVariableName,
+            count: standardizedValues.length
+          }
         };
       } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : 'Unknown error'};
+        return {
+          success: false,
+          commandId: 'geoda.standardize',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
       }
     }
-  });
+  };
 
-  const rateTool = tool({
+  const rate: RoomCommand = {
+    id: 'geoda.rate',
+    name: 'Rate calculation',
+    group: 'GeoDa',
     description:
       'Calculate rate from an event variable and a base variable using excess risk or empirical Bayes smoothing.',
     inputSchema: z.object({
@@ -482,13 +597,22 @@ export function getGeoTools(ctx: KeplerContext) {
         .optional()
         .describe('Rate method (default: excessRisk)'),
       outputDatasetName: z.string()
-    }),
-    execute: async (
-      {datasetName, eventVariable, baseVariable, method = 'excessRisk', outputDatasetName},
-      {abortSignal}
-    ) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {
+        datasetName,
+        eventVariable,
+        baseVariable,
+        method = 'excessRisk',
+        outputDatasetName
+      } = (input ?? {}) as {
+        datasetName: string;
+        eventVariable: string;
+        baseVariable: string;
+        method?: 'excessRisk' | 'empiricalBayes';
+        outputDatasetName: string;
+      };
       try {
-        abortSignal?.throwIfAborted();
         const eventValues = await getValues(datasetName, eventVariable);
         const baseValues = await getValues(datasetName, baseVariable);
 
@@ -507,27 +631,34 @@ export function getGeoTools(ctx: KeplerContext) {
 
         return {
           success: true,
-          details: `Rate (${method}) for ${eventVariable}/${baseVariable} on ${datasetName} -> ${outputDatasetName} (column: ${outputVariableName}).`,
-          outputDatasetName,
-          outputVariableName,
-          count: rateValues.length
+          commandId: 'geoda.rate',
+          data: {
+            details: `Rate (${method}) for ${eventVariable}/${baseVariable} on ${datasetName} -> ${outputDatasetName} (column: ${outputVariableName}).`,
+            outputDatasetName,
+            outputVariableName,
+            count: rateValues.length
+          }
         };
       } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : 'Unknown error'};
+        return {
+          success: false,
+          commandId: 'geoda.rate',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
       }
     }
-  });
+  };
 
   return {
-    routing: routingTool,
-    isochrone: isochroneTool,
-    geocoding: geocodingTool,
-    spatialQuery: spatialQueryTool,
-    gridTool,
-    thiessenPolygons: thiessenPolygonsTool,
-    minimumSpanningTree: minimumSpanningTreeTool,
-    cartogram: cartogramTool,
-    standardizeVariable: standardizeVariableTool,
-    rate: rateTool
+    'geo.routing': routing,
+    'geo.isochrone': isochrone,
+    'geo.geocode': geocoding,
+    'geo.spatial-query': spatialQuery,
+    'geo.grid': gridTool,
+    'geoda.thiessen-polygons': thiessenPolygons,
+    'geoda.mst': minimumSpanningTree,
+    'geoda.cartogram': cartogram,
+    'geoda.standardize': standardizeVariable,
+    'geoda.rate': rate
   };
 }

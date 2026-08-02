@@ -1,35 +1,49 @@
-import {tool} from '../ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {KeplerContext} from '../../types';
 
-export function getMapBoundaryTool(ctx: KeplerContext) {
-  return tool({
+export const mapBoundaryCommandId = 'map.get-boundary' as const;
+
+export function getMapBoundaryTool(ctx: KeplerContext): RoomCommand {
+  return {
+    id: mapBoundaryCommandId,
+    name: 'Get map boundary',
+    group: 'Map',
     description:
       'Get the boundary of the map. Northwest and Southeast coordinates in [longitude, latitude] format.',
-    inputSchema: z.object({}),
-    execute: async (_args, {abortSignal}) => {
+    inputSchema: z.object({}) as any,
+    execute: async () => {
       try {
-        abortSignal?.throwIfAborted();
         const boundary = ctx.getMapBoundary();
         if (!boundary) {
           return {
             success: false,
+            commandId: mapBoundaryCommandId,
             error: 'Map boundary not available.',
-            instruction: 'Please ensure the kepler.gl map is properly loaded and try again.'
+            data: {
+              instruction:
+                'Please ensure the kepler.gl map is properly loaded and try again.'
+            }
           };
         }
         return {
           success: true,
-          details: `Map boundary retrieved. NW: [${boundary.nw[0]}, ${boundary.nw[1]}], SE: [${boundary.se[0]}, ${boundary.se[1]}]`,
-          boundary
+          commandId: mapBoundaryCommandId,
+          data: {
+            details: `Map boundary retrieved. NW: [${boundary.nw[0]}, ${boundary.nw[1]}], SE: [${boundary.se[0]}, ${boundary.se[1]}]`,
+            boundary
+          }
         };
       } catch (error) {
         return {
           success: false,
+          commandId: mapBoundaryCommandId,
           error: error instanceof Error ? error.message : 'Unknown error',
-          instruction: 'Please ensure the kepler.gl map is properly loaded and try again.'
+          data: {
+            instruction: 'Please ensure the kepler.gl map is properly loaded and try again.'
+          }
         };
       }
     }
-  });
+  };
 }

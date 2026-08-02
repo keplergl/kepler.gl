@@ -1,22 +1,34 @@
-import {tool} from './ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {KeplerContext} from '../types';
 import {FETCH_TIMEOUT_MS, combineSignals, mapboxRateLimiter} from './utils';
 
+export const routingCommandId = 'geo.routing' as const;
+
 export function getRoutingTool(
   ctx: KeplerContext,
   onToolCompleted: (toolName: string, result: any) => Promise<void>
-) {
-  return tool({
+): RoomCommand {
+  return {
+    id: routingCommandId,
+    name: 'Routing directions',
+    group: 'Geo',
     description: 'Get routing directions between two coordinates using Mapbox Directions API.',
     inputSchema: z.object({
       origin: z.object({longitude: z.number(), latitude: z.number()}),
       destination: z.object({longitude: z.number(), latitude: z.number()}),
       mode: z.enum(['driving', 'walking', 'cycling']).optional(),
       datasetName: z.string().describe('Name for the output dataset')
-    }),
-    execute: async ({origin, destination, mode = 'driving', datasetName}, {abortSignal}) => {
-      const {signal, cleanup} = combineSignals(FETCH_TIMEOUT_MS, abortSignal);
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {origin, destination, mode = 'driving', datasetName} = (input ?? {}) as {
+        origin: {longitude: number; latitude: number};
+        destination: {longitude: number; latitude: number};
+        mode?: 'driving' | 'walking' | 'cycling';
+        datasetName: string;
+      };
+      // RoomCommandExecutionContext has no abortSignal; use a timeout-only signal.
+      const {signal, cleanup} = combineSignals(FETCH_TIMEOUT_MS, undefined);
       try {
         const mapboxToken = ctx.getMapboxToken();
         if (!mapboxToken) throw new Error('Mapbox token is not configured');
@@ -25,8 +37,9 @@ export function getRoutingTool(
         const response = await fetch(url, {signal});
         if (!response.ok) throw new Error(`Mapbox API error: ${response.status}`);
         const data = await response.json();
-        if (!data.routes || data.routes.length === 0)
-          return {success: false, error: 'No routes found'};
+        if (!data.routes || data.routes.length === 0) {
+          return {success: false, commandId: routingCommandId, error: 'No routes found'};
+        }
         const route = data.routes[0];
         const geojson = {
           type: 'FeatureCollection' as const,
@@ -41,16 +54,23 @@ export function getRoutingTool(
         await onToolCompleted(datasetName, {type: 'geojson', content: geojson});
         return {
           success: true,
-          datasetName,
-          distance: route.distance,
-          duration: route.duration,
-          details: `Routing directions saved as ${datasetName}.`
+          commandId: routingCommandId,
+          data: {
+            datasetName,
+            distance: route.distance,
+            duration: route.duration,
+            details: `Routing directions saved as ${datasetName}.`
+          }
         };
       } catch (error) {
-        return {success: false, error: `Failed to get routing: ${error}`};
+        return {
+          success: false,
+          commandId: routingCommandId,
+          error: `Failed to get routing: ${error}`
+        };
       } finally {
         cleanup();
       }
     }
-  });
+  };
 }

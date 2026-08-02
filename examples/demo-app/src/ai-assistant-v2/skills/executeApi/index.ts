@@ -20,8 +20,8 @@
  */
 
 import {z} from 'zod';
+import type {StoreApi} from '@sqlrooms/room-store';
 import {tool} from '../../tools/ai-tool-shim';
-import type {KeplerContext} from '../../types';
 import {normalizeExecuteApiInput} from './normalizeInput';
 import {buildCommandHandlers, ListCommandsArgs, ExecuteCommandArgs} from './handleCommands';
 import type {ApiHandler, ExecuteApiOutput} from './types';
@@ -97,12 +97,12 @@ export const EXECUTE_API_GUIDANCE = `Always call as: { call: { apiName: "<name>"
   Reference geography (US state/county/zipcode boundaries, road networks, building footprints, POIs) is NOT fetched by a built-in command — the user loads such data into kepler.gl via map.load-data (a URL) or by importing files directly. If a task needs boundaries/roads the user has not provided, ask the user to load that data first.`;
 
 /**
- * Build the `executeApi` tool parameterized by `KeplerContext`. The command
- * handlers are constructed once per call (they close over the tool sets, which
- * close over `ctx`).
+ * Build the `executeApi` tool parameterized by the room-store. The command
+ * handlers are constructed once per call; they delegate `executeCommand` /
+ * `listCommands` to `store.commands` (the registry populated in `store.ts`).
  */
-export function createExecuteApiTool(ctx: KeplerContext) {
-  const {listCommandsHandler, executeCommandHandler} = buildCommandHandlers(ctx);
+export function createExecuteApiTool(store: StoreApi<any>) {
+  const {listCommandsHandler, executeCommandHandler} = buildCommandHandlers(store);
 
   const HANDLERS: Record<string, ApiHandler> = {
     listCommands: listCommandsHandler,
@@ -125,7 +125,6 @@ export function createExecuteApiTool(ctx: KeplerContext) {
     ),
     execute: async ({call}, options): Promise<ExecuteApiOutput> => {
       const apiCtx = {
-        keplerContext: ctx,
         args: call.args,
         abortSignal: options?.abortSignal
       };

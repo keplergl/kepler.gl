@@ -1,11 +1,16 @@
-import {tool} from '../ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {DEFAULT_MAP_STYLES} from '@kepler.gl/constants';
 import {mapStyleChange} from '@kepler.gl/actions';
 import {KeplerContext} from '../../types';
 
-export function getBasemapTool(ctx: KeplerContext) {
-  return tool({
+export const basemapCommandId = 'map.set-basemap' as const;
+
+export function getBasemapTool(ctx: KeplerContext): RoomCommand {
+  return {
+    id: basemapCommandId,
+    name: 'Set basemap',
+    group: 'Map',
     description: 'Change the basemap style of the kepler.gl map.',
     inputSchema: z.object({
       styleType: z.enum([
@@ -19,26 +24,30 @@ export function getBasemapTool(ctx: KeplerContext) {
         'muted',
         'muted_night'
       ])
-    }),
-    execute: async ({styleType}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {styleType} = (input ?? {}) as {styleType: string};
       try {
-        abortSignal?.throwIfAborted();
         if (!DEFAULT_MAP_STYLES.find(style => style.id === styleType)) {
           throw new Error(`Invalid basemap style: ${styleType}.`);
         }
         ctx.dispatch(mapStyleChange(styleType));
         return {
           success: true,
-          details: `Basemap style changed to ${styleType}.`
+          commandId: basemapCommandId,
+          data: {details: `Basemap style changed to ${styleType}.`}
         };
       } catch (error) {
         return {
           success: false,
+          commandId: basemapCommandId,
           error: error instanceof Error ? error.message : 'Unknown error',
-          instruction:
-            'Try to fix the error. If the error persists, ask the user to try with a different basemap style.'
+          data: {
+            instruction:
+              'Try to fix the error. If the error persists, ask the user to try with a different basemap style.'
+          }
         };
       }
     }
-  });
+  };
 }

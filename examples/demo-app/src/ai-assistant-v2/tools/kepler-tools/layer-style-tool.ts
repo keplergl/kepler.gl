@@ -1,10 +1,15 @@
-import {tool} from '../ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {layerVisualChannelConfigChange} from '@kepler.gl/actions';
 import {KeplerContext} from '../../types';
 
-export function getUpdateLayerColorTool(ctx: KeplerContext) {
-  return tool({
+export const updateLayerColorCommandId = 'map.update-layer-color' as const;
+
+export function getUpdateLayerColorTool(ctx: KeplerContext): RoomCommand {
+  return {
+    id: updateLayerColorCommandId,
+    name: 'Update layer color',
+    group: 'Map',
     description: 'Update the color palette of an existing layer.',
     inputSchema: z.object({
       layerId: z.string(),
@@ -14,10 +19,14 @@ export function getUpdateLayerColorTool(ctx: KeplerContext) {
         .describe(
           'An array of hex color values. Try to generate colors from user description like: van gogh starry night, water color etc.'
         )
-    }),
-    execute: async ({layerId, numberOfColors, customColors}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {layerId, numberOfColors, customColors} = (input ?? {}) as {
+        layerId: string;
+        numberOfColors: number;
+        customColors: string[];
+      };
       try {
-        abortSignal?.throwIfAborted();
         const visState = ctx.getVisState();
         const layers = visState.layers;
         const layer = layers.find(l => l.id === layerId);
@@ -54,16 +63,20 @@ export function getUpdateLayerColorTool(ctx: KeplerContext) {
 
         return {
           success: true,
-          details: `Color updated to ${customColors.join(', ')} for layer ${layerId}`
+          commandId: updateLayerColorCommandId,
+          data: {details: `Color updated to ${customColors.join(', ')} for layer ${layerId}`}
         };
       } catch (error) {
         return {
           success: false,
+          commandId: updateLayerColorCommandId,
           error: error instanceof Error ? error.message : 'Unknown error',
-          instruction:
-            'Try to fix the error. If the error persists, ask the user to try with different parameters.'
+          data: {
+            instruction:
+              'Try to fix the error. If the error persists, ask the user to try with different parameters.'
+          }
         };
       }
     }
-  });
+  };
 }

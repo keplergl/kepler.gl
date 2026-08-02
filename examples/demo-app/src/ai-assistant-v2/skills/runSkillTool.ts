@@ -74,7 +74,7 @@ export function createRunSkillTool({
         const record = await storage.readSkill(ref);
 
         const skillTools = {
-          executeApi: createExecuteApiTool(getKeplerContext()),
+          executeApi: createExecuteApiTool(store),
           ...getEchartsTools(getKeplerContext())
         };
 

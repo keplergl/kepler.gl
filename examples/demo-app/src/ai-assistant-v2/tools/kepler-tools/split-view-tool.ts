@@ -1,12 +1,17 @@
-import {tool} from '../ai-tool-shim';
+import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {toggleSplitMap, toggleLayerForMap} from '@kepler.gl/actions';
 import {KeplerContext} from '../../types';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export function getSplitViewTool(ctx: KeplerContext) {
-  return tool({
+export const splitViewCommandId = 'map.split-view' as const;
+
+export function getSplitViewTool(ctx: KeplerContext): RoomCommand {
+  return {
+    id: splitViewCommandId,
+    name: 'Toggle split map view',
+    group: 'Map',
     description: `Enable or disable the dual-map (split view) comparison mode.
 
 When enabled, the map splits into two panels for side-by-side comparison. Pass layerIdsForMap0 / layerIdsForMap1 to assign which layers show ONLY in the left / right panel; without these, all layers show on both panels (no comparison).
@@ -30,10 +35,14 @@ Use the SAME colorBy / colorType for the layers being compared, so the compariso
         .describe(
           'Layer IDs to show ONLY in the RIGHT panel. Layers not listed are hidden from the right panel.'
         )
-    }),
-    execute: async ({action, layerIdsForMap0, layerIdsForMap1}, {abortSignal}) => {
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {action, layerIdsForMap0, layerIdsForMap1} = (input ?? {}) as {
+        action: 'enable' | 'disable';
+        layerIdsForMap0?: string[];
+        layerIdsForMap1?: string[];
+      };
       try {
-        abortSignal?.throwIfAborted();
         const visState = ctx.getVisState();
         const isSplit = visState.splitMaps && visState.splitMaps.length > 1;
 
@@ -43,7 +52,8 @@ Use the SAME colorBy / colorType for the layers being compared, so the compariso
           }
           return {
             success: true,
-            details: 'Split map view disabled. Returned to single map view.'
+            commandId: splitViewCommandId,
+            data: {details: 'Split map view disabled. Returned to single map view.'}
           };
         }
 
@@ -97,20 +107,26 @@ Use the SAME colorBy / colorType for the layers being compared, so the compariso
 
         return {
           success: true,
-          details: `Split map view enabled. ${layers.length} layer(s) available.${
-            hasLayerAssignment
-              ? ` Left panel: ${(layerIdsForMap0 || []).length} layer(s), Right panel: ${(layerIdsForMap1 || []).length} layer(s).`
-              : ' All layers visible on both panels. Provide layerIdsForMap0/layerIdsForMap1 to assign layers to each panel.'
-          }`
+          commandId: splitViewCommandId,
+          data: {
+            details: `Split map view enabled. ${layers.length} layer(s) available.${
+              hasLayerAssignment
+                ? ` Left panel: ${(layerIdsForMap0 || []).length} layer(s), Right panel: ${(layerIdsForMap1 || []).length} layer(s).`
+                : ' All layers visible on both panels. Provide layerIdsForMap0/layerIdsForMap1 to assign layers to each panel.'
+            }`
+          }
         };
       } catch (error) {
         return {
           success: false,
+          commandId: splitViewCommandId,
           error: error instanceof Error ? error.message : 'Unknown error',
-          instruction:
-            'Check that a map is loaded and layers exist. If the error persists, ask the user to try with different parameters.'
+          data: {
+            instruction:
+              'Check that a map is loaded and layers exist. If the error persists, ask the user to try with different parameters.'
+          }
         };
       }
     }
-  });
+  };
 }

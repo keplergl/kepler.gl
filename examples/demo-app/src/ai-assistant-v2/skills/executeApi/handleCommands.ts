@@ -1,20 +1,24 @@
 /**
  * The routing core for the `executeApi` command dispatcher.
  *
- * Adapts `spatial-agent/src/skills/executeApi/handleCommands.ts` to the
- * demo-app's tool surface. Unlike spatial-agent (which has host-injected
- * command tools + built-in virtual commands), every command here is built-in:
- * the handler forwards `input` to an existing demo-app tool's `execute`,
- * then applies that tool's `toModelOutput` (if any) so token-trimming behavior
- * is preserved. No tool logic is duplicated.
+ * The demo-app's kepler/data/geoda/geo tools are now `RoomCommand`s registered
+ * in the room-store command registry (see `store.ts`'s `registerCommandsForOwner`
+ * call). This file builds the two `executeApi` apiName handlers
+ * (`listCommands`, `executeCommand`) that delegate to the registry:
+ *
+ *  - `executeCommand` → `store.commands.invokeCommand(commandId, input)`, then
+ *    surfaces the rich fields from `result.data` into `ExecuteApiOutput` so the
+ *    existing `toModelOutput` in `index.ts` (multi-step chaining — e.g.
+ *    `data.classify` `breaks` → `map.add-layer` `colorMap`) keeps working.
+ *  - `listCommands` → `store.commands.listCommands(...)`, mapped to the
+ *    `uniqueValues` carrier field.
+ *
+ * No tool logic is duplicated here — the registry is the single source of truth.
  */
 
 import {z} from 'zod';
-import type {KeplerContext} from '../../types';
-import {getQueryTools} from '../../tools/query-tool';
-import {getKeplerTools} from '../../tools/kepler-tools';
-import {getGeoTools} from '../../tools/geo-tools';
-import {getSpatialAnalysisTools} from '../../tools/spatial-analysis-tools';
+import type {StoreApi} from '@sqlrooms/room-store';
+import type {RoomCommandDescriptor, RoomCommandResult} from '@sqlrooms/room-store';
 import {
   defineHandler,
   type ApiHandler,
@@ -22,128 +26,17 @@ import {
   type ExecuteApiOutput
 } from './types';
 
-/** A built AI SDK tool, treated loosely for dynamic dispatch. */
-type AnyTool = {
-  execute?: (args: any, options: any) => Promise<any>;
-  toModelOutput?: (params: {output: any; toolCallId?: string}) => any;
-  description?: string;
-  inputSchema?: z.ZodType;
+/** The room-store state shape this dispatcher reads from (commands slice only). */
+type CommandsStoreState = {
+  commands: {
+    invokeCommand: (commandId: string, input?: unknown) => Promise<RoomCommandResult>;
+    listCommands: (options?: {
+      includeInvisible?: boolean;
+      includeDisabled?: boolean;
+      includeInputSchema?: boolean;
+    }) => RoomCommandDescriptor[];
+  };
 };
-
-/**
- * Build a forwarder handler for one existing tool. The handler validates
- * `input` against the tool's own `inputSchema`, calls `execute`, then applies
- * `toModelOutput` if present (preserving the token-trimming the old
- * `skillTools.ts` dispatcher applied).
- */
-function forwardToTool(tool: AnyTool): ApiHandler {
-  return {
-    argsSchema: (tool.inputSchema ?? z.record(z.unknown())) as z.ZodType,
-    run: async (ctx: ExecuteApiContext): Promise<ExecuteApiOutput> => {
-      if (!tool.execute || typeof tool.execute !== 'function') {
-        return {
-          success: false,
-          error: 'Tool has no execute function.'
-        };
-      }
-      try {
-        const rawOutput = await tool.execute(ctx.args, {
-          abortSignal: ctx.abortSignal,
-          toolCallId: 'executeApi'
-        });
-        const trimmed =
-          typeof tool.toModelOutput === 'function'
-            ? tool.toModelOutput({output: rawOutput, toolCallId: 'executeApi'})
-            : rawOutput;
-        // `toModelOutput` already collapses to the model-facing subset; return
-        // it directly so `index.ts`'s `toModelOutput` can surface the same
-        // fields. Preserve `success` from the raw output (trimmed output may
-        // omit it on success paths).
-        return {
-          ...(typeof trimmed === 'object' && trimmed !== null ? trimmed : {details: trimmed}),
-          success: rawOutput?.success ?? true
-        } as ExecuteApiOutput;
-      } catch (error) {
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-          instruction:
-            'Please explain the error and give a plan to fix it. Then try again with different arguments.'
-        };
-      }
-    }
-  };
-}
-
-/**
- * The full command catalog. Each entry maps a `commandId` to a forwarder
- * handler for one existing demo-app tool. Built once per `createExecuteApiTool`
- * call (the tool sets are parameterized by `KeplerContext`).
- *
- * Command id conventions:
- *  - `map.*`   — kepler.gl map-mutation tools (basemap, layers, data, boundary)
- *  - `data.*`  — DuckDB SQL tools (query, filter, table, merge, load-to-map)
- *  - `geoda.*` — GeoDa (@geoda/core) spatial-analysis tools (lisa, moran, weights, regression, standardize, rate, thiessen-polygons, mst, cartogram)
- *  - `geo.*`   — geo tools (routing, isochrone, geocode, spatial-query, grid)
- */
-function buildCommandHandlerMap(ctx: KeplerContext): Record<string, ApiHandler> {
-  const queryTools = getQueryTools(ctx) as Record<string, AnyTool>;
-  const keplerTools = getKeplerTools(ctx) as Record<string, AnyTool>;
-  const geoTools = getGeoTools(ctx) as Record<string, AnyTool>;
-  const spatialTools = getSpatialAnalysisTools(ctx) as Record<string, AnyTool>;
-
-  // map.* — kepler.gl map-mutation tools
-  const map: Record<string, ApiHandler> = {
-    'map.set-basemap': forwardToTool(keplerTools.basemap),
-    'map.add-layer': forwardToTool(keplerTools.addLayer),
-    'map.update-layer-color': forwardToTool(keplerTools.updateLayerColor),
-    'map.load-data': forwardToTool(keplerTools.loadData),
-    'map.get-boundary': forwardToTool(keplerTools.mapBoundary),
-    'map.save-data': forwardToTool(keplerTools.saveDataToMap),
-    'map.create-table': forwardToTool(keplerTools.tableTool),
-    'map.add-time-filter': forwardToTool(keplerTools.addTimeFilter),
-    'map.toggle-time-filter': forwardToTool(keplerTools.toggleTimeFilter),
-    'map.split-view': forwardToTool(keplerTools.splitView),
-    'map.get-dataset-context': forwardToTool(keplerTools.datasetContext)
-  };
-
-  // data.* — DuckDB SQL tools
-  const data: Record<string, ApiHandler> = {
-    'data.query': forwardToTool(queryTools.genericQuery),
-    'data.filter': forwardToTool(queryTools.filterDataset),
-    'data.create-table': forwardToTool(queryTools.tableTool),
-    'data.merge-tables': forwardToTool(queryTools.mergeTablesTool),
-    'data.load-to-map': forwardToTool(queryTools.createKeplerDatasetFromTable)
-  };
-
-  // geoda.* — spatial-analysis tools
-  const geoda: Record<string, ApiHandler> = {
-    'geoda.lisa': forwardToTool(spatialTools.lisaTool),
-    'geoda.global-moran': forwardToTool(spatialTools.globalMoranTool),
-    'geoda.spatial-weights': forwardToTool(spatialTools.weightsTool),
-    'geoda.regression': forwardToTool(spatialTools.regressionTool),
-    'data.classify': forwardToTool(spatialTools.classifyTool),
-    'geoda.standardize': forwardToTool(geoTools.standardizeVariable),
-    'geoda.rate': forwardToTool(geoTools.rate),
-    // Geometry-generation ops backed by the GeoDa JS library (@geoda/core).
-    // They live in geo-tools.ts but belong under geoda.* by the same rule as
-    // standardize/rate (calls @geoda/core → geoda.*); grid stays geo.* (Turf).
-    'geoda.thiessen-polygons': forwardToTool(geoTools.thiessenPolygons),
-    'geoda.mst': forwardToTool(geoTools.minimumSpanningTree),
-    'geoda.cartogram': forwardToTool(geoTools.cartogram)
-  };
-
-  // geo.* — geo tools
-  const geo: Record<string, ApiHandler> = {
-    'geo.routing': forwardToTool(geoTools.routing),
-    'geo.isochrone': forwardToTool(geoTools.isochrone),
-    'geo.geocode': forwardToTool(geoTools.geocoding),
-    'geo.spatial-query': forwardToTool(geoTools.spatialQuery),
-    'geo.grid': forwardToTool(geoTools.gridTool)
-  };
-
-  return {...map, ...data, ...geoda, ...geo};
-}
 
 export const ListCommandsArgs = z
   .object({
@@ -164,21 +57,23 @@ export const ListCommandsArgs = z
 export type ListCommandsArgs = z.infer<typeof ListCommandsArgs>;
 
 /**
- * Build the `listCommands` handler. Unlike spatial-agent (which delegates to a
- * host-injected tool), every command here is built-in, so we enumerate the
- * handler map directly. The handler is constructed inside a factory because
- * the map is parameterized by `KeplerContext`.
+ * Build the `listCommands` handler. Delegates to `store.commands.listCommands`
+ * and maps `RoomCommandDescriptor[]` to the `uniqueValues` carrier field the
+ * `toModelOutput` in `index.ts` surfaces to the model.
  */
-function buildListCommandsHandler(handlers: Record<string, ApiHandler>): ApiHandler {
+function buildListCommandsHandler(store: StoreApi<CommandsStoreState>): ApiHandler {
   return defineHandler({
     argsSchema: ListCommandsArgs,
-    run: async (_ctx: ExecuteApiContext<ListCommandsArgs>): Promise<ExecuteApiOutput> => {
-      const commands = Object.keys(handlers).map(commandId => ({
-        commandId,
-        // `argsSchema` is a Zod type; `.description` is not uniformly present,
-        // so we surface a one-line flag instead of a full description here.
-        // The full per-command guidance lives in `EXECUTE_API_GUIDANCE`.
-        inputRequired: true
+    run: async (ctx: ExecuteApiContext<ListCommandsArgs>): Promise<ExecuteApiOutput> => {
+      const {includeInvisible, includeDisabled, includeInputSchema} = ctx.args;
+      const descriptors = store.getState().commands.listCommands({
+        includeInvisible,
+        includeDisabled,
+        includeInputSchema
+      });
+      const commands = descriptors.map(d => ({
+        commandId: d.id,
+        inputRequired: d.requiresInput
       }));
       return {
         success: true,
@@ -205,44 +100,52 @@ export const ExecuteCommandArgs = z
 export type ExecuteCommandArgs = z.infer<typeof ExecuteCommandArgs>;
 
 /**
- * Build the `executeCommand` handler. Looks up `commandId` in the built-in
- * handler map and forwards `input` to it. Throws if the command id is unknown.
+ * Build the `executeCommand` handler. Looks up `commandId` in the registry via
+ * `store.commands.invokeCommand` and surfaces the rich fields from `result.data`
+ * into `ExecuteApiOutput` so multi-step chaining keeps working.
  */
-function buildExecuteCommandHandler(handlers: Record<string, ApiHandler>): ApiHandler {
+function buildExecuteCommandHandler(store: StoreApi<CommandsStoreState>): ApiHandler {
   return defineHandler({
     argsSchema: ExecuteCommandArgs,
     run: async (ctx: ExecuteApiContext<ExecuteCommandArgs>): Promise<ExecuteApiOutput> => {
-      const handler = handlers[ctx.args.commandId];
-      if (!handler) {
+      const {commandId, input} = ctx.args;
+      try {
+        const result = await store.getState().commands.invokeCommand(commandId, input ?? {});
+        // `result.data` carries the command's rich output (details, boundary,
+        // breaks, weightsId, globalMoranI, ...). Spread it onto the AI-facing
+        // output so `toModelOutput` in `index.ts` can surface each typed field.
+        const data = (result.data ?? {}) as Record<string, unknown>;
+        const output: ExecuteApiOutput = {
+          success: result.success,
+          ...(result.error ? {error: result.error} : {}),
+          ...(typeof data === 'object' && data !== null ? (data as ExecuteApiOutput) : {})
+        };
+        return output;
+      } catch (error) {
         return {
           success: false,
-          error: `Unknown command ID "${ctx.args.commandId}". Available: ${Object.keys(
-            handlers
-          ).join(', ')}.`,
-          instruction: `Call executeApi with apiName "listCommands" to see all available command IDs, or use one of: ${Object.keys(
-            handlers
-          ).join(', ')}.`
+          error: `Command "${commandId}" failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+          instruction:
+            'Please explain the error and give a plan to fix it. Then try again with different arguments.'
         };
       }
-      return handler.run({...ctx, args: ctx.args.input ?? {}});
     }
   });
 }
 
 /**
- * Build the pair of command handlers (`listCommands`, `executeCommand`)
- * parameterized by `KeplerContext`. Returned to `index.ts` which registers
- * them in the `ExecuteApiCall` discriminated union.
+ * Build the pair of command handlers (`listCommands`, `executeCommand`) backed by
+ * the room-store command registry. Returned to `index.ts` which registers them
+ * in the `ExecuteApiCall` discriminated union.
  */
-export function buildCommandHandlers(ctx: KeplerContext): {
-  handlers: Record<string, ApiHandler>;
+export function buildCommandHandlers(store: StoreApi<CommandsStoreState>): {
   listCommandsHandler: ApiHandler;
   executeCommandHandler: ApiHandler;
 } {
-  const handlers = buildCommandHandlerMap(ctx);
   return {
-    handlers,
-    listCommandsHandler: buildListCommandsHandler(handlers),
-    executeCommandHandler: buildExecuteCommandHandler(handlers)
+    listCommandsHandler: buildListCommandsHandler(store),
+    executeCommandHandler: buildExecuteCommandHandler(store)
   };
 }
