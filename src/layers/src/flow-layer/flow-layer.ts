@@ -523,9 +523,35 @@ export default class FlowLayer extends Layer {
 
     const {visConfig} = this.config;
     const flowLinesRenderingMode = visConfig.flowLinesRenderingMode || 'straight';
+
+    // In globe mode we still render flows (the layer is flagged unsupported and shows a
+    // warning), but we want the flat arrows on the far side of the globe to be occluded
+    // by the planet instead of drawing on top of it. The @flowmap.gl flow-line sublayers
+    // hardcode `depthTest: false` in their sublayer parameters (see FlowmapLayer.js), so
+    // a top-level `parameters` won't reach them — we override via _subLayerProps, which
+    // getSubLayerProps applies last. cullMode 'none' keeps both faces (arrows are flat).
+    const isGlobeMode = Boolean(opts.mapState?.globe?.enabled);
+    const blendingParameters = opts.mapState?.layerParameters ?? {};
+    const globeSubLayerProps = isGlobeMode
+      ? (() => {
+          const depthParams = {
+            parameters: {cull: false, depthTest: true, depthCompare: 'less-equal', cullMode: 'none', ...blendingParameters}
+          };
+          return {
+            _subLayerProps: {
+              'flow-lines': depthParams,
+              'curved-flow-lines': depthParams,
+              'animated-flow-lines': depthParams,
+              'flow-highlight': depthParams
+            }
+          };
+        })()
+      : {};
+
     return [
       new FlowmapLayer<LocationDatum, FlowDatum>({
         ...cleanProps,
+        ...globeSubLayerProps,
         dataProvider: this._dataProvider,
         data: this._dataVersion as any,
         ...flowmapDataAccessors,
@@ -547,7 +573,8 @@ export default class FlowLayer extends Layer {
         onHover: layerCallbacks.onLayerHover,
         parameters: {
           ...(cleanProps.parameters || {}),
-          cull: false
+          cull: false,
+          ...blendingParameters
         }
       })
     ];

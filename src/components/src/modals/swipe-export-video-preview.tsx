@@ -13,6 +13,7 @@ import styled from 'styled-components';
 import {DeckAdapter} from '@hubble.gl/core';
 import {createKeplerLayers} from '@hubble.gl/react';
 import {compositeSwipeFrame, getSwipePercentageAtTime, SwipeEasing} from './swipe-composite-utils';
+import {getGlobeExportLayers} from './hubble-utils';
 
 function setRef<T>(ref: React.Ref<T> | React.MutableRefObject<T>, value: T) {
   if (typeof ref === 'function') {
@@ -75,6 +76,7 @@ export type SwipeExportVideoPreviewProps = {
   swipeEndPct: number;
   swipeEasing: SwipeEasing;
   currentTimeMs: number;
+  backgroundColor?: string;
 };
 
 type SwipeExportVideoPreviewState = {
@@ -172,7 +174,14 @@ export class SwipeExportVideoPreview extends Component<
     if (!leftCanvas || !rightCanvas || !outputCanvas) return;
 
     const percentage = this._getCurrentSwipePercentage();
-    compositeSwipeFrame(leftCanvas, rightCanvas, outputCanvas, percentage, true);
+    compositeSwipeFrame(
+      leftCanvas,
+      rightCanvas,
+      outputCanvas,
+      percentage,
+      true,
+      this.props.backgroundColor
+    );
   }
 
   /**
@@ -208,9 +217,29 @@ export class SwipeExportVideoPreview extends Component<
   }
 
   _createLayers(mapIndex: number, beforeId?: string) {
-    const {deckProps, mapData, viewState} = this.props;
+    const {deckProps, mapData, viewState, disableBaseMap, mapProps} = this.props;
+
+    // Globe swipe: build a fresh set of globe layers per side. Each side is a
+    // separate Deck, so it needs its OWN Layer instances (deck.gl Layer objects
+    // are stateful and bound to one Deck — sharing them makes the second Deck
+    // assert while initializing them). Building per `mapIndex` also respects the
+    // split-map layer visibility on each half of the swipe.
+    if (disableBaseMap && mapData?.mapState?.globe?.enabled) {
+      return getGlobeExportLayers(mapData, {
+        mapIndex,
+        mapboxApiAccessToken: mapProps?.mapboxApiAccessToken,
+        mapboxApiUrl: mapProps?.mapboxApiUrl
+      });
+    }
+
     if (deckProps && deckProps.layers) {
-      return deckProps.layers;
+      // Non-globe path with explicit layers: clone per side with a unique id so
+      // the two Deck instances don't share the same stateful Layer objects.
+      return deckProps.layers.map((layer: any) =>
+        layer && typeof layer.clone === 'function'
+          ? layer.clone({id: `${layer.id}-swipe-${mapIndex}`})
+          : layer
+      );
     }
     return createKeplerLayers(mapData, viewState, mapIndex, beforeId);
   }
@@ -245,6 +274,26 @@ export class SwipeExportVideoPreview extends Component<
     }
   }
 
+  // Globe (disableBaseMap) mode has no ReactMapGL and therefore no map 'render'
+  // event to drive compositing. Instead each bare <DeckGL> reports when it has
+  // drawn via onAfterRender; once both sides have rendered we composite. Without
+  // this the composite output canvas is never painted until the user presses
+  // play, so the preview shows a blank (white) frame on mount.
+  _onDeckRender = (side: 'left' | 'right') => {
+    const readyKey = side === 'left' ? 'leftReady' : 'rightReady';
+    if (!this.state[readyKey]) {
+      this.setState({[readyKey]: true} as any);
+    }
+    // Composite as soon as both decks exist and have drawn. We check the deck
+    // refs directly (not React state, which can be stale right after setState)
+    // and intentionally don't gate on layers being fully loaded here (that gate
+    // lives in the capture loop): for a live preview we want to show the globe
+    // as it streams in rather than a blank frame while tiles load.
+    if (this.leftDeckRef.current && this.rightDeckRef.current) {
+      this._compositeFrame();
+    }
+  };
+
   _renderMapCanvas(
     side: 'left' | 'right',
     mapIndex: number
@@ -258,11 +307,25 @@ export class SwipeExportVideoPreview extends Component<
     const deck = deckRef.current;
 
     if (disableBaseMap) {
+      const adapterProps = adapter.getProps({
+        deck: deck as any,
+        extraProps: {...deckProps, layers: keplerLayers}
+      }) as any;
+      const adapterOnAfterRender = adapterProps.onAfterRender;
       return (
         <MapLayer $width={width} $height={height}>
           <DeckGL
             ref={ref => setRef(deckRef, ref?.deck as any)}
-            {...(adapter.getProps({deck: deck as any, extraProps: {...deckProps, layers: keplerLayers}}) as any)}
+            deviceProps={{type: 'webgl', webgl: {preserveDrawingBuffer: true}}}
+            {...adapterProps}
+            viewState={viewState}
+            onViewStateChange={({viewState: vs}: any) => this.props.setViewState(vs)}
+            onAfterRender={(params: any) => {
+              if (typeof adapterOnAfterRender === 'function') {
+                adapterOnAfterRender(params);
+              }
+              this._onDeckRender(side);
+            }}
             {...this._getContainer()}
           />
         </MapLayer>

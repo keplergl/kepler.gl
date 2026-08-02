@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Field, Millisecond} from './types';
-import {MapSplitMode} from '@kepler.gl/constants';
+import {MapSplitMode, MapViewMode} from '@kepler.gl/constants';
 type MapViewState = {
   latitude: number;
   longitude: number;
@@ -29,6 +29,8 @@ export type MapState = {
   maxBounds?: Bounds;
   initialState?: any;
   scale?: number;
+  /** Layer rendering parameters forwarded from visState for use during layer construction in globe mode. */
+  layerParameters?: Record<string, string | boolean>;
 
   // the following 4 properties assist with split viewports that can optionally have (un)synced viewports and zooms
   /**  Is the application split into 2 maps? */
@@ -39,6 +41,28 @@ export type MapState = {
   isZoomLocked: boolean;
   /**  An array of either 0 or 2 Viewport objects (index 0 for left map; index 1 for right map) */
   splitMapViewports: Viewport[];
+  mapViewMode?: MapViewMode;
+  globe?: {
+    enabled: boolean;
+    config: {
+      atmosphere: boolean;
+      azimuth: boolean;
+      azimuthAngle: number;
+      terminator: boolean;
+      terminatorOpacity: number;
+      basemap: boolean;
+      labels: boolean;
+      labelsColor: [number, number, number];
+      adminLines: boolean;
+      adminLinesColor: [number, number, number];
+      water: boolean;
+      waterColor: [number, number, number];
+      surfaceColor: [number, number, number];
+      surface: boolean;
+      backgroundColor: [number, number, number];
+      stars: boolean;
+    };
+  };
   /** The current split map mode (single, dual, swipe) */
   mapSplitMode: MapSplitMode;
   /** Swipe compare divider position as a percentage (0-100) */

@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/duckdb",
   "author": "Shan He <heshan0131@gmail.com>",
-  "version": "3.3.0-alpha.3",
+  "version": "3.3.0-alpha.5",
   "description": "DuckDB plugin for Kepler.gl",
   "license": "MIT",
   "main": "dist/index.js",
@@ -32,23 +32,21 @@
   },
   "scripts": {
     "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
-    "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
     "build:types": "tsc --project ./tsconfig.production.json",
     "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
     "stab": "mkdir -p dist/components dist/table && echo \"export * from '../src';\" > dist/index.js && echo \"export * from '../../src/components';\" > dist/components/index.js && echo \"export * from '../../src/table';\" > dist/table/index.js"
   },
   "files": [
-    "dist",
-    "umd"
+    "dist"
   ],
   "dependencies": {
     "@duckdb/duckdb-wasm": "^1.28.0",
-    "@kepler.gl/common-utils": "3.3.0-alpha.3",
-    "@kepler.gl/constants": "3.3.0-alpha.3",
-    "@kepler.gl/processors": "3.3.0-alpha.3",
-    "@kepler.gl/table": "3.3.0-alpha.3",
-    "@kepler.gl/types": "3.3.0-alpha.3",
-    "@kepler.gl/utils": "3.3.0-alpha.3",
+    "@kepler.gl/common-utils": "3.3.0-alpha.5",
+    "@kepler.gl/constants": "3.3.0-alpha.5",
+    "@kepler.gl/processors": "3.3.0-alpha.5",
+    "@kepler.gl/table": "3.3.0-alpha.5",
+    "@kepler.gl/types": "3.3.0-alpha.5",
+    "@kepler.gl/utils": "3.3.0-alpha.5",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-collapsible": "^1.1.0",
     "apache-arrow": ">=15.0.0",

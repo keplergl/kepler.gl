@@ -25,3 +25,5 @@ export * from './layer-utils/aggregation-utils';
 
 export * from './3d-building-layer/types';
 export * from './3d-building-layer/3d-building-utils';
+
+export * from './globe';

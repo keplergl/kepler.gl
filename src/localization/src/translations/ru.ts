@@ -45,7 +45,7 @@ export default {
     building: 'Здания',
     water: 'Вода',
     land: 'Земля',
-    '3dBuilding': '3d здания',
+    '3dBuilding': '3D здания',
     background: 'Фон'
   },
   panel: {
@@ -312,6 +312,9 @@ export default {
     closePanel: 'Закрыть текущую панель',
     switchToDualView: 'Перейти в режим двойной карты',
     selectSplitMode: 'Выбрать режим отображения карты',
+    singleView: 'Одна',
+    dualView: 'Двойная',
+    swipeView: 'Сравнение',
     showLegend: 'Показать легенду',
     disable3DMap: 'Отключить 3D Карту',
     DrawOnMap: 'Рисовать на карте',

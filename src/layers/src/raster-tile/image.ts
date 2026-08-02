@@ -368,9 +368,10 @@ async function loadSingleAssetSTAC(request: AssetRequestData): Promise<ImageData
   const imageBands = await loadNpyArray(request, true);
 
   if (!imageBands) {
-    return {
-      imageBands
-    };
+    // loadNpyArray returns null when the request was aborted or the server
+    // returned no usable data. Propagate null imageBands so the caller
+    // (getTileData) can detect the empty result and avoid caching it as valid.
+    return {imageBands: null};
   }
 
   const imageMask = (request.useMask && imageBands.pop()) || null;

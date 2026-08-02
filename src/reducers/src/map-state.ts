@@ -17,6 +17,8 @@ const actionHandler = {
   [ActionTypes.RESET_MAP_CONFIG]: mapStateUpdaters.resetMapConfigUpdater,
   [ActionTypes.TOGGLE_SPLIT_MAP]: mapStateUpdaters.toggleSplitMapUpdater,
   [ActionTypes.TOGGLE_SPLIT_MAP_VIEWPORT]: mapStateUpdaters.toggleSplitMapViewportUpdater,
+  [ActionTypes.SET_MAP_VIEW_MODE]: mapStateUpdaters.setMapViewModeUpdater,
+  [ActionTypes.GLOBE_CONFIG_CHANGE]: mapStateUpdaters.globeConfigChangeUpdater,
   [ActionTypes.SET_MAP_SPLIT_MODE]: mapStateUpdaters.setMapSplitModeUpdater,
   [ActionTypes.SET_SWIPE_COMPARE_PERCENTAGE]: mapStateUpdaters.setSwipeComparePercentageUpdater
 };

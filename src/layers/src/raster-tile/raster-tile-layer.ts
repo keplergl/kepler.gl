@@ -9,7 +9,7 @@ import type {TextureProps} from '@luma.gl/core';
 type Texture2DProps = Partial<TextureProps> & Record<string, any>;
 import memoize from 'lodash/memoize';
 
-import {PathLayer} from '@deck.gl/layers';
+import {PathLayer, TextLayer} from '@deck.gl/layers';
 import {DatasetType, PMTilesType, LAYER_TYPES} from '@kepler.gl/constants';
 import {RasterLayer, RasterMeshLayer} from '@kepler.gl/deckgl-layers';
 import {
@@ -127,6 +127,7 @@ export type RasterTileLayerVisConfigCommonSettings = {
   enableTerrain: VisConfigBoolean;
   enableTerrainTopView: VisConfigBoolean;
   showTileBorders: VisConfigBoolean;
+  showTileDebugInfo: VisConfigBoolean;
   zoomOffset: VisConfigNumber;
 };
 
@@ -403,7 +404,7 @@ export default class RasterTileLayer extends KeplerLayer {
 
   /**
    * Update zRange of viewport. This is necessary so that tiles in extruded mode are shown properly
-   * at high elevations: https://github.com/foursquare/studio-monorepo/pull/1892/files
+   * at high elevations.
    * Derived from https://github.com/visgl/deck.gl/blob/8d824a4b836fee3bfebe6fc962e0f03d8c1dbd0d/modules/geo-layers/src/terrain-layer/terrain-layer.js#L173-L196
    *
    * @param tiles Array of tiles in current viewport
@@ -644,7 +645,8 @@ export default class RasterTileLayer extends KeplerLayer {
       hasCategoricalColorMap: Boolean(categoricalColorMap),
       hasShadowEffect,
       onRedrawNeeded: layerCallbacks?.onRedrawNeeded,
-      showTileBorders: visConfig.showTileBorders
+      showTileBorders: visConfig.showTileBorders,
+      showTileDebugInfo: visConfig.showTileDebugInfo
     });
 
     return [tileLayer];
@@ -659,6 +661,7 @@ export default class RasterTileLayer extends KeplerLayer {
 
     const tileSource = data.tileSource;
     const showTileBorders = visConfig.showTileBorders;
+    const showTileDebugInfo = visConfig.showTileDebugInfo;
     const minZoom = metadata.minZoom || 0;
     const maxZoom = metadata.maxZoom || 30;
 
@@ -687,6 +690,7 @@ export default class RasterTileLayer extends KeplerLayer {
 
         tileSource,
         showTileBorders,
+        showTileDebugInfo,
 
         visible,
         opacity,
@@ -767,6 +771,15 @@ export default class RasterTileLayer extends KeplerLayer {
 
       const [min, max] = this.getMinMaxPixelValues(images.imageBands);
       tilesBeingLoaded--;
+
+      // If the fetch returned an ImageData object but without any band arrays
+      // (e.g. loadNpyArray silently returned null because the AbortSignal fired
+      // just after the HTTP response arrived), treat this as a failed load and
+      // return null so deck.gl shows the parent tile as a placeholder and
+      // re-requests this tile on the next viewport change.
+      if (!images.imageBands || (Array.isArray(images.imageBands) && images.imageBands.length === 0)) {
+        return null;
+      }
 
       // Add terrain data only if we requested it above
       return {
@@ -858,17 +871,59 @@ export default class RasterTileLayer extends KeplerLayer {
   }
 }
 
+/**
+ * Build a TextLayer debug overlay for a single tile.
+ * Shown when showTileDebugInfo is enabled regardless of tile load state.
+ */
+function buildTileDebugLayer(
+  id: string,
+  tile: {index: {x: number; y: number; z: number}; bbox: unknown},
+  status: string,
+  extra: string
+): TextLayer {
+  const bbox = tile.bbox as GeoBoundingBox;
+  const {west, south, east, north} = bbox;
+  const cx = (west + east) / 2;
+  const cy = (south + north) / 2;
+  const {x, y, z} = tile.index;
+  const label = `[${z}/${x}/${y}]\n${status}${extra ? `\n${extra}` : ''}`;
+
+  return new TextLayer({
+    id: `${id}-debug`,
+    data: [{position: [cx, cy, 0], text: label}],
+    getPosition: d => d.position,
+    getText: d => d.text,
+    getSize: 12,
+    getColor: [255, 255, 80, 230],
+    getBackgroundColor: [0, 0, 0, 160],
+    background: true,
+    backgroundPadding: [3, 2, 3, 2],
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    lineHeight: 1.3,
+    billboard: true,
+    sizeUnits: 'pixels',
+    getTextAnchor: 'middle',
+    getAlignmentBaseline: 'center'
+  });
+}
+
 function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | DeckLayer<any>[] {
   const {
     tile,
     data,
     minPixelValue: globalMinPixelValue,
-    maxPixelValue: globalMaxPixelValue
+    maxPixelValue: globalMaxPixelValue,
+    showTileDebugInfo
   } = props;
   const bbox = tile.bbox as GeoBoundingBox;
   const {west, south, east, north} = bbox;
 
+  // When debug overlay is on but data hasn't arrived yet, show a placeholder label
   if (!data) {
+    if (showTileDebugInfo) {
+      return [buildTileDebugLayer(props.id, tile, 'loading…', '')];
+    }
     return [];
   }
 
@@ -878,7 +933,20 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
     minPixelValue: tileMinPixelValue,
     maxPixelValue: tileMaxPixelValue
   } = data;
+
   if (!images || (Array.isArray(images) && images.length === 0)) {
+    if (showTileDebugInfo) {
+      return [buildTileDebugLayer(props.id, tile, 'NO IMAGES', '')];
+    }
+    return [];
+  }
+
+  // Guard against an ImageData object that loaded but has no band arrays
+  // (loadNpyArray returned null e.g. because abort fired after HTTP response).
+  if (!images.imageBands || (Array.isArray(images.imageBands) && images.imageBands.length === 0)) {
+    if (showTileDebugInfo) {
+      return [buildTileDebugLayer(props.id, tile, 'NO BANDS (empty fetch)', '')];
+    }
     return [];
   }
 
@@ -889,6 +957,9 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
     ? globalMaxPixelValue
     : tileMaxPixelValue;
   if (typeof minPixelValue !== 'number' || typeof maxPixelValue !== 'number') {
+    if (showTileDebugInfo) {
+      return [buildTileDebugLayer(props.id, tile, 'NO RANGE', '')];
+    }
     return [];
   }
 
@@ -921,10 +992,11 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
         _imageCoordinateSystem: COORDINATE_SYSTEM.CARTESIAN
       });
 
+  const layers: DeckLayer<any>[] = [rasterLayer];
+
   if (props.showTileBorders) {
     const borderColor: [number, number, number, number] = [0, 255, 0, 200];
-    return [
-      rasterLayer,
+    layers.push(
       new PathLayer({
         id: `${props.id}-border`,
         data: [
@@ -940,10 +1012,19 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
         getColor: borderColor,
         widthMinPixels: 2
       })
-    ];
+    );
   }
 
-  return rasterLayer;
+  if (showTileDebugInfo) {
+    const bandCount = Array.isArray(images.imageBands) ? images.imageBands.length : 0;
+    const minStr = Number.isFinite(minPixelValue) ? minPixelValue.toFixed(2) : '?';
+    const maxStr = Number.isFinite(maxPixelValue) ? maxPixelValue.toFixed(2) : '?';
+    const extra = `bands:${bandCount} min:${minStr} max:${maxStr}${terrain ? ' 3D' : ''}`;
+    const status = bandCount === 0 ? 'BANDS MISSING' : 'OK';
+    layers.push(buildTileDebugLayer(props.id, tile, status, extra));
+  }
+
+  return layers;
 }
 
 function renderSubLayersPMTiles(props: {
@@ -951,6 +1032,7 @@ function renderSubLayersPMTiles(props: {
   data: any;
   tileSource: any;
   showTileBorders: boolean;
+  showTileDebugInfo?: boolean;
   minZoom: number;
   maxZoom: number;
   tile: any;
@@ -958,6 +1040,7 @@ function renderSubLayersPMTiles(props: {
   const {
     tileSource,
     showTileBorders,
+    showTileDebugInfo,
     minZoom,
     maxZoom,
     tile: {
@@ -1002,6 +1085,12 @@ function renderSubLayersPMTiles(props: {
         widthMinPixels: 4
       })
     );
+  }
+
+  if (showTileDebugInfo) {
+    const status = props.data?.image ? 'OK' : 'NO IMAGE';
+    const extra = `zoom:${zoom} min:${minZoom} max:${maxZoom}`;
+    layers.push(buildTileDebugLayer(props.id, props.tile, status, extra));
   }
 
   return layers;

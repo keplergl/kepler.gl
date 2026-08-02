@@ -45,7 +45,7 @@ export default {
     building: 'Edifícios',
     water: 'Água',
     land: 'Terra',
-    '3dBuilding': 'Edifícios em 3d',
+    '3dBuilding': 'Edifícios em 3D',
     background: 'Fundo'
   },
   panel: {
@@ -315,6 +315,9 @@ export default {
     closePanel: 'Fechar painel atual',
     switchToDualView: 'Trocar para visualização dupla de mapa',
     selectSplitMode: 'Selecionar modo de visualização do mapa',
+    singleView: 'Único',
+    dualView: 'Duplo',
+    swipeView: 'Comparar',
     showLegend: 'mostrar legenda',
     disable3DMap: 'Desabilitar Mapa 3D',
     DrawOnMap: 'Desenhar no mapa',

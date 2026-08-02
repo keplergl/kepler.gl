@@ -38,7 +38,7 @@
     "classnames": "^2.2.1",
     "d3-format": "^2.0.0",
     "dropbox": "^4.0.12",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.1",
     "global": "^4.3.0",
     "keymirror": "^0.1.1",
     "markdown-to-jsx": "^7.7.6",

@@ -118,9 +118,11 @@ export {
   isStyleUsingMapboxTiles,
   isStyleUsingOpenStreetMapTiles,
   mapHasOpenStreetMapAttribution,
+  getBaseMapAttributions,
   getBaseMapLibrary,
   transformRequest
 } from './map-style-utils/mapbox-utils';
+export type {AttributionMapLike} from './map-style-utils/mapbox-utils';
 
 // Map
 export * from './map-utils';
@@ -184,7 +186,8 @@ export type {
   BaseMapLibraryConfig,
   MapLibInstance,
   GetMapRef,
-  SvgIcon
+  SvgIcon,
+  ReduxLogLevel
 } from './application-config';
 export type {DatabaseAdapter, DatabaseConnection} from './application-config-types';
 

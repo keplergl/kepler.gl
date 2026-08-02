@@ -23,6 +23,7 @@ import {parseSetCameraType, scaleToVideoExport, getResolutionSetting} from './hu
 import {SwipeExportVideoPreview} from './swipe-export-video-preview';
 import SwipeExportSettings from './swipe-export-settings';
 import {SwipeEasing} from './swipe-composite-utils';
+import {getGlobeClearColor} from '@kepler.gl/deckgl-layers';
 
 const ENCODERS = {
   gif: GifEncoder,
@@ -299,6 +300,20 @@ export class SwipeExportVideoPanelContainer extends Component<
     this.setState({viewState});
   };
 
+  /**
+   * CSS background color for globe swipe (the area the globe doesn't cover).
+   * Returns undefined outside globe mode so non-globe swipe keeps its previous
+   * transparent-clear compositing (the opaque base map already fills the frame).
+   */
+  getBackgroundColor(): string | undefined {
+    if (!this.props.mapData?.mapState?.globe?.enabled) {
+      return undefined;
+    }
+    const bg = this.props.mapData?.mapState?.globe?.config?.backgroundColor;
+    const [r, g, b] = getGlobeClearColor(bg);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
   setStateAndNotify(update: SwipeExportVideoSettings) {
     const {onSettingsChange} = this.props;
     const {mediaType, cameraPreset, fileName, resolution, durationMs} = this.state;
@@ -548,6 +563,7 @@ export class SwipeExportVideoPanelContainer extends Component<
             swipeEndPct={swipeEndPct}
             swipeEasing={swipeEasing}
             currentTimeMs={currentTimeMs}
+            backgroundColor={this.getBackgroundColor()}
           />
           <SwipeExportSettings
             durationMs={durationMs}

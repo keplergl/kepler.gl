@@ -774,6 +774,14 @@ export const rasterVisConfigs = {
     property: 'showTileBorders',
     description: 'Debug: render wireframe boundaries of raster tiles'
   } as VisConfigBoolean,
+  showTileDebugInfo: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'Show Tile Debug Info',
+    group: '',
+    property: 'showTileDebugInfo',
+    description: 'Debug: overlay each tile with its coordinates, status, and pixel range'
+  } as VisConfigBoolean,
   zoomOffset: {
     type: 'number',
     defaultValue: 0,

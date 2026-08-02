@@ -42,21 +42,38 @@ export function computeDeckEffects({
   // TODO: 1) deck effects per deck context 2) preserved between draws
   let hasLightingShadow = false;
 
+  // Light & Shadow and both Fog effects are not supported in globe mode:
+  // - Fog effects are screen-space post-processing passes that read the flat
+  //   MapView depth buffer and don't make sense on the sphere.
+  // - Shadows are cast on the flat ground plane, not the globe surface.
+  // In globe mode we drop the fog effects entirely and force the lighting
+  // effect into its shadow-disabled state (kept in the array, like the normal
+  // "disabled" path, so the shadow shader module stays registered and layer
+  // models don't end up with stale shadow_uShadowMap bindings).
+  const isGlobeMode = Boolean(mapState?.globe?.enabled);
+
   const deckEffects = visState.effectOrder
     .map(effectId => {
       const effect = findById(effectId)(visState.effects) as Effect | undefined;
       if (effect?.deckEffect) {
+        const isFogEffect = effect.type === SURFACE_FOG_TYPE || effect.type === DISTANCE_FOG_TYPE;
+        const isLightingEffect = effect.type === LIGHT_AND_SHADOW_EFFECT.type;
+
+        // Globe mode: skip fog effects, and keep lighting effects only in their
+        // shadow-disabled form.
+        if (isGlobeMode && isFogEffect) {
+          return null;
+        }
+
         // Always reset isExportMode so the flag doesn't persist from a
         // previous export session on reused effect instances.
-        if (
-          effect.type === LIGHT_AND_SHADOW_EFFECT.type ||
-          effect.type === SURFACE_FOG_TYPE ||
-          effect.type === DISTANCE_FOG_TYPE
-        ) {
+        if (isLightingEffect || isFogEffect) {
           effect.deckEffect.isExportMode = Boolean(isExport);
         }
 
-        if (effect.isEnabled) {
+        const enabledInThisView = effect.isEnabled && !(isGlobeMode && isLightingEffect);
+
+        if (enabledInThisView) {
           // deck.gl's EffectManager matches effects by id and reuses old
           // instances (calling oldEffect.setProps(newEffect.props)) instead
           // of replacing them. When a lighting effect is removed and
@@ -84,7 +101,7 @@ export function computeDeckEffects({
           // Disabling shadow on the lights avoids visual effects.
           disableLightingEffect(effect);
         }
-        if (effect.isEnabled || effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+        if (enabledInThisView || effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
           if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
             hasLightingShadow = true;
             if (!isExport) {

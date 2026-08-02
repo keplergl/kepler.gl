@@ -50,6 +50,32 @@ export type BaseMapLibraryConfig = {
  * A mechanism to override default Kepler values/settings so that we
  * without having to make application-specific changes to the kepler repo.
  */
+/**
+ * Controls which Redux actions are suppressed by the dev-mode Redux logger.
+ * Mirrors the `log.level` convention used by luma.gl / deck.gl.
+ *
+ * - `0` — log every action (no filtering)
+ * - `1` — suppress the highest-frequency UI noise:
+ *          MOUSE_MOVE, LAYER_HOVER, SET_MAP_BOUNDARY, SET_LOADING_INDICATOR
+ * - `2` — suppress everything in level 1 plus map/layer update chatter:
+ *          LOAD_MAP_STYLES, UPDATE_MAP, LAYER_VISUAL_CHANGE,
+ *          ON_MAP_CLICK, FILTER_CHANGE, MAP_LOAD_STARTED
+ *
+ * Effects by context:
+ * - **redux-logger** (console output): only active when `NODE_ENV === 'local'` (i.e. `yarn start`)
+ * - **Redux DevTools** (`actionsBlacklist`): active whenever the browser extension is present,
+ *   regardless of `NODE_ENV`
+ *
+ * Default: `1`
+ *
+ * @example
+ * ```ts
+ * initApplicationConfig({ reduxLogLevel: 2 }); // quieter dev console
+ * initApplicationConfig({ reduxLogLevel: 0 }); // see every action
+ * ```
+ */
+export type ReduxLogLevel = 0 | 1 | 2;
+
 export type KeplerApplicationConfig = {
   /** Default name of export HTML file, can be overridden by user */
   defaultHtmlName?: string;
@@ -125,8 +151,14 @@ export type KeplerApplicationConfig = {
   /** Whether to show the map navigation control (zoom buttons and compass). Enabled by default. */
   enableMapNavigationControl?: boolean;
 
+  /** Whether to show the map scale bar at the bottom-left of the map. Enabled by default. */
+  enableMapScale?: boolean;
+
   /** Whether to enable the swipe compare mode in split map view. Enabled by default. */
   enableSwipeMode?: boolean;
+
+  /** Whether to show the option to switch to the globe view. Enabled by default. */
+  enableGlobeView?: boolean;
 
   /** Whether to enable the layer groups feature. Enabled by default. */
   enableLayerGroups?: boolean;
@@ -166,6 +198,9 @@ export type KeplerApplicationConfig = {
    * ```
    */
   customIconUrl?: string;
+
+  /** Controls Redux action logging verbosity in dev mode. See {@link ReduxLogLevel}. */
+  reduxLogLevel?: ReduxLogLevel;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -238,13 +273,19 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableMapNavigationControl: true,
 
+  enableMapScale: true,
+
   enableSwipeMode: true,
+
+  enableGlobeView: true,
 
   enableLayerGroups: true,
 
   customIcons: [],
 
-  customIconUrl: ''
+  customIconUrl: '',
+
+  reduxLogLevel: 1
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;

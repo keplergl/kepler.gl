@@ -16,7 +16,13 @@ import {Annotation} from '@kepler.gl/types';
 import {ActionHandler, updateAnnotation, setSelectedAnnotation} from '@kepler.gl/actions';
 import AnnotationNode from './annotation-node';
 import AnnotationText from './annotation-text';
-import {MapViewport, movePoint, moveText, resizeCircle} from './annotation-utils';
+import {
+  MapViewport,
+  isPointVisibleOnGlobe,
+  movePoint,
+  moveText,
+  resizeCircle
+} from './annotation-utils';
 
 const AnnotationOverlayContainer = styled.div`
   position: absolute;
@@ -50,6 +56,7 @@ export type AnnotationOverlayProps = {
   isAnnotationMode: boolean;
   mapIndex: number;
   viewport: MapViewport;
+  isGlobeEnabled?: boolean;
   updateAnnotation: ActionHandler<typeof updateAnnotation>;
   setSelectedAnnotation: ActionHandler<typeof setSelectedAnnotation>;
 };
@@ -61,12 +68,22 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
   isAnnotationMode,
   mapIndex,
   viewport,
+  isGlobeEnabled,
   updateAnnotation: onUpdateAnnotation,
   setSelectedAnnotation: onSetSelectedAnnotation
 }) => {
   const annotationsToRender = useMemo(
-    () => annotations.filter(ann => (ann.mapIndex ?? 0) === mapIndex && ann.isVisible).reverse(),
-    [annotations, mapIndex]
+    () =>
+      annotations
+        .filter(
+          ann =>
+            (ann.mapIndex ?? 0) === mapIndex &&
+            ann.isVisible &&
+            // Hide annotations on the far side of the globe (occluded by the planet)
+            (!isGlobeEnabled || isPointVisibleOnGlobe(ann.anchorPoint, viewport))
+        )
+        .reverse(),
+    [annotations, mapIndex, isGlobeEnabled, viewport]
   );
 
   const draggedAnnotationRef = React.useRef<Annotation | null>(null);

@@ -734,3 +734,73 @@ test('filterUtils -> getPolygonFilterFunctor -> point layer with dataToFeature (
 
   t.end();
 });
+
+test('filterUtils -> getPolygonFilterFunctor -> aggregation layers (grid/hexagon/cluster)', t => {
+  const squarePolygon = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-1, -1],
+          [1, -1],
+          [1, 1],
+          [-1, 1],
+          [-1, -1]
+        ]
+      ]
+    }
+  };
+
+  const filter = {value: squarePolygon};
+
+  ['grid', 'hexagon', 'cluster'].forEach(type => {
+    // GeoJSON column mode: aggregation layers store parsed Features in
+    // dataToFeature but precompute per-row centroids used for filtering.
+    const geojsonLayer = {
+      type,
+      config: {columnMode: 'geojson'},
+      getPositionAccessor: () => () => null,
+      // dataToFeature holds Feature objects (must NOT be used for the point test)
+      dataToFeature: [
+        {type: 'Feature', geometry: {type: 'Point', coordinates: [0.5, 0.5]}},
+        {type: 'Feature', geometry: {type: 'Point', coordinates: [10, 10]}},
+        null
+      ],
+      centroids: [
+        [0.5, 0.5], // inside
+        [10, 10], // outside
+        null // no geometry
+      ]
+    };
+
+    const fn = getPolygonFilterFunctor(geojsonLayer, filter, null);
+    t.equal(fn({index: 0}), true, `${type} geojson: centroid inside should return true`);
+    t.equal(fn({index: 1}), false, `${type} geojson: centroid outside should return false`);
+    t.equal(fn({index: 2}), null, `${type} geojson: missing centroid should be falsy`);
+
+    // Point column mode: no centroids, falls back to the position accessor.
+    const pointLayer = {
+      type,
+      config: {columnMode: 'points'},
+      getPositionAccessor: () => d => d.position,
+      dataToFeature: [],
+      centroids: []
+    };
+
+    const fn2 = getPolygonFilterFunctor(pointLayer, filter, null);
+    t.equal(
+      fn2({position: [0.5, 0.5]}),
+      true,
+      `${type} points: point inside should return true`
+    );
+    t.equal(
+      fn2({position: [10, 10]}),
+      false,
+      `${type} points: point outside should return false`
+    );
+  });
+
+  t.end();
+});
