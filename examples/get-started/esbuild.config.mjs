@@ -18,17 +18,19 @@ const port = 8080;
 
 // Normalize the ESM/CJS interop for every `@turf/*` module.
 //
-// @deck.gl-community/editable-layers@9.3.7 default-imports ~27 turf modules
-// (`import turfX from '@turf/x'`) but depends on turf v7. When editable-layers is
-// pulled in through kepler.gl's CJS dist, esbuild's ESM<->CJS interop double-wraps
-// these modules so the default import resolves to a namespace object instead of
-// the function, and calls like `(0, import_rewind.default)(...)` throw
-// `... .default is not a function`.
+// @deck.gl-community/editable-layers@9.3.8 mixes default and named imports of
+// turf v7 modules (e.g. `import { rewind } from '@turf/rewind'` and
+// `import bboxPolygon from '@turf/bbox-polygon'`). The turf v7 CJS builds ship
+// as bare `module.exports = fn` (no named properties), so esbuild's ESM<->CJS
+// interop leaves named imports like `import_rewind.rewind` undefined. Callers
+// then get `(0, import_rewind.rewind)(...)` → TypeError: ... is not a function.
 //
-// This plugin intercepts every `@turf/*` specifier and emits a small CommonJS
-// shim that requires turf's real build and re-exports it so that `.default` is
-// the module's real default (the function, for single-function modules) while
-// all named exports are preserved (for multi-export utils like @turf/helpers).
+// This plugin intercepts every `@turf/*` specifier, requires turf's real CJS
+// build, and re-exports it so that:
+//   - Single-function modules: `module.exports = fn`, `fn.default = fn`, and
+//     `fn[moduleName] = fn` so both default and named imports resolve to fn.
+//   - Multi-export utilities (e.g. @turf/helpers): all named exports preserved
+//     and `.default` set to the module object.
 const require = createRequire(import.meta.url);
 const turfInteropNamespace = 'turf-interop-shim';
 const turfInteropPlugin = {
@@ -43,6 +45,8 @@ const turfInteropPlugin = {
     build.onLoad({filter: /.*/, namespace: turfInteropNamespace}, loadArgs => {
       // Resolve the package's real entry from the project (bypasses our resolver).
       const realEntry = require.resolve(loadArgs.path).replace(/\\/g, '/');
+      // Derive the function name from the package path: '@turf/rewind' → 'rewind'
+      const moduleName = loadArgs.path.split('/').pop();
       return {
         contents: `
           const mod = require(${JSON.stringify(realEntry)});
@@ -60,6 +64,14 @@ const turfInteropPlugin = {
               if (key !== 'default') fn[key] = mod[key];
             }
             fn.default = fn;
+            // Also expose the function under the module's own name so that
+            // named imports like \`import { rewind } from '@turf/rewind'\` work
+            // even when the CJS build only does \`module.exports = fn\` without
+            // attaching a same-named property.
+            const funcName = ${JSON.stringify(moduleName)};
+            if (funcName && typeof fn[funcName] !== 'function') {
+              fn[funcName] = fn;
+            }
             module.exports = fn;
           } else {
             // Multi-export util module (e.g. @turf/helpers): keep every named
