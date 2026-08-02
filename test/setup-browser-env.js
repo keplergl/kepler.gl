@@ -5,6 +5,8 @@
 import {JSDOM, VirtualConsole} from 'jsdom';
 import global from 'global';
 
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
 const nop = () => {};
 
 const virtualConsole = new VirtualConsole();

@@ -31,6 +31,10 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
   };
 
   _redrawScheduled = false;
+  _pendingImageRetry: RasterLayerAddedProps['images'] | null = null;
+  /** How many consecutive frames have retried a failed texture upload. */
+  _imageRetryCount = 0;
+  static readonly MAX_IMAGE_RETRY_ATTEMPTS = 3;
 
   initializeState(): void {
     patchPipelineValidation();
@@ -40,6 +44,40 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
   }
 
   draw(_opts: {shaderModuleProps: Record<string, unknown>}): void {
+    // If a previous frame had failed texture uploads, retry them now before
+    // checking whether the images state is complete. Pass oldImagesData: {} so
+    // all keys are treated as new and bypass the isEqual skip-check.
+    // Retries are bounded to MAX_IMAGE_RETRY_ATTEMPTS to avoid an infinite
+    // redraw loop when image data is permanently invalid.
+    if (this._pendingImageRetry) {
+      const retry = this._pendingImageRetry;
+      this._pendingImageRetry = null;
+      const {images: newImages, hasPendingUploads} = loadImages({
+        gl: this.context.device?.gl || this.context.gl,
+        device: this.context.device,
+        images: this.state.images,
+        imagesData: retry,
+        oldImagesData: {}
+      });
+      if (newImages) {
+        this.setState({images: newImages});
+      }
+      if (hasPendingUploads) {
+        this._imageRetryCount++;
+        if (this._imageRetryCount < RasterLayer.MAX_IMAGE_RETRY_ATTEMPTS) {
+          this._pendingImageRetry = retry;
+          this._scheduleRedraw();
+        } else {
+          console.warn(
+            `RasterLayer: texture upload failed after ${RasterLayer.MAX_IMAGE_RETRY_ATTEMPTS} attempts, giving up.`
+          );
+          this._imageRetryCount = 0;
+        }
+      } else {
+        this._imageRetryCount = 0;
+      }
+    }
+
     const {model, images, coordinateConversion, bounds} = this.state;
     const {desaturate, transparentColor, tintColor, moduleProps} = this.props;
 
@@ -158,7 +196,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     const device = this.context.device;
     const gl = device?.gl || this.context.gl;
 
-    const newImages = loadImages({
+    const {images: newImages, hasPendingUploads} = loadImages({
       gl,
       device,
       images,
@@ -167,6 +205,14 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     });
     if (newImages) {
       this.setState({images: newImages});
+    }
+    // If any texture upload failed (device not ready / createTexture threw),
+    // stash the imagesData and schedule a retry next frame. The retry passes
+    // oldImagesData: {} so all keys bypass the isEqual skip-check.
+    if (hasPendingUploads) {
+      this._pendingImageRetry = props.images;
+      this._imageRetryCount = 0;
+      this._scheduleRedraw();
     }
   }
 

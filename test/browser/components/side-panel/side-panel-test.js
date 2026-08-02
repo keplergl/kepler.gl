@@ -381,32 +381,32 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   wrapper.find(ToolbarItem).at(0).find('.toolbar-item').simulate('click');
   t.ok(toggleModal.calledWith(EXPORT_IMAGE_ID), 'Should call toggleModal with EXPORT_IMAGE_ID');
 
-  // export data
+  // export video
   t.equal(
     wrapper.find(ToolbarItem).at(1).find('.toolbar-item__title').text(),
+    'Export Video',
+    'Should render Export Video'
+  );
+  wrapper.find(ToolbarItem).at(1).find('.toolbar-item').simulate('click');
+  t.ok(toggleModal.calledWith(EXPORT_VIDEO_ID), 'Should call toggleModal with EXPORT_VIDEO_ID');
+
+  // export data
+  t.equal(
+    wrapper.find(ToolbarItem).at(2).find('.toolbar-item__title').text(),
     'Export Data',
     'Should render Export Data'
   );
-  wrapper.find(ToolbarItem).at(1).find('.toolbar-item').simulate('click');
+  wrapper.find(ToolbarItem).at(2).find('.toolbar-item').simulate('click');
   t.ok(toggleModal.calledWith(EXPORT_DATA_ID), 'Should call toggleModal with EXPORT_DATA_ID');
 
   // export map
   t.equal(
-    wrapper.find(ToolbarItem).at(2).find('.toolbar-item__title').text(),
+    wrapper.find(ToolbarItem).at(3).find('.toolbar-item__title').text(),
     'Export Map',
     'Should render Export Map'
   );
-  wrapper.find(ToolbarItem).at(2).find('.toolbar-item').simulate('click');
-  t.ok(toggleModal.calledWith(EXPORT_MAP_ID), 'Should call toggleModal with EXPORT_MAP_ID');
-
-  // export video
-  t.equal(
-    wrapper.find(ToolbarItem).at(3).find('.toolbar-item__title').text(),
-    'Export Video',
-    'Should render Export Video'
-  );
   wrapper.find(ToolbarItem).at(3).find('.toolbar-item').simulate('click');
-  t.ok(toggleModal.calledWith(EXPORT_VIDEO_ID), 'Should call toggleModal with EXPORT_VIDEO_ID');
+  t.ok(toggleModal.calledWith(EXPORT_MAP_ID), 'Should call toggleModal with EXPORT_MAP_ID');
 
   t.end();
 });

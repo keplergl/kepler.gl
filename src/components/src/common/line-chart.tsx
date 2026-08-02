@@ -1,39 +1,27 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useMemo} from 'react';
-import {
-  HorizontalGridLines,
-  LineSeries,
-  XYPlot,
-  CustomSVGSeries,
-  Hint,
-  YAxis,
-  MarkSeries,
-  LineSeriesPoint,
-  RVNearestXData
-} from 'react-vis';
+import React, {useCallback, useMemo, useRef} from 'react';
+import {scaleTime, scaleLinear} from 'd3-scale';
+import {bisector} from 'd3-array';
 import {LineChart} from '@kepler.gl/types';
-import styled from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 import {datetimeFormatter} from '@kepler.gl/utils';
 
-const LineChartWrapper = styled.div`
-  .rv-xy-plot {
-    /* important for rendering hint */
-    position: relative;
-  }
-  .rv-xy-plot__inner {
-    /* important to show axis */
-    overflow: visible;
-    clip-path: inset(-2px -10px -2px -50px);
-  }
+export interface LineSeriesPoint {
+  x: number;
+  y: number;
+}
 
-  .rv-xy-plot__grid-lines__line {
+const LineChartWrapper = styled.div`
+  position: relative;
+
+  .line-chart__grid-line {
     stroke: ${props => props.theme.histogramFillOutRange};
     stroke-dasharray: 1px 4px;
   }
 
-  .rv-xy-plot__axis__tick__text {
+  .line-chart__axis-tick {
     font-size: 9px;
     fill: ${props => props.theme.textColor};
   }
@@ -48,6 +36,8 @@ const StyledHint = styled.div`
   padding: 3px 6px;
   pointer-events: none;
   user-select: none;
+  position: absolute;
+  white-space: nowrap;
 `;
 
 interface HintContentProps {
@@ -83,16 +73,15 @@ interface LineChartProps {
   isEnlarged?: boolean;
   lineChart?: LineChart;
   margin: {top?: number; bottom?: number; left?: number; right?: number};
-  onMouseMove: (datapoint: LineSeriesPoint | null, data?: RVNearestXData<LineSeriesPoint>) => void;
+  onMouseMove: (datapoint: LineSeriesPoint | null) => void;
   value?: number[];
   width: number;
   timezone?: string | null;
   timeFormat?: string;
   range?: number[];
   yAxisAutoRange?: boolean;
+  theme?: any;
 }
-
-const MARGIN = {top: 0, bottom: 0, left: 0, right: 0};
 
 function LineChartFactory() {
   const LineChartComponent = ({
@@ -111,11 +100,31 @@ function LineChartFactory() {
     timezone,
     timeFormat,
     range,
-    yAxisAutoRange
+    yAxisAutoRange,
+    theme
   }: LineChartProps) => {
+    const svgRef = useRef<SVGSVGElement>(null);
     const {yDomain, xDomain} = lineChart || {};
     // @ts-expect-error seems lineChart.series has ambiguous types. Requires refactoring.
     const series: {lines: any[]; markers: any[]} = lineChart?.series;
+
+    const lineColor = color || (theme && theme.activeColor) || '#3A414C';
+
+    const computedYDomain = useMemo(() => {
+      if (yDomain && yDomain[0] != null && yDomain[1] != null) return yDomain;
+      if (!series?.lines) return undefined;
+      let min: number | undefined;
+      let max: number | undefined;
+      for (const line of series.lines) {
+        for (const point of line) {
+          if (point.y != null) {
+            if (min === undefined || point.y < min) min = point.y;
+            if (max === undefined || point.y > max) max = point.y;
+          }
+        }
+      }
+      return min !== undefined && max !== undefined ? [min, max] : undefined;
+    }, [yDomain, series]);
 
     const effectiveXDomain = useMemo(
       () => (range && range.length === 2 ? range : xDomain),
@@ -123,7 +132,7 @@ function LineChartFactory() {
     );
 
     const filteredYDomain = useMemo(() => {
-      if (!yAxisAutoRange || !series?.lines || !value || value.length < 2) return yDomain;
+      if (!yAxisAutoRange || !series?.lines || !value || value.length < 2) return computedYDomain;
       let min: number | undefined;
       let max: number | undefined;
       for (const line of series.lines) {
@@ -139,28 +148,26 @@ function LineChartFactory() {
           }
         }
       }
-      return min !== undefined && max !== undefined ? [min, max] : yDomain;
-    }, [series, value, yDomain, yAxisAutoRange]);
+      return min !== undefined && max !== undefined ? [min, max] : computedYDomain;
+    }, [series, value, computedYDomain, yAxisAutoRange]);
 
-    const paddedYDomain = useMemo(
-      () => {
-        if (!filteredYDomain || filteredYDomain[0] == null || filteredYDomain[1] == null) return [];
-        const padding = (filteredYDomain[1] - filteredYDomain[0]) * 0.1;
-        return [filteredYDomain[0] - padding, filteredYDomain[1] + padding];
-      },
-      [filteredYDomain]
-    );
-    const brushData = useMemo(() => {
-      return effectiveXDomain && paddedYDomain
-        ? [
-            {
-              x: effectiveXDomain[0],
-              y: paddedYDomain[1],
-              customComponent: () => brushComponent
-            }
-          ]
-        : [];
-    }, [effectiveXDomain, paddedYDomain, brushComponent]);
+    const paddedYDomain = useMemo(() => {
+      if (!filteredYDomain || filteredYDomain[0] == null || filteredYDomain[1] == null) return [];
+      const padding = (filteredYDomain[1] - filteredYDomain[0]) * 0.1;
+      return [filteredYDomain[0] - padding, filteredYDomain[1] + padding];
+    }, [filteredYDomain]);
+
+    const xScale = useMemo(() => {
+      if (!effectiveXDomain || effectiveXDomain.length < 2) return null;
+      return scaleTime()
+        .domain([new Date(effectiveXDomain[0]), new Date(effectiveXDomain[1])])
+        .range([0, width]);
+    }, [effectiveXDomain, width]);
+
+    const yScale = useMemo(() => {
+      if (!paddedYDomain || paddedYDomain.length < 2) return null;
+      return scaleLinear().domain(paddedYDomain).range([height, 0]);
+    }, [paddedYDomain, height]);
 
     const hintFormatter = useMemo(
       () => datetimeFormatter(timezone)(timeFormat),
@@ -182,42 +189,133 @@ function LineChartFactory() {
       };
     }, [hoveredDP, paddedYDomain]);
 
+    const gridLines = useMemo(() => {
+      if (!yScale) return [];
+      return yScale.ticks(3);
+    }, [yScale]);
+
+    const yAxisTicks = useMemo(() => {
+      if (!yScale) return [];
+      return yScale.ticks(3);
+    }, [yScale]);
+
+    const linePaths = useMemo(() => {
+      if (!xScale || !yScale || !series?.lines) return [];
+      return series.lines.map(lineData => {
+        const points = lineData
+          .filter(p => p.x != null && p.y != null)
+          .map(p => `${xScale(new Date(p.x))},${yScale(p.y)}`);
+        return points.length > 1 ? `M${points.join('L')}` : '';
+      });
+    }, [xScale, yScale, series]);
+
+    const bisectX = useMemo(() => bisector<LineSeriesPoint, number>(d => d.x).left, []);
+
+    const findNearestPoint = useCallback(
+      (mouseX: number) => {
+        if (!xScale || !series?.lines) return null;
+        const xValue = xScale.invert(mouseX).getTime();
+        let nearest: LineSeriesPoint | null = null;
+        let minDist = Infinity;
+        for (const line of series.lines) {
+          if (line.length === 0) continue;
+          const idx = bisectX(line, xValue);
+          // Check the two candidates around the bisection point
+          for (const i of [idx - 1, idx]) {
+            if (i >= 0 && i < line.length) {
+              const dist = Math.abs(line[i].x - xValue);
+              if (dist < minDist) {
+                minDist = dist;
+                nearest = line[i];
+              }
+            }
+          }
+        }
+        return nearest;
+      },
+      [xScale, series, bisectX]
+    );
+
+    const handleMouseMove = useCallback(
+      (e: React.MouseEvent<SVGSVGElement>) => {
+        if (!enableChartHover || series?.markers?.length) return;
+        const svg = svgRef.current;
+        if (!svg) return;
+        const rect = svg.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const nearest = findNearestPoint(mouseX);
+        onMouseMove(nearest);
+      },
+      [enableChartHover, series, findNearestPoint, onMouseMove]
+    );
+
+    const handleMouseLeave = useCallback(() => {
+      onMouseMove(null);
+    }, [onMouseMove]);
+
+    const hintPosition = useMemo(() => {
+      if (!clampedHoveredDP || !xScale || !yScale) return null;
+      return {
+        left: xScale(new Date(clampedHoveredDP.x)),
+        top: yScale(clampedHoveredDP.y)
+      };
+    }, [clampedHoveredDP, xScale, yScale]);
+
     return (
       <LineChartWrapper style={{marginTop: `${margin.top}px`}}>
-        <XYPlot
-          xType="time"
+        <svg
+          ref={svgRef}
           width={width}
           height={height}
-          margin={MARGIN}
-          onMouseLeave={() => {
-            onMouseMove(null);
-          }}
-          yDomain={paddedYDomain}
-          xDomain={effectiveXDomain}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          style={{overflow: 'visible'}}
         >
-          <HorizontalGridLines tickTotal={3} />
-          {series.lines.map((d, i) => (
-            <LineSeries
+          {gridLines.map((tick, i) => (
+            <line
               key={i}
-              style={{fill: 'none'}}
-              color={color}
-              data={d}
-              onNearestX={series.markers.length || !enableChartHover ? undefined : onMouseMove}
+              className="line-chart__grid-line"
+              x1={0}
+              x2={width}
+              y1={yScale!(tick)}
+              y2={yScale!(tick)}
             />
           ))}
-          <MarkSeries data={isHoveredDPVisible && hoveredDP ? [hoveredDP] : []} color={color} />
-          <CustomSVGSeries data={brushData} />
-          {isEnlarged && <YAxis tickTotal={3} />}
-          {clampedHoveredDP && enableChartHover && !brushing ? (
-            <Hint value={clampedHoveredDP}>
-              <HintContent {...hoveredDP!} format={hintFormatter} />
-            </Hint>
-          ) : null}
-        </XYPlot>
+          {linePaths.map((d, i) => (
+            <path key={i} d={d} fill="none" stroke={lineColor} strokeWidth={1} />
+          ))}
+          {isHoveredDPVisible && hoveredDP && xScale && yScale && (
+            <circle
+              cx={xScale(new Date(hoveredDP.x))}
+              cy={yScale(hoveredDP.y)}
+              r={4}
+              fill={lineColor}
+            />
+          )}
+          {isEnlarged &&
+            yAxisTicks.map((tick, i) => (
+              <text
+                key={i}
+                className="line-chart__axis-tick"
+                x={-4}
+                y={yScale!(tick)}
+                textAnchor="end"
+                dominantBaseline="middle"
+              >
+                {tick}
+              </text>
+            ))}
+          {brushComponent}
+        </svg>
+        {clampedHoveredDP && enableChartHover && !brushing && hintPosition ? (
+          <div style={{position: 'absolute', left: hintPosition.left, top: hintPosition.top}}>
+            <HintContent {...hoveredDP!} format={hintFormatter} />
+          </div>
+        ) : null}
       </LineChartWrapper>
     );
   };
-  return LineChartComponent;
+  return withTheme(LineChartComponent) as React.FC<Omit<LineChartProps, 'theme'>>;
 }
 
 export default LineChartFactory;

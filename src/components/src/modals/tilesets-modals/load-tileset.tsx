@@ -7,7 +7,13 @@ import JSONPretty from 'react-json-pretty';
 import {AutoSizer} from 'react-virtualized';
 import styled from 'styled-components';
 
-import {VectorTileIcon, RasterTileIcon, WMSLayerIcon, Tile3DLayerIcon} from '@kepler.gl/layers';
+import {
+  VectorTileIcon,
+  RasterTileIcon,
+  WMSLayerIcon,
+  Tile3DLayerIcon,
+  BitmapLayerIcon
+} from '@kepler.gl/layers';
 import {getError, getApplicationConfig} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
@@ -18,6 +24,7 @@ import TilesetRasterForm from './tileset-raster-form';
 
 import TilesetWMSForm from './tileset-wms-form';
 import TilesetTile3DForm from './tileset-tile3d-form';
+import TilesetBitmapForm from './tileset-bitmap-form';
 
 const WIDTH_ICON = '70px';
 
@@ -34,7 +41,7 @@ const Container = styled.div`
 
 const TilesetTypeContainer = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, ${WIDTH_ICON});
+  grid-template-columns: repeat(6, ${WIDTH_ICON});
   column-gap: 10px;
   margin-bottom: 20px;
 `;
@@ -43,6 +50,22 @@ const MetaContainer = styled.div`
   display: flex;
   max-height: 400px;
   background-color: ${({theme}) => theme.editorBackground};
+`;
+
+const BitmapPreviewContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+
+  img {
+    max-width: 100%;
+    max-height: 360px;
+    border-radius: 4px;
+    object-fit: contain;
+  }
 `;
 
 export interface MetaInnerContainerProps {
@@ -103,6 +126,12 @@ const TILE_TYPES = [
     label: '3D Tile',
     Icon: Tile3DLayerIcon,
     Component: TilesetTile3DForm
+  },
+  {
+    id: 'bitmap',
+    label: 'Bitmap',
+    Icon: BitmapLayerIcon,
+    Component: TilesetBitmapForm
   }
 ];
 
@@ -130,6 +159,7 @@ function LoadTilesetTabFactory() {
     // temp patch to hide raster tile layer while in development
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
     const enableWMSLayer = getApplicationConfig().enableWMSLayer;
+    const enableBitmapLayer = getApplicationConfig().enableBitmapLayer;
 
     // Filter tile types based on application config
     const tileTypes = useMemo(() => {
@@ -140,10 +170,13 @@ function LoadTilesetTabFactory() {
         if (tileType.id === 'wms') {
           return enableWMSLayer;
         }
+        if (tileType.id === 'bitmap') {
+          return enableBitmapLayer;
+        }
         return true; // Include all other types by default
       });
       return types;
-    }, [enableRasterTileLayer, enableWMSLayer]);
+    }, [enableRasterTileLayer, enableWMSLayer, enableBitmapLayer]);
 
     const CurrentForm = tileTypes[typeIndex].Component;
 
@@ -167,7 +200,11 @@ function LoadTilesetTabFactory() {
             </div>
           </div>
           <MetaContainer>
-            {data && (
+            {data && 'imagePreviewUrl' in data ? (
+              <BitmapPreviewContainer>
+                <img src={(data as any).imagePreviewUrl} alt="Bitmap preview" />
+              </BitmapPreviewContainer>
+            ) : data ? (
               <AutoSizer>
                 {({height, width}) => (
                   <MetaInnerContainer height={height} width={width}>
@@ -175,7 +212,7 @@ function LoadTilesetTabFactory() {
                   </MetaInnerContainer>
                 )}
               </AutoSizer>
-            )}
+            ) : null}
           </MetaContainer>
         </Container>
         <LoadDataFooter

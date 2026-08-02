@@ -69,11 +69,9 @@ export type MultiSelectFilterProps = {
 export type TimeWidgetTopProps = {
   filter: Filter;
   readOnly: boolean;
-  datasets: Datasets;
-  setFilterPlot: (newProp, valueIndex?: number) => void;
-  index: number;
   onClose: () => void;
   onToggleMinify: () => void;
+  onToggleSettings?: () => void;
   isMinified: boolean;
 };
 

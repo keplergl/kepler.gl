@@ -106,9 +106,11 @@ test('WMSLayer -> debounce respects preserveDrawingBuffer', t => {
   });
 
   // Check that load was called immediately (no debounce)
-  t.ok(exportLoadCalled, 'loadImage should be called immediately in export mode');
-
-  t.end();
+  // In export mode, debounce is minimal (10ms), verify the spy is triggered after timer fires
+  setTimeout(() => {
+    t.ok(exportLoadCalled, 'loadImage should be called immediately in export mode');
+    t.end();
+  }, 15);
 });
 
 /**
@@ -135,6 +137,9 @@ test('WMSLayer -> isLoaded tracks async loading', t => {
     _nextRequestId: 0,
     lastRequestId: -1
   };
+
+  // Mock internalState so super.isLoaded returns true
+  layer.internalState = {isAsyncPropLoading: () => false};
 
   t.ok(layer.isLoaded, 'Layer should be loaded initially (loadCounter = 0)');
 

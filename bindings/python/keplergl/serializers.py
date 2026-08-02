@@ -114,24 +114,44 @@ def _serialize_dataframe_arrow(df: pd.DataFrame, name: str) -> dict:
     }
 
 
-def serialize_geodataframe(gdf: gpd.GeoDataFrame, name: str) -> dict:
-    """Serialize GeoDataFrame to GeoArrow format."""
+def _is_geometry_col(series: pd.Series) -> bool:
+    """Return True if the series has a geopandas geometry dtype."""
+    return isinstance(series.dtype, gpd.array.GeometryDtype)
+
+
+def _geoseries_to_geoarrow(geom_series: gpd.GeoSeries):
+    """Convert a GeoSeries to a GeoArrow array, handling all-null series."""
     import geoarrow.pyarrow as ga
 
-    # Convert geometry column to geoarrow format
-    geom_col = gdf.geometry.name
-    geom_series = gdf.geometry
     if geom_series.notna().any():
-        geom_array = ga.as_geoarrow(geom_series)
-    else:
-        # GeoArrow cannot infer a concrete geometry type from an empty/all-null series.
-        geom_array = ga.as_geoarrow(geom_series, type=ga.wkb())
+        return ga.as_geoarrow(geom_series)
+    # GeoArrow cannot infer a concrete geometry type from an empty/all-null series.
+    return ga.as_geoarrow(geom_series, type=ga.wkb())
 
-    # Build table with non-geometry columns as regular Arrow arrays
-    non_geom_cols = [c for c in gdf.columns if c != geom_col]
-    arrays = [pa.array(gdf[c]) for c in non_geom_cols]
-    arrays.append(geom_array)
-    col_names = non_geom_cols + [geom_col]
+
+def serialize_geodataframe(gdf: gpd.GeoDataFrame, name: str) -> dict:
+    """Serialize GeoDataFrame to GeoArrow format.
+
+    The active geometry column is encoded as GeoArrow. Any additional geometry
+    columns (GeoDataFrames can have more than one) are converted to WKT strings
+    so they round-trip through the Arrow table without serialization errors and
+    remain readable in kepler.gl as text attributes.
+    """
+    active_geom_col = gdf.geometry.name
+
+    arrays = []
+    col_names = []
+    for col in gdf.columns:
+        series = gdf[col]
+        if col == active_geom_col:
+            arrays.append(_geoseries_to_geoarrow(gdf.geometry))
+        elif _is_geometry_col(series):
+            # Secondary geometry columns: convert to WKT strings to avoid
+            # pa.array() failing on raw geometry objects.
+            arrays.append(pa.array(series.to_wkt()))
+        else:
+            arrays.append(pa.array(series))
+        col_names.append(col)
 
     table = pa.table(dict(zip(col_names, arrays)))
     return {

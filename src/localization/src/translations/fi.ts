@@ -44,7 +44,7 @@ export default {
     building: 'Rakennukset',
     water: 'Vesi',
     land: 'Maa',
-    '3dBuilding': '3d-rakennukset',
+    '3dBuilding': '3D-rakennukset',
     background: 'Tausta'
   },
   panel: {
@@ -312,6 +312,10 @@ export default {
     layerSettings: 'Tason asetukset',
     closePanel: 'Sulje paneeli',
     switchToDualView: 'Vaihda kaksoiskarrtanäkymään',
+    selectSplitMode: 'Valitse karttanäkymätila',
+    singleView: 'Yksi',
+    dualView: 'Kaksois',
+    swipeView: 'Vertaa',
     showLegend: 'Näytä selite',
     disable3DMap: 'Poistu 3D-näkymästä',
     DrawOnMap: 'Piirrä kartalle',

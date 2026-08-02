@@ -11,14 +11,16 @@ type EnhancedFormattedMessageProps = {
   values?: {
     [key: string]: string | number | null;
   };
-  children?: () => React.ReactElement;
+  children?: (chunks: React.ReactNode[]) => React.ReactElement;
 };
 
 const EnhancedFormattedMessage: React.FC<EnhancedFormattedMessageProps> = props => (
   <FormattedMessage
-    // Us id as default Message to prevent error being thrown
+    // Use id as default Message to prevent error being thrown
     defaultMessage={props.defaultMessage || props.id}
-    {...props}
+    id={props.id}
+    values={props.values ?? undefined}
+    {...(props.children ? {children: props.children as any} : {})}
   />
 );
 

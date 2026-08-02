@@ -127,13 +127,13 @@ test('Components -> ExportImageModal.preview image', t => {
 
   t.equal(
     wrapper.find('.preview-image-placeholder').html(),
-    '<img class="preview-image-placeholder" src="data:image/png;base64,2i3u" alt="Map preview">',
+    '<img class="preview-image-placeholder" alt="Map preview" src="data:image/png;base64,2i3u">',
     'should render image with src'
   );
 
   t.equal(
     wrapper.find('.preview-image').html(),
-    '<div class="preview-image"><div class="preview-image-container"><img class="preview-image-placeholder" src="data:image/png;base64,2i3u" alt="Map preview"></div></div>',
+    '<div class="preview-image"><div class="preview-image-container"><img class="preview-image-placeholder" alt="Map preview" src="data:image/png;base64,2i3u"></div></div>',
     'should render preview image with src'
   );
 

@@ -25,8 +25,7 @@ import {
   Filter,
   Field as KeplerField,
   MapState,
-  Merge,
-  ZoomStopsConfig
+  Merge
 } from '@kepler.gl/types';
 import {findDefaultColorField, DataContainerInterface} from '@kepler.gl/utils';
 
@@ -57,8 +56,6 @@ export type AbstractTileLayerVisConfigSettings = {
   elevationScale: VisConfigNumber;
   opacity: VisConfigNumber;
   colorRange: VisConfigColorRange;
-  // TODO: figure out type for radiusByZoom vis config
-  radiusByZoom: any;
   dynamicColor: VisConfigBoolean;
 };
 
@@ -118,14 +115,6 @@ export const commonTileVisConfigs = {
   elevationScale: {...LAYER_VIS_CONFIGS.elevationScale, allowCustomValue: false},
   opacity: 'opacity' as const,
   colorRange: 'colorRange' as const,
-  // TODO: figure out type for radiusByZoom vis config
-  radiusByZoom: {
-    ...LAYER_VIS_CONFIGS.radius,
-    defaultValue: {
-      enabled: false,
-      stops: null
-    } as ZoomStopsConfig
-  } as any,
   dynamicColor: {
     type: 'boolean',
     defaultValue: false,

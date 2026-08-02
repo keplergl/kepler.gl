@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-/* eslint-disable max-statements, enzyme-deprecation/no-mount */
+/* eslint-disable max-statements */
 import {mount} from 'enzyme';
 import cloneDeep from 'lodash/cloneDeep';
 import React from 'react';

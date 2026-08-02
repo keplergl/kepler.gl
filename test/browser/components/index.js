@@ -3,7 +3,6 @@
 
 import './injector-test';
 import './container-test';
-import './kepler-gl-test';
 
 import './modals';
 import './notifications';
@@ -15,6 +14,9 @@ import './editor';
 import './filters';
 import './geocoder-panel-test';
 import './tooltip-config-test';
+import './attribution-test';
 import './bottom-widget-test';
 import './plot-container-test';
 import './effects';
+
+import './kepler-gl-test';

@@ -3,7 +3,14 @@
 
 import test from 'tape';
 import {AnnotationKind} from '@kepler.gl/constants';
-import {makeMarker, movePoint, moveText, resizeCircle, isLeftOriented} from '@kepler.gl/components';
+import {
+  makeMarker,
+  movePoint,
+  moveText,
+  resizeCircle,
+  isLeftOriented,
+  isPointVisibleOnGlobe
+} from '@kepler.gl/components';
 
 const mockViewport = {
   project: ([lng, lat]) => [lng * 10 + 500, lat * -10 + 300],
@@ -200,6 +207,63 @@ test('#resizeCircle -> radius cannot go below 0', t => {
   const changes = resizeCircle(annotation, delta, mockViewport);
 
   t.ok(changes.radiusInMeters >= 0, 'radius should not be negative');
+
+  t.end();
+});
+
+test('#isPointVisibleOnGlobe -> front-facing point round-trips to itself', t => {
+  // A GlobeViewport-like mock where project/unproject are inverses: any point
+  // resolves back to itself, i.e. it is on the near (visible) hemisphere.
+  const identityViewport = {
+    project: ([lng, lat]) => [lng, lat],
+    unproject: ([x, y]) => [x, y]
+  };
+
+  t.equal(isPointVisibleOnGlobe([0, 0], identityViewport), true, 'center point is visible');
+  t.equal(isPointVisibleOnGlobe([30, -45], identityViewport), true, 'off-center point is visible');
+
+  t.end();
+});
+
+test('#isPointVisibleOnGlobe -> occluded point resolves to a different surface point', t => {
+  // Mock the far-side occlusion: unproject always returns the front-most point
+  // ([0, 0]) regardless of pixel, as deck's GlobeViewport does for a ray that
+  // hits the near hemisphere first.
+  const occludingViewport = {
+    project: ([lng, lat]) => [lng, lat],
+    unproject: () => [0, 0]
+  };
+
+  t.equal(isPointVisibleOnGlobe([0, 0], occludingViewport), true, 'front point stays visible');
+  t.equal(
+    isPointVisibleOnGlobe([120, 0], occludingViewport),
+    false,
+    'point far from the resolved surface point is occluded'
+  );
+
+  t.end();
+});
+
+test('#isPointVisibleOnGlobe -> non-finite projection is treated as not visible', t => {
+  const nanProjectViewport = {
+    project: () => [NaN, NaN],
+    unproject: ([x, y]) => [x, y]
+  };
+  const nanUnprojectViewport = {
+    project: ([lng, lat]) => [lng, lat],
+    unproject: () => [NaN, NaN]
+  };
+
+  t.equal(
+    isPointVisibleOnGlobe([10, 10], nanProjectViewport),
+    false,
+    'non-finite project result is not visible'
+  );
+  t.equal(
+    isPointVisibleOnGlobe([10, 10], nanUnprojectViewport),
+    false,
+    'non-finite unproject result is not visible'
+  );
 
   t.end();
 });

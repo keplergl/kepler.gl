@@ -31,6 +31,7 @@ package-lock.json
 /index.html
 
 npm-debug.log
+lerna-debug.log
 .history/
 .yarn
 .npmrc

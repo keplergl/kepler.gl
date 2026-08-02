@@ -1531,13 +1531,17 @@ class Layer implements KeplerLayer {
     layerCallbacks: any;
     visible: boolean;
   }) {
+    const blendingParameters = mapState.layerParameters ?? {};
     return {
       id: this.id,
       idx,
       coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
       pickable: true,
       wrapLongitude: true,
-      parameters: {depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d)},
+      parameters: {
+        depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d),
+        ...blendingParameters
+      },
       hidden: this.config.hidden,
       // visconfig
       opacity: this.config.visConfig.opacity,
@@ -1568,15 +1572,17 @@ class Layer implements KeplerLayer {
       getPixelOffset,
       backgroundProps,
       updateTriggers,
+      animationConfig,
       sharedProps
     }: {
       getPosition?: ((d: any) => number[]) | arrow.Vector;
       getFiltered?: (data: {index: number}, objectInfo: {index: number}) => number;
       getPixelOffset: (textLabel: any) => number[] | ((d: any) => number[]);
-      backgroundProps?: {background: boolean};
+      backgroundProps?: {background: boolean; backgroundPadding?: number[]; getBackgroundColor?: any};
       updateTriggers: {
         [key: string]: any;
       };
+      animationConfig?: any;
       sharedProps: any;
     },
     renderOpts
@@ -1589,6 +1595,9 @@ class Layer implements KeplerLayer {
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {
         const background = textLabel[i].background || backgroundProps?.background;
+        const getText = animationConfig
+          ? f => d.getText(f, animationConfig)
+          : d.getText;
 
         accu.push(
           // @ts-expect-error
@@ -1597,7 +1606,7 @@ class Layer implements KeplerLayer {
             id: `${this.id}-label-${textLabel[i].field?.name}`,
             data: data.data,
             visible: this.config.isVisible,
-            getText: d.getText,
+            getText,
             getPosition,
             getFiltered,
             characterSet: d.characterSet,
@@ -1611,19 +1620,27 @@ class Layer implements KeplerLayer {
             outlineWidth: textLabel[i].outlineWidth * TEXT_OUTLINE_MULTIPLIER,
             outlineColor: textLabel[i].outlineColor,
             background,
-            getBackgroundColor: textLabel[i].backgroundColor,
+            ...(backgroundProps?.backgroundPadding
+              ? {backgroundPadding: backgroundProps.backgroundPadding}
+              : null),
+            getBackgroundColor:
+              backgroundProps?.getBackgroundColor ?? textLabel[i].backgroundColor,
             fontSettings: {
               sdf: textLabel[i].outlineWidth > 0
             },
             parameters: {
               // text will always show on top of all layers
-              depthTest: false
+              depthTest: false,
+              ...(mapState?.layerParameters ?? {})
             },
 
             getFilterValue: data.getFilterValue,
             updateTriggers: {
               ...updateTriggers,
-              getText: textLabel[i].field?.name,
+              getText: {
+                field: textLabel[i].field?.name,
+                ...(updateTriggers.getText || {})
+              },
               getPixelOffset: {
                 ...updateTriggers.getRadius,
                 mapState,
@@ -1639,7 +1656,8 @@ class Layer implements KeplerLayer {
                 ? {
                     background: {
                       parameters: {
-                        cull: false
+                        cull: false,
+                        ...(mapState?.layerParameters ?? {})
                       }
                     }
                   }

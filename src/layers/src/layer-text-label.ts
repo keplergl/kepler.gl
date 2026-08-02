@@ -3,9 +3,15 @@
 
 import * as arrow from 'apache-arrow';
 import {getDistanceScales} from 'viewport-mercator-project';
-import {DataContainerInterface, ArrowDataContainer, isArrowTable} from '@kepler.gl/utils';
-import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {
+  DataContainerInterface,
+  ArrowDataContainer,
+  isArrowTable,
+  getFormatter
+} from '@kepler.gl/utils';
+import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
 import uniq from 'lodash/uniq';
+import {max} from 'd3-array';
 
 export const defaultPadding = 20;
 
@@ -43,13 +49,39 @@ export const textLabelAccessor = textLabel => dc => d => {
   return notNullorUndefined(val) ? String(val) : '';
 };
 
+export const getSingleTextLabelValue = (
+  {field, format}: {field: any; format?: string},
+  datum: {index: number} | any[] | null
+): string => {
+  const fmt = getFormatter(field.displayFormat ?? format, field);
+  const val = datum ? field.valueAccessor(datum, true) : null;
+  return (notNullorUndefined(val) ? fmt(val) : null) ?? '';
+};
+
+export const getMultiTextLabelValue = (
+  textLabelField: {field: any; format?: string}[],
+  datum: {index: number} | any[] | null
+): string => {
+  const labelValuePairs = toArray(textLabelField).map(fieldNFormat => {
+    const fnf = Array.isArray(fieldNFormat.field) ? fieldNFormat.field[0] : fieldNFormat;
+    const strVal = getSingleTextLabelValue(fnf, datum);
+    return [fnf?.field.displayName, strVal] as [string, string];
+  });
+  const maxLabelLen = max(labelValuePairs, ([v]) => v.length) ?? 0;
+  const maxValLen = max(labelValuePairs, ([, v]) => v.length) ?? 0;
+  return labelValuePairs
+    .map(([label, val]) => `${label.padEnd(maxLabelLen)} ${val.padStart(maxValLen)}`)
+    .join('\n');
+};
+
 export const formatTextLabelData = ({
   textLabel,
   triggerChanged,
   oldLayerData,
   data,
   dataContainer,
-  filteredIndex
+  filteredIndex,
+  textLabelAccessor: customTextLabelAccessor
 }: {
   textLabel: any;
   triggerChanged?: boolean | {[key: string]: boolean};
@@ -57,6 +89,7 @@ export const formatTextLabelData = ({
   data: any;
   dataContainer: DataContainerInterface;
   filteredIndex?: Uint8ClampedArray | null;
+  textLabelAccessor?: (tl: any) => (dc: DataContainerInterface) => (d: any) => string;
 }) => {
   return textLabel.map((tl, i) => {
     if (!tl.field) {
@@ -67,7 +100,8 @@ export const formatTextLabelData = ({
       };
     }
 
-    const getTextAccessor: (d: {index: number}) => string = textLabelAccessor(tl)(dataContainer);
+    const accessor = customTextLabelAccessor || textLabelAccessor;
+    const getTextAccessor: (d: {index: number}) => string = accessor(tl)(dataContainer);
     let characterSet;
     let getText: typeof getTextAccessor | arrow.Vector = getTextAccessor;
 

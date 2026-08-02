@@ -30,8 +30,13 @@ function getOptions(opt) {
 
   const options = {
     server: {
-      command: 'webpack-dev-server',
-      arguments: ['--entry', entryPath, '--config', configPath, '--env.mode=test']
+      // webpack-cli 5 moved the dev server behind the `webpack serve` command
+      command: 'webpack',
+      arguments: ['serve', '--entry', entryPath, '--config', configPath, '--env', 'mode=test'],
+      // fixed port so BrowserTestDriver builds a matching http://localhost:<port> url
+      port: 9018,
+      // give webpack-dev-server time to bind the port before the browser navigates
+      wait: 8000
     },
     browser: {
       defaultViewport: {width: 1200, height: 800}

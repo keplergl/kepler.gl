@@ -403,7 +403,7 @@ export default function AnnotationManagerFactory(): React.FC<any> {
               return (
                 <StyledAnnotationItemWrapper key={annotation.id}>
                   <StyledAnnotationItemHeader
-                    active={isSelected}
+                    $active={isSelected}
                     onClick={() => handleSelectAnnotation(annotation.id)}
                   >
                     <HeaderLabelSection>

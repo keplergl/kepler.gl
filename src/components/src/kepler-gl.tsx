@@ -213,6 +213,7 @@ export const sidePanelSelector = createSelector(
     (props: KeplerGLProps) => props.version,
     (props: KeplerGLProps) => props.appWebsite,
     (props: KeplerGLProps) => props.mapStyle,
+    (props: KeplerGLProps) => props.mapState,
     (props: KeplerGLProps) => props.onSaveMap,
     (props: KeplerGLProps) => props.uiState,
     (props: KeplerGLProps) => props.mapStyleActions,
@@ -237,6 +238,7 @@ export const sidePanelSelector = createSelector(
     version,
     appWebsite,
     mapStyle,
+    mapState,
     onSaveMap,
     uiState,
     mapStyleActions,
@@ -260,6 +262,7 @@ export const sidePanelSelector = createSelector(
     version: version ? version : DEFAULT_KEPLER_GL_PROPS.version,
     appWebsite,
     mapStyle,
+    mapState,
     onSaveMap,
     uiState,
     mapStyleActions,
@@ -618,7 +621,7 @@ function KeplerGlFactory(
 
     static contextType = RootContext;
 
-    root = createRef<HTMLDivElement>();
+    root = createRef<HTMLDivElement | null>();
     bottomWidgetRef = createRef<HTMLDivElement>();
 
     /* selectors */
@@ -765,7 +768,11 @@ function KeplerGlFactory(
                       <NotificationPanel {...notificationPanelFields} />
                       <DndContext visState={visState}>
                         {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                        <MapsLayout className="maps" mapState={this.props.mapState}>
+                        <MapsLayout
+                          className="maps"
+                          mapState={this.props.mapState}
+                          onSetSwipeComparePercentage={this.props.mapStateActions.setSwipeComparePercentage}
+                        >
                           {mapContainers}
                         </MapsLayout>
                       </DndContext>

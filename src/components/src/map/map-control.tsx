@@ -8,14 +8,16 @@ import KeplerGlLogo from '../common/logo';
 // factories
 import SplitMapButtonFactory from './split-map-button';
 import Toggle3dButtonFactory from './toggle-3d-button';
-import LayerSelectorPanelFactory from './layer-selector-panel';
 import MapLegendPanelFactory from './map-legend-panel';
 import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
+import MapNavigationControlFactory from './map-navigation-control';
 import {Layer} from '@kepler.gl/layers';
-import {Editor, LayerVisConfig, MapControls, MapState} from '@kepler.gl/types';
+import {Editor, LayerVisConfig, LayerOrder, MapControls, MapState} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
+import {getApplicationConfig} from '@kepler.gl/utils';
+import {MapViewMode} from '@kepler.gl/constants';
 
 import AnnotationControlFactory from './annotations/annotation-control';
 
@@ -47,11 +49,15 @@ export type MapControlProps = {
   isSplit: boolean;
   primary: boolean;
   layers: Layer[];
+  layerOrder?: LayerOrder;
   layersToRender: {[key: string]: boolean};
   mapIndex: number;
   mapControls: MapControls;
   onTogglePerspective: () => void;
+  onSetMapViewMode?: (mode: MapViewMode) => void;
+  mapViewMode?: MapViewMode;
   onToggleSplitMap: typeof MapStateActions.toggleSplitMap;
+  onSetMapSplitMode?: typeof MapStateActions.setMapSplitMode;
   onToggleSplitMapViewport: ({
     isViewportSynced,
     isZoomLocked
@@ -77,36 +83,38 @@ export type MapControlProps = {
 
   // optional
   mapState?: MapState;
+  mapStateActions?: typeof MapStateActions;
   readOnly?: boolean;
   scale?: number;
   mapLayers?: {[key: string]: boolean};
   editor: Editor;
   actionComponents?: React.ComponentType<any>[];
   mapHeight?: number;
+  splitMaps?: {layers: {[key: string]: boolean}}[];
+  onToggleLayerForMap?: (mapIndex: number, layerId: string) => void;
 };
 
 MapControlFactory.deps = [
   SplitMapButtonFactory,
   Toggle3dButtonFactory,
-  LayerSelectorPanelFactory,
   MapLegendPanelFactory,
   MapDrawPanelFactory,
   LocalePanelFactory,
-  AnnotationControlFactory
+  AnnotationControlFactory,
+  MapNavigationControlFactory
 ];
 
 function MapControlFactory(
   SplitMapButton: ReturnType<typeof SplitMapButtonFactory>,
   Toggle3dButton: ReturnType<typeof Toggle3dButtonFactory>,
-  LayerSelectorPanel: ReturnType<typeof LayerSelectorPanelFactory>,
   MapLegendPanel: ReturnType<typeof MapLegendPanelFactory>,
   MapDrawPanel: ReturnType<typeof MapDrawPanelFactory>,
   LocalePanel: ReturnType<typeof LocalePanelFactory>,
-  AnnotationControl: ReturnType<typeof AnnotationControlFactory>
+  AnnotationControl: ReturnType<typeof AnnotationControlFactory>,
+  MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>
 ) {
   const DEFAULT_ACTIONS = [
     SplitMapButton,
-    LayerSelectorPanel,
     Toggle3dButton,
     MapDrawPanel,
     AnnotationControl,
@@ -122,12 +130,18 @@ function MapControlFactory(
     top = 0,
     mapIndex = 0,
     logoComponent = LegendLogo,
+    mapState,
+    mapStateActions,
     ...restProps
   }) => {
     const actionComponentProps = {
       isSplit,
       mapIndex,
       logoComponent,
+      mapState,
+      onSetMapSplitMode: getApplicationConfig().enableSwipeMode
+        ? mapStateActions?.setMapSplitMode
+        : undefined,
       ...restProps
     };
     return (
@@ -135,6 +149,13 @@ function MapControlFactory(
         {actionComponents.map((ActionComponent, index) => (
           <ActionComponent key={index} className="map-control-action" {...actionComponentProps} />
         ))}
+        {mapState && mapStateActions ? (
+          <MapNavigationControl
+            mapState={mapState}
+            mapIndex={mapIndex}
+            mapStateActions={mapStateActions}
+          />
+        ) : null}
       </StyledMapControl>
     );
   };
