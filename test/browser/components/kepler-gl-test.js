@@ -15,6 +15,7 @@ import {
   appInjector,
   KeplerGlFactory,
   SidePanelFactory,
+  PanelHeaderFactory,
   MapContainerFactory,
   BottomWidgetFactory,
   ModalContainerFactory,
@@ -33,6 +34,7 @@ import {StateWithGeocoderDataset} from 'test/helpers/mock-state';
 
 const KeplerGl = appInjector.get(KeplerGlFactory);
 const SidePanel = appInjector.get(SidePanelFactory);
+const PanelHeader = appInjector.get(PanelHeaderFactory);
 const MapContainer = appInjector.get(MapContainerFactory);
 const BottomWidget = appInjector.get(BottomWidgetFactory);
 const ModalContainer = appInjector.get(ModalContainerFactory);
@@ -73,7 +75,7 @@ test('Components -> KeplerGl -> Mount', t => {
   }, 'Should not throw error when mount KeplerGl');
 
   t.equal(wrapper.find(KeplerGl).length, 1, 'should render KeplerGl');
-  t.equal(wrapper.find('.side-panel__content').length, 1, 'should render SidePanel');
+  t.equal(wrapper.find(PanelHeader).length, 1, 'should render SidePanel');
   t.equal(wrapper.find(MapContainer).length, 1, 'should render MapContainer');
   t.equal(wrapper.find(BottomWidget).length, 1, 'should render BottomWidget');
   t.equal(wrapper.find(ModalContainer).length, 1, 'should render ModalContainer');
@@ -116,7 +118,7 @@ test('Components -> KeplerGl -> Mount -> readOnly', t => {
   }, 'Should not throw error when mount KeplerGl');
 
   t.equal(wrapper.find(KeplerGl).length, 1, 'should render KeplerGl');
-  t.equal(wrapper.find('.side-panel__content').length, 0, 'should not render SidePanel');
+  t.equal(wrapper.find(PanelHeader).length, 0, 'should not render SidePanel');
   t.equal(wrapper.find(MapContainer).length, 1, 'should render MapContainer');
   t.equal(wrapper.find(BottomWidget).length, 1, 'should render BottomWidget');
   t.equal(wrapper.find(ModalContainer).length, 1, 'should render ModalContainer');
@@ -162,7 +164,7 @@ test('Components -> KeplerGl -> Mount -> Plot', t => {
   }, 'Should not throw error when mount KeplerGl');
 
   t.equal(wrapper.find(KeplerGl).length, 1, 'should render KeplerGl');
-  t.equal(wrapper.find('.side-panel__content').length, 1, 'should render SidePanel');
+  t.equal(wrapper.find(PanelHeader).length, 1, 'should render SidePanel');
   t.equal(wrapper.find(MapContainer).length, 2, 'should render 2 MapContainer');
   t.equal(wrapper.find(BottomWidget).length, 1, 'should render BottomWidget');
   t.equal(wrapper.find(ModalContainer).length, 1, 'should render ModalContainer');
@@ -205,7 +207,7 @@ test('Components -> KeplerGl -> Mount -> Split Maps', t => {
   }, 'Should not throw error when mount KeplerGl');
 
   t.equal(wrapper.find(KeplerGl).length, 1, 'should render KeplerGl');
-  t.equal(wrapper.find('.side-panel__content').length, 1, 'should render SidePanel');
+  t.equal(wrapper.find(PanelHeader).length, 1, 'should render SidePanel');
   t.equal(wrapper.find(MapContainer).length, 2, 'should render 2 MapContainer');
   t.equal(wrapper.find(BottomWidget).length, 1, 'should render BottomWidget');
   t.equal(wrapper.find(ModalContainer).length, 1, 'should render ModalContainer');
