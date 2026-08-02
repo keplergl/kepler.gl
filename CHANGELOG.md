@@ -15,6 +15,26 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.5] - Aug 2 2026
+
+43c034ad chore(deps): bump d3-color from 2.0.0 to 3.1.0 (#3599)
+ab0780a0 fix: custom basemap attribution and style dropdown thumbnail (#3600)
+288c782b fix(raster-tile): fix stuck black tiles for raster tile layer (#3598)
+28f4596b chore: add reduxLogLevel config to suppress noisy Redux actions in dev console (#3597)
+ee9aa885 feat: add map scale bar (#3596)
+314fe449 fix(globe): fade atmosphere halo & day/night effect on zoom in (#3595)
+bdc6bd39 fix(globe): layer blending and overlay blending in Globe mode (#3594)
+3e4f57ba fix(globe): prevent globe rotation when drag starts or moves outside the globe silhouette (#3593)
+e3a44596 chore(deps): bump brace-expansion in /examples/demo-app (#3602)
+adf932ca chore(deps): bump brace-expansion from 1.1.16 to 1.1.18 in /website (#3601)
+28e8e3f5 chore: upgrade Python bindings to kepler.gl 3.3.0-alpha.4 (React 19) (#3591)
+58f2d6ab fix: python binding adaptation of 2283 (#3590)
+854f6a55 feat: Add SKILL.md for keplergl python package (#3429)
+f00fd208 docs: update keplergl-jupyter docs for v0.4.0 (#3431)
+e4a29070 chore: remove deprecated umd logic (#3589)
+b6d10804 chore: remove deprecated `bindings/kepler.gl-jupyter` in favor of `bindings/python (#3430)
+0e093722 chore(deps): bump pygments from 2.19.2 to 2.20.0 in /bindings/python (#3568)
+
 ## [3.3.0-alpha.4] - July 28 2026
 
 - ea966330 chore: upgrade to webpack 5 (#3587)
