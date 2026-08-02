@@ -53,22 +53,26 @@ type LoadingIndicatorProps = {
   activeSidePanel?: boolean;
   sidePanelWidth?: number;
   hasAttributionLogos?: boolean;
+  hasMapScale?: boolean;
 };
 
 /** Extra adjustment for the loading indicator when side panel is visible */
 const LEFT_POSITION_ADJUSTMENT = 3;
+/** Height of the map scale bar, used to stack the loading indicator above it */
+const MAP_SCALE_HEIGHT = 24;
 
 const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
   isVisible,
   activeSidePanel,
   sidePanelWidth,
   hasAttributionLogos,
+  hasMapScale,
   theme
 }) => {
   const left =
     (activeSidePanel ? (sidePanelWidth || 0) + LEFT_POSITION_ADJUSTMENT : 0) +
     theme.sidePanel.margin.left;
-  const bottomOffset = hasAttributionLogos ? 24 : 0;
+  const bottomOffset = (hasAttributionLogos ? 24 : 0) + (hasMapScale ? MAP_SCALE_HEIGHT : 0);
 
   // Helper message to track number of tiles that are being loaded
   const numRasterTilesInProgress = getNumRasterTilesBeingLoaded();
