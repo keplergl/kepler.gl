@@ -355,7 +355,7 @@ export const Attribution: React.FC<AttributionProps> = ({
         <StyledAttribution
           mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
           mapLibAttributionCssClass={baseMapLibraryConfig.mapLibAttributionCssClass}
-          showLogo={false}
+          showLogo={globeAttributions.length > 0}
         >
           <EndHorizontalFlexbox>
             <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
