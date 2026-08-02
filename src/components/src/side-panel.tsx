@@ -273,7 +273,9 @@ export default function SidePanelFactory(
           if ((pf[i] as any).animationWindow !== (nf[i] as any).animationWindow) return false;
           if (pf[i].speed !== nf[i].speed) return false;
           if (pf[i].gpu !== nf[i].gpu) return false;
-          if (isFilterPanelOpen && nf[i].view !== 'enlarged') {
+          // Always check value when the filter panel is open so the panel stays up-to-date.
+          // Outside the panel, suppress value changes to avoid re-renders during animation.
+          if (isFilterPanelOpen) {
             if (pf[i].value !== nf[i].value) return false;
           }
         }
@@ -299,18 +301,41 @@ export default function SidePanelFactory(
       }
 
       if (key === 'layers') {
-        const isLayerPanelOpen = (next as any).uiState?.activeSidePanel === 'layer';
-        if (isLayerPanelOpen) {
-          const filtersAlsoChanged = prev.filters !== next.filters;
-          if (!filtersAlsoChanged) return false;
-        }
         const pl = prev.layers;
         const nl = next.layers;
         if (pl?.length !== nl?.length) return false;
+        const isLayerPanelOpen = (next as any).uiState?.activeSidePanel === 'layer';
         for (let i = 0; i < nl.length; i++) {
+          if (pl[i] === nl[i]) continue;
           if (pl[i].id !== nl[i].id) return false;
           if (pl[i].type !== nl[i].type) return false;
+          if (pl[i].config.isVisible !== nl[i].config.isVisible) return false;
+          if (pl[i].config.label !== nl[i].config.label) return false;
+          // When the layer panel is open, also check config fields visible in the panel UI
+          if (isLayerPanelOpen) {
+            if (pl[i].config.isConfigActive !== nl[i].config.isConfigActive) return false;
+            if (pl[i].config.color !== nl[i].config.color) return false;
+            if (pl[i].config.highlightColor !== nl[i].config.highlightColor) return false;
+            if (pl[i].config.visConfig !== nl[i].config.visConfig) return false;
+            if (pl[i].config.dataId !== nl[i].config.dataId) return false;
+            if (pl[i].config.columns !== nl[i].config.columns) return false;
+          }
         }
+        continue;
+      }
+
+      if (key === 'layerOrder') {
+        // layerOrder changes during drag-and-drop reordering — always re-render
+        return false;
+      }
+
+      if (key === 'mapState') {
+        // mapState changes on every pan/zoom frame (latitude, longitude, zoom, bearing, pitch).
+        // SidePanel only cares about globe.enabled (used in MapManager to conditionally
+        // show the globe settings panel). Suppress all other mapState changes.
+        const pm = prev.mapState;
+        const nm = next.mapState;
+        if (pm?.globe?.enabled !== nm?.globe?.enabled) return false;
         continue;
       }
 

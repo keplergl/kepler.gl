@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {PropsWithChildren, useRef, useEffect, memo} from 'react';
+import React, {PropsWithChildren, useRef, useEffect} from 'react';
 import styled, {withTheme, keyframes} from 'styled-components';
 
 import {getNumRasterTilesBeingLoaded, getNumVectorTilesBeingLoaded} from '@kepler.gl/layers';
@@ -113,6 +113,4 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
   );
 };
 
-const MemoizedLoadingIndicator = memo(LoadingIndicator);
-
-export default withTheme(MemoizedLoadingIndicator) as React.FC<PropsWithChildren<LoadingIndicatorProps>>;
+export default withTheme(LoadingIndicator) as React.FC<PropsWithChildren<LoadingIndicatorProps>>;

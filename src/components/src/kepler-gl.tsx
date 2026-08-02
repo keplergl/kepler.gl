@@ -207,82 +207,40 @@ export function getVisibleDatasets(datasets) {
   return filterObjectByPredicate(datasets, key => key !== GEOCODER_DATASET_NAME);
 }
 
-export const sidePanelSelector = createSelector(
-  [
-    (props: KeplerGLProps) => props.appName,
-    (props: KeplerGLProps) => props.version,
-    (props: KeplerGLProps) => props.appWebsite,
-    (props: KeplerGLProps) => props.mapStyle,
-    (props: KeplerGLProps) => props.mapState,
-    (props: KeplerGLProps) => props.onSaveMap,
-    (props: KeplerGLProps) => props.uiState,
-    (props: KeplerGLProps) => props.mapStyleActions,
-    (props: KeplerGLProps) => props.visStateActions,
-    (props: KeplerGLProps) => props.uiStateActions,
-    (props: KeplerGLProps) => props.mapStateActions,
-    (props: KeplerGLProps) => props.visState.filters,
-    (props: KeplerGLProps) => props.visState.layers,
-    (props: KeplerGLProps) => props.visState.layerOrder,
-    (props: KeplerGLProps) => props.visState.layerClasses,
-    (props: KeplerGLProps) => props.visState.interactionConfig,
-    (props: KeplerGLProps) => props.visState.mapInfo,
-    (props: KeplerGLProps) => props.visState.layerBlending,
-    (props: KeplerGLProps) => props.visState.overlayBlending,
-    (props: KeplerGLProps) => props.sidePanelWidth,
-    (props: KeplerGLProps) => props.providerState.mapSaved,
-    (_props: KeplerGLProps, availableProviders) => availableProviders,
-    (_props: KeplerGLProps, _availableProviders, filteredDatasets) => filteredDatasets
-  ],
-  (
-    appName,
-    version,
-    appWebsite,
-    mapStyle,
-    mapState,
-    onSaveMap,
-    uiState,
-    mapStyleActions,
-    visStateActions,
-    uiStateActions,
-    mapStateActions,
-    filters,
-    layers,
-    layerOrder,
-    layerClasses,
-    interactionConfig,
-    mapInfo,
-    layerBlending,
-    overlayBlending,
-    sidePanelWidth,
-    mapSaved,
-    availableProviders,
-    filteredDatasets
-  ) => ({
-    appName: appName ? appName : DEFAULT_KEPLER_GL_PROPS.appName,
-    version: version ? version : DEFAULT_KEPLER_GL_PROPS.version,
-    appWebsite,
-    mapStyle,
-    mapState,
-    onSaveMap,
-    uiState,
-    mapStyleActions,
-    visStateActions,
-    uiStateActions,
-    mapStateActions,
-    datasets: filteredDatasets,
-    filters,
-    layers,
-    layerOrder,
-    layerClasses,
-    interactionConfig,
-    mapInfo,
-    layerBlending,
-    overlayBlending,
-    width: sidePanelWidth ? sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
-    availableProviders,
-    mapSaved
-  })
-);
+// sidePanelSelector is a plain function (not memoized at this level) because:
+// 1. It receives `availableProviders` and `filteredDatasets` as extra args, which are
+//    already individually memoized at the instance level in KeplerGL.
+// 2. A module-level createSelector with extra positional args only caches one result,
+//    so it would thrash on every render with multiple instances or changing extras.
+export const sidePanelSelector = (
+  props: KeplerGLProps,
+  availableProviders,
+  filteredDatasets
+) => ({
+  appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
+  version: props.version ? props.version : DEFAULT_KEPLER_GL_PROPS.version,
+  appWebsite: props.appWebsite,
+  mapStyle: props.mapStyle,
+  mapState: props.mapState,
+  onSaveMap: props.onSaveMap,
+  uiState: props.uiState,
+  mapStyleActions: props.mapStyleActions,
+  visStateActions: props.visStateActions,
+  uiStateActions: props.uiStateActions,
+  mapStateActions: props.mapStateActions,
+  datasets: filteredDatasets,
+  filters: props.visState.filters,
+  layers: props.visState.layers,
+  layerOrder: props.visState.layerOrder,
+  layerClasses: props.visState.layerClasses,
+  interactionConfig: props.visState.interactionConfig,
+  mapInfo: props.visState.mapInfo,
+  layerBlending: props.visState.layerBlending,
+  overlayBlending: props.visState.overlayBlending,
+  width: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
+  availableProviders,
+  mapSaved: props.providerState.mapSaved
+});
 
 export const plotContainerSelector = (props: KeplerGLProps) => ({
   width: props.width,

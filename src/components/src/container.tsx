@@ -22,11 +22,16 @@ export const ERROR_MSG = {
 const mapStateToProps = (state: any, props: ContainerProps) => ({state, ...props});
 const dispatchToProps = (dispatch: Dispatch<any>) => ({dispatch});
 const connector = connect(mapStateToProps, dispatchToProps, null, {
+  // Skip re-render when this kepler.gl instance slice is unchanged.
+  // The outer Container only uses `state` for the existence check (line below).
+  // All actual data subscriptions are handled by the inner KeplerGL via
+  // keplerGlConnect, which has its own independent Redux subscription.
   areStatesEqual: (next: any, prev: any, nextOwnProps: ContainerProps) => {
     const getState = nextOwnProps.getState || ((s: any) => s.keplerGl);
     const id = nextOwnProps.id || 'map';
     const nextInstance = getState(next)?.[id];
     const prevInstance = getState(prev)?.[id];
+    // If neither instance exists yet, fall back to full equality check
     if (!prevInstance && !nextInstance) {
       return next === prev;
     }

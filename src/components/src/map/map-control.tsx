@@ -176,9 +176,13 @@ function MapControlFactory(
         for (let i = 0; i < nl.length; i++) {
           if (pl[i] === nl[i]) continue;
           if (pl[i].id !== nl[i].id) return false;
+          if (pl[i].type !== nl[i].type) return false;
           if (pl[i].config.isVisible !== nl[i].config.isVisible) return false;
           if (pl[i].config.label !== nl[i].config.label) return false;
           if (pl[i].config.isConfigActive !== nl[i].config.isConfigActive) return false;
+          // color is shown in the legend panel
+          if (pl[i].config.color !== nl[i].config.color) return false;
+          if (pl[i].config.highlightColor !== nl[i].config.highlightColor) return false;
         }
         continue;
       }
