@@ -2369,9 +2369,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@deck.gl-community/editable-layers@npm:9.3.7":
-  version: 9.3.7
-  resolution: "@deck.gl-community/editable-layers@npm:9.3.7"
+"@deck.gl-community/editable-layers@npm:9.3.8":
+  version: 9.3.8
+  resolution: "@deck.gl-community/editable-layers@npm:9.3.8"
   dependencies:
     "@math.gl/core": "npm:^4.0.0"
     "@math.gl/web-mercator": "npm:>=4.0.1"
@@ -2423,7 +2423,7 @@ __metadata:
     "@luma.gl/core": ~9.3.2
     "@luma.gl/engine": ~9.3.2
     h3-js: ^4.2.1
-  checksum: 10c0/2e4c1a758fbbcb5751609be367e68672e756c8b81d6b3d6e40129f2b876bf6ad17a4b45fe0694cd2fac1bc7a9c5fd008b8d6b58ac593a2ec8dde830a3981f961
+  checksum: 10c0/6fbcfabcfe1727cd142ec97c2f259738dcebe4ef14c57aec2fc42fe50cd98e533d2a31592b3f667171553cabae288f064234f205e48dff391dbfa24a9347b413
   languageName: node
   linkType: hard
 
@@ -5729,7 +5729,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/components@workspace:src/components"
   dependencies:
-    "@deck.gl-community/editable-layers": "npm:9.3.7"
+    "@deck.gl-community/editable-layers": "npm:9.3.8"
     "@deck.gl/core": "npm:^9.3.1"
     "@deck.gl/react": "npm:^9.3.1"
     "@deck.gl/widgets": "npm:^9.3.1"
@@ -5965,7 +5965,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/layers@workspace:src/layers"
   dependencies:
-    "@deck.gl-community/editable-layers": "npm:9.3.7"
+    "@deck.gl-community/editable-layers": "npm:9.3.8"
     "@deck.gl/aggregation-layers": "npm:^9.3.1"
     "@deck.gl/core": "npm:^9.3.1"
     "@deck.gl/extensions": "npm:^9.3.1"
@@ -6043,7 +6043,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/processors@workspace:src/processors"
   dependencies:
-    "@deck.gl-community/editable-layers": "npm:9.3.7"
+    "@deck.gl-community/editable-layers": "npm:9.3.8"
     "@kepler.gl/common-utils": "npm:3.3.0-alpha.5"
     "@kepler.gl/constants": "npm:3.3.0-alpha.5"
     "@kepler.gl/schemas": "npm:3.3.0-alpha.5"
@@ -23891,7 +23891,7 @@ __metadata:
     "@babel/register": "npm:^7.12.1"
     "@babel/runtime": "npm:^7.26.10"
     "@babel/traverse": "npm:^7.12.1"
-    "@deck.gl-community/editable-layers": "npm:9.3.7"
+    "@deck.gl-community/editable-layers": "npm:9.3.8"
     "@deck.gl-community/layers": "npm:9.2.8"
     "@deck.gl/mapbox": "npm:^9.3.1"
     "@deck.gl/test-utils": "npm:^9.3.1"

@@ -28,7 +28,7 @@
     "dist"
   ],
   "dependencies": {
-    "@deck.gl-community/editable-layers": "9.3.7",
+    "@deck.gl-community/editable-layers": "9.3.8",
     "@kepler.gl/common-utils": "3.3.0-alpha.5",
     "@kepler.gl/constants": "3.3.0-alpha.5",
     "@kepler.gl/schemas": "3.3.0-alpha.5",
