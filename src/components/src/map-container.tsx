@@ -298,8 +298,14 @@ export default function MapContainerFactory(
     }
 
     state = {
-      showBaseMapAttribution: true,
-      // attribution strings declared by custom basemap styles (e.g. OpenFreeMap)
+      // true for built-in kepler.gl styles (dark-matter, positron, …) and when the
+      // basemap uses Mapbox-hosted tiles (mapbox:// sources).
+      // For user-added custom styles (OpenFreeMap, CARTO self-hosted, …) MapLibre is
+      // merely the rendering engine, not the tile provider, so the logo is hidden and
+      // the basemap's own TileJSON attribution is shown instead.
+      showBaseMapLibLogo: false,
+      // attribution strings collected from the resolved map sources (e.g. CARTO,
+      // OpenFreeMap).  Populated after TileJSON resolves.
       basemapAttributions: [] as string[]
     };
 
@@ -314,7 +320,7 @@ export default function MapContainerFactory(
       if (this._map) {
         this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
         this._map.off(MAPBOXGL_RENDER, this._onMapRender);
-        this._removeOsmSourceDataListener();
+        this._removeBasemapAttributionListeners();
       }
       if (!this._ref.current) {
         return;
@@ -324,10 +330,10 @@ export default function MapContainerFactory(
 
     componentDidUpdate(prevProps) {
       if (prevProps.mapStyle.styleType !== this.props.mapStyle.styleType) {
-        this._removeOsmSourceDataListener();
+        this._removeBasemapAttributionListeners();
         if (this.props.mapStyle.styleType === NO_MAP_ID) {
           this.setState({
-            showBaseMapAttribution: false,
+            showBaseMapLibLogo: false,
             basemapAttributions: []
           });
         } else {
@@ -340,7 +346,8 @@ export default function MapContainerFactory(
     _map: GetMapRef | null = null;
     _ref = createRef<HTMLDivElement>();
     _deckGLErrorsElapsed: {[id: string]: number} = {};
-    _osmSourceDataListener: ((e: any) => void) | null = null;
+    _basemapSourceDataListener: ((e: any) => void) | null = null;
+    _basemapIdleListener: (() => void) | null = null;
 
     _onMapRender = () => {
       if (typeof this.props.onMapRender === 'function') {
@@ -534,7 +541,7 @@ export default function MapContainerFactory(
     };
 
     _updateAttribution = (update?: any) => {
-      this._removeOsmSourceDataListener();
+      this._removeBasemapAttributionListeners();
 
       let styleObj = update?.style || null;
       if (!styleObj && this._map) {
@@ -550,62 +557,107 @@ export default function MapContainerFactory(
       const usesMapbox = styleObj ? isStyleUsingMapboxTiles(styleObj) : false;
       const usesOsm = styleObj ? isStyleUsingOpenStreetMapTiles(styleObj) : false;
       const basemapAttributions = getBaseMapAttributions(this._map);
-      // if OSM tiles are detected but no source-level attribution string was
-      // collected, fold in the canonical OSM attribution so the render path
-      // stays uniform (no separate hardcoded fallback link)
+
+      // if OSM tiles are detected in the raw style but no source-level attribution
+      // string was collected yet, fold in the canonical OSM attribution so the
+      // render path stays uniform (no separate hardcoded fallback link)
       if (usesOsm && !basemapAttributions.length) {
         basemapAttributions.push(OSM_ATTRIBUTION_HTML);
       }
 
-      if (usesMapbox || usesOsm || basemapAttributions.length) {
-        this.setState({
-          showBaseMapAttribution: true,
-          basemapAttributions
-        });
-      } else {
-        this.setState({
-          showBaseMapAttribution: false,
-          basemapAttributions
-        });
-        this._checkOsmAttributionOnSourceLoad();
+      // Determine whether to show the "Basemap by: MapLibre/Mapbox" logo:
+      //  - Always show for built-in kepler.gl styles (dark-matter, positron, …):
+      //    they don't carry their own "provider" branding so the rendering-engine
+      //    logo acts as the basemap credit.
+      //  - Always show when Mapbox tiles are in use (mapbox:// sources): Mapbox
+      //    attribution is required.
+      //  - Hide for custom user-added styles (custom === 'LOCAL' | 'MANAGED'):
+      //    those styles supply their own TileJSON attribution (e.g. OpenFreeMap),
+      //    so showing "Basemap by: MapLibre" would be misleading.
+      const styleType = this.props.mapStyle?.styleType;
+      const currentStyle = this.props.mapStyle?.mapStyles?.[styleType];
+      const isUserCustomStyle = Boolean(currentStyle?.custom);
+      const showBaseMapLibLogo = usesMapbox || !isUserCustomStyle;
+
+      this.setState({
+        showBaseMapLibLogo,
+        basemapAttributions
+      });
+
+      // For non-Mapbox styles, TileJSON attribution resolves asynchronously
+      // after style.load.  Start a listener so we can update basemapAttributions
+      // as soon as the sources resolve their TileJSON.
+      if (!usesMapbox) {
+        this._collectBasemapAttributions();
       }
     };
 
-    _removeOsmSourceDataListener = () => {
-      if (this._osmSourceDataListener && this._map) {
-        this._map.off('sourcedata', this._osmSourceDataListener);
-        this._osmSourceDataListener = null;
+    _removeBasemapAttributionListeners = () => {
+      if (this._basemapSourceDataListener && this._map) {
+        this._map.off('sourcedata', this._basemapSourceDataListener);
+        this._basemapSourceDataListener = null;
+      }
+      if (this._basemapIdleListener && this._map) {
+        this._map.off('idle', this._basemapIdleListener);
+        this._basemapIdleListener = null;
       }
     };
 
-    _checkOsmAttributionOnSourceLoad = () => {
+    _collectBasemapAttributions = () => {
       if (!this._map) return;
-      this._removeOsmSourceDataListener();
+      this._removeBasemapAttributionListeners();
       let attempts = 0;
       // Cap retries so a style that never yields attributions doesn't leave a
       // permanent sourcedata listener attached.
       const MAX_ATTEMPTS = 50;
-      const onSourceData = (e: any) => {
-        if (!e?.isSourceLoaded) return;
-        attempts++;
+
+      const tryCollect = () => {
         // TileJSON resolves asynchronously; re-collect attributions once a
-        // source is loaded so custom basemap attributions are not lost.
-        // (Unlike the sync path, OSM detection here reads the same resolved
-        // sources as getBaseMapAttributions, so a separate OSM fold-in is
-        // unreachable — any OSM string would already be in the collected list.)
+        // source's metadata is available so custom basemap attributions are not lost.
         const basemapAttributions = getBaseMapAttributions(this._map);
         if (basemapAttributions.length) {
-          this._removeOsmSourceDataListener();
-          this.setState({
-            showBaseMapAttribution: true,
-            basemapAttributions
-          });
-        } else if (attempts >= MAX_ATTEMPTS) {
-          this._removeOsmSourceDataListener();
+          this._removeBasemapAttributionListeners();
+          // Don't change showBaseMapLibLogo here — it is fixed at style.load time
+          // based on whether the style uses Mapbox tiles.  We only update the
+          // provider attributions collected from the resolved TileJSON.
+          this.setState({basemapAttributions});
+          return true;
+        }
+        return false;
+      };
+
+      const onSourceData = (e: any) => {
+        // Collect attributions when:
+        //   (a) a source's TileJSON has just been fetched (sourceDataType === 'metadata') —
+        //       this is the earliest moment the `attribution` property is available on the
+        //       resolved source object, or
+        //   (b) a source is fully loaded (isSourceLoaded === true) — fallback for raster
+        //       sources or styles that set attribution inline rather than via TileJSON.
+        if (!e?.isSourceLoaded && e?.sourceDataType !== 'metadata') return;
+        attempts++;
+        tryCollect();
+        if (attempts >= MAX_ATTEMPTS) {
+          this._removeBasemapAttributionListeners();
         }
       };
-      this._osmSourceDataListener = onSourceData;
+
+      // The `idle` event fires when the map has finished loading all pending
+      // resources (tiles, TileJSON, sprites). At that point attributions from
+      // all sources are guaranteed to be resolved, so this is a reliable
+      // one-shot fallback that catches cases where the sourcedata metadata
+      // events are missed or the source never reaches isSourceLoaded.
+      const onIdle = () => {
+        this._removeBasemapAttributionListeners();
+        const basemapAttributions = getBaseMapAttributions(this._map);
+        if (basemapAttributions.length) {
+          this.setState({basemapAttributions});
+        }
+      };
+
+      this._basemapSourceDataListener = onSourceData;
+      this._basemapIdleListener = onIdle;
       this._map.on('sourcedata', onSourceData);
+      this._map.on('idle', onIdle);
     };
 
     _setMapRef = mapRef => {
@@ -615,7 +667,7 @@ export default function MapContainerFactory(
         if (map && this._map !== map) {
           this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
           this._map.off(MAPBOXGL_RENDER, this._onMapRender);
-          this._removeOsmSourceDataListener();
+          this._removeBasemapAttributionListeners();
           this._map = null;
         }
       }
@@ -1479,7 +1531,7 @@ export default function MapContainerFactory(
           ) : null}
           {this.props.primary ? (
             <Attribution
-              showBaseMapLibLogo={this.state.showBaseMapAttribution}
+              showBaseMapLibLogo={this.state.showBaseMapLibLogo}
               basemapAttributions={this.state.basemapAttributions}
               datasetAttributions={datasetAttributions}
               baseMapLibraryConfig={baseMapLibraryConfig}

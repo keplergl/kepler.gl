@@ -557,11 +557,13 @@ export const StyledMapContainer = styled.div`
 export type StyledAttributionProps = {
   mapLibCssClass: string;
   mapLibAttributionCssClass: string;
+  showLogo?: boolean;
 };
 
 export const StyledAttribution = styled.div
   .withConfig({
-    shouldForwardProp: prop => !['mapLibCssClass', 'mapLibAttributionCssClass'].includes(prop)
+    shouldForwardProp: prop =>
+      !['mapLibCssClass', 'mapLibAttributionCssClass', 'showLogo'].includes(prop)
   })
   .attrs<StyledAttributionProps>(props => ({
     className: props.mapLibAttributionCssClass
@@ -585,7 +587,7 @@ export const StyledAttribution = styled.div
 
     .basemap-attribution {
       display: inline-block;
-      max-width: 220px;
+      max-width: ${props => (props.showLogo === false ? '320px' : '220px')};
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -639,7 +641,7 @@ export const StyledAttribution = styled.div
     }
 
     .basemap-attribution {
-      max-width: 140px;
+      max-width: ${(props: StyledAttributionProps) => (props.showLogo === false ? '220px' : '140px')};
     }
   `};
 `;
