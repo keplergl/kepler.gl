@@ -232,15 +232,22 @@ export default function BottomWidgetFactory(
     );
   };
 
-  const MemoizedBottomWidget = memo(BottomWidget);
+  // Wrap order matters for memo to be effective:
+  //   1. withTheme   — injects `theme` prop from styled-components context
+  //   2. forwardRef  — converts the React ref to the `rootRef` prop
+  //   3. memo        — outermost guard; sees stable props after theme injection
+  //
+  // If memo wrapped a component that still had withTheme outside it, withTheme
+  // would produce a new props object on every render and bust the memo cache.
+  const ThemedBottomWidget = withTheme(BottomWidget);
 
   const ForwardedBottomWidget = forwardRef(
-    (props: BottomWidgetThemedProps, ref: React.ForwardedRef<HTMLDivElement>) => (
-      <MemoizedBottomWidget {...props} rootRef={ref} />
+    (props: Omit<BottomWidgetThemedProps, 'rootRef' | 'theme'>, ref: React.ForwardedRef<HTMLDivElement>) => (
+      <ThemedBottomWidget {...(props as BottomWidgetThemedProps)} rootRef={ref} />
     )
   );
   ForwardedBottomWidget.displayName = 'BottomWidget';
 
-  return withTheme(ForwardedBottomWidget);
+  return memo(ForwardedBottomWidget) as unknown as React.FC<BottomWidgetThemedProps>;
 }
 /* eslint-enable complexity */
