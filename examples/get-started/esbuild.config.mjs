@@ -16,76 +16,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const port = 8080;
 
-// Normalize the ESM/CJS interop for every `@turf/*` module.
-//
-// @deck.gl-community/editable-layers@9.3.8 mixes default and named imports of
-// turf v7 modules (e.g. `import { rewind } from '@turf/rewind'` and
-// `import bboxPolygon from '@turf/bbox-polygon'`). The turf v7 CJS builds ship
-// as bare `module.exports = fn` (no named properties), so esbuild's ESM<->CJS
-// interop leaves named imports like `import_rewind.rewind` undefined. Callers
-// then get `(0, import_rewind.rewind)(...)` → TypeError: ... is not a function.
-//
-// This plugin intercepts every `@turf/*` specifier, requires turf's real CJS
-// build, and re-exports it so that:
-//   - Single-function modules: `module.exports = fn`, `fn.default = fn`, and
-//     `fn[moduleName] = fn` so both default and named imports resolve to fn.
-//   - Multi-export utilities (e.g. @turf/helpers): all named exports preserved
-//     and `.default` set to the module object.
+// @turf/rewind ships as `module.exports = fn` (no named export), but
+// @deck.gl-community/editable-layers uses `import { rewind } from '@turf/rewind'`.
+// This shim patches the single missing property so the named import resolves.
+// Remove once @turf/rewind adds a proper `exports` field.
 const require = createRequire(import.meta.url);
-const turfInteropNamespace = 'turf-interop-shim';
+const turfRewindPath = require.resolve('@turf/rewind').replace(/\\/g, '/');
 const turfInteropPlugin = {
-  name: 'turf-interop',
+  name: 'turf-rewind-interop',
   setup(build) {
-    build.onResolve({filter: /^@turf\//}, resolveArgs => {
-      // Don't re-process the require inside our own generated shim.
-      if (resolveArgs.namespace === turfInteropNamespace) return undefined;
-      return {path: resolveArgs.path, namespace: turfInteropNamespace};
-    });
-
-    build.onLoad({filter: /.*/, namespace: turfInteropNamespace}, loadArgs => {
-      // Resolve the package's real entry from the project (bypasses our resolver).
-      const realEntry = require.resolve(loadArgs.path).replace(/\\/g, '/');
-      // Derive the function name from the package path: '@turf/rewind' → 'rewind'
-      const moduleName = loadArgs.path.split('/').pop();
-      return {
-        contents: `
-          const mod = require(${JSON.stringify(realEntry)});
-          const def = typeof mod.default !== 'undefined'
-            ? mod.default
-            : (typeof mod === 'function' ? mod : undefined);
-
-          if (typeof def === 'function') {
-            // Single-function turf module. Make module.exports the function
-            // itself so a consumer's default import resolves to it directly
-            // (avoids esbuild's ESM/CJS double-wrapping). Attach named exports
-            // as properties so \`import {x}\`/\`.x\` access still works.
-            const fn = def;
-            for (const key of Object.keys(mod)) {
-              if (key !== 'default') fn[key] = mod[key];
-            }
-            fn.default = fn;
-            // Also expose the function under the module's own name so that
-            // named imports like \`import { rewind } from '@turf/rewind'\` work
-            // even when the CJS build only does \`module.exports = fn\` without
-            // attaching a same-named property.
-            const funcName = ${JSON.stringify(moduleName)};
-            if (funcName && typeof fn[funcName] !== 'function') {
-              fn[funcName] = fn;
-            }
-            module.exports = fn;
-          } else {
-            // Multi-export util module (e.g. @turf/helpers): keep every named
-            // export and provide the object itself as the default.
-            for (const key of Object.keys(mod)) {
-              if (key !== 'default') module.exports[key] = mod[key];
-            }
-            module.exports.default = mod.default !== undefined ? mod.default : module.exports;
-          }
-        `,
-        loader: 'js',
-        resolveDir: __dirname
-      };
-    });
+    build.onResolve({filter: /^@turf\/rewind$/}, () => ({path: turfRewindPath, namespace: 'turf-rewind'}));
+    build.onLoad({filter: /.*/, namespace: 'turf-rewind'}, () => ({
+      contents: `const fn = require(${JSON.stringify(turfRewindPath)}); fn.rewind = fn; module.exports = fn;`,
+      loader: 'js',
+      resolveDir: __dirname
+    }));
   }
 };
 
