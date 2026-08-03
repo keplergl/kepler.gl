@@ -8,6 +8,7 @@
     "start": "node esbuild.config.mjs --start"
   },
   "dependencies": {
+    "@deck.gl/mapbox": "~9.3.7",
     "@kepler.gl/components": "^3.3.0-alpha.5",
     "@kepler.gl/reducers": "^3.3.0-alpha.5",
     "react": "^19.0.0",
