@@ -138,7 +138,7 @@ function applyColorConfig(
 
 export const addLayerCommandId = 'map.add-layer' as const;
 
-export function getAddLayerTool(ctx: KeplerContext): RoomCommand {
+export function getAddLayerCommand(ctx: KeplerContext): RoomCommand {
   return {
     id: addLayerCommandId,
     name: 'Add map layer',
@@ -164,7 +164,7 @@ BASIC MAP:
 
 COLOR MAPPING:
 - If user requests color visualization, use available columns in the dataset
-- Use dataClassify tool to classify data into bins or unique values when needed
+- Use data.classify command to classify data into bins or unique values when needed
 - For continuous data (colorType 'breaks'):
   [{value: 0, color: '#fee5d9'}, {value: 50, color: '#fcae91'}, {value: 100, color: '#fb6a4a'}, {value: null, color: '#de2d26'}]
   The last entry with value: null represents the color for the highest values

@@ -20,32 +20,31 @@ Do NOT use this skill for:
 - LISA clustering → use the `lisa-clustering` skill.
 - Spatial filtering → use the `spatial-filter` skill.
 
-## Tools at a glance
+## Commands at a glance
 
-These five are called as **direct tools by name** — *not* through `executeApi`.
-Every other built-in skill routes its actions through `executeApi`; this one is
-the exception, because a chart's deliverable is the React component itself and
-its tool name must survive to the UI for the right renderer to be selected.
+All five are called through `executeApi` with `apiName: "executeCommand"` —
+the same dispatcher every other skill uses. See the `executeApi` tool
+description for the envelope shape.
 
-| tool             | what it produces                                   | chart? |
-| ---------------- | -------------------------------------------------- | :----: |
-| `histogramTool`  | frequency distribution of one numeric variable     |  yes   |
-| `boxplotTool`    | quartile/mean/std/IQR stats for several variables  |  no   |
-| `scatterplotTool`| correlation + min/max/mean for two variables       |  no   |
-| `bubbleChartTool`| x/y/size stats for three variables                 |  no   |
-| `pcpTool`        | min/max/mean/std per variable, many at once        |  no   |
+| commandId           | what it produces                                   | chart? |
+| ------------------- | -------------------------------------------------- | :----: |
+| `chart.histogram`   | frequency distribution of one numeric variable     |  yes   |
+| `chart.boxplot`     | quartile/mean/std/IQR stats for several variables  |  no   |
+| `chart.scatterplot` | correlation + min/max/mean for two variables       |  no   |
+| `chart.bubble`      | x/y/size stats for three variables                 |  no   |
+| `chart.pcp`         | min/max/mean/std per variable, many at once        |  no   |
 
 ## Picking a chart
 
-- Distribution of **one** numeric variable → `histogramTool`.
-- Spread / outliers across **several** variables → `boxplotTool`.
-- Relationship between **two** variables → `scatterplotTool`.
-- Relationship between **three** variables → `bubbleChartTool`.
-- **Many** variables compared at once → `pcpTool`.
+- Distribution of **one** numeric variable → `chart.histogram`.
+- Spread / outliers across **several** variables → `chart.boxplot`.
+- Relationship between **two** variables → `chart.scatterplot`.
+- Relationship between **three** variables → `chart.bubble`.
+- **Many** variables compared at once → `chart.pcp`.
 
 ## Data source
 
-Any kepler dataset or DuckDB table works. The tools read kepler first, then
+Any kepler dataset or DuckDB table works. The commands read kepler first, then
 fall back to DuckDB under both naming conventions (the verbatim name and
 `tbl_<sanitized>`). If a variable isn't found, **confirm the name** via
 `executeApi` `data.query` / `SHOW TABLES` (or `data.create-table` results)
@@ -53,29 +52,68 @@ rather than guessing.
 
 ## Honesty rule
 
-- `histogramTool` **draws a chart**, so do NOT restate every bin count in prose
-  — a short summary of the shape is enough.
-- The other four return **numbers only, no chart**. Their statistics MUST appear
-  in your reply, and you MUST NOT claim a chart was drawn. If you only see
-  numbers back from a tool, the user sees only your text.
+- `chart.histogram` **draws a chart**, so do NOT restate every bin count in
+  prose — a short summary of the shape is enough.
+- The other four return **numbers only, no chart**. Their statistics MUST
+  appear in your reply, and you MUST NOT claim a chart was drawn. If you only
+  see numbers back from a command, the user sees only your text.
 
 ## Workflow
 
 1. Identify the dataset name and the numeric variable(s) the user is asking
    about. If unsure of a name, confirm it before calling.
-2. Pick the tool using the guide above.
-3. Call it directly by name with `datasetName` and the variable name(s).
+2. Pick the command using the guide above.
+3. Call it through `executeApi` with `commandId` and `input` containing
+   `datasetName` and the variable name(s).
 4. Report the results in prose:
-   - For `histogramTool`, describe the distribution shape (skew, modes, range)
-     — the chart itself shows the bin counts.
-   - For the four stats-only tools, restate the returned numbers (medians, IQRs,
-     correlation, means, etc.) since no chart is rendered.
+   - For `chart.histogram`, describe the distribution shape (skew, modes,
+     range) — the chart itself shows the bin counts.
+   - For the four stats-only commands, restate the returned numbers (medians,
+     IQRs, correlation, means, etc.) since no chart is rendered.
+
+### Example: histogram
+
+```json
+{
+  "call": {
+    "apiName": "executeCommand",
+    "args": {
+      "commandId": "chart.histogram",
+      "input": {
+        "datasetName": "county_unemployment",
+        "variableName": "unemployment_rate",
+        "numberOfBins": 10
+      }
+    }
+  },
+  "reasoning": "Drawing a histogram of unemployment rate."
+}
+```
+
+### Example: scatterplot
+
+```json
+{
+  "call": {
+    "apiName": "executeCommand",
+    "args": {
+      "commandId": "chart.scatterplot",
+      "input": {
+        "datasetName": "county_unemployment",
+        "xVariableName": "income",
+        "yVariableName": "unemployment_rate"
+      }
+    }
+  },
+  "reasoning": "Checking correlation between income and unemployment."
+}
+```
 
 ## Self-check (before your final message)
 
-- If you called any tool other than `histogramTool`, your reply must contain
-  its numeric results. If it doesn't, add them.
-- If you called `histogramTool`, do not list every bin count; the chart already
-  shows them.
-- Never claim a chart was drawn for `boxplotTool`, `scatterplotTool`,
-  `bubbleChartTool`, or `pcpTool` — they return numbers only.
+- If you called any command other than `chart.histogram`, your reply must
+  contain its numeric results. If it doesn't, add them.
+- If you called `chart.histogram`, do not list every bin count; the chart
+  already shows them.
+- Never claim a chart was drawn for `chart.boxplot`, `chart.scatterplot`,
+  `chart.bubble`, or `chart.pcp` — they return numbers only.

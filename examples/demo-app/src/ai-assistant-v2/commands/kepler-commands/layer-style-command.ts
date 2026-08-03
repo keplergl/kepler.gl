@@ -5,7 +5,7 @@ import {KeplerContext} from '../../types';
 
 export const updateLayerColorCommandId = 'map.update-layer-color' as const;
 
-export function getUpdateLayerColorTool(ctx: KeplerContext): RoomCommand {
+export function getUpdateLayerColorCommand(ctx: KeplerContext): RoomCommand {
   return {
     id: updateLayerColorCommandId,
     name: 'Update layer color',

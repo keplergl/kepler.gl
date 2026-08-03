@@ -121,4 +121,40 @@ export type ExecuteApiOutput = {
 
   // dataset-context-tool
   datasets?: unknown[];
+
+  // chart-commands (histogram, boxplot, scatterplot, bubble, pcp)
+  /**
+   * The command id that produced this output. Stamped by `executeCommand` from
+   * `result.commandId` so the UI renderer can dispatch on it (e.g. the
+   * histogram ECharts renderer checks `commandId === 'chart.histogram'`).
+   */
+  commandId?: string;
+  variableNames?: string[];
+  xVariableName?: string;
+  yVariableName?: string;
+  sizeVariableName?: string;
+  numberOfBins?: number;
+  totalValues?: number;
+  /**
+   * Histogram bin data for the renderer. NOT surfaced to the LLM by
+   * `toModelOutput` — the `details` string carries the bin summary instead.
+   */
+  histogramData?: unknown[];
+  /**
+   * Row indexes per bin, used by the histogram renderer for brush-selection →
+   * map highlighting. NOT meant for the LLM to read and NOT surfaced by
+   * `toModelOutput`.
+   */
+  barDataIndexes?: number[][];
+  /** `'kepler'` rows line up with the map (brush highlights features);
+   * `'duckdb'` rows don't (brush is inert). Renderer-only. */
+  source?: 'kepler' | 'duckdb';
+  boxplots?: unknown[];
+  meanPoint?: [string, number][];
+  correlation?: number;
+  xStats?: {min: number; max: number; mean: number};
+  yStats?: {min: number; max: number; mean: number};
+  sizeStats?: {min: number; max: number; mean: number};
+  pcp?: Array<{name: string; min: number; max: number; mean: number; std: number}>;
+  totalPoints?: number;
 };

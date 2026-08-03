@@ -1,11 +1,11 @@
 import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {KeplerContext} from '../types';
-import {FETCH_TIMEOUT_MS, combineSignals, mapboxRateLimiter} from './utils';
+import {FETCH_TIMEOUT_MS, combineSignals, mapboxRateLimiter} from '../tools/utils';
 
 export const routingCommandId = 'geo.routing' as const;
 
-export function getRoutingTool(
+export function getRoutingCommand(
   ctx: KeplerContext,
   onToolCompleted: (toolName: string, result: any) => Promise<void>
 ): RoomCommand {

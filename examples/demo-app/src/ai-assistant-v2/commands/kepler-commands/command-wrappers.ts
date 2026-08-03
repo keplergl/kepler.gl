@@ -4,8 +4,8 @@
  * can be reused by any in-browser skill system that wants to expose its
  * existing AI SDK tools as commands without rewriting them.
  *
- * The demo-app's own tool factories return `RoomCommand` directly (preferred
- * when you own the tool — see `basemap-tool.ts` for the reference shape). This
+ * The demo-app's own command factories return `RoomCommand` directly (preferred
+ * when you own the command — see `basemap-command.ts` for the reference shape). This
  * wrapper is the fallback path for hosts that cannot rewrite their tools:
  * it folds the tool's `execute`, `inputSchema`, and `toModelOutput` (the
  * token-trim logic the AI SDK applies between tool call and model) into a

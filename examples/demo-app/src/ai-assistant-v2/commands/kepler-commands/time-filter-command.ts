@@ -78,7 +78,7 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const addTimeFilterCommandId = 'map.add-time-filter' as const;
 
-export function getAddTimeFilterTool(ctx: KeplerContext): RoomCommand {
+export function getAddTimeFilterCommand(ctx: KeplerContext): RoomCommand {
   return {
     id: addTimeFilterCommandId,
     name: 'Add time filter',

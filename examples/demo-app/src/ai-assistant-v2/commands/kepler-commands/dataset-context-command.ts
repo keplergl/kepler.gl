@@ -1,11 +1,11 @@
 import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {KeplerContext} from '../../types';
-import {getDatasetContext} from '../utils';
+import {getDatasetContext} from '../../tools/utils';
 
 export const datasetContextCommandId = 'map.get-dataset-context' as const;
 
-export function getDatasetContextTool(ctx: KeplerContext): RoomCommand {
+export function getDatasetContextCommand(ctx: KeplerContext): RoomCommand {
   return {
     id: datasetContextCommandId,
     name: 'Get dataset context',

@@ -23,8 +23,8 @@ import {
 import {linearRegression, spatialLagRegression, spatialError} from '@geoda/regression';
 import {SpatialGeometry} from '@geoda/core';
 import {KeplerContext} from '../types';
-import {getValuesFromDataset, getGeometriesFromDataset} from './utils';
-import {getTableAsGeoJSON} from './duckdb-cache';
+import {getValuesFromDataset, getGeometriesFromDataset} from '../tools/utils';
+import {getTableAsGeoJSON} from '../tools/duckdb-cache';
 
 type WeightsCache = Record<
   string,
@@ -62,7 +62,7 @@ function getCachedWeightsById(weightsId: string) {
   return globalWeightsCache[weightsId] || null;
 }
 
-export function getSpatialAnalysisTools(ctx: KeplerContext): Record<string, RoomCommand> {
+export function getSpatialAnalysisCommands(ctx: KeplerContext): Record<string, RoomCommand> {
   const getValues = async (datasetName: string, variableName: string) => {
     const visState = ctx.getVisState();
     return getValuesFromDataset(

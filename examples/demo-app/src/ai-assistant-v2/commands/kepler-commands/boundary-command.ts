@@ -4,7 +4,7 @@ import {KeplerContext} from '../../types';
 
 export const mapBoundaryCommandId = 'map.get-boundary' as const;
 
-export function getMapBoundaryTool(ctx: KeplerContext): RoomCommand {
+export function getMapBoundaryCommand(ctx: KeplerContext): RoomCommand {
   return {
     id: mapBoundaryCommandId,
     name: 'Get map boundary',

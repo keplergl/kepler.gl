@@ -5,7 +5,7 @@ import {KeplerContext} from '../../types';
 
 export const toggleTimeFilterCommandId = 'map.toggle-time-filter' as const;
 
-export function getToggleTimeFilterTool(ctx: KeplerContext): RoomCommand {
+export function getToggleTimeFilterCommand(ctx: KeplerContext): RoomCommand {
   return {
     id: toggleTimeFilterCommandId,
     name: 'Toggle time controller',

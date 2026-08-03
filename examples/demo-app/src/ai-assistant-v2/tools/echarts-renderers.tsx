@@ -1,5 +1,6 @@
 import React from 'react';
 import type {ToolRenderer, ToolRendererRegistry} from '@sqlrooms/ai-core';
+import type {ExecuteApiOutput} from '../skills/executeApi/types';
 import type {HistogramToolOutput} from './echarts-tools';
 import {HistogramComponent} from '../charts/histogram-component';
 
@@ -17,33 +18,41 @@ export function setHistogramSelectionHandler(handler: HistogramSelectionHandler 
 }
 
 /**
- * Renders the output of `histogramTool` as an ECharts histogram, matching the
- * OpenAssistant `HistogramPlotComponent`.
+ * Render the histogram produced by the `chart.histogram` command.
  *
- * Registered in the store `toolRenderers` map under the `histogramTool` key AND
- * hoisted via `hoistedRenderers` in `MainView`, so the chart is drawn inline in
- * the chat. Without both, the tool output is only summarized as text.
+ * Charts are now routed through `executeApi` (`executeCommand` with
+ * `commandId: "chart.histogram"`), so the tool name reported to the UI is
+ * `executeApi`, not `histogramTool`. This renderer is registered under the
+ * `executeApi` key and dispatches on `output.commandId` to decide whether the
+ * output is a histogram (draw the ECharts component) or some other command
+ * (fall through to the default text rendering).
  */
-export const HistogramToolResult: ToolRenderer<HistogramToolOutput> = ({
+const HistogramChartRenderer: ToolRenderer<ExecuteApiOutput & HistogramToolOutput> = ({
   output,
   state,
   errorText
 }) => {
+  // Only handle the histogram command; non-histogram executeApi output is left
+  // for the default renderer by returning null (the registry falls through).
+  if (!output || output.commandId !== 'chart.histogram') {
+    return null;
+  }
+
   if (state === 'output-error') {
     return (
       <div className="text-destructive text-xs">
-        Histogram failed: {errorText ?? output?.error ?? 'Unknown error'}
+        Histogram failed: {errorText ?? output.error ?? 'Unknown error'}
       </div>
     );
   }
 
-  if (!output || !output.success) {
+  if (!output.success) {
     if (state === 'input-streaming' || state === 'input-available') {
       return <div className="text-xs opacity-60">Building histogram…</div>;
     }
     return (
       <div className="text-destructive text-xs">
-        Histogram failed: {output?.error ?? 'No data returned'}
+        Histogram failed: {output.error ?? 'No data returned'}
       </div>
     );
   }
@@ -84,9 +93,23 @@ export const HistogramToolResult: ToolRenderer<HistogramToolOutput> = ({
 /**
  * Renderers for the echarts-style analytical tools, keyed by tool name so they
  * can be spread into the store `toolRenderers` registry.
+ *
+ * With charts routed through `executeApi`, the tool name reported to the UI is
+ * `executeApi`. The histogram renderer dispatches on `output.commandId` to
+ * distinguish a histogram result from any other `executeApi` output; for
+ * non-histogram output it returns null so the default `executeApi` text
+ * rendering applies.
  */
 export function getEchartsToolRenderers(): ToolRendererRegistry {
   return {
-    histogramTool: HistogramToolResult as ToolRenderer<any>
+    executeApi: HistogramChartRenderer as ToolRenderer<any>
   };
+}
+
+/**
+ * Renderer key(s) to hoist via `hoistedRenderers` in `MainView` so the chart
+ * draws inline in the chat rather than as a collapsed tool call.
+ */
+export function getEchartsHoistedRenderers(): string[] {
+  return Object.keys(getEchartsToolRenderers());
 }

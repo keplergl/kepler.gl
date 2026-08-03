@@ -7,7 +7,7 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const splitViewCommandId = 'map.split-view' as const;
 
-export function getSplitViewTool(ctx: KeplerContext): RoomCommand {
+export function getSplitViewCommand(ctx: KeplerContext): RoomCommand {
   return {
     id: splitViewCommandId,
     name: 'Toggle split map view',

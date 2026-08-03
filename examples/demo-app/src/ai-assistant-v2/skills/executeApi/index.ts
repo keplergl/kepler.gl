@@ -14,9 +14,9 @@
  *  - `listCommands`    — enumerate available command ids.
  *  - `executeCommand`  — run a command by id with optional `input`.
  *
- * All 31 existing tool actions become commands routed through the
+ * All 31 existing command actions are routed through the
  * `BUILTIN_COMMAND_HANDLERS` map in `handleCommands.ts`. Handlers forward to
- * the existing tools — no tool logic is duplicated.
+ * the command registry — no command logic is duplicated.
  */
 
 import {z} from 'zod';
@@ -94,7 +94,22 @@ export const EXECUTE_API_GUIDANCE = `Always call as: { call: { apiName: "<name>"
   - "geo.spatial-query": DuckDB spatial SQL (ST_* functions). input: { datasetNames: string[], outputDatasetName, sqlQuery, reasoning }. Use __tbl0__, __tbl1__, ... as table placeholders. The geometry column stores GeoJSON strings — wrap with ST_GeomFromGeoJSON(geometry).
   - "geo.grid": Rectangular grid of polygons over a dataset's bbox (Turf). input: { datasetName, rows, columns, outputDatasetName }.
 
-  Reference geography (US state/county/zipcode boundaries, road networks, building footprints, POIs) is NOT fetched by a built-in command — the user loads such data into kepler.gl via map.load-data (a URL) or by importing files directly. If a task needs boundaries/roads the user has not provided, ask the user to load that data first.`;
+  CHART commands (analytical charts & summary statistics):
+  - "chart.histogram": Frequency distribution of one numeric variable. DRAWS a chart inline. input: { datasetName, variableName, numberOfBins? }. Default bins: 7. Returns bin counts + details string.
+  - "chart.boxplot": Quartile/mean/std/IQR stats for several variables. Numbers only, NO chart. input: { datasetName, variableNames: string[] }.
+  - "chart.scatterplot": Correlation + min/max/mean for two variables. Numbers only, NO chart. input: { datasetName, xVariableName, yVariableName }.
+  - "chart.bubble": x/y/size stats for three variables. Numbers only, NO chart. input: { datasetName, xVariableName, yVariableName, sizeVariableName }.
+  - "chart.pcp": min/max/mean/std per variable, many at once. Numbers only, NO chart. input: { datasetName, variableNames: string[] }.
+  Only "chart.histogram" draws a chart; the other four return numbers only — restate the statistics in your reply and do NOT claim a chart was drawn.
+
+  Reference geography (US state/county/zipcode boundaries, road networks, building footprints, POIs) is NOT fetched by a built-in command — the user loads such data into kepler.gl via map.load-data (a URL) or by importing files directly. If a task needs boundaries/roads the user has not provided, ask the user to load that data first.
+
+  CHART commands (analytical charts & summary statistics):
+  - "chart.histogram": Draw a histogram (frequency distribution) of one numeric variable. input: { datasetName, variableName, numberOfBins? }. numberOfBins default 7. Renders an interactive ECharts chart inline in the chat (with brush-selection → map highlighting when the data source is kepler).
+  - "chart.boxplot": Compute boxplot statistics (quartiles, mean, std, IQR) for several numeric variables. input: { datasetName, variableNames }. Returns numbers only — no chart is rendered.
+  - "chart.scatterplot": Compute correlation and min/max/mean for two numeric variables. input: { datasetName, xVariableName, yVariableName }. Returns numbers only.
+  - "chart.bubble": Compute x/y/size statistics for three numeric variables. input: { datasetName, xVariableName, yVariableName, sizeVariableName }. Returns numbers only.
+  - "chart.pcp": Compute min/max/mean/std per variable for many variables at once (parallel coordinates). input: { datasetName, variableNames }. Returns numbers only.`;
 
 /**
  * Build the `executeApi` tool parameterized by the room-store. The command
@@ -187,6 +202,23 @@ export function createExecuteApiTool(store: StoreApi<any>) {
         modelResult.integerTemporalColumns = output.integerTemporalColumns;
       if (output.integerTemporalHint != null)
         modelResult.integerTemporalHint = output.integerTemporalHint;
+      // Chart command outputs. `barDataIndexes`, `histogramData` (raw bins),
+      // `source`, `meanPoint` are renderer-only and intentionally NOT surfaced
+      // — the `details` string already carries the human/model-facing summary.
+      if (output.commandId != null) modelResult.commandId = output.commandId;
+      if (output.variableNames != null) modelResult.variableNames = output.variableNames;
+      if (output.xVariableName != null) modelResult.xVariableName = output.xVariableName;
+      if (output.yVariableName != null) modelResult.yVariableName = output.yVariableName;
+      if (output.sizeVariableName != null) modelResult.sizeVariableName = output.sizeVariableName;
+      if (output.numberOfBins != null) modelResult.numberOfBins = output.numberOfBins;
+      if (output.totalValues != null) modelResult.totalValues = output.totalValues;
+      if (output.boxplots != null) modelResult.boxplots = output.boxplots;
+      if (output.correlation != null) modelResult.correlation = output.correlation;
+      if (output.xStats != null) modelResult.xStats = output.xStats;
+      if (output.yStats != null) modelResult.yStats = output.yStats;
+      if (output.sizeStats != null) modelResult.sizeStats = output.sizeStats;
+      if (output.pcp != null) modelResult.pcp = output.pcp;
+      if (output.totalPoints != null) modelResult.totalPoints = output.totalPoints;
       return {
         type: 'text' as const,
         value: JSON.stringify(modelResult)

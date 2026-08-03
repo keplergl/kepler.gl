@@ -1,30 +1,14 @@
-import type {RoomCommand} from '@sqlrooms/room-store';
-import {KeplerContext} from '../types';
-import {getGeoTools} from './geo-tools';
-import {getKeplerTools} from './kepler-tools';
-import {getSpatialAnalysisTools} from './spatial-analysis-tools';
-import {getQueryTools} from './query-tool';
-
 /**
- * Build the full kepler-ai command catalog for a given `KeplerContext`. Merges
- * the kepler / query / geo / spatial-analysis command sets into one map keyed
- * by command id. Intended for registry registration via
- * `registerCommandsForOwner(store, KEPLER_COMMAND_OWNER, Object.values(...))`.
+ * AI SDK tool factories that the orchestrator/skill agents call directly (as
+ * opposed to `RoomCommand`s, which are routed through the `executeApi`
+ * command dispatcher — see `../commands/`).
  *
- * ECharts tools are NOT included here — they remain direct AI SDK tools because
- * a chart's deliverable is the React component and its tool name must survive to
- * the UI for the right renderer to be selected. See `runSkillTool.ts`.
+ * Charts are now routed through `executeApi` as `chart.*` commands (see
+ * `../commands/chart-commands.ts`). The histogram renderer dispatches on
+ * `output.commandId` rather than tool name — see `echarts-renderers.tsx`.
+ *
+ * The full command catalog (kepler / query / geo / spatial-analysis / chart)
+ * lives in `../commands/index.ts` (`getAllCommands`).
  */
-export function getAllCommands(ctx: KeplerContext): Record<string, RoomCommand> {
-  return {
-    ...getKeplerTools(ctx),
-    ...getQueryTools(ctx),
-    ...getGeoTools(ctx),
-    ...getSpatialAnalysisTools(ctx)
-  };
-}
-
-export {getKeplerTools, KEPLER_COMMAND_OWNER} from './kepler-tools';
-export {getGeoTools} from './geo-tools';
-export {getSpatialAnalysisTools} from './spatial-analysis-tools';
-export {getQueryTools} from './query-tool';
+export {getEchartsTools} from './echarts-tools';
+export {createWrappedQueryTool} from './query-tool-wrapper';

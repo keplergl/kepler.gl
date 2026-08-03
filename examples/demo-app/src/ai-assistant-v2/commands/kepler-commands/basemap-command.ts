@@ -6,7 +6,7 @@ import {KeplerContext} from '../../types';
 
 export const basemapCommandId = 'map.set-basemap' as const;
 
-export function getBasemapTool(ctx: KeplerContext): RoomCommand {
+export function getBasemapCommand(ctx: KeplerContext): RoomCommand {
   return {
     id: basemapCommandId,
     name: 'Set basemap',

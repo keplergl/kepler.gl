@@ -1,11 +1,11 @@
 import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {KeplerContext} from '../../types';
-import {loadTableToKepler} from '../duckdb-cache';
+import {loadTableToKepler} from '../../tools/duckdb-cache';
 
 export const saveDataCommandId = 'map.save-data' as const;
 
-export function getSaveDataTool(ctx: KeplerContext): RoomCommand {
+export function getSaveDataCommand(ctx: KeplerContext): RoomCommand {
   return {
     id: saveDataCommandId,
     name: 'Save DuckDB table to map',

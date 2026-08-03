@@ -11,8 +11,8 @@ import {
   datasetNameToTableName,
   convertArrowRowToObject,
   tableToLLMResult
-} from './utils';
-import {saveToDuckdb, loadTableToKepler} from './duckdb-cache';
+} from '../tools/utils';
+import {saveToDuckdb, loadTableToKepler} from '../tools/duckdb-cache';
 
 /**
  * Load dataset columns into a DuckDB table, incrementally adding only missing columns.
@@ -83,7 +83,7 @@ async function loadTableIntoDuckDB(
   return db;
 }
 
-export function getQueryTools(ctx: KeplerContext): Record<string, RoomCommand> {
+export function getQueryCommands(ctx: KeplerContext): Record<string, RoomCommand> {
   const getValues = async (datasetName: string, variableName: string) => {
     const visState = ctx.getVisState();
     return getValuesFromDataset(visState.datasets, visState.layers, datasetName, variableName);
@@ -238,7 +238,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
     }
   };
 
-  const tableTool: RoomCommand = {
+  const tableCommand: RoomCommand = {
     id: 'data.create-table',
     name: 'Create table via SQL',
     group: 'Data',
@@ -306,7 +306,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
     }
   };
 
-  const mergeTablesTool: RoomCommand = {
+  const mergeTablesCommand: RoomCommand = {
     id: 'data.merge-tables',
     name: 'Merge tables via SQL',
     group: 'Data',
@@ -394,7 +394,7 @@ IMPORTANT: Use __TABLE_A__ and __TABLE_B__ as table name placeholders in SQL. Th
     name: 'Load DuckDB table to map',
     group: 'Data',
     description: `Create a new kepler.gl map dataset from a DuckDB table.
-Use this tool after running a query (genericQuery, tableTool, mergeTablesTool) to visualize the result on a kepler.gl map.`,
+Use this command after running a query (genericQuery, tableCommand, mergeTablesCommand) to visualize the result on a kepler.gl map.`,
     inputSchema: z.object({
       datasetName: z
         .string()
@@ -431,8 +431,8 @@ Use this tool after running a query (genericQuery, tableTool, mergeTablesTool) t
   return {
     'data.query': genericQuery,
     'data.filter': filterDataset,
-    'data.create-table': tableTool,
-    'data.merge-tables': mergeTablesTool,
+    'data.create-table': tableCommand,
+    'data.merge-tables': mergeTablesCommand,
     'data.load-to-map': createKeplerDatasetFromTable
   };
 }

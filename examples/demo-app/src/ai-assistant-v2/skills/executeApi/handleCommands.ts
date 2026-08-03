@@ -1,7 +1,7 @@
 /**
  * The routing core for the `executeApi` command dispatcher.
  *
- * The demo-app's kepler/data/geoda/geo tools are now `RoomCommand`s registered
+ * The demo-app's kepler/data/geoda/geo commands are `RoomCommand`s registered
  * in the room-store command registry (see `store.ts`'s `registerCommandsForOwner`
  * call). This file builds the two `executeApi` apiName handlers
  * (`listCommands`, `executeCommand`) that delegate to the registry:
@@ -13,7 +13,7 @@
  *  - `listCommands` → `store.commands.listCommands(...)`, mapped to the
  *    `uniqueValues` carrier field.
  *
- * No tool logic is duplicated here — the registry is the single source of truth.
+ * No command logic is duplicated here — the registry is the single source of truth.
  */
 
 import {z} from 'zod';
@@ -112,11 +112,14 @@ function buildExecuteCommandHandler(store: StoreApi<CommandsStoreState>): ApiHan
       try {
         const result = await store.getState().commands.invokeCommand(commandId, input ?? {});
         // `result.data` carries the command's rich output (details, boundary,
-        // breaks, weightsId, globalMoranI, ...). Spread it onto the AI-facing
-        // output so `toModelOutput` in `index.ts` can surface each typed field.
+        // breaks, weightsId, globalMoranI, histogramData, ...). Spread it onto
+        // the AI-facing output so `toModelOutput` in `index.ts` can surface each
+        // typed field. Stamp `commandId` so the UI renderer can dispatch on it
+        // (e.g. the histogram ECharts renderer checks `commandId === 'chart.histogram'`).
         const data = (result.data ?? {}) as Record<string, unknown>;
         const output: ExecuteApiOutput = {
           success: result.success,
+          commandId,
           ...(result.error ? {error: result.error} : {}),
           ...(typeof data === 'object' && data !== null ? (data as ExecuteApiOutput) : {})
         };

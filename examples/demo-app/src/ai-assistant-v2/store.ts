@@ -26,7 +26,7 @@ import {createKeplerAiInstructions} from './instructions';
 import {getEchartsToolRenderers, setHistogramSelectionHandler} from './tools/echarts-renderers';
 import {highlightRows, setStoreConnectorProvider} from './tools/utils';
 import {createWrappedQueryTool} from './tools/query-tool-wrapper';
-import {getAllCommands, KEPLER_COMMAND_OWNER} from './tools/tools';
+import {getAllCommands, KEPLER_COMMAND_OWNER} from './commands';
 import {layerSetIsValid} from '@kepler.gl/actions';
 import type {KeplerContext} from './types';
 import type {SkillListing} from '@sqlrooms/ai';

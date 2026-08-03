@@ -4,7 +4,7 @@ import {tableFromArrays, Table as ArrowTable} from 'apache-arrow';
 import {addDataToMap} from '@kepler.gl/actions';
 import {processFileData} from '@kepler.gl/processors';
 import {KeplerContext} from '../../types';
-import {getValuesFromDataset, getConnector, datasetNameToTableName} from '../utils';
+import {getValuesFromDataset, getConnector, datasetNameToTableName} from '../../tools/utils';
 
 function convertArrowRowToObject(row: any): Record<string, unknown> {
   if (row === null || typeof row !== 'object') return row;
@@ -27,7 +27,7 @@ function convertArrowRowToObject(row: any): Record<string, unknown> {
 
 export const tableCommandId = 'map.create-table' as const;
 
-export function getTableTool(ctx: KeplerContext): RoomCommand {
+export function getTableCommand(ctx: KeplerContext): RoomCommand {
   return {
     id: tableCommandId,
     name: 'Create map dataset via SQL',

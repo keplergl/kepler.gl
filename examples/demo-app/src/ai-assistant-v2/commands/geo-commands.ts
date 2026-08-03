@@ -27,11 +27,11 @@ import {
   mapboxRateLimiter,
   nominatimRateLimiter,
   datasetNameToTableName
-} from './utils';
-import {saveToDuckdb, saveGeojsonToDuckdb, getTableAsGeoJSON} from './duckdb-cache';
-import {getRoutingTool} from './routing';
+} from '../tools/utils';
+import {saveToDuckdb, saveGeojsonToDuckdb, getTableAsGeoJSON} from '../tools/duckdb-cache';
+import {getRoutingCommand} from './routing-command';
 
-export function getGeoTools(ctx: KeplerContext): Record<string, RoomCommand> {
+export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> {
   const getValues = async (datasetName: string, variableName: string) => {
     const visState = ctx.getVisState();
     return getValuesFromDataset(
@@ -83,7 +83,7 @@ export function getGeoTools(ctx: KeplerContext): Record<string, RoomCommand> {
     return geojson;
   };
 
-  const routing = getRoutingTool(ctx, onToolCompleted);
+  const routing = getRoutingCommand(ctx, onToolCompleted);
 
   const isochrone: RoomCommand = {
     id: 'geo.isochrone',
@@ -272,7 +272,7 @@ export function getGeoTools(ctx: KeplerContext): Record<string, RoomCommand> {
     }
   };
 
-  const gridTool: RoomCommand = {
+  const gridCommand: RoomCommand = {
     id: 'geo.grid',
     name: 'Rectangular grid',
     group: 'Geo',
@@ -654,7 +654,7 @@ export function getGeoTools(ctx: KeplerContext): Record<string, RoomCommand> {
     'geo.isochrone': isochrone,
     'geo.geocode': geocoding,
     'geo.spatial-query': spatialQuery,
-    'geo.grid': gridTool,
+    'geo.grid': gridCommand,
     'geoda.thiessen-polygons': thiessenPolygons,
     'geoda.mst': minimumSpanningTree,
     'geoda.cartogram': cartogram,

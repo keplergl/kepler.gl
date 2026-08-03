@@ -6,7 +6,7 @@ import {KeplerContext} from '../../types';
 
 export const loadDataCommandId = 'map.load-data' as const;
 
-export function getLoadDataTool(ctx: KeplerContext): RoomCommand {
+export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
   return {
     id: loadDataCommandId,
     name: 'Load data from URL',

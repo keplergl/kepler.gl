@@ -45,17 +45,17 @@ concerns (middleware, logging, confirmation).
 
 ## Two ways to adopt
 
-### 1. Direct conversion (preferred when you own the tool)
+### 1. Direct conversion (preferred when you own the command)
 
 Rewrite the factory to return `RoomCommand` directly. The demo-app uses this
-path for all its kepler/data/geoda/geo tools. Reference:
-[`tools/kepler-tools/basemap-tool.ts`](../tools/kepler-tools/basemap-tool.ts).
+path for all its kepler/data/geoda/geo commands. Reference:
+[`commands/kepler-commands/basemap-command.ts`](../commands/kepler-commands/basemap-command.ts).
 
 ```ts
 import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 
-export function getBasemapTool(ctx: KeplerContext): RoomCommand {
+export function getBasemapCommand(ctx: KeplerContext): RoomCommand {
   return {
     id: 'map.set-basemap',
     name: 'Set basemap',
@@ -83,14 +83,14 @@ registerCommandsForOwner(roomStore, 'kepler-ai', [
 ### 2. Wrapper (when you can't rewrite the tool)
 
 Use `toolToCommand(tool, meta)` from
-[`tools/kepler-tools/command-wrappers.ts`](../tools/kepler-tools/command-wrappers.ts).
+[`commands/kepler-commands/command-wrappers.ts`](../commands/kepler-commands/command-wrappers.ts).
 It folds the AI SDK tool's `execute`, `inputSchema`, and `toModelOutput` (the
 token-trim logic the AI SDK applies between tool call and model) into a single
 `RoomCommand.execute` so the registry-stored result already carries the
 model-facing subset.
 
 ```ts
-import {toolToCommand} from '../tools/kepler-tools/command-wrappers';
+import {toolToCommand} from '../commands/kepler-commands/command-wrappers';
 import {getSomeExistingAiSdkTool} from './my-tools';
 
 const cmd = toolToCommand(getSomeExistingAiSdkTool(ctx), {
