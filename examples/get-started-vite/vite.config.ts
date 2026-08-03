@@ -27,6 +27,76 @@ const turfRewindPlugin = {
   }
 };
 
+// @hubble.gl/react was compiled with esbuild targeting Node, using isNodeMode=1 in
+// its __toESM helper. With isNodeMode=1, __toESM ALWAYS sets .default to the entire
+// require() result regardless of the module's __esModule flag:
+//
+//   var import_react_map_gl = __toESM(require("react-map-gl"), 1)
+//   → import_react_map_gl.default = entire_exports_object   ← "got: object"
+//
+// This was fine when react-map-gl/7 and @deck.gl/react/8 each did
+// `module.exports = TheComponent` (the require result was the component directly).
+// Modern versions wrap everything: `module.exports = __toCommonJS({Map, ...})`.
+//
+// Vite plugins (resolveId/load) are NOT invoked for nested node_modules during
+// esbuild pre-bundling. @hubble.gl/react has its own node_modules/react-map-gl@7.1.9,
+// so the Vite plugin chain is bypassed for that resolution entirely.
+//
+// Fix: use a native esbuild plugin (optimizeDeps.esbuildOptions.plugins). These run
+// inside esbuild itself and intercept every require() call, including from nested
+// node_modules. The shim sets module.exports = <component> so that
+// __toESM(require("pkg"), 1).default === <component>  ✓
+const reactMapGlCjsPath = _require.resolve('react-map-gl/mapbox');
+const deckGlReactCjsPath = _require.resolve('@deck.gl/react');
+
+function makeHubbleInteropShim(getComponent: string, cjsPath: string): string {
+  return [
+    '"use strict";',
+    `const _m = require(${JSON.stringify(cjsPath)});`,
+    `const Comp = ${getComponent};`,
+    // Copy all named exports onto Comp so useControl, DeckGL etc. remain accessible
+    // as properties (for callers using import_pkg.useControl or import_pkg.DeckGL).
+    'Object.assign(Comp, _m);',
+    // Ensure Comp.default === Comp so _interopRequireDefault also works.
+    'Comp.default = Comp;',
+    // module.exports = Comp means __commonJS wrapper returns Comp directly,
+    // so __toESM(require("pkg"), isNodeMode=1).default === Comp (a React forwardRef).
+    'module.exports = Comp;'
+  ].join('\n');
+}
+
+// This is an esbuild-level plugin, NOT a Vite plugin.
+// It must be placed in optimizeDeps.esbuildOptions.plugins to run during pre-bundling.
+const hubbleGlInteropEsbuildPlugin = {
+  name: 'hubble-gl-cjs-interop',
+  setup(build: any) {
+    build.onResolve({filter: /^react-map-gl$/}, () => ({
+      path: 'react-map-gl-shim',
+      namespace: 'hubble-gl-interop'
+    }));
+    build.onResolve({filter: /^@deck\.gl\/react$/}, () => ({
+      path: 'deck-gl-react-shim',
+      namespace: 'hubble-gl-interop'
+    }));
+    build.onLoad({filter: /.*/, namespace: 'hubble-gl-interop'}, (args: any) => {
+      if (args.path === 'react-map-gl-shim') {
+        return {
+          contents: makeHubbleInteropShim('_m.Map', reactMapGlCjsPath),
+          loader: 'js',
+          resolveDir: _dirname
+        };
+      }
+      if (args.path === 'deck-gl-react-shim') {
+        return {
+          contents: makeHubbleInteropShim('_m.DeckGL', deckGlReactCjsPath),
+          loader: 'js',
+          resolveDir: _dirname
+        };
+      }
+    });
+  }
+};
+
 // All @kepler.gl/* packages and their pure-CJS transitive dependencies.
 // These must be pre-bundled by esbuild so Vite serves them as ESM rather than
 // trying to serve the raw CJS files (which have no `export default` and break
@@ -113,10 +183,45 @@ export default defineConfig({
     'process.env.NODE_DEBUG': JSON.stringify(false)
   },
   resolve: {
-    // Dedupe forces all nested copies of these packages (e.g. the one inside
-    // @kepler.gl/layers/node_modules/) to resolve to the single root-level
-    // version, which is then pre-bundled by esbuild below.
-    dedupe: ['styled-components', 'react', 'react-dom', ...nodePolyfillDeps, 'thrift']
+    // Dedupe forces every import of these packages — no matter how deeply
+    // nested or which ancestor directory a require() starts from — to resolve
+    // to the single copy installed in examples/get-started-vite/node_modules/.
+    //
+    // Without this, packages that rely on peer-dep resolution (e.g.
+    // @deck.gl-community/editable-layers) can walk up past the example dir
+    // into the monorepo root node_modules, loading @deck.gl/core@9.3.1 there
+    // instead of the example's @deck.gl/core@9.3.7, triggering the
+    // "multiple versions detected" error and the luma.gl double-init warning.
+    dedupe: [
+      'styled-components',
+      'react',
+      'react-dom',
+      '@luma.gl/constants',
+      '@luma.gl/core',
+      '@luma.gl/effects',
+      '@luma.gl/engine',
+      '@luma.gl/gltf',
+      '@luma.gl/shadertools',
+      '@luma.gl/webgl',
+      '@deck.gl/aggregation-layers',
+      '@deck.gl/core',
+      '@deck.gl/extensions',
+      '@deck.gl/geo-layers',
+      '@deck.gl/layers',
+      '@deck.gl/mapbox',
+      '@deck.gl/mesh-layers',
+      '@deck.gl/react',
+      '@deck.gl/widgets',
+      '@math.gl/core',
+      '@math.gl/culling',
+      '@math.gl/geospatial',
+      '@math.gl/polygon',
+      '@math.gl/sun',
+      '@math.gl/types',
+      '@math.gl/web-mercator',
+      'thrift',
+      ...nodePolyfillDeps
+    ]
   },
   optimizeDeps: {
     // parquet-wasm contains native WASM that esbuild cannot inline;
@@ -128,7 +233,8 @@ export default defineConfig({
     exclude: ['parquet-wasm', '@loaders.gl/parquet'],
     include: [...keplerPackages, 'apache-arrow', ...loadersCjsDeps, ...nodePolyfillDeps],
     esbuildOptions: {
-      target: 'es2020'
+      target: 'es2020',
+      plugins: [hubbleGlInteropEsbuildPlugin]
     }
   }
 });
