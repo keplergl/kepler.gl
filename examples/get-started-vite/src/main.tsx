@@ -8,6 +8,13 @@ import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
 
 import KeplerGl from '@kepler.gl/components';
 import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
+import {initApplicationConfig} from '@kepler.gl/utils';
+
+// Annotations require a custom MapControl that mounts AnnotationManager.
+// Disable them here so the default get-started example stays minimal.
+initApplicationConfig({
+  enableAnnotations: false
+});
 
 const reducers = combineReducers({
   keplerGl: keplerGlReducer.initialState({
