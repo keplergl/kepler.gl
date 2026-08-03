@@ -15,25 +15,13 @@ Go to the root directory and install the dependencies:
 yarn bootstrap
 ```
 
-If install fails while building the `gl` package, use Node 20.19.3 from the repo root `.nvmrc` (`nvm install` / `nvm use`), or see [Troubleshooting: gl package install](../../contributing/DEVELOPERS.md#troubleshooting-gl-package-install).
-
 Then, go to the `examples/get-started` directory and install the dependencies:
 
 ```sh
 yarn install
 ```
 
-## 2. MapBox Token
-
-Replace the placeholder Mapbox token in `src/app.tsx` with your own:
-
-```tsx
-mapboxApiAccessToken="<your_mapbox_token>"
-```
-
-You can get a free token at [mapbox.com](https://www.mapbox.com/).
-
-## 3. Start the App
+## 2. Start the App
 
 ```sh
 yarn start
