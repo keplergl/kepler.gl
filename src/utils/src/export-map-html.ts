@@ -84,9 +84,9 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           // Trigger es-module-shims "shim mode" so it always parses the
           // importmap-shim / module-shim tags below instead of deferring to the
           // native loader (which fails under file://).
-          window.esmsInitOptions = {shimMode: true, version: '${ES_MODULE_SHIMS_VERSION}'};
+          window.esmsInitOptions = {shimMode: true};
         </script>
-        <script async src="https://ga.jspm.io/npm:es-module-shims@${ES_MODULE_SHIMS_VERSION}/dist/es-module-shims.js" crossorigin="anonymous"></script>
+        <script src="https://ga.jspm.io/npm:es-module-shims@${ES_MODULE_SHIMS_VERSION}/dist/es-module-shims.js" crossorigin="anonymous"></script>
 
         <script type="importmap-shim">
           {
