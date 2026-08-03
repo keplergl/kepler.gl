@@ -86,8 +86,8 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           // native loader (which fails under file://).
           window.esmsInitOptions = {shimMode: true};
         </script>
-        <script src="https://ga.jspm.io/npm:es-module-shims@${ES_MODULE_SHIMS_VERSION}/dist/es-module-shims.js" crossorigin="anonymous"></script>
-
+        <script src="https://unpkg.com/es-module-shims@${ES_MODULE_SHIMS_VERSION}/dist/es-module-shims.js" crossorigin="anonymous"></script>
+        
         <script type="importmap-shim">
           {
             "imports": {
