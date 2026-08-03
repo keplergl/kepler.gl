@@ -7,6 +7,8 @@ dist/
 build/
 umd/
 */**/dist/
+*.tsbuildinfo
+
 
 __pycache__/
 .pytest_cache/
