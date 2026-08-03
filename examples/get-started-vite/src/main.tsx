@@ -32,6 +32,13 @@ function useWindowSize() {
   return size;
 }
 
+// luma.gl defaults `debug` to true whenever NODE_ENV !== 'production', which Vite
+// sets during `vite dev`. That wraps the WebGL context in the Khronos debug layer
+// and starts a GPU timer query per render pass. Globe mode issues several passes
+// per frame and overlapping TIME_ELAPSED_EXT queries are illegal in WebGL2, so the
+// debug layer throws and takes the app down.
+const DECK_GL_PROPS = {deviceProps: {debug: false}};
+
 const App = () => {
   const dispatch = useDispatch();
   const {width, height} = useWindowSize();
@@ -42,6 +49,7 @@ const App = () => {
       id="map"
       width={width}
       height={height}
+      deckGlProps={DECK_GL_PROPS}
     />
   );
 };

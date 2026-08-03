@@ -8,7 +8,14 @@ import {Provider, useDispatch} from 'react-redux';
 import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
 
 import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
-import KeplerGl from '@kepler.gl/components';
+import {injectComponents} from '@kepler.gl/components';
+
+import {replaceMapControl} from './map-control';
+
+// The annotations map control button ships with the default map controls, but the
+// panel it opens has to be mounted by the app.
+// The cast works around injectComponents being typed as accepting `never[]`.
+const KeplerGl = injectComponents([replaceMapControl()] as never[]);
 
 const reducers = combineReducers({
   keplerGl: keplerGlReducer.initialState({

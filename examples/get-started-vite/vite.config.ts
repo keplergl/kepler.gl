@@ -45,6 +45,47 @@ const globeViewPatchEsbuildPlugin = {
   }
 };
 
+// @kepler.gl/components@3.3.0-alpha.5 hardcodes `deviceProps` on the video export
+// preview Deck instances without opting out of luma.gl's debug device. luma turns
+// `debug` on whenever NODE_ENV !== 'production' (which Vite sets during `vite dev`)
+// and then wraps every render pass in a TIME_ELAPSED_EXT timer query. WebGL2 allows
+// only one such query at a time and globe export issues several passes per frame,
+// so the debug context throws INVALID_OPERATION and the export modal crashes.
+// These Deck instances are created inside the modal, so unlike the map's Deck they
+// can't be reached through KeplerGl's `deckGlProps`.
+// Fixed in source at src/components/src/modals/hubble-utils.ts; patch the installed
+// compiled files here until a new release is published.
+const EXPORT_PREVIEW_FILE = /(globe|swipe)-export-video-preview\.js$/;
+
+function patchExportDeviceProps(code: string): string | null {
+  const patched = code.replace(
+    /deviceProps:\s*\{\s*type:\s*'webgl',/g,
+    "deviceProps: {debug: false, type: 'webgl',"
+  );
+  return patched === code ? null : patched;
+}
+
+const exportDeviceDebugPatchPlugin = {
+  name: 'export-device-debug-patch',
+  transform(code: string, id: string) {
+    if (!EXPORT_PREVIEW_FILE.test(id)) return null;
+    const patched = patchExportDeviceProps(code);
+    return patched ? {code: patched, map: null} : null;
+  }
+};
+
+const exportDeviceDebugPatchEsbuildPlugin = {
+  name: 'export-device-debug-patch',
+  setup(build: any) {
+    build.onLoad({filter: EXPORT_PREVIEW_FILE}, async (args: any) => {
+      const {readFile} = await import('fs/promises');
+      const source = await readFile(args.path, 'utf8');
+      const patched = patchExportDeviceProps(source);
+      return patched ? {contents: patched, loader: 'js'} : null;
+    });
+  }
+};
+
 // @turf/rewind ESM entry only has `export default rewind` (no named export), but
 // @deck.gl-community/editable-layers uses `import { rewind } from '@turf/rewind'`.
 // This plugin intercepts the import and injects a shim that re-exports the default
@@ -183,7 +224,7 @@ const loadersCjsDeps = [
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [globeViewPatchPlugin, turfRewindPlugin, wasm(), react()],
+  plugins: [globeViewPatchPlugin, exportDeviceDebugPatchPlugin, turfRewindPlugin, wasm(), react()],
   server: {
     port: 8081,
     open: true
@@ -268,7 +309,11 @@ export default defineConfig({
     include: [...keplerPackages, 'apache-arrow', ...loadersCjsDeps, ...nodePolyfillDeps],
     esbuildOptions: {
       target: 'es2020',
-      plugins: [globeViewPatchEsbuildPlugin, hubbleGlInteropEsbuildPlugin]
+      plugins: [
+        globeViewPatchEsbuildPlugin,
+        exportDeviceDebugPatchEsbuildPlugin,
+        hubbleGlInteropEsbuildPlugin
+      ]
     }
   }
 });
