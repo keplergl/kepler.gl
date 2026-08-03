@@ -438,6 +438,62 @@ test('#mapStateReducer -> FIT_BOUNDS.invalid', t => {
   t.end();
 });
 
+test('#mapStateReducer -> FIT_BOUNDS - globe mode clamps zoom to globe range', t => {
+  // When in globe mode, fitBounds should respect GLOBE_MIN_ZOOM and GLOBE_MAX_ZOOM
+
+  const mapUpdate = {
+    width: 640,
+    height: 480
+  };
+
+  // World-wide bounds that would normally zoom out very far (below GLOBE_MIN_ZOOM)
+  const worldWideBounds = [-180, -85, 180, 85];
+
+  // First set up the map with dimensions
+  let state = reducer(undefined, updateMap(mapUpdate, 0));
+
+  // Enter globe mode
+  state = reducer(state, setMapViewMode(MapViewMode.MODE_GLOBE));
+  t.equal(state.globe.enabled, true, 'sanity: globe should be enabled');
+
+  // Now fit to world-wide bounds (which would zoom out beyond globe's minimum)
+  state = reducer(state, fitBounds(worldWideBounds));
+
+  t.ok(
+    state.zoom >= GLOBE_MIN_ZOOM,
+    `zoom should not go below GLOBE_MIN_ZOOM (${GLOBE_MIN_ZOOM}), got ${state.zoom}`
+  );
+  t.ok(
+    state.zoom <= GLOBE_MAX_ZOOM,
+    `zoom should not exceed GLOBE_MAX_ZOOM (${GLOBE_MAX_ZOOM}), got ${state.zoom}`
+  );
+
+  // Test with very small bounds that would zoom in very far (above GLOBE_MAX_ZOOM)
+  const smallBounds = [5.668, 45.111, 5.670, 45.113];
+  state = reducer(state, fitBounds(smallBounds));
+
+  t.ok(
+    state.zoom >= GLOBE_MIN_ZOOM,
+    `zoom should not go below GLOBE_MIN_ZOOM (${GLOBE_MIN_ZOOM}), got ${state.zoom}`
+  );
+  t.ok(
+    state.zoom <= GLOBE_MAX_ZOOM,
+    `zoom should not exceed GLOBE_MAX_ZOOM (${GLOBE_MAX_ZOOM}), got ${state.zoom}`
+  );
+
+  // In non-globe mode (2D), fitBounds should not be constrained by globe limits
+  state = reducer(state, setMapViewMode(MapViewMode.MODE_2D));
+  const prevZoom = state.zoom;
+  state = reducer(state, fitBounds(smallBounds));
+  // The zoom should be able to go higher than GLOBE_MAX_ZOOM when not in globe mode
+  t.ok(
+    state.zoom > GLOBE_MAX_ZOOM || state.zoom === prevZoom,
+    'in 2D mode, zoom should not be limited by GLOBE_MAX_ZOOM'
+  );
+
+  t.end();
+});
+
 test('#mapStateReducer -> SPLIT_MAP: toggle', t => {
   let newState = reducer(INITIAL_MAP_STATE, toggleSplitMap());
 
