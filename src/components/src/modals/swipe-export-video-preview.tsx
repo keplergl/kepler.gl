@@ -13,7 +13,11 @@ import styled from 'styled-components';
 import {DeckAdapter} from '@hubble.gl/core';
 import {createKeplerLayers} from '@hubble.gl/react';
 import {compositeSwipeFrame, getSwipePercentageAtTime, SwipeEasing} from './swipe-composite-utils';
-import {getGlobeExportLayers} from './hubble-utils';
+import {
+  EXPORT_DECK_DEVICE_PROPS,
+  EXPORT_OVERLAY_DEVICE_PROPS,
+  getGlobeExportLayers
+} from './hubble-utils';
 
 function setRef<T>(ref: React.Ref<T> | React.MutableRefObject<T>, value: T) {
   if (typeof ref === 'function') {
@@ -316,7 +320,7 @@ export class SwipeExportVideoPreview extends Component<
         <MapLayer $width={width} $height={height}>
           <DeckGL
             ref={ref => setRef(deckRef, ref?.deck as any)}
-            deviceProps={{type: 'webgl', webgl: {preserveDrawingBuffer: true}}}
+            deviceProps={EXPORT_DECK_DEVICE_PROPS}
             {...adapterProps}
             viewState={viewState}
             onViewStateChange={({viewState: vs}: any) => this.props.setViewState(vs)}
@@ -353,7 +357,7 @@ export class SwipeExportVideoPreview extends Component<
         >
           <DeckGLOverlay
             ref={deckRef}
-            deviceProps={{type: 'webgl', webgl: {stencil: true}}}
+            deviceProps={EXPORT_OVERLAY_DEVICE_PROPS}
             {...adapter.getProps({deck: deck as any, extraProps: {...deckProps, layers: keplerLayers}})}
           />
         </ReactMapGL>
