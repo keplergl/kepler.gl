@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
 import Window from 'global/window';
@@ -28,6 +28,7 @@ import Announcement, {FormLink} from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
+import BugReportModal from './components/bug-report-modal';
 import {CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS} from './constants/default-settings';
 import {messages} from './constants/localization';
 
@@ -48,11 +49,9 @@ import {
 import {CLOUD_PROVIDERS} from './cloud-providers';
 import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
 
-const KeplerGl = require('@kepler.gl/components').injectComponents([
-  replaceLoadDataModal(),
-  replaceMapControl(),
-  replacePanelHeader()
-]);
+// KeplerGl is instantiated inside the App component so the replacePanelHeader
+// factory can receive the onBugReportClick callback via closure.
+// See useMemo usage below.
 
 // Sample data
 /* eslint-disable no-unused-vars */
@@ -154,6 +153,22 @@ const StyledVerticalResizeHandle = styled(PanelResizeHandle)`
 
 const App = props => {
   const [showBanner, toggleShowBanner] = useState(false);
+  const [bugReportOpen, setBugReportOpen] = useState(false);
+  const handleOpenBugReport = useCallback(() => setBugReportOpen(true), []);
+  const handleCloseBugReport = useCallback(() => setBugReportOpen(false), []);
+
+  // KeplerGl is created here so replacePanelHeader can receive the callback.
+  // useMemo ensures injectComponents is called only once per mount.
+  const KeplerGl = useMemo(
+    () =>
+      require('@kepler.gl/components').injectComponents([
+        replaceLoadDataModal(),
+        replaceMapControl(),
+        replacePanelHeader(handleOpenBugReport)
+      ]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
   const {id, provider} = useParams();
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -882,6 +897,7 @@ const App = props => {
             <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
               <Announcement onDisable={_disableBanner} />
             </Banner>
+            <BugReportModal isOpen={bugReportOpen} onClose={handleCloseBugReport} />
             <div style={CONTAINER_STYLE}>
               <PanelGroup direction="horizontal">
                 <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>

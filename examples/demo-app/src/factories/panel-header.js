@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {PanelHeaderFactory, Icons} from '@kepler.gl/components';
-import {BUG_REPORT_LINK, USER_GUIDE_DOC} from '@kepler.gl/constants';
+import {USER_GUIDE_DOC} from '@kepler.gl/constants';
 
 export function CustomPanelHeaderFactory(...deps) {
   const PanelHeader = PanelHeaderFactory(...deps);
@@ -13,9 +13,8 @@ export function CustomPanelHeaderFactory(...deps) {
       {
         id: 'bug',
         iconComponent: Icons.Bug,
-        href: BUG_REPORT_LINK,
-        blank: true,
         tooltip: 'Bug Report',
+        // Replaced at runtime by replacePanelHeader(onBugReportClick)
         onClick: () => {}
       },
       {
@@ -39,6 +38,26 @@ export function CustomPanelHeaderFactory(...deps) {
 
 CustomPanelHeaderFactory.deps = PanelHeaderFactory.deps;
 
-export function replacePanelHeader() {
-  return [PanelHeaderFactory, CustomPanelHeaderFactory];
+/**
+ * Returns the [PanelHeaderFactory, CustomPanelHeaderFactory] pair for
+ * injectComponents, with the bug-report button wired to `onBugReportClick`.
+ *
+ * @param {() => void} [onBugReportClick] - called when the Bug Report icon is clicked
+ */
+export function replacePanelHeader(onBugReportClick) {
+  // Build a thin wrapper that forwards deps and patches the onClick at
+  // factory-creation time using the closure over onBugReportClick.
+  function PatchedPanelHeaderFactory(...deps) {
+    const PanelHeader = CustomPanelHeaderFactory(...deps);
+    if (typeof onBugReportClick === 'function') {
+      const items = PanelHeader.defaultProps.actionItems.map(item =>
+        item.id === 'bug' ? {...item, onClick: onBugReportClick} : item
+      );
+      PanelHeader.defaultProps = {...PanelHeader.defaultProps, actionItems: items};
+    }
+    return PanelHeader;
+  }
+  PatchedPanelHeaderFactory.deps = PanelHeaderFactory.deps;
+
+  return [PanelHeaderFactory, PatchedPanelHeaderFactory];
 }
