@@ -176,6 +176,7 @@ export type RenderSubLayersCustomProps = ColorRescaling &
     hasCategoricalColorMap: boolean;
     hasShadowEffect?: boolean;
     showTileBorders?: boolean;
+    showTileDebugInfo?: boolean;
   };
 
 export interface RenderSubLayersDefaultProps {

@@ -500,7 +500,8 @@ export const getGlobeBaseLayers = ({
   globe,
   mapStyleType,
   basemapProvider,
-  latitude
+  latitude,
+  zoom
 }: {
   mapboxApiAccessToken: string;
   globe: Globe;
@@ -516,6 +517,11 @@ export const getGlobeBaseLayers = ({
    * omitted, no latitude compensation is applied (equator behavior).
    */
   latitude?: number;
+  /**
+   * Current map zoom level. Used to fade the atmosphere effects out when the user
+   * zooms in past a certain threshold (mirrors Google Maps globe behaviour).
+   */
+  zoom?: number;
 }): Layer[] => {
   const {config} = globe;
 
@@ -534,7 +540,7 @@ export const getGlobeBaseLayers = ({
   const hasTileAccess = useCarto || Boolean(mapboxApiAccessToken);
 
   return [
-    config.atmosphere ? getGlobeAtmosphereSkyLayer({config}) : null,
+    config.atmosphere ? getGlobeAtmosphereSkyLayer({config, zoom}) : null,
 
     // Depth-only cross-section disk: writes depth at the globe's silhouette so
     // far-side geometry (arcs/lines) is occluded by the planet.
@@ -678,7 +684,7 @@ export const getGlobeBaseLayers = ({
   ].filter(Boolean) as Layer[];
 };
 
-export const getGlobeTopLayers = ({globe}: {globe: Globe}): Layer[] => {
+export const getGlobeTopLayers = ({globe, zoom}: {globe: Globe; zoom?: number}): Layer[] => {
   const {config} = globe;
-  return [config.atmosphere ? getGlobeAtmosphereLayer({config}) : null].filter(Boolean) as Layer[];
+  return [config.atmosphere ? getGlobeAtmosphereLayer({config, zoom}) : null].filter(Boolean) as Layer[];
 };

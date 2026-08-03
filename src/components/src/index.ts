@@ -161,6 +161,7 @@ export {default as LazyTippy} from './map/lazy-tippy';
 export {default as LocalePanelFactory} from './map/locale-panel';
 export {default as MapControlFactory} from './map/map-control';
 export {default as MapNavigationControlFactory} from './map/map-navigation-control';
+export {default as MapScaleFactory} from './map/map-scale';
 export {default as MapControlPanelFactory} from './map/map-control-panel';
 export {default as MapControlToolbarFactory} from './map/map-control-toolbar';
 export {default as MapControlTooltipFactory} from './map/map-control-tooltip';

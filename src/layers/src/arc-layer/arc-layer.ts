@@ -519,7 +519,8 @@ export default class ArcLayer extends Layer {
     // whole ribbon renders, without changing the global culling that the globe
     // surface relies on.
     const isGlobeMode = Boolean(mapState?.globe?.enabled);
-    const globeParameters = isGlobeMode ? {parameters: {cull: false}} : {};
+    const blendingParameters = mapState?.layerParameters ?? {};
+    const globeParameters = isGlobeMode ? {parameters: {cull: false, ...blendingParameters}} : {};
 
     const useArrowLayer = Boolean(this.geoArrowVector0);
 

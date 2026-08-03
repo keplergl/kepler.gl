@@ -41,6 +41,28 @@ const v3SunPosNow = angleToSunPos(sunPosNow.azimuth + Math.PI);
 
 const NUM_SAMPLE_RAYS = 3;
 
+/**
+ * Zoom range over which the atmosphere effect fades out.
+ * Below ATMOSPHERE_FADE_ZOOM_START the effect is fully visible.
+ * Above ATMOSPHERE_FADE_ZOOM_END the effect is completely hidden.
+ */
+const ATMOSPHERE_FADE_ZOOM_START = 3.5;
+const ATMOSPHERE_FADE_ZOOM_END = 6;
+
+/**
+ * Convert a mapState zoom level to a [0, 1] atmosphere opacity multiplier.
+ * Returns 1 (fully visible) below ATMOSPHERE_FADE_ZOOM_START, smoothly
+ * interpolates to 0 between the two thresholds, and returns 0 above
+ * ATMOSPHERE_FADE_ZOOM_END.
+ */
+export function atmosphereZoomFade(zoom: number): number {
+  if (zoom <= ATMOSPHERE_FADE_ZOOM_START) return 1;
+  if (zoom >= ATMOSPHERE_FADE_ZOOM_END) return 0;
+  const t = (zoom - ATMOSPHERE_FADE_ZOOM_START) / (ATMOSPHERE_FADE_ZOOM_END - ATMOSPHERE_FADE_ZOOM_START);
+  // Smooth-step for a perceptually gentle transition.
+  return 1 - t * t * (3 - 2 * t);
+}
+
 const ATMOSPHERE_UNIFORMS = {
   v3SunPos: v3SunPosNow,
   exposure: 2,
@@ -59,20 +81,23 @@ const ATMOSPHERE_UNIFORMS = {
 
 type AtmosphereLayerProps = {
   config: GlobeConfig;
+  /** Pre-computed [0, 1] zoom-fade multiplier; 1 = fully visible, 0 = hidden. */
+  zoomFade: number;
 };
 
 export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, AtmosphereLayerProps> {
   static layerName = 'AtmosphereLayerRealistic';
 
   draw({uniforms}: {uniforms: object}): void {
-    const {config} = this.props;
+    const {config, zoomFade} = this.props;
     const model = this.state.model;
     if (model) {
       (model as any).props.uniforms = {
         ...(model as any).props.uniforms,
         ...ATMOSPHERE_UNIFORMS,
         fTerminatorOpacityFactor: config.terminator ? config.terminatorOpacity : 0,
-        v3SunPos: config.azimuth ? angleToSunPos(toRadians(config.azimuthAngle)) : v3SunPosNow
+        v3SunPos: config.azimuth ? angleToSunPos(toRadians(config.azimuthAngle)) : v3SunPosNow,
+        fAtmosphereZoomFade: zoomFade
       };
     }
     super.draw({uniforms});
@@ -100,6 +125,7 @@ export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, AtmosphereLay
 
           uniform float fTerminatorAttenuateFactor;
           uniform float fTerminatorOpacityFactor;
+          uniform float fAtmosphereZoomFade;
 
           const int nSamples = ${NUM_SAMPLE_RAYS};
 
@@ -176,6 +202,11 @@ export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, AtmosphereLay
           // reaches full darkening on the night side (<= -0.2).
           float fNightMask = smoothstep(0.2, -0.2, fLightAngle);
           fragColor.a *= fNightMask;
+
+          // Fade out the entire day/night shading effect as the user zooms in.
+          // At zoom levels above ATMOSPHERE_FADE_ZOOM_END the effect is invisible,
+          // so it doesn't obscure map detail at street/city scale.
+          fragColor.a *= fAtmosphereZoomFade;
         `,
         'fs:DECKGL_FILTER_COLOR': ``
       }
@@ -187,13 +218,14 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, Atmosphere
   static layerName = 'AtmosphereSkyLayerRealistic';
 
   draw({uniforms}: {uniforms: object}): void {
-    const {config} = this.props;
+    const {config, zoomFade} = this.props;
     const model = this.state.model;
     if (model) {
       (model as any).props.uniforms = {
         ...(model as any).props.uniforms,
         ...ATMOSPHERE_UNIFORMS,
-        v3SunPos: config.azimuth ? angleToSunPos(toRadians(config.azimuthAngle)) : v3SunPosNow
+        v3SunPos: config.azimuth ? angleToSunPos(toRadians(config.azimuthAngle)) : v3SunPosNow,
+        fAtmosphereZoomFade: zoomFade
       };
     }
     super.draw({uniforms});
@@ -218,6 +250,7 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, Atmosphere
           uniform float fKr4PI;
           uniform float fKm4PI;
           uniform float fScaleDepth;
+          uniform float fAtmosphereZoomFade;
 
           const int nSamples = ${NUM_SAMPLE_RAYS};
 
@@ -295,6 +328,9 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, Atmosphere
 
           fragColor = vec4(skyColor, 1.0);
           fragColor.a = fragColor.b;
+
+          // Fade the sky halo out as the user zooms in past continent scale.
+          fragColor.a *= fAtmosphereZoomFade;
         `,
         'fs:DECKGL_FILTER_COLOR': ``
       }
@@ -315,11 +351,13 @@ const ATMOSPHERE_SKY_PARAMETERS = {
   blendEquation: [0x8006, 0x8006]
 };
 
-export const getGlobeAtmosphereLayer = ({config}: {config: GlobeConfig}) => {
+export const getGlobeAtmosphereLayer = ({config, zoom}: {config: GlobeConfig; zoom?: number}) => {
+  const zoomFade = atmosphereZoomFade(zoom ?? 0);
   return new AtmosphereLayerRealistic({
     id: 'atmosphere',
     data: [[0, 0, 0]],
     config,
+    zoomFade,
     coordinateOrigin: [0, 0, 0],
     coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
     getPosition: ((d: number[]) => d) as any,
@@ -329,11 +367,13 @@ export const getGlobeAtmosphereLayer = ({config}: {config: GlobeConfig}) => {
   });
 };
 
-export const getGlobeAtmosphereSkyLayer = ({config}: {config: GlobeConfig}) => {
+export const getGlobeAtmosphereSkyLayer = ({config, zoom}: {config: GlobeConfig; zoom?: number}) => {
+  const zoomFade = atmosphereZoomFade(zoom ?? 0);
   return new AtmosphereSkyLayerRealistic({
     id: 'atmosphere-sky',
     data: [[0, 0, 0]],
     config,
+    zoomFade,
     coordinateOrigin: [0, 0, 0],
     coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
     getPosition: ((d: number[]) => d) as any,

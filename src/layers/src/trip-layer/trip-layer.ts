@@ -788,7 +788,8 @@ export default class TripLayer extends Layer {
       wrapLongitude: false,
       parameters: {
         depthTest: mapState.dragRotate,
-        depthMask: false
+        depthMask: false,
+        ...(mapState?.layerParameters ?? {})
       },
       trailLength: visConfig.trailLength * 1000,
       fadeTrail: visConfig.fadeTrail,
@@ -826,10 +827,9 @@ export default class TripLayer extends Layer {
           _animations: {
             '*': {speed: 5}
           },
-          parameters: {depthTest: true, blend: false},
+          parameters: {depthTest: true, blend: false, ...(mapState?.layerParameters ?? {})},
           updateTriggers: {
             getTransformMatrix: {
-              ...this.config.columns,
               currentTime: animationConfig.currentTime,
               rollField,
               pitchField,
