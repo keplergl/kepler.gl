@@ -16,29 +16,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const port = 8080;
 
-// @kepler.gl/deckgl-layers@3.3.0-alpha.5 contains a Babel compilation bug in
-// globe-view.js: `(super.applyConstraints as any)(props)` was compiled to a
-// property-GET (_superPropGet with r=1) followed by a plain call, losing the
-// `this` binding and causing `TypeError: Cannot read properties of undefined
-// (reading '_constrainZoom')` when globe mode is activated.
-// The correct form is a method-CALL (_superPropGet with r=2) that wraps the
-// invocation in `p.apply(this, args)`.
-// Fixed in source at src/deckgl-layers/src/globe/globe-view.ts; patch the
-// installed compiled file here until a new release is published.
-const globeViewPatchPlugin = {
-  name: 'globe-view-patch',
-  setup(build) {
-    build.onLoad({filter: /globe-view\.js$/}, async args => {
-      const source = await fs.promises.readFile(args.path, 'utf8');
-      const patched = source.replace(
-        '_superPropGet(PatchedGlobeState, "applyConstraints", this, 1)(props)',
-        '_superPropGet(PatchedGlobeState, "applyConstraints", this, 3)([props])'
-      );
-      return {contents: patched, loader: 'js'};
-    });
-  }
-};
-
 // @turf/rewind ships as `module.exports = fn` (no named export), but
 // @deck.gl-community/editable-layers uses `import { rewind } from '@turf/rewind'`.
 // This shim patches the single missing property so the named import resolves.
@@ -155,7 +132,6 @@ const config = {
   // an esbuild resolver plugin that re-resolves the specifier from __dirname so that
   // Node resolution always picks up the local node_modules copy.
   plugins: [
-    globeViewPatchPlugin,
     hubbleGlInteropPlugin,
     {
       name: 'dedupe-deck-luma',

@@ -11,81 +11,6 @@ import {fileURLToPath} from 'url';
 const _require = createRequire(import.meta.url);
 const _dirname = dirname(fileURLToPath(import.meta.url));
 
-// @kepler.gl/deckgl-layers@3.3.0-alpha.5 contains a Babel compilation bug in
-// globe-view.js: `(super.applyConstraints as any)(props)` was compiled to a
-// property-GET (_superPropGet with r=1) followed by a plain call, losing the
-// `this` binding and causing `TypeError: Cannot read properties of undefined
-// (reading '_constrainZoom')` when globe mode is activated.
-// The correct form is a method-CALL (_superPropGet with r=2) that wraps the
-// invocation in `p.apply(this, args)`.
-// Fixed in source at src/deckgl-layers/src/globe/globe-view.ts; patch the
-// installed compiled file here until a new release is published.
-const GLOBE_VIEW_BUGGY = '_superPropGet(PatchedGlobeState, "applyConstraints", this, 1)(props)';
-const GLOBE_VIEW_FIXED = '_superPropGet(PatchedGlobeState, "applyConstraints", this, 3)([props])';
-
-// Vite plugin: applied during production Rollup build and Vite's transform step.
-const globeViewPatchPlugin = {
-  name: 'globe-view-patch',
-  transform(code: string, id: string) {
-    if (!id.includes('globe-view') || !code.includes(GLOBE_VIEW_BUGGY)) return null;
-    return {code: code.replace(GLOBE_VIEW_BUGGY, GLOBE_VIEW_FIXED), map: null};
-  }
-};
-
-// esbuild plugin: applied during optimizeDeps pre-bundling (dev mode).
-const globeViewPatchEsbuildPlugin = {
-  name: 'globe-view-patch',
-  setup(build: any) {
-    build.onLoad({filter: /globe-view\.js$/}, async (args: any) => {
-      const {readFile} = await import('fs/promises');
-      const source = await readFile(args.path, 'utf8');
-      if (!source.includes(GLOBE_VIEW_BUGGY)) return null;
-      return {contents: source.replace(GLOBE_VIEW_BUGGY, GLOBE_VIEW_FIXED), loader: 'js'};
-    });
-  }
-};
-
-// @kepler.gl/components@3.3.0-alpha.5 hardcodes `deviceProps` on the video export
-// preview Deck instances without opting out of luma.gl's debug device. luma turns
-// `debug` on whenever NODE_ENV !== 'production' (which Vite sets during `vite dev`)
-// and then wraps every render pass in a TIME_ELAPSED_EXT timer query. WebGL2 allows
-// only one such query at a time and globe export issues several passes per frame,
-// so the debug context throws INVALID_OPERATION and the export modal crashes.
-// These Deck instances are created inside the modal, so unlike the map's Deck they
-// can't be reached through KeplerGl's `deckGlProps`.
-// Fixed in source at src/components/src/modals/hubble-utils.ts; patch the installed
-// compiled files here until a new release is published.
-const EXPORT_PREVIEW_FILE = /(globe|swipe)-export-video-preview\.js$/;
-
-function patchExportDeviceProps(code: string): string | null {
-  const patched = code.replace(
-    /deviceProps:\s*\{\s*type:\s*'webgl',/g,
-    "deviceProps: {debug: false, type: 'webgl',"
-  );
-  return patched === code ? null : patched;
-}
-
-const exportDeviceDebugPatchPlugin = {
-  name: 'export-device-debug-patch',
-  transform(code: string, id: string) {
-    if (!EXPORT_PREVIEW_FILE.test(id)) return null;
-    const patched = patchExportDeviceProps(code);
-    return patched ? {code: patched, map: null} : null;
-  }
-};
-
-const exportDeviceDebugPatchEsbuildPlugin = {
-  name: 'export-device-debug-patch',
-  setup(build: any) {
-    build.onLoad({filter: EXPORT_PREVIEW_FILE}, async (args: any) => {
-      const {readFile} = await import('fs/promises');
-      const source = await readFile(args.path, 'utf8');
-      const patched = patchExportDeviceProps(source);
-      return patched ? {contents: patched, loader: 'js'} : null;
-    });
-  }
-};
-
 // @turf/rewind ESM entry only has `export default rewind` (no named export), but
 // @deck.gl-community/editable-layers uses `import { rewind } from '@turf/rewind'`.
 // This plugin intercepts the import and injects a shim that re-exports the default
@@ -224,7 +149,7 @@ const loadersCjsDeps = [
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [globeViewPatchPlugin, exportDeviceDebugPatchPlugin, turfRewindPlugin, wasm(), react()],
+  plugins: [turfRewindPlugin, wasm(), react()],
   server: {
     port: 8081,
     open: true
@@ -309,11 +234,7 @@ export default defineConfig({
     include: [...keplerPackages, 'apache-arrow', ...loadersCjsDeps, ...nodePolyfillDeps],
     esbuildOptions: {
       target: 'es2020',
-      plugins: [
-        globeViewPatchEsbuildPlugin,
-        exportDeviceDebugPatchEsbuildPlugin,
-        hubbleGlInteropEsbuildPlugin
-      ]
+      plugins: [hubbleGlInteropEsbuildPlugin]
     }
   }
 });
