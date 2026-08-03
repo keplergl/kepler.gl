@@ -15,6 +15,11 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.6] - Aug 3 2026
+
+- 0ec3dd86 fix: globe crashes in dev mode (#3605)
+- 800083e0 fix: more fixes to WMS layer (#3603)
+
 ## [3.3.0-alpha.5] - Aug 2 2026
 
 - c82030ba chore(deps): bump @deck.gl-community/editable-layers from 9.3.7 to 9.3.8
