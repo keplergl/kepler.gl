@@ -237,7 +237,12 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           }(Redux, middleWares));
 
           const store = (function createStore(redux, enhancers) {
-            const initialState = {};
+            // Pre-seed the map style so the correct basemap is active from the
+            // very first render, avoiding a flash of the default dark basemap.
+            const savedStyleType = ${JSON.stringify(options.config?.mapStyle?.styleType ?? null)};
+            const initialState = savedStyleType
+              ? {keplerGl: {map: {mapStyle: {styleType: savedStyleType}}}}
+              : {};
 
             return redux.createStore(
               reducers,
