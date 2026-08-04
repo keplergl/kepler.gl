@@ -34,12 +34,6 @@ const turfInteropPlugin = {
   }
 };
 
-// @hubble.gl/react now ships proper ESM (no longer compiled with isNodeMode=1).
-// The old CJS shim for react-map-gl and @deck.gl/react is no longer needed and
-// was causing a double-init of luma.gl: the shim used require() which pulled in
-// the CJS chain (@deck.gl/core -> @luma.gl/* CJS) while kepler.gl ESM pulled in
-// the ESM luma.gl, resulting in two separate Luma class instances in the bundle.
-
 const config = {
   platform: 'browser',
   format: 'iife',
@@ -61,31 +55,14 @@ const config = {
     'process.env.OpenAIToken': JSON.stringify(process.env.OpenAIToken || ''),
     'process.env.NODE_DEBUG': JSON.stringify(false)
   },
-  // Force every @deck.gl/*, @luma.gl/* and @math.gl/* import — regardless of which
-  // node_modules directory it is resolved from — to use the single copy installed in
-  // this example's own node_modules. Without this, packages resolved from the monorepo
-  // root (e.g. @deck.gl/mapbox) pull in the older root-level @deck.gl/core@9.3.1,
-  // triggering the "multiple versions detected" warning and the luma.gl double-init
-  // WebGL-debug-mode penalty.
-  //
-  // Note: esbuild's `alias` option does raw string substitution and does NOT consult
-  // the target package's `exports` field for subpath resolution, so it cannot be used
-  // here (e.g. `@luma.gl/webgl/constants` → `<dir>/constants` fails). Instead we use
-  // an esbuild resolver plugin that re-resolves the specifier from __dirname so that
-  // Node resolution always picks up the local node_modules copy.
+  // Re-resolve @deck.gl/*, @luma.gl/*, @math.gl/*, @hubble.gl/*, styled-components,
+  // react and react-dom from the example root to guarantee a single instance of
+  // each package regardless of where the import originates.
   plugins: [
     {
       name: 'dedupe-deck-luma',
       setup(build) {
-        // Re-resolve any @deck.gl/*, @luma.gl/*, @math.gl/*, @hubble.gl/*,
-        // react-map-gl, styled-components, react, and react-dom import from the
-        // example root so that Node's resolution always lands in this example's
-        // own node_modules (single instance per package).
-        // esbuild automatically skips the current plugin for the nested resolve()
-        // call, preventing infinite recursion.
         build.onResolve({filter: /^(@(deck|luma|math|hubble)\.gl\/|styled-components$|react$|react-dom$)/}, async args => {
-          // Explicit recursion guard: esbuild is supposed to skip the current plugin
-          // for nested build.resolve() calls, but this ensures it even if it doesn't.
           if (args.pluginData?.deduped) return;
           const result = await build.resolve(args.path, {
             resolveDir: __dirname,
