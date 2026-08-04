@@ -84,10 +84,33 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           // Trigger es-module-shims "shim mode" so it always parses the
           // importmap-shim / module-shim tags below instead of deferring to the
           // native loader (which fails under file://).
-          window.esmsInitOptions = {shimMode: true, version: '${ES_MODULE_SHIMS_VERSION}'};
+          window.esmsInitOptions = {shimMode: true};
         </script>
-        <script async src="https://ga.jspm.io/npm:es-module-shims@${ES_MODULE_SHIMS_VERSION}/dist/es-module-shims.js" crossorigin="anonymous"></script>
-
+        <script>
+          // Replace the loading overlay with an error message.
+          // Safe to call at any time — once React has mounted and removed
+          // #kepler-load-screen this becomes a no-op.
+          window._keplerShowLoadError = function(msg) {
+            var loadScreen = document.getElementById('kepler-load-screen');
+            if (!loadScreen) return;
+            var spinner = loadScreen.querySelector('.kepler-spinner');
+            var label = loadScreen.querySelector('.kepler-load-label');
+            if (spinner) spinner.style.display = 'none';
+            if (label) label.style.display = 'none';
+            var errEl = document.createElement('div');
+            errEl.className = 'kepler-load-error';
+            errEl.textContent = msg || 'Failed to load the map. Check your internet connection and reload the page.';
+            loadScreen.appendChild(errEl);
+          };
+          // Catch unhandled promise rejections (e.g. ES module imports failing
+          // inside the module-shim script before loadScript is ever called).
+          window.addEventListener('unhandledrejection', function(event) {
+            console.error('kepler.gl: unhandled rejection during map load', event.reason);
+            window._keplerShowLoadError('Failed to load the map. Check your internet connection and reload the page.');
+          });
+        </script>
+        <script src="https://unpkg.com/es-module-shims@${ES_MODULE_SHIMS_VERSION}/dist/es-module-shims.js" crossorigin="anonymous"></script>
+        
         <script type="importmap-shim">
           {
             "imports": {
@@ -155,10 +178,44 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
             })
             .catch(function(error) {
               console.error('kepler.gl: failed to load UMD bundle', error);
+              window._keplerShowLoadError('Failed to load the map bundle. Check your internet connection and reload the page.');
             });
         </script>
         <style type="text/css">
           body {margin: 0; padding: 0; overflow: hidden;}
+          #kepler-load-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #29323c;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            z-index: 9999;
+            font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+            color: #a0a7b4;
+          }
+          #kepler-load-screen .kepler-spinner {
+            width: 48px; height: 48px;
+            border: 4px solid rgba(255,255,255,0.08);
+            border-top-color: #1fbad6;
+            border-radius: 50%;
+            animation: kepler-spin 0.8s linear infinite;
+          }
+          #kepler-load-screen .kepler-load-label {
+            font-size: 13px;
+            letter-spacing: 0.5px;
+          }
+          #kepler-load-screen .kepler-load-error {
+            font-size: 13px;
+            color: #f05e45;
+            max-width: 360px;
+            text-align: center;
+            line-height: 1.5;
+          }
+          @keyframes kepler-spin { to { transform: rotate(360deg); } }
         </style>
 
         <!--MapBox token-->
@@ -173,7 +230,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
            * Provide your MapBox Token
            **/
           window.MAPBOX_TOKEN = '${options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN'}';
-          window.WARNING_MESSAGE = 'Please Provide a Mapbox Token in order to use Kepler.gl. Edit this file and fill out MAPBOX_TOKEN with your access key';
+          window.WARNING_MESSAGE = 'No Mapbox token provided. Mapbox basemaps will not be available. To enable them, edit this file and set MAPBOX_TOKEN to your Mapbox access key.';
         </script>
 
         <!-- GA: Delete this as you wish, However to pat ourselves on the back, we only track anonymous pageview to understand how many people are using kepler.gl. -->
@@ -199,7 +256,10 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
       <body>
         <!-- We will put our React component inside this div. -->
         <div id="app">
-          <!-- Kepler.gl map will be placed here-->
+          <div id="kepler-load-screen">
+            <div class="kepler-spinner"></div>
+            <div class="kepler-load-label">Loading map…</div>
+          </div>
         </div>
 
         <!--
@@ -210,21 +270,27 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <script type="text/kepler-bootstrap">
           /* Validate Mapbox Token */
           if ((MAPBOX_TOKEN || '') === '' || MAPBOX_TOKEN === 'PROVIDE_MAPBOX_TOKEN') {
-            alert(WARNING_MESSAGE);
+            console.warn('[kepler.gl]', WARNING_MESSAGE);
           }
 
           /** STORE **/
-          const reducers = (function createReducers(redux, keplerGl) {
+          // Pre-seed styleType so the correct basemap fetch starts on the very
+          // first render, avoiding a flash of the default dark basemap.
+          // options.config has the versioned envelope shape: { version, config: { mapStyle, ... } }
+          const savedStyleType = ${JSON.stringify(options.config?.config?.mapStyle?.styleType ?? null)};
+
+          const reducers = (function createReducers(redux, keplerGl, styleType) {
             return redux.combineReducers({
               // mount keplerGl reducer
               keplerGl: keplerGl.keplerGlReducer.initialState({
                 uiState: {
                   readOnly: ${options.mode === EXPORT_HTML_MAP_MODES.READ},
                   currentModal: null
-                }
+                },
+                ...(styleType ? {mapStyle: {styleType}} : {})
               })
             });
-          }(Redux, KeplerGl));
+          }(Redux, KeplerGl, savedStyleType));
 
           const middleWares = (function createMiddlewares(keplerGl) {
             return keplerGl.enhanceReduxMiddleware([
@@ -237,11 +303,9 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           }(Redux, middleWares));
 
           const store = (function createStore(redux, enhancers) {
-            const initialState = {};
-
             return redux.createStore(
               reducers,
-              initialState,
+              {},
               redux.compose(enhancers)
             );
           }(Redux, enhancers));
@@ -359,6 +423,13 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                 window.addEventListener('resize', handleResize);
                 return function() {window.removeEventListener('resize', handleResize);};
               }, []);
+              // Remove the loading overlay after the first render is painted.
+              // useEffect fires post-commit, so this is safe under React 19's
+              // concurrent renderer — the map is visible before the overlay goes away.
+              react.useEffect(function removeLoadScreen() {
+                var loadScreen = document.getElementById('kepler-load-screen');
+                if (loadScreen) loadScreen.remove();
+              }, []);
               return react.createElement(
                 'div',
                 {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
@@ -403,7 +474,11 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               config
             );
 
-            // For some reason Kepler overwrites the config without extra wait time
+            // The 500 ms delay is a historical workaround for a race where
+            // keplerGl re-initialises and overwrites config applied synchronously.
+            // The pre-seeded styleType above removes the basemap flash on first
+            // render; this dispatch still applies the full saved config (layers,
+            // viewport, layer groups, etc.) once the component has settled.
             window.setTimeout(() => {
               store.dispatch(
                 keplerGl.addDataToMap({

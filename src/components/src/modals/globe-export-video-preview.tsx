@@ -7,6 +7,7 @@ import type {Deck, DeckProps, MapViewState} from '@deck.gl/core';
 import styled from 'styled-components';
 
 import {DeckAdapter} from '@hubble.gl/core';
+import {EXPORT_DECK_DEVICE_PROPS} from './hubble-utils';
 
 const PreviewContainer = styled.div<{$width: number; $height: number; $background: string}>`
   width: ${props => props.$width}px;
@@ -97,7 +98,7 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
           ref={ref => {
             this.deckRef.current = (ref?.deck as any) || null;
           }}
-          deviceProps={{type: 'webgl', webgl: {preserveDrawingBuffer: true}}}
+          deviceProps={EXPORT_DECK_DEVICE_PROPS}
           {...adapterProps}
           viewState={viewState}
           onViewStateChange={({viewState: vs}: any) => setViewState(vs)}

@@ -85,6 +85,14 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       width: number;
       height: number;
     };
+    inFlightRequestParameters?: {
+      bbox: [number, number, number, number];
+      boundingBox: [[number, number], [number, number]];
+      layers: string[];
+      srs: 'EPSG:4326' | 'EPSG:3857';
+      width: number;
+      height: number;
+    };
     lastRequestId: number;
     _nextRequestId: number;
     /** TODO: Change any => setTimeout return type. Different between Node and browser... */
@@ -220,6 +228,19 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       ? getGlobeVisibleBounds(viewport)
       : viewport.getBounds();
     const {width, height} = viewport;
+    
+    // Edge case: when bounds are perfectly symmetric around 0° (both longitude and latitude),
+    // it can cause rendering artifacts with EPSG:4326 on the globe.
+    // Add asymmetry to avoid this issue.
+    if (viewport.resolution && bounds) {
+      const minLat = bounds[1];
+      const maxLat = bounds[3];
+      // Check if latitude bounds are symmetric around 0° (within 0.1° tolerance)
+      if (Math.abs(minLat + maxLat) < 0.1 && Math.abs(minLat) > 1) {
+        bounds[3] += 0.1;
+      }
+    }
+    
     let {srs} = this.props;
     if (srs === 'auto') {
       // BitmapLayer only supports LNGLAT or CARTESIAN (Web-Mercator)
@@ -249,16 +270,16 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       requestParams.bbox = [minX, minY, maxX, maxY];
     }
 
-    // Skip request if parameters haven't meaningfully changed
+    // Skip request if parameters haven't meaningfully changed from an in-flight request
     if (
-      this.state.lastRequestParameters &&
-      this._areRequestParamsEqual(this.state.lastRequestParameters, requestParams)
+      this.state.inFlightRequestParameters &&
+      this._areRequestParamsEqual(this.state.inFlightRequestParameters, requestParams)
     ) {
       return;
     }
 
-    // Skip request if the new view is already fully covered by the last requested
-    // image at comparable resolution. This is very common while panning (and small
+    // Skip request if the new view is already fully covered by the last COMPLETED request
+    // at comparable resolution. This is very common while panning (and small
     // zoom-ins) within a larger, recently fetched extent — e.g. on the globe a
     // single request can cover the whole visible hemisphere, so rotating around it
     // shouldn't hit the network again. The existing image is simply repositioned by
@@ -273,25 +294,46 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
 
     // During video export, throttle zoom-in requests to only fire on zoom level crossings.
     // The existing image is stretched by the BitmapLayer until the next level is reached.
+    // However, always allow requests if the new view isn't fully covered by the last image.
     const gl = this.context.gl;
     const isExporting = gl?.getContextAttributes?.()?.preserveDrawingBuffer;
+    
     if (isExporting && this.state._lastRequestZoom >= 0) {
       const currentZoom = viewport.zoom;
       const lastZoom = this.state._lastRequestZoom;
       const isZoomingIn = currentZoom > lastZoom;
-      if (isZoomingIn && Math.floor(currentZoom) === Math.floor(lastZoom)) {
+      
+      // Check if the new view is fully covered by the last loaded image
+      const lastBbox = this.state.lastRequestParameters?.bbox;
+      const currentBbox = requestParams.bbox;
+      let fullyContained = false;
+      
+      if (lastBbox && currentBbox) {
+        // New bbox must be fully inside the previous bbox
+        fullyContained = 
+          currentBbox[0] >= lastBbox[0] && 
+          currentBbox[1] >= lastBbox[1] && 
+          currentBbox[2] <= lastBbox[2] && 
+          currentBbox[3] <= lastBbox[3];
+      }
+      
+      // Only throttle if:
+      // 1. Zooming in (not zooming out or panning at same zoom)
+      // 2. Same zoom floor (haven't crossed an integer zoom level)
+      // 3. New view is fully contained in the last loaded image (no uncovered areas)
+      if (isZoomingIn && Math.floor(currentZoom) === Math.floor(lastZoom) && fullyContained) {
         return;
       }
     }
 
-    // Update lastRequestParameters BEFORE making the request to prevent race conditions
-    // where multiple debounced calls see the same old parameters and all proceed
-    this.state.lastRequestParameters = requestParams;
-    this.state._lastRequestZoom = viewport.zoom;
+    // Mark request as in-flight to prevent duplicate requests
+    this.state.inFlightRequestParameters = requestParams;
 
     const requestId = this.getRequestId();
     try {
       this.state.loadCounter++;
+      // Trigger a redraw to update the UI loading indicator
+      this.setNeedsRedraw();
       this.props.onImageLoadStart(requestId);
 
       const image = await this.state.imageSource.getImage(requestParams);
@@ -299,6 +341,10 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       // If a request takes a long time, later requests may have already loaded.
       if (this.state.lastRequestId < requestId) {
         this.getCurrentLayer()?.props.onImageLoad(requestId);
+        // Update lastRequestParameters only after successful load
+        // This ensures coverage checks only use successfully loaded images
+        this.state.lastRequestParameters = requestParams;
+        this.state._lastRequestZoom = viewport.zoom;
         // Not type safe...
         this.setState({
           image,
@@ -310,7 +356,11 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       this.context.onError?.(error as Error, this);
       this.getCurrentLayer()?.props.onImageLoadError(requestId, error as Error);
     } finally {
+      // Clear in-flight marker when request completes (success or error)
+      this.state.inFlightRequestParameters = undefined;
       this.state.loadCounter--;
+      // Trigger a redraw to update the UI loading indicator
+      this.setNeedsRedraw();
     }
   }
 
@@ -352,6 +402,7 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
 
     // Is the new bbox fully contained within the previously requested bbox?
     const contained = n[0] >= p[0] && n[1] >= p[1] && n[2] <= p[2] && n[3] <= p[3];
+    
     if (!contained) {
       return false;
     }

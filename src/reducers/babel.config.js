@@ -3,21 +3,14 @@
 
 const KeplerPackage = require('./package');
 
-const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
-const PLUGINS = [
+// Plugins shared by both CJS and ESM builds.
+const SHARED_PLUGINS = [
   ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
-  '@babel/plugin-transform-modules-commonjs',
   '@babel/plugin-transform-class-properties',
   '@babel/plugin-transform-optional-chaining',
   '@babel/plugin-transform-logical-assignment-operators',
   '@babel/plugin-transform-nullish-coalescing-operator',
   '@babel/plugin-transform-export-namespace-from',
-  [
-    '@babel/transform-runtime',
-    {
-      regenerator: true
-    }
-  ],
   [
     'search-and-replace',
     {
@@ -30,22 +23,35 @@ const PLUGINS = [
     }
   ]
 ];
-const ENV = {
-  test: {
-    plugins: ['istanbul']
-  },
-  debug: {
-    sourceMaps: 'inline',
-    retainLines: true
-  }
-};
 
 module.exports = function babel(api) {
-  api.cache(true);
+  // Cache per BABEL_ENV so that CJS and ESM builds get separate cached results.
+  api.cache.using(() => process.env.BABEL_ENV || process.env.NODE_ENV || 'development');
+
+  const isEsm = api.env('esm');
+  const isTest = api.env('test');
+  const isDebug = api.env('debug');
+
+  // ESM build: modules:false preserves import/export so Vite/esbuild can tree-shake.
+  // CJS build (default / test): transforms import/export to require/module.exports.
+  const presets = [
+    ['@babel/preset-env', isEsm ? {modules: false} : {}],
+    '@babel/preset-react',
+    '@babel/preset-typescript'
+  ];
+
+  const plugins = [
+    ...SHARED_PLUGINS,
+    // CJS and test builds need the CommonJS transform; ESM must omit it.
+    ...(isEsm ? [] : ['@babel/plugin-transform-modules-commonjs']),
+    // Runtime helpers: ESM variant uses ESM imports, no require() calls.
+    ['@babel/transform-runtime', {regenerator: true, ...(isEsm ? {useESModules: true} : {})}],
+    ...(isTest ? ['istanbul'] : [])
+  ];
 
   return {
-    presets: PRESETS,
-    plugins: PLUGINS,
-    env: ENV
+    presets,
+    plugins,
+    ...(isDebug ? {sourceMaps: 'inline', retainLines: true} : {})
   };
 };
