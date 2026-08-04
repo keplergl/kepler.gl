@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/table",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.3.0-alpha.5",
+  "version": "3.3.0-alpha.6",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/cjs/index.js",
@@ -28,10 +28,10 @@
     "dist"
   ],
   "dependencies": {
-    "@kepler.gl/common-utils": "3.3.0-alpha.5",
-    "@kepler.gl/constants": "3.3.0-alpha.5",
-    "@kepler.gl/types": "3.3.0-alpha.5",
-    "@kepler.gl/utils": "3.3.0-alpha.5",
+    "@kepler.gl/common-utils": "3.3.0-alpha.6",
+    "@kepler.gl/constants": "3.3.0-alpha.6",
+    "@kepler.gl/types": "3.3.0-alpha.6",
+    "@kepler.gl/utils": "3.3.0-alpha.6",
     "@loaders.gl/mvt": "^4.4.1",
     "@loaders.gl/pmtiles": "^4.4.1",
     "@types/d3-array": "^2.8.0",

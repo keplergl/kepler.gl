@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/common-utils",
   "author": "Shan He <heshan0131@gmail.com>",
-  "version": "3.3.0-alpha.5",
+  "version": "3.3.0-alpha.6",
   "description": "kepler.gl common utils",
   "license": "MIT",
   "main": "dist/cjs/index.js",
@@ -28,8 +28,8 @@
     "dist"
   ],
   "dependencies": {
-    "@kepler.gl/constants": "3.3.0-alpha.5",
-    "@kepler.gl/types": "3.3.0-alpha.5",
+    "@kepler.gl/constants": "3.3.0-alpha.6",
+    "@kepler.gl/types": "3.3.0-alpha.6",
     "d3-array": "^2.8.0",
     "global": "^4.3.0",
     "h3-js": "^4.4.0",
