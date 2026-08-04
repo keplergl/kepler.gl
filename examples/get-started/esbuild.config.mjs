@@ -7,7 +7,6 @@ import process from 'node:process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {createRequire} from 'node:module';
 import {spawn} from 'node:child_process';
 
 const args = process.argv;
@@ -15,24 +14,6 @@ const args = process.argv;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const port = 8080;
-
-// @turf/rewind ships as `module.exports = fn` (no named export), but
-// @deck.gl-community/editable-layers uses `import { rewind } from '@turf/rewind'`.
-// This shim patches the single missing property so the named import resolves.
-// Remove once @turf/rewind adds a proper `exports` field.
-const require = createRequire(import.meta.url);
-const turfRewindPath = require.resolve('@turf/rewind').replace(/\\/g, '/');
-const turfInteropPlugin = {
-  name: 'turf-rewind-interop',
-  setup(build) {
-    build.onResolve({filter: /^@turf\/rewind$/}, () => ({path: turfRewindPath, namespace: 'turf-rewind'}));
-    build.onLoad({filter: /.*/, namespace: 'turf-rewind'}, () => ({
-      contents: `const fn = require(${JSON.stringify(turfRewindPath)}); fn.rewind = fn; module.exports = fn;`,
-      loader: 'js',
-      resolveDir: __dirname
-    }));
-  }
-};
 
 const config = {
   platform: 'browser',
@@ -55,14 +36,14 @@ const config = {
     'process.env.OpenAIToken': JSON.stringify(process.env.OpenAIToken || ''),
     'process.env.NODE_DEBUG': JSON.stringify(false)
   },
-  // Re-resolve @deck.gl/*, @luma.gl/*, @math.gl/*, @hubble.gl/*, styled-components,
-  // react and react-dom from the example root to guarantee a single instance of
-  // each package regardless of where the import originates.
   plugins: [
+    // styled-components: @hubble.gl/react nests its own copy.
+    // react-palm: @kepler.gl/actions, reducers, table, tasks each nest their own copy.
+    // Both are singletons that break when loaded more than once.
     {
-      name: 'dedupe-deck-luma',
+      name: 'dedupe-singletons',
       setup(build) {
-        build.onResolve({filter: /^(@(deck|luma|math|hubble)\.gl\/|styled-components$|react$|react-dom$)/}, async args => {
+        build.onResolve({filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$)/}, async args => {
           if (args.pluginData?.deduped) return;
           const result = await build.resolve(args.path, {
             resolveDir: __dirname,
@@ -73,7 +54,6 @@ const config = {
         });
       }
     },
-    turfInteropPlugin,
     copyPlugin({
       resolveFrom: 'cwd',
       assets: {
