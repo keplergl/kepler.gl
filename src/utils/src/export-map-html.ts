@@ -104,7 +104,8 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           };
           // Catch unhandled promise rejections (e.g. ES module imports failing
           // inside the module-shim script before loadScript is ever called).
-          window.addEventListener('unhandledrejection', function() {
+          window.addEventListener('unhandledrejection', function(event) {
+            console.error('kepler.gl: unhandled rejection during map load', event.reason);
             window._keplerShowLoadError('Failed to load the map. Check your internet connection and reload the page.');
           });
         </script>
