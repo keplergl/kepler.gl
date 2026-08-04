@@ -9,7 +9,7 @@ import {
   DROPPABLE_MAP_CONTAINER_TYPE,
   SORTABLE_LAYER_TYPE,
   SORTABLE_LAYER_GROUP_DROPPABLE_TYPE
-} from '@kepler.gl/components/common/dnd-layer-items';
+} from '@kepler.gl/components';
 import {reorderLayerOrder} from '@kepler.gl/reducers';
 
 jest.mock('react-redux', () => ({

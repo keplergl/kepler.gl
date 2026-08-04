@@ -8,7 +8,7 @@ import {reorderEffect, updateEffect} from '@kepler.gl/actions';
 import {
   SORTABLE_EFFECT_PANEL_TYPE,
   SORTABLE_EFFECT_TYPE
-} from '@kepler.gl/components/common/dnd-layer-items';
+} from '@kepler.gl/components';
 import {reorderEffectOrder} from '@kepler.gl/utils';
 
 // Mock useDispatch hook
