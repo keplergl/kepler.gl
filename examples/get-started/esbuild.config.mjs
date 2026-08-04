@@ -34,69 +34,11 @@ const turfInteropPlugin = {
   }
 };
 
-// @hubble.gl/react was compiled with esbuild targeting Node, using isNodeMode=1 in
-// its __toESM helper. With isNodeMode=1, __toESM ALWAYS sets .default to the entire
-// require() result regardless of the module's __esModule flag:
-//
-//   var import_react_map_gl = __toESM(require("react-map-gl"), 1)
-//   → import_react_map_gl.default = entire_exports_object   ← "got: object"
-//
-// This was fine when react-map-gl/7 and @deck.gl/react shipped
-// `module.exports = TheComponent` directly; modern versions wrap everything:
-// `module.exports = __toCommonJS({Map, ...})`.
-//
-// @hubble.gl/react also has its own nested node_modules/react-map-gl@7.1.9 which
-// esbuild would find first. Intercepting both bare specifiers at the esbuild level
-// and injecting a CJS shim ensures __toESM(require("pkg"), 1).default === Comp ✓
-const reactMapGlCjsPath = require.resolve('react-map-gl/mapbox');
-const deckGlReactCjsPath = require.resolve('@deck.gl/react');
-
-function makeHubbleInteropShim(getComponent, cjsPath) {
-  return [
-    '"use strict";',
-    `const _m = require(${JSON.stringify(cjsPath)});`,
-    `const Comp = ${getComponent};`,
-    // Copy all named exports onto Comp so useControl, DeckGL etc. remain accessible.
-    'Object.assign(Comp, _m);',
-    // Ensure Comp.default === Comp so _interopRequireDefault also works.
-    'Comp.default = Comp;',
-    // module.exports = Comp → __commonJS wrapper returns Comp directly,
-    // so __toESM(require("pkg"), isNodeMode=1).default === Comp (a React forwardRef).
-    'module.exports = Comp;'
-  ].join('\n');
-}
-
-const hubbleGlInteropPlugin = {
-  name: 'hubble-gl-cjs-interop',
-  setup(build) {
-    build.onResolve({filter: /^react-map-gl$/}, () => ({
-      path: 'react-map-gl-shim',
-      namespace: 'hubble-gl-interop'
-    }));
-    // Also intercept @deck.gl/react before the dedupe-deck-luma plugin sees it;
-    // the shim already points to the locally-installed 9.3.7 copy.
-    build.onResolve({filter: /^@deck\.gl\/react$/}, () => ({
-      path: 'deck-gl-react-shim',
-      namespace: 'hubble-gl-interop'
-    }));
-    build.onLoad({filter: /.*/, namespace: 'hubble-gl-interop'}, args => {
-      if (args.path === 'react-map-gl-shim') {
-        return {
-          contents: makeHubbleInteropShim('_m.Map', reactMapGlCjsPath),
-          loader: 'js',
-          resolveDir: __dirname
-        };
-      }
-      if (args.path === 'deck-gl-react-shim') {
-        return {
-          contents: makeHubbleInteropShim('_m.DeckGL', deckGlReactCjsPath),
-          loader: 'js',
-          resolveDir: __dirname
-        };
-      }
-    });
-  }
-};
+// @hubble.gl/react now ships proper ESM (no longer compiled with isNodeMode=1).
+// The old CJS shim for react-map-gl and @deck.gl/react is no longer needed and
+// was causing a double-init of luma.gl: the shim used require() which pulled in
+// the CJS chain (@deck.gl/core -> @luma.gl/* CJS) while kepler.gl ESM pulled in
+// the ESM luma.gl, resulting in two separate Luma class instances in the bundle.
 
 const config = {
   platform: 'browser',
@@ -132,16 +74,16 @@ const config = {
   // an esbuild resolver plugin that re-resolves the specifier from __dirname so that
   // Node resolution always picks up the local node_modules copy.
   plugins: [
-    hubbleGlInteropPlugin,
     {
       name: 'dedupe-deck-luma',
       setup(build) {
-        // Re-resolve any @deck.gl/*, @luma.gl/*, @math.gl/*, styled-components,
-        // react, and react-dom import from the example root so that Node's resolution
-        // always lands in this example's own node_modules (single instance per package).
+        // Re-resolve any @deck.gl/*, @luma.gl/*, @math.gl/*, @hubble.gl/*,
+        // react-map-gl, styled-components, react, and react-dom import from the
+        // example root so that Node's resolution always lands in this example's
+        // own node_modules (single instance per package).
         // esbuild automatically skips the current plugin for the nested resolve()
         // call, preventing infinite recursion.
-        build.onResolve({filter: /^(@(deck|luma|math)\.gl\/|styled-components$|react$|react-dom$)/}, async args => {
+        build.onResolve({filter: /^(@(deck|luma|math|hubble)\.gl\/|styled-components$|react$|react-dom$)/}, async args => {
           // Explicit recursion guard: esbuild is supposed to skip the current plugin
           // for nested build.resolve() calls, but this ensures it even if it doesn't.
           if (args.pluginData?.deduped) return;
