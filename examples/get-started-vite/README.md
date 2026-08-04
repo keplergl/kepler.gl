@@ -9,9 +9,14 @@ A minimal example showing how to integrate [Kepler.gl](https://kepler.gl/) into 
 
 ## 1. Install Dependencies
 
+Go to the `examples/get-started-vite` directory and run:
+
 ```sh
-yarn install
+touch yarn.lock && yarn
 ```
+
+> `touch yarn.lock` is required once to mark this directory as a standalone Yarn project,
+> independent of the monorepo root.
 
 ## 2. Start the App
 

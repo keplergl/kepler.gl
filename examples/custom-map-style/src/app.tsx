@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
-import {connect} from 'react-redux';
+import * as React from 'react';
+import {useState, useEffect} from 'react';
 import KeplerGl from '@kepler.gl/components';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 
 const localeMessages = {
   en: {
@@ -14,23 +13,27 @@ const localeMessages = {
   }
 };
 
-const App = () => (
-  <div style={{position: 'absolute', width: '100%', height: '100%'}}>
-    <AutoSizer>
-      {({height, width}) => (
-        <KeplerGl
-          mapboxApiAccessToken=""
-          id="map"
-          width={width}
-          height={height}
-          localeMessages={localeMessages}
-        />
-      )}
-    </AutoSizer>
-  </div>
-);
+function useWindowSize() {
+  const [size, setSize] = useState({width: window.innerWidth, height: window.innerHeight});
+  useEffect(() => {
+    const onResize = () => setSize({width: window.innerWidth, height: window.innerHeight});
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return size;
+}
 
-const mapStateToProps = state => state;
-const dispatchToProps = dispatch => ({dispatch});
+const App = () => {
+  const {width, height} = useWindowSize();
+  return (
+    <KeplerGl
+      mapboxApiAccessToken=""
+      id="map"
+      width={width}
+      height={height}
+      localeMessages={localeMessages}
+    />
+  );
+};
 
-export default connect(mapStateToProps, dispatchToProps)(App);
+export default App;
