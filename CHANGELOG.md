@@ -17,6 +17,9 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.3.0-alpha.6] - Aug 4 2026
 
+- 426d6051 feat: add loading spinner to exported HTML maps (#3612)
+- 56d43329 fix: pre-seed basemap style in exported HTML map (#3613)
+- 0f377f89 chore(deps): bump fast-uri from 3.1.4 to 3.1.5 in /website (#3611)
 - f4961c61 chore: add dual ESM/CJS build for all workspace packages (#3607)
 - c99fc432 fix: exported html map loads blank (#3610)
 - b5805c1c fix: Babel stops recognizing it as a super method call (#3606)
