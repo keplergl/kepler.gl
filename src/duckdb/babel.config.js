@@ -30,6 +30,7 @@ module.exports = function babel(api) {
 
   const isEsm = api.env('esm');
   const isTest = api.env('test');
+  const isDebug = api.env('debug');
 
   // ESM build: modules:false preserves import/export so Vite/esbuild can tree-shake.
   // CJS build (default / test): transforms import/export to require/module.exports.
@@ -48,5 +49,9 @@ module.exports = function babel(api) {
     ...(isTest ? ['istanbul'] : [])
   ];
 
-  return {presets, plugins};
+  return {
+    presets,
+    plugins,
+    ...(isDebug ? {sourceMaps: 'inline', retainLines: true} : {})
+  };
 };
