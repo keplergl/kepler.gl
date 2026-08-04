@@ -15,8 +15,11 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.3.0-alpha.6] - Aug 3 2026
+## [3.3.0-alpha.6] - Aug 4 2026
 
+- f4961c61 chore: add dual ESM/CJS build for all workspace packages (#3607)
+- c99fc432 fix: exported html map loads blank (#3610)
+- b5805c1c fix: Babel stops recognizing it as a super method call (#3606)
 - 0ec3dd86 fix: globe crashes in dev mode (#3605)
 - 800083e0 fix: more fixes to WMS layer (#3603)
 
