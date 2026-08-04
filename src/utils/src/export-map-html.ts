@@ -214,17 +214,22 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           }
 
           /** STORE **/
-          const reducers = (function createReducers(redux, keplerGl) {
+          // Pre-seed the map style so the correct basemap is active from the
+          // very first render, avoiding a flash of the default dark basemap.
+          const savedStyleType = ${JSON.stringify(options.config?.config?.mapStyle?.styleType ?? null)};
+
+          const reducers = (function createReducers(redux, keplerGl, styleType) {
             return redux.combineReducers({
               // mount keplerGl reducer
               keplerGl: keplerGl.keplerGlReducer.initialState({
                 uiState: {
                   readOnly: ${options.mode === EXPORT_HTML_MAP_MODES.READ},
                   currentModal: null
-                }
+                },
+                ...(styleType ? {mapStyle: {styleType}} : {})
               })
             });
-          }(Redux, KeplerGl));
+          }(Redux, KeplerGl, savedStyleType));
 
           const middleWares = (function createMiddlewares(keplerGl) {
             return keplerGl.enhanceReduxMiddleware([
@@ -237,16 +242,9 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           }(Redux, middleWares));
 
           const store = (function createStore(redux, enhancers) {
-            // Pre-seed the map style so the correct basemap is active from the
-            // very first render, avoiding a flash of the default dark basemap.
-            const savedStyleType = ${JSON.stringify(options.config?.mapStyle?.styleType ?? null)};
-            const initialState = savedStyleType
-              ? {keplerGl: {map: {mapStyle: {styleType: savedStyleType}}}}
-              : {};
-
             return redux.createStore(
               reducers,
-              initialState,
+              {},
               redux.compose(enhancers)
             );
           }(Redux, enhancers));
