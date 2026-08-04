@@ -214,8 +214,9 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           }
 
           /** STORE **/
-          // Pre-seed the map style so the correct basemap is active from the
-          // very first render, avoiding a flash of the default dark basemap.
+          // Pre-seed styleType so the correct basemap fetch starts on the very
+          // first render, avoiding a flash of the default dark basemap.
+          // options.config has the versioned envelope shape: { version, config: { mapStyle, ... } }
           const savedStyleType = ${JSON.stringify(options.config?.config?.mapStyle?.styleType ?? null)};
 
           const reducers = (function createReducers(redux, keplerGl, styleType) {
@@ -406,7 +407,11 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               config
             );
 
-            // For some reason Kepler overwrites the config without extra wait time
+            // The 500 ms delay is a historical workaround for a race where
+            // keplerGl re-initialises and overwrites config applied synchronously.
+            // The pre-seeded styleType above removes the basemap flash on first
+            // render; this dispatch still applies the full saved config (layers,
+            // viewport, layer groups, etc.) once the component has settled.
             window.setTimeout(() => {
               store.dispatch(
                 keplerGl.addDataToMap({
