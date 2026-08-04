@@ -86,6 +86,29 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           // native loader (which fails under file://).
           window.esmsInitOptions = {shimMode: true};
         </script>
+        <script>
+          // Replace the loading overlay with an error message.
+          // Safe to call at any time — once React has mounted and removed
+          // #kepler-load-screen this becomes a no-op.
+          window._keplerShowLoadError = function(msg) {
+            var loadScreen = document.getElementById('kepler-load-screen');
+            if (!loadScreen) return;
+            var spinner = loadScreen.querySelector('.kepler-spinner');
+            var label = loadScreen.querySelector('.kepler-load-label');
+            if (spinner) spinner.style.display = 'none';
+            if (label) label.style.display = 'none';
+            var errEl = document.createElement('div');
+            errEl.className = 'kepler-load-error';
+            errEl.textContent = msg || 'Failed to load the map. Check your internet connection and reload the page.';
+            loadScreen.appendChild(errEl);
+          };
+          // Catch unhandled promise rejections (e.g. ES module imports failing
+          // inside the module-shim script before loadScript is ever called).
+          window.addEventListener('unhandledrejection', function(event) {
+            console.error('kepler.gl: unhandled rejection during map load', event.reason);
+            window._keplerShowLoadError('Failed to load the map. Check your internet connection and reload the page.');
+          });
+        </script>
         <script src="https://unpkg.com/es-module-shims@${ES_MODULE_SHIMS_VERSION}/dist/es-module-shims.js" crossorigin="anonymous"></script>
         
         <script type="importmap-shim">
@@ -155,10 +178,44 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
             })
             .catch(function(error) {
               console.error('kepler.gl: failed to load UMD bundle', error);
+              window._keplerShowLoadError('Failed to load the map bundle. Check your internet connection and reload the page.');
             });
         </script>
         <style type="text/css">
           body {margin: 0; padding: 0; overflow: hidden;}
+          #kepler-load-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #29323c;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            z-index: 9999;
+            font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+            color: #a0a7b4;
+          }
+          #kepler-load-screen .kepler-spinner {
+            width: 48px; height: 48px;
+            border: 4px solid rgba(255,255,255,0.08);
+            border-top-color: #1fbad6;
+            border-radius: 50%;
+            animation: kepler-spin 0.8s linear infinite;
+          }
+          #kepler-load-screen .kepler-load-label {
+            font-size: 13px;
+            letter-spacing: 0.5px;
+          }
+          #kepler-load-screen .kepler-load-error {
+            font-size: 13px;
+            color: #f05e45;
+            max-width: 360px;
+            text-align: center;
+            line-height: 1.5;
+          }
+          @keyframes kepler-spin { to { transform: rotate(360deg); } }
         </style>
 
         <!--MapBox token-->
@@ -199,7 +256,10 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
       <body>
         <!-- We will put our React component inside this div. -->
         <div id="app">
-          <!-- Kepler.gl map will be placed here-->
+          <div id="kepler-load-screen">
+            <div class="kepler-spinner"></div>
+            <div class="kepler-load-label">Loading map…</div>
+          </div>
         </div>
 
         <!--
@@ -362,6 +422,13 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                 };
                 window.addEventListener('resize', handleResize);
                 return function() {window.removeEventListener('resize', handleResize);};
+              }, []);
+              // Remove the loading overlay after the first render is painted.
+              // useEffect fires post-commit, so this is safe under React 19's
+              // concurrent renderer — the map is visible before the overlay goes away.
+              react.useEffect(function removeLoadScreen() {
+                var loadScreen = document.getElementById('kepler-load-screen');
+                if (loadScreen) loadScreen.remove();
               }, []);
               return react.createElement(
                 'div',
