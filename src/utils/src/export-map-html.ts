@@ -173,7 +173,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
            * Provide your MapBox Token
            **/
           window.MAPBOX_TOKEN = '${options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN'}';
-          window.WARNING_MESSAGE = 'Please Provide a Mapbox Token in order to use Kepler.gl. Edit this file and fill out MAPBOX_TOKEN with your access key';
+          window.WARNING_MESSAGE = 'No Mapbox token provided. Mapbox basemaps will not be available. To enable them, edit this file and set MAPBOX_TOKEN to your Mapbox access key.';
         </script>
 
         <!-- GA: Delete this as you wish, However to pat ourselves on the back, we only track anonymous pageview to understand how many people are using kepler.gl. -->
@@ -210,7 +210,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <script type="text/kepler-bootstrap">
           /* Validate Mapbox Token */
           if ((MAPBOX_TOKEN || '') === '' || MAPBOX_TOKEN === 'PROVIDE_MAPBOX_TOKEN') {
-            alert(WARNING_MESSAGE);
+            console.warn('[kepler.gl]', WARNING_MESSAGE);
           }
 
           /** STORE **/
