@@ -214,17 +214,23 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           }
 
           /** STORE **/
-          const reducers = (function createReducers(redux, keplerGl) {
+          // Pre-seed styleType so the correct basemap fetch starts on the very
+          // first render, avoiding a flash of the default dark basemap.
+          // options.config has the versioned envelope shape: { version, config: { mapStyle, ... } }
+          const savedStyleType = ${JSON.stringify(options.config?.config?.mapStyle?.styleType ?? null)};
+
+          const reducers = (function createReducers(redux, keplerGl, styleType) {
             return redux.combineReducers({
               // mount keplerGl reducer
               keplerGl: keplerGl.keplerGlReducer.initialState({
                 uiState: {
                   readOnly: ${options.mode === EXPORT_HTML_MAP_MODES.READ},
                   currentModal: null
-                }
+                },
+                ...(styleType ? {mapStyle: {styleType}} : {})
               })
             });
-          }(Redux, KeplerGl));
+          }(Redux, KeplerGl, savedStyleType));
 
           const middleWares = (function createMiddlewares(keplerGl) {
             return keplerGl.enhanceReduxMiddleware([
@@ -237,11 +243,9 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           }(Redux, middleWares));
 
           const store = (function createStore(redux, enhancers) {
-            const initialState = {};
-
             return redux.createStore(
               reducers,
-              initialState,
+              {},
               redux.compose(enhancers)
             );
           }(Redux, enhancers));
@@ -403,7 +407,11 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               config
             );
 
-            // For some reason Kepler overwrites the config without extra wait time
+            // The 500 ms delay is a historical workaround for a race where
+            // keplerGl re-initialises and overwrites config applied synchronously.
+            // The pre-seeded styleType above removes the basemap flash on first
+            // render; this dispatch still applies the full saved config (layers,
+            // viewport, layer groups, etc.) once the component has settled.
             window.setTimeout(() => {
               store.dispatch(
                 keplerGl.addDataToMap({
