@@ -5,7 +5,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
 import KeplerGl from '@kepler.gl/components';
 
-const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
+const MAPBOX_TOKEN = process.env.MapboxAccessToken || 'pk.xxx.yyy'; // eslint-disable-line
 
 const StyledWrapper = styled.div`
   position: absolute;

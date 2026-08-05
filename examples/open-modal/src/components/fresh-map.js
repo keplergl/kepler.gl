@@ -1,44 +1,52 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
+import React, {useEffect, useRef, useState} from 'react';
+import {useDispatch} from 'react-redux';
 import {addDataToMap, wrapTo} from '@kepler.gl/actions';
 import KeplerGl from '@kepler.gl/components';
 
 import sampleData from '../data/sample-data';
 import config from '../configurations/config';
 
-export default class FreshMap extends Component {
-  componentDidMount() {
-    this.props.dispatch(
+const FreshMap = ({mapboxApiAccessToken, id}) => {
+  const dispatch = useDispatch();
+  const containerRef = useRef(null);
+  const [dimensions, setDimensions] = useState({width: 0, height: 0});
+
+  useEffect(() => {
+    dispatch(
       wrapTo(
-        this.props.id,
+        id,
         addDataToMap({
           datasets: sampleData,
-          options: {
-            centerMap: true
-          },
+          options: {centerMap: true},
           config
         })
       )
     );
-  }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  render() {
-    const {mapboxApiAccessToken, id} = this.props;
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      const {width, height} = entries[0].contentRect;
+      setDimensions({width, height});
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
-    return (
-      <AutoSizer>
-        {({height, width}) => (
-          <KeplerGl
-            mapboxApiAccessToken={mapboxApiAccessToken}
-            id={id}
-            width={width}
-            height={height}
-          />
-        )}
-      </AutoSizer>
-    );
-  }
-}
+  return (
+    <div ref={containerRef} style={{width: '100%', height: '100%'}}>
+      <KeplerGl
+        mapboxApiAccessToken={mapboxApiAccessToken}
+        id={id}
+        width={dimensions.width}
+        height={dimensions.height}
+      />
+    </div>
+  );
+};
+
+export default FreshMap;
