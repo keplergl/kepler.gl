@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {OAuthApp} from '@carto/toolkit';
-import Console from 'global/console';
 import CartoIcon from './carto-icon';
 import {Provider} from '@kepler.gl/cloud-providers';
 import {createDataContainer} from '@kepler.gl/utils';

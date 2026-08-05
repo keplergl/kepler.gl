@@ -9,7 +9,11 @@ import process from 'node:process';
 import fs from 'node:fs';
 import {spawn} from 'node:child_process';
 import {join} from 'node:path';
+import {dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import KeplerPackage from '../../package.json' assert {type: 'json'};
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const args = process.argv;
 
@@ -125,8 +129,46 @@ const config = {
     replace({
       __PACKAGE_VERSION__: KeplerPackage.version,
       include: /constants\/src\/default-settings\.ts/
-    })
+    }),
+    // styled-components: @hubble.gl/react nests its own copy.
+    // react-palm: several @kepler.gl/* packages nest their own copy.
+    // Both are singletons that break when loaded more than once.
+    {
+      name: 'dedupe-singletons',
+      setup(build) {
+        build.onResolve({filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$)/}, async args => {
+          if (args.pluginData?.deduped) return;
+          const result = await build.resolve(args.path, {
+            resolveDir: __dirname,
+            kind: args.kind,
+            pluginData: {deduped: true}
+          });
+          return result;
+        });
+      }
+    }
   ]
+};
+
+// Force @luma.gl/* and @deck.gl/* to the root monorepo node_modules.
+// The demo-app may install newer patch versions, but kepler.gl was built
+// and tested against the root versions (luma.gl 9.3.2 / deck.gl 9.3.1).
+// NOT added to config.plugins directly — it is injected conditionally so
+// that --env.deck / --env.deck_src modes (which alias deck.gl to a local
+// source tree) are not overridden.
+const dedupeWebglPlugin = {
+  name: 'dedupe-webgl',
+  setup(build) {
+    build.onResolve({filter: /^(@luma\.gl\/|@deck\.gl\/)/}, async args => {
+      if (args.pluginData?.deduped) return;
+      const result = await build.resolve(args.path, {
+        resolveDir: NODE_MODULES_DIR,
+        kind: args.kind,
+        pluginData: {deduped: true}
+      });
+      return result;
+    });
+  }
 };
 
 function addAliases(externals, args) {
@@ -280,6 +322,7 @@ function openURL(url) {
         // Optionally generate a bundle analysis
         plugins: [
           ...config.plugins,
+          dedupeWebglPlugin,
           {
             name: 'bundle-analyzer',
             setup(build) {
@@ -308,10 +351,17 @@ function openURL(url) {
       ? localAliases
       : getThirdPartyLibraryAliases(false);
     const nodeModulesDir = isLocal ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
+    // Skip dedupe-webgl when a local deck.gl source override is active so that
+    // --env.deck / --env.deck_src aliases are not overridden by the plugin.
+    const useDeckOverride = args.includes('--env.deck') || args.includes('--env.deck_src');
 
     await esbuild
       .context({
         ...config,
+        plugins: [
+          ...config.plugins,
+          ...(useDeckOverride ? [] : [dedupeWebglPlugin])
+        ],
         minify: false,
         sourcemap: true,
         alias: {

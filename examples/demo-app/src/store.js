@@ -8,9 +8,6 @@ import thunk from 'redux-thunk';
 import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
-// eslint-disable-next-line no-unused-vars
-import Window from 'global/window';
-
 import demoReducer from './reducers/index';
 
 const reducers = combineReducers({
@@ -50,7 +47,7 @@ if (NODE_ENV === 'local') {
 
   const logger = createLogger({
     collapsed: () => true,
-    predicate: (_getState, action) => Window.__KEPLER_LOG_FULL__ || !suppressed.has(action.type)
+    predicate: (_getState, action) => window.__KEPLER_LOG_FULL__ || !suppressed.has(action.type)
   });
   middlewares.push(logger);
 }
@@ -66,10 +63,10 @@ let composeEnhancers = compose;
  * comment out code below to enable Redux Devtools
  */
 
-if (Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) {
+if (window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) {
   const level = getApplicationConfig().reduxLogLevel ?? 1;
   const suppressed = SUPPRESSED_BY_LEVEL[level] ?? LEVEL1_ACTIONS;
-  composeEnhancers = Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
+  composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
     actionsBlacklist: [...suppressed]
   });
 }

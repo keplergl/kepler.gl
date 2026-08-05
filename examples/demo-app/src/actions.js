@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {fetch} from 'global';
-
 import {loadFiles, toggleModal} from '@kepler.gl/actions';
 import {parseUri} from '@kepler.gl/common-utils';
 import {load} from '@loaders.gl/core';
