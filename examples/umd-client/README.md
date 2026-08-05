@@ -10,13 +10,7 @@ React 19 no longer ships UMD builds. This example uses [es-module-shims](https:/
 
 Open `index.html` directly in a browser — an internet connection is required to load scripts from unpkg.com and esm.sh.
 
-By default the map uses a **MapLibre / Carto basemap** and no Mapbox token is needed.
-
-If you want to use **Mapbox basemaps**, replace `'pk.xxx.yyy'` near the bottom of `<head>` with your own token:
-
-```js
-window.MAPBOX_TOKEN = 'pk.<your_token_here>';
-```
+By default the map uses a **MapLibre / Carto basemap** (no token needed). To switch to a Mapbox basemap, set `window.MAPBOX_TOKEN` near the top of `index.html` — see [Mapbox token](#mapbox-token) in `examples/README.md`.
 
 ### Loading data
 

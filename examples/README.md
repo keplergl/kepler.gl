@@ -65,3 +65,18 @@ yarn start
 [custom-map-style]: custom-map-style/README.md
 [node-app]: node-app/README.md
 [umd-client]: umd-client/README.md
+
+## Mapbox token
+
+All examples default to a **MapLibre / Carto basemap** so they work without any token.
+
+If you want to use **Mapbox basemaps**, set the `MapboxAccessToken` environment variable before starting an example:
+
+```sh
+export MapboxAccessToken=<your_mapbox_token>
+yarn start
+```
+
+For `umd-client` (no build step), edit `index.html` and set `window.MAPBOX_TOKEN` near the top of the file instead.
+
+For `demo-app`, create a `.env` file from `.env.template` at the repo root and fill in `MAPBOX_ACCESS_TOKEN` and other optional cloud integration tokens.
