@@ -3,13 +3,9 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import document from 'global/document';
-import Modal from 'react-modal';
 import {Provider} from 'react-redux';
 import store from './store';
 import App from './app';
-
-Modal.setAppElement('#root');
 
 const Root = () => (
   <Provider store={store}>

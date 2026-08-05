@@ -10,22 +10,16 @@ import process from 'node:process';
 import fs from 'node:fs';
 import {spawn} from 'node:child_process';
 import {join} from 'node:path';
+import {dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const args = process.argv;
 
 const port = 3000;
 
 const NODE_ENV = JSON.stringify(process.env.NODE_ENV || 'production');
-
-// Ensure a single instance of React and friends to avoid invalid hook calls
-const ROOT_NODE_MODULES = join('..', '..', 'node_modules');
-const thirdPartyAliases = {
-  react: join(ROOT_NODE_MODULES, 'react'),
-  'react-dom': join(ROOT_NODE_MODULES, 'react-dom'),
-  'react-redux': join(ROOT_NODE_MODULES, 'react-redux', 'lib'),
-  'styled-components': join(ROOT_NODE_MODULES, 'styled-components'),
-  'apache-arrow': join(ROOT_NODE_MODULES, 'apache-arrow')
-};
 
 const config = {
   platform: 'browser',
@@ -52,7 +46,7 @@ const config = {
       root: '../../.env'
     }),
     replace({
-      __PACKAGE_VERSION__: '3.1.10',
+      __PACKAGE_VERSION__: '3.3.0-alpha.6',
       include: /constants\/src\/default-settings\.ts/
     }),
     copyPlugin({
@@ -61,7 +55,27 @@ const config = {
         from: ['index.html'],
         to: ['dist/index.html']
       }
-    })
+    }),
+    // styled-components: @hubble.gl/react nests its own copy.
+    // react-palm: several @kepler.gl/* packages nest their own copy.
+    // Both are singletons that break when loaded more than once.
+    {
+      name: 'dedupe-singletons',
+      setup(build) {
+        build.onResolve(
+          {filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$)/},
+          async args => {
+            if (args.pluginData?.deduped) return;
+            const result = await build.resolve(args.path, {
+              resolveDir: __dirname,
+              kind: args.kind,
+              pluginData: {deduped: true}
+            });
+            return result;
+          }
+        );
+      }
+    }
   ]
 };
 
@@ -82,7 +96,6 @@ function openURL(url) {
     const result = await esbuild
       .build({
         ...config,
-        alias: thirdPartyAliases,
         minify: true,
         sourcemap: false,
         metafile: true,
@@ -104,7 +117,6 @@ function openURL(url) {
     await esbuild
       .context({
         ...config,
-        alias: thirdPartyAliases,
         minify: false,
         sourcemap: true,
         banner: {

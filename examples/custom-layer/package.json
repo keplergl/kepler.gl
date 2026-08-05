@@ -1,0 +1,48 @@
+{
+  "name": "kepler-custom-layer",
+  "version": "0.0.1",
+  "license": "MIT",
+  "scripts": {
+    "bootstrap": "yarn install && yarn",
+    "build": "node esbuild.config.mjs --build",
+    "start": "node esbuild.config.mjs --start"
+  },
+  "dependencies": {
+    "@deck.gl/aggregation-layers": "9.3.1",
+    "@deck.gl/core": "9.3.1",
+    "@deck.gl/mapbox": "9.3.1",
+    "@kepler.gl/components": "^3.3.0-alpha.6",
+    "@kepler.gl/layers": "^3.3.0-alpha.6",
+    "@kepler.gl/reducers": "^3.3.0-alpha.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-redux": "^9.1.0",
+    "redux": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "esbuild": "^0.25.0",
+    "esbuild-plugin-copy": "^2.1.1",
+    "typescript": "^5.5.0"
+  },
+  "resolutions": {
+    "@deck.gl/aggregation-layers": "9.3.1",
+    "@deck.gl/core": "9.3.1",
+    "@deck.gl/extensions": "9.3.1",
+    "@deck.gl/geo-layers": "9.3.1",
+    "@deck.gl/layers": "9.3.1",
+    "@deck.gl/mesh-layers": "9.3.1",
+    "@deck.gl/mapbox": "9.3.1",
+    "@deck.gl/react": "9.3.1",
+    "@deck.gl/widgets": "9.3.1",
+    "@luma.gl/constants": "9.3.2",
+    "@luma.gl/core": "9.3.2",
+    "@luma.gl/effects": "9.3.2",
+    "@luma.gl/engine": "9.3.2",
+    "@luma.gl/shadertools": "9.3.2",
+    "@luma.gl/webgl": "9.3.2",
+    "@luma.gl/webgpu": "9.3.2"
+  }
+}

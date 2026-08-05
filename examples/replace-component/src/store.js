@@ -9,7 +9,7 @@ const customizedKeplerGlReducer = keplerGlReducer.initialState({
   uiState: {
     // hide side panel when mounted
     activeSidePanel: null,
-    // hide all modals whtn mounted
+    // hide all modals when mounted
     currentModal: null
   }
 });
@@ -20,6 +20,6 @@ const reducers = combineReducers({
 });
 
 const middlewares = enhanceReduxMiddleware([]);
-const enhancers = [applyMiddleware(...middlewares)];
+const enhancers = applyMiddleware(...middlewares);
 
-export default createStore(reducers, {}, compose(...enhancers));
+export default createStore(reducers, {}, compose(enhancers));

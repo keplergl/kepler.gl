@@ -1,53 +1,44 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import {connect} from 'react-redux';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
+import * as React from 'react';
+import {useState, useEffect} from 'react';
+import {useDispatch} from 'react-redux';
 import KeplerGl from '@kepler.gl/components';
-import {createAction} from 'redux-actions';
-
 import {addDataToMap, wrapTo} from '@kepler.gl/actions';
+
 import sampleData from './data/sample-data';
 import config from './configurations/config';
 
-const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
+// Extra action handled by the custom kepler.gl reducer plugin (see store.js)
+const hideAndShowSidePanel = () => ({type: 'HIDE_AND_SHOW_SIDE_PANEL'});
 
-// extra actions plugged into kepler.gl reducer (store.js)
-const hideAndShowSidePanel = createAction('HIDE_AND_SHOW_SIDE_PANEL');
-
-class App extends Component {
-  componentDidMount() {
-    this.props.dispatch(
-      wrapTo(
-        'map1',
-        addDataToMap({
-          datasets: sampleData,
-          config
-        })
-      )
-    );
-  }
-
-  _toggleSidePanelVisibility = () => {
-    this.props.dispatch(wrapTo('map1', hideAndShowSidePanel()));
-  };
-
-  render() {
-    return (
-      <div style={{position: 'absolute', width: '100%', height: '100%'}}>
-        <button onClick={this._toggleSidePanelVisibility}> Hide / Show Side Panel</button>
-        <AutoSizer>
-          {({height, width}) => (
-            <KeplerGl mapboxApiAccessToken={MAPBOX_TOKEN} id="map1" width={width} height={height} />
-          )}
-        </AutoSizer>
-      </div>
-    );
-  }
+function useWindowSize() {
+  const [size, setSize] = useState({width: window.innerWidth, height: window.innerHeight});
+  useEffect(() => {
+    const onResize = () => setSize({width: window.innerWidth, height: window.innerHeight});
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return size;
 }
 
-const mapStateToProps = state => state;
-const dispatchToProps = dispatch => ({dispatch});
+const App = () => {
+  const dispatch = useDispatch();
+  const {width, height} = useWindowSize();
 
-export default connect(mapStateToProps, dispatchToProps)(App);
+  useEffect(() => {
+    dispatch(wrapTo('map1', addDataToMap({datasets: sampleData, config})));
+  }, [dispatch]);
+
+  return (
+    <div style={{position: 'absolute', width: '100%', height: '100%'}}>
+      <button onClick={() => dispatch(wrapTo('map1', hideAndShowSidePanel()))}>
+        Hide / Show Side Panel
+      </button>
+      <KeplerGl mapboxApiAccessToken="pk.xxx.yyy" id="map1" width={width} height={height - 30} />
+    </div>
+  );
+};
+
+export default App;

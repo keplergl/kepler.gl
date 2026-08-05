@@ -3,11 +3,7 @@
 
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components';
-import Window from 'global/window';
-import {connect} from 'react-redux';
 import KeplerGl from '@kepler.gl/components';
-
-const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
 const theme = {
   sidePanelBg: '#ffffff',
@@ -43,20 +39,19 @@ const StyleSwitch = styled.div`
   border: 1px solid mediumseagreen;
 `;
 
+function useWindowSize() {
+  const [size, setSize] = useState({width: window.innerWidth, height: window.innerHeight});
+  useEffect(() => {
+    const onResize = () => setSize({width: window.innerWidth, height: window.innerHeight});
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return size;
+}
+
 function App() {
   const [customTheme, setTheme] = useState(false);
-  const [windowDimension, setDimension] = useState({
-    width: Window.innerWidth,
-    height: Window.innerHeight
-  });
-
-  useEffect(() => {
-    const handleResize = () => {
-      setDimension({width: Window.innerWidth, height: Window.innerHeight});
-    };
-    Window.addEventListener('resize', handleResize);
-    return () => Window.removeEventListener('resize', handleResize);
-  }, []);
+  const {width, height} = useWindowSize();
 
   return (
     <div>
@@ -70,22 +65,15 @@ function App() {
         />
       </StyleSwitch>
       <KeplerGl
-        mapboxApiAccessToken={MAPBOX_TOKEN}
+        mapboxApiAccessToken="pk.xxx.yyy"
         id="map"
-        /*
-         * Specify path to keplerGl state, because it is not mount at the root
-         */
         getState={state => state.demo.keplerGl}
-        width={windowDimension.width}
-        height={windowDimension.height}
+        width={width}
+        height={height}
         theme={customTheme ? theme : emptyTheme}
       />
     </div>
   );
-  // }
 }
 
-const mapStateToProps = state => state;
-const dispatchToProps = dispatch => ({dispatch});
-
-export default connect(mapStateToProps, dispatchToProps)(App);
+export default App;

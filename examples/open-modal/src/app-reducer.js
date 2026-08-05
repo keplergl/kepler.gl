@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {createAction, handleActions} from 'redux-actions';
-
 // CONSTANTS
 export const INIT = 'INIT';
 export const SHOW_MODAL = 'SHOW_MODAL';
 
 // ACTIONS
-export const appInit = createAction(INIT);
-export const showModal = createAction(SHOW_MODAL);
+export const appInit = () => ({type: INIT});
+export const showModal = id => ({type: SHOW_MODAL, payload: id});
 
 // INITIAL_STATE
 const initialState = {
@@ -19,19 +17,15 @@ const initialState = {
 };
 
 // REDUCER
-const appReducer = handleActions(
-  {
-    [INIT]: state => ({
-      ...state,
-      loaded: true
-    }),
-
-    [SHOW_MODAL]: (state, action) => ({
-      ...state,
-      modal: action.payload
-    })
-  },
-  initialState
-);
+const appReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case INIT:
+      return {...state, loaded: true};
+    case SHOW_MODAL:
+      return {...state, modal: action.payload};
+    default:
+      return state;
+  }
+};
 
 export default appReducer;

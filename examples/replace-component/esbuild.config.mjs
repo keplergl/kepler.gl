@@ -7,38 +7,16 @@ import {dotenvRun} from '@dotenv-run/esbuild';
 import copyPlugin from 'esbuild-plugin-copy';
 
 import process from 'node:process';
-import fs from 'node:fs';
 import {spawn} from 'node:child_process';
-import {join} from 'node:path';
+import {dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import KeplerPackage from '../../package.json' assert {type: 'json'};
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 const args = process.argv;
-const LIB_DIR = '../../';
-const NODE_MODULES_DIR = join(LIB_DIR, 'node_modules');
-const SRC_DIR = join(LIB_DIR, 'src');
-
-// For debugging deck.gl, load deck.gl from external deck.gl directory
-const EXTERNAL_DECK_SRC = join(LIB_DIR, 'deck.gl');
-
-// For debugging loaders.gl, load loaders.gl from external loaders.gl directory
-const EXTERNAL_LOADERS_SRC = join(LIB_DIR, 'loaders.gl');
-
 const port = 8080;
 const NODE_ENV = JSON.stringify(process.env.NODE_ENV || 'production');
-
-// add alias to serve from kepler src, resolve libraries so there is only one copy of them
-const RESOLVE_LOCAL_ALIASES = {
-  react: `${NODE_MODULES_DIR}/react`,
-  'react-dom': `${NODE_MODULES_DIR}/react-dom`,
-  'react-redux': `${NODE_MODULES_DIR}/react-redux/lib`,
-  'styled-components': `${NODE_MODULES_DIR}/styled-components`,
-  'react-intl': `${NODE_MODULES_DIR}/react-intl`,
-  'react-palm': `${NODE_MODULES_DIR}/react-palm`,
-  // Suppress useless warnings from react-date-picker's dep
-  'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
-  // kepler.gl and loaders.gl need to use same apache-arrow
-  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`
-};
 
 const config = {
   platform: 'browser',
@@ -57,14 +35,7 @@ const config = {
   define: {
     NODE_ENV,
     'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
-    'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
-    'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken || ''),
-    'process.env.CartoClientId': JSON.stringify(process.env.CartoClientId || ''),
-    'process.env.FoursquareClientId': JSON.stringify(process.env.FoursquareClientId || ''),
-    'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain || ''),
-    'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL || ''),
-    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL || ''),
-    'process.env.NODE_DEBUG': JSON.stringify(false)
+    'process.env.NODE_ENV': NODE_ENV
   },
   plugins: [
     dotenvRun({
@@ -72,7 +43,6 @@ const config = {
       environment: NODE_ENV,
       root: '../../.env'
     }),
-    // automatically injected kepler.gl package version into the bundle
     replace({
       __PACKAGE_VERSION__: KeplerPackage.version,
       include: /constants\/src\/default-settings\.ts/
@@ -83,67 +53,31 @@ const config = {
         from: ['index.html'],
         to: ['dist/index.html']
       }
-    })
+    }),
+    // styled-components: @hubble.gl/react nests its own copy.
+    // react-palm: several @kepler.gl/* packages nest their own copy.
+    // Both are singletons that break when loaded more than once.
+    {
+      name: 'dedupe-singletons',
+      setup(build) {
+        build.onResolve(
+          {filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$)/},
+          async args => {
+            if (args.pluginData?.deduped) return;
+            const result = await build.resolve(args.path, {
+              resolveDir: __dirname,
+              kind: args.kind,
+              pluginData: {deduped: true}
+            });
+            return result;
+          }
+        );
+      }
+    }
   ]
 };
 
-function addAliases(externals, args) {
-  const resolveAlias = RESOLVE_LOCAL_ALIASES;
-
-  // Combine flags
-  const useLocalDeck = args.includes('--env.deck');
-  const useRepoDeck = args.includes('--env.deck_src');
-
-  // resolve deck.gl from local dir
-  if (useLocalDeck || useRepoDeck) {
-    // Load deck.gl from root node_modules
-    // if env.deck_src Load deck.gl from deck.gl/modules/main/src folder parallel to kepler.gl
-    resolveAlias['deck.gl'] = useLocalDeck
-      ? `${NODE_MODULES_DIR}/deck.gl/src`
-      : `${EXTERNAL_DECK_SRC}/modules/main/src`;
-
-    // if env.deck Load @deck.gl modules from root node_modules/@deck.gl
-    // if env.deck_src Load @deck.gl modules from  deck.gl/modules folder parallel to kepler.gl
-    externals['deck.gl'].forEach(mdl => {
-      resolveAlias[`@deck.gl/${mdl}`] = useLocalDeck
-        ? `${NODE_MODULES_DIR}/@deck.gl/${mdl}/src`
-        : `${EXTERNAL_DECK_SRC}/modules/${mdl}/src`;
-      // types are stored in different directory
-      resolveAlias[`@deck.gl/${mdl}/typed`] = useLocalDeck
-        ? `${NODE_MODULES_DIR}/@deck.gl/${mdl}/typed`
-        : `${EXTERNAL_DECK_SRC}/modules/${mdl}/src/types`;
-    });
-
-    ['luma.gl', 'probe.gl', 'loaders.gl'].forEach(name => {
-      // if env.deck Load ${name} from root node_modules
-      // if env.deck_src Load ${name} from deck.gl/node_modules folder parallel to kepler.gl
-      resolveAlias[name] = useLocalDeck
-        ? `${NODE_MODULES_DIR}/${name}/src`
-        : name === 'probe.gl'
-        ? `${EXTERNAL_DECK_SRC}/node_modules/${name}/src`
-        : `${EXTERNAL_DECK_SRC}/node_modules/@${name}/core/src`;
-
-      // if env.deck Load @${name} modules from root node_modules/@${name}
-      // if env.deck_src Load @${name} modules from deck.gl/node_modules/@${name} folder parallel to kepler.gl`
-      externals[name].forEach(mdl => {
-        resolveAlias[`@${name}/${mdl}`] = useLocalDeck
-          ? `${NODE_MODULES_DIR}/@${name}/${mdl}/src`
-          : `${EXTERNAL_DECK_SRC}/node_modules/@${name}/${mdl}/src`;
-      });
-    });
-  }
-
-  if (args.includes('--env.loaders_src')) {
-    externals['loaders.gl'].forEach(mdl => {
-      resolveAlias[`@loaders.gl/${mdl}`] = `${EXTERNAL_LOADERS_SRC}/modules/${mdl}/src`;
-    });
-  }
-
-  return resolveAlias;
-}
-
 function openURL(url) {
-  // Could potentially be replaced by https://www.npmjs.com/package/open, it was throwing an error when tried last
   const cmd = {
     darwin: ['open'],
     linux: ['xdg-open'],
@@ -156,37 +90,6 @@ function openURL(url) {
 }
 
 (async () => {
-  // local dev
-
-  const modules = ['@deck.gl', '@loaders.gl', '@luma.gl', '@probe.gl'];
-  const loadAllDirs = modules.map(
-    dir =>
-      new Promise(success => {
-        fs.readdir(join(NODE_MODULES_DIR, dir), (err, items) => {
-          if (err) {
-            const colorRed = '\x1b[31m';
-            const colorReset = '\x1b[0m';
-            console.log(
-              `${colorRed}%s${colorReset}`,
-              `Cannot find ${dir} in node_modules, make sure it is installed. ${err}`
-            );
-
-            success(null);
-          }
-          success(items);
-        });
-      })
-  );
-
-  const externals = await Promise.all(loadAllDirs).then(results => ({
-    'deck.gl': results[0],
-    'loaders.gl': results[1],
-    'luma.gl': results[2],
-    'probe.gl': results[3]
-  }));
-
-  const localAliases = addAliases(externals, args);
-
   if (args.includes('--build')) {
     await esbuild
       .build({
@@ -212,9 +115,6 @@ function openURL(url) {
         ...config,
         minify: false,
         sourcemap: true,
-        // add alias to resolve libraries so there is only one copy of them
-        // always alias to avoid duplicate Reacts
-        alias: localAliases,
         banner: {
           js: `new EventSource('/esbuild').addEventListener('change', () => location.reload());`
         }
@@ -230,7 +130,7 @@ function openURL(url) {
           }
         });
         console.info(
-          `kepler.gl demo app running at ${`http://localhost:${port}`}, press Ctrl+C to stop`
+          `kepler.gl replace-component example running at http://localhost:${port}, press Ctrl+C to stop`
         );
         openURL(`http://localhost:${port}`);
       })

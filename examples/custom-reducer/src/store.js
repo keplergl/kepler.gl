@@ -4,12 +4,14 @@
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import keplerGlReducer, {uiStateUpdaters, enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import appReducer from './app-reducer';
-import Window from 'global/window';
 
 const customizedKeplerGlReducer = keplerGlReducer
   .initialState({
+    mapStyle: {
+      styleType: 'dark-matter'
+    },
     uiState: {
-      // hide side panel to disallower user customize the map
+      // hide side panel to disallow user customize the map
       readOnly: true,
 
       // customize which map control button to show
@@ -48,11 +50,9 @@ const reducers = combineReducers({
 });
 
 const middlewares = enhanceReduxMiddleware([]);
-const enhancers = [applyMiddleware(...middlewares)];
-
-const initialState = {};
+const enhancers = applyMiddleware(...middlewares);
 
 // add redux devtools
-const composeEnhancers = Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
-export default createStore(reducers, initialState, composeEnhancers(...enhancers));
+export default createStore(reducers, {}, composeEnhancers(enhancers));

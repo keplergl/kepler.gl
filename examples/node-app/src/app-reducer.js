@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {createAction, handleActions} from 'redux-actions';
-
 // CONSTANTS
 export const INIT = 'INIT';
 
 // ACTIONS
-export const appInit = createAction(INIT);
+export const appInit = () => ({type: INIT});
 
 // INITIAL_STATE
 const initialState = {
@@ -16,14 +14,13 @@ const initialState = {
 };
 
 // REDUCER
-const appReducer = handleActions(
-  {
-    [INIT]: state => ({
-      ...state,
-      loaded: true
-    })
-  },
-  initialState
-);
+const appReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case INIT:
+      return {...state, loaded: true};
+    default:
+      return state;
+  }
+};
 
 export default appReducer;
