@@ -603,6 +603,7 @@ export const LAYER_TYPES = keyMirror({
   cluster: null,
   icon: null,
   heatmap: null,
+  isoline: null,
   hexagonId: null,
   '3D': null,
   trip: null,

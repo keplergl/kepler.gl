@@ -652,10 +652,87 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    _renderIsolineLayerConfig({layer, visConfiguratorProps, layerChannelConfigProps}) {
+      const {visConfig} = layer.config;
+      const aggregationOptions = (layer.visConfigSettings.aggregation?.options || []).map(
+        (key: string) => ({id: key, label: key.charAt(0) + key.slice(1).toLowerCase()})
+      );
+      const selectedAggregation = aggregationOptions.find(
+        ({id}: {id: string}) => id === visConfig.aggregation
+      );
+
+      return (
+        <StyledLayerVisualConfigurator>
+          {/* Color */}
+          <LayerConfigGroup label={'layer.color'} collapsible>
+            <LayerColorRangeSelector {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* Kernel radius */}
+          <LayerConfigGroup label={'layer.radius'}>
+            <VisConfigSlider
+              {...layer.visConfigSettings.radius}
+              {...visConfiguratorProps}
+              label={false}
+            />
+          </LayerConfigGroup>
+
+          {/* Levels */}
+          <LayerConfigGroup label={'layer.isoline'}>
+            <VisConfigSlider {...layer.visConfigSettings.levels} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.intensity} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+
+          {/* Display options */}
+          <LayerConfigGroup label={'layer.display'} collapsible>
+            <VisConfigSwitch {...layer.visConfigSettings.showFill} {...visConfiguratorProps} />
+            <VisConfigSwitch {...layer.visConfigSettings.showLines} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.lineWidth} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+
+          {/* Labels */}
+          <LayerConfigGroup label={'layer.labels'} collapsible>
+            <VisConfigSwitch {...layer.visConfigSettings.showLabels} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider {...layer.visConfigSettings.labelSize} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* Weight */}
+          <LayerConfigGroup label={'layer.weight'}>
+            <ChannelByValueSelector
+              channel={layer.visualChannels.weight}
+              {...layerChannelConfigProps}
+            />
+          </LayerConfigGroup>
+
+          {/* Aggregation */}
+          <LayerConfigGroup label={'layer.aggregation'}>
+            <SidePanelSection>
+              <PanelLabel>
+                <FormattedMessage id={'layerVisConfigs.weightAggregation'} />
+              </PanelLabel>
+              <ItemSelector
+                selectedItems={selectedAggregation}
+                options={aggregationOptions}
+                displayOption="label"
+                getOptionValue="id"
+                multiSelect={false}
+                searchable={false}
+                onChange={(value: any) => visConfiguratorProps.onChange({aggregation: value})}
+              />
+            </SidePanelSection>
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
     _renderGridLayerConfig(props) {
       return this._renderAggregationLayerConfig(props);
     }
-
     _renderHexagonLayerConfig(props) {
       return this._renderAggregationLayerConfig(props);
     }
