@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {forwardRef, useMemo, useCallback} from 'react';
+import React, {forwardRef, memo, useMemo, useCallback} from 'react';
 import styled, {withTheme, IStyledComponent} from 'styled-components';
 
 import {FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
@@ -232,10 +232,22 @@ export default function BottomWidgetFactory(
     );
   };
 
-  return withTheme(
-    forwardRef((props: BottomWidgetThemedProps, ref: React.ForwardedRef<HTMLDivElement>) => (
-      <BottomWidget {...props} rootRef={ref} />
-    ))
+  // Wrap order matters for memo to be effective:
+  //   1. withTheme   — injects `theme` prop from styled-components context
+  //   2. forwardRef  — converts the React ref to the `rootRef` prop
+  //   3. memo        — outermost guard; sees stable props after theme injection
+  //
+  // If memo wrapped a component that still had withTheme outside it, withTheme
+  // would produce a new props object on every render and bust the memo cache.
+  const ThemedBottomWidget = withTheme(BottomWidget);
+
+  const ForwardedBottomWidget = forwardRef(
+    (props: Omit<BottomWidgetThemedProps, 'rootRef' | 'theme'>, ref: React.ForwardedRef<HTMLDivElement>) => (
+      <ThemedBottomWidget {...(props as BottomWidgetThemedProps)} rootRef={ref} />
+    )
   );
+  ForwardedBottomWidget.displayName = 'BottomWidget';
+
+  return memo(ForwardedBottomWidget) as unknown as React.FC<BottomWidgetThemedProps>;
 }
 /* eslint-enable complexity */
