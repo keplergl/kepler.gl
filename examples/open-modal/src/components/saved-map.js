@@ -1,26 +1,34 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
+import React, {useEffect, useRef, useState} from 'react';
 import KeplerGl from '@kepler.gl/components';
 
-export default class SavedMap extends Component {
-  render() {
-    const {mapboxApiAccessToken, id} = this.props;
+const SavedMap = ({mapboxApiAccessToken, id}) => {
+  const containerRef = useRef(null);
+  const [dimensions, setDimensions] = useState({width: 0, height: 0});
 
-    return (
-      <AutoSizer>
-        {({height, width}) => (
-          <KeplerGl
-            mapboxApiAccessToken={mapboxApiAccessToken}
-            id={id}
-            width={width}
-            height={height}
-            mint={false}
-          />
-        )}
-      </AutoSizer>
-    );
-  }
-}
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      const {width, height} = entries[0].contentRect;
+      setDimensions({width, height});
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} style={{width: '100%', height: '100%'}}>
+      <KeplerGl
+        mapboxApiAccessToken={mapboxApiAccessToken}
+        id={id}
+        width={dimensions.width}
+        height={dimensions.height}
+        mint={false}
+      />
+    </div>
+  );
+};
+
+export default SavedMap;

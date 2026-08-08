@@ -3,6 +3,7 @@
 
 import './base-layer-specs';
 import './arc-layer-specs';
+import './bitmap-layer-specs';
 import './cluster-layer-specs';
 import './geojson-layer-specs';
 import './grid-layer-specs';

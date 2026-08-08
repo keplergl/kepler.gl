@@ -5,22 +5,23 @@
     "start-local": "NODE_ENV=local node esbuild.config.mjs --start"
   },
   "dependencies": {
-    "@kepler.gl/components": "^3.1.10",
-    "@kepler.gl/reducers": "^3.1.10",
+    "@kepler.gl/components": "^3.3.0-alpha.6",
+    "@kepler.gl/reducers": "^3.3.0-alpha.6",
     "express": "^4.17.1",
-    "global": "^4.3.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-palm": "^3.3.6",
-    "react-redux": "^8.0.5",
-    "react-virtualized": "^9.21.0",
-    "redux-actions": "^2.2.1",
-    "styled-components": "6.1.8"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-redux": "^9.1.0",
+    "redux": "^5.0.0",
+    "styled-components": "6.4.3"
   },
   "devDependencies": {
     "@dotenv-run/esbuild": "^1.5.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/styled-components": "^5.1.26",
     "esbuild": "^0.25.0",
     "esbuild-plugin-copy": "^2.1.1",
-    "esbuild-plugin-replace": "^1.4.0"
+    "esbuild-plugin-replace": "^1.4.0",
+    "typescript": "^5.0.0"
   }
 }

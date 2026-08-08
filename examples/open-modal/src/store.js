@@ -5,7 +5,6 @@ import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 
 import appReducer from './app-reducer';
-import Window from 'global/window';
 
 const reducers = combineReducers({
   keplerGl: keplerGlReducer,
@@ -13,11 +12,10 @@ const reducers = combineReducers({
 });
 
 const middlewares = enhanceReduxMiddleware([]);
-const enhancers = [applyMiddleware(...middlewares)];
+const enhancers = applyMiddleware(...middlewares);
 
 const initialState = {};
 
-// add redux devtools
-const composeEnhancers = Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
-export default createStore(reducers, initialState, composeEnhancers(...enhancers));
+export default createStore(reducers, initialState, composeEnhancers(enhancers));

@@ -107,6 +107,7 @@ export type SavedVisState = {
   splitMaps: SplitMap[];
   animationConfig: SavedAnimationConfig;
   editor?: SavedEditor;
+  layerOrder?: any[];
 };
 
 // Min saved config can be passed to addDataToMap
@@ -132,6 +133,7 @@ export type ParsedVisState = {
   overlayBlending?: string;
   splitMaps?: SplitMap[];
   animationConfig?: Partial<SavedAnimationConfig>;
+  layerOrder?: any[];
 };
 
 export type ParsedUiState = {

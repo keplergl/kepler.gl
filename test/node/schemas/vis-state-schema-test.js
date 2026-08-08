@@ -39,7 +39,8 @@ const expectedVisStateEntries = [
   'overlayBlending',
   'splitMaps',
   'animationConfig',
-  'editor'
+  'editor',
+  'layerOrder'
 ];
 
 test('#visStateSchema -> v1 -> save layers', t => {

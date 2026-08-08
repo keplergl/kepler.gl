@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import * as React from 'react';
 import ReactDOM from 'react-dom/client';
-import document from 'global/document';
-import Modal from 'react-modal';
 import {Provider} from 'react-redux';
 import store from './store';
 import App from './app';
-
-Modal.setAppElement('#root');
 
 const Root = () => (
   <Provider store={store}>
@@ -18,5 +14,4 @@ const Root = () => (
 );
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-
 root.render(<Root />);

@@ -1538,13 +1538,17 @@ class Layer implements KeplerLayer {
     layerCallbacks: any;
     visible: boolean;
   }) {
+    const blendingParameters = mapState.layerParameters ?? {};
     return {
       id: this.id,
       idx,
       coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
       pickable: true,
       wrapLongitude: true,
-      parameters: {depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d)},
+      parameters: {
+        depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d),
+        ...blendingParameters
+      },
       hidden: this.config.hidden,
       // visconfig
       opacity: this.config.visConfig.opacity,
@@ -1633,7 +1637,8 @@ class Layer implements KeplerLayer {
             },
             parameters: {
               // text will always show on top of all layers
-              depthTest: false
+              depthTest: false,
+              ...(mapState?.layerParameters ?? {})
             },
 
             getFilterValue: data.getFilterValue,
@@ -1658,7 +1663,8 @@ class Layer implements KeplerLayer {
                 ? {
                     background: {
                       parameters: {
-                        cull: false
+                        cull: false,
+                        ...(mapState?.layerParameters ?? {})
                       }
                     }
                   }

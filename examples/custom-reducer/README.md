@@ -1,24 +1,40 @@
 # Customize kepler.gl Reducer
 
-This example demos how to customize kepler.gl reducer
+Demo showing how to customize the kepler.gl reducer:
 
-1. Customize reducer initialState by `keplerGlReducer.initialState`
-2. Adding custom actions by `keplerGlReducer.plugins`
+1. Customize reducer initial state via `keplerGlReducer.initialState`
+2. Add custom actions via `keplerGlReducer.plugin`
 
-### Local dev
+## Pre-requirements
 
+- [Node.js ^20.x](http://nodejs.org)
+- [Yarn 4.4.0](https://yarnpkg.com): See the [installation instructions][yarn-install].
+
+## 1. Install Dependencies
+
+Go to the `examples/custom-reducer` directory and run:
+
+```sh
+touch yarn.lock && yarn
 ```
-yarn
-```
 
-add mapbox access token to node env
+> `touch yarn.lock` is required once to mark this directory as a standalone Yarn project,
+> independent of the monorepo root.
 
-```
-export MapboxAccessToken=<your_mapbox_token>
-```
+## 2. Start the App
 
-then
-
-```
+```sh
 yarn start
 ```
+
+The app will be available at [http://localhost:8080](http://localhost:8080).
+
+## Production Build
+
+```sh
+yarn build
+```
+
+The output will be in the `dist/` directory.
+
+[yarn-install]: https://yarnpkg.com/getting-started/install

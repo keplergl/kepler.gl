@@ -244,6 +244,8 @@ export type VisConfigNumber = VisConfig & {
   defaultValue: number;
   range: SizeRange;
   step: number;
+  focusRange?: [number, number];
+  focusWeight?: number;
 };
 
 export type VisConfigBoolean = VisConfig & {

@@ -96,7 +96,8 @@ const ExportDataModalFactory = () => {
         (datasets[datasetId].type === DatasetType.VECTOR_TILE ||
           datasets[datasetId].type === DatasetType.RASTER_TILE ||
           datasets[datasetId].type === DatasetType.WMS_TILE ||
-          datasets[datasetId].type === DatasetType.TILE_3D) &&
+          datasets[datasetId].type === DatasetType.TILE_3D ||
+          datasets[datasetId].type === DatasetType.BITMAP) &&
         (selectedDataset === datasetId || exportAllDatasets)
       );
     });

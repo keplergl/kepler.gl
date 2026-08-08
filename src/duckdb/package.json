@@ -1,26 +1,29 @@
 {
   "name": "@kepler.gl/duckdb",
   "author": "Shan He <heshan0131@gmail.com>",
-  "version": "3.3.0-alpha.0",
+  "version": "3.3.0-alpha.6",
   "description": "DuckDB plugin for Kepler.gl",
   "license": "MIT",
-  "main": "dist/index.js",
+  "main": "dist/cjs/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/cjs/index.js"
     },
     "./components": {
       "types": "./dist/components/index.d.ts",
-      "import": "./dist/components/index.js",
-      "require": "./dist/components/index.js"
+      "import": "./dist/esm/components/index.js",
+      "require": "./dist/cjs/components/index.js",
+      "default": "./dist/cjs/components/index.js"
     },
     "./table": {
       "types": "./dist/table/index.d.ts",
-      "import": "./dist/table/index.js",
-      "require": "./dist/table/index.js"
+      "import": "./dist/esm/table/index.js",
+      "require": "./dist/cjs/table/index.js",
+      "default": "./dist/cjs/table/index.js"
     }
   },
   "keywords": [
@@ -31,25 +34,23 @@
     "url": "https://github.com/keplergl/kepler.gl.git"
   },
   "scripts": {
-    "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
-    "build:umd": "NODE_OPTIONS=--openssl-legacy-provider webpack --config ./webpack/umd.js --progress --env.prod",
+    "build": "rm -fr dist && babel src --out-dir dist/cjs --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts' && BABEL_ENV=esm babel src --out-dir dist/esm --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
     "build:types": "tsc --project ./tsconfig.production.json",
     "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
-    "stab": "mkdir -p dist/components dist/table && echo \"export * from '../src';\" > dist/index.js && echo \"export * from '../../src/components';\" > dist/components/index.js && echo \"export * from '../../src/table';\" > dist/table/index.js"
+    "stab": "mkdir -p dist/cjs/components dist/cjs/table dist/esm/components dist/esm/table && echo \"'use strict'; Object.assign(module.exports, require('../../src'));\" > dist/cjs/index.js && echo \"export * from '../../src';\" > dist/esm/index.js && echo \"'use strict'; Object.assign(module.exports, require('../../../src/components'));\" > dist/cjs/components/index.js && echo \"export * from '../../../src/components';\" > dist/esm/components/index.js && echo \"'use strict'; Object.assign(module.exports, require('../../../src/table'));\" > dist/cjs/table/index.js && echo \"export * from '../../../src/table';\" > dist/esm/table/index.js"
   },
   "files": [
-    "dist",
-    "umd"
+    "dist"
   ],
   "dependencies": {
     "@duckdb/duckdb-wasm": "^1.28.0",
-    "@kepler.gl/common-utils": "3.3.0-alpha.0",
-    "@kepler.gl/constants": "3.3.0-alpha.0",
-    "@kepler.gl/processors": "3.3.0-alpha.0",
-    "@kepler.gl/table": "3.3.0-alpha.0",
-    "@kepler.gl/types": "3.3.0-alpha.0",
-    "@kepler.gl/utils": "3.3.0-alpha.0",
-    "@monaco-editor/react": "^4.6.0",
+    "@kepler.gl/common-utils": "3.3.0-alpha.6",
+    "@kepler.gl/constants": "3.3.0-alpha.6",
+    "@kepler.gl/processors": "3.3.0-alpha.6",
+    "@kepler.gl/table": "3.3.0-alpha.6",
+    "@kepler.gl/types": "3.3.0-alpha.6",
+    "@kepler.gl/utils": "3.3.0-alpha.6",
+    "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-collapsible": "^1.1.0",
     "apache-arrow": ">=15.0.0",
     "monaco-editor": "^0.52.0",
@@ -72,5 +73,6 @@
     "node": "20.19.3",
     "yarn": "4.4.0"
   },
-  "packageManager": "yarn@4.4.0"
+  "packageManager": "yarn@4.4.0",
+  "module": "dist/esm/index.js"
 }

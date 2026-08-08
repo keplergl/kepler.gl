@@ -186,7 +186,7 @@ export const ECOSYSTEM = [
     description:
       'Built with Deck.gl, Kepler.gl utilizes WebGL to render large datasets quickly and efficiently.',
     image: fsqCdnUrl('ecosystem-jupyter.png'),
-    githubUrl: 'https://github.com/keplergl/kepler.gl/tree/master/bindings/kepler.gl-jupyter'
+    githubUrl: 'https://github.com/keplergl/kepler.gl/tree/master/bindings/python'
   },
   {
     title: 'Tableau',

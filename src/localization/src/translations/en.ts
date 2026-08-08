@@ -45,8 +45,15 @@ export default {
     building: 'Building',
     water: 'Water',
     land: 'Land',
-    '3dBuilding': '3d Building',
-    background: 'Background'
+    '3dBuilding': '3D Building',
+    background: 'Background',
+    atmosphere: 'Atmosphere',
+    basemap: 'Basemap',
+    adminBorders: 'Admin Borders',
+    terminator: 'Day/Night',
+    sunAzimuth: 'Sun Azimuth',
+    surface: 'Globe Surface',
+    stars: 'Stars'
   },
   panel: {
     text: {
@@ -103,6 +110,9 @@ export default {
     service: 'Service',
     layer: 'Layer',
     appearance: 'Appearance',
+    bounds: 'Bounds',
+    imageSource: 'Image Source',
+    alignment: 'Alignment',
     uniqueIdField: 'Unique ID Field',
     type: {
       point: 'point',
@@ -124,7 +134,8 @@ export default {
       vectortile: 'vector tile',
       rastertile: 'raster tile',
       wms: 'WMS',
-      tile3d: '3D tile'
+      tile3d: '3D tile',
+      bitmap: 'bitmap'
     },
     wms: {
       hover: 'Value:'
@@ -149,6 +160,14 @@ export default {
     billboardDescription: 'Orient geometry towards the camera',
     fadeTrail: 'Fade trail',
     opacity: 'Opacity',
+    imageUrl: 'Image URL',
+    showBounds: 'Show Bounds',
+    editBounds: 'Drag corners to resize',
+    alignMode: 'Align to map',
+    boundsWest: 'West',
+    boundsSouth: 'South',
+    boundsEast: 'East',
+    boundsNorth: 'North',
     pointSize: 'Point Size',
     coverage: 'Coverage',
     outline: 'Outline',
@@ -233,13 +252,15 @@ export default {
     addData: 'Add Data',
     addLayer: 'Add Layer',
     layerBlending: 'Layer Blending',
-    overlayBlending: 'Overlay Blending'
+    overlayBlending: 'Overlay Blending',
+    globeUnsupported: '{layerType} layer is not supported in Globe mode'
   },
   mapManager: {
     mapStyle: 'Map style',
     addMapStyle: 'Add Map Style',
     '3dBuildingColor': '3D Building Color',
-    backgroundColor: 'Background Color'
+    backgroundColor: 'Background Color',
+    globeLayers: 'Globe Layers'
   },
   effectManager: {
     effects: 'Effects',
@@ -317,7 +338,8 @@ export default {
     vectorTile: 'Vector tile',
     rasterTile: 'Raster tile',
     wmsTile: 'WMS tile',
-    tile3d: '3D tile'
+    tile3d: '3D tile',
+    bitmap: 'Bitmap image'
   },
   tooltip: {
     hideLayer: 'Hide layer',
@@ -333,8 +355,16 @@ export default {
     layerSettings: 'Layer settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',
+    selectSplitMode: 'Select map view mode',
+    singleView: 'Single',
+    dualView: 'Dual',
+    swipeView: 'Swipe',
     showLegend: 'Show legend',
     disable3DMap: 'Disable 3D Map',
+    globeMap: 'Globe Map',
+    disableGlobeMap: 'Disable Globe Map',
+    viewMode: 'View Mode',
+    top: 'Top',
     DrawOnMap: 'Draw on map',
     selectLocale: 'Select locale',
     showAiAssistantPanel: 'Show AI Assistant',

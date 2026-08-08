@@ -611,12 +611,16 @@ export const LAYER_TYPES = keyMirror({
   vectorTile: null,
   rasterTile: null,
   wms: null,
-  tile3d: null
+  tile3d: null,
+  bitmap: null
 });
 
 export const EDITOR_AVAILABLE_LAYERS: string[] = [
   LAYER_TYPES.point,
+  LAYER_TYPES.icon,
+  LAYER_TYPES.grid,
   LAYER_TYPES.hexagon,
+  LAYER_TYPES.cluster,
   LAYER_TYPES.arc,
   LAYER_TYPES.line,
   LAYER_TYPES.hexagonId,

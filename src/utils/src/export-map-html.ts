@@ -3,6 +3,21 @@
 
 import {EXPORT_HTML_MAP_MODES, KEPLER_GL_VERSION} from '@kepler.gl/constants';
 
+// React (and react-dom) no longer publish UMD builds starting with v19, so the
+// exported map loads React and the other UMD peer dependencies as ES modules
+// from an ESM CDN (esm.sh) via an import map, and exposes them on `window` as
+// the globals (React, ReactDOM, Redux, ReactRedux, styled) that the kepler.gl
+// UMD bundle and the inline scripts below expect.
+// See: https://react.dev/blog/2024/04/25/react-19-upgrade-guide#umd-builds-removed
+const REACT_VERSION = '19.1.0';
+const REACT_DOM_VERSION = '19.1.0';
+const REDUX_VERSION = '5.0.1';
+const REACT_REDUX_VERSION = '9.3.0';
+const STYLED_COMPONENTS_VERSION = '6.1.19';
+// es-module-shims lets the exported map keep working as a standalone file://
+// document (native ES modules/import maps are blocked under the file:// origin).
+const ES_MODULE_SHIMS_VERSION = '2.8.1';
+
 /**
  * This method is used to create an html file which will inlcude kepler and map data
  * @param {Object} options Object that collects all necessary data to  create the html file
@@ -47,18 +62,160 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <meta name="twitter:description" content="Kepler.gl is a powerful web-based geospatial data analysis tool. Built on a high performance rendering engine and designed for large-scale data sets.">
         <meta name="twitter:image" content="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/kepler.gl-meta-tag.png" />
 
-        <!-- Load React/Redux -->
-        <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
-        <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
-        <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
-        <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
-        <script src="https://unpkg.com/styled-components@6.1.8/dist/styled-components.min.js" crossorigin></script>
+        <!--
+          Load React/Redux and the other UMD peer dependencies as ES modules.
+          React >= 19 no longer ships UMD builds, so we pull everything from an
+          ESM CDN (esm.sh) and re-expose them on window as the globals that the
+          kepler.gl UMD bundle (and the inline scripts below) expect.
 
-        <!-- Load Kepler.gl -->
-        <script src="https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.js" crossorigin></script>
+          IMPORTANT: this file must keep working as a standalone file, i.e. opened
+          directly from disk via the file:// protocol. Native ES module scripts
+          are always fetched with CORS semantics and a file:// document has an
+          opaque (null) origin, so the browser refuses to load native modules or
+          import maps locally. To keep the standalone-file behaviour we run
+          es-module-shims in "shim mode" (importmap-shim / module-shim tags): it
+          is a classic script (loads fine from file://) that resolves the import
+          map and executes the modules as blob: URLs, sidestepping that
+          restriction. The import map pins a single React instance and uses
+          external= so react-redux / styled-components reuse it (otherwise React
+          hooks break).
+        -->
+        <script>
+          // Trigger es-module-shims "shim mode" so it always parses the
+          // importmap-shim / module-shim tags below instead of deferring to the
+          // native loader (which fails under file://).
+          window.esmsInitOptions = {shimMode: true};
+        </script>
+        <script>
+          // Replace the loading overlay with an error message.
+          // Safe to call at any time — once React has mounted and removed
+          // #kepler-load-screen this becomes a no-op.
+          window._keplerShowLoadError = function(msg) {
+            var loadScreen = document.getElementById('kepler-load-screen');
+            if (!loadScreen) return;
+            var spinner = loadScreen.querySelector('.kepler-spinner');
+            var label = loadScreen.querySelector('.kepler-load-label');
+            if (spinner) spinner.style.display = 'none';
+            if (label) label.style.display = 'none';
+            var errEl = document.createElement('div');
+            errEl.className = 'kepler-load-error';
+            errEl.textContent = msg || 'Failed to load the map. Check your internet connection and reload the page.';
+            loadScreen.appendChild(errEl);
+          };
+          // Catch unhandled promise rejections (e.g. ES module imports failing
+          // inside the module-shim script before loadScript is ever called).
+          window.addEventListener('unhandledrejection', function(event) {
+            console.error('kepler.gl: unhandled rejection during map load', event.reason);
+            window._keplerShowLoadError('Failed to load the map. Check your internet connection and reload the page.');
+          });
+        </script>
+        <script src="https://unpkg.com/es-module-shims@${ES_MODULE_SHIMS_VERSION}/dist/es-module-shims.js" crossorigin="anonymous"></script>
+        
+        <script type="importmap-shim">
+          {
+            "imports": {
+              "react": "https://esm.sh/react@${REACT_VERSION}",
+              "react/jsx-runtime": "https://esm.sh/react@${REACT_VERSION}/jsx-runtime",
+              "react-dom": "https://esm.sh/react-dom@${REACT_DOM_VERSION}?external=react",
+              "react-dom/client": "https://esm.sh/react-dom@${REACT_DOM_VERSION}/client?external=react",
+              "redux": "https://esm.sh/redux@${REDUX_VERSION}",
+              "react-redux": "https://esm.sh/react-redux@${REACT_REDUX_VERSION}?external=react,react-dom,redux",
+              "styled-components": "https://esm.sh/styled-components@${STYLED_COMPONENTS_VERSION}?external=react,react-dom"
+            }
+          }
+        </script>
 
+        <!--
+          Expose the ES modules as globals for the UMD kepler.gl bundle, then load
+          the kepler.gl UMD script and the app bootstrap script only after those
+          globals are available. The kepler.gl UMD bundle is a classic script
+          (which loads fine from file://), so it is injected dynamically here once
+          the globals are in place to guarantee the correct ordering.
+        -->
+        <script type="module-shim">
+          import * as React from 'react';
+          import * as ReactDOM from 'react-dom';
+          import * as ReactDOMClient from 'react-dom/client';
+          import * as Redux from 'redux';
+          import * as ReactRedux from 'react-redux';
+          import * as StyledComponents from 'styled-components';
+
+          // esm.sh namespaces expose the module's default export under .default.
+          // Normalize so the globals match the shape the React 18 UMD builds had:
+          // - React / Redux / ReactRedux keep their full namespace (named exports).
+          // - ReactDOM merges the classic + client entry so both createPortal and
+          //   createRoot are available (createRoot moved to react-dom/client in v19).
+          // - styled-components' global must be the callable default (styled) with
+          //   its named exports (ThemeProvider, withTheme, css, keyframes, ...)
+          //   attached, since the kepler.gl bundle relies on both.
+          window.React = React.default || React;
+          window.ReactDOM = Object.assign({}, ReactDOM.default || ReactDOM, ReactDOMClient);
+          window.Redux = Redux.default || Redux;
+          window.ReactRedux = ReactRedux.default || ReactRedux;
+          window.styled = Object.assign(StyledComponents.default, StyledComponents);
+
+          function loadScript(src) {
+            return new Promise(function(resolve, reject) {
+              var script = document.createElement('script');
+              script.src = src;
+              script.crossOrigin = 'anonymous';
+              script.onload = resolve;
+              script.onerror = reject;
+              document.head.appendChild(script);
+            });
+          }
+
+          // Load the kepler.gl UMD bundle after the globals are in place, then run
+          // the app bootstrap scripts (marked as type="text/kepler-bootstrap").
+          loadScript('https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.js')
+            .then(function() {
+              var bootstraps = document.querySelectorAll('script[type="text/kepler-bootstrap"]');
+              bootstraps.forEach(function(node) {
+                var script = document.createElement('script');
+                script.text = node.textContent;
+                document.body.appendChild(script);
+              });
+            })
+            .catch(function(error) {
+              console.error('kepler.gl: failed to load UMD bundle', error);
+              window._keplerShowLoadError('Failed to load the map bundle. Check your internet connection and reload the page.');
+            });
+        </script>
         <style type="text/css">
           body {margin: 0; padding: 0; overflow: hidden;}
+          #kepler-load-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #29323c;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            z-index: 9999;
+            font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+            color: #a0a7b4;
+          }
+          #kepler-load-screen .kepler-spinner {
+            width: 48px; height: 48px;
+            border: 4px solid rgba(255,255,255,0.08);
+            border-top-color: #1fbad6;
+            border-radius: 50%;
+            animation: kepler-spin 0.8s linear infinite;
+          }
+          #kepler-load-screen .kepler-load-label {
+            font-size: 13px;
+            letter-spacing: 0.5px;
+          }
+          #kepler-load-screen .kepler-load-error {
+            font-size: 13px;
+            color: #f05e45;
+            max-width: 360px;
+            text-align: center;
+            line-height: 1.5;
+          }
+          @keyframes kepler-spin { to { transform: rotate(360deg); } }
         </style>
 
         <!--MapBox token-->
@@ -72,8 +229,8 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           /**
            * Provide your MapBox Token
            **/
-          const MAPBOX_TOKEN = '${options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN'}';
-          const WARNING_MESSAGE = 'Please Provide a Mapbox Token in order to use Kepler.gl. Edit this file and fill out MAPBOX_TOKEN with your access key';
+          window.MAPBOX_TOKEN = '${options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN'}';
+          window.WARNING_MESSAGE = 'No Mapbox token provided. Mapbox basemaps will not be available. To enable them, edit this file and set MAPBOX_TOKEN to your Mapbox access key.';
         </script>
 
         <!-- GA: Delete this as you wish, However to pat ourselves on the back, we only track anonymous pageview to understand how many people are using kepler.gl. -->
@@ -84,10 +241,10 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
           ga('create', 'UA-64694404-19', {
             'storage': 'none',
-            'clientId': localStorage.getItem('ga:clientId')
+            'clientId': (function(){try{return localStorage.getItem('ga:clientId')}catch(e){return null}})()
           });
           ga(function(tracker) {
-              localStorage.setItem('ga:clientId', tracker.get('clientId'));
+              try{localStorage.setItem('ga:clientId', tracker.get('clientId'));}catch(e){}
           });
           ga('set', 'checkProtocolTask', null); // Disable file protocol checking.
           ga('set', 'checkStorageTask', null); // Disable cookie storage checking.
@@ -99,28 +256,41 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
       <body>
         <!-- We will put our React component inside this div. -->
         <div id="app">
-          <!-- Kepler.gl map will be placed here-->
+          <div id="kepler-load-screen">
+            <div class="kepler-spinner"></div>
+            <div class="kepler-load-label">Loading map…</div>
+          </div>
         </div>
 
-        <!-- Load our React component. -->
-        <script>
+        <!--
+          Load our React component. This script is not executed inline: it is run
+          by the module shim in <head> once the kepler.gl UMD bundle (and its
+          global peer dependencies) have finished loading.
+        -->
+        <script type="text/kepler-bootstrap">
           /* Validate Mapbox Token */
           if ((MAPBOX_TOKEN || '') === '' || MAPBOX_TOKEN === 'PROVIDE_MAPBOX_TOKEN') {
-            alert(WARNING_MESSAGE);
+            console.warn('[kepler.gl]', WARNING_MESSAGE);
           }
 
           /** STORE **/
-          const reducers = (function createReducers(redux, keplerGl) {
+          // Pre-seed styleType so the correct basemap fetch starts on the very
+          // first render, avoiding a flash of the default dark basemap.
+          // options.config has the versioned envelope shape: { version, config: { mapStyle, ... } }
+          const savedStyleType = ${JSON.stringify(options.config?.config?.mapStyle?.styleType ?? null)};
+
+          const reducers = (function createReducers(redux, keplerGl, styleType) {
             return redux.combineReducers({
               // mount keplerGl reducer
               keplerGl: keplerGl.keplerGlReducer.initialState({
                 uiState: {
                   readOnly: ${options.mode === EXPORT_HTML_MAP_MODES.READ},
                   currentModal: null
-                }
+                },
+                ...(styleType ? {mapStyle: {styleType}} : {})
               })
             });
-          }(Redux, KeplerGl));
+          }(Redux, KeplerGl, savedStyleType));
 
           const middleWares = (function createMiddlewares(keplerGl) {
             return keplerGl.enhanceReduxMiddleware([
@@ -133,11 +303,9 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           }(Redux, middleWares));
 
           const store = (function createStore(redux, enhancers) {
-            const initialState = {};
-
             return redux.createStore(
               reducers,
-              initialState,
+              {},
               redux.compose(enhancers)
             );
           }(Redux, enhancers));
@@ -255,6 +423,13 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                 window.addEventListener('resize', handleResize);
                 return function() {window.removeEventListener('resize', handleResize);};
               }, []);
+              // Remove the loading overlay after the first render is painted.
+              // useEffect fires post-commit, so this is safe under React 19's
+              // concurrent renderer — the map is visible before the overlay goes away.
+              react.useEffect(function removeLoadScreen() {
+                var loadScreen = document.getElementById('kepler-load-screen');
+                if (loadScreen) loadScreen.remove();
+              }, []);
               return react.createElement(
                 'div',
                 {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
@@ -284,9 +459,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
             const root = reactDOM.createRoot(container);
             root.render(app);
           }(React, ReactDOM, app));
-        </script>
-        <!-- The next script will show how to interact directly with Kepler map store -->
-        <script>
+
           /**
            * Customize map.
            * In the following section you can use the store object to dispatch Kepler.gl actions
@@ -301,7 +474,11 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               config
             );
 
-            // For some reason Kepler overwrites the config without extra wait time
+            // The 500 ms delay is a historical workaround for a race where
+            // keplerGl re-initialises and overwrites config applied synchronously.
+            // The pre-seeded styleType above removes the basemap flash on first
+            // render; this dispatch still applies the full saved config (layers,
+            // viewport, layer groups, etc.) once the component has settled.
             window.setTimeout(() => {
               store.dispatch(
                 keplerGl.addDataToMap({

@@ -47,6 +47,6 @@ export const CloudProviderContext = createContext<CloudProviderContextType>({
   cloudProviders: []
 });
 
-export const RootContext = createContext<RefObject<HTMLDivElement> | null>(null);
+export const RootContext = createContext<RefObject<HTMLDivElement | null> | null>(null);
 
 export default KeplerGlContext;

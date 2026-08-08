@@ -7,6 +7,8 @@ dist/
 build/
 umd/
 */**/dist/
+*.tsbuildinfo
+
 
 __pycache__/
 .pytest_cache/
@@ -31,6 +33,7 @@ package-lock.json
 /index.html
 
 npm-debug.log
+lerna-debug.log
 .history/
 .yarn
 .npmrc

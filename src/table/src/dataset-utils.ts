@@ -164,6 +164,8 @@ async function refreshRemoteData(datasetInfo: CreateTableProps): Promise<object 
       return await refreshWMSMetadata(datasetInfo);
     case DatasetType.TILE_3D:
       return null;
+    case DatasetType.BITMAP:
+      return null;
     default:
       return null;
   }

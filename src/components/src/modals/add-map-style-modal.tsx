@@ -90,10 +90,6 @@ const InlineLink = styled.a`
   }
 `;
 
-const nop = () => {
-  return;
-};
-
 interface AddMapStyleModalProps {
   inputMapStyle: ActionHandler<typeof inputMapStyle>;
   inputStyle: InputStyle;
@@ -124,6 +120,11 @@ function AddMapStyleModalFactory() {
     const [reRenderKey, setReRenderKey] = useState(0);
     const [previousToken, setPreviousToken] = useState<string | null>(null);
     const mapRef = useRef<MapInstance | null>(null);
+    const mapListenersRef = useRef<{
+      onStyleLoad?: () => void;
+      onError?: () => void;
+      pendingOnIdle?: (() => void) | null;
+    }>({});
     const loadCustomMapStyleRef = useRef(loadCustomMapStyleAction);
     loadCustomMapStyleRef.current = loadCustomMapStyleAction;
 
@@ -135,11 +136,20 @@ function AddMapStyleModalFactory() {
     }, [inputStyle?.accessToken, previousToken]);
 
     const setMapRefCallback = useCallback((mapRefInstance: MapRef | null) => {
+      // Remove listeners from the previous map instance
       if (mapRef.current && mapRefInstance) {
         const map = mapRefInstance.getMap();
         if (map && mapRef.current !== map) {
-          mapRef.current.off('style.load', nop);
-          mapRef.current.off('error', nop);
+          if (mapListenersRef.current.onStyleLoad) {
+            mapRef.current.off('style.load', mapListenersRef.current.onStyleLoad);
+          }
+          if (mapListenersRef.current.onError) {
+            mapRef.current.off('error', mapListenersRef.current.onError);
+          }
+          if (mapListenersRef.current.pendingOnIdle) {
+            mapRef.current.off('idle', mapListenersRef.current.pendingOnIdle);
+          }
+          mapListenersRef.current = {};
           mapRef.current = null;
         }
       }
@@ -148,14 +158,46 @@ function AddMapStyleModalFactory() {
       if (map && mapRef.current !== map) {
         mapRef.current = map;
 
-        map.on('style.load', () => {
+        const onStyleLoad = () => {
+          // Cancel any previous idle capture that hasn't fired yet.
+          if (mapListenersRef.current.pendingOnIdle) {
+            map.off('idle', mapListenersRef.current.pendingOnIdle);
+            mapListenersRef.current.pendingOnIdle = null;
+          }
+
           const style = map.getStyle();
           loadCustomMapStyleRef.current({style, error: false});
-        });
 
-        map.on('error', () => {
+          // Capture a thumbnail once the map finishes its first full render
+          // (tiles loaded + painted).  We use a one-shot `idle` listener so we
+          // get a real screenshot instead of a blank canvas.
+          // preserveDrawingBuffer is set to true on this map instance, so
+          // getCanvas().toDataURL() is safe to call synchronously here.
+          const onIdle = () => {
+            mapListenersRef.current.pendingOnIdle = null;
+            map.off('idle', onIdle);
+            try {
+              const icon = map.getCanvas().toDataURL('image/png');
+              loadCustomMapStyleRef.current({icon});
+            } catch {
+              // toDataURL can fail if the canvas is cross-origin tainted; in
+              // that case the no-icon placeholder set by inputMapStyleAction
+              // stays and is good enough.
+            }
+          };
+          mapListenersRef.current.pendingOnIdle = onIdle;
+          map.on('idle', onIdle);
+        };
+
+        const onError = () => {
           loadCustomMapStyleRef.current({error: true});
-        });
+        };
+
+        mapListenersRef.current.onStyleLoad = onStyleLoad;
+        mapListenersRef.current.onError = onError;
+
+        map.on('style.load', onStyleLoad);
+        map.on('error', onError);
       }
     }, []);
 

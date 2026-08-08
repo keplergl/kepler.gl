@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Window from 'global/window';
 import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
 import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 
@@ -12,12 +11,8 @@ const reducers = combineReducers({
 });
 
 const middlewares = enhanceReduxMiddleware([]);
+const enhancers = applyMiddleware(...middlewares);
 
-export const enhancers = [applyMiddleware(...middlewares)];
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
-const initialState = {};
-
-// add redux devtools
-const composeEnhancers = Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-
-export default createStore(reducers, initialState, composeEnhancers(...enhancers));
+export default createStore(reducers, {}, composeEnhancers(enhancers));

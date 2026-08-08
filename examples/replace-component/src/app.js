@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import {connect} from 'react-redux';
+import React, {useEffect, useRef, useState} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
 import {addDataToMap, wrapTo} from '@kepler.gl/actions';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 
 import sampleData, {config} from './data/sample-data';
 
-const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
+const MAPBOX_TOKEN = process.env.MapboxAccessToken || 'pk.xxx.yyy'; // eslint-disable-line
 
 import {
   SidebarFactory,
@@ -50,30 +49,40 @@ const KeplerGl = injectComponents([
   [MapPopoverFactory, CustomMapPopoverFactory]
 ]);
 
-class App extends Component {
-  componentDidMount() {
-    this.props.dispatch(wrapTo('map1', addDataToMap({datasets: sampleData, config})));
-  }
+const App = () => {
+  const dispatch = useDispatch();
+  const mapConfig = useSelector(state => state.app.mapConfig);
 
-  render() {
-    return (
-      <div style={{position: 'absolute', width: '100%', height: '100%'}}>
-        <AutoSizer>
-          {({height, width}) => (
-            <KeplerGl mapboxApiAccessToken={MAPBOX_TOKEN} id="map1" width={width} height={height} />
-          )}
-        </AutoSizer>
-        <StyledMapConfigDisplay>
-          {this.props.app.mapConfig
-            ? JSON.stringify(this.props.app.mapConfig)
-            : 'Click Save Config to Display Config Here'}
-        </StyledMapConfigDisplay>
-      </div>
-    );
-  }
-}
+  const containerRef = useRef(null);
+  const [dimensions, setDimensions] = useState({width: 0, height: 0});
 
-const mapStateToProps = state => state;
-const dispatchToProps = dispatch => ({dispatch});
+  useEffect(() => {
+    dispatch(wrapTo('map1', addDataToMap({datasets: sampleData, config})));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-export default connect(mapStateToProps, dispatchToProps)(App);
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      const {width, height} = entries[0].contentRect;
+      setDimensions({width, height});
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} style={{position: 'absolute', width: '100%', height: '100%'}}>
+      <KeplerGl
+        mapboxApiAccessToken={MAPBOX_TOKEN}
+        id="map1"
+        width={dimensions.width}
+        height={dimensions.height}
+      />
+      <StyledMapConfigDisplay>
+        {mapConfig ? JSON.stringify(mapConfig) : 'Click Save Config to Display Config Here'}
+      </StyledMapConfigDisplay>
+    </div>
+  );
+};
+
+export default App;

@@ -45,8 +45,8 @@ const NavItem = styled.div`
   margin: ${props => props.theme.margins.tiny};
   font-size: 10px;
   text-align: center;
-  filter: ${props => props.isActive && 'brightness(300%)'};
-  transform: ${props => props.isActive && 'scale(1.1)'};
+  filter: ${props => props.$isActive && 'brightness(300%)'};
+  transform: ${props => props.$isActive && 'scale(1.1)'};
   transition: transform 500ms, filter 500ms;
   cursor: pointer;
   &:hover {
@@ -74,7 +74,7 @@ const NavIcon = styled.img`
 const Nav = ({items, selectedIndex, onClick}) => (
   <NavContainer>
     {items.map(({text, icon}, i) => (
-      <NavItem key={i} isActive={selectedIndex === i} onClick={() => onClick(i)}>
+      <NavItem key={i} $isActive={selectedIndex === i} onClick={() => onClick(i)}>
         <NavIcon src={icon} />
         {text}
       </NavItem>

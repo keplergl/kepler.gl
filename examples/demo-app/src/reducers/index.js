@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {combineReducers} from 'redux';
-import {handleActions} from 'redux-actions';
 import Task, {withTask} from 'react-palm/tasks';
 
 import {aiAssistantReducer} from '@kepler.gl/ai-assistant';
@@ -15,6 +14,8 @@ import {getApplicationConfig} from '@kepler.gl/utils';
 
 // import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 // import keplerGlDuckdbPlugin, {KeplerGlDuckDbTable, DuckDBWasmAdapter} from '@kepler.gl/duckdb';
+
+import {initApplicationConfig} from '@kepler.gl/utils';
 
 import {
   INIT,
@@ -49,6 +50,36 @@ initApplicationConfig({
 });
 */
 
+// Example: Register custom icons for the icon layer.
+// These will be merged with the default icons fetched from CDN.
+// Data values in the "icon" column matching these IDs will render the custom shapes.
+// NOTE: Cell winding must be counter-clockwise (CCW) to match the CDN icon convention.
+initApplicationConfig({
+  customIcons: [
+    {
+      id: 'custom-star',
+      mesh: {
+        cells: [
+          [5, 1, 0],
+          [5, 2, 1],
+          [5, 3, 2],
+          [5, 4, 3],
+          [5, 0, 4]
+        ],
+        positions: [
+          [0, 1, 0],
+          [0.95, 0.31, 0],
+          [0.59, -0.81, 0],
+          [-0.59, -0.81, 0],
+          [-0.95, 0.31, 0],
+          [0, 0, 0]
+        ]
+      }
+    }
+  ],
+  customIconUrl: 'https://raw.githubusercontent.com/keplergl/kepler.gl-data/refs/heads/master/layers/icon/custom-icons.json'
+});
+
 const {DEFAULT_MAP_CONTROLS} = uiStateUpdaters;
 
 // INITIAL_APP_STATE
@@ -65,23 +96,18 @@ const initialAppState = {
 };
 
 // App reducer
-export const appReducer = handleActions(
-  {
-    [INIT]: state => ({
-      ...state,
-      loaded: true
-    }),
-    [LOAD_MAP_SAMPLE_FILE]: (state, action) => ({
-      ...state,
-      sampleMaps: action.samples
-    }),
-    [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
-      ...state,
-      isMapLoading: action.isMapLoading
-    })
-  },
-  initialAppState
-);
+export const appReducer = (state = initialAppState, action) => {
+  switch (action.type) {
+    case INIT:
+      return {...state, loaded: true};
+    case LOAD_MAP_SAMPLE_FILE:
+      return {...state, sampleMaps: action.samples};
+    case SET_SAMPLE_LOADING_STATUS:
+      return {...state, isMapLoading: action.isMapLoading};
+    default:
+      return state;
+  }
+};
 
 const {DEFAULT_EXPORT_MAP} = uiStateUpdaters;
 

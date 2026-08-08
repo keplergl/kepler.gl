@@ -3,7 +3,7 @@
 
 import * as arrow from 'apache-arrow';
 import {point as turfPoint} from '@turf/helpers';
-import booleanWithin from '@turf/boolean-within';
+import {booleanWithin} from '@turf/boolean-within';
 import {Feature, Polygon} from 'geojson';
 import uniq from 'lodash/uniq';
 import {DATA_TYPES} from 'type-analyzer';
@@ -77,7 +77,7 @@ export const geojsonVisConfigs: {
   sizeRange: 'strokeWidthRange';
   radiusRange: 'radiusRange';
   heightRange: 'elevationRange';
-  elevationScale: 'elevationScale';
+  elevationScale: VisConfigNumber;
   stroked: 'stroked';
   filled: 'filled';
   enable3d: 'enable3d';
@@ -92,7 +92,9 @@ export const geojsonVisConfigs: {
   },
   thickness: {
     ...LAYER_VIS_CONFIGS.thickness,
-    defaultValue: 0.5
+    defaultValue: 0.5,
+    focusRange: [0, 1],
+    focusWeight: 0.3
   },
   strokeColor: 'strokeColor',
   colorRange: 'colorRange',
@@ -102,7 +104,11 @@ export const geojsonVisConfigs: {
   sizeRange: 'strokeWidthRange',
   radiusRange: 'radiusRange',
   heightRange: 'elevationRange',
-  elevationScale: 'elevationScale',
+  elevationScale: {
+    ...LAYER_VIS_CONFIGS.elevationScale,
+    focusRange: [0, 1],
+    focusWeight: 0.3
+  },
   stroked: 'stroked',
   filled: 'filled',
   enable3d: 'enable3d',

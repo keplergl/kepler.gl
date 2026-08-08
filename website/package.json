@@ -21,21 +21,19 @@
     "global": "^4.3.2",
     "lodash": "4.17.23",
     "prop-types": "^15.6.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-palm": "^3.1.2",
-    "react-redux": "^8.0.5",
-    "react-router": "3.2.6",
-    "react-router-redux": "^4.0.8",
-    "react-swipeable-views": "^0.12.13",
+    "react-redux": "^9.1.0",
+    "react-router-dom": "^6.30.0",
     "react-waypoint": "^9.0.1",
-    "redux": "^4.2.1",
+    "redux": "^5.0.0",
     "redux-actions": "^1.2.0",
     "redux-thunk": "^1.0.0",
-    "styled-components": "6.1.8"
+    "styled-components": "6.4.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.1",
+    "@babel/core": "^7.29.6",
     "@babel/plugin-transform-class-properties": "^7.12.1",
     "@babel/plugin-transform-export-namespace-from": "^7.12.1",
     "@babel/plugin-transform-modules-commonjs": "^7.12.1",
@@ -49,7 +47,7 @@
     "babel-loader": "^8.0.0",
     "babel-plugin-module-resolver": "^3.0.0",
     "css-loader": "^6.8.1",
-    "esbuild": "^0.23.1",
+    "esbuild": "^0.28.1",
     "esbuild-plugin-replace": "^1.4.0",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^6.3.0",
@@ -66,12 +64,12 @@
     "webpack": "^5.104.1",
     "webpack-cli": "^5.1.4",
     "webpack-dev-middleware": "^6.1.1",
-    "webpack-dev-server": "^5.2.4",
+    "webpack-dev-server": "^5.2.5",
     "webpack-hot-middleware": "^2.25.4"
   },
   "peerDependencies": {
-    "react": "18.x",
-    "react-dom": "18.x"
+    "react": ">=19",
+    "react-dom": ">=19"
   },
   "engines": {
     "node": ">=20"

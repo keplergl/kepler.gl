@@ -55,8 +55,14 @@ export {
   geoCoderPanelSelector
 } from './kepler-gl';
 export {default as LayerAnimationControllerFactory} from './layer-animation-controller';
-export {Attribution, default as MapContainerFactory} from './map-container';
+export {
+  Attribution,
+  renderBasemapAttribution,
+  dedupeBasemapAttributions,
+  default as MapContainerFactory
+} from './map-container';
 export {default as MapsLayoutFactory} from './maps-layout';
+export {default as LayoutSplitter, LayoutSplitterMode} from './common/layout-splitter';
 export {default as ModalContainerFactory} from './modal-container';
 export {default as PlotContainerFactory} from './plot-container';
 export {default as SidePanelFactory} from './side-panel';
@@ -100,7 +106,6 @@ export {default as SingleColorPalette} from './side-panel/layer-panel/single-col
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 export {default as ScenegraphModelSelectorFactory} from './side-panel/layer-panel/scenegraph-model-selector';
 
-
 export {default as AddLayerButtonFactory} from './side-panel/layer-panel/add-layer-button';
 export * from './side-panel/layer-panel/channel-by-value-selector';
 export * from './side-panel/layer-panel/color-breaks-panel';
@@ -124,6 +129,7 @@ export {
 export * from './side-panel/layer-panel/dimension-scale-selector';
 
 export {default as LayerListFactory} from './side-panel/layer-panel/layer-list';
+export {default as LayerGroupHeaderFactory} from './side-panel/layer-panel/layer-group-header';
 export * from './side-panel/layer-panel/vis-config-by-field-selector';
 export {default as PanelViewListToggleFactory} from './side-panel/panel-view-list-toggle';
 export {default as DatasetInfoFactory} from './side-panel/common/dataset-info';
@@ -151,11 +157,11 @@ export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/m
 // map factories
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
-export {default as LayerSelectorPanelFactory} from './map/layer-selector-panel';
 export {default as LazyTippy} from './map/lazy-tippy';
 export {default as LocalePanelFactory} from './map/locale-panel';
 export {default as MapControlFactory} from './map/map-control';
 export {default as MapNavigationControlFactory} from './map/map-navigation-control';
+export {default as MapScaleFactory} from './map/map-scale';
 export {default as MapControlPanelFactory} from './map/map-control-panel';
 export {default as MapControlToolbarFactory} from './map/map-control-toolbar';
 export {default as MapControlTooltipFactory} from './map/map-control-tooltip';
@@ -363,7 +369,14 @@ export {default as AnnotationManagerFactory} from './annotations/annotation-pane
 export {AnnotationOverlay} from './annotations';
 export {AnnotationNode} from './annotations';
 export {AnnotationText} from './annotations';
-export {makeMarker, movePoint, moveText, resizeCircle, isLeftOriented} from './annotations';
+export {
+  makeMarker,
+  movePoint,
+  moveText,
+  resizeCircle,
+  isLeftOriented,
+  isPointVisibleOnGlobe
+} from './annotations';
 export type {MapViewport, AnnotationMarker} from './annotations';
 export {default as AnnotationControlFactory} from './map/annotations/annotation-control';
 
@@ -490,7 +503,10 @@ export {
   DROPPABLE_MAP_CONTAINER_TYPE,
   SORTABLE_LAYER_TYPE,
   SORTABLE_EFFECT_TYPE,
+  SORTABLE_EFFECT_PANEL_TYPE,
   SORTABLE_SIDE_PANEL_TYPE,
+  SORTABLE_LAYER_GROUP_TYPE,
+  SORTABLE_LAYER_GROUP_DROPPABLE_TYPE,
   DND_MODIFIERS,
   DND_EMPTY_MODIFIERS
 } from './common/dnd-layer-items';

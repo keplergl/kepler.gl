@@ -182,31 +182,24 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
   const fieldValueAccessor = layer.accessVSFieldValue(field, currentTime);
   const value = fieldValueAccessor(field, data instanceof DataRow ? {index: data._rowIndex} : data);
 
-  // Handle WMS layer data in comparison mode - WMS layers don't have comparable field data
   let primaryValue = null;
   let displayDeltaValue: string | null = null;
 
   if (primaryData) {
     try {
-      // Only calculate primary value if primaryData has a compatible structure
-      if (
-        primaryData instanceof DataRow ||
-        (primaryData && typeof primaryData === 'object' && 'index' in primaryData)
-      ) {
-        primaryValue = fieldValueAccessor(
-          field,
-          primaryData instanceof DataRow ? {index: primaryData._rowIndex} : primaryData
-        );
-
-        displayDeltaValue = getTooltipDisplayDeltaValue({
-          field,
-          value,
-          primaryValue,
-          compareType
-        });
+      if (primaryData instanceof DataRow) {
+        primaryValue = fieldValueAccessor(field, {index: primaryData._rowIndex});
+      } else if (Array.isArray(primaryData) || (typeof primaryData === 'object' && primaryData)) {
+        primaryValue = fieldValueAccessor(field, primaryData);
       }
+
+      displayDeltaValue = getTooltipDisplayDeltaValue({
+        field,
+        value,
+        primaryValue,
+        compareType
+      });
     } catch (error) {
-      // If there's an error accessing primaryData (e.g., WMS layer data), skip comparison
       primaryValue = null;
     }
   }
@@ -223,17 +216,21 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
   );
 };
 
-// TODO: supporting comparative value for aggregated cells as well
 const CellInfo = ({
   fieldsToShow,
   data,
-  layer
+  layer,
+  primaryData,
+  compareType
 }: {
   data: AggregationLayerHoverData;
   fieldsToShow: TooltipField[];
   layer: Layer;
+  primaryData?: AggregationLayerHoverData | null;
+  compareType?: CompareType;
 }) => {
   const {colorField, sizeField} = layer.config as any;
+  const isComparing = Boolean(primaryData);
 
   const colorValue = useMemo(() => {
     if (colorField && layer.visualChannels.color) {
@@ -251,35 +248,92 @@ const CellInfo = ({
     return null;
   }, [fieldsToShow, sizeField, layer, data.elevationValue]);
 
+  const colorDelta = useMemo(() => {
+    if (!primaryData || !colorField || !('colorValue' in primaryData)) return null;
+    return getTooltipDisplayDeltaValue({
+      field: colorField,
+      value: data.colorValue,
+      primaryValue: primaryData.colorValue,
+      compareType
+    });
+  }, [primaryData, colorField, data.colorValue, compareType]);
+
+  const elevationDelta = useMemo(() => {
+    if (!primaryData || !sizeField || !('elevationValue' in primaryData)) return null;
+    return getTooltipDisplayDeltaValue({
+      field: sizeField,
+      value: data.elevationValue,
+      primaryValue: primaryData.elevationValue,
+      compareType
+    });
+  }, [primaryData, sizeField, data.elevationValue, compareType]);
+
   const aggregatedData = useMemo(() => {
     if (data.aggregatedData && fieldsToShow) {
-      return fieldsToShow.reduce((acc, field) => {
-        const dataForField = data.aggregatedData?.[field.name];
-        if (dataForField?.measure && field.name !== colorField?.name) {
-          acc.push({
-            name: `${capitalizeFirstLetter(dataForField.measure)} of ${field.name}`,
-            value: dataForField.value
-          });
-        }
-        return acc;
-      }, [] as {name: string; value?: string}[]);
+      return fieldsToShow.reduce(
+        (acc, field) => {
+          const dataForField = data.aggregatedData?.[field.name];
+          if (dataForField?.measure && field.name !== colorField?.name) {
+            const primaryDataForField = primaryData?.aggregatedData?.[field.name];
+            const deltaValue = primaryDataForField
+              ? getTooltipDisplayDeltaValue({
+                  field: {type: 'real', name: field.name} as Field,
+                  value: dataForField.value != null ? Number(dataForField.value) : null,
+                  primaryValue:
+                    primaryDataForField.value != null ? Number(primaryDataForField.value) : null,
+                  compareType
+                })
+              : null;
+            acc.push({
+              name: `${capitalizeFirstLetter(dataForField.measure)} of ${field.name}`,
+              value: dataForField.value,
+              deltaValue
+            });
+          }
+          return acc;
+        },
+        [] as {name: string; value?: string; deltaValue: string | null}[]
+      );
     }
     return [];
-  }, [data.aggregatedData, fieldsToShow, colorField?.name]);
+  }, [data.aggregatedData, fieldsToShow, colorField?.name, primaryData, compareType]);
 
   const colorMeasure = layer.getVisualChannelDescription('color').measure;
   const sizeMeasure = layer.getVisualChannelDescription('size').measure;
   return (
     <tbody>
-      <Row name={'total points'} key="count" value={String(data.points && data.points.length)} />
+      <Row
+        name={'total points'}
+        key="count"
+        value={String(data.points && data.points.length)}
+        isComparing={isComparing}
+      />
       {colorField && layer.visualChannels.color && colorMeasure ? (
-        <Row name={colorMeasure} key="color" value={colorValue || 'N/A'} />
+        <Row
+          name={colorMeasure}
+          key="color"
+          value={colorValue || 'N/A'}
+          deltaValue={colorDelta}
+          isComparing={isComparing}
+        />
       ) : null}
       {sizeField && layer.visualChannels.size && sizeMeasure ? (
-        <Row name={sizeMeasure} key="size" value={elevationValue || 'N/A'} />
+        <Row
+          name={sizeMeasure}
+          key="size"
+          value={elevationValue || 'N/A'}
+          deltaValue={elevationDelta}
+          isComparing={isComparing}
+        />
       ) : null}
       {aggregatedData.map((dataForField, idx) => (
-        <Row name={dataForField.name} key={`data_${idx}`} value={dataForField.value || 'N/A'} />
+        <Row
+          name={dataForField.name}
+          key={`data_${idx}`}
+          value={dataForField.value != null ? String(dataForField.value) : 'N/A'}
+          deltaValue={dataForField.deltaValue}
+          isComparing={isComparing}
+        />
       ))}
     </tbody>
   );

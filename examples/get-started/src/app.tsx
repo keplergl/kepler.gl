@@ -2,14 +2,20 @@
 // Copyright contributors to the kepler.gl project
 
 import * as React from 'react';
+import {useState, useEffect} from 'react';
 import ReactDOM from 'react-dom/client';
-import {connect, Provider} from 'react-redux';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
+import {Provider, useDispatch} from 'react-redux';
 import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
-import document from 'global/document';
 
 import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import KeplerGl from '@kepler.gl/components';
+import {initApplicationConfig} from '@kepler.gl/utils';
+
+// Annotations require a custom MapControl that mounts AnnotationManager.
+// Disable them here so the default get-started example stays minimal.
+initApplicationConfig({
+  enableAnnotations: false
+});
 
 const reducers = combineReducers({
   keplerGl: keplerGlReducer.initialState({
@@ -20,47 +26,42 @@ const reducers = combineReducers({
   })
 });
 
-const middleWares = enhanceReduxMiddleware([
-  // Add other middlewares here
-]);
+const middleWares = enhanceReduxMiddleware([]);
 
 const enhancers = applyMiddleware(...middleWares);
 
-const initialState = {};
-const store = createStore(reducers, initialState, compose(enhancers));
+const store = createStore(reducers, {}, compose(enhancers));
 
-const App = () => (
-  <div
-    style={{
-      position: 'absolute',
-      top: '0px',
-      left: '0px',
-      width: '100%',
-      height: '100%'
-    }}
-  >
-    <AutoSizer>
-      {({height, width}) => (
-        <KeplerGl
-          mapboxApiAccessToken="pk.xxx.yyy" // Replace with your mapbox token
-          id="map"
-          width={width}
-          height={height}
-        />
-      )}
-    </AutoSizer>
-  </div>
-);
+function useWindowSize() {
+  const [size, setSize] = useState({width: window.innerWidth, height: window.innerHeight});
+  useEffect(() => {
+    const onResize = () => setSize({width: window.innerWidth, height: window.innerHeight});
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return size;
+}
 
-const mapStateToProps = state => state;
-const dispatchToProps = dispatch => ({dispatch});
-const ConnectedApp = connect(mapStateToProps, dispatchToProps)(App);
+const App = () => {
+  const dispatch = useDispatch();
+  const {width, height} = useWindowSize();
+
+  return (
+    <KeplerGl
+      mapboxApiAccessToken="pk.xxx.yyy" // Replace with your mapbox token
+      id="map"
+      width={width}
+      height={height}
+    />
+  );
+};
+
 const Root = () => (
   <Provider store={store}>
-    <ConnectedApp />
+    <App />
   </Provider>
 );
 
 const container = document.getElementById('root');
-const root = ReactDOM.createRoot(container);
+const root = ReactDOM.createRoot(container!);
 root.render(<Root />);

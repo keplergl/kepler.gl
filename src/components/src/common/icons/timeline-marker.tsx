@@ -3,9 +3,9 @@
 
 import React, {Component} from 'react';
 import PropTypes, {any} from 'prop-types';
-import Base from './base';
+import Base, {BaseProps} from './base';
 
-export default class TimelineMarker extends Component {
+export default class TimelineMarker extends Component<BaseProps> {
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string,

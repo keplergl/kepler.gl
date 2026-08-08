@@ -2,11 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {routerReducer, routerMiddleware} from 'react-router-redux';
 import {taskMiddleware} from 'react-palm/tasks';
 import thunk from 'redux-thunk';
 
-import {browserHistory} from 'react-router';
 import appReducer from './app';
 import demoReducer from '../../../examples/demo-app/src/reducers';
 import analyticsMiddleware from './analytics';
@@ -14,8 +12,7 @@ import analyticsMiddleware from './analytics';
 const initialState = {};
 const reducers = {
   demo: demoReducer,
-  app: appReducer,
-  routing: routerReducer
+  app: appReducer
 };
 
 const combinedReducers = combineReducers(reducers);
@@ -23,7 +20,6 @@ const combinedReducers = combineReducers(reducers);
 export const middlewares = [
   taskMiddleware,
   thunk,
-  routerMiddleware(browserHistory),
   analyticsMiddleware
 ];
 

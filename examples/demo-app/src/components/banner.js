@@ -7,8 +7,8 @@ import {Icons} from '@kepler.gl/components';
 
 const StyledBanner = styled.div`
   align-items: center;
-  background-color: ${props => props.bgColor};
-  color: ${props => props.fontColor};
+  background-color: ${props => props.$bgColor};
+  color: ${props => props.$fontColor};
   display: flex;
   height: ${props => props.height}px;
   justify-content: space-between;
@@ -22,7 +22,7 @@ const StyledBanner = styled.div`
     cursor: pointer;
   }
 
-  top: ${props => (props.visible ? 0 : -100)}px;
+  top: ${props => (props.$visible ? 0 : -100)}px;
 `;
 
 const Banner = ({
@@ -35,10 +35,10 @@ const Banner = ({
 }) => (
   <StyledBanner
     className="top-banner"
-    bgColor={bgColor}
-    fontColor={fontColor}
+    $bgColor={bgColor}
+    $fontColor={fontColor}
     height={height}
-    visible={show}
+    $visible={show}
   >
     <div>{children}</div>
     <Icons.Delete height="14px" onClick={onClose} />

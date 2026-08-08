@@ -2,14 +2,13 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
-import Window from 'global/window';
-import {connect, useDispatch} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
+import {useParams, useSearchParams, useLocation} from 'react-router-dom';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {ScreenshotWrapper} from '@openassistant/ui';
 import {
@@ -68,7 +67,6 @@ import sampleAnimateTrip, {
   replacePointData,
   config as syncedTripConfig
 } from './data/sample-animate-trip-data';
-import sampleIconCsv from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, {config as rowDataConfig} from './data/sample-row-data';
 import {sampleFlowData, config as flowDataConfig} from './data/sample-flow-data';
@@ -154,7 +152,10 @@ const StyledVerticalResizeHandle = styled(PanelResizeHandle)`
 
 const App = props => {
   const [showBanner, toggleShowBanner] = useState(false);
-  const {params: {id, provider} = {}, location: {query = {}} = {}} = props;
+  const {id, provider} = useParams();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const query = Object.fromEntries(searchParams.entries());
   const dispatch = useDispatch();
 
   // TODO find another way to check for existence of duckDb plugin
@@ -169,6 +170,33 @@ const App = props => {
   );
 
   const prevQueryRef = useRef<number>(null);
+
+  const startScreenCapture = useSelector(
+    (state: any) => state.demo.aiAssistant.screenshotToAsk.startScreenCapture
+  );
+
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [mapDimensions, setMapDimensions] = useState({width: 0, height: 0});
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      const {width, height} = entries[0].contentRect;
+      setMapDimensions({width, height});
+    });
+    observer.observe(mapContainerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Handle OAuth callback on /auth route
+  useEffect(() => {
+    if (location.pathname === '/auth' && window.opener) {
+      const {getCloudProvider, DEFAULT_CLOUD_PROVIDER} = require('./cloud-providers');
+      const authProvider = getCloudProvider(DEFAULT_CLOUD_PROVIDER);
+      const token = authProvider.getAccessTokenFromLocation(location);
+      window.opener.postMessage({token}, window.location.origin);
+    }
+  }, [location]);
 
   useEffect(() => {
     // if we pass an id as part of the url
@@ -260,7 +288,7 @@ const App = props => {
 
   const _disableBanner = useCallback(() => {
     hideBanner();
-    Window.localStorage.setItem(BannerKey, 'true');
+    window.localStorage.setItem(BannerKey, 'true');
   }, [hideBanner]);
 
   const _loadRowData = useCallback(() => {
@@ -422,7 +450,19 @@ const App = props => {
   }, [dispatch]);
 
   const _loadIconData = useCallback(() => {
-    // load icon data and config and process csv file
+    // Demonstrates all 3 icon sources:
+    // 1. CDN icons (e.g. 'accel') - fetched automatically
+    // 2. Inline custom icons (e.g. 'custom-star'') - via initApplicationConfig({ customIcons })
+    // 3. Remote custom icons (e.g. 'remote-triangle', 'remote-cross', 'remote-hexagon') - via customIconUrl
+    const csvData = [
+      'time,lat,lng,icon,annotation-severity,annotation-html',
+      '2016-06-28 20:10:00,37.780,-122.410,accel,5,"Default CDN icon"',
+      '2016-06-28 20:10:10,37.782,-122.415,custom-star,5,"Inline custom star"',
+      '2016-06-28 20:10:30,37.778,-122.405,remote-triangle,3,"Remote triangle icon"',
+      '2016-06-28 20:10:40,37.784,-122.420,remote-cross,2,"Remote cross icon"',
+      '2016-06-28 20:10:50,37.772,-122.412,remote-hexagon,4,"Remote hexagon icon"'
+    ].join('\n');
+
     dispatch(
       addDataToMap({
         datasets: [
@@ -431,9 +471,34 @@ const App = props => {
               label: 'Icon Data',
               id: 'test_icon_data'
             },
-            data: processCsvData(sampleIconCsv)
+            data: processCsvData(csvData)
           }
-        ]
+        ],
+        config: {
+          version: 'v1',
+          config: {
+            visState: {
+              layers: [
+                {
+                  type: 'icon',
+                  config: {
+                    dataId: 'test_icon_data',
+                    label: 'Custom Icons',
+                    columns: {
+                      lat: 'lat',
+                      lng: 'lng',
+                      icon: 'icon'
+                    },
+                    isVisible: true,
+                    visConfig: {
+                      radius: 100
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
       })
     );
   }, [dispatch]);
@@ -525,7 +590,7 @@ const App = props => {
       features: sampleGeojsonPoints.features.slice(0, 5)
     });
     _loadGeojsonData();
-    Window.setTimeout(() => {
+    window.setTimeout(() => {
       dispatch(
         replaceDataInMap({
           datasetToReplaceId: 'bart-stops-geo',
@@ -619,6 +684,159 @@ const App = props => {
     );
   }, [dispatch]);
 
+  const _loadWmsLayer = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'OpenStreetMap WMS',
+              id: 'osm-wms',
+              type: 'wms-tile'
+            },
+            data: {
+              fields: [],
+              rows: []
+            },
+            metadata: {
+              type: 'remote',
+              remoteTileFormat: 'wms',
+              tilesetDataUrl: 'https://ows.terrestris.de/osm/service',
+              tilesetMetadataUrl:
+                'https://ows.terrestris.de/osm/service?service=WMS&request=GetCapabilities',
+              version: '1.1.1',
+              layers: [
+                {
+                  name: 'OSM-WMS',
+                  title: 'OpenStreetMap WMS',
+                  boundingBox: [-180, -88, 180, 88]
+                }
+              ],
+              label: 'OpenStreetMap WMS'
+            },
+            disableDataOperation: true
+          }
+        ],
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+  }, [dispatch]);
+
+  const _loadRasterTileLayer = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'Swiss Historical Map',
+              id: 'swiss-historical-raster',
+              type: 'raster-tile'
+            },
+            data: {
+              fields: [],
+              rows: []
+            },
+            metadata: {
+              metadataUrl:
+                'https://public-bucket-for-tests.s3.us-east-1.amazonaws.com/historic-swis-18xx.pmtiles',
+              pmtilesType: 'raster'
+            },
+            disableDataOperation: true
+          }
+        ],
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+  }, [dispatch]);
+
+  const _loadBitmapLayer = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'SF Bitmap Overlay',
+              id: 'sf-bitmap',
+              type: 'bitmap'
+            },
+            data: {
+              fields: [],
+              rows: []
+            },
+            metadata: {
+              imageUrl:
+                'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/sf-districts.png',
+              bounds: [-122.5179, 37.70391916246189, -122.35462834588868, 37.830428246756696]
+            },
+            disableDataOperation: true
+          }
+        ],
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+  }, [dispatch]);
+
+  const _loadTile3DLayer = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'Royal Exhibition Building',
+              id: 'royal-exhibition-3d',
+              type: 'tile-3d'
+            },
+            data: {
+              fields: [],
+              rows: []
+            },
+            metadata: {
+              tile3dUrl:
+                'https://raw.githubusercontent.com/visgl/deck.gl-data/master/3d-tiles/RoyalExhibitionBuilding/tileset.json'
+            },
+            disableDataOperation: true
+          }
+        ],
+        config: {
+          version: 'v1',
+          config: {
+            visState: {
+              effects: [
+                {
+                  type: 'surfaceFog',
+                  isEnabled: true,
+                  parameters: {
+                    density: 1,
+                    height: 40,
+                    thickness: 50,
+                    fogColor: [70, 130, 180]
+                  }
+                }
+              ]
+            },
+            mapState: {
+              pitch: 0,
+              dragRotate: false
+            }
+          }
+        },
+        options: {
+          autoCreateLayers: true,
+          centerMap: true
+        }
+      })
+    );
+  }, [dispatch]);
+
   const _loadSampleData = useCallback(() => {
     // _loadPointData();
     // _loadGeojsonData();
@@ -631,6 +849,10 @@ const App = props => {
     // _loadRowData();
     // _loadVectorTileData();
     // _loadFlowData();
+    //_loadWmsLayer();
+    //_loadRasterTileLayer();
+    //_loadBitmapLayer();
+    // _loadTile3DLayer();
     // _loadSyncedFilterWTripLayer();
     // _replaceSyncedFilterWTripLayer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -647,6 +869,10 @@ const App = props => {
     _replaceData,
     _loadVectorTileData,
     _loadFlowData,
+    _loadWmsLayer,
+    _loadRasterTileLayer,
+    _loadBitmapLayer,
+    _loadTile3DLayer,
     _loadSyncedFilterWTripLayer,
     _replaceSyncedFilterWTripLayer
   ]);
@@ -663,7 +889,7 @@ const App = props => {
         // }}
         >
           <ScreenshotWrapper
-            startScreenCapture={props.demo.aiAssistant.screenshotToAsk.startScreenCapture}
+            startScreenCapture={startScreenCapture}
             setScreenCaptured={_setScreenCaptured}
             setStartScreenCapture={_setStartScreenCapture}
             className="h-screen"
@@ -676,23 +902,21 @@ const App = props => {
                 <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
                   <PanelGroup direction="vertical">
                     <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
-                      <AutoSizer>
-                        {({height, width}) => (
-                          <KeplerGl
-                            mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                            id="map"
-                            getState={keplerGlGetState}
-                            width={width}
-                            height={height}
-                            cloudProviders={CLOUD_PROVIDERS}
-                            localeMessages={messages}
-                            onExportToCloudSuccess={onExportFileSuccess}
-                            onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                            featureFlags={DEFAULT_FEATURE_FLAGS}
-                            onViewStateChange={onViewStateChange}
-                          />
-                        )}
-                      </AutoSizer>
+                      <div ref={mapContainerRef} style={{width: '100%', height: '100%'}}>
+                        <KeplerGl
+                          mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                          id="map"
+                          getState={keplerGlGetState}
+                          width={mapDimensions.width}
+                          height={mapDimensions.height}
+                          cloudProviders={CLOUD_PROVIDERS}
+                          localeMessages={messages}
+                          onExportToCloudSuccess={onExportFileSuccess}
+                          onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                          featureFlags={DEFAULT_FEATURE_FLAGS}
+                          onViewStateChange={onViewStateChange}
+                        />
+                      </div>
                     </Panel>
 
                     {isSqlPanelOpen && (
@@ -722,7 +946,4 @@ const App = props => {
   );
 };
 
-const mapStateToProps = state => state;
-const dispatchToProps = dispatch => ({dispatch});
-
-export default connect(mapStateToProps, dispatchToProps)(App);
+export default App;

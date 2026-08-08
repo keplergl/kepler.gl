@@ -236,8 +236,26 @@ test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
     ],
     'should update field pairs'
   );
+
+  // Re-open the field selector dropdown after the field pair was selected
+  const fieldSelector3 = wrapper
+    .find(LayerColumnConfig)
+    .at(0)
+    .find(ColumnSelector)
+    .at(0)
+    .find(FieldSelector)
+    .at(0);
+  clickItemSelector(fieldSelector3);
+  const fieldSelector4 = wrapper
+    .find(LayerColumnConfig)
+    .at(0)
+    .find(ColumnSelector)
+    .at(0)
+    .find(FieldSelector)
+    .at(0);
+
   t.equal(
-    getItemSelectorListText(fieldSelector2, 2),
+    getItemSelectorListText(fieldSelector4, 2),
     'gps_data.lng',
     'should render correct field pair name'
   );

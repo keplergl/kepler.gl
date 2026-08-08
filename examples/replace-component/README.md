@@ -1,22 +1,24 @@
-# Replacing components
+# Replacing Components
 
-Example showing how to replace kepler.gl default components using `injectComponents` method.
+Example showing how to replace kepler.gl default components using the `injectComponents` method.
+
+The example replaces the following components with custom versions:
+- **Sidebar** — wrapped in a scaled container
+- **PanelHeader** — removes default action items
+- **PanelToggle** — adds a "Save Config" button that serializes and displays the current map config
+- **CustomPanels** — adds two extra side panel tabs (Rocket, Chart)
+- **MapPopover** — suppresses the tooltip for the point layer
 
 #### 1. Install
 
 ```sh
-yarn install
+touch yarn.lock && yarn
 ```
 
-#### 2. Mapbox Token
+> `touch yarn.lock` is needed the first time so Yarn treats this as a standalone project,
+> independent from the kepler.gl monorepo.
 
-add mapbox access token to node env
-
-```sh
-export MapboxAccessToken=<your_mapbox_token>
-```
-
-#### 3. Start the app
+#### 2. Start the app
 
 ```sh
 yarn start

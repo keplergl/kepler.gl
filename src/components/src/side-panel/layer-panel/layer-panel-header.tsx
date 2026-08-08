@@ -64,7 +64,7 @@ export type LayerPanelHeaderProps = {
   layerType?: string | null;
   allowDuplicate?: boolean;
   isDragNDropEnabled?: boolean;
-  warning?: boolean;
+  warning?: React.ReactNode;
   labelRCGColorValues?: RGBColor | null;
   actionIcons?: {
     remove: ComponentType<Partial<BaseProps>>;
@@ -416,7 +416,7 @@ function LayerPanelHeaderFactory(
           'sort--handle': !isConfigActive
         })}
         isValid={isValid}
-        warning={warning}
+        warning={Boolean(warning)}
         $active={isConfigActive}
         labelRCGColorValues={labelRCGColorValues}
         onClick={onToggleEnableConfig}

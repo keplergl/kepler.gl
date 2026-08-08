@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useRef, ComponentType, Dispatch, useEffect, useMemo} from 'react';
+import React, {useRef, ComponentType, useEffect, useMemo} from 'react';
 import {connect, ConnectedProps, useDispatch} from 'react-redux';
+import type {Dispatch} from 'redux';
 
 import {console as Console} from 'global/window';
 import {injector, provideRecipesToInjector, flattenDeps} from './injector';
@@ -69,7 +70,7 @@ export function ContainerFactory(
    */
 
   function usePreviousId(value) {
-    const ref = useRef();
+    const ref = useRef<string | undefined>(undefined);
     useEffect(() => {
       ref.current = value;
     });
@@ -89,7 +90,7 @@ export function ContainerFactory(
       state
     } = props;
     const prevId = usePreviousId(id);
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<Dispatch>();
 
     useEffect(() => {
       // add a new entry to reducer

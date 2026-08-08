@@ -78,6 +78,47 @@ export function isLeftOriented(angle: number): boolean {
   return angle > 90 || angle < -90;
 }
 
+/** Great-circle angular distance between two lng/lat points, in degrees. */
+function angularDistanceDeg(a: [number, number], b: [number, number]): number {
+  const toRad = Math.PI / 180;
+  const phi1 = a[1] * toRad;
+  const phi2 = b[1] * toRad;
+  const dLambda = (b[0] - a[0]) * toRad;
+  const cosD =
+    Math.sin(phi1) * Math.sin(phi2) + Math.cos(phi1) * Math.cos(phi2) * Math.cos(dLambda);
+  return Math.acos(Math.min(1, Math.max(-1, cosD))) / toRad;
+}
+
+// Round-trip tolerance in degrees. Front-facing points round-trip back to
+// themselves within numerical error; occluded points resolve to a different
+// (front) surface point that is several degrees away.
+const GLOBE_VISIBILITY_TOLERANCE_DEG = 0.5;
+
+/**
+ * Geometric occlusion test for a point on the globe.
+ *
+ * In globe mode `viewport.project()` still returns valid screen coordinates for
+ * points on the far (back) side of the planet, so DOM overlays like annotations
+ * keep rendering "through" the opaque globe. Rather than approximate with a
+ * lng/lat box, we project the point to screen space and unproject it back:
+ * deck's `GlobeViewport.unproject` returns the *nearest* (front-facing) point on
+ * the sphere along that ray. If the point comes back to (approximately) itself
+ * it is on the visible hemisphere; otherwise the ray hit the front of the globe
+ * first and the point is occluded. This uses the real projection math, so it
+ * follows the true horizon and adapts to zoom/altitude automatically.
+ */
+export function isPointVisibleOnGlobe(point: [number, number], viewport: MapViewport): boolean {
+  const projected = viewport.project(point);
+  if (!projected || !Number.isFinite(projected[0]) || !Number.isFinite(projected[1])) {
+    return false;
+  }
+  const roundTrip = viewport.unproject([projected[0], projected[1]]);
+  if (!roundTrip || !Number.isFinite(roundTrip[0]) || !Number.isFinite(roundTrip[1])) {
+    return false;
+  }
+  return angularDistanceDeg(point, [roundTrip[0], roundTrip[1]]) < GLOBE_VISIBILITY_TOLERANCE_DEG;
+}
+
 export function movePoint(
   annotation: Annotation,
   delta: {x: number; y: number},

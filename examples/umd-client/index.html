@@ -14,23 +14,77 @@
     <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet" />
     <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet" />
 
-    <!-- Load React/Redux -->
-    <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+    <!--
+      React >= 19 no longer ships UMD builds, so we load React/Redux as ES modules
+      via esm.sh and re-expose them as globals for the kepler.gl UMD bundle.
+
+      es-module-shims runs in "shim mode" so that import maps and module scripts
+      work when this file is opened directly from disk (file:// protocol), where
+      native ES module imports are blocked by CORS.
+    -->
+    <script>
+      window.esmsInitOptions = {shimMode: true};
+    </script>
     <script
-      src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"
-      crossorigin
-    ></script>
-    <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
-    <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
-    <script
-      src="https://unpkg.com/styled-components@6.1.8/dist/styled-components.min.js"
-      crossorigin
+      src="https://unpkg.com/es-module-shims@2.8.1/dist/es-module-shims.js"
+      crossorigin="anonymous"
     ></script>
 
-    <!-- Load Kepler.gl-->
-    <script src="https://unpkg.com/kepler.gl@3.1.10/umd/keplergl.min.js"></script>
-    <!--If you want to load the build from filepath -->
-    <!--<script src="../../umd/keplergl.min.js"></script>-->
+    <script type="importmap-shim">
+      {
+        "imports": {
+          "react":              "https://esm.sh/react@19.1.0",
+          "react/jsx-runtime":  "https://esm.sh/react@19.1.0/jsx-runtime",
+          "react-dom":          "https://esm.sh/react-dom@19.1.0?external=react",
+          "react-dom/client":   "https://esm.sh/react-dom@19.1.0/client?external=react",
+          "redux":              "https://esm.sh/redux@5.0.1",
+          "react-redux":        "https://esm.sh/react-redux@9.3.0?external=react,react-dom,redux",
+          "styled-components":  "https://esm.sh/styled-components@6.1.19?external=react,react-dom"
+        }
+      }
+    </script>
+
+    <!--
+      Expose the ES modules as globals, then dynamically load the kepler.gl UMD
+      bundle. Once it's ready, run the bootstrap scripts below.
+    -->
+    <script type="module-shim">
+      import * as React           from 'react';
+      import * as ReactDOM        from 'react-dom';
+      import * as ReactDOMClient  from 'react-dom/client';
+      import * as Redux           from 'redux';
+      import * as ReactRedux      from 'react-redux';
+      import * as StyledComponents from 'styled-components';
+
+      window.React          = React.default || React;
+      window.ReactDOM       = Object.assign({}, ReactDOM.default || ReactDOM, ReactDOMClient);
+      window.Redux          = Redux.default || Redux;
+      window.ReactRedux     = ReactRedux.default || ReactRedux;
+      window.styled         = Object.assign(StyledComponents.default, StyledComponents);
+
+      function loadScript(src) {
+        return new Promise(function(resolve, reject) {
+          var script = document.createElement('script');
+          script.src = src;
+          script.crossOrigin = 'anonymous';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+
+      loadScript('https://unpkg.com/kepler.gl@3.3.0-alpha.6/umd/keplergl.min.js')
+        .then(function() {
+          document.querySelectorAll('script[type="text/kepler-bootstrap"]').forEach(function(node) {
+            var script = document.createElement('script');
+            script.text = node.textContent;
+            document.body.appendChild(script);
+          });
+        })
+        .catch(function(err) {
+          console.error('kepler.gl: failed to load UMD bundle', err);
+        });
+    </script>
 
     <style type="text/css">
       body {
@@ -40,65 +94,61 @@
       }
     </style>
 
-    <!--MapBox token-->
+    <!--
+      Provide your MapBox Token if you want to use Mapbox basemaps.
+      Leave as 'pk.xxx.yyy' to use the default MapLibre (Carto) basemap — no token required.
+    -->
     <script>
-      /**
-       * Provide your MapBox Token (Used in pre 3.x kepler.gl)
-       **/
-      const MAPBOX_TOKEN = 'PROVIDE_MAPBOX_TOKEN';
-      const WARNING_MESSAGE =
-        'Please Provide a Mapbox Token in order to use Kepler.gl. Edit this file and fill out MAPBOX_TOKEN with your access key';
+      window.MAPBOX_TOKEN = 'pk.xxx.yyy';
     </script>
   </head>
   <body>
-    <!-- We will put our React component inside this div. -->
-    <div id="app">
-      <!-- Kepler.gl map will be placed here-->
-    </div>
+    <div id="app"></div>
 
-    <!-- Load our React component. -->
-    <script>
-      /* Validate Mapbox Token */
-      if ((MAPBOX_TOKEN || '') === '' || MAPBOX_TOKEN === 'PROVIDE_MAPBOX_TOKEN') {
-        alert(WARNING_MESSAGE);
-      }
-
+    <script type="text/kepler-bootstrap">
       /** STORE **/
       const reducers = (function createReducers(redux, keplerGl) {
         return redux.combineReducers({
-          // mount keplerGl reducer
           keplerGl: keplerGl.keplerGlReducer
         });
       })(Redux, KeplerGl);
 
       const middleWares = (function createMiddlewares(keplerGl) {
-        return keplerGl.enhanceReduxMiddleware([
-          // Add other middlewares here
-        ]);
+        return keplerGl.enhanceReduxMiddleware([]);
       })(KeplerGl);
 
-      const enhancers = (function craeteEnhancers(redux, middles) {
+      const enhancers = (function createEnhancers(redux, middles) {
         return redux.applyMiddleware(...middles);
       })(Redux, middleWares);
 
       const store = (function createStore(redux, enhancers) {
-        const initialState = {};
-
-        return redux.createStore(reducers, initialState, redux.compose(enhancers));
+        return redux.createStore(reducers, {}, redux.compose(enhancers));
       })(Redux, enhancers);
       /** END STORE **/
 
       /** COMPONENTS **/
-      const KeplerElement = (function (react, keplerGl, mapboxToken) {
-        return function (props) {
+      const KeplerElement = (function makeKeplerElement(react, keplerGl, mapboxToken) {
+        return function App() {
+          var _useState = react.useState({width: window.innerWidth, height: window.innerHeight});
+          var dimensions = _useState[0];
+          var setDimensions = _useState[1];
+
+          react.useEffect(function() {
+            function onResize() {
+              setDimensions({width: window.innerWidth, height: window.innerHeight});
+            }
+            window.addEventListener('resize', onResize);
+            return function() { window.removeEventListener('resize', onResize); };
+          }, []);
+
           return react.createElement(
             'div',
             {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
             react.createElement(keplerGl.KeplerGl, {
               mapboxApiAccessToken: mapboxToken,
               id: 'map',
-              width: props.width || 1200,
-              height: props.height || 800
+              width: dimensions.width,
+              height: dimensions.height
             })
           );
         };
@@ -114,18 +164,16 @@
       /** END COMPONENTS **/
 
       /** Render **/
-      (function render(react, reactDOM, app) {
-        const container = document.getElementById('app');
-        const root = reactDOM.createRoot(container);
+      (function render(reactDOM, app) {
+        const root = reactDOM.createRoot(document.getElementById('app'));
         root.render(app);
-      })(React, ReactDOM, app);
-    </script>
+      })(ReactDOM, app);
 
-    <!-- The next script will show how to interact directly with Kepler map store -->
-    <script>
       /**
        * Customize map.
-       * Interact with map store to customize data and behavior
+       * Use the store to dispatch kepler.gl actions and load data.
+       * Example:
+       *   store.dispatch(KeplerGl.addDataToMap({ datasets: [...], config: {...} }));
        */
       (function customize(keplerGl, store) {
         // store.dispatch(keplerGl.toggleSplitMap());
