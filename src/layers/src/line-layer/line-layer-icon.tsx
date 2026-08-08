@@ -1,26 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
-import {Base} from '../base';
+import React from 'react';
+import {Base, BaseProps} from '../base';
 
-export default class LineLayerIcon extends Component {
-  static propTypes = {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  };
-
-  static defaultProps = {
-    height: '16px',
-    predefinedClassName: 'line-layer-icon',
-    totalColor: 5
-  };
-
-  render() {
-    return (
-      <Base {...this.props}>
+const LineLayerIcon: React.FC<Partial<BaseProps>> = ({
+  height = '16px',
+  predefinedClassName = 'line-layer-icon',
+  totalColor = 5,
+  ...props
+}) => (
+  <Base height={height} predefinedClassName={predefinedClassName} totalColor={totalColor} {...props}>
         <path
           d="M57.8,58.3c-0.4,0-0.8-0.2-1.1-0.5L33.1,32.1c-0.6-0.6-0.5-1.6,0.1-2.1c0.6-0.6,1.6-0.5,2.1,0.1l23.7,25.8
           c0.6,0.6,0.5,1.6-0.1,2.1C58.5,58.2,58.2,58.3,57.8,58.3z"
@@ -47,6 +37,6 @@ export default class LineLayerIcon extends Component {
           className="cr5"
         />
       </Base>
-    );
-  }
-}
+);
+
+export default LineLayerIcon;

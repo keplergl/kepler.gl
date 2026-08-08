@@ -1,24 +1,28 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {project32, UpdateParameters} from '@deck.gl/core/typed';
-import {BitmapLayer} from '@deck.gl/layers/typed';
-import {isWebGL2} from '@luma.gl/core';
-import {ProgramManager} from '@luma.gl/engine';
+import {UpdateParameters} from '@deck.gl/core';
+import {BitmapLayer} from '@deck.gl/layers';
 
-import fsWebGL1 from './raster-layer-webgl1.fs';
-import vsWebGL1 from './raster-layer-webgl1.vs';
-import fsWebGL2 from './raster-layer-webgl2.fs';
-import vsWebGL2 from './raster-layer-webgl2.vs';
+import {
+  buildRasterFragmentShader,
+  buildRasterVertexShader,
+  rasterUniforms,
+  ensureRasterHooksRegistered,
+  prepareLumaModules
+} from './raster-layer-shaders';
 import {loadImages} from '../images';
 import type {RasterLayerAddedProps, ImageState} from '../types';
-import {modulesEqual} from '../util';
+import {modulesEqual, applyModuleUniforms} from '../util';
+import {patchPipelineValidation} from '../pipeline-validation-patch';
+import {rasterProcessingUniforms} from '../raster-processing-uniforms';
 
 const defaultProps = {
   ...BitmapLayer.defaultProps,
   modules: {type: 'array', value: [], compare: true},
   images: {type: 'object', value: {}, compare: true},
-  moduleProps: {type: 'object', value: {}, compare: true}
+  moduleProps: {type: 'object', value: {}, compare: true},
+  onRedrawNeeded: {type: 'function', value: null, compare: false}
 };
 
 export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
@@ -26,36 +30,57 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     images: ImageState;
   };
 
+  _redrawScheduled = false;
+  _pendingImageRetry: RasterLayerAddedProps['images'] | null = null;
+  /** How many consecutive frames have retried a failed texture upload. */
+  _imageRetryCount = 0;
+  static readonly MAX_IMAGE_RETRY_ATTEMPTS = 3;
+
   initializeState(): void {
-    const {gl} = this.context;
-    const programManager = ProgramManager.getDefaultProgramManager(gl);
-
-    const fsStr1 = 'fs:DECKGL_MUTATE_COLOR(inout vec4 image, in vec2 coord)';
-    const fsStr2 = 'fs:DECKGL_CREATE_COLOR(inout vec4 image, in vec2 coord)';
-
-    // Only initialize shader hook functions _once globally_
-    // Since the program manager is shared across all layers, but many layers
-    // might be created, this solves the performance issue of always adding new
-    // hook functions.
-    if (!programManager._hookFunctions.includes(fsStr1)) {
-      programManager.addShaderHook(fsStr1);
-    }
-    if (!programManager._hookFunctions.includes(fsStr2)) {
-      programManager.addShaderHook(fsStr2);
-    }
-
-    // images is a mapping from keys to Texture2D objects. The keys should match
-    // names of uniforms in shader modules
+    patchPipelineValidation();
+    ensureRasterHooksRegistered();
     this.setState({images: {}});
-
     super.initializeState();
   }
 
-  draw({uniforms}: {uniforms: {[key: string]: any}}): void {
+  draw(_opts: {shaderModuleProps: Record<string, unknown>}): void {
+    // If a previous frame had failed texture uploads, retry them now before
+    // checking whether the images state is complete. Pass oldImagesData: {} so
+    // all keys are treated as new and bypass the isEqual skip-check.
+    // Retries are bounded to MAX_IMAGE_RETRY_ATTEMPTS to avoid an infinite
+    // redraw loop when image data is permanently invalid.
+    if (this._pendingImageRetry) {
+      const retry = this._pendingImageRetry;
+      this._pendingImageRetry = null;
+      const {images: newImages, hasPendingUploads} = loadImages({
+        gl: this.context.device?.gl || this.context.gl,
+        device: this.context.device,
+        images: this.state.images,
+        imagesData: retry,
+        oldImagesData: {}
+      });
+      if (newImages) {
+        this.setState({images: newImages});
+      }
+      if (hasPendingUploads) {
+        this._imageRetryCount++;
+        if (this._imageRetryCount < RasterLayer.MAX_IMAGE_RETRY_ATTEMPTS) {
+          this._pendingImageRetry = retry;
+          this._scheduleRedraw();
+        } else {
+          console.warn(
+            `RasterLayer: texture upload failed after ${RasterLayer.MAX_IMAGE_RETRY_ATTEMPTS} attempts, giving up.`
+          );
+          this._imageRetryCount = 0;
+        }
+      } else {
+        this._imageRetryCount = 0;
+      }
+    }
+
     const {model, images, coordinateConversion, bounds} = this.state;
     const {desaturate, transparentColor, tintColor, moduleProps} = this.props;
 
-    // Render the image
     if (
       !model ||
       !images ||
@@ -65,44 +90,64 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
       return;
     }
 
-    model
-      .setUniforms({
-        ...uniforms,
-        desaturate,
-        transparentColor: transparentColor?.map(x => (x ? x / 255 : 0)),
-        tintColor: tintColor?.slice(0, 3).map(x => x / 255),
-        coordinateConversion,
-        bounds
-      })
-      .updateModuleSettings({
-        ...moduleProps,
-        ...images
-      })
-      .draw();
+    // Set UBO uniforms for the raster module
+    model.shaderInputs.setProps({
+      raster: {
+        desaturate: desaturate || 0,
+        transparentColor: (transparentColor || [0, 0, 0, 0]).map(x => (x ? x / 255 : 0)),
+        tintColor: (tintColor || [255, 255, 255]).slice(0, 3).map(x => x / 255),
+        coordinateConversion: coordinateConversion || 0,
+        bounds: bounds || [0, 0, 0, 0],
+        opacity: this.props.opacity ?? 1
+      }
+    });
+
+    // Apply each custom module's uniforms/bindings to shaderInputs directly.
+    // We call getUniforms once per module and write the results into
+    // shaderInputs.moduleUniforms/moduleBindings, bypassing setProps() which
+    // would call getUniforms a second time on already-transformed values.
+    const allModuleProps = {...moduleProps, ...images};
+    const modules = this.props.modules || [];
+    applyModuleUniforms(model.shaderInputs, modules, allModuleProps);
+
+    const drawSuccess = model.draw(this.context.renderPass);
+    if (!drawSuccess) {
+      this._scheduleRedraw();
+    }
+  }
+
+  _scheduleRedraw(): void {
+    if (this._redrawScheduled) return;
+    this._redrawScheduled = true;
+    requestAnimationFrame(() => {
+      this._redrawScheduled = false;
+      if (this.context.deck) {
+        // @ts-expect-error accessing private deck.gl property
+        this.context.deck._needsRedraw = 'RasterLayer pipeline pending';
+      }
+      this.context.layerManager?.setNeedsRedraw('RasterLayer pipeline pending');
+      if (typeof this.props.onRedrawNeeded === 'function') {
+        this.props.onRedrawNeeded();
+      }
+    });
   }
 
   getShaders(): any {
-    const {gl} = this.context;
     const {modules = []} = this.props;
-    const webgl2 = isWebGL2(gl);
 
-    // Choose webgl version for module
-    // If fs2 or fs1 keys exist, prefer them, but fall back to fs, so that
-    // version-independent modules don't need to care
-    for (const module of modules) {
-      module.fs = webgl2 ? module.fs2 || module.fs : module.fs1 || module.fs;
-
-      // Sampler type is always float for WebGL1
-      if (!webgl2 && module.defines) {
-        module.defines.SAMPLER_TYPE = 'sampler2D';
-      }
-    }
+    const lumaModules = prepareLumaModules(modules);
+    const parentShaders = super.getShaders();
 
     return {
-      ...super.getShaders(),
-      vs: webgl2 ? vsWebGL2 : vsWebGL1,
-      fs: webgl2 ? fsWebGL2 : fsWebGL1,
-      modules: [project32, ...modules]
+      ...parentShaders,
+      vs: buildRasterVertexShader(),
+      fs: buildRasterFragmentShader(),
+      modules: [
+        ...(parentShaders.modules || []),
+        rasterUniforms,
+        rasterProcessingUniforms,
+        ...lumaModules
+      ]
     };
   }
 
@@ -112,12 +157,10 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     const modules = props && props.modules;
     const oldModules = oldProps && oldProps.modules;
 
-    // setup model first
-    // If the list of modules changed, need to recompile the shaders
     if (changeFlags.extensionsChanged || !modulesEqual(modules, oldModules)) {
-      const {gl} = this.context;
-      this.state.model?.delete();
-      this.state.model = this._getModel(gl);
+      this.state.model?.destroy?.();
+      // @ts-expect-error _getModel is internal to BitmapLayer
+      this.state.model = this._getModel(this.context.device || this.context.gl);
       this.getAttributeManager()?.invalidateAll();
     }
 
@@ -150,16 +193,26 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     oldProps: RasterLayerAddedProps;
   }): void {
     const {images} = this.state;
-    const {gl} = this.context;
+    const device = this.context.device;
+    const gl = device?.gl || this.context.gl;
 
-    const newImages = loadImages({
+    const {images: newImages, hasPendingUploads} = loadImages({
       gl,
+      device,
       images,
       imagesData: props.images,
       oldImagesData: oldProps.images
     });
     if (newImages) {
       this.setState({images: newImages});
+    }
+    // If any texture upload failed (device not ready / createTexture threw),
+    // stash the imagesData and schedule a retry next frame. The retry passes
+    // oldImagesData: {} so all keys bypass the isEqual skip-check.
+    if (hasPendingUploads) {
+      this._pendingImageRetry = props.images;
+      this._imageRetryCount = 0;
+      this._scheduleRedraw();
     }
   }
 
@@ -169,9 +222,9 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     if (this.state.images) {
       for (const image of Object.values(this.state.images)) {
         if (Array.isArray(image)) {
-          image.map(x => x && x.delete());
+          image.map(x => x && (x.destroy ? x.destroy() : x.delete?.()));
         } else if (image) {
-          image.delete();
+          image.destroy ? image.destroy() : image.delete?.();
         }
       }
     }

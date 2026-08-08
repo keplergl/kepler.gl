@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-const configure = require('enzyme').configure;
-const Adapter = require('@cfaester/enzyme-adapter-react-18').default;
-configure({adapter: new Adapter()});
-
-// component tests
-require('./components');
-
-// test layers
-require('./layer-tests');
-
-// test reducers
+// test reducers (no enzyme dependency, most stable)
 require('./reducers');
 
 // test processors
 require('./file-handler-test');
+
+// test layers
+require('./layer-tests');
+
+// component tests (uses enzyme adapter)
+require('./components');

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
-import React, {useState, forwardRef} from 'react';
+import React, {useState, forwardRef, Ref} from 'react';
 import Tippy from '@tippyjs/react/headless';
 import type {TippyProps} from '@tippyjs/react';
 import {isTest} from '@kepler.gl/utils';
@@ -30,12 +29,13 @@ const LazyTippy = forwardRef((props: TippyProps, ref) => {
   computedProps.plugins = [lazyPlugin, ...(props.plugins || [])];
 
   if (props.render) {
-    computedProps.render = (...args) => (mounted ? props.render(...args) : '');
+    const render = props.render;
+    computedProps.render = (...args) => (mounted ? render(...args) : '');
   } else {
     computedProps.content = mounted ? props.content : '';
   }
 
-  return <Tippy {...computedProps} ref={ref} />;
+  return <Tippy {...computedProps} ref={ref as Ref<Element>} />;
 });
 
 export default LazyTippy;

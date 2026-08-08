@@ -12,7 +12,12 @@ import {
   reorderEffect,
   ActionHandler
 } from '@kepler.gl/actions';
-import {LIGHT_AND_SHADOW_EFFECT, EFFECT_DESCRIPTIONS} from '@kepler.gl/constants';
+import {
+  LIGHT_AND_SHADOW_EFFECT,
+  EFFECT_DESCRIPTIONS,
+  DISTANCE_FOG_TYPE,
+  SURFACE_FOG_TYPE
+} from '@kepler.gl/constants';
 import {visStateLens} from '@kepler.gl/reducers';
 import {Effect} from '@kepler.gl/types';
 import {VisState} from '@kepler.gl/schemas';
@@ -70,11 +75,11 @@ const StyledEffectPanelHeader = styled.div`
 `;
 
 type StyledEffectPanelContentProps = {
-  extended?: boolean;
+  $extended?: boolean;
 };
 const StyledEffectPanelContent = styled.div<StyledEffectPanelContentProps>`
   ${props => props.theme.sidePanelScrollBar};
-  padding: ${props => (props.extended ? '32px' : '10px 0px 10px 0px')};
+  padding: ${props => (props.$extended ? '32px' : '10px 0px 10px 0px')};
   overflow: overlay;
   display: flex;
   flex-direction: column;
@@ -98,11 +103,21 @@ function EffectManagerFactory(
       const hasShadow = effects.some(effect => {
         return effect.type === LIGHT_AND_SHADOW_EFFECT.type;
       });
+      const hasDistanceFog = effects.some(effect => {
+        return effect.type === DISTANCE_FOG_TYPE;
+      });
+      const hasSurfaceFog = effects.some(effect => {
+        return effect.type === SURFACE_FOG_TYPE;
+      });
+      const hasAnyFog = hasDistanceFog || hasSurfaceFog;
 
       return EFFECT_DESCRIPTIONS.map(desc => {
         return {
           ...desc,
-          disabled: Boolean(hasShadow && desc.type === LIGHT_AND_SHADOW_EFFECT.type)
+          disabled: Boolean(
+            (hasShadow && desc.type === LIGHT_AND_SHADOW_EFFECT.type) ||
+              (hasAnyFog && (desc.type === DISTANCE_FOG_TYPE || desc.type === SURFACE_FOG_TYPE))
+          )
         };
       });
     }, [effects]);
@@ -139,7 +154,7 @@ function EffectManagerFactory(
             </SidePanelTitle>
           </StyledEffectPanelHeader>
 
-          <StyledEffectPanelContent extended={typeSelectorOpened && effects.length === 0}>
+          <StyledEffectPanelContent $extended={typeSelectorOpened && effects.length === 0}>
             <EffectList
               effects={effects}
               effectOrder={effectOrder}

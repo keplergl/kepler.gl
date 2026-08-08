@@ -119,6 +119,7 @@ const StudioContainer = styled(Flex)`
   align-items: center;
   flex-direction: column;
   gap: 72px;
+  overflow-x: hidden;
 `;
 
 const Section = styled(Flex)`
@@ -221,7 +222,7 @@ const Studio = () => {
           <CardSection key={index} cards={cards} />
         ))}
       </Swipeable>
-      <WhiteLinkButton outline large href={LEARN_MORE_LINK} target="_blank">
+      <WhiteLinkButton $outline $large href={LEARN_MORE_LINK} target="_blank">
         Learn More
       </WhiteLinkButton>
     </StudioContainer>

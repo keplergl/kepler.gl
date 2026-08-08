@@ -6,7 +6,7 @@ import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
 import {ascending, extent} from 'd3-array';
 
-import booleanWithin from '@turf/boolean-within';
+import {booleanWithin} from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
 import {
@@ -19,7 +19,7 @@ import {
 } from '@kepler.gl/constants';
 // import {VisState} from '@kepler.gl/schemas';
 import * as ScaleUtils from './data-scale-utils';
-import {h3IsValid} from 'h3-js';
+import {isValidCell} from 'h3-js';
 
 import {
   Entries,
@@ -382,6 +382,40 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
   switch (layer.type) {
     case LAYER_TYPES.point:
     case LAYER_TYPES.icon:
+      if (layer.config?.columnMode === 'geojson' && layer.dataToFeature?.length) {
+        return data => {
+          const coordinates = layer.dataToFeature[data.index];
+          if (!coordinates) return false;
+          if (Array.isArray(coordinates[0])) {
+            return (coordinates as number[][]).some(
+              coord =>
+                coord.length >= 2 &&
+                coord.every(Number.isFinite) &&
+                isInPolygon(coord, filter.value)
+            );
+          }
+          return (
+            coordinates.length >= 2 &&
+            coordinates.every(Number.isFinite) &&
+            isInPolygon(coordinates, filter.value)
+          );
+        };
+      }
+      return data => {
+        const pos = getPosition(data);
+        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+      };
+    case LAYER_TYPES.grid:
+    case LAYER_TYPES.hexagon:
+    case LAYER_TYPES.cluster:
+      // Aggregation layers store parsed GeoJSON Features (not coordinate arrays)
+      // in dataToFeature, but precompute per-row centroids for both column modes.
+      if (layer.centroids?.length) {
+        return data => {
+          const centroid = layer.centroids[data.index];
+          return centroid && isInPolygon(centroid, filter.value);
+        };
+      }
       return data => {
         const pos = getPosition(data);
         return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
@@ -408,7 +442,7 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
       }
       return data => {
         const id = getPosition(data);
-        if (!h3IsValid(id)) {
+        if (!isValidCell(id)) {
           return false;
         }
         const pos = getCentroid({id});
@@ -417,6 +451,17 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
     case LAYER_TYPES.geojson:
       return data => {
         return layer.isInPolygon(data, data.index, filter.value);
+      };
+    case LAYER_TYPES.heatmap:
+      if (layer.centroids?.length) {
+        return data => {
+          const centroid = layer.centroids[data.index];
+          return centroid && isInPolygon(centroid, filter.value);
+        };
+      }
+      return data => {
+        const pos = getPosition(data);
+        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
       };
     default:
       return () => true;

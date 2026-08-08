@@ -11,13 +11,21 @@ import {
   applyFiltersToDatasets,
   validateFiltersUpdateDatasets,
   findById,
-  aggregate
+  aggregate,
+  isPlainObject
 } from '@kepler.gl/utils';
 
 import {Layer} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
-import {AGGREGATION_TYPES, LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
+import {
+  AGGREGATION_TYPES,
+  LAYER_BLENDINGS,
+  OVERLAY_BLENDINGS,
+  isAnnotationKind,
+  INITIAL_ANNOTATION_LINE_COLOR,
+  INITIAL_ANNOTATION_LINE_WIDTH
+} from '@kepler.gl/constants';
 import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
 
 import {
@@ -34,7 +42,9 @@ import {
   LayerColumn,
   ParsedFilter,
   NestedPartial,
-  SavedAnimationConfig
+  SavedAnimationConfig,
+  LayerOrder,
+  LayerOrderGroup
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
@@ -290,13 +300,25 @@ export function mergeLayers<S extends VisState>(
     preserveLayerOrder
   );
 
-  return {
+  let mergedState: S = {
     ...state,
     layers: newLayers,
     layerOrder: newLayerOrder,
     preserveLayerOrder,
     layerToBeMerged: [...state.layerToBeMerged, ...unmerged]
   };
+
+  // Apply pending layerOrder with groups if layers are now available
+  if (mergedState.layerOrderToBeMerged && mergedState.layers.length > 0) {
+    const savedOrder = mergedState.layerOrderToBeMerged;
+    mergedState = mergeLayerOrder(mergedState, savedOrder);
+    // Keep savedLayerOrder available for future deferred layers
+    if (mergedState.layerToBeMerged.length > 0) {
+      mergedState = {...mergedState, layerOrderToBeMerged: savedOrder};
+    }
+  }
+
+  return mergedState;
 }
 
 export function insertLayerAtRightOrder(
@@ -308,9 +330,9 @@ export function insertLayerAtRightOrder(
   if (!layersToInsert?.length) {
     return {newLayers: currentLayers, newLayerOrder: currentOrder};
   }
-  // perservedOrder ['a', 'b', 'c'];
-  // layerOrder ['a', 'b', 'c']
+
   const currentLayerQueue = currentOrder
+    .filter(entry => typeof entry === 'string')
     .map(id => findById(id)(currentLayers))
     .filter(layer => Boolean(layer));
   const newLayers = currentLayers.concat(layersToInsert);
@@ -321,12 +343,127 @@ export function insertLayerAtRightOrder(
     true
   );
 
-  // reconstruct layerOrder after insert
-  const newLayerOrder = getLayerOrderFromLayers(newLayerOrderQueue);
+  const newFlatLayerOrder = getLayerOrderFromLayers(newLayerOrderQueue);
+
+  // If no groups exist in current order, just use the new flat order
+  const hasGroups = currentOrder.some(entry => isPlainObject(entry));
+  if (!hasGroups) {
+    return {
+      newLayerOrder: newFlatLayerOrder,
+      newLayers
+    };
+  }
+
+  // Rebuild layerOrder preserving groups in their relative positions.
+  // Replace each string entry with its updated position from newFlatLayerOrder,
+  // and keep groups as-is.
+  const existingFlatIds = new Set(
+    currentOrder.filter(entry => typeof entry === 'string') as string[]
+  );
+  const newInsertedIds = newFlatLayerOrder.filter(id => !existingFlatIds.has(id));
+
+  // Rebuild: walk through currentOrder, replace string entries with their
+  // new position equivalents from newFlatLayerOrder, then append any newly inserted layers
+  const result: LayerOrder = [];
+  const flatQueue = [...newFlatLayerOrder.filter(id => existingFlatIds.has(id))];
+  let flatIdx = 0;
+
+  for (const entry of currentOrder) {
+    if (isPlainObject(entry)) {
+      result.push(entry as LayerOrderGroup);
+    } else {
+      // Replace with corresponding entry from reordered flat list
+      if (flatIdx < flatQueue.length) {
+        result.push(flatQueue[flatIdx]);
+        flatIdx++;
+      }
+    }
+  }
+
+  // Append any newly inserted layers at the front (they are new)
+  return {
+    newLayerOrder: [...newInsertedIds, ...result],
+    newLayers
+  };
+}
+
+/**
+ * Merge saved layerOrder with current state to restore layer groups.
+ * Called after layers have been merged. If the saved config contains a layerOrder
+ * with groups, this replaces the flat layerOrder with the saved hierarchical one,
+ * filtering out any layer IDs that don't exist in the current state.
+ */
+export function mergeLayerOrder<S extends VisState>(
+  state: S,
+  savedLayerOrder?: any[],
+  fromConfig?: boolean
+): S {
+  if (!savedLayerOrder || !Array.isArray(savedLayerOrder) || savedLayerOrder.length === 0) {
+    return state;
+  }
+
+  // Check if the saved layerOrder contains any groups
+  const hasGroups = savedLayerOrder.some(entry => isPlainObject(entry));
+  if (!hasGroups) {
+    // No groups - the layer merger already handled ordering via preserveLayerOrder
+    return state;
+  }
+
+  // If layers haven't been merged yet, store for later
+  if (state.layers.length === 0) {
+    return {
+      ...state,
+      layerOrderToBeMerged: savedLayerOrder
+    };
+  }
+
+  // Build a set of valid layer IDs from current state
+  const validLayerIds = new Set(state.layers.map(l => l.id));
+
+  // Recursively filter the saved layerOrder to only include valid layers
+  function filterLayerOrder(order: any[]): LayerOrder {
+    const result: LayerOrder = [];
+    for (const entry of order) {
+      if (isPlainObject(entry)) {
+        const group = entry as LayerOrderGroup;
+        const filteredGroupOrder = filterLayerOrder(group.layerOrder);
+        // Keep the group even if empty (user may want the empty group)
+        result.push({
+          ...group,
+          layerOrder: filteredGroupOrder
+        });
+      } else if (typeof entry === 'string' && validLayerIds.has(entry)) {
+        result.push(entry);
+      }
+    }
+    return result;
+  }
+
+  const restoredLayerOrder = filterLayerOrder(savedLayerOrder);
+
+  // Find any layers in the current state that aren't in the restored order
+  // (could happen if layers were added between save and load)
+  const layerIdsInRestored = new Set<string>();
+  function collectIds(order: any[]) {
+    for (const entry of order) {
+      if (isPlainObject(entry)) {
+        collectIds((entry as LayerOrderGroup).layerOrder);
+      } else if (typeof entry === 'string') {
+        layerIdsInRestored.add(entry);
+      }
+    }
+  }
+  collectIds(restoredLayerOrder);
+
+  // Add any missing layers at the top
+  const missingLayers = state.layers
+    .filter(l => !layerIdsInRestored.has(l.id))
+    .map(l => l.id);
 
   return {
-    newLayerOrder,
-    newLayers
+    ...state,
+    layerOrder: [...missingLayers, ...restoredLayerOrder],
+    layerOrderToBeMerged: null
   };
 }
 
@@ -348,7 +485,9 @@ export function mergeInteractions<S extends VisState>(
       }
 
       const currentConfig =
-        key === 'tooltip' || key === 'brush' ? state.interactionConfig[key].config : null;
+        key === 'tooltip' || key === 'brush' || key === 'geocoder'
+          ? state.interactionConfig[key].config
+          : null;
 
       const {enabled, ...configSaved} = interactionToBeMerged[key] || {};
 
@@ -455,6 +594,10 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
       // keep the biggest brush size
       combined[key].size =
         aggregate(toBeCombinedProps, AGGREGATION_TYPES.maximum, p => p.size) ?? null;
+    }
+
+    if (key === 'geocoder') {
+      combined[key].limitSearch = toBeCombinedProps.some(p => p?.limitSearch);
     }
   }
 
@@ -573,6 +716,44 @@ export function mergeEffects<S extends VisState>(
     ...state,
     effects: newEffects,
     effectOrder: newEffects.map(effect => effect.id)
+  };
+}
+
+/**
+ * Merge annotations with saved config
+ */
+export function mergeAnnotations<S extends VisState>(state: S, annotations: any[]): S {
+  if (!annotations || !annotations.length) {
+    return state;
+  }
+  const existingIds = new Set(state.annotations.map(a => a.id));
+  const validAnnotations = annotations
+    .filter(
+      a =>
+        a &&
+        a.id &&
+        !existingIds.has(a.id) &&
+        isAnnotationKind(a.kind) &&
+        Array.isArray(a.anchorPoint) &&
+        a.anchorPoint.length === 2
+    )
+    .map(a => ({
+      isVisible: true,
+      autoSize: true,
+      autoSizeY: true,
+      label: '',
+      lineColor: INITIAL_ANNOTATION_LINE_COLOR,
+      lineWidth: INITIAL_ANNOTATION_LINE_WIDTH,
+      textWidth: 0,
+      textHeight: 0,
+      ...a
+    }));
+  if (!validAnnotations.length) {
+    return state;
+  }
+  return {
+    ...state,
+    annotations: [...state.annotations, ...validAnnotations]
   };
 }
 
@@ -1109,6 +1290,10 @@ export const VIS_STATE_MERGERS: VisStateMergers<any> = [
     preserveOrder: 'preserveLayerOrder'
   },
   {
+    merge: mergeLayerOrder,
+    prop: 'layerOrder'
+  },
+  {
     merge: mergeFilters,
     prop: 'filters',
     toMergeProp: 'filterToBeMerged',
@@ -1118,6 +1303,11 @@ export const VIS_STATE_MERGERS: VisStateMergers<any> = [
   {
     merge: mergeEffects,
     prop: 'effects'
+  },
+  {
+    merge: mergeAnnotations,
+    prop: 'annotations',
+    toMergeProp: 'annotationsToBeMerged'
   },
   {
     merge: mergeInteractions,

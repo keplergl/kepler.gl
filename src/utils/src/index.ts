@@ -54,7 +54,8 @@ export {
   LayerToFilterTimeInterval,
   TileTimeInterval,
   getTimelineFromAnimationConfig,
-  getTimelineFromFilter
+  getTimelineFromFilter,
+  filterIntervalOptions
 } from './time';
 export {maybeHexToGeo, getPositionFromHexValue} from './position-utils';
 
@@ -82,7 +83,7 @@ export {
   isMSEdge
 } from './export-utils';
 export {getFormatValue, getDefaultTimeFormat} from './format';
-export {setLayerBlending} from './gl-utils';
+export {getLayerBlendingParameters, patchDeckRendererForPostProcessing} from './gl-utils';
 export {flattenMessages, mergeMessages} from './locale-utils';
 export {isValidMapInfo} from './map-info-utils';
 export {
@@ -112,14 +113,16 @@ export {
   reorderEffectOrder,
   validateEffectParameters
 } from './effect-utils';
-
 // Mapbox
 export {
   isStyleUsingMapboxTiles,
   isStyleUsingOpenStreetMapTiles,
+  mapHasOpenStreetMapAttribution,
+  getBaseMapAttributions,
   getBaseMapLibrary,
   transformRequest
 } from './map-style-utils/mapbox-utils';
+export type {AttributionMapLike} from './map-style-utils/mapbox-utils';
 
 // Map
 export * from './map-utils';
@@ -127,7 +130,11 @@ export * from './map-utils';
 export {
   ArrowDataContainer,
   arrowDataTypeToAnalyzerDataType,
-  arrowDataTypeToFieldType
+  arrowDataTypeToFieldType,
+  isArrowTable,
+  isArrowFixedSizeList,
+  isArrowStruct,
+  isArrowVector
 } from './arrow-data-container';
 export type {DataContainerInterface} from './data-container-interface';
 export {
@@ -178,7 +185,9 @@ export type {
   KeplerApplicationConfig,
   BaseMapLibraryConfig,
   MapLibInstance,
-  GetMapRef
+  GetMapRef,
+  SvgIcon,
+  ReduxLogLevel
 } from './application-config';
 export type {DatabaseAdapter, DatabaseConnection} from './application-config-types';
 
@@ -188,3 +197,6 @@ export {isAppleDevice} from './browser-utils';
 export {default as quickInsertionSort} from './quick-insertion-sort';
 
 export type {KeplerTableModel} from './types';
+
+export {valueToPosition, positionToValue, createSliderScale} from './slider-scale-utils';
+export type {SliderScaleConfig} from './slider-scale-utils';

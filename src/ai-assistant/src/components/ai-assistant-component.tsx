@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components';
 import {textColorLT, theme} from '@kepler.gl/styles';
@@ -59,6 +59,19 @@ export function AiAssistantComponent() {
 
   const [ideas, setIdeas] = useState<{title: string; description: string}[]>([]);
 
+  const [restartKey, setRestartKey] = useState<number>(0);
+  const restartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up pending restart timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (restartTimeoutRef.current !== null) {
+        clearTimeout(restartTimeoutRef.current);
+        restartTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   // get dataset meta data and re-initialize assistant when datasets or layers change
   useEffect(() => {
     const metaData = getDatasetContext(visState?.datasets, visState?.layers || []);
@@ -70,7 +83,13 @@ export function AiAssistantComponent() {
   const instructions = `${INSTRUCTIONS}\n\n${datasetMetaData}`;
 
   // generate ideas from LLM
-  const {temporaryPrompt} = useAssistant({...assistantProps, instructions});
+  const {temporaryPrompt, restartChat: libraryRestartChat} = useAssistant({
+    ...assistantProps,
+    instructions
+  });
+
+  const restartChatRef = useRef(libraryRestartChat);
+  restartChatRef.current = libraryRestartChat;
 
   const generateIdeas = async () => {
     try {
@@ -97,10 +116,22 @@ export function AiAssistantComponent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasetMetaData]);
 
-  const onRestartAssistant = () => {
-    // clean up aiAssistant state
+  const onRestartAssistant = useCallback(async () => {
     dispatch(updateAiAssistantMessages([]));
-  };
+
+    try {
+      await restartChatRef.current();
+    } catch (e) {
+      console.error('Error restarting chat:', e);
+    }
+
+    // Defer remount to next tick so the Redux state update (empty messages)
+    // propagates before the component remounts with fresh initialMessages.
+    restartTimeoutRef.current = setTimeout(() => {
+      restartTimeoutRef.current = null;
+      setRestartKey(prev => prev + 1);
+    }, 0);
+  }, [dispatch]);
 
   const onMessagesUpdated = (messages: MessageModel[]) => {
     dispatch(updateAiAssistantMessages(messages));
@@ -117,6 +148,7 @@ export function AiAssistantComponent() {
   return (
     <StyledAiAssistantComponent className="ai-assistant-component">
       <AiAssistant
+        key={restartKey}
         {...assistantProps}
         instructions={instructions}
         theme={theme.textColor === textColorLT ? 'light' : 'dark'}

@@ -1,26 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
-import {Base} from '../base';
+import React from 'react';
+import {Base, BaseProps} from '../base';
 
-class ArcLayerIcon extends Component {
-  static propTypes = {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  };
-
-  static defaultProps = {
-    height: '16px',
-    predefinedClassName: 'point-layer-icon',
-    totalColor: 4
-  };
-
-  render() {
-    return (
-      <Base {...this.props}>
+const ArcLayerIcon: React.FC<Partial<BaseProps>> = ({
+  height = '16px',
+  predefinedClassName = 'point-layer-icon',
+  totalColor = 4,
+  ...props
+}) => (
+  <Base height={height} predefinedClassName={predefinedClassName} totalColor={totalColor} {...props}>
         <path
           d="M34.5,34.4c-0.6,0-1.2-0.4-1.4-1c-2.7-9.9-8.8-21.7-16.8-22.3c-3.1-0.2-5.6,1.5-7,4.8c-0.3,0.7-1.1,1.1-1.9,0.7
 	c-0.7-0.3-1.1-1.1-0.7-1.9c1.9-4.3,5.6-6.8,9.8-6.5c9.5,0.7,16.3,13,19.4,24.4c0.2,0.8-0.2,1.5-1,1.7C34.8,34.3,34.6,34.4,34.5,34.4
@@ -43,8 +33,6 @@ class ArcLayerIcon extends Component {
           className="cr4"
         />
       </Base>
-    );
-  }
-}
+);
 
 export default ArcLayerIcon;

@@ -8,3 +8,5 @@ export const DEMO_LINK = '/demo';
 export const DEMO_DUCKDB_LINK = 'https://kepler-preview.foursquare.com/';
 export const KEPLER_FSQ_BUCKET =
   'https://studio-public-data.foursquare.com/statics/keplergl/images';
+export const KEPLER_FSQ_DESKTOP_BUCKET =
+  'https://spatial-desktop.foursquare.com/app-data/keplergl/images';

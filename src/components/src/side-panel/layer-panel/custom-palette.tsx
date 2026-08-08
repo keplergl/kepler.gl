@@ -208,6 +208,9 @@ const StyledInput = styled(Input).withConfig({shouldForwardProp})<{
   width: ${props => props.width ?? '100%'};
   text-align: ${props => props.textAlign ?? 'end'};
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
+  font-size: 10px;
+  padding-left: 4px;
+  padding-right: 4px;
 `;
 
 const InputText = styled.div.withConfig({shouldForwardProp})<{width: string; textAlign: string}>`
@@ -216,6 +219,9 @@ const InputText = styled.div.withConfig({shouldForwardProp})<{width: string; tex
   border-color: transparent;
   width: ${props => props.width ?? '100%'};
   text-align: ${props => props.textAlign ?? 'end'};
+  font-size: 10px;
+  padding-left: 4px;
+  padding-right: 4px;
 
   &:hover {
     cursor: auto;
@@ -377,8 +383,11 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
   editColorMap,
   editable
 }) => {
-  const noMinBound = !Number.isFinite(item.inputs[0]) && index === 0;
-  const noMaxBound = !Number.isFinite(item.inputs[1]) && isLast;
+  const hasInputs = Array.isArray(item?.inputs);
+  const leftInput = hasInputs ? item.inputs[0] : undefined;
+  const rightInput = hasInputs ? item.inputs[1] : undefined;
+  const noMinBound = !Number.isFinite(leftInput) && index === 0;
+  const noMaxBound = !Number.isFinite(rightInput) && isLast;
   const onChangeLeft = useCallback(
     val => {
       if (editable && editColorMap) editColorMap(parseFloat(val), index - 1);
@@ -395,18 +404,18 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
   return (
     <StyledRangeInput>
       <ColorPaletteInput
-        value={noMinBound ? 'Less' : item.inputs[0].toString()}
+        value={noMinBound ? 'Less' : String(leftInput ?? '')}
         id={`color-palette-input-${index}-left`}
-        width="50px"
+        width="54px"
         textAlign="end"
         editable={noMinBound ? false : editable}
         onChange={onChangeLeft}
       />
       <Dash />
       <ColorPaletteInput
-        value={noMaxBound ? 'More' : item.inputs[1].toString()}
+        value={noMaxBound ? 'More' : String(rightInput ?? '')}
         id={`color-palette-input-${index}-right`}
-        width="50px"
+        width="54px"
         textAlign="end"
         onChange={onChangeRight}
         editable={noMaxBound ? false : editable}
@@ -468,7 +477,7 @@ export const CustomPaletteInput: React.FC<CustomPaletteInputProps> = ({
                 />
               </StyledColorHexInput>
             ) : null}
-            {isNumericColorBreaks(colorBreaks) ? (
+            {colorBreaks && index < colorBreaks.length && isNumericColorBreaks(colorBreaks) ? (
               <EditableColorRange
                 item={colorBreaks[index]}
                 isLast={index === colorBreaks.length - 1}
@@ -719,6 +728,9 @@ export const CategoricalSelector: React.FC<CategoricalSelectorProps> = ({
                     listAnchor: 'list__item__anchor'
                   }}
                   options={allValues}
+                  // add safe string casting for the Typeahead, so fuzzy search never receives non-strings, preventing the toLowerCase crash
+                  displayOption={o => String(o ?? '')}
+                  filterOption={(input, o) => String(o ?? '').includes(String(input ?? ''))}
                   placeholder={'Search'}
                   onOptionSelected={onOptionSelected}
                   customListComponent={ModifiedDropdownList}

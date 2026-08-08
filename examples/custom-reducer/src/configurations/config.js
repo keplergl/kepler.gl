@@ -120,18 +120,9 @@ export default {
       isSplit: false
     },
     mapStyle: {
-      styleType: 'light',
-      topLayerGroups: {
-        label: true
-      },
-      visibleLayerGroups: {
-        label: true,
-        road: true,
-        border: false,
-        building: true,
-        water: true,
-        land: true
-      }
+      styleType: 'dark-matter',
+      topLayerGroups: {},
+      visibleLayerGroups: {}
     }
   }
 };

@@ -4,7 +4,7 @@ Original GeoDa lab by Luc Anselin: https://geodacenter.github.io/workbook/3a_map
 
 ## Introduction
 
-In this Chapter, we will explore a range of mapping and geovisualization options. We start with a review of common thematic map classifications. We next focus on different statistical maps, in particular maps that are designed to highight extreme values or outliers. We also illustrate maps for categorical variables (unique value maps), and their extension to multiple categories in the form of co-location maps. We close with a review of some special approaches to geovisualization, i.e., ~~conditional maps~~, the cartogram and map animation.
+In this Chapter, we will explore a range of mapping and geovisualization options. We start with a review of common thematic map classifications. We next focus on different statistical maps, in particular maps that are designed to highlight extreme values or outliers. We also illustrate maps for categorical variables (unique value maps), and their extension to multiple categories in the form of co-location maps. We close with a review of some special approaches to geovisualization, i.e., ~~conditional maps~~, the cartogram and map animation.
 
  The main objective is to use the maps to interact with the data as part of the exploration process.
 
@@ -102,7 +102,7 @@ In Kepler.gl, the equal intervals method is also callled 'quantize'. See documen
 To create an equal intervals map for the variable `rent2008` with 4 categories, you can use the following prompt:
 
 ```
-Can you create a equal intervals map for the variable 'rent2008' with 4 categories using the same YlOrBr color scheme?
+Can you create an equal intervals map for the variable 'rent2008' with 4 categories using the same YlOrBr color scheme?
 ```
 
 <img width="1068" alt="Screenshot 2025-06-12 at 3 16 40 PM" src="https://github.com/user-attachments/assets/d985a359-f053-4a3e-bdcf-f3e015adc70d" />
@@ -119,12 +119,12 @@ Can you create a histogram for the variable 'rent2008' with 4 bins?
 
 The resulting histogram has the exact same ranges for each interval as the equal intervals map. The number of observations in each category is the same as well. The values for the number of observations in the descriptive statistics below the graph match the values given in the map legend.
 
-Finally, we illustrate the equivalence between the two graphs by selecting a category in the map legend. To accomplish this, we select the highest category in the histogram. This selects will highlights the related observations in the map, through linking.
+Finally, we illustrate the equivalence between the two graphs by selecting a category in the map legend. To accomplish this, we select the highest category in the histogram. This selection will highlight the related observations in the map, through linking.
 
 ![equal-map-histogram-link](https://github.com/user-attachments/assets/e60c9d4b-4c56-4993-8b65-6c9ca5325ce0)
 
 :::note
-The linking is now way one for now: from plot to map. The two-way linking is not supported yet.
+The linking is now one way for now: from plot to map. The two-way linking is not supported yet.
 :::
 
 
@@ -133,7 +133,7 @@ The linking is now way one for now: from plot to map. The two-way linking is not
 In Kepler.gl, there are several options to customize the map.
 
 - change base map [doc](https://docs.kepler.gl/docs/user-guides/f-map-styles)
-- chang layer order [doc](https://docs.kepler.gl/docs/user-guides/b-kepler-gl-workflow/add-data-to-layers/d-blend-and-rearrange-layers)
+- change layer order [doc](https://docs.kepler.gl/docs/user-guides/b-kepler-gl-workflow/add-data-to-layers/d-blend-and-rearrange-layers)
 - configure layer [doc](https://docs.kepler.gl/docs/user-guides/d-layer-attributes)
 - configure color palettes [doc](https://docs.kepler.gl/docs/user-guides/l-color-attributes)
 

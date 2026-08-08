@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {ShaderModule} from './webgl/types';
+import {UNIFORM_NAME_MAP} from './raster-processing-uniforms';
 
 /**
  * Test if two lists of modules are equal
@@ -23,4 +24,99 @@ export function modulesEqual(modules: ShaderModule[], oldModules: ShaderModule[]
   }
 
   return true;
+}
+
+function isUniformValue(value: unknown): boolean {
+  return (
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    ArrayBuffer.isView(value) ||
+    Array.isArray(value)
+  );
+}
+
+/**
+ * Apply module uniforms/bindings to shaderInputs, calling each module's
+ * getUniforms exactly once and writing the result directly — avoiding the
+ * double-getUniforms bug where shaderInputs.setProps() would re-invoke
+ * getUniforms on already-transformed values.
+ *
+ * For modules whose uniforms have been consolidated into the shared
+ * rasterProcessing UBO, the uniform values are remapped (prefixed) and
+ * written to the rasterProcessing slot instead of the individual module slot.
+ */
+export function applyModuleUniforms(
+  shaderInputs: {
+    moduleUniforms: Record<string, Record<string, unknown>>;
+    moduleBindings: Record<string, Record<string, unknown>>;
+    setProps?: (props: any) => void;
+  },
+  modules: ShaderModule[],
+  allModuleProps: Record<string, unknown>
+): void {
+  for (const mod of modules) {
+    if (mod.getUniforms) {
+      const result = mod.getUniforms(allModuleProps as object);
+      if (result) {
+        const uniforms: Record<string, unknown> = {};
+        const bindings: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(result)) {
+          if (isUniformValue(value)) {
+            uniforms[key] = value;
+          } else {
+            bindings[key] = value;
+          }
+        }
+        try {
+          const nameMap = UNIFORM_NAME_MAP[mod.name];
+          if (nameMap && mod.uniformTypes) {
+            // Consolidated module: remap uniforms to the shared rasterProcessing UBO
+            if (!shaderInputs.moduleUniforms.rasterProcessing) {
+              shaderInputs.moduleUniforms.rasterProcessing = {};
+            }
+            for (const [key, value] of Object.entries(uniforms)) {
+              const remapped = nameMap[key];
+              if (remapped) {
+                shaderInputs.moduleUniforms.rasterProcessing[remapped] = value;
+              }
+            }
+            // Bindings (textures) stay on the original module name
+            if (Object.keys(bindings).length > 0) {
+              if (!shaderInputs.moduleBindings[mod.name]) {
+                shaderInputs.moduleBindings[mod.name] = {};
+              }
+              Object.assign(shaderInputs.moduleBindings[mod.name], bindings);
+            }
+          } else {
+            // Non-consolidated module: write directly as before
+            if (!shaderInputs.moduleUniforms[mod.name]) {
+              shaderInputs.moduleUniforms[mod.name] = {};
+            }
+            if (!shaderInputs.moduleBindings[mod.name]) {
+              shaderInputs.moduleBindings[mod.name] = {};
+            }
+            Object.assign(shaderInputs.moduleUniforms[mod.name], uniforms);
+            Object.assign(shaderInputs.moduleBindings[mod.name], bindings);
+          }
+        } catch {
+          const nameMap = UNIFORM_NAME_MAP[mod.name];
+          if (nameMap && mod.uniformTypes) {
+            const remappedUniforms: Record<string, unknown> = {};
+            for (const [key, val] of Object.entries(uniforms)) {
+              const remapped = nameMap[key];
+              if (remapped) {
+                remappedUniforms[remapped] = val;
+              }
+            }
+            shaderInputs.setProps?.({rasterProcessing: remappedUniforms});
+            if (Object.keys(bindings).length > 0) {
+              shaderInputs.setProps?.({[mod.name]: bindings});
+            }
+          } else {
+            shaderInputs.setProps?.({[mod.name]: result});
+          }
+        }
+      }
+    }
+  }
 }

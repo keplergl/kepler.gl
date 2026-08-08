@@ -1,26 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
-import {Base} from '../base';
+import React from 'react';
+import {Base, BaseProps} from '../base';
 
-export default class GeojsonLayerIcon extends Component {
-  static propTypes = {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  };
-
-  static defaultProps = {
-    height: null,
-    size: 'tiny',
-    predefinedClassName: 'geojson-layer-icon'
-  };
-
-  render() {
-    return (
-      <Base {...this.props}>
+const GeojsonLayerIcon: React.FC<Partial<BaseProps>> = ({
+  height = undefined,
+  predefinedClassName = 'geojson-layer-icon',
+  ...props
+}) => (
+  <Base height={height} predefinedClassName={predefinedClassName} {...props}>
         <polygon
           className="cr1"
           points="25.04 23.08 9.72 31.79 8.19 43.2 19.57 53.83 28.79 53.83 35.6 46.57 39.45 30.08 25.04 23.08"
@@ -46,6 +35,6 @@ export default class GeojsonLayerIcon extends Component {
           style={{opacity: 0.8}}
         />
       </Base>
-    );
-  }
-}
+);
+
+export default GeojsonLayerIcon;

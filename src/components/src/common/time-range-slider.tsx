@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useMemo} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import throttle from 'lodash/throttle';
 import styled, {IStyledComponent} from 'styled-components';
 
@@ -15,6 +15,7 @@ import AnimationControlFactory from './animation-control/animation-control';
 import {BaseComponentProps} from '../types';
 
 const animationControlWidth = 176;
+const animationControlExportWidth = 19;
 
 type TimeRangeSliderProps = {
   domain?: [number, number];
@@ -36,6 +37,7 @@ type TimeRangeSliderProps = {
   animationWindow: string;
   resetAnimation?: () => void;
   toggleAnimation: () => void;
+  exportAnimation?: () => void;
   updateAnimationSpeed?: (val: number) => void;
   setFilterAnimationWindow?: (id: string) => void;
   setFilterPlot?: ActionHandler<typeof setFilterPlot>;
@@ -46,7 +48,7 @@ type TimeRangeSliderProps = {
 };
 
 export type StyledSliderContainerProps = BaseComponentProps & {
-  isEnlarged?: boolean;
+  $isEnlarged?: boolean;
 };
 
 const StyledSliderContainer: IStyledComponent<
@@ -57,7 +59,7 @@ const StyledSliderContainer: IStyledComponent<
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding-left: ${props => (props.isEnlarged ? 24 : 0)}px;
+  padding-left: ${props => (props.$isEnlarged ? 24 : 0)}px;
 
   .timeline-container .kg-slider {
     display: none;
@@ -68,7 +70,7 @@ const StyledSliderContainer: IStyledComponent<
   }
 `;
 
-const ANIMATION_CONTROL_STYLE = {flex: 1};
+const ANIMATION_CONTROL_STYLE = {flex: 1, padding: 0, marginTop: 0};
 
 TimeRangeSliderFactory.deps = [
   PlaybackControlsFactory,
@@ -115,22 +117,26 @@ export default function TimeRangeSliderFactory(
       updateAnimationSpeed,
       setFilterAnimationWindow,
       toggleAnimation,
+      exportAnimation,
       onChange,
       setFilterPlot,
       timeline
     } = props;
 
     const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
+    useEffect(() => () => throttledOnchange.cancel(), [throttledOnchange]);
+
     const binsForInterval = useMemo(
       () => getTimeBinsForInterval(timeBins, plotType?.interval),
       [timeBins, plotType?.interval]
     );
+    const width = animationControlWidth + (exportAnimation ? animationControlExportWidth : 0);
 
     const style = useMemo(
       () => ({
-        width: isEnlarged ? `calc(100% - ${animationControlWidth}px)` : '100%'
+        width: isEnlarged ? `calc(100% - ${width}px)` : '100%'
       }),
-      [isEnlarged]
+      [isEnlarged, width]
     );
 
     return (
@@ -145,7 +151,7 @@ export default function TimeRangeSliderFactory(
             />
           </div>
         ) : null}
-        <StyledSliderContainer className="time-range-slider__container" isEnlarged={isEnlarged}>
+        <StyledSliderContainer className="time-range-slider__container" $isEnlarged={isEnlarged}>
           {!isMinified ? (
             <div className="timeline-container" style={style}>
               <RangeSlider
@@ -176,6 +182,7 @@ export default function TimeRangeSliderFactory(
               updateAnimationSpeed={updateAnimationSpeed}
               setTimelineValue={throttledOnchange}
               setAnimationWindow={setFilterAnimationWindow}
+              exportAnimation={exportAnimation}
               showTimeDisplay={false}
               timeline={timeline}
             />
@@ -183,13 +190,14 @@ export default function TimeRangeSliderFactory(
           {isEnlarged && !isMinified ? (
             <PlaybackControls
               isAnimatable={isAnimatable}
-              width={animationControlWidth}
+              width={width}
               speed={speed}
               animationWindow={animationWindow}
               updateAnimationSpeed={updateAnimationSpeed}
               setFilterAnimationWindow={setFilterAnimationWindow}
               pauseAnimation={toggleAnimation}
               resetAnimation={resetAnimation}
+              exportAnimation={exportAnimation}
               isAnimating={isAnimating}
               startAnimation={toggleAnimation}
             />

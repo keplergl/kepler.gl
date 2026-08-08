@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {ReactElement, useMemo} from 'react';
+import React, {ReactElement, useMemo, useRef} from 'react';
 import {scaleLinear} from 'd3-scale';
 import {hcl} from 'd3-color';
 import {min, max} from 'd3-array';
@@ -20,7 +20,7 @@ const HISTOGRAM_MASK_FGCOLOR = '#000000';
 
 const histogramStyle = {
   highlightW: 0.7,
-  unHighlightedW: 0.4
+  unHighlightedW: 0.7
 };
 
 const HistogramWrapper = styled.svg`
@@ -35,6 +35,11 @@ const HistogramBreakLine = styled.g`
   stroke: ${props => props.theme.histogramBreakLineColor};
   stroke-width: 1px;
   transform: translate(0, 0);
+`;
+
+const YAxisTick = styled.text`
+  font-size: 9px;
+  fill: ${props => props.theme.textColor};
 `;
 
 type BarType = {
@@ -58,23 +63,11 @@ Bar.displayName = 'Bar';
 
 const isBarInRange = (
   bar: {x0: number; x1: number},
-  index: number,
-  list: any[],
-  filterDomain: any[],
+  _index: number,
+  _list: any[],
+  _filterDomain: any[],
   filterValue: any[]
-) => {
-  // first
-  // if x0 <= domain[0] and current value[0] wasn't changed from the original domain
-  const x0Condition =
-    index === 0 ? bar.x0 <= filterDomain[0] && filterDomain[0] === filterValue[0] : false;
-  // Last
-  // if x1 >= domain[1] and current value[1] wasn't changed from the original domain
-  const x1Condition =
-    index === list.length - 1
-      ? bar.x1 >= filterDomain[1] && filterDomain[1] === filterValue[1]
-      : false;
-  return (x0Condition || bar.x0 >= filterValue[0]) && (x1Condition || bar.x1 <= filterValue[1]);
-};
+) => bar.x1 > filterValue[0] && bar.x0 < filterValue[1];
 
 export type HistogramMaskModeType = {
   NoMask: number;
@@ -82,11 +75,14 @@ export type HistogramMaskModeType = {
   MaskWithOverlay: number;
 };
 
+const undefinedToZero = (v: number | undefined) => (v ? v : 0);
+
 interface HistogramPlotProps {
   width: number;
   height: number;
   margin: {top: number; bottom: number; left: number; right: number};
   isRanged?: boolean;
+  isEnlarged?: boolean;
   value: number[];
   isMasked?: number;
   brushComponent?: ReactElement;
@@ -104,6 +100,7 @@ function HistogramPlotFactory() {
     histogramsByGroup,
     colorsByGroup,
     isMasked = HISTOGRAM_MASK_MODE.NoMask,
+    isEnlarged,
     countProp = 'count',
     margin,
     isRanged,
@@ -112,7 +109,6 @@ function HistogramPlotFactory() {
     brushComponent,
     breakLines
   }: HistogramPlotProps) => {
-    const undefinedToZero = (x: number | undefined) => (x ? x : 0);
     const groupKeys = useMemo(
       () =>
         Object.keys(histogramsByGroup)
@@ -130,28 +126,23 @@ function HistogramPlotFactory() {
       [range, histogramsByGroup, groupKeys]
     );
 
-    const barWidth = useMemo(() => {
+    const numBins = useMemo(() => {
       if (groupKeys.length === 0) return 0;
-      // find histogramsByGroup with max number of bins
       const maxGroup = groupKeys.reduce((accu, key, _idx) => {
         if (histogramsByGroup[key].length > accu.length) {
           return histogramsByGroup[key];
         }
         return accu;
       }, histogramsByGroup[groupKeys[0]]);
+      return maxGroup.length;
+    }, [histogramsByGroup, groupKeys]);
 
-      // find the bin for measuring step
-      const stdBinIdx = maxGroup.length > 1 ? 1 : 0;
-      const xStep = maxGroup[stdBinIdx].x1 - maxGroup[stdBinIdx].x0;
-      const maxBins = (domain[1] - domain[0]) / xStep;
-      if (!maxBins) return 0;
-      return width / maxBins / (isMasked ? 1 : groupKeys.length);
-    }, [histogramsByGroup, domain, groupKeys, width, isMasked]);
+    const x = useMemo(() => scaleLinear().domain(domain).range([0, width]), [domain, width]);
 
-    const x = useMemo(
-      () => scaleLinear().domain(domain).range([barWidth, width]),
-      [domain, width, barWidth]
-    );
+    const fallbackBarWidth = useMemo(() => {
+      if (numBins === 0) return 0;
+      return width / numBins;
+    }, [numBins, width]);
 
     const y = useMemo(
       () =>
@@ -167,6 +158,20 @@ function HistogramPlotFactory() {
       [histogramsByGroup, groupKeys, height, countProp]
     );
 
+    const yAxisTicks = useMemo(() => {
+      if (!isEnlarged) return null;
+      const yMax = Math.max(
+        Number(max(groupKeys, key => max(histogramsByGroup[key], d => d[countProp]))),
+        1
+      );
+      const tickCount = 3;
+      const ticks = scaleLinear().domain([0, yMax]).ticks(tickCount);
+      return ticks;
+    }, [isEnlarged, groupKeys, histogramsByGroup, countProp]);
+
+    const clipIdRef = useRef(`histogram-clip-${Math.random().toString(36).slice(2)}`);
+    const clipId = clipIdRef.current;
+
     if (groupKeys.length === 0) {
       return null;
     }
@@ -179,6 +184,9 @@ function HistogramPlotFactory() {
           style={{margin: `${margin.top}px ${margin.right}px ${margin.bottom}px ${margin.left}px`}}
         >
           <defs>
+            <clipPath id={`${clipId}-mask`}>
+              <rect x="0" y="0" width={width} height={height + margin.bottom} />
+            </clipPath>
             <mask id="histogram-mask">
               <rect
                 x="0"
@@ -193,6 +201,10 @@ function HistogramPlotFactory() {
                   const wRatio = inRange
                     ? histogramStyle.highlightW
                     : histogramStyle.unHighlightedW;
+                  const bx0 = x(undefinedToZero(bar.x0));
+                  const bx1 = x(undefinedToZero(bar.x1));
+                  const binW = Math.max(bx1 - bx0, 1);
+                  const drawnW = binW * wRatio;
                   return (
                     <Bar
                       $isOverlay={false}
@@ -200,8 +212,8 @@ function HistogramPlotFactory() {
                       $color={HISTOGRAM_MASK_FGCOLOR}
                       key={`mask-${idx}`}
                       height={y(bar[countProp])}
-                      width={barWidth * wRatio}
-                      x={x(bar.x0) + (barWidth * (1 - wRatio)) / 2}
+                      width={drawnW}
+                      x={bx0 + (binW - drawnW) / 2}
                       y={height - y(bar[countProp])}
                     />
                   );
@@ -219,7 +231,12 @@ function HistogramPlotFactory() {
             />
           </g>
           {isMasked === HISTOGRAM_MASK_MODE.MaskWithOverlay && (
-            <g key="bins" transform="translate(0,0)" className="overlay-histogram-bars">
+            <g
+              key="bins"
+              transform="translate(0,0)"
+              className="overlay-histogram-bars"
+              clipPath={`url(#${clipId}-mask)`}
+            >
               {histogramsByGroup.bins.map((bar, idx, list) => {
                 const filterBar = histogramsByGroup.filteredBins[idx];
                 const maskHeight = filterBar
@@ -227,14 +244,18 @@ function HistogramPlotFactory() {
                   : y(bar[countProp]);
                 const inRange = isBarInRange(bar, idx, list, domain, value);
                 const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
+                const bx0 = x(undefinedToZero(bar.x0));
+                const bx1 = x(undefinedToZero(bar.x1));
+                const binW = Math.max(bx1 - bx0, 1);
+                const drawnW = binW * wRatio;
                 return (
                   <Bar
                     $inRange={inRange}
                     $isOverlay={true}
                     key={`bar-${idx}`}
                     height={maskHeight}
-                    width={barWidth * wRatio}
-                    x={x(bar.x0) + (barWidth * (1 - wRatio)) / 2}
+                    width={drawnW}
+                    x={bx0 + (binW - drawnW) / 2}
                     y={height - y(bar[countProp])}
                   />
                 );
@@ -248,7 +269,7 @@ function HistogramPlotFactory() {
               );
             })}
           </HistogramBreakLine>
-          <g transform={`translate(${isRanged ? 0 : barWidth / 2}, 0)`}>{brushComponent}</g>
+          <g transform={`translate(${isRanged ? 0 : fallbackBarWidth / 2}, 0)`}>{brushComponent}</g>
         </HistogramWrapper>
       );
     };
@@ -261,37 +282,62 @@ function HistogramPlotFactory() {
         height={height}
         style={{margin: `${margin.top}px ${margin.right}px ${margin.bottom}px ${margin.left}px`}}
       >
-        <g>
+        <defs>
+          <clipPath id={clipId}>
+            <rect x="0" y="0" width={width} height={height} />
+          </clipPath>
+        </defs>
+        <g transform={`translate(${isRanged ? 0 : fallbackBarWidth / 2}, 0)`}>{brushComponent}</g>
+        <g clipPath={`url(#${clipId})`} style={{pointerEvents: 'none'}}>
           {groupKeys.map((key, i) => (
             <g key={key} className="histogram-bars">
               {histogramsByGroup[key].map((bar, idx, list) => {
                 const inRange = isBarInRange(bar, idx, list, domain, value);
 
                 const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
-                const startX =
-                  x(undefinedToZero(bar.x0)) + barWidth * i + (barWidth * (1 - wRatio)) / 2;
-                if (startX > 0 && startX + barWidth * histogramStyle.unHighlightedW <= width) {
-                  return (
-                    <Bar
-                      $isOverlay={false}
-                      $inRange={inRange}
-                      $color={colorsByGroup?.[key]}
-                      key={`bar-${idx}`}
-                      height={y(bar[countProp])}
-                      width={barWidth * wRatio}
-                      x={startX}
-                      rx={1}
-                      ry={1}
-                      y={height - y(bar[countProp])}
-                    />
-                  );
-                }
-                return null;
+                const bx0 = x(undefinedToZero(bar.x0));
+                const bx1 = x(undefinedToZero(bar.x1));
+                const binW = Math.max(bx1 - bx0, 1);
+                const perGroupW = isMasked ? binW : binW / groupKeys.length;
+                const drawnWidth = perGroupW * wRatio;
+                const groupOffset =
+                  groupKeys.length > 1
+                    ? perGroupW * i + (perGroupW - drawnWidth) / 2
+                    : (binW - drawnWidth) / 2;
+                const startX = bx0 + groupOffset;
+                return (
+                  <Bar
+                    $isOverlay={false}
+                    $inRange={inRange}
+                    $color={colorsByGroup?.[key]}
+                    key={`bar-${idx}`}
+                    height={y(bar[countProp])}
+                    width={drawnWidth}
+                    x={startX}
+                    rx={1}
+                    ry={1}
+                    y={height - y(bar[countProp])}
+                  />
+                );
               })}
             </g>
           ))}
         </g>
-        <g transform={`translate(${isRanged ? 0 : barWidth / 2}, 0)`}>{brushComponent}</g>
+        {yAxisTicks ? (
+          <g className="histogram-y-axis">
+            {yAxisTicks.map(tick => (
+              <YAxisTick
+                key={tick}
+                x={-4}
+                y={height - y(tick)}
+                textAnchor="end"
+                dominantBaseline="middle"
+              >
+                {tick}
+              </YAxisTick>
+            ))}
+          </g>
+        ) : null}
       </HistogramWrapper>
     );
   };

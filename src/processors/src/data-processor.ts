@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
-import {csvParseRows} from 'd3-dsv';
+import {csvParseRows, tsvParseRows, dsvFormat} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {parseSync} from '@loaders.gl/core';
@@ -33,12 +33,45 @@ import {
   toArray
 } from '@kepler.gl/common-utils';
 import {KeplerGlSchema, ParsedDataset, SavedMap, LoadedMap} from '@kepler.gl/schemas';
-import {Feature} from '@nebula.gl/edit-modes';
+import {Feature} from '@deck.gl-community/editable-layers';
 
 // if any of these value occurs in csv, parse it to null;
 // const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
 // matches empty string
 export const CSV_NULLS = /^(null|NULL|Null|NaN|\/N||)$/;
+
+const SUPPORTED_DELIMITERS = [',', '\t', ';', '|'] as const;
+
+function getRowParser(delimiter: string): (raw: string) => string[][] {
+  if (delimiter === ',') return csvParseRows;
+  if (delimiter === '\t') return tsvParseRows;
+  return dsvFormat(delimiter).parseRows;
+}
+
+/**
+ * Detect the delimiter used in a DSV string by checking the first line.
+ * Returns the delimiter that produces the most columns (minimum 2).
+ * Falls back to comma if no delimiter produces multiple columns.
+ */
+export function detectDelimiter(rawData: string): string {
+  const newlineIdx = rawData.indexOf('\n');
+  const firstLine = newlineIdx === -1 ? rawData : rawData.slice(0, newlineIdx);
+  if (!firstLine) return ',';
+
+  let bestDelimiter = ',';
+  let bestCount = 1;
+
+  for (const delimiter of SUPPORTED_DELIMITERS) {
+    const parsed = getRowParser(delimiter)(firstLine);
+    const count = parsed[0]?.length || 0;
+    if (count > bestCount) {
+      bestCount = count;
+      bestDelimiter = delimiter;
+    }
+  }
+
+  return bestDelimiter;
+}
 
 function tryParseJsonString(str) {
   try {
@@ -51,7 +84,10 @@ function tryParseJsonString(str) {
 export const PARSE_FIELD_VALUE_FROM_STRING = {
   [ALL_FIELD_TYPES.boolean]: {
     valid: (d: unknown): boolean => typeof d === 'boolean',
-    parse: (d: unknown): boolean => d === 'true' || d === 'True' || d === 'TRUE' || d === '1'
+    parse: (d: unknown): boolean => {
+      const s = String(d).toLowerCase();
+      return s === 'true' || s === 'yes' || s === '1';
+    }
   },
   [ALL_FIELD_TYPES.integer]: {
     // @ts-ignore
@@ -116,11 +152,11 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
   let headerRow: string[] | undefined;
 
   if (typeof rawData === 'string') {
-    const parsedRows: string[][] = csvParseRows(rawData);
+    const delimiter = detectDelimiter(rawData);
+    const parsedRows: string[][] = getRowParser(delimiter)(rawData);
 
     if (!Array.isArray(parsedRows) || parsedRows.length < 2) {
-      // looks like an empty file, throw error to be catch
-      throw new Error('process Csv Data Failed: CSV is empty');
+      throw new Error('processCsvData Failed: delimited text is empty or has no data rows');
     }
     headerRow = parsedRows[0];
     rows = parsedRows.slice(1);
@@ -453,12 +489,15 @@ export function arrowSchemaToFields(
     let analyzerType = arrowDataTypeToAnalyzerDataType(field.type);
     let format = '';
 
+    const fieldTypeSuggestion = fieldTypeSuggestions[field.name];
+    const keplerField = keplerFields[fieldIndex];
+
     // geometry fields produced by DuckDB's st_asgeojson()
-    if (fieldTypeSuggestions[field.name] === 'JSON') {
+    if (fieldTypeSuggestion === 'JSON') {
       type = ALL_FIELD_TYPES.geojson;
       analyzerType = AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING;
     } else if (
-      fieldTypeSuggestions[field.name] === 'GEOMETRY' ||
+      fieldTypeSuggestion === 'GEOMETRY' ||
       field.metadata.get(GEOARROW_METADATA_KEY)?.startsWith('geoarrow')
     ) {
       type = ALL_FIELD_TYPES.geoarrow;
@@ -467,7 +506,7 @@ export function arrowSchemaToFields(
       type = ALL_FIELD_TYPES.geoarrow;
       analyzerType = AnalyzerDATA_TYPES.GEOMETRY;
       field.metadata?.set(GEOARROW_METADATA_KEY, geoArrowMetadata[field.name]);
-    } else if (fieldTypeSuggestions[field.name] === 'BLOB') {
+    } else if (fieldTypeSuggestion === 'BLOB') {
       // When arrow wkb column saved to DuckDB as BLOB without any metadata, then queried back
       try {
         const data = table.getChildAt(fieldIndex)?.get(0);
@@ -482,10 +521,22 @@ export function arrowSchemaToFields(
       } catch (error) {
         // ignore, not WKB
       }
+    } else if (
+      fieldTypeSuggestion === 'VARCHAR' &&
+      (keplerField.analyzerType === AnalyzerDATA_TYPES.GEOMETRY ||
+        keplerField.analyzerType === AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING)
+    ) {
+      // When wkb/wkt was saved as varchar in DuckDB
+      type = keplerField.type;
+      analyzerType = keplerField.analyzerType;
+      format = keplerField.format;
+    } else if (fieldTypeSuggestion === 'VARCHAR' && keplerField.type === ALL_FIELD_TYPES.h3) {
+      // when kepler detected h3 column using getFieldsFromData(), set type to h3 and analyzerType to H3
+      type = ALL_FIELD_TYPES.h3;
+      analyzerType = keplerField.analyzerType;
     } else {
       // TODO should we use Kepler getFieldsFromData instead
       // of arrowDataTypeToFieldType for all fields?
-      const keplerField = keplerFields[fieldIndex];
       if (keplerField.type === ALL_FIELD_TYPES.timestamp) {
         type = keplerField.type;
         analyzerType = keplerField.analyzerType;
@@ -510,6 +561,44 @@ export function arrowSchemaToFields(
   });
 }
 
+const CAST_BIGINTS = false;
+
+/**
+ * Cast 64-bit integer Arrow columns (Int64, Uint64) to Float64 to avoid BigInt values
+ * that are incompatible with d3 scales, sorting, and other numeric operations.
+ * Mirrors the DuckDB approach of casting BIGINT/UBIGINT to DOUBLE.
+ */
+function castBigIntColumnsToFloat64(arrowTable: arrow.Table): arrow.Table {
+  if (!CAST_BIGINTS) {
+    return arrowTable;
+  }
+
+  const needsCast = arrowTable.schema.fields.some(
+    f => arrow.DataType.isInt(f.type) && f.type.bitWidth === 64
+  );
+  if (!needsCast) {
+    return arrowTable;
+  }
+
+  const newColumns: Record<string, arrow.Vector> = {};
+  for (let i = 0; i < arrowTable.numCols; i++) {
+    const field = arrowTable.schema.fields[i];
+    const col = arrowTable.getChildAt(i);
+    if (!col) continue;
+    if (arrow.DataType.isInt(field.type) && field.type.bitWidth === 64) {
+      const float64Array = new Float64Array(col.length);
+      for (let j = 0; j < col.length; j++) {
+        const val = col.get(j);
+        float64Array[j] = val === null ? NaN : Number(val);
+      }
+      newColumns[field.name] = arrow.makeVector(float64Array);
+    } else {
+      newColumns[field.name] = col;
+    }
+  }
+  return new arrow.Table(newColumns);
+}
+
 /**
  * Parse arrow batches returned from parseInBatches()
  *
@@ -520,7 +609,7 @@ export function processArrowBatches(arrowBatches: arrow.RecordBatch[]): Processo
   if (arrowBatches.length === 0) {
     return null;
   }
-  const arrowTable = new arrow.Table(arrowBatches);
+  const arrowTable = castBigIntColumnsToFloat64(new arrow.Table(arrowBatches));
   const fields = arrowSchemaToFields(arrowTable);
 
   const cols = [...Array(arrowTable.numCols).keys()].map(i => arrowTable.getChildAt(i));

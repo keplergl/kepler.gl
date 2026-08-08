@@ -9,10 +9,10 @@ import {VectorTileLayer} from '@kepler.gl/layers';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
+import FieldSelectorFactory from '../../common/field-selector';
 import ChannelByValueSelectorFactory from './channel-by-value-selector';
 import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import {LayerColorRangeSelectorFactory, LayerColorSelectorFactory} from './layer-color-selector';
-import VisConfigByZoomInput from './radius-by-zoom-input';
 import VisConfigSliderFactory from './vis-config-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
 
@@ -37,7 +37,8 @@ VectorTileLayerConfiguratorFactory.deps = [
   LayerConfigGroupFactory,
   VisConfigSliderFactory,
   VisConfigSwitchFactory,
-  SourceDataSelectorFactory
+  SourceDataSelectorFactory,
+  FieldSelectorFactory
 ];
 
 function VectorTileLayerConfiguratorFactory(
@@ -46,7 +47,9 @@ function VectorTileLayerConfiguratorFactory(
   LayerColorSelector: ReturnType<typeof LayerColorSelectorFactory>,
   LayerConfigGroup: ReturnType<typeof LayerConfigGroupFactory>,
   VisConfigSlider: ReturnType<typeof VisConfigSliderFactory>,
-  VisConfigSwitch: ReturnType<typeof VisConfigSwitchFactory>
+  VisConfigSwitch: ReturnType<typeof VisConfigSwitchFactory>,
+  _SourceDataSelector: ReturnType<typeof SourceDataSelectorFactory>,
+  FieldSelector: ReturnType<typeof FieldSelectorFactory>
 ): React.FC<Props> {
   const VectorTileLayerConfigurator = ({
     layer,
@@ -164,21 +167,11 @@ function VectorTileLayerConfiguratorFactory(
           description="Point radius in pixels or meters"
           collapsible
         >
-          {layer.config.visConfig.radiusByZoom?.enabled && visConfiguratorProps.onChange ? (
-            <VisConfigByZoomInput
-              config={layer.config.visConfig.radiusByZoom}
-              onChange={visConfiguratorProps.onChange}
-              label="Radius"
-              property="radiusByZoom"
-              unit="px"
-            />
-          ) : (
-            <VisConfigSlider
-              {...layer.visConfigSettings.radius}
-              {...visConfiguratorProps}
-              label={false}
-            />
-          )}
+          <VisConfigSlider
+            {...layer.visConfigSettings.radius}
+            {...visConfiguratorProps}
+            label={false}
+          />
 
           <ConfigGroupCollapsibleContent>
             {layerChannelConfigProps.fields ? (
@@ -189,6 +182,19 @@ function VectorTileLayerConfiguratorFactory(
             ) : null}
             <VisConfigSwitch {...layer.visConfigSettings.radiusUnits} {...visConfiguratorProps} />
           </ConfigGroupCollapsibleContent>
+        </LayerConfigGroup>
+
+        {/* Unique ID Field */}
+        <LayerConfigGroup {...visConfiguratorProps} label="layer.uniqueIdField">
+          <FieldSelector
+            fields={layerChannelConfigProps.fields || []}
+            value={layer.config.uniqueIdField || null}
+            onSelect={(val: any) =>
+              layerConfiguratorProps.onChange?.({uniqueIdField: val?.name || null})
+            }
+            placeholder={'placeholder.selectField'}
+            erasable
+          />
         </LayerConfigGroup>
       </StyledLayerConfigurator>
     );

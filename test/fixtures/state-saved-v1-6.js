@@ -656,7 +656,8 @@ export const savedStateWIthNonValidFilters = {
                 stroked: true,
                 filled: true,
                 enable3d: true,
-                wireframe: false
+                wireframe: false,
+                allowHover: true
               }
             },
             visualChannels: {
@@ -705,7 +706,8 @@ export const savedStateWIthNonValidFilters = {
                 stroked: true,
                 filled: false,
                 enable3d: false,
-                wireframe: false
+                wireframe: false,
+                allowHover: true
               }
             },
             visualChannels: {

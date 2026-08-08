@@ -109,9 +109,10 @@ export function getStacApiUrlParams(options: {
 
 export function bandIndexesToURLParams(
   urlParams: URLSearchParams,
-  bandIndexes: BandIndexes
+  bandIndexes: BandIndexes,
+  useNewFormat: boolean
 ): URLSearchParams {
-  if (getApplicationConfig().rasterServerUseLatestTitiler) {
+  if (useNewFormat) {
     // for newer titiler versions
     bandIndexes.forEach(bandIndex => {
       urlParams.append('bidx', String(bandIndex + 1));
@@ -143,7 +144,13 @@ export function getSingleCOGUrlParams(options: {
     return_mask: String(mask),
     url
   });
-  return bandIndexesToURLParams(urlParams, loadBandIndexes);
+  return bandIndexesToURLParams(
+    urlParams,
+    loadBandIndexes,
+    Boolean(
+      stac.rasterServerUseLatestTitiler ?? getApplicationConfig().rasterServerUseLatestTitiler
+    )
+  );
 }
 
 /**

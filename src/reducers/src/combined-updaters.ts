@@ -4,10 +4,9 @@
 import {
   toggleModalUpdater,
   loadFilesSuccessUpdater as uiStateLoadFilesSuccessUpdater,
-  setMapControlSettingsUpdater as uiStateSetMapControlSettingsUpdater,
-  toggleMapControlUpdater as uiStateToggleMapControlUpdater,
   toggleMapControlUpdater,
-  toggleSplitMapUpdater as uiStateToggleSplitMapUpdater
+  toggleSplitMapUpdater as uiStateToggleSplitMapUpdater,
+  receiveMapConfigUpdater as uiStateReceiveMapConfigUpdater
 } from './ui-state-updaters';
 import {
   updateVisDataUpdater as visStateUpdateVisDataUpdater,
@@ -18,7 +17,9 @@ import {
 } from './vis-state-updaters';
 import {
   receiveMapConfigUpdater as stateMapConfigUpdater,
-  toggleSplitMapUpdater as mapStateToggleSplitMapUpdater
+  toggleSplitMapUpdater as mapStateToggleSplitMapUpdater,
+  setMapSplitModeUpdater as mapStateSetMapSplitModeUpdater,
+  setMapViewModeUpdater
 } from './map-state-updaters';
 import {
   mapStyleChangeUpdater,
@@ -34,13 +35,15 @@ import {
   MapStyleChangeUpdaterAction,
   LayerTypeChangeUpdaterAction,
   ToggleSplitMapUpdaterAction,
-  ReplaceDataInMapPayload
+  ReplaceDataInMapPayload,
+  MapStateActions
 } from '@kepler.gl/actions';
 import {VisState} from '@kepler.gl/schemas';
 import {Layer} from '@kepler.gl/layers';
-import {isPlainObject} from '@kepler.gl/utils';
+import {isPlainObject, computeSplitMapLayers} from '@kepler.gl/utils';
 import {findMapBounds} from './data-utils';
-import {BASE_MAP_COLOR_MODES, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
+import {BASE_MAP_COLOR_MODES, OVERLAY_BLENDINGS, NO_MAP_ID, MapSplitMode} from '@kepler.gl/constants';
+import {getBasemapColorsForStyle, DEFAULT_BASEMAP_COLOR} from '@kepler.gl/deckgl-layers';
 
 export type KeplerGlState = {
   visState: VisState;
@@ -207,27 +210,11 @@ export const addDataToMapUpdater = (
       )
     ),
     pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
+    pick_('uiState')(
+      apply_(uiStateReceiveMapConfigUpdater, payload_({config: parsedConfig, options}))
+    ),
     pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
 
-    if_(
-      Boolean(parsedConfig?.uiState?.mapControls?.mapLegend?.active),
-      pick_('uiState')(
-        apply_(uiStateToggleMapControlUpdater, payload_({panelId: 'mapLegend', index: 0}))
-      )
-    ),
-
-    if_(
-      Boolean(parsedConfig?.uiState?.mapControls?.mapLegend?.settings),
-      pick_('uiState')(
-        apply_(
-          uiStateSetMapControlSettingsUpdater,
-          payload_({
-            panelId: 'mapLegend',
-            settings: parsedConfig?.uiState?.mapControls?.mapLegend?.settings ?? {}
-          })
-        )
-      )
-    ),
     pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
     pick_('uiState')(
       merge_(
@@ -317,7 +304,7 @@ export const combinedMapStyleChangeUpdater = (
   const getColorMode = key => mapStyle.mapStyles[key]?.colorMode;
   const prevColorMode = getColorMode(mapStyle.styleType);
   const nextColorMode = getColorMode(payload.styleType);
-  let {visState} = state;
+  let {visState, mapState} = state;
   if (nextColorMode !== prevColorMode) {
     switch (nextColorMode) {
       case BASE_MAP_COLOR_MODES.DARK:
@@ -336,10 +323,102 @@ export const combinedMapStyleChangeUpdater = (
       // do nothing
     }
   }
+
+  // Update globe config colors when style changes and globe is enabled
+  if (mapState.globe?.enabled) {
+    // Switching from "No Basemap" to a basemap - restore basemap sub-toggles
+    if (payload.styleType !== NO_MAP_ID && mapStyle.styleType === NO_MAP_ID) {
+      mapState = {
+        ...mapState,
+        globe: {
+          ...mapState.globe,
+          config: {
+            ...mapState.globe.config,
+            basemap: true,
+            labels: true,
+            adminLines: true,
+            water: true
+          }
+        }
+      };
+    }
+    mapState = syncGlobeConfigColorsToStyle(mapState, mapStyle, payload.styleType);
+  }
+
   return {
     ...state,
     visState,
+    mapState,
     mapStyle: mapStyleChangeUpdater(mapStyle, {payload: {...payload}})
+  };
+};
+
+/**
+ * Derive globe basemap colors (surface / water / admin lines) from a map style and
+ * return an updated mapState with those colors written into `globe.config`. Used both
+ * when the base map style changes and when entering globe mode, so the globe always
+ * reflects the currently selected basemap instead of the static DEFAULT_GLOBE_CONFIG.
+ */
+export function syncGlobeConfigColorsToStyle(
+  mapState: MapState,
+  mapStyle: MapStyle,
+  styleType: string
+): MapState {
+  if (!mapState.globe?.enabled) {
+    return mapState;
+  }
+
+  const nextStyleObj = mapStyle.mapStyles[styleType];
+  const nextGlobeConfig = {...mapState.globe.config};
+
+  if (styleType === NO_MAP_ID) {
+    nextGlobeConfig.basemap = false;
+    nextGlobeConfig.labels = false;
+    nextGlobeConfig.adminLines = false;
+    nextGlobeConfig.water = false;
+    nextGlobeConfig.surfaceColor = DEFAULT_BASEMAP_COLOR.backgroundFillColor;
+    nextGlobeConfig.waterColor = DEFAULT_BASEMAP_COLOR.basemapWaterFillColor;
+    nextGlobeConfig.adminLinesColor = DEFAULT_BASEMAP_COLOR.basemapAdminLineColor;
+  } else {
+    const basemapColors = nextStyleObj
+      ? getBasemapColorsForStyle(styleType, {
+          style: nextStyleObj.style,
+          layerGroups: nextStyleObj.layerGroups
+        })
+      : // Style object not yet loaded - use known presets by style type
+        getBasemapColorsForStyle(styleType);
+    nextGlobeConfig.surfaceColor = basemapColors.backgroundFillColor;
+    nextGlobeConfig.waterColor = basemapColors.basemapWaterFillColor;
+    nextGlobeConfig.adminLinesColor = basemapColors.basemapAdminLineColor;
+  }
+
+  return {
+    ...mapState,
+    globe: {
+      ...mapState.globe,
+      config: nextGlobeConfig
+    }
+  };
+}
+
+/**
+ * Updater that switches the map view mode (2D / 3D / Globe). Runs the base map-state
+ * updater and, when entering globe mode, syncs the globe basemap colors to the
+ * currently selected map style so the globe doesn't show stale default colors.
+ */
+export const combinedSetMapViewModeUpdater = (
+  state: KeplerGlState,
+  action: MapStateActions.SetMapViewModeUpdaterAction
+): KeplerGlState => {
+  let mapState = setMapViewModeUpdater(state.mapState, action);
+
+  if (mapState.globe?.enabled) {
+    mapState = syncGlobeConfigColorsToStyle(mapState, state.mapStyle, state.mapStyle.styleType);
+  }
+
+  return {
+    ...state,
+    mapState
   };
 };
 
@@ -404,6 +483,64 @@ export const toggleSplitMapUpdater = (
   }
 
   return newState;
+};
+
+/**
+ * Set map split mode updater - coordinates state changes across visState, mapState, and uiState
+ */
+export const setMapSplitModeUpdater = (
+  state: KeplerGlState,
+  action: MapStateActions.SetMapSplitModeUpdaterAction
+): KeplerGlState => {
+  const {mapSplitMode} = action.payload;
+  const prevMode = state.mapState.mapSplitMode;
+
+  if (mapSplitMode === prevMode) {
+    return state;
+  }
+
+  const newMapState = mapStateSetMapSplitModeUpdater(state.mapState, action);
+
+  let newVisState = {...state.visState};
+
+  switch (mapSplitMode) {
+    case MapSplitMode.SINGLE_MAP:
+      newVisState = {
+        ...newVisState,
+        splitMaps: []
+      };
+      break;
+    case MapSplitMode.DUAL_MAP:
+    case MapSplitMode.SWIPE_COMPARE:
+      if (prevMode === MapSplitMode.SINGLE_MAP) {
+        newVisState = {
+          ...newVisState,
+          splitMaps: computeSplitMapLayers(newVisState.layers, {
+            duplicate: mapSplitMode === MapSplitMode.SWIPE_COMPARE
+          })
+        };
+      }
+      break;
+    default:
+      break;
+  }
+
+  let newUiState = uiStateToggleSplitMapUpdater(state.uiState);
+
+  const isSplit = newVisState.splitMaps.length !== 0;
+  const isLegendActive = newUiState.mapControls?.mapLegend?.active;
+  if (isSplit && !isLegendActive) {
+    newUiState = toggleMapControlUpdater(newUiState, {
+      payload: {panelId: 'mapLegend', index: 0}
+    });
+  }
+
+  return {
+    ...state,
+    mapState: newMapState,
+    visState: newVisState,
+    uiState: newUiState
+  };
 };
 
 const defaultReplaceDataToMapOptions = {

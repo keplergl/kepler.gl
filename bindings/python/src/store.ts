@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
+import {legacy_createStore as createReduxStore, combineReducers, applyMiddleware, compose, type StoreEnhancer} from 'redux';
+import {keplerGlReducer, enhanceReduxMiddleware} from '@kepler.gl/reducers';
+
+export const KEPLER_ID = 'jupyter_kepler';
+
+const customizedKeplerGlReducer = keplerGlReducer.initialState({
+  uiState: {
+    currentModal: null,
+    activeSidePanel: null
+  }
+});
+
+const reducers = combineReducers({
+  keplerGl: customizedKeplerGlReducer
+});
+
+export function createStore() {
+  const middlewares = enhanceReduxMiddleware([]);
+  const enhancers = [applyMiddleware(...middlewares)];
+
+  return createReduxStore(reducers, {}, compose(...enhancers) as StoreEnhancer);
+}

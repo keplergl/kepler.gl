@@ -2,10 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 // libraries
-import React, {Component, createRef, useMemo} from 'react';
+import React, {Component, createRef} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {Map, MapRef} from 'react-map-gl';
-import {PickInfo} from '@deck.gl/core/lib/deck';
+import {Map as MapboxLegacyMap, MapRef} from 'react-map-gl/mapbox-legacy';
+import {Map as MaplibreMap} from '@vis.gl/react-maplibre';
+import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import {useDroppable} from '@dnd-kit/core';
@@ -16,24 +17,30 @@ import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actio
 // components
 import MapPopoverFactory from './map/map-popover';
 import MapControlFactory from './map/map-control';
+import MapScaleFactory from './map/map-scale';
+import {StyledMapContainer} from './common/styled-components';
 import {
-  StyledMapContainer,
-  StyledAttribution,
-  EndHorizontalFlexbox
-} from './common/styled-components';
+  Attribution,
+  AttributionLogos,
+  renderBasemapAttribution,
+  dedupeBasemapAttributions
+} from './map/attribution';
 
 import EditorFactory from './editor/editor';
+import {AnnotationOverlay} from './annotations';
 
 // utils
 import {
   generateMapboxLayers,
   updateMapboxLayers,
+  Layer,
   LayerBaseConfig,
   VisualChannelDomain,
   EditorLayerUtils,
   AggregatedBin
 } from '@kepler.gl/layers';
 import {
+  AttributionWithStyle,
   DatasetAttribution,
   MapState,
   MapControls,
@@ -43,15 +50,13 @@ import {
 } from '@kepler.gl/types';
 import {
   errorNotification,
-  setLayerBlending,
   isStyleUsingMapboxTiles,
   isStyleUsingOpenStreetMapTiles,
+  getBaseMapAttributions,
   getBaseMapLibrary,
-  BaseMapLibraryConfig,
   transformRequest,
   observeDimensions,
   unobserveDimensions,
-  hasMobileWidth,
   getMapLayersFromSplitMaps,
   onViewPortChange,
   getViewportFromMapState,
@@ -59,9 +64,10 @@ import {
   rgbToHex,
   computeDeckEffects,
   getApplicationConfig,
-  GetMapRef
+  GetMapRef,
+  getLayerBlendingParameters,
+  patchDeckRendererForPostProcessing
 } from '@kepler.gl/utils';
-import {breakPointValues} from '@kepler.gl/styles';
 
 // default-settings
 import {
@@ -70,8 +76,22 @@ import {
   THROTTLE_NOTIFICATION_TIME,
   DEFAULT_PICKING_RADIUS,
   NO_MAP_ID,
-  EMPTY_MAPBOX_STYLE
+  EMPTY_MAPBOX_STYLE,
+  MAPBOX_MAX_PITCH,
+  MAP_LIB_OPTIONS,
+  GLOBE_MIN_ZOOM,
+  GLOBE_MAX_ZOOM
 } from '@kepler.gl/constants';
+
+import {
+  getGlobeBaseLayers,
+  getGlobeTopLayers,
+  getGlobeClearColor,
+  getGlobeBasemapAttributions,
+  resolveGlobeBasemapProvider,
+  getStarsBackgroundImage,
+  KeplerGlobeView
+} from '@kepler.gl/deckgl-layers';
 
 import {DROPPABLE_MAP_CONTAINER_TYPE} from './common/dnd-layer-items';
 // Contexts
@@ -79,7 +99,6 @@ import {MapViewStateContext} from './map-view-state-context';
 
 import ErrorBoundary from './common/error-boundary';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {MapView} from '@deck.gl/core';
 import {
   MapStyle,
   areAnyDeckLayersLoading,
@@ -139,39 +158,34 @@ const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
-const nop = () => {
-  return;
-};
 
-type MapLibLogoProps = {
-  baseMapLibraryConfig: BaseMapLibraryConfig;
-};
-
-const MapLibLogo = ({baseMapLibraryConfig}: MapLibLogoProps) => (
-  <div className="attrition-logo">
-    Basemap by:
-    <a
-      style={{marginLeft: '5px'}}
-      className={`${baseMapLibraryConfig.mapLibCssClass}-ctrl-logo`}
-      target="_blank"
-      rel="noopener noreferrer"
-      href={baseMapLibraryConfig.mapLibUrl}
-      aria-label={`${baseMapLibraryConfig.mapLibName} logo`}
-    />
-  </div>
-);
+// Canonical OpenStreetMap attribution, injected into the collected list when a
+// style is detected to use OSM tiles but the resolved sources haven't yielded
+// an attribution string of their own (e.g. raw style declares OSM but the
+// TileJSON hasn't exposed it). Rendered through the same safe link parser as
+// every other collected attribution.
+const OSM_ATTRIBUTION_HTML =
+  '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 interface StyledDroppableProps {
-  isOver: boolean;
+  $isOver: boolean;
 }
 
 const StyledDroppable = styled.div<StyledDroppableProps>`
-  background-color: ${props => (props.isOver ? props.theme.dndOverBackgroundColor : 'none')};
+  background-color: ${props => (props.$isOver ? props.theme.dndOverBackgroundColor : 'none')};
   width: 100%;
   height: 100%;
   position: absolute;
   pointer-events: none;
   z-index: 1;
+`;
+
+const StyledMapScaleContainer = styled.div<{$left: number; $bottomOffset: number}>`
+  position: absolute;
+  bottom: ${props => props.theme.sidePanel.margin.left + props.$bottomOffset}px;
+  left: ${props => props.$left}px;
+  z-index: 1;
+  pointer-events: auto;
 `;
 
 export const isSplitSelector = props =>
@@ -184,125 +198,14 @@ export const Droppable = ({containerId}) => {
     disabled: !containerId
   });
 
-  return <StyledDroppable ref={setNodeRef} isOver={isOver} />;
+  return <StyledDroppable ref={setNodeRef} $isOver={isOver} />;
 };
 
-interface StyledDatasetAttributionsContainerProps {
-  isPalm: boolean;
-}
+// Attribution UI (parser + components) lives in ./map/attribution and is
+// re-exported here to preserve the public import path (@kepler.gl/components).
+export {Attribution, AttributionLogos, renderBasemapAttribution, dedupeBasemapAttributions};
 
-const StyledDatasetAttributionsContainer = styled.div<StyledDatasetAttributionsContainerProps>`
-  max-width: ${props => (props.isPalm ? '200px' : '300px')};
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-  color: ${props => props.theme.labelColor};
-  margin-right: 2px;
-  margin-bottom: 1px;
-  line-height: ${props => (props.isPalm ? '1em' : '1.4em')};
-
-  &:hover {
-    white-space: inherit;
-  }
-`;
-
-const DatasetAttributions = ({
-  datasetAttributions,
-  isPalm
-}: {
-  datasetAttributions: DatasetAttribution[];
-  isPalm: boolean;
-}) => (
-  <>
-    {datasetAttributions?.length ? (
-      <StyledDatasetAttributionsContainer isPalm={isPalm}>
-        {datasetAttributions.map((ds, idx) => (
-          <a
-            {...(ds.url ? {href: ds.url} : null)}
-            target="_blank"
-            rel="noopener noreferrer"
-            key={`${ds.title}_${idx}`}
-          >
-            {ds.title}
-            {idx !== datasetAttributions.length - 1 ? ', ' : null}
-          </a>
-        ))}
-      </StyledDatasetAttributionsContainer>
-    ) : null}
-  </>
-);
-
-type AttributionProps = {
-  showBaseMapLibLogo: boolean;
-  showOsmBasemapAttribution: boolean;
-  datasetAttributions: DatasetAttribution[];
-  baseMapLibraryConfig: BaseMapLibraryConfig;
-};
-
-export const Attribution: React.FC<AttributionProps> = ({
-  showBaseMapLibLogo = true,
-  showOsmBasemapAttribution = false,
-  datasetAttributions,
-  baseMapLibraryConfig
-}: AttributionProps) => {
-  const isPalm = hasMobileWidth(breakPointValues);
-
-  const memoizedComponents = useMemo(() => {
-    if (!showBaseMapLibLogo) {
-      return (
-        <StyledAttribution
-          mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
-          mapLibAttributionCssClass={baseMapLibraryConfig.mapLibAttributionCssClass}
-        >
-          <EndHorizontalFlexbox>
-            <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
-            {showOsmBasemapAttribution ? (
-              <div className="attrition-link">
-                {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
-                <a
-                  href="http://www.openstreetmap.org/copyright"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  © OpenStreetMap
-                </a>
-              </div>
-            ) : null}
-          </EndHorizontalFlexbox>
-        </StyledAttribution>
-      );
-    }
-
-    return (
-      <StyledAttribution
-        mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
-        mapLibAttributionCssClass={baseMapLibraryConfig.mapLibAttributionCssClass}
-      >
-        <EndHorizontalFlexbox>
-          <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
-          <div className="attrition-link">
-            {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
-            {isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
-            <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
-              © kepler.gl |{' '}
-            </a>
-            {!isPalm ? <MapLibLogo baseMapLibraryConfig={baseMapLibraryConfig} /> : null}
-          </div>
-        </EndHorizontalFlexbox>
-      </StyledAttribution>
-    );
-  }, [
-    showBaseMapLibLogo,
-    showOsmBasemapAttribution,
-    datasetAttributions,
-    isPalm,
-    baseMapLibraryConfig
-  ]);
-
-  return memoizedComponents;
-};
-
-MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
+MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory, MapScaleFactory];
 
 type MapboxStyle = string | object | undefined;
 type PropSelector<R> = Selector<MapContainerProps, R>;
@@ -337,7 +240,7 @@ export interface MapContainerProps {
   locale?: any;
   theme?: any;
   editor?: any;
-  MapComponent?: typeof Map;
+  MapComponent?: typeof MapboxLegacyMap | typeof MaplibreMap;
   deckGlProps?: any;
   onDeckInitialized?: (a: any, b: any) => void;
   onViewStateChange?: (viewport: Viewport) => void;
@@ -346,7 +249,11 @@ export interface MapContainerProps {
   bottomMapContainerProps: any;
   transformRequest?: (url: string, resourceType?: string) => {url: string};
 
+  /** Pass `false` to disable the remote RTL text plugin, or a URL string to self-host it. */
+  RTLTextPlugin?: string | false;
+
   datasetAttributions?: DatasetAttribution[];
+  attributionLogos?: AttributionWithStyle[];
 
   generateMapboxLayers?: typeof generateMapboxLayers;
   generateDeckGLLayers?: typeof computeDeckLayers;
@@ -367,7 +274,8 @@ export interface MapContainerProps {
 export default function MapContainerFactory(
   MapPopover: ReturnType<typeof MapPopoverFactory>,
   MapControl: ReturnType<typeof MapControlFactory>,
-  Editor: ReturnType<typeof EditorFactory>
+  Editor: ReturnType<typeof EditorFactory>,
+  MapScale: ReturnType<typeof MapScaleFactory>
 ): React.ComponentType<MapContainerProps> {
   class MapContainer extends Component<MapContainerProps> {
     displayName = 'MapContainer';
@@ -379,7 +287,6 @@ export default function MapContainerFactory(
     declare context: React.ContextType<typeof MapViewStateContext>;
 
     static defaultProps = {
-      MapComponent: Map,
       deckGlProps: {},
       index: 0,
       primary: true
@@ -387,11 +294,19 @@ export default function MapContainerFactory(
 
     constructor(props) {
       super(props);
+      patchDeckRendererForPostProcessing();
     }
 
     state = {
-      // Determines whether attribution should be visible based the result of loading the map style
-      showBaseMapAttribution: true
+      // true for built-in kepler.gl styles (dark-matter, positron, …) and when the
+      // basemap uses Mapbox-hosted tiles (mapbox:// sources).
+      // For user-added custom styles (OpenFreeMap, CARTO self-hosted, …) MapLibre is
+      // merely the rendering engine, not the tile provider, so the logo is hidden and
+      // the basemap's own TileJSON attribution is shown instead.
+      showBaseMapLibLogo: false,
+      // attribution strings collected from the resolved map sources (e.g. CARTO,
+      // OpenFreeMap).  Populated after TileJSON resolves.
+      basemapAttributions: [] as string[]
     };
 
     componentDidMount() {
@@ -402,10 +317,10 @@ export default function MapContainerFactory(
     }
 
     componentWillUnmount() {
-      // unbind mapboxgl event listener
       if (this._map) {
-        this._map?.off(MAPBOXGL_STYLE_UPDATE, nop);
-        this._map?.off(MAPBOXGL_RENDER, nop);
+        this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
+        this._map.off(MAPBOXGL_RENDER, this._onMapRender);
+        this._removeBasemapAttributionListeners();
       }
       if (!this._ref.current) {
         return;
@@ -413,10 +328,32 @@ export default function MapContainerFactory(
       unobserveDimensions(this._ref.current);
     }
 
+    componentDidUpdate(prevProps) {
+      if (prevProps.mapStyle.styleType !== this.props.mapStyle.styleType) {
+        this._removeBasemapAttributionListeners();
+        if (this.props.mapStyle.styleType === NO_MAP_ID) {
+          this.setState({
+            showBaseMapLibLogo: false,
+            basemapAttributions: []
+          });
+        } else {
+          this._updateAttribution();
+        }
+      }
+    }
+
     _deck: any = null;
     _map: GetMapRef | null = null;
     _ref = createRef<HTMLDivElement>();
     _deckGLErrorsElapsed: {[id: string]: number} = {};
+    _basemapSourceDataListener: ((e: any) => void) | null = null;
+    _basemapIdleListener: (() => void) | null = null;
+
+    _onMapRender = () => {
+      if (typeof this.props.onMapRender === 'function') {
+        this.props.onMapRender(this._map);
+      }
+    };
 
     previousLayers = {
       // [layers.id]: mapboxLayerConfig
@@ -497,12 +434,37 @@ export default function MapContainerFactory(
     // used by <StyledMap> inline style prop
     mapStyleTypeSelector = props => props.mapStyle.styleType;
     mapStyleBackgroundColorSelector = props => props.mapStyle.backgroundColor;
+    globeModeSelector = props => Boolean(props.mapState?.globe?.enabled);
+    globeBackgroundColorSelector = props => props.mapState?.globe?.config?.backgroundColor;
+    globeStarsSelector = props => Boolean(props.mapState?.globe?.config?.stars);
     styleSelector = createSelector(
       this.mapStyleTypeSelector,
       this.mapStyleBackgroundColorSelector,
-      (styleType, backgroundColor) => ({
+      this.globeModeSelector,
+      this.globeBackgroundColorSelector,
+      this.globeStarsSelector,
+      (styleType, backgroundColor, isGlobeMode, globeBackgroundColor, globeStars) => ({
         ...MAP_STYLE.container,
-        ...(styleType === NO_MAP_ID ? {backgroundColor: rgbToHex(backgroundColor)} : {})
+        ...(styleType === NO_MAP_ID ? {backgroundColor: rgbToHex(backgroundColor)} : {}),
+        // In globe mode the deck.gl canvas is transparent (the globe View uses
+        // `clearColor: false` to avoid corrupting the picking buffer), so the
+        // background around the globe is painted here on the container instead.
+        ...(isGlobeMode
+          ? {
+              // Fall back to the default globe background when none is configured.
+              backgroundColor: rgbToHex(
+                (globeBackgroundColor as [number, number, number]) ||
+                  (getGlobeClearColor().slice(0, 3) as [number, number, number])
+              ),
+              // Optionally overlay a tileable star-field pattern on the background.
+              ...(globeStars
+                ? {
+                    backgroundImage: `url('${getStarsBackgroundImage()}')`,
+                    backgroundRepeat: 'repeat'
+                  }
+                : {})
+            }
+          : {})
       })
     );
 
@@ -511,18 +473,36 @@ export default function MapContainerFactory(
       this.props.visStateActions.onLayerClick(null);
     };
 
-    _onLayerHover = (_idx: number, info: PickInfo<any> | null) => {
+    _onLayerHover = (_idx: number, info: PickingInfo<any> | null) => {
       this.props.visStateActions.onLayerHover(info, this.props.index);
     };
 
     _onLayerSetDomain = (
       idx: number,
-      value: {domain: VisualChannelDomain; aggregatedBins: AggregatedBin[]}
+      value: number[] | {domain: VisualChannelDomain; aggregatedBins: Record<number, AggregatedBin>}
     ) => {
-      this.props.visStateActions.layerConfigChange(this.props.visState.layers[idx], {
-        colorDomain: value.domain,
-        aggregatedBins: value.aggregatedBins
-      } as Partial<LayerBaseConfig>);
+      // deck.gl 9 native aggregation layers (Grid, Hexagon) pass
+      // {domain, aggregatedBins} via our ScaleEnhanced* overrides,
+      // while ClusterLayer's CPUAggregator also passes {domain, aggregatedBins}.
+      // Plain [min, max] is a fallback if the override is bypassed.
+      const config = Array.isArray(value)
+        ? {colorDomain: value as VisualChannelDomain}
+        : {colorDomain: value.domain, aggregatedBins: value.aggregatedBins};
+
+      const layer = this.props.visState.layers[idx];
+      if (!layer) return;
+
+      this.props.visStateActions.layerConfigChange(layer, config as Partial<LayerBaseConfig>);
+    };
+
+    _onRedrawNeeded = (_idx: number) => {
+      // updateMapUpdater always returns a new state object reference, which triggers re-render
+      const {mapStateActions, index} = this.props;
+      mapStateActions.updateMap({}, index);
+    };
+
+    _onFitBounds = (_idx: number, bounds: [number, number, number, number]) => {
+      this.props.mapStateActions.fitBounds(bounds);
     };
 
     _onLayerFilteredItemsChange = (idx, event) => {
@@ -553,17 +533,131 @@ export default function MapContainerFactory(
       this.previousLayers = {};
       this._updateMapboxLayers();
 
-      if (update && update.style) {
-        // No attributions are needed if the style doesn't reference Mapbox sources
-        this.setState({
-          showBaseMapAttribution:
-            isStyleUsingMapboxTiles(update.style) || !isStyleUsingOpenStreetMapTiles(update.style)
-        });
-      }
+      this._updateAttribution(update);
 
       if (typeof this.props.onMapStyleLoaded === 'function') {
         this.props.onMapStyleLoaded(this._map);
       }
+    };
+
+    _updateAttribution = (update?: any) => {
+      this._removeBasemapAttributionListeners();
+
+      let styleObj = update?.style || null;
+      if (!styleObj && this._map) {
+        try {
+          const rawStyle = this._map.isStyleLoaded?.() ? this._map.getStyle?.() : null;
+          if (rawStyle) {
+            styleObj = {stylesheet: rawStyle};
+          }
+        } catch {
+          // map style not ready yet
+        }
+      }
+      const usesMapbox = styleObj ? isStyleUsingMapboxTiles(styleObj) : false;
+      const usesOsm = styleObj ? isStyleUsingOpenStreetMapTiles(styleObj) : false;
+      const basemapAttributions = getBaseMapAttributions(this._map);
+
+      // if OSM tiles are detected in the raw style but no source-level attribution
+      // string was collected yet, fold in the canonical OSM attribution so the
+      // render path stays uniform (no separate hardcoded fallback link)
+      if (usesOsm && !basemapAttributions.length) {
+        basemapAttributions.push(OSM_ATTRIBUTION_HTML);
+      }
+
+      // Determine whether to show the "Basemap by: MapLibre/Mapbox" logo:
+      //  - Always show for built-in kepler.gl styles (dark-matter, positron, …):
+      //    they don't carry their own "provider" branding so the rendering-engine
+      //    logo acts as the basemap credit.
+      //  - Always show when Mapbox tiles are in use (mapbox:// sources): Mapbox
+      //    attribution is required.
+      //  - Hide for custom user-added styles (custom === 'LOCAL' | 'MANAGED'):
+      //    those styles supply their own TileJSON attribution (e.g. OpenFreeMap),
+      //    so showing "Basemap by: MapLibre" would be misleading.
+      const styleType = this.props.mapStyle?.styleType;
+      const currentStyle = this.props.mapStyle?.mapStyles?.[styleType];
+      const isUserCustomStyle = Boolean(currentStyle?.custom);
+      const showBaseMapLibLogo = usesMapbox || !isUserCustomStyle;
+
+      this.setState({
+        showBaseMapLibLogo,
+        basemapAttributions
+      });
+
+      // For non-Mapbox styles, TileJSON attribution resolves asynchronously
+      // after style.load.  Start a listener so we can update basemapAttributions
+      // as soon as the sources resolve their TileJSON.
+      if (!usesMapbox) {
+        this._collectBasemapAttributions();
+      }
+    };
+
+    _removeBasemapAttributionListeners = () => {
+      if (this._basemapSourceDataListener && this._map) {
+        this._map.off('sourcedata', this._basemapSourceDataListener);
+        this._basemapSourceDataListener = null;
+      }
+      if (this._basemapIdleListener && this._map) {
+        this._map.off('idle', this._basemapIdleListener);
+        this._basemapIdleListener = null;
+      }
+    };
+
+    _collectBasemapAttributions = () => {
+      if (!this._map) return;
+      this._removeBasemapAttributionListeners();
+      let attempts = 0;
+      // Cap retries so a style that never yields attributions doesn't leave a
+      // permanent sourcedata listener attached.
+      const MAX_ATTEMPTS = 50;
+
+      const tryCollect = () => {
+        // TileJSON resolves asynchronously; re-collect attributions once a
+        // source's metadata is available so custom basemap attributions are not lost.
+        const basemapAttributions = getBaseMapAttributions(this._map);
+        if (basemapAttributions.length) {
+          this._removeBasemapAttributionListeners();
+          // Don't change showBaseMapLibLogo here — it is fixed at style.load time
+          // based on whether the style uses Mapbox tiles.  We only update the
+          // provider attributions collected from the resolved TileJSON.
+          this.setState({basemapAttributions});
+          return true;
+        }
+        return false;
+      };
+
+      const onSourceData = (e: any) => {
+        // Collect attributions when:
+        //   (a) a source's TileJSON has just been fetched (sourceDataType === 'metadata') —
+        //       this is the earliest moment the `attribution` property is available on the
+        //       resolved source object, or
+        //   (b) a source is fully loaded (isSourceLoaded === true) — fallback for raster
+        //       sources or styles that set attribution inline rather than via TileJSON.
+        if (!e?.isSourceLoaded && e?.sourceDataType !== 'metadata') return;
+        attempts++;
+        tryCollect();
+        if (attempts >= MAX_ATTEMPTS) {
+          this._removeBasemapAttributionListeners();
+        }
+      };
+
+      // The `idle` event fires when the map has finished loading all pending
+      // resources (tiles, TileJSON, sprites). At that point attributions from
+      // all sources are guaranteed to be resolved, so this is a reliable
+      // one-shot fallback that catches cases where the sourcedata metadata
+      // events are missed or the source never reaches isSourceLoaded.
+      const onIdle = () => {
+        this._removeBasemapAttributionListeners();
+        const basemapAttributions = getBaseMapAttributions(this._map);
+        if (basemapAttributions.length) {
+          this.setState({basemapAttributions});
+        }
+      };
+
+      this._basemapSourceDataListener = onSourceData;
+      this._basemapIdleListener = onIdle;
+      this._map.on('sourcedata', onSourceData);
+      this._map.on('idle', onIdle);
     };
 
     _setMapRef = mapRef => {
@@ -571,8 +665,9 @@ export default function MapContainerFactory(
       if (this._map && mapRef) {
         const map = mapRef.getMap();
         if (map && this._map !== map) {
-          this._map?.off(MAPBOXGL_STYLE_UPDATE, nop);
-          this._map?.off(MAPBOXGL_RENDER, nop);
+          this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
+          this._map.off(MAPBOXGL_RENDER, this._onMapRender);
+          this._removeBasemapAttributionListeners();
           this._map = null;
         }
       }
@@ -585,12 +680,7 @@ export default function MapContainerFactory(
         }
         // bind mapboxgl event listener
         this._map.on(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
-
-        this._map.on(MAPBOXGL_RENDER, () => {
-          if (typeof this.props.onMapRender === 'function') {
-            this.props.onMapRender(this._map);
-          }
-        });
+        this._map.on(MAPBOXGL_RENDER, this._onMapRender);
       }
 
       if (this.props.getMapboxRef) {
@@ -601,9 +691,9 @@ export default function MapContainerFactory(
       }
     };
 
-    _onDeckInitialized(gl) {
+    _onDeckInitialized(device) {
       if (this.props.onDeckInitialized) {
-        this.props.onDeckInitialized(this._deck, gl);
+        this.props.onDeckInitialized(this._deck, device);
       }
     }
 
@@ -617,9 +707,42 @@ export default function MapContainerFactory(
       return !viewIndex && Boolean(this._deck?.viewManager?._viewports?.length);
     }
 
-    _onBeforeRender = ({gl}) => {
-      setLayerBlending(gl, this.props.visState.layerBlending);
+    _onBeforeRender = () => {
+      // no-op
     };
+
+    _annotationViewportCache: {key: string; viewport: any} | null = null;
+
+    _wasInteracting = false;
+
+    _getAnnotationViewport(mapState: any, internalViewState: any) {
+      const longitude = internalViewState?.longitude ?? mapState.longitude;
+      const latitude = internalViewState?.latitude ?? mapState.latitude;
+      const zoom = internalViewState?.zoom ?? mapState.zoom;
+      const pitch = internalViewState?.pitch ?? mapState.pitch ?? 0;
+      const bearing = internalViewState?.bearing ?? mapState.bearing ?? 0;
+      const width = mapState.width || 0;
+      const height = mapState.height || 0;
+      const key = `${longitude},${latitude},${zoom},${pitch},${bearing},${width},${height}`;
+
+      if (this._annotationViewportCache?.key === key) {
+        return this._annotationViewportCache.viewport;
+      }
+
+      const mergedState = {...mapState, ...internalViewState, width, height};
+      const vp = getViewportFromMapState(mergedState) as any;
+      const viewport = {
+        project: (lngLat: [number, number]) => vp.project(lngLat) as [number, number],
+        unproject: (xy: [number, number]) => vp.unproject(xy) as [number, number],
+        longitude,
+        latitude,
+        width,
+        height,
+        zoom
+      };
+      this._annotationViewportCache = {key, viewport};
+      return viewport;
+    }
 
     _onDeckError = (error, layer) => {
       const errorMessage = error?.message || 'unknown-error';
@@ -809,54 +932,25 @@ export default function MapContainerFactory(
       const {setFeatures, onLayerClick, setSelectedFeature} = visStateActions;
 
       const generateDeckGLLayersMethod = generateDeckGLLayers ?? computeDeckLayers;
-      const deckGlLayers = generateDeckGLLayersMethod(
-        {
-          visState,
-          mapState: internalMapState,
-          mapStyle
-        },
-        {
-          mapIndex: index,
-          primaryMap,
-          mapboxApiAccessToken,
-          mapboxApiUrl,
-          layersForDeck,
-          editorInfo: primaryMap
-            ? {
-                editor,
-                editorMenuActive,
-                onSetFeatures: setFeatures,
-                setSelectedFeature,
-                // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
-                featureCollection: this.featureCollectionSelector(this.props),
-                selectedFeatureIndexes: this.selectedFeatureIndexArraySelector(
-                  // @ts-ignore Argument of type 'unknown' is not assignable to parameter of type 'number'.
-                  editorFeatureSelectedIndex
-                ),
-                viewport
-              }
-            : undefined
-        },
-        {
-          onLayerHover: this._onLayerHover,
-          onSetLayerDomain: this._onLayerSetDomain,
-          onFilteredItemsChange: this._onLayerFilteredItemsChange,
-          onWMSFeatureInfo: this._onWMSFeatureInfo
-        },
-        deckGlProps
-      );
 
       const extraDeckParams: {
         getTooltip?: (info: any) => object | null;
         getCursor?: ({isDragging}: {isDragging: boolean}) => string;
       } = {};
       if (primaryMap) {
-        extraDeckParams.getTooltip = info =>
-          EditorLayerUtils.getTooltip(info, {
+        // Omit hover updates when the pointer position is invalid, ie. over UI overlays or
+        // outside the map container. In those cases x/y may be < 0
+        extraDeckParams.getTooltip = info => {
+          const x = Number(info?.x);
+          const y = Number(info?.y);
+          if (Number.isNaN(x) || Number.isNaN(y) || x < 0 || y < 0) return null;
+
+          return EditorLayerUtils.getTooltip(info, {
             editorMenuActive,
             editor,
             theme
           });
+        };
 
         extraDeckParams.getCursor = ({isDragging}: {isDragging: boolean}) => {
           const editorCursor = EditorLayerUtils.getCursor({
@@ -873,19 +967,124 @@ export default function MapContainerFactory(
       }
 
       const effects = this._isOKToRenderEffects(index)
-        ? computeDeckEffects({visState, mapState})
+        ? computeDeckEffects({visState, mapState, isExport: this.props.isExport})
         : [];
+
+      const isGlobeMode = mapState.globe?.enabled;
+
+      // In globe mode with a non-default blend mode, forward pre-computed layer
+      // rendering parameters into mapState so individual layers can merge them into
+      // their own parameters objects. The global DeckGL parameters cannot be used in
+      // globe mode because they are merged into globe system layers (atmosphere,
+      // surface, etc.) and alter their carefully tuned blend/depth state.
+      // 'normal' is omitted — it is the WebGL default and injecting it would
+      // override intentional blend:false settings on layers like trip/scenegraph.
+      const layerBlendingParams =
+        isGlobeMode && visState.layerBlending && visState.layerBlending !== 'normal'
+          ? getLayerBlendingParameters(visState.layerBlending)
+          : undefined;
+      const deckLayersMapState = layerBlendingParams
+        ? {...internalMapState, layerParameters: layerBlendingParams}
+        : internalMapState;
+
+      const deckGlLayers = generateDeckGLLayersMethod(
+        {
+          visState,
+          mapState: deckLayersMapState,
+          mapStyle
+        },
+        {
+          mapIndex: index,
+          primaryMap,
+          mapboxApiAccessToken,
+          mapboxApiUrl,
+          layersForDeck,
+          editorInfo: primaryMap
+            ? {
+                editor,
+                editorMenuActive,
+                onSetFeatures: setFeatures,
+                setSelectedFeature,
+                onApplyPolygonFilterAll: visStateActions.setPolygonFilterAllLayers,
+                // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
+                featureCollection: this.featureCollectionSelector(this.props),
+                selectedFeatureIndexes: this.selectedFeatureIndexArraySelector(
+                  // @ts-ignore Argument of type 'unknown' is not assignable to parameter of type 'number'.
+                  editorFeatureSelectedIndex
+                ),
+                viewport
+              }
+            : undefined
+        },
+        {
+          onLayerHover: this._onLayerHover,
+          onSetLayerDomain: this._onLayerSetDomain,
+          onFilteredItemsChange: this._onLayerFilteredItemsChange,
+          onWMSFeatureInfo: this._onWMSFeatureInfo,
+          onRedrawNeeded: this._onRedrawNeeded,
+          onFitBounds: this._onFitBounds
+        },
+        deckGlProps
+      );
+
+      // Follow the selected basemap style's library so the globe uses the same
+      // provider as the flat 2D map (CARTO tiles for MapLibre styles, Mapbox
+      // tiles for Mapbox styles).
+      const globeBasemapProvider = resolveGlobeBasemapProvider(
+        getBaseMapLibrary(mapStyle?.mapStyles?.[mapStyle?.styleType]),
+        mapboxApiAccessToken || ''
+      );
+
+      // In globe mode, prepend globe base layers and append top layers
+      const globeBaseLayers =
+        isGlobeMode && mapState.globe
+          ? getGlobeBaseLayers({
+              mapboxApiAccessToken: mapboxApiAccessToken || '',
+              globe: mapState.globe,
+              mapStyleType: mapStyle?.styleType,
+              basemapProvider: globeBasemapProvider,
+              // Use the live (internal) latitude so the tile LOD compensation
+              // stays in sync with the deck viewport during a drag; mapState
+              // latitude lags behind while rotating.
+              latitude: internalMapState.latitude,
+              zoom: internalMapState.zoom
+            })
+          : [];
+      const globeTopLayers =
+        isGlobeMode && mapState.globe
+          ? getGlobeTopLayers({globe: mapState.globe, zoom: internalMapState.zoom})
+          : [];
+      const finalDeckGlLayers = isGlobeMode
+        ? [...globeBaseLayers, ...deckGlLayers, ...globeTopLayers]
+        : deckGlLayers;
 
       const views = deckGlProps?.views
         ? deckGlProps?.views()
-        : new MapView({legacyMeterSizes: true});
+        : isGlobeMode
+        ? new KeplerGlobeView({
+            resolution: 5,
+            // The visible background around the globe is painted by the map
+            // container's CSS background (see styleSelector), NOT by a per-view
+            // color clear. deck.gl applies a View's `clearColor` in *every* pass,
+            // including the picking pass, and it forces the cleared alpha to 255
+            // (`clearColor[3] || 255`). In the picking buffer the alpha byte encodes
+            // the layer index, so a 255 clear makes deck.gl decode every pixel as a
+            // non-existent layer ("Picked non-existent layer. Is picking buffer
+            // corrupt?") on hover. `clearColor: false` skips the per-view color
+            // clear so the picking buffer keeps its 0 alpha; the canvas stays
+            // transparent and the CSS background shows through.
+            clear: true,
+            clearColor: false
+          })
+        : new MapView({farZMultiplier: 1.2});
 
       let allDeckGlProps = {
         ...deckGlProps,
         pickingRadius: DEFAULT_PICKING_RADIUS,
         views,
-        layers: deckGlLayers,
-        effects
+        layers: finalDeckGlLayers,
+        effects,
+        parameters: isGlobeMode ? {cull: true} : getLayerBlendingParameters(visState.layerBlending)
       };
 
       if (typeof deckRenderCallbacks?.onDeckRender === 'function') {
@@ -921,11 +1120,22 @@ export default function MapContainerFactory(
               isInteractive
                 ? {
                     doubleClickZoom: !isEditorDrawingMode,
-                    dragRotate: this.props.mapState.dragRotate
+                    dragRotate: this.props.mapState.dragRotate,
+                    maxPitch: this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch,
+                    // In globe mode allow zooming out further than deck.gl's default
+                    // of 0 so the whole globe can be pulled back on screen. Set on the
+                    // controller so it stays authoritative regardless of the viewState
+                    // round-trip through Redux/local context. Cap the max zoom too so
+                    // the basemap tiles don't break down at high globe zoom.
+                    ...(isGlobeMode ? {minZoom: GLOBE_MIN_ZOOM, maxZoom: GLOBE_MAX_ZOOM} : {})
                   }
                 : false
             }
-            initialViewState={internalViewState}
+            viewState={
+              isGlobeMode
+                ? {...internalViewState, minZoom: GLOBE_MIN_ZOOM, maxZoom: GLOBE_MAX_ZOOM}
+                : internalViewState
+            }
             onBeforeRender={this._onBeforeRender}
             onViewStateChange={isInteractive ? this._onViewportChange : undefined}
             {...extraDeckParams}
@@ -946,6 +1156,20 @@ export default function MapContainerFactory(
             onClick={(data, event) => {
               // @ts-ignore
               normalizeEvent(event.srcEvent, viewport);
+
+              // Handle bitmap layer alignment mode: if a bitmap layer is waiting
+              // for a map click, route the click coordinate to it
+              if (data.coordinate) {
+                const aligningLayer = visState.layers.find(
+                  (l: any) => l.type === 'bitmap' && l.alignWaitingForMap && l.config.isVisible
+                );
+                if (aligningLayer) {
+                  (aligningLayer as any).onAlignMapClick(data.coordinate as [number, number]);
+                  this._onRedrawNeeded(0);
+                  return;
+                }
+              }
+
               const res = EditorLayerUtils.onClick(data, event, {
                 editorMenuActive,
                 editor,
@@ -965,7 +1189,7 @@ export default function MapContainerFactory(
                 this._deck = comp.deck;
               }
             }}
-            onWebGLInitialized={gl => this._onDeckInitialized(gl)}
+            onDeviceInitialized={device => this._onDeckInitialized(device)}
             onAfterRender={() => {
               if (typeof deckRenderCallbacks?.onDeckAfterRender === 'function') {
                 deckRenderCallbacks.onDeckAfterRender(allDeckGlProps);
@@ -1012,14 +1236,54 @@ export default function MapContainerFactory(
     }, DEBOUNCE_VIEWPORT_PROPAGATE);
 
     _onViewportChange = viewport => {
-      const {viewState} = viewport;
+      const {viewState, interactionState} = viewport;
       if (this.props.isExport) {
         // Image export map shouldn't be interactive (otherwise this callback can
         // lead to inadvertent changes to the state of the main map)
         return;
       }
       const {setInternalViewState} = this.context;
-      setInternalViewState(viewState, this.props.index);
+
+      // Flat map (2D/3D): keep the original, always-synchronous behavior. The
+      // interaction-aware timing below exists purely to fix globe-specific
+      // controlled-viewState, so it must not change the main 2D logic.
+      if (!this.props.mapState?.globe?.enabled) {
+        setInternalViewState(viewState, this.props.index);
+        this._wasInteracting = false;
+        this._onViewportChangePropagateDebounced();
+        return;
+      }
+
+      const isUserInteraction =
+        interactionState &&
+        (interactionState.isZooming ||
+          interactionState.isPanning ||
+          interactionState.isRotating ||
+          interactionState.isDragging ||
+          interactionState.inTransition);
+      // The emit that ends a gesture (panend/rotateEnd, or a fling transition
+      // ending) arrives with all interaction flags false. If we defer it, the
+      // controlled `viewState` fed back to deck lags a frame behind the
+      // controller's committed state and deck re-seeds from the stale value,
+      // making the globe visibly "jump back" to where the drag was released -
+      // most noticeable on a throw/fling release. Treat the first all-false emit
+      // right after an active gesture as part of that gesture and apply it
+      // synchronously too.
+      const isInteractionSettle = !isUserInteraction && this._wasInteracting;
+      this._wasInteracting = Boolean(isUserInteraction);
+      if (isUserInteraction || isInteractionSettle) {
+        // For interactive gestures (pan/zoom/rotate) and their end-of-gesture
+        // settle, update synchronously so the controlled `viewState` stays in
+        // lockstep with the controller and there's no stale re-seed.
+        setInternalViewState(viewState, this.props.index);
+      } else {
+        // deck.gl can fire onViewStateChange synchronously during its own render
+        // (e.g. when switching view types like MapView -> GlobeView). Updating React
+        // state during render throws a warning, so defer non-interactive updates.
+        setTimeout(() => {
+          setInternalViewState(viewState, this.props.index);
+        }, 0);
+      }
       this._onViewportChangePropagateDebounced();
     };
 
@@ -1036,6 +1300,11 @@ export default function MapContainerFactory(
       this.props.visStateActions.setLoadingIndicator({change: 0});
     }, DEBOUNCE_LOADING_STATE_PROPAGATE);
 
+    _handleToggleLayerVisibility = (layer: Layer) => {
+      const {visStateActions} = this.props;
+      visStateActions.layerConfigChange(layer, {isVisible: !layer.config.isVisible});
+    };
+
     _toggleMapControl = panelId => {
       const {index, uiStateActions} = this.props;
 
@@ -1049,7 +1318,6 @@ export default function MapContainerFactory(
         mapState,
         mapStyle,
         mapStateActions,
-        MapComponent = Map,
         mapboxApiAccessToken,
         // mapboxApiUrl,
         mapControls,
@@ -1063,13 +1331,14 @@ export default function MapContainerFactory(
         topMapContainerProps,
         theme,
         datasetAttributions = [],
+        attributionLogos = [],
         containerId = 0,
         isLoadingIndicatorVisible,
         activeSidePanel,
         sidePanelWidth
       } = this.props;
 
-      const {layers, datasets, editor, interactionConfig} = visState;
+      const {layers, datasets, editor, interactionConfig, layerOrder} = visState;
 
       const layersToRender = this.layersToRenderSelector(this.props);
       const layersForDeck = this.layersForDeckSelector(this.props);
@@ -1077,20 +1346,41 @@ export default function MapContainerFactory(
       // Current style can be a custom style, from which we pull the mapbox API acccess token
       const currentStyle = mapStyle.mapStyles?.[mapStyle.styleType];
       const baseMapLibraryName = getBaseMapLibrary(currentStyle);
-      const baseMapLibraryConfig =
-        getApplicationConfig().baseMapLibraryConfig?.[baseMapLibraryName];
+      const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
+
+      // Select the correct Map adapter based on the active base map library.
+      // Using the native adapter for each library avoids Transform API
+      // incompatibilities (e.g. mapbox-legacy's cloneTransform with MapLibre v5).
+      const ResolvedMapComponent =
+        this.props.MapComponent ??
+        (baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX ? MapboxLegacyMap : MaplibreMap);
+
+      const useMapboxAdapter = ResolvedMapComponent === MapboxLegacyMap;
 
       const internalViewState = this.context?.getInternalViewState(index);
-      const mapProps = {
+      const configMaxPitch = mapState.maxPitch ?? getApplicationConfig().maxPitch;
+      const effectiveMaxPitch = useMapboxAdapter
+        ? Math.min(configMaxPitch, MAPBOX_MAX_PITCH)
+        : configMaxPitch;
+      const mapProps: Record<string, any> = {
         ...internalViewState,
-        preserveDrawingBuffer: true,
+        maxPitch: effectiveMaxPitch,
+        preserveDrawingBuffer: this.props.isExport ?? false,
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         // baseApiUrl: mapboxApiUrl,
-        mapLib: baseMapLibraryConfig.getMapLib(),
         transformRequest:
           this.props.transformRequest ||
           transformRequest(currentStyle?.accessToken || mapboxApiAccessToken)
       };
+
+      if (this.props.RTLTextPlugin !== undefined) {
+        mapProps.RTLTextPlugin = this.props.RTLTextPlugin;
+      }
+
+      if (useMapboxAdapter) {
+        const mapboxConfig = getApplicationConfig().baseMapLibraryConfig[MAP_LIB_OPTIONS.MAPBOX];
+        mapProps.mapLib = mapboxConfig.getMapLib();
+      }
 
       const hasGeocoderLayer = Boolean(layers.find(l => l.id === GEOCODER_LAYER_ID));
       const isSplit = Boolean(mapState.isSplit);
@@ -1099,10 +1389,14 @@ export default function MapContainerFactory(
         primaryMap: true,
         isInteractive: true,
         children: (
-          <MapComponent
+          <ResolvedMapComponent
             key={`bottom-${baseMapLibraryName}`}
             {...mapProps}
-            mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
+            mapStyle={
+              mapState.globe?.enabled
+                ? EMPTY_MAPBOX_STYLE
+                : mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE
+            }
             {...bottomMapContainerProps}
             ref={this._setMapRef}
           />
@@ -1113,43 +1407,56 @@ export default function MapContainerFactory(
         // in this case we don't want to render the map
         return null;
       }
+      // In split (dual) view mode, only render the map control buttons on the
+      // right-side map (primary === true, i.e. index === 1). Otherwise the same
+      // buttons are duplicated on both maps and any opened menu appears mirrored.
+      const showMapControl = !isSplit || Boolean(primary);
       return (
         <>
-          <MapControl
-            mapState={mapState}
-            datasets={datasets}
-            availableLocales={LOCALE_CODES_ARRAY}
-            dragRotate={mapState.dragRotate}
-            isSplit={isSplit}
-            primary={Boolean(primary)}
-            isExport={isExport}
-            layers={layers}
-            layersToRender={layersToRender}
-            mapIndex={index || 0}
-            mapControls={mapControls}
-            readOnly={this.props.readOnly}
-            scale={mapState.scale || 1}
-            logoComponent={this.props.logoComponent}
-            top={
-              interactionConfig.geocoder && interactionConfig.geocoder.enabled
-                ? theme.mapControlTop
-                : 0
-            }
-            editor={editor}
-            locale={locale}
-            onTogglePerspective={mapStateActions.togglePerspective}
-            onToggleSplitMap={mapStateActions.toggleSplitMap}
-            onMapToggleLayer={this._handleMapToggleLayer}
-            onToggleMapControl={this._toggleMapControl}
-            onToggleSplitMapViewport={mapStateActions.toggleSplitMapViewport}
-            onSetEditorMode={visStateActions.setEditorMode}
-            onSetLocale={uiStateActions.setLocale}
-            onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
-            onLayerVisConfigChange={visStateActions.layerVisConfigChange}
-            mapHeight={mapState.height}
-            setMapControlSettings={uiStateActions.setMapControlSettings}
-            activeSidePanel={activeSidePanel}
-          />
+          {showMapControl && (
+            <MapControl
+              mapState={mapState}
+              mapStateActions={mapStateActions}
+              datasets={datasets}
+              availableLocales={LOCALE_CODES_ARRAY}
+              dragRotate={mapState.dragRotate}
+              isSplit={isSplit}
+              primary={Boolean(primary)}
+              isExport={isExport}
+              layers={layers}
+              layerOrder={layerOrder}
+              layersToRender={layersToRender}
+              mapIndex={index || 0}
+              mapControls={mapControls}
+              readOnly={this.props.readOnly}
+              scale={mapState.scale || 1}
+              logoComponent={this.props.logoComponent}
+              top={
+                interactionConfig.geocoder && interactionConfig.geocoder.enabled
+                  ? theme.mapControlTop
+                  : 0
+              }
+              editor={editor}
+              locale={locale}
+              onTogglePerspective={mapStateActions.togglePerspective}
+              onSetMapViewMode={mapStateActions.setMapViewMode}
+              mapViewMode={mapState.mapViewMode}
+              onToggleSplitMap={mapStateActions.toggleSplitMap}
+              onMapToggleLayer={this._handleMapToggleLayer}
+              onToggleMapControl={this._toggleMapControl}
+              onToggleSplitMapViewport={mapStateActions.toggleSplitMapViewport}
+              onSetEditorMode={visStateActions.setEditorMode}
+              onSetLocale={uiStateActions.setLocale}
+              onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
+              onLayerVisConfigChange={visStateActions.layerVisConfigChange}
+              onToggleLayerVisibility={this._handleToggleLayerVisibility}
+              mapHeight={mapState.height}
+              setMapControlSettings={uiStateActions.setMapControlSettings}
+              activeSidePanel={activeSidePanel}
+              splitMaps={this.props.visState.splitMaps}
+              onToggleLayerForMap={visStateActions.toggleLayerForMap}
+            />
+          )}
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}
 
           {deck}
@@ -1170,16 +1477,38 @@ export default function MapContainerFactory(
               display: editor.visible ? 'block' : 'none'
             }}
           />
+          <AnnotationOverlay
+            annotations={visState.annotations}
+            selectedAnnotationId={visState.selectedAnnotationId}
+            isEditingAnnotationText={visState.isEditingAnnotationText}
+            isAnnotationMode={Boolean(mapControls?.annotation?.active)}
+            mapIndex={index || 0}
+            viewport={this._getAnnotationViewport(mapState, internalViewState)}
+            isGlobeEnabled={Boolean(mapState.globe?.enabled)}
+            updateAnnotation={visStateActions.updateAnnotation}
+            setSelectedAnnotation={visStateActions.setSelectedAnnotation}
+          />
           {this.props.children}
-          {mapStyle.topMapStyle ? (
-            <MapComponent
+          {mapStyle.topMapStyle && !mapState.globe?.enabled ? (
+            <ResolvedMapComponent
               key={`top-${baseMapLibraryName}`}
               viewState={internalViewState}
+              maxPitch={effectiveMaxPitch}
               mapStyle={mapStyle.topMapStyle}
               style={MAP_STYLE.top}
               mapboxAccessToken={mapProps.mapboxAccessToken}
               transformRequest={mapProps.transformRequest}
-              mapLib={baseMapLibraryConfig.getMapLib()}
+              {...(mapProps.RTLTextPlugin !== undefined
+                ? {RTLTextPlugin: mapProps.RTLTextPlugin}
+                : {})}
+              {...(useMapboxAdapter
+                ? {
+                    mapLib:
+                      getApplicationConfig().baseMapLibraryConfig[
+                        MAP_LIB_OPTIONS.MAPBOX
+                      ].getMapLib()
+                  }
+                : {})}
               {...topMapContainerProps}
             />
           ) : null}
@@ -1191,20 +1520,50 @@ export default function MapContainerFactory(
               )
             : null}
           {this._renderMapPopover()}
-          {primary !== isSplit ? (
+          {!isExport && primary !== isSplit ? (
             <LoadingIndicator
               isVisible={Boolean(isLoadingIndicatorVisible || this.anyActiveLayerLoading)}
               activeSidePanel={Boolean(activeSidePanel)}
               sidePanelWidth={sidePanelWidth}
+              hasAttributionLogos={attributionLogos.length > 0}
+              hasMapScale={getApplicationConfig().enableMapScale}
             />
           ) : null}
           {this.props.primary ? (
             <Attribution
-              showBaseMapLibLogo={this.state.showBaseMapAttribution}
-              showOsmBasemapAttribution={true}
+              showBaseMapLibLogo={this.state.showBaseMapLibLogo}
+              basemapAttributions={this.state.basemapAttributions}
               datasetAttributions={datasetAttributions}
               baseMapLibraryConfig={baseMapLibraryConfig}
+              globeAttributions={getGlobeBasemapAttributions({
+                globe: mapState.globe,
+                mapboxApiAccessToken,
+                mapStyleType: mapStyle?.styleType,
+                basemapProvider: resolveGlobeBasemapProvider(
+                  baseMapLibraryName,
+                  mapboxApiAccessToken
+                )
+              })}
             />
+          ) : null}
+          {this.props.primary ? (
+            <AttributionLogos
+              logos={attributionLogos}
+              activeSidePanel={Boolean(activeSidePanel)}
+              sidePanelWidth={sidePanelWidth}
+            />
+          ) : null}
+          {!isExport && getApplicationConfig().enableMapScale ? (
+            <StyledMapScaleContainer
+              $left={
+                primary && activeSidePanel
+                  ? (sidePanelWidth || 0) + (theme?.sidePanel?.margin?.left ?? 9)
+                  : theme?.sidePanel?.margin?.left ?? 9
+              }
+              $bottomOffset={primary && attributionLogos.length > 0 ? 24 : 0}
+            >
+              <MapScale mapState={mapState} mapIndex={index ?? 0} />
+            </StyledMapScaleContainer>
           ) : null}
         </>
       );
@@ -1221,8 +1580,7 @@ export default function MapContainerFactory(
 
       const currentStyle = mapStyle.mapStyles?.[mapStyle.styleType];
       const baseMapLibraryName = getBaseMapLibrary(currentStyle);
-      const baseMapLibraryConfig =
-        getApplicationConfig().baseMapLibraryConfig?.[baseMapLibraryName];
+      const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
 
       return (
         <StyledMap

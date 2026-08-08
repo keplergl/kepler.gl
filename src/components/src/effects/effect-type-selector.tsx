@@ -9,7 +9,7 @@ import EffectTypeDropdownListFactory from './effect-type-dropdown-list';
 import EffectTypeListItemFactory, {DUMMY_ITEM_ID} from './effect-type-list-item';
 
 export type EffectTypeSelectorProps = {
-  options: {type: string; name: string; disabled: boolean}[];
+  options: {type: string; name: string; description?: string; disabled: boolean}[];
   onSelect: (type: any) => void;
   theme: any;
   onBlur?: () => void;
@@ -41,6 +41,7 @@ const DropdownWrapper = styled.div`
 const StyledEffectTypeSelector = styled.div`
   .item-selector .item-selector__dropdown {
     padding: 4px 10px 4px 10px;
+    width: fit-content;
     background-color: ${props => props.theme.secondaryBtnBgd};
     border-radius: ${props => props.theme.primaryBtnRadius};
     font-size: ${props => props.theme.primaryBtnFontSizeDefault};

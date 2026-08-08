@@ -29,6 +29,8 @@ const actionHandler = {
   [ActionTypes.CLEANUP_EXPORT_IMAGE]: uiStateUpdaters.cleanupExportImageUpdater,
   [ActionTypes.START_EXPORTING_IMAGE]: uiStateUpdaters.startExportingImageUpdater,
 
+  [ActionTypes.SET_EXPORT_VIDEO_SETTING]: uiStateUpdaters.setExportVideoSettingUpdater,
+
   [ActionTypes.SET_EXPORT_SELECTED_DATASET]: uiStateUpdaters.setExportSelectedDatasetUpdater,
   [ActionTypes.SET_EXPORT_DATA_TYPE]: uiStateUpdaters.setExportDataTypeUpdater,
   [ActionTypes.SET_EXPORT_FILTERED]: uiStateUpdaters.setExportFilteredUpdater,
@@ -44,7 +46,8 @@ const actionHandler = {
   [ActionTypes.TOGGLE_SPLIT_MAP]: uiStateUpdaters.toggleSplitMapUpdater,
   [ActionTypes.SHOW_DATASET_TABLE]: uiStateUpdaters.showDatasetTableUpdater,
   [ActionTypes.SET_LOCALE]: uiStateUpdaters.setLocaleUpdater,
-  [ActionTypes.TOGGLE_PANEL_LIST_VIEW]: uiStateUpdaters.togglePanelListViewUpdater
+  [ActionTypes.TOGGLE_PANEL_LIST_VIEW]: uiStateUpdaters.togglePanelListViewUpdater,
+  [ActionTypes.RECEIVE_MAP_CONFIG]: uiStateUpdaters.receiveMapConfigUpdater
 };
 
 /* Reducer */

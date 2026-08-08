@@ -1,26 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
-import {Base} from '../base';
+import React from 'react';
+import {Base, BaseProps} from '../base';
 
-class ClusterLayerIcon extends Component {
-  static propTypes = {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  };
-
-  static defaultProps = {
-    height: '16px',
-    predefinedClassName: 'cluster-layer-icon',
-    totalColor: 5
-  };
-
-  render() {
-    return (
-      <Base {...this.props}>
+const ClusterLayerIcon: React.FC<Partial<BaseProps>> = ({
+  height = '16px',
+  predefinedClassName = 'cluster-layer-icon',
+  totalColor = 5,
+  ...props
+}) => (
+  <Base height={height} predefinedClassName={predefinedClassName} totalColor={totalColor} {...props}>
         <path
           d="M13.6,22.7c2.9-3.6,4.4-6.3,4.4-8c0-2.7-2.2-4.9-4.9-4.9S8.2,12,8.2,14.7c0,1.7,1.5,4.4,4.4,8l0,0
 	C12.8,23,13.2,23,13.6,22.7C13.5,22.8,13.6,22.7,13.6,22.7z"
@@ -47,8 +37,6 @@ class ClusterLayerIcon extends Component {
           className="cr5"
         />
       </Base>
-    );
-  }
-}
+);
 
 export default ClusterLayerIcon;

@@ -40,7 +40,7 @@ const composedReducer = (state, action) => {
          foo: {
             ...state.keplerGl.foo,
             mapStyle: mapStyleUpdaters.mapConfigChangeUpdater(
-              mapStyle,
+              state.keplerGl.foo.mapStyle,
               {payload: {visibleLayerGroups: {label: false, road: true, background: true}}}
             )
          }
@@ -234,7 +234,7 @@ Returns **[Object][23]** nextState
 
 [20]: #parameters-7
 
-[21]: ../advanced-usage/using-updaters.md
+[21]: ../advanced-usages/using-updaters.md
 
 [22]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 

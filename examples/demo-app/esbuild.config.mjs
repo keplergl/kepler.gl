@@ -10,7 +10,11 @@ import process from 'node:process';
 import fs from 'node:fs';
 import {spawn} from 'node:child_process';
 import {join} from 'node:path';
+import {dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import KeplerPackage from '../../package.json' assert {type: 'json'};
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const args = process.argv;
 
@@ -25,9 +29,6 @@ const EXTERNAL_DECK_SRC = join(LIB_DIR, 'deck.gl');
 
 // For debugging loaders.gl, load loaders.gl from external loaders.gl directory
 const EXTERNAL_LOADERS_SRC = join(LIB_DIR, 'loaders.gl');
-
-// For debugging hubble.gl, load hubble.gl from external hubble.gl directory
-const EXTERNAL_HUBBLE_SRC = join(LIB_DIR, '../../hubble.gl');
 
 const port = 8080;
 
@@ -45,7 +46,8 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     ...localSources,
     react: `${nodeModulesDir}/react`,
     'react-dom': `${nodeModulesDir}/react-dom`,
-    'react-redux': `${nodeModulesDir}/react-redux/lib`,
+    'react-dom/client': `${nodeModulesDir}/react-dom/client`,
+    'react-redux': `${nodeModulesDir}/react-redux`,
     'styled-components': `${nodeModulesDir}/styled-components`,
     'react-intl': `${nodeModulesDir}/react-intl`,
     'react-palm': `${nodeModulesDir}/react-palm`,
@@ -53,6 +55,13 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     'apache-arrow': `${nodeModulesDir}/apache-arrow`
   };
 };
+
+const getProductionReactAliases = nodeModulesDir => ({
+  react: `${nodeModulesDir}/react/cjs/react.production.js`,
+  'react/jsx-runtime': `${nodeModulesDir}/react/cjs/react-jsx-runtime.production.js`,
+  'react-dom': `${nodeModulesDir}/react-dom/cjs/react-dom.production.js`,
+  'react-dom/client': `${nodeModulesDir}/react-dom/cjs/react-dom-client.production.js`
+});
 
 // Env variables required for demo app
 const requiredEnvVariables = [
@@ -84,6 +93,10 @@ const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
+  logOverride: {
+    'unsupported-jsx-comment': 'silent'
+  },
+  inject: ['src/react19-shim.js'],
   loader: {
     '.js': 'jsx',
     '.css': 'css',
@@ -95,7 +108,17 @@ const config = {
   outfile: 'dist/bundle.js',
   bundle: true,
   define: {
-    NODE_ENV
+    NODE_ENV,
+    // Define process.env variables for browser environment
+    'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
+    'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
+    'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken || ''),
+    'process.env.CartoClientId': JSON.stringify(process.env.CartoClientId || ''),
+    'process.env.FoursquareClientId': JSON.stringify(process.env.FoursquareClientId || ''),
+    'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain || ''),
+    'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL || ''),
+    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL || ''),
+    'process.env.NODE_ENV': NODE_ENV
   },
   plugins: [
     dotenvRun({
@@ -108,6 +131,23 @@ const config = {
       __PACKAGE_VERSION__: KeplerPackage.version,
       include: /constants\/src\/default-settings\.ts/
     }),
+    // styled-components: @hubble.gl/react nests its own copy.
+    // react-palm: several @kepler.gl/* packages nest their own copy.
+    // Both are singletons that break when loaded more than once.
+    {
+      name: 'dedupe-singletons',
+      setup(build) {
+        build.onResolve({filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$)/}, async args => {
+          if (args.pluginData?.deduped) return;
+          const result = await build.resolve(args.path, {
+            resolveDir: __dirname,
+            kind: args.kind,
+            pluginData: {deduped: true}
+          });
+          return result;
+        });
+      }
+    },
     // copy files to dist
     copy({
       resolveFrom: 'cwd',
@@ -119,11 +159,32 @@ const config = {
   ]
 };
 
+// Force @luma.gl/* and @deck.gl/* to the root monorepo node_modules.
+// The demo-app may install newer patch versions, but kepler.gl was built
+// and tested against the root versions (luma.gl 9.3.2 / deck.gl 9.3.1).
+// NOT added to config.plugins directly — it is injected conditionally so
+// that --env.deck / --env.deck_src modes (which alias deck.gl to a local
+// source tree) are not overridden.
+const dedupeWebglPlugin = {
+  name: 'dedupe-webgl',
+  setup(build) {
+    build.onResolve({filter: /^(@luma\.gl\/|@deck\.gl\/)/}, async args => {
+      if (args.pluginData?.deduped) return;
+      const result = await build.resolve(args.path, {
+        resolveDir: NODE_MODULES_DIR,
+        kind: args.kind,
+        pluginData: {deduped: true}
+      });
+      return result;
+    });
+  }
+};
+
 function addAliases(externals, args) {
   const resolveAlias = getThirdPartyLibraryAliases(true);
 
   // Combine flags
-  const useLocalDeck = args.includes('--env.deck') || args.includes('--env.hubble_src');
+  const useLocalDeck = args.includes('--env.deck');
   const useRepoDeck = args.includes('--env.deck_src');
   const useLocalAiAssistant = args.includes('--env.ai');
 
@@ -201,12 +262,6 @@ function addAliases(externals, args) {
     });
   }
 
-  if (args.includes('--env.hubble_src')) {
-    externals['hubble.gl'].forEach(mdl => {
-      resolveAlias[`@hubble.gl/${mdl}`] = `${EXTERNAL_HUBBLE_SRC}/modules/${mdl}/src`;
-    });
-  }
-
   return resolveAlias;
 }
 
@@ -226,7 +281,7 @@ function openURL(url) {
 (async () => {
   // local dev
 
-  const modules = ['@deck.gl', '@loaders.gl', '@luma.gl', '@probe.gl', '@hubble.gl'];
+  const modules = ['@deck.gl', '@loaders.gl', '@luma.gl', '@probe.gl'];
   const loadAllDirs = modules.map(
     dir =>
       new Promise(success => {
@@ -250,8 +305,7 @@ function openURL(url) {
     'deck.gl': results[0],
     'loaders.gl': results[1],
     'luma.gl': results[2],
-    'probe.gl': results[3],
-    'hubble.gl': results[4]
+    'probe.gl': results[3]
   }));
 
   const localAliases = addAliases(externals, args);
@@ -277,6 +331,7 @@ function openURL(url) {
         // Optionally generate a bundle analysis
         plugins: [
           ...config.plugins,
+          dedupeWebglPlugin,
           {
             name: 'bundle-analyzer',
             setup(build) {
@@ -300,15 +355,28 @@ function openURL(url) {
   }
 
   if (args.includes('--start')) {
+    const isLocal = process.env.NODE_ENV === 'local';
+    const baseAliases = isLocal
+      ? localAliases
+      : getThirdPartyLibraryAliases(false);
+    const nodeModulesDir = isLocal ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
+    // Skip dedupe-webgl when a local deck.gl source override is active so that
+    // --env.deck / --env.deck_src aliases are not overridden by the plugin.
+    const useDeckOverride = args.includes('--env.deck') || args.includes('--env.deck_src');
+
     await esbuild
       .context({
         ...config,
+        plugins: [
+          ...config.plugins,
+          ...(useDeckOverride ? [] : [dedupeWebglPlugin])
+        ],
         minify: false,
         sourcemap: true,
-        // add alias to resolve libraries so there is only one copy of them
-        ...(process.env.NODE_ENV === 'local'
-          ? {alias: localAliases}
-          : {alias: getThirdPartyLibraryAliases(false)}),
+        alias: {
+          ...baseAliases,
+          ...(!isLocal ? getProductionReactAliases(nodeModulesDir) : {})
+        },
         banner: {
           js: `new EventSource('/esbuild').addEventListener('change', () => location.reload());`
         }

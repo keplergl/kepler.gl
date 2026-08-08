@@ -33,7 +33,7 @@ const reducers = combineReducers({
 });
 
 // using createStore
-export default createStore(reducer, initialState, applyMiddleware(taskMiddleware));
+export default createStore(reducers, initialState, applyMiddleware(taskMiddleware));
 ```
 
 ### keplerGlReducer.initialState
@@ -64,7 +64,7 @@ const myKeplerGlReducer = keplerGlReducer
 
 ### keplerGlReducer.plugin
 
-Returns a kepler.gl reducer that will also pass each action through additional reducers spiecified.
+Returns a kepler.gl reducer that will also pass each action through additional reducers specified.
 The parameter should be either a reducer map or a reducer function.
 The state passed into the additional action handler is the instance state.
 It will include all the subreducers `visState`, `uiState`, `mapState` and `mapStyle`.

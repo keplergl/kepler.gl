@@ -3,16 +3,18 @@
 
 type EffectParameterDescription = {
   name: string;
-  type?: 'number' | 'array' | 'color';
+  type?: 'number' | 'array' | 'color' | 'checkbox';
   label?: string | false | (string | false)[];
+  tooltip?: string;
   min: number;
   max: number;
-  defaultValue?: number | number[];
+  defaultValue?: number | number[] | boolean;
 };
 
 export type EffectDescription = {
   type: string;
   name: string;
+  description?: string;
   parameters: EffectParameterDescription[];
 };
 

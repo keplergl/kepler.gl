@@ -14,13 +14,19 @@ import {
   MAP_CONTROLS
 } from '@kepler.gl/constants';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {createNotification, errorNotification, calculateExportImageSize} from '@kepler.gl/utils';
+import {
+  createNotification,
+  errorNotification,
+  calculateExportImageSize,
+  getApplicationConfig
+} from '@kepler.gl/utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
 import {
   ActionTypes,
   KeplerGlInitPayload,
   LoadFilesErrUpdaterAction,
+  ReceiveMapConfigPayload,
   UIStateActions
 } from '@kepler.gl/actions';
 import {
@@ -29,6 +35,7 @@ import {
   ExportJson,
   ExportMap,
   ExportImage,
+  ExportVideo,
   MapControlItem,
   MapControls,
   UiState
@@ -128,7 +135,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = (
  * @property imageDataUri Default: `''`,
  * @property exporting Default: `false`
  * @property error Default: `false`
- * @property escapeXhtmlForWebpack Default: `true`
+ * @property escapeXhtmlForWebpack Default: from application config (auto-detected: `true` for webpack)
  * @public
  */
 export const DEFAULT_EXPORT_IMAGE: ExportImage = {
@@ -153,8 +160,8 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   // processing: used as loading indicator when export image is being produced
   processing: false,
   error: false,
-  // whether to apply fix for uglify error in dom-to-image (should be true for webpack builds)
-  escapeXhtmlForWebpack: true
+  // whether to apply fix for uglify error in dom-to-image (from application config, auto-detects build tool)
+  escapeXhtmlForWebpack: getApplicationConfig().escapeXhtmlForWebpack
 };
 
 export const DEFAULT_LOAD_FILES = {
@@ -218,6 +225,28 @@ export const DEFAULT_EXPORT_MAP: ExportMap = {
 };
 
 /**
+ * Default initial `exportVideo` settings
+ * @memberof uiStateUpdaters
+ * @constant
+ * @property mediaType Default: `'webm'`
+ * @property cameraPreset Default: `'None'`
+ * @property fileName Default: `'kepler.gl'`
+ * @property resolution Default: `'1280x720'`
+ * @property durationMs Default: `1000`
+ * @public
+ */
+export const DEFAULT_EXPORT_VIDEO: ExportVideo = {
+  mediaType: 'webm', // use webm as default as gif export tends to freeze on larger recordings
+  cameraPreset: 'None',
+  fileName: 'kepler.gl',
+  resolution: '1280x720',
+  durationMs: 1000,
+  swipeStartPct: 0,
+  swipeEndPct: 100,
+  swipeEasing: 'ease-in-out'
+};
+
+/**
  * Default initial `uiState`
  * @memberof uiStateUpdaters
  * @constant
@@ -248,6 +277,8 @@ export const INITIAL_UI_STATE: UiState = {
   exportData: DEFAULT_EXPORT_DATA,
   // html export
   exportMap: DEFAULT_EXPORT_MAP,
+  // export video modal ui
+  exportVideo: DEFAULT_EXPORT_VIDEO,
   // map control panels
   mapControls: DEFAULT_MAP_CONTROLS,
   // ui notifications
@@ -356,6 +387,16 @@ export const toggleSidePanelCloseButtonUpdater = (
   isSidePanelCloseButtonVisible: show
 });
 
+// Map control dropdowns/menus that overlap each other visually and therefore
+// should be mutually exclusive: opening one closes all the others.
+// (split/view-mode menu, top/3d/globe menu, polygon draw tool, language menu)
+export const MUTUALLY_EXCLUSIVE_MAP_CONTROLS: string[] = [
+  MAP_CONTROLS.splitMap,
+  MAP_CONTROLS.toggle3d,
+  MAP_CONTROLS.mapDraw,
+  MAP_CONTROLS.mapLocale
+];
+
 /**
  * Toggle active map control panel
  * @memberof uiStateUpdaters
@@ -379,15 +420,6 @@ export const toggleMapControlUpdater = (
       ? MAP_CONTROLS.effect
       : null;
 
-  // To to toggle the mapDraw and mapLocal dropdowns
-  // We have to deactivate the other active dropdown
-  const dropdownToDeactivate =
-    panelId === MAP_CONTROLS.mapDraw
-      ? MAP_CONTROLS.mapLocale
-      : panelId === MAP_CONTROLS.mapLocale
-      ? MAP_CONTROLS.mapDraw
-      : null;
-
   // If we need to deactivate a competing panel and it's currently active
   if (panelToDeactivate && state.mapControls[panelToDeactivate]?.active) {
     updatedState = {
@@ -402,18 +434,22 @@ export const toggleMapControlUpdater = (
     };
   }
 
-  // If we need to deactivate a competing dropdown and it's currently active
-  if (dropdownToDeactivate && state.mapControls[dropdownToDeactivate]?.active) {
-    updatedState = {
-      ...state,
-      mapControls: {
-        ...updatedState.mapControls,
-        [dropdownToDeactivate]: {
-          ...updatedState.mapControls[dropdownToDeactivate],
-          active: false
-        }
+  // The overlapping map control menus should be mutually exclusive: when one of
+  // them is being opened, deactivate every other one that is currently active
+  // so their dropdowns never overlap on screen.
+  const isOpening = !updatedState.mapControls[panelId]?.active;
+  if (isOpening && MUTUALLY_EXCLUSIVE_MAP_CONTROLS.includes(panelId)) {
+    const nextMapControls = {...updatedState.mapControls};
+    let didDeactivate = false;
+    MUTUALLY_EXCLUSIVE_MAP_CONTROLS.forEach(controlId => {
+      if (controlId !== panelId && nextMapControls[controlId]?.active) {
+        nextMapControls[controlId] = {...nextMapControls[controlId], active: false};
+        didDeactivate = true;
       }
-    };
+    });
+    if (didDeactivate) {
+      updatedState = {...updatedState, mapControls: nextMapControls};
+    }
   }
 
   return {
@@ -521,9 +557,6 @@ export const setExportImageSettingUpdater = (
     ...state,
     exportImage: {
       ...updated,
-      // @ts-expect-error
-      // TODO: calculateExportImageSize does not return imageSize.zoomOffset,
-      // do we need take this value from current state, or return defaul value = 0
       imageSize
     }
   };
@@ -585,6 +618,26 @@ export const cleanupExportImageUpdater = (state: UiState): UiState => ({
     error: false,
     processing: false,
     center: false
+  }
+});
+
+/**
+ * Set `exportVideo` settings: mediaType, cameraPreset, fileName, resolution, durationMs
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload new video export settings
+ * @returns nextState
+ * @public
+ */
+export const setExportVideoSettingUpdater = (
+  state: UiState,
+  {payload: newSetting}: UIStateActions.SetExportVideoSettingUpdaterAction
+): UiState => ({
+  ...state,
+  exportVideo: {
+    ...state.exportVideo,
+    ...newSetting
   }
 });
 
@@ -929,4 +982,60 @@ export const togglePanelListViewUpdater = (
     ...state,
     [stateProp]: listView
   };
+};
+
+/**
+ * Merge received ui state config when loading a saved map
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload saved map config `{mapStyle, visState, mapState, uiState}`
+ * @returns nextState
+ * @public
+ */
+export const receiveMapConfigUpdater = (
+  state: UiState,
+  {
+    payload: {config}
+  }: {
+    type?: (typeof ActionTypes)['RECEIVE_MAP_CONFIG'];
+    payload: ReceiveMapConfigPayload;
+  }
+): UiState => {
+  const {uiState} = config || {};
+  if (!uiState) {
+    return state;
+  }
+
+  let newState = state;
+
+  if (uiState.mapControls?.mapLegend?.active) {
+    const currentLegend = newState.mapControls.mapLegend;
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        mapLegend: {
+          show: true,
+          ...currentLegend,
+          active: true,
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+
+  if (uiState.mapControls?.mapLegend?.settings) {
+    newState = setMapControlSettingsUpdater(newState, {
+      payload: {panelId: 'mapLegend', settings: uiState.mapControls.mapLegend.settings}
+    } as UIStateActions.setMapControlSettingsUpdaterAction);
+  }
+
+  if (uiState.locale) {
+    newState = setLocaleUpdater(newState, {
+      payload: {locale: uiState.locale}
+    } as UIStateActions.SetLocaleUpdaterAction);
+  }
+
+  return newState;
 };

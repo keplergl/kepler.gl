@@ -11,12 +11,15 @@ type Params = {
   settings?: MapLegendControlSettings;
   onChangeSettings: (settings: Partial<MapLegendControlSettings>) => void;
   theme: Record<string, any>;
+  mapHeight?: number;
+  mapWidth?: number;
 };
 
 type ReturnType = {
   positionStyles: Record<string, unknown>;
   updatePosition: () => void;
   contentHeight: number;
+  maxContentHeight?: number;
   startResize: () => void;
   resize: (deltaY: number) => void;
 };
@@ -87,13 +90,22 @@ export default function useLegendPosition({
   isSidePanelShown,
   settings,
   onChangeSettings,
-  theme
+  theme,
+  mapHeight,
+  mapWidth
 }: Params): ReturnType {
   const pos = settings?.position ?? DEFAULT_POSITION;
   const contentHeight = settings?.contentHeight ?? -1;
   const positionStyles = useMemo(() => ({[pos.anchorX]: pos.x, [pos.anchorY]: pos.y}), [pos]);
   const startHeightRef = useRef(0);
   const sidePanelWidth = theme.sidePanel?.width || 0;
+
+  // Calculate dynamic max content height based on map root dimensions
+  const maxContentHeight = useMemo(() => {
+    if (!mapHeight) return undefined;
+    // Available height minus margins and header
+    return mapHeight - MARGIN.top - MARGIN.bottom - MAP_CONTROL_HEADER_FULL_HEIGHT;
+  }, [mapHeight]);
 
   const calcPosition = useCalcLegendPosition({
     legendContentRef,
@@ -119,8 +131,14 @@ export default function useLegendPosition({
       if (root instanceof HTMLElement && legendContent) {
         const mapRootBounds = root.getBoundingClientRect();
         const legendRect = legendContent.getBoundingClientRect();
+        const remainingHeight =
+          mapRootBounds.bottom - (legendRect.top + MAP_CONTROL_HEADER_FULL_HEIGHT + MARGIN.bottom);
+        // Use maxContentHeight if available, otherwise fall back to viewport-based calculation
+        const maxHeight = maxContentHeight
+          ? Math.min(maxContentHeight, remainingHeight)
+          : remainingHeight;
         const nextHeight = Math.min(
-          mapRootBounds.bottom - (legendRect.top + MAP_CONTROL_HEADER_FULL_HEIGHT + MARGIN.bottom),
+          maxHeight,
           Math.max(MIN_CONTENT_HEIGHT, startHeightRef.current + deltaY)
         );
         onChangeSettings({contentHeight: nextHeight});
@@ -130,7 +148,7 @@ export default function useLegendPosition({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [contentHeight, pos, onChangeSettings]
+    [contentHeight, pos, onChangeSettings, maxContentHeight]
   );
 
   // Shift when side panel is shown/hidden
@@ -151,5 +169,13 @@ export default function useLegendPosition({
     }
   }, [isSidePanelShown, onChangeSettings, sidePanelWidth]);
 
-  return {positionStyles, updatePosition, contentHeight, startResize, resize};
+  // Clamp contentHeight when map resizes to ensure legend stays within available space
+  useEffect(() => {
+    if (!mapWidth || !mapHeight || !legendContentRef.current) return;
+    if (maxContentHeight && contentHeight > 0 && contentHeight > maxContentHeight) {
+      onChangeSettings({contentHeight: maxContentHeight});
+    }
+  }, [mapWidth, mapHeight, contentHeight, onChangeSettings, maxContentHeight, legendContentRef]);
+
+  return {positionStyles, updatePosition, contentHeight, maxContentHeight, startResize, resize};
 }

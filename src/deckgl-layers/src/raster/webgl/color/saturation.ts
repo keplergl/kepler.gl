@@ -14,7 +14,10 @@ import {GetUniformsOutput, ShaderModule} from '../types';
  * @returns {vec3} The color with the saturation adjusted.
  */
 const fs = `\
-uniform float uSaturationValue;
+uniform saturationUniforms {
+  float value;
+} saturation;
+
 vec3 saturate(vec3 rgb, float adjustment) {
     // Algorithm from Chapter 16 of OpenGL Shading Language
     const vec3 W = vec3(0.2125, 0.7154, 0.0721);
@@ -31,17 +34,20 @@ function getUniforms(opts: {saturationValue?: number} = {}): GetUniformsOutput {
   }
 
   return {
-    uSaturationValue: Number.isFinite(saturationValue) ? saturationValue : 1
+    value: Number.isFinite(saturationValue) ? saturationValue : 1
   };
 }
 
 export const saturation: ShaderModule = {
   name: 'saturation',
   fs,
+  uniformTypes: {
+    value: 'f32'
+  },
   getUniforms,
   inject: {
     'fs:DECKGL_MUTATE_COLOR': `
-    image = vec4(saturate(image.rgb, uSaturationValue), image.a);
+    image = vec4(saturate(image.rgb, saturation.value), image.a);
     `
   }
 };

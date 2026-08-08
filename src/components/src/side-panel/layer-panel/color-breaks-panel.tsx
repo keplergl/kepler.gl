@@ -12,7 +12,7 @@ import {
   colorMapToColorBreaks,
   isNumericColorBreaks as notOrdinalColorBreaks
 } from '@kepler.gl/utils';
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useMemo, useEffect} from 'react';
 import styled from 'styled-components';
 import ColumnStatsChartFactory from '../../common/column-stats-chart';
 import {Edit} from '../../common/icons';
@@ -155,6 +155,17 @@ function ColorBreaksPanelFactory(
       [customPalette.colorMap, isEditingCustomBreaks, colorBreaks]
     );
 
+    // Update layers on editing custom breaks
+    useEffect(() => {
+      const {type} = customPalette || {};
+      if (
+        isEditingCustomBreaks &&
+        (type === SCALE_TYPES.customOrdinal || type === SCALE_TYPES.custom)
+      ) {
+        onScaleChange(type, customPalette);
+      }
+    }, [isEditingCustomBreaks, customPalette, onScaleChange]);
+
     const onClickEditCustomBreaks = useCallback(() => {
       setColorUI({
         colorRangeConfig: {
@@ -231,8 +242,8 @@ function ColorBreaksPanelFactory(
               currentBreaks={currentBreaks}
               onEdit={isCustomBreaks ? onClickEditCustomBreaks : null}
             />
-          ) : customPalette.colorMap &&
-            customPalette.type === 'customOrdinal' &&
+          ) : (isCustomBreaks || customPalette.type === SCALE_TYPES.customOrdinal) &&
+            customPalette.colorMap &&
             customPalette.name?.endsWith(colorField.name) ? (
             <CategoricalColorDisplay
               colorMap={customPalette.colorMap}

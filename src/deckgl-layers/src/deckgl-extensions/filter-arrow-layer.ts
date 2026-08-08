@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {Layer, LayerExtension} from '@deck.gl/core';
-import GL from '@luma.gl/constants';
 
 import shaderModule from './filter-shader-module';
 
@@ -42,16 +41,9 @@ export default class FilterArrowExtension extends LayerExtension {
       attributeManager.add({
         filtered: {
           size: 1,
-          type: GL.FLOAT,
-          accessor: 'getFiltered',
-          shaderAttributes: {
-            filtered: {
-              divisor: 0
-            },
-            instanceFiltered: {
-              divisor: 1
-            }
-          }
+          type: 'float32',
+          stepMode: 'dynamic',
+          accessor: 'getFiltered'
         }
       });
     }

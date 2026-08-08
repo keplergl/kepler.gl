@@ -4,9 +4,11 @@
 import Console from 'global/console';
 
 import {GEOCODER_LAYER_ID, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
-import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
+import {Layer as DeckLayer} from '@deck.gl/core';
+type DeckLayerProps = any;
 import {
   Field,
+  LayerVisConfig,
   TooltipField,
   CompareType,
   SplitMapLayers,
@@ -15,7 +17,12 @@ import {
   FeatureSelectionContext,
   BindedLayerCallbacks,
   LayerCallbacks,
-  Viewport
+  Viewport,
+  LayerOrderGroup,
+  LayerOrder,
+  LayerOrderEntry,
+  FlatLayerOrder,
+  LayerOrderHierarchy
 } from '@kepler.gl/types';
 import {
   FindDefaultLayerPropsReturnValue,
@@ -28,8 +35,8 @@ import {
 
 import KeplerTable from '@kepler.gl/table';
 import {VisState} from '@kepler.gl/schemas';
-import {isFunction, getMapLayersFromSplitMaps, DataRow} from '@kepler.gl/utils';
-import {arrayMove} from '@kepler.gl/common-utils';
+import {isFunction, getMapLayersFromSplitMaps, DataRow, isPlainObject} from '@kepler.gl/utils';
+import {arrayMove, generateHashId} from '@kepler.gl/common-utils';
 
 import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
 
@@ -51,11 +58,11 @@ export type AggregationLayerHoverData = {
 };
 
 export type LayerHoverProp = {
-  data: DataRow | AggregationLayerHoverData | null;
+  data: DataRow | AggregationLayerHoverData | any[] | null;
   fields: Field[];
   fieldsToShow: TooltipField[];
   layer: Layer;
-  primaryData?: DataRow | AggregationLayerHoverData | null;
+  primaryData?: DataRow | AggregationLayerHoverData | any[] | null;
   compareType?: CompareType;
   currentTime?: VisState['animationConfig']['currentTime'];
 };
@@ -98,6 +105,54 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
       ? layer.setInitialLayerConfig(dataset)
       : layer;
   });
+}
+
+/**
+ * Applies `patch` to `config.visConfig` only for layers whose `dataId` is in `datasetIdsToPatch`.
+ * Layers for datasets that were already on the map are left unchanged — `addDataToMap`
+ * Keys whose patch value is `undefined` are skipped so existing visConfig is not cleared.
+ */
+export function mergeLayerVisConfigForNewDatasets(
+  state: VisState,
+  patch: Partial<LayerVisConfig> | undefined,
+  datasetIdsToPatch: string[]
+): VisState {
+  if (!patch || !Object.keys(patch).length) {
+    return state;
+  }
+
+  const hasDefinedPatchValue = (Object.keys(patch) as Array<keyof LayerVisConfig>).some(
+    key => patch[key] !== undefined
+  );
+  if (!hasDefinedPatchValue) {
+    return state;
+  }
+
+  const datasetIdSet = new Set(datasetIdsToPatch);
+
+  return {
+    ...state,
+    layers: state.layers.map(layer => {
+      if (!layer.config.dataId || !datasetIdSet.has(layer.config.dataId)) {
+        return layer;
+      }
+      const settings = layer.visConfigSettings;
+      if (!settings) {
+        return layer;
+      }
+      const allowedKeys = (Object.keys(patch) as Array<keyof LayerVisConfig>).filter(
+        key => Object.prototype.hasOwnProperty.call(settings, key) && patch[key] !== undefined
+      );
+      if (!allowedKeys.length) {
+        return layer;
+      }
+      const partial = allowedKeys.reduce<Partial<LayerVisConfig>>((acc, key) => {
+        acc[key] = patch[key];
+        return acc;
+      }, {});
+      return layer.updateLayerVisConfig(partial);
+    })
+  };
 }
 
 type MinVisStateForLayerData = {
@@ -338,6 +393,7 @@ export type ComputeDeckLayersProps = {
       feature: Feature | null,
       selectionContext?: FeatureSelectionContext
     ) => any;
+    onApplyPolygonFilterAll?: (feature: Feature) => any;
     featureCollection: {
       type: string;
       features: Feature[];
@@ -358,6 +414,79 @@ export function bindLayerCallbacks(
     }),
     {} as Record<string, (val: unknown) => void>
   );
+}
+
+function computeDeckLayersFromLayerOrder(
+  layerOrder: LayerOrder,
+  layers: Layer[],
+  layerData: any[],
+  currentLayersForDeck: {[key: string]: boolean},
+  renderProps: {
+    datasets: any;
+    hoverInfo: any;
+    clicked: any;
+    mapState: any;
+    interactionConfig: any;
+    animationConfig: any;
+    mapLayers: any;
+    hasShadowEffect: boolean;
+  },
+  layerCallbacks?: any
+): any[] {
+  const {datasets, hoverInfo, clicked, mapState, interactionConfig, animationConfig, mapLayers, hasShadowEffect} = renderProps;
+  return layerOrder
+    .slice()
+    .reverse()
+    .reduce((overlays, element) => {
+      if (isPlainObject(element)) {
+        const layerGroup = element as LayerOrderGroup;
+        if (!layerGroup.isVisible) {
+          return overlays;
+        }
+        return overlays.concat(
+          computeDeckLayersFromLayerOrder(
+            layerGroup.layerOrder,
+            layers,
+            layerData,
+            currentLayersForDeck,
+            renderProps,
+            layerCallbacks
+          )
+        );
+      }
+      const layerId = element as string;
+      if (!currentLayersForDeck[layerId]) {
+        return overlays;
+      }
+      const layerIndex = layers.findIndex(({id}) => id === layerId);
+      if (layerIndex === -1) {
+        return overlays;
+      }
+      const bindedLayerCallbacks = layerCallbacks
+        ? bindLayerCallbacks(layerCallbacks, layerIndex)
+        : {};
+      const layer = layers[layerIndex];
+      const data = layerData[layerIndex];
+      const layerOverlay = renderDeckGlLayer(
+        {
+          datasets,
+          layer,
+          layerIndex,
+          data,
+          hoverInfo,
+          clicked,
+          mapState,
+          interactionConfig,
+          animationConfig,
+          mapLayers,
+          experimentalContext: {
+            hasShadowEffect
+          }
+        },
+        bindedLayerCallbacks
+      );
+      return overlays.concat(layerOverlay || []);
+    }, [] as any[]);
 }
 
 // eslint-disable-next-line complexity
@@ -397,9 +526,31 @@ export function computeDeckLayers(
     dataLayers = layerOrder
       .slice()
       .reverse()
-      .filter(id => currentLayersForDeck[id])
-      .reduce((overlays, layerId) => {
+      .reduce((overlays, element) => {
+        if (isPlainObject(element)) {
+          const layerGroup = element as LayerOrderGroup;
+          if (!layerGroup.isVisible) {
+            return overlays;
+          }
+          return overlays.concat(
+            computeDeckLayersFromLayerOrder(
+              layerGroup.layerOrder,
+              layers,
+              layerData,
+              currentLayersForDeck,
+              {datasets, hoverInfo, clicked, mapState, interactionConfig, animationConfig, mapLayers, hasShadowEffect},
+              layerCallbacks
+            )
+          );
+        }
+        const layerId = element as string;
+        if (!currentLayersForDeck[layerId]) {
+          return overlays;
+        }
         const layerIndex = layers.findIndex(({id}) => id === layerId);
+        if (layerIndex === -1) {
+          return overlays;
+        }
         const bindedLayerCallbacks = layerCallbacks
           ? bindLayerCallbacks(layerCallbacks, layerIndex)
           : {};
@@ -456,7 +607,8 @@ export function computeDeckLayers(
   if (editorInfo) {
     editorLayer.push(
       getEditorLayer({
-        ...editorInfo
+        ...editorInfo,
+        mapState
       })
     );
   }
@@ -468,26 +620,225 @@ export function getLayerOrderFromLayers<T extends {id: string}>(layers: T[]): st
   return layers.map(({id}) => id);
 }
 
+// --- Layer Group Utilities ---
+
+export function getNewLayerGroup(props?: Partial<LayerOrderGroup>): LayerOrderGroup {
+  return {
+    id: props?.id ?? generateHashId(6),
+    label: props?.label ?? 'New group',
+    isVisible: props?.isVisible ?? true,
+    layerOrder: props?.layerOrder ?? [],
+    isIncludedInLegend: props?.isIncludedInLegend ?? true
+  };
+}
+
+export function addLayerOrGroupToLayerOrder(
+  layerOrder: LayerOrder,
+  element: LayerOrderEntry,
+  atIndex?: number
+): LayerOrder {
+  const idx = atIndex ?? 0;
+  const result = [...layerOrder];
+  result.splice(idx, 0, element);
+  return result;
+}
+
+export function removeElementFromLayerOrder(
+  layerOrder: LayerOrder,
+  element: LayerOrderEntry
+): LayerOrder {
+  if (!layerOrder) return [];
+  const elementId = typeof element === 'string' ? element : element.id;
+  let newLayerOrder = layerOrder.filter(entry => {
+    if (isPlainObject(entry)) {
+      return (entry as LayerOrderGroup).id !== elementId;
+    }
+    return entry !== elementId;
+  });
+
+  newLayerOrder = newLayerOrder.map(entry => {
+    if (isPlainObject(entry)) {
+      const group = entry as LayerOrderGroup;
+      return {
+        ...group,
+        layerOrder: removeElementFromLayerOrder(group.layerOrder, elementId)
+      };
+    }
+    return entry;
+  });
+
+  return newLayerOrder;
+}
+
+export function getLayerGroupFromLayerOrder(
+  layerOrder: LayerOrder,
+  layerGroupId: string
+): LayerOrderGroup | undefined {
+  let group: LayerOrderGroup | undefined;
+  for (let i = 0; i < layerOrder.length && !group; i++) {
+    const entry = layerOrder[i];
+    if (isPlainObject(entry)) {
+      const grp = entry as LayerOrderGroup;
+      group =
+        grp.id === layerGroupId ? grp : getLayerGroupFromLayerOrder(grp.layerOrder, layerGroupId);
+    }
+  }
+  return group;
+}
+
+/**
+ * Find the parent group that contains a given layer ID.
+ * Returns undefined if the layer is at the root level.
+ */
+export function findParentGroupForLayer(
+  layerOrder: LayerOrder,
+  layerId: string
+): LayerOrderGroup | undefined {
+  for (const entry of layerOrder) {
+    if (isPlainObject(entry)) {
+      const group = entry as LayerOrderGroup;
+      if (group.layerOrder.some(e => typeof e === 'string' && e === layerId)) {
+        return group;
+      }
+      const nested = findParentGroupForLayer(group.layerOrder, layerId);
+      if (nested) return nested;
+    }
+  }
+  return undefined;
+}
+
+export function getIndexFromLayerEntryId(layerOrder: LayerOrder, layerEntryId: string): number {
+  return layerOrder.findIndex(entry =>
+    isPlainObject(entry) ? (entry as LayerOrderGroup).id === layerEntryId : entry === layerEntryId
+  );
+}
+
+export function isLayerPresentInLayerOrder(layerOrder: LayerOrder, layerId: string): boolean {
+  let found = false;
+  for (let i = 0; i < layerOrder.length && !found; i++) {
+    const entry = layerOrder[i];
+    if (isPlainObject(entry)) {
+      found = isLayerPresentInLayerOrder((entry as LayerOrderGroup).layerOrder, layerId);
+    } else {
+      found = layerId === entry;
+    }
+  }
+  return found;
+}
+
+export function replaceLayerEntryInLayerOrder(
+  layerOrder: LayerOrder,
+  oldEntry: LayerOrderEntry,
+  newEntry: LayerOrderEntry
+): LayerOrder {
+  const oldEntryId = typeof oldEntry === 'string' ? oldEntry : oldEntry.id;
+  return layerOrder.map(entry => {
+    if (typeof entry === 'string') {
+      return entry === oldEntryId ? newEntry : entry;
+    } else if (isPlainObject(entry)) {
+      const grp = entry as LayerOrderGroup;
+      if (grp.id === oldEntryId) {
+        return newEntry;
+      }
+      return {
+        ...grp,
+        layerOrder: replaceLayerEntryInLayerOrder(grp.layerOrder, oldEntry, newEntry)
+      };
+    }
+    return entry;
+  });
+}
+
+export function updateLayerGroupInLayerOrder(
+  layerOrder: LayerOrder,
+  newLayerGroup: LayerOrderGroup
+): LayerOrder {
+  return layerOrder.map(entry => {
+    if (isPlainObject(entry)) {
+      const grp = entry as LayerOrderGroup;
+      if (grp.id === newLayerGroup.id) {
+        return newLayerGroup;
+      }
+      return {
+        ...grp,
+        layerOrder: updateLayerGroupInLayerOrder(grp.layerOrder, newLayerGroup)
+      };
+    }
+    return entry;
+  });
+}
+
+export function getFlatLayerOrder(layerOrder: LayerOrder): FlatLayerOrder {
+  return layerOrder.reduce((acc, orderEntry) => {
+    if (isPlainObject(orderEntry)) {
+      return [...acc, ...getFlatLayerOrder((orderEntry as LayerOrderGroup).layerOrder)];
+    }
+    return [...acc, orderEntry as string];
+  }, [] as FlatLayerOrder);
+}
+
+export function buildLayerOrderHierarchy(
+  layerOrder: LayerOrder,
+  layers?: Layer[] | readonly Layer[]
+): LayerOrderHierarchy {
+  const validLayers = layers?.filter(Boolean);
+  return layerOrder.reduce((acc, element) => {
+    if (isPlainObject(element)) {
+      return [...acc, ['layerGroup', element as LayerOrderGroup] as const];
+    }
+    const layer = validLayers?.find(l => l.id === element);
+    if (!layer || layer.config.hidden) {
+      return acc;
+    }
+    return [...acc, ['layer', layer] as const];
+  }, [] as LayerOrderHierarchy);
+}
+
+export function removeGhostLayerFromLayerOrder(
+  layerOrder: LayerOrder,
+  layers: {id: string}[]
+): LayerOrder {
+  return layerOrder.reduce((acc, entry) => {
+    if (typeof entry === 'string') {
+      if (layers.find(l => l.id === entry)) {
+        acc.push(entry);
+      }
+    } else {
+      const grp = entry as LayerOrderGroup;
+      if (grp.layerOrder) {
+        acc.push({
+          ...grp,
+          layerOrder: removeGhostLayerFromLayerOrder(grp.layerOrder, layers)
+        });
+      }
+    }
+    return acc;
+  }, [] as LayerOrder);
+}
+
 export function reorderLayerOrder(
   layerOrder: VisState['layerOrder'],
   originLayerId: string,
   destinationLayerId: string
 ): VisState['layerOrder'] {
-  const activeIndex = layerOrder.indexOf(originLayerId);
-  const overIndex = layerOrder.indexOf(destinationLayerId);
+  const activeIndex = getIndexFromLayerEntryId(layerOrder, originLayerId);
+  const overIndex = getIndexFromLayerEntryId(layerOrder, destinationLayerId);
 
+  if (activeIndex === -1 || overIndex === -1) {
+    return layerOrder;
+  }
   return arrayMove(layerOrder, activeIndex, overIndex);
 }
 
 export function addLayerToLayerOrder(
   layerOrder: VisState['layerOrder'],
   layerId: string
-): string[] {
+): LayerOrder {
   return [layerId, ...layerOrder];
 }
 
 export function getLayerHoverPropValue(
-  data: DataRow | AggregationLayerHoverData | null | undefined,
+  data: DataRow | AggregationLayerHoverData | any[] | null | undefined,
   fieldIndex: number
 ) {
   if (!data) return undefined;

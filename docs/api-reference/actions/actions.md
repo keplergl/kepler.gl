@@ -298,7 +298,7 @@ Callback when load map style success
 
 ### mapConfigChange
 
-Update `visibleLayerGroups`to change layer group visibility
+Update `visibleLayerGroups` to change layer group visibility
 
 - **ActionTypes**: [`ActionTypes.MAP_CONFIG_CHANGE`][12]
 - **Updaters**: [`mapStyleUpdaters.mapConfigChangeUpdater`][171]
@@ -343,12 +343,12 @@ Set 3d building layer group color
 ## main
 
 Main kepler.gl actions, these actions handles loading data and config into kepler.gl reducer. These actions
-is listened by all subreducers,
+are listened to by all subreducers.
 
 ### addDataToMap
 
 Add data to kepler.gl reducer, prepare map with preset configuration if config is passed.
-Kepler.gl provides a handy set of utils to parse data from different formats to the `data` object required in dataset. You rarely need to manually format the data obejct.
+Kepler.gl provides a handy set of utils to parse data from different formats to the `data` object required in dataset. You rarely need to manually format the data object.
 
 Use `KeplerGlSchema.getConfigToSave` to generate a json blob of the currents instance config.
 The config object value will always have higher precedence than the options properties.
@@ -533,7 +533,7 @@ Trigger CPU filter of selected dataset
 
 **Parameters**
 
-- `dataId` **([string][162] | Arrary&lt;[string][162]>)** single dataId or an array of dataIds
+- `dataId` **([string][162] | Array&lt;[string][162]>)** single dataId or an array of dataIds
 
 Returns **{type: ActionTypes.APPLY_CPU_FILTER, dataId: [string][162]}**
 
@@ -593,7 +593,7 @@ Update layer text label
 
 ### layerTypeChange
 
-Update layer type. Previews layer config will be copied if applicable.
+Update layer type. Previous layer config will be copied if applicable.
 
 - **ActionTypes**: [`ActionTypes.LAYER_TYPE_CHANGE`][12]
 - **Updaters**: [`visStateUpdaters.layerTypeChangeUpdater`][192]
@@ -697,7 +697,7 @@ Returns **{type: ActionTypes.MAP_CLICK}**
 
 ### onMouseMove
 
-Trigger map mouse moveevent, payload would be
+Trigger map mouse move event, payload would be
 React-map-gl MapLayerMouseEvent
 [https://visgl.github.io/react-map-gl/docs/api-reference/types#maplayermouseevent][202]
 
@@ -708,7 +708,7 @@ React-map-gl MapLayerMouseEvent
 
 - `evt` **[Object][164]** MapLayerMouseEvent
 
-Returns **{type: ActionTypes.MAP_CLICK}**
+Returns **{type: ActionTypes.MOUSE_MOVE}**
 
 ### removeDataset
 
@@ -784,10 +784,10 @@ Set the map mode
 **Examples**
 
 ```javascript
-import {setMapMode} from '@kepler.gl/actions';
+import {setEditorMode} from '@kepler.gl/actions';
 import {EDITOR_MODES} from '@kepler.gl/constants';
 
-this.props.dispatch(setMapMode(EDITOR_MODES.DRAW_POLYGON));
+this.props.dispatch(setEditorMode(EDITOR_MODES.DRAW_POLYGON));
 ```
 
 ### setFilter
@@ -822,18 +822,16 @@ Returns **{type: ActionTypes.SET_FILTER_PLOT, idx: any, newProp: any}**
 
 ### setMapInfo
 
-Set the property of a filter plot
+Set map info such as title and description
 
 - **ActionTypes**: [`ActionTypes.SET_MAP_INFO`][12]
 - **Updaters**: [`visStateUpdaters.setMapInfoUpdater`][211]
 
 **Parameters**
 
-- `info`
-- `idx` **[Number][188]**
-- `newProp` **[Object][164]** key value mapping of new prop `{yAxis: 'histogram'}`
+- `info` **[Object][164]** map info object, e.g. `{title: 'My Map', description: 'My map description'}`
 
-Returns **{type: ActionTypes.SET_FILTER_PLOT, idx: any, newProp: any}**
+Returns **{type: ActionTypes.SET_MAP_INFO, info: info}**
 
 ### showDatasetTable
 
@@ -958,9 +956,9 @@ Returns **{type: ActionTypes.UPDATE_VIS_DATA, datasets: datasets, options: optio
 ## uiStateActions
 
 Actions handled mostly by `uiState` reducer.
-They manage UI changes in tha app, such as open and close side panel,
+They manage UI changes in the app, such as open and close side panel,
 switch between tabs in the side panel, open and close modal dialog for exporting data / images etc.
-It also manges which settings are selected during image and map export
+It also manages which settings are selected during image and map export
 
 ### addNotification
 
@@ -1037,7 +1035,7 @@ Whether to export filtered data, `true` or `false`
 
 **Parameters**
 
-- `payload` **[boolean][165]** set `true` to ony export filtered data
+- `payload` **[boolean][165]** set `true` to only export filtered data
 
 ### setExportImageDataUri
 
@@ -1474,7 +1472,7 @@ Set the export map format (html, json)
 [173]: ../reducers/map-style.md#mapstyleupdatersrequestmapstylesupdater
 [174]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 [175]: ../reducers/map-style.md#mapstyleupdatersset3dbuildingcolorupdater
-[176]: ../reducers/composers.md#combinedupdatersadddatatomapupdater
+[176]: ../reducers/combine.md#combinedupdatersadddatatomapupdater
 [177]: ../reducers/map-style.md#mapstyleupdatersinitmapstyleupdater
 [178]: ../reducers/map-state.md#mapstateupdatersreceivemapconfigupdater
 [179]: ../reducers/map-style.md#mapstyleupdatersreceivemapconfigupdater

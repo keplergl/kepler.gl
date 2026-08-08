@@ -16,6 +16,7 @@ import {TileJSON} from '@loaders.gl/mvt';
 import {PMTilesMetadata} from '@loaders.gl/pmtiles';
 import {getMetaUrl, parseVectorMetadata, VectorTileMetadata} from '@kepler.gl/table';
 import {Merge} from '@kepler.gl/types';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {default as useFetchVectorTileMetadata} from '../../hooks/use-fetch-vector-tile-metadata';
 import {DatasetCreationAttributes, MetaResponse} from './common';
@@ -23,7 +24,7 @@ import {InputLight} from '../../common';
 
 const TilesetInputContainer = styled.div`
   display: grid;
-  grid-template-rows: repeat(3, 1fr);
+  grid-template-rows: repeat(4, auto);
   row-gap: 18px;
   font-size: 12px;
 `;
@@ -33,6 +34,59 @@ const TilesetInputDescription = styled.div`
   color: ${props => props.theme.AZURE200};
   font-size: 11px;
 `;
+
+const ExampleUrlsContainer = styled.div`
+  text-align: left;
+  color: ${props => props.theme.AZURE200};
+  font-size: 11px;
+`;
+
+const ExampleTabs = styled.div`
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+`;
+
+const ExampleTab = styled.div<{active: boolean}>`
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+  background: ${props => (props.active ? props.theme.AZURE400 : 'transparent')};
+  color: ${props => (props.active ? props.theme.WHITE : props.theme.AZURE200)};
+  border: 1px solid ${props => props.theme.AZURE400};
+  &:hover {
+    background: ${props => (props.active ? props.theme.AZURE400 : props.theme.AZURE500)};
+  }
+`;
+
+const ExampleUrl = styled.div`
+  word-break: break-all;
+  cursor: pointer;
+  color: ${props => props.theme.AZURE200};
+  font-size: 11px;
+`;
+
+const VECTOR_TILE_EXAMPLES = [
+  {
+    label: 'MVT',
+    name: 'USA Population',
+    url: 'https://4sq-studio-public.s3.us-west-2.amazonaws.com/vector-tile/cb_v2/{z}/{x}/{y}.pbf'
+  },
+  {
+    label: 'PMTiles',
+    name: 'FSQ Places',
+    url: 'https://fsq-os-places-us-east-1.s3.us-east-1.amazonaws.com/release/vector-tiles/latest/fsq-os-places.pmtiles'
+  },
+  {
+    label: 'PMTiles',
+    name: 'Railways',
+    url: 'https://4sq-studio-public.s3.us-west-2.amazonaws.com/pmtiles-test/161727fe-7952-4e57-aa05-850b3086b0b2.pmtiles'
+  }
+];
 
 export type VectorTilesetFormData = {
   name: string;
@@ -73,6 +127,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
   const [tileUrl, setTileUrl] = useState<string>('');
   const [metadataUrl, setMetadataUrl] = useState<string | null>('');
   const [initialFetchError, setInitialFetchError] = useState<Error | null>(null);
+  const [exampleTab, setExampleTab] = useState(0);
 
   const onTileNameChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,6 +174,14 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
     },
     [setTileUrl, tileName, setMetadataUrl, metadataUrl]
   );
+
+  const onExampleClick = useCallback((url: string, name: string) => {
+    const usePMTiles = isPMTilesUrl(url);
+    setTileUrl(url);
+    setTileName(name);
+    setInitialFetchError(null);
+    setMetadataUrl(usePMTiles ? url : getMetaUrl(url));
+  }, []);
 
   const process = useMemo(() => {
     return (value: PMTilesMetadata | TileJSON) =>
@@ -227,6 +290,39 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
           Optional, but recommended. Supports json, txt
         </TilesetInputDescription>
       </div>
+      {getApplicationConfig().showInlineTilesetExamples && (
+        <div>
+          <TilesetInputDescription>
+            For example, try a public vector tileset:
+          </TilesetInputDescription>
+          <ExampleUrlsContainer>
+            <ExampleTabs>
+              {VECTOR_TILE_EXAMPLES.map((ex, i) => (
+                <ExampleTab
+                  key={`${ex.label}-${ex.name}`}
+                  active={exampleTab === i}
+                  onClick={() => {
+                    setExampleTab(i);
+                    onExampleClick(ex.url, ex.name);
+                  }}
+                >
+                  {ex.name}
+                </ExampleTab>
+              ))}
+            </ExampleTabs>
+            <ExampleUrl
+              onClick={() =>
+                onExampleClick(
+                  VECTOR_TILE_EXAMPLES[exampleTab].url,
+                  VECTOR_TILE_EXAMPLES[exampleTab].name
+                )
+              }
+            >
+              {VECTOR_TILE_EXAMPLES[exampleTab].url}
+            </ExampleUrl>
+          </ExampleUrlsContainer>
+        </div>
+      )}
     </TilesetInputContainer>
   );
 };

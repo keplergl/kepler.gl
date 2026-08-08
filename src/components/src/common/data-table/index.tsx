@@ -44,7 +44,7 @@ const unpinnedClassList = {
 };
 
 type ContainerProps = {
-  hasCustomScrollBarStyle?: boolean;
+  $hasCustomScrollBarStyle?: boolean;
 };
 
 export const Container = styled.div<ContainerProps>`
@@ -59,7 +59,7 @@ export const Container = styled.div<ContainerProps>`
     outline: 0;
   }
   .body-grid {
-    ${props => props.hasCustomScrollBarStyle && props.theme.modalScrollBar}
+    ${props => props.$hasCustomScrollBarStyle && props.theme.modalScrollBar}
   }
 
   .cell {
@@ -349,7 +349,7 @@ export const TableSection = ({
                 height={headerGridProps.height + browserScrollBarWidth}
                 width={headerGridWidth}
                 scrollLeft={scrollLeft}
-                onScroll={onScroll}
+                onScroll={args => onScroll?.({...args, scrollTop: scrollTop ?? 0})}
               />
             </div>
             <div
@@ -615,7 +615,7 @@ function DataTableFactory(
         <Container
           className="data-table-container"
           ref={this.root}
-          hasCustomScrollBarStyle={hasCustomScrollBarStyle}
+          $hasCustomScrollBarStyle={hasCustomScrollBarStyle}
         >
           {Object.keys(cellSizeCache).length ? (
             <>

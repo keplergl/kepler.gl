@@ -23,11 +23,20 @@ export const SECTIONS = [
     description: 'A customizable geospatial toolbox to help make data-driven decisions.',
     icon: cdnUrl('icons/features.png')
   },
+  /*
   {
     id: 'studio',
     title: 'Take The Next Step',
     description: `Built on top of kepler.gl’s framework, Foursquare Studio is a free,
 powerful geospatial analytics and visualization tool, with new features and updates released every few weeks.`,
+    icon: fsqCdnUrl('fsqlogo.png'),
+    isDark: true
+  },*/
+  {
+    id: 'desktop',
+    title: 'Foursquare Spatial Desktop',
+    description:
+      'A native desktop app built on kepler.gl, DuckDB and SQLRooms for more power and fewer browser limitations.',
     icon: fsqCdnUrl('fsqlogo.png'),
     isDark: true
   },
@@ -71,7 +80,7 @@ export const HEADER_NAVS = [
     link: 'https://docs.kepler.gl/docs/user-guides'
   },
   {
-    text: 'Documentation',
+    text: 'Docs',
     link: 'https://docs.kepler.gl/docs/api-reference'
   },
   {
@@ -177,7 +186,7 @@ export const ECOSYSTEM = [
     description:
       'Built with Deck.gl, Kepler.gl utilizes WebGL to render large datasets quickly and efficiently.',
     image: fsqCdnUrl('ecosystem-jupyter.png'),
-    githubUrl: 'https://github.com/keplergl/kepler.gl/tree/master/bindings/kepler.gl-jupyter'
+    githubUrl: 'https://github.com/keplergl/kepler.gl/tree/master/bindings/python'
   },
   {
     title: 'Tableau',

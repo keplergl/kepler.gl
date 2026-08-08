@@ -29,7 +29,8 @@ const SliderWrapper = styled.div`
   display: flex;
   position: relative;
   flex-grow: 1;
-  margin: 0 24px;
+  margin: 0 4px;
+  padding: 0 6px;
 
   ${media.palm`
     margin: 0 ${SLIDER_MARGIN_PALM}px;
@@ -48,6 +49,8 @@ const StyledDomain = styled.div.attrs(props => ({
   color: ${props => props.theme.titleTextColor};
   font-weight: 400;
   font-size: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
 `;
 
 const PROGRESS_BAR_HEIGHT = 8;
@@ -89,10 +92,20 @@ function TimelineSliderFactory() {
       [isRanged, value]
     );
 
+    const [displayValue0, displayValue1]: [number, number] = useMemo(() => {
+      if (!domain) {
+        return [value0, value1];
+      }
+
+      return [isRanged ? clamp(domain, value0) : value0, clamp(domain, value1)];
+    }, [domain, isRanged, value0, value1]);
+
     const [onSlider0Change, onSlider1Change] = useMemo(() => {
       if (!domain) return [noop, noop];
       return [
-        isRanged ? (newValue: number) => onThrottleUpdate([clamp(domain, newValue), value1]) : noop,
+        isRanged
+          ? (newValue: number) => onThrottleUpdate([clamp(domain, newValue), value1])
+          : noop,
         isRanged
           ? (newValue: number) => onThrottleUpdate([value0, clamp(domain, newValue)])
           : (newValue: number) =>
@@ -142,8 +155,8 @@ function TimelineSliderFactory() {
             style={timelineSliderStyle}
             onSlider0Change={onSlider0Change}
             onSlider1Change={onSlider1Change}
-            value0={value0}
-            value1={value1}
+            value0={displayValue0}
+            value1={displayValue1}
             marks={marks}
           />
         </SliderWrapper>

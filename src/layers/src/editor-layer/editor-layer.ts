@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {EditableGeoJsonLayer} from '@nebula.gl/layers';
-import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
+import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
+import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core';
 import {
   DrawPolygonMode,
   TranslateMode,
   CompositeMode,
-  DrawRectangleMode
-} from '@nebula.gl/edit-modes';
+  GeoJsonEditMode
+} from '@deck.gl-community/editable-layers';
 import {PathStyleExtension} from '@deck.gl/extensions';
 
 import {EDITOR_LAYER_ID, EDITOR_MODES, EDITOR_LAYER_PICKING_RADIUS} from '@kepler.gl/constants';
@@ -18,21 +18,27 @@ import {generateHashId} from '@kepler.gl/common-utils';
 import {EDIT_TYPES} from './constants';
 import {LINE_STYLE, FEATURE_STYLE, EDIT_HANDLE_STYLE} from './feature-styles';
 import {ModifyModeExtended} from './modify-mode-extended';
+import {DrawRectangleModeExtended} from './draw-rectangle-mode-extended';
 import {isDrawingActive} from './editor-layer-utils';
 
-const DEFAULT_COMPOSITE_MODE = new CompositeMode([new TranslateMode(), new ModifyModeExtended()]);
+const DEFAULT_COMPOSITE_MODE = new CompositeMode([
+  new TranslateMode() as unknown as GeoJsonEditMode,
+  new ModifyModeExtended() as unknown as GeoJsonEditMode
+]);
 
 export type GetEditorLayerProps = {
   editorMenuActive: boolean;
   editor: Editor;
   onSetFeatures: (features: Feature[]) => any;
   setSelectedFeature: (feature: Feature | null, selectionContext?: FeatureSelectionContext) => any;
+  onApplyPolygonFilterAll?: (feature: Feature) => any;
   viewport: Viewport;
   featureCollection: {
     type: string;
     features: Feature[];
   };
   selectedFeatureIndexes: number[];
+  mapState?: {globe?: {enabled: boolean}; layerParameters?: Record<string, string | boolean>};
 };
 
 /**
@@ -51,9 +57,11 @@ export function getEditorLayer({
   editor,
   onSetFeatures,
   setSelectedFeature,
+  onApplyPolygonFilterAll,
   featureCollection,
   selectedFeatureIndexes,
-  viewport
+  viewport,
+  mapState
 }: GetEditorLayerProps): DeckLayer<DeckLayerProps> {
   const {mode: editorMode} = editor;
 
@@ -62,7 +70,7 @@ export function getEditorLayer({
     // @ts-ignore
     if (editorMode === EDITOR_MODES.DRAW_POLYGON) mode = DrawPolygonMode;
     // @ts-ignore
-    else if (editorMode === EDITOR_MODES.DRAW_RECTANGLE) mode = DrawRectangleMode;
+    else if (editorMode === EDITOR_MODES.DRAW_RECTANGLE) mode = DrawRectangleModeExtended;
   }
 
   // @ts-ignore
@@ -93,17 +101,23 @@ export function getEditorLayer({
           const {features: _features} = updatedData;
           if (_features.length) {
             const lastFeature = _features[_features.length - 1];
-            lastFeature.properties.isClosed = true;
+            if (lastFeature.properties) lastFeature.properties.isClosed = true;
             lastFeature.id = generateHashId(6);
-            onSetFeatures(updatedData.features);
-            setSelectedFeature(lastFeature);
+            onSetFeatures(updatedData.features as unknown as Feature[]);
+
+            const isRectangle = lastFeature.properties?.shape === 'Rectangle';
+            if (isRectangle && onApplyPolygonFilterAll) {
+              onApplyPolygonFilterAll(lastFeature as unknown as Feature);
+            } else {
+              setSelectedFeature(lastFeature as unknown as Feature);
+            }
           }
           break;
         }
         case EDIT_TYPES.ADD_POSITION:
         case EDIT_TYPES.MOVE_POSITION:
         case EDIT_TYPES.TRANSLATING:
-          onSetFeatures(updatedData.features);
+          onSetFeatures(updatedData.features as unknown as Feature[]);
           break;
         default:
           break;
@@ -160,6 +174,22 @@ export function getEditorLayer({
     getTentativeLineWidth: LINE_STYLE.getTentativeLineWidth,
     getTentativeFillColor: LINE_STYLE.getTentativeFillColor,
 
-    parameters: {}
+    // Globe mode needs explicit depth testing so the editor overlay is occluded
+    // by the sphere; in flat 2D/3D keep deck.gl's default (empty parameters) so
+    // this matches the pre-globe behavior exactly.
+    parameters: mapState?.globe?.enabled
+      ? {depthTest: true, ...(mapState?.layerParameters ?? {})}
+      : {},
+    shadowEnabled: false,
+    _subLayerProps: {
+      geojson: {shadowEnabled: false},
+      guides: {shadowEnabled: false},
+      tooltips: {
+        shadowEnabled: false,
+        _subLayerProps: {
+          characters: {shadowEnabled: false}
+        }
+      }
+    }
   });
 }

@@ -22,7 +22,7 @@ import LayerConfigGroupFactory, {
   ConfigGroupCollapsibleHeader
 } from './layer-config-group';
 
-import {LAYER_TEXT_CONFIGS} from '@kepler.gl/constants';
+import {LAYER_TEXT_CONFIGS, DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
 import {Field, LayerTextLabel, RGBAColor, RGBColor} from '@kepler.gl/types';
 import FieldSelectorFactory from '../../common/field-selector';
 import ColorSelectorFactory from './color-selector';
@@ -97,6 +97,17 @@ function TextLabelPanelFactory(
                 </SidePanelSection>
                 <SidePanelSection>
                   <PanelLabel>
+                    <FormattedMessage id="panel.text.fontWeight" />
+                  </PanelLabel>
+                  <RangeSlider
+                    {...LAYER_TEXT_CONFIGS.fontWeight}
+                    value1={tl.weight ?? DEFAULT_TEXT_LABEL.weight}
+                    isRanged={false}
+                    onChange={v => updateLayerTextLabel(idx, 'weight', v[1])}
+                  />
+                </SidePanelSection>
+                <SidePanelSection>
+                  <PanelLabel>
                     <FormattedMessage id="panel.text.fontColor" />
                   </PanelLabel>
                   <ColorSelector
@@ -151,7 +162,7 @@ function TextLabelPanelFactory(
                   <ColorSelector
                     colorSets={[
                       {
-                        selectedColor: tl.backgroundColor,
+                        selectedColor: tl.backgroundColor ?? [0, 0, 0, 255],
                         setColor: v => updateLayerTextLabel(idx, 'backgroundColor', v)
                       }
                     ]}

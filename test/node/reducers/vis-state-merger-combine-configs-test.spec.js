@@ -69,7 +69,7 @@ const TEST_CASES = [
         compareMode: true,
         compareType: 'relative'
       },
-      geocoder: {enabled: true},
+      geocoder: {enabled: true, limitSearch: false},
       brush: {enabled: true, size: 3},
       coordinate: {enabled: false}
     }
@@ -147,7 +147,7 @@ const TEST_CASES = [
         compareMode: true,
         compareType: 'relative'
       },
-      geocoder: {enabled: true},
+      geocoder: {enabled: true, limitSearch: false},
       brush: {enabled: true, size: 3},
       coordinate: {enabled: false}
     }

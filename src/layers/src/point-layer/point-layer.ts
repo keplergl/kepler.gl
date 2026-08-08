@@ -328,7 +328,7 @@ export default class PointLayer extends Layer {
   }
 
   static findDefaultLayerProps(dataset: KeplerTable) {
-    const {fieldPairs = [], type} = dataset;
+    const {fieldPairs = [], type, label} = dataset;
 
     const props: FindDefaultLayerProps[] = [];
 
@@ -346,7 +346,11 @@ export default class PointLayer extends Layer {
         isVisible?: boolean;
         columns?: PointLayerColumnsConfig;
       } = {
-        label: pair.defaultName || 'Point'
+        label:
+          // Skip the generic 'point' fallback from findPointFieldPairs and use the dataset label instead
+          pair.defaultName && pair.defaultName !== 'point'
+            ? pair.defaultName
+            : (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'Point'
       };
 
       // default layer color for begintrip and dropoff point
@@ -437,7 +441,7 @@ export default class PointLayer extends Layer {
         pushPointPosition(data, pos, index, neighbors);
       } else {
         // COLUMN_MODE_GEOJSON mode - point from geojson coordinates
-        const coordinates = this.dataToFeature[i];
+        const coordinates = this.dataToFeature[index];
         // if multi points
         if (coordinates && Array.isArray(coordinates[0])) {
           coordinates.forEach(coord => {
@@ -590,7 +594,8 @@ export default class PointLayer extends Layer {
         getPosition,
         parameters: {
           // circles will be flat on the map when the altitude column is not used
-          depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1
+          depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1,
+          ...(mapState?.layerParameters ?? {})
         },
         lineWidthUnits: 'pixels',
         updateTriggers,
@@ -639,10 +644,19 @@ export default class PointLayer extends Layer {
 
   hasHoveredObject(objectInfo: {index: number}) {
     if (
+      this.geoArrowVector &&
       isLayerHoveredFromArrow(objectInfo, this.id) &&
       objectInfo.index >= 0 &&
       this.dataContainer
     ) {
+      if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
+        const coordinates = this.dataToFeature[objectInfo.index];
+        if (!coordinates) return null;
+        const position = Array.isArray(coordinates[0])
+          ? (coordinates as number[][])[0]
+          : coordinates;
+        return {index: objectInfo.index, position};
+      }
       return {
         index: objectInfo.index,
         position: this.getPositionAccessor(this.dataContainer)(objectInfo)

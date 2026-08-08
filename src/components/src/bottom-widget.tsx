@@ -4,7 +4,7 @@
 import React, {forwardRef, useMemo, useCallback} from 'react';
 import styled, {withTheme, IStyledComponent} from 'styled-components';
 
-import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
 import {hasPortableWidth, isSideFilter, mergeFilterWithTimeline} from '@kepler.gl/utils';
 import {media, breakPointValues} from '@kepler.gl/styles';
 import {TimeRangeFilter} from '@kepler.gl/types';
@@ -19,7 +19,7 @@ import {BaseComponentProps} from './types';
 const maxWidth = 1080;
 
 export type BottomWidgetContainerProps = BaseComponentProps & {
-  hasPadding?: boolean;
+  $hasPadding?: boolean;
   width: number;
   ref: React.ForwardedRef<HTMLDivElement>;
 };
@@ -30,10 +30,10 @@ const BottomWidgetContainer: IStyledComponent<
 > = styled.div<BottomWidgetContainerProps>`
   display: flex;
   flex-direction: column;
-  padding-top: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingTop : 0)}px;
-  padding-right: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingRight : 0)}px;
-  padding-bottom: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingBottom : 0)}px;
-  padding-left: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingLeft : 0)}px;
+  padding-top: ${props => (props.$hasPadding ? props.theme.bottomWidgetPaddingTop : 0)}px;
+  padding-right: ${props => (props.$hasPadding ? props.theme.bottomWidgetPaddingRight : 0)}px;
+  padding-bottom: ${props => (props.$hasPadding ? props.theme.bottomWidgetPaddingBottom : 0)}px;
+  padding-left: ${props => (props.$hasPadding ? props.theme.bottomWidgetPaddingLeft : 0)}px;
   pointer-events: none !important; /* prevent padding from blocking input */
   & > * {
     /* all children should allow input */
@@ -76,6 +76,7 @@ export default function BottomWidgetFactory(
       datasets,
       filters,
       animationConfig,
+      toggleModal,
       visStateActions,
       containerW,
       uiState,
@@ -145,6 +146,8 @@ export default function BottomWidgetFactory(
       [filter, animationConfig]
     );
 
+    const exportAnimation = useCallback(() => toggleModal(EXPORT_VIDEO_ID), [toggleModal]);
+
     const onClose = useCallback(
       () => visStateActions.setFilterView(enlargedFilterIdx, FILTER_VIEW_TYPES.side),
       [visStateActions, enlargedFilterIdx]
@@ -166,7 +169,7 @@ export default function BottomWidgetFactory(
         width={Math.min(maxWidth, enlargedFilterWidth)}
         style={{marginRight: spaceForLegendWidth}}
         className="bottom-widget--container"
-        hasPadding={showAnimationControl || showTimeWidget}
+        $hasPadding={showAnimationControl || showTimeWidget}
         ref={rootRef}
       >
         {!isTimelineLinkedWithFilter ? (
@@ -179,6 +182,7 @@ export default function BottomWidgetFactory(
                 <LayerAnimationControl
                   updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
                   toggleAnimation={visStateActions.toggleLayerAnimation}
+                  exportAnimation={exportAnimation}
                   isAnimatable={!animatedFilter}
                   isAnimating={isAnimating}
                   resetAnimation={resetAnimation}
@@ -211,6 +215,7 @@ export default function BottomWidgetFactory(
                   setFilterAnimationWindow={visStateActions.setFilterAnimationWindow}
                   setFilterSyncTimelineMode={visStateActions.setTimeFilterSyncTimelineMode}
                   toggleAnimation={visStateActions.toggleFilterAnimation}
+                  exportAnimation={exportAnimation}
                   updateAnimationSpeed={visStateActions.updateFilterAnimationSpeed}
                   resetAnimation={resetAnimation}
                   isAnimatable={!animationConfig || !animationConfig.isAnimating}

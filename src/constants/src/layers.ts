@@ -26,6 +26,7 @@ export const PROPERTY_GROUPS = keyMirror({
   radius: null,
   height: null,
   angle: null,
+  scenegraph: null,
   // for heatmap aggregation
   cell: null,
   precision: null,
@@ -41,6 +42,7 @@ export const DEFAULT_TEXT_LABEL: LayerTextLabel = {
   field: null,
   color: [255, 255, 255],
   size: 18,
+  weight: 400,
   offset: [0, 0],
   anchor: 'start',
   alignment: 'center',
@@ -488,6 +490,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     type: 'boolean',
     defaultValue: true,
     label: 'layerVisConfigs.allowHover',
+    description: 'layerVisConfigs.allowHoverDescription',
     group: PROPERTY_GROUPS.interaction,
     property: 'allowHover'
   },
@@ -504,6 +507,48 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     label: 'layerVisConfigs.showHighlightColor',
     group: PROPERTY_GROUPS.interaction,
     property: 'showHighlightColor'
+  },
+  scenegraph: {
+    defaultValue: null,
+    type: 'input',
+    label: 'layerVisConfigs.scenegraph',
+    group: PROPERTY_GROUPS.scenegraph,
+    property: 'scenegraph'
+  },
+  scenegraphEnabled: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.scenegraphEnabled',
+    group: PROPERTY_GROUPS.scenegraph,
+    property: 'scenegraphEnabled'
+  },
+  scenegraphCustomModelUrl: {
+    defaultValue: '',
+    type: 'input',
+    label: 'layerVisConfigs.scenegraphCustomModelUrl',
+    group: PROPERTY_GROUPS.scenegraph,
+    property: 'scenegraphCustomModelUrl'
+  },
+  scenegraphColorEnabled: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.scenegraphColorEnabled',
+    group: PROPERTY_GROUPS.scenegraph,
+    property: 'scenegraphColorEnabled'
+  },
+  scenegraphUseTrailColor: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.scenegraphUseTrailColor',
+    group: PROPERTY_GROUPS.scenegraph,
+    property: 'scenegraphUseTrailColor'
+  },
+  scenegraphColor: {
+    defaultValue: null,
+    type: 'color-select',
+    label: 'layerVisConfigs.scenegraphColor',
+    group: PROPERTY_GROUPS.scenegraph,
+    property: 'scenegraphColor'
   }
 };
 
@@ -515,6 +560,15 @@ export const LAYER_TEXT_CONFIGS: LayerTextConfig = {
     step: 1,
     isRanged: false,
     label: 'Font size',
+    showInput: true
+  },
+  fontWeight: {
+    type: 'number',
+    range: [100, 900],
+    value0: 100,
+    step: 100,
+    isRanged: false,
+    label: 'Font weight',
     showInput: true
   },
   outlineWidth: {
@@ -553,16 +607,23 @@ export const LAYER_TYPES = keyMirror({
   '3D': null,
   trip: null,
   s2: null,
+  flow: null,
   vectorTile: null,
   rasterTile: null,
-  wms: null
+  wms: null,
+  tile3d: null,
+  bitmap: null
 });
 
 export const EDITOR_AVAILABLE_LAYERS: string[] = [
   LAYER_TYPES.point,
+  LAYER_TYPES.icon,
+  LAYER_TYPES.grid,
   LAYER_TYPES.hexagon,
+  LAYER_TYPES.cluster,
   LAYER_TYPES.arc,
   LAYER_TYPES.line,
   LAYER_TYPES.hexagonId,
-  LAYER_TYPES.geojson
+  LAYER_TYPES.geojson,
+  LAYER_TYPES.heatmap
 ];

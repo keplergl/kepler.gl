@@ -33,8 +33,8 @@ const StyledImg = styled.img`
   display: block;
   position: absolute;
   top: 0;
-  transition: opacity ${props => props.fadeDuration}ms;
-  opacity: ${props => (props.isVisible ? '1.0' : '0.0')};
+  transition: opacity ${props => props.$fadeDuration}ms;
+  opacity: ${props => (props.$isVisible ? '1.0' : '0.0')};
 `;
 
 export default class SlideShow extends PureComponent {
@@ -82,8 +82,8 @@ export default class SlideShow extends PureComponent {
           <StyledImg
             key={src}
             src={src}
-            fadeDuration={fadeDuration}
-            isVisible={i <= this.state.currentIndex}
+            $fadeDuration={fadeDuration}
+            $isVisible={i <= this.state.currentIndex}
           />
         ))}
       </StyledImgContainer>

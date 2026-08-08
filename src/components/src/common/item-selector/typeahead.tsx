@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {Component, createRef, ElementType, KeyboardEventHandler} from 'react';
-import {polyfill} from 'react-lifecycles-compat';
 import fuzzy from 'fuzzy';
 import classNames from 'classnames';
 import styled, {IStyledComponent} from 'styled-components';
@@ -24,7 +23,7 @@ const DEFAULT_CLASS = 'typeahead';
 
 export type TypeaheadWrapperProps = BaseComponentProps & {
   light?: boolean;
-  ref: React.RefObject<HTMLDivElement>;
+  ref: React.RefObject<HTMLDivElement | null>;
 };
 
 const TypeaheadWrapper: IStyledComponent<'web', TypeaheadWrapperProps> = styled.div.withConfig({
@@ -52,7 +51,7 @@ export type TypeaheadInputProps = BaseComponentProps & {
   value?: string;
   type: string;
   disabled?: boolean;
-  ref: React.RefObject<HTMLDivElement>;
+  ref: React.RefObject<HTMLInputElement | null>;
   placeholder?: string | undefined;
 };
 
@@ -272,8 +271,8 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     }
   }
 
-  root = createRef<HTMLDivElement>();
-  entry = createRef<HTMLInputElement>();
+  root = createRef<HTMLDivElement | null>();
+  entry = createRef<HTMLInputElement | null>();
 
   focus = () => {
     if (this.entry.current) {
@@ -545,7 +544,5 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     );
   }
 }
-
-polyfill(Typeahead);
 
 export default Typeahead;

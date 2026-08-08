@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import {polyfill} from 'react-lifecycles-compat';
+import React, {useRef, useState, useEffect, useCallback} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
-import {Map, MapboxMap, MapRef} from 'react-map-gl';
+import {Map as MapboxLegacyMap, MapInstance, MapRef} from 'react-map-gl/mapbox-legacy';
+import {Map as MaplibreMap} from '@vis.gl/react-maplibre';
 import {
   StyledModalContent,
   InputLight,
@@ -19,7 +19,7 @@ import {media} from '@kepler.gl/styles';
 import {getApplicationConfig, getBaseMapLibrary, transformRequest} from '@kepler.gl/utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {NO_BASEMAP_ICON} from '@kepler.gl/constants';
+import {NO_BASEMAP_ICON, MAP_LIB_OPTIONS} from '@kepler.gl/constants';
 import {InputStyle, MapState} from '@kepler.gl/types';
 import {ActionHandler, inputMapStyle, loadCustomMapStyle} from '@kepler.gl/actions';
 
@@ -90,10 +90,6 @@ const InlineLink = styled.a`
   }
 `;
 
-const nop = () => {
-  return;
-};
-
 interface AddMapStyleModalProps {
   inputMapStyle: ActionHandler<typeof inputMapStyle>;
   inputStyle: InputStyle;
@@ -111,215 +107,244 @@ interface AddMapStyleModalProps {
 }
 
 function AddMapStyleModalFactory() {
-  class AddMapStyleModal extends Component<AddMapStyleModalProps> {
-    state = {
-      reRenderKey: 0,
-      previousToken: null
-    };
+  function AddMapStyleModal({
+    inputMapStyle: inputMapStyleAction,
+    inputStyle,
+    loadCustomMapStyle: loadCustomMapStyleAction,
+    mapboxApiAccessToken,
+    mapboxApiUrl,
+    transformRequest: customTransformRequest,
+    mapState,
+    intl
+  }: AddMapStyleModalProps) {
+    const [reRenderKey, setReRenderKey] = useState(0);
+    const [previousToken, setPreviousToken] = useState<string | null>(null);
+    const mapRef = useRef<MapInstance | null>(null);
+    const mapListenersRef = useRef<{
+      onStyleLoad?: () => void;
+      onError?: () => void;
+      pendingOnIdle?: (() => void) | null;
+    }>({});
+    const loadCustomMapStyleRef = useRef(loadCustomMapStyleAction);
+    loadCustomMapStyleRef.current = loadCustomMapStyleAction;
 
-    static getDerivedStateFromProps(props, state) {
-      if (
-        props.inputStyle &&
-        props.inputStyle.accessToken &&
-        props.inputStyle.accessToken !== state.previousToken
-      ) {
-        // toke has changed
-        // ReactMapGl doesn't re-create map when token has changed
-        // here we force the map to update
-
-        return {
-          reRenderKey: state.reRenderKey + 1,
-          previousToken: props.inputStyle.accessToken
-        };
+    useEffect(() => {
+      if (inputStyle?.accessToken && inputStyle.accessToken !== previousToken) {
+        setReRenderKey(prev => prev + 1);
+        setPreviousToken(inputStyle.accessToken);
       }
+    }, [inputStyle?.accessToken, previousToken]);
 
-      return null;
-    }
-
-    _map: MapboxMap | undefined | null;
-
-    _setMapRef = (mapRef: MapRef) => {
-      // Handle change of the basemap library
-      if (this._map && mapRef) {
-        const map = mapRef.getMap();
-        if (map && this._map !== map) {
-          this._map.off('style.load', nop);
-          this._map.off('error', nop);
-          this._map = null;
+    const setMapRefCallback = useCallback((mapRefInstance: MapRef | null) => {
+      // Remove listeners from the previous map instance
+      if (mapRef.current && mapRefInstance) {
+        const map = mapRefInstance.getMap();
+        if (map && mapRef.current !== map) {
+          if (mapListenersRef.current.onStyleLoad) {
+            mapRef.current.off('style.load', mapListenersRef.current.onStyleLoad);
+          }
+          if (mapListenersRef.current.onError) {
+            mapRef.current.off('error', mapListenersRef.current.onError);
+          }
+          if (mapListenersRef.current.pendingOnIdle) {
+            mapRef.current.off('idle', mapListenersRef.current.pendingOnIdle);
+          }
+          mapListenersRef.current = {};
+          mapRef.current = null;
         }
       }
 
-      const map = mapRef && mapRef.getMap();
-      if (map && this._map !== map) {
-        this._map = map;
+      const map = mapRefInstance && mapRefInstance.getMap();
+      if (map && mapRef.current !== map) {
+        mapRef.current = map;
 
-        map.on('style.load', () => {
+        const onStyleLoad = () => {
+          // Cancel any previous idle capture that hasn't fired yet.
+          if (mapListenersRef.current.pendingOnIdle) {
+            map.off('idle', mapListenersRef.current.pendingOnIdle);
+            mapListenersRef.current.pendingOnIdle = null;
+          }
+
           const style = map.getStyle();
-          this.loadMapStyleJson(style);
-        });
+          loadCustomMapStyleRef.current({style, error: false});
 
-        map.on('error', () => {
-          this.loadMapStyleError();
-        });
+          // Capture a thumbnail once the map finishes its first full render
+          // (tiles loaded + painted).  We use a one-shot `idle` listener so we
+          // get a real screenshot instead of a blank canvas.
+          // preserveDrawingBuffer is set to true on this map instance, so
+          // getCanvas().toDataURL() is safe to call synchronously here.
+          const onIdle = () => {
+            mapListenersRef.current.pendingOnIdle = null;
+            map.off('idle', onIdle);
+            try {
+              const icon = map.getCanvas().toDataURL('image/png');
+              loadCustomMapStyleRef.current({icon});
+            } catch {
+              // toDataURL can fail if the canvas is cross-origin tainted; in
+              // that case the no-icon placeholder set by inputMapStyleAction
+              // stays and is good enough.
+            }
+          };
+          mapListenersRef.current.pendingOnIdle = onIdle;
+          map.on('idle', onIdle);
+        };
+
+        const onError = () => {
+          loadCustomMapStyleRef.current({error: true});
+        };
+
+        mapListenersRef.current.onStyleLoad = onStyleLoad;
+        mapListenersRef.current.onError = onError;
+
+        map.on('style.load', onStyleLoad);
+        map.on('error', onError);
       }
+    }, []);
+
+    const baseMapLibraryName = getBaseMapLibrary(inputStyle);
+    const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
+
+    const mapboxApiAccessTokenToUse = inputStyle.accessToken || mapboxApiAccessToken;
+    const mapProps: Record<string, any> = {
+      ...mapState,
+      mapboxAccessToken: mapboxApiAccessTokenToUse,
+      preserveDrawingBuffer: true,
+      transformRequest:
+        customTransformRequest?.(mapboxApiAccessTokenToUse) ||
+        transformRequest(mapboxApiAccessTokenToUse)
     };
 
-    loadMapStyleJson = style => {
-      this.props.loadCustomMapStyle({style, error: false});
-    };
-
-    loadMapStyleError = () => {
-      this.props.loadCustomMapStyle({error: true});
-    };
-
-    render() {
-      const {inputStyle, mapState, intl} = this.props;
-
-      const baseMapLibraryName = getBaseMapLibrary(inputStyle);
-      const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
-
-      const mapboxApiAccessToken = inputStyle.accessToken || this.props.mapboxApiAccessToken;
-      const mapProps = {
-        ...mapState,
-        // TODO baseApiUrl should be taken into account in transformRequest as we use dynamic mapLib import
-        // baseApiUrl: mapboxApiUrl,
-        mapboxAccessToken: mapboxApiAccessToken,
-        mapLib: baseMapLibraryConfig.getMapLib(),
-        preserveDrawingBuffer: true,
-        transformRequest:
-          this.props.transformRequest?.(mapboxApiAccessToken) ||
-          transformRequest(mapboxApiAccessToken)
-      };
-
-      return (
-        <div className="add-map-style-modal">
-          <StyledModalContent>
-            <StyledModalVerticalPanel>
-              <StyledModalSection>
-                <div className="modal-section-title">
-                  <FormattedMessage id={'modal.addStyle.pasteTitle'} />
-                </div>
-                <div className="modal-section-subtitle">
-                  {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle0'})}
-                  <InlineLink
-                    target="_blank"
-                    href="https://www.mapbox.com/help/studio-manual-publish/#style-url"
-                  >
-                    {' '}
-                    {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle2'})}
-                  </InlineLink>{' '}
-                  {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle3'})}
-                  <InlineLink
-                    target="_blank"
-                    href="https://docs.mapbox.com/mapbox-gl-js/style-spec"
-                  >
-                    {' '}
-                    {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle4'})}
-                  </InlineLink>
-                </div>
-                <InputLight
-                  type="text"
-                  value={inputStyle.url || ''}
-                  onChange={({target: {value}}) =>
-                    this.props.inputMapStyle({
-                      url: value,
-                      id: 'Custom Style',
-                      icon: `${getApplicationConfig().cdnUrl}/${NO_BASEMAP_ICON}`
-                    })
-                  }
-                  placeholder="e.g. https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
-                />
-              </StyledModalSection>
-
-              <StyledModalSection>
-                <div className="modal-section-title">
-                  <FormattedMessage id={'modal.addStyle.publishTitle'} />
-                </div>
-                <div className="modal-section-subtitle">
-                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle1'})}
-                  <InlineLink target="_blank" href="https://www.mapbox.com/studio/styles/">
-                    {' '}
-                    mapbox
-                  </InlineLink>{' '}
-                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle2'})}
-                  <InlineLink
-                    target="_blank"
-                    href="https://www.mapbox.com/help/studio-manual-publish/"
-                  >
-                    {' '}
-                    {intl.formatMessage({id: 'modal.addStyle.publishSubtitle3'})}
-                  </InlineLink>{' '}
-                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle4'})}
-                </div>
-
-                <div className="modal-section-subtitle">
-                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle5'})}
-                  <InlineLink
-                    target="_blank"
-                    href="https://www.mapbox.com/help/how-access-tokens-work/"
-                  >
-                    {' '}
-                    {intl.formatMessage({id: 'modal.addStyle.publishSubtitle6'})}
-                  </InlineLink>{' '}
-                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle7'})}
-                </div>
-                <InputLight
-                  type="text"
-                  value={inputStyle.accessToken || ''}
-                  onChange={({target: {value}}) => this.props.inputMapStyle({accessToken: value})}
-                  placeholder={intl.formatMessage({id: 'modal.addStyle.exampleToken'})}
-                />
-              </StyledModalSection>
-
-              <StyledModalSection>
-                <div className="modal-section-title">
-                  <FormattedMessage id={'modal.addStyle.namingTitle'} />
-                </div>
-                <InputLight
-                  type="text"
-                  value={inputStyle.label || ''}
-                  onChange={({target: {value}}) => this.props.inputMapStyle({label: value})}
-                  placeholder="Name your style"
-                />
-              </StyledModalSection>
-            </StyledModalVerticalPanel>
-            <PreviewMap>
-              <div
-                className={classnames('preview-title', {
-                  error: inputStyle.error
-                })}
-              >
-                {inputStyle.error
-                  ? ErrorMsg.styleError
-                  : (inputStyle.style && inputStyle.style.name) || ''}
-              </div>
-              <StyledPreviewImage className="preview-image">
-                {/** Note, we need the Map to render with errored params to get style.error messages */}
-                {!inputStyle.isValid ? (
-                  <div className="preview-image-spinner" />
-                ) : (
-                  <StyledMapContainer>
-                    <Map
-                      {...mapProps}
-                      ref={this._setMapRef}
-                      key={`${baseMapLibraryName}-${this.state.reRenderKey}-${inputStyle.url}-${mapboxApiAccessToken}`}
-                      style={{
-                        width: MapW,
-                        height: MapH
-                      }}
-                      mapStyle={inputStyle.url === null ? undefined : inputStyle.url}
-                    />
-                  </StyledMapContainer>
-                )}
-              </StyledPreviewImage>
-            </PreviewMap>
-          </StyledModalContent>
-        </div>
-      );
+    if (baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX) {
+      mapProps.mapLib = baseMapLibraryConfig.getMapLib();
     }
+
+    const ResolvedMapComponent =
+      baseMapLibraryName === MAP_LIB_OPTIONS.MAPBOX ? MapboxLegacyMap : MaplibreMap;
+
+    return (
+      <div className="add-map-style-modal">
+        <StyledModalContent>
+          <StyledModalVerticalPanel>
+            <StyledModalSection>
+              <div className="modal-section-title">
+                <FormattedMessage id={'modal.addStyle.pasteTitle'} />
+              </div>
+              <div className="modal-section-subtitle">
+                {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle0'})}
+                <InlineLink
+                  target="_blank"
+                  href="https://www.mapbox.com/help/studio-manual-publish/#style-url"
+                >
+                  {' '}
+                  {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle2'})}
+                </InlineLink>{' '}
+                {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle3'})}
+                <InlineLink target="_blank" href="https://docs.mapbox.com/mapbox-gl-js/style-spec">
+                  {' '}
+                  {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle4'})}
+                </InlineLink>
+              </div>
+              <InputLight
+                type="text"
+                value={inputStyle.url || ''}
+                onChange={({target: {value}}) =>
+                  inputMapStyleAction({
+                    url: value,
+                    id: 'Custom Style',
+                    icon: `${getApplicationConfig().cdnUrl}/${NO_BASEMAP_ICON}`
+                  })
+                }
+                placeholder="e.g. https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+              />
+            </StyledModalSection>
+
+            <StyledModalSection>
+              <div className="modal-section-title">
+                <FormattedMessage id={'modal.addStyle.publishTitle'} />
+              </div>
+              <div className="modal-section-subtitle">
+                {intl.formatMessage({id: 'modal.addStyle.publishSubtitle1'})}
+                <InlineLink target="_blank" href="https://www.mapbox.com/studio/styles/">
+                  {' '}
+                  mapbox
+                </InlineLink>{' '}
+                {intl.formatMessage({id: 'modal.addStyle.publishSubtitle2'})}
+                <InlineLink
+                  target="_blank"
+                  href="https://www.mapbox.com/help/studio-manual-publish/"
+                >
+                  {' '}
+                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle3'})}
+                </InlineLink>{' '}
+                {intl.formatMessage({id: 'modal.addStyle.publishSubtitle4'})}
+              </div>
+
+              <div className="modal-section-subtitle">
+                {intl.formatMessage({id: 'modal.addStyle.publishSubtitle5'})}
+                <InlineLink
+                  target="_blank"
+                  href="https://www.mapbox.com/help/how-access-tokens-work/"
+                >
+                  {' '}
+                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle6'})}
+                </InlineLink>{' '}
+                {intl.formatMessage({id: 'modal.addStyle.publishSubtitle7'})}
+              </div>
+              <InputLight
+                type="text"
+                value={inputStyle.accessToken || ''}
+                onChange={({target: {value}}) => inputMapStyleAction({accessToken: value})}
+                placeholder={intl.formatMessage({id: 'modal.addStyle.exampleToken'})}
+              />
+            </StyledModalSection>
+
+            <StyledModalSection>
+              <div className="modal-section-title">
+                <FormattedMessage id={'modal.addStyle.namingTitle'} />
+              </div>
+              <InputLight
+                type="text"
+                value={inputStyle.label || ''}
+                onChange={({target: {value}}) => inputMapStyleAction({label: value})}
+                placeholder="Name your style"
+              />
+            </StyledModalSection>
+          </StyledModalVerticalPanel>
+          <PreviewMap>
+            <div
+              className={classnames('preview-title', {
+                error: inputStyle.error
+              })}
+            >
+              {inputStyle.error
+                ? ErrorMsg.styleError
+                : (inputStyle.style && inputStyle.style.name) || ''}
+            </div>
+            <StyledPreviewImage className="preview-image">
+              {!inputStyle.isValid ? (
+                <div className="preview-image-spinner" />
+              ) : (
+                <StyledMapContainer>
+                  <ResolvedMapComponent
+                    {...mapProps}
+                    ref={setMapRefCallback as any}
+                    key={`${baseMapLibraryName}-${reRenderKey}-${inputStyle.url}-${mapboxApiAccessTokenToUse}`}
+                    style={{
+                      width: MapW,
+                      height: MapH
+                    }}
+                    mapStyle={inputStyle.url === null ? undefined : inputStyle.url}
+                  />
+                </StyledMapContainer>
+              )}
+            </StyledPreviewImage>
+          </PreviewMap>
+        </StyledModalContent>
+      </div>
+    );
   }
 
-  return injectIntl(polyfill(AddMapStyleModal));
+  return injectIntl(AddMapStyleModal);
 }
 
 export default AddMapStyleModalFactory;

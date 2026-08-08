@@ -403,7 +403,8 @@ export const savedStateV0 = {
               filled: true,
               extruded: false,
               wireframe: false,
-              'hi-precision': false
+              'hi-precision': false,
+              allowHover: true
             }
           }
         ],
@@ -901,7 +902,7 @@ export const mergedFilters = [
       interval: '5-second',
       defaultTimeFormat: 'L  LTS',
       type: 'histogram',
-      aggregation: 'sum'
+      aggregation: 'average'
     },
     yAxis: null,
     domain: [1453770124000, 1453770810000],
@@ -1237,6 +1238,7 @@ mergedLayer3.config = {
   dataId: '9h10t7fyb',
   label: 'begintrip_hex',
   color: [241, 92, 23],
+  columnMode: 'points',
   columns: {
     lat: {
       value: 'begintrip_lat',
@@ -1414,7 +1416,8 @@ mergedLayer4.config = {
     filled: true,
     enable3d: false,
     wireframe: false,
-    strokeOpacity: 0.8
+    strokeOpacity: 0.8,
+    allowHover: true
   },
   animation: {enabled: false}
 };

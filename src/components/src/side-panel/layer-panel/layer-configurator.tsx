@@ -3,11 +3,11 @@
 
 /* eslint-disable complexity */
 import {FormattedMessage} from '@kepler.gl/localization';
-import React, {Component, Fragment} from 'react';
+import React, {Component, Fragment, useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
 
 import ItemSelector from '../../common/item-selector/item-selector';
-import {Input, PanelLabel, SidePanelSection} from '../../common/styled-components';
+import {Input, InputLight, PanelLabel, PanelLabelWrapper, SidePanelSection} from '../../common/styled-components';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
 import AggrScaleSelectorFactory from './aggr-scale-selector';
@@ -25,17 +25,31 @@ import LayerTypeSelectorFactory from './layer-type-selector';
 import TextLabelPanelFactory from './text-label-panel';
 import VisConfigSliderFactory from './vis-config-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
+import ScenegraphModelSelectorFactory, {
+  ScenegraphCustomModelUrlInput
+} from './scenegraph-model-selector';
 
 import RasterTileLayerConfiguratorFactory from './raster-tile-layer-configurator';
 import VectorTileLayerConfiguratorFactory from './vector-tile-layer-configurator';
 
 import {ActionHandler, toggleModal} from '@kepler.gl/actions';
-import {AGGREGATION_TYPE_OPTIONS, LAYER_TYPES} from '@kepler.gl/constants';
-import {AggregationLayer, Layer, LayerBaseConfig, VisualChannel} from '@kepler.gl/layers';
+import {
+  AGGREGATION_TYPE_OPTIONS,
+  LAYER_TYPES,
+  CUSTOM_SCENEGRAPH_MODEL_ID,
+  BitmapDatasetMetadata
+} from '@kepler.gl/constants';
+import {AggregationLayer, Layer, LayerBaseConfig, VisualChannel, COLUMN_MODE_GEOJSON} from '@kepler.gl/layers';
 
 import {matchDatasetType, Datasets} from '@kepler.gl/table';
 import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
+
+const FLOW_RENDERING_MODE_LABELS: Record<string, string> = {
+  straight: 'Straight',
+  curved: 'Curved',
+  'animated-straight': 'Animated'
+};
 
 type LayerConfiguratorProps = {
   layer: Layer;
@@ -86,7 +100,266 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
   className: 'layer-panel__config__visualC-config'
 })`
   margin-top: 12px;
+
+  .bitmap-bounds-sliders .kg-range-slider__input {
+    width: 80px;
+  }
 `;
+
+const BitmapDropZone = styled.div<{$isDragging: boolean}>`
+  border: 2px dashed ${props => (props.$isDragging ? props.theme.activeColor : props.theme.borderColor)};
+  border-radius: 4px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  color: ${props => props.theme.textColorHl};
+  font-size: 11px;
+  transition: border-color 0.2s;
+  margin-top: 8px;
+
+  &:hover {
+    border-color: ${props => props.theme.activeColor};
+  }
+`;
+
+const BitmapDropZoneWrapper = styled.div`
+  position: relative;
+`;
+
+const BitmapClearButton = styled.button`
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: ${props => props.theme.panelBackground};
+  border: 2px solid ${props => props.theme.borderColor};
+  border-radius: 50%;
+  color: ${props => props.theme.textColorHl};
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 1;
+
+  &:hover {
+    border-color: ${props => props.theme.activeColor};
+  }
+`;
+
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/tiff'];
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+
+type BitmapImageSourceProps = {
+  dataset: any;
+  onChange: (v: Record<string, any>) => void;
+};
+
+const BitmapImageSourceSection: React.FC<BitmapImageSourceProps> = ({dataset, onChange}) => {
+  const metadata = (dataset?.metadata || {}) as BitmapDatasetMetadata;
+  const [url, setUrl] = useState(metadata.isDataUri ? '' : metadata.imageUrl || '');
+  const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const updateImage = useCallback(
+    (imageUrl: string, isDataUri: boolean) => {
+      if (dataset?.metadata) {
+        (dataset.metadata as BitmapDatasetMetadata).imageUrl = imageUrl;
+        (dataset.metadata as BitmapDatasetMetadata).isDataUri = isDataUri;
+      }
+      // Force a layer re-render by bumping a no-op visConfig change
+      onChange({_imageTs: Date.now()});
+    },
+    [dataset, onChange]
+  );
+
+  const onUrlChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setUrl(e.target.value);
+      setError(null);
+    },
+    []
+  );
+
+  const onUrlBlur = useCallback(() => {
+    if (url) {
+      updateImage(url, false);
+    }
+  }, [url, updateImage]);
+
+  const handleFile = useCallback(
+    (file: File) => {
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        setError('Unsupported format. Use PNG, JPEG, GIF, WebP, or TIFF.');
+        return;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        setError('Image too large (max 10MB).');
+        return;
+      }
+      setError(null);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUri = reader.result as string;
+        setUrl('');
+        updateImage(dataUri, true);
+      };
+      reader.onerror = () => setError('Failed to read file.');
+      reader.readAsDataURL(file);
+    },
+    [updateImage]
+  );
+
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) handleFile(files[0]);
+    },
+    [handleFile]
+  );
+
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const onDragLeave = useCallback(() => setIsDragging(false), []);
+
+  const onDropZoneClick = useCallback(() => fileInputRef.current?.click(), []);
+
+  const onFileInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files && files.length > 0) handleFile(files[0]);
+    },
+    [handleFile]
+  );
+
+  const isCurrentDataUri = metadata.isDataUri;
+
+  const onClearLocal = useCallback(() => {
+    if (dataset?.metadata) {
+      (dataset.metadata as BitmapDatasetMetadata).imageUrl = '';
+      (dataset.metadata as BitmapDatasetMetadata).isDataUri = false;
+    }
+    setUrl('');
+    setError(null);
+    onChange({_imageTs: Date.now()});
+  }, [dataset, onChange]);
+
+  return (
+    <div>
+      <PanelLabel>
+        <FormattedMessage id="layerVisConfigs.imageUrl" />
+      </PanelLabel>
+      <InputLight
+        type="text"
+        placeholder="Image URL (PNG, JPEG, etc.)"
+        value={url}
+        onChange={onUrlChange}
+        onBlur={onUrlBlur}
+        disabled={isCurrentDataUri}
+      />
+      <BitmapDropZoneWrapper>
+        {isCurrentDataUri && (
+          <BitmapClearButton onClick={onClearLocal} title="Clear image">✕</BitmapClearButton>
+        )}
+        <BitmapDropZone
+          $isDragging={isDragging}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onClick={onDropZoneClick}
+        >
+          {isCurrentDataUri ? 'Local image loaded. Drop another to replace.' : 'Drop image here or click to select'}
+        </BitmapDropZone>
+      </BitmapDropZoneWrapper>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={ACCEPTED_IMAGE_TYPES.join(',')}
+        style={{display: 'none'}}
+        onChange={onFileInputChange}
+      />
+      {error && <div style={{color: '#ff5a5a', fontSize: '11px', marginTop: '4px'}}>{error}</div>}
+    </div>
+  );
+};
+
+const AlignModeContainer = styled.div`
+  padding: 8px 0;
+  font-size: 11px;
+  color: ${props => props.theme.textColor};
+`;
+
+const AlignModeStatus = styled.div<{$highlight?: boolean}>`
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: ${props => props.$highlight ? props.theme.panelBackgroundHover : 'transparent'};
+  margin-bottom: 6px;
+  line-height: 1.4;
+`;
+
+const AlignModeResetButton = styled.button`
+  background: ${props => props.theme.secondaryBtnBgd};
+  color: ${props => props.theme.secondaryBtnColor};
+  border: 1px solid ${props => props.theme.secondaryBtnBgd};
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  margin-top: 4px;
+  &:hover {
+    background: ${props => props.theme.secondaryBtnBgdHover};
+  }
+`;
+
+const AlignPointCount = styled.span`
+  font-weight: 600;
+  color: ${props => props.theme.activeColor};
+`;
+
+type BitmapAlignModeUIProps = {
+  layer: any;
+  onChange: (v: Record<string, any>) => void;
+};
+
+const BitmapAlignModeUI: React.FC<BitmapAlignModeUIProps> = ({layer, onChange}) => {
+  const pointCount = layer.alignControlPoints?.length || 0;
+  const waitingForMap = layer.alignWaitingForMap;
+
+  const onReset = useCallback(() => {
+    layer.resetAlignControlPoints();
+    onChange({_alignTs: Date.now()});
+  }, [layer, onChange]);
+
+  return (
+    <AlignModeContainer>
+      {waitingForMap ? (
+        <AlignModeStatus $highlight>
+          Now click the <strong>same point on the map</strong> (where it should be).
+        </AlignModeStatus>
+      ) : (
+        <AlignModeStatus $highlight>
+          Click a <strong>recognizable point on the image</strong>.
+        </AlignModeStatus>
+      )}
+      <div style={{marginTop: '4px'}}>
+        <AlignPointCount>{pointCount}</AlignPointCount> point pair{pointCount !== 1 ? 's' : ''} set
+        {pointCount >= 2 && ' — bounds auto-updated'}
+      </div>
+      {pointCount > 0 && (
+        <AlignModeResetButton onClick={onReset}>Reset Points</AlignModeResetButton>
+      )}
+    </AlignModeContainer>
+  );
+};
 
 export const getLayerFields = (datasets: Datasets, layer: Layer) =>
   datasets[layer.config?.dataId || ''] ? datasets[layer.config.dataId].fields : [];
@@ -99,7 +372,8 @@ export const getLayerConfiguratorProps = (props: LayerConfiguratorProps) => ({
   layer: props.layer,
   fields: getLayerFields(props.datasets, props.layer),
   onChange: props.updateLayerConfig,
-  setColorUI: props.updateLayerColorUI
+  setColorUI: props.updateLayerColorUI,
+  setLayerTextLabel: props.updateLayerTextLabel
 });
 
 export const getVisConfiguratorProps = (props: LayerConfiguratorProps) => ({
@@ -131,7 +405,8 @@ LayerConfiguratorFactory.deps = [
   ArcLayerColorSelectorFactory,
   AggrScaleSelectorFactory,
   VectorTileLayerConfiguratorFactory,
-  RasterTileLayerConfiguratorFactory
+  RasterTileLayerConfiguratorFactory,
+  ScenegraphModelSelectorFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -148,7 +423,8 @@ export default function LayerConfiguratorFactory(
   ArcLayerColorSelector: ReturnType<typeof ArcLayerColorSelectorFactory>,
   AggrScaleSelector: ReturnType<typeof AggrScaleSelectorFactory>,
   VectorTileLayerConfigurator: ReturnType<typeof VectorTileLayerConfiguratorFactory>,
-  RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>
+  RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>,
+  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
@@ -319,6 +595,13 @@ export default function LayerConfiguratorFactory(
     }
 
     _renderHeatmapLayerConfig({layer, visConfiguratorProps, layerChannelConfigProps}) {
+      const {visConfig} = layer.config;
+      const aggregationOptions = (layer.visConfigSettings.aggregation?.options || []).map(key => ({
+        id: key,
+        label: key.charAt(0) + key.slice(1).toLowerCase()
+      }));
+      const selectedAggregation = aggregationOptions.find(({id}) => id === visConfig.aggregation);
+
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
@@ -336,12 +619,34 @@ export default function LayerConfiguratorFactory(
               label={false}
             />
           </LayerConfigGroup>
+          {/* Intensity & Threshold */}
+          <LayerConfigGroup label={'layer.heatmap'}>
+            <VisConfigSlider {...layer.visConfigSettings.intensity} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.threshold} {...visConfiguratorProps} />
+          </LayerConfigGroup>
           {/* Weight */}
           <LayerConfigGroup label={'layer.weight'}>
             <ChannelByValueSelector
               channel={layer.visualChannels.weight}
               {...layerChannelConfigProps}
             />
+          </LayerConfigGroup>
+          {/* Aggregation */}
+          <LayerConfigGroup label={'layer.aggregation'}>
+            <SidePanelSection>
+              <PanelLabel>
+                <FormattedMessage id={'layerVisConfigs.weightAggregation'} />
+              </PanelLabel>
+              <ItemSelector
+                selectedItems={selectedAggregation}
+                options={aggregationOptions}
+                displayOption="label"
+                getOptionValue="id"
+                multiSelect={false}
+                searchable={false}
+                onChange={value => visConfiguratorProps.onChange({aggregation: value})}
+              />
+            </SidePanelSection>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );
@@ -662,6 +967,15 @@ export default function LayerConfiguratorFactory(
         meta: {featureTypes = {}}
       } = layer;
 
+      const handleAngleBasedOnChange = (changes, prop) => {
+        layerChannelConfigProps.onChange(changes, prop);
+        const angleName = prop.replace('adjust', '');
+        visConfiguratorProps.onChange({
+          [prop]: 0,
+          [`invert${angleName}`]: false
+        });
+      };
+
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
@@ -721,6 +1035,140 @@ export default function LayerConfiguratorFactory(
             <ConfigGroupCollapsibleContent>
               <VisConfigSwitch {...layer.visConfigSettings.fadeTrail} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* Text Label */}
+          <TextLabelPanel
+            id={layer.id}
+            fields={visConfiguratorProps.fields}
+            updateLayerTextLabel={this.props.updateLayerTextLabel}
+            textLabel={layer.config.textLabel}
+          />
+
+          {/* 3D Model */}
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            label={'layer.3DModel'}
+            collapsible={true}
+            property="scenegraphEnabled"
+          >
+            <ScenegraphModelSelector
+              selected={layer.config.visConfig.scenegraph}
+              disabled={!layer.config.visConfig.scenegraphEnabled}
+              onSelect={(scenegraph: {id: string}) =>
+                visConfiguratorProps.onChange({scenegraph: scenegraph.id})
+              }
+            />
+            {layer.config.visConfig.scenegraphEnabled ? (
+              <>
+                <ConfigGroupCollapsibleContent>
+                  {layer.config.visConfig.scenegraph === CUSTOM_SCENEGRAPH_MODEL_ID ? (
+                    <SidePanelSection>
+                      <PanelLabelWrapper>
+                        <PanelLabel>
+                          <FormattedMessage id="layer.3DModelURL" />
+                        </PanelLabel>
+                      </PanelLabelWrapper>
+                      <ScenegraphCustomModelUrlInput
+                        customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
+                        onChange={url =>
+                          visConfiguratorProps.onChange({
+                            scenegraphCustomModelUrl: url
+                          })
+                        }
+                      />
+                    </SidePanelSection>
+                  ) : null}
+                  <VisConfigSwitch
+                    {...layer.visConfigSettings.scenegraphColorEnabled}
+                    {...visConfiguratorProps}
+                  />
+                  {layer.config.visConfig.scenegraphColorEnabled ? (
+                    <>
+                      <VisConfigSwitch
+                        {...layer.visConfigSettings.scenegraphUseTrailColor}
+                        {...visConfiguratorProps}
+                      />
+                      {!layer.config.visConfig.scenegraphUseTrailColor ? (
+                        <LayerColorSelector
+                          {...visConfiguratorProps}
+                          selectedColor={layer.config.visConfig.scenegraphColor}
+                          property="scenegraphColor"
+                        />
+                      ) : null}
+                    </>
+                  ) : null}
+                  <VisConfigSlider
+                    {...layer.visConfigSettings.sizeScale}
+                    {...visConfiguratorProps}
+                    disabled={false}
+                  />
+                  {layer.config.columnMode !== COLUMN_MODE_GEOJSON ? (
+                    <ChannelByValueSelector
+                      channel={layer.visualChannels.adjustRoll}
+                      label={layer.visConfigSettings.fixedRoll?.label}
+                      description={layer.visConfigSettings.fixedRoll?.description}
+                      {...layerChannelConfigProps}
+                      onChange={handleAngleBasedOnChange}
+                      showScale={false}
+                    />
+                  ) : null}
+                  {layer.config.rollField ? (
+                    <VisConfigSwitch
+                      {...layer.visConfigSettings.invertRoll}
+                      {...visConfiguratorProps}
+                    />
+                  ) : null}
+                  <VisConfigSlider
+                    {...layer.visConfigSettings.adjustRoll}
+                    {...visConfiguratorProps}
+                    disabled={false}
+                  />
+                  {layer.config.columnMode !== COLUMN_MODE_GEOJSON ? (
+                    <ChannelByValueSelector
+                      channel={layer.visualChannels.adjustPitch}
+                      label={layer.visConfigSettings.fixedPitch?.label}
+                      description={layer.visConfigSettings.fixedPitch?.description}
+                      {...layerChannelConfigProps}
+                      onChange={handleAngleBasedOnChange}
+                      showScale={false}
+                    />
+                  ) : null}
+                  {layer.config.pitchField ? (
+                    <VisConfigSwitch
+                      {...layer.visConfigSettings.invertPitch}
+                      {...visConfiguratorProps}
+                    />
+                  ) : null}
+                  <VisConfigSlider
+                    {...layer.visConfigSettings.adjustPitch}
+                    {...visConfiguratorProps}
+                    disabled={false}
+                  />
+                  {layer.config.columnMode !== COLUMN_MODE_GEOJSON ? (
+                    <ChannelByValueSelector
+                      channel={layer.visualChannels.adjustYaw}
+                      label={layer.visConfigSettings.fixedYaw?.label}
+                      description={layer.visConfigSettings.fixedYaw?.description}
+                      {...layerChannelConfigProps}
+                      onChange={handleAngleBasedOnChange}
+                      showScale={false}
+                    />
+                  ) : null}
+                  {layer.config.yawField ? (
+                    <VisConfigSwitch
+                      {...layer.visConfigSettings.invertYaw}
+                      {...visConfiguratorProps}
+                    />
+                  ) : null}
+                  <VisConfigSlider
+                    {...layer.visConfigSettings.adjustYaw}
+                    {...visConfiguratorProps}
+                    disabled={false}
+                  />
+                </ConfigGroupCollapsibleContent>
+              </>
+            ) : null}
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );
@@ -871,6 +1319,21 @@ export default function LayerConfiguratorFactory(
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}
+
+          {/* Interaction */}
+          {'allowHover' in layer.visConfigSettings ? (
+            <LayerConfigGroup label={'layer.interaction'} collapsible>
+              <VisConfigSwitch {...layer.visConfigSettings.allowHover} {...visConfiguratorProps} />
+            </LayerConfigGroup>
+          ) : null}
+
+          {/* text label */}
+          <TextLabelPanel
+            id={layer.id}
+            fields={visConfiguratorProps.fields}
+            updateLayerTextLabel={this.props.updateLayerTextLabel}
+            textLabel={layer.config.textLabel}
+          />
         </StyledLayerVisualConfigurator>
       );
     }
@@ -1024,6 +1487,50 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    _renderTile3dLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label={'layer.appearance'}>
+            <LayerColorSelector {...layerConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.pointSize} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
+    _renderBitmapLayerConfig({layer, dataset, visConfiguratorProps}) {
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label={'layer.imageSource'} collapsible>
+            <BitmapImageSourceSection
+              dataset={dataset}
+              onChange={visConfiguratorProps.onChange}
+            />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layer.appearance'}>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layer.bounds'} collapsible>
+            <VisConfigSwitch {...layer.visConfigSettings.editBounds} {...visConfiguratorProps} />
+            <div className="bitmap-bounds-sliders">
+              <VisConfigSlider {...layer.visConfigSettings.boundsWest} {...visConfiguratorProps} />
+              <VisConfigSlider {...layer.visConfigSettings.boundsEast} {...visConfiguratorProps} />
+              <VisConfigSlider {...layer.visConfigSettings.boundsSouth} {...visConfiguratorProps} />
+              <VisConfigSlider {...layer.visConfigSettings.boundsNorth} {...visConfiguratorProps} />
+            </div>
+            <VisConfigSwitch {...layer.visConfigSettings.showBounds} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layer.alignment'} collapsible>
+            <VisConfigSwitch {...layer.visConfigSettings.alignMode} {...visConfiguratorProps} />
+            {layer.config.visConfig.alignMode && (
+              <BitmapAlignModeUI layer={layer} onChange={visConfiguratorProps.onChange} />
+            )}
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
     _renderWmsLayerConfig({
       layer,
       visConfiguratorProps,
@@ -1071,6 +1578,92 @@ export default function LayerConfiguratorFactory(
               {...visConfiguratorProps}
               property="transparent"
             />
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
+    _renderFlowLayerConfig({layer, visConfiguratorProps}) {
+      const {visConfig} = layer.config;
+      const renderingModeOptions = (
+        layer.visConfigSettings.flowLinesRenderingMode?.options || []
+      ).map(mode => ({
+        id: mode,
+        label: FLOW_RENDERING_MODE_LABELS[mode] || mode
+      }));
+      const selectedRenderingMode = renderingModeOptions.find(
+        ({id}) => id === visConfig.flowLinesRenderingMode
+      );
+
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label={'layer.color'} collapsible>
+            <LayerColorRangeSelector {...visConfiguratorProps} property="colorRange" />
+            <VisConfigSwitch
+              {...layer.visConfigSettings.darkBaseMapEnabled}
+              {...visConfiguratorProps}
+            />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            label={'layerVisConfigs.flow.fade'}
+            collapsible={false}
+            property="flowFadeEnabled"
+          >
+            <VisConfigSlider
+              {...layer.visConfigSettings.flowFadeAmount}
+              {...visConfiguratorProps}
+              disabled={!layer.config.visConfig.flowFadeEnabled}
+              label={false}
+            />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layerVisConfigs.flow.display'} collapsible>
+            <SidePanelSection>
+              <PanelLabel>
+                <FormattedMessage id={'layerVisConfigs.flow.renderingMode'} />
+              </PanelLabel>
+              <ItemSelector
+                selectedItems={selectedRenderingMode}
+                options={renderingModeOptions}
+                displayOption="label"
+                getOptionValue="id"
+                multiSelect={false}
+                searchable={false}
+                onChange={value => visConfiguratorProps.onChange({flowLinesRenderingMode: value})}
+              />
+            </SidePanelSection>
+            <VisConfigSlider
+              {...layer.visConfigSettings.flowLineThicknessScale}
+              {...visConfiguratorProps}
+            />
+            {visConfig.flowLinesRenderingMode === 'curved' ? (
+              <VisConfigSlider
+                {...layer.visConfigSettings.flowLineCurviness}
+                {...visConfiguratorProps}
+              />
+            ) : null}
+            <VisConfigSwitch
+              {...layer.visConfigSettings.flowClusteringEnabled}
+              {...visConfiguratorProps}
+            />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSwitch
+                {...layer.visConfigSettings.flowLocationTotalsEnabled}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSwitch
+                {...layer.visConfigSettings.flowAdaptiveScalesEnabled}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSlider
+                {...layer.visConfigSettings.maxTopFlowsDisplayNum}
+                {...visConfiguratorProps}
+                label={'layerVisConfigs.flow.maxTopFlowsDisplayNum'}
+              />
+            </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );

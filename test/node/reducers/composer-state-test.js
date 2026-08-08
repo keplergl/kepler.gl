@@ -170,6 +170,84 @@ test('#composerStateReducer - addDataToMapUpdater: uiState', t => {
   t.end();
 });
 
+test('#composerStateReducer - addDataToMapUpdater: mapLegend', t => {
+  const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+
+  t.equal(
+    state.uiState.mapControls.mapLegend.active,
+    false,
+    'mapLegend should be inactive by default'
+  );
+
+  const newState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      config: {
+        uiState: {
+          mapControls: {
+            mapLegend: {
+              active: true,
+              settings: {
+                position: {x: 20, y: 40, anchorX: 'left', anchorY: 'top'},
+                contentHeight: 150
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(
+    newState.uiState.mapControls.mapLegend.active,
+    true,
+    'mapLegend should be set to active from config'
+  );
+  t.deepEqual(
+    newState.uiState.mapControls.mapLegend.settings.position,
+    {x: 20, y: 40, anchorX: 'left', anchorY: 'top'},
+    'mapLegend settings position should be set from config'
+  );
+  t.equal(
+    newState.uiState.mapControls.mapLegend.settings.contentHeight,
+    150,
+    'mapLegend settings contentHeight should be set from config'
+  );
+
+  t.end();
+});
+
+test('#composerStateReducer - addDataToMapUpdater: locale', t => {
+  const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+
+  t.equal(state.uiState.locale, 'en', 'locale should be en by default');
+
+  const newState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      config: {
+        uiState: {
+          locale: 'es'
+        }
+      }
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(newState.uiState.locale, 'es', 'locale should be set to es from config');
+
+  t.end();
+});
+
 test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   const data = processCsvData(testCsvData);
 
@@ -395,6 +473,82 @@ test('#composerStateReducer - addDataToMapUpdater: autoCreateLayers', t => {
     }
   });
   t.equal(nextState.visState.layers.length, 0, 'should not create layers');
+
+  t.end();
+});
+
+test('#composerStateReducer - addDataToMapUpdater: layerVisConfig only affects new datasets; unknown keys ignored', t => {
+  const data = processCsvData(testCsvData);
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data,
+        info: {id: 'first-csv-dataset'}
+      }
+    }
+  });
+  oldState = {
+    ...oldState,
+    visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)
+  };
+  drainTasksForTesting();
+
+  const firstLayer = oldState.visState.layers.find(l => l.config.dataId === 'first-csv-dataset');
+  t.ok(firstLayer, 'first dataset should have a layer');
+  const allowHoverFirstBefore = firstLayer.config.visConfig.allowHover;
+
+  let nextState = addDataToMapUpdater(oldState, {
+    payload: {
+      datasets: {
+        data,
+        info: {id: 'second-csv-dataset'}
+      },
+      options: {
+        keepExistingConfig: true,
+        layerVisConfig: {
+          allowHover: false,
+          opacity: undefined,
+          totallyUnknownVisKey999: 'strip-me'
+        }
+      }
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  const layerFirst = nextState.visState.layers.find(l => l.config.dataId === 'first-csv-dataset');
+  const layerSecond = nextState.visState.layers.find(l => l.config.dataId === 'second-csv-dataset');
+
+  t.ok(layerSecond, 'second dataset should have a layer');
+  t.equal(
+    layerFirst.config.visConfig.allowHover,
+    allowHoverFirstBefore,
+    'layerVisConfig must not change visConfig for layers tied to prior datasets'
+  );
+  t.equal(
+    layerSecond.config.visConfig.allowHover,
+    false,
+    'layerVisConfig should merge allowHover onto layers for datasets added in this action'
+  );
+  t.equal(
+    layerFirst.config.visConfig.totallyUnknownVisKey999,
+    undefined,
+    'unknown keys must not be applied to existing layers'
+  );
+  t.equal(
+    layerSecond.config.visConfig.totallyUnknownVisKey999,
+    undefined,
+    'unknown keys must not be merged into visConfig when absent from visConfigSettings'
+  );
+  t.ok(
+    typeof layerSecond.config.visConfig.opacity === 'number',
+    'undefined patch values must not overwrite visConfig (e.g. opacity)'
+  );
 
   t.end();
 });

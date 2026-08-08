@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useMemo} from 'react';
+import React, {useEffect, useRef, useMemo} from 'react';
 import styled from 'styled-components';
+import truncate from 'lodash/truncate';
 import {CompareType, Field, Merge, TooltipField} from '@kepler.gl/types';
 import {CenterFlexbox} from '../common/styled-components';
 import {Layers} from '../common/icons';
@@ -44,11 +45,16 @@ const StyledTable = styled.table`
       color: ${props => props.theme.negativeBtnActBgd};
     }
   }
-  & .row__value,
   & .row__name {
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: no-wrap;
+    white-space: nowrap;
+  }
+  & .row__value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre-line;
+    max-width: 250px;
   }
 `;
 
@@ -64,13 +70,48 @@ interface RowProps {
   value: string;
   deltaValue?: string | null;
   url?: string;
+  isComparing?: boolean;
 }
 
-const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
+const TOOLTIP_VALUE_MAX_LENGTH = 256;
+
+/**
+ * Image component that cleans up resources on unmount to prevent memory leaks.
+ * Revokes blob/object URLs and clears the image src to release memory.
+ */
+const TooltipImage: React.FC<{src: string}> = ({src}) => {
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    return () => {
+      // Revoke blob URLs to free memory
+      if (src && (src.startsWith('blob:') || src.startsWith('data:'))) {
+        try {
+          URL.revokeObjectURL(src);
+        } catch (e) {
+          // ignore errors from non-object URLs
+        }
+      }
+      // Clear the image src to release the decoded image from memory
+      if (imgRef.current) {
+        imgRef.current.src = '';
+      }
+    };
+  }, [src]);
+
+  return <img ref={imgRef} src={src} />;
+};
+
+const Row: React.FC<RowProps> = ({name, value, deltaValue, url, isComparing}) => {
   // Set 'url' to 'value' if it looks like a url
   if (!url && value && typeof value === 'string' && value.match(/^http/)) {
     url = value;
   }
+
+  const displayValue =
+    typeof value === 'string' && value.length > TOOLTIP_VALUE_MAX_LENGTH
+      ? truncate(value, {length: TOOLTIP_VALUE_MAX_LENGTH})
+      : value;
 
   const asImg = /<img>/.test(name);
   return (
@@ -78,26 +119,28 @@ const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
       <td className="row__name">{asImg ? name.replace('<img>', '') : name}</td>
       <td className="row__value">
         {asImg ? (
-          <img src={value} />
+          <TooltipImage src={value} />
         ) : url ? (
           <a target="_blank" rel="noopener noreferrer" href={url}>
-            {value}
+            {displayValue}
           </a>
         ) : (
-          <>
-            <span>{value}</span>
-            {notNullorUndefined(deltaValue) ? (
-              <span
-                className={`row__delta-value ${
-                  deltaValue?.toString().charAt(0) === '+' ? 'positive' : 'negative'
-                }`}
-              >
-                {deltaValue}
-              </span>
-            ) : null}
-          </>
+          <span>{displayValue}</span>
         )}
       </td>
+      {isComparing ? (
+        <td
+          className={`row__delta-value ${
+            notNullorUndefined(deltaValue)
+              ? deltaValue?.toString().charAt(0) === '+'
+                ? 'positive'
+                : 'negative'
+              : ''
+          }`}
+        >
+          {deltaValue ?? ''}
+        </td>
+      ) : null}
     </tr>
   );
 };
@@ -139,31 +182,24 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
   const fieldValueAccessor = layer.accessVSFieldValue(field, currentTime);
   const value = fieldValueAccessor(field, data instanceof DataRow ? {index: data._rowIndex} : data);
 
-  // Handle WMS layer data in comparison mode - WMS layers don't have comparable field data
   let primaryValue = null;
   let displayDeltaValue: string | null = null;
 
   if (primaryData) {
     try {
-      // Only calculate primary value if primaryData has a compatible structure
-      if (
-        primaryData instanceof DataRow ||
-        (primaryData && typeof primaryData === 'object' && 'index' in primaryData)
-      ) {
-        primaryValue = fieldValueAccessor(
-          field,
-          primaryData instanceof DataRow ? {index: primaryData._rowIndex} : primaryData
-        );
-
-        displayDeltaValue = getTooltipDisplayDeltaValue({
-          field,
-          value,
-          primaryValue,
-          compareType
-        });
+      if (primaryData instanceof DataRow) {
+        primaryValue = fieldValueAccessor(field, {index: primaryData._rowIndex});
+      } else if (Array.isArray(primaryData) || (typeof primaryData === 'object' && primaryData)) {
+        primaryValue = fieldValueAccessor(field, primaryData);
       }
+
+      displayDeltaValue = getTooltipDisplayDeltaValue({
+        field,
+        value,
+        primaryValue,
+        compareType
+      });
     } catch (error) {
-      // If there's an error accessing primaryData (e.g., WMS layer data), skip comparison
       primaryValue = null;
     }
   }
@@ -175,21 +211,26 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
       name={field.displayName || field.name}
       value={displayValue}
       deltaValue={displayDeltaValue}
+      isComparing={Boolean(primaryData)}
     />
   );
 };
 
-// TODO: supporting comparative value for aggregated cells as well
 const CellInfo = ({
   fieldsToShow,
   data,
-  layer
+  layer,
+  primaryData,
+  compareType
 }: {
   data: AggregationLayerHoverData;
   fieldsToShow: TooltipField[];
   layer: Layer;
+  primaryData?: AggregationLayerHoverData | null;
+  compareType?: CompareType;
 }) => {
   const {colorField, sizeField} = layer.config as any;
+  const isComparing = Boolean(primaryData);
 
   const colorValue = useMemo(() => {
     if (colorField && layer.visualChannels.color) {
@@ -207,35 +248,92 @@ const CellInfo = ({
     return null;
   }, [fieldsToShow, sizeField, layer, data.elevationValue]);
 
+  const colorDelta = useMemo(() => {
+    if (!primaryData || !colorField || !('colorValue' in primaryData)) return null;
+    return getTooltipDisplayDeltaValue({
+      field: colorField,
+      value: data.colorValue,
+      primaryValue: primaryData.colorValue,
+      compareType
+    });
+  }, [primaryData, colorField, data.colorValue, compareType]);
+
+  const elevationDelta = useMemo(() => {
+    if (!primaryData || !sizeField || !('elevationValue' in primaryData)) return null;
+    return getTooltipDisplayDeltaValue({
+      field: sizeField,
+      value: data.elevationValue,
+      primaryValue: primaryData.elevationValue,
+      compareType
+    });
+  }, [primaryData, sizeField, data.elevationValue, compareType]);
+
   const aggregatedData = useMemo(() => {
     if (data.aggregatedData && fieldsToShow) {
-      return fieldsToShow.reduce((acc, field) => {
-        const dataForField = data.aggregatedData?.[field.name];
-        if (dataForField?.measure && field.name !== colorField?.name) {
-          acc.push({
-            name: `${capitalizeFirstLetter(dataForField.measure)} of ${field.name}`,
-            value: dataForField.value
-          });
-        }
-        return acc;
-      }, [] as {name: string; value?: string}[]);
+      return fieldsToShow.reduce(
+        (acc, field) => {
+          const dataForField = data.aggregatedData?.[field.name];
+          if (dataForField?.measure && field.name !== colorField?.name) {
+            const primaryDataForField = primaryData?.aggregatedData?.[field.name];
+            const deltaValue = primaryDataForField
+              ? getTooltipDisplayDeltaValue({
+                  field: {type: 'real', name: field.name} as Field,
+                  value: dataForField.value != null ? Number(dataForField.value) : null,
+                  primaryValue:
+                    primaryDataForField.value != null ? Number(primaryDataForField.value) : null,
+                  compareType
+                })
+              : null;
+            acc.push({
+              name: `${capitalizeFirstLetter(dataForField.measure)} of ${field.name}`,
+              value: dataForField.value,
+              deltaValue
+            });
+          }
+          return acc;
+        },
+        [] as {name: string; value?: string; deltaValue: string | null}[]
+      );
     }
     return [];
-  }, [data.aggregatedData, fieldsToShow, colorField?.name]);
+  }, [data.aggregatedData, fieldsToShow, colorField?.name, primaryData, compareType]);
 
   const colorMeasure = layer.getVisualChannelDescription('color').measure;
   const sizeMeasure = layer.getVisualChannelDescription('size').measure;
   return (
     <tbody>
-      <Row name={'total points'} key="count" value={String(data.points && data.points.length)} />
+      <Row
+        name={'total points'}
+        key="count"
+        value={String(data.points && data.points.length)}
+        isComparing={isComparing}
+      />
       {colorField && layer.visualChannels.color && colorMeasure ? (
-        <Row name={colorMeasure} key="color" value={colorValue || 'N/A'} />
+        <Row
+          name={colorMeasure}
+          key="color"
+          value={colorValue || 'N/A'}
+          deltaValue={colorDelta}
+          isComparing={isComparing}
+        />
       ) : null}
       {sizeField && layer.visualChannels.size && sizeMeasure ? (
-        <Row name={sizeMeasure} key="size" value={elevationValue || 'N/A'} />
+        <Row
+          name={sizeMeasure}
+          key="size"
+          value={elevationValue || 'N/A'}
+          deltaValue={elevationDelta}
+          isComparing={isComparing}
+        />
       ) : null}
       {aggregatedData.map((dataForField, idx) => (
-        <Row name={dataForField.name} key={`data_${idx}`} value={dataForField.value || 'N/A'} />
+        <Row
+          name={dataForField.name}
+          key={`data_${idx}`}
+          value={dataForField.value != null ? String(dataForField.value) : 'N/A'}
+          deltaValue={dataForField.deltaValue}
+          isComparing={isComparing}
+        />
       ))}
     </tbody>
   );
@@ -261,7 +359,7 @@ const LayerHoverInfoFactory = () => {
           {props.layer.config.label}
         </StyledLayerName>
         {hasFieldsToShow && <StyledDivider />}
-        <StyledTable>
+        <StyledTable className={props.primaryData ? 'comparing' : undefined}>
           {data.wmsFeatureData ? (
             <tbody>
               {data.wmsFeatureData.map(({name, value}, i) => (

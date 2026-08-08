@@ -664,7 +664,8 @@ export const savedStateV1 = {
                 stroked: true,
                 filled: true,
                 enable3d: true,
-                wireframe: false
+                wireframe: false,
+                allowHover: true
               }
             },
             visualChannels: {
@@ -713,7 +714,8 @@ export const savedStateV1 = {
                 stroked: true,
                 filled: false,
                 enable3d: false,
-                wireframe: false
+                wireframe: false,
+                allowHover: true
               }
             },
             visualChannels: {
@@ -972,7 +974,8 @@ mergedLayer0.config = {
     strokeColor: [181, 18, 65],
     strokeOpacity: 0.8,
     enable3d: true,
-    wireframe: false
+    wireframe: false,
+    allowHover: true
   },
   animation: {enabled: false}
 };
@@ -2766,7 +2769,8 @@ mergedLayer1.config = {
     enable3d: false,
     wireframe: false,
     strokeColor: [221, 178, 124],
-    strokeOpacity: 0.8
+    strokeOpacity: 0.8,
+    allowHover: true
   },
   animation: {enabled: false}
 };

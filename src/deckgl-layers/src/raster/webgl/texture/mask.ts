@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Texture2D} from '@luma.gl/webgl';
-
+import type {Texture} from '@luma.gl/core';
 import {GetUniformsOutput, ShaderModule} from '../types';
 
 const inf = Math.pow(2, 62);
 
 function getUniforms(
-  opts: {imageMask?: Texture2D; maskKeepMin?: number; maskKeepMax?: number} = {}
+  opts: {imageMask?: Texture; maskKeepMin?: number; maskKeepMax?: number} = {}
 ): GetUniformsOutput {
   const {imageMask, maskKeepMin, maskKeepMax} = opts;
   if (!imageMask) {
@@ -17,18 +16,30 @@ function getUniforms(
 
   return {
     bitmapTextureMask: imageMask,
-    uMaskKeepMin: Number.isFinite(maskKeepMin) ? maskKeepMin : -inf,
-    uMaskKeepMax: Number.isFinite(maskKeepMax) ? maskKeepMax : inf
+    keepMin: Number.isFinite(maskKeepMin) ? maskKeepMin : -inf,
+    keepMax: Number.isFinite(maskKeepMax) ? maskKeepMax : inf
   };
 }
 
-const fs1 = `\
-uniform sampler2D bitmapTextureMask;
-uniform float uMaskKeepMin;
-uniform float uMaskKeepMax;
+const maskUniformTypes = {
+  keepMin: 'f32',
+  keepMax: 'f32'
+};
+
+function makeMaskModule(name: string, samplerType: string): ShaderModule {
+  const blockDecl = `\
+uniform ${name}Uniforms {
+  float keepMin;
+  float keepMax;
+} ${name};
 `;
 
-const fs2 = `\
+  const fs1 = `\
+uniform sampler2D bitmapTextureMask;
+${blockDecl}
+`;
+
+  const fs2 = `\
 precision mediump float;
 precision mediump int;
 precision mediump usampler2D;
@@ -39,42 +50,28 @@ precision mediump usampler2D;
   uniform sampler2D bitmapTextureMask;
 #endif
 
-uniform float uMaskKeepMin;
-uniform float uMaskKeepMax;
+${blockDecl}
 `;
 
-const mask: ShaderModule = {
-  name: 'mask-image',
-  fs1,
-  fs2,
-  getUniforms,
-  defines: {
-    SAMPLER_TYPE: 'sampler2D'
-  },
-  inject: {
-    'fs:DECKGL_CREATE_COLOR': `
-    float mask_value = float(texture2D(bitmapTextureMask, coord).r);
-    if (mask_value < uMaskKeepMin) discard;
-    if (mask_value > uMaskKeepMax) discard;
+  return {
+    name,
+    fs1,
+    fs2,
+    uniformTypes: maskUniformTypes,
+    getUniforms,
+    defines: {
+      SAMPLER_TYPE: samplerType
+    },
+    inject: {
+      'fs:DECKGL_CREATE_COLOR': `
+    float mask_value = float(texture(bitmapTextureMask, coord).r);
+    if (mask_value < ${name}.keepMin) discard;
+    if (mask_value > ${name}.keepMax) discard;
     `
-  }
-};
+    }
+  };
+}
 
-export const maskFloat: ShaderModule = {
-  ...mask,
-  name: 'mask-image-float'
-};
-export const maskUint: ShaderModule = {
-  ...mask,
-  name: 'mask-image-uint',
-  defines: {
-    SAMPLER_TYPE: 'usampler2D'
-  }
-};
-export const maskInt: ShaderModule = {
-  ...mask,
-  name: 'mask-image-int',
-  defines: {
-    SAMPLER_TYPE: 'isampler2D'
-  }
-};
+export const maskFloat: ShaderModule = makeMaskModule('mask_image_float', 'sampler2D');
+export const maskUint: ShaderModule = makeMaskModule('mask_image_uint', 'usampler2D');
+export const maskInt: ShaderModule = makeMaskModule('mask_image_int', 'isampler2D');

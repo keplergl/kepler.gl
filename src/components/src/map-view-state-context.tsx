@@ -4,7 +4,16 @@
 import React, {useState, useEffect, createContext} from 'react';
 import isEqual from 'lodash/isEqual';
 import pick from 'lodash/pick';
-import {MapViewState} from '@deck.gl/core/typed';
+type MapViewState = {
+  latitude: number;
+  longitude: number;
+  zoom: number;
+  bearing?: number;
+  pitch?: number;
+  maxPitch?: number;
+  minZoom?: number;
+  maxZoom?: number;
+};
 import {pickViewportPropsFromMapState} from '@kepler.gl/reducers';
 
 import {MapState} from '@kepler.gl/types';

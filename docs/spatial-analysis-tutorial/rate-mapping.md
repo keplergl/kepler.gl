@@ -36,7 +36,7 @@ Can you load the dataset: https://geodacenter.github.io/data-and-lab/data/ohlung
 
 We start our discussion of rate maps by illustrating something we should not be doing. This pertains to the important difference between a spatially extensive and a spatially intensive variable. In many applications that use public health data, we typically have access to a count of events, such as the number of cancer cases (a spatially extensive variable), as well as to the relevant population at risk, which allows for the calculation of a rate (a spatially intensive variable).
 
-In our example, we could consider the number (count) of lung cancer cases by county among white females in Ohio (say, in 1968). The corresponding variable in our data set is LFW68. We can create a box map (hinge 1.5) in the by now familar prompt:
+In our example, we could consider the number (count) of lung cancer cases by county among white females in Ohio (say, in 1968). The corresponding variable in our data set is LFW68. We can create a box map (hinge 1.5) in the by now familiar prompt:
 
 ```
 Can you create a box map (hinge 1.5) for the LFW68 variable using color theme BuRd?

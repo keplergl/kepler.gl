@@ -8,6 +8,16 @@
 # We use tail to avoid the first line of the the output which is the command itself
 yarn babel node_modules/@mapbox/tiny-sdf/index.js | tail -n +2 > node_modules/@mapbox/tiny-sdf/index.cjs
 
+# Make the CJS build resolvable by require() - patch package.json to add exports and remove ESM-only type
+node -e "
+const fs = require('fs');
+const p = 'node_modules/@mapbox/tiny-sdf/package.json';
+const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
+pkg.exports = { '.': { require: './index.cjs', import: './index.js', default: './index.cjs' } };
+pkg.main = './index.cjs';
+fs.writeFileSync(p, JSON.stringify(pkg, null, 2));
+"
+
 # Patch for an issue with react-virtualized output having an invalid import
 # https://github.com/bvaughn/react-virtualized/issues/1212
 if [[ -f "node_modules/react-virtualized/dist/es/WindowScroller/utils/onScroll.js" ]]; then

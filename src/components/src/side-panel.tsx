@@ -6,6 +6,7 @@ import React, {useCallback, useMemo} from 'react';
 import {
   EXPORT_DATA_ID,
   EXPORT_MAP_ID,
+  EXPORT_VIDEO_ID,
   SHARE_MAP_ID,
   SIDEBAR_PANELS,
   OVERWRITE_MAP_ID,
@@ -112,6 +113,7 @@ export default function SidePanelFactory(
       panels = fullPanels,
       mapInfo = {},
       mapSaved,
+      mapState,
       mapStateActions,
       mapStyle,
       mapStyleActions,
@@ -139,6 +141,7 @@ export default function SidePanelFactory(
     const onClickExportImage = useCallback(() => toggleModal(EXPORT_IMAGE_ID), [toggleModal]);
     const onClickExportData = useCallback(() => toggleModal(EXPORT_DATA_ID), [toggleModal]);
     const onClickExportMap = useCallback(() => toggleModal(EXPORT_MAP_ID), [toggleModal]);
+    const onClickExportVideo = useCallback(() => toggleModal(EXPORT_VIDEO_ID), [toggleModal]);
     const onClickSaveToStorage = useCallback(
       () => toggleModal(mapSaved ? OVERWRITE_MAP_ID : SAVE_MAP_ID),
       [mapSaved, toggleModal]
@@ -189,6 +192,7 @@ export default function SidePanelFactory(
           onExportImage={onClickExportImage}
           onExportData={onClickExportData}
           onExportMap={onClickExportMap}
+          onExportVideo={onClickExportVideo}
           onSaveMap={hasStorage ? onSaveMap : undefined}
           onSaveToStorage={hasStorage ? onClickSaveToStorage : null}
           onSaveAsToStorage={hasStorage && mapSaved ? onClickSaveAsToStorage : null}
@@ -213,6 +217,7 @@ export default function SidePanelFactory(
                 layerBlending={layerBlending}
                 overlayBlending={overlayBlending}
                 mapStyle={mapStyle}
+                mapState={mapState}
                 mapStyleActions={mapStyleActions}
                 mapStateActions={mapStateActions}
                 interactionConfig={interactionConfig}

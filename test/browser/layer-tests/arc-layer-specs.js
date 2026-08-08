@@ -19,7 +19,7 @@ import {StateWArcNeighbors} from 'test/helpers/mock-state';
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {copyTableAndUpdate} from '@kepler.gl/table';
-import {h3ToGeo} from 'h3-js';
+import {cellToLatLng} from 'h3-js';
 
 const {ArcLayer} = KeplerGlLayers;
 const columns = {
@@ -343,18 +343,18 @@ test('#ArcLayer -> formatLayerData', t => {
           data: [
             {
               index: 0,
-              sourcePosition: [...h3ToGeo(testArcData[0]['source hex_id']).reverse(), 0],
-              targetPosition: [...h3ToGeo(testArcData[0]['target hex_id']).reverse(), 0]
+              sourcePosition: [...cellToLatLng(testArcData[0]['source hex_id']).reverse(), 0],
+              targetPosition: [...cellToLatLng(testArcData[0]['target hex_id']).reverse(), 0]
             },
             {
               index: 1,
-              sourcePosition: [...h3ToGeo(testArcData[1]['source hex_id']).reverse(), 0],
-              targetPosition: [...h3ToGeo(testArcData[1]['target hex_id']).reverse(), 0]
+              sourcePosition: [...cellToLatLng(testArcData[1]['source hex_id']).reverse(), 0],
+              targetPosition: [...cellToLatLng(testArcData[1]['target hex_id']).reverse(), 0]
             },
             {
               index: 2,
-              sourcePosition: [...h3ToGeo(testArcData[2]['source hex_id']).reverse(), 0],
-              targetPosition: [...h3ToGeo(testArcData[2]['target hex_id']).reverse(), 0]
+              sourcePosition: [...cellToLatLng(testArcData[2]['source hex_id']).reverse(), 0],
+              targetPosition: [...cellToLatLng(testArcData[2]['target hex_id']).reverse(), 0]
             }
           ],
           getFilterValue: () => {},

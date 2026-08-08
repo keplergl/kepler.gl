@@ -1,26 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
-import {Base} from '../base';
+import React from 'react';
+import {Base, BaseProps} from '../base';
 
-export default class TripLayerIcon extends Component {
-  static propTypes = {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  };
-
-  static defaultProps = {
-    size: 'tiny',
-    height: '16px',
-    predefinedClassName: 'trip-layer-icon'
-  };
-
-  render() {
-    return (
-      <Base {...this.props}>
+const TripLayerIcon: React.FC<Partial<BaseProps>> = ({
+  height = '16px',
+  predefinedClassName = 'trip-layer-icon',
+  ...props
+}) => (
+  <Base height={height} predefinedClassName={predefinedClassName} {...props}>
         <g clipPath="url(#clip0)" className="cr1">
           <path d="M53.025 4.85005C50.25 2.07505 45.75 2.07505 42.975 4.85005C40.2 7.62505 40.2 12.2 42.975 14.975L48 20L53.025 14.9C55.8 12.2 55.8 7.62505 53.025 4.85005ZM48 11.375C47.175 11.375 46.5 10.7 46.5 9.87505C46.5 9.05005 47.175 8.37505 48 8.37505C48.825 8.37505 49.5 9.05005 49.5 9.87505C49.5 10.7 48.825 11.375 48 11.375Z" />
         </g>
@@ -40,6 +29,6 @@ export default class TripLayerIcon extends Component {
           </clipPath>
         </defs>
       </Base>
-    );
-  }
-}
+);
+
+export default TripLayerIcon;

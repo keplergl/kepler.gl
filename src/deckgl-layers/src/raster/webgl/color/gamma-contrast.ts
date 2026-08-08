@@ -22,23 +22,25 @@ import {GetUniformsOutput, ShaderModule} from '../types';
 const fs = `\
 #define epsilon 0.00000001
 
-uniform float gamma1;
-uniform float gamma2;
-uniform float gamma3;
-uniform float gamma4;
+uniform gamma_contrastUniforms {
+  float gamma1;
+  float gamma2;
+  float gamma3;
+  float gamma4;
+} gamma_contrast;
 
-float gammaContrast(float arr, float g) {
+float gammaContrastCalc(float arr, float g) {
   // Gamma must be > 0
   g = clamp(g, epsilon, g);
 
   return pow(arr, 1.0 / g);
 }
 
-vec4 gammaContrast(vec4 arr, float g1, float g2, float g3, float g4) {
-  arr.r = gammaContrast(arr.r, g1);
-  arr.g = gammaContrast(arr.g, g2);
-  arr.b = gammaContrast(arr.b, g3);
-  arr.a = gammaContrast(arr.a, g4);
+vec4 gammaContrastCalc(vec4 arr, float g1, float g2, float g3, float g4) {
+  arr.r = gammaContrastCalc(arr.r, g1);
+  arr.g = gammaContrastCalc(arr.g, g2);
+  arr.b = gammaContrastCalc(arr.b, g3);
+  arr.a = gammaContrastCalc(arr.a, g4);
 
   return arr;
 }
@@ -90,10 +92,16 @@ function getUniforms(
 export const gammaContrast: ShaderModule = {
   name: 'gamma_contrast',
   fs,
+  uniformTypes: {
+    gamma1: 'f32',
+    gamma2: 'f32',
+    gamma3: 'f32',
+    gamma4: 'f32'
+  },
   getUniforms,
   inject: {
     'fs:DECKGL_MUTATE_COLOR': `
-    image = gammaContrast(image, gamma1, gamma2, gamma3, gamma4);
+    image = gammaContrastCalc(image, gamma_contrast.gamma1, gamma_contrast.gamma2, gamma_contrast.gamma3, gamma_contrast.gamma4);
     `
   }
 };

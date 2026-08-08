@@ -1,31 +1,42 @@
 # Customize kepler.gl Theme
 
-This example show how to customize Kepler.gl theme
-  1. Define an object (theme) to override Kepler.gl style
-  2. Pass the newly created object as prop to KeplerGl react component
+This example shows how to customize the kepler.gl theme:
 
-#### 1. Install
+1. Define an object (`theme`) to override kepler.gl styles
+2. Pass the newly created object as the `theme` prop to the `KeplerGl` component
 
-```sh
-npm install
-```
+## Pre-requirements
 
-or
+- [Node.js ^20.x](http://nodejs.org)
+- [Yarn 4.4.0](https://yarnpkg.com): See the [installation instructions][yarn-install].
 
-```sh
-yarn
-```
+## 1. Install Dependencies
 
-
-#### 2. Mapbox Token
-add mapbox access token to node env
+Go to the `examples/custom-theme` directory and run:
 
 ```sh
-export MapboxAccessToken=<your_mapbox_token>
+touch yarn.lock && yarn
 ```
 
-#### 3. Start the app
+> `touch yarn.lock` is required once to mark this directory as a standalone Yarn project,
+> independent of the monorepo root.
+
+## 2. Start the App
 
 ```sh
-npm start
+yarn start
 ```
+
+The app will be available at [http://localhost:8080](http://localhost:8080).
+
+Use the checkbox in the bottom-right corner to toggle between the default and the custom (light) theme.
+
+## Production Build
+
+```sh
+yarn build
+```
+
+The output will be in the `dist/` directory.
+
+[yarn-install]: https://yarnpkg.com/getting-started/install

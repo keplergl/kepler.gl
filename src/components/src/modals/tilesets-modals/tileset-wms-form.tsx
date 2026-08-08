@@ -8,6 +8,7 @@ import {WMSCapabilities} from '@loaders.gl/wms';
 import {validateUrl} from '@kepler.gl/common-utils';
 import {DatasetType, REMOTE_TILE, RemoteTileFormat, WMSDatasetMetadata} from '@kepler.gl/constants';
 import {getWMSCapabilities, wmsCapabilitiesToDatasetMetadata} from '@kepler.gl/table';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
 import {InputLight} from '../../common';
@@ -29,12 +30,58 @@ const ExampleUrlsContainer = styled.div`
   text-align: left;
   color: ${props => props.theme.AZURE200};
   font-size: 11px;
+`;
 
-  .example-url {
-    margin-top: 8px;
-    display: block;
+const ExampleTabs = styled.div`
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+`;
+
+const ExampleTab = styled.div<{active: boolean}>`
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+  background: ${props => (props.active ? props.theme.AZURE400 : 'transparent')};
+  color: ${props => (props.active ? props.theme.WHITE : props.theme.AZURE200)};
+  border: 1px solid ${props => (props.active ? props.theme.AZURE400 : props.theme.AZURE400)};
+
+  &:hover {
+    background: ${props => (props.active ? props.theme.AZURE400 : props.theme.AZURE500)};
   }
 `;
+
+const ExampleUrl = styled.div`
+  word-break: break-all;
+  cursor: pointer;
+  color: ${props => props.theme.AZURE200};
+  font-size: 11px;
+
+  &:hover {
+    color: ${props => props.theme.AZURE100};
+  }
+`;
+
+const WMS_EXAMPLES = [
+  {
+    label: 'OSM',
+    name: 'OpenStreetMap WMS',
+    url: 'https://ows.terrestris.de/osm/service'
+  },
+  {
+    label: 'NOAA Radar',
+    name: 'NOAA CONUS Radar',
+    url: 'https://opengeo.ncep.noaa.gov/geoserver/conus/conus_cref_qcd/ows'
+  },
+  {
+    label: 'NASA GIBS',
+    name: 'NASA GIBS',
+    url: 'https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi'
+  }
+];
 
 type WMSTileFormProps = {
   setResponse: (response: MetaResponse) => void;
@@ -52,6 +99,7 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const [wmsData, setWMSData] = useState<WMSData | null>(null);
+  const [exampleTab, setExampleTab] = useState(0);
 
   const onLayerNameChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,6 +107,14 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
       setLayerName(event.target.value);
     },
     [setLayerName]
+  );
+
+  const onExampleClick = useCallback(
+    (url: string, name: string) => {
+      setWmsUrl(url);
+      setLayerName(name);
+    },
+    [setWmsUrl, setLayerName]
   );
 
   const onWmsUrlChange = useCallback(
@@ -113,7 +169,7 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
           tilesetDataUrl: wmsUrl,
           tilesetMetadataUrl: `${wmsUrl}?service=WMS&request=GetCapabilities`,
           layers: wmsData?.layers || [],
-          wmsVersion: wmsData?.version || '1.3.0'
+          version: wmsData?.version || '1.3.0'
         }
       };
       setResponse({
@@ -153,18 +209,34 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
         />
         <TilesetInputDescription>Provide a valid WMS service URL.</TilesetInputDescription>
       </div>
-      <div>
-        <TilesetInputDescription>For example, try a public WMS URL:</TilesetInputDescription>
-        <ExampleUrlsContainer>
-          <div className="example-url">• https://ows.terrestris.de/osm/service</div>
-          <div className="example-url">
-            • https://opengeo.ncep.noaa.gov/geoserver/conus/conus_cref_qcd/ows
-          </div>
-          <div className="example-url">
-            • https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi
-          </div>
-        </ExampleUrlsContainer>
-      </div>
+      {getApplicationConfig().showInlineTilesetExamples && (
+        <div>
+          <TilesetInputDescription>For example, try a public WMS URL:</TilesetInputDescription>
+          <ExampleUrlsContainer>
+            <ExampleTabs>
+              {WMS_EXAMPLES.map((ex, i) => (
+                <ExampleTab
+                  key={ex.label}
+                  active={exampleTab === i}
+                  onClick={() => {
+                    setExampleTab(i);
+                    onExampleClick(ex.url, ex.name);
+                  }}
+                >
+                  {ex.label}
+                </ExampleTab>
+              ))}
+            </ExampleTabs>
+            <ExampleUrl
+              onClick={() =>
+                onExampleClick(WMS_EXAMPLES[exampleTab].url, WMS_EXAMPLES[exampleTab].name)
+              }
+            >
+              {WMS_EXAMPLES[exampleTab].url}
+            </ExampleUrl>
+          </ExampleUrlsContainer>
+        </div>
+      )}
     </TilesetInputContainer>
   );
 };

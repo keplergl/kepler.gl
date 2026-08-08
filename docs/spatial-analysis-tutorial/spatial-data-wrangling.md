@@ -81,7 +81,7 @@ If the csv file contains coordinates, the AI Assistant will automatically create
 Here we convert the chicago_sup.dbf, which is used in [GeoDa workbook](https://geodacenter.github.io/workbook/01_datawrangling_1/lab1a.html), to chicago_sup.csv file:
 
 ```
-Can you create a map layerfrom https://geodacenter.github.io/data-and-lab/data/chicago_sup.csv?
+Can you create a map layer from https://geodacenter.github.io/data-and-lab/data/chicago_sup.csv?
 ```
 
 <img width="1092" alt="Screenshot 2025-05-31 at 10 45 07 PM" src="https://github.com/user-attachments/assets/0a3059db-bc76-427d-8866-885f21bded71" />
@@ -95,7 +95,7 @@ In the GeoDa workbook, you will need to specify the latitude/longitude columns i
 
 Grid layers are useful to aggregate counts of point locations in order to calculate point pattern statistics, such as quadrat counts. In Kepler.gl, users can create a grid layer from a dataset easily. See [Kepler.gl Grid Layer](https://docs.kepler.gl/docs/user-guides/c-types-of-layers/d-grid) for more details.
 
-In this tutorial, we are using the Ai assistant to create a grid layer from either the current map view (the map bounds defind by northwest and southweast points), or use the bounding box of an available data source.
+In this tutorial, we are using the Ai assistant to create a grid layer from either the current map view (the map bounds defined by northwest and southeast points), or use the bounding box of an available data source.
 
 ```
 Can you create a 20x20 grid layer over the chicago_commpop areas?
@@ -125,7 +125,7 @@ The table of the dataset can be opened by using the 'Show Data Table' button whe
 
 <img width="1145" alt="Screenshot 2025-06-06 at 3 49 55 PM" src="https://github.com/user-attachments/assets/fa80088b-59d7-4821-ae12-1b7c063fac90" />
 
-This is a view only table. You can not e.g. edit the data, or add/remove a column in this table. The Foursqure Studio, which is developed based on Kepler.gl, has a more powerful table editor (see docs [here](https://docs.foursquare.com/analytics-products/docs/data)). We hope these features will be upstream back to Kepler.gl in the future.
+This is a view only table. You can not e.g. edit the data, or add/remove a column in this table. The Foursquare Studio, which is developed based on Kepler.gl, has a more powerful table editor (see docs [here](https://docs.foursquare.com/analytics-products/docs/data)). We hope these features will be upstream back to Kepler.gl in the future.
 
 However, using different AI Assistant tools, like query, standardizeVariable, etc., you can achieve the same goal of manipulating the data in the table. The limitation is that you can not directly edit the data in the table, but you can create a new dataset with the manipulated data.
 
@@ -160,7 +160,7 @@ The calculator functionality is to create a new variable with:
 - univariate and bivariate operations
 - spatial lag
 - rates
-- data/time operations
+- date/time operations
 
 Spatial Lag and Rates are advanced functions that are discussed separately in later chapters.
 

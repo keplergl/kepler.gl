@@ -8,7 +8,7 @@ The spatial data analysis tools are powered by [Geoda](https://geodacenter.githu
 
 #### [Get Started](./get-started.md)
 
-#### [Spatial Data Wrangling - Basic Operations](./spatial-data-wragling.md)
+#### [Spatial Data Wrangling - Basic Operations](./spatial-data-wrangling.md)
 
 #### [Spatial Data Wrangling - GIS Operations](./spatial-data-gis.md)
 
@@ -34,8 +34,8 @@ The spatial data analysis tools are powered by [Geoda](https://geodacenter.githu
 #### [Local Spatial Autocorrelation](./local-spatial-autocorrelation.md)
 
 - [LISA and Local Moran](./local-moran-i.md)
-- Other Local Spatial Autorrelation
-- Multivariate Local Spatial Autorrelation
+- Other Local Spatial Autocorrelation
+- Multivariate Local Spatial Autocorrelation
 - LISA for Discrete Variables
 
 #### [Spatial Regression](./spatial-regression.md)

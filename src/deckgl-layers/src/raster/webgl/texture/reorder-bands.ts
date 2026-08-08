@@ -9,7 +9,9 @@ import {ShaderModule, GetUniformsOutput} from '../types';
  */
 
 const fs = `\
-uniform mat4 uReorder;
+uniform reorder_bandsUniforms {
+  mat4 ordering;
+} reorder_bands;
 
 vec4 reorder_image(vec4 image, mat4 ordering) {
   return image.rgba * ordering;
@@ -24,7 +26,7 @@ function getUniforms(opts: {ordering?: number[]} = {}): GetUniformsOutput {
   }
 
   return {
-    uReorder: constructPermutationMatrix(ordering)
+    ordering: constructPermutationMatrix(ordering)
   };
 }
 
@@ -52,12 +54,15 @@ export function constructPermutationMatrix(vector: number[]): number[] {
 }
 
 export const reorderBands: ShaderModule = {
-  name: 'reorder-bands',
+  name: 'reorder_bands',
   fs,
+  uniformTypes: {
+    ordering: 'mat4x4<f32>'
+  },
   getUniforms,
   inject: {
     'fs:DECKGL_MUTATE_COLOR': `
-    image = reorder_image(image, uReorder);
+    image = reorder_image(image, reorder_bands.ordering);
     `
   }
 };

@@ -9,7 +9,7 @@ function CustomSidePanelsFactory() {
     {
       id: 'rocket',
       label: 'Rocket',
-      iconComponent: Icons.Rocket
+      iconComponent: Icons.Globe
     },
     {
       id: 'chart',

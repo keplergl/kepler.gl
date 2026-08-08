@@ -4,44 +4,131 @@
 import SunCalc from 'suncalc';
 import cloneDeep from 'lodash/cloneDeep';
 
-import {PostProcessEffect} from '@deck.gl/core/typed';
+import type {Effect as DeckEffect} from '@deck.gl/core';
 
 import {
   LIGHT_AND_SHADOW_EFFECT,
   LIGHT_AND_SHADOW_EFFECT_TIME_MODES,
   FILTER_TYPES,
-  FILTER_VIEW_TYPES
+  FILTER_VIEW_TYPES,
+  DISTANCE_FOG_TYPE,
+  SURFACE_FOG_TYPE
 } from '@kepler.gl/constants';
 import {arrayMove} from '@kepler.gl/common-utils';
 import {MapState, Effect, EffectProps, EffectDescription} from '@kepler.gl/types';
 import {findById} from './utils';
 import {clamp} from './data-utils';
+import {normalizeColor} from './color-utils';
 
 // TODO isolate types - depends on @kepler.gl/schemas
 type VisState = any;
 
+// Retains the last LightingEffect deckEffect so we can keep it in the
+// effects array (with shadows disabled) after the user removes the
+// Light & Shadow effect from the UI. Without this, deck.gl calls
+// cleanup() which removes the shadow shader module, but existing layer
+// models still have shadow_uShadowMap bindings → texture errors.
+let _lastLightingDeckEffect: any = null;
+
 export function computeDeckEffects({
   visState,
-  mapState
+  mapState,
+  isExport
 }: {
   visState: VisState;
   mapState: MapState;
-}): PostProcessEffect[] {
+  isExport?: boolean;
+}): DeckEffect[] {
   // TODO: 1) deck effects per deck context 2) preserved between draws
-  return visState.effectOrder
+  let hasLightingShadow = false;
+
+  // Light & Shadow and both Fog effects are not supported in globe mode:
+  // - Fog effects are screen-space post-processing passes that read the flat
+  //   MapView depth buffer and don't make sense on the sphere.
+  // - Shadows are cast on the flat ground plane, not the globe surface.
+  // In globe mode we drop the fog effects entirely and force the lighting
+  // effect into its shadow-disabled state (kept in the array, like the normal
+  // "disabled" path, so the shadow shader module stays registered and layer
+  // models don't end up with stale shadow_uShadowMap bindings).
+  const isGlobeMode = Boolean(mapState?.globe?.enabled);
+
+  const deckEffects = visState.effectOrder
     .map(effectId => {
       const effect = findById(effectId)(visState.effects) as Effect | undefined;
-      if (effect?.isEnabled && effect.deckEffect) {
-        updateEffect({visState, mapState, effect});
-        return effect.deckEffect;
+      if (effect?.deckEffect) {
+        const isFogEffect = effect.type === SURFACE_FOG_TYPE || effect.type === DISTANCE_FOG_TYPE;
+        const isLightingEffect = effect.type === LIGHT_AND_SHADOW_EFFECT.type;
+
+        // Globe mode: skip fog effects, and keep lighting effects only in their
+        // shadow-disabled form.
+        if (isGlobeMode && isFogEffect) {
+          return null;
+        }
+
+        // Always reset isExportMode so the flag doesn't persist from a
+        // previous export session on reused effect instances.
+        if (isLightingEffect || isFogEffect) {
+          effect.deckEffect.isExportMode = Boolean(isExport);
+        }
+
+        const enabledInThisView = effect.isEnabled && !(isGlobeMode && isLightingEffect);
+
+        if (enabledInThisView) {
+          // deck.gl's EffectManager matches effects by id and reuses old
+          // instances (calling oldEffect.setProps(newEffect.props)) instead
+          // of replacing them. When a lighting effect is removed and
+          // re-added, the cached _lastLightingDeckEffect is the instance
+          // that deck.gl will actually render with. Adopt it so that
+          // parameter syncing in updateEffect targets the right object.
+          if (
+            !isExport &&
+            effect.type === LIGHT_AND_SHADOW_EFFECT.type &&
+            _lastLightingDeckEffect &&
+            _lastLightingDeckEffect !== effect.deckEffect
+          ) {
+            const orphaned = effect.deckEffect;
+            effect.deckEffect = _lastLightingDeckEffect;
+            if (orphaned && typeof orphaned.cleanup === 'function') {
+              orphaned.cleanup();
+            }
+          }
+          updateEffect({visState, mapState, effect});
+        } else if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+          // Keep lighting effects in the array even when disabled to avoid
+          // removing the shadow shader module. Composite layer sublayers
+          // don't regenerate models when default shader modules change,
+          // leaving stale pipelines with shadow_uShadowMap bindings.
+          // Disabling shadow on the lights avoids visual effects.
+          disableLightingEffect(effect);
+        }
+        if (enabledInThisView || effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+          if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+            hasLightingShadow = true;
+            if (!isExport) {
+              _lastLightingDeckEffect = effect.deckEffect;
+            }
+          }
+          return effect.deckEffect;
+        }
       }
       return null;
     })
     .filter(effect => effect);
+
+  if (!hasLightingShadow && _lastLightingDeckEffect) {
+    disableDeckLightingEffect(_lastLightingDeckEffect);
+    deckEffects.unshift(_lastLightingDeckEffect);
+  }
+
+  return deckEffects;
 }
 
 /**
- * Always keep light & shadow effect at the top
+ * Always keep light & shadow effect at the top, then distance fog and
+ * surface fog right after it (before other post-processing effects).
+ * Both fog effects read the depth buffer from renderBuffers[0];
+ * subsequent effects clear depth during their render passes, so fog
+ * must run before that happens.
  */
 export const fixEffectOrder = (effects: Effect[], effectOrder: string[]): string[] => {
   const lightShadowEffect = effects.find(effect => effect.type === LIGHT_AND_SHADOW_EFFECT.type);
@@ -52,6 +139,29 @@ export const fixEffectOrder = (effects: Effect[], effectOrder: string[]): string
       effectOrder.unshift(lightShadowEffect.id);
     }
   }
+
+  const distanceFogEffect = effects.find(effect => effect.type === DISTANCE_FOG_TYPE);
+  if (distanceFogEffect) {
+    const ind = effectOrder.indexOf(distanceFogEffect.id);
+    const targetPos = lightShadowEffect ? 1 : 0;
+    if (ind > targetPos) {
+      effectOrder.splice(ind, 1);
+      effectOrder.splice(targetPos, 0, distanceFogEffect.id);
+    }
+  }
+
+  const surfaceFogEffect = effects.find(effect => effect.type === SURFACE_FOG_TYPE);
+  if (surfaceFogEffect) {
+    const ind = effectOrder.indexOf(surfaceFogEffect.id);
+    let targetPos = 0;
+    if (lightShadowEffect) targetPos++;
+    if (distanceFogEffect) targetPos++;
+    if (ind > targetPos) {
+      effectOrder.splice(ind, 1);
+      effectOrder.splice(targetPos, 0, surfaceFogEffect.id);
+    }
+  }
+
   return effectOrder;
 };
 
@@ -79,18 +189,72 @@ function isDaytime(lat, lon, timestamp) {
 }
 
 /**
- * Update effect to match latest vis and map states
+ * Disable shadow rendering on a lighting effect without removing it.
+ * This keeps the shadow shader module registered and prevents stale
+ * texture binding errors in composite layer sublayers.
  */
-function updateEffect({visState, mapState, effect}) {
+function disableLightingEffect(effect: Effect) {
+  const deckEffect = effect.deckEffect;
+  if (!deckEffect) return;
+  disableDeckLightingEffect(deckEffect);
+}
+
+/**
+ * Disable shadow rendering directly on a deck.gl LightingEffect instance.
+ */
+function disableDeckLightingEffect(deckEffect: any) {
+  deckEffect.shadow = false;
+  deckEffect.outputUniformShadow = false;
+  for (const light of deckEffect.directionalLights || []) {
+    light.shadow = false;
+  }
+}
+
+/**
+ * Update effect to match latest vis and map states.
+ *
+ * deck.gl's EffectManager compares effects by `id` and reuses the
+ * existing (old) instance when a new one with the same id is supplied
+ * (calling `oldEffect.setProps(newEffect.props)` instead of replacing).
+ * LightingEffect.setProps only updates light sources, not shadowColor.
+ * So we must sync ALL parameters here every frame to ensure the deck
+ * effect always reflects the kepler-side state — even if deck.gl
+ * silently swapped the instance under us.
+ */
+function updateEffect({visState, mapState, effect}: {visState: any; mapState: any; effect: any}) {
   if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
-    let {timestamp} = effect.parameters;
-    const {timeMode} = effect.parameters;
-    const sunLight = effect.deckEffect.directionalLights[0];
+    const deckEffect = effect.deckEffect;
+    const {parameters} = effect;
+
+    // Re-enable shadow rendering in case it was previously disabled
+    for (const light of deckEffect.directionalLights || []) {
+      light.shadow = true;
+    }
+    deckEffect.shadow = deckEffect.directionalLights?.some(l => l.shadow) ?? false;
+
+    // Sync shadow color & intensity (not handled by deck.gl setProps)
+    deckEffect.shadowColor = [
+      ...normalizeColor(parameters.shadowColor),
+      parameters.shadowIntensity
+    ];
+
+    // Sync ambient light
+    if (deckEffect.ambientLight) {
+      deckEffect.ambientLight.intensity = parameters.ambientLightIntensity;
+      deckEffect.ambientLight.color = parameters.ambientLightColor.slice();
+    }
+
+    let {timestamp} = parameters;
+    const {timeMode} = parameters;
+    const sunLight = deckEffect.directionalLights?.[0];
+    if (sunLight) {
+      sunLight.color = parameters.sunLightColor.slice();
+    }
 
     // set timestamp for shadow
     if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current) {
       timestamp = Date.now();
-      sunLight.timestamp = timestamp;
+      if (sunLight) sunLight.timestamp = timestamp;
     } else if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation) {
       timestamp = visState.animationConfig.currentTime ?? 0;
       if (!timestamp) {
@@ -103,16 +267,16 @@ function updateEffect({visState, mapState, effect}) {
           timestamp = filter.value?.[0] ?? 0;
         }
       }
-      sunLight.timestamp = timestamp;
+      if (sunLight) sunLight.timestamp = timestamp;
     }
 
     // output uniform shadow during nighttime
     if (isDaytime(mapState.latitude, mapState.longitude, timestamp)) {
-      effect.deckEffect.outputUniformShadow = false;
-      sunLight.intensity = effect.parameters.sunLightIntensity;
+      deckEffect.outputUniformShadow = false;
+      if (sunLight) sunLight.intensity = parameters.sunLightIntensity;
     } else {
-      effect.deckEffect.outputUniformShadow = true;
-      sunLight.intensity = 0;
+      deckEffect.outputUniformShadow = true;
+      if (sunLight) sunLight.intensity = 0;
     }
   }
 }
@@ -149,6 +313,11 @@ export function validateEffectParameters(
           property[i] = value;
         }
       });
+      return;
+    }
+
+    if (type === 'checkbox') {
+      result[name] = Boolean(property);
       return;
     }
 

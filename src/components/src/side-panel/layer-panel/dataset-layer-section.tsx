@@ -10,12 +10,13 @@ import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, ActionHandler, VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
+import {LayerOrder, MapState} from '@kepler.gl/types';
 
 type DatasetLayerSectionProps = {
   datasets: Datasets;
   dataset: KeplerTable;
   layers: Layer[];
-  layerOrder: string[];
+  layerOrder: LayerOrder;
   layerClasses: LayerClassesType;
   showDeleteDataset: boolean;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
@@ -24,6 +25,7 @@ type DatasetLayerSectionProps = {
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
+  mapState?: MapState;
 };
 
 const DatasetLayerSectionWrapper = styled.div.attrs({
@@ -51,7 +53,8 @@ function DatasetLayerSectionFactory(
       layerClasses,
       uiStateActions,
       visStateActions,
-      mapStateActions
+      mapStateActions,
+      mapState
     } = props;
 
     const datasetCatalog = useMemo(() => {
@@ -61,6 +64,9 @@ function DatasetLayerSectionFactory(
     // temp patch to hide layers that are in development
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
     const enableWMSLayer = getApplicationConfig().enableWMSLayer;
+    const enableFlowLayer = getApplicationConfig().enableFlowLayer;
+    const enableBitmapLayer = getApplicationConfig().enableBitmapLayer;
+
     const filteredLayerClasses = useMemo(() => {
       let filteredClasses = layerClasses;
       if (!enableRasterTileLayer) {
@@ -71,8 +77,16 @@ function DatasetLayerSectionFactory(
         const {wms: _wms, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
       }
+      if (!enableFlowLayer) {
+        const {flow: _flow, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
+      if (!enableBitmapLayer) {
+        const {bitmap: _bitmap, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
       return filteredClasses as LayerClassesType;
-    }, [enableRasterTileLayer, enableWMSLayer, layerClasses]);
+    }, [enableRasterTileLayer, enableWMSLayer, enableFlowLayer, enableBitmapLayer, layerClasses]);
 
     return (
       <DatasetLayerSectionWrapper>
@@ -91,6 +105,7 @@ function DatasetLayerSectionFactory(
           uiStateActions={uiStateActions}
           visStateActions={visStateActions}
           mapStateActions={mapStateActions}
+          mapState={mapState}
           isSortable={false}
         />
       </DatasetLayerSectionWrapper>

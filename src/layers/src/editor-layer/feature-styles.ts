@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {RGBAColor} from '@deck.gl/core';
 import {Feature} from '@kepler.gl/types';
+
+type RGBAColor = [number, number, number, number];
 
 import {COLORS} from './constants';
 

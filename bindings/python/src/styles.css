@@ -1,0 +1,23 @@
+.kepler-gl {
+  font-family: ff-clan-web-pro, "Helvetica Neue", Helvetica, sans-serif;
+  width: 100%;
+  height: 100%;
+}
+
+/* Ensure the map container has proper dimensions */
+.kepler-gl .map-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* Fix for maplibre-gl canvas */
+.maplibregl-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.maplibregl-map {
+  width: 100%;
+  height: 100%;
+}

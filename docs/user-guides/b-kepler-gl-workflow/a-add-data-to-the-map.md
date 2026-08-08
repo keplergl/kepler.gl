@@ -17,7 +17,7 @@
 
 
 ## Supported Projection Coordinate System
-kepler.gl only supports **[Web Mercator]([https://en.wikipedia.org/wiki/Web_Mercator_projection) EPSG:3857 -- WGS84**.
+kepler.gl only supports **[Web Mercator](https://en.wikipedia.org/wiki/Web_Mercator_projection) EPSG:3857 -- WGS84**.
 
 Geometry coordinates should be presented with a geographic coordinate reference system, using the WGS84 datum, and with longitude and latitude units of decimal degrees.
 
@@ -68,7 +68,7 @@ kepler.gl will auto detect layer, if the column names follows certain naming con
 |**Polygon**| A column content contains `geojson` data types. Acceptable formats include [Well-Known Text](http://www.postgis.net/docs/ST_AsText.html) e.g. `POLYGON ((-74.158 40.835, -74.148 40.830, -74.151 40.832, -74.158 40.835))` and [GeoJSON Geometry](https://tools.ietf.org/html/rfc7946#appendix-A). e.g. `{"type":"LineString","coordinates":[[100.0, 0.0],[101.0, 1.0]]}`
 
 #### 3. Embed Geometries in CSV
-Geometries (Polygons, Points, LindStrings etc) can be embedded into CSV as a `GeoJSON` or `WKT` formatted string.
+Geometries (Polygons, Points, LineStrings etc) can be embedded into CSV as a `GeoJSON` or `WKT` formatted string.
 
 ##### `GeoJSON` String
 Use the geometry of a Feature, which includes type and coordinates. It should be a JSON formatted string, with the `"` corrected escaped. More info on [String escape in csv](https://gpdb.docs.pivotal.io/43250/admin_guide/load/topics/g-escaping-in-csv-formatted-files.html)

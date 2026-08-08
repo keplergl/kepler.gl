@@ -35,6 +35,7 @@ export type SavedInteractionConfig = {
   };
   geocoder: {
     enabled: boolean;
+    limitSearch?: boolean;
   };
   brush: InteractionConfig['brush']['config'] & {
     enabled: boolean;
@@ -106,6 +107,7 @@ export type SavedVisState = {
   splitMaps: SplitMap[];
   animationConfig: SavedAnimationConfig;
   editor?: SavedEditor;
+  layerOrder?: any[];
 };
 
 // Min saved config can be passed to addDataToMap
@@ -131,18 +133,25 @@ export type ParsedVisState = {
   overlayBlending?: string;
   splitMaps?: SplitMap[];
   animationConfig?: Partial<SavedAnimationConfig>;
+  layerOrder?: any[];
 };
 
 export type ParsedUiState = {
-  mapControls: {
-    mapLegend: {
-      active: boolean;
-      settings: {
-        position: string;
-        contentHeight: number;
+  mapControls?: {
+    mapLegend?: {
+      active?: boolean;
+      settings?: {
+        position?: {
+          x: number;
+          y: number;
+          anchorX: 'left' | 'right';
+          anchorY: 'top' | 'bottom';
+        };
+        contentHeight?: number;
       };
     };
   };
+  locale?: string;
 };
 
 export type SavedMapState = {

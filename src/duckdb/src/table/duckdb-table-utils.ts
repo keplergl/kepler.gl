@@ -32,18 +32,43 @@ export async function getDuckDBColumnTypes(
   tableName: string
 ): Promise<DuckDBColumnDesc[]> {
   const quotedTableName = quoteTableName(tableName);
-  const resDescribe = await connection.query(`DESCRIBE ${quotedTableName}`);
-
   const duckDbTypes: DuckDBColumnDesc[] = [];
-  const numRows = resDescribe.numRows;
-  for (let i = 0; i < numRows; ++i) {
-    const columnName = resDescribe.getChildAt(0)?.get(i);
-    const columnType = resDescribe.getChildAt(1)?.get(i);
+  try {
+    // PRAGMA table_info is less likely to bind/execute view SQL than DESCRIBE,
+    // so it avoids triggering remote access (e.g., S3) for view-backed schemas.
+    const resInfo = await connection.query(`PRAGMA table_info(${quotedTableName})`);
+    const numRows = resInfo.numRows;
+    const columnNames = resInfo.getChild('name');
+    const columnTypes = resInfo.getChild('type');
+    for (let i = 0; i < numRows; ++i) {
+      duckDbTypes.push({
+        name: columnNames?.get(i),
+        type: columnTypes?.get(i)
+      });
+    }
+  } catch (primaryError) {
+    try {
+      const resDescribe = await connection.query(`DESCRIBE ${quotedTableName}`);
+      const numRows = resDescribe.numRows;
+      for (let i = 0; i < numRows; ++i) {
+        const columnName = resDescribe.getChildAt(0)?.get(i);
+        const columnType = resDescribe.getChildAt(1)?.get(i);
 
-    duckDbTypes.push({
-      name: columnName,
-      type: columnType
-    });
+        duckDbTypes.push({
+          name: columnName,
+          type: columnType
+        });
+      }
+    } catch (fallbackError) {
+      const error = new Error(
+        `[DuckDB] Failed to load column types for ${tableName} (PRAGMA + DESCRIBE).`
+      );
+      (error as Error & {cause?: unknown}).cause = {
+        primaryError,
+        fallbackError
+      };
+      throw error;
+    }
   }
 
   return duckDbTypes;
@@ -111,7 +136,15 @@ export function castDuckDBTypesForKepler(
     const quotedColumnName = quoteColumnName(name);
     if (type === 'GEOMETRY' && options.geometryToWKB) {
       return `ST_AsWKB(${quotedColumnName}) as ${quotedColumnName}`;
-    } else if (type === 'BIGINT' && options.bigIntToDouble) {
+    } else if (
+      options.bigIntToDouble &&
+      (type === 'BIGINT' ||
+        type === 'UBIGINT' ||
+        type === 'HUGEINT' ||
+        type === 'UHUGEINT' ||
+        type.startsWith('DECIMAL'))
+    ) {
+      // Cast 64-bit and larger integer types and DECIMAL to DOUBLE to avoid BigInt in JS
       return `CAST(${quotedColumnName} AS DOUBLE) as ${quotedColumnName}`;
     }
     return quotedColumnName;

@@ -4,7 +4,7 @@
 import pick from 'lodash/pick';
 import {VERSIONS} from './versions';
 import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {colorRangeBackwardCompatibility, isFilterValidToSave, findById} from '@kepler.gl/utils';
+import {colorRangeBackwardCompatibility, isFilterValidToSave, findById, isPlainObject} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import Schema from './schema';
 import cloneDeep from 'lodash/cloneDeep';
@@ -16,6 +16,7 @@ import {
   FileLoadingProgress,
   Filter,
   InteractionConfig,
+  LayerOrder,
   MapInfo,
   ParsedFilter,
   ParsedLayer,
@@ -28,7 +29,8 @@ import {
   SavedVisState,
   SplitMap,
   ValueOf,
-  Effect
+  Effect,
+  Annotation
 } from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
@@ -53,9 +55,14 @@ export interface VisState {
   layers: Layer[];
   layerData: any[];
   layerToBeMerged: any[];
-  layerOrder: string[];
+  layerOrder: LayerOrder;
+  layerOrderToBeMerged: any[] | null;
   effects: Effect[];
   effectOrder: string[];
+  annotations: Annotation[];
+  annotationsToBeMerged: any[];
+  selectedAnnotationId: string | null;
+  isEditingAnnotationText: boolean;
   filters: Filter[];
   filterToBeMerged: any[];
   datasets: Datasets;
@@ -571,9 +578,23 @@ export class LayerSchemaV0 extends Schema {
     const [visState] = parents.slice(-1);
 
     return {
-      [this.key as 'layers']: visState.layerOrder.reduce((saved, layerId) => {
-        // save layers according to their rendering order
-        const layer = findById(layerId)(layers);
+      [this.key as 'layers']: visState.layerOrder.reduce((saved, entry) => {
+        if (isPlainObject(entry)) {
+          const group = entry as Record<string, unknown>;
+          const groupLayerOrder = group.layerOrder as any[];
+          if (groupLayerOrder) {
+            groupLayerOrder.forEach(nestedEntry => {
+              if (typeof nestedEntry === 'string') {
+                const layer = findById(nestedEntry)(layers);
+                if (layer?.isValidToSave()) {
+                  saved.push(this.savePropertiesOrApplySchema(layer).layers);
+                }
+              }
+            });
+          }
+          return saved;
+        }
+        const layer = findById(entry as string)(layers);
         if (layer?.isValidToSave()) {
           saved.push(this.savePropertiesOrApplySchema(layer).layers);
         }
@@ -831,6 +852,46 @@ export class EffectsSchema extends Schema {
   }
 }
 
+const annotationPropsV1 = {
+  id: null,
+  kind: null,
+  isVisible: null,
+  autoSize: null,
+  autoSizeY: null,
+  anchorPoint: null,
+  label: null,
+  editorState: null,
+  mapIndex: null,
+  lineColor: null,
+  lineWidth: null,
+  textWidth: null,
+  textHeight: null,
+  textVerticalAlign: null,
+  armLength: null,
+  angle: null,
+  radiusInMeters: null
+};
+
+export class AnnotationsSchema extends Schema {
+  key = 'annotations';
+
+  save(annotations) {
+    return {
+      [this.key]: annotations.map(
+        annotation => this.savePropertiesOrApplySchema(annotation).annotations
+      )
+    };
+  }
+
+  load(annotations) {
+    return {
+      [this.key]: annotations.map(
+        annotation => this.loadPropertiesOrApplySchema(annotation).annotations
+      )
+    };
+  }
+}
+
 export const filterPropsV1 = {
   ...filterPropsV0,
   plotType: new PlotTypeSchema({
@@ -892,6 +953,10 @@ export const propertiesV1 = {
     version: VERSIONS.v1,
     properties: effectPropsV1
   }),
+  annotations: new AnnotationsSchema({
+    version: VERSIONS.v1,
+    properties: annotationPropsV1
+  }),
   interactionConfig: new InteractionSchemaV1({
     version: VERSIONS.v1,
     properties: interactionPropsV1
@@ -917,7 +982,8 @@ export const propertiesV1 = {
       visible: null
     },
     key: 'editor'
-  })
+  }),
+  layerOrder: null
 };
 
 export class VisStateSchemaV1 extends Schema {

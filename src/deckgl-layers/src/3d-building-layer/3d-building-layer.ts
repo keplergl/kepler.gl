@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import GL from '@luma.gl/constants';
-import {CompositeLayer} from '@deck.gl/core/typed';
-import {TileLayer as DeckGLTileLayer} from '@deck.gl/geo-layers/typed';
-import {SolidPolygonLayer, SolidPolygonLayerProps} from '@deck.gl/layers/typed';
+import {CompositeLayer} from '@deck.gl/core';
+import {TileLayer as DeckGLTileLayer} from '@deck.gl/geo-layers';
+import {SolidPolygonLayer, SolidPolygonLayerProps} from '@deck.gl/layers';
+import {BLEND_PARAMS_ALPHA} from '@kepler.gl/constants';
 
 import {getTileData} from './3d-building-utils';
 import {ThreeDBuildingLayerProps, TileDataItem, TileLoadProps} from './types';
@@ -15,10 +15,7 @@ export default class ThreeDBuildingLayer extends CompositeLayer<ThreeDBuildingLa
   renderSubLayers(props: SolidPolygonLayerProps<any>) {
     return new SolidPolygonLayer<TileDataItem>({
       ...props,
-      parameters: {
-        blendFunc: [GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA, GL.ONE, GL.ONE_MINUS_SRC_ALPHA],
-        blendEquation: [GL.FUNC_ADD, GL.FUNC_ADD]
-      },
+      parameters: BLEND_PARAMS_ALPHA,
       extruded: true,
       opacity: 1,
       filled: true,

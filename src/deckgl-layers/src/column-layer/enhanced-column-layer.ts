@@ -1,13 +1,25 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {ColumnLayer, ColumnLayerProps} from '@deck.gl/layers';
 import {UNIT} from '@deck.gl/core';
-import {ColumnLayer, ColumnLayerProps} from '@deck.gl/layers/typed';
-import GL from '@luma.gl/constants';
 
 import {editShader} from '../';
 
-function addInstanceCoverage(vs) {
+// deck.gl 9 / luma 9 sets custom uniforms via UBO-backed shader modules (Model has
+// no setUniforms). This module exposes the globe-mode flag to the shader.
+const globeModeUniforms = {
+  name: 'globeMode',
+  vs: `layout(std140) uniform globeModeUniforms {
+  float globeMode;
+} globeModeProps;
+`,
+  uniformTypes: {
+    globeMode: 'f32'
+  }
+} as const;
+
+function addInstanceCoverage(vs: string) {
   const addDecl = editShader(
     vs,
     'hexagon cell vs add instance 1',
@@ -19,23 +31,35 @@ function addInstanceCoverage(vs) {
   return editShader(
     addDecl,
     'hexagon cell vs add instance 2',
-    'float dotRadius = radius * coverage * shouldRender;',
-    'float dotRadius = radius * coverage * instanceCoverage * shouldRender;'
+    'float dotRadius = column.radius * column.coverage * shouldRender;',
+    'float dotRadius = column.radius * column.coverage * instanceCoverage * shouldRender;'
+  );
+}
+
+function addGlobeScaling(vs: string) {
+  return editShader(
+    vs,
+    'hexagon cell vs globe scale mod',
+    'vec2 offset = (rotationMatrix * positions.xy * strokeOffsetRatio + column.offset) * dotRadius;',
+    `float radiusGlobeMod = globeModeProps.globeMode > 0.5 ? sin((90.0 - abs(geometry.worldPosition.y)) * PI / 180.0) * PI : 1.0;
+      vec2 offset = (rotationMatrix * positions.xy * strokeOffsetRatio + column.offset) * dotRadius * radiusGlobeMod;`
   );
 }
 
 type EnhancedColumnLayerProps = ColumnLayerProps<any> & {
-  strokeOpacity: any;
+  strokeOpacity: number;
 };
 
-// TODO: export all deck.gl layers from kepler.gl
 class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
   getShaders() {
     const shaders = super.getShaders();
 
+    const vs = addGlobeScaling(addInstanceCoverage(shaders.vs));
+
     return {
       ...shaders,
-      vs: addInstanceCoverage(shaders.vs)
+      vs,
+      modules: [...(shaders.modules || []), globeModeUniforms]
     };
   }
 
@@ -47,7 +71,7 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
     });
   }
 
-  draw({uniforms}) {
+  draw({uniforms: _uniforms}) {
     const {
       lineWidthUnits,
       lineWidthScale,
@@ -65,9 +89,13 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
       radius,
       angle
     } = this.props;
-    const {model, fillVertexCount, wireframeVertexCount, edgeDistance} = this.state;
+    const fillModel = this.state.fillModel;
+    const wireframeModel = this.state.wireframeModel;
+    const {fillVertexCount, edgeDistance} = this.state;
 
-    model.setUniforms(uniforms).setUniforms({
+    const globeMode = (this.context.viewport as any).resolution ? 1.0 : 0.0;
+
+    const columnProps = {
       radius,
       angle: (angle / 180) * Math.PI,
       offset,
@@ -81,35 +109,36 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
       widthScale: lineWidthScale,
       widthMinPixels: lineWidthMinPixels,
       widthMaxPixels: lineWidthMaxPixels
-    });
+    };
 
-    // When drawing 3d: draw wireframe first so it doesn't get occluded by depth test
-    if (extruded && wireframe) {
-      model.setProps({isIndexed: true});
-      model
-        .setVertexCount(wireframeVertexCount)
-        .setDrawMode(GL.LINES)
-        .setUniforms({isStroke: true})
-        .draw();
+    if (extruded && wireframe && wireframeModel) {
+      wireframeModel.shaderInputs.setProps({
+        column: {...columnProps, isStroke: true},
+        globeMode: {globeMode}
+      });
+      wireframeModel.draw(this.context.renderPass);
     }
-    if (filled) {
-      model.setProps({isIndexed: false});
-      model
-        .setVertexCount(fillVertexCount)
-        .setDrawMode(GL.TRIANGLE_STRIP)
-        .setUniforms({isStroke: false})
-        .draw();
+    if (filled && fillModel) {
+      fillModel.setVertexCount(fillVertexCount);
+      fillModel.shaderInputs.setProps({
+        column: {...columnProps, isStroke: false},
+        globeMode: {globeMode}
+      });
+      fillModel.draw(this.context.renderPass);
     }
-    // When drawing 2d: draw fill before stroke so that the outline is always on top
-    if (!extruded && stroked) {
-      model.setProps({isIndexed: false});
-      // The width of the stroke is achieved by flattening the side of the cylinder.
-      // Skip the last 1/3 of the vertices which is the top.
-      model
-        .setVertexCount((fillVertexCount * 2) / 3)
-        .setDrawMode(GL.TRIANGLE_STRIP)
-        .setUniforms({isStroke: true, opacity: strokeOpacity})
-        .draw();
+    if (!extruded && stroked && fillModel) {
+      fillModel.setVertexCount((fillVertexCount * 2) / 3);
+      fillModel.shaderInputs.setProps({
+        column: {...columnProps, isStroke: true},
+        layer: {opacity: strokeOpacity ?? this.props.opacity},
+        globeMode: {globeMode}
+      });
+      fillModel.draw(this.context.renderPass);
+      // Restore original vertex count and opacity so subsequent passes are unaffected
+      fillModel.setVertexCount(fillVertexCount);
+      fillModel.shaderInputs.setProps({
+        layer: {opacity: this.props.opacity}
+      });
     }
   }
 }

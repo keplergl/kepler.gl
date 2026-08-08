@@ -9,7 +9,6 @@
 import Window from 'global/window';
 import document from 'global/document';
 import Console from 'global/console';
-import svgToMiniDataURI from 'mini-svg-data-uri';
 import {IMAGE_EXPORT_ERRORS} from '@kepler.gl/constants';
 
 import {
@@ -246,11 +245,24 @@ function makeSvgDataUri(node, width, height, escapeXhtmlForWebpack = true) {
     const foreignObject = `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`;
     const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`;
 
-    // Optimizing SVGs in data URIs
-    // see https://codepen.io/tigt/post/optimizing-svgs-in-data-uris
-    // the best way of encoding SVG in a data: URI is data:image/svg+xml,[actual data].
-    // We don’t need the ;charset=utf-8 parameter because the given SVG is ASCII.
-    return svgToMiniDataURI(svgStr);
+    // Use base64 encoding
+    let base64Svg: string;
+    if (typeof Buffer !== 'undefined' && Buffer.from) {
+      base64Svg = Buffer.from(svgStr, 'utf8').toString('base64');
+    } else if (typeof TextEncoder !== 'undefined') {
+      // Modern browsers: TextEncoder handles Unicode → UTF-8 bytes
+      // Must chunk to avoid call stack limits with large arrays
+      const bytes = new TextEncoder().encode(svgStr);
+      const CHUNK_SIZE = 8192;
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+        binary += String.fromCharCode.apply(null, Array.from(bytes.slice(i, i + CHUNK_SIZE)));
+      }
+      base64Svg = Window.btoa(binary);
+    } else {
+      throw new Error('No base64 encoder found');
+    }
+    return `data:image/svg+xml;base64,${base64Svg}`;
   });
 }
 

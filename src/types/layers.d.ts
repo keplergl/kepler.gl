@@ -27,7 +27,7 @@ export type LayerBaseConfig = {
   };
 
   // for aggregate layer, aggregatedBins is returned for custom color scale
-  aggregatedBins?: AggregatedBin[];
+  aggregatedBins?: Record<number, AggregatedBin>;
 
   columnMode?: string;
   heightField?: VisualChannelField;
@@ -162,12 +162,13 @@ export type LayerTextLabel = {
   color: RGBColor;
   background: boolean;
   size: number;
+  weight: number;
   offset: [number, number];
   anchor: string;
   alignment: string;
   outlineWidth: number;
   outlineColor: RGBAColor;
-  backgroundColor: RGBAColor;
+  backgroundColor: RGBAColor | null;
 };
 
 export type ColorRangeConfig = {
@@ -243,6 +244,8 @@ export type VisConfigNumber = VisConfig & {
   defaultValue: number;
   range: SizeRange;
   step: number;
+  focusRange?: [number, number];
+  focusWeight?: number;
 };
 
 export type VisConfigBoolean = VisConfig & {
@@ -341,6 +344,12 @@ export type LayerVisConfigSettings = {
   allowHover: VisConfigBoolean;
   showNeighborOnHover: VisConfigBoolean;
   showHighlightColor: VisConfigBoolean;
+  scenegraph: VisConfigInput;
+  scenegraphEnabled: VisConfigBoolean;
+  scenegraphCustomModelUrl: VisConfigInput;
+  scenegraphColorEnabled: VisConfigBoolean;
+  scenegraphUseTrailColor: VisConfigBoolean;
+  scenegraphColor: VisConfigColorSelect;
   [key: string]: LayerVisConfigTypes;
 };
 
@@ -404,6 +413,7 @@ export type TextConfigNumber = {
 
 export type LayerTextConfig = {
   fontSize: TextConfigNumber;
+  fontWeight: TextConfigNumber;
   outlineWidth: TextConfigNumber;
   textAnchor: TextConfigSelect;
   textAlignment: TextConfigSelect;
@@ -426,6 +436,8 @@ export type LayerCallbacks = {
       coordinate?: [number, number] | null;
     }
   ) => void;
+  onRedrawNeeded?: (idx: number) => void;
+  onFitBounds?: (idx: number, bounds: [number, number, number, number]) => void;
 };
 
 export type BindedLayerCallbacks = {
@@ -436,6 +448,8 @@ export type BindedLayerCallbacks = {
     featureInfo: Array<{name: string; value: string}> | string | null,
     coordinate?: [number, number]
   ) => void;
+  onRedrawNeeded?: () => void;
+  onFitBounds?: (bounds: [number, number, number, number]) => void;
 };
 
 export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';

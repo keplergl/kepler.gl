@@ -5,7 +5,7 @@ import {getApplicationConfig} from '@kepler.gl/utils';
 
 interface RequestQueue {
   activeRequests: number;
-  queue: Array<() => Promise<any>>;
+  queue: Array<() => void>;
 }
 
 class RequestThrottle {
@@ -39,25 +39,21 @@ class RequestThrottle {
       : 'No active server queues';
   }
 
-  async throttleRequest<T>(serverKey: string, requestFunction: () => Promise<T>): Promise<T> {
+  async throttleRequest<T>(
+    serverKey: string,
+    requestFunction: () => Promise<T>,
+    maxConcurrentRequestsOverride?: number
+  ): Promise<T> {
     const serverQueue = this.getServerQueue(serverKey);
+    const maxConcurrentRequests =
+      typeof maxConcurrentRequestsOverride === 'number'
+        ? maxConcurrentRequestsOverride
+        : this.maxConcurrentRequests;
 
-    if (
-      serverQueue.activeRequests >= this.maxConcurrentRequests &&
-      Boolean(this.maxConcurrentRequests)
-    ) {
-      // Wait for a slot to become available
+    if (serverQueue.activeRequests >= maxConcurrentRequests && Boolean(maxConcurrentRequests)) {
+      // Wait for a free slot. We push only the resolver — requestFunction is called once below.
       await new Promise<void>(resolve => {
-        serverQueue.queue.push(async () => {
-          try {
-            const result = await requestFunction();
-            resolve();
-            return result;
-          } catch (error) {
-            resolve();
-            return null;
-          }
-        });
+        serverQueue.queue.push(resolve);
       });
     }
 
@@ -66,10 +62,10 @@ class RequestThrottle {
       return await requestFunction();
     } finally {
       serverQueue.activeRequests--;
-      // Process next request in queue if any
-      const nextRequest = serverQueue.queue.shift();
-      if (nextRequest) {
-        nextRequest();
+      // Unblock the next waiting caller, if any
+      const nextResolve = serverQueue.queue.shift();
+      if (nextResolve) {
+        nextResolve();
       }
     }
   }

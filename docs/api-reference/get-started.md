@@ -2,7 +2,7 @@
 
 ### Installation
 
-Use <b>Node v18</b> and above, older node versions have not been tested
+Use <b>Node v20</b> and above, older node versions have not been tested
 
 ```sh
 npm install --save kepler.gl @kepler.gl/components @kepler.gl/reducers

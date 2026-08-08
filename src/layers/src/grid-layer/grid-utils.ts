@@ -12,6 +12,7 @@ import {MapState} from '@kepler.gl/types';
  * @param coverage
  * @param properties
  * @param mapState
+ * @param coordinate - fallback position from picking info (deck.gl 9 no longer provides object.position)
  * @returns - geojson feature
  */
 
@@ -21,15 +22,17 @@ export function pointToPolygonGeo({
   cellSize,
   coverage,
   properties,
-  mapState
+  mapState,
+  coordinate
 }: {
   object: any;
   cellSize: number;
   coverage: number;
   properties?: any;
   mapState: MapState;
+  coordinate?: number[];
 }) {
-  const {position} = object;
+  const position = object.position || coordinate;
   const viewport = new WebMercatorViewport(mapState);
 
   if (!position) {

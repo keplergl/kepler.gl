@@ -803,6 +803,7 @@ export const expectedSavedLayer0 = {
     label: DEFAULT_LAYER_LABEL,
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [2, 2, 2],
+    columnMode: 'points',
     columns: {
       lat: 'gps_data.lat',
       lng: 'gps_data.lng'
@@ -843,6 +844,7 @@ export const expectedLoadedLayer0 = {
     label: DEFAULT_LAYER_LABEL,
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [2, 2, 2],
+    columnMode: 'points',
     columns: {
       lat: 'gps_data.lat',
       lng: 'gps_data.lng'
@@ -1020,7 +1022,8 @@ export const expectedSavedLayer2 = {
       filled: true,
       enable3d: false,
       wireframe: false,
-      strokeOpacity: 0.8
+      strokeOpacity: 0.8,
+      allowHover: true
     },
     textLabel: [DEFAULT_TEXT_LABEL]
   },
@@ -1068,7 +1071,8 @@ export const expectedLoadedLayer2 = {
       stroked: true,
       filled: true,
       enable3d: false,
-      wireframe: false
+      wireframe: false,
+      allowHover: true
     },
     colorField: null,
     colorScale: 'quantile',
@@ -1127,15 +1131,37 @@ export const expectedSavedTripLayer = {
       trailLength: 180,
       fadeTrail: true,
       billboard: false,
-      sizeRange: [0, 10]
+      sizeRange: [0, 10],
+      sizeScale: 1,
+      scenegraph: null,
+      scenegraphEnabled: false,
+      scenegraphColorEnabled: false,
+      scenegraphUseTrailColor: false,
+      scenegraphColor: null,
+      scenegraphCustomModelUrl: '',
+      adjustRoll: 0,
+      adjustPitch: 0,
+      adjustYaw: 0,
+      invertRoll: false,
+      invertPitch: false,
+      invertYaw: false,
+      fixedRoll: true,
+      fixedPitch: true,
+      fixedYaw: true
     },
-    textLabel: [DEFAULT_TEXT_LABEL]
+    textLabel: [{...DEFAULT_TEXT_LABEL, backgroundColor: null}]
   },
   visualChannels: {
     colorField: null,
     colorScale: 'quantile',
     sizeField: null,
-    sizeScale: 'linear'
+    sizeScale: 'linear',
+    rollField: null,
+    rollScale: 'linear',
+    pitchField: null,
+    pitchScale: 'linear',
+    yawField: null,
+    yawScale: 'linear'
   }
 };
 

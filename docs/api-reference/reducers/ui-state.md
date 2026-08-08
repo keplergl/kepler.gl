@@ -60,7 +60,7 @@ const composedReducer = (state, action) => {
          foo: {
             ...state.keplerGl.foo,
             uiState: uiStateUpdaters.toggleSidePanelUpdater(
-              uiState, {payload: null}
+              state.keplerGl.foo.uiState, {payload: null}
             )
          }
        }
@@ -521,7 +521,7 @@ Returns **[Object][55]** nextState
 
 [52]: #parameters-19
 
-[53]: ../advanced-usage/using-updaters.md
+[53]: ../advanced-usages/using-updaters.md
 
 [54]: ../actions/actions.md#addnotification
 

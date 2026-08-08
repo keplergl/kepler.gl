@@ -45,14 +45,22 @@ export default {
     building: 'Building',
     water: 'Water',
     land: 'Land',
-    '3dBuilding': '3d Building',
-    background: 'Background'
+    '3dBuilding': '3D Building',
+    background: 'Background',
+    atmosphere: 'Atmosphere',
+    basemap: 'Basemap',
+    adminBorders: 'Admin Borders',
+    terminator: 'Day/Night',
+    sunAzimuth: 'Sun Azimuth',
+    surface: 'Globe Surface',
+    stars: 'Stars'
   },
   panel: {
     text: {
       label: 'label',
       labelWithId: 'Label {labelId}',
       fontSize: 'Font size',
+      fontWeight: 'Font weight',
       fontColor: 'Font color',
       backgroundColor: 'Background color',
       textAnchor: 'Text anchor',
@@ -67,7 +75,8 @@ export default {
       layer: 'Layers',
       filter: 'Filters',
       interaction: 'Interactions',
-      basemap: 'Base map'
+      basemap: 'Base map',
+      annotation: 'Annotations'
     },
     panelViewToggle: {
       list: 'View List',
@@ -95,10 +104,16 @@ export default {
     colorByDescription: 'When off, color is based on count of points',
     aggregateBy: 'Aggregate {field} by',
     '3DModel': '3D Model',
+    '3DModelURL': 'Custom 3D Model URL',
+    '3DModelURLDescription': 'URL of a .glb or .glTF file with the 3D model.',
     '3DModelOptions': '3D Model Options',
     service: 'Service',
     layer: 'Layer',
     appearance: 'Appearance',
+    bounds: 'Bounds',
+    imageSource: 'Image Source',
+    alignment: 'Alignment',
+    uniqueIdField: 'Unique ID Field',
     type: {
       point: 'point',
       arc: 'arc',
@@ -115,16 +130,21 @@ export default {
       trip: 'trip',
       s2: 'S2',
       '3d': '3D',
+      flow: 'flow',
       vectortile: 'vector tile',
       rastertile: 'raster tile',
-      wms: 'WMS'
+      wms: 'WMS',
+      tile3d: '3D tile',
+      bitmap: 'bitmap'
     },
     wms: {
       hover: 'Value:'
     },
     layerUpdateError:
       'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.',
-    interaction: 'Interaction'
+    interaction: 'Interaction',
+    heatmap: 'Heatmap',
+    aggregation: 'Aggregation'
   },
   layerVisConfigs: {
     angle: 'Angle',
@@ -140,6 +160,15 @@ export default {
     billboardDescription: 'Orient geometry towards the camera',
     fadeTrail: 'Fade trail',
     opacity: 'Opacity',
+    imageUrl: 'Image URL',
+    showBounds: 'Show Bounds',
+    editBounds: 'Drag corners to resize',
+    alignMode: 'Align to map',
+    boundsWest: 'West',
+    boundsSouth: 'South',
+    boundsEast: 'East',
+    boundsNorth: 'North',
+    pointSize: 'Point Size',
     coverage: 'Coverage',
     outline: 'Outline',
     colorRange: 'Color range',
@@ -149,6 +178,7 @@ export default {
     targetColor: 'Target Color',
     colorAggregation: 'Color Aggregation',
     heightAggregation: 'Height Aggregation',
+    weightAggregation: 'Weight Aggregation',
     resolutionRange: 'Resolution range',
     sizeScale: 'Size Scale',
     worldUnitSize: 'World Unit Size',
@@ -166,38 +196,125 @@ export default {
     enablePolygonHeight: 'Enable Polygon Height',
     showWireframe: 'Show Wireframe',
     weightIntensity: 'Weight Intensity',
+    intensity: 'Intensity',
+    threshold: 'Threshold',
     zoomScale: 'Zoom Scale',
     heightRange: 'Height Range',
     heightMultiplier: 'Height Multiplier',
     fixedHeight: 'Fixed height',
     fixedHeightDescription: 'Use height without modifications',
-    allowHover: 'Allow Hover',
+    allowHover: 'Allow hover',
+    allowHoverDescription: 'Show or hide tooltip when hovering over layer features',
     showNeighborOnHover: 'Highlight Neighbors On Hover',
     showHighlightColor: 'Show highlight Color',
     darkModeEnabled: 'Dark base map',
-    transparentBackground: 'Transparent Background'
+    transparentBackground: 'Transparent Background',
+    scenegraphColorEnabled: 'Apply color',
+    scenegraphUseTrailColor: 'Use trail color',
+    adjustRoll: 'Adjust Roll',
+    adjustPitch: 'Adjust Pitch',
+    adjustYaw: 'Adjust Yaw',
+    adjustSize: 'Size Scale',
+    adjustSizeDescription:
+      'Size is scaled by factor of 2^x where x is the slider value. Zero means no scaling.',
+    invertRoll: 'Invert Roll',
+    invertPitch: 'Invert Pitch',
+    invertYaw: 'Invert Yaw',
+    fixedRoll: 'Roll based on',
+    fixedPitch: 'Pitch based on',
+    fixedYaw: 'Yaw based on',
+    fixedRollDescription:
+      'Select a column with the values for Roll. Zero is level. Positive is rolled right.',
+    fixedPitchDescription:
+      'Select a column with the values for Pitch. Zero is level. Positive is Pitch up.',
+    fixedYawDescription:
+      'Select a column with the values for Yaw. Zero is north. Positive is clockwise from north.',
+    flow: {
+      fade: 'Fade',
+      fadeEnabled: 'Fade',
+      fadeAmount: 'Fade Amount',
+      display: 'Display',
+      renderingMode: 'Line Style',
+      renderingModes: {
+        straight: 'Straight',
+        curved: 'Curved',
+        'animated-straight': 'Animated'
+      },
+      adaptiveScalesEnabled: 'Adaptive Scales',
+      clusteringEnabled: 'Clustering',
+      lineThicknessScale: 'Line Thickness',
+      lineCurviness: 'Curviness',
+      locationTotalsEnabled: 'Location Totals',
+      maxTopFlowsDisplayNum: 'Max Top Flows'
+    }
   },
   layerManager: {
     addData: 'Add Data',
     addLayer: 'Add Layer',
     layerBlending: 'Layer Blending',
-    overlayBlending: 'Overlay Blending'
+    overlayBlending: 'Overlay Blending',
+    globeUnsupported: '{layerType} layer is not supported in Globe mode'
   },
   mapManager: {
     mapStyle: 'Map style',
     addMapStyle: 'Add Map Style',
     '3dBuildingColor': '3D Building Color',
-    backgroundColor: 'Background Color'
+    backgroundColor: 'Background Color',
+    globeLayers: 'Globe Layers'
   },
   effectManager: {
     effects: 'Effects',
-    addEffect: 'Add effect',
+    addEffect: 'Add',
     pickDateTime: 'Pick date/time',
     currentTime: 'Current time',
     pickCurrrentTime: 'Pick current time',
     date: 'Date',
     time: 'Time',
     timezone: 'Timezone'
+  },
+  annotationManager: {
+    title: 'Annotations',
+    addAnnotation: 'Add',
+    type: 'Type',
+    lineWidth: 'Line Width',
+    color: 'Color'
+  },
+  effectDescription: {
+    lightAndShadow:
+      'Simulates realistic sun lighting and shadow casting based on time of day and geographic location. Adjustable shadow intensity, sun and ambient light colors.',
+    ink: 'Applies an ink-wash artistic style that darkens edges and creates a hand-drawn appearance. Adjust strength to control the intensity of the effect.',
+    brightnessContrast:
+      'Adjusts the overall brightness and contrast of the map. Use positive values to brighten or increase contrast, negative values to darken or flatten the image.',
+    hueSaturation:
+      'Shifts the color hue and adjusts saturation across the entire map. Useful for creating color themes or desaturating the view.',
+    vibrance:
+      'Selectively boosts the intensity of muted colors without oversaturating already vivid ones. Produces a more natural-looking color enhancement than saturation.',
+    sepia:
+      'Applies a warm brownish tone reminiscent of aged photographs. Control the amount to blend between the original colors and the sepia look.',
+    dotScreen:
+      'Converts the image into a pattern of monochrome dots, resembling newspaper halftone printing. Adjust angle, dot size, and center position.',
+    colorHalftone:
+      'Simulates CMYK color halftone printing with separate dot patterns for each color channel. Control angle, dot size, and center position.',
+    noise:
+      'Adds random film-grain style noise across the map. Useful for a textured, analog aesthetic or to reduce color banding.',
+    triangleBlur:
+      'Applies a smooth Gaussian-like blur uniformly across the map. Control the blur radius to adjust the level of softness.',
+    zoomBlur:
+      'Creates a radial motion blur that emanates from a center point, simulating a camera zoom. Adjust strength and center position.',
+    tiltShift:
+      'Simulates a tilt-shift lens effect that blurs areas outside a focal band, creating a miniature model look. Set the focal band with start/end positions.',
+    edgeWork:
+      'Highlights structural edges in the image using an artistic charcoal-sketch style. Adjust the detection radius to control line thickness.',
+    vignette:
+      'Darkens the corners and edges of the map, drawing focus toward the center. Control the darkening amount and the radius of the clear area.',
+    magnify:
+      'Creates a circular magnifying glass overlay at a configurable position. Adjust size, zoom level, and border width.',
+    hexagonalPixelate:
+      'Replaces the image with a grid of hexagonal tiles, each filled with the average color of the area it covers. Adjust the tile scale.',
+    distanceFog:
+      'Fades distant objects into a fog color based on their depth from the camera, enhancing the sense of depth. Control density, start distance, range, and fog color.',
+    surfaceFog:
+      'Renders a fog layer at a specific elevation above the terrain surface. Adjust elevation, transition thickness, density, color, and an optional noise pattern.'
   },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',
@@ -220,15 +337,17 @@ export default {
     rowCount: '{rowCount} rows',
     vectorTile: 'Vector tile',
     rasterTile: 'Raster tile',
-    wmsTile: 'WMS tile'
+    wmsTile: 'WMS tile',
+    tile3d: '3D tile',
+    bitmap: 'Bitmap image'
   },
   tooltip: {
     hideLayer: 'Hide layer',
     showLayer: 'Show layer',
     hideFeature: 'Hide feature',
     showFeature: 'Show feature',
-    hide: 'hide',
-    show: 'show',
+    hide: 'Hide',
+    show: 'Show',
     removeLayer: 'Remove layer',
     duplicateLayer: 'Duplicate layer',
     zoomToLayer: 'Zoom to layer',
@@ -236,8 +355,16 @@ export default {
     layerSettings: 'Layer settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',
+    selectSplitMode: 'Select map view mode',
+    singleView: 'Single',
+    dualView: 'Dual',
+    swipeView: 'Swipe',
     showLegend: 'Show legend',
     disable3DMap: 'Disable 3D Map',
+    globeMap: 'Globe Map',
+    disableGlobeMap: 'Disable Globe Map',
+    viewMode: 'View Mode',
+    top: 'Top',
     DrawOnMap: 'Draw on map',
     selectLocale: 'Select locale',
     showAiAssistantPanel: 'Show AI Assistant',
@@ -254,17 +381,24 @@ export default {
     '3DMap': '3D Map',
     animationByWindow: 'Moving Time Window',
     animationByIncremental: 'Incremental Time Window',
-    speed: 'speed',
-    play: 'play',
-    pause: 'pause',
-    reset: 'reset',
-    export: 'export',
+    speed: 'Speed',
+    play: 'Play',
+    pause: 'Pause',
+    reset: 'Reset',
+    export: 'Export',
     timeLayerSync: 'Link with the layer timeline',
     timeLayerUnsync: 'Unlink with the layer timeline',
     syncTimelineStart: 'Start of current filter timeframe',
     syncTimelineEnd: 'End of current filter timeframe',
     showEffectPanel: 'Show effect panel',
     hideEffectPanel: 'Hide effect panel',
+    showAnnotationPanel: 'Show annotations',
+    hideAnnotationPanel: 'Hide annotations',
+    removeAnnotation: 'Remove annotation',
+    duplicateAnnotation: 'Duplicate annotation',
+    hideAnnotation: 'Hide annotation',
+    showAnnotation: 'Show annotation',
+    annotationSettings: 'Annotation settings',
     removeEffect: 'Remove effect',
     disableEffect: 'Disable effect',
     effectSettings: 'Effect settings'
@@ -273,6 +407,7 @@ export default {
     exportImage: 'Export Image',
     exportData: 'Export Data',
     exportMap: 'Export Map',
+    exportVideo: 'Export Video',
     shareMapURL: 'Share Map URL',
     saveMap: 'Save Map',
     select: 'Select',
@@ -289,6 +424,11 @@ export default {
     noLayersToFilter: 'No layers to filter'
   },
 
+  exportVideoModal: {
+    animation: 'Animation',
+    settings: 'Settings'
+  },
+
   modal: {
     title: {
       deleteDataset: 'Delete Dataset',
@@ -296,6 +436,7 @@ export default {
       exportImage: 'Export Image',
       exportData: 'Export Data',
       exportMap: 'Export Map',
+      exportVideo: 'Export Video',
       addCustomMapboxStyle: 'Add Custom Map Style',
       saveMap: 'Save Map',
       shareURL: 'Share URL'
@@ -318,8 +459,13 @@ export default {
       ratio16_9: '16:9',
       resolutionTitle: 'Resolution',
       resolutionDescription: 'High resolution is better for prints.',
+      resolutionPlaceholder: 'Select resolution...',
       mapLegendTitle: 'Map Legend',
       mapLegendAdd: 'Add legend on map'
+    },
+    exportVideo: {
+      animation: 'Animation',
+      settings: 'Settings'
     },
     exportData: {
       datasetTitle: 'Dataset',
@@ -387,6 +533,8 @@ export default {
         tokenPlaceholder: 'Paste your Mapbox access token',
         tokenMisuseWarning:
           '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ',
+        tokenSecurityWarning:
+          '* Warning: your Mapbox token will be embedded in the exported HTML file. Anyone with access to this file can see and use your token. Use a scoped token with URL restrictions when possible. ',
         tokenDisclaimer: 'You can change the Mapbox token later using the following instructions: ',
         tokenUpdate: 'How to update an existing map token.',
         modeTitle: 'Map Mode',
@@ -529,7 +677,8 @@ ${'```'}
   },
   header: {
     visibleLayers: 'Visible layers',
-    layerLegend: 'Legend'
+    layerLegend: 'Legend',
+    annotations: 'Annotations'
   },
   interactions: {
     tooltip: 'Tooltip',
@@ -582,7 +731,22 @@ ${'```'}
     hexagon: {
       worldUnitSize: 'Hexagon Radius (km)'
     },
-    hex_id: 'hex id'
+    hex_id: 'hex id',
+    flow: {
+      source: {
+        lat: 'source lat',
+        lng: 'source lng',
+        name: 'source name',
+        h3: 'source H3'
+      },
+      target: {
+        lat: 'target lat',
+        lng: 'target lng',
+        name: 'target name',
+        h3: 'target H3'
+      },
+      count: 'count'
+    }
   },
   color: {
     customPalette: 'Custom Palette',
@@ -621,7 +785,8 @@ ${'```'}
     addTilesetText: 'Add Tileset'
   },
   geocoder: {
-    title: 'Enter an address or coordinates, ex 37.79,-122.40'
+    title: 'Enter an address or coordinates, ex 37.79,-122.40',
+    limitSearch: 'Limit Search to Viewport'
   },
   fieldSelector: {
     clearAll: 'Clear All',
@@ -662,6 +827,21 @@ ${'```'}
           color: 'Fill color',
           strokeColor: 'Outline'
         }
+      }
+    }
+  },
+  flow: {
+    tooltip: {
+      location: {
+        name: 'Name',
+        incomingCount: 'Incoming',
+        outgoingCount: 'Outgoing',
+        internalCount: 'Internal'
+      },
+      flow: {
+        sourceName: 'Origin',
+        targetName: 'Destination',
+        count: 'Count'
       }
     }
   }

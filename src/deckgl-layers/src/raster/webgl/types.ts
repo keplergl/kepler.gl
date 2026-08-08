@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Texture2D} from '@luma.gl/webgl';
+import type {Texture} from '@luma.gl/core';
 
 export interface ShaderModule {
   /** A unique name for this shader module */
@@ -18,16 +18,19 @@ export interface ShaderModule {
 
   /** A vertex shader to inject */
   vs?: string;
-  uniforms?: Record<string, any>;
+  uniforms?: Record<string, UniformType>;
   getUniforms?: (opts: object) => GetUniformsOutput;
+
+  /** luma.gl 9 UBO uniform type declarations (e.g. { opacity: 'f32' }) */
+  uniformTypes?: Record<string, string>;
 
   /** Optional constants to define when injecting */
   defines?: Record<string, string>;
   inject?: Record<string, string>;
   dependencies?: ShaderModule[];
-  deprecations?: any[];
+  deprecations?: {type: string; old: string; new: string}[];
 }
 
-export type UniformType = number | number[] | Texture2D | undefined;
+export type UniformType = number | number[] | Texture | undefined;
 
 export type GetUniformsOutput = Record<string, UniformType> | null;

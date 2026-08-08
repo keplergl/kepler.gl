@@ -5,11 +5,17 @@
  * Functions and constants for handling webgl/luma.gl/deck.gl entities
  */
 
-import {parse, fetchFile, load, FetchError} from '@loaders.gl/core';
+import {parse, fetchFile, load, FetchError, Loader} from '@loaders.gl/core';
 import {ImageLoader} from '@loaders.gl/images';
 import {NPYLoader} from '@loaders.gl/textures';
-import GL from '@luma.gl/constants';
-import {Texture2DProps} from '@luma.gl/webgl';
+// @ts-ignore GL resolution depends on moduleResolution setting
+import {GL} from '@luma.gl/constants';
+
+/**
+ * Loose texture data descriptor passed around before actual luma.gl Texture creation.
+ * Not the same as luma.gl's strict TextureProps (which requires width/height).
+ */
+type Texture2DProps = Record<string, any>;
 
 import {sleep} from '@kepler.gl/common-utils';
 import {getLoaderOptions} from '@kepler.gl/constants';
@@ -251,6 +257,16 @@ type LoadingOptions = {
   fetch?: typeof fetch | FetchLike;
 };
 
+type NpyRequest = {
+  url: string;
+  rasterServerUrl: string;
+  options: RequestInit;
+  rasterServerMaxRetries?: number;
+  rasterServerRetryDelay?: number;
+  rasterServerServerErrorsToRetry?: number[];
+  rasterServerMaxPerServerRequests?: number;
+};
+
 /**
  * Load NPY Array
  *
@@ -263,98 +279,107 @@ type LoadingOptions = {
  * @return image object to pass to Texture2D constructor
  */
 export async function loadNpyArray(
-  request: {url: string; rasterServerUrl: string; options: RequestInit},
+  request: NpyRequest,
   split: true,
   options?: LoadingOptions
 ): Promise<Texture2DProps[] | null>;
 export async function loadNpyArray(
-  request: {url: string; rasterServerUrl: string; options: RequestInit},
+  request: NpyRequest,
   split: false,
   options?: LoadingOptions
 ): Promise<Texture2DProps | null>;
 export async function loadNpyArray(
-  request: {url: string; rasterServerUrl: string; options: RequestInit},
+  request: NpyRequest,
   split: boolean,
   options?: LoadingOptions
 ): Promise<Texture2DProps | Texture2DProps[] | null> {
-  const numAttempts = 1 + getApplicationConfig().rasterServerMaxRetries;
+  const numAttempts =
+    1 + (request.rasterServerMaxRetries ?? getApplicationConfig().rasterServerMaxRetries);
 
-  const asset = await getRequestThrottle().throttleRequest(request.rasterServerUrl, async () => {
-    for (let attempt = 0; attempt < numAttempts; attempt++) {
-      try {
-        const {npy: npyOptions} = getLoaderOptions();
-        const response: NPYLoaderResponse = await load(request.url, NPYLoader, {
-          npy: npyOptions,
-          fetch: options?.fetch
-        });
+  const asset = await getRequestThrottle().throttleRequest(
+    request.rasterServerUrl,
+    async () => {
+      for (let attempt = 0; attempt < numAttempts; attempt++) {
+        try {
+          const {npy: npyOptions} = getLoaderOptions();
 
-        if (!response || !response.data || request.options.signal?.aborted) {
-          return null;
-        }
+          const response = (await load(request.url, NPYLoader as Loader<NPYLoaderResponse>, {
+            npy: npyOptions,
+            fetch: options?.fetch
+          })) as NPYLoaderResponse;
 
-        // Float64 data needs to be coerced to Float32 for the GPU
-        if (response.data instanceof Float64Array) {
-          response.data = Float32Array.from(response.data);
-        }
+          if (!response || !response.data || request.options.signal?.aborted) {
+            return null;
+          }
 
-        const {data, header} = response;
-        const {shape} = header;
-        const {format, dataFormat, type} = getWebGL2TextureParameters(data);
+          // Float64 data needs to be coerced to Float32 for the GPU
+          if (response.data instanceof Float64Array) {
+            response.data = Float32Array.from(response.data);
+          }
 
-        // TODO: check height-width or width-height
-        // Regardless, images usually square
-        // TODO: handle cases of 256x256x1 instead of 1x256x256
-        const [z, height, width] = shape;
+          const {data, header} = response;
+          const {shape} = header;
+          const {format, dataFormat, type} = getWebGL2TextureParameters(data);
 
-        // Since we now use WebGL2 data types for 8-bit textures, we set the following for all textures
-        const mipmaps = false;
-        const parameters = DEFAULT_HIGH_BIT_TEXTURE_PARAMETERS;
+          // TODO: check height-width or width-height
+          // Regardless, images usually square
+          // TODO: handle cases of 256x256x1 instead of 1x256x256
+          const [z, height, width] = shape;
 
-        if (!split) {
-          return {
-            data,
-            width,
-            height,
-            format,
-            dataFormat,
-            type,
-            parameters,
-            mipmaps
-          };
-        }
+          // Since we now use WebGL2 data types for 8-bit textures, we set the following for all textures
+          const mipmaps = false;
+          const parameters = DEFAULT_HIGH_BIT_TEXTURE_PARAMETERS;
 
-        // Split into individual arrays
-        const channels: Texture2DProps[] = [];
-        const channelSize = height * width;
-        for (let i = 0; i < z; i++) {
-          channels.push({
-            data: data.subarray(i * channelSize, (i + 1) * channelSize),
-            width,
-            height,
-            format,
-            dataFormat,
-            type,
-            parameters,
-            mipmaps
-          });
-        }
-        return channels;
-      } catch (error) {
-        // Retry if Service Temporarily Unavailable 503 error etc.
-        if (
-          attempt < numAttempts &&
-          error instanceof FetchError &&
-          getApplicationConfig().rasterServerServerErrorsToRetry?.includes(
-            error.response?.status as number
-          )
-        ) {
-          await sleep(getApplicationConfig().rasterServerRetryDelay);
-          continue;
+          if (!split) {
+            return {
+              data,
+              width,
+              height,
+              format,
+              dataFormat,
+              type,
+              parameters,
+              mipmaps
+            };
+          }
+
+          // Split into individual arrays
+          const channels: Texture2DProps[] = [];
+          const channelSize = height * width;
+          for (let i = 0; i < z; i++) {
+            channels.push({
+              data: data.subarray(i * channelSize, (i + 1) * channelSize),
+              width,
+              height,
+              format,
+              dataFormat,
+              type,
+              parameters,
+              mipmaps
+            });
+          }
+          return channels;
+        } catch (error) {
+          // Retry if Service Temporarily Unavailable 503 error etc.
+          if (
+            attempt < numAttempts &&
+            error instanceof FetchError &&
+            (
+              request.rasterServerServerErrorsToRetry ??
+              getApplicationConfig().rasterServerServerErrorsToRetry
+            )?.includes(error.response?.status as number)
+          ) {
+            await sleep(
+              request.rasterServerRetryDelay ?? getApplicationConfig().rasterServerRetryDelay
+            );
+            continue;
+          }
         }
       }
-    }
-    return null;
-  });
+      return null;
+    },
+    request.rasterServerMaxPerServerRequests
+  );
 
   return asset;
 }

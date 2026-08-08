@@ -39,8 +39,10 @@ import {GetUniformsOutput, ShaderModule} from '../types';
 const fs = `\
 #define epsilon 0.00000001
 
-uniform float sigmoidalContrast;
-uniform float sigmoidalBias;
+uniform sigmoidalContrastUniforms {
+  float contrast;
+  float bias;
+} sigmoidalContrast;
 
 // NOTE: Input array must have float values between 0 and 1!
 // NOTE: bias must be a scalar float between 0 and 1!
@@ -87,18 +89,22 @@ function getUniforms(
   }
 
   return {
-    sigmoidalContrast: Number.isFinite(sigmoidalContrast) ? sigmoidalContrast : 0,
-    sigmoidalBias: Number.isFinite(sigmoidalBias) ? sigmoidalBias : 0.5
+    contrast: Number.isFinite(sigmoidalContrast) ? sigmoidalContrast : 0,
+    bias: Number.isFinite(sigmoidalBias) ? sigmoidalBias : 0.5
   };
 }
 
 export const sigmoidalContrast: ShaderModule = {
   name: 'sigmoidalContrast',
   fs,
+  uniformTypes: {
+    contrast: 'f32',
+    bias: 'f32'
+  },
   getUniforms,
   inject: {
     'fs:DECKGL_MUTATE_COLOR': `
-    image = calculateSigmoidalContrast(image, sigmoidalContrast, sigmoidalBias);
+    image = calculateSigmoidalContrast(image, sigmoidalContrast.contrast, sigmoidalContrast.bias);
     `
   }
 };

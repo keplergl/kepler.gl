@@ -11,8 +11,10 @@ import {Effect, EffectUpdateProps} from '@kepler.gl/types';
 
 import RangeSliderFactory from '../common/range-slider';
 import {ArrowDownSmall} from '../common/icons';
+import {Tooltip} from '../common/styled-components';
 import EffectTimeConfiguratorFactory from './effect-time-configurator';
 import CompactColorPicker from './compact-color-picker';
+import SurfaceFogElevationSectionFactory, {ELEVATION_SECTION_TYPE} from './surface-fog-section';
 
 export type EffectConfiguratorProps = {
   effect: Effect;
@@ -60,13 +62,13 @@ const StyledVerticalSeparator = styled.div`
 `;
 
 type StyledWrapperProps = {
-  marginBottom?: number;
+  $marginBottom?: number;
 };
 const StyledWrapper = styled.div<StyledWrapperProps>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${props => props.marginBottom ?? 9}px;
+  margin-bottom: ${props => props.$marginBottom ?? 9}px;
 `;
 
 const StyledConfigSection = styled.div`
@@ -139,6 +141,63 @@ const RegularSliderWrapper = styled.div.attrs({
   }
 `;
 
+const StyledCheckboxWrapper = styled.div.attrs({
+  className: 'effect-configurator__pp-section-checkbox'
+})`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+`;
+
+const StyledCheckbox = styled.input`
+  margin-right: 6px;
+  cursor: pointer;
+  accent-color: ${props => props.theme.activeColor};
+`;
+
+const StyledCheckboxLabel = styled.label`
+  font-size: ${props => props.theme.inputFontSize};
+  color: ${props => props.theme.effectPanelTextSecondary1};
+  cursor: pointer;
+  white-space: nowrap;
+`;
+
+const StyledHintTooltip = styled(Tooltip)`
+  &.__react_component_tooltip {
+    max-width: 220px;
+    white-space: normal;
+    line-height: 1.4;
+    text-align: left;
+  }
+`;
+
+const StyledHintIcon = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 6px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  color: ${props => props.theme.labelColor};
+  border: 1px solid ${props => props.theme.labelColor};
+  cursor: help;
+  &:hover {
+    color: ${props => props.theme.textColorHl};
+    border-color: ${props => props.theme.textColorHl};
+  }
+`;
+
+const StyledColorCheckboxRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+`;
+
 const COMMON_SLIDER_PROPS = {
   showInput: true,
   isRanged: false,
@@ -148,17 +207,25 @@ const COMMON_SLIDER_PROPS = {
 
 type EffectParameterDescriptionFlattened = {
   name: string;
+  type?: 'number' | 'array' | 'color' | 'checkbox';
   label?: string | false | (string | false)[];
+  tooltip?: string;
   min: number;
   max: number;
+  defaultValue?: number | number[] | boolean;
   index?: number;
 };
 
-EffectConfiguratorFactory.deps = [RangeSliderFactory, EffectTimeConfiguratorFactory];
+EffectConfiguratorFactory.deps = [
+  RangeSliderFactory,
+  EffectTimeConfiguratorFactory,
+  SurfaceFogElevationSectionFactory
+];
 
 export default function EffectConfiguratorFactory(
   RangeSlider: ReturnType<typeof RangeSliderFactory>,
-  EffectTimeConfigurator: ReturnType<typeof EffectTimeConfiguratorFactory>
+  EffectTimeConfigurator: ReturnType<typeof EffectTimeConfiguratorFactory>,
+  SurfaceFogElevationSection: ReturnType<typeof SurfaceFogElevationSectionFactory>
 ): React.FC<EffectConfiguratorProps> {
   const ShadowEffectConfigurator: React.FC<EffectConfiguratorProps> = ({
     effect,
@@ -168,17 +235,21 @@ export default function EffectConfiguratorFactory(
 
     const sliderProps = useMemo(() => {
       const propNames = ['shadowIntensity', 'ambientLightIntensity', 'sunLightIntensity'];
+      const descriptions = effect.getParameterDescriptions();
       return propNames.map(propName => {
+        const desc = descriptions.find(d => d.name === propName);
+        const min = desc?.min ?? 0;
+        const max = desc?.max ?? 1;
         return {
           value1: parameters[propName],
-          range: [0, 1],
-          value0: 0,
+          range: [min, max],
+          value0: min,
           onChange: (value: number[], event?: Event | null) => {
             updateEffectConfig(event, id, {parameters: {[propName]: value[1]}});
           }
         };
       });
-    }, [id, parameters, updateEffectConfig]);
+    }, [id, effect, parameters, updateEffectConfig]);
 
     const onTimeParametersChanged = useCallback(
       parameters => {
@@ -221,10 +292,10 @@ export default function EffectConfiguratorFactory(
 
         <StyledVerticalSeparator />
 
-        <StyledWrapper marginBottom={0}>
+        <StyledWrapper $marginBottom={0}>
           <SectionTitle>{'Shadow'}</SectionTitle>
         </StyledWrapper>
-        <StyledWrapper marginBottom={16}>
+        <StyledWrapper $marginBottom={16}>
           <CompactColorPicker
             label={'Color'}
             color={colorPickerProps[2].colorSets[0].selectedColor}
@@ -239,10 +310,10 @@ export default function EffectConfiguratorFactory(
           </StyledConfigSection>
         </StyledWrapper>
 
-        <StyledWrapper marginBottom={0}>
+        <StyledWrapper $marginBottom={0}>
           <SectionTitle>{'Ambient light'}</SectionTitle>
         </StyledWrapper>
-        <StyledWrapper marginBottom={16}>
+        <StyledWrapper $marginBottom={16}>
           <CompactColorPicker
             label={'Color'}
             color={colorPickerProps[0].colorSets[0].selectedColor}
@@ -257,10 +328,10 @@ export default function EffectConfiguratorFactory(
           </StyledConfigSection>
         </StyledWrapper>
 
-        <StyledWrapper marginBottom={0}>
+        <StyledWrapper $marginBottom={0}>
           <SectionTitle>{'Sun light'}</SectionTitle>
         </StyledWrapper>
-        <StyledWrapper marginBottom={0}>
+        <StyledWrapper $marginBottom={0}>
           <CompactColorPicker
             label={'Color'}
             color={colorPickerProps[1].colorSets[0].selectedColor}
@@ -279,17 +350,30 @@ export default function EffectConfiguratorFactory(
   };
   const defaultUniforms = {};
 
+  const ELEVATION_EXTRA_PARAMS = new Set(['heightEnd', 'animateHeight', 'linearEasing']);
+
   const PostProcessingEffectConfigurator: React.FC<EffectConfiguratorProps> = ({
     effect,
     updateEffectConfig
   }) => {
-    const uniforms = effect.deckEffect?.module.uniforms || defaultUniforms;
+    const uniforms = effect.deckEffect?.module.propTypes || defaultUniforms;
     const parameterDescriptions = effect.getParameterDescriptions();
     const {parameters, id} = effect;
+
+    const hasElevationSection = parameterDescriptions.some(d => d.name === 'animateHeight');
+
     const flatParameterDescriptions = useMemo(() => {
       return parameterDescriptions.reduce((acc, description) => {
-        if (description.type === 'array') {
-          // split arrays of controls into a separate controls for each component
+        if (hasElevationSection && ELEVATION_EXTRA_PARAMS.has(description.name)) return acc;
+
+        if (hasElevationSection && description.name === 'height') {
+          acc.push({...description, type: ELEVATION_SECTION_TYPE as any});
+          return acc;
+        }
+
+        if (description.type === 'color') {
+          acc.push(description);
+        } else if (description.type === 'array') {
           if (Array.isArray(description.defaultValue)) {
             description.defaultValue.forEach((_, index) => {
               acc.push({
@@ -305,23 +389,57 @@ export default function EffectConfiguratorFactory(
 
         return acc;
       }, [] as EffectParameterDescriptionFlattened[]);
-    }, [parameterDescriptions]);
+    }, [parameterDescriptions, hasElevationSection]);
 
     const controls = useMemo(() => {
       return flatParameterDescriptions.map(desc => {
+        if ((desc.type as string) === ELEVATION_SECTION_TYPE) {
+          return {isElevationSection: true as const};
+        }
+
+        if (desc.type === 'color') {
+          return {
+            isColor: true as const,
+            label: desc.label || desc.name,
+            paramName: desc.name,
+            color: parameters[desc.name] || desc.defaultValue || [255, 255, 255],
+            onSetColor: (v: [number, number, number]) =>
+              updateEffectConfig(null, id, {parameters: {[desc.name]: v}})
+          };
+        }
+
+        if (desc.type === 'checkbox') {
+          const label = typeof desc.label === 'string' ? desc.label : desc.name;
+          return {
+            isCheckbox: true as const,
+            label,
+            paramName: desc.name,
+            checked: Boolean(parameters[desc.name]),
+            tooltip: desc.tooltip,
+            onChange: () =>
+              updateEffectConfig(null, id, {parameters: {[desc.name]: !parameters[desc.name]}})
+          };
+        }
+
         const paramName = desc.name;
 
-        const uniform = uniforms[desc.name];
-        if ((!uniform && uniform !== 0) || uniform.private) {
+        const rawUniform = uniforms[desc.name];
+        if (rawUniform && rawUniform.private) {
           return null;
         }
+
+        // luma.gl 9 wraps array propTypes as {value: [...]}
+        const uniform =
+          rawUniform && typeof rawUniform === 'object' && Array.isArray(rawUniform.value)
+            ? rawUniform.value
+            : rawUniform;
 
         const prevValue = parameters[paramName];
 
         const label = desc.label === false ? false : desc.label || desc.name;
 
         // the uniform is [number, number] array
-        if (uniform.length === 2) {
+        if (Array.isArray(uniform) && uniform.length === 2) {
           return {
             label,
             value1: prevValue[desc.index || 0] || 0,
@@ -350,15 +468,32 @@ export default function EffectConfiguratorFactory(
           };
         }
         // the uniform description is {value: 0, min: 0, max: 1, ...}
-        else if (isNumber(uniform.value)) {
+        else if (uniform && isNumber(uniform.value)) {
+          const rangeMin = desc.min ?? uniform.min ?? uniform.softMin ?? 0;
+          const rangeMax = desc.max ?? uniform.max ?? uniform.softMax ?? 1;
+          const rangeSpan = rangeMax - rangeMin;
+          const step = rangeSpan > 10 ? 1 : 0.001;
           return {
             label,
             value1: prevValue || 0,
-            range: [
-              desc.min ?? uniform.min ?? uniform.softMin ?? 0,
-              desc.max ?? uniform.max ?? uniform.softMax ?? 1
-            ],
-            value0: desc.min ?? uniform.min ?? uniform.softMin ?? 0,
+            range: [rangeMin, rangeMax],
+            value0: rangeMin,
+            step,
+            onChange: (newValue: number[], event) => {
+              updateEffectConfig(event, id, {parameters: {[paramName]: newValue[1]}});
+            }
+          };
+        }
+        // Parameter defined in effect description but not in shader propTypes
+        else if (desc.min !== undefined && desc.max !== undefined) {
+          const rangeSpan = desc.max - desc.min;
+          const step = rangeSpan > 10 ? 1 : 0.001;
+          return {
+            label,
+            value1: prevValue ?? desc.defaultValue ?? 0,
+            range: [desc.min, desc.max],
+            value0: desc.min,
+            step,
             onChange: (newValue: number[], event) => {
               updateEffectConfig(event, id, {parameters: {[paramName]: newValue[1]}});
             }
@@ -372,23 +507,132 @@ export default function EffectConfiguratorFactory(
 
     return (
       <StyledEffectConfigurator key={effect.id}>
-        {flatParameterDescriptions.map((desc, parameterIndex) => {
-          const control = controls[parameterIndex];
-          if (!control) {
-            return null;
+        {(() => {
+          const elements: React.ReactNode[] = [];
+          let i = 0;
+          while (i < flatParameterDescriptions.length) {
+            const control = controls[i];
+            if (!control) {
+              i++;
+              continue;
+            }
+
+            if ('isColor' in control) {
+              const nextControl = i + 1 < controls.length ? controls[i + 1] : null;
+              if (nextControl && 'isCheckbox' in nextControl) {
+                const cbTooltipId = nextControl.tooltip
+                  ? `effect-cb-hint-${effect.id}-${i}`
+                  : undefined;
+                elements.push(
+                  <StyledColorCheckboxRow key={`${effect.id}-${i}`}>
+                    <CompactColorPicker
+                      label={typeof control.label === 'string' ? control.label : 'Color'}
+                      color={control.color}
+                      onSetColor={
+                        control.onSetColor ??
+                        (() => {
+                          /* noop */
+                        })
+                      }
+                      Icon={ArrowDownSmall}
+                    />
+                    <StyledCheckboxWrapper
+                      onClick={() => (nextControl as {onChange: () => void}).onChange()}
+                    >
+                      <StyledCheckbox
+                        type="checkbox"
+                        checked={nextControl.checked}
+                        onChange={() => (nextControl as {onChange: () => void}).onChange()}
+                        onClick={e => e.stopPropagation()}
+                      />
+                      <StyledCheckboxLabel>{nextControl.label}</StyledCheckboxLabel>
+                      {nextControl.tooltip ? (
+                        <>
+                          <StyledHintIcon
+                            data-tip
+                            data-for={cbTooltipId}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            ?
+                          </StyledHintIcon>
+                          <StyledHintTooltip id={cbTooltipId} effect="solid" delayShow={200}>
+                            {nextControl.tooltip}
+                          </StyledHintTooltip>
+                        </>
+                      ) : null}
+                    </StyledCheckboxWrapper>
+                  </StyledColorCheckboxRow>
+                );
+                i += 2;
+                continue;
+              }
+
+              elements.push(
+                <RegularOuterWrapper key={`${effect.id}-${i}`}>
+                  <CompactColorPicker
+                    label={typeof control.label === 'string' ? control.label : 'Color'}
+                    color={control.color}
+                    onSetColor={
+                      control.onSetColor ??
+                      (() => {
+                        /* noop */
+                      })
+                    }
+                    Icon={ArrowDownSmall}
+                  />
+                </RegularOuterWrapper>
+              );
+              i++;
+              continue;
+            }
+
+            if ('isCheckbox' in control) {
+              elements.push(
+                <RegularOuterWrapper key={`${effect.id}-${i}`}>
+                  <StyledCheckboxWrapper
+                    onClick={() => (control as {onChange: () => void}).onChange()}
+                  >
+                    <StyledCheckbox
+                      type="checkbox"
+                      checked={control.checked}
+                      onChange={() => (control as {onChange: () => void}).onChange()}
+                      onClick={e => e.stopPropagation()}
+                    />
+                    <StyledCheckboxLabel>{control.label}</StyledCheckboxLabel>
+                  </StyledCheckboxWrapper>
+                </RegularOuterWrapper>
+              );
+              i++;
+              continue;
+            }
+
+            if ('isElevationSection' in control) {
+              elements.push(
+                <SurfaceFogElevationSection
+                  key={`${effect.id}-elevation`}
+                  effect={effect}
+                  updateEffectConfig={updateEffectConfig}
+                />
+              );
+              i++;
+              continue;
+            }
+
+            elements.push(
+              <RegularOuterWrapper key={`${effect.id}-${i}`}>
+                {control.label ? (
+                  <RegularSectionTitleWrapper>{control.label}</RegularSectionTitleWrapper>
+                ) : null}
+                <RegularSliderWrapper>
+                  <RangeSlider key={i} {...COMMON_SLIDER_PROPS} {...control} />
+                </RegularSliderWrapper>
+              </RegularOuterWrapper>
+            );
+            i++;
           }
 
-          return (
-            <RegularOuterWrapper key={`${effect.id}-${parameterIndex}`}>
-              {control.label ? (
-                <RegularSectionTitleWrapper>{control.label}</RegularSectionTitleWrapper>
-              ) : null}
-              <RegularSliderWrapper>
-                <RangeSlider key={parameterIndex} {...COMMON_SLIDER_PROPS} {...control} />
-              </RegularSliderWrapper>
-            </RegularOuterWrapper>
-          );
-        })}
+          return elements;
+        })()}
       </StyledEffectConfigurator>
     );
   };

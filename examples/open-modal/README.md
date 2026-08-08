@@ -1,29 +1,21 @@
-# Open modal
+# Open Modal
 
-Example showing how to open kepler.gl in a modal.
+This example demonstrates how to mount Kepler.gl inside a `react-modal` dialog, showcasing two different lifecycle behaviors:
+
+- **Fresh state** (`mint: true`, the default) — the map resets every time the modal is reopened
+- **Saved state** (`mint: false`) — the map preserves its state across open/close cycles
 
 #### 1. Install
 
 ```sh
-npm install
+touch yarn.lock && yarn
 ```
 
-or
+> `touch yarn.lock` is needed the first time so Yarn treats this as a standalone project,
+> independent from the kepler.gl monorepo.
+
+#### 2. Start the app
 
 ```sh
-yarn
-```
-
-
-#### 2. Mapbox Token
-add mapbox access token to node env
-
-```sh
-export MapboxAccessToken=<your_mapbox_token>
-```
-
-#### 3. Start the app
-
-```sh
-npm start
+yarn start
 ```

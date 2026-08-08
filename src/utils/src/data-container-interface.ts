@@ -3,6 +3,7 @@
 
 import {ProtoDatasetField} from '@kepler.gl/types';
 import {DataRow, SharedRowOptions} from './data-row';
+import * as arrow from 'apache-arrow';
 
 /**
  * Specifies a range of rows of a data container that should be processed.
@@ -14,9 +15,9 @@ export type RangeOptions = {
 export interface DataContainerInterface {
   /**
    * Updates the data container with new data.
-   * @param updateData updated data, e.g. for arrow data container, it's an array of arrow columns; for row data container, it's an array of rows.
+   * @param updateData updated data, e.g. for arrow data container, it's an array of arrow columns or an arrow.Table; for row data container, it's an array of rows.
    */
-  update?(updateData: any[]): void;
+  update?(updateData: any[] | arrow.Table): void;
 
   /**
    * Returns the number of rows in the data container.

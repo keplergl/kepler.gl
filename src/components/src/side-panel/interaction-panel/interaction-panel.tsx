@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import Switch from '../../common/switch';
 import BrushConfigFactory from './brush-config';
 import TooltipConfigFactory from './tooltip-config';
+import GeocoderConfigFactory from './geocoder-config';
 import {Datasets} from '@kepler.gl/table';
 import {InteractionConfig, ValueOf} from '@kepler.gl/types';
 import {
@@ -35,9 +36,10 @@ interface InteractionPanelProps {
 
 const StyledInteractionPanel = styled.div`
   padding-bottom: 6px;
+  contain: layout paint;
 `;
 
-InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory];
+InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory, GeocoderConfigFactory];
 
 const INTERACTION_CONFIG_ICONS: {[key: string]: React.ElementType} = {
   tooltip: Messages,
@@ -48,7 +50,8 @@ const INTERACTION_CONFIG_ICONS: {[key: string]: React.ElementType} = {
 
 function InteractionPanelFactory(
   TooltipConfig: ReturnType<typeof TooltipConfigFactory>,
-  BrushConfig: ReturnType<typeof BrushConfigFactory>
+  BrushConfig: ReturnType<typeof BrushConfigFactory>,
+  GeocoderConfig: ReturnType<typeof GeocoderConfigFactory>
 ): ComponentType<InteractionPanelProps> {
   const InteractionPanel: React.FC<InteractionPanelProps> = ({
     config,
@@ -104,6 +107,9 @@ function InteractionPanelFactory(
         break;
       case 'brush':
         template = <BrushConfig config={config.config} onChange={onChange} />;
+        break;
+      case 'geocoder':
+        template = <GeocoderConfig config={config.config} onChange={onChange} />;
         break;
 
       default:

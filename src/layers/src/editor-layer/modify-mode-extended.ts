@@ -3,11 +3,11 @@
 
 import {
   ModifyMode,
-  FeatureOf,
+  Feature,
   LineString,
   Point,
   Viewport as NebulaViewport
-} from '@nebula.gl/edit-modes';
+} from '@deck.gl-community/editable-layers';
 import {Viewport} from '@deck.gl/core';
 
 import {EDITOR_LAYER_PICKING_RADIUS} from '@kepler.gl/constants';
@@ -20,8 +20,8 @@ const RIGHT_BUTTON = 2;
 export class ModifyModeExtended extends ModifyMode {
   // @ts-expect-error expect to return no point when object is too far
   getNearestPoint(
-    line: FeatureOf<LineString>,
-    inPoint: FeatureOf<Point>,
+    line: Feature<LineString>,
+    inPoint: Feature<Point>,
     viewport: Viewport | null | undefined
   ) {
     const p = super.getNearestPoint(line, inPoint, viewport as NebulaViewport | null | undefined);

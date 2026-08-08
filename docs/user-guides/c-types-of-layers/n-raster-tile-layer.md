@@ -1,0 +1,55 @@
+# Raster Tile Layer — How to add (experimental)
+
+Use Raster Tile layer to visualize satellite/aerial imagery from raster pmtiles or COGs via STAC metadata.
+
+1. Open Add Data → Tilesets.
+2. Select Raster Tile tileset type.
+3. Paste URL to the tileset:
+   - pmtiles (raster format): provide a direct HTTPS URL to a .pmtiles file containing raster imagery. Raster pmtiles don't require dedicated raster tile servers, unless you want to use elevation meshes.
+   - COG (.tif): provide a direct HTTPS URL to a Cloud Optimized GeoTIFF. The public [TiTiler](https://titiler.xyz) service is used automatically for metadata and tile serving. Elevation is not supported in this mode.
+   - STAC Item/Collection (COGs): provide a HTTPS URL to a STAC Item or Collection. Both STAC 1.0.x (with EO + Raster extensions) and STAC 1.1.0+ (with core `bands`) are supported. For this option you need to provide a [compatible raster tile server](https://github.com/igorDykhta/kepler-raster-server).
+4. Click Add.
+5. Style band selection and opacity as needed in Layers panel.
+
+Important notes for COGs via STAC:
+
+- **STAC 1.0.x:** The STAC Item/Collection must include EO and Raster extensions with `eo:bands` and `raster:bands`.
+- **STAC 1.1.0+:** Items using the core `bands` field (where band metadata lives directly on each asset instead of separate `eo:bands`/`raster:bands` extensions) are also supported. Each band object should include `data_type` and optionally `eo:common_name` and `statistics`.
+- Both formats can coexist within a single STAC item (some assets using legacy extensions, others using core `bands`).
+- COG assets must be publicly accessible over HTTPS.
+- You must run your own raster tile server (e.g., TiTiler). Example implementation that supports collections and elevations: [kepler-raster-server](https://github.com/igorDykhta/kepler-raster-server).
+
+# Loading standalone COG (.tif) files
+
+You can load a Cloud Optimized GeoTIFF directly by pasting its URL (ending in `.tif` or `.tiff`) into the "Tileset metadata URL" field. When a COG URL is detected, kepler.gl automatically fetches STAC metadata from the public [TiTiler](https://titiler.xyz) service (`/cog/stac` endpoint) and sets `https://titiler.xyz` as the raster tile server.
+
+- **No self-hosted server required** — the public TiTiler instance handles both metadata and tile serving.
+- **Elevation is not available** when using the public TiTiler service.
+- The COG file must be publicly accessible over HTTPS.
+- If the "Raster tile servers" field is empty when you paste a `.tif` URL, it will be auto-filled with `https://titiler.xyz`.
+
+# Elevation
+
+To enable elevation rendering, you must provide one or more compatible raster tile servers when adding the tileset. Enter them in the "Raster tile servers" field of the Add Tileset form.
+
+- For STAC Items/Collections: compatible raster tile servers are required.
+- For raster .pmtiles: raster tile servers are optional for imagery, but required if you plan to use elevation.
+- The server must expose COGs as XYZ tiles and support elevation/DEM tiles. Example implementation: [kepler-raster-server](https://github.com/igorDykhta/kepler-raster-server) (TiTiler-based).
+
+Example Raster .pmtiles:
+
+- Swiss historical - https://public-bucket-for-tests.s3.us-east-1.amazonaws.com/historic-swis-18xx.pmtiles
+
+Example STAC Items:
+
+- Bangladesh rivers — https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/planet-skysat-opendata.json
+- Antarctica ice — https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/sentinel-2-l2a.json
+- Kiribati island — https://4sq-studio-public.s3.us-west-2.amazonaws.com/sdk/examples/sample-data/raster/stac-example.json
+
+Example STAC Collections:
+
+- sentinel-2-l1c — https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c
+- modis-09A1-061 — https://planetarycomputer.microsoft.com/api/stac/v1/collections/modis-09A1-061
+- landsat-c2-l1 — https://planetarycomputer.microsoft.com/api/stac/v1/collections/landsat-c2-l1
+
+[Back to layer overview](./README.md)

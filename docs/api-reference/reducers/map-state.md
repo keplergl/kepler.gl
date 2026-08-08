@@ -38,7 +38,7 @@ const composedReducer = (state, action) => {
          foo: {
             ...state.keplerGl.foo,
             mapState: mapStateUpdaters.fitBoundsUpdater(
-              mapState, {payload: [127.34, 31.09, 127.56, 31.59]]}
+              state.keplerGl.foo.mapState, {payload: [127.34, 31.09, 127.56, 31.59]}
             )
          }
        }
@@ -179,7 +179,7 @@ Returns **[Object][19]** nextState
 
 [16]: #parameters-5
 
-[17]: ../advanced-usage/using-updaters.md
+[17]: ../advanced-usages/using-updaters.md
 
 [18]: ../actions/actions.md#fitbounds
 

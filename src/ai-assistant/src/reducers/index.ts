@@ -10,6 +10,7 @@ import {
   SET_MAP_BOUNDARY
 } from '../actions';
 import {MessageModel} from '@openassistant/core';
+import {PROVIDER_DEFAULT_BASE_URLS} from '../config/models';
 
 export type AiAssistantConfig = {
   isReady: boolean;
@@ -28,7 +29,7 @@ const initialConfig: AiAssistantConfig = {
   provider: 'openai',
   model: 'gpt-4o',
   apiKey: '',
-  baseUrl: 'http://localhost:11434/api',
+  baseUrl: PROVIDER_DEFAULT_BASE_URLS['openai'],
   temperature: 0.0,
   topP: 1.0
 };

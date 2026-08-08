@@ -22,9 +22,11 @@ import {LAYER_BLENDINGS, OVERLAY_BLENDINGS, PANEL_VIEW_TOGGLES} from '@kepler.gl
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, MapStateActions, ActionHandler} from '@kepler.gl/actions';
 import {SidePanelItem} from '../types';
-import {PanelListView} from '@kepler.gl/types';
+import {MapState, PanelListView, LayerOrder} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
+import PanelHeaderActionFactory from './panel-header-action';
+import {Folder} from '../common/icons';
 
 type LayerBlendingSelectorProps = {
   layerBlending: string;
@@ -41,13 +43,14 @@ type OverlayBlendingSelectorProps = {
 type LayerManagerProps = {
   datasets: Datasets;
   layers: Layer[];
-  layerOrder: string[];
+  layerOrder: LayerOrder;
   layerClasses: LayerClassesType;
   layerBlending: string;
   overlayBlending: string;
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
+  mapState?: MapState;
   showAddDataModal: () => void;
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
@@ -143,7 +146,8 @@ LayerManagerFactory.deps = [
   PanelTitleFactory,
   DatasetSectionFactory,
   AddLayerButtonFactory,
-  InfoHelperFactory
+  InfoHelperFactory,
+  PanelHeaderActionFactory
 ];
 
 function LayerManagerFactory(
@@ -153,7 +157,8 @@ function LayerManagerFactory(
   PanelTitle: ReturnType<typeof PanelTitleFactory>,
   DatasetSection: ReturnType<typeof DatasetSectionFactory>,
   AddLayerButton: ReturnType<typeof AddLayerButtonFactory>,
-  InfoHelper: ReturnType<typeof InfoHelperFactory>
+  InfoHelper: ReturnType<typeof InfoHelperFactory>,
+  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
 ) {
   const LayerManager: React.FC<LayerManagerProps> = ({
     layers,
@@ -172,7 +177,8 @@ function LayerManagerFactory(
     removeDataset,
     uiStateActions,
     visStateActions,
-    mapStateActions
+    mapStateActions,
+    mapState
   }) => {
     const {addLayer} = visStateActions;
     const {togglePanelListView} = uiStateActions;
@@ -182,6 +188,10 @@ function LayerManagerFactory(
       },
       [addLayer]
     );
+
+    const onAddGroup = useCallback(() => {
+      visStateActions.addLayerGroup({});
+    }, [visStateActions]);
 
     const onTogglePanelListView = useCallback(
       (listView: string) => {
@@ -195,6 +205,9 @@ function LayerManagerFactory(
     // temp patch to hide layers that are in development
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
     const enableWMSLayer = getApplicationConfig().enableWMSLayer;
+    const enableFlowLayer = getApplicationConfig().enableFlowLayer;
+    const enableLayerGroups = getApplicationConfig().enableLayerGroups;
+
     const filteredLayerClasses = useMemo(() => {
       let filteredClasses = layerClasses;
       if (!enableRasterTileLayer) {
@@ -205,8 +218,12 @@ function LayerManagerFactory(
         const {wms: _wms, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
       }
+      if (!enableFlowLayer) {
+        const {flow: _flow, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
       return filteredClasses as LayerClassesType;
-    }, [enableRasterTileLayer, enableWMSLayer, layerClasses]);
+    }, [enableRasterTileLayer, enableWMSLayer, enableFlowLayer, layerClasses]);
 
     return (
       <div className="layer-manager">
@@ -228,6 +245,15 @@ function LayerManagerFactory(
             className="layer-manager-title"
             title={intl.formatMessage({id: panelMetadata.label})}
           >
+            {enableLayerGroups ? (
+              <PanelHeaderAction
+                className="layer-group__create"
+                id="new-layer-group"
+                onClick={onAddGroup}
+                IconComponent={Folder}
+                tooltip="Create layer group"
+              />
+            ) : null}
             <AddLayerButton datasets={datasets} onAdd={onAddLayer} />
           </PanelTitle>
         </SidePanelSection>
@@ -244,6 +270,7 @@ function LayerManagerFactory(
               uiStateActions={uiStateActions}
               visStateActions={visStateActions}
               mapStateActions={mapStateActions}
+              mapState={mapState}
               showDeleteDataset={showDeleteDataset}
             />
           ) : (
@@ -254,6 +281,7 @@ function LayerManagerFactory(
               uiStateActions={uiStateActions}
               visStateActions={visStateActions}
               mapStateActions={mapStateActions}
+              mapState={mapState}
               layerClasses={filteredLayerClasses}
             />
           )}

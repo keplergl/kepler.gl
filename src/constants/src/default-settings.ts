@@ -80,6 +80,13 @@ export const ADD_MAP_STYLE_ID = 'addMapStyle';
  */
 export const EXPORT_MAP_ID = 'exportMap';
 /**
+ * Modal id: export video modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const EXPORT_VIDEO_ID = 'exportVideo';
+/**
  * Modal id: save map modal
  * @constant
  * @type {string}
@@ -286,6 +293,9 @@ export const MAP_LIB_OPTIONS = {
   MAPBOX: 'mapbox' as const,
   MAPLIBRE: 'maplibre' as const
 };
+
+/** Mapbox GL JS does not support pitch above 60 degrees */
+export const MAPBOX_MAX_PITCH = 60;
 
 export type BaseMapLibraryType = 'mapbox' | 'maplibre';
 
@@ -643,7 +653,8 @@ export const CHANNEL_SCALES = keyMirror({
   radius: null,
   size: null,
   colorAggr: null,
-  sizeAggr: null
+  sizeAggr: null,
+  angle: null
 });
 
 export const AGGREGATION_TYPES: {
@@ -693,7 +704,8 @@ export const AGGREGATION_TYPE_OPTIONS: {id: string; label: string}[] = Object.en
 export const linearFieldScaleFunctions = {
   [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.custom],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt],
-  [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
+  [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+  [CHANNEL_SCALES.angle]: [SCALE_TYPES.linear]
 };
 
 const DEFAULT_AGGREGATION_COLOR_SCALES = [
@@ -1020,16 +1032,27 @@ export const SixteenByNineRatioOption: ImageRatioOption = {
 
 export const EXPORT_IMG_RATIO_OPTIONS: ReadonlyArray<ImageRatioOption> = [
   ScreenRatioOption,
-  CustomRatioOption,
   FourByThreeRatioOption,
-  SixteenByNineRatioOption
+  SixteenByNineRatioOption,
+  CustomRatioOption
 ];
 
+export type ExportResolutionOption =
+  | keyof typeof RESOLUTIONS
+  | '1280x720'
+  | '1920x1080'
+  | '2560x1440'
+  | '1600x900'
+  | '1024x768'
+  | '1280x960'
+  | '1600x1200'
+  | '1920x1440';
+
 export type ImageResolutionOption = {
-  id: keyof typeof RESOLUTIONS;
+  id: ExportResolutionOption;
   label: string;
   available: boolean;
-  scale: number;
+  scale?: number;
   getSize: (screenW: number, screenH: number) => {width: number; height: number};
 };
 
@@ -1055,9 +1078,74 @@ export const TwoXResolutionOption: ImageResolutionOption = {
   })
 };
 
+// Fixed dimension options
+export const Resolution1920x1080Option: ImageResolutionOption = {
+  id: '1920x1080',
+  label: '1920 × 1080 (16:9)',
+  available: true,
+  getSize: () => ({width: 1920, height: 1080})
+};
+
+export const Resolution1280x720Option: ImageResolutionOption = {
+  id: '1280x720',
+  label: '1280 × 720 (16:9)',
+  available: true,
+  getSize: () => ({width: 1280, height: 720})
+};
+
+export const Resolution2560x1440Option: ImageResolutionOption = {
+  id: '2560x1440',
+  label: '2560 × 1440 (16:9)',
+  available: true,
+  getSize: () => ({width: 2560, height: 1440})
+};
+
+export const Resolution1600x900Option: ImageResolutionOption = {
+  id: '1600x900',
+  label: '1600 × 900 (16:9)',
+  available: true,
+  getSize: () => ({width: 1600, height: 900})
+};
+
+export const Resolution1024x768Option: ImageResolutionOption = {
+  id: '1024x768',
+  label: '1024 × 768 (4:3)',
+  available: true,
+  getSize: () => ({width: 1024, height: 768})
+};
+
+export const Resolution1280x960Option: ImageResolutionOption = {
+  id: '1280x960',
+  label: '1280 × 960 (4:3)',
+  available: true,
+  getSize: () => ({width: 1280, height: 960})
+};
+
+export const Resolution1600x1200Option: ImageResolutionOption = {
+  id: '1600x1200',
+  label: '1600 × 1200 (4:3)',
+  available: true,
+  getSize: () => ({width: 1600, height: 1200})
+};
+
+export const Resolution1920x1440Option: ImageResolutionOption = {
+  id: '1920x1440',
+  label: '1920 × 1440 (4:3)',
+  available: true,
+  getSize: () => ({width: 1920, height: 1440})
+};
+
 export const EXPORT_IMG_RESOLUTION_OPTIONS: ReadonlyArray<ImageResolutionOption> = [
   OneXResolutionOption,
-  TwoXResolutionOption
+  TwoXResolutionOption,
+  Resolution1280x720Option,
+  Resolution1920x1080Option,
+  Resolution2560x1440Option,
+  Resolution1600x900Option,
+  Resolution1024x768Option,
+  Resolution1280x960Option,
+  Resolution1600x1200Option,
+  Resolution1920x1440Option
 ];
 
 export const EXPORT_DATA_TYPE = keyMirror({
@@ -1189,7 +1277,10 @@ export const GEOCODER_DATASET_NAME = 'geocoder_dataset';
 export const GEOCODER_LAYER_ID = 'geocoder_layer';
 export const GEOCODER_GEO_OFFSET = 0.05;
 export const GEOCODER_ICON_COLOR: [number, number, number] = [255, 0, 0];
-export const GEOCODER_ICON_SIZE = 80;
+// Base icon size before anchor normalization. The geocoder pin icon is bottom-anchored
+// and scaled to fit the ScatterplotLayer unit circle (~0.5x), so the rendered size is
+// compensated here (80 * 2 = 160).
+export const GEOCODER_ICON_SIZE = 160;
 
 // Editor
 export const EDITOR_LAYER_ID = 'kepler_editor_layer';
@@ -1249,8 +1340,120 @@ export const MAP_CONTROLS = keyMirror({
   mapDraw: null,
   mapLocale: null,
   effect: null,
+  annotation: null,
   aiAssistant: null
 });
+
+export enum MapViewMode {
+  MODE_2D = 'MODE_2D',
+  MODE_3D = 'MODE_3D',
+  MODE_GLOBE = 'MODE_GLOBE'
+}
+
+/**
+ * Minimum zoom level allowed in globe mode. Negative values let the user zoom
+ * out further than the web-mercator default of 0, so the whole globe can be
+ * pulled back to appear smaller on screen.
+ */
+export const GLOBE_MIN_ZOOM = 2;
+
+/**
+ * Maximum zoom in globe mode.
+ *
+ * The previous "empty rectangles" at high zoom were caused by the vector basemap
+ * layer declaring `maxZoom: 23` while the raw tile endpoints only have data to
+ * z16 (mapbox-streets-v8) / z14 (CARTO) — deck then requested non-existent tiles
+ * that 404. That is fixed in `getGlobeBaseLayers` by setting `maxZoom` to each
+ * source's true data max so deck overzooms instead.
+ *
+ * The remaining practical ceiling is float32 precision: deck's globe places
+ * geometry in common space on a sphere of radius 256 with no fp64/relative-to-
+ * center trick, so beyond ~visual-zoom 16 (roughly this mapState zoom minus
+ * `zoomAdjust(lat)` ≈ 1.65 at the equator) geometry starts to jitter/drift.
+ */
+export const GLOBE_MAX_ZOOM = 16;
+
+/**
+ * Maximum absolute center latitude allowed in globe mode. Constrains the camera
+ * target to a band around the equator so the view can't be centered on the
+ * poles (deck.gl's default clamps to ~85°, which lets the camera stare straight
+ * down at a pole). Applies symmetrically to the northern and southern hemisphere.
+ */
+export const GLOBE_MAX_LATITUDE = 75;
+
+export type GlobeConfig = {
+  atmosphere: boolean;
+  azimuth: boolean;
+  azimuthAngle: number;
+  terminator: boolean;
+  terminatorOpacity: number;
+  basemap: boolean;
+  labels: boolean;
+  labelsColor: [number, number, number];
+  adminLines: boolean;
+  adminLinesColor: [number, number, number];
+  water: boolean;
+  waterColor: [number, number, number];
+  surfaceColor: [number, number, number];
+  surface: boolean;
+  backgroundColor: [number, number, number];
+  stars: boolean;
+};
+
+export type Globe = {
+  enabled: boolean;
+  config: GlobeConfig;
+};
+
+export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
+  atmosphere: true,
+  azimuth: false,
+  azimuthAngle: 45,
+  terminator: true,
+  terminatorOpacity: 0.35,
+  basemap: true,
+  labels: false,
+  labelsColor: [114.75, 114.75, 114.75],
+  adminLines: true,
+  adminLinesColor: [40, 63, 93],
+  water: true,
+  waterColor: [17, 35, 48],
+  surface: true,
+  surfaceColor: [9, 16, 29],
+  // Color of the empty space rendered around the globe (deck.gl clear color).
+  // Matches the previous hardcoded clear color [0.015, 0.035, 0.065] in 0-1 space.
+  backgroundColor: [4, 9, 17],
+  stars: false
+};
+
+export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
+  point: true,
+  arc: true,
+  grid: true,
+  hexagon: true,
+  geojson: true,
+  cluster: true,
+  icon: true,
+  hexagonId: true,
+  '3D': true,
+  vectorTile: true,
+  hexTile: true,
+  line: true,
+  trip: true,
+  rasterTile: true,
+  heatmap: true,
+  s2: false,
+  tile3d: false,
+  // Flow arrows are flat quads in common space (equatorial plane) and collapse when
+  // viewed edge-on on the globe, so the flow layer is not supported in Globe mode.
+  flow: false
+};
+
+export enum MapSplitMode {
+  SINGLE_MAP = 'SINGLE_MAP',
+  DUAL_MAP = 'DUAL_MAP',
+  SWIPE_COMPARE = 'SWIPE_COMPARE'
+}
 
 /**
  * A multiplier for screen-space width/scale for Arc, Line, Icon and Text layers.
@@ -1322,26 +1525,32 @@ export const DEFAULT_LIGHT_AND_SHADOW_PROPS: {
 export const LIGHT_AND_SHADOW_EFFECT: EffectDescription = {
   type: 'lightAndShadow',
   name: 'Light & Shadow',
+  description: 'effectDescription.lightAndShadow',
   parameters: [
     {name: 'timestamp', min: 0, max: Number.MAX_SAFE_INTEGER},
     {name: 'shadowIntensity', min: 0, max: 1, defaultValue: DEFAULT_SHADOW_INTENSITY},
-    {name: 'sunLightIntensity', min: 0, max: 1, defaultValue: DEFAULT_LIGHT_INTENSITY},
-    {name: 'ambientLightIntensity', min: 0, max: 1, defaultValue: DEFAULT_LIGHT_INTENSITY},
+    {name: 'sunLightIntensity', min: 0, max: 5, defaultValue: DEFAULT_LIGHT_INTENSITY},
+    {name: 'ambientLightIntensity', min: 0, max: 5, defaultValue: DEFAULT_LIGHT_INTENSITY},
     {name: 'shadowColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_SHADOW_COLOR},
     {name: 'sunLightColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_LIGHT_COLOR},
     {name: 'ambientLightColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_LIGHT_COLOR}
   ]
 };
 
+export const DISTANCE_FOG_TYPE = 'distanceFog';
+export const SURFACE_FOG_TYPE = 'surfaceFog';
+
 export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   ink: {
     type: 'ink',
     name: 'Ink',
+    description: 'effectDescription.ink',
     parameters: [{name: 'strength', min: 0, max: 1}]
   },
   brightnessContrast: {
     type: 'brightnessContrast',
     name: 'Brightness & Contrast',
+    description: 'effectDescription.brightnessContrast',
     parameters: [
       {name: 'brightness', min: -1, max: 1},
       {name: 'contrast', min: -1, max: 1}
@@ -1350,6 +1559,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   hueSaturation: {
     type: 'hueSaturation',
     name: 'Hue & Saturation',
+    description: 'effectDescription.hueSaturation',
     parameters: [
       {name: 'hue', min: -1, max: 1},
       {name: 'saturation', defaultValue: 0.25, min: -1, max: 1}
@@ -1358,16 +1568,19 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   vibrance: {
     type: 'vibrance',
     name: 'Vibrance',
+    description: 'effectDescription.vibrance',
     parameters: [{name: 'amount', defaultValue: 0.5, min: -1, max: 1}]
   },
   sepia: {
     type: 'sepia',
     name: 'Sepia',
+    description: 'effectDescription.sepia',
     parameters: [{name: 'amount', min: 0, max: 1}]
   },
   dotScreen: {
     type: 'dotScreen',
     name: 'Dot Screen',
+    description: 'effectDescription.dotScreen',
     parameters: [
       {
         name: 'angle',
@@ -1392,6 +1605,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   colorHalftone: {
     type: 'colorHalftone',
     name: 'Color Halftone',
+    description: 'effectDescription.colorHalftone',
     parameters: [
       {
         name: 'angle',
@@ -1416,16 +1630,19 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   noise: {
     type: 'noise',
     name: 'Noise',
+    description: 'effectDescription.noise',
     parameters: [{name: 'amount', min: 0, max: 1}]
   },
   triangleBlur: {
     type: 'triangleBlur',
     name: 'Blur (Triangle)',
+    description: 'effectDescription.triangleBlur',
     parameters: [{name: 'radius', min: 0, max: 100}]
   },
   zoomBlur: {
     type: 'zoomBlur',
     name: 'Blur (Zoom)',
+    description: 'effectDescription.zoomBlur',
     parameters: [
       {
         name: 'strength',
@@ -1446,6 +1663,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   tiltShift: {
     type: 'tiltShift',
     name: 'Blur (Tilt Shift)',
+    description: 'effectDescription.tiltShift',
     parameters: [
       {
         name: 'blurRadius',
@@ -1480,11 +1698,13 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   edgeWork: {
     type: 'edgeWork',
     name: 'Edge work',
+    description: 'effectDescription.edgeWork',
     parameters: [{name: 'radius', min: 1, max: 50}]
   },
   vignette: {
     type: 'vignette',
     name: 'Vignette',
+    description: 'effectDescription.vignette',
     parameters: [
       {name: 'amount', min: 0, max: 1},
       {name: 'radius', min: 0, max: 1}
@@ -1493,6 +1713,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   magnify: {
     type: 'magnify',
     name: 'Magnify',
+    description: 'effectDescription.magnify',
     parameters: [
       {
         name: 'screenXY',
@@ -1525,7 +1746,67 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   hexagonalPixelate: {
     type: 'hexagonalPixelate',
     name: 'Hexagonal Pixelate',
+    description: 'effectDescription.hexagonalPixelate',
     parameters: [{name: 'scale', defaultValue: 20, min: 1, max: 50}]
+  },
+  distanceFog: {
+    type: DISTANCE_FOG_TYPE,
+    name: 'Distance Fog',
+    description: 'effectDescription.distanceFog',
+    parameters: [
+      {name: 'density', defaultValue: 0.5, min: 0, max: 1},
+      {name: 'fogStart', label: 'Start', defaultValue: 0.3, min: 0, max: 1},
+      {name: 'fogRange', label: 'Range', defaultValue: 0.5, min: 0.01, max: 1},
+      {name: 'fogColor', type: 'color', min: 0, max: 255, defaultValue: [217, 222, 230]}
+    ]
+  },
+  surfaceFog: {
+    type: SURFACE_FOG_TYPE,
+    name: 'Surface Fog',
+    description: 'effectDescription.surfaceFog',
+    parameters: [
+      {name: 'density', defaultValue: 0.6, min: 0, max: 1},
+      {name: 'height', label: 'Elevation (m)', defaultValue: 50, min: -200, max: 6000},
+      {
+        name: 'animateHeight',
+        type: 'checkbox',
+        label: 'Animate Elevation',
+        tooltip:
+          'Animates elevation from start to end value during video export preview and recording.',
+        defaultValue: false,
+        min: 0,
+        max: 1
+      },
+      {name: 'heightEnd', label: 'End Elevation (m)', defaultValue: 100, min: -200, max: 6000},
+      {
+        name: 'linearEasing',
+        type: 'checkbox',
+        label: 'Linear Easing',
+        tooltip:
+          'Uses constant speed instead of smooth ease-in / ease-out during elevation animation.',
+        defaultValue: false,
+        min: 0,
+        max: 1
+      },
+      {name: 'thickness', label: 'Transition (m)', defaultValue: 50, min: 0, max: 1000},
+      {
+        name: 'fogColor',
+        type: 'color',
+        label: 'Fog Color',
+        min: 0,
+        max: 255,
+        defaultValue: [230, 235, 242]
+      },
+      {
+        name: 'pattern',
+        type: 'checkbox',
+        label: 'Pattern',
+        tooltip: 'Adds a noise pattern to the fog for a more natural, volumetric look.',
+        defaultValue: false,
+        min: 0,
+        max: 1
+      }
+    ]
   }
 };
 
@@ -1550,6 +1831,8 @@ export type EffectType =
   | 'vignette'
   | 'magnify'
   | 'hexagonalPixelate'
+  | 'distanceFog'
+  | 'surfaceFog'
   | 'lightAndShadow';
 
 export const SYNC_TIMELINE_MODES: Record<string, SyncTimelineMode> = {
@@ -1588,3 +1871,113 @@ export const getLoaderOptions = () => {
     }
   };
 };
+
+export const CUSTOM_SCENEGRAPH_MODEL_ID = 'custom';
+const MODELS_BASE_URL =
+  'https://studio-public-data.foursquare.com/statics/keplergl/3d-models.2022-06-13';
+
+export const TRIP_LAYER_SCENEGRAPH_MODELS: {
+  id: string;
+  label: string;
+  icon: any;
+  url: string | null;
+  angles: [number, number, number];
+  scale: number;
+}[] = [
+  {
+    id: 'airplane',
+    label: 'Airplane',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Plane.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'boeing777',
+    label: 'Airliner',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Airliner.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'uber-evtol',
+    label: 'VTOL',
+    icon: null,
+    url: `${MODELS_BASE_URL}/evtol.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'hang-glider',
+    label: 'Glider',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Hangglider.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'helicopter',
+    label: 'Helicopter',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Helicopter.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'bicycle',
+    label: 'Bicycle',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Bicycle.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'scooter',
+    label: 'Scooter',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Scooter.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'car',
+    label: 'Car',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Car.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'truck',
+    label: 'Truck',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Truck.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'semitruck',
+    label: 'Semitruck',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Semitruck.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: 'cargoship',
+    label: 'Cargoship',
+    icon: null,
+    url: `${MODELS_BASE_URL}/Cargoship.glb`,
+    angles: [0, 0, 0],
+    scale: 1.0
+  },
+  {
+    id: CUSTOM_SCENEGRAPH_MODEL_ID,
+    label: 'Custom',
+    icon: null,
+    url: null,
+    angles: [0, 0, 0],
+    scale: 1.0
+  }
+];

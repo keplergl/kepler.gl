@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {_Tile2DHeader} from '@deck.gl/geo-layers/typed';
-import {TypedArray} from '@loaders.gl/loader-utils/src/types';
-import {Texture2DProps} from '@luma.gl/webgl';
+import {_Tile2DHeader} from '@deck.gl/geo-layers';
+import type {TypedArray} from '@loaders.gl/loader-utils';
+import type {TextureProps} from '@luma.gl/core';
+
+/**
+ * Loose texture data descriptor assembled before actual luma.gl Texture creation.
+ * Intentionally broader than luma.gl's strict TextureProps (which requires width/height).
+ */
+type Texture2DProps = Partial<TextureProps> & Record<string, any>;
 
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 import type {ColorMap, StacTypes} from '@kepler.gl/types';
@@ -80,6 +86,7 @@ export type PresetOption = {
     assetId: string;
     bandIndex?: number;
   };
+  bandOverrides?: Record<string, string> | null;
 };
 
 export type DataSourceParams = AssetRequestInfo & {
@@ -99,7 +106,17 @@ export type CategoricalColormapOptions = {
   maxValue?: number;
 };
 
-export type ExtendedKeplerSTAC = {rasterTileServerUrls?: []};
+export type ExtendedKeplerSTAC = {
+  rasterTileServerUrls?: [];
+  /** Optional per-layer override for max retries when fetching raster data */
+  rasterServerMaxRetries?: number;
+  /** Optional per-layer override for retry delay between attempts (ms) */
+  rasterServerRetryDelay?: number;
+  /** Optional per-layer override for which server errors are retried */
+  rasterServerServerErrorsToRetry?: number[];
+  /** Optional per-layer override for max concurrent requests per server */
+  rasterServerMaxPerServerRequests?: number;
+};
 
 /**
  * Custom fields we pass on to the getTileData callback
@@ -158,6 +175,8 @@ export type RenderSubLayersCustomProps = ColorRescaling &
     maxCategoricalBandValue?: number;
     hasCategoricalColorMap: boolean;
     hasShadowEffect?: boolean;
+    showTileBorders?: boolean;
+    showTileDebugInfo?: boolean;
   };
 
 export interface RenderSubLayersDefaultProps {
@@ -207,6 +226,14 @@ export type AssetRequestData = {
   useMask: boolean;
   /** Pass this property through the request to pick specific bands from the response */
   responseRequiredBandIndices?: number[] | null;
+  /** Optional per-request override for max retries when fetching NPY arrays */
+  rasterServerMaxRetries?: number;
+  /** Optional per-request override for retry delay between attempts (ms) */
+  rasterServerRetryDelay?: number;
+  /** Optional per-request override for which server errors are retried */
+  rasterServerServerErrorsToRetry?: number[];
+  /** Optional per-request override for max concurrent requests per server */
+  rasterServerMaxPerServerRequests?: number;
 };
 
 export type NPYLoaderDataTypes =

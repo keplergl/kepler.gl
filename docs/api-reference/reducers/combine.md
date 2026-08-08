@@ -7,7 +7,7 @@
 
 ## combinedUpdaters
 
-Some actions will affect the entire kepler.lg instance state.
+Some actions will affect the entire kepler.gl instance state.
 The updaters for these actions is exported as `combinedUpdaters`. These updater take the entire instance state
 as the first argument. Read more about [Using updaters][5]
 
@@ -82,7 +82,7 @@ Returns **[Object][7]** nextState
 
 [4]: #parameters
 
-[5]: ../advanced-usage/using-updaters.md
+[5]: ../advanced-usages/using-updaters.md
 
 [6]: ../actions/actions.md#adddatatomap
 

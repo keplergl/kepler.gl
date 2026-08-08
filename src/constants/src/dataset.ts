@@ -5,7 +5,9 @@ export enum DatasetType {
   LOCAL = 'local',
   VECTOR_TILE = 'vector-tile',
   RASTER_TILE = 'raster-tile',
-  WMS_TILE = 'wms-tile'
+  WMS_TILE = 'wms-tile',
+  TILE_3D = 'tile-3d',
+  BITMAP = 'bitmap'
 }
 
 export enum RemoteTileFormat {
@@ -74,4 +76,61 @@ export type WMSDatasetMetadata = {
   tilesetMetadataUrl: string;
   version: string;
   layers: {name: string; title: string; boundingBox: number[] | null}[];
+  label?: string;
+  attribution?: string;
+};
+
+export type Tile3DProviderAttribution = {
+  title: string;
+  url: string;
+  logoUrl?: string;
+  height?: number;
+  bottom?: number;
+};
+
+export type Tile3DProvider = {
+  name: string;
+  urlKey: string;
+  attribution?: Tile3DProviderAttribution;
+};
+
+export const TILE3D_PROVIDERS: Record<string, Tile3DProvider> = {
+  google: {
+    name: 'Google 3D Tiles',
+    urlKey: 'google',
+    attribution: {
+      title: 'Built with Google Maps.',
+      url: '',
+      logoUrl:
+        'https://studio-public-data.foursquare.com/statics/images/google-watermark-white.png',
+      height: 17,
+      bottom: 0
+    }
+  },
+  cesium: {
+    name: 'Cesium ion',
+    urlKey: 'ion.cesium',
+    attribution: {title: 'Cesium.', url: 'https://cesium.com/', height: 19, bottom: 0}
+  },
+  arcgis: {
+    name: 'ArcGIS',
+    urlKey: 'arcgis',
+    attribution: {title: 'Powered by Esri.', url: 'https://arcgis.com/', height: 16}
+  }
+};
+
+export type Tile3DDatasetMetadata = {
+  tile3dUrl: string;
+  tile3dAccessToken?: string;
+  tile3dProvider?: string;
+};
+
+export type BitmapBounds =
+  | [number, number, number, number]
+  | [[number, number], [number, number], [number, number], [number, number]];
+
+export type BitmapDatasetMetadata = {
+  imageUrl: string;
+  bounds: BitmapBounds;
+  isDataUri?: boolean;
 };

@@ -25,7 +25,8 @@ export const propertiesV1 = {
       })
     },
     key: 'mapControls'
-  })
+  }),
+  locale: null
 };
 
 const uiStateSchema = {

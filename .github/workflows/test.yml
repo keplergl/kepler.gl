@@ -13,10 +13,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [18.x]
-
     steps:
       - uses: actions/checkout@v4
       # use Volta to manage yarn/node versions
@@ -39,5 +35,6 @@ jobs:
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
+        continue-on-error: true
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -11,6 +11,6 @@ const reducers = combineReducers({
 });
 
 const middlewares = enhanceReduxMiddleware([]);
-const enhancers = [applyMiddleware(...middlewares)];
+const enhancers = applyMiddleware(...middlewares);
 
-export default createStore(reducers, {}, compose(...enhancers));
+export default createStore(reducers, {}, compose(enhancers));

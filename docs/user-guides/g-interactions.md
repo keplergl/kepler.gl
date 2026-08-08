@@ -33,7 +33,7 @@ tooltip displays metrics when hovering over a data point. You can choose which f
 
 
   - __Web link__
-Tooltip can be a clicable weblink. To add a web link as tooltip, add  url starts with `http://` to the field content.
+Tooltip can be a clickable weblink. To add a web link as tooltip, add a url that starts with `http://` to the field content.
 
 ![tooltips](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/g-interactions-1.png "tooltips")
 

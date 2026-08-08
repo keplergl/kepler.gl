@@ -3,12 +3,27 @@
 
 import React, {PureComponent} from 'react';
 import styled from 'styled-components';
-import SwipeableViews from 'react-swipeable-views';
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   gap: 72px;
+`;
+
+const SlidesWrapper = styled.div`
+  overflow: hidden;
+  width: 100%;
+`;
+
+const SlidesTrack = styled.div`
+  display: flex;
+  transition: transform 0.35s cubic-bezier(0.15, 0.3, 0.25, 1);
+  transform: translateX(${props => -(props.$index || 0) * 100}%);
+`;
+
+const Slide = styled.div`
+  flex: 0 0 100%;
+  min-width: 0;
 `;
 
 const PaginationContainer = styled.div`
@@ -29,7 +44,7 @@ const PaginationBar = styled.div`
   width: 50px;
   height: 4px;
   background: white;
-  opacity: ${props => (props.isActive ? '1.0' : '0.5')};
+  opacity: ${props => (props.$isActive ? '1.0' : '0.5')};
   transition: opacity 200ms;
 `;
 
@@ -37,7 +52,7 @@ const Pagination = ({items, selectedIndex, onChange}) => (
   <PaginationContainer>
     {items.map((item, index) => (
       <PaginationBarWrapper key={index} onClick={() => onChange(index)}>
-        <PaginationBar isActive={index === selectedIndex} />
+        <PaginationBar $isActive={index === selectedIndex} />
       </PaginationBarWrapper>
     ))}
   </PaginationContainer>
@@ -48,9 +63,13 @@ export default class Swipeable extends PureComponent {
     const {children, onChange, selectedIndex} = this.props;
     return (
       <Container>
-        <SwipeableViews enableMouseEvents index={selectedIndex} onChange={onChange}>
-          {children}
-        </SwipeableViews>
+        <SlidesWrapper>
+          <SlidesTrack $index={selectedIndex}>
+            {React.Children.map(children, (child, i) => (
+              <Slide key={i}>{child}</Slide>
+            ))}
+          </SlidesTrack>
+        </SlidesWrapper>
         <div>
           <Pagination items={children} selectedIndex={selectedIndex} onChange={onChange} />
         </div>

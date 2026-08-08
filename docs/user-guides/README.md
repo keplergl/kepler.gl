@@ -37,7 +37,9 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [H3](./c-types-of-layers/j-h3.md)
 * [Trip](./c-types-of-layers/k-trip.md)
 * [S2](./c-types-of-layers/l-s2.md)
-* [Vector](./c-types-of-layers/vector.md)
+* [Vector Tile Layer](./c-types-of-layers/m-vector-tile-layer.md)
+* [Raster Tile Layer](./c-types-of-layers/n-raster-tile-layer.md)
+* [WMS Layer](./c-types-of-layers/o-wms-layer.md)
 
 #### [Layer attributes](./d-layer-attributes.md)
 
@@ -45,10 +47,10 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Filters](./e-filters.md)
 
-#### [Map styles](./f-map-styles.md#map-styles.md)
-* [Base map styles](./f-map-styles.md#base-map-styles.md)
-* [Map layers](./f-map-styles.md#map-layers.md)
-* [Custom styles](./f-map-styles.md#custom-styles.md)
+#### [Map styles](./f-map-styles.md#map-styles)
+* [Base map styles](./f-map-styles.md#base-map-styles)
+* [Map layers](./f-map-styles.md#toggle-map-layers)
+* [Custom styles](./f-map-styles.md#custom-map-styles)
 
 #### [Interactions](./g-interactions.md)
 * [Tooltips](./g-interactions.md#tooltips)
@@ -57,8 +59,15 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Map Settings](./m-map-settings.md)
 * [View maps in 3d](./m-map-settings.md#view-maps-in-3d)
+* [Globe view](./m-map-settings.md#globe-view)
 * [Display legend](./m-map-settings.md#display-legend)
 * [Split maps](./m-map-settings.md#split-maps)
+
+#### [Effects](./effects.md)
+* [Light & Shadow](./effects.md#light--shadow)
+* [Post-processing (Ink, Blur, Sepia, …)](./effects.md#ink)
+* [Distance Fog](./effects.md#distance-fog)
+* [Surface Fog](./effects.md#surface-fog)
 
 #### [SQL Data Explorer](./sql-data-explorer.md)
 
@@ -67,5 +76,9 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 #### [Time playback](./h-playback.md)
 
 #### [Save and export](./k-save-and-export.md)
+* [Export Image](./k-save-and-export.md#export-image)
+* [Export Data](./k-save-and-export.md#export-data)
+* [Export Map](./k-save-and-export.md#export-map)
+* [Export Video](./k-save-and-export.md#export-video)
 
 #### [FAQ](./i-FAQ.md)

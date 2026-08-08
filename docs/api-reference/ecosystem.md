@@ -16,7 +16,7 @@ Read more about [Component][components].
 
 ![Forward Dispatcher][forward-dispatcher]
 
-The kepler.gl root reducer that user mounted in their app is in fact a wrapper reducer that stored the child state and update them based on forwarded actions. If An action is not a forwarded action, it pass down to all child reducers.
+The kepler.gl root reducer that user mounted in their app is in fact a wrapper reducer that stored the child state and update them based on forwarded actions. If an action is not a forwarded action, it pass down to all child reducers.
 
 When a KeplerGl component instance is mounted with the id `foo`, the wrapper reducer will  add a kepler.gl local state in the root state at key `foo`.
 
@@ -56,7 +56,7 @@ Read more about [Actions and Updaters][actions-updaters].
 
 Processors and schema manager are useful helpers to get data in and out of kepler.gl. You can use `processCsvData(csv)` and `processGeojson(geojson)` to parse csv or geoJson file and pass it to `addDataToMap()` action.
 
-To save and reload the current map, you can call `KeplerGlSchema.save()` and pass it the instant state. It will return a json output containing map data and config. Pass this json file to `processKeplerglJSON()` and then `addDataToMap()` will reproduce the same map.
+To save and reload the current map, you can call `KeplerGlSchema.save()` and pass it the instance state. It will return a json output containing map data and config. Pass this json file to `processKeplerglJSON()` and then `addDataToMap()` will reproduce the same map.
 
 Read more about [Processors][processors] and [Schema Manager][schemas].
 

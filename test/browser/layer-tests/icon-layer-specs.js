@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-/* eslint-disable enzyme-deprecation/no-mount */
 import test from 'tape';
 import React from 'react';
 import {mount} from 'enzyme';
@@ -270,8 +269,8 @@ test('#IconLayer -> renderLayer', t => {
         t.equal(layer.type, 'icon', 'should create 1 icon layer');
         t.equal(
           deckLayers.length,
-          0,
-          'Should create 0 deck.gl layer when icon geometry is not provided'
+          3,
+          'Should create 3 deck.gl layer when default icon geometry is not provided or missing'
         );
       }
     },
@@ -300,7 +299,11 @@ test('#IconLayer -> renderLayer', t => {
           3,
           'Should create 3 deck.gl layer when icon geometry is provided'
         );
-        const expectedLayerIds = ['test_layer_1', 'test_layer_1-accel', 'test_layer_1-attach'];
+        const expectedLayerIds = [
+          'test_layer_1_0',
+          'test_layer_1_0-accel',
+          'test_layer_1_0-attach'
+        ];
 
         t.deepEqual(
           deckLayers.map(l => l.id),
@@ -357,7 +360,11 @@ test('#IconLayer -> renderLayer', t => {
           3,
           'Should create 3 deck.gl layer when icon geometry is provided'
         );
-        const expectedLayerIds = ['test_layer_1', 'test_layer_1-accel', 'test_layer_1-attach'];
+        const expectedLayerIds = [
+          'test_layer_1_0',
+          'test_layer_1_0-accel',
+          'test_layer_1_0-attach'
+        ];
 
         t.deepEqual(
           deckLayers.map(l => l.id),
@@ -417,9 +424,9 @@ test('#IconLayer -> renderLayer', t => {
         t.deepEqual(
           deckLayers.map(l => l.id),
           [
-            'test_layer_1',
-            'test_layer_1-accel',
-            'test_layer_1-attach',
+            'test_layer_1_0',
+            'test_layer_1_0-accel',
+            'test_layer_1_0-attach',
             'test_layer_1-label-types',
             'test_layer_1-label-types-characters',
             'test_layer_1-label-has_result',

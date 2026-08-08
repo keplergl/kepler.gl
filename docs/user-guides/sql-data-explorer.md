@@ -2,7 +2,7 @@
 
 **This feature is currently undergoing development. Stay tuned for updates!**
 
-The new SQL data explorer provides a DucKDB instance where you can use SQL to transform and add data to the map.
+The new SQL data explorer provides a DuckDB instance where you can use SQL to transform and add data to the map.
 
 ![SQL Data Explorer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/images/kepler-duck-db.png 'SQL Data Explorer')
 

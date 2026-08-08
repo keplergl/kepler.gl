@@ -83,7 +83,12 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           'getFiltered',
           'getLineColor',
           'getLineWidth',
-          'getPointRadius'
+          'getPointRadius',
+          'getPosition',
+          'textLabelData',
+          'textLabelFilterValue',
+          'textLabelFiltered',
+          'textLabels'
         ];
         const expectedLayerMeta = updatedLayerV2.meta;
         const expectedDataToFeature = updatedLayerV2.dataToFeature;
@@ -203,7 +208,12 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           'getFiltered',
           'getLineColor',
           'getLineWidth',
-          'getPointRadius'
+          'getPointRadius',
+          'getPosition',
+          'textLabelData',
+          'textLabelFilterValue',
+          'textLabelFiltered',
+          'textLabels'
         ];
         const expectedLayerMeta = updatedLayerV2.meta;
         const expectedDataToFeature = updatedLayerV2.dataToFeature;
@@ -317,7 +327,12 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           'getFiltered',
           'getLineColor',
           'getLineWidth',
-          'getPointRadius'
+          'getPointRadius',
+          'getPosition',
+          'textLabelData',
+          'textLabelFilterValue',
+          'textLabelFiltered',
+          'textLabels'
         ];
         const expectedLayerMeta = updatedGeoJsonLayer.meta;
         const expectedDataToFeature = updatedGeoJsonLayer.dataToFeature;
@@ -419,7 +434,12 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           'getFiltered',
           'getLineColor',
           'getLineWidth',
-          'getPointRadius'
+          'getPointRadius',
+          'getPosition',
+          'textLabelData',
+          'textLabelFilterValue',
+          'textLabelFiltered',
+          'textLabels'
         ];
         const expectedLayerMeta = geoStyleMeta;
 

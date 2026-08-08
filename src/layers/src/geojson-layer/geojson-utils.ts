@@ -4,13 +4,13 @@
 import {Buffer} from 'buffer';
 import {Feature, Position, BBox} from 'geojson';
 import normalize from '@mapbox/geojson-normalize';
-import bbox from '@turf/bbox';
+import {bbox} from '@turf/bbox';
 import {ascending} from 'd3-array';
-import center from '@turf/center';
+import {center} from '@turf/center';
 import {AllGeoJSON} from '@turf/helpers';
 import {parseSync} from '@loaders.gl/core';
 import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
-import {binaryToGeometry} from '@loaders.gl/gis';
+import {convertBinaryGeometryToGeometry} from '@loaders.gl/gis';
 import {BinaryFeatureCollection} from '@loaders.gl/schema';
 import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
@@ -55,11 +55,33 @@ export function fieldIsGeoArrow(geoField?: ProtoDatasetField | null): boolean {
 
 export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
   const properties = null; // help ensure that properties is present on the returned geojson feature
+  // Support WKB geometry provided as binary (e.g., from Parquet/GeoParquet)
+  if (rawFeature instanceof Uint8Array || rawFeature instanceof ArrayBuffer) {
+    try {
+      const binaryInput =
+        rawFeature instanceof ArrayBuffer
+          ? rawFeature
+          : (rawFeature as Uint8Array).buffer.slice(
+              (rawFeature as Uint8Array).byteOffset,
+              (rawFeature as Uint8Array).byteOffset + (rawFeature as Uint8Array).byteLength
+            );
+      const binaryGeo = parseSync(binaryInput as ArrayBuffer, WKBLoader);
+      // @ts-expect-error loaders.gl binary type to GeoJSON geometry
+      const parsedGeo = convertBinaryGeometryToGeometry(binaryGeo);
+      const normalized = normalize(parsedGeo);
+      if (!normalized || !Array.isArray(normalized.features) || !normalized.features.length) {
+        return null;
+      }
+      return {properties, ...normalized.features[0]};
+    } catch (e) {
+      return null;
+    }
+  }
   if (typeof rawFeature === 'object') {
     // Support GeoJson feature as object
     // probably need to normalize it as well
     const normalized = normalize(rawFeature);
-    if (!normalized || !Array.isArray(normalized.features)) {
+    if (!normalized || !Array.isArray(normalized.features) || !normalized.features.length) {
       // fail to normalize GeoJson
       return null;
     }
@@ -118,7 +140,7 @@ export function getGeojsonLayerMeta({
       try {
         // TODO: use line interpolate to get center of line for LineString
         const cent = center(feature as AllGeoJSON);
-        meanCenters.push(cent.geometry.coordinates);
+        meanCenters.push(cent?.geometry?.coordinates ?? null);
       } catch (e) {
         meanCenters.push(null);
       }
@@ -157,14 +179,9 @@ export function getGeojsonDataMaps(
     const feature = parseGeoJsonRawFeature(getFeature({index}));
 
     if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
-      const cleaned = {
-        ...feature,
-        // store index of the data in feature properties
-        properties: {
-          ...feature.properties,
-          index
-        }
-      };
+      const cleaned = Object.assign({}, feature);
+      // store index of the data in feature properties
+      cleaned.properties = Object.assign({}, feature.properties ?? {}, {index});
 
       dataToFeature[index] = cleaned;
     } else {
@@ -216,34 +233,39 @@ export function getGeojsonPointDataMaps(
  * @param {String} geoString
  * @returns {null | Object} geojson object or null if failed
  */
+const WKT_PREFIX_RE =
+  /^\s*(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION)\s*[(ZME]/i;
+
 function parseGeometryFromString(geoString: string): Feature | null {
   let parsedGeo;
 
-  // try parse as geojson string
-  // {"type":"Polygon","coordinates":[[[-74.158491,40.83594]]]}
-  try {
-    parsedGeo = JSON.parse(geoString);
-  } catch (e) {
-    // keep trying to parse
-  }
-
-  // try parse as wkt using loaders.gl WKTLoader
-  if (!parsedGeo) {
+  if (WKT_PREFIX_RE.test(geoString)) {
+    // WKT: starts with a geometry keyword (POINT, POLYGON, …)
     try {
       parsedGeo = parseSync(geoString, WKTLoader);
     } catch (e) {
       return null;
     }
-  }
-
-  // try parse as wkb using loaders.gl WKBLoader
-  if (!parsedGeo) {
-    try {
-      const buffer = Buffer.from(geoString, 'hex');
-      const binaryGeo = parseSync(buffer, WKBLoader);
-      // @ts-expect-error
-      parsedGeo = binaryToGeometry(binaryGeo);
-    } catch (e) {
+  } else {
+    const firstChar = geoString.charAt(geoString.search(/\S/));
+    if (firstChar === '{' || firstChar === '[') {
+      // GeoJSON as a JSON string
+      try {
+        parsedGeo = JSON.parse(geoString);
+      } catch (e) {
+        return null;
+      }
+    } else if (firstChar) {
+      // try parse as WKB hex string
+      try {
+        const buffer = Buffer.from(geoString, 'hex');
+        const binaryGeo = parseSync(buffer, WKBLoader);
+        // @ts-expect-error
+        parsedGeo = convertBinaryGeometryToGeometry(binaryGeo);
+      } catch (e) {
+        return null;
+      }
+    } else {
       return null;
     }
   }
@@ -338,7 +360,14 @@ export function groupColumnsAsGeoJson(
   for (let index = 0; index < dataContainer.numRows(); index++) {
     // note: can materialize the row
     const datum = dataContainer.rowAsArray(index);
-    const id = datum[columns.id.fieldIdx];
+    // Convert id to string to ensure consistent object key behavior
+    // (numeric keys are sorted differently than string keys in Object.entries)
+    const rawId = datum[columns.id.fieldIdx];
+    if (rawId == null) {
+      // Skip rows with missing IDs to avoid grouping them under "null"/"undefined"
+      continue;
+    }
+    const id = String(rawId);
     const lat = datum[columns.lat.fieldIdx];
     const lon = datum[columns.lng.fieldIdx];
     const altitude = columns.altitude ? datum[columns.altitude.fieldIdx] : 0;
@@ -397,8 +426,8 @@ export function detectTableColumns(
   }
   // find sort by field
   const sortByFieldIdx = fields.findIndex(f => f.type === ALL_FIELD_TYPES.timestamp);
-  // find id column
-  const idFieldIdx = fields.findIndex(f => f.name?.toLowerCase().match(/^(id|uuid)$/g));
+  // find id column: support id, uuid, xxx_id and xxx_uuid columns
+  const idFieldIdx = fields.findIndex(f => f.name?.toLowerCase().match(/^(id|uuid|._id|._uuid)$/g));
 
   if (sortByFieldIdx > -1 && idFieldIdx > -1) {
     const pointColumns = assignPointPairToLayerColumn(fieldPairs[0], true);
@@ -447,11 +476,15 @@ export function applyFiltersToTableColumns(
   const filteredIndexSet = new Set(filteredIndex);
   const filteredFeatures: GeojsonDataMaps = [];
   for (const feature of dataToFeature) {
+    // @ts-expect-error geometry.coordinates not available for BinaryFeatureCollection
+    if (!feature || !feature.geometry || !feature.geometry.coordinates) {
+      continue;
+    }
     // @ts-expect-error geometry.coordinates not available for GeometryCollection
     const filteredCoords = feature.geometry.coordinates.filter(c =>
       filteredIndexSet.has(c.datumIndex)
     );
-    if (filteredCoords.length > 0 && feature) {
+    if (filteredCoords.length > 0) {
       filteredFeatures.push({
         ...feature,
         geometry: {

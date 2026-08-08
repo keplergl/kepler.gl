@@ -38,15 +38,15 @@ export const WarningMsg = styled.span`
 `;
 
 interface StyledFileDropProps {
-  dragOver?: boolean;
+  $dragOver?: boolean;
 }
 
 const StyledFileDrop = styled.div<StyledFileDropProps>`
   background-color: white;
   border-radius: 4px;
-  border-style: ${props => (props.dragOver ? 'solid' : 'dashed')};
+  border-style: ${props => (props.$dragOver ? 'solid' : 'dashed')};
   border-width: 1px;
-  border-color: ${props => (props.dragOver ? props.theme.textColorLT : props.theme.subtextColorLT)};
+  border-color: ${props => (props.$dragOver ? props.theme.textColorLT : props.theme.subtextColorLT)};
   text-align: center;
   width: 100%;
   padding: 48px 8px 0;
@@ -241,7 +241,7 @@ function FileUploadFactory() {
                   {fileUploadInfoText}
                 </Markdown>
               </StyledUploadMessage>
-              <StyledFileDrop dragOver={dragOver}>
+              <StyledFileDrop $dragOver={dragOver}>
                 <StyledFileTypeFow className="file-type-row">
                   {fileExtensions.map(ext => (
                     <FileType key={ext} ext={ext} height="50px" fontSize="9px" />

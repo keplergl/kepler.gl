@@ -98,7 +98,7 @@ export function createNewDataEntry(
     info,
     color,
     opts,
-    data: validatedData
+    data: data.arrowTable ? {...validatedData, arrowTable: data.arrowTable} : validatedData
   });
 }
 
@@ -136,7 +136,12 @@ async function createTable(datasetInfo: CreateTableProps) {
     ...opts,
     metadata
   });
-  await table.importData({data});
+  try {
+    await table.importData({data});
+  } catch (error) {
+    console.error('Failed to create table', error);
+    throw error;
+  }
 
   return table;
 }
@@ -157,6 +162,10 @@ async function refreshRemoteData(datasetInfo: CreateTableProps): Promise<object 
       return await refreshRasterTileMetadata(datasetInfo);
     case DatasetType.WMS_TILE:
       return await refreshWMSMetadata(datasetInfo);
+    case DatasetType.TILE_3D:
+      return null;
+    case DatasetType.BITMAP:
+      return null;
     default:
       return null;
   }
