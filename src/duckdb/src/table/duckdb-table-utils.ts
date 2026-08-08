@@ -113,7 +113,7 @@ export function quoteTableName(tableName: string): string {
  * @param columnName The column name to quote.
  * @returns The column name, properly quoted.
  */
-function quoteColumnName(columnName: string): string {
+export function quoteColumnName(columnName: string): string {
   return `"${columnName.replace(/"/g, '""')}"`;
 }
 
@@ -469,7 +469,7 @@ export function removeSQLComments(sql: string): string {
  */
 export const dropTableIfExists = async (connection: DatabaseConnection, tableName: string) => {
   try {
-    await connection.query(`DROP TABLE IF EXISTS "${tableName}";`);
+    await connection.query(`DROP TABLE IF EXISTS ${quoteTableName(tableName)};`);
   } catch (error) {
     console.error('Dropping table failed', tableName, error);
   }
@@ -512,27 +512,28 @@ export async function tableFromFile(file: File | null): Promise<null | Error> {
     } else {
       await db.registerFileHandle(sourceName, file, DuckDBDataProtocol.BROWSER_FILEREADER, true);
 
+      const quotedTableName = quoteTableName(tableName);
       if (fileExt === 'csv') {
         await c.query(`
-            CREATE TABLE '${tableName}' AS
+            CREATE TABLE ${quotedTableName} AS
             SELECT *
             FROM read_csv('${sourceName}', header = true, auto_detect = true, sample_size = -1);
           `);
       } else if (fileExt === 'json') {
         await c.query(`
-            CREATE TABLE '${tableName}' AS
+            CREATE TABLE ${quotedTableName} AS
             SELECT *
             FROM read_json_auto('${sourceName}');
           `);
       } else if (fileExt === 'geojson') {
         await c.query(`
-            CREATE TABLE '${tableName}' AS
+            CREATE TABLE ${quotedTableName} AS
             SELECT *
             FROM ST_READ('${sourceName}', keep_wkb = TRUE);
           `);
       } else if (fileExt === 'parquet') {
         await c.query(`
-            CREATE TABLE '${tableName}' AS
+            CREATE TABLE ${quotedTableName} AS
             SELECT *
             FROM read_parquet('${sourceName}')
           `);
