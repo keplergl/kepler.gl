@@ -5253,9 +5253,15 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
     [0, 1, 2, 3],
     'The dataset filteredIndex should not be affected by polygon filters'
   );
-  t.ok(
+  t.deepEqual(
     newReducer.datasets.puppy.filteredIndexByLayer[newReducer.layers[0].id],
+    [0, 2],
     'Should have per-layer polygon filtered index'
+  );
+  t.equal(
+    newReducer.layerData[0].data.length,
+    2,
+    'Targeted layer should show polygon-filtered points'
   );
 
   newReducer = reducer(newReducer, VisStateActions.toggleFilterFeature(0));
@@ -5267,6 +5273,120 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
     newReducer.datasets.puppy.filteredIndex,
     [0, 1, 2, 3],
     "The polygon filter shouldn't be applied"
+  );
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndexByLayer,
+    {},
+    'Per-layer polygon filtered index should be cleared when filter is disabled'
+  );
+  t.equal(
+    newReducer.layerData[0].data.length,
+    4,
+    'Targeted layer should restore full data when polygon filter is disabled'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> APPLY_CPU_FILTER with polygon filter', t => {
+  const state = {
+    ...INITIAL_VIS_STATE
+  };
+
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {
+            name: 'start_point_lat',
+            format: '',
+            fieldIdx: 0,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'start_point_lng',
+            format: '',
+            fieldIdx: 1,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lat',
+            format: '',
+            fieldIdx: 2,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lng',
+            format: '',
+            fieldIdx: 3,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          }
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv',
+        size: 144,
+        id: 'puppy'
+      }
+    }
+  ];
+
+  let newReducer = applyActions(reducer, state, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: true, keepExistingConfig: false}, {}]
+    }
+  ]);
+
+  newReducer = reducer(newReducer, VisStateActions.setFeatures([mockPolygonFeature]));
+  newReducer = reducer(newReducer, VisStateActions.setSelectedFeature(mockPolygonFeature));
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[0], mockPolygonFeature)
+  );
+
+  const layerId = newReducer.layers[0].id;
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndex,
+    [0, 1, 2, 3],
+    'dataset filteredIndex should ignore polygon filters'
+  );
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndexByLayer[layerId],
+    [0, 2],
+    'per-layer index should keep rows inside the polygon'
+  );
+
+  newReducer = reducer(newReducer, VisStateActions.applyCPUFilter('puppy'));
+
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIdxCPU,
+    [0, 2],
+    'filtered export should apply polygon filters via per-layer indices'
+  );
+
+  // Targeting a second layer whose positions are outside the polygon:
+  // export should be the union of both layers' visible rows.
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[1], mockPolygonFeature)
+  );
+  newReducer = reducer(newReducer, VisStateActions.applyCPUFilter('puppy'));
+
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndexByLayer[newReducer.layers[1].id],
+    [],
+    'second layer should have no rows inside the polygon'
+  );
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIdxCPU,
+    [0, 2],
+    'filtered export should keep the union of polygon-visible rows across targeted layers'
   );
 
   t.end();

@@ -42,6 +42,7 @@ import {
   getFilterRecord,
   getPolygonFilterFunctor,
   isValidFilterValue,
+  mergePolygonLayerIndexes,
   getNumericFieldDomain,
   getTimestampFieldDomain,
   getLinearDomain,
@@ -125,7 +126,7 @@ export function maybeToDate(
  * Compute per-layer filtered indices for polygon filters.
  * Polygon filters are layer-specific: they should only affect the layers listed in filter.layerId.
  * For each layer on this dataset, compute a filtered index that applies only the polygon filters
- * targeting that specific layer (using OR logic when multiple layers on the same dataset are selected).
+ * targeting that specific layer. Multiple polygon filters targeting the same layer are ANDed.
  */
 function computePolygonFilteredIndexByLayer(
   filters: Filter[],
@@ -489,23 +490,31 @@ class KeplerTable<F extends Field = Field> {
       return this;
     }
 
+    let baseIndex: number[];
+    let indexByLayer: Record<string, number[]>;
+
     // no gpu filter
     if (!filters.find(f => f.gpu)) {
-      this.filteredIdxCPU = this.filteredIndex;
+      baseIndex = this.filteredIndex;
+      indexByLayer = this.filteredIndexByLayer;
       this.filterRecordCPU = getFilterRecord(this.id, filters, opt);
-      return this;
+    } else {
+      // make a copy for cpu filtering
+      const copied = copyTable(this);
+
+      copied.filterRecord = this.filterRecordCPU;
+      copied.filteredIndex = this.filteredIdxCPU || [];
+
+      const filtered = copied.filterTable(filters, layers, opt);
+
+      baseIndex = filtered.filteredIndex;
+      indexByLayer = filtered.filteredIndexByLayer;
+      this.filterRecordCPU = filtered.filterRecord;
     }
 
-    // make a copy for cpu filtering
-    const copied = copyTable(this);
-
-    copied.filterRecord = this.filterRecordCPU;
-    copied.filteredIndex = this.filteredIdxCPU || [];
-
-    const filtered = copied.filterTable(filters, layers, opt);
-
-    this.filteredIdxCPU = filtered.filteredIndex;
-    this.filterRecordCPU = filtered.filterRecord;
+    // Polygon filters are applied per-layer (not in filteredIndex). For export, keep rows
+    // visible on any polygon-targeted layer.
+    this.filteredIdxCPU = mergePolygonLayerIndexes(baseIndex, indexByLayer);
 
     return this;
   }
