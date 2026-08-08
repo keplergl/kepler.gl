@@ -45,7 +45,7 @@ import {
   isArrowTable
 } from '@kepler.gl/utils';
 import {generateHashId, toArray, notNullorUndefined} from '@kepler.gl/common-utils';
-import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
+import {Datasets, GpuFilter, KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
 import {
   AggregatedBin,
   ColorRange,
@@ -1324,9 +1324,10 @@ class Layer implements KeplerLayer {
     const {dataContainer} = layerDataset;
 
     // Use per-layer polygon-filtered index if available
+    const layerFilteredIndex = layerDataset.filteredIndexByLayer?.[this.id];
     const effectiveDataset =
-      layerDataset.filteredIndexByLayer?.[this.id] != null
-        ? {...layerDataset, filteredIndex: layerDataset.filteredIndexByLayer[this.id]}
+      layerFilteredIndex != null
+        ? copyTableAndUpdate(layerDataset, {filteredIndex: layerFilteredIndex})
         : layerDataset;
 
     const getPosition = this.getPositionAccessor(dataContainer, effectiveDataset);
