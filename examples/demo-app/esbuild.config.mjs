@@ -63,6 +63,44 @@ const getProductionReactAliases = nodeModulesDir => ({
   'react-dom/client': `${nodeModulesDir}/react-dom/cjs/react-dom-client.production.js`
 });
 
+// Workspace packages to load from source when NODE_ENV=local.
+// Must include package subpaths (e.g. duckdb/components) — the monorepo
+// tsconfig only maps `@kepler.gl/*` (one segment), so subpath imports would
+// otherwise resolve to demo-app/node_modules and create a second utils singleton.
+const KEPLER_WORKSPACE_PACKAGES = [
+  'actions',
+  'ai-assistant',
+  'cloud-providers',
+  'common-utils',
+  'components',
+  'constants',
+  'deckgl-arrow-layers',
+  'deckgl-layers',
+  'duckdb',
+  'effects',
+  'layers',
+  'localization',
+  'processors',
+  'reducers',
+  'schemas',
+  'styles',
+  'table',
+  'tasks',
+  'utils'
+];
+
+const getKeplerLocalAliases = () => {
+  const aliases = {};
+  for (const pkg of KEPLER_WORKSPACE_PACKAGES) {
+    aliases[`@kepler.gl/${pkg}`] = join(SRC_DIR, pkg, 'src');
+  }
+  aliases['@kepler.gl/duckdb/components'] = join(SRC_DIR, 'duckdb/src/components');
+  aliases['@kepler.gl/duckdb/table'] = join(SRC_DIR, 'duckdb/src/table');
+  return aliases;
+};
+
+const isLocalEnv = process.env.NODE_ENV === 'local';
+
 // Env variables required for demo app
 const requiredEnvVariables = [
   'MapboxAccessToken',
@@ -96,6 +134,10 @@ const config = {
   logOverride: {
     'unsupported-jsx-comment': 'silent'
   },
+  // Use demo-app tsconfig (no path mappings). Walking up to the monorepo
+  // tsconfig would rewrite `@kepler.gl/pkg` → `src/pkg/src` but not subpaths
+  // like `@kepler.gl/duckdb/components`, splitting the applicationConfig singleton.
+  tsconfig: join(__dirname, 'tsconfig.json'),
   inject: ['src/react19-shim.js'],
   loader: {
     '.js': 'jsx',
@@ -148,18 +190,18 @@ const config = {
         });
       }
     },
-    // @kepler.gl/* must resolve to a single copy (and a single module format).
-    // demo-app/node_modules has published tarballs while the monorepo root links
-    // workspace packages; without deduping, initApplicationConfig() and SqlPanel
-    // can see different applicationConfig singletons (database stays null).
-    // Always use the "import" condition so CJS+ESM dual packages don't both bundle.
+    // Force a single @kepler.gl/* copy from demo-app/node_modules (published
+    // packages on Netlify/production). Local monorepo source is handled via
+    // getKeplerLocalAliases() instead — do not resolve from the repo root
+    // node_modules here (workspace dist/ is often missing on CI).
     {
       name: 'dedupe-kepler',
       setup(build) {
+        if (isLocalEnv) return;
         build.onResolve({filter: /^@kepler\.gl\//}, async args => {
           if (args.pluginData?.deduped) return;
           const result = await build.resolve(args.path, {
-            resolveDir: NODE_MODULES_DIR,
+            resolveDir: __dirname,
             kind: 'import-statement',
             pluginData: {deduped: true}
           });
@@ -337,7 +379,8 @@ function openURL(url) {
         sourcemap: false,
         // Add alias resolution for build
         alias: {
-          ...getThirdPartyLibraryAliases(true)
+          ...getThirdPartyLibraryAliases(true),
+          ...(isLocalEnv ? getKeplerLocalAliases() : {})
         },
         // Add these production optimizations
         define: {
@@ -376,7 +419,7 @@ function openURL(url) {
   if (args.includes('--start')) {
     const isLocal = process.env.NODE_ENV === 'local';
     const baseAliases = isLocal
-      ? localAliases
+      ? {...localAliases, ...getKeplerLocalAliases()}
       : getThirdPartyLibraryAliases(false);
     const nodeModulesDir = isLocal ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
     // Skip dedupe-webgl when a local deck.gl source override is active so that
