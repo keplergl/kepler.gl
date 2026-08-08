@@ -27,6 +27,9 @@ yarn start
 - ### [Get Started (Vite)][get-started-vite]
   Minimal kepler.gl setup with Vite.
 
+- ### [DuckDB (Vite)][duckdb-vite]
+  Minimal kepler.gl setup with the DuckDB plugin and Vite.
+
 - ### [Demo App][demo-app]
   kepler.gl as a full single-page app — loads sample maps from remote URLs and saves map data to Dropbox. This is also the source code of kepler.gl/#/demo.
 
@@ -56,6 +59,7 @@ yarn start
 
 [get-started]: get-started/README.md
 [get-started-vite]: get-started-vite/README.md
+[duckdb-vite]: duckdb-vite/README.md
 [demo-app]: demo-app/README.md
 [open-modal]: open-modal/README.md
 [custom-reducer]: custom-reducer/README.md
