@@ -148,6 +148,25 @@ const config = {
         });
       }
     },
+    // @kepler.gl/* must resolve to a single copy (and a single module format).
+    // demo-app/node_modules has published tarballs while the monorepo root links
+    // workspace packages; without deduping, initApplicationConfig() and SqlPanel
+    // can see different applicationConfig singletons (database stays null).
+    // Always use the "import" condition so CJS+ESM dual packages don't both bundle.
+    {
+      name: 'dedupe-kepler',
+      setup(build) {
+        build.onResolve({filter: /^@kepler\.gl\//}, async args => {
+          if (args.pluginData?.deduped) return;
+          const result = await build.resolve(args.path, {
+            resolveDir: NODE_MODULES_DIR,
+            kind: 'import-statement',
+            pluginData: {deduped: true}
+          });
+          return result;
+        });
+      }
+    },
     // copy files to dist
     copy({
       resolveFrom: 'cwd',
