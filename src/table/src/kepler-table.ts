@@ -296,6 +296,7 @@ class KeplerTable<F extends Field = Field> {
     this.allIndexes = allIndexes;
     this.filteredIndex = allIndexes;
     this.filteredIndexForDomain = allIndexes;
+    this.filteredIndexByLayer = {};
     this.fieldPairs = findPointFieldPairs(fields);
     // @ts-expect-error Make sure that fields satisfies F extends Field
     this.fields = fields;
@@ -312,6 +313,7 @@ class KeplerTable<F extends Field = Field> {
     this.allIndexes = this.dataContainer.getPlainIndex();
     this.filteredIndex = this.allIndexes;
     this.filteredIndexForDomain = this.allIndexes;
+    this.filteredIndexByLayer = {};
 
     return this;
   }
