@@ -17,7 +17,6 @@ import {initApplicationConfig} from '@kepler.gl/utils';
 
 import {replaceMapControl} from './map-control';
 
-// DuckDB plugin wiring mirrors examples/demo-app on igr/duckdb-demo-branch (PR #2942).
 initApplicationConfig({
   plugins: [keplerGlDuckdbPlugin],
   table: KeplerGlDuckDbTable,

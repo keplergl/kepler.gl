@@ -28,8 +28,7 @@ yarn start
   Minimal kepler.gl setup with Vite.
 
 - ### [DuckDB (Vite)][duckdb-vite]
-  Vite app with the DuckDB plugin enabled — useful for reproducing DuckDB
-  ingestion issues (e.g. [#3433](https://github.com/keplergl/kepler.gl/pull/3433)).
+  Minimal kepler.gl setup with the DuckDB plugin and Vite.
 
 - ### [Demo App][demo-app]
   kepler.gl as a full single-page app — loads sample maps from remote URLs and saves map data to Dropbox. This is also the source code of kepler.gl/#/demo.
