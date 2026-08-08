@@ -79,7 +79,13 @@ export const ModalTabItem: React.FC<ModalTabItemProps> = ({
   const intl = useIntl();
 
   return method.tabElementType ? (
-    <method.tabElementType onClick={onClick} intl={intl} />
+    <method.tabElementType
+      className={classnames('load-data-modal__tab__item', {
+        active: currentMethod && method.id === currentMethod
+      })}
+      onClick={onClick}
+      intl={intl}
+    />
   ) : (
     <StyledLoadDataModalTabItem
       className={classnames('load-data-modal__tab__item', {
