@@ -322,6 +322,8 @@ export default {
     disable3DMap: 'Desabilitar Mapa 3D',
     DrawOnMap: 'Desenhar no mapa',
     selectLocale: 'Selecionar língua',
+    switchToLightTheme: 'Mudar para tema claro',
+    switchToDarkTheme: 'Mudar para tema escuro',
     showAiAssistantPanel: 'Mostrar painel de AI Assistant',
     hideAiAssistantPanel: 'Esconder painel de AI Assistant',
     hideLayerPanel: 'Esconder painel de camada',

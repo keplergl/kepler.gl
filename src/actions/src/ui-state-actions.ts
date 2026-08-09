@@ -475,6 +475,27 @@ export const setLocale: (
   })
 );
 
+/** SET_THEME */
+export type SetThemeUpdaterAction = {
+  payload: {theme: string};
+};
+/**
+ * Set UI `theme` value (`light` or `dark`)
+ * @memberof uiStateActions
+ * @param theme - theme of the UI
+ * @public
+ */
+export const setTheme: (
+  theme: SetThemeUpdaterAction['payload']['theme']
+) => Merge<SetThemeUpdaterAction, {type: typeof ActionTypes.SET_THEME}> = createAction(
+  ActionTypes.SET_THEME,
+  (theme: SetThemeUpdaterAction['payload']['theme']) => ({
+    payload: {
+      theme
+    }
+  })
+);
+
 /** TOGGLE_PANEL_LIST_VIEW */
 export type TogglePanelListViewAction = {
   payload: {

@@ -317,6 +317,8 @@ export default {
     disable3DMap: '3D地図を無効化',
     DrawOnMap: '地図上に図形を描画',
     selectLocale: '言語設定',
+    switchToLightTheme: 'ライトテーマに切り替え',
+    switchToDarkTheme: 'ダークテーマに切り替え',
     showAiAssistantPanel: 'AI 助手パネルを表示',
     hideAiAssistantPanel: 'AI 助手パネルを非表示',
     hideLayerPanel: 'レイヤパネルを非表示',

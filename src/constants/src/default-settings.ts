@@ -1339,6 +1339,7 @@ export const MAP_CONTROLS = keyMirror({
   splitMap: null,
   mapDraw: null,
   mapLocale: null,
+  mapTheme: null,
   effect: null,
   annotation: null,
   aiAssistant: null

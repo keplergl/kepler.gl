@@ -319,6 +319,8 @@ export default {
     disable3DMap: 'Отключить 3D Карту',
     DrawOnMap: 'Рисовать на карте',
     selectLocale: 'Выберите регион',
+    switchToLightTheme: 'Переключить на светлую тему',
+    switchToDarkTheme: 'Переключить на тёмную тему',
     showAiAssistantPanel: 'Показать панель AI Assistant',
     hideAiAssistantPanel: 'Скрыть панель AI Assistant',
     hideLayerPanel: 'Скрыть панель слоев',

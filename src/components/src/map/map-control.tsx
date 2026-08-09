@@ -11,6 +11,7 @@ import Toggle3dButtonFactory from './toggle-3d-button';
 import MapLegendPanelFactory from './map-legend-panel';
 import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
+import ThemeToggleButtonFactory from './theme-toggle-button';
 import MapNavigationControlFactory from './map-navigation-control';
 import {Layer} from '@kepler.gl/layers';
 import {Editor, LayerVisConfig, LayerOrder, MapControls, MapState} from '@kepler.gl/types';
@@ -73,8 +74,10 @@ export type MapControlProps = {
   onToggleLayerVisibility?: (layer: Layer) => void;
   top: number;
   onSetLocale: typeof UIStateActions.setLocale;
+  onSetTheme: typeof UIStateActions.setTheme;
   availableLocales: string[];
   locale: string;
+  themeName?: string;
   logoComponent?: React.FC | React.ReactNode;
   isExport?: boolean;
 
@@ -100,6 +103,7 @@ MapControlFactory.deps = [
   MapLegendPanelFactory,
   MapDrawPanelFactory,
   LocalePanelFactory,
+  ThemeToggleButtonFactory,
   AnnotationControlFactory,
   MapNavigationControlFactory
 ];
@@ -110,6 +114,7 @@ function MapControlFactory(
   MapLegendPanel: ReturnType<typeof MapLegendPanelFactory>,
   MapDrawPanel: ReturnType<typeof MapDrawPanelFactory>,
   LocalePanel: ReturnType<typeof LocalePanelFactory>,
+  ThemeToggleButton: ReturnType<typeof ThemeToggleButtonFactory>,
   AnnotationControl: ReturnType<typeof AnnotationControlFactory>,
   MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>
 ) {
@@ -119,6 +124,7 @@ function MapControlFactory(
     MapDrawPanel,
     AnnotationControl,
     LocalePanel,
+    ThemeToggleButton,
     MapLegendPanel
   ];
 
@@ -132,6 +138,8 @@ function MapControlFactory(
     logoComponent = LegendLogo,
     mapState,
     mapStateActions,
+    themeName,
+    onSetTheme,
     ...restProps
   }) => {
     const actionComponentProps = {
@@ -142,7 +150,10 @@ function MapControlFactory(
       onSetMapSplitMode: getApplicationConfig().enableSwipeMode
         ? mapStateActions?.setMapSplitMode
         : undefined,
-      ...restProps
+      ...restProps,
+      // Prefer uiState theme name over any unrelated `theme` prop (e.g. styled-components)
+      theme: themeName,
+      onSetTheme
     };
     return (
       <StyledMapControl className="map-control" $top={top}>

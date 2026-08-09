@@ -11,7 +11,8 @@ import {
   EXPORT_IMG_RATIOS,
   EXPORT_MAP_FORMATS,
   RESOLUTIONS,
-  MAP_CONTROLS
+  MAP_CONTROLS,
+  THEME
 } from '@kepler.gl/constants';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {
@@ -106,7 +107,8 @@ const DEFAULT_MAP_LEGEND_CONTROL = {
  * @property toggle3d Default: `{show: true}`
  * @property splitMap Default: `{show: true}`
  * @property mapDraw Default: `{show: true, active: false}`
- * @property mapLocale Default: `{show: false, active: false}`
+ * @property mapLocale Default: `{show: true, active: false}`
+ * @property mapTheme Default: `{show: true, active: false}`
  * @public
  */
 export const DEFAULT_MAP_CONTROLS: MapControls = (
@@ -262,6 +264,8 @@ export const DEFAULT_EXPORT_VIDEO: ExportVideo = {
  * @property notifications Default: `[]`
  * @property notifications Default: `[]`
  * @property loadFiles
+ * @property locale Default: `'en'`
+ * @property theme Default: `'dark'`
  * @property isSidePanelCloseButtonVisible Default: `true`
  * @public
  */
@@ -287,6 +291,8 @@ export const INITIAL_UI_STATE: UiState = {
   loadFiles: DEFAULT_LOAD_FILES,
   // Locale of the UI
   locale: LOCALE_CODES.en,
+  // Theme of the UI (used when enableThemeToggle is on)
+  theme: THEME.dark,
   layerPanelListView: 'list',
   filterPanelListView: 'list',
   isSidePanelCloseButtonVisible: true
@@ -957,6 +963,24 @@ export const setLocaleUpdater = (
 });
 
 /**
+ * Set the theme of the UI
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload
+ * @param action.payload.theme theme
+ * @returns nextState
+ * @public
+ */
+export const setThemeUpdater = (
+  state: UiState,
+  {payload: {theme}}: UIStateActions.SetThemeUpdaterAction
+): UiState => ({
+  ...state,
+  theme
+});
+
+/**
  * Toggle layer panel list view
  * @memberof uiStateUpdaters
  * @param state `uiState`
@@ -1035,6 +1059,12 @@ export const receiveMapConfigUpdater = (
     newState = setLocaleUpdater(newState, {
       payload: {locale: uiState.locale}
     } as UIStateActions.SetLocaleUpdaterAction);
+  }
+
+  if (uiState.theme) {
+    newState = setThemeUpdater(newState, {
+      payload: {theme: uiState.theme}
+    } as UIStateActions.SetThemeUpdaterAction);
   }
 
   return newState;
