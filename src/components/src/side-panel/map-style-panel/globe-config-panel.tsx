@@ -21,6 +21,11 @@ import LayerGroupColorPickerFactory from './map-layer-group-color-picker';
 
 const StyledGlobeConfigPanel = styled.div`
   padding-bottom: 6px;
+
+  /* Give slider/color controls more horizontal room. */
+  .side-panel-panel__content {
+    padding-right: 2px;
+  }
 `;
 
 const StyledConfigRow = styled.div`
@@ -47,6 +52,20 @@ const SliderWrapper = styled.div<{$enabled?: boolean}>`
   flex-grow: 1;
   margin-left: 4px;
   ${props => (props.$enabled ? '' : disableSlider)}
+`;
+
+// Atmosphere slider rows: shrink the numeric inputs by 10px so the track can use
+// the extra space (default theme.sliderInputWidth is 56).
+const AtmosphereSliderWrapper = styled(SliderWrapper)`
+  input {
+    width: ${props => props.theme.sliderInputWidth - 5}px;
+  }
+`;
+
+// Keep color swatches slightly inset from the panel edge (sliders already get
+// inset from their numeric inputs; swatches need an explicit margin).
+const ColorPickerSlot = styled.div`
+  margin-right: 10px;
 `;
 
 // Slider rows (Day/Night, Sun Azimuth) put the label and the slider side by side.
@@ -157,6 +176,72 @@ function GlobeConfigPanelFactory(
             </PanelLabelWrapper>
           </StyledConfigRow>
 
+          {/* Huge Halo (child of atmosphere) — additive soft glow on top of realistic halo */}
+          <ChildRow>
+            <PanelLabelWrapper>
+              <PanelHeaderAction
+                className="layer-group__visibility-toggle"
+                id="globe-huge-halo-toggle"
+                tooltip={globeConfig.hugeHalo ? 'tooltip.hide' : 'tooltip.show'}
+                onClick={() => onToggle('hugeHalo', undefined, 'atmosphere')}
+                IconComponent={globeConfig.hugeHalo ? EyeSeen : EyeUnseen}
+                active={Boolean(globeConfig.hugeHalo && globeConfig.atmosphere)}
+                flush
+              />
+              <LayerLabel $active={Boolean(globeConfig.hugeHalo && globeConfig.atmosphere)}>
+                <FormattedMessage id="mapLayers.hugeHalo" />
+              </LayerLabel>
+            </PanelLabelWrapper>
+          </ChildRow>
+
+          {/* Huge Halo radius multiplier */}
+          <SliderRow>
+            <PanelLabelWrapper>
+              <LayerLabel
+                $active={Boolean(globeConfig.hugeHalo && globeConfig.atmosphere)}
+                style={{paddingLeft: 28}}
+              >
+                <FormattedMessage id="mapLayers.hugeHaloRadius" />
+              </LayerLabel>
+            </PanelLabelWrapper>
+            <AtmosphereSliderWrapper $enabled={Boolean(globeConfig.hugeHalo && globeConfig.atmosphere)}>
+              <RangeSlider
+                range={[0.5, 3.5]}
+                value0={0}
+                value1={globeConfig.hugeHaloRadius ?? 1}
+                step={0.05}
+                isRanged={false}
+                onChange={val => onSliderChange('hugeHaloRadius', val)}
+                inputTheme="secondary"
+                showInput
+              />
+            </AtmosphereSliderWrapper>
+          </SliderRow>
+
+          {/* Huge Halo opacity */}
+          <SliderRow>
+            <PanelLabelWrapper>
+              <LayerLabel
+                $active={Boolean(globeConfig.hugeHalo && globeConfig.atmosphere)}
+                style={{paddingLeft: 28}}
+              >
+                <FormattedMessage id="mapLayers.hugeHaloOpacity" />
+              </LayerLabel>
+            </PanelLabelWrapper>
+            <AtmosphereSliderWrapper $enabled={Boolean(globeConfig.hugeHalo && globeConfig.atmosphere)}>
+              <RangeSlider
+                range={[0, 1]}
+                value0={0}
+                value1={globeConfig.hugeHaloOpacity ?? 1}
+                step={0.01}
+                isRanged={false}
+                onChange={val => onSliderChange('hugeHaloOpacity', val)}
+                inputTheme="secondary"
+                showInput
+              />
+            </AtmosphereSliderWrapper>
+          </SliderRow>
+
           {/* Terminator (child of atmosphere) */}
           <SliderRow>
             <PanelLabelWrapper>
@@ -173,7 +258,7 @@ function GlobeConfigPanelFactory(
                 <FormattedMessage id="mapLayers.terminator" />
               </LayerLabel>
             </PanelLabelWrapper>
-            <SliderWrapper $enabled={globeConfig.terminator && globeConfig.atmosphere}>
+            <AtmosphereSliderWrapper $enabled={globeConfig.terminator && globeConfig.atmosphere}>
               <RangeSlider
                 range={[0, 1]}
                 value0={0}
@@ -184,7 +269,7 @@ function GlobeConfigPanelFactory(
                 inputTheme="secondary"
                 showInput
               />
-            </SliderWrapper>
+            </AtmosphereSliderWrapper>
           </SliderRow>
 
           {/* Sun Azimuth (child of atmosphere) */}
@@ -203,7 +288,7 @@ function GlobeConfigPanelFactory(
                 <FormattedMessage id="mapLayers.sunAzimuth" />
               </LayerLabel>
             </PanelLabelWrapper>
-            <SliderWrapper $enabled={globeConfig.azimuth && globeConfig.atmosphere}>
+            <AtmosphereSliderWrapper $enabled={globeConfig.azimuth && globeConfig.atmosphere}>
               <RangeSlider
                 range={[0, 360]}
                 value0={0}
@@ -214,7 +299,7 @@ function GlobeConfigPanelFactory(
                 inputTheme="secondary"
                 showInput
               />
-            </SliderWrapper>
+            </AtmosphereSliderWrapper>
           </SliderRow>
 
           {/* Basemap */}
@@ -251,13 +336,15 @@ function GlobeConfigPanelFactory(
                 <FormattedMessage id="mapLayers.label" />
               </LayerLabel>
             </PanelLabelWrapper>
-            <LayerGroupColorPicker
-              slug="globe-labels"
-              color={globeConfig.labelsColor}
-              onColorChange={(color: RGBColor) => onColorChange('labelsColor', color)}
-              extraMarginRight={false}
-              disabled={!(globeConfig.labels && globeConfig.basemap)}
-            />
+            <ColorPickerSlot>
+              <LayerGroupColorPicker
+                slug="globe-labels"
+                color={globeConfig.labelsColor}
+                onColorChange={(color: RGBColor) => onColorChange('labelsColor', color)}
+                extraMarginRight={true}
+                disabled={!(globeConfig.labels && globeConfig.basemap)}
+              />
+            </ColorPickerSlot>
           </ChildRow>
 
           {/* Admin Lines (child of basemap) */}
@@ -276,13 +363,15 @@ function GlobeConfigPanelFactory(
                 <FormattedMessage id="mapLayers.adminBorders" />
               </LayerLabel>
             </PanelLabelWrapper>
-            <LayerGroupColorPicker
-              slug="globe-admin"
-              color={globeConfig.adminLinesColor}
-              onColorChange={(color: RGBColor) => onColorChange('adminLinesColor', color)}
-              extraMarginRight={false}
-              disabled={!(globeConfig.adminLines && globeConfig.basemap)}
-            />
+            <ColorPickerSlot>
+              <LayerGroupColorPicker
+                slug="globe-admin"
+                color={globeConfig.adminLinesColor}
+                onColorChange={(color: RGBColor) => onColorChange('adminLinesColor', color)}
+                extraMarginRight={true}
+                disabled={!(globeConfig.adminLines && globeConfig.basemap)}
+              />
+            </ColorPickerSlot>
           </ChildRow>
 
           {/* Water (child of basemap) */}
@@ -301,13 +390,15 @@ function GlobeConfigPanelFactory(
                 <FormattedMessage id="mapLayers.water" />
               </LayerLabel>
             </PanelLabelWrapper>
-            <LayerGroupColorPicker
-              slug="globe-water"
-              color={globeConfig.waterColor}
-              onColorChange={(color: RGBColor) => onColorChange('waterColor', color)}
-              extraMarginRight={false}
-              disabled={!(globeConfig.water && globeConfig.basemap)}
-            />
+            <ColorPickerSlot>
+              <LayerGroupColorPicker
+                slug="globe-water"
+                color={globeConfig.waterColor}
+                onColorChange={(color: RGBColor) => onColorChange('waterColor', color)}
+                extraMarginRight={true}
+                disabled={!(globeConfig.water && globeConfig.basemap)}
+              />
+            </ColorPickerSlot>
           </ChildRow>
 
           {/* Globe Surface (always visible, only has color) */}
@@ -317,13 +408,15 @@ function GlobeConfigPanelFactory(
                 <FormattedMessage id="mapLayers.surface" />
               </LayerLabel>
             </PanelLabelWrapper>
-            <LayerGroupColorPicker
-              slug="globe-surface"
-              color={globeConfig.surfaceColor}
-              onColorChange={(color: RGBColor) => onColorChange('surfaceColor', color)}
-              extraMarginRight={false}
-              disabled={false}
-            />
+            <ColorPickerSlot>
+              <LayerGroupColorPicker
+                slug="globe-surface"
+                color={globeConfig.surfaceColor}
+                onColorChange={(color: RGBColor) => onColorChange('surfaceColor', color)}
+                extraMarginRight={true}
+                disabled={false}
+              />
+            </ColorPickerSlot>
           </StyledConfigRow>
 
           {/* Background (empty space around the globe, always visible) */}
@@ -333,13 +426,15 @@ function GlobeConfigPanelFactory(
                 <FormattedMessage id="mapLayers.background" />
               </LayerLabel>
             </PanelLabelWrapper>
-            <LayerGroupColorPicker
-              slug="globe-background"
-              color={globeConfig.backgroundColor}
-              onColorChange={(color: RGBColor) => onColorChange('backgroundColor', color)}
-              extraMarginRight={false}
-              disabled={false}
-            />
+            <ColorPickerSlot>
+              <LayerGroupColorPicker
+                slug="globe-background"
+                color={globeConfig.backgroundColor}
+                onColorChange={(color: RGBColor) => onColorChange('backgroundColor', color)}
+                extraMarginRight={true}
+                disabled={false}
+              />
+            </ColorPickerSlot>
           </StyledConfigRow>
 
           {/* Stars (rendered behind the globe in 3D space) */}

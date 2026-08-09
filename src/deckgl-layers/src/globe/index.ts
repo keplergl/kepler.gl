@@ -19,8 +19,10 @@
 export {
   AtmosphereLayerRealistic,
   AtmosphereSkyLayerRealistic,
+  AtmosphereHugeHaloLayer,
   getGlobeAtmosphereLayer,
-  getGlobeAtmosphereSkyLayer
+  getGlobeAtmosphereSkyLayer,
+  getGlobeHugeHaloLayer
 } from './atmosphere-layer';
 export {GlobeDepthDiskLayer, getGlobeDepthDiskLayer} from './globe-depth-disk-layer';
 export {

@@ -8,7 +8,7 @@ import {TileLayer, MVTLayer} from '@deck.gl/geo-layers';
 import type {Globe} from '@kepler.gl/constants';
 import type {RGBColor} from '@kepler.gl/types';
 
-import {getGlobeAtmosphereLayer, getGlobeAtmosphereSkyLayer} from './atmosphere-layer';
+import {getGlobeAtmosphereLayer, getGlobeAtmosphereSkyLayer, getGlobeHugeHaloLayer} from './atmosphere-layer';
 import {getGlobeDepthDiskLayer} from './globe-depth-disk-layer';
 import {MVTLabelLayer} from './mvt-label-layer';
 
@@ -540,6 +540,8 @@ export const getGlobeBaseLayers = ({
   const hasTileAccess = useCarto || Boolean(mapboxApiAccessToken);
 
   return [
+    // Huge halo behind the thin realistic limb so both can be visible together.
+    config.atmosphere ? getGlobeHugeHaloLayer({config, zoom}) : null,
     config.atmosphere ? getGlobeAtmosphereSkyLayer({config, zoom}) : null,
 
     // Depth-only cross-section disk: writes depth at the globe's silhouette so
