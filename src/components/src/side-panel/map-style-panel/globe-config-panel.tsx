@@ -5,7 +5,7 @@ import React, {useCallback} from 'react';
 import styled, {css} from 'styled-components';
 
 import {MapState, RGBColor} from '@kepler.gl/types';
-import {GlobeConfig} from '@kepler.gl/constants';
+import {GlobeConfig, DEFAULT_GLOBE_CONFIG} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import {EyeSeen, EyeUnseen} from '../../common/icons';
@@ -208,7 +208,7 @@ function GlobeConfigPanelFactory(
               <RangeSlider
                 range={[0.5, 3.5]}
                 value0={0}
-                value1={globeConfig.hugeHaloRadius ?? 1}
+                value1={globeConfig.hugeHaloRadius ?? DEFAULT_GLOBE_CONFIG.hugeHaloRadius}
                 step={0.05}
                 isRanged={false}
                 onChange={val => onSliderChange('hugeHaloRadius', val)}
@@ -232,7 +232,7 @@ function GlobeConfigPanelFactory(
               <RangeSlider
                 range={[0, 1]}
                 value0={0}
-                value1={globeConfig.hugeHaloOpacity ?? 1}
+                value1={globeConfig.hugeHaloOpacity ?? DEFAULT_GLOBE_CONFIG.hugeHaloOpacity}
                 step={0.01}
                 isRanged={false}
                 onChange={val => onSliderChange('hugeHaloOpacity', val)}

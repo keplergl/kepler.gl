@@ -11,7 +11,7 @@ import {SphereGeometry} from '@luma.gl/engine';
 import {Vector3} from '@math.gl/core';
 import {getSunPosition} from '@math.gl/sun';
 
-import type {GlobeConfig} from '@kepler.gl/constants';
+import {DEFAULT_GLOBE_CONFIG, type GlobeConfig} from '@kepler.gl/constants';
 
 const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 
@@ -366,6 +366,8 @@ const ATMOSPHERE_SKY_PARAMETERS = {
 const HUGE_HALO_INNER_RADIUS = 258;
 const HUGE_HALO_BASE_OUTER_RADIUS = 294;
 const HUGE_HALO_BASE_SHELL = HUGE_HALO_BASE_OUTER_RADIUS - HUGE_HALO_INNER_RADIUS;
+/** Matches the Halo Radius slider max; higher values can produce a black-disc artifact. */
+const HUGE_HALO_RADIUS_MAX = 3.5;
 
 const HUGE_HALO_UNIFORMS = {
   fInnerRadius: HUGE_HALO_INNER_RADIUS,
@@ -384,14 +386,20 @@ const HUGE_HALO_PARAMETERS = {
 };
 
 function resolveHugeHaloRadius(config: GlobeConfig): number {
-  const multiplier = Number.isFinite(config.hugeHaloRadius) ? config.hugeHaloRadius : 1;
-  // Scale shell thickness; keep outer above the planet surface. Cap at 4 to avoid
-  // the black-disc artifact when the shell encloses the camera.
-  return HUGE_HALO_INNER_RADIUS + HUGE_HALO_BASE_SHELL * Math.max(Math.min(multiplier, 4), 0.05);
+  const multiplier = Number.isFinite(config.hugeHaloRadius)
+    ? (config.hugeHaloRadius as number)
+    : DEFAULT_GLOBE_CONFIG.hugeHaloRadius;
+  // Scale shell thickness; keep outer above the planet surface.
+  return (
+    HUGE_HALO_INNER_RADIUS +
+    HUGE_HALO_BASE_SHELL * Math.max(Math.min(multiplier, HUGE_HALO_RADIUS_MAX), 0.05)
+  );
 }
 
 function resolveHugeHaloOpacity(config: GlobeConfig): number {
-  const opacity = Number.isFinite(config.hugeHaloOpacity) ? config.hugeHaloOpacity : 1;
+  const opacity = Number.isFinite(config.hugeHaloOpacity)
+    ? (config.hugeHaloOpacity as number)
+    : DEFAULT_GLOBE_CONFIG.hugeHaloOpacity;
   return Math.max(0, Math.min(1, opacity));
 }
 
