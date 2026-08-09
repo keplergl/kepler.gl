@@ -79,7 +79,7 @@ test('MapControlFactory - display all options', t => {
       </MapViewStateContextProvider>
     </IntlWrapper>
   );
-  t.equal($.find('.map-control-action').length, 7, 'Should show 7 action panels');
+  t.equal($.find('.map-control-action').length, 8, 'Should show 8 action panels');
   t.end();
 });
 
