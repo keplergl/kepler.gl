@@ -47,7 +47,6 @@ export const DEFAULT_FEATURE_FLAGS = {
  * Public OAuth Web client ID for the Kepler.gl demo Google Drive provider.
  * Safe to ship in the client bundle (same as DropboxClientId). Override via
  * GoogleDriveClientId env for local/Netlify if needed.
- * Authorized origins must include http://localhost:8080 and https://kepler.gl.
  */
 export const DEFAULT_GOOGLE_DRIVE_CLIENT_ID =
   '955797395662-m2aetl68gd71shdgtsmbbj2pvuk1psgc.apps.googleusercontent.com';
