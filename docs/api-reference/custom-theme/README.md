@@ -23,3 +23,23 @@ const Map = props => (
 | `dark` (default) | ![Screen Shot 2020-03-11 at 2 11 45 PM](https://user-images.githubusercontent.com/3605556/76464370-78c13080-63a2-11ea-977e-9678a25580f9.png) |
 | `light`  | ![Screen Shot 2020-03-11 at 2 10 15 PM](https://user-images.githubusercontent.com/3605556/76464360-74951300-63a2-11ea-82fe-3d055dc0b8dd.png)  |
 | `base`  | ![Screen Shot 2020-03-11 at 2 10 49 PM](https://user-images.githubusercontent.com/3605556/76464366-78289a00-63a2-11ea-944b-e5a9208bacde.png) |
+
+### Theme Toggle Control
+
+To show a map control that lets users switch between light and dark themes at runtime, enable it via application config:
+
+```js
+import {initApplicationConfig} from '@kepler.gl/utils';
+
+initApplicationConfig({enableThemeToggle: true});
+```
+
+When enabled, the active theme is stored in `uiState.theme` (`'light'` | `'dark'`) and can be initialized through `keplerGlReducer.initialState`:
+
+```js
+keplerGlReducer.initialState({
+  uiState: {
+    theme: 'light'
+  }
+});
+```

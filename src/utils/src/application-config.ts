@@ -162,7 +162,10 @@ export type KeplerApplicationConfig = {
 
   /** Whether to enable the layer groups feature. Enabled by default. */
   enableLayerGroups?: boolean;
-  
+
+  /** Whether to show a map control to toggle between light and dark UI themes. Disabled by default. */
+  enableThemeToggle?: boolean;
+
   /**
    * Custom SVG icons to be made available in the icon layer.
    * These icons will be merged with the default icons fetched from CDN.
@@ -281,11 +284,13 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableLayerGroups: true,
 
+  enableThemeToggle: false,
+
   customIcons: [],
 
   customIconUrl: '',
 
-  reduxLogLevel: 1
+  reduxLogLevel: 1,
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;

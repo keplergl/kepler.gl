@@ -23,7 +23,17 @@ const theme = {
   secondaryInputBgd: '#f7f7F7',
   secondaryInputBgdActive: '#f7f7F7',
   secondaryInputBgdHover: '#ffffff',
-  panelActiveBg: '#f7f7F7'
+  panelActiveBg: '#f7f7F7',
+  // Map control buttons (top-right) use floatingBtn* tokens
+  floatingBtnBgd: '#F7F7F7',
+  floatingBtnActBgd: '#F7F7F7',
+  floatingBtnBgdHover: '#F7F7F7',
+  floatingBtnColor: '#6A7485',
+  floatingBtnActColor: '#2473bd',
+  mapPanelBackgroundColor: '#FFFFFF',
+  mapPanelHeaderBackgroundColor: '#F7F7F7',
+  toolbarItemBgdHover: '#F7F7F7',
+  toolbarItemIconHover: '#2473bd'
 };
 
 const emptyTheme = {};

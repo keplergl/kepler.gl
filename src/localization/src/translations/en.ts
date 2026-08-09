@@ -370,6 +370,8 @@ export default {
     top: 'Top',
     DrawOnMap: 'Draw on map',
     selectLocale: 'Select locale',
+    switchToLightTheme: 'Switch to light theme',
+    switchToDarkTheme: 'Switch to dark theme',
     showAiAssistantPanel: 'Show AI Assistant',
     hideAiAssistantPanel: 'Hide AI Assistant',
     hideLayerPanel: 'Hide layer panel',

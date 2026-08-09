@@ -188,6 +188,7 @@ export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => {
     mapControls: props.uiState.mapControls,
     readOnly: props.uiState.readOnly,
     locale: props.uiState.locale,
+    uiTheme: props.uiState.theme,
     isLoadingIndicatorVisible: Number(props.visState.loadingIndicatorValue) > 0,
     sidePanelWidth: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
 
@@ -546,17 +547,31 @@ function KeplerGlFactory(
 
     /* selectors */
     themeSelector = props => props.theme;
-    availableThemeSelector = createSelector(this.themeSelector, theme =>
-      typeof theme === 'object'
-        ? {
+    uiThemeSelector = props => props.uiState?.theme;
+    availableThemeSelector = createSelector(
+      this.themeSelector,
+      this.uiThemeSelector,
+      (theme, uiTheme) => {
+        // When theme toggle is enabled, uiState.theme drives light/dark switching.
+        const themeInput = getApplicationConfig().enableThemeToggle
+          ? uiTheme || THEME.dark
+          : theme;
+
+        if (typeof themeInput === 'object' && themeInput !== null) {
+          return {
             ...basicTheme,
-            ...theme
-          }
-        : theme === THEME.light
-        ? themeLT
-        : theme === THEME.base
-        ? themeBS
-        : theme
+            ...themeInput
+          };
+        }
+        if (themeInput === THEME.light) {
+          return themeLT;
+        }
+        if (themeInput === THEME.base) {
+          return themeBS;
+        }
+        // THEME.dark and unknown values fall back to the default dark theme
+        return basicTheme;
+      }
     );
 
     datasetsSelector = props => props.visState.datasets;

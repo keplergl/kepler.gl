@@ -238,6 +238,7 @@ export interface MapContainerProps {
   sidePanelWidth?: number;
 
   locale?: any;
+  uiTheme?: string;
   theme?: any;
   editor?: any;
   MapComponent?: typeof MapboxLegacyMap | typeof MaplibreMap;
@@ -1323,6 +1324,7 @@ export default function MapContainerFactory(
         mapControls,
         isExport,
         locale,
+        uiTheme,
         uiStateActions,
         visStateActions,
         index,
@@ -1438,6 +1440,7 @@ export default function MapContainerFactory(
               }
               editor={editor}
               locale={locale}
+              themeName={uiTheme}
               onTogglePerspective={mapStateActions.togglePerspective}
               onSetMapViewMode={mapStateActions.setMapViewMode}
               mapViewMode={mapState.mapViewMode}
@@ -1447,6 +1450,7 @@ export default function MapContainerFactory(
               onToggleSplitMapViewport={mapStateActions.toggleSplitMapViewport}
               onSetEditorMode={visStateActions.setEditorMode}
               onSetLocale={uiStateActions.setLocale}
+              onSetTheme={uiStateActions.setTheme}
               onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
               onLayerVisConfigChange={visStateActions.layerVisConfigChange}
               onToggleLayerVisibility={this._handleToggleLayerVisibility}
