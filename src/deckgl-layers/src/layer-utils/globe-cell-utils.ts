@@ -157,7 +157,11 @@ export function makeGlobeCellLayerClass<T extends LayerConstructor>(
 
   class GlobeCellLayer extends (BaseCellLayer as {new (...args: any[]): any}) {
     getShaders() {
-      const shaders = (super.getShaders as () => any)();
+      // Avoid `(super.fn as any)()` — Babel compiles that to a property GET
+      // (`_superPropGet(..., 1)`) that drops `this`. A direct call uses method-CALL
+      // form (`_superPropGet(..., 3)`), which preserves the binding.
+      // See https://github.com/keplergl/kepler.gl/issues/3614.
+      const shaders = super.getShaders();
       return {
         ...shaders,
         vs: addGlobeCellProjection(shaders.vs, type),
@@ -175,7 +179,7 @@ export function makeGlobeCellLayerClass<T extends LayerConstructor>(
       if (model?.shaderInputs) {
         model.shaderInputs.setProps({globeCell: {globeMode}});
       }
-      (super.draw as (o: any) => void)(opts);
+      super.draw(opts);
     }
   }
   (GlobeCellLayer as unknown as {layerName: string}).layerName = `Globe${type}CellLayer`;
