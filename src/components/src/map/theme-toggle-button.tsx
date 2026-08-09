@@ -18,7 +18,7 @@ interface ThemeToggleButtonIcons {
 }
 
 export type ThemeToggleButtonProps = {
-  theme: string;
+  themeName?: string;
   onSetTheme: (theme: string) => void;
   mapControls: MapControls;
   actionIcons?: ThemeToggleButtonIcons;
@@ -35,12 +35,12 @@ function ThemeToggleButtonFactory(
   };
 
   const ThemeToggleButton: React.FC<ThemeToggleButtonProps> = ({
-    theme,
+    themeName = THEME.dark,
     onSetTheme,
     mapControls,
     actionIcons = defaultActionIcons
   }) => {
-    const isLight = theme === THEME.light;
+    const isLight = themeName === THEME.light;
 
     const onClick = useCallback(
       event => {

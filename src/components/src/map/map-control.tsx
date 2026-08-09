@@ -151,8 +151,7 @@ function MapControlFactory(
         ? mapStateActions?.setMapSplitMode
         : undefined,
       ...restProps,
-      // Prefer uiState theme name over any unrelated `theme` prop (e.g. styled-components)
-      theme: themeName,
+      themeName,
       onSetTheme
     };
     return (
