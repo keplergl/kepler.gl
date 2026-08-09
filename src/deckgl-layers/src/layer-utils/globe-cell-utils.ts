@@ -157,10 +157,6 @@ export function makeGlobeCellLayerClass<T extends LayerConstructor>(
 
   class GlobeCellLayer extends (BaseCellLayer as {new (...args: any[]): any}) {
     getShaders() {
-      // Avoid `(super.fn as any)()` — Babel compiles that to a property GET
-      // (`_superPropGet(..., 1)`) that drops `this`. A direct call uses method-CALL
-      // form (`_superPropGet(..., 3)`), which preserves the binding.
-      // See https://github.com/keplergl/kepler.gl/issues/3614.
       const shaders = super.getShaders();
       return {
         ...shaders,
