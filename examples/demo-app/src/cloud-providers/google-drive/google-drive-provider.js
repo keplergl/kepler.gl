@@ -222,6 +222,7 @@ export default class GoogleDriveProvider extends Provider {
     const token = await this._requireToken();
     const {map, thumbnail} = mapData;
     const title = (map.info && map.info.title) || 'Untitled Map';
+    const description = (map.info && map.info.description) || '';
     const fileName = `${title}.json`;
     const folderId = await this._ensureAppFolder(token);
 
@@ -232,11 +233,12 @@ export default class GoogleDriveProvider extends Provider {
 
     let fileMeta;
     if (existing && options.overwrite) {
-      fileMeta = await this._updateJsonFile(token, existing.id, map);
+      fileMeta = await this._updateJsonFile(token, existing.id, map, description);
     } else {
       fileMeta = await this._createMultipartFile({
         token,
         name: fileName,
+        description,
         parents: [folderId],
         mimeType: MIME_JSON,
         body: JSON.stringify(map)
@@ -266,7 +268,7 @@ export default class GoogleDriveProvider extends Provider {
       return {
         id: fileMeta.id,
         title,
-        description: (map.info && map.info.description) || '',
+        description,
         privateMap: false,
         loadParams: {id: fileMeta.id, path: fileName},
         shareUrl: this.getShareUrl(true),
@@ -277,7 +279,7 @@ export default class GoogleDriveProvider extends Provider {
     return {
       id: fileMeta.id,
       title,
-      description: (map.info && map.info.description) || '',
+      description,
       privateMap: true,
       loadParams: {id: fileMeta.id, path: fileName}
     };
@@ -456,8 +458,12 @@ export default class GoogleDriveProvider extends Provider {
     }
   }
 
-  async _createMultipartFile({token, name, parents, mimeType, body}) {
-    const metadata = JSON.stringify({name, mimeType, parents});
+  async _createMultipartFile({token, name, parents, mimeType, body, description}) {
+    const metadataPayload = {name, mimeType, parents};
+    if (description !== undefined) {
+      metadataPayload.description = description;
+    }
+    const metadata = JSON.stringify(metadataPayload);
     const boundary = 'keplergl_google_drive_boundary';
     const delimiter = `--${boundary}\r\n`;
     const closeDelimiter = `\r\n--${boundary}--`;
@@ -487,18 +493,21 @@ export default class GoogleDriveProvider extends Provider {
     requestBody.set(contentBytes, preambleBytes.length);
     requestBody.set(closingBytes, preambleBytes.length + contentBytes.length);
 
-    return this._driveFetch(`${DRIVE_UPLOAD_API}/files?uploadType=multipart&fields=id,name`, {
-      token,
-      method: 'POST',
-      headers: {
-        'Content-Type': `multipart/related; boundary=${boundary}`
-      },
-      body: requestBody
-    });
+    return this._driveFetch(
+      `${DRIVE_UPLOAD_API}/files?uploadType=multipart&fields=id,name,description`,
+      {
+        token,
+        method: 'POST',
+        headers: {
+          'Content-Type': `multipart/related; boundary=${boundary}`
+        },
+        body: requestBody
+      }
+    );
   }
 
-  _updateJsonFile(token, fileId, map) {
-    return this._driveFetch(
+  async _updateJsonFile(token, fileId, map, description = '') {
+    const fileMeta = await this._driveFetch(
       `${DRIVE_UPLOAD_API}/files/${fileId}?uploadType=media&fields=id,name`,
       {
         token,
@@ -507,6 +516,16 @@ export default class GoogleDriveProvider extends Provider {
         body: JSON.stringify(map)
       }
     );
+
+    // Media upload does not update metadata; patch description separately.
+    await this._driveFetch(`${DRIVE_API}/files/${fileId}?fields=id,name,description`, {
+      token,
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({description})
+    });
+
+    return {...fileMeta, description};
   }
 
   _updateBinaryFile(token, fileId, blob, mimeType) {
@@ -530,10 +549,12 @@ export default class GoogleDriveProvider extends Provider {
         body: JSON.stringify({role: 'reader', type: 'anyone'})
       });
     } catch (err) {
-      // Permission may already exist; ignore conflict-style failures
-      if (!String(err.message || err).includes('403')) {
-        throw err;
+      const msg = String(err.message || err);
+      // Drive returns 409 / alreadyExists when the anyone permission is already set
+      if (/alreadyExists|already exists|409|conflict/i.test(msg)) {
+        return;
       }
+      throw err;
     }
   }
 
@@ -548,7 +569,7 @@ export default class GoogleDriveProvider extends Provider {
     });
 
     if (!response.ok) {
-      let message = `${response.status} ${response.statusText}`;
+      let message = response.statusText || 'Request failed';
       let reason = '';
       try {
         const errJson = await response.json();
@@ -557,6 +578,7 @@ export default class GoogleDriveProvider extends Provider {
       } catch (e) {
         // ignore parse errors
       }
+      const detail = [response.status, reason, message].filter(Boolean).join(' ');
       if (
         response.status === 403 &&
         /insufficient.*(scope|authentication)/i.test(`${message} ${reason}`)
@@ -567,7 +589,7 @@ export default class GoogleDriveProvider extends Provider {
           'Google Drive permission is missing. Log out of Google Drive in Kepler, then log in again and allow Drive access (do not uncheck it on the consent screen).'
         );
       }
-      throw new Error(`Google Drive API error: ${message}`);
+      throw new Error(`Google Drive API error: ${detail}`);
     }
 
     if (response.status === 204) {

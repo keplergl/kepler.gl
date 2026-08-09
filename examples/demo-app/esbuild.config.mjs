@@ -71,8 +71,7 @@ const requiredEnvVariables = [
   'FoursquareClientId',
   'FoursquareDomain',
   'FoursquareAPIURL',
-  'FoursquareUserMapsURL',
-  'GoogleDriveClientId'
+  'FoursquareUserMapsURL'
 ];
 
 /**

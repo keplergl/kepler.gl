@@ -17,8 +17,19 @@ export function loadScript(src) {
       return Promise.resolve();
     }
     return new Promise((resolve, reject) => {
-      existing.addEventListener('load', () => resolve());
-      existing.addEventListener('error', () => reject(new Error(`Failed to load script: ${src}`)));
+      existing.addEventListener(
+        'load',
+        () => {
+          existing.dataset.loaded = 'true';
+          resolve();
+        },
+        {once: true}
+      );
+      existing.addEventListener(
+        'error',
+        () => reject(new Error(`Failed to load script: ${src}`)),
+        {once: true}
+      );
     });
   }
 
