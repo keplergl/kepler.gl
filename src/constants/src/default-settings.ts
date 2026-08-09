@@ -1388,9 +1388,12 @@ export type GlobeConfig = {
    * realistic scattering sky halo.
    */
   hugeHalo: boolean;
-  /** Multiplier for huge-halo shell thickness (1 = default ~14% beyond the globe). */
+  /**
+   * Multiplier for huge-halo shell thickness. `1` is the baseline (~14% beyond
+   * the globe); the configured default is 3.5.
+   */
   hugeHaloRadius: number;
-  /** Opacity of the huge-halo glow (0–1). */
+  /** Opacity of the huge-halo glow (0–1). Default: 0.2. */
   hugeHaloOpacity: number;
   azimuth: boolean;
   azimuthAngle: number;
@@ -1435,6 +1438,7 @@ export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
   // Color of the empty space rendered around the globe (deck.gl clear color).
   // Matches the previous hardcoded clear color [0.015, 0.035, 0.065] in 0-1 space.
   backgroundColor: [4, 9, 17],
+  // Starfield behind the globe is on by default in globe view.
   stars: true
 };
 

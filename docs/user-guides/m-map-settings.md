@@ -137,10 +137,11 @@ slider:
 - __Atmosphere__ — the glowing halo rendered around the globe. Turning it off
   also hides its sub-settings:
   - __Huge Halo__ — adds a large uniform glow around the globe on top of the
-    realistic atmosphere halo (view-independent, thick soft aura).
+    realistic atmosphere halo (view-independent, thick soft aura). Enabled by
+    default.
     - __Halo Radius__ — multiplier for how far the glow extends beyond the globe
-      (1 = default).
-    - __Halo Opacity__ — opacity of the huge halo (0–1).
+      (`1` = baseline thickness; default is `3.5`).
+    - __Halo Opacity__ — opacity of the huge halo (0–1; default is `0.2`).
   - __Day/Night (terminator)__ — shades the night side of the globe. The slider
     controls the shading opacity.
   - __Sun azimuth__ — direction of the sun used for the day/night shading. The
@@ -153,6 +154,7 @@ slider:
 - __Surface__ — the color of the globe's land surface.
 - __Background__ — the color of the empty space rendered around the globe. This
   color is also used as the background in image and video export.
+- __Stars__ — a starfield behind the globe. Enabled by default.
 
 ### Known issues and limitations
 

@@ -54,7 +54,7 @@ const SliderWrapper = styled.div<{$enabled?: boolean}>`
   ${props => (props.$enabled ? '' : disableSlider)}
 `;
 
-// Atmosphere slider rows: shrink the numeric inputs by 10px so the track can use
+// Atmosphere slider rows: shrink the numeric inputs by 5px so the track can use
 // the extra space (default theme.sliderInputWidth is 56).
 const AtmosphereSliderWrapper = styled(SliderWrapper)`
   input {
