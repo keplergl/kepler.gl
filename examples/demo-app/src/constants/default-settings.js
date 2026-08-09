@@ -43,6 +43,15 @@ export const DEFAULT_FEATURE_FLAGS = {
   cloudStorage: true
 };
 
+/**
+ * Public OAuth Web client ID for the Kepler.gl demo Google Drive provider.
+ * Safe to ship in the client bundle (same as DropboxClientId). Override via
+ * GoogleDriveClientId env for local/Netlify if needed.
+ * Authorized origins must include http://localhost:8080 and https://kepler.gl.
+ */
+export const DEFAULT_GOOGLE_DRIVE_CLIENT_ID =
+  '955797395662-m2aetl68gd71shdgtsmbbj2pvuk1psgc.apps.googleusercontent.com';
+
 export const CLOUD_PROVIDERS_CONFIGURATION = {
   MAPBOX_TOKEN: process.env.MapboxAccessToken, // eslint-disable-line
   DROPBOX_CLIENT_ID: process.env.DropboxClientId, // eslint-disable-line
@@ -52,5 +61,6 @@ export const CLOUD_PROVIDERS_CONFIGURATION = {
   FOURSQUARE_DOMAIN: process.env.FoursquareDomain, // eslint-disable-line
   FOURSQUARE_API_URL: process.env.FoursquareAPIURL, // eslint-disable-line
   FOURSQUARE_USER_MAPS_URL: process.env.FoursquareUserMapsURL, // eslint-disable-line
-  GOOGLE_DRIVE_CLIENT_ID: process.env.GoogleDriveClientId // eslint-disable-line
+  GOOGLE_DRIVE_CLIENT_ID:
+    process.env.GoogleDriveClientId || DEFAULT_GOOGLE_DRIVE_CLIENT_ID // eslint-disable-line
 };
