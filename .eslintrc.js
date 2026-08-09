@@ -61,26 +61,7 @@ module.exports = {
         '@typescript-eslint/no-explicit-any': 'off',
         // TODO: Enable this rule and provide description or fix the errors
         '@typescript-eslint/ban-ts-comment': 'off',
-        '@typescript-eslint/no-var-requires': 'off',
-        // Casting `super.method` then calling it makes Babel emit an unbound
-        // `_superPropGet(..., 1)` call that drops `this` (see #3614).
-        'no-restricted-syntax': [
-          'error',
-          {
-            selector:
-              "CallExpression[callee.type='TSAsExpression'][callee.expression.type='MemberExpression'][callee.expression.object.type='Super']",
-            message:
-              'Do not cast `super.method` before calling it (e.g. `(super.foo as any)()`). ' +
-              'Babel drops `this` on that form. Call `super.foo(...)` directly instead.'
-          },
-          {
-            selector:
-              "CallExpression[callee.type='TSTypeAssertion'][callee.expression.type='MemberExpression'][callee.expression.object.type='Super']",
-            message:
-              'Do not cast `super.method` before calling it (e.g. `(<any>super.foo)()`). ' +
-              'Babel drops `this` on that form. Call `super.foo(...)` directly instead.'
-          }
-        ]
+        '@typescript-eslint/no-var-requires': 'off'
       }
     },
     {
