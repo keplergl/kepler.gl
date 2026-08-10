@@ -54,7 +54,7 @@ export function defineHandler<TArgs>(handler: {
  * can pass its raw output through without enumerating every tool's shape.
  *
  * Domain-specific fields are surfaced to the model via `toModelOutput` in
- * `index.ts` so multi-step flows (e.g. `data.classify` breaks → `map.add-layer`
+ * `index.ts` so multi-step flows (e.g. `geoda.analysis` classify breaks → `map.add-layer`
  * colorMap) can chain.
  */
 export type ExecuteApiOutput = {

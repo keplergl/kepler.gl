@@ -1,24 +1,11 @@
 import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {FeatureCollection, Feature} from 'geojson';
-import {
-  getCartogram,
-  getMinimumSpanningTree,
-  getThiessenPolygons,
-  deviationFromMean,
-  standardizeMAD,
-  rangeAdjust,
-  rangeStandardize,
-  standardize,
-  excessRisk,
-  empiricalBayes,
-  SpatialGeometry
-} from '@geoda/core';
+import zips from 'zip3';
 import {bbox} from '@turf/bbox';
 import {polygon} from '@turf/helpers';
 import {KeplerContext} from '../types';
 import {
-  getValuesFromDataset,
   getGeometriesFromDataset,
   getConnector,
   ensureSpatialExtension,
@@ -26,23 +13,16 @@ import {
   combineSignals,
   mapboxRateLimiter,
   nominatimRateLimiter,
-  datasetNameToTableName
+  overpassRateLimiter,
+  githubRateLimiter,
+  datasetNameToTableName,
+  arrowTableToObjects
 } from '../tools/utils';
 import {saveToDuckdb, saveGeojsonToDuckdb, getTableAsGeoJSON} from '../tools/duckdb-cache';
 import {getRoutingCommand} from './routing-command';
 
 export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> {
-  const getValues = async (datasetName: string, variableName: string) => {
-    const visState = ctx.getVisState();
-    return getValuesFromDataset(
-      visState.datasets,
-      visState.layers,
-      datasetName,
-      variableName
-    ) as number[];
-  };
-
-  const getGeometries = async (datasetName: string): Promise<SpatialGeometry> => {
+  const getGeometries = async (datasetName: string): Promise<Feature[]> => {
     const visState = ctx.getVisState();
     let geoms = getGeometriesFromDataset(
       visState.datasets,
@@ -240,9 +220,7 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
         });
 
         const result = await db.query(resolvedSql);
-        const rows = result
-          .toArray()
-          .map((row: any) => (typeof row.toJSON === 'function' ? row.toJSON() : row));
+        const rows = arrowTableToObjects(result);
 
         const features = rows.map((row: any) => {
           const geometry =
@@ -259,7 +237,11 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
           commandId: 'geo.spatial-query',
           data: {
             details: `${reasoning} — ${features.length} features -> ${outputDatasetName}.`,
-            outputDatasetName
+            outputDatasetName,
+            // Preview of the result rows (properties only, geometry excluded) so
+            // the LLM can read scalar values (e.g. area/length/perimeter) computed
+            // by the spatial SQL. Surfaced via `toModelOutput`'s firstFiveRows.
+            firstFiveRows: features.slice(0, 5).map(f => f.properties)
           }
         };
       } catch (error) {
@@ -353,296 +335,212 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
     }
   };
 
-  const thiessenPolygons: RoomCommand = {
-    id: 'geoda.thiessen-polygons',
-    name: 'Thiessen (Voronoi) polygons',
-    group: 'GeoDa',
-    description: 'Create Thiessen (Voronoi) polygons from geometries using GeoDa.',
-    inputSchema: z.object({
-      datasetName: z.string(),
-      outputDatasetName: z.string()
-    }) as any,
-    execute: async (_execCtx, input) => {
-      const {datasetName, outputDatasetName} = (input ?? {}) as {
-        datasetName: string;
-        outputDatasetName: string;
-      };
-      try {
-        const geometries = await getGeometries(datasetName);
-        if (!geometries || geometries.length === 0)
-          throw new Error(`Dataset ${datasetName} is empty or not found`);
-
-        const thiessenFeatures = await getThiessenPolygons({geoms: geometries});
-        const geojson: FeatureCollection = {
-          type: 'FeatureCollection',
-          features: thiessenFeatures
-        };
-        await onToolCompleted(outputDatasetName, {type: 'geojson', content: geojson});
-        return {
-          success: true,
-          commandId: 'geoda.thiessen-polygons',
-          data: {
-            details: `Thiessen polygons from ${geometries.length} features -> ${outputDatasetName}.`,
-            outputDatasetName
-          }
-        };
-      } catch (error) {
-        return {
-          success: false,
-          commandId: 'geoda.thiessen-polygons',
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
-      }
-    }
-  };
-
-  const minimumSpanningTree: RoomCommand = {
-    id: 'geoda.mst',
-    name: 'Minimum spanning tree',
-    group: 'GeoDa',
-    description: 'Create a minimum spanning tree (MST) from geometries using GeoDa.',
-    inputSchema: z.object({
-      datasetName: z.string(),
-      outputDatasetName: z.string()
-    }) as any,
-    execute: async (_execCtx, input) => {
-      const {datasetName, outputDatasetName} = (input ?? {}) as {
-        datasetName: string;
-        outputDatasetName: string;
-      };
-      try {
-        const geometries = await getGeometries(datasetName);
-        if (!geometries || geometries.length === 0)
-          throw new Error(`Dataset ${datasetName} is empty or not found`);
-
-        const mstFeatures = await getMinimumSpanningTree({geoms: geometries});
-        const geojson: FeatureCollection = {
-          type: 'FeatureCollection',
-          features: mstFeatures
-        };
-        await onToolCompleted(outputDatasetName, {type: 'geojson', content: geojson});
-        return {
-          success: true,
-          commandId: 'geoda.mst',
-          data: {
-            details: `MST with ${mstFeatures.length} edges from ${geometries.length} features -> ${outputDatasetName}.`,
-            outputDatasetName
-          }
-        };
-      } catch (error) {
-        return {
-          success: false,
-          commandId: 'geoda.mst',
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
-      }
-    }
-  };
-
-  const cartogram: RoomCommand = {
-    id: 'geoda.cartogram',
-    name: 'Dorling cartogram',
-    group: 'GeoDa',
+  const roads: RoomCommand = {
+    id: 'geo.roads',
+    name: 'Road networks',
+    group: 'Geo',
     description:
-      'Create a Dorling cartogram from polygon geometries using a weight variable (GeoDa).',
+      'Fetch road networks from OpenStreetMap (Overpass API) within a bounding box. The box can come from a dataset boundary, explicit mapBounds, or the current map viewport.',
     inputSchema: z.object({
-      datasetName: z.string(),
-      weightVariable: z.string().describe('Property name to use as weight'),
-      iterations: z
-        .number()
+      datasetName: z
+        .string()
         .optional()
-        .describe('Number of iterations for cartogram optimization (default 100)'),
-      outputDatasetName: z.string()
+        .describe('Dataset whose boundary defines the fetch area (takes precedence over mapBounds)'),
+      mapBounds: z
+        .object({
+          northwest: z.object({longitude: z.number(), latitude: z.number()}),
+          southeast: z.object({longitude: z.number(), latitude: z.number()})
+        })
+        .optional()
+        .describe('Bounding box to fetch roads within'),
+      outputDatasetName: z
+        .string()
+        .optional()
+        .describe('Name for the output dataset (default: roads_<timestamp>)')
     }) as any,
     execute: async (_execCtx, input) => {
-      const {datasetName, weightVariable, iterations = 100, outputDatasetName} = (input ?? {}) as {
-        datasetName: string;
-        weightVariable: string;
-        iterations?: number;
-        outputDatasetName: string;
+      const {datasetName, mapBounds, outputDatasetName} = (input ?? {}) as {
+        datasetName?: string;
+        mapBounds?: {
+          northwest: {longitude: number; latitude: number};
+          southeast: {longitude: number; latitude: number};
+        };
+        outputDatasetName?: string;
       };
       try {
-        const geometries = await getGeometries(datasetName);
-        if (!geometries || geometries.length === 0)
-          throw new Error(`Dataset ${datasetName} is empty or not found`);
+        let south = mapBounds?.southeast.latitude ?? 0;
+        let east = mapBounds?.southeast.longitude ?? 0;
+        let north = mapBounds?.northwest.latitude ?? 0;
+        let west = mapBounds?.northwest.longitude ?? 0;
 
-        const values = await getValues(datasetName, weightVariable);
-        const cartogramFeatures: Feature[] = await getCartogram(geometries, values, iterations);
+        if (datasetName) {
+          const geometries = await getGeometries(datasetName);
+          if (!geometries || geometries.length === 0)
+            throw new Error(`Dataset ${datasetName} is empty or not found`);
+          const fc: FeatureCollection = {
+            type: 'FeatureCollection',
+            features: (geometries as any[]).map((feat: any) => ({
+              type: 'Feature',
+              geometry: feat.geometry || feat,
+              properties: feat.properties || {}
+            }))
+          };
+          const [minX, minY, maxX, maxY] = bbox(fc);
+          south = minY;
+          west = minX;
+          north = maxY;
+          east = maxX;
+        } else if (!mapBounds) {
+          const boundary = ctx.getMapBoundary();
+          if (boundary) {
+            const {nw, se} = boundary;
+            west = nw[0];
+            north = nw[1];
+            east = se[0];
+            south = se[1];
+          }
+        }
 
-        const geojson: FeatureCollection = {
-          type: 'FeatureCollection',
-          features: cartogramFeatures.map((feature, index) => ({
-            ...feature,
-            properties: {
-              ...feature.properties,
-              [weightVariable]: values[index]
+        const query = `[out:json][timeout:25];(way[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|service|living_street|path|track|road)$"](${south},${west},${north},${east}););out body;>;out skel qt;`;
+
+        await overpassRateLimiter.waitForNextCall();
+        const {signal, cleanup} = combineSignals(FETCH_TIMEOUT_MS, undefined);
+        try {
+          const response = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            body: query,
+            signal
+          });
+          if (!response.ok) throw new Error(`Overpass API request failed: ${response.statusText}`);
+          const data = await response.json();
+
+          const nodeMap = new Map<number, {lon: number; lat: number}>();
+          const ways: {id: number; nodes: number[]; tags: {highway?: string; name?: string}}[] = [];
+          data.elements.forEach((element: any) => {
+            if (element.type === 'node') nodeMap.set(element.id, element);
+            else if (element.type === 'way') ways.push(element);
+          });
+
+          const features: Feature[] = [];
+          for (const way of ways) {
+            const coordinates = way.nodes.map(nodeId => {
+              const node = nodeMap.get(nodeId);
+              if (!node) throw new Error(`Node ${nodeId} not found`);
+              return [node.lon, node.lat];
+            });
+            features.push({
+              type: 'Feature',
+              geometry: {type: 'LineString', coordinates},
+              properties: {
+                id: way.id,
+                highway: way.tags.highway,
+                name: way.tags.name || 'Unnamed Road'
+              }
+            });
+          }
+
+          const geojson: FeatureCollection = {type: 'FeatureCollection', features};
+          const outName = outputDatasetName || `roads_${Date.now()}`;
+          await onToolCompleted(outName, {type: 'geojson', content: geojson});
+          return {
+            success: true,
+            commandId: 'geo.roads',
+            data: {
+              details: `Fetched ${features.length} roads -> ${outName}.`,
+              outputDatasetName: outName
             }
-          }))
-        };
-        await onToolCompleted(outputDatasetName, {type: 'geojson', content: geojson});
-        return {
-          success: true,
-          commandId: 'geoda.cartogram',
-          data: {
-            details: `Cartogram from ${cartogramFeatures.length} features (${weightVariable}) -> ${outputDatasetName}.`,
-            outputDatasetName
-          }
-        };
+          };
+        } finally {
+          cleanup();
+        }
       } catch (error) {
         return {
           success: false,
-          commandId: 'geoda.cartogram',
+          commandId: 'geo.roads',
           error: error instanceof Error ? error.message : 'Unknown error'
         };
       }
     }
   };
 
-  const standardizeVariable: RoomCommand = {
-    id: 'geoda.standardize',
-    name: 'Standardize variable',
-    group: 'GeoDa',
+  const usBoundary: RoomCommand = {
+    id: 'geo.us-boundary',
+    name: 'US boundaries',
+    group: 'Geo',
     description:
-      'Standardize a variable using statistical methods: deviationFromMean, standardizeMAD, rangeAdjust, rangeStandardize, or standardize (Z-score).',
+      'Fetch US state, county, or zipcode boundary GeoJSON from public GitHub datasets.',
     inputSchema: z.object({
-      datasetName: z.string(),
-      variableName: z.string(),
-      method: z.enum([
-        'deviationFromMean',
-        'standardizeMAD',
-        'rangeAdjust',
-        'rangeStandardize',
-        'standardize'
-      ]),
-      outputDatasetName: z.string()
-    }) as any,
-    execute: async (_execCtx, input) => {
-      const {datasetName, variableName, method, outputDatasetName} = (input ?? {}) as {
-        datasetName: string;
-        variableName: string;
-        method:
-          | 'deviationFromMean'
-          | 'standardizeMAD'
-          | 'rangeAdjust'
-          | 'rangeStandardize'
-          | 'standardize';
-        outputDatasetName: string;
-      };
-      try {
-        const values = await getValues(datasetName, variableName);
-
-        let standardizedValues: number[] | undefined;
-        switch (method) {
-          case 'deviationFromMean':
-            standardizedValues = await deviationFromMean(values);
-            break;
-          case 'standardizeMAD':
-            standardizedValues = await standardizeMAD(values);
-            break;
-          case 'rangeAdjust':
-            standardizedValues = await rangeAdjust(values);
-            break;
-          case 'rangeStandardize':
-            standardizedValues = await rangeStandardize(values);
-            break;
-          case 'standardize':
-            standardizedValues = await standardize(values);
-            break;
-          default:
-            throw new Error(`Invalid standardization method: ${method}`);
-        }
-
-        if (!standardizedValues) {
-          throw new Error(`Failed to standardize ${variableName} using ${method}`);
-        }
-
-        const outputVariableName = `${variableName}_${method}`;
-        await onToolCompleted(outputDatasetName, {
-          type: 'columnData',
-          content: {[outputVariableName]: standardizedValues}
-        });
-
-        return {
-          success: true,
-          commandId: 'geoda.standardize',
-          data: {
-            details: `Standardized ${variableName} using ${method} -> ${outputDatasetName} (column: ${outputVariableName}).`,
-            outputDatasetName,
-            outputVariableName,
-            count: standardizedValues.length
-          }
-        };
-      } catch (error) {
-        return {
-          success: false,
-          commandId: 'geoda.standardize',
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
-      }
-    }
-  };
-
-  const rate: RoomCommand = {
-    id: 'geoda.rate',
-    name: 'Rate calculation',
-    group: 'GeoDa',
-    description:
-      'Calculate rate from an event variable and a base variable using excess risk or empirical Bayes smoothing.',
-    inputSchema: z.object({
-      datasetName: z.string(),
-      eventVariable: z.string(),
-      baseVariable: z.string(),
-      method: z
-        .enum(['excessRisk', 'empiricalBayes'])
+      type: z.enum(['state', 'county', 'zipcode']).describe('Boundary type to fetch'),
+      ids: z
+        .array(z.string())
+        .describe(
+          'State names (lowercase, e.g. "california"), 5-digit county FIPS codes, or 5-digit zipcodes'
+        ),
+      outputDatasetName: z
+        .string()
         .optional()
-        .describe('Rate method (default: excessRisk)'),
-      outputDatasetName: z.string()
+        .describe('Name for the output dataset (default: states_/counties_/zipcodes_<timestamp>)')
     }) as any,
     execute: async (_execCtx, input) => {
-      const {
-        datasetName,
-        eventVariable,
-        baseVariable,
-        method = 'excessRisk',
-        outputDatasetName
-      } = (input ?? {}) as {
-        datasetName: string;
-        eventVariable: string;
-        baseVariable: string;
-        method?: 'excessRisk' | 'empiricalBayes';
-        outputDatasetName: string;
+      const {type, ids, outputDatasetName} = (input ?? {}) as {
+        type: 'state' | 'county' | 'zipcode';
+        ids: string[];
+        outputDatasetName?: string;
       };
       try {
-        const eventValues = await getValues(datasetName, eventVariable);
-        const baseValues = await getValues(datasetName, baseVariable);
+        const features: Feature[] = [];
 
-        let rateValues: number[];
-        if (method === 'empiricalBayes') {
-          rateValues = empiricalBayes(baseValues, eventValues);
-        } else {
-          rateValues = excessRisk(baseValues, eventValues);
+        for (const id of ids) {
+          await githubRateLimiter.waitForNextCall();
+          let url: string;
+          if (type === 'state') {
+            url = `https://raw.githubusercontent.com/glynnbird/usstatesgeojson/master/${id}.geojson`;
+          } else if (type === 'county') {
+            const stateCode = id.slice(0, 2);
+            url = `https://raw.githubusercontent.com/hyperknot/country-levels-export/master/geojson/medium/fips/${stateCode}/${id}.geojson`;
+          } else {
+            const stateCode = zips[id.slice(0, 3)]?.state;
+            if (!stateCode) throw new Error(`Unknown zipcode prefix for ${id}`);
+            url = `https://raw.githubusercontent.com/greencoder/us-zipcode-to-geojson/refs/heads/master/data/${stateCode}/${id}.geojson`;
+          }
+
+          const {signal, cleanup} = combineSignals(FETCH_TIMEOUT_MS, undefined);
+          let geojson: any;
+          try {
+            const response = await fetch(url, {signal});
+            if (!response.ok) throw new Error(`HTTP ${response.status} for ${id}`);
+            geojson = await response.json();
+          } finally {
+            cleanup();
+          }
+
+          if (type === 'zipcode' && geojson && 'features' in geojson) {
+            // drop the first centroid feature
+            geojson.features.shift();
+            features.push(...geojson.features);
+          } else if (geojson && 'features' in geojson) {
+            features.push(...geojson.features);
+          } else if (geojson) {
+            features.push(geojson);
+          }
         }
 
-        const outputVariableName = `${eventVariable}_${method}_rate`;
-        await onToolCompleted(outputDatasetName, {
-          type: 'columnData',
-          content: {[outputVariableName]: rateValues}
-        });
-
+        const geojson: FeatureCollection = {type: 'FeatureCollection', features};
+        const prefix = type === 'state' ? 'states' : type === 'county' ? 'counties' : 'zipcodes';
+        const outName = outputDatasetName || `${prefix}_${Date.now()}`;
+        await onToolCompleted(outName, {type: 'geojson', content: geojson});
         return {
           success: true,
-          commandId: 'geoda.rate',
+          commandId: 'geo.us-boundary',
           data: {
-            details: `Rate (${method}) for ${eventVariable}/${baseVariable} on ${datasetName} -> ${outputDatasetName} (column: ${outputVariableName}).`,
-            outputDatasetName,
-            outputVariableName,
-            count: rateValues.length
+            details: `Fetched ${features.length} ${type} boundaries -> ${outName}.`,
+            outputDatasetName: outName
           }
         };
       } catch (error) {
         return {
           success: false,
-          commandId: 'geoda.rate',
+          commandId: 'geo.us-boundary',
           error: error instanceof Error ? error.message : 'Unknown error'
         };
       }
@@ -655,10 +553,7 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
     'geo.geocode': geocoding,
     'geo.spatial-query': spatialQuery,
     'geo.grid': gridCommand,
-    'geoda.thiessen-polygons': thiessenPolygons,
-    'geoda.mst': minimumSpanningTree,
-    'geoda.cartogram': cartogram,
-    'geoda.standardize': standardizeVariable,
-    'geoda.rate': rate
+    'geo.roads': roads,
+    'geo.us-boundary': usBoundary
   };
 }

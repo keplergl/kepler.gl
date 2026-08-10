@@ -13,7 +13,7 @@ Use this skill when the user wants to keep only the points that lie inside a set
    - The geometry column stores GeoJSON strings — wrap with `ST_GeomFromGeoJSON(geometry)` for spatial ops.
    - Save the result (the matching points).
 2. Filter the result to keep only rows where the intersection count is greater than zero, using `executeApi` with `commandId: "data.filter"` and `input: { datasetName, variableNames, sql, resultDatasetName }` (or an equivalent SQL transform via `data.create-table`).
-3. Save the filtered result as the final answer and visualize it on the map.
+3. Save the filtered result as the final answer and visualize it on the map using `executeApi` with `commandId: "map.add-layer"` — `data.filter` does NOT auto-create a layer.
 
 ## Rules
 

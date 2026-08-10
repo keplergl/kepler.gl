@@ -6,7 +6,7 @@
  *   3. Spin up a fresh `ToolLoopAgent` seeded with the skill's `SKILL.md` as
  *      instructions and a tool set built from the shared `KeplerContext`:
  *      `executeApi` (the unified command dispatcher — `executeCommand` routes
- *      a `commandId` such as "map.get-boundary", "data.query", "geoda.lisa",
+ *      a `commandId` such as "map.get-boundary", "data.query", "geoda.analysis",
  *      "chart.histogram" to the underlying kepler / DuckDB / GeoDa / geo /
  *      chart commands, and `listCommands` enumerates the available command ids).
  *      Charts are now routed through `executeApi` like every other command —

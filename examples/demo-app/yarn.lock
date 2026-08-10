@@ -13615,6 +13615,7 @@ __metadata:
     styled-components: "npm:6.4.3"
     tailwindcss: "npm:^4.3.3"
     usehooks-ts: "npm:^3.1.0"
+    zip3: "npm:^1.0.4"
     zod: "npm:^3.22.0"
     zustand: "npm:^5.0.14"
   languageName: unknown
@@ -15151,6 +15152,13 @@ __metadata:
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
   checksum: 10c0/dceb44c28578b31641e13695d200d34ec4ab3966a5729814d5445b194933c096b7ced71494ce53a0e8820685d1d010df8b2422e5bf2cdea7e469d97ffbea306f
+  languageName: node
+  linkType: hard
+
+"zip3@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "zip3@npm:1.0.4"
+  checksum: 10c0/28d9cb2efac02d93483ee037dad7f6b1afdc66bc3b5ebae3467f68bf4364f76d8339b1e314b21063bd89f0a5c0bba357faf43ff5bec8ea2683bc27c95c4be2b7
   languageName: node
   linkType: hard
 

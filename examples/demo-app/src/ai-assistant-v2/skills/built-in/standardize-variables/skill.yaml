@@ -1,4 +1,0 @@
-id: standardize-variables
-version: 0.1.0
-name: Standardize multiple variables
-description: Standardize (or apply a similar transformation to) multiple variables in a dataset, chaining the results so the final dataset contains all standardized variables together.

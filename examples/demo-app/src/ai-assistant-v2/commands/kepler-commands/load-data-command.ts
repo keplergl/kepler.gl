@@ -57,7 +57,10 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         ctx.dispatch(
           addDataToMap({
             datasets: parsedData,
-            options: {autoCreateLayers: true, centerMap: true}
+            // Do NOT auto-create a layer — the assistant creates the layer
+            // explicitly via `map.add-layer` (with full styling control), so
+            // loading data never produces a duplicate default layer.
+            options: {autoCreateLayers: false, centerMap: true}
           })
         );
 

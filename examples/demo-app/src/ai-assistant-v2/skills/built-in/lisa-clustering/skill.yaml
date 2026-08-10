@@ -1,4 +1,0 @@
-id: lisa-clustering
-version: 0.1.0
-name: LISA clustering analysis
-description: Perform LISA (Local Indicators of Spatial Association) cluster analysis on a variable, including spatial weights creation, and explain the results in context.

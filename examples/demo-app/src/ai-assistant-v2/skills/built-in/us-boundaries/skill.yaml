@@ -1,0 +1,4 @@
+id: us-boundaries
+version: 0.1.0
+name: US boundaries
+description: Fetch US state, county, or zipcode boundary polygons via geo.us-boundary and visualize them on the map.

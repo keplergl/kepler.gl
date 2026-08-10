@@ -20,11 +20,10 @@ compare layers side by side. Examples:
 - "What's the current map boundary/extent?"
 
 Do NOT use this skill for:
-- Classifying data into bins → use the `data-classify` skill.
-- LISA clustering → use the `lisa-clustering` skill.
+- GeoDa spatial analysis (LISA, spatial weights, regression, classification, rate, standardization, geometry ops) → use the `geoda-analysis` skill.
 - Spatial filtering → use the `spatial-filter` skill.
 - Colocation analysis → use the `colocation` skill.
-- Standardizing variables → use the `standardize-variables` skill.
+- US boundaries → use the `us-boundaries` skill.
 
 ## Commands at a glance
 
@@ -36,9 +35,9 @@ Do NOT use this skill for:
 | `map.split-view`         | Enable/disable dual-map comparison.                            |
 | `map.update-layer-color` | Update an existing layer's color palette.                      |
 | `map.set-basemap`        | Change the basemap style.                                      |
-| `map.load-data`          | Load data from a URL (auto-creates a layer).                  |
-| `map.save-data`          | Save a DuckDB table as a map dataset (auto-creates a layer).   |
-| `map.create-table`       | Create a dataset via SQL (auto-creates a layer).               |
+| `map.load-data`          | Load data from a URL (no layer — call `map.add-layer`).        |
+| `map.save-data`          | Save a DuckDB table as a map dataset (no layer — call `map.add-layer`). |
+| `map.create-table`       | Create a dataset via SQL (no layer — call `map.add-layer`).    |
 | `map.get-boundary`       | Read the current map view's bounding box.                      |
 
 All operations go through `executeApi` with `apiName: "executeCommand"`. See the executeApi tool description for the envelope shape.
@@ -68,8 +67,9 @@ All operations go through `executeApi` with `apiName: "executeCommand"`. See the
 - For categorical data use `colorType: "unique"`:
   `[{value: "retail", color: "#1f77b4"}, {value: "restaurant", color: "#ff7f0e"}]`
 - For `heatmap`, only `colorRange` (from `colorMap`) takes effect.
-- To compute the break values, call `data.classify` (in the `data-classify`
-  skill) first and pass the returned `breaks` as the `colorMap` values.
+- To compute the break values, call `geoda.analysis` with `analysis: "classify"`
+  (in the `geoda-analysis` skill) first and pass the returned `breaks` as the
+  `colorMap` values.
 - Generate ColorBrewer-style palettes automatically when the user does not
   specify colors.
 
@@ -277,9 +277,9 @@ matching `layerId` from the dataset context.
 }
 ```
 
-This fetches the data, parses it, adds it to the map, and auto-creates a
-layer. Do NOT call `map.add-layer` afterward — the layer is created
-automatically.
+This fetches the data, parses it, and adds it to the map as a dataset. It
+does NOT create a layer — call `map.add-layer` afterward to visualize the
+data (with the layer type, color, and styling you want).
 
 ### 8. Map boundary
 
@@ -302,8 +302,9 @@ Returns the northwest and southeast coordinates of the current map view:
 - Use the `executeApi` tool for all operations in this skill — do not call
   `queryDuckDB` or `geoda` directly (they are not available; everything goes
   through `executeApi`).
-- Do not call `map.add-layer` after `map.load-data` / `map.save-data` /
-  `map.create-table` — those auto-create a layer.
+- After `map.load-data` / `map.save-data` / `map.create-table` /
+  `data.filter` / `data.load-to-map`, call `map.add-layer` to create a layer
+  — those commands do NOT auto-create layers.
 - For change-over-time requests, create exactly ONE animated layer — never
   a separate static layer per time step.
 - Do not add a `map.add-time-filter` to a trip layer — trips animate

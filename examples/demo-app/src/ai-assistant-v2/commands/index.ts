@@ -2,7 +2,7 @@ import type {RoomCommand} from '@sqlrooms/room-store';
 import {KeplerContext} from '../types';
 import {getGeoCommands} from './geo-commands';
 import {getKeplerCommands} from './kepler-commands';
-import {getSpatialAnalysisCommands} from './spatial-analysis-commands';
+import {getGeodaAnalysisCommand} from './geoda-analysis-command';
 import {getQueryCommands} from './query-commands';
 import {getChartCommands} from './chart-commands';
 
@@ -23,13 +23,13 @@ export function getAllCommands(ctx: KeplerContext): Record<string, RoomCommand> 
     ...getKeplerCommands(ctx),
     ...getQueryCommands(ctx),
     ...getGeoCommands(ctx),
-    ...getSpatialAnalysisCommands(ctx),
+    'geoda.analysis': getGeodaAnalysisCommand(ctx),
     ...getChartCommands(ctx)
   };
 }
 
 export {getKeplerCommands, KEPLER_COMMAND_OWNER} from './kepler-commands';
 export {getGeoCommands} from './geo-commands';
-export {getSpatialAnalysisCommands} from './spatial-analysis-commands';
+export {getGeodaAnalysisCommand} from './geoda-analysis-command';
 export {getQueryCommands} from './query-commands';
 export {getChartCommands} from './chart-commands';

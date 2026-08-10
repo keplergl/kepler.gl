@@ -6,7 +6,7 @@ import {ALL_FIELD_TYPES, LAYER_TYPES} from '@kepler.gl/constants';
 import {Field, ProtoDataset, ProtoDatasetField} from '@kepler.gl/types';
 import {processFileData} from '@kepler.gl/processors';
 import {createWasmDuckDbConnector, type DuckDbConnector} from '@sqlrooms/duckdb';
-import {tableFromArrays} from 'apache-arrow';
+import {tableFromArrays, Type} from 'apache-arrow';
 
 // The kepler tools DuckDB connector. Prefer the store's DuckDB slice connector
 // when wired via `setStoreConnectorProvider`, so skills (which materialize kepler
@@ -435,12 +435,71 @@ export function convertArrowRowToObject(row: any): Record<string, unknown> {
 }
 
 /**
+ * Convert an Arrow DecimalBigNum (128-bit signed, stored as a Uint32Array of
+ * words) to a JS number, applying the column's declared scale.
+ *
+ * Arrow's own `valueOf(scale)` divides the raw bigint by 10^scale and converts
+ * the intermediate denominator with bigIntToNumber, which throws for scale >= 16
+ * (10^16 > Number.MAX_SAFE_INTEGER). We instead reconstruct the bigint and
+ * insert the decimal point via string manipulation, which is exact for any scale.
+ */
+function decimalBigNumToNumber(v: any, scale: number): number {
+  let big = 0n;
+  for (let i = v.length - 1; i >= 0; i--) {
+    big = (big << 32n) | BigInt(v[i] >>> 0);
+  }
+  // Two's complement sign (128-bit).
+  if (v[v.length - 1] & 0x80000000) {
+    big -= 1n << BigInt(32 * v.length);
+  }
+  const negative = big < 0n;
+  if (negative) big = -big;
+  let s = big.toString();
+  if (scale > 0) {
+    if (s.length <= scale) s = s.padStart(scale + 1, '0');
+    s = `${s.slice(0, s.length - scale)}.${s.slice(s.length - scale)}`;
+  }
+  return Number(`${negative ? '-' : ''}${s}`);
+}
+
+/**
  * Convert an Arrow Table to an array of plain JS objects.
+ *
+ * Decimal columns are resolved to numbers using each column's declared scale.
+ * `row.toJSON()` passes Decimal values through as opaque BigNum objects
+ * ({0: low, 1: high, ...}), which kepler.gl then stores as `object`-typed
+ * fields and downstream commands (e.g. `data.merge-tables`) choke on when they
+ * try to re-materialize the dataset into DuckDB. The schema carries the scale,
+ * so we resolve the value here.
  */
 export function arrowTableToObjects(table: {
   toArray: () => any[];
+  schema?: {fields: {name: string; type?: {typeId?: number; scale?: number}}[]};
 }): Record<string, unknown>[] {
-  return table.toArray().map((row: any) => convertArrowRowToObject(row));
+  const scaleByColumn = new Map<string, number>();
+  for (const field of table.schema?.fields ?? []) {
+    if (field.type?.typeId === Type.Decimal && typeof field.type.scale === 'number') {
+      scaleByColumn.set(field.name, field.type.scale);
+    }
+  }
+  return table.toArray().map((row: any) => {
+    const json = row.toJSON();
+    for (const [name, scale] of scaleByColumn) {
+      const v = json[name];
+      if (v && typeof v === 'object' && typeof v.valueOf === 'function') {
+        json[name] = decimalBigNumToNumber(v, scale);
+      }
+    }
+    for (const key in json) {
+      const val = json[key];
+      if (val && typeof val === 'object' && typeof val.toJSON === 'function') {
+        json[key] = convertArrowRowToObject(val);
+      } else if (typeof val === 'bigint') {
+        json[key] = val.toString();
+      }
+    }
+    return json;
+  });
 }
 
 /**

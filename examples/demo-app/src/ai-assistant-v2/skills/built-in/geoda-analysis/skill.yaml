@@ -1,0 +1,4 @@
+id: geoda-analysis
+version: 0.1.0
+name: GeoDa spatial analysis
+description: Run statistical spatial analysis (spatial weights, LISA, global Moran, spatial regression, classification, rate, standardization, thiessen polygons, MST, cartogram) via geoda.analysis, and geometry operations (area, length, perimeter, buffer, centroid, dissolve, spatial join) via geo.spatial-query.

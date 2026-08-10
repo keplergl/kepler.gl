@@ -164,7 +164,7 @@ BASIC MAP:
 
 COLOR MAPPING:
 - If user requests color visualization, use available columns in the dataset
-- Use data.classify command to classify data into bins or unique values when needed
+- Use geoda.analysis (analysis: 'classify') to classify data into bins or unique values when needed
 - For continuous data (colorType 'breaks'):
   [{value: 0, color: '#fee5d9'}, {value: 50, color: '#fcae91'}, {value: 100, color: '#fb6a4a'}, {value: null, color: '#de2d26'}]
   The last entry with value: null represents the color for the highest values

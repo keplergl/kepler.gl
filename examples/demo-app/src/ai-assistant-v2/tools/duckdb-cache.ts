@@ -1,7 +1,7 @@
 import {FeatureCollection} from 'geojson';
 import {addDataToMap} from '@kepler.gl/actions';
 import {processFileData} from '@kepler.gl/processors';
-import {getConnector} from './utils';
+import {getConnector, arrowTableToObjects} from './utils';
 import type {KeplerContext} from '../types';
 
 let _cachedTableContext = '';
@@ -211,6 +211,8 @@ export async function getDuckdbTableContext(): Promise<string> {
 
 /**
  * Query a DuckDB table and return rows as plain objects.
+ * Uses the schema-aware converter so Decimal columns come back as numbers
+ * (not opaque Arrow BigNum objects) — see arrowTableToObjects.
  */
 export async function queryTable(
   tableName: string,
@@ -219,9 +221,7 @@ export async function queryTable(
   const db = await getConnector();
   const query = sql ?? `SELECT * FROM "${tableName}"`;
   const result = await db.query(query);
-  return result
-    .toArray()
-    .map((row: any) => (typeof row.toJSON === 'function' ? row.toJSON() : row));
+  return arrowTableToObjects(result);
 }
 
 /**
@@ -307,7 +307,9 @@ export async function loadTableToKepler(
       addDataToMap({
         datasets: parsedData,
         options: {
-          autoCreateLayers: options?.autoCreateLayers ?? true,
+          // No auto-create by default — the assistant creates the layer
+          // explicitly via `map.add-layer` to avoid duplicate default layers.
+          autoCreateLayers: options?.autoCreateLayers ?? false,
           centerMap: options?.centerMap ?? true
         }
       })

@@ -57,12 +57,12 @@ export const EXECUTE_API_GUIDANCE = `Always call as: { call: { apiName: "<name>"
 
   MAP commands (mutate the kepler.gl map):
   - "map.set-basemap": Change the basemap style. input: { styleType }. Valid styleType: "no_map", "dark-matter", "positron", "voyager", "satellite", "dark", "light", "muted", "muted_night".
-  - "map.add-layer": Add a new map layer from a dataset. input: { datasetName, layerType, latitudeColumn?, longitudeColumn?, layerName?, simpleColor?, colorBy?, colorType?, colorMap? }. layerType: point|arc|line|grid|hexagon|geojson|cluster|heatmap|h3|trip|s2. For geojson datasets use geometryColumn "_geojson". Do NOT call this after map.load-data / map.save-data / map.create-table — those auto-create a layer.
+  - "map.add-layer": Add a new map layer from a dataset. input: { datasetName, layerType, latitudeColumn?, longitudeColumn?, layerName?, simpleColor?, colorBy?, colorType?, colorMap? }. layerType: point|arc|line|grid|hexagon|geojson|cluster|heatmap|h3|trip|s2. For geojson datasets use geometryColumn "_geojson". Call this after map.load-data / map.save-data / map.create-table / data.filter / data.load-to-map to create a layer — those commands do NOT auto-create layers.
   - "map.update-layer-color": Update an existing layer's color palette. input: { layerId, numberOfColors, customColors }. customColors is an array of hex color strings; numberOfColors must equal its length.
-  - "map.load-data": Load a dataset from a URL into kepler.gl (auto-creates a layer). input: { url }.
+  - "map.load-data": Load a dataset from a URL into kepler.gl. Does NOT create a layer — call map.add-layer to visualize. input: { url }.
   - "map.get-boundary": Get the current map viewport bounding box. input: {} (empty). Returns { boundary: { nw: [lon, lat], se: [lon, lat] } }.
-  - "map.save-data": Save a DuckDB table as a kepler.gl map dataset (auto-creates a layer). input: { datasetNames: string[] }.
-  - "map.create-table": Create a new kepler.gl dataset via SQL (auto-creates a layer). input: { datasetName, variableNames, sql, resultDatasetName }. Use __TABLE__ as the table-name placeholder in sql.
+  - "map.save-data": Save a DuckDB table as a kepler.gl map dataset. Does NOT create a layer — call map.add-layer to visualize. input: { datasetNames: string[] }.
+  - "map.create-table": Create a new kepler.gl dataset via SQL. Does NOT create a layer — call map.add-layer to visualize. input: { datasetName, variableNames, sql, resultDatasetName }. Use __TABLE__ as the table-name placeholder in sql.
   - "map.add-time-filter": Animate a NON-trip layer over a TIMESTAMP/DATE column. input: { datasetName, dateTimeColumn, interval? }. interval: 1-second|1-minute|1-hour|1-day|1-week|1-month|3-month|1-year (auto-detected when omitted). DO NOT use for trip layers (they have built-in animation). Returns { filterIndex, interval }.
   - "map.toggle-time-filter": Show/hide the enlarged time controller at the bottom of the map. input: { action: "show"|"hide", filterIndex? }. A time filter must already exist (create via map.add-time-filter).
   - "map.split-view": Enable/disable dual-map comparison. input: { action: "enable"|"disable", layerIdsForMap0?, layerIdsForMap1? }. Provide layer-id arrays to assign layers per panel; without them all layers show on both panels.
@@ -70,29 +70,30 @@ export const EXECUTE_API_GUIDANCE = `Always call as: { call: { apiName: "<name>"
 
   DATA commands (DuckDB SQL):
   - "data.query": Execute a generic SELECT SQL query and save the result. input: { datasetName, variableNames, sql, resultDatasetName }. Use __TABLE__ as the table-name placeholder. Returns a truncated preview + totalRows.
-  - "data.filter": Filter a dataset via SQL and add the result to kepler.gl (auto-creates a layer). input: { datasetName, variableNames, sql, resultDatasetName }. Use __TABLE__ as the placeholder.
+  - "data.filter": Filter a dataset via SQL and add the result to kepler.gl. Does NOT create a layer — call map.add-layer to visualize. input: { datasetName, variableNames, sql, resultDatasetName }. Use __TABLE__ as the placeholder.
   - "data.create-table": Create a new table via SQL (add/rename/change columns). input: { datasetName, variableNames, sql, resultDatasetName }. Use __TABLE__ as the placeholder.
   - "data.merge-tables": Merge two tables via SQL (JOIN or UNION). input: { datasetNameA, datasetNameB, sql }. Use __TABLE_A__ and __TABLE_B__ as placeholders.
-  - "data.load-to-map": Load a saved DuckDB table onto the kepler.gl map. input: { datasetName }.
-  - "data.classify": Classify a numeric variable into bins. input: { datasetName, variableName, method, k?, hinge? }. method: quantile|natural breaks|equal interval|percentile|box|standard deviation|unique values. Returns { breaks? } or { uniqueValues? }.
-
-  GEODA commands (spatial analysis):
-  - "geoda.lisa": LISA (Local Moran/Geary/G/GStar/quantileLisa) cluster analysis. input: { datasetName, variableName, method, weightsId?, permutation?, significanceThreshold?, k?, quantile? }. Create weights first via geoda.spatial-weights.
-  - "geoda.global-moran": Global Moran's I for spatial autocorrelation. input: { datasetName, variableName, weightsId? }.
-  - "geoda.spatial-weights": Create a spatial weights matrix. input: { datasetName, type, k?, orderOfContiguity?, includeLowerOrder?, precisionThreshold?, distanceThreshold?, isMile?, useCentroids? }. type: queen|rook|knn|threshold. Returns { weightsId }.
-  - "geoda.regression": Spatial regression (classic / spatial-lag / spatial-error). input: { datasetName, dependentVariable, independentVariables, modelType, weightsId? }. modelType: classic|spatial-lag|spatial-error.
-  - "geoda.standardize": Standardize a variable. input: { datasetName, variableName, method, outputDatasetName }. method: deviationFromMean|standardizeMAD|rangeAdjust|rangeStandardize|standardize.
-  - "geoda.rate": Rate calculation (excess risk / empirical Bayes). input: { datasetName, eventVariable, baseVariable, method?, outputDatasetName }.
-  - "geoda.thiessen-polygons": Voronoi polygons from geometries (GeoDa). input: { datasetName, outputDatasetName }.
-  - "geoda.mst": Minimum spanning tree from geometries (GeoDa). input: { datasetName, outputDatasetName }.
-  - "geoda.cartogram": Dorling cartogram from polygons + weight variable (GeoDa). input: { datasetName, weightVariable, iterations?, outputDatasetName }.
+  - "data.load-to-map": Load a saved DuckDB table onto the kepler.gl map. Does NOT create a layer — call map.add-layer to visualize. input: { datasetName }.
+  GEODA commands (spatial analysis) — all via the single "geoda.analysis" command; pick the operation with the "analysis" field:
+  - "geoda.analysis" (analysis: "spatial-weights"): Create a spatial weights matrix. input: { datasetName, type, k?, orderOfContiguity?, includeLowerOrder?, precisionThreshold?, distanceThreshold?, isMile?, useCentroids? }. type: queen|rook|knn|threshold. Returns { weightsId }.
+  - "geoda.analysis" (analysis: "lisa"): LISA (Local Moran/Geary/G/GStar/quantileLisa) cluster analysis. input: { datasetName, variableName, method, weightsId?, permutation?, significanceThreshold?, k?, quantile? }. Create weights first via the spatial-weights operation.
+  - "geoda.analysis" (analysis: "global-moran"): Global Moran's I for spatial autocorrelation. input: { datasetName, variableName, weightsId? }.
+  - "geoda.analysis" (analysis: "regression"): Spatial regression (classic / spatial-lag / spatial-error). input: { datasetName, dependentVariable, independentVariables, modelType, weightsId? }. modelType: classic|spatial-lag|spatial-error.
+  - "geoda.analysis" (analysis: "classify"): Classify a numeric variable into bins. input: { datasetName, variableName, method, k?, hinge? }. method: quantile|natural breaks|equal interval|percentile|box|standard deviation|unique values. Returns { breaks? } or { uniqueValues? }.
+  - "geoda.analysis" (analysis: "rate"): Rate calculation (excess risk / empirical Bayes). input: { datasetName, eventVariable, baseVariable, method?, outputDatasetName }.
+  - "geoda.analysis" (analysis: "standardize"): Standardize a variable. input: { datasetName, variableName, method, outputDatasetName }. method: deviationFromMean|standardizeMAD|rangeAdjust|rangeStandardize|standardize.
+  - "geoda.analysis" (analysis: "thiessen-polygons"): Voronoi polygons from geometries (GeoDa). input: { datasetName, outputDatasetName }.
+  - "geoda.analysis" (analysis: "mst"): Minimum spanning tree from geometries (GeoDa). input: { datasetName, outputDatasetName }.
+  - "geoda.analysis" (analysis: "cartogram"): Dorling cartogram from polygons + weight variable (GeoDa). input: { datasetName, weightVariable, iterations?, outputDatasetName }.
 
   GEO commands (geo tools):
   - "geo.routing": Mapbox routing directions between two points. input: { origin: {longitude, latitude}, destination: {longitude, latitude}, mode?, datasetName }.
   - "geo.isochrone": Mapbox isochrone polygons from a point. input: { origin: {longitude, latitude}, timeLimit?, distanceLimit?, profile?, datasetName }.
   - "geo.geocode": Geocode an address to lat/lng. input: { address, datasetName }.
-  - "geo.spatial-query": DuckDB spatial SQL (ST_* functions). input: { datasetNames: string[], outputDatasetName, sqlQuery, reasoning }. Use __tbl0__, __tbl1__, ... as table placeholders. The geometry column stores GeoJSON strings — wrap with ST_GeomFromGeoJSON(geometry).
+  - "geo.spatial-query": DuckDB spatial SQL (ST_* functions). input: { datasetNames: string[], outputDatasetName, sqlQuery, reasoning }. Use __tbl0__, __tbl1__, ... as table placeholders. The geometry column stores GeoJSON strings — wrap with ST_GeomFromGeoJSON(geometry). ALSO covers geometry operations (area/length/perimeter/buffer/centroid/dissolve/spatial-join) — write the SQL yourself (e.g. ST_Area_Spheroid, ST_Length_Spheroid, ST_Perimeter_Spheroid, ST_Centroid, ST_Union_Agg, ST_Intersects; buffer via ST_Transform to EPSG:3857, ST_Buffer, transform back). Returns a firstFiveRows preview of the result properties so you can read scalar values. After saving, call data.load-to-map to visualize the result.
   - "geo.grid": Rectangular grid of polygons over a dataset's bbox (Turf). input: { datasetName, rows, columns, outputDatasetName }.
+  - "geo.roads": Fetch road networks from OpenStreetMap (Overpass API). input: { datasetName?, mapBounds?, outputDatasetName? }. Bounds resolve from datasetName (its bbox), else mapBounds, else the current map viewport.
+  - "geo.us-boundary": Fetch US state/county/zipcode boundaries. input: { type: state|county|zipcode, ids: string[], outputDatasetName? }. ids: lowercase state names, 5-digit county FIPS codes, or 5-digit zipcodes (enumerate zipcodes from your own knowledge).
 
   CHART commands (analytical charts & summary statistics):
   - "chart.histogram": Frequency distribution of one numeric variable. DRAWS a chart inline. input: { datasetName, variableName, numberOfBins? }. Default bins: 7. Returns bin counts + details string.
@@ -102,14 +103,7 @@ export const EXECUTE_API_GUIDANCE = `Always call as: { call: { apiName: "<name>"
   - "chart.pcp": min/max/mean/std per variable, many at once. Numbers only, NO chart. input: { datasetName, variableNames: string[] }.
   Only "chart.histogram" draws a chart; the other four return numbers only — restate the statistics in your reply and do NOT claim a chart was drawn.
 
-  Reference geography (US state/county/zipcode boundaries, road networks, building footprints, POIs) is NOT fetched by a built-in command — the user loads such data into kepler.gl via map.load-data (a URL) or by importing files directly. If a task needs boundaries/roads the user has not provided, ask the user to load that data first.
-
-  CHART commands (analytical charts & summary statistics):
-  - "chart.histogram": Draw a histogram (frequency distribution) of one numeric variable. input: { datasetName, variableName, numberOfBins? }. numberOfBins default 7. Renders an interactive ECharts chart inline in the chat (with brush-selection → map highlighting when the data source is kepler).
-  - "chart.boxplot": Compute boxplot statistics (quartiles, mean, std, IQR) for several numeric variables. input: { datasetName, variableNames }. Returns numbers only — no chart is rendered.
-  - "chart.scatterplot": Compute correlation and min/max/mean for two numeric variables. input: { datasetName, xVariableName, yVariableName }. Returns numbers only.
-  - "chart.bubble": Compute x/y/size statistics for three numeric variables. input: { datasetName, xVariableName, yVariableName, sizeVariableName }. Returns numbers only.
-  - "chart.pcp": Compute min/max/mean/std per variable for many variables at once (parallel coordinates). input: { datasetName, variableNames }. Returns numbers only.`;
+  Reference geography: US state/county/zipcode boundaries are fetched via geo.us-boundary (public GitHub datasets); road networks via geo.roads (OpenStreetMap Overpass). Building footprints and POIs are NOT fetched by a built-in command — the user loads such data into kepler.gl via map.load-data (a URL) or by importing files directly. If a task needs data the user has not provided, ask the user to load it first.`;
 
 /**
  * Build the `executeApi` tool parameterized by the room-store. The command
@@ -167,7 +161,7 @@ export function createExecuteApiTool(store: StoreApi<any>) {
       if (output.instruction != null) modelResult.instruction = output.instruction;
       if (output.error != null) modelResult.error = output.error;
       // Surface the data-bearing fields the model is documented to consume.
-      // Without these, multi-step flows break: e.g. data.classify's `breaks`
+      // Without these, multi-step flows break: e.g. geoda.analysis classify's `breaks`
       // can't be passed to map.add-layer's colorMap, and map.get-boundary's
       // `boundary` can't scope a subsequent spatial query.
       if (output.boundary != null) modelResult.boundary = output.boundary;

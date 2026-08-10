@@ -9,7 +9,7 @@
  *  - `executeCommand` → `store.commands.invokeCommand(commandId, input)`, then
  *    surfaces the rich fields from `result.data` into `ExecuteApiOutput` so the
  *    existing `toModelOutput` in `index.ts` (multi-step chaining — e.g.
- *    `data.classify` `breaks` → `map.add-layer` `colorMap`) keeps working.
+ *    `geoda.analysis` classify `breaks` → `map.add-layer` `colorMap`) keeps working.
  *  - `listCommands` → `store.commands.listCommands(...)`, mapped to the
  *    `uniqueValues` carrier field.
  *
@@ -90,7 +90,7 @@ export const ExecuteCommandArgs = z
   .object({
     commandId: z
       .string()
-      .describe('The exact command ID (e.g. "map.get-boundary", "data.query", "geoda.lisa").'),
+      .describe('The exact command ID (e.g. "map.get-boundary", "data.query", "geoda.analysis").'),
     input: z
       .unknown()
       .optional()

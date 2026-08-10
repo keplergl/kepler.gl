@@ -17,7 +17,7 @@ layer. Examples:
 
 Do NOT use this skill for:
 - Map layer creation / styling → use the `kepler` skill.
-- LISA clustering → use the `lisa-clustering` skill.
+- LISA clustering → use the `geoda-analysis` skill.
 - Spatial filtering → use the `spatial-filter` skill.
 
 ## Commands at a glance

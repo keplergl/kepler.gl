@@ -9,7 +9,7 @@ import {
   getValuesFromDataset,
   getConnector,
   datasetNameToTableName,
-  convertArrowRowToObject,
+  arrowTableToObjects,
   tableToLLMResult
 } from '../tools/utils';
 import {saveToDuckdb, loadTableToKepler} from '../tools/duckdb-cache';
@@ -122,9 +122,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         const db = await loadTableIntoDuckDB(getValues, datasetName, variableNames, dbTableName);
         const arrowResult = await db.query(resolvedSql);
 
-        const jsonResult: Record<string, unknown>[] = arrowResult
-          .toArray()
-          .map((row: any) => convertArrowRowToObject(row));
+        const jsonResult: Record<string, unknown>[] = arrowTableToObjects(arrowResult);
 
         const truncatedQueryResult = tableToLLMResult(jsonResult);
 
@@ -191,9 +189,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         const db = await loadTableIntoDuckDB(getValues, datasetName, variableNames, dbTableName);
         const arrowResult = await db.query(resolvedSql);
 
-        const jsonResult: Record<string, unknown>[] = arrowResult
-          .toArray()
-          .map((row: any) => convertArrowRowToObject(row));
+        const jsonResult: Record<string, unknown>[] = arrowTableToObjects(arrowResult);
 
         await saveToDuckdb(resultDatasetName, {
           type: 'rowObjects',
@@ -208,7 +204,9 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         ctx.dispatch(
           addDataToMap({
             datasets: parsedData,
-            options: {autoCreateLayers: true, centerMap: true}
+            // No auto-create — the assistant creates the layer explicitly via
+            // `map.add-layer` to avoid duplicate default layers.
+            options: {autoCreateLayers: false, centerMap: true}
           })
         );
 
@@ -270,9 +268,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         const db = await loadTableIntoDuckDB(getValues, datasetName, variableNames, dbTableName);
         const arrowResult = await db.query(resolvedSql);
 
-        const jsonResult: Record<string, unknown>[] = arrowResult
-          .toArray()
-          .map((row: any) => convertArrowRowToObject(row));
+        const jsonResult: Record<string, unknown>[] = arrowTableToObjects(arrowResult);
 
         await saveToDuckdb(resultDatasetName, {
           type: 'rowObjects',
@@ -352,9 +348,7 @@ IMPORTANT: Use __TABLE_A__ and __TABLE_B__ as table name placeholders in SQL. Th
           .replace(/__TABLE_B__/g, `"${dbTableNameB}"`);
         const arrowResult = await db.query(resolvedSql);
 
-        const jsonResult: Record<string, unknown>[] = arrowResult
-          .toArray()
-          .map((row: any) => convertArrowRowToObject(row));
+        const jsonResult: Record<string, unknown>[] = arrowTableToObjects(arrowResult);
 
         const resultDatasetName = `merge_${generateId()}`;
 

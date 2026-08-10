@@ -46,6 +46,11 @@ let reduxStore: any = null;
 
 export function setReduxStore(store: any) {
   reduxStore = store;
+  // Dev-only hook: expose the redux store so browser validation harnesses can
+  // inspect kepler.gl's visState (datasets, layers) directly.
+  if (typeof window !== 'undefined') {
+    (window as any).__keplerReduxStore = store;
+  }
   // Wire the histogram brush-selection callback now that redux is available, so
   // the standalone chart renderer can highlight the brushed rows on the map.
   // The histogram renderer surfaces tool output produced by skill sub-agents.
@@ -188,6 +193,13 @@ export const {roomStore, useRoomStore} = createRoomStore<RoomState>(
     })
   )
 );
+
+// Dev-only hook: expose the room store on `window` so browser-based validation
+// harnesses (e.g. puppeteer scripts) can drive commands directly without an LLM
+// API key. No-op in non-browser environments.
+if (typeof window !== 'undefined') {
+  (window as any).__keplerRoomStore = roomStore;
+}
 
 // Wire the room store's DuckDB connector into the kepler tools layer so that
 // skills (which materialize kepler datasets into DuckDB via tools/utils.ts

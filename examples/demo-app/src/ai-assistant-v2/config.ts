@@ -24,7 +24,7 @@ export const LLM_MODELS = [
   },
   {name: 'deepseek', models: ['deepseek-chat']},
   {name: 'xai', models: ['grok-3-mini']},
-  {name: 'ollama', models: ['qwen3:32b', 'gpt-oss']}
+  {name: 'ollama', models: ['deepseek-v4-flash:cloud', 'qwen3:32b', 'gpt-oss']}
 ];
 
 export const AI_SETTINGS = {

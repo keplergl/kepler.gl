@@ -109,7 +109,7 @@ registerCommandsForOwner(roomStore, 'my-owner', [cmd]);
   (the `KeplerContext` closure is enough); the AI-layer `executeApi` tool keeps
   its own abort handling on the dispatcher.
 - **Rich outputs.** `RoomCommandResult.data` is `unknown`. Multi-step chaining
-  (e.g. `data.classify` `breaks` → `map.add-layer` `colorMap`) works because
+  (e.g. `geoda.analysis` classify `breaks` → `map.add-layer` `colorMap`) works because
   the AI-layer dispatcher surfaces typed fields out of `data` — keep your
   `data` payload shaped the way the consuming command expects to read it.
 - **`toModelOutput`.** On the direct-conversion path, fold the trim logic into

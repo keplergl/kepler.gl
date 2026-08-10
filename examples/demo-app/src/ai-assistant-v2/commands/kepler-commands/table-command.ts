@@ -4,26 +4,12 @@ import {tableFromArrays, Table as ArrowTable} from 'apache-arrow';
 import {addDataToMap} from '@kepler.gl/actions';
 import {processFileData} from '@kepler.gl/processors';
 import {KeplerContext} from '../../types';
-import {getValuesFromDataset, getConnector, datasetNameToTableName} from '../../tools/utils';
-
-function convertArrowRowToObject(row: any): Record<string, unknown> {
-  if (row === null || typeof row !== 'object') return row;
-  if (typeof row.toJSON === 'function') {
-    const json = row.toJSON();
-    for (const key in json) {
-      const val = json[key];
-      if (val && typeof val === 'object' && typeof val.toJSON === 'function') {
-        json[key] = convertArrowRowToObject(val);
-      } else if (Array.isArray(val)) {
-        json[key] = val.map(v => convertArrowRowToObject(v));
-      } else if (typeof val === 'bigint') {
-        json[key] = val.toString();
-      }
-    }
-    return json;
-  }
-  return row;
-}
+import {
+  getValuesFromDataset,
+  getConnector,
+  datasetNameToTableName,
+  arrowTableToObjects
+} from '../../tools/utils';
 
 export const tableCommandId = 'map.create-table' as const;
 
@@ -80,9 +66,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
 
         const arrowResult = await db.query(resolvedSql);
 
-        const jsonResult: Record<string, unknown>[] = arrowResult
-          .toArray()
-          .map((row: any) => convertArrowRowToObject(row));
+        const jsonResult: Record<string, unknown>[] = arrowTableToObjects(arrowResult);
 
         const parsedData = await processFileData({
           content: {data: jsonResult, fileName: resultDatasetName},
@@ -92,7 +76,9 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         ctx.dispatch(
           addDataToMap({
             datasets: parsedData,
-            options: {autoCreateLayers: true, centerMap: true}
+            // No auto-create — the assistant creates the layer explicitly via
+            // `map.add-layer` to avoid duplicate default layers.
+            options: {autoCreateLayers: false, centerMap: true}
           })
         );
 

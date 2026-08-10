@@ -1,4 +1,0 @@
-id: data-classify
-version: 0.1.0
-name: Classify data into bins
-description: Classify a numeric variable into bins using statistical break values (quantile, natural breaks, equal interval, etc.), respecting inclusive-lower / exclusive-upper bin semantics.

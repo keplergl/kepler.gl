@@ -28,4 +28,4 @@ Use this skill when the user wants to see where two variables co-occur (co-locat
 
 - Keep skills portable: replace V1/V2 and dataset names with the user's actual variable and dataset names at runtime.
 - Use `__TABLE__` as the table-name placeholder in any SQL; it is replaced with the real DuckDB table name at runtime.
-- Do not call `map.add-layer` after `data.create-table` — `data.create-table` auto-creates a map layer. (Use `map.add-layer` only when visualizing a previously-saved dataset that has no layer yet, as in step 5.)
+- After `data.create-table`, call `map.add-layer` to create a layer — `data.create-table` does NOT auto-create a layer. In this workflow, only the final dataset C needs a layer (step 5); the intermediate datasets B and C are created without layers.
