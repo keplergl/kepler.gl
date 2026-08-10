@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-export default `a5, value
+export default `a5,value
 1ae2958000000000,0.5979242952642347
 1ae2968000000000,0.5446256069712141
 1adebc8000000000,0.1187171597109975
@@ -42,7 +42,7 @@ export const config = {
           },
           visualChannels: {
             colorField: {
-              name: ' value',
+              name: 'value',
               type: 'real'
             },
             colorScale: 'quantile'

@@ -27,7 +27,7 @@ export function toA5Cell(token: string | bigint | number): bigint | null {
   }
 
   if (typeof token === 'number') {
-    if (!Number.isFinite(token) || !Number.isInteger(token) || token < 0) {
+    if (!Number.isSafeInteger(token) || token < 0) {
       return null;
     }
     try {
