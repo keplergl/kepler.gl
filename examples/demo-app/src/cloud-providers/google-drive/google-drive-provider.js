@@ -72,11 +72,9 @@ export default class GoogleDriveProvider extends Provider {
   }
 
   async getAccessToken() {
-    if (this._accessToken) {
-      return this._accessToken;
-    }
-
     const stored = this._readStorage();
+
+    // Reuse cached token only while expiresAt says it is still valid
     if (stored?.token && !this._isExpired(stored)) {
       const scope = stored.scope || '';
       if (scope && !scope.split(/\s+/).includes(DRIVE_SCOPE)) {
@@ -88,8 +86,11 @@ export default class GoogleDriveProvider extends Provider {
       return this._accessToken;
     }
 
-    // Try silent refresh if we previously consented
-    if (stored?.token && this.clientId) {
+    const hadToken = Boolean(this._accessToken || stored?.token);
+    this._accessToken = null;
+
+    // Silent refresh after expiry (or if memory still held a stale token)
+    if (hadToken && this.clientId) {
       try {
         await this._ensureTokenClient();
         const tokenResponse = await this._requestAccessToken({prompt: ''});
@@ -298,6 +299,10 @@ export default class GoogleDriveProvider extends Provider {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        this._accessToken = null;
+        this._clearStorage();
+      }
       const errText = await response.text();
       throw new Error(`Google Drive download failed: ${response.status} ${errText}`);
     }
@@ -579,6 +584,11 @@ export default class GoogleDriveProvider extends Provider {
         // ignore parse errors
       }
       const detail = [response.status, reason, message].filter(Boolean).join(' ');
+      if (response.status === 401) {
+        this._accessToken = null;
+        this._clearStorage();
+        throw new Error('Google Drive session expired. Log in again.');
+      }
       if (
         response.status === 403 &&
         /insufficient.*(scope|authentication)/i.test(`${message} ${reason}`)
