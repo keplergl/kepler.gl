@@ -55,6 +55,7 @@ initApplicationConfig({
 // Data values in the "icon" column matching these IDs will render the custom shapes.
 // NOTE: Cell winding must be counter-clockwise (CCW) to match the CDN icon convention.
 initApplicationConfig({
+  enableA5Layer: true,
   customIcons: [
     {
       id: 'custom-star',

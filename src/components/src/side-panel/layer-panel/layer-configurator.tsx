@@ -1487,6 +1487,114 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    _renderA5LayerConfig({
+      layer,
+      visConfiguratorProps,
+      layerConfiguratorProps,
+      layerChannelConfigProps
+    }) {
+      const {
+        config: {visConfig}
+      } = layer;
+
+      return (
+        <StyledLayerVisualConfigurator>
+          {/* Color */}
+          <LayerConfigGroup
+            {...layer.visConfigSettings.filled}
+            {...visConfiguratorProps}
+            label="layer.fillColor"
+            collapsible
+          >
+            <ChannelByValueSelector
+              channel={layer.visualChannels.color}
+              {...layerChannelConfigProps}
+            />
+            {layer.config.colorField ? (
+              <LayerColorRangeSelector {...visConfiguratorProps} />
+            ) : (
+              <LayerColorSelector {...layerConfiguratorProps} />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* Stroke */}
+          <LayerConfigGroup
+            {...layer.visConfigSettings.stroked}
+            {...visConfiguratorProps}
+            label="layer.strokeColor"
+            collapsible
+          >
+            {layer.config.strokeColorField ? (
+              <LayerColorRangeSelector {...visConfiguratorProps} property="strokeColorRange" />
+            ) : (
+              <LayerColorSelector
+                {...visConfiguratorProps}
+                selectedColor={layer.config.visConfig.strokeColor}
+                property="strokeColor"
+              />
+            )}
+            <ChannelByValueSelector
+              channel={layer.visualChannels.strokeColor}
+              {...layerChannelConfigProps}
+            />
+          </LayerConfigGroup>
+
+          {/* Stroke Width */}
+          <LayerConfigGroup {...visConfiguratorProps} label="layer.strokeWidth" collapsible>
+            {layer.config.sizeField ? (
+              <VisConfigSlider
+                {...layer.visConfigSettings.sizeRange}
+                {...visConfiguratorProps}
+                label={false}
+              />
+            ) : (
+              <VisConfigSlider
+                {...layer.visConfigSettings.thickness}
+                {...visConfiguratorProps}
+                label={false}
+              />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <ChannelByValueSelector
+                channel={layer.visualChannels.size}
+                {...layerChannelConfigProps}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* Elevation */}
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            {...layer.visConfigSettings.enable3d}
+            disabled={!visConfig.filled}
+            collapsible
+          >
+            <ChannelByValueSelector
+              channel={layer.visualChannels.height}
+              {...layerChannelConfigProps}
+            />
+            <VisConfigSlider
+              {...layer.visConfigSettings.elevationScale}
+              {...visConfiguratorProps}
+              label={'layerVisConfigs.heightMultiplier'}
+            />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.heightRange}
+                {...visConfiguratorProps}
+                label="layerVisConfigs.heightRange"
+              />
+              <VisConfigSwitch {...layer.visConfigSettings.fixedHeight} {...visConfiguratorProps} />
+              <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.wireframe} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
     _renderTile3dLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
       return (
         <StyledLayerVisualConfigurator>
