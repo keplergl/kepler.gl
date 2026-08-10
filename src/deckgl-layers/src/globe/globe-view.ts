@@ -89,9 +89,6 @@ class ZoomToCursorGlobeController extends GlobeController {
       // view can't be centered on the poles. deck.gl's applyConstraints clamps
       // latitude to ~85°, which still lets the camera look straight at a pole.
       applyConstraints(props: any) {
-        // Avoid `(super.fn as any)(args)` — Babel compiles that to a property GET
-        // (`_superPropGet(..., 1)`) that drops `this`. A direct call uses method-CALL
-        // form (`_superPropGet(..., 3)`), which preserves the binding.
         const result = super.applyConstraints(props);
         const clampedLatitude = clamp(result.latitude, -GLOBE_MAX_LATITUDE, GLOBE_MAX_LATITUDE);
         if (clampedLatitude !== result.latitude) {

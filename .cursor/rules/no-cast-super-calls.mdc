@@ -1,0 +1,25 @@
+---
+description: Never cast super.method before calling — Babel drops this
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# No cast-then-call on `super` methods
+
+Do not write `(super.method as SomeType)(...)` or `(<SomeType>super.method)(...)`.
+
+Babel compiles that to an unbound `_superPropGet(..., 1)` call, so `this` is
+`undefined` and `this.props` crashes at runtime (kepler.gl #3614).
+
+```ts
+// Bad
+const shaders = (super.getShaders as () => any)();
+(super.draw as (o: any) => void)(opts);
+
+// Good
+const shaders = super.getShaders();
+super.draw(opts);
+```
+
+If TypeScript complains about the super call signature, fix the types or use a
+`// @ts-expect-error` on the call line — do not cast the method reference.

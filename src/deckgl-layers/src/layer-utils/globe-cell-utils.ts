@@ -157,7 +157,7 @@ export function makeGlobeCellLayerClass<T extends LayerConstructor>(
 
   class GlobeCellLayer extends (BaseCellLayer as {new (...args: any[]): any}) {
     getShaders() {
-      const shaders = (super.getShaders as () => any)();
+      const shaders = super.getShaders();
       return {
         ...shaders,
         vs: addGlobeCellProjection(shaders.vs, type),
@@ -175,7 +175,7 @@ export function makeGlobeCellLayerClass<T extends LayerConstructor>(
       if (model?.shaderInputs) {
         model.shaderInputs.setProps({globeCell: {globeMode}});
       }
-      (super.draw as (o: any) => void)(opts);
+      super.draw(opts);
     }
   }
   (GlobeCellLayer as unknown as {layerName: string}).layerName = `Globe${type}CellLayer`;
