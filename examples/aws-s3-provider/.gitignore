@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.env
+yarn.lock
+*.log
+.DS_Store
