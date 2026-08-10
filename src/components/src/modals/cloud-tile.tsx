@@ -126,30 +126,46 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
     if (!provider) {
       return;
     }
+    let cancelled = false;
     setError(null);
     setIsLoading(true);
-    setError(null);
     provider
       .getUser()
-      .then(setUser)
-      .catch(setError)
+      .then(nextUser => {
+        if (!cancelled) {
+          setUser(nextUser);
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          setUser(null);
+          setError(err as Error);
+        }
+      })
       .finally(() => {
-        setError(null);
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       });
+    return () => {
+      cancelled = true;
+    };
   }, [provider]);
 
   const onLogin = useCallback(async () => {
     setError(null);
     setIsLoading(true);
     try {
-      const user = await provider.login();
-      setUser(user);
+      const nextUser = await provider.login();
+      setUser(nextUser);
       setProvider(provider);
+      return nextUser;
     } catch (error) {
       setError(error as Error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [provider, setProvider]);
 
   const onSelect = useCallback(async () => {
@@ -162,7 +178,7 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
     }
     try {
       await onLogin();
-      setProvider(provider);
+      // onLogin already selected the provider on success
     } catch (err) {
       setError(err as Error);
       setProvider(null);
