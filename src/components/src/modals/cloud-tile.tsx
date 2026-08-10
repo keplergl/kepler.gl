@@ -161,8 +161,9 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
       setProvider(provider);
       return nextUser;
     } catch (error) {
+      // Swallow: also used as LoginButton onClick (must not reject)
       setError(error as Error);
-      throw error;
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -176,13 +177,11 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
       setProvider(provider);
       return;
     }
-    try {
-      await onLogin();
-      // onLogin already selected the provider on success
-    } catch (err) {
-      setError(err as Error);
+    const nextUser = await onLogin();
+    if (!nextUser) {
       setProvider(null);
     }
+    // onLogin already selected the provider on success
   }, [setProvider, provider, user, isLoading, onLogin]);
 
   const onLogout = useCallback(async () => {

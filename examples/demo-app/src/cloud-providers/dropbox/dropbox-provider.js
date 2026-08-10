@@ -194,20 +194,22 @@ export default class DropboxProvider extends Provider {
    * @param loadParams
    */
   async downloadMap(loadParams) {
-    const token = this.getAccessToken();
-    if (!token) {
-      throw new Error('Not logged in to Dropbox');
+    try {
+      const token = this.getAccessToken();
+      if (!token) {
+        throw new Error('Not logged in to Dropbox');
+      }
+      const {path} = loadParams;
+      const result = await this._dropbox.filesDownload({path});
+      const json = await this._readFile(result.fileBlob);
+
+      return {
+        map: json,
+        format: KEPLER_FORMAT
+      };
+    } catch (error) {
+      throw this._handleDropboxError(error);
     }
-    const {path} = loadParams;
-    const result = await this._dropbox.filesDownload({path});
-    const json = await this._readFile(result.fileBlob);
-
-    const response = {
-      map: json,
-      format: KEPLER_FORMAT
-    };
-
-    return Promise.resolve(response);
   }
 
   getUserName() {
@@ -328,9 +330,7 @@ export default class DropboxProvider extends Provider {
         Window.localStorage.removeItem('dropbox');
       }
       this._initializeDropbox();
-      return new Error(
-        'Dropbox session expired. Log out if needed, then log in again.'
-      );
+      return new Error('Dropbox session expired. Please log in again.');
     }
 
     // dropbox list_folder error
