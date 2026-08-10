@@ -129,13 +129,23 @@ export function a5TokenToPolygonGeo(
       number,
       number
     ][];
-    const isClosed = Boolean(properties?.isClosed);
+
+    if (properties?.isClosed) {
+      return {
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [vertices]
+        },
+        properties: properties ?? null
+      };
+    }
 
     return {
       type: 'Feature',
       geometry: {
-        type: isClosed ? 'Polygon' : 'LineString',
-        coordinates: isClosed ? [vertices] : vertices
+        type: 'LineString',
+        coordinates: vertices
       },
       properties: properties ?? null
     };
