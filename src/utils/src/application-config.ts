@@ -269,7 +269,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableBitmapLayer: true,
 
   // A5 layer config
-  enableA5Layer: false,
+  enableA5Layer: true,
 
   showInlineTilesetExamples: true,
 
