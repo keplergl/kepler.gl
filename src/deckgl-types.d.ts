@@ -104,6 +104,7 @@ declare module '@deck.gl/geo-layers' {
   export {default as H3HexagonLayer} from '@deck.gl/geo-layers/dist/h3-layers/h3-hexagon-layer';
   export {default as H3ClusterLayer} from '@deck.gl/geo-layers/dist/h3-layers/h3-cluster-layer';
   export {default as S2Layer} from '@deck.gl/geo-layers/dist/s2-layer/s2-layer';
+  export {default as A5Layer} from '@deck.gl/geo-layers/dist/a5-layer/a5-layer';
   export {default as TripsLayer} from '@deck.gl/geo-layers/dist/trips-layer/trips-layer';
   export {default as TileLayer} from '@deck.gl/geo-layers/dist/tile-layer/tile-layer';
   export {default as MVTLayer} from '@deck.gl/geo-layers/dist/mvt-layer/mvt-layer';
@@ -113,6 +114,7 @@ declare module '@deck.gl/geo-layers' {
 
   export type {H3HexagonLayerProps} from '@deck.gl/geo-layers/dist/h3-layers/h3-hexagon-layer';
   export type {S2LayerProps} from '@deck.gl/geo-layers/dist/s2-layer/s2-layer';
+  export type {A5LayerProps} from '@deck.gl/geo-layers/dist/a5-layer/a5-layer';
   export type {
     TileLayerProps,
     TileLayerPickingInfo

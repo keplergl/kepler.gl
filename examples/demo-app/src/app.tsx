@@ -60,6 +60,7 @@ import sampleTripData, {testCsvData, sampleTripDataConfig} from './data/sample-t
 import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
 import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sample-s2-data';
+import sampleA5Data, {config as a5MapConfig, dataId as a5DataId} from './data/sample-a5-data';
 import sampleAnimateTrip, {
   pointData,
   pointDataId,
@@ -645,6 +646,26 @@ const App = props => {
     );
   }, [dispatch]);
 
+  const _loadA5Data = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'A5 Data',
+              id: a5DataId
+            },
+            data: processCsvData(sampleA5Data)
+          }
+        ],
+        config: a5MapConfig as ParsedConfig,
+        options: {
+          keepExistingConfig: true
+        }
+      })
+    );
+  }, [dispatch]);
+
   const _loadGpsData = useCallback(() => {
     dispatch(
       addDataToMap({
@@ -844,6 +865,7 @@ const App = props => {
     // _loadIconData();
     // _loadH3HexagonData();
     // _loadS2Data();
+    // _loadA5Data();
     // _loadScenegraphLayer();
     // _loadGpsData();
     // _loadRowData();
@@ -863,6 +885,7 @@ const App = props => {
     _loadIconData,
     _loadH3HexagonData,
     _loadS2Data,
+    _loadA5Data,
     _loadScenegraphLayer,
     _loadGpsData,
     _loadRowData,

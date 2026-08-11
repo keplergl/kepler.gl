@@ -28,7 +28,8 @@ export const addLayer = extendedTool<
         'heatmap',
         'h3',
         'trip',
-        's2'
+        's2',
+        'a5'
       ]
     >;
     colorBy: z.ZodOptional<z.ZodString>;
@@ -90,7 +91,8 @@ For geojson datasets:
       'heatmap',
       'h3',
       'trip',
-      's2'
+      's2',
+      'a5'
     ]),
     colorBy: z.string().optional(),
     colorType: z.enum(['breaks', 'unique']).optional(),

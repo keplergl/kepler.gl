@@ -159,6 +159,7 @@ export {default as CoordinateInfoFactory} from './map/coordinate-info';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as LazyTippy} from './map/lazy-tippy';
 export {default as LocalePanelFactory} from './map/locale-panel';
+export {default as ThemeToggleButtonFactory} from './map/theme-toggle-button';
 export {default as MapControlFactory} from './map/map-control';
 export {default as MapNavigationControlFactory} from './map/map-navigation-control';
 export {default as MapScaleFactory} from './map/map-scale';

@@ -46,6 +46,9 @@ export type MapState = {
     enabled: boolean;
     config: {
       atmosphere: boolean;
+      hugeHalo: boolean;
+      hugeHaloRadius: number;
+      hugeHaloOpacity: number;
       azimuth: boolean;
       azimuthAngle: number;
       terminator: boolean;
@@ -505,6 +508,7 @@ export type MapControls = {
   splitMap?: MapControlItem;
   mapDraw?: MapControlItem;
   mapLocale?: MapControlItem;
+  mapTheme?: MapControlItem;
   effect?: MapControlItem;
   annotation?: MapControlItem;
   aiAssistant?: MapControlItem;
@@ -524,6 +528,8 @@ export type Notifications = {
 };
 
 export type Locale = string;
+
+export type UiTheme = string;
 
 export type PanelListView = string;
 
@@ -549,6 +555,8 @@ export type UiState = {
   loadFiles: LoadFiles;
   // Locale of the UI
   locale: Locale;
+  // Theme of the UI (`light` | `dark`), used when enableThemeToggle is on
+  theme: UiTheme;
   // view layers by list or dataset
   layerPanelListView: PanelListView;
   // view filters by list or dataset

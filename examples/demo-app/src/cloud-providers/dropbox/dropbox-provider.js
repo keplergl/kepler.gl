@@ -3,6 +3,7 @@
 
 // DROPBOX
 import {Dropbox} from 'dropbox';
+import Window from 'global/window';
 import DropboxIcon from './dropbox-icon';
 import {MAP_URI} from '../../constants/default-settings';
 import {KEPLER_FORMAT, Provider} from '@kepler.gl/cloud-providers';
@@ -107,6 +108,10 @@ export default class DropboxProvider extends Provider {
   async listMaps() {
     // list files
     try {
+      const token = this.getAccessToken();
+      if (!token) {
+        throw new Error('Not logged in to Dropbox');
+      }
       // https://dropbox.github.io/dropbox-sdk-js/Dropbox.html#filesListFolder__anchor
       const response = await this._dropbox.filesListFolder({
         path: `${this._path}`
@@ -189,16 +194,22 @@ export default class DropboxProvider extends Provider {
    * @param loadParams
    */
   async downloadMap(loadParams) {
-    const {path} = loadParams;
-    const result = await this._dropbox.filesDownload({path});
-    const json = await this._readFile(result.fileBlob);
+    try {
+      const token = this.getAccessToken();
+      if (!token) {
+        throw new Error('Not logged in to Dropbox');
+      }
+      const {path} = loadParams;
+      const result = await this._dropbox.filesDownload({path});
+      const json = await this._readFile(result.fileBlob);
 
-    const response = {
-      map: json,
-      format: KEPLER_FORMAT
-    };
-
-    return Promise.resolve(response);
+      return {
+        map: json,
+        format: KEPLER_FORMAT
+      };
+    } catch (error) {
+      throw this._handleDropboxError(error);
+    }
   }
 
   getUserName() {
@@ -211,7 +222,13 @@ export default class DropboxProvider extends Provider {
   }
 
   async logout() {
-    await this._dropbox.authTokenRevoke();
+    try {
+      if (this.getAccessToken()) {
+        await this._dropbox.authTokenRevoke();
+      }
+    } catch (err) {
+      // Ignore revoke failures (e.g. already-invalid token)
+    }
     if (Window.localStorage) {
       Window.localStorage.removeItem('dropbox');
     }
@@ -290,11 +307,32 @@ export default class DropboxProvider extends Provider {
   }
 
   async getUser() {
-    const response = await this._dropbox.usersGetCurrentAccount();
-    return this._getUserFromAccount(response);
+    const token = this.getAccessToken();
+    if (!token) {
+      return null;
+    }
+    try {
+      const response = await this._dropbox.usersGetCurrentAccount();
+      return this._getUserFromAccount(response);
+    } catch (error) {
+      throw this._handleDropboxError(error);
+    }
   }
 
   _handleDropboxError(error) {
+    const summary =
+      (error && error.error && error.error.error_summary) ||
+      (typeof error?.message === 'string' ? error.message : '');
+
+    // Stale / revoked token left in localStorage — clear so Login is shown again
+    if (typeof summary === 'string' && /invalid_access_token/i.test(summary)) {
+      if (Window.localStorage) {
+        Window.localStorage.removeItem('dropbox');
+      }
+      this._initializeDropbox();
+      return new Error('Dropbox session expired. Please log in again.');
+    }
+
     // dropbox list_folder error
     if (error && error.error && error.error.error_summary) {
       return new Error(`Dropbox Error: ${error.error.error_summary}`);
