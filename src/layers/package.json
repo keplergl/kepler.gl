@@ -70,6 +70,7 @@
     "@types/keymirror": "^0.1.1",
     "@types/lodash": "4.17.5",
     "@types/styled-components": "^5.1.32",
+    "a5-js": "^0.7.3",
     "apache-arrow": ">=15.0.0",
     "buffer": "6.0.3",
     "d3-array": "^2.8.0",

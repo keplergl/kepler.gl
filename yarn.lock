@@ -6007,6 +6007,7 @@ __metadata:
     "@types/keymirror": "npm:^0.1.1"
     "@types/lodash": "npm:4.17.5"
     "@types/styled-components": "npm:^5.1.32"
+    a5-js: "npm:^0.7.3"
     apache-arrow: "npm:>=15.0.0"
     buffer: "npm:6.0.3"
     d3-array: "npm:^2.8.0"
@@ -13071,7 +13072,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"a5-js@npm:^0.7.2":
+"a5-js@npm:^0.7.2, a5-js@npm:^0.7.3":
   version: 0.7.3
   resolution: "a5-js@npm:0.7.3"
   dependencies:
