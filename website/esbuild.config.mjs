@@ -66,7 +66,8 @@ const config = {
     'process.env.FoursquareClientId': JSON.stringify(process.env.FoursquareClientId || ''),
     'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain || ''),
     'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL || ''),
-    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL || '')
+    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL || ''),
+    'process.env.GoogleDriveClientId': JSON.stringify(process.env.GoogleDriveClientId || '')
   },
   plugins: [
     replace({

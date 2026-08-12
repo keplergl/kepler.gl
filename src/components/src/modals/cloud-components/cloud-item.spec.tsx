@@ -3,7 +3,7 @@
 
 // @ts-nocheck
 import React from 'react';
-import {fireEvent} from '@testing-library/react';
+import {fireEvent, waitFor} from '@testing-library/react';
 import {renderWithTheme} from '../../../../../test/helpers/component-jest-utils';
 
 import {CloudItem} from './cloud-item';
@@ -15,10 +15,33 @@ describe('CloudItem', () => {
   const mockVis = {
     title: 'Test Title',
     description: 'Test Description',
-    lastModification: new Date().toISOString(),
+    updatedAt: Date.now(),
     thumbnail: 'test-thumbnail.jpg',
     privateMap: true
   };
+
+  let observerCallback;
+  beforeEach(() => {
+    observerCallback = null;
+    class MockIntersectionObserver {
+      constructor(cb) {
+        observerCallback = cb;
+      }
+      observe() {
+        // Immediately report visible for lazy-load tests
+        if (observerCallback) {
+          observerCallback([{isIntersecting: true}]);
+        }
+      }
+      disconnect() {
+        return undefined;
+      }
+      unobserve() {
+        return undefined;
+      }
+    }
+    global.IntersectionObserver = MockIntersectionObserver;
+  });
 
   it('renders without crashing', () => {
     const {getByText} = renderWithTheme(<CloudItem vis={mockVis} onClick={nop} />);
@@ -56,7 +79,7 @@ describe('CloudItem', () => {
     expect(getByText('Test Title')).toBeInTheDocument();
     expect(getByText('Test Description')).toBeInTheDocument();
     expect(
-      getByText(`Last modified ${moment.utc(mockVis.lastModification).fromNow()}`)
+      getByText(`Last modified ${moment.utc(mockVis.updatedAt).fromNow()}`)
     ).toBeInTheDocument();
   });
 
@@ -65,5 +88,19 @@ describe('CloudItem', () => {
     const {getByText} = renderWithTheme(<CloudItem vis={mockVis} onClick={onClickMock} />);
     fireEvent.click(getByText('Test Title'));
     expect(onClickMock).toHaveBeenCalled();
+  });
+
+  it('lazy-loads thumbnail when tile becomes visible', async () => {
+    const getMapThumbnail = jest.fn().mockResolvedValue('lazy-thumb.jpg');
+    const provider = {
+      hasLazyThumbnails: () => true,
+      getMapThumbnail
+    };
+    const vis = {...mockVis, thumbnail: undefined};
+    const {findByRole} = renderWithTheme(<CloudItem vis={vis} onClick={nop} provider={provider} />);
+
+    const thumb = await findByRole('thumbnail-wrapper');
+    await waitFor(() => expect(getMapThumbnail).toHaveBeenCalledWith(vis));
+    expect(thumb.style.backgroundImage).toContain('lazy-thumb.jpg');
   });
 });

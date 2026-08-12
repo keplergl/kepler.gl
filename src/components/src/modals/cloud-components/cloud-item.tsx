@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import moment from 'moment/moment';
-import React from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
 import {Base} from '../../common/icons';
 
@@ -106,11 +106,62 @@ const StyledVisualizationItem = styled.div`
   }
 `;
 
-export const CloudItem = ({vis, onClick}) => {
-  const thumbnailStyle = {backgroundImage: `url(${vis.thumbnail})`};
+export const CloudItem = ({vis, onClick, provider}) => {
+  const [thumbnail, setThumbnail] = useState(vis.thumbnail);
+  const rootRef = useRef(null);
+  const loadingRef = useRef(false);
+
+  useEffect(() => {
+    setThumbnail(vis.thumbnail);
+    loadingRef.current = false;
+  }, [vis.id, vis.thumbnail]);
+
+  useEffect(() => {
+    if (
+      thumbnail ||
+      !provider?.hasLazyThumbnails?.() ||
+      !provider?.getMapThumbnail ||
+      !rootRef.current
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    const el = rootRef.current;
+    const observer = new IntersectionObserver(
+      entries => {
+        const entry = entries[0];
+        if (!entry?.isIntersecting || loadingRef.current || cancelled) {
+          return;
+        }
+        loadingRef.current = true;
+        Promise.resolve(provider.getMapThumbnail(vis))
+          .then(url => {
+            if (!cancelled && url) {
+              setThumbnail(url);
+            }
+          })
+          .catch(() => {
+            // Keep placeholder icon on failure
+          })
+          .finally(() => {
+            observer.disconnect();
+          });
+      },
+      {root: null, rootMargin: '100px', threshold: 0.01}
+    );
+
+    observer.observe(el);
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+    };
+  }, [thumbnail, provider, vis]);
+
+  const thumbnailStyle = thumbnail ? {backgroundImage: `url(${thumbnail})`} : undefined;
   return (
-    <StyledVisualizationItem onClick={onClick}>
-      {vis.thumbnail ? (
+    <StyledVisualizationItem ref={rootRef} onClick={onClick}>
+      {thumbnail ? (
         <div role="thumbnail-wrapper" className="vis_item-thumb" style={thumbnailStyle}>
           {Object.prototype.hasOwnProperty.call(vis, 'privateMap') ? (
             <PrivacyBadge privateMap={vis.privateMap} />

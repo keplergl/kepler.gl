@@ -44,7 +44,10 @@ CARTO_CLIENT_ID=<your_carto_client_id>
 FOURSQUARE_CLIENT_ID=<your_foursquare_client_id>
 FOURSQUARE_DOMAIN=<your_foursquare_domain>
 FOURSQUARE_USER_MAPS_URL=<your_foursquare_user_map_url>
+GoogleDriveClientId=<your_google_oauth_web_client_id>
 ```
+
+For Google Drive, create an OAuth 2.0 **Web application** client in [Google Cloud Console](https://console.cloud.google.com/), enable the **Google Drive API**, and add your demo-app origin (e.g. `http://localhost:8080`) to Authorized JavaScript origins. Only the client ID is required (no API key).
 
 #### 3. Start the app
 
