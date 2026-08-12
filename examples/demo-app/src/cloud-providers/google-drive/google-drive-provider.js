@@ -19,7 +19,6 @@ const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const SCOPES = [DRIVE_SCOPE, 'openid', 'profile', 'email'].join(' ');
 
 const PRIVATE_STORAGE_ENABLED = true;
-// Public share-via-URL needs a CORS-friendly download host; Drive direct links are not.
 const SHARING_ENABLED = false;
 const MANAGEMENT_URL = 'https://drive.google.com/drive/my-drive';
 
@@ -39,6 +38,9 @@ export default class GoogleDriveProvider extends Provider {
     this._tokenClient = null;
     this._folderId = null;
     this._shareUrl = null;
+    // Serialize GIS token requests — TokenClient exposes a single callback pair.
+    this._tokenRequestChain = Promise.resolve();
+    this._thumbnailCache = new Map();
   }
 
   isEnabled() {
@@ -51,6 +53,10 @@ export default class GoogleDriveProvider extends Provider {
 
   hasSharingUrl() {
     return SHARING_ENABLED;
+  }
+
+  hasLazyThumbnails() {
+    return true;
   }
 
   getManagementUrl() {
@@ -179,6 +185,7 @@ export default class GoogleDriveProvider extends Provider {
     this._accessToken = null;
     this._folderId = null;
     this._shareUrl = null;
+    this._thumbnailCache = new Map();
     this._clearStorage();
   }
 
@@ -196,27 +203,68 @@ export default class GoogleDriveProvider extends Provider {
       {token}
     );
 
-    const files = data.files || [];
-    const visualizations = await Promise.all(
-      files.map(async file => {
-        const title = file.name.replace(/\.json$/i, '');
-        const thumbnail = await this._findThumbnail(token, folderId, title);
-        return {
-          id: file.id,
-          title,
-          description: file.description || '',
-          updatedAt: file.modifiedTime ? new Date(file.modifiedTime).getTime() : undefined,
-          privateMap: true,
-          thumbnail,
-          loadParams: {
-            id: file.id,
-            path: file.name
-          }
-        };
-      })
+    // One metadata list for PNGs — CloudItem lazy-loads bytes via getMapThumbnail.
+    const pngQ = [
+      `'${folderId}' in parents`,
+      `mimeType = '${MIME_PNG}'`,
+      'trashed = false'
+    ].join(' and ');
+    const pngData = await this._driveFetch(
+      `${DRIVE_API}/files?q=${encodeURIComponent(pngQ)}&fields=files(id,name)&pageSize=100`,
+      {token}
     );
+    const thumbnailIdByTitle = {};
+    (pngData.files || []).forEach(png => {
+      const title = png.name.replace(/\.png$/i, '');
+      if (!thumbnailIdByTitle[title]) {
+        thumbnailIdByTitle[title] = png.id;
+      }
+    });
 
-    return visualizations;
+    return (data.files || []).map(file => {
+      const title = file.name.replace(/\.json$/i, '');
+      return {
+        id: file.id,
+        title,
+        description: file.description || '',
+        updatedAt: file.modifiedTime ? new Date(file.modifiedTime).getTime() : undefined,
+        privateMap: true,
+        loadParams: {
+          id: file.id,
+          path: file.name,
+          thumbnailId: thumbnailIdByTitle[title]
+        }
+      };
+    });
+  }
+
+  async getMapThumbnail(map) {
+    if (map?.thumbnail) {
+      return map.thumbnail;
+    }
+    const thumbnailId = map?.loadParams?.thumbnailId;
+    if (!thumbnailId) {
+      return undefined;
+    }
+    if (this._thumbnailCache.has(thumbnailId)) {
+      return this._thumbnailCache.get(thumbnailId);
+    }
+
+    try {
+      const token = await this._requireToken();
+      const response = await fetch(`${DRIVE_API}/files/${thumbnailId}?alt=media`, {
+        headers: {Authorization: `Bearer ${token}`}
+      });
+      if (!response.ok) {
+        return undefined;
+      }
+      const blob = await response.blob();
+      const dataUrl = await this._blobToDataUrl(blob);
+      this._thumbnailCache.set(thumbnailId, dataUrl);
+      return dataUrl;
+    } catch (err) {
+      return undefined;
+    }
   }
 
   async uploadMap({mapData, options = {}}) {
@@ -264,7 +312,6 @@ export default class GoogleDriveProvider extends Provider {
 
     if (options.isPublic) {
       await this._makePublic(token, fileMeta.id);
-      // Deep link for logged-in Google Drive users of this app
       this._shareUrl = `/demo/map/${NAME}?id=${fileMeta.id}`;
       return {
         id: fileMeta.id,
@@ -287,7 +334,7 @@ export default class GoogleDriveProvider extends Provider {
   }
 
   async downloadMap(loadParams = {}) {
-    // listMaps sets {id, path: fileName}; post-save deep links use ?path=<fileId>
+    // listMaps sets {id, path: fileName}; URL loads may pass ?path=<fileId>
     const id = loadParams.id || loadParams.path;
     if (!id || String(id).endsWith('.json')) {
       throw new Error('Google Drive: no file id provided in loadParams');
@@ -350,34 +397,43 @@ export default class GoogleDriveProvider extends Provider {
   }
 
   _requestAccessToken({prompt, scope} = {}) {
-    return new Promise((resolve, reject) => {
-      this._tokenClient.callback = response => {
-        if (response.error) {
-          reject(new Error(response.error_description || response.error));
-          return;
+    const run = () =>
+      new Promise((resolve, reject) => {
+        this._tokenClient.callback = response => {
+          if (response.error) {
+            reject(new Error(response.error_description || response.error));
+            return;
+          }
+          this._accessToken = response.access_token;
+          const expiresIn = Number(response.expires_in) || 3600;
+          this._writeStorage({
+            token: response.access_token,
+            expiresAt: Date.now() + expiresIn * 1000,
+            scope: response.scope,
+            user: this._readStorage()?.user
+          });
+          resolve(response);
+        };
+        this._tokenClient.error_callback = error => {
+          reject(new Error(error?.type || 'Google OAuth error'));
+        };
+        const overrides = {};
+        if (prompt !== undefined) {
+          overrides.prompt = prompt;
         }
-        this._accessToken = response.access_token;
-        const expiresIn = Number(response.expires_in) || 3600;
-        this._writeStorage({
-          token: response.access_token,
-          expiresAt: Date.now() + expiresIn * 1000,
-          scope: response.scope,
-          user: this._readStorage()?.user
-        });
-        resolve(response);
-      };
-      this._tokenClient.error_callback = error => {
-        reject(new Error(error?.type || 'Google OAuth error'));
-      };
-      const overrides = {};
-      if (prompt !== undefined) {
-        overrides.prompt = prompt;
-      }
-      if (scope) {
-        overrides.scope = scope;
-      }
-      this._tokenClient.requestAccessToken(overrides);
-    });
+        if (scope) {
+          overrides.scope = scope;
+        }
+        this._tokenClient.requestAccessToken(overrides);
+      });
+
+    // Queue so overlapping silent refresh + login cannot overwrite callbacks.
+    const next = this._tokenRequestChain.then(run, run);
+    this._tokenRequestChain = next.then(
+      () => undefined,
+      () => undefined
+    );
+    return next;
   }
 
   async _fetchUser(token) {
@@ -400,14 +456,18 @@ export default class GoogleDriveProvider extends Provider {
       return this._folderId;
     }
 
+    // Only My Drive root — avoids picking a same-named folder elsewhere in Drive.
+    // If duplicates exist at root, prefer the oldest (original app folder).
+    const escapedName = this.appName.replace(/'/g, "\\'");
     const q = [
-      `name = '${this.appName}'`,
+      `name = '${escapedName}'`,
+      `'root' in parents`,
       `mimeType = 'application/vnd.google-apps.folder'`,
       'trashed = false'
     ].join(' and ');
 
     const listed = await this._driveFetch(
-      `${DRIVE_API}/files?q=${encodeURIComponent(q)}&fields=files(id,name)&pageSize=1`,
+      `${DRIVE_API}/files?q=${encodeURIComponent(q)}&fields=files(id,name,createdTime)&orderBy=createdTime&pageSize=10`,
       {token}
     );
 
@@ -422,7 +482,8 @@ export default class GoogleDriveProvider extends Provider {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         name: this.appName,
-        mimeType: 'application/vnd.google-apps.folder'
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: ['root']
       })
     });
 
@@ -442,25 +503,6 @@ export default class GoogleDriveProvider extends Provider {
       {token}
     );
     return data.files && data.files[0] ? data.files[0] : null;
-  }
-
-  async _findThumbnail(token, folderId, title) {
-    const png = await this._findFileByName(token, folderId, `${title}.png`);
-    if (!png) {
-      return undefined;
-    }
-    try {
-      const response = await fetch(`${DRIVE_API}/files/${png.id}?alt=media`, {
-        headers: {Authorization: `Bearer ${token}`}
-      });
-      if (!response.ok) {
-        return undefined;
-      }
-      const blob = await response.blob();
-      return await this._blobToDataUrl(blob);
-    } catch (err) {
-      return undefined;
-    }
   }
 
   async _createMultipartFile({token, name, parents, mimeType, body, description}) {
@@ -555,7 +597,7 @@ export default class GoogleDriveProvider extends Provider {
       });
     } catch (err) {
       const msg = String(err.message || err);
-      // Drive returns 409 / alreadyExists when the anyone permission is already set
+      // Drive returns 409 / alreadyExists when the permission is already set
       if (/alreadyExists|already exists|409|conflict/i.test(msg)) {
         return;
       }
