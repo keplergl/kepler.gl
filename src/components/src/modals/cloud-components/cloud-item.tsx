@@ -117,7 +117,12 @@ export const CloudItem = ({vis, onClick, provider}) => {
   }, [vis.id, vis.thumbnail]);
 
   useEffect(() => {
-    if (thumbnail || !provider?.hasLazyThumbnails?.() || !provider?.getMapThumbnail || !rootRef.current) {
+    if (
+      thumbnail ||
+      !provider?.hasLazyThumbnails?.() ||
+      !provider?.getMapThumbnail ||
+      !rootRef.current
+    ) {
       return;
     }
 

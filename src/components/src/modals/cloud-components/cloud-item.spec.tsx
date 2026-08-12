@@ -33,8 +33,12 @@ describe('CloudItem', () => {
           observerCallback([{isIntersecting: true}]);
         }
       }
-      disconnect() {}
-      unobserve() {}
+      disconnect() {
+        return undefined;
+      }
+      unobserve() {
+        return undefined;
+      }
     }
     global.IntersectionObserver = MockIntersectionObserver;
   });
@@ -93,9 +97,7 @@ describe('CloudItem', () => {
       getMapThumbnail
     };
     const vis = {...mockVis, thumbnail: undefined};
-    const {findByRole} = renderWithTheme(
-      <CloudItem vis={vis} onClick={nop} provider={provider} />
-    );
+    const {findByRole} = renderWithTheme(<CloudItem vis={vis} onClick={nop} provider={provider} />);
 
     const thumb = await findByRole('thumbnail-wrapper');
     await waitFor(() => expect(getMapThumbnail).toHaveBeenCalledWith(vis));

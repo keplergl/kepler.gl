@@ -192,23 +192,21 @@ export default class GoogleDriveProvider extends Provider {
   async listMaps() {
     const token = await this._requireToken();
     const folderId = await this._ensureAppFolder(token);
-    const q = [
-      `'${folderId}' in parents`,
-      `mimeType = '${MIME_JSON}'`,
-      'trashed = false'
-    ].join(' and ');
+    const q = [`'${folderId}' in parents`, `mimeType = '${MIME_JSON}'`, 'trashed = false'].join(
+      ' and '
+    );
 
     const data = await this._driveFetch(
-      `${DRIVE_API}/files?q=${encodeURIComponent(q)}&fields=files(id,name,modifiedTime,description)&orderBy=modifiedTime desc&pageSize=100`,
+      `${DRIVE_API}/files?q=${encodeURIComponent(
+        q
+      )}&fields=files(id,name,modifiedTime,description)&orderBy=modifiedTime desc&pageSize=100`,
       {token}
     );
 
     // One metadata list for PNGs — CloudItem lazy-loads bytes via getMapThumbnail.
-    const pngQ = [
-      `'${folderId}' in parents`,
-      `mimeType = '${MIME_PNG}'`,
-      'trashed = false'
-    ].join(' and ');
+    const pngQ = [`'${folderId}' in parents`, `mimeType = '${MIME_PNG}'`, 'trashed = false'].join(
+      ' and '
+    );
     const pngData = await this._driveFetch(
       `${DRIVE_API}/files?q=${encodeURIComponent(pngQ)}&fields=files(id,name)&pageSize=100`,
       {token}
@@ -467,7 +465,9 @@ export default class GoogleDriveProvider extends Provider {
     ].join(' and ');
 
     const listed = await this._driveFetch(
-      `${DRIVE_API}/files?q=${encodeURIComponent(q)}&fields=files(id,name,createdTime)&orderBy=createdTime&pageSize=10`,
+      `${DRIVE_API}/files?q=${encodeURIComponent(
+        q
+      )}&fields=files(id,name,createdTime)&orderBy=createdTime&pageSize=10`,
       {token}
     );
 
@@ -576,15 +576,12 @@ export default class GoogleDriveProvider extends Provider {
   }
 
   _updateBinaryFile(token, fileId, blob, mimeType) {
-    return this._driveFetch(
-      `${DRIVE_UPLOAD_API}/files/${fileId}?uploadType=media&fields=id,name`,
-      {
-        token,
-        method: 'PATCH',
-        headers: {'Content-Type': mimeType},
-        body: blob
-      }
-    );
+    return this._driveFetch(`${DRIVE_UPLOAD_API}/files/${fileId}?uploadType=media&fields=id,name`, {
+      token,
+      method: 'PATCH',
+      headers: {'Content-Type': mimeType},
+      body: blob
+    });
   }
 
   async _makePublic(token, fileId) {
