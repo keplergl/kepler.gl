@@ -186,6 +186,7 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
 
   const onLogout = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       await provider.logout();
     } catch (error) {

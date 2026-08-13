@@ -227,13 +227,9 @@ export default class DropboxProvider extends Provider {
         await this._dropbox.authTokenRevoke();
       }
     } catch (err) {
-      // Ignore revoke failures (e.g. already-invalid token)
+      // Ignore revoke failures (e.g. already-invalid/expired token)
     }
-    if (Window.localStorage) {
-      Window.localStorage.removeItem('dropbox');
-    }
-    // re instantiate dropbox
-    this._initializeDropbox();
+    this._clearAuth();
   }
 
   isEnabled() {
@@ -306,6 +302,27 @@ export default class DropboxProvider extends Provider {
     this._dropbox.setClientId(this.clientId);
   }
 
+  _clearAuth() {
+    if (Window.localStorage) {
+      Window.localStorage.removeItem('dropbox');
+    }
+    this._initializeDropbox();
+  }
+
+  _getErrorSummary(error) {
+    return (
+      (error && error.error && error.error.error_summary) ||
+      (typeof error?.message === 'string' ? error.message : '') ||
+      ''
+    );
+  }
+
+  _isInvalidTokenError(error) {
+    const summary = this._getErrorSummary(error);
+    // Dropbox may return invalid_access_token or expired_access_token
+    return typeof summary === 'string' && /(invalid|expired)_access_token/i.test(summary);
+  }
+
   async getUser() {
     const token = this.getAccessToken();
     if (!token) {
@@ -315,21 +332,18 @@ export default class DropboxProvider extends Provider {
       const response = await this._dropbox.usersGetCurrentAccount();
       return this._getUserFromAccount(response);
     } catch (error) {
+      // Stale token in localStorage — treat as logged out so the tile shows Login
+      if (this._isInvalidTokenError(error)) {
+        this._clearAuth();
+        return null;
+      }
       throw this._handleDropboxError(error);
     }
   }
 
   _handleDropboxError(error) {
-    const summary =
-      (error && error.error && error.error.error_summary) ||
-      (typeof error?.message === 'string' ? error.message : '');
-
-    // Stale / revoked token left in localStorage — clear so Login is shown again
-    if (typeof summary === 'string' && /invalid_access_token/i.test(summary)) {
-      if (Window.localStorage) {
-        Window.localStorage.removeItem('dropbox');
-      }
-      this._initializeDropbox();
+    if (this._isInvalidTokenError(error)) {
+      this._clearAuth();
       return new Error('Dropbox session expired. Please log in again.');
     }
 
@@ -409,10 +423,14 @@ export default class DropboxProvider extends Provider {
    * @param {string} path
    */
   _authLink(path = 'auth') {
-    return this._dropbox.getAuthenticationUrl(
+    const url = this._dropbox.getAuthenticationUrl(
       `${Window.location.origin}/${path}`,
       btoa(JSON.stringify({handler: 'dropbox', origin: Window.location.origin}))
     );
+    // SDK has no force_reauthentication option; without it Dropbox may silently
+    // re-authorize the same browser session after Kepler logout.
+    const sep = String(url).includes('?') ? '&' : '?';
+    return `${url}${sep}force_reauthentication=true`;
   }
 
   /**
