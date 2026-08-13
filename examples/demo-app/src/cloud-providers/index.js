@@ -31,11 +31,11 @@ export const CLOUD_PROVIDERS = [
     userMapsURL: FOURSQUARE_USER_MAPS_URL
   }),
   new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME),
-  new CartoProvider(CARTO_CLIENT_ID),
   new GoogleDriveProvider({
     clientId: GOOGLE_DRIVE_CLIENT_ID,
     appName: GOOGLE_DRIVE_APP_NAME
-  })
+  }),
+  new CartoProvider(CARTO_CLIENT_ID)
 ];
 
 export function getCloudProvider(providerName) {
