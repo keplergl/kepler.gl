@@ -73,7 +73,17 @@ import {
 } from 'test/fixtures/geojson';
 import tripCsvData, {tripCsvDataInfo, expectedCoordinates} from 'test/fixtures/test-trip-csv-data';
 import tripGeojson, {timeStampDomain, tripDataInfo} from 'test/fixtures/trip-geojson';
-import {mockPolygonFeature, mockPolygonFeature2, mockPolygonData} from 'test/fixtures/polygon';
+import {
+  mockPolygonFeature,
+  mockPolygonFeature2,
+  mockPolygonData,
+  mockDualLonLatRows,
+  mockStartRegionPolygon,
+  mockEndRegionPolygon,
+  mockEastOverlapPolygon,
+  mockWestOnlyPolygon,
+  mockEastOnlyPolygon
+} from 'test/fixtures/polygon';
 
 // test helpers
 import {
@@ -5545,6 +5555,208 @@ test('#visStateReducer -> POLYGON: setPolygonFilterLayer: H3', t => {
     [1, 3, 5, 8],
     'should filter layer data'
   );
+  t.end();
+});
+
+function loadDualLonLatPolygonState() {
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {
+            name: 'start_point_lat',
+            format: '',
+            fieldIdx: 0,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'start_point_lng',
+            format: '',
+            fieldIdx: 1,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lat',
+            format: '',
+            fieldIdx: 2,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lng',
+            format: '',
+            fieldIdx: 3,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          }
+        ],
+        rows: mockDualLonLatRows
+      },
+      info: {
+        label: 'trips.csv',
+        size: 144,
+        id: 'trips'
+      }
+    }
+  ];
+
+  return applyActions(reducer, {...INITIAL_VIS_STATE}, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: true, keepExistingConfig: false}, {}]
+    }
+  ]);
+}
+
+function pointLayerByLat(state, latField) {
+  return state.layers.find(
+    l => l.type === 'point' && l.config.columns?.lat?.value === latField
+  );
+}
+
+function layerDataIndexes(state, layer) {
+  return state.layerData[state.layers.indexOf(layer)].data.map(d => d.index);
+}
+
+test('#visStateReducer -> POLYGON: independent polygons on two layers', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+  const endLayer = pointLayerByLat(state, 'end_point_lat');
+
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([mockStartRegionPolygon, mockEndRegionPolygon])
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockStartRegionPolygon));
+  state = reducer(
+    state,
+    VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon)
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEndRegionPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(endLayer, mockEndRegionPolygon));
+
+  t.equal(state.filters.length, 2, 'Should create one polygon filter per feature');
+  t.deepEqual(
+    state.datasets.trips.filteredIndex,
+    [0, 1, 2, 3],
+    'dataset filteredIndex should ignore polygon filters'
+  );
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [0, 1],
+    'start layer should keep only points inside the start-region polygon'
+  );
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[endLayer.id],
+    [1, 2],
+    'end layer should keep only points inside the end-region polygon'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [0, 1],
+    'start layer data should match its per-layer polygon index'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, endLayer),
+    [1, 2],
+    'end layer data should match its per-layer polygon index'
+  );
+
+  state = reducer(state, VisStateActions.applyCPUFilter('trips'));
+  t.deepEqual(
+    state.datasets.trips.filteredIdxCPU,
+    [0, 1, 2],
+    'filtered export should be the union of independently visible rows'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: intersecting polygons AND on the same layer', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+  const endLayer = pointLayerByLat(state, 'end_point_lat');
+
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([mockStartRegionPolygon, mockEastOverlapPolygon])
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockStartRegionPolygon));
+  state = reducer(
+    state,
+    VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon)
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEastOverlapPolygon));
+  state = reducer(
+    state,
+    VisStateActions.setPolygonFilterLayer(startLayer, mockEastOverlapPolygon)
+  );
+
+  t.equal(state.filters.length, 2, 'Should create two polygon filters on the same layer');
+  t.deepEqual(
+    state.filters.map(f => f.layerId),
+    [[startLayer.id], [startLayer.id]],
+    'Both polygons should target only the start layer'
+  );
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [1],
+    'start layer should keep only the intersection of both polygons'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [1],
+    'start layer data should show only the intersecting point'
+  );
+  t.equal(
+    state.datasets.trips.filteredIndexByLayer[endLayer.id],
+    undefined,
+    'untargeted end layer should not have a per-layer polygon index'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, endLayer),
+    [0, 1, 2, 3],
+    'untargeted end layer should keep all points'
+  );
+
+  state = reducer(state, VisStateActions.toggleFilterFeature(1));
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [0, 1],
+    'disabling one polygon should restore the remaining polygon filter'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [0, 1],
+    'start layer data should match the remaining polygon'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: disjoint polygons AND on the same layer', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+
+  state = reducer(state, VisStateActions.setFeatures([mockWestOnlyPolygon, mockEastOnlyPolygon]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockWestOnlyPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockWestOnlyPolygon));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEastOnlyPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockEastOnlyPolygon));
+
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [],
+    'start layer should keep no points when two polygons do not overlap'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [],
+    'start layer data should be empty when polygon filters have no intersection'
+  );
+
   t.end();
 });
 
