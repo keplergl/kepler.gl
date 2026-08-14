@@ -7,7 +7,9 @@ import {
   getTimeRangeFilterKeyframes,
   getBeforeLayerId,
   getStaticMapProps,
-  getAnimatableFilters
+  getAnimatableFilters,
+  getVideoExportDevicePixelRatio,
+  pinExportVideoDevicePixelRatio
 } from './hubble-utils';
 
 jest.mock('@kepler.gl/utils', () => ({
@@ -306,6 +308,44 @@ describe('hubble-utils', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('synced');
+    });
+  });
+
+  describe('getVideoExportDevicePixelRatio', () => {
+    test('maps preview CSS width onto the selected export resolution', () => {
+      expect(getVideoExportDevicePixelRatio('1280x720', 320)).toBe(4);
+      expect(getVideoExportDevicePixelRatio('1920x1080', 540)).toBe(1920 / 540);
+    });
+
+    test('falls back to the default resolution when value is missing', () => {
+      expect(getVideoExportDevicePixelRatio(undefined, 320)).toBe(960 / 320);
+    });
+
+    test('returns 1 when preview width is 0', () => {
+      expect(getVideoExportDevicePixelRatio('1280x720', 0)).toBe(1);
+    });
+  });
+
+  describe('pinExportVideoDevicePixelRatio', () => {
+    test('pins devicePixelRatio to the export scale and ignores preview-time writes', () => {
+      const original = window.devicePixelRatio;
+      const restore = pinExportVideoDevicePixelRatio('1280x720', 320);
+
+      expect(window.devicePixelRatio).toBe(4);
+      window.devicePixelRatio = 1;
+      expect(window.devicePixelRatio).toBe(4);
+
+      restore();
+      expect(window.devicePixelRatio).toBe(original);
+    });
+
+    test('restore unpins devicePixelRatio so it is no longer the export scale', () => {
+      const restore = pinExportVideoDevicePixelRatio('1920x1080', 480);
+      expect(window.devicePixelRatio).toBe(4);
+
+      restore();
+      expect(typeof window.devicePixelRatio).toBe('number');
+      expect(window.devicePixelRatio).not.toBe(4);
     });
   });
 });

@@ -54,11 +54,13 @@ jest.mock('./hubble-utils', () => ({
     views: {}
   })),
   getTimeRangeFilterKeyframes: jest.fn(),
-  getAnimatableFilters: jest.fn(() => [])
+  getAnimatableFilters: jest.fn(() => []),
+  pinExportVideoDevicePixelRatio: jest.fn(() => () => {})
 }));
 
 import ExportVideoModalFactory from './export-video-modal';
 import {DeckShadowCompositingEffect} from '@kepler.gl/effects';
+import {pinExportVideoDevicePixelRatio} from './hubble-utils';
 
 function renderWithThemeLocal(component) {
   return render(
@@ -440,6 +442,18 @@ describe('ExportVideoModal', () => {
 
       expect(effects.length).toBe(1);
       expect(effects[0]).toBe(nonShadowEffect);
+    });
+  });
+
+  describe('export-scale devicePixelRatio pin', () => {
+    test('pins devicePixelRatio for standard (non-swipe, non-globe) export', async () => {
+      await renderAndWaitForPanel();
+
+      expect(pinExportVideoDevicePixelRatio).toHaveBeenCalled();
+      const [resolution, exportVideoWidth] = pinExportVideoDevicePixelRatio.mock.calls[0];
+      expect(resolution).toBe('1280x720');
+      expect(exportVideoWidth).toBeGreaterThanOrEqual(320);
+      expect(exportVideoWidth).toBeLessThanOrEqual(540);
     });
   });
 });

@@ -513,10 +513,11 @@ export class GlobeExportVideoPanelContainer extends Component<
     } = this.state;
 
     const timecode = this.getTimecode();
-    let canvasSize = this.getCanvasSize();
-    if (previewing) {
-      canvasSize = this._getContainer();
-    }
+    // Keep the export resolution during preview. Hubble drops to the CSS box
+    // size (DPR=1) for performance; that resizes the drawing buffer and
+    // misplaces layers relative to the camera. Idle and recording already
+    // render at export resolution, so preview should too.
+    const canvasSize = this.getCanvasSize();
 
     const isActive = rendering || previewing;
 

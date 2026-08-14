@@ -423,3 +423,69 @@ const RESOLUTIONS: Resolution[] = [
 export function getResolutionSetting(value: string): Resolution {
   return RESOLUTIONS.find(r => r.value === value) || RESOLUTIONS[0];
 }
+
+/**
+ * Pixel ratio that maps the CSS-sized preview box onto the selected export
+ * resolution (exportWidth / previewCssWidth).
+ */
+export function getVideoExportDevicePixelRatio(
+  resolution: string | undefined,
+  exportVideoWidth: number
+): number {
+  if (!exportVideoWidth) return 1;
+  const {width} = getResolutionSetting(resolution || '');
+  return Math.max(1, width / exportVideoWidth);
+}
+
+/**
+ * Pin `window.devicePixelRatio` to the export-scale ratio while the standard
+ * (MapLibre + Deck overlay) video-export preview is mounted.
+ *
+ * hubble.gl assigns `window.devicePixelRatio` so a small CSS preview can render
+ * at the selected export resolution. During animated preview it then drops that
+ * ratio to 1 (1:1 with the container) for performance. MapLibre picks up the
+ * drop and resizes its drawing buffer; the interleaved Deck overlay does not,
+ * so layers jump off the basemap. Pinning the ratio to the export scale keeps
+ * both renderers in sync for preview and recording.
+ *
+ * Must not pin to the native DPR: that captured recording at
+ * preview-CSS × nativeDPR instead of the selected quality.
+ *
+ * Returns a restore function.
+ */
+export function pinExportVideoDevicePixelRatio(
+  resolution: string | undefined,
+  exportVideoWidth: number
+): () => void {
+  if (typeof window === 'undefined') {
+    return () => {
+      /* no-op */
+    };
+  }
+
+  const scaledDpr = getVideoExportDevicePixelRatio(resolution, exportVideoWidth);
+  const fallbackDpr = window.devicePixelRatio;
+
+  Object.defineProperty(window, 'devicePixelRatio', {
+    configurable: true,
+    enumerable: true,
+    get: () => scaledDpr,
+    set: () => {
+      // Ignore hubble.gl's preview-time assignment (typically 1).
+    }
+  });
+
+  return () => {
+    delete (window as unknown as {devicePixelRatio?: number}).devicePixelRatio;
+    // Browser: deleting the own property restores Window.prototype's getter.
+    // jsdom: the own data property is gone, so put the previous value back.
+    if (window.devicePixelRatio == null) {
+      Object.defineProperty(window, 'devicePixelRatio', {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: fallbackDpr
+      });
+    }
+  };
+}

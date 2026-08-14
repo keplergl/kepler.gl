@@ -32,7 +32,8 @@ import {
   getBeforeLayerId,
   getHubbleDeckGlProps,
   getTimeRangeFilterKeyframes,
-  getAnimatableFilters
+  getAnimatableFilters,
+  pinExportVideoDevicePixelRatio
 } from './hubble-utils';
 import {useFogHeightAnimation} from './fog-height-animation';
 
@@ -398,6 +399,17 @@ const ExportVideoModalFactory = () => {
     // itself; the flat maplibre base map must be disabled so it doesn't render a
     // 2D Mercator map behind/around the globe.
     const isGlobeEnabled = Boolean(mapState?.globe?.enabled);
+
+    useEffect(() => {
+      // hubble.gl drops window.devicePixelRatio to 1 during animated preview so
+      // the drawing buffer matches the CSS box. MapLibre resizes with that drop;
+      // the interleaved Deck overlay does not, and layers leave the basemap.
+      // Pin to the export-scale ratio (not the native DPR) so preview stays
+      // aligned and recording still captures at the selected quality.
+      // Swipe/globe previews own their canvases and manage pixel ratio themselves.
+      if (isSwipeMode || isGlobeEnabled) return undefined;
+      return pinExportVideoDevicePixelRatio(videoConfiguration.resolution, exportVideoWidth);
+    }, [isSwipeMode, isGlobeEnabled, videoConfiguration.resolution, exportVideoWidth]);
 
     const onFilterFrameUpdate = useCallback(
       (filterIdx: number, name: string, value: any) => {
