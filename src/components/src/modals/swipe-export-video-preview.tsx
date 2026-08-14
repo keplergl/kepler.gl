@@ -178,13 +178,17 @@ export class SwipeExportVideoPreview extends Component<
     if (!leftCanvas || !rightCanvas || !outputCanvas) return;
 
     const percentage = this._getCurrentSwipePercentage();
+    const globe = this.props.mapData?.mapState?.globe;
+    const showStars = Boolean(globe?.enabled && globe?.config?.stars);
+
     compositeSwipeFrame(
       leftCanvas,
       rightCanvas,
       outputCanvas,
       percentage,
       true,
-      this.props.backgroundColor
+      this.props.backgroundColor,
+      showStars
     );
   }
 
