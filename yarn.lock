@@ -5661,10 +5661,10 @@ __metadata:
     "@kepler.gl/types": "npm:3.3.0-alpha.6"
     "@kepler.gl/utils": "npm:3.3.0-alpha.6"
     "@reduxjs/toolkit": "npm:^1.7.2"
-    "@types/lodash": "npm:4.17.5"
+    "@types/lodash": "npm:4.17.24"
     "@types/react-redux": "npm:^7.1.23"
     "@types/redux-actions": "npm:^2.6.2"
-    lodash: "npm:4.17.23"
+    lodash: "npm:4.18.1"
     react-palm: "npm:^3.3.8"
     react-redux: "npm:^8.0.5"
     redux: "npm:^5.0.0"
@@ -5775,7 +5775,7 @@ __metadata:
     "@types/d3-scale": "npm:^3.2.2"
     "@types/d3-selection": "npm:^3.0.2"
     "@types/exenv": "npm:^1.2.0"
-    "@types/lodash": "npm:4.17.5"
+    "@types/lodash": "npm:4.17.24"
     "@types/react": "npm:^19.0.0"
     "@types/react-copy-to-clipboard": "npm:^5.0.2"
     "@types/react-dom": "npm:^19.0.0"
@@ -5913,11 +5913,11 @@ __metadata:
     "@math.gl/web-mercator": "npm:^4.1.0"
     "@types/d3-array": "npm:^2.8.0"
     "@types/geojson": "npm:^7946.0.8"
-    "@types/lodash": "npm:4.17.5"
+    "@types/lodash": "npm:4.17.24"
     "@types/supercluster": "npm:^7.1.0"
     d3-array: "npm:^2.8.0"
     global: "npm:^4.3.0"
-    lodash: "npm:4.17.23"
+    lodash: "npm:4.18.1"
     pbf: "npm:^3.1.0"
     supercluster: "npm:^7.1.0"
     viewport-mercator-project: "npm:^6.0.0"
@@ -5938,6 +5938,7 @@ __metadata:
     "@monaco-editor/react": "npm:^4.7.0"
     "@radix-ui/react-collapsible": "npm:^1.1.0"
     apache-arrow: "npm:>=15.0.0"
+    lodash: "npm:4.18.1"
     monaco-editor: "npm:^0.52.0"
     react-resizable-panels: "npm:^2.1.7"
   languageName: unknown
@@ -6005,7 +6006,7 @@ __metadata:
     "@turf/helpers": "npm:^7.2.0"
     "@types/geojson": "npm:^7946.0.8"
     "@types/keymirror": "npm:^0.1.1"
-    "@types/lodash": "npm:4.17.5"
+    "@types/lodash": "npm:4.17.24"
     "@types/styled-components": "npm:^5.1.32"
     a5-js: "npm:^0.7.3"
     apache-arrow: "npm:>=15.0.0"
@@ -6016,7 +6017,7 @@ __metadata:
     d3-shape: "npm:^1.2.0"
     global: "npm:^4.3.0"
     keymirror: "npm:^0.1.1"
-    lodash: "npm:4.17.23"
+    lodash: "npm:4.18.1"
     long: "npm:^4.0.0"
     markdown-to-jsx: "npm:^7.7.6"
     prop-types: "npm:^15.6.0"
@@ -6093,14 +6094,14 @@ __metadata:
     "@turf/bbox": "npm:^7.2.0"
     "@turf/bbox-polygon": "npm:^7.2.0"
     "@turf/boolean-within": "npm:^7.2.0"
-    "@types/lodash": "npm:4.17.5"
+    "@types/lodash": "npm:4.17.24"
     "@types/redux-actions": "npm:^2.6.2"
     copy-to-clipboard: "npm:^3.3.1"
     d3-color: "npm:^3.1.0"
     d3-dsv: "npm:^2.0.0"
     deepmerge: "npm:^4.2.2"
     global: "npm:^4.3.0"
-    lodash: "npm:4.17.23"
+    lodash: "npm:4.18.1"
     react-palm: "npm:^3.3.8"
     redux: "npm:^5.0.0"
     redux-actions: "npm:^2.2.1"
@@ -6120,11 +6121,11 @@ __metadata:
     "@kepler.gl/utils": "npm:3.3.0-alpha.6"
     "@loaders.gl/loader-utils": "npm:^4.4.1"
     "@types/keymirror": "npm:^0.1.1"
-    "@types/lodash": "npm:4.17.5"
+    "@types/lodash": "npm:4.17.24"
     apache-arrow: "npm:>=15.0.0"
     global: "npm:^4.3.0"
     keymirror: "npm:^0.1.1"
-    lodash: "npm:4.17.23"
+    lodash: "npm:4.18.1"
   languageName: unknown
   linkType: soft
 
@@ -6149,10 +6150,10 @@ __metadata:
     "@loaders.gl/mvt": "npm:^4.4.1"
     "@loaders.gl/pmtiles": "npm:^4.4.1"
     "@types/d3-array": "npm:^2.8.0"
-    "@types/lodash": "npm:4.17.5"
+    "@types/lodash": "npm:4.17.24"
     d3-array: "npm:^2.8.0"
     global: "npm:^4.3.0"
-    lodash: "npm:4.17.23"
+    lodash: "npm:4.18.1"
     moment: "npm:^2.10.6"
     react-palm: "npm:^3.3.8"
     type-analyzer: "npm:0.4.0"
@@ -6197,7 +6198,7 @@ __metadata:
     "@turf/helpers": "npm:^7.2.0"
     "@types/d3-array": "npm:^2.8.0"
     "@types/keymirror": "npm:^0.1.1"
-    "@types/lodash": "npm:4.17.5"
+    "@types/lodash": "npm:4.17.24"
     apache-arrow: "npm:>=15.0.0"
     d3-array: "npm:^2.8.0"
     d3-color: "npm:^3.1.0"
@@ -6207,7 +6208,7 @@ __metadata:
     global: "npm:^4.3.0"
     h3-js: "npm:^4.4.0"
     keymirror: "npm:^0.1.1"
-    lodash: "npm:4.17.23"
+    lodash: "npm:4.18.1"
     mapbox-gl: "npm:1.13.1"
     maplibre-gl: "npm:^4.0.0"
     maplibregl-mapbox-request-transformer: "npm:^0.0.2"
@@ -12084,10 +12085,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.17.5":
-  version: 4.17.5
-  resolution: "@types/lodash@npm:4.17.5"
-  checksum: 10c0/55924803ed853e72261512bd3eaf2c5b16558c3817feb0a3125ef757afe46e54b86f33d1960e40b7606c0ddab91a96f47966bf5e6006b7abfd8994c13b04b19b
+"@types/lodash@npm:4.17.24":
+  version: 4.17.24
+  resolution: "@types/lodash@npm:4.17.24"
+  checksum: 10c0/b72f60d4daacdad1fa643edb3faba204c02a01eb1ac00a83ff73496a6d236fc55e459c06106e8ced42277dba932d087d8fc090f8de4ef590d3f91e6d6f7ce85a
   languageName: node
   linkType: hard
 
@@ -24492,10 +24493,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:4.17.23":
-  version: 4.17.23
-  resolution: "lodash@npm:4.17.23"
-  checksum: 10c0/1264a90469f5bb95d4739c43eb6277d15b6d9e186df4ac68c3620443160fc669e2f14c11e7d8b2ccf078b81d06147c01a8ccced9aab9f9f63d50dcf8cace6bf6
+"lodash@npm:4.18.1":
+  version: 4.18.1
+  resolution: "lodash@npm:4.18.1"
+  checksum: 10c0/757228fc68805c59789e82185135cf85f05d0b2d3d54631d680ca79ec21944ec8314d4533639a14b8bcfbd97a517e78960933041a5af17ecb693ec6eecb99a27
   languageName: node
   linkType: hard
 

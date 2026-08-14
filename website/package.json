@@ -19,7 +19,7 @@
   "dependencies": {
     "classnames": "^2.2.5",
     "global": "^4.3.2",
-    "lodash": "4.17.23",
+    "lodash": "4.18.1",
     "prop-types": "^15.6.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
