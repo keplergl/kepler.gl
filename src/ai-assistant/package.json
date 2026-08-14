@@ -50,7 +50,7 @@
     "color-interpolate": "^1.0.5",
     "global": "^4.3.0",
     "ollama-ai-provider-v2": "^0.0.5",
-    "react-intl": "^6.3.0",
+    "react-intl": "^7.0.0",
     "usehooks-ts": "^3.1.0"
   },
   "nyc": {
