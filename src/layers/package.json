@@ -75,7 +75,7 @@
     "buffer": "6.0.3",
     "d3-array": "^2.8.0",
     "d3-format": "^3.1.0",
-    "d3-interpolate": "^2.0.1",
+    "d3-interpolate": "^3.0.1",
     "d3-shape": "^1.2.0",
     "global": "^4.3.0",
     "keymirror": "^0.1.1",
