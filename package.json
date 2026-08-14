@@ -278,7 +278,8 @@
     "jpeg-js": "^0.4.3",
     "lodash": "4.17.23",
     "minimist": "1.2.6",
-    "node-fetch": "2.6.1",
+    "node-fetch": "2.7.0",
+    "thrift": "0.23.0",
     "tough-cookie": "4.0.0",
     "sha.js": "2.4.12"
   },
