@@ -41,6 +41,31 @@ import {KeplerTableModel} from './types';
 type Datasets = any;
 
 /**
+ * Merge per-layer polygon-filtered indices into a dataset-level index.
+ * When any layers are polygon-filtered, take the union of their indices (a row is kept if it
+ * is visible on at least one targeted layer), then intersect with the base index.
+ * Used for filtered export and filter plots/histograms.
+ */
+export function mergePolygonLayerIndexes(
+  baseIndex: number[],
+  filteredIndexByLayer: Record<string, number[]> = {}
+): number[] {
+  const layerIndexes = Object.values(filteredIndexByLayer);
+  if (!layerIndexes.length) {
+    return baseIndex;
+  }
+
+  const union = new Set<number>();
+  for (const indexes of layerIndexes) {
+    for (const idx of indexes) {
+      union.add(idx);
+    }
+  }
+
+  return baseIndex.filter(i => union.has(i));
+}
+
+/**
  *
  * @param thresholds
  * @param values
@@ -242,8 +267,11 @@ export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
 
   const {
     gpuFilter: {filterValueUpdateTriggers, filterRange, filterValueAccessor},
-    filteredIndex
+    filteredIndex,
+    filteredIndexByLayer
   } = dataset;
+  // Polygon filters are per-layer; plots use the union of targeted layer indices
+  const plotFilteredIndex = mergePolygonLayerIndexes(filteredIndex, filteredIndexByLayer);
   const getFilterValue = filterValueAccessor(dataset.dataContainer)();
 
   const allChannels = Object.keys(filterValueUpdateTriggers)
@@ -251,7 +279,7 @@ export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
     .filter(i => Object.values(filterValueUpdateTriggers)[i]);
   const skipAll = !allChannels.filter(i => !skipIndexes.includes(i)).length;
   if (skipAll) {
-    return filteredIndex;
+    return plotFilteredIndex;
   }
 
   const filterData = getFilterDataFunc(
@@ -261,7 +289,7 @@ export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
     skipIndexes
   );
 
-  return filteredIndex.filter(filterData);
+  return plotFilteredIndex.filter(filterData);
 }
 
 function getSkipIndexes(dataset, filter) {

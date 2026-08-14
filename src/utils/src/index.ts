@@ -40,6 +40,7 @@ export {
   histogramFromValues,
   histogramFromDomain,
   histogramFromOrdinal,
+  mergePolygonLayerIndexes,
   runGpuFilterForPlot,
   updateTimeFilterPlotType
 } from './plot';
