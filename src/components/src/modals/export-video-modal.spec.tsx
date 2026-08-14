@@ -55,7 +55,10 @@ jest.mock('./hubble-utils', () => ({
   })),
   getTimeRangeFilterKeyframes: jest.fn(),
   getAnimatableFilters: jest.fn(() => []),
-  getResolutionSetting: jest.requireActual('./hubble-utils').getResolutionSetting
+  getResolutionSetting: jest.fn(value => {
+    const [width, height] = String(value || '1280x720').split('x').map(Number);
+    return {value, width, height, label: value};
+  })
 }));
 
 import ExportVideoModalFactory from './export-video-modal';
@@ -441,6 +444,32 @@ describe('ExportVideoModal', () => {
 
       expect(effects.length).toBe(1);
       expect(effects[0]).toBe(nonShadowEffect);
+    });
+  });
+
+  describe('devicePixelRatio freeze', () => {
+    const originalDpr = window.devicePixelRatio;
+
+    afterEach(() => {
+      Object.defineProperty(window, 'devicePixelRatio', {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: originalDpr
+      });
+    });
+
+    test('pins devicePixelRatio to export scale and restores it on unmount', async () => {
+      const {unmount} = await renderAndWaitForPanel();
+      const {exportVideoWidth} = mockExportVideoPanelContainer.mock.calls[0][0];
+
+      expect(window.devicePixelRatio).toBe(1280 / exportVideoWidth);
+
+      window.devicePixelRatio = 1;
+      expect(window.devicePixelRatio).toBe(1280 / exportVideoWidth);
+
+      unmount();
+      expect(window.devicePixelRatio).toBe(originalDpr);
     });
   });
 });
