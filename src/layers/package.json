@@ -84,7 +84,7 @@
     "markdown-to-jsx": "^7.7.6",
     "prop-types": "^15.6.0",
     "react": "^19.0.0",
-    "react-intl": "^6.3.0",
+    "react-intl": "^7.0.0",
     "reselect": "^5.0.0",
     "s2-geometry": "^1.2.10",
     "styled-components": "6.4.3",
