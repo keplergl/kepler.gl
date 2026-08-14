@@ -94,11 +94,14 @@ export default class FoursquareProvider extends Provider {
   }
 
   async getUser() {
-    return this._auth0.getUser();
+    const user = await this._auth0.getUser();
+    return this._mapAuth0User(user);
   }
 
   async login() {
-    return this._auth0.loginWithPopup(undefined, {popup: openPopup()});
+    await this._auth0.loginWithPopup(undefined, {popup: openPopup()});
+    // CloudTile expects a user object; Auth0 loginWithPopup resolves to void.
+    return this.getUser();
   }
 
   async logout() {
@@ -106,6 +109,17 @@ export default class FoursquareProvider extends Provider {
       // this make sure after logging out the sdk will not redirect the user
       openUrl: false
     });
+  }
+
+  _mapAuth0User(user) {
+    if (!user) {
+      return null;
+    }
+    return {
+      name: user.name || user.nickname || user.email || 'Foursquare User',
+      email: user.email || '',
+      thumbnail: user.picture
+    };
   }
 
   async uploadMap({mapData, options = {}}) {

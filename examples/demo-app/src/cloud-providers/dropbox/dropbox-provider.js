@@ -58,45 +58,85 @@ export default class DropboxProvider extends Provider {
   async login() {
     return new Promise((resolve, reject) => {
       const link = this._authLink();
-
       const authWindow = Window.open(link, '_blank', 'width=1024,height=716');
 
+      if (!authWindow) {
+        reject(new Error('Dropbox login popup was blocked'));
+        return;
+      }
+
+      let settled = false;
+      let closePoll = null;
+
+      const cleanup = () => {
+        Window.removeEventListener('message', handleToken);
+        if (closePoll !== null) {
+          Window.clearInterval(closePoll);
+          closePoll = null;
+        }
+      };
+
+      const settleReject = err => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        cleanup();
+        reject(err instanceof Error ? err : new Error(String(err)));
+      };
+
       const handleToken = async event => {
-        // if user has dev tools this will skip all the react-devtools events
-        if (!event.data.token) {
+        // Skip react-devtools / cross-origin noise
+        if (event.origin !== Window.location.origin || !event.data?.token) {
+          return;
+        }
+        if (settled) {
           return;
         }
 
-        if (authWindow) {
+        // Mark settled before closing the popup so the close poll does not treat
+        // a successful login as a cancel.
+        settled = true;
+        cleanup();
+        try {
           authWindow.close();
-          Window.removeEventListener('message', handleToken);
+        } catch (err) {
+          // ignore
         }
 
         const {token} = event.data;
-
         if (!token) {
-          reject('Failed to login to Dropbox');
+          reject(new Error('Failed to login to Dropbox'));
           return;
         }
 
-        this._dropbox.setAccessToken(token);
-        // save user name
-        const user = await this.getUser();
+        try {
+          this._dropbox.setAccessToken(token);
+          const user = await this.getUser();
 
-        if (Window.localStorage) {
-          Window.localStorage.setItem(
-            'dropbox',
-            JSON.stringify({
-              // dropbox token doesn't expire unless revoked by the user
-              token,
-              user,
-              timestamp: new Date()
-            })
-          );
+          if (Window.localStorage) {
+            Window.localStorage.setItem(
+              'dropbox',
+              JSON.stringify({
+                // dropbox token doesn't expire unless revoked by the user
+                token,
+                user,
+                timestamp: new Date()
+              })
+            );
+          }
+
+          resolve(user);
+        } catch (err) {
+          reject(err instanceof Error ? err : new Error(String(err)));
         }
-
-        resolve(user);
       };
+
+      closePoll = Window.setInterval(() => {
+        if (!settled && authWindow.closed) {
+          settleReject(new Error('Dropbox login was cancelled'));
+        }
+      }, 500);
 
       Window.addEventListener('message', handleToken);
     });
@@ -227,13 +267,9 @@ export default class DropboxProvider extends Provider {
         await this._dropbox.authTokenRevoke();
       }
     } catch (err) {
-      // Ignore revoke failures (e.g. already-invalid token)
+      // Ignore revoke failures (e.g. already-invalid/expired token)
     }
-    if (Window.localStorage) {
-      Window.localStorage.removeItem('dropbox');
-    }
-    // re instantiate dropbox
-    this._initializeDropbox();
+    this._clearAuth();
   }
 
   isEnabled() {
@@ -306,6 +342,27 @@ export default class DropboxProvider extends Provider {
     this._dropbox.setClientId(this.clientId);
   }
 
+  _clearAuth() {
+    if (Window.localStorage) {
+      Window.localStorage.removeItem('dropbox');
+    }
+    this._initializeDropbox();
+  }
+
+  _getErrorSummary(error) {
+    return (
+      (error && error.error && error.error.error_summary) ||
+      (typeof error?.message === 'string' ? error.message : '') ||
+      ''
+    );
+  }
+
+  _isInvalidTokenError(error) {
+    const summary = this._getErrorSummary(error);
+    // Dropbox may return invalid_access_token or expired_access_token
+    return typeof summary === 'string' && /(invalid|expired)_access_token/i.test(summary);
+  }
+
   async getUser() {
     const token = this.getAccessToken();
     if (!token) {
@@ -315,21 +372,18 @@ export default class DropboxProvider extends Provider {
       const response = await this._dropbox.usersGetCurrentAccount();
       return this._getUserFromAccount(response);
     } catch (error) {
+      // Stale token in localStorage — treat as logged out so the tile shows Login
+      if (this._isInvalidTokenError(error)) {
+        this._clearAuth();
+        return null;
+      }
       throw this._handleDropboxError(error);
     }
   }
 
   _handleDropboxError(error) {
-    const summary =
-      (error && error.error && error.error.error_summary) ||
-      (typeof error?.message === 'string' ? error.message : '');
-
-    // Stale / revoked token left in localStorage — clear so Login is shown again
-    if (typeof summary === 'string' && /invalid_access_token/i.test(summary)) {
-      if (Window.localStorage) {
-        Window.localStorage.removeItem('dropbox');
-      }
-      this._initializeDropbox();
+    if (this._isInvalidTokenError(error)) {
+      this._clearAuth();
       return new Error('Dropbox session expired. Please log in again.');
     }
 
@@ -409,10 +463,14 @@ export default class DropboxProvider extends Provider {
    * @param {string} path
    */
   _authLink(path = 'auth') {
-    return this._dropbox.getAuthenticationUrl(
+    const url = this._dropbox.getAuthenticationUrl(
       `${Window.location.origin}/${path}`,
       btoa(JSON.stringify({handler: 'dropbox', origin: Window.location.origin}))
     );
+    // SDK has no force_reauthentication option; without it Dropbox may silently
+    // re-authorize the same browser session after Kepler logout.
+    const sep = String(url).includes('?') ? '&' : '?';
+    return `${url}${sep}force_reauthentication=true`;
   }
 
   /**
