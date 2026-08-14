@@ -534,11 +534,10 @@ export class SwipeExportVideoPanelContainer extends Component<
     } = this.state;
 
     const timecode = this.getTimecode();
-    // Keep the export resolution during preview. Dropping to the CSS box size
-    // (DPR=1) desyncs MapLibre's drawing buffer from the Deck overlay, so
-    // layers jump off the basemap. Idle and recording already render at export
-    // resolution, so preview should too.
-    const canvasSize = this.getCanvasSize();
+    let canvasSize = this.getCanvasSize();
+    if (previewing) {
+      canvasSize = this._getContainer();
+    }
 
     const isActive = rendering || previewing;
 

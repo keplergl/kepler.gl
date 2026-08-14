@@ -33,7 +33,7 @@ import {
   getHubbleDeckGlProps,
   getTimeRangeFilterKeyframes,
   getAnimatableFilters,
-  pinExportVideoDevicePixelRatio
+  getResolutionSetting
 } from './hubble-utils';
 import {useFogHeightAnimation} from './fog-height-animation';
 
@@ -401,14 +401,31 @@ const ExportVideoModalFactory = () => {
     const isGlobeEnabled = Boolean(mapState?.globe?.enabled);
 
     useEffect(() => {
-      // hubble.gl drops window.devicePixelRatio to 1 during animated preview so
-      // the drawing buffer matches the CSS box. MapLibre resizes with that drop;
-      // the interleaved Deck overlay does not, and layers leave the basemap.
-      // Pin to the export-scale ratio (not the native DPR) so preview stays
-      // aligned and recording still captures at the selected quality.
-      // Swipe/globe previews own their canvases and manage pixel ratio themselves.
+      // Same freeze as before: hubble.gl writes window.devicePixelRatio to scale
+      // the preview, then sets it to 1 during animated preview, which desyncs
+      // MapLibre from the Deck overlay. Pin to the *export* scale (not native DPR)
+      // so preview stays aligned and recording still uses the selected quality.
       if (isSwipeMode || isGlobeEnabled) return undefined;
-      return pinExportVideoDevicePixelRatio(videoConfiguration.resolution, exportVideoWidth);
+
+      const {width} = getResolutionSetting(videoConfiguration.resolution || '');
+      const scaledDpr = exportVideoWidth ? Math.max(1, width / exportVideoWidth) : 1;
+      const descriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
+
+      Object.defineProperty(window, 'devicePixelRatio', {
+        configurable: true,
+        get: () => scaledDpr,
+        set: () => {
+          // no-op: ignore hubble.gl dropping DPR to 1 during preview
+        }
+      });
+
+      return () => {
+        if (descriptor) {
+          Object.defineProperty(window, 'devicePixelRatio', descriptor);
+        } else {
+          delete (window as {devicePixelRatio?: number}).devicePixelRatio;
+        }
+      };
     }, [isSwipeMode, isGlobeEnabled, videoConfiguration.resolution, exportVideoWidth]);
 
     const onFilterFrameUpdate = useCallback(
