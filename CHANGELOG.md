@@ -15,6 +15,23 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.7] - Aug 14 2026
+
+- e379e332 fix: polygon filtered index per layer, instead of per dataset (#3452)
+- 40a64eb7 fix: dropbox full logout; error on stale access token (#3627)
+- b313dfa2 feat(demo-app): add Google Drive cloud storage provider (#3623)
+- dead655a feat: A5 layer (#3625)
+- 29b8e479 fix: GlobehexagonCellLayer crash from Babel unbound super calls (#3622)
+- e8a644e4 fix: dropbox storage provider login issues (#3624)
+- a0bee767 feat: add optional theme switch toggle (#3620)
+- 997cba29 feat(globe): larger halo; globe controls fixes (#3621)
+- 621bb236 chore(deps): bump postcss from 8.4.49 to 8.5.26 in /website (#3619)
+- 24e6478c chore(deps): bump nanoid from 3.3.8 to 3.3.18 in /examples/demo-app (#3617)
+- 8458ee7f chore(deps): bump fast-uri from 3.1.2 to 3.1.5 (#3618)
+- 07422bfc fix: DuckDB GeoJSON import on newer duckdb-wasm (#3616)
+- b6ac552b chore: add duckdb vite example (#3615)
+- cb70edfa chore: upgrade examples to kepler.gl 3.3.0-alpha.6 (#3528)
+
 ## [3.3.0-alpha.6] - Aug 4 2026
 
 - 426d6051 feat: add loading spinner to exported HTML maps (#3612)
