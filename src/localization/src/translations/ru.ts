@@ -318,6 +318,8 @@ export default {
     showLegend: 'Показать легенду',
     disable3DMap: 'Отключить 3D Карту',
     DrawOnMap: 'Рисовать на карте',
+    copyAllSketches: 'Скопировать все наброски в буфер обмена как GeoJSON',
+    convertToLayer: 'Преобразовать наброски в слой GeoJSON и очистить рисунок',
     selectLocale: 'Выберите регион',
     switchToLightTheme: 'Переключить на светлую тему',
     switchToDarkTheme: 'Переключить на тёмную тему',

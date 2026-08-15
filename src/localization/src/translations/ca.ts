@@ -320,6 +320,8 @@ export default {
     showLegend: 'mostra llegenda',
     disable3DMap: 'Desactiva mapa 3D',
     DrawOnMap: 'Dibuixa al mapa',
+    copyAllSketches: 'Copia tots els esbossos al porta-retalls com a GeoJSON',
+    convertToLayer: 'Converteix els esbossos en una capa GeoJSON i esborra el dibuix',
     selectLocale: 'Selecciona configuració regional',
     switchToLightTheme: 'Canvia al tema clar',
     switchToDarkTheme: 'Canvia al tema fosc',

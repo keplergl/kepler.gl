@@ -369,6 +369,8 @@ export default {
     viewMode: 'View Mode',
     top: 'Top',
     DrawOnMap: 'Draw on map',
+    copyAllSketches: 'Copy all sketches to the clipboard as GeoJSON',
+    convertToLayer: 'Turn sketches into a new GeoJSON layer and clear the drawing',
     selectLocale: 'Select locale',
     switchToLightTheme: 'Switch to light theme',
     switchToDarkTheme: 'Switch to dark theme',

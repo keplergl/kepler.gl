@@ -316,6 +316,8 @@ export default {
     showLegend: '凡例を表示',
     disable3DMap: '3D地図を無効化',
     DrawOnMap: '地図上に図形を描画',
+    copyAllSketches: 'すべてのスケッチを GeoJSON としてクリップボードにコピー',
+    convertToLayer: 'スケッチを GeoJSON レイヤに変換し、描画をクリア',
     selectLocale: '言語設定',
     switchToLightTheme: 'ライトテーマに切り替え',
     switchToDarkTheme: 'ダークテーマに切り替え',

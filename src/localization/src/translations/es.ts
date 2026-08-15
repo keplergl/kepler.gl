@@ -321,6 +321,8 @@ export default {
     showLegend: 'Mostrar leyenda',
     disable3DMap: 'Desactivar mapa 3D',
     DrawOnMap: 'Dibujar en el mapa',
+    copyAllSketches: 'Copiar todos los bocetos al portapapeles como GeoJSON',
+    convertToLayer: 'Convertir los bocetos en una capa GeoJSON y borrar el dibujo',
     selectLocale: 'Seleccionar configuración regional',
     switchToLightTheme: 'Cambiar a tema claro',
     switchToDarkTheme: 'Cambiar a tema oscuro',

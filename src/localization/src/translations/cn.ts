@@ -307,6 +307,8 @@ export default {
     showLegend: '显示图例',
     disable3DMap: '禁用 3D 地图',
     DrawOnMap: '在地图上绘制',
+    copyAllSketches: '将所有草图以 GeoJSON 复制到剪贴板',
+    convertToLayer: '将草图转为 GeoJSON 图层并清除绘制',
     selectLocale: '选择语言',
     switchToLightTheme: '切换到浅色主题',
     switchToDarkTheme: '切换到深色主题',

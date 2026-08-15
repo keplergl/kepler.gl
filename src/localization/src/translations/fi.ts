@@ -319,6 +319,8 @@ export default {
     showLegend: 'Näytä selite',
     disable3DMap: 'Poistu 3D-näkymästä',
     DrawOnMap: 'Piirrä kartalle',
+    copyAllSketches: 'Kopioi kaikki luonnokset leikepöydälle GeoJSON-muodossa',
+    convertToLayer: 'Muunna luonnokset GeoJSON-tasoksi ja tyhjennä piirros',
     selectLocale: 'Valitse kielisyys',
     switchToLightTheme: 'Vaihda vaaleaan teemaan',
     switchToDarkTheme: 'Vaihda tummaan teemaan',

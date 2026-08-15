@@ -147,6 +147,7 @@ function MapDrawPanelFactory(
                 className="copy-all-geometry"
                 onClick={onCopyAllGeometry}
                 label="toolbar.copyAll"
+                tooltip="tooltip.copyAllSketches"
                 icon={actionIcons.copy}
                 disabled={!hasSketchFeatures}
               />
@@ -154,6 +155,7 @@ function MapDrawPanelFactory(
                 className="convert-to-layer"
                 onClick={() => onConvertEditorFeaturesToLayer?.()}
                 label="toolbar.convertToLayer"
+                tooltip="tooltip.convertToLayer"
                 icon={actionIcons.layers}
                 disabled={!hasSketchFeatures}
               />

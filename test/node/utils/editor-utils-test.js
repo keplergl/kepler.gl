@@ -418,5 +418,27 @@ test('editorLayerUtils -> filter polygons are styled differently from sketches',
     'Outline-only filter hover should use the original opaque yellow stroke'
   );
 
+  const layerWithPoint = getEditorLayer({
+    editorMenuActive: false,
+    editor: INITIAL_VIS_STATE.editor,
+    onSetFeatures: VisStateActions.setFeatures,
+    setSelectedFeature: VisStateActions.setSelectedFeature,
+    featureCollection: {
+      features: [
+        filterFeature,
+        {id: 'point-1', properties: {}, geometry: {type: 'Point', coordinates: [0, 0]}}
+      ],
+      type: 'FeatureCollection'
+    },
+    selectedFeatureIndexes: [],
+    viewport: null
+  });
+  t.ok(layerWithPoint.props.filled, 'Point sketches should enable fill so points are visible');
+  t.equal(
+    layerWithPoint.props.highlightColor({object: filterFeature})[3],
+    0xff,
+    'Filter hover should stay an opaque stroke even when point sketches enable fill'
+  );
+
   t.end();
 });
