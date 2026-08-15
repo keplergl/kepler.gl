@@ -7,7 +7,7 @@ import type {Deck, DeckProps, MapViewState} from '@deck.gl/core';
 import styled from 'styled-components';
 
 import {DeckAdapter} from '@hubble.gl/core';
-import {EXPORT_DECK_DEVICE_PROPS} from './hubble-utils';
+import {EXPORT_DECK_DEVICE_PROPS, getGlobeExportLayers} from './hubble-utils';
 
 const PreviewContainer = styled.div<{
   $width: number;
@@ -38,6 +38,7 @@ export type GlobeExportVideoPreviewProps = {
   durationMs: number;
   /** CSS color string for the area the globe does not cover. */
   backgroundColor: string;
+  mapProps?: Record<string, any>;
   /** Tileable star-field data URL, matching the live globe map CSS background. */
   starsImage?: string | null;
 };
@@ -86,19 +87,29 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
       resolution,
       exportVideoWidth,
       backgroundColor,
+      mapData,
+      mapProps,
       starsImage
     } = this.props;
     const {width, height} = this._getContainer();
     const deck = this.deckRef.current;
 
+    // Rebuild layers from the animated camera (hubble 2D: createKeplerLayers(mapData, viewState)).
+    const layers = getGlobeExportLayers(mapData, {
+      mapIndex: 0,
+      mapboxApiAccessToken: mapProps?.mapboxApiAccessToken,
+      mapboxApiUrl: mapProps?.mapboxApiUrl,
+      viewState
+    });
+
     // adapter.getProps injects `_animate` (and toggles `controller` off while
-    // recording) so hubble's KeplerAnimation can drive the camera. Layers,
-    // views, controller bounds and initialViewState come from `deckProps`
+    // recording) so hubble's KeplerAnimation can drive the camera. Views,
+    // controller bounds and initialViewState come from `deckProps`
     // (see getHubbleDeckGlProps). A controlled `viewState` keeps the preview in
     // sync with the animated camera and prevents the GlobeState assert.
     const adapterProps = adapter.getProps({
       deck: deck as any,
-      extraProps: deckProps as any
+      extraProps: {...deckProps, layers} as any
     }) as any;
 
     // Render the drawing buffer at the true export resolution regardless of the

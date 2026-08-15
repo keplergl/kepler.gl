@@ -546,6 +546,7 @@ export class GlobeExportVideoPanelContainer extends Component<
             saving={saving}
             durationMs={durationMs}
             deckProps={deckProps}
+            mapProps={this.props.mapProps}
             backgroundColor={this.getBackgroundColor()}
             starsImage={this.areStarsEnabled() ? getStarsBackgroundImage() : null}
           />

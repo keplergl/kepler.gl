@@ -236,7 +236,8 @@ export class SwipeExportVideoPreview extends Component<
       return getGlobeExportLayers(mapData, {
         mapIndex,
         mapboxApiAccessToken: mapProps?.mapboxApiAccessToken,
-        mapboxApiUrl: mapProps?.mapboxApiUrl
+        mapboxApiUrl: mapProps?.mapboxApiUrl,
+        viewState
       });
     }
 

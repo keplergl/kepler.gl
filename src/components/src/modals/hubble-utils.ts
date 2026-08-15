@@ -313,8 +313,14 @@ export function getGlobeExportLayers(
   {
     mapIndex,
     mapboxApiAccessToken,
-    mapboxApiUrl
-  }: {mapIndex: number; mapboxApiAccessToken?: string; mapboxApiUrl?: string}
+    mapboxApiUrl,
+    viewState
+  }: {
+    mapIndex: number;
+    mapboxApiAccessToken?: string;
+    mapboxApiUrl?: string;
+    viewState?: MapViewState;
+  }
 ) {
   const globe = keplerState.mapState?.globe;
   const globeBaseLayers = getGlobeBaseLayers({
@@ -323,12 +329,19 @@ export function getGlobeExportLayers(
     mapStyleType: keplerState.mapStyle?.styleType
   });
   const globeTopLayers = getGlobeTopLayers({globe});
-  const dataLayers = computeDeckLayers(keplerState, {
-    mapIndex,
-    primaryMap: mapIndex === 0,
-    mapboxApiAccessToken,
-    mapboxApiUrl
-  });
+  // Same as hubble createKeplerLayers: fold the animated camera into mapState so
+  // zoom-dependent props (scatterplot radiusScale) update each frame.
+  const dataLayers = computeDeckLayers(
+    viewState
+      ? {...keplerState, mapState: {...keplerState.mapState, ...viewState}}
+      : keplerState,
+    {
+      mapIndex,
+      primaryMap: mapIndex === 0,
+      mapboxApiAccessToken,
+      mapboxApiUrl
+    }
+  );
   return [...globeBaseLayers, ...dataLayers, ...globeTopLayers];
 }
 
