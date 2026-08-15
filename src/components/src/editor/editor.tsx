@@ -148,7 +148,12 @@ export default function EditorFactory(
         return false;
       }
       const tagName = element.tagName;
-      return tagName === 'INPUT' || tagName === 'TEXTAREA' || Boolean(element.isContentEditable);
+      return (
+        tagName === 'INPUT' ||
+        tagName === 'TEXTAREA' ||
+        tagName === 'SELECT' ||
+        Boolean(element.isContentEditable)
+      );
     };
 
     _onKeyPressed = (event: KeyboardEvent) => {

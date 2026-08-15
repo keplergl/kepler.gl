@@ -113,6 +113,10 @@ function FilterFeatureBadges({
             id: 'editor.polygonFilter',
             defaultMessage: 'Polygon filter'
           })}
+          aria-label={intl.formatMessage({
+            id: 'editor.polygonFilter',
+            defaultMessage: 'Polygon filter'
+          })}
           style={{left: badge.x, top: badge.y}}
           onClick={event => {
             event.stopPropagation();
