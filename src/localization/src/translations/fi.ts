@@ -382,6 +382,10 @@ export default {
     filterLayer: 'Suodata tasoja',
     filterLayerDisabled: 'Ei-monikulmiogeometrioita ei voi käyttää suodatukseen',
     copyGeometry: 'Kopioi geometria',
+    editProperties: 'Muokkaa ominaisuuksia',
+    propertyName: 'Ominaisuus',
+    propertyValue: 'Arvo',
+    removeProperty: 'Poista ominaisuus',
     polygonFilter: 'Polygonisuodatin',
     noLayersToFilter: 'Ei tasoja suodatettavaksi'
   },

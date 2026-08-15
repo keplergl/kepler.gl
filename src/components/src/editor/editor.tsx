@@ -44,6 +44,7 @@ interface EditorProps {
   onSelect: (f: Feature | null) => any;
   onSetEditorMode: (m: any) => void;
   onDeleteFeature: (f: Feature) => any;
+  onSetFeatureProperties: (f: Feature, properties: Record<string, unknown>) => any;
   onTogglePolygonFilter: (l: Layer, f: Feature) => any;
 }
 
@@ -65,6 +66,7 @@ export default function EditorFactory(
     currentFilter,
     onClose,
     onDeleteFeature,
+    onSetFeatureProperties,
     onToggleLayer,
     position
   }) => {
@@ -82,6 +84,7 @@ export default function EditorFactory(
                     currentFilter={currentFilter}
                     onClose={onClose}
                     onDeleteFeature={onDeleteFeature}
+                    onSetFeatureProperties={onSetFeatureProperties}
                     onToggleLayer={onToggleLayer}
                     position={position || null}
                   />
@@ -194,6 +197,10 @@ export default function EditorFactory(
       }
     };
 
+    _onSetFeatureProperties = (feature: Feature, properties: Record<string, unknown>) => {
+      this.props.onSetFeatureProperties(feature, properties);
+    };
+
     render() {
       const {className, datasets, editor, style, index} = this.props;
       const {selectedFeature, selectionContext} = editor;
@@ -211,6 +218,9 @@ export default function EditorFactory(
           currentFilter={currentFilter}
           onClose={this._closeFeatureAction}
           onDeleteFeature={this._onDeleteSelectedFeature}
+          onSetFeatureProperties={
+            this._onSetFeatureProperties as FeatureActionPanelProps['onSetFeatureProperties']
+          }
           onToggleLayer={this._togglePolygonFilter}
           position={position || null}
           className={className}

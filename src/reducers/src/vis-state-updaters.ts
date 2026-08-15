@@ -60,6 +60,7 @@ import {
   adjustValueToFilterDomain,
   errorNotification,
   editorFeaturesToFeatureCollection,
+  mergeUserFeatureProperties,
   toSketchFeature,
   featureToFilterValue,
   filterDatasetCPU,
@@ -136,6 +137,7 @@ import {processGeojson} from '@kepler.gl/processors';
 
 import {
   Filter,
+  Feature,
   InteractionConfig,
   AnimationConfig,
   FilterAnimationConfig,
@@ -3738,6 +3740,74 @@ export function setFeaturesUpdater(
   }
 
   return newState;
+}
+
+function findEditorFeature(state: VisState, feature?: Feature | null): Feature | null {
+  if (!feature?.id) {
+    return feature || null;
+  }
+  if (state.editor.selectedFeature?.id === feature.id) {
+    return state.editor.selectedFeature;
+  }
+  const fromEditor = state.editor.features.find(item => item.id === feature.id);
+  if (fromEditor) {
+    return fromEditor;
+  }
+  const filterId = getFilterIdInFeature(feature);
+  if (filterId) {
+    const filter = state.filters.find(item => item.id === filterId);
+    if (filter?.value) {
+      return filter.value;
+    }
+  }
+  return feature;
+}
+
+/**
+ * Set user-facing GeoJSON properties on a sketch or polygon-filter feature.
+ * @memberof visStateUpdaters
+ */
+export function setEditorFeaturePropertiesUpdater(
+  state: VisState,
+  {feature, properties}: VisStateActions.SetEditorFeaturePropertiesUpdaterAction
+): VisState {
+  const source = findEditorFeature(state, feature);
+  if (!source?.id) {
+    return state;
+  }
+
+  const nextFeature = mergeUserFeatureProperties(source, properties);
+  const filterId = getFilterIdInFeature(nextFeature);
+  const nextEditor = {
+    ...state.editor,
+    features: filterId
+      ? state.editor.features
+      : state.editor.features.map(item => (item.id === nextFeature.id ? nextFeature : item)),
+    selectedFeature:
+      state.editor.selectedFeature?.id === nextFeature.id
+        ? nextFeature
+        : state.editor.selectedFeature
+  };
+
+  const nextState = {
+    ...state,
+    editor: nextEditor
+  };
+
+  if (!filterId) {
+    return nextState;
+  }
+
+  const filterIdx = state.filters.findIndex(item => item.id === filterId);
+  if (filterIdx < 0) {
+    return nextState;
+  }
+
+  return setFilterUpdater(nextState, {
+    idx: filterIdx,
+    prop: 'value',
+    value: featureToFilterValue(nextFeature, filterId)
+  });
 }
 
 /**

@@ -6013,6 +6013,55 @@ test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_EDITOR_FEATURE_PROPERTIES', t => {
+  const pointFeature = {
+    type: 'Feature',
+    id: 'point-1',
+    properties: {isClosed: false},
+    geometry: {type: 'Point', coordinates: [0, 0]}
+  };
+
+  let state = {
+    ...INITIAL_VIS_STATE,
+    editor: {
+      ...INITIAL_VIS_STATE.editor,
+      features: [pointFeature],
+      selectedFeature: pointFeature
+    }
+  };
+
+  state = reducer(
+    state,
+    VisStateActions.setEditorFeatureProperties(pointFeature, {
+      name: 'Stop',
+      filterId: 'nope',
+      isClosed: true
+    })
+  );
+
+  t.equal(state.editor.features[0].properties.name, 'Stop', 'Should store user properties');
+  t.equal(
+    state.editor.selectedFeature.properties.name,
+    'Stop',
+    'Should keep the selected feature in sync'
+  );
+  t.equal(
+    state.editor.features[0].properties.isClosed,
+    false,
+    'Should preserve editor-only properties'
+  );
+  t.notOk(
+    state.editor.features[0].properties.filterId,
+    'Should ignore reserved keys from the payload'
+  );
+
+  state = reducer(state, VisStateActions.setEditorFeatureProperties(pointFeature, {}));
+  t.notOk(state.editor.features[0].properties.name, 'Should remove user properties when cleared');
+  t.equal(state.editor.features[0].properties.isClosed, false, 'Should keep editor-only properties');
+
+  t.end();
+});
+
 test('#visStateReducer -> APPLY_CPU_FILTER has multi datasets', t => {
   const initialState = CloneDeep(StateWFilters.visState);
   const previousDataset1 = initialState.datasets[testCsvDataId];

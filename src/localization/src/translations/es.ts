@@ -384,6 +384,10 @@ export default {
     filterLayer: 'Filtrar capas',
     filterLayerDisabled: 'Las geometrías no poligonales no se pueden usar para filtrar',
     copyGeometry: 'Copiar geometría',
+    editProperties: 'Editar propiedades',
+    propertyName: 'Propiedad',
+    propertyValue: 'Valor',
+    removeProperty: 'Quitar propiedad',
     polygonFilter: 'Filtro de polígono',
     noLayersToFilter: 'No hay capas para filtrar'
   },

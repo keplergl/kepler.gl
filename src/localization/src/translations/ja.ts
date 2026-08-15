@@ -380,6 +380,10 @@ export default {
     filterLayer: 'レイヤをフィルタ',
     filterLayerDisabled: 'ポリゴン以外のジオメトリはフィルタリングに使用できません',
     copyGeometry: 'ジオメトリをコピー',
+    editProperties: 'プロパティを編集',
+    propertyName: 'プロパティ',
+    propertyValue: '値',
+    removeProperty: 'プロパティを削除',
     polygonFilter: 'ポリゴンフィルタ',
     noLayersToFilter: 'フィルタするレイヤがありません'
   },

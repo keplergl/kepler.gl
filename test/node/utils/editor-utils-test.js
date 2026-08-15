@@ -440,5 +440,21 @@ test('editorLayerUtils -> filter polygons are styled differently from sketches',
     'Polygon hover should stay semi-transparent even when point sketches enable fill'
   );
 
+  const lineFeature = {
+    id: 'line-1',
+    properties: {},
+    geometry: {type: 'LineString', coordinates: [[0, 0], [1, 1]]}
+  };
+  t.equal(
+    editorLayer.props.getLineWidth(sketch, false),
+    2,
+    'Polygon sketches should keep the existing outline width'
+  );
+  t.equal(
+    editorLayer.props.getLineWidth(lineFeature, false),
+    4,
+    'Line sketches should use a thicker stroke so they stay visible'
+  );
+
   t.end();
 });

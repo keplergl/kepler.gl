@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useState, ComponentType} from 'react';
+import React, {useCallback, useEffect, useState, ComponentType} from 'react';
 import {useIntl} from 'react-intl';
 import copy from 'copy-to-clipboard';
 import {useDismiss, useFloating, useInteractions} from '@floating-ui/react';
@@ -15,12 +15,17 @@ import {Datasets} from '@kepler.gl/table';
 import {canApplyFeatureFilter} from '@kepler.gl/utils';
 
 import ActionPanel, {ActionPanelItem} from '../common/action-panel';
-import {Trash, Layers, Copy, Checkmark} from '../common/icons';
+import {Trash, Layers, Copy, Checkmark, Edit} from '../common/icons';
+import FeaturePropertiesEditor from './feature-properties-editor';
 
 const LAYOVER_OFFSET = 4;
 
 const StyledActionsLayer = styled.div`
   position: absolute;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 4px;
   .layer-panel-item-disabled {
     color: ${props => props.theme.textColor};
   }
@@ -29,7 +34,8 @@ const defaultActionIcons = {
   remove: Trash,
   layer: Layers,
   copy: Copy,
-  copied: Checkmark
+  copied: Checkmark,
+  edit: Edit
 };
 PureFeatureActionPanelFactory.deps = [];
 
@@ -45,6 +51,7 @@ export interface FeatureActionPanelProps {
   currentFilter?: Filter;
   onToggleLayer: (layer: Layer) => void;
   onDeleteFeature: () => void;
+  onSetFeatureProperties?: (feature: Feature, properties: Record<string, unknown>) => void;
   onClose?: () => void;
   children?: React.ReactNode;
   actionIcons?: {
@@ -62,11 +69,13 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
     currentFilter,
     onToggleLayer,
     onDeleteFeature,
+    onSetFeatureProperties,
     actionIcons = defaultActionIcons,
     children,
     onClose
   }: FeatureActionPanelProps) => {
     const [copied, setCopied] = useState(false);
+    const [showProperties, setShowProperties] = useState(false);
     const {layerId = []} = currentFilter || {};
     const intl = useIntl();
 
@@ -87,6 +96,10 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
       setCopied(true);
     }, [selectedFeature?.geometry]);
 
+    useEffect(() => {
+      setShowProperties(false);
+    }, [selectedFeature?.id]);
+
     if (!position) {
       return null;
     }
@@ -106,7 +119,10 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
           {canFilterLayers ? (
             <ActionPanelItem
               className="editor-layers-list"
-              label={intl.formatMessage({id: 'editor.filterLayer', defaultMessage: 'Filter layers'})}
+              label={intl.formatMessage({
+                id: 'editor.filterLayer',
+                defaultMessage: 'Filter layers'
+              })}
               Icon={actionIcons.layer}
             >
               {layers.length ? (
@@ -137,6 +153,15 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
             </ActionPanelItem>
           ) : null}
           <ActionPanelItem
+            label={intl.formatMessage({
+              id: 'editor.editProperties',
+              defaultMessage: 'Edit Properties'
+            })}
+            className="edit-properties-panel-item"
+            Icon={actionIcons.edit}
+            onClick={() => setShowProperties(open => !open)}
+          />
+          <ActionPanelItem
             label={intl.formatMessage({id: 'editor.copyGeometry', defaultMessage: 'Copy Geometry'})}
             className="delete-panel-item"
             Icon={copied ? actionIcons.copied : actionIcons.copy}
@@ -150,6 +175,12 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
             onClick={onDeleteFeature}
           />
         </ActionPanel>
+        {showProperties ? (
+          <FeaturePropertiesEditor
+            selectedFeature={selectedFeature}
+            onSetFeatureProperties={onSetFeatureProperties}
+          />
+        ) : null}
       </StyledActionsLayer>
     );
   };

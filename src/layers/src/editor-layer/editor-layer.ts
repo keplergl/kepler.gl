@@ -198,7 +198,10 @@ export function getEditorLayer({
 
     getTentativeLineColor: LINE_STYLE.getTentativeLineColor,
     // @ts-ignore
-    getTentativeLineWidth: LINE_STYLE.getTentativeLineWidth,
+    getTentativeLineWidth:
+      editorMode === EDITOR_MODES.DRAW_LINESTRING
+        ? LINE_STYLE.lineStringWidth
+        : LINE_STYLE.getTentativeLineWidth,
     getTentativeFillColor: LINE_STYLE.getTentativeFillColor,
 
     // Globe mode needs explicit depth testing so the editor overlay is occluded

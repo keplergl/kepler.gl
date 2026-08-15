@@ -6,7 +6,9 @@ import {
   editorFeaturesToFeatureCollection,
   sanitizeEditorFeature,
   toSketchFeature,
-  getFilterFeatureAnchor
+  getFilterFeatureAnchor,
+  getUserFeatureProperties,
+  mergeUserFeatureProperties
 } from '@kepler.gl/utils';
 
 test('editor-feature-utils -> sanitizeEditorFeature', t => {
@@ -133,5 +135,50 @@ test('editor-feature-utils -> getFilterFeatureAnchor', t => {
     [4, 3],
     'Should use the north-east vertex for the filter badge'
   );
+  t.end();
+});
+
+test('editor-feature-utils -> getUserFeatureProperties / mergeUserFeatureProperties', t => {
+  const feature = {
+    type: 'Feature',
+    id: 'line-1',
+    properties: {
+      isClosed: false,
+      filterId: 'keep-internal',
+      name: 'route'
+    },
+    geometry: {
+      type: 'LineString',
+      coordinates: [
+        [0, 0],
+        [1, 1]
+      ]
+    }
+  };
+
+  t.deepEqual(
+    getUserFeatureProperties(feature),
+    {name: 'route'},
+    'Should return only user-facing properties'
+  );
+
+  t.deepEqual(
+    mergeUserFeatureProperties(feature, {name: 'updated', capacity: '12', filterId: 'nope'})
+      .properties,
+    {
+      isClosed: false,
+      filterId: 'keep-internal',
+      name: 'updated',
+      capacity: '12'
+    },
+    'Should replace user properties and ignore reserved keys'
+  );
+
+  t.deepEqual(
+    mergeUserFeatureProperties(feature, {}).properties,
+    {isClosed: false, filterId: 'keep-internal'},
+    'Should drop previous user properties when the next set is empty'
+  );
+
   t.end();
 });

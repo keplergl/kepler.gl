@@ -1474,6 +1474,7 @@ export default function MapContainerFactory(
             filters={this.polygonFiltersSelector(this.props)}
             layers={layers}
             onDeleteFeature={visStateActions.deleteFeature}
+            onSetFeatureProperties={visStateActions.setEditorFeatureProperties}
             onSelect={visStateActions.setSelectedFeature}
             onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
             onSetEditorMode={visStateActions.setEditorMode}

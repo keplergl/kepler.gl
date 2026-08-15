@@ -1567,6 +1567,32 @@ export function loadFilesErr(
 export type SetFeaturesUpdaterAction = {
   features: Feature[];
 };
+
+export type SetEditorFeaturePropertiesUpdaterAction = {
+  feature: Feature;
+  properties: Record<string, unknown>;
+};
+/**
+ * Set user-facing GeoJSON properties on a Draw on Map sketch.
+ * Editor-only keys such as `filterId` and `isClosed` are preserved.
+ * @memberof visStateActions
+ * @param feature
+ * @param properties
+ * @returns action
+ */
+export function setEditorFeatureProperties(
+  feature: Feature,
+  properties: Record<string, unknown>
+): Merge<
+  SetEditorFeaturePropertiesUpdaterAction,
+  {type: typeof ActionTypes.SET_EDITOR_FEATURE_PROPERTIES}
+> {
+  return {
+    type: ActionTypes.SET_EDITOR_FEATURE_PROPERTIES,
+    feature,
+    properties
+  };
+}
 /**
  * Store features to state
  * @memberof visStateActions

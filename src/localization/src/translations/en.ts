@@ -432,6 +432,10 @@ export default {
     filterLayer: 'Filter Layers',
     filterLayerDisabled: 'Non-polygon geometries cannot be used for filtering',
     copyGeometry: 'Copy Geometry',
+    editProperties: 'Edit Properties',
+    propertyName: 'Property',
+    propertyValue: 'Value',
+    removeProperty: 'Remove property',
     polygonFilter: 'Polygon filter',
     noLayersToFilter: 'No layers to filter'
   },

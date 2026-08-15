@@ -4,6 +4,7 @@
   - [Open the drawing tools](#open-the-drawing-tools)
   - [Drawing tools](#drawing-tools)
   - [Select, move, and edit](#select-move-and-edit)
+  - [Edit properties](#edit-properties)
   - [Filter layers](#filter-layers)
   - [Copy and convert to a layer](#copy-and-convert-to-a-layer)
 <!-- /TOC -->
@@ -33,7 +34,11 @@ Press **Escape** while a draw tool is active to return to **Select**.
 3. Drag the **body of a line** to move the whole line. Drag a vertex to reshape it. Click the line to insert a vertex.
 4. Drag the **interior of a polygon or rectangle** to move it. Drag a vertex to reshape it.
 
-Right-click a selected sketch for **Copy Geometry** and **Delete**. **Filter Layers** appears only for polygons and rectangles.
+Right-click a selected sketch for **Edit Properties**, **Copy Geometry**, and **Delete**. **Filter Layers** appears only for polygons and rectangles.
+
+## Edit properties
+
+Right-click a sketch and choose **Edit Properties** to add, change, or remove name/value pairs. These are stored as GeoJSON properties and become columns when you convert sketches to a layer.
 
 ## Filter layers
 

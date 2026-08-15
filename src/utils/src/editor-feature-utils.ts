@@ -14,6 +14,57 @@ const EDITOR_INTERNAL_PROPERTIES = new Set([
   'renderType'
 ]);
 
+export function isReservedEditorProperty(key: string): boolean {
+  return EDITOR_INTERNAL_PROPERTIES.has(key);
+}
+
+/**
+ * GeoJSON properties that should survive copy / convert, excluding editor internals.
+ */
+export function getUserFeatureProperties(feature?: Feature | null): Record<string, unknown> {
+  if (!feature) {
+    return {};
+  }
+  return (sanitizeEditorFeature(feature).properties || {}) as Record<string, unknown>;
+}
+
+/**
+ * Replace user-facing properties while preserving editor-only keys.
+ */
+export function mergeUserFeatureProperties(
+  feature: Feature,
+  userProperties: Record<string, unknown> = {}
+): Feature {
+  const internalProperties = Object.entries(feature.properties || {}).reduce<
+    Record<string, unknown>
+  >((acc, [key, value]) => {
+    if (EDITOR_INTERNAL_PROPERTIES.has(key)) {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+
+  const nextUserProperties = Object.entries(userProperties).reduce<Record<string, unknown>>(
+    (acc, [key, value]) => {
+      const name = typeof key === 'string' ? key.trim() : '';
+      if (!name || EDITOR_INTERNAL_PROPERTIES.has(name)) {
+        return acc;
+      }
+      acc[name] = value;
+      return acc;
+    },
+    {}
+  );
+
+  return {
+    ...feature,
+    properties: {
+      ...internalProperties,
+      ...nextUserProperties
+    }
+  };
+}
+
 export type EditorFeatureCollection = {
   type: 'FeatureCollection';
   features: Feature[];
@@ -83,7 +134,12 @@ export function getFilterFeatureAnchor(feature: Feature): [number, number] | nul
 
   if (!Array.isArray(ring) || !ring.length) {
     const bbox = feature.properties?.bbox;
-    if (Array.isArray(bbox) && bbox.length >= 4 && Number.isFinite(bbox[2]) && Number.isFinite(bbox[3])) {
+    if (
+      Array.isArray(bbox) &&
+      bbox.length >= 4 &&
+      Number.isFinite(bbox[2]) &&
+      Number.isFinite(bbox[3])
+    ) {
       return [bbox[2], bbox[3]];
     }
     return null;
