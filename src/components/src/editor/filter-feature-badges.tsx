@@ -103,20 +103,19 @@ function FilterFeatureBadges({
     return null;
   }
 
+  const polygonFilterLabel = intl.formatMessage({
+    id: 'editor.polygonFilter',
+    defaultMessage: 'Polygon filter'
+  });
+
   return (
     <BadgeLayer className="editor-filter-badges">
       {badges.map(badge => (
         <FilterBadge
           key={badge.id}
           type="button"
-          title={intl.formatMessage({
-            id: 'editor.polygonFilter',
-            defaultMessage: 'Polygon filter'
-          })}
-          aria-label={intl.formatMessage({
-            id: 'editor.polygonFilter',
-            defaultMessage: 'Polygon filter'
-          })}
+          title={polygonFilterLabel}
+          aria-label={polygonFilterLabel}
           style={{left: badge.x, top: badge.y}}
           onClick={event => {
             event.stopPropagation();
