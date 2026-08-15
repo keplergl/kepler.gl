@@ -93,7 +93,8 @@ const ToolbarItem = React.memo((props: ToolbarItemProps) => {
     </StyledDiv>
   );
 
-  if (!props.tooltip) {
+  const tooltip = props.tooltip;
+  if (!tooltip) {
     return item;
   }
 
@@ -102,7 +103,7 @@ const ToolbarItem = React.memo((props: ToolbarItemProps) => {
       placement="left"
       render={() => (
         <div>
-          <FormattedMessage id={props.tooltip} />
+          <FormattedMessage id={tooltip} />
         </div>
       )}
     >
