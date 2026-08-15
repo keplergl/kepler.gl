@@ -452,8 +452,13 @@ test('editorLayerUtils -> filter polygons are styled differently from sketches',
   );
   t.equal(
     editorLayer.props.getLineWidth(lineFeature, false),
-    4,
-    'Line sketches should use a thicker stroke so they stay visible'
+    2,
+    'Unselected line sketches should match the default stroke width'
+  );
+  t.equal(
+    editorLayer.props.getLineWidth(lineFeature, true),
+    3,
+    'Selected line sketches should use a thicker stroke so they stay visible'
   );
 
   t.end();
