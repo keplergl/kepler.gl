@@ -313,7 +313,8 @@ export class GlobeExportVideoPanelContainer extends Component<
 
   /** Starfield behind the globe, matching the live map's CSS background. */
   areStarsEnabled(): boolean {
-    return Boolean(this.props.mapData?.mapState?.globe?.config?.stars);
+    const globe = this.props.mapData?.mapState?.globe;
+    return Boolean(globe?.enabled && globe?.config?.stars);
   }
 
   setStateAndNotify(update: GlobeExportVideoSettings) {
