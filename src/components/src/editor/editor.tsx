@@ -139,20 +139,33 @@ export default function EditorFactory(
 
     isInFocus = () => document.activeElement?.id === DECKGL_RENDER_LAYER;
 
+    isTypingTarget = (target: EventTarget | null) => {
+      const element = target as HTMLElement | null;
+      if (!element) {
+        return false;
+      }
+      const tagName = element.tagName;
+      return tagName === 'INPUT' || tagName === 'TEXTAREA' || Boolean(element.isContentEditable);
+    };
+
     _onKeyPressed = (event: KeyboardEvent) => {
+      const isEscape = event.keyCode === KeyEvent.DOM_VK_ESCAPE || event.key === 'Escape';
+      if (isEscape && !this.isTypingTarget(event.target)) {
+        const drawing = EditorLayerUtils.isDrawingActive(true, this.props.editor.mode);
+        if (drawing) {
+          this.props.onSetEditorMode(EDITOR_MODES.EDIT);
+          this.props.onSelect(null);
+        } else if (this.isInFocus()) {
+          this.props.onSelect(null);
+        }
+        return;
+      }
+
       if (this.isInFocus()) {
         switch (event.keyCode) {
           case KeyEvent.DOM_VK_DELETE:
           case KeyEvent.DOM_VK_BACK_SPACE:
             this._onDeleteSelectedFeature();
-            break;
-          case KeyEvent.DOM_VK_ESCAPE:
-            // reset active drawing
-            if (EditorLayerUtils.isDrawingActive(true, this.props.editor.mode)) {
-              this.props.onSetEditorMode(EDITOR_MODES.EDIT);
-            }
-
-            this.props.onSelect(null);
             break;
           default:
             break;

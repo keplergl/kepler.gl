@@ -5,6 +5,8 @@ import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
 import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core';
 import {
   DrawPolygonMode,
+  DrawLineStringMode,
+  DrawPointMode,
   TranslateMode,
   CompositeMode,
   GeoJsonEditMode
@@ -16,7 +18,7 @@ import {Viewport, Editor, Feature, FeatureSelectionContext} from '@kepler.gl/typ
 import {generateHashId} from '@kepler.gl/common-utils';
 
 import {EDIT_TYPES} from './constants';
-import {LINE_STYLE, FEATURE_STYLE, EDIT_HANDLE_STYLE} from './feature-styles';
+import {LINE_STYLE, FEATURE_STYLE, EDIT_HANDLE_STYLE, getFeatureDashArray} from './feature-styles';
 import {ModifyModeExtended} from './modify-mode-extended';
 import {DrawRectangleModeExtended} from './draw-rectangle-mode-extended';
 import {isDrawingActive} from './editor-layer-utils';
@@ -25,6 +27,12 @@ const DEFAULT_COMPOSITE_MODE = new CompositeMode([
   new TranslateMode() as unknown as GeoJsonEditMode,
   new ModifyModeExtended() as unknown as GeoJsonEditMode
 ]);
+
+class DrawLineStringSketchMode extends DrawLineStringMode {
+  getTooltips() {
+    return [];
+  }
+}
 
 export type GetEditorLayerProps = {
   editorMenuActive: boolean;
@@ -71,7 +79,22 @@ export function getEditorLayer({
     if (editorMode === EDITOR_MODES.DRAW_POLYGON) mode = DrawPolygonMode;
     // @ts-ignore
     else if (editorMode === EDITOR_MODES.DRAW_RECTANGLE) mode = DrawRectangleModeExtended;
+    // @ts-ignore
+    else if (editorMode === EDITOR_MODES.DRAW_LINESTRING) mode = DrawLineStringSketchMode;
+    // @ts-ignore
+    else if (editorMode === EDITOR_MODES.DRAW_POINT) mode = DrawPointMode;
   }
+
+  const hasPointFeatures = featureCollection.features.some(
+    feature => feature.geometry?.type === 'Point' || feature.geometry?.type === 'MultiPoint'
+  );
+  // Point sketches need fill to be visible, including the tentative point while drawing.
+  // Filter polygons stay outline-only (same as before) so hover can use the
+  // opaque line highlight; they are marked with a filter icon overlay instead.
+  const filled =
+    selectedFeatureIndexes.length > 0 ||
+    hasPointFeatures ||
+    editorMode === EDITOR_MODES.DRAW_POINT;
 
   // @ts-ignore
   return new EditableGeoJsonLayer({
@@ -90,10 +113,7 @@ export function getEditorLayer({
     },
 
     pickingLineWidthExtraPixels: 5,
-
-    // Only show fill when polygons are selected,
-    // there is no way atm to enable fill for only one feature
-    filled: selectedFeatureIndexes.length > 0,
+    filled,
 
     onEdit: ({updatedData, editType}) => {
       switch (editType) {
@@ -101,13 +121,22 @@ export function getEditorLayer({
           const {features: _features} = updatedData;
           if (_features.length) {
             const lastFeature = _features[_features.length - 1];
-            if (lastFeature.properties) lastFeature.properties.isClosed = true;
+            const geometryType = lastFeature.geometry?.type;
+            if (
+              lastFeature.properties &&
+              (geometryType === 'Polygon' || geometryType === 'MultiPolygon')
+            ) {
+              lastFeature.properties.isClosed = true;
+            }
+            if (!lastFeature.type) lastFeature.type = 'Feature';
             lastFeature.id = generateHashId(6);
             onSetFeatures(updatedData.features as unknown as Feature[]);
 
             const isRectangle = lastFeature.properties?.shape === 'Rectangle';
             if (isRectangle && onApplyPolygonFilterAll) {
               onApplyPolygonFilterAll(lastFeature as unknown as Feature);
+            } else if (geometryType === 'Point' || geometryType === 'LineString') {
+              // Stay in draw mode so multiple sketches can be added in a row.
             } else {
               setSelectedFeature(lastFeature as unknown as Feature);
             }
@@ -141,22 +170,12 @@ export function getEditorLayer({
       }
 
       // Note: highlight color affects even transparent filled polygons
-      return selectedFeatureIndexes.length
-        ? FEATURE_STYLE.highlightMultiplier
-        : LINE_STYLE.highlightMultiplier;
+      return filled ? FEATURE_STYLE.highlightMultiplier : LINE_STYLE.highlightMultiplier;
     },
 
     extensions: [new PathStyleExtension({dash: true})],
     dashGapPickable: true,
-    getDashArray: feature => {
-      if (feature?.properties?.guideType === 'tentative') {
-        return LINE_STYLE.dashArray;
-      }
-
-      if (feature?.id === editor.selectedFeature?.id) return LINE_STYLE.solidArray;
-
-      return LINE_STYLE.dashArray;
-    },
+    getDashArray: getFeatureDashArray,
 
     getLineColor: LINE_STYLE.getColor,
     getFillColor: FEATURE_STYLE.getColor,

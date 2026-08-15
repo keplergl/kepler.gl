@@ -416,8 +416,12 @@ export default {
     shareMapURL: 'Share Map URL',
     saveMap: 'Save Map',
     select: 'Select',
+    point: 'Point',
+    line: 'Line',
     polygon: 'Polygon',
     rectangle: 'Rectangle',
+    copyAll: 'Copy all',
+    convertToLayer: 'Convert to\nLayer',
     hide: 'Hide',
     show: 'Show',
     ...LOCALES
@@ -426,6 +430,7 @@ export default {
     filterLayer: 'Filter Layers',
     filterLayerDisabled: 'Non-polygon geometries cannot be used for filtering',
     copyGeometry: 'Copy Geometry',
+    polygonFilter: 'Polygon filter',
     noLayersToFilter: 'No layers to filter'
   },
 

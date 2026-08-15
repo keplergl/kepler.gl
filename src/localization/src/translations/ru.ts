@@ -367,8 +367,12 @@ export default {
     exportVideo: 'Экспорт видео',
     saveMap: 'Сохарнить Карту',
     select: 'Выбрать',
+    point: 'Точка',
+    line: 'Линия',
     polygon: 'Многоугольник',
     rectangle: 'Квадрат',
+    copyAll: 'Копировать всё',
+    convertToLayer: 'Преобразовать\nв слой',
     hide: 'Скрыть',
     show: 'Показать',
     ...LOCALES
@@ -377,6 +381,7 @@ export default {
     filterLayer: 'Слои фильтров',
     filterLayerDisabled: 'Неполигональные геометрии нельзя использовать для фильтрации',
     copyGeometry: 'Копировать геометрию',
+    polygonFilter: 'Полигональный фильтр',
     noLayersToFilter: 'Нет слоев для фильтрации'
   },
   exportVideoModal: {

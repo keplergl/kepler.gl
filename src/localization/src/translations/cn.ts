@@ -354,8 +354,12 @@ export default {
     shareMapURL: '分享地图网址',
     saveMap: '保存地图',
     select: '选择',
+    point: '点',
+    line: '线',
     polygon: 'polygon',
     rectangle: 'rectangle',
+    copyAll: '复制全部',
+    convertToLayer: '转换为\n图层',
     hide: '隐藏',
     show: '显示',
     ...LOCALES
@@ -364,6 +368,7 @@ export default {
     filterLayer: '过滤图层',
     filterLayerDisabled: '非多边形几何图形不能用于过滤',
     copyGeometry: '复制几何图形',
+    polygonFilter: '多边形过滤器',
     noLayersToFilter: '没有可过滤的图层'
   },
   exportVideoModal: {

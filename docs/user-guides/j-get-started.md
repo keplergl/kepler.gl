@@ -28,7 +28,7 @@ Learn more about [adding data layers](./b-kepler-gl-workflow/b-add-data-layers/a
 
 ![choose a dataset](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/add-filter.png "choose a dataset")
 
-Add filters to your map to limit the data that is displayed. Filters must be based on the columns in your dataset. To create a new filter, open the Filter menu and click Add Filter. Note that filters apply to all layers and cannot be toggled on and off.
+Add filters to your map to limit the data that is displayed. You can filter by a column in your dataset, or spatially with a polygon or rectangle from [Draw on Map](./draw-on-map.md). To create a column filter, open the Filter menu and click Add Filter.
 
 Learn more about [filters](./e-filters.md).
 

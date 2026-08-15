@@ -5103,6 +5103,33 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   t.end();
 });
 
+test('#visStateReducer -> POLYGON: unselecting all layers returns sketch', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const layer = initialState.layers[0];
+  let state = reducer(initialState, VisStateActions.setFeatures([mockPolygonFeature]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockPolygonFeature));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(layer, mockPolygonFeature));
+
+  t.equal(state.filters.length, 1, 'Should create a polygon filter');
+  t.equal(state.editor.features.length, 0, 'Sketch should move into the filter');
+
+  const filterFeature = state.filters[0].value;
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(layer, filterFeature));
+
+  t.equal(state.filters.length, 0, 'Should remove the filter when no layers remain');
+  t.equal(state.editor.features.length, 1, 'Should return the polygon to sketches');
+  t.notOk(
+    state.editor.features[0].properties.filterId,
+    'Returned sketch should not be a filter'
+  );
+  t.equal(
+    state.editor.selectedFeature.id,
+    mockPolygonFeature.id,
+    'Should keep the polygon selected'
+  );
+  t.end();
+});
+
 test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
   const state = {
     ...INITIAL_VIS_STATE
@@ -5911,6 +5938,78 @@ test('#uiStateReducer -> SET_FEATURES/SET_SELECTED_FEATURE/DELETE_FEATURE', t =>
   );
 
   t.equal(newState.editor.mode, EDITOR_MODES.EDIT, 'Editor mode should be set to edit_vertex');
+  t.end();
+});
+
+test('#visStateReducer -> SET_FEATURES line keeps draw mode', t => {
+  let state = reducer(
+    INITIAL_VIS_STATE,
+    VisStateActions.setEditorMode(EDITOR_MODES.DRAW_LINESTRING)
+  );
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([
+      {
+        type: 'Feature',
+        id: 'line-1',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            [0, 0],
+            [1, 1]
+          ]
+        }
+      }
+    ])
+  );
+
+  t.equal(
+    state.editor.mode,
+    EDITOR_MODES.DRAW_LINESTRING,
+    'Line sketches should stay in line drawing mode'
+  );
+  t.equal(state.editor.features.length, 1, 'Should store the line sketch');
+  t.end();
+});
+
+test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER', t => {
+  const emptyState = reducer(INITIAL_VIS_STATE, VisStateActions.convertEditorFeaturesToLayer());
+  t.equal(emptyState, INITIAL_VIS_STATE, 'Should no-op when there are no sketch features');
+
+  const lineFeature = {
+    type: 'Feature',
+    id: 'line-1',
+    properties: {isClosed: false},
+    geometry: {
+      type: 'LineString',
+      coordinates: [
+        [0, 0],
+        [1, 1]
+      ]
+    }
+  };
+
+  let state = {
+    ...INITIAL_VIS_STATE,
+    editor: {
+      ...INITIAL_VIS_STATE.editor,
+      features: [lineFeature],
+      selectedFeature: lineFeature,
+      mode: EDITOR_MODES.DRAW_LINESTRING
+    }
+  };
+
+  state = reducer(state, VisStateActions.convertEditorFeaturesToLayer());
+  t.deepEqual(state.editor.features, [], 'Should clear sketch features after convert');
+  t.equal(state.editor.selectedFeature, null, 'Should clear selected feature after convert');
+  t.equal(state.editor.mode, EDITOR_MODES.EDIT, 'Should switch to select mode after convert');
+
+  const tasks = drainTasksForTesting();
+  t.ok(
+    /Drawn Geometry \d{2}/.test(JSON.stringify(tasks)),
+    'Converted layer should be named Drawn Geometry plus a two-digit number'
+  );
   t.end();
 });
 

@@ -368,8 +368,12 @@ export default {
     shareMapURL: 'Compartir el enlace del mapa',
     saveMap: 'Guardar mapa',
     select: 'selecciona',
+    point: 'punto',
+    line: 'línea',
     polygon: 'polígono',
     rectangle: 'rectángulo',
+    copyAll: 'Copiar todo',
+    convertToLayer: 'Convertir\na capa',
     hide: 'esconder',
     show: 'mostrar',
     ...LOCALES
@@ -378,6 +382,7 @@ export default {
     filterLayer: 'Filtrar capas',
     filterLayerDisabled: 'Las geometrías no poligonales no se pueden usar para filtrar',
     copyGeometry: 'Copiar geometría',
+    polygonFilter: 'Filtro de polígono',
     noLayersToFilter: 'No hay capas para filtrar'
   },
   exportVideoModal: {

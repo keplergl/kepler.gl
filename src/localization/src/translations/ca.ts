@@ -367,8 +367,12 @@ export default {
     shareMapURL: 'Comparteix URL del mapa',
     saveMap: 'Desa mapa',
     select: 'selecciona',
+    point: 'punt',
+    line: 'línia',
     polygon: 'polígon',
     rectangle: 'rectangle',
+    copyAll: 'Copia-ho tot',
+    convertToLayer: 'Converteix\na capa',
     hide: 'amaga',
     show: 'mostra',
     ...LOCALES
@@ -377,6 +381,7 @@ export default {
     filterLayer: 'Filtra capes',
     filterLayerDisabled: 'Les geometries no poligonals no es poden utilitzar per filtrar',
     copyGeometry: 'Copia geometria',
+    polygonFilter: 'Filtre de polígon',
     noLayersToFilter: 'No hi ha capes per filtrar'
   },
   exportVideoModal: {

@@ -1671,16 +1671,16 @@ export function deleteFeature(
 export type SetEditorModeUpdaterAction = {
   mode: string;
 };
-/** Set the map mode
+/** Set the Draw on Map editor mode.
  * @memberof visStateActions
- * @param mode one of EDITOR_MODES
+ * @param mode one of `EDITOR_MODES`: `EDIT`, `DRAW_POINT`, `DRAW_LINESTRING`, `DRAW_POLYGON`, `DRAW_RECTANGLE`
  * @returns action
  * @public
  * @example
- * import {setMapMode} from '@kepler.gl/actions';
+ * import {setEditorMode} from '@kepler.gl/actions';
  * import {EDITOR_MODES} from '@kepler.gl/constants';
  *
- * this.props.dispatch(setMapMode(EDITOR_MODES.DRAW_POLYGON));
+ * this.props.dispatch(setEditorMode(EDITOR_MODES.DRAW_LINESTRING));
  */
 export function setEditorMode(
   mode: string
@@ -1722,6 +1722,27 @@ export function toggleEditorVisibility(): Merge<
 > {
   return {
     type: ActionTypes.TOGGLE_EDITOR_VISIBILITY
+  };
+}
+
+export type ConvertEditorFeaturesToLayerUpdaterAction = void;
+/**
+ * Convert editor sketch features into a GeoJSON dataset and layer, then clear the sketches.
+ * The new dataset/layer is labeled `Drawn Geometry` plus a two-digit number.
+ * @memberof visStateActions
+ * @return action
+ * @public
+ * @example
+ * import {convertEditorFeaturesToLayer} from '@kepler.gl/actions';
+ *
+ * this.props.dispatch(convertEditorFeaturesToLayer());
+ */
+export function convertEditorFeaturesToLayer(): Merge<
+  ConvertEditorFeaturesToLayerUpdaterAction,
+  {type: typeof ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER}
+> {
+  return {
+    type: ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER
   };
 }
 

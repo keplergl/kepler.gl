@@ -91,7 +91,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
       return null;
     }
 
-    const isFilterLayerDisabled = !canApplyFeatureFilter(selectedFeature as any);
+    const canFilterLayers = canApplyFeatureFilter(selectedFeature as any);
     return (
       <StyledActionsLayer
         ref={refs.setFloating}
@@ -103,41 +103,39 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
         }}
       >
         <ActionPanel>
-          <ActionPanelItem
-            className="editor-layers-list"
-            label={intl.formatMessage({id: 'editor.filterLayer', defaultMessage: 'Filter layers'})}
-            Icon={actionIcons.layer}
-            isDisabled={isFilterLayerDisabled}
-            tooltipText={
-              isFilterLayerDisabled ? intl.formatMessage({id: 'editor.filterLayerDisabled'}) : null
-            }
-          >
-            {layers.length ? (
-              layers.map((layer, index) => (
+          {canFilterLayers ? (
+            <ActionPanelItem
+              className="editor-layers-list"
+              label={intl.formatMessage({id: 'editor.filterLayer', defaultMessage: 'Filter layers'})}
+              Icon={actionIcons.layer}
+            >
+              {layers.length ? (
+                layers.map((layer, index) => (
+                  <ActionPanelItem
+                    key={index}
+                    label={layer.config.label}
+                    // @ts-ignore
+                    color={datasets[layer.config.dataId].color}
+                    isSelection={true}
+                    isActive={layerId.includes(layer.id)}
+                    onClick={() => onToggleLayer(layer)}
+                    className="layer-panel-item"
+                  />
+                ))
+              ) : (
                 <ActionPanelItem
-                  key={index}
-                  label={layer.config.label}
-                  // @ts-ignore
-                  color={datasets[layer.config.dataId].color}
-                  isSelection={true}
-                  isActive={layerId.includes(layer.id)}
-                  onClick={() => onToggleLayer(layer)}
-                  className="layer-panel-item"
+                  key={'no-layers'}
+                  label={intl.formatMessage({
+                    id: 'editor.noLayersToFilter',
+                    defaultMessage: 'No layers to filter'
+                  })}
+                  isSelection={false}
+                  isActive={false}
+                  className="layer-panel-item-disabled"
                 />
-              ))
-            ) : (
-              <ActionPanelItem
-                key={'no-layers'}
-                label={intl.formatMessage({
-                  id: 'editor.noLayersToFilter',
-                  defaultMessage: 'No layers to filter'
-                })}
-                isSelection={false}
-                isActive={false}
-                className="layer-panel-item-disabled"
-              />
-            )}
-          </ActionPanelItem>
+              )}
+            </ActionPanelItem>
+          ) : null}
           <ActionPanelItem
             label={intl.formatMessage({id: 'editor.copyGeometry', defaultMessage: 'Copy Geometry'})}
             className="delete-panel-item"

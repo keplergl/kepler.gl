@@ -141,6 +141,9 @@ const actionHandler = {
 
   [ActionTypes.TOGGLE_EDITOR_VISIBILITY]: visStateUpdaters.toggleEditorVisibilityUpdater,
 
+  [ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER]:
+    visStateUpdaters.convertEditorFeaturesToLayerUpdater,
+
   [ActionTypes.TOGGLE_FILTER_FEATURE]: visStateUpdaters.toggleFilterFeatureUpdater,
 
   [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater,

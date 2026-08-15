@@ -59,6 +59,8 @@ import {
   computeSplitMapLayers,
   adjustValueToFilterDomain,
   errorNotification,
+  editorFeaturesToFeatureCollection,
+  toSketchFeature,
   featureToFilterValue,
   filterDatasetCPU,
   generatePolygonFilter,
@@ -130,6 +132,7 @@ import {
 } from './vis-state-merger';
 
 import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
+import {processGeojson} from '@kepler.gl/processors';
 
 import {
   Filter,
@@ -3853,6 +3856,20 @@ export function setPolygonFilterLayerUpdater(
       ? // if layer is included, remove it
         layerId.filter(l => l !== layer.id)
       : [...layerId, layer.id];
+
+    // Last layer removed: turn the filter polygon back into a sketch
+    if (!newLayerId.length) {
+      const sketchFeature = toSketchFeature(feature);
+      const stateWithoutFilter = removeFilterUpdater(newState, {idx: filterIdx});
+      return {
+        ...stateWithoutFilter,
+        editor: {
+          ...stateWithoutFilter.editor,
+          features: [...stateWithoutFilter.editor.features, sketchFeature],
+          selectedFeature: sketchFeature
+        }
+      };
+    }
   } else {
     // if we haven't create the polygon filter, create it
     const newFilter = generatePolygonFilter([], feature);
@@ -4043,6 +4060,65 @@ export function toggleEditorVisibilityUpdater(
       visible: !state.editor.visible
     }
   };
+}
+
+/**
+ * Convert editor sketch features into a GeoJSON dataset/layer and clear the sketches.
+ */
+export function convertEditorFeaturesToLayerUpdater(
+  state: VisState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _action: VisStateActions.ConvertEditorFeaturesToLayerUpdaterAction
+): VisState {
+  const features = state.editor.features;
+  if (!features.length) {
+    return state;
+  }
+
+  let data;
+  try {
+    data = processGeojson(editorFeaturesToFeatureCollection(features));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to convert drawn geometry to a layer: ${message}`,
+            id: 'convert-editor-features'
+          })
+        )
+      )
+    );
+  }
+
+  const clearedState: VisState = {
+    ...state,
+    editor: {
+      ...state.editor,
+      features: [],
+      selectedFeature: null,
+      mode: EDITOR_MODES.EDIT
+    }
+  };
+
+  const labelId = Math.floor(Math.random() * 90) + 10;
+
+  return updateVisDataUpdater(clearedState, {
+    datasets: {
+      info: {
+        id: `drawn-geometry-${generateHashId(6)}`,
+        label: `Drawn Geometry ${labelId}`
+      },
+      data
+    },
+    options: {
+      keepExistingConfig: true,
+      centerMap: false,
+      autoCreateLayers: true
+    }
+  });
 }
 
 export function setFilterAnimationTimeConfigUpdater(

@@ -9,6 +9,7 @@ import {ComponentType, MouseEvent} from 'react';
 
 interface StyledDivProps {
   $active?: boolean;
+  $disabled?: boolean;
 }
 
 const StyledDiv = styled.div.attrs(props => ({
@@ -26,6 +27,8 @@ const StyledDiv = styled.div.attrs(props => ({
   border-radius: ${props => props.theme.toolbarItemBorderRaddius};
   background-color: ${props =>
     props.$active ? props.theme.toolbarItemBgdHover : props.theme.dropdownListBgd};
+  opacity: ${props => (props.$disabled ? 0.4 : 1)};
+  pointer-events: ${props => (props.$disabled ? 'none' : 'auto')};
 
   .toolbar-item__svg-container {
     margin-bottom: 4px;
@@ -51,6 +54,7 @@ export type ToolbarItemProps = {
   label: string;
   className?: string;
   active?: boolean;
+  disabled?: boolean;
   onClose?: () => void;
   onClick: ((event: MouseEvent<HTMLDivElement>) => void) | null;
   icon?: ComponentType<any>;
@@ -61,9 +65,13 @@ const ToolbarItem = React.memo((props: ToolbarItemProps) => (
     id={props.id}
     className={props.className}
     $active={props.active}
+    $disabled={props.disabled}
     onClick={e => {
       e.stopPropagation();
       e.preventDefault();
+      if (props.disabled) {
+        return;
+      }
       if (typeof props.onClose === 'function') {
         props.onClose();
       }

@@ -366,8 +366,12 @@ export default {
     shareMapURL: 'Jaa kartan URL',
     saveMap: 'Tallenna kartta',
     select: 'valitse',
+    point: 'piste',
+    line: 'viiva',
     polygon: 'polygoni',
     rectangle: 'nelikulmio',
+    copyAll: 'Kopioi kaikki',
+    convertToLayer: 'Muunna\ntasoksi',
     hide: 'piilota',
     show: 'näytä',
     ...LOCALES
@@ -376,6 +380,7 @@ export default {
     filterLayer: 'Suodata tasoja',
     filterLayerDisabled: 'Ei-monikulmiogeometrioita ei voi käyttää suodatukseen',
     copyGeometry: 'Kopioi geometria',
+    polygonFilter: 'Polygonisuodatin',
     noLayersToFilter: 'Ei tasoja suodatettavaksi'
   },
   exportVideoModal: {

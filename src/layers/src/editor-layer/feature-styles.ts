@@ -26,6 +26,10 @@ const SECONDARY_COLOR_TRANSPARENT: RGBAColor = [...COLORS.SECONDARY, ALPHA_0];
 const TENTATIVE_FEATURE_COLOR: RGBAColor = [...COLORS.SECONDARY, ALPHA_1];
 const TENTATIVE_FEATURE_COLOR_TRANSPARENT: RGBAColor = [...COLORS.SECONDARY, ALPHA_005];
 
+export function isFilterFeature(feature?: Feature | null): boolean {
+  return Boolean(feature?.properties?.filterId);
+}
+
 export const EDIT_HANDLE_STYLE = {
   getRadius: POINT_RADIUS,
   getFillColor: SECONDARY_COLOR_TRANSPARENT,
@@ -36,8 +40,13 @@ export const EDIT_HANDLE_STYLE = {
 };
 
 export const FEATURE_STYLE = {
-  getColor: (feature: Feature, isSelected: boolean) =>
-    isSelected ? PRIMARY_COLOR_TRANSPARENT : SECONDARY_COLOR_TRANSPARENT,
+  getColor: (feature: Feature, isSelected: boolean) => {
+    const isPoint = feature?.geometry?.type === 'Point' || feature?.geometry?.type === 'MultiPoint';
+    if (isPoint) {
+      return PRIMARY_COLOR;
+    }
+    return isSelected ? PRIMARY_COLOR_TRANSPARENT : SECONDARY_COLOR_TRANSPARENT;
+  },
   highlightMultiplier: [...COLORS.HIGHLIGHT, ALPHA_01],
   highlightMultiplierNone: SECONDARY_COLOR_TRANSPARENT
 };
@@ -54,3 +63,10 @@ export const LINE_STYLE = {
   solidArray: STROKE_SOLID_ARRAY,
   highlightMultiplier: [...COLORS.HIGHLIGHT, ALPHA_1]
 };
+
+export function getFeatureDashArray(feature?: Feature | null): number[] {
+  if (feature?.properties?.guideType === 'tentative' || isFilterFeature(feature)) {
+    return LINE_STYLE.dashArray;
+  }
+  return LINE_STYLE.solidArray;
+}
