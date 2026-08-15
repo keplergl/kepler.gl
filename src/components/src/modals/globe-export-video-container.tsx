@@ -22,7 +22,7 @@ import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {parseSetCameraType, scaleToVideoExport, getResolutionSetting} from './hubble-utils';
 import {GlobeExportVideoPreview} from './globe-export-video-preview';
 import SwipeExportSettings from './swipe-export-settings';
-import {getGlobeClearColor} from '@kepler.gl/deckgl-layers';
+import {drawStarsBackground, getGlobeClearColor, getStarsBackgroundImage} from '@kepler.gl/deckgl-layers';
 
 // No-op for the swipe-specific settings callbacks that this single-map globe
 // exporter doesn't use (the swipe controls are hidden via `hideSwipe`).
@@ -311,6 +311,12 @@ export class GlobeExportVideoPanelContainer extends Component<
     return `rgb(${r}, ${g}, ${b})`;
   }
 
+  /** Starfield behind the globe, matching the live map's CSS background. */
+  areStarsEnabled(): boolean {
+    const globe = this.props.mapData?.mapState?.globe;
+    return Boolean(globe?.enabled && globe?.config?.stars);
+  }
+
   setStateAndNotify(update: GlobeExportVideoSettings) {
     const {onSettingsChange} = this.props;
     const {mediaType, cameraPreset, fileName, resolution, durationMs} = this.state;
@@ -441,9 +447,14 @@ export class GlobeExportVideoPanelContainer extends Component<
             if (offCtx) {
               // deck's canvas is transparent where the globe isn't drawn
               // (clearColor is disabled to keep picking intact), so fill the
-              // configured background first, then composite the deck frame.
+              // configured background first, tile the starfield (the live map
+              // paints stars as a CSS background, which canvas capture misses),
+              // then composite the deck frame.
               offCtx.fillStyle = this.getBackgroundColor();
               offCtx.fillRect(0, 0, width, height);
+              if (this.areStarsEnabled()) {
+                drawStarsBackground(offCtx, width, height);
+              }
               offCtx.drawImage(deckCanvas, 0, 0, width, height);
             }
 
@@ -537,6 +548,7 @@ export class GlobeExportVideoPanelContainer extends Component<
             deckProps={deckProps}
             mapProps={this.props.mapProps}
             backgroundColor={this.getBackgroundColor()}
+            starsImage={this.areStarsEnabled() ? getStarsBackgroundImage() : null}
           />
           <SwipeExportSettings
             durationMs={durationMs}

@@ -9,11 +9,20 @@ import styled from 'styled-components';
 import {DeckAdapter} from '@hubble.gl/core';
 import {EXPORT_DECK_DEVICE_PROPS, getGlobeExportLayers} from './hubble-utils';
 
-const PreviewContainer = styled.div<{$width: number; $height: number; $background: string}>`
+const PreviewContainer = styled.div<{
+  $width: number;
+  $height: number;
+  $background: string;
+  $starsImage?: string | null;
+}>`
   width: ${props => props.$width}px;
   height: ${props => props.$height}px;
   position: relative;
-  background: ${props => props.$background};
+  background-color: ${props => props.$background};
+  ${props =>
+    props.$starsImage
+      ? `background-image: url('${props.$starsImage}'); background-repeat: repeat;`
+      : ''}
 `;
 
 export type GlobeExportVideoPreviewProps = {
@@ -30,6 +39,8 @@ export type GlobeExportVideoPreviewProps = {
   /** CSS color string for the area the globe does not cover. */
   backgroundColor: string;
   mapProps?: Record<string, any>;
+  /** Tileable star-field data URL, matching the live globe map CSS background. */
+  starsImage?: string | null;
 };
 
 /**
@@ -77,7 +88,8 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
       exportVideoWidth,
       backgroundColor,
       mapData,
-      mapProps
+      mapProps,
+      starsImage
     } = this.props;
     const {width, height} = this._getContainer();
     const deck = this.deckRef.current;
@@ -111,7 +123,12 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
     const pixelRatio = Math.max(1, resolution[0] / exportVideoWidth);
 
     return (
-      <PreviewContainer $width={width} $height={height} $background={backgroundColor}>
+      <PreviewContainer
+        $width={width}
+        $height={height}
+        $background={backgroundColor}
+        $starsImage={starsImage}
+      >
         <DeckGL
           ref={ref => {
             this.deckRef.current = (ref?.deck as any) || null;

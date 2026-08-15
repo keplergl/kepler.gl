@@ -32,7 +32,8 @@ import {
   getBeforeLayerId,
   getHubbleDeckGlProps,
   getTimeRangeFilterKeyframes,
-  getAnimatableFilters
+  getAnimatableFilters,
+  getResolutionSetting
 } from './hubble-utils';
 import {useFogHeightAnimation} from './fog-height-animation';
 
@@ -398,6 +399,34 @@ const ExportVideoModalFactory = () => {
     // itself; the flat maplibre base map must be disabled so it doesn't render a
     // 2D Mercator map behind/around the globe.
     const isGlobeEnabled = Boolean(mapState?.globe?.enabled);
+
+    useEffect(() => {
+      // Same freeze as before: hubble.gl writes window.devicePixelRatio to scale
+      // the preview, then sets it to 1 during animated preview, which desyncs
+      // MapLibre from the Deck overlay. Pin to the *export* scale (not native DPR)
+      // so preview stays aligned and recording still uses the selected quality.
+      if (isSwipeMode || isGlobeEnabled) return undefined;
+
+      const {width} = getResolutionSetting(videoConfiguration.resolution || '');
+      const scaledDpr = exportVideoWidth ? Math.max(1, width / exportVideoWidth) : 1;
+      const descriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
+
+      Object.defineProperty(window, 'devicePixelRatio', {
+        configurable: true,
+        get: () => scaledDpr,
+        set: () => {
+          // no-op: ignore hubble.gl dropping DPR to 1 during preview
+        }
+      });
+
+      return () => {
+        if (descriptor) {
+          Object.defineProperty(window, 'devicePixelRatio', descriptor);
+        } else {
+          delete (window as {devicePixelRatio?: number}).devicePixelRatio;
+        }
+      };
+    }, [isSwipeMode, isGlobeEnabled, videoConfiguration.resolution, exportVideoWidth]);
 
     const onFilterFrameUpdate = useCallback(
       (filterIdx: number, name: string, value: any) => {
