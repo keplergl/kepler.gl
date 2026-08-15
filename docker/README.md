@@ -30,6 +30,12 @@ docker compose -f docker/docker-compose.yml up kepler-prod
 
 Then open http://localhost:8080.
 
+Once the image exists, omit `--build` so Compose reuses it and start is seconds, not minutes. Pass `--build` only after source, Dockerfile, or `.env` changes. If Compose still starts a build, force the existing image with `--no-build`:
+
+```bash
+docker compose -f docker/docker-compose.yml up --no-build kepler-prod
+```
+
 To rebuild after code changes on the host:
 
 ```bash
@@ -59,7 +65,7 @@ docker run -p 8080:8080 kepler-prod
 ## Notes
 
 - The build context must be the repository root (both Dockerfiles reference `src/`, `scripts/`, etc.).
-- The `.dockerignore` at the root excludes `node_modules/`, `.git/`, `website/`, `bindings/`, `test/`, and `docs/` to keep the build context small.
+- The `.dockerignore` at the root excludes nested `node_modules/`, other examples, `.git/`, `website/`, `bindings/`, `test/`, and `docs/` to keep the build context small. Yarn installs use a BuildKit cache mount so lockfile rebuilds reuse downloaded packages.
 - All postinstall scripts are disabled during `yarn install` to avoid building the `gl` native package (requires GPU headers, only used for tests). The `esbuild` platform binary is then installed selectively since it's required for bundling.
 - Environment variables like `MapboxAccessToken` are read from the `.env` file copied into the build context. Rebuild the image to change them.
 - The dev image provides a no-op `xdg-open` to prevent the server from crashing when it tries to open a browser.
