@@ -17,6 +17,7 @@ const STROKE_DASH_ARRAY = [4, 3];
 const ALPHA_0 = 0x00;
 const ALPHA_005 = 0x0d;
 const ALPHA_01 = 0x1a;
+const ALPHA_04 = 0x66;
 const ALPHA_05 = 0x80;
 const ALPHA_1 = 0xff;
 
@@ -47,7 +48,7 @@ export const FEATURE_STYLE = {
     }
     return isSelected ? PRIMARY_COLOR_TRANSPARENT : SECONDARY_COLOR_TRANSPARENT;
   },
-  highlightMultiplier: [...COLORS.HIGHLIGHT, ALPHA_01],
+  highlightMultiplier: [...COLORS.HIGHLIGHT, ALPHA_04],
   highlightMultiplierNone: SECONDARY_COLOR_TRANSPARENT
 };
 

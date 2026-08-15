@@ -89,8 +89,6 @@ export function getEditorLayer({
     feature => feature.geometry?.type === 'Point' || feature.geometry?.type === 'MultiPoint'
   );
   // Point sketches need fill to be visible, including the tentative point while drawing.
-  // Hover must not follow this flag: GeoJsonLayer applies highlight to fill when
-  // `filled` is true, which would wash out filter polygon outlines.
   const filled =
     selectedFeatureIndexes.length > 0 ||
     hasPointFeatures ||
@@ -169,12 +167,18 @@ export function getEditorLayer({
         else if (type === 'existing') return EDIT_HANDLE_STYLE.highlightMultiplier;
       }
 
-      // Note: highlight color affects even transparent filled polygons, so this
-      // follows selection rather than `filled`. Point sketches can enable fill
-      // without changing unselected filter/outline hover.
-      return selectedFeatureIndexes.length
-        ? FEATURE_STYLE.highlightMultiplier
-        : LINE_STYLE.highlightMultiplier;
+      // Polygons get a mostly transparent fill highlight. Using the opaque
+      // stroke color here paints a solid yellow background because GeoJsonLayer
+      // applies highlightColor to fill when the layer is filled (e.g. points).
+      const geomType = object?.geometry?.type;
+      if (geomType === 'Polygon' || geomType === 'MultiPolygon') {
+        return FEATURE_STYLE.highlightMultiplier;
+      }
+      if (geomType === 'LineString' || geomType === 'MultiLineString') {
+        return LINE_STYLE.highlightMultiplier;
+      }
+
+      return filled ? FEATURE_STYLE.highlightMultiplier : LINE_STYLE.highlightMultiplier;
     },
 
     extensions: [new PathStyleExtension({dash: true})],

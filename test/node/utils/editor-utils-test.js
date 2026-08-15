@@ -414,8 +414,8 @@ test('editorLayerUtils -> filter polygons are styled differently from sketches',
   );
   t.equal(
     editorLayer.props.highlightColor({object: filterFeature})[3],
-    0xff,
-    'Outline-only filter hover should use the original opaque yellow stroke'
+    0x66,
+    'Unselected polygon hover should use a semi-transparent yellow fill'
   );
 
   const layerWithPoint = getEditorLayer({
@@ -436,8 +436,8 @@ test('editorLayerUtils -> filter polygons are styled differently from sketches',
   t.ok(layerWithPoint.props.filled, 'Point sketches should enable fill so points are visible');
   t.equal(
     layerWithPoint.props.highlightColor({object: filterFeature})[3],
-    0xff,
-    'Filter hover should stay an opaque stroke even when point sketches enable fill'
+    0x66,
+    'Polygon hover should stay semi-transparent even when point sketches enable fill'
   );
 
   t.end();
