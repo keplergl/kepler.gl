@@ -45,6 +45,9 @@ yarn start
 - ### [Custom Theme][custom-theme]
   Customize the kepler.gl theme by overriding default style properties.
 
+- ### [Clicked Feature][clicked-feature]
+  Read `visState.clicked` from Redux and show a GeoJSON feature's `shapeName` in a host-app sidebar outside the map.
+
 - ### [Custom Layer][custom-layer]
   Add a custom deck.gl layer (`ContourLayer`) to kepler.gl's layer type selector, so it can be picked from the dropdown, configured with dataset columns, and rendered on the map.
 
@@ -65,6 +68,7 @@ yarn start
 [custom-reducer]: custom-reducer/README.md
 [replace-component]: replace-component/README.md
 [custom-theme]: custom-theme/README.md
+[clicked-feature]: clicked-feature/README.md
 [custom-layer]: custom-layer/README.md
 [custom-map-style]: custom-map-style/README.md
 [node-app]: node-app/README.md
