@@ -121,7 +121,7 @@ export const defaultAddDataToMapOptions = {
  * @param {Object} action.payload `{datasets, options, config}`
  * @param action.payload.datasets - ***required** datasets can be a dataset or an array of datasets
  * Each dataset object needs to have `info` and `data` property.
- * @param [action.payload.options] option object `{centerMap: true}`
+ * @param [action.payload.options] option object `{centerMap: true, padding: {left: 300}}`
  * @param [action.payload.config] map config
  * @param [action.payload.info] map info contains title and description
  * @returns nextState
