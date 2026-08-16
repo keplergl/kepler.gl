@@ -107,19 +107,24 @@ export type TimeFieldFilterProps = TimeRangeFieldDomain & {
 // Unique identifier of each field
 const FID_KEY = 'name';
 
+function readFieldValue(
+  fieldIdx: number,
+  dc: DataContainerInterface,
+  // An object with row index or a materialized row array (for materialized hover info from trip layer)
+  d: {index: number} | any[]
+) {
+  return Array.isArray(d) ? d[fieldIdx] : dc.valueAt(d.index, fieldIdx);
+}
+
 export function maybeToDate(
   isTime: boolean,
   fieldIdx: number,
   format: string,
   dc: DataContainerInterface,
-  // An object with row index or a materialized row array (for materialized hover info from trip layer)
   d: {index: number} | any[]
 ) {
-  if (isTime) {
-    return timeToUnixMilli(Array.isArray(d) ? d[fieldIdx] : dc.valueAt(d.index, fieldIdx), format);
-  }
-
-  return Array.isArray(d) ? d[fieldIdx] : dc.valueAt(d.index, fieldIdx);
+  const value = readFieldValue(fieldIdx, dc, d);
+  return isTime ? timeToUnixMilli(value, format) : value;
 }
 
 /**
@@ -778,20 +783,33 @@ export function copyTableAndUpdate(
   }, copyTable(original));
 }
 
+/**
+ * Arrow Int64/Uint64 columns yield JS BigInt. Detect from the column type once
+ * at bind time so other columns keep the existing accessor with no extra checks.
+ */
+function isInt64ArrowColumn(dc: DataContainerInterface, fieldIdx: number): boolean {
+  const type = (dc.getColumn?.(fieldIdx) as {type?: {bitWidth?: number; isSigned?: boolean}})
+    ?.type;
+  return type?.bitWidth === 64 && typeof type.isSigned === 'boolean';
+}
+
 export function getFieldValueAccessor<
   F extends {
     type?: Field['type'];
     format?: Field['format'];
   }
 >(f: F, i: number, dc: DataContainerInterface) {
-  return maybeToDate.bind(
-    null,
-    // is time
-    f.type === ALL_FIELD_TYPES.timestamp,
-    i,
-    f.format || '',
-    dc
-  );
+  if (f.type === ALL_FIELD_TYPES.timestamp) {
+    const format = f.format || '';
+    return (d: {index: number} | any[]) => timeToUnixMilli(readFieldValue(i, dc, d), format);
+  }
+  if (isInt64ArrowColumn(dc, i)) {
+    return (d: {index: number} | any[]) => {
+      const value = readFieldValue(i, dc, d);
+      return value == null ? value : Number(value);
+    };
+  }
+  return readFieldValue.bind(null, i, dc);
 }
 
 export default KeplerTable;
