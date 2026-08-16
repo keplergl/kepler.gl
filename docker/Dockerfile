@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -12,8 +13,9 @@ COPY --parents src/*/package.json ./
 COPY --parents examples/demo-app/package.json examples/demo-app/yarn.lock examples/demo-app/.yarnrc.yml ./
 
 # Skip all postinstall scripts to avoid building the gl native package (GPU headers not available)
-RUN yarn config set enableScripts false && \
-    yarn install && \
+RUN --mount=type=cache,id=kepler-yarn,target=/yarn-cache \
+    yarn config set enableScripts false && \
+    YARN_CACHE_FOLDER=/yarn-cache yarn install && \
     yarn config set enableScripts true
 
 # Selectively run esbuild postinstall (needed for the correct platform binary)
@@ -27,7 +29,8 @@ RUN yarn workspaces foreach -At run stab
 
 WORKDIR /app/examples/demo-app
 
-RUN yarn install
+RUN --mount=type=cache,id=kepler-yarn,target=/yarn-cache \
+    YARN_CACHE_FOLDER=/yarn-cache yarn install
 RUN yarn build
 
 FROM node:20-alpine AS runtime
