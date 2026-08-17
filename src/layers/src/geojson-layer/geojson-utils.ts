@@ -371,7 +371,7 @@ function parseGeometryFromString(geoString: string): Feature | null {
       // try parse as WKB hex string
       try {
         const buffer = Buffer.from(geoString, 'hex');
-        parsedGeo = convertWKBToGeometry(toArrayBuffer(new Uint8Array(buffer)));
+        parsedGeo = convertWKBToGeometry(toArrayBuffer(buffer));
       } catch (e) {
         return null;
       }
