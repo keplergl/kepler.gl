@@ -137,6 +137,44 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should be centered (
   t.end();
 });
 
+test('#composerStateReducer - addDataToMapUpdater: centerMap padding', t => {
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  const datasets = {
+    data: mockRawData,
+    info: {
+      id: 'foo'
+    }
+  };
+
+  const fitMapAfterAdd = options => {
+    let nextState = addDataToMapUpdater(state, {
+      payload: {
+        datasets,
+        options
+      }
+    });
+    nextState.visState = applyExistingDatasetTasks(visStateReducer, nextState.visState);
+    const tasks = drainTasksForTesting();
+    nextState.mapState = mapStateReducer(nextState.mapState, succeedTaskWithValues(tasks[0], {}));
+    drainTasksForTesting();
+    return nextState;
+  };
+
+  const unpadded = fitMapAfterAdd({centerMap: true});
+  const padded = fitMapAfterAdd({centerMap: true, padding: {left: 300}});
+
+  t.ok(
+    padded.mapState.zoom < unpadded.mapState.zoom,
+    'padding should zoom out relative to unpadded centerMap'
+  );
+  t.ok(
+    padded.mapState.longitude < unpadded.mapState.longitude,
+    'left padding should pan west so points are not hidden under the side panel'
+  );
+
+  t.end();
+});
+
 test('#composerStateReducer - addDataToMapUpdater: uiState', t => {
   // init kepler.gl root and instance
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;

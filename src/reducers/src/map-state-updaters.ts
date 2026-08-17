@@ -180,7 +180,8 @@ export const fitBoundsUpdater = (
 ): MapState => {
   const centerAndZoom = getCenterAndZoomFromBounds(action.payload, {
     width: state.width,
-    height: state.height
+    height: state.height,
+    padding: action.meta?.padding
   });
   if (!centerAndZoom) {
     // bounds is invalid
@@ -398,7 +399,8 @@ export const receiveMapConfigUpdater = (
   // center map will override mapState config
   if (options.centerMap && bounds) {
     mergedState = fitBoundsUpdater(mergedState, {
-      payload: bounds
+      payload: bounds,
+      meta: {padding: options.padding}
     });
   }
 
