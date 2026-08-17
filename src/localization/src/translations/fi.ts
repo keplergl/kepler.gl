@@ -319,6 +319,8 @@ export default {
     showLegend: 'Näytä selite',
     disable3DMap: 'Poistu 3D-näkymästä',
     DrawOnMap: 'Piirrä kartalle',
+    copyAllSketches: 'Kopioi kaikki luonnokset leikepöydälle GeoJSON-muodossa',
+    convertToLayer: 'Muunna luonnokset GeoJSON-tasoksi ja tyhjennä piirros',
     selectLocale: 'Valitse kielisyys',
     switchToLightTheme: 'Vaihda vaaleaan teemaan',
     switchToDarkTheme: 'Vaihda tummaan teemaan',
@@ -366,8 +368,12 @@ export default {
     shareMapURL: 'Jaa kartan URL',
     saveMap: 'Tallenna kartta',
     select: 'valitse',
+    point: 'piste',
+    line: 'viiva',
     polygon: 'polygoni',
     rectangle: 'nelikulmio',
+    copyAll: 'Kopioi kaikki',
+    convertToLayer: 'Muunna\ntasoksi',
     hide: 'piilota',
     show: 'näytä',
     ...LOCALES
@@ -376,6 +382,11 @@ export default {
     filterLayer: 'Suodata tasoja',
     filterLayerDisabled: 'Ei-monikulmiogeometrioita ei voi käyttää suodatukseen',
     copyGeometry: 'Kopioi geometria',
+    editProperties: 'Muokkaa ominaisuuksia',
+    propertyName: 'Ominaisuus',
+    propertyValue: 'Arvo',
+    removeProperty: 'Poista ominaisuus',
+    polygonFilter: 'Polygonisuodatin',
     noLayersToFilter: 'Ei tasoja suodatettavaksi'
   },
   exportVideoModal: {

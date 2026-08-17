@@ -48,6 +48,8 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Filters](./e-filters.md)
 
+#### [Draw on Map](./draw-on-map.md)
+
 #### [Map styles](./f-map-styles.md#map-styles)
 * [Base map styles](./f-map-styles.md#base-map-styles)
 * [Map layers](./f-map-styles.md#toggle-map-layers)

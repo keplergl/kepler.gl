@@ -59,6 +59,9 @@ import {
   computeSplitMapLayers,
   adjustValueToFilterDomain,
   errorNotification,
+  editorFeaturesToFeatureCollection,
+  mergeUserFeatureProperties,
+  toSketchFeature,
   featureToFilterValue,
   filterDatasetCPU,
   generatePolygonFilter,
@@ -130,9 +133,11 @@ import {
 } from './vis-state-merger';
 
 import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
+import {processGeojson} from '@kepler.gl/processors';
 
 import {
   Filter,
+  Feature,
   InteractionConfig,
   AnimationConfig,
   FilterAnimationConfig,
@@ -3674,14 +3679,24 @@ export function updateAnimationDomain<S extends VisState>(state: S): S {
 export const setEditorModeUpdater = (
   state: VisState,
   {mode}: VisStateActions.SetEditorModeUpdaterAction
-): VisState => ({
-  ...state,
-  editor: {
-    ...state.editor,
-    mode,
-    selectedFeature: null
+): VisState => {
+  const sketchesEnabled = getApplicationConfig().enableDrawOnMapSketches;
+  if (
+    !sketchesEnabled &&
+    (mode === EDITOR_MODES.DRAW_POINT || mode === EDITOR_MODES.DRAW_LINESTRING)
+  ) {
+    return state;
   }
-});
+
+  return {
+    ...state,
+    editor: {
+      ...state.editor,
+      mode,
+      selectedFeature: null
+    }
+  };
+};
 
 // const featureToFilterValue = (feature) => ({...feature, id: feature.id});
 /**
@@ -3736,6 +3751,78 @@ export function setFeaturesUpdater(
   }
 
   return newState;
+}
+
+function findEditorFeature(state: VisState, feature?: Feature | null): Feature | null {
+  if (!feature?.id) {
+    return feature || null;
+  }
+  if (state.editor.selectedFeature?.id === feature.id) {
+    return state.editor.selectedFeature;
+  }
+  const fromEditor = state.editor.features.find(item => item.id === feature.id);
+  if (fromEditor) {
+    return fromEditor;
+  }
+  const filterId = getFilterIdInFeature(feature);
+  if (filterId) {
+    const filter = state.filters.find(item => item.id === filterId);
+    if (filter?.value) {
+      return filter.value;
+    }
+  }
+  return feature;
+}
+
+/**
+ * Set user-facing GeoJSON properties on a sketch or polygon-filter feature.
+ * @memberof visStateUpdaters
+ */
+export function setEditorFeaturePropertiesUpdater(
+  state: VisState,
+  {feature, properties}: VisStateActions.SetEditorFeaturePropertiesUpdaterAction
+): VisState {
+  if (!getApplicationConfig().enableDrawOnMapSketches) {
+    return state;
+  }
+
+  const source = findEditorFeature(state, feature);
+  if (!source?.id) {
+    return state;
+  }
+
+  const nextFeature = mergeUserFeatureProperties(source, properties);
+  const filterId = getFilterIdInFeature(nextFeature);
+  const nextEditor = {
+    ...state.editor,
+    features: filterId
+      ? state.editor.features
+      : state.editor.features.map(item => (item.id === nextFeature.id ? nextFeature : item)),
+    selectedFeature:
+      state.editor.selectedFeature?.id === nextFeature.id
+        ? nextFeature
+        : state.editor.selectedFeature
+  };
+
+  const nextState = {
+    ...state,
+    editor: nextEditor
+  };
+
+  if (!filterId) {
+    return nextState;
+  }
+
+  const filterIdx = state.filters.findIndex(item => item.id === filterId);
+  if (filterIdx < 0) {
+    return nextState;
+  }
+
+  return setFilterUpdater(nextState, {
+    idx: filterIdx,
+    prop: 'value',
+    value: featureToFilterValue(nextFeature, filterId)
+  });
 }
 
 /**
@@ -3854,6 +3941,20 @@ export function setPolygonFilterLayerUpdater(
       ? // if layer is included, remove it
         layerId.filter(l => l !== layer.id)
       : [...layerId, layer.id];
+
+    // Last layer removed: turn the filter polygon back into a sketch
+    if (!newLayerId.length) {
+      const sketchFeature = toSketchFeature(feature);
+      const stateWithoutFilter = removeFilterUpdater(newState, {idx: filterIdx});
+      return {
+        ...stateWithoutFilter,
+        editor: {
+          ...stateWithoutFilter.editor,
+          features: [...stateWithoutFilter.editor.features, sketchFeature],
+          selectedFeature: sketchFeature
+        }
+      };
+    }
   } else {
     // if we haven't create the polygon filter, create it
     const newFilter = generatePolygonFilter([], feature);
@@ -4044,6 +4145,69 @@ export function toggleEditorVisibilityUpdater(
       visible: !state.editor.visible
     }
   };
+}
+
+/**
+ * Convert editor sketch features into a GeoJSON dataset/layer and clear the sketches.
+ */
+export function convertEditorFeaturesToLayerUpdater(
+  state: VisState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _action: VisStateActions.ConvertEditorFeaturesToLayerUpdaterAction
+): VisState {
+  if (!getApplicationConfig().enableDrawOnMapSketches) {
+    return state;
+  }
+
+  const features = state.editor.features;
+  if (!features.length) {
+    return state;
+  }
+
+  let data;
+  try {
+    data = processGeojson(editorFeaturesToFeatureCollection(features));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to convert drawn geometry to a layer: ${message}`,
+            id: 'convert-editor-features'
+          })
+        )
+      )
+    );
+  }
+
+  const clearedState: VisState = {
+    ...state,
+    editor: {
+      ...state.editor,
+      features: [],
+      selectedFeature: null,
+      mode: EDITOR_MODES.EDIT
+    }
+  };
+
+  const labelId = Math.floor(Math.random() * 90) + 10;
+
+  return updateVisDataUpdater(clearedState, {
+    datasets: {
+      info: {
+        id: `drawn-geometry-${generateHashId(6)}`,
+        label: `Drawn Geometry ${labelId}`
+      },
+      data
+    },
+    options: {
+      keepExistingConfig: true,
+      centerMap: false,
+      autoCreateLayers: true
+    }
+  });
 }
 
 export function setFilterAnimationTimeConfigUpdater(

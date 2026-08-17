@@ -321,6 +321,8 @@ export default {
     showLegend: 'Mostrar leyenda',
     disable3DMap: 'Desactivar mapa 3D',
     DrawOnMap: 'Dibujar en el mapa',
+    copyAllSketches: 'Copiar todos los bocetos al portapapeles como GeoJSON',
+    convertToLayer: 'Convertir los bocetos en una capa GeoJSON y borrar el dibujo',
     selectLocale: 'Seleccionar configuración regional',
     switchToLightTheme: 'Cambiar a tema claro',
     switchToDarkTheme: 'Cambiar a tema oscuro',
@@ -368,8 +370,12 @@ export default {
     shareMapURL: 'Compartir el enlace del mapa',
     saveMap: 'Guardar mapa',
     select: 'selecciona',
+    point: 'punto',
+    line: 'línea',
     polygon: 'polígono',
     rectangle: 'rectángulo',
+    copyAll: 'Copiar todo',
+    convertToLayer: 'Convertir\na capa',
     hide: 'esconder',
     show: 'mostrar',
     ...LOCALES
@@ -378,6 +384,11 @@ export default {
     filterLayer: 'Filtrar capas',
     filterLayerDisabled: 'Las geometrías no poligonales no se pueden usar para filtrar',
     copyGeometry: 'Copiar geometría',
+    editProperties: 'Editar propiedades',
+    propertyName: 'Propiedad',
+    propertyValue: 'Valor',
+    removeProperty: 'Quitar propiedad',
+    polygonFilter: 'Filtro de polígono',
     noLayersToFilter: 'No hay capas para filtrar'
   },
   exportVideoModal: {

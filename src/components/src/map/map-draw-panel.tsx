@@ -3,15 +3,50 @@
 
 import React, {useCallback} from 'react';
 import classnames from 'classnames';
+import copy from 'copy-to-clipboard';
+import styled from 'styled-components';
 
 import {EDITOR_MODES} from '@kepler.gl/constants';
-import {CursorClick, DrawPolygon, EyeSeen, EyeUnseen, Polygon, Rectangle} from '../common/icons';
+import {editorFeaturesToFeatureCollection, getApplicationConfig} from '@kepler.gl/utils';
+import {
+  Copy,
+  CursorClick,
+  DrawPoint,
+  DrawPolygon,
+  EyeSeen,
+  EyeUnseen,
+  Layers,
+  LineString,
+  Polygon,
+  Rectangle
+} from '../common/icons';
 import {MapControlButton} from '../common/styled-components';
 import ToolbarItem from '../common/toolbar-item';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlToolbarFactory from './map-control-toolbar';
 import {Editor, MapControls} from '@kepler.gl/types';
 import {BaseProps} from '../common/icons';
+
+const ToolbarSeparator = styled.div`
+  height: 1px;
+  margin: 4px 12px;
+  background-color: ${props => props.theme.panelHeaderIcon};
+  opacity: 0.2;
+`;
+
+const DrawControls = styled.div`
+  position: relative;
+
+  .convert-to-layer .toolbar-item__title {
+    flex: 1;
+    min-width: 0;
+    white-space: pre;
+    text-align: center;
+    line-height: 1.25;
+    overflow: hidden;
+    font-size: 11px;
+  }
+`;
 
 MapDrawPanelFactory.deps = [MapControlTooltipFactory, MapControlToolbarFactory];
 
@@ -21,6 +56,7 @@ export type MapDrawPanelProps = {
   onToggleMapControl: (control: string) => void;
   onSetEditorMode: (mode: string) => void;
   onToggleEditorVisibility: () => void;
+  onConvertEditorFeaturesToLayer?: () => void;
   actionIcons: {[id: string]: React.ComponentType<Partial<BaseProps>>};
 };
 
@@ -34,7 +70,11 @@ function MapDrawPanelFactory(
     polygon: DrawPolygon,
     cursor: CursorClick,
     innerPolygon: Polygon,
-    rectangle: Rectangle
+    rectangle: Rectangle,
+    point: DrawPoint,
+    line: LineString,
+    copy: Copy,
+    layers: Layers
   };
 
   const MapDrawPanel: React.FC<MapDrawPanelProps> = React.memo(
@@ -43,20 +83,29 @@ function MapDrawPanelFactory(
       mapControls,
       onToggleMapControl,
       onSetEditorMode,
+      onConvertEditorFeaturesToLayer,
       actionIcons = defaultActionIcons
     }) => {
       const isActive = mapControls?.mapDraw?.active;
+      const hasSketchFeatures = Boolean(editor?.features?.length);
+      const enableSketches = getApplicationConfig().enableDrawOnMapSketches;
       const onToggleMenuPanel = useCallback(() => {
         if (!isActive) {
           onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE);
         }
         onToggleMapControl('mapDraw');
       }, [isActive, onToggleMapControl, onSetEditorMode]);
+      const onCopyAllGeometry = useCallback(() => {
+        if (!editor?.features?.length) {
+          return;
+        }
+        copy(JSON.stringify(editorFeaturesToFeatureCollection(editor.features)));
+      }, [editor?.features]);
       if (!mapControls?.mapDraw?.show) {
         return null;
       }
       return (
-        <div className="map-draw-controls" style={{position: 'relative'}}>
+        <DrawControls className="map-draw-controls">
           {isActive ? (
             <MapControlToolbar $show={isActive}>
               <ToolbarItem
@@ -66,6 +115,24 @@ function MapDrawPanelFactory(
                 icon={actionIcons.cursor}
                 active={editor.mode === EDITOR_MODES.EDIT}
               />
+              {enableSketches ? (
+                <ToolbarItem
+                  className="draw-point"
+                  onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POINT)}
+                  label="toolbar.point"
+                  icon={actionIcons.point}
+                  active={editor.mode === EDITOR_MODES.DRAW_POINT}
+                />
+              ) : null}
+              {enableSketches ? (
+                <ToolbarItem
+                  className="draw-line"
+                  onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_LINESTRING)}
+                  label="toolbar.line"
+                  icon={actionIcons.line}
+                  active={editor.mode === EDITOR_MODES.DRAW_LINESTRING}
+                />
+              ) : null}
               <ToolbarItem
                 className="draw-feature"
                 onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
@@ -80,6 +147,27 @@ function MapDrawPanelFactory(
                 icon={actionIcons.rectangle}
                 active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
               />
+              {enableSketches ? (
+                <>
+                  <ToolbarSeparator />
+                  <ToolbarItem
+                    className="copy-all-geometry"
+                    onClick={onCopyAllGeometry}
+                    label="toolbar.copyAll"
+                    tooltip="tooltip.copyAllSketches"
+                    icon={actionIcons.copy}
+                    disabled={!hasSketchFeatures}
+                  />
+                  <ToolbarItem
+                    className="convert-to-layer"
+                    onClick={() => onConvertEditorFeaturesToLayer?.()}
+                    label="toolbar.convertToLayer"
+                    tooltip="tooltip.convertToLayer"
+                    icon={actionIcons.layers}
+                    disabled={!hasSketchFeatures}
+                  />
+                </>
+              ) : null}
             </MapControlToolbar>
           ) : null}
           <MapControlTooltip id="map-draw" message="tooltip.DrawOnMap">
@@ -94,7 +182,7 @@ function MapDrawPanelFactory(
               <actionIcons.polygon height="18px" />
             </MapControlButton>
           </MapControlTooltip>
-        </div>
+        </DrawControls>
       );
     }
   );

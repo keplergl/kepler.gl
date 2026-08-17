@@ -21,6 +21,16 @@ function MapControlToolbar() {
         width: 16px;
         height: 16px;
         margin-right: 10px;
+        flex-shrink: 0;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+          width: 16px;
+          height: 16px;
+        }
       }
 
       .toolbar-item__title {

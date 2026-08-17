@@ -70,6 +70,7 @@ export type MapControlProps = {
   onToggleMapControl: (control: string) => void;
   onSetEditorMode: (mode: string) => void;
   onToggleEditorVisibility: () => void;
+  onConvertEditorFeaturesToLayer?: () => void;
   onLayerVisConfigChange: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   onToggleLayerVisibility?: (layer: Layer) => void;
   top: number;

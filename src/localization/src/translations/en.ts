@@ -369,6 +369,8 @@ export default {
     viewMode: 'View Mode',
     top: 'Top',
     DrawOnMap: 'Draw on map',
+    copyAllSketches: 'Copy all sketches to the clipboard as GeoJSON',
+    convertToLayer: 'Turn sketches into a new GeoJSON layer and clear the drawing',
     selectLocale: 'Select locale',
     switchToLightTheme: 'Switch to light theme',
     switchToDarkTheme: 'Switch to dark theme',
@@ -416,8 +418,12 @@ export default {
     shareMapURL: 'Share Map URL',
     saveMap: 'Save Map',
     select: 'Select',
+    point: 'Point',
+    line: 'Line',
     polygon: 'Polygon',
     rectangle: 'Rectangle',
+    copyAll: 'Copy all',
+    convertToLayer: 'Convert to\nLayer',
     hide: 'Hide',
     show: 'Show',
     ...LOCALES
@@ -426,6 +432,11 @@ export default {
     filterLayer: 'Filter Layers',
     filterLayerDisabled: 'Non-polygon geometries cannot be used for filtering',
     copyGeometry: 'Copy Geometry',
+    editProperties: 'Edit Properties',
+    propertyName: 'Property',
+    propertyValue: 'Value',
+    removeProperty: 'Remove property',
+    polygonFilter: 'Polygon filter',
     noLayersToFilter: 'No layers to filter'
   },
 

@@ -6,9 +6,11 @@ import styled from 'styled-components';
 import classnames from 'classnames';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {ComponentType, MouseEvent} from 'react';
+import TippyTooltip from './tippy-tooltip';
 
 interface StyledDivProps {
   $active?: boolean;
+  $disabled?: boolean;
 }
 
 const StyledDiv = styled.div.attrs(props => ({
@@ -26,6 +28,9 @@ const StyledDiv = styled.div.attrs(props => ({
   border-radius: ${props => props.theme.toolbarItemBorderRaddius};
   background-color: ${props =>
     props.$active ? props.theme.toolbarItemBgdHover : props.theme.dropdownListBgd};
+  opacity: ${props => (props.$disabled ? 0.4 : 1)};
+  // Keep hover so tooltips still work when the action is disabled.
+  pointer-events: auto;
 
   .toolbar-item__svg-container {
     margin-bottom: 4px;
@@ -41,7 +46,7 @@ const StyledDiv = styled.div.attrs(props => ({
     svg {
       color: ${props => props.theme.toolbarItemIconHover};
     }
-    cursor: pointer;
+    cursor: ${props => (props.$disabled ? 'default' : 'pointer')};
   }
 `;
 
@@ -49,37 +54,63 @@ export type ToolbarItemProps = {
   id?: string;
   key?: string;
   label: string;
+  tooltip?: string;
   className?: string;
   active?: boolean;
+  disabled?: boolean;
   onClose?: () => void;
   onClick: ((event: MouseEvent<HTMLDivElement>) => void) | null;
   icon?: ComponentType<any>;
 };
 
-const ToolbarItem = React.memo((props: ToolbarItemProps) => (
-  <StyledDiv
-    id={props.id}
-    className={props.className}
-    $active={props.active}
-    onClick={e => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (typeof props.onClose === 'function') {
-        props.onClose();
-      }
-      props.onClick?.(e);
-    }}
-  >
-    {props.icon && (
-      <div className="toolbar-item__svg-container">
-        <props.icon />
+const ToolbarItem = React.memo((props: ToolbarItemProps) => {
+  const item = (
+    <StyledDiv
+      id={props.id}
+      className={props.className}
+      $active={props.active}
+      $disabled={props.disabled}
+      onClick={e => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (props.disabled) {
+          return;
+        }
+        if (typeof props.onClose === 'function') {
+          props.onClose();
+        }
+        props.onClick?.(e);
+      }}
+    >
+      {props.icon && (
+        <div className="toolbar-item__svg-container">
+          <props.icon />
+        </div>
+      )}
+      <div className="toolbar-item__title">
+        <FormattedMessage id={props.label} />
       </div>
-    )}
-    <div className="toolbar-item__title">
-      <FormattedMessage id={props.label} />
-    </div>
-  </StyledDiv>
-));
+    </StyledDiv>
+  );
+
+  const tooltip = props.tooltip;
+  if (!tooltip) {
+    return item;
+  }
+
+  return (
+    <TippyTooltip
+      placement="left"
+      render={() => (
+        <div>
+          <FormattedMessage id={tooltip} />
+        </div>
+      )}
+    >
+      {item}
+    </TippyTooltip>
+  );
+});
 
 ToolbarItem.displayName = 'ToolbarItem';
 

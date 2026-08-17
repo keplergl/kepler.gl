@@ -129,6 +129,8 @@ const actionHandler = {
 
   [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
 
+  [ActionTypes.SET_EDITOR_FEATURE_PROPERTIES]: visStateUpdaters.setEditorFeaturePropertiesUpdater,
+
   [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater,
 
   [ActionTypes.SET_POLYGON_FILTER_LAYER]: visStateUpdaters.setPolygonFilterLayerUpdater,
@@ -140,6 +142,9 @@ const actionHandler = {
   [ActionTypes.SET_EDITOR_MODE]: visStateUpdaters.setEditorModeUpdater,
 
   [ActionTypes.TOGGLE_EDITOR_VISIBILITY]: visStateUpdaters.toggleEditorVisibilityUpdater,
+
+  [ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER]:
+    visStateUpdaters.convertEditorFeaturesToLayerUpdater,
 
   [ActionTypes.TOGGLE_FILTER_FEATURE]: visStateUpdaters.toggleFilterFeatureUpdater,
 

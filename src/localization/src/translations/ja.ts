@@ -316,6 +316,8 @@ export default {
     showLegend: '凡例を表示',
     disable3DMap: '3D地図を無効化',
     DrawOnMap: '地図上に図形を描画',
+    copyAllSketches: 'すべてのスケッチを GeoJSON としてクリップボードにコピー',
+    convertToLayer: 'スケッチを GeoJSON レイヤに変換し、描画をクリア',
     selectLocale: '言語設定',
     switchToLightTheme: 'ライトテーマに切り替え',
     switchToDarkTheme: 'ダークテーマに切り替え',
@@ -364,8 +366,12 @@ export default {
     shareMapURL: '地図のURLを共有',
     saveMap: '地図を保存',
     select: '選択',
+    point: 'ポイント',
+    line: 'ライン',
     polygon: 'ポリゴン',
     rectangle: '長方形',
+    copyAll: 'すべてコピー',
+    convertToLayer: 'レイヤに\n変換',
     hide: '非表示',
     show: '表示',
     ...LOCALES
@@ -374,6 +380,11 @@ export default {
     filterLayer: 'レイヤをフィルタ',
     filterLayerDisabled: 'ポリゴン以外のジオメトリはフィルタリングに使用できません',
     copyGeometry: 'ジオメトリをコピー',
+    editProperties: 'プロパティを編集',
+    propertyName: 'プロパティ',
+    propertyValue: '値',
+    removeProperty: 'プロパティを削除',
+    polygonFilter: 'ポリゴンフィルタ',
     noLayersToFilter: 'フィルタするレイヤがありません'
   },
   exportVideoModal: {

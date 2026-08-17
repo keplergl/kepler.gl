@@ -27,6 +27,7 @@ import {
 } from './map/attribution';
 
 import EditorFactory from './editor/editor';
+import FilterFeatureBadges from './editor/filter-feature-badges';
 import {AnnotationOverlay} from './annotations';
 
 // utils
@@ -1452,6 +1453,7 @@ export default function MapContainerFactory(
               onSetLocale={uiStateActions.setLocale}
               onSetTheme={uiStateActions.setTheme}
               onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
+              onConvertEditorFeaturesToLayer={visStateActions.convertEditorFeaturesToLayer}
               onLayerVisConfigChange={visStateActions.layerVisConfigChange}
               onToggleLayerVisibility={this._handleToggleLayerVisibility}
               mapHeight={mapState.height}
@@ -1472,6 +1474,7 @@ export default function MapContainerFactory(
             filters={this.polygonFiltersSelector(this.props)}
             layers={layers}
             onDeleteFeature={visStateActions.deleteFeature}
+            onSetFeatureProperties={visStateActions.setEditorFeatureProperties}
             onSelect={visStateActions.setSelectedFeature}
             onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
             onSetEditorMode={visStateActions.setEditorMode}
@@ -1481,6 +1484,14 @@ export default function MapContainerFactory(
               display: editor.visible ? 'block' : 'none'
             }}
           />
+          {editor.visible ? (
+            <FilterFeatureBadges
+              filters={this.polygonFiltersSelector(this.props)}
+              viewport={this._getAnnotationViewport(mapState, internalViewState)}
+              isGlobeEnabled={Boolean(mapState.globe?.enabled)}
+              onSelect={visStateActions.setSelectedFeature}
+            />
+          ) : null}
           <AnnotationOverlay
             annotations={visState.annotations}
             selectedAnnotationId={visState.selectedAnnotationId}
