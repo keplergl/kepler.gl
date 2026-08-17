@@ -113,7 +113,7 @@ export function histogramFromValues(
   values: (Millisecond | null | number)[],
   numBins: number,
   valueAccessor?: (d: number) => number
-) {
+): Bin[] {
   const getBins = d3Histogram().thresholds(numBins);
 
   if (valueAccessor) {
@@ -131,7 +131,7 @@ export function histogramFromValues(
     .filter(b => {
       const {x0, x1} = b;
       return isNumber(x0) && isNumber(x1);
-    });
+    }) as Bin[];
 }
 
 export function histogramFromOrdinal(
