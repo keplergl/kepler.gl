@@ -16,6 +16,7 @@ import {PathStyleExtension} from '@deck.gl/extensions';
 import {EDITOR_LAYER_ID, EDITOR_MODES, EDITOR_LAYER_PICKING_RADIUS} from '@kepler.gl/constants';
 import {Viewport, Editor, Feature, FeatureSelectionContext} from '@kepler.gl/types';
 import {generateHashId} from '@kepler.gl/common-utils';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {EDIT_TYPES} from './constants';
 import {LINE_STYLE, FEATURE_STYLE, EDIT_HANDLE_STYLE, getFeatureDashArray} from './feature-styles';
@@ -72,6 +73,7 @@ export function getEditorLayer({
   mapState
 }: GetEditorLayerProps): DeckLayer<DeckLayerProps> {
   const {mode: editorMode} = editor;
+  const sketchesEnabled = getApplicationConfig().enableDrawOnMapSketches;
 
   let mode = DEFAULT_COMPOSITE_MODE;
   if (editorMenuActive) {
@@ -80,9 +82,11 @@ export function getEditorLayer({
     // @ts-ignore
     else if (editorMode === EDITOR_MODES.DRAW_RECTANGLE) mode = DrawRectangleModeExtended;
     // @ts-ignore
-    else if (editorMode === EDITOR_MODES.DRAW_LINESTRING) mode = DrawLineStringSketchMode;
+    else if (sketchesEnabled && editorMode === EDITOR_MODES.DRAW_LINESTRING)
+      // @ts-ignore
+      mode = DrawLineStringSketchMode;
     // @ts-ignore
-    else if (editorMode === EDITOR_MODES.DRAW_POINT) mode = DrawPointMode;
+    else if (sketchesEnabled && editorMode === EDITOR_MODES.DRAW_POINT) mode = DrawPointMode;
   }
 
   const hasPointFeatures = featureCollection.features.some(
@@ -92,7 +96,7 @@ export function getEditorLayer({
   const filled =
     selectedFeatureIndexes.length > 0 ||
     hasPointFeatures ||
-    editorMode === EDITOR_MODES.DRAW_POINT;
+    (sketchesEnabled && editorMode === EDITOR_MODES.DRAW_POINT);
 
   // @ts-ignore
   return new EditableGeoJsonLayer({
@@ -199,7 +203,7 @@ export function getEditorLayer({
     getTentativeLineColor: LINE_STYLE.getTentativeLineColor,
     // @ts-ignore
     getTentativeLineWidth:
-      editorMode === EDITOR_MODES.DRAW_LINESTRING
+      sketchesEnabled && editorMode === EDITOR_MODES.DRAW_LINESTRING
         ? LINE_STYLE.lineStringWidth
         : LINE_STYLE.getTentativeLineWidth,
     getTentativeFillColor: LINE_STYLE.getTentativeFillColor,

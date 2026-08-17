@@ -7,6 +7,7 @@
   - [Edit properties](#edit-properties)
   - [Filter layers](#filter-layers)
   - [Copy and convert to a layer](#copy-and-convert-to-a-layer)
+  - [Disable sketch tools](#disable-sketch-tools)
 <!-- /TOC -->
 
 Draw on Map lets you sketch points, lines, polygons, and rectangles on the map. Sketches stay on the map until you delete them, convert them to a layer, or use a polygon or rectangle as a spatial filter.
@@ -59,5 +60,15 @@ The drawing menu also includes:
 
 - **Copy all** — copies every sketch as a GeoJSON FeatureCollection.
 - **Convert to Layer** — turns the sketches into a GeoJSON dataset and layer named `Drawn Geometry` plus a number, then clears the sketches.
+
+## Disable sketch tools
+
+Point, Line, Copy all, Convert to Layer, and Edit Properties are enabled by default. Polygon and rectangle drawing stay available if you turn the extra tools off:
+
+```js
+import {initApplicationConfig} from '@kepler.gl/utils';
+
+initApplicationConfig({enableDrawOnMapSketches: false});
+```
 
 [Back to table of contents](README.md)

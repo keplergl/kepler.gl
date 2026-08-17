@@ -7,7 +7,7 @@ import copy from 'copy-to-clipboard';
 import styled from 'styled-components';
 
 import {EDITOR_MODES} from '@kepler.gl/constants';
-import {editorFeaturesToFeatureCollection} from '@kepler.gl/utils';
+import {editorFeaturesToFeatureCollection, getApplicationConfig} from '@kepler.gl/utils';
 import {
   Copy,
   CursorClick,
@@ -88,6 +88,7 @@ function MapDrawPanelFactory(
     }) => {
       const isActive = mapControls?.mapDraw?.active;
       const hasSketchFeatures = Boolean(editor?.features?.length);
+      const enableSketches = getApplicationConfig().enableDrawOnMapSketches;
       const onToggleMenuPanel = useCallback(() => {
         if (!isActive) {
           onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE);
@@ -114,20 +115,24 @@ function MapDrawPanelFactory(
                 icon={actionIcons.cursor}
                 active={editor.mode === EDITOR_MODES.EDIT}
               />
-              <ToolbarItem
-                className="draw-point"
-                onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POINT)}
-                label="toolbar.point"
-                icon={actionIcons.point}
-                active={editor.mode === EDITOR_MODES.DRAW_POINT}
-              />
-              <ToolbarItem
-                className="draw-line"
-                onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_LINESTRING)}
-                label="toolbar.line"
-                icon={actionIcons.line}
-                active={editor.mode === EDITOR_MODES.DRAW_LINESTRING}
-              />
+              {enableSketches ? (
+                <ToolbarItem
+                  className="draw-point"
+                  onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POINT)}
+                  label="toolbar.point"
+                  icon={actionIcons.point}
+                  active={editor.mode === EDITOR_MODES.DRAW_POINT}
+                />
+              ) : null}
+              {enableSketches ? (
+                <ToolbarItem
+                  className="draw-line"
+                  onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_LINESTRING)}
+                  label="toolbar.line"
+                  icon={actionIcons.line}
+                  active={editor.mode === EDITOR_MODES.DRAW_LINESTRING}
+                />
+              ) : null}
               <ToolbarItem
                 className="draw-feature"
                 onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
@@ -142,23 +147,27 @@ function MapDrawPanelFactory(
                 icon={actionIcons.rectangle}
                 active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
               />
-              <ToolbarSeparator />
-              <ToolbarItem
-                className="copy-all-geometry"
-                onClick={onCopyAllGeometry}
-                label="toolbar.copyAll"
-                tooltip="tooltip.copyAllSketches"
-                icon={actionIcons.copy}
-                disabled={!hasSketchFeatures}
-              />
-              <ToolbarItem
-                className="convert-to-layer"
-                onClick={() => onConvertEditorFeaturesToLayer?.()}
-                label="toolbar.convertToLayer"
-                tooltip="tooltip.convertToLayer"
-                icon={actionIcons.layers}
-                disabled={!hasSketchFeatures}
-              />
+              {enableSketches ? (
+                <>
+                  <ToolbarSeparator />
+                  <ToolbarItem
+                    className="copy-all-geometry"
+                    onClick={onCopyAllGeometry}
+                    label="toolbar.copyAll"
+                    tooltip="tooltip.copyAllSketches"
+                    icon={actionIcons.copy}
+                    disabled={!hasSketchFeatures}
+                  />
+                  <ToolbarItem
+                    className="convert-to-layer"
+                    onClick={() => onConvertEditorFeaturesToLayer?.()}
+                    label="toolbar.convertToLayer"
+                    tooltip="tooltip.convertToLayer"
+                    icon={actionIcons.layers}
+                    disabled={!hasSketchFeatures}
+                  />
+                </>
+              ) : null}
             </MapControlToolbar>
           ) : null}
           <MapControlTooltip id="map-draw" message="tooltip.DrawOnMap">

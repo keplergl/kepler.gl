@@ -3678,14 +3678,24 @@ export function updateAnimationDomain<S extends VisState>(state: S): S {
 export const setEditorModeUpdater = (
   state: VisState,
   {mode}: VisStateActions.SetEditorModeUpdaterAction
-): VisState => ({
-  ...state,
-  editor: {
-    ...state.editor,
-    mode,
-    selectedFeature: null
+): VisState => {
+  const sketchesEnabled = getApplicationConfig().enableDrawOnMapSketches;
+  if (
+    !sketchesEnabled &&
+    (mode === EDITOR_MODES.DRAW_POINT || mode === EDITOR_MODES.DRAW_LINESTRING)
+  ) {
+    return state;
   }
-});
+
+  return {
+    ...state,
+    editor: {
+      ...state.editor,
+      mode,
+      selectedFeature: null
+    }
+  };
+};
 
 // const featureToFilterValue = (feature) => ({...feature, id: feature.id});
 /**
@@ -3771,6 +3781,10 @@ export function setEditorFeaturePropertiesUpdater(
   state: VisState,
   {feature, properties}: VisStateActions.SetEditorFeaturePropertiesUpdaterAction
 ): VisState {
+  if (!getApplicationConfig().enableDrawOnMapSketches) {
+    return state;
+  }
+
   const source = findEditorFeature(state, feature);
   if (!source?.id) {
     return state;
@@ -4140,6 +4154,10 @@ export function convertEditorFeaturesToLayerUpdater(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _action: VisStateActions.ConvertEditorFeaturesToLayerUpdaterAction
 ): VisState {
+  if (!getApplicationConfig().enableDrawOnMapSketches) {
+    return state;
+  }
+
   const features = state.editor.features;
   if (!features.length) {
     return state;

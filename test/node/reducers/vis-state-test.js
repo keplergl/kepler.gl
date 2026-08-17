@@ -34,7 +34,8 @@ import {
   getAnimatableVisibleLayers,
   getDefaultFilter,
   histogramFromDomain,
-  TileTimeInterval
+  TileTimeInterval,
+  initApplicationConfig
 } from '@kepler.gl/utils';
 import {
   ALL_FIELD_TYPES,
@@ -6010,6 +6011,57 @@ test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER', t => {
     /Drawn Geometry \d{2}/.test(JSON.stringify(tasks)),
     'Converted layer should be named Drawn Geometry plus a two-digit number'
   );
+  t.end();
+});
+
+test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER disabled by config', t => {
+  initApplicationConfig({enableDrawOnMapSketches: false});
+
+  try {
+    const lineFeature = {
+      type: 'Feature',
+      id: 'line-1',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [0, 0],
+          [1, 1]
+        ]
+      }
+    };
+    const startState = {
+      ...INITIAL_VIS_STATE,
+      editor: {
+        ...INITIAL_VIS_STATE.editor,
+        features: [lineFeature],
+        selectedFeature: lineFeature
+      }
+    };
+
+    const nextState = reducer(startState, VisStateActions.convertEditorFeaturesToLayer());
+    t.equal(nextState, startState, 'Should no-op convert when draw-on-map sketches are disabled');
+
+    const ignoredMode = reducer(startState, VisStateActions.setEditorMode(EDITOR_MODES.DRAW_POINT));
+    t.equal(
+      ignoredMode.editor.mode,
+      startState.editor.mode,
+      'Should ignore point draw mode when sketches are disabled'
+    );
+
+    const ignoredProperties = reducer(
+      startState,
+      VisStateActions.setEditorFeatureProperties(lineFeature, {name: 'route'})
+    );
+    t.equal(
+      ignoredProperties,
+      startState,
+      'Should ignore edit properties when sketches are disabled'
+    );
+  } finally {
+    initApplicationConfig({enableDrawOnMapSketches: true});
+  }
+
   t.end();
 });
 

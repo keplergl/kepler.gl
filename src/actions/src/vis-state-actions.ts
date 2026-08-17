@@ -1755,6 +1755,7 @@ export type ConvertEditorFeaturesToLayerUpdaterAction = void;
 /**
  * Convert editor sketch features into a GeoJSON dataset and layer, then clear the sketches.
  * The new dataset/layer is labeled `Drawn Geometry` plus a two-digit number.
+ * No-ops when `enableDrawOnMapSketches` is false in application config.
  * @memberof visStateActions
  * @return action
  * @public

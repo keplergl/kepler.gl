@@ -12,7 +12,7 @@ import {Layer} from '@kepler.gl/layers';
 import {Filter} from '@kepler.gl/types';
 import {Feature} from '@deck.gl-community/editable-layers';
 import {Datasets} from '@kepler.gl/table';
-import {canApplyFeatureFilter} from '@kepler.gl/utils';
+import {canApplyFeatureFilter, getApplicationConfig} from '@kepler.gl/utils';
 
 import ActionPanel, {ActionPanelItem} from '../common/action-panel';
 import {Trash, Layers, Copy, Checkmark, Edit} from '../common/icons';
@@ -105,6 +105,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
     }
 
     const canFilterLayers = canApplyFeatureFilter(selectedFeature as any);
+    const enableSketches = getApplicationConfig().enableDrawOnMapSketches;
     return (
       <StyledActionsLayer
         ref={refs.setFloating}
@@ -152,15 +153,17 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
               )}
             </ActionPanelItem>
           ) : null}
-          <ActionPanelItem
-            label={intl.formatMessage({
-              id: 'editor.editProperties',
-              defaultMessage: 'Edit Properties'
-            })}
-            className="edit-properties-panel-item"
-            Icon={actionIcons.edit}
-            onClick={() => setShowProperties(open => !open)}
-          />
+          {enableSketches ? (
+            <ActionPanelItem
+              label={intl.formatMessage({
+                id: 'editor.editProperties',
+                defaultMessage: 'Edit Properties'
+              })}
+              className="edit-properties-panel-item"
+              Icon={actionIcons.edit}
+              onClick={() => setShowProperties(open => !open)}
+            />
+          ) : null}
           <ActionPanelItem
             label={intl.formatMessage({id: 'editor.copyGeometry', defaultMessage: 'Copy Geometry'})}
             className="delete-panel-item"
@@ -175,7 +178,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
             onClick={onDeleteFeature}
           />
         </ActionPanel>
-        {showProperties ? (
+        {enableSketches && showProperties ? (
           <FeaturePropertiesEditor
             selectedFeature={selectedFeature}
             onSetFeatureProperties={onSetFeatureProperties}
