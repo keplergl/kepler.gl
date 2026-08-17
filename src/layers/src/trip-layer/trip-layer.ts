@@ -626,7 +626,7 @@ export default class TripLayer extends Layer {
     switch (this.config.columnMode) {
       case COLUMN_MODE_GEOJSON: {
         valueAccessor = (dc: DataContainerInterface, f, fieldIndex: number) => {
-          return dc.valueAt(f.properties.index, fieldIndex);
+          return fields[fieldIndex].valueAccessor({index: f.properties.index});
         };
         const textLabelAccessor = tl => dc => {
           const {field} = tl;

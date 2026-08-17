@@ -524,8 +524,7 @@ class HeatmapLayer extends Layer {
     let filteredData = data;
     if (hasFilter) {
       const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
-        (d: {index: number}) => d.index,
-        (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex)
+        (d: {index: number}) => d.index
       );
       const filterFunc = getFilterDataFunc(gpuFilter.filterRange, getFilterValue);
       filteredData = data.filter(filterFunc);

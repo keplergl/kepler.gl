@@ -314,7 +314,7 @@ export default class AggregationLayer extends Layer {
       accu[field.name] = {
         measure,
         value: aggregate(object.points, measure, (d: {index: number}) => {
-          return dataContainer.valueAt(d.index, field.fieldIdx);
+          return field.valueAccessor(d);
         })
       };
       return accu;
@@ -593,10 +593,7 @@ export default class AggregationLayer extends Layer {
       arr.some(v => v !== 0)
     );
 
-    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
-      this.gpuFilterGetIndex,
-      this.gpuFilterGetData
-    );
+    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(this.gpuFilterGetIndex);
     const filterData = hasFilter
       ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
       : undefined;
