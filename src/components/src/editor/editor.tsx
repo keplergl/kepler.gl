@@ -44,6 +44,7 @@ interface EditorProps {
   onSelect: (f: Feature | null) => any;
   onSetEditorMode: (m: any) => void;
   onDeleteFeature: (f: Feature) => any;
+  onSetFeatureProperties: (f: Feature, properties: Record<string, unknown>) => any;
   onTogglePolygonFilter: (l: Layer, f: Feature) => any;
 }
 
@@ -65,6 +66,7 @@ export default function EditorFactory(
     currentFilter,
     onClose,
     onDeleteFeature,
+    onSetFeatureProperties,
     onToggleLayer,
     position
   }) => {
@@ -82,6 +84,7 @@ export default function EditorFactory(
                     currentFilter={currentFilter}
                     onClose={onClose}
                     onDeleteFeature={onDeleteFeature}
+                    onSetFeatureProperties={onSetFeatureProperties}
                     onToggleLayer={onToggleLayer}
                     position={position || null}
                   />
@@ -139,20 +142,38 @@ export default function EditorFactory(
 
     isInFocus = () => document.activeElement?.id === DECKGL_RENDER_LAYER;
 
+    isTypingTarget = (target: EventTarget | null) => {
+      const element = target as HTMLElement | null;
+      if (!element) {
+        return false;
+      }
+      const tagName = element.tagName;
+      return (
+        tagName === 'INPUT' ||
+        tagName === 'TEXTAREA' ||
+        tagName === 'SELECT' ||
+        Boolean(element.isContentEditable)
+      );
+    };
+
     _onKeyPressed = (event: KeyboardEvent) => {
+      const isEscape = event.keyCode === KeyEvent.DOM_VK_ESCAPE || event.key === 'Escape';
+      if (isEscape && !this.isTypingTarget(event.target)) {
+        const drawing = EditorLayerUtils.isDrawingActive(true, this.props.editor.mode);
+        if (drawing) {
+          this.props.onSetEditorMode(EDITOR_MODES.EDIT);
+          this.props.onSelect(null);
+        } else if (this.isInFocus()) {
+          this.props.onSelect(null);
+        }
+        return;
+      }
+
       if (this.isInFocus()) {
         switch (event.keyCode) {
           case KeyEvent.DOM_VK_DELETE:
           case KeyEvent.DOM_VK_BACK_SPACE:
             this._onDeleteSelectedFeature();
-            break;
-          case KeyEvent.DOM_VK_ESCAPE:
-            // reset active drawing
-            if (EditorLayerUtils.isDrawingActive(true, this.props.editor.mode)) {
-              this.props.onSetEditorMode(EDITOR_MODES.EDIT);
-            }
-
-            this.props.onSelect(null);
             break;
           default:
             break;
@@ -181,6 +202,10 @@ export default function EditorFactory(
       }
     };
 
+    _onSetFeatureProperties = (feature: Feature, properties: Record<string, unknown>) => {
+      this.props.onSetFeatureProperties(feature, properties);
+    };
+
     render() {
       const {className, datasets, editor, style, index} = this.props;
       const {selectedFeature, selectionContext} = editor;
@@ -198,6 +223,9 @@ export default function EditorFactory(
           currentFilter={currentFilter}
           onClose={this._closeFeatureAction}
           onDeleteFeature={this._onDeleteSelectedFeature}
+          onSetFeatureProperties={
+            this._onSetFeatureProperties as FeatureActionPanelProps['onSetFeatureProperties']
+          }
           onToggleLayer={this._togglePolygonFilter}
           position={position || null}
           className={className}

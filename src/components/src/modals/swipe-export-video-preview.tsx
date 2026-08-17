@@ -7,7 +7,7 @@ import ReactMapGL, {type MapRef, useControl} from 'react-map-gl/maplibre';
 // @ts-ignore module resolution mismatch with moduleResolution:"node"
 import {MapboxOverlay} from '@deck.gl/mapbox';
 import type {Deck, DeckProps, MapViewState} from '@deck.gl/core';
-import isEqual from 'lodash.isequal';
+import isEqual from 'lodash/isEqual';
 import styled from 'styled-components';
 
 import {DeckAdapter} from '@hubble.gl/core';
@@ -178,13 +178,17 @@ export class SwipeExportVideoPreview extends Component<
     if (!leftCanvas || !rightCanvas || !outputCanvas) return;
 
     const percentage = this._getCurrentSwipePercentage();
+    const globe = this.props.mapData?.mapState?.globe;
+    const showStars = Boolean(globe?.enabled && globe?.config?.stars);
+
     compositeSwipeFrame(
       leftCanvas,
       rightCanvas,
       outputCanvas,
       percentage,
       true,
-      this.props.backgroundColor
+      this.props.backgroundColor,
+      showStars
     );
   }
 
@@ -232,7 +236,8 @@ export class SwipeExportVideoPreview extends Component<
       return getGlobeExportLayers(mapData, {
         mapIndex,
         mapboxApiAccessToken: mapProps?.mapboxApiAccessToken,
-        mapboxApiUrl: mapProps?.mapboxApiUrl
+        mapboxApiUrl: mapProps?.mapboxApiUrl,
+        viewState
       });
     }
 

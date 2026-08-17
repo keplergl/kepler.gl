@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import './data-utils-test';
+import './column-statistics-test';
 import './data-processor-test';
 import './kepler-table-test';
 import './kepler-table-utils-test';
@@ -21,6 +22,7 @@ import './export-utils-test';
 import './s2-utils-test';
 import './a5-utils-test';
 import './editor-utils-test';
+import './editor-feature-utils-test';
 import './kepler-gl-utils-test';
 import './timeline-test';
 import './timeline-zoom-test';

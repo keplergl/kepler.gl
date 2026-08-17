@@ -34,7 +34,8 @@ import {
   getAnimatableVisibleLayers,
   getDefaultFilter,
   histogramFromDomain,
-  TileTimeInterval
+  TileTimeInterval,
+  initApplicationConfig
 } from '@kepler.gl/utils';
 import {
   ALL_FIELD_TYPES,
@@ -5103,6 +5104,33 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   t.end();
 });
 
+test('#visStateReducer -> POLYGON: unselecting all layers returns sketch', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const layer = initialState.layers[0];
+  let state = reducer(initialState, VisStateActions.setFeatures([mockPolygonFeature]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockPolygonFeature));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(layer, mockPolygonFeature));
+
+  t.equal(state.filters.length, 1, 'Should create a polygon filter');
+  t.equal(state.editor.features.length, 0, 'Sketch should move into the filter');
+
+  const filterFeature = state.filters[0].value;
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(layer, filterFeature));
+
+  t.equal(state.filters.length, 0, 'Should remove the filter when no layers remain');
+  t.equal(state.editor.features.length, 1, 'Should return the polygon to sketches');
+  t.notOk(
+    state.editor.features[0].properties.filterId,
+    'Returned sketch should not be a filter'
+  );
+  t.equal(
+    state.editor.selectedFeature.id,
+    mockPolygonFeature.id,
+    'Should keep the polygon selected'
+  );
+  t.end();
+});
+
 test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
   const state = {
     ...INITIAL_VIS_STATE
@@ -5914,6 +5942,178 @@ test('#uiStateReducer -> SET_FEATURES/SET_SELECTED_FEATURE/DELETE_FEATURE', t =>
   t.end();
 });
 
+test('#visStateReducer -> SET_FEATURES line keeps draw mode', t => {
+  let state = reducer(
+    INITIAL_VIS_STATE,
+    VisStateActions.setEditorMode(EDITOR_MODES.DRAW_LINESTRING)
+  );
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([
+      {
+        type: 'Feature',
+        id: 'line-1',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            [0, 0],
+            [1, 1]
+          ]
+        }
+      }
+    ])
+  );
+
+  t.equal(
+    state.editor.mode,
+    EDITOR_MODES.DRAW_LINESTRING,
+    'Line sketches should stay in line drawing mode'
+  );
+  t.equal(state.editor.features.length, 1, 'Should store the line sketch');
+  t.end();
+});
+
+test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER', t => {
+  const emptyState = reducer(INITIAL_VIS_STATE, VisStateActions.convertEditorFeaturesToLayer());
+  t.equal(emptyState, INITIAL_VIS_STATE, 'Should no-op when there are no sketch features');
+
+  const lineFeature = {
+    type: 'Feature',
+    id: 'line-1',
+    properties: {isClosed: false},
+    geometry: {
+      type: 'LineString',
+      coordinates: [
+        [0, 0],
+        [1, 1]
+      ]
+    }
+  };
+
+  let state = {
+    ...INITIAL_VIS_STATE,
+    editor: {
+      ...INITIAL_VIS_STATE.editor,
+      features: [lineFeature],
+      selectedFeature: lineFeature,
+      mode: EDITOR_MODES.DRAW_LINESTRING
+    }
+  };
+
+  state = reducer(state, VisStateActions.convertEditorFeaturesToLayer());
+  t.deepEqual(state.editor.features, [], 'Should clear sketch features after convert');
+  t.equal(state.editor.selectedFeature, null, 'Should clear selected feature after convert');
+  t.equal(state.editor.mode, EDITOR_MODES.EDIT, 'Should switch to select mode after convert');
+
+  const tasks = drainTasksForTesting();
+  t.ok(
+    /Drawn Geometry \d{2}/.test(JSON.stringify(tasks)),
+    'Converted layer should be named Drawn Geometry plus a two-digit number'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER disabled by config', t => {
+  initApplicationConfig({enableDrawOnMapSketches: false});
+
+  try {
+    const lineFeature = {
+      type: 'Feature',
+      id: 'line-1',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [0, 0],
+          [1, 1]
+        ]
+      }
+    };
+    const startState = {
+      ...INITIAL_VIS_STATE,
+      editor: {
+        ...INITIAL_VIS_STATE.editor,
+        features: [lineFeature],
+        selectedFeature: lineFeature
+      }
+    };
+
+    const nextState = reducer(startState, VisStateActions.convertEditorFeaturesToLayer());
+    t.equal(nextState, startState, 'Should no-op convert when draw-on-map sketches are disabled');
+
+    const ignoredMode = reducer(startState, VisStateActions.setEditorMode(EDITOR_MODES.DRAW_POINT));
+    t.equal(
+      ignoredMode.editor.mode,
+      startState.editor.mode,
+      'Should ignore point draw mode when sketches are disabled'
+    );
+
+    const ignoredProperties = reducer(
+      startState,
+      VisStateActions.setEditorFeatureProperties(lineFeature, {name: 'route'})
+    );
+    t.equal(
+      ignoredProperties,
+      startState,
+      'Should ignore edit properties when sketches are disabled'
+    );
+  } finally {
+    initApplicationConfig({enableDrawOnMapSketches: true});
+  }
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_EDITOR_FEATURE_PROPERTIES', t => {
+  const pointFeature = {
+    type: 'Feature',
+    id: 'point-1',
+    properties: {isClosed: false},
+    geometry: {type: 'Point', coordinates: [0, 0]}
+  };
+
+  let state = {
+    ...INITIAL_VIS_STATE,
+    editor: {
+      ...INITIAL_VIS_STATE.editor,
+      features: [pointFeature],
+      selectedFeature: pointFeature
+    }
+  };
+
+  state = reducer(
+    state,
+    VisStateActions.setEditorFeatureProperties(pointFeature, {
+      name: 'Stop',
+      filterId: 'nope',
+      isClosed: true
+    })
+  );
+
+  t.equal(state.editor.features[0].properties.name, 'Stop', 'Should store user properties');
+  t.equal(
+    state.editor.selectedFeature.properties.name,
+    'Stop',
+    'Should keep the selected feature in sync'
+  );
+  t.equal(
+    state.editor.features[0].properties.isClosed,
+    false,
+    'Should preserve editor-only properties'
+  );
+  t.notOk(
+    state.editor.features[0].properties.filterId,
+    'Should ignore reserved keys from the payload'
+  );
+
+  state = reducer(state, VisStateActions.setEditorFeatureProperties(pointFeature, {}));
+  t.notOk(state.editor.features[0].properties.name, 'Should remove user properties when cleared');
+  t.equal(state.editor.features[0].properties.isClosed, false, 'Should keep editor-only properties');
+
+  t.end();
+});
+
 test('#visStateReducer -> APPLY_CPU_FILTER has multi datasets', t => {
   const initialState = CloneDeep(StateWFilters.visState);
   const previousDataset1 = initialState.datasets[testCsvDataId];
@@ -6027,6 +6227,62 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   );
   assertDatasetIsTable(t, nextState5.datasets[testCsvDataId]);
 
+  t.end();
+});
+
+test('#visStateReducer -> LOAD_COLUMN_STATS', t => {
+  drainTasksForTesting();
+  const initialState = CloneDeep(StateWFiles.visState);
+
+  const noOpState = reducer(
+    initialState,
+    VisStateActions.loadColumnStats('missing', 'gps_data.lat')
+  );
+  t.equal(noOpState, initialState, 'state should not change when dataset is missing');
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.loadColumnStats(testCsvDataId, 'gps_data.lat')
+  );
+  const loadingField = nextState.datasets[testCsvDataId].fields.find(f => f.name === 'gps_data.lat');
+  t.equal(loadingField.isLoadingStats, true, 'should set isLoadingStats while loading');
+
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 1, 'should create a column stats task');
+
+  const result = {
+    type: 'numeric',
+    mean: 30,
+    std: 1,
+    percentNulls: 0,
+    bins: [],
+    quantiles: [
+      {label: 'Min', value: 29},
+      {label: 'Max', value: 31}
+    ]
+  };
+  const successState = reducer(
+    nextState,
+    VisStateActions.loadColumnStatsSuccess(testCsvDataId, 'gps_data.lat', result, {})
+  );
+  const successField = successState.datasets[testCsvDataId].fields.find(
+    f => f.name === 'gps_data.lat'
+  );
+  t.equal(successField.isLoadingStats, false, 'should clear isLoadingStats on success');
+  t.deepEqual(
+    successField.filterProps.columnStats,
+    result,
+    'should store columnStats on filterProps'
+  );
+
+  const errorState = reducer(
+    nextState,
+    VisStateActions.loadColumnStatsError(testCsvDataId, 'gps_data.lat', new Error('stats failed'))
+  );
+  const errorField = errorState.datasets[testCsvDataId].fields.find(f => f.name === 'gps_data.lat');
+  t.equal(errorField.isLoadingStats, false, 'should clear isLoadingStats on error');
+
+  drainTasksForTesting();
   t.end();
 });
 

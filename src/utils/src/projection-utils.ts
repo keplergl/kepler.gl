@@ -6,6 +6,8 @@ import geoViewport from '@mapbox/geo-viewport';
 import WebMercatorViewport from 'viewport-mercator-project';
 import Console from 'global/console';
 
+import type {ViewportPadding} from '@kepler.gl/types';
+
 export const MAPBOX_TILE_SIZE = 512;
 
 function isLat(num) {
@@ -33,11 +35,72 @@ export function validateBounds(bounds) {
   return null;
 }
 
-export function getCenterAndZoomFromBounds(bounds, {width, height}) {
+function normalizeViewportPadding(padding?: ViewportPadding | null): {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+} | null {
+  if (padding == null) {
+    return null;
+  }
+  if (typeof padding === 'number') {
+    return padding > 0 ? {top: padding, bottom: padding, left: padding, right: padding} : null;
+  }
+  const normalized = {
+    top: padding.top || 0,
+    bottom: padding.bottom || 0,
+    left: padding.left || 0,
+    right: padding.right || 0
+  };
+  return normalized.top || normalized.bottom || normalized.left || normalized.right
+    ? normalized
+    : null;
+}
+
+export function getCenterAndZoomFromBounds(
+  bounds,
+  {
+    width,
+    height,
+    padding
+  }: {
+    width: number;
+    height: number;
+    padding?: ViewportPadding;
+  }
+) {
   const validBounds = validateBounds(bounds);
   if (!validBounds) {
     Console.warn('invalid map bounds provided');
     return null;
+  }
+
+  const normalizedPadding = normalizeViewportPadding(padding);
+  if (normalizedPadding) {
+    try {
+      const viewport = new WebMercatorViewport({width, height, zoom: 0}).fitBounds(
+        [
+          [validBounds[0], validBounds[1]],
+          [validBounds[2], validBounds[3]]
+        ],
+        {padding: normalizedPadding}
+      );
+      let zoom = viewport.zoom;
+      const center = [viewport.longitude, viewport.latitude];
+
+      // NOTE: this logic is used in deck.gl normalizeViewportProps
+      // This is required in order to prevent projection matrix mismatch between basemap and layers
+      const minZoom = Math.log2(height / MAPBOX_TILE_SIZE);
+      if (zoom <= minZoom) {
+        zoom = minZoom;
+        center[1] = 0;
+      }
+
+      return {zoom, center};
+    } catch (err) {
+      Console.warn('failed to fit map bounds with padding', err);
+    }
   }
 
   // viewport(bounds, dimensions, minzoom, maxzoom, tileSize, allowFloat)

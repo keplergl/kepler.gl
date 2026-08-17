@@ -18,7 +18,8 @@ import {
   DEFAULT_AGGREGATION,
   AGGREGATION_TYPES,
   ALL_FIELD_TYPES,
-  GEOJSON_FIELDS
+  GEOJSON_FIELDS,
+  GEOARROW_METADATA_KEY
 } from '@kepler.gl/constants';
 import {ColorRange, Field, LayerColumn, Merge} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
@@ -28,7 +29,11 @@ import {point as turfPoint} from '@turf/helpers';
 import {Feature, Polygon} from 'geojson';
 
 import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue} from './layer-utils';
-import {parseGeoJsonRawFeature} from './geojson-layer/geojson-utils';
+import {
+  parseGeoJsonRawFeature,
+  getCentroidFromGeometry,
+  getAllPositions
+} from './geojson-layer/geojson-utils';
 
 type AggregationLayerColumns = {
   lat: LayerColumn;
@@ -128,53 +133,6 @@ function wrapOrdinalAccessor(
 const getLayerColorRange = (colorRange: ColorRange) => colorRange.colors.map(hexToRgb);
 
 export const aggregateRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
-
-/**
- * Compute the centroid [lng, lat] of a GeoJSON geometry.
- * For Point returns the coordinate directly; for complex geometries
- * averages all vertex positions into a single representative point.
- */
-function getCentroidFromGeometry(geometry: any): number[] | null {
-  if (!geometry) return null;
-  const positions = getAllPositions(geometry);
-  if (positions.length === 0) return null;
-  if (positions.length === 1) return positions[0];
-
-  let sumLng = 0;
-  let sumLat = 0;
-  let count = 0;
-  for (const pos of positions) {
-    if (Number.isFinite(pos[0]) && Number.isFinite(pos[1])) {
-      sumLng += pos[0];
-      sumLat += pos[1];
-      count++;
-    }
-  }
-  return count > 0 ? [sumLng / count, sumLat / count] : null;
-}
-
-/**
- * Extract all vertex [lng, lat] coordinates from a GeoJSON geometry.
- */
-function getAllPositions(geometry: any): number[][] {
-  if (!geometry) return [];
-  switch (geometry.type) {
-    case 'Point':
-      return [geometry.coordinates];
-    case 'MultiPoint':
-    case 'LineString':
-      return geometry.coordinates;
-    case 'MultiLineString':
-    case 'Polygon':
-      return geometry.coordinates.flat();
-    case 'MultiPolygon':
-      return geometry.coordinates.flat(2);
-    case 'GeometryCollection':
-      return (geometry.geometries || []).flatMap(getAllPositions);
-    default:
-      return [];
-  }
-}
 
 export type AggregationLayerVisualChannelConfig = LayerColorConfig & LayerSizeConfig;
 export type AggregationLayerConfig = Merge<LayerBaseConfig, {columns: AggregationLayerColumns}> &
@@ -356,7 +314,7 @@ export default class AggregationLayer extends Layer {
       accu[field.name] = {
         measure,
         value: aggregate(object.points, measure, (d: {index: number}) => {
-          return dataContainer.valueAt(d.index, field.fieldIdx);
+          return field.valueAccessor(d);
         })
       };
       return accu;
@@ -500,7 +458,12 @@ export default class AggregationLayer extends Layer {
 
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       const getFeature = this.getPositionAccessor(dataContainer);
-      this._buildGeojsonDataToFeature(dataContainer, getFeature);
+      const geoField = dataset.fields?.[this.config.columns.geojson.fieldIdx];
+      const encoding =
+        geoField?.metadata && typeof (geoField.metadata as Map<string, string>).get === 'function'
+          ? (geoField.metadata as Map<string, string>).get(GEOARROW_METADATA_KEY)
+          : (geoField?.metadata as Record<string, string> | undefined)?.[GEOARROW_METADATA_KEY];
+      this._buildGeojsonDataToFeature(dataContainer, getFeature, encoding);
       this.updateMeta({bounds: this._geojsonBounds});
     } else {
       this.dataToFeature = [];
@@ -513,7 +476,11 @@ export default class AggregationLayer extends Layer {
     }
   }
 
-  private _buildGeojsonDataToFeature(dataContainer: DataContainerInterface, getFeature: any) {
+  private _buildGeojsonDataToFeature(
+    dataContainer: DataContainerInterface,
+    getFeature: any,
+    geoArrowEncoding?: string | null
+  ) {
     const fieldIdx = this.config.columns.geojson.fieldIdx;
     if (
       this.dataToFeature.length === dataContainer.numRows() &&
@@ -533,7 +500,7 @@ export default class AggregationLayer extends Layer {
 
     for (let i = 0; i < dataContainer.numRows(); i++) {
       const rawFeature = getFeature({index: i});
-      const feature = parseGeoJsonRawFeature(rawFeature);
+      const feature = parseGeoJsonRawFeature(rawFeature, geoArrowEncoding);
       this.dataToFeature[i] = feature;
       this.centroids[i] = feature?.geometry ? getCentroidFromGeometry(feature.geometry) : null;
 
@@ -598,12 +565,13 @@ export default class AggregationLayer extends Layer {
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const feature = this.dataToFeature[index];
-      if (!feature?.geometry) continue;
-
-      const centroid = getCentroidFromGeometry(feature.geometry);
-      if (centroid) {
-        data.push({index, position: centroid});
+      const centroid =
+        this.centroids[index] ||
+        (this.dataToFeature[index]?.geometry
+          ? getCentroidFromGeometry(this.dataToFeature[index].geometry)
+          : null);
+      if (centroid && Number.isFinite(centroid[0]) && Number.isFinite(centroid[1])) {
+        data.push({index, position: [centroid[0], centroid[1]]});
       }
     }
 
@@ -625,10 +593,7 @@ export default class AggregationLayer extends Layer {
       arr.some(v => v !== 0)
     );
 
-    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
-      this.gpuFilterGetIndex,
-      this.gpuFilterGetData
-    );
+    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(this.gpuFilterGetIndex);
     const filterData = hasFilter
       ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
       : undefined;

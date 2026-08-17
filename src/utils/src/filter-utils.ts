@@ -903,12 +903,12 @@ export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
     return {lineChart: {}, yAxis};
   }
 
-  // return lineChart
+  const yAccessor = dataset.fields[fieldIdx].valueAccessor;
   const series = dataset.dataContainer
     .map(
-      (row, rowIndex) => ({
+      (_row, rowIndex) => ({
         x: mappedValue[rowIndex],
-        y: row.valueAt(fieldIdx)
+        y: yAccessor({index: rowIndex})
       }),
       true
     )

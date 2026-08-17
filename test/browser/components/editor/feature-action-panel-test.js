@@ -65,3 +65,60 @@ test('FeatureActionPanel -> display layers', t => {
 
   t.end();
 });
+
+test('FeatureActionPanel -> edit properties', t => {
+  const selectedFeature = {
+    type: 'Feature',
+    id: 'point-1',
+    properties: {},
+    geometry: {type: 'Point', coordinates: [0, 0]}
+  };
+  const onSetFeatureProperties = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FeatureActionPanel
+        className="action-item-test"
+        layers={[]}
+        datasets={{}}
+        selectedFeature={selectedFeature}
+        onToggleLayer={() => {}}
+        onDeleteFeature={() => {}}
+        onSetFeatureProperties={onSetFeatureProperties}
+        position={{x: 0, y: 0}}
+      />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    wrapper.find('.feature-properties-editor').length,
+    0,
+    'Properties editor should be hidden until requested'
+  );
+
+  wrapper.find('.edit-properties-panel-item').simulate('click');
+  wrapper.update();
+
+  t.ok(
+    wrapper.find('.feature-properties-editor').length,
+    'Clicking Edit Properties should open the properties table'
+  );
+
+  wrapper
+    .find('.feature-property-name')
+    .at(0)
+    .simulate('change', {target: {value: 'name'}});
+  wrapper.update();
+  wrapper
+    .find('.feature-property-value')
+    .at(0)
+    .simulate('change', {target: {value: 'Park'}});
+
+  t.ok(onSetFeatureProperties.called, 'Should save properties when a named row has a value');
+  t.deepEqual(
+    onSetFeatureProperties.lastCall.args[1],
+    {name: 'Park'},
+    'Should pass user properties without editor internals'
+  );
+
+  t.end();
+});

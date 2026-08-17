@@ -320,6 +320,8 @@ export default {
     showLegend: 'mostra llegenda',
     disable3DMap: 'Desactiva mapa 3D',
     DrawOnMap: 'Dibuixa al mapa',
+    copyAllSketches: 'Copia tots els esbossos al porta-retalls com a GeoJSON',
+    convertToLayer: 'Converteix els esbossos en una capa GeoJSON i esborra el dibuix',
     selectLocale: 'Selecciona configuració regional',
     switchToLightTheme: 'Canvia al tema clar',
     switchToDarkTheme: 'Canvia al tema fosc',
@@ -367,8 +369,12 @@ export default {
     shareMapURL: 'Comparteix URL del mapa',
     saveMap: 'Desa mapa',
     select: 'selecciona',
+    point: 'punt',
+    line: 'línia',
     polygon: 'polígon',
     rectangle: 'rectangle',
+    copyAll: 'Copia-ho tot',
+    convertToLayer: 'Converteix\na capa',
     hide: 'amaga',
     show: 'mostra',
     ...LOCALES
@@ -377,6 +383,11 @@ export default {
     filterLayer: 'Filtra capes',
     filterLayerDisabled: 'Les geometries no poligonals no es poden utilitzar per filtrar',
     copyGeometry: 'Copia geometria',
+    editProperties: 'Edita propietats',
+    propertyName: 'Propietat',
+    propertyValue: 'Valor',
+    removeProperty: 'Suprimeix la propietat',
+    polygonFilter: 'Filtre de polígon',
     noLayersToFilter: 'No hi ha capes per filtrar'
   },
   exportVideoModal: {

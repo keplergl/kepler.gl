@@ -113,7 +113,7 @@ export function histogramFromValues(
   values: (Millisecond | null | number)[],
   numBins: number,
   valueAccessor?: (d: number) => number
-) {
+): Bin[] {
   const getBins = d3Histogram().thresholds(numBins);
 
   if (valueAccessor) {
@@ -131,7 +131,7 @@ export function histogramFromValues(
     .filter(b => {
       const {x0, x1} = b;
       return isNumber(x0) && isNumber(x1);
-    });
+    }) as Bin[];
 }
 
 export function histogramFromOrdinal(
@@ -376,14 +376,14 @@ const getAgregationType = (field, aggregation) => {
   return aggregation;
 };
 
-const getAggregationAccessor = (field, dataContainer: DataContainerInterface, fields) => {
+const getAggregationAccessor = (field, fields) => {
   if (isPercentField(field)) {
     const numeratorIdx = fields.findIndex(f => f.name === field.metadata.numerator);
     const denominatorIdx = fields.findIndex(f => f.name === field.metadata.denominator);
 
     return {
-      getNumerator: i => dataContainer.valueAt(i, numeratorIdx),
-      getDenominator: i => dataContainer.valueAt(i, denominatorIdx)
+      getNumerator: i => fields[numeratorIdx].valueAccessor({index: i}),
+      getDenominator: i => fields[denominatorIdx].valueAccessor({index: i})
     };
   }
 
@@ -395,7 +395,7 @@ export const getValueAggrFunc = (
   aggregation: string,
   dataset: KeplerTableModel<any, any>
 ): ((bin: Bin) => number) => {
-  const {dataContainer, fields} = dataset;
+  const {fields} = dataset;
 
   // The passed-in field might not have all the fields set (e.g. valueAccessor)
   const datasetField = fields.find(
@@ -408,7 +408,7 @@ export const getValueAggrFunc = (
           bin.indexes,
           getAgregationType(datasetField, aggregation),
           // @ts-expect-error can return {getNumerator, getDenominator}
-          getAggregationAccessor(datasetField, dataContainer, fields)
+          getAggregationAccessor(datasetField, fields)
         )
     : bin => bin.count;
 };

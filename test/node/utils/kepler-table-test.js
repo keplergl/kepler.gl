@@ -6,9 +6,10 @@ import moment from 'moment';
 import testData, {numericRangesCsv, testFields} from 'test/fixtures/test-csv-data';
 
 import {preciseRound, getFilterFunction} from '@kepler.gl/utils';
-import {findPointFieldPairs} from '@kepler.gl/table';
+import {findPointFieldPairs, KeplerTable} from '@kepler.gl/table';
 import {processCsvData} from '@kepler.gl/processors';
-import {FILTER_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
+import * as arrow from 'apache-arrow';
 
 import {cmpFields} from '../../helpers/comparison-utils';
 import {createNewDataEntryMock} from '../../helpers/table-utils';
@@ -412,6 +413,37 @@ test('KeplerTable -> findPointFieldPairs', t => {
       t.deepEqual(found[index], pair, 'should found correct point pair');
     });
   });
+
+  t.end();
+});
+
+test('KeplerTable -> Int64 field accessor converts BigInt to number', async t => {
+  const arrowTable = arrow.tableFromArrays({
+    count: new BigInt64Array([1n, 9999n]),
+    name: ['a', 'b']
+  });
+  const table = new KeplerTable({info: {id: 'int64'}, color: [0, 0, 0]});
+  await table.importData({
+    data: {
+      fields: [
+        {name: 'count', type: ALL_FIELD_TYPES.integer, analyzerType: 'INT'},
+        {name: 'name', type: ALL_FIELD_TYPES.string, analyzerType: 'STRING'}
+      ],
+      cols: [arrowTable.getChildAt(0), arrowTable.getChildAt(1)],
+      arrowTable
+    }
+  });
+
+  t.equal(typeof table.dataContainer.valueAt(0, 0), 'bigint', 'valueAt stays raw BigInt');
+  t.equal(table.dataContainer.valueAt(0, 0), 1n);
+  t.equal(
+    typeof table.fields[0].valueAccessor({index: 0}),
+    'number',
+    'Int64 valueAccessor returns a JS number'
+  );
+  t.equal(table.fields[0].valueAccessor({index: 0}), 1);
+  t.equal(table.fields[0].valueAccessor({index: 1}), 9999);
+  t.equal(table.fields[1].valueAccessor({index: 0}), 'a', 'non-Int64 accessors are unchanged');
 
   t.end();
 });

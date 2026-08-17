@@ -83,6 +83,8 @@ export {default as CodeAlt} from './code-alt';
 export {default as Warning} from './warning';
 export {default as WarningSign} from './warning-sign';
 export {default as DrawPolygon} from './draw-polygon';
+export {default as DrawPoint} from './draw-point';
+export {default as LineString} from './line-string';
 export {default as Polygon} from './polygon';
 export {default as Rectangle} from './rectangle';
 export {default as TimelineMarker} from './timeline-marker';

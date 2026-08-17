@@ -29,7 +29,7 @@
   ],
   "dependencies": {
     "react": "^19.0.0",
-    "react-intl": "^6.3.0",
+    "react-intl": "^7.0.0",
     "redux": "^5.0.0"
   },
   "nyc": {

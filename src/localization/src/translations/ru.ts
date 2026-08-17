@@ -318,6 +318,8 @@ export default {
     showLegend: 'Показать легенду',
     disable3DMap: 'Отключить 3D Карту',
     DrawOnMap: 'Рисовать на карте',
+    copyAllSketches: 'Скопировать все наброски в буфер обмена как GeoJSON',
+    convertToLayer: 'Преобразовать наброски в слой GeoJSON и очистить рисунок',
     selectLocale: 'Выберите регион',
     switchToLightTheme: 'Переключить на светлую тему',
     switchToDarkTheme: 'Переключить на тёмную тему',
@@ -367,8 +369,12 @@ export default {
     exportVideo: 'Экспорт видео',
     saveMap: 'Сохарнить Карту',
     select: 'Выбрать',
+    point: 'Точка',
+    line: 'Линия',
     polygon: 'Многоугольник',
     rectangle: 'Квадрат',
+    copyAll: 'Копировать всё',
+    convertToLayer: 'Преобразовать\nв слой',
     hide: 'Скрыть',
     show: 'Показать',
     ...LOCALES
@@ -377,6 +383,11 @@ export default {
     filterLayer: 'Слои фильтров',
     filterLayerDisabled: 'Неполигональные геометрии нельзя использовать для фильтрации',
     copyGeometry: 'Копировать геометрию',
+    editProperties: 'Изменить свойства',
+    propertyName: 'Свойство',
+    propertyValue: 'Значение',
+    removeProperty: 'Удалить свойство',
+    polygonFilter: 'Полигональный фильтр',
     noLayersToFilter: 'Нет слоев для фильтрации'
   },
   exportVideoModal: {

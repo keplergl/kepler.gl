@@ -2,9 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 /**
- * Generates a CSS-compatible star-field background image as a data URL.
- * The stars are rendered onto an offscreen canvas, tiled seamlessly via CSS
- * `background-repeat`. The result is deterministic (seeded PRNG) and cached
+ * Generates a tileable star-field used behind the globe.
+ * The live map and video-export preview paint it as a CSS `background-image`
+ * with `background-repeat: repeat`. Video-export capture (which only reads
+ * canvas pixels) tiles the same image onto a 2D context via
+ * `drawStarsBackground`. The result is deterministic (seeded PRNG) and cached
  * so it's only generated once.
  */
 
@@ -26,27 +28,21 @@ function seededRandom(seed: number): () => number {
 const TRANSPARENT_PIXEL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
+let cachedCanvas: HTMLCanvasElement | null = null;
 let cachedDataUrl: string | null = null;
 
-/**
- * Returns a data URL of a tileable star-field image (512×512 PNG).
- * Generates the image once and caches it for subsequent calls.
- */
-export function getStarsBackgroundImage(): string {
-  if (cachedDataUrl) return cachedDataUrl;
-
+function generateStarsTile(): HTMLCanvasElement | null {
   if (typeof document === 'undefined') {
-    // SSR fallback: return a transparent 1x1 pixel to avoid url() triggering a page request
-    return TRANSPARENT_PIXEL;
+    return null;
   }
 
   const canvas = document.createElement('canvas');
   canvas.width = STAR_CANVAS_SIZE;
   canvas.height = STAR_CANVAS_SIZE;
   const ctx = canvas.getContext('2d');
-  if (!ctx) return (cachedDataUrl = TRANSPARENT_PIXEL);
+  if (!ctx) return null;
 
-  // Transparent background so CSS backgroundColor shows through
+  // Transparent background so CSS backgroundColor / canvas fill shows through
   ctx.clearRect(0, 0, STAR_CANVAS_SIZE, STAR_CANVAS_SIZE);
 
   const random = seededRandom(42);
@@ -64,7 +60,47 @@ export function getStarsBackgroundImage(): string {
     ctx.fill();
   }
 
+  return canvas;
+}
+
+function getStarsTileCanvas(): HTMLCanvasElement | null {
+  if (cachedCanvas) return cachedCanvas;
+  cachedCanvas = generateStarsTile();
+  return cachedCanvas;
+}
+
+/**
+ * Returns a data URL of a tileable star-field image (512×512 PNG).
+ * Generates the image once and caches it for subsequent calls.
+ */
+export function getStarsBackgroundImage(): string {
+  if (cachedDataUrl) return cachedDataUrl;
+
+  const canvas = getStarsTileCanvas();
+  if (!canvas) {
+    // SSR / missing 2D context: return a transparent 1x1 pixel so url() never
+    // resolves to an empty value that could trigger a request for the document.
+    return (cachedDataUrl = TRANSPARENT_PIXEL);
+  }
+
   cachedDataUrl = canvas.toDataURL('image/png');
   return cachedDataUrl;
+}
+
+/**
+ * Tile the star-field onto a 2D canvas (e.g. video-export frame capture).
+ * Stars are drawn with alpha so the caller should fill the background color first.
+ */
+export function drawStarsBackground(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number
+): void {
+  const tile = getStarsTileCanvas();
+  if (!tile || width <= 0 || height <= 0) return;
+  const pattern = ctx.createPattern(tile, 'repeat');
+  if (!pattern) return;
+  ctx.fillStyle = pattern;
+  ctx.fillRect(0, 0, width, height);
 }
 

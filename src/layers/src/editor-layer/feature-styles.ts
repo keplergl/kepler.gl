@@ -10,6 +10,8 @@ import {COLORS} from './constants';
 const POINT_RADIUS = 5;
 const STROKE_WIDTH_SELECTED = 2.5;
 const STROKE_WIDTH_NOT_SELECTED = 2;
+const LINESTRING_WIDTH = 2;
+const LINESTRING_WIDTH_SELECTED = 3;
 
 const STROKE_SOLID_ARRAY = [0, 0];
 const STROKE_DASH_ARRAY = [4, 3];
@@ -17,6 +19,7 @@ const STROKE_DASH_ARRAY = [4, 3];
 const ALPHA_0 = 0x00;
 const ALPHA_005 = 0x0d;
 const ALPHA_01 = 0x1a;
+const ALPHA_04 = 0x66;
 const ALPHA_05 = 0x80;
 const ALPHA_1 = 0xff;
 
@@ -25,6 +28,10 @@ const PRIMARY_COLOR: RGBAColor = [...COLORS.PRIMARY, ALPHA_1];
 const SECONDARY_COLOR_TRANSPARENT: RGBAColor = [...COLORS.SECONDARY, ALPHA_0];
 const TENTATIVE_FEATURE_COLOR: RGBAColor = [...COLORS.SECONDARY, ALPHA_1];
 const TENTATIVE_FEATURE_COLOR_TRANSPARENT: RGBAColor = [...COLORS.SECONDARY, ALPHA_005];
+
+export function isFilterFeature(feature?: Feature | null): boolean {
+  return Boolean(feature?.properties?.filterId);
+}
 
 export const EDIT_HANDLE_STYLE = {
   getRadius: POINT_RADIUS,
@@ -36,21 +43,44 @@ export const EDIT_HANDLE_STYLE = {
 };
 
 export const FEATURE_STYLE = {
-  getColor: (feature: Feature, isSelected: boolean) =>
-    isSelected ? PRIMARY_COLOR_TRANSPARENT : SECONDARY_COLOR_TRANSPARENT,
-  highlightMultiplier: [...COLORS.HIGHLIGHT, ALPHA_01],
+  getColor: (feature: Feature, isSelected: boolean) => {
+    const isPoint = feature?.geometry?.type === 'Point' || feature?.geometry?.type === 'MultiPoint';
+    if (isPoint) {
+      return PRIMARY_COLOR;
+    }
+    return isSelected ? PRIMARY_COLOR_TRANSPARENT : SECONDARY_COLOR_TRANSPARENT;
+  },
+  highlightMultiplier: [...COLORS.HIGHLIGHT, ALPHA_04],
   highlightMultiplierNone: SECONDARY_COLOR_TRANSPARENT
 };
+
+function isLineFeature(feature?: Feature | null): boolean {
+  const type = feature?.geometry?.type;
+  return type === 'LineString' || type === 'MultiLineString';
+}
 
 export const LINE_STYLE = {
   getColor: (_feature: Feature, isSelected: boolean): RGBAColor =>
     isSelected ? PRIMARY_COLOR : PRIMARY_COLOR,
-  getWidth: (_feature: Feature, isSelected: boolean): number =>
-    isSelected ? STROKE_WIDTH_SELECTED : STROKE_WIDTH_NOT_SELECTED,
+  getWidth: (feature: Feature, isSelected: boolean): number => {
+    if (isLineFeature(feature)) {
+      return isSelected ? LINESTRING_WIDTH_SELECTED : LINESTRING_WIDTH;
+    }
+    return isSelected ? STROKE_WIDTH_SELECTED : STROKE_WIDTH_NOT_SELECTED;
+  },
   getTentativeLineColor: (): RGBAColor => TENTATIVE_FEATURE_COLOR,
-  getTentativeLineWidth: (): number => STROKE_WIDTH_NOT_SELECTED,
+  getTentativeLineWidth: (feature?: Feature): number =>
+    isLineFeature(feature) ? LINESTRING_WIDTH : STROKE_WIDTH_NOT_SELECTED,
+  lineStringWidth: LINESTRING_WIDTH,
   getTentativeFillColor: TENTATIVE_FEATURE_COLOR_TRANSPARENT,
   dashArray: STROKE_DASH_ARRAY,
   solidArray: STROKE_SOLID_ARRAY,
   highlightMultiplier: [...COLORS.HIGHLIGHT, ALPHA_1]
 };
+
+export function getFeatureDashArray(feature?: Feature | null): number[] {
+  if (feature?.properties?.guideType === 'tentative' || isFilterFeature(feature)) {
+    return LINE_STYLE.dashArray;
+  }
+  return LINE_STYLE.solidArray;
+}

@@ -1,12 +1,43 @@
-dist/
-.venv/
-.conda/
-node_modules/
-__pycache__/
-build/
-.git/
-website/
-bindings/
-test/
-docs/
-*.log
+# Nested installs are not matched by a root-only `node_modules/` pattern.
+**/node_modules
+**/.yarn
+**/.pnp.*
+
+# Build artifacts
+**/dist
+**/build
+**/umd
+**/coverage
+**/*-coverage
+**/.nyc_output
+**/*.tsbuildinfo
+**/__pycache__
+**/*.log
+**/.DS_Store
+
+# VCS and local tooling
+.git
+.github
+.cursor
+.vscode
+.idea
+.history
+.venv
+.conda
+.netlify
+
+# Not used by the demo-app image
+bindings
+website
+test
+docs
+screenshots
+skill
+contributing
+typedoc
+docker
+
+# Other examples (keep demo-app only)
+examples/*
+!examples/demo-app
+!examples/demo-app/**

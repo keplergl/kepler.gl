@@ -520,7 +520,7 @@ export default class GeoJsonLayer extends Layer {
       return {};
     }
     const {textLabel} = this.config;
-    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
+    const {gpuFilter, dataContainer, fields} = datasets[this.config.dataId];
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
 
     // Text labels are only supported in GEOJSON column mode where properties.index
@@ -547,7 +547,8 @@ export default class GeoJsonLayer extends Layer {
     let filterValueAccessor;
     let dataAccessor;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
-      filterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.properties.index, fieldIndex);
+      filterValueAccessor = (dc, d, fieldIndex) =>
+        fields[fieldIndex].valueAccessor({index: d.properties.index});
       // For GEOJSON mode, properties.index is the row index in the data container
       dataAccessor = () => d => ({index: d.properties.index});
     } else {
@@ -577,10 +578,7 @@ export default class GeoJsonLayer extends Layer {
         indexAccessor,
         filterValueAccessor
       ),
-      textLabelFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
-        textLabelIndexAccessor,
-        (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex)
-      ),
+      textLabelFilterValue: gpuFilter.filterValueAccessor(dataContainer)(textLabelIndexAccessor),
       getFiltered: isFilteredAccessor,
       textLabelFiltered: textLabelFilteredAccessor,
       textLabels,

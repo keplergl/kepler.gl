@@ -224,6 +224,7 @@ export {default as ExportVideoControlFactory} from './common/animation-control/e
 export {default as WindowActionControlFactory} from './common/animation-control/window-action-control';
 
 export {default as HistogramPlotFactory, HISTOGRAM_MASK_MODE} from './common/histogram-plot';
+export type {HistogramPlotProps} from './common/histogram-plot';
 export {default as IconButton} from './common/icon-button';
 export {default as LinkRenderer} from './common/link-renderer';
 export {
@@ -289,7 +290,13 @@ export {
   NumberFormatConfig
 } from './common/data-table/display-format';
 export {default as HeaderCellFactory} from './common/data-table/header-cell';
+export type {HeaderCellProps} from './common/data-table/header-cell';
 export {FormatterDropdown, default as OptionDropdown} from './common/data-table/option-dropdown';
+export {default as ColumnStatisticsNumericFactory} from './common/data-table/column-statistics-numeric';
+export type {ColumnStatisticsNumericProps} from './common/data-table/column-statistics-numeric';
+export {default as ColumnStatisticsTimeFactory} from './common/data-table/column-statistics-time';
+export type {ColumnStatisticsTimeProps} from './common/data-table/column-statistics-time';
+export {STATS_WIDTH} from './common/data-table/column-statistics-components';
 export {default as DatasetLabel} from './common/dataset-label';
 export {default as FieldSelectorFactory} from './common/field-selector';
 export * from './common/field-token';

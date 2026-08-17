@@ -152,6 +152,13 @@ export type KeplerApplicationConfig = {
   /** Whether to enable the annotations feature. Enabled by default. */
   enableAnnotations?: boolean;
 
+  /**
+   * Whether to enable extended Draw on Map sketch tools: Point, Line, Copy all,
+   * Convert to Layer, and Edit Properties.
+   * Polygon and rectangle drawing remain available when this is disabled. Enabled by default.
+   */
+  enableDrawOnMapSketches?: boolean;
+
   /** Whether to show the map navigation control (zoom buttons and compass). Enabled by default. */
   enableMapNavigationControl?: boolean;
 
@@ -169,6 +176,9 @@ export type KeplerApplicationConfig = {
 
   /** Whether to show a map control to toggle between light and dark UI themes. Disabled by default. */
   enableThemeToggle?: boolean;
+
+  /** Whether to show column statistics in the data table modal. Enabled by default. */
+  enableColumnStats?: boolean;
 
   /**
    * Custom SVG icons to be made available in the icon layer.
@@ -281,6 +291,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableAnnotations: true,
 
+  enableDrawOnMapSketches: true,
+
   enableMapNavigationControl: true,
 
   enableMapScale: true,
@@ -293,11 +305,13 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableThemeToggle: false,
 
+  enableColumnStats: true,
+
   customIcons: [],
 
   customIconUrl: '',
 
-  reduxLogLevel: 1,
+  reduxLogLevel: 1
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;

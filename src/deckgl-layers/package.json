@@ -49,11 +49,11 @@
     "@math.gl/web-mercator": "^4.1.0",
     "@types/d3-array": "^2.8.0",
     "@types/geojson": "^7946.0.8",
-    "@types/lodash": "4.17.5",
+    "@types/lodash": "4.17.24",
     "@types/supercluster": "^7.1.0",
     "d3-array": "^2.8.0",
     "global": "^4.3.0",
-    "lodash": "4.17.23",
+    "lodash": "4.18.1",
     "pbf": "^3.1.0",
     "supercluster": "^7.1.0",
     "viewport-mercator-project": "^6.0.0"

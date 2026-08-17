@@ -74,6 +74,19 @@ export type MapState = {
 
 export type Bounds = [number, number, number, number];
 
+/**
+ * Padding in pixels used when fitting the map viewport to bounds.
+ * A number applies the same padding on all sides.
+ */
+export type ViewportPadding =
+  | number
+  | {
+      top?: number;
+      bottom?: number;
+      left?: number;
+      right?: number;
+    };
+
 export type RangeFieldDomain = {
   domain: number[];
   step: number;

@@ -370,6 +370,31 @@ test('#mapStateReducer -> FIT_BOUNDS', t => {
   t.end();
 });
 
+test('#mapStateReducer -> FIT_BOUNDS with padding', t => {
+  const bounds = [5.668343999999995, 45.111511000000014, 5.852471999999996, 45.26800200000002];
+  const mapUpdate = {
+    width: 640,
+    height: 480
+  };
+
+  const stateWidthMapDimension = reducer(undefined, updateMap(mapUpdate, 0));
+  const unpadded = reducer(stateWidthMapDimension, fitBounds(bounds));
+  const paddedLeft = reducer(stateWidthMapDimension, fitBounds(bounds, {left: 300}));
+  const paddedUniform = reducer(stateWidthMapDimension, fitBounds(bounds, 80));
+
+  t.ok(
+    paddedLeft.zoom < unpadded.zoom,
+    'left padding should zoom out so bounds fit in the remaining viewport'
+  );
+  t.ok(
+    paddedLeft.longitude < unpadded.longitude,
+    'left padding should pan west so bounds sit in the visible area to the right of the side panel'
+  );
+  t.ok(paddedUniform.zoom < unpadded.zoom, 'uniform padding should zoom out');
+
+  t.end();
+});
+
 test('#mapStateReducer -> FIT_BOUNDS - split map and unsynced viewports', t => {
   // default input and output in @mapbox/geo-viewport
   // https://github.com/mapbox/geo-viewport

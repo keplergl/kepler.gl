@@ -3,6 +3,7 @@
 
 import {SavedMap, ParsedConfig, SavedConfigV1, MinSavedConfigV1} from './schemas';
 import type {LayerVisConfig} from './layers';
+import type {ViewportPadding} from './reducers';
 
 /** EXPORT_FILE_TO_CLOUD */
 export type MapData = {
@@ -66,6 +67,12 @@ export type ProtoDataset = {
 
 export type AddDataToMapOptions = {
   centerMap?: boolean;
+  /**
+   * Padding in pixels applied when `centerMap` is true.
+   * Use this so a few points are not hidden under the side panel or other UI.
+   * A number applies the same padding on all sides.
+   */
+  padding?: ViewportPadding;
   readOnly?: boolean;
   keepExistingConfig?: boolean;
   autoCreateLayers?: boolean;

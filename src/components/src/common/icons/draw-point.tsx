@@ -4,16 +4,18 @@
 import React, {Component} from 'react';
 import Base, {BaseProps} from './base';
 
-export default class ArrowDownSolid extends Component<Partial<BaseProps>> {
+export default class DrawPoint extends Component<Partial<BaseProps>> {
   static defaultProps = {
     height: '16px',
-    predefinedClassName: 'data-ex-icons-arrowdown-solid'
+    predefinedClassName: 'data-ex-icons-draw-point',
+    viewBox: '0 0 22 16'
   };
 
   render() {
     return (
       <Base {...this.props}>
-        <polygon points="6.4,20.8 56.4,20.8 31.4,45.8 " />
+        <circle cx="11" cy="8" r="5" stroke="currentColor" fill="transparent" strokeWidth="1.5" />
+        <circle cx="11" cy="8" r="2" />
       </Base>
     );
   }

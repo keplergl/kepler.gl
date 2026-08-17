@@ -39,4 +39,4 @@ export type {GlobeBasemapProvider, GlobeAttribution} from './globe-layers';
 export {MVTLabelLayer} from './mvt-label-layer';
 export {default as EnhancedMultiIconLayer} from './enhanced-multi-icon-layer';
 export {KeplerGlobeView} from './globe-view';
-export {getStarsBackgroundImage} from './globe-stars-layer';
+export {getStarsBackgroundImage, drawStarsBackground} from './globe-stars-layer';

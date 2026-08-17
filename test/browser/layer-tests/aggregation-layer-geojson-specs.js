@@ -3,11 +3,7 @@
 
 import test from 'tape';
 
-import {
-  testFormatLayerDataCases,
-  prepareGeojsonDataset,
-  dataId
-} from 'test/helpers/layer-utils';
+import {testFormatLayerDataCases, prepareGeojsonDataset, dataId} from 'test/helpers/layer-utils';
 
 import {KeplerGlLayers} from '@kepler.gl/layers';
 const {GridLayer, HexagonLayer, ClusterLayer} = KeplerGlLayers;
@@ -455,6 +451,10 @@ test('#AggregationLayer -> geojson mode handles Point, LineString, Polygon geome
   t.ok(minLat <= 37.8, 'minLat should include southernmost point');
   t.ok(maxLat >= 37.9, 'maxLat should include northernmost point');
 
+  const data = layer.calculateDataAttribute(mockDataset, null);
+  t.equal(data.length, 3, 'should emit a bin point for Point, LineString, and Polygon');
+  t.deepEqual(data[0].position, [-122.4, 37.8], 'Point position should be the point');
+
   t.end();
 });
 
@@ -467,11 +467,7 @@ test('#AggregationLayer -> isInPolygon with geojson mode', t => {
   });
 
   // Set up centroids manually
-  layer.centroids = [
-    [-122.4, 37.8],
-    [-122.5, 37.9],
-    null
-  ];
+  layer.centroids = [[-122.4, 37.8], [-122.5, 37.9], null];
 
   // Create a polygon that contains the first centroid but not the second
   const filterPolygon = {
@@ -494,22 +490,10 @@ test('#AggregationLayer -> isInPolygon with geojson mode', t => {
     }
   };
 
-  t.ok(
-    layer.isInPolygon(null, 0, filterPolygon),
-    'first point should be inside polygon'
-  );
-  t.notOk(
-    layer.isInPolygon(null, 1, filterPolygon),
-    'second point should be outside polygon'
-  );
-  t.notOk(
-    layer.isInPolygon(null, 2, filterPolygon),
-    'null centroid should return false'
-  );
-  t.notOk(
-    layer.isInPolygon(null, 99, filterPolygon),
-    'out-of-bounds index should return false'
-  );
+  t.ok(layer.isInPolygon(null, 0, filterPolygon), 'first point should be inside polygon');
+  t.notOk(layer.isInPolygon(null, 1, filterPolygon), 'second point should be outside polygon');
+  t.notOk(layer.isInPolygon(null, 2, filterPolygon), 'null centroid should return false');
+  t.notOk(layer.isInPolygon(null, 99, filterPolygon), 'out-of-bounds index should return false');
 
   t.end();
 });

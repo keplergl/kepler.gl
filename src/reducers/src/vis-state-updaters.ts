@@ -45,7 +45,9 @@ import {
   fitBounds as fitMapBounds,
   toggleLayerForMap,
   applyFilterConfig,
-  SetLoadingIndicatorPayload
+  SetLoadingIndicatorPayload,
+  loadColumnStatsSuccess,
+  loadColumnStatsError
 } from '@kepler.gl/actions';
 
 // Utils
@@ -59,6 +61,9 @@ import {
   computeSplitMapLayers,
   adjustValueToFilterDomain,
   errorNotification,
+  editorFeaturesToFeatureCollection,
+  mergeUserFeatureProperties,
+  toSketchFeature,
   featureToFilterValue,
   filterDatasetCPU,
   generatePolygonFilter,
@@ -130,9 +135,11 @@ import {
 } from './vis-state-merger';
 
 import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
+import {processGeojson} from '@kepler.gl/processors';
 
 import {
   Filter,
+  Feature,
   InteractionConfig,
   AnimationConfig,
   FilterAnimationConfig,
@@ -147,6 +154,7 @@ import {Loader} from '@loaders.gl/loader-utils';
 
 import {
   Datasets,
+  FilterProps,
   assignGpuChannel,
   copyTableAndUpdate,
   createNewDataEntry,
@@ -183,7 +191,9 @@ import {
   LayerToFilterTimeInterval,
   TIME_INTERVALS_ORDERED,
   mergeFilterDomain,
-  initCustomPaletteByCustomScale
+  initCustomPaletteByCustomScale,
+  collectColumnValues,
+  getColumnStatistics
 } from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
 import {PayloadAction} from '@reduxjs/toolkit';
@@ -3124,8 +3134,9 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
   if (newLayers.length && (options || {}).centerMap) {
     const bounds = findMapBounds(newLayers);
     if (bounds) {
+      const padding = options?.padding;
       const fitBoundsTask = ACTION_TASK_FIT_BOUNDS().map(() => {
-        return fitMapBounds(bounds);
+        return fitMapBounds(bounds, padding);
       });
       updatedState = withTask(updatedState, fitBoundsTask);
     }
@@ -3673,14 +3684,24 @@ export function updateAnimationDomain<S extends VisState>(state: S): S {
 export const setEditorModeUpdater = (
   state: VisState,
   {mode}: VisStateActions.SetEditorModeUpdaterAction
-): VisState => ({
-  ...state,
-  editor: {
-    ...state.editor,
-    mode,
-    selectedFeature: null
+): VisState => {
+  const sketchesEnabled = getApplicationConfig().enableDrawOnMapSketches;
+  if (
+    !sketchesEnabled &&
+    (mode === EDITOR_MODES.DRAW_POINT || mode === EDITOR_MODES.DRAW_LINESTRING)
+  ) {
+    return state;
   }
-});
+
+  return {
+    ...state,
+    editor: {
+      ...state.editor,
+      mode,
+      selectedFeature: null
+    }
+  };
+};
 
 // const featureToFilterValue = (feature) => ({...feature, id: feature.id});
 /**
@@ -3735,6 +3756,78 @@ export function setFeaturesUpdater(
   }
 
   return newState;
+}
+
+function findEditorFeature(state: VisState, feature?: Feature | null): Feature | null {
+  if (!feature?.id) {
+    return feature || null;
+  }
+  if (state.editor.selectedFeature?.id === feature.id) {
+    return state.editor.selectedFeature;
+  }
+  const fromEditor = state.editor.features.find(item => item.id === feature.id);
+  if (fromEditor) {
+    return fromEditor;
+  }
+  const filterId = getFilterIdInFeature(feature);
+  if (filterId) {
+    const filter = state.filters.find(item => item.id === filterId);
+    if (filter?.value) {
+      return filter.value;
+    }
+  }
+  return feature;
+}
+
+/**
+ * Set user-facing GeoJSON properties on a sketch or polygon-filter feature.
+ * @memberof visStateUpdaters
+ */
+export function setEditorFeaturePropertiesUpdater(
+  state: VisState,
+  {feature, properties}: VisStateActions.SetEditorFeaturePropertiesUpdaterAction
+): VisState {
+  if (!getApplicationConfig().enableDrawOnMapSketches) {
+    return state;
+  }
+
+  const source = findEditorFeature(state, feature);
+  if (!source?.id) {
+    return state;
+  }
+
+  const nextFeature = mergeUserFeatureProperties(source, properties);
+  const filterId = getFilterIdInFeature(nextFeature);
+  const nextEditor = {
+    ...state.editor,
+    features: filterId
+      ? state.editor.features
+      : state.editor.features.map(item => (item.id === nextFeature.id ? nextFeature : item)),
+    selectedFeature:
+      state.editor.selectedFeature?.id === nextFeature.id
+        ? nextFeature
+        : state.editor.selectedFeature
+  };
+
+  const nextState = {
+    ...state,
+    editor: nextEditor
+  };
+
+  if (!filterId) {
+    return nextState;
+  }
+
+  const filterIdx = state.filters.findIndex(item => item.id === filterId);
+  if (filterIdx < 0) {
+    return nextState;
+  }
+
+  return setFilterUpdater(nextState, {
+    idx: filterIdx,
+    prop: 'value',
+    value: featureToFilterValue(nextFeature, filterId)
+  });
 }
 
 /**
@@ -3853,6 +3946,20 @@ export function setPolygonFilterLayerUpdater(
       ? // if layer is included, remove it
         layerId.filter(l => l !== layer.id)
       : [...layerId, layer.id];
+
+    // Last layer removed: turn the filter polygon back into a sketch
+    if (!newLayerId.length) {
+      const sketchFeature = toSketchFeature(feature);
+      const stateWithoutFilter = removeFilterUpdater(newState, {idx: filterIdx});
+      return {
+        ...stateWithoutFilter,
+        editor: {
+          ...stateWithoutFilter.editor,
+          features: [...stateWithoutFilter.editor.features, sketchFeature],
+          selectedFeature: sketchFeature
+        }
+      };
+    }
   } else {
     // if we haven't create the polygon filter, create it
     const newFilter = generatePolygonFilter([], feature);
@@ -4028,6 +4135,123 @@ export function setColumnDisplayFormatUpdater(
   return newState;
 }
 
+type LoadColumnStatsTaskPayload = {
+  dataset: VisState['datasets'][string];
+  field: Field;
+};
+
+function getMappedValue(filterProps?: FilterProps | null): unknown[] | undefined {
+  if (filterProps && 'mappedValue' in filterProps && Array.isArray(filterProps.mappedValue)) {
+    return filterProps.mappedValue;
+  }
+  return undefined;
+}
+
+function yieldForPaint(): Promise<void> {
+  return new Promise(resolve => {
+    setTimeout(resolve, 0);
+  });
+}
+
+async function requestDatasetColumnStatistics({dataset, field}: LoadColumnStatsTaskPayload) {
+  // Yield so the data table and per-column loading spinners can paint first.
+  await yieldForPaint();
+  const filterProps = field.filterProps || dataset.getColumnFilterProps(field.name);
+  const mappedValue = getMappedValue(filterProps);
+  const values = mappedValue ?? collectColumnValues(dataset.dataContainer, field.fieldIdx);
+  const result = await getColumnStatistics({
+    values,
+    fieldType: field.type
+  });
+
+  return {result, filterProps};
+}
+
+const LOAD_COLUMN_STATS_TASK = Task.fromPromise(
+  requestDatasetColumnStatistics,
+  'LOAD_COLUMN_STATS_TASK'
+);
+
+/**
+ * Start loading column statistics for one or more fields.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function loadColumnStatsUpdater(
+  state: VisState,
+  {dataId, fieldName}: VisStateActions.LoadColumnStatsUpdaterAction
+): VisState {
+  const fieldNamesToLoad = toArray(fieldName);
+  const dataset = state.datasets[dataId];
+  const fieldsToLoad = dataset?.fields.filter(f => fieldNamesToLoad.includes(f.name));
+  if (!dataset || !fieldsToLoad.length) {
+    return state;
+  }
+
+  const newFields = dataset.fields.map(field =>
+    fieldNamesToLoad.includes(field.name) ? {...field, isLoadingStats: true} : field
+  );
+  const newDataset = copyTableAndUpdate(dataset, {fields: newFields});
+
+  const tasks = fieldsToLoad.map(f =>
+    LOAD_COLUMN_STATS_TASK({dataset: newDataset, field: f}).bimap(
+      ({result, filterProps}) => loadColumnStatsSuccess(newDataset.id, f.name, result, filterProps),
+      (error: Error) => loadColumnStatsError(newDataset.id, f.name, error)
+    )
+  );
+  const nextState = pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+
+  return withTask(nextState, tasks);
+}
+
+/**
+ * Persist loaded column statistics on the field.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function loadColumnStatsSuccessUpdater(
+  state: VisState,
+  {result, filterProps, dataId, fieldName}: VisStateActions.LoadColumnStatsSuccessUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  const field = (dataset?.fields || []).find(f => f.name === fieldName);
+  if (!dataset || !field) {
+    return state;
+  }
+
+  const newFilterProps = {
+    ...filterProps,
+    columnStats: result
+  };
+  const newFields = dataset.fields.map(f =>
+    f.name === fieldName ? {...f, filterProps: newFilterProps, isLoadingStats: false} : f
+  );
+  const newDataset = copyTableAndUpdate(dataset, {fields: newFields});
+  return pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+}
+
+/**
+ * Clear loading flag when column statistics fail.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function loadColumnStatsErrorUpdater(
+  state: VisState,
+  {error, dataId, fieldName}: VisStateActions.LoadColumnStatsErrorUpdaterAction
+): VisState {
+  Console.error(error);
+  const dataset = state.datasets[dataId];
+  const field = (dataset?.fields || []).find(f => f.name === fieldName);
+  if (!dataset || !field) {
+    return state;
+  }
+  const newFields = dataset.fields.map(f =>
+    f.name === fieldName ? {...f, isLoadingStats: false} : f
+  );
+  const newDataset = copyTableAndUpdate(dataset, {fields: newFields});
+  return pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+}
+
 /**
  * Update editor
  */
@@ -4043,6 +4267,69 @@ export function toggleEditorVisibilityUpdater(
       visible: !state.editor.visible
     }
   };
+}
+
+/**
+ * Convert editor sketch features into a GeoJSON dataset/layer and clear the sketches.
+ */
+export function convertEditorFeaturesToLayerUpdater(
+  state: VisState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _action: VisStateActions.ConvertEditorFeaturesToLayerUpdaterAction
+): VisState {
+  if (!getApplicationConfig().enableDrawOnMapSketches) {
+    return state;
+  }
+
+  const features = state.editor.features;
+  if (!features.length) {
+    return state;
+  }
+
+  let data;
+  try {
+    data = processGeojson(editorFeaturesToFeatureCollection(features));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to convert drawn geometry to a layer: ${message}`,
+            id: 'convert-editor-features'
+          })
+        )
+      )
+    );
+  }
+
+  const clearedState: VisState = {
+    ...state,
+    editor: {
+      ...state.editor,
+      features: [],
+      selectedFeature: null,
+      mode: EDITOR_MODES.EDIT
+    }
+  };
+
+  const labelId = Math.floor(Math.random() * 90) + 10;
+
+  return updateVisDataUpdater(clearedState, {
+    datasets: {
+      info: {
+        id: `drawn-geometry-${generateHashId(6)}`,
+        label: `Drawn Geometry ${labelId}`
+      },
+      data
+    },
+    options: {
+      keepExistingConfig: true,
+      centerMap: false,
+      autoCreateLayers: true
+    }
+  });
 }
 
 export function setFilterAnimationTimeConfigUpdater(
