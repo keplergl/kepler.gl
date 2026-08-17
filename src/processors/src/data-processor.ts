@@ -430,10 +430,27 @@ export function processKeplerglDataset(
 }
 
 /**
- * Parse arrow table and return a dataset
+ * Process a loaders.gl [`ArrowTable`](https://loaders.gl/docs/specifications/category-table) (`{shape: 'arrow-table', data}`)
+ * and return a data object that can be passed to [`addDataToMap`](../actions/actions.md#adddatatomap).
+ * Load arrow files with `GeoArrowLoader` and `{arrow: {shape: 'arrow-table'}}`.
  *
  * @param arrowTable ArrowTable to parse, see loaders.gl/schema
  * @returns dataset containing `fields` and `rows` or null
+ * @public
+ * @example
+ * import {addDataToMap} from '@kepler.gl/actions';
+ * import {processArrowTable} from '@kepler.gl/processors';
+ * import {load} from '@loaders.gl/core';
+ * import {GeoArrowLoader} from '@loaders.gl/arrow';
+ *
+ * const arrowTable = await load(url, GeoArrowLoader, {arrow: {shape: 'arrow-table'}});
+ *
+ * dispatch(addDataToMap({
+ *   datasets: {
+ *     info: {id: 'arrow_dataset', label: 'My Arrow'},
+ *     data: processArrowTable(arrowTable)
+ *   }
+ * }));
  */
 export function processArrowTable(arrowTable: ArrowTable): ProcessorResult | null {
   // @ts-ignore - Unknown data type causing build failures

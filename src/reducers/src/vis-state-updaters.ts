@@ -3129,8 +3129,9 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
   if (newLayers.length && (options || {}).centerMap) {
     const bounds = findMapBounds(newLayers);
     if (bounds) {
+      const padding = options?.padding;
       const fitBoundsTask = ACTION_TASK_FIT_BOUNDS().map(() => {
-        return fitMapBounds(bounds);
+        return fitMapBounds(bounds, padding);
       });
       updatedState = withTask(updatedState, fitBoundsTask);
     }

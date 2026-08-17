@@ -3,6 +3,7 @@
 ### Table of Contents
 
 - [getFieldsFromData](#getfieldsfromdata)
+- [processArrowTable](#processarrowtable)
 - [processCsvData](#processcsvdata)
 - [processGeojson](#processgeojson)
 - [processKeplerglJSON](#processkeplergljson)
@@ -53,6 +54,36 @@ const fields = getFieldsFromData(data, fieldOrder);
 ```
 
 Returns **[Array][16]&lt;[Object][17]>** formatted fields
+
+## processArrowTable
+
+Process a loaders.gl [ArrowTable][21] (`{shape: 'arrow-table', data}`)
+and return a data object that can be passed to [`addDataToMap`][18].
+Load arrow files with `GeoArrowLoader` and `{arrow: {shape: 'arrow-table'}}`.
+
+**Parameters**
+
+-   `arrowTable` **[Object][17]** ArrowTable to parse, see loaders.gl/schema
+
+**Examples**
+
+```javascript
+import {addDataToMap} from '@kepler.gl/actions';
+import {processArrowTable} from '@kepler.gl/processors';
+import {load} from '@loaders.gl/core';
+import {GeoArrowLoader} from '@loaders.gl/arrow';
+
+const arrowTable = await load(url, GeoArrowLoader, {arrow: {shape: 'arrow-table'}});
+
+dispatch(addDataToMap({
+  datasets: {
+    info: {id: 'arrow_dataset', label: 'My Arrow'},
+    data: processArrowTable(arrowTable)
+  }
+}));
+```
+
+Returns **[Object][17]** dataset containing `fields` and `rows` or null
 
 ## processCsvData
 
@@ -221,3 +252,5 @@ Returns **[Object][17]** dataset containing `fields` and `rows`
 [19]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 
 [20]: http://wiki.geojson.org/GeoJSON_draft_version_6#FeatureCollection
+
+[21]: https://loaders.gl/docs/specifications/category-table

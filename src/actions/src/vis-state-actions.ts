@@ -8,6 +8,7 @@ import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {KeplerTable} from '@kepler.gl/table';
 import {
   AddDataToMapPayload,
+  ViewportPadding,
   ValueOf,
   Merge,
   PickInfo,
@@ -1122,6 +1123,7 @@ export function loadColumnStatsError(
 
 export type AddDataToMapUpdaterOptions = {
   centerMap?: boolean;
+  padding?: ViewportPadding;
   readOnly?: boolean;
   keepExistingConfig?: boolean;
 };
@@ -1146,6 +1148,8 @@ export type UpdateVisDataUpdaterAction = {
  * @param {object} options
  * @param options.centerMap `default: true` if `centerMap` is set to `true` kepler.gl will
  * place the map view within the data points boundaries
+ * @param options.padding padding in pixels applied when `centerMap` is true so data is not hidden
+ * under the side panel or other UI. Can be a number or `{top, bottom, left, right}`.
  * @param options.readOnly `default: false` if `readOnly` is set to `true`
  * the left setting panel will be hidden
  * @param config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}

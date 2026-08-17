@@ -9,8 +9,8 @@ import {ascending} from 'd3-array';
 import {center} from '@turf/center';
 import {AllGeoJSON} from '@turf/helpers';
 import {parseSync} from '@loaders.gl/core';
-import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
-import {convertBinaryGeometryToGeometry} from '@loaders.gl/gis';
+import {WKTLoader} from '@loaders.gl/wkt';
+import {convertWKBToGeometry, convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
 import {BinaryFeatureCollection} from '@loaders.gl/schema';
 import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
@@ -53,56 +53,168 @@ export function fieldIsGeoArrow(geoField?: ProtoDatasetField | null): boolean {
   return Boolean(geoField?.metadata?.get('ARROW:extension:name'));
 }
 
-export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
+function toArrayBuffer(
+  rawFeature: ArrayBuffer | {buffer: ArrayBufferLike; byteOffset: number; byteLength: number}
+): ArrayBuffer {
+  if (rawFeature instanceof ArrayBuffer) {
+    return rawFeature;
+  }
+  return rawFeature.buffer.slice(
+    rawFeature.byteOffset,
+    rawFeature.byteOffset + rawFeature.byteLength
+  ) as ArrayBuffer;
+}
+
+function isBinaryGeometry(value: unknown): value is Uint8Array | ArrayBuffer {
+  if (value instanceof ArrayBuffer) {
+    return true;
+  }
+  // Uint8Array, Buffer, and other byte views (Arrow Binary .get())
+  return ArrayBuffer.isView(value) && (value as Uint8Array).BYTES_PER_ELEMENT === 1;
+}
+
+function isLngLat(pos: unknown): pos is number[] {
+  const values = pos as {length?: number; 0?: unknown; 1?: unknown} | null;
+  return (
+    Boolean(values) &&
+    (Array.isArray(pos) || ArrayBuffer.isView(pos)) &&
+    (values as {length: number}).length >= 2 &&
+    Number.isFinite(Number(values?.[0])) &&
+    Number.isFinite(Number(values?.[1]))
+  );
+}
+
+/**
+ * Extract all vertex [lng, lat] coordinates from a GeoJSON geometry.
+ * Recurses through any nesting so Point, LineString, Polygon, and multi-
+ * variants all yield a flat list of positions.
+ */
+export function getAllPositions(geometry: any): number[][] {
+  if (!geometry) return [];
+  if (geometry.type === 'GeometryCollection') {
+    return (geometry.geometries || []).flatMap(getAllPositions);
+  }
+  const positions: number[][] = [];
+  collectPositions(geometry.coordinates, positions);
+  return positions;
+}
+
+function collectPositions(node: unknown, out: number[][]): void {
+  if (isLngLat(node)) {
+    out.push([Number(node[0]), Number(node[1])]);
+    return;
+  }
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      collectPositions(child, out);
+    }
+  }
+}
+
+/**
+ * Compute the centroid [lng, lat] of a GeoJSON geometry.
+ * For Point returns the coordinate directly; for complex geometries
+ * averages all vertex positions into a single representative point.
+ */
+export function getCentroidFromGeometry(geometry: any): number[] | null {
+  if (!geometry) return null;
+  const positions = getAllPositions(geometry);
+  if (positions.length === 0) return null;
+  if (positions.length === 1) return positions[0];
+
+  let sumLng = 0;
+  let sumLat = 0;
+  let count = 0;
+  for (const pos of positions) {
+    sumLng += pos[0];
+    sumLat += pos[1];
+    count++;
+  }
+  return count > 0 ? [sumLng / count, sumLat / count] : null;
+}
+
+function featureFromGeometry(parsedGeo: unknown, properties: null): Feature | null {
+  const normalized = normalize(parsedGeo);
+  if (!normalized || !Array.isArray(normalized.features) || !normalized.features.length) {
+    return null;
+  }
+  return {properties, ...normalized.features[0]};
+}
+
+/**
+ * Parse a raw cell value into a GeoJSON Feature.
+ * @param rawFeature Feature / geometry object, WKT/GeoJSON string, WKB bytes, or coordinate array
+ * @param geoArrowEncoding Optional ARROW:extension:name (e.g. geoarrow.wkb, geoarrow.point)
+ */
+export function parseGeoJsonRawFeature(
+  rawFeature: unknown,
+  geoArrowEncoding?: string | null
+): Feature | null {
   const properties = null; // help ensure that properties is present on the returned geojson feature
-  // Support WKB geometry provided as binary (e.g., from Parquet/GeoParquet)
-  if (rawFeature instanceof Uint8Array || rawFeature instanceof ArrayBuffer) {
+
+  if (rawFeature == null) {
+    return null;
+  }
+
+  // GeoArrow / GeoParquet cell (WKB, WKT, or native point/linestring/polygon)
+  if (geoArrowEncoding) {
     try {
-      const binaryInput =
-        rawFeature instanceof ArrayBuffer
-          ? rawFeature
-          : (rawFeature as Uint8Array).buffer.slice(
-              (rawFeature as Uint8Array).byteOffset,
-              (rawFeature as Uint8Array).byteOffset + (rawFeature as Uint8Array).byteLength
-            );
-      const binaryGeo = parseSync(binaryInput as ArrayBuffer, WKBLoader);
-      // @ts-expect-error loaders.gl binary type to GeoJSON geometry
-      const parsedGeo = convertBinaryGeometryToGeometry(binaryGeo);
-      const normalized = normalize(parsedGeo);
-      if (!normalized || !Array.isArray(normalized.features) || !normalized.features.length) {
-        return null;
+      const geometry = convertGeoArrowGeometryToGeoJSON(
+        rawFeature,
+        geoArrowEncoding as Parameters<typeof convertGeoArrowGeometryToGeoJSON>[1]
+      );
+      if (geometry) {
+        return {type: 'Feature', geometry, properties};
       }
-      return {properties, ...normalized.features[0]};
+    } catch (e) {
+      // fall through to generic parsers
+    }
+  }
+
+  // Support WKB geometry provided as binary (e.g., from Parquet/GeoParquet/DuckDB)
+  if (isBinaryGeometry(rawFeature)) {
+    try {
+      const parsedGeo = convertWKBToGeometry(toArrayBuffer(rawFeature));
+      return featureFromGeometry(parsedGeo, properties);
     } catch (e) {
       return null;
     }
   }
-  if (typeof rawFeature === 'object') {
-    // Support GeoJson feature as object
-    // probably need to normalize it as well
-    const normalized = normalize(rawFeature);
-    if (!normalized || !Array.isArray(normalized.features) || !normalized.features.length) {
-      // fail to normalize GeoJson
-      return null;
-    }
 
-    return {properties, ...normalized.features[0]};
-  } else if (typeof rawFeature === 'string') {
+  // Coordinate arrays: Point [lng, lat] or LineString [[lat, lng], ...]
+  // Must run before `typeof === 'object'` because arrays are objects.
+  if (Array.isArray(rawFeature)) {
+    if (isLngLat(rawFeature)) {
+      return {
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: rawFeature},
+        properties
+      };
+    }
+    if (Array.isArray(rawFeature[0])) {
+      // Support GeoJson LineString as an array of points stored as [lat, lng]
+      return {
+        type: 'Feature',
+        geometry: {
+          coordinates: rawFeature.map((pts: number[]) => [pts[1], pts[0]]),
+          type: 'LineString'
+        },
+        properties
+      };
+    }
+    return null;
+  }
+
+  if (typeof rawFeature === 'object') {
+    // Support GeoJson feature or geometry as object
+    return featureFromGeometry(rawFeature, properties);
+  }
+
+  if (typeof rawFeature === 'string') {
     const parsedGeometry = parseGeometryFromString(rawFeature);
     if (!parsedGeometry) return null;
     // @ts-expect-error verify whether parsedGeometry always contains properties
     return {properties, ...parsedGeometry};
-  } else if (Array.isArray(rawFeature)) {
-    // Support GeoJson  LineString as an array of points
-    return {
-      type: 'Feature',
-      geometry: {
-        // why do we need to flip it...
-        coordinates: rawFeature.map(pts => [pts[1], pts[0]]),
-        type: 'LineString'
-      },
-      properties
-    };
   }
 
   return null;
@@ -259,9 +371,7 @@ function parseGeometryFromString(geoString: string): Feature | null {
       // try parse as WKB hex string
       try {
         const buffer = Buffer.from(geoString, 'hex');
-        const binaryGeo = parseSync(buffer, WKBLoader);
-        // @ts-expect-error
-        parsedGeo = convertBinaryGeometryToGeometry(binaryGeo);
+        parsedGeo = convertWKBToGeometry(toArrayBuffer(buffer));
       } catch (e) {
         return null;
       }
