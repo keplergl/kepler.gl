@@ -616,7 +616,7 @@ test('Components -> cellSize -> renderedSize', t => {
     const props = wrapper.find(DataTable).at(0).props();
 
     const expected = {
-      _geojson: {row: 500, header: 180},
+      _geojson: {row: 180, header: 180},
       'income level of people over 65': {row: 180, header: 223},
       engagement: {row: 180, header: 180}
     };

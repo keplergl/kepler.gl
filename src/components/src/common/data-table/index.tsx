@@ -219,6 +219,34 @@ const columnWidthFunction =
       : cellSizeCache[columns[index]] || defaultColumnWidth;
   };
 
+const GEOMETRY_FIELD_TYPES: Record<string, boolean> = {
+  geojson: true,
+  geoarrow: true
+};
+const MAX_GEOMETRY_CELL_CHARS = 512;
+const MAX_GEOMETRY_ARRAY_LENGTH = 8;
+
+function formatGeometryForTable(value: unknown): string {
+  if (typeof value === 'string') {
+    return value.length > MAX_GEOMETRY_CELL_CHARS
+      ? `${value.slice(0, MAX_GEOMETRY_CELL_CHARS)}…`
+      : value;
+  }
+  try {
+    const text = JSON.stringify(value, (_key, val) =>
+      Array.isArray(val) && val.length > MAX_GEOMETRY_ARRAY_LENGTH ? `[…${val.length}]` : val
+    );
+    if (!text) {
+      return '';
+    }
+    return text.length > MAX_GEOMETRY_CELL_CHARS
+      ? `${text.slice(0, MAX_GEOMETRY_CELL_CHARS)}…`
+      : text;
+  } catch {
+    return '{geojson}';
+  }
+}
+
 interface GetRowCellProps {
   dataContainer: DataContainerInterface | null;
   columns: (string & {ghost?: boolean})[];
@@ -239,11 +267,13 @@ const defaultGetRowCell = (
   const {type} = colMeta[column];
 
   const value = dataContainer?.valueAt(rowIdx, columns.indexOf(column));
-  return value === null || value === undefined || value === ''
-    ? ''
-    : formatter
-    ? formatter(value)
-    : parseFieldValue(value, type);
+  if (value === null || value === undefined || value === '') {
+    return '';
+  }
+  if (GEOMETRY_FIELD_TYPES[type]) {
+    return formatGeometryForTable(value);
+  }
+  return formatter ? formatter(value) : parseFieldValue(value, type);
 };
 
 type StatsControlProps = {
