@@ -15,6 +15,40 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.7] - Aug 14 2026
+
+- 34fd0bfc (origin/master, origin/HEAD, master) feat: add column statistics to the data table (#3646)
+- 90467113 feat: add point and line sketching to Draw on Map (#3639)
+- 423e1767 chore(examples): add click info example (#3643)
+- 8c03ee49 fix: handle Arrow Int64 BigInt values in accessors and filters (#3641)
+- 5030285a fix: heatmap centroids from point and line geometries (#3642)
+- 525b54ac feat: centerMap - add optional padding (#3644)
+- dbca1806 chore: update docs (#3645)
+- e26ed9c0 chore(docker): shrink build context and cache yarn installs (#3640)
+- fd3bc652 chore: fix dependabot vulnerabilities (#3638)
+- edd4e20c fix(video-export): points in video export don't react to zoom changes (#3637)
+- 24d554d0 fix(video-export): show globe stars in preview and exported video (#3636)
+- 6296973d fix(video-export): pixel ratio in preview mode regression (#3634)
+- 8fba10a2 chore: upgrade d3 (#3632)
+- 495d2995 chore: react-intl bump to 7 (#3633)
+- 2107ed8c Root now pins node-fetch 2.7.0 and thrift 0.23.0 (#3631)
+- 551dc3ff chore: Lodash is now 4.18.1 across the published packages and the website (#3630)
+- 54db300f chore: remove unused not exported files / utils (#3628)
+- e379e332 fix: polygon filtered index per layer, instead of per dataset (#3452)
+- 40a64eb7 fix: dropbox full logout; error on stale access token (#3627)
+- b313dfa2 feat(demo-app): add Google Drive cloud storage provider (#3623)
+- dead655a feat: A5 layer (#3625)
+- 29b8e479 fix: GlobehexagonCellLayer crash from Babel unbound super calls (#3622)
+- e8a644e4 fix: dropbox storage provider login issues (#3624)
+- a0bee767 feat: add optional theme switch toggle (#3620)
+- 997cba29 feat(globe): larger halo; globe controls fixes (#3621)
+- 621bb236 chore(deps): bump postcss from 8.4.49 to 8.5.26 in /website (#3619)
+- 24e6478c chore(deps): bump nanoid from 3.3.8 to 3.3.18 in /examples/demo-app (#3617)
+- 8458ee7f chore(deps): bump fast-uri from 3.1.2 to 3.1.5 (#3618)
+- 07422bfc fix: DuckDB GeoJSON import on newer duckdb-wasm (#3616)
+- b6ac552b chore: add duckdb vite example (#3615)
+- cb70edfa chore: upgrade examples to kepler.gl 3.3.0-alpha.6 (#3528)
+
 ## [3.3.0-alpha.6] - Aug 4 2026
 
 - 426d6051 feat: add loading spinner to exported HTML maps (#3612)
