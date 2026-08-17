@@ -6230,6 +6230,62 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   t.end();
 });
 
+test('#visStateReducer -> LOAD_COLUMN_STATS', t => {
+  drainTasksForTesting();
+  const initialState = CloneDeep(StateWFiles.visState);
+
+  const noOpState = reducer(
+    initialState,
+    VisStateActions.loadColumnStats('missing', 'gps_data.lat')
+  );
+  t.equal(noOpState, initialState, 'state should not change when dataset is missing');
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.loadColumnStats(testCsvDataId, 'gps_data.lat')
+  );
+  const loadingField = nextState.datasets[testCsvDataId].fields.find(f => f.name === 'gps_data.lat');
+  t.equal(loadingField.isLoadingStats, true, 'should set isLoadingStats while loading');
+
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 1, 'should create a column stats task');
+
+  const result = {
+    type: 'numeric',
+    mean: 30,
+    std: 1,
+    percentNulls: 0,
+    bins: [],
+    quantiles: [
+      {label: 'Min', value: 29},
+      {label: 'Max', value: 31}
+    ]
+  };
+  const successState = reducer(
+    nextState,
+    VisStateActions.loadColumnStatsSuccess(testCsvDataId, 'gps_data.lat', result, {})
+  );
+  const successField = successState.datasets[testCsvDataId].fields.find(
+    f => f.name === 'gps_data.lat'
+  );
+  t.equal(successField.isLoadingStats, false, 'should clear isLoadingStats on success');
+  t.deepEqual(
+    successField.filterProps.columnStats,
+    result,
+    'should store columnStats on filterProps'
+  );
+
+  const errorState = reducer(
+    nextState,
+    VisStateActions.loadColumnStatsError(testCsvDataId, 'gps_data.lat', new Error('stats failed'))
+  );
+  const errorField = errorState.datasets[testCsvDataId].fields.find(f => f.name === 'gps_data.lat');
+  t.equal(errorField.isLoadingStats, false, 'should clear isLoadingStats on error');
+
+  drainTasksForTesting();
+  t.end();
+});
+
 test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
   const initialState = CloneDeep(StateWFiles.visState);
 

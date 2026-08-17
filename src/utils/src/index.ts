@@ -34,6 +34,20 @@ export {setStyleSheetBaseHref} from './dom-utils';
 export {default as domtoimage} from './dom-to-image';
 export {getFrequency, getMode, aggregate} from './aggregation';
 export {
+  ColumnStatsType,
+  NUMERIC_BIN_COUNT,
+  collectColumnValues,
+  computeColumnStats,
+  getColumnStatistics
+} from './column-statistics';
+export type {
+  ColumnStats,
+  NumericColumnStats,
+  CategoricalColumnStats,
+  TimeColumnStats,
+  Quantile
+} from './column-statistics';
+export {
   adjustValueToAnimationWindow,
   getBinThresholds,
   histogramFromThreshold,

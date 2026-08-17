@@ -26,6 +26,7 @@ export type ColMetaProps = {
   format?: string;
   columnStats?: any;
   displayFormat?: string;
+  isLoadingStats?: boolean;
 };
 
 export type ColMeta = {

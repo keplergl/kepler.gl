@@ -1044,6 +1044,83 @@ export function setColumnDisplayFormat(
   };
 }
 
+export type LoadColumnStatsUpdaterAction = {
+  dataId: string;
+  fieldName: string | string[];
+};
+
+/**
+ * Lazily compute column statistics for the data table header.
+ * @param dataId
+ * @param fieldName one or more field names
+ * @returns action
+ * @public
+ */
+export function loadColumnStats(
+  dataId: string,
+  fieldName: string | string[]
+): Merge<LoadColumnStatsUpdaterAction, {type: typeof ActionTypes.LOAD_COLUMN_STATS}> {
+  return {
+    type: ActionTypes.LOAD_COLUMN_STATS,
+    dataId,
+    fieldName
+  };
+}
+
+export type LoadColumnStatsSuccessUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  result: any;
+  filterProps?: any;
+};
+
+/**
+ * Column statistics finished loading
+ * @returns action
+ * @public
+ */
+export function loadColumnStatsSuccess(
+  dataId: string,
+  fieldName: string,
+  result: any,
+  filterProps?: any
+): Merge<
+  LoadColumnStatsSuccessUpdaterAction,
+  {type: typeof ActionTypes.LOAD_COLUMN_STATS_SUCCESS}
+> {
+  return {
+    type: ActionTypes.LOAD_COLUMN_STATS_SUCCESS,
+    dataId,
+    fieldName,
+    result,
+    filterProps
+  };
+}
+
+export type LoadColumnStatsErrorUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  error: Error;
+};
+
+/**
+ * Column statistics failed to load
+ * @returns action
+ * @public
+ */
+export function loadColumnStatsError(
+  dataId: string,
+  fieldName: string,
+  error: Error
+): Merge<LoadColumnStatsErrorUpdaterAction, {type: typeof ActionTypes.LOAD_COLUMN_STATS_ERROR}> {
+  return {
+    type: ActionTypes.LOAD_COLUMN_STATS_ERROR,
+    dataId,
+    fieldName,
+    error
+  };
+}
+
 export type AddDataToMapUpdaterOptions = {
   centerMap?: boolean;
   padding?: ViewportPadding;

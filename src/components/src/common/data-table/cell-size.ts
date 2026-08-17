@@ -13,6 +13,14 @@ const EDGE_COLUMN_PADDING = 10;
 // be added to min cell width in order to show column name
 const MAX_EMPTY_COLUMN_SPACE = 60;
 
+const GEOMETRY_FIELD_TYPES: Record<string, boolean> = {
+  geojson: true,
+  geoarrow: true
+};
+
+// GeoJSON payloads can be huge; do not size the column from cell text.
+const MAX_GEOMETRY_CELL_SIZE = 180;
+
 type RenderSizeParam = {
   text: {dataContainer: DataContainerInterface; column: string};
   type?: string;
@@ -63,25 +71,32 @@ export function renderedSize({
   const context = textCanvas.getContext('2d');
   context.font = [fontSize, font].join('px ');
 
-  let rowsToSample = [...Array(numRowsToCalculate)].map(() =>
-    Math.floor(Math.random() * (dataContainer.numRows() - 1))
-  );
+  const isGeometryColumn = Boolean(GEOMETRY_FIELD_TYPES[type]);
+  const maxWidth = isGeometryColumn ? MAX_GEOMETRY_CELL_SIZE : maxCellSize;
 
-  // If we have less than 10 rows, lets measure all of them
-  if (dataContainer.numRows() <= numRowsToCalculate) {
-    rowsToSample = Array.from(Array(dataContainer.numRows()).keys());
+  let rowWidth = minCellSize + cellPadding;
+  if (!isGeometryColumn) {
+    let rowsToSample = [...Array(numRowsToCalculate)].map(() =>
+      Math.floor(Math.random() * Math.max(dataContainer.numRows() - 1, 0))
+    );
+
+    // If we have less than 10 rows, lets measure all of them
+    if (dataContainer.numRows() <= numRowsToCalculate) {
+      rowsToSample = Array.from(Array(dataContainer.numRows()).keys());
+    }
+    rowWidth = Math.max(
+      rowWidth,
+      ...rowsToSample.map(rowIdx => {
+        const value = parseFieldValue(dataContainer.valueAt(rowIdx, colIdx), type);
+        // measuring large text cause slow performance
+        if (value.length > maxWidth) {
+          return maxWidth;
+        }
+        const textWidth = context.measureText(value).width;
+        return Math.ceil(textWidth) + cellPadding;
+      })
+    );
   }
-  const rowWidth = Math.max(
-    ...rowsToSample.map(rowIdx => {
-      const value = parseFieldValue(dataContainer.valueAt(rowIdx, colIdx), type);
-      // measuring large text cause slow performance
-      if (value.length > maxCellSize) {
-        return maxCellSize;
-      }
-      const textWidth = context.measureText(value).width;
-      return Math.ceil(textWidth) + cellPadding;
-    })
-  );
   // header cell only has left padding
   const headerWidth =
     Math.ceil(context.measureText(column).width) + cellPadding / 2 + optionsButton;
@@ -91,7 +106,7 @@ export function renderedSize({
   // min header width is measured by cell
   const minHeaderWidth = minCellSize + cellPadding / 2 + optionsButton;
 
-  const clampedRowWidth = clamp(minRowWidth, maxCellSize, rowWidth);
+  const clampedRowWidth = clamp(minRowWidth, maxWidth, rowWidth);
   const clampedHeaderWidth = clamp(minHeaderWidth, maxHeaderSize, headerWidth);
 
   // cleanup
@@ -154,14 +169,17 @@ function expandCellSize(
   let remaining = roomToFill;
 
   const expandedCellSize = columnOrder.reduce((accu, col) => {
-    let size = cellSizeCache[col].row;
-    if (cellSizeCache[col].row < cellSizeCache[col].header && remaining > 0) {
+    const colSize = cellSizeCache[col];
+    if (!colSize) {
+      return accu;
+    }
+
+    let size = colSize.row;
+    if (colSize.row < colSize.header && remaining > 0) {
       // if we are cutting off the header, expand to fit it
       size =
-        cellSizeCache[col].header - cellSizeCache[col].row < remaining
-          ? cellSizeCache[col].header
-          : cellSizeCache[col].row + remaining;
-      remaining -= size - cellSizeCache[col].row;
+        colSize.header - colSize.row < remaining ? colSize.header : colSize.row + remaining;
+      remaining -= size - colSize.row;
     }
 
     return {
@@ -172,9 +190,10 @@ function expandCellSize(
 
   let ghost: number | null = null;
   if (remaining > 0 && remaining < MIN_GHOST_CELL_SIZE) {
-    // expand last cell
     const lastCell = columnOrder[columnOrder.length - 1];
-    expandedCellSize[lastCell] += remaining;
+    if (lastCell && expandedCellSize[lastCell] != null) {
+      expandedCellSize[lastCell] += remaining;
+    }
   } else if (remaining >= MIN_GHOST_CELL_SIZE) {
     // if too much left add a ghost cell
     ghost = remaining;
