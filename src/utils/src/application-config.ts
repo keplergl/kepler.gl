@@ -170,7 +170,7 @@ export type KeplerApplicationConfig = {
   /** Whether to show a map control to toggle between light and dark UI themes. Disabled by default. */
   enableThemeToggle?: boolean;
 
-  /** Whether to show column statistics in the data table modal. Disabled by default. */
+  /** Whether to show column statistics in the data table modal. Enabled by default. */
   enableColumnStats?: boolean;
 
   /**

@@ -246,7 +246,7 @@ test('Components -> DataTableModal.render: csv 1', t => {
 
   t.deepEqual(props.columns, expectedColumns, 'DataTable should have the correct props.columns');
   t.deepEqual(props.colMeta, expectedColMeta, 'DataTable should have the correct props.colMeta');
-  t.equal(props.hasStats, false, 'DataTable should disable column stats by default');
+  t.equal(props.hasStats, true, 'DataTable should enable column stats by default');
 
   const datasetId = Object.keys(StateWFiles.visState.datasets)[0];
 
@@ -265,16 +265,16 @@ test('Components -> DataTableModal.render: csv 1', t => {
   t.end();
 });
 
-test('Components -> DataTableModal.render: enableColumnStats', t => {
-  initApplicationConfig({enableColumnStats: true});
+test('Components -> DataTableModal.render: disableColumnStats', t => {
+  initApplicationConfig({enableColumnStats: false});
   try {
     const wrapper = mountWithTheme(
       <DataTableModal datasets={StateWFiles.visState.datasets} dataId={testCsvDataId} />
     );
     const props = wrapper.find(DataTable).at(0).props();
-    t.equal(props.hasStats, true, 'DataTable should enable column stats when config flag is on');
+    t.equal(props.hasStats, false, 'DataTable should disable column stats when config flag is off');
   } finally {
-    initApplicationConfig({enableColumnStats: false});
+    initApplicationConfig({enableColumnStats: true});
   }
   t.end();
 });
@@ -628,7 +628,7 @@ test('Components -> cellSize -> renderedSize', t => {
     );
   } finally {
     restoreMockCanvas();
-    initApplicationConfig({enableColumnStats: false});
+    initApplicationConfig({enableColumnStats: true});
   }
   t.end();
 });
