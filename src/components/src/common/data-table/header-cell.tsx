@@ -254,7 +254,13 @@ function HeaderCellFactory(
       <div />
     ) : (
       <>
-        <section className="details">
+        <section
+          className="details"
+          onClick={e => {
+            if (e.shiftKey && !isGhost) sortTableColumn?.(column);
+          }}
+          onDoubleClick={onSortTable}
+        >
           <FieldToken type={colMeta[column].type} />
           <div className="col-name">
             <div className="col-name__left">
@@ -313,10 +319,6 @@ function HeaderCellFactory(
         style={style}
         $hasStats={Boolean(hasStats)}
         $firstCell={firstCell}
-        onClick={e => {
-          e.shiftKey && !isGhost ? sortTableColumn(column) : null;
-        }}
-        onDoubleClick={onSortTable}
         title={isGhost ? undefined : column}
       >
         {hasStats && !isGhost ? (

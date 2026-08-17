@@ -276,12 +276,7 @@ const defaultGetRowCell = (
   return formatter ? formatter(value) : parseFieldValue(value, type);
 };
 
-type StatsControlProps = {
-  top: number;
-  showStats?: boolean;
-};
-
-const StyledStatsControl = styled.div<StatsControlProps>`
+const StyledStatsControl = styled.div<{$showStats?: boolean; top: number}>`
   height: ${props => props.theme.headerStatsControlHeight}px;
   width: 100%;
   display: flex;
@@ -305,7 +300,7 @@ const StyledStatsControl = styled.div<StatsControlProps>`
     svg {
       margin-left: 12px;
       transition: transform ${STATS_TOGGLE_DURATION} ease-in-out;
-      transform: rotate(${props => (props.showStats ? 180 : 0)}deg);
+      transform: rotate(${props => (props.$showStats ? 180 : 0)}deg);
     }
   }
 `;
@@ -319,8 +314,13 @@ const StatsControl = ({
   showStats?: boolean;
   toggleShowStats: () => void;
 }) => (
-  <StyledStatsControl top={top} showStats={showStats}>
-    <div onClick={toggleShowStats}>
+  <StyledStatsControl
+    top={top}
+    $showStats={showStats}
+    onClick={toggleShowStats}
+    onDoubleClick={event => event.stopPropagation()}
+  >
+    <div>
       {showStats ? 'Hide Column Stats' : 'Show Column Stats'}
       <ArrowDown height="18px" />
     </div>
@@ -700,7 +700,7 @@ function DataTableFactory(
                             columns={pinnedColumns}
                             headerGridProps={headerGridProps}
                             headerVisibleHeight={visibleHeaderHeight}
-                            headerBodyOffset={collapsedHeaderHeight}
+                            headerBodyOffset={visibleHeaderHeight}
                             fixedWidth={pinnedColumnsWidth}
                             onScroll={args => onScroll({...args, scrollLeft})}
                             scrollTop={scrollTop}
@@ -732,7 +732,7 @@ function DataTableFactory(
                           columns={unpinnedColumnsGhost}
                           headerGridProps={headerGridProps}
                           headerVisibleHeight={visibleHeaderHeight}
-                          headerBodyOffset={collapsedHeaderHeight}
+                          headerBodyOffset={visibleHeaderHeight}
                           fixedWidth={fixedWidth}
                           fixedHeight={fixedHeight}
                           onScroll={onScroll}

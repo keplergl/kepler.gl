@@ -1093,35 +1093,25 @@ const scrollBar = css`
 export const modalScrollBar = css`
   &::-webkit-scrollbar {
     width: 14px;
-    height: 16px;
+    height: 14px;
   }
 
   &::-webkit-scrollbar-track {
     background: white;
   }
-  &::-webkit-scrollbar-track:horizontal {
-    background: ${props => props.theme.textColorHl};
-  }
+
   &::-webkit-scrollbar-thumb {
     background: ${props => props.theme.scrollbarThumbColorLT};
     border: 4px solid white;
+    border-radius: 7px;
   }
 
   &::-webkit-scrollbar-corner {
-    background: ${props => props.theme.textColorHl};
+    background: white;
   }
 
   &::-webkit-scrollbar-thumb:hover {
     background: ${props => props.theme.scrollbarThumbColorHoverLT};
-  }
-
-  &::-webkit-scrollbar-thumb:vertical {
-    border-radius: 7px;
-  }
-
-  &::-webkit-scrollbar-thumb:horizontal {
-    border-radius: 9px;
-    border: 4px solid ${props => props.theme.textColorHl};
   }
 `;
 
