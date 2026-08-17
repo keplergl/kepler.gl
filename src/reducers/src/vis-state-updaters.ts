@@ -45,7 +45,9 @@ import {
   fitBounds as fitMapBounds,
   toggleLayerForMap,
   applyFilterConfig,
-  SetLoadingIndicatorPayload
+  SetLoadingIndicatorPayload,
+  loadColumnStatsSuccess,
+  loadColumnStatsError
 } from '@kepler.gl/actions';
 
 // Utils
@@ -147,6 +149,7 @@ import {Loader} from '@loaders.gl/loader-utils';
 
 import {
   Datasets,
+  FilterProps,
   assignGpuChannel,
   copyTableAndUpdate,
   createNewDataEntry,
@@ -183,7 +186,9 @@ import {
   LayerToFilterTimeInterval,
   TIME_INTERVALS_ORDERED,
   mergeFilterDomain,
-  initCustomPaletteByCustomScale
+  initCustomPaletteByCustomScale,
+  collectColumnValues,
+  getColumnStatistics
 } from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
 import {PayloadAction} from '@reduxjs/toolkit';
@@ -4026,6 +4031,123 @@ export function setColumnDisplayFormatUpdater(
   };
 
   return newState;
+}
+
+type LoadColumnStatsTaskPayload = {
+  dataset: VisState['datasets'][string];
+  field: Field;
+};
+
+function getMappedValue(filterProps?: FilterProps | null): unknown[] | undefined {
+  if (filterProps && 'mappedValue' in filterProps && Array.isArray(filterProps.mappedValue)) {
+    return filterProps.mappedValue;
+  }
+  return undefined;
+}
+
+function yieldForPaint(): Promise<void> {
+  return new Promise(resolve => {
+    setTimeout(resolve, 0);
+  });
+}
+
+async function requestDatasetColumnStatistics({dataset, field}: LoadColumnStatsTaskPayload) {
+  // Yield so the data table and per-column loading spinners can paint first.
+  await yieldForPaint();
+  const filterProps = field.filterProps || dataset.getColumnFilterProps(field.name);
+  const mappedValue = getMappedValue(filterProps);
+  const values = mappedValue ?? collectColumnValues(dataset.dataContainer, field.fieldIdx);
+  const result = await getColumnStatistics({
+    values,
+    fieldType: field.type
+  });
+
+  return {result, filterProps};
+}
+
+const LOAD_COLUMN_STATS_TASK = Task.fromPromise(
+  requestDatasetColumnStatistics,
+  'LOAD_COLUMN_STATS_TASK'
+);
+
+/**
+ * Start loading column statistics for one or more fields.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function loadColumnStatsUpdater(
+  state: VisState,
+  {dataId, fieldName}: VisStateActions.LoadColumnStatsUpdaterAction
+): VisState {
+  const fieldNamesToLoad = toArray(fieldName);
+  const dataset = state.datasets[dataId];
+  const fieldsToLoad = dataset?.fields.filter(f => fieldNamesToLoad.includes(f.name));
+  if (!dataset || !fieldsToLoad.length) {
+    return state;
+  }
+
+  const newFields = dataset.fields.map(field =>
+    fieldNamesToLoad.includes(field.name) ? {...field, isLoadingStats: true} : field
+  );
+  const newDataset = copyTableAndUpdate(dataset, {fields: newFields});
+
+  const tasks = fieldsToLoad.map(f =>
+    LOAD_COLUMN_STATS_TASK({dataset: newDataset, field: f}).bimap(
+      ({result, filterProps}) => loadColumnStatsSuccess(newDataset.id, f.name, result, filterProps),
+      (error: Error) => loadColumnStatsError(newDataset.id, f.name, error)
+    )
+  );
+  const nextState = pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+
+  return withTask(nextState, tasks);
+}
+
+/**
+ * Persist loaded column statistics on the field.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function loadColumnStatsSuccessUpdater(
+  state: VisState,
+  {result, filterProps, dataId, fieldName}: VisStateActions.LoadColumnStatsSuccessUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  const field = (dataset?.fields || []).find(f => f.name === fieldName);
+  if (!dataset || !field) {
+    return state;
+  }
+
+  const newFilterProps = {
+    ...filterProps,
+    columnStats: result
+  };
+  const newFields = dataset.fields.map(f =>
+    f.name === fieldName ? {...f, filterProps: newFilterProps, isLoadingStats: false} : f
+  );
+  const newDataset = copyTableAndUpdate(dataset, {fields: newFields});
+  return pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+}
+
+/**
+ * Clear loading flag when column statistics fail.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function loadColumnStatsErrorUpdater(
+  state: VisState,
+  {error, dataId, fieldName}: VisStateActions.LoadColumnStatsErrorUpdaterAction
+): VisState {
+  Console.error(error);
+  const dataset = state.datasets[dataId];
+  const field = (dataset?.fields || []).find(f => f.name === fieldName);
+  if (!dataset || !field) {
+    return state;
+  }
+  const newFields = dataset.fields.map(f =>
+    f.name === fieldName ? {...f, isLoadingStats: false} : f
+  );
+  const newDataset = copyTableAndUpdate(dataset, {fields: newFields});
+  return pick_('datasets')(merge_({[dataId]: newDataset}))(state);
 }
 
 /**

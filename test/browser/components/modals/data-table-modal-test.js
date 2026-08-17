@@ -32,7 +32,7 @@ import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
 import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../../helpers/utils';
 
-import {createDataContainer, getFieldFormatLabels} from '@kepler.gl/utils';
+import {createDataContainer, getFieldFormatLabels, initApplicationConfig} from '@kepler.gl/utils';
 
 const {VertThreeDots} = Icons;
 const DataTableModal = appInjector.get(DataTableModalFactory);
@@ -246,6 +246,7 @@ test('Components -> DataTableModal.render: csv 1', t => {
 
   t.deepEqual(props.columns, expectedColumns, 'DataTable should have the correct props.columns');
   t.deepEqual(props.colMeta, expectedColMeta, 'DataTable should have the correct props.colMeta');
+  t.equal(props.hasStats, false, 'DataTable should disable column stats by default');
 
   const datasetId = Object.keys(StateWFiles.visState.datasets)[0];
 
@@ -264,6 +265,20 @@ test('Components -> DataTableModal.render: csv 1', t => {
   t.end();
 });
 
+test('Components -> DataTableModal.render: enableColumnStats', t => {
+  initApplicationConfig({enableColumnStats: true});
+  try {
+    const wrapper = mountWithTheme(
+      <DataTableModal datasets={StateWFiles.visState.datasets} dataId={testCsvDataId} />
+    );
+    const props = wrapper.find(DataTable).at(0).props();
+    t.equal(props.hasStats, true, 'DataTable should enable column stats when config flag is on');
+  } finally {
+    initApplicationConfig({enableColumnStats: false});
+  }
+  t.end();
+});
+
 test('Components -> DataTableModal -> click tab', t => {
   const showDatasetTable = sinon.spy();
 
@@ -276,7 +291,11 @@ test('Components -> DataTableModal -> click tab', t => {
   );
 
   t.equal(wrapper.find(DatasetModalTab).length, 2, 'should render 2 DatasetModalTab');
-  t.equal(wrapper.find(DatasetModalTab).at(0).prop('$active'), true, 'prop 0 active should be true');
+  t.equal(
+    wrapper.find(DatasetModalTab).at(0).prop('$active'),
+    true,
+    'prop 0 active should be true'
+  );
   t.equal(
     wrapper.find(DatasetModalTab).at(0).find('.dataset-name').text(),
     'hello.csv',
@@ -567,47 +586,50 @@ test('Components -> DatableModal -> sort/pin/copy and display format should be c
 
 test('Components -> cellSize -> renderedSize', t => {
   prepareMockCanvas();
+  initApplicationConfig({enableColumnStats: true});
+  try {
+    const fields = [
+      {name: testColumns[0], type: 'geojson'},
+      {name: testColumns[1], type: 'real'},
+      {name: testColumns[2], type: 'string'}
+    ];
+    const dataContainer = createDataContainer(texts, {fields});
 
-  const fields = [
-    {name: testColumns[0], type: 'geojson'},
-    {name: testColumns[1], type: 'real'},
-    {name: testColumns[2], type: 'string'}
-  ];
-  const dataContainer = createDataContainer(texts, {fields});
+    const wrapper = mountWithTheme(
+      <DataTableModal
+        datasets={{
+          smoothie: {
+            id: 'smoothie',
+            dataContainer,
+            fields: [
+              {name: testColumns[0], type: 'geojson', displayName: testColumns[0]},
+              {name: testColumns[1], type: 'real', displayName: testColumns[1]},
+              {name: testColumns[2], type: 'string', displayName: testColumns[2]}
+            ],
+            color: [113, 113, 113]
+          }
+        }}
+        dataId="smoothie"
+      />
+    );
 
-  const wrapper = mountWithTheme(
-    <DataTableModal
-      datasets={{
-        smoothie: {
-          id: 'smoothie',
-          dataContainer,
-          fields: [
-            {name: testColumns[0], type: 'geojson', displayName: testColumns[0]},
-            {name: testColumns[1], type: 'real', displayName: testColumns[1]},
-            {name: testColumns[2], type: 'string', displayName: testColumns[2]}
-          ],
-          color: [113, 113, 113]
-        }
-      }}
-      dataId="smoothie"
-    />
-  );
+    const props = wrapper.find(DataTable).at(0).props();
 
-  const props = wrapper.find(DataTable).at(0).props();
+    const expected = {
+      _geojson: {row: 500, header: 180},
+      'income level of people over 65': {row: 180, header: 223},
+      engagement: {row: 180, header: 180}
+    };
 
-  const expected = {
-    _geojson: {row: 500, header: 186},
-    'income level of people over 65': {row: 162, header: 223},
-    engagement: {row: 162, header: 186}
-  };
-
-  t.deepEqual(
-    props.cellSizeCache,
-    expected,
-    'DataTable should have the correct props.cellSizeCache'
-  );
-
-  restoreMockCanvas();
+    t.deepEqual(
+      props.cellSizeCache,
+      expected,
+      'DataTable should have the correct props.cellSizeCache'
+    );
+  } finally {
+    restoreMockCanvas();
+    initApplicationConfig({enableColumnStats: false});
+  }
   t.end();
 });
 

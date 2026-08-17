@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import './data-utils-test';
+import './column-statistics-test';
 import './data-processor-test';
 import './kepler-table-test';
 import './kepler-table-utils-test';

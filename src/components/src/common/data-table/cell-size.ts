@@ -154,14 +154,17 @@ function expandCellSize(
   let remaining = roomToFill;
 
   const expandedCellSize = columnOrder.reduce((accu, col) => {
-    let size = cellSizeCache[col].row;
-    if (cellSizeCache[col].row < cellSizeCache[col].header && remaining > 0) {
+    const colSize = cellSizeCache[col];
+    if (!colSize) {
+      return accu;
+    }
+
+    let size = colSize.row;
+    if (colSize.row < colSize.header && remaining > 0) {
       // if we are cutting off the header, expand to fit it
       size =
-        cellSizeCache[col].header - cellSizeCache[col].row < remaining
-          ? cellSizeCache[col].header
-          : cellSizeCache[col].row + remaining;
-      remaining -= size - cellSizeCache[col].row;
+        colSize.header - colSize.row < remaining ? colSize.header : colSize.row + remaining;
+      remaining -= size - colSize.row;
     }
 
     return {
@@ -172,9 +175,10 @@ function expandCellSize(
 
   let ghost: number | null = null;
   if (remaining > 0 && remaining < MIN_GHOST_CELL_SIZE) {
-    // expand last cell
     const lastCell = columnOrder[columnOrder.length - 1];
-    expandedCellSize[lastCell] += remaining;
+    if (lastCell && expandedCellSize[lastCell] != null) {
+      expandedCellSize[lastCell] += remaining;
+    }
   } else if (remaining >= MIN_GHOST_CELL_SIZE) {
     // if too much left add a ghost cell
     ghost = remaining;

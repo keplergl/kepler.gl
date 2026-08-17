@@ -153,6 +153,12 @@ const actionHandler = {
 
   [ActionTypes.SET_COLUMN_DISPLAY_FORMAT]: visStateUpdaters.setColumnDisplayFormatUpdater,
 
+  [ActionTypes.LOAD_COLUMN_STATS]: visStateUpdaters.loadColumnStatsUpdater,
+
+  [ActionTypes.LOAD_COLUMN_STATS_SUCCESS]: visStateUpdaters.loadColumnStatsSuccessUpdater,
+
+  [ActionTypes.LOAD_COLUMN_STATS_ERROR]: visStateUpdaters.loadColumnStatsErrorUpdater,
+
   [ActionTypes.NEXT_FILE_BATCH]: visStateUpdaters.nextFileBatchUpdater,
 
   [ActionTypes.PROCESS_FILE_CONTENT]: visStateUpdaters.processFileContentUpdater,

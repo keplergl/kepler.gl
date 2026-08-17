@@ -9,6 +9,7 @@ import {createSelector} from 'reselect';
 import get from 'lodash/get';
 import debounce from 'lodash/debounce';
 import {ArrowDown} from '../icons';
+import LoadingSpinner from '../loading-spinner';
 
 import {CellSizeCache} from './cell-size';
 
@@ -24,6 +25,7 @@ import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 const defaultHeaderRowHeight = 55;
 const defaultHeaderStatsControlHeight = 40;
 const defaultRowHeight = 32;
+const STATS_TOGGLE_DURATION = '0.5s';
 const overscanColumnCount = 10;
 const overscanRowCount = 10;
 // The default scrollbar width can range anywhere from 12px to 17px
@@ -45,11 +47,12 @@ const unpinnedClassList = {
 
 type ContainerProps = {
   $hasCustomScrollBarStyle?: boolean;
+  $hasStats?: boolean;
 };
 
 export const Container = styled.div<ContainerProps>`
   display: flex;
-  font-size: 11px;
+  font-size: ${props => props.theme.cellFontSize}px;
   flex-grow: 1;
   color: ${props => props.theme.dataTableTextColor};
   width: 100%;
@@ -134,8 +137,6 @@ export const Container = styled.div<ContainerProps>`
       height: 100%;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: flex-start;
       text-align: center;
       overflow: hidden;
       // header border is rendered by header container
@@ -145,6 +146,8 @@ export const Container = styled.div<ContainerProps>`
       }
     }
     .cell {
+      justify-content: center;
+      align-items: flex-start;
       border-bottom: 1px solid ${props => props.theme.cellBorderColor};
       border-right: 1px solid ${props => props.theme.cellBorderColor};
       white-space: nowrap;
@@ -156,14 +159,26 @@ export const Container = styled.div<ContainerProps>`
         text-decoration: none;
       }
     }
-    .cell.end-cell,
-    .header-cell.end-cell {
+    .header-cell {
+      justify-content: ${props => (props.$hasStats ? 'flex-start' : 'center')};
+      align-items: ${props => (props.$hasStats ? 'stretch' : 'flex-start')};
+    }
+    .cell.end-cell {
       border-right: none;
       padding-right: ${props => props.theme.cellPaddingSide + props.theme.edgeCellPaddingSide}px;
     }
-    .cell.first-cell,
-    .header-cell.first-cell {
+    .header-cell.end-cell {
+      border-right: ${props =>
+        props.$hasStats ? `1px solid ${props.theme.cellBorderColor}` : 'none'};
+      padding-right: ${props =>
+        props.$hasStats ? 0 : props.theme.cellPaddingSide + props.theme.edgeCellPaddingSide}px;
+    }
+    .cell.first-cell {
       padding-left: ${props => props.theme.cellPaddingSide + props.theme.edgeCellPaddingSide}px;
+    }
+    .header-cell.first-cell {
+      padding-left: ${props =>
+        props.$hasStats ? 0 : props.theme.cellPaddingSide + props.theme.edgeCellPaddingSide}px;
     }
     .cell.bottom-cell {
       border-bottom: none;
@@ -176,6 +191,17 @@ export const Container = styled.div<ContainerProps>`
   &:focus {
     outline: none;
   }
+`;
+
+const StyledTableLoading = styled.div.attrs({
+  className: 'data-table-loading'
+})`
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 240px;
 `;
 
 const defaultColumnWidth = 200;
@@ -233,8 +259,8 @@ const StyledStatsControl = styled.div<StatsControlProps>`
   align-items: stretch;
   position: absolute;
   top: ${props => props.top}px;
-  font-family: ${props => props.theme.fontFamilyMedium}px;
-  font-size: 12px;
+  font-family: ${props => props.theme.fontFamily};
+  font-size: ${props => props.theme.cellFontSize}px;
   color: ${props => props.theme.activeColor};
   background-color: ${props => props.theme.headerCellStatsControlBackground};
   &:hover {
@@ -248,7 +274,7 @@ const StyledStatsControl = styled.div<StatsControlProps>`
 
     svg {
       margin-left: 12px;
-      transition: transform 0.5s ease;
+      transition: transform ${STATS_TOGGLE_DURATION} ease-in-out;
       transform: rotate(${props => (props.showStats ? 180 : 0)}deg);
     }
   }
@@ -292,6 +318,8 @@ interface TableSectionProps {
   headerCellRender?;
   dataCellRender?;
   scrollLeft?: number;
+  headerVisibleHeight?: number;
+  headerBodyOffset?: number;
 }
 
 export const TableSection = ({
@@ -308,21 +336,28 @@ export const TableSection = ({
   setGridRef = undefined,
   headerCellRender,
   dataCellRender,
-  scrollLeft = 0
+  scrollLeft = 0,
+  headerVisibleHeight,
+  headerBodyOffset
 }: TableSectionProps) => {
-  const headerHeight = headerGridProps.height;
+  const headerGridHeight = headerGridProps.height;
+  const visibleHeight = headerVisibleHeight ?? headerGridHeight;
+  const bodyOffset = headerBodyOffset ?? visibleHeight;
 
   const headerStyle = useMemo(
     () => ({
-      height: `${headerHeight}px`
+      height: `${visibleHeight}px`,
+      overflow: 'hidden' as const,
+      transition: `height ${STATS_TOGGLE_DURATION} ease-in-out`
     }),
-    [headerHeight]
+    [visibleHeight]
   );
   const contentStyle = useMemo(
     () => ({
-      top: `${headerHeight}px`
+      top: `${visibleHeight}px`,
+      transition: `top ${STATS_TOGGLE_DURATION} ease-in-out`
     }),
-    [headerHeight]
+    [visibleHeight]
   );
 
   return (
@@ -346,7 +381,7 @@ export const TableSection = ({
                 cellRenderer={headerCellRender}
                 {...headerGridProps}
                 {...gridDimension}
-                height={headerGridProps.height + browserScrollBarWidth}
+                height={headerGridHeight + browserScrollBarWidth}
                 width={headerGridWidth}
                 scrollLeft={scrollLeft}
                 onScroll={args => onScroll?.({...args, scrollTop: scrollTop ?? 0})}
@@ -361,7 +396,7 @@ export const TableSection = ({
                 {...dataGridProps}
                 {...gridDimension}
                 className={isPinned ? 'pinned-grid' : 'body-grid'}
-                height={dataGridHeight - headerGridProps.height}
+                height={dataGridHeight - bodyOffset}
                 onScroll={onScroll}
                 scrollLeft={scrollLeft}
                 scrollTop={scrollTop}
@@ -395,6 +430,7 @@ export interface DataTableProps {
   showStats?: boolean;
   hasCustomScrollBarStyle?: boolean;
   getRowCell?: (renderDataCellProps: GetRowCellProps, formatter: any) => string | number;
+  loadColumnStats?: (dataId: string, fieldName: string) => void;
 }
 
 interface DataTableState {
@@ -437,7 +473,7 @@ function DataTableFactory(
     componentDidMount() {
       this.hasMounted = true;
       window.addEventListener('resize', this.scaleCellsToWidth);
-      this.scaleCellsToWidth();
+      this.doScaleCellsToWidth();
     }
 
     componentDidUpdate(prevProps) {
@@ -445,7 +481,7 @@ function DataTableFactory(
         this.props.cellSizeCache !== prevProps.cellSizeCache ||
         this.props.pinnedColumns !== prevProps.pinnedColumns
       ) {
-        this.scaleCellsToWidth();
+        this.doScaleCellsToWidth();
       }
     }
 
@@ -493,7 +529,11 @@ function DataTableFactory(
     };
 
     doScaleCellsToWidth = () => {
-      if (this.hasMounted) this.setState(this.getCellSizeCache());
+      if (!this.hasMounted) return;
+      const propsCache = this.props.cellSizeCache || {};
+      // Column widths are measured after first paint; skip until they exist.
+      if (!Object.keys(propsCache).length) return;
+      this.setState(this.getCellSizeCache());
     };
 
     scaleCellsToWidth = debounce(this.doScaleCellsToWidth, 300);
@@ -587,20 +627,18 @@ function DataTableFactory(
         rowHeight = defaultRowHeight
       } = theme;
 
+      const collapsedHeaderHeight = hasStats
+        ? headerRowHeight + headerStatsControlHeight
+        : headerRowHeight;
+      const expandedHeaderHeight = hasStats ? headerRowWStatsHeight : headerRowHeight;
+      const visibleHeaderHeight = showStats ? expandedHeaderHeight : collapsedHeaderHeight;
+
       const headerGridProps = {
         cellSizeCache,
         className: 'header-grid',
-        height: !hasStats
-          ? headerRowHeight
-          : showStats
-          ? headerRowWStatsHeight
-          : headerRowHeight + headerStatsControlHeight,
+        height: expandedHeaderHeight,
         rowCount: 1,
-        rowHeight: !hasStats
-          ? headerRowHeight
-          : showStats
-          ? headerRowWStatsHeight
-          : headerRowHeight + headerStatsControlHeight
+        rowHeight: expandedHeaderHeight
       };
 
       const dataGridProps = {
@@ -616,6 +654,7 @@ function DataTableFactory(
           className="data-table-container"
           ref={this.root}
           $hasCustomScrollBarStyle={hasCustomScrollBarStyle}
+          $hasStats={Boolean(hasStats)}
         >
           {Object.keys(cellSizeCache).length ? (
             <>
@@ -630,6 +669,8 @@ function DataTableFactory(
                             isPinned
                             columns={pinnedColumns}
                             headerGridProps={headerGridProps}
+                            headerVisibleHeight={visibleHeaderHeight}
+                            headerBodyOffset={collapsedHeaderHeight}
                             fixedWidth={pinnedColumnsWidth}
                             onScroll={args => onScroll({...args, scrollLeft})}
                             scrollTop={scrollTop}
@@ -660,6 +701,8 @@ function DataTableFactory(
                           isPinned={false}
                           columns={unpinnedColumnsGhost}
                           headerGridProps={headerGridProps}
+                          headerVisibleHeight={visibleHeaderHeight}
+                          headerBodyOffset={collapsedHeaderHeight}
                           fixedWidth={fixedWidth}
                           fixedHeight={fixedHeight}
                           onScroll={onScroll}
@@ -698,7 +741,11 @@ function DataTableFactory(
                 />
               ) : null}
             </>
-          ) : null}
+          ) : (
+            <StyledTableLoading role="status" aria-label="Loading data table">
+              <LoadingSpinner size={48} />
+            </StyledTableLoading>
+          )}
         </Container>
       );
     }

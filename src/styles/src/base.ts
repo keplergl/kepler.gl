@@ -386,7 +386,7 @@ export const notificationPanelItemWidth = notificationPanelWidth - 60;
 export const notificationPanelItemHeight = 60;
 
 // Data Table
-const headerRowHeight = 70;
+const headerRowHeight = 40;
 const headerStatsControlHeight = 32;
 const headerRowWStatsHeight = 364;
 const rowHeight = 32;
