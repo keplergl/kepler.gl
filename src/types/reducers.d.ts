@@ -524,6 +524,7 @@ export type MapControls = {
   mapTheme?: MapControlItem;
   effect?: MapControlItem;
   annotation?: MapControlItem;
+  sqlPanel?: MapControlItem;
   aiAssistant?: MapControlItem;
 };
 
