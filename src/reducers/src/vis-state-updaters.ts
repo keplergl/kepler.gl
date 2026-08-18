@@ -93,6 +93,7 @@ import {
   EDITOR_MODES,
   FILTER_TYPES,
   FILTER_VIEW_TYPES,
+  LAYER_TYPES,
   FPS,
   LIGHT_AND_SHADOW_EFFECT,
   DISTANCE_FOG_TYPE,
@@ -3050,6 +3051,18 @@ function layerVisConfigFromAddDataOptions(
 }
 
 /**
+ * Polygon filters for these layers use centroids / dataToFeature from
+ * calculateLayerData. Other types (lat/lng points, H3, arcs) can filter
+ * from columns on the first pass and must not be recalculated here.
+ */
+function polygonFilterDependsOnLayerMeta(layer: Layer): boolean {
+  return (
+    layer.type === LAYER_TYPES.geojson ||
+    layer.config?.columnMode === 'geojson'
+  );
+}
+
+/**
  * Add new dataset to `visState`, with option to load a map config along with the datasets
  */
 function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPayload): VisState {
@@ -3116,6 +3129,37 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
     : uniq(Object.keys(newDataEntries).concat(datasetFiltered));
 
   let updatedState = updateAllLayerDomainData(mergedState, updatedDatasets, undefined);
+
+  // Polygon per-layer indexes need centroids / dataToFeature, which are only
+  // populated by the layer-data pass above. Skip datasets whose targeted layers
+  // already filtered from columns (e.g. lat/lng points).
+  const polygonFilters = updatedState.filters.filter(
+    f => f.type === FILTER_TYPES.polygon && f.enabled !== false
+  );
+  const polygonMetaDataIds = uniq(
+    updatedState.layers
+      .filter(
+        layer =>
+          polygonFilterDependsOnLayerMeta(layer) &&
+          polygonFilters.some(f => f.layerId?.includes(layer.id))
+      )
+      .map(layer => layer.config.dataId)
+      .filter((id): id is string => Boolean(id) && updatedDatasets.includes(id))
+  );
+  if (polygonMetaDataIds.length) {
+    updatedState = updateAllLayerDomainData(
+      {
+        ...updatedState,
+        datasets: applyFiltersToDatasets(
+          polygonMetaDataIds,
+          updatedState.datasets,
+          updatedState.filters,
+          updatedState.layers
+        )
+      },
+      polygonMetaDataIds
+    );
+  }
 
   // register layer animation domain,
   // need to be called after layer data is calculated
