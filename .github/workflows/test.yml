@@ -38,9 +38,10 @@ jobs:
         run: sudo apt-get install xvfb
 
       - name: Install Dependencies
-        run: yarn bootstrap
+        run: yarn install --immutable && yarn bootstrap
         env:
           HUSKY: 0
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
 
       # - name: Install Puppeteer
       #   run: yarn dlx "puppeteer@23.1.0"
