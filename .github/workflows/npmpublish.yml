@@ -17,8 +17,9 @@ jobs:
       # use Volta to manage yarn/node versions
       - uses: volta-cli/action@v4
 
-      - run: yarn install
       - run: yarn bootstrap
+        env:
+          HUSKY: 0
       - name: Login to NPM
         run: npm config set "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}"
 

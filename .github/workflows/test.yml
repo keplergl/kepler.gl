@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,17 +22,36 @@ jobs:
       # use Volta to manage yarn/node versions
       - uses: volta-cli/action@v4
 
+      - name: Get Yarn cache directory
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Yarn
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
       - name: Install XVFB
         run: sudo apt-get install xvfb
 
       - name: Install Dependencies
-        run: yarn install && yarn bootstrap
+        run: yarn bootstrap
+        env:
+          HUSKY: 0
 
       # - name: Install Puppeteer
       #   run: yarn dlx "puppeteer@23.1.0"
 
+      - name: Typecheck
+        run: yarn typescript
+
       - name: Lint
-        run: yarn lint
+        # Check-only (`yarn lint:check`) currently fails on ~650 existing
+        # prettier/prettier issues. Switch after a formatting cleanup.
+        run: yarn eslint src test webpack examples website --fix --ignore-path .gitignore
 
       - name: Test
         run: xvfb-run --auto-servernum yarn cover

@@ -42,7 +42,7 @@
     "url": "https://github.com/keplergl/kepler.gl.git"
   },
   "scripts": {
-    "bootstrap": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true git submodule update --init --recursive && yarn install && yarn fix-dependencies && yarn workspaces foreach -At run stab",
+    "bootstrap": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true git submodule update --init --recursive && yarn install --immutable && yarn fix-dependencies && yarn workspaces foreach -At run stab",
     "install:example": "cd examples/demo-app && NODE_OPTIONS=--openssl-legacy-provider yarn",
     "install:web": "yarn install:example && cd website && yarn",
     "install-and-start": "node ./scripts/install-and-start",
@@ -87,6 +87,7 @@
     "example-version": "babel-node ./scripts/edit-version.js",
     "prettier-all": "prettier --write '{examples,src}/**/src/**/*.{js,tsx,ts}' 'test/**/*.{js,ts,tsx}'",
     "lint": "yarn typescript && eslint src test webpack examples website --fix --ignore-path .gitignore",
+    "lint:check": "yarn typescript && eslint src test webpack examples website --ignore-path .gitignore",
     "lint:css": "stylelint './src/**/*.js'",
     "typescript": "tsc --noEmit",
     "web": "(yarn && yarn install:web && yarn start:web)",

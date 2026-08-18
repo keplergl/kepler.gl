@@ -2,6 +2,17 @@ name: Build and Publish KeplerGL Python Package
 
 on:
   push:
+    branches: [master]
+    paths:
+      - 'bindings/python/**'
+      - '.github/workflows/build-publish-pypi.yml'
+      - 'package.json'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'bindings/python/**'
+      - '.github/workflows/build-publish-pypi.yml'
+      - 'package.json'
   workflow_dispatch:
     inputs:
       prerelease:
