@@ -46,6 +46,13 @@ jobs:
       # - name: Install Puppeteer
       #   run: yarn dlx "puppeteer@23.1.0"
 
+      - name: Check circular dependencies
+        run: yarn check-circular-deps
+
+      - name: Unused dependencies and exports
+        continue-on-error: true
+        run: yarn knip
+
       - name: Typecheck
         run: yarn typescript
 
