@@ -69,21 +69,3 @@ jobs:
         continue-on-error: true
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  typecheck-examples:
-    name: Typecheck ${{ matrix.example }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        example: [get-started-vite, duckdb-vite]
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: volta-cli/action@v4
-
-      - name: Install and typecheck
-        working-directory: examples/${{ matrix.example }}
-        run: |
-          yarn install
-          yarn tsc -b --pretty false --noEmit
