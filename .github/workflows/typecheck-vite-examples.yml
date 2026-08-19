@@ -1,7 +1,5 @@
-# Vite examples live outside the Yarn workspace and depend on published
-# @kepler.gl/* packages, not this checkout. Run after npm publish (and on
-# manual dispatch), not on every PR.
-name: Typecheck Vite examples
+# Run after npm publish (and on manual dispatch), not on every PR.
+name: Typecheck examples
 
 on:
   workflow_run:
