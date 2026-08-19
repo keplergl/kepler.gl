@@ -4,10 +4,14 @@
 import React, {useCallback} from 'react';
 
 import {MapControlButton, MapControlTooltipFactory} from '@kepler.gl/components';
-import {MapControls} from '@kepler.gl/types';
+import {MapControlItem, MapControls} from '@kepler.gl/types';
+
+type MapControlsWithSqlPanel = MapControls & {
+  sqlPanel?: MapControlItem;
+};
 
 export type SqlPanelControlProps = {
-  mapControls: MapControls;
+  mapControls: MapControlsWithSqlPanel;
   onToggleMapControl: (control: string) => void;
 };
 

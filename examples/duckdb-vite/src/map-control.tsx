@@ -7,10 +7,12 @@ import {MapControlFactory} from '@kepler.gl/components';
 
 import SqlPanelControlFactory from './sql-panel-control';
 
-CustomMapControlFactory.deps = [SqlPanelControlFactory, ...MapControlFactory.deps];
+CustomMapControlFactory.deps = [SqlPanelControlFactory, ...(MapControlFactory.deps ?? [])];
 
 function CustomMapControlFactory(SqlPanelControl: React.ComponentType<any>, ...deps: any[]) {
-  const MapControl = MapControlFactory(...deps);
+  const MapControl = (
+    MapControlFactory as (...args: any[]) => ReturnType<typeof MapControlFactory>
+  )(...deps);
   const actionComponents = [...(MapControl.defaultActionComponents ?? []), SqlPanelControl];
 
   const CustomMapControl = (props: any) => (

@@ -62,7 +62,7 @@ const middleWares = enhanceReduxMiddleware([]);
 const enhancers = applyMiddleware(...middleWares);
 const store = createStore(reducers, {}, compose(enhancers));
 
-const KeplerGl = injectComponents([replaceMapControl()]);
+const KeplerGl = injectComponents([replaceMapControl()] as any);
 
 const StyledResizeHandle = styled(PanelResizeHandle)`
   background-color: ${panelBorderColor};
@@ -93,8 +93,8 @@ const App = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapDimensions, setMapDimensions] = useState({width: 0, height: 0});
 
-  const isSqlPanelOpen = useSelector(
-    (state: any) => Boolean(state?.keplerGl?.map?.uiState?.mapControls?.sqlPanel?.active)
+  const isSqlPanelOpen = useSelector((state: any) =>
+    Boolean(state?.keplerGl?.map?.uiState?.mapControls?.sqlPanel?.active)
   );
 
   useEffect(() => {
