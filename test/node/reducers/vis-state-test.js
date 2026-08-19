@@ -5565,6 +5565,70 @@ test('#visStateReducer -> POLYGON: delete polygon filter', t => {
   t.end();
 });
 
+test('#visStateReducer -> POLYGON: reload saved geojson map keeps filtered layer data', t => {
+  const appState = CloneDeep(StateWFiles);
+  const geojsonLayer = appState.visState.layers.find(l => l.type === 'geojson');
+  t.ok(geojsonLayer, 'should have a geojson layer');
+
+  const bounds = geojsonLayer.meta.bounds || [-122.5, 37.7, -122.3, 37.9];
+  const pad = 1;
+  const coveringPolygon = {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [bounds[0] - pad, bounds[1] - pad],
+          [bounds[0] - pad, bounds[3] + pad],
+          [bounds[2] + pad, bounds[3] + pad],
+          [bounds[2] + pad, bounds[1] - pad],
+          [bounds[0] - pad, bounds[1] - pad]
+        ]
+      ]
+    },
+    properties: {
+      renderType: 'Polygon',
+      isClosed: true,
+      isVisible: true
+    },
+    id: 'reload-polygon-filter'
+  };
+
+  const filteredState = reducer(
+    appState.visState,
+    VisStateActions.setPolygonFilterLayer(geojsonLayer, coveringPolygon)
+  );
+
+  const layerIdx = filteredState.layers.findIndex(l => l.id === geojsonLayer.id);
+  const expectedCount = filteredState.layerData[layerIdx].data.length;
+  t.ok(expectedCount > 0, 'geojson layer should have polygon-filtered features before save');
+
+  const saved = SchemaManager.save({...appState, visState: filteredState});
+  const loaded = SchemaManager.load(saved);
+
+  const reloaded = applyActions(reducer, INITIAL_VIS_STATE, [
+    {action: VisStateActions.updateVisData, payload: [loaded.datasets, {}, loaded.config]}
+  ]);
+
+  const reloadedIdx = reloaded.layers.findIndex(l => l.id === geojsonLayer.id);
+  t.ok(
+    reloaded.filters.some(f => f.type === 'polygon'),
+    'should restore the polygon filter'
+  );
+  t.equal(
+    reloaded.layerData[reloadedIdx].data.length,
+    expectedCount,
+    'reloaded geojson layer should show polygon-filtered features without toggling the filter'
+  );
+  t.equal(
+    reloaded.datasets[geojsonLayer.config.dataId].filteredIndexByLayer[geojsonLayer.id].length,
+    expectedCount,
+    'reloaded per-layer polygon index should match layer data'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> POLYGON: setPolygonFilterLayer: H3', t => {
   const initialState = CloneDeep(StateWH3Layer).visState;
   const newState = reducer(
