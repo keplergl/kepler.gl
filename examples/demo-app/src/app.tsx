@@ -4,8 +4,8 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
 import {useDispatch} from 'react-redux';
-import cloneDeep from 'lodash/cloneDeep';
-import isEqual from 'lodash/isEqual';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
+import isEqual from 'es-toolkit/compat/isEqual';
 import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
 import {useParams, useSearchParams, useLocation} from 'react-router-dom';

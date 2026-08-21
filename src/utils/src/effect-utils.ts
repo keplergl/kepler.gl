@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import SunCalc from 'suncalc';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import type {Effect as DeckEffect} from '@deck.gl/core';
 

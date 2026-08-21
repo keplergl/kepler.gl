@@ -6,8 +6,8 @@ import {ScrollSync, AutoSizer, OnScrollParams, GridProps, Index} from 'react-vir
 import styled, {withTheme} from 'styled-components';
 import classnames from 'classnames';
 import {createSelector} from 'reselect';
-import get from 'lodash/get';
-import debounce from 'lodash/debounce';
+import get from 'es-toolkit/compat/get';
+import debounce from 'es-toolkit/compat/debounce';
 import {ArrowDown} from '../icons';
 import LoadingSpinner from '../loading-spinner';
 

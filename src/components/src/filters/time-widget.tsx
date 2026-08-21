@@ -3,7 +3,7 @@
 
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components';
-import throttle from 'lodash/throttle';
+import throttle from 'es-toolkit/compat/throttle';
 import {DEFAULT_TIME_FORMAT, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {clamp, datetimeFormatter} from '@kepler.gl/utils';
 import {BottomWidgetInner, Button, PanelLabel} from '../common/styled-components';

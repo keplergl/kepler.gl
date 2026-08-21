@@ -35,10 +35,9 @@
     "@loaders.gl/mvt": "^4.4.1",
     "@loaders.gl/pmtiles": "^4.4.1",
     "@types/d3-array": "^2.8.0",
-    "@types/lodash": "4.17.24",
     "d3-array": "^2.8.0",
+    "es-toolkit": "^1.39.10",
     "global": "^4.3.0",
-    "lodash": "4.18.1",
     "moment": "^2.10.6",
     "react-palm": "^3.3.8",
     "type-analyzer": "0.4.0"

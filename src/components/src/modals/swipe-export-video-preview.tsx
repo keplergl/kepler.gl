@@ -7,7 +7,7 @@ import ReactMapGL, {type MapRef, useControl} from 'react-map-gl/maplibre';
 // @ts-ignore module resolution mismatch with moduleResolution:"node"
 import {MapboxOverlay} from '@deck.gl/mapbox';
 import type {Deck, DeckProps, MapViewState} from '@deck.gl/core';
-import isEqual from 'lodash/isEqual';
+import isEqual from 'es-toolkit/compat/isEqual';
 import styled from 'styled-components';
 
 import {DeckAdapter} from '@hubble.gl/core';

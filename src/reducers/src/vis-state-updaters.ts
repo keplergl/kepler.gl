@@ -6,12 +6,12 @@ import type {AllGeoJSON} from '@turf/helpers';
 import copy from 'copy-to-clipboard';
 import deepmerge from 'deepmerge';
 import {console as Console} from 'global/window';
-import cloneDeep from 'lodash/cloneDeep';
-import get from 'lodash/get';
-import isEqual from 'lodash/isEqual';
-import pick from 'lodash/pick';
-import uniq from 'lodash/uniq';
-import xor from 'lodash/xor';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
+import get from 'es-toolkit/compat/get';
+import isEqual from 'es-toolkit/compat/isEqual';
+import pick from 'es-toolkit/compat/pick';
+import uniq from 'es-toolkit/compat/uniq';
+import xor from 'es-toolkit/compat/xor';
 import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 // Tasks
 import {

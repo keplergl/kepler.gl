@@ -7,7 +7,7 @@ import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 import type {TypedArray} from '@loaders.gl/loader-utils';
 import type {TextureProps} from '@luma.gl/core';
 type Texture2DProps = Partial<TextureProps> & Record<string, any>;
-import memoize from 'lodash/memoize';
+import memoize from 'es-toolkit/compat/memoize';
 
 import {PathLayer, TextLayer} from '@deck.gl/layers';
 import {DatasetType, PMTilesType, LAYER_TYPES} from '@kepler.gl/constants';

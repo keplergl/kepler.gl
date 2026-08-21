@@ -3,7 +3,7 @@
 
 import React, {useMemo} from 'react';
 import styled, {IStyledComponent} from 'styled-components';
-import throttle from 'lodash/throttle';
+import throttle from 'es-toolkit/compat/throttle';
 import classnames from 'classnames';
 import {clamp, datetimeFormatter} from '@kepler.gl/utils';
 import {media} from '@kepler.gl/styles';

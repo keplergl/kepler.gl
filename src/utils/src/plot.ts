@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {bisectLeft, extent, histogram as d3Histogram, ticks} from 'd3-array';
-import isEqual from 'lodash/isEqual';
+import isEqual from 'es-toolkit/compat/isEqual';
 import {getFilterMappedValue, getInitialInterval, intervalToFunction} from './time';
 import moment from 'moment';
 import {

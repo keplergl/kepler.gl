@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import memoize from 'lodash/memoize';
-import clondDeep from 'lodash/cloneDeep';
+import memoize from 'es-toolkit/compat/memoize';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {
   DEFAULT_LAYER_GROUPS,
   DEFAULT_MAPBOX_API_URL,
@@ -162,7 +162,7 @@ export function scaleMapStyleByResolution(mapboxStyle, scale) {
     const {filter: labelLayerFilter} = labelLayerGroup;
     const zoomOffset = Math.log2(scale);
 
-    const copyStyle = clondDeep(mapboxStyle);
+    const copyStyle = cloneDeep(mapboxStyle);
     (copyStyle.layers || []).forEach(d => {
       // edit minzoom and maxzoom
       if (d.maxzoom) {

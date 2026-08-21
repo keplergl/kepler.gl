@@ -10,7 +10,7 @@ import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import {useDroppable} from '@dnd-kit/core';
-import debounce from 'lodash/debounce';
+import debounce from 'es-toolkit/compat/debounce';
 
 import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actions';
 

@@ -3,7 +3,7 @@
 
 import React, {useEffect, useRef, useMemo} from 'react';
 import styled from 'styled-components';
-import truncate from 'lodash/truncate';
+import truncate from 'es-toolkit/compat/truncate';
 import {CompareType, Field, Merge, TooltipField} from '@kepler.gl/types';
 import {CenterFlexbox} from '../common/styled-components';
 import {Layers} from '../common/icons';

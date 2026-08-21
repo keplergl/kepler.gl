@@ -10,7 +10,7 @@ import {
   getFormatter
 } from '@kepler.gl/utils';
 import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
-import uniq from 'lodash/uniq';
+import uniq from 'es-toolkit/compat/uniq';
 import {max} from 'd3-array';
 
 export const defaultPadding = 20;
