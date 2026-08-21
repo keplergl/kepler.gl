@@ -1,5 +1,5 @@
 import React from 'react';
-import {Chat, AiSettingsPanel} from '@sqlrooms/ai';
+import {Chat, AiSettingsPanel, useGenerateSessionTitle} from '@sqlrooms/ai';
 import {useRoomStore} from '../store';
 import {getEchartsHoistedRenderers} from '../tools/echarts-renderers';
 import {useDisclosure} from '@sqlrooms/ui';
@@ -28,12 +28,37 @@ function loadInternalComponents() {
 
 const EMPTY_BEHAVIOR = {};
 
+/**
+ * Auto-generates a descriptive title for each chat session after the first user
+ * message. The sqlrooms library exports `useGenerateSessionTitle` but leaves it
+ * to the consuming app to mount it — without this hook, every session stays
+ * named "Untitled" forever. Gated on the current provider having an API key so
+ * a key-less chat never tries to call the LLM (and thereby renames a session to
+ * an error string).
+ */
+function AutoSessionTitle() {
+  const hasApiKey = useRoomStore(s => {
+    const session = s.ai.getCurrentSession();
+    if (!session) return false;
+    if (session.modelProvider === 'custom') {
+      const customModel = s.aiSettings.config.customModels?.find(
+        m => m.modelName === session.model
+      );
+      return Boolean(customModel?.apiKey);
+    }
+    return Boolean(s.aiSettings.config.providers?.[session.modelProvider]?.apiKey);
+  });
+  useGenerateSessionTitle({enabled: hasApiKey});
+  return null;
+}
+
 function ChatRoot({children}: {children: React.ReactNode}) {
   loadInternalComponents();
   return (
     <ToolRenderBehaviorProvider value={EMPTY_BEHAVIOR}>
       <SessionChatRuntimeProvider>
         <SessionChatManager />
+        <AutoSessionTitle />
         {children}
       </SessionChatRuntimeProvider>
     </ToolRenderBehaviorProvider>
