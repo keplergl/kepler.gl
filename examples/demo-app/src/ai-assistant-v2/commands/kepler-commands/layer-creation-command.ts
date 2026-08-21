@@ -2,8 +2,8 @@ import type {RoomCommand} from '@sqlrooms/room-store';
 import {z} from 'zod';
 import {LayerClasses} from '@kepler.gl/layers';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
-import {findDefaultLayer} from '@kepler.gl/reducers';
-import {addLayer as addLayerAction} from '@kepler.gl/actions';
+import {findDefaultLayer, findMapBounds} from '@kepler.gl/reducers';
+import {addLayer as addLayerAction, fitBounds} from '@kepler.gl/actions';
 import {KeplerContext} from '../../types';
 
 export function guessDefaultLayer(dataset: KeplerTable, layerType: string) {
@@ -283,6 +283,16 @@ For geojson datasets:
         applyColorConfig(newLayer, dataset, {simpleColor, colorBy, colorType, colorMap});
 
         ctx.dispatch(addLayerAction(newLayer, datasetId));
+
+        // Center the map on the new layer's data bounds. `addDataToMap` with
+        // `autoCreateLayers: false` (used by `map.load-data`) never fits bounds
+        // because no layer exists at load time, and `addLayerUpdater` does not
+        // center either — so fit here explicitly.
+        const addedLayer = ctx.getVisState().layers.find(l => l.id === newLayer.id);
+        const bounds = addedLayer ? findMapBounds([addedLayer]) : null;
+        if (bounds) {
+          ctx.dispatch(fitBounds(bounds));
+        }
 
         const temporalFields = dataset.fields
           ?.filter((f: any) => f.type === 'timestamp' || f.type === 'date')
