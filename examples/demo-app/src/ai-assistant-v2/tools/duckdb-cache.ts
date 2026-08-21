@@ -1,7 +1,9 @@
 import {FeatureCollection} from 'geojson';
+import {tableFromArrays} from 'apache-arrow';
 import {addDataToMap} from '@kepler.gl/actions';
 import {processFileData} from '@kepler.gl/processors';
 import {getConnector, arrowTableToObjects, datasetNameToTableName} from './utils';
+import type {DuckDbConnector} from '@sqlrooms/duckdb';
 import type {KeplerContext} from '../types';
 
 let _cachedTableContext = '';
@@ -12,6 +14,69 @@ async function refreshTableContext(): Promise<void> {
 
 export function getDuckdbTableContextSync(): string {
   return _cachedTableContext;
+}
+
+// ---------------------------------------------------------------------------
+// Arrow-based table loading
+// ---------------------------------------------------------------------------
+
+/**
+ * Row array → column data, padding any key missing from a row with null so every
+ * column ends up the same length (required by `tableFromArrays`). This also means
+ * features whose property sets differ still produce a rectangular table.
+ */
+function rowsToColumnData(rows: Record<string, unknown>[]): Record<string, unknown[]> {
+  const keys = [...new Set(rows.flatMap(row => Object.keys(row)))];
+  const columnData: Record<string, unknown[]> = {};
+  for (const key of keys) {
+    columnData[key] = rows.map(row => (key in row ? row[key] : null));
+  }
+  return columnData;
+}
+
+/**
+ * Coerce a column so `tableFromArrays` can infer a single Arrow type. Homogeneous
+ * primitive columns (numbers / strings / booleans, with or without nulls) pass
+ * through untouched. Columns mixing types (or holding objects) are stringified —
+ * the same coercion DuckDB's UNION ALL applied when the old path embedded every
+ * row as SQL literals.
+ */
+function coerceColumnForArrow(values: unknown[]): unknown[] {
+  const kinds = new Set(values.map(v => (v === null || v === undefined ? 'null' : typeof v)));
+  const nonNullKinds = [...kinds].filter(kind => kind !== 'null');
+  if (nonNullKinds.length <= 1 && nonNullKinds[0] !== 'object') {
+    return values;
+  }
+  return values.map(value => {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+  });
+}
+
+/**
+ * Load row-oriented data into DuckDB via the native Arrow insert.
+ *
+ * The previous implementation used `db.loadObjects`, which inlines every row as
+ * `SELECT <literal> ... UNION ALL SELECT <literal> ...`. Past a few hundred rows
+ * the resulting statement exceeds DuckDB's default `max_expression_depth` (1000)
+ * and the whole save fails with a parser error — e.g. `geoda.analysis` standardize
+ * and any `data.query`/`data.filter`/`data.create-table` whose result had ~3,000
+ * rows. `loadArrow` inserts natively (the same path `map.create-table` uses), so
+ * arbitrarily large tables load fine.
+ */
+async function loadRowsToArrow(
+  db: DuckDbConnector,
+  tableName: string,
+  rows: Record<string, unknown>[]
+): Promise<void> {
+  const columnData = rowsToColumnData(rows);
+  const coerced: Record<string, unknown[]> = {};
+  for (const [name, values] of Object.entries(columnData)) {
+    coerced[name] = coerceColumnForArrow(values);
+  }
+  const arrowTable = tableFromArrays(coerced);
+  await db.loadArrow(arrowTable, tableName);
 }
 
 /**
@@ -33,7 +98,7 @@ export async function saveGeojsonToDuckdb(
   if (rows.length === 0) {
     await db.execute(`CREATE TABLE "${tableName}" (geometry VARCHAR)`);
   } else {
-    await db.loadObjects(rows, tableName);
+    await loadRowsToArrow(db, tableName, rows);
   }
 
   await refreshTableContext();
@@ -50,7 +115,7 @@ export async function saveRowsToDuckdb(
   await db.execute(`DROP TABLE IF EXISTS "${tableName}"`);
 
   if (rows.length > 0) {
-    await db.loadObjects(rows, tableName);
+    await loadRowsToArrow(db, tableName, rows);
   } else {
     await db.execute(`CREATE TABLE "${tableName}" (__empty BOOLEAN)`);
   }
