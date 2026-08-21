@@ -66,6 +66,10 @@ All operations go through `executeApi` with `apiName: "executeCommand"`. See the
   `[{value: 0, color: "#fee5d9"}, {value: 50, color: "#fcae91"}, {value: 100, color: "#fb6a4a"}, {value: null, color: "#de2d26"}]`
 - For categorical data use `colorType: "unique"`:
   `[{value: "retail", color: "#1f77b4"}, {value: "restaurant", color: "#ff7f0e"}]`
+  HARD RULE: the `value`s MUST be the actual unique values in the column. Call
+  `geoda.analysis` with `analysis: "classify"`, `method: "unique values"` first
+  and use the returned `uniqueValues` verbatim. NEVER guess category labels from
+  the column name — `map.add-layer` rejects values that do not exist in the data.
 - For `heatmap`, only `colorRange` (from `colorMap`) takes effect.
 - To compute the break values, call `geoda.analysis` with `analysis: "classify"`
   (in the `geoda-analysis` skill) first and pass the returned `breaks` as the

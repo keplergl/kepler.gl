@@ -102,13 +102,35 @@ function applyColorConfig(
     }
   }
 
-  const {colorBy, colorType, colorMap = [{value: null, color: '#333333'}]} = args;
+  const {colorBy, colorType, colorMap: providedColorMap} = args;
+  const colorMap = providedColorMap ?? [{value: null, color: '#333333'}];
 
   if (colorBy) {
     const colorField = dataset.fields.find(f => f.name === colorBy);
     if (!colorField) {
       throw new Error(`Field ${colorBy} not found.`);
     }
+
+    // For categorical (customOrdinal) color maps, every value becomes the scale
+    // domain, so it must be a real value present in the data. The agent must not
+    // invent category labels — get them via geoda.analysis (analysis: 'classify',
+    // method: 'unique values'). Rejecting here turns a silent wrong render into a
+    // recoverable error.
+    if (colorType !== 'breaks' && providedColorMap) {
+      const actualValues = new Set(
+        Array.from({length: dataset.length}, (_, i) => dataset.getValue(colorBy, i))
+      );
+      const missing = providedColorMap.filter(c => !actualValues.has(c.value)).map(c => c.value);
+      if (missing.length > 0) {
+        const sample = [...actualValues].slice(0, 20).map(v => JSON.stringify(v)).join(', ');
+        throw new Error(
+          `colorMap value(s) ${missing.map(v => JSON.stringify(v)).join(', ')} not found in field "${colorBy}". ` +
+            `Actual unique values: ${sample}${actualValues.size > 20 ? ', …' : ''}. ` +
+            `Call geoda.analysis (analysis: 'classify', method: 'unique values') to get the real values.`
+        );
+      }
+    }
+
     const colorScale = colorType === 'breaks' ? 'custom' : 'customOrdinal';
     const colors = colorMap.map(c => c.color);
     const keplerColorMap = colorMap.map(c => [c.value, c.color]);
@@ -170,6 +192,10 @@ COLOR MAPPING:
   The last entry with value: null represents the color for the highest values
 - For categorical data (colorType 'unique'):
   [{value: 'category1', color: '#1f77b4'}, {value: 'category2', color: '#ff7f0e'}]
+  HARD RULE: the colorMap values MUST be the actual unique values present in the data.
+  Call geoda.analysis (analysis: 'classify', method: 'unique values') first and use the
+  returned uniqueValues verbatim. NEVER invent category labels from the field name —
+  the command rejects values that do not exist in the data.
 - Generate colorBrewer colors automatically if user doesn't specify colors
 
 For geojson datasets:
