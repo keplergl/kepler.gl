@@ -3,7 +3,7 @@
 
 // @ts-nocheck
 
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {colorPaletteToColorRange} from '@kepler.gl/constants';
 import {
   getInitialInputStyle,

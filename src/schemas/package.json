@@ -36,11 +36,10 @@
     "@kepler.gl/utils": "3.3.0-alpha.7",
     "@loaders.gl/loader-utils": "^4.4.1",
     "@types/keymirror": "^0.1.1",
-    "@types/lodash": "4.17.24",
     "apache-arrow": ">=15.0.0",
+    "es-toolkit": "^1.39.10",
     "global": "^4.3.0",
-    "keymirror": "^0.1.1",
-    "lodash": "4.18.1"
+    "keymirror": "^0.1.1"
   },
   "nyc": {
     "sourceMap": false,

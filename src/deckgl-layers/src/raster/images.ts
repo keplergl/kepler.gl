@@ -3,7 +3,7 @@
 
 // @ts-ignore GL resolution depends on moduleResolution setting
 import {GL} from '@luma.gl/constants';
-import isEqual from 'lodash/isEqual';
+import isEqual from 'es-toolkit/compat/isEqual';
 
 import {FILTER_MODE, ADDRESS_MODE, TEXTURE_FORMAT} from '@kepler.gl/constants';
 import type {Texture} from '@luma.gl/core';

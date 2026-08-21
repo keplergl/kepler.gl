@@ -7,7 +7,7 @@
 
 import {load, FetchError} from '@loaders.gl/core';
 import {QuantizedMeshLoader} from '@loaders.gl/terrain';
-import memoize from 'lodash/memoize';
+import memoize from 'es-toolkit/compat/memoize';
 
 import {sleep} from '@kepler.gl/common-utils';
 import {getLoaderOptions} from '@kepler.gl/constants';

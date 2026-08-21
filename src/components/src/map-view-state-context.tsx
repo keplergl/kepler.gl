@@ -2,8 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useState, useEffect, createContext} from 'react';
-import isEqual from 'lodash/isEqual';
-import pick from 'lodash/pick';
+import isEqual from 'es-toolkit/compat/isEqual';
+import pick from 'es-toolkit/compat/pick';
 type MapViewState = {
   latitude: number;
   longitude: number;

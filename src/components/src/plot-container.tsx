@@ -4,7 +4,7 @@
 // libraries
 import React, {useRef, useEffect, useState, useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-import debounce from 'lodash/debounce';
+import debounce from 'es-toolkit/compat/debounce';
 import {
   exportImageError,
   scaleMapStyleByResolution,

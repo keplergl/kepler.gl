@@ -79,7 +79,7 @@ import {
   getCategoricalColorScale,
   updateCustomColorRangeByColorUI
 } from '@kepler.gl/utils';
-import memoize from 'lodash/memoize';
+import memoize from 'es-toolkit/compat/memoize';
 import {
   initializeCustomPalette,
   isDomainQuantile,

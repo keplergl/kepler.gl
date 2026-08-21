@@ -7,7 +7,7 @@ import {device} from '@deck.gl/test-utils';
 import sinon from 'sinon';
 import {render} from '@testing-library/react';
 import {console as Console} from 'global/window';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import {
   INITIAL_MAP_STATE,
