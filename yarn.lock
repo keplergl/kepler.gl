@@ -24062,7 +24062,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"js-yaml@npm:4.3.1, js-yaml@npm:^4.1.0":
+"js-yaml@npm:4.3.1":
   version: 4.3.1
   resolution: "js-yaml@npm:4.3.1"
   dependencies:
@@ -26543,7 +26543,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimatch@npm:2 || 3, minimatch@npm:3.1.5, minimatch@npm:^3.0.0, minimatch@npm:^3.0.4, minimatch@npm:^3.0.5, minimatch@npm:^3.1.1, minimatch@npm:^3.1.2":
+"minimatch@npm:2 || 3, minimatch@npm:3.1.5, minimatch@npm:^3.0.4, minimatch@npm:^3.0.5, minimatch@npm:^3.1.1, minimatch@npm:^3.1.2":
   version: 3.1.5
   resolution: "minimatch@npm:3.1.5"
   dependencies:
@@ -26552,7 +26552,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimatch@npm:9.0.9, minimatch@npm:^9.0.0, minimatch@npm:^9.0.4":
+"minimatch@npm:9.0.9, minimatch@npm:^9.0.4":
   version: 9.0.9
   resolution: "minimatch@npm:9.0.9"
   dependencies:
@@ -29826,7 +29826,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"qs@npm:6.15.3, qs@npm:^6.12.3, qs@npm:^6.4.0, qs@npm:~6.15.1":
+"qs@npm:6.15.3":
   version: 6.15.3
   resolution: "qs@npm:6.15.3"
   dependencies:
