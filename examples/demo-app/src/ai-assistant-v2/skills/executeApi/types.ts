@@ -112,6 +112,12 @@ export type ExecuteApiOutput = {
   count?: number;
   distance?: number;
   duration?: number;
+  /**
+   * Real column names of each input table loaded by `geo.spatial-query`, so the
+   * model can reference them in follow-up SQL without guessing (e.g. the
+   * geometry column is `geometry`, never the map-side `_geojson`).
+   */
+  tableSchemas?: Array<{tableName: string; columns: string[]}>;
 
   // kepler-tools (add-layer) temporal follow-up hints
   dateTimeColumns?: string[];

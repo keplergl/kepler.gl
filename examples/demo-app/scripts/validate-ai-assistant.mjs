@@ -363,6 +363,21 @@ async function main() {
   check('geoda.analysis classify returns breaks', classify.success && Array.isArray(classify.breaks) && classify.breaks.length > 0,
     classify.success ? `breaks: [${classify.breaks.join(', ')}]` : classify.error);
 
+  // --- geoda.analysis missing discriminator ---
+  // Omitting `analysis` must yield an actionable message, not a bare Zod
+  // "Invalid discriminator value" that reads as if the value were wrong.
+  const missingAnalysis = await page.evaluate(async () => {
+    const store = window.__keplerRoomStore;
+    const invoke = (id, input) => store.getState().commands.invokeCommand(id, input);
+    const r = await invoke('geoda.analysis', {
+      datasetName: 'test_numeric', variableName: 'value', method: 'quantile', k: 3
+    });
+    return {success: r.success, error: r.error};
+  });
+  check('geoda.analysis missing analysis field gives actionable error',
+    !missingAnalysis.success && /Missing or invalid required field "analysis"/.test(missingAnalysis.error || ''),
+    missingAnalysis.error);
+
   // --- geo.spatial-query ---
   const spatial = await page.evaluate(async ({bartUrl}) => {
     const store = window.__keplerRoomStore;
@@ -375,10 +390,40 @@ async function main() {
         'SELECT ST_AsGeoJSON(ST_Centroid(ST_GeomFromGeoJSON(geometry))) AS geometry, name FROM __tbl0__',
       reasoning: 'Compute centroids of BART stations'
     });
-    return {success: r.success, error: r.error, firstFiveRows: r.data?.firstFiveRows, outputDatasetName: r.data?.outputDatasetName};
+    return {success: r.success, error: r.error, firstFiveRows: r.data?.firstFiveRows, outputDatasetName: r.data?.outputDatasetName, tableSchemas: r.data?.tableSchemas};
   }, {bartUrl: BART_URL});
   check('geo.spatial-query runs DuckDB spatial SQL', spatial.success,
     spatial.success ? `output: ${spatial.outputDatasetName}, rows: ${spatial.firstFiveRows?.length}` : spatial.error);
+  // The result must report each input table's real column names (incl. the
+  // `geometry` column) so the model can write follow-up SQL without guessing.
+  const spatialSchema = spatial.tableSchemas?.find(s => s.tableName === 'tbl_bart_geo_json');
+  check('geo.spatial-query reports input table schemas',
+    Array.isArray(spatial.tableSchemas) && spatialSchema?.columns?.includes('geometry'),
+    spatial.success ? `tableSchemas: ${JSON.stringify(spatial.tableSchemas)}` : spatial.error);
+
+  // --- data.query on a DuckDB-only table ---
+  // A table that exists in DuckDB but is NOT a kepler map dataset must not
+  // produce a misleading "Dataset not found" — the model should be told it's a
+  // DuckDB table and how to use it.
+  const duckdbOnly = await page.evaluate(async () => {
+    const store = window.__keplerRoomStore;
+    const invoke = (id, input) => store.getState().commands.invokeCommand(id, input);
+    const conn = await store.getState().db.getConnector();
+    await conn.query(
+      'CREATE OR REPLACE TABLE test_duckdb_only AS SELECT * FROM (VALUES (1, 10.5), (2, 20.1)) AS t(id, value)'
+    );
+    // Deliberately NOT loaded to the map.
+    const r = await invoke('data.query', {
+      datasetName: 'test_duckdb_only',
+      variableNames: ['id', 'value'],
+      sql: 'SELECT * FROM __TABLE__',
+      resultDatasetName: 'duckdb_only_result'
+    });
+    return {success: r.success, error: r.error};
+  });
+  check('data.query on a DuckDB-only table gives a helpful hint',
+    !duckdbOnly.success && /is a DuckDB table, not a map dataset/.test(duckdbOnly.error || ''),
+    duckdbOnly.error);
 
   // =====================================================================
   // Lab Chapter 1 — Spatial Data Wrangling (1): Basic Operations
@@ -424,6 +469,14 @@ async function main() {
     });
     out.grid = {success: r7.success, details: r7.data?.details, error: r7.error};
     await sleep(1500);
+
+    // Grid cells must use `col` (not the DuckDB-reserved `column`). The grid
+    // command saves under the canonical `datasetNameToTableName` name
+    // (`tbl_us_grid`).
+    const gridColsResult = await (await store.getState().db.getConnector()).query(
+      "SELECT column_name FROM information_schema.columns WHERE table_name = 'tbl_us_grid'"
+    );
+    out.gridCols = gridColsResult.toArray().map(r => String(r.toJSON().column_name));
 
     // Variable standardization (Z-score).
     const r8 = await invoke('geoda.analysis', {
@@ -484,6 +537,9 @@ async function main() {
       citiesDs ? `cities15000.csv layers: ${citiesDs.layers}` : 'cities15000.csv not found');
     check('Ch1: geo.grid creates a 20x20 grid', c1.grid.success && /400 cells/.test(c1.grid.details || ''),
       c1.grid.details || c1.grid.error);
+    check('Ch1: geo.grid uses col (not reserved column)',
+      Array.isArray(c1.gridCols) && c1.gridCols.includes('col') && !c1.gridCols.includes('column'),
+      c1.gridCols ? `grid columns: ${c1.gridCols.join(', ')}` : 'grid table not found');
     check('Ch1: geoda.analysis standardize creates a new variable', c1.standardize.success && c1.standardize.count === 52,
       c1.standardize.success ? `output: ${c1.standardize.output}, count: ${c1.standardize.count}` : c1.standardize.error);
     check('Ch1: data.create-table + data.load-to-map', c1.createTable && c1.loadToMap,
@@ -765,7 +821,7 @@ async function main() {
     const conn = await store.getState().db.getConnector();
     try {
       const res = await conn.query(
-        'SELECT CAST(event_excessRisk_rate AS DOUBLE) AS v FROM "rate_excess"'
+        'SELECT CAST(event_excessRisk_rate AS DOUBLE) AS v FROM "tbl_rate_excess"'
       );
       const vals = res.toArray().map(r => Number(r.toJSON().v));
       out.rateValues = {

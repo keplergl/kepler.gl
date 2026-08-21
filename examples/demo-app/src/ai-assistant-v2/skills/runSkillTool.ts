@@ -19,10 +19,20 @@
 import {streamSubAgent, type AiSliceState} from '@sqlrooms/ai-core';
 import type {SkillStorage} from '@sqlrooms/ai';
 import type {StoreApi} from '@sqlrooms/room-store';
-import {ToolLoopAgent, stepCountIs, tool, type LanguageModel} from 'ai';
+import {ToolLoopAgent, tool, type LanguageModel} from 'ai';
 import {z} from 'zod';
 import type {KeplerContext} from '../types';
 import {createExecuteApiTool} from './executeApi';
+
+/**
+ * Maximum number of tool-loop steps a skill sub-agent may take before it is
+ * cut off. Matches the `ToolLoopAgent` default (20). When the cap is hit the
+ * result is marked `truncated` so the orchestrator knows the skill may not
+ * have finished — previously a low cap (10) silently returned a partial
+ * `finalOutput` with `success: true`, which the parent agent reported as a
+ * completed task.
+ */
+const MAX_SKILL_STEPS = 20;
 
 export interface CreateRunSkillToolOptions {
   store: StoreApi<AiSliceState>;
@@ -71,11 +81,21 @@ export function createRunSkillTool({
           executeApi: createExecuteApiTool(store)
         };
 
+        // The stop condition only fires when the loop still has pending tool
+        // calls (i.e. the agent was mid-work), so `stepLimitHit` reliably
+        // distinguishes "cut off by the cap" from "finished naturally".
+        let stepLimitHit = false;
         const subAgent = new ToolLoopAgent({
           model: getModel(),
           tools: skillTools,
           instructions: record.instructions,
-          stopWhen: stepCountIs(10)
+          stopWhen: ({steps}) => {
+            if (steps.length >= MAX_SKILL_STEPS) {
+              stepLimitHit = true;
+              return true;
+            }
+            return false;
+          }
         });
 
         const result = await streamSubAgent(
@@ -85,6 +105,19 @@ export function createRunSkillTool({
           options?.toolCallId || '',
           options?.abortSignal
         );
+
+        if (stepLimitHit) {
+          return {
+            success: true as const,
+            skillId,
+            rootId: ref.rootId,
+            truncated: true as const,
+            finalOutput:
+              result.finalOutput +
+              '\n\n[Note: the skill reached its step limit and may not have completed all steps. ' +
+              'If the task is not fully done, continue from where it left off.]'
+          };
+        }
 
         return {
           success: true as const,

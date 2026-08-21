@@ -18,7 +18,12 @@ import {
   datasetNameToTableName,
   arrowTableToObjects
 } from '../tools/utils';
-import {saveToDuckdb, saveGeojsonToDuckdb, getTableAsGeoJSON} from '../tools/duckdb-cache';
+import {
+  saveToDuckdb,
+  saveGeojsonToDuckdb,
+  getTableAsGeoJSON,
+  getTableColumns
+} from '../tools/duckdb-cache';
 import {getRoutingCommand} from './routing-command';
 
 export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> {
@@ -31,7 +36,8 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
       datasetName
     );
     if (geoms.length === 0) {
-      const geojson = await getTableAsGeoJSON(datasetName);
+      // Tables are saved under `datasetNameToTableName(name)` → `tbl_<sanitized>`.
+      const geojson = await getTableAsGeoJSON(datasetNameToTableName(datasetName));
       if (geojson) {
         geoms = geojson.features;
       }
@@ -40,8 +46,9 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
   };
 
   const onToolCompleted = async (toolName: string, result: any) => {
-    // save to duckdb cache
-    await saveToDuckdb(toolName, result);
+    // save to duckdb cache under the canonical `tbl_<sanitized>` name so
+    // `geo.spatial-query` / `data.query` placeholders (`__tbl0__` etc.) resolve.
+    await saveToDuckdb(datasetNameToTableName(toolName), result);
   };
 
   const ensureDatasetInDuckdb = async (datasetName: string) => {
@@ -184,7 +191,7 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
     name: 'Spatial SQL query',
     group: 'Geo',
     description:
-      'Run a DuckDB spatial SQL query on one or more datasets. Use ST_* functions for spatial operations (ST_Intersects, ST_Within, ST_Buffer, ST_Centroid, ST_Union_Agg, ST_Length, ST_Area, ST_Perimeter, ST_AsGeoJSON, ST_GeomFromGeoJSON, etc). The geometry column stores GeoJSON strings — wrap with ST_GeomFromGeoJSON(geometry) for spatial ops. Reference tables using __tbl0__, __tbl1__, ... placeholders (mapped to datasetNames in order).',
+      'Run a DuckDB spatial SQL query on one or more datasets. Use ST_* functions for spatial operations (ST_Intersects, ST_Within, ST_Buffer, ST_Centroid, ST_Union_Agg, ST_Length, ST_Area, ST_Perimeter, ST_AsGeoJSON, ST_GeomFromGeoJSON, etc). The geometry column stores GeoJSON strings — wrap with ST_GeomFromGeoJSON(geometry) for spatial ops. IMPORTANT: in DuckDB the geometry column is ALWAYS named `geometry` (never `_geojson` — that is the kepler.gl map-side name). The result includes each input table\'s real column names in `tableSchemas` — read them before writing your SQL. Reference tables using __tbl0__, __tbl1__, ... placeholders (mapped to datasetNames in order).',
     inputSchema: z.object({
       datasetNames: z
         .array(z.string())
@@ -205,9 +212,15 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
         reasoning: string;
       };
       try {
+        // Report each input table's real column names so the model can write
+        // SQL against them instead of guessing (e.g. `geometry`, not `_geojson`).
+        const tableSchemas: {tableName: string; columns: string[]}[] = [];
         for (const name of datasetNames) {
           const loaded = await ensureDatasetInDuckdb(name);
           if (!loaded) throw new Error(`Dataset ${name} is empty or not found`);
+          const tableName = datasetNameToTableName(name);
+          const cols = await getTableColumns(tableName);
+          tableSchemas.push({tableName, columns: cols.map(c => c.name)});
         }
 
         await ensureSpatialExtension();
@@ -238,6 +251,9 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
           data: {
             details: `${reasoning} — ${features.length} features -> ${outputDatasetName}.`,
             outputDatasetName,
+            // Real column names of each input table, so the model can reference
+            // them in follow-up SQL without guessing. Surfaced via `toModelOutput`.
+            tableSchemas,
             // Preview of the result rows (properties only, geometry excluded) so
             // the LLM can read scalar values (e.g. area/length/perimeter) computed
             // by the spatial SQL. Surfaced via `toModelOutput`'s firstFiveRows.
@@ -309,7 +325,9 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
                     [x1, y1]
                   ]
                 ],
-                {row, column: col, gridId: `${row}_${col}`}
+                // `col` (not `column`) — `column` is a reserved word in DuckDB
+                // and would force every downstream query to quote it.
+                {row, col, gridId: `${row}_${col}`}
               )
             );
           }

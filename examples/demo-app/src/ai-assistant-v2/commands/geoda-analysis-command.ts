@@ -58,7 +58,11 @@ import {
 } from '@geoda/lisa';
 import {linearRegression, spatialLagRegression, spatialError} from '@geoda/regression';
 import {KeplerContext} from '../types';
-import {getValuesFromDataset, getGeometriesFromDataset} from '../tools/utils';
+import {
+  getValuesFromDataset,
+  getGeometriesFromDataset,
+  datasetNameToTableName
+} from '../tools/utils';
 import {saveToDuckdb, getTableAsGeoJSON} from '../tools/duckdb-cache';
 
 type WeightsCache = Record<
@@ -101,7 +105,9 @@ function getCachedWeightsById(weightsId: string) {
  * Discriminated-union input schema for `geoda.analysis`. Each operation carries
  * only the fields it needs; the `analysis` field selects the operation.
  */
-const AnalysisInput = z.discriminatedUnion('analysis', [
+const AnalysisInput = z.discriminatedUnion(
+  'analysis',
+  [
   z.object({
     analysis: z.literal('spatial-weights'),
     datasetName: z.string(),
@@ -216,7 +222,19 @@ const AnalysisInput = z.discriminatedUnion('analysis', [
       .describe('Number of iterations for cartogram optimization (default 100)'),
     outputDatasetName: z.string()
   })
-]);
+  ],
+  {
+    // The model frequently omits the `analysis` discriminator entirely. The
+    // default Zod message ("Invalid discriminator value. Expected ...") reads
+    // as if the value were wrong when it is actually missing — say exactly what
+    // to do instead.
+    errorMap: issue => ({
+      message: `Missing or invalid required field "analysis". Must be one of: ${
+        'options' in issue ? issue.options.map(String).join(', ') : 'see the command description'
+      }`
+    })
+  }
+);
 
 export function getGeodaAnalysisCommand(ctx: KeplerContext): RoomCommand {
   const getValues = async (datasetName: string, variableName: string) => {
@@ -238,7 +256,8 @@ export function getGeodaAnalysisCommand(ctx: KeplerContext): RoomCommand {
       datasetName
     );
     if (geoms.length === 0) {
-      const geojson = await getTableAsGeoJSON(datasetName);
+      // Tables are saved under `datasetNameToTableName(name)` → `tbl_<sanitized>`.
+      const geojson = await getTableAsGeoJSON(datasetNameToTableName(datasetName));
       if (geojson) {
         geoms = geojson.features;
       }
@@ -247,8 +266,9 @@ export function getGeodaAnalysisCommand(ctx: KeplerContext): RoomCommand {
   };
 
   const onToolCompleted = async (toolName: string, result: any) => {
-    // save to duckdb cache
-    await saveToDuckdb(toolName, result);
+    // save to duckdb cache under the canonical `tbl_<sanitized>` name so
+    // `geo.spatial-query` / `data.query` placeholders (`__tbl0__` etc.) resolve.
+    await saveToDuckdb(datasetNameToTableName(toolName), result);
   };
 
   const runSpatialWeights = async (args: z.infer<typeof AnalysisInput>) => {

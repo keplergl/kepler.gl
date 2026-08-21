@@ -12,7 +12,7 @@ import {
   arrowTableToObjects,
   tableToLLMResult
 } from '../tools/utils';
-import {saveToDuckdb, loadTableToKepler} from '../tools/duckdb-cache';
+import {saveToDuckdb, loadTableToKepler, tableExists} from '../tools/duckdb-cache';
 
 /**
  * Load dataset columns into a DuckDB table, incrementally adding only missing columns.
@@ -52,32 +52,52 @@ async function loadTableIntoDuckDB(
     return db;
   }
 
-  if (existingColumns.size === 0) {
-    const columnData: Record<string, unknown[]> = {};
-    for (const varName of variableNames) {
-      columnData[varName] = await getValues(datasetName, varName);
-    }
-    const arrowTable: ArrowTable = tableFromArrays(columnData);
-    await db.execute(`DROP TABLE IF EXISTS "${dbTableName}"`);
-    await db.loadArrow(arrowTable, dbTableName);
-  } else {
-    const existingData = await db.query(`SELECT * FROM "${dbTableName}"`);
-    const columnData: Record<string, unknown[]> = {};
+  try {
+    if (existingColumns.size === 0) {
+      const columnData: Record<string, unknown[]> = {};
+      for (const varName of variableNames) {
+        columnData[varName] = await getValues(datasetName, varName);
+      }
+      const arrowTable: ArrowTable = tableFromArrays(columnData);
+      await db.execute(`DROP TABLE IF EXISTS "${dbTableName}"`);
+      await db.loadArrow(arrowTable, dbTableName);
+    } else {
+      const existingData = await db.query(`SELECT * FROM "${dbTableName}"`);
+      const columnData: Record<string, unknown[]> = {};
 
-    for (const field of existingData.schema.fields) {
-      const col = existingData.getChild(field.name);
-      if (col) {
-        columnData[field.name] = Array.from(col);
+      for (const field of existingData.schema.fields) {
+        const col = existingData.getChild(field.name);
+        if (col) {
+          columnData[field.name] = Array.from(col);
+        }
+      }
+
+      for (const varName of missingVars) {
+        columnData[varName] = await getValues(datasetName, varName);
+      }
+
+      const arrowTable: ArrowTable = tableFromArrays(columnData);
+      await db.execute(`DROP TABLE IF EXISTS "${dbTableName}"`);
+      await db.loadArrow(arrowTable, dbTableName);
+    }
+  } catch (error) {
+    // The dataset may be a DuckDB table rather than a kepler map dataset.
+    // `getValues` throws "Dataset X not found" for those — turn it into a
+    // helpful hint instead of a misleading error. Probe both naming
+    // conventions: the canonical `tbl_<sanitized>` name (used by commands
+    // that save via `saveToDuckdb`) and the verbatim name (tables created
+    // directly via SQL).
+    if (error instanceof Error && /not found/i.test(error.message)) {
+      const candidates = [datasetNameToTableName(datasetName), datasetName];
+      for (const candidate of candidates) {
+        if (await tableExists(candidate)) {
+          throw new Error(
+            `"${datasetName}" is a DuckDB table, not a map dataset. Load it onto the map with data.load-to-map, or query it directly with geo.spatial-query.`
+          );
+        }
       }
     }
-
-    for (const varName of missingVars) {
-      columnData[varName] = await getValues(datasetName, varName);
-    }
-
-    const arrowTable: ArrowTable = tableFromArrays(columnData);
-    await db.execute(`DROP TABLE IF EXISTS "${dbTableName}"`);
-    await db.loadArrow(arrowTable, dbTableName);
+    throw error;
   }
 
   return db;
@@ -126,7 +146,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
 
         const truncatedQueryResult = tableToLLMResult(jsonResult);
 
-        await saveToDuckdb(resultDatasetName, {
+        await saveToDuckdb(datasetNameToTableName(resultDatasetName), {
           type: 'rowObjects',
           content: jsonResult
         });
@@ -191,7 +211,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
 
         const jsonResult: Record<string, unknown>[] = arrowTableToObjects(arrowResult);
 
-        await saveToDuckdb(resultDatasetName, {
+        await saveToDuckdb(datasetNameToTableName(resultDatasetName), {
           type: 'rowObjects',
           content: jsonResult
         });
@@ -270,7 +290,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
 
         const jsonResult: Record<string, unknown>[] = arrowTableToObjects(arrowResult);
 
-        await saveToDuckdb(resultDatasetName, {
+        await saveToDuckdb(datasetNameToTableName(resultDatasetName), {
           type: 'rowObjects',
           content: jsonResult
         });
@@ -352,7 +372,7 @@ IMPORTANT: Use __TABLE_A__ and __TABLE_B__ as table name placeholders in SQL. Th
 
         const resultDatasetName = `merge_${generateId()}`;
 
-        await saveToDuckdb(resultDatasetName, {
+        await saveToDuckdb(datasetNameToTableName(resultDatasetName), {
           type: 'rowObjects',
           content: jsonResult
         });

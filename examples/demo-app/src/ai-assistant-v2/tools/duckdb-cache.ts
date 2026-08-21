@@ -1,7 +1,7 @@
 import {FeatureCollection} from 'geojson';
 import {addDataToMap} from '@kepler.gl/actions';
 import {processFileData} from '@kepler.gl/processors';
-import {getConnector, arrowTableToObjects} from './utils';
+import {getConnector, arrowTableToObjects, datasetNameToTableName} from './utils';
 import type {KeplerContext} from '../types';
 
 let _cachedTableContext = '';
@@ -190,6 +190,28 @@ export async function getDuckdbTableNames(): Promise<DuckdbTableInfo[]> {
 }
 
 /**
+ * Return the column names (with types) of a single DuckDB table, in ordinal
+ * order. Used to report input-table schemas back to the model so it can write
+ * spatial SQL against the real column names instead of guessing (e.g. the
+ * geometry column is `geometry`, never the kepler.gl map-side `_geojson`).
+ */
+export async function getTableColumns(
+  tableName: string
+): Promise<{name: string; type: string}[]> {
+  const db = await getConnector();
+  const info = await db.query(
+    `SELECT column_name, data_type
+     FROM information_schema.columns
+     WHERE table_name = '${tableName.replace(/'/g, "''")}'
+     ORDER BY ordinal_position`
+  );
+  return info.toArray().map((r: any) => {
+    const j = typeof r.toJSON === 'function' ? r.toJSON() : r;
+    return {name: String(j.column_name), type: String(j.data_type)};
+  });
+}
+
+/**
  * Build a human-readable summary of all DuckDB tables suitable for
  * injecting into an LLM system prompt.
  */
@@ -280,18 +302,27 @@ export async function loadTableToKepler(
   options?: {autoCreateLayers?: boolean; centerMap?: boolean}
 ): Promise<{success: boolean; error?: string}> {
   try {
-    const exists = await tableExists(tableName);
+    // Two DuckDB naming conventions coexist: commands that save via
+    // `saveToDuckdb` now write under `datasetNameToTableName(name)` →
+    // `tbl_<sanitized>`, but tables created directly via SQL (e.g. the
+    // harness's `test_numeric`) keep their verbatim name. Resolve the
+    // sanitized name first, falling back to the raw name.
+    const resolvedName = (await tableExists(datasetNameToTableName(tableName)))
+      ? datasetNameToTableName(tableName)
+      : tableName;
+
+    const exists = await tableExists(resolvedName);
     if (!exists) {
       return {success: false, error: `Table "${tableName}" not found in DuckDB.`};
     }
 
-    const hasGeom = await hasGeometryColumn(tableName);
+    const hasGeom = await hasGeometryColumn(resolvedName);
     let data: any;
 
     if (hasGeom) {
-      data = await getTableAsGeoJSON(tableName);
+      data = await getTableAsGeoJSON(resolvedName);
     } else {
-      data = await queryTable(tableName);
+      data = await queryTable(resolvedName);
     }
 
     if (!data || (Array.isArray(data) && data.length === 0)) {
@@ -299,6 +330,9 @@ export async function loadTableToKepler(
     }
 
     const parsedData = await processFileData({
+      // Keep the user-facing name as the kepler dataset label (not the resolved
+      // `tbl_` name) so commands that look up datasets by label — e.g.
+      // `data.merge-tables`, `geoda.analysis` — still find it.
       content: {data, fileName: tableName},
       fileCache: []
     });
