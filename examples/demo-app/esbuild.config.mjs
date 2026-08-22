@@ -27,10 +27,80 @@ const EXTERNAL_LOADERS_SRC = join(LIB_DIR, 'loaders.gl');
 
 const port = 8080;
 
-const getThirdPartyLibraryAliases = useKeplerNodeModules => {
-  const nodeModulesDir = useKeplerNodeModules ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
+/**
+ * Run the demo against the local kepler.gl source tree instead of the published
+ * `@kepler.gl/*` packages in examples/demo-app/node_modules (which shadow the
+ * root workspace symlinks and would leave core changes — e.g. the
+ * `UPDATE_DATASET` action/reducer — invisible to the bundle). Mirrors the
+ * existing `--env.deck_src` / `--env.loaders_src` flags; applied in both the
+ * `--start` and `--build` paths. `@kepler.gl/types` is types-only (imports are
+ * elided by esbuild) and intentionally excluded.
+ */
+const KEPLER_SRC_ALIASES = Object.fromEntries(
+  [
+    'actions',
+    'cloud-providers',
+    'common-utils',
+    'components',
+    'constants',
+    'duckdb',
+    'layers',
+    'localization',
+    'processors',
+    'reducers',
+    'schemas',
+    'styles',
+    'table',
+    'utils'
+  ].map(pkg => [`@kepler.gl/${pkg}`, join(SRC_DIR, pkg, 'src', 'index.ts')])
+);
 
-  const localSources = useKeplerNodeModules
+const getKeplerAliases = () => ({
+  ...KEPLER_SRC_ALIASES,
+  // duckdb ships a components subpath (SqlPanel); esbuild picks the longest
+  // matching alias key, so this wins for `@kepler.gl/duckdb/components`.
+  '@kepler.gl/duckdb/components': join(SRC_DIR, 'duckdb', 'src', 'components', 'index.tsx')
+});
+
+/**
+ * The local kepler src is built against the workspace's deck.gl 9 / luma 9 /
+ * math.gl 4 / probe.gl stack in the ROOT node_modules, but the demo-app's own
+ * node_modules carries older versions (deck.gl 8 / luma.gl 8). Point every
+ * scoped module of those stacks at the root `src/` so the bundled kepler src
+ * sees the versions it was written against — deck/luma in particular must be a
+ * single instance shared with the rest of the bundle. Mirrors the existing
+ * `--env.deck` aliases but applies in every mode (kepler src is now always
+ * bundled). Scopes absent from root are left to normal resolution.
+ *
+ * `@loaders.gl` is deliberately NOT aliased: kepler src (3.3) needs loaders 4.4
+ * while the demo's own `src/actions.ts` still uses 4.3-era names
+ * (`ParquetWasmLoader`, `_GeoJSONLoader`) that 4.4 renamed. esbuild resolves
+ * per-importing-file, so leaving the scope alone gives each tree its own copy —
+ * kepler src files walk up from /kepler.gl/src to root's 4.4, demo files to the
+ * demo's 4.3. The two copies are independent (no shared module state), so this
+ * is safe, unlike deck/luma which must not be duplicated.
+ */
+const getLocalSourceStackAliases = () => {
+  const aliases = {};
+  ['@deck.gl', '@luma.gl', '@math.gl', '@probe.gl'].forEach(scope => {
+    const scopeDir = join(NODE_MODULES_DIR, scope);
+    let items;
+    try {
+      items = fs.readdirSync(scopeDir);
+    } catch {
+      return; // not installed at root — keep node resolution
+    }
+    items.forEach(mdl => {
+      aliases[`${scope}/${mdl}`] = join(scopeDir, mdl, 'src');
+    });
+  });
+  return aliases;
+};
+
+const getThirdPartyLibraryAliases = useKeplerNodePackage => {
+  const nodeModulesDir = useKeplerNodePackage ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
+
+  const localSources = useKeplerNodePackage
     ? {
         // Suppress useless warnings from react-date-picker's dep
         'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`
@@ -38,6 +108,8 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     : {};
 
   return {
+    ...getKeplerAliases(),
+    ...getLocalSourceStackAliases(),
     ...localSources,
     react: `${nodeModulesDir}/react`,
     'react-dom': `${nodeModulesDir}/react-dom`,

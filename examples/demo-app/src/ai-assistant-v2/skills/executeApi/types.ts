@@ -81,6 +81,9 @@ export type ExecuteApiOutput = {
   sql?: string;
   dbTableName?: string;
 
+  // map.add-column command — the newly added column name(s)
+  addedColumns?: string[];
+
   // kepler-tools (basemap, load-data, save-data, table)
   dataInfo?: unknown;
   savedDatasetNames?: string[];

@@ -147,6 +147,7 @@ import {Loader} from '@loaders.gl/loader-utils';
 
 import {
   Datasets,
+  KeplerTable,
   assignGpuChannel,
   copyTableAndUpdate,
   createNewDataEntry,
@@ -3204,6 +3205,228 @@ export function updateDatasetPropsUpdater(
   }
 
   return state;
+}
+
+/**
+ * Re-validate a live layer against a table whose schema just changed.
+ *
+ * The layer's columns / visual-channel fields / text-label fields are first
+ * remapped to their new names (via `renames`) so the layer follows a rename
+ * instead of treating the old column as removed, then re-validated with
+ * `validateExistingLayerWithData` — the same serialize + validate path used
+ * when a saved config is loaded against new data. Returns `null` when a
+ * required column is gone (the layer can no longer be built).
+ */
+function reconcileLayerWithNewSchema(
+  layer: Layer,
+  renames: Record<string, string>,
+  newTable: KeplerTable,
+  state: VisState
+): Layer | null {
+  const configPatch: Record<string, any> = {};
+
+  // follow renamed columns
+  const columnsPatch: Record<string, {value: string | null; fieldIdx: number}> = {};
+  let columnsChanged = false;
+  Object.entries(layer.config.columns || {}).forEach(([ckey, col]) => {
+    if (col?.value && renames[col.value]) {
+      columnsPatch[ckey] = {...col, value: renames[col.value]};
+      columnsChanged = true;
+    }
+  });
+  if (columnsChanged) {
+    configPatch.columns = {...layer.config.columns, ...columnsPatch};
+  }
+
+  // follow renamed visual-channel fields (colorField, sizeField, ...)
+  Object.values(layer.visualChannels).forEach(({field}) => {
+    const fieldConfig = layer.config[field];
+    if (fieldConfig?.name && renames[fieldConfig.name]) {
+      configPatch[field] = {...fieldConfig, name: renames[fieldConfig.name]};
+    }
+  });
+
+  // follow renamed text-label fields
+  if (layer.config.textLabel?.length) {
+    const textLabel = layer.config.textLabel.map(tl =>
+      tl.field && renames[tl.field.name]
+        ? {...tl, field: {...tl.field, name: renames[tl.field.name]}}
+        : tl
+    );
+    if (textLabel.some((tl, i) => tl !== layer.config.textLabel[i])) {
+      configPatch.textLabel = textLabel;
+    }
+  }
+
+  // shallow-copy the layer so we never mutate redux state; the copy keeps the
+  // prototype methods (`visualChannels` getter, `isValidToSave`) so it
+  // serializes exactly like a live layer.
+  const layerCopy = Object.assign(Object.create(Object.getPrototypeOf(layer)), layer);
+  if (Object.keys(configPatch).length) {
+    layerCopy.config = {...layer.config, ...configPatch};
+  }
+
+  const validated = validateExistingLayerWithData(
+    newTable,
+    state.layerClasses,
+    layerCopy,
+    state.schema
+  );
+
+  return validated && validated.hasAllColumns() ? validated : null;
+}
+
+/**
+ * Update an existing dataset's schema (columns/fields) in place and reconcile
+ * everything that referenced the old columns: filters, layers, tooltip fields,
+ * pinned columns and sort state. The dataset keeps its id/label/color/metadata.
+ *
+ * `action.data` is the same shape `KeplerTable.importData` accepts (`{cols,
+ * fields, arrowTable}` when replacing columns). `action.renames` is an optional
+ * old → new column-name map so layers/filters/tooltips follow a rename instead
+ * of treating the old column as removed.
+ *
+ * Reconciliation is name-based — the same way kepler.gl loads a saved config
+ * against changed data. A layer whose required column is gone is removed; a
+ * filter on a gone column is dropped (or the dataset is spliced out of a synced
+ * filter); tooltip fields are remapped / dropped.
+ *
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function updateDatasetUpdater(
+  state: VisState,
+  action: VisStateActions.UpdateDatasetUpdaterAction
+): VisState {
+  const {dataId, data, renames = {}} = action;
+  const existing = state.datasets[dataId];
+  if (!existing) {
+    return state;
+  }
+
+  // 1. rebuild the table schema in place (same id/label/color/metadata)
+  const newTable = copyTableAndUpdate(existing, {});
+  newTable.updateSchema(data);
+
+  // The data container is rebuilt unsorted and unfiltered; reset the table's
+  // view state that indexes into the old container.
+  newTable.filteredIdxCPU = newTable.allIndexes;
+  newTable.filterRecordCPU = undefined;
+  newTable.sortColumn = undefined;
+  newTable.sortOrder = null;
+  newTable.pinnedColumns = (existing.pinnedColumns || [])
+    .map(name => renames[name] ?? name)
+    .filter(name => newTable.getColumnFieldIdx(name) > -1);
+
+  const newFieldsByName = new Set(newTable.fields.map(f => f.name));
+  const newDatasets = {...state.datasets, [dataId]: newTable};
+
+  // 2. reconcile filters
+  let newFilters = state.filters
+    .map(filter => {
+      const vi = filter.dataId.indexOf(dataId);
+      if (vi === -1) {
+        return filter;
+      }
+
+      const oldName = filter.name[vi];
+      const newName = renames[oldName] ?? oldName;
+      const fieldIdx = newTable.getColumnFieldIdx(newName);
+
+      if (fieldIdx === -1) {
+        // column is gone: drop a single-dataset filter, splice it out of a synced one
+        return filter.dataId.length === 1 ? null : _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
+      }
+
+      // column present (possibly renamed): re-resolve name/fieldIdx/domain
+      const {filter: updated} = applyFilterFieldName(filter, newDatasets, dataId, newName, vi, {
+        mergeDomain: vi > 0
+      });
+      if (!updated) {
+        return null;
+      }
+
+      // brush filters carry a second y-axis field; follow a rename there too
+      const yAxis =
+        updated.yAxis?.name &&
+        (renames[updated.yAxis.name]
+          ? {...updated.yAxis, name: renames[updated.yAxis.name]}
+          : newFieldsByName.has(updated.yAxis.name)
+            ? updated.yAxis
+            : null);
+
+      return {
+        ...updated,
+        yAxis,
+        // clamp the user's previous selection into the new domain instead of
+        // resetting it to the full range
+        value: adjustValueToFilterDomain(filter.value, updated)
+      };
+    })
+    .filter(Boolean) as Filter[];
+
+  // reassign GPU channels now that the filter list is settled
+  newFilters = newFilters.map(filter =>
+    filter.gpu ? assignGpuChannel(setFilterGpuMode(filter, newFilters), newFilters) : filter
+  );
+
+  // 3. rebuild the table's filter state (gpuFilter / filterRecord / filteredIndex)
+  newTable.filterTable(
+    newFilters,
+    state.layers.filter(l => l.config.dataId === dataId),
+    {}
+  );
+
+  // 4. reconcile layers
+  const layersToRemove: string[] = [];
+  const newLayers = state.layers.map(layer => {
+    if (layer.config.dataId !== dataId) {
+      return layer;
+    }
+    const reconciled = reconcileLayerWithNewSchema(layer, renames, newTable, state);
+    if (reconciled) {
+      return reconciled;
+    }
+    layersToRemove.push(layer.id);
+    return layer; // placeholder, dropped via removeLayerUpdater below
+  });
+
+  // 5. reconcile tooltip fieldsToShow
+  let interactionConfig = state.interactionConfig;
+  const tooltip = interactionConfig?.tooltip;
+  const fieldsToShow = tooltip?.config?.fieldsToShow?.[dataId];
+  if (fieldsToShow) {
+    const nextFieldsToShow = fieldsToShow.flatMap(f => {
+      const name = renames[f.name] ?? f.name;
+      return newFieldsByName.has(name) ? [{...f, name}] : [];
+    });
+    interactionConfig = {
+      ...interactionConfig,
+      tooltip: {
+        ...tooltip,
+        config: {
+          ...tooltip.config,
+          fieldsToShow: {...tooltip.config.fieldsToShow, [dataId]: nextFieldsToShow}
+        }
+      }
+    };
+  }
+
+  let nextState = {
+    ...state,
+    datasets: newDatasets,
+    filters: newFilters,
+    layers: newLayers,
+    interactionConfig
+  };
+
+  // 6. drop layers that lost their required columns
+  nextState = layersToRemove.reduce((accu, id) => removeLayerUpdater(accu, {id}), nextState);
+
+  // 7. recompute layer domains + data for the updated dataset
+  nextState = updateAllLayerDomainData(nextState, dataId);
+
+  return nextState;
 }
 
 /**

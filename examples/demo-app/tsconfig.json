@@ -20,7 +20,16 @@
     "noImplicitAny": false,
     "baseUrl": ".",
     "paths": {
-      "styled-components": ["node_modules/styled-components"]
+      "styled-components": ["node_modules/styled-components"],
+      // The packages this feature extends (new `updateDataset` action,
+      // `UPDATE_DATASET` reducer case, `KeplerTable.updateSchema`) resolve to
+      // their locally-built declarations (src/<pkg>/dist) so the demo typecheck
+      // sees the new API. Every other @kepler.gl/* stays on the demo's published
+      // packages. `skipLibCheck` means these .d.ts are consumed as types, not
+      // re-typechecked, so no kepler source tree is pulled into the demo compile.
+      "@kepler.gl/actions": ["../../src/actions/dist/index.d.ts"],
+      "@kepler.gl/reducers": ["../../src/reducers/dist/index.d.ts"],
+      "@kepler.gl/table": ["../../src/table/dist/index.d.ts"]
     }
   },
   "include": ["src"]

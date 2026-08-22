@@ -206,6 +206,27 @@ class KeplerTable<F extends Field = Field> {
   }
 
   async importData({data}: {data: ProtoDataset['data']}) {
+    this.updateSchema(data);
+  }
+
+  /**
+   * Replace this table's columns and fields with new data in place.
+   *
+   * Unlike `update()` (which only refreshes the rows of the existing data
+   * container), `updateSchema` rebuilds the schema — it can add, remove, rename
+   * or re-type columns. It preserves the table identity (`id`, `label`, `color`,
+   * `metadata`, `type`, `supportedFilterTypes`, `disableDataOperation`) set in
+   * the constructor.
+   *
+   * Synchronous on purpose: reducers call it directly to commit a schema change
+   * (see `UPDATE_DATASET`), while `importData` remains the async entry point for
+   * the task-based loading pipeline.
+   *
+   * @param data - new column data + field descriptors, e.g. `{cols, fields, arrowTable}`.
+   *   When replacing columns, pass `cols` (the arrow vectors) so an
+   *   `ArrowDataContainer` is built; a rows-only payload cannot express a schema change.
+   */
+  updateSchema(data: ProtoDataset['data']): this {
     const dataContainerData = data.cols ? data.cols : data.rows;
     const inputDataFormat = data.cols ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY;
 
@@ -234,6 +255,8 @@ class KeplerTable<F extends Field = Field> {
     // @ts-expect-error Make sure that fields satisfies F extends Field
     this.fields = fields;
     this.gpuFilter = getGpuFilterProps([], this.id, fields, undefined);
+
+    return this;
   }
 
   /**

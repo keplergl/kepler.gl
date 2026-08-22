@@ -27,7 +27,8 @@ import {
   AnimationConfig,
   FilterAnimationConfig,
   LayerOrder,
-  LayerOrderGroup
+  LayerOrderGroup,
+  ProtoDataset
 } from '@kepler.gl/types';
 import {createAction} from '@reduxjs/toolkit';
 
@@ -1137,6 +1138,40 @@ export function updateDatasetProps(
     type: ActionTypes.UPDATE_DATASET_PROPS,
     dataId,
     props
+  };
+}
+
+export type UpdateDatasetUpdaterAction = {
+  dataId: string;
+  /** New column data + field descriptors, e.g. `{cols, fields, arrowTable}` (same shape `KeplerTable.importData` accepts). */
+  data: ProtoDataset['data'];
+  /**
+   * Optional old → new column-name map, used to carry layers/filters/tooltips
+   * across a rename (name-based reconciliation alone would treat a renamed
+   * column as removed).
+   */
+  renames?: Record<string, string>;
+};
+/**
+ * Update an existing dataset's schema (columns + fields) in place.
+ * Unlike `addDataToMap`, this keeps the dataset `id`/`label`/`color`/`metadata`
+ * and reconciles layers, filters and tooltip config that referenced the old
+ * columns. Used by the AI assistant's `map.add-column` command.
+ * @param dataId - ***required** Id of the dataset to update
+ * @param data - ***required** New column data + field descriptors
+ * @param renames - (Optional) old column name → new column name, so layers/filters follow a rename
+ * @returns action
+ */
+export function updateDataset(
+  dataId: string,
+  data: ProtoDataset['data'],
+  renames?: Record<string, string>
+): Merge<UpdateDatasetUpdaterAction, {type: typeof ActionTypes.UPDATE_DATASET}> {
+  return {
+    type: ActionTypes.UPDATE_DATASET,
+    dataId,
+    data,
+    renames
   };
 }
 

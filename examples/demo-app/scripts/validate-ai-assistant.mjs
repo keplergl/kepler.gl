@@ -299,7 +299,7 @@ async function main() {
   });
   const expected = [
     'map.set-basemap', 'map.add-layer', 'map.update-layer-color', 'map.load-data',
-    'map.save-data', 'map.create-table', 'map.add-time-filter', 'map.toggle-time-filter',
+    'map.save-data', 'map.create-table', 'map.add-column', 'map.add-time-filter', 'map.toggle-time-filter',
     'map.split-view', 'map.get-boundary', 'map.get-dataset-context',
     'data.query', 'data.filter', 'data.create-table', 'data.merge-tables', 'data.load-to-map',
     'geo.routing', 'geo.isochrone', 'geo.geocode', 'geo.spatial-query', 'geo.grid',

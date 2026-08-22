@@ -20,7 +20,7 @@ import {saveToDuckdb, loadTableToKepler, tableExists} from '../tools/duckdb-cach
  * re-fetching data. If some columns are missing, reads existing data from DuckDB and
  * appends only the new columns to avoid redundant getValues() calls.
  */
-async function loadTableIntoDuckDB(
+export async function loadTableIntoDuckDB(
   getValues: (datasetName: string, variableName: string) => Promise<unknown[]>,
   datasetName: string,
   variableNames: string[],

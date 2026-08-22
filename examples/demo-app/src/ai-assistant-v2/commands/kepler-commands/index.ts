@@ -7,6 +7,7 @@ import {getUpdateLayerColorCommand} from './layer-style-command';
 import {getLoadDataCommand} from './load-data-command';
 import {getSaveDataCommand} from './save-data-command';
 import {getTableCommand} from './table-command';
+import {getAddColumnCommand} from './add-column-command';
 import {getAddTimeFilterCommand} from './time-filter-command';
 import {getToggleTimeFilterCommand} from './toggle-time-filter-command';
 import {getSplitViewCommand} from './split-view-command';
@@ -33,6 +34,7 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getLoadDataCommand(ctx),
     getSaveDataCommand(ctx),
     getTableCommand(ctx),
+    getAddColumnCommand(ctx),
     getAddTimeFilterCommand(ctx),
     getToggleTimeFilterCommand(ctx),
     getSplitViewCommand(ctx),
@@ -48,6 +50,7 @@ export {getUpdateLayerColorCommand} from './layer-style-command';
 export {getLoadDataCommand} from './load-data-command';
 export {getSaveDataCommand} from './save-data-command';
 export {getTableCommand} from './table-command';
+export {getAddColumnCommand} from './add-column-command';
 export {getAddTimeFilterCommand} from './time-filter-command';
 export {getToggleTimeFilterCommand} from './toggle-time-filter-command';
 export {getSplitViewCommand} from './split-view-command';

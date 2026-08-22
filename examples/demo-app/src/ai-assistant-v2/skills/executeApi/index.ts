@@ -62,7 +62,8 @@ export const EXECUTE_API_GUIDANCE = `Always call as: { call: { apiName: "<name>"
   - "map.load-data": Load a dataset from a URL into kepler.gl. Does NOT create a layer — call map.add-layer to visualize. input: { url }.
   - "map.get-boundary": Get the current map viewport bounding box. input: {} (empty). Returns { boundary: { nw: [lon, lat], se: [lon, lat] } }.
   - "map.save-data": Save a DuckDB table as a kepler.gl map dataset. Does NOT create a layer — call map.add-layer to visualize. input: { datasetNames: string[] }.
-  - "map.create-table": Create a new kepler.gl dataset via SQL. Does NOT create a layer — call map.add-layer to visualize. input: { datasetName, variableNames, sql, resultDatasetName }. Use __TABLE__ as the table-name placeholder in sql.
+  - "map.create-table": Create a NEW kepler.gl dataset via SQL (add/delete/rename columns or change column types). Does NOT create a layer — call map.add-layer to visualize. input: { datasetName, variableNames, sql, resultDatasetName }. Use __TABLE__ as the table-name placeholder in sql. To add a column to an EXISTING dataset in place, use "map.add-column" instead.
+  - "map.add-column": Add a NEW column to an EXISTING kepler.gl dataset, in place, with EXACTLY ONE of two value sources. (a) copyFromColumn: copy the values of an existing column — this is how you "rename" a column in place: to rename "fare" to "fare_amount", add a new column "fare_amount" that copies "fare" (the original column stays). (b) expression: an SQL expression computed per row, e.g. a z-score — input: { datasetName, newColumnName, expression: "(HR60 - AVG(HR60) OVER()) / STDDEV(HR60) OVER()" } adds HR60_Z to the existing dataset. The dataset keeps its name/id/color and existing layers, filters and tooltips are untouched. ONLY adds columns — it cannot delete, rename-in-place, or change column types; use map.create-table for those. Prefer map.add-column over creating a new dataset whenever the user asks to add a variable to an EXISTING dataset.
   - "map.add-time-filter": Animate a NON-trip layer over a TIMESTAMP/DATE column. input: { datasetName, dateTimeColumn, interval? }. interval: 1-second|1-minute|1-hour|1-day|1-week|1-month|3-month|1-year (auto-detected when omitted). DO NOT use for trip layers (they have built-in animation). Returns { filterIndex, interval }.
   - "map.toggle-time-filter": Show/hide the enlarged time controller at the bottom of the map. input: { action: "show"|"hide", filterIndex? }. A time filter must already exist (create via map.add-time-filter).
   - "map.split-view": Enable/disable dual-map comparison. input: { action: "enable"|"disable", layerIdsForMap0?, layerIdsForMap1? }. Provide layer-id arrays to assign layers per panel; without them all layers show on both panels.
@@ -183,6 +184,7 @@ export function createExecuteApiTool(store: StoreApi<any>) {
       if (output.totalRows != null) modelResult.totalRows = output.totalRows;
       if (output.firstFiveRows != null) modelResult.firstFiveRows = output.firstFiveRows;
       if (output.firstTwoRows != null) modelResult.firstTwoRows = output.firstTwoRows;
+      if (output.addedColumns != null) modelResult.addedColumns = output.addedColumns;
       if (output.savedDatasetNames != null)
         modelResult.savedDatasetNames = output.savedDatasetNames;
       if (output.outputDatasetName != null)
