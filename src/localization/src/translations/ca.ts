@@ -373,6 +373,7 @@ export default {
     line: 'línia',
     polygon: 'polígon',
     rectangle: 'rectangle',
+    circle: 'cercle',
     copyAll: 'Copia-ho tot',
     convertToLayer: 'Converteix\na capa',
     hide: 'amaga',

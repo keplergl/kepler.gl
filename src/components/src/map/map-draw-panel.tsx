@@ -18,7 +18,8 @@ import {
   Layers,
   LineString,
   Polygon,
-  Rectangle
+  Rectangle,
+  Circle
 } from '../common/icons';
 import {MapControlButton} from '../common/styled-components';
 import ToolbarItem from '../common/toolbar-item';
@@ -71,6 +72,7 @@ function MapDrawPanelFactory(
     cursor: CursorClick,
     innerPolygon: Polygon,
     rectangle: Rectangle,
+    circle: Circle,
     point: DrawPoint,
     line: LineString,
     copy: Copy,
@@ -146,6 +148,13 @@ function MapDrawPanelFactory(
                 label="toolbar.rectangle"
                 icon={actionIcons.rectangle}
                 active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
+              />
+              <ToolbarItem
+                className="draw-circle"
+                onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_CIRCLE)}
+                label="toolbar.circle"
+                icon={actionIcons.circle}
+                active={editor.mode === EDITOR_MODES.DRAW_CIRCLE}
               />
               {enableSketches ? (
                 <>

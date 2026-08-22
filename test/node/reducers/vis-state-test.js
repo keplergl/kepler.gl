@@ -6038,6 +6038,39 @@ test('#visStateReducer -> SET_FEATURES line keeps draw mode', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_FEATURES closed circle switches to edit', t => {
+  let state = reducer(INITIAL_VIS_STATE, VisStateActions.setEditorMode(EDITOR_MODES.DRAW_CIRCLE));
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([
+      {
+        type: 'Feature',
+        id: 'circle-1',
+        properties: {
+          isClosed: true,
+          shape: 'Circle'
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 1],
+              [1, 0],
+              [0, -1],
+              [-1, 0],
+              [0, 1]
+            ]
+          ]
+        }
+      }
+    ])
+  );
+
+  t.equal(state.editor.mode, EDITOR_MODES.EDIT, 'Closed circle sketches should switch to select');
+  t.equal(state.editor.features.length, 1, 'Should store the circle sketch');
+  t.end();
+});
+
 test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER', t => {
   const emptyState = reducer(INITIAL_VIS_STATE, VisStateActions.convertEditorFeaturesToLayer());
   t.equal(emptyState, INITIAL_VIS_STATE, 'Should no-op when there are no sketch features');
@@ -6111,6 +6144,13 @@ test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER disabled by config', 
       ignoredMode.editor.mode,
       startState.editor.mode,
       'Should ignore point draw mode when sketches are disabled'
+    );
+
+    const circleMode = reducer(startState, VisStateActions.setEditorMode(EDITOR_MODES.DRAW_CIRCLE));
+    t.equal(
+      circleMode.editor.mode,
+      EDITOR_MODES.DRAW_CIRCLE,
+      'Should allow circle draw mode when sketches are disabled'
     );
 
     const ignoredProperties = reducer(

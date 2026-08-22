@@ -1780,7 +1780,7 @@ export type SetEditorModeUpdaterAction = {
 };
 /** Set the Draw on Map editor mode.
  * @memberof visStateActions
- * @param mode one of `EDITOR_MODES`: `EDIT`, `DRAW_POINT`, `DRAW_LINESTRING`, `DRAW_POLYGON`, `DRAW_RECTANGLE`
+ * @param mode one of `EDITOR_MODES`: `EDIT`, `DRAW_POINT`, `DRAW_LINESTRING`, `DRAW_POLYGON`, `DRAW_RECTANGLE`, `DRAW_CIRCLE`
  * @returns action
  * @public
  * @example
