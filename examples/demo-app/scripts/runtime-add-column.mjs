@@ -84,6 +84,15 @@ const out = await page.evaluate(async ({citiesUrl}) => {
   });
   r.dup = {success: dup.success, error: dup.error};
 
+  // 6. Type change via expression: cast an integer column to a string.
+  const cast = await invoke('map.add-column', {
+    datasetName: 'cities15000.csv',
+    newColumnName: 'population_str',
+    expression: 'CAST("population" AS VARCHAR)'
+  });
+  r.cast = cast;
+  await sleep(1500);
+
   // 5. Schema guard: both copyFromColumn AND expression together → rejected.
   const both = await invoke('map.add-column', {
     datasetName: 'cities15000.csv',
@@ -117,6 +126,9 @@ const out = await page.evaluate(async ({citiesUrl}) => {
   const dsAfter = (after.data?.datasets || []).find(d => d.datasetName === 'cities15000.csv');
   r.idAfter = dsAfter?.datasetId;
   r.fieldsAfter = (dsAfter?.fields || []).map(f => Object.keys(f)[0]);
+  r.typesAfter = Object.fromEntries(
+    (dsAfter?.fields || []).map(f => [Object.keys(f)[0], Object.values(f)[0]])
+  );
   r.layersAfter = dsAfter?.layers?.length;
 
   // Verify copy semantics: first 3 values of the new column equal the source.
@@ -195,6 +207,16 @@ const dataRow = (out.zaggText || '')
 const zMean = dataRow ? Number.parseFloat((dataRow.match(/\| *(-?[\d.e+-]+) *\|/) || [])[1] || 'NaN') : NaN;
 check('z-score mean is ~0', Number.isFinite(zMean) && Math.abs(zMean) < 1e-6,
   out.zaggText ? `zagg: ${out.zaggText.replace(/\s+/g, ' ').slice(0, 200)}` : 'no aggregate text');
+
+// Type-change via cast expression.
+check('map.add-column cast succeeds', out.cast?.success,
+  out.cast?.data?.details || out.cast?.error);
+check('cast column has string type in place', out.typesAfter?.population_str === 'string' &&
+  out.typesAfter?.population !== 'string',
+  `population_str: ${out.typesAfter?.population_str}, population: ${out.typesAfter?.population}`);
+check('dataset id still unchanged after cast add', out.idBefore === out.idAfter,
+  `before:${out.idBefore} after:${out.idAfter}`);
+check('layer survived the cast add', out.layersAfter === 1, `layers after: ${out.layersAfter}`);
 
 await browser.close();
 

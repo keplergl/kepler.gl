@@ -17,6 +17,9 @@ compare layers side by side. Examples:
 - "Change the basemap to dark/satellite/positron"
 - "Update the color of the layer to blue"
 - "Load data from this URL"
+- "Add a new variable / column to an existing dataset"
+- "Change a column's type (e.g. make NOSOUTH a string)"
+- "Rename a column on the existing dataset"
 - "What's the current map boundary/extent?"
 
 Do NOT use this skill for:
@@ -37,7 +40,8 @@ Do NOT use this skill for:
 | `map.set-basemap`        | Change the basemap style.                                      |
 | `map.load-data`          | Load data from a URL (no layer — call `map.add-layer`).        |
 | `map.save-data`          | Save a DuckDB table as a map dataset (no layer — call `map.add-layer`). |
-| `map.create-table`       | Create a dataset via SQL (no layer — call `map.add-layer`).    |
+| `map.add-column`         | Add a column to an EXISTING dataset in place (copy or expression). |
+| `map.create-table`       | Create a NEW dataset via SQL (original untouched — call `map.add-layer`). |
 | `map.get-boundary`       | Read the current map view's bounding box.                      |
 
 All operations go through `executeApi` with `apiName: "executeCommand"`. See the executeApi tool description for the envelope shape.
@@ -301,6 +305,43 @@ Returns the northwest and southeast coordinates of the current map view:
 `{ boundary: { nw: [lon, lat], se: [lon, lat] } }`. When the user says
 "current map view", call this to scope spatial queries to the visible area.
 
+### 9. Add / rename / retype a column in an EXISTING dataset (`map.add-column`)
+
+`map.add-column` adds a NEW column to an existing dataset **in place** — the
+dataset keeps its name, id, color and layers, and existing columns are
+untouched. The new column's values come from exactly ONE of two sources:
+
+- `copyFromColumn` — copy an existing column's values. This is how you rename a
+  column in place: to rename `fare` to `fare_amount`, add `fare_amount` copying
+  `fare` (the original column stays — the command never removes columns).
+- `expression` — an SQL expression computed per row, for a derived variable
+  (z-score, ratio, concatenation) OR a type change:
+  - z-score: `{ datasetName, newColumnName: "HR60_Z", expression: "(HR60 - AVG(HR60) OVER()) / STDDEV(HR60) OVER()" }`
+  - type change: `{ datasetName, newColumnName: "NOSOUTH_str", expression: "NOSOUTH::VARCHAR" }`
+    (or `CAST(NOSOUTH AS VARCHAR)`). The new column holds the cast values; the
+    original column stays.
+
+```json
+{
+  "call": {
+    "apiName": "executeCommand",
+    "args": {
+      "commandId": "map.add-column",
+      "input": {
+        "datasetName": "natregimes.geojson",
+        "newColumnName": "NOSOUTH_str",
+        "expression": "NOSOUTH::VARCHAR"
+      }
+    }
+  },
+  "reasoning": "Change NOSOUTH to a string type by adding a cast column."
+}
+```
+
+`map.create-table` is NOT for this — it builds a separate NEW dataset and leaves
+the original untouched. Prefer `map.add-column` whenever the user wants the
+change to land in the existing dataset.
+
 ## Rules
 
 - Use the `executeApi` tool for all operations in this skill — do not call
@@ -309,6 +350,10 @@ Returns the northwest and southeast coordinates of the current map view:
 - After `map.load-data` / `map.save-data` / `map.create-table` /
   `data.filter` / `data.load-to-map`, call `map.add-layer` to create a layer
   — those commands do NOT auto-create layers.
+- To add a variable to, rename a column in, or change a column type in an
+  EXISTING dataset, use `map.add-column` (copy or expression) — do NOT create a
+  new dataset. `map.create-table` only when the user wants a SEPARATE new
+  dataset.
 - For change-over-time requests, create exactly ONE animated layer — never
   a separate static layer per time step.
 - Do not add a `map.add-time-filter` to a trip layer — trips animate
