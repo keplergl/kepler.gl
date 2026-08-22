@@ -799,6 +799,8 @@ ${'```'}
     dropMessage: 'Drag & Drop Your File(s) Here, {browse}, or',
     urlPlaceholder: 'Enter your dataset URL',
     fetch: 'Fetch',
+    format: 'Format',
+    formatAuto: 'Auto',
     cors: 'The URL must allow [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {

@@ -11,11 +11,11 @@ import FileDrop from './file-drop';
 import {FileLoading, FileLoadingProgress} from '@kepler.gl/types';
 
 import {validateUrl} from '@kepler.gl/common-utils';
-import {GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
+import {GUIDES_FILE_FORMAT_DOC, REMOTE_FILE_FORMATS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {fetchRemoteFileAsKeplerFile, getFileNameForRemoteUrl} from '@kepler.gl/processors';
 import {media} from '@kepler.gl/styles';
-import {isChrome} from '@kepler.gl/utils';
+import {isChrome, getApplicationConfig} from '@kepler.gl/utils';
 import Markdown from 'markdown-to-jsx';
 
 import {Button, InputLight} from '../styled-components';
@@ -158,6 +158,16 @@ const StyledRemoteUrlInput = styled(InputLight)`
   max-width: 300px;
 `;
 
+const StyledRemoteFormatSelect = styled.select`
+  ${props => props.theme.inputLT};
+  width: 88px;
+  flex-shrink: 0;
+  height: auto;
+  box-sizing: border-box;
+  padding: 0 6px;
+  cursor: pointer;
+`;
+
 const StyledRemoteFetchButton = styled(Button)`
   height: auto;
   box-sizing: border-box;
@@ -223,6 +233,7 @@ function FileUploadFactory() {
       files: [],
       errorFiles: [],
       remoteUrl: '',
+      remoteFormat: 'auto',
       remoteError: null as {message: string} | null,
       remoteLoading: false,
       remoteProgress: {} as FileLoadingProgress
@@ -292,6 +303,10 @@ function FileUploadFactory() {
       });
     };
 
+    _onRemoteFormatChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+      this.setState({remoteFormat: event.target.value});
+    };
+
     _onRemoteUrlKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
       if (event.key === 'Enter') {
         event.preventDefault();
@@ -300,8 +315,11 @@ function FileUploadFactory() {
     };
 
     _handleLoadRemoteFile = async () => {
-      const {remoteUrl, remoteError} = this.state;
+      const {remoteUrl, remoteFormat, remoteError} = this.state;
       const {intl} = this.props;
+      const showFormatSelector = getApplicationConfig().enableRemoteFileFormatSelector;
+      const format =
+        showFormatSelector && remoteFormat !== 'auto' ? remoteFormat : undefined;
       if (!remoteUrl || remoteError || this.state.remoteLoading) {
         if (!remoteUrl) {
           this.setState({remoteError: {message: 'Incorrect URL'}});
@@ -313,7 +331,7 @@ function FileUploadFactory() {
         return;
       }
 
-      const fileName = getFileNameForRemoteUrl(remoteUrl);
+      const fileName = getFileNameForRemoteUrl(remoteUrl, format);
       const downloading = intl.formatMessage({id: 'fileUploader.downloading'});
       this.setState({
         remoteLoading: true,
@@ -330,7 +348,7 @@ function FileUploadFactory() {
 
       try {
         let lastUpdate = 0;
-        const file = await fetchRemoteFileAsKeplerFile(remoteUrl, undefined, ({percent}) => {
+        const file = await fetchRemoteFileAsKeplerFile(remoteUrl, format, ({percent}) => {
           const now = Date.now();
           if (percent < 1 && now - lastUpdate < 100) {
             return;
@@ -370,10 +388,11 @@ function FileUploadFactory() {
     };
 
     render() {
-      const {dragOver, files, errorFiles, remoteUrl, remoteError, remoteLoading, remoteProgress} =
+      const {dragOver, files, errorFiles, remoteUrl, remoteFormat, remoteError, remoteLoading, remoteProgress} =
         this.state;
       const {fileLoading, fileLoadingProgress, theme, intl} = this.props;
       const {fileExtensions = [], fileFormatNames = []} = this.props;
+      const showFormatSelector = getApplicationConfig().enableRemoteFileFormatSelector;
       const fileUploadInfoText = `${intl.formatMessage(
         {
           id: 'fileUploader.configUploadMessage'
@@ -466,6 +485,22 @@ function FileUploadFactory() {
                                 onKeyDown={this._onRemoteUrlKeyDown}
                                 disabled={remoteLoading}
                               />
+                              {showFormatSelector ? (
+                                <StyledRemoteFormatSelect
+                                  aria-label={intl.formatMessage({id: 'fileUploader.format'})}
+                                  value={remoteFormat}
+                                  onChange={this._onRemoteFormatChange}
+                                  disabled={remoteLoading}
+                                >
+                                  {REMOTE_FILE_FORMATS.map(format => (
+                                    <option key={format} value={format}>
+                                      {format === 'auto'
+                                        ? intl.formatMessage({id: 'fileUploader.formatAuto'})
+                                        : format.toUpperCase()}
+                                    </option>
+                                  ))}
+                                </StyledRemoteFormatSelect>
+                              ) : null}
                               <StyledRemoteFetchButton
                                 type="button"
                                 cta

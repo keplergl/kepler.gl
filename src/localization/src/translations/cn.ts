@@ -673,6 +673,8 @@ export default {
     dropMessage: '将您的文件拖放到此处，{browse}，或',
     urlPlaceholder: '输入数据集 URL',
     fetch: '获取',
+    format: '格式',
+    formatAuto: '自动',
     cors: 'URL 必须允许 [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)。'
   },
   tilesetSetup: {

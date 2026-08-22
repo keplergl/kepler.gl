@@ -688,6 +688,8 @@ export default {
     dropMessage: 'Raahaa ja pudota tiedostosi tänne, {browse} tai',
     urlPlaceholder: 'Syötä aineiston URL',
     fetch: 'Hae',
+    format: 'Muoto',
+    formatAuto: 'Auto',
     cors: 'URL-osoitteen on sallittava [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   density: 'tiheys',

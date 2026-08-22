@@ -690,6 +690,8 @@ export default {
     dropMessage: "Arrossega i deixa anar l'arxiu aquí, {browse}, o",
     urlPlaceholder: 'Introdueix l’URL del conjunt de dades',
     fetch: 'Carrega',
+    format: 'Format',
+    formatAuto: 'Auto',
     cors: 'L’URL ha de permetre [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {

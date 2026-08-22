@@ -692,6 +692,8 @@ export default {
     dropMessage: 'Перетащите сюда ваши файлы, {browse} или',
     urlPlaceholder: 'Введите URL набора данных',
     fetch: 'Загрузить',
+    format: 'Формат',
+    formatAuto: 'Авто',
     cors: 'URL должен разрешать [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {

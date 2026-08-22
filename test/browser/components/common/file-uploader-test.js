@@ -7,6 +7,7 @@ import sinon from 'sinon';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 import {FileUpload, WarningMsg, FileDrop, UploadButton} from '@kepler.gl/components';
+import {initApplicationConfig} from '@kepler.gl/utils';
 
 test('Components -> FileUploader.render', t => {
   let wrapper;
@@ -244,6 +245,29 @@ test('Components -> FileUpload remote URL form', t => {
     1,
     'should render URL input'
   );
+  t.equal(
+    wrapper.find('.file-uploader__remote-url select').hostNodes().length,
+    0,
+    'format selector is hidden by default'
+  );
 
+  t.end();
+});
+
+test('Components -> FileUpload remote URL format selector flag', t => {
+  initApplicationConfig({enableRemoteFileFormatSelector: true});
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FileUpload onFileUpload={() => {}} fileExtensions={['csv', 'geojson']} />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    wrapper.find('.file-uploader__remote-url select').hostNodes().length,
+    1,
+    'should render format select when the flag is enabled'
+  );
+
+  initApplicationConfig({enableRemoteFileFormatSelector: false});
   t.end();
 });

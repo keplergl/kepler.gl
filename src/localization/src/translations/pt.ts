@@ -692,6 +692,8 @@ export default {
     dropMessage: 'Arraste e solte seu(s) arquivo(s) aqui, {browse}, ou',
     urlPlaceholder: 'Insira a URL do conjunto de dados',
     fetch: 'Buscar',
+    format: 'Formato',
+    formatAuto: 'Auto',
     cors: 'A URL deve permitir [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {
