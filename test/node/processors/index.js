@@ -2,3 +2,4 @@
 // Copyright contributors to the kepler.gl project
 
 import './file-handler-test';
+import './remote-file-test';

@@ -297,7 +297,8 @@ export default {
     vectorTile: 'Векторный тайл',
     rasterTile: 'Растровый тайл',
     wmsTile: 'WMS тайл',
-    tile3d: '3D тайл'
+    tile3d: '3D тайл',
+    remoteFile: '{rowCount} строк (удалённый)'
   },
   tooltip: {
     hideLayer: 'скрыть слой',
@@ -685,8 +686,15 @@ export default {
       'Загрузите {fileFormatNames} или сохраненную карту **Json**. Подробнее [**supported file formats**]',
     browseFiles: 'Просматреть файлы',
     uploading: 'Загрузка',
+    downloading: 'Загрузка',
     fileNotSupported: 'Файл {errorFiles} не поддерживается.',
-    or: 'или'
+    or: 'или',
+    dropMessage: 'Перетащите сюда ваши файлы, {browse} или',
+    urlPlaceholder: 'Введите URL набора данных',
+    fetch: 'Загрузить',
+    format: 'Формат',
+    formatAuto: 'Авто',
+    cors: 'URL должен разрешать [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {
     header: 'Настройка векторных тайлов',

@@ -15,7 +15,7 @@ import {
   isArrowTable
 } from '@kepler.gl/utils';
 import {generateHashId} from '@kepler.gl/common-utils';
-import {DATASET_FORMATS} from '@kepler.gl/constants';
+import {DATASET_FORMATS, DatasetType, REMOTE_FILE_EXTENSIONS} from '@kepler.gl/constants';
 import {AddDataToMapPayload, Feature, LoadedMap, ProcessorResult} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import type {FeatureCollection} from 'geojson';
@@ -66,6 +66,10 @@ export type ProcessFileDataContent = {
   progress?: {rowCount?: number; rowCountInBatch?: number; percent?: number};
   /**  metadata e.g. for arrow data, metadata could be the schema.fields */
   metadata?: Map<string, string>;
+  /** Remote URL this file was fetched from, if any. */
+  sourceUrl?: string;
+  /** User-selected or inferred remote file format (csv, geojson, parquet, …). */
+  keplerFormat?: string;
 };
 
 export {isArrowTable};
@@ -132,9 +136,29 @@ export async function* makeProgressIterator(
 }
 
 // eslint-disable-next-line complexity
+function getPersistedRemoteFormat(
+  keplerFormat?: string,
+  fileName?: string
+): string | undefined {
+  if (
+    keplerFormat &&
+    keplerFormat !== 'auto' &&
+    Object.prototype.hasOwnProperty.call(REMOTE_FILE_EXTENSIONS, keplerFormat)
+  ) {
+    return keplerFormat;
+  }
+  const ext = fileName?.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+  if (ext && Object.prototype.hasOwnProperty.call(REMOTE_FILE_EXTENSIONS, ext)) {
+    return ext;
+  }
+  return undefined;
+}
+
 export async function* readBatch(
   asyncIterator: AsyncIterable<any>,
-  fileName: string
+  fileName: string,
+  sourceUrl?: string,
+  keplerFormat?: string
 ): AsyncGenerator {
   let result = null;
   const batches = <any>[];
@@ -174,7 +198,9 @@ export async function* readBatch(
         : {}),
       fileName,
       // if dataset is CSV, data is set to the raw batches
-      data: result ? result : batches
+      data: result ? result : batches,
+      ...(sourceUrl ? {sourceUrl} : {}),
+      ...(keplerFormat ? {keplerFormat} : {})
     };
   }
 }
@@ -190,19 +216,24 @@ export async function readFileInBatches({
   loadOptions: any;
 }): Promise<AsyncGenerator> {
   loaders = [JSONLoader, CSVLoader, GeoArrowLoader, ParquetArrowLoader, ...loaders];
+  const hasExtension = /\.[a-z0-9]+$/i.test(file.name);
+  const mimeType = !hasExtension && file.type ? file.type : undefined;
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
     arrow: ARROW_LOADER_OPTIONS,
     json: JSON_LOADER_OPTIONS,
     parquet: PARQUET_LOADER_OPTIONS,
     metadata: true,
+    ...(mimeType ? {mimeType} : {}),
     ...loadOptions
   };
 
   const batchIterator = await parseInBatches(file, loaders, loadOptions);
   const progressIterator = makeProgressIterator(batchIterator, {size: file.size});
+  const sourceUrl = (file as File & {keplerSourceUrl?: string}).keplerSourceUrl;
+  const keplerFormat = (file as File & {keplerFormat?: string}).keplerFormat;
 
-  return readBatch(progressIterator, file.name);
+  return readBatch(progressIterator, file.name, sourceUrl, keplerFormat);
 }
 
 export async function processFileData({
@@ -251,6 +282,8 @@ export async function processFileData({
       throw new Error(`Can not process uploaded file, ${getError(error as Error)}`);
     }
 
+    const sourceUrl = content.sourceUrl;
+    const remoteFormat = getPersistedRemoteFormat(content.keplerFormat, content.fileName);
     return [
       ...fileCache,
       {
@@ -258,8 +291,17 @@ export async function processFileData({
         info: {
           id,
           label: content.fileName,
-          format
-        }
+          format,
+          ...(sourceUrl ? {type: DatasetType.EXTERNALLY_HOSTED} : {})
+        },
+        ...(sourceUrl
+          ? {
+              metadata: {
+                source: sourceUrl,
+                ...(remoteFormat ? {sourceFormat: remoteFormat} : {})
+              }
+            }
+          : {})
       }
     ];
   } else {
@@ -290,7 +332,8 @@ export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayl
           info: {
             id: info?.id || generateHashId(4),
             ...(info || {})
-          }
+          },
+          ...(file.metadata ? {metadata: file.metadata} : {})
         };
         accu.datasets.push(newDataset);
       }

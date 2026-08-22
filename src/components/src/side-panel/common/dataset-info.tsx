@@ -41,6 +41,8 @@ export default function DatasetInfoFactory() {
             ? 'datasetInfo.tile3d'
             : dataset.type === DatasetType.BITMAP
             ? 'datasetInfo.bitmap'
+            : dataset.type === DatasetType.EXTERNALLY_HOSTED
+            ? 'datasetInfo.remoteFile'
             : 'datasetInfo.rowCount'
         }
         values={{rowCount: numFormat(dataset.dataContainer.numRows())}}

@@ -5,7 +5,7 @@ import pick from 'es-toolkit/compat/pick';
 import {console as globalConsole} from 'global/window';
 import * as arrow from 'apache-arrow';
 
-import {ALL_FIELD_TYPES, DATASET_FORMATS} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, DATASET_FORMATS, DatasetType, getRemoteSourceFormat} from '@kepler.gl/constants';
 import {ProtoDataset, RGBColor, JsonObject} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
@@ -164,6 +164,23 @@ export class DatasetSchema extends Schema {
   key = 'dataset';
 
   save(dataset: KeplerTable): SavedDatasetV1['data'] {
+    if (dataset.type === DatasetType.EXTERNALLY_HOSTED && dataset.metadata?.source) {
+      // Keep the remote URL instead of inlining rows so shared map configs stay small.
+      const sourceFormat = getRemoteSourceFormat(dataset.metadata);
+      return this.savePropertiesOrApplySchema({
+        id: dataset.id,
+        label: dataset.label,
+        color: dataset.color,
+        type: dataset.type,
+        allData: [],
+        fields: getFieldsForSaving(dataset.fields || []),
+        metadata: {
+          source: dataset.metadata.source,
+          ...(sourceFormat ? {format: sourceFormat} : {})
+        }
+      })[this.key];
+    }
+
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
@@ -190,6 +207,8 @@ export class DatasetSchema extends Schema {
     // because we have updated type-analyzer
     // we need to add format to each field
     const needCalculateMeta =
+      Array.isArray(allData) &&
+      allData.length > 0 &&
       fields[0] &&
       (!Object.prototype.hasOwnProperty.call(fields[0], 'format') ||
         !Object.prototype.hasOwnProperty.call(fields[0], 'analyzerType'));
@@ -218,10 +237,20 @@ export class DatasetSchema extends Schema {
     }
 
     // get format of all fields
+    let metadata = dataset.metadata;
+    if (dataset.type === DatasetType.EXTERNALLY_HOSTED && dataset.metadata) {
+      const sourceFormat = getRemoteSourceFormat(dataset.metadata);
+      metadata = {
+        source: dataset.metadata.source,
+        ...(sourceFormat ? {sourceFormat} : {}),
+        ...(typeof dataset.metadata.size === 'number' ? {size: dataset.metadata.size} : {})
+      };
+    }
+
     return {
-      data: {fields: updatedFields, rows: dataset.allData},
+      data: {fields: updatedFields || [], rows: dataset.allData || []},
       info: pick(dataset, ['id', 'label', 'color', 'type']),
-      ...(dataset.metadata ? {metadata: dataset.metadata} : {}),
+      ...(metadata ? {metadata} : {}),
       ...(dataset.disableDataOperation ? {disableDataOperation: dataset.disableDataOperation} : {})
     };
   }
