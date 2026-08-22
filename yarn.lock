@@ -5950,6 +5950,7 @@ __metadata:
     "@turf/bbox": "npm:^7.2.0"
     "@turf/boolean-within": "npm:^7.2.0"
     "@turf/center": "npm:^7.2.0"
+    "@turf/distance": "npm:^7.2.0"
     "@turf/helpers": "npm:^7.2.0"
     "@types/geojson": "npm:^7946.0.8"
     "@types/keymirror": "npm:^0.1.1"
