@@ -160,7 +160,7 @@ function MapControlFactory(
         {actionComponents.map((ActionComponent, index) => (
           <ActionComponent key={index} className="map-control-action" {...actionComponentProps} />
         ))}
-        {mapState && mapStateActions ? (
+        {mapState && mapStateActions && !restProps.isExport ? (
           <MapNavigationControl
             mapState={mapState}
             mapIndex={mapIndex}
