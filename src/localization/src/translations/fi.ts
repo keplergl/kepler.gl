@@ -296,7 +296,8 @@ export default {
     vectorTile: 'Vektoritiili',
     rasterTile: 'Rasteritiili',
     wmsTile: 'WMS-tiili',
-    tile3d: '3D-tiili'
+    tile3d: '3D-tiili',
+    remoteFile: '{rowCount} riviä (etä)'
   },
   tooltip: {
     hideLayer: 'Piilota taso',
@@ -681,8 +682,13 @@ export default {
       'Lisää {fileFormatNames} tai tallennettu kartta **Json**. Lue lisää [**tuetuista formaateista**]',
     browseFiles: 'selaa tiedostojasi',
     uploading: 'ladataan',
+    downloading: 'Ladataan',
     fileNotSupported: 'Tiedosto {errorFiles} ei ole tuettu.',
-    or: 'tai'
+    or: 'tai',
+    dropMessage: 'Raahaa ja pudota tiedostosi tänne, {browse} tai',
+    urlPlaceholder: 'Syötä aineiston URL',
+    fetch: 'Hae',
+    cors: 'URL-osoitteen on sallittava [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   density: 'tiheys',
   'Bug Report': 'Bugiraportointi',

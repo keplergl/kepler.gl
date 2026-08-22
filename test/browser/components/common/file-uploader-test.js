@@ -230,3 +230,20 @@ test('Components -> UploadButton fileInput', t => {
 
   t.end();
 });
+
+test('Components -> FileUpload remote URL form', t => {
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FileUpload onFileUpload={() => {}} fileExtensions={['csv', 'geojson']} />
+    </IntlWrapper>
+  );
+
+  t.ok(wrapper.find('.file-uploader__remote-url').exists(), 'should render remote URL form');
+  t.equal(
+    wrapper.find('.file-uploader__remote-url input').hostNodes().length,
+    1,
+    'should render URL input'
+  );
+
+  t.end();
+});

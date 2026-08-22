@@ -3,11 +3,77 @@
 
 export enum DatasetType {
   LOCAL = 'local',
+  EXTERNALLY_HOSTED = 'externally-hosted',
   VECTOR_TILE = 'vector-tile',
   RASTER_TILE = 'raster-tile',
   WMS_TILE = 'wms-tile',
   TILE_3D = 'tile-3d',
   BITMAP = 'bitmap'
+}
+
+export const REMOTE_FILE_FORMATS = ['auto', 'csv', 'geojson', 'json', 'arrow', 'parquet'] as const;
+export type RemoteFileFormat = (typeof REMOTE_FILE_FORMATS)[number];
+
+export const REMOTE_FILE_MIME_TYPES: Record<Exclude<RemoteFileFormat, 'auto'>, string> = {
+  csv: 'text/csv',
+  geojson: 'application/geo+json',
+  json: 'application/json',
+  arrow: 'application/vnd.apache.arrow.file',
+  parquet: 'application/vnd.apache.parquet'
+};
+
+export const REMOTE_FILE_EXTENSIONS: Record<Exclude<RemoteFileFormat, 'auto'>, string> = {
+  csv: 'csv',
+  geojson: 'geojson',
+  json: 'json',
+  arrow: 'arrow',
+  parquet: 'parquet'
+};
+
+export const MIME_TO_REMOTE_FILE_EXTENSION: Record<string, string> = {
+  'text/csv': 'csv',
+  'text/tab-separated-values': 'tsv',
+  'application/geo+json': 'geojson',
+  'application/vnd.geo+json': 'geojson',
+  'application/json': 'json',
+  'application/vnd.apache.arrow.file': 'arrow',
+  'application/vnd.apache.arrow.stream': 'arrow',
+  'application/vnd.apache.parquet': 'parquet',
+  'application/x-parquet': 'parquet'
+};
+
+export type ExternalDatasetMetadata = {
+  /** Remote URL of the dataset file. */
+  source: string;
+  /** Optional format hint for extensionless URLs (SAS keys, etc). */
+  format?: Exclude<RemoteFileFormat, 'auto'> | string;
+  /** Last known size of the hosted resource, in bytes. */
+  size?: number;
+};
+
+/** Runtime copy of {@link ExternalDatasetMetadata} with `format` renamed to avoid colliding with DATASET_FORMATS. */
+export type ExternalDatasetRuntimeMetadata = {
+  source: string;
+  sourceFormat?: Exclude<RemoteFileFormat, 'auto'> | string;
+  size?: number;
+};
+
+export function getRemoteSourceFormat(metadata?: {
+  sourceFormat?: unknown;
+  format?: unknown;
+}): string | undefined {
+  const candidate =
+    (typeof metadata?.sourceFormat === 'string' && metadata.sourceFormat) ||
+    (typeof metadata?.format === 'string' && metadata.format) ||
+    undefined;
+  if (
+    candidate &&
+    candidate !== 'auto' &&
+    Object.prototype.hasOwnProperty.call(REMOTE_FILE_EXTENSIONS, candidate)
+  ) {
+    return candidate;
+  }
+  return undefined;
 }
 
 export enum RemoteTileFormat {

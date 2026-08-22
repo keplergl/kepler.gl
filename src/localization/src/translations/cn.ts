@@ -284,7 +284,8 @@ export default {
     vectorTile: '矢量瓦片',
     rasterTile: '栅格瓦片',
     wmsTile: 'WMS瓦片',
-    tile3d: '3D瓦片'
+    tile3d: '3D瓦片',
+    remoteFile: '{rowCount}行（远程）'
   },
   tooltip: {
     hideLayer: '隐藏图层',
@@ -666,8 +667,13 @@ export default {
       '上传 {fileFormatNames} 或保存的地图 **Json**。阅读更多关于[**支持的文件格式**]',
     browseFiles: '浏览你的文件',
     uploading: '上传',
+    downloading: '下载中',
     fileNotSupported: '不支持文件 {errorFiles}。',
-    or: '或'
+    or: '或',
+    dropMessage: '将您的文件拖放到此处，{browse}，或',
+    urlPlaceholder: '输入数据集 URL',
+    fetch: '获取',
+    cors: 'URL 必须允许 [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)。'
   },
   tilesetSetup: {
     header: '设置矢量瓦片',
