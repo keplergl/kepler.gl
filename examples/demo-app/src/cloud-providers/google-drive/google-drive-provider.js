@@ -80,7 +80,9 @@ export default class GoogleDriveProvider extends Provider {
   async getAccessToken() {
     const stored = this._readStorage();
 
-    // Reuse cached token only while expiresAt says it is still valid
+    // Reuse cached token only while expiresAt says it is still valid.
+    // Do not call GIS here: requestAccessToken always opens a popup, and
+    // CloudTile calls getUser() on mount (Load From Storage / Save Map).
     if (stored?.token && !this._isExpired(stored)) {
       const scope = stored.scope || '';
       if (scope && !scope.split(/\s+/).includes(DRIVE_SCOPE)) {
@@ -92,27 +94,7 @@ export default class GoogleDriveProvider extends Provider {
       return this._accessToken;
     }
 
-    const hadToken = Boolean(this._accessToken || stored?.token);
     this._accessToken = null;
-
-    // Silent refresh after expiry (or if memory still held a stale token)
-    if (hadToken && this.clientId) {
-      try {
-        await this._ensureTokenClient();
-        const tokenResponse = await this._requestAccessToken({prompt: ''});
-        if (!this._hasDriveScope(tokenResponse)) {
-          this._clearStorage();
-          this._accessToken = null;
-          return null;
-        }
-        return tokenResponse.access_token;
-      } catch (err) {
-        this._clearStorage();
-        this._accessToken = null;
-        return null;
-      }
-    }
-
     return null;
   }
 
@@ -151,9 +133,15 @@ export default class GoogleDriveProvider extends Provider {
     }
 
     await this._ensureTokenClient();
-    // Must be called from a user gesture so the consent popup is not blocked.
+    // GIS TokenClient always opens a popup; only login() (user click) may call it.
+    // Prior session: prompt '' refreshes without the account picker (popup may flash
+    // and auto-close). First login: select_account so the user can pick an account.
     // Google may grant Sign-In scopes but not Drive (granular consent) — verify and re-ask.
-    let tokenResponse = await this._requestAccessToken({prompt: 'select_account'});
+    const stored = this._readStorage();
+    const hadSession = Boolean(stored?.token || stored?.user);
+    let tokenResponse = await this._requestAccessToken({
+      prompt: hadSession ? '' : 'select_account'
+    });
     if (!this._hasDriveScope(tokenResponse)) {
       tokenResponse = await this._requestAccessToken({
         prompt: 'consent',
@@ -425,7 +413,7 @@ export default class GoogleDriveProvider extends Provider {
         this._tokenClient.requestAccessToken(overrides);
       });
 
-    // Queue so overlapping silent refresh + login cannot overwrite callbacks.
+    // Queue so overlapping login requests cannot overwrite GIS callbacks.
     const next = this._tokenRequestChain.then(run, run);
     this._tokenRequestChain = next.then(
       () => undefined,
