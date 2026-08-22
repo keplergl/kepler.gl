@@ -166,6 +166,8 @@ export function getTooltip(
     const tooltipText =
       editor.mode === EDITOR_MODES.DRAW_RECTANGLE
         ? 'Click or drag to draw rectangle'
+        : editor.mode === EDITOR_MODES.DRAW_CIRCLE
+        ? 'Click or drag to draw circle'
         : editor.mode === EDITOR_MODES.DRAW_POINT
         ? 'Click to add a point'
         : editor.mode === EDITOR_MODES.DRAW_LINESTRING

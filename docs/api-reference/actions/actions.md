@@ -779,7 +779,7 @@ Set the Draw on Map editor mode
 
 **Parameters**
 
-- `mode` **[string][162]** one of `EDITOR_MODES`: `EDIT`, `DRAW_POINT`, `DRAW_LINESTRING`, `DRAW_POLYGON`, `DRAW_RECTANGLE`
+- `mode` **[string][162]** one of `EDITOR_MODES`: `EDIT`, `DRAW_POINT`, `DRAW_LINESTRING`, `DRAW_POLYGON`, `DRAW_RECTANGLE`, `DRAW_CIRCLE`
 
 **Examples**
 

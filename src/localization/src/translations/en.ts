@@ -422,6 +422,7 @@ export default {
     line: 'Line',
     polygon: 'Polygon',
     rectangle: 'Rectangle',
+    circle: 'Circle',
     copyAll: 'Copy all',
     convertToLayer: 'Convert to\nLayer',
     hide: 'Hide',

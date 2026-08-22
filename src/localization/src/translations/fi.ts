@@ -372,6 +372,7 @@ export default {
     line: 'viiva',
     polygon: 'polygoni',
     rectangle: 'nelikulmio',
+    circle: 'ympyrä',
     copyAll: 'Kopioi kaikki',
     convertToLayer: 'Muunna\ntasoksi',
     hide: 'piilota',

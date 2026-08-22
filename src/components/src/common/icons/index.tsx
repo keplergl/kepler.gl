@@ -87,6 +87,7 @@ export {default as DrawPoint} from './draw-point';
 export {default as LineString} from './line-string';
 export {default as Polygon} from './polygon';
 export {default as Rectangle} from './rectangle';
+export {default as Circle} from './circle';
 export {default as TimelineMarker} from './timeline-marker';
 export {default as OrderByList} from './order-by-list';
 export {default as OrderByDataset} from './order-by-dataset';

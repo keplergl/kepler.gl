@@ -297,8 +297,8 @@ test('MapControlFactory - show panels', t => {
   t.equal(wrapper.find(MapControlToolbar).length, 1, 'should render 1 MapControlToolbar');
   t.equal(
     wrapper.find(MapControlToolbar).at(0).find(ToolbarItem).length,
-    7,
-    'should render 7 ToolbarItem'
+    8,
+    'should render 8 ToolbarItem'
   );
 
   // show locale

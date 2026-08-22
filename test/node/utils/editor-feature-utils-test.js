@@ -43,6 +43,45 @@ test('editor-feature-utils -> sanitizeEditorFeature', t => {
   t.end();
 });
 
+test('editor-feature-utils -> sanitizeEditorFeature circle is a regular polygon', t => {
+  const ring = [
+    [0, 1],
+    [1, 0],
+    [0, -1],
+    [-1, 0],
+    [0, 1]
+  ];
+  const feature = {
+    type: 'Feature',
+    id: 'circle-1',
+    properties: {
+      isClosed: true,
+      shape: 'Circle',
+      editProperties: {
+        shape: 'Circle',
+        center: [0, 0],
+        radius: {value: 1, unit: 'kilometers'}
+      }
+    },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [ring]
+    }
+  };
+
+  t.deepEqual(
+    sanitizeEditorFeature(feature),
+    {
+      type: 'Feature',
+      id: 'circle-1',
+      properties: {},
+      geometry: feature.geometry
+    },
+    'Should keep tessellated Polygon geometry and drop circle editor metadata'
+  );
+  t.end();
+});
+
 test('editor-feature-utils -> editorFeaturesToFeatureCollection', t => {
   const point = {
     id: 'point-1',

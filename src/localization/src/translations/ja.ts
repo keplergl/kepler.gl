@@ -370,6 +370,7 @@ export default {
     line: 'ライン',
     polygon: 'ポリゴン',
     rectangle: '長方形',
+    circle: '円',
     copyAll: 'すべてコピー',
     convertToLayer: 'レイヤに\n変換',
     hide: '非表示',

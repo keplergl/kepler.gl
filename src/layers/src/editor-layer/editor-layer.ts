@@ -5,7 +5,6 @@ import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
 import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core';
 import {
   DrawPolygonMode,
-  DrawLineStringMode,
   DrawPointMode,
   TranslateMode,
   CompositeMode,
@@ -22,18 +21,14 @@ import {EDIT_TYPES} from './constants';
 import {LINE_STYLE, FEATURE_STYLE, EDIT_HANDLE_STYLE, getFeatureDashArray} from './feature-styles';
 import {ModifyModeExtended} from './modify-mode-extended';
 import {DrawRectangleModeExtended} from './draw-rectangle-mode-extended';
+import {DrawCircleModeExtended} from './draw-circle-mode-extended';
+import {DrawLineStringModeExtended} from './draw-line-string-mode-extended';
 import {isDrawingActive} from './editor-layer-utils';
 
 const DEFAULT_COMPOSITE_MODE = new CompositeMode([
   new TranslateMode() as unknown as GeoJsonEditMode,
   new ModifyModeExtended() as unknown as GeoJsonEditMode
 ]);
-
-class DrawLineStringSketchMode extends DrawLineStringMode {
-  getTooltips() {
-    return [];
-  }
-}
 
 export type GetEditorLayerProps = {
   editorMenuActive: boolean;
@@ -82,9 +77,11 @@ export function getEditorLayer({
     // @ts-ignore
     else if (editorMode === EDITOR_MODES.DRAW_RECTANGLE) mode = DrawRectangleModeExtended;
     // @ts-ignore
+    else if (editorMode === EDITOR_MODES.DRAW_CIRCLE) mode = DrawCircleModeExtended;
+    // @ts-ignore
     else if (sketchesEnabled && editorMode === EDITOR_MODES.DRAW_LINESTRING)
       // @ts-ignore
-      mode = DrawLineStringSketchMode;
+      mode = DrawLineStringModeExtended;
     // @ts-ignore
     else if (sketchesEnabled && editorMode === EDITOR_MODES.DRAW_POINT) mode = DrawPointMode;
   }
@@ -111,7 +108,9 @@ export function getEditorLayer({
     modeConfig: {
       viewport,
       screenSpace: true,
-      lockRectangles: true
+      lockRectangles: true,
+      // Turf circle() default; 64 vertices is a smooth tessellated polygon.
+      steps: 64
     },
 
     pickingLineWidthExtraPixels: 5,
@@ -220,8 +219,20 @@ export function getEditorLayer({
       guides: {shadowEnabled: false},
       tooltips: {
         shadowEnabled: false,
+        getSize: 14,
+        getColor: [255, 255, 255, 255],
+        background: true,
+        getBackgroundColor: [0, 0, 0, 200],
+        backgroundPadding: [6, 4],
+        getPixelOffset: [12, 0],
+        getTextAnchor: 'start',
+        getAlignmentBaseline: 'center',
+        fontFamily: 'sans-serif',
+        fontWeight: '600',
+        pickable: false,
         _subLayerProps: {
-          characters: {shadowEnabled: false}
+          characters: {shadowEnabled: false},
+          background: {shadowEnabled: false}
         }
       }
     }
