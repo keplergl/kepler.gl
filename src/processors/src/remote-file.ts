@@ -42,6 +42,15 @@ export function getMimeTypeForFormat(format?: string | null): string | undefined
   return REMOTE_FILE_MIME_TYPES[format as Exclude<RemoteFileFormat, 'auto'>];
 }
 
+export function isRemoteDatasetUrl(url: string): boolean {
+  try {
+    const {protocol} = new URL(url);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Build a filename loaders.gl can use to pick a parser.
  * Prefers an explicit format, then the URL path extension, then Content-Type.
@@ -87,6 +96,9 @@ export async function fetchRemoteFileAsKeplerFile(
   format?: string | null,
   onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void
 ): Promise<KeplerRemoteFile> {
+  if (!isRemoteDatasetUrl(url)) {
+    throw new Error('Remote dataset URL must use http or https');
+  }
   const response = await fetch(url);
   if (!response.ok) {
     const text = await response.text().catch(() => response.statusText);
@@ -112,17 +124,17 @@ async function readResponseBlob(
   const contentLength = Number(response.headers.get('content-length'));
   const total = Number.isFinite(contentLength) && contentLength > 0 ? contentLength : undefined;
 
-  const emit = (loaded: number) => {
+  const emit = (loaded: number, complete = false) => {
     onProgress?.({
       loaded,
       total,
-      percent: total ? Math.min(1, loaded / total) : 0
+      percent: complete ? 1 : total ? Math.min(1, loaded / total) : 0
     });
   };
 
   if (!response.body) {
     const blob = await response.blob();
-    emit(blob.size);
+    emit(blob.size, true);
     return blob;
   }
 
@@ -141,6 +153,7 @@ async function readResponseBlob(
     emit(loaded);
   }
 
+  emit(loaded, true);
   return new Blob(chunks);
 }
 

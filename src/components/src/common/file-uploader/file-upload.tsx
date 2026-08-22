@@ -10,10 +10,13 @@ import FileUploadProgress from './file-upload-progress';
 import FileDrop from './file-drop';
 import {FileLoading, FileLoadingProgress} from '@kepler.gl/types';
 
-import {validateUrl} from '@kepler.gl/common-utils';
 import {GUIDES_FILE_FORMAT_DOC, REMOTE_FILE_FORMATS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {fetchRemoteFileAsKeplerFile, getFileNameForRemoteUrl} from '@kepler.gl/processors';
+import {
+  fetchRemoteFileAsKeplerFile,
+  getFileNameForRemoteUrl,
+  isRemoteDatasetUrl
+} from '@kepler.gl/processors';
 import {media} from '@kepler.gl/styles';
 import {isChrome, getApplicationConfig} from '@kepler.gl/utils';
 import Markdown from 'markdown-to-jsx';
@@ -299,7 +302,7 @@ function FileUploadFactory() {
       const remoteUrl = event.target.value;
       this.setState({
         remoteUrl,
-        remoteError: remoteUrl && !validateUrl(remoteUrl) ? {message: 'Incorrect URL'} : null
+        remoteError: remoteUrl && !isRemoteDatasetUrl(remoteUrl) ? {message: 'Incorrect URL'} : null
       });
     };
 
@@ -326,7 +329,7 @@ function FileUploadFactory() {
         }
         return;
       }
-      if (!validateUrl(remoteUrl)) {
+      if (!isRemoteDatasetUrl(remoteUrl)) {
         this.setState({remoteError: {message: 'Incorrect URL'}});
         return;
       }
@@ -478,6 +481,9 @@ function FileUploadFactory() {
                               <StyledRemoteUrlInput
                                 type="url"
                                 value={remoteUrl}
+                                aria-label={intl.formatMessage({
+                                  id: 'fileUploader.urlPlaceholder'
+                                })}
                                 placeholder={intl.formatMessage({
                                   id: 'fileUploader.urlPlaceholder'
                                 })}

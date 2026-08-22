@@ -2,7 +2,13 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {getExtensionFromUrl, getFileNameForRemoteUrl, getMimeTypeForFormat} from '@kepler.gl/processors';
+import {
+  fetchRemoteFileAsKeplerFile,
+  getExtensionFromUrl,
+  getFileNameForRemoteUrl,
+  getMimeTypeForFormat,
+  isRemoteDatasetUrl
+} from '@kepler.gl/processors';
 
 test('#remote-file -> getExtensionFromUrl', t => {
   t.equal(getExtensionFromUrl('https://example.com/data.geojson'), 'geojson');
@@ -57,5 +63,57 @@ test('#remote-file -> getFileNameForRemoteUrl', t => {
     'data.geojson',
     'should replace the extension when an explicit format is provided'
   );
+  t.end();
+});
+
+test('#remote-file -> isRemoteDatasetUrl', t => {
+  t.ok(isRemoteDatasetUrl('https://example.com/data.csv'), 'https is allowed');
+  t.ok(isRemoteDatasetUrl('http://example.com/data.csv'), 'http is allowed');
+  t.notOk(isRemoteDatasetUrl('javascript:alert(1)'), 'javascript: is rejected');
+  t.notOk(isRemoteDatasetUrl('file:///tmp/data.csv'), 'file: is rejected');
+  t.notOk(isRemoteDatasetUrl('ftp://example.com/data.csv'), 'ftp is rejected');
+  t.notOk(isRemoteDatasetUrl('not a url'), 'invalid URLs are rejected');
+  t.end();
+});
+
+test('#remote-file -> fetchRemoteFileAsKeplerFile rejects non-http URLs', async t => {
+  try {
+    await fetchRemoteFileAsKeplerFile('javascript:alert(1)');
+    t.fail('should reject javascript: URLs');
+  } catch (error) {
+    t.ok(error instanceof Error, 'should throw');
+    t.ok(/http or https/i.test(error.message), 'should mention http or https');
+  }
+  t.end();
+});
+
+test('#remote-file -> fetchRemoteFileAsKeplerFile progress without Content-Length', async t => {
+  const origFetch = global.fetch;
+  const chunks = [new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6])];
+  let i = 0;
+  global.fetch = async () =>
+    new Response(
+      new ReadableStream({
+        pull(controller) {
+          if (i < chunks.length) {
+            controller.enqueue(chunks[i++]);
+          } else {
+            controller.close();
+          }
+        }
+      }),
+      {status: 200}
+    );
+
+  try {
+    const percents = [];
+    await fetchRemoteFileAsKeplerFile('https://example.com/data.csv', 'csv', ({percent}) => {
+      percents.push(percent);
+    });
+    t.ok(percents.length, 'should emit progress');
+    t.equal(percents[percents.length - 1], 1, 'should emit 100% when the blob is fully read');
+  } finally {
+    global.fetch = origFetch;
+  }
   t.end();
 });

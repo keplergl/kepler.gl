@@ -240,11 +240,9 @@ test('Components -> FileUpload remote URL form', t => {
   );
 
   t.ok(wrapper.find('.file-uploader__remote-url').exists(), 'should render remote URL form');
-  t.equal(
-    wrapper.find('.file-uploader__remote-url input').hostNodes().length,
-    1,
-    'should render URL input'
-  );
+  const urlInput = wrapper.find('.file-uploader__remote-url input').hostNodes();
+  t.equal(urlInput.length, 1, 'should render URL input');
+  t.ok(urlInput.first().prop('aria-label'), 'should set aria-label on URL input');
   t.equal(
     wrapper.find('.file-uploader__remote-url select').hostNodes().length,
     0,
