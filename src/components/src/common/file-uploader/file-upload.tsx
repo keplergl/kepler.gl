@@ -227,19 +227,31 @@ type FileUploadProps = {
   disableExtensionFilter?: boolean;
 } & WrappedComponentProps;
 
+type FileUploadState = {
+  dragOver: boolean;
+  fileLoading: FileLoading | false;
+  files: File[];
+  errorFiles: string[];
+  remoteUrl: string;
+  remoteFormat: string;
+  remoteError: {message: string} | null;
+  remoteLoading: boolean;
+  remoteProgress: FileLoadingProgress;
+};
+
 function FileUploadFactory() {
   /** @augments {Component<FileUploadProps>} */
-  class FileUpload extends Component<FileUploadProps> {
-    state = {
+  class FileUpload extends Component<FileUploadProps, FileUploadState> {
+    state: FileUploadState = {
       dragOver: false,
       fileLoading: false,
       files: [],
       errorFiles: [],
       remoteUrl: '',
       remoteFormat: 'auto',
-      remoteError: null as {message: string} | null,
+      remoteError: null,
       remoteLoading: false,
-      remoteProgress: {} as FileLoadingProgress
+      remoteProgress: {}
     };
 
     static getDerivedStateFromProps(props, state) {
