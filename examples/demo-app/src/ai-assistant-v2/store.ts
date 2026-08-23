@@ -28,7 +28,7 @@ import {highlightRows, setStoreConnectorProvider} from './tools/utils';
 import {createWrappedQueryTool} from './tools/query-tool-wrapper';
 import {getAllCommands, KEPLER_COMMAND_OWNER} from './commands';
 import {layerSetIsValid} from '@kepler.gl/actions';
-import type {KeplerContext} from './types';
+import type {KeplerContext, KeplerStateAccessors, VisState} from './types';
 import type {SkillListing} from '@sqlrooms/ai';
 import {KeplerSkillStorage} from './skills/KeplerSkillStorage';
 import {createRunSkillTool} from './skills/runSkillTool';
@@ -44,6 +44,13 @@ export type RoomState = BaseRoomStoreState &
 
 let reduxStore: any = null;
 
+// App-provided accessors for the kepler.gl application state the assistant
+// needs. The host app supplies these via `setKeplerStateAccessors` so this
+// module does not hard-code a redux state shape; any host app can provide
+// accessors matching its own store. The reduxStore remains the generic Redux
+// dispatch bridge (dispatch is not app-specific).
+let keplerStateAccessors: KeplerStateAccessors | null = null;
+
 export function setReduxStore(store: any) {
   reduxStore = store;
   // Dev-only hook: expose the redux store so browser validation harnesses can
@@ -55,7 +62,7 @@ export function setReduxStore(store: any) {
   // the standalone chart renderer can highlight the brushed rows on the map.
   // The histogram renderer surfaces tool output produced by skill sub-agents.
   setHistogramSelectionHandler((datasetName, selectedIndices) => {
-    const visState = reduxStore?.getState()?.demo?.keplerGl?.map?.visState;
+    const visState = keplerStateAccessors?.getVisState();
     if (!visState) return;
     highlightRows(
       visState.datasets,
@@ -67,6 +74,16 @@ export function setReduxStore(store: any) {
   });
 }
 
+/**
+ * Provide accessors to the kepler.gl visState and map boundary. The host app
+ * calls this (or passes `stateAccessors` to `AiAssistantPanel`) so the module
+ * never hard-codes a redux state path. `reduxStore` is set separately via
+ * `setReduxStore` and remains the dispatch bridge.
+ */
+export function setKeplerStateAccessors(accessors: KeplerStateAccessors) {
+  keplerStateAccessors = accessors;
+}
+
 export function getReduxStore() {
   return reduxStore;
 }
@@ -76,13 +93,13 @@ export function getReduxDispatch() {
 }
 
 export function getKeplerVisState() {
-  return reduxStore?.getState()?.demo?.keplerGl?.map?.visState;
+  return keplerStateAccessors?.getVisState();
 }
 
 function getKeplerContext(): KeplerContext {
   return {
-    getVisState: () => reduxStore?.getState()?.demo?.keplerGl?.map?.visState,
-    getMapBoundary: () => reduxStore?.getState()?.demo?.aiAssistant?.keplerGl?.mapBoundary,
+    getVisState: () => keplerStateAccessors?.getVisState() as VisState,
+    getMapBoundary: () => keplerStateAccessors?.getMapBoundary(),
     getMapboxToken: () => {
       const apiKey = typeof window !== 'undefined' ? localStorage.getItem('mapbox-token') : null;
       return apiKey || undefined;
@@ -212,41 +229,16 @@ if (typeof window !== 'undefined') {
 // this connector. Must run after `roomStore` exists.
 setStoreConnectorProvider(async () => roomStore.getState().db.getConnector());
 
-// Register the kepler-ai command catalog (kepler / query / geo / spatial-analysis)
-// into the room-store command registry. The same `RoomCommand` definitions then
-// serve every surface that reads the registry — the AI skill `executeApi` tool
-// (which delegates to `store.commands.invokeCommand`), the stock
-// `search_commands` / `get_command` / `list_commands` / `execute_command` AI
-// tools, the command palette UI, the CLI adapter, and the MCP adapter.
+// Register the kepler-ai command catalog (map.*, data.*, geoda.*, geo.*,
+// chart.*) into the room-store command registry. The same `RoomCommand`
+// definitions then serve every surface that reads the registry: the AI skill
+// `executeApi` tool (which delegates to `store.commands.invokeCommand`), the
+// stock `search_commands` / `get_command` / `list_commands` / `execute_command`
+// AI tools, the command palette UI, the CLI adapter, and the MCP adapter.
 //
 // `KeplerContext` is a singleton built from `reduxStore`, so a one-time
 // registration is sufficient. If `KeplerContext` ever becomes per-session,
 // re-register on swap with `unregisterCommandsForOwner` + `registerCommandsForOwner`.
-registerCommandsForOwner(
-  roomStore,
-  KEPLER_COMMAND_OWNER,
-  Object.values(getAllCommands(getKeplerContext()))
-);
-
-// Register the kepler-ai command catalog in the room-store command registry.
-// This makes the same command definitions (map.*, data.*, geoda.*, geo.*)
-// available to every surface that reads the registry: the AI skill layer
-// (`executeApi` delegates to `store.commands.invokeCommand`), the command
-// palette UI, the CLI adapter, and the MCP adapter. `KeplerContext` is a
-// singleton built from `reduxStore`, so a one-time registration is correct;
-// if it ever becomes per-session, re-register on swap.
-registerCommandsForOwner(
-  roomStore,
-  KEPLER_COMMAND_OWNER,
-  Object.values(getAllCommands(getKeplerContext()))
-);
-
-// Register the kepler-ai commands (map / data / geoda / geo) in the room-store
-// command registry so every surface — AI skill `executeApi`, command palette,
-// CLI, MCP — reads from one source of truth. `KeplerContext` is a singleton
-// built from `reduxStore`, so a one-time registration is correct; if it ever
-// becomes per-session, re-register on swap via `unregisterCommandsForOwner` +
-// `registerCommandsForOwner`.
 registerCommandsForOwner(
   roomStore,
   KEPLER_COMMAND_OWNER,

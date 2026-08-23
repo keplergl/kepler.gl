@@ -938,7 +938,15 @@ const App = (props: any) => {
                   <>
                     <StyledVerticalResizeHandle />
                     <Panel defaultSize={30} minSize={20}>
-                      <AiAssistantPanel reduxStore={reduxStore} />
+                      <AiAssistantPanel
+                        reduxStore={reduxStore}
+                        stateAccessors={{
+                          getVisState: () =>
+                            (reduxStore?.getState() as any)?.demo?.keplerGl?.map?.visState,
+                          getMapBoundary: () =>
+                            (reduxStore?.getState() as any)?.demo?.aiAssistant?.keplerGl?.mapBoundary
+                        }}
+                      />
                     </Panel>
                   </>
                 )}
