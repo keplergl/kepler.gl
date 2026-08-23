@@ -488,6 +488,10 @@ export default {
       title: 'Emmagatzematge al núvol',
       subtitle: 'Accedeix per desar el mapa al teu emmagatzematge al núvol'
     },
+    providerSelect: {
+      disclaimer:
+        'Inicieu la sessió amb el vostre compte. Els mapes es desen al vostre emmagatzematge personal del proveïdor que trieu, no a Kepler.gl.'
+    },
     exportMap: {
       formatTitle: 'Format de mapa',
       formatSubtitle: 'Escull el format amb què vols exportar el teu mapa',

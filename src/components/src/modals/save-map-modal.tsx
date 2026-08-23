@@ -7,6 +7,7 @@ import ImageModalContainer, {ImageModalContainerProps} from './image-modal-conta
 import {FlexContainer} from '../common/flex-container';
 import StatusPanel, {UploadAnimation} from './status-panel';
 import {ProviderSelect} from './cloud-components/provider-select';
+import {CloudStorageDisclaimer} from './cloud-components/cloud-storage-disclaimer';
 import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER, dataTestIds} from '@kepler.gl/constants';
 
 import {
@@ -30,6 +31,7 @@ const StyledSaveMapModal = styled.div.attrs({
 })`
   .save-map-modal-content {
     min-height: 400px;
+    display: flex;
     flex-direction: column;
   }
 
@@ -255,6 +257,7 @@ function SaveMapModalFactory() {
                 providerIcon={provider && provider.icon}
               />
             ) : null}
+            <CloudStorageDisclaimer />
           </StyledModalContent>
         </StyledSaveMapModal>
         <ModalFooter cancel={onCancel} confirm={confirm} confirmButton={confirmButton} />

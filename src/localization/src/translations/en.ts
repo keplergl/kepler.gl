@@ -539,6 +539,10 @@ export default {
       title: 'Cloud storage',
       subtitle: 'Login to save map to your personal cloud storage'
     },
+    providerSelect: {
+      disclaimer:
+        'You sign in with your own account. Maps are stored in your personal cloud storage with the provider you choose, not on Kepler.gl.'
+    },
     exportMap: {
       formatTitle: 'Map format',
       formatSubtitle: 'Choose the format to export your map to',

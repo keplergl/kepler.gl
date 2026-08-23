@@ -489,6 +489,10 @@ export default {
       title: 'Almacentage en la nube',
       subtitle: 'Acceder para guardar el mapa en teu almacenage en la nube'
     },
+    providerSelect: {
+      disclaimer:
+        'Inicia sesión con tu propia cuenta. Los mapas se guardan en tu almacenamiento personal del proveedor que elijas, no en Kepler.gl.'
+    },
     exportMap: {
       formatTitle: 'Formato de mapa',
       formatSubtitle: 'Escoger el formato al que se desea exportar el mapa',

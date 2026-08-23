@@ -44,6 +44,9 @@ const StyledTileWrapper: IStyledComponent<'web', StyledTileWrapperProps> = style
 const StyledBox = styled(CenterVerticalFlexbox)`
   margin-right: 12px;
   position: relative;
+  width: 120px;
+  max-width: 120px;
+  flex: 0 0 120px;
 `;
 
 const StyledCloudName = styled.div`
@@ -101,6 +104,12 @@ const NewTag = styled.div`
 export const StyledWarning = styled.span`
   color: ${props => props.theme.errorColor};
   font-weight: ${props => props.theme.selectFontWeightBold};
+  display: block;
+  width: 100%;
+  text-align: center;
+  overflow-wrap: break-word;
+  font-size: 11px;
+  line-height: 1.3;
 `;
 
 interface CloudTileProps {
@@ -174,8 +183,28 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
       return;
     }
     if (user) {
-      setProvider(provider);
-      return;
+      // Re-check on click: mount-time getUser() can go stale if the modal stays
+      // open past token expiry. Null means the session is gone — fall through
+      // to login() (this click is a user gesture). A throw is a transient
+      // failure (e.g. Dropbox network); keep the cached user and do not
+      // force another provider login popup.
+      setError(null);
+      setIsLoading(true);
+      try {
+        const currentUser = await provider.getUser();
+        if (currentUser) {
+          setUser(currentUser);
+          setIsLoading(false);
+          setProvider(provider);
+          return;
+        }
+        setUser(null);
+        setIsLoading(false);
+      } catch {
+        setIsLoading(false);
+        setProvider(provider);
+        return;
+      }
     }
     const nextUser = await onLogin();
     if (!nextUser) {

@@ -486,6 +486,10 @@ export default {
       title: 'クラウドストレージ',
       subtitle: '地図を個人用クラウドストレージに保存するためにログインする'
     },
+    providerSelect: {
+      disclaimer:
+        'ご自身のアカウントでログインします。マップは選択したプロバイダーの個人ストレージに保存され、Kepler.gl 上には保存されません。'
+    },
     exportMap: {
       formatTitle: '地図の形式',
       formatSubtitle: '地図の出力形式を選択します',
