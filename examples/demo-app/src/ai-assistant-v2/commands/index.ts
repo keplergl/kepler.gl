@@ -5,6 +5,7 @@ import {getKeplerCommands} from './kepler-commands';
 import {getGeodaAnalysisCommand} from './geoda-analysis-command';
 import {getQueryCommands} from './query-commands';
 import {getChartCommands} from './chart-commands';
+import {getRunSqlCommand} from './run-sql-command';
 
 /**
  * Build the full kepler-ai command catalog for a given `KeplerContext`. Merges
@@ -24,7 +25,8 @@ export function getAllCommands(ctx: KeplerContext): Record<string, RoomCommand> 
     ...getQueryCommands(ctx),
     ...getGeoCommands(ctx),
     'geoda.analysis': getGeodaAnalysisCommand(ctx),
-    ...getChartCommands(ctx)
+    ...getChartCommands(ctx),
+    'data.run-sql': getRunSqlCommand()
   };
 }
 

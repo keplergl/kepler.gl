@@ -518,6 +518,21 @@ async function main() {
   check('MCP: no renderer-only field leaks in tool results (P1.2)',
     contractChecks.outputLeaks.length === 0, contractChecks.outputLeaks.join('; '));
 
+  // --- data.run-sql: the kepler-mcp analysis engine backed by duckdb-wasm ---
+  const runSql = await page.evaluate(async () => {
+    const store = window.__keplerRoomStore;
+    const r = await store.getState().commands.invokeCommand('data.run-sql', {
+      sql: 'SELECT 1+1 AS x'
+    });
+    return {success: r.success, data: r.data, error: r.error};
+  });
+  const runSqlOk =
+    runSql.success &&
+    Array.isArray(runSql.data?.firstFiveRows) &&
+    runSql.data.firstFiveRows[0]?.x === 2;
+  check('data.run-sql (analysis engine) returns a real DuckDB result',
+    runSqlOk, JSON.stringify(runSql.data || runSql.error));
+
   // =====================================================================
   // Lab Chapter 1 — Spatial Data Wrangling (1): Basic Operations
   // =====================================================================
