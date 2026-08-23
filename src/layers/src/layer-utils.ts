@@ -24,7 +24,6 @@ import {convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
 import {WKBLoader} from '@loaders.gl/wkt';
 import {geojsonToBinary} from '@loaders.gl/gis';
 import {
-  BinaryFeatureCollection,
   Geometry,
   BinaryPointFeature,
   BinaryLineFeature,

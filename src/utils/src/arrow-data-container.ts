@@ -282,10 +282,9 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._numRows = this._cols[0]?.length ?? 0;
     this._numChunks = this._cols[0]?.data?.length ?? 0;
     const table = compactArrowTable(data.arrowTable || this._createTable());
+    this._arrowTable = table;
     if (table.numCols > 0) {
       this._assignTable(table);
-    } else {
-      this._arrowTable = table;
     }
   }
 
