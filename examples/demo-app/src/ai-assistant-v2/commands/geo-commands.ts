@@ -70,7 +70,10 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
     return geojson;
   };
 
-  const routing = getRoutingCommand(ctx, onToolCompleted);
+  const routing: RoomCommand = {
+    ...getRoutingCommand(ctx, onToolCompleted),
+    metadata: {readOnly: false, riskLevel: 'medium', idempotent: false}
+  };
 
   const isochrone: RoomCommand = {
     id: 'geo.isochrone',
@@ -78,6 +81,7 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
     group: 'Geo',
     description:
       'Get isochrone polygons showing reachable areas within a time/distance from a point.',
+    metadata: {readOnly: false, riskLevel: 'medium', idempotent: false},
     inputSchema: z.object({
       origin: z.object({longitude: z.number(), latitude: z.number()}),
       timeLimit: z.number().optional().describe('Time limit in minutes'),
@@ -141,6 +145,7 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
     name: 'Geocode address',
     group: 'Geo',
     description: 'Geocode an address to get latitude and longitude.',
+    metadata: {readOnly: false, riskLevel: 'medium', idempotent: false},
     inputSchema: z.object({
       address: z.string().describe('The address to geocode'),
       datasetName: z.string().describe('Name for the output dataset')
@@ -192,6 +197,7 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
     group: 'Geo',
     description:
       'Run a DuckDB spatial SQL query on one or more datasets. Use ST_* functions for spatial operations (ST_Intersects, ST_Within, ST_Buffer, ST_Centroid, ST_Union_Agg, ST_Length, ST_Area, ST_Perimeter, ST_AsGeoJSON, ST_GeomFromGeoJSON, etc). The geometry column stores GeoJSON strings — wrap with ST_GeomFromGeoJSON(geometry) for spatial ops. IMPORTANT: in DuckDB the geometry column is ALWAYS named `geometry` (never `_geojson` — that is the kepler.gl map-side name). The result includes each input table\'s real column names in `tableSchemas` — read them before writing your SQL. Reference tables using __tbl0__, __tbl1__, ... placeholders (mapped to datasetNames in order).',
+    metadata: {readOnly: false, riskLevel: 'medium', idempotent: false},
     inputSchema: z.object({
       datasetNames: z
         .array(z.string())
@@ -276,6 +282,7 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
     group: 'Geo',
     description:
       'Create a rectangular grid of polygons that divides a given area into rows and columns.',
+    metadata: {readOnly: false, riskLevel: 'medium', idempotent: false},
     inputSchema: z.object({
       datasetName: z.string().describe('Dataset whose bounding box defines the grid extent'),
       rows: z.number().positive().describe('Number of rows in the grid'),
@@ -359,6 +366,7 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
     group: 'Geo',
     description:
       'Fetch road networks from OpenStreetMap (Overpass API) within a bounding box. The box can come from a dataset boundary, explicit mapBounds, or the current map viewport.',
+    metadata: {readOnly: false, riskLevel: 'medium', requiresConfirmation: true, idempotent: false},
     inputSchema: z.object({
       datasetName: z
         .string()
@@ -487,6 +495,7 @@ export function getGeoCommands(ctx: KeplerContext): Record<string, RoomCommand> 
     group: 'Geo',
     description:
       'Fetch US state, county, or zipcode boundary GeoJSON from public GitHub datasets.',
+    metadata: {readOnly: false, riskLevel: 'medium', requiresConfirmation: true, idempotent: false},
     inputSchema: z.object({
       type: z.enum(['state', 'county', 'zipcode']).describe('Boundary type to fetch'),
       ids: z

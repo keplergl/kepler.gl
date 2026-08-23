@@ -11,6 +11,7 @@ export function getMapBoundaryCommand(ctx: KeplerContext): RoomCommand {
     group: 'Map',
     description:
       'Get the boundary of the map. Northwest and Southeast coordinates in [longitude, latitude] format.',
+    metadata: {readOnly: true, riskLevel: 'low', idempotent: true},
     inputSchema: z.object({}) as any,
     execute: async () => {
       try {

@@ -12,6 +12,7 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
     name: 'Load data from URL',
     group: 'Map',
     description: 'Load dataset from a URL into kepler.gl.',
+    metadata: {readOnly: false, riskLevel: 'medium', requiresConfirmation: true},
     inputSchema: z.object({
       url: z.string().describe('The URL to load data from')
     }) as any,

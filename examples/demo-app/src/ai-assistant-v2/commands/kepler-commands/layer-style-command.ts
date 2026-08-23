@@ -11,6 +11,7 @@ export function getUpdateLayerColorCommand(ctx: KeplerContext): RoomCommand {
     name: 'Update layer color',
     group: 'Map',
     description: 'Update the color palette of an existing layer.',
+    metadata: {readOnly: false, riskLevel: 'low', idempotent: true},
     inputSchema: z.object({
       layerId: z.string(),
       numberOfColors: z.number(),

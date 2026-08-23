@@ -24,6 +24,7 @@ Please note:
 1. Do not use * to select all columns, instead use all the column names in dataset.
 2. List all column names the new table or dataset will have.
 IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replaced with the actual DuckDB table name at runtime.`,
+    metadata: {readOnly: false, riskLevel: 'high', idempotent: false},
     inputSchema: z.object({
       datasetName: z.string().describe('The name of the source dataset'),
       variableNames: z

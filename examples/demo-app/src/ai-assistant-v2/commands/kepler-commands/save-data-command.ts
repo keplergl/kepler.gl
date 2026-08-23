@@ -12,6 +12,7 @@ export function getSaveDataCommand(ctx: KeplerContext): RoomCommand {
     group: 'Map',
     description:
       'Save a DuckDB table to kepler.gl as a map dataset. Works with any table including those from buffer, zipcode, county, state, isochrone, routing, query results, etc.',
+    metadata: {readOnly: false, riskLevel: 'medium', requiresConfirmation: true},
     inputSchema: z.object({
       datasetNames: z
         .array(z.string())

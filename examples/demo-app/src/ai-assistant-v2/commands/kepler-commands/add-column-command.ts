@@ -24,6 +24,7 @@ The new column's values come from exactly ONE of two sources:
 - expression — an SQL expression computed in DuckDB against the dataset's rows, e.g. a z-score: "(HR60 - AVG(HR60) OVER()) / STDDEV(HR60) OVER()" adds HR60_Z holding the standardized value of HR60. The expression may reference existing columns and window functions; it must produce exactly one value per row.
 CHANGING A COLUMN'S TYPE: use expression to add a NEW column that casts the original, e.g. to turn "NOSOUTH" (numeric) into a string, add a new column with expression "NOSOUTH::VARCHAR" (or "CAST(NOSOUTH AS VARCHAR)"). The values become strings; the original column stays. Name the new column clearly (e.g. "NOSOUTH_str") or as the user requests.
 IMPORTANT: this command only ADDS columns. It cannot delete or rename-in-place an existing column, and it never changes the type OF an existing column in place — a type change is achieved by adding a NEW column holding the cast values. If you need to remove columns or rebuild the whole table, use map.create-table (which creates a NEW dataset; the original is untouched).`,
+    metadata: {readOnly: false, riskLevel: 'medium', idempotent: false},
     inputSchema: z
       .object({
         datasetName: z.string().describe('The name of the dataset to add the column to'),

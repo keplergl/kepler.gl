@@ -1,7 +1,7 @@
 import React from 'react';
 import type {ToolRenderer, ToolRendererRegistry} from '@sqlrooms/ai-core';
 import type {ExecuteApiOutput} from '../skills/executeApi/types';
-import type {HistogramToolOutput} from './echarts-tools';
+import type {HistogramToolOutput, HistogramUiPayload} from './echarts-tools';
 import {HistogramComponent} from '../charts/histogram-component';
 
 /**
@@ -27,11 +27,9 @@ export function setHistogramSelectionHandler(handler: HistogramSelectionHandler 
  * output is a histogram (draw the ECharts component) or some other command
  * (fall through to the default text rendering).
  */
-const HistogramChartRenderer: ToolRenderer<ExecuteApiOutput & HistogramToolOutput> = ({
-  output,
-  state,
-  errorText
-}) => {
+const HistogramChartRenderer: ToolRenderer<
+  ExecuteApiOutput & HistogramToolOutput & {__ui?: HistogramUiPayload}
+> = ({output, state, errorText}) => {
   // Only handle the histogram command; non-histogram executeApi output is left
   // for the default renderer by returning null (the registry falls through).
   if (!output || output.commandId !== 'chart.histogram') {
@@ -57,7 +55,8 @@ const HistogramChartRenderer: ToolRenderer<ExecuteApiOutput & HistogramToolOutpu
     );
   }
 
-  if (!output.histogramData?.length || !output.barDataIndexes?.length) {
+  const ui = output.__ui;
+  if (!ui?.histogramData?.length || !ui?.barDataIndexes?.length) {
     return <div className="text-xs opacity-60">No values to plot.</div>;
   }
 
@@ -65,15 +64,15 @@ const HistogramChartRenderer: ToolRenderer<ExecuteApiOutput & HistogramToolOutpu
   // wired in that case. DuckDB-only tables have no kepler layer to highlight,
   // so the brush is inert — surface that as a one-line note instead of a
   // silent dead interaction.
-  const isKepler = output.source !== 'duckdb';
+  const isKepler = ui.source !== 'duckdb';
 
   return (
     <div className="my-2 w-full">
       <HistogramComponent
         datasetName={output.datasetName}
         variableName={output.variableName}
-        histogramData={output.histogramData}
-        barDataIndexes={output.barDataIndexes}
+        histogramData={ui.histogramData}
+        barDataIndexes={ui.barDataIndexes}
         onSelected={
           isKepler
             ? (datasetName, selectedIndices) =>

@@ -12,6 +12,7 @@ export function getBasemapCommand(ctx: KeplerContext): RoomCommand {
     name: 'Set basemap',
     group: 'Map',
     description: 'Change the basemap style of the kepler.gl map.',
+    metadata: {readOnly: false, riskLevel: 'low', idempotent: true},
     inputSchema: z.object({
       styleType: z.enum([
         'no_map',

@@ -14,6 +14,7 @@ export function getDatasetContextCommand(ctx: KeplerContext): RoomCommand {
       'Get all loaded kepler.gl datasets with their fields and layer configurations. ' +
       'Returns each dataset name, id, field name→type mappings, and the layers ' +
       '(id, label, type, geometryMode, geometryColumns) bound to it.',
+    metadata: {readOnly: true, riskLevel: 'low', idempotent: true},
     inputSchema: z.object({}) as any,
     execute: async () => {
       try {

@@ -201,6 +201,7 @@ COLOR MAPPING:
 For geojson datasets:
 - Use geometryColumn: '_geojson' and layerType: 'geojson' even for point collections
 `,
+    metadata: {readOnly: false, riskLevel: 'medium', idempotent: false},
     inputSchema: z.object({
       datasetName: z.string().describe('The name of the dataset. Note: do NOT use the datasetId.'),
       latitudeColumn: z.string().optional(),

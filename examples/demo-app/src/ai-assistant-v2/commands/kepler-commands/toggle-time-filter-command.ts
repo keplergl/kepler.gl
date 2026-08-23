@@ -16,6 +16,7 @@ A time filter must already exist on the map (created via map.add-time-filter).
 
 - action: "show" — enlarge the time controller so it is visible at the bottom of the map.
 - action: "hide" — collapse the time controller back to the side panel.`,
+    metadata: {readOnly: false, riskLevel: 'low', idempotent: true},
     inputSchema: z.object({
       action: z
         .enum(['show', 'hide'])

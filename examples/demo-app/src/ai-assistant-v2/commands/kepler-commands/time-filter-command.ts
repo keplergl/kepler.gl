@@ -90,6 +90,7 @@ DO NOT call this for a trip layer — trips have built-in time animation.
 The dataset and a layer for it must already exist on the map (e.g. from map.add-layer or map.load-data).
 
 Pass the datasetName and the dateTimeColumn to animate over. The interval is auto-detected from the data when omitted; pass it explicitly to override.`,
+    metadata: {readOnly: false, riskLevel: 'medium', idempotent: false},
     inputSchema: z.object({
       datasetName: z.string().describe('The name (label) or id of the dataset to animate.'),
       dateTimeColumn: z

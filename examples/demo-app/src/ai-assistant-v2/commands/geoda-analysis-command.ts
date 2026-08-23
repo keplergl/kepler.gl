@@ -228,9 +228,9 @@ const AnalysisInput = z.discriminatedUnion(
     // default Zod message ("Invalid discriminator value. Expected ...") reads
     // as if the value were wrong when it is actually missing — say exactly what
     // to do instead.
-    errorMap: issue => ({
+    error: issue => ({
       message: `Missing or invalid required field "analysis". Must be one of: ${
-        'options' in issue ? issue.options.map(String).join(', ') : 'see the command description'
+        'options' in issue ? (issue.options as string[]).map(String).join(', ') : 'see the command description'
       }`
     })
   }
@@ -712,6 +712,7 @@ export function getGeodaAnalysisCommand(ctx: KeplerContext): RoomCommand {
     group: 'GeoDa',
     description:
       'Run any GeoDa spatial analysis operation: spatial-weights, lisa, global-moran, regression, classify, rate, standardize, thiessen-polygons, mst, cartogram. Pick the operation via the "analysis" field.',
+    metadata: {readOnly: false, riskLevel: 'medium', idempotent: false},
     inputSchema: AnalysisInput as any,
     execute: async (_execCtx, input) => {
       const args = input as z.infer<typeof AnalysisInput>;

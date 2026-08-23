@@ -38,6 +38,16 @@ export type HistogramToolOutput = {
   error?: string;
 };
 
+/**
+ * Renderer-only payload for the histogram command, carried under `data.__ui`
+ * (not surfaced to the model, stripped by MCP adapters).
+ */
+export type HistogramUiPayload = {
+  histogramData: (HistogramBin & {count: number})[];
+  barDataIndexes?: number[][];
+  source?: 'kepler' | 'duckdb';
+};
+
 export type BoxplotStats = {
   name: string;
   low: number;
@@ -273,6 +283,15 @@ export function getEchartsTools(ctx: KeplerContext) {
           error: error instanceof Error ? error.message : 'Unknown error'
         };
       }
+    },
+    // Result shaping: keep renderer-only payload (`histogramData`,
+    // `barDataIndexes`, `source`) under `data.__ui` so an MCP adapter reading
+    // the command result can strip it and the model never sees full row-index
+    // arrays. The demo-app's own renderer reads `__ui`.
+    toModelOutput: ({output}: {output: any}) => {
+      if (!output || typeof output !== 'object' || !('histogramData' in output)) return output;
+      const {histogramData, barDataIndexes, source, ...model} = output;
+      return {...model, __ui: {histogramData, barDataIndexes, source}};
     }
   });
 
@@ -312,6 +331,13 @@ export function getEchartsTools(ctx: KeplerContext) {
           error: error instanceof Error ? error.message : 'Unknown error'
         };
       }
+    },
+    // Result shaping: `meanPoint` is renderer-only; keep it under `data.__ui`
+    // so an MCP adapter can strip it and the model never sees it.
+    toModelOutput: ({output}: {output: any}) => {
+      if (!output || typeof output !== 'object' || !('meanPoint' in output)) return output;
+      const {meanPoint, ...model} = output;
+      return {...model, __ui: {meanPoint}};
     }
   });
 

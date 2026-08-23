@@ -19,6 +19,7 @@ When enabled, the map splits into two panels for side-by-side comparison. Pass l
 When disabled, the map returns to a single panel.
 
 Use the SAME colorBy / colorType for the layers being compared, so the comparison is fair.`,
+    metadata: {readOnly: false, riskLevel: 'low', idempotent: true},
     inputSchema: z.object({
       action: z
         .enum(['enable', 'disable'])

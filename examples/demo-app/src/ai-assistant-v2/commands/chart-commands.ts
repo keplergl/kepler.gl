@@ -30,37 +30,37 @@ import {toolToCommand} from './kepler-commands/command-wrappers';
  */
 export function getChartCommands(ctx: KeplerContext): Record<string, RoomCommand> {
   const tools = getEchartsTools(ctx);
-  const commands = [
-    toolToCommand(tools.histogramTool, {
+  const commands: RoomCommand[] = [
+    {...toolToCommand(tools.histogramTool, {
       id: 'chart.histogram',
       name: 'Histogram',
       group: 'Chart',
       keywords: ['histogram', 'distribution', 'frequency', 'bin']
-    }),
-    toolToCommand(tools.boxplotTool, {
+    }), metadata: {readOnly: true, riskLevel: 'low', idempotent: true}},
+    {...toolToCommand(tools.boxplotTool, {
       id: 'chart.boxplot',
       name: 'Boxplot',
       group: 'Chart',
       keywords: ['boxplot', 'quartile', 'iqr', 'outlier']
-    }),
-    toolToCommand(tools.scatterplotTool, {
+    }), metadata: {readOnly: true, riskLevel: 'low', idempotent: true}},
+    {...toolToCommand(tools.scatterplotTool, {
       id: 'chart.scatterplot',
       name: 'Scatterplot',
       group: 'Chart',
       keywords: ['scatterplot', 'correlation', 'scatter']
-    }),
-    toolToCommand(tools.bubbleChartTool, {
+    }), metadata: {readOnly: true, riskLevel: 'low', idempotent: true}},
+    {...toolToCommand(tools.bubbleChartTool, {
       id: 'chart.bubble',
       name: 'Bubble chart',
       group: 'Chart',
       keywords: ['bubble', 'chart', 'three variables']
-    }),
-    toolToCommand(tools.pcpTool, {
+    }), metadata: {readOnly: true, riskLevel: 'low', idempotent: true}},
+    {...toolToCommand(tools.pcpTool, {
       id: 'chart.pcp',
       name: 'Parallel coordinates',
       group: 'Chart',
       keywords: ['parallel coordinates', 'pcp', 'multivariate']
-    })
+    }), metadata: {readOnly: true, riskLevel: 'low', idempotent: true}}
   ];
   return Object.fromEntries(commands.map(c => [c.id, c]));
 }

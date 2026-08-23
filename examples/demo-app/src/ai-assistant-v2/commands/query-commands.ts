@@ -117,6 +117,7 @@ export function getQueryCommands(ctx: KeplerContext): Record<string, RoomCommand
 1. This tool is NOT for filtering the user dataset.
 2. There is no need to add a sub-query to add an auto-increment column 'row_index' to the original dataset.
 IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replaced with the actual DuckDB table name at runtime.`,
+    metadata: {readOnly: true, riskLevel: 'medium', idempotent: true},
     inputSchema: z.object({
       datasetName: z.string(),
       variableNames: z
@@ -186,6 +187,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
     description: `Filter the user dataset using a SELECT SQL query in DuckDB and save as new dataset.
 Do not use * to select all columns, use all column names.
 IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replaced with the actual DuckDB table name at runtime.`,
+    metadata: {readOnly: false, riskLevel: 'medium', idempotent: false},
     inputSchema: z.object({
       datasetName: z.string(),
       variableNames: z
@@ -265,6 +267,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
 2. Do not use * to select all columns.
 3. List all column names the new table will have.
 IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replaced with the actual DuckDB table name at runtime.`,
+    metadata: {readOnly: false, riskLevel: 'high', idempotent: false},
     inputSchema: z.object({
       datasetName: z.string(),
       variableNames: z
@@ -330,6 +333,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
 - Horizontal merge (JOIN): SELECT A.id, A.name, B.pop FROM __TABLE_A__ A JOIN __TABLE_B__ B USING (id)
 - Vertical merge (UNION): SELECT id, name FROM __TABLE_A__ UNION ALL SELECT id, name FROM __TABLE_B__
 IMPORTANT: Use __TABLE_A__ and __TABLE_B__ as table name placeholders in SQL. They will be replaced with actual DuckDB table names at runtime.`,
+    metadata: {readOnly: false, riskLevel: 'high', idempotent: false},
     inputSchema: z.object({
       datasetNameA: z.string().describe('The name of the first dataset.'),
       datasetNameB: z.string().describe('The name of the second dataset.'),
@@ -409,6 +413,7 @@ IMPORTANT: Use __TABLE_A__ and __TABLE_B__ as table name placeholders in SQL. Th
     group: 'Data',
     description: `Create a new kepler.gl map dataset from a DuckDB table.
 Use this command after running a query (genericQuery, tableCommand, mergeTablesCommand) to visualize the result on a kepler.gl map.`,
+    metadata: {readOnly: false, riskLevel: 'medium', idempotent: false},
     inputSchema: z.object({
       datasetName: z
         .string()
