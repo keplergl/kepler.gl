@@ -101,8 +101,12 @@ export async function fetchRemoteFileAsKeplerFile(
   }
   const response = await fetch(url);
   if (!response.ok) {
-    const text = await response.text().catch(() => response.statusText);
-    throw new Error(text || `Failed to fetch ${url}`);
+    // Don't put the response body in the error: 404 HTML pages would dump into the UI.
+    response.body?.cancel?.().catch(() => {});
+    const status = response.statusText
+      ? `${response.status} ${response.statusText}`
+      : String(response.status);
+    throw new Error(`Failed to fetch ${url} (${status})`);
   }
 
   const blob = await readResponseBlob(response, onProgress);

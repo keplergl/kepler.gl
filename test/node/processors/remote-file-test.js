@@ -87,6 +87,31 @@ test('#remote-file -> fetchRemoteFileAsKeplerFile rejects non-http URLs', async 
   t.end();
 });
 
+test('#remote-file -> fetchRemoteFileAsKeplerFile does not dump error bodies', async t => {
+  const origFetch = global.fetch;
+  global.fetch = async () =>
+    new Response('<!DOCTYPE html><html><body>Not Found '.repeat(500) + '</body></html>', {
+      status: 404,
+      statusText: 'Not Found'
+    });
+
+  try {
+    await fetchRemoteFileAsKeplerFile('https://example.com/missing.csv');
+    t.fail('should reject HTTP errors');
+  } catch (error) {
+    t.ok(error instanceof Error, 'should throw');
+    t.equal(
+      error.message,
+      'Failed to fetch https://example.com/missing.csv (404 Not Found)',
+      'should report status without the response body'
+    );
+    t.ok(!error.message.includes('<html>'), 'should not include HTML from the error page');
+  } finally {
+    global.fetch = origFetch;
+  }
+  t.end();
+});
+
 test('#remote-file -> fetchRemoteFileAsKeplerFile progress without Content-Length', async t => {
   const origFetch = global.fetch;
   const chunks = [new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6])];

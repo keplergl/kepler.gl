@@ -246,8 +246,10 @@ export async function processFileData({
   const {fileName, data} = content;
   let format: string | undefined;
   let processor: ((data: any) => ProcessorResult | LoadedMap | null) | undefined;
-  // generate unique id with length of 4 using fileName string
-  const id = generateHashIdFromString(fileName);
+  // Hash the source URL when present so two remote files that share a filename
+  // (or a local file and a remote URL with the same name) do not collide and
+  // overwrite each other. The UI shows `label` (the filename), not this id.
+  const id = generateHashIdFromString(content.sourceUrl || fileName);
   // decide on which table class to use based on application config
   const table = getApplicationConfig().table ?? KeplerTable;
 

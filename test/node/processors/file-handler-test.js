@@ -224,3 +224,56 @@ test('#file-handler -> processFileData persists remote file format', async t => 
 
   t.end();
 });
+
+test('#file-handler -> processFileData remote ids do not collide on filename', async t => {
+  const rows = [{lat: 1, lng: 2}];
+  const local = await processFileData({
+    content: {fileName: 'quakes.csv', data: rows},
+    fileCache: []
+  });
+  const remoteA = await processFileData({
+    content: {
+      fileName: 'quakes.csv',
+      data: rows,
+      sourceUrl: 'https://a.example.com/quakes.csv'
+    },
+    fileCache: []
+  });
+  const remoteB = await processFileData({
+    content: {
+      fileName: 'quakes.csv',
+      data: rows,
+      sourceUrl: 'https://b.example.com/quakes.csv'
+    },
+    fileCache: []
+  });
+  const remoteAAgain = await processFileData({
+    content: {
+      fileName: 'quakes.csv',
+      data: rows,
+      sourceUrl: 'https://a.example.com/quakes.csv'
+    },
+    fileCache: []
+  });
+
+  t.equal(local[0].info.label, 'quakes.csv', 'local label stays the filename');
+  t.equal(remoteA[0].info.label, 'quakes.csv', 'remote label stays the filename');
+  t.notEqual(
+    local[0].info.id,
+    remoteA[0].info.id,
+    'local and remote files with the same name get different ids'
+  );
+  t.notEqual(
+    remoteA[0].info.id,
+    remoteB[0].info.id,
+    'two remote URLs with the same filename get different ids'
+  );
+  t.equal(
+    remoteA[0].info.id,
+    remoteAAgain[0].info.id,
+    'reloading the same URL keeps a stable id so progressive batches can update in place'
+  );
+  t.ok(!String(remoteA[0].info.id).includes('http'), 'id is a hash, not the raw URL');
+
+  t.end();
+});
