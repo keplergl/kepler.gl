@@ -377,14 +377,11 @@ export function getFilterProps(
 }
 
 function hasFiniteLngLat(pos: unknown): pos is number[] {
-  const values = pos as {length?: number; 0?: unknown; 1?: unknown} | null;
-  return (
-    Boolean(values) &&
-    (Array.isArray(pos) || ArrayBuffer.isView(pos)) &&
-    (values as {length: number}).length >= 2 &&
-    Number.isFinite(Number(values[0])) &&
-    Number.isFinite(Number(values[1]))
-  );
+  if (pos == null || !(Array.isArray(pos) || ArrayBuffer.isView(pos))) {
+    return false;
+  }
+  const values = pos as ArrayLike<unknown>;
+  return values.length >= 2 && Number.isFinite(Number(values[0])) && Number.isFinite(Number(values[1]));
 }
 
 export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
