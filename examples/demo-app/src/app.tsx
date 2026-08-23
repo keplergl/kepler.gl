@@ -19,6 +19,11 @@ import {
   setMapBoundary
 } from './ai-assistant-v2/screenshot-actions';
 import {AiAssistantPanel} from './ai-assistant-v2';
+import {startMcpBridge} from './ai-assistant-v2/mcp/bridge';
+
+// Opt-in local MCP bridge: connects to ws://localhost:<port> only when the page
+// URL has `?mcp=1` (default off). Lets a local kepler-mcp hub drive the map.
+startMcpBridge();
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
