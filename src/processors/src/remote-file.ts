@@ -102,7 +102,7 @@ export async function fetchRemoteFileAsKeplerFile(
   const response = await fetch(url);
   if (!response.ok) {
     // Don't put the response body in the error: 404 HTML pages would dump into the UI.
-    response.body?.cancel?.().catch(() => {});
+    response.body?.cancel?.().catch(() => undefined);
     const status = response.statusText
       ? `${response.status} ${response.statusText}`
       : String(response.status);

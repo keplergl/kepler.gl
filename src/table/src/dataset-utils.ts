@@ -12,8 +12,7 @@ import {
   PMTilesType,
   RemoteTileFormat,
   VectorTileDatasetMetadata,
-  WMSDatasetMetadata,
-  getRemoteSourceFormat
+  WMSDatasetMetadata
 } from '@kepler.gl/constants';
 import {
   hexToRgb,
@@ -121,8 +120,6 @@ async function createTable(datasetInfo: CreateTableProps) {
   const {info, color, opts} = datasetInfo;
   let {data} = datasetInfo;
 
-  data = await hydrateExternallyHostedData(datasetInfo);
-
   // update metadata for remote tiled datasets
   const refreshedMetadata = await refreshRemoteData(datasetInfo);
   let metadata = opts.metadata;
@@ -151,29 +148,6 @@ async function createTable(datasetInfo: CreateTableProps) {
 }
 const UPDATE_TABLE_TASK = Task.fromPromise(updateTable, 'UPDATE_TABLE_TASK');
 const CREATE_TABLE_TASK = Task.fromPromise(createTable, 'CREATE_TABLE_TASK');
-
-function hasTabularData(data: {rows?: unknown[]; cols?: unknown[]; arrowTable?: unknown}): boolean {
-  return Boolean(data?.rows?.length || data?.cols?.length || data?.arrowTable);
-}
-
-async function hydrateExternallyHostedData(datasetInfo: CreateTableProps) {
-  const {info, opts, data} = datasetInfo;
-  const source = opts.metadata?.source;
-  if (
-    info?.type !== DatasetType.EXTERNALLY_HOSTED ||
-    typeof source !== 'string' ||
-    hasTabularData(data)
-  ) {
-    return data;
-  }
-
-  const loader = getApplicationConfig().loadExternallyHostedDataset;
-  return loader({
-    source,
-    format: getRemoteSourceFormat(opts.metadata),
-    size: typeof opts.metadata?.size === 'number' ? opts.metadata.size : undefined
-  });
-}
 
 /**
  * Fetch metadata for vector tile layers using tilesetMetadataUrl from metadata

@@ -224,17 +224,6 @@ export type KeplerApplicationConfig = {
 
   /** Controls Redux action logging verbosity in dev mode. See {@link ReduxLogLevel}. */
   reduxLogLevel?: ReduxLogLevel;
-
-  /**
-   * Fetch and parse an externally hosted dataset (CSV, GeoJSON, Arrow, Parquet).
-   * Registered by `@kepler.gl/processors` so `@kepler.gl/table` can reload
-   * `externally-hosted` datasets from a saved map config without a circular import.
-   */
-  loadExternallyHostedDataset?: (metadata: {
-    source: string;
-    format?: string;
-    size?: number;
-  }) => Promise<{fields: any[]; rows: any[][]; cols?: any[]; arrowTable?: any}>;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -330,11 +319,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   customIconUrl: '',
 
-  reduxLogLevel: 1,
-
-  loadExternallyHostedDataset: async () => {
-    throw new Error('Remote dataset loader is not initialized');
-  }
+  reduxLogLevel: 1
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;
