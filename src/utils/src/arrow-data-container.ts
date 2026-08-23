@@ -139,7 +139,6 @@ const DEFAULT_MAX_ARROW_BATCHES = 255;
  * `maxArrowBatches` from {@link getApplicationConfig} (or the optional override).
  */
 export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number): arrow.Table {
-  const batchCount = table?.batches?.length ?? 0;
   const batchLimit =
     maxArrowBatches ?? getApplicationConfig().maxArrowBatches ?? DEFAULT_MAX_ARROW_BATCHES;
 
@@ -168,37 +167,13 @@ export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number):
     const compacted = tableFromCompactedColumns(table, columns);
 
     if (compacted?.batches?.length && compacted.batches.length < table.batches.length) {
-      console.log('[kepler.gl] Arrow batches', {
-        count: batchCount,
-        maxArrowBatches: batchLimit,
-        collapsed: true,
-        after: compacted.batches.length,
-        hasGeoMetadata: hasArrowGeoMetadata(compacted.schema)
-      });
       return compacted;
     }
   } catch {
     // Keep the original table if this Arrow build cannot combine chunks.
   }
 
-  console.log('[kepler.gl] Arrow batches', {
-    count: batchCount,
-    maxArrowBatches: batchLimit,
-    collapsed: false
-  });
   return table;
-}
-
-function hasArrowGeoMetadata(schema?: arrow.Schema | null): boolean {
-  if (!schema) {
-    return false;
-  }
-  if (schema.metadata?.get?.('geo')) {
-    return true;
-  }
-  return (schema.fields || []).some(field =>
-    Boolean(field.metadata?.get?.('ARROW:extension:name')?.startsWith?.('geoarrow'))
-  );
 }
 
 function copyArrowSchemaMetadata(from?: arrow.Schema | null, to?: arrow.Schema | null): void {
