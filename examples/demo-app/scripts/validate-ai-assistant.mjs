@@ -426,6 +426,89 @@ async function main() {
     duckdbOnly.error);
 
   // =====================================================================
+  // MCP contract checks (P1.6) — pins the registry as an exportable contract
+  // =====================================================================
+  // 1. Schema export (pins P1.1): every registered command exposes a valid
+  //    inputSchema (JSON Schema) via listCommands({includeInputSchema:true}).
+  // 2. Policy metadata (pins P1.3): every command carries non-default policy
+  //    metadata (riskLevel / requiresConfirmation / readOnly).
+  // 3. Output shape (pins P1.2): no renderer-only field (histogramData,
+  //    barDataIndexes, source, meanPoint) appears at the top level of a tool
+  //    result — renderer payloads live under `__ui` and must not leak to MCP.
+  const contractChecks = await page.evaluate(async ({bartUrl}) => {
+    const store = window.__keplerRoomStore;
+    const invoke = (id, input) => store.getState().commands.invokeCommand(id, input);
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const out = {schemaErrors: [], policyErrors: [], outputLeaks: []};
+
+    // (1) Schema export
+    try {
+      const descs = store.getState().commands.listCommands({includeInputSchema: true});
+      for (const d of descs) {
+        if (!d.inputSchema || !d.inputSchema.type || !d.inputSchema.properties) {
+          out.schemaErrors.push(`${d.id}: missing/invalid JSON Schema`);
+        }
+      }
+    } catch (e) {
+      out.schemaErrors.push(`listCommands threw: ${e && e.message ? e.message : e}`);
+    }
+
+    // (2) Policy metadata (non-default)
+    try {
+      const descs = store.getState().commands.listCommands();
+      const DEFAULT_RISK = 'low';
+      for (const d of descs) {
+        if (d.riskLevel === DEFAULT_RISK && !d.requiresConfirmation && d.readOnly === false) {
+          out.policyErrors.push(`${d.id}: default policy metadata (riskLevel=${d.riskLevel})`);
+        }
+        // map.load-data and map.save-data must require confirmation (security)
+        if ((d.id === 'map.load-data' || d.id === 'map.save-data') && !d.requiresConfirmation) {
+          out.policyErrors.push(`${d.id}: must require confirmation`);
+        }
+      }
+    } catch (e) {
+      out.policyErrors.push(`listCommands threw: ${e && e.message ? e.message : e}`);
+    }
+
+    // (3) Output shape — chart.histogram result must not leak renderer fields
+    const load = await invoke('map.load-data', {url: bartUrl});
+    if (load.success) await sleep(3000);
+    const dsCtx = (await invoke('map.get-dataset-context', {})).data;
+    const ds = dsCtx?.datasets?.[0];
+    const datasetName = ds?.datasetName;
+    // ds.fields is an array of {fieldName: type}; pick the first numeric field
+    const numericFieldEntry = (ds?.fields || []).find(f => {
+      const type = String(Object.values(f || {})[0] || '');
+      return /real|integer|float|int|bigint/i.test(type);
+    });
+    const numericField = numericFieldEntry ? Object.keys(numericFieldEntry)[0] : 'zipcode';
+    const hist = await invoke('chart.histogram', {
+      datasetName,
+      variableName: numericField || 'zipcode'
+    });
+    const data = hist.data;
+    if (data) {
+      const leaked = ['histogramData', 'barDataIndexes', 'source', 'meanPoint'].filter(
+        k => k in data
+      );
+      if (leaked.length) out.outputLeaks.push(`chart.histogram leaked: ${leaked.join(', ')}`);
+      if (!data.__ui || !data.__ui.histogramData) {
+        out.outputLeaks.push('chart.histogram __ui.histogramData missing');
+      }
+    } else {
+      out.outputLeaks.push(`chart.histogram returned no data (${hist.error || 'no error'})`);
+    }
+    return out;
+  }, {bartUrl: BART_URL});
+
+  check('MCP: every command exports valid JSON Schema (P1.1)',
+    contractChecks.schemaErrors.length === 0, contractChecks.schemaErrors.join('; '));
+  check('MCP: every command carries non-default policy metadata (P1.3)',
+    contractChecks.policyErrors.length === 0, contractChecks.policyErrors.join('; '));
+  check('MCP: no renderer-only field leaks in tool results (P1.2)',
+    contractChecks.outputLeaks.length === 0, contractChecks.outputLeaks.join('; '));
+
+  // =====================================================================
   // Lab Chapter 1 — Spatial Data Wrangling (1): Basic Operations
   // =====================================================================
   const ch1 = await runChapter(page, async ({usStatesUrl, bartUrl, citiesUrl}) => {
@@ -743,7 +826,7 @@ async function main() {
     const r3 = await invoke('chart.histogram', {
       datasetName: 'us-states.json', variableName: 'density', numberOfBins: 4
     });
-    out.histogram = {success: r3.success, bins: r3.data?.histogramData?.length, total: r3.data?.totalValues, error: r3.error};
+    out.histogram = {success: r3.success, bins: r3.data?.__ui?.histogramData?.length, total: r3.data?.totalValues, error: r3.error};
     await sleep(1000);
 
     return out;
