@@ -174,8 +174,25 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
       return;
     }
     if (user) {
-      setProvider(provider);
-      return;
+      // Re-check on click: mount-time getUser() can go stale if the modal stays
+      // open past token expiry. If the session is gone, fall through to login()
+      // (this click is a user gesture, so an OAuth popup is allowed).
+      setError(null);
+      setIsLoading(true);
+      let currentUser: CloudUser | null = null;
+      try {
+        currentUser = await provider.getUser();
+      } catch {
+        currentUser = null;
+      }
+      if (currentUser) {
+        setUser(currentUser);
+        setIsLoading(false);
+        setProvider(provider);
+        return;
+      }
+      setUser(null);
+      setIsLoading(false);
     }
     const nextUser = await onLogin();
     if (!nextUser) {

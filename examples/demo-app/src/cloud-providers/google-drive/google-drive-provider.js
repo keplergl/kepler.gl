@@ -13,10 +13,11 @@ const MIME_JSON = 'application/json';
 const MIME_PNG = 'image/png';
 const DRIVE_API = 'https://www.googleapis.com/drive/v3';
 const DRIVE_UPLOAD_API = 'https://www.googleapis.com/upload/drive/v3';
-const USERINFO_API = 'https://www.googleapis.com/oauth2/v3/userinfo';
 const GIS_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
-const SCOPES = [DRIVE_SCOPE, 'openid', 'profile', 'email'].join(' ');
+// Drive only — openid/profile/email adds a separate "Sign in to Kepler.gl" step
+// that races with Drive consent and often ends as popup_closed. User info comes
+// from Drive about.get instead.
 
 const PRIVATE_STORAGE_ENABLED = true;
 const SHARING_ENABLED = false;
@@ -136,18 +137,13 @@ export default class GoogleDriveProvider extends Provider {
     // GIS TokenClient always opens a popup; only login() (user click) may call it.
     // Prior session: prompt '' refreshes without the account picker (popup may flash
     // and auto-close). First login: select_account so the user can pick an account.
-    // Google may grant Sign-In scopes but not Drive (granular consent) — verify and re-ask.
+    // One GIS request only — a second requestAccessToken (Drive consent retry)
+    // races with the still-open first popup and surfaces as popup_closed.
     const stored = this._readStorage();
     const hadSession = Boolean(stored?.token || stored?.user);
-    let tokenResponse = await this._requestAccessToken({
+    const tokenResponse = await this._requestAccessToken({
       prompt: hadSession ? '' : 'select_account'
     });
-    if (!this._hasDriveScope(tokenResponse)) {
-      tokenResponse = await this._requestAccessToken({
-        prompt: 'consent',
-        scope: DRIVE_SCOPE
-      });
-    }
     if (!this._hasDriveScope(tokenResponse)) {
       throw new Error(
         'Google Drive access was not granted. On the consent screen, allow Google Drive / See, edit, create, and delete only the specific Google Drive files you use with this app.'
@@ -164,12 +160,9 @@ export default class GoogleDriveProvider extends Provider {
   }
 
   async logout() {
-    const token = this._accessToken || this._readStorage()?.token;
-    if (token && window.google?.accounts?.oauth2?.revoke) {
-      await new Promise(resolve => {
-        window.google.accounts.oauth2.revoke(token, resolve);
-      });
-    }
+    // Do not GIS-revoke: revoke forces a full re-consent on the next login
+    // ("Kepler.gl wants access…") and that multi-step popup often closes
+    // without delivering a token. Clearing the local session is enough.
     this._accessToken = null;
     this._folderId = null;
     this._shareUrl = null;
@@ -365,7 +358,7 @@ export default class GoogleDriveProvider extends Provider {
       // callback is set per request in _requestAccessToken
       this._tokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: this.clientId,
-        scope: SCOPES,
+        scope: DRIVE_SCOPE,
         callback: () => {}
       });
     }
@@ -385,9 +378,23 @@ export default class GoogleDriveProvider extends Provider {
   _requestAccessToken({prompt, scope} = {}) {
     const run = () =>
       new Promise((resolve, reject) => {
+        let settled = false;
+        let popupClosedTimer = null;
+
+        const settle = (fn, value) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          if (popupClosedTimer) {
+            clearTimeout(popupClosedTimer);
+          }
+          fn(value);
+        };
+
         this._tokenClient.callback = response => {
           if (response.error) {
-            reject(new Error(response.error_description || response.error));
+            settle(reject, new Error(response.error_description || response.error));
             return;
           }
           this._accessToken = response.access_token;
@@ -398,10 +405,27 @@ export default class GoogleDriveProvider extends Provider {
             scope: response.scope,
             user: this._readStorage()?.user
           });
-          resolve(response);
+          settle(resolve, response);
         };
+        let silentRetry = false;
         this._tokenClient.error_callback = error => {
-          reject(new Error(error?.type || 'Google OAuth error'));
+          // After a completed consent, GIS often fires popup_closed instead of
+          // callback. Ask once with prompt '' to pick up the grant (brief flash).
+          if (error?.type === 'popup_closed' && !silentRetry) {
+            silentRetry = true;
+            this._tokenClient.requestAccessToken({prompt: ''});
+            return;
+          }
+          if (error?.type === 'popup_closed') {
+            popupClosedTimer = setTimeout(() => {
+              settle(
+                reject,
+                new Error('Google sign-in was closed before finishing. Click Login to try again.')
+              );
+            }, 1500);
+            return;
+          }
+          settle(reject, new Error(error?.type || 'Google OAuth error'));
         };
         const overrides = {};
         if (prompt !== undefined) {
@@ -423,17 +447,12 @@ export default class GoogleDriveProvider extends Provider {
   }
 
   async _fetchUser(token) {
-    const response = await fetch(USERINFO_API, {
-      headers: {Authorization: `Bearer ${token}`}
-    });
-    if (!response.ok) {
-      throw new Error('Failed to fetch Google user profile');
-    }
-    const profile = await response.json();
+    const data = await this._driveFetch(`${DRIVE_API}/about?fields=user`, {token});
+    const user = data.user || {};
     return {
-      name: profile.name || profile.email || 'Google User',
-      email: profile.email || '',
-      thumbnail: profile.picture
+      name: user.displayName || user.emailAddress || 'Google User',
+      email: user.emailAddress || '',
+      thumbnail: user.photoLink
     };
   }
 
