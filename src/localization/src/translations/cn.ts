@@ -474,6 +474,9 @@ export default {
       title: '云存储',
       subtitle: '登录以将地图保存到个人云存储'
     },
+    providerSelect: {
+      disclaimer: '请使用您自己的账号登录。地图保存在您所选提供商的个人云存储中，而非 Kepler.gl。'
+    },
     exportMap: {
       formatTitle: '地图的格式',
       formatSubtitle: '选择导出地图的格式',

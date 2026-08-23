@@ -487,6 +487,10 @@ export default {
       title: 'Pilvitallennus',
       subtitle: 'Kirjaudu sisään pilvipalveluusi tallentaaksesi kartan'
     },
+    providerSelect: {
+      disclaimer:
+        'Kirjaudu omalla tililläsi. Kartat tallennetaan valitsemasi palvelun henkilökohtaiseen pilveen, ei Kepler.gl:ään.'
+    },
     exportMap: {
       formatTitle: 'Kartan formaatti',
       formatSubtitle: 'Valitse formaatti, jossa viet kartan',

@@ -379,22 +379,22 @@ export default class GoogleDriveProvider extends Provider {
     const run = () =>
       new Promise((resolve, reject) => {
         let settled = false;
-        let popupClosedTimer = null;
 
         const settle = (fn, value) => {
           if (settled) {
             return;
           }
           settled = true;
-          if (popupClosedTimer) {
-            clearTimeout(popupClosedTimer);
-          }
           fn(value);
         };
 
         this._tokenClient.callback = response => {
           if (response.error) {
             settle(reject, new Error(response.error_description || response.error));
+            return;
+          }
+          // Ignore a token that arrives after the user closed the popup.
+          if (settled) {
             return;
           }
           this._accessToken = response.access_token;
@@ -407,25 +407,18 @@ export default class GoogleDriveProvider extends Provider {
           });
           settle(resolve, response);
         };
-        let silentRetry = false;
         this._tokenClient.error_callback = error => {
-          // After a completed consent, GIS often fires popup_closed instead of
-          // callback. Ask once with prompt '' to pick up the grant (brief flash).
-          if (error?.type === 'popup_closed' && !silentRetry) {
-            silentRetry = true;
-            this._tokenClient.requestAccessToken({prompt: ''});
-            return;
-          }
-          if (error?.type === 'popup_closed') {
-            popupClosedTimer = setTimeout(() => {
-              settle(
-                reject,
-                new Error('Google sign-in was closed before finishing. Click Login to try again.')
-              );
-            }, 1500);
-            return;
-          }
-          settle(reject, new Error(error?.type || 'Google OAuth error'));
+          // Treat popup_closed as cancel. Do not wait for a late token (leftover
+          // grant can look like success) and do not call requestAccessToken again
+          // (not a user gesture; a blocked popup can hang the token chain).
+          settle(
+            reject,
+            new Error(
+              error?.type === 'popup_closed'
+                ? 'Google sign-in was closed before finishing. Click Login to try again.'
+                : error?.type || 'Google OAuth error'
+            )
+          );
         };
         const overrides = {};
         if (prompt !== undefined) {
