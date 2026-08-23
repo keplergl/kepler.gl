@@ -831,7 +831,9 @@ export function isInRange(val: any, domain: number[]): boolean {
  * @return {boolean}
  */
 export function isInPolygon(point: number[], polygon: any): boolean {
-  return booleanWithin(turfPoint(point), polygon);
+  // turfPoint requires a plain array; Arrow accessors can return typed arrays
+  const lngLat = Array.isArray(point) ? point : [Number(point[0]), Number(point[1])];
+  return booleanWithin(turfPoint(lngLat), polygon);
 }
 export function getTimeWidgetTitleFormatter(domain: [number, number]): string | null {
   if (!isValidTimeDomain(domain)) {
