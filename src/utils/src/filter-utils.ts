@@ -377,8 +377,13 @@ export function getFilterProps(
 }
 
 function hasFiniteLngLat(pos: unknown): pos is number[] {
+  const values = pos as {length?: number; 0?: unknown; 1?: unknown} | null;
   return (
-    Array.isArray(pos) && pos.length >= 2 && Number.isFinite(pos[0]) && Number.isFinite(pos[1])
+    Boolean(values) &&
+    (Array.isArray(pos) || ArrayBuffer.isView(pos)) &&
+    (values as {length: number}).length >= 2 &&
+    Number.isFinite(Number(values[0])) &&
+    Number.isFinite(Number(values[1]))
   );
 }
 

@@ -231,7 +231,7 @@ export type KeplerApplicationConfig = {
    * initApplicationConfig({maxArrowBatches: 64});
    * ```
    */
-    maxArrowBatches?: number;
+  maxArrowBatches?: number;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {

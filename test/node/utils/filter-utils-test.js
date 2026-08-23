@@ -849,6 +849,11 @@ test('filterUtils -> getPolygonFilterFunctor -> point layer ignores non-finite a
     false,
     'null altitude should not include a point outside'
   );
+  t.equal(
+    fn({position: new Float64Array([0.5, 0.5, 0])}),
+    true,
+    'typed-array lng/lat should be treated as a valid position'
+  );
 
   t.end();
 });
