@@ -20,6 +20,7 @@ import {ProcessorResult, Field} from '@kepler.gl/types';
 import {
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,
+  compactArrowTable,
   hasOwnProperty,
   isPlainObject
 } from '@kepler.gl/utils';
@@ -626,7 +627,7 @@ export function processArrowBatches(arrowBatches: arrow.RecordBatch[]): Processo
   if (arrowBatches.length === 0) {
     return null;
   }
-  const arrowTable = castBigIntColumnsToFloat64(new arrow.Table(arrowBatches));
+  const arrowTable = compactArrowTable(castBigIntColumnsToFloat64(new arrow.Table(arrowBatches)));
   const fields = arrowSchemaToFields(arrowTable);
 
   const cols = [...Array(arrowTable.numCols).keys()].map(i => arrowTable.getChildAt(i));

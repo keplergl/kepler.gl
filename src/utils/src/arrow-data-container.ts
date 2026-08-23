@@ -7,6 +7,7 @@ import * as arrow from 'apache-arrow';
 import {console as globalConsole} from 'global/window';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 
+import {getApplicationConfig} from './application-config';
 import {DataContainerInterface, RangeOptions} from './data-container-interface';
 import {DataRow, SharedRowOptions} from './data-row';
 
@@ -120,6 +121,98 @@ function* columnIterator(dataContainer: DataContainerInterface, columnIndex: num
   }
 }
 
+const DEFAULT_MAX_ARROW_BATCHES = 255;
+
+/**
+ * Collapse Arrow record batches into as few chunks as possible.
+ *
+ * Deck.gl picking encodes at most 255 pickable leaf layers. Kepler creates one
+ * Deck layer per Arrow record batch (and GeoJsonLayer adds fill/stroke/point
+ * sublayers), so parquet/DuckDB tables with hundreds of batches make hover and
+ * click miss most of the data. Combining chunks keeps picking under that cap
+ * without changing row values.
+ *
+ * apache-arrow JS does not expose Vector.combineChunks in the version Kepler
+ * uses, so we rebuild each column through a Builder (one chunk per column).
+ *
+ * Compaction only runs when `table.batches.length` is greater than
+ * `maxArrowBatches` from {@link getApplicationConfig} (or the optional override).
+ */
+export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number): arrow.Table {
+  if (!table || !Array.isArray(table.batches) || table.batches.length <= 1) {
+    return table;
+  }
+
+  const batchLimit =
+    maxArrowBatches ?? getApplicationConfig().maxArrowBatches ?? DEFAULT_MAX_ARROW_BATCHES;
+  if (table.batches.length <= batchLimit) {
+    return table;
+  }
+
+  try {
+    const columns: Record<string, arrow.Vector> = {};
+    for (let i = 0; i < table.numCols; i++) {
+      const field = table.schema.fields[i];
+      const column = table.getChildAt(i);
+      if (!column) {
+        continue;
+      }
+      columns[field.name] = compactArrowVector(column, field.type);
+    }
+
+    const TableClass = table.constructor as typeof arrow.Table;
+    let compacted: arrow.Table;
+    try {
+      compacted = new TableClass(columns);
+    } catch {
+      compacted = new TableClass(table.schema, columns);
+    }
+
+    if (compacted?.batches?.length && compacted.batches.length < table.batches.length) {
+      return compacted;
+    }
+  } catch {
+    // Keep the original table if this Arrow build cannot combine chunks.
+  }
+
+  return table;
+}
+
+function compactArrowVector(column: arrow.Vector, type: arrow.DataType = column.type): arrow.Vector {
+  if (!column || !column.data || column.data.length <= 1) {
+    return column;
+  }
+
+  const maybeCombine = (column as {combineChunks?: () => arrow.Vector}).combineChunks;
+  if (typeof maybeCombine === 'function') {
+    try {
+      const combined = maybeCombine.call(column);
+      if (combined?.data?.length <= 1) {
+        return combined;
+      }
+    } catch {
+      // fall through to Builder
+    }
+  }
+
+  const builder = arrow.makeBuilder({type, nullValues: [null]});
+  const length = column.length;
+  for (let i = 0; i < length; i++) {
+    const isValid = typeof (column as {isValid?: (index: number) => boolean}).isValid === 'function'
+      ? (column as {isValid: (index: number) => boolean}).isValid(i)
+      : true;
+    builder.append(isValid ? column.get(i) : null);
+  }
+  const finished = builder.finish() as arrow.Vector | {toVector: () => arrow.Vector};
+  if (finished instanceof arrow.Vector) {
+    return finished;
+  }
+  if (typeof (finished as {toVector?: () => arrow.Vector}).toVector === 'function') {
+    return (finished as {toVector: () => arrow.Vector}).toVector();
+  }
+  return column;
+}
+
 /**
  * A data container where all data is stored in raw Arrow table
  */
@@ -144,14 +237,17 @@ export class ArrowDataContainer implements DataContainerInterface {
       throw Error("ArrowDataContainer: columns object isn't an array");
     }
 
-    this._cols = data.cols;
-    this._numColumns = data.cols.length;
-    this._numRows = data.cols[0].length;
     this._fields = data.fields || [];
-    this._numChunks = data.cols[0].data.length;
-    // this._colData = data.cols.map(c => c.toArray());
-
-    this._arrowTable = data.arrowTable || this._createTable();
+    this._cols = data.cols;
+    this._numColumns = this._cols.length;
+    this._numRows = this._cols[0]?.length ?? 0;
+    this._numChunks = this._cols[0]?.data?.length ?? 0;
+    const table = compactArrowTable(data.arrowTable || this._createTable());
+    if (table.numCols > 0) {
+      this._assignTable(table);
+    } else {
+      this._arrowTable = table;
+    }
   }
 
   /**
@@ -170,20 +266,33 @@ export class ArrowDataContainer implements DataContainerInterface {
     return this._arrowTable;
   }
 
+  private _assignTable(table: arrow.Table) {
+    this._arrowTable = table;
+    this._cols = Array.from(
+      {length: table.numCols},
+      (_, i) => table.getChildAt(i) as arrow.Vector
+    ).filter(col => col);
+    this._numColumns = this._cols.length;
+    this._numRows = this._cols[0]?.length ?? 0;
+    this._numChunks = this._cols[0]?.data?.length ?? 0;
+  }
+
   update(updateData: arrow.Vector<any>[] | arrow.Table) {
     const isArrow = isArrowTable(updateData);
     if (isArrow) {
-      this._cols = Array.from(
-        {length: updateData.numCols},
-        (_, i) => updateData.getChildAt(i) as arrow.Vector
-      ).filter(col => col);
+      this._assignTable(compactArrowTable(updateData));
     } else {
       this._cols = updateData;
+      const table = compactArrowTable(this._createTable());
+      if (table.numCols > 0) {
+        this._assignTable(table);
+      } else {
+        this._numColumns = this._cols.length;
+        this._numRows = this._cols[0]?.length ?? 0;
+        this._numChunks = this._cols[0]?.data?.length ?? 0;
+        this._arrowTable = table;
+      }
     }
-    this._numColumns = this._cols?.length ?? 0;
-    this._numRows = this._cols?.[0]?.length ?? 0;
-    this._numChunks = this._cols?.[0]?.data?.length ?? 0;
-    this._arrowTable = isArrow ? updateData : this._createTable();
 
     // cache column data to make valueAt() faster
     // this._colData = this._cols.map(c => c.toArray());

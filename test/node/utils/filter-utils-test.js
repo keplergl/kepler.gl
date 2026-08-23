@@ -804,3 +804,51 @@ test('filterUtils -> getPolygonFilterFunctor -> aggregation layers (grid/hexagon
 
   t.end();
 });
+
+test('filterUtils -> getPolygonFilterFunctor -> point layer ignores non-finite altitude', t => {
+  const squarePolygon = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-1, -1],
+          [1, -1],
+          [1, 1],
+          [-1, 1],
+          [-1, -1]
+        ]
+      ]
+    }
+  };
+
+  const filter = {value: squarePolygon};
+  const layer = {
+    type: 'point',
+    config: {columnMode: 'points'},
+    getPositionAccessor: () => d => d.position,
+    dataToFeature: []
+  };
+
+  const fn = getPolygonFilterFunctor(layer, filter, null);
+
+  t.equal(fn({position: [0.5, 0.5, 0]}), true, 'finite altitude should keep a point inside');
+  t.equal(
+    fn({position: [0.5, 0.5, null]}),
+    true,
+    'null altitude should not exclude a valid lng/lat'
+  );
+  t.equal(
+    fn({position: [0.5, 0.5, undefined]}),
+    true,
+    'undefined altitude should not exclude a valid lng/lat'
+  );
+  t.equal(
+    fn({position: [10, 10, null]}),
+    false,
+    'null altitude should not include a point outside'
+  );
+
+  t.end();
+});

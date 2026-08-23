@@ -3,7 +3,8 @@
 
 import test from 'tape';
 
-import {createDataContainer, createIndexedDataContainer} from '@kepler.gl/utils';
+import {createDataContainer, createIndexedDataContainer, compactArrowTable, ArrowDataContainer} from '@kepler.gl/utils';
+import * as arrow from 'apache-arrow';
 
 const data = [
   [10, 20], // 0
@@ -117,6 +118,43 @@ test('IndexedDataContainer', t => {
     270,
     `RowDataContainer.reduce should return expected value`
   );
+
+  t.end();
+});
+
+test('ArrowDataContainer -> compactArrowTable collapses record batches over the limit', t => {
+  const batchA = arrow.tableFromJSON([{lng: -122.4, lat: 37.8}]);
+  const batchB = arrow.tableFromJSON([{lng: -122.5, lat: 37.9}]);
+  const combined = batchA.concat(batchB);
+
+  t.ok(combined.batches.length > 1, 'fixture should have multiple record batches');
+
+  const belowLimit = compactArrowTable(combined, 255);
+  t.equal(
+    belowLimit.batches.length,
+    combined.batches.length,
+    'compactArrowTable should leave tables at or under maxArrowBatches unchanged'
+  );
+
+  const compacted = compactArrowTable(combined, 1);
+  t.equal(compacted.numRows, 2, 'compactArrowTable should keep all rows');
+  t.equal(compacted.batches.length, 1, 'compactArrowTable should collapse into one batch');
+
+  const cols = Array.from({length: combined.numCols}, (_, i) => combined.getChildAt(i)).filter(
+    Boolean
+  );
+  const arrowDc = new ArrowDataContainer({
+    cols,
+    fields: combined.schema.fields.map((field, fieldIdx) => ({
+      name: field.name,
+      fieldIdx
+    })),
+    arrowTable: compactArrowTable(combined, 1)
+  });
+
+  t.equal(arrowDc.numRows(), 2, 'ArrowDataContainer should keep all rows');
+  t.equal(arrowDc.numChunks(), 1, 'ArrowDataContainer should store a compacted table');
+  t.deepEqual(arrowDc.valueAt(0, 0), -122.4, 'compacted container should preserve values');
 
   t.end();
 });

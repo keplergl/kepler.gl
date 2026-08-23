@@ -31,7 +31,11 @@ import {
   BinaryPolygonFeature
 } from '@loaders.gl/schema';
 
-import {DeckGlGeoTypes, GeojsonDataMaps} from './geojson-layer/geojson-utils';
+import {
+  DeckGlGeoTypes,
+  GeojsonDataMaps,
+  getCentroidFromGeometry
+} from './geojson-layer/geojson-utils';
 
 export type FindDefaultLayerProps = {
   label: string;
@@ -87,7 +91,7 @@ function getBinaryGeometriesFromWKBArrow(
   geoColumn: arrow.Vector,
   options: {chunkIndex?: number; chunkOffset?: number}
 ): GeojsonLayerMetaProps {
-  const dataToFeature: BinaryFeatureCollection[] = [];
+  const centroids: Array<number[] | null> = [];
   const featureTypes: GeojsonLayerMetaProps['featureTypes'] = {
     point: false,
     line: false,
@@ -102,8 +106,8 @@ function getBinaryGeometriesFromWKBArrow(
   let featureIndex = globalFeatureIdOffset;
   let bounds: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
 
+  const geojsonFeatures: Feature[] = [];
   chunks.forEach(chunk => {
-    const geojsonFeatures: Feature[] = [];
     for (let i = 0; i < chunk.length; ++i) {
       // ignore features without any geometry
       if (chunk.valueOffsets[i + 1] - chunk.valueOffsets[i] > 0) {
@@ -118,54 +122,57 @@ function getBinaryGeometriesFromWKBArrow(
           properties: {index: featureIndex}
         };
         geojsonFeatures.push(feature);
+        centroids.push(getCentroidFromGeometry(geometry));
 
         const {type} = geometry;
         featureTypes.polygon = type === 'Polygon' || type === 'MultiPolygon';
         featureTypes.point = type === 'Point' || type === 'MultiPoint';
         featureTypes.line = type === 'LineString' || type === 'MultiLineString';
+      } else {
+        centroids.push(null);
       }
 
       featureIndex++;
     }
+  });
 
-    const geojsonToBinaryOptions = {
-      triangulate: true,
-      fixRingWinding: true
-    };
-    const binaryFeatures = geojsonToBinary(geojsonFeatures, geojsonToBinaryOptions);
+  // One BinaryFeatureCollection for the whole column. A collection per Arrow
+  // chunk becomes one GeoJsonLayer (with fill/stroke/point sublayers) each, and
+  // parquet/DuckDB files easily exceed deck.gl's 255 pickable-layer cap.
+  const geojsonToBinaryOptions = {
+    triangulate: true,
+    fixRingWinding: true
+  };
+  const binaryFeatures = geojsonToBinary(geojsonFeatures, geojsonToBinaryOptions);
 
-    // Need to update globalFeatureIds, to take into account previous batches,
-    // as geojsonToBinary doesn't have such option.
-    const featureTypesArr = ['points', 'lines', 'polygons'];
-    featureTypesArr.forEach(prop => {
-      const features = binaryFeatures[prop] as
-        | BinaryPointFeature
-        | BinaryLineFeature
-        | BinaryPolygonFeature;
-      if (features) {
-        bounds = updateBoundsFromGeoArrowSamples(
-          features.positions.value as Float64Array,
-          features.positions.size,
-          bounds
-        );
+  const featureTypesArr = ['points', 'lines', 'polygons'];
+  featureTypesArr.forEach(prop => {
+    const features = binaryFeatures[prop] as
+      | BinaryPointFeature
+      | BinaryLineFeature
+      | BinaryPolygonFeature;
+    if (features) {
+      bounds = updateBoundsFromGeoArrowSamples(
+        features.positions.value as Float64Array,
+        features.positions.size,
+        bounds
+      );
 
-        const {globalFeatureIds, numericProps} = features;
-        const {index} = numericProps;
-        const len = globalFeatureIds.value.length;
-        for (let i = 0; i < len; ++i) {
-          globalFeatureIds.value[i] = index.value[i];
-        }
+      const {globalFeatureIds, numericProps} = features;
+      const {index} = numericProps;
+      const len = globalFeatureIds.value.length;
+      for (let i = 0; i < len; ++i) {
+        globalFeatureIds.value[i] = index.value[i];
       }
-    });
-
-    dataToFeature.push(binaryFeatures);
+    }
   });
 
   return {
-    dataToFeature: dataToFeature,
+    dataToFeature: [binaryFeatures],
     featureTypes: featureTypes,
     bounds,
-    fixedRadius: false
+    fixedRadius: false,
+    centroids
   };
 }
 
@@ -291,6 +298,38 @@ export function getGeoArrowPointFields(fields: Field[]): Field[] {
 }
 
 /**
+ * Reads lng/lat from a GeoArrow point cell. Arrow may return a FixedSizeList
+ * (with .get), a typed array, a plain [lng, lat] array, or a {x,y} struct.
+ */
+export function getGeoArrowPointCoords(row: any): [number, number, number] {
+  if (row == null) {
+    return [NaN, NaN, 0];
+  }
+  if (typeof row.get === 'function') {
+    const x = row.get(0) ?? row.get('x') ?? row.get('lng') ?? row.get('lon');
+    const y = row.get(1) ?? row.get('y') ?? row.get('lat');
+    if (Number.isFinite(x) && Number.isFinite(y)) {
+      return [Number(x), Number(y), 0];
+    }
+  }
+  if (typeof row.toArray === 'function') {
+    const arr = row.toArray();
+    return [Number(arr[0]), Number(arr[1]), 0];
+  }
+  if (Array.isArray(row) || ArrayBuffer.isView(row)) {
+    return [Number(row[0]), Number(row[1]), 0];
+  }
+  if (typeof row === 'object') {
+    const x = row.x ?? row.lng ?? row.lon;
+    const y = row.y ?? row.lat;
+    if (x !== undefined && y !== undefined) {
+      return [Number(x), Number(y), 0];
+    }
+  }
+  return [NaN, NaN, 0];
+}
+
+/**
  * Builds an arrow vector compatible with ARROW:extension:name geoarrow.point.
  * @param getPosition Position accessor.
  * @param numElements Number of elements in the vector.
@@ -305,7 +344,6 @@ export function createGeoArrowPointVector(
   // in a correct arrow format, as this approach seems too excessive for just a simple interleaved buffer.
 
   const numElements = dataContainer.numRows();
-  const table = dataContainer.getTable();
 
   const numCoords = numElements > 0 ? getPosition({index: 0}).length : 2;
   const precision = 2;
@@ -319,21 +357,16 @@ export function createGeoArrowPointVector(
   const fixedSizeListBuilder = new arrow.FixedSizeListBuilder({type: fixedSizeList});
   fixedSizeListBuilder.addChild(floatBuilder);
 
-  const assembledBatches: arrow.Data[] = [];
+  // One record batch, not one per source batch: a batch per parquet/DuckDB
+  // chunk would create hundreds of pickable ScatterplotLayers and hit deck.gl's
+  // 255-layer picking cap.
   const indexData = {index: 0};
-  for (let batchIndex = 0; batchIndex < table.batches.length; ++batchIndex) {
-    const numRowsInBatch = table.batches[batchIndex].numRows;
-
-    for (let i = 0; i < numRowsInBatch; ++i) {
-      const pos = getPosition(indexData);
-      fixedSizeListBuilder.append(pos);
-
-      ++indexData.index;
-    }
-    assembledBatches.push(fixedSizeListBuilder.flush());
+  for (let i = 0; i < numElements; ++i) {
+    indexData.index = i;
+    fixedSizeListBuilder.append(getPosition(indexData));
   }
 
-  return arrow.makeVector(assembledBatches);
+  return arrow.makeVector(numElements > 0 ? [fixedSizeListBuilder.flush()] : []);
 }
 
 /**

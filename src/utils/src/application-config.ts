@@ -218,6 +218,20 @@ export type KeplerApplicationConfig = {
 
   /** Controls Redux action logging verbosity in dev mode. See {@link ReduxLogLevel}. */
   reduxLogLevel?: ReduxLogLevel;
+
+  /**
+   * If an Arrow/Parquet table has more record batches than this, they are
+   * compacted into a single batch. Deck.gl picking supports at most 255
+   * pickable layers, so the default is 255. Compacting copies the table, so
+   * raising this skips that cost for smaller files. Set to `0` to always
+   * compact; set a very large number to never compact.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({maxArrowBatches: 64});
+   * ```
+   */
+    maxArrowBatches?: number;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -311,7 +325,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   customIconUrl: '',
 
-  reduxLogLevel: 1
+  reduxLogLevel: 1,
+
+  maxArrowBatches: 255
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;

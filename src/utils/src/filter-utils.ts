@@ -376,6 +376,12 @@ export function getFilterProps(
   }
 }
 
+function hasFiniteLngLat(pos: unknown): pos is number[] {
+  return (
+    Array.isArray(pos) && pos.length >= 2 && Number.isFinite(pos[0]) && Number.isFinite(pos[1])
+  );
+}
+
 export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
   const getPosition = layer.getPositionAccessor(dataContainer);
 
@@ -388,22 +394,15 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
           if (!coordinates) return false;
           if (Array.isArray(coordinates[0])) {
             return (coordinates as number[][]).some(
-              coord =>
-                coord.length >= 2 &&
-                coord.every(Number.isFinite) &&
-                isInPolygon(coord, filter.value)
+              coord => hasFiniteLngLat(coord) && isInPolygon(coord, filter.value)
             );
           }
-          return (
-            coordinates.length >= 2 &&
-            coordinates.every(Number.isFinite) &&
-            isInPolygon(coordinates, filter.value)
-          );
+          return hasFiniteLngLat(coordinates) && isInPolygon(coordinates, filter.value);
         };
       }
       return data => {
         const pos = getPosition(data);
-        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+        return hasFiniteLngLat(pos) && isInPolygon(pos, filter.value);
       };
     case LAYER_TYPES.grid:
     case LAYER_TYPES.hexagon:
@@ -418,14 +417,14 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
       }
       return data => {
         const pos = getPosition(data);
-        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+        return hasFiniteLngLat(pos) && isInPolygon(pos, filter.value);
       };
     case LAYER_TYPES.arc:
     case LAYER_TYPES.line:
       return data => {
         const pos = getPosition(data);
         return (
-          pos.every(Number.isFinite) &&
+          hasFiniteLngLat(pos) &&
           [
             [pos[0], pos[1]],
             [pos[3], pos[4]]
@@ -446,7 +445,7 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
           return false;
         }
         const pos = getCentroid({id});
-        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+        return hasFiniteLngLat(pos) && isInPolygon(pos, filter.value);
       };
     case LAYER_TYPES.geojson:
       return data => {
@@ -461,7 +460,7 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
       }
       return data => {
         const pos = getPosition(data);
-        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+        return hasFiniteLngLat(pos) && isInPolygon(pos, filter.value);
       };
     default:
       return () => true;

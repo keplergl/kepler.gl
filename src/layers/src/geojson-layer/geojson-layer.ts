@@ -617,9 +617,20 @@ export default class GeoJsonLayer extends Layer {
       const geoField = geoFieldAccessor(this.config.columns)(dataContainer);
 
       // update the latest batch/chunk of geoarrow data when loading data incrementally
-      if (geoColumn && geoField && this.dataToFeature.length < dataContainer.numChunks()) {
-        // for incrementally loading data, we only load and render the latest batch; otherwise, we will load and render all batches
-        const isIncrementalLoad = dataContainer.numChunks() - this.dataToFeature.length === 1;
+      const processedRows = this.centroids.length;
+      if (
+        geoColumn &&
+        geoField &&
+        (this.dataToFeature.length < dataContainer.numChunks() ||
+          processedRows < dataContainer.numRows())
+      ) {
+        // Incremental only when a new chunk appeared. Compacted tables stay at 1
+        // chunk while row count grows, so those updates reprocess the whole table.
+        const isIncrementalLoad =
+          this.dataToFeature.length > 0 &&
+          dataContainer.numChunks() - this.dataToFeature.length === 1 &&
+          processedRows > 0 &&
+          processedRows < dataContainer.numRows();
         // TODO: add support for COLUMN_MODE_TABLE in getGeojsonLayerMetaFromArrow
         const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} =
           getGeojsonLayerMetaFromArrow({
@@ -628,9 +639,14 @@ export default class GeoJsonLayer extends Layer {
             geoField,
             ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
           });
-        if (centroids) this.centroids = this.centroids.concat(centroids);
+        if (isIncrementalLoad) {
+          if (centroids) this.centroids = this.centroids.concat(centroids);
+          this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
+        } else {
+          this.centroids = centroids || [];
+          this.dataToFeature = dataToFeature;
+        }
         this.updateMeta({bounds, fixedRadius, featureTypes});
-        this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
       }
     } else if (this.dataToFeature.length === 0 || this.config.columnMode === COLUMN_MODE_TABLE) {
       const getFeature = this.getPositionAccessor(dataContainer);
