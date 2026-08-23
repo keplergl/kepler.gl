@@ -181,6 +181,12 @@ export type KeplerApplicationConfig = {
   enableColumnStats?: boolean;
 
   /**
+   * Show a format dropdown next to the remote dataset URL field (Auto / CSV / GeoJSON / JSON / Arrow / Parquet).
+   * Useful for extensionless URLs such as Azure SAS blobs. Disabled by default.
+   */
+  enableRemoteFileFormatSelector?: boolean;
+
+  /**
    * Custom SVG icons to be made available in the icon layer.
    * These icons will be merged with the default icons fetched from CDN.
    * Each icon must have a unique `id` and a `mesh` describing its triangulated geometry.
@@ -306,6 +312,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableThemeToggle: false,
 
   enableColumnStats: true,
+
+  enableRemoteFileFormatSelector: false,
 
   customIcons: [],
 

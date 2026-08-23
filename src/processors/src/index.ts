@@ -3,4 +3,5 @@
 
 export * from './data-processor';
 export * from './file-handler';
+export * from './remote-file';
 export * from './types';

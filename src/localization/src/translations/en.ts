@@ -342,7 +342,8 @@ export default {
     rasterTile: 'Raster tile',
     wmsTile: 'WMS tile',
     tile3d: '3D tile',
-    bitmap: 'Bitmap image'
+    bitmap: 'Bitmap image',
+    remoteFile: '{rowCount} rows (remote)'
   },
   tooltip: {
     hideLayer: 'Hide layer',
@@ -796,8 +797,15 @@ ${'```'}
       'Upload {fileFormatNames} or saved map **Json**. Read more about [**supported file formats**]',
     browseFiles: 'browse your files',
     uploading: 'Uploading',
+    downloading: 'Downloading',
     fileNotSupported: 'File {errorFiles} is not supported.',
-    or: 'or'
+    or: 'or',
+    dropMessage: 'Drag & Drop Your File(s) Here, {browse}, or',
+    urlPlaceholder: 'Enter your dataset URL',
+    fetch: 'Fetch',
+    format: 'Format',
+    formatAuto: 'Auto',
+    cors: 'The URL must allow [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {
     header: 'Setup Vector Tiles',
