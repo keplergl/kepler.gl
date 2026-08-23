@@ -139,12 +139,14 @@ const DEFAULT_MAX_ARROW_BATCHES = 255;
  * `maxArrowBatches` from {@link getApplicationConfig} (or the optional override).
  */
 export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number): arrow.Table {
+  const batchCount = table?.batches?.length ?? 0;
+  const batchLimit =
+    maxArrowBatches ?? getApplicationConfig().maxArrowBatches ?? DEFAULT_MAX_ARROW_BATCHES;
+
   if (!table || !Array.isArray(table.batches) || table.batches.length <= 1) {
     return table;
   }
 
-  const batchLimit =
-    maxArrowBatches ?? getApplicationConfig().maxArrowBatches ?? DEFAULT_MAX_ARROW_BATCHES;
   if (table.batches.length <= batchLimit) {
     return table;
   }
@@ -160,22 +162,84 @@ export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number):
       columns[field.name] = compactArrowVector(column, field.type);
     }
 
-    const TableClass = table.constructor as typeof arrow.Table;
-    let compacted: arrow.Table;
-    try {
-      compacted = new TableClass(columns);
-    } catch {
-      compacted = new TableClass(table.schema, columns);
-    }
+    // Always build a kepler apache-arrow Table. Using `table.constructor` can
+    // mix DuckDB's bundled Arrow Table with rebuilt vectors and drop schema
+    // metadata (`geo`, ARROW:extension:name) that Kepler needs to create layers.
+    const compacted = tableFromCompactedColumns(table, columns);
 
     if (compacted?.batches?.length && compacted.batches.length < table.batches.length) {
+      console.log('[kepler.gl] Arrow batches', {
+        count: batchCount,
+        maxArrowBatches: batchLimit,
+        collapsed: true,
+        after: compacted.batches.length,
+        hasGeoMetadata: hasArrowGeoMetadata(compacted.schema)
+      });
       return compacted;
     }
   } catch {
     // Keep the original table if this Arrow build cannot combine chunks.
   }
 
+  console.log('[kepler.gl] Arrow batches', {
+    count: batchCount,
+    maxArrowBatches: batchLimit,
+    collapsed: false
+  });
   return table;
+}
+
+function hasArrowGeoMetadata(schema?: arrow.Schema | null): boolean {
+  if (!schema) {
+    return false;
+  }
+  if (schema.metadata?.get?.('geo')) {
+    return true;
+  }
+  return (schema.fields || []).some(field =>
+    Boolean(field.metadata?.get?.('ARROW:extension:name')?.startsWith?.('geoarrow'))
+  );
+}
+
+function copyArrowSchemaMetadata(from?: arrow.Schema | null, to?: arrow.Schema | null): void {
+  if (!from || !to) {
+    return;
+  }
+
+  const fromMeta = from.metadata as Map<string, string> | undefined;
+  const toMeta = to.metadata as Map<string, string> | undefined;
+  if (fromMeta && toMeta && typeof fromMeta.forEach === 'function' && typeof toMeta.set === 'function') {
+    fromMeta.forEach((value, key) => {
+      toMeta.set(key, value);
+    });
+  }
+
+  const fromByName = new Map((from.fields || []).map(field => [field.name, field]));
+  (to.fields || []).forEach(toField => {
+    const fromField = fromByName.get(toField.name);
+    const src = fromField?.metadata as Map<string, string> | undefined;
+    const dst = toField?.metadata as Map<string, string> | undefined;
+    if (!src || !dst || typeof src.forEach !== 'function' || typeof dst.set !== 'function') {
+      return;
+    }
+    src.forEach((value, key) => {
+      dst.set(key, value);
+    });
+  });
+}
+
+function tableFromCompactedColumns(
+  source: arrow.Table,
+  columns: Record<string, arrow.Vector>
+): arrow.Table {
+  let compacted: arrow.Table;
+  try {
+    compacted = new arrow.Table(source.schema, columns);
+  } catch {
+    compacted = new arrow.Table(columns);
+  }
+  copyArrowSchemaMetadata(source.schema, compacted.schema);
+  return compacted;
 }
 
 function compactArrowVector(column: arrow.Vector, type: arrow.DataType = column.type): arrow.Vector {

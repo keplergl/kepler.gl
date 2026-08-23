@@ -136,9 +136,24 @@ test('ArrowDataContainer -> compactArrowTable collapses record batches over the 
     'compactArrowTable should leave tables at or under maxArrowBatches unchanged'
   );
 
+  combined.schema.metadata.set(
+    'geo',
+    JSON.stringify({columns: {lng: {encoding: 'WKB'}}})
+  );
+  combined.schema.fields[0].metadata.set('ARROW:extension:name', 'geoarrow.wkb');
+
   const compacted = compactArrowTable(combined, 1);
   t.equal(compacted.numRows, 2, 'compactArrowTable should keep all rows');
   t.equal(compacted.batches.length, 1, 'compactArrowTable should collapse into one batch');
+  t.ok(
+    compacted.schema.metadata.get('geo'),
+    'compactArrowTable should keep GeoParquet schema metadata used to create layers'
+  );
+  t.equal(
+    compacted.schema.fields[0].metadata.get('ARROW:extension:name'),
+    'geoarrow.wkb',
+    'compactArrowTable should keep geoarrow field metadata'
+  );
 
   const cols = Array.from({length: combined.numCols}, (_, i) => combined.getChildAt(i)).filter(
     Boolean

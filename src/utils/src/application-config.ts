@@ -327,7 +327,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   reduxLogLevel: 1,
 
-  maxArrowBatches: 255
+  maxArrowBatches: 1
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;
