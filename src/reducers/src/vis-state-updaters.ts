@@ -111,7 +111,9 @@ import {
   INITIAL_ANNOTATION_TEXT_HEIGHT,
   INITIAL_ANNOTATION_LINE_WIDTH,
   INITIAL_ANNOTATION_LINE_COLOR,
-  AnnotationKind
+  AnnotationKind,
+  DatasetType,
+  getRemoteSourceFormat
 } from '@kepler.gl/constants';
 import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
 import {
@@ -136,7 +138,7 @@ import {
 } from './vis-state-merger';
 
 import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
-import {processGeojson} from '@kepler.gl/processors';
+import {loadExternallyHostedDataset, processGeojson} from '@kepler.gl/processors';
 
 import {
   Filter,
@@ -149,7 +151,8 @@ import {
   LayerVisConfig,
   TimeRangeFilter,
   Annotation,
-  AnnotationPropsPartial
+  AnnotationPropsPartial,
+  ProtoDataset
 } from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
@@ -2887,6 +2890,52 @@ export const toggleLayerForMapUpdater = (
   };
 };
 
+function hasTabularDatasetData(data?: ProtoDataset['data'] | null): boolean {
+  return Boolean(data?.rows?.length || data?.cols?.length || (data as {arrowTable?: unknown})?.arrowTable);
+}
+
+function needsExternallyHostedHydrate(dataset: ProtoDataset): boolean {
+  return (
+    dataset.info?.type === DatasetType.EXTERNALLY_HOSTED &&
+    typeof dataset.metadata?.source === 'string' &&
+    !hasTabularDatasetData(dataset.data)
+  );
+}
+
+async function hydrateExternallyHostedProtoDataset(dataset: ProtoDataset): Promise<ProtoDataset> {
+  if (!needsExternallyHostedHydrate(dataset)) {
+    return dataset;
+  }
+  const data = await loadExternallyHostedDataset({
+    source: dataset.metadata?.source as string,
+    format: getRemoteSourceFormat(dataset.metadata),
+    size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined
+  });
+  return {...dataset, data};
+}
+
+const HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromise(
+  hydrateExternallyHostedProtoDataset,
+  'HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK'
+);
+
+const FAIL_CREATE_DATASET_TASK = Task.fromPromise(async (message: string) => {
+  throw new Error(message);
+}, 'FAIL_CREATE_DATASET_TASK');
+
+function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets) {
+  if (!needsExternallyHostedHydrate(dataset)) {
+    return createNewDataEntry(dataset, datasets);
+  }
+  return HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK(dataset).chain(hydrated => {
+    const task = createNewDataEntry(hydrated, datasets);
+    return (
+      task ||
+      FAIL_CREATE_DATASET_TASK('Failed to create a new dataset due to data verification errors')
+    );
+  });
+}
+
 /**
  * Add new dataset to `visState`, with option to load a map config along with the datasets
  * @memberof visStateUpdaters
@@ -2917,7 +2966,7 @@ export const updateVisDataUpdater = (
   const notificationTasks: Task[] = [];
 
   datasets.forEach(({info = {}, ...rest}, datasetIndex) => {
-    const task = createNewDataEntry({info, ...rest}, state.datasets);
+    const task = createNewDataEntryTask({info, ...rest}, state.datasets);
     if (task) {
       createDatasetTasks.push(task);
     } else {

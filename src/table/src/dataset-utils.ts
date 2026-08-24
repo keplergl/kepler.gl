@@ -117,7 +117,8 @@ type CreateTableProps = {
 };
 
 async function createTable(datasetInfo: CreateTableProps) {
-  const {info, color, opts, data} = datasetInfo;
+  const {info, color, opts} = datasetInfo;
+  let {data} = datasetInfo;
 
   // update metadata for remote tiled datasets
   const refreshedMetadata = await refreshRemoteData(datasetInfo);
@@ -165,6 +166,8 @@ async function refreshRemoteData(datasetInfo: CreateTableProps): Promise<object 
     case DatasetType.TILE_3D:
       return null;
     case DatasetType.BITMAP:
+      return null;
+    case DatasetType.EXTERNALLY_HOSTED:
       return null;
     default:
       return null;

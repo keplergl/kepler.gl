@@ -3,7 +3,8 @@
 
 import test from 'tape';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
-import SchemaManager from '@kepler.gl/schemas';
+import SchemaManager, {datasetSchema, VERSIONS} from '@kepler.gl/schemas';
+import {DatasetType} from '@kepler.gl/constants';
 
 // fixtures
 import {
@@ -114,6 +115,42 @@ test('#DatasetSchema -> SchemaManager.parseSavedData.v1 with ts', t => {
   });
 
   t.deepEqual(parsedValid[0].data.rows, expectedRows, 'should parse rows correctly');
+
+  t.end();
+});
+
+test('#DatasetSchema -> save externally-hosted dataset without inlining rows', t => {
+  const dataset = {
+    id: 'remote-1',
+    label: 'quakes.csv',
+    color: [1, 2, 3],
+    type: DatasetType.EXTERNALLY_HOSTED,
+    fields: [{name: 'lat', type: 'real', format: '', analyzerType: 'FLOAT'}],
+    metadata: {
+      source: 'https://example.com/quakes.csv',
+      sourceFormat: 'csv',
+      extra: 'should-not-save'
+    }
+  };
+
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+
+  t.deepEqual(saved.allData, [], 'should not inline remote rows');
+  t.equal(saved.type, DatasetType.EXTERNALLY_HOSTED, 'should persist dataset type');
+  t.deepEqual(
+    saved.metadata,
+    {source: 'https://example.com/quakes.csv', format: 'csv'},
+    'should persist source URL without extra metadata'
+  );
+
+  const loaded = SchemaManager.parseSavedData([{version: 'v1', data: saved}]);
+  t.equal(loaded.length, 1, 'should parse one dataset');
+  t.equal(loaded[0].info.type, DatasetType.EXTERNALLY_HOSTED, 'should restore type');
+  t.equal(loaded[0].info.id, 'remote-1', 'should restore id');
+  t.equal(loaded[0].metadata.source, 'https://example.com/quakes.csv', 'should restore source');
+  t.equal(loaded[0].metadata.sourceFormat, 'csv', 'should map saved format to sourceFormat');
+  t.equal(loaded[0].metadata.format, undefined, 'should not collide with DATASET_FORMATS');
+  t.deepEqual(loaded[0].data.rows, [], 'loaded rows should stay empty until refetch');
 
   t.end();
 });

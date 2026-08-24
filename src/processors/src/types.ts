@@ -7,6 +7,13 @@ export type FileCacheItem = {
     id?: string;
     label: string;
     format: string;
+    type?: string;
+  };
+  metadata?: {
+    source?: string;
+    format?: string;
+    sourceFormat?: string;
+    [key: string]: unknown;
   };
 };
 

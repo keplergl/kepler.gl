@@ -19,7 +19,7 @@ const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
 })`
   padding: ${props => props.theme.modalPadding};
-  min-height: 440px;
+  min-height: 360px;
   display: flex;
   flex-direction: column;
 `;

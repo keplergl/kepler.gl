@@ -297,7 +297,8 @@ export default {
     vectorTile: 'Mosaic vectorial',
     rasterTile: 'Mosaic ràster',
     wmsTile: 'Mosaic WMS',
-    tile3d: 'Mosaic 3D'
+    tile3d: 'Mosaic 3D',
+    remoteFile: '{rowCount} files (remot)'
   },
   tooltip: {
     hideLayer: 'oculta la capa',
@@ -687,8 +688,15 @@ export default {
       'Carrega {fileFormatNames} o un mapa desat en **Json**. Més informació sobre [**supported file formats**]',
     browseFiles: 'navega pels teus arxius',
     uploading: 'Carregant',
+    downloading: 'Descarregant',
     fileNotSupported: "L'arxiu {errorFiles} no és compatible.",
-    or: 'o'
+    or: 'o',
+    dropMessage: "Arrossega i deixa anar l'arxiu aquí, {browse}, o",
+    urlPlaceholder: 'Introdueix l’URL del conjunt de dades',
+    fetch: 'Carrega',
+    format: 'Format',
+    formatAuto: 'Auto',
+    cors: 'L’URL ha de permetre [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {
     header: 'Configurar mosaics vectorials',

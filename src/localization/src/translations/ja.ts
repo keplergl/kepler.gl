@@ -295,7 +295,8 @@ export default {
     vectorTile: 'ベクタータイル',
     rasterTile: 'ラスタータイル',
     wmsTile: 'WMSタイル',
-    tile3d: '3Dタイル'
+    tile3d: '3Dタイル',
+    remoteFile: '{rowCount}行（リモート）'
   },
   tooltip: {
     hideLayer: 'レイヤを非表示',
@@ -684,8 +685,15 @@ export default {
       '{fileFormatNames} または保存済地図の**Json**をアップロードします。詳細は以下を参照してください：[**対応ファイル形式**]',
     browseFiles: 'デバイスのファイルを選択',
     uploading: 'アップロード中',
+    downloading: 'ダウンロード中',
     fileNotSupported: '{errorFiles} はサポートされていないファイルです。',
-    or: 'または'
+    or: 'または',
+    dropMessage: 'ここにファイルをドロップ（複数可）、{browse}、または',
+    urlPlaceholder: 'データセットの URL を入力',
+    fetch: '取得',
+    format: '形式',
+    formatAuto: '自動',
+    cors: 'URL は [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) を許可する必要があります。'
   },
   geocoder: {
     title: '住所または座標を入力（例： 37.79,-122.40）'

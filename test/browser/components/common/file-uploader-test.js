@@ -7,6 +7,7 @@ import sinon from 'sinon';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 import {FileUpload, WarningMsg, FileDrop, UploadButton} from '@kepler.gl/components';
+import {initApplicationConfig} from '@kepler.gl/utils';
 
 test('Components -> FileUploader.render', t => {
   let wrapper;
@@ -228,5 +229,43 @@ test('Components -> UploadButton fileInput', t => {
 
   t.deepEqual(files, mockFiles, 'should set files to state');
 
+  t.end();
+});
+
+test('Components -> FileUpload remote URL form', t => {
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FileUpload onFileUpload={() => {}} fileExtensions={['csv', 'geojson']} />
+    </IntlWrapper>
+  );
+
+  t.ok(wrapper.find('.file-uploader__remote-url').exists(), 'should render remote URL form');
+  const urlInput = wrapper.find('.file-uploader__remote-url input').hostNodes();
+  t.equal(urlInput.length, 1, 'should render URL input');
+  t.ok(urlInput.first().prop('aria-label'), 'should set aria-label on URL input');
+  t.equal(
+    wrapper.find('.file-uploader__remote-url select').hostNodes().length,
+    0,
+    'format selector is hidden by default'
+  );
+
+  t.end();
+});
+
+test('Components -> FileUpload remote URL format selector flag', t => {
+  initApplicationConfig({enableRemoteFileFormatSelector: true});
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FileUpload onFileUpload={() => {}} fileExtensions={['csv', 'geojson']} />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    wrapper.find('.file-uploader__remote-url select').hostNodes().length,
+    1,
+    'should render format select when the flag is enabled'
+  );
+
+  initApplicationConfig({enableRemoteFileFormatSelector: false});
   t.end();
 });
