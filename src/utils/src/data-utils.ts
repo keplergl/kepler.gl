@@ -5,10 +5,11 @@ import assert from 'assert';
 import {format as d3Format} from 'd3-format';
 import moment from 'moment-timezone';
 
-import {convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
+import {convertGeoArrowGeometryToGeoJSON, convertGeometryToWKT} from '@loaders.gl/gis';
 
 import {
   ALL_FIELD_TYPES,
+  GEOARROW_METADATA_KEY,
   TOOLTIP_FORMATS,
   TOOLTIP_FORMAT_TYPES,
   TOOLTIP_KEY,
@@ -19,7 +20,6 @@ import {Field, Millisecond, ProtoDatasetField} from '@kepler.gl/types';
 
 import {snapToMarks} from './plot';
 import {isPlainObject} from './utils';
-import {isArrowVector} from './arrow-data-container';
 
 export type FieldFormatter = (value: any, field?: ProtoDatasetField) => string;
 
@@ -299,6 +299,80 @@ export function uint8ArrayToHex(data: Uint8Array): string {
     .join('');
 }
 
+function isByteArray(data: unknown): data is ArrayBufferView {
+  return ArrayBuffer.isView(data) && (data as ArrayBufferView).BYTES_PER_ELEMENT === 1;
+}
+
+function getGeoArrowEncoding(field?: ProtoDatasetField): string | undefined {
+  const metadata = field?.metadata as Map<string, string> | Record<string, string> | undefined;
+  if (!metadata) {
+    return undefined;
+  }
+  if (typeof (metadata as Map<string, string>).get === 'function') {
+    return (metadata as Map<string, string>).get(GEOARROW_METADATA_KEY);
+  }
+  return (metadata as Record<string, string>)[GEOARROW_METADATA_KEY];
+}
+
+function serializeGeoJsonGeometry(geometry: {type?: string} | null): string | null {
+  if (!geometry || typeof geometry !== 'object' || !geometry.type) {
+    return null;
+  }
+  try {
+    return convertGeometryToWKT(geometry);
+  } catch {
+    try {
+      return JSON.stringify(geometry);
+    } catch {
+      return null;
+    }
+  }
+}
+
+/**
+ * Serialize a geoarrow cell so CSV / JSON export can be re-imported.
+ * Native geoarrow values (points, polygons, …) become WKT (or GeoJSON);
+ * WKB bytes become hex WKB. Always returns a string.
+ */
+export function formatGeoArrowValue(data: any, field?: ProtoDatasetField): string {
+  const encoding = getGeoArrowEncoding(field);
+
+  if (encoding) {
+    try {
+      const geometry = convertGeoArrowGeometryToGeoJSON(data, encoding);
+      const serialized = serializeGeoJsonGeometry(geometry);
+      if (serialized) {
+        return serialized;
+      }
+    } catch {
+      // fall through to binary / string fallbacks
+    }
+  }
+
+  if (isByteArray(data)) {
+    const bytes =
+      data instanceof Uint8Array
+        ? data
+        : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+    return uint8ArrayToHex(bytes);
+  }
+
+  if (typeof data === 'string') {
+    return data;
+  }
+
+  try {
+    const json = JSON.stringify(data);
+    if (json && json !== '{}' && json !== '[]') {
+      return json;
+    }
+  } catch {
+    // ignore
+  }
+
+  return data == null ? '' : String(data);
+}
+
 export const FIELD_DISPLAY_FORMAT: {
   [key: string]: FieldFormatter;
 } = {
@@ -316,22 +390,7 @@ export const FIELD_DISPLAY_FORMAT: {
       : Array.isArray(d)
       ? `[${String(d)}]`
       : '',
-  [ALL_FIELD_TYPES.geoarrow]: (data, field) => {
-    if (isArrowVector(data)) {
-      try {
-        const encoding = field?.metadata?.get('ARROW:extension:name');
-        if (encoding) {
-          const geometry = convertGeoArrowGeometryToGeoJSON(data, encoding);
-          return JSON.stringify(geometry);
-        }
-      } catch (error) {
-        // ignore for now
-      }
-    } else if (data instanceof Uint8Array) {
-      return uint8ArrayToHex(data);
-    }
-    return data;
-  },
+  [ALL_FIELD_TYPES.geoarrow]: formatGeoArrowValue,
   [ALL_FIELD_TYPES.object]: (value: any) => {
     try {
       return JSON.stringify(value);

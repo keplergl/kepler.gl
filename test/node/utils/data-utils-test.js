@@ -13,10 +13,12 @@ import {
   getFormatter,
   defaultFormatter,
   formatNumber,
-  roundToFour
+  roundToFour,
+  parseFieldValue,
+  formatGeoArrowValue
 } from '@kepler.gl/utils';
 import {processLayerBounds} from '@kepler.gl/reducers';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 
 test('dataUtils -> clamp', t => {
   t.equal(clamp([0, 1], 2), 1, 'should clamp 2 to 1 for [0,1]');
@@ -277,5 +279,30 @@ test('dataUtils -> validateBounds', t => {
     t.deepEqual(output, tc.output, tc.message);
   });
 
+  t.end();
+});
+
+test('dataUtils -> formatGeoArrowValue', t => {
+  const wkbField = {
+    name: 'geometry',
+    type: ALL_FIELD_TYPES.geoarrow,
+    metadata: new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.WKB]])
+  };
+  const wkb = Uint8Array.from(Buffer.from('0101000000000000000000f03f0000000000000040', 'hex'));
+  const formatted = formatGeoArrowValue(wkb, wkbField);
+  t.equal(typeof formatted, 'string', 'geoarrow formatter should always return a string');
+  t.ok(
+    formatted.startsWith('POINT') || formatted.startsWith('01') || formatted.startsWith('{'),
+    'WKB cell should export as WKT, hex WKB, or GeoJSON'
+  );
+
+  const parsed = parseFieldValue(wkb, ALL_FIELD_TYPES.geoarrow, wkbField);
+  t.equal(parsed, formatted, 'parseFieldValue should use the geoarrow formatter');
+
+  const rawObject = formatGeoArrowValue(
+    {not: 'geometry'},
+    {name: 'g', type: ALL_FIELD_TYPES.geoarrow}
+  );
+  t.equal(typeof rawObject, 'string', 'non-geometry objects should still stringify');
   t.end();
 });

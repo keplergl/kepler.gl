@@ -30,6 +30,44 @@ export function isHexWkb(str: string | null): boolean {
   return /^[0-9a-fA-F]+$/.test(str.slice(2));
 }
 
+const GEOJSON_GEOMETRY_TYPES = new Set([
+  'Point',
+  'MultiPoint',
+  'LineString',
+  'MultiLineString',
+  'Polygon',
+  'MultiPolygon',
+  'GeometryCollection',
+  'Feature',
+  'FeatureCollection'
+]);
+
+/**
+ * Check if a string is a GeoJSON geometry or Feature (as stored in CSV).
+ * type-analyzer classifies `{...}` JSON as OBJECT, so a `geometry` column of
+ * GeoJSON strings would otherwise not be treated as geometry on re-import.
+ */
+export function isGeoJsonGeometryString(value: unknown): boolean {
+  if (typeof value !== 'string') {
+    return false;
+  }
+  const trimmed = value.trim();
+  if (trimmed.charAt(0) !== '{') {
+    return false;
+  }
+  try {
+    const parsed = JSON.parse(trimmed);
+    return Boolean(
+      parsed &&
+        typeof parsed === 'object' &&
+        typeof parsed.type === 'string' &&
+        GEOJSON_GEOMETRY_TYPES.has(parsed.type)
+    );
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Converts non-arrays to arrays.  Leaves arrays alone.  Converts
  * undefined values to empty arrays ([] instead of [undefined]).

@@ -6,7 +6,7 @@ import {ArrowTableInterface, ApacheVectorInterface, RowData, Field} from '@keple
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {console as globalConsole} from 'global/window';
 import {range} from 'd3-array';
-import {isHexWkb, notNullorUndefined} from './data';
+import {isHexWkb, isGeoJsonGeometryString, notNullorUndefined} from './data';
 import {h3IsValid} from './h3-utils';
 
 const H3_ANALYZER_TYPE = 'H3';
@@ -265,6 +265,14 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     // quick check if string is hex wkb
     if (type === AnalyzerDATA_TYPES.STRING) {
       type = data.some(d => isHexWkb(d[name])) ? AnalyzerDATA_TYPES.GEOMETRY : type;
+    }
+
+    // GeoJSON geometry/Feature JSON is classified as OBJECT (or STRING).
+    // Detect it so a `geometry` column exported from parquet/geoarrow re-imports.
+    if (type === AnalyzerDATA_TYPES.OBJECT || type === AnalyzerDATA_TYPES.STRING) {
+      type = data.some(d => isGeoJsonGeometryString(d[name]))
+        ? AnalyzerDATA_TYPES.GEOMETRY
+        : type;
     }
 
     return {

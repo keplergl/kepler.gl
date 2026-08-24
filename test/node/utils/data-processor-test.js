@@ -45,7 +45,7 @@ import {
 
 import {formatCsv} from '@kepler.gl/reducers';
 
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {cmpFields} from '../../helpers/comparison-utils';
 
 test('Processor -> getFieldsFromData', t => {
@@ -130,6 +130,21 @@ test('Processor -> getFieldsFromData', t => {
 
   fields.forEach((f, i) =>
     t.equal(f.type, expectedFieldTypes[i], `should find field type as ${expectedFieldTypes[i]}`)
+  );
+  t.end();
+});
+
+test('Processor -> getFieldsFromData geojson in geometry column', t => {
+  const data = [
+    {id: '1', geometry: '{"type":"Point","coordinates":[-122.4,37.8]}'},
+    {id: '2', geometry: '{"type":"Point","coordinates":[-73.9,40.7]}'}
+  ];
+  const fields = getFieldsFromData(data, ['id', 'geometry']);
+  t.equal(fields[0].type, 'string', 'id should be string');
+  t.equal(
+    fields[1].type,
+    'geojson',
+    'GeoJSON JSON in a column named geometry should be detected as geojson'
   );
   t.end();
 });
@@ -1006,6 +1021,46 @@ test('Processor -> formatCsv', t => {
 
     t.deepEqual(formatCsv(dataContainer, fields), expected, msg);
   });
+  t.end();
+});
+
+test('Processor -> formatCsv geoarrow geometry roundtrip', t => {
+  // POINT(1 2) little-endian WKB
+  const wkb = Uint8Array.from(Buffer.from('0101000000000000000000f03f0000000000000040', 'hex'));
+  const fields = [
+    {
+      name: 'geometry',
+      displayName: 'geometry',
+      type: ALL_FIELD_TYPES.geoarrow,
+      analyzerType: 'GEOMETRY',
+      metadata: new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.WKB]])
+    },
+    {
+      name: 'id',
+      displayName: 'id',
+      type: ALL_FIELD_TYPES.integer,
+      analyzerType: 'INT'
+    }
+  ];
+  const rows = [[wkb, 1]];
+  const dataContainer = createDataContainer(rows, {fields});
+  const csv = formatCsv(dataContainer, fields);
+
+  t.equal(typeof csv, 'string', 'should produce a csv string');
+  t.ok(csv.startsWith('geometry,id'), 'csv should include geometry header');
+
+  const reimported = processCsvData(csv);
+  t.equal(
+    reimported.fields[0].type,
+    'geojson',
+    're-imported geometry column should be detected as geojson'
+  );
+  t.ok(reimported.rows[0][0], 're-imported geometry value should be present');
+  t.notEqual(
+    String(reimported.rows[0][0]),
+    '[object Object]',
+    're-imported geometry should not be a broken object string'
+  );
   t.end();
 });
 

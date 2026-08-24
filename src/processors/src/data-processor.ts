@@ -501,7 +501,7 @@ export function arrowSchemaToFields(
   const keplerFields = getFieldsFromData(sample, headerRow);
   const geoArrowMetadata = getGeoArrowMetadataFromSchema(table);
 
-  return table.schema.fields.map((field: arrow.Field, fieldIndex: number) => {
+  const fields = table.schema.fields.map((field: arrow.Field, fieldIndex: number) => {
     let type = arrowDataTypeToFieldType(field.type);
     let analyzerType = arrowDataTypeToAnalyzerDataType(field.type);
     let format = '';
@@ -575,6 +575,57 @@ export function arrowSchemaToFields(
       },
       metadata: field.metadata
     };
+  });
+
+  logAddedGeometryFields(fields);
+  return fields;
+}
+
+function getArrowExtensionName(field: {
+  metadata?: Map<string, string> | Record<string, string>;
+}): string | undefined {
+  const metadata = field.metadata;
+  if (!metadata) {
+    return undefined;
+  }
+  if (typeof (metadata as Map<string, string>).get === 'function') {
+    return (metadata as Map<string, string>).get(GEOARROW_METADATA_KEY);
+  }
+  return (metadata as Record<string, string>)[GEOARROW_METADATA_KEY];
+}
+
+/**
+ * Debug helper: log how each geometry column was classified when Arrow/parquet is added.
+ * kind is one of: geoarrow (native), wkb, geojson-string, simple-arrow.
+ */
+function logAddedGeometryFields(fields: Field[]): void {
+  const summary = fields.map(field => {
+    const encoding = getArrowExtensionName(field);
+    let kind = 'simple-arrow';
+    if (encoding === GEOARROW_EXTENSIONS.WKB || encoding === 'geoarrow.wkb') {
+      kind = 'wkb';
+    } else if (typeof encoding === 'string' && encoding.startsWith('geoarrow')) {
+      kind = 'geoarrow';
+    } else if (field.type === ALL_FIELD_TYPES.geoarrow) {
+      kind = encoding ? 'geoarrow' : 'geoarrow-unknown';
+    } else if (field.type === ALL_FIELD_TYPES.geojson) {
+      kind = 'geojson-string';
+    }
+
+    return {
+      name: field.name,
+      keplerType: field.type,
+      analyzerType: (field as any).analyzerType,
+      encoding: encoding || null,
+      kind
+    };
+  });
+
+  const geometryFields = summary.filter(f => f.kind !== 'simple-arrow');
+  // eslint-disable-next-line no-console
+  console.log('[kepler.gl:geometry] added arrow fields', {
+    geometry: geometryFields.length ? geometryFields : 'none (simple arrow / no geometry column)',
+    all: summary
   });
 }
 

@@ -3,7 +3,7 @@
 
 import test from 'tape';
 import {findDefaultColorField, createNewDataEntry} from '@kepler.gl/utils';
-import {isHexWkb} from '@kepler.gl/common-utils';
+import {isHexWkb, isGeoJsonGeometryString} from '@kepler.gl/common-utils';
 import {processCsvData} from '@kepler.gl/processors';
 
 import csvData from 'test/fixtures/test-layer-data';
@@ -88,4 +88,23 @@ test('datasetUtils.isHexWkb', t => {
 
   const validEWktNDR = '0020000001000013ff0000000000400000000000000040';
   t.ok(isHexWkb(validEWktNDR), 'A valid hex ewkb in NDR should be valid');
+  t.end();
+});
+
+test('datasetUtils.isGeoJsonGeometryString', t => {
+  t.notOk(isGeoJsonGeometryString(''), 'empty string is not GeoJSON geometry');
+  t.notOk(isGeoJsonGeometryString(null), 'null is not GeoJSON geometry');
+  t.notOk(isGeoJsonGeometryString('{"name":"not geometry"}'), 'plain JSON object is not geometry');
+  t.notOk(isGeoJsonGeometryString('POINT (1 2)'), 'WKT is not GeoJSON geometry JSON');
+  t.ok(
+    isGeoJsonGeometryString('{"type":"Point","coordinates":[-122.4,37.8]}'),
+    'GeoJSON Point string should be detected'
+  );
+  t.ok(
+    isGeoJsonGeometryString(
+      '{"type":"Feature","properties":{},"geometry":{"type":"Point","coordinates":[0,0]}}'
+    ),
+    'GeoJSON Feature string should be detected'
+  );
+  t.end();
 });
