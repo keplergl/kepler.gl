@@ -41,7 +41,8 @@ import {
   createGeoArrowPointVector,
   getFilteredIndex,
   getNeighbors,
-  FindDefaultLayerProps
+  FindDefaultLayerProps,
+  getGeoArrowPointCoords
 } from '../layer-utils';
 import {getGeojsonPointDataMaps, GeojsonPointDataMaps} from '../geojson-layer/geojson-utils';
 import {
@@ -131,7 +132,7 @@ export const geoarrowPosAccessor =
   (dataContainer: DataContainerInterface) =>
   (d: {index: number}) => {
     const row = dataContainer.valueAt(d.index, geoarrow.fieldIdx);
-    return [row.get(0), row.get(1), 0];
+    return getGeoArrowPointCoords(row);
   };
 
 export const COLUMN_MODE_POINTS = 'points';

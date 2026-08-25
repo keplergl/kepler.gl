@@ -224,6 +224,22 @@ export type KeplerApplicationConfig = {
 
   /** Controls Redux action logging verbosity in dev mode. See {@link ReduxLogLevel}. */
   reduxLogLevel?: ReduxLogLevel;
+
+  /**
+   * If an Arrow/Parquet table has more record batches than this, they are
+   * compacted into a single batch. The default is `1`, so any table with more
+   * than one record batch is compacted. Deck.gl picking supports at most 255
+   * pickable leaf layers, and GeoJSON adds fill/stroke/point sublayers per
+   * batch, so a higher cap still overruns picking. Compacting copies the table.
+   * Progressive Arrow loading skips compaction on intermediate batches and
+   * compacts the completed file once. Set a very large number to never compact.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({maxArrowBatches: 64});
+   * ```
+   */
+  maxArrowBatches?: number;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -319,7 +335,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   customIconUrl: '',
 
-  reduxLogLevel: 1
+  reduxLogLevel: 1,
+
+  maxArrowBatches: 1
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;

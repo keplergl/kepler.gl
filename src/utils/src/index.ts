@@ -144,6 +144,7 @@ export * from './map-utils';
 
 export {
   ArrowDataContainer,
+  compactArrowTable,
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,
   isArrowTable,

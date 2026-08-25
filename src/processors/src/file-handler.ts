@@ -70,6 +70,11 @@ export type ProcessFileDataContent = {
   sourceUrl?: string;
   /** User-selected or inferred remote file format (csv, geojson, parquet, …). */
   keplerFormat?: string;
+  /**
+   * When true, skip Arrow record-batch compaction. Set on intermediate
+   * progressive Arrow loads so each batch does not copy the growing table.
+   */
+  skipArrowCompact?: boolean;
 };
 
 export {isArrowTable};
@@ -279,7 +284,10 @@ export async function processFileData({
     // eslint-disable-next-line no-useless-catch
     let result;
     try {
-      result = await processor(data);
+      result =
+        format === DATASET_FORMATS.arrow && content.skipArrowCompact
+          ? await processArrowBatches(data as any, {compact: false})
+          : await processor(data);
     } catch (error) {
       throw new Error(`Can not process uploaded file, ${getError(error as Error)}`);
     }

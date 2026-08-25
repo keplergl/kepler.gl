@@ -3517,7 +3517,12 @@ export const nextFileBatchUpdater = (
     fileName.endsWith('arrow') &&
     accumulated?.data?.length > 0
       ? [
-          PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
+          // Skip compaction while batches are still arriving. The completed
+          // file is compacted once in processFileContent.
+          PROCESS_FILE_DATA({
+            content: {...accumulated, skipArrowCompact: true},
+            fileCache: []
+          }).bimap(
             result => loadFilesSuccess(result),
             err => loadFilesErr(fileName, err)
           )

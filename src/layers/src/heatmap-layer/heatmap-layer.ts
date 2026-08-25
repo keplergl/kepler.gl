@@ -30,7 +30,7 @@ import {booleanWithin} from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Feature, Polygon} from 'geojson';
 
-import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue} from '../layer-utils';
+import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue, getGeoArrowPointCoords} from '../layer-utils';
 import {getFilterDataFunc} from '../aggregation-layer';
 import {
   parseGeoJsonRawFeature,
@@ -88,7 +88,8 @@ export const geoarrowPosAccessor =
   (dc: DataContainerInterface) =>
   (d: {index: number}): number[] => {
     const row = dc.valueAt(d.index, geoarrow.fieldIdx);
-    return [row.get(0), row.get(1)];
+    const coords = getGeoArrowPointCoords(row);
+    return [coords[0], coords[1]];
   };
 
 export const geojsonAccessor =

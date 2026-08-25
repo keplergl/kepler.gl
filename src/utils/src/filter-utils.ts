@@ -376,6 +376,21 @@ export function getFilterProps(
   }
 }
 
+function hasFiniteLngLat(pos: unknown): pos is number[] {
+  if (pos == null || !(Array.isArray(pos) || ArrayBuffer.isView(pos))) {
+    return false;
+  }
+  const values = pos as ArrayLike<unknown>;
+  // Do not coerce with Number(): Number(null/''/false) is 0 and would pass.
+  return (
+    values.length >= 2 &&
+    typeof values[0] === 'number' &&
+    Number.isFinite(values[0]) &&
+    typeof values[1] === 'number' &&
+    Number.isFinite(values[1])
+  );
+}
+
 export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
   const getPosition = layer.getPositionAccessor(dataContainer);
 
@@ -388,22 +403,15 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
           if (!coordinates) return false;
           if (Array.isArray(coordinates[0])) {
             return (coordinates as number[][]).some(
-              coord =>
-                coord.length >= 2 &&
-                coord.every(Number.isFinite) &&
-                isInPolygon(coord, filter.value)
+              coord => hasFiniteLngLat(coord) && isInPolygon(coord, filter.value)
             );
           }
-          return (
-            coordinates.length >= 2 &&
-            coordinates.every(Number.isFinite) &&
-            isInPolygon(coordinates, filter.value)
-          );
+          return hasFiniteLngLat(coordinates) && isInPolygon(coordinates, filter.value);
         };
       }
       return data => {
         const pos = getPosition(data);
-        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+        return hasFiniteLngLat(pos) && isInPolygon(pos, filter.value);
       };
     case LAYER_TYPES.grid:
     case LAYER_TYPES.hexagon:
@@ -418,14 +426,15 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
       }
       return data => {
         const pos = getPosition(data);
-        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+        return hasFiniteLngLat(pos) && isInPolygon(pos, filter.value);
       };
     case LAYER_TYPES.arc:
     case LAYER_TYPES.line:
       return data => {
         const pos = getPosition(data);
         return (
-          pos.every(Number.isFinite) &&
+          hasFiniteLngLat(pos) &&
+          hasFiniteLngLat([pos[3], pos[4]]) &&
           [
             [pos[0], pos[1]],
             [pos[3], pos[4]]
@@ -446,7 +455,7 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
           return false;
         }
         const pos = getCentroid({id});
-        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+        return hasFiniteLngLat(pos) && isInPolygon(pos, filter.value);
       };
     case LAYER_TYPES.geojson:
       return data => {
@@ -461,7 +470,7 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
       }
       return data => {
         const pos = getPosition(data);
-        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+        return hasFiniteLngLat(pos) && isInPolygon(pos, filter.value);
       };
     default:
       return () => true;
@@ -830,7 +839,9 @@ export function isInRange(val: any, domain: number[]): boolean {
  * @return {boolean}
  */
 export function isInPolygon(point: number[], polygon: any): boolean {
-  return booleanWithin(turfPoint(point), polygon);
+  // turfPoint requires a plain array; Arrow accessors can return typed arrays
+  const lngLat = Array.isArray(point) ? point : [Number(point[0]), Number(point[1])];
+  return booleanWithin(turfPoint(lngLat), polygon);
 }
 export function getTimeWidgetTitleFormatter(domain: [number, number]): string | null {
   if (!isValidTimeDomain(domain)) {

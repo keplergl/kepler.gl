@@ -23,6 +23,7 @@ import {
   getApplicationConfig,
   DatabaseAdapter,
   DatabaseConnection,
+  compactArrowTable,
   isArrowTable,
   isArrowVector
 } from '@kepler.gl/utils';
@@ -257,11 +258,13 @@ export class KeplerGlDuckDbTable extends KeplerTable {
 
       restoreGeoarrowMetadata(arrowResult, geoarrowMetadata);
 
+      const compactedResult = compactArrowTable(arrowResult);
+
       fields = useNewFields
-        ? arrowSchemaToFields(arrowResult, tableDuckDBTypes)
-        : data.fields ?? arrowSchemaToFields(arrowResult, tableDuckDBTypes);
-      cols = [...Array(arrowResult.numCols).keys()]
-        .map(i => arrowResult.getChildAt(i))
+        ? arrowSchemaToFields(compactedResult, tableDuckDBTypes)
+        : data.fields ?? arrowSchemaToFields(compactedResult, tableDuckDBTypes);
+      cols = [...Array(compactedResult.numCols).keys()]
+        .map(i => compactedResult.getChildAt(i))
         .filter(col => col) as arrow.Vector[];
     } catch (error) {
       console.error('DuckDB table: createTableAndGetArrow', error);

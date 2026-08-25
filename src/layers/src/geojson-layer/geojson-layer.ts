@@ -617,9 +617,33 @@ export default class GeoJsonLayer extends Layer {
       const geoField = geoFieldAccessor(this.config.columns)(dataContainer);
 
       // update the latest batch/chunk of geoarrow data when loading data incrementally
-      if (geoColumn && geoField && this.dataToFeature.length < dataContainer.numChunks()) {
-        // for incrementally loading data, we only load and render the latest batch; otherwise, we will load and render all batches
-        const isIncrementalLoad = dataContainer.numChunks() - this.dataToFeature.length === 1;
+      const processedRows = this.centroids.length;
+      const numRows = dataContainer.numRows();
+      const numChunks = dataContainer.numChunks();
+      // WKB (and other whole-column collections) keep dataToFeature.length at 1
+      // even when numChunks() is large. Row count is the progress signal then;
+      // comparing length to numChunks would re-parse WKB on every meta update.
+      const processedWholeColumn =
+        this.dataToFeature.length > 0 && processedRows > 0 && processedRows >= numRows;
+      // Progressive loads keep one dataToFeature entry per chunk, then compact
+      // the finished table to one chunk. Row count already matches, so without
+      // this check we would skip the rebuild and keep excess Deck layers.
+      const compactedAfterProgressiveLoad = this.dataToFeature.length > numChunks;
+      const needsUpdate =
+        this.dataToFeature.length === 0 ||
+        (!processedWholeColumn && this.dataToFeature.length < numChunks) ||
+        (processedRows > 0 && processedRows < numRows) ||
+        compactedAfterProgressiveLoad;
+
+      if (geoColumn && geoField && needsUpdate) {
+        // Incremental only when a new chunk appeared. Compacted tables stay at 1
+        // chunk while row count grows, so those updates reprocess the whole table.
+        const isIncrementalLoad =
+          this.dataToFeature.length > 0 &&
+          !processedWholeColumn &&
+          numChunks - this.dataToFeature.length === 1 &&
+          processedRows > 0 &&
+          processedRows < numRows;
         // TODO: add support for COLUMN_MODE_TABLE in getGeojsonLayerMetaFromArrow
         const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} =
           getGeojsonLayerMetaFromArrow({
@@ -628,9 +652,14 @@ export default class GeoJsonLayer extends Layer {
             geoField,
             ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
           });
-        if (centroids) this.centroids = this.centroids.concat(centroids);
+        if (isIncrementalLoad) {
+          if (centroids) this.centroids = this.centroids.concat(centroids);
+          this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
+        } else {
+          this.centroids = centroids || [];
+          this.dataToFeature = dataToFeature;
+        }
         this.updateMeta({bounds, fixedRadius, featureTypes});
-        this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
       }
     } else if (this.dataToFeature.length === 0 || this.config.columnMode === COLUMN_MODE_TABLE) {
       const getFeature = this.getPositionAccessor(dataContainer);

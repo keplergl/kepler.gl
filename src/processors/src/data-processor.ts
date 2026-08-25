@@ -20,6 +20,7 @@ import {ProcessorResult, Field} from '@kepler.gl/types';
 import {
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,
+  compactArrowTable,
   hasOwnProperty,
   isPlainObject
 } from '@kepler.gl/utils';
@@ -616,17 +617,34 @@ function castBigIntColumnsToFloat64(arrowTable: arrow.Table): arrow.Table {
   return new arrow.Table(newColumns);
 }
 
+export type ProcessArrowBatchesOptions = {
+  /**
+   * When false, skip compactArrowTable. Progressive Arrow loading uses this so
+   * each incoming batch does not copy the accumulated table. Defaults to true.
+   * The final processFileContent call leaves this unset so the completed table
+   * is compacted once.
+   */
+  compact?: boolean;
+};
+
 /**
  * Parse arrow batches returned from parseInBatches()
  *
- * @param arrowTable the arrow table to parse
+ * @param arrowBatches the arrow record batches to parse
+ * @param options optional processing flags
  * @returns dataset containing `fields` and `rows` or null
  */
-export function processArrowBatches(arrowBatches: arrow.RecordBatch[]): ProcessorResult | null {
+export function processArrowBatches(
+  arrowBatches: arrow.RecordBatch[],
+  options?: ProcessArrowBatchesOptions
+): ProcessorResult | null {
   if (arrowBatches.length === 0) {
     return null;
   }
-  const arrowTable = castBigIntColumnsToFloat64(new arrow.Table(arrowBatches));
+  const arrowTable =
+    options?.compact === false
+      ? castBigIntColumnsToFloat64(new arrow.Table(arrowBatches))
+      : compactArrowTable(castBigIntColumnsToFloat64(new arrow.Table(arrowBatches)));
   const fields = arrowSchemaToFields(arrowTable);
 
   const cols = [...Array(arrowTable.numCols).keys()].map(i => arrowTable.getChildAt(i));
