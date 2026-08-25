@@ -2,7 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {isKeplerGlMap, makeProgressIterator, filesToDataPayload, processFileData} from '@kepler.gl/processors';
+import {isKeplerGlMap, makeProgressIterator, filesToDataPayload, processFileData, processArrowBatches} from '@kepler.gl/processors';
+import * as arrow from 'apache-arrow';
 import {parsedFields, parsedRows} from 'test/fixtures/row-object';
 import {
   savedStateV1InteractionCoordinate as keplerglMap,
@@ -274,6 +275,62 @@ test('#file-handler -> processFileData remote ids do not collide on filename', a
     'reloading the same URL keeps a stable id so progressive batches can update in place'
   );
   t.ok(!String(remoteA[0].info.id).includes('http'), 'id is a hash, not the raw URL');
+
+  t.end();
+});
+
+test('#file-handler -> processArrowBatches skip compact for incremental loads', t => {
+  const batchA = arrow.tableFromJSON([{lng: -122.4, lat: 37.8}]);
+  const batchB = arrow.tableFromJSON([{lng: -122.5, lat: 37.9}]);
+  const combined = batchA.concat(batchB);
+
+  t.ok(combined.batches.length > 1, 'fixture should have multiple record batches');
+
+  const skipped = processArrowBatches(combined.batches, {compact: false});
+  t.equal(
+    skipped.cols[0].data.length,
+    combined.batches.length,
+    'compact:false should leave record batches unchanged'
+  );
+
+  const compacted = processArrowBatches(combined.batches);
+  t.equal(compacted.cols[0].data.length, 1, 'default processArrowBatches should compact');
+  t.equal(compacted.cols[0].length, 2, 'compacted table should keep all rows');
+
+  t.end();
+});
+
+test('#file-handler -> processFileData skipArrowCompact', async t => {
+  const batchA = arrow.tableFromJSON([{lng: -122.4, lat: 37.8}]);
+  const batchB = arrow.tableFromJSON([{lng: -122.5, lat: 37.9}]);
+  const combined = batchA.concat(batchB);
+
+  const incremental = await processFileData({
+    content: {
+      fileName: 'points.arrow',
+      data: combined.batches,
+      skipArrowCompact: true
+    },
+    fileCache: []
+  });
+  t.equal(
+    incremental[0].data.cols[0].data.length,
+    combined.batches.length,
+    'progressive processFileData should not compact Arrow batches'
+  );
+
+  const finished = await processFileData({
+    content: {
+      fileName: 'points.arrow',
+      data: combined.batches
+    },
+    fileCache: []
+  });
+  t.equal(
+    finished[0].data.cols[0].data.length,
+    1,
+    'final processFileData should compact Arrow batches'
+  );
 
   t.end();
 });

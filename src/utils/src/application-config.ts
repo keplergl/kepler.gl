@@ -227,10 +227,12 @@ export type KeplerApplicationConfig = {
 
   /**
    * If an Arrow/Parquet table has more record batches than this, they are
-   * compacted into a single batch. Deck.gl picking supports at most 255
-   * pickable layers, so the default is 255. Compacting copies the table, so
-   * raising this skips that cost for smaller files. Set to `0` to always
-   * compact; set a very large number to never compact.
+   * compacted into a single batch. The default is `1`, so any table with more
+   * than one record batch is compacted. Deck.gl picking supports at most 255
+   * pickable leaf layers, and GeoJSON adds fill/stroke/point sublayers per
+   * batch, so a higher cap still overruns picking. Compacting copies the table.
+   * Progressive Arrow loading skips compaction on intermediate batches and
+   * compacts the completed file once. Set a very large number to never compact.
    *
    * @example
    * ```

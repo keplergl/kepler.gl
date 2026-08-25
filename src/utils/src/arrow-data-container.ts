@@ -121,7 +121,7 @@ function* columnIterator(dataContainer: DataContainerInterface, columnIndex: num
   }
 }
 
-const DEFAULT_MAX_ARROW_BATCHES = 255;
+const DEFAULT_MAX_ARROW_BATCHES = 1;
 
 /**
  * Collapse Arrow record batches into as few chunks as possible.
@@ -136,7 +136,10 @@ const DEFAULT_MAX_ARROW_BATCHES = 255;
  * uses, so we rebuild each column through a Builder (one chunk per column).
  *
  * Compaction only runs when `table.batches.length` is greater than
- * `maxArrowBatches` from {@link getApplicationConfig} (or the optional override).
+ * `maxArrowBatches` from {@link getApplicationConfig} (default `1`) or the
+ * optional override. Progressive Arrow loading does not compact on each
+ * incoming batch; {@link ArrowDataContainer.update} assigns new chunks as-is
+ * and the completed file is compacted once.
  */
 export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number): arrow.Table {
   const batchLimit =
@@ -217,6 +220,43 @@ function tableFromCompactedColumns(
   return compacted;
 }
 
+/**
+ * Convert an Arrow cell from Vector.get() into a value makeBuilder.append accepts.
+ * Nested GeoArrow (FixedSizeList / List) cells are Vectors, not arrays.
+ */
+function arrowCellToBuilderValue(value: unknown): unknown {
+  if (value == null) {
+    return null;
+  }
+  if (ArrayBuffer.isView(value)) {
+    return Array.from(value as any);
+  }
+
+  const nested = value as {
+    toArray?: () => ArrayLike<unknown>;
+    numChildren?: number;
+    get?: (index: number) => unknown;
+    length?: number;
+    isValid?: (index: number) => boolean;
+  };
+
+  // Primitive numeric child of a FixedSizeList (lng/lat).
+  if (typeof nested.toArray === 'function' && nested.numChildren === 0) {
+    return Array.from(nested.toArray());
+  }
+
+  if (typeof nested.get === 'function' && typeof nested.length === 'number') {
+    const out: unknown[] = [];
+    for (let i = 0; i < nested.length; i++) {
+      const valid = typeof nested.isValid === 'function' ? nested.isValid(i) : true;
+      out.push(valid ? arrowCellToBuilderValue(nested.get(i)) : null);
+    }
+    return out;
+  }
+
+  return value;
+}
+
 function compactArrowVector(column: arrow.Vector, type: arrow.DataType = column.type): arrow.Vector {
   if (!column || !column.data || column.data.length <= 1) {
     return column;
@@ -240,7 +280,10 @@ function compactArrowVector(column: arrow.Vector, type: arrow.DataType = column.
     const isValid = typeof (column as {isValid?: (index: number) => boolean}).isValid === 'function'
       ? (column as {isValid: (index: number) => boolean}).isValid(i)
       : true;
-    builder.append(isValid ? column.get(i) : null);
+    // FixedSizeList/List .get() returns nested Vectors. Appending those
+    // silently writes NaN (points) or throws (lines/polygons). Plain JS
+    // arrays are what makeBuilder expects.
+    builder.append(isValid ? arrowCellToBuilderValue(column.get(i)) : null);
   }
   const finished = builder.finish() as arrow.Vector | {toVector: () => arrow.Vector};
   if (finished instanceof arrow.Vector) {
@@ -316,12 +359,15 @@ export class ArrowDataContainer implements DataContainerInterface {
   }
 
   update(updateData: arrow.Vector<any>[] | arrow.Table) {
+    // Incremental Arrow loads append batches here. Compacting on every update
+    // would copy the growing table (Builder over every cell). Skip collapse;
+    // processArrowBatches compact once when the file is fully loaded.
     const isArrow = isArrowTable(updateData);
     if (isArrow) {
-      this._assignTable(compactArrowTable(updateData));
+      this._assignTable(updateData);
     } else {
       this._cols = updateData;
-      const table = compactArrowTable(this._createTable());
+      const table = this._createTable();
       if (table.numCols > 0) {
         this._assignTable(table);
       } else {
