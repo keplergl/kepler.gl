@@ -2529,6 +2529,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@duckdb/duckdb-wasm@npm:^1.32.0":
+  version: 1.32.0
+  resolution: "@duckdb/duckdb-wasm@npm:1.32.0"
+  dependencies:
+    apache-arrow: "npm:^17.0.0"
+  checksum: 10c0/bd0cadac3e9a61b69d411345b67618d2ce69ae040a908e3bd67e77fd669633a680d931f7bc1519c8519a1f4c6874cbb8925251e2bba091275014d01daa518020
+  languageName: node
+  linkType: hard
+
 "@emnapi/core@npm:^1.1.0":
   version: 1.11.3
   resolution: "@emnapi/core@npm:1.11.3"
@@ -7103,6 +7112,87 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@sqlrooms/duckdb-core@npm:0.29.0-rc.9":
+  version: 0.29.0-rc.9
+  resolution: "@sqlrooms/duckdb-core@npm:0.29.0-rc.9"
+  dependencies:
+    "@sqlrooms/room-config": "npm:0.29.0-rc.9"
+  peerDependencies:
+    apache-arrow: 17.0.0
+  checksum: 10c0/36078b865d6b5a78933aa2772e6fbfe54fcfc00af4e5bec8f6a3628015fd3d1d030ffec3aabf126733b8b6d7057a169a53fb84dd1221d8f4119cdcdf7ca4c5ab
+  languageName: node
+  linkType: hard
+
+"@sqlrooms/duckdb@npm:0.29.0-rc.9":
+  version: 0.29.0-rc.9
+  resolution: "@sqlrooms/duckdb@npm:0.29.0-rc.9"
+  dependencies:
+    "@duckdb/duckdb-wasm": "npm:^1.32.0"
+    "@sqlrooms/duckdb-core": "npm:0.29.0-rc.9"
+    "@sqlrooms/room-config": "npm:0.29.0-rc.9"
+    "@sqlrooms/room-store": "npm:0.29.0-rc.9"
+    "@sqlrooms/utils": "npm:0.29.0-rc.9"
+    fast-deep-equal: "npm:^3.1.3"
+    immer: "npm:^11.0.1"
+    zod: "npm:^4.1.8"
+    zustand: "npm:^5.0.8"
+  peerDependencies:
+    apache-arrow: 17.0.0
+  checksum: 10c0/84ab3f49cb60cecae2c8d98264907bb4f2c1c94342821164641934f02c6a21eb39586fd4d3aadcaba59b1e0cb0147989c6175ffff3b66aa5d1cb54f5bf6607bb
+  languageName: node
+  linkType: hard
+
+"@sqlrooms/layout-config@npm:0.29.0-rc.9":
+  version: 0.29.0-rc.9
+  resolution: "@sqlrooms/layout-config@npm:0.29.0-rc.9"
+  dependencies:
+    zod: "npm:^4.1.8"
+  checksum: 10c0/9b81419bf4adc26032dafac056fb2fa98ff3c9534e7d76ec53fba2da43dbd199ab20ee55d9d8c395a9d2a128340e1f6054a65efe10ffc30ac8c94f91d2137ef9
+  languageName: node
+  linkType: hard
+
+"@sqlrooms/room-config@npm:0.29.0-rc.9":
+  version: 0.29.0-rc.9
+  resolution: "@sqlrooms/room-config@npm:0.29.0-rc.9"
+  dependencies:
+    "@sqlrooms/layout-config": "npm:0.29.0-rc.9"
+    zod: "npm:^4.1.8"
+  peerDependencies:
+    react: ">=18"
+    react-dom: ">=18"
+  checksum: 10c0/379b767a9845553e597931487994900cb66768e6bc5a76f8675f351257726be865d9c19a23b1f6fed375f96e9dfa65c86c12ff85832b2bd85b4fde3bb111bb36
+  languageName: node
+  linkType: hard
+
+"@sqlrooms/room-store@npm:0.29.0-rc.9":
+  version: 0.29.0-rc.9
+  resolution: "@sqlrooms/room-store@npm:0.29.0-rc.9"
+  dependencies:
+    "@sqlrooms/room-config": "npm:0.29.0-rc.9"
+    immer: "npm:^11.0.1"
+    zod: "npm:^4.1.8"
+    zustand: "npm:^5.0.8"
+  peerDependencies:
+    react: ">=18"
+  checksum: 10c0/89217d5f1887aa22db01925f55ce253537dd400639e395021a55f3311779c5b4de505e0fa90dbdd08d8abaae0fb53638dd9a703ef0ecece0a65aa7736627d436
+  languageName: node
+  linkType: hard
+
+"@sqlrooms/utils@npm:0.29.0-rc.9":
+  version: 0.29.0-rc.9
+  resolution: "@sqlrooms/utils@npm:0.29.0-rc.9"
+  dependencies:
+    d3-color: "npm:^3.1.0"
+    d3-format: "npm:^3.1.0"
+    d3-time-format: "npm:^4.1.0"
+    dayjs: "npm:^1.11.18"
+  peerDependencies:
+    react: ">=18"
+    react-dom: ">=18"
+  checksum: 10c0/eb099fd591db2af3c7d2d6e75b2666e23ef6eddc17b22bd4cbf29d259faacba918db1f636b5924a026d871fe6d9720d2e64a0847011d132ea2baff535908b19b
+  languageName: node
+  linkType: hard
+
 "@stylelint/postcss-css-in-js@npm:^0.37.2":
   version: 0.37.3
   resolution: "@stylelint/postcss-css-in-js@npm:0.37.3"
@@ -10585,6 +10675,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"baseline-browser-mapping@npm:^2.11.12":
+  version: 2.11.19
+  resolution: "baseline-browser-mapping@npm:2.11.19"
+  bin:
+    baseline-browser-mapping: dist/cli.cjs
+  checksum: 10c0/827e60717e1652d80471cc69e61c85966b7934cde4aab94f9eb21b9b8f864f094a810717c569fdec5b372fc4c9b7bbf99c27c5ceddb3a57313238fc6be355d93
+  languageName: node
+  linkType: hard
+
 "basic-ftp@npm:^5.0.2":
   version: 5.0.5
   resolution: "basic-ftp@npm:5.0.5"
@@ -11024,17 +11123,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"browserslist@npm:^4.17.0":
-  version: 4.23.2
-  resolution: "browserslist@npm:4.23.2"
+"browserslist@npm:^4.24.0":
+  version: 4.28.8
+  resolution: "browserslist@npm:4.28.8"
   dependencies:
-    caniuse-lite: "npm:^1.0.30001640"
-    electron-to-chromium: "npm:^1.4.820"
-    node-releases: "npm:^2.0.14"
-    update-browserslist-db: "npm:^1.1.0"
+    baseline-browser-mapping: "npm:^2.11.12"
+    caniuse-lite: "npm:^1.0.30001809"
+    electron-to-chromium: "npm:^1.5.402"
+    node-releases: "npm:^2.0.53"
+    update-browserslist-db: "npm:^1.3.0"
   bin:
     browserslist: cli.js
-  checksum: 10c0/0217d23c69ed61cdd2530c7019bf7c822cd74c51f8baab18dd62457fed3129f52499f8d3a6f809ae1fb7bb3050aa70caa9a529cc36c7478427966dbf429723a5
+  checksum: 10c0/047dd517c8d1f1f56a253d752c3127b8ad01c58e4cbb7e21cb5cd07ebd13e083a2237c3afb13eb60674282c9132bd4534aea2c3ff7c6f7d29be0687a00cbd537
   languageName: node
   linkType: hard
 
@@ -13065,6 +13165,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dayjs@npm:^1.11.18":
+  version: 1.11.23
+  resolution: "dayjs@npm:1.11.23"
+  checksum: 10c0/69ab04bf19c676e44ab50cc2fca223d265f3dafd107151ef3b0f3ad74d360c37caa602abe62f87cb25d90bd9f6bee003698af47df5b0dbf10a998b7b5f3bb3f1
+  languageName: node
+  linkType: hard
+
 "de-indent@npm:^1.0.2":
   version: 1.0.2
   resolution: "de-indent@npm:1.0.2"
@@ -14019,10 +14126,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-to-chromium@npm:^1.4.820":
-  version: 1.5.2
-  resolution: "electron-to-chromium@npm:1.5.2"
-  checksum: 10c0/5de3edc46087d90c0621597e6427d0711443a7aeeced3348a91ab56c9aebd0f7ed7b44c99379ff0295fa1f1a5ffba32225e7f28dfed997d88eaf2fe61c9e30d7
+"electron-to-chromium@npm:^1.5.402":
+  version: 1.5.413
+  resolution: "electron-to-chromium@npm:1.5.413"
+  checksum: 10c0/12f68866c366d3413ce4655201180e1ea3f005598e1916ef948e6fd12fb5c0680c068012837226321c226b54993fe1acba04ff64e99a5faed292f4c93dff94dd
   languageName: node
   linkType: hard
 
@@ -14504,10 +14611,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"escalade@npm:^3.1.1, escalade@npm:^3.1.2":
+"escalade@npm:^3.1.1":
   version: 3.1.2
   resolution: "escalade@npm:3.1.2"
   checksum: 10c0/6b4adafecd0682f3aa1cd1106b8fff30e492c7015b178bc81b2d2f75106dabea6c6d6e8508fc491bd58e597c74abb0e8e2368f943ecb9393d4162e3c2f3cf287
+  languageName: node
+  linkType: hard
+
+"escalade@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "escalade@npm:3.2.0"
+  checksum: 10c0/ced4dd3a78e15897ed3be74e635110bbf3b08877b0a41be50dcb325ee0e0b5f65fc2d50e9845194d7c4633f327e2e1c6cce00a71b617c5673df0374201d67f65
   languageName: node
   linkType: hard
 
@@ -17408,6 +17522,13 @@ __metadata:
   version: 3.0.6
   resolution: "immediate@npm:3.0.6"
   checksum: 10c0/f8ba7ede69bee9260241ad078d2d535848745ff5f6995c7c7cb41cfdc9ccc213f66e10fa5afb881f90298b24a3f7344b637b592beb4f54e582770cdce3f1f039
+  languageName: node
+  linkType: hard
+
+"immer@npm:^11.0.1":
+  version: 11.1.18
+  resolution: "immer@npm:11.1.18"
+  checksum: 10c0/afe02fcd154134eb2b3bea5a06051ef2e220677dbbc9c0b17ea2ce1c22bfc3690ac16f916922c12ad9c074617a02148ac5d94cbf0886d76e7ebac726806679d0
   languageName: node
   linkType: hard
 
@@ -21568,10 +21689,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-releases@npm:^2.0.14":
-  version: 2.0.18
-  resolution: "node-releases@npm:2.0.18"
-  checksum: 10c0/786ac9db9d7226339e1dc84bbb42007cb054a346bd9257e6aa154d294f01bc6a6cddb1348fa099f079be6580acbb470e3c048effd5f719325abd0179e566fd27
+"node-releases@npm:^2.0.53":
+  version: 2.0.53
+  resolution: "node-releases@npm:2.0.53"
+  checksum: 10c0/db9fb29b21ec12e223ead8bd9406100ff14fce01678a9a4865e288098456b84869431421a739f216aa520b6f57d9425f6537662501ae8a2d9e1771bfa87751bc
   languageName: node
   linkType: hard
 
@@ -22960,7 +23081,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"picocolors@npm:^1.0.0, picocolors@npm:^1.0.1":
+"picocolors@npm:^1.0.0":
   version: 1.0.1
   resolution: "picocolors@npm:1.0.1"
   checksum: 10c0/c63cdad2bf812ef0d66c8db29583802355d4ca67b9285d846f390cc15c2f6ccb94e8cb7eb6a6e97fc5990a6d3ad4ae42d86c84d3146e667c739a4234ed50d400
@@ -28578,17 +28699,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"update-browserslist-db@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "update-browserslist-db@npm:1.1.0"
+"update-browserslist-db@npm:^1.3.0":
+  version: 1.3.1
+  resolution: "update-browserslist-db@npm:1.3.1"
   dependencies:
-    escalade: "npm:^3.1.2"
-    picocolors: "npm:^1.0.1"
+    escalade: "npm:^3.2.0"
+    picocolors: "npm:^1.1.1"
   peerDependencies:
     browserslist: ">= 4.21.0"
   bin:
     update-browserslist-db: cli.js
-  checksum: 10c0/a7452de47785842736fb71547651c5bbe5b4dc1e3722ccf48a704b7b34e4dcf633991eaa8e4a6a517ffb738b3252eede3773bef673ef9021baa26b056d63a5b9
+  checksum: 10c0/2a924f5aa283af2d918e5cd941c7e8d77b05adf2ffbe5ca461506b1ff05fee6e8bca74c0f1ba37eb28f00ec93b15e80de24c7222825835aec2dd7bf0a0f6a417
   languageName: node
   linkType: hard
 
@@ -29967,10 +30088,38 @@ __metadata:
   languageName: node
   linkType: hard
 
+"zod@npm:^4.1.8, zod@npm:^4.4.0":
+  version: 4.4.3
+  resolution: "zod@npm:4.4.3"
+  checksum: 10c0/7ea31b558e88f9faf44f31dd185e2e1cbf51fed3081787fb96cc2534749b50c0acfc6da7f0922a7353ed092dd358c7d50c28ea96c94d04af64191bd33152eca3
+  languageName: node
+  linkType: hard
+
 "zstd-codec@npm:^0.1":
   version: 0.1.5
   resolution: "zstd-codec@npm:0.1.5"
   checksum: 10c0/8b7e6d9ce86f00fc4ea16c949aab5538505a1f3f1a9c7c095b2a7308b4ed894deec7bdb2c614e1486a337abdce09a6e56282dc0e39fe9f880953b094f8c7810b
+  languageName: node
+  linkType: hard
+
+"zustand@npm:^5.0.8":
+  version: 5.0.15
+  resolution: "zustand@npm:5.0.15"
+  peerDependencies:
+    "@types/react": ">=18.0.0"
+    immer: ">=9.0.6"
+    react: ">=18.0.0"
+    use-sync-external-store: ">=1.2.0"
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    immer:
+      optional: true
+    react:
+      optional: true
+    use-sync-external-store:
+      optional: true
+  checksum: 10c0/ed3a883950a8c22d98e8c72cef103af18043ce66b45faf218ad20ccc8ee29716aacfc6b0a3e783b2152ea38b7663f3982bb6bf2b13ce3df692b05276446afa04
   languageName: node
   linkType: hard
 

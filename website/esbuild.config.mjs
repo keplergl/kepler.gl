@@ -26,7 +26,7 @@ const port = 3003;
 // Tailwind CLI, exactly like the demo-app build does, and link the output from
 // index.html. `@source` globs inside this stylesheet are resolved relative to
 // the stylesheet itself, so pointing at the demo-app copy keeps them valid.
-const TAILWIND_INPUT = '../examples/demo-app/src/ai-assistant-v2/styles.css';
+const TAILWIND_INPUT = '../examples/demo-app/src/styles.css';
 const TAILWIND_OUTPUT = 'dist/tailwind.css';
 
 // The tailwindcss CLI is a dependency of the demo-app workspace; locate its

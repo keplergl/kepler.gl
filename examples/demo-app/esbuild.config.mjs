@@ -381,7 +381,7 @@ function openURL(url) {
     // Start Tailwind CSS watcher for sqlrooms UI components
     spawn(
       './node_modules/.bin/tailwindcss',
-      ['-i', 'src/ai-assistant-v2/styles.css', '-o', 'dist/tailwind.css', '--watch'],
+      ['-i', 'src/styles.css', '-o', 'dist/tailwind.css', '--watch'],
       {
         stdio: 'inherit'
       }

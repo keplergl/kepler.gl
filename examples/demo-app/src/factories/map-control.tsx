@@ -14,7 +14,7 @@ import {
 // published in the @kepler.gl/components version this example currently depends on.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const AnnotationManagerFactory = (require('@kepler.gl/components') as any).AnnotationManagerFactory;
-import AiAssistantControlFactory from '../ai-assistant-v2/map/ai-assistant-control';
+import {AiAssistantControlFactory} from '@openassistant/kepler-assistant';
 
 import {BannerMapPanel, SampleMapPanel} from '../components/map-control/map-control';
 import SqlPanelControlFactory from '../components/map-control/sql-panel-control';

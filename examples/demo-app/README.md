@@ -2,6 +2,12 @@
 
 This is the src code of kepler.gl demo app. You can copy this folder out and run it locally.
 
+> The AI assistant (panel, control, reducer) comes from the published
+> **`@openassistant/kepler-assistant`** package (`^0.0.1`), which temporarily
+> vendors the `@kepler.gl/mcp` map surface (this repo's `src/mcp/` module is
+> removed for now). See [`docs/NEXT_PLAN.md`](docs/NEXT_PLAN.md) for the
+> permanent separation back into a kepler.gl `src/mcp/` module.
+
 #### Pre requirement
 - [Node.js ^20.x](http://nodejs.org): We use Node to generate the documentation, run a
   development web server, run tests, and generate distributable files. Depending on your system,
