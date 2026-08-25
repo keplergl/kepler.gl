@@ -361,6 +361,7 @@ export default {
     line: '线',
     polygon: 'polygon',
     rectangle: 'rectangle',
+    circle: '圆形',
     copyAll: '复制全部',
     convertToLayer: '转换为\n图层',
     hide: '隐藏',

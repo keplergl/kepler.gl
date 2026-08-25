@@ -145,6 +145,10 @@ export * from './h3-hexagon-layer';
 export {default as Table} from './table';
 
 export {getEditorLayer} from './editor-layer/editor-layer';
+export {
+  formatCircleRadiusLabel,
+  formatLineLengthLabel
+} from './editor-layer/editor-measure-labels';
 
 export {
   default as ScenegraphLayer,

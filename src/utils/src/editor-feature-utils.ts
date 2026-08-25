@@ -11,7 +11,8 @@ const EDITOR_INTERNAL_PROPERTIES = new Set([
   'guideType',
   'editHandleType',
   'shape',
-  'renderType'
+  'renderType',
+  'editProperties'
 ]);
 
 export function isReservedEditorProperty(key: string): boolean {

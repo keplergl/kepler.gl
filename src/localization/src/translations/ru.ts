@@ -374,6 +374,7 @@ export default {
     line: 'Линия',
     polygon: 'Многоугольник',
     rectangle: 'Квадрат',
+    circle: 'Круг',
     copyAll: 'Копировать всё',
     convertToLayer: 'Преобразовать\nв слой',
     hide: 'Скрыть',

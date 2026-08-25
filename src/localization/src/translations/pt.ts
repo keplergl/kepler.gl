@@ -375,6 +375,7 @@ export default {
     line: 'linha',
     polygon: 'polígono',
     rectangle: 'retângulo',
+    circle: 'círculo',
     copyAll: 'Copiar tudo',
     convertToLayer: 'Converter\nem camada',
     hide: 'esconder',

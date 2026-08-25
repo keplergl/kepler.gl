@@ -7,7 +7,23 @@ import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
 import {INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 import {EDITOR_LAYER_ID, EDITOR_MODES} from '@kepler.gl/constants';
-import {EditorLayerUtils, getEditorLayer} from '@kepler.gl/layers';
+import {EditorLayerUtils, getEditorLayer, formatCircleRadiusLabel, formatLineLengthLabel} from '@kepler.gl/layers';
+
+test('editorLayerUtils -> formatCircleRadiusLabel', t => {
+  t.equal(formatCircleRadiusLabel(0), '', 'Should hide invalid radii');
+  t.equal(formatCircleRadiusLabel(0.25), 'Radius: 0.25 km', 'Should show radius in kilometers');
+  t.equal(formatCircleRadiusLabel(1.5), 'Radius: 1.50 km', 'Should keep two decimal places');
+  t.equal(formatCircleRadiusLabel(12.345), 'Radius: 12.35 km', 'Should round to two decimal places');
+  t.end();
+});
+
+test('editorLayerUtils -> formatLineLengthLabel', t => {
+  t.equal(formatLineLengthLabel(0), '', 'Should hide invalid lengths');
+  t.equal(formatLineLengthLabel(0.25), 'Length: 0.25 km', 'Should show length in kilometers');
+  t.equal(formatLineLengthLabel(1.5), 'Length: 1.50 km', 'Should keep two decimal places');
+  t.equal(formatLineLengthLabel(12.345), 'Length: 12.35 km', 'Should round to two decimal places');
+  t.end();
+});
 
 test('editorLayerUtils -> isDrawingActive', t => {
   t.equal(
@@ -34,6 +50,11 @@ test('editorLayerUtils -> isDrawingActive', t => {
     EditorLayerUtils.isDrawingActive(true, EDITOR_MODES.DRAW_POINT),
     true,
     'Should return true for point drawing mode'
+  );
+  t.equal(
+    EditorLayerUtils.isDrawingActive(true, EDITOR_MODES.DRAW_CIRCLE),
+    true,
+    'Should return true for circle drawing mode'
   );
   t.end();
 });
@@ -117,6 +138,16 @@ test('editorLayerUtils -> getTooltip', t => {
     })?.text,
     'Click to start a line. Double-click to finish',
     'Should return a tooltip for line drawing'
+  );
+
+  t.equal(
+    EditorLayerUtils.getTooltip(info, {
+      editor: {...editor, mode: EDITOR_MODES.DRAW_CIRCLE},
+      theme: {},
+      editorMenuActive: true
+    })?.text,
+    'Click or drag to draw circle',
+    'Should return a tooltip for circle drawing'
   );
 
   info.layer.id = EDITOR_LAYER_ID;
@@ -365,6 +396,75 @@ test('editorLayerUtils -> getEditorLayer', t => {
     viewport: null
   });
   t.ok(editorLayer instanceof EditableGeoJsonLayer, 'Should return an editable layer');
+
+  const circleLayer = getEditorLayer({
+    editorMenuActive: true,
+    editor: {...editor, mode: EDITOR_MODES.DRAW_CIRCLE},
+    onSetFeatures: VisStateActions.setFeatures,
+    setSelectedFeature: VisStateActions.setSelectedFeature,
+    featureCollection: {
+      features: [],
+      type: 'FeatureCollection'
+    },
+    selectedFeatureIndexes: [],
+    viewport: null
+  });
+  t.equal(
+    circleLayer.props.mode.name,
+    'DrawCircleModeExtended',
+    'Should use the circle draw mode when DRAW_CIRCLE is active'
+  );
+  t.equal(circleLayer.props.modeConfig.steps, 64, 'Should tessellate circles with 64 vertices');
+  t.equal(circleLayer.props._subLayerProps.tooltips.background, true, 'Radius label should use a background');
+
+  const CircleMode = circleLayer.props.mode;
+  const circleMode = new CircleMode();
+  t.deepEqual(circleMode.getTooltips(), [], 'Should hide the radius label before the circle has a radius');
+
+  circleMode.radius = 0.25;
+  circleMode.position = [10, 20];
+  t.deepEqual(
+    circleMode.getTooltips(),
+    [{position: [10, 20], text: 'Radius: 0.25 km'}],
+    'Should show a radius label at the circle rim while drawing'
+  );
+
+  const lineLayer = getEditorLayer({
+    editorMenuActive: true,
+    editor: {...editor, mode: EDITOR_MODES.DRAW_LINESTRING},
+    onSetFeatures: VisStateActions.setFeatures,
+    setSelectedFeature: VisStateActions.setSelectedFeature,
+    featureCollection: {
+      features: [],
+      type: 'FeatureCollection'
+    },
+    selectedFeatureIndexes: [],
+    viewport: null
+  });
+  t.equal(
+    lineLayer.props.mode.name,
+    'DrawLineStringModeExtended',
+    'Should use the line draw mode when DRAW_LINESTRING is active'
+  );
+
+  const LineMode = lineLayer.props.mode;
+  const lineMode = new LineMode();
+  t.deepEqual(lineMode.getTooltips({}), [], 'Should hide the length label before the line has a vertex');
+
+  lineMode.addClickSequence({mapCoords: [0, 0]});
+  t.deepEqual(
+    lineMode.getTooltips({lastPointerMoveEvent: {mapCoords: [0, 0]}}),
+    [],
+    'Should hide the length label when the tentative segment has no length'
+  );
+
+  const lengthTooltips = lineMode.getTooltips({lastPointerMoveEvent: {mapCoords: [1, 0]}});
+  t.equal(lengthTooltips.length, 1, 'Should show a length label while drawing a line');
+  t.deepEqual(lengthTooltips[0].position, [1, 0], 'Should place the length label at the cursor');
+  t.ok(
+    /^Length: \d+\.\d{2} km$/.test(lengthTooltips[0].text),
+    'Should format the length as Length: xx km'
+  );
 
   t.end();
 });
