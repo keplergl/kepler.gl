@@ -404,8 +404,16 @@ test('compactArrowTable -> duplicate field names keep both columns', t => {
   t.equal(compacted.numCols, 2, 'compaction should not drop a duplicate-named column');
   t.equal(compacted.numRows, 2, 'compaction should keep all rows');
   t.equal(compacted.batches.length, 1, 'duplicate-named columns should still collapse to one batch');
-  t.deepEqual(Array.from(compacted.getChildAt(0).toArray()), [1.5, 2.5]);
-  t.deepEqual(Array.from(compacted.getChildAt(1).toArray()), [1, 2]);
+  t.deepEqual(
+    [compacted.getChildAt(0).get(0), compacted.getChildAt(0).get(1)],
+    [1.5, 2.5],
+    'first duplicate-named column should keep its float values'
+  );
+  t.deepEqual(
+    [compacted.getChildAt(1).get(0), compacted.getChildAt(1).get(1)],
+    [1, 2],
+    'second duplicate-named column should keep its int values'
+  );
 
   t.end();
 });

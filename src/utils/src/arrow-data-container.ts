@@ -166,7 +166,7 @@ export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number):
       const seen = seenNames.get(field.name) ?? 0;
       seenNames.set(field.name, seen + 1);
       const key = seen === 0 ? field.name : `${field.name}_${seen}`;
-      columns[key] = compactArrowVector(column, field.type);
+      columns[key] = compactArrowVector(column, column.type || field.type);
     }
 
     // Always build a kepler apache-arrow Table. Using `table.constructor` can
