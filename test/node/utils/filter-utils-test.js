@@ -854,6 +854,67 @@ test('filterUtils -> getPolygonFilterFunctor -> point layer ignores non-finite a
     true,
     'typed-array lng/lat should be treated as a valid position'
   );
+  t.equal(
+    fn({position: [null, 0.5, 0]}),
+    false,
+    'null longitude should not coerce to 0 and pass the polygon filter'
+  );
+  t.equal(
+    fn({position: ['', 0.5, 0]}),
+    false,
+    'empty-string longitude should not coerce to 0 and pass the polygon filter'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> getPolygonFilterFunctor -> arc layer validates both endpoints', t => {
+  const squarePolygon = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-1, -1],
+          [1, -1],
+          [1, 1],
+          [-1, 1],
+          [-1, -1]
+        ]
+      ]
+    }
+  };
+
+  const fn = getPolygonFilterFunctor(
+    {
+      type: 'arc',
+      getPositionAccessor: () => d => d.position
+    },
+    {value: squarePolygon},
+    null
+  );
+
+  t.equal(
+    fn({position: [0.5, 0.5, 0, 0.2, 0.2, 0]}),
+    true,
+    'arc with both endpoints inside should pass'
+  );
+  t.equal(
+    fn({position: [0.5, 0.5, null, 0.2, 0.2, undefined]}),
+    true,
+    'null altitude should not exclude a valid arc'
+  );
+  t.equal(
+    fn({position: [0.5, 0.5, 0, null, 0.2, 0]}),
+    false,
+    'missing destination longitude should not reach turfPoint'
+  );
+  t.equal(
+    fn({position: [0.5, 0.5, 0, 10, 10, 0]}),
+    false,
+    'arc with destination outside should fail'
+  );
 
   t.end();
 });

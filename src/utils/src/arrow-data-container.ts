@@ -155,13 +155,18 @@ export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number):
 
   try {
     const columns: Record<string, arrow.Vector> = {};
+    const seenNames = new Map<string, number>();
     for (let i = 0; i < table.numCols; i++) {
       const field = table.schema.fields[i];
       const column = table.getChildAt(i);
       if (!column) {
         continue;
       }
-      columns[field.name] = compactArrowVector(column, field.type);
+      // Arrow schemas may repeat field names; object keys would drop earlier columns.
+      const seen = seenNames.get(field.name) ?? 0;
+      seenNames.set(field.name, seen + 1);
+      const key = seen === 0 ? field.name : `${field.name}_${seen}`;
+      columns[key] = compactArrowVector(column, field.type);
     }
 
     // Always build a kepler apache-arrow Table. Using `table.constructor` can
@@ -193,8 +198,8 @@ function copyArrowSchemaMetadata(from?: arrow.Schema | null, to?: arrow.Schema |
   }
 
   const fromByName = new Map((from.fields || []).map(field => [field.name, field]));
-  (to.fields || []).forEach(toField => {
-    const fromField = fromByName.get(toField.name);
+  (to.fields || []).forEach((toField, index) => {
+    const fromField = from.fields?.[index] || fromByName.get(toField.name);
     const src = fromField?.metadata as Map<string, string> | undefined;
     const dst = toField?.metadata as Map<string, string> | undefined;
     if (!src || !dst || typeof src.forEach !== 'function' || typeof dst.set !== 'function') {

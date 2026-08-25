@@ -625,10 +625,15 @@ export default class GeoJsonLayer extends Layer {
       // comparing length to numChunks would re-parse WKB on every meta update.
       const processedWholeColumn =
         this.dataToFeature.length > 0 && processedRows > 0 && processedRows >= numRows;
+      // Progressive loads keep one dataToFeature entry per chunk, then compact
+      // the finished table to one chunk. Row count already matches, so without
+      // this check we would skip the rebuild and keep excess Deck layers.
+      const compactedAfterProgressiveLoad = this.dataToFeature.length > numChunks;
       const needsUpdate =
         this.dataToFeature.length === 0 ||
         (!processedWholeColumn && this.dataToFeature.length < numChunks) ||
-        (processedRows > 0 && processedRows < numRows);
+        (processedRows > 0 && processedRows < numRows) ||
+        compactedAfterProgressiveLoad;
 
       if (geoColumn && geoField && needsUpdate) {
         // Incremental only when a new chunk appeared. Compacted tables stay at 1

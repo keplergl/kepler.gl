@@ -380,6 +380,36 @@ test('compactArrowTable -> dictionary, WKB, and nested GeoArrow keep values', t 
   t.end();
 });
 
+test('compactArrowTable -> duplicate field names keep both columns', t => {
+  const duplicateNameTable = (floatValues, intValues) => {
+    const schema = new arrow.Schema([
+      new arrow.Field('x', new arrow.Float64()),
+      new arrow.Field('x', new arrow.Int32())
+    ]);
+    const floats = arrow.vectorFromArray(floatValues, new arrow.Float64());
+    const ints = arrow.vectorFromArray(intValues, new arrow.Int32());
+    const data = arrow.makeData({
+      type: new arrow.Struct(schema.fields),
+      children: [floats.data[0], ints.data[0]],
+      length: floatValues.length
+    });
+    return new arrow.Table(new arrow.RecordBatch(schema, data));
+  };
+
+  const combined = duplicateNameTable([1.5], [1]).concat(duplicateNameTable([2.5], [2]));
+  t.equal(combined.numCols, 2, 'fixture should expose both duplicate-named columns');
+  t.ok(combined.batches.length > 1, 'fixture should have multiple record batches');
+
+  const compacted = compactArrowTable(combined, 1);
+  t.equal(compacted.numCols, 2, 'compaction should not drop a duplicate-named column');
+  t.equal(compacted.numRows, 2, 'compaction should keep all rows');
+  t.equal(compacted.batches.length, 1, 'duplicate-named columns should still collapse to one batch');
+  t.deepEqual(Array.from(compacted.getChildAt(0).toArray()), [1.5, 2.5]);
+  t.deepEqual(Array.from(compacted.getChildAt(1).toArray()), [1, 2]);
+
+  t.end();
+});
+
 test('compactArrowTable -> Builder failure keeps the original table', t => {
   const batchA = arrow.tableFromJSON([{lng: -122.4}]);
   const batchB = arrow.tableFromJSON([{lng: -122.5}]);

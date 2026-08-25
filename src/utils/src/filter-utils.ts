@@ -381,7 +381,14 @@ function hasFiniteLngLat(pos: unknown): pos is number[] {
     return false;
   }
   const values = pos as ArrayLike<unknown>;
-  return values.length >= 2 && Number.isFinite(Number(values[0])) && Number.isFinite(Number(values[1]));
+  // Do not coerce with Number(): Number(null/''/false) is 0 and would pass.
+  return (
+    values.length >= 2 &&
+    typeof values[0] === 'number' &&
+    Number.isFinite(values[0]) &&
+    typeof values[1] === 'number' &&
+    Number.isFinite(values[1])
+  );
 }
 
 export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
@@ -427,6 +434,7 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
         const pos = getPosition(data);
         return (
           hasFiniteLngLat(pos) &&
+          hasFiniteLngLat([pos[3], pos[4]]) &&
           [
             [pos[0], pos[1]],
             [pos[3], pos[4]]
