@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
