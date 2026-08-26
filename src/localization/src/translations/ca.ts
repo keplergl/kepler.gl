@@ -291,7 +291,14 @@ export default {
   },
   datasetTitle: {
     showDataTable: 'Mostra taula de dades',
-    removeDataset: 'Elimina conjunt de dades'
+    removeDataset: 'Elimina conjunt de dades',
+    refreshDataset: 'Actualitza el conjunt de dades',
+    refreshOff: 'Off',
+    refresh10s: '10s',
+    refresh15s: '15s',
+    refresh1m: '1 min',
+    refresh5m: '5 min',
+    refresh15m: '15 min'
   },
   datasetInfo: {
     rowCount: '{rowCount} files',
@@ -299,7 +306,8 @@ export default {
     rasterTile: 'Mosaic ràster',
     wmsTile: 'Mosaic WMS',
     tile3d: 'Mosaic 3D',
-    remoteFile: '{rowCount} files (remot)'
+    remoteFile: '{rowCount} files (remot)',
+    refreshInterval: 'Actualitza'
   },
   tooltip: {
     hideLayer: 'oculta la capa',
@@ -698,6 +706,7 @@ export default {
     fetch: 'Carrega',
     format: 'Format',
     formatAuto: 'Auto',
+    refreshInterval: 'Actualitza',
     cors: 'L’URL ha de permetre [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {

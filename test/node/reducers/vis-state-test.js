@@ -39,6 +39,7 @@ import {
 } from '@kepler.gl/utils';
 import {
   ALL_FIELD_TYPES,
+  DatasetType,
   EDITOR_MODES,
   LAYER_VIS_CONFIGS,
   DEFAULT_TEXT_LABEL,
@@ -943,7 +944,11 @@ test('visStateReducer -> layerDataIdChangeUpdater -> not valid to save layer rem
 
   // Verify precondition: layer has colorField set
   t.ok(pointLayer.config.colorField, 'point layer should have colorField set');
-  t.equal(pointLayer.config.colorField.name, 'gps_data.types', 'colorField should be gps_data.types');
+  t.equal(
+    pointLayer.config.colorField.name,
+    'gps_data.types',
+    'colorField should be gps_data.types'
+  );
 
   // Add a new dataset with fewer rows but containing the same colorField name
   const newFields = [
@@ -961,7 +966,10 @@ test('visStateReducer -> layerDataIdChangeUpdater -> not valid to save layer rem
       action: VisStateActions.updateVisData,
       payload: [
         [
-          {info: {id: 'small-dataset', label: 'Small Data'}, data: {fields: newFields, rows: newRows}}
+          {
+            info: {id: 'small-dataset', label: 'Small Data'},
+            data: {fields: newFields, rows: newRows}
+          }
         ]
       ]
     }
@@ -998,7 +1006,11 @@ test('visStateReducer -> layerDataIdChangeUpdater -> not valid to save layer rem
   t.equal(updatedLayer.config.dataId, 'small-dataset', 'should update layer dataId');
   // colorField should be remapped to the new dataset's field (same name exists)
   t.ok(updatedLayer.config.colorField, 'colorField should be remapped');
-  t.equal(updatedLayer.config.colorField.name, 'gps_data.types', 'colorField should match by name in new dataset');
+  t.equal(
+    updatedLayer.config.colorField.name,
+    'gps_data.types',
+    'colorField should match by name in new dataset'
+  );
 
   // Now test clearing: switch to a dataset without the colorField name
   const noMatchFields = [
@@ -1012,7 +1024,10 @@ test('visStateReducer -> layerDataIdChangeUpdater -> not valid to save layer rem
       action: VisStateActions.updateVisData,
       payload: [
         [
-          {info: {id: 'no-match-dataset', label: 'No Match'}, data: {fields: noMatchFields, rows: noMatchRows}}
+          {
+            info: {id: 'no-match-dataset', label: 'No Match'},
+            data: {fields: noMatchFields, rows: noMatchRows}
+          }
         ]
       ]
     }
@@ -1032,7 +1047,11 @@ test('visStateReducer -> layerDataIdChangeUpdater -> not valid to save layer rem
 
   const finalLayer = finalState.layers[0];
   t.equal(finalLayer.config.dataId, 'no-match-dataset', 'should update dataId to no-match-dataset');
-  t.equal(finalLayer.config.colorField, null, 'colorField should be null when no matching field in new dataset');
+  t.equal(
+    finalLayer.config.colorField,
+    null,
+    'colorField should be null when no matching field in new dataset'
+  );
 
   t.end();
 });
@@ -5037,7 +5056,11 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
 
   t.equal(newReducer.layerData[0].data.length, 2, 'Layer Point 1 should only show 2 points');
 
-  t.equal(newReducer.layerData[1].data.length, 4, 'Layer Point 2 should show all 4 points (not targeted by filter)');
+  t.equal(
+    newReducer.layerData[1].data.length,
+    4,
+    'Layer Point 2 should show all 4 points (not targeted by filter)'
+  );
 
   const filterFeature = newReducer.filters[0].value;
 
@@ -5051,9 +5074,17 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
 
   t.equal(newReducer.filters[0].layerId.length, 2, 'Should have two values in filter.layerId');
 
-  t.equal(newReducer.layerData[0].data.length, 2, 'Layer Point 1 should show 2 points (filtered by its own position)');
+  t.equal(
+    newReducer.layerData[0].data.length,
+    2,
+    'Layer Point 1 should show 2 points (filtered by its own position)'
+  );
 
-  t.equal(newReducer.layerData[1].data.length, 0, 'Layer Point 2 should show 0 points (end positions are outside polygon)');
+  t.equal(
+    newReducer.layerData[1].data.length,
+    0,
+    'Layer Point 2 should show 0 points (end positions are outside polygon)'
+  );
 
   // Adding a new dataset - creates extra 4 layers
   newReducer = applyActions(reducer, newReducer, [
@@ -5119,10 +5150,7 @@ test('#visStateReducer -> POLYGON: unselecting all layers returns sketch', t => 
 
   t.equal(state.filters.length, 0, 'Should remove the filter when no layers remain');
   t.equal(state.editor.features.length, 1, 'Should return the polygon to sketches');
-  t.notOk(
-    state.editor.features[0].properties.filterId,
-    'Returned sketch should not be a filter'
-  );
+  t.notOk(state.editor.features[0].properties.filterId, 'Returned sketch should not be a filter');
   t.equal(
     state.editor.selectedFeature.id,
     mockPolygonFeature.id,
@@ -5703,9 +5731,7 @@ function loadDualLonLatPolygonState() {
 }
 
 function pointLayerByLat(state, latField) {
-  return state.layers.find(
-    l => l.type === 'point' && l.config.columns?.lat?.value === latField
-  );
+  return state.layers.find(l => l.type === 'point' && l.config.columns?.lat?.value === latField);
 }
 
 function layerDataIndexes(state, layer) {
@@ -5722,10 +5748,7 @@ test('#visStateReducer -> POLYGON: independent polygons on two layers', t => {
     VisStateActions.setFeatures([mockStartRegionPolygon, mockEndRegionPolygon])
   );
   state = reducer(state, VisStateActions.setSelectedFeature(mockStartRegionPolygon));
-  state = reducer(
-    state,
-    VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon)
-  );
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon));
   state = reducer(state, VisStateActions.setSelectedFeature(mockEndRegionPolygon));
   state = reducer(state, VisStateActions.setPolygonFilterLayer(endLayer, mockEndRegionPolygon));
 
@@ -5776,15 +5799,9 @@ test('#visStateReducer -> POLYGON: intersecting polygons AND on the same layer',
     VisStateActions.setFeatures([mockStartRegionPolygon, mockEastOverlapPolygon])
   );
   state = reducer(state, VisStateActions.setSelectedFeature(mockStartRegionPolygon));
-  state = reducer(
-    state,
-    VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon)
-  );
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon));
   state = reducer(state, VisStateActions.setSelectedFeature(mockEastOverlapPolygon));
-  state = reducer(
-    state,
-    VisStateActions.setPolygonFilterLayer(startLayer, mockEastOverlapPolygon)
-  );
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockEastOverlapPolygon));
 
   t.equal(state.filters.length, 2, 'Should create two polygon filters on the same layer');
   t.deepEqual(
@@ -6213,7 +6230,11 @@ test('#visStateReducer -> SET_EDITOR_FEATURE_PROPERTIES', t => {
 
   state = reducer(state, VisStateActions.setEditorFeatureProperties(pointFeature, {}));
   t.notOk(state.editor.features[0].properties.name, 'Should remove user properties when cleared');
-  t.equal(state.editor.features[0].properties.isClosed, false, 'Should keep editor-only properties');
+  t.equal(
+    state.editor.features[0].properties.isClosed,
+    false,
+    'Should keep editor-only properties'
+  );
 
   t.end();
 });
@@ -6348,7 +6369,9 @@ test('#visStateReducer -> LOAD_COLUMN_STATS', t => {
     initialState,
     VisStateActions.loadColumnStats(testCsvDataId, 'gps_data.lat')
   );
-  const loadingField = nextState.datasets[testCsvDataId].fields.find(f => f.name === 'gps_data.lat');
+  const loadingField = nextState.datasets[testCsvDataId].fields.find(
+    f => f.name === 'gps_data.lat'
+  );
   t.equal(loadingField.isLoadingStats, true, 'should set isLoadingStats while loading');
 
   const tasks = drainTasksForTesting();
@@ -7901,6 +7924,95 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom palette - select new ste
     expectedVisConfigColorRange,
     'should set predefined palette in visConfig.colorRange when one deletes a color item from Custom Palette and select new steps'
   );
+
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset', async t => {
+  drainTasksForTesting();
+  const initialData = processCsvData('lat,lng\n1,2\n3,4');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'remote-1', type: DatasetType.EXTERNALLY_HOSTED, label: 'quakes.csv'},
+    data: initialData,
+    metadata: {source: 'https://example.com/quakes.csv', sourceFormat: 'csv'}
+  });
+
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets
+  };
+
+  t.equal(state.datasets['remote-1'].dataContainer.numRows(), 2, 'starts with 2 rows');
+
+  const loadingState = reducer(state, VisStateActions.refreshDataset('remote-1'));
+  t.equal(
+    loadingState.datasets['remote-1'].metadata.refreshStatus,
+    'loading',
+    'should mark the dataset as loading'
+  );
+
+  const skipped = reducer(loadingState, VisStateActions.refreshDataset('remote-1'));
+  t.equal(skipped, loadingState, 'should ignore a second refresh while loading');
+
+  const [task, ...more] = drainTasksForTesting();
+  t.equal(more.length, 0, 'should create one refresh task');
+  t.equal(task.type, 'REFRESH_EXTERNALLY_HOSTED_DATASET_TASK', 'should fetch the remote file');
+
+  const refreshed = processCsvData('lat,lng\n10,20\n30,40\n50,60');
+  await loadingState.datasets['remote-1'].update(refreshed);
+
+  const successState = reducer(
+    loadingState,
+    succeedTaskInTest(task, {
+      data: refreshed,
+      notModified: false,
+      etag: '"v2"',
+      size: 32
+    })
+  );
+
+  t.equal(successState.datasets['remote-1'].dataContainer.numRows(), 3, 'should replace rows');
+  t.equal(successState.datasets['remote-1'].metadata.refreshStatus, 'idle', 'should clear loading');
+  t.equal(successState.datasets['remote-1'].metadata.etag, '"v2"', 'should store etag');
+  t.ok(successState.datasets['remote-1'].metadata.lastFetchedAt, 'should record lastFetchedAt');
+
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset 304 and error', async t => {
+  drainTasksForTesting();
+  const initialData = processCsvData('lat,lng\n1,2');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'remote-1', type: DatasetType.EXTERNALLY_HOSTED, label: 'quakes.csv'},
+    data: initialData,
+    metadata: {source: 'https://example.com/quakes.csv'}
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+
+  const loadingState = reducer(state, VisStateActions.refreshDataset('remote-1'));
+  const [task] = drainTasksForTesting();
+
+  const notModified = reducer(
+    loadingState,
+    succeedTaskInTest(task, {data: null, notModified: true, etag: '"same"'})
+  );
+  t.equal(notModified.datasets['remote-1'].dataContainer.numRows(), 1, '304 keeps existing rows');
+  t.equal(notModified.datasets['remote-1'].metadata.refreshStatus, 'idle');
+  t.equal(notModified.datasets['remote-1'].metadata.etag, '"same"');
+
+  const loadingAgain = reducer(notModified, VisStateActions.refreshDataset('remote-1'));
+  const [errorTask] = drainTasksForTesting();
+  const failed = reducer(loadingAgain, errorTaskInTest(errorTask, new Error('network down')));
+  t.equal(failed.datasets['remote-1'].metadata.refreshStatus, 'error');
+  t.ok(
+    String(failed.datasets['remote-1'].metadata.refreshError).includes('network down'),
+    'should store the error message'
+  );
+  t.equal(failed.datasets['remote-1'].dataContainer.numRows(), 1, 'error keeps existing rows');
+  drainTasksForTesting();
+
+  const ignored = reducer(state, VisStateActions.refreshDataset('missing'));
+  t.equal(ignored, state, 'unknown dataset is a no-op');
 
   t.end();
 });

@@ -70,6 +70,8 @@ export type ProcessFileDataContent = {
   sourceUrl?: string;
   /** User-selected or inferred remote file format (csv, geojson, parquet, …). */
   keplerFormat?: string;
+  /** Poll interval in ms, copied from a remote URL load. */
+  refreshIntervalMs?: number;
   /**
    * When true, skip Arrow record-batch compaction. Set on intermediate
    * progressive Arrow loads so each batch does not copy the growing table.
@@ -141,10 +143,7 @@ export async function* makeProgressIterator(
 }
 
 // eslint-disable-next-line complexity
-function getPersistedRemoteFormat(
-  keplerFormat?: string,
-  fileName?: string
-): string | undefined {
+function getPersistedRemoteFormat(keplerFormat?: string, fileName?: string): string | undefined {
   if (
     keplerFormat &&
     keplerFormat !== 'auto' &&
@@ -163,7 +162,8 @@ export async function* readBatch(
   asyncIterator: AsyncIterable<any>,
   fileName: string,
   sourceUrl?: string,
-  keplerFormat?: string
+  keplerFormat?: string,
+  refreshIntervalMs?: number
 ): AsyncGenerator {
   let result = null;
   const batches = <any>[];
@@ -205,7 +205,8 @@ export async function* readBatch(
       // if dataset is CSV, data is set to the raw batches
       data: result ? result : batches,
       ...(sourceUrl ? {sourceUrl} : {}),
-      ...(keplerFormat ? {keplerFormat} : {})
+      ...(keplerFormat ? {keplerFormat} : {}),
+      ...(typeof refreshIntervalMs === 'number' && refreshIntervalMs > 0 ? {refreshIntervalMs} : {})
     };
   }
 }
@@ -237,8 +238,10 @@ export async function readFileInBatches({
   const progressIterator = makeProgressIterator(batchIterator, {size: file.size});
   const sourceUrl = (file as File & {keplerSourceUrl?: string}).keplerSourceUrl;
   const keplerFormat = (file as File & {keplerFormat?: string}).keplerFormat;
+  const refreshIntervalMs = (file as File & {keplerRefreshIntervalMs?: number})
+    .keplerRefreshIntervalMs;
 
-  return readBatch(progressIterator, file.name, sourceUrl, keplerFormat);
+  return readBatch(progressIterator, file.name, sourceUrl, keplerFormat, refreshIntervalMs);
 }
 
 export async function processFileData({
@@ -308,7 +311,11 @@ export async function processFileData({
           ? {
               metadata: {
                 source: sourceUrl,
-                ...(remoteFormat ? {sourceFormat: remoteFormat} : {})
+                ...(remoteFormat ? {sourceFormat: remoteFormat} : {}),
+                ...(typeof content.refreshIntervalMs === 'number' && content.refreshIntervalMs > 0
+                  ? {refreshIntervalMs: content.refreshIntervalMs}
+                  : {}),
+                lastFetchedAt: Date.now()
               }
             }
           : {})

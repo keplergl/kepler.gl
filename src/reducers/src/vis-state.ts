@@ -103,6 +103,12 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_TABLE_COLOR]: visStateUpdaters.updateTableColorUpdater,
 
+  [ActionTypes.REFRESH_DATASET]: visStateUpdaters.refreshDatasetUpdater,
+
+  [ActionTypes.REFRESH_DATASET_SUCCESS]: visStateUpdaters.refreshDatasetSuccessUpdater,
+
+  [ActionTypes.REFRESH_DATASET_ERROR]: visStateUpdaters.refreshDatasetErrorUpdater,
+
   [ActionTypes.TOGGLE_FILTER_ANIMATION]: visStateUpdaters.toggleFilterAnimationUpdater,
 
   [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateFilterAnimationSpeedUpdater,

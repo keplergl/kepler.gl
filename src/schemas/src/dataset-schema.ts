@@ -5,7 +5,12 @@ import pick from 'es-toolkit/compat/pick';
 import {console as globalConsole} from 'global/window';
 import * as arrow from 'apache-arrow';
 
-import {ALL_FIELD_TYPES, DATASET_FORMATS, DatasetType, getRemoteSourceFormat} from '@kepler.gl/constants';
+import {
+  ALL_FIELD_TYPES,
+  DATASET_FORMATS,
+  DatasetType,
+  getRemoteSourceFormat
+} from '@kepler.gl/constants';
 import {ProtoDataset, RGBColor, JsonObject} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
@@ -176,7 +181,11 @@ export class DatasetSchema extends Schema {
         fields: getFieldsForSaving(dataset.fields || []),
         metadata: {
           source: dataset.metadata.source,
-          ...(sourceFormat ? {format: sourceFormat} : {})
+          ...(sourceFormat ? {format: sourceFormat} : {}),
+          ...(typeof dataset.metadata.refreshIntervalMs === 'number' &&
+          dataset.metadata.refreshIntervalMs > 0
+            ? {refreshIntervalMs: dataset.metadata.refreshIntervalMs}
+            : {})
         }
       })[this.key];
     }
@@ -243,7 +252,11 @@ export class DatasetSchema extends Schema {
       metadata = {
         source: dataset.metadata.source,
         ...(sourceFormat ? {sourceFormat} : {}),
-        ...(typeof dataset.metadata.size === 'number' ? {size: dataset.metadata.size} : {})
+        ...(typeof dataset.metadata.size === 'number' ? {size: dataset.metadata.size} : {}),
+        ...(typeof dataset.metadata.refreshIntervalMs === 'number' &&
+        dataset.metadata.refreshIntervalMs > 0
+          ? {refreshIntervalMs: dataset.metadata.refreshIntervalMs}
+          : {})
       };
     }
 

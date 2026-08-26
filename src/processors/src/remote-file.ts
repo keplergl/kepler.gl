@@ -15,6 +15,32 @@ import {processFileData, ProcessFileDataContent, readFileInBatches} from './file
 export type KeplerRemoteFile = File & {
   keplerSourceUrl?: string;
   keplerFormat?: string;
+  keplerRefreshIntervalMs?: number;
+  keplerEtag?: string;
+  keplerLastModified?: string;
+};
+
+export type FetchRemoteFileOptions = {
+  format?: string | null;
+  onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void;
+  etag?: string;
+  lastModified?: string;
+};
+
+export type FetchRemoteFileResult = {
+  file: KeplerRemoteFile | null;
+  notModified: boolean;
+  etag?: string;
+  lastModified?: string;
+  size?: number;
+};
+
+export type LoadExternallyHostedDatasetResult = {
+  data: NonNullable<ProcessorResult> | null;
+  notModified: boolean;
+  etag?: string;
+  lastModified?: string;
+  size?: number;
 };
 
 function getPathFileName(url: string): string {
@@ -60,7 +86,7 @@ export function getFileNameForRemoteUrl(
   format?: string | null,
   mimeType?: string | null
 ): string {
-  let base = getPathFileName(url) || 'dataset';
+  const base = getPathFileName(url) || 'dataset';
 
   const formatExt =
     format && format !== 'auto'
@@ -87,19 +113,33 @@ export function getFileNameForRemoteUrl(
 }
 
 /**
- * Fetch a remote dataset URL and wrap it as a File the existing loadFiles pipeline can parse.
- * Sets File.type from an explicit format or the response Content-Type so extensionless
- * URLs (SAS keys) still select the right loader.
+ * Fetch a remote dataset URL. Honors If-None-Match / If-Modified-Since when etag
+ * or lastModified are provided so unchanged files can skip a re-parse.
  */
-export async function fetchRemoteFileAsKeplerFile(
+export async function fetchRemoteFile(
   url: string,
-  format?: string | null,
-  onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void
-): Promise<KeplerRemoteFile> {
+  options: FetchRemoteFileOptions = {}
+): Promise<FetchRemoteFileResult> {
+  const {format, onProgress, etag, lastModified} = options;
   if (!isRemoteDatasetUrl(url)) {
     throw new Error('Remote dataset URL must use http or https');
   }
-  const response = await fetch(url);
+  const headers: Record<string, string> = {};
+  if (etag) {
+    headers['If-None-Match'] = etag;
+  }
+  if (lastModified) {
+    headers['If-Modified-Since'] = lastModified;
+  }
+  const response = await fetch(url, Object.keys(headers).length ? {headers} : undefined);
+  if (response.status === 304) {
+    return {
+      file: null,
+      notModified: true,
+      etag: etag || response.headers.get('etag') || undefined,
+      lastModified: lastModified || response.headers.get('last-modified') || undefined
+    };
+  }
   if (!response.ok) {
     // Don't put the response body in the error: 404 HTML pages would dump into the UI.
     response.body?.cancel?.().catch(() => undefined);
@@ -113,12 +153,47 @@ export async function fetchRemoteFileAsKeplerFile(
   const headerType = response.headers.get('content-type') || blob.type || '';
   const mimeType = getMimeTypeForFormat(format) || headerType.split(';')[0].trim();
   const fileName = getFileNameForRemoteUrl(url, format, mimeType);
-  const file = new File([blob], fileName, mimeType ? {type: mimeType} : undefined) as KeplerRemoteFile;
+  const file = new File(
+    [blob],
+    fileName,
+    mimeType ? {type: mimeType} : undefined
+  ) as KeplerRemoteFile;
   file.keplerSourceUrl = url;
   if (format && format !== 'auto') {
     file.keplerFormat = format;
   }
-  return file;
+  const responseEtag = response.headers.get('etag') || undefined;
+  const responseLastModified = response.headers.get('last-modified') || undefined;
+  if (responseEtag) {
+    file.keplerEtag = responseEtag;
+  }
+  if (responseLastModified) {
+    file.keplerLastModified = responseLastModified;
+  }
+  return {
+    file,
+    notModified: false,
+    etag: responseEtag,
+    lastModified: responseLastModified,
+    size: file.size
+  };
+}
+
+/**
+ * Fetch a remote dataset URL and wrap it as a File the existing loadFiles pipeline can parse.
+ * Sets File.type from an explicit format or the response Content-Type so extensionless
+ * URLs (SAS keys) still select the right loader.
+ */
+export async function fetchRemoteFileAsKeplerFile(
+  url: string,
+  format?: string | null,
+  onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void
+): Promise<KeplerRemoteFile> {
+  const result = await fetchRemoteFile(url, {format, onProgress});
+  if (!result.file) {
+    throw new Error(`Failed to fetch ${url} (304 Not Modified)`);
+  }
+  return result.file;
 }
 
 async function readResponseBlob(
@@ -161,9 +236,7 @@ async function readResponseBlob(
   return new Blob(chunks);
 }
 
-function isTabularProcessorResult(
-  data: unknown
-): data is NonNullable<ProcessorResult> {
+function isTabularProcessorResult(data: unknown): data is NonNullable<ProcessorResult> {
   return Boolean(
     data &&
       typeof data === 'object' &&
@@ -174,17 +247,30 @@ function isTabularProcessorResult(
 
 /**
  * Fetch, parse, and process a remote file into Kepler dataset data.
- * Used when reloading an `externally-hosted` dataset from a saved map config.
+ * Used when reloading an `externally-hosted` dataset from a saved map config
+ * and when refreshing a live remote dataset.
  */
 export async function loadExternallyHostedDataset(metadata: {
   source: string;
   format?: string;
   size?: number;
-}): Promise<NonNullable<ProcessorResult>> {
-  const {source, format} = metadata;
-  const file = await fetchRemoteFileAsKeplerFile(source, format);
+  etag?: string;
+  lastModified?: string;
+}): Promise<LoadExternallyHostedDatasetResult> {
+  const {source, format, etag, lastModified, size} = metadata;
+  const fetched = await fetchRemoteFile(source, {format, etag, lastModified});
+  if (fetched.notModified || !fetched.file) {
+    return {
+      data: null,
+      notModified: true,
+      etag: fetched.etag,
+      lastModified: fetched.lastModified,
+      size
+    };
+  }
+
   const batches = await readFileInBatches({
-    file,
+    file: fetched.file,
     fileCache: [],
     loaders: [],
     loadOptions: {}
@@ -210,7 +296,13 @@ export async function loadExternallyHostedDataset(metadata: {
   if (!isTabularProcessorResult(data)) {
     throw new Error(`Remote file is not a dataset: ${source}`);
   }
-  return data;
+  return {
+    data,
+    notModified: false,
+    etag: fetched.etag,
+    lastModified: fetched.lastModified,
+    size: fetched.size
+  };
 }
 
 export function isExternallyHostedFile(file: File): file is KeplerRemoteFile {

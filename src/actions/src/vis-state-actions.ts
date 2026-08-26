@@ -28,7 +28,8 @@ import {
   AnimationConfig,
   FilterAnimationConfig,
   LayerOrder,
-  LayerOrderGroup
+  LayerOrderGroup,
+  ProtoDataset
 } from '@kepler.gl/types';
 import {createAction} from '@reduxjs/toolkit';
 
@@ -942,6 +943,71 @@ export function updateTableColor(
     type: ActionTypes.UPDATE_TABLE_COLOR,
     dataId,
     newColor
+  };
+}
+
+export type RefreshDatasetUpdaterAction = {
+  dataId: string;
+};
+/**
+ * Re-fetch an externally hosted dataset from its source URL.
+ * @memberof visStateActions
+ * @param dataId dataset id
+ * @returns action
+ * @public
+ */
+export function refreshDataset(
+  dataId: string
+): Merge<RefreshDatasetUpdaterAction, {type: typeof ActionTypes.REFRESH_DATASET}> {
+  return {
+    type: ActionTypes.REFRESH_DATASET,
+    dataId
+  };
+}
+
+export type RefreshDatasetSuccessUpdaterAction = {
+  dataId: string;
+  result: {
+    data: ProtoDataset['data'] | null;
+    notModified: boolean;
+    etag?: string;
+    lastModified?: string;
+    size?: number;
+  };
+};
+/**
+ * Apply a successful remote dataset refresh.
+ * @memberof visStateActions
+ * @returns action
+ */
+export function refreshDatasetSuccess(
+  dataId: string,
+  result: RefreshDatasetSuccessUpdaterAction['result']
+): Merge<RefreshDatasetSuccessUpdaterAction, {type: typeof ActionTypes.REFRESH_DATASET_SUCCESS}> {
+  return {
+    type: ActionTypes.REFRESH_DATASET_SUCCESS,
+    dataId,
+    result
+  };
+}
+
+export type RefreshDatasetErrorUpdaterAction = {
+  dataId: string;
+  error: Error;
+};
+/**
+ * Record a failed remote dataset refresh.
+ * @memberof visStateActions
+ * @returns action
+ */
+export function refreshDatasetError(
+  dataId: string,
+  error: Error
+): Merge<RefreshDatasetErrorUpdaterAction, {type: typeof ActionTypes.REFRESH_DATASET_ERROR}> {
+  return {
+    type: ActionTypes.REFRESH_DATASET_ERROR,
+    dataId,
+    error
   };
 }
 

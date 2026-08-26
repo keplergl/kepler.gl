@@ -244,9 +244,14 @@ test('Components -> FileUpload remote URL form', t => {
   t.equal(urlInput.length, 1, 'should render URL input');
   t.ok(urlInput.first().prop('aria-label'), 'should set aria-label on URL input');
   t.equal(
-    wrapper.find('.file-uploader__remote-url select').hostNodes().length,
+    wrapper.find('.file-uploader__remote-format').hostNodes().length,
     0,
     'format selector is hidden by default'
+  );
+  t.equal(
+    wrapper.find('.file-uploader__remote-refresh').hostNodes().length,
+    1,
+    'should render refresh interval select'
   );
 
   t.end();
@@ -261,7 +266,7 @@ test('Components -> FileUpload remote URL format selector flag', t => {
   );
 
   t.equal(
-    wrapper.find('.file-uploader__remote-url select').hostNodes().length,
+    wrapper.find('.file-uploader__remote-format').hostNodes().length,
     1,
     'should render format select when the flag is enabled'
   );

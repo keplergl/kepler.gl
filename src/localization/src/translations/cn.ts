@@ -278,7 +278,14 @@ export default {
   },
   datasetTitle: {
     showDataTable: '显示数据表',
-    removeDataset: '删除数据集'
+    removeDataset: '删除数据集',
+    refreshDataset: '刷新数据集',
+    refreshOff: '关闭',
+    refresh10s: '10秒',
+    refresh15s: '15秒',
+    refresh1m: '1分钟',
+    refresh5m: '5分钟',
+    refresh15m: '15分钟'
   },
   datasetInfo: {
     rowCount: '{rowCount}行',
@@ -286,7 +293,8 @@ export default {
     rasterTile: '栅格瓦片',
     wmsTile: 'WMS瓦片',
     tile3d: '3D瓦片',
-    remoteFile: '{rowCount}行（远程）'
+    remoteFile: '{rowCount}行（远程）',
+    refreshInterval: '刷新'
   },
   tooltip: {
     hideLayer: '隐藏图层',
@@ -680,6 +688,7 @@ export default {
     fetch: '获取',
     format: '格式',
     formatAuto: '自动',
+    refreshInterval: '刷新',
     cors: 'URL 必须允许 [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)。'
   },
   tilesetSetup: {

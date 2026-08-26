@@ -289,7 +289,14 @@ export default {
   },
   datasetTitle: {
     showDataTable: 'データ表を表示',
-    removeDataset: 'データセットを削除'
+    removeDataset: 'データセットを削除',
+    refreshDataset: 'データセットを更新',
+    refreshOff: 'オフ',
+    refresh10s: '10秒',
+    refresh15s: '15秒',
+    refresh1m: '1分',
+    refresh5m: '5分',
+    refresh15m: '15分'
   },
   datasetInfo: {
     rowCount: '{rowCount}行',
@@ -297,7 +304,8 @@ export default {
     rasterTile: 'ラスタータイル',
     wmsTile: 'WMSタイル',
     tile3d: '3Dタイル',
-    remoteFile: '{rowCount}行（リモート）'
+    remoteFile: '{rowCount}行（リモート）',
+    refreshInterval: '更新'
   },
   tooltip: {
     hideLayer: 'レイヤを非表示',
@@ -695,6 +703,7 @@ export default {
     fetch: '取得',
     format: '形式',
     formatAuto: '自動',
+    refreshInterval: '更新',
     cors: 'URL は [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) を許可する必要があります。'
   },
   geocoder: {

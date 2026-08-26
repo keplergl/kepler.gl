@@ -22,6 +22,7 @@ type MiniDataset = {
   label?: string;
   dataContainer: DataContainerInterface;
   type?: string;
+  metadata?: Record<string, any>;
 };
 
 type MiniDatasets = {
@@ -35,6 +36,8 @@ export type SourceDataCatalogProps = {
   showDatasetTable?: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset?: ActionHandler<typeof openDeleteModal>;
+  refreshDataset?: ActionHandler<typeof VisStateActions.refreshDataset>;
+  updateDatasetProps?: ActionHandler<typeof VisStateActions.updateDatasetProps>;
 };
 
 SourceDataCatalogFactory.deps = [DatasetTitleFactory, DatasetInfoFactory];
@@ -49,7 +52,9 @@ function SourceDataCatalogFactory(
     removeDataset,
     onTitleClick,
     updateTableColor,
-    showDeleteDataset = false
+    showDeleteDataset = false,
+    refreshDataset,
+    updateDatasetProps
   }: SourceDataCatalogProps) => (
     <SourceDataCatalogWrapper className="source-data-catalog">
       {Object.values(datasets).map(dataset => (
@@ -61,8 +66,11 @@ function SourceDataCatalogFactory(
             dataset={dataset}
             onTitleClick={onTitleClick}
             updateTableColor={updateTableColor}
+            refreshDataset={refreshDataset}
           />
-          {showDatasetTable ? <DatasetInfo dataset={dataset} /> : null}
+          {showDatasetTable ? (
+            <DatasetInfo dataset={dataset} updateDatasetProps={updateDatasetProps} />
+          ) : null}
         </SidePanelSection>
       ))}
     </SourceDataCatalogWrapper>

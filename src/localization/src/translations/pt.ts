@@ -292,7 +292,14 @@ export default {
   },
   datasetTitle: {
     showDataTable: 'Mostrar tabela de dados',
-    removeDataset: 'Remover tabela de dados'
+    removeDataset: 'Remover tabela de dados',
+    refreshDataset: 'Atualizar conjunto de dados',
+    refreshOff: 'Off',
+    refresh10s: '10s',
+    refresh15s: '15s',
+    refresh1m: '1 min',
+    refresh5m: '5 min',
+    refresh15m: '15 min'
   },
   datasetInfo: {
     rowCount: '{rowCount} linhas',
@@ -300,7 +307,8 @@ export default {
     rasterTile: 'Mosaico raster',
     wmsTile: 'Mosaico WMS',
     tile3d: 'Mosaico 3D',
-    remoteFile: '{rowCount} linhas (remoto)'
+    remoteFile: '{rowCount} linhas (remoto)',
+    refreshInterval: 'Atualizar'
   },
   tooltip: {
     hideLayer: 'esconder camada',
@@ -700,6 +708,7 @@ export default {
     fetch: 'Buscar',
     format: 'Formato',
     formatAuto: 'Auto',
+    refreshInterval: 'Atualizar',
     cors: 'A URL deve permitir [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {

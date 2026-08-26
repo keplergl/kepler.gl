@@ -157,9 +157,7 @@ function computePolygonFilteredIndexByLayer(
 
   for (const layer of layersOnDataset) {
     // For each polygon filter, check if this layer is targeted
-    const applicableFilters = polygonFilters.filter(
-      f => f.layerId && f.layerId.includes(layer.id)
-    );
+    const applicableFilters = polygonFilters.filter(f => f.layerId && f.layerId.includes(layer.id));
 
     if (!applicableFilters.length) {
       // This layer is not targeted by any polygon filter - use base index
@@ -310,15 +308,43 @@ class KeplerTable<F extends Field = Field> {
 
   /**
    * update table with new data
-   * @param data - new data e.g. the arrow data with new batches loaded
+   * @param data - new data e.g. the arrow data with new batches loaded, or a full row snapshot
    */
   async update(data: ProtoDataset['data']) {
+    if (data.fields?.length && !fieldNamesMatch(this.fields, data.fields)) {
+      await this.importData({data});
+      return this;
+    }
+
     const dataContainerData = data.arrowTable ?? data.cols ?? data.rows;
-    this.dataContainer.update?.(dataContainerData);
+    const inputDataFormat = data.cols ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY;
+
+    if (typeof this.dataContainer.update === 'function') {
+      this.dataContainer.update(dataContainerData);
+    } else {
+      this.dataContainer = createDataContainer(dataContainerData, {
+        fields: data.fields || this.fields,
+        arrowTable: data.arrowTable,
+        inputDataFormat
+      });
+    }
+
+    this.fields = this.fields.map((f, i) => {
+      const {filterProps: _filterProps, ...rest} = f;
+      return {
+        ...rest,
+        valueAccessor: getFieldValueAccessor(f, i, this.dataContainer)
+      };
+    }) as F[];
+
     this.allIndexes = this.dataContainer.getPlainIndex();
     this.filteredIndex = this.allIndexes;
     this.filteredIndexForDomain = this.allIndexes;
     this.filteredIndexByLayer = {};
+    this.filterRecord = undefined;
+    this.filterRecordCPU = undefined;
+    this.changedFilters = undefined;
+    this.gpuFilter = getGpuFilterProps([], this.id, this.fields, undefined);
 
     return this;
   }
@@ -783,13 +809,19 @@ export function copyTableAndUpdate(
   }, copyTable(original));
 }
 
+function fieldNamesMatch(current: {name: string}[], incoming: {name: string}[]): boolean {
+  if (current.length !== incoming.length) {
+    return false;
+  }
+  return current.every((field, i) => field.name === incoming[i].name);
+}
+
 /**
  * Arrow Int64/Uint64 columns yield JS BigInt. Detect from the column type once
  * at bind time so other columns keep the existing accessor with no extra checks.
  */
 function isInt64ArrowColumn(dc: DataContainerInterface, fieldIdx: number): boolean {
-  const type = (dc.getColumn?.(fieldIdx) as {type?: {bitWidth?: number; isSigned?: boolean}})
-    ?.type;
+  const type = (dc.getColumn?.(fieldIdx) as {type?: {bitWidth?: number; isSigned?: boolean}})?.type;
   return type?.bitWidth === 64 && typeof type.isSigned === 'boolean';
 }
 

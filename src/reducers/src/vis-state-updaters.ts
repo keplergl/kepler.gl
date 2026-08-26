@@ -47,7 +47,9 @@ import {
   applyFilterConfig,
   SetLoadingIndicatorPayload,
   loadColumnStatsSuccess,
-  loadColumnStatsError
+  loadColumnStatsError,
+  refreshDatasetSuccess,
+  refreshDatasetError
 } from '@kepler.gl/actions';
 
 // Utils
@@ -1147,10 +1149,7 @@ export function layerVisConfigChangeUpdater(
 
   // Exclusive bitmap editing: when editBounds is turned on for one bitmap layer,
   // turn it off for all other bitmap layers
-  if (
-    newLayer.type === 'bitmap' &&
-    action.newVisConfig.editBounds === true
-  ) {
+  if (newLayer.type === 'bitmap' && action.newVisConfig.editBounds === true) {
     nextState = {
       ...nextState,
       layers: nextState.layers.map((l, i) => {
@@ -2010,10 +2009,7 @@ export const updateLayerGroupUpdater = (
   if (options.layerOrder) {
     newState.layerOrder = [...layerGroup.layerOrder, ...newState.layerOrder];
     options.layerOrder.forEach(layerId => {
-      newState.layerOrder = removeElementFromLayerOrder(
-        newState.layerOrder,
-        layerId as string
-      );
+      newState.layerOrder = removeElementFromLayerOrder(newState.layerOrder, layerId as string);
     });
   }
 
@@ -2244,10 +2240,7 @@ export const duplicateLayerUpdater = (
     const idxInGroup = parentGroup.layerOrder.findIndex(e => e === original.id);
     const newGroupLayerOrder = arrayInsert(parentGroup.layerOrder, idxInGroup, newLayer.id);
     const updatedGroup = {...parentGroup, layerOrder: newGroupLayerOrder};
-    const newLayerOrder = updateLayerGroupInLayerOrder(
-      layerOrderWithoutPrepended,
-      updatedGroup
-    );
+    const newLayerOrder = updateLayerGroupInLayerOrder(layerOrderWithoutPrepended, updatedGroup);
     nextState = reorderLayerUpdater(nextState, {order: newLayerOrder});
   } else {
     // Layer is at root level - use original index-based insertion
@@ -2891,7 +2884,9 @@ export const toggleLayerForMapUpdater = (
 };
 
 function hasTabularDatasetData(data?: ProtoDataset['data'] | null): boolean {
-  return Boolean(data?.rows?.length || data?.cols?.length || (data as {arrowTable?: unknown})?.arrowTable);
+  return Boolean(
+    data?.rows?.length || data?.cols?.length || (data as {arrowTable?: unknown})?.arrowTable
+  );
 }
 
 function needsExternallyHostedHydrate(dataset: ProtoDataset): boolean {
@@ -2906,12 +2901,26 @@ async function hydrateExternallyHostedProtoDataset(dataset: ProtoDataset): Promi
   if (!needsExternallyHostedHydrate(dataset)) {
     return dataset;
   }
-  const data = await loadExternallyHostedDataset({
+  const loaded = await loadExternallyHostedDataset({
     source: dataset.metadata?.source as string,
     format: getRemoteSourceFormat(dataset.metadata),
     size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined
   });
-  return {...dataset, data};
+  if (!loaded.data) {
+    throw new Error(`No data loaded from ${dataset.metadata?.source}`);
+  }
+  return {
+    ...dataset,
+    data: loaded.data,
+    metadata: {
+      ...dataset.metadata,
+      ...(loaded.etag ? {etag: loaded.etag} : {}),
+      ...(loaded.lastModified ? {lastModified: loaded.lastModified} : {}),
+      ...(typeof loaded.size === 'number' ? {size: loaded.size} : {}),
+      lastFetchedAt: Date.now(),
+      refreshStatus: 'idle'
+    }
+  };
 }
 
 const HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromise(
@@ -2934,6 +2943,161 @@ function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets) {
       FAIL_CREATE_DATASET_TASK('Failed to create a new dataset due to data verification errors')
     );
   });
+}
+
+function patchDatasetMetadata(dataset: Datasets[string], patch: Record<string, unknown>) {
+  return copyTableAndUpdate(dataset, {
+    metadata: {
+      ...dataset.metadata,
+      ...patch
+    }
+  });
+}
+
+async function refreshExternallyHostedTable(dataset: Datasets[string]) {
+  const loaded = await loadExternallyHostedDataset({
+    source: dataset.metadata?.source as string,
+    format: getRemoteSourceFormat(dataset.metadata),
+    size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined,
+    etag: typeof dataset.metadata?.etag === 'string' ? dataset.metadata.etag : undefined,
+    lastModified:
+      typeof dataset.metadata?.lastModified === 'string' ? dataset.metadata.lastModified : undefined
+  });
+  if (!loaded.notModified && loaded.data) {
+    await dataset.update(loaded.data);
+  }
+  return loaded;
+}
+
+const REFRESH_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromise(
+  refreshExternallyHostedTable,
+  'REFRESH_EXTERNALLY_HOSTED_DATASET_TASK'
+);
+
+/**
+ * Re-fetch an externally hosted dataset and replace its table contents in place.
+ * Layers and filters are kept when field names match.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function refreshDatasetUpdater(
+  state: VisState,
+  {dataId}: VisStateActions.RefreshDatasetUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (
+    !dataset ||
+    dataset.type !== DatasetType.EXTERNALLY_HOSTED ||
+    typeof dataset.metadata?.source !== 'string'
+  ) {
+    return state;
+  }
+  if (dataset.metadata?.refreshStatus === 'loading') {
+    return state;
+  }
+
+  const nextDataset = patchDatasetMetadata(dataset, {
+    refreshStatus: 'loading',
+    refreshError: undefined
+  });
+
+  return withTask(
+    {
+      ...state,
+      datasets: {
+        ...state.datasets,
+        [dataId]: nextDataset
+      }
+    },
+    REFRESH_EXTERNALLY_HOSTED_DATASET_TASK(nextDataset).bimap(
+      result => refreshDatasetSuccess(dataId, result),
+      (error: Error) => refreshDatasetError(dataId, error)
+    )
+  );
+}
+
+/**
+ * Apply a finished remote refresh: keep layers, re-run filters and layer data.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function refreshDatasetSuccessUpdater(
+  state: VisState,
+  {dataId, result}: VisStateActions.RefreshDatasetSuccessUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+
+  const metadataPatch = {
+    refreshStatus: 'idle',
+    refreshError: undefined,
+    lastFetchedAt: Date.now(),
+    ...(result.etag ? {etag: result.etag} : {}),
+    ...(result.lastModified ? {lastModified: result.lastModified} : {}),
+    ...(typeof result.size === 'number' ? {size: result.size} : {})
+  };
+
+  const refreshed = patchDatasetMetadata(dataset, metadataPatch);
+  const datasets = {
+    ...state.datasets,
+    [dataId]: refreshed
+  };
+
+  if (result.notModified || !result.data) {
+    return {
+      ...state,
+      datasets
+    };
+  }
+
+  const filteredDatasets = applyFiltersToDatasets([dataId], datasets, state.filters, state.layers);
+
+  let nextState: VisState = {
+    ...state,
+    datasets: filteredDatasets
+  };
+  nextState = updateAllLayerDomainData(nextState, [dataId], undefined);
+  return updateAnimationDomain(nextState);
+}
+
+/**
+ * Record a failed remote dataset refresh without dropping existing rows.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function refreshDatasetErrorUpdater(
+  state: VisState,
+  {dataId, error}: VisStateActions.RefreshDatasetErrorUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+
+  const nextState = {
+    ...state,
+    datasets: {
+      ...state.datasets,
+      [dataId]: patchDatasetMetadata(dataset, {
+        refreshStatus: 'error',
+        refreshError: error?.message || String(error)
+      })
+    }
+  };
+
+  return withTask(
+    nextState,
+    ACTION_TASK().map(() =>
+      addNotification(
+        errorNotification({
+          message: `Failed to refresh dataset: ${error?.message || error}`,
+          id: `dataset-refresh-failed-${dataId}`
+        })
+      )
+    )
+  );
 }
 
 /**
@@ -3105,10 +3269,7 @@ function layerVisConfigFromAddDataOptions(
  * from columns on the first pass and must not be recalculated here.
  */
 function polygonFilterDependsOnLayerMeta(layer: Layer): boolean {
-  return (
-    layer.type === LAYER_TYPES.geojson ||
-    layer.config?.columnMode === 'geojson'
-  );
+  return layer.type === LAYER_TYPES.geojson || layer.config?.columnMode === 'geojson';
 }
 
 /**

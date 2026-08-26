@@ -291,7 +291,14 @@ export default {
   },
   datasetTitle: {
     showDataTable: 'Показать таблицу данных ',
-    removeDataset: 'Удалить набор данных'
+    removeDataset: 'Удалить набор данных',
+    refreshDataset: 'Обновить набор данных',
+    refreshOff: 'Выкл.',
+    refresh10s: '10 с',
+    refresh15s: '15 с',
+    refresh1m: '1 мин',
+    refresh5m: '5 мин',
+    refresh15m: '15 мин'
   },
   datasetInfo: {
     rowCount: '{rowCount} строк',
@@ -299,7 +306,8 @@ export default {
     rasterTile: 'Растровый тайл',
     wmsTile: 'WMS тайл',
     tile3d: '3D тайл',
-    remoteFile: '{rowCount} строк (удалённый)'
+    remoteFile: '{rowCount} строк (удалённый)',
+    refreshInterval: 'Обновление'
   },
   tooltip: {
     hideLayer: 'скрыть слой',
@@ -700,6 +708,7 @@ export default {
     fetch: 'Загрузить',
     format: 'Формат',
     formatAuto: 'Авто',
+    refreshInterval: 'Обновление',
     cors: 'URL должен разрешать [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {

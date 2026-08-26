@@ -52,6 +52,17 @@ export class RowDataContainer implements DataContainerInterface {
     this._numColumns = data.rows[0]?.length || 0;
   }
 
+  /**
+   * Replace all rows. Callers pass the full snapshot (same contract as ArrowDataContainer).
+   */
+  update(updateData: any[]): void {
+    if (!Array.isArray(updateData)) {
+      throw Error("RowDataContainer.update: rows object isn't an array");
+    }
+    this._rows = updateData;
+    this._numColumns = updateData[0]?.length || 0;
+  }
+
   numRows(): number {
     return this._rows.length;
   }

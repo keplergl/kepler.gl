@@ -3,7 +3,12 @@
 
 import test from 'tape';
 
-import {createDataContainer, createIndexedDataContainer, compactArrowTable, ArrowDataContainer} from '@kepler.gl/utils';
+import {
+  createDataContainer,
+  createIndexedDataContainer,
+  compactArrowTable,
+  ArrowDataContainer
+} from '@kepler.gl/utils';
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
 
@@ -65,6 +70,19 @@ test('RowDataContainer', t => {
     `RowDataContainer.reduce should return expected value`
   );
 
+  t.end();
+});
+
+test('RowDataContainer.update replaces rows', t => {
+  const dc = createDataContainer(data);
+  dc.update([
+    [1, 2],
+    [3, 4]
+  ]);
+  t.equal(dc.numRows(), 2, 'should replace with the new row count');
+  t.equal(dc.numColumns(), 2, 'should keep column count');
+  t.equal(dc.valueAt(0, 0), 1, 'should read values from the new rows');
+  t.deepEqual(dc.getPlainIndex(), [0, 1], 'should rebuild the index');
   t.end();
 });
 
@@ -137,10 +155,7 @@ test('ArrowDataContainer -> compactArrowTable collapses record batches over the 
     'compactArrowTable should leave tables at or under maxArrowBatches unchanged'
   );
 
-  combined.schema.metadata.set(
-    'geo',
-    JSON.stringify({columns: {lng: {encoding: 'WKB'}}})
-  );
+  combined.schema.metadata.set('geo', JSON.stringify({columns: {lng: {encoding: 'WKB'}}}));
   combined.schema.fields[0].metadata.set('ARROW:extension:name', 'geoarrow.wkb');
 
   const compacted = compactArrowTable(combined, 1);
@@ -177,7 +192,9 @@ test('ArrowDataContainer -> compactArrowTable collapses record batches over the 
 
 test('ArrowDataContainer -> update does not collapse record batches', t => {
   const batchA = arrow.tableFromJSON([{lng: -122.4, lat: 37.8}]);
-  const colsA = Array.from({length: batchA.numCols}, (_, i) => batchA.getChildAt(i)).filter(Boolean);
+  const colsA = Array.from({length: batchA.numCols}, (_, i) => batchA.getChildAt(i)).filter(
+    Boolean
+  );
   const dc = new ArrowDataContainer({
     cols: colsA,
     fields: batchA.schema.fields.map((field, fieldIdx) => ({
@@ -305,10 +322,7 @@ test('compactArrowTable -> dictionary, WKB, and nested GeoArrow keep values', t 
     [wkbPoint(-122.5, 37.9)],
     geoMeta(GEOARROW_EXTENSIONS.WKB)
   );
-  wkbTable.schema.metadata.set(
-    'geo',
-    JSON.stringify({columns: {geometry: {encoding: 'WKB'}}})
-  );
+  wkbTable.schema.metadata.set('geo', JSON.stringify({columns: {geometry: {encoding: 'WKB'}}}));
   const wkbCompacted = compactArrowTable(wkbTable, 1);
   t.equal(wkbCompacted.batches.length, 1, 'WKB binary column should collapse to one batch');
   t.deepEqual(
@@ -343,8 +357,18 @@ test('compactArrowTable -> dictionary, WKB, and nested GeoArrow keep values', t 
   const lineTable = concatColumnTables(
     'geom',
     lineType,
-    [[[-122.4, 37.8], [-122.5, 37.9]]],
-    [[[0, 0], [1, 1]]],
+    [
+      [
+        [-122.4, 37.8],
+        [-122.5, 37.9]
+      ]
+    ],
+    [
+      [
+        [0, 0],
+        [1, 1]
+      ]
+    ],
     geoMeta(GEOARROW_EXTENSIONS.LINESTRING)
   );
   const lineCompacted = compactArrowTable(lineTable, 1);
@@ -403,7 +427,11 @@ test('compactArrowTable -> duplicate field names keep both columns', t => {
   const compacted = compactArrowTable(combined, 1);
   t.equal(compacted.numCols, 2, 'compaction should not drop a duplicate-named column');
   t.equal(compacted.numRows, 2, 'compaction should keep all rows');
-  t.equal(compacted.batches.length, 1, 'duplicate-named columns should still collapse to one batch');
+  t.equal(
+    compacted.batches.length,
+    1,
+    'duplicate-named columns should still collapse to one batch'
+  );
   t.deepEqual(
     [compacted.getChildAt(0).get(0), compacted.getChildAt(0).get(1)],
     [1.5, 2.5],

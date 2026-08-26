@@ -42,6 +42,17 @@ export const MIME_TO_REMOTE_FILE_EXTENSION: Record<string, string> = {
   'application/x-parquet': 'parquet'
 };
 
+export const DATASET_REFRESH_INTERVAL_OPTIONS: {value: number; labelId: string}[] = [
+  {value: 0, labelId: 'datasetTitle.refreshOff'},
+  {value: 10_000, labelId: 'datasetTitle.refresh10s'},
+  {value: 15_000, labelId: 'datasetTitle.refresh15s'},
+  {value: 60_000, labelId: 'datasetTitle.refresh1m'},
+  {value: 300_000, labelId: 'datasetTitle.refresh5m'},
+  {value: 900_000, labelId: 'datasetTitle.refresh15m'}
+];
+
+export type ExternalDatasetRefreshStatus = 'idle' | 'loading' | 'error';
+
 export type ExternalDatasetMetadata = {
   /** Remote URL of the dataset file. */
   source: string;
@@ -49,6 +60,8 @@ export type ExternalDatasetMetadata = {
   format?: Exclude<RemoteFileFormat, 'auto'> | string;
   /** Last known size of the hosted resource, in bytes. */
   size?: number;
+  /** Poll interval in ms. Omitted or 0 means manual refresh only. */
+  refreshIntervalMs?: number;
 };
 
 /** Runtime copy of {@link ExternalDatasetMetadata} with `format` renamed to avoid colliding with DATASET_FORMATS. */
@@ -56,7 +69,18 @@ export type ExternalDatasetRuntimeMetadata = {
   source: string;
   sourceFormat?: Exclude<RemoteFileFormat, 'auto'> | string;
   size?: number;
+  refreshIntervalMs?: number;
+  etag?: string;
+  lastModified?: string;
+  lastFetchedAt?: number;
+  refreshStatus?: ExternalDatasetRefreshStatus;
+  refreshError?: string;
 };
+
+export function getDatasetRefreshIntervalMs(metadata?: {refreshIntervalMs?: unknown}): number {
+  const value = metadata?.refreshIntervalMs;
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0;
+}
 
 export function getRemoteSourceFormat(metadata?: {
   sourceFormat?: unknown;

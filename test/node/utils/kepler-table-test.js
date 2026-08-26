@@ -447,3 +447,47 @@ test('KeplerTable -> Int64 field accessor converts BigInt to number', async t =>
 
   t.end();
 });
+
+test('KeplerTable -> update replaces row snapshots', async t => {
+  const table = new KeplerTable({info: {id: 'rows'}, color: [0, 0, 0]});
+  await table.importData({
+    data: {
+      fields: [
+        {name: 'lat', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
+        {name: 'lng', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'}
+      ],
+      rows: [
+        [1, 2],
+        [3, 4]
+      ]
+    }
+  });
+  t.equal(table.length, 2, 'starts with 2 rows');
+
+  await table.update({
+    fields: [
+      {name: 'lat', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
+      {name: 'lng', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'}
+    ],
+    rows: [
+      [10, 20],
+      [30, 40],
+      [50, 60]
+    ]
+  });
+  t.equal(table.length, 3, 'should grow to the new snapshot');
+  t.equal(table.fields[0].valueAccessor({index: 0}), 10, 'accessors should read new values');
+  t.equal(table.filteredIndex.length, 3, 'filtered index should match new length');
+
+  await table.update({
+    fields: [
+      {name: 'lat', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
+      {name: 'lng', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
+      {name: 'name', type: ALL_FIELD_TYPES.string, analyzerType: 'STRING'}
+    ],
+    rows: [['a', 'b', 'c']]
+  });
+  t.equal(table.fields.length, 3, 'schema change should rebuild fields');
+  t.equal(table.length, 1, 'schema change should import the new rows');
+  t.end();
+});

@@ -3,6 +3,7 @@
 
 import test from 'tape';
 import {
+  fetchRemoteFile,
   fetchRemoteFileAsKeplerFile,
   getExtensionFromUrl,
   getFileNameForRemoteUrl,
@@ -90,7 +91,7 @@ test('#remote-file -> fetchRemoteFileAsKeplerFile rejects non-http URLs', async 
 test('#remote-file -> fetchRemoteFileAsKeplerFile does not dump error bodies', async t => {
   const origFetch = global.fetch;
   global.fetch = async () =>
-    new Response('<!DOCTYPE html><html><body>Not Found '.repeat(500) + '</body></html>', {
+    new Response(`${'<!DOCTYPE html><html><body>Not Found '.repeat(500)}</body></html>`, {
       status: 404,
       statusText: 'Not Found'
     });
@@ -137,6 +138,24 @@ test('#remote-file -> fetchRemoteFileAsKeplerFile progress without Content-Lengt
     });
     t.ok(percents.length, 'should emit progress');
     t.equal(percents[percents.length - 1], 1, 'should emit 100% when the blob is fully read');
+  } finally {
+    global.fetch = origFetch;
+  }
+  t.end();
+});
+
+test('#remote-file -> fetchRemoteFile returns notModified on 304', async t => {
+  const origFetch = global.fetch;
+  global.fetch = async (url, init) => {
+    t.equal(init.headers['If-None-Match'], '"abc"', 'should send If-None-Match');
+    return new Response(null, {status: 304, headers: {etag: '"abc"'}});
+  };
+
+  try {
+    const result = await fetchRemoteFile('https://example.com/data.csv', {etag: '"abc"'});
+    t.ok(result.notModified, 'should report notModified');
+    t.equal(result.file, null, 'should not return a file');
+    t.equal(result.etag, '"abc"');
   } finally {
     global.fetch = origFetch;
   }

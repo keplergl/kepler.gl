@@ -154,3 +154,33 @@ test('#DatasetSchema -> save externally-hosted dataset without inlining rows', t
 
   t.end();
 });
+
+test('#DatasetSchema -> save externally-hosted dataset refresh interval', t => {
+  const dataset = {
+    id: 'remote-1',
+    label: 'quakes.csv',
+    color: [1, 2, 3],
+    type: DatasetType.EXTERNALLY_HOSTED,
+    fields: [{name: 'lat', type: 'real', format: '', analyzerType: 'FLOAT'}],
+    metadata: {
+      source: 'https://example.com/quakes.csv',
+      sourceFormat: 'csv',
+      refreshIntervalMs: 60_000,
+      etag: '"skip-me"',
+      refreshStatus: 'loading'
+    }
+  };
+
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  t.deepEqual(
+    saved.metadata,
+    {source: 'https://example.com/quakes.csv', format: 'csv', refreshIntervalMs: 60_000},
+    'should persist refresh interval without runtime status'
+  );
+
+  const loaded = SchemaManager.parseSavedData([{version: 'v1', data: saved}]);
+  t.equal(loaded[0].metadata.refreshIntervalMs, 60_000, 'should restore refresh interval');
+  t.equal(loaded[0].metadata.etag, undefined, 'should not restore etag');
+
+  t.end();
+});

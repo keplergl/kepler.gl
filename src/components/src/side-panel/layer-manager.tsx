@@ -255,6 +255,8 @@ function LayerManagerFactory(
           showDeleteDataset={showDeleteDataset}
           showDatasetList={!isSortByDatasetMode}
           showAddDataModal={showAddDataModal}
+          refreshDataset={visStateActions.refreshDataset}
+          updateDatasetProps={visStateActions.updateDatasetProps}
         />
         <SidePanelDivider />
         <SidePanelSection>
