@@ -29,8 +29,8 @@ run next to `yarn start` on 8080). The CSV server listens at
 
 - Twelve points around San Francisco, moving every ~10 seconds.
 - The right sidebar `snapshot` number increments with each poll.
-- Layers panel → dataset row: **Refresh** is set to **10s**, and the reload
-  icon refetches immediately.
+- Layers panel → dataset row: the clock icon expands **Refresh** and a reload
+  button next to the row count (this example sets **10s** programmatically).
 - Opening the data table shows `updated_at` changing. Field names stay the same,
   so the point layer is kept (not rebuilt from scratch).
 

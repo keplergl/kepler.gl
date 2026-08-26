@@ -293,6 +293,7 @@ export default {
     showDataTable: 'Показать таблицу данных ',
     removeDataset: 'Удалить набор данных',
     refreshDataset: 'Обновить набор данных',
+    refreshSettings: 'Настройки обновления',
     refreshOff: 'Выкл.',
     refresh10s: '10 с',
     refresh15s: '15 с',
@@ -307,7 +308,9 @@ export default {
     wmsTile: 'WMS тайл',
     tile3d: '3D тайл',
     remoteFile: '{rowCount} строк (удалённый)',
-    refreshInterval: 'Обновление'
+    refreshInterval: 'Обновление',
+    refreshing: 'Обновление…',
+    refreshingPercent: 'Обновление {percent}%'
   },
   tooltip: {
     hideLayer: 'скрыть слой',

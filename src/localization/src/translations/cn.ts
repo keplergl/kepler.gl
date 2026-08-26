@@ -280,6 +280,7 @@ export default {
     showDataTable: '显示数据表',
     removeDataset: '删除数据集',
     refreshDataset: '刷新数据集',
+    refreshSettings: '刷新设置',
     refreshOff: '关闭',
     refresh10s: '10秒',
     refresh15s: '15秒',
@@ -294,7 +295,9 @@ export default {
     wmsTile: 'WMS瓦片',
     tile3d: '3D瓦片',
     remoteFile: '{rowCount}行（远程）',
-    refreshInterval: '刷新'
+    refreshInterval: '刷新',
+    refreshing: '正在刷新…',
+    refreshingPercent: '正在刷新 {percent}%'
   },
   tooltip: {
     hideLayer: '隐藏图层',

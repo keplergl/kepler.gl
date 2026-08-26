@@ -14,6 +14,9 @@ import {
 import {FormattedMessage} from '@kepler.gl/localization';
 import {DataContainerInterface} from '@kepler.gl/utils';
 import {VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {Reset} from '../../common/icons';
+import {Tooltip} from '../../common/styled-components';
+import DatasetRefreshProgressIcon from './dataset-refresh-progress';
 
 const numFormat = format(',');
 
@@ -25,11 +28,14 @@ type MiniDataset = {
     refreshIntervalMs?: number;
     refreshStatus?: string;
     refreshError?: string;
+    refreshProgress?: number;
   };
 };
 
 export type DatasetInfoProps = {
   dataset: MiniDataset;
+  showRefreshSettings?: boolean;
+  refreshDataset?: ActionHandler<typeof VisStateActions.refreshDataset>;
   updateDatasetProps?: ActionHandler<typeof VisStateActions.updateDatasetProps>;
 };
 
@@ -43,6 +49,27 @@ const StyledDataRowCount = styled.div`
   flex-wrap: wrap;
 `;
 
+const StyledRefreshing = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: ${props => props.theme.textColorHl};
+`;
+
+const StyledRefreshSettings = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+const StyledRefreshLabel = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+`;
+
 const StyledRefreshSelect = styled.select`
   ${props => props.theme.input};
   height: 18px;
@@ -54,15 +81,42 @@ const StyledRefreshSelect = styled.select`
   background-color: transparent;
 `;
 
-const StyledRefreshLabel = styled.label`
+const StyledRefreshError = styled.div`
+  width: 100%;
+  font-size: 11px;
+  color: ${props => props.theme.errorColor};
+`;
+
+const StyledRefreshNow = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: ${props => props.theme.subtextColor};
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  &:hover:not(:disabled) {
+    color: ${props => props.theme.textColorHl};
+  }
 `;
 
 export default function DatasetInfoFactory() {
-  const DatasetInfo: React.FC<DatasetInfoProps> = ({dataset, updateDatasetProps}) => {
+  const DatasetInfo: React.FC<DatasetInfoProps> = ({
+    dataset,
+    showRefreshSettings,
+    refreshDataset,
+    updateDatasetProps
+  }) => {
     const intl = useIntl();
     const isRemote = dataset.type === DatasetType.EXTERNALLY_HOSTED;
     const intervalMs = getDatasetRefreshIntervalMs(dataset.metadata);
@@ -70,6 +124,26 @@ export default function DatasetInfoFactory() {
       option => option.value === intervalMs
     );
     const selectValue = matchingOption ? intervalMs : 0;
+
+    const spinning = dataset.metadata?.refreshStatus === 'loading';
+    const progress =
+      typeof dataset.metadata?.refreshProgress === 'number'
+        ? dataset.metadata.refreshProgress
+        : undefined;
+    const showPercent = spinning && typeof progress === 'number' && progress > 0 && progress < 100;
+    const showRefreshControls = Boolean(
+      showRefreshSettings && isRemote && (refreshDataset || updateDatasetProps)
+    );
+
+    const onRefreshNow = useCallback(
+      (event: React.MouseEvent) => {
+        event.stopPropagation();
+        if (!spinning) {
+          refreshDataset?.(dataset.id);
+        }
+      },
+      [dataset.id, refreshDataset, spinning]
+    );
 
     const onRefreshIntervalChange = useCallback(
       (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -82,7 +156,7 @@ export default function DatasetInfoFactory() {
     );
 
     return (
-      <StyledDataRowCount className="source-data-rows">
+      <StyledDataRowCount className="source-data-rows" aria-busy={spinning}>
         <FormattedMessage
           id={
             dataset.type === DatasetType.VECTOR_TILE
@@ -101,24 +175,58 @@ export default function DatasetInfoFactory() {
           }
           values={{rowCount: numFormat(dataset.dataContainer.numRows())}}
         />
-        {isRemote && updateDatasetProps ? (
-          <StyledRefreshLabel
-            className="dataset-refresh-interval"
+        {spinning ? (
+          <StyledRefreshing className="dataset-refresh-status">
+            <DatasetRefreshProgressIcon percent={progress} size={12} />
+            <FormattedMessage
+              id={showPercent ? 'datasetInfo.refreshingPercent' : 'datasetInfo.refreshing'}
+              values={{percent: Math.round(progress ?? 0)}}
+            />
+          </StyledRefreshing>
+        ) : null}
+        {showRefreshControls ? (
+          <StyledRefreshSettings
+            className="dataset-refresh-settings"
             onClick={event => event.stopPropagation()}
           >
-            <FormattedMessage id="datasetInfo.refreshInterval" />
-            <StyledRefreshSelect
-              aria-label={intl.formatMessage({id: 'datasetInfo.refreshInterval'})}
-              value={selectValue}
-              onChange={onRefreshIntervalChange}
-            >
-              {DATASET_REFRESH_INTERVAL_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {intl.formatMessage({id: option.labelId})}
-                </option>
-              ))}
-            </StyledRefreshSelect>
-          </StyledRefreshLabel>
+            {updateDatasetProps ? (
+              <StyledRefreshLabel>
+                <FormattedMessage id="datasetInfo.refreshInterval" />
+                <StyledRefreshSelect
+                  aria-label={intl.formatMessage({id: 'datasetInfo.refreshInterval'})}
+                  value={selectValue}
+                  onChange={onRefreshIntervalChange}
+                >
+                  {DATASET_REFRESH_INTERVAL_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {intl.formatMessage({id: option.labelId})}
+                    </option>
+                  ))}
+                </StyledRefreshSelect>
+              </StyledRefreshLabel>
+            ) : null}
+            {refreshDataset ? (
+              <StyledRefreshNow
+                type="button"
+                className="dataset-refresh-now"
+                aria-label={intl.formatMessage({id: 'datasetTitle.refreshDataset'})}
+                data-tip
+                data-for={`refresh-now-${dataset.id}`}
+                disabled={spinning}
+                onClick={onRefreshNow}
+              >
+                <Reset height="14px" />
+                <Tooltip id={`refresh-now-${dataset.id}`} effect="solid">
+                  <span>
+                    <FormattedMessage id={'datasetTitle.refreshDataset'} />
+                  </span>
+                </Tooltip>
+              </StyledRefreshNow>
+            ) : null}
+            {dataset.metadata?.refreshError ? (
+              <StyledRefreshError>{dataset.metadata.refreshError}</StyledRefreshError>
+            ) : null}
+          </StyledRefreshSettings>
         ) : null}
       </StyledDataRowCount>
     );

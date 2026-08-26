@@ -7975,6 +7975,39 @@ test('VisStateUpdater -> refreshDataset', async t => {
   t.equal(successState.datasets['remote-1'].metadata.refreshStatus, 'idle', 'should clear loading');
   t.equal(successState.datasets['remote-1'].metadata.etag, '"v2"', 'should store etag');
   t.ok(successState.datasets['remote-1'].metadata.lastFetchedAt, 'should record lastFetchedAt');
+  t.equal(
+    successState.datasets['remote-1'].metadata.refreshProgress,
+    undefined,
+    'should clear refresh progress'
+  );
+
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDatasetProgress', async t => {
+  drainTasksForTesting();
+  const initialData = processCsvData('lat,lng\n1,2');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'remote-1', type: DatasetType.EXTERNALLY_HOSTED, label: 'quakes.csv'},
+    data: initialData,
+    metadata: {source: 'https://example.com/quakes.csv', sourceFormat: 'csv'}
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+  const loadingState = reducer(state, VisStateActions.refreshDataset('remote-1'));
+  drainTasksForTesting();
+
+  const progressed = reducer(loadingState, VisStateActions.refreshDatasetProgress('remote-1', 42));
+  t.equal(
+    progressed.datasets['remote-1'].metadata.refreshProgress,
+    42,
+    'should store download percent'
+  );
+
+  const same = reducer(progressed, VisStateActions.refreshDatasetProgress('remote-1', 42));
+  t.equal(same, progressed, 'should skip redundant progress updates');
+
+  const idle = reducer(state, VisStateActions.refreshDatasetProgress('remote-1', 50));
+  t.equal(idle, state, 'should ignore progress when not loading');
 
   t.end();
 });

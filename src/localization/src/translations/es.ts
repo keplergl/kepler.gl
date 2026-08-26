@@ -294,6 +294,7 @@ export default {
     showDataTable: 'Mostar la tabla de datos',
     removeDataset: 'Eliminar conjunto de datos',
     refreshDataset: 'Actualizar conjunto de datos',
+    refreshSettings: 'Ajustes de actualización',
     refreshOff: 'Off',
     refresh10s: '10s',
     refresh15s: '15s',
@@ -308,7 +309,9 @@ export default {
     wmsTile: 'Mosaico WMS',
     tile3d: 'Mosaico 3D',
     remoteFile: '{rowCount} filas (remoto)',
-    refreshInterval: 'Actualizar'
+    refreshInterval: 'Actualizar',
+    refreshing: 'Actualizando…',
+    refreshingPercent: 'Actualizando {percent}%'
   },
   tooltip: {
     hideLayer: 'Ocultar la capa',

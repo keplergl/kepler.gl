@@ -293,6 +293,7 @@ export default {
     showDataTable: 'Mostra taula de dades',
     removeDataset: 'Elimina conjunt de dades',
     refreshDataset: 'Actualitza el conjunt de dades',
+    refreshSettings: 'Configuració d’actualització',
     refreshOff: 'Off',
     refresh10s: '10s',
     refresh15s: '15s',
@@ -307,7 +308,9 @@ export default {
     wmsTile: 'Mosaic WMS',
     tile3d: 'Mosaic 3D',
     remoteFile: '{rowCount} files (remot)',
-    refreshInterval: 'Actualitza'
+    refreshInterval: 'Actualitza',
+    refreshing: 'S’està actualitzant…',
+    refreshingPercent: 'S’està actualitzant {percent}%'
   },
   tooltip: {
     hideLayer: 'oculta la capa',

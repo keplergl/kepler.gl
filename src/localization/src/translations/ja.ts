@@ -291,6 +291,7 @@ export default {
     showDataTable: 'データ表を表示',
     removeDataset: 'データセットを削除',
     refreshDataset: 'データセットを更新',
+    refreshSettings: '更新設定',
     refreshOff: 'オフ',
     refresh10s: '10秒',
     refresh15s: '15秒',
@@ -305,7 +306,9 @@ export default {
     wmsTile: 'WMSタイル',
     tile3d: '3Dタイル',
     remoteFile: '{rowCount}行（リモート）',
-    refreshInterval: '更新'
+    refreshInterval: '更新',
+    refreshing: '更新中…',
+    refreshingPercent: '更新中 {percent}%'
   },
   tooltip: {
     hideLayer: 'レイヤを非表示',

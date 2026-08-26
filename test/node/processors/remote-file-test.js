@@ -144,6 +144,40 @@ test('#remote-file -> fetchRemoteFileAsKeplerFile progress without Content-Lengt
   t.end();
 });
 
+test('#remote-file -> fetchRemoteFileAsKeplerFile progress with Content-Length', async t => {
+  const origFetch = global.fetch;
+  const chunks = [new Uint8Array([1, 2, 3, 4]), new Uint8Array([5, 6, 7, 8])];
+  let i = 0;
+  global.fetch = async () =>
+    new Response(
+      new ReadableStream({
+        pull(controller) {
+          if (i < chunks.length) {
+            controller.enqueue(chunks[i++]);
+          } else {
+            controller.close();
+          }
+        }
+      }),
+      {status: 200, headers: {'content-length': '8'}}
+    );
+
+  try {
+    const percents = [];
+    await fetchRemoteFileAsKeplerFile('https://example.com/data.csv', 'csv', ({percent}) => {
+      percents.push(percent);
+    });
+    t.ok(
+      percents.some(p => p > 0 && p < 1),
+      'should emit intermediate percent when Content-Length is known'
+    );
+    t.equal(percents[percents.length - 1], 1, 'should emit 100% when complete');
+  } finally {
+    global.fetch = origFetch;
+  }
+  t.end();
+});
+
 test('#remote-file -> fetchRemoteFile returns notModified on 304', async t => {
   const origFetch = global.fetch;
   global.fetch = async (url, init) => {

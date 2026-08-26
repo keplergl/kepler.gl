@@ -1011,6 +1011,26 @@ export function refreshDatasetError(
   };
 }
 
+export type RefreshDatasetProgressUpdaterAction = {
+  dataId: string;
+  percent: number;
+};
+/**
+ * Update download progress for an in-flight remote dataset refresh (0–100).
+ * @memberof visStateActions
+ * @returns action
+ */
+export function refreshDatasetProgress(
+  dataId: string,
+  percent: number
+): Merge<RefreshDatasetProgressUpdaterAction, {type: typeof ActionTypes.REFRESH_DATASET_PROGRESS}> {
+  return {
+    type: ActionTypes.REFRESH_DATASET_PROGRESS,
+    dataId,
+    percent
+  };
+}
+
 export type SortTableColumnUpdaterAction = {
   dataId: string;
   column: string;

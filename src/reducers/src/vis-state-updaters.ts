@@ -49,7 +49,8 @@ import {
   loadColumnStatsSuccess,
   loadColumnStatsError,
   refreshDatasetSuccess,
-  refreshDatasetError
+  refreshDatasetError,
+  refreshDatasetProgress
 } from '@kepler.gl/actions';
 
 // Utils
@@ -2954,14 +2955,23 @@ function patchDatasetMetadata(dataset: Datasets[string], patch: Record<string, u
   });
 }
 
-async function refreshExternallyHostedTable(dataset: Datasets[string]) {
+async function refreshExternallyHostedTable({
+  arg: dataset,
+  onProgress
+}: {
+  arg: Datasets[string];
+  onProgress: (progress: {loaded: number; total?: number; percent: number}) => void;
+}) {
   const loaded = await loadExternallyHostedDataset({
     source: dataset.metadata?.source as string,
     format: getRemoteSourceFormat(dataset.metadata),
     size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined,
     etag: typeof dataset.metadata?.etag === 'string' ? dataset.metadata.etag : undefined,
     lastModified:
-      typeof dataset.metadata?.lastModified === 'string' ? dataset.metadata.lastModified : undefined
+      typeof dataset.metadata?.lastModified === 'string'
+        ? dataset.metadata.lastModified
+        : undefined,
+    onProgress
   });
   if (!loaded.notModified && loaded.data) {
     await dataset.update(loaded.data);
@@ -2969,7 +2979,7 @@ async function refreshExternallyHostedTable(dataset: Datasets[string]) {
   return loaded;
 }
 
-const REFRESH_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromise(
+const REFRESH_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromiseWithProgress(
   refreshExternallyHostedTable,
   'REFRESH_EXTERNALLY_HOSTED_DATASET_TASK'
 );
@@ -2998,7 +3008,8 @@ export function refreshDatasetUpdater(
 
   const nextDataset = patchDatasetMetadata(dataset, {
     refreshStatus: 'loading',
-    refreshError: undefined
+    refreshError: undefined,
+    refreshProgress: undefined
   });
 
   return withTask(
@@ -3009,11 +3020,43 @@ export function refreshDatasetUpdater(
         [dataId]: nextDataset
       }
     },
-    REFRESH_EXTERNALLY_HOSTED_DATASET_TASK(nextDataset).bimap(
+    REFRESH_EXTERNALLY_HOSTED_DATASET_TASK({
+      arg: nextDataset,
+      onProgress: progress =>
+        refreshDatasetProgress(dataId, Math.round((progress?.percent ?? 0) * 100))
+    }).bimap(
       result => refreshDatasetSuccess(dataId, result),
       (error: Error) => refreshDatasetError(dataId, error)
     )
   );
+}
+
+/**
+ * Record download progress for an in-flight remote dataset refresh.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function refreshDatasetProgressUpdater(
+  state: VisState,
+  {dataId, percent}: VisStateActions.RefreshDatasetProgressUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset || dataset.metadata?.refreshStatus !== 'loading') {
+    return state;
+  }
+  const nextPercent = Number.isFinite(percent)
+    ? Math.max(0, Math.min(100, Math.round(percent)))
+    : 0;
+  if (dataset.metadata?.refreshProgress === nextPercent) {
+    return state;
+  }
+  return {
+    ...state,
+    datasets: {
+      ...state.datasets,
+      [dataId]: patchDatasetMetadata(dataset, {refreshProgress: nextPercent})
+    }
+  };
 }
 
 /**
@@ -3033,6 +3076,7 @@ export function refreshDatasetSuccessUpdater(
   const metadataPatch = {
     refreshStatus: 'idle',
     refreshError: undefined,
+    refreshProgress: undefined,
     lastFetchedAt: Date.now(),
     ...(result.etag ? {etag: result.etag} : {}),
     ...(result.lastModified ? {lastModified: result.lastModified} : {}),
@@ -3082,7 +3126,8 @@ export function refreshDatasetErrorUpdater(
       ...state.datasets,
       [dataId]: patchDatasetMetadata(dataset, {
         refreshStatus: 'error',
-        refreshError: error?.message || String(error)
+        refreshError: error?.message || String(error),
+        refreshProgress: undefined
       })
     }
   };

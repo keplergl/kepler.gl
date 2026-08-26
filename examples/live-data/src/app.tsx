@@ -36,6 +36,7 @@ type KeplerRootState = {
             metadata?: {
               refreshStatus?: string;
               refreshError?: string;
+              refreshProgress?: number;
               lastFetchedAt?: number;
               refreshIntervalMs?: number;
             };
@@ -105,6 +106,7 @@ function LiveDataSidebar() {
   const updatedAt = fieldValue(dataset, 'updated_at');
   const lastFetchedAt = dataset?.metadata?.lastFetchedAt;
   const status = dataset?.metadata?.refreshStatus || (dataset ? 'idle' : 'loading');
+  const progress = dataset?.metadata?.refreshProgress;
 
   return (
     <aside style={sidebarStyle}>
@@ -116,7 +118,10 @@ function LiveDataSidebar() {
       <div style={{display: 'grid', gap: 8}}>
         <div style={{display: 'flex', justifyContent: 'space-between', gap: 12}}>
           <span style={{color: '#c3c9d5'}}>status</span>
-          <span>{status}</span>
+          <span>
+            {status}
+            {status === 'loading' && typeof progress === 'number' ? ` ${progress}%` : ''}
+          </span>
         </div>
         <div style={{display: 'flex', justifyContent: 'space-between', gap: 12}}>
           <span style={{color: '#c3c9d5'}}>snapshot</span>

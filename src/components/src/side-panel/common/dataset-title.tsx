@@ -7,7 +7,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 
 import {Table} from '@kepler.gl/layers';
 import {CenterFlexbox, Tooltip} from '../../common/styled-components';
-import {ArrowRight, Reset, Trash} from '../../common/icons';
+import {ArrowRight, Clock, Trash} from '../../common/icons';
 import {DatasetType} from '@kepler.gl/constants';
 import DatasetTagFactory from './dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
@@ -49,27 +49,12 @@ const DataTagAction = styled.div`
   opacity: 0;
 `;
 
-const StyledRefreshIcon = styled(Reset)<{$spinning?: boolean}>`
-  ${props =>
-    props.$spinning
-      ? `
-    animation: kepler-dataset-refresh-spin 0.8s linear infinite;
-    @keyframes kepler-dataset-refresh-spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-  `
-      : ''}
-`;
-
 type MiniDataset = {
   id: string;
   color: RGBColor;
   label?: string;
   disableDataOperation?: boolean;
   type?: string;
-  metadata?: {refreshStatus?: string};
 };
 
 export type DatasetTitleProps = {
@@ -79,7 +64,7 @@ export type DatasetTitleProps = {
   showDatasetTable?: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset?: ActionHandler<typeof openDeleteModal>;
-  refreshDataset?: ActionHandler<typeof VisStateActions.refreshDataset>;
+  onToggleRefreshSettings?: () => void;
 };
 
 const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
@@ -99,29 +84,22 @@ const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
   </DataTagAction>
 );
 
-const RefreshDataset = ({
-  id,
-  spinning,
-  refreshDataset
-}: {
-  id: string;
-  spinning?: boolean;
-  refreshDataset?: ActionHandler<typeof VisStateActions.refreshDataset>;
-}) => (
-  <DataTagAction className="dataset-action refresh-dataset" data-tip data-for={`refresh-${id}`}>
-    <StyledRefreshIcon
-      $spinning={spinning}
+const RefreshDatasetSettings = ({id, onToggle}: {id: string; onToggle?: () => void}) => (
+  <DataTagAction
+    className="dataset-action refresh-dataset-settings"
+    data-tip
+    data-for={`refresh-settings-${id}`}
+  >
+    <Clock
       height="16px"
       onClick={e => {
         e.stopPropagation();
-        if (!spinning) {
-          refreshDataset?.(id);
-        }
+        onToggle?.();
       }}
     />
-    <Tooltip id={`refresh-${id}`} effect="solid">
+    <Tooltip id={`refresh-settings-${id}`} effect="solid">
       <span>
-        <FormattedMessage id={'datasetTitle.refreshDataset'} />
+        <FormattedMessage id={'datasetTitle.refreshSettings'} />
       </span>
     </Tooltip>
   </DataTagAction>
@@ -160,7 +138,7 @@ export default function DatasetTitleFactory(
     removeDataset,
     dataset,
     updateTableColor,
-    refreshDataset
+    onToggleRefreshSettings
   }) => {
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
     const root = useRef(null);
@@ -192,6 +170,8 @@ export default function DatasetTitleFactory(
       [onTitleClick, showDatasetTable, datasetId, dataset.disableDataOperation]
     );
 
+    const isRemote = dataset.type === DatasetType.EXTERNALLY_HOSTED;
+
     return (
       <div className="custom-palette-panel" ref={root}>
         <StyledDatasetTitle
@@ -220,12 +200,8 @@ export default function DatasetTitleFactory(
           {showDatasetTable && !dataset.disableDataOperation ? (
             <ShowDataTable id={datasetId} showDatasetTable={showDatasetTable} />
           ) : null}
-          {refreshDataset && dataset.type === DatasetType.EXTERNALLY_HOSTED ? (
-            <RefreshDataset
-              id={datasetId}
-              spinning={dataset.metadata?.refreshStatus === 'loading'}
-              refreshDataset={refreshDataset}
-            />
+          {onToggleRefreshSettings && isRemote ? (
+            <RefreshDatasetSettings id={datasetId} onToggle={onToggleRefreshSettings} />
           ) : null}
           {showDeleteDataset ? (
             <RemoveDataset datasetKey={datasetId} removeDataset={removeDataset} />

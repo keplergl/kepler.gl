@@ -109,6 +109,8 @@ const actionHandler = {
 
   [ActionTypes.REFRESH_DATASET_ERROR]: visStateUpdaters.refreshDatasetErrorUpdater,
 
+  [ActionTypes.REFRESH_DATASET_PROGRESS]: visStateUpdaters.refreshDatasetProgressUpdater,
+
   [ActionTypes.TOGGLE_FILTER_ANIMATION]: visStateUpdaters.toggleFilterAnimationUpdater,
 
   [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateFilterAnimationSpeedUpdater,

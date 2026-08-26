@@ -75,6 +75,8 @@ export type ExternalDatasetRuntimeMetadata = {
   lastFetchedAt?: number;
   refreshStatus?: ExternalDatasetRefreshStatus;
   refreshError?: string;
+  /** Download progress 0–100 while `refreshStatus` is `loading`. */
+  refreshProgress?: number;
 };
 
 export function getDatasetRefreshIntervalMs(metadata?: {refreshIntervalMs?: unknown}): number {

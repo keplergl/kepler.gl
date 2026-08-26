@@ -203,11 +203,27 @@ async function readResponseBlob(
   const contentLength = Number(response.headers.get('content-length'));
   const total = Number.isFinite(contentLength) && contentLength > 0 ? contentLength : undefined;
 
+  const PROGRESS_INTERVAL_MS = 80;
+  let lastEmitAt = 0;
+  let lastEmittedPercent = -1;
   const emit = (loaded: number, complete = false) => {
+    const percent = complete ? 1 : total ? Math.min(1, loaded / total) : 0;
+    const rounded = Math.round(percent * 100);
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    if (
+      !complete &&
+      loaded !== 0 &&
+      rounded === lastEmittedPercent &&
+      now - lastEmitAt < PROGRESS_INTERVAL_MS
+    ) {
+      return;
+    }
+    lastEmitAt = now;
+    lastEmittedPercent = rounded;
     onProgress?.({
       loaded,
       total,
-      percent: complete ? 1 : total ? Math.min(1, loaded / total) : 0
+      percent
     });
   };
 
@@ -256,9 +272,10 @@ export async function loadExternallyHostedDataset(metadata: {
   size?: number;
   etag?: string;
   lastModified?: string;
+  onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void;
 }): Promise<LoadExternallyHostedDatasetResult> {
-  const {source, format, etag, lastModified, size} = metadata;
-  const fetched = await fetchRemoteFile(source, {format, etag, lastModified});
+  const {source, format, etag, lastModified, size, onProgress} = metadata;
+  const fetched = await fetchRemoteFile(source, {format, etag, lastModified, onProgress});
   if (fetched.notModified || !fetched.file) {
     return {
       data: null,

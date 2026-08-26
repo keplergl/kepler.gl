@@ -292,6 +292,7 @@ export default {
     showDataTable: 'Näytä attribuuttitaulu',
     removeDataset: 'Poista aineisto',
     refreshDataset: 'Päivitä aineisto',
+    refreshSettings: 'Päivitysasetukset',
     refreshOff: 'Pois',
     refresh10s: '10 s',
     refresh15s: '15 s',
@@ -306,7 +307,9 @@ export default {
     wmsTile: 'WMS-tiili',
     tile3d: '3D-tiili',
     remoteFile: '{rowCount} riviä (etä)',
-    refreshInterval: 'Päivitys'
+    refreshInterval: 'Päivitys',
+    refreshing: 'Päivitetään…',
+    refreshingPercent: 'Päivitetään {percent}%'
   },
   tooltip: {
     hideLayer: 'Piilota taso',

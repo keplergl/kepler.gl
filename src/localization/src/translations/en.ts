@@ -337,6 +337,7 @@ export default {
     showDataTable: 'Show data table',
     removeDataset: 'Remove dataset',
     refreshDataset: 'Refresh dataset',
+    refreshSettings: 'Refresh settings',
     refreshOff: 'Off',
     refresh10s: '10s',
     refresh15s: '15s',
@@ -352,7 +353,9 @@ export default {
     tile3d: '3D tile',
     bitmap: 'Bitmap image',
     remoteFile: '{rowCount} rows (remote)',
-    refreshInterval: 'Refresh'
+    refreshInterval: 'Refresh',
+    refreshing: 'Refreshing…',
+    refreshingPercent: 'Refreshing {percent}%'
   },
   tooltip: {
     hideLayer: 'Hide layer',
