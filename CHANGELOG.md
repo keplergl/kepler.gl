@@ -15,6 +15,22 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.8] - Aug 26 2026
+
+- af5d8173 chore: pin patched transitive deps via Yarn resolutions (#3654)
+- 854099ff feat: add circle draw tool and live length/radius labels (#3661)
+- d810e51c fix: collapse Arrow record batches above configurable cap (#3663)
+- 7dec2e70 feat: load CSV, GeoJSON, Arrow, and Parquet from a remote URL (#3662)
+- 2f60c22b fix: google drive provider prevent auto popup (#3660)
+- df9abf68 fix: remove ui buttons from map preview image (#3659)
+- be12d109 chore: replace lodash with es-toolkit (#3653)
+- 59eada01 chore: run Vite example typecheck after npm publish (#3652)
+- 2fe86102 fix: polygon filter not applied on map load (#3651)
+- f33e93b4 chore: typecheck Vite examples in CI (#3650)
+- 2926c507 chore: add circular-dep and unused-export CI checks (#3649)
+- 5b430334 chore: run Prettier and ESLint on staged files (#3648)
+- 56cad19d chore: cache Yarn, freeze lockfile, and skip Python CI on JS PRs (#3647)
+
 ## [3.3.0-alpha.7] - Aug 14 2026
 
 - 34fd0bfc (origin/master, origin/HEAD, master) feat: add column statistics to the data table (#3646)

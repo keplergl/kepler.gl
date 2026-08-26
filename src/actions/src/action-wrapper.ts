@@ -22,6 +22,35 @@ interface IKeplerGlAction {
 
 export const getActionForwardAddress = (id: string) => `${ADDRESS_PREFIX}${id.toUpperCase()}`;
 
+function wrapToImpl(id: string, action: IKeplerGlAction) {
+  return {
+    // keep original action.type
+    type: action.type,
+
+    // actual action
+    payload: {
+      ...action,
+      meta: {
+        ...action.meta,
+        _id_: id
+      }
+    },
+
+    // add forward signature to meta
+    meta: {
+      ...(action.meta || {}),
+      _forward_: FORWARD,
+      _addr_: getActionForwardAddress(id)
+    }
+  };
+}
+
+// Explicit type so declaration emit does not need es-toolkit's unexported CurriedFunction2.
+type WrapTo = {
+  (id: string, action: IKeplerGlAction): ReturnType<typeof wrapToImpl>;
+  (id: string): (action: IKeplerGlAction) => ReturnType<typeof wrapToImpl>;
+};
+
 /**
  * Wrap an action into a forward action that only modify the state of a specific
  * kepler.gl instance. kepler.gl reducer will look for signatures in the action to
@@ -65,26 +94,7 @@ export const getActionForwardAddress = (id: string) => `${ADDRESS_PREFIX}${id.to
  * const wrapToMap1 = wrapTo('map_1');
  * this.props.dispatch(wrapToMap1(togglePerspective()));
  */
-export const wrapTo = curry((id: string, action: IKeplerGlAction) => ({
-  // keep original action.type
-  type: action.type,
-
-  // actual action
-  payload: {
-    ...action,
-    meta: {
-      ...action.meta,
-      _id_: id
-    }
-  },
-
-  // add forward signature to meta
-  meta: {
-    ...(action.meta || {}),
-    _forward_: FORWARD,
-    _addr_: getActionForwardAddress(id)
-  }
-}));
+export const wrapTo: WrapTo = curry(wrapToImpl);
 
 /**
  * Whether an action is a forward action
