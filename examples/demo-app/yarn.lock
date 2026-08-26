@@ -1272,6 +1272,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@geoda/core@npm:^0.0.25":
+  version: 0.0.25
+  resolution: "@geoda/core@npm:0.0.25"
+  dependencies:
+    "@loaders.gl/schema": "npm:^4.1.0-alpha.4"
+    geojson: "npm:^0.5.0"
+  checksum: 10c0/d5bbab6c8dcfa6b231d7741e7e1e495334ab55a4a92cd79b4abacc2a8dd9f7025e9f11e2f67d3282c19359f0e25e33280dba5852235ecd5df091f553a4161869
+  languageName: node
+  linkType: hard
+
 "@geoda/lisa@npm:^0.0.22":
   version: 0.0.22
   resolution: "@geoda/lisa@npm:0.0.22"
@@ -1282,10 +1292,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@geoda/lisa@npm:^0.0.25":
+  version: 0.0.25
+  resolution: "@geoda/lisa@npm:0.0.25"
+  dependencies:
+    "@loaders.gl/schema": "npm:^4.1.0-alpha.4"
+    geojson: "npm:^0.5.0"
+  checksum: 10c0/51983fcd144e6b50c52984a0a76cf96fd1c97e10e80cbe5b7ed23d79ca252690543ba36a5d5ae7a74f21d2d8966cc4c92e254af622c5a75ee46840462b570292
+  languageName: node
+  linkType: hard
+
 "@geoda/regression@npm:^0.0.22":
   version: 0.0.22
   resolution: "@geoda/regression@npm:0.0.22"
   checksum: 10c0/f705bf24c82be77268a6703a21252a92216ea40672015ff84dd4215408d976b810fb45934fe46644bbf00b786ebc059c59d0308839f244279cb74c0cc11f4d73
+  languageName: node
+  linkType: hard
+
+"@geoda/regression@npm:^0.0.25":
+  version: 0.0.25
+  resolution: "@geoda/regression@npm:0.0.25"
+  checksum: 10c0/9ef54074a38a1a77902c840384436702f51531de8e1c663d070513d090b7de29e2ccbde4010b80caf24f9ed762008d5e237189198423cf45745aed3e8d885c71
   languageName: node
   linkType: hard
 
@@ -3771,14 +3798,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/kepler-assistant@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "@openassistant/kepler-assistant@npm:0.0.1"
+"@openassistant/kepler-assistant@npm:^0.0.2":
+  version: 0.0.2
+  resolution: "@openassistant/kepler-assistant@npm:0.0.2"
   dependencies:
     "@ai-sdk/openai-compatible": "npm:^1.0.18"
-    "@geoda/core": "npm:^0.0.22"
-    "@geoda/lisa": "npm:^0.0.22"
-    "@geoda/regression": "npm:^0.0.22"
+    "@geoda/core": "npm:^0.0.25"
+    "@geoda/lisa": "npm:^0.0.25"
+    "@geoda/regression": "npm:^0.0.25"
     "@kepler.gl/actions": "npm:^3.2.0"
     "@kepler.gl/components": "npm:^3.2.0"
     "@kepler.gl/constants": "npm:^3.2.0"
@@ -3808,7 +3835,7 @@ __metadata:
     zip3: "npm:^1.0.4"
     zod: "npm:^4.4.0"
     zustand: "npm:^5.0.14"
-  checksum: 10c0/67678fdd11ea0038ef548a3d0ddf7e1ad71ef980ce69c744dfba0d9304815a778e0f81f893bcaf5d4250d6108d3ea82ec28fbd05ced91172dadb05c61733c580
+  checksum: 10c0/96abc77cb97f3de594aa5fe7145c4b3d6ecc4c9d1b112dce4ab4a4df011465f20da2f116e5bf2ce9e0aa1930201fd242edc00bc82f7d8e3c81f8d417cbead5f7
   languageName: node
   linkType: hard
 
@@ -13749,7 +13776,7 @@ __metadata:
     "@loaders.gl/csv": "npm:^4.3.2"
     "@loaders.gl/json": "npm:^4.3.2"
     "@loaders.gl/parquet": "npm:^4.3.2"
-    "@openassistant/kepler-assistant": "npm:^0.0.1"
+    "@openassistant/kepler-assistant": "npm:^0.0.2"
     "@sqlrooms/ai": "npm:0.29.0-rc.9"
     "@sqlrooms/ai-core": "npm:0.29.0-rc.9"
     "@sqlrooms/duckdb": "npm:0.29.0-rc.9"

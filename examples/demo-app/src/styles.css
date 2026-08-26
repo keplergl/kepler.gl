@@ -7,13 +7,17 @@
  * ScreenshotWrapper in app.tsx are also generated. */
 @source "./**/*.{ts,tsx}";
 
-/* Scan @sqlrooms package dist files for their Tailwind classes */
-@source "../../node_modules/@sqlrooms/ui/dist/**/*.js";
-@source "../../node_modules/@sqlrooms/ai/dist/**/*.js";
-@source "../../node_modules/@sqlrooms/ai-core/dist/**/*.js";
-@source "../../node_modules/@sqlrooms/ai-settings/dist/**/*.js";
-@source "../../node_modules/@sqlrooms/duckdb/dist/**/*.js";
-@source "../../node_modules/@sqlrooms/room-store/dist/**/*.js";
+/* Scan package dist files for their Tailwind classes. These live in the
+ * demo-app's own node_modules — `../node_modules` from this file (src/) is the
+ * demo-app package root, not the kepler.gl repo root (`../..`). `@source`
+ * paths are resolved relative to the CSS file, not the CLI's working dir. */
+@source "../node_modules/@sqlrooms/ui/dist/**/*.js";
+@source "../node_modules/@sqlrooms/ai/dist/**/*.js";
+@source "../node_modules/@sqlrooms/ai-core/dist/**/*.js";
+@source "../node_modules/@sqlrooms/ai-settings/dist/**/*.js";
+@source "../node_modules/@sqlrooms/duckdb/dist/**/*.js";
+@source "../node_modules/@sqlrooms/room-store/dist/**/*.js";
+@source "../node_modules/@openassistant/kepler-assistant/dist/**/*.js";
 
 /*
  * Override kepler.gl's Tailwind v3 preflight which sets a global
@@ -66,3 +70,7 @@ body > [data-state='open'][role='dialog'] {
   width: 80vw;
   max-width: 80vw;
 }
+
+
+
+
