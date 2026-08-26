@@ -2,7 +2,13 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {isKeplerGlMap, makeProgressIterator, filesToDataPayload, processFileData, processArrowBatches} from '@kepler.gl/processors';
+import {
+  isKeplerGlMap,
+  makeProgressIterator,
+  filesToDataPayload,
+  processFileData,
+  processArrowBatches
+} from '@kepler.gl/processors';
 import * as arrow from 'apache-arrow';
 import {parsedFields, parsedRows} from 'test/fixtures/row-object';
 import {
@@ -202,10 +208,16 @@ test('#file-handler -> processFileData persists remote file format', async t => 
 
   t.equal(cache[0].info.type, 'externally-hosted', 'should mark the dataset as externally-hosted');
   t.equal(cache[0].info.format, 'row', 'processor format stays row for CSV');
-  t.deepEqual(
-    cache[0].metadata,
-    {source: 'https://example.com/abc123?sv=1', sourceFormat: 'csv'},
+  t.equal(cache[0].metadata.source, 'https://example.com/abc123?sv=1');
+  t.equal(
+    cache[0].metadata.sourceFormat,
+    'csv',
     'should persist the file format, not the processor format'
+  );
+  t.equal(
+    typeof cache[0].metadata.lastFetchedAt,
+    'number',
+    'should record lastFetchedAt on remote load'
   );
 
   const parquetCache = await processFileData({
