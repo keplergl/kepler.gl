@@ -10,17 +10,12 @@ import FileUploadProgress from './file-upload-progress';
 import FileDrop from './file-drop';
 import {FileLoading, FileLoadingProgress} from '@kepler.gl/types';
 
-import {
-  GUIDES_FILE_FORMAT_DOC,
-  REMOTE_FILE_FORMATS,
-  DATASET_REFRESH_INTERVAL_OPTIONS
-} from '@kepler.gl/constants';
+import {GUIDES_FILE_FORMAT_DOC, REMOTE_FILE_FORMATS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {
   fetchRemoteFileAsKeplerFile,
   getFileNameForRemoteUrl,
-  isRemoteDatasetUrl,
-  KeplerRemoteFile
+  isRemoteDatasetUrl
 } from '@kepler.gl/processors';
 import {media} from '@kepler.gl/styles';
 import {isChrome, getApplicationConfig} from '@kepler.gl/utils';
@@ -177,20 +172,6 @@ const StyledRemoteFormatSelect = styled.select`
   cursor: pointer;
 `;
 
-const StyledRemoteRefreshSelect = styled(StyledRemoteFormatSelect)`
-  width: auto;
-  min-width: 72px;
-`;
-
-const StyledRefreshLabel = styled.label`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  color: ${props => props.theme.subtextColorLT};
-  font-size: 11px;
-`;
-
 const StyledRemoteFetchButton = styled(Button)`
   height: auto;
   box-sizing: border-box;
@@ -254,7 +235,6 @@ type FileUploadState = {
   errorFiles: string[];
   remoteUrl: string;
   remoteFormat: string;
-  remoteRefreshIntervalMs: number;
   remoteError: {message: string} | null;
   remoteLoading: boolean;
   remoteProgress: FileLoadingProgress;
@@ -270,7 +250,6 @@ function FileUploadFactory() {
       errorFiles: [],
       remoteUrl: '',
       remoteFormat: 'auto',
-      remoteRefreshIntervalMs: 0,
       remoteError: null,
       remoteLoading: false,
       remoteProgress: {}
@@ -344,10 +323,6 @@ function FileUploadFactory() {
       this.setState({remoteFormat: event.target.value});
     };
 
-    _onRemoteRefreshIntervalChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-      this.setState({remoteRefreshIntervalMs: Number(event.target.value) || 0});
-    };
-
     _onRemoteUrlKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
       if (event.key === 'Enter') {
         event.preventDefault();
@@ -356,7 +331,7 @@ function FileUploadFactory() {
     };
 
     _handleLoadRemoteFile = async () => {
-      const {remoteUrl, remoteFormat, remoteRefreshIntervalMs, remoteError} = this.state;
+      const {remoteUrl, remoteFormat, remoteError} = this.state;
       const {intl} = this.props;
       const showFormatSelector = getApplicationConfig().enableRemoteFileFormatSelector;
       const format = showFormatSelector && remoteFormat !== 'auto' ? remoteFormat : undefined;
@@ -408,9 +383,6 @@ function FileUploadFactory() {
             };
           });
         });
-        if (remoteRefreshIntervalMs > 0) {
-          (file as KeplerRemoteFile).keplerRefreshIntervalMs = remoteRefreshIntervalMs;
-        }
         this.setState(
           {
             files: [file],
@@ -437,7 +409,6 @@ function FileUploadFactory() {
         errorFiles,
         remoteUrl,
         remoteFormat,
-        remoteRefreshIntervalMs,
         remoteError,
         remoteLoading,
         remoteProgress
@@ -566,26 +537,6 @@ function FileUploadFactory() {
                               >
                                 <FormattedMessage id={'fileUploader.fetch'} />
                               </StyledRemoteFetchButton>
-                            </StyledRemoteUrlRow>
-                            <StyledRemoteUrlRow>
-                              <StyledRefreshLabel>
-                                <FormattedMessage id={'fileUploader.refreshInterval'} />
-                                <StyledRemoteRefreshSelect
-                                  className="file-uploader__remote-refresh"
-                                  aria-label={intl.formatMessage({
-                                    id: 'fileUploader.refreshInterval'
-                                  })}
-                                  value={remoteRefreshIntervalMs}
-                                  onChange={this._onRemoteRefreshIntervalChange}
-                                  disabled={remoteLoading}
-                                >
-                                  {DATASET_REFRESH_INTERVAL_OPTIONS.map(option => (
-                                    <option key={option.value} value={option.value}>
-                                      {intl.formatMessage({id: option.labelId})}
-                                    </option>
-                                  ))}
-                                </StyledRemoteRefreshSelect>
-                              </StyledRefreshLabel>
                             </StyledRemoteUrlRow>
                             {remoteError ? <WarningMsg>{remoteError.message}</WarningMsg> : null}
                           </StyledRemoteUrlForm>

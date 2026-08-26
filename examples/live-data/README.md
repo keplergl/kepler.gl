@@ -52,6 +52,6 @@ URL**
 http://localhost:4010/vehicles.csv
 ```
 
-Set refresh to 10s and Fetch.
+Fetch, then set **Refresh** to 10s on the dataset in the Layers panel.
 
 [yarn-install]: https://yarnpkg.com/getting-started/install

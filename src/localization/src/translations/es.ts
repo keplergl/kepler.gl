@@ -707,7 +707,6 @@ export default {
     fetch: 'Cargar',
     format: 'Formato',
     formatAuto: 'Auto',
-    refreshInterval: 'Actualizar',
     cors: 'La URL debe permitir [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {

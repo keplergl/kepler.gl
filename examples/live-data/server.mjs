@@ -112,7 +112,7 @@ function serveIndex(res) {
       <li><a href="/vehicles.csv">/vehicles.csv</a> — current snapshot</li>
       <li><a href="/vehicles.csv?fresh=1">/vehicles.csv?fresh=1</a> — step, then return</li>
     </ul>
-    <p>Paste that URL into Kepler.gl Add Data → URL, with refresh set to 10s.</p>
+    <p>Paste that URL into Kepler.gl Add Data → URL, then set Refresh to 10s on the dataset.</p>
   </body>
 </html>`;
   res.writeHead(200, corsHeaders({'Content-Type': 'text/html; charset=utf-8'}));

@@ -708,7 +708,6 @@ export default {
     fetch: 'Загрузить',
     format: 'Формат',
     formatAuto: 'Авто',
-    refreshInterval: 'Обновление',
     cors: 'URL должен разрешать [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {

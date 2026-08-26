@@ -815,7 +815,6 @@ ${'```'}
     fetch: 'Fetch',
     format: 'Format',
     formatAuto: 'Auto',
-    refreshInterval: 'Refresh',
     cors: 'The URL must allow [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {

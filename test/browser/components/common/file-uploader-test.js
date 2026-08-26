@@ -248,11 +248,6 @@ test('Components -> FileUpload remote URL form', t => {
     0,
     'format selector is hidden by default'
   );
-  t.equal(
-    wrapper.find('.file-uploader__remote-refresh').hostNodes().length,
-    1,
-    'should render refresh interval select'
-  );
 
   t.end();
 });

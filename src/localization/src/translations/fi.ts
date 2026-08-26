@@ -704,7 +704,6 @@ export default {
     fetch: 'Hae',
     format: 'Muoto',
     formatAuto: 'Auto',
-    refreshInterval: 'Päivitys',
     cors: 'URL-osoitteen on sallittava [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   density: 'tiheys',

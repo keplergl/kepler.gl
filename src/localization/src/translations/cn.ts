@@ -688,7 +688,6 @@ export default {
     fetch: '获取',
     format: '格式',
     formatAuto: '自动',
-    refreshInterval: '刷新',
     cors: 'URL 必须允许 [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)。'
   },
   tilesetSetup: {

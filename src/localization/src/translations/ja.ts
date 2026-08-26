@@ -703,7 +703,6 @@ export default {
     fetch: '取得',
     format: '形式',
     formatAuto: '自動',
-    refreshInterval: '更新',
     cors: 'URL は [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) を許可する必要があります。'
   },
   geocoder: {
