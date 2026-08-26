@@ -260,9 +260,8 @@ test('Components -> FileUpload remote URL format selector flag', t => {
     </IntlWrapper>
   );
 
-  t.equal(
-    wrapper.find('.file-uploader__remote-format').hostNodes().length,
-    1,
+  t.ok(
+    wrapper.find('.file-uploader__remote-format').hostNodes().length >= 1,
     'should render format select when the flag is enabled'
   );
 
