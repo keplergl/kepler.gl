@@ -138,6 +138,10 @@ export type KeplerApplicationConfig = {
   // A5 DGGS layer is optional. Disabled by default; enable via initApplicationConfig.
   enableA5Layer?: boolean;
 
+  // GeoHash layer config
+  // GeoHash layer is optional. Disabled by default; enable via initApplicationConfig.
+  enableGeohashLayer?: boolean;
+
   /** Whether to show example URLs in tileset setup forms (vector tile, raster tile, WMS, 3D tile) */
   showInlineTilesetExamples?: boolean;
 
@@ -302,6 +306,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   // A5 layer config
   enableA5Layer: true,
+
+  // GeoHash layer config
+  enableGeohashLayer: true,
 
   showInlineTilesetExamples: true,
 

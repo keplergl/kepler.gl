@@ -16,6 +16,7 @@
       * [Point](docs/user-guides/c-types-of-layers/a-point.md)
       * [S2 Layer](docs/user-guides/c-types-of-layers/l-s2.md)
       * [A5 Layer](docs/user-guides/c-types-of-layers/q-a5.md)
+      * [GeoHash Layer](docs/user-guides/c-types-of-layers/r-geohash.md)
       * [Icon](docs/user-guides/c-types-of-layers/g-icon.md)
       * [Line](docs/user-guides/c-types-of-layers/c-line.md)
       * [Cluster](docs/user-guides/c-types-of-layers/f-cluster.md)

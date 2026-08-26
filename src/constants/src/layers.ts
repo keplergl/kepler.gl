@@ -608,6 +608,7 @@ export const LAYER_TYPES = keyMirror({
   trip: null,
   s2: null,
   a5: null,
+  geohash: null,
   flow: null,
   vectorTile: null,
   rasterTile: null,

@@ -29,7 +29,8 @@ export const addLayer = extendedTool<
         'h3',
         'trip',
         's2',
-        'a5'
+        'a5',
+        'geohash'
       ]
     >;
     colorBy: z.ZodOptional<z.ZodString>;
@@ -92,7 +93,8 @@ For geojson datasets:
       'h3',
       'trip',
       's2',
-      'a5'
+      'a5',
+      'geohash'
     ]),
     colorBy: z.string().optional(),
     colorType: z.enum(['breaks', 'unique']).optional(),

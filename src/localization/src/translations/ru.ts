@@ -117,6 +117,7 @@ export default {
       hexagonid: 'H3',
       trip: 'пути',
       s2: 'S2',
+      geohash: 'GeoHash',
       '3d': '3D',
       flow: 'поток',
       vectortile: 'векторный тайл',
