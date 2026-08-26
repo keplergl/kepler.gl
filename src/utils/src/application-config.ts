@@ -139,7 +139,7 @@ export type KeplerApplicationConfig = {
   enableA5Layer?: boolean;
 
   // GeoHash layer config
-  // GeoHash layer is optional. Disabled by default; enable via initApplicationConfig.
+  // GeoHash layer is optional. Enabled by default; disable via initApplicationConfig.
   enableGeohashLayer?: boolean;
 
   /** Whether to show example URLs in tileset setup forms (vector tile, raster tile, WMS, 3D tile) */

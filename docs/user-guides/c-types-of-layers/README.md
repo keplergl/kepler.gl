@@ -104,7 +104,7 @@ The A5 layer is optional and disabled by default. Enable it with `enableA5Layer:
 
 To use GeoHash layer, you need to assign a column containing [Geohash](https://en.wikipedia.org/wiki/Geohash) cell identifiers. Kepler.gl auto-detects columns named `geohash`, `geo_hash`, or `geohash_id`.
 
-The GeoHash layer is optional and disabled by default. Enable it with `enableGeohashLayer: true` in the application configuration.
+The GeoHash layer is optional and enabled by default. Disable it with `enableGeohashLayer: false` in the application configuration.
 
 ## Vector Tile Layer
 

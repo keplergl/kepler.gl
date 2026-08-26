@@ -4,12 +4,12 @@ To use GeoHash layer, you need to assign a column containing [Geohash](https://e
 
 ### Enable the layer
 
-The GeoHash layer is optional and **disabled by default**. Enable it in your app config:
+The GeoHash layer is optional and **enabled by default**. Disable it in your app config:
 
 ```js
 import {initApplicationConfig} from '@kepler.gl/utils';
 
-initApplicationConfig({enableGeohashLayer: true});
+initApplicationConfig({enableGeohashLayer: false});
 ```
 
 ### Naming Convention

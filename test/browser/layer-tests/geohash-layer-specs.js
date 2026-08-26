@@ -34,7 +34,7 @@ function createGeohashDataset(filteredIndex) {
   dataset.importData({
     data: {fields, rows}
   });
-  if (filteredIndex) {
+  if (filteredIndex != null) {
     dataset.filteredIndex = filteredIndex;
     dataset.filteredIndexForDomain = filteredIndex;
   }
