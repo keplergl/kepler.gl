@@ -67,6 +67,7 @@ function DatasetLayerSectionFactory(
     const enableFlowLayer = getApplicationConfig().enableFlowLayer;
     const enableBitmapLayer = getApplicationConfig().enableBitmapLayer;
     const enableA5Layer = getApplicationConfig().enableA5Layer;
+    const enableGeohashLayer = getApplicationConfig().enableGeohashLayer;
 
     const filteredLayerClasses = useMemo(() => {
       let filteredClasses = layerClasses;
@@ -90,6 +91,10 @@ function DatasetLayerSectionFactory(
         const {a5: _a5, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
       }
+      if (!enableGeohashLayer) {
+        const {geohash: _geohash, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
       return filteredClasses as LayerClassesType;
     }, [
       enableRasterTileLayer,
@@ -97,6 +102,7 @@ function DatasetLayerSectionFactory(
       enableFlowLayer,
       enableBitmapLayer,
       enableA5Layer,
+      enableGeohashLayer,
       layerClasses
     ]);
 

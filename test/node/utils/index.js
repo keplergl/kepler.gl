@@ -21,6 +21,7 @@ import './util-test';
 import './export-utils-test';
 import './s2-utils-test';
 import './a5-utils-test';
+import './geohash-utils-test';
 import './editor-utils-test';
 import './editor-feature-utils-test';
 import './kepler-gl-utils-test';

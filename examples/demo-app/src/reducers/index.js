@@ -56,6 +56,7 @@ initApplicationConfig({
 // NOTE: Cell winding must be counter-clockwise (CCW) to match the CDN icon convention.
 initApplicationConfig({
   enableA5Layer: true,
+  enableGeohashLayer: true,
   customIcons: [
     {
       id: 'custom-star',
@@ -78,7 +79,8 @@ initApplicationConfig({
       }
     }
   ],
-  customIconUrl: 'https://raw.githubusercontent.com/keplergl/kepler.gl-data/refs/heads/master/layers/icon/custom-icons.json'
+  customIconUrl:
+    'https://raw.githubusercontent.com/keplergl/kepler.gl-data/refs/heads/master/layers/icon/custom-icons.json'
 });
 
 const {DEFAULT_MAP_CONTROLS} = uiStateUpdaters;

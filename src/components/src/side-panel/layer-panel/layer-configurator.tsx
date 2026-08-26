@@ -7,7 +7,13 @@ import React, {Component, Fragment, useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
 
 import ItemSelector from '../../common/item-selector/item-selector';
-import {Input, InputLight, PanelLabel, PanelLabelWrapper, SidePanelSection} from '../../common/styled-components';
+import {
+  Input,
+  InputLight,
+  PanelLabel,
+  PanelLabelWrapper,
+  SidePanelSection
+} from '../../common/styled-components';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
 import AggrScaleSelectorFactory from './aggr-scale-selector';
@@ -39,7 +45,13 @@ import {
   CUSTOM_SCENEGRAPH_MODEL_ID,
   BitmapDatasetMetadata
 } from '@kepler.gl/constants';
-import {AggregationLayer, Layer, LayerBaseConfig, VisualChannel, COLUMN_MODE_GEOJSON} from '@kepler.gl/layers';
+import {
+  AggregationLayer,
+  Layer,
+  LayerBaseConfig,
+  VisualChannel,
+  COLUMN_MODE_GEOJSON
+} from '@kepler.gl/layers';
 
 import {matchDatasetType, Datasets} from '@kepler.gl/table';
 import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
@@ -107,7 +119,8 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
 `;
 
 const BitmapDropZone = styled.div<{$isDragging: boolean}>`
-  border: 2px dashed ${props => (props.$isDragging ? props.theme.activeColor : props.theme.borderColor)};
+  border: 2px dashed
+    ${props => (props.$isDragging ? props.theme.activeColor : props.theme.borderColor)};
   border-radius: 4px;
   padding: 12px;
   text-align: center;
@@ -177,13 +190,10 @@ const BitmapImageSourceSection: React.FC<BitmapImageSourceProps> = ({dataset, on
     [dataset, onChange]
   );
 
-  const onUrlChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setUrl(e.target.value);
-      setError(null);
-    },
-    []
-  );
+  const onUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setUrl(e.target.value);
+    setError(null);
+  }, []);
 
   const onUrlBlur = useCallback(() => {
     if (url) {
@@ -268,7 +278,9 @@ const BitmapImageSourceSection: React.FC<BitmapImageSourceProps> = ({dataset, on
       />
       <BitmapDropZoneWrapper>
         {isCurrentDataUri && (
-          <BitmapClearButton onClick={onClearLocal} title="Clear image">✕</BitmapClearButton>
+          <BitmapClearButton onClick={onClearLocal} title="Clear image">
+            ✕
+          </BitmapClearButton>
         )}
         <BitmapDropZone
           $isDragging={isDragging}
@@ -277,7 +289,9 @@ const BitmapImageSourceSection: React.FC<BitmapImageSourceProps> = ({dataset, on
           onDragLeave={onDragLeave}
           onClick={onDropZoneClick}
         >
-          {isCurrentDataUri ? 'Local image loaded. Drop another to replace.' : 'Drop image here or click to select'}
+          {isCurrentDataUri
+            ? 'Local image loaded. Drop another to replace.'
+            : 'Drop image here or click to select'}
         </BitmapDropZone>
       </BitmapDropZoneWrapper>
       <input
@@ -301,7 +315,7 @@ const AlignModeContainer = styled.div`
 const AlignModeStatus = styled.div<{$highlight?: boolean}>`
   padding: 6px 8px;
   border-radius: 4px;
-  background: ${props => props.$highlight ? props.theme.panelBackgroundHover : 'transparent'};
+  background: ${props => (props.$highlight ? props.theme.panelBackgroundHover : 'transparent')};
   margin-bottom: 6px;
   line-height: 1.4;
 `;
@@ -1487,6 +1501,20 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    _renderGeohashLayerConfig({
+      layer,
+      visConfiguratorProps,
+      layerConfiguratorProps,
+      layerChannelConfigProps
+    }) {
+      return this._renderA5LayerConfig({
+        layer,
+        visConfiguratorProps,
+        layerConfiguratorProps,
+        layerChannelConfigProps
+      });
+    }
+
     _renderA5LayerConfig({
       layer,
       visConfiguratorProps,
@@ -1611,10 +1639,7 @@ export default function LayerConfiguratorFactory(
       return (
         <StyledLayerVisualConfigurator>
           <LayerConfigGroup label={'layer.imageSource'} collapsible>
-            <BitmapImageSourceSection
-              dataset={dataset}
-              onChange={visConfiguratorProps.onChange}
-            />
+            <BitmapImageSourceSection dataset={dataset} onChange={visConfiguratorProps.onChange} />
           </LayerConfigGroup>
           <LayerConfigGroup label={'layer.appearance'}>
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
