@@ -316,7 +316,9 @@ class KeplerTable<F extends Field = Field> {
       return this;
     }
 
-    const dataContainerData = data.arrowTable ?? data.cols ?? data.rows;
+    // Column-form (Arrow) may include both cols and arrowTable. Row snapshots always
+    // include `rows`; leftover arrowTable metadata must not be passed to RowDataContainer.
+    const dataContainerData = data.cols ? data.arrowTable ?? data.cols : data.rows;
     const inputDataFormat = data.cols ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY;
 
     if (typeof this.dataContainer.update === 'function') {
@@ -324,7 +326,7 @@ class KeplerTable<F extends Field = Field> {
     } else {
       this.dataContainer = createDataContainer(dataContainerData, {
         fields: data.fields || this.fields,
-        arrowTable: data.arrowTable,
+        arrowTable: data.cols ? data.arrowTable : undefined,
         inputDataFormat
       });
     }

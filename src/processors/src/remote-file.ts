@@ -136,8 +136,8 @@ export async function fetchRemoteFile(
     return {
       file: null,
       notModified: true,
-      etag: etag || response.headers.get('etag') || undefined,
-      lastModified: lastModified || response.headers.get('last-modified') || undefined
+      etag: response.headers.get('etag') || etag || undefined,
+      lastModified: response.headers.get('last-modified') || lastModified || undefined
     };
   }
   if (!response.ok) {

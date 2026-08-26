@@ -148,14 +148,25 @@ test('#remote-file -> fetchRemoteFile returns notModified on 304', async t => {
   const origFetch = global.fetch;
   global.fetch = async (url, init) => {
     t.equal(init.headers['If-None-Match'], '"abc"', 'should send If-None-Match');
-    return new Response(null, {status: 304, headers: {etag: '"abc"'}});
+    return new Response(null, {
+      status: 304,
+      headers: {etag: '"xyz"', 'last-modified': 'Wed, 21 Oct 2015 07:28:00 GMT'}
+    });
   };
 
   try {
-    const result = await fetchRemoteFile('https://example.com/data.csv', {etag: '"abc"'});
+    const result = await fetchRemoteFile('https://example.com/data.csv', {
+      etag: '"abc"',
+      lastModified: 'Tue, 20 Oct 2015 07:28:00 GMT'
+    });
     t.ok(result.notModified, 'should report notModified');
     t.equal(result.file, null, 'should not return a file');
-    t.equal(result.etag, '"abc"');
+    t.equal(result.etag, '"xyz"', 'should prefer the 304 response ETag');
+    t.equal(
+      result.lastModified,
+      'Wed, 21 Oct 2015 07:28:00 GMT',
+      'should prefer the 304 response Last-Modified'
+    );
   } finally {
     global.fetch = origFetch;
   }

@@ -479,6 +479,18 @@ test('KeplerTable -> update replaces row snapshots', async t => {
   t.equal(table.fields[0].valueAccessor({index: 0}), 10, 'accessors should read new values');
   t.equal(table.filteredIndex.length, 3, 'filtered index should match new length');
 
+  const leftoverArrow = arrow.tableFromArrays({lat: [0], lng: [0]});
+  await table.update({
+    fields: [
+      {name: 'lat', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
+      {name: 'lng', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'}
+    ],
+    rows: [[7, 8]],
+    arrowTable: leftoverArrow
+  });
+  t.equal(table.length, 1, 'row snapshot should win over leftover arrowTable');
+  t.equal(table.fields[0].valueAccessor({index: 0}), 7);
+
   await table.update({
     fields: [
       {name: 'lat', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
