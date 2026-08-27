@@ -293,6 +293,7 @@ export default {
     showDataTable: 'Mostra taula de dades',
     removeDataset: 'Elimina conjunt de dades',
     refreshDataset: 'Actualitza el conjunt de dades',
+    refreshFailed: 'Error d’actualització',
     refreshSettings: 'Configuració d’actualització',
     refreshOff: 'Off',
     refresh10s: '10s',

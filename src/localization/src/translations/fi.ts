@@ -292,6 +292,7 @@ export default {
     showDataTable: 'Näytä attribuuttitaulu',
     removeDataset: 'Poista aineisto',
     refreshDataset: 'Päivitä aineisto',
+    refreshFailed: 'Päivitys epäonnistui',
     refreshSettings: 'Päivitysasetukset',
     refreshOff: 'Pois',
     refresh10s: '10 s',

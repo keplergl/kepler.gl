@@ -3146,17 +3146,7 @@ export function refreshDatasetErrorUpdater(
     }
   };
 
-  return withTask(
-    nextState,
-    ACTION_TASK().map(() =>
-      addNotification(
-        errorNotification({
-          message: `Failed to refresh dataset: ${error?.message || error}`,
-          id: `dataset-refresh-failed-${dataId}`
-        })
-      )
-    )
-  );
+  return nextState;
 }
 
 /**

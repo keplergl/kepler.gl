@@ -337,6 +337,7 @@ export default {
     showDataTable: 'Show data table',
     removeDataset: 'Remove dataset',
     refreshDataset: 'Refresh dataset',
+    refreshFailed: 'Refresh failed',
     refreshSettings: 'Refresh settings',
     refreshOff: 'Off',
     refresh10s: '10s',

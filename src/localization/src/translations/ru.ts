@@ -293,6 +293,7 @@ export default {
     showDataTable: 'Показать таблицу данных ',
     removeDataset: 'Удалить набор данных',
     refreshDataset: 'Обновить набор данных',
+    refreshFailed: 'Не удалось обновить',
     refreshSettings: 'Настройки обновления',
     refreshOff: 'Выкл.',
     refresh10s: '10 с',

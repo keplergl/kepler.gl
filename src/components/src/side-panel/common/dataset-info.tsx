@@ -33,7 +33,6 @@ type MiniDataset = {
   metadata?: {
     refreshIntervalMs?: number;
     refreshStatus?: string;
-    refreshError?: string;
     refreshProgress?: number;
   };
 };
@@ -98,12 +97,6 @@ const StyledCustomSeconds = styled.input`
 
 const StyledCustomUnit = styled.span`
   font-size: 11px;
-`;
-
-const StyledRefreshError = styled.div`
-  width: 100%;
-  font-size: 11px;
-  color: ${props => props.theme.errorColor};
 `;
 
 const StyledRefreshNow = styled.button`
@@ -319,9 +312,6 @@ export default function DatasetInfoFactory() {
                   </span>
                 </Tooltip>
               </StyledRefreshNow>
-            ) : null}
-            {dataset.metadata?.refreshError ? (
-              <StyledRefreshError>{dataset.metadata.refreshError}</StyledRefreshError>
             ) : null}
           </StyledRefreshSettings>
         ) : null}

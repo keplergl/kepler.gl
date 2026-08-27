@@ -291,6 +291,7 @@ export default {
     showDataTable: 'データ表を表示',
     removeDataset: 'データセットを削除',
     refreshDataset: 'データセットを更新',
+    refreshFailed: '更新に失敗しました',
     refreshSettings: '更新設定',
     refreshOff: 'オフ',
     refresh10s: '10秒',

@@ -7,7 +7,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 
 import {Table} from '@kepler.gl/layers';
 import {CenterFlexbox, Tooltip} from '../../common/styled-components';
-import {ArrowRight, Clock, Trash} from '../../common/icons';
+import {ArrowRight, Clock, Trash, WarningSign} from '../../common/icons';
 import {DatasetType} from '@kepler.gl/constants';
 import DatasetTagFactory from './dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
@@ -49,12 +49,23 @@ const DataTagAction = styled.div`
   opacity: 0;
 `;
 
+const StyledRefreshError = styled.div`
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  height: 16px;
+  flex-shrink: 0;
+`;
+
 type MiniDataset = {
   id: string;
   color: RGBColor;
   label?: string;
   disableDataOperation?: boolean;
   type?: string;
+  metadata?: {
+    refreshError?: string;
+  };
 };
 
 export type DatasetTitleProps = {
@@ -126,6 +137,26 @@ const RemoveDataset = ({datasetKey, removeDataset}: RemoveDatasetProps) => (
   </DataTagAction>
 );
 
+const RefreshErrorIcon = ({id, message}: {id: string; message: string}) => (
+  <StyledRefreshError
+    className="dataset-refresh-error"
+    data-tip
+    data-for={`refresh-error-${id}`}
+    onClick={e => e.stopPropagation()}
+    role="img"
+    aria-label={message}
+  >
+    <WarningSign height="14px" />
+    <Tooltip id={`refresh-error-${id}`} type="error" effect="solid">
+      <span>
+        <FormattedMessage id="datasetTitle.refreshFailed" />
+        {': '}
+        {message}
+      </span>
+    </Tooltip>
+  </StyledRefreshError>
+);
+
 DatasetTitleFactory.deps = [DatasetTagFactory];
 
 export default function DatasetTitleFactory(
@@ -171,6 +202,7 @@ export default function DatasetTitleFactory(
     );
 
     const isRemote = dataset.type === DatasetType.EXTERNALLY_HOSTED;
+    const refreshError = dataset.metadata?.refreshError;
 
     return (
       <div className="custom-palette-panel" ref={root}>
@@ -197,6 +229,7 @@ export default function DatasetTitleFactory(
               <ArrowRight height="12px" />
             </CenterFlexbox>
           ) : null}
+          {refreshError ? <RefreshErrorIcon id={datasetId} message={refreshError} /> : null}
           {showDatasetTable && !dataset.disableDataOperation ? (
             <ShowDataTable id={datasetId} showDatasetTable={showDatasetTable} />
           ) : null}

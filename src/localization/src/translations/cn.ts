@@ -280,6 +280,7 @@ export default {
     showDataTable: '显示数据表',
     removeDataset: '删除数据集',
     refreshDataset: '刷新数据集',
+    refreshFailed: '刷新失败',
     refreshSettings: '刷新设置',
     refreshOff: '关闭',
     refresh10s: '10秒',
