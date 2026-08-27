@@ -2918,8 +2918,8 @@ async function hydrateExternallyHostedProtoDataset(dataset: ProtoDataset): Promi
     data: loaded.data,
     metadata: {
       ...dataset.metadata,
-      ...(loaded.etag ? {etag: loaded.etag} : {}),
-      ...(loaded.lastModified ? {lastModified: loaded.lastModified} : {}),
+      etag: loaded.etag,
+      lastModified: loaded.lastModified,
       ...(typeof loaded.size === 'number' ? {size: loaded.size} : {}),
       lastFetchedAt: Date.now(),
       refreshStatus: 'idle'
@@ -3161,8 +3161,10 @@ export function refreshDatasetSuccessUpdater(
     refreshError: undefined,
     refreshProgress: undefined,
     lastFetchedAt: Date.now(),
-    ...(result.etag ? {etag: result.etag} : {}),
-    ...(result.lastModified ? {lastModified: result.lastModified} : {}),
+    // Always write validators. A 200 that omits them must not keep the previous
+    // ETag or a later 304 can skip a body we no longer have.
+    etag: result.etag,
+    lastModified: result.lastModified,
     ...(typeof result.size === 'number' ? {size: result.size} : {})
   };
 

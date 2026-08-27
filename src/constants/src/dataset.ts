@@ -55,7 +55,6 @@ export const DATASET_REFRESH_INTERVAL_OPTIONS: {value: number; labelId: string}[
 export const DATASET_REFRESH_CUSTOM_VALUE = 'custom';
 /** Default custom poll interval when switching from Off to Custom. */
 export const DATASET_REFRESH_DEFAULT_CUSTOM_MS = 30_000;
-/** Fastest interval the refresh UI will commit (100ms). */
 export const DATASET_REFRESH_MIN_INTERVAL_MS = 100;
 
 export function isPresetDatasetRefreshInterval(ms: number): boolean {

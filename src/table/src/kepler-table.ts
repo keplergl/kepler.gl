@@ -321,7 +321,7 @@ class KeplerTable<F extends Field = Field> {
     // pre-refresh update() so filters/gpuFilter are not wiped on a normal load.
     const isRowSnapshot = !data.cols && Array.isArray(data.rows);
 
-    if (isRowSnapshot && data.fields?.length && !fieldNamesMatch(this.fields, data.fields)) {
+    if (data.fields?.length && !fieldNamesMatch(this.fields, data.fields)) {
       await this.importData({data});
       this.dataRevision += 1;
       return this;

@@ -489,6 +489,45 @@ test('KeplerTable -> update with arrow cols keeps gpu filter state', async t => 
   t.end();
 });
 
+test('KeplerTable -> update rebuilds fields when arrow column names change', async t => {
+  const first = arrow.tableFromArrays({
+    lat: [1],
+    lng: [2]
+  });
+  const table = new KeplerTable({info: {id: 'arrow-schema'}, color: [0, 0, 0]});
+  await table.importData({
+    data: {
+      fields: [
+        {name: 'lat', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
+        {name: 'lng', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'}
+      ],
+      rows: [],
+      cols: [first.getChildAt(0), first.getChildAt(1)],
+      arrowTable: first
+    }
+  });
+
+  const next = arrow.tableFromArrays({
+    lat: [1],
+    lng: [2],
+    name: ['a']
+  });
+  await table.update({
+    fields: [
+      {name: 'lat', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
+      {name: 'lng', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
+      {name: 'name', type: ALL_FIELD_TYPES.string, analyzerType: 'STRING'}
+    ],
+    rows: [],
+    cols: [next.getChildAt(0), next.getChildAt(1), next.getChildAt(2)],
+    arrowTable: next
+  });
+
+  t.equal(table.fields.length, 3, 'column schema change should rebuild fields');
+  t.equal(table.fields[2].name, 'name');
+  t.end();
+});
+
 test('KeplerTable -> update replaces row snapshots', async t => {
   const table = new KeplerTable({info: {id: 'rows'}, color: [0, 0, 0]});
   await table.importData({

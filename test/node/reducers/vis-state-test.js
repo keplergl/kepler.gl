@@ -7967,6 +7967,7 @@ test('VisStateUpdater -> refreshDataset', async t => {
       data: refreshed,
       notModified: false,
       etag: '"v2"',
+      lastModified: 'Wed, 21 Oct 2015 07:28:00 GMT',
       size: 32
     })
   );
@@ -7974,11 +7975,36 @@ test('VisStateUpdater -> refreshDataset', async t => {
   t.equal(successState.datasets['remote-1'].dataContainer.numRows(), 3, 'should replace rows');
   t.equal(successState.datasets['remote-1'].metadata.refreshStatus, 'idle', 'should clear loading');
   t.equal(successState.datasets['remote-1'].metadata.etag, '"v2"', 'should store etag');
+  t.equal(
+    successState.datasets['remote-1'].metadata.lastModified,
+    'Wed, 21 Oct 2015 07:28:00 GMT',
+    'should store Last-Modified'
+  );
   t.ok(successState.datasets['remote-1'].metadata.lastFetchedAt, 'should record lastFetchedAt');
   t.equal(
     successState.datasets['remote-1'].metadata.refreshProgress,
     undefined,
     'should clear refresh progress'
+  );
+
+  const loadingAgain = reducer(successState, VisStateActions.refreshDataset('remote-1'));
+  const [taskAgain] = drainTasksForTesting();
+  const clearedValidators = reducer(
+    loadingAgain,
+    succeedTaskInTest(taskAgain, {
+      data: processCsvData('lat,lng\n7,8'),
+      notModified: false
+    })
+  );
+  t.equal(
+    clearedValidators.datasets['remote-1'].metadata.etag,
+    undefined,
+    'a 200 without ETag should drop the previous validator'
+  );
+  t.equal(
+    clearedValidators.datasets['remote-1'].metadata.lastModified,
+    undefined,
+    'a 200 without Last-Modified should drop the previous validator'
   );
 
   t.end();
