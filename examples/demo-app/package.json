@@ -44,7 +44,7 @@
     "@loaders.gl/csv": "^4.3.2",
     "@loaders.gl/json": "^4.3.2",
     "@loaders.gl/parquet": "^4.3.2",
-    "@openassistant/kepler-assistant": "^0.0.8",
+    "@openassistant/kepler-assistant": "^0.0.9",
     "@sqlrooms/ai": "0.29.0-rc.11",
     "@sqlrooms/ai-core": "0.29.0-rc.11",
     "@sqlrooms/duckdb": "0.29.0-rc.11",
