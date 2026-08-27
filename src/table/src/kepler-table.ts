@@ -316,43 +316,47 @@ class KeplerTable<F extends Field = Field> {
    * @param data - new data e.g. the arrow data with new batches loaded, or a full row snapshot
    */
   async update(data: ProtoDataset['data']) {
-    if (data.fields?.length && !fieldNamesMatch(this.fields, data.fields)) {
+    // Arrow/DuckDB incremental loads pass `cols` (and empty `rows`). Row snapshots
+    // for remote refresh pass `rows` only. Keep the column path close to the
+    // pre-refresh update() so filters/gpuFilter are not wiped on a normal load.
+    const isRowSnapshot = !data.cols && Array.isArray(data.rows);
+
+    if (isRowSnapshot && data.fields?.length && !fieldNamesMatch(this.fields, data.fields)) {
       await this.importData({data});
       this.dataRevision += 1;
       return this;
     }
 
-    // Column-form (Arrow) may include both cols and arrowTable. Row snapshots always
-    // include `rows`; leftover arrowTable metadata must not be passed to RowDataContainer.
-    const dataContainerData = data.cols ? data.arrowTable ?? data.cols : data.rows;
-    const inputDataFormat = data.cols ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY;
+    // Row snapshots must not pass leftover arrowTable into RowDataContainer.
+    const dataContainerData = isRowSnapshot ? data.rows : data.arrowTable ?? data.cols ?? data.rows;
 
     if (typeof this.dataContainer.update === 'function') {
       this.dataContainer.update(dataContainerData);
-    } else {
+    } else if (isRowSnapshot) {
       this.dataContainer = createDataContainer(dataContainerData, {
         fields: data.fields || this.fields,
-        arrowTable: data.cols ? data.arrowTable : undefined,
-        inputDataFormat
+        inputDataFormat: DataForm.ROWS_ARRAY
       });
     }
 
-    this.fields = this.fields.map((f, i) => {
-      const {filterProps: _filterProps, ...rest} = f;
-      return {
-        ...rest,
-        valueAccessor: getFieldValueAccessor(f, i, this.dataContainer)
-      };
-    }) as F[];
+    if (isRowSnapshot) {
+      this.fields = this.fields.map((f, i) => {
+        const {filterProps: _filterProps, ...rest} = f;
+        return {
+          ...rest,
+          valueAccessor: getFieldValueAccessor(f, i, this.dataContainer)
+        };
+      }) as F[];
+      this.filterRecord = undefined;
+      this.filterRecordCPU = undefined;
+      this.changedFilters = undefined;
+      this.gpuFilter = getGpuFilterProps([], this.id, this.fields, undefined);
+    }
 
     this.allIndexes = this.dataContainer.getPlainIndex();
     this.filteredIndex = this.allIndexes;
     this.filteredIndexForDomain = this.allIndexes;
     this.filteredIndexByLayer = {};
-    this.filterRecord = undefined;
-    this.filterRecordCPU = undefined;
-    this.changedFilters = undefined;
-    this.gpuFilter = getGpuFilterProps([], this.id, this.fields, undefined);
     this.dataRevision += 1;
 
     return this;

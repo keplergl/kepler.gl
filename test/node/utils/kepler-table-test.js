@@ -448,6 +448,47 @@ test('KeplerTable -> Int64 field accessor converts BigInt to number', async t =>
   t.end();
 });
 
+test('KeplerTable -> update with arrow cols keeps gpu filter state', async t => {
+  const first = arrow.tableFromArrays({
+    lat: [1, 2],
+    lng: [3, 4]
+  });
+  const table = new KeplerTable({info: {id: 'arrow-inc'}, color: [0, 0, 0]});
+  await table.importData({
+    data: {
+      fields: [
+        {name: 'lat', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
+        {name: 'lng', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'}
+      ],
+      rows: [],
+      cols: [first.getChildAt(0), first.getChildAt(1)],
+      arrowTable: first
+    }
+  });
+
+  const gpuFilter = table.gpuFilter;
+  table.filterRecord = {name: 'keep-me'};
+
+  const next = arrow.tableFromArrays({
+    lat: [1, 2, 3],
+    lng: [3, 4, 5]
+  });
+  await table.update({
+    fields: [
+      {name: 'lat', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
+      {name: 'lng', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'}
+    ],
+    rows: [],
+    cols: [next.getChildAt(0), next.getChildAt(1)],
+    arrowTable: next
+  });
+
+  t.equal(table.length, 3, 'arrow incremental update should grow rows');
+  t.equal(table.gpuFilter, gpuFilter, 'arrow incremental update should keep gpuFilter');
+  t.equal(table.filterRecord?.name, 'keep-me', 'arrow incremental update should keep filterRecord');
+  t.end();
+});
+
 test('KeplerTable -> update replaces row snapshots', async t => {
   const table = new KeplerTable({info: {id: 'rows'}, color: [0, 0, 0]});
   await table.importData({
@@ -463,6 +504,7 @@ test('KeplerTable -> update replaces row snapshots', async t => {
     }
   });
   t.equal(table.length, 2, 'starts with 2 rows');
+  table.filterRecord = {name: 'stale'};
 
   await table.update({
     fields: [
@@ -478,6 +520,7 @@ test('KeplerTable -> update replaces row snapshots', async t => {
   t.equal(table.length, 3, 'should grow to the new snapshot');
   t.equal(table.fields[0].valueAccessor({index: 0}), 10, 'accessors should read new values');
   t.equal(table.filteredIndex.length, 3, 'filtered index should match new length');
+  t.equal(table.filterRecord, undefined, 'row snapshot should drop stale filterRecord');
 
   const leftoverArrow = arrow.tableFromArrays({lat: [0], lng: [0]});
   await table.update({

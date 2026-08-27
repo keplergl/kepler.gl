@@ -25,6 +25,8 @@ export type FetchRemoteFileOptions = {
   onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void;
   etag?: string;
   lastModified?: string;
+  /** Bypass the HTTP cache. Used for poll/reload, not the first remote URL load. */
+  bypassCache?: boolean;
 };
 
 export type FetchRemoteFileResult = {
@@ -120,7 +122,7 @@ export async function fetchRemoteFile(
   url: string,
   options: FetchRemoteFileOptions = {}
 ): Promise<FetchRemoteFileResult> {
-  const {format, onProgress, etag, lastModified} = options;
+  const {format, onProgress, etag, lastModified, bypassCache} = options;
   if (!isRemoteDatasetUrl(url)) {
     throw new Error('Remote dataset URL must use http or https');
   }
@@ -132,7 +134,7 @@ export async function fetchRemoteFile(
     headers['If-Modified-Since'] = lastModified;
   }
   const response = await fetch(url, {
-    cache: 'no-store',
+    ...(bypassCache ? {cache: 'no-store' as RequestCache} : {}),
     ...(Object.keys(headers).length ? {headers} : {})
   });
   if (response.status === 304) {
@@ -275,10 +277,17 @@ export async function loadExternallyHostedDataset(metadata: {
   size?: number;
   etag?: string;
   lastModified?: string;
+  bypassCache?: boolean;
   onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void;
 }): Promise<LoadExternallyHostedDatasetResult> {
-  const {source, format, etag, lastModified, size, onProgress} = metadata;
-  const fetched = await fetchRemoteFile(source, {format, etag, lastModified, onProgress});
+  const {source, format, etag, lastModified, size, bypassCache, onProgress} = metadata;
+  const fetched = await fetchRemoteFile(source, {
+    format,
+    etag,
+    lastModified,
+    bypassCache,
+    onProgress
+  });
   if (fetched.notModified || !fetched.file) {
     return {
       data: null,

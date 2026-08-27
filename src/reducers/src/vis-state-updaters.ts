@@ -117,6 +117,7 @@ import {
   INITIAL_ANNOTATION_LINE_COLOR,
   AnnotationKind,
   DatasetType,
+  getDatasetRefreshIntervalMs,
   getRemoteSourceFormat
 } from '@kepler.gl/constants';
 import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
@@ -2906,7 +2907,8 @@ async function hydrateExternallyHostedProtoDataset(dataset: ProtoDataset): Promi
   const loaded = await loadExternallyHostedDataset({
     source: dataset.metadata?.source as string,
     format: getRemoteSourceFormat(dataset.metadata),
-    size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined
+    size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined,
+    bypassCache: getDatasetRefreshIntervalMs(dataset.metadata) > 0
   });
   if (!loaded.data) {
     throw new Error(`No data loaded from ${dataset.metadata?.source}`);
@@ -2971,7 +2973,7 @@ async function refreshExternallyHostedTable({
 }) {
   // Fetch only. Do not mutate the Redux table here: progress events copy it, and
   // the success updater applies the snapshot to whatever instance is in the store.
-  return loadExternallyHostedDataset({...metadata, onProgress});
+  return loadExternallyHostedDataset({...metadata, onProgress, bypassCache: true});
 }
 
 const REFRESH_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromiseWithProgress(

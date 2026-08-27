@@ -178,10 +178,26 @@ test('#remote-file -> fetchRemoteFileAsKeplerFile progress with Content-Length',
   t.end();
 });
 
+test('#remote-file -> fetchRemoteFileAsKeplerFile uses the default HTTP cache', async t => {
+  const origFetch = global.fetch;
+  global.fetch = async (url, init) => {
+    t.equal(init?.cache, undefined, 'first remote URL load should not set cache: no-store');
+    return new Response('a,b\n1,2', {status: 200, headers: {'content-type': 'text/csv'}});
+  };
+
+  try {
+    await fetchRemoteFileAsKeplerFile('https://example.com/data.csv', 'csv');
+  } finally {
+    global.fetch = origFetch;
+  }
+  t.end();
+});
+
 test('#remote-file -> fetchRemoteFile returns notModified on 304', async t => {
   const origFetch = global.fetch;
   global.fetch = async (url, init) => {
     t.equal(init.headers['If-None-Match'], '"abc"', 'should send If-None-Match');
+    t.equal(init.cache, 'no-store', 'refresh fetches should bypass the HTTP cache');
     return new Response(null, {
       status: 304,
       headers: {etag: '"xyz"', 'last-modified': 'Wed, 21 Oct 2015 07:28:00 GMT'}
@@ -191,7 +207,8 @@ test('#remote-file -> fetchRemoteFile returns notModified on 304', async t => {
   try {
     const result = await fetchRemoteFile('https://example.com/data.csv', {
       etag: '"abc"',
-      lastModified: 'Tue, 20 Oct 2015 07:28:00 GMT'
+      lastModified: 'Tue, 20 Oct 2015 07:28:00 GMT',
+      bypassCache: true
     });
     t.ok(result.notModified, 'should report notModified');
     t.equal(result.file, null, 'should not return a file');
