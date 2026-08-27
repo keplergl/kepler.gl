@@ -11,6 +11,8 @@ import {
   DATASET_REFRESH_CUSTOM_VALUE,
   DATASET_REFRESH_DEFAULT_CUSTOM_MS,
   DATASET_REFRESH_INTERVAL_OPTIONS,
+  DATASET_REFRESH_MIN_INTERVAL_MS,
+  formatCustomRefreshSeconds,
   getDatasetRefreshIntervalMs,
   isPresetDatasetRefreshInterval,
   parseCustomRefreshIntervalMs
@@ -57,7 +59,7 @@ const StyledRefreshing = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: ${props => props.theme.textColorHl};
+  color: ${props => props.theme.inputColor};
 `;
 
 const StyledRefreshSettings = styled.div`
@@ -90,7 +92,7 @@ const StyledCustomSeconds = styled.input`
   height: 18px;
   font-size: 11px;
   padding: 0 4px;
-  width: 44px;
+  width: 52px;
   background-color: transparent;
 `;
 
@@ -143,7 +145,7 @@ export default function DatasetInfoFactory() {
     const isCustomInterval = intervalMs > 0 && !isPresetDatasetRefreshInterval(intervalMs);
     const [customMode, setCustomMode] = useState(isCustomInterval);
     const [customSeconds, setCustomSeconds] = useState(() =>
-      String(Math.max(1, Math.round((intervalMs || DATASET_REFRESH_DEFAULT_CUSTOM_MS) / 1000)))
+      formatCustomRefreshSeconds(intervalMs || DATASET_REFRESH_DEFAULT_CUSTOM_MS)
     );
     const showCustomInput = customMode || isCustomInterval;
     const selectValue = showCustomInput
@@ -154,9 +156,7 @@ export default function DatasetInfoFactory() {
       const ms = getDatasetRefreshIntervalMs(dataset.metadata);
       const custom = ms > 0 && !isPresetDatasetRefreshInterval(ms);
       setCustomMode(custom);
-      setCustomSeconds(
-        String(Math.max(1, Math.round((ms || DATASET_REFRESH_DEFAULT_CUSTOM_MS) / 1000)))
-      );
+      setCustomSeconds(formatCustomRefreshSeconds(ms || DATASET_REFRESH_DEFAULT_CUSTOM_MS));
     }, [dataset.id, dataset.metadata?.refreshIntervalMs]);
 
     const spinning = dataset.metadata?.refreshStatus === 'loading';
@@ -184,13 +184,11 @@ export default function DatasetInfoFactory() {
         const nextMs = parseCustomRefreshIntervalMs(secondsText);
         if (nextMs == null) {
           setCustomSeconds(
-            String(
-              Math.max(1, Math.round((intervalMs || DATASET_REFRESH_DEFAULT_CUSTOM_MS) / 1000))
-            )
+            formatCustomRefreshSeconds(intervalMs || DATASET_REFRESH_DEFAULT_CUSTOM_MS)
           );
           return;
         }
-        setCustomSeconds(String(nextMs / 1000));
+        setCustomSeconds(formatCustomRefreshSeconds(nextMs));
         if (nextMs !== intervalMs) {
           updateDatasetProps?.(dataset.id, {metadata: {refreshIntervalMs: nextMs}});
         }
@@ -203,15 +201,15 @@ export default function DatasetInfoFactory() {
         event.stopPropagation();
         const value = event.target.value;
         if (value === DATASET_REFRESH_CUSTOM_VALUE) {
-          const seconds = Math.max(
-            1,
-            Math.round((intervalMs || DATASET_REFRESH_DEFAULT_CUSTOM_MS) / 1000)
+          const secondsText = formatCustomRefreshSeconds(
+            intervalMs || DATASET_REFRESH_DEFAULT_CUSTOM_MS
           );
+          const nextMs = parseCustomRefreshIntervalMs(secondsText);
           setCustomMode(true);
-          setCustomSeconds(String(seconds));
-          if (!intervalMs) {
+          setCustomSeconds(secondsText);
+          if (!intervalMs && nextMs != null) {
             updateDatasetProps?.(dataset.id, {
-              metadata: {refreshIntervalMs: seconds * 1000}
+              metadata: {refreshIntervalMs: nextMs}
             });
           }
           return;
@@ -279,9 +277,9 @@ export default function DatasetInfoFactory() {
                   <>
                     <StyledCustomSeconds
                       type="number"
-                      min={1}
-                      step={1}
-                      inputMode="numeric"
+                      min={DATASET_REFRESH_MIN_INTERVAL_MS / 1000}
+                      step={0.1}
+                      inputMode="decimal"
                       className="dataset-refresh-custom-seconds"
                       aria-label={intl.formatMessage({id: 'datasetInfo.refreshCustomSeconds'})}
                       value={customSeconds}

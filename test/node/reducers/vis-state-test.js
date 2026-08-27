@@ -22,7 +22,8 @@ import {
   syncTimeFilterWithLayerTimelineUpdater,
   setTimeFilterTimelineModeUpdater,
   setFilterAnimationTimeUpdater,
-  setFilterAnimationWindowUpdater
+  setFilterAnimationWindowUpdater,
+  calculateLayerData
 } from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
@@ -7980,6 +7981,69 @@ test('VisStateUpdater -> refreshDataset', async t => {
     undefined,
     'should clear refresh progress'
   );
+
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset rebuilds point layer positions', async t => {
+  drainTasksForTesting();
+  const initialData = processCsvData('lat,lng\n37.77,-122.42');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'remote-1', type: DatasetType.EXTERNALLY_HOSTED, label: 'live.csv'},
+    data: initialData,
+    metadata: {source: 'https://example.com/live.csv', sourceFormat: 'csv'}
+  });
+  const {props} = PointLayer.findDefaultLayerProps(datasets['remote-1']);
+  const pointLayer = new PointLayer({
+    id: 'p1',
+    dataId: 'remote-1',
+    isVisible: true,
+    ...props[0]
+  });
+  const stateWithLayer = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [pointLayer],
+    layerData: [{}]
+  };
+  const {layerData: initialLayerData, layer} = calculateLayerData(
+    pointLayer,
+    stateWithLayer,
+    undefined
+  );
+  const state = {
+    ...stateWithLayer,
+    layers: [layer],
+    layerData: [initialLayerData]
+  };
+
+  t.ok(initialLayerData.data?.[0]?.position, 'should format an initial point');
+  const firstPos = initialLayerData.data[0].position.slice();
+
+  const loadingState = reducer(state, VisStateActions.refreshDataset('remote-1'));
+  const progressed = reducer(loadingState, VisStateActions.refreshDatasetProgress('remote-1', 50));
+  t.notEqual(
+    progressed.datasets['remote-1'],
+    loadingState.datasets['remote-1'],
+    'progress should copy the table'
+  );
+
+  const [task] = drainTasksForTesting();
+  const refreshed = processCsvData('lat,lng\n10,20');
+  await loadingState.datasets['remote-1'].update(refreshed);
+
+  const successState = reducer(
+    progressed,
+    succeedTaskInTest(task, {
+      data: refreshed,
+      notModified: false,
+      etag: '"v2"'
+    })
+  );
+
+  const nextPos = successState.layerData[0].data[0].position;
+  t.notDeepEqual(nextPos, firstPos, 'should rebuild point positions after refresh');
+  t.deepEqual(nextPos.slice(0, 2), [20, 10], 'should use the new lng/lat');
 
   t.end();
 });

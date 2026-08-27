@@ -3083,6 +3083,20 @@ export function refreshDatasetSuccessUpdater(
     ...(typeof result.size === 'number' ? {size: result.size} : {})
   };
 
+  // Progress copies the table while the fetch task may still mutate the older
+  // instance. Re-apply the snapshot on the store table and bump dataRevision so
+  // point layers rebuild instead of keeping the first-frame positions.
+  if (!result.notModified && result.data) {
+    const data = result.data;
+    const snapshot = data.cols
+      ? (data as {arrowTable?: unknown}).arrowTable ?? data.cols
+      : data.rows;
+    if (snapshot && typeof dataset.dataContainer.update === 'function') {
+      dataset.dataContainer.update(snapshot);
+    }
+    dataset.dataRevision = (dataset.dataRevision || 0) + 1;
+  }
+
   const refreshed = patchDatasetMetadata(dataset, metadataPatch);
   const datasets = {
     ...state.datasets,

@@ -131,7 +131,10 @@ export async function fetchRemoteFile(
   if (lastModified) {
     headers['If-Modified-Since'] = lastModified;
   }
-  const response = await fetch(url, Object.keys(headers).length ? {headers} : undefined);
+  const response = await fetch(url, {
+    cache: 'no-store',
+    ...(Object.keys(headers).length ? {headers} : {})
+  });
   if (response.status === 304) {
     return {
       file: null,

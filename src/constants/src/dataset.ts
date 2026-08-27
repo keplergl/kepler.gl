@@ -55,8 +55,8 @@ export const DATASET_REFRESH_INTERVAL_OPTIONS: {value: number; labelId: string}[
 export const DATASET_REFRESH_CUSTOM_VALUE = 'custom';
 /** Default custom poll interval when switching from Off to Custom. */
 export const DATASET_REFRESH_DEFAULT_CUSTOM_MS = 30_000;
-/** Fastest interval the refresh UI will commit (1 second). */
-export const DATASET_REFRESH_MIN_INTERVAL_MS = 1_000;
+/** Fastest interval the refresh UI will commit (100ms). */
+export const DATASET_REFRESH_MIN_INTERVAL_MS = 100;
 
 export function isPresetDatasetRefreshInterval(ms: number): boolean {
   return DATASET_REFRESH_INTERVAL_OPTIONS.some(option => option.value === ms);
@@ -95,13 +95,22 @@ export function getDatasetRefreshIntervalMs(metadata?: {refreshIntervalMs?: unkn
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0;
 }
 
-/** Parse a seconds field into ms, or null if the input is not a positive integer. */
+/** Parse a seconds field into ms, or null if the input is not a positive number. */
 export function parseCustomRefreshIntervalMs(secondsText: string): number | null {
-  const seconds = Number.parseInt(secondsText, 10);
-  if (!Number.isFinite(seconds) || seconds < 1) {
+  const seconds = Number.parseFloat(secondsText);
+  if (!Number.isFinite(seconds) || seconds <= 0) {
     return null;
   }
-  return Math.max(DATASET_REFRESH_MIN_INTERVAL_MS, seconds * 1000);
+  return Math.max(DATASET_REFRESH_MIN_INTERVAL_MS, Math.round(seconds * 1000));
+}
+
+/** Display string for the custom seconds input (keeps tenths for sub-second values). */
+export function formatCustomRefreshSeconds(ms: number): string {
+  const seconds = Math.max(DATASET_REFRESH_MIN_INTERVAL_MS, ms) / 1000;
+  if (Number.isInteger(seconds)) {
+    return String(seconds);
+  }
+  return String(Number(seconds.toFixed(3)));
 }
 
 export function getRemoteSourceFormat(metadata?: {

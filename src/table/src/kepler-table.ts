@@ -197,6 +197,11 @@ class KeplerTable<F extends Field = Field> {
   fields: F[] = [];
 
   dataContainer: DataContainerInterface;
+  /**
+   * Bumped in {@link update} so layer `dataUpdateTriggers` notice in-place row
+   * snapshots (the dataContainer instance stays the same).
+   */
+  dataRevision = 0;
 
   allIndexes: number[] = [];
   filteredIndex: number[] = [];
@@ -313,6 +318,7 @@ class KeplerTable<F extends Field = Field> {
   async update(data: ProtoDataset['data']) {
     if (data.fields?.length && !fieldNamesMatch(this.fields, data.fields)) {
       await this.importData({data});
+      this.dataRevision += 1;
       return this;
     }
 
@@ -347,6 +353,7 @@ class KeplerTable<F extends Field = Field> {
     this.filterRecordCPU = undefined;
     this.changedFilters = undefined;
     this.gpuFilter = getGpuFilterProps([], this.id, this.fields, undefined);
+    this.dataRevision += 1;
 
     return this;
   }

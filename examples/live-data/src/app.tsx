@@ -19,7 +19,7 @@ const MAP_ID = 'map';
 const SIDEBAR_WIDTH = 280;
 const DATASET_ID = 'live-vehicles';
 const LIVE_DATA_URL = process.env.LIVE_DATA_URL || 'http://localhost:4010/vehicles.csv';
-const REFRESH_INTERVAL_MS = 10_000;
+const REFRESH_INTERVAL_MS = 300;
 
 type KeplerRootState = {
   keplerGl: {
@@ -102,7 +102,8 @@ function LiveDataSidebar() {
   const dataset = useSelector(
     (state: KeplerRootState) => state.keplerGl[MAP_ID]?.visState?.datasets?.[DATASET_ID]
   );
-  const snapshot = fieldValue(dataset, 'snapshot');
+  const progressAlongOrbit = fieldValue(dataset, 'progress');
+  const orbitS = fieldValue(dataset, 'orbit_s');
   const updatedAt = fieldValue(dataset, 'updated_at');
   const lastFetchedAt = dataset?.metadata?.lastFetchedAt;
   const status = dataset?.metadata?.refreshStatus || (dataset ? 'idle' : 'loading');
@@ -110,9 +111,10 @@ function LiveDataSidebar() {
 
   return (
     <aside style={sidebarStyle}>
-      <h2 style={{margin: '0 0 8px', fontSize: 16}}>Live vehicles</h2>
+      <h2 style={{margin: '0 0 8px', fontSize: 16}}>Live orbit</h2>
       <p style={{margin: '0 0 12px', color: '#c3c9d5'}}>
-        CSV at <code>{LIVE_DATA_URL}</code> is rewritten every 10s. Kepler polls it and replaces the
+        CSV at <code>{LIVE_DATA_URL}</code> returns the current positions of 3 points circling San
+        Francisco (one full loop every 2 min). Kepler polls that URL once a second and replaces the
         table without tearing down the point layer.
       </p>
       <div style={{display: 'grid', gap: 8}}>
@@ -124,8 +126,14 @@ function LiveDataSidebar() {
           </span>
         </div>
         <div style={{display: 'flex', justifyContent: 'space-between', gap: 12}}>
-          <span style={{color: '#c3c9d5'}}>snapshot</span>
-          <span style={{fontSize: 20, fontWeight: 600}}>{snapshot ?? '—'}</span>
+          <span style={{color: '#c3c9d5'}}>orbit</span>
+          <span style={{fontSize: 20, fontWeight: 600}}>
+            {progressAlongOrbit == null
+              ? '—'
+              : `${Math.round(Number(progressAlongOrbit) * 100)}% (${
+                  orbitS == null ? '—' : `${Number(orbitS).toFixed(1)}s`
+                } / 120s)`}
+          </span>
         </div>
         <div style={{display: 'flex', justifyContent: 'space-between', gap: 12}}>
           <span style={{color: '#c3c9d5'}}>updated_at</span>
@@ -144,8 +152,8 @@ function LiveDataSidebar() {
         <p style={{margin: '12px 0 0', color: '#f19c99'}}>{dataset.metadata.refreshError}</p>
       ) : null}
       <p style={{margin: '16px 0 0', color: '#c3c9d5'}}>
-        In the Layers panel, the dataset refresh control should show 10s. Click the reload icon, or
-        open <code>?fresh=1</code> on the CSV URL, to fetch immediately.
+        In the Layers panel, dataset refresh is set to 1s. Click the reload icon to sample the orbit
+        immediately.
       </p>
     </aside>
   );
@@ -163,7 +171,7 @@ const App = () => {
           datasets: {
             info: {
               id: DATASET_ID,
-              label: 'Live vehicles',
+              label: 'Live orbit',
               type: DatasetType.EXTERNALLY_HOSTED
             },
             data: {fields: [], rows: []},
@@ -175,12 +183,27 @@ const App = () => {
           },
           options: {
             centerMap: true,
-            autoCreateLayers: true,
+            autoCreateLayers: false,
             layerVisConfig: {radius: 24, filled: true, opacity: 0.85}
           },
           config: {
             version: 'v1',
             config: {
+              visState: {
+                layers: [
+                  {
+                    id: 'live-orbit-point',
+                    type: 'point',
+                    config: {
+                      dataId: DATASET_ID,
+                      label: 'Live orbit',
+                      columns: {lat: 'lat', lng: 'lng', altitude: null},
+                      isVisible: true,
+                      visConfig: {radius: 24, filled: true, opacity: 0.85}
+                    }
+                  }
+                ]
+              },
               mapState: {
                 latitude: 37.7749,
                 longitude: -122.4194,

@@ -2,10 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 /**
- * Serves a CORS CSV snapshot of vehicles around San Francisco.
+ * Serves a CORS CSV of points orbiting San Francisco.
  *
- * GET /vehicles.csv        current snapshot (rewritten every 10 seconds)
- * GET /vehicles.csv?fresh=1  step immediately, then return (for Reload testing)
+ * Positions are a function of wall-clock time: each point completes one full
+ * loop every 120 seconds. GET /vehicles.csv returns the current positions at
+ * request time (no server-side snapshot timer).
  *
  * Kepler.gl polls this URL as DatasetType.EXTERNALLY_HOSTED.
  */
@@ -14,22 +15,13 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const DEFAULT_PORT = Number(process.env.LIVE_DATA_PORT || 4010);
-const SNAPSHOT_MS = Number(process.env.LIVE_DATA_INTERVAL_MS || 10_000);
+const PERIOD_MS = Number(process.env.LIVE_DATA_PERIOD_MS || 120_000);
+const POINT_COUNT = Number(process.env.LIVE_DATA_POINTS || 3);
 const SF = {lat: 37.7749, lng: -122.4194};
-
-const vehicles = Array.from({length: 12}, (_, i) => ({
-  id: `veh-${String(i + 1).padStart(2, '0')}`,
-  lat: SF.lat + (Math.random() - 0.5) * 0.04,
-  lng: SF.lng + (Math.random() - 0.5) * 0.06,
-  speed: 12 + Math.random() * 28,
-  heading: Math.random() * 360
-}));
-
-let snapshot = 0;
-let updatedAt = new Date().toISOString();
-let lastModifiedHttp = new Date().toUTCString();
-let csv = '';
-let etag = '';
+const COS_LAT = Math.cos((SF.lat * Math.PI) / 180);
+const KM_PER_DEG_LAT = 111.32;
+const RINGS = 3;
+const POINTS_PER_RING = Math.max(1, Math.round(POINT_COUNT / RINGS));
 
 function corsHeaders(extra = {}) {
   return {
@@ -42,49 +34,66 @@ function corsHeaders(extra = {}) {
   };
 }
 
-function clampToSf(vehicle) {
-  if (Math.abs(vehicle.lat - SF.lat) > 0.05) {
-    vehicle.lat = SF.lat + (Math.random() - 0.5) * 0.02;
-  }
-  if (Math.abs(vehicle.lng - SF.lng) > 0.08) {
-    vehicle.lng = SF.lng + (Math.random() - 0.5) * 0.03;
-  }
+function orbitProgress(nowMs) {
+  const elapsed = ((nowMs % PERIOD_MS) + PERIOD_MS) % PERIOD_MS;
+  return elapsed / PERIOD_MS;
 }
 
-function step() {
-  snapshot += 1;
-  const now = new Date();
-  updatedAt = now.toISOString();
-  lastModifiedHttp = now.toUTCString();
-  const dtHours = SNAPSHOT_MS / 3_600_000;
-  for (const vehicle of vehicles) {
-    const headingRad = (vehicle.heading * Math.PI) / 180;
-    // Exaggerate real km/h so a 10s poll is obvious at city zoom (~300–500 m).
-    const distDeg = ((vehicle.speed * dtHours) / 111) * 40;
-    vehicle.lat += Math.cos(headingRad) * distDeg;
-    vehicle.lng +=
-      (Math.sin(headingRad) * distDeg) / Math.max(0.2, Math.cos((vehicle.lat * Math.PI) / 180));
-    vehicle.heading = (vehicle.heading + (Math.random() - 0.5) * 50 + 360) % 360;
-    vehicle.speed = Math.max(5, Math.min(65, vehicle.speed + (Math.random() - 0.5) * 10));
-    clampToSf(vehicle);
-  }
-  const header = 'id,lat,lng,speed,heading,snapshot,updated_at';
-  const rows = vehicles.map(
-    vehicle =>
-      `${vehicle.id},${vehicle.lat.toFixed(6)},${vehicle.lng.toFixed(6)},${vehicle.speed.toFixed(
-        1
-      )},${vehicle.heading.toFixed(1)},${snapshot},${updatedAt}`
-  );
-  csv = `${header}\n${rows.join('\n')}\n`;
-  etag = `"snap-${snapshot}"`;
+function pointAt(nowMs, index) {
+  const ring = Math.floor(index / POINTS_PER_RING);
+  const onRing = index % POINTS_PER_RING;
+  const radiusKm = 1.8 + ring * 1.2;
+  const radiusLat = radiusKm / KM_PER_DEG_LAT;
+  const radiusLng = radiusKm / (KM_PER_DEG_LAT * COS_LAT);
+  const direction = ring % 2 === 0 ? 1 : -1;
+  const start = (onRing / POINTS_PER_RING) * 2 * Math.PI + ring * 0.35;
+  const tau = orbitProgress(nowMs);
+  const theta = start + direction * tau * 2 * Math.PI;
+  const lat = SF.lat + radiusLat * Math.sin(theta);
+  const lng = SF.lng + radiusLng * Math.cos(theta);
+  const dLat = direction * radiusLat * Math.cos(theta);
+  const dLng = direction * -radiusLng * Math.sin(theta);
+  const heading = (Math.atan2(dLng, dLat) * 180) / Math.PI;
+  const speedKmh = ((2 * Math.PI * radiusKm) / (PERIOD_MS / 1000)) * 3600;
+  return {
+    id: `veh-${String(index + 1).padStart(2, '0')}`,
+    lat,
+    lng,
+    heading: (heading + 360) % 360,
+    speed: speedKmh,
+    ring: ring + 1,
+    progress: tau
+  };
+}
+
+function buildCsv(now = new Date()) {
+  const nowMs = now.getTime();
+  const tau = orbitProgress(nowMs);
+  const updatedAt = now.toISOString();
+  const header = 'id,lat,lng,heading,speed,ring,progress,orbit_s,updated_at';
+  const rows = Array.from({length: POINT_COUNT}, (_, index) => {
+    const point = pointAt(nowMs, index);
+    return [
+      point.id,
+      point.lat.toFixed(6),
+      point.lng.toFixed(6),
+      point.heading.toFixed(1),
+      point.speed.toFixed(1),
+      point.ring,
+      point.progress.toFixed(4),
+      (tau * (PERIOD_MS / 1000)).toFixed(2),
+      updatedAt
+    ].join(',');
+  });
+  return `${header}\n${rows.join('\n')}\n`;
 }
 
 function serveCsv(req, res) {
-  if (req.headers['if-none-match'] === etag) {
-    res.writeHead(304, corsHeaders({ETag: etag, 'Last-Modified': lastModifiedHttp}));
-    res.end();
-    return;
-  }
+  const now = new Date();
+  const csv = buildCsv(now);
+  const lastModifiedHttp = now.toUTCString();
+  // Unique per request so If-None-Match never 304s: each fetch is a new time sample.
+  const etag = `"t-${now.getTime()}"`;
   res.writeHead(
     200,
     corsHeaders({
@@ -102,17 +111,19 @@ function serveCsv(req, res) {
 }
 
 function serveIndex(res) {
+  const tau = orbitProgress(Date.now());
   const body = `<!DOCTYPE html>
 <html>
   <head><title>kepler.gl live-data</title></head>
   <body style="font-family: sans-serif; max-width: 42em; padding: 24px">
-    <h1>Live vehicle CSV</h1>
-    <p>New snapshot every ${SNAPSHOT_MS / 1000}s (currently snapshot ${snapshot}).</p>
+    <h1>Live orbit CSV</h1>
+    <p>${POINT_COUNT} points circle San Francisco. One full loop every ${
+    PERIOD_MS / 1000
+  }s (currently ${(tau * 100).toFixed(1)}% through the orbit).</p>
     <ul>
-      <li><a href="/vehicles.csv">/vehicles.csv</a> — current snapshot</li>
-      <li><a href="/vehicles.csv?fresh=1">/vehicles.csv?fresh=1</a> — step, then return</li>
+      <li><a href="/vehicles.csv">/vehicles.csv</a> — positions at request time</li>
     </ul>
-    <p>Paste that URL into Kepler.gl Add Data → URL, then set Refresh to 10s on the dataset.</p>
+    <p>Paste that URL into Kepler.gl Add Data → URL, then set Refresh to 1s (or Custom) on the dataset.</p>
   </body>
 </html>`;
   res.writeHead(200, corsHeaders({'Content-Type': 'text/html; charset=utf-8'}));
@@ -120,10 +131,6 @@ function serveIndex(res) {
 }
 
 export function startLiveDataServer(port = DEFAULT_PORT) {
-  step();
-  const timer = setInterval(step, SNAPSHOT_MS);
-  timer.unref?.();
-
   const server = http.createServer((req, res) => {
     const url = new URL(req.url || '/', `http://127.0.0.1:${port}`);
     if (req.method === 'OPTIONS') {
@@ -132,9 +139,6 @@ export function startLiveDataServer(port = DEFAULT_PORT) {
       return;
     }
     if (url.pathname === '/vehicles.csv') {
-      if (url.searchParams.has('fresh')) {
-        step();
-      }
       serveCsv(req, res);
       return;
     }
@@ -148,7 +152,9 @@ export function startLiveDataServer(port = DEFAULT_PORT) {
 
   server.listen(port, () => {
     console.info(
-      `Live CSV at http://localhost:${port}/vehicles.csv (new snapshot every ${SNAPSHOT_MS / 1000}s)`
+      `Live CSV at http://localhost:${port}/vehicles.csv (${POINT_COUNT} points, ${
+        PERIOD_MS / 1000
+      }s orbit)`
     );
   });
 
@@ -156,8 +162,7 @@ export function startLiveDataServer(port = DEFAULT_PORT) {
 }
 
 const isDirectRun =
-  Boolean(process.argv[1]) &&
-  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+  Boolean(process.argv[1]) && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 
 if (isDirectRun) {
   startLiveDataServer();

@@ -1,8 +1,9 @@
 # Live remotely hosted data
 
-Loads a CORS CSV of vehicles around San Francisco as a remotely hosted dataset
-and **polls it every 10 seconds**. The CSV file itself is rewritten on that same
-interval, so points drift on the map and the `snapshot` column increments.
+Loads a CORS CSV of points orbiting San Francisco as a remotely hosted dataset
+and **polls it every 1 second**. Positions are computed from wall-clock time:
+each point completes one full loop in **2 minutes**. A fetch returns the
+positions at that moment (there is no server-side snapshot timer).
 
 This is a manual test harness for snapshot refresh (`refreshDataset` /
 `metadata.refreshIntervalMs`) on `DatasetType.EXTERNALLY_HOSTED`. It bundles
@@ -27,15 +28,14 @@ run next to `yarn start` on 8080). The CSV server listens at
 
 ## What to look for
 
-- Twelve points around San Francisco, moving every ~10 seconds.
-- The right sidebar `snapshot` number increments with each poll.
-- Layers panel → dataset row: the clock icon expands **Refresh** and a reload
-  button next to the row count (this example sets **10s** programmatically).
-- Opening the data table shows `updated_at` changing. Field names stay the same,
-  so the point layer is kept (not rebuilt from scratch).
-
-`GET /vehicles.csv?fresh=1` steps the snapshot on every request, which is useful
-if you want the reload icon to always show new rows.
+- Three points on three rings around San Francisco. Adjacent rings move in
+  opposite directions. One full orbit takes 2 minutes.
+- The right sidebar **orbit** percent advances with each poll (`progress` /
+  `orbit_s` in the table).
+- Layers panel → one **Point** layer (trip is not auto-created). Refresh is
+  set on the dataset row; the reload icon samples the current time immediately.
+- Field names stay the same, so the point layer is kept (not rebuilt from
+  scratch).
 
 ## CSV server only (Add Data URL)
 
@@ -52,6 +52,6 @@ URL**
 http://localhost:4010/vehicles.csv
 ```
 
-Fetch, then set **Refresh** to 10s on the dataset in the Layers panel.
+Fetch, then set **Refresh** to 1s (or Custom) on the dataset in the Layers panel.
 
 [yarn-install]: https://yarnpkg.com/getting-started/install
