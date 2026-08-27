@@ -33,19 +33,15 @@ export default function RemoteDatasetRefreshController({
     [datasets]
   );
 
-  const pollKey = pollTargets
-    .map(target => `${target.id}:${target.intervalMs}`)
-    .sort()
-    .join('|');
+  const pollKey = JSON.stringify(
+    pollTargets.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+  );
 
   useEffect(() => {
-    if (!refreshDataset || !pollKey) {
+    const targets: {id: string; intervalMs: number}[] = JSON.parse(pollKey);
+    if (!refreshDataset || !targets.length) {
       return undefined;
     }
-    const targets = pollKey.split('|').map(entry => {
-      const sep = entry.lastIndexOf(':');
-      return {id: entry.slice(0, sep), intervalMs: Number(entry.slice(sep + 1))};
-    });
     const timers = targets.map(target =>
       window.setInterval(() => refreshDataset(target.id), target.intervalMs)
     );

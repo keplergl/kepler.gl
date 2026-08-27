@@ -72,6 +72,10 @@ export type ProcessFileDataContent = {
   keplerFormat?: string;
   /** Poll interval in ms, copied from a remote URL load. */
   refreshIntervalMs?: number;
+  /** HTTP ETag from the remote fetch, used for the next conditional refresh. */
+  etag?: string;
+  /** HTTP Last-Modified from the remote fetch, used for the next conditional refresh. */
+  lastModified?: string;
   /**
    * When true, skip Arrow record-batch compaction. Set on intermediate
    * progressive Arrow loads so each batch does not copy the growing table.
@@ -163,7 +167,9 @@ export async function* readBatch(
   fileName: string,
   sourceUrl?: string,
   keplerFormat?: string,
-  refreshIntervalMs?: number
+  refreshIntervalMs?: number,
+  etag?: string,
+  lastModified?: string
 ): AsyncGenerator {
   let result = null;
   const batches = <any>[];
@@ -206,7 +212,11 @@ export async function* readBatch(
       data: result ? result : batches,
       ...(sourceUrl ? {sourceUrl} : {}),
       ...(keplerFormat ? {keplerFormat} : {}),
-      ...(typeof refreshIntervalMs === 'number' && refreshIntervalMs > 0 ? {refreshIntervalMs} : {})
+      ...(typeof refreshIntervalMs === 'number' && refreshIntervalMs > 0
+        ? {refreshIntervalMs}
+        : {}),
+      ...(etag ? {etag} : {}),
+      ...(lastModified ? {lastModified} : {})
     };
   }
 }
@@ -240,8 +250,18 @@ export async function readFileInBatches({
   const keplerFormat = (file as File & {keplerFormat?: string}).keplerFormat;
   const refreshIntervalMs = (file as File & {keplerRefreshIntervalMs?: number})
     .keplerRefreshIntervalMs;
+  const etag = (file as File & {keplerEtag?: string}).keplerEtag;
+  const lastModified = (file as File & {keplerLastModified?: string}).keplerLastModified;
 
-  return readBatch(progressIterator, file.name, sourceUrl, keplerFormat, refreshIntervalMs);
+  return readBatch(
+    progressIterator,
+    file.name,
+    sourceUrl,
+    keplerFormat,
+    refreshIntervalMs,
+    etag,
+    lastModified
+  );
 }
 
 export async function processFileData({
@@ -314,6 +334,10 @@ export async function processFileData({
                 ...(remoteFormat ? {sourceFormat: remoteFormat} : {}),
                 ...(typeof content.refreshIntervalMs === 'number' && content.refreshIntervalMs > 0
                   ? {refreshIntervalMs: content.refreshIntervalMs}
+                  : {}),
+                ...(typeof content.etag === 'string' && content.etag ? {etag: content.etag} : {}),
+                ...(typeof content.lastModified === 'string' && content.lastModified
+                  ? {lastModified: content.lastModified}
                   : {}),
                 lastFetchedAt: Date.now()
               }

@@ -252,6 +252,30 @@ test('#file-handler -> processFileData persists remote file format', async t => 
     'number',
     'should record lastFetchedAt on remote load'
   );
+  t.equal(cache[0].metadata.etag, undefined, 'should omit etag when the fetch did not provide one');
+  t.equal(
+    cache[0].metadata.lastModified,
+    undefined,
+    'should omit lastModified when the fetch did not provide one'
+  );
+
+  const withValidators = await processFileData({
+    content: {
+      fileName: 'quakes.csv',
+      data: [{lat: 1, lng: 2}],
+      sourceUrl: 'https://example.com/quakes.csv',
+      keplerFormat: 'csv',
+      etag: '"abc"',
+      lastModified: 'Wed, 21 Oct 2015 07:28:00 GMT'
+    },
+    fileCache: []
+  });
+  t.equal(withValidators[0].metadata.etag, '"abc"', 'should persist ETag for the next refresh');
+  t.equal(
+    withValidators[0].metadata.lastModified,
+    'Wed, 21 Oct 2015 07:28:00 GMT',
+    'should persist Last-Modified for the next refresh'
+  );
 
   const parquetCache = await processFileData({
     content: {

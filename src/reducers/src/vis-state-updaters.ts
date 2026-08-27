@@ -84,7 +84,8 @@ import {
   removeFilterPlot,
   isLayerAnimatable,
   isSideFilter,
-  getApplicationConfig
+  getApplicationConfig,
+  validateFiltersUpdateDatasets
 } from '@kepler.gl/utils';
 import {generateHashId, toArray, arrayMove} from '@kepler.gl/common-utils';
 // Mergers
@@ -2956,27 +2957,21 @@ function patchDatasetMetadata(dataset: Datasets[string], patch: Record<string, u
 }
 
 async function refreshExternallyHostedTable({
-  arg: dataset,
+  arg: metadata,
   onProgress
 }: {
-  arg: Datasets[string];
+  arg: {
+    source: string;
+    format?: string;
+    size?: number;
+    etag?: string;
+    lastModified?: string;
+  };
   onProgress: (progress: {loaded: number; total?: number; percent: number}) => void;
 }) {
-  const loaded = await loadExternallyHostedDataset({
-    source: dataset.metadata?.source as string,
-    format: getRemoteSourceFormat(dataset.metadata),
-    size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined,
-    etag: typeof dataset.metadata?.etag === 'string' ? dataset.metadata.etag : undefined,
-    lastModified:
-      typeof dataset.metadata?.lastModified === 'string'
-        ? dataset.metadata.lastModified
-        : undefined,
-    onProgress
-  });
-  if (!loaded.notModified && loaded.data) {
-    await dataset.update(loaded.data);
-  }
-  return loaded;
+  // Fetch only. Do not mutate the Redux table here: progress events copy it, and
+  // the success updater applies the snapshot to whatever instance is in the store.
+  return loadExternallyHostedDataset({...metadata, onProgress});
 }
 
 const REFRESH_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromiseWithProgress(
@@ -3021,7 +3016,16 @@ export function refreshDatasetUpdater(
       }
     },
     REFRESH_EXTERNALLY_HOSTED_DATASET_TASK({
-      arg: nextDataset,
+      arg: {
+        source: nextDataset.metadata.source as string,
+        format: getRemoteSourceFormat(nextDataset.metadata),
+        size: typeof nextDataset.metadata.size === 'number' ? nextDataset.metadata.size : undefined,
+        etag: typeof nextDataset.metadata.etag === 'string' ? nextDataset.metadata.etag : undefined,
+        lastModified:
+          typeof nextDataset.metadata.lastModified === 'string'
+            ? nextDataset.metadata.lastModified
+            : undefined
+      },
       onProgress: progress =>
         refreshDatasetProgress(dataId, Math.round((progress?.percent ?? 0) * 100))
     }).bimap(
@@ -3059,6 +3063,83 @@ export function refreshDatasetProgressUpdater(
   };
 }
 
+function fieldNamesEqual(current: {name: string}[], incoming?: {name: string}[] | null): boolean {
+  if (!incoming?.length) {
+    return true;
+  }
+  if (current.length !== incoming.length) {
+    return false;
+  }
+  return current.every((field, i) => field.name === incoming[i].name);
+}
+
+/**
+ * When a remote snapshot changes column names, old layer fieldIdx / filter names
+ * can point at the wrong column. Re-bind by name and drop configs that no longer fit.
+ */
+function rebindLayersAndFiltersAfterSchemaChange(
+  state: VisState,
+  dataId: string,
+  datasets: VisState['datasets']
+): VisState {
+  const dataset = datasets[dataId];
+  const nextLayers: Layer[] = [];
+  const droppedLayers: Layer[] = [];
+
+  state.layers.forEach(layer => {
+    if (layer.config.dataId !== dataId) {
+      nextLayers.push(layer);
+      return;
+    }
+    const rebound = validateExistingLayerWithData(dataset, state.layerClasses, layer, state.schema);
+    if (rebound?.isValidToSave()) {
+      nextLayers.push(rebound);
+    } else {
+      droppedLayers.push(layer);
+    }
+  });
+
+  let nextLayerOrder = state.layerOrder;
+  let nextSplitMaps = state.splitMaps;
+  droppedLayers.forEach(layer => {
+    nextLayerOrder = removeElementFromLayerOrder(nextLayerOrder, layer.id);
+    nextSplitMaps = removeLayerFromSplitMaps(nextSplitMaps, layer);
+  });
+
+  const nextLayerData = nextLayers.map(layer => {
+    const oldIdx = state.layers.findIndex(oldLayer => oldLayer.id === layer.id);
+    return oldIdx >= 0 ? state.layerData[oldIdx] : {};
+  });
+
+  const filtersForDataset = state.filters.filter(filter => toArray(filter.dataId).includes(dataId));
+  const otherFilters = state.filters.filter(filter => !toArray(filter.dataId).includes(dataId));
+
+  const {validated, updatedDatasets} = validateFiltersUpdateDatasets(
+    {...state, datasets, layers: nextLayers},
+    filtersForDataset
+  );
+
+  const nextFilters = [...otherFilters, ...validated];
+  const filteredDatasets = applyFiltersToDatasets(
+    [dataId],
+    updatedDatasets,
+    nextFilters,
+    nextLayers
+  );
+
+  let nextState: VisState = {
+    ...state,
+    datasets: filteredDatasets,
+    layers: nextLayers,
+    layerData: nextLayerData,
+    layerOrder: nextLayerOrder,
+    splitMaps: nextSplitMaps,
+    filters: nextFilters
+  };
+  nextState = updateAllLayerDomainData(nextState, [dataId], undefined);
+  return updateAnimationDomain(nextState);
+}
+
 /**
  * Apply a finished remote refresh: keep layers, re-run filters and layer data.
  * @memberof visStateUpdaters
@@ -3083,18 +3164,15 @@ export function refreshDatasetSuccessUpdater(
     ...(typeof result.size === 'number' ? {size: result.size} : {})
   };
 
-  // Progress copies the table while the fetch task may still mutate the older
-  // instance. Re-apply the snapshot on the store table and bump dataRevision so
-  // point layers rebuild instead of keeping the first-frame positions.
+  const schemaUnchanged = fieldNamesEqual(dataset.fields, result.data?.fields);
+
+  // Apply the snapshot to the table currently in the store. Progress may have
+  // copied it off the object that started the fetch; the task never mutates it.
   if (!result.notModified && result.data) {
-    const data = result.data;
-    const snapshot = data.cols
-      ? (data as {arrowTable?: unknown}).arrowTable ?? data.cols
-      : data.rows;
-    if (snapshot && typeof dataset.dataContainer.update === 'function') {
-      dataset.dataContainer.update(snapshot);
-    }
-    dataset.dataRevision = (dataset.dataRevision || 0) + 1;
+    // KeplerTable.update is async so DuckDB can await Arrow conversion. The
+    // CSV/GeoJSON path (and KeplerTable.importData) run synchronously before
+    // the first await, so the store table is updated before we copy it below.
+    void dataset.update(result.data);
   }
 
   const refreshed = patchDatasetMetadata(dataset, metadataPatch);
@@ -3108,6 +3186,10 @@ export function refreshDatasetSuccessUpdater(
       ...state,
       datasets
     };
+  }
+
+  if (!schemaUnchanged) {
+    return rebindLayersAndFiltersAfterSchemaChange(state, dataId, datasets);
   }
 
   const filteredDatasets = applyFiltersToDatasets([dataId], datasets, state.filters, state.layers);

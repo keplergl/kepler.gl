@@ -7960,7 +7960,6 @@ test('VisStateUpdater -> refreshDataset', async t => {
   t.equal(task.type, 'REFRESH_EXTERNALLY_HOSTED_DATASET_TASK', 'should fetch the remote file');
 
   const refreshed = processCsvData('lat,lng\n10,20\n30,40\n50,60');
-  await loadingState.datasets['remote-1'].update(refreshed);
 
   const successState = reducer(
     loadingState,
@@ -8030,7 +8029,11 @@ test('VisStateUpdater -> refreshDataset rebuilds point layer positions', async t
 
   const [task] = drainTasksForTesting();
   const refreshed = processCsvData('lat,lng\n10,20');
-  await loadingState.datasets['remote-1'].update(refreshed);
+  t.equal(
+    progressed.datasets['remote-1'].dataContainer.numRows(),
+    1,
+    'progress must not apply the snapshot'
+  );
 
   const successState = reducer(
     progressed,
@@ -8044,6 +8047,59 @@ test('VisStateUpdater -> refreshDataset rebuilds point layer positions', async t
   const nextPos = successState.layerData[0].data[0].position;
   t.notDeepEqual(nextPos, firstPos, 'should rebuild point positions after refresh');
   t.deepEqual(nextPos.slice(0, 2), [20, 10], 'should use the new lng/lat');
+
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset rebinds or drops layers when field names change', async t => {
+  drainTasksForTesting();
+  const initialData = processCsvData('lat,lng\n37.77,-122.42');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'remote-1', type: DatasetType.EXTERNALLY_HOSTED, label: 'live.csv'},
+    data: initialData,
+    metadata: {source: 'https://example.com/live.csv', sourceFormat: 'csv'}
+  });
+  const {props} = PointLayer.findDefaultLayerProps(datasets['remote-1']);
+  const pointLayer = new PointLayer({
+    id: 'p1',
+    dataId: 'remote-1',
+    isVisible: true,
+    ...props[0]
+  });
+  const {layerData, layer} = calculateLayerData(
+    pointLayer,
+    {...INITIAL_VIS_STATE, datasets, layers: [pointLayer], layerData: [{}]},
+    undefined
+  );
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layerData],
+    layerOrder: [layer.id]
+  };
+
+  const loadingCompatible = reducer(state, VisStateActions.refreshDataset('remote-1'));
+  const [compatibleTask] = drainTasksForTesting();
+  const withExtraColumn = processCsvData('lat,lng,value\n10,20,3');
+  const kept = reducer(
+    loadingCompatible,
+    succeedTaskInTest(compatibleTask, {data: withExtraColumn, notModified: false})
+  );
+  t.equal(kept.layers.length, 1, 'should keep the point layer when lat/lng still exist');
+  t.equal(kept.layers[0].id, 'p1', 'should keep the same layer id');
+  t.equal(kept.datasets['remote-1'].fields.length, 3, 'should load the extra column');
+
+  const loadingIncompatible = reducer(kept, VisStateActions.refreshDataset('remote-1'));
+  const [incompatibleTask] = drainTasksForTesting();
+  const renamed = processCsvData('foo,bar\n1,2');
+  const dropped = reducer(
+    loadingIncompatible,
+    succeedTaskInTest(incompatibleTask, {data: renamed, notModified: false})
+  );
+  t.equal(dropped.layers.length, 0, 'should drop the point layer when lat/lng are gone');
+  t.deepEqual(dropped.layerOrder, [], 'should remove the layer from layerOrder');
+  t.equal(dropped.datasets['remote-1'].fields[0].name, 'foo', 'should still apply the snapshot');
 
   t.end();
 });

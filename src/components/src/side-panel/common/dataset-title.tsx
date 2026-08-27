@@ -3,6 +3,7 @@
 
 import React, {useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
+import {useIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import {Table} from '@kepler.gl/layers';
@@ -47,6 +48,27 @@ const DataTagAction = styled.div`
   margin-left: 12px;
   height: 16px;
   opacity: 0;
+`;
+
+const DataTagActionButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 12px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0;
+
+  &:focus-visible {
+    opacity: 1;
+    outline: 1px solid ${props => props.theme.textColorHl};
+    outline-offset: 1px;
+  }
 `;
 
 const StyledRefreshError = styled.div`
@@ -95,26 +117,29 @@ const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
   </DataTagAction>
 );
 
-const RefreshDatasetSettings = ({id, onToggle}: {id: string; onToggle?: () => void}) => (
-  <DataTagAction
-    className="dataset-action refresh-dataset-settings"
-    data-tip
-    data-for={`refresh-settings-${id}`}
-  >
-    <Clock
-      height="16px"
+const RefreshDatasetSettings = ({id, onToggle}: {id: string; onToggle?: () => void}) => {
+  const intl = useIntl();
+  return (
+    <DataTagActionButton
+      type="button"
+      className="dataset-action refresh-dataset-settings"
+      data-tip
+      data-for={`refresh-settings-${id}`}
+      aria-label={intl.formatMessage({id: 'datasetTitle.refreshSettings'})}
       onClick={e => {
         e.stopPropagation();
         onToggle?.();
       }}
-    />
-    <Tooltip id={`refresh-settings-${id}`} effect="solid">
-      <span>
-        <FormattedMessage id={'datasetTitle.refreshSettings'} />
-      </span>
-    </Tooltip>
-  </DataTagAction>
-);
+    >
+      <Clock height="16px" />
+      <Tooltip id={`refresh-settings-${id}`} effect="solid">
+        <span>
+          <FormattedMessage id={'datasetTitle.refreshSettings'} />
+        </span>
+      </Tooltip>
+    </DataTagActionButton>
+  );
+};
 
 const RemoveDataset = ({datasetKey, removeDataset}: RemoveDatasetProps) => (
   <DataTagAction
