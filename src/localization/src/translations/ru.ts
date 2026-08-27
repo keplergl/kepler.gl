@@ -299,7 +299,8 @@ export default {
     refresh15s: '15 с',
     refresh1m: '1 мин',
     refresh5m: '5 мин',
-    refresh15m: '15 мин'
+    refresh15m: '15 мин',
+    refreshCustom: 'Свой'
   },
   datasetInfo: {
     rowCount: '{rowCount} строк',
@@ -309,6 +310,7 @@ export default {
     tile3d: '3D тайл',
     remoteFile: '{rowCount} строк (удалённый)',
     refreshInterval: 'Обновление',
+    refreshCustomSeconds: 'Секунды',
     refreshing: 'Обновление…',
     refreshingPercent: 'Обновление {percent}%'
   },

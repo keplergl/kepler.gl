@@ -300,7 +300,8 @@ export default {
     refresh15s: '15s',
     refresh1m: '1 min',
     refresh5m: '5 min',
-    refresh15m: '15 min'
+    refresh15m: '15 min',
+    refreshCustom: 'Personalizado'
   },
   datasetInfo: {
     rowCount: '{rowCount} linhas',
@@ -310,6 +311,7 @@ export default {
     tile3d: 'Mosaico 3D',
     remoteFile: '{rowCount} linhas (remoto)',
     refreshInterval: 'Atualizar',
+    refreshCustomSeconds: 'Segundos',
     refreshing: 'Atualizando…',
     refreshingPercent: 'Atualizando {percent}%'
   },

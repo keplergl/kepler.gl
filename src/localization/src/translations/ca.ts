@@ -299,7 +299,8 @@ export default {
     refresh15s: '15s',
     refresh1m: '1 min',
     refresh5m: '5 min',
-    refresh15m: '15 min'
+    refresh15m: '15 min',
+    refreshCustom: 'Personalitzat'
   },
   datasetInfo: {
     rowCount: '{rowCount} files',
@@ -309,6 +310,7 @@ export default {
     tile3d: 'Mosaic 3D',
     remoteFile: '{rowCount} files (remot)',
     refreshInterval: 'Actualitza',
+    refreshCustomSeconds: 'Segons',
     refreshing: 'S’està actualitzant…',
     refreshingPercent: 'S’està actualitzant {percent}%'
   },

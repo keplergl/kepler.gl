@@ -343,7 +343,8 @@ export default {
     refresh15s: '15s',
     refresh1m: '1 min',
     refresh5m: '5 min',
-    refresh15m: '15 min'
+    refresh15m: '15 min',
+    refreshCustom: 'Custom'
   },
   datasetInfo: {
     rowCount: '{rowCount} rows',
@@ -354,6 +355,7 @@ export default {
     bitmap: 'Bitmap image',
     remoteFile: '{rowCount} rows (remote)',
     refreshInterval: 'Refresh',
+    refreshCustomSeconds: 'Seconds',
     refreshing: 'Refreshing…',
     refreshingPercent: 'Refreshing {percent}%'
   },

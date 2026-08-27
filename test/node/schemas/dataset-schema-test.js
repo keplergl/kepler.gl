@@ -184,3 +184,26 @@ test('#DatasetSchema -> save externally-hosted dataset refresh interval', t => {
 
   t.end();
 });
+
+test('#DatasetSchema -> save externally-hosted dataset custom refresh interval', t => {
+  const dataset = {
+    id: 'remote-1',
+    label: 'quakes.csv',
+    color: [1, 2, 3],
+    type: DatasetType.EXTERNALLY_HOSTED,
+    fields: [{name: 'lat', type: 'real', format: '', analyzerType: 'FLOAT'}],
+    metadata: {
+      source: 'https://example.com/quakes.csv',
+      sourceFormat: 'csv',
+      refreshIntervalMs: 45_000
+    }
+  };
+
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  t.equal(saved.metadata.refreshIntervalMs, 45_000, 'should persist a custom interval');
+
+  const loaded = SchemaManager.parseSavedData([{version: 'v1', data: saved}]);
+  t.equal(loaded[0].metadata.refreshIntervalMs, 45_000, 'should restore a custom interval');
+
+  t.end();
+});

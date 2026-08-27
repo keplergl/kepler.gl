@@ -286,7 +286,8 @@ export default {
     refresh15s: '15秒',
     refresh1m: '1分钟',
     refresh5m: '5分钟',
-    refresh15m: '15分钟'
+    refresh15m: '15分钟',
+    refreshCustom: '自定义'
   },
   datasetInfo: {
     rowCount: '{rowCount}行',
@@ -296,6 +297,7 @@ export default {
     tile3d: '3D瓦片',
     remoteFile: '{rowCount}行（远程）',
     refreshInterval: '刷新',
+    refreshCustomSeconds: '秒',
     refreshing: '正在刷新…',
     refreshingPercent: '正在刷新 {percent}%'
   },

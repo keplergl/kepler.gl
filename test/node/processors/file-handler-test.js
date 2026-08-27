@@ -9,6 +9,7 @@ import {
   processFileData,
   processArrowBatches
 } from '@kepler.gl/processors';
+import {getDatasetRefreshIntervalMs} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
 import {parsedFields, parsedRows} from 'test/fixtures/row-object';
 import {
@@ -190,6 +191,38 @@ test('#file-handler -> filesToDataPayload remote metadata', t => {
     result[0].datasets[0].metadata,
     {source: 'https://example.com/quakes.csv', sourceFormat: 'csv'},
     'should pass remote source metadata'
+  );
+
+  t.end();
+});
+
+test('#file-handler -> processFileData one-shot load does not enable polling', async t => {
+  const rows = [{lat: 1, lng: 2}];
+  const local = await processFileData({
+    content: {fileName: 'local.csv', data: rows},
+    fileCache: []
+  });
+  t.equal(local[0].info.type, undefined, 'local files are not marked externally-hosted');
+  t.equal(local[0].metadata, undefined, 'local files get no remote refresh metadata');
+
+  const remote = await processFileData({
+    content: {
+      fileName: 'remote.csv',
+      data: rows,
+      sourceUrl: 'https://example.com/remote.csv'
+    },
+    fileCache: []
+  });
+  t.equal(remote[0].info.type, 'externally-hosted', 'URL loads are still externally-hosted');
+  t.equal(
+    remote[0].metadata.refreshIntervalMs,
+    undefined,
+    'a one-shot URL load does not set a poll interval'
+  );
+  t.equal(
+    getDatasetRefreshIntervalMs(remote[0].metadata),
+    0,
+    'polling helper treats omitted interval as off'
   );
 
   t.end();

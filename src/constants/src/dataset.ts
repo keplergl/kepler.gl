@@ -51,6 +51,17 @@ export const DATASET_REFRESH_INTERVAL_OPTIONS: {value: number; labelId: string}[
   {value: 900_000, labelId: 'datasetTitle.refresh15m'}
 ];
 
+/** Select value for a user-entered interval that is not one of the presets. */
+export const DATASET_REFRESH_CUSTOM_VALUE = 'custom';
+/** Default custom poll interval when switching from Off to Custom. */
+export const DATASET_REFRESH_DEFAULT_CUSTOM_MS = 30_000;
+/** Fastest interval the refresh UI will commit (1 second). */
+export const DATASET_REFRESH_MIN_INTERVAL_MS = 1_000;
+
+export function isPresetDatasetRefreshInterval(ms: number): boolean {
+  return DATASET_REFRESH_INTERVAL_OPTIONS.some(option => option.value === ms);
+}
+
 export type ExternalDatasetRefreshStatus = 'idle' | 'loading' | 'error';
 
 export type ExternalDatasetMetadata = {
@@ -82,6 +93,15 @@ export type ExternalDatasetRuntimeMetadata = {
 export function getDatasetRefreshIntervalMs(metadata?: {refreshIntervalMs?: unknown}): number {
   const value = metadata?.refreshIntervalMs;
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+/** Parse a seconds field into ms, or null if the input is not a positive integer. */
+export function parseCustomRefreshIntervalMs(secondsText: string): number | null {
+  const seconds = Number.parseInt(secondsText, 10);
+  if (!Number.isFinite(seconds) || seconds < 1) {
+    return null;
+  }
+  return Math.max(DATASET_REFRESH_MIN_INTERVAL_MS, seconds * 1000);
 }
 
 export function getRemoteSourceFormat(metadata?: {

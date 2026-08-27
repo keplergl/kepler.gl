@@ -298,7 +298,8 @@ export default {
     refresh15s: '15 s',
     refresh1m: '1 min',
     refresh5m: '5 min',
-    refresh15m: '15 min'
+    refresh15m: '15 min',
+    refreshCustom: 'Mukautettu'
   },
   datasetInfo: {
     rowCount: '{rowCount} riviä',
@@ -308,6 +309,7 @@ export default {
     tile3d: '3D-tiili',
     remoteFile: '{rowCount} riviä (etä)',
     refreshInterval: 'Päivitys',
+    refreshCustomSeconds: 'Sekuntia',
     refreshing: 'Päivitetään…',
     refreshingPercent: 'Päivitetään {percent}%'
   },

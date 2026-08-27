@@ -297,7 +297,8 @@ export default {
     refresh15s: '15秒',
     refresh1m: '1分',
     refresh5m: '5分',
-    refresh15m: '15分'
+    refresh15m: '15分',
+    refreshCustom: 'カスタム'
   },
   datasetInfo: {
     rowCount: '{rowCount}行',
@@ -307,6 +308,7 @@ export default {
     tile3d: '3Dタイル',
     remoteFile: '{rowCount}行（リモート）',
     refreshInterval: '更新',
+    refreshCustomSeconds: '秒',
     refreshing: '更新中…',
     refreshingPercent: '更新中 {percent}%'
   },

@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
 import {format} from 'd3-format';
 import {useIntl} from 'react-intl';
 
 import {
   DatasetType,
+  DATASET_REFRESH_CUSTOM_VALUE,
+  DATASET_REFRESH_DEFAULT_CUSTOM_MS,
   DATASET_REFRESH_INTERVAL_OPTIONS,
-  getDatasetRefreshIntervalMs
+  getDatasetRefreshIntervalMs,
+  isPresetDatasetRefreshInterval,
+  parseCustomRefreshIntervalMs
 } from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {DataContainerInterface} from '@kepler.gl/utils';
@@ -76,9 +80,22 @@ const StyledRefreshSelect = styled.select`
   font-size: 11px;
   padding: 0 4px;
   width: auto;
-  max-width: 72px;
+  max-width: 96px;
   cursor: pointer;
   background-color: transparent;
+`;
+
+const StyledCustomSeconds = styled.input`
+  ${props => props.theme.input};
+  height: 18px;
+  font-size: 11px;
+  padding: 0 4px;
+  width: 44px;
+  background-color: transparent;
+`;
+
+const StyledCustomUnit = styled.span`
+  font-size: 11px;
 `;
 
 const StyledRefreshError = styled.div`
@@ -123,7 +140,24 @@ export default function DatasetInfoFactory() {
     const matchingOption = DATASET_REFRESH_INTERVAL_OPTIONS.find(
       option => option.value === intervalMs
     );
-    const selectValue = matchingOption ? intervalMs : 0;
+    const isCustomInterval = intervalMs > 0 && !isPresetDatasetRefreshInterval(intervalMs);
+    const [customMode, setCustomMode] = useState(isCustomInterval);
+    const [customSeconds, setCustomSeconds] = useState(() =>
+      String(Math.max(1, Math.round((intervalMs || DATASET_REFRESH_DEFAULT_CUSTOM_MS) / 1000)))
+    );
+    const showCustomInput = customMode || isCustomInterval;
+    const selectValue = showCustomInput
+      ? DATASET_REFRESH_CUSTOM_VALUE
+      : String(matchingOption ? matchingOption.value : 0);
+
+    useEffect(() => {
+      const ms = getDatasetRefreshIntervalMs(dataset.metadata);
+      const custom = ms > 0 && !isPresetDatasetRefreshInterval(ms);
+      setCustomMode(custom);
+      setCustomSeconds(
+        String(Math.max(1, Math.round((ms || DATASET_REFRESH_DEFAULT_CUSTOM_MS) / 1000)))
+      );
+    }, [dataset.id, dataset.metadata?.refreshIntervalMs]);
 
     const spinning = dataset.metadata?.refreshStatus === 'loading';
     const progress =
@@ -145,14 +179,49 @@ export default function DatasetInfoFactory() {
       [dataset.id, refreshDataset, spinning]
     );
 
+    const commitCustomInterval = useCallback(
+      (secondsText: string) => {
+        const nextMs = parseCustomRefreshIntervalMs(secondsText);
+        if (nextMs == null) {
+          setCustomSeconds(
+            String(
+              Math.max(1, Math.round((intervalMs || DATASET_REFRESH_DEFAULT_CUSTOM_MS) / 1000))
+            )
+          );
+          return;
+        }
+        setCustomSeconds(String(nextMs / 1000));
+        if (nextMs !== intervalMs) {
+          updateDatasetProps?.(dataset.id, {metadata: {refreshIntervalMs: nextMs}});
+        }
+      },
+      [dataset.id, intervalMs, updateDatasetProps]
+    );
+
     const onRefreshIntervalChange = useCallback(
       (event: React.ChangeEvent<HTMLSelectElement>) => {
         event.stopPropagation();
+        const value = event.target.value;
+        if (value === DATASET_REFRESH_CUSTOM_VALUE) {
+          const seconds = Math.max(
+            1,
+            Math.round((intervalMs || DATASET_REFRESH_DEFAULT_CUSTOM_MS) / 1000)
+          );
+          setCustomMode(true);
+          setCustomSeconds(String(seconds));
+          if (!intervalMs) {
+            updateDatasetProps?.(dataset.id, {
+              metadata: {refreshIntervalMs: seconds * 1000}
+            });
+          }
+          return;
+        }
+        setCustomMode(false);
         updateDatasetProps?.(dataset.id, {
-          metadata: {refreshIntervalMs: Number(event.target.value) || 0}
+          metadata: {refreshIntervalMs: Number(value) || 0}
         });
       },
-      [dataset.id, updateDatasetProps]
+      [dataset.id, intervalMs, updateDatasetProps]
     );
 
     return (
@@ -198,11 +267,41 @@ export default function DatasetInfoFactory() {
                   onChange={onRefreshIntervalChange}
                 >
                   {DATASET_REFRESH_INTERVAL_OPTIONS.map(option => (
-                    <option key={option.value} value={option.value}>
+                    <option key={option.value} value={String(option.value)}>
                       {intl.formatMessage({id: option.labelId})}
                     </option>
                   ))}
+                  <option value={DATASET_REFRESH_CUSTOM_VALUE}>
+                    {intl.formatMessage({id: 'datasetTitle.refreshCustom'})}
+                  </option>
                 </StyledRefreshSelect>
+                {showCustomInput ? (
+                  <>
+                    <StyledCustomSeconds
+                      type="number"
+                      min={1}
+                      step={1}
+                      inputMode="numeric"
+                      className="dataset-refresh-custom-seconds"
+                      aria-label={intl.formatMessage({id: 'datasetInfo.refreshCustomSeconds'})}
+                      value={customSeconds}
+                      onChange={event => {
+                        event.stopPropagation();
+                        setCustomSeconds(event.target.value);
+                      }}
+                      onBlur={event => commitCustomInterval(event.target.value)}
+                      onKeyDown={event => {
+                        event.stopPropagation();
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          commitCustomInterval(customSeconds);
+                          (event.target as HTMLInputElement).blur();
+                        }
+                      }}
+                    />
+                    <StyledCustomUnit>s</StyledCustomUnit>
+                  </>
+                ) : null}
               </StyledRefreshLabel>
             ) : null}
             {refreshDataset ? (
