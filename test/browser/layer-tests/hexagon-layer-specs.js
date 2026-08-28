@@ -105,6 +105,10 @@ test('#HexagonLayer -> constructor', t => {
           t.ok(layer.isAggregated === true, 'HexagonLayer is aggregated');
           t.ok(layer.config.label === 'test hexagon layer', 'label should be correct');
           t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
+          t.ok(
+            layer.visConfigSettings.worldUnitSize.range[0] > 0,
+            'hexagon radius should have a positive minimum'
+          );
         }
       }
     ]
