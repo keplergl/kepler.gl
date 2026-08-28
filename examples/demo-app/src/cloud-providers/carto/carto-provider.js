@@ -25,11 +25,6 @@ export default class CartoProvider extends Provider {
     this._folderLink = `https://{user}.${DOMAIN}/dashboard/maps/external`;
 
     // Initialize CARTO API
-    // NOTE: `clientID` is intentionally omitted from the constructor options.
-    // OAuthApp's constructor calls `initOauth` (which sets `this._oauth`) only when
-    // `oauthOptions.clientID` is truthy. `setClientID` below throws
-    // 'Cannot set the client ID more than once' if `_oauth` is already set, so the
-    // client ID must be passed via `setClientID` only — not via the constructor.
     this._carto = new OAuthApp(
       {
         authorization: `https://${DOMAIN}/oauth2`,
@@ -47,9 +42,9 @@ export default class CartoProvider extends Provider {
   /**
    * The CARTO toolkit library takes care of the login process.
    */
-  async login(onCloudLoginSuccess) {
+  login(onCloudLoginSuccess) {
     try {
-      await this._carto.login().then(() => {
+      this._carto.login().then(() => {
         onCloudLoginSuccess && onCloudLoginSuccess(this.name);
       });
     } catch (error) {
@@ -57,18 +52,18 @@ export default class CartoProvider extends Provider {
     }
   }
 
-  async logout(onCloudLogoutSuccess) {
+  logout(onCloudLogoutSuccess) {
     try {
       this._carto.oauth.clear();
       this._carto.oauth._carto.sync();
-      onCloudLogoutSuccess && onCloudLogoutSuccess();
+      onCloudLogoutSuccess();
     } catch (error) {
       this._manageErrors(error);
     }
   }
 
   isEnabled() {
-    return Boolean(this.clientId);
+    return this.clientId !== null;
   }
 
   hasPrivateStorage() {
@@ -79,7 +74,7 @@ export default class CartoProvider extends Provider {
     return SHARING_ENABLED;
   }
 
-  async uploadMap({mapData, options = {}}) {
+  async uploadMap({mapData = {}, options = {}}) {
     try {
       const {isPublic = true, overwrite = true} = options;
       const {map: {config, datasets, info} = {}, thumbnail} = mapData;
@@ -170,7 +165,7 @@ export default class CartoProvider extends Provider {
       this._manageErrors(error, false);
     }
 
-    return username || '';
+    return username;
   }
 
   /**
@@ -280,12 +275,11 @@ export default class CartoProvider extends Provider {
       return formattedVis;
     } catch (error) {
       this._manageErrors(error);
-      return [];
     }
   }
 
   getShareUrl(fullUrl = false) {
-    return this.getMapUrl(fullUrl) || '';
+    return this.getMapUrl(fullUrl);
   }
 
   getMapUrl(fullUrl = true, mapParams = null) {
@@ -301,7 +295,6 @@ export default class CartoProvider extends Provider {
         fullUrl
       );
     }
-    return '';
   }
 
   getManagementUrl() {
@@ -341,6 +334,7 @@ export default class CartoProvider extends Provider {
     };
   }
 
+  // eslint-disable-next-line complexity
   _manageErrors(error, throwException = true) {
     let message;
     if (error && error.message) {
@@ -348,33 +342,33 @@ export default class CartoProvider extends Provider {
 
       switch (error.message) {
         case 'No client ID has been specified':
-          console.error('No ClientID set for CARTO provider');
+          Console.error('No ClientID set for CARTO provider');
           break;
         case 'Cannot set the client ID more than once':
-          console.error('CARTO provider already initialized');
+          Console.error('CARTO provider already initialized');
           break;
         case (error.message.match(/relation "[a-zA-Z0-9_]+" does not exist/) || {}).input:
-          console.error('CARTO custom storage is not properly initialized');
+          Console.error('CARTO custom storage is not properly initialized');
           message = 'Custom storage is not properly initialized';
           break;
         case (
           error.message.match(/Failed to copy to keplergl_[a-zA-Z0-9_]+: Too many retries/) || {}
         ).input:
-          console.error('CARTO Rate limit exceeded');
+          Console.error('CARTO Rate limit exceeded');
           message =
             "Failed to upload. You've exceeded the number of datasets allowed with your plan. Consider upgrading your plan.";
           break;
         case (error.message.match(/[a-zA-Z0-9_\s:]+: DB Quota exceeded/) || {}).input:
-          console.error('CARTO DB Quota exceeded');
+          Console.error('CARTO DB Quota exceeded');
           message =
             "Failed to upload. You've exceeded your account's disk storage limit. Consider upgrading your plan.";
           break;
         default:
-          console.error(`CARTO provider: ${message}`);
+          Console.error(`CARTO provider: ${message}`);
       }
     } else {
       message = 'General error in CARTO provider';
-      console.error(message);
+      Console.error(message);
     }
 
     // Use 'CARTO' as error code in order to show provider in notifications

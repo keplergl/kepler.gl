@@ -258,7 +258,7 @@ export default class DropboxProvider extends Provider {
       const jsonString = Window.localStorage.getItem('dropbox');
       return jsonString && JSON.parse(jsonString).user;
     }
-    return '';
+    return null;
   }
 
   async logout() {
@@ -273,7 +273,7 @@ export default class DropboxProvider extends Provider {
   }
 
   isEnabled() {
-    return Boolean(this.clientId);
+    return this.clientId !== null;
   }
 
   hasPrivateStorage() {
@@ -386,6 +386,7 @@ export default class DropboxProvider extends Provider {
       this._clearAuth();
       return new Error('Dropbox session expired. Please log in again.');
     }
+
     // dropbox list_folder error
     if (error && error.error && error.error.error_summary) {
       return new Error(`Dropbox Error: ${error.error.error_summary}`);
@@ -396,10 +397,9 @@ export default class DropboxProvider extends Provider {
 
   _readFile(fileBlob) {
     return new Promise((resolve, reject) => {
-      const fileReader = new FileReader();
-      fileReader.onload = ({target}) => {
+      const fileReader = new FileReader(fileBlob);
+      fileReader.onload = ({target: {result}}) => {
         try {
-          const result = target?.result;
           const json = JSON.parse(result);
           resolve(json);
         } catch (err) {
@@ -448,7 +448,7 @@ export default class DropboxProvider extends Provider {
         // Update URL to avoid CORS issue
         // Unfortunately this is not the ideal scenario but it will make sure people
         // can share dropbox urls with users without the dropbox account (publish on twitter, facebook)
-        this._shareUrl = this._overrideUrl(result.url) || undefined;
+        this._shareUrl = this._overrideUrl(result.url);
 
         return {
           // the full url to be displayed

@@ -64,13 +64,14 @@ function extractMapFromFSQResponse(response) {
 export default class FoursquareProvider extends Provider {
   constructor({clientId, authDomain, apiURL, userMapsURL}) {
     super({name: NAME, displayName: DISPLAY_NAME, storageMessage: STORAGE_MESSAGE, icon: FSQIcon});
+    this.icon = FSQIcon;
     this.appName = APP_NAME;
     this.apiURL = apiURL;
 
     this._auth0 = new Auth0Client({
       domain: authDomain,
       clientId,
-      ...{scope: FOURSQUARE_AUTH_SCOPE},
+      scope: FOURSQUARE_AUTH_SCOPE,
       authorizationParams: {
         prompt: 'login',
         redirect_uri: window.location.origin,
@@ -196,13 +197,11 @@ export default class FoursquareProvider extends Provider {
   }
 
   async downloadMap(loadParams) {
-    const {path} = loadParams;
-    let {id} = loadParams;
+    let {id, path} = loadParams;
     if (!id) {
       // try to get map id from foursquare map path
       if (typeof path === 'string') {
-        const match = /((\w{4,12}-?)){5}/.exec(path);
-        const pathId = match ? match[0] : null;
+        const pathId = /((\w{4,12}-?)){5}/.exec(path)[0];
         if (pathId) {
           id = pathId;
         }
@@ -229,7 +228,7 @@ export default class FoursquareProvider extends Provider {
 
   getMapUrl(loadParams) {
     const {id} = loadParams;
-    return id ? `${this.apiURL}/v1/maps/${id}` : '';
+    return id ? `${this.apiURL}/v1/maps/${id}` : null;
   }
 
   getManagementUrl() {
