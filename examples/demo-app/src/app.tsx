@@ -41,15 +41,6 @@ import {
 import {CLOUD_PROVIDERS} from './cloud-providers';
 import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
 
-// The sample/demo data loaders below (`_loadPointData`, `_loadGeojsonData`, etc.) build
-// `addDataToMap` payloads by hand for a variety of ad-hoc demo datasets. Their shapes are
-// looser than the strict `AddDataToMapPayload` type (e.g. raw `ProcessorResult` for `data`,
-// inline `config` literals missing newer required fields). None of these dead-code demo
-// paths are exercised in production, so we relax the type here once rather than casting at
-// each of the ~16 call sites below.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const addDataToMapAny: (payload: any) => any = addDataToMap as any;
-
 const KeplerGl = require('@kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
@@ -91,7 +82,7 @@ function shouldForwardProp(propName: string, target: unknown) {
 
 const BannerHeight = 48;
 const BannerKey = `banner-${FormLink}`;
-const keplerGlGetState = (state: any) => state.demo.keplerGl;
+const keplerGlGetState = state => state.demo.keplerGl;
 
 const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
@@ -122,7 +113,7 @@ const GlobalStyle = styled.div`
   }
 `;
 
-const CONTAINER_STYLE: React.CSSProperties = {
+const CONTAINER_STYLE = {
   transition: 'margin 1s, height 1s',
   position: 'absolute',
   width: '100%',
@@ -155,25 +146,24 @@ const StyledVerticalResizeHandle = styled(PanelResizeHandle)`
   }
 `;
 
-const App = (props: any) => {
+const App = props => {
   const [showBanner, toggleShowBanner] = useState(false);
   const {id, provider} = useParams();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const query = Object.fromEntries(searchParams.entries());
-  const dispatch = useDispatch() as any;
+  const dispatch = useDispatch();
   const reduxStore = useStore();
 
   // TODO find another way to check for existence of duckDb plugin
   const duckDbPluginEnabled = (getApplicationConfig().plugins || []).some(p => p.name === 'duckdb');
 
   const isSqlPanelOpen = useSelector(
-    (state: any) =>
-      duckDbPluginEnabled && state?.demo?.keplerGl?.map?.uiState.mapControls.sqlPanel?.active
+    state => duckDbPluginEnabled && state?.demo?.keplerGl?.map?.uiState.mapControls.sqlPanel?.active
   );
 
   const isAiAssistantPanelOpen = useSelector(
-    (state: any) => state?.demo?.keplerGl?.map?.uiState.mapControls.aiAssistant?.active
+    state => state?.demo?.keplerGl?.map?.uiState.mapControls.aiAssistant?.active
   );
 
   const prevQueryRef = useRef<{
@@ -220,7 +210,7 @@ const App = (props: any) => {
           loadParams: query,
           provider: cloudProvider,
           onSuccess: onLoadCloudMapSuccess
-        } as any)
+        })
       );
       prevQueryRef.current = {provider, id, query};
       return;
@@ -260,13 +250,10 @@ const App = (props: any) => {
    * get data from vector tiles when map boundary changes
    */
   const onViewStateChange = useCallback(
-    (viewState: any) => {
+    viewState => {
       const viewport = new WebMercatorViewport(viewState);
-      const nw = viewport.unproject([0, 0] as [number, number]) as [number, number];
-      const se = viewport.unproject([viewport.width, viewport.height] as [number, number]) as [
-        number,
-        number
-      ];
+      const nw = viewport.unproject([0, 0]);
+      const se = viewport.unproject([viewport.width, viewport.height]);
       dispatch(setMapBoundary(nw, se));
     },
     [dispatch]
@@ -289,7 +276,7 @@ const App = (props: any) => {
 
   const _loadRowData = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -306,7 +293,7 @@ const App = (props: any) => {
 
   const _loadVectorTileData = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -377,7 +364,7 @@ const App = (props: any) => {
 
   const _loadPointData = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -413,7 +400,7 @@ const App = (props: any) => {
 
   const _loadScenegraphLayer = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: {
           info: {
             label: 'Sample Scenegraph Ducks',
@@ -460,7 +447,7 @@ const App = (props: any) => {
     ].join('\n');
 
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -501,7 +488,7 @@ const App = (props: any) => {
 
   const _loadTripGeoJson = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {label: 'Trip animation', id: animateTripDataId},
@@ -517,7 +504,7 @@ const App = (props: any) => {
     const geojsonPoints = processGeojson(sampleGeojsonPoints);
     const geojsonZip = null; // processGeojson(sampleGeojson);
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           geojsonPoints
             ? {
@@ -542,7 +529,7 @@ const App = (props: any) => {
 
   const _loadSyncedFilterWTripLayer = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {label: 'Trip animation', id: animateTripDataId},
@@ -602,7 +589,7 @@ const App = (props: any) => {
   const _loadH3HexagonData = useCallback(() => {
     // load h3 hexagon
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -623,7 +610,7 @@ const App = (props: any) => {
   const _loadS2Data = useCallback(() => {
     // load s2
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -643,7 +630,7 @@ const App = (props: any) => {
 
   const _loadA5Data = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -663,7 +650,7 @@ const App = (props: any) => {
 
   const _loadGpsData = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -682,7 +669,7 @@ const App = (props: any) => {
 
   const _loadFlowData = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -702,7 +689,7 @@ const App = (props: any) => {
 
   const _loadWmsLayer = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -743,7 +730,7 @@ const App = (props: any) => {
 
   const _loadRasterTileLayer = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -773,7 +760,7 @@ const App = (props: any) => {
 
   const _loadBitmapLayer = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -803,7 +790,7 @@ const App = (props: any) => {
 
   const _loadTile3DLayer = useCallback(() => {
     dispatch(
-      addDataToMapAny({
+      addDataToMap({
         datasets: [
           {
             info: {
@@ -866,9 +853,9 @@ const App = (props: any) => {
     // _loadRowData();
     // _loadVectorTileData();
     // _loadFlowData();
-    // _loadWmsLayer();
-    // _loadRasterTileLayer();
-    // _loadBitmapLayer();
+    //_loadWmsLayer();
+    //_loadRasterTileLayer();
+    //_loadBitmapLayer();
     // _loadTile3DLayer();
     // _loadSyncedFilterWTripLayer();
     // _replaceSyncedFilterWTripLayer();
