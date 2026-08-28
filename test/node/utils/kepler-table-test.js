@@ -6,7 +6,7 @@ import moment from 'moment';
 import testData, {numericRangesCsv, testFields} from 'test/fixtures/test-csv-data';
 
 import {preciseRound, getFilterFunction} from '@kepler.gl/utils';
-import {findPointFieldPairs, KeplerTable} from '@kepler.gl/table';
+import {findPointFieldPairs, KeplerTable, createNewDataEntry} from '@kepler.gl/table';
 import {processCsvData} from '@kepler.gl/processors';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
@@ -486,6 +486,99 @@ test('KeplerTable -> update with arrow cols keeps gpu filter state', async t => 
   t.equal(table.length, 3, 'arrow incremental update should grow rows');
   t.equal(table.gpuFilter, gpuFilter, 'arrow incremental update should keep gpuFilter');
   t.equal(table.filterRecord?.name, 'keep-me', 'arrow incremental update should keep filterRecord');
+  t.equal(table.dataRevision, 1, 'arrow incremental update should bump dataRevision');
+  t.end();
+});
+
+test('KeplerTable -> update DuckDB cols payload keeps fields and gpuFilter', async t => {
+  const first = arrow.tableFromArrays({
+    lat: [1, 2],
+    lng: [3, 4]
+  });
+  const table = new KeplerTable({info: {id: 'duckdb-shape'}, color: [0, 0, 0]});
+  await table.importData({
+    data: {
+      fields: [
+        {name: 'lat', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
+        {name: 'lng', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'}
+      ],
+      rows: [],
+      cols: [first.getChildAt(0), first.getChildAt(1)],
+      arrowTable: first
+    }
+  });
+  const gpuFilter = table.gpuFilter;
+  const names = table.fields.map(field => field.name);
+
+  const next = arrow.tableFromArrays({
+    lat: [1, 2, 3],
+    lng: [3, 4, 5]
+  });
+  // DuckDBTable.update calls super.update({cols, rows: [], fields: []})
+  await table.update({
+    cols: [next.getChildAt(0), next.getChildAt(1)],
+    rows: [],
+    fields: []
+  });
+
+  t.equal(table.length, 3, 'DuckDB-shaped update should grow rows');
+  t.deepEqual(
+    table.fields.map(field => field.name),
+    names,
+    'empty fields must not rebuild schema'
+  );
+  t.equal(table.gpuFilter, gpuFilter, 'DuckDB-shaped update should keep gpuFilter');
+  t.end();
+});
+
+test('createNewDataEntry -> existing id updates Arrow table in place', async t => {
+  const fields = [
+    {name: 'lat', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'},
+    {name: 'lng', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'}
+  ];
+  const batch1 = arrow.tableFromArrays({lat: [1], lng: [2]});
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'arrow-1'},
+    data: {
+      fields,
+      rows: [],
+      cols: [batch1.getChildAt(0), batch1.getChildAt(1)]
+    }
+  });
+  const table = datasets['arrow-1'];
+  t.equal(table.length, 1, 'first batch should create the table');
+  const gpuFilter = table.gpuFilter;
+  const revision = table.dataRevision;
+
+  const batch2 = arrow.tableFromArrays({
+    lat: [1, 3],
+    lng: [2, 4]
+  });
+  const task = createNewDataEntry(
+    {
+      info: {id: 'arrow-1'},
+      data: {
+        fields,
+        rows: [],
+        cols: [batch2.getChildAt(0), batch2.getChildAt(1)]
+      }
+    },
+    datasets
+  );
+  t.equal(task.type, 'UPDATE_TABLE_TASK', 'same id should update instead of creating');
+
+  await task.run(
+    async (effectorPrime, success, error) => {
+      await effectorPrime(success, error);
+    },
+    value => {
+      t.equal(value, table, 'should return the same table instance');
+    }
+  );
+
+  t.equal(table.length, 2, 'second batch should replace/grow rows');
+  t.equal(table.gpuFilter, gpuFilter, 'incremental createNewDataEntry should keep gpuFilter');
+  t.ok(table.dataRevision > revision, 'incremental createNewDataEntry should bump dataRevision');
   t.end();
 });
 
