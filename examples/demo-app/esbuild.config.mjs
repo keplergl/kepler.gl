@@ -7,7 +7,7 @@ import {dotenvRun} from '@dotenv-run/esbuild';
 
 import process from 'node:process';
 import fs from 'node:fs';
-import {spawn} from 'node:child_process';
+import {execSync, spawn} from 'node:child_process';
 import {join} from 'node:path';
 import {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -374,6 +374,18 @@ function openURL(url) {
   const localAliases = addAliases(externals, args);
 
   if (args.includes('--build')) {
+    // Generate the Tailwind stylesheet for the production build. The dev
+    // (`--start`) path starts a watcher, but `--build` never ran Tailwind, so
+    // dist/tailwind.css (referenced by dist/index.html) only ever existed when
+    // a dev session had produced it. On a clean build (e.g. Netlify) it was
+    // missing and the @sqlrooms UI — including the Radix dropdown/dialog
+    // popups portaled to <body> — shipped unstyled.
+    console.log('⚡ Building Tailwind CSS...');
+    execSync(
+      './node_modules/.bin/tailwindcss -i src/styles.css -o dist/tailwind.css --minify',
+      {stdio: 'inherit'}
+    );
+
     await esbuild
       .build({
         ...config,
