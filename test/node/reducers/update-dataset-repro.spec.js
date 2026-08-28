@@ -211,3 +211,125 @@ describe('updateDataset with DuckDB round-tripped _geojson (Struct)', () => {
     expect(threw).toBe(false);
   });
 });
+
+describe('updateDataset with mixed Polygon/MultiPolygon _geojson (the real nyc shape)', () => {
+  // nyc.geojson mixes Polygon and MultiPolygon features. Rebuilding the whole
+  // table through tableFromArrays infers the shallower Arrow type and nulls the
+  // MultiPolygon's deeper coordinate nesting — the v0.0.7 fix reads existing
+  // columns straight from the kepler dataset instead, so the payload below is
+  // exactly what buildAddColumnPayload dispatches.
+  const mixedGeojson = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-74, 40.7],
+              [-73.95, 40.7],
+              [-73.95, 40.75],
+              [-74, 40.7]
+            ]
+          ]
+        },
+        properties: {NAME: 'NBH0', KIDS2000: 39}
+      },
+      {
+        type: 'Feature',
+        geometry: {
+          type: 'MultiPolygon',
+          coordinates: [
+            [
+              [
+                [-73.9, 40.7],
+                [-73.8, 40.7],
+                [-73.8, 40.8],
+                [-73.9, 40.7]
+              ]
+            ]
+          ]
+        },
+        properties: {NAME: 'Jackson Heights', KIDS2000: 20}
+      }
+    ]
+  };
+
+  let state;
+
+  beforeAll(() => {
+    let init = reducer(undefined, {type: '@@INIT'});
+    const {fields, rows} = processGeojson(mixedGeojson);
+    const info = {id: 'nyc', label: 'nyc.geojson'};
+    state = applyAction(init, addDataToMap(
+      {
+        datasets: [{info, data: {fields, rows}}],
+        options: {centerMap: false, readOnly: false},
+        config: {
+          version: 'v1',
+          config: {
+            visState: {
+              layers: [
+                {
+                  type: 'geojson',
+                  config: {
+                    dataId: 'nyc',
+                    label: 'NYC neighborhoods',
+                    columns: {geojson: '_geojson'},
+                    colorField: null,
+                    isVisible: true
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    ));
+  });
+
+  test('rows payload keeps the MultiPolygon coordinates and the layer renders', () => {
+    const dataset = state.visState.datasets.nyc;
+    const originalFields = dataset.fields;
+
+    // buildAddColumnPayload: existing columns straight from the kepler dataset,
+    // new column appended, fields = original + new.
+    const columns = originalFields.map(f => ({
+      name: f.name,
+      values: Array.from({length: dataset.length}, (_, i) => dataset.getValue(f.name, i))
+    }));
+    const kidscat = Array.from({length: dataset.length}, (_, i) =>
+      dataset.getValue('KIDS2000', i) < 30 ? 1 : 2
+    );
+    const rows = Array.from({length: dataset.length}, (_, i) => [
+      ...columns.map(c => c.values[i]),
+      kidscat[i]
+    ]);
+    const fields = [...originalFields, {name: 'kidscat', type: 'integer', analyzerType: 'INT'}];
+
+    const newState = reducer(state, VisStateActions.updateDataset('nyc', {rows, fields}));
+    const vis = newState.visState;
+
+    // the MultiPolygon feature keeps its real coordinates (NOT nulls)
+    const mp = vis.datasets.nyc.getValue('_geojson', 1);
+    expect(mp.geometry.type).toBe('MultiPolygon');
+    expect(Array.isArray(mp.geometry.coordinates)).toBe(true);
+    expect(mp.geometry.coordinates[0][0][0]).toEqual([-73.9, 40.7]);
+
+    // the layer survives and its meta still computes
+    expect(vis.layers.length).toBe(1);
+    const layer = vis.layers[0];
+    layer.updateLayerMeta(vis.datasets.nyc);
+    expect(layer.meta?.bounds).toEqual([-74, 40.7, -73.8, 40.8]);
+    expect(Array.isArray(layer.dataToFeature?.[1]?.geometry?.coordinates)).toBe(true);
+
+    let threw = false;
+    try {
+      layer.formatLayerData(vis.datasets, undefined);
+    } catch (e) {
+      threw = true;
+    }
+    expect(threw).toBe(false);
+  });
+});
