@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import SchemaManager from '@kepler.gl/schemas';
 import {InitialState} from 'test/helpers/mock-state';
 
@@ -15,11 +15,12 @@ test('#uiStateSchema -> v1 -> save load uiState', t => {
 
   t.deepEqual(
     Object.keys(uiToSave).sort(),
-    ['locale', 'mapControls'].sort(),
-    'saved uiState should have mapControls and locale'
+    ['locale', 'mapControls', 'theme'].sort(),
+    'saved uiState should have mapControls, locale and theme'
   );
 
   t.equal(uiToSave.locale, 'en', 'default locale should be en');
+  t.equal(uiToSave.theme, 'dark', 'default theme should be dark');
   t.deepEqual(
     uiToSave.mapControls,
     {mapLegend: {active: false}},

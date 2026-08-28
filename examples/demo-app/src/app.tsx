@@ -2,12 +2,10 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
-import Window from 'global/window';
-import {connect, useDispatch, useStore} from 'react-redux';
-import cloneDeep from 'lodash/cloneDeep';
-import isEqual from 'lodash/isEqual';
+import {useDispatch, useStore} from 'react-redux';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
+import isEqual from 'es-toolkit/compat/isEqual';
 import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
 import {useParams, useSearchParams, useLocation} from 'react-router-dom';
@@ -71,6 +69,7 @@ import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
 import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sample-s2-data';
+import sampleA5Data, {config as a5MapConfig, dataId as a5DataId} from './data/sample-a5-data';
 import sampleAnimateTrip, {
   pointData,
   pointDataId,
@@ -188,6 +187,23 @@ const App = (props: any) => {
     query: Record<string, string>;
   } | null>(null);
 
+  const startScreenCapture = useSelector(
+    (state: any) => state.demo.aiAssistant.screenshotToAsk.startScreenCapture
+  );
+
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [mapDimensions, setMapDimensions] = useState({width: 0, height: 0});
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      const {width, height} = entries[0].contentRect;
+      setMapDimensions({width, height});
+    });
+    observer.observe(mapContainerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   // Handle OAuth callback on /auth route
   useEffect(() => {
     if (location.pathname === '/auth' && window.opener) {
@@ -291,7 +307,7 @@ const App = (props: any) => {
 
   const _disableBanner = useCallback(() => {
     hideBanner();
-    Window.localStorage.setItem(BannerKey, 'true');
+    window.localStorage.setItem(BannerKey, 'true');
   }, [hideBanner]);
 
   const _loadRowData = useCallback(() => {
@@ -593,7 +609,7 @@ const App = (props: any) => {
       features: sampleGeojsonPoints.features.slice(0, 5)
     });
     _loadGeojsonData();
-    Window.setTimeout(() => {
+    window.setTimeout(() => {
       dispatch(
         replaceDataInMap({
           datasetToReplaceId: 'bart-stops-geo',
@@ -641,6 +657,26 @@ const App = (props: any) => {
           }
         ],
         config: s2MapConfig as ParsedConfig,
+        options: {
+          keepExistingConfig: true
+        }
+      })
+    );
+  }, [dispatch]);
+
+  const _loadA5Data = useCallback(() => {
+    dispatch(
+      addDataToMapAny({
+        datasets: [
+          {
+            info: {
+              label: 'A5 Data',
+              id: a5DataId
+            },
+            data: processCsvData(sampleA5Data)
+          }
+        ],
+        config: a5MapConfig as ParsedConfig,
         options: {
           keepExistingConfig: true
         }
@@ -847,6 +883,7 @@ const App = (props: any) => {
     // _loadIconData();
     // _loadH3HexagonData();
     // _loadS2Data();
+    // _loadA5Data();
     // _loadScenegraphLayer();
     // _loadGpsData();
     // _loadRowData();
@@ -866,6 +903,7 @@ const App = (props: any) => {
     _loadIconData,
     _loadH3HexagonData,
     _loadS2Data,
+    _loadA5Data,
     _loadScenegraphLayer,
     _loadGpsData,
     _loadRowData,
@@ -892,7 +930,7 @@ const App = (props: any) => {
         // }}
         >
           <ScreenshotWrapper
-            startScreenCapture={props.demo.aiAssistant.screenshotToAsk.startScreenCapture}
+            startScreenCapture={startScreenCapture}
             setScreenCaptured={_setScreenCaptured}
             setStartScreenCapture={_setStartScreenCapture}
             className="h-screen"
@@ -905,23 +943,21 @@ const App = (props: any) => {
                 <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
                   <PanelGroup direction="vertical">
                     <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
-                      <AutoSizer>
-                        {({height, width}) => (
-                          <KeplerGl
-                            mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                            id="map"
-                            getState={keplerGlGetState}
-                            width={width}
-                            height={height}
-                            cloudProviders={CLOUD_PROVIDERS}
-                            localeMessages={messages}
-                            onExportToCloudSuccess={onExportFileSuccess}
-                            onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                            featureFlags={DEFAULT_FEATURE_FLAGS}
-                            onViewStateChange={onViewStateChange}
-                          />
-                        )}
-                      </AutoSizer>
+                      <div ref={mapContainerRef} style={{width: '100%', height: '100%'}}>
+                        <KeplerGl
+                          mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                          id="map"
+                          getState={keplerGlGetState}
+                          width={mapDimensions.width}
+                          height={mapDimensions.height}
+                          cloudProviders={CLOUD_PROVIDERS}
+                          localeMessages={messages}
+                          onExportToCloudSuccess={onExportFileSuccess}
+                          onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                          featureFlags={DEFAULT_FEATURE_FLAGS}
+                          onViewStateChange={onViewStateChange}
+                        />
+                      </div>
                     </Panel>
 
                     {isSqlPanelOpen && (
@@ -959,7 +995,4 @@ const App = (props: any) => {
   );
 };
 
-const mapStateToProps = state => state;
-const dispatchToProps = dispatch => ({dispatch});
-
-export default connect(mapStateToProps, dispatchToProps)(App);
+export default App;

@@ -2,9 +2,72 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {histogramFromThreshold, histogramFromValues} from '@kepler.gl/utils';
+import {
+  histogramFromThreshold,
+  histogramFromValues,
+  mergePolygonLayerIndexes,
+  runGpuFilterForPlot
+} from '@kepler.gl/utils';
 
 const values1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+
+test('Utils -> mergePolygonLayerIndexes', t => {
+  const baseIndex = [0, 1, 2, 3];
+
+  t.deepEqual(
+    mergePolygonLayerIndexes(baseIndex, {}),
+    baseIndex,
+    'should return base index when no layers are polygon-filtered'
+  );
+
+  t.deepEqual(
+    mergePolygonLayerIndexes(baseIndex, {layerA: [0, 2]}),
+    [0, 2],
+    'should keep rows visible on a single targeted layer'
+  );
+
+  t.deepEqual(
+    mergePolygonLayerIndexes(baseIndex, {layerA: [0, 2], layerB: [1]}),
+    [0, 1, 2],
+    'should keep the union of rows visible on any targeted layer'
+  );
+
+  t.deepEqual(
+    mergePolygonLayerIndexes(baseIndex, {layerA: [], layerB: []}),
+    [],
+    'should export no rows when all targeted layers are empty'
+  );
+
+  t.end();
+});
+
+test('Utils -> runGpuFilterForPlot applies polygon layer indexes', t => {
+  const dataset = {
+    id: 'puppy',
+    filteredIndex: [0, 1, 2, 3],
+    filteredIndexByLayer: {layerA: [0, 2]},
+    dataContainer: {},
+    gpuFilter: {
+      filterRange: [],
+      filterValueUpdateTriggers: {},
+      filterValueAccessor: () => () => () => []
+    }
+  };
+
+  t.deepEqual(
+    runGpuFilterForPlot(dataset),
+    [0, 2],
+    'should start plots from polygon-visible rows when filteredIndexByLayer is set'
+  );
+
+  t.deepEqual(
+    runGpuFilterForPlot({...dataset, filteredIndexByLayer: {}}),
+    [0, 1, 2, 3],
+    'should fall back to filteredIndex when no polygon layer indexes exist'
+  );
+
+  t.end();
+});
 
 test('Utils -> histogramFromThreshold', t => {
   const thresholds1 = [1, 3, 6, 13];

@@ -45,7 +45,7 @@ import {
   isArrowTable
 } from '@kepler.gl/utils';
 import {generateHashId, toArray, notNullorUndefined} from '@kepler.gl/common-utils';
-import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
+import {Datasets, GpuFilter, KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
 import {
   AggregatedBin,
   ColorRange,
@@ -79,7 +79,7 @@ import {
   getCategoricalColorScale,
   updateCustomColorRangeByColorUI
 } from '@kepler.gl/utils';
-import memoize from 'lodash/memoize';
+import memoize from 'es-toolkit/compat/memoize';
 import {
   initializeCustomPalette,
   isDomainQuantile,
@@ -1299,11 +1299,12 @@ class Layer implements KeplerLayer {
     this.meta = {...this.meta, ...meta};
   }
 
-  getDataUpdateTriggers({filteredIndex, id, dataContainer}: KeplerTable): any {
+  getDataUpdateTriggers({filteredIndex, filteredIndexByLayer, id, dataContainer}: KeplerTable): any {
     const {columns} = this.config;
+    const layerFilteredIndex = filteredIndexByLayer?.[this.id] ?? filteredIndex;
 
     return {
-      getData: {datasetId: id, dataContainer, columns, filteredIndex},
+      getData: {datasetId: id, dataContainer, columns, filteredIndex: layerFilteredIndex},
       getMeta: {datasetId: id, dataContainer, columns},
       ...(this.config.textLabel || []).reduce(
         (accu, tl, i) => ({
@@ -1322,12 +1323,19 @@ class Layer implements KeplerLayer {
     const layerDataset = datasets[this.config.dataId];
     const {dataContainer} = layerDataset;
 
-    const getPosition = this.getPositionAccessor(dataContainer, layerDataset);
+    // Use per-layer polygon-filtered index if available
+    const layerFilteredIndex = layerDataset.filteredIndexByLayer?.[this.id];
+    const effectiveDataset =
+      layerFilteredIndex != null
+        ? copyTableAndUpdate(layerDataset, {filteredIndex: layerFilteredIndex})
+        : layerDataset;
+
+    const getPosition = this.getPositionAccessor(dataContainer, effectiveDataset);
     const dataUpdateTriggers = this.getDataUpdateTriggers(layerDataset);
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
     if (triggerChanged && (triggerChanged.getMeta || triggerChanged.getData)) {
-      this.updateLayerMeta(layerDataset, getPosition);
+      this.updateLayerMeta(effectiveDataset, getPosition);
 
       // reset filteredItemCount
       this.filteredItemCount = {};
@@ -1339,7 +1347,7 @@ class Layer implements KeplerLayer {
       // same data
       data = oldLayerData.data;
     } else {
-      data = this.calculateDataAttribute(layerDataset, getPosition);
+      data = this.calculateDataAttribute(effectiveDataset, getPosition);
     }
 
     return {data, triggerChanged};
@@ -1531,13 +1539,17 @@ class Layer implements KeplerLayer {
     layerCallbacks: any;
     visible: boolean;
   }) {
+    const blendingParameters = mapState.layerParameters ?? {};
     return {
       id: this.id,
       idx,
       coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
       pickable: true,
       wrapLongitude: true,
-      parameters: {depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d)},
+      parameters: {
+        depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d),
+        ...blendingParameters
+      },
       hidden: this.config.hidden,
       // visconfig
       opacity: this.config.visConfig.opacity,
@@ -1626,7 +1638,8 @@ class Layer implements KeplerLayer {
             },
             parameters: {
               // text will always show on top of all layers
-              depthTest: false
+              depthTest: false,
+              ...(mapState?.layerParameters ?? {})
             },
 
             getFilterValue: data.getFilterValue,
@@ -1651,7 +1664,8 @@ class Layer implements KeplerLayer {
                 ? {
                     background: {
                       parameters: {
-                        cull: false
+                        cull: false,
+                        ...(mapState?.layerParameters ?? {})
                       }
                     }
                   }

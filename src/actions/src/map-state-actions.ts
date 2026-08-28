@@ -3,7 +3,7 @@
 
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
-import {Bounds, Merge, Viewport} from '@kepler.gl/types';
+import {Bounds, Merge, Viewport, ViewportPadding} from '@kepler.gl/types';
 import {MapSplitMode, MapViewMode, GlobeConfig} from '@kepler.gl/constants';
 
 export type TogglePerspectiveUpdaterAction = void;
@@ -21,21 +21,30 @@ export const togglePerspective: () => Merge<
   {type: typeof ActionTypes.TOGGLE_PERSPECTIVE}
 > = createAction(ActionTypes.TOGGLE_PERSPECTIVE);
 
-export type FitBoundsUpdaterAction = {payload: Bounds};
+export type FitBoundsUpdaterAction = {
+  payload: Bounds;
+  meta?: {padding?: ViewportPadding};
+};
 /**
  * Fit map viewport to bounds
  * @memberof mapStateActions
  * @param {Array<Number>} bounds as `[lngMin, latMin, lngMax, latMax]`
+ * @param {Number|Object} [padding] padding in pixels around the bounds. Can be a number or `{top, bottom, left, right}`.
  * @public
  * @example
  * import {fitBounds} from '@kepler.gl/actions';
  * this.props.dispatch(fitBounds([-122.23, 37.127, -122.11, 37.456]));
+ * this.props.dispatch(fitBounds([-122.23, 37.127, -122.11, 37.456], {left: 300}));
  */
 export const fitBounds: (
-  payload: Bounds
+  bounds: Bounds,
+  padding?: ViewportPadding
 ) => Merge<FitBoundsUpdaterAction, {type: typeof ActionTypes.FIT_BOUNDS}> = createAction(
   ActionTypes.FIT_BOUNDS,
-  (bounds: Bounds) => ({payload: bounds})
+  (bounds: Bounds, padding?: ViewportPadding) => ({
+    payload: bounds,
+    meta: {padding}
+  })
 );
 
 export type UpdateMapUpdaterAction = {payload: {viewport: Viewport; mapIndex?: number}};

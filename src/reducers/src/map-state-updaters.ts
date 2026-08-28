@@ -6,7 +6,7 @@ import {booleanWithin} from '@turf/boolean-within';
 import {bboxPolygon} from '@turf/bbox-polygon';
 import {fitBounds} from '@math.gl/web-mercator';
 import deepmerge from 'deepmerge';
-import pick from 'lodash/pick';
+import pick from 'es-toolkit/compat/pick';
 
 import {
   getCenterAndZoomFromBounds,
@@ -180,12 +180,21 @@ export const fitBoundsUpdater = (
 ): MapState => {
   const centerAndZoom = getCenterAndZoomFromBounds(action.payload, {
     width: state.width,
-    height: state.height
+    height: state.height,
+    padding: action.meta?.padding
   });
   if (!centerAndZoom) {
     // bounds is invalid
     return state;
   }
+
+  // In globe mode, clamp zoom to globe's allowed range
+  const isGlobeMode = Boolean(state.globe?.enabled);
+  const zoom = Number.isFinite(centerAndZoom.zoom)
+    ? isGlobeMode
+      ? Math.min(Math.max(centerAndZoom.zoom, GLOBE_MIN_ZOOM), GLOBE_MAX_ZOOM)
+      : centerAndZoom.zoom
+    : undefined;
 
   const newState = {
     ...state,
@@ -193,7 +202,7 @@ export const fitBoundsUpdater = (
     longitude: centerAndZoom.center[0],
     // For marginal or invalid bounds, zoom may be NaN. Make sure to provide a valid value in order
     // to avoid corrupt state and potential crashes as zoom is expected to be a number
-    ...(Number.isFinite(centerAndZoom.zoom) ? {zoom: centerAndZoom.zoom} : {})
+    ...(zoom !== undefined ? {zoom} : {})
   };
 
   // if fitting to bounds while split and unsynced
@@ -390,7 +399,8 @@ export const receiveMapConfigUpdater = (
   // center map will override mapState config
   if (options.centerMap && bounds) {
     mergedState = fitBoundsUpdater(mergedState, {
-      payload: bounds
+      payload: bounds,
+      meta: {padding: options.padding}
     });
   }
 

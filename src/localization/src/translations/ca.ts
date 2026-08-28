@@ -117,6 +117,7 @@ export default {
       hexagonid: 'H3',
       trip: 'viatge',
       s2: 'S2',
+      geohash: 'GeoHash',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'mosaic vectorial',
@@ -235,7 +236,7 @@ export default {
     title: 'Anotacions',
     addAnnotation: 'Afegir',
     type: 'Tipus',
-    lineWidth: "Amplada de línia",
+    lineWidth: 'Amplada de línia',
     color: 'Color'
   },
   effectDescription: {
@@ -297,7 +298,8 @@ export default {
     vectorTile: 'Mosaic vectorial',
     rasterTile: 'Mosaic ràster',
     wmsTile: 'Mosaic WMS',
-    tile3d: 'Mosaic 3D'
+    tile3d: 'Mosaic 3D',
+    remoteFile: '{rowCount} files (remot)'
   },
   tooltip: {
     hideLayer: 'oculta la capa',
@@ -313,14 +315,20 @@ export default {
     layerSettings: 'Configuració de capa',
     closePanel: 'Tanca panel actual',
     switchToDualView: 'Canvia a la vista de mapa dual',
-    selectSplitMode: "Selecciona el mode de vista del mapa",
-    singleView: "Únic",
-    dualView: "Doble",
-    swipeView: "Comparar",
+    selectSplitMode: 'Selecciona el mode de vista del mapa',
+    singleView: 'Únic',
+    dualView: 'Doble',
+    swipeView: 'Comparar',
     showLegend: 'mostra llegenda',
     disable3DMap: 'Desactiva mapa 3D',
     DrawOnMap: 'Dibuixa al mapa',
+    copyAllSketches: 'Copia tots els esbossos al porta-retalls com a GeoJSON',
+    convertToLayer: 'Converteix els esbossos en una capa GeoJSON i esborra el dibuix',
     selectLocale: 'Selecciona configuració regional',
+    switchToLightTheme: 'Canvia al tema clar',
+    switchToDarkTheme: 'Canvia al tema fosc',
+    showAiAssistantPanel: 'Mostra el tauler de AI Assistant',
+    hideAiAssistantPanel: 'Oculta el tauler de AI Assistant',
     hideLayerPanel: 'Oculta el tauler de capes',
     showLayerPanel: 'Mostra el tauler de capes',
     moveToTop: 'Desplaça a dalt de tot de les capes de dades',
@@ -344,8 +352,8 @@ export default {
     syncTimelineEnd: 'Fi del període de temps del filtre actual',
     showEffectPanel: "Mostra el panell d'efectes",
     hideEffectPanel: "Amaga el panell d'efectes",
-    showAnnotationPanel: "Mostra les anotacions",
-    hideAnnotationPanel: "Amaga les anotacions",
+    showAnnotationPanel: 'Mostra les anotacions',
+    hideAnnotationPanel: 'Amaga les anotacions',
     removeAnnotation: "Elimina l'anotació",
     duplicateAnnotation: "Duplica l'anotació",
     hideAnnotation: "Amaga l'anotació",
@@ -363,8 +371,13 @@ export default {
     shareMapURL: 'Comparteix URL del mapa',
     saveMap: 'Desa mapa',
     select: 'selecciona',
+    point: 'punt',
+    line: 'línia',
     polygon: 'polígon',
     rectangle: 'rectangle',
+    circle: 'cercle',
+    copyAll: 'Copia-ho tot',
+    convertToLayer: 'Converteix\na capa',
     hide: 'amaga',
     show: 'mostra',
     ...LOCALES
@@ -373,6 +386,11 @@ export default {
     filterLayer: 'Filtra capes',
     filterLayerDisabled: 'Les geometries no poligonals no es poden utilitzar per filtrar',
     copyGeometry: 'Copia geometria',
+    editProperties: 'Edita propietats',
+    propertyName: 'Propietat',
+    propertyValue: 'Valor',
+    removeProperty: 'Suprimeix la propietat',
+    polygonFilter: 'Filtre de polígon',
     noLayersToFilter: 'No hi ha capes per filtrar'
   },
   exportVideoModal: {
@@ -472,6 +490,10 @@ export default {
     saveMap: {
       title: 'Emmagatzematge al núvol',
       subtitle: 'Accedeix per desar el mapa al teu emmagatzematge al núvol'
+    },
+    providerSelect: {
+      disclaimer:
+        'Inicieu la sessió amb el vostre compte. Els mapes es desen al vostre emmagatzematge personal del proveïdor que trieu, no a Kepler.gl.'
     },
     exportMap: {
       formatTitle: 'Format de mapa',
@@ -668,8 +690,15 @@ export default {
       'Carrega {fileFormatNames} o un mapa desat en **Json**. Més informació sobre [**supported file formats**]',
     browseFiles: 'navega pels teus arxius',
     uploading: 'Carregant',
+    downloading: 'Descarregant',
     fileNotSupported: "L'arxiu {errorFiles} no és compatible.",
-    or: 'o'
+    or: 'o',
+    dropMessage: "Arrossega i deixa anar l'arxiu aquí, {browse}, o",
+    urlPlaceholder: 'Introdueix l’URL del conjunt de dades',
+    fetch: 'Carrega',
+    format: 'Format',
+    formatAuto: 'Auto',
+    cors: 'L’URL ha de permetre [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {
     header: 'Configurar mosaics vectorials',

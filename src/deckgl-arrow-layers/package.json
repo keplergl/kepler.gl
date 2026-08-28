@@ -1,10 +1,10 @@
 {
   "name": "@kepler.gl/deckgl-arrow-layers",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.3.0-alpha.4",
+  "version": "3.3.0-alpha.8",
   "description": "Deck.gl layers with GeoArrow and GeoParquet support",
   "license": "MIT",
-  "main": "dist/index.js",
+  "main": "dist/cjs/index.js",
   "types": "dist/index.d.ts",
   "keywords": [
     "babel",
@@ -19,20 +19,18 @@
     "url": "https://github.com/keplergl/kepler.gl.git"
   },
   "scripts": {
-    "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
-    "build:umd": "webpack --config ./webpack/umd.js --progress --env prod",
+    "build": "rm -fr dist && babel src --out-dir dist/cjs --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts' && BABEL_ENV=esm babel src --out-dir dist/esm --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
     "build:types": "tsc --project ./tsconfig.production.json",
     "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
-    "stab": "mkdir -p dist && touch dist/index.js"
+    "stab": "mkdir -p dist/cjs dist/esm && touch dist/cjs/index.js dist/esm/index.js"
   },
   "files": [
-    "dist",
-    "umd"
+    "dist"
   ],
   "dependencies": {
     "@geoarrow/geoarrow-js": "^0.3.0",
-    "@kepler.gl/constants": "3.3.0-alpha.4",
-    "@kepler.gl/utils": "3.3.0-alpha.4",
+    "@kepler.gl/constants": "3.3.0-alpha.8",
+    "@kepler.gl/utils": "3.3.0-alpha.8",
     "@math.gl/core": "^4.1.0",
     "@math.gl/polygon": "^4.1.0",
     "@math.gl/types": "^4.1.0",
@@ -61,5 +59,14 @@
     "node": "20.19.3",
     "yarn": "4.4.0"
   },
-  "packageManager": "yarn@4.4.0"
+  "packageManager": "yarn@4.4.0",
+  "module": "dist/esm/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/cjs/index.js"
+    }
+  }
 }

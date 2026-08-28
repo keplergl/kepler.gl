@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import throttle from 'lodash/throttle';
+import throttle from 'es-toolkit/compat/throttle';
 import {useEffect, useRef, useState, RefObject} from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 

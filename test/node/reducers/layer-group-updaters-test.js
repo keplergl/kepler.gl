@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape-catch';
-import CloneDeep from 'lodash/cloneDeep';
+import CloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import {VisStateActions} from '@kepler.gl/actions';
 import {

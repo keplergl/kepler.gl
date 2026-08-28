@@ -3,7 +3,7 @@
 
 /* eslint-disable max-statements */
 import {mount} from 'enzyme';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';

@@ -29,6 +29,8 @@ export type MapState = {
   maxBounds?: Bounds;
   initialState?: any;
   scale?: number;
+  /** Layer rendering parameters forwarded from visState for use during layer construction in globe mode. */
+  layerParameters?: Record<string, string | boolean>;
 
   // the following 4 properties assist with split viewports that can optionally have (un)synced viewports and zooms
   /**  Is the application split into 2 maps? */
@@ -44,6 +46,9 @@ export type MapState = {
     enabled: boolean;
     config: {
       atmosphere: boolean;
+      hugeHalo: boolean;
+      hugeHaloRadius: number;
+      hugeHaloOpacity: number;
       azimuth: boolean;
       azimuthAngle: number;
       terminator: boolean;
@@ -68,6 +73,19 @@ export type MapState = {
 };
 
 export type Bounds = [number, number, number, number];
+
+/**
+ * Padding in pixels used when fitting the map viewport to bounds.
+ * A number applies the same padding on all sides.
+ */
+export type ViewportPadding =
+  | number
+  | {
+      top?: number;
+      bottom?: number;
+      left?: number;
+      right?: number;
+    };
 
 export type RangeFieldDomain = {
   domain: number[];
@@ -503,8 +521,11 @@ export type MapControls = {
   splitMap?: MapControlItem;
   mapDraw?: MapControlItem;
   mapLocale?: MapControlItem;
+  mapTheme?: MapControlItem;
   effect?: MapControlItem;
   annotation?: MapControlItem;
+  sqlPanel?: MapControlItem;
+  aiAssistant?: MapControlItem;
   [key: string]: MapControlItem | MapControlMapLegend | undefined;
 };
 
@@ -522,6 +543,8 @@ export type Notifications = {
 };
 
 export type Locale = string;
+
+export type UiTheme = string;
 
 export type PanelListView = string;
 
@@ -547,6 +570,8 @@ export type UiState = {
   loadFiles: LoadFiles;
   // Locale of the UI
   locale: Locale;
+  // Theme of the UI (`light` | `dark`), used when enableThemeToggle is on
+  theme: UiTheme;
   // view layers by list or dataset
   layerPanelListView: PanelListView;
   // view filters by list or dataset

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import memoize from 'lodash/memoize';
-import uniq from 'lodash/uniq';
+import memoize from 'es-toolkit/compat/memoize';
+import uniq from 'es-toolkit/compat/uniq';
 import {interpolateArray} from 'd3-interpolate';
 import Layer, {LayerBaseConfig, defaultGetFieldValue, VisualChannelField} from '../base-layer';
 import {TripsLayer as DeckGLTripsLayer} from '@deck.gl/geo-layers';
@@ -626,7 +626,7 @@ export default class TripLayer extends Layer {
     switch (this.config.columnMode) {
       case COLUMN_MODE_GEOJSON: {
         valueAccessor = (dc: DataContainerInterface, f, fieldIndex: number) => {
-          return dc.valueAt(f.properties.index, fieldIndex);
+          return fields[fieldIndex].valueAccessor({index: f.properties.index});
         };
         const textLabelAccessor = tl => dc => {
           const {field} = tl;
@@ -788,7 +788,8 @@ export default class TripLayer extends Layer {
       wrapLongitude: false,
       parameters: {
         depthTest: mapState.dragRotate,
-        depthMask: false
+        depthMask: false,
+        ...(mapState?.layerParameters ?? {})
       },
       trailLength: visConfig.trailLength * 1000,
       fadeTrail: visConfig.fadeTrail,
@@ -826,10 +827,9 @@ export default class TripLayer extends Layer {
           _animations: {
             '*': {speed: 5}
           },
-          parameters: {depthTest: true, blend: false},
+          parameters: {depthTest: true, blend: false, ...(mapState?.layerParameters ?? {})},
           updateTriggers: {
             getTransformMatrix: {
-              ...this.config.columns,
               currentTime: animationConfig.currentTime,
               rollField,
               pitchField,

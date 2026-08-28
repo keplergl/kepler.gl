@@ -12,7 +12,14 @@ from typing import Optional
 import pandas as pd
 import geopandas as gpd
 
-DEFAULT_KEPLER_GL_CDN_VERSION = "3"
+DEFAULT_KEPLER_GL_CDN_VERSION = "3.3.0-alpha.4"
+
+REACT_VERSION = "19.1.0"
+REACT_DOM_VERSION = "19.1.0"
+REDUX_VERSION = "5.0.1"
+REACT_REDUX_VERSION = "9.3.0"
+STYLED_COMPONENTS_VERSION = "6.1.19"
+ES_MODULE_SHIMS_VERSION = "2.8.1"
 
 
 def _dataset_to_csv(data) -> Optional[str]:
@@ -191,19 +198,73 @@ def export_map_html(
     <!--Kepler css-->
     <link href="https://unpkg.com/kepler.gl@{kepler_gl_version}/umd/keplergl.min.css" rel="stylesheet">
 
-    <!--MapBox css-->
-    <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet">
-    <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
+    <!--MapLibre css-->
+    <link href="https://unpkg.com/maplibre-gl@^4/dist/maplibre-gl.css" rel="stylesheet">
 
-    <!-- Load React/Redux -->
-    <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
-    <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
-    <script src="https://unpkg.com/styled-components@6.1.8/dist/styled-components.min.js" crossorigin></script>
+    <!--
+      React >= 19 no longer ships UMD builds, so we load React and the other
+      peer dependencies as ES modules from esm.sh via an import map, then
+      expose them as window globals that the kepler.gl UMD bundle expects.
 
-    <!-- Load Kepler.gl -->
-    <script src="https://unpkg.com/kepler.gl@{kepler_gl_version}/umd/keplergl.min.js" crossorigin></script>
+      es-module-shims runs in "shim mode" so the page also works when opened
+      as a local file:// (native import maps are blocked under file://).
+    -->
+    <script>
+      window.esmsInitOptions = {{shimMode: true, version: '{ES_MODULE_SHIMS_VERSION}'}};
+    </script>
+    <script async src="https://ga.jspm.io/npm:es-module-shims@{ES_MODULE_SHIMS_VERSION}/dist/es-module-shims.js" crossorigin="anonymous"></script>
+
+    <script type="importmap-shim">
+      {{
+        "imports": {{
+          "react":              "https://esm.sh/react@{REACT_VERSION}",
+          "react/jsx-runtime":  "https://esm.sh/react@{REACT_VERSION}/jsx-runtime",
+          "react-dom":          "https://esm.sh/react-dom@{REACT_DOM_VERSION}?external=react",
+          "react-dom/client":   "https://esm.sh/react-dom@{REACT_DOM_VERSION}/client?external=react",
+          "redux":              "https://esm.sh/redux@{REDUX_VERSION}",
+          "react-redux":        "https://esm.sh/react-redux@{REACT_REDUX_VERSION}?external=react,react-dom,redux",
+          "styled-components":  "https://esm.sh/styled-components@{STYLED_COMPONENTS_VERSION}?external=react,react-dom"
+        }}
+      }}
+    </script>
+
+    <!--
+      Expose the ES modules as globals for the kepler.gl UMD bundle, then
+      dynamically load that bundle and run the bootstrap scripts once ready.
+    -->
+    <script type="module-shim">
+      import * as React            from 'react';
+      import * as ReactDOM         from 'react-dom';
+      import * as ReactDOMClient   from 'react-dom/client';
+      import * as Redux            from 'redux';
+      import * as ReactRedux       from 'react-redux';
+      import * as StyledComponents from 'styled-components';
+
+      window.React       = React.default || React;
+      window.ReactDOM    = Object.assign({{}}, ReactDOM.default || ReactDOM, ReactDOMClient);
+      window.Redux       = Redux.default || Redux;
+      window.ReactRedux  = ReactRedux.default || ReactRedux;
+      window.styled      = Object.assign(StyledComponents.default, StyledComponents);
+
+      function loadScript(src) {{
+        return new Promise(function(resolve, reject) {{
+          var s = document.createElement('script');
+          s.src = src; s.crossOrigin = 'anonymous';
+          s.onload = resolve; s.onerror = reject;
+          document.head.appendChild(s);
+        }});
+      }}
+
+      loadScript('https://unpkg.com/kepler.gl@{kepler_gl_version}/umd/keplergl.min.js')
+        .then(function() {{
+          document.querySelectorAll('script[type="text/kepler-bootstrap"]').forEach(function(node) {{
+            var s = document.createElement('script');
+            s.text = node.textContent;
+            document.body.appendChild(s);
+          }});
+        }})
+        .catch(function(err) {{ console.error('kepler.gl: failed to load UMD bundle', err); }});
+    </script>
 
     <style type="text/css">
       body {{margin: 0; padding: 0; overflow: hidden;}}
@@ -216,7 +277,7 @@ def export_map_html(
   <body>
     <div id="app"></div>
 
-    <script>
+    <script type="text/kepler-bootstrap">
       /** STORE **/
       const reducers = (function createReducers(redux, keplerGl) {{
         return redux.combineReducers({{
@@ -238,14 +299,13 @@ def export_map_html(
       }}(Redux, middleWares));
 
       const store = (function createStore(redux, enhancers) {{
-        return redux.createStore(reducers, {{}}, redux.compose(enhancers));
+        return redux.legacy_createStore(reducers, {{}}, redux.compose(enhancers));
       }}(Redux, enhancers));
       /** END STORE **/
 
       /** COMPONENTS **/
       var KeplerElement = (function makeKeplerElement(react, keplerGl, mapboxToken) {{
         return function App() {{
-          var rootElm = react.useRef(null);
           var _useState = react.useState({{
             width: window.innerWidth,
             height: window.innerHeight
@@ -283,14 +343,13 @@ def export_map_html(
       /** END COMPONENTS **/
 
       /** Render **/
-      (function render(react, reactDOM, app) {{
-        const container = document.getElementById('app');
-        const root = reactDOM.createRoot(container);
+      (function render(reactDOM, app) {{
+        const root = reactDOM.createRoot(document.getElementById('app'));
         root.render(app);
-      }}(React, ReactDOM, app));
+      }}(ReactDOM, app));
     </script>
 
-    <script>
+    <script type="text/kepler-bootstrap">
       (function customize(keplerGl, store) {{
         var datasets = [];
 {dataset_js}

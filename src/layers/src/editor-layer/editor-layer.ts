@@ -5,6 +5,7 @@ import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
 import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core';
 import {
   DrawPolygonMode,
+  DrawPointMode,
   TranslateMode,
   CompositeMode,
   GeoJsonEditMode
@@ -14,11 +15,14 @@ import {PathStyleExtension} from '@deck.gl/extensions';
 import {EDITOR_LAYER_ID, EDITOR_MODES, EDITOR_LAYER_PICKING_RADIUS} from '@kepler.gl/constants';
 import {Viewport, Editor, Feature, FeatureSelectionContext} from '@kepler.gl/types';
 import {generateHashId} from '@kepler.gl/common-utils';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {EDIT_TYPES} from './constants';
-import {LINE_STYLE, FEATURE_STYLE, EDIT_HANDLE_STYLE} from './feature-styles';
+import {LINE_STYLE, FEATURE_STYLE, EDIT_HANDLE_STYLE, getFeatureDashArray} from './feature-styles';
 import {ModifyModeExtended} from './modify-mode-extended';
 import {DrawRectangleModeExtended} from './draw-rectangle-mode-extended';
+import {DrawCircleModeExtended} from './draw-circle-mode-extended';
+import {DrawLineStringModeExtended} from './draw-line-string-mode-extended';
 import {isDrawingActive} from './editor-layer-utils';
 
 const DEFAULT_COMPOSITE_MODE = new CompositeMode([
@@ -38,7 +42,7 @@ export type GetEditorLayerProps = {
     features: Feature[];
   };
   selectedFeatureIndexes: number[];
-  mapState?: {globe?: {enabled: boolean}};
+  mapState?: {globe?: {enabled: boolean}; layerParameters?: Record<string, string | boolean>};
 };
 
 /**
@@ -64,6 +68,7 @@ export function getEditorLayer({
   mapState
 }: GetEditorLayerProps): DeckLayer<DeckLayerProps> {
   const {mode: editorMode} = editor;
+  const sketchesEnabled = getApplicationConfig().enableDrawOnMapSketches;
 
   let mode = DEFAULT_COMPOSITE_MODE;
   if (editorMenuActive) {
@@ -71,7 +76,24 @@ export function getEditorLayer({
     if (editorMode === EDITOR_MODES.DRAW_POLYGON) mode = DrawPolygonMode;
     // @ts-ignore
     else if (editorMode === EDITOR_MODES.DRAW_RECTANGLE) mode = DrawRectangleModeExtended;
+    // @ts-ignore
+    else if (editorMode === EDITOR_MODES.DRAW_CIRCLE) mode = DrawCircleModeExtended;
+    // @ts-ignore
+    else if (sketchesEnabled && editorMode === EDITOR_MODES.DRAW_LINESTRING)
+      // @ts-ignore
+      mode = DrawLineStringModeExtended;
+    // @ts-ignore
+    else if (sketchesEnabled && editorMode === EDITOR_MODES.DRAW_POINT) mode = DrawPointMode;
   }
+
+  const hasPointFeatures = featureCollection.features.some(
+    feature => feature.geometry?.type === 'Point' || feature.geometry?.type === 'MultiPoint'
+  );
+  // Point sketches need fill to be visible, including the tentative point while drawing.
+  const filled =
+    selectedFeatureIndexes.length > 0 ||
+    hasPointFeatures ||
+    (sketchesEnabled && editorMode === EDITOR_MODES.DRAW_POINT);
 
   // @ts-ignore
   return new EditableGeoJsonLayer({
@@ -86,14 +108,13 @@ export function getEditorLayer({
     modeConfig: {
       viewport,
       screenSpace: true,
-      lockRectangles: true
+      lockRectangles: true,
+      // Turf circle() default; 64 vertices is a smooth tessellated polygon.
+      steps: 64
     },
 
     pickingLineWidthExtraPixels: 5,
-
-    // Only show fill when polygons are selected,
-    // there is no way atm to enable fill for only one feature
-    filled: selectedFeatureIndexes.length > 0,
+    filled,
 
     onEdit: ({updatedData, editType}) => {
       switch (editType) {
@@ -101,13 +122,22 @@ export function getEditorLayer({
           const {features: _features} = updatedData;
           if (_features.length) {
             const lastFeature = _features[_features.length - 1];
-            if (lastFeature.properties) lastFeature.properties.isClosed = true;
+            const geometryType = lastFeature.geometry?.type;
+            if (
+              lastFeature.properties &&
+              (geometryType === 'Polygon' || geometryType === 'MultiPolygon')
+            ) {
+              lastFeature.properties.isClosed = true;
+            }
+            if (!lastFeature.type) lastFeature.type = 'Feature';
             lastFeature.id = generateHashId(6);
             onSetFeatures(updatedData.features as unknown as Feature[]);
 
             const isRectangle = lastFeature.properties?.shape === 'Rectangle';
             if (isRectangle && onApplyPolygonFilterAll) {
               onApplyPolygonFilterAll(lastFeature as unknown as Feature);
+            } else if (geometryType === 'Point' || geometryType === 'LineString') {
+              // Stay in draw mode so multiple sketches can be added in a row.
             } else {
               setSelectedFeature(lastFeature as unknown as Feature);
             }
@@ -140,23 +170,23 @@ export function getEditorLayer({
         else if (type === 'existing') return EDIT_HANDLE_STYLE.highlightMultiplier;
       }
 
-      // Note: highlight color affects even transparent filled polygons
-      return selectedFeatureIndexes.length
-        ? FEATURE_STYLE.highlightMultiplier
-        : LINE_STYLE.highlightMultiplier;
+      // Polygons get a mostly transparent fill highlight. Using the opaque
+      // stroke color here paints a solid yellow background because GeoJsonLayer
+      // applies highlightColor to fill when the layer is filled (e.g. points).
+      const geomType = object?.geometry?.type;
+      if (geomType === 'Polygon' || geomType === 'MultiPolygon') {
+        return FEATURE_STYLE.highlightMultiplier;
+      }
+      if (geomType === 'LineString' || geomType === 'MultiLineString') {
+        return LINE_STYLE.highlightMultiplier;
+      }
+
+      return filled ? FEATURE_STYLE.highlightMultiplier : LINE_STYLE.highlightMultiplier;
     },
 
     extensions: [new PathStyleExtension({dash: true})],
     dashGapPickable: true,
-    getDashArray: feature => {
-      if (feature?.properties?.guideType === 'tentative') {
-        return LINE_STYLE.dashArray;
-      }
-
-      if (feature?.id === editor.selectedFeature?.id) return LINE_STYLE.solidArray;
-
-      return LINE_STYLE.dashArray;
-    },
+    getDashArray: getFeatureDashArray,
 
     getLineColor: LINE_STYLE.getColor,
     getFillColor: FEATURE_STYLE.getColor,
@@ -171,21 +201,38 @@ export function getEditorLayer({
 
     getTentativeLineColor: LINE_STYLE.getTentativeLineColor,
     // @ts-ignore
-    getTentativeLineWidth: LINE_STYLE.getTentativeLineWidth,
+    getTentativeLineWidth:
+      sketchesEnabled && editorMode === EDITOR_MODES.DRAW_LINESTRING
+        ? LINE_STYLE.lineStringWidth
+        : LINE_STYLE.getTentativeLineWidth,
     getTentativeFillColor: LINE_STYLE.getTentativeFillColor,
 
     // Globe mode needs explicit depth testing so the editor overlay is occluded
     // by the sphere; in flat 2D/3D keep deck.gl's default (empty parameters) so
     // this matches the pre-globe behavior exactly.
-    parameters: mapState?.globe?.enabled ? {depthTest: true} : {},
+    parameters: mapState?.globe?.enabled
+      ? {depthTest: true, ...(mapState?.layerParameters ?? {})}
+      : {},
     shadowEnabled: false,
     _subLayerProps: {
       geojson: {shadowEnabled: false},
       guides: {shadowEnabled: false},
       tooltips: {
         shadowEnabled: false,
+        getSize: 14,
+        getColor: [255, 255, 255, 255],
+        background: true,
+        getBackgroundColor: [0, 0, 0, 200],
+        backgroundPadding: [6, 4],
+        getPixelOffset: [12, 0],
+        getTextAnchor: 'start',
+        getAlignmentBaseline: 'center',
+        fontFamily: 'sans-serif',
+        fontWeight: '600',
+        pickable: false,
         _subLayerProps: {
-          characters: {shadowEnabled: false}
+          characters: {shadowEnabled: false},
+          background: {shadowEnabled: false}
         }
       }
     }

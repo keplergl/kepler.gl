@@ -77,7 +77,7 @@ export type HistogramMaskModeType = {
 
 const undefinedToZero = (v: number | undefined) => (v ? v : 0);
 
-interface HistogramPlotProps {
+export interface HistogramPlotProps {
   width: number;
   height: number;
   margin: {top: number; bottom: number; left: number; right: number};

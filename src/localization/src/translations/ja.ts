@@ -117,6 +117,7 @@ export default {
       hexagonid: 'H3',
       trip: 'trip',
       s2: 'S2',
+      geohash: 'GeoHash',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'vector tile',
@@ -295,7 +296,8 @@ export default {
     vectorTile: 'ベクタータイル',
     rasterTile: 'ラスタータイル',
     wmsTile: 'WMSタイル',
-    tile3d: '3Dタイル'
+    tile3d: '3Dタイル',
+    remoteFile: '{rowCount}行（リモート）'
   },
   tooltip: {
     hideLayer: 'レイヤを非表示',
@@ -316,7 +318,13 @@ export default {
     showLegend: '凡例を表示',
     disable3DMap: '3D地図を無効化',
     DrawOnMap: '地図上に図形を描画',
+    copyAllSketches: 'すべてのスケッチを GeoJSON としてクリップボードにコピー',
+    convertToLayer: 'スケッチを GeoJSON レイヤに変換し、描画をクリア',
     selectLocale: '言語設定',
+    switchToLightTheme: 'ライトテーマに切り替え',
+    switchToDarkTheme: 'ダークテーマに切り替え',
+    showAiAssistantPanel: 'AI 助手パネルを表示',
+    hideAiAssistantPanel: 'AI 助手パネルを非表示',
     hideLayerPanel: 'レイヤパネルを非表示',
     showLayerPanel: 'レイヤパネルを表示',
     moveToTop: 'データレイヤの手前に移動',
@@ -360,8 +368,13 @@ export default {
     shareMapURL: '地図のURLを共有',
     saveMap: '地図を保存',
     select: '選択',
+    point: 'ポイント',
+    line: 'ライン',
     polygon: 'ポリゴン',
     rectangle: '長方形',
+    circle: '円',
+    copyAll: 'すべてコピー',
+    convertToLayer: 'レイヤに\n変換',
     hide: '非表示',
     show: '表示',
     ...LOCALES
@@ -370,6 +383,11 @@ export default {
     filterLayer: 'レイヤをフィルタ',
     filterLayerDisabled: 'ポリゴン以外のジオメトリはフィルタリングに使用できません',
     copyGeometry: 'ジオメトリをコピー',
+    editProperties: 'プロパティを編集',
+    propertyName: 'プロパティ',
+    propertyValue: '値',
+    removeProperty: 'プロパティを削除',
+    polygonFilter: 'ポリゴンフィルタ',
     noLayersToFilter: 'フィルタするレイヤがありません'
   },
   exportVideoModal: {
@@ -470,6 +488,10 @@ export default {
     saveMap: {
       title: 'クラウドストレージ',
       subtitle: '地図を個人用クラウドストレージに保存するためにログインする'
+    },
+    providerSelect: {
+      disclaimer:
+        'ご自身のアカウントでログインします。マップは選択したプロバイダーの個人ストレージに保存され、Kepler.gl 上には保存されません。'
     },
     exportMap: {
       formatTitle: '地図の形式',
@@ -665,8 +687,15 @@ export default {
       '{fileFormatNames} または保存済地図の**Json**をアップロードします。詳細は以下を参照してください：[**対応ファイル形式**]',
     browseFiles: 'デバイスのファイルを選択',
     uploading: 'アップロード中',
+    downloading: 'ダウンロード中',
     fileNotSupported: '{errorFiles} はサポートされていないファイルです。',
-    or: 'または'
+    or: 'または',
+    dropMessage: 'ここにファイルをドロップ（複数可）、{browse}、または',
+    urlPlaceholder: 'データセットの URL を入力',
+    fetch: '取得',
+    format: '形式',
+    formatAuto: '自動',
+    cors: 'URL は [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) を許可する必要があります。'
   },
   geocoder: {
     title: '住所または座標を入力（例： 37.79,-122.40）'

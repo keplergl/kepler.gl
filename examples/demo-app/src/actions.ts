@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {fetch} from 'global';
-
 import {loadFiles, toggleModal} from '@kepler.gl/actions';
 import {parseUri} from '@kepler.gl/common-utils';
 import {load} from '@loaders.gl/core';
@@ -138,7 +136,7 @@ export function loadRemoteMap(options) {
  * @param url
  * @returns {Promise<any>}
  */
-function loadRemoteRawData(url) {
+function loadRemoteRawData(url): Promise<any> {
   if (!url) {
     // TODO: we should return reject with an appropriate error
     return Promise.resolve(null);
@@ -198,7 +196,7 @@ function loadRemoteSampleMap(options) {
   return dispatch => {
     // Load configuration first
     const {configUrl, dataUrl, remoteDatasetConfigUrl} = options;
-    const toLoad = [loadRemoteConfig(configUrl)];
+    const toLoad: (Promise<any> | null)[] = [loadRemoteConfig(configUrl)];
     toLoad.push(dataUrl ? loadRemoteData(dataUrl) : null);
     // Load remote dataset config for tiled layers
     toLoad.push(remoteDatasetConfigUrl ? loadRemoteConfig(remoteDatasetConfigUrl) : null);
@@ -255,7 +253,7 @@ function loadRemoteConfig(url) {
  * @param url to fetch data from (csv, json, geojson)
  * @returns {Promise<any>}
  */
-function loadRemoteData(url) {
+function loadRemoteData(url): Promise<any> {
   if (!url) {
     // TODO: we should return reject with an appropriate error
     return Promise.resolve(null);

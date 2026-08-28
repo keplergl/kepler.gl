@@ -18,8 +18,8 @@
   },
   "dependencies": {
     "classnames": "^2.2.5",
+    "es-toolkit": "^1.39.10",
     "global": "^4.3.2",
-    "lodash": "4.17.23",
     "prop-types": "^15.6.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -64,12 +64,23 @@
     "webpack": "^5.104.1",
     "webpack-cli": "^5.1.4",
     "webpack-dev-middleware": "^6.1.1",
-    "webpack-dev-server": "^5.2.5",
+    "webpack-dev-server": "^5.2.6",
     "webpack-hot-middleware": "^2.25.4"
   },
   "peerDependencies": {
     "react": ">=19",
     "react-dom": ">=19"
+  },
+  "resolutions": {
+    "ip-address": "10.5.0",
+    "lodash": "4.18.1",
+    "mime": "1.6.0",
+    "min-document": "2.19.2",
+    "node-fetch": "2.7.0",
+    "qs": "6.15.3",
+    "socks": "2.8.9",
+    "tar": "7.5.22",
+    "tmp": "0.2.7"
   },
   "engines": {
     "node": ">=20"

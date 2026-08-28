@@ -3,7 +3,7 @@
 
 import React, {Component} from 'react';
 import {css} from 'styled-components';
-import get from 'lodash/get';
+import get from 'es-toolkit/compat/get';
 import document from 'global/document';
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
@@ -325,6 +325,7 @@ export default function ModalContainerFactory(
                 pinTableColumn={visStateActions.pinTableColumn}
                 copyTableColumn={visStateActions.copyTableColumn}
                 setColumnDisplayFormat={visStateActions.setColumnDisplayFormat}
+                loadColumnStats={visStateActions.loadColumnStats}
                 uiStateActions={uiStateActions}
                 uiState={uiState}
               />

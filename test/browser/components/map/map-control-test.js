@@ -79,7 +79,7 @@ test('MapControlFactory - display all options', t => {
       </MapViewStateContextProvider>
     </IntlWrapper>
   );
-  t.equal($.find('.map-control-action').length, 7, 'Should show 7 action panels');
+  t.equal($.find('.map-control-action').length, 8, 'Should show 8 action panels');
   t.end();
 });
 
@@ -297,8 +297,8 @@ test('MapControlFactory - show panels', t => {
   t.equal(wrapper.find(MapControlToolbar).length, 1, 'should render 1 MapControlToolbar');
   t.equal(
     wrapper.find(MapControlToolbar).at(0).find(ToolbarItem).length,
-    3,
-    'should render 3 ToolbarItem'
+    8,
+    'should render 8 ToolbarItem'
   );
 
   // show locale

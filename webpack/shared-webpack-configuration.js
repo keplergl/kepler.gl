@@ -46,7 +46,10 @@ const WEBPACK_ENV_VARIABLES = Object.keys(ENV_VARIABLES_WITH_INSTRUCTIONS).reduc
     ...acc,
     [key]: null
   }),
-  {}
+  {
+    // Optional until set in Netlify / local env (not required for production build validation)
+    GoogleDriveClientId: null
+  }
 );
 
 module.exports = {

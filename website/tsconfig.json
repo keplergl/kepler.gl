@@ -20,7 +20,12 @@
     "noImplicitAny": false,
     "baseUrl": ".",
     "paths": {
-      "styled-components": ["node_modules/styled-components"]
+      "styled-components": ["node_modules/styled-components"],
+      // The website's esbuild aliases @kepler.gl/* to local source; for the
+      // typecheck, resolve to the demo-app's published packages (which carry
+      // built .d.ts) rather than the unbuilt local src/<pkg>/dist.
+      "@kepler.gl/actions": ["../examples/demo-app/node_modules/@kepler.gl/actions/dist/index.d.ts"],
+      "@kepler.gl/constants": ["../examples/demo-app/node_modules/@kepler.gl/constants/dist/index.d.ts"]
     }
   },
   "include": ["src", "../examples/demo-app/src"]

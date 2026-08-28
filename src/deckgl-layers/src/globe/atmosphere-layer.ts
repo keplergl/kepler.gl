@@ -11,7 +11,7 @@ import {SphereGeometry} from '@luma.gl/engine';
 import {Vector3} from '@math.gl/core';
 import {getSunPosition} from '@math.gl/sun';
 
-import type {GlobeConfig} from '@kepler.gl/constants';
+import {DEFAULT_GLOBE_CONFIG, type GlobeConfig} from '@kepler.gl/constants';
 
 const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 
@@ -35,11 +35,40 @@ const GLOBE_MESH_OUTER = new SphereGeometry({
   nlong: 100
 });
 
+// ~14% larger than the globe surface mesh — yields a thick soft aura (~0.1–0.15R).
+const GLOBE_MESH_HUGE_HALO = new SphereGeometry({
+  radius: 7.3e6,
+  nlat: 100,
+  nlong: 100
+});
+
 const [lon, lat] = [0, 90];
 const sunPosNow = getSunPosition(Date.now(), lat, lon);
 const v3SunPosNow = angleToSunPos(sunPosNow.azimuth + Math.PI);
 
 const NUM_SAMPLE_RAYS = 3;
+
+/**
+ * Zoom range over which the atmosphere effect fades out.
+ * Below ATMOSPHERE_FADE_ZOOM_START the effect is fully visible.
+ * Above ATMOSPHERE_FADE_ZOOM_END the effect is completely hidden.
+ */
+const ATMOSPHERE_FADE_ZOOM_START = 3.5;
+const ATMOSPHERE_FADE_ZOOM_END = 6;
+
+/**
+ * Convert a mapState zoom level to a [0, 1] atmosphere opacity multiplier.
+ * Returns 1 (fully visible) below ATMOSPHERE_FADE_ZOOM_START, smoothly
+ * interpolates to 0 between the two thresholds, and returns 0 above
+ * ATMOSPHERE_FADE_ZOOM_END.
+ */
+export function atmosphereZoomFade(zoom: number): number {
+  if (zoom <= ATMOSPHERE_FADE_ZOOM_START) return 1;
+  if (zoom >= ATMOSPHERE_FADE_ZOOM_END) return 0;
+  const t = (zoom - ATMOSPHERE_FADE_ZOOM_START) / (ATMOSPHERE_FADE_ZOOM_END - ATMOSPHERE_FADE_ZOOM_START);
+  // Smooth-step for a perceptually gentle transition.
+  return 1 - t * t * (3 - 2 * t);
+}
 
 const ATMOSPHERE_UNIFORMS = {
   v3SunPos: v3SunPosNow,
@@ -59,20 +88,23 @@ const ATMOSPHERE_UNIFORMS = {
 
 type AtmosphereLayerProps = {
   config: GlobeConfig;
+  /** Pre-computed [0, 1] zoom-fade multiplier; 1 = fully visible, 0 = hidden. */
+  zoomFade: number;
 };
 
 export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, AtmosphereLayerProps> {
   static layerName = 'AtmosphereLayerRealistic';
 
   draw({uniforms}: {uniforms: object}): void {
-    const {config} = this.props;
+    const {config, zoomFade} = this.props;
     const model = this.state.model;
     if (model) {
       (model as any).props.uniforms = {
         ...(model as any).props.uniforms,
         ...ATMOSPHERE_UNIFORMS,
         fTerminatorOpacityFactor: config.terminator ? config.terminatorOpacity : 0,
-        v3SunPos: config.azimuth ? angleToSunPos(toRadians(config.azimuthAngle)) : v3SunPosNow
+        v3SunPos: config.azimuth ? angleToSunPos(toRadians(config.azimuthAngle)) : v3SunPosNow,
+        fAtmosphereZoomFade: zoomFade
       };
     }
     super.draw({uniforms});
@@ -100,6 +132,7 @@ export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, AtmosphereLay
 
           uniform float fTerminatorAttenuateFactor;
           uniform float fTerminatorOpacityFactor;
+          uniform float fAtmosphereZoomFade;
 
           const int nSamples = ${NUM_SAMPLE_RAYS};
 
@@ -176,6 +209,11 @@ export class AtmosphereLayerRealistic extends SimpleMeshLayer<any, AtmosphereLay
           // reaches full darkening on the night side (<= -0.2).
           float fNightMask = smoothstep(0.2, -0.2, fLightAngle);
           fragColor.a *= fNightMask;
+
+          // Fade out the entire day/night shading effect as the user zooms in.
+          // At zoom levels above ATMOSPHERE_FADE_ZOOM_END the effect is invisible,
+          // so it doesn't obscure map detail at street/city scale.
+          fragColor.a *= fAtmosphereZoomFade;
         `,
         'fs:DECKGL_FILTER_COLOR': ``
       }
@@ -187,13 +225,14 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, Atmosphere
   static layerName = 'AtmosphereSkyLayerRealistic';
 
   draw({uniforms}: {uniforms: object}): void {
-    const {config} = this.props;
+    const {config, zoomFade} = this.props;
     const model = this.state.model;
     if (model) {
       (model as any).props.uniforms = {
         ...(model as any).props.uniforms,
         ...ATMOSPHERE_UNIFORMS,
-        v3SunPos: config.azimuth ? angleToSunPos(toRadians(config.azimuthAngle)) : v3SunPosNow
+        v3SunPos: config.azimuth ? angleToSunPos(toRadians(config.azimuthAngle)) : v3SunPosNow,
+        fAtmosphereZoomFade: zoomFade
       };
     }
     super.draw({uniforms});
@@ -218,6 +257,7 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, Atmosphere
           uniform float fKr4PI;
           uniform float fKm4PI;
           uniform float fScaleDepth;
+          uniform float fAtmosphereZoomFade;
 
           const int nSamples = ${NUM_SAMPLE_RAYS};
 
@@ -295,6 +335,9 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, Atmosphere
 
           fragColor = vec4(skyColor, 1.0);
           fragColor.a = fragColor.b;
+
+          // Fade the sky halo out as the user zooms in past continent scale.
+          fragColor.a *= fAtmosphereZoomFade;
         `,
         'fs:DECKGL_FILTER_COLOR': ``
       }
@@ -315,11 +358,124 @@ const ATMOSPHERE_SKY_PARAMETERS = {
   blendEquation: [0x8006, 0x8006]
 };
 
-export const getGlobeAtmosphereLayer = ({config}: {config: GlobeConfig}) => {
+/**
+ * Soft, sun-independent glow. Radii are in deck.gl common space
+ * (GLOBE_COMMON_RADIUS = 256; atmosphere uses ~258 as a slight fudge).
+ * Outer ≈ 14% larger than inner at radius multiplier = 1 (matches the base mesh).
+ */
+const HUGE_HALO_INNER_RADIUS = 258;
+const HUGE_HALO_BASE_OUTER_RADIUS = 294;
+const HUGE_HALO_BASE_SHELL = HUGE_HALO_BASE_OUTER_RADIUS - HUGE_HALO_INNER_RADIUS;
+/** Matches the Halo Radius slider max; higher values can produce a black-disc artifact. */
+const HUGE_HALO_RADIUS_MAX = 3.5;
+
+const HUGE_HALO_UNIFORMS = {
+  fInnerRadius: HUGE_HALO_INNER_RADIUS,
+  // Soft cyan matching the reference huge-halo look.
+  v3HaloColor: [0.45, 0.72, 1.0],
+  fHaloIntensity: 1.0
+};
+
+const HUGE_HALO_PARAMETERS = {
+  cullFace: 0x0404, // GL.FRONT
+  depthMask: false,
+  // Large shells often enclose the camera; disable depth so the ring still draws.
+  depthTest: false,
+  blendFunc: [0x0302, 0x0303, 1, 0x0303], // SRC_ALPHA, ONE_MINUS_SRC_ALPHA
+  blendEquation: [0x8006, 0x8006]
+};
+
+function resolveHugeHaloRadius(config: GlobeConfig): number {
+  const multiplier = Number.isFinite(config.hugeHaloRadius)
+    ? (config.hugeHaloRadius as number)
+    : DEFAULT_GLOBE_CONFIG.hugeHaloRadius;
+  // Scale shell thickness; keep outer above the planet surface.
+  return (
+    HUGE_HALO_INNER_RADIUS +
+    HUGE_HALO_BASE_SHELL * Math.max(Math.min(multiplier, HUGE_HALO_RADIUS_MAX), 0.05)
+  );
+}
+
+function resolveHugeHaloOpacity(config: GlobeConfig): number {
+  const opacity = Number.isFinite(config.hugeHaloOpacity)
+    ? (config.hugeHaloOpacity as number)
+    : DEFAULT_GLOBE_CONFIG.hugeHaloOpacity;
+  return Math.max(0, Math.min(1, opacity));
+}
+
+/**
+ * View-independent atmosphere: a large uniform emissive aura around the globe.
+ * Unlike AtmosphereSkyLayerRealistic, this ignores sun direction and uses a
+ * linear radial falloff through a thick shell (max at the surface → 0 at outer radius).
+ */
+export class AtmosphereHugeHaloLayer extends SimpleMeshLayer<any, AtmosphereLayerProps> {
+  static layerName = 'AtmosphereHugeHaloLayer';
+
+  draw({uniforms}: {uniforms: object}): void {
+    const {config, zoomFade} = this.props;
+    const model = this.state.model;
+    if (model) {
+      (model as any).props.uniforms = {
+        ...(model as any).props.uniforms,
+        ...HUGE_HALO_UNIFORMS,
+        fHaloOpacity: resolveHugeHaloOpacity(config),
+        fAtmosphereZoomFade: zoomFade
+      };
+    }
+    super.draw({uniforms});
+  }
+
+  getShaders(): any {
+    return {
+      ...super.getShaders(),
+      inject: {
+        'fs:#decl': `
+          uniform float fInnerRadius;
+          uniform vec3 v3HaloColor;
+          uniform float fHaloIntensity;
+          uniform float fHaloOpacity;
+          uniform float fAtmosphereZoomFade;
+        `,
+        'fs:#main-end': `
+          vec3 v3CameraPos = cameraPosition;
+          vec3 v3Pos = position_commonspace.xyz;
+          // Outer radius from the actual mesh vertex so sizeScale stays in sync.
+          float fOuterRadius = length(v3Pos);
+          vec3 v3Ray = normalize(v3Pos - v3CameraPos);
+
+          // Impact parameter of the view ray (perpendicular distance from globe
+          // center to the ray). Stable when the camera is inside the outer shell,
+          // unlike near/far sphere-intersection math which breaks in that case
+          // and produced a black disc at high radius multipliers.
+          float fDMin = length(cross(v3CameraPos, v3Ray));
+
+          // Linear falloff in the annulus only: max at the surface, zero at outer.
+          float fShell = max(fOuterRadius - fInnerRadius, 0.0001);
+          float fGlow = 0.0;
+          if (fDMin >= fInnerRadius && fDMin < fOuterRadius) {
+            float t = (fDMin - fInnerRadius) / fShell;
+            fGlow = 1.0 - t;
+          }
+
+          fGlow *= fHaloIntensity;
+
+          // Straight alpha (not premultiplied) for SRC_ALPHA blending.
+          fragColor = vec4(v3HaloColor, fGlow * fHaloOpacity);
+          fragColor.a *= fAtmosphereZoomFade;
+        `,
+        'fs:DECKGL_FILTER_COLOR': ``
+      }
+    };
+  }
+}
+
+export const getGlobeAtmosphereLayer = ({config, zoom}: {config: GlobeConfig; zoom?: number}) => {
+  const zoomFade = atmosphereZoomFade(zoom ?? 0);
   return new AtmosphereLayerRealistic({
     id: 'atmosphere',
     data: [[0, 0, 0]],
     config,
+    zoomFade,
     coordinateOrigin: [0, 0, 0],
     coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
     getPosition: ((d: number[]) => d) as any,
@@ -329,16 +485,46 @@ export const getGlobeAtmosphereLayer = ({config}: {config: GlobeConfig}) => {
   });
 };
 
-export const getGlobeAtmosphereSkyLayer = ({config}: {config: GlobeConfig}) => {
+/** Realistic sun-lit scattering sky halo (thin limb glow). */
+export const getGlobeAtmosphereSkyLayer = ({config, zoom}: {config: GlobeConfig; zoom?: number}) => {
+  const zoomFade = atmosphereZoomFade(zoom ?? 0);
   return new AtmosphereSkyLayerRealistic({
     id: 'atmosphere-sky',
     data: [[0, 0, 0]],
     config,
+    zoomFade,
     coordinateOrigin: [0, 0, 0],
     coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
     getPosition: ((d: number[]) => d) as any,
     getColor: [0, 0, 0],
     mesh: GLOBE_MESH_OUTER,
     parameters: ATMOSPHERE_SKY_PARAMETERS
+  });
+};
+
+/**
+ * Large uniform glow drawn in addition to the realistic sky halo when
+ * `config.hugeHalo` is enabled. Returns null when disabled.
+ */
+export const getGlobeHugeHaloLayer = ({config, zoom}: {config: GlobeConfig; zoom?: number}) => {
+  if (!config.hugeHalo) {
+    return null;
+  }
+  const zoomFade = atmosphereZoomFade(zoom ?? 0);
+  const outerRadius = resolveHugeHaloRadius(config);
+  // Keep mesh extent in sync with the desired outer radius (base mesh = default outer).
+  const sizeScale = outerRadius / HUGE_HALO_BASE_OUTER_RADIUS;
+  return new AtmosphereHugeHaloLayer({
+    id: 'atmosphere-huge-halo',
+    data: [[0, 0, 0]],
+    config,
+    zoomFade,
+    coordinateOrigin: [0, 0, 0],
+    coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+    getPosition: ((d: number[]) => d) as any,
+    getColor: [0, 0, 0],
+    mesh: GLOBE_MESH_HUGE_HALO,
+    sizeScale,
+    parameters: HUGE_HALO_PARAMETERS
   });
 };

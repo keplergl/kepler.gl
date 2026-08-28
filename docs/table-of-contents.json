@@ -46,7 +46,9 @@
             {"entry": "docs/user-guides/c-types-of-layers/h-hexbin"},
             {"entry": "docs/user-guides/c-types-of-layers/i-heatmap"},
             {"entry": "docs/user-guides/c-types-of-layers/j-h3"},
-            {"entry": "docs/user-guides/c-types-of-layers/k.trip"}
+            {"entry": "docs/user-guides/c-types-of-layers/k.trip"},
+            {"entry": "docs/user-guides/c-types-of-layers/q-a5"},
+            {"entry": "docs/user-guides/c-types-of-layers/r-geohash"}
           ]
         }
       ]
@@ -118,7 +120,14 @@
     {
       "title": "Python Bindings",
       "entries": [
-        {"entry": "docs/keplergl-jupyter/user-guide"}
+        {"entry": "docs/keplergl-jupyter"},
+        {"entry": "docs/keplergl-jupyter/install"},
+        {"entry": "docs/keplergl-jupyter/widget-api"},
+        {"entry": "docs/keplergl-jupyter/data-formats"},
+        {"entry": "docs/keplergl-jupyter/map-customization"},
+        {"entry": "docs/keplergl-jupyter/config"},
+        {"entry": "docs/keplergl-jupyter/save-and-export"},
+        {"entry": "docs/keplergl-jupyter/faq"}
       ]
     }
   ]

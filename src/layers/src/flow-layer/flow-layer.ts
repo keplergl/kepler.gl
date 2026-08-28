@@ -16,6 +16,7 @@ import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {
   ColumnLabels,
   ColumnPairs,
+  Field,
   SupportedColumnMode,
   VisConfigBoolean,
   VisConfigNumber,
@@ -313,9 +314,12 @@ export default class FlowLayer extends Layer {
   private getLocationFromPosition = (pos: number[]) =>
     this._locationsByLatLon?.[FlowLayer.getLatLonKey(pos)];
 
-  private getMagnitude = (dataContainer: DataContainerInterface) => (rowIndex: number) => {
+  private getMagnitude = (fields: Field[]) => (rowIndex: number) => {
     const fieldIdx = this.config.columns.count?.fieldIdx;
-    return fieldIdx != null && fieldIdx >= 0 ? dataContainer.valueAt(rowIndex, fieldIdx) : 1;
+    if (fieldIdx == null || fieldIdx < 0) {
+      return 1;
+    }
+    return fields[fieldIdx].valueAccessor({index: rowIndex});
   };
 
   private getSourceName = (dataContainer: DataContainerInterface, d: {index: number}) => {
@@ -385,7 +389,7 @@ export default class FlowLayer extends Layer {
     const getLocationWeight = makeLocationWeightGetter(flowIndices, {
       getFlowOriginId,
       getFlowDestId,
-      getFlowMagnitude: this.getMagnitude(dataContainer)
+      getFlowMagnitude: this.getMagnitude(dataset.fields)
     });
 
     const clusterLevels = clusterLocations(locations, flowmapDataAccessors, getLocationWeight, {
@@ -396,14 +400,14 @@ export default class FlowLayer extends Layer {
   }
 
   calculateDataAttribute(
-    {dataContainer, filteredIndex}: KeplerTable,
+    {dataContainer, filteredIndex, fields}: KeplerTable,
     getPosition: (d: any) => number[]
   ): FlowDatum[] {
     const data: FlowDatum[] = [];
     const datum = {index: 0};
     const getSource = this.getSourcePosition(dataContainer);
     const getTarget = this.getTargetPosition(dataContainer);
-    const getMag = this.getMagnitude(dataContainer);
+    const getMag = this.getMagnitude(fields);
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
       datum.index = index;
@@ -456,15 +460,7 @@ export default class FlowLayer extends Layer {
         diffUpdateTriggers(filterUpdateTriggers, this._oldFilterUpdateTriggers);
       if (filterChanged || dataChanged) {
         const indexAccessor = (d: FlowDatum) => d.index;
-        const valueAccessor = (
-          dc: DataContainerInterface,
-          d: {index: number},
-          fieldIndex: number
-        ) => dc.valueAt(d.index, fieldIndex);
-        const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
-          indexAccessor,
-          valueAccessor
-        );
+        const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(indexAccessor);
         resultingFlows = resultingFlows.filter(getFilterDataFunc(filterRange, getFilterValue));
       }
       this._oldFilterUpdateTriggers = filterUpdateTriggers;
@@ -531,10 +527,11 @@ export default class FlowLayer extends Layer {
     // a top-level `parameters` won't reach them — we override via _subLayerProps, which
     // getSubLayerProps applies last. cullMode 'none' keeps both faces (arrows are flat).
     const isGlobeMode = Boolean(opts.mapState?.globe?.enabled);
+    const blendingParameters = opts.mapState?.layerParameters ?? {};
     const globeSubLayerProps = isGlobeMode
       ? (() => {
           const depthParams = {
-            parameters: {cull: false, depthTest: true, depthCompare: 'less-equal', cullMode: 'none'}
+            parameters: {cull: false, depthTest: true, depthCompare: 'less-equal', cullMode: 'none', ...blendingParameters}
           };
           return {
             _subLayerProps: {
@@ -572,7 +569,8 @@ export default class FlowLayer extends Layer {
         onHover: layerCallbacks.onLayerHover,
         parameters: {
           ...(cleanProps.parameters || {}),
-          cull: false
+          cull: false,
+          ...blendingParameters
         }
       })
     ];
@@ -582,7 +580,7 @@ export default class FlowLayer extends Layer {
     object: Record<string, any>;
     fieldValues: Array<{labelMessage: string; value: any}>;
   } | null {
-    const fmt = d3Format(TOOLTIP_FORMATS.DECIMAL_COMMA.format);
+    const fmt = v => d3Format(TOOLTIP_FORMATS.DECIMAL_COMMA.format)(Number(v));
     switch (object?.type) {
       case PickingType.LOCATION:
         return {

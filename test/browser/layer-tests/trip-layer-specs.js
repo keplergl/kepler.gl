@@ -3,7 +3,7 @@
 
 /* eslint-disable max-statements */
 import test from 'tape';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import {
   tripDefaultLineWidth as defaultLineWidth,

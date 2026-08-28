@@ -15,6 +15,88 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.8] - Aug 26 2026
+
+- af5d8173 chore: pin patched transitive deps via Yarn resolutions (#3654)
+- 854099ff feat: add circle draw tool and live length/radius labels (#3661)
+- d810e51c fix: collapse Arrow record batches above configurable cap (#3663)
+- 7dec2e70 feat: load CSV, GeoJSON, Arrow, and Parquet from a remote URL (#3662)
+- 2f60c22b fix: google drive provider prevent auto popup (#3660)
+- df9abf68 fix: remove ui buttons from map preview image (#3659)
+- be12d109 chore: replace lodash with es-toolkit (#3653)
+- 59eada01 chore: run Vite example typecheck after npm publish (#3652)
+- 2fe86102 fix: polygon filter not applied on map load (#3651)
+- f33e93b4 chore: typecheck Vite examples in CI (#3650)
+- 2926c507 chore: add circular-dep and unused-export CI checks (#3649)
+- 5b430334 chore: run Prettier and ESLint on staged files (#3648)
+- 56cad19d chore: cache Yarn, freeze lockfile, and skip Python CI on JS PRs (#3647)
+
+## [3.3.0-alpha.7] - Aug 14 2026
+
+- 34fd0bfc (origin/master, origin/HEAD, master) feat: add column statistics to the data table (#3646)
+- 90467113 feat: add point and line sketching to Draw on Map (#3639)
+- 423e1767 chore(examples): add click info example (#3643)
+- 8c03ee49 fix: handle Arrow Int64 BigInt values in accessors and filters (#3641)
+- 5030285a fix: heatmap centroids from point and line geometries (#3642)
+- 525b54ac feat: centerMap - add optional padding (#3644)
+- dbca1806 chore: update docs (#3645)
+- e26ed9c0 chore(docker): shrink build context and cache yarn installs (#3640)
+- fd3bc652 chore: fix dependabot vulnerabilities (#3638)
+- edd4e20c fix(video-export): points in video export don't react to zoom changes (#3637)
+- 24d554d0 fix(video-export): show globe stars in preview and exported video (#3636)
+- 6296973d fix(video-export): pixel ratio in preview mode regression (#3634)
+- 8fba10a2 chore: upgrade d3 (#3632)
+- 495d2995 chore: react-intl bump to 7 (#3633)
+- 2107ed8c Root now pins node-fetch 2.7.0 and thrift 0.23.0 (#3631)
+- 551dc3ff chore: Lodash is now 4.18.1 across the published packages and the website (#3630)
+- 54db300f chore: remove unused not exported files / utils (#3628)
+- e379e332 fix: polygon filtered index per layer, instead of per dataset (#3452)
+- 40a64eb7 fix: dropbox full logout; error on stale access token (#3627)
+- b313dfa2 feat(demo-app): add Google Drive cloud storage provider (#3623)
+- dead655a feat: A5 layer (#3625)
+- 29b8e479 fix: GlobehexagonCellLayer crash from Babel unbound super calls (#3622)
+- e8a644e4 fix: dropbox storage provider login issues (#3624)
+- a0bee767 feat: add optional theme switch toggle (#3620)
+- 997cba29 feat(globe): larger halo; globe controls fixes (#3621)
+- 621bb236 chore(deps): bump postcss from 8.4.49 to 8.5.26 in /website (#3619)
+- 24e6478c chore(deps): bump nanoid from 3.3.8 to 3.3.18 in /examples/demo-app (#3617)
+- 8458ee7f chore(deps): bump fast-uri from 3.1.2 to 3.1.5 (#3618)
+- 07422bfc fix: DuckDB GeoJSON import on newer duckdb-wasm (#3616)
+- b6ac552b chore: add duckdb vite example (#3615)
+- cb70edfa chore: upgrade examples to kepler.gl 3.3.0-alpha.6 (#3528)
+
+## [3.3.0-alpha.6] - Aug 4 2026
+
+- 426d6051 feat: add loading spinner to exported HTML maps (#3612)
+- 56d43329 fix: pre-seed basemap style in exported HTML map (#3613)
+- 0f377f89 chore(deps): bump fast-uri from 3.1.4 to 3.1.5 in /website (#3611)
+- f4961c61 chore: add dual ESM/CJS build for all workspace packages (#3607)
+- c99fc432 fix: exported html map loads blank (#3610)
+- b5805c1c fix: Babel stops recognizing it as a super method call (#3606)
+- 0ec3dd86 fix: globe crashes in dev mode (#3605)
+- 800083e0 fix: more fixes to WMS layer (#3603)
+
+## [3.3.0-alpha.5] - Aug 2 2026
+
+- c82030ba chore(deps): bump @deck.gl-community/editable-layers from 9.3.7 to 9.3.8
+- 43c034ad chore(deps): bump d3-color from 2.0.0 to 3.1.0 (#3599)
+- ab0780a0 fix: custom basemap attribution and style dropdown thumbnail (#3600)
+- 288c782b fix(raster-tile): fix stuck black tiles for raster tile layer (#3598)
+- 28f4596b chore: add reduxLogLevel config to suppress noisy Redux actions in dev console (#3597)
+- ee9aa885 feat: add map scale bar (#3596)
+- 314fe449 fix(globe): fade atmosphere halo & day/night effect on zoom in (#3595)
+- bdc6bd39 fix(globe): layer blending and overlay blending in Globe mode (#3594)
+- 3e4f57ba fix(globe): prevent globe rotation when drag starts or moves outside the globe silhouette (#3593)
+- e3a44596 chore(deps): bump brace-expansion in /examples/demo-app (#3602)
+- adf932ca chore(deps): bump brace-expansion from 1.1.16 to 1.1.18 in /website (#3601)
+- 28e8e3f5 chore: upgrade Python bindings to kepler.gl 3.3.0-alpha.4 (React 19) (#3591)
+- 58f2d6ab fix: python binding adaptation of 2283 (#3590)
+- 854f6a55 feat: Add SKILL.md for keplergl python package (#3429)
+- f00fd208 docs: update keplergl-jupyter docs for v0.4.0 (#3431)
+- e4a29070 chore: remove deprecated umd logic (#3589)
+- b6d10804 chore: remove deprecated `bindings/kepler.gl-jupyter` in favor of `bindings/python` (#3430)
+- 0e093722 chore(deps): bump pygments from 2.19.2 to 2.20.0 in /bindings/python (#3568)
+
 ## [3.3.0-alpha.4] - July 28 2026
 
 - ea966330 chore: upgrade to webpack 5 (#3587)

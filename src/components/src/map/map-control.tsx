@@ -11,6 +11,7 @@ import Toggle3dButtonFactory from './toggle-3d-button';
 import MapLegendPanelFactory from './map-legend-panel';
 import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
+import ThemeToggleButtonFactory from './theme-toggle-button';
 import MapNavigationControlFactory from './map-navigation-control';
 import {Layer} from '@kepler.gl/layers';
 import {Editor, LayerVisConfig, LayerOrder, MapControls, MapState} from '@kepler.gl/types';
@@ -69,12 +70,15 @@ export type MapControlProps = {
   onToggleMapControl: (control: string) => void;
   onSetEditorMode: (mode: string) => void;
   onToggleEditorVisibility: () => void;
+  onConvertEditorFeaturesToLayer?: () => void;
   onLayerVisConfigChange: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   onToggleLayerVisibility?: (layer: Layer) => void;
   top: number;
   onSetLocale: typeof UIStateActions.setLocale;
+  onSetTheme: typeof UIStateActions.setTheme;
   availableLocales: string[];
   locale: string;
+  themeName?: string;
   logoComponent?: React.FC | React.ReactNode;
   isExport?: boolean;
 
@@ -100,6 +104,7 @@ MapControlFactory.deps = [
   MapLegendPanelFactory,
   MapDrawPanelFactory,
   LocalePanelFactory,
+  ThemeToggleButtonFactory,
   AnnotationControlFactory,
   MapNavigationControlFactory
 ];
@@ -110,6 +115,7 @@ function MapControlFactory(
   MapLegendPanel: ReturnType<typeof MapLegendPanelFactory>,
   MapDrawPanel: ReturnType<typeof MapDrawPanelFactory>,
   LocalePanel: ReturnType<typeof LocalePanelFactory>,
+  ThemeToggleButton: ReturnType<typeof ThemeToggleButtonFactory>,
   AnnotationControl: ReturnType<typeof AnnotationControlFactory>,
   MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>
 ) {
@@ -119,6 +125,7 @@ function MapControlFactory(
     MapDrawPanel,
     AnnotationControl,
     LocalePanel,
+    ThemeToggleButton,
     MapLegendPanel
   ];
 
@@ -132,6 +139,8 @@ function MapControlFactory(
     logoComponent = LegendLogo,
     mapState,
     mapStateActions,
+    themeName,
+    onSetTheme,
     ...restProps
   }) => {
     const actionComponentProps = {
@@ -142,14 +151,16 @@ function MapControlFactory(
       onSetMapSplitMode: getApplicationConfig().enableSwipeMode
         ? mapStateActions?.setMapSplitMode
         : undefined,
-      ...restProps
+      ...restProps,
+      themeName,
+      onSetTheme
     };
     return (
       <StyledMapControl className="map-control" $top={top}>
         {actionComponents.map((ActionComponent, index) => (
           <ActionComponent key={index} className="map-control-action" {...actionComponentProps} />
         ))}
-        {mapState && mapStateActions ? (
+        {mapState && mapStateActions && !restProps.isExport ? (
           <MapNavigationControl
             mapState={mapState}
             mapIndex={mapIndex}

@@ -117,6 +117,7 @@ export default {
       hexagonid: 'H3',
       trip: 'viaje',
       s2: 'S2',
+      geohash: 'GeoHash',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'mosaico vectorial',
@@ -298,7 +299,8 @@ export default {
     vectorTile: 'Mosaico vectorial',
     rasterTile: 'Mosaico ráster',
     wmsTile: 'Mosaico WMS',
-    tile3d: 'Mosaico 3D'
+    tile3d: 'Mosaico 3D',
+    remoteFile: '{rowCount} filas (remoto)'
   },
   tooltip: {
     hideLayer: 'Ocultar la capa',
@@ -321,7 +323,13 @@ export default {
     showLegend: 'Mostrar leyenda',
     disable3DMap: 'Desactivar mapa 3D',
     DrawOnMap: 'Dibujar en el mapa',
+    copyAllSketches: 'Copiar todos los bocetos al portapapeles como GeoJSON',
+    convertToLayer: 'Convertir los bocetos en una capa GeoJSON y borrar el dibujo',
     selectLocale: 'Seleccionar configuración regional',
+    switchToLightTheme: 'Cambiar a tema claro',
+    switchToDarkTheme: 'Cambiar a tema oscuro',
+    showAiAssistantPanel: 'Mostrar el panel de AI Assistant',
+    hideAiAssistantPanel: 'Ocultar el panel de AI Assistant',
     hideLayerPanel: 'Ocultar la tabla de capas',
     showLayerPanel: 'Mostrar la tabla  de capas',
     moveToTop: 'Desplazar arriba de las capas de datos',
@@ -364,8 +372,13 @@ export default {
     shareMapURL: 'Compartir el enlace del mapa',
     saveMap: 'Guardar mapa',
     select: 'selecciona',
+    point: 'punto',
+    line: 'línea',
     polygon: 'polígono',
     rectangle: 'rectángulo',
+    circle: 'círculo',
+    copyAll: 'Copiar todo',
+    convertToLayer: 'Convertir\na capa',
     hide: 'esconder',
     show: 'mostrar',
     ...LOCALES
@@ -374,6 +387,11 @@ export default {
     filterLayer: 'Filtrar capas',
     filterLayerDisabled: 'Las geometrías no poligonales no se pueden usar para filtrar',
     copyGeometry: 'Copiar geometría',
+    editProperties: 'Editar propiedades',
+    propertyName: 'Propiedad',
+    propertyValue: 'Valor',
+    removeProperty: 'Quitar propiedad',
+    polygonFilter: 'Filtro de polígono',
     noLayersToFilter: 'No hay capas para filtrar'
   },
   exportVideoModal: {
@@ -473,6 +491,10 @@ export default {
     saveMap: {
       title: 'Almacentage en la nube',
       subtitle: 'Acceder para guardar el mapa en teu almacenage en la nube'
+    },
+    providerSelect: {
+      disclaimer:
+        'Inicia sesión con tu propia cuenta. Los mapas se guardan en tu almacenamiento personal del proveedor que elijas, no en Kepler.gl.'
     },
     exportMap: {
       formatTitle: 'Formato de mapa',
@@ -669,8 +691,15 @@ export default {
       'Cargar {fileFormatNames} o un mapa guardado en **Json**. Más información sobre [**supported file formats**]',
     browseFiles: 'navega por tus archivos',
     uploading: 'Cargando',
+    downloading: 'Descargando',
     fileNotSupported: 'El archivo {errorFiles} no es compatible.',
-    or: 'o'
+    or: 'o',
+    dropMessage: 'Arrastra y suelta el archivo aquí, {browse}, o',
+    urlPlaceholder: 'Introduce la URL del conjunto de datos',
+    fetch: 'Cargar',
+    format: 'Formato',
+    formatAuto: 'Auto',
+    cors: 'La URL debe permitir [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {
     header: 'Configurar mosaicos vectoriales',

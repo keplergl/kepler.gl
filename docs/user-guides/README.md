@@ -37,6 +37,8 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [H3](./c-types-of-layers/j-h3.md)
 * [Trip](./c-types-of-layers/k-trip.md)
 * [S2](./c-types-of-layers/l-s2.md)
+* [A5](./c-types-of-layers/q-a5.md)
+* [GeoHash](./c-types-of-layers/r-geohash.md)
 * [Vector Tile Layer](./c-types-of-layers/m-vector-tile-layer.md)
 * [Raster Tile Layer](./c-types-of-layers/n-raster-tile-layer.md)
 * [WMS Layer](./c-types-of-layers/o-wms-layer.md)
@@ -46,6 +48,8 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 #### [Color Palettes](./l-color-attributes.md)
 
 #### [Filters](./e-filters.md)
+
+#### [Draw on Map](./draw-on-map.md)
 
 #### [Map styles](./f-map-styles.md#map-styles)
 * [Base map styles](./f-map-styles.md#base-map-styles)

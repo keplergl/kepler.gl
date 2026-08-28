@@ -131,6 +131,8 @@ const actionHandler = {
 
   [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
 
+  [ActionTypes.SET_EDITOR_FEATURE_PROPERTIES]: visStateUpdaters.setEditorFeaturePropertiesUpdater,
+
   [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater,
 
   [ActionTypes.SET_POLYGON_FILTER_LAYER]: visStateUpdaters.setPolygonFilterLayerUpdater,
@@ -143,6 +145,9 @@ const actionHandler = {
 
   [ActionTypes.TOGGLE_EDITOR_VISIBILITY]: visStateUpdaters.toggleEditorVisibilityUpdater,
 
+  [ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER]:
+    visStateUpdaters.convertEditorFeaturesToLayerUpdater,
+
   [ActionTypes.TOGGLE_FILTER_FEATURE]: visStateUpdaters.toggleFilterFeatureUpdater,
 
   [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater,
@@ -154,6 +159,12 @@ const actionHandler = {
   [ActionTypes.COPY_TABLE_COLUMN]: visStateUpdaters.copyTableColumnUpdater,
 
   [ActionTypes.SET_COLUMN_DISPLAY_FORMAT]: visStateUpdaters.setColumnDisplayFormatUpdater,
+
+  [ActionTypes.LOAD_COLUMN_STATS]: visStateUpdaters.loadColumnStatsUpdater,
+
+  [ActionTypes.LOAD_COLUMN_STATS_SUCCESS]: visStateUpdaters.loadColumnStatsSuccessUpdater,
+
+  [ActionTypes.LOAD_COLUMN_STATS_ERROR]: visStateUpdaters.loadColumnStatsErrorUpdater,
 
   [ActionTypes.NEXT_FILE_BATCH]: visStateUpdaters.nextFileBatchUpdater,
 

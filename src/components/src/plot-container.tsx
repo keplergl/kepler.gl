@@ -4,7 +4,7 @@
 // libraries
 import React, {useRef, useEffect, useState, useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-import debounce from 'lodash/debounce';
+import debounce from 'es-toolkit/compat/debounce';
 import {
   exportImageError,
   scaleMapStyleByResolution,
@@ -33,9 +33,17 @@ const CLASS_FILTER = [
   'mapboxgl-control-container',
   'attrition-link',
   'attrition-logo',
-  'map-control__panel-split-viewport-tools'
+  'map-control__panel-split-viewport-tools',
+  'map-navigation-control'
 ];
-const DOM_FILTER_FUNC = node => !CLASS_FILTER.includes(node.className);
+const DOM_FILTER_FUNC = node => {
+  const className = typeof node.className === 'string' ? node.className : '';
+  if (!className) {
+    return true;
+  }
+  const classes = className.split(/\s+/);
+  return !CLASS_FILTER.some(cls => classes.includes(cls));
+};
 const OUT_OF_SCREEN_POSITION = -9999;
 
 /**
@@ -75,7 +83,8 @@ const StyledPlotContainer = styled.div<StyledPlotContainerProps>`
   .mapboxgl-ctrl-bottom-left,
   .mapboxgl-ctrl-bottom-right,
   .mapbox-attribution-container,
-  .map-control__panel-split-viewport-tools {
+  .map-control__panel-split-viewport-tools,
+  .map-navigation-control {
     display: none;
   }
 

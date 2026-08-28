@@ -9,7 +9,8 @@ import {
   SORT_ORDER,
   ALL_FIELD_TYPES,
   ALTITUDE_FIELDS,
-  SCALE_TYPES
+  SCALE_TYPES,
+  FILTER_TYPES
 } from '@kepler.gl/constants';
 import {
   RGBColor,
@@ -39,6 +40,9 @@ import {
   getFilterFunction,
   getFilterProps,
   getFilterRecord,
+  getPolygonFilterFunctor,
+  isValidFilterValue,
+  mergePolygonLayerIndexes,
   getNumericFieldDomain,
   getTimestampFieldDomain,
   getLinearDomain,
@@ -103,19 +107,85 @@ export type TimeFieldFilterProps = TimeRangeFieldDomain & {
 // Unique identifier of each field
 const FID_KEY = 'name';
 
+function readFieldValue(
+  fieldIdx: number,
+  dc: DataContainerInterface,
+  // An object with row index or a materialized row array (for materialized hover info from trip layer)
+  d: {index: number} | any[]
+) {
+  return Array.isArray(d) ? d[fieldIdx] : dc.valueAt(d.index, fieldIdx);
+}
+
 export function maybeToDate(
   isTime: boolean,
   fieldIdx: number,
   format: string,
   dc: DataContainerInterface,
-  // An object with row index or a materialized row array (for materialized hover info from trip layer)
   d: {index: number} | any[]
 ) {
-  if (isTime) {
-    return timeToUnixMilli(Array.isArray(d) ? d[fieldIdx] : dc.valueAt(d.index, fieldIdx), format);
+  const value = readFieldValue(fieldIdx, dc, d);
+  return isTime ? timeToUnixMilli(value, format) : value;
+}
+
+/**
+ * Compute per-layer filtered indices for polygon filters.
+ * Polygon filters are layer-specific: they should only affect the layers listed in filter.layerId.
+ * For each layer on this dataset, compute a filtered index that applies only the polygon filters
+ * targeting that specific layer. Multiple polygon filters targeting the same layer are ANDed.
+ */
+function computePolygonFilteredIndexByLayer(
+  filters: Filter[],
+  layers: Layer[],
+  dataId: string,
+  dataContainer: DataContainerInterface,
+  baseFilteredIndex: number[]
+): Record<string, number[]> {
+  const polygonFilters = filters.filter(
+    f =>
+      f.type === FILTER_TYPES.polygon &&
+      f.dataId.includes(dataId) &&
+      f.enabled !== false &&
+      isValidFilterValue(f.type, f.value)
+  );
+
+  if (!polygonFilters.length) {
+    return {};
   }
 
-  return Array.isArray(d) ? d[fieldIdx] : dc.valueAt(d.index, fieldIdx);
+  const layersOnDataset = layers.filter(l => l.config?.dataId === dataId);
+  const result: Record<string, number[]> = {};
+
+  for (const layer of layersOnDataset) {
+    // For each polygon filter, check if this layer is targeted
+    const applicableFilters = polygonFilters.filter(
+      f => f.layerId && f.layerId.includes(layer.id)
+    );
+
+    if (!applicableFilters.length) {
+      // This layer is not targeted by any polygon filter - use base index
+      continue;
+    }
+
+    // Build polygon filter functors for this layer
+    const filterFunctors = applicableFilters.map(filter =>
+      getPolygonFilterFunctor(layer, filter, dataContainer)
+    );
+
+    // Filter the base filtered index: a row passes if it passes ALL polygon filters
+    // (each polygon filter already uses this layer's position accessor)
+    const layerFilteredIndex: number[] = [];
+    const filterContext = {index: -1};
+    for (let i = 0; i < baseFilteredIndex.length; i++) {
+      filterContext.index = baseFilteredIndex[i];
+      if (filterFunctors.every(fn => fn(filterContext))) {
+        layerFilteredIndex.push(baseFilteredIndex[i]);
+      }
+    }
+
+    result[layer.id] = layerFilteredIndex;
+  }
+
+  return result;
 }
 
 class KeplerTable<F extends Field = Field> {
@@ -134,6 +204,7 @@ class KeplerTable<F extends Field = Field> {
   filteredIndex: number[] = [];
   filteredIdxCPU?: number[];
   filteredIndexForDomain: number[] = [];
+  filteredIndexByLayer: Record<string, number[]> = {};
   fieldPairs: FieldPair[] = [];
   gpuFilter: GpuFilter;
   filterRecord?: FilterRecord;
@@ -251,6 +322,7 @@ class KeplerTable<F extends Field = Field> {
     this.allIndexes = allIndexes;
     this.filteredIndex = allIndexes;
     this.filteredIndexForDomain = allIndexes;
+    this.filteredIndexByLayer = {};
     this.fieldPairs = findPointFieldPairs(fields);
     // @ts-expect-error Make sure that fields satisfies F extends Field
     this.fields = fields;
@@ -269,6 +341,7 @@ class KeplerTable<F extends Field = Field> {
     this.allIndexes = this.dataContainer.getPlainIndex();
     this.filteredIndex = this.allIndexes;
     this.filteredIndexForDomain = this.allIndexes;
+    this.filteredIndexByLayer = {};
 
     return this;
   }
@@ -382,6 +455,7 @@ class KeplerTable<F extends Field = Field> {
     if (!filters.length) {
       this.filteredIndex = this.allIndexes;
       this.filteredIndexForDomain = this.allIndexes;
+      this.filteredIndexByLayer = {};
       return this;
     }
 
@@ -416,6 +490,15 @@ class KeplerTable<F extends Field = Field> {
     this.filteredIndexForDomain =
       filterResult.filteredIndexForDomain || this.filteredIndexForDomain;
 
+    // Compute per-layer filtered indices for polygon filters
+    this.filteredIndexByLayer = computePolygonFilteredIndexByLayer(
+      filters,
+      layers,
+      dataId,
+      dataContainer,
+      this.filteredIndex
+    );
+
     return this;
   }
 
@@ -437,23 +520,31 @@ class KeplerTable<F extends Field = Field> {
       return this;
     }
 
+    let baseIndex: number[];
+    let indexByLayer: Record<string, number[]>;
+
     // no gpu filter
     if (!filters.find(f => f.gpu)) {
-      this.filteredIdxCPU = this.filteredIndex;
+      baseIndex = this.filteredIndex;
+      indexByLayer = this.filteredIndexByLayer;
       this.filterRecordCPU = getFilterRecord(this.id, filters, opt);
-      return this;
+    } else {
+      // make a copy for cpu filtering
+      const copied = copyTable(this);
+
+      copied.filterRecord = this.filterRecordCPU;
+      copied.filteredIndex = this.filteredIdxCPU || [];
+
+      const filtered = copied.filterTable(filters, layers, opt);
+
+      baseIndex = filtered.filteredIndex;
+      indexByLayer = filtered.filteredIndexByLayer;
+      this.filterRecordCPU = filtered.filterRecord;
     }
 
-    // make a copy for cpu filtering
-    const copied = copyTable(this);
-
-    copied.filterRecord = this.filterRecordCPU;
-    copied.filteredIndex = this.filteredIdxCPU || [];
-
-    const filtered = copied.filterTable(filters, layers, opt);
-
-    this.filteredIdxCPU = filtered.filteredIndex;
-    this.filterRecordCPU = filtered.filterRecord;
+    // Polygon filters are applied per-layer (not in filteredIndex). For export, keep rows
+    // visible on any polygon-targeted layer.
+    this.filteredIdxCPU = mergePolygonLayerIndexes(baseIndex, indexByLayer);
 
     return this;
   }
@@ -715,20 +806,33 @@ export function copyTableAndUpdate(
   }, copyTable(original));
 }
 
+/**
+ * Arrow Int64/Uint64 columns yield JS BigInt. Detect from the column type once
+ * at bind time so other columns keep the existing accessor with no extra checks.
+ */
+function isInt64ArrowColumn(dc: DataContainerInterface, fieldIdx: number): boolean {
+  const type = (dc.getColumn?.(fieldIdx) as {type?: {bitWidth?: number; isSigned?: boolean}})
+    ?.type;
+  return type?.bitWidth === 64 && typeof type.isSigned === 'boolean';
+}
+
 export function getFieldValueAccessor<
   F extends {
     type?: Field['type'];
     format?: Field['format'];
   }
 >(f: F, i: number, dc: DataContainerInterface) {
-  return maybeToDate.bind(
-    null,
-    // is time
-    f.type === ALL_FIELD_TYPES.timestamp,
-    i,
-    f.format || '',
-    dc
-  );
+  if (f.type === ALL_FIELD_TYPES.timestamp) {
+    const format = f.format || '';
+    return (d: {index: number} | any[]) => timeToUnixMilli(readFieldValue(i, dc, d), format);
+  }
+  if (isInt64ArrowColumn(dc, i)) {
+    return (d: {index: number} | any[]) => {
+      const value = readFieldValue(i, dc, d);
+      return value == null ? value : Number(value);
+    };
+  }
+  return readFieldValue.bind(null, i, dc);
 }
 
 export default KeplerTable;

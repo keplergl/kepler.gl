@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {combineReducers} from 'redux';
-import {handleActions} from 'redux-actions';
 import Task, {withTask} from 'react-palm/tasks';
 
 import {aiAssistantReducer} from '@openassistant/kepler-assistant';
@@ -56,6 +55,8 @@ initApplicationConfig({
 // Data values in the "icon" column matching these IDs will render the custom shapes.
 // NOTE: Cell winding must be counter-clockwise (CCW) to match the CDN icon convention.
 initApplicationConfig({
+  enableA5Layer: true,
+  enableGeohashLayer: true,
   customIcons: [
     {
       id: 'custom-star',
@@ -98,23 +99,18 @@ const initialAppState = {
 };
 
 // App reducer
-export const appReducer = handleActions(
-  {
-    [INIT]: (state: any) => ({
-      ...state,
-      loaded: true
-    }),
-    [LOAD_MAP_SAMPLE_FILE]: (state: any, action: any) => ({
-      ...state,
-      sampleMaps: action.samples
-    }),
-    [SET_SAMPLE_LOADING_STATUS]: (state: any, action: any) => ({
-      ...state,
-      isMapLoading: action.isMapLoading
-    })
-  },
-  initialAppState
-);
+export const appReducer = (state = initialAppState, action) => {
+  switch (action.type) {
+    case INIT:
+      return {...state, loaded: true};
+    case LOAD_MAP_SAMPLE_FILE:
+      return {...state, sampleMaps: action.samples};
+    case SET_SAMPLE_LOADING_STATUS:
+      return {...state, isMapLoading: action.isMapLoading};
+    default:
+      return state;
+  }
+};
 
 const {DEFAULT_EXPORT_MAP} = uiStateUpdaters;
 

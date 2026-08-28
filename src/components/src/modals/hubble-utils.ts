@@ -28,6 +28,27 @@ type MapboxLayerRef = {
   id: string;
 } & Record<string, any>;
 
+// luma.gl defaults `debug` to true whenever NODE_ENV !== 'production', which
+// instruments every render pass with a TIME_ELAPSED_EXT timer query. WebGL2 only
+// allows one such query to be active at a time, and the globe export renders
+// several passes per frame, so the debug context throws INVALID_OPERATION and
+// takes the whole export modal down. Export previews are throwaway render
+// targets that don't need the validation layer.
+
+/** Device props for export previews that own their canvas and read pixels back off it. */
+export const EXPORT_DECK_DEVICE_PROPS = {
+  type: 'webgl' as const,
+  webgl: {preserveDrawingBuffer: true},
+  debug: false
+};
+
+/** Device props for export previews that draw as an overlay on top of a basemap. */
+export const EXPORT_OVERLAY_DEVICE_PROPS = {
+  type: 'webgl' as const,
+  webgl: {stencil: true},
+  debug: false
+};
+
 const linear: (p: number) => number = p => p;
 const hold: (p: number) => number = p => (p === 1 ? 1 : 0);
 
@@ -292,8 +313,14 @@ export function getGlobeExportLayers(
   {
     mapIndex,
     mapboxApiAccessToken,
-    mapboxApiUrl
-  }: {mapIndex: number; mapboxApiAccessToken?: string; mapboxApiUrl?: string}
+    mapboxApiUrl,
+    viewState
+  }: {
+    mapIndex: number;
+    mapboxApiAccessToken?: string;
+    mapboxApiUrl?: string;
+    viewState?: MapViewState;
+  }
 ) {
   const globe = keplerState.mapState?.globe;
   const globeBaseLayers = getGlobeBaseLayers({
@@ -302,12 +329,19 @@ export function getGlobeExportLayers(
     mapStyleType: keplerState.mapStyle?.styleType
   });
   const globeTopLayers = getGlobeTopLayers({globe});
-  const dataLayers = computeDeckLayers(keplerState, {
-    mapIndex,
-    primaryMap: mapIndex === 0,
-    mapboxApiAccessToken,
-    mapboxApiUrl
-  });
+  // Same as hubble createKeplerLayers: fold the animated camera into mapState so
+  // zoom-dependent props (scatterplot radiusScale) update each frame.
+  const dataLayers = computeDeckLayers(
+    viewState
+      ? {...keplerState, mapState: {...keplerState.mapState, ...viewState}}
+      : keplerState,
+    {
+      mapIndex,
+      primaryMap: mapIndex === 0,
+      mapboxApiAccessToken,
+      mapboxApiUrl
+    }
+  );
   return [...globeBaseLayers, ...dataLayers, ...globeTopLayers];
 }
 

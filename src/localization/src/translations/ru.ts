@@ -117,6 +117,7 @@ export default {
       hexagonid: 'H3',
       trip: 'пути',
       s2: 'S2',
+      geohash: 'GeoHash',
       '3d': '3D',
       flow: 'поток',
       vectortile: 'векторный тайл',
@@ -297,7 +298,8 @@ export default {
     vectorTile: 'Векторный тайл',
     rasterTile: 'Растровый тайл',
     wmsTile: 'WMS тайл',
-    tile3d: '3D тайл'
+    tile3d: '3D тайл',
+    remoteFile: '{rowCount} строк (удалённый)'
   },
   tooltip: {
     hideLayer: 'скрыть слой',
@@ -318,7 +320,13 @@ export default {
     showLegend: 'Показать легенду',
     disable3DMap: 'Отключить 3D Карту',
     DrawOnMap: 'Рисовать на карте',
+    copyAllSketches: 'Скопировать все наброски в буфер обмена как GeoJSON',
+    convertToLayer: 'Преобразовать наброски в слой GeoJSON и очистить рисунок',
     selectLocale: 'Выберите регион',
+    switchToLightTheme: 'Переключить на светлую тему',
+    switchToDarkTheme: 'Переключить на тёмную тему',
+    showAiAssistantPanel: 'Показать панель AI Assistant',
+    hideAiAssistantPanel: 'Скрыть панель AI Assistant',
     hideLayerPanel: 'Скрыть панель слоев',
     showLayerPanel: 'Показать панель слоев',
     moveToTop: 'Перейти к верхним слоям данных',
@@ -363,8 +371,13 @@ export default {
     exportVideo: 'Экспорт видео',
     saveMap: 'Сохарнить Карту',
     select: 'Выбрать',
+    point: 'Точка',
+    line: 'Линия',
     polygon: 'Многоугольник',
     rectangle: 'Квадрат',
+    circle: 'Круг',
+    copyAll: 'Копировать всё',
+    convertToLayer: 'Преобразовать\nв слой',
     hide: 'Скрыть',
     show: 'Показать',
     ...LOCALES
@@ -373,6 +386,11 @@ export default {
     filterLayer: 'Слои фильтров',
     filterLayerDisabled: 'Неполигональные геометрии нельзя использовать для фильтрации',
     copyGeometry: 'Копировать геометрию',
+    editProperties: 'Изменить свойства',
+    propertyName: 'Свойство',
+    propertyValue: 'Значение',
+    removeProperty: 'Удалить свойство',
+    polygonFilter: 'Полигональный фильтр',
     noLayersToFilter: 'Нет слоев для фильтрации'
   },
   exportVideoModal: {
@@ -473,6 +491,10 @@ export default {
     saveMap: {
       title: 'Облачное хранилище',
       subtitle: 'Авторизуйтесь, чтобы сохранить карту в вашем личном облачном хранилище'
+    },
+    providerSelect: {
+      disclaimer:
+        'Войдите в свой аккаунт. Карты хранятся в вашем личном облаке у выбранного провайдера, а не на Kepler.gl.'
     },
     exportMap: {
       formatTitle: 'Формат карты',
@@ -670,8 +692,15 @@ export default {
       'Загрузите {fileFormatNames} или сохраненную карту **Json**. Подробнее [**supported file formats**]',
     browseFiles: 'Просматреть файлы',
     uploading: 'Загрузка',
+    downloading: 'Загрузка',
     fileNotSupported: 'Файл {errorFiles} не поддерживается.',
-    or: 'или'
+    or: 'или',
+    dropMessage: 'Перетащите сюда ваши файлы, {browse} или',
+    urlPlaceholder: 'Введите URL набора данных',
+    fetch: 'Загрузить',
+    format: 'Формат',
+    formatAuto: 'Авто',
+    cors: 'URL должен разрешать [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {
     header: 'Настройка векторных тайлов',

@@ -110,12 +110,15 @@ export default class FoursquareProvider extends Provider {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getUser(): Promise<any> {
-    return this._auth0.getUser();
+    const user = await this._auth0.getUser();
+    return this._mapAuth0User(user);
   }
 
   // @ts-expect-error base Provider.login() return type will be widened to Promise<CloudUser | void> in a future @kepler.gl/cloud-providers release
   async login(): Promise<void> {
-    return this._auth0.loginWithPopup(undefined, {popup: openPopup()});
+    await this._auth0.loginWithPopup(undefined, {popup: openPopup()});
+    // CloudTile expects a user object; Auth0 loginWithPopup resolves to void.
+    return this.getUser();
   }
 
   async logout(): Promise<void> {
@@ -123,6 +126,17 @@ export default class FoursquareProvider extends Provider {
       // this make sure after logging out the sdk will not redirect the user
       openUrl: false
     });
+  }
+
+  _mapAuth0User(user) {
+    if (!user) {
+      return null;
+    }
+    return {
+      name: user.name || user.nickname || user.email || 'Foursquare User',
+      email: user.email || '',
+      thumbnail: user.picture
+    };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

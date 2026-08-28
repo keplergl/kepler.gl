@@ -7,6 +7,7 @@ import * as arrow from 'apache-arrow';
 import {console as globalConsole} from 'global/window';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 
+import {getApplicationConfig} from './application-config';
 import {DataContainerInterface, RangeOptions} from './data-container-interface';
 import {DataRow, SharedRowOptions} from './data-row';
 
@@ -120,6 +121,185 @@ function* columnIterator(dataContainer: DataContainerInterface, columnIndex: num
   }
 }
 
+const DEFAULT_MAX_ARROW_BATCHES = 1;
+
+/**
+ * Collapse Arrow record batches into as few chunks as possible.
+ *
+ * Deck.gl picking encodes at most 255 pickable leaf layers. Kepler creates one
+ * Deck layer per Arrow record batch (and GeoJsonLayer adds fill/stroke/point
+ * sublayers), so parquet/DuckDB tables with hundreds of batches make hover and
+ * click miss most of the data. Combining chunks keeps picking under that cap
+ * without changing row values.
+ *
+ * apache-arrow JS does not expose Vector.combineChunks in the version Kepler
+ * uses, so we rebuild each column through a Builder (one chunk per column).
+ *
+ * Compaction only runs when `table.batches.length` is greater than
+ * `maxArrowBatches` from {@link getApplicationConfig} (default `1`) or the
+ * optional override. Progressive Arrow loading does not compact on each
+ * incoming batch; {@link ArrowDataContainer.update} assigns new chunks as-is
+ * and the completed file is compacted once.
+ */
+export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number): arrow.Table {
+  const batchLimit =
+    maxArrowBatches ?? getApplicationConfig().maxArrowBatches ?? DEFAULT_MAX_ARROW_BATCHES;
+
+  if (!table || !Array.isArray(table.batches) || table.batches.length <= 1) {
+    return table;
+  }
+
+  if (table.batches.length <= batchLimit) {
+    return table;
+  }
+
+  try {
+    const columns: Record<string, arrow.Vector> = {};
+    const seenNames = new Map<string, number>();
+    for (let i = 0; i < table.numCols; i++) {
+      const field = table.schema.fields[i];
+      const column = table.getChildAt(i);
+      if (!column) {
+        continue;
+      }
+      // Arrow schemas may repeat field names; object keys would drop earlier columns.
+      const seen = seenNames.get(field.name) ?? 0;
+      seenNames.set(field.name, seen + 1);
+      const key = seen === 0 ? field.name : `${field.name}_${seen}`;
+      columns[key] = compactArrowVector(column, column.type || field.type);
+    }
+
+    // Always build a kepler apache-arrow Table. Using `table.constructor` can
+    // mix DuckDB's bundled Arrow Table with rebuilt vectors and drop schema
+    // metadata (`geo`, ARROW:extension:name) that Kepler needs to create layers.
+    const compacted = tableFromCompactedColumns(table, columns);
+
+    if (compacted?.batches?.length && compacted.batches.length < table.batches.length) {
+      return compacted;
+    }
+  } catch {
+    // Keep the original table if this Arrow build cannot combine chunks.
+  }
+
+  return table;
+}
+
+function copyArrowSchemaMetadata(from?: arrow.Schema | null, to?: arrow.Schema | null): void {
+  if (!from || !to) {
+    return;
+  }
+
+  const fromMeta = from.metadata as Map<string, string> | undefined;
+  const toMeta = to.metadata as Map<string, string> | undefined;
+  if (fromMeta && toMeta && typeof fromMeta.forEach === 'function' && typeof toMeta.set === 'function') {
+    fromMeta.forEach((value, key) => {
+      toMeta.set(key, value);
+    });
+  }
+
+  const fromByName = new Map((from.fields || []).map(field => [field.name, field]));
+  (to.fields || []).forEach((toField, index) => {
+    const fromField = from.fields?.[index] || fromByName.get(toField.name);
+    const src = fromField?.metadata as Map<string, string> | undefined;
+    const dst = toField?.metadata as Map<string, string> | undefined;
+    if (!src || !dst || typeof src.forEach !== 'function' || typeof dst.set !== 'function') {
+      return;
+    }
+    src.forEach((value, key) => {
+      dst.set(key, value);
+    });
+  });
+}
+
+function tableFromCompactedColumns(
+  source: arrow.Table,
+  columns: Record<string, arrow.Vector>
+): arrow.Table {
+  let compacted: arrow.Table;
+  try {
+    compacted = new arrow.Table(source.schema, columns);
+  } catch {
+    compacted = new arrow.Table(columns);
+  }
+  copyArrowSchemaMetadata(source.schema, compacted.schema);
+  return compacted;
+}
+
+/**
+ * Convert an Arrow cell from Vector.get() into a value makeBuilder.append accepts.
+ * Nested GeoArrow (FixedSizeList / List) cells are Vectors, not arrays.
+ */
+function arrowCellToBuilderValue(value: unknown): unknown {
+  if (value == null) {
+    return null;
+  }
+  if (ArrayBuffer.isView(value)) {
+    return Array.from(value as any);
+  }
+
+  const nested = value as {
+    toArray?: () => ArrayLike<unknown>;
+    numChildren?: number;
+    get?: (index: number) => unknown;
+    length?: number;
+    isValid?: (index: number) => boolean;
+  };
+
+  // Primitive numeric child of a FixedSizeList (lng/lat).
+  if (typeof nested.toArray === 'function' && nested.numChildren === 0) {
+    return Array.from(nested.toArray());
+  }
+
+  if (typeof nested.get === 'function' && typeof nested.length === 'number') {
+    const out: unknown[] = [];
+    for (let i = 0; i < nested.length; i++) {
+      const valid = typeof nested.isValid === 'function' ? nested.isValid(i) : true;
+      out.push(valid ? arrowCellToBuilderValue(nested.get(i)) : null);
+    }
+    return out;
+  }
+
+  return value;
+}
+
+function compactArrowVector(column: arrow.Vector, type: arrow.DataType = column.type): arrow.Vector {
+  if (!column || !column.data || column.data.length <= 1) {
+    return column;
+  }
+
+  const maybeCombine = (column as {combineChunks?: () => arrow.Vector}).combineChunks;
+  if (typeof maybeCombine === 'function') {
+    try {
+      const combined = maybeCombine.call(column);
+      if (combined?.data?.length <= 1) {
+        return combined;
+      }
+    } catch {
+      // fall through to Builder
+    }
+  }
+
+  const builder = arrow.makeBuilder({type, nullValues: [null]});
+  const length = column.length;
+  for (let i = 0; i < length; i++) {
+    const isValid = typeof (column as {isValid?: (index: number) => boolean}).isValid === 'function'
+      ? (column as {isValid: (index: number) => boolean}).isValid(i)
+      : true;
+    // FixedSizeList/List .get() returns nested Vectors. Appending those
+    // silently writes NaN (points) or throws (lines/polygons). Plain JS
+    // arrays are what makeBuilder expects.
+    builder.append(isValid ? arrowCellToBuilderValue(column.get(i)) : null);
+  }
+  const finished = builder.finish() as arrow.Vector | {toVector: () => arrow.Vector};
+  if (finished instanceof arrow.Vector) {
+    return finished;
+  }
+  if (typeof (finished as {toVector?: () => arrow.Vector}).toVector === 'function') {
+    return (finished as {toVector: () => arrow.Vector}).toVector();
+  }
+  return column;
+}
+
 /**
  * A data container where all data is stored in raw Arrow table
  */
@@ -144,14 +324,16 @@ export class ArrowDataContainer implements DataContainerInterface {
       throw Error("ArrowDataContainer: columns object isn't an array");
     }
 
-    this._cols = data.cols;
-    this._numColumns = data.cols.length;
-    this._numRows = data.cols[0].length;
     this._fields = data.fields || [];
-    this._numChunks = data.cols[0].data.length;
-    // this._colData = data.cols.map(c => c.toArray());
-
-    this._arrowTable = data.arrowTable || this._createTable();
+    this._cols = data.cols;
+    this._numColumns = this._cols.length;
+    this._numRows = this._cols[0]?.length ?? 0;
+    this._numChunks = this._cols[0]?.data?.length ?? 0;
+    const table = compactArrowTable(data.arrowTable || this._createTable());
+    this._arrowTable = table;
+    if (table.numCols > 0) {
+      this._assignTable(table);
+    }
   }
 
   /**
@@ -170,20 +352,36 @@ export class ArrowDataContainer implements DataContainerInterface {
     return this._arrowTable;
   }
 
+  private _assignTable(table: arrow.Table) {
+    this._arrowTable = table;
+    this._cols = Array.from(
+      {length: table.numCols},
+      (_, i) => table.getChildAt(i) as arrow.Vector
+    ).filter(col => col);
+    this._numColumns = this._cols.length;
+    this._numRows = this._cols[0]?.length ?? 0;
+    this._numChunks = this._cols[0]?.data?.length ?? 0;
+  }
+
   update(updateData: arrow.Vector<any>[] | arrow.Table) {
+    // Incremental Arrow loads append batches here. Compacting on every update
+    // would copy the growing table (Builder over every cell). Skip collapse;
+    // processArrowBatches compact once when the file is fully loaded.
     const isArrow = isArrowTable(updateData);
     if (isArrow) {
-      this._cols = Array.from(
-        {length: updateData.numCols},
-        (_, i) => updateData.getChildAt(i) as arrow.Vector
-      ).filter(col => col);
+      this._assignTable(updateData);
     } else {
       this._cols = updateData;
+      const table = this._createTable();
+      if (table.numCols > 0) {
+        this._assignTable(table);
+      } else {
+        this._numColumns = this._cols.length;
+        this._numRows = this._cols[0]?.length ?? 0;
+        this._numChunks = this._cols[0]?.data?.length ?? 0;
+        this._arrowTable = table;
+      }
     }
-    this._numColumns = this._cols?.length ?? 0;
-    this._numRows = this._cols?.[0]?.length ?? 0;
-    this._numChunks = this._cols?.[0]?.data?.length ?? 0;
-    this._arrowTable = isArrow ? updateData : this._createTable();
 
     // cache column data to make valueAt() faster
     // this._colData = this._cols.map(c => c.toArray());

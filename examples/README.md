@@ -1,44 +1,90 @@
 # Examples
 
-A list of examples to demonstrate adding `kepler.gl` to your app. Each of the examples is a complete project that can be ran locally.
+A list of examples demonstrating how to add `kepler.gl` to your app. Each example is a standalone project that can be run locally.
 
-To start each example, cd into the folder then run:
+## Getting started
 
+Each example has its own `package.json`. To run one, `cd` into its folder and install dependencies:
+
+```sh
+touch yarn.lock && yarn
 ```
-yarn && yarn start
+
+> `touch yarn.lock` is required the first time so Yarn treats the folder as a
+> standalone project, independent from the kepler.gl monorepo.
+
+Then start the dev server:
+
+```sh
+yarn start
 ```
+
+## Examples
+
+- ### [Get Started][get-started]
+  Minimal kepler.gl setup with esbuild.
+
+- ### [Get Started (Vite)][get-started-vite]
+  Minimal kepler.gl setup with Vite.
+
+- ### [DuckDB (Vite)][duckdb-vite]
+  Minimal kepler.gl setup with the DuckDB plugin and Vite.
 
 - ### [Demo App][demo-app]
-
-  kepler.gl as a single page app, loading sample maps from remote url, saving map data to dropbox. This is also the source code of kepler.gl/#/demo.
+  kepler.gl as a full single-page app — loads sample maps from remote URLs and saves map data to Dropbox. This is also the source code of kepler.gl/#/demo.
 
 - ### [Open Modal][open-modal]
-  Open kepler.gl in a modal.
+  Embed kepler.gl inside a `react-modal` dialog, demonstrating both fresh-state and saved-state lifecycle behaviors.
 
 - ### [Custom Reducer][custom-reducer]
-  Customize kepler.gl reducer initial state, adding more actions using plugin.
-
-- ### [umd client][umd-client]
-  A single html file loading kepler.gl
+  Customize the kepler.gl reducer's initial state and extend it with additional actions using the plugin system.
 
 - ### [Replace UI Component][replace-component]
-  Example showing how to replace kepler.gl default ui components using `injectComponents` method.
+  Replace kepler.gl's default UI components using the `injectComponents` method.
 
-- ### [Custom theme][custom-theme]
-  Customize kepler.gl theme by override default style properties.
+- ### [Custom Theme][custom-theme]
+  Customize the kepler.gl theme by overriding default style properties.
+
+- ### [Clicked Feature][clicked-feature]
+  Read `visState.clicked` from Redux and show a GeoJSON feature's `shapeName` in a host-app sidebar outside the map.
+
+- ### [Custom Layer][custom-layer]
+  Add a custom deck.gl layer (`ContourLayer`) to kepler.gl's layer type selector, so it can be picked from the dropdown, configured with dataset columns, and rendered on the map.
+
+- ### [Custom Map Style][custom-map-style]
+  Use kepler.gl with basemap services other than Mapbox (e.g. MapLibre / Carto).
 
 - ### [Node App][node-app]
-  Embed Kepler.gl in a node/express/webpack application. 
+  Embed kepler.gl in a Node.js/Express application — builds the bundle with esbuild and serves it as static files.
 
-- ### [Custom map style][custom-map-style]
+- ### [UMD Client][umd-client]
+  A single HTML file that loads kepler.gl from CDN — no build tool or `npm install` required. Works when opened directly from disk.
 
-  Demo how to use kepler.gl with other basemap services other than Mapbox.
-[custom-reducer]: custom-reducer/README.md
+[get-started]: get-started/README.md
+[get-started-vite]: get-started-vite/README.md
+[duckdb-vite]: duckdb-vite/README.md
 [demo-app]: demo-app/README.md
-[node-app]: node-app/README.md
-
 [open-modal]: open-modal/README.md
-[umd-client]: umd-client/README.md
+[custom-reducer]: custom-reducer/README.md
 [replace-component]: replace-component/README.md
 [custom-theme]: custom-theme/README.md
+[clicked-feature]: clicked-feature/README.md
+[custom-layer]: custom-layer/README.md
 [custom-map-style]: custom-map-style/README.md
+[node-app]: node-app/README.md
+[umd-client]: umd-client/README.md
+
+## Mapbox token
+
+All examples default to a **MapLibre / Carto basemap** so they work without any token.
+
+If you want to use **Mapbox basemaps**, set the `MapboxAccessToken` environment variable before starting an example:
+
+```sh
+export MapboxAccessToken=<your_mapbox_token>
+yarn start
+```
+
+For `umd-client` (no build step), edit `index.html` and set `window.MAPBOX_TOKEN` near the top of the file instead.
+
+For `demo-app`, create a `.env` file from `.env.template` at the repo root and fill in `MAPBOX_ACCESS_TOKEN` and other optional cloud integration tokens.

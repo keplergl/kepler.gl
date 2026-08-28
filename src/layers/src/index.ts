@@ -41,8 +41,14 @@ export {
 } from './trip-layer/trip-utils';
 import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer';
 export {defaultElevation as s2DefaultElevation} from './s2-geometry-layer/s2-geometry-layer';
+import {default as A5GeometryLayer} from './a5-layer/a5-layer';
+export {defaultElevation as a5DefaultElevation} from './a5-layer/a5-layer';
+import {default as GeohashGeometryLayer} from './geohash-layer/geohash-layer';
+export {defaultElevation as geohashDefaultElevation} from './geohash-layer/geohash-layer';
 import {default as FlowLayer} from './flow-layer/flow-layer';
 export {getS2Center} from './s2-geometry-layer/s2-utils';
+export {getA5Center} from './a5-layer/a5-utils';
+export {getGeohashCenter} from './geohash-layer/geohash-utils';
 export {default as AggregationLayer} from './aggregation-layer';
 import {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
 
@@ -104,6 +110,8 @@ export const KeplerGlLayers = {
   ScenegraphLayer,
   TripLayer,
   S2GeometryLayer,
+  A5GeometryLayer,
+  GeohashGeometryLayer,
   FlowLayer,
   VectorTileLayer,
   RasterTileLayer,
@@ -127,6 +135,8 @@ export const LayerClasses = {
   [LAYER_TYPES['3D']]: ScenegraphLayer,
   [LAYER_TYPES.trip]: TripLayer,
   [LAYER_TYPES.s2]: S2GeometryLayer,
+  [LAYER_TYPES.a5]: A5GeometryLayer,
+  [LAYER_TYPES.geohash]: GeohashGeometryLayer,
   [LAYER_TYPES.flow]: FlowLayer,
   [LAYER_TYPES['vectorTile']]: VectorTileLayer,
   [LAYER_TYPES['rasterTile']]: RasterTileLayer,
@@ -140,6 +150,7 @@ export * from './h3-hexagon-layer';
 export {default as Table} from './table';
 
 export {getEditorLayer} from './editor-layer/editor-layer';
+export {formatCircleRadiusLabel, formatLineLengthLabel} from './editor-layer/editor-measure-labels';
 
 export {
   default as ScenegraphLayer,

@@ -19,8 +19,10 @@
 export {
   AtmosphereLayerRealistic,
   AtmosphereSkyLayerRealistic,
+  AtmosphereHugeHaloLayer,
   getGlobeAtmosphereLayer,
-  getGlobeAtmosphereSkyLayer
+  getGlobeAtmosphereSkyLayer,
+  getGlobeHugeHaloLayer
 } from './atmosphere-layer';
 export {GlobeDepthDiskLayer, getGlobeDepthDiskLayer} from './globe-depth-disk-layer';
 export {
@@ -37,4 +39,4 @@ export type {GlobeBasemapProvider, GlobeAttribution} from './globe-layers';
 export {MVTLabelLayer} from './mvt-label-layer';
 export {default as EnhancedMultiIconLayer} from './enhanced-multi-icon-layer';
 export {KeplerGlobeView} from './globe-view';
-export {getStarsBackgroundImage} from './globe-stars-layer';
+export {getStarsBackgroundImage, drawStarsBackground} from './globe-stars-layer';

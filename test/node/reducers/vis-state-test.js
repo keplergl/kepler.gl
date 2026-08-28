@@ -7,7 +7,7 @@ import sinon from 'sinon';
 import {console as Console} from 'global/window';
 
 import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
-import CloneDeep from 'lodash/cloneDeep';
+import CloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import SchemaManager from '@kepler.gl/schemas';
 import {VisStateActions, MapStateActions} from '@kepler.gl/actions';
@@ -34,7 +34,8 @@ import {
   getAnimatableVisibleLayers,
   getDefaultFilter,
   histogramFromDomain,
-  TileTimeInterval
+  TileTimeInterval,
+  initApplicationConfig
 } from '@kepler.gl/utils';
 import {
   ALL_FIELD_TYPES,
@@ -73,7 +74,17 @@ import {
 } from 'test/fixtures/geojson';
 import tripCsvData, {tripCsvDataInfo, expectedCoordinates} from 'test/fixtures/test-trip-csv-data';
 import tripGeojson, {timeStampDomain, tripDataInfo} from 'test/fixtures/trip-geojson';
-import {mockPolygonFeature, mockPolygonFeature2, mockPolygonData} from 'test/fixtures/polygon';
+import {
+  mockPolygonFeature,
+  mockPolygonFeature2,
+  mockPolygonData,
+  mockDualLonLatRows,
+  mockStartRegionPolygon,
+  mockEndRegionPolygon,
+  mockEastOverlapPolygon,
+  mockWestOnlyPolygon,
+  mockEastOnlyPolygon
+} from 'test/fixtures/polygon';
 
 // test helpers
 import {
@@ -5026,7 +5037,7 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
 
   t.equal(newReducer.layerData[0].data.length, 2, 'Layer Point 1 should only show 2 points');
 
-  t.equal(newReducer.layerData[1].data.length, 2, 'Layer Point 2 should only show 2 points');
+  t.equal(newReducer.layerData[1].data.length, 4, 'Layer Point 2 should show all 4 points (not targeted by filter)');
 
   const filterFeature = newReducer.filters[0].value;
 
@@ -5040,9 +5051,9 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
 
   t.equal(newReducer.filters[0].layerId.length, 2, 'Should have two values in filter.layerId');
 
-  t.equal(newReducer.layerData[0].data.length, 0, 'Layer Point 1 should show 0 points');
+  t.equal(newReducer.layerData[0].data.length, 2, 'Layer Point 1 should show 2 points (filtered by its own position)');
 
-  t.equal(newReducer.layerData[1].data.length, 0, 'Layer Point 2 show show 0 points');
+  t.equal(newReducer.layerData[1].data.length, 0, 'Layer Point 2 should show 0 points (end positions are outside polygon)');
 
   // Adding a new dataset - creates extra 4 layers
   newReducer = applyActions(reducer, newReducer, [
@@ -5079,17 +5090,44 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   t.equal(
     newReducer.layerData[0].data.length,
     2,
-    'Layer Point 1 show 2 points because we removed layer 2'
+    'Layer Point 1 show 2 points because it is still filtered'
   );
 
   t.equal(newReducer.layerData[4].data.length, 2, 'Layer Point 5 should 2 points because filtered');
 
   t.equal(
-    newReducer.layerData[2].data.length,
-    2,
-    'Layer Point 2 should still show 2 filters because layer 1 is still filtered'
+    newReducer.layerData[1].data.length,
+    4,
+    'Layer Point 2 should show full data because it was removed from filter'
   );
 
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: unselecting all layers returns sketch', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const layer = initialState.layers[0];
+  let state = reducer(initialState, VisStateActions.setFeatures([mockPolygonFeature]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockPolygonFeature));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(layer, mockPolygonFeature));
+
+  t.equal(state.filters.length, 1, 'Should create a polygon filter');
+  t.equal(state.editor.features.length, 0, 'Sketch should move into the filter');
+
+  const filterFeature = state.filters[0].value;
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(layer, filterFeature));
+
+  t.equal(state.filters.length, 0, 'Should remove the filter when no layers remain');
+  t.equal(state.editor.features.length, 1, 'Should return the polygon to sketches');
+  t.notOk(
+    state.editor.features[0].properties.filterId,
+    'Returned sketch should not be a filter'
+  );
+  t.equal(
+    state.editor.selectedFeature.id,
+    mockPolygonFeature.id,
+    'Should keep the polygon selected'
+  );
   t.end();
 });
 
@@ -5250,8 +5288,18 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
   );
   t.deepEqual(
     newReducer.datasets.puppy.filteredIndex,
+    [0, 1, 2, 3],
+    'The dataset filteredIndex should not be affected by polygon filters'
+  );
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndexByLayer[newReducer.layers[0].id],
     [0, 2],
-    'The polygon filter should be applied'
+    'Should have per-layer polygon filtered index'
+  );
+  t.equal(
+    newReducer.layerData[0].data.length,
+    2,
+    'Targeted layer should show polygon-filtered points'
   );
 
   newReducer = reducer(newReducer, VisStateActions.toggleFilterFeature(0));
@@ -5263,6 +5311,120 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
     newReducer.datasets.puppy.filteredIndex,
     [0, 1, 2, 3],
     "The polygon filter shouldn't be applied"
+  );
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndexByLayer,
+    {},
+    'Per-layer polygon filtered index should be cleared when filter is disabled'
+  );
+  t.equal(
+    newReducer.layerData[0].data.length,
+    4,
+    'Targeted layer should restore full data when polygon filter is disabled'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> APPLY_CPU_FILTER with polygon filter', t => {
+  const state = {
+    ...INITIAL_VIS_STATE
+  };
+
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {
+            name: 'start_point_lat',
+            format: '',
+            fieldIdx: 0,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'start_point_lng',
+            format: '',
+            fieldIdx: 1,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lat',
+            format: '',
+            fieldIdx: 2,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lng',
+            format: '',
+            fieldIdx: 3,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          }
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv',
+        size: 144,
+        id: 'puppy'
+      }
+    }
+  ];
+
+  let newReducer = applyActions(reducer, state, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: true, keepExistingConfig: false}, {}]
+    }
+  ]);
+
+  newReducer = reducer(newReducer, VisStateActions.setFeatures([mockPolygonFeature]));
+  newReducer = reducer(newReducer, VisStateActions.setSelectedFeature(mockPolygonFeature));
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[0], mockPolygonFeature)
+  );
+
+  const layerId = newReducer.layers[0].id;
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndex,
+    [0, 1, 2, 3],
+    'dataset filteredIndex should ignore polygon filters'
+  );
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndexByLayer[layerId],
+    [0, 2],
+    'per-layer index should keep rows inside the polygon'
+  );
+
+  newReducer = reducer(newReducer, VisStateActions.applyCPUFilter('puppy'));
+
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIdxCPU,
+    [0, 2],
+    'filtered export should apply polygon filters via per-layer indices'
+  );
+
+  // Targeting a second layer whose positions are outside the polygon:
+  // export should be the union of both layers' visible rows.
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[1], mockPolygonFeature)
+  );
+  newReducer = reducer(newReducer, VisStateActions.applyCPUFilter('puppy'));
+
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndexByLayer[newReducer.layers[1].id],
+    [],
+    'second layer should have no rows inside the polygon'
+  );
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIdxCPU,
+    [0, 2],
+    'filtered export should keep the union of polygon-visible rows across targeted layers'
   );
 
   t.end();
@@ -5403,6 +5565,70 @@ test('#visStateReducer -> POLYGON: delete polygon filter', t => {
   t.end();
 });
 
+test('#visStateReducer -> POLYGON: reload saved geojson map keeps filtered layer data', t => {
+  const appState = CloneDeep(StateWFiles);
+  const geojsonLayer = appState.visState.layers.find(l => l.type === 'geojson');
+  t.ok(geojsonLayer, 'should have a geojson layer');
+
+  const bounds = geojsonLayer.meta.bounds || [-122.5, 37.7, -122.3, 37.9];
+  const pad = 1;
+  const coveringPolygon = {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [bounds[0] - pad, bounds[1] - pad],
+          [bounds[0] - pad, bounds[3] + pad],
+          [bounds[2] + pad, bounds[3] + pad],
+          [bounds[2] + pad, bounds[1] - pad],
+          [bounds[0] - pad, bounds[1] - pad]
+        ]
+      ]
+    },
+    properties: {
+      renderType: 'Polygon',
+      isClosed: true,
+      isVisible: true
+    },
+    id: 'reload-polygon-filter'
+  };
+
+  const filteredState = reducer(
+    appState.visState,
+    VisStateActions.setPolygonFilterLayer(geojsonLayer, coveringPolygon)
+  );
+
+  const layerIdx = filteredState.layers.findIndex(l => l.id === geojsonLayer.id);
+  const expectedCount = filteredState.layerData[layerIdx].data.length;
+  t.ok(expectedCount > 0, 'geojson layer should have polygon-filtered features before save');
+
+  const saved = SchemaManager.save({...appState, visState: filteredState});
+  const loaded = SchemaManager.load(saved);
+
+  const reloaded = applyActions(reducer, INITIAL_VIS_STATE, [
+    {action: VisStateActions.updateVisData, payload: [loaded.datasets, {}, loaded.config]}
+  ]);
+
+  const reloadedIdx = reloaded.layers.findIndex(l => l.id === geojsonLayer.id);
+  t.ok(
+    reloaded.filters.some(f => f.type === 'polygon'),
+    'should restore the polygon filter'
+  );
+  t.equal(
+    reloaded.layerData[reloadedIdx].data.length,
+    expectedCount,
+    'reloaded geojson layer should show polygon-filtered features without toggling the filter'
+  );
+  t.equal(
+    reloaded.datasets[geojsonLayer.config.dataId].filteredIndexByLayer[geojsonLayer.id].length,
+    expectedCount,
+    'reloaded per-layer polygon index should match layer data'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> POLYGON: setPolygonFilterLayer: H3', t => {
   const initialState = CloneDeep(StateWH3Layer).visState;
   const newState = reducer(
@@ -5412,15 +5638,217 @@ test('#visStateReducer -> POLYGON: setPolygonFilterLayer: H3', t => {
 
   const expectedFilteredIndex = [1, 3, 5, 8];
   t.deepEqual(
-    newState.datasets['190vdll3di'].filteredIndex,
+    newState.datasets['190vdll3di'].filteredIndexByLayer[newState.layers[0].id],
     expectedFilteredIndex,
-    'should filter data based on h3 layer'
+    'should have per-layer polygon filtered index for h3 layer'
   );
   t.deepEqual(
     newState.layerData[0].data.map(d => d.index),
     [1, 3, 5, 8],
     'should filter layer data'
   );
+  t.end();
+});
+
+function loadDualLonLatPolygonState() {
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {
+            name: 'start_point_lat',
+            format: '',
+            fieldIdx: 0,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'start_point_lng',
+            format: '',
+            fieldIdx: 1,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lat',
+            format: '',
+            fieldIdx: 2,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lng',
+            format: '',
+            fieldIdx: 3,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          }
+        ],
+        rows: mockDualLonLatRows
+      },
+      info: {
+        label: 'trips.csv',
+        size: 144,
+        id: 'trips'
+      }
+    }
+  ];
+
+  return applyActions(reducer, {...INITIAL_VIS_STATE}, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: true, keepExistingConfig: false}, {}]
+    }
+  ]);
+}
+
+function pointLayerByLat(state, latField) {
+  return state.layers.find(
+    l => l.type === 'point' && l.config.columns?.lat?.value === latField
+  );
+}
+
+function layerDataIndexes(state, layer) {
+  return state.layerData[state.layers.indexOf(layer)].data.map(d => d.index);
+}
+
+test('#visStateReducer -> POLYGON: independent polygons on two layers', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+  const endLayer = pointLayerByLat(state, 'end_point_lat');
+
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([mockStartRegionPolygon, mockEndRegionPolygon])
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockStartRegionPolygon));
+  state = reducer(
+    state,
+    VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon)
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEndRegionPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(endLayer, mockEndRegionPolygon));
+
+  t.equal(state.filters.length, 2, 'Should create one polygon filter per feature');
+  t.deepEqual(
+    state.datasets.trips.filteredIndex,
+    [0, 1, 2, 3],
+    'dataset filteredIndex should ignore polygon filters'
+  );
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [0, 1],
+    'start layer should keep only points inside the start-region polygon'
+  );
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[endLayer.id],
+    [1, 2],
+    'end layer should keep only points inside the end-region polygon'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [0, 1],
+    'start layer data should match its per-layer polygon index'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, endLayer),
+    [1, 2],
+    'end layer data should match its per-layer polygon index'
+  );
+
+  state = reducer(state, VisStateActions.applyCPUFilter('trips'));
+  t.deepEqual(
+    state.datasets.trips.filteredIdxCPU,
+    [0, 1, 2],
+    'filtered export should be the union of independently visible rows'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: intersecting polygons AND on the same layer', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+  const endLayer = pointLayerByLat(state, 'end_point_lat');
+
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([mockStartRegionPolygon, mockEastOverlapPolygon])
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockStartRegionPolygon));
+  state = reducer(
+    state,
+    VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon)
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEastOverlapPolygon));
+  state = reducer(
+    state,
+    VisStateActions.setPolygonFilterLayer(startLayer, mockEastOverlapPolygon)
+  );
+
+  t.equal(state.filters.length, 2, 'Should create two polygon filters on the same layer');
+  t.deepEqual(
+    state.filters.map(f => f.layerId),
+    [[startLayer.id], [startLayer.id]],
+    'Both polygons should target only the start layer'
+  );
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [1],
+    'start layer should keep only the intersection of both polygons'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [1],
+    'start layer data should show only the intersecting point'
+  );
+  t.equal(
+    state.datasets.trips.filteredIndexByLayer[endLayer.id],
+    undefined,
+    'untargeted end layer should not have a per-layer polygon index'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, endLayer),
+    [0, 1, 2, 3],
+    'untargeted end layer should keep all points'
+  );
+
+  state = reducer(state, VisStateActions.toggleFilterFeature(1));
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [0, 1],
+    'disabling one polygon should restore the remaining polygon filter'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [0, 1],
+    'start layer data should match the remaining polygon'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: disjoint polygons AND on the same layer', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+
+  state = reducer(state, VisStateActions.setFeatures([mockWestOnlyPolygon, mockEastOnlyPolygon]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockWestOnlyPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockWestOnlyPolygon));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEastOnlyPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockEastOnlyPolygon));
+
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [],
+    'start layer should keep no points when two polygons do not overlap'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [],
+    'start layer data should be empty when polygon filters have no intersection'
+  );
+
   t.end();
 });
 
@@ -5578,6 +6006,218 @@ test('#uiStateReducer -> SET_FEATURES/SET_SELECTED_FEATURE/DELETE_FEATURE', t =>
   t.end();
 });
 
+test('#visStateReducer -> SET_FEATURES line keeps draw mode', t => {
+  let state = reducer(
+    INITIAL_VIS_STATE,
+    VisStateActions.setEditorMode(EDITOR_MODES.DRAW_LINESTRING)
+  );
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([
+      {
+        type: 'Feature',
+        id: 'line-1',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            [0, 0],
+            [1, 1]
+          ]
+        }
+      }
+    ])
+  );
+
+  t.equal(
+    state.editor.mode,
+    EDITOR_MODES.DRAW_LINESTRING,
+    'Line sketches should stay in line drawing mode'
+  );
+  t.equal(state.editor.features.length, 1, 'Should store the line sketch');
+  t.end();
+});
+
+test('#visStateReducer -> SET_FEATURES closed circle switches to edit', t => {
+  let state = reducer(INITIAL_VIS_STATE, VisStateActions.setEditorMode(EDITOR_MODES.DRAW_CIRCLE));
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([
+      {
+        type: 'Feature',
+        id: 'circle-1',
+        properties: {
+          isClosed: true,
+          shape: 'Circle'
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 1],
+              [1, 0],
+              [0, -1],
+              [-1, 0],
+              [0, 1]
+            ]
+          ]
+        }
+      }
+    ])
+  );
+
+  t.equal(state.editor.mode, EDITOR_MODES.EDIT, 'Closed circle sketches should switch to select');
+  t.equal(state.editor.features.length, 1, 'Should store the circle sketch');
+  t.end();
+});
+
+test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER', t => {
+  const emptyState = reducer(INITIAL_VIS_STATE, VisStateActions.convertEditorFeaturesToLayer());
+  t.equal(emptyState, INITIAL_VIS_STATE, 'Should no-op when there are no sketch features');
+
+  const lineFeature = {
+    type: 'Feature',
+    id: 'line-1',
+    properties: {isClosed: false},
+    geometry: {
+      type: 'LineString',
+      coordinates: [
+        [0, 0],
+        [1, 1]
+      ]
+    }
+  };
+
+  let state = {
+    ...INITIAL_VIS_STATE,
+    editor: {
+      ...INITIAL_VIS_STATE.editor,
+      features: [lineFeature],
+      selectedFeature: lineFeature,
+      mode: EDITOR_MODES.DRAW_LINESTRING
+    }
+  };
+
+  state = reducer(state, VisStateActions.convertEditorFeaturesToLayer());
+  t.deepEqual(state.editor.features, [], 'Should clear sketch features after convert');
+  t.equal(state.editor.selectedFeature, null, 'Should clear selected feature after convert');
+  t.equal(state.editor.mode, EDITOR_MODES.EDIT, 'Should switch to select mode after convert');
+
+  const tasks = drainTasksForTesting();
+  t.ok(
+    /Drawn Geometry \d{2}/.test(JSON.stringify(tasks)),
+    'Converted layer should be named Drawn Geometry plus a two-digit number'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER disabled by config', t => {
+  initApplicationConfig({enableDrawOnMapSketches: false});
+
+  try {
+    const lineFeature = {
+      type: 'Feature',
+      id: 'line-1',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [0, 0],
+          [1, 1]
+        ]
+      }
+    };
+    const startState = {
+      ...INITIAL_VIS_STATE,
+      editor: {
+        ...INITIAL_VIS_STATE.editor,
+        features: [lineFeature],
+        selectedFeature: lineFeature
+      }
+    };
+
+    const nextState = reducer(startState, VisStateActions.convertEditorFeaturesToLayer());
+    t.equal(nextState, startState, 'Should no-op convert when draw-on-map sketches are disabled');
+
+    const ignoredMode = reducer(startState, VisStateActions.setEditorMode(EDITOR_MODES.DRAW_POINT));
+    t.equal(
+      ignoredMode.editor.mode,
+      startState.editor.mode,
+      'Should ignore point draw mode when sketches are disabled'
+    );
+
+    const circleMode = reducer(startState, VisStateActions.setEditorMode(EDITOR_MODES.DRAW_CIRCLE));
+    t.equal(
+      circleMode.editor.mode,
+      EDITOR_MODES.DRAW_CIRCLE,
+      'Should allow circle draw mode when sketches are disabled'
+    );
+
+    const ignoredProperties = reducer(
+      startState,
+      VisStateActions.setEditorFeatureProperties(lineFeature, {name: 'route'})
+    );
+    t.equal(
+      ignoredProperties,
+      startState,
+      'Should ignore edit properties when sketches are disabled'
+    );
+  } finally {
+    initApplicationConfig({enableDrawOnMapSketches: true});
+  }
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_EDITOR_FEATURE_PROPERTIES', t => {
+  const pointFeature = {
+    type: 'Feature',
+    id: 'point-1',
+    properties: {isClosed: false},
+    geometry: {type: 'Point', coordinates: [0, 0]}
+  };
+
+  let state = {
+    ...INITIAL_VIS_STATE,
+    editor: {
+      ...INITIAL_VIS_STATE.editor,
+      features: [pointFeature],
+      selectedFeature: pointFeature
+    }
+  };
+
+  state = reducer(
+    state,
+    VisStateActions.setEditorFeatureProperties(pointFeature, {
+      name: 'Stop',
+      filterId: 'nope',
+      isClosed: true
+    })
+  );
+
+  t.equal(state.editor.features[0].properties.name, 'Stop', 'Should store user properties');
+  t.equal(
+    state.editor.selectedFeature.properties.name,
+    'Stop',
+    'Should keep the selected feature in sync'
+  );
+  t.equal(
+    state.editor.features[0].properties.isClosed,
+    false,
+    'Should preserve editor-only properties'
+  );
+  t.notOk(
+    state.editor.features[0].properties.filterId,
+    'Should ignore reserved keys from the payload'
+  );
+
+  state = reducer(state, VisStateActions.setEditorFeatureProperties(pointFeature, {}));
+  t.notOk(state.editor.features[0].properties.name, 'Should remove user properties when cleared');
+  t.equal(state.editor.features[0].properties.isClosed, false, 'Should keep editor-only properties');
+
+  t.end();
+});
+
 test('#visStateReducer -> APPLY_CPU_FILTER has multi datasets', t => {
   const initialState = CloneDeep(StateWFilters.visState);
   const previousDataset1 = initialState.datasets[testCsvDataId];
@@ -5691,6 +6331,62 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   );
   assertDatasetIsTable(t, nextState5.datasets[testCsvDataId]);
 
+  t.end();
+});
+
+test('#visStateReducer -> LOAD_COLUMN_STATS', t => {
+  drainTasksForTesting();
+  const initialState = CloneDeep(StateWFiles.visState);
+
+  const noOpState = reducer(
+    initialState,
+    VisStateActions.loadColumnStats('missing', 'gps_data.lat')
+  );
+  t.equal(noOpState, initialState, 'state should not change when dataset is missing');
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.loadColumnStats(testCsvDataId, 'gps_data.lat')
+  );
+  const loadingField = nextState.datasets[testCsvDataId].fields.find(f => f.name === 'gps_data.lat');
+  t.equal(loadingField.isLoadingStats, true, 'should set isLoadingStats while loading');
+
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 1, 'should create a column stats task');
+
+  const result = {
+    type: 'numeric',
+    mean: 30,
+    std: 1,
+    percentNulls: 0,
+    bins: [],
+    quantiles: [
+      {label: 'Min', value: 29},
+      {label: 'Max', value: 31}
+    ]
+  };
+  const successState = reducer(
+    nextState,
+    VisStateActions.loadColumnStatsSuccess(testCsvDataId, 'gps_data.lat', result, {})
+  );
+  const successField = successState.datasets[testCsvDataId].fields.find(
+    f => f.name === 'gps_data.lat'
+  );
+  t.equal(successField.isLoadingStats, false, 'should clear isLoadingStats on success');
+  t.deepEqual(
+    successField.filterProps.columnStats,
+    result,
+    'should store columnStats on filterProps'
+  );
+
+  const errorState = reducer(
+    nextState,
+    VisStateActions.loadColumnStatsError(testCsvDataId, 'gps_data.lat', new Error('stats failed'))
+  );
+  const errorField = errorState.datasets[testCsvDataId].fields.find(f => f.name === 'gps_data.lat');
+  t.equal(errorField.isLoadingStats, false, 'should clear isLoadingStats on error');
+
+  drainTasksForTesting();
   t.end();
 });
 

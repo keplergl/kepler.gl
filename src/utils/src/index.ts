@@ -34,12 +34,27 @@ export {setStyleSheetBaseHref} from './dom-utils';
 export {default as domtoimage} from './dom-to-image';
 export {getFrequency, getMode, aggregate} from './aggregation';
 export {
+  ColumnStatsType,
+  NUMERIC_BIN_COUNT,
+  collectColumnValues,
+  computeColumnStats,
+  getColumnStatistics
+} from './column-statistics';
+export type {
+  ColumnStats,
+  NumericColumnStats,
+  CategoricalColumnStats,
+  TimeColumnStats,
+  Quantile
+} from './column-statistics';
+export {
   adjustValueToAnimationWindow,
   getBinThresholds,
   histogramFromThreshold,
   histogramFromValues,
   histogramFromDomain,
   histogramFromOrdinal,
+  mergePolygonLayerIndexes,
   runGpuFilterForPlot,
   updateTimeFilterPlotType
 } from './plot';
@@ -129,6 +144,7 @@ export * from './map-utils';
 
 export {
   ArrowDataContainer,
+  compactArrowTable,
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,
   isArrowTable,
@@ -145,6 +161,8 @@ export {
 } from './data-container-utils';
 export * from './filter-utils';
 export type {FilterChanged, FilterResult, dataValueAccessor} from './filter-utils';
+export * from './editor-feature-utils';
+export type {EditorFeatureCollection} from './editor-feature-utils';
 
 export {
   colorMapToColorBreaks,
@@ -186,7 +204,8 @@ export type {
   BaseMapLibraryConfig,
   MapLibInstance,
   GetMapRef,
-  SvgIcon
+  SvgIcon,
+  ReduxLogLevel
 } from './application-config';
 export type {DatabaseAdapter, DatabaseConnection} from './application-config-types';
 

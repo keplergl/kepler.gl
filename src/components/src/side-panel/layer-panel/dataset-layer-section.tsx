@@ -66,6 +66,8 @@ function DatasetLayerSectionFactory(
     const enableWMSLayer = getApplicationConfig().enableWMSLayer;
     const enableFlowLayer = getApplicationConfig().enableFlowLayer;
     const enableBitmapLayer = getApplicationConfig().enableBitmapLayer;
+    const enableA5Layer = getApplicationConfig().enableA5Layer;
+    const enableGeohashLayer = getApplicationConfig().enableGeohashLayer;
 
     const filteredLayerClasses = useMemo(() => {
       let filteredClasses = layerClasses;
@@ -85,8 +87,24 @@ function DatasetLayerSectionFactory(
         const {bitmap: _bitmap, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
       }
+      if (!enableA5Layer) {
+        const {a5: _a5, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
+      if (!enableGeohashLayer) {
+        const {geohash: _geohash, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
       return filteredClasses as LayerClassesType;
-    }, [enableRasterTileLayer, enableWMSLayer, enableFlowLayer, enableBitmapLayer, layerClasses]);
+    }, [
+      enableRasterTileLayer,
+      enableWMSLayer,
+      enableFlowLayer,
+      enableBitmapLayer,
+      enableA5Layer,
+      enableGeohashLayer,
+      layerClasses
+    ]);
 
     return (
       <DatasetLayerSectionWrapper>

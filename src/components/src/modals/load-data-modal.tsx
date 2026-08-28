@@ -3,7 +3,7 @@
 
 import React, {useState} from 'react';
 import styled from 'styled-components';
-import get from 'lodash/get';
+import get from 'es-toolkit/compat/get';
 import {IntlShape, useIntl} from 'react-intl';
 
 import FileUploadFactory from '../common/file-uploader/file-upload';
@@ -19,7 +19,7 @@ const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
 })`
   padding: ${props => props.theme.modalPadding};
-  min-height: 440px;
+  min-height: 360px;
   display: flex;
   flex-direction: column;
 `;

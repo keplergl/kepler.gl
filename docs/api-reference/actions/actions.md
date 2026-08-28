@@ -772,14 +772,14 @@ Returns **{type: ActionTypes.REORDER_LAYER, order: order}**
 
 ### setEditorMode
 
-Set the map mode
+Set the Draw on Map editor mode
 
 - **ActionTypes**: [`ActionTypes.SET_EDITOR_MODE`][12]
 - **Updaters**: [`visStateUpdaters.setEditorModeUpdater`][208]
 
 **Parameters**
 
-- `mode` **[string][162]** one of EDITOR_MODES
+- `mode` **[string][162]** one of `EDITOR_MODES`: `EDIT`, `DRAW_POINT`, `DRAW_LINESTRING`, `DRAW_POLYGON`, `DRAW_RECTANGLE`, `DRAW_CIRCLE`
 
 **Examples**
 
@@ -787,7 +787,7 @@ Set the map mode
 import {setEditorMode} from '@kepler.gl/actions';
 import {EDITOR_MODES} from '@kepler.gl/constants';
 
-this.props.dispatch(setEditorMode(EDITOR_MODES.DRAW_POLYGON));
+this.props.dispatch(setEditorMode(EDITOR_MODES.DRAW_LINESTRING));
 ```
 
 ### setFilter

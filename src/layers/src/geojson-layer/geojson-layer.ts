@@ -5,7 +5,7 @@ import * as arrow from 'apache-arrow';
 import {point as turfPoint} from '@turf/helpers';
 import {booleanWithin} from '@turf/boolean-within';
 import {Feature, Polygon} from 'geojson';
-import uniq from 'lodash/uniq';
+import uniq from 'es-toolkit/compat/uniq';
 import {DATA_TYPES} from 'type-analyzer';
 import Layer, {
   colorMaker,
@@ -520,7 +520,7 @@ export default class GeoJsonLayer extends Layer {
       return {};
     }
     const {textLabel} = this.config;
-    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
+    const {gpuFilter, dataContainer, fields} = datasets[this.config.dataId];
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
 
     // Text labels are only supported in GEOJSON column mode where properties.index
@@ -547,7 +547,8 @@ export default class GeoJsonLayer extends Layer {
     let filterValueAccessor;
     let dataAccessor;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
-      filterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.properties.index, fieldIndex);
+      filterValueAccessor = (dc, d, fieldIndex) =>
+        fields[fieldIndex].valueAccessor({index: d.properties.index});
       // For GEOJSON mode, properties.index is the row index in the data container
       dataAccessor = () => d => ({index: d.properties.index});
     } else {
@@ -577,10 +578,7 @@ export default class GeoJsonLayer extends Layer {
         indexAccessor,
         filterValueAccessor
       ),
-      textLabelFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
-        textLabelIndexAccessor,
-        (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex)
-      ),
+      textLabelFilterValue: gpuFilter.filterValueAccessor(dataContainer)(textLabelIndexAccessor),
       getFiltered: isFilteredAccessor,
       textLabelFiltered: textLabelFilteredAccessor,
       textLabels,
@@ -619,9 +617,33 @@ export default class GeoJsonLayer extends Layer {
       const geoField = geoFieldAccessor(this.config.columns)(dataContainer);
 
       // update the latest batch/chunk of geoarrow data when loading data incrementally
-      if (geoColumn && geoField && this.dataToFeature.length < dataContainer.numChunks()) {
-        // for incrementally loading data, we only load and render the latest batch; otherwise, we will load and render all batches
-        const isIncrementalLoad = dataContainer.numChunks() - this.dataToFeature.length === 1;
+      const processedRows = this.centroids.length;
+      const numRows = dataContainer.numRows();
+      const numChunks = dataContainer.numChunks();
+      // WKB (and other whole-column collections) keep dataToFeature.length at 1
+      // even when numChunks() is large. Row count is the progress signal then;
+      // comparing length to numChunks would re-parse WKB on every meta update.
+      const processedWholeColumn =
+        this.dataToFeature.length > 0 && processedRows > 0 && processedRows >= numRows;
+      // Progressive loads keep one dataToFeature entry per chunk, then compact
+      // the finished table to one chunk. Row count already matches, so without
+      // this check we would skip the rebuild and keep excess Deck layers.
+      const compactedAfterProgressiveLoad = this.dataToFeature.length > numChunks;
+      const needsUpdate =
+        this.dataToFeature.length === 0 ||
+        (!processedWholeColumn && this.dataToFeature.length < numChunks) ||
+        (processedRows > 0 && processedRows < numRows) ||
+        compactedAfterProgressiveLoad;
+
+      if (geoColumn && geoField && needsUpdate) {
+        // Incremental only when a new chunk appeared. Compacted tables stay at 1
+        // chunk while row count grows, so those updates reprocess the whole table.
+        const isIncrementalLoad =
+          this.dataToFeature.length > 0 &&
+          !processedWholeColumn &&
+          numChunks - this.dataToFeature.length === 1 &&
+          processedRows > 0 &&
+          processedRows < numRows;
         // TODO: add support for COLUMN_MODE_TABLE in getGeojsonLayerMetaFromArrow
         const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} =
           getGeojsonLayerMetaFromArrow({
@@ -630,9 +652,14 @@ export default class GeoJsonLayer extends Layer {
             geoField,
             ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
           });
-        if (centroids) this.centroids = this.centroids.concat(centroids);
+        if (isIncrementalLoad) {
+          if (centroids) this.centroids = this.centroids.concat(centroids);
+          this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
+        } else {
+          this.centroids = centroids || [];
+          this.dataToFeature = dataToFeature;
+        }
         this.updateMeta({bounds, fixedRadius, featureTypes});
-        this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
       }
     } else if (this.dataToFeature.length === 0 || this.config.columnMode === COLUMN_MODE_TABLE) {
       const getFeature = this.getPositionAccessor(dataContainer);

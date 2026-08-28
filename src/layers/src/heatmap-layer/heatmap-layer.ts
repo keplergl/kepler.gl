@@ -2,7 +2,12 @@
 // Copyright contributors to the kepler.gl project
 
 import KeplerHeatmapLayer from './deck-heatmap-layer';
-import {CHANNEL_SCALES, ALL_FIELD_TYPES, GEOJSON_FIELDS} from '@kepler.gl/constants';
+import {
+  CHANNEL_SCALES,
+  ALL_FIELD_TYPES,
+  GEOJSON_FIELDS,
+  GEOARROW_METADATA_KEY
+} from '@kepler.gl/constants';
 import Layer, {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 import {
@@ -25,9 +30,13 @@ import {booleanWithin} from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Feature, Polygon} from 'geojson';
 
-import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue} from '../layer-utils';
+import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue, getGeoArrowPointCoords} from '../layer-utils';
 import {getFilterDataFunc} from '../aggregation-layer';
-import {parseGeoJsonRawFeature} from '../geojson-layer/geojson-utils';
+import {
+  parseGeoJsonRawFeature,
+  getCentroidFromGeometry,
+  getAllPositions
+} from '../geojson-layer/geojson-utils';
 
 export type HeatmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -79,7 +88,8 @@ export const geoarrowPosAccessor =
   (dc: DataContainerInterface) =>
   (d: {index: number}): number[] => {
     const row = dc.valueAt(d.index, geoarrow.fieldIdx);
-    return [row.get(0), row.get(1)];
+    const coords = getGeoArrowPointCoords(row);
+    return [coords[0], coords[1]];
   };
 
 export const geojsonAccessor =
@@ -87,54 +97,6 @@ export const geojsonAccessor =
   (dc: DataContainerInterface) =>
   (d: {index: number}) =>
     dc.valueAt(d.index, geojson.fieldIdx);
-
-/**
- * Compute the centroid [lng, lat] of a GeoJSON geometry.
- * For Point returns the coordinate directly; for complex geometries
- * averages all vertex positions into a single representative point.
- */
-function getCentroidFromGeometry(geometry: any): number[] | null {
-  if (!geometry) return null;
-  const positions = getAllPositions(geometry);
-  if (positions.length === 0) return null;
-  if (positions.length === 1) return positions[0];
-
-  let sumLng = 0;
-  let sumLat = 0;
-  let count = 0;
-  for (const pos of positions) {
-    if (Number.isFinite(pos[0]) && Number.isFinite(pos[1])) {
-      sumLng += pos[0];
-      sumLat += pos[1];
-      count++;
-    }
-  }
-  return count > 0 ? [sumLng / count, sumLat / count] : null;
-}
-
-/**
- * Extract all vertex [lng, lat] coordinates from a GeoJSON geometry.
- * Used internally for bounds computation and centroid calculation.
- */
-function getAllPositions(geometry: any): number[][] {
-  if (!geometry) return [];
-  switch (geometry.type) {
-    case 'Point':
-      return [geometry.coordinates];
-    case 'MultiPoint':
-    case 'LineString':
-      return geometry.coordinates;
-    case 'MultiLineString':
-    case 'Polygon':
-      return geometry.coordinates.flat();
-    case 'MultiPolygon':
-      return geometry.coordinates.flat(2);
-    case 'GeometryCollection':
-      return (geometry.geometries || []).flatMap(getAllPositions);
-    default:
-      return [];
-  }
-}
 
 export const pointColResolver = (
   {lat, lng, geoarrow, geojson}: HeatmapLayerColumnsConfig,
@@ -422,7 +384,12 @@ class HeatmapLayer extends Layer {
 
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       const getFeature = this.getPositionAccessor(dataContainer);
-      this._buildGeojsonDataToFeature(dataContainer, getFeature);
+      const geoField = dataset.fields?.[this.config.columns.geojson.fieldIdx];
+      const encoding =
+        geoField?.metadata && typeof (geoField.metadata as Map<string, string>).get === 'function'
+          ? (geoField.metadata as Map<string, string>).get(GEOARROW_METADATA_KEY)
+          : (geoField?.metadata as Record<string, string> | undefined)?.[GEOARROW_METADATA_KEY];
+      this._buildGeojsonDataToFeature(dataContainer, getFeature, encoding);
       this.updateMeta({bounds: this._geojsonBounds});
     } else {
       this.dataToFeature = [];
@@ -437,7 +404,11 @@ class HeatmapLayer extends Layer {
    * Parse raw GeoJSON values into Feature objects and store them.
    * Re-parses when the data container size changes (new data load or column switch).
    */
-  private _buildGeojsonDataToFeature(dataContainer: DataContainerInterface, getFeature: any) {
+  private _buildGeojsonDataToFeature(
+    dataContainer: DataContainerInterface,
+    getFeature: any,
+    geoArrowEncoding?: string | null
+  ) {
     const fieldIdx = this.config.columns.geojson.fieldIdx;
     if (
       this.dataToFeature.length === dataContainer.numRows() &&
@@ -457,7 +428,7 @@ class HeatmapLayer extends Layer {
 
     for (let i = 0; i < dataContainer.numRows(); i++) {
       const rawFeature = getFeature({index: i});
-      const feature = parseGeoJsonRawFeature(rawFeature);
+      const feature = parseGeoJsonRawFeature(rawFeature, geoArrowEncoding);
       this.dataToFeature[i] = feature;
       this.centroids[i] = feature?.geometry ? getCentroidFromGeometry(feature.geometry) : null;
 
@@ -500,20 +471,22 @@ class HeatmapLayer extends Layer {
   }
 
   /**
-   * For GeoJSON mode, compute the centroid of each feature's geometry
-   * and emit a single heatmap data entry per feature.
+   * For GeoJSON mode, emit a single heatmap data entry per feature
+   * at the geometry centroid (Point coordinates, or vertex average for
+   * LineString / Polygon).
    */
   private _calculateGeojsonDataAttribute(filteredIndex: number[]) {
     const data: {index: number; position: number[]}[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const feature = this.dataToFeature[index];
-      if (!feature?.geometry) continue;
-
-      const centroid = getCentroidFromGeometry(feature.geometry);
-      if (centroid) {
-        data.push({index, position: centroid});
+      const centroid =
+        this.centroids[index] ||
+        (this.dataToFeature[index]?.geometry
+          ? getCentroidFromGeometry(this.dataToFeature[index].geometry)
+          : null);
+      if (centroid && Number.isFinite(centroid[0]) && Number.isFinite(centroid[1])) {
+        data.push({index, position: [centroid[0], centroid[1]]});
       }
     }
 
@@ -552,8 +525,7 @@ class HeatmapLayer extends Layer {
     let filteredData = data;
     if (hasFilter) {
       const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
-        (d: {index: number}) => d.index,
-        (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex)
+        (d: {index: number}) => d.index
       );
       const filterFunc = getFilterDataFunc(gpuFilter.filterRange, getFilterValue);
       filteredData = data.filter(filterFunc);

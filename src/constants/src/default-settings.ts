@@ -1288,8 +1288,19 @@ export const EDITOR_LAYER_PICKING_RADIUS = 6;
 export const EDITOR_MODES = {
   DRAW_POLYGON: 'DRAW_POLYGON',
   DRAW_RECTANGLE: 'DRAW_RECTANGLE',
+  DRAW_CIRCLE: 'DRAW_CIRCLE',
+  DRAW_LINESTRING: 'DRAW_LINESTRING',
+  DRAW_POINT: 'DRAW_POINT',
   EDIT: 'EDIT_VERTEX'
 };
+
+export const EDITOR_DRAW_MODES: string[] = [
+  EDITOR_MODES.DRAW_POLYGON,
+  EDITOR_MODES.DRAW_RECTANGLE,
+  EDITOR_MODES.DRAW_CIRCLE,
+  EDITOR_MODES.DRAW_LINESTRING,
+  EDITOR_MODES.DRAW_POINT
+];
 
 export const PLOT_TYPES = keyMirror({
   histogram: null,
@@ -1339,6 +1350,7 @@ export const MAP_CONTROLS = keyMirror({
   splitMap: null,
   mapDraw: null,
   mapLocale: null,
+  mapTheme: null,
   effect: null,
   annotation: null
 });
@@ -1382,6 +1394,18 @@ export const GLOBE_MAX_LATITUDE = 75;
 
 export type GlobeConfig = {
   atmosphere: boolean;
+  /**
+   * When true, draw a large sun-independent uniform glow in addition to the
+   * realistic scattering sky halo.
+   */
+  hugeHalo: boolean;
+  /**
+   * Multiplier for huge-halo shell thickness. `1` is the baseline (~14% beyond
+   * the globe); the configured default is 3.5.
+   */
+  hugeHaloRadius: number;
+  /** Opacity of the huge-halo glow (0–1). Default: 0.2. */
+  hugeHaloOpacity: number;
   azimuth: boolean;
   azimuthAngle: number;
   terminator: boolean;
@@ -1406,6 +1430,9 @@ export type Globe = {
 
 export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
   atmosphere: true,
+  hugeHalo: true,
+  hugeHaloRadius: 3.5,
+  hugeHaloOpacity: 0.2,
   azimuth: false,
   azimuthAngle: 45,
   terminator: true,
@@ -1422,7 +1449,8 @@ export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
   // Color of the empty space rendered around the globe (deck.gl clear color).
   // Matches the previous hardcoded clear color [0.015, 0.035, 0.065] in 0-1 space.
   backgroundColor: [4, 9, 17],
-  stars: false
+  // Starfield behind the globe is on by default in globe view.
+  stars: true
 };
 
 export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {

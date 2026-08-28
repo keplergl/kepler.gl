@@ -45,7 +45,7 @@ export function isTripGeoJsonField(dataContainer: DataContainerInterface, field:
 
   const features: Feature<Geometry, GeoJsonProperties>[] = sampleRawFeatures
     .mapIndex(field.valueAccessor)
-    .map(parseGeoJsonRawFeature)
+    .map(rawFeature => parseGeoJsonRawFeature(rawFeature))
     .filter(notNullorUndefined);
   const featureTypes = getGeojsonFeatureTypes(features);
 

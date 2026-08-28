@@ -6,11 +6,17 @@ import {createLogger} from 'redux-logger';
 import thunk from 'redux-thunk';
 
 import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
-
-// eslint-disable-next-line no-unused-vars
-import Window from 'global/window';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 import demoReducer from './reducers/index';
+
+declare global {
+  interface Window {
+    __KEPLER_LOG_FULL__?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    __REDUX_DEVTOOLS_EXTENSION_COMPOSE__?: any;
+  }
+}
 
 const reducers = combineReducers({
   demo: demoReducer
@@ -18,14 +24,38 @@ const reducers = combineReducers({
 
 export const middlewares = enhanceReduxMiddleware([thunk]) as any[];
 
-const NOISY_ACTIONS = new Set(['@@kepler.gl/MOUSE_MOVE', '@@kepler.gl/LAYER_HOVER']);
+// Actions suppressed at each log level. Each level is a superset of the one above.
+// Set window.__KEPLER_LOG_FULL__ = true in the browser console to override and log everything.
+const LEVEL1_ACTIONS = new Set([
+  '@@kepler.gl/MOUSE_MOVE',
+  '@@kepler.gl/LAYER_HOVER',
+  '@@kepler.gl/SET_LOADING_INDICATOR',
+  '@@openassistant/SET_MAP_BOUNDARY'
+]);
 
-// Set window.__KEPLER_LOG_FULL__ = true in the console to include
-// high-frequency actions (MOUSE_MOVE, LAYER_HOVER, UPDATE_MAP).
+const LEVEL2_ACTIONS = new Set([
+  ...LEVEL1_ACTIONS,
+  '@@kepler.gl/LOAD_MAP_STYLES',
+  '@@kepler.gl/MAP_LOAD_STARTED',
+  '@@kepler.gl/LAYER_VISUAL_CHANGE',
+  '@@kepler.gl/UPDATE_MAP',
+  '@@kepler.gl/ON_MAP_CLICK',
+  '@@kepler.gl/FILTER_CHANGE'
+]);
+
+const SUPPRESSED_BY_LEVEL = [
+  new Set(),          // 0 — log everything
+  LEVEL1_ACTIONS,     // 1 — suppress UI noise (default)
+  LEVEL2_ACTIONS      // 2 — suppress UI noise + map/layer chatter
+];
+
 if (NODE_ENV === 'local') {
+  const level = getApplicationConfig().reduxLogLevel ?? 1;
+  const suppressed = SUPPRESSED_BY_LEVEL[level] ?? LEVEL1_ACTIONS;
+
   const logger = createLogger({
     collapsed: () => true,
-    predicate: (_getState, action) => Window.__KEPLER_LOG_FULL__ || !NOISY_ACTIONS.has(action.type)
+    predicate: (_getState, action) => window.__KEPLER_LOG_FULL__ || !suppressed.has(action.type)
   });
   middlewares.push(logger);
 }
@@ -41,9 +71,11 @@ let composeEnhancers = compose;
  * comment out code below to enable Redux Devtools
  */
 
-if (Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) {
-  composeEnhancers = Window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
-    actionsBlacklist: [...NOISY_ACTIONS]
+if (window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) {
+  const level = getApplicationConfig().reduxLogLevel ?? 1;
+  const suppressed = SUPPRESSED_BY_LEVEL[level] ?? LEVEL1_ACTIONS;
+  composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
+    actionsBlacklist: [...suppressed]
   });
 }
 

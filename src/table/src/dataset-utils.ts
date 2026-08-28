@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import uniq from 'lodash/uniq';
+import uniq from 'es-toolkit/compat/uniq';
 import KeplerTable, {Datasets} from './kepler-table';
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
 import Task from 'react-palm/tasks';
@@ -117,7 +117,8 @@ type CreateTableProps = {
 };
 
 async function createTable(datasetInfo: CreateTableProps) {
-  const {info, color, opts, data} = datasetInfo;
+  const {info, color, opts} = datasetInfo;
+  let {data} = datasetInfo;
 
   // update metadata for remote tiled datasets
   const refreshedMetadata = await refreshRemoteData(datasetInfo);
@@ -165,6 +166,8 @@ async function refreshRemoteData(datasetInfo: CreateTableProps): Promise<object 
     case DatasetType.TILE_3D:
       return null;
     case DatasetType.BITMAP:
+      return null;
+    case DatasetType.EXTERNALLY_HOSTED:
       return null;
     default:
       return null;

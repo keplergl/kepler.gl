@@ -2,9 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import Task, {withTask, drainTasksForTesting, succeedTaskInTest} from 'react-palm/tasks';
-import CloneDeep from 'lodash/cloneDeep';
+import CloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import keplerGlReducer, {
   mergeFilters,
@@ -105,7 +105,6 @@ import {
   mergedTripFilter,
   mergedRateFilter
 } from 'test/fixtures/geojson';
-import {mockStateWithPolygonFilter} from 'test/fixtures/points-with-polygon-filter-map';
 import {mockStateWithSyncedFilterAndTripLayer} from 'test/fixtures/synced-filter-with-trip-layer';
 
 test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
@@ -1996,23 +1995,43 @@ test('VisStateMerger -> insertLayerAtRightOrder -> to empty config', t => {
 });
 
 test('VisStateMerger -> load polygon filter map', t => {
-  const oldState = mockStateWithPolygonFilter();
+  const parsedMap = processKeplerglJSON(polygonFilterMap);
+  const oldState = applyActions(coreReducer, cloneDeep(InitialState), [
+    {action: addDataToMap, payload: [parsedMap]}
+  ]);
 
   const oldFilter = oldState.visState.filters[0];
+  const filteredLayerId = oldFilter.layerId[0];
+  const oldLayerIdx = oldState.visState.layers.findIndex(l => l.id === filteredLayerId);
+  const oldLayer = oldState.visState.layers[oldLayerIdx];
+  const oldLayerDataCount = oldState.visState.layerData[oldLayerIdx]?.data?.length;
+
+  t.ok(oldFilter, 'Source map should have a polygon filter');
+  t.ok(oldLayerDataCount > 0, 'Source map should show polygon-filtered layer data');
 
   const appStateToSave = SchemaManager.save(oldState);
   const stateParsed = SchemaManager.load(appStateToSave);
   const initialState = cloneDeep(InitialState);
   const initialVisState = initialState.visState;
 
-  const visState = visStateReducer(
-    initialVisState,
-    updateVisData(stateParsed.datasets, {}, stateParsed.config)
-  );
+  const visState = applyActions(visStateReducer, initialVisState, [
+    {action: updateVisData, payload: [stateParsed.datasets, {}, stateParsed.config]}
+  ]);
 
   const newFilter = visState.filters[0];
+  const reloadedIdx = visState.layers.findIndex(l => l.id === oldLayer.id);
 
   t.deepEqual(newFilter, oldFilter, 'Should have loaded the polygon filter correctly');
+  t.equal(
+    visState.layerData[reloadedIdx].data.length,
+    oldLayerDataCount,
+    'Reloaded point layer should show polygon-filtered features without toggling the filter'
+  );
+  t.equal(
+    visState.datasets[oldLayer.config.dataId].filteredIndexByLayer[oldLayer.id].length,
+    oldLayerDataCount,
+    'Reloaded per-layer polygon index should match layer data'
+  );
   t.end();
 });
 

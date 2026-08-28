@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useEffect, useMemo} from 'react';
-import throttle from 'lodash/throttle';
+import throttle from 'es-toolkit/compat/throttle';
 import styled, {IStyledComponent} from 'styled-components';
 
 import RangeSliderFactory from './range-slider';

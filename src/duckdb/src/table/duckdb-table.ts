@@ -23,6 +23,7 @@ import {
   getApplicationConfig,
   DatabaseAdapter,
   DatabaseConnection,
+  compactArrowTable,
   isArrowTable,
   isArrowVector
 } from '@kepler.gl/utils';
@@ -48,6 +49,8 @@ import {
   dropTableIfExists,
   getDuckDBColumnTypes,
   getDuckDBColumnTypesMap,
+  quoteColumnName,
+  quoteTableName,
   removeUnsupportedExtensions,
   restoreArrowTable,
   restoreUnsupportedExtensions
@@ -124,7 +127,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       }, '');
 
       const createTableSql = `
-        CREATE TABLE '${this.label}' AS
+        CREATE TABLE ${quoteTableName(this.label)} AS
         SELECT *
         FROM read_json('${this.id}',
                        columns = {${columns}});
@@ -141,13 +144,17 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       const {rows} = data;
       await db.registerFileText(this.id, JSON.stringify(rows));
 
+      // Identifiers need double quotes; file paths stay single-quoted string literals.
+      const tableName = quoteTableName(this.label);
       const createTableSql = `
         install spatial;
         load spatial;
-        CREATE TABLE '${this.label}' AS
+        CREATE TABLE ${tableName} AS
         SELECT *
         FROM ST_READ('${this.id}', keep_wkb = TRUE);
-        ALTER TABLE '${this.label}' RENAME '${DUCKDB_WKB_COLUMN}' TO '${KEPLER_GEOM_FROM_GEOJSON_COLUMN}';
+        ALTER TABLE ${tableName}
+        RENAME ${quoteColumnName(DUCKDB_WKB_COLUMN)}
+        TO ${quoteColumnName(KEPLER_GEOM_FROM_GEOJSON_COLUMN)};
       `;
 
       await c.query(createTableSql);
@@ -251,11 +258,13 @@ export class KeplerGlDuckDbTable extends KeplerTable {
 
       restoreGeoarrowMetadata(arrowResult, geoarrowMetadata);
 
+      const compactedResult = compactArrowTable(arrowResult);
+
       fields = useNewFields
-        ? arrowSchemaToFields(arrowResult, tableDuckDBTypes)
-        : data.fields ?? arrowSchemaToFields(arrowResult, tableDuckDBTypes);
-      cols = [...Array(arrowResult.numCols).keys()]
-        .map(i => arrowResult.getChildAt(i))
+        ? arrowSchemaToFields(compactedResult, tableDuckDBTypes)
+        : data.fields ?? arrowSchemaToFields(compactedResult, tableDuckDBTypes);
+      cols = [...Array(compactedResult.numCols).keys()]
+        .map(i => compactedResult.getChildAt(i))
         .filter(col => col) as arrow.Vector[];
     } catch (error) {
       console.error('DuckDB table: createTableAndGetArrow', error);

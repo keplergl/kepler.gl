@@ -116,6 +116,7 @@ export default {
       hexagonid: 'H3',
       trip: 'matka',
       s2: 'S2',
+      geohash: 'GeoHash',
       '3d': '3D',
       flow: 'virtaus',
       vectortile: 'vektoritiili',
@@ -296,7 +297,8 @@ export default {
     vectorTile: 'Vektoritiili',
     rasterTile: 'Rasteritiili',
     wmsTile: 'WMS-tiili',
-    tile3d: '3D-tiili'
+    tile3d: '3D-tiili',
+    remoteFile: '{rowCount} riviä (etä)'
   },
   tooltip: {
     hideLayer: 'Piilota taso',
@@ -319,7 +321,13 @@ export default {
     showLegend: 'Näytä selite',
     disable3DMap: 'Poistu 3D-näkymästä',
     DrawOnMap: 'Piirrä kartalle',
+    copyAllSketches: 'Kopioi kaikki luonnokset leikepöydälle GeoJSON-muodossa',
+    convertToLayer: 'Muunna luonnokset GeoJSON-tasoksi ja tyhjennä piirros',
     selectLocale: 'Valitse kielisyys',
+    switchToLightTheme: 'Vaihda vaaleaan teemaan',
+    switchToDarkTheme: 'Vaihda tummaan teemaan',
+    showAiAssistantPanel: 'Näytä AI-apuohjelman paneeli',
+    hideAiAssistantPanel: 'Piilota AI-apuohjelman paneeli',
     hideLayerPanel: 'Piilota tasopaneeli',
     showLayerPanel: 'Näytä tasopaneeli',
     moveToTop: 'Siirrä tasojen päällimmäiseksi',
@@ -362,8 +370,13 @@ export default {
     shareMapURL: 'Jaa kartan URL',
     saveMap: 'Tallenna kartta',
     select: 'valitse',
+    point: 'piste',
+    line: 'viiva',
     polygon: 'polygoni',
     rectangle: 'nelikulmio',
+    circle: 'ympyrä',
+    copyAll: 'Kopioi kaikki',
+    convertToLayer: 'Muunna\ntasoksi',
     hide: 'piilota',
     show: 'näytä',
     ...LOCALES
@@ -372,6 +385,11 @@ export default {
     filterLayer: 'Suodata tasoja',
     filterLayerDisabled: 'Ei-monikulmiogeometrioita ei voi käyttää suodatukseen',
     copyGeometry: 'Kopioi geometria',
+    editProperties: 'Muokkaa ominaisuuksia',
+    propertyName: 'Ominaisuus',
+    propertyValue: 'Arvo',
+    removeProperty: 'Poista ominaisuus',
+    polygonFilter: 'Polygonisuodatin',
     noLayersToFilter: 'Ei tasoja suodatettavaksi'
   },
   exportVideoModal: {
@@ -471,6 +489,10 @@ export default {
     saveMap: {
       title: 'Pilvitallennus',
       subtitle: 'Kirjaudu sisään pilvipalveluusi tallentaaksesi kartan'
+    },
+    providerSelect: {
+      disclaimer:
+        'Kirjaudu omalla tililläsi. Kartat tallennetaan valitsemasi palvelun henkilökohtaiseen pilveen, ei Kepler.gl:ään.'
     },
     exportMap: {
       formatTitle: 'Kartan formaatti',
@@ -666,8 +688,15 @@ export default {
       'Lisää {fileFormatNames} tai tallennettu kartta **Json**. Lue lisää [**tuetuista formaateista**]',
     browseFiles: 'selaa tiedostojasi',
     uploading: 'ladataan',
+    downloading: 'Ladataan',
     fileNotSupported: 'Tiedosto {errorFiles} ei ole tuettu.',
-    or: 'tai'
+    or: 'tai',
+    dropMessage: 'Raahaa ja pudota tiedostosi tänne, {browse} tai',
+    urlPlaceholder: 'Syötä aineiston URL',
+    fetch: 'Hae',
+    format: 'Muoto',
+    formatAuto: 'Auto',
+    cors: 'URL-osoitteen on sallittava [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   density: 'tiheys',
   'Bug Report': 'Bugiraportointi',

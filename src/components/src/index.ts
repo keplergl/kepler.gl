@@ -159,8 +159,10 @@ export {default as CoordinateInfoFactory} from './map/coordinate-info';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as LazyTippy} from './map/lazy-tippy';
 export {default as LocalePanelFactory} from './map/locale-panel';
+export {default as ThemeToggleButtonFactory} from './map/theme-toggle-button';
 export {default as MapControlFactory} from './map/map-control';
 export {default as MapNavigationControlFactory} from './map/map-navigation-control';
+export {default as MapScaleFactory} from './map/map-scale';
 export {default as MapControlPanelFactory} from './map/map-control-panel';
 export {default as MapControlToolbarFactory} from './map/map-control-toolbar';
 export {default as MapControlTooltipFactory} from './map/map-control-tooltip';
@@ -222,6 +224,7 @@ export {default as ExportVideoControlFactory} from './common/animation-control/e
 export {default as WindowActionControlFactory} from './common/animation-control/window-action-control';
 
 export {default as HistogramPlotFactory, HISTOGRAM_MASK_MODE} from './common/histogram-plot';
+export type {HistogramPlotProps} from './common/histogram-plot';
 export {default as IconButton} from './common/icon-button';
 export {default as LinkRenderer} from './common/link-renderer';
 export {
@@ -287,7 +290,13 @@ export {
   NumberFormatConfig
 } from './common/data-table/display-format';
 export {default as HeaderCellFactory} from './common/data-table/header-cell';
+export type {HeaderCellProps} from './common/data-table/header-cell';
 export {FormatterDropdown, default as OptionDropdown} from './common/data-table/option-dropdown';
+export {default as ColumnStatisticsNumericFactory} from './common/data-table/column-statistics-numeric';
+export type {ColumnStatisticsNumericProps} from './common/data-table/column-statistics-numeric';
+export {default as ColumnStatisticsTimeFactory} from './common/data-table/column-statistics-time';
+export type {ColumnStatisticsTimeProps} from './common/data-table/column-statistics-time';
+export {STATS_WIDTH} from './common/data-table/column-statistics-components';
 export {default as DatasetLabel} from './common/dataset-label';
 export {default as FieldSelectorFactory} from './common/field-selector';
 export * from './common/field-token';
@@ -502,6 +511,7 @@ export {
   DROPPABLE_MAP_CONTAINER_TYPE,
   SORTABLE_LAYER_TYPE,
   SORTABLE_EFFECT_TYPE,
+  SORTABLE_EFFECT_PANEL_TYPE,
   SORTABLE_SIDE_PANEL_TYPE,
   SORTABLE_LAYER_GROUP_TYPE,
   SORTABLE_LAYER_GROUP_DROPPABLE_TYPE,

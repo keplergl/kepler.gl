@@ -41,7 +41,8 @@ import {
   createGeoArrowPointVector,
   getFilteredIndex,
   getNeighbors,
-  FindDefaultLayerProps
+  FindDefaultLayerProps,
+  getGeoArrowPointCoords
 } from '../layer-utils';
 import {getGeojsonPointDataMaps, GeojsonPointDataMaps} from '../geojson-layer/geojson-utils';
 import {
@@ -131,7 +132,7 @@ export const geoarrowPosAccessor =
   (dataContainer: DataContainerInterface) =>
   (d: {index: number}) => {
     const row = dataContainer.valueAt(d.index, geoarrow.fieldIdx);
-    return [row.get(0), row.get(1), 0];
+    return getGeoArrowPointCoords(row);
   };
 
 export const COLUMN_MODE_POINTS = 'points';
@@ -594,7 +595,8 @@ export default class PointLayer extends Layer {
         getPosition,
         parameters: {
           // circles will be flat on the map when the altitude column is not used
-          depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1
+          depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1,
+          ...(mapState?.layerParameters ?? {})
         },
         lineWidthUnits: 'pixels',
         updateTriggers,

@@ -8,6 +8,7 @@ import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {KeplerTable} from '@kepler.gl/table';
 import {
   AddDataToMapPayload,
+  ViewportPadding,
   ValueOf,
   Merge,
   PickInfo,
@@ -1044,8 +1045,86 @@ export function setColumnDisplayFormat(
   };
 }
 
+export type LoadColumnStatsUpdaterAction = {
+  dataId: string;
+  fieldName: string | string[];
+};
+
+/**
+ * Lazily compute column statistics for the data table header.
+ * @param dataId
+ * @param fieldName one or more field names
+ * @returns action
+ * @public
+ */
+export function loadColumnStats(
+  dataId: string,
+  fieldName: string | string[]
+): Merge<LoadColumnStatsUpdaterAction, {type: typeof ActionTypes.LOAD_COLUMN_STATS}> {
+  return {
+    type: ActionTypes.LOAD_COLUMN_STATS,
+    dataId,
+    fieldName
+  };
+}
+
+export type LoadColumnStatsSuccessUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  result: any;
+  filterProps?: any;
+};
+
+/**
+ * Column statistics finished loading
+ * @returns action
+ * @public
+ */
+export function loadColumnStatsSuccess(
+  dataId: string,
+  fieldName: string,
+  result: any,
+  filterProps?: any
+): Merge<
+  LoadColumnStatsSuccessUpdaterAction,
+  {type: typeof ActionTypes.LOAD_COLUMN_STATS_SUCCESS}
+> {
+  return {
+    type: ActionTypes.LOAD_COLUMN_STATS_SUCCESS,
+    dataId,
+    fieldName,
+    result,
+    filterProps
+  };
+}
+
+export type LoadColumnStatsErrorUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  error: Error;
+};
+
+/**
+ * Column statistics failed to load
+ * @returns action
+ * @public
+ */
+export function loadColumnStatsError(
+  dataId: string,
+  fieldName: string,
+  error: Error
+): Merge<LoadColumnStatsErrorUpdaterAction, {type: typeof ActionTypes.LOAD_COLUMN_STATS_ERROR}> {
+  return {
+    type: ActionTypes.LOAD_COLUMN_STATS_ERROR,
+    dataId,
+    fieldName,
+    error
+  };
+}
+
 export type AddDataToMapUpdaterOptions = {
   centerMap?: boolean;
+  padding?: ViewportPadding;
   readOnly?: boolean;
   keepExistingConfig?: boolean;
 };
@@ -1070,6 +1149,8 @@ export type UpdateVisDataUpdaterAction = {
  * @param {object} options
  * @param options.centerMap `default: true` if `centerMap` is set to `true` kepler.gl will
  * place the map view within the data points boundaries
+ * @param options.padding padding in pixels applied when `centerMap` is true so data is not hidden
+ * under the side panel or other UI. Can be a number or `{top, bottom, left, right}`.
  * @param options.readOnly `default: false` if `readOnly` is set to `true`
  * the left setting panel will be hidden
  * @param config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
@@ -1602,6 +1683,32 @@ export function loadFilesErr(
 export type SetFeaturesUpdaterAction = {
   features: Feature[];
 };
+
+export type SetEditorFeaturePropertiesUpdaterAction = {
+  feature: Feature;
+  properties: Record<string, unknown>;
+};
+/**
+ * Set user-facing GeoJSON properties on a Draw on Map sketch.
+ * Editor-only keys such as `filterId` and `isClosed` are preserved.
+ * @memberof visStateActions
+ * @param feature
+ * @param properties
+ * @returns action
+ */
+export function setEditorFeatureProperties(
+  feature: Feature,
+  properties: Record<string, unknown>
+): Merge<
+  SetEditorFeaturePropertiesUpdaterAction,
+  {type: typeof ActionTypes.SET_EDITOR_FEATURE_PROPERTIES}
+> {
+  return {
+    type: ActionTypes.SET_EDITOR_FEATURE_PROPERTIES,
+    feature,
+    properties
+  };
+}
 /**
  * Store features to state
  * @memberof visStateActions
@@ -1706,16 +1813,16 @@ export function deleteFeature(
 export type SetEditorModeUpdaterAction = {
   mode: string;
 };
-/** Set the map mode
+/** Set the Draw on Map editor mode.
  * @memberof visStateActions
- * @param mode one of EDITOR_MODES
+ * @param mode one of `EDITOR_MODES`: `EDIT`, `DRAW_POINT`, `DRAW_LINESTRING`, `DRAW_POLYGON`, `DRAW_RECTANGLE`, `DRAW_CIRCLE`
  * @returns action
  * @public
  * @example
- * import {setMapMode} from '@kepler.gl/actions';
+ * import {setEditorMode} from '@kepler.gl/actions';
  * import {EDITOR_MODES} from '@kepler.gl/constants';
  *
- * this.props.dispatch(setMapMode(EDITOR_MODES.DRAW_POLYGON));
+ * this.props.dispatch(setEditorMode(EDITOR_MODES.DRAW_LINESTRING));
  */
 export function setEditorMode(
   mode: string
@@ -1757,6 +1864,28 @@ export function toggleEditorVisibility(): Merge<
 > {
   return {
     type: ActionTypes.TOGGLE_EDITOR_VISIBILITY
+  };
+}
+
+export type ConvertEditorFeaturesToLayerUpdaterAction = void;
+/**
+ * Convert editor sketch features into a GeoJSON dataset and layer, then clear the sketches.
+ * The new dataset/layer is labeled `Drawn Geometry` plus a two-digit number.
+ * No-ops when `enableDrawOnMapSketches` is false in application config.
+ * @memberof visStateActions
+ * @return action
+ * @public
+ * @example
+ * import {convertEditorFeaturesToLayer} from '@kepler.gl/actions';
+ *
+ * this.props.dispatch(convertEditorFeaturesToLayer());
+ */
+export function convertEditorFeaturesToLayer(): Merge<
+  ConvertEditorFeaturesToLayerUpdaterAction,
+  {type: typeof ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER}
+> {
+  return {
+    type: ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER
   };
 }
 

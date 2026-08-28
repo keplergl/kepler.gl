@@ -152,6 +152,7 @@ export type ParsedUiState = {
     };
   };
   locale?: string;
+  theme?: string;
 };
 
 export type SavedMapState = {

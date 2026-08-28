@@ -94,6 +94,18 @@ To use H3 layer, you need a `hex_id` in your dataset, which can be generated usi
 
 To use S2 layer, you need to assign a column containing S2 tokens.
 
+## A5 Layer
+
+To use A5 layer, you need to assign a column containing [A5](https://a5geo.org) cell identifiers. Kepler.gl auto-detects columns named `a5`, `a5_token`, or `a5_id`.
+
+The A5 layer is optional and disabled by default. Enable it with `enableA5Layer: true` in the application configuration.
+
+## GeoHash Layer
+
+To use GeoHash layer, you need to assign a column containing [Geohash](https://en.wikipedia.org/wiki/Geohash) cell identifiers. Kepler.gl auto-detects columns named `geohash`, `geo_hash`, or `geohash_id`.
+
+The GeoHash layer is optional and enabled by default. Disable it with `enableGeohashLayer: false` in the application configuration.
+
 ## Vector Tile Layer
 
 ![Vector Tile layer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/documentation/layer-types/vector-tile.png 'Vector Tile Layer')

@@ -140,21 +140,13 @@ function getEmptyFilterRange() {
  */
 const defaultGetIndex = d => d.index;
 
-/**
- * Returns value at the specified row from the data container.
- * @param dc Data container.
- * @param d Data element with row index info.
- * @param fieldIndex Column index in the data container.
- * @returns
- */
-const defaultGetData = (dc: DataContainerInterface, d: any, fieldIndex: number) => {
-  return dc.valueAt(d.index, fieldIndex);
-};
-
 const getFilterValueAccessor =
   (channels: (Filter | undefined)[], dataId: string, fields: any[]) =>
   (dc: DataContainerInterface) =>
-  (getIndex = defaultGetIndex, getData = defaultGetData) =>
+  (
+    getIndex = defaultGetIndex,
+    getData?: (dc: DataContainerInterface, d: any, fieldIndex: number) => any
+  ) =>
   (d, objectInfo?: {index: number}) => {
     // for empty channel, value is 0 and min max would be [0, 0]
     const channelValues = channels.map(filter => {
@@ -167,7 +159,9 @@ const getFilterValueAccessor =
       let value;
       // d can be undefined when called from attribute updater from deck,
       // when data is an ArrowTable, so use objectInfo instead.
-      const data = getData(dc, d || objectInfo, fieldIndex);
+      const datum = d || objectInfo;
+      // field.valueAccessor is Number() for Int64 columns; valueAt stays raw BigInt.
+      const data = getData ? getData(dc, datum, fieldIndex) : field.valueAccessor(datum);
       if (typeof data === 'function') {
         value = data(field);
       } else {

@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {bisectLeft, extent, histogram as d3Histogram, ticks} from 'd3-array';
-import isEqual from 'lodash/isEqual';
+import isEqual from 'es-toolkit/compat/isEqual';
 import {getFilterMappedValue, getInitialInterval, intervalToFunction} from './time';
 import moment from 'moment';
 import {
@@ -39,6 +39,31 @@ import {KeplerTableModel} from './types';
 
 // TODO kepler-table module isn't accessible from utils. Add compatible interface to types
 type Datasets = any;
+
+/**
+ * Merge per-layer polygon-filtered indices into a dataset-level index.
+ * When any layers are polygon-filtered, take the union of their indices (a row is kept if it
+ * is visible on at least one targeted layer), then intersect with the base index.
+ * Used for filtered export and filter plots/histograms.
+ */
+export function mergePolygonLayerIndexes(
+  baseIndex: number[],
+  filteredIndexByLayer: Record<string, number[]> = {}
+): number[] {
+  const layerIndexes = Object.values(filteredIndexByLayer);
+  if (!layerIndexes.length) {
+    return baseIndex;
+  }
+
+  const union = new Set<number>();
+  for (const indexes of layerIndexes) {
+    for (const idx of indexes) {
+      union.add(idx);
+    }
+  }
+
+  return baseIndex.filter(i => union.has(i));
+}
 
 /**
  *
@@ -88,7 +113,7 @@ export function histogramFromValues(
   values: (Millisecond | null | number)[],
   numBins: number,
   valueAccessor?: (d: number) => number
-) {
+): Bin[] {
   const getBins = d3Histogram().thresholds(numBins);
 
   if (valueAccessor) {
@@ -106,7 +131,7 @@ export function histogramFromValues(
     .filter(b => {
       const {x0, x1} = b;
       return isNumber(x0) && isNumber(x1);
-    });
+    }) as Bin[];
 }
 
 export function histogramFromOrdinal(
@@ -242,8 +267,11 @@ export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
 
   const {
     gpuFilter: {filterValueUpdateTriggers, filterRange, filterValueAccessor},
-    filteredIndex
+    filteredIndex,
+    filteredIndexByLayer
   } = dataset;
+  // Polygon filters are per-layer; plots use the union of targeted layer indices
+  const plotFilteredIndex = mergePolygonLayerIndexes(filteredIndex, filteredIndexByLayer);
   const getFilterValue = filterValueAccessor(dataset.dataContainer)();
 
   const allChannels = Object.keys(filterValueUpdateTriggers)
@@ -251,7 +279,7 @@ export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
     .filter(i => Object.values(filterValueUpdateTriggers)[i]);
   const skipAll = !allChannels.filter(i => !skipIndexes.includes(i)).length;
   if (skipAll) {
-    return filteredIndex;
+    return plotFilteredIndex;
   }
 
   const filterData = getFilterDataFunc(
@@ -261,7 +289,7 @@ export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
     skipIndexes
   );
 
-  return filteredIndex.filter(filterData);
+  return plotFilteredIndex.filter(filterData);
 }
 
 function getSkipIndexes(dataset, filter) {
@@ -348,14 +376,14 @@ const getAgregationType = (field, aggregation) => {
   return aggregation;
 };
 
-const getAggregationAccessor = (field, dataContainer: DataContainerInterface, fields) => {
+const getAggregationAccessor = (field, fields) => {
   if (isPercentField(field)) {
     const numeratorIdx = fields.findIndex(f => f.name === field.metadata.numerator);
     const denominatorIdx = fields.findIndex(f => f.name === field.metadata.denominator);
 
     return {
-      getNumerator: i => dataContainer.valueAt(i, numeratorIdx),
-      getDenominator: i => dataContainer.valueAt(i, denominatorIdx)
+      getNumerator: i => fields[numeratorIdx].valueAccessor({index: i}),
+      getDenominator: i => fields[denominatorIdx].valueAccessor({index: i})
     };
   }
 
@@ -367,7 +395,7 @@ export const getValueAggrFunc = (
   aggregation: string,
   dataset: KeplerTableModel<any, any>
 ): ((bin: Bin) => number) => {
-  const {dataContainer, fields} = dataset;
+  const {fields} = dataset;
 
   // The passed-in field might not have all the fields set (e.g. valueAccessor)
   const datasetField = fields.find(
@@ -380,7 +408,7 @@ export const getValueAggrFunc = (
           bin.indexes,
           getAgregationType(datasetField, aggregation),
           // @ts-expect-error can return {getNumerator, getDenominator}
-          getAggregationAccessor(datasetField, dataContainer, fields)
+          getAggregationAccessor(datasetField, fields)
         )
     : bin => bin.count;
 };

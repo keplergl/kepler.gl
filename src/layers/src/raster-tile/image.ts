@@ -7,7 +7,7 @@
 
 import {load, FetchError} from '@loaders.gl/core';
 import {QuantizedMeshLoader} from '@loaders.gl/terrain';
-import memoize from 'lodash/memoize';
+import memoize from 'es-toolkit/compat/memoize';
 
 import {sleep} from '@kepler.gl/common-utils';
 import {getLoaderOptions} from '@kepler.gl/constants';
@@ -368,9 +368,10 @@ async function loadSingleAssetSTAC(request: AssetRequestData): Promise<ImageData
   const imageBands = await loadNpyArray(request, true);
 
   if (!imageBands) {
-    return {
-      imageBands
-    };
+    // loadNpyArray returns null when the request was aborted or the server
+    // returned no usable data. Propagate null imageBands so the caller
+    // (getTileData) can detect the empty result and avoid caching it as valid.
+    return {imageBands: null};
   }
 
   const imageMask = (request.useMask && imageBands.pop()) || null;

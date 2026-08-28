@@ -50,6 +50,32 @@ export type BaseMapLibraryConfig = {
  * A mechanism to override default Kepler values/settings so that we
  * without having to make application-specific changes to the kepler repo.
  */
+/**
+ * Controls which Redux actions are suppressed by the dev-mode Redux logger.
+ * Mirrors the `log.level` convention used by luma.gl / deck.gl.
+ *
+ * - `0` — log every action (no filtering)
+ * - `1` — suppress the highest-frequency UI noise:
+ *          MOUSE_MOVE, LAYER_HOVER, SET_MAP_BOUNDARY, SET_LOADING_INDICATOR
+ * - `2` — suppress everything in level 1 plus map/layer update chatter:
+ *          LOAD_MAP_STYLES, UPDATE_MAP, LAYER_VISUAL_CHANGE,
+ *          ON_MAP_CLICK, FILTER_CHANGE, MAP_LOAD_STARTED
+ *
+ * Effects by context:
+ * - **redux-logger** (console output): only active when `NODE_ENV === 'local'` (i.e. `yarn start`)
+ * - **Redux DevTools** (`actionsBlacklist`): active whenever the browser extension is present,
+ *   regardless of `NODE_ENV`
+ *
+ * Default: `1`
+ *
+ * @example
+ * ```ts
+ * initApplicationConfig({ reduxLogLevel: 2 }); // quieter dev console
+ * initApplicationConfig({ reduxLogLevel: 0 }); // see every action
+ * ```
+ */
+export type ReduxLogLevel = 0 | 1 | 2;
+
 export type KeplerApplicationConfig = {
   /** Default name of export HTML file, can be overridden by user */
   defaultHtmlName?: string;
@@ -108,6 +134,14 @@ export type KeplerApplicationConfig = {
   // Bitmap layer config
   enableBitmapLayer?: boolean;
 
+  // A5 layer config
+  // A5 DGGS layer is optional. Disabled by default; enable via initApplicationConfig.
+  enableA5Layer?: boolean;
+
+  // GeoHash layer config
+  // GeoHash layer is optional. Enabled by default; disable via initApplicationConfig.
+  enableGeohashLayer?: boolean;
+
   /** Whether to show example URLs in tileset setup forms (vector tile, raster tile, WMS, 3D tile) */
   showInlineTilesetExamples?: boolean;
 
@@ -122,8 +156,18 @@ export type KeplerApplicationConfig = {
   /** Whether to enable the annotations feature. Enabled by default. */
   enableAnnotations?: boolean;
 
+  /**
+   * Whether to enable extended Draw on Map sketch tools: Point, Line, Copy all,
+   * Convert to Layer, and Edit Properties.
+   * Polygon and rectangle drawing remain available when this is disabled. Enabled by default.
+   */
+  enableDrawOnMapSketches?: boolean;
+
   /** Whether to show the map navigation control (zoom buttons and compass). Enabled by default. */
   enableMapNavigationControl?: boolean;
+
+  /** Whether to show the map scale bar at the bottom-left of the map. Enabled by default. */
+  enableMapScale?: boolean;
 
   /** Whether to enable the swipe compare mode in split map view. Enabled by default. */
   enableSwipeMode?: boolean;
@@ -133,7 +177,19 @@ export type KeplerApplicationConfig = {
 
   /** Whether to enable the layer groups feature. Enabled by default. */
   enableLayerGroups?: boolean;
-  
+
+  /** Whether to show a map control to toggle between light and dark UI themes. Disabled by default. */
+  enableThemeToggle?: boolean;
+
+  /** Whether to show column statistics in the data table modal. Enabled by default. */
+  enableColumnStats?: boolean;
+
+  /**
+   * Show a format dropdown next to the remote dataset URL field (Auto / CSV / GeoJSON / JSON / Arrow / Parquet).
+   * Useful for extensionless URLs such as Azure SAS blobs. Disabled by default.
+   */
+  enableRemoteFileFormatSelector?: boolean;
+
   /**
    * Custom SVG icons to be made available in the icon layer.
    * These icons will be merged with the default icons fetched from CDN.
@@ -169,6 +225,25 @@ export type KeplerApplicationConfig = {
    * ```
    */
   customIconUrl?: string;
+
+  /** Controls Redux action logging verbosity in dev mode. See {@link ReduxLogLevel}. */
+  reduxLogLevel?: ReduxLogLevel;
+
+  /**
+   * If an Arrow/Parquet table has more record batches than this, they are
+   * compacted into a single batch. The default is `1`, so any table with more
+   * than one record batch is compacted. Deck.gl picking supports at most 255
+   * pickable leaf layers, and GeoJSON adds fill/stroke/point sublayers per
+   * batch, so a higher cap still overruns picking. Compacting copies the table.
+   * Progressive Arrow loading skips compaction on intermediate batches and
+   * compacts the completed file once. Set a very large number to never compact.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({maxArrowBatches: 64});
+   * ```
+   */
+  maxArrowBatches?: number;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -229,6 +304,12 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   // Bitmap layer config
   enableBitmapLayer: true,
 
+  // A5 layer config
+  enableA5Layer: true,
+
+  // GeoHash layer config
+  enableGeohashLayer: true,
+
   showInlineTilesetExamples: true,
 
   // Image export config
@@ -239,7 +320,11 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableAnnotations: true,
 
+  enableDrawOnMapSketches: true,
+
   enableMapNavigationControl: true,
+
+  enableMapScale: true,
 
   enableSwipeMode: true,
 
@@ -247,9 +332,19 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableLayerGroups: true,
 
+  enableThemeToggle: false,
+
+  enableColumnStats: true,
+
+  enableRemoteFileFormatSelector: false,
+
   customIcons: [],
 
-  customIconUrl: ''
+  customIconUrl: '',
+
+  reduxLogLevel: 1,
+
+  maxArrowBatches: 1
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;

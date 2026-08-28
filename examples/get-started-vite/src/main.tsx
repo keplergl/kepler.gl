@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Dispatch} from 'react';
+import React, {useState, useEffect} from 'react';
 import ReactDOM from 'react-dom/client';
-import {connect, Provider} from 'react-redux';
-
+import {Provider, useDispatch} from 'react-redux';
 import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
 
 import KeplerGl from '@kepler.gl/components';
-import keplerGlReducer, {enhanceReduxMiddleware, KeplerGlState} from '@kepler.gl/reducers';
+import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
+import {initApplicationConfig} from '@kepler.gl/utils';
 
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
+// Annotations require a custom MapControl that mounts AnnotationManager.
+// Disable them here so the default get-started example stays minimal.
+initApplicationConfig({
+  enableAnnotations: false
+});
 
-// create reducers
 const reducers = combineReducers({
-  // mount keplerGl reducer
   keplerGl: keplerGlReducer.initialState({
     uiState: {
       readOnly: false,
@@ -23,52 +25,48 @@ const reducers = combineReducers({
   })
 });
 
-// create middlewares
-const middleWares = enhanceReduxMiddleware([
-  // Add other middlewares here
-]);
-
-// craeteEnhancers
+const middleWares = enhanceReduxMiddleware([]);
 const enhancers = applyMiddleware(...middleWares);
+const store = createStore(reducers, {}, compose(enhancers));
 
-// create store
-const initialState = {};
-const store = createStore(reducers, initialState, compose(enhancers));
+function useWindowSize() {
+  const [size, setSize] = useState({width: window.innerWidth, height: window.innerHeight});
+  useEffect(() => {
+    const onResize = () => setSize({width: window.innerWidth, height: window.innerHeight});
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return size;
+}
 
-const App = () => (
-  <div
-    style={{
-      position: 'absolute',
-      top: '0px',
-      left: '0px',
-      width: '100%',
-      height: '100%'
-    }}
-  >
-    <AutoSizer>
-      {({height, width}) => (
-        <KeplerGl
-          mapboxApiAccessToken="pk.eyJ1IjoiaWdvcjEzMTMxMyIsImEiOiJjbTRtMWxoMnIwN3VhMmlxOGRnZ3AxcGhhIn0.d9YD6z5nsBNzPXrXWzIaAA"
-          id="map"
-          width={width}
-          height={height}
-        />
-      )}
-    </AutoSizer>
-  </div>
-);
+// luma.gl defaults `debug` to true whenever NODE_ENV !== 'production', which Vite
+// sets during `vite dev`. That wraps the WebGL context in the Khronos debug layer
+// and starts a GPU timer query per render pass. Globe mode issues several passes
+// per frame and overlapping TIME_ELAPSED_EXT queries are illegal in WebGL2, so the
+// debug layer throws and takes the app down.
+const DECK_GL_PROPS = {deviceProps: {debug: false}};
 
-const mapStateToProps = (state: KeplerGlState) => state;
-const dispatchToProps = (dispatch: Dispatch<any>) => ({dispatch});
-const ConnectedApp = connect(mapStateToProps, dispatchToProps)(App);
+const App = () => {
+  const dispatch = useDispatch();
+  const {width, height} = useWindowSize();
+
+  return (
+    <KeplerGl
+      mapboxApiAccessToken="pk.xxx.yyy" // Replace with your mapbox token
+      id="map"
+      width={width}
+      height={height}
+      deckGlProps={DECK_GL_PROPS}
+    />
+  );
+};
+
 const Root = () => (
   <Provider store={store}>
-    <ConnectedApp />
+    <App />
   </Provider>
 );
 
 const container = document.getElementById('root');
-if (container) {
-  const root = ReactDOM.createRoot(container);
-  root.render(<Root />);
-}
+const root = ReactDOM.createRoot(container!);
+root.render(<Root />);
