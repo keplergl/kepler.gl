@@ -41,6 +41,11 @@ const NotificationItemContent = styled.div<NotificationItemContentProps>`
   border-radius: 4px;
   box-shadow: ${props => props.theme.boxShadow};
   cursor: pointer;
+
+  &:hover .notification-item--copy {
+    opacity: 1;
+    pointer-events: auto;
+  }
 `;
 
 const NotificationActions = styled.div.attrs({
@@ -49,14 +54,22 @@ const NotificationActions = styled.div.attrs({
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: 6px;
   flex-shrink: 0;
+  position: relative;
 `;
 
-const ActionIconButton = styled.div`
+const ActionIconButton = styled.div.attrs({
+  className: 'notification-item--copy'
+})<{$copied?: boolean}>`
   display: flex;
   cursor: pointer;
   line-height: 0;
+  position: absolute;
+  right: calc(100% + 6px);
+  top: 0;
+  z-index: 1;
+  opacity: ${props => (props.$copied ? 1 : 0)};
+  pointer-events: ${props => (props.$copied ? 'auto' : 'none')};
 `;
 
 const DeleteIcon = styled(Delete)`
@@ -212,6 +225,7 @@ export default function NotificationItemFactory() {
           </NotificationMessage>
           <NotificationActions onClick={event => event.stopPropagation()}>
             <ActionIconButton
+              $copied={copied}
               data-testid={dataTestIds.copyNotificationIcon}
               title={copied ? 'Copied' : 'Copy to clipboard'}
               onClick={onCopy}

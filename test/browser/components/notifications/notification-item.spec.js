@@ -48,6 +48,7 @@ describe('Notification tests', () => {
     fireEvent.click(notification);
     expect(notification).toHaveClass('notification-item--expanded');
 
+    fireEvent.mouseOver(notification);
     fireEvent.click(screen.getByTestId(dataTestIds.copyNotificationIcon));
 
     expect(copy).toHaveBeenCalledWith('Failed to load tiles');
