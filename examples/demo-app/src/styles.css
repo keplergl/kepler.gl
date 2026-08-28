@@ -2,6 +2,25 @@
 
 @import '@sqlrooms/ui/tailwind-preset.css';
 
+/*
+ * The demo (CONTAINER_STYLE in app.tsx) is `position: absolute; height: 100%`.
+ * That resolves against the viewport while `body` is `position: static`. Opening
+ * a Radix dropdown/popover (session history, rename, delete, model picker)
+ * sets `body[data-scroll-locked] { position: relative !important }`, which
+ * makes `body` the containing block. Without an explicit height, body
+ * collapses to 0 (in-flow children are empty wrappers; the map is
+ * absolutely positioned) and the dark `bg-background` paints the viewport,
+ * so the popup looks unstyled and full-screen. The website build also
+ * mounts into an unstyled div with no html/body height.
+ */
+html,
+body,
+#root,
+.kg-web-content {
+  width: 100%;
+  height: 100%;
+}
+
 /* Scan our local components. Include the whole demo-app `src` tree so
  * app-level Tailwind classes in app.tsx are also generated. */
 @source "./**/*.{ts,tsx}";
@@ -49,12 +68,13 @@
  * z-indices compete directly in the body's root stacking context and cover
  * the z-50 popup.
  *
- * Hoist any Radix layer portaled to <body> (the dialog overlay + content both
- * carry data-state="open" and live directly under body, outside #root where
- * kepler.gl is mounted) above all kepler.gl layers. Unlayered CSS beats
- * Tailwind's layered .z-50, so no !important is needed.
+ * Hoist any Radix layer portaled to <body> above all kepler.gl layers.
+ * Dialog overlay/content are `body > [data-state=open]`; dropdown/popover
+ * content is wrapped in `body > [data-radix-popper-content-wrapper]`.
+ * Unlayered CSS beats Tailwind's layered .z-50, so no !important is needed.
  */
-body > [data-state='open'] {
+body > [data-state='open'],
+body > [data-radix-popper-content-wrapper] {
   z-index: 10001;
 }
 

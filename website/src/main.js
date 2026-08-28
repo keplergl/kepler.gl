@@ -14,6 +14,7 @@ import document from 'global/document';
 require('./static/favicon.png');
 
 const el = document.createElement('div');
+el.id = 'root';
 document.body.appendChild(el);
 
 const root = ReactDOM.createRoot(el);
