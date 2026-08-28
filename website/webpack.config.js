@@ -39,7 +39,7 @@ const BABEL_CONFIG = {
 };
 
 const COMMON_CONFIG = {
-  entry: ['../examples/demo-app/src/react19-shim.ts', './src/main'],
+  entry: ['../examples/demo-app/src/react19-shim.js', './src/main'],
   output: {
     path: resolve(__dirname, 'build'),
     filename: 'bundle.js',

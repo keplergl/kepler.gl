@@ -53,7 +53,7 @@ jobs:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
 
       # Install dependencies for the standalone example apps and website so
-      # that `yarn typescript:examples` (run by `yarn lint`) can resolve their
+      # that `yarn lint` (eslint over `examples website`) can resolve their
       # third-party modules. These projects are NOT yarn workspaces of the
       # root package and therefore need their own `yarn install`.
       - name: Install Example & Website Dependencies

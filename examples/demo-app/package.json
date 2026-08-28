@@ -112,8 +112,6 @@
   "devDependencies": {
     "@dotenv-run/esbuild": "^1.5.0",
     "@tailwindcss/cli": "^4.3.3",
-    "@types/react": "19.2.17",
-    "@types/react-dom": "19.2.3",
     "esbuild-plugin-replace": "^1.4.0"
   }
 }

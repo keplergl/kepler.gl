@@ -77,7 +77,7 @@ const getKeplerAliases = () => ({
  * bundled). Scopes absent from root are left to normal resolution.
  *
  * `@loaders.gl` is deliberately NOT aliased: kepler src (3.3) needs loaders 4.4
- * while the demo's own `src/actions.ts` still uses 4.3-era names
+ * while the demo's own `src/actions.js` still uses 4.3-era names
  * (`ParquetWasmLoader`, `_GeoJSONLoader`) that 4.4 renamed. esbuild resolves
  * per-importing-file, so leaving the scope alone gives each tree its own copy —
  * kepler src files walk up from /kepler.gl/src to root's 4.4, demo files to the
@@ -169,7 +169,7 @@ const config = {
   logOverride: {
     'unsupported-jsx-comment': 'silent'
   },
-  inject: ['src/react19-shim.ts'],
+  inject: ['src/react19-shim.js'],
   loader: {
     '.js': 'jsx',
     '.css': 'css',
@@ -177,7 +177,7 @@ const config = {
     '.woff': 'file',
     '.woff2': 'file'
   },
-  entryPoints: ['src/main.tsx'],
+  entryPoints: ['src/main.js'],
   outfile: 'dist/bundle.js',
   bundle: true,
   define: {
