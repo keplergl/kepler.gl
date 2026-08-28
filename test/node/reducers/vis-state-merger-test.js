@@ -858,7 +858,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
           [testCsvDataId]: [
             {
               name: 'gps_data.utc_timestamp',
-              format: null
+              format: 'L LTS'
             },
             {
               name: 'gps_data.types',
@@ -866,7 +866,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
             },
             {
               name: 'epoch',
-              format: null
+              format: 'L LTS'
             },
             {
               name: 'has_result',
@@ -1083,7 +1083,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
                 [testCsvDataId]: [
                   {
                     name: 'gps_data.utc_timestamp',
-                    format: null
+                    format: 'L LTS'
                   },
                   {
                     name: 'gps_data.types',
@@ -1091,7 +1091,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
                   },
                   {
                     name: 'epoch',
-                    format: null
+                    format: 'L LTS'
                   },
                   {
                     name: 'has_result',
@@ -1167,7 +1167,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
           [testCsvDataId]: [
             {
               name: 'gps_data.utc_timestamp',
-              format: null
+              format: 'L LTS'
             },
             {
               name: 'gps_data.types',
@@ -1175,7 +1175,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
             },
             {
               name: 'epoch',
-              format: null
+              format: 'L LTS'
             },
             {
               name: 'has_result',

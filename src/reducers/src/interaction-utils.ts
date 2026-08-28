@@ -38,7 +38,7 @@ export function findFieldsToShow({
   id: string;
   maxDefaultTooltips: number;
 }): {
-  [key: string]: string[];
+  [key: string]: TooltipField[];
 } {
   // first find default tooltip fields for trips
   const fieldsToShow = DEFAULT_TOOLTIP_FIELDS.reduce((prev, curr) => {
@@ -69,12 +69,22 @@ function autoFindTooltipFields(fields, maxDefaultTooltips) {
       type !== 'object'
   );
 
-  return fieldsToShow.slice(0, maxDefaultTooltips).map(({name}) => {
+  return fieldsToShow.slice(0, maxDefaultTooltips).map(({name, type}) => {
     return {
       name,
-      format: null
+      format: getDefaultTooltipFormat(type)
     };
   });
+}
+
+function getDefaultTooltipFormat(type?: string): string | null {
+  if (type === ALL_FIELD_TYPES.timestamp) {
+    return TOOLTIP_FORMATS.DATE_TIME_L_LTS[TOOLTIP_KEY];
+  }
+  if (type === ALL_FIELD_TYPES.date) {
+    return TOOLTIP_FORMATS.DATE_L[TOOLTIP_KEY];
+  }
+  return null;
 }
 
 function _mergeFieldPairs(pairs) {
