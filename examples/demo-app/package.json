@@ -67,7 +67,6 @@
     "es-toolkit": "^1.39.10",
     "esbuild": "^0.28.1",
     "global": "^4.3.0",
-    "html2canvas": "^1.4.1",
     "keymirror": "^0.1.1",
     "lexical": "^0.48.0",
     "lucide-react": "^1.25.0",

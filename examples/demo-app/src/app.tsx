@@ -10,12 +10,7 @@ import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
 import {useParams, useSearchParams, useLocation} from 'react-router-dom';
 import {WebMercatorViewport} from '@deck.gl/core';
-import {ScreenshotWrapper} from './components/screenshot-wrapper';
-import {
-  setStartScreenCapture,
-  setScreenCaptured,
-  setMapBoundary
-} from '@openassistant/kepler-assistant';
+import {setMapBoundary} from '@openassistant/kepler-assistant';
 import {AiAssistantPanel} from '@openassistant/kepler-assistant';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
@@ -187,10 +182,6 @@ const App = (props: any) => {
     query: Record<string, string>;
   } | null>(null);
 
-  const startScreenCapture = useSelector(
-    (state: any) => state.demo.aiAssistant.screenshotToAsk.startScreenCapture
-  );
-
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapDimensions, setMapDimensions] = useState({width: 0, height: 0});
 
@@ -277,20 +268,6 @@ const App = (props: any) => {
         number
       ];
       dispatch(setMapBoundary(nw, se));
-    },
-    [dispatch]
-  );
-
-  const _setStartScreenCapture = useCallback(
-    flag => {
-      dispatch(setStartScreenCapture(flag));
-    },
-    [dispatch]
-  );
-
-  const _setScreenCaptured = useCallback(
-    screenshot => {
-      dispatch(setScreenCaptured(screenshot));
     },
     [dispatch]
   );
@@ -929,66 +906,59 @@ const App = (props: any) => {
         //   node ? (this.root = node) : null;
         // }}
         >
-          <ScreenshotWrapper
-            startScreenCapture={startScreenCapture}
-            setScreenCaptured={_setScreenCaptured}
-            setStartScreenCapture={_setStartScreenCapture}
-            className="h-screen"
-          >
-            <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
-              <Announcement onDisable={_disableBanner} />
-            </Banner>
-            <div style={CONTAINER_STYLE}>
-              <PanelGroup direction="horizontal">
-                <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
-                  <PanelGroup direction="vertical">
-                    <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
-                      <div ref={mapContainerRef} style={{width: '100%', height: '100%'}}>
-                        <KeplerGl
-                          mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                          id="map"
-                          getState={keplerGlGetState}
-                          width={mapDimensions.width}
-                          height={mapDimensions.height}
-                          cloudProviders={CLOUD_PROVIDERS}
-                          localeMessages={messages}
-                          onExportToCloudSuccess={onExportFileSuccess}
-                          onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                          featureFlags={DEFAULT_FEATURE_FLAGS}
-                          onViewStateChange={onViewStateChange}
-                        />
-                      </div>
-                    </Panel>
-
-                    {isSqlPanelOpen && (
-                      <>
-                        <StyledResizeHandle />
-                        <Panel defaultSize={40} minSize={20}>
-                          <SqlPanel initialSql={query.sql || ''} />
-                        </Panel>
-                      </>
-                    )}
-                  </PanelGroup>
-                </Panel>
-                {isAiAssistantPanelOpen && (
-                  <>
-                    <StyledVerticalResizeHandle />
-                    <Panel defaultSize={30} minSize={20}>
-                      <AiAssistantPanel
-                        reduxStore={reduxStore}
-                        stateAccessors={{
-                          getVisState: () =>
-                            (reduxStore?.getState() as any)?.demo?.keplerGl?.map?.visState,
-                          getMapBoundary: () =>
-                            (reduxStore?.getState() as any)?.demo?.aiAssistant?.keplerGl?.mapBoundary
-                        }}
+          <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
+            <Announcement onDisable={_disableBanner} />
+          </Banner>
+          <div style={CONTAINER_STYLE}>
+            <PanelGroup direction="horizontal">
+              <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
+                <PanelGroup direction="vertical">
+                  <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
+                    <div ref={mapContainerRef} style={{width: '100%', height: '100%'}}>
+                      <KeplerGl
+                        mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                        id="map"
+                        getState={keplerGlGetState}
+                        width={mapDimensions.width}
+                        height={mapDimensions.height}
+                        cloudProviders={CLOUD_PROVIDERS}
+                        localeMessages={messages}
+                        onExportToCloudSuccess={onExportFileSuccess}
+                        onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                        featureFlags={DEFAULT_FEATURE_FLAGS}
+                        onViewStateChange={onViewStateChange}
                       />
-                    </Panel>
-                  </>
-                )}
-              </PanelGroup>
-            </div>
-          </ScreenshotWrapper>
+                    </div>
+                  </Panel>
+
+                  {isSqlPanelOpen && (
+                    <>
+                      <StyledResizeHandle />
+                      <Panel defaultSize={40} minSize={20}>
+                        <SqlPanel initialSql={query.sql || ''} />
+                      </Panel>
+                    </>
+                  )}
+                </PanelGroup>
+              </Panel>
+              {isAiAssistantPanelOpen && (
+                <>
+                  <StyledVerticalResizeHandle />
+                  <Panel defaultSize={30} minSize={20}>
+                    <AiAssistantPanel
+                      reduxStore={reduxStore}
+                      stateAccessors={{
+                        getVisState: () =>
+                          (reduxStore?.getState() as any)?.demo?.keplerGl?.map?.visState,
+                        getMapBoundary: () =>
+                          (reduxStore?.getState() as any)?.demo?.aiAssistant?.keplerGl?.mapBoundary
+                      }}
+                    />
+                  </Panel>
+                </>
+              )}
+            </PanelGroup>
+          </div>
         </GlobalStyle>
       </ThemeProvider>
     </StyleSheetManager>

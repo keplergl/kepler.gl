@@ -3,8 +3,7 @@
 @import '@sqlrooms/ui/tailwind-preset.css';
 
 /* Scan our local components. Include the whole demo-app `src` tree so
- * app-level Tailwind classes like the `h-screen`/`w-screen` layout on the
- * ScreenshotWrapper in app.tsx are also generated. */
+ * app-level Tailwind classes in app.tsx are also generated. */
 @source "./**/*.{ts,tsx}";
 
 /* Scan package dist files for their Tailwind classes. These live in the
