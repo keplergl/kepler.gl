@@ -289,7 +289,17 @@ export default {
   },
   datasetTitle: {
     showDataTable: 'データ表を表示',
-    removeDataset: 'データセットを削除'
+    removeDataset: 'データセットを削除',
+    refreshDataset: 'データセットを更新',
+    refreshFailed: '更新に失敗しました',
+    refreshSettings: '更新設定',
+    refreshOff: 'オフ',
+    refresh10s: '10秒',
+    refresh15s: '15秒',
+    refresh1m: '1分',
+    refresh5m: '5分',
+    refresh15m: '15分',
+    refreshCustom: 'カスタム'
   },
   datasetInfo: {
     rowCount: '{rowCount}行',
@@ -297,7 +307,11 @@ export default {
     rasterTile: 'ラスタータイル',
     wmsTile: 'WMSタイル',
     tile3d: '3Dタイル',
-    remoteFile: '{rowCount}行（リモート）'
+    remoteFile: '{rowCount}行（リモート）',
+    refreshInterval: '更新',
+    refreshCustomSeconds: '秒',
+    refreshing: '更新中…',
+    refreshingPercent: '更新中 {percent}%'
   },
   tooltip: {
     hideLayer: 'レイヤを非表示',

@@ -42,6 +42,27 @@ export const MIME_TO_REMOTE_FILE_EXTENSION: Record<string, string> = {
   'application/x-parquet': 'parquet'
 };
 
+export const DATASET_REFRESH_INTERVAL_OPTIONS: {value: number; labelId: string}[] = [
+  {value: 0, labelId: 'datasetTitle.refreshOff'},
+  {value: 10_000, labelId: 'datasetTitle.refresh10s'},
+  {value: 15_000, labelId: 'datasetTitle.refresh15s'},
+  {value: 60_000, labelId: 'datasetTitle.refresh1m'},
+  {value: 300_000, labelId: 'datasetTitle.refresh5m'},
+  {value: 900_000, labelId: 'datasetTitle.refresh15m'}
+];
+
+/** Select value for a user-entered interval that is not one of the presets. */
+export const DATASET_REFRESH_CUSTOM_VALUE = 'custom';
+/** Default custom poll interval when switching from Off to Custom. */
+export const DATASET_REFRESH_DEFAULT_CUSTOM_MS = 30_000;
+export const DATASET_REFRESH_MIN_INTERVAL_MS = 100;
+
+export function isPresetDatasetRefreshInterval(ms: number): boolean {
+  return DATASET_REFRESH_INTERVAL_OPTIONS.some(option => option.value === ms);
+}
+
+export type ExternalDatasetRefreshStatus = 'idle' | 'loading' | 'error';
+
 export type ExternalDatasetMetadata = {
   /** Remote URL of the dataset file. */
   source: string;
@@ -49,6 +70,8 @@ export type ExternalDatasetMetadata = {
   format?: Exclude<RemoteFileFormat, 'auto'> | string;
   /** Last known size of the hosted resource, in bytes. */
   size?: number;
+  /** Poll interval in ms. Omitted or 0 means manual refresh only. */
+  refreshIntervalMs?: number;
 };
 
 /** Runtime copy of {@link ExternalDatasetMetadata} with `format` renamed to avoid colliding with DATASET_FORMATS. */
@@ -56,7 +79,38 @@ export type ExternalDatasetRuntimeMetadata = {
   source: string;
   sourceFormat?: Exclude<RemoteFileFormat, 'auto'> | string;
   size?: number;
+  refreshIntervalMs?: number;
+  etag?: string;
+  lastModified?: string;
+  lastFetchedAt?: number;
+  refreshStatus?: ExternalDatasetRefreshStatus;
+  refreshError?: string;
+  /** Download progress 0–100 while `refreshStatus` is `loading`. */
+  refreshProgress?: number;
 };
+
+export function getDatasetRefreshIntervalMs(metadata?: {refreshIntervalMs?: unknown}): number {
+  const value = metadata?.refreshIntervalMs;
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+/** Parse a seconds field into ms, or null if the input is not a positive number. */
+export function parseCustomRefreshIntervalMs(secondsText: string): number | null {
+  const seconds = Number.parseFloat(secondsText);
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return null;
+  }
+  return Math.max(DATASET_REFRESH_MIN_INTERVAL_MS, Math.round(seconds * 1000));
+}
+
+/** Display string for the custom seconds input (keeps tenths for sub-second values). */
+export function formatCustomRefreshSeconds(ms: number): string {
+  const seconds = Math.max(DATASET_REFRESH_MIN_INTERVAL_MS, ms) / 1000;
+  if (Number.isInteger(seconds)) {
+    return String(seconds);
+  }
+  return String(Number(seconds.toFixed(3)));
+}
 
 export function getRemoteSourceFormat(metadata?: {
   sourceFormat?: unknown;

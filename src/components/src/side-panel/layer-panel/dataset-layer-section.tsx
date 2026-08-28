@@ -114,6 +114,8 @@ function DatasetLayerSectionFactory(
           updateTableColor={updateTableColor}
           removeDataset={removeDataset}
           showDeleteDataset={showDeleteDataset}
+          refreshDataset={visStateActions.refreshDataset}
+          updateDatasetProps={visStateActions.updateDatasetProps}
         />
         <LayerList
           datasets={datasets}

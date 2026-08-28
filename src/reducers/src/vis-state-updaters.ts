@@ -47,7 +47,10 @@ import {
   applyFilterConfig,
   SetLoadingIndicatorPayload,
   loadColumnStatsSuccess,
-  loadColumnStatsError
+  loadColumnStatsError,
+  refreshDatasetSuccess,
+  refreshDatasetError,
+  refreshDatasetProgress
 } from '@kepler.gl/actions';
 
 // Utils
@@ -81,7 +84,8 @@ import {
   removeFilterPlot,
   isLayerAnimatable,
   isSideFilter,
-  getApplicationConfig
+  getApplicationConfig,
+  validateFiltersUpdateDatasets
 } from '@kepler.gl/utils';
 import {generateHashId, toArray, arrayMove} from '@kepler.gl/common-utils';
 // Mergers
@@ -113,6 +117,7 @@ import {
   INITIAL_ANNOTATION_LINE_COLOR,
   AnnotationKind,
   DatasetType,
+  getDatasetRefreshIntervalMs,
   getRemoteSourceFormat
 } from '@kepler.gl/constants';
 import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
@@ -1147,10 +1152,7 @@ export function layerVisConfigChangeUpdater(
 
   // Exclusive bitmap editing: when editBounds is turned on for one bitmap layer,
   // turn it off for all other bitmap layers
-  if (
-    newLayer.type === 'bitmap' &&
-    action.newVisConfig.editBounds === true
-  ) {
+  if (newLayer.type === 'bitmap' && action.newVisConfig.editBounds === true) {
     nextState = {
       ...nextState,
       layers: nextState.layers.map((l, i) => {
@@ -2010,10 +2012,7 @@ export const updateLayerGroupUpdater = (
   if (options.layerOrder) {
     newState.layerOrder = [...layerGroup.layerOrder, ...newState.layerOrder];
     options.layerOrder.forEach(layerId => {
-      newState.layerOrder = removeElementFromLayerOrder(
-        newState.layerOrder,
-        layerId as string
-      );
+      newState.layerOrder = removeElementFromLayerOrder(newState.layerOrder, layerId as string);
     });
   }
 
@@ -2244,10 +2243,7 @@ export const duplicateLayerUpdater = (
     const idxInGroup = parentGroup.layerOrder.findIndex(e => e === original.id);
     const newGroupLayerOrder = arrayInsert(parentGroup.layerOrder, idxInGroup, newLayer.id);
     const updatedGroup = {...parentGroup, layerOrder: newGroupLayerOrder};
-    const newLayerOrder = updateLayerGroupInLayerOrder(
-      layerOrderWithoutPrepended,
-      updatedGroup
-    );
+    const newLayerOrder = updateLayerGroupInLayerOrder(layerOrderWithoutPrepended, updatedGroup);
     nextState = reorderLayerUpdater(nextState, {order: newLayerOrder});
   } else {
     // Layer is at root level - use original index-based insertion
@@ -2891,7 +2887,9 @@ export const toggleLayerForMapUpdater = (
 };
 
 function hasTabularDatasetData(data?: ProtoDataset['data'] | null): boolean {
-  return Boolean(data?.rows?.length || data?.cols?.length || (data as {arrowTable?: unknown})?.arrowTable);
+  return Boolean(
+    data?.rows?.length || data?.cols?.length || (data as {arrowTable?: unknown})?.arrowTable
+  );
 }
 
 function needsExternallyHostedHydrate(dataset: ProtoDataset): boolean {
@@ -2906,12 +2904,27 @@ async function hydrateExternallyHostedProtoDataset(dataset: ProtoDataset): Promi
   if (!needsExternallyHostedHydrate(dataset)) {
     return dataset;
   }
-  const data = await loadExternallyHostedDataset({
+  const loaded = await loadExternallyHostedDataset({
     source: dataset.metadata?.source as string,
     format: getRemoteSourceFormat(dataset.metadata),
-    size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined
+    size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined,
+    bypassCache: getDatasetRefreshIntervalMs(dataset.metadata) > 0
   });
-  return {...dataset, data};
+  if (!loaded.data) {
+    throw new Error(`No data loaded from ${dataset.metadata?.source}`);
+  }
+  return {
+    ...dataset,
+    data: loaded.data,
+    metadata: {
+      ...dataset.metadata,
+      etag: loaded.etag,
+      lastModified: loaded.lastModified,
+      ...(typeof loaded.size === 'number' ? {size: loaded.size} : {}),
+      lastFetchedAt: Date.now(),
+      refreshStatus: 'idle'
+    }
+  };
 }
 
 const HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromise(
@@ -2934,6 +2947,292 @@ function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets) {
       FAIL_CREATE_DATASET_TASK('Failed to create a new dataset due to data verification errors')
     );
   });
+}
+
+function patchDatasetMetadata(dataset: Datasets[string], patch: Record<string, unknown>) {
+  return copyTableAndUpdate(dataset, {
+    metadata: {
+      ...dataset.metadata,
+      ...patch
+    }
+  });
+}
+
+async function refreshExternallyHostedTable({
+  arg: metadata,
+  onProgress
+}: {
+  arg: {
+    source: string;
+    format?: string;
+    size?: number;
+    etag?: string;
+    lastModified?: string;
+  };
+  onProgress: (progress: {loaded: number; total?: number; percent: number}) => void;
+}) {
+  // Fetch only. Do not mutate the Redux table here: progress events copy it, and
+  // the success updater applies the snapshot to whatever instance is in the store.
+  return loadExternallyHostedDataset({...metadata, onProgress, bypassCache: true});
+}
+
+const REFRESH_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromiseWithProgress(
+  refreshExternallyHostedTable,
+  'REFRESH_EXTERNALLY_HOSTED_DATASET_TASK'
+);
+
+/**
+ * Re-fetch an externally hosted dataset and replace its table contents in place.
+ * Layers and filters are kept when field names match.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function refreshDatasetUpdater(
+  state: VisState,
+  {dataId}: VisStateActions.RefreshDatasetUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (
+    !dataset ||
+    dataset.type !== DatasetType.EXTERNALLY_HOSTED ||
+    typeof dataset.metadata?.source !== 'string'
+  ) {
+    return state;
+  }
+  if (dataset.metadata?.refreshStatus === 'loading') {
+    return state;
+  }
+
+  const nextDataset = patchDatasetMetadata(dataset, {
+    refreshStatus: 'loading',
+    refreshError: undefined,
+    refreshProgress: undefined
+  });
+
+  return withTask(
+    {
+      ...state,
+      datasets: {
+        ...state.datasets,
+        [dataId]: nextDataset
+      }
+    },
+    REFRESH_EXTERNALLY_HOSTED_DATASET_TASK({
+      arg: {
+        source: nextDataset.metadata.source as string,
+        format: getRemoteSourceFormat(nextDataset.metadata),
+        size: typeof nextDataset.metadata.size === 'number' ? nextDataset.metadata.size : undefined,
+        etag: typeof nextDataset.metadata.etag === 'string' ? nextDataset.metadata.etag : undefined,
+        lastModified:
+          typeof nextDataset.metadata.lastModified === 'string'
+            ? nextDataset.metadata.lastModified
+            : undefined
+      },
+      onProgress: progress =>
+        refreshDatasetProgress(dataId, Math.round((progress?.percent ?? 0) * 100))
+    }).bimap(
+      result => refreshDatasetSuccess(dataId, result),
+      (error: Error) => refreshDatasetError(dataId, error)
+    )
+  );
+}
+
+/**
+ * Record download progress for an in-flight remote dataset refresh.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function refreshDatasetProgressUpdater(
+  state: VisState,
+  {dataId, percent}: VisStateActions.RefreshDatasetProgressUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset || dataset.metadata?.refreshStatus !== 'loading') {
+    return state;
+  }
+  const nextPercent = Number.isFinite(percent)
+    ? Math.max(0, Math.min(100, Math.round(percent)))
+    : 0;
+  if (dataset.metadata?.refreshProgress === nextPercent) {
+    return state;
+  }
+  return {
+    ...state,
+    datasets: {
+      ...state.datasets,
+      [dataId]: patchDatasetMetadata(dataset, {refreshProgress: nextPercent})
+    }
+  };
+}
+
+function fieldNamesEqual(current: {name: string}[], incoming?: {name: string}[] | null): boolean {
+  if (!incoming?.length) {
+    return true;
+  }
+  if (current.length !== incoming.length) {
+    return false;
+  }
+  return current.every((field, i) => field.name === incoming[i].name);
+}
+
+/**
+ * When a remote snapshot changes column names, old layer fieldIdx / filter names
+ * can point at the wrong column. Re-bind by name and drop configs that no longer fit.
+ */
+function rebindLayersAndFiltersAfterSchemaChange(
+  state: VisState,
+  dataId: string,
+  datasets: VisState['datasets']
+): VisState {
+  const dataset = datasets[dataId];
+  const nextLayers: Layer[] = [];
+  const droppedLayers: Layer[] = [];
+
+  state.layers.forEach(layer => {
+    if (layer.config.dataId !== dataId) {
+      nextLayers.push(layer);
+      return;
+    }
+    const rebound = validateExistingLayerWithData(dataset, state.layerClasses, layer, state.schema);
+    if (rebound?.isValidToSave()) {
+      nextLayers.push(rebound);
+    } else {
+      droppedLayers.push(layer);
+    }
+  });
+
+  let nextLayerOrder = state.layerOrder;
+  let nextSplitMaps = state.splitMaps;
+  droppedLayers.forEach(layer => {
+    nextLayerOrder = removeElementFromLayerOrder(nextLayerOrder, layer.id);
+    nextSplitMaps = removeLayerFromSplitMaps(nextSplitMaps, layer);
+  });
+
+  const nextLayerData = nextLayers.map(layer => {
+    const oldIdx = state.layers.findIndex(oldLayer => oldLayer.id === layer.id);
+    return oldIdx >= 0 ? state.layerData[oldIdx] : {};
+  });
+
+  const filtersForDataset = state.filters.filter(filter => toArray(filter.dataId).includes(dataId));
+  const otherFilters = state.filters.filter(filter => !toArray(filter.dataId).includes(dataId));
+
+  const {validated, updatedDatasets} = validateFiltersUpdateDatasets(
+    {...state, datasets, layers: nextLayers},
+    filtersForDataset
+  );
+
+  const nextFilters = [...otherFilters, ...validated];
+  const filteredDatasets = applyFiltersToDatasets(
+    [dataId],
+    updatedDatasets,
+    nextFilters,
+    nextLayers
+  );
+
+  let nextState: VisState = {
+    ...state,
+    datasets: filteredDatasets,
+    layers: nextLayers,
+    layerData: nextLayerData,
+    layerOrder: nextLayerOrder,
+    splitMaps: nextSplitMaps,
+    filters: nextFilters
+  };
+  nextState = updateAllLayerDomainData(nextState, [dataId], undefined);
+  return updateAnimationDomain(nextState);
+}
+
+/**
+ * Apply a finished remote refresh: keep layers, re-run filters and layer data.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function refreshDatasetSuccessUpdater(
+  state: VisState,
+  {dataId, result}: VisStateActions.RefreshDatasetSuccessUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+
+  const metadataPatch = {
+    refreshStatus: 'idle',
+    refreshError: undefined,
+    refreshProgress: undefined,
+    lastFetchedAt: Date.now(),
+    // Always write validators. A 200 that omits them must not keep the previous
+    // ETag or a later 304 can skip a body we no longer have.
+    etag: result.etag,
+    lastModified: result.lastModified,
+    ...(typeof result.size === 'number' ? {size: result.size} : {})
+  };
+
+  const schemaUnchanged = fieldNamesEqual(dataset.fields, result.data?.fields);
+
+  // Apply the snapshot to the table currently in the store. Progress may have
+  // copied it off the object that started the fetch; the task never mutates it.
+  if (!result.notModified && result.data) {
+    // KeplerTable.update is async so DuckDB can await Arrow conversion. The
+    // CSV/GeoJSON path (and KeplerTable.importData) run synchronously before
+    // the first await, so the store table is updated before we copy it below.
+    void dataset.update(result.data);
+  }
+
+  const refreshed = patchDatasetMetadata(dataset, metadataPatch);
+  const datasets = {
+    ...state.datasets,
+    [dataId]: refreshed
+  };
+
+  if (result.notModified || !result.data) {
+    return {
+      ...state,
+      datasets
+    };
+  }
+
+  if (!schemaUnchanged) {
+    return rebindLayersAndFiltersAfterSchemaChange(state, dataId, datasets);
+  }
+
+  const filteredDatasets = applyFiltersToDatasets([dataId], datasets, state.filters, state.layers);
+
+  let nextState: VisState = {
+    ...state,
+    datasets: filteredDatasets
+  };
+  nextState = updateAllLayerDomainData(nextState, [dataId], undefined);
+  return updateAnimationDomain(nextState);
+}
+
+/**
+ * Record a failed remote dataset refresh without dropping existing rows.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function refreshDatasetErrorUpdater(
+  state: VisState,
+  {dataId, error}: VisStateActions.RefreshDatasetErrorUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+
+  const nextState = {
+    ...state,
+    datasets: {
+      ...state.datasets,
+      [dataId]: patchDatasetMetadata(dataset, {
+        refreshStatus: 'error',
+        refreshError: error?.message || String(error),
+        refreshProgress: undefined
+      })
+    }
+  };
+
+  return nextState;
 }
 
 /**
@@ -3105,10 +3404,7 @@ function layerVisConfigFromAddDataOptions(
  * from columns on the first pass and must not be recalculated here.
  */
 function polygonFilterDependsOnLayerMeta(layer: Layer): boolean {
-  return (
-    layer.type === LAYER_TYPES.geojson ||
-    layer.config?.columnMode === 'geojson'
-  );
+  return layer.type === LAYER_TYPES.geojson || layer.config?.columnMode === 'geojson';
 }
 
 /**

@@ -3,11 +3,13 @@
 
 import React, {useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
+import {useIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import {Table} from '@kepler.gl/layers';
 import {CenterFlexbox, Tooltip} from '../../common/styled-components';
-import {ArrowRight, Trash} from '../../common/icons';
+import {ArrowRight, Clock, Trash, WarningSign} from '../../common/icons';
+import {DatasetType} from '@kepler.gl/constants';
 import DatasetTagFactory from './dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
 import {Portaled} from '../..';
@@ -48,11 +50,44 @@ const DataTagAction = styled.div`
   opacity: 0;
 `;
 
+const DataTagActionButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 12px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0;
+
+  &:focus-visible {
+    opacity: 1;
+    outline: 1px solid ${props => props.theme.textColorHl};
+    outline-offset: 1px;
+  }
+`;
+
+const StyledRefreshError = styled.div`
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  height: 16px;
+  flex-shrink: 0;
+`;
+
 type MiniDataset = {
   id: string;
   color: RGBColor;
   label?: string;
   disableDataOperation?: boolean;
+  type?: string;
+  metadata?: {
+    refreshError?: string;
+  };
 };
 
 export type DatasetTitleProps = {
@@ -62,6 +97,7 @@ export type DatasetTitleProps = {
   showDatasetTable?: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset?: ActionHandler<typeof openDeleteModal>;
+  onToggleRefreshSettings?: () => void;
 };
 
 const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
@@ -80,6 +116,30 @@ const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
     </Tooltip>
   </DataTagAction>
 );
+
+const RefreshDatasetSettings = ({id, onToggle}: {id: string; onToggle?: () => void}) => {
+  const intl = useIntl();
+  return (
+    <DataTagActionButton
+      type="button"
+      className="dataset-action refresh-dataset-settings"
+      data-tip
+      data-for={`refresh-settings-${id}`}
+      aria-label={intl.formatMessage({id: 'datasetTitle.refreshSettings'})}
+      onClick={e => {
+        e.stopPropagation();
+        onToggle?.();
+      }}
+    >
+      <Clock height="16px" />
+      <Tooltip id={`refresh-settings-${id}`} effect="solid">
+        <span>
+          <FormattedMessage id={'datasetTitle.refreshSettings'} />
+        </span>
+      </Tooltip>
+    </DataTagActionButton>
+  );
+};
 
 const RemoveDataset = ({datasetKey, removeDataset}: RemoveDatasetProps) => (
   <DataTagAction
@@ -102,6 +162,26 @@ const RemoveDataset = ({datasetKey, removeDataset}: RemoveDatasetProps) => (
   </DataTagAction>
 );
 
+const RefreshErrorIcon = ({id, message}: {id: string; message: string}) => (
+  <StyledRefreshError
+    className="dataset-refresh-error"
+    data-tip
+    data-for={`refresh-error-${id}`}
+    onClick={e => e.stopPropagation()}
+    role="img"
+    aria-label={message}
+  >
+    <WarningSign height="14px" />
+    <Tooltip id={`refresh-error-${id}`} type="error" effect="solid">
+      <span>
+        <FormattedMessage id="datasetTitle.refreshFailed" />
+        {': '}
+        {message}
+      </span>
+    </Tooltip>
+  </StyledRefreshError>
+);
+
 DatasetTitleFactory.deps = [DatasetTagFactory];
 
 export default function DatasetTitleFactory(
@@ -113,7 +193,8 @@ export default function DatasetTitleFactory(
     onTitleClick,
     removeDataset,
     dataset,
-    updateTableColor
+    updateTableColor,
+    onToggleRefreshSettings
   }) => {
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
     const root = useRef(null);
@@ -145,6 +226,9 @@ export default function DatasetTitleFactory(
       [onTitleClick, showDatasetTable, datasetId, dataset.disableDataOperation]
     );
 
+    const isRemote = dataset.type === DatasetType.EXTERNALLY_HOSTED;
+    const refreshError = dataset.metadata?.refreshError;
+
     return (
       <div className="custom-palette-panel" ref={root}>
         <StyledDatasetTitle
@@ -170,8 +254,12 @@ export default function DatasetTitleFactory(
               <ArrowRight height="12px" />
             </CenterFlexbox>
           ) : null}
+          {refreshError ? <RefreshErrorIcon id={datasetId} message={refreshError} /> : null}
           {showDatasetTable && !dataset.disableDataOperation ? (
             <ShowDataTable id={datasetId} showDatasetTable={showDatasetTable} />
+          ) : null}
+          {onToggleRefreshSettings && isRemote ? (
+            <RefreshDatasetSettings id={datasetId} onToggle={onToggleRefreshSettings} />
           ) : null}
           {showDeleteDataset ? (
             <RemoveDataset datasetKey={datasetId} removeDataset={removeDataset} />

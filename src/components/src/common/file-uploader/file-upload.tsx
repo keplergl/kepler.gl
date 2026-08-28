@@ -51,7 +51,8 @@ const StyledFileDrop = styled.div<StyledFileDropProps>`
   border-radius: 4px;
   border-style: ${props => (props.$dragOver ? 'solid' : 'dashed')};
   border-width: 1px;
-  border-color: ${props => (props.$dragOver ? props.theme.textColorLT : props.theme.subtextColorLT)};
+  border-color: ${props =>
+    props.$dragOver ? props.theme.textColorLT : props.theme.subtextColorLT};
   text-align: center;
   width: 100%;
   min-height: 360px;
@@ -333,8 +334,7 @@ function FileUploadFactory() {
       const {remoteUrl, remoteFormat, remoteError} = this.state;
       const {intl} = this.props;
       const showFormatSelector = getApplicationConfig().enableRemoteFileFormatSelector;
-      const format =
-        showFormatSelector && remoteFormat !== 'auto' ? remoteFormat : undefined;
+      const format = showFormatSelector && remoteFormat !== 'auto' ? remoteFormat : undefined;
       if (!remoteUrl || remoteError || this.state.remoteLoading) {
         if (!remoteUrl) {
           this.setState({remoteError: {message: 'Incorrect URL'}});
@@ -403,8 +403,16 @@ function FileUploadFactory() {
     };
 
     render() {
-      const {dragOver, files, errorFiles, remoteUrl, remoteFormat, remoteError, remoteLoading, remoteProgress} =
-        this.state;
+      const {
+        dragOver,
+        files,
+        errorFiles,
+        remoteUrl,
+        remoteFormat,
+        remoteError,
+        remoteLoading,
+        remoteProgress
+      } = this.state;
       const {fileLoading, fileLoadingProgress, theme, intl} = this.props;
       const {fileExtensions = [], fileFormatNames = []} = this.props;
       const showFormatSelector = getApplicationConfig().enableRemoteFileFormatSelector;
@@ -505,6 +513,7 @@ function FileUploadFactory() {
                               />
                               {showFormatSelector ? (
                                 <StyledRemoteFormatSelect
+                                  className="file-uploader__remote-format"
                                   aria-label={intl.formatMessage({id: 'fileUploader.format'})}
                                   value={remoteFormat}
                                   onChange={this._onRemoteFormatChange}

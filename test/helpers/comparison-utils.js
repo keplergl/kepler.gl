@@ -325,18 +325,15 @@ export function cmpColumns(t, expectedColumns, actualColumns, layerName) {
 
 export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
   assertDatasetIsTable(t, actualDataset);
-  // filteredIndexByLayer is an internal optimization property, skip in key comparison if not in expected
+  // Internal fields added after fixtures were written; compare only when expected sets them.
+  const optionalDatasetKeys = new Set(['filteredIndexByLayer', 'dataRevision']);
   const actualKeysForComparison = Object.keys(actualDataset).filter(
-    key => key !== 'filteredIndexByLayer' || key in expectedDataset
+    key => !optionalDatasetKeys.has(key) || key in expectedDataset
   );
   const expectedKeysForComparison = Object.keys(expectedDataset);
   t.deepEqual(
-    actualKeysForComparison
-      .filter(key => actualDataset[key] !== undefined)
-      .sort(),
-    expectedKeysForComparison
-      .filter(key => expectedDataset[key] !== undefined)
-      .sort(),
+    actualKeysForComparison.filter(key => actualDataset[key] !== undefined).sort(),
+    expectedKeysForComparison.filter(key => expectedDataset[key] !== undefined).sort(),
     `dataset:${expectedDataset.id} should have same keys`
   );
 
@@ -379,6 +376,7 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
           });
           break;
         case 'filteredIndexByLayer':
+        case 'dataRevision':
           if (key in expectedDataset) {
             t.deepEqual(
               actualDataset[key],

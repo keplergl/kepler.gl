@@ -2,7 +2,14 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {isKeplerGlMap, makeProgressIterator, filesToDataPayload, processFileData, processArrowBatches} from '@kepler.gl/processors';
+import {
+  isKeplerGlMap,
+  makeProgressIterator,
+  filesToDataPayload,
+  processFileData,
+  processArrowBatches
+} from '@kepler.gl/processors';
+import {getDatasetRefreshIntervalMs} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
 import {parsedFields, parsedRows} from 'test/fixtures/row-object';
 import {
@@ -189,6 +196,38 @@ test('#file-handler -> filesToDataPayload remote metadata', t => {
   t.end();
 });
 
+test('#file-handler -> processFileData one-shot load does not enable polling', async t => {
+  const rows = [{lat: 1, lng: 2}];
+  const local = await processFileData({
+    content: {fileName: 'local.csv', data: rows},
+    fileCache: []
+  });
+  t.equal(local[0].info.type, undefined, 'local files are not marked externally-hosted');
+  t.equal(local[0].metadata, undefined, 'local files get no remote refresh metadata');
+
+  const remote = await processFileData({
+    content: {
+      fileName: 'remote.csv',
+      data: rows,
+      sourceUrl: 'https://example.com/remote.csv'
+    },
+    fileCache: []
+  });
+  t.equal(remote[0].info.type, 'externally-hosted', 'URL loads are still externally-hosted');
+  t.equal(
+    remote[0].metadata.refreshIntervalMs,
+    undefined,
+    'a one-shot URL load does not set a poll interval'
+  );
+  t.equal(
+    getDatasetRefreshIntervalMs(remote[0].metadata),
+    0,
+    'polling helper treats omitted interval as off'
+  );
+
+  t.end();
+});
+
 test('#file-handler -> processFileData persists remote file format', async t => {
   const cache = await processFileData({
     content: {
@@ -202,10 +241,40 @@ test('#file-handler -> processFileData persists remote file format', async t => 
 
   t.equal(cache[0].info.type, 'externally-hosted', 'should mark the dataset as externally-hosted');
   t.equal(cache[0].info.format, 'row', 'processor format stays row for CSV');
-  t.deepEqual(
-    cache[0].metadata,
-    {source: 'https://example.com/abc123?sv=1', sourceFormat: 'csv'},
+  t.equal(cache[0].metadata.source, 'https://example.com/abc123?sv=1');
+  t.equal(
+    cache[0].metadata.sourceFormat,
+    'csv',
     'should persist the file format, not the processor format'
+  );
+  t.equal(
+    typeof cache[0].metadata.lastFetchedAt,
+    'number',
+    'should record lastFetchedAt on remote load'
+  );
+  t.equal(cache[0].metadata.etag, undefined, 'should omit etag when the fetch did not provide one');
+  t.equal(
+    cache[0].metadata.lastModified,
+    undefined,
+    'should omit lastModified when the fetch did not provide one'
+  );
+
+  const withValidators = await processFileData({
+    content: {
+      fileName: 'quakes.csv',
+      data: [{lat: 1, lng: 2}],
+      sourceUrl: 'https://example.com/quakes.csv',
+      keplerFormat: 'csv',
+      etag: '"abc"',
+      lastModified: 'Wed, 21 Oct 2015 07:28:00 GMT'
+    },
+    fileCache: []
+  });
+  t.equal(withValidators[0].metadata.etag, '"abc"', 'should persist ETag for the next refresh');
+  t.equal(
+    withValidators[0].metadata.lastModified,
+    'Wed, 21 Oct 2015 07:28:00 GMT',
+    'should persist Last-Modified for the next refresh'
   );
 
   const parquetCache = await processFileData({

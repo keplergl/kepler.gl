@@ -291,7 +291,17 @@ export default {
   },
   datasetTitle: {
     showDataTable: 'Mostra taula de dades',
-    removeDataset: 'Elimina conjunt de dades'
+    removeDataset: 'Elimina conjunt de dades',
+    refreshDataset: 'Actualitza el conjunt de dades',
+    refreshFailed: 'Error d’actualització',
+    refreshSettings: 'Configuració d’actualització',
+    refreshOff: 'Off',
+    refresh10s: '10s',
+    refresh15s: '15s',
+    refresh1m: '1 min',
+    refresh5m: '5 min',
+    refresh15m: '15 min',
+    refreshCustom: 'Personalitzat'
   },
   datasetInfo: {
     rowCount: '{rowCount} files',
@@ -299,7 +309,11 @@ export default {
     rasterTile: 'Mosaic ràster',
     wmsTile: 'Mosaic WMS',
     tile3d: 'Mosaic 3D',
-    remoteFile: '{rowCount} files (remot)'
+    remoteFile: '{rowCount} files (remot)',
+    refreshInterval: 'Actualitza',
+    refreshCustomSeconds: 'Segons',
+    refreshing: 'S’està actualitzant…',
+    refreshingPercent: 'S’està actualitzant {percent}%'
   },
   tooltip: {
     hideLayer: 'oculta la capa',

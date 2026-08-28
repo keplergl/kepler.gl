@@ -335,7 +335,17 @@ export default {
   },
   datasetTitle: {
     showDataTable: 'Show data table',
-    removeDataset: 'Remove dataset'
+    removeDataset: 'Remove dataset',
+    refreshDataset: 'Refresh dataset',
+    refreshFailed: 'Refresh failed',
+    refreshSettings: 'Refresh settings',
+    refreshOff: 'Off',
+    refresh10s: '10s',
+    refresh15s: '15s',
+    refresh1m: '1 min',
+    refresh5m: '5 min',
+    refresh15m: '15 min',
+    refreshCustom: 'Custom'
   },
   datasetInfo: {
     rowCount: '{rowCount} rows',
@@ -344,7 +354,11 @@ export default {
     wmsTile: 'WMS tile',
     tile3d: '3D tile',
     bitmap: 'Bitmap image',
-    remoteFile: '{rowCount} rows (remote)'
+    remoteFile: '{rowCount} rows (remote)',
+    refreshInterval: 'Refresh',
+    refreshCustomSeconds: 'Seconds',
+    refreshing: 'Refreshing…',
+    refreshingPercent: 'Refreshing {percent}%'
   },
   tooltip: {
     hideLayer: 'Hide layer',

@@ -1,0 +1,11 @@
+{
+  "name": "kepler-live-data",
+  "version": "0.0.1",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "start": "node esbuild.config.mjs --start",
+    "start:data": "node server.mjs",
+    "build": "node esbuild.config.mjs --build"
+  }
+}

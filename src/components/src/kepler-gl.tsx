@@ -60,6 +60,7 @@ import GeoCoderPanelFactory from './geocoder-panel';
 import EffectManagerFactory from './effects/effect-manager';
 import DndContextFactory from './dnd-context';
 import {CloudListProvider} from './hooks/use-cloud-list-provider';
+import RemoteDatasetRefreshController from './remote-dataset-refresh-controller';
 
 import {
   filterObjectByPredicate,
@@ -553,9 +554,7 @@ function KeplerGlFactory(
       this.uiThemeSelector,
       (theme, uiTheme) => {
         // When theme toggle is enabled, uiState.theme drives light/dark switching.
-        const themeInput = getApplicationConfig().enableThemeToggle
-          ? uiTheme || THEME.dark
-          : theme;
+        const themeInput = getApplicationConfig().enableThemeToggle ? uiTheme || THEME.dark : theme;
 
         if (typeof themeInput === 'object' && themeInput !== null) {
           return {
@@ -701,12 +700,18 @@ function KeplerGlFactory(
                       ref={this.root}
                     >
                       <NotificationPanel {...notificationPanelFields} />
+                      <RemoteDatasetRefreshController
+                        datasets={visState.datasets}
+                        refreshDataset={this.props.visStateActions.refreshDataset}
+                      />
                       <DndContext visState={visState}>
                         {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
                         <MapsLayout
                           className="maps"
                           mapState={this.props.mapState}
-                          onSetSwipeComparePercentage={this.props.mapStateActions.setSwipeComparePercentage}
+                          onSetSwipeComparePercentage={
+                            this.props.mapStateActions.setSwipeComparePercentage
+                          }
                         >
                           {mapContainers}
                         </MapsLayout>

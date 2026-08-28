@@ -1299,13 +1299,25 @@ class Layer implements KeplerLayer {
     this.meta = {...this.meta, ...meta};
   }
 
-  getDataUpdateTriggers({filteredIndex, filteredIndexByLayer, id, dataContainer}: KeplerTable): any {
+  getDataUpdateTriggers({
+    filteredIndex,
+    filteredIndexByLayer,
+    id,
+    dataContainer,
+    dataRevision
+  }: KeplerTable): any {
     const {columns} = this.config;
     const layerFilteredIndex = filteredIndexByLayer?.[this.id] ?? filteredIndex;
 
     return {
-      getData: {datasetId: id, dataContainer, columns, filteredIndex: layerFilteredIndex},
-      getMeta: {datasetId: id, dataContainer, columns},
+      getData: {
+        datasetId: id,
+        dataContainer,
+        columns,
+        filteredIndex: layerFilteredIndex,
+        dataRevision
+      },
+      getMeta: {datasetId: id, dataContainer, columns, dataRevision},
       ...(this.config.textLabel || []).reduce(
         (accu, tl, i) => ({
           ...accu,
@@ -1586,7 +1598,11 @@ class Layer implements KeplerLayer {
       getPosition?: ((d: any) => number[]) | arrow.Vector;
       getFiltered?: (data: {index: number}, objectInfo: {index: number}) => number;
       getPixelOffset: (textLabel: any) => number[] | ((d: any) => number[]);
-      backgroundProps?: {background: boolean; backgroundPadding?: number[]; getBackgroundColor?: any};
+      backgroundProps?: {
+        background: boolean;
+        backgroundPadding?: number[];
+        getBackgroundColor?: any;
+      };
       updateTriggers: {
         [key: string]: any;
       };
@@ -1603,9 +1619,7 @@ class Layer implements KeplerLayer {
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {
         const background = textLabel[i].background || backgroundProps?.background;
-        const getText = animationConfig
-          ? f => d.getText(f, animationConfig)
-          : d.getText;
+        const getText = animationConfig ? f => d.getText(f, animationConfig) : d.getText;
 
         accu.push(
           // @ts-expect-error
@@ -1631,8 +1645,7 @@ class Layer implements KeplerLayer {
             ...(backgroundProps?.backgroundPadding
               ? {backgroundPadding: backgroundProps.backgroundPadding}
               : null),
-            getBackgroundColor:
-              backgroundProps?.getBackgroundColor ?? textLabel[i].backgroundColor,
+            getBackgroundColor: backgroundProps?.getBackgroundColor ?? textLabel[i].backgroundColor,
             fontSettings: {
               sdf: textLabel[i].outlineWidth > 0
             },

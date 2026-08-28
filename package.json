@@ -70,6 +70,7 @@
     "start:replace-component": "yarn install-and-start examples/replace-component start:local",
     "start:custom-theme": "yarn install-and-start examples/custom-theme start-local",
     "start:custom-map-style": "yarn install-and-start examples/custom-map-style start-local",
+    "start:live-data": "node examples/live-data/esbuild.config.mjs --start",
     "start:node-app": "yarn install-and-start examples/node-app start-local",
     "start:web": "yarn install-and-start website start",
     "start:https": "yarn install-and-start examples/demo-app start-local-https",

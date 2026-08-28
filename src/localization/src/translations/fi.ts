@@ -290,7 +290,17 @@ export default {
   },
   datasetTitle: {
     showDataTable: 'Näytä attribuuttitaulu',
-    removeDataset: 'Poista aineisto'
+    removeDataset: 'Poista aineisto',
+    refreshDataset: 'Päivitä aineisto',
+    refreshFailed: 'Päivitys epäonnistui',
+    refreshSettings: 'Päivitysasetukset',
+    refreshOff: 'Pois',
+    refresh10s: '10 s',
+    refresh15s: '15 s',
+    refresh1m: '1 min',
+    refresh5m: '5 min',
+    refresh15m: '15 min',
+    refreshCustom: 'Mukautettu'
   },
   datasetInfo: {
     rowCount: '{rowCount} riviä',
@@ -298,7 +308,11 @@ export default {
     rasterTile: 'Rasteritiili',
     wmsTile: 'WMS-tiili',
     tile3d: '3D-tiili',
-    remoteFile: '{rowCount} riviä (etä)'
+    remoteFile: '{rowCount} riviä (etä)',
+    refreshInterval: 'Päivitys',
+    refreshCustomSeconds: 'Sekuntia',
+    refreshing: 'Päivitetään…',
+    refreshingPercent: 'Päivitetään {percent}%'
   },
   tooltip: {
     hideLayer: 'Piilota taso',

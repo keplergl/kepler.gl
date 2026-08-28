@@ -278,7 +278,17 @@ export default {
   },
   datasetTitle: {
     showDataTable: '显示数据表',
-    removeDataset: '删除数据集'
+    removeDataset: '删除数据集',
+    refreshDataset: '刷新数据集',
+    refreshFailed: '刷新失败',
+    refreshSettings: '刷新设置',
+    refreshOff: '关闭',
+    refresh10s: '10秒',
+    refresh15s: '15秒',
+    refresh1m: '1分钟',
+    refresh5m: '5分钟',
+    refresh15m: '15分钟',
+    refreshCustom: '自定义'
   },
   datasetInfo: {
     rowCount: '{rowCount}行',
@@ -286,7 +296,11 @@ export default {
     rasterTile: '栅格瓦片',
     wmsTile: 'WMS瓦片',
     tile3d: '3D瓦片',
-    remoteFile: '{rowCount}行（远程）'
+    remoteFile: '{rowCount}行（远程）',
+    refreshInterval: '刷新',
+    refreshCustomSeconds: '秒',
+    refreshing: '正在刷新…',
+    refreshingPercent: '正在刷新 {percent}%'
   },
   tooltip: {
     hideLayer: '隐藏图层',

@@ -1,6 +1,9 @@
 # Examples
 
-A list of examples demonstrating how to add `kepler.gl` to your app. Each example is a standalone project that can be run locally.
+A list of examples demonstrating how to add `kepler.gl` to your app. Most
+examples are standalone projects that can be run locally. The [Live Data][live-data]
+harness is started from the repo root (`yarn start:live-data`) so it can bundle
+local `src/`.
 
 ## Getting started
 
@@ -48,6 +51,9 @@ yarn start
 - ### [Clicked Feature][clicked-feature]
   Read `visState.clicked` from Redux and show a GeoJSON feature's `shapeName` in a host-app sidebar outside the map.
 
+- ### [Live Data][live-data]
+  Remotely hosted CSV of points orbiting San Francisco on a 2-minute loop. Kepler.gl hydrates the URL on load and polls it every 300 ms so points move on the map.
+
 - ### [Custom Layer][custom-layer]
   Add a custom deck.gl layer (`ContourLayer`) to kepler.gl's layer type selector, so it can be picked from the dropdown, configured with dataset columns, and rendered on the map.
 
@@ -69,6 +75,7 @@ yarn start
 [replace-component]: replace-component/README.md
 [custom-theme]: custom-theme/README.md
 [clicked-feature]: clicked-feature/README.md
+[live-data]: live-data/README.md
 [custom-layer]: custom-layer/README.md
 [custom-map-style]: custom-map-style/README.md
 [node-app]: node-app/README.md
