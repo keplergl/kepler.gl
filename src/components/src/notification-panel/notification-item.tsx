@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import styled from 'styled-components';
-import {Delete, Info, Warning, Checkmark} from '../common/icons';
+import copy from 'copy-to-clipboard';
+import {Delete, Info, Warning, Checkmark, Copy} from '../common/icons';
 import Markdown from 'markdown-to-jsx';
 import {dataTestIds} from '@kepler.gl/constants';
 import {ActionHandler, removeNotification as removeNotificationActions} from '@kepler.gl/actions';
@@ -42,7 +43,35 @@ const NotificationItemContent = styled.div<NotificationItemContentProps>`
   cursor: pointer;
 `;
 
+const NotificationActions = styled.div.attrs({
+  className: 'notification-item--action'
+})`
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 6px;
+  flex-shrink: 0;
+`;
+
+const ActionIconButton = styled.div`
+  display: flex;
+  cursor: pointer;
+  line-height: 0;
+`;
+
 const DeleteIcon = styled(Delete)`
+  cursor: pointer;
+  width: 13px;
+  height: 13px;
+`;
+
+const CopyIcon = styled(Copy)`
+  cursor: pointer;
+  width: 13px;
+  height: 13px;
+`;
+
+const CopiedIcon = styled(Checkmark)`
   cursor: pointer;
   width: 13px;
   height: 13px;
@@ -125,12 +154,32 @@ export default function NotificationItemFactory() {
     theme
   }: NotificationItemProps) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
       if (initialIsExpanded) {
         setIsExpanded(true);
       }
     }, [initialIsExpanded]);
+
+    useEffect(() => {
+      if (!copied) {
+        return;
+      }
+      const timeoutId = window.setTimeout(() => setCopied(false), 1500);
+      return () => window.clearTimeout(timeoutId);
+    }, [copied]);
+
+    const onCopy = useCallback(
+      (event: React.MouseEvent) => {
+        event.stopPropagation();
+        if (notification.message) {
+          copy(notification.message);
+          setCopied(true);
+        }
+      },
+      [notification.message]
+    );
 
     return (
       <NotificationItemContentBlock isExpanded={isExpanded} theme={theme}>
@@ -140,7 +189,7 @@ export default function NotificationItemFactory() {
           </NotificationCounter>
         ) : null}
         <NotificationItemContent
-          className="notification-item"
+          className={`notification-item${isExpanded ? ' notification-item--expanded' : ''}`}
           type={notification.type}
           isExpanded={isExpanded}
           onClick={() => setIsExpanded(!isExpanded)}
@@ -161,11 +210,18 @@ export default function NotificationItemFactory() {
               {notification.message}
             </Markdown>
           </NotificationMessage>
-          {typeof removeNotification === 'function' ? (
-            <div className="notification-item--action">
+          <NotificationActions onClick={event => event.stopPropagation()}>
+            <ActionIconButton
+              data-testid={dataTestIds.copyNotificationIcon}
+              title={copied ? 'Copied' : 'Copy to clipboard'}
+              onClick={onCopy}
+            >
+              {copied ? <CopiedIcon height="10px" /> : <CopyIcon height="10px" />}
+            </ActionIconButton>
+            {typeof removeNotification === 'function' ? (
               <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
-            </div>
-          ) : null}
+            ) : null}
+          </NotificationActions>
         </NotificationItemContent>
       </NotificationItemContentBlock>
     );
