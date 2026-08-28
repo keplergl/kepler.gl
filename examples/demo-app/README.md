@@ -3,10 +3,15 @@
 This is the src code of kepler.gl demo app. You can copy this folder out and run it locally.
 
 > The AI assistant (panel, control, reducer) comes from the published
-> **`@openassistant/kepler-assistant`** package (`^0.0.1`), which temporarily
+> **`@openassistant/kepler-assistant`** package (`^0.0.12`), which temporarily
 > vendors the `@kepler.gl/mcp` map surface (this repo's `src/mcp/` module is
-> removed for now). See [`docs/NEXT_PLAN.md`](docs/NEXT_PLAN.md) for the
-> permanent separation back into a kepler.gl `src/mcp/` module.
+> removed for now). kepler.gl is a **static website**: it only provides the map
+> surface *interface* (`@kepler.gl/mcp`) plus a WebSocket listener — it never
+> runs an MCP server. Any MCP server (kepler-assistant's own, or any harness
+> like Claude Code / Codex driving the map) is **user-provided** and follows the
+> `@kepler.gl/mcp` interface, while the command registry executes on the
+> in-browser map. See [`docs/NEXT_PLAN.md`](docs/NEXT_PLAN.md) for the permanent
+> separation back into a kepler.gl `src/mcp/` module.
 
 #### Pre requirement
 - [Node.js ^20.x](http://nodejs.org): We use Node to generate the documentation, run a
