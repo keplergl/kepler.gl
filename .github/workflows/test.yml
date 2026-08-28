@@ -21,15 +21,6 @@ jobs:
       - uses: actions/checkout@v4
       # use Volta to manage yarn/node versions
       - uses: volta-cli/action@v4
-      # Enable Corepack so the `packageManager` field in each project's
-      # package.json is honored when `yarn` is invoked inside nested
-      # example/website directories. Volta pins yarn at the root, but
-      # nested installs (e.g. examples/custom-reducer) without a local
-      # `volta` config can fall back to the system yarn 1.x and fail with
-      # "packageManager ... However the current global version of Yarn is
-      # 1.22.22". Corepack closes that gap.
-      - name: Enable Corepack
-        run: corepack enable
 
       - name: Get Yarn cache directory
         id: yarn-cache-dir
@@ -56,12 +47,18 @@ jobs:
       # that `yarn lint` (eslint over `examples website`) can resolve their
       # third-party modules. These projects are NOT yarn workspaces of the
       # root package and therefore need their own `yarn install`.
+      # Use `corepack yarn` (not bare `yarn`): bare `yarn` resolves through
+      # Volta, which falls back to the system yarn 1.x in directories without
+      # a local `volta` config (the example apps) and fails with
+      # "packageManager ... However the current global version of Yarn is
+      # 1.22.22". `corepack yarn` honors the root package.json's
+      # `packageManager` field and runs yarn 4.4.0 everywhere.
       - name: Install Example & Website Dependencies
         run: |
-          yarn install:example
-          cd website && yarn && cd ..
+          corepack yarn install:example
+          cd website && corepack yarn && cd ..
           for d in examples/custom-reducer examples/custom-theme examples/open-modal examples/replace-component examples/node-app; do
-            (cd "$d" && yarn)
+            (cd "$d" && corepack yarn)
           done
 
       # - name: Install Puppeteer
