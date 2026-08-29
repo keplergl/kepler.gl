@@ -21,7 +21,9 @@ import {
   CHANNEL_SCALES,
   DEFAULT_COLOR_UI,
   LAYER_VIS_CONFIGS,
-  CULL_MODE
+  CULL_MODE,
+  NO_VALUE_COLOR,
+  MISSING_VALUE_COLOR
 } from '@kepler.gl/constants';
 import {
   getTileUrl,
@@ -40,6 +42,7 @@ import {
   BindedLayerCallbacks,
   VisConfigRange,
   VisConfigNumber,
+  VisConfigBoolean,
   DomainStops
 } from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/utils';
@@ -63,11 +66,7 @@ import AbstractTileLayer, {
   AbstractTileLayerVisConfigSettings
 } from './abstract-tile-layer';
 import TileDataset from './common-tile/tile-dataset';
-import {
-  isDomainStops,
-  isDomainQuantiles,
-  isIndexedField
-} from './common-tile/tile-utils';
+import {isDomainStops, isDomainQuantiles, isIndexedField} from './common-tile/tile-utils';
 
 export {getNumVectorTilesBeingLoaded} from './loading-counter';
 
@@ -164,7 +163,16 @@ export const vectorTileVisConfigs = {
     isRanged: true,
     range: [0, 1],
     step: 0.01
-  } as VisConfigRange
+  } as VisConfigRange,
+
+  hideNulls: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layer.hideNulls',
+    group: '',
+    property: 'hideNulls',
+    description: 'layer.hideNullsDescription'
+  } as VisConfigBoolean
 };
 
 export type VectorTileLayerConfig = Merge<
@@ -190,6 +198,7 @@ export type VectorTileLayerVisConfigSettings = Merge<
   {
     sizeRange: VisConfigRange;
     strokeWidth: VisConfigNumber;
+    hideNulls: VisConfigBoolean;
   }
 >;
 
@@ -271,10 +280,18 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     return [DatasetType.VECTOR_TILE];
   }
 
+  get noneLayerDataAffectingProps() {
+    return [...super.noneLayerDataAffectingProps, 'hideNulls'];
+  }
+
   get visualChannels(): Record<string, VisualChannel> {
     const visualChannels = super.visualChannels;
     return {
       ...visualChannels,
+      color: {
+        ...visualChannels.color,
+        nullValue: config => (config.visConfig.hideNulls ? NO_VALUE_COLOR : MISSING_VALUE_COLOR)
+      },
       strokeColor: {
         property: 'strokeColor',
         field: 'strokeColorField',
@@ -285,7 +302,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         channelScaleType: CHANNEL_SCALES.color,
         accessor: 'getLineColor',
         condition: config => config.visConfig.stroked,
-        nullValue: visualChannels.color.nullValue,
+        nullValue: NO_VALUE_COLOR,
         getAttributeValue: config => config.visConfig.strokeColor || config.color
       },
       size: {
@@ -371,9 +388,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     if (this.config.visConfig.dynamicColor && visualChannel.key === 'color') {
       if (scale === SCALE_TYPES.quantile) {
         const current = this.config.colorDomain;
-        return Array.isArray(current) && current.length > 2
-          ? (current as number[])
-          : defaultDomain;
+        return Array.isArray(current) && current.length > 2 ? (current as number[]) : defaultDomain;
       }
       if (scale === SCALE_TYPES.quantize) {
         const current = this.config.colorDomain;
@@ -640,6 +655,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               colorScale: this.config.colorScale,
               colorDomain: this.config.colorDomain,
               colorRange: visConfig.colorRange,
+              hideNulls: visConfig.hideNulls,
               currentTime: isIndexedField(colorField) ? animationConfig.currentTime : null
             },
             getElevation: {

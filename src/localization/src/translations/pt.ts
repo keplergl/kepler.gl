@@ -102,6 +102,9 @@ export default {
     layer: 'Camada',
     appearance: 'Aparência',
     uniqueIdField: 'Campo ID único',
+    hideNulls: 'Ocultar valores nulos',
+    hideNullsDescription:
+      'Quando ativado, entidades sem valor de cor de preenchimento são ocultadas. Quando desativado, elas são exibidas em cinza.',
     type: {
       point: 'ponto',
       arc: 'arco',

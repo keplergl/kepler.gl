@@ -102,6 +102,9 @@ export default {
     layer: 'Capa',
     appearance: 'Aparença',
     uniqueIdField: 'Camp ID únic',
+    hideNulls: 'Amaga els valors nuls',
+    hideNullsDescription:
+      "Quan està activat, les entitats sense valor de color de fons s'amaguen. Quan està desactivat, es mostren en gris.",
     type: {
       point: 'punt',
       arc: 'arc',

@@ -1147,6 +1147,8 @@ class Layer implements KeplerLayer {
                 );
 
           const getFieldValue = this.accessVSFieldValue(this.config[field], indexKey);
+          const resolveNullValue = () =>
+            typeof nullValue === 'function' ? nullValue(this.config) : nullValue;
 
           if (scaleFunction) {
             attributeAccessors[accessor] = scaleFunction.byZoom
@@ -1157,7 +1159,7 @@ class Layer implements KeplerLayer {
                       scaleFunc,
                       dataAccessor(dataContainer)(d),
                       this.config[field],
-                      nullValue,
+                      resolveNullValue(),
                       getFieldValue
                     );
                 })
@@ -1166,7 +1168,7 @@ class Layer implements KeplerLayer {
                     scaleFunction,
                     dataAccessor(dataContainer)(d),
                     this.config[field],
-                    nullValue,
+                    resolveNullValue(),
                     getFieldValue
                   );
 

@@ -60,7 +60,11 @@ function VectorTileLayerConfiguratorFactory(
     return (
       <StyledLayerConfigurator>
         {/* Fill Color */}
-        <LayerConfigGroup {...visConfiguratorProps} label="layer.fillColor">
+        <LayerConfigGroup
+          {...visConfiguratorProps}
+          label="layer.fillColor"
+          collapsible={Boolean(layer.config.colorField)}
+        >
           {layerChannelConfigProps.fields ? (
             <ChannelByValueSelector
               {...layerChannelConfigProps}
@@ -77,6 +81,9 @@ function VectorTileLayerConfiguratorFactory(
                 {...visConfiguratorProps}
                 channel={layer.visualChannels.color}
               />
+              <ConfigGroupCollapsibleContent>
+                <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.hideNulls} />
+              </ConfigGroupCollapsibleContent>
             </>
           ) : (
             <LayerColorSelector {...layerConfiguratorProps} />
