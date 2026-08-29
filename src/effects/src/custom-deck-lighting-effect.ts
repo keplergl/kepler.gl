@@ -5,6 +5,7 @@ import {LightingEffect, shadow} from '@deck.gl/core';
 import type {Texture} from '@luma.gl/core';
 import type {ShaderModule} from '@luma.gl/shadertools';
 import {EDITOR_LAYER_ID} from '@kepler.gl/constants';
+import {patchShadowPassToDrawingBuffer} from './shadow-pass-drawing-buffer';
 import {patchTileViewportIds} from './tile-viewport-fix';
 
 // A plain LightingEffect() — its constructor calls _applyDefaultLights()
@@ -165,6 +166,9 @@ class CustomDeckLightingEffect extends LightingEffect {
     const {device, deck} = context;
     if (this._private.shadow && !this._private.dummyShadowMap) {
       this._private._createShadowPasses(device);
+      for (const shadowPass of this._private.shadowPasses) {
+        patchShadowPassToDrawingBuffer(shadowPass, () => this.isExportMode);
+      }
       deck._addDefaultShaderModule(CustomShadowModule || shadow);
       this._private.dummyShadowMap = device.createTexture({width: 1, height: 1});
     }
