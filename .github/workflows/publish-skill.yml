@@ -26,26 +26,26 @@ jobs:
       - name: Build Claude skill package
         run: |
           STAGING=$(mktemp -d)
-          SKILL_DIR="$STAGING/kepler.gl"
+          SKILL_DIR="$STAGING/kepler-gl"
           mkdir -p "$SKILL_DIR"
 
           cp bindings/python/skill/SKILL.md "$SKILL_DIR/SKILL.md"
           cp -r bindings/python/skill/skill-references "$SKILL_DIR/skill-references"
 
-          (cd "$STAGING" && zip -r "$OLDPWD/kepler.gl-claude.zip" kepler.gl)
+          (cd "$STAGING" && zip -r "$OLDPWD/kepler.gl-claude.zip" kepler-gl)
           rm -rf "$STAGING"
 
       - name: Build Codex skill package
         run: |
           STAGING=$(mktemp -d)
-          SKILL_DIR="$STAGING/kepler.gl"
+          SKILL_DIR="$STAGING/kepler-gl"
           mkdir -p "$SKILL_DIR"
 
           cp bindings/python/skill/SKILL.md "$SKILL_DIR/SKILL.md"
           cp -r bindings/python/skill/skill-references "$SKILL_DIR/skill-references"
           cp -r bindings/python/skill/agents "$SKILL_DIR/agents"
 
-          (cd "$STAGING" && zip -r "$OLDPWD/kepler.gl-codex.zip" kepler.gl)
+          (cd "$STAGING" && zip -r "$OLDPWD/kepler.gl-codex.zip" kepler-gl)
           rm -rf "$STAGING"
 
       - name: Upload Claude skill artifact
