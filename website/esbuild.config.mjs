@@ -133,6 +133,25 @@ const config = {
           return {path: `${join(distDir, subpath)}.js`};
         });
       }
+    },
+    // Force every `@sqlrooms/*` package (not subpaths) through the demo-app
+    // install. Nested rc.11/rc.12 copies of `@sqlrooms/room-store` each have
+    // their own RoomStateProvider context, so AI Settings throws
+    // "Missing RoomStateProvider in the tree" and React unmounts the app.
+    {
+      name: 'dedupe-sqlrooms',
+      setup(build) {
+        const demoAppDir = join(LIB_DIR, 'examples/demo-app');
+        build.onResolve({filter: /^@sqlrooms\/[^/]+$/}, async args => {
+          if (args.pluginData?.dedupedSqlrooms) return;
+          const result = await build.resolve(args.path, {
+            resolveDir: demoAppDir,
+            kind: args.kind,
+            pluginData: {dedupedSqlrooms: true}
+          });
+          return result;
+        });
+      }
     }
   ]
 };
