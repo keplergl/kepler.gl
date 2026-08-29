@@ -235,14 +235,15 @@ const config = {
     // styled-components: @hubble.gl/react nests its own copy.
     // react-palm: several @kepler.gl/* packages nest their own copy.
     // @sqlrooms/room-store: RoomStateProvider is a React context. Nested
-    // rc.11/rc.12 copies (demo-app vs kepler-assistant) make AI Settings
-    // throw "Missing RoomStateProvider in the tree" and unmount the app.
-    // All three are singletons that break when loaded more than once.
+    // copies each have their own context, so AI Settings throws
+    // "Missing RoomStateProvider in the tree" and unmounts the app.
+    // Do not blanket-match `@sqlrooms/*` — nested packages like
+    // `@sqlrooms/db` are not installed at the demo-app root.
     {
       name: 'dedupe-singletons',
       setup(build) {
         build.onResolve(
-          {filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$|@sqlrooms\/[^/]+$)/},
+          {filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$|@sqlrooms\/room-store$)/},
           async args => {
             if (args.pluginData?.deduped) return;
             const result = await build.resolve(args.path, {
