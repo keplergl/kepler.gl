@@ -168,7 +168,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
         [testCsvDataId]: [
           {
             name: 'gps_data.utc_timestamp',
-            format: null
+            format: 'L LTS'
           },
           {
             name: 'gps_data.types',
@@ -176,7 +176,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
           },
           {
             name: 'epoch',
-            format: null
+            format: 'L LTS'
           },
           {
             name: 'has_result',

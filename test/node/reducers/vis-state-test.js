@@ -3990,7 +3990,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
             [testCsvDataId]: [
               {
                 name: 'gps_data.utc_timestamp',
-                format: null
+                format: 'L LTS'
               },
               {
                 name: 'gps_data.types',
@@ -3998,7 +3998,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
               },
               {
                 name: 'epoch',
-                format: null
+                format: 'L LTS'
               },
               {
                 name: 'has_result',

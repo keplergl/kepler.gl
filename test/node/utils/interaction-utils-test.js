@@ -113,6 +113,29 @@ test('interactionUtil -> autoFindTooltipFields', t => {
   t.end();
 });
 
+test('interactionUtil -> autoFindTooltipFields -> datetime default format', t => {
+  const dateTimeFields = [
+    {name: 'lat'},
+    {name: 'DateTime', type: 'timestamp'},
+    {name: 'event_date', type: 'date'},
+    {name: 'uid', type: 'integer'}
+  ];
+
+  t.deepEqual(
+    findFieldsToShow({fields: dateTimeFields, id: 'test', maxDefaultTooltips: 5}),
+    {
+      test: [
+        {name: 'DateTime', format: 'L LTS'},
+        {name: 'event_date', format: 'L'},
+        {name: 'uid', format: null}
+      ]
+    },
+    'should default timestamp and date tooltip fields to a human-readable format'
+  );
+
+  t.end();
+});
+
 test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
   const tooltipConfig = StateWTooltipFormat.visState.interactionConfig.tooltip.config;
   const dataset = StateWTooltipFormat.visState.datasets[testGeoJsonDataId];

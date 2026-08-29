@@ -104,9 +104,9 @@ test('Map Popover - render with layerHoverProp', t => {
   const rows = table.find('.layer-hover-info__row');
   t.equal(rows.length, 5, 'should render 5 rows');
   const expectedTooltips = [
-    ['gps_data.utc_timestamp', '1474071864000'],
+    ['gps_data.utc_timestamp', '09/17/2016 12:24:24 AM'],
     ['gps_data.types', 'driver_analytics'],
-    ['epoch', '1472754400000'],
+    ['epoch', '09/01/2016 6:26:40 PM'],
     ['has_result', ''],
     ['uid', '1']
   ];
