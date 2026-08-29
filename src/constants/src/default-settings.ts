@@ -1500,6 +1500,7 @@ export const dataTestIds: Record<string, string> = {
   errorIcon: 'error-icon',
   successIcon: 'success-icon',
   checkmarkIcon: 'checkmark-icon',
+  copyNotificationIcon: 'copy-notification-icon',
   sortableLayerItem: 'sortable-layer-item',
   staticLayerItem: 'static-layer-item',
   layerTitleEditor: 'layer__title__editor',
