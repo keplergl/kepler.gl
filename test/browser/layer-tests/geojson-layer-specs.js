@@ -674,3 +674,95 @@ test('#GeojsonLayer -> renderLayer', t => {
   testRenderLayerCases(t, GeojsonLayer, TEST_CASES);
   t.end();
 });
+
+test('#GeojsonLayer -> hover overlay caches outline data', t => {
+  const layer = new GeojsonLayer({id: 'hover_geojson'});
+  const polygonFeature = {
+    type: 'Feature',
+    properties: {index: 0},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [1, 0],
+          [1, 1],
+          [0, 0]
+        ]
+      ]
+    }
+  };
+  const objectHovered = {
+    picked: true,
+    index: 0,
+    layer: {props: {id: 'hover_geojson'}},
+    object: polygonFeature
+  };
+
+  const first = layer._getHoverOverlayData(objectHovered);
+  const second = layer._getHoverOverlayData({...objectHovered});
+
+  t.ok(first, 'should create hover overlay data');
+  t.equal(first, second, 'should reuse hover overlay data for the same feature across redraws');
+  t.equal(
+    first[0].geometry.type,
+    'MultiLineString',
+    'should stroke polygons as lines so hover overlay skips fill tessellation'
+  );
+  t.deepEqual(
+    first[0].geometry.coordinates,
+    polygonFeature.geometry.coordinates,
+    'should keep polygon rings as line coordinates'
+  );
+
+  const other = layer._getHoverOverlayData({
+    ...objectHovered,
+    index: 1,
+    object: {...polygonFeature, properties: {index: 1}}
+  });
+  t.notEqual(first, other, 'should rebuild hover overlay data when the hovered feature changes');
+
+  const multi = layer._getHoverOverlayData({
+    picked: true,
+    index: 2,
+    layer: {props: {id: 'hover_geojson'}},
+    object: {
+      type: 'Feature',
+      properties: {index: 2},
+      geometry: {
+        type: 'MultiPolygon',
+        coordinates: [
+          [
+            [
+              [0, 0],
+              [1, 0],
+              [1, 1],
+              [0, 0]
+            ]
+          ],
+          [
+            [
+              [2, 2],
+              [3, 2],
+              [3, 3],
+              [2, 2]
+            ]
+          ]
+        ]
+      }
+    }
+  });
+  t.equal(
+    multi[0].geometry.type,
+    'MultiLineString',
+    'should flatten MultiPolygon rings into lines'
+  );
+  t.equal(multi[0].geometry.coordinates.length, 2, 'should keep one line per polygon ring');
+
+  t.equal(
+    layer._getHoverOverlayData({...objectHovered, picked: false}),
+    null,
+    'should clear hover overlay data when nothing is picked'
+  );
+  t.end();
+});
