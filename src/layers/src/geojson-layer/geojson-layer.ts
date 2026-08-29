@@ -186,7 +186,8 @@ type ObjectInfo = {
   index: number;
   object?: Feature | undefined;
   picked: boolean;
-  layer: Layer;
+  // deck.gl picking info; only `props.id` is read for hover matching
+  layer: {props: {id: string}};
   radius?: number;
   id?: string;
 };

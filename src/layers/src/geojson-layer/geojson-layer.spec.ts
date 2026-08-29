@@ -20,7 +20,7 @@ describe('GeoJsonLayer hover overlay cache', () => {
     }
   };
 
-  const hovered = (index: number, overrides: Record<string, unknown> = {}) => ({
+  const hovered = (index: number, overrides: {picked?: boolean} = {}) => ({
     picked: true,
     index,
     layer: {props: {id: 'hover_geojson'}},
