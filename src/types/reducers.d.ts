@@ -526,6 +526,7 @@ export type MapControls = {
   annotation?: MapControlItem;
   sqlPanel?: MapControlItem;
   aiAssistant?: MapControlItem;
+  [key: string]: MapControlItem | MapControlMapLegend | undefined;
 };
 
 export type LoadFiles = {

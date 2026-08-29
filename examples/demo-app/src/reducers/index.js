@@ -4,7 +4,7 @@
 import {combineReducers} from 'redux';
 import Task, {withTask} from 'react-palm/tasks';
 
-import {aiAssistantReducer} from '@kepler.gl/ai-assistant';
+import {aiAssistantReducer} from '@openassistant/kepler-assistant';
 import {EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/processors';
 import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/reducers';
@@ -126,7 +126,7 @@ const demoReducer = combineReducers({
       exportMap: {
         ...DEFAULT_EXPORT_MAP,
         [EXPORT_MAP_FORMATS.HTML]: {
-          ...DEFAULT_EXPORT_MAP[[EXPORT_MAP_FORMATS.HTML]],
+          ...DEFAULT_EXPORT_MAP[EXPORT_MAP_FORMATS.HTML],
           exportMapboxAccessToken: CLOUD_PROVIDERS_CONFIGURATION.EXPORT_MAPBOX_TOKEN
         }
       },
@@ -142,7 +142,11 @@ const demoReducer = combineReducers({
                 show: true
               }
             }
-          : {})
+          : {}),
+        aiAssistant: {
+          active: false,
+          show: true
+        }
       }
     },
     visState: {
@@ -241,7 +245,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
 const loadRemoteDatasetProcessedSuccess = (state, action) => {
   const {config, datasets, options} = action.payload;
 
-  const parsedConfig = config ? KeplerGlSchema.parseSavedConfig(config) : null;
+  const parsedConfig = config ? KeplerGlSchema.parseSavedConfig(config) : undefined;
 
   // a hack to use minZoom and maxZoom from examples
   if (parsedConfig?.mapState) {

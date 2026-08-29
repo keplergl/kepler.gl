@@ -3,20 +3,15 @@
 
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useStore} from 'react-redux';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import isEqual from 'es-toolkit/compat/isEqual';
 import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
 import {useParams, useSearchParams, useLocation} from 'react-router-dom';
 import {WebMercatorViewport} from '@deck.gl/core';
-import {ScreenshotWrapper} from '@openassistant/ui';
-import {
-  setStartScreenCapture,
-  setScreenCaptured,
-  AiAssistantPanel,
-  setMapBoundary
-} from '@kepler.gl/ai-assistant';
+import {setMapBoundary} from '@openassistant/kepler-assistant';
+import {AiAssistantPanel} from '@openassistant/kepler-assistant';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -56,7 +51,7 @@ const KeplerGl = require('@kepler.gl/components').injectComponents([
 /* eslint-disable no-unused-vars */
 import sampleTripData, {testCsvData, sampleTripDataConfig} from './data/sample-trip-data';
 // import sampleGeojson from './data/sample-small-geojson';
-// import sampleGeojsonPoints from './data/sample-geojson-points';
+import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
 import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sample-s2-data';
@@ -76,7 +71,7 @@ import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/proce
 /* eslint-enable no-unused-vars */
 
 // This implements the default behavior from styled-components v5
-function shouldForwardProp(propName, target) {
+function shouldForwardProp(propName: string, target: unknown) {
   if (typeof target === 'string') {
     // For HTML elements, forward the prop if it is a valid HTML attribute
     return isPropValid(propName);
@@ -158,6 +153,7 @@ const App = props => {
   const location = useLocation();
   const query = Object.fromEntries(searchParams.entries());
   const dispatch = useDispatch();
+  const reduxStore = useStore();
 
   // TODO find another way to check for existence of duckDb plugin
   const duckDbPluginEnabled = (getApplicationConfig().plugins || []).some(p => p.name === 'duckdb');
@@ -170,11 +166,11 @@ const App = props => {
     state => state?.demo?.keplerGl?.map?.uiState.mapControls.aiAssistant?.active
   );
 
-  const prevQueryRef = useRef<number>(null);
-
-  const startScreenCapture = useSelector(
-    (state: any) => state.demo.aiAssistant.screenshotToAsk.startScreenCapture
-  );
+  const prevQueryRef = useRef<{
+    provider?: string;
+    id?: string;
+    query: Record<string, string>;
+  } | null>(null);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapDimensions, setMapDimensions] = useState({width: 0, height: 0});
@@ -259,20 +255,6 @@ const App = props => {
       const nw = viewport.unproject([0, 0]);
       const se = viewport.unproject([viewport.width, viewport.height]);
       dispatch(setMapBoundary(nw, se));
-    },
-    [dispatch]
-  );
-
-  const _setStartScreenCapture = useCallback(
-    flag => {
-      dispatch(setStartScreenCapture(flag));
-    },
-    [dispatch]
-  );
-
-  const _setScreenCaptured = useCallback(
-    screenshot => {
-      dispatch(setScreenCaptured(screenshot));
     },
     [dispatch]
   );
@@ -599,7 +581,7 @@ const App = props => {
             info: {label: 'Bart Stops Geo Replaced', id: 'bart-stops-geo-2'},
             data: sliceData
           }
-        })
+        } as any)
       );
     }, 1000);
   }, [dispatch, _loadGeojsonData]);
@@ -911,58 +893,59 @@ const App = props => {
         //   node ? (this.root = node) : null;
         // }}
         >
-          <ScreenshotWrapper
-            startScreenCapture={startScreenCapture}
-            setScreenCaptured={_setScreenCaptured}
-            setStartScreenCapture={_setStartScreenCapture}
-            className="h-screen"
-          >
-            <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
-              <Announcement onDisable={_disableBanner} />
-            </Banner>
-            <div style={CONTAINER_STYLE}>
-              <PanelGroup direction="horizontal">
-                <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
-                  <PanelGroup direction="vertical">
-                    <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
-                      <div ref={mapContainerRef} style={{width: '100%', height: '100%'}}>
-                        <KeplerGl
-                          mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                          id="map"
-                          getState={keplerGlGetState}
-                          width={mapDimensions.width}
-                          height={mapDimensions.height}
-                          cloudProviders={CLOUD_PROVIDERS}
-                          localeMessages={messages}
-                          onExportToCloudSuccess={onExportFileSuccess}
-                          onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                          featureFlags={DEFAULT_FEATURE_FLAGS}
-                          onViewStateChange={onViewStateChange}
-                        />
-                      </div>
-                    </Panel>
+          <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
+            <Announcement onDisable={_disableBanner} />
+          </Banner>
+          <div style={CONTAINER_STYLE}>
+            <PanelGroup direction="horizontal">
+              <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
+                <PanelGroup direction="vertical">
+                  <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
+                    <div ref={mapContainerRef} style={{width: '100%', height: '100%'}}>
+                      <KeplerGl
+                        mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                        id="map"
+                        getState={keplerGlGetState}
+                        width={mapDimensions.width}
+                        height={mapDimensions.height}
+                        cloudProviders={CLOUD_PROVIDERS}
+                        localeMessages={messages}
+                        onExportToCloudSuccess={onExportFileSuccess}
+                        onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                        featureFlags={DEFAULT_FEATURE_FLAGS}
+                        onViewStateChange={onViewStateChange}
+                      />
+                    </div>
+                  </Panel>
 
-                    {isSqlPanelOpen && (
-                      <>
-                        <StyledResizeHandle />
-                        <Panel defaultSize={40} minSize={20}>
-                          <SqlPanel initialSql={query.sql || ''} />
-                        </Panel>
-                      </>
-                    )}
-                  </PanelGroup>
-                </Panel>
-                {isAiAssistantPanelOpen && (
-                  <>
-                    <StyledVerticalResizeHandle />
-                    <Panel defaultSize={30} minSize={20}>
-                      <AiAssistantPanel />
-                    </Panel>
-                  </>
-                )}
-              </PanelGroup>
-            </div>
-          </ScreenshotWrapper>
+                  {isSqlPanelOpen && (
+                    <>
+                      <StyledResizeHandle />
+                      <Panel defaultSize={40} minSize={20}>
+                        <SqlPanel initialSql={query.sql || ''} />
+                      </Panel>
+                    </>
+                  )}
+                </PanelGroup>
+              </Panel>
+              {isAiAssistantPanelOpen && (
+                <>
+                  <StyledVerticalResizeHandle />
+                  <Panel defaultSize={30} minSize={20}>
+                    <AiAssistantPanel
+                      reduxStore={reduxStore}
+                      stateAccessors={{
+                        getVisState: () =>
+                          (reduxStore?.getState() as any)?.demo?.keplerGl?.map?.visState,
+                        getMapBoundary: () =>
+                          (reduxStore?.getState() as any)?.demo?.aiAssistant?.keplerGl?.mapBoundary
+                      }}
+                    />
+                  </Panel>
+                </>
+              )}
+            </PanelGroup>
+          </div>
         </GlobalStyle>
       </ThemeProvider>
     </StyleSheetManager>

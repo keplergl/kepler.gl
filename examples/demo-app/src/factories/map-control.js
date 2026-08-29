@@ -8,10 +8,12 @@ import {
   withState,
   MapControlFactory,
   EffectControlFactory,
-  EffectManagerFactory,
-  AnnotationManagerFactory
+  EffectManagerFactory
 } from '@kepler.gl/components';
-import {AiAssistantControlFactory} from '@kepler.gl/ai-assistant';
+// AnnotationManagerFactory is available in the workspace source (src/components) but not yet
+// published in the @kepler.gl/components version this example currently depends on.
+const AnnotationManagerFactory = require('@kepler.gl/components').AnnotationManagerFactory;
+import {AiAssistantControlFactory} from '@openassistant/kepler-assistant';
 
 import {BannerMapPanel, SampleMapPanel} from '../components/map-control/map-control';
 import SqlPanelControlFactory from '../components/map-control/sql-panel-control';
@@ -56,10 +58,21 @@ const StyledMapControlOverlay = styled.div`
   }
 `;
 
+// `AnnotationManagerFactory` may be missing when this example is built against a published
+// `@kepler.gl/components` that predates it (see the require shim above). The component
+// injector calls `.deps` on every entry of this array and on their transitive deps, so an
+// `undefined` here crashes injection at startup. Substitute a harmless no-op factory so the
+// deps array stays positionally aligned with `CustomMapControlFactory`'s parameters while
+// remaining injectable. `CustomMapControlFactory` already renders the annotation manager
+// conditionally, so the stub is never actually mounted.
+const NoopAnnotationManagerFactory = () => () => null;
+NoopAnnotationManagerFactory.deps = [];
+const SafeAnnotationManagerFactory = AnnotationManagerFactory || NoopAnnotationManagerFactory;
+
 CustomMapControlFactory.deps = [
   EffectControlFactory,
   EffectManagerFactory,
-  AnnotationManagerFactory,
+  SafeAnnotationManagerFactory,
   SqlPanelControlFactory,
   AiAssistantControlFactory,
   ...MapControlFactory.deps

@@ -135,6 +135,8 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_DATASET_PROPS]: visStateUpdaters.updateDatasetPropsUpdater,
 
+  [ActionTypes.UPDATE_DATASET]: visStateUpdaters.updateDatasetUpdater,
+
   [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
 
   [ActionTypes.SET_EDITOR_FEATURE_PROPERTIES]: visStateUpdaters.setEditorFeaturePropertiesUpdater,

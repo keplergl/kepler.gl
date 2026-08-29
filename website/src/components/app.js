@@ -11,6 +11,8 @@ const GlobalStyleDiv = styled.div`
   font-weight: 400;
   font-size: 0.875em;
   line-height: 1.71429;
+  width: 100%;
+  height: 100%;
 
   *,
   *:before,

@@ -7,7 +7,7 @@ import {dotenvRun} from '@dotenv-run/esbuild';
 
 import process from 'node:process';
 import fs from 'node:fs';
-import {spawn} from 'node:child_process';
+import {execSync, spawn} from 'node:child_process';
 import {join} from 'node:path';
 import {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -31,10 +31,80 @@ const EXTERNAL_LOADERS_SRC = join(LIB_DIR, 'loaders.gl');
 
 const port = 8080;
 
-const getThirdPartyLibraryAliases = useKeplerNodeModules => {
-  const nodeModulesDir = useKeplerNodeModules ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
+/**
+ * Run the demo against the local kepler.gl source tree instead of the published
+ * `@kepler.gl/*` packages in examples/demo-app/node_modules (which shadow the
+ * root workspace symlinks and would leave core changes — e.g. the
+ * `UPDATE_DATASET` action/reducer — invisible to the bundle). Mirrors the
+ * existing `--env.deck_src` / `--env.loaders_src` flags; applied in both the
+ * `--start` and `--build` paths. `@kepler.gl/types` is types-only (imports are
+ * elided by esbuild) and intentionally excluded.
+ */
+const KEPLER_SRC_ALIASES = Object.fromEntries(
+  [
+    'actions',
+    'cloud-providers',
+    'common-utils',
+    'components',
+    'constants',
+    'duckdb',
+    'layers',
+    'localization',
+    'processors',
+    'reducers',
+    'schemas',
+    'styles',
+    'table',
+    'utils'
+  ].map(pkg => [`@kepler.gl/${pkg}`, join(SRC_DIR, pkg, 'src', 'index.ts')])
+);
 
-  const localSources = useKeplerNodeModules
+const getKeplerAliases = () => ({
+  ...KEPLER_SRC_ALIASES,
+  // duckdb ships a components subpath (SqlPanel); esbuild picks the longest
+  // matching alias key, so this wins for `@kepler.gl/duckdb/components`.
+  '@kepler.gl/duckdb/components': join(SRC_DIR, 'duckdb', 'src', 'components', 'index.tsx')
+});
+
+/**
+ * The local kepler src is built against the workspace's deck.gl 9 / luma 9 /
+ * math.gl 4 / probe.gl stack in the ROOT node_modules, but the demo-app's own
+ * node_modules carries older versions (deck.gl 8 / luma.gl 8). Point every
+ * scoped module of those stacks at the root `src/` so the bundled kepler src
+ * sees the versions it was written against — deck/luma in particular must be a
+ * single instance shared with the rest of the bundle. Mirrors the existing
+ * `--env.deck` aliases but applies in every mode (kepler src is now always
+ * bundled). Scopes absent from root are left to normal resolution.
+ *
+ * `@loaders.gl` is deliberately NOT aliased: kepler src (3.3) needs loaders 4.4
+ * while the demo's own `src/actions.js` still uses 4.3-era names
+ * (`ParquetWasmLoader`, `_GeoJSONLoader`) that 4.4 renamed. esbuild resolves
+ * per-importing-file, so leaving the scope alone gives each tree its own copy —
+ * kepler src files walk up from /kepler.gl/src to root's 4.4, demo files to the
+ * demo's 4.3. The two copies are independent (no shared module state), so this
+ * is safe, unlike deck/luma which must not be duplicated.
+ */
+const getLocalSourceStackAliases = () => {
+  const aliases = {};
+  ['@deck.gl', '@luma.gl', '@math.gl', '@probe.gl'].forEach(scope => {
+    const scopeDir = join(NODE_MODULES_DIR, scope);
+    let items;
+    try {
+      items = fs.readdirSync(scopeDir);
+    } catch {
+      return; // not installed at root — keep node resolution
+    }
+    items.forEach(mdl => {
+      aliases[`${scope}/${mdl}`] = join(scopeDir, mdl, 'src');
+    });
+  });
+  return aliases;
+};
+
+const getThirdPartyLibraryAliases = useKeplerNodePackage => {
+  const nodeModulesDir = useKeplerNodePackage ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
+
+  const localSources = useKeplerNodePackage
     ? {
         // Suppress useless warnings from react-date-picker's dep
         'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`
@@ -42,6 +112,8 @@ const getThirdPartyLibraryAliases = useKeplerNodeModules => {
     : {};
 
   return {
+    ...getKeplerAliases(),
+    ...getLocalSourceStackAliases(),
     ...localSources,
     react: `${nodeModulesDir}/react`,
     'react-dom': `${nodeModulesDir}/react-dom`,
@@ -92,6 +164,8 @@ const config = {
   platform: 'browser',
   format: 'iife',
   logLevel: 'info',
+  // Silence noisy warnings from prebuilt third-party deps (e.g. @deck.gl-community
+  // editable-layers ships files with a Preact `@jsxImportSource` pragma).
   logOverride: {
     'unsupported-jsx-comment': 'silent'
   },
@@ -131,21 +205,55 @@ const config = {
       __PACKAGE_VERSION__: KeplerPackage.version,
       include: /constants\/src\/default-settings\.ts/
     }),
+    // Resolve monaco-editor subpath imports (missing .js extension) used by @sqlrooms packages
+    {
+      name: 'resolve-monaco-editor',
+      setup(build) {
+        build.onResolve({filter: /^monaco-editor\/esm\//}, args => {
+          if (args.path.endsWith('.js') || args.path.endsWith('.css')) return null;
+          const subpath = args.path + '.js';
+          const resolved = join(process.cwd(), BASE_NODE_MODULES_DIR, subpath);
+          return {path: resolved};
+        });
+      }
+    },
+    // Resolve @sqlrooms/ai-core internal component imports that bypass the package exports map
+    {
+      name: 'resolve-sqlrooms-ai-core-internals',
+      setup(build) {
+        build.onResolve({filter: /^@sqlrooms\/ai-core\/components\//}, args => {
+          const subpath =
+            args.path.replace(
+              '@sqlrooms/ai-core/components/',
+              '@sqlrooms/ai-core/dist/components/'
+            ) + '.js';
+          const resolved = join(process.cwd(), BASE_NODE_MODULES_DIR, subpath);
+          return {path: resolved};
+        });
+      }
+    },
     // styled-components: @hubble.gl/react nests its own copy.
     // react-palm: several @kepler.gl/* packages nest their own copy.
-    // Both are singletons that break when loaded more than once.
+    // @sqlrooms/room-store: RoomStateProvider is a React context. Nested
+    // copies each have their own context, so AI Settings throws
+    // "Missing RoomStateProvider in the tree" and unmounts the app.
+    // Do not blanket-match `@sqlrooms/*` — nested packages like
+    // `@sqlrooms/db` are not installed at the demo-app root.
     {
       name: 'dedupe-singletons',
       setup(build) {
-        build.onResolve({filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$)/}, async args => {
-          if (args.pluginData?.deduped) return;
-          const result = await build.resolve(args.path, {
-            resolveDir: __dirname,
-            kind: args.kind,
-            pluginData: {deduped: true}
-          });
-          return result;
-        });
+        build.onResolve(
+          {filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$|@sqlrooms\/room-store$)/},
+          async args => {
+            if (args.pluginData?.deduped) return;
+            const result = await build.resolve(args.path, {
+              resolveDir: __dirname,
+              kind: args.kind,
+              pluginData: {deduped: true}
+            });
+            return result;
+          }
+        );
       }
     }
   ]
@@ -178,36 +286,6 @@ function addAliases(externals, args) {
   // Combine flags
   const useLocalDeck = args.includes('--env.deck');
   const useRepoDeck = args.includes('--env.deck_src');
-  const useLocalAiAssistant = args.includes('--env.ai');
-
-  // resolve ai-assistant from local dir
-  if (useLocalAiAssistant) {
-    resolveAlias['@openassistant/core'] = join(LIB_DIR, '../openassistant/packages/core/src');
-    resolveAlias['@openassistant/ui'] = join(LIB_DIR, '../openassistant/packages/ui/src');
-    resolveAlias['@openassistant/echarts'] = join(
-      LIB_DIR,
-      '../openassistant/packages/components/echarts/src'
-    );
-    resolveAlias['@openassistant/tables'] = join(
-      LIB_DIR,
-      '../openassistant/packages/components/tables/src'
-    );
-    resolveAlias['@openassistant/geoda'] = join(
-      LIB_DIR,
-      '../openassistant/packages/tools/geoda/src'
-    );
-    resolveAlias['@openassistant/duckdb'] = join(
-      LIB_DIR,
-      '../openassistant/packages/tools/duckdb/src'
-    );
-    resolveAlias['@openassistant/plots'] = join(
-      LIB_DIR,
-      '../openassistant/packages/tools/plots/src'
-    );
-    resolveAlias['@openassistant/osm'] = join(LIB_DIR, '../openassistant/packages/tools/osm/src');
-    resolveAlias['@openassistant/utils'] = join(LIB_DIR, '../openassistant/packages/utils/src');
-    resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
-  }
 
   // resolve deck.gl from local dir
   if (useLocalDeck || useRepoDeck) {
@@ -303,6 +381,18 @@ function openURL(url) {
   const localAliases = addAliases(externals, args);
 
   if (args.includes('--build')) {
+    // Generate the Tailwind stylesheet for the production build. The dev
+    // (`--start`) path starts a watcher, but `--build` never ran Tailwind, so
+    // dist/tailwind.css (referenced by dist/index.html) only ever existed when
+    // a dev session had produced it. On a clean build (e.g. Netlify) it was
+    // missing and the @sqlrooms UI — including the Radix dropdown/dialog
+    // popups portaled to <body> — shipped unstyled.
+    console.log('⚡ Building Tailwind CSS...');
+    execSync(
+      './node_modules/.bin/tailwindcss -i src/styles.css -o dist/tailwind.css --minify',
+      {stdio: 'inherit'}
+    );
+
     await esbuild
       .build({
         ...config,
@@ -348,13 +438,20 @@ function openURL(url) {
 
   if (args.includes('--start')) {
     const isLocal = process.env.NODE_ENV === 'local';
-    const baseAliases = isLocal
-      ? localAliases
-      : getThirdPartyLibraryAliases(false);
+    const baseAliases = isLocal ? localAliases : getThirdPartyLibraryAliases(false);
     const nodeModulesDir = isLocal ? NODE_MODULES_DIR : BASE_NODE_MODULES_DIR;
     // Skip dedupe-webgl when a local deck.gl source override is active so that
     // --env.deck / --env.deck_src aliases are not overridden by the plugin.
     const useDeckOverride = args.includes('--env.deck') || args.includes('--env.deck_src');
+
+    // Start Tailwind CSS watcher for sqlrooms UI components
+    spawn(
+      './node_modules/.bin/tailwindcss',
+      ['-i', 'src/styles.css', '-o', 'dist/tailwind.css', '--watch'],
+      {
+        stdio: 'inherit'
+      }
+    );
 
     await esbuild
       .context({
