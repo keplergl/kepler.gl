@@ -6,11 +6,13 @@ import JSONPretty from 'react-json-pretty';
 import {ADD_DATA_TO_MAP_DOC} from '@kepler.gl/constants';
 import styled from 'styled-components';
 import {StyledExportSection, Button} from '../../common/styled-components';
-import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
+import {StyledExportMapNote, StyledWarning, ExportMapLink} from './components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
 
 const StyledJsonExportSection = styled(StyledExportSection)`
+  margin: 8px 0 12px;
+
   .note {
     color: ${props => props.theme.errorColor};
     font-size: 11px;
@@ -27,9 +29,9 @@ const StyledJsonExportSection = styled(StyledExportSection)`
     padding: 0.5em 3.5em 0.5em 1em;
     margin: 0;
     box-sizing: border-box;
-    height: 180px;
+    height: 120px;
     width: 100%;
-    overflow-y: scroll;
+    overflow-y: auto;
     overflow-x: auto;
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -52,12 +54,9 @@ const ExportJsonMapUnmemoized = ({config = {}}: ExportJsonPropTypes) => {
   const [copied, setCopy] = useState(false);
   return (
     <div>
-      <StyledExportMapSection>
-        <div className="description" />
-        <div className="selection">
-          <FormattedMessage id={'modal.exportMap.json.selection'} />
-        </div>
-      </StyledExportMapSection>
+      <StyledExportMapNote>
+        <FormattedMessage id={'modal.exportMap.json.selection'} />
+      </StyledExportMapNote>
       <StyledJsonExportSection className="export-map-modal__json-options">
         <div className="description">
           <div className="title">
