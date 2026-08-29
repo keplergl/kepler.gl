@@ -35,6 +35,8 @@ export const PROPERTY_GROUPS = keyMirror({
 });
 
 export const DEFAULT_LAYER_OPACITY = 0.8;
+/** Minimum grid / hexagon cell size in kilometers. Zero is invalid for aggregation. */
+export const MIN_WORLD_UNIT_SIZE = 0.001;
 export const DEFAULT_HIGHLIGHT_COLOR: RGBAColor = [252, 242, 26, 255];
 export const DEFAULT_LAYER_LABEL = 'new layer';
 
@@ -352,7 +354,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     defaultValue: 1,
     label: 'layerVisConfigs.worldUnitSize',
     isRanged: false,
-    range: [0, 500],
+    range: [MIN_WORLD_UNIT_SIZE, 500],
     step: 0.0001,
     group: PROPERTY_GROUPS.cell,
     property: 'worldUnitSize',
@@ -473,7 +475,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     defaultValue: 20,
     label: 'layerVisConfigs.radius',
     isRanged: false,
-    range: [0, 100],
+    range: [0.1, 100],
     step: 0.1,
     group: PROPERTY_GROUPS.cell,
     property: 'radius',

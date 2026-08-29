@@ -123,6 +123,10 @@ test('#GridLayer -> constructor', t => {
           t.ok(layer.isAggregated === true, 'gridLayer is aggregated');
           t.ok(layer.config.label === 'test grid layer', 'label should be correct');
           t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
+          t.ok(
+            layer.visConfigSettings.worldUnitSize.range[0] > 0,
+            'grid size should have a positive minimum'
+          );
         }
       }
     ]

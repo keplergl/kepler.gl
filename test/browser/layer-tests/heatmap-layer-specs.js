@@ -35,6 +35,10 @@ test('#HeatmapLayer -> contructor', t => {
         },
         test: layer => {
           t.equal(layer.config.visConfig.radius, 20, 'Heatmap default radius should be 20');
+          t.ok(
+            layer.visConfigSettings.radius.range[0] > 0,
+            'heatmap radius should have a positive minimum'
+          );
           t.ok(layer.config.dataId === 'taro', 'heatmaplayer dataId should be correct');
           t.ok(layer.type === 'heatmap', 'type should be heatmap');
           t.ok(layer.isAggregated === true, 'heatmaplayer is aggregated');
