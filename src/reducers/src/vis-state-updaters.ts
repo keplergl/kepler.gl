@@ -2377,6 +2377,22 @@ export const updateEffectUpdater = (
     );
   }
 
+  const effect = state.effects[idx];
+  const nextParams = props.parameters;
+  // A timestamp-only no-op still used to allocate a new visState (setProps
+  // mutates in place). That retriggered nested react-redux connect subscribers
+  // while dragging the Light & Shadow day-time slider until React threw
+  // "Maximum update depth exceeded".
+  if (
+    nextParams &&
+    Object.keys(props).length === 1 &&
+    Object.keys(nextParams).length === 1 &&
+    nextParams.timestamp != null &&
+    nextParams.timestamp === effect.parameters.timestamp
+  ) {
+    return state;
+  }
+
   const newEffects = [...state.effects];
   newEffects[idx].setProps(props);
 
@@ -3735,7 +3751,9 @@ export function updateDatasetUpdater(
 
       if (fieldIdx === -1) {
         // column is gone: drop a single-dataset filter, splice it out of a synced one
-        return filter.dataId.length === 1 ? null : _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
+        return filter.dataId.length === 1
+          ? null
+          : _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
       }
 
       // column present (possibly renamed): re-resolve name/fieldIdx/domain
@@ -3752,8 +3770,8 @@ export function updateDatasetUpdater(
         (renames[updated.yAxis.name]
           ? {...updated.yAxis, name: renames[updated.yAxis.name]}
           : newFieldsByName.has(updated.yAxis.name)
-            ? updated.yAxis
-            : null);
+          ? updated.yAxis
+          : null);
 
       return {
         ...updated,

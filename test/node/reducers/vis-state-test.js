@@ -7590,6 +7590,39 @@ test('#VisStateUpdater -> updateEffect', t => {
   t.end();
 });
 
+test('#VisStateUpdater -> updateEffect: skip no-op timestamp', t => {
+  const initialState = InitialState.visState;
+  let nextState = reducer(
+    initialState,
+    VisStateActions.addEffect({id: 'e_shadow', type: LIGHT_AND_SHADOW_EFFECT.type})
+  );
+  const shadow = nextState.effects.find(e => e.id === 'e_shadow');
+  const timestamp = shadow.parameters.timestamp;
+
+  const afterSameTimestamp = reducer(
+    nextState,
+    VisStateActions.updateEffect('e_shadow', {parameters: {timestamp}})
+  );
+  t.equal(
+    afterSameTimestamp,
+    nextState,
+    'timestamp-only no-op should return the same visState reference'
+  );
+
+  const afterNewTimestamp = reducer(
+    nextState,
+    VisStateActions.updateEffect('e_shadow', {parameters: {timestamp: timestamp + 60000}})
+  );
+  t.notEqual(afterNewTimestamp, nextState, 'a new timestamp should still produce a new visState');
+  t.equal(
+    afterNewTimestamp.effects.find(e => e.id === 'e_shadow').parameters.timestamp,
+    timestamp + 60000,
+    'timestamp should update when the value actually changes'
+  );
+
+  t.end();
+});
+
 test('#VisStateUpdater -> addEffect: invalid effect parameters', t => {
   const initialState = InitialState.visState;
 

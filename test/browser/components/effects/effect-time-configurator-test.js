@@ -308,3 +308,82 @@ test('Components -> EffectTimeConfigurator -> date with custom timezone update',
 
   t.end();
 });
+
+test('Components -> EffectTimeConfigurator -> day time slider does not echo same timestamp', t => {
+  const store = mockStore(ititialState);
+  const onDateTimeChange = sinon.spy();
+  // Already quantized to HH:mm:00 so a same-minute slider echo is a true no-op.
+  const quantizedTimestamp = Date.UTC(2023, 6, 25, 16, 46, 0, 0);
+  const props = {
+    timestamp: quantizedTimestamp,
+    timezone: 'UTC',
+    timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick,
+    onChange: onDateTimeChange
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <EffectTimeConfigurator {...props} />
+        </Provider>
+      </IntlWrapper>
+    );
+  }, `EffectTimeConfigurator should not fail`);
+
+  const sliderOnChange = wrapper.find('RangeSlider').at(0).props().onChange;
+  sliderOnChange([0, (16 * 60 + 46) / (24 * 60)]);
+  t.equal(
+    onDateTimeChange.callCount,
+    0,
+    'slider should not dispatch when quantized time matches the current timestamp'
+  );
+
+  sliderOnChange([0, (17 * 60 + 0) / (24 * 60)]);
+  t.equal(onDateTimeChange.callCount, 1, 'slider should dispatch when the minute actually changes');
+  t.ok(onDateTimeChange.lastCall.args[0].timestamp, 'updated timestamp should be set');
+
+  t.end();
+});
+
+test('Components -> EffectTimeConfigurator -> slider drag ignores time picker echo', t => {
+  const store = mockStore(ititialState);
+  const onDateTimeChange = sinon.spy();
+  const quantizedTimestamp = Date.UTC(2023, 6, 25, 16, 46, 0, 0);
+  const props = {
+    timestamp: quantizedTimestamp,
+    timezone: 'UTC',
+    timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick,
+    onChange: onDateTimeChange
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <EffectTimeConfigurator {...props} />
+        </Provider>
+      </IntlWrapper>
+    );
+  }, `EffectTimeConfigurator should not fail`);
+
+  const sliderOnChange = wrapper.find('RangeSlider').at(0).props().onChange;
+  sliderOnChange([0, (17 * 60 + 0) / (24 * 60)]);
+  t.equal(onDateTimeChange.callCount, 1, 'slider should dispatch once');
+
+  // TimePicker can echo a 12-hour string when its controlled value is rewritten
+  // from the store. That echo must not dispatch while the pointer is down.
+  wrapper.update();
+  const timePickerOnChange = wrapper.find('TimePicker').at(0).props().onChange;
+  timePickerOnChange('04:00');
+  t.equal(onDateTimeChange.callCount, 1, 'time picker echo during slider drag should be ignored');
+
+  document.dispatchEvent(new Event('mouseup'));
+  wrapper.update();
+  timePickerOnChange('18:00');
+  t.equal(onDateTimeChange.callCount, 2, 'time picker should work after drag ends');
+
+  t.end();
+});
