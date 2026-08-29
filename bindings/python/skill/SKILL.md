@@ -10,10 +10,10 @@ Use the `keplergl` Python package to create standalone, interactive HTML map fil
 ## Installation
 
 ```bash
-pip install keplergl
+pip install keplergl==0.4.0rc4
 ```
 
-Requires `keplergl >= 0.4.0`. Earlier versions use a different widget/serialization API and the examples in this skill will not work. Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are installed automatically.
+The 0.3.x releases on PyPI use a different widget/serialization API and the examples in this skill will not work with them — install the 0.4.0 release line shown above (or newer: `pip install --pre "keplergl>=0.4.0"`). Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are installed automatically.
 
 ## Instructions
 
