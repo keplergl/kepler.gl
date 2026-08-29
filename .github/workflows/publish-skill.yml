@@ -3,10 +3,10 @@ name: Publish kepler.gl Skill
 on:
   push:
     paths:
-      - 'skill/SKILL.md'
-      - 'skill/skill-references/**'
-      - 'skill/agents/**'
-      - 'skill/plugin.json'
+      - 'bindings/python/skill/SKILL.md'
+      - 'bindings/python/skill/skill-references/**'
+      - 'bindings/python/skill/agents/**'
+      - 'bindings/python/skill/plugin.json'
     tags:
       - 'skill-v*'
   workflow_dispatch:
@@ -23,7 +23,7 @@ jobs:
       - name: Read skill version
         id: version
         run: |
-          VERSION=$(python3 -c "import json; print(json.load(open('skill/plugin.json'))['version'])")
+          VERSION=$(python3 -c "import json; print(json.load(open('bindings/python/skill/plugin.json'))['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Build Claude skill package
@@ -32,8 +32,8 @@ jobs:
           SKILL_DIR="$STAGING/kepler.gl"
           mkdir -p "$SKILL_DIR"
 
-          cp skill/SKILL.md "$SKILL_DIR/SKILL.md"
-          cp -r skill/skill-references "$SKILL_DIR/skill-references"
+          cp bindings/python/skill/SKILL.md "$SKILL_DIR/SKILL.md"
+          cp -r bindings/python/skill/skill-references "$SKILL_DIR/skill-references"
 
           (cd "$STAGING" && zip -r "$OLDPWD/kepler.gl-claude.zip" kepler.gl)
           rm -rf "$STAGING"
@@ -44,9 +44,9 @@ jobs:
           SKILL_DIR="$STAGING/kepler.gl"
           mkdir -p "$SKILL_DIR"
 
-          cp skill/SKILL.md "$SKILL_DIR/SKILL.md"
-          cp -r skill/skill-references "$SKILL_DIR/skill-references"
-          cp -r skill/agents "$SKILL_DIR/agents"
+          cp bindings/python/skill/SKILL.md "$SKILL_DIR/SKILL.md"
+          cp -r bindings/python/skill/skill-references "$SKILL_DIR/skill-references"
+          cp -r bindings/python/skill/agents "$SKILL_DIR/agents"
 
           (cd "$STAGING" && zip -r "$OLDPWD/kepler.gl-codex.zip" kepler.gl)
           rm -rf "$STAGING"
@@ -65,7 +65,7 @@ jobs:
 
       - name: Build source package
         run: |
-          zip -r kepler.gl-skill-source.zip skill/
+          cd bindings/python && zip -r "$OLDPWD/kepler.gl-skill-source.zip" skill/
 
       - name: Attach packages to release
         if: startsWith(github.ref, 'refs/tags/skill-v')
