@@ -26,6 +26,7 @@
     "./src/deckgl-arrow-layers",
     "./src/table",
     "./src/layers",
+    "./src/mcp",
     "./src/schemas",
     "./src/cloud-providers",
     "./src/processors",

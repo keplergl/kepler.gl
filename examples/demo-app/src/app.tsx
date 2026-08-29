@@ -12,6 +12,7 @@ import {useParams, useSearchParams, useLocation} from 'react-router-dom';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {setMapBoundary} from '@openassistant/kepler-assistant';
 import {AiAssistantPanel} from '@openassistant/kepler-assistant';
+import {KeplerMcpBridge} from './kepler-mcp-bridge';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -945,6 +946,7 @@ const App = props => {
                 </>
               )}
             </PanelGroup>
+            <KeplerMcpBridge reduxStore={reduxStore} />
           </div>
         </GlobalStyle>
       </ThemeProvider>

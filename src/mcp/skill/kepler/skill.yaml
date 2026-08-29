@@ -1,0 +1,4 @@
+id: kepler
+version: 0.2.0
+name: Kepler map management
+description: Create and configure kepler.gl map layers (point, arc, line, grid, hexagon, geojson, cluster, heatmap, h3, trip, s2) from datasets, animate them over time, compare them side by side, change the basemap, update layer colors, load data from a URL, add columns to existing datasets, and read the current map boundary.

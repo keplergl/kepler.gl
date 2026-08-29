@@ -50,6 +50,7 @@ const KEPLER_SRC_ALIASES = Object.fromEntries(
     'duckdb',
     'layers',
     'localization',
+    'mcp',
     'processors',
     'reducers',
     'schemas',
