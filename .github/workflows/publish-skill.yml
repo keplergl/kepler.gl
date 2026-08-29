@@ -3,10 +3,7 @@ name: Publish kepler.gl Skill
 on:
   push:
     paths:
-      - 'bindings/python/skill/SKILL.md'
-      - 'bindings/python/skill/skill-references/**'
-      - 'bindings/python/skill/agents/**'
-      - 'bindings/python/skill/plugin.json'
+      - 'bindings/python/skill/**'
     tags:
       - 'skill-v*'
   workflow_dispatch:
