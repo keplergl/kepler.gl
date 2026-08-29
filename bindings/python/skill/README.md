@@ -10,6 +10,7 @@ This directory contains the **kepler.gl** agent skill — a set of instructions 
 | [geojson-polygon-map.md](skill-references/geojson-polygon-map.md) | Polygons & lines from GeoJSON / GeoDataFrame |
 | [h3-hexagon-map.md](skill-references/h3-hexagon-map.md) | H3 spatial index hexagons |
 | [arc-line-map.md](skill-references/arc-line-map.md) | Origin–destination arcs & lines |
+| [flow-layer.md](skill-references/flow-layer.md) | Aggregated O–D flow maps (clustering, magnitude, location totals) |
 | [heatmap.md](skill-references/heatmap.md) | Density heatmap from points |
 | [hexbin-aggregation-map.md](skill-references/hexbin-aggregation-map.md) | Spatial binning into hexagons |
 | [trip-animation-map.md](skill-references/trip-animation-map.md) | Animated trips along paths |

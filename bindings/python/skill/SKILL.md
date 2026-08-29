@@ -66,6 +66,7 @@ Read or set the map configuration dict. Use `map.config` after customizing in Ju
 ## Key Rules
 
 - **`dataId` must match the dataset `name`** — every layer and filter references a dataset by `dataId`; this must match the key in the `data` dict or the `name` passed to `add_data()`.
+- **The `flow` layer is never auto-created** — for aggregated O-D flow maps (migration, commute, trade), always pass an explicit layer config with `'type': 'flow'`; without one kepler.gl falls back to an `arc` layer. See [Flow Layer](skill-references/flow-layer.md).
 - **GeoJSON columns use `_geojson`** — when data is loaded as GeoJSON, the geometry column is internally named `_geojson` in configs.
 - **`colorField` / `colorScale` / `sizeField` / `heightField` etc. belong under `visualChannels`, NOT under `config`.** Putting them under `config` is silently ignored — the layer will render but the "Color Based On (field)" input shows empty. The layer object must have two siblings: `config` (for `dataId`, `columns`, `visConfig`, …) and `visualChannels` (for all field-to-channel mappings).
 - Columns named `latitude`/`lat`/`lng`/`longitude` are auto-detected as coordinates.
@@ -93,6 +94,7 @@ Read or set the map configuration dict. Use `map.config` after customizing in Ju
 |------------|---------------|--------------|
 | Point | `"point"` | DataFrame with lat/lng columns |
 | Arc | `"arc"` | DataFrame with origin/destination lat/lng |
+| Flow | `"flow"` | DataFrame with origin/destination lat/lng or H3 — **requires explicit config, never auto-created** |
 | Line | `"line"` | DataFrame with origin/destination lat/lng |
 | Hexbin | `"hexagon"` | DataFrame with lat/lng (aggregated spatially) |
 | Heatmap | `"heatmap"` | DataFrame with lat/lng |
@@ -146,6 +148,7 @@ For detailed per-layer-type examples with full config, see supporting files:
 - [GeoJSON / Polygon Map](skill-references/geojson-polygon-map.md) — Polygons, lines from GeoJSON or GeoDataFrame
 - [H3 Hexagon Map](skill-references/h3-hexagon-map.md) — H3 spatial index hexagons
 - [Arc / Line Map](skill-references/arc-line-map.md) — Origin-destination connections
+- [Flow Layer](skill-references/flow-layer.md) — Aggregated O-D flow maps with clustering, magnitude-proportional lines and location totals
 - [Heatmap](skill-references/heatmap.md) — Density heatmap from points
 - [Hexbin Aggregation Map](skill-references/hexbin-aggregation-map.md) — Spatial binning into hexagons
 - [Trip Animation Map](skill-references/trip-animation-map.md) — Animated trips along paths
