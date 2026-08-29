@@ -21,7 +21,7 @@ function makeFakeCellLayerClass() {
     // deck.gl ColumnLayer recreates fillModel on extensionsChanged and does not
     // copy over the colorRange texture binding. GridCellLayer / HexagonCellLayer
     // only bind that texture when the colorRange *prop* changes.
-    updateState() {
+    updateState(_params?: unknown) {
       this.state.fillModel = {shaderInputs: {setProps: jest.fn()}};
     }
 

@@ -159,7 +159,7 @@ type LayerConstructor = {new (...args: any[]): any; layerName?: string};
  * Re-bind the existing texture onto whatever fillModel is current. Harmless
  * when the parent already bound it; required after a model rebuild.
  */
-function bindColorRangeTexture(layer: {state?: any}, moduleName: string): void {
+function bindColorRangeTexture(layer: any, moduleName: string): void {
   const model = layer.state?.fillModel;
   const colorTexture = layer.state?.colorTexture;
   if (model?.shaderInputs && colorTexture) {
