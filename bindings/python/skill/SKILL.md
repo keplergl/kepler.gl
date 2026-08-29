@@ -105,6 +105,17 @@ Read or set the map configuration dict. Use `map.config` after customizing in Ju
 | Trip | `"trip"` | GeoJSON with LineString + timestamps |
 | S2 | `"s2"` | DataFrame with S2 token column |
 
+## Picking a Layer Type
+
+The layer `'type'` you put in the config is the only thing that determines what renders — describing a "flow map" in text does nothing.
+
+- Individual locations → `point` (`cluster` for zoomed-out density, `heatmap` for continuous intensity).
+- Density binned into cells → `hexagon`/`hexagonId` (H3) or `grid`; pre-aggregated H3 → `hexagonId`.
+- **Origin→destination requests → default to `flow`.** Any wording like "flow map", "flows", "movement between", or migration / commute / trade / supply-chain / flights-between data ⇒ `flow` — it renders fine even for a handful of pairs. Choose `arc` ONLY when the user explicitly asks for plain, unaggregated point-to-point arcs ("draw an arc from A to B", "connect each pair", "no clustering"). Do not substitute a `geojson`/`line` layer for an O-D request just because a geometry column is present.
+- Polylines / polygons → `geojson` (or `line` for straight segments).
+- Time-animated movement → `trip`.
+- Before finalizing, re-check that each layer's configured `'type'` matches what you told the user — saying "flow map" while the config says `'type': 'arc'` is the classic mismatch.
+
 ## Config Structure
 
 ```python

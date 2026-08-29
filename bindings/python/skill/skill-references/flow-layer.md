@@ -18,6 +18,15 @@ supply-chain, or any O-D dataset.
 
 ## When to use `flow` vs `arc`
 
+**O-D requests default to `flow`.** If the user asks for a "flow map", flows,
+"movement between", or names an O-D domain (migration, commute, trade,
+supply chain, shipments, flights between airports), build a `flow` layer —
+it renders fine even for a handful of pairs. Choose `arc` ONLY when the user
+explicitly asks for plain, unaggregated arcs ("draw a line/arc from A to
+B", "connect each pair", "no clustering"). Never substitute a
+`geojson`/`line` layer for an O-D request just because the data has a
+geometry column.
+
 | Property                     | `flow`                  | `arc`                |
 | ---------------------------- | ----------------------- | -------------------- |
 | Aggregates / clusters O-D    | yes                     | no                   |
@@ -198,6 +207,12 @@ FlowLayer has **no `colorField`/`colorScale` visual channel** — like
 For a magnitude palette, pass a full `colorRange` object with explicit
 `name`, `type`, `category` and `colors` (as in the worked example) — the
 layer maps flow magnitude across that range automatically.
+
+Suggested sequential palettes (dark → light reversed for magnitude maps):
+
+- YlGn (sequential green): `#ffffcc #c2e699 #78c679 #31a354 #006837 #004529`
+- OrRd (sequential red): `#fee5d9 #fcae91 #fb6a4a #de2d26 #a50f15`
+- YlGnBu (sequential blue): `#ffffcc #a1dab4 #41b6c4 #2c7fb8 #253494`
 
 ## visConfig knobs
 
