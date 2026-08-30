@@ -16,43 +16,34 @@ const DEFAULT_LIGHTING_EFFECT = new LightingEffect();
  * Exposes private members of LightingEffect that we need to access.
  * These are runtime-accessible but TypeScript marks them as private.
  */
-type ShadowPassLike = {
-  delete(): void;
-  render(params: Record<string, unknown>): void;
-  getLayerParameters: (
-    layer: {props?: {parameters?: Record<string, unknown>}},
-    layerIndex: number,
-    viewport: unknown
-  ) => Record<string, unknown>;
-};
-
 interface LightingEffectPrivate {
   shadow: boolean;
-  shadowPasses: ShadowPassLike[];
+  shadowPasses: {
+    delete(): void;
+    render(params: Record<string, unknown>): void;
+    getLayerParameters: (
+      layer: unknown,
+      layerIndex: number,
+      viewport: unknown
+    ) => Record<string, unknown>;
+  }[];
   dummyShadowMap: Texture | null;
   _createShadowPasses(device: unknown): void;
 }
 
-// deck.gl's ShadowPass sets depthWriteEnabled/depthCompare, but Kepler's WebGL
-// path applies parameters via withParametersWebGL, which only honors GL-style
-// depthTest/depthMask. Layers that set depthMask: false for 2D stacking then
-// fail to write the shadow map, so shadows appear or vanish depending on order.
-//
-// polygonOffset is applied per layerIndex (later layers pulled toward the camera).
-// In the shadow pass the camera is the sun, so a ground plane drawn after buildings
-// is biased closer than building walls and overwrites them. Roofs stay closer, so
-// shadows on the plane look correct while buildings stop receiving shadows.
+// WebGL applies GL-style depthTest/depthMask; deck.gl's ShadowPass only sets
+// depthWriteEnabled. Disable polygonOffset so a later ground plane is not
+// pulled toward the sun and cannot overwrite building walls in the shadow map.
 const SHADOW_PASS_DEPTH_PARAMETERS = {
-  blend: false,
   depthTest: true,
   depthMask: true,
-  depthWriteEnabled: true,
-  depthCompare: 'less-equal',
   polygonOffsetFill: false,
   polygonOffset: [0, 0]
 };
 
-export function patchShadowPassDepth(pass: ShadowPassLike) {
+export function patchShadowPassDepth(pass: {
+  getLayerParameters: (...args: unknown[]) => Record<string, unknown>;
+}) {
   const originalGetLayerParameters = pass.getLayerParameters.bind(pass);
   pass.getLayerParameters = (layer, layerIndex, viewport) => ({
     ...originalGetLayerParameters(layer, layerIndex, viewport),

@@ -16,11 +16,8 @@ describe('patchShadowPassDepth', () => {
     patchShadowPassDepth(pass as Parameters<typeof patchShadowPassDepth>[0]);
 
     expect(pass.getLayerParameters({} as any, 0, null)).toMatchObject({
-      blend: false,
       depthTest: true,
       depthMask: true,
-      depthWriteEnabled: true,
-      depthCompare: 'less-equal',
       polygonOffsetFill: false,
       polygonOffset: [0, 0]
     });
