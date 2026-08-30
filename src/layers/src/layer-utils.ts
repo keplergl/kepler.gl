@@ -21,6 +21,7 @@ import {getBinaryGeometriesFromArrow, BinaryGeometriesFromArrowOptions} from '@l
 import {updateBoundsFromGeoArrowSamples} from '@loaders.gl/geoarrow';
 import {convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
 
+import {parseSync} from '@loaders.gl/core';
 import {WKBLoader} from '@loaders.gl/wkt';
 import {geojsonToBinary} from '@loaders.gl/gis';
 import {
@@ -112,7 +113,7 @@ function getBinaryGeometriesFromWKBArrow(
       if (chunk.valueOffsets[i + 1] - chunk.valueOffsets[i] > 0) {
         const valuesSlice = chunk.values.slice(chunk.valueOffsets[i], chunk.valueOffsets[i + 1]);
 
-        const geometry = WKBLoader?.parseSync?.(valuesSlice.buffer, {
+        const geometry = parseSync(valuesSlice.buffer, WKBLoader, {
           wkb: {shape: 'geojson-geometry'}
         }) as Geometry;
         const feature: Feature = {

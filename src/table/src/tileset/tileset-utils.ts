@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {parse} from '@loaders.gl/core';
 import {TileJSONLoader, TileJSON} from '@loaders.gl/mvt';
 
 /**
@@ -26,7 +27,7 @@ export async function getMVTMetadata(metadataURL: string | null): Promise<TileJS
     return null;
   }
   const tileJSON = await response.text();
-  const metadata = TileJSONLoader.parseTextSync?.(tileJSON) || null;
+  const metadata = (await parse(tileJSON, TileJSONLoader)) || null;
 
   const rawMetadata = JSON.parse(tileJSON);
   if (rawMetadata?.attribution) {
