@@ -295,8 +295,12 @@ export default function EffectTimeConfiguratorFactory(
       value => {
         isSliderDraggingRef.current = true;
         setSliderDragProgress(value[1]);
-        const hours = clamp([0, 23], Math.floor(value[1] * 24));
-        const minutes = clamp([0, 59], Math.floor((value[1] * 24 - hours) * 60));
+        // Round to the nearest minute. Flooring (value * 24) then (fraction * 60)
+        // can drop a minute to floating point (e.g. 16:46 → 16:45) and dispatch
+        // a false change when the handle is already on the current time.
+        const totalMinutes = clamp([0, 24 * 60 - 1], Math.round(value[1] * 24 * 60));
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
 
         const newFormattedTime = `${hours < 10 ? `0${hours}` : hours}:${
           minutes < 10 ? `0${minutes}` : minutes

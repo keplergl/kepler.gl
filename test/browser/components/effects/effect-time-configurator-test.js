@@ -380,7 +380,9 @@ test('Components -> EffectTimeConfigurator -> slider drag ignores time picker ec
   timePickerOnChange('04:00');
   t.equal(onDateTimeChange.callCount, 1, 'time picker echo during slider drag should be ignored');
 
-  document.dispatchEvent(new Event('mouseup'));
+  // jsdom's dispatchEvent rejects Node's Event; use the window constructor.
+  const MouseUpEvent = window.MouseEvent || window.Event;
+  document.dispatchEvent(new MouseUpEvent('mouseup'));
   wrapper.update();
   timePickerOnChange('18:00');
   t.equal(onDateTimeChange.callCount, 2, 'time picker should work after drag ends');
