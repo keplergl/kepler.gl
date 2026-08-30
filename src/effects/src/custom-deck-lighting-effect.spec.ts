@@ -18,7 +18,7 @@ describe('alignExportShadowPass', () => {
     };
     const shadowPass = {
       device: {gl, canvasContext},
-      render: jest.fn(() => ({
+      render: jest.fn((_params?: unknown) => ({
         size: canvasContext.getDrawingBufferSize(),
         ratio: canvasContext.cssToDeviceRatio()
       }))
