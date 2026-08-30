@@ -128,6 +128,26 @@ function createCustomShadowModule(): ShaderModule | null {
 
 const CustomShadowModule = createCustomShadowModule();
 
+// deck.gl picking injects at order 99 and blends highlightColor over the
+// fragment. In the shadow pass that overwrites encoded depth, so a hovered
+// extruded feature stops casting a shadow. Re-encode after picking.
+// Color-pass highlight compositing is unchanged (shadow still runs first).
+const PICKING_FILTER_COLOR_ORDER = 99;
+
+export const shadowMapHoverFixModule = {
+  name: 'shadow-map-hover-fix',
+  inject: {
+    'fs:DECKGL_FILTER_COLOR': {
+      order: PICKING_FILTER_COLOR_ORDER + 1,
+      injection: `
+  if (shadow.drawShadowMap) {
+    color = shadow_filterShadowColor(color);
+  }
+      `
+    }
+  }
+} as unknown as ShaderModule;
+
 /**
  * Detect layers that use the PBR shader module (3D tile sublayers:
  * ScenegraphLayer sets `_lighting: 'pbr'`, SimpleMeshLayer sets `pbrMaterial`).
@@ -143,6 +163,8 @@ function isPbrLayer(layer: any): boolean {
  * - A patched shadow module with `outputUniformShadow` for uniform shadow
  *   during nighttime (avoids partial shadows from below).
  * - Simple phong replacement for PBR layers (avoids microfacet specular).
+ * - Shadow-map depth re-encoded after picking highlight so hovered extruded
+ *   features still cast shadows.
  * - getShaderModuleProps override that always provides dummyShadowMap
  *   to prevent "Bad texture binding" errors when shadows are disabled.
  */
@@ -166,6 +188,7 @@ class CustomDeckLightingEffect extends LightingEffect {
     if (this._private.shadow && !this._private.dummyShadowMap) {
       this._private._createShadowPasses(device);
       deck._addDefaultShaderModule(CustomShadowModule || shadow);
+      deck._addDefaultShaderModule(shadowMapHoverFixModule);
       this._private.dummyShadowMap = device.createTexture({width: 1, height: 1});
     }
   }
@@ -198,6 +221,7 @@ class CustomDeckLightingEffect extends LightingEffect {
       this._private.dummyShadowMap.destroy();
       this._private.dummyShadowMap = null;
       context.deck._removeDefaultShaderModule(CustomShadowModule || shadow);
+      context.deck._removeDefaultShaderModule(shadowMapHoverFixModule);
     }
   }
 
