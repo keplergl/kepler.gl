@@ -344,6 +344,7 @@ test('Components -> EffectTimeConfigurator -> day time slider does not echo same
   t.equal(onDateTimeChange.callCount, 1, 'slider should dispatch when the minute actually changes');
   t.ok(onDateTimeChange.lastCall.args[0].timestamp, 'updated timestamp should be set');
 
+  wrapper.unmount();
   t.end();
 });
 
@@ -387,5 +388,6 @@ test('Components -> EffectTimeConfigurator -> slider drag ignores time picker ec
   timePickerOnChange('18:00');
   t.equal(onDateTimeChange.callCount, 2, 'time picker should work after drag ends');
 
+  wrapper.unmount();
   t.end();
 });
