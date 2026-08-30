@@ -28,12 +28,16 @@ describe('alignExportShadowPass', () => {
 
   test('sizes the shadow pass to the live GL buffer during export, then restores', () => {
     const {shadowPass, canvasContext, gl} = createShadowPass();
+    const originalSize = canvasContext.getDrawingBufferSize;
+    const originalRatio = canvasContext.cssToDeviceRatio;
     alignExportShadowPass(shadowPass, () => true);
 
     expect(shadowPass.render({viewports: [{width: 540}]})).toEqual({
       size: [1920, 1080],
       ratio: 1920 / 540
     });
+    expect(canvasContext.getDrawingBufferSize).toBe(originalSize);
+    expect(canvasContext.cssToDeviceRatio).toBe(originalRatio);
     expect(canvasContext.getDrawingBufferSize()).toEqual([1080, 608]);
     expect(canvasContext.cssToDeviceRatio()).toBe(2);
     expect(gl.depthRange.mock.calls).toEqual([

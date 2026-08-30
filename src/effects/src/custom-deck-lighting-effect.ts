@@ -51,8 +51,8 @@ export function alignExportShadowPass(shadowPass: any, isExportMode: () => boole
       return render(params);
     }
 
-    const prevSize = canvasContext.getDrawingBufferSize.bind(canvasContext);
-    const prevRatio = canvasContext.cssToDeviceRatio.bind(canvasContext);
+    const prevSize = canvasContext.getDrawingBufferSize;
+    const prevRatio = canvasContext.cssToDeviceRatio;
     const prevDepth = gl.getParameter?.(gl.DEPTH_RANGE ?? 0x0b70);
     canvasContext.getDrawingBufferSize = () => [width, height];
     canvasContext.cssToDeviceRatio = () => width / viewport.width;
