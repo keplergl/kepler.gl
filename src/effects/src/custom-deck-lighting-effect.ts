@@ -32,6 +32,42 @@ interface CustomShadowProps {
 }
 
 /**
+ * Video export shares MapLibre's canvas. Luma's cssToDeviceRatio() can lag that
+ * bitmap, so ShadowPass draws into a corner of its FBO and the rest samples as
+ * fully shadowed. For the shadow pass only, read the live GL buffer; restore
+ * afterward so the color pass / basemap stay aligned.
+ */
+export function alignExportShadowPass(shadowPass: any, isExportMode: () => boolean): void {
+  const render = shadowPass.render.bind(shadowPass);
+  shadowPass.render = params => {
+    if (!isExportMode()) return render(params);
+
+    const gl = shadowPass.device?.gl;
+    const canvasContext = shadowPass.device?.canvasContext;
+    const viewport = params?.viewports?.[0];
+    const width = gl?.drawingBufferWidth;
+    const height = gl?.drawingBufferHeight;
+    if (!gl || !canvasContext || !viewport?.width || !width || !height) {
+      return render(params);
+    }
+
+    const prevSize = canvasContext.getDrawingBufferSize;
+    const prevRatio = canvasContext.cssToDeviceRatio;
+    const prevDepth = gl.getParameter?.(gl.DEPTH_RANGE ?? 0x0b70);
+    canvasContext.getDrawingBufferSize = () => [width, height];
+    canvasContext.cssToDeviceRatio = () => width / viewport.width;
+    gl.depthRange?.(0, 1);
+    try {
+      return render(params);
+    } finally {
+      canvasContext.getDrawingBufferSize = prevSize;
+      canvasContext.cssToDeviceRatio = prevRatio;
+      if (prevDepth) gl.depthRange?.(prevDepth[0], prevDepth[1]);
+    }
+  };
+}
+
+/**
  * Insert text before a target string in shader source.
  */
 function insertBefore(source: string, target: string, textToInsert: string): string {
@@ -165,6 +201,9 @@ class CustomDeckLightingEffect extends LightingEffect {
     const {device, deck} = context;
     if (this._private.shadow && !this._private.dummyShadowMap) {
       this._private._createShadowPasses(device);
+      for (const shadowPass of this._private.shadowPasses) {
+        alignExportShadowPass(shadowPass, () => this.isExportMode);
+      }
       deck._addDefaultShaderModule(CustomShadowModule || shadow);
       this._private.dummyShadowMap = device.createTexture({width: 1, height: 1});
     }
