@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
+import {useSelector} from 'react-redux';
 import {injectIntl, IntlShape} from 'react-intl';
 import styled from 'styled-components';
 import moment from 'moment-timezone';
 import SunCalc from 'suncalc';
 
-import {MapState} from '@kepler.gl/types';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {clamp} from '@kepler.gl/utils';
 import {
@@ -15,9 +15,8 @@ import {
   LightAndShadowEffectTimeMode,
   DEFAULT_TIMEZONE
 } from '@kepler.gl/constants';
-import {mapStateLens} from '@kepler.gl/reducers';
 
-import {withState} from '../injector';
+import KeplerGlContext from '../context';
 import {StyledDatePicker as DatePicker, Tooltip} from '../common/styled-components';
 import Checkbox from '../common/checkbox';
 import Button from '../common/data-table/button';
@@ -174,6 +173,26 @@ const getDayRatio = (date: moment.Moment) => {
   return ((date.hours() * 60 + date.minutes()) * 60 * 1000) / DAY_MILISECONDS;
 };
 
+/**
+ * Normalize TimePicker output (HH:mm, h:mm a, or Date) to HH:mm.
+ * react-time-picker with format "hh:mm a" can echo a 12-hour string when its
+ * controlled value is rewritten, which would otherwise parse as a different UTC time.
+ */
+const normalizeTimeInput = (newTime: unknown): string | null => {
+  if (newTime instanceof Date && Number.isFinite(newTime.getTime())) {
+    return moment(newTime).format('HH:mm');
+  }
+  if (typeof newTime !== 'string' || !newTime) {
+    return null;
+  }
+  const trimmed = newTime.trim();
+  if (/^\d{2}:\d{2}/.test(trimmed)) {
+    return trimmed.slice(0, 5);
+  }
+  const parsed = moment(trimmed, ['HH:mm', 'H:mm', 'hh:mm A', 'h:mm A', 'hh:mm a', 'h:mm a'], true);
+  return parsed.isValid() ? parsed.format('HH:mm') : null;
+};
+
 EffectTimeConfiguratorFactory.deps = [
   TimezoneSelectorFactory,
   EffectTimeSliderFactory,
@@ -190,39 +209,62 @@ export default function EffectTimeConfiguratorFactory(
     timezone: _timezone,
     timeMode,
     onChange: onTimeParametersChanged,
-    mapState,
     intl
-  }: EffectTimeConfiguratorProps & {intl: IntlShape; mapState: MapState}) => {
+  }: EffectTimeConfiguratorProps & {intl: IntlShape}) => {
+    // Subscribe only to lat/lon. Connecting this panel to the full store (via
+    // withState) re-rendered it on every effect timestamp tick while dragging
+    // the day-time slider, and react-redux nested connect layout effects then
+    // hit "Maximum update depth exceeded".
+    const {selector} = useContext(KeplerGlContext);
+    const latitude = useSelector(state => selector(state)?.mapState?.latitude ?? 0);
+    const longitude = useSelector(state => selector(state)?.mapState?.longitude ?? 0);
+
     const timezone = useMemo(() => {
       return moment.tz.names().includes(_timezone) ? _timezone : DEFAULT_TIMEZONE;
     }, [_timezone]);
 
-    const [datePickerDate, fullDate, formattedTime, formattedDate, dayTimeProgress] =
-      useMemo(() => {
-        // Guard against an invalid stored timestamp so we never build an
-        // "Invalid Date" for the date picker (react-date-picker throws on it).
-        const safeTimestamp = Number.isFinite(timestamp) ? timestamp : Date.now();
-        const currentMoment = moment.tz(safeTimestamp, timezone);
+    const {fullDate, formattedTime, formattedDate, dayTimeProgress} = useMemo(() => {
+      // Guard against an invalid stored timestamp so we never build an
+      // "Invalid Date" for the date picker (react-date-picker throws on it).
+      const safeTimestamp = Number.isFinite(timestamp) ? timestamp : Date.now();
+      const currentMoment = moment.tz(safeTimestamp, timezone);
 
-        // Slider value from 0 to 1
-        const dayProgress = getDayRatio(currentMoment);
+      return {
+        fullDate: currentMoment.toDate(),
+        formattedTime: currentMoment.format('HH:mm'),
+        formattedDate: currentMoment.format('YYYY-MM-DD'),
+        dayTimeProgress: getDayRatio(currentMoment)
+      };
+    }, [timestamp, timezone]);
 
-        // Date picker always renders Date in local timezone
-        const date = new Date();
-        date.setFullYear(currentMoment.year(), currentMoment.month(), currentMoment.date());
-        date.setHours(0, 0, 0, 0);
+    // Only allocate a new Date when the calendar day changes. A new object on
+    // every timestamp tick makes react-date-picker fire onChange while dragging.
+    const datePickerDate = useMemo(() => {
+      const [year, month, day] = formattedDate.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }, [formattedDate]);
 
-        return [
-          date,
-          currentMoment.toDate(),
-          currentMoment.format('HH:mm'),
-          currentMoment.format('YYYY-MM-DD'),
-          dayProgress
-        ];
-      }, [timestamp, timezone]);
+    // Keep the slider on the pointer while dragging so Redux minute-quantization
+    // cannot snap it (and so date/time widgets cannot echo onChange mid-gesture).
+    const [sliderDragProgress, setSliderDragProgress] = useState<number | null>(null);
+    const isSliderDraggingRef = useRef(false);
+
+    const endSliderDrag = useCallback(() => {
+      isSliderDraggingRef.current = false;
+      setSliderDragProgress(null);
+    }, []);
+
+    useEffect(() => {
+      document.addEventListener('mouseup', endSliderDrag);
+      document.addEventListener('touchend', endSliderDrag);
+      return () => {
+        document.removeEventListener('mouseup', endSliderDrag);
+        document.removeEventListener('touchend', endSliderDrag);
+      };
+    }, [endSliderDrag]);
 
     const timeSliderConfig = useMemo(() => {
-      const times = SunCalc.getTimes(fullDate, mapState.latitude, mapState.longitude);
+      const times = SunCalc.getTimes(fullDate, latitude, longitude);
       const {dawn, sunrise, sunset, dusk} = times;
 
       return {
@@ -233,41 +275,60 @@ export default function EffectTimeConfiguratorFactory(
         sunriseTime: moment.tz(sunrise.valueOf(), timezone).format('hh:mm A'),
         sunsetTime: moment.tz(sunset.valueOf(), timezone).format('hh:mm A')
       };
-    }, [fullDate, timezone, mapState.latitude, mapState.longitude]);
+    }, [fullDate, timezone, latitude, longitude]);
+
+    // Date/time widgets (and the slider itself) can echo onChange when their
+    // controlled value is rewritten from the store. Skip no-op timestamp
+    // updates so those echoes cannot dispatch in a loop.
+    const timestampRef = useRef(timestamp);
+    timestampRef.current = timestamp;
+
+    const commitTimestamp = useCallback(
+      (newTimestamp: number | null | undefined) => {
+        if (newTimestamp == null || newTimestamp === timestampRef.current) return;
+        onTimeParametersChanged({timestamp: newTimestamp});
+      },
+      [onTimeParametersChanged]
+    );
 
     const onTimeSliderChange = useCallback(
       value => {
-        const hours = clamp([0, 23], Math.floor(value[1] * 24));
-        const minutes = clamp([0, 59], Math.floor((value[1] * 24 - hours) * 60));
+        isSliderDraggingRef.current = true;
+        setSliderDragProgress(value[1]);
+        // Round to the nearest minute. Flooring (value * 24) then (fraction * 60)
+        // can drop a minute to floating point (e.g. 16:46 → 16:45) and dispatch
+        // a false change when the handle is already on the current time.
+        const totalMinutes = clamp([0, 24 * 60 - 1], Math.round(value[1] * 24 * 60));
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
 
         const newFormattedTime = `${hours < 10 ? `0${hours}` : hours}:${
           minutes < 10 ? `0${minutes}` : minutes
         }`;
-        const newTimestamp = getTimestamp(formattedDate, newFormattedTime, timezone);
-        onTimeParametersChanged({timestamp: newTimestamp});
+        commitTimestamp(getTimestamp(formattedDate, newFormattedTime, timezone));
       },
-      [formattedDate, timezone, onTimeParametersChanged]
+      [formattedDate, timezone, commitTimestamp]
     );
 
     const setDate = useCallback(
       newDate => {
-        if (!newDate) return;
+        if (isSliderDraggingRef.current || !newDate) return;
 
         const newFormattedDate = moment(newDate).format('YYYY-MM-DD');
-        const newTimestamp = getTimestamp(newFormattedDate, formattedTime, timezone);
-        onTimeParametersChanged({timestamp: newTimestamp});
+        commitTimestamp(getTimestamp(newFormattedDate, formattedTime, timezone));
       },
-      [formattedTime, timezone, onTimeParametersChanged]
+      [formattedTime, timezone, commitTimestamp]
     );
 
     const setTime = useCallback(
       newTime => {
-        if (!newTime) return;
+        if (isSliderDraggingRef.current || !newTime) return;
 
-        const newTimestamp = getTimestamp(formattedDate, newTime, timezone);
-        onTimeParametersChanged({timestamp: newTimestamp});
+        const timeStr = normalizeTimeInput(newTime);
+        if (!timeStr) return;
+        commitTimestamp(getTimestamp(formattedDate, timeStr, timezone));
       },
-      [formattedDate, timezone, onTimeParametersChanged]
+      [formattedDate, timezone, commitTimestamp]
     );
 
     const setTimezone = useCallback(
@@ -309,7 +370,7 @@ export default function EffectTimeConfiguratorFactory(
 
         <SliderWrapper hidden={disableDateTimePick}>
           <EffectTimeSlider
-            value={dayTimeProgress}
+            value={sliderDragProgress ?? dayTimeProgress}
             onChange={onTimeSliderChange}
             config={timeSliderConfig}
           />
@@ -397,6 +458,5 @@ export default function EffectTimeConfiguratorFactory(
     );
   };
 
-  // @ts-expect-error how to properly type?
-  return withState([mapStateLens])(injectIntl(EffectTimeConfigurator));
+  return injectIntl(EffectTimeConfigurator);
 }
