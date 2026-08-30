@@ -13,6 +13,22 @@ This is the src code of kepler.gl demo app. You can copy this folder out and run
 > in-browser map. See [`docs/NEXT_PLAN.md`](docs/NEXT_PLAN.md) for the permanent
 > separation back into a kepler.gl `src/mcp/` module.
 
+#### Agent surfaces
+
+The demo exposes the same DuckDB-free `map.*` command catalog through two
+transports (`kepler-mcp-shared.ts` holds the common glue):
+
+- **`kepler-mcp-bridge.tsx`** — WebSocket reverse-connect to a local
+  kepler-mcp-demo process (opt-in via `?mcp=<token>` or the bottom-left chip).
+- **`kepler-webmcp.tsx`** — native [WebMCP](https://webmachinelearning.github.io/webmcp/)
+  registration on `document.modelContext` (fallback `navigator.modelContext`),
+  for harnesses with a built-in browser (Chrome's agent, Claude Desktop's
+  browser, ...). Needs Chrome 149+ with the WebMCP origin trial or
+  `chrome://flags/#enable-webmcp-testing`; the chip is hidden when the API is
+  not available. Tool names fold `map.load-data` → `map_load_data` (dots are
+  common MCP-tool-name poison); the original command id is kept in the
+  description and every result string.
+
 #### Pre requirement
 - [Node.js ^20.x](http://nodejs.org): We use Node to generate the documentation, run a
   development web server, run tests, and generate distributable files. Depending on your system,
