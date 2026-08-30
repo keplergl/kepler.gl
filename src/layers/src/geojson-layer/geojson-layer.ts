@@ -26,7 +26,8 @@ import {
   detectTableColumns,
   COLUMN_MODE_GEOJSON,
   applyFiltersToTableColumns,
-  fieldIsGeoArrow
+  fieldIsGeoArrow,
+  featureToHoverOutline
 } from './geojson-utils';
 import {
   getGeojsonLayerMetaFromArrow,
@@ -185,7 +186,8 @@ type ObjectInfo = {
   index: number;
   object?: Feature | undefined;
   picked: boolean;
-  layer: Layer;
+  // deck.gl picking info; only `props.id` is read for hover matching
+  layer: {props: {id: string}};
   radius?: number;
   id?: string;
 };
@@ -256,6 +258,9 @@ export default class GeoJsonLayer extends Layer {
   filteredIndex: Uint8ClampedArray | null = null;
   filteredIndexTrigger: number[] | null = null;
   centroids: Array<number[] | null> = [];
+  // Stable hover overlay data so deck.gl does not re-parse the feature every redraw.
+  _hoverOverlayIndex: number | null = null;
+  _hoverOverlayData: Feature[] | null = null;
 
   _layerInfoModal: {
     [COLUMN_MODE_TABLE]: () => React.JSX.Element;
@@ -740,6 +745,34 @@ export default class GeoJsonLayer extends Layer {
       : super.hasHoveredObject(objectInfo);
   }
 
+  /**
+   * Memoized hover overlay features. Rebuilding `data: [hoveredObject]` on every
+   * pan/zoom frame makes deck.gl re-convert (and tessellate) huge polygons.
+   */
+  _getHoverOverlayData(objectInfo: ObjectInfo | null | undefined): Feature[] | null {
+    if (!objectInfo || !this.isLayerHovered(objectInfo)) {
+      this._hoverOverlayIndex = null;
+      this._hoverOverlayData = null;
+      return null;
+    }
+
+    const {index} = objectInfo;
+    if (Number.isFinite(index) && this._hoverOverlayData && this._hoverOverlayIndex === index) {
+      return this._hoverOverlayData;
+    }
+
+    const hoveredObject = this.hasHoveredObject(objectInfo);
+    if (!hoveredObject) {
+      this._hoverOverlayIndex = null;
+      this._hoverOverlayData = null;
+      return null;
+    }
+
+    this._hoverOverlayIndex = index;
+    this._hoverOverlayData = [featureToHoverOutline(hoveredObject)];
+    return this._hoverOverlayData;
+  }
+
   getElevationZoomFactor({zoom, zoomOffset = 0}) {
     return this.config.visConfig.fixedHeight ? 1 : Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }
@@ -773,7 +806,7 @@ export default class GeoJsonLayer extends Layer {
     };
 
     const pickable = interactionConfig.tooltip.enabled && visConfig.allowHover;
-    const hoveredObject = this.hasHoveredObject(objectHovered);
+    const hoverOverlayData = visConfig.enable3d ? null : this._getHoverOverlayData(objectHovered);
 
     const {data, ...props} = dataProps;
 
@@ -824,14 +857,14 @@ export default class GeoJsonLayer extends Layer {
     return [
       ...deckLayers,
       // hover layer
-      ...(hoveredObject && !visConfig.enable3d
+      ...(hoverOverlayData
         ? [
             new DeckGLGeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
               visible: defaultLayerProps.visible,
               wrapLongitude: false,
-              data: [hoveredObject] as Feature[],
+              data: hoverOverlayData,
               getLineWidth: props.getLineWidth,
               getPointRadius: props.getPointRadius,
               getElevation: props.getElevation,

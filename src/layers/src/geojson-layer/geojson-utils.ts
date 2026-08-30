@@ -142,6 +142,38 @@ function featureFromGeometry(parsedGeo: unknown, properties: null): Feature | nu
 }
 
 /**
+ * Convert a hovered feature to outline-only geometry for the hover overlay.
+ * The overlay is stroked and not filled, so polygon tessellation (earcut) is wasted
+ * work — and for high-vertex polygons it is expensive enough to stall pan/zoom
+ * if it runs again on every redraw.
+ */
+export function featureToHoverOutline(feature: Feature): Feature {
+  const {geometry} = feature;
+  if (!geometry) {
+    return feature;
+  }
+  if (geometry.type === 'Polygon') {
+    return {
+      ...feature,
+      geometry: {
+        type: 'MultiLineString',
+        coordinates: geometry.coordinates
+      }
+    };
+  }
+  if (geometry.type === 'MultiPolygon') {
+    return {
+      ...feature,
+      geometry: {
+        type: 'MultiLineString',
+        coordinates: geometry.coordinates.flat()
+      }
+    };
+  }
+  return feature;
+}
+
+/**
  * Parse a raw cell value into a GeoJSON Feature.
  * @param rawFeature Feature / geometry object, WKT/GeoJSON string, WKB bytes, or coordinate array
  * @param geoArrowEncoding Optional ARROW:extension:name (e.g. geoarrow.wkb, geoarrow.point)
