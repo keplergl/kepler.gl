@@ -3,6 +3,45 @@
 
 import GeoJsonLayer from './geojson-layer';
 
+describe('GeoJsonLayer default deck parameters', () => {
+  const gpuFilter = null as any;
+  const layerCallbacks = {};
+
+  const propsFor = (layer: GeoJsonLayer, mapState: Record<string, unknown>) =>
+    layer.getDefaultDeckLayerProps({
+      idx: 0,
+      gpuFilter,
+      mapState: mapState as any,
+      layerCallbacks,
+      visible: true
+    }).parameters;
+
+  test('flat layer in top view depth-tests but does not write depth', () => {
+    const layer = new GeoJsonLayer({id: 'geojson_depth'});
+    expect(propsFor(layer, {dragRotate: false})).toMatchObject({
+      depthTest: true,
+      depthMask: false
+    });
+  });
+
+  test('extruded layer writes depth even in top view so it can occlude a flat plane', () => {
+    const layer = new GeoJsonLayer({id: 'geojson_depth'});
+    layer.config.visConfig.enable3d = true;
+    expect(propsFor(layer, {dragRotate: false})).toMatchObject({
+      depthTest: true,
+      depthMask: true
+    });
+  });
+
+  test('3D view writes depth for flat layers so they participate in occlusion', () => {
+    const layer = new GeoJsonLayer({id: 'geojson_depth'});
+    expect(propsFor(layer, {dragRotate: true})).toMatchObject({
+      depthTest: true,
+      depthMask: true
+    });
+  });
+});
+
 describe('GeoJsonLayer hover overlay cache', () => {
   const polygonFeature = {
     type: 'Feature' as const,
