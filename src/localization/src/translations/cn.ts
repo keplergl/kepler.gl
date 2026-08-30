@@ -102,6 +102,8 @@ export default {
     layer: '图层',
     appearance: '外观',
     uniqueIdField: '唯一ID字段',
+    hideNulls: '隐藏空值',
+    hideNullsDescription: '开启后，没有填充颜色值的要素将被隐藏。关闭时，这些要素显示为灰色。',
     type: {
       point: 'point',
       arc: 'arc',

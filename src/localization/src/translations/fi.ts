@@ -101,6 +101,9 @@ export default {
     layer: 'Taso',
     appearance: 'Ulkoasu',
     uniqueIdField: 'Yksilöivä ID-kenttä',
+    hideNulls: 'Piilota tyhjät arvot',
+    hideNullsDescription:
+      'Kun asetus on päällä, kohteet ilman täyttöväriarvoa piilotetaan. Kun se on pois päältä, ne näytetään harmaana.',
     type: {
       point: 'piste',
       arc: 'kaari',

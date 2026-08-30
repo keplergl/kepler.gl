@@ -943,6 +943,8 @@ export const DEFAULT_LAYER_COLOR_PALETTE_STEPS = 6;
 export const DEFAULT_TOOLTIP_FIELDS: any[] = [];
 
 export const NO_VALUE_COLOR: RGBAColor = [0, 0, 0, 0];
+/** Visible gray used when a color field has no value and missing features should stay on the map. */
+export const MISSING_VALUE_COLOR: RGBAColor = [128, 128, 128, 255];
 
 export const DEFAULT_PICKING_RADIUS = 3;
 

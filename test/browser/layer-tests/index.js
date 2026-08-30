@@ -20,5 +20,6 @@ import './s2-geometry-layer-specs';
 import './a5-layer-specs';
 import './geohash-layer-specs';
 import './wms-layer-specs';
+import './vector-tile-layer-specs';
 import './flow-layer-specs';
 import './aggregation-layer-geojson-specs';

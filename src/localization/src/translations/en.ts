@@ -117,6 +117,9 @@ export default {
     imageSource: 'Image Source',
     alignment: 'Alignment',
     uniqueIdField: 'Unique ID Field',
+    hideNulls: 'Hide Null Values',
+    hideNullsDescription:
+      'When on, features with no fill-color value are hidden. When off, they are shown in gray.',
     type: {
       point: 'point',
       arc: 'arc',

@@ -102,6 +102,9 @@ export default {
     layer: 'レイヤ',
     appearance: '外観',
     uniqueIdField: '一意IDフィールド',
+    hideNulls: 'Null値を非表示',
+    hideNullsDescription:
+      'オンにすると、塗りつぶし色の値がないフィーチャは非表示になります。オフの場合は灰色で表示されます。',
     type: {
       point: 'point',
       arc: 'arc',

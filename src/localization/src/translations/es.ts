@@ -102,6 +102,9 @@ export default {
     layer: 'Capa',
     appearance: 'Apariencia',
     uniqueIdField: 'Campo ID único',
+    hideNulls: 'Ocultar valores nulos',
+    hideNullsDescription:
+      'Cuando está activado, las entidades sin valor de color de relleno se ocultan. Cuando está desactivado, se muestran en gris.',
     type: {
       point: 'punto',
       arc: 'arco',
