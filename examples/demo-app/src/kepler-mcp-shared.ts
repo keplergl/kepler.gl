@@ -1,0 +1,131 @@
+/**
+ * Shared plumbing for the demo-app's two agent surfaces over the
+ * `@kepler.gl/mcp` map.* commands:
+ *
+ *  - `kepler-mcp-bridge.tsx` — WebSocket reverse-connect to a local MCP server
+ *    (Claude Code / Codex driving the map without a browser extension)
+ *  - `kepler-webmcp.tsx` — native WebMCP registration (`document.modelContext`)
+ *    for harnesses with a built-in browser (Chrome's agent, Claude Desktop's
+ *    browser, ...)
+ *
+ * Both surfaces execute commands against the demo's own redux store through
+ * the same `buildKeplerContext` and serve the same DuckDB-free catalog.
+ */
+import {getKeplerCommands, getValuesFromDataset} from '@kepler.gl/mcp';
+import type {KeplerContext, RoomCommandResult, ToolDescriptor} from '@kepler.gl/mcp';
+import {WebMercatorViewport} from '@deck.gl/core';
+
+// map.* commands that need a DuckDB connector / the kepler-app glue
+// (`loadTableToKepler`, `loadTableIntoDuckDB`, `getConnector`). The demo
+// surfaces (mapping-only bridge / webMCP) do not serve them.
+export const DUCKDB_REQUIRED = new Set(['map.create-table', 'map.add-column', 'map.save-data']);
+
+/** Live accessors into the demo's own redux store — no kepler-assistant needed. */
+export function buildKeplerContext(reduxStore: any): KeplerContext {
+  const readMap = () => reduxStore?.getState()?.demo?.keplerGl?.map;
+  return {
+    getVisState: () => readMap()?.visState,
+    getMapBoundary: () => {
+      // Recompute the current viewport corners from the live mapState (same
+      // WebMercatorViewport math the app's onViewStateChange uses). Fall back
+      // to the assistant slice's stored boundary if mapState lacks a size.
+      const mapState = readMap()?.mapState;
+      if (mapState?.width && mapState?.height) {
+        try {
+          const viewport = new WebMercatorViewport(mapState);
+          const nw = viewport.unproject([0, 0]);
+          const se = viewport.unproject([viewport.width, viewport.height]);
+          return {nw: [nw[0], nw[1]], se: [se[0], se[1]]};
+        } catch {
+          /* fall through to stored boundary */
+        }
+      }
+      return reduxStore?.getState()?.demo?.aiAssistant?.keplerGl?.mapBoundary;
+    },
+    getMapboxToken: () =>
+      typeof window !== 'undefined' ? (localStorage.getItem('mapbox-token') ?? undefined) : undefined,
+    dispatch: (action: any) => reduxStore?.dispatch(action),
+    getValuesFromDataset: (datasetName, variableName) => {
+      const visState = readMap()?.visState;
+      if (!visState) return [];
+      return getValuesFromDataset(visState.datasets, visState.layers, datasetName, variableName);
+    },
+    getDatasetContext: () => {
+      // Shape required by map.get-dataset-context: a human line, then a JSON
+      // array of {datasetName, datasetId, fields, layers} descriptors.
+      const visState = readMap()?.visState;
+      const datasets = visState?.datasets;
+      const layers = visState?.layers ?? [];
+      if (!datasets) return '';
+      const context =
+        'Please remember the following datasets and layers for answering the user question:';
+      const dataMeta = Object.values(datasets).map((ds: any) => ({
+        datasetName: ds?.label ?? ds?.id,
+        datasetId: ds?.id,
+        fields: (ds?.fields ?? []).map((f: any) => ({[f.name]: f.type})),
+        layers: layers
+          .filter((layer: any) => layer?.config?.dataId === ds?.id)
+          .map((layer: any) => ({
+            id: layer.id,
+            label: layer.config.label,
+            type: layer.type,
+            geometryMode: layer.config.columnMode,
+            geometryColumns: Object.fromEntries(
+              Object.entries(layer.config.columns)
+                .filter(([, value]) => value !== null)
+                .map(([key, value]) => [
+                  key,
+                  typeof value === 'object' && value !== null
+                    ? Object.fromEntries(Object.entries(value).filter(([, v]) => v !== null))
+                    : value
+                ])
+            )
+          }))
+      }));
+      return `${context}\n${JSON.stringify(dataMeta)}`;
+    },
+    loadTableToKepler: async () => ({
+      success: false,
+      error: 'map.save-data / loadTableToKepler is not available in the mapping-only bridge.'
+    }),
+    loadTableIntoDuckDB: async () => {
+      throw new Error('DuckDB operations are not available in the mapping-only bridge.');
+    },
+    getConnector: async () => {
+      throw new Error('DuckDB operations are not available in the mapping-only bridge.');
+    }
+  };
+}
+
+/** The DuckDB-free map.* commands this page serves to agents. */
+export function buildCatalog(ctx: KeplerContext) {
+  return Object.values(getKeplerCommands(ctx)).filter(c => !DUCKDB_REQUIRED.has(c.id));
+}
+
+export function toDescriptor(cmd: {id: string; name: string; description?: string; group?: string; keywords?: string[]; metadata?: {readOnly?: boolean; idempotent?: boolean; riskLevel?: string; requiresConfirmation?: boolean}; inputSchema?: any}): ToolDescriptor {
+  let inputSchema: Record<string, unknown> = {type: 'object'};
+  if (cmd.inputSchema) {
+    try {
+      // zod v4 -> JSON Schema
+      const zod: any = require('zod');
+      inputSchema = (zod.toJSONSchema?.(cmd.inputSchema) ?? {type: 'object'}) as Record<string, unknown>;
+    } catch {
+      inputSchema = {type: 'object'};
+    }
+  }
+  return {
+    id: cmd.id,
+    name: cmd.name,
+    description: cmd.description,
+    group: cmd.group,
+    keywords: cmd.keywords,
+    inputSchema,
+    metadata: cmd.metadata as ToolDescriptor['metadata']
+  };
+}
+
+export function formatResult(result: RoomCommandResult): string {
+  if (result.error) return `✗ ${result.commandId}: ${result.error}`;
+  const data = result.data as {details?: string} | undefined;
+  return data?.details ? `✓ ${data.details}` : `✓ ${result.commandId} ok`;
+}
