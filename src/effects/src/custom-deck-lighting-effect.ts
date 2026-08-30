@@ -42,7 +42,11 @@ const SHADOW_PASS_DEPTH_PARAMETERS = {
 };
 
 export function patchShadowPassDepth(pass: {
-  getLayerParameters: (...args: unknown[]) => Record<string, unknown>;
+  getLayerParameters: (
+    layer: unknown,
+    layerIndex: number,
+    viewport: unknown
+  ) => Record<string, unknown>;
 }) {
   const originalGetLayerParameters = pass.getLayerParameters.bind(pass);
   pass.getLayerParameters = (layer, layerIndex, viewport) => ({
