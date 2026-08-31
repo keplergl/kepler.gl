@@ -15,9 +15,24 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## Unreleased
+## [3.3.0-alpha.9] - Sep 1 2026
 
-- feat: `addToDataset` / `removeFromDataset` to append, upsert, and delete rows in place without breaking layers (#176). Row tables only; Arrow/DuckDB warn and no-op until INSERT/concat exist.
+- bcf2be72 feat: addToDataset / removeFromDataset for in-place row edits (#176) (#3684)
+- adab6c25 fix: shadows effect issues with highlighted objects (#3683)
+- 99599585 fix: Light & Shadow layer order shading and top-view occlusion (#3681)
+- 78ab050c fix: Light & Shadow regression in video export (#3680)
+- 4c8c8f7a fix: Light & Shadow day slider max update depth crash (#3679)
+- 08f41de6 fix: Grid and Hexagon layers disappear when Light & Shadow is added (#3677)
+- f6b29bdf feat: an option to show vector tile features with not set attributes (#3676)
+- a734cd8f fix: lag when hovering large GeoJSON polygons (#3675)
+- 790dfe87 fix: export map button not visible (#3674)
+- 55c90ece feat: copy error notifications to clipboard (#3668)
+- 56ac6ff4 fix: set aggregation layers min radius above 0 (#3669)
+- bb1fe5e6 fix: add default format for timestamps / datetime (#3670)
+- 9bc3fea1 chore: move AI assistant out of kepler.gl core package (#3532)
+- c45373a4 feat: reload and poll remotely hosted datasets (#3667)
+- 30b0f648 feat: add GeoHash layer (#3666)
+
 
 ## [3.3.0-alpha.8] - Aug 26 2026
 
