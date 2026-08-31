@@ -57,7 +57,13 @@ export {getSplitViewCommand} from './split-view-command';
 export {getDatasetContextCommand} from './dataset-context-command';
 export {toolToCommand, asInputSchema} from './command-wrappers';
 export type {AnyTool, CommandMeta} from './command-wrappers';
-export type {KeplerContext, KeplerStateAccessors, VisState} from './types';
+export type {
+  KeplerContext,
+  KeplerStateAccessors,
+  VisState,
+  RoomCommandResult,
+  ToolDescriptor
+} from './types';
 export {
   datasetNameToTableName,
   convertArrowRowToObject,

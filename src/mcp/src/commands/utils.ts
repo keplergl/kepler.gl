@@ -266,6 +266,13 @@ export function buildAddColumnPayload(
   // The new column's values + field descriptor come from the computation's
   // arrow result (DuckDB expression / copy, or geoda write-back).
   const newColumnValues = arrowTableToObjects(newColumnArrow).map(o => o[newColumnName]);
+  if (newColumnValues.length !== dataset.length) {
+    throw new Error(
+      `Computed column "${newColumnName}" produced ${newColumnValues.length} rows, but dataset ` +
+        `"${datasetName}" has ${dataset.length} rows. The expression must produce exactly one ` +
+        `value per row — check for filters, joins, or a non-1:1 query.`
+    );
+  }
   const newField = arrowSchemaToFields(newColumnArrow)[0];
 
   // Existing columns come from the original kepler dataset, never Arrow/DuckDB.

@@ -50,6 +50,23 @@ export type RoomCommand = {
 };
 
 /**
+ * A command's model-facing descriptor: the id/name/description/group/keywords
+ * plus a JSON-Schema-converted `inputSchema` and the policy metadata. This is
+ * the shape hosts advertise over the wire (e.g. the demo-app bridge's
+ * `toDescriptor`), so it lives in the map surface package to keep the contract
+ * self-contained.
+ */
+export type ToolDescriptor = {
+  id: string;
+  name: string;
+  description?: string;
+  group?: string;
+  keywords?: string[];
+  inputSchema: Record<string, unknown>;
+  metadata?: RoomCommandPolicyMetadata;
+};
+
+/**
  * Structural slice of `@sqlrooms/duckdb`'s `DuckDbConnector` — only the methods
  * the map.* commands call, typed against apache-arrow so the query result flows
  * into `arrowTableToObjects` / `arrowSchemaToFields` unchanged. Kept local so
