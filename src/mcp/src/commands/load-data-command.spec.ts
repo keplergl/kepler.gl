@@ -9,6 +9,11 @@ jest.mock('@kepler.gl/processors', () => ({
 
 import {readFileInBatches, processFileData} from '@kepler.gl/processors';
 
+// The tests stub global.fetch; capture the original so it can be restored in
+// afterEach — otherwise the mock leaks into other suites in the same run and
+// causes order-dependent failures.
+const originalFetch = global.fetch;
+
 function makeCtx() {
   let dispatched: any = null;
   const ctx = {
@@ -30,6 +35,10 @@ describe('map.load-data', () => {
   beforeEach(() => {
     (readFileInBatches as jest.Mock).mockReset();
     (processFileData as jest.Mock).mockReset();
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   it('fetches the URL, parses it, and dispatches addDataToMap with the datasetName override', async () => {

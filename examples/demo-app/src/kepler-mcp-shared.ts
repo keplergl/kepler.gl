@@ -14,6 +14,7 @@
 import {getKeplerCommands, getValuesFromDataset} from '@kepler.gl/mcp';
 import type {KeplerContext, RoomCommandResult, ToolDescriptor} from '@kepler.gl/mcp';
 import {WebMercatorViewport} from '@deck.gl/core';
+import {toJSONSchema} from 'zod';
 // The skill markdown ships with the @kepler.gl/mcp package (subpath export), so
 // the demo-app folder stays self-contained — no relative path reaching outside
 // it into the monorepo layout.
@@ -171,9 +172,11 @@ export function toDescriptor(cmd: {id: string; name: string; description?: strin
   let inputSchema: Record<string, unknown> = {type: 'object'};
   if (cmd.inputSchema) {
     try {
-      // zod v4 -> JSON Schema
-      const zod: any = require('zod');
-      inputSchema = (zod.toJSONSchema?.(cmd.inputSchema) ?? {type: 'object'}) as Record<string, unknown>;
+      // zod v4 -> JSON Schema. Static import (not require): the demo-app
+      // bundles for platform 'browser' / format 'iife', where `require` is
+      // undefined — a runtime require would throw and silently fall back to
+      // {type: 'object'}, losing tool discoverability and validation.
+      inputSchema = (toJSONSchema(cmd.inputSchema) ?? {type: 'object'}) as Record<string, unknown>;
     } catch {
       inputSchema = {type: 'object'};
     }

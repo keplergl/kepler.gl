@@ -50,7 +50,14 @@ function getUrlConfig(): {token: string; port: number; host: string; tokenFromUr
   const requestedHost = params.get('mcpHost');
   const host =
     urlToken != null && requestedHost && isLoopbackHost(requestedHost) ? requestedHost : WSHost();
-  const port = urlToken != null ? Number(params.get('mcpPort')) || DEFAULT_PORT : DEFAULT_PORT;
+  // Clamp to a valid TCP port (1-65535): a crafted ?mcpPort=99999 or negative
+  // value is truthy after Number() and would produce an invalid WebSocket URL
+  // with confusing connection failures.
+  const requestedPort = Number(params.get('mcpPort'));
+  const port =
+    urlToken != null && Number.isInteger(requestedPort) && requestedPort >= 1 && requestedPort <= 65535
+      ? requestedPort
+      : DEFAULT_PORT;
   return {token, port, host, tokenFromUrl: urlToken != null};
 }
 
