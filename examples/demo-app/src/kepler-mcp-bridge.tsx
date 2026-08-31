@@ -96,13 +96,17 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
       setError(null);
 
       const wsUrl = `ws://${host}:${port}/ws?token=${encodeURIComponent(useToken)}`;
+      // The token is a credential — never surface the full URL in logs or
+      // user-visible errors (screenshots, screen recordings, shared console
+      // logs would leak it). Redact it for display.
+      const redactedWsUrl = `ws://${host}:${port}/ws?token=***`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
         ws.send(JSON.stringify({type: 'hello', commands: catalog.map(toDescriptor)}));
         setStatus('connected');
-        pushLog(`connected to ${wsUrl} · ${catalog.length} map commands`);
+        pushLog(`connected to ${redactedWsUrl} · ${catalog.length} map commands`);
       };
       ws.onmessage = async ev => {
         let msg: any;
@@ -135,7 +139,7 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
         pushLog(formatResult(result));
       };
       ws.onerror = () => {
-        setError(`WebSocket error connecting to ${wsUrl}. Is kepler-mcp-demo running?`);
+        setError(`WebSocket error connecting to ${redactedWsUrl}. Is kepler-mcp-demo running?`);
         setStatus('error');
       };
       ws.onclose = () => {
