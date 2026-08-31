@@ -84,6 +84,7 @@ const config = {
   loader: {
     '.js': 'jsx',
     '.css': 'css',
+    '.md': 'text',
     '.png': 'file',
     '.jpg': 'file',
     '.svg': 'file',
