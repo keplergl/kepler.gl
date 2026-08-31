@@ -20,6 +20,12 @@ import {buildCatalog, buildKeplerContext, formatResult, toDescriptor} from './ke
 const DEFAULT_PORT = 8765;
 const WSHost = () => 'localhost';
 
+// The bridge only ever talks to a local kepler-mcp-demo process. A crafted
+// link must not be able to point it at a remote WebSocket server (data-exfil /
+// remote-control risk), so any host other than loopback is ignored.
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]', '0.0.0.0']);
+const isLoopbackHost = (host: string) => LOOPBACK_HOSTS.has(host.toLowerCase());
+
 type BridgeStatus = 'idle' | 'connecting' | 'connected' | 'error';
 
 function getUrlConfig(): {token: string; port: number; host: string; tokenFromUrl: boolean} {
@@ -28,7 +34,10 @@ function getUrlConfig(): {token: string; port: number; host: string; tokenFromUr
   let stored: string | null = null;
   if (typeof window !== 'undefined') {
     try {
-      stored = localStorage.getItem('kepler-mcp-token');
+      // sessionStorage (not localStorage): the token is a credential, so it
+      // must not linger past the tab session or be readable by any script on
+      // the origin indefinitely. sessionStorage still survives page reloads.
+      stored = sessionStorage.getItem('kepler-mcp-token');
     } catch {
       // private mode / blocked storage — treat as absent
     }
@@ -36,8 +45,11 @@ function getUrlConfig(): {token: string; port: number; host: string; tokenFromUr
   const token = urlToken ?? stored ?? '';
   // Only honor URL host/port when the token is ALSO from the URL — otherwise a
   // link like `?mcpHost=attacker.tld` could combine a persisted token with a
-  // non-local host and leak it.
-  const host = urlToken != null ? (params.get('mcpHost') ?? WSHost()) : WSHost();
+  // non-local host and leak it. And even then, restrict the host to loopback
+  // addresses only.
+  const requestedHost = params.get('mcpHost');
+  const host =
+    urlToken != null && requestedHost && isLoopbackHost(requestedHost) ? requestedHost : WSHost();
   const port = urlToken != null ? Number(params.get('mcpPort')) || DEFAULT_PORT : DEFAULT_PORT;
   return {token, port, host, tokenFromUrl: urlToken != null};
 }
@@ -87,7 +99,9 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
         return;
       }
       try {
-        localStorage.setItem('kepler-mcp-token', useToken);
+        // sessionStorage, not localStorage — the token is a credential and
+        // must not outlive the tab session.
+        sessionStorage.setItem('kepler-mcp-token', useToken);
       } catch {
         // private mode / blocked storage — the bridge still works for this
         // session without persistence
