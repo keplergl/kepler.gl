@@ -11,7 +11,7 @@
  * the same contract.
  */
 
-import type {MapToolId} from './types';
+import type {MapToolId, ToolResult} from './types';
 import {MAP_TOOL_IDS} from './types';
 
 /** The map-only tool surface. Exposes only pure map actuation. */
@@ -20,14 +20,7 @@ export interface MapContract {
   /** List the tools this surface exposes (id + input JSON Schema, if known). */
   listTools(): Array<{id: MapToolId; inputSchema?: unknown; description?: string}>;
   /** Execute a map tool. Returns a trimmed, model-facing result. */
-  callTool(
-    id: MapToolId,
-    input: Record<string, unknown>
-  ): Promise<{
-    success: boolean;
-    data?: unknown;
-    error?: string;
-  }>;
+  callTool(id: MapToolId, input: Record<string, unknown>): Promise<ToolResult>;
 }
 
 export {MAP_TOOL_IDS};

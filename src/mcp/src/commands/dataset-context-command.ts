@@ -28,7 +28,15 @@ export function getDatasetContextCommand(ctx: KeplerContext): RoomCommand {
             }
           };
         }
-        const datasets = JSON.parse(context.split('\n').slice(1).join('\n'));
+        // Accept either a pure-JSON context or the two-part "human line + JSON"
+        // format: hosts may return either, so don't assume the first line is a
+        // preface.
+        const trimmed = context.trim();
+        const datasets = JSON.parse(
+          trimmed.startsWith('[') || trimmed.startsWith('{')
+            ? trimmed
+            : context.split('\n').slice(1).join('\n')
+        );
         return {
           success: true,
           commandId: datasetContextCommandId,

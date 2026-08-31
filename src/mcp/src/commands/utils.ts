@@ -67,7 +67,9 @@ export function convertArrowRowToObject(row: any): unknown {
  * Arrow's own `valueOf(scale)` divides the raw bigint by 10^scale and converts
  * the intermediate denominator with bigIntToNumber, which throws for scale >= 16
  * (10^16 > Number.MAX_SAFE_INTEGER). We instead reconstruct the bigint and
- * insert the decimal point via string manipulation, which is exact for any scale.
+ * insert the decimal point via string manipulation, which avoids that throw and
+ * is exact up to the final JS Number coercion — very large Decimal128 values can
+ * still lose precision or overflow when converted to a Number.
  */
 function decimalBigNumToNumber(v: any, scale: number): number {
   let big = 0n;
