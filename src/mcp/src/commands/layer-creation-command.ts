@@ -142,7 +142,6 @@ function applyColorConfig(
   }
 
   const {colorBy, colorType, colorMap: providedColorMap} = args;
-  const colorMap = providedColorMap ?? [{value: null, color: '#333333'}];
 
   if (colorBy) {
     const colorField = dataset.fields.find(f => f.name === colorBy);
@@ -191,18 +190,25 @@ function applyColorConfig(
     // scale so numeric fields colored via colorBy aren't mis-colored as
     // categorical. Only an explicit 'unique' selects the categorical scale.
     const colorScale = colorType === 'unique' ? 'customOrdinal' : 'custom';
-    const colors = colorMap.map(c => c.color);
-    const keplerColorMap = colorMap.map(c => [c.value, c.color]);
-    const colorRange = {
-      name: 'color.customPalette',
-      type: 'custom',
-      category: 'Custom',
-      colors,
-      colorMap: keplerColorMap
-    } as const;
+
+    // Only force a custom palette when the caller provided an explicit
+    // colorMap. A synthetic single-entry colorMap ({value: null, color:
+    // '#333333'}) would route through kepler's custom colorMap scale path and
+    // render everything as the no-value/unknown color; without an explicit
+    // colorMap, bind the color field and let kepler.gl's default color range
+    // apply.
+    const colorRange = providedColorMap
+      ? ({
+          name: 'color.customPalette',
+          type: 'custom',
+          category: 'Custom',
+          colors: providedColorMap.map(c => c.color),
+          colorMap: providedColorMap.map(c => [c.value, c.color])
+        } as const)
+      : null;
 
     if (newLayer.type === 'heatmap') {
-      if (colors.length > 1) {
+      if (colorRange && providedColorMap && providedColorMap.length > 1) {
         newLayer.config.visConfig['colorRange'] = {...colorRange};
       }
     } else {
@@ -211,8 +217,10 @@ function applyColorConfig(
       newLayer.config['strokeColorScale'] = colorScale;
       newLayer.config['strokeColorField'] = colorField;
       newLayer.config.visConfig['filled'] = true;
-      newLayer.config.visConfig['colorRange'] = colorRange;
-      newLayer.config.visConfig['strokeColorRange'] = colorRange;
+      if (colorRange) {
+        newLayer.config.visConfig['colorRange'] = colorRange;
+        newLayer.config.visConfig['strokeColorRange'] = colorRange;
+      }
     }
   }
 }
@@ -264,7 +272,7 @@ COLOR MAPPING:
   Call geoda.analysis (analysis: 'classify', method: 'unique values') first and use the
   returned uniqueValues verbatim. NEVER invent category labels from the field name —
   the command rejects values that do not exist in the data.
-- Generate colorBrewer colors automatically if user doesn't specify colors
+- If the user doesn't specify colors, omit colorBy/colorMap — kepler.gl applies its default color range automatically
 
 For geojson datasets:
 - Use geometryColumn: '_geojson' and layerType: 'geojson' even for point collections
