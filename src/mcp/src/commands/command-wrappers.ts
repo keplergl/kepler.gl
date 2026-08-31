@@ -61,7 +61,7 @@ export function toolToCommand(tool: AnyTool, meta: CommandMeta): RoomCommand {
     group: meta.group,
     keywords: meta.keywords,
     inputSchema: tool.inputSchema as any,
-    execute: async (_ctx, input) => {
+    execute: async (ctx, input) => {
       if (!tool.execute || typeof tool.execute !== 'function') {
         return {
           success: false,
@@ -70,7 +70,13 @@ export function toolToCommand(tool: AnyTool, meta: CommandMeta): RoomCommand {
         };
       }
       try {
-        const rawOutput = await tool.execute(input ?? {}, {toolCallId: meta.id});
+        // Thread the caller's AbortSignal through so hosts (WebMCP / bridge)
+        // can cancel long-running wrapped tools when the agent aborts. Tools
+        // that don't use a signal ignore it.
+        const rawOutput = await tool.execute(input ?? {}, {
+          toolCallId: meta.id,
+          signal: ctx.signal
+        });
         const trimmed =
           typeof tool.toModelOutput === 'function'
             ? tool.toModelOutput({output: rawOutput, toolCallId: meta.id})
