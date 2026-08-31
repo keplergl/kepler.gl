@@ -61,6 +61,27 @@ export function convertArrowRowToObject(row: any): unknown {
 }
 
 /**
+ * Normalize a Decimal BigNum into an indexable word array. Arrow's
+ * DecimalBigNum is a Uint32Array (has `.length`); `row.toJSON()` can emit it as
+ * a plain numeric-key object ({0: low, 1: high, ...}) with no `.length`, which
+ * decimalBigNumToNumber would miscompute (the loop never runs, returning 0).
+ */
+function toWordArray(v: any): number[] {
+  if (Array.isArray(v)) {
+    return v;
+  }
+  if (ArrayBuffer.isView(v)) {
+    return Array.from(v as unknown as ArrayLike<number>);
+  }
+  const words: number[] = [];
+  for (let i = 0; i < 4; i++) {
+    if (v[i] === undefined) break;
+    words.push(v[i]);
+  }
+  return words;
+}
+
+/**
  * Convert an Arrow DecimalBigNum (128-bit signed, stored as a Uint32Array of
  * words) to a JS number, applying the column's declared scale.
  *
@@ -72,13 +93,17 @@ export function convertArrowRowToObject(row: any): unknown {
  * still lose precision or overflow when converted to a Number.
  */
 function decimalBigNumToNumber(v: any, scale: number): number {
+  const words = toWordArray(v);
+  // Only convert when at least one word exists — an empty word array is a
+  // zero value (or a non-BigNum object that shouldn't be here).
+  if (words.length === 0) return 0;
   let big = 0n;
-  for (let i = v.length - 1; i >= 0; i--) {
-    big = (big << 32n) | BigInt(v[i] >>> 0);
+  for (let i = words.length - 1; i >= 0; i--) {
+    big = (big << 32n) | BigInt(words[i] >>> 0);
   }
   // Two's complement sign (128-bit).
-  if (v[v.length - 1] & 0x80000000) {
-    big -= 1n << BigInt(32 * v.length);
+  if (words[words.length - 1] & 0x80000000) {
+    big -= 1n << BigInt(32 * words.length);
   }
   const negative = big < 0n;
   if (negative) big = -big;
@@ -114,7 +139,10 @@ export function arrowTableToObjects(table: {
     const json = row.toJSON();
     for (const [name, scale] of scaleByColumn) {
       const v = json[name];
-      if (v && typeof v === 'object' && typeof v.valueOf === 'function') {
+      // The column is Decimal-typed, so object values are BigNums. (The old
+      // `typeof v.valueOf === 'function'` guard was always true for objects —
+      // every object inherits valueOf — and did not distinguish BigNums.)
+      if (v && typeof v === 'object') {
         json[name] = decimalBigNumToNumber(v, scale);
       }
     }

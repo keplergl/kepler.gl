@@ -36,6 +36,20 @@ A time filter must already exist on the map (created via map.add-time-filter).
         filterIndex?: number;
       };
       try {
+        // Runtime guard: the bridge/webMCP call execute directly without zod
+        // parsing, so a missing/invalid action must not silently fall back to
+        // 'side' (which would hide the controller — a surprising mutation).
+        if (action !== 'show' && action !== 'hide') {
+          return {
+            success: false,
+            commandId: toggleTimeFilterCommandId,
+            error: `Invalid action "${String(action)}". Must be "show" or "hide".`,
+            data: {
+              instruction:
+                'Pass action: "show" to enlarge the time controller, or "hide" to collapse it.'
+            }
+          };
+        }
         const visState = ctx.getVisState();
         const filters = visState.filters ?? [];
 
