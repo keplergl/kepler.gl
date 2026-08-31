@@ -64,7 +64,10 @@ const getKeplerAliases = () => ({
   ...KEPLER_SRC_ALIASES,
   // duckdb ships a components subpath (SqlPanel); esbuild picks the longest
   // matching alias key, so this wins for `@kepler.gl/duckdb/components`.
-  '@kepler.gl/duckdb/components': join(SRC_DIR, 'duckdb', 'src', 'components', 'index.tsx')
+  '@kepler.gl/duckdb/components': join(SRC_DIR, 'duckdb', 'src', 'components', 'index.tsx'),
+  // mcp ships the map-management skill markdown as a subpath export; the
+  // longer key wins over the `@kepler.gl/mcp` src alias above.
+  '@kepler.gl/mcp/skill/kepler/SKILL.md': join(SRC_DIR, 'mcp', 'skill', 'kepler', 'SKILL.md')
 });
 
 /**

@@ -14,7 +14,10 @@
 import {getKeplerCommands, getValuesFromDataset} from '@kepler.gl/mcp';
 import type {KeplerContext, RoomCommandResult, ToolDescriptor} from '@kepler.gl/mcp';
 import {WebMercatorViewport} from '@deck.gl/core';
-import mapSkillMarkdown from '../../../src/mcp/skill/kepler/SKILL.md';
+// The skill markdown ships with the @kepler.gl/mcp package (subpath export), so
+// the demo-app folder stays self-contained — no relative path reaching outside
+// it into the monorepo layout.
+import mapSkillMarkdown from '@kepler.gl/mcp/skill/kepler/SKILL.md';
 
 // map.* commands that need a DuckDB connector / the kepler-app glue
 // (`loadTableToKepler`, `loadTableIntoDuckDB`, `getConnector`). The demo

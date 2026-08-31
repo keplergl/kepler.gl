@@ -12,7 +12,8 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
       "default": "./dist/cjs/index.js"
-    }
+    },
+    "./skill/kepler/SKILL.md": "./skill/kepler/SKILL.md"
   },
   "keywords": [
     "kepler",

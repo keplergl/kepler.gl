@@ -145,7 +145,10 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
       ws.onclose = () => {
         if (wsRef.current === ws) {
           wsRef.current = null;
-          setStatus('idle');
+          // Don't clobber an error status set by onerror — a failed connection
+          // should stay visible as 'error', not silently flip back to 'idle'
+          // (which would mask the failure while the error text lingers).
+          setStatus(prev => (prev === 'error' ? prev : 'idle'));
         }
       };
     },
