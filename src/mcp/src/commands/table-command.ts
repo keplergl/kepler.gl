@@ -39,7 +39,19 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         resultDatasetName: string;
       };
       try {
-        const dbTableName = datasetNameToTableName(datasetName);
+        const visState = ctx.getVisState();
+        const datasets = visState.datasets;
+        const dataId = Object.keys(datasets).find(
+          id => id === datasetName || datasets[id].label === datasetName
+        );
+        if (!dataId) {
+          throw new Error(`Dataset "${datasetName}" not found.`);
+        }
+        // Derive the DuckDB table name from the resolved dataset id, not the
+        // user-provided label: different labels can sanitize to the same table
+        // name (e.g. "A-B" vs "A B"), which would clobber another dataset's
+        // temp table inside DuckDB and run the SQL against unintended data.
+        const dbTableName = datasetNameToTableName(dataId);
         const resolvedSql = sql.replace(/__TABLE__/g, `"${dbTableName}"`);
         const columnData: Record<string, unknown[]> = {};
         // Object-valued columns (the `_geojson` Feature objects) must not be
@@ -50,7 +62,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         // for the DuckDB round-trip and restore the objects afterwards.
         const objectColumns: string[] = [];
         for (const varName of variableNames) {
-          const values = ctx.getValuesFromDataset(datasetName, varName);
+          const values = ctx.getValuesFromDataset(dataId, varName);
           if (isObjectColumn(values)) objectColumns.push(varName);
           columnData[varName] = stringifyObjectColumn(values);
         }

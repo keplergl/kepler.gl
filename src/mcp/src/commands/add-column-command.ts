@@ -78,8 +78,12 @@ IMPORTANT: this command only ADDS columns. It cannot delete or rename-in-place a
           );
         }
 
-        const dbTableName = datasetNameToTableName(datasetName);
-        const db = await ctx.loadTableIntoDuckDB(datasetName, fieldNames, dbTableName);
+        // Derive the DuckDB table name from the resolved dataset id, not the
+        // user-provided label: different labels can sanitize to the same table
+        // name (e.g. "A-B" vs "A B"), which would clobber another dataset's
+        // temp table inside DuckDB and run the SQL against unintended data.
+        const dbTableName = datasetNameToTableName(dataId);
+        const db = await ctx.loadTableIntoDuckDB(dataId, fieldNames, dbTableName);
 
         // Add-only: compute ONLY the new column in DuckDB. Existing columns are
         // never round-tripped through DuckDB/Arrow — `tableFromArrays` infers a
