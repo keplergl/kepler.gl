@@ -27,7 +27,7 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
             'Use this instead of creating a duplicate dataset to rename it.'
         )
     }) as any,
-    execute: async (_execCtx, input) => {
+    execute: async (execCtx, input) => {
       const {url, datasetName} = (input ?? {}) as {url: string; datasetName?: string};
       try {
         try {
@@ -37,7 +37,9 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         }
 
         const visState = ctx.getVisState();
-        const response = await fetch(url);
+        // Thread the caller's AbortSignal into the fetch so WebMCP/bridge
+        // cancellations stop long-running loads instead of letting them hang.
+        const response = await fetch(url, {signal: execCtx?.signal});
         if (!response.ok) {
           throw new Error(`Failed to fetch data from ${url}: ${response.statusText}`);
         }
