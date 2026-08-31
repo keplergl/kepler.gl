@@ -358,6 +358,19 @@ For geojson datasets:
 
         if (!layer) {
           if (layerType === 'point' && latitudeColumn && longitudeColumn) {
+            // Validate both columns exist before building the config —
+            // getColumnFieldIdx returns -1 for a missing column, and an
+            // invalid fieldIdx would dispatch a broken layer config (empty
+            // render / confusing runtime errors).
+            const latIdx = dataset.getColumnFieldIdx(latitudeColumn);
+            const lngIdx = dataset.getColumnFieldIdx(longitudeColumn);
+            if (latIdx < 0 || lngIdx < 0) {
+              const missing = latIdx < 0 ? latitudeColumn : longitudeColumn;
+              const available = dataset.fields?.map((f: any) => f.name).join(', ') ?? '';
+              throw new Error(
+                `Column "${missing}" not found in dataset "${datasetName}". Available columns: ${available}`
+              );
+            }
             layer = {
               id: `layer_${Date.now()}`,
               type: 'point',
@@ -365,14 +378,8 @@ For geojson datasets:
                 dataId: datasetId,
                 label: layerName || `${datasetName}-${layerType}`,
                 columns: {
-                  lat: {
-                    value: latitudeColumn,
-                    fieldIdx: dataset.getColumnFieldIdx(latitudeColumn)
-                  },
-                  lng: {
-                    value: longitudeColumn,
-                    fieldIdx: dataset.getColumnFieldIdx(longitudeColumn)
-                  }
+                  lat: {value: latitudeColumn, fieldIdx: latIdx},
+                  lng: {value: longitudeColumn, fieldIdx: lngIdx}
                 },
                 visConfig: {}
               }
