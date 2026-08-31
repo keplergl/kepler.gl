@@ -136,10 +136,17 @@ export function KeplerWebMcp({reduxStore, onStatus}: McpWebMcpProps) {
             // The agent's transport JSON-serializes the return value, and a
             // rejected execute only surfaces as an opaque UnknownError — so
             // errors are returned as text, never thrown.
-            execute: async input => {
+            execute: async (input, options) => {
               try {
                 const result = await cmd.execute(
-                  {store: undefined, getState: () => undefined, invocation: {surface: 'webmcp'}} as any,
+                  {
+                    store: undefined,
+                    getState: () => undefined,
+                    invocation: {surface: 'webmcp'},
+                    // Thread the caller's AbortSignal through so agents can
+                    // cancel long-running commands (e.g. map.load-data).
+                    signal: options?.signal
+                  } as any,
                   input ?? {}
                 );
                 return formatResult(result as any);

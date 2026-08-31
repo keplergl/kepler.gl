@@ -225,7 +225,14 @@ export function restoreObjectColumns(rows: Record<string, unknown>[], columnName
       const value = row[name];
       if (typeof value === 'string') {
         try {
-          row[name] = JSON.parse(value);
+          const parsed = JSON.parse(value);
+          // Only restore object/array values. A column may mix objects with
+          // primitives (e.g. a string "1" alongside real objects), and
+          // JSON-parsing those would coerce "1" → 1 / "true" → true, silently
+          // changing their types. Leave primitives as the original string.
+          if (parsed !== null && typeof parsed === 'object') {
+            row[name] = parsed;
+          }
         } catch {
           // Not JSON — leave the string as-is.
         }
