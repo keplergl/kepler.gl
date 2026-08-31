@@ -31,11 +31,18 @@ function getUrlConfig(): {token: string; port: number; host: string} {
   return {token, port, host};
 }
 
-type McpBridgeProps = {
-  reduxStore: any;
+export type BridgeStatusInfo = {
+  status: BridgeStatus;
+  error: string | null;
+  connected: boolean;
 };
 
-export function KeplerMcpBridge({reduxStore}: McpBridgeProps) {
+type McpBridgeProps = {
+  reduxStore: any;
+  onStatus?: (info: BridgeStatusInfo) => void;
+};
+
+export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
   const [token, setToken] = useState(getUrlConfig().token);
   const [port, setPort] = useState(getUrlConfig().port);
   const [status, setStatus] = useState<BridgeStatus>('idle');
@@ -127,27 +134,19 @@ export function KeplerMcpBridge({reduxStore}: McpBridgeProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Report status up so a parent can render a unified summary chip.
+  useEffect(() => {
+    onStatus?.({status, error, connected: status === 'connected'});
+  }, [status, error, onStatus]);
+
   const connected = status === 'connected';
-  const chip = (connected ? '#2e7cf6' : status === 'error' ? '#d64545' : '#555') as const;
+  const dot = connected ? '#8ff29a' : status === 'connecting' ? '#ffe27a' : '#fff';
 
   return (
-    <div style={{position: 'fixed', left: 12, bottom: 12, zIndex: 9999, fontFamily: 'monospace', fontSize: 11}}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          background: chip,
-          color: '#fff',
-          borderRadius: 999,
-          padding: '4px 10px',
-          boxShadow: '0 2px 8px rgba(0,0,0,.35)'
-        }}
-      >
-        <span style={{width: 8, height: 8, borderRadius: 8, background: status === 'connected' ? '#8ff29a' : status === 'connecting' ? '#ffe27a' : '#fff', flex: 'none'}} />
-        <span>
-          map harness · {status}
-        </span>
+    <div style={{display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start'}}>
+      <div style={{display: 'flex', alignItems: 'center', gap: 8, color: '#fff'}}>
+        <span style={{width: 8, height: 8, borderRadius: 8, background: dot, flex: 'none'}} />
+        <span>map harness · {status}</span>
         {connected ? (
           <button onClick={disconnect} style={btnStyle}>disconnect</button>
         ) : (
@@ -169,16 +168,7 @@ export function KeplerMcpBridge({reduxStore}: McpBridgeProps) {
         )}
       </div>
       {(error || log.length > 0) && (
-        <div
-          style={{
-            marginTop: 4,
-            background: 'rgba(0,0,0,.85)',
-            color: '#ddd',
-            borderRadius: 6,
-            padding: '4px 8px',
-            maxWidth: 420
-          }}
-        >
+        <div style={{color: '#ddd', maxWidth: 420}}>
           {error && <div style={{color: '#ff9e9e'}}>{error}</div>}
           {log.slice(-4).map((line, i) => (
             <div key={i} style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>

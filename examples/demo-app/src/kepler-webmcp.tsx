@@ -60,13 +60,22 @@ function webMcpName(commandId: string): string {
 
 type WebMcpStatus = 'idle' | 'registering' | 'registered' | 'error';
 
+export type WebMcpStatusInfo = {
+  available: boolean;
+  status: WebMcpStatus;
+  toolCount: number;
+  error: string | null;
+  enabled: boolean;
+};
+
 type McpWebMcpProps = {
   reduxStore: any;
+  onStatus?: (info: WebMcpStatusInfo) => void;
 };
 
 const ENABLED_KEY = 'kepler-webmcp-enabled';
 
-export function KeplerWebMcp({reduxStore}: McpWebMcpProps) {
+export function KeplerWebMcp({reduxStore, onStatus}: McpWebMcpProps) {
   const modelContext = useMemo(getModelContext, []);
   const [enabled, setEnabled] = useState(
     () => (typeof window === 'undefined' ? true : window.localStorage.getItem(ENABLED_KEY) !== 'false')
@@ -179,66 +188,43 @@ export function KeplerWebMcp({reduxStore}: McpWebMcpProps) {
     []
   );
 
-  if (!modelContext) {
-    // Feature detection failed — render nothing rather than a permanent dead chip.
-    return null;
-  }
+  // Report status up so a parent can render a unified summary chip.
+  useEffect(() => {
+    onStatus?.({available: !!modelContext, status, toolCount, error, enabled});
+  }, [modelContext, status, toolCount, error, enabled, onStatus]);
 
-  const chip =
-    status === 'registered' ? '#2e7cf6' : status === 'error' ? '#d64545' : status === 'registering' ? '#b58900' : '#555';
+  const available = !!modelContext;
+  const label = !available
+    ? 'API unavailable'
+    : !enabled
+      ? 'off'
+      : status === 'registered'
+        ? `${toolCount} map tools registered`
+        : status;
+  const dot =
+    !available || status === 'idle' || status === 'error'
+      ? '#fff'
+      : status === 'registered'
+        ? '#8ff29a'
+        : '#ffe27a';
 
   return (
-    <div style={{position: 'fixed', left: 12, bottom: 44, zIndex: 9999, fontFamily: 'monospace', fontSize: 11}}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          background: chip,
-          color: '#fff',
-          borderRadius: 999,
-          padding: '4px 10px',
-          boxShadow: '0 2px 8px rgba(0,0,0,.35)'
-        }}
-      >
-        <span
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: 8,
-            background:
-              status === 'registered' ? '#8ff29a' : status === 'registering' ? '#ffe27a' : '#fff',
-            flex: 'none'
-          }}
-        />
-        <span>
-          webMCP ·{' '}
-          {status === 'registered' ? `${toolCount} map tools registered` : status}
-        </span>
-        {enabled ? (
-          <button onClick={() => setPersistedEnabled(false)} style={btnStyle}>
-            disable
-          </button>
-        ) : (
-          <button onClick={() => setPersistedEnabled(true)} style={btnStyle}>
-            enable
-          </button>
-        )}
+    <div style={{display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start'}}>
+      <div style={{display: 'flex', alignItems: 'center', gap: 8, color: '#fff'}}>
+        <span style={{width: 8, height: 8, borderRadius: 8, background: dot, flex: 'none'}} />
+        <span>webMCP · {label}</span>
+        {available &&
+          (enabled ? (
+            <button onClick={() => setPersistedEnabled(false)} style={btnStyle}>
+              disable
+            </button>
+          ) : (
+            <button onClick={() => setPersistedEnabled(true)} style={btnStyle}>
+              enable
+            </button>
+          ))}
       </div>
-      {error && (
-        <div
-          style={{
-            marginTop: 4,
-            background: 'rgba(0,0,0,.85)',
-            color: '#ff9e9e',
-            borderRadius: 6,
-            padding: '4px 8px',
-            maxWidth: 420
-          }}
-        >
-          {error}
-        </div>
-      )}
+      {error && <div style={{color: '#ff9e9e', maxWidth: 420}}>{error}</div>}
     </div>
   );
 }
