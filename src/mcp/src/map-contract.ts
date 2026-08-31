@@ -1,9 +1,11 @@
 /**
- * The kepler.gl map-only tool contract — the "map surface".
+ * The kepler.gl map tool contract — the "map surface".
  *
  * kepler.gl's contract is "accept data, actuate the map, introspect, render."
- * Nothing here computes: no SQL, no spatial analysis, no charts. Those belong
- * to the analysis service (kepler-assistant).
+ * The surface is map-focused: no spatial analysis and no charts — those belong
+ * to the analysis service (kepler-assistant). A few table ops (map.create-table,
+ * map.add-column, map.save-data) are DuckDB-backed and mutate the map's datasets
+ * in place; they are part of the surface because they change what the map shows.
  *
  * This module is intentionally dependency-light. It defines the map.* tool ids
  * and a `MapContract` interface so any host (the demo-app browser page, the

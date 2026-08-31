@@ -16,9 +16,11 @@ export interface ToolResult {
 }
 
 /**
- * The v1 map-only tool surface (pure map actuation — no compute). These are the
- * command ids the kepler.gl demo-app's assistant actually registers, reconciled
- * with the kepler-mcp proposal.
+ * The v1 map tool surface. These are the command ids the kepler.gl demo-app's
+ * assistant actually registers, reconciled with the kepler-mcp proposal. Most
+ * commands are pure map actuation (set-basemap, add-layer, ...); the table ops
+ * (map.create-table, map.add-column, map.save-data) are DuckDB-backed and are
+ * included because they mutate the map's datasets in place.
  */
 export const MAP_TOOL_IDS = [
   'map.set-basemap',

@@ -21,7 +21,9 @@ IMPORTANT: this command only ADDS columns. It cannot delete or rename-in-place a
     metadata: {readOnly: false, riskLevel: 'medium', idempotent: false},
     inputSchema: z
       .object({
-        datasetName: z.string().describe('The name of the dataset to add the column to'),
+        datasetName: z
+          .string()
+          .describe('The name (label) or id of the dataset to add the column to'),
         newColumnName: z
           .string()
           .describe('The name of the new column to add. Must not already exist in the dataset.'),
@@ -57,7 +59,9 @@ IMPORTANT: this command only ADDS columns. It cannot delete or rename-in-place a
       try {
         const visState = ctx.getVisState();
         const datasets = visState.datasets;
-        const dataId = Object.keys(datasets).find(id => datasets[id].label === datasetName);
+        const dataId = Object.keys(datasets).find(
+          id => id === datasetName || datasets[id].label === datasetName
+        );
         if (!dataId) {
           throw new Error(`Dataset "${datasetName}" not found.`);
         }

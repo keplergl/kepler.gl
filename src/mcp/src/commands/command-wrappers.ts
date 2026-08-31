@@ -39,7 +39,7 @@ export type CommandMeta = {
 /**
  * Cast a concrete zod schema (e.g. `z.object({...})`, which is `ZodObject<...>`)
  * to the `ZodType<unknown>` that `RoomCommand.inputSchema` expects. The
- * installed zod v3 `ZodObject` is not structurally assignable to sqlrooms'
+ * installed zod `ZodObject` is not structurally assignable to sqlrooms'
  * `ZodType<unknown>` (covariance on the output type), so a cast is required at
  * the assignment site. This helper centralizes that cast.
  */
