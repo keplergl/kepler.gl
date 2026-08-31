@@ -20,6 +20,24 @@ export interface DataContainerInterface {
   update?(updateData: any[] | arrow.Table): void;
 
   /**
+   * Append rows in place. Implemented by row containers; Arrow/DuckDB omit this.
+   * @returns false when the rows are rejected (wrong shape) and the container is unchanged.
+   */
+  append?(rows: any[][]): boolean;
+
+  /**
+   * Replace one row in place. Implemented by row containers; Arrow/DuckDB omit this.
+   * @returns false when the index or row is rejected and the container is unchanged.
+   */
+  replace?(index: number, row: any[]): boolean;
+
+  /**
+   * Remove rows by index in place. Implemented by row containers; Arrow/DuckDB omit this.
+   * @returns false when any index is invalid and the container is unchanged.
+   */
+  remove?(indexes: number[]): boolean;
+
+  /**
    * Returns the number of rows in the data container.
    * @returns Number of rows in the data container.
    */

@@ -111,6 +111,10 @@ const actionHandler = {
 
   [ActionTypes.REFRESH_DATASET_PROGRESS]: visStateUpdaters.refreshDatasetProgressUpdater,
 
+  [ActionTypes.ADD_TO_DATASET]: visStateUpdaters.addToDatasetUpdater,
+
+  [ActionTypes.REMOVE_FROM_DATASET]: visStateUpdaters.removeFromDatasetUpdater,
+
   [ActionTypes.TOGGLE_FILTER_ANIMATION]: visStateUpdaters.toggleFilterAnimationUpdater,
 
   [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateFilterAnimationSpeedUpdater,

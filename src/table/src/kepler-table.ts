@@ -107,6 +107,13 @@ export type TimeFieldFilterProps = TimeRangeFieldDomain & {
 // Unique identifier of each field
 const FID_KEY = 'name';
 
+const ROW_EDIT_NOT_IMPLEMENTED =
+  'In-place row edits (append, upsert, delete) are not implemented for Arrow/DuckDB tables. DuckDB INSERT and Arrow concat are not supported yet. Use addDataToMap with keepExistingConfig to replace the table.';
+
+function warnRowEditsUnavailable(method: string): void {
+  Console.warn(`KeplerTable.${method}: ${ROW_EDIT_NOT_IMPLEMENTED}`);
+}
+
 function readFieldValue(
   fieldIdx: number,
   dc: DataContainerInterface,
@@ -383,6 +390,170 @@ class KeplerTable<F extends Field = Field> {
     this.dataRevision += 1;
 
     return this;
+  }
+
+  /**
+   * Append column-ordered rows in place. No-op for Arrow/DuckDB (no `append`).
+   * Accessors stay bound: the container instance is not replaced.
+   * @returns false when the payload is rejected and the table is unchanged.
+   */
+  appendRows(rows: any[][]): boolean {
+    if (typeof this.dataContainer.append !== 'function') {
+      warnRowEditsUnavailable('appendRows');
+      return false;
+    }
+    if (!rows.length) {
+      return false;
+    }
+    const columnCount = this.fields.length;
+    if (!columnCount || rows.some(row => !Array.isArray(row) || row.length !== columnCount)) {
+      return false;
+    }
+
+    const start = this.dataContainer.numRows();
+    if (!this.dataContainer.append(rows)) {
+      return false;
+    }
+
+    const nextIndexes =
+      this.allIndexes.length === start
+        ? this.allIndexes.concat(rows.map((_, i) => start + i))
+        : this.dataContainer.getPlainIndex();
+    this.afterRowMutation(nextIndexes);
+    return true;
+  }
+
+  /**
+   * Replace rows that share `keyField` and append the rest. Last incoming row
+   * wins for a repeated key. No-op for Arrow/DuckDB.
+   * @returns false when the payload is rejected and the table is unchanged.
+   */
+  upsertRows(rows: any[][], keyField: string): boolean {
+    if (
+      typeof this.dataContainer.append !== 'function' ||
+      typeof this.dataContainer.replace !== 'function'
+    ) {
+      warnRowEditsUnavailable('upsertRows');
+      return false;
+    }
+    const keyIdx = this.fields.findIndex(field => field.name === keyField);
+    if (keyIdx < 0 || !rows.length) {
+      return false;
+    }
+    const columnCount = this.fields.length;
+    if (rows.some(row => !Array.isArray(row) || row.length !== columnCount)) {
+      return false;
+    }
+
+    const start = this.dataContainer.numRows();
+    const keyToIndex = new Map<unknown, number>();
+    for (let i = 0; i < start; i++) {
+      const key = this.dataContainer.valueAt(i, keyIdx);
+      if (!keyToIndex.has(key)) {
+        keyToIndex.set(key, i);
+      }
+    }
+
+    const lastByKey = new Map<unknown, any[]>();
+    const keyOrder: unknown[] = [];
+    for (const row of rows) {
+      const key = row[keyIdx];
+      if (!lastByKey.has(key)) {
+        keyOrder.push(key);
+      }
+      lastByKey.set(key, row);
+    }
+
+    const toAppend: any[][] = [];
+    for (const key of keyOrder) {
+      const row = lastByKey.get(key);
+      if (!row) {
+        continue;
+      }
+      const existing = keyToIndex.get(key);
+      if (existing !== undefined) {
+        this.dataContainer.replace(existing, row);
+      } else {
+        toAppend.push(row);
+      }
+    }
+
+    if (toAppend.length && !this.dataContainer.append(toAppend)) {
+      return false;
+    }
+
+    const nextIndexes =
+      toAppend.length && this.allIndexes.length === start
+        ? this.allIndexes.concat(toAppend.map((_, i) => start + i))
+        : toAppend.length
+        ? this.dataContainer.getPlainIndex()
+        : this.allIndexes;
+    this.afterRowMutation(nextIndexes);
+    return true;
+  }
+
+  /**
+   * Remove rows by index in place. No-op for Arrow/DuckDB (no `remove`).
+   * @returns false when any index is invalid and the table is unchanged.
+   */
+  removeRows(indexes: number[]): boolean {
+    if (typeof this.dataContainer.remove !== 'function') {
+      warnRowEditsUnavailable('removeRows');
+      return false;
+    }
+    if (!indexes.length) {
+      return false;
+    }
+    if (!this.dataContainer.remove(indexes)) {
+      return false;
+    }
+    this.afterRowMutation(this.dataContainer.getPlainIndex());
+    return true;
+  }
+
+  /**
+   * Indexes of rows whose `fieldName` value is in `values` (first-column-wins
+   * equality via Set). Empty when the field is missing.
+   */
+  findRowIndexesByFieldValues(fieldName: string, values: unknown[]): number[] {
+    const fieldIdx = this.fields.findIndex(field => field.name === fieldName);
+    if (fieldIdx < 0 || !values.length) {
+      return [];
+    }
+    const match = new Set(values);
+    const indexes: number[] = [];
+    const numRows = this.dataContainer.numRows();
+    for (let i = 0; i < numRows; i++) {
+      if (match.has(this.dataContainer.valueAt(i, fieldIdx))) {
+        indexes.push(i);
+      }
+    }
+    return indexes;
+  }
+
+  private afterRowMutation(allIndexes: number[]): void {
+    const fieldsToRebuild = this.fields.filter(f => f.filterProps).map(f => f.name);
+
+    // Drop cached per-row props (mappedValue is indexed by row). Same as a
+    // snapshot update(); getColumnFilterProps rebuilds after indexes are current.
+    this.fields = this.fields.map(f => {
+      const {filterProps: _filterProps, ...rest} = f;
+      return rest;
+    }) as F[];
+
+    this.allIndexes = allIndexes;
+    this.filteredIndex = allIndexes;
+    this.filteredIndexForDomain = allIndexes;
+    this.filteredIndexByLayer = {};
+    this.filteredIdxCPU = undefined;
+    this.filterRecord = undefined;
+    this.filterRecordCPU = undefined;
+    this.changedFilters = undefined;
+    this.sortColumn = undefined;
+    this.sortOrder = null;
+    this.dataRevision += 1;
+
+    fieldsToRebuild.forEach(name => this.getColumnFilterProps(name));
   }
 
   get length() {

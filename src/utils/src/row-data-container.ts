@@ -63,6 +63,68 @@ export class RowDataContainer implements DataContainerInterface {
     this._numColumns = updateData[0]?.length || 0;
   }
 
+  /**
+   * Append rows without copying the existing table. Rejects the whole batch when
+   * any row is not an array of the current column count (empty tables take the
+   * width from the first row).
+   */
+  append(rows: any[][]): boolean {
+    if (!Array.isArray(rows) || !rows.length) {
+      return false;
+    }
+
+    const expected = this._numColumns || (Array.isArray(rows[0]) ? rows[0].length : 0);
+    if (!expected) {
+      return false;
+    }
+    for (let i = 0; i < rows.length; i++) {
+      if (!Array.isArray(rows[i]) || rows[i].length !== expected) {
+        return false;
+      }
+    }
+
+    this._rows.push(...rows);
+    this._numColumns = expected;
+    return true;
+  }
+
+  /**
+   * Overwrite one row. Rejects an out-of-range index or a row of the wrong width.
+   */
+  replace(index: number, row: any[]): boolean {
+    if (!Number.isInteger(index) || index < 0 || index >= this._rows.length) {
+      return false;
+    }
+    if (!Array.isArray(row) || row.length !== this._numColumns) {
+      return false;
+    }
+    this._rows[index] = row;
+    return true;
+  }
+
+  /**
+   * Drop unique valid indexes in one rebuild. Any out-of-range or non-integer
+   * index rejects the whole call so callers can no-op instead of shifting twice.
+   */
+  remove(indexes: number[]): boolean {
+    if (!Array.isArray(indexes) || !indexes.length) {
+      return false;
+    }
+
+    const numRows = this._rows.length;
+    const toRemove = new Set<number>();
+    for (let i = 0; i < indexes.length; i++) {
+      const index = indexes[i];
+      if (!Number.isInteger(index) || index < 0 || index >= numRows) {
+        return false;
+      }
+      toRemove.add(index);
+    }
+
+    this._rows = this._rows.filter((_, rowIndex) => !toRemove.has(rowIndex));
+    return true;
+  }
+
   numRows(): number {
     return this._rows.length;
   }

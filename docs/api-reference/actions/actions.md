@@ -26,6 +26,7 @@
 - [visStateActions][42]
   - [addFilter][43]
   - [addLayer][45]
+  - [addToDataset](#addtodataset)
   - [applyCPUFilter][47]
   - [enlargeFilter][49]
   - [interactionConfigChange][51]
@@ -41,6 +42,7 @@
   - [onMapClick][71]
   - [onMouseMove][72]
   - [removeDataset][74]
+  - [removeFromDataset](#removefromdataset)
   - [removeFilter][76]
   - [removeLayer][78]
   - [reorderLayer][80]
@@ -524,6 +526,23 @@ Add a new layer
 
 Returns **{type: ActionTypes.ADD_LAYER, props: props}**
 
+### addToDataset
+
+Append or upsert rows on an existing in-memory row dataset without `addDataToMap`. Keeps layer identity and style. Pass `options.upsertBy` to replace rows that share that key and append the rest.
+
+Not implemented for Arrow or DuckDB tables (no INSERT / concat yet); those calls warn and leave the table unchanged. Use `addDataToMap` with `keepExistingConfig` for a full replace.
+
+- **ActionTypes**: `ActionTypes.ADD_TO_DATASET`
+- **Updaters**: `visStateUpdaters.addToDatasetUpdater`
+
+**Parameters**
+
+- `dataId` **[string][162]** dataset id
+- `rows` one row or an array of rows (column-ordered arrays, or objects keyed by field name)
+- `options` **[Object][164]** (optional) `{upsertBy: string}` unique key field
+
+Returns **{type: ActionTypes.ADD_TO_DATASET, dataId, rows, options}**
+
 ### applyCPUFilter
 
 Trigger CPU filter of selected dataset
@@ -722,6 +741,22 @@ Remove a dataset and all layers, filters, tooltip configs that based on it
 - `key` **[string][162]** dataset id
 
 Returns **{type: ActionTypes.REMOVE_DATASET, key: key}**
+
+### removeFromDataset
+
+Delete rows from an existing in-memory row dataset without restyling layers. The second argument is either row indexes or `{field, values}` to match a column (for example an id).
+
+Not implemented for Arrow or DuckDB tables; those calls warn and leave the table unchanged.
+
+- **ActionTypes**: `ActionTypes.REMOVE_FROM_DATASET`
+- **Updaters**: `visStateUpdaters.removeFromDatasetUpdater`
+
+**Parameters**
+
+- `dataId` **[string][162]** dataset id
+- `rowIndexesOrMatcher` one index, an array of indexes, or `{field, values}`
+
+Returns **{type: ActionTypes.REMOVE_FROM_DATASET, dataId, rowIndexes?, byField?}**
 
 ### removeFilter
 

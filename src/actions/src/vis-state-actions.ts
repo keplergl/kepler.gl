@@ -1031,6 +1031,101 @@ export function refreshDatasetProgress(
   };
 }
 
+/**
+ * One dataset row: a column-ordered array (same as `ProtoDataset.data.rows`)
+ * or a field-name record. Missing keys become `null`.
+ */
+export type DatasetRow = any[] | Record<string, unknown>;
+
+export type AddToDatasetOptions = {
+  /**
+   * Field name used as a unique key. Matching rows are replaced in place;
+   * keys that are not in the table are appended. Last incoming row wins when
+   * the same key appears twice. Row tables only — Arrow/DuckDB no-op with a warning.
+   */
+  upsertBy?: string;
+};
+
+export type AddToDatasetUpdaterAction = {
+  dataId: string;
+  rows: DatasetRow | DatasetRow[];
+  options?: AddToDatasetOptions;
+};
+/**
+ * Append rows to an existing in-memory row dataset without `addDataToMap`.
+ * Keeps layer identity and style. Pass `options.upsertBy` to replace rows that
+ * share that key and append the rest.
+ *
+ * Not implemented for Arrow or DuckDB tables (no INSERT / concat yet); those
+ * calls warn and leave the table unchanged. Use `addDataToMap` with
+ * `keepExistingConfig` for a full replace.
+ * @memberof visStateActions
+ * @param dataId dataset id
+ * @param rows one row or an array of rows (arrays in field order, or objects keyed by field name)
+ * @param options optional `{upsertBy}` field name
+ * @returns action
+ * @public
+ */
+export function addToDataset(
+  dataId: string,
+  rows: DatasetRow | DatasetRow[],
+  options?: AddToDatasetOptions
+): Merge<AddToDatasetUpdaterAction, {type: typeof ActionTypes.ADD_TO_DATASET}> {
+  return {
+    type: ActionTypes.ADD_TO_DATASET,
+    dataId,
+    rows,
+    options
+  };
+}
+
+export type RemoveFromDatasetByField = {
+  field: string;
+  values: unknown | unknown[];
+};
+
+export type RemoveFromDatasetUpdaterAction = {
+  dataId: string;
+  rowIndexes?: number | number[];
+  byField?: RemoveFromDatasetByField;
+};
+/**
+ * Delete rows from an existing in-memory row dataset without restyling layers.
+ * The second argument is either row indexes or `{field, values}` to match a
+ * column (e.g. an id). Out-of-range indexes are a no-op for the whole action.
+ *
+ * Not implemented for Arrow or DuckDB tables; those calls warn and leave the
+ * table unchanged. For a full table replace use `addDataToMap` with
+ * `keepExistingConfig`.
+ * @memberof visStateActions
+ * @param dataId dataset id
+ * @param rowIndexesOrMatcher one index, an array of indexes, or `{field, values}`
+ * @returns action
+ * @public
+ */
+export function removeFromDataset(
+  dataId: string,
+  rowIndexesOrMatcher: number | number[] | RemoveFromDatasetByField
+): Merge<RemoveFromDatasetUpdaterAction, {type: typeof ActionTypes.REMOVE_FROM_DATASET}> {
+  if (
+    rowIndexesOrMatcher &&
+    typeof rowIndexesOrMatcher === 'object' &&
+    !Array.isArray(rowIndexesOrMatcher) &&
+    'field' in rowIndexesOrMatcher
+  ) {
+    return {
+      type: ActionTypes.REMOVE_FROM_DATASET,
+      dataId,
+      byField: rowIndexesOrMatcher
+    };
+  }
+  return {
+    type: ActionTypes.REMOVE_FROM_DATASET,
+    dataId,
+    rowIndexes: rowIndexesOrMatcher
+  };
+}
+
 export type SortTableColumnUpdaterAction = {
   dataId: string;
   column: string;

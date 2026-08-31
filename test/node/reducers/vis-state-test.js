@@ -8228,3 +8228,371 @@ test('VisStateUpdater -> refreshDataset 304 and error', async t => {
 
   t.end();
 });
+
+test('VisStateUpdater -> addToDataset appends rows and keeps layers', async t => {
+  const initialData = processCsvData('lat,lng\n37.77,-122.42');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const {props} = PointLayer.findDefaultLayerProps(datasets['live']);
+  const pointLayer = new PointLayer({
+    id: 'p1',
+    dataId: 'live',
+    isVisible: true,
+    ...props[0]
+  });
+  const {layerData, layer} = calculateLayerData(
+    pointLayer,
+    {...INITIAL_VIS_STATE, datasets, layers: [pointLayer], layerData: [{}]},
+    undefined
+  );
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layerData],
+    layerOrder: [layer.id]
+  };
+
+  const revisionBefore = state.datasets.live.dataRevision;
+  const appended = reducer(
+    state,
+    VisStateActions.addToDataset('live', [
+      [10, 20],
+      [30, 40]
+    ])
+  );
+
+  t.equal(appended.datasets.live.dataContainer.numRows(), 3, 'should append both rows');
+  t.deepEqual(appended.datasets.live.allIndexes, [0, 1, 2], 'should extend allIndexes');
+  t.notEqual(appended.datasets.live.dataRevision, revisionBefore, 'should bump dataRevision');
+  t.notEqual(appended.datasets.live, state.datasets.live, 'should copy the table for Redux');
+  t.equal(appended.layers.length, 1, 'should not create extra layers');
+  t.equal(appended.layers[0].id, 'p1', 'should keep the same layer id');
+  t.equal(appended.layerOrder[0], 'p1', 'should keep layerOrder');
+  t.equal(appended.layerData[0].data.length, 3, 'should rebuild layer data for the new rows');
+  t.deepEqual(
+    appended.layerData[0].data[1].position.slice(0, 2),
+    [20, 10],
+    'should plot the first appended point'
+  );
+
+  const asObjects = reducer(appended, VisStateActions.addToDataset('live', {lat: 11, lng: 22}));
+  t.equal(asObjects.datasets.live.dataContainer.numRows(), 4, 'should append a field-name record');
+  t.equal(asObjects.datasets.live.dataContainer.valueAt(3, 0), 11, 'should map lat by field name');
+  t.equal(asObjects.layers[0].id, 'p1', 'object rows should not restyle layers');
+
+  const missingKeys = reducer(asObjects, VisStateActions.addToDataset('live', {lat: 99}));
+  t.equal(
+    missingKeys.datasets.live.dataContainer.numRows(),
+    5,
+    'should accept a partial object row'
+  );
+  t.equal(
+    missingKeys.datasets.live.dataContainer.valueAt(4, 1),
+    null,
+    'missing object keys should become null'
+  );
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset object rows ignore prototype keys', async t => {
+  const initialData = processCsvData('lat,lng\n1,2');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+
+  const inheritedLng = Object.assign(Object.create({lng: 999}), {lat: 50});
+  const missing = reducer(state, VisStateActions.addToDataset('live', inheritedLng));
+  t.equal(missing.datasets.live.dataContainer.numRows(), 2, 'should append the object row');
+  t.equal(missing.datasets.live.dataContainer.valueAt(1, 0), 50, 'own lat should be copied');
+  t.equal(
+    missing.datasets.live.dataContainer.valueAt(1, 1),
+    null,
+    'inherited lng should become null'
+  );
+
+  const own = reducer(missing, VisStateActions.addToDataset('live', {lat: 7, lng: 8}));
+  t.equal(own.datasets.live.dataContainer.valueAt(2, 1), 8, 'own lng should still be copied');
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset no-ops', async t => {
+  const initialData = processCsvData('lat,lng\n1,2');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+
+  t.equal(
+    reducer(state, VisStateActions.addToDataset('missing', [1, 2])),
+    state,
+    'unknown dataset is a no-op'
+  );
+  t.equal(
+    reducer(state, VisStateActions.addToDataset('live', [1])),
+    state,
+    'wrong column count is a no-op'
+  );
+  t.equal(
+    reducer(state, VisStateActions.addToDataset('live', [])),
+    state,
+    'empty row list is a no-op'
+  );
+
+  datasets.live.dataContainer.append = undefined;
+  const warn = sinon.stub(console, 'warn');
+  t.equal(
+    reducer(state, VisStateActions.addToDataset('live', [3, 4])),
+    state,
+    'tables without append (Arrow/DuckDB) are a no-op'
+  );
+  t.ok(warn.called, 'should warn that in-place row edits are not implemented for Arrow/DuckDB');
+  warn.restore();
+  t.equal(state.datasets.live.dataContainer.numRows(), 1, 'no-op must not mutate rows');
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset reapplies filters', async t => {
+  const initialData = processCsvData('lat,lng,value\n37.77,-122.42,10\n37.78,-122.43,20');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const withFilter = reducer({...INITIAL_VIS_STATE, datasets}, VisStateActions.addFilter('live'));
+  const named = reducer(withFilter, VisStateActions.setFilter(0, 'name', 'value'));
+  const filtered = reducer(named, VisStateActions.setFilter(0, 'value', [0, 15]));
+
+  t.deepEqual(
+    filtered.datasets.live.filteredIndexForDomain,
+    [0],
+    'range filter should hide the out-of-range seed row'
+  );
+
+  const appended = reducer(
+    filtered,
+    VisStateActions.addToDataset('live', [
+      [37.79, -122.44, 12],
+      [37.8, -122.45, 99]
+    ])
+  );
+
+  t.equal(
+    appended.datasets.live.dataContainer.numRows(),
+    4,
+    'should still store both appended rows'
+  );
+  t.deepEqual(
+    appended.datasets.live.filteredIndexForDomain,
+    [0, 2],
+    'should keep in-range rows and hide the out-of-range append'
+  );
+  t.equal(appended.filters.length, 1, 'should keep the existing filter');
+
+  t.end();
+});
+
+test('VisStateUpdater -> removeFromDataset deletes rows and keeps layers', async t => {
+  const initialData = processCsvData('lat,lng\n1,2\n3,4\n5,6\n7,8');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const {props} = PointLayer.findDefaultLayerProps(datasets['live']);
+  const pointLayer = new PointLayer({
+    id: 'p1',
+    dataId: 'live',
+    isVisible: true,
+    ...props[0]
+  });
+  const {layerData, layer} = calculateLayerData(
+    pointLayer,
+    {...INITIAL_VIS_STATE, datasets, layers: [pointLayer], layerData: [{}]},
+    undefined
+  );
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layerData],
+    layerOrder: [layer.id]
+  };
+
+  const removed = reducer(state, VisStateActions.removeFromDataset('live', [0, 2]));
+  t.equal(removed.datasets.live.dataContainer.numRows(), 2, 'should drop both indexes');
+  t.deepEqual(removed.datasets.live.allIndexes, [0, 1], 'should rebuild contiguous indexes');
+  t.equal(removed.datasets.live.dataContainer.valueAt(0, 0), 3, 'should keep the former row 1');
+  t.equal(removed.datasets.live.dataContainer.valueAt(1, 0), 7, 'should keep the former row 3');
+  t.equal(removed.layers.length, 1, 'should not create extra layers');
+  t.equal(removed.layers[0].id, 'p1', 'should keep the same layer id');
+  t.equal(removed.layerData[0].data.length, 2, 'should rebuild layer data');
+
+  const oneIndex = reducer(removed, VisStateActions.removeFromDataset('live', 0));
+  t.equal(oneIndex.datasets.live.dataContainer.numRows(), 1, 'should accept a single index');
+  t.equal(
+    oneIndex.datasets.live.dataContainer.valueAt(0, 0),
+    7,
+    'should keep the last remaining row'
+  );
+
+  t.equal(
+    reducer(oneIndex, VisStateActions.removeFromDataset('missing', 0)),
+    oneIndex,
+    'unknown dataset is a no-op'
+  );
+  t.equal(
+    reducer(oneIndex, VisStateActions.removeFromDataset('live', 99)),
+    oneIndex,
+    'out-of-range index is a no-op'
+  );
+
+  oneIndex.datasets.live.dataContainer.remove = undefined;
+  const warn = sinon.stub(console, 'warn');
+  t.equal(
+    reducer(oneIndex, VisStateActions.removeFromDataset('live', 0)),
+    oneIndex,
+    'tables without remove (Arrow/DuckDB) are a no-op'
+  );
+  t.ok(warn.called, 'should warn that in-place deletes are not implemented for Arrow/DuckDB');
+  warn.restore();
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset rebuilds timestamp mappedValue', async t => {
+  const initialData = processCsvData(
+    'lat,lng,ts\n37.77,-122.42,2016-09-17 00:09:55\n37.78,-122.43,2016-09-17 00:10:55'
+  );
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const withFilter = reducer({...INITIAL_VIS_STATE, datasets}, VisStateActions.addFilter('live'));
+  const filtered = reducer(withFilter, VisStateActions.setFilter(0, 'name', 'ts'));
+  const tsField = filtered.datasets.live.fields.find(f => f.name === 'ts');
+  t.equal(
+    tsField.filterProps.mappedValue.length,
+    2,
+    'time filter should cache mappedValue per row'
+  );
+
+  const appended = reducer(
+    filtered,
+    VisStateActions.addToDataset('live', [37.79, -122.44, '2016-09-17 00:11:55'])
+  );
+  const nextTs = appended.datasets.live.fields.find(f => f.name === 'ts');
+  t.equal(
+    nextTs.filterProps.mappedValue.length,
+    3,
+    'mappedValue should cover the appended timestamp row'
+  );
+  t.ok(
+    nextTs.filterProps.mappedValue[2] > nextTs.filterProps.mappedValue[1],
+    'appended timestamp should parse into mappedValue'
+  );
+
+  const removed = reducer(appended, VisStateActions.removeFromDataset('live', 0));
+  const afterRemove = removed.datasets.live.fields.find(f => f.name === 'ts');
+  t.equal(
+    afterRemove.filterProps.mappedValue.length,
+    2,
+    'mappedValue should shrink after a row is removed'
+  );
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset upserts by key', async t => {
+  const initialData = processCsvData('id,lat,lng\na,1,2\nb,3,4');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+
+  const upserted = reducer(
+    state,
+    VisStateActions.addToDataset(
+      'live',
+      [
+        {id: 'b', lat: 30, lng: 40},
+        {id: 'c', lat: 5, lng: 6},
+        {id: 'b', lat: 33, lng: 44}
+      ],
+      {upsertBy: 'id'}
+    )
+  );
+
+  t.equal(upserted.datasets.live.dataContainer.numRows(), 3, 'should append only the new key');
+  t.equal(upserted.datasets.live.dataContainer.valueAt(0, 0), 'a', 'should keep unmatched rows');
+  t.equal(
+    upserted.datasets.live.dataContainer.valueAt(1, 1),
+    33,
+    'should replace the matching key with the last incoming row'
+  );
+  t.equal(upserted.datasets.live.dataContainer.valueAt(2, 0), 'c', 'should append the new key');
+  t.equal(upserted.layers.length, 0, 'upsert should not create layers');
+
+  t.end();
+});
+
+test('VisStateUpdater -> removeFromDataset by field values', async t => {
+  const initialData = processCsvData('id,lat,lng\na,1,2\nb,3,4\nc,5,6\nb,7,8');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+
+  const removed = reducer(
+    state,
+    VisStateActions.removeFromDataset('live', {field: 'id', values: ['b', 'missing']})
+  );
+  t.equal(removed.datasets.live.dataContainer.numRows(), 2, 'should drop every row with that id');
+  t.equal(removed.datasets.live.dataContainer.valueAt(0, 0), 'a', 'should keep unmatched ids');
+  t.equal(
+    removed.datasets.live.dataContainer.valueAt(1, 0),
+    'c',
+    'should keep later unmatched ids'
+  );
+
+  const none = reducer(
+    removed,
+    VisStateActions.removeFromDataset('live', {field: 'id', values: 'zzz'})
+  );
+  t.equal(none, removed, 'unknown values are a no-op');
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset and removeFromDataset clear table sort', async t => {
+  const initialData = processCsvData('lat,lng\n1,2\n3,4\n5,6');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const unsorted = {...INITIAL_VIS_STATE, datasets};
+  const sorted = reducer(unsorted, VisStateActions.sortTableColumn('live', 'lat'));
+  t.ok(sorted.datasets.live.sortOrder, 'should have a sort permutation before mutate');
+  t.ok(sorted.datasets.live.sortColumn, 'should have sortColumn before mutate');
+
+  const appended = reducer(sorted, VisStateActions.addToDataset('live', [7, 8]));
+  t.equal(appended.datasets.live.sortOrder, null, 'append should drop sortOrder');
+  t.equal(appended.datasets.live.sortColumn, undefined, 'append should drop sortColumn');
+
+  const sortedAgain = reducer(appended, VisStateActions.sortTableColumn('live', 'lat'));
+  t.ok(sortedAgain.datasets.live.sortOrder, 'should be able to sort again after append');
+
+  const removed = reducer(sortedAgain, VisStateActions.removeFromDataset('live', 0));
+  t.equal(removed.datasets.live.sortOrder, null, 'remove should drop sortOrder');
+  t.equal(removed.datasets.live.sortColumn, undefined, 'remove should drop sortColumn');
+
+  t.end();
+});

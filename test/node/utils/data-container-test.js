@@ -86,6 +86,71 @@ test('RowDataContainer.update replaces rows', t => {
   t.end();
 });
 
+test('RowDataContainer.append and remove', t => {
+  const dc = createDataContainer([
+    [10, 20],
+    [30, 40],
+    [50, 60]
+  ]);
+
+  t.equal(
+    dc.append([
+      [70, 80],
+      [90, 100]
+    ]),
+    true,
+    'should append matching rows'
+  );
+  t.equal(dc.numRows(), 5, 'should grow without replacing existing rows');
+  t.equal(dc.valueAt(0, 0), 10, 'should keep the original first row');
+  t.equal(dc.valueAt(4, 1), 100, 'should read the last appended row');
+  t.deepEqual(dc.getPlainIndex(), [0, 1, 2, 3, 4], 'should expose contiguous indexes');
+
+  t.equal(dc.append([[1]]), false, 'should reject a wrong column count');
+  t.equal(dc.append([]), false, 'should reject an empty batch');
+  t.equal(dc.numRows(), 5, 'should leave rows unchanged after a rejected append');
+
+  t.equal(dc.replace(0, [11, 22]), true, 'should overwrite a row in place');
+  t.deepEqual(dc.rowAsArray(0), [11, 22], 'should read the replaced row');
+  t.equal(dc.replace(99, [1, 2]), false, 'should reject a replace with an out-of-range index');
+  t.equal(dc.replace(0, [1]), false, 'should reject a replace with the wrong column count');
+  t.deepEqual(
+    dc.rowAsArray(0),
+    [11, 22],
+    'should leave the row unchanged after a rejected replace'
+  );
+
+  t.equal(dc.remove([1, 1, 3]), true, 'should drop unique valid indexes in one rebuild');
+  t.deepEqual(
+    dc.flattenData(),
+    [
+      [11, 22],
+      [50, 60],
+      [90, 100]
+    ],
+    'should keep the remaining rows in order'
+  );
+  t.deepEqual(dc.getPlainIndex(), [0, 1, 2], 'should rebuild indexes after remove');
+
+  t.equal(dc.remove([99]), false, 'should reject an out-of-range index');
+  t.equal(dc.remove([-1]), false, 'should reject a negative index');
+  t.equal(dc.numRows(), 3, 'should leave rows unchanged after a rejected remove');
+
+  dc.update([[1, 2]]);
+  t.equal(dc.numRows(), 1, 'update should still replace after append/remove');
+  t.equal(dc.valueAt(0, 0), 1, 'update should write the new snapshot');
+
+  const empty = createDataContainer([]);
+  t.equal(
+    empty.append([[3, 4]]),
+    true,
+    'should set column count from the first row on an empty table'
+  );
+  t.equal(empty.numRows(), 1, 'empty table should accept the first append');
+  t.equal(empty.numColumns(), 2, 'empty table should take width from the first row');
+  t.end();
+});
+
 test('IndexedDataContainer', t => {
   const dc = createIndexedDataContainer(createDataContainer(data), indices);
 

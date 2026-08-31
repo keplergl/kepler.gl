@@ -3213,14 +3213,134 @@ export function refreshDatasetSuccessUpdater(
     return rebindLayersAndFiltersAfterSchemaChange(state, dataId, datasets);
   }
 
-  const filteredDatasets = applyFiltersToDatasets([dataId], datasets, state.filters, state.layers);
+  return reapplyFiltersAndLayerData({...state, datasets}, dataId);
+}
 
+function reapplyFiltersAndLayerData(state: VisState, dataId: string): VisState {
+  const filteredDatasets = applyFiltersToDatasets(
+    [dataId],
+    state.datasets,
+    state.filters,
+    state.layers
+  );
   let nextState: VisState = {
     ...state,
     datasets: filteredDatasets
   };
   nextState = updateAllLayerDomainData(nextState, [dataId], undefined);
   return updateAnimationDomain(nextState);
+}
+
+function isDatasetRowList(
+  rows: VisStateActions.DatasetRow | VisStateActions.DatasetRow[]
+): rows is VisStateActions.DatasetRow[] {
+  if (!Array.isArray(rows) || !rows.length) {
+    return Array.isArray(rows);
+  }
+  // A single column-ordered row is an array of primitives; a list of rows is
+  // an array of arrays or an array of field-name records.
+  return Array.isArray(rows[0]) || isPlainObject(rows[0]);
+}
+
+function toArrayRow(row: VisStateActions.DatasetRow, fields: Field[]): any[] | null {
+  if (Array.isArray(row)) {
+    return row.length === fields.length ? row : null;
+  }
+  if (isPlainObject(row)) {
+    const record = row as Record<string, unknown>;
+    return fields.map(field =>
+      Object.prototype.hasOwnProperty.call(record, field.name) ? record[field.name] : null
+    );
+  }
+  return null;
+}
+
+function normalizeDatasetRows(
+  rows: VisStateActions.DatasetRow | VisStateActions.DatasetRow[],
+  fields: Field[]
+): any[][] | null {
+  if (!fields.length) {
+    return null;
+  }
+  const list = isDatasetRowList(rows) ? rows : [rows];
+  if (!list.length) {
+    return null;
+  }
+  const normalized: any[][] = [];
+  for (let i = 0; i < list.length; i++) {
+    const arrayRow = toArrayRow(list[i], fields);
+    if (!arrayRow) {
+      return null;
+    }
+    normalized.push(arrayRow);
+  }
+  return normalized;
+}
+
+/**
+ * Append or upsert rows on an existing in-memory row dataset. Keeps layers and re-runs filters.
+ * Arrow/DuckDB tables warn and are left unchanged (INSERT / concat not implemented).
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function addToDatasetUpdater(
+  state: VisState,
+  {dataId, rows, options}: VisStateActions.AddToDatasetUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+
+  const normalized = normalizeDatasetRows(rows, dataset.fields);
+  if (!normalized) {
+    return state;
+  }
+
+  const applied = options?.upsertBy
+    ? dataset.upsertRows(normalized, options.upsertBy)
+    : dataset.appendRows(normalized);
+  if (!applied) {
+    return state;
+  }
+
+  const datasets = {
+    ...state.datasets,
+    [dataId]: copyTableAndUpdate(dataset, {})
+  };
+  return reapplyFiltersAndLayerData({...state, datasets}, dataId);
+}
+
+/**
+ * Delete rows by index or by field values from an existing in-memory row dataset.
+ * Keeps layers. Arrow/DuckDB tables warn and are left unchanged.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function removeFromDatasetUpdater(
+  state: VisState,
+  {dataId, rowIndexes, byField}: VisStateActions.RemoveFromDatasetUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+
+  const indexes = byField
+    ? dataset.findRowIndexesByFieldValues(byField.field, toArray(byField.values))
+    : toArray(rowIndexes ?? []);
+  if (!indexes.length) {
+    return state;
+  }
+  if (!dataset.removeRows(indexes)) {
+    return state;
+  }
+
+  const datasets = {
+    ...state.datasets,
+    [dataId]: copyTableAndUpdate(dataset, {})
+  };
+  return reapplyFiltersAndLayerData({...state, datasets}, dataId);
 }
 
 /**
