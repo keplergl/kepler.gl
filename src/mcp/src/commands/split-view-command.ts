@@ -49,7 +49,10 @@ Use the SAME colorBy / colorType for the layers being compared, so the compariso
 
         if (action === 'disable') {
           if (isSplit) {
-            ctx.dispatch(toggleSplitMap(0));
+            // Close the RIGHT panel (index 1) so the LEFT panel (map0) survives:
+            // `closeSpecificMapAtIndex` keeps `1 - payload`, so closing 0 would
+            // keep the right panel and flip layer visibility to map1's config.
+            ctx.dispatch(toggleSplitMap(1));
           }
           return {
             success: true,
@@ -80,7 +83,9 @@ Use the SAME colorBy / colorType for the layers being compared, so the compariso
               const map0Layers = splitMaps[0]?.layers || {};
               const desiredSet0 = new Set(layerIdsForMap0);
               for (const layerId of allLayerIds) {
-                const isVisible = map0Layers[layerId];
+                // Coerce to boolean: a missing entry means "hidden", and
+                // `toggleLayerForMapUpdater` toggles missing entries to visible.
+                const isVisible = Boolean(map0Layers[layerId]);
                 const shouldBeVisible = desiredSet0.has(layerId);
                 if (isVisible !== shouldBeVisible) {
                   ctx.dispatch(toggleLayerForMap(0, layerId));
@@ -93,7 +98,9 @@ Use the SAME colorBy / colorType for the layers being compared, so the compariso
               const map1Layers = freshSplitMaps?.[1]?.layers || {};
               const desiredSet1 = new Set(layerIdsForMap1);
               for (const layerId of allLayerIds) {
-                const isVisible = map1Layers[layerId];
+                // Coerce to boolean: a missing entry means "hidden", and
+                // `toggleLayerForMapUpdater` toggles missing entries to visible.
+                const isVisible = Boolean(map1Layers[layerId]);
                 const shouldBeVisible = desiredSet1.has(layerId);
                 if (isVisible !== shouldBeVisible) {
                   ctx.dispatch(toggleLayerForMap(1, layerId));
