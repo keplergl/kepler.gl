@@ -95,6 +95,12 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
       setStatus('connecting');
       setError(null);
 
+      // Close any existing socket first — clicking connect repeatedly (or a
+      // reconnect) must not leave multiple sockets open racing to handle
+      // messages and mutate the map.
+      wsRef.current?.close();
+      wsRef.current = null;
+
       const wsUrl = `ws://${host}:${port}/ws?token=${encodeURIComponent(useToken)}`;
       // The token is a credential — never surface the full URL in logs or
       // user-visible errors (screenshots, screen recordings, shared console

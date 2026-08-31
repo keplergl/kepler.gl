@@ -364,12 +364,16 @@ export function tableToLLMResult(
   const headerRow = `| ${columns.join(' | ')} |`;
   const separatorRow = `| ${columns.map(() => '---').join(' | ')} |`;
   const lines = [headerRow, separatorRow];
+  // Track the joined length incrementally instead of re-joining the whole
+  // array on every row (O(n²) in the number of preview rows).
+  let currentLength = headerRow.length + separatorRow.length + 1; // +1 for the '\n' between them
 
   for (const row of table) {
     const values = columns.map(col => truncateValue(row[col]));
-    lines.push(`| ${values.join(' | ')} |`);
+    const line = `| ${values.join(' | ')} |`;
+    lines.push(line);
+    currentLength += line.length + 1; // +1 for the '\n' separator
 
-    const currentLength = lines.join('\n').length;
     if (currentLength > maxTotalLength - 100) {
       lines.push('...');
       break;
