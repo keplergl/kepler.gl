@@ -1,6 +1,6 @@
 import type {RoomCommand} from './types';
 import {z} from 'zod';
-import {KeplerContext} from './types';
+import type {KeplerContext} from './types';
 
 export const mapBoundaryCommandId = 'map.get-boundary' as const;
 

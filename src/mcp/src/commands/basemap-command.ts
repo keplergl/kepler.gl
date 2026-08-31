@@ -2,7 +2,7 @@ import type {RoomCommand} from './types';
 import {z} from 'zod';
 import {DEFAULT_MAP_STYLES} from '@kepler.gl/constants';
 import {mapStyleChange} from '@kepler.gl/actions';
-import {KeplerContext} from './types';
+import type {KeplerContext} from './types';
 
 export const basemapCommandId = 'map.set-basemap' as const;
 

@@ -6,11 +6,11 @@
  */
 
 import {Type} from 'apache-arrow';
-import {Layer, VectorTileLayer} from '@kepler.gl/layers';
-import {Datasets} from '@kepler.gl/table';
 import {LAYER_TYPES} from '@kepler.gl/constants';
-import {Field} from '@kepler.gl/types';
 import {arrowSchemaToFields} from '@kepler.gl/processors';
+import type {Layer, VectorTileLayer} from '@kepler.gl/layers';
+import type {Datasets} from '@kepler.gl/table';
+import type {Field} from '@kepler.gl/types';
 
 /** Type for a Redux dispatch function, used by tools that need to dispatch kepler actions */
 export type KeplerDispatch = (action: any) => void;
@@ -35,7 +35,7 @@ export function datasetNameToTableName(datasetName: string): string {
  * object. Handles nested toJSON(), arrays, and bigint values. Extracted from
  * query-tool.ts so the stock @sqlrooms/ai query tool wrapper can share it.
  */
-export function convertArrowRowToObject(row: any): Record<string, unknown> {
+export function convertArrowRowToObject(row: any): unknown {
   if (row === null || typeof row !== 'object') return row;
 
   if (typeof row.toJSON === 'function') {
@@ -368,7 +368,9 @@ export function formatResultsForLLM(
   options?: {maxTotalLength?: number; maxValueLength?: number}
 ): string {
   const sliced = result.toArray().slice(0, numberOfRows);
-  const rows = sliced.map((row: any) => convertArrowRowToObject(row));
+  const rows = sliced.map(
+    (row: any) => convertArrowRowToObject(row) as Record<string, unknown>
+  );
   return tableToLLMResult(
     rows,
     options?.maxTotalLength ?? LLM_PREVIEW_MAX_TOTAL_LENGTH,

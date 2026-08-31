@@ -1,5 +1,5 @@
 import type {RoomCommand} from './types';
-import {KeplerContext} from './types';
+import type {KeplerContext} from './types';
 import {getBasemapCommand} from './basemap-command';
 import {getMapBoundaryCommand} from './boundary-command';
 import {getAddLayerCommand} from './layer-creation-command';

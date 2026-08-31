@@ -3,7 +3,7 @@ import {z} from 'zod';
 import {tableFromArrays, Table as ArrowTable} from 'apache-arrow';
 import {addDataToMap} from '@kepler.gl/actions';
 import {processFileData} from '@kepler.gl/processors';
-import {KeplerContext} from './types';
+import type {KeplerContext} from './types';
 import {datasetNameToTableName, arrowTableToObjects} from './utils';
 import {isObjectColumn, stringifyObjectColumn, restoreObjectColumns} from './utils';
 

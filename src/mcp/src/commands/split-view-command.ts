@@ -1,7 +1,7 @@
 import type {RoomCommand} from './types';
 import {z} from 'zod';
 import {toggleSplitMap, toggleLayerForMap} from '@kepler.gl/actions';
-import {KeplerContext} from './types';
+import type {KeplerContext} from './types';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

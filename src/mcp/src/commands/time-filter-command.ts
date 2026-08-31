@@ -1,13 +1,14 @@
 import type {RoomCommand} from './types';
 import {z} from 'zod';
-import KeplerTable, {Datasets} from '@kepler.gl/table';
+import type KeplerTable from '@kepler.gl/table';
+import type {Datasets} from '@kepler.gl/table';
 import {
   addFilter,
   setFilter,
   setFilterAnimationTime,
   setFilterAnimationWindow
 } from '@kepler.gl/actions';
-import {KeplerContext} from './types';
+import type {KeplerContext} from './types';
 
 export type IntervalKey =
   | '1-second'

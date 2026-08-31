@@ -1,6 +1,6 @@
 import type {RoomCommand} from './types';
 import {z} from 'zod';
-import {KeplerContext} from './types';
+import type {KeplerContext} from './types';
 
 export const saveDataCommandId = 'map.save-data' as const;
 

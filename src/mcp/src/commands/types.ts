@@ -1,7 +1,7 @@
 import type {Table as ArrowTable} from 'apache-arrow';
 import type {ZodType} from 'zod';
-import {Datasets} from '@kepler.gl/table';
-import {KeplerDispatch} from './utils';
+import type {Datasets} from '@kepler.gl/table';
+import type {KeplerDispatch} from './utils';
 
 /**
  * Structural subset of `@sqlrooms/room-store`'s `RoomCommand` — enough for the

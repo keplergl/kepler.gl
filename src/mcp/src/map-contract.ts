@@ -11,7 +11,8 @@
  * the same contract.
  */
 
-import type {MapToolId, MAP_TOOL_IDS} from './types';
+import type {MapToolId} from './types';
+import {MAP_TOOL_IDS} from './types';
 
 /** The map-only tool surface. Exposes only pure map actuation. */
 export interface MapContract {

@@ -1,10 +1,11 @@
 import type {RoomCommand} from './types';
 import {z} from 'zod';
 import {LayerClasses} from '@kepler.gl/layers';
-import KeplerTable, {Datasets} from '@kepler.gl/table';
+import type KeplerTable from '@kepler.gl/table';
+import type {Datasets} from '@kepler.gl/table';
 import {findDefaultLayer, findMapBounds} from '@kepler.gl/reducers';
 import {addLayer as addLayerAction, fitBounds} from '@kepler.gl/actions';
-import {KeplerContext} from './types';
+import type {KeplerContext} from './types';
 
 export function guessDefaultLayer(
   dataset: KeplerTable,

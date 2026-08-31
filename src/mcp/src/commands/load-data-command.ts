@@ -2,7 +2,7 @@ import type {RoomCommand} from './types';
 import {z} from 'zod';
 import {addDataToMap} from '@kepler.gl/actions';
 import {readFileInBatches, processFileData, ProcessFileDataContent} from '@kepler.gl/processors';
-import {KeplerContext} from './types';
+import type {KeplerContext} from './types';
 
 export const loadDataCommandId = 'map.load-data' as const;
 

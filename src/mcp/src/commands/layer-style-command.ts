@@ -1,7 +1,7 @@
 import type {RoomCommand} from './types';
 import {z} from 'zod';
 import {layerVisualChannelConfigChange} from '@kepler.gl/actions';
-import {KeplerContext} from './types';
+import type {KeplerContext} from './types';
 
 export const updateLayerColorCommandId = 'map.update-layer-color' as const;
 

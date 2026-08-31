@@ -1,7 +1,7 @@
 import type {RoomCommand} from './types';
 import {z} from 'zod';
 import {updateDataset} from '@kepler.gl/actions';
-import {KeplerContext} from './types';
+import type {KeplerContext} from './types';
 import {buildAddColumnPayload} from './utils';
 import {datasetNameToTableName, tableToLLMResult} from './utils';
 
