@@ -168,6 +168,14 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
             await sleep(100);
             filterId = ctx.getVisState().filters?.[filterIdx]?.id ?? '';
           }
+          if (!filterId) {
+            // Fail fast instead of proceeding with an empty id — the later
+            // setFilterAnimationWindow({id: filterId, ...}) would no-op or
+            // update the wrong filter.
+            throw new Error(
+              `Timed out waiting for the time filter on column "${dateTimeColumn}" to be created. Please try again.`
+            );
+          }
         }
 
         const currentFilters = ctx.getVisState().filters ?? [];

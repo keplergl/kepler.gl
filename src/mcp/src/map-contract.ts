@@ -16,7 +16,11 @@
 import type {MapToolId, ToolResult} from './types';
 import {MAP_TOOL_IDS} from './types';
 
-/** The map-only tool surface. Exposes only pure map actuation. */
+/**
+ * The map tool surface. Mostly pure map actuation (set-basemap, add-layer, ...);
+ * a few table ops (map.create-table, map.add-column, map.save-data) are included
+ * because they mutate the map's datasets in place.
+ */
 export interface MapContract {
   readonly toolIds: readonly MapToolId[];
   /** List the tools this surface exposes (id + input JSON Schema, if known). */

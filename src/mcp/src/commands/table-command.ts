@@ -62,7 +62,10 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         // for the DuckDB round-trip and restore the objects afterwards.
         const objectColumns: string[] = [];
         for (const varName of variableNames) {
-          const values = ctx.getValuesFromDataset(dataId, varName);
+          // Pass the user-provided datasetName (label or id) — the documented
+          // KeplerContext contract — not the resolved id; getValuesFromDataset
+          // matches by label or id either way.
+          const values = ctx.getValuesFromDataset(datasetName, varName);
           if (isObjectColumn(values)) objectColumns.push(varName);
           columnData[varName] = stringifyObjectColumn(values);
         }

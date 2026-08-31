@@ -128,7 +128,7 @@ export type KeplerContext = {
     | undefined;
   getMapboxToken: () => string | undefined;
   dispatch: KeplerDispatch;
-  /** Read a column's values from a kepler dataset (by label). */
+  /** Read a column's values from a kepler dataset (by label or id). */
   getValuesFromDataset: (datasetName: string, variableName: string) => unknown[];
   /** Build the dataset+layer context string for the LLM. */
   getDatasetContext: () => string;
