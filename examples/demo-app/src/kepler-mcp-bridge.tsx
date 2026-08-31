@@ -24,7 +24,14 @@ type BridgeStatus = 'idle' | 'connecting' | 'connected' | 'error';
 
 function getUrlConfig(): {token: string; port: number; host: string} {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
-  const stored = typeof window !== 'undefined' ? localStorage.getItem('kepler-mcp-token') : null;
+  let stored: string | null = null;
+  if (typeof window !== 'undefined') {
+    try {
+      stored = localStorage.getItem('kepler-mcp-token');
+    } catch {
+      // private mode / blocked storage — treat as absent
+    }
+  }
   const token = params.get('mcp') ?? stored ?? '';
   const port = Number(params.get('mcpPort')) || DEFAULT_PORT;
   const host = params.get('mcpHost') ?? WSHost();
@@ -75,7 +82,12 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
         setStatus('error');
         return;
       }
-      localStorage.setItem('kepler-mcp-token', useToken);
+      try {
+        localStorage.setItem('kepler-mcp-token', useToken);
+      } catch {
+        // private mode / blocked storage — the bridge still works for this
+        // session without persistence
+      }
       setStatus('connecting');
       setError(null);
 
@@ -137,6 +149,13 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
     if (cfg.token) {
       setToken(cfg.token);
       connect(cfg.token);
+      // Strip the token from the URL so it doesn't leak via browser history,
+      // screenshots, logs, or Referer headers when navigating away.
+      if (typeof window !== 'undefined' && window.history?.replaceState) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('mcp');
+        window.history.replaceState({}, '', url.toString());
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

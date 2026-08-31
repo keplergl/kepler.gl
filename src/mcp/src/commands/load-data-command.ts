@@ -43,7 +43,9 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         }
 
         const blob = await response.blob();
-        const fileName = url.split('/').pop() || 'data';
+        // Derive the filename from the URL pathname so query strings (e.g.
+        // `data.csv?x=1`) don't end up in the dataset name.
+        const fileName = new URL(url).pathname.split('/').pop() || 'data';
         const file = new File([blob], fileName);
 
         const batches = await readFileInBatches({
@@ -64,6 +66,10 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
             parsedData = await processFileData({content, fileCache: []});
             break;
           }
+        }
+
+        if (parsedData.length === 0) {
+          throw new Error(`No data could be parsed from ${url}.`);
         }
 
         // Apply a caller-chosen dataset name (default: the URL filename) so the

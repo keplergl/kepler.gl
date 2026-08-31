@@ -77,9 +77,15 @@ const ENABLED_KEY = 'kepler-webmcp-enabled';
 
 export function KeplerWebMcp({reduxStore, onStatus}: McpWebMcpProps) {
   const modelContext = useMemo(getModelContext, []);
-  const [enabled, setEnabled] = useState(
-    () => (typeof window === 'undefined' ? true : window.localStorage.getItem(ENABLED_KEY) !== 'false')
-  );
+  const [enabled, setEnabled] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      return window.localStorage.getItem(ENABLED_KEY) !== 'false';
+    } catch {
+      // private mode / blocked storage — default to enabled
+      return true;
+    }
+  });
   const [status, setStatus] = useState<WebMcpStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [toolCount, setToolCount] = useState(0);
