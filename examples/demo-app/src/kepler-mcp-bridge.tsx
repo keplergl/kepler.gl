@@ -22,8 +22,9 @@ const WSHost = () => 'localhost';
 
 type BridgeStatus = 'idle' | 'connecting' | 'connected' | 'error';
 
-function getUrlConfig(): {token: string; port: number; host: string} {
+function getUrlConfig(): {token: string; port: number; host: string; tokenFromUrl: boolean} {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const urlToken = params.get('mcp');
   let stored: string | null = null;
   if (typeof window !== 'undefined') {
     try {
@@ -32,10 +33,13 @@ function getUrlConfig(): {token: string; port: number; host: string} {
       // private mode / blocked storage — treat as absent
     }
   }
-  const token = params.get('mcp') ?? stored ?? '';
-  const port = Number(params.get('mcpPort')) || DEFAULT_PORT;
-  const host = params.get('mcpHost') ?? WSHost();
-  return {token, port, host};
+  const token = urlToken ?? stored ?? '';
+  // Only honor URL host/port when the token is ALSO from the URL — otherwise a
+  // link like `?mcpHost=attacker.tld` could combine a persisted token with a
+  // non-local host and leak it.
+  const host = urlToken != null ? (params.get('mcpHost') ?? WSHost()) : WSHost();
+  const port = urlToken != null ? Number(params.get('mcpPort')) || DEFAULT_PORT : DEFAULT_PORT;
+  return {token, port, host, tokenFromUrl: urlToken != null};
 }
 
 export type BridgeStatusInfo = {
@@ -146,7 +150,11 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
 
   useEffect(() => {
     const cfg = getUrlConfig();
-    if (cfg.token) {
+    // Auto-connect ONLY when the token came from the URL (?mcp=<token>) — the
+    // explicit opt-in. A persisted token must not auto-connect: a link like
+    // `?mcpHost=attacker.tld` could otherwise combine the stored token with a
+    // non-local host and leak it.
+    if (cfg.tokenFromUrl && cfg.token) {
       setToken(cfg.token);
       connect(cfg.token);
       // Strip the token from the URL so it doesn't leak via browser history,

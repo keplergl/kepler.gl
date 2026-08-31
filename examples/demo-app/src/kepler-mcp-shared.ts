@@ -40,7 +40,13 @@ const SKILL_HINT = `\nREAD THE MAP SKILL FIRST: call kepler.get-map-skill before
 export function buildKeplerContext(reduxStore: any): KeplerContext {
   const readMap = () => reduxStore?.getState()?.demo?.keplerGl?.map;
   return {
-    getVisState: () => readMap()?.visState,
+    getVisState: () => {
+      const visState = readMap()?.visState;
+      if (!visState) {
+        throw new Error('kepler.gl map is not initialized yet.');
+      }
+      return visState;
+    },
     getMapBoundary: () => {
       // Recompute the current viewport corners from the live mapState (same
       // WebMercatorViewport math the app's onViewStateChange uses). Fall back

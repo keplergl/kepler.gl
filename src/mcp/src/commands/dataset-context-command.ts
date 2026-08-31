@@ -37,11 +37,12 @@ export function getDatasetContextCommand(ctx: KeplerContext): RoomCommand {
             ? trimmed
             : context.split('\n').slice(1).join('\n')
         );
+        const count = Array.isArray(datasets) ? datasets.length : Object.keys(datasets).length;
         return {
           success: true,
           commandId: datasetContextCommandId,
           data: {
-            details: `${datasets.length} dataset(s) loaded.`,
+            details: `${count} dataset(s) loaded.`,
             datasets
           }
         };

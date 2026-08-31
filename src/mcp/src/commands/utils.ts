@@ -180,7 +180,9 @@ export function getValuesFromVectorTileLayer(datasetId: string, layers: Layer[],
   // @ts-expect-error TODO fix this later in the vector-tile layer
   for (const row of layer.tileDataset.tileSet) {
     const value = accessor(field, row);
-    if (value === null) break;
+    // Nulls mean "skip this row" (as in kepler's own TileDataset iteration),
+    // not "end of data" — breaking here would truncate the values array.
+    if (value === null) continue;
     values.push(value);
   }
   return values;
