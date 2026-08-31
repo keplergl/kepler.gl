@@ -12,7 +12,12 @@
  * the same `buildKeplerContext` and serve the same DuckDB-free catalog.
  */
 import {getKeplerCommands, getValuesFromDataset} from '@kepler.gl/mcp';
-import type {KeplerContext, RoomCommandResult, ToolDescriptor} from '@kepler.gl/mcp';
+import type {
+  KeplerContext,
+  RoomCommandExecuteOutput,
+  RoomCommandResult,
+  ToolDescriptor
+} from '@kepler.gl/mcp';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {toJSONSchema} from 'zod';
 // The skill markdown ships with the @kepler.gl/mcp package (subpath export), so
@@ -95,7 +100,10 @@ export function buildKeplerContext(reduxStore: any): KeplerContext {
       const dataMeta = Object.values(datasets).map((ds: any) => ({
         datasetName: ds?.label ?? ds?.id,
         datasetId: ds?.id,
-        fields: (ds?.fields ?? []).map((f: any) => ({[f.name]: f.type})),
+        // Field name→type mappings as a single object ({colA: typeA, ...}),
+        // matching the "field name→type mappings" shape map.get-dataset-context
+        // describes — not an array of single-key objects.
+        fields: Object.fromEntries((ds?.fields ?? []).map((f: any) => [f.name, f.type])),
         layers: layers
           .filter((layer: any) => layer?.config?.dataId === ds?.id)
           .map((layer: any) => ({
@@ -192,8 +200,16 @@ export function toDescriptor(cmd: {id: string; name: string; description?: strin
   };
 }
 
-export function formatResult(result: RoomCommandResult): string {
-  if (result.error) return `✗ ${result.commandId}: ${result.error}`;
-  const data = result.data as {details?: string} | undefined;
-  return data?.details ? `✓ ${data.details}` : `✓ ${result.commandId} ok`;
+export function formatResult(result: RoomCommandExecuteOutput): string {
+  // A command may return a bare payload (TData) or void, not just a
+  // RoomCommandResult — handle those instead of assuming the result shape.
+  if (result && typeof result === 'object' && 'success' in result) {
+    const r = result as RoomCommandResult;
+    if (r.error) return `✗ ${r.commandId}: ${r.error}`;
+    const data = r.data as {details?: string} | undefined;
+    return data?.details ? `✓ ${data.details}` : `✓ ${r.commandId} ok`;
+  }
+  return result == null
+    ? '✓ ok'
+    : `✓ ${typeof result === 'string' ? result : JSON.stringify(result)}`;
 }

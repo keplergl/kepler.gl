@@ -158,9 +158,16 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
           filterIdx = filters.length;
           ctx.dispatch(addFilter(datasetId));
           ctx.dispatch(setFilter(filterIdx, 'name', dateTimeColumn));
-          await sleep(300);
-          const filtersAfter = ctx.getVisState().filters ?? [];
-          filterId = filtersAfter[filterIdx]?.id ?? '';
+          // Poll for the filter entry to appear instead of a fixed sleep: on
+          // slower devices the filter (and its id) may not be available yet,
+          // and a fixed delay would leave filterId as an empty string, making
+          // the later setFilterAnimationWindow({id: filterId, ...}) behave
+          // unpredictably.
+          filterId = '';
+          for (let attempt = 0; attempt < 10 && !filterId; attempt++) {
+            await sleep(100);
+            filterId = ctx.getVisState().filters?.[filterIdx]?.id ?? '';
+          }
         }
 
         const currentFilters = ctx.getVisState().filters ?? [];
