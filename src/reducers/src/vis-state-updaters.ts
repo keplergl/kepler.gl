@@ -3247,7 +3247,10 @@ function toArrayRow(row: VisStateActions.DatasetRow, fields: Field[]): any[] | n
     return row.length === fields.length ? row : null;
   }
   if (isPlainObject(row)) {
-    return fields.map(field => (field.name in row ? row[field.name] : null));
+    const record = row as Record<string, unknown>;
+    return fields.map(field =>
+      Object.prototype.hasOwnProperty.call(record, field.name) ? record[field.name] : null
+    );
   }
   return null;
 }

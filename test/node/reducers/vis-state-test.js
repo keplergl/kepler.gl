@@ -8298,6 +8298,30 @@ test('VisStateUpdater -> addToDataset appends rows and keeps layers', async t =>
   t.end();
 });
 
+test('VisStateUpdater -> addToDataset object rows ignore prototype keys', async t => {
+  const initialData = processCsvData('lat,lng\n1,2');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+
+  const inheritedLng = Object.assign(Object.create({lng: 999}), {lat: 50});
+  const missing = reducer(state, VisStateActions.addToDataset('live', inheritedLng));
+  t.equal(missing.datasets.live.dataContainer.numRows(), 2, 'should append the object row');
+  t.equal(missing.datasets.live.dataContainer.valueAt(1, 0), 50, 'own lat should be copied');
+  t.equal(
+    missing.datasets.live.dataContainer.valueAt(1, 1),
+    null,
+    'inherited lng should become null'
+  );
+
+  const own = reducer(missing, VisStateActions.addToDataset('live', {lat: 7, lng: 8}));
+  t.equal(own.datasets.live.dataContainer.valueAt(2, 1), 8, 'own lng should still be copied');
+
+  t.end();
+});
+
 test('VisStateUpdater -> addToDataset no-ops', async t => {
   const initialData = processCsvData('lat,lng\n1,2');
   const datasets = await createNewDataEntryMock({
