@@ -13,7 +13,8 @@
       "require": "./dist/cjs/index.js",
       "default": "./dist/cjs/index.js"
     },
-    "./skill/kepler/SKILL.md": "./skill/kepler/SKILL.md"
+    "./skill/kepler/SKILL.md": "./skill/kepler/SKILL.md",
+    "./skill/kepler/skill.yaml": "./skill/kepler/skill.yaml"
   },
   "keywords": [
     "kepler",

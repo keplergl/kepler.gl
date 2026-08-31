@@ -181,13 +181,23 @@ export function getValuesFromVectorTileLayer(datasetId: string, layers: Layer[],
   if (!isVectorTileLayer(layer)) return [];
   const accessor = layer.accessRowValue(field);
   const values: unknown[] = [];
-  // @ts-expect-error TODO fix this later in the vector-tile layer
-  for (const row of layer.tileDataset.tileSet) {
-    const value = accessor(field, row);
-    // Nulls mean "skip this row" (as in kepler's own TileDataset iteration),
-    // not "end of data" — breaking here would truncate the values array.
-    if (value === null) continue;
-    values.push(value);
+  // Iterate the layer's tiles through the public `TileDataset.getTiles()` seam
+  // (the same tile->features unwrap the layer itself uses in renderLayer) —
+  // not the private `tileSet` field, which is an implementation detail that
+  // can change with internal refactors. `tileDataset` is protected, so it
+  // needs a cast, but `getTiles()` is a stable public method.
+  const tiles = (layer as any).tileDataset?.getTiles?.() ?? [];
+  for (const tile of tiles) {
+    const content = (tile as any)?.content;
+    const features = content?.shape === 'geojson-table' ? content.features : content;
+    if (!Array.isArray(features)) continue;
+    for (const row of features) {
+      const value = accessor(field, row);
+      // Nulls mean "skip this row" (as in kepler's own TileDataset iteration),
+      // not "end of data" — breaking here would truncate the values array.
+      if (value === null) continue;
+      values.push(value);
+    }
   }
   return values;
 }
