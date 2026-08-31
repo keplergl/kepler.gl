@@ -18,9 +18,41 @@ const DEFAULT_LIGHTING_EFFECT = new LightingEffect();
  */
 interface LightingEffectPrivate {
   shadow: boolean;
-  shadowPasses: {delete(): void; render(params: Record<string, unknown>): void}[];
+  shadowPasses: {
+    delete(): void;
+    render(params: Record<string, unknown>): void;
+    getLayerParameters: (
+      layer: unknown,
+      layerIndex: number,
+      viewport: unknown
+    ) => Record<string, unknown>;
+  }[];
   dummyShadowMap: Texture | null;
   _createShadowPasses(device: unknown): void;
+}
+
+// WebGL applies GL-style depthTest/depthMask; deck.gl's ShadowPass only sets
+// depthWriteEnabled. Disable polygonOffset so a later ground plane is not
+// pulled toward the sun and cannot overwrite building walls in the shadow map.
+const SHADOW_PASS_DEPTH_PARAMETERS = {
+  depthTest: true,
+  depthMask: true,
+  polygonOffsetFill: false,
+  polygonOffset: [0, 0]
+};
+
+export function patchShadowPassDepth(pass: {
+  getLayerParameters: (
+    layer: unknown,
+    layerIndex: number,
+    viewport: unknown
+  ) => Record<string, unknown>;
+}) {
+  const originalGetLayerParameters = pass.getLayerParameters.bind(pass);
+  pass.getLayerParameters = (layer, layerIndex, viewport) => ({
+    ...originalGetLayerParameters(layer, layerIndex, viewport),
+    ...SHADOW_PASS_DEPTH_PARAMETERS
+  });
 }
 
 /** Extended shadow module props with our custom field. */
@@ -202,6 +234,7 @@ class CustomDeckLightingEffect extends LightingEffect {
     if (this._private.shadow && !this._private.dummyShadowMap) {
       this._private._createShadowPasses(device);
       for (const shadowPass of this._private.shadowPasses) {
+        patchShadowPassDepth(shadowPass);
         alignExportShadowPass(shadowPass, () => this.isExportMode);
       }
       deck._addDefaultShaderModule(CustomShadowModule || shadow);
