@@ -6,7 +6,11 @@ import {findDefaultLayer, findMapBounds} from '@kepler.gl/reducers';
 import {addLayer as addLayerAction, fitBounds} from '@kepler.gl/actions';
 import {KeplerContext} from './types';
 
-export function guessDefaultLayer(dataset: KeplerTable, layerType: string) {
+export function guessDefaultLayer(
+  dataset: KeplerTable,
+  layerType: string,
+  options?: {countColumn?: string}
+) {
   if (layerType === 'heatmap') {
     if (dataset.fieldPairs && dataset.fieldPairs.length > 0) {
       const props = dataset.fieldPairs.map(fieldPair => ({
@@ -44,6 +48,40 @@ export function guessDefaultLayer(dataset: KeplerTable, layerType: string) {
     throw new Error(
       `Failed to create a trip layer. Trip layer requires id, lat, lng, and timestamp columns.`
     );
+  } else if (layerType === 'flow') {
+    // Flow layers are never auto-detected (findDefaultLayerProps returns
+    // {props: []}), so build one explicitly from the first two point lat/lng
+    // field pairs — the same source/target pair logic the default arc layer
+    // uses: pair[0] = origin (lat0/lng0), pair[1] = destination (lat1/lng1).
+    // The count column (flow magnitude) is optional; without it every flow
+    // renders at weight 1.
+    const pairs = dataset.fieldPairs || [];
+    if (pairs.length < 2) {
+      throw new Error(
+        `Failed to create a flow layer. Flow layer requires two point lat/lng pairs ` +
+          `(origin + destination), e.g. origin_lat/origin_lng and dest_lat/dest_lng.`
+      );
+    }
+    const columns: any = {
+      lat0: pairs[0].pair.lat,
+      lng0: pairs[0].pair.lng,
+      lat1: pairs[1].pair.lat,
+      lng1: pairs[1].pair.lng
+    };
+    if (options?.countColumn && dataset.getColumnFieldIdx(options.countColumn) >= 0) {
+      columns.count = {
+        value: options.countColumn,
+        fieldIdx: dataset.getColumnFieldIdx(options.countColumn)
+      };
+    }
+    // LayerClasses' computed keys (keyMirror) aren't statically named, so
+    // access flow like the trip branch accesses trip: through an `as any` cast.
+    const layer = new (LayerClasses as any).flow({
+      isVisible: true,
+      label: `${pairs[0].defaultName} -> ${pairs[1].defaultName} flow`,
+      columns
+    });
+    return layer;
   }
   const defaultLayers = findDefaultLayer(dataset, LayerClasses as any);
   const layer = defaultLayers.find(l => l.type === layerType);
@@ -175,6 +213,7 @@ IMPORTANT: generated layer names must be unique.
 
 LAYER TYPES:
 - point: Point markers (requires lat/lng columns)
+- flow: Origin->destination flow map (requires two point lat/lng pairs, auto-detected)
 - h3: H3 hexagon cells (requires hexId column)
 - geojson: Polygon/geometry features (uses geometry column, usually auto-detected)
 - hexagon: Hexagonal binning of points
@@ -184,6 +223,14 @@ LAYER TYPES:
 - grid: Grid binning
 - trip: Animated trip (flights, deliveries, vessels)
 - s2: S2 geometry cells
+
+FLOW MAPS (layerType 'flow'):
+For origin->destination flows use layerType 'flow' — a dedicated flow layer that draws
+locations and weighted flows between them. It needs TWO point lat/lng pairs in the
+dataset (source pair + destination pair), which are auto-detected. Prefer 'flow' over
+'arc' for O-D flows; 'arc' draws straight great-circle lines without location clustering
+or flow aggregation. To weight the flows by a value column (flow magnitude), pass
+countColumn with the column name — omit it to render all flows at weight 1.
 
 BASIC MAP:
 - Use datasetName, latitudeColumn/longitudeColumn (for point maps), and layerType
@@ -217,6 +264,7 @@ For geojson datasets:
         .describe('Generate a unique name for the layer based on the context.'),
       layerType: z.enum([
         'point',
+        'flow',
         'arc',
         'line',
         'grid',
@@ -236,6 +284,12 @@ For geojson datasets:
         ),
       colorBy: z.string().optional(),
       colorType: z.enum(['breaks', 'unique']).optional(),
+      countColumn: z
+        .string()
+        .optional()
+        .describe(
+          'For layerType "flow" (and only flow): a numeric column whose value weights each flow (flow magnitude). Omit to render all flows at weight 1.'
+        ),
       colorMap: z
         .array(
           z.object({
@@ -256,6 +310,7 @@ For geojson datasets:
         colorBy?: string;
         colorType?: 'breaks' | 'unique';
         colorMap?: Array<{value: string | number | null; color: string}>;
+        countColumn?: string;
       };
       const {
         datasetName,
@@ -266,7 +321,8 @@ For geojson datasets:
         simpleColor,
         colorBy,
         colorType,
-        colorMap
+        colorMap,
+        countColumn
       } = args;
       try {
         const visState = ctx.getVisState();
@@ -280,7 +336,7 @@ For geojson datasets:
         }
 
         const dataset = datasets[datasetId];
-        let layer = guessDefaultLayer(dataset, layerType);
+        let layer = guessDefaultLayer(dataset, layerType, {countColumn});
 
         if (!layer) {
           if (layerType === 'point' && latitudeColumn && longitudeColumn) {

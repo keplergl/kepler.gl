@@ -14,11 +14,27 @@
 import {getKeplerCommands, getValuesFromDataset} from '@kepler.gl/mcp';
 import type {KeplerContext, RoomCommandResult, ToolDescriptor} from '@kepler.gl/mcp';
 import {WebMercatorViewport} from '@deck.gl/core';
+import mapSkillMarkdown from '../../../src/mcp/skill/kepler/SKILL.md';
 
 // map.* commands that need a DuckDB connector / the kepler-app glue
 // (`loadTableToKepler`, `loadTableIntoDuckDB`, `getConnector`). The demo
 // surfaces (mapping-only bridge / webMCP) do not serve them.
 export const DUCKDB_REQUIRED = new Set(['map.create-table', 'map.add-column', 'map.save-data']);
+
+// Mutating map.* commands every agent will reach for without reading the
+// skill. Each gets a pointer to kepler.get-map-skill prepended to its
+// description so the reader tool is impossible to miss.
+const SKILL_REQUIRED = new Set([
+  'map.add-layer',
+  'map.update-layer-color',
+  'map.add-time-filter',
+  'map.toggle-time-filter',
+  'map.split-view',
+  'map.load-data',
+  'map.set-basemap'
+]);
+
+const SKILL_HINT = `\nREAD THE MAP SKILL FIRST: call kepler.get-map-skill before using this command — it explains layer-type selection, color rules, and the workflow.`;
 
 /** Live accessors into the demo's own redux store — no kepler-assistant needed. */
 export function buildKeplerContext(reduxStore: any): KeplerContext {
@@ -97,9 +113,42 @@ export function buildKeplerContext(reduxStore: any): KeplerContext {
   };
 }
 
-/** The DuckDB-free map.* commands this page serves to agents. */
+/** The DuckDB-free map.* commands this page serves to agents, plus the map skill reader. */
 export function buildCatalog(ctx: KeplerContext) {
-  return Object.values(getKeplerCommands(ctx)).filter(c => !DUCKDB_REQUIRED.has(c.id));
+  const commands = Object.values(getKeplerCommands(ctx)).filter(c => !DUCKDB_REQUIRED.has(c.id));
+  return [getMapSkillCommand(), ...commands.map(c => withSkillHint(c))];
+}
+
+/**
+ * Read-only tool that serves the kepler.gl map-management skill verbatim. First
+ * in the catalog so it is the first tool any surface advertises; every mutating
+ * command's description also points at it (see `withSkillHint`).
+ */
+function getMapSkillCommand() {
+  return {
+    id: 'kepler.get-map-skill',
+    name: 'Read map skill',
+    group: 'Map',
+    description: `READ THE MAP SKILL FIRST — the kepler.gl map-management skill, served verbatim from src/mcp/skill/kepler/SKILL.md.
+
+Call this command BEFORE any other map command. It explains how to choose a layer type (point, arc, line, grid, hexagon, cluster, heatmap, geojson, h3, trip, s2, flow), how to color layers (case-sensitive colorBy, breaks vs unique colorMaps), time animation, split view, and the complete add-layer workflow with JSON examples.
+
+When the user asks for a flow map, "OD flows", "a map of movements" → this skill maps that to layerType "flow" (use "arc" only for straight great-circle lines between un-clustered points).`,
+    keywords: ['skill', 'map', 'workflow', 'guide', 'read-me-first'],
+    metadata: {readOnly: true, idempotent: true, riskLevel: 'low'},
+    execute: async () => ({
+      success: true,
+      commandId: 'kepler.get-map-skill',
+      data: {details: mapSkillMarkdown}
+    })
+  };
+}
+
+function withSkillHint(cmd: ReturnType<typeof getKeplerCommands>[string]) {
+  if (SKILL_REQUIRED.has(cmd.id) && cmd.description) {
+    return {...cmd, description: `${cmd.description}${SKILL_HINT}`};
+  }
+  return cmd;
 }
 
 export function toDescriptor(cmd: {id: string; name: string; description?: string; group?: string; keywords?: string[]; metadata?: {readOnly?: boolean; idempotent?: boolean; riskLevel?: string; requiresConfirmation?: boolean}; inputSchema?: any}): ToolDescriptor {
