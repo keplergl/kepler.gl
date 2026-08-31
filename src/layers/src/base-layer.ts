@@ -1554,6 +1554,11 @@ class Layer implements KeplerLayer {
     visible: boolean;
   }) {
     const blendingParameters = mapState.layerParameters ?? {};
+    const enable3d = Boolean(this.config.visConfig.enable3d);
+    const is3dView = Boolean(mapState.dragRotate);
+    // Always depth-test so a flat layer cannot paint over closer extruded
+    // geometry (e.g. a ground plane covering buildings in top view). Only 3D
+    // layers / 3D view write depth, so coplanar 2D layers still stack by order.
     return {
       id: this.id,
       idx,
@@ -1561,7 +1566,8 @@ class Layer implements KeplerLayer {
       pickable: true,
       wrapLongitude: true,
       parameters: {
-        depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d),
+        depthTest: true,
+        depthMask: is3dView || enable3d,
         ...blendingParameters
       },
       hidden: this.config.hidden,
