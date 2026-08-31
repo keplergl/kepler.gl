@@ -79,6 +79,25 @@ Use the SAME colorBy / colorType for the layers being compared, so the compariso
             const allLayers = updatedVis.layers || [];
             const allLayerIds = allLayers.map((l: any) => l.id);
 
+            // Fail fast on unknown layer ids — silently ignoring them would
+            // hide every real layer not listed and produce an unexpected blank
+            // panel.
+            const allLayerIdSet = new Set(allLayerIds);
+            for (const [panel, ids] of [
+              ['left (map0)', layerIdsForMap0],
+              ['right (map1)', layerIdsForMap1]
+            ] as const) {
+              if (ids && ids.length > 0) {
+                const unknown = ids.filter(id => !allLayerIdSet.has(id));
+                if (unknown.length > 0) {
+                  throw new Error(
+                    `Unknown layer id(s) for the ${panel} panel: ${unknown.join(', ')}. ` +
+                      `Available layer ids: ${allLayerIds.join(', ')}`
+                  );
+                }
+              }
+            }
+
             if (layerIdsForMap0 && layerIdsForMap0.length > 0) {
               const map0Layers = splitMaps[0]?.layers || {};
               const desiredSet0 = new Set(layerIdsForMap0);

@@ -45,7 +45,7 @@
     "@kepler.gl/reducers": "3.3.0-alpha.8",
     "@kepler.gl/table": "3.3.0-alpha.8",
     "@kepler.gl/types": "3.3.0-alpha.8",
-    "apache-arrow": ">=15.0.0",
+    "apache-arrow": "^17.0.0",
     "zod": "^4.4.0"
   },
   "nyc": {

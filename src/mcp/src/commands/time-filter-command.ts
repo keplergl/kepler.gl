@@ -113,6 +113,16 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
         interval?: IntervalKey;
       };
       try {
+        // Runtime guard: the bridge/webMCP call execute without zod parsing,
+        // so an invalid interval must not be written into kepler filter state
+        // (plotType.interval).
+        if (interval !== undefined && !(interval in INTERVAL_MILLIS)) {
+          throw new Error(
+            `Invalid interval "${String(interval)}". Must be one of: ${Object.keys(
+              INTERVAL_MILLIS
+            ).join(', ')}.`
+          );
+        }
         const visState = ctx.getVisState();
         const datasets: Datasets = visState.datasets;
 

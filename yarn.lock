@@ -4096,7 +4096,7 @@ __metadata:
     "@kepler.gl/reducers": "npm:3.3.0-alpha.9"
     "@kepler.gl/table": "npm:3.3.0-alpha.9"
     "@kepler.gl/types": "npm:3.3.0-alpha.9"
-    apache-arrow: "npm:>=15.0.0"
+    apache-arrow: "npm:^17.0.0"
     zod: "npm:^4.4.0"
   languageName: unknown
   linkType: soft
