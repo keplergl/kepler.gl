@@ -154,8 +154,10 @@ function applyColorConfig(
     // domain, so it must be a real value present in the data. The agent must not
     // invent category labels — get them via geoda.analysis (analysis: 'classify',
     // method: 'unique values'). Rejecting here turns a silent wrong render into a
-    // recoverable error.
-    if (colorType !== 'breaks' && providedColorMap) {
+    // recoverable error. Only run this when colorType is explicitly 'unique':
+    // an omitted colorType defaults to a continuous (breaks) scale, whose
+    // colorMap values are break boundaries, not data values.
+    if (colorType === 'unique' && providedColorMap) {
       // Validate without materializing the whole column: scan rows, deleting
       // matches from a small `wanted` set (early-exit when all are found),
       // while collecting a small sample of actual values for the error message.
@@ -185,7 +187,10 @@ function applyColorConfig(
       }
     }
 
-    const colorScale = colorType === 'breaks' ? 'custom' : 'customOrdinal';
+    // colorType is optional; when omitted, default to a continuous (breaks)
+    // scale so numeric fields colored via colorBy aren't mis-colored as
+    // categorical. Only an explicit 'unique' selects the categorical scale.
+    const colorScale = colorType === 'unique' ? 'customOrdinal' : 'custom';
     const colors = colorMap.map(c => c.color);
     const keplerColorMap = colorMap.map(c => [c.value, c.color]);
     const colorRange = {

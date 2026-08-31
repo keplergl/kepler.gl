@@ -145,7 +145,11 @@ export function getValuesFromDataset(
   datasetName: string,
   variableName: string
 ): unknown[] {
-  const datasetId = Object.keys(datasets).find(dataId => datasets[dataId].label === datasetName);
+  // Commands advertise accepting a dataset "name (label) or id", so match by
+  // either — a caller using the dataset id must not fail here.
+  const datasetId = Object.keys(datasets).find(
+    dataId => dataId === datasetName || datasets[dataId].label === datasetName
+  );
   if (!datasetId) {
     throw new Error(`Dataset ${datasetName} not found`);
   }
@@ -267,7 +271,11 @@ export function buildAddColumnPayload(
   newColumnName: string,
   newColumnArrow: any
 ): {rows: unknown[][]; fields: any[]} {
-  const datasetId = Object.keys(datasets).find(id => datasets[id].label === datasetName);
+  // Match by id or label, consistent with getValuesFromDataset and the
+  // commands' "name (label) or id" contract.
+  const datasetId = Object.keys(datasets).find(
+    id => id === datasetName || datasets[id].label === datasetName
+  );
   if (!datasetId) {
     throw new Error(`Dataset "${datasetName}" not found.`);
   }
