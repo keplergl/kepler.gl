@@ -20,7 +20,7 @@ Please note:
 1. Do not use * to select all columns, instead use all the column names in dataset.
 2. List all column names the new table or dataset will have.
 IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replaced with the actual DuckDB table name at runtime.`,
-    metadata: {readOnly: false, riskLevel: 'high', idempotent: false},
+    metadata: {readOnly: false, riskLevel: 'high', idempotent: false, requiresConfirmation: true},
     inputSchema: z.object({
       datasetName: z.string().describe('The name of the source dataset'),
       variableNames: z
@@ -53,6 +53,10 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         // temp table inside DuckDB and run the SQL against unintended data.
         const dbTableName = datasetNameToTableName(dataId);
         const resolvedSql = sql.replace(/__TABLE__/g, `"${dbTableName}"`);
+        // Dedupe variableNames: duplicate names would silently overwrite
+        // earlier entries in columnData, producing an Arrow table that doesn't
+        // match the requested column list.
+        const uniqueVariableNames = [...new Set(variableNames)];
         const columnData: Record<string, unknown[]> = {};
         // Object-valued columns (the `_geojson` Feature objects) must not be
         // round-tripped through Arrow raw: `tableFromArrays` infers ONE Arrow
@@ -61,7 +65,7 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         // and the MultiPolygon coordinates come back as nulls. Stringify them
         // for the DuckDB round-trip and restore the objects afterwards.
         const objectColumns: string[] = [];
-        for (const varName of variableNames) {
+        for (const varName of uniqueVariableNames) {
           // Pass the user-provided datasetName (label or id) — the documented
           // KeplerContext contract — not the resolved id; getValuesFromDataset
           // matches by label or id either way.

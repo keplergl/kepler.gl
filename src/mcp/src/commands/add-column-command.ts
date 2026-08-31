@@ -83,7 +83,10 @@ IMPORTANT: this command only ADDS columns. It cannot delete or rename-in-place a
         // name (e.g. "A-B" vs "A B"), which would clobber another dataset's
         // temp table inside DuckDB and run the SQL against unintended data.
         const dbTableName = datasetNameToTableName(dataId);
-        const db = await ctx.loadTableIntoDuckDB(dataId, fieldNames, dbTableName);
+        // Pass the user-provided datasetName (label or id) to
+        // loadTableIntoDuckDB — the documented KeplerContext contract — not
+        // the resolved id.
+        const db = await ctx.loadTableIntoDuckDB(datasetName, fieldNames, dbTableName);
 
         // Add-only: compute ONLY the new column in DuckDB. Existing columns are
         // never round-tripped through DuckDB/Arrow — `tableFromArrays` infers a

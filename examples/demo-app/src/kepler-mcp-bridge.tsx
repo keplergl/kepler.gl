@@ -228,7 +228,13 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
             <input
               type="number"
               value={port}
-              onChange={e => setPort(Number(e.target.value) || DEFAULT_PORT)}
+              onChange={e => {
+                // Clamp manual entry to a valid TCP port (1-65535), matching
+                // the URL-param parsing — 0/negative/>65535 would produce an
+                // invalid WebSocket URL with confusing failures.
+                const v = Number(e.target.value);
+                setPort(Number.isInteger(v) && v >= 1 && v <= 65535 ? v : DEFAULT_PORT);
+              }}
               style={{width: 52, background: 'rgba(255,255,255,.15)', border: '1px solid rgba(255,255,255,.5)', color: '#fff', borderRadius: 4, padding: '2px 6px'}}
             />
             <button onClick={() => connect()} style={btnStyle}>connect</button>
