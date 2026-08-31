@@ -47,6 +47,10 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         // `data.csv?x=1`) don't end up in the dataset name.
         const fileName = new URL(url).pathname.split('/').pop() || 'data';
         const file = new File([blob], fileName);
+        // Preserve the source URL so processors hash by URL (avoiding dataset-id
+        // collisions between same-named files) and can attach externally-hosted
+        // metadata — mirrors loadExternallyHostedDataset.
+        (file as File & {keplerSourceUrl?: string}).keplerSourceUrl = url;
 
         const batches = await readFileInBatches({
           file,

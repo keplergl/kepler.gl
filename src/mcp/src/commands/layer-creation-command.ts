@@ -156,20 +156,30 @@ function applyColorConfig(
     // method: 'unique values'). Rejecting here turns a silent wrong render into a
     // recoverable error.
     if (colorType !== 'breaks' && providedColorMap) {
-      const actualValues = new Set(
-        Array.from({length: dataset.length}, (_, i) => dataset.getValue(colorBy, i))
-      );
-      const missing = providedColorMap.filter(c => !actualValues.has(c.value)).map(c => c.value);
-      if (missing.length > 0) {
-        const sample = [...actualValues]
-          .slice(0, 20)
-          .map(v => JSON.stringify(v))
-          .join(', ');
+      // Validate without materializing the whole column: scan rows, deleting
+      // matches from a small `wanted` set (early-exit when all are found),
+      // while collecting a small sample of actual values for the error message.
+      const wanted = new Set(providedColorMap.map(c => c.value));
+      const sample: unknown[] = [];
+      const seen = new Set<unknown>();
+      for (let i = 0; i < dataset.length && wanted.size > 0; i++) {
+        const v = dataset.getValue(colorBy, i);
+        if (wanted.has(v)) {
+          wanted.delete(v);
+        } else if (!seen.has(v) && sample.length < 20) {
+          seen.add(v);
+          sample.push(v);
+        }
+      }
+      if (wanted.size > 0) {
+        const missing = [...wanted];
         throw new Error(
           `colorMap value(s) ${missing
             .map(v => JSON.stringify(v))
             .join(', ')} not found in field "${colorBy}". ` +
-            `Actual unique values: ${sample}${actualValues.size > 20 ? ', …' : ''}. ` +
+            `Actual unique values: ${sample.map(v => JSON.stringify(v)).join(', ')}${
+              sample.length >= 20 ? ', …' : ''
+            }. ` +
             `Call geoda.analysis (analysis: 'classify', method: 'unique values') to get the real values.`
         );
       }

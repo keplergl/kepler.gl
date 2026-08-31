@@ -58,8 +58,15 @@ export function buildKeplerContext(reduxStore: any): KeplerContext {
       }
       return reduxStore?.getState()?.demo?.aiAssistant?.keplerGl?.mapBoundary;
     },
-    getMapboxToken: () =>
-      typeof window !== 'undefined' ? (localStorage.getItem('mapbox-token') ?? undefined) : undefined,
+    getMapboxToken: () => {
+      if (typeof window === 'undefined') return undefined;
+      try {
+        return localStorage.getItem('mapbox-token') ?? undefined;
+      } catch {
+        // private mode / blocked storage — no token
+        return undefined;
+      }
+    },
     dispatch: (action: any) => reduxStore?.dispatch(action),
     getValuesFromDataset: (datasetName, variableName) => {
       const visState = readMap()?.visState;

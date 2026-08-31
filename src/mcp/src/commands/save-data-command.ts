@@ -46,7 +46,9 @@ export function getSaveDataCommand(ctx: KeplerContext): RoomCommand {
         return {
           success: false,
           commandId: saveDataCommandId,
-          error: `Cannot save data to kepler.gl: ${error}`
+          error: `Cannot save data to kepler.gl: ${
+            error instanceof Error ? error.message : String(error)
+          }`
         };
       }
     }
