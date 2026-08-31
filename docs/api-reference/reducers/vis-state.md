@@ -5,6 +5,7 @@
 - [visStateUpdaters](#visstateupdaters)
   - [addFilterUpdater](#addfilterupdater)
   - [addLayerUpdater](#addlayerupdater)
+  - [addToDatasetUpdater](#addtodatasetupdater)
   - [applyCPUFilterUpdater](#applycpufilterupdater)
   - [enlargeFilterUpdater](#enlargefilterupdater)
   - [INITIAL\_VIS\_STATE](#initial_vis_state)
@@ -20,6 +21,7 @@
   - [mapClickUpdater](#mapclickupdater)
   - [receiveMapConfigUpdater](#receivemapconfigupdater)
   - [removeDatasetUpdater](#removedatasetupdater)
+  - [removeFromDatasetUpdater](#removefromdatasetupdater)
   - [removeFilterUpdater](#removefilterupdater)
   - [removeLayerUpdater](#removelayerupdater)
   - [reorderLayerUpdater](#reorderlayerupdater)
@@ -100,6 +102,22 @@ Add a new layer
 -   `state` **[Object][69]** `visState`
 -   `action` **[Object][69]** action
     -   `action.props` **[Object][69]** new layer props
+
+Returns **[Object][69]** nextState
+
+### addToDatasetUpdater
+
+Append or upsert rows on an existing in-memory row dataset. Keeps layers and re-runs filters. Arrow/DuckDB tables warn and are left unchanged (INSERT / concat not implemented).
+
+-   **Action**: [`addToDataset`](../actions/actions.md#addtodataset)
+
+**Parameters**
+
+-   `state` **[Object][69]** `visState`
+-   `action` **[Object][69]** action
+    -   `action.dataId` **[string][70]** dataset id
+    -   `action.rows` rows to append or upsert
+    -   `action.options.upsertBy` **[string][70]** (optional) unique key field
 
 Returns **[Object][69]** nextState
 
@@ -315,6 +333,22 @@ Remove a dataset and all layers, filters, tooltip configs that based on it
 -   `state` **[Object][69]** `visState`
 -   `action` **[Object][69]** action
     -   `action.key` **[string][70]** dataset id
+
+Returns **[Object][69]** nextState
+
+### removeFromDatasetUpdater
+
+Delete rows by index or by field values from an existing in-memory row dataset. Keeps layers. Arrow/DuckDB tables warn and are left unchanged.
+
+-   **Action**: [`removeFromDataset`](../actions/actions.md#removefromdataset)
+
+**Parameters**
+
+-   `state` **[Object][69]** `visState`
+-   `action` **[Object][69]** action
+    -   `action.dataId` **[string][70]** dataset id
+    -   `action.rowIndexes` row indexes (optional)
+    -   `action.byField` `{field, values}` matcher (optional)
 
 Returns **[Object][69]** nextState
 
