@@ -45,6 +45,7 @@ type McpBridgeProps = {
 export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
   const [token, setToken] = useState(getUrlConfig().token);
   const [port, setPort] = useState(getUrlConfig().port);
+  const [host, setHost] = useState(getUrlConfig().host);
   const [status, setStatus] = useState<BridgeStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
@@ -78,7 +79,7 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
       setStatus('connecting');
       setError(null);
 
-      const wsUrl = `ws://${WSHost()}:${port}/ws?token=${encodeURIComponent(useToken)}`;
+      const wsUrl = `ws://${host}:${port}/ws?token=${encodeURIComponent(useToken)}`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
@@ -88,7 +89,13 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
         pushLog(`connected to ${wsUrl} · ${catalog.length} map commands`);
       };
       ws.onmessage = async ev => {
-        const msg = JSON.parse(String(ev.data));
+        let msg: any;
+        try {
+          msg = JSON.parse(String(ev.data));
+        } catch {
+          pushLog(`ignored non-JSON message: ${String(ev.data).slice(0, 80)}`);
+          return;
+        }
         if (msg?.type !== 'call') return;
         const {callId, tool, input} = msg as {callId: string; tool: string; input?: unknown};
         const command = commandsById[tool];
@@ -122,7 +129,7 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
         }
       };
     },
-    [catalog, commandsById, port, pushLog, token]
+    [catalog, commandsById, host, port, pushLog, token]
   );
 
   useEffect(() => {

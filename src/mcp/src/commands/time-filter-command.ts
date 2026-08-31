@@ -175,7 +175,12 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
             if (fieldIdx >= 0 && dataset.dataContainer) {
               const rows = dataset.dataContainer.numRows();
               mappedValues = [];
-              for (let i = 0; i < rows; i++) {
+              // Sample a bounded number of rows — iterating every row can freeze
+              // the UI thread on large datasets, and a sample is enough for a
+              // reasonable interval estimate.
+              const MAX_SAMPLES = 1000;
+              const step = Math.max(1, Math.floor(rows / MAX_SAMPLES));
+              for (let i = 0; i < rows; i += step) {
                 const val = dataset.dataContainer.valueAt(i, fieldIdx);
                 if (val != null) {
                   const ts = typeof val === 'number' ? val : new Date(val as any).getTime();

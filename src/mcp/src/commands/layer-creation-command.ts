@@ -256,7 +256,9 @@ For geojson datasets:
 `,
     metadata: {readOnly: false, riskLevel: 'medium', idempotent: false},
     inputSchema: z.object({
-      datasetName: z.string().describe('The name of the dataset. Note: do NOT use the datasetId.'),
+      datasetName: z
+        .string()
+        .describe('The name (label) or id of the dataset. Prefer the label when known.'),
       latitudeColumn: z.string().optional(),
       longitudeColumn: z.string().optional(),
       layerName: z
