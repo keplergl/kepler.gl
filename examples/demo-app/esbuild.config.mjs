@@ -174,6 +174,7 @@ const config = {
   loader: {
     '.js': 'jsx',
     '.css': 'css',
+    '.md': 'text',
     '.ttf': 'file',
     '.woff': 'file',
     '.woff2': 'file'

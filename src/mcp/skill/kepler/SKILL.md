@@ -32,7 +32,7 @@ not this one.
 
 | command                  | purpose                                                        |
 | ------------------------ | -------------------------------------------------------------- |
-| `map.add-layer`          | Add a layer (point, h3, arc, trip, hexagon, grid, cluster, heatmap, geojson, line, s2) to the map. |
+| `map.add-layer`          | Add a layer (point, flow, h3, arc, trip, hexagon, grid, cluster, heatmap, geojson, line, s2) to the map. |
 | `map.add-time-filter`    | Animate a NON-trip layer over a TIMESTAMP/DATE column.         |
 | `map.toggle-time-filter` | Show/hide the enlarged time controller at the bottom of the map. |
 | `map.split-view`         | Enable/disable dual-map comparison.                            |
@@ -57,7 +57,8 @@ assistant the dispatcher is the `executeApi` tool with
   for continuous intensity).
 - Density without precomputed cells → `grid` or `hexagon` (auto-binned).
 - Pre-aggregated H3 cells → `h3`.
-- Origin→destination flows → `arc`.
+- Origin→destination flows → `flow` (a dedicated flow layer with locations, clustering and weighted edges; requires two point lat/lng pairs — source + destination). Fall back to `arc` only when you want straight great-circle lines between points. For weighted flows optionally pass the magnitude column as `countColumn`.
+
 - Polylines / polygons → `line` / `geojson`. A decoded GEOMETRY `geom`
   column can be rendered directly with `geojson` — do NOT convert it to
   lat/lon columns or build an intermediate table. For geojson datasets use
