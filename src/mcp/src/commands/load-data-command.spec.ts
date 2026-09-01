@@ -218,4 +218,88 @@ describe('map.load-data', () => {
     expect(result.error).toMatch(/HTTP 500/);
     expect(getDispatched()).toBeNull();
   });
+
+  it('loads a small file embedded as a data URL (remote-context local file)', async () => {
+    const {ctx, getDispatched} = makeCtx();
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      statusText: 'OK',
+      blob: async () => new Blob(['a,b\n1,2'], {type: 'text/csv'})
+    } as any);
+
+    const content = {data: [{a: 1, b: 2}], fileName: 'data.csv'};
+    (readFileInBatches as jest.Mock).mockResolvedValue({
+      next: jest
+        .fn()
+        .mockResolvedValueOnce({value: content, done: false})
+        .mockResolvedValueOnce({value: undefined, done: true})
+    });
+    (processFileData as jest.Mock).mockResolvedValue([
+      {info: {label: 'data.csv'}, rows: [{a: 1, b: 2}]}
+    ]);
+
+    const cmd = getLoadDataCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      url: 'data:text/csv;base64,YSxiCjEsMg=='
+    })) as CommandResult;
+
+    expect(result.success).toBe(true);
+    expect(global.fetch).toHaveBeenCalledWith('data:text/csv;base64,YSxiCjEsMg==', {
+      signal: undefined
+    });
+    const action = getDispatched();
+    expect(action).toBeTruthy();
+    // the default dataset name is derived from the data URL's MIME type
+    expect(action.payload.datasets[0].info.label).toBe('data.csv');
+  });
+
+  it('hashes a data URL down for the dataset source (no huge metadata)', async () => {
+    const {ctx, getDispatched} = makeCtx();
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      statusText: 'OK',
+      blob: async () => new Blob(['a,b\n1,2'], {type: 'text/csv'})
+    } as any);
+
+    const content = {data: [{a: 1, b: 2}], fileName: 'data.csv'};
+    let capturedFile: any;
+    (readFileInBatches as jest.Mock).mockImplementation(async ({file}: any) => {
+      capturedFile = file;
+      return {
+        next: jest
+          .fn()
+          .mockResolvedValueOnce({value: content, done: false})
+          .mockResolvedValueOnce({value: undefined, done: true})
+      };
+    });
+    (processFileData as jest.Mock).mockResolvedValue([
+      {info: {label: 'data.csv'}, rows: [{a: 1, b: 2}]}
+    ]);
+
+    const cmd = getLoadDataCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      url: 'data:text/csv;base64,YSxiCjEsMg=='
+    })) as CommandResult;
+
+    expect(result.success).toBe(true);
+    // the source is a short content hash, not the full (potentially large) data URL
+    expect(capturedFile.keplerSourceUrl).toMatch(/^data:[a-z0-9]+$/);
+    expect(capturedFile.keplerSourceUrl).not.toContain('base64');
+  });
+
+  it('rejects an oversized data URL', async () => {
+    const {ctx, getDispatched} = makeCtx();
+
+    const cmd = getLoadDataCommand(ctx as any);
+    const bigDataUrl = `data:text/csv;base64,${'A'.repeat(2 * 1024 * 1024 + 1)}`;
+    const result = (await cmd.execute({} as any, {
+      url: bigDataUrl
+    })) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Data URL is too large/);
+    expect(getDispatched()).toBeNull();
+  });
 });

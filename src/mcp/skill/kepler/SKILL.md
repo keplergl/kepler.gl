@@ -256,6 +256,15 @@ user wants a specific dataset name, pass it as `datasetName`:
 { "url": "https://.../nyc.geojson", "datasetName": "NYC Neighborhoods" }
 ```
 
+Local files: a local file must be served over http(s) — the browser cannot
+fetch `file://` paths. Copy the file into the demo app's served directory
+(e.g. `examples/demo-app/dist/`) and pass `/filename.csv`, or serve it with
+a CORS-enabled local server (`npx serve --cors -l 8000`) and pass
+`http://localhost:8000/filename.csv`. If you have the file content but
+cannot serve it (e.g. a remote browser context), pass it as a data URL —
+`data:text/csv;base64,<base64 content>` (encode with `base64 -i file.csv`).
+This works for small files (up to ~2MB).
+
 For large files (over a few MB), prefer Parquet (`.parquet`) over
 GeoJSON/CSV — it loads much faster and is less likely to time out. Convert
 GeoJSON to GeoParquet with geopandas (`gdf.to_parquet("data.parquet")`);
