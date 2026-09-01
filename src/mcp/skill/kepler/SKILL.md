@@ -256,6 +256,12 @@ user wants a specific dataset name, pass it as `datasetName`:
 { "url": "https://.../nyc.geojson", "datasetName": "NYC Neighborhoods" }
 ```
 
+For large files (over a few MB), prefer Parquet (`.parquet`) over
+GeoJSON/CSV — it loads much faster and is less likely to time out. Convert
+GeoJSON to GeoParquet with geopandas (`gdf.to_parquet("data.parquet")`);
+kepler reads GeoParquet geometry (WKB) natively, so the map renders the
+same lines.
+
 Do NOT create a duplicate dataset just to rename it — never run
 `map.create-table` with a plain `SELECT *` (or any copy) to give the loaded
 data a friendlier name. `map.create-table` creates a SEPARATE new dataset and

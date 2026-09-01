@@ -20,7 +20,10 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
       'LOCAL FILES: to load a file served by the demo app itself, pass a path like ' +
       '`/sf_streets.geojson` (a file in the demo\'s served directory) or a full ' +
       '`http://localhost:<port>/...` URL. `file://` paths cannot be fetched by a browser — ' +
-      'the file must be served over http(s).',
+      'the file must be served over http(s). ' +
+      'LARGE DATASETS: for files over a few MB, prefer Parquet (.parquet) over GeoJSON/CSV — ' +
+      'it loads much faster and is less likely to time out. Convert GeoJSON to GeoParquet ' +
+      'with geopandas (`gdf.to_parquet("data.parquet")`); kepler reads GeoParquet geometry (WKB) natively.',
     metadata: {readOnly: false, riskLevel: 'medium', requiresConfirmation: true},
     inputSchema: z.object({
       url: z
