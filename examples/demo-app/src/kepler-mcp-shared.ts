@@ -31,7 +31,7 @@ import mapSkillMarkdown from '@kepler.gl/mcp/skill/kepler/SKILL.md';
 export const DUCKDB_REQUIRED = new Set(['map.create-table', 'map.add-column', 'map.save-data']);
 
 // Mutating map.* commands every agent will reach for without reading the
-// skill. Each gets a pointer to kepler.get-map-skill prepended to its
+// skill. Each gets a pointer to kepler.get-map-skill appended to its
 // description so the reader tool is impossible to miss.
 const SKILL_REQUIRED = new Set([
   'map.add-layer',

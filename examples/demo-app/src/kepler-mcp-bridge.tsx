@@ -23,7 +23,10 @@ const WSHost = () => 'localhost';
 // The bridge only ever talks to a local kepler-mcp-demo process. A crafted
 // link must not be able to point it at a remote WebSocket server (data-exfil /
 // remote-control risk), so any host other than loopback is ignored.
-const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]', '0.0.0.0']);
+// True loopback hosts only. `0.0.0.0` is deliberately excluded: it is the
+// "any address" wildcard, not a loopback address, and accepting it would
+// undermine the protection against connecting the bridge to non-local hosts.
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
 const isLoopbackHost = (host: string) => LOOPBACK_HOSTS.has(host.toLowerCase());
 
 type BridgeStatus = 'idle' | 'connecting' | 'connected' | 'error';
