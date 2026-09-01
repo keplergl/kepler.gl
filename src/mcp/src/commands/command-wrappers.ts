@@ -87,10 +87,14 @@ export function toolToCommand(tool: AnyTool, meta: CommandMeta): RoomCommand {
           // A structured failure (success:false) that didn't throw must still
           // carry an error message — otherwise callers see {success:false,
           // error:undefined} and downstream formatters misreport it as a
-          // success. Fall back to a generic message when the tool omits one.
+          // success. Many tool/result shapes (including RoomCommandResult)
+          // carry the failure in a `message` field rather than `error`, so
+          // fall back to that before the generic message.
           error:
             rawOutput?.success === false
-              ? (rawOutput?.error as string | undefined) ?? 'Tool execution failed.'
+              ? (rawOutput?.error as string | undefined) ??
+                (rawOutput?.message as string | undefined) ??
+                'Tool execution failed.'
               : undefined,
           data: typeof trimmed === 'object' && trimmed !== null ? trimmed : {details: trimmed}
         };
