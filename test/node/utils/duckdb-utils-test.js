@@ -3,6 +3,7 @@
 
 import test from 'tape';
 import * as arrow from 'apache-arrow';
+import Console from 'global/console';
 
 import {
   SUPPORTED_DUCKDB_DROP_EXTENSIONS,
@@ -22,6 +23,7 @@ import {
   sanitizeDuckDBTableName,
   quoteTableName
 } from '../../../src/duckdb/src/table/duckdb-table-utils';
+import {KeplerGlDuckDbTable} from '../../../src/duckdb/src/table/duckdb-table';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 
@@ -588,5 +590,24 @@ test('duckdb-utils -> SUPPORTED_DUCKDB_DROP_EXTENSIONS', t => {
   t.ok(SUPPORTED_DUCKDB_DROP_EXTENSIONS.includes('arrow'), 'should include arrow');
   t.equal(SUPPORTED_DUCKDB_DROP_EXTENSIONS.length, 5, 'should have 5 supported extensions');
 
+  t.end();
+});
+
+test('KeplerGlDuckDbTable -> row edits stay a warned no-op', t => {
+  const table = new KeplerGlDuckDbTable({info: {id: 'duck', label: 'duck'}});
+  const originalWarn = Console.warn;
+  const warnings = [];
+  Console.warn = message => warnings.push(String(message));
+
+  t.equal(table.appendRows([[1, 2]]), false, 'appendRows should no-op');
+  t.equal(table.upsertRows([[1, 2]], 'id'), false, 'upsertRows should no-op');
+  t.equal(table.removeRows([0]), false, 'removeRows should no-op');
+  t.equal(table.dataContainer.numRows(), 0, 'should not mutate the empty seed table');
+  t.ok(
+    warnings.some(message => message.includes('DuckDB INSERT')),
+    'should warn that DuckDB INSERT is not implemented'
+  );
+
+  Console.warn = originalWarn;
   t.end();
 });

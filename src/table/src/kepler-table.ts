@@ -108,7 +108,7 @@ export type TimeFieldFilterProps = TimeRangeFieldDomain & {
 const FID_KEY = 'name';
 
 const ROW_EDIT_NOT_IMPLEMENTED =
-  'In-place row edits (append, upsert, delete) are not implemented for Arrow/DuckDB tables. DuckDB INSERT and Arrow concat are not supported yet. Use addDataToMap with keepExistingConfig to replace the table.';
+  'In-place row edits (append, upsert, delete) are not implemented for this table. DuckDB tables omit row edits (no INSERT yet). Use addDataToMap with keepExistingConfig to replace the table.';
 
 function warnRowEditsUnavailable(method: string): void {
   Console.warn(`KeplerTable.${method}: ${ROW_EDIT_NOT_IMPLEMENTED}`);
@@ -393,8 +393,8 @@ class KeplerTable<F extends Field = Field> {
   }
 
   /**
-   * Append column-ordered rows in place. No-op for Arrow/DuckDB (no `append`).
-   * Accessors stay bound: the container instance is not replaced.
+   * Append column-ordered rows in place. Accessors stay bound: the container
+   * instance is not replaced. No-op when the container has no `append` (DuckDB).
    * @returns false when the payload is rejected and the table is unchanged.
    */
   appendRows(rows: any[][]): boolean {
@@ -425,7 +425,8 @@ class KeplerTable<F extends Field = Field> {
 
   /**
    * Replace rows that share `keyField` and append the rest. Last incoming row
-   * wins for a repeated key. No-op for Arrow/DuckDB.
+   * wins for a repeated key. No-op when the container has no `append`/`replace`
+   * (DuckDB).
    * @returns false when the payload is rejected and the table is unchanged.
    */
   upsertRows(rows: any[][], keyField: string): boolean {
@@ -472,7 +473,9 @@ class KeplerTable<F extends Field = Field> {
       }
       const existing = keyToIndex.get(key);
       if (existing !== undefined) {
-        this.dataContainer.replace(existing, row);
+        if (!this.dataContainer.replace(existing, row)) {
+          return false;
+        }
       } else {
         toAppend.push(row);
       }
@@ -493,7 +496,8 @@ class KeplerTable<F extends Field = Field> {
   }
 
   /**
-   * Remove rows by index in place. No-op for Arrow/DuckDB (no `remove`).
+   * Remove rows by index in place. No-op when the container has no `remove`
+   * (DuckDB).
    * @returns false when any index is invalid and the table is unchanged.
    */
   removeRows(indexes: number[]): boolean {

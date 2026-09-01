@@ -3278,8 +3278,8 @@ function normalizeDatasetRows(
 }
 
 /**
- * Append or upsert rows on an existing in-memory row dataset. Keeps layers and re-runs filters.
- * Arrow/DuckDB tables warn and are left unchanged (INSERT / concat not implemented).
+ * Append or upsert rows on an existing in-memory row or Arrow dataset. Keeps layers and re-runs filters.
+ * DuckDB tables warn and are left unchanged (INSERT not implemented). Nested / geoarrow Arrow columns are rejected.
  * @memberof visStateUpdaters
  * @public
  */
@@ -3312,8 +3312,8 @@ export function addToDatasetUpdater(
 }
 
 /**
- * Delete rows by index or by field values from an existing in-memory row dataset.
- * Keeps layers. Arrow/DuckDB tables warn and are left unchanged.
+ * Delete rows by index or by field values from an existing in-memory row or Arrow dataset.
+ * Keeps layers. DuckDB tables warn and are left unchanged.
  * @memberof visStateUpdaters
  * @public
  */

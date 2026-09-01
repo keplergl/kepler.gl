@@ -13,9 +13,10 @@ update styles:
   (injected rows disappear).
 
 This bundles local monorepo `src/` (not a published npm package). Host-row
-edits only work for in-memory CSV (`RowDataContainer`), which this example
-uses. Arrow and DuckDB tables log a warning and leave the data unchanged
-(INSERT / concat are not implemented yet). The **Keyed by id** controls
+edits work for in-memory CSV (`RowDataContainer`) and Arrow tables with
+primitive columns. DuckDB tables log a warning and leave the data unchanged
+(INSERT is not implemented yet). Nested, binary, and geoarrow Arrow columns
+are also left unchanged. The **Keyed by id** controls
 exercise `addToDataset(id, rows, {upsertBy: 'id'})` and
 `removeFromDataset(id, {field: 'id', values})`.
 

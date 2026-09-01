@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {ProtoDatasetField} from '@kepler.gl/types';
 import * as arrow from 'apache-arrow';
 import {console as globalConsole} from 'global/window';
@@ -191,7 +191,12 @@ function copyArrowSchemaMetadata(from?: arrow.Schema | null, to?: arrow.Schema |
 
   const fromMeta = from.metadata as Map<string, string> | undefined;
   const toMeta = to.metadata as Map<string, string> | undefined;
-  if (fromMeta && toMeta && typeof fromMeta.forEach === 'function' && typeof toMeta.set === 'function') {
+  if (
+    fromMeta &&
+    toMeta &&
+    typeof fromMeta.forEach === 'function' &&
+    typeof toMeta.set === 'function'
+  ) {
     fromMeta.forEach((value, key) => {
       toMeta.set(key, value);
     });
@@ -262,7 +267,10 @@ function arrowCellToBuilderValue(value: unknown): unknown {
   return value;
 }
 
-function compactArrowVector(column: arrow.Vector, type: arrow.DataType = column.type): arrow.Vector {
+function compactArrowVector(
+  column: arrow.Vector,
+  type: arrow.DataType = column.type
+): arrow.Vector {
   if (!column || !column.data || column.data.length <= 1) {
     return column;
   }
@@ -282,9 +290,10 @@ function compactArrowVector(column: arrow.Vector, type: arrow.DataType = column.
   const builder = arrow.makeBuilder({type, nullValues: [null]});
   const length = column.length;
   for (let i = 0; i < length; i++) {
-    const isValid = typeof (column as {isValid?: (index: number) => boolean}).isValid === 'function'
-      ? (column as {isValid: (index: number) => boolean}).isValid(i)
-      : true;
+    const isValid =
+      typeof (column as {isValid?: (index: number) => boolean}).isValid === 'function'
+        ? (column as {isValid: (index: number) => boolean}).isValid(i)
+        : true;
     // FixedSizeList/List .get() returns nested Vectors. Appending those
     // silently writes NaN (points) or throws (lines/polygons). Plain JS
     // arrays are what makeBuilder expects.
@@ -298,6 +307,53 @@ function compactArrowVector(column: arrow.Vector, type: arrow.DataType = column.
     return (finished as {toVector: () => arrow.Vector}).toVector();
   }
   return column;
+}
+
+/**
+ * Primitive (and dictionary-of-primitive) columns can be rebuilt from JS row
+ * arrays via vectorFromArray. Nested, binary, and geoarrow columns cannot.
+ */
+function isSupportedArrowRowEditType(type: arrow.DataType): boolean {
+  if (
+    arrow.DataType.isUtf8(type) ||
+    arrow.DataType.isNull(type) ||
+    arrow.DataType.isInt(type) ||
+    arrow.DataType.isFloat(type) ||
+    arrow.DataType.isBool(type) ||
+    arrow.DataType.isDate(type) ||
+    arrow.DataType.isTimestamp(type) ||
+    arrow.DataType.isTime(type)
+  ) {
+    return true;
+  }
+  if (arrow.DataType.isDictionary(type)) {
+    const dictionary = (type as arrow.Dictionary).dictionary;
+    return Boolean(dictionary && isSupportedArrowRowEditType(dictionary));
+  }
+  return false;
+}
+
+function arrowFieldGeoArrowExtension(field?: arrow.Field | null): string | undefined {
+  const metadata = field?.metadata as Map<string, string> | Record<string, string> | undefined;
+  if (!metadata) {
+    return undefined;
+  }
+  if (typeof (metadata as Map<string, string>).get === 'function') {
+    return (metadata as Map<string, string>).get(GEOARROW_METADATA_KEY);
+  }
+  return (metadata as Record<string, string>)[GEOARROW_METADATA_KEY];
+}
+
+function concatArrowTables(tables: arrow.Table[]): arrow.Table | null {
+  const nonempty = tables.filter(table => table && table.numRows > 0);
+  if (!nonempty.length) {
+    return tables[0] ?? null;
+  }
+  let next = nonempty[0];
+  for (let i = 1; i < nonempty.length; i++) {
+    next = next.concat(nonempty[i]);
+  }
+  return next;
 }
 
 /**
@@ -385,6 +441,183 @@ export class ArrowDataContainer implements DataContainerInterface {
 
     // cache column data to make valueAt() faster
     // this._colData = this._cols.map(c => c.toArray());
+  }
+
+  /**
+   * Concat rows onto the Arrow table. Rejects the whole batch when any row is
+   * the wrong width or a column type cannot be rebuilt from JS values
+   * (nested, binary, geoarrow). Compacts after concat so batch count stays
+   * under the hover/picking cap.
+   */
+  append(rows: any[][]): boolean {
+    const extra = this._tableFromRows(rows, 'append');
+    if (!extra) {
+      return false;
+    }
+    try {
+      const next = this._numRows === 0 ? extra : this._arrowTable.concat(extra);
+      this._commitTable(next);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Replace one row by slicing around it and concatenating a one-row table.
+   * Same type restrictions as {@link append}.
+   */
+  replace(index: number, row: any[]): boolean {
+    if (!Number.isInteger(index) || index < 0 || index >= this._numRows) {
+      return false;
+    }
+    const extra = this._tableFromRows([row], 'replace');
+    if (!extra) {
+      return false;
+    }
+    try {
+      const parts: arrow.Table[] = [];
+      if (index > 0) {
+        parts.push(this._arrowTable.slice(0, index));
+      }
+      parts.push(extra);
+      if (index + 1 < this._numRows) {
+        parts.push(this._arrowTable.slice(index + 1));
+      }
+      const next = concatArrowTables(parts);
+      if (!next) {
+        return false;
+      }
+      this._commitTable(next);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Drop unique valid indexes by concatenating the kept slices. Works for any
+   * Arrow type (including nested/geoarrow) because no JS values are rebuilt.
+   * Any out-of-range or non-integer index rejects the whole call.
+   */
+  remove(indexes: number[]): boolean {
+    if (!Array.isArray(indexes) || !indexes.length) {
+      return false;
+    }
+
+    const numRows = this._numRows;
+    const toRemove = new Set<number>();
+    for (let i = 0; i < indexes.length; i++) {
+      const index = indexes[i];
+      if (!Number.isInteger(index) || index < 0 || index >= numRows) {
+        return false;
+      }
+      toRemove.add(index);
+    }
+
+    if (toRemove.size === numRows) {
+      this._assignTable(this._arrowTable.slice(0, 0));
+      return true;
+    }
+
+    try {
+      const kept: arrow.Table[] = [];
+      let start = 0;
+      const sorted = [...toRemove].sort((a, b) => a - b);
+      for (let i = 0; i < sorted.length; i++) {
+        const index = sorted[i];
+        if (index > start) {
+          kept.push(this._arrowTable.slice(start, index));
+        }
+        start = index + 1;
+      }
+      if (start < numRows) {
+        kept.push(this._arrowTable.slice(start));
+      }
+      const next = concatArrowTables(kept);
+      if (!next) {
+        return false;
+      }
+      this._commitTable(next);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private _commitTable(table: arrow.Table): void {
+    this._assignTable(compactArrowTable(table));
+  }
+
+  private _unsupportedRowEditReason(): string | null {
+    const fields = this._arrowTable?.schema?.fields || [];
+    if (!fields.length) {
+      return 'table has no columns';
+    }
+    for (let i = 0; i < fields.length; i++) {
+      const field = fields[i];
+      const extension = arrowFieldGeoArrowExtension(field);
+      if (typeof extension === 'string' && extension.startsWith('geoarrow')) {
+        return `column "${field.name}" is geoarrow (${extension})`;
+      }
+      if (!isSupportedArrowRowEditType(field.type)) {
+        return `column "${field.name}" has unsupported type ${field.type}`;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Build a same-schema table from JS rows, using each existing column's Arrow
+   * type so dictionary/utf8/float concat does not coerce to nulls.
+   */
+  private _tableFromRows(rows: any[][], method: string): arrow.Table | null {
+    if (!Array.isArray(rows) || !rows.length) {
+      return null;
+    }
+
+    const numCols = this._arrowTable?.numCols || this._numColumns;
+    if (!numCols) {
+      return null;
+    }
+    for (let i = 0; i < rows.length; i++) {
+      if (!Array.isArray(rows[i]) || rows[i].length !== numCols) {
+        return null;
+      }
+    }
+
+    const unsupported = this._unsupportedRowEditReason();
+    if (unsupported) {
+      globalConsole.warn(`ArrowDataContainer.${method}: ${unsupported}`);
+      return null;
+    }
+
+    const columns: Record<string, arrow.Vector> = {};
+    const seenNames = new Map<string, number>();
+    for (let i = 0; i < numCols; i++) {
+      const field = this._arrowTable.schema.fields[i];
+      const seen = seenNames.get(field.name) ?? 0;
+      seenNames.set(field.name, seen + 1);
+      const key = seen === 0 ? field.name : `${field.name}_${seen}`;
+      const values = rows.map(row => row[i]);
+      try {
+        columns[key] = arrow.vectorFromArray(values, field.type);
+      } catch {
+        globalConsole.warn(
+          `ArrowDataContainer.${method}: could not encode column "${field.name}" as ${field.type}`
+        );
+        return null;
+      }
+    }
+
+    let extra: arrow.Table;
+    try {
+      extra = new arrow.Table(this._arrowTable.schema, columns);
+    } catch {
+      extra = new arrow.Table(columns);
+    }
+    copyArrowSchemaMetadata(this._arrowTable.schema, extra.schema);
+    return extra;
   }
 
   numChunks(): number {
