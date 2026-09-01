@@ -205,6 +205,16 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Close the socket on unmount so a live connection doesn't leak (route
+  // changes, HMR, ...) and socket events can't trigger state updates after
+  // the component is gone.
+  useEffect(() => {
+    return () => {
+      wsRef.current?.close();
+      wsRef.current = null;
+    };
+  }, []);
+
   // Report status up so a parent can render a unified summary chip.
   useEffect(() => {
     onStatus?.({status, error, connected: status === 'connected'});

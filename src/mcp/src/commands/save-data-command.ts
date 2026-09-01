@@ -15,11 +15,25 @@ export function getSaveDataCommand(ctx: KeplerContext): RoomCommand {
     inputSchema: z.object({
       datasetNames: z
         .array(z.string())
+        .min(1)
         .describe('The names of the DuckDB tables to load into kepler.gl.')
     }) as any,
     execute: async (_execCtx, input) => {
       const {datasetNames} = (input ?? {}) as {datasetNames: string[]};
       try {
+        // Runtime guard: the bridge/webMCP call execute without zod parsing,
+        // so a missing/empty/wrong-typed datasetNames must not fall through to
+        // a confusing TypeError or an unhelpful "No datasets found…" message.
+        if (
+          !Array.isArray(datasetNames) ||
+          datasetNames.length === 0 ||
+          datasetNames.some(name => typeof name !== 'string' || name.length === 0)
+        ) {
+          throw new Error(
+            'datasetNames must be a non-empty array of DuckDB table names, e.g. ["my_table"].'
+          );
+        }
+
         const loadedDatasetNames: string[] = [];
 
         for (const datasetName of datasetNames) {
