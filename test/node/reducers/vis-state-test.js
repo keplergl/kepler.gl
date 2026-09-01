@@ -26,7 +26,8 @@ import {
   calculateLayerData
 } from '@kepler.gl/reducers';
 
-import {processCsvData, processGeojson} from '@kepler.gl/processors';
+import {processCsvData, processGeojson, processArrowBatches} from '@kepler.gl/processors';
+import * as arrow from 'apache-arrow';
 import {Layer, KeplerGlLayers, COLUMN_MODE_TABLE} from '@kepler.gl/layers';
 import {maybeToDate} from '@kepler.gl/table';
 import {
@@ -8298,6 +8299,101 @@ test('VisStateUpdater -> addToDataset appends rows and keeps layers', async t =>
   t.end();
 });
 
+test('VisStateUpdater -> addToDataset rebuilds GeoJSON dataToFeature', async t => {
+  const initialData = processGeojson({
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {id: 'a', ring: 1},
+        geometry: {type: 'Point', coordinates: [-122.42, 37.77]}
+      }
+    ]
+  });
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.geojson'},
+    data: initialData
+  });
+  const {props} = GeojsonLayer.findDefaultLayerProps(datasets.live);
+  t.ok(props.length, 'should find a geojson column');
+  const geoLayer = new GeojsonLayer({
+    id: 'g1',
+    dataId: 'live',
+    isVisible: true,
+    ...props[0]
+  });
+  const {layerData, layer} = calculateLayerData(
+    geoLayer,
+    {...INITIAL_VIS_STATE, datasets, layers: [geoLayer], layerData: [{}]},
+    undefined
+  );
+
+  t.equal(layer.dataToFeature.length, 1, 'should parse the initial feature');
+
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layerData],
+    layerOrder: [layer.id]
+  };
+
+  const appended = reducer(
+    state,
+    VisStateActions.addToDataset('live', {
+      id: 'b',
+      ring: 2,
+      _geojson: {
+        type: 'Feature',
+        properties: {id: 'b', ring: 2},
+        geometry: {type: 'Point', coordinates: [-122.5, 37.8]}
+      }
+    })
+  );
+
+  t.equal(appended.datasets.live.dataContainer.numRows(), 2, 'should append the feature row');
+  t.equal(appended.layers[0].dataToFeature.length, 2, 'should rebuild dataToFeature after append');
+  t.equal(appended.layerData[0].data.length, 2, 'should rebuild layer data after append');
+  t.deepEqual(
+    appended.layers[0].dataToFeature[1].geometry.coordinates,
+    [-122.5, 37.8],
+    'should include the appended point'
+  );
+
+  const replaced = reducer(
+    appended,
+    VisStateActions.addToDataset(
+      'live',
+      {
+        id: 'a',
+        ring: 1,
+        _geojson: {
+          type: 'Feature',
+          properties: {id: 'a', ring: 1},
+          geometry: {type: 'Point', coordinates: [-122.1, 37.1]}
+        }
+      },
+      {upsertBy: 'id'}
+    )
+  );
+
+  t.equal(replaced.datasets.live.dataContainer.numRows(), 2, 'upsert should keep row count');
+  t.deepEqual(
+    replaced.layers[0].dataToFeature[0].geometry.coordinates,
+    [-122.1, 37.1],
+    'should rebuild dataToFeature after in-place replace'
+  );
+
+  const removed = reducer(
+    replaced,
+    VisStateActions.removeFromDataset('live', {field: 'id', values: 'b'})
+  );
+  t.equal(removed.layers[0].dataToFeature.length, 1, 'should drop the removed feature');
+  t.equal(removed.layerData[0].data.length, 1, 'should drop layer data for the removed feature');
+
+  t.end();
+});
+
 test('VisStateUpdater -> addToDataset object rows ignore prototype keys', async t => {
   const initialData = processCsvData('lat,lng\n1,2');
   const datasets = await createNewDataEntryMock({
@@ -8351,9 +8447,9 @@ test('VisStateUpdater -> addToDataset no-ops', async t => {
   t.equal(
     reducer(state, VisStateActions.addToDataset('live', [3, 4])),
     state,
-    'tables without append (Arrow/DuckDB) are a no-op'
+    'tables without append are a no-op'
   );
-  t.ok(warn.called, 'should warn that in-place row edits are not implemented for Arrow/DuckDB');
+  t.ok(warn.called, 'should warn that in-place row edits are not implemented');
   warn.restore();
   t.equal(state.datasets.live.dataContainer.numRows(), 1, 'no-op must not mutate rows');
 
@@ -8458,9 +8554,9 @@ test('VisStateUpdater -> removeFromDataset deletes rows and keeps layers', async
   t.equal(
     reducer(oneIndex, VisStateActions.removeFromDataset('live', 0)),
     oneIndex,
-    'tables without remove (Arrow/DuckDB) are a no-op'
+    'tables without remove are a no-op'
   );
-  t.ok(warn.called, 'should warn that in-place deletes are not implemented for Arrow/DuckDB');
+  t.ok(warn.called, 'should warn that in-place deletes are not implemented');
   warn.restore();
 
   t.end();
@@ -8593,6 +8689,111 @@ test('VisStateUpdater -> addToDataset and removeFromDataset clear table sort', a
   const removed = reducer(sortedAgain, VisStateActions.removeFromDataset('live', 0));
   t.equal(removed.datasets.live.sortOrder, null, 'remove should drop sortOrder');
   t.equal(removed.datasets.live.sortColumn, undefined, 'remove should drop sortColumn');
+
+  t.end();
+});
+
+async function createArrowLiveDatasets(rows) {
+  const table = arrow.tableFromJSON(rows);
+  return createNewDataEntryMock({
+    info: {id: 'live', label: 'live.arrow'},
+    data: processArrowBatches(table.batches)
+  });
+}
+
+test('VisStateUpdater -> addToDataset and removeFromDataset on Arrow tables', async t => {
+  const datasets = await createArrowLiveDatasets([{lat: 37.77, lng: -122.42}]);
+  t.ok(
+    typeof datasets.live.dataContainer.append === 'function',
+    'Arrow dataset should expose append'
+  );
+
+  const {props} = PointLayer.findDefaultLayerProps(datasets.live);
+  const pointLayer = new PointLayer({
+    id: 'p1',
+    dataId: 'live',
+    isVisible: true,
+    ...props[0]
+  });
+  const {layerData, layer} = calculateLayerData(
+    pointLayer,
+    {...INITIAL_VIS_STATE, datasets, layers: [pointLayer], layerData: [{}]},
+    undefined
+  );
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layerData],
+    layerOrder: [layer.id]
+  };
+
+  const appended = reducer(
+    state,
+    VisStateActions.addToDataset('live', [
+      [10, 20],
+      [30, 40]
+    ])
+  );
+  t.equal(appended.datasets.live.dataContainer.numRows(), 3, 'should append both Arrow rows');
+  t.equal(appended.layers[0].id, 'p1', 'should keep the same layer id');
+  t.equal(
+    appended.layerData[0].data.numRows,
+    3,
+    'should rebuild Arrow layer data with the new row count'
+  );
+  t.notEqual(
+    appended.layerData[0].data,
+    state.layerData[0].data,
+    'should replace the previous Arrow table snapshot'
+  );
+
+  const keyed = await createArrowLiveDatasets([
+    {id: 'a', lat: 1, lng: 2},
+    {id: 'b', lat: 3, lng: 4}
+  ]);
+  const upserted = reducer(
+    {...INITIAL_VIS_STATE, datasets: keyed},
+    VisStateActions.addToDataset(
+      'live',
+      [
+        {id: 'b', lat: 30, lng: 40},
+        {id: 'c', lat: 5, lng: 6}
+      ],
+      {upsertBy: 'id'}
+    )
+  );
+  t.equal(
+    upserted.datasets.live.dataContainer.numRows(),
+    3,
+    'should append only the new Arrow key'
+  );
+  t.equal(
+    upserted.datasets.live.dataContainer.valueAt(1, 1),
+    30,
+    'should replace the matching Arrow key'
+  );
+  t.equal(
+    upserted.datasets.live.dataContainer.valueAt(2, 0),
+    'c',
+    'should append the new Arrow key'
+  );
+
+  const removed = reducer(
+    upserted,
+    VisStateActions.removeFromDataset('live', {field: 'id', values: ['b']})
+  );
+  t.equal(removed.datasets.live.dataContainer.numRows(), 2, 'should drop the matching Arrow id');
+  t.equal(
+    removed.datasets.live.dataContainer.valueAt(0, 0),
+    'a',
+    'should keep unmatched Arrow ids'
+  );
+  t.equal(
+    removed.datasets.live.dataContainer.valueAt(1, 0),
+    'c',
+    'should keep later unmatched Arrow ids'
+  );
 
   t.end();
 });

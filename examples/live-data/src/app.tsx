@@ -18,19 +18,27 @@ import {
   wrapTo
 } from '@kepler.gl/actions';
 import {DatasetType} from '@kepler.gl/constants';
+import {processArrowBatches, processGeojson} from '@kepler.gl/processors';
 import {initApplicationConfig} from '@kepler.gl/utils';
+import * as arrow from 'apache-arrow';
 
 initApplicationConfig({enableAnnotations: false});
 
 const MAP_ID = 'map';
 const SIDEBAR_WIDTH = 300;
 const DATASET_ID = 'live-vehicles';
+const POINT_LAYER_ID = 'live-orbit-point';
+const GEOJSON_LAYER_ID = 'live-orbit-geojson';
 const LIVE_DATA_URL = process.env.LIVE_DATA_URL || 'http://localhost:4010/vehicles.csv';
 const REFRESH_INTERVAL_MS = 300;
 const AUTO_INTERVAL_MS = 800;
 const MAX_HOST_ROWS = 20;
 const TRACKER_ID = 'track-01';
 const POLL_VEHICLE_ID = 'veh-01';
+const GEOJSON_SEED_COUNT = 8;
+const BUILDINGS_URL =
+  'https://raw.githubusercontent.com/keplergl/kepler.gl-data/refs/heads/master/datasets/buildings-australia.geojson';
+const MONASH = {lat: -37.8949, lng: 145.1443};
 
 const SF = {lat: 37.7749, lng: -122.4194};
 const COS_LAT = Math.cos((SF.lat * Math.PI) / 180);
@@ -38,6 +46,7 @@ const KM_PER_DEG_LAT = 111.32;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
 type LiveMode = 'poll' | 'host';
+type TableFormat = 'csv' | 'arrow' | 'geojson';
 
 type KeplerRootState = {
   keplerGl: {
@@ -50,6 +59,7 @@ type KeplerRootState = {
             dataContainer?: {
               numRows: () => number;
               valueAt: (row: number, col: number) => unknown;
+              getTable?: () => unknown;
             };
             metadata?: {
               refreshStatus?: string;
@@ -118,6 +128,14 @@ function hostRowIndexes(dataset: LiveDataset | undefined): number[] {
   }, []);
 }
 
+function isArrowTable(dataset: LiveDataset | undefined): boolean {
+  return typeof dataset?.dataContainer?.getTable === 'function';
+}
+
+function isGeojsonTable(dataset: LiveDataset | undefined): boolean {
+  return (dataset?.fields || []).some(field => field.name === '_geojson');
+}
+
 function makeHostVehicle(seq: number, options?: {id?: string; ring?: number}) {
   const angle = seq * GOLDEN_ANGLE;
   const radiusKm = 5.2 + (seq % 8) * 0.35;
@@ -133,6 +151,232 @@ function makeHostVehicle(seq: number, options?: {id?: string; ring?: number}) {
     progress: 0,
     orbit_s: 0,
     updated_at: new Date().toISOString()
+  };
+}
+
+function seedVehicles() {
+  return [0, 1, 2].map(index =>
+    makeHostVehicle(index + 1, {
+      id: `veh-${String(index + 1).padStart(2, '0')}`,
+      ring: index + 1
+    })
+  );
+}
+
+function vehiclesToRowData(vehicles: Record<string, unknown>[]) {
+  const names = Object.keys(vehicles[0]);
+  return {
+    fields: names.map(name => ({name})),
+    rows: vehicles.map(row => names.map(name => row[name]))
+  };
+}
+
+type BuildingFeature = {
+  type?: string;
+  properties?: Record<string, unknown> | null;
+  geometry?: {type: string; coordinates: unknown} | null;
+};
+
+let buildingsCache: BuildingFeature[] | null = null;
+let buildingsLoad: Promise<BuildingFeature[]> | null = null;
+
+function loadBuildings(): Promise<BuildingFeature[]> {
+  if (buildingsCache) {
+    return Promise.resolve(buildingsCache);
+  }
+  if (!buildingsLoad) {
+    buildingsLoad = fetch(BUILDINGS_URL)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Buildings GeoJSON HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((json: {features?: BuildingFeature[]}) => {
+        const features = (json.features || []).filter(feature => feature?.geometry);
+        if (!features.length) {
+          throw new Error('Buildings GeoJSON had no features');
+        }
+        buildingsCache = features;
+        return features;
+      })
+      .catch(error => {
+        buildingsLoad = null;
+        throw error;
+      });
+  }
+  return buildingsLoad;
+}
+
+function buildingAt(seq: number): BuildingFeature {
+  const features = buildingsCache;
+  if (!features?.length) {
+    throw new Error('Buildings GeoJSON is not loaded');
+  }
+  return features[seq % features.length];
+}
+
+function buildingRow(feature: BuildingFeature, id: string) {
+  const properties = {
+    id,
+    land_use: String(feature.properties?.LAND_USE_T ?? ''),
+    height: Number(feature.properties?.HEIGHT_AVE ?? 0),
+    lga: String(feature.properties?.LGA_NAME ?? '')
+  };
+  const wrapped = {
+    type: 'Feature' as const,
+    properties,
+    geometry: feature.geometry
+  };
+  return {_geojson: wrapped, ...properties};
+}
+
+function seedBuildingRows(features: BuildingFeature[]) {
+  return features
+    .slice(0, GEOJSON_SEED_COUNT)
+    .map(feature =>
+      buildingRow(feature, `bldg-${feature.properties?.TARGET_FID ?? feature.properties?.BF_FID}`)
+    );
+}
+
+function nextHostBuildingRow(seq: number) {
+  return buildingRow(
+    buildingAt(GEOJSON_SEED_COUNT + seq - 1),
+    `host-${String(seq).padStart(3, '0')}`
+  );
+}
+
+function nextTrackerBuildingRow(seq: number) {
+  return buildingRow(buildingAt(seq), TRACKER_ID);
+}
+
+const MAP_VIEW = {
+  latitude: 37.7749,
+  longitude: -122.4194,
+  zoom: 12.2,
+  pitch: 0,
+  bearing: 0
+};
+
+const GEOJSON_MAP_VIEW = {
+  latitude: MONASH.lat,
+  longitude: MONASH.lng,
+  zoom: 16,
+  pitch: 0,
+  bearing: 0
+};
+
+const POINT_LAYER_CONFIG = {
+  id: POINT_LAYER_ID,
+  type: 'point',
+  config: {
+    dataId: DATASET_ID,
+    label: 'Live orbit',
+    columns: {lat: 'lat', lng: 'lng', altitude: null},
+    isVisible: true,
+    visConfig: {radius: 24, filled: true, opacity: 0.85}
+  },
+  visualChannels: {
+    colorField: {name: 'ring', type: 'integer'},
+    colorScale: 'quantize'
+  }
+};
+
+const GEOJSON_LAYER_CONFIG = {
+  id: GEOJSON_LAYER_ID,
+  type: 'geojson',
+  config: {
+    dataId: DATASET_ID,
+    label: 'Monash buildings',
+    columns: {geojson: '_geojson'},
+    isVisible: true,
+    visConfig: {filled: true, stroked: true, thickness: 0.6, radius: 16, opacity: 0.8}
+  },
+  visualChannels: {
+    colorField: {name: 'land_use', type: 'string'},
+    colorScale: 'ordinal'
+  }
+};
+
+function mapConfig(layers: object[], mapState = MAP_VIEW) {
+  return {
+    version: 'v1' as const,
+    config: {
+      visState: {layers},
+      mapState,
+      mapStyle: {styleType: 'dark-matter'}
+    }
+  };
+}
+
+function buildAddDataToMap(format: TableFormat, mode: LiveMode, buildings?: BuildingFeature[]) {
+  const options = {
+    centerMap: false,
+    autoCreateLayers: false,
+    keepExistingConfig: false,
+    layerVisConfig: {radius: 24, filled: true, opacity: 0.85}
+  };
+
+  if (format === 'geojson') {
+    const rows = seedBuildingRows(buildings || buildingsCache || []);
+    return {
+      datasets: {
+        info: {id: DATASET_ID, label: 'Monash buildings'},
+        data: processGeojson({
+          type: 'FeatureCollection',
+          features: rows.map(row => row._geojson)
+        })
+      },
+      options: {
+        ...options,
+        centerMap: true
+      },
+      config: mapConfig([GEOJSON_LAYER_CONFIG], GEOJSON_MAP_VIEW)
+    };
+  }
+
+  if (format === 'arrow') {
+    const table = arrow.tableFromJSON(seedVehicles());
+    return {
+      datasets: {
+        info: {id: DATASET_ID, label: 'Live orbit'},
+        data: processArrowBatches(table.batches)
+      },
+      options,
+      config: mapConfig([POINT_LAYER_CONFIG])
+    };
+  }
+
+  if (mode === 'host') {
+    return {
+      datasets: {
+        info: {id: DATASET_ID, label: 'Live orbit'},
+        data: vehiclesToRowData(seedVehicles())
+      },
+      options,
+      config: mapConfig([POINT_LAYER_CONFIG])
+    };
+  }
+
+  return {
+    datasets: {
+      info: {
+        id: DATASET_ID,
+        label: 'Live orbit',
+        type: DatasetType.EXTERNALLY_HOSTED
+      },
+      data: {fields: [], rows: []},
+      metadata: {
+        source: LIVE_DATA_URL,
+        sourceFormat: 'csv',
+        refreshIntervalMs: REFRESH_INTERVAL_MS
+      }
+    },
+    options: {
+      ...options,
+      centerMap: true
+    },
+    config: mapConfig([POINT_LAYER_CONFIG])
   };
 }
 
@@ -182,7 +426,7 @@ function ModeToggle({
     <div
       style={{
         display: 'flex',
-        marginBottom: 14,
+        marginBottom: 8,
         border: '1px solid #4a5160',
         borderRadius: 6,
         overflow: 'hidden'
@@ -208,6 +452,52 @@ function ModeToggle({
             color: enabled ? '#f7f7f7' : '#6a7485',
             fontWeight: mode === value ? 600 : 400,
             fontSize: 13
+          }}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function FormatToggle({
+  format,
+  onChange
+}: {
+  format: TableFormat;
+  onChange: (next: TableFormat) => void;
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        marginBottom: 14,
+        border: '1px solid #4a5160',
+        borderRadius: 6,
+        overflow: 'hidden'
+      }}
+    >
+      {(
+        [
+          ['csv', 'CSV'],
+          ['arrow', 'Arrow'],
+          ['geojson', 'GeoJSON']
+        ] as const
+      ).map(([value, label]) => (
+        <button
+          key={value}
+          type="button"
+          onClick={() => onChange(value)}
+          style={{
+            flex: 1,
+            padding: '7px 10px',
+            border: 0,
+            cursor: 'pointer',
+            background: format === value ? '#4a6a4e' : 'transparent',
+            color: '#f7f7f7',
+            fontWeight: format === value ? 600 : 400,
+            fontSize: 12
           }}
         >
           {label}
@@ -269,7 +559,8 @@ function PollSidebar({dataset}: {dataset: LiveDataset | undefined}) {
       <p style={{margin: '16px 0 0', color: '#c3c9d5'}}>
         Layers panel: dataset refresh is 300ms. Click reload to sample the orbit immediately.
         Switching to <strong>Host rows</strong> pauses the poll so you can append or delete without
-        the next snapshot wiping your edits.
+        the next snapshot wiping your edits. <strong>Arrow</strong> / <strong>GeoJSON</strong> drop
+        this Kepler instance and load a fresh table of that type — they do not convert this CSV.
       </p>
     </>
   );
@@ -279,6 +570,8 @@ function HostSidebar({
   dataset,
   autoTrail,
   keyedNote,
+  geojsonLoading,
+  geojsonError,
   onAutoTrail,
   onAdd,
   onRemoveLast,
@@ -291,6 +584,8 @@ function HostSidebar({
   dataset: LiveDataset | undefined;
   autoTrail: boolean;
   keyedNote: string;
+  geojsonLoading?: boolean;
+  geojsonError?: string;
   onAutoTrail: (next: boolean) => void;
   onAdd: (count: number) => void;
   onRemoveLast: () => void;
@@ -307,15 +602,34 @@ function HostSidebar({
   const hasPollVehicle = ids.includes(POLL_VEHICLE_ID);
   const hostIds = ids.filter(id => id.startsWith('host-'));
   const lastHostId = hostIds[hostIds.length - 1];
+  const arrow = isArrowTable(dataset);
+  const geojson = isGeojsonTable(dataset);
+
+  const geojsonBusy = Boolean(geojsonLoading || geojsonError);
 
   return (
     <>
+      {geojsonLoading ? (
+        <p style={{margin: '0 0 12px', color: '#9ad0a8'}}>Fetching buildings GeoJSON…</p>
+      ) : null}
+      {geojsonError ? <p style={{margin: '0 0 12px', color: '#f19c99'}}>{geojsonError}</p> : null}
       <p style={{margin: '0 0 12px', color: '#c3c9d5'}}>
         Polling is off. The host app dispatches <code>addToDataset</code> /{' '}
         <code>removeFromDataset</code> so rows change in place — same layer id and style. Host
         points land on outer rings (4–6) and color by <code>ring</code>.
+        {geojson || geojsonLoading || geojsonError
+          ? ' This instance fetches Monash building footprints at runtime. Add pulls the next building from that file; Move tracker replaces one footprint in place.'
+          : arrow
+          ? ' This instance is an Arrow table: append/upsert concat batches; Move tracker replaces the matching id.'
+          : ' Arrow and GeoJSON each remount Kepler with their own table — they do not convert these CSV rows.'}
       </p>
       <div style={{display: 'grid', gap: 8, marginBottom: 12}}>
+        <div style={{display: 'flex', justifyContent: 'space-between', gap: 12}}>
+          <span style={{color: '#c3c9d5'}}>table</span>
+          <span>
+            {geojson ? 'GeoJSON features' : arrow ? 'ArrowDataContainer' : 'RowDataContainer'}
+          </span>
+        </div>
         <div style={{display: 'flex', justifyContent: 'space-between', gap: 12}}>
           <span style={{color: '#c3c9d5'}}>rows</span>
           <span>
@@ -331,16 +645,34 @@ function HostSidebar({
           }}
         >
           <span style={{color: '#c3c9d5', flexShrink: 0}}>ids</span>
-          <span style={{textAlign: 'right', wordBreak: 'break-word'}}>
+          <span
+            style={{
+              minWidth: 0,
+              maxHeight: 52,
+              overflowY: 'auto',
+              textAlign: 'right',
+              wordBreak: 'break-word'
+            }}
+          >
             {ids.length ? ids.join(', ') : '—'}
           </span>
         </div>
       </div>
       <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8}}>
-        <button type="button" style={buttonStyle} onClick={() => onAdd(1)} disabled={!dataset}>
+        <button
+          type="button"
+          style={buttonStyle}
+          onClick={() => onAdd(1)}
+          disabled={!dataset || geojsonBusy}
+        >
           Add 1
         </button>
-        <button type="button" style={buttonStyle} onClick={() => onAdd(5)} disabled={!dataset}>
+        <button
+          type="button"
+          style={buttonStyle}
+          onClick={() => onAdd(5)}
+          disabled={!dataset || geojsonBusy}
+        >
           Add 5
         </button>
         <button type="button" style={buttonStyle} onClick={onRemoveLast} disabled={rows < 1}>
@@ -353,11 +685,17 @@ function HostSidebar({
       <p style={{margin: '16px 0 8px', fontWeight: 600}}>Keyed by id</p>
       <p style={{margin: '0 0 8px', color: '#c3c9d5'}}>
         <code>upsertBy: &apos;id&apos;</code> keeps the same row. First click inserts{' '}
-        <code>{TRACKER_ID}</code> (ring 7); later clicks move it and the row count stays put.
-        Removes use <code>{'{field, values}'}</code>, not a row index.
+        <code>{TRACKER_ID}</code> (ring 7); later clicks <strong>replace</strong> it
+        {geojson ? ' with another building from the file' : arrow ? ' via Arrow concat' : ''} and
+        the row count stays put. Removes use <code>{'{field, values}'}</code>, not a row index.
       </p>
       <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8}}>
-        <button type="button" style={buttonStyle} onClick={onUpsertTracker} disabled={!dataset}>
+        <button
+          type="button"
+          style={buttonStyle}
+          onClick={onUpsertTracker}
+          disabled={!dataset || geojsonBusy}
+        >
           {hasTracker ? 'Move tracker' : 'Insert tracker'}
         </button>
         <button type="button" style={buttonStyle} onClick={onRemoveTracker} disabled={!hasTracker}>
@@ -399,24 +737,36 @@ function HostSidebar({
           type="checkbox"
           checked={autoTrail}
           onChange={event => onAutoTrail(event.target.checked)}
-          disabled={!dataset}
+          disabled={!dataset || geojsonBusy}
         />
         Auto trail (add every 800ms, keep {MAX_HOST_ROWS} host rows)
       </label>
       <p style={{margin: '16px 0 0', color: '#c3c9d5'}}>
-        Switch back to <strong>Poll URL</strong> to resume HTTP snapshot replace — injected rows
-        disappear on the next fetch.
+        <strong>Poll URL</strong> remounts the CSV poll instance — injected rows disappear.
       </p>
     </>
   );
 }
 
-function LiveDataSidebar() {
+function LiveDataSidebar({
+  mode,
+  tableFormat,
+  geojsonLoading,
+  geojsonError,
+  onMode,
+  onFormat
+}: {
+  mode: LiveMode;
+  tableFormat: TableFormat;
+  geojsonLoading: boolean;
+  geojsonError: string;
+  onMode: (next: LiveMode) => void;
+  onFormat: (next: TableFormat) => void;
+}) {
   const dispatch = useDispatch();
   const dataset = useSelector(
     (state: KeplerRootState) => state.keplerGl[MAP_ID]?.visState?.datasets?.[DATASET_ID]
   );
-  const [mode, setMode] = useState<LiveMode>('poll');
   const [autoTrail, setAutoTrail] = useState(false);
   const [keyedNote, setKeyedNote] = useState('');
   const hostSeq = useRef(1);
@@ -425,29 +775,27 @@ function LiveDataSidebar() {
   datasetRef.current = dataset;
 
   const toKepler = useCallback(
-    (action: Parameters<typeof wrapTo>[1]) => dispatch(wrapTo(MAP_ID, action)),
+    (action: unknown) => dispatch(wrapTo(MAP_ID, action as never)),
     [dispatch]
   );
 
-  const setLiveMode = useCallback(
-    (next: LiveMode) => {
-      setMode(next);
-      if (next === 'poll') {
-        setAutoTrail(false);
-        setKeyedNote('');
-        toKepler(
-          updateDatasetProps(DATASET_ID, {metadata: {refreshIntervalMs: REFRESH_INTERVAL_MS}})
-        );
-        toKepler(refreshDataset(DATASET_ID));
-        return;
-      }
-      toKepler(updateDatasetProps(DATASET_ID, {metadata: {refreshIntervalMs: 0}}));
-    },
-    [toKepler]
-  );
+  useEffect(() => {
+    setAutoTrail(false);
+    setKeyedNote('');
+    hostSeq.current = 1;
+    trackSeq.current = 1;
+  }, [tableFormat, mode]);
 
   const addHostRows = useCallback(
     (count: number) => {
+      if (isGeojsonTable(datasetRef.current)) {
+        if (!buildingsCache?.length) {
+          return;
+        }
+        const rows = Array.from({length: count}, () => nextHostBuildingRow(hostSeq.current++));
+        toKepler(addToDataset(DATASET_ID, rows));
+        return;
+      }
       const rows = Array.from({length: count}, () => makeHostVehicle(hostSeq.current++));
       toKepler(addToDataset(DATASET_ID, rows));
     },
@@ -473,7 +821,14 @@ function LiveDataSidebar() {
   const upsertTracker = useCallback(() => {
     const ids = rowIds(datasetRef.current);
     const existed = ids.includes(TRACKER_ID);
-    const row = makeHostVehicle(trackSeq.current++, {id: TRACKER_ID, ring: 7});
+    const row = isGeojsonTable(datasetRef.current)
+      ? buildingsCache?.length
+        ? nextTrackerBuildingRow(trackSeq.current++)
+        : null
+      : makeHostVehicle(trackSeq.current++, {id: TRACKER_ID, ring: 7});
+    if (!row) {
+      return;
+    }
     toKepler(addToDataset(DATASET_ID, row, {upsertBy: 'id'}));
     setKeyedNote(
       existed
@@ -511,7 +866,14 @@ function LiveDataSidebar() {
       if (extras.length >= MAX_HOST_ROWS) {
         toKepler(removeFromDataset(DATASET_ID, extras[0]));
       }
-      toKepler(addToDataset(DATASET_ID, makeHostVehicle(hostSeq.current++)));
+      if (isGeojsonTable(datasetRef.current)) {
+        if (!buildingsCache?.length) {
+          return;
+        }
+        toKepler(addToDataset(DATASET_ID, nextHostBuildingRow(hostSeq.current++)));
+      } else {
+        toKepler(addToDataset(DATASET_ID, makeHostVehicle(hostSeq.current++)));
+      }
     }, AUTO_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, [autoTrail, mode, toKepler]);
@@ -521,9 +883,10 @@ function LiveDataSidebar() {
       <h2 style={{margin: '0 0 8px', fontSize: 16}}>Live data</h2>
       <ModeToggle
         mode={mode}
-        hostEnabled={(dataset?.dataContainer?.numRows?.() ?? 0) > 0}
-        onChange={setLiveMode}
+        hostEnabled={tableFormat !== 'csv' || (dataset?.dataContainer?.numRows?.() ?? 0) > 0}
+        onChange={onMode}
       />
+      <FormatToggle format={tableFormat} onChange={onFormat} />
       {mode === 'poll' ? (
         <PollSidebar dataset={dataset} />
       ) : (
@@ -531,6 +894,8 @@ function LiveDataSidebar() {
           dataset={dataset}
           autoTrail={autoTrail}
           keyedNote={keyedNote}
+          geojsonLoading={tableFormat === 'geojson' ? geojsonLoading : false}
+          geojsonError={tableFormat === 'geojson' ? geojsonError : ''}
           onAutoTrail={setAutoTrail}
           onAdd={addHostRows}
           onRemoveLast={removeLast}
@@ -548,80 +913,118 @@ function LiveDataSidebar() {
 const App = () => {
   const dispatch = useDispatch();
   const {width, height} = useWindowSize();
+  const [mode, setMode] = useState<LiveMode>('poll');
+  const [tableFormat, setTableFormat] = useState<TableFormat>('csv');
+  const [session, setSession] = useState(0);
+  const [geojsonLoading, setGeojsonLoading] = useState(false);
+  const [geojsonError, setGeojsonError] = useState('');
+  const pollInstanceRef = useRef(true);
+
+  const toKepler = useCallback(
+    (action: unknown) => dispatch(wrapTo(MAP_ID, action as never)),
+    [dispatch]
+  );
 
   useEffect(() => {
-    dispatch(
-      wrapTo(
-        MAP_ID,
-        addDataToMap({
-          datasets: {
-            info: {
-              id: DATASET_ID,
-              label: 'Live orbit',
-              type: DatasetType.EXTERNALLY_HOSTED
-            },
-            data: {fields: [], rows: []},
-            metadata: {
-              source: LIVE_DATA_URL,
-              sourceFormat: 'csv',
-              refreshIntervalMs: REFRESH_INTERVAL_MS
-            }
-          },
-          options: {
-            centerMap: true,
-            autoCreateLayers: false,
-            layerVisConfig: {radius: 24, filled: true, opacity: 0.85}
-          },
-          config: {
-            version: 'v1',
-            config: {
-              visState: {
-                layers: [
-                  {
-                    id: 'live-orbit-point',
-                    type: 'point',
-                    config: {
-                      dataId: DATASET_ID,
-                      label: 'Live orbit',
-                      columns: {lat: 'lat', lng: 'lng', altitude: null},
-                      isVisible: true,
-                      visConfig: {radius: 24, filled: true, opacity: 0.85}
-                    },
-                    visualChannels: {
-                      colorField: {name: 'ring', type: 'integer'},
-                      colorScale: 'quantize'
-                    }
-                  }
-                ]
-              },
-              mapState: {
-                latitude: 37.7749,
-                longitude: -122.4194,
-                zoom: 12.2,
-                pitch: 0,
-                bearing: 0
-              },
-              mapStyle: {
-                styleType: 'dark-matter'
-              }
-            }
+    let cancelled = false;
+    pollInstanceRef.current = tableFormat === 'csv' && mode === 'poll';
+
+    async function loadMap() {
+      if (tableFormat === 'geojson') {
+        setGeojsonLoading(true);
+        setGeojsonError('');
+        try {
+          const buildings = await loadBuildings();
+          if (cancelled) {
+            return;
           }
-        })
-      )
-    );
-  }, [dispatch]);
+          toKepler(addDataToMap(buildAddDataToMap('geojson', mode, buildings) as never));
+        } catch (error) {
+          if (!cancelled) {
+            setGeojsonError(error instanceof Error ? error.message : String(error));
+          }
+        } finally {
+          if (!cancelled) {
+            setGeojsonLoading(false);
+          }
+        }
+        return;
+      }
+      setGeojsonLoading(false);
+      setGeojsonError('');
+      toKepler(addDataToMap(buildAddDataToMap(tableFormat, mode) as never));
+    }
+
+    loadMap();
+    return () => {
+      cancelled = true;
+    };
+    // session is the remount signal; format/mode are applied in the same React batch as session++
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, toKepler]);
+
+  const remount = useCallback((nextFormat: TableFormat, nextMode: LiveMode) => {
+    setTableFormat(nextFormat);
+    setMode(nextMode);
+    setSession(value => value + 1);
+  }, []);
+
+  const setLiveMode = useCallback(
+    (next: LiveMode) => {
+      if (next === 'poll') {
+        if (tableFormat === 'csv' && pollInstanceRef.current) {
+          setMode('poll');
+          toKepler(
+            updateDatasetProps(DATASET_ID, {metadata: {refreshIntervalMs: REFRESH_INTERVAL_MS}})
+          );
+          toKepler(refreshDataset(DATASET_ID));
+          return;
+        }
+        remount('csv', 'poll');
+        return;
+      }
+      if (tableFormat === 'csv' && pollInstanceRef.current) {
+        setMode('host');
+        toKepler(updateDatasetProps(DATASET_ID, {metadata: {refreshIntervalMs: 0}}));
+        return;
+      }
+      if (tableFormat !== 'csv') {
+        return;
+      }
+      remount('csv', 'host');
+    },
+    [remount, tableFormat, toKepler]
+  );
+
+  const setLiveTableFormat = useCallback(
+    (next: TableFormat) => {
+      if (next === tableFormat) {
+        return;
+      }
+      remount(next, next === 'csv' ? 'poll' : 'host');
+    },
+    [remount, tableFormat]
+  );
 
   return (
     <div style={{display: 'flex', width: '100%', height: '100%'}}>
       <div style={{position: 'relative', flex: 1, minWidth: 0}}>
         <KeplerGl
+          key={session}
           mapboxApiAccessToken="pk.xxx.yyy"
           id={MAP_ID}
           width={Math.max(width - SIDEBAR_WIDTH, 0)}
           height={height}
         />
       </div>
-      <LiveDataSidebar />
+      <LiveDataSidebar
+        mode={mode}
+        tableFormat={tableFormat}
+        geojsonLoading={geojsonLoading}
+        geojsonError={geojsonError}
+        onMode={setLiveMode}
+        onFormat={setLiveTableFormat}
+      />
     </div>
   );
 };

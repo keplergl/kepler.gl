@@ -533,3 +533,102 @@ test('compactArrowTable -> Builder failure keeps the original table', t => {
 
   t.end();
 });
+
+function arrowContainerFromTable(table) {
+  const cols = Array.from({length: table.numCols}, (_, i) => table.getChildAt(i)).filter(Boolean);
+  return new ArrowDataContainer({
+    cols,
+    fields: table.schema.fields.map((field, fieldIdx) => ({
+      name: field.name,
+      fieldIdx
+    })),
+    arrowTable: table
+  });
+}
+
+test('ArrowDataContainer.append replace and remove', t => {
+  const dc = arrowContainerFromTable(
+    arrow.tableFromJSON([
+      {id: 'a', lat: 1},
+      {id: 'b', lat: 2}
+    ])
+  );
+
+  t.equal(
+    dc.append([
+      ['c', 3],
+      ['d', 4]
+    ]),
+    true,
+    'should append matching primitive/dictionary rows'
+  );
+  t.equal(dc.numRows(), 4, 'should grow without replacing existing rows');
+  t.equal(dc.valueAt(0, 0), 'a', 'should keep the original first id');
+  t.equal(dc.valueAt(3, 1), 4, 'should read the last appended lat');
+  t.equal(dc.numChunks(), 1, 'append should compact concat batches');
+
+  t.equal(dc.append([[1]]), false, 'should reject a wrong column count');
+  t.equal(dc.append([]), false, 'should reject an empty batch');
+  t.equal(dc.numRows(), 4, 'should leave rows unchanged after a rejected append');
+
+  t.equal(dc.replace(1, ['B', 22]), true, 'should overwrite a row by concat');
+  t.equal(dc.valueAt(1, 0), 'B', 'should read the replaced id');
+  t.equal(dc.valueAt(1, 1), 22, 'should read the replaced lat');
+  t.equal(dc.replace(99, ['z', 1]), false, 'should reject a replace with an out-of-range index');
+  t.equal(dc.replace(0, ['z']), false, 'should reject a replace with the wrong column count');
+  t.equal(dc.valueAt(0, 0), 'a', 'should leave the row unchanged after a rejected replace');
+
+  t.equal(dc.remove([1, 1, 3]), true, 'should drop unique valid indexes in one rebuild');
+  t.equal(dc.numRows(), 2, 'should keep the remaining rows');
+  t.equal(dc.valueAt(0, 0), 'a', 'should keep the former row 0');
+  t.equal(dc.valueAt(1, 0), 'c', 'should keep the former row 2');
+  t.deepEqual(dc.getPlainIndex(), [0, 1], 'should rebuild indexes after remove');
+
+  t.equal(dc.remove([99]), false, 'should reject an out-of-range index');
+  t.equal(dc.remove([-1]), false, 'should reject a negative index');
+  t.equal(dc.numRows(), 2, 'should leave rows unchanged after a rejected remove');
+
+  t.equal(dc.remove([0, 1]), true, 'should allow removing every remaining row');
+  t.equal(dc.numRows(), 0, 'should keep an empty table with the original schema');
+  t.equal(
+    dc.append([['e', 5]]),
+    true,
+    'empty table should accept an append that matches the schema'
+  );
+  t.equal(dc.numRows(), 1, 'empty table should grow from the append');
+  t.equal(dc.valueAt(0, 0), 'e', 'appended id should survive an empty-table concat');
+
+  t.end();
+});
+
+test('ArrowDataContainer.append rejects nested and geoarrow columns', t => {
+  const originalWarn = console.warn;
+  console.warn = () => {};
+
+  const listTable = new arrow.Table({
+    vals: arrow.vectorFromArray([
+      [1, 2],
+      [3, 4]
+    ])
+  });
+  const listDc = arrowContainerFromTable(listTable);
+  t.equal(listDc.append([[[5, 6]]]), false, 'should reject a List column');
+  t.equal(listDc.numRows(), 2, 'rejected append must not mutate a List table');
+  t.equal(listDc.remove([0]), true, 'remove should still concat slices of nested columns');
+  t.equal(listDc.numRows(), 1, 'should drop the nested row by slice');
+
+  const geoMeta = new Map();
+  geoMeta.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.WKB);
+  const wkbTable = tableFromColumnValues(
+    'geometry',
+    new arrow.Binary(),
+    [new Uint8Array([1, 2, 3])],
+    geoMeta
+  );
+  const geoDc = arrowContainerFromTable(wkbTable);
+  t.equal(geoDc.append([[new Uint8Array([4, 5, 6])]]), false, 'should reject a geoarrow column');
+  t.equal(geoDc.numRows(), 1, 'rejected append must not mutate a geoarrow table');
+
+  console.warn = originalWarn;
+  t.end();
+});

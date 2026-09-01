@@ -51,7 +51,7 @@ export type ActionHandlers<T extends {[k: string]: Handler}> = {
  * @param {boolean} data.options.readOnly `default: false` if `readOnly` is set to `true`
  * the left setting panel will be hidden
  * @param {boolean} data.options.keepExistingConfig whether to keep exiting map data and associated layer filter  interaction config `default: false`.
- * To append, upsert, or delete rows on an existing in-memory row dataset without replacing it or creating layers, use `addToDataset` / `removeFromDataset`. Arrow and DuckDB tables do not support those actions yet.
+ * To append, upsert, or delete rows on an existing in-memory row or Arrow dataset without replacing it or creating layers, use `addToDataset` / `removeFromDataset`. DuckDB tables do not support those actions yet.
  * @param {Object} data.config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
  * @public
  * @example

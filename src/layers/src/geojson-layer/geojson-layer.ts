@@ -608,7 +608,11 @@ export default class GeoJsonLayer extends Layer {
     return booleanWithin(turfPoint(point), polygon);
   }
 
-  updateLayerMeta(dataset: KeplerTable) {
+  updateLayerMeta(
+    dataset: KeplerTable,
+    _getPosition?: unknown,
+    triggerChanged?: {getMeta?: boolean; getData?: boolean} | false
+  ) {
     const {dataContainer} = dataset;
 
     this.dataContainer = dataContainer;
@@ -666,7 +670,14 @@ export default class GeoJsonLayer extends Layer {
         }
         this.updateMeta({bounds, fixedRadius, featureTypes});
       }
-    } else if (this.dataToFeature.length === 0 || this.config.columnMode === COLUMN_MODE_TABLE) {
+    } else if (
+      // Keep the first-parse skip for filter-only updates (getData.filteredIndex).
+      // Rebuild when row count changes (add/remove) or getMeta changes (dataRevision).
+      this.dataToFeature.length === 0 ||
+      this.config.columnMode === COLUMN_MODE_TABLE ||
+      this.dataToFeature.length !== dataContainer.numRows() ||
+      Boolean(triggerChanged && triggerChanged.getMeta)
+    ) {
       const getFeature = this.getPositionAccessor(dataContainer);
 
       const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMeta({

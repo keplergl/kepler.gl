@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
+import Console from 'global/console';
 
 import {
   DatasetType,
@@ -70,6 +71,13 @@ const DUCKDB_WKB_COLUMN = 'wkb_geometry';
  in order to support Kepler maps saved before introduction of DuckDb plugin.
  */
 const KEPLER_GEOM_FROM_GEOJSON_COLUMN = '_geojson';
+
+const DUCKDB_ROW_EDIT_NOT_IMPLEMENTED =
+  'In-place row edits (append, upsert, delete) are not implemented for DuckDB tables. DuckDB INSERT is not supported yet. Use addDataToMap with keepExistingConfig to replace the table.';
+
+function warnDuckDbRowEdits(method: string): void {
+  Console.warn(`KeplerGlDuckDbTable.${method}: ${DUCKDB_ROW_EDIT_NOT_IMPLEMENTED}`);
+}
 
 /**
  * Names of columns that most likely contain binary wkb geometry
@@ -298,6 +306,25 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     const {cols} = await this.createTableAndGetArrow(data);
 
     return super.update({cols, rows: [], fields: []});
+  }
+
+  /**
+   * DuckDB's Arrow view is a query snapshot. Mutating it without SQL INSERT
+   * would desync the WASM table, so row edits stay a warned no-op.
+   */
+  appendRows(_rows: any[][]): boolean {
+    warnDuckDbRowEdits('appendRows');
+    return false;
+  }
+
+  upsertRows(_rows: any[][], _keyField: string): boolean {
+    warnDuckDbRowEdits('upsertRows');
+    return false;
+  }
+
+  removeRows(_indexes: number[]): boolean {
+    warnDuckDbRowEdits('removeRows');
+    return false;
   }
 
   static getFileProcessor = function (data: any, inputFormat?: string) {

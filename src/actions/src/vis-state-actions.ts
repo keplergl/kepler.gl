@@ -1041,7 +1041,8 @@ export type AddToDatasetOptions = {
   /**
    * Field name used as a unique key. Matching rows are replaced in place;
    * keys that are not in the table are appended. Last incoming row wins when
-   * the same key appears twice. Row tables only — Arrow/DuckDB no-op with a warning.
+   * the same key appears twice. DuckDB tables no-op with a warning. Nested /
+   * geoarrow Arrow columns also no-op (primitive Arrow columns concat in place).
    */
   upsertBy?: string;
 };
@@ -1052,13 +1053,14 @@ export type AddToDatasetUpdaterAction = {
   options?: AddToDatasetOptions;
 };
 /**
- * Append rows to an existing in-memory row dataset without `addDataToMap`.
+ * Append rows to an existing in-memory row or Arrow dataset without `addDataToMap`.
  * Keeps layer identity and style. Pass `options.upsertBy` to replace rows that
  * share that key and append the rest.
  *
- * Not implemented for Arrow or DuckDB tables (no INSERT / concat yet); those
- * calls warn and leave the table unchanged. Use `addDataToMap` with
- * `keepExistingConfig` for a full replace.
+ * DuckDB tables (no INSERT yet) warn and leave the table unchanged. Arrow
+ * tables concat primitive columns in place; nested, binary, and geoarrow
+ * columns are rejected. Use `addDataToMap` with `keepExistingConfig` for a
+ * full replace.
  * @memberof visStateActions
  * @param dataId dataset id
  * @param rows one row or an array of rows (arrays in field order, or objects keyed by field name)
@@ -1090,12 +1092,12 @@ export type RemoveFromDatasetUpdaterAction = {
   byField?: RemoveFromDatasetByField;
 };
 /**
- * Delete rows from an existing in-memory row dataset without restyling layers.
+ * Delete rows from an existing in-memory row or Arrow dataset without restyling layers.
  * The second argument is either row indexes or `{field, values}` to match a
  * column (e.g. an id). Out-of-range indexes are a no-op for the whole action.
  *
- * Not implemented for Arrow or DuckDB tables; those calls warn and leave the
- * table unchanged. For a full table replace use `addDataToMap` with
+ * DuckDB tables warn and leave the table unchanged. Arrow tables concat the
+ * kept slices in place. For a full table replace use `addDataToMap` with
  * `keepExistingConfig`.
  * @memberof visStateActions
  * @param dataId dataset id
