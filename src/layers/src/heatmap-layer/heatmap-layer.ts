@@ -30,7 +30,11 @@ import {booleanWithin} from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Feature, Polygon} from 'geojson';
 
-import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue, getGeoArrowPointCoords} from '../layer-utils';
+import {
+  getGeoArrowPointLayerProps,
+  FindDefaultLayerPropsReturnValue,
+  getGeoArrowPointCoords
+} from '../layer-utils';
 import {getFilterDataFunc} from '../aggregation-layer';
 import {
   parseGeoJsonRawFeature,

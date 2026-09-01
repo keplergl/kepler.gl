@@ -10,7 +10,12 @@ const VectorTileIcon: React.FC<Partial<BaseProps>> = ({
   totalColor = 2,
   ...props
 }) => (
-  <Base height={height} predefinedClassName={predefinedClassName} totalColor={totalColor} {...props}>
+  <Base
+    height={height}
+    predefinedClassName={predefinedClassName}
+    totalColor={totalColor}
+    {...props}
+  >
     <g id="vector-tile-layer">
       <polygon
         id="Path"

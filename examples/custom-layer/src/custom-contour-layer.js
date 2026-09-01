@@ -21,7 +21,7 @@ const ContourLayerIcon = ({height = '16px', style = {fill: 'currentColor'}, ...p
     {/* Three concentric ellipses centered at (32, 32) in 64×64 space */}
     <ellipse cx="32" cy="32" rx="28" ry="20" stroke="currentColor" strokeWidth="3" fill="none" />
     <ellipse cx="32" cy="32" rx="18" ry="12" stroke="currentColor" strokeWidth="3" fill="none" />
-    <ellipse cx="32" cy="32" rx="8"  ry="5"  stroke="currentColor" strokeWidth="3" fill="none" />
+    <ellipse cx="32" cy="32" rx="8" ry="5" stroke="currentColor" strokeWidth="3" fill="none" />
   </svg>
 );
 

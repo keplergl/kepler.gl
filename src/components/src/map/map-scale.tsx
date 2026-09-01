@@ -141,9 +141,7 @@ export default function MapScaleFactory() {
     const {getInternalViewState} = useContext<MapViewStateContextType>(MapViewStateContext);
     const viewState = getInternalViewState(mapIndex);
 
-    const [displayUnits, setDisplayUnits] = useState<'km' | 'miles'>(
-      getStoredDistancePreference
-    );
+    const [displayUnits, setDisplayUnits] = useState<'km' | 'miles'>(getStoredDistancePreference);
 
     const handleClick = useCallback(() => {
       setDisplayUnits(prev => {
@@ -166,7 +164,8 @@ export default function MapScaleFactory() {
     // unproject can return null in some edge cases (e.g. during globe projection)
     if (!p1 || !p2) return null;
 
-    const metersPerPixel = distance(p1 as [number, number], p2 as [number, number], {units: 'meters'}) / RULER_SIZE;
+    const metersPerPixel =
+      distance(p1 as [number, number], p2 as [number, number], {units: 'meters'}) / RULER_SIZE;
 
     if (!isFinite(metersPerPixel) || metersPerPixel <= 0) return null;
 

@@ -30,6 +30,7 @@
   "dependencies": {
     "@kepler.gl/common-utils": "3.3.0-alpha.10",
     "@kepler.gl/constants": "3.3.0-alpha.10",
+    "@kepler.gl/tasks-core": "3.3.0-alpha.10",
     "@kepler.gl/types": "3.3.0-alpha.10",
     "@kepler.gl/utils": "3.3.0-alpha.10",
     "@loaders.gl/mvt": "^4.4.1",
@@ -39,7 +40,6 @@
     "es-toolkit": "^1.39.10",
     "global": "^4.3.0",
     "moment": "^2.10.6",
-    "react-palm": "^3.3.8",
     "type-analyzer": "0.4.0"
   },
   "nyc": {

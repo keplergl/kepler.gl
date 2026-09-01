@@ -4,7 +4,8 @@
 import uniq from 'es-toolkit/compat/uniq';
 import KeplerTable, {Datasets} from './kepler-table';
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
-import Task from 'react-palm/tasks';
+import Task from '@kepler.gl/tasks-core';
+import type {TaskDescriptor} from '@kepler.gl/tasks-core';
 
 import {
   DatasetType,
@@ -71,7 +72,7 @@ export function getNewDatasetColor(datasets: Datasets): RGBColor {
 export function createNewDataEntry(
   {info, data, ...opts}: ProtoDataset,
   datasets: Datasets = {}
-): Datasets | null {
+): TaskDescriptor | null {
   const TableClass = getApplicationConfig().table ?? KeplerTable;
   let dataValidator = validateInputData;
   if (typeof TableClass.getInputDataValidator === 'function') {
@@ -118,7 +119,7 @@ type CreateTableProps = {
 
 async function createTable(datasetInfo: CreateTableProps) {
   const {info, color, opts} = datasetInfo;
-  let {data} = datasetInfo;
+  const {data} = datasetInfo;
 
   // update metadata for remote tiled datasets
   const refreshedMetadata = await refreshRemoteData(datasetInfo);

@@ -531,7 +531,13 @@ export default class FlowLayer extends Layer {
     const globeSubLayerProps = isGlobeMode
       ? (() => {
           const depthParams = {
-            parameters: {cull: false, depthTest: true, depthCompare: 'less-equal', cullMode: 'none', ...blendingParameters}
+            parameters: {
+              cull: false,
+              depthTest: true,
+              depthCompare: 'less-equal',
+              cullMode: 'none',
+              ...blendingParameters
+            }
           };
           return {
             _subLayerProps: {

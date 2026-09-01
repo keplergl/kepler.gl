@@ -277,7 +277,9 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           // Pre-seed styleType so the correct basemap fetch starts on the very
           // first render, avoiding a flash of the default dark basemap.
           // options.config has the versioned envelope shape: { version, config: { mapStyle, ... } }
-          const savedStyleType = ${JSON.stringify(options.config?.config?.mapStyle?.styleType ?? null)};
+          const savedStyleType = ${JSON.stringify(
+            options.config?.config?.mapStyle?.styleType ?? null
+          )};
 
           const reducers = (function createReducers(redux, keplerGl, styleType) {
             return redux.combineReducers({

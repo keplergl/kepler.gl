@@ -494,7 +494,7 @@ test('#mapStateReducer -> FIT_BOUNDS - globe mode clamps zoom to globe range', t
   );
 
   // Test with very small bounds that would zoom in very far (above GLOBE_MAX_ZOOM)
-  const smallBounds = [5.668, 45.111, 5.670, 45.113];
+  const smallBounds = [5.668, 45.111, 5.67, 45.113];
   state = reducer(state, fitBounds(smallBounds));
 
   t.ok(

@@ -151,7 +151,9 @@ function MapControlPanelFactory() {
           }}
           className={classNames('map-control-panel', className)}
         >
-          {mapState?.isSplit && isViewportUnsyncAllowed && mapState?.mapSplitMode !== MapSplitMode.SWIPE_COMPARE ? (
+          {mapState?.isSplit &&
+          isViewportUnsyncAllowed &&
+          mapState?.mapSplitMode !== MapSplitMode.SWIPE_COMPARE ? (
             <StyledMapControlPanelHeaderSplitViewportsTools>
               <StyledSBCenterFlexbox style={{paddingBottom: '6px'}}>
                 <FormattedMessage id="Unlock Viewport" />

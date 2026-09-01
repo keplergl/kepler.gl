@@ -215,7 +215,7 @@ export const useLexicalTextStyle = ({
       }
       editor.update(
         () => {
-          let selection = $getSelection();
+          const selection = $getSelection();
           if (!$isRangeSelection(selection) || selection.isCollapsed()) {
             const root = $getRoot();
             const newSelection = $createRangeSelection();
@@ -295,7 +295,7 @@ export const useInsertLexicalLink = ({
       editor.setEditable(true);
     }
     editor.update(() => {
-      let selection = $getSelection();
+      const selection = $getSelection();
       if (!$isRangeSelection(selection) || selection.isCollapsed()) {
         const root = $getRoot();
         const newSelection = $createRangeSelection();

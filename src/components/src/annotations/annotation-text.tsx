@@ -112,15 +112,27 @@ const AnnotationText: FC<AnnotationTextProps> = ({
     () => ({
       ...(autoSize ? {minWidth: 80} : {width: textWidth || 120}),
       bottom: viewport.height - (y + ty),
-      borderBottom:
-        kind !== AnnotationKind.TEXT ? `${lineWidth}px solid ${lineColor}` : undefined,
+      borderBottom: kind !== AnnotationKind.TEXT ? `${lineWidth}px solid ${lineColor}` : undefined,
       ...(kind === AnnotationKind.TEXT
         ? {left: x + tx - (textWidth || 80) / 2}
         : isLeft
         ? {right: viewport.width - x - tx}
         : {left: x + tx})
     }),
-    [autoSize, kind, textWidth, tx, ty, viewport.width, viewport.height, x, y, isLeft, lineWidth, lineColor]
+    [
+      autoSize,
+      kind,
+      textWidth,
+      tx,
+      ty,
+      viewport.width,
+      viewport.height,
+      x,
+      y,
+      isLeft,
+      lineWidth,
+      lineColor
+    ]
   );
 
   const handleEditorChange = useCallback(

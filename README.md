@@ -90,10 +90,9 @@ Here are the basic steps to import kepler.gl into your app. You also take a look
 
 ### 1. Mount reducer
 
-Kepler.gl uses Redux to manage its internal state, along with [react-palm][react-palm] middleware to handle side effects.
+Kepler.gl uses Redux to manage its internal state, along with a built-in task middleware to handle async side effects.
 
-You need to add `taskMiddleware` of `react-palm` to your store too. We are actively working on a solution where
-`react-palm` will not be required, however it is still a very lightweight side effects management tool that is easier to test than react-thunk.
+You need to add `taskMiddleware` to your store. The easiest way is via `enhanceReduxMiddleware` from `@kepler.gl/reducers`:
 
 ```js
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
@@ -524,7 +523,6 @@ Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatato
 [mapbox-token]: https://www.mapbox.com/help/define-access-token/
 [developers]: contributing/DEVELOPERS.md
 [examples]: https://github.com/keplergl/kepler.gl/tree/master/examples
-[react-palm]: https://github.com/btford/react-palm
 [roadmap]: https://github.com/keplergl/kepler.gl/wiki/Kepler.gl-2019-Roadmap
 [stack]: https://stackoverflow.com/questions/tagged/kepler.gl
 [web]: http://www.kepler.gl/

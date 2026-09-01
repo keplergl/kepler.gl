@@ -129,8 +129,14 @@ test('#visStateReducer -> REMOVE_LAYER_GROUP -> removes group and its layers', t
   t.notOk(group, 'group should be removed');
 
   // Layers inside group should be removed
-  t.notOk(nextState.layers.find(l => l.id === layer0Id), 'layer0 should be removed');
-  t.notOk(nextState.layers.find(l => l.id === layer1Id), 'layer1 should be removed');
+  t.notOk(
+    nextState.layers.find(l => l.id === layer0Id),
+    'layer0 should be removed'
+  );
+  t.notOk(
+    nextState.layers.find(l => l.id === layer1Id),
+    'layer1 should be removed'
+  );
 
   // Layer count should decrease
   t.equal(nextState.layers.length, initialLayerCount - 2, 'should have 2 fewer layers');
@@ -261,7 +267,10 @@ test('#visStateReducer -> REMOVE_LAYER_FROM_LAYER_GROUP -> removes layer from gr
   t.notOk(group.layerOrder.includes(layer0Id), 'layer0 should be removed from group');
 
   // Layer should still exist in state.layers (not deleted)
-  t.ok(nextState.layers.find(l => l.id === layer0Id), 'layer should still exist');
+  t.ok(
+    nextState.layers.find(l => l.id === layer0Id),
+    'layer should still exist'
+  );
   t.end();
 });
 
@@ -287,7 +296,11 @@ test('#visStateReducer -> SWAP_LAYER_ORDER_ENTRIES -> root to root', t => {
   );
 
   // First and last should be swapped
-  t.equal(nextState.layerOrder[nextState.layerOrder.length - 1], firstEntry, 'origin moved to destination');
+  t.equal(
+    nextState.layerOrder[nextState.layerOrder.length - 1],
+    firstEntry,
+    'origin moved to destination'
+  );
   t.end();
 });
 
@@ -308,10 +321,7 @@ test('#visStateReducer -> SWAP_LAYER_ORDER_ENTRIES -> group to root', t => {
 
   // layer0 should now be at root level
   const group = getLayerGroupFromLayerOrder(nextState.layerOrder, 'test_group_1');
-  t.notOk(
-    group.layerOrder.includes(layer0Id),
-    'layer0 should be removed from group'
-  );
+  t.notOk(group.layerOrder.includes(layer0Id), 'layer0 should be removed from group');
   t.ok(
     nextState.layerOrder.some(e => e === layer0Id),
     'layer0 should be at root level'
@@ -333,10 +343,7 @@ test('#visStateReducer -> SWAP_LAYER_ORDER_ENTRIES -> root to group', t => {
   );
 
   const group = getLayerGroupFromLayerOrder(nextState.layerOrder, 'test_group_1');
-  t.ok(
-    group.layerOrder.includes(layer2Id),
-    'layer2 should be moved into the group'
-  );
+  t.ok(group.layerOrder.includes(layer2Id), 'layer2 should be moved into the group');
   t.end();
 });
 
@@ -355,10 +362,7 @@ test('#visStateReducer -> DUPLICATE_LAYER -> layer inside group', t => {
   const group = getLayerGroupFromLayerOrder(nextState.layerOrder, 'test_group_1');
 
   t.ok(group, 'group should still exist');
-  t.ok(
-    group.layerOrder.includes(newLayer.id),
-    'duplicated layer should be inside the same group'
-  );
+  t.ok(group.layerOrder.includes(newLayer.id), 'duplicated layer should be inside the same group');
   t.end();
 });
 
@@ -373,7 +377,10 @@ test('#visStateReducer -> REMOVE_LAYER -> layer inside group', t => {
   const nextState = reducer(state, VisStateActions.removeLayer(layer0Id));
 
   // Layer should be removed from state
-  t.notOk(nextState.layers.find(l => l.id === layer0Id), 'layer should be removed');
+  t.notOk(
+    nextState.layers.find(l => l.id === layer0Id),
+    'layer should be removed'
+  );
 
   // Layer should be removed from group
   const group = getLayerGroupFromLayerOrder(nextState.layerOrder, 'test_group_1');

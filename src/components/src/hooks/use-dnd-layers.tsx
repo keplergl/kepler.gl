@@ -83,7 +83,11 @@ const useDndLayers: (layers: Layer[], layerOrder: LayerOrder) => DndLayersHook =
       if (!overId) {
         if (activeParent && activeType === SORTABLE_LAYER_TYPE) {
           let newLayerOrder = removeElementFromLayerOrder(layerOrder, activeId);
-          newLayerOrder = addLayerOrGroupToLayerOrder(newLayerOrder, activeId, newLayerOrder.length);
+          newLayerOrder = addLayerOrGroupToLayerOrder(
+            newLayerOrder,
+            activeId,
+            newLayerOrder.length
+          );
           dispatch(reorderLayer(newLayerOrder));
         }
         return;

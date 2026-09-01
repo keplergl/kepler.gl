@@ -60,10 +60,7 @@ function CustomLayerConfiguratorFactory(
             focusWeight={0.6}
             {...visConfiguratorProps}
           />
-          <VisConfigSlider
-            {...layer.visConfigSettings.opacity}
-            {...visConfiguratorProps}
-          />
+          <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
         </LayerConfigGroup>
       );
     }
@@ -108,7 +105,7 @@ function seedRandom(seed: number) {
   let s = seed;
   return () => {
     s = (s * 1664525 + 1013904223) & 0xffffffff;
-    return ((s >>> 0) / 0xffffffff);
+    return (s >>> 0) / 0xffffffff;
   };
 }
 
@@ -117,7 +114,7 @@ function generateSampleRows(n: number): {lat: number; lng: number}[] {
   const centres = [
     {lat: 37.78, lng: -122.42, spread: 0.06}, // San Francisco downtown
     {lat: 37.87, lng: -122.27, spread: 0.04}, // Berkeley
-    {lat: 37.68, lng: -122.08, spread: 0.05}  // Hayward
+    {lat: 37.68, lng: -122.08, spread: 0.05} // Hayward
   ];
   const rows: {lat: number; lng: number}[] = [];
   for (let i = 0; i < n; i++) {
@@ -230,12 +227,7 @@ const App = () => {
   }, [dispatch]);
 
   return (
-    <KeplerGlWithContour
-      mapboxApiAccessToken="pk.xxx.yyy"
-      id="map"
-      width={width}
-      height={height}
-    />
+    <KeplerGlWithContour mapboxApiAccessToken="pk.xxx.yyy" id="map" width={width} height={height} />
   );
 };
 

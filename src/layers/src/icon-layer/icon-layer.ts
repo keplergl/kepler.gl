@@ -273,7 +273,9 @@ export default class IconLayer extends Layer {
         ? Window.fetch(customIconUrl, fetchConfig)
             .then(response => {
               if (!response.ok) {
-                throw new Error(`Failed to load custom icons from ${customIconUrl}: ${response.status}`);
+                throw new Error(
+                  `Failed to load custom icons from ${customIconUrl}: ${response.status}`
+                );
               }
               return response.json();
             })
@@ -284,12 +286,14 @@ export default class IconLayer extends Layer {
             })
         : Promise.resolve([] as SvgIcon[]);
 
-    Promise.all([cdnPromise, customUrlPromise]).then(([cdnIcons, remoteCustomIcons]) => {
-      const mergedCdnAndRemote = this.mergeIcons(cdnIcons, remoteCustomIcons);
-      this.setSvgIcons(mergedCdnAndRemote);
-    }).catch(() => {
-      this.setSvgIcons([]);
-    });
+    Promise.all([cdnPromise, customUrlPromise])
+      .then(([cdnIcons, remoteCustomIcons]) => {
+        const mergedCdnAndRemote = this.mergeIcons(cdnIcons, remoteCustomIcons);
+        this.setSvgIcons(mergedCdnAndRemote);
+      })
+      .catch(() => {
+        this.setSvgIcons([]);
+      });
   }
 
   setSvgIcons(svgIcons: SvgIcon[] = []) {

@@ -5,7 +5,7 @@
 // The add-column command round-trips the dataset through DuckDB, so the _geojson
 // column comes back as an Arrow Struct (not plain JS feature objects). This test
 // feeds that exact shape through updateDatasetUpdater and inspects the layers.
-import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
+import {drainTasksForTesting, succeedTaskWithValues} from '@kepler.gl/tasks';
 import {tableFromArrays} from 'apache-arrow';
 
 import {KeplerTable} from '@kepler.gl/table';
@@ -85,8 +85,9 @@ describe('updateDataset with DuckDB round-tripped _geojson (Struct)', () => {
     // 1. load geojson + add a geojson layer (mirrors the demo-app conversation)
     const {fields, rows} = processGeojson(geojson);
     const info = {id: 'nyc', label: 'nyc.geojson'};
-    state = applyAction(init, addDataToMap(
-      {
+    state = applyAction(
+      init,
+      addDataToMap({
         datasets: [{info, data: {fields, rows}}],
         options: {centerMap: false, readOnly: false},
         config: {
@@ -108,8 +109,8 @@ describe('updateDataset with DuckDB round-tripped _geojson (Struct)', () => {
             }
           }
         }
-      }
-    ));
+      })
+    );
 
     expect(Object.keys(state.visState.datasets)).toContain('nyc');
     expect(state.visState.layers.length).toBe(1);
@@ -132,7 +133,10 @@ describe('updateDataset with DuckDB round-tripped _geojson (Struct)', () => {
     const fields = arrowSchemaToFields(arrowResult);
     const cols = [...Array(arrowResult.numCols).keys()].map(i => arrowResult.getChildAt(i));
 
-    const newState = reducer(state, VisStateActions.updateDataset('nyc', {cols, fields, arrowTable: arrowResult}));
+    const newState = reducer(
+      state,
+      VisStateActions.updateDataset('nyc', {cols, fields, arrowTable: arrowResult})
+    );
     const layer = newState.visState.layers[0];
     layer.updateLayerMeta(newState.visState.datasets.nyc);
     const coords = layer.dataToFeature?.[0]?.geometry?.coordinates;
@@ -262,8 +266,9 @@ describe('updateDataset with mixed Polygon/MultiPolygon _geojson (the real nyc s
     let init = reducer(undefined, {type: '@@INIT'});
     const {fields, rows} = processGeojson(mixedGeojson);
     const info = {id: 'nyc', label: 'nyc.geojson'};
-    state = applyAction(init, addDataToMap(
-      {
+    state = applyAction(
+      init,
+      addDataToMap({
         datasets: [{info, data: {fields, rows}}],
         options: {centerMap: false, readOnly: false},
         config: {
@@ -285,8 +290,8 @@ describe('updateDataset with mixed Polygon/MultiPolygon _geojson (the real nyc s
             }
           }
         }
-      }
-    ));
+      })
+    );
   });
 
   test('rows payload keeps the MultiPolygon coordinates and the layer renders', () => {

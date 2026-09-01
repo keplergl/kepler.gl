@@ -6,7 +6,7 @@ import test from 'tape-catch';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 
-import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
+import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from '@kepler.gl/tasks';
 import CloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import SchemaManager from '@kepler.gl/schemas';

@@ -790,16 +790,8 @@ test('filterUtils -> getPolygonFilterFunctor -> aggregation layers (grid/hexagon
     };
 
     const fn2 = getPolygonFilterFunctor(pointLayer, filter, null);
-    t.equal(
-      fn2({position: [0.5, 0.5]}),
-      true,
-      `${type} points: point inside should return true`
-    );
-    t.equal(
-      fn2({position: [10, 10]}),
-      false,
-      `${type} points: point outside should return false`
-    );
+    t.equal(fn2({position: [0.5, 0.5]}), true, `${type} points: point inside should return true`);
+    t.equal(fn2({position: [10, 10]}), false, `${type} points: point outside should return false`);
   });
 
   t.end();

@@ -3,7 +3,7 @@
 
 /* eslint-disable max-statements */
 
-import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
+import {drainTasksForTesting, succeedTaskWithValues} from '@kepler.gl/tasks';
 import test from 'tape';
 
 import {registerEntry} from '@kepler.gl/actions';

@@ -101,7 +101,13 @@ test('layerGroupUtils -> addLayerOrGroupToLayerOrder -> add layer id', t => {
 });
 
 test('layerGroupUtils -> addLayerOrGroupToLayerOrder -> add group', t => {
-  const newGroup = {id: 'g1', label: 'G1', isVisible: true, isIncludedInLegend: true, layerOrder: []};
+  const newGroup = {
+    id: 'g1',
+    label: 'G1',
+    isVisible: true,
+    isIncludedInLegend: true,
+    layerOrder: []
+  };
   const result = addLayerOrGroupToLayerOrder(['layer_1'], newGroup);
   t.equal(result.length, 2, 'should add group');
   t.deepEqual(result[0], newGroup, 'should prepend group');
@@ -138,7 +144,9 @@ test('layerGroupUtils -> removeElementFromLayerOrder -> remove group by object',
 test('layerGroupUtils -> removeElementFromLayerOrder -> remove nested layer', t => {
   const result = removeElementFromLayerOrder(COMPLEX_LAYER_ORDER, 'layer_d');
   const parentGroup = result.find(e => typeof e !== 'string' && e.id === 'group_nested');
-  const nestedGroup = parentGroup.layerOrder.find(e => typeof e !== 'string' && e.id === 'nested_group');
+  const nestedGroup = parentGroup.layerOrder.find(
+    e => typeof e !== 'string' && e.id === 'nested_group'
+  );
   t.deepEqual(nestedGroup.layerOrder, [], 'should remove layer_d from nested group');
   t.end();
 });
@@ -224,12 +232,18 @@ test('layerGroupUtils -> isLayerPresentInLayerOrder -> layer in group', t => {
 });
 
 test('layerGroupUtils -> isLayerPresentInLayerOrder -> layer in nested group', t => {
-  t.ok(isLayerPresentInLayerOrder(COMPLEX_LAYER_ORDER, 'layer_d'), 'should find layer in nested group');
+  t.ok(
+    isLayerPresentInLayerOrder(COMPLEX_LAYER_ORDER, 'layer_d'),
+    'should find layer in nested group'
+  );
   t.end();
 });
 
 test('layerGroupUtils -> isLayerPresentInLayerOrder -> missing layer', t => {
-  t.notOk(isLayerPresentInLayerOrder(MOCK_LAYER_ORDER, 'nonexistent'), 'should not find missing layer');
+  t.notOk(
+    isLayerPresentInLayerOrder(MOCK_LAYER_ORDER, 'nonexistent'),
+    'should not find missing layer'
+  );
   t.end();
 });
 
@@ -247,7 +261,11 @@ test('layerGroupUtils -> replaceLayerEntryInLayerOrder -> replace string entry',
 test('layerGroupUtils -> replaceLayerEntryInLayerOrder -> replace layer inside group', t => {
   const result = replaceLayerEntryInLayerOrder(MOCK_LAYER_ORDER, 'layer_a', 'layer_replaced');
   const group1 = result.find(e => typeof e !== 'string' && e.id === 'group_1');
-  t.deepEqual(group1.layerOrder, ['layer_replaced', 'layer_b'], 'should replace layer inside group');
+  t.deepEqual(
+    group1.layerOrder,
+    ['layer_replaced', 'layer_b'],
+    'should replace layer inside group'
+  );
   t.end();
 });
 
@@ -335,14 +353,23 @@ test('layerGroupUtils -> removeGhostLayerFromLayerOrder -> removes missing layer
   const result = removeGhostLayerFromLayerOrder(MOCK_LAYER_ORDER, validLayers);
   const flatResult = getFlatLayerOrder(result);
   const validIds = validLayers.map(l => l.id);
-  t.ok(flatResult.every(id => validIds.includes(id)), 'should only contain valid layer ids');
+  t.ok(
+    flatResult.every(id => validIds.includes(id)),
+    'should only contain valid layer ids'
+  );
   t.notOk(flatResult.includes('layer_b'), 'should not contain layer_b');
   t.notOk(flatResult.includes('layer_c'), 'should not contain layer_c');
   t.end();
 });
 
 test('layerGroupUtils -> removeGhostLayerFromLayerOrder -> preserves groups', t => {
-  const validLayers = [{id: 'layer_0'}, {id: 'layer_a'}, {id: 'layer_b'}, {id: 'layer_c'}, {id: 'layer_f'}];
+  const validLayers = [
+    {id: 'layer_0'},
+    {id: 'layer_a'},
+    {id: 'layer_b'},
+    {id: 'layer_c'},
+    {id: 'layer_f'}
+  ];
   const result = removeGhostLayerFromLayerOrder(MOCK_LAYER_ORDER, validLayers);
   t.equal(result.length, MOCK_LAYER_ORDER.length, 'should keep all entries when all layers valid');
   t.end();
@@ -361,7 +388,10 @@ test('layerGroupUtils -> reorderLayerOrder -> simple flat reorder', t => {
 
 test('layerGroupUtils -> reorderLayerOrder -> reorder groups', t => {
   const group = {
-    id: 'g1', label: 'G', isVisible: true, isIncludedInLegend: true,
+    id: 'g1',
+    label: 'G',
+    isVisible: true,
+    isIncludedInLegend: true,
     layerOrder: ['x', 'y', 'z']
   };
   const order = ['a', group, 'b'];
@@ -386,7 +416,10 @@ test('layerGroupUtils -> reorderLayerOrder -> no-op for missing entry', t => {
 test('layerGroupUtils -> insertLayerAtRightOrder -> preserves groups', t => {
   const currentLayers = [{id: 'layer_1'}, {id: 'layer_2'}];
   const group = {
-    id: 'g1', label: 'G', isVisible: true, isIncludedInLegend: true,
+    id: 'g1',
+    label: 'G',
+    isVisible: true,
+    isIncludedInLegend: true,
     layerOrder: ['layer_1']
   };
   const currentOrder = [group, 'layer_2'];
@@ -441,7 +474,10 @@ test('layerGroupUtils -> mergeLayerOrder -> flat saved layerOrder (no groups)', 
 test('layerGroupUtils -> mergeLayerOrder -> restores groups from saved config', t => {
   const savedLayerOrder = [
     {
-      id: 'g1', label: 'My Group', isVisible: true, isIncludedInLegend: true,
+      id: 'g1',
+      label: 'My Group',
+      isVisible: true,
+      isIncludedInLegend: true,
       layerOrder: ['a', 'b']
     },
     'c'
@@ -460,7 +496,10 @@ test('layerGroupUtils -> mergeLayerOrder -> restores groups from saved config', 
 test('layerGroupUtils -> mergeLayerOrder -> filters out deleted layers', t => {
   const savedLayerOrder = [
     {
-      id: 'g1', label: 'Group', isVisible: true, isIncludedInLegend: true,
+      id: 'g1',
+      label: 'Group',
+      isVisible: true,
+      isIncludedInLegend: true,
       layerOrder: ['a', 'deleted_layer']
     },
     'b'
@@ -476,7 +515,10 @@ test('layerGroupUtils -> mergeLayerOrder -> filters out deleted layers', t => {
 test('layerGroupUtils -> mergeLayerOrder -> adds missing layers at top', t => {
   const savedLayerOrder = [
     {
-      id: 'g1', label: 'Group', isVisible: true, isIncludedInLegend: true,
+      id: 'g1',
+      label: 'Group',
+      isVisible: true,
+      isIncludedInLegend: true,
       layerOrder: ['a']
     }
   ];

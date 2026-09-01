@@ -116,13 +116,13 @@ export type AlignControlPoint = {
 export default class BitmapOverlayLayer extends Layer {
   declare visConfigSettings: BitmapLayerVisConfigSettings;
   private _editFeatureCollection: any = null;
-  private _prevDataBoundsKey: string = '';
+  private _prevDataBoundsKey = '';
   private _onRedrawNeeded: (() => void) | undefined;
   private _rafId: number | undefined;
 
   // Alignment mode state
   alignControlPoints: AlignControlPoint[] = [];
-  alignWaitingForMap: boolean = false;
+  alignWaitingForMap = false;
   private _pendingUV: [number, number] | null = null;
 
   constructor(props: {dataId: string; visConfig?: Record<string, any>} & Record<string, any>) {
@@ -149,10 +149,7 @@ export default class BitmapOverlayLayer extends Layer {
 
   onAlignMapClick(lngLat: [number, number]): void {
     if (!this._pendingUV) return;
-    this.alignControlPoints = [
-      ...this.alignControlPoints,
-      {uv: this._pendingUV, geo: lngLat}
-    ];
+    this.alignControlPoints = [...this.alignControlPoints, {uv: this._pendingUV, geo: lngLat}];
     this._pendingUV = null;
     this.alignWaitingForMap = false;
 
@@ -174,13 +171,25 @@ export default class BitmapOverlayLayer extends Layer {
     // Solve affine: lng = a * u + b, lat = c * v + d
     // From 2+ points, use least squares (for 2 points, exact solution)
     const n = pts.length;
-    let sumU = 0, sumLng = 0, sumUU = 0, sumULng = 0;
-    let sumV = 0, sumLat = 0, sumVV = 0, sumVLat = 0;
+    let sumU = 0,
+      sumLng = 0,
+      sumUU = 0,
+      sumULng = 0;
+    let sumV = 0,
+      sumLat = 0,
+      sumVV = 0,
+      sumVLat = 0;
     for (const p of pts) {
       const [u, v] = p.uv;
       const [lng, lat] = p.geo;
-      sumU += u; sumLng += lng; sumUU += u * u; sumULng += u * lng;
-      sumV += v; sumLat += lat; sumVV += v * v; sumVLat += v * lat;
+      sumU += u;
+      sumLng += lng;
+      sumUU += u * u;
+      sumULng += u * lng;
+      sumV += v;
+      sumLat += lat;
+      sumVV += v * v;
+      sumVLat += v * lat;
     }
 
     // lng = a*u + b (solve for a, b)
@@ -197,10 +206,10 @@ export default class BitmapOverlayLayer extends Layer {
 
     // Bounds: image corners are (0,0), (1,0), (1,1), (0,1)
     // UV origin (0,0) = top-left of image, (1,1) = bottom-right
-    const west = b;         // u=0
-    const east = a + b;     // u=1
-    const north = d;        // v=0 (top of image)
-    const south = c + d;    // v=1 (bottom of image)
+    const west = b; // u=0
+    const east = a + b; // u=1
+    const north = d; // v=0 (top of image)
+    const south = c + d; // v=1 (bottom of image)
 
     this.updateLayerVisConfig({
       boundsWest: Math.min(west, east),
@@ -385,20 +394,14 @@ export default class BitmapOverlayLayer extends Layer {
     }
 
     // Read current bounds from the edit feature collection (source of truth during editing)
-    const editCoords =
-      this._editFeatureCollection?.features?.[0]?.geometry?.coordinates?.[0];
+    const editCoords = this._editFeatureCollection?.features?.[0]?.geometry?.coordinates?.[0];
     let activeBounds: [number, number, number, number];
     if (editCoords && editCoords.length >= 4) {
       // Use all vertices (excluding closing point which duplicates the first)
       const pts = editCoords.slice(0, -1);
       const lngs = pts.map((c: number[]) => c[0]);
       const lats = pts.map((c: number[]) => c[1]);
-      activeBounds = [
-        Math.min(...lngs),
-        Math.min(...lats),
-        Math.max(...lngs),
-        Math.max(...lats)
-      ];
+      activeBounds = [Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats)];
     } else {
       activeBounds = [west, south, east, north];
     }
@@ -527,8 +530,7 @@ export default class BitmapOverlayLayer extends Layer {
             if (isFinal) {
               // Sync sliders on gesture end
               const geom = updatedData?.features?.[0]?.geometry;
-              const coords =
-                geom && 'coordinates' in geom ? (geom as any).coordinates[0] : null;
+              const coords = geom && 'coordinates' in geom ? (geom as any).coordinates[0] : null;
               if (coords && coords.length >= 5) {
                 const pts = coords.slice(0, -1);
                 const lngs = pts.map((c: number[]) => c[0]);
@@ -559,5 +561,4 @@ export default class BitmapOverlayLayer extends Layer {
 
     return layers;
   }
-
 }

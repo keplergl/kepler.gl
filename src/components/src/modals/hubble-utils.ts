@@ -332,9 +332,7 @@ export function getGlobeExportLayers(
   // Same as hubble createKeplerLayers: fold the animated camera into mapState so
   // zoom-dependent props (scatterplot radiusScale) update each frame.
   const dataLayers = computeDeckLayers(
-    viewState
-      ? {...keplerState, mapState: {...keplerState.mapState, ...viewState}}
-      : keplerState,
+    viewState ? {...keplerState, mapState: {...keplerState.mapState, ...viewState}} : keplerState,
     {
       mapIndex,
       primaryMap: mapIndex === 0,

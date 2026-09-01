@@ -103,9 +103,7 @@ function TimelineSliderFactory() {
     const [onSlider0Change, onSlider1Change] = useMemo(() => {
       if (!domain) return [noop, noop];
       return [
-        isRanged
-          ? (newValue: number) => onThrottleUpdate([clamp(domain, newValue), value1])
-          : noop,
+        isRanged ? (newValue: number) => onThrottleUpdate([clamp(domain, newValue), value1]) : noop,
         isRanged
           ? (newValue: number) => onThrottleUpdate([value0, clamp(domain, newValue)])
           : (newValue: number) =>

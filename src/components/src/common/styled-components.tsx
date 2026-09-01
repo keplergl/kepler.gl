@@ -641,7 +641,8 @@ export const StyledAttribution = styled.div
     }
 
     .basemap-attribution {
-      max-width: ${(props: StyledAttributionProps) => (props.showLogo === false ? '220px' : '140px')};
+      max-width: ${(props: StyledAttributionProps) =>
+        props.showLogo === false ? '220px' : '140px'};
     }
   `};
 `;

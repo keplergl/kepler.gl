@@ -10,7 +10,13 @@ const FlowLayerIcon: React.FC<Partial<BaseProps>> = ({
   totalColor = 3,
   ...props
 }) => (
-  <Base height={height} predefinedClassName={predefinedClassName} totalColor={totalColor} {...props} viewBox="0 0 64 64">
+  <Base
+    height={height}
+    predefinedClassName={predefinedClassName}
+    totalColor={totalColor}
+    {...props}
+    viewBox="0 0 64 64"
+  >
     {/* Left point */}
     <circle cx="10" cy="42" r="4.5" className="cr1" />
     {/* Right point */}

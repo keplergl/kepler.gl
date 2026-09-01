@@ -56,7 +56,9 @@ jest.mock('./hubble-utils', () => ({
   getTimeRangeFilterKeyframes: jest.fn(),
   getAnimatableFilters: jest.fn(() => []),
   getResolutionSetting: jest.fn(value => {
-    const [width, height] = String(value || '1280x720').split('x').map(Number);
+    const [width, height] = String(value || '1280x720')
+      .split('x')
+      .map(Number);
     return {value, width, height, label: value};
   })
 }));

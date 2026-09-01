@@ -504,7 +504,10 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                     <StyledConfigSection>
                       <StyledConfigRow>
                         <StyledConfigLabel>
-                          {intl.formatMessage({id: 'annotationManager.type', defaultMessage: 'Type'})}
+                          {intl.formatMessage({
+                            id: 'annotationManager.type',
+                            defaultMessage: 'Type'
+                          })}
                         </StyledConfigLabel>
                         <StyledSelect
                           value={annotation.kind}
@@ -521,7 +524,10 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                       </StyledConfigRow>
                       <StyledConfigRow>
                         <StyledConfigLabel>
-                          {intl.formatMessage({id: 'annotationManager.lineWidth', defaultMessage: 'Line Width'})}
+                          {intl.formatMessage({
+                            id: 'annotationManager.lineWidth',
+                            defaultMessage: 'Line Width'
+                          })}
                         </StyledConfigLabel>
                         <StyledSelect
                           value={annotation.lineWidth}
@@ -538,7 +544,10 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                       </StyledConfigRow>
                       <StyledConfigRow>
                         <StyledConfigLabel>
-                          {intl.formatMessage({id: 'annotationManager.color', defaultMessage: 'Color'})}
+                          {intl.formatMessage({
+                            id: 'annotationManager.color',
+                            defaultMessage: 'Color'
+                          })}
                         </StyledConfigLabel>
                         <InlineColorPicker
                           color={hexToRgb(annotation.lineColor)}

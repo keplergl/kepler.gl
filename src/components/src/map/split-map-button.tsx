@@ -32,11 +32,7 @@ export type SplitMapButtonProps = {
 
 const SwipeCompareIcon: React.FC<{height?: string}> = ({height = '18px'}) => (
   <svg height={height} viewBox="0 0 16 16" fill="currentColor">
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M2 2h12v12H2V2zm1 1v10h10V3H3z"
-    />
+    <path fillRule="evenodd" clipRule="evenodd" d="M2 2h12v12H2V2zm1 1v10h10V3H3z" />
     <path d="M7.5 3v10h1V3z" />
     <path d="M5 8l2-2v4l-2-2z" />
     <path d="M11 8l-2-2v4l2-2z" />

@@ -43,11 +43,17 @@ function isPixelOnGlobe(viewport: any, pos: [number, number]): boolean {
   if (p0[3] === 0 || p1[3] === 0) return true; // degenerate projection
 
   // Perspective-divide to world space.
-  const ax = p0[0] / p0[3], ay = p0[1] / p0[3], az = p0[2] / p0[3];
-  const bx = p1[0] / p1[3], by = p1[1] / p1[3], bz = p1[2] / p1[3];
+  const ax = p0[0] / p0[3],
+    ay = p0[1] / p0[3],
+    az = p0[2] / p0[3];
+  const bx = p1[0] / p1[3],
+    by = p1[1] / p1[3],
+    bz = p1[2] / p1[3];
 
   // Ray direction.
-  const dx = bx - ax, dy = by - ay, dz = bz - az;
+  const dx = bx - ax,
+    dy = by - ay,
+    dz = bz - az;
 
   // Squared distance from the origin (globe center) to the ray:
   //   d² = |P₀ × dir|² / |dir|²

@@ -270,30 +270,27 @@ const CellInfo = ({
 
   const aggregatedData = useMemo(() => {
     if (data.aggregatedData && fieldsToShow) {
-      return fieldsToShow.reduce(
-        (acc, field) => {
-          const dataForField = data.aggregatedData?.[field.name];
-          if (dataForField?.measure && field.name !== colorField?.name) {
-            const primaryDataForField = primaryData?.aggregatedData?.[field.name];
-            const deltaValue = primaryDataForField
-              ? getTooltipDisplayDeltaValue({
-                  field: {type: 'real', name: field.name} as Field,
-                  value: dataForField.value != null ? Number(dataForField.value) : null,
-                  primaryValue:
-                    primaryDataForField.value != null ? Number(primaryDataForField.value) : null,
-                  compareType
-                })
-              : null;
-            acc.push({
-              name: `${capitalizeFirstLetter(dataForField.measure)} of ${field.name}`,
-              value: dataForField.value,
-              deltaValue
-            });
-          }
-          return acc;
-        },
-        [] as {name: string; value?: string; deltaValue: string | null}[]
-      );
+      return fieldsToShow.reduce((acc, field) => {
+        const dataForField = data.aggregatedData?.[field.name];
+        if (dataForField?.measure && field.name !== colorField?.name) {
+          const primaryDataForField = primaryData?.aggregatedData?.[field.name];
+          const deltaValue = primaryDataForField
+            ? getTooltipDisplayDeltaValue({
+                field: {type: 'real', name: field.name} as Field,
+                value: dataForField.value != null ? Number(dataForField.value) : null,
+                primaryValue:
+                  primaryDataForField.value != null ? Number(primaryDataForField.value) : null,
+                compareType
+              })
+            : null;
+          acc.push({
+            name: `${capitalizeFirstLetter(dataForField.measure)} of ${field.name}`,
+            value: dataForField.value,
+            deltaValue
+          });
+        }
+        return acc;
+      }, [] as {name: string; value?: string; deltaValue: string | null}[]);
     }
     return [];
   }, [data.aggregatedData, fieldsToShow, colorField?.name, primaryData, compareType]);

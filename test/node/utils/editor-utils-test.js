@@ -7,13 +7,22 @@ import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
 import {INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 import {EDITOR_LAYER_ID, EDITOR_MODES} from '@kepler.gl/constants';
-import {EditorLayerUtils, getEditorLayer, formatCircleRadiusLabel, formatLineLengthLabel} from '@kepler.gl/layers';
+import {
+  EditorLayerUtils,
+  getEditorLayer,
+  formatCircleRadiusLabel,
+  formatLineLengthLabel
+} from '@kepler.gl/layers';
 
 test('editorLayerUtils -> formatCircleRadiusLabel', t => {
   t.equal(formatCircleRadiusLabel(0), '', 'Should hide invalid radii');
   t.equal(formatCircleRadiusLabel(0.25), 'Radius: 0.25 km', 'Should show radius in kilometers');
   t.equal(formatCircleRadiusLabel(1.5), 'Radius: 1.50 km', 'Should keep two decimal places');
-  t.equal(formatCircleRadiusLabel(12.345), 'Radius: 12.35 km', 'Should round to two decimal places');
+  t.equal(
+    formatCircleRadiusLabel(12.345),
+    'Radius: 12.35 km',
+    'Should round to two decimal places'
+  );
   t.end();
 });
 
@@ -415,11 +424,19 @@ test('editorLayerUtils -> getEditorLayer', t => {
     'Should use the circle draw mode when DRAW_CIRCLE is active'
   );
   t.equal(circleLayer.props.modeConfig.steps, 64, 'Should tessellate circles with 64 vertices');
-  t.equal(circleLayer.props._subLayerProps.tooltips.background, true, 'Radius label should use a background');
+  t.equal(
+    circleLayer.props._subLayerProps.tooltips.background,
+    true,
+    'Radius label should use a background'
+  );
 
   const CircleMode = circleLayer.props.mode;
   const circleMode = new CircleMode();
-  t.deepEqual(circleMode.getTooltips(), [], 'Should hide the radius label before the circle has a radius');
+  t.deepEqual(
+    circleMode.getTooltips(),
+    [],
+    'Should hide the radius label before the circle has a radius'
+  );
 
   circleMode.radius = 0.25;
   circleMode.position = [10, 20];
@@ -449,7 +466,11 @@ test('editorLayerUtils -> getEditorLayer', t => {
 
   const LineMode = lineLayer.props.mode;
   const lineMode = new LineMode();
-  t.deepEqual(lineMode.getTooltips({}), [], 'Should hide the length label before the line has a vertex');
+  t.deepEqual(
+    lineMode.getTooltips({}),
+    [],
+    'Should hide the length label before the line has a vertex'
+  );
 
   lineMode.addClickSequence({mapCoords: [0, 0]});
   t.deepEqual(
@@ -543,7 +564,13 @@ test('editorLayerUtils -> filter polygons are styled differently from sketches',
   const lineFeature = {
     id: 'line-1',
     properties: {},
-    geometry: {type: 'LineString', coordinates: [[0, 0], [1, 1]]}
+    geometry: {
+      type: 'LineString',
+      coordinates: [
+        [0, 0],
+        [1, 1]
+      ]
+    }
   };
   t.equal(
     editorLayer.props.getLineWidth(sketch, false),

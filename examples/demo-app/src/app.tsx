@@ -853,9 +853,9 @@ const App = props => {
     // _loadRowData();
     // _loadVectorTileData();
     // _loadFlowData();
-    //_loadWmsLayer();
-    //_loadRasterTileLayer();
-    //_loadBitmapLayer();
+    // _loadWmsLayer();
+    // _loadRasterTileLayer();
+    // _loadBitmapLayer();
     // _loadTile3DLayer();
     // _loadSyncedFilterWTripLayer();
     // _replaceSyncedFilterWTripLayer();

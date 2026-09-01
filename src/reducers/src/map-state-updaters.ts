@@ -16,7 +16,14 @@ import {
 } from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
 import {MapState, Bounds, Viewport} from '@kepler.gl/types';
-import {MapSplitMode, MapViewMode, DEFAULT_GLOBE_CONFIG, GLOBE_MIN_ZOOM, GLOBE_MAX_ZOOM, GLOBE_MAX_LATITUDE} from '@kepler.gl/constants';
+import {
+  MapSplitMode,
+  MapViewMode,
+  DEFAULT_GLOBE_CONFIG,
+  GLOBE_MIN_ZOOM,
+  GLOBE_MAX_ZOOM,
+  GLOBE_MAX_LATITUDE
+} from '@kepler.gl/constants';
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.

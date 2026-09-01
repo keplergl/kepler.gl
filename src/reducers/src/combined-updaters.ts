@@ -42,7 +42,12 @@ import {VisState} from '@kepler.gl/schemas';
 import {Layer} from '@kepler.gl/layers';
 import {isPlainObject, computeSplitMapLayers} from '@kepler.gl/utils';
 import {findMapBounds} from './data-utils';
-import {BASE_MAP_COLOR_MODES, OVERLAY_BLENDINGS, NO_MAP_ID, MapSplitMode} from '@kepler.gl/constants';
+import {
+  BASE_MAP_COLOR_MODES,
+  OVERLAY_BLENDINGS,
+  NO_MAP_ID,
+  MapSplitMode
+} from '@kepler.gl/constants';
 import {getBasemapColorsForStyle, DEFAULT_BASEMAP_COLOR} from '@kepler.gl/deckgl-layers';
 
 export type KeplerGlState = {

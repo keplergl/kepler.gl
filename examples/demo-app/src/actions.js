@@ -171,7 +171,7 @@ function loadRemoteRawData(url) {
  * @returns {Function}
  */
 export function loadSample(options, pushRoute = true) {
-  return (dispatch) => {
+  return dispatch => {
     if (options.id && pushRoute) {
       const search = window.location.search || '';
       window.history.pushState(null, '', `/demo/${options.id}${search}`);

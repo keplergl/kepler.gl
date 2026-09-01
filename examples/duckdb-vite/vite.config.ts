@@ -24,7 +24,9 @@ const turfRewindPlugin = {
   load(id: string) {
     if (id !== '\0turf-rewind-shim') return;
     const esmEntry = resolve(_dirname, 'node_modules/@turf/rewind/main.es.js');
-    return `import rewindFn from ${JSON.stringify(esmEntry)};\nexport const rewind = rewindFn;\nexport default rewindFn;\n`;
+    return `import rewindFn from ${JSON.stringify(
+      esmEntry
+    )};\nexport const rewind = rewindFn;\nexport default rewindFn;\n`;
   }
 };
 

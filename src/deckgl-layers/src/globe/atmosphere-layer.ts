@@ -65,7 +65,8 @@ const ATMOSPHERE_FADE_ZOOM_END = 6;
 export function atmosphereZoomFade(zoom: number): number {
   if (zoom <= ATMOSPHERE_FADE_ZOOM_START) return 1;
   if (zoom >= ATMOSPHERE_FADE_ZOOM_END) return 0;
-  const t = (zoom - ATMOSPHERE_FADE_ZOOM_START) / (ATMOSPHERE_FADE_ZOOM_END - ATMOSPHERE_FADE_ZOOM_START);
+  const t =
+    (zoom - ATMOSPHERE_FADE_ZOOM_START) / (ATMOSPHERE_FADE_ZOOM_END - ATMOSPHERE_FADE_ZOOM_START);
   // Smooth-step for a perceptually gentle transition.
   return 1 - t * t * (3 - 2 * t);
 }
@@ -486,7 +487,13 @@ export const getGlobeAtmosphereLayer = ({config, zoom}: {config: GlobeConfig; zo
 };
 
 /** Realistic sun-lit scattering sky halo (thin limb glow). */
-export const getGlobeAtmosphereSkyLayer = ({config, zoom}: {config: GlobeConfig; zoom?: number}) => {
+export const getGlobeAtmosphereSkyLayer = ({
+  config,
+  zoom
+}: {
+  config: GlobeConfig;
+  zoom?: number;
+}) => {
   const zoomFade = atmosphereZoomFade(zoom ?? 0);
   return new AtmosphereSkyLayerRealistic({
     id: 'atmosphere-sky',

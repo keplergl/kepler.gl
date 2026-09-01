@@ -156,7 +156,12 @@ export default function RangePlotFactory(
     };
 
     return isLineChart(plotType) && lineChart ? (
-      <LineChartPlot lineChart={lineChart} range={range} yAxisAutoRange={plotType.yAxisAutoRange} {...commonProps} />
+      <LineChartPlot
+        lineChart={lineChart}
+        range={range}
+        yAxisAutoRange={plotType.yAxisAutoRange}
+        {...commonProps}
+      />
     ) : (
       <HistogramPlot
         histogramsByGroup={bins}

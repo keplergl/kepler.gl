@@ -640,9 +640,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
    * The quad is emitted in the canonical world copy (data longitudes as-is),
    * matching how other layers pin geometry to a single basemap.
    */
-  private _dataQuadCorners(
-    densityBounds: [number, number, number, number]
-  ): number[][] | null {
+  private _dataQuadCorners(densityBounds: [number, number, number, number]): number[][] | null {
     const [dW, dS, dE, dN] = densityBounds;
     if (![dW, dS, dE, dN].every(Number.isFinite)) {
       return null;

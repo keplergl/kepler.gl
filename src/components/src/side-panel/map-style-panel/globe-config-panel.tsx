@@ -204,7 +204,9 @@ function GlobeConfigPanelFactory(
                 <FormattedMessage id="mapLayers.hugeHaloRadius" />
               </LayerLabel>
             </PanelLabelWrapper>
-            <AtmosphereSliderWrapper $enabled={Boolean(globeConfig.hugeHalo && globeConfig.atmosphere)}>
+            <AtmosphereSliderWrapper
+              $enabled={Boolean(globeConfig.hugeHalo && globeConfig.atmosphere)}
+            >
               <RangeSlider
                 range={[0.5, 3.5]}
                 value0={0}
@@ -228,7 +230,9 @@ function GlobeConfigPanelFactory(
                 <FormattedMessage id="mapLayers.hugeHaloOpacity" />
               </LayerLabel>
             </PanelLabelWrapper>
-            <AtmosphereSliderWrapper $enabled={Boolean(globeConfig.hugeHalo && globeConfig.atmosphere)}>
+            <AtmosphereSliderWrapper
+              $enabled={Boolean(globeConfig.hugeHalo && globeConfig.atmosphere)}
+            >
               <RangeSlider
                 range={[0, 1]}
                 value0={0}

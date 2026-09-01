@@ -82,7 +82,7 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     const defaultWmsLayer = props.layers?.[0] ?? null;
 
     this.registerVisConfig(wmsTileVisConfigs);
-    
+
     this.updateLayerVisConfig({
       opacity: 0.8, // Default opacity
       wmsLayer: defaultWmsLayer,
