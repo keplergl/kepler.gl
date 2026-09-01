@@ -351,6 +351,32 @@ For geojson datasets:
         countColumn
       } = args;
       try {
+        // Runtime guard: the bridge/webMCP call execute without zod parsing, so
+        // a missing/invalid layerType must not fall through to
+        // guessDefaultLayer's first-default-layer fallback (layerType is
+        // required by the command contract).
+        const VALID_LAYER_TYPES = [
+          'point',
+          'flow',
+          'arc',
+          'line',
+          'grid',
+          'hexagon',
+          'geojson',
+          'cluster',
+          'heatmap',
+          'h3',
+          'trip',
+          's2'
+        ];
+        if (!layerType || !VALID_LAYER_TYPES.includes(layerType)) {
+          throw new Error(
+            `Invalid layerType "${String(layerType)}". Must be one of: ${VALID_LAYER_TYPES.join(
+              ', '
+            )}.`
+          );
+        }
+
         const visState = ctx.getVisState();
         const datasets: Datasets = visState.datasets;
 

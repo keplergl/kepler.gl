@@ -81,6 +81,19 @@ describe('map.split-view', () => {
     expect(toggles).toHaveLength(3);
   });
 
+  it('rejects an invalid action instead of falling through to enable', async () => {
+    const {ctx, getDispatched} = makeCtx();
+    const cmd = getSplitViewCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {action: 'toggle'})) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Invalid action/);
+    // no split-map toggle dispatched
+    expect(
+      getDispatched().filter((a: any) => a.type === ActionTypes.TOGGLE_SPLIT_MAP)
+    ).toHaveLength(0);
+  });
+
   it('rejects unknown layer ids instead of silently hiding real layers', async () => {
     const layers = [{id: 'layer_a'}];
     const {ctx} = makeCtx({layers});

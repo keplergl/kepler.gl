@@ -44,6 +44,21 @@ Use the SAME colorBy / colorType for the layers being compared, so the compariso
         layerIdsForMap1?: string[];
       };
       try {
+        // Runtime guard: the bridge/webMCP call execute without zod parsing, so
+        // a missing/invalid action must not fall through to the enable path and
+        // toggle split view unexpectedly.
+        if (action !== 'enable' && action !== 'disable') {
+          return {
+            success: false,
+            commandId: splitViewCommandId,
+            error: `Invalid action "${String(action)}". Must be "enable" or "disable".`,
+            data: {
+              instruction:
+                'Pass action: "enable" to activate dual map mode, or "disable" to return to a single map.'
+            }
+          };
+        }
+
         const visState = ctx.getVisState();
         const isSplit = visState.splitMaps && visState.splitMaps.length > 1;
 

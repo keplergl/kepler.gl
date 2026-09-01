@@ -103,4 +103,20 @@ describe('map.add-layer (flow)', () => {
     // no count column → magnitude stays unset (null), so all flows weigh 1
     expect(action.config.config.columns.count).toBeNull();
   });
+
+  it('rejects an invalid layerType instead of falling back to a default layer', async () => {
+    const table = await makeTwoPairTable();
+    const {ctx, getDispatched} = makeCtx(table);
+
+    const cmd = getAddLayerCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      datasetName: table.label,
+      layerType: 'bogus'
+    })) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Invalid layerType/);
+    // no layer added
+    expect(getDispatched()).toBeNull();
+  });
 });

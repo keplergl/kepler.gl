@@ -28,6 +28,19 @@ export function getUpdateLayerColorCommand(ctx: KeplerContext): RoomCommand {
         customColors: string[];
       };
       try {
+        // Runtime guards: the bridge/webMCP call execute without zod parsing,
+        // so missing/wrong-typed inputs must fail with actionable errors
+        // instead of a TypeError (e.g. reading `.length` of undefined).
+        if (typeof layerId !== 'string' || layerId.length === 0) {
+          throw new Error('layerId is required and must be a string.');
+        }
+        if (typeof numberOfColors !== 'number' || !Number.isFinite(numberOfColors)) {
+          throw new Error('numberOfColors is required and must be a number.');
+        }
+        if (!Array.isArray(customColors) || customColors.some(c => typeof c !== 'string')) {
+          throw new Error('customColors is required and must be an array of hex color strings.');
+        }
+
         const visState = ctx.getVisState();
         const layers = visState.layers;
         const layer = layers.find(l => l.id === layerId);
