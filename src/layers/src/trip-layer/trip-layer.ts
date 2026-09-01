@@ -653,7 +653,13 @@ export default class TripLayer extends Layer {
         throw new Error(`Unsupported column mode: ${this.config.columnMode}`);
     }
     const indexAccessor = f => f.properties.index;
-    const dataAccessor = dc => d => ({index: d.properties.index});
+    // For GEOJSON mode, properties.index is the row index in the data container.
+    // For TABLE mode, properties.index is the feature index (not a row index), so
+    // read field values from the first row of the trip (properties.values) instead.
+    const dataAccessor =
+      this.config.columnMode === COLUMN_MODE_GEOJSON
+        ? (dc => d => ({index: d.properties.index}))
+        : (() => d => d.properties.values[0]);
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
     const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
       indexAccessor,
