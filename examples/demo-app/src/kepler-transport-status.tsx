@@ -9,7 +9,7 @@
  * clickable trigger (tabindex + focus/blur + click toggle) so the controls
  * stay reachable without a mouse.
  */
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {KeplerWebMcp, type WebMcpStatusInfo} from './kepler-webmcp';
 import {KeplerMcpBridge, type BridgeStatusInfo} from './kepler-mcp-bridge';
 
@@ -62,6 +62,18 @@ export function KeplerTransportStatus({reduxStore}: Props) {
   const scheduleClose = useCallback(() => {
     if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
     closeTimer.current = window.setTimeout(() => setExpanded(false), 150);
+  }, []);
+
+  // Clear the pending close timer on unmount — otherwise the scheduled
+  // setExpanded(false) fires after the component is gone (React "state update
+  // on an unmounted component" warning / potential memory leak).
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current !== null) {
+        window.clearTimeout(closeTimer.current);
+        closeTimer.current = null;
+      }
+    };
   }, []);
 
   const o = overall(webmcp, bridge);
