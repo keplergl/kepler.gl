@@ -7,6 +7,17 @@ import {findDefaultLayer, findMapBounds} from '@kepler.gl/reducers';
 import {addLayer as addLayerAction, fitBounds} from '@kepler.gl/actions';
 import type {KeplerContext} from './types';
 
+/**
+ * Unique layer id. Date.now()-based ids can collide when multiple layers are
+ * created within the same millisecond (rapid successive tool calls), producing
+ * duplicate layer ids and unpredictable reducer behavior. Append a random
+ * suffix — the same Math.random().toString(36) trick kepler's generateHashId
+ * uses — so ids stay unique.
+ */
+function uniqueLayerId(prefix = 'layer'): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function guessDefaultLayer(
   dataset: KeplerTable,
   layerType: string,
@@ -100,7 +111,7 @@ function buildLayerConfig(
   sourceName: string,
   layerType: string
 ) {
-  const layerId = layer.id || `layer_${Date.now()}`;
+  const layerId = layer.id || uniqueLayerId();
   const columns = layer.config?.columns || {};
 
   return {
@@ -414,7 +425,7 @@ For geojson datasets:
               );
             }
             layer = {
-              id: `layer_${Date.now()}`,
+              id: uniqueLayerId(),
               type: 'point',
               config: {
                 dataId: datasetId,
