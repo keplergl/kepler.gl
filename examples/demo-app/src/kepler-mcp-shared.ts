@@ -45,6 +45,13 @@ const SKILL_REQUIRED = new Set([
 
 const SKILL_HINT = `\nREAD THE MAP SKILL FIRST: call kepler.get-map-skill before using this command — it explains layer-type selection, color rules, and the workflow.`;
 
+// The skill markdown is served verbatim, but this demo catalog filters out the
+// DuckDB-backed commands. Prepend a note so agents don't get stuck trying
+// tools that aren't actually served on the bridge/WebMCP surfaces.
+const DUCKDB_UNAVAILABLE_NOTE = `> NOTE: this demo surface does NOT serve the DuckDB-backed commands ${[
+  ...DUCKDB_REQUIRED
+].join(', ')} — they are filtered out of the catalog. Use the available map.* commands only.`;
+
 /** Live accessors into the demo's own redux store — no kepler-assistant needed. */
 export function buildKeplerContext(reduxStore: any): KeplerContext {
   const readMap = () => reduxStore?.getState()?.demo?.keplerGl?.map;
@@ -168,7 +175,7 @@ When the user asks for a flow map, "OD flows", "a map of movements" → this ski
     execute: async () => ({
       success: true,
       commandId: 'kepler.get-map-skill',
-      data: {details: mapSkillMarkdown}
+      data: {details: `${DUCKDB_UNAVAILABLE_NOTE}\n\n${mapSkillMarkdown}`}
     })
   };
 }

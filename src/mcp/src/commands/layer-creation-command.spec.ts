@@ -120,3 +120,57 @@ describe('map.add-layer (flow)', () => {
     expect(getDispatched()).toBeNull();
   });
 });
+
+describe('map.add-layer (colorMap validation)', () => {
+  it('finds a unique category that appears only later in a large dataset (even sampling)', async () => {
+    // 20k rows; the wanted category 'z' exists ONLY at index 10000 — beyond the
+    // old prefix scan (first 10k rows) but inside the even-stride scan
+    // (step = 20000/10000 = 2, so even indices 0..19998 are visited).
+    const rows: any[] = [];
+    for (let i = 0; i < 20000; i++) {
+      rows.push([37.77, -122.42, i === 10000 ? 'z' : 'a']);
+    }
+    const table = new KeplerTable({color: [255, 0, 0]} as any);
+    await table.importData({
+      data: {
+        rows,
+        fields: [
+          {name: 'lat', type: ALL_FIELD_TYPES.real},
+          {name: 'lng', type: ALL_FIELD_TYPES.real},
+          {name: 'category', type: ALL_FIELD_TYPES.string}
+        ]
+      } as any
+    });
+    const {ctx, getDispatched} = makeCtx(table);
+
+    const cmd = getAddLayerCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      datasetName: table.label,
+      layerType: 'point',
+      colorBy: 'category',
+      colorType: 'unique',
+      colorMap: [{value: 'z', color: '#1f77b4'}]
+    })) as CommandResult;
+
+    expect(result.success).toBe(true);
+    expect(getDispatched()).toBeTruthy();
+  });
+
+  it('still rejects a category that does not exist anywhere in the data', async () => {
+    const table = await makeTwoPairTable();
+    const {ctx, getDispatched} = makeCtx(table);
+
+    const cmd = getAddLayerCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      datasetName: table.label,
+      layerType: 'flow',
+      colorBy: 'count',
+      colorType: 'unique',
+      colorMap: [{value: 'nope', color: '#1f77b4'}]
+    })) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/not found in field/);
+    expect(getDispatched()).toBeNull();
+  });
+});

@@ -178,11 +178,16 @@ function applyColorConfig(
       // Cap the scan so a large dataset can't freeze the UI while validating
       // category values — if the cap is hit before every wanted value is found,
       // fail with the best-effort sample rather than iterating every row.
+      // Sample EVENLY across the whole dataset (stride = length / cap), not just
+      // the first rows: a prefix scan would falsely flag a category that only
+      // appears later in a large dataset as "not found".
       const MAX_UNIQUE_SCAN_ROWS = 10000;
       const wanted = new Set(providedColorMap.map(c => c.value));
       const sample: unknown[] = [];
       const seen = new Set<unknown>();
-      for (let i = 0; i < Math.min(dataset.length, MAX_UNIQUE_SCAN_ROWS) && wanted.size > 0; i++) {
+      const scanCount = Math.min(dataset.length, MAX_UNIQUE_SCAN_ROWS);
+      const step = Math.max(1, Math.floor(dataset.length / scanCount));
+      for (let i = 0; i < dataset.length && wanted.size > 0; i += step) {
         const v = dataset.getValue(colorBy, i);
         if (wanted.has(v)) {
           wanted.delete(v);
