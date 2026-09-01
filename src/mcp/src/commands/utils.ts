@@ -385,7 +385,11 @@ export function tableToLLMResult(
         value instanceof ArrayBuffer ? value.byteLength : (value as ArrayBufferView).byteLength;
       str = `<${byteLen} bytes>`;
     } else if (Array.isArray(value)) {
-      str = value.map(v => (typeof v === 'string' ? v : String(v))).join(', ');
+      // Format each element through truncateValue so object elements render
+      // as JSON (not "[object Object]") and bigints/typed values stay
+      // consistent with the scalar branches — String(v) would lose that
+      // structure and bypass the bigint-safe stringify.
+      str = value.map(v => truncateValue(v)).join(', ');
     } else if (typeof value === 'object') {
       try {
         str = JSON.stringify(value, (_k, v) => (typeof v === 'bigint' ? v.toString() : v));
