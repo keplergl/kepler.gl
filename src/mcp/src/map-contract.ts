@@ -14,7 +14,6 @@
  */
 
 import type {MapToolId, ToolResult} from './types';
-import {MAP_TOOL_IDS} from './types';
 
 /**
  * The map tool surface. Mostly pure map actuation (set-basemap, add-layer, ...);
@@ -28,6 +27,3 @@ export interface MapContract {
   /** Execute a map tool. Returns a trimmed, model-facing result. */
   callTool(id: MapToolId, input: Record<string, unknown>): Promise<ToolResult>;
 }
-
-export {MAP_TOOL_IDS};
-export type {MapToolId};

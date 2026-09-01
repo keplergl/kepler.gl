@@ -62,6 +62,7 @@ export type {
   KeplerStateAccessors,
   VisState,
   RoomCommandResult,
+  RoomCommandExecuteOutput,
   ToolDescriptor
 } from './types';
 export {
