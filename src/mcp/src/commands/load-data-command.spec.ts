@@ -255,7 +255,7 @@ describe('map.load-data', () => {
   });
 
   it('hashes a data URL down for the dataset source (no huge metadata)', async () => {
-    const {ctx, getDispatched} = makeCtx();
+    const {ctx} = makeCtx();
 
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
