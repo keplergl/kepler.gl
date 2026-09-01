@@ -188,10 +188,8 @@ export function getValuesFromDataset(
       throw new Error(`Field ${variableName} not found in dataset ${datasetName}`);
     }
     if (dataset.type === 'vector-tile') {
-      const vtField = dataset.fields.find(f => f.name === variableName);
-      if (vtField) {
-        return getValuesFromVectorTileLayer(datasetId, layers, vtField);
-      }
+      // Reuse the field resolved above — no need to re-find it by name.
+      return getValuesFromVectorTileLayer(datasetId, layers, field);
     }
     return Array.from({length: dataset.length}, (_, i) => dataset.getValue(variableName, i));
   }
