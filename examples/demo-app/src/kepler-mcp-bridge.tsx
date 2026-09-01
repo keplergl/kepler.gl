@@ -237,6 +237,7 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
               value={token}
               onChange={e => setToken(e.target.value)}
               placeholder="token"
+              aria-label="map harness token"
               style={{width: 130, background: 'rgba(255,255,255,.15)', border: '1px solid rgba(255,255,255,.5)', color: '#fff', borderRadius: 4, padding: '2px 6px'}}
             />
             <input
@@ -249,6 +250,7 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
                 const v = Number(e.target.value);
                 setPort(Number.isInteger(v) && v >= 1 && v <= 65535 ? v : DEFAULT_PORT);
               }}
+              aria-label="map harness port"
               style={{width: 52, background: 'rgba(255,255,255,.15)', border: '1px solid rgba(255,255,255,.5)', color: '#fff', borderRadius: 4, padding: '2px 6px'}}
             />
             <button onClick={() => connect()} style={btnStyle}>connect</button>

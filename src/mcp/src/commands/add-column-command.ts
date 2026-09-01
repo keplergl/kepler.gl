@@ -57,6 +57,21 @@ IMPORTANT: this command only ADDS columns. It cannot delete or rename-in-place a
         expression?: string;
       };
       try {
+        // Runtime guard: the bridge/webMCP call execute without zod parsing, so
+        // the superRefine "exactly one of copyFromColumn/expression" constraint
+        // is not enforced. Without it, both-missing would build
+        // `(undefined) AS ...` and produce a confusing DuckDB error.
+        const provided = [copyFromColumn, expression].filter(v => v != null).length;
+        if (provided !== 1) {
+          throw new Error('Provide exactly one of copyFromColumn or expression.');
+        }
+        if (typeof datasetName !== 'string' || datasetName.length === 0) {
+          throw new Error('datasetName must be a non-empty string.');
+        }
+        if (typeof newColumnName !== 'string' || newColumnName.length === 0) {
+          throw new Error('newColumnName must be a non-empty string.');
+        }
+
         const visState = ctx.getVisState();
         const datasets = visState.datasets;
         const dataId = Object.keys(datasets).find(

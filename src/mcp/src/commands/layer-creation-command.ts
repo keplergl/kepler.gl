@@ -160,10 +160,14 @@ function applyColorConfig(
       // Validate without materializing the whole column: scan rows, deleting
       // matches from a small `wanted` set (early-exit when all are found),
       // while collecting a small sample of actual values for the error message.
+      // Cap the scan so a large dataset can't freeze the UI while validating
+      // category values — if the cap is hit before every wanted value is found,
+      // fail with the best-effort sample rather than iterating every row.
+      const MAX_UNIQUE_SCAN_ROWS = 10000;
       const wanted = new Set(providedColorMap.map(c => c.value));
       const sample: unknown[] = [];
       const seen = new Set<unknown>();
-      for (let i = 0; i < dataset.length && wanted.size > 0; i++) {
+      for (let i = 0; i < Math.min(dataset.length, MAX_UNIQUE_SCAN_ROWS) && wanted.size > 0; i++) {
         const v = dataset.getValue(colorBy, i);
         if (wanted.has(v)) {
           wanted.delete(v);
