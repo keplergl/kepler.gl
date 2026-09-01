@@ -71,7 +71,11 @@ export function buildKeplerContext(reduxStore: any): KeplerContext {
           /* fall through to stored boundary */
         }
       }
-      return reduxStore?.getState()?.demo?.aiAssistant?.keplerGl?.mapBoundary;
+      // Coerce null → undefined: the assistant slice may hold null, but
+      // KeplerContext.getMapBoundary is typed to return the boundary object or
+      // undefined only — returning null would break the contract for strict
+      // consumers.
+      return reduxStore?.getState()?.demo?.aiAssistant?.keplerGl?.mapBoundary ?? undefined;
     },
     getMapboxToken: () => {
       if (typeof window === 'undefined') return undefined;
