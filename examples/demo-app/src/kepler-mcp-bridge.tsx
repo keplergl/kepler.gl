@@ -78,7 +78,9 @@ type McpBridgeProps = {
 export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
   const [token, setToken] = useState(getUrlConfig().token);
   const [port, setPort] = useState(getUrlConfig().port);
-  const [host, setHost] = useState(getUrlConfig().host);
+  // host is fixed from the URL config at init (loopback-only) and never
+  // changed by the UI, so the setter is intentionally not destructured.
+  const [host] = useState(getUrlConfig().host);
   const [status, setStatus] = useState<BridgeStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
