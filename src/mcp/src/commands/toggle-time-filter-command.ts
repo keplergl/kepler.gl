@@ -65,7 +65,19 @@ A time filter must already exist on the map (created via map.add-time-filter).
         let targetIdx: number;
         if (filterIndex === undefined) {
           const found = filters.findIndex((f: any) => f.type === 'timeRange' || f.type === 'time');
-          targetIdx = found < 0 ? 0 : found;
+          // Don't fall back to index 0 when no time filter exists — toggling
+          // the first (non-time) filter would mutate an unrelated filter,
+          // contradicting the "a time filter must already exist" contract.
+          if (found < 0) {
+            return {
+              success: false,
+              commandId: toggleTimeFilterCommandId,
+              error:
+                'No time filter found on the map. Add a time filter first via map.add-time-filter.',
+              data: {instruction: 'Call map.add-time-filter before map.toggle-time-filter.'}
+            };
+          }
+          targetIdx = found;
         } else {
           targetIdx = filterIndex;
         }

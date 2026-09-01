@@ -82,6 +82,19 @@ describe('map.toggle-time-filter', () => {
     expect(getDispatched()).toHaveLength(0);
   });
 
+  it('does not fall back to a non-time filter when filterIndex is omitted', async () => {
+    // Filters exist but none are time filters — the auto-pick must error
+    // instead of toggling the first (unrelated) filter.
+    const filters = [{id: 'f0', type: 'range'}];
+    const {ctx, getDispatched} = makeCtx({filters});
+    const cmd = getToggleTimeFilterCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {action: 'show'})) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/No time filter found/);
+    expect(getDispatched()).toHaveLength(0);
+  });
+
   it('rejects an out-of-range filterIndex', async () => {
     const filters = [{id: 'f0', type: 'timeRange'}];
     const {ctx, getDispatched} = makeCtx({filters});
