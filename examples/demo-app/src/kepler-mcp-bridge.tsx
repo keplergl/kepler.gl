@@ -51,8 +51,11 @@ function getUrlConfig(): {token: string; port: number; host: string; tokenFromUr
   // non-local host and leak it. And even then, restrict the host to loopback
   // addresses only.
   const requestedHost = params.get('mcpHost');
-  const host =
+  const rawHost =
     urlToken != null && requestedHost && isLoopbackHost(requestedHost) ? requestedHost : WSHost();
+  // IPv6 hosts must be bracketed in a URL (`ws://[::1]:port/...`), but users
+  // commonly pass the bare `::1` form — normalize so the WebSocket URL is valid.
+  const host = rawHost.includes(':') && !rawHost.startsWith('[') ? `[${rawHost}]` : rawHost;
   // Clamp to a valid TCP port (1-65535): a crafted ?mcpPort=99999 or negative
   // value is truthy after Number() and would produce an invalid WebSocket URL
   // with confusing connection failures.
