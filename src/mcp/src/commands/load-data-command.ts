@@ -31,10 +31,20 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
     execute: async (execCtx, input) => {
       const {url, datasetName} = (input ?? {}) as {url: string; datasetName?: string};
       try {
+        // Restrict to http(s) up front: the command fetches remote datasets,
+        // and other schemes (data:, file:, javascript:) would either be
+        // rejected by fetch with a less actionable error or widen the input
+        // surface for no benefit.
+        let parsedUrl: URL;
         try {
-          new URL(url);
+          parsedUrl = new URL(url);
         } catch {
           throw new Error(`Invalid URL: ${url}`);
+        }
+        if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+          throw new Error(
+            `Unsupported URL scheme "${parsedUrl.protocol}". Only http(s) URLs are supported.`
+          );
         }
 
         const visState = ctx.getVisState();

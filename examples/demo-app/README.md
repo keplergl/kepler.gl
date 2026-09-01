@@ -24,8 +24,9 @@ transports (`kepler-mcp-shared.ts` holds the common glue):
   registration on `document.modelContext` (fallback `navigator.modelContext`),
   for harnesses with a built-in browser (Chrome's agent, Claude Desktop's
   browser, ...). Needs Chrome 149+ with the WebMCP origin trial or
-  `chrome://flags/#enable-webmcp-testing`; the chip is hidden when the API is
-  not available. Tool names fold `map.load-data` → `map_load_data` (dots are
+  `chrome://flags/#enable-webmcp-testing`; when the API is not available the
+  chip shows "webMCP · API unavailable" (the harness status stays visible).
+  Tool names fold `map.load-data` → `map_load_data` (dots are
   common MCP-tool-name poison); the original command id is kept in the
   description and every result string.
 

@@ -86,7 +86,11 @@ export function guessDefaultLayer(
   }
   const defaultLayers = findDefaultLayer(dataset, LayerClasses as any);
   const layer = defaultLayers.find(l => l.type === layerType);
-  return layer || (defaultLayers.length > 0 ? defaultLayers[0] : null);
+  // Return null (not a fallback to the first default layer) when the requested
+  // type can't be created — silently substituting a different layer type (e.g.
+  // requesting "h3" and getting a point layer) violates the command contract
+  // and makes failures hard to diagnose. The caller errors clearly on null.
+  return layer || null;
 }
 
 function buildLayerConfig(
