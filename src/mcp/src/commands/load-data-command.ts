@@ -16,10 +16,18 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
       'Load a dataset from a URL into kepler.gl. The dataset is named after the URL filename, ' +
       'or after `datasetName` when provided. Does NOT create a layer — call map.add-layer to visualize. ' +
       'Do NOT create a duplicate dataset (e.g. via map.create-table) just to rename it; ' +
-      'name it here with `datasetName` instead, or use the URL-filename dataset as-is.',
+      'name it here with `datasetName` instead, or use the URL-filename dataset as-is. ' +
+      'LOCAL FILES: to load a file served by the demo app itself, pass a path like ' +
+      '`/sf_streets.geojson` (a file in the demo\'s served directory) or a full ' +
+      '`http://localhost:<port>/...` URL. `file://` paths cannot be fetched by a browser — ' +
+      'the file must be served over http(s).',
     metadata: {readOnly: false, riskLevel: 'medium', requiresConfirmation: true},
     inputSchema: z.object({
-      url: z.string().describe('The URL to load data from'),
+      url: z
+        .string()
+        .describe(
+          'The URL to load data from. May be a full http(s) URL or a path served by the demo app (e.g. /data.geojson).'
+        ),
       datasetName: z
         .string()
         .optional()
@@ -31,13 +39,23 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
     execute: async (execCtx, input) => {
       const {url, datasetName} = (input ?? {}) as {url: string; datasetName?: string};
       try {
-        // Restrict to http(s) up front: the command fetches remote datasets,
-        // and other schemes (data:, file:, javascript:) would either be
-        // rejected by fetch with a less actionable error or widen the input
-        // surface for no benefit.
+        if (typeof url !== 'string' || url.trim() === '') {
+          throw new Error(`Invalid URL: ${url}`);
+        }
+
+        // Resolve the URL before validating the scheme. A scheme-less string is
+        // a relative reference — resolve it against the page origin so files
+        // served by the demo app itself (same-origin) can be loaded with a bare
+        // path (e.g. `/sf_streets.geojson`). Browsers cannot fetch `file://`
+        // URLs, so a local file must be served over http(s) by the page's own
+        // server (or a CORS-enabled local server). Other schemes (data:,
+        // javascript:) would either be rejected by fetch with a less actionable
+        // error or widen the input surface for no benefit.
+        const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
+        const pageOrigin = typeof window !== 'undefined' ? window.location.origin : undefined;
         let parsedUrl: URL;
         try {
-          parsedUrl = new URL(url);
+          parsedUrl = hasScheme ? new URL(url) : new URL(url, pageOrigin);
         } catch {
           throw new Error(`Invalid URL: ${url}`);
         }
@@ -50,20 +68,20 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         const visState = ctx.getVisState();
         // Thread the caller's AbortSignal into the fetch so WebMCP/bridge
         // cancellations stop long-running loads instead of letting them hang.
-        const response = await fetch(url, {signal: execCtx?.signal});
+        const response = await fetch(parsedUrl.href, {signal: execCtx?.signal});
         if (!response.ok) {
           // Include the numeric status — statusText is often empty (e.g. some
           // CDNs / error pages), and the code alone makes failures diagnosable.
           const reason = response.statusText
             ? `HTTP ${response.status} ${response.statusText}`
             : `HTTP ${response.status}`;
-          throw new Error(`Failed to fetch data from ${url}: ${reason}`);
+          throw new Error(`Failed to fetch data from ${parsedUrl.href}: ${reason}`);
         }
 
         const blob = await response.blob();
         // Derive the filename from the URL pathname so query strings (e.g.
         // `data.csv?x=1`) don't end up in the dataset name.
-        const fileName = new URL(url).pathname.split('/').pop() || 'data';
+        const fileName = parsedUrl.pathname.split('/').pop() || 'data';
         // Carry the Blob's MIME type into the File so loader selection in
         // readFileInBatches can use it — a URL with no extension (or a
         // misleading one) would otherwise leave file.type empty and fail to
@@ -71,8 +89,9 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         const file = new File([blob], fileName, {type: blob.type || undefined});
         // Preserve the source URL so processors hash by URL (avoiding dataset-id
         // collisions between same-named files) and can attach externally-hosted
-        // metadata — mirrors loadExternallyHostedDataset.
-        (file as File & {keplerSourceUrl?: string}).keplerSourceUrl = url;
+        // metadata — mirrors loadExternallyHostedDataset. Use the RESOLVED href
+        // so a relative path and its absolute form hash to the same dataset id.
+        (file as File & {keplerSourceUrl?: string}).keplerSourceUrl = parsedUrl.href;
 
         const batches = await readFileInBatches({
           file,

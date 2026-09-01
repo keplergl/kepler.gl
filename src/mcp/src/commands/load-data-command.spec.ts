@@ -116,13 +116,69 @@ describe('map.load-data', () => {
     const {ctx, getDispatched} = makeCtx();
 
     const cmd = getLoadDataCommand(ctx as any);
+    // `http://` has a scheme but no host — unparseable even with a base, so it
+    // stays a genuine "Invalid URL" (a scheme-less string like `not a url` is a
+    // valid relative reference in jsdom and resolves against the page origin).
     const result = (await cmd.execute({} as any, {
-      url: 'not a url'
+      url: 'http://'
     })) as CommandResult;
 
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/Invalid URL/);
     expect(getDispatched()).toBeNull();
+  });
+
+  it('returns an error for an empty url without dispatching', async () => {
+    const {ctx, getDispatched} = makeCtx();
+
+    const cmd = getLoadDataCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      url: '   '
+    })) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Invalid URL/);
+    expect(getDispatched()).toBeNull();
+  });
+
+  it('resolves a relative URL against the page origin (local-file support)', async () => {
+    const {ctx, getDispatched} = makeCtx();
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      statusText: 'OK',
+      blob: async () => new Blob(['a,b\n1,2'], {type: 'text/csv'})
+    } as any);
+
+    const content = {data: [{a: 1, b: 2}], fileName: 'data.csv'};
+    let capturedFile: any;
+    (readFileInBatches as jest.Mock).mockImplementation(async ({file}: any) => {
+      capturedFile = file;
+      return {
+        next: jest
+          .fn()
+          .mockResolvedValueOnce({value: content, done: false})
+          .mockResolvedValueOnce({value: undefined, done: true})
+      };
+    });
+    (processFileData as jest.Mock).mockResolvedValue([
+      {info: {label: 'data.csv'}, rows: [{a: 1, b: 2}]}
+    ]);
+
+    const cmd = getLoadDataCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      url: '/data.csv'
+    })) as CommandResult;
+
+    expect(result.success).toBe(true);
+    // jsdom's default origin is http://localhost — the relative path resolves
+    // against it, so the fetch targets the demo app's own server (same-origin).
+    expect(global.fetch).toHaveBeenCalledWith('http://localhost/data.csv', {signal: undefined});
+    // the resolved href (not the bare relative path) is preserved for hashing
+    expect(capturedFile.keplerSourceUrl).toBe('http://localhost/data.csv');
+    const action = getDispatched();
+    expect(action).toBeTruthy();
+    expect(action.payload.datasets[0].info.label).toBe('data.csv');
   });
 
   it('includes the numeric status code in a non-ok fetch error', async () => {
