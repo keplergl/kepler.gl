@@ -110,10 +110,15 @@ IMPORTANT: this command only ADDS columns. It cannot delete or rename-in-place a
         // coordinates come back as nulls and the geometry disappears.
         // `buildAddColumnPayload` rebuilds the payload from the original kepler
         // values instead, appending the new column from this single-column result.
+        // Escape double quotes in identifier names before embedding them in
+        // quoted SQL identifiers — a `"` in copyFromColumn/newColumnName would
+        // otherwise break the query or enable SQL injection into DuckDB. (The
+        // `expression` is user-provided SQL by design, so it is not escaped.)
+        const escapeIdent = (name: string) => name.replace(/"/g, '""');
         const appendedSql =
           copyFromColumn != null
-            ? `"${copyFromColumn}" AS "${newColumnName}"`
-            : `(${expression}) AS "${newColumnName}"`;
+            ? `"${escapeIdent(copyFromColumn)}" AS "${escapeIdent(newColumnName)}"`
+            : `(${expression}) AS "${escapeIdent(newColumnName)}"`;
         const arrowResult = await db.query(`SELECT ${appendedSql} FROM "${dbTableName}"`);
 
         const {rows, fields} = buildAddColumnPayload(

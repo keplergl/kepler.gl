@@ -52,6 +52,17 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         // name (e.g. "A-B" vs "A B"), which would clobber another dataset's
         // temp table inside DuckDB and run the SQL against unintended data.
         const dbTableName = datasetNameToTableName(dataId);
+        // The contract requires the __TABLE__ placeholder — without it the
+        // query would run against whatever table names appear in the SQL (or
+        // return unrelated results), which is especially risky for a
+        // high-risk, confirmation-gated command. Fail fast with an actionable
+        // error instead.
+        if (!sql.includes('__TABLE__')) {
+          throw new Error(
+            'The SQL query must use the __TABLE__ placeholder as the table name, ' +
+              'e.g. `SELECT * FROM __TABLE__`.'
+          );
+        }
         const resolvedSql = sql.replace(/__TABLE__/g, `"${dbTableName}"`);
         // Dedupe variableNames: duplicate names would silently overwrite
         // earlier entries in columnData, producing an Arrow table that doesn't
