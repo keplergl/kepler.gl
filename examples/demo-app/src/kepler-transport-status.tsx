@@ -76,7 +76,11 @@ export function KeplerTransportStatus({reduxStore}: Props) {
         fontFamily: 'monospace',
         fontSize: 11,
         display: 'flex',
-        flexDirection: 'column',
+        // column-reverse keeps the chip (first in DOM) visually at the bottom
+        // while the panel renders above it. The chip must come FIRST in the
+        // DOM so that after expanding it with the keyboard, forward-tab moves
+        // into the panel's controls instead of jumping out of the widget.
+        flexDirection: 'column-reverse',
         gap: 4,
         alignItems: 'flex-start'
       }}
@@ -93,22 +97,6 @@ export function KeplerTransportStatus({reduxStore}: Props) {
         }
       }}
     >
-      <div
-        style={{
-          background: 'rgba(0,0,0,.92)',
-          borderRadius: 8,
-          padding: '8px 10px',
-          maxWidth: 440,
-          boxShadow: '0 4px 16px rgba(0,0,0,.4)',
-          display: expanded ? 'flex' : 'none',
-          flexDirection: 'column',
-          gap: 8
-        }}
-      >
-        <KeplerWebMcp reduxStore={reduxStore} onStatus={setWebmcp} />
-        <div style={{height: 1, background: 'rgba(255,255,255,.15)'}} />
-        <KeplerMcpBridge reduxStore={reduxStore} onStatus={setBridge} />
-      </div>
       <div
         tabIndex={0}
         role="button"
@@ -138,6 +126,22 @@ export function KeplerTransportStatus({reduxStore}: Props) {
         <span>
           map surface · webMCP {webmcpLabel(webmcp)} · harness {bridgeLabel(bridge)}
         </span>
+      </div>
+      <div
+        style={{
+          background: 'rgba(0,0,0,.92)',
+          borderRadius: 8,
+          padding: '8px 10px',
+          maxWidth: 440,
+          boxShadow: '0 4px 16px rgba(0,0,0,.4)',
+          display: expanded ? 'flex' : 'none',
+          flexDirection: 'column',
+          gap: 8
+        }}
+      >
+        <KeplerWebMcp reduxStore={reduxStore} onStatus={setWebmcp} />
+        <div style={{height: 1, background: 'rgba(255,255,255,.15)'}} />
+        <KeplerMcpBridge reduxStore={reduxStore} onStatus={setBridge} />
       </div>
     </div>
   );

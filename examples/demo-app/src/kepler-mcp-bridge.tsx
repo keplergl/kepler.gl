@@ -220,6 +220,7 @@ export function KeplerMcpBridge({reduxStore, onStatus}: McpBridgeProps) {
         ) : (
           <>
             <input
+              type="password"
               value={token}
               onChange={e => setToken(e.target.value)}
               placeholder="token"
