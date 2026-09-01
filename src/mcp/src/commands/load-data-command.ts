@@ -52,7 +52,12 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         // cancellations stop long-running loads instead of letting them hang.
         const response = await fetch(url, {signal: execCtx?.signal});
         if (!response.ok) {
-          throw new Error(`Failed to fetch data from ${url}: ${response.statusText}`);
+          // Include the numeric status — statusText is often empty (e.g. some
+          // CDNs / error pages), and the code alone makes failures diagnosable.
+          const reason = response.statusText
+            ? `HTTP ${response.status} ${response.statusText}`
+            : `HTTP ${response.status}`;
+          throw new Error(`Failed to fetch data from ${url}: ${reason}`);
         }
 
         const blob = await response.blob();

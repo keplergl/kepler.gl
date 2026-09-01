@@ -34,11 +34,24 @@ export function getUpdateLayerColorCommand(ctx: KeplerContext): RoomCommand {
         if (typeof layerId !== 'string' || layerId.length === 0) {
           throw new Error('layerId is required and must be a string.');
         }
-        if (typeof numberOfColors !== 'number' || !Number.isFinite(numberOfColors)) {
-          throw new Error('numberOfColors is required and must be a number.');
+        if (
+          typeof numberOfColors !== 'number' ||
+          !Number.isInteger(numberOfColors) ||
+          numberOfColors <= 0
+        ) {
+          throw new Error('numberOfColors is required and must be a positive integer.');
         }
-        if (!Array.isArray(customColors) || customColors.some(c => typeof c !== 'string')) {
-          throw new Error('customColors is required and must be an array of hex color strings.');
+        // The schema/description promise hex colors — a non-hex string would
+        // produce an invalid palette downstream, so reject it up front with an
+        // actionable error instead of a confusing render.
+        const HEX_COLOR_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+        if (
+          !Array.isArray(customColors) ||
+          customColors.some(c => typeof c !== 'string' || !HEX_COLOR_RE.test(c))
+        ) {
+          throw new Error(
+            'customColors is required and must be an array of hex color strings (e.g. #RRGGBB or #RRGGBBAA).'
+          );
         }
 
         const visState = ctx.getVisState();

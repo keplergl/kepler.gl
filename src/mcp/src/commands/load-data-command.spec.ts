@@ -124,4 +124,42 @@ describe('map.load-data', () => {
     expect(result.error).toMatch(/Invalid URL/);
     expect(getDispatched()).toBeNull();
   });
+
+  it('includes the numeric status code in a non-ok fetch error', async () => {
+    const {ctx, getDispatched} = makeCtx();
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found'
+    } as any);
+
+    const cmd = getLoadDataCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      url: 'https://example.com/missing.csv'
+    })) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/HTTP 404 Not Found/);
+    expect(getDispatched()).toBeNull();
+  });
+
+  it('falls back to the bare status code when statusText is empty', async () => {
+    const {ctx, getDispatched} = makeCtx();
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: ''
+    } as any);
+
+    const cmd = getLoadDataCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      url: 'https://example.com/broken.csv'
+    })) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/HTTP 500/);
+    expect(getDispatched()).toBeNull();
+  });
 });

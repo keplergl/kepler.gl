@@ -101,4 +101,28 @@ describe('map.update-layer-color', () => {
     const action = getDispatched();
     expect(action.newVisConfig.colorRange.colors).toEqual(['#2166ac', '#f7f7f7', '#b2182b']);
   });
+
+  it('rejects a non-hex color string (bridge path skips zod)', async () => {
+    const {result, getDispatched} = await runUpdateColor(plainLayer, {
+      layerId: 'plain',
+      numberOfColors: 2,
+      customColors: ['#2166ac', 'not-a-color']
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/hex color strings/);
+    expect(getDispatched()).toBeNull();
+  });
+
+  it('rejects a non-positive-integer numberOfColors (bridge path skips zod)', async () => {
+    const {result, getDispatched} = await runUpdateColor(plainLayer, {
+      layerId: 'plain',
+      numberOfColors: 0,
+      customColors: ['#2166ac']
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/positive integer/);
+    expect(getDispatched()).toBeNull();
+  });
 });
