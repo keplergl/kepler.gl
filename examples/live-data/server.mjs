@@ -160,10 +160,10 @@ function serveIndex(res, port) {
     PERIOD_MS / 1000
   }s (currently ${(tau * 100).toFixed(1)}% through the orbit).</p>
     <ul>
-      <li><a href="/vehicles.csv">/vehicles.csv</a> — positions at request time</li>
-      <li><code>ws://localhost:${port}${WS_PATH}</code> — JSON upserts for the live-data example host</li>
+      <li><a href="/vehicles.csv">/vehicles.csv</a> — paste this into Kepler.gl Add Data → URL, then set Refresh to Custom (0.3s)</li>
+      <li><code>ws://localhost:${port}${WS_PATH}</code> — JSON upserts for the live-data <strong>host app</strong> (not Add Data)</li>
     </ul>
-    <p>Paste that URL into Kepler.gl Add Data → URL, then set Refresh to 1s (or Custom) on the dataset.</p>
+    <p>The WebSocket URL is not a Kepler dataset source. Only the CSV belongs in Add Data → URL.</p>
   </body>
 </html>`;
   res.writeHead(200, corsHeaders({'Content-Type': 'text/html; charset=utf-8'}));
