@@ -108,4 +108,23 @@ describe('map.toggle-time-filter', () => {
     expect(result.error).toMatch(/out of range/);
     expect(getDispatched()).toHaveLength(0);
   });
+
+  it('rejects a non-integer or negative filterIndex', async () => {
+    const filters = [{id: 'f0', type: 'timeRange'}];
+    const {ctx, getDispatched} = makeCtx({filters});
+    const cmd = getToggleTimeFilterCommand(ctx as any);
+
+    for (const bad of ['1', 1.5, -1]) {
+      const result = (await cmd.execute({} as any, {
+        action: 'show',
+        filterIndex: bad
+      })) as CommandResult;
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/Invalid filterIndex/);
+    }
+    // no setFilterView dispatched for any of them
+    expect(
+      getDispatched().filter((a: any) => a.type === ActionTypes.SET_FILTER_VIEW)
+    ).toHaveLength(0);
+  });
 });

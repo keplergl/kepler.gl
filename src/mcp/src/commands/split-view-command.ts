@@ -59,6 +59,29 @@ Use the SAME colorBy / colorType for the layers being compared, so the compariso
           };
         }
 
+        // Runtime guard: the bridge/webMCP call execute without zod parsing, so
+        // a string/object passed as layerIdsForMap0/1 must not be treated as
+        // iterable (`.length`, `.filter`) and produce surprising layer toggles.
+        // Reject non-array or non-string entries when these fields are provided.
+        for (const [name, ids] of [
+          ['layerIdsForMap0', layerIdsForMap0],
+          ['layerIdsForMap1', layerIdsForMap1]
+        ] as const) {
+          if (
+            ids !== undefined &&
+            (!Array.isArray(ids) || ids.some(id => typeof id !== 'string' || id.length === 0))
+          ) {
+            return {
+              success: false,
+              commandId: splitViewCommandId,
+              error: `Invalid ${name}. Must be an array of non-empty layer id strings.`,
+              data: {
+                instruction: `Pass ${name} as an array of layer id strings, or omit it to show all layers on that panel.`
+              }
+            };
+          }
+        }
+
         const visState = ctx.getVisState();
         const isSplit = visState.splitMaps && visState.splitMaps.length > 1;
 

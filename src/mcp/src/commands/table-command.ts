@@ -39,6 +39,26 @@ IMPORTANT: Use __TABLE__ as the table name placeholder in SQL. It will be replac
         resultDatasetName: string;
       };
       try {
+        // Runtime guard: the bridge/webMCP call execute without zod parsing, so
+        // missing/wrong-typed inputs must not fall through to TypeErrors (e.g.
+        // `sql.includes` on a non-string) that surface as confusing errors.
+        if (typeof datasetName !== 'string' || datasetName.length === 0) {
+          throw new Error('datasetName must be a non-empty string.');
+        }
+        if (
+          !Array.isArray(variableNames) ||
+          variableNames.length === 0 ||
+          variableNames.some(v => typeof v !== 'string' || v.length === 0)
+        ) {
+          throw new Error('variableNames must be a non-empty array of non-empty strings.');
+        }
+        if (typeof sql !== 'string' || sql.length === 0) {
+          throw new Error('sql must be a non-empty string.');
+        }
+        if (typeof resultDatasetName !== 'string' || resultDatasetName.length === 0) {
+          throw new Error('resultDatasetName must be a non-empty string.');
+        }
+
         const visState = ctx.getVisState();
         const datasets = visState.datasets;
         const dataId = Object.keys(datasets).find(

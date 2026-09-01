@@ -50,6 +50,22 @@ A time filter must already exist on the map (created via map.add-time-filter).
             }
           };
         }
+        // Runtime guard: the bridge/webMCP call execute without zod parsing, so
+        // a string/float filterIndex must not slip through and be dispatched
+        // into setFilterView (breaking reducer logic / toggling the wrong
+        // filter). Reject anything that isn't a non-negative integer.
+        if (filterIndex !== undefined && (!Number.isInteger(filterIndex) || filterIndex < 0)) {
+          return {
+            success: false,
+            commandId: toggleTimeFilterCommandId,
+            error: `Invalid filterIndex "${String(filterIndex)}". Must be a non-negative integer.`,
+            data: {
+              instruction:
+                'Pass filterIndex as a non-negative integer, or omit it to auto-detect the first time filter.'
+            }
+          };
+        }
+
         const visState = ctx.getVisState();
         const filters = visState.filters ?? [];
 
