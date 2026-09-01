@@ -2,12 +2,12 @@
  * kepler-transport-status — one status box for every way the map surface is
  * exposed to an agent.
  *
- * Collapsed it is a single chip summarizing both transports (webMCP + the
- * WebSocket harness bridge); hovering expands a panel with per-transport
- * status and controls. The panel is part of the hover target, so moving from
- * the chip into the panel keeps it open. The chip is also a focusable,
- * clickable trigger (tabindex + focus/blur + click toggle) so the controls
- * stay reachable without a mouse.
+ * Collapsed it is a small LED (green when a transport is live, grey when
+ * idle, amber while connecting, red on error). Hovering / focusing / clicking
+ * expands a panel with per-transport status and controls. The panel is part
+ * of the hover target, so moving from the LED into the panel keeps it open.
+ * The LED is also a focusable, clickable trigger (tabindex + focus/blur +
+ * click toggle) so the controls stay reachable without a mouse.
  */
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {KeplerWebMcp, type WebMcpStatusInfo} from './kepler-webmcp';
@@ -29,7 +29,7 @@ function bridgeLabel(info: BridgeStatusInfo | null): string {
   return info ? info.status : 'idle';
 }
 
-/** Worst state across both transports drives the chip color. */
+/** Worst state across both transports drives the LED color. */
 function overall(
   webmcp: WebMcpStatusInfo | null,
   bridge: BridgeStatusInfo | null
@@ -41,8 +41,8 @@ function overall(
   if (states.includes('registering') || states.includes('connecting'))
     return {color: '#b58900', dot: '#ffe27a'};
   if (states.includes('registered') || states.includes('connected'))
-    return {color: '#2e7cf6', dot: '#8ff29a'};
-  return {color: '#555', dot: '#fff'};
+    return {color: '#1f9d55', dot: '#8ff29a'};
+  return {color: '#6b6b6b', dot: '#c8c8c8'};
 }
 
 export function KeplerTransportStatus({reduxStore}: Props) {
@@ -77,6 +77,7 @@ export function KeplerTransportStatus({reduxStore}: Props) {
   }, []);
 
   const o = overall(webmcp, bridge);
+  const summary = `map surface · webMCP ${webmcpLabel(webmcp)} · harness ${bridgeLabel(bridge)}`;
 
   return (
     <div
@@ -88,8 +89,8 @@ export function KeplerTransportStatus({reduxStore}: Props) {
         fontFamily: 'monospace',
         fontSize: 11,
         display: 'flex',
-        // column-reverse keeps the chip (first in DOM) visually at the bottom
-        // while the panel renders above it. The chip must come FIRST in the
+        // column-reverse keeps the LED (first in DOM) visually at the bottom
+        // while the panel renders above it. The LED must come FIRST in the
         // DOM so that after expanding it with the keyboard, forward-tab moves
         // into the panel's controls instead of jumping out of the widget.
         flexDirection: 'column-reverse',
@@ -101,7 +102,7 @@ export function KeplerTransportStatus({reduxStore}: Props) {
       onFocus={open}
       onBlur={e => {
         // React's onBlur bubbles, so it fires when focus moves between the
-        // chip and the panel's controls too. Only schedule the close when
+        // LED and the panel's controls too. Only schedule the close when
         // focus actually leaves the whole widget — otherwise tabbing through
         // the controls would collapse the panel mid-interaction.
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
@@ -113,6 +114,8 @@ export function KeplerTransportStatus({reduxStore}: Props) {
         tabIndex={0}
         role="button"
         aria-expanded={expanded}
+        aria-label={summary}
+        title={summary}
         onClick={() => setExpanded(prev => !prev)}
         onKeyDown={e => {
           // role="button" on a div has no native keyboard activation;
@@ -125,19 +128,27 @@ export function KeplerTransportStatus({reduxStore}: Props) {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          justifyContent: 'center',
           background: o.color,
-          color: '#fff',
+          border: 'none',
           borderRadius: 999,
-          padding: '4px 10px',
-          boxShadow: '0 2px 8px rgba(0,0,0,.35)',
-          cursor: 'pointer'
+          width: 18,
+          height: 18,
+          padding: 0,
+          boxShadow: '0 0 0 2px rgba(255,255,255,.75), 0 2px 8px rgba(0,0,0,.35)',
+          cursor: 'pointer',
+          flex: 'none'
         }}
       >
-        <span style={{width: 8, height: 8, borderRadius: 8, background: o.dot, flex: 'none'}} />
-        <span>
-          map surface · webMCP {webmcpLabel(webmcp)} · harness {bridgeLabel(bridge)}
-        </span>
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: 8,
+            background: o.dot,
+            flex: 'none'
+          }}
+        />
       </div>
       <div
         style={{
