@@ -122,10 +122,10 @@ describe('map.add-layer (flow)', () => {
 });
 
 describe('map.add-layer (colorMap validation)', () => {
-  it('finds a unique category that appears only later in a large dataset (even sampling)', async () => {
+  it('finds a unique category that appears only later in a large dataset (full scan)', async () => {
     // 20k rows; the wanted category 'z' exists ONLY at index 10000 — beyond the
-    // old prefix scan (first 10k rows) but inside the even-stride scan
-    // (step = 20000/10000 = 2, so even indices 0..19998 are visited).
+    // old prefix scan (first 10k rows), so a bounded sample would falsely flag
+    // it as missing. The full scan (with early-exit) finds it.
     const rows: any[] = [];
     for (let i = 0; i < 20000; i++) {
       rows.push([37.77, -122.42, i === 10000 ? 'z' : 'a']);
