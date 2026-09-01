@@ -5,7 +5,9 @@
  * Collapsed it is a single chip summarizing both transports (webMCP + the
  * WebSocket harness bridge); hovering expands a panel with per-transport
  * status and controls. The panel is part of the hover target, so moving from
- * the chip into the panel keeps it open.
+ * the chip into the panel keeps it open. The chip is also a focusable,
+ * clickable trigger (tabindex + focus/blur + click toggle) so the controls
+ * stay reachable without a mouse.
  */
 import React, {useCallback, useRef, useState} from 'react';
 import {KeplerWebMcp, type WebMcpStatusInfo} from './kepler-webmcp';
@@ -80,6 +82,8 @@ export function KeplerTransportStatus({reduxStore}: Props) {
       }}
       onMouseEnter={open}
       onMouseLeave={scheduleClose}
+      onFocus={open}
+      onBlur={scheduleClose}
     >
       <div
         style={{
@@ -98,6 +102,18 @@ export function KeplerTransportStatus({reduxStore}: Props) {
         <KeplerMcpBridge reduxStore={reduxStore} onStatus={setBridge} />
       </div>
       <div
+        tabIndex={0}
+        role="button"
+        aria-expanded={expanded}
+        onClick={() => setExpanded(prev => !prev)}
+        onKeyDown={e => {
+          // role="button" on a div has no native keyboard activation;
+          // mirror the click toggle for Enter/Space.
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setExpanded(prev => !prev);
+          }
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -106,7 +122,8 @@ export function KeplerTransportStatus({reduxStore}: Props) {
           color: '#fff',
           borderRadius: 999,
           padding: '4px 10px',
-          boxShadow: '0 2px 8px rgba(0,0,0,.35)'
+          boxShadow: '0 2px 8px rgba(0,0,0,.35)',
+          cursor: 'pointer'
         }}
       >
         <span style={{width: 8, height: 8, borderRadius: 8, background: o.dot, flex: 'none'}} />

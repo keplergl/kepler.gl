@@ -428,17 +428,23 @@ export function tableToLLMResult(
 /**
  * Format the first N rows of an Arrow result as a pipe-delimited string for the
  * LLM, capped at maxTotalLength chars. Convenience wrapper combining
- * arrowTableToObjects + tableToLLMResult.
+ * arrowTableToObjects + tableToLLMResult: slices the first `numberOfRows`
+ * rows, normalizes Decimal columns via arrowTableToObjects (applying each
+ * column's declared scale so previews don't leak opaque BigNum word objects),
+ * then renders the pipe table.
  */
 export function formatResultsForLLM(
-  result: {toArray: () => any[]},
+  result: {
+    toArray: () => any[];
+    schema?: {fields: {name: string; type?: {typeId?: number; scale?: number}}[]};
+  },
   numberOfRows: number = NUMBER_OF_ROWS_RETURN_TO_LLM,
   options?: {maxTotalLength?: number; maxValueLength?: number}
 ): string {
-  const sliced = result.toArray().slice(0, numberOfRows);
-  const rows = sliced.map(
-    (row: any) => convertArrowRowToObject(row) as Record<string, unknown>
-  );
+  const rows = arrowTableToObjects({
+    toArray: () => result.toArray().slice(0, numberOfRows),
+    schema: result.schema
+  });
   return tableToLLMResult(
     rows,
     options?.maxTotalLength ?? LLM_PREVIEW_MAX_TOTAL_LENGTH,
