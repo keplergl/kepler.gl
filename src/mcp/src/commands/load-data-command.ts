@@ -49,7 +49,11 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         // Derive the filename from the URL pathname so query strings (e.g.
         // `data.csv?x=1`) don't end up in the dataset name.
         const fileName = new URL(url).pathname.split('/').pop() || 'data';
-        const file = new File([blob], fileName);
+        // Carry the Blob's MIME type into the File so loader selection in
+        // readFileInBatches can use it — a URL with no extension (or a
+        // misleading one) would otherwise leave file.type empty and fail to
+        // pick the right loader.
+        const file = new File([blob], fileName, {type: blob.type || undefined});
         // Preserve the source URL so processors hash by URL (avoiding dataset-id
         // collisions between same-named files) and can attach externally-hosted
         // metadata — mirrors loadExternallyHostedDataset.
