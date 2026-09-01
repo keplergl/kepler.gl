@@ -23,18 +23,22 @@ IMPORTANT: this command only ADDS columns. It cannot delete or rename-in-place a
       .object({
         datasetName: z
           .string()
+          .min(1)
           .describe('The name (label) or id of the dataset to add the column to'),
         newColumnName: z
           .string()
+          .min(1)
           .describe('The name of the new column to add. Must not already exist in the dataset.'),
         copyFromColumn: z
           .string()
+          .min(1)
           .optional()
           .describe(
             'The name of an EXISTING column whose values the new column will copy. Mutually exclusive with `expression` — provide exactly one.'
           ),
         expression: z
           .string()
+          .min(1)
           .optional()
           .describe(
             'An SQL expression computed in DuckDB against the dataset rows; the result becomes the new column. e.g. z-score: "(HR60 - AVG(HR60) OVER()) / STDDEV(HR60) OVER()". Mutually exclusive with `copyFromColumn` — provide exactly one.'
@@ -70,6 +74,16 @@ IMPORTANT: this command only ADDS columns. It cannot delete or rename-in-place a
         }
         if (typeof newColumnName !== 'string' || newColumnName.length === 0) {
           throw new Error('newColumnName must be a non-empty string.');
+        }
+        // The bridge/webMCP path skips zod, so an empty copyFromColumn/expression
+        // would slip through and build `() AS ...` / `"" AS ...` — a confusing
+        // DuckDB error instead of an actionable one. Enforce non-empty strings
+        // for whichever source is selected.
+        if (copyFromColumn != null && (typeof copyFromColumn !== 'string' || copyFromColumn.length === 0)) {
+          throw new Error('copyFromColumn must be a non-empty string.');
+        }
+        if (expression != null && (typeof expression !== 'string' || expression.length === 0)) {
+          throw new Error('expression must be a non-empty string.');
         }
 
         const visState = ctx.getVisState();

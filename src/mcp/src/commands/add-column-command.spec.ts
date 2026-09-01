@@ -75,6 +75,34 @@ describe('map.add-column', () => {
     expect(db.query).not.toHaveBeenCalled();
   });
 
+  it('rejects an empty expression (bridge path skips zod)', async () => {
+    const {ctx, db} = makeCtx();
+    const cmd = getAddColumnCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      datasetName: 'My Dataset',
+      newColumnName: 'c',
+      expression: ''
+    })) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/expression must be a non-empty string/);
+    expect(db.query).not.toHaveBeenCalled();
+  });
+
+  it('rejects an empty copyFromColumn (bridge path skips zod)', async () => {
+    const {ctx, db} = makeCtx();
+    const cmd = getAddColumnCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      datasetName: 'My Dataset',
+      newColumnName: 'c',
+      copyFromColumn: ''
+    })) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/copyFromColumn must be a non-empty string/);
+    expect(db.query).not.toHaveBeenCalled();
+  });
+
   it('escapes double quotes in identifiers when building the SQL', async () => {
     const {ctx, db} = makeCtx();
     const cmd = getAddColumnCommand(ctx as any);

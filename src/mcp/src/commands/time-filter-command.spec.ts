@@ -130,6 +130,23 @@ describe('map.add-time-filter', () => {
     expect(result.error).toMatch(/Invalid interval/);
   });
 
+  it('rejects an inherited-property interval like "toString" (own-property check)', async () => {
+    const table = await makeTimestampTable();
+    const {ctx} = makeCtx(table);
+
+    const cmd = getAddTimeFilterCommand(ctx as any);
+    // `"toString" in INTERVAL_MILLIS` is true (inherited from Object.prototype),
+    // so the guard must use an own-property check to reject it.
+    const result = (await cmd.execute({} as any, {
+      datasetName: table.label,
+      dateTimeColumn: 'ts',
+      interval: 'toString'
+    })) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Invalid interval/);
+  });
+
   it('rejects a non-timestamp column', async () => {
     const table = await makeTimestampTable();
     const {ctx} = makeCtx(table);

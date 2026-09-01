@@ -115,8 +115,14 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
       try {
         // Runtime guard: the bridge/webMCP call execute without zod parsing,
         // so an invalid interval must not be written into kepler filter state
-        // (plotType.interval).
-        if (interval !== undefined && !(interval in INTERVAL_MILLIS)) {
+        // (plotType.interval). Use an own-property check — `in` matches
+        // inherited properties (e.g. "toString"), so a crafted interval could
+        // otherwise bypass the guard — and require a string value.
+        if (
+          interval !== undefined &&
+          (typeof interval !== 'string' ||
+            !Object.prototype.hasOwnProperty.call(INTERVAL_MILLIS, interval))
+        ) {
           throw new Error(
             `Invalid interval "${String(interval)}". Must be one of: ${Object.keys(
               INTERVAL_MILLIS
