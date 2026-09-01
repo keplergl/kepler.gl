@@ -83,7 +83,15 @@ export function KeplerTransportStatus({reduxStore}: Props) {
       onMouseEnter={open}
       onMouseLeave={scheduleClose}
       onFocus={open}
-      onBlur={scheduleClose}
+      onBlur={e => {
+        // React's onBlur bubbles, so it fires when focus moves between the
+        // chip and the panel's controls too. Only schedule the close when
+        // focus actually leaves the whole widget — otherwise tabbing through
+        // the controls would collapse the panel mid-interaction.
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          scheduleClose();
+        }
+      }}
     >
       <div
         style={{

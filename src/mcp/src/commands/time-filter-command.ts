@@ -228,11 +228,14 @@ Pass the datasetName and the dateTimeColumn to animate over. The interval is aut
             await sleep(200);
             const updatedFilter = ctx.getVisState().filters?.[filterIdx];
             if (updatedFilter?.domain && updatedFilter.domain.length === 2) {
+              // timeBins is keyed by dataset id, then by interval:
+              // {[dataId]: {[interval]: bins[]}}. Look up the bins for THIS
+              // filter's dataset — grabbing the first entry via
+              // Object.values(timeBins)[0] would pick the wrong dataset's bins
+              // when multiple datasets/filters exist, animating against the
+              // wrong time window.
               const timeBins = (updatedFilter as any).timeBins;
-              const bins =
-                timeBins &&
-                Object.keys(timeBins).length &&
-                (Object.values(timeBins)[0] as any)?.[resolvedInterval as string];
+              const bins = timeBins?.[datasetId]?.[resolvedInterval as string];
               if (bins && bins.length > 0) {
                 datasetBins = bins;
                 break;
