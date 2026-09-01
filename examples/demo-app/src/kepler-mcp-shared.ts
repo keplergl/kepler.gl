@@ -205,7 +205,13 @@ export function formatResult(result: RoomCommandExecuteOutput): string {
   // RoomCommandResult — handle those instead of assuming the result shape.
   if (result && typeof result === 'object' && 'success' in result) {
     const r = result as RoomCommandResult;
-    if (r.error) return `✗ ${r.commandId}: ${r.error}`;
+    // A structured failure may carry `error` or a `message` field, or neither
+    // — treat success:false as a failure regardless so it can't be formatted
+    // as a ✓ success and mask the failure in bridge/WebMCP logs.
+    if (r.success === false || r.error) {
+      const reason = r.error ?? (r as {message?: string}).message ?? 'failed';
+      return `✗ ${r.commandId}: ${reason}`;
+    }
     const data = r.data as {details?: string} | undefined;
     return data?.details ? `✓ ${data.details}` : `✓ ${r.commandId} ok`;
   }

@@ -84,6 +84,14 @@ export function toolToCommand(tool: AnyTool, meta: CommandMeta): RoomCommand {
         return {
           success: rawOutput?.success ?? true,
           commandId: meta.id,
+          // A structured failure (success:false) that didn't throw must still
+          // carry an error message — otherwise callers see {success:false,
+          // error:undefined} and downstream formatters misreport it as a
+          // success. Fall back to a generic message when the tool omits one.
+          error:
+            rawOutput?.success === false
+              ? (rawOutput?.error as string | undefined) ?? 'Tool execution failed.'
+              : undefined,
           data: typeof trimmed === 'object' && trimmed !== null ? trimmed : {details: trimmed}
         };
       } catch (error) {
