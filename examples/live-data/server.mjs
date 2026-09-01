@@ -14,9 +14,15 @@ import http from 'node:http';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
+import {attachWebSocketHub} from './websocket.mjs';
+
 const DEFAULT_PORT = Number(process.env.LIVE_DATA_PORT || 4010);
 const PERIOD_MS = Number(process.env.LIVE_DATA_PERIOD_MS || 120_000);
 const POINT_COUNT = Number(process.env.LIVE_DATA_POINTS || 3);
+const WS_INTERVAL_MS = Number(process.env.LIVE_DATA_WS_INTERVAL_MS || 400);
+const WS_POINT_COUNT = Number(process.env.LIVE_DATA_WS_POINTS || 3);
+const WS_PATH = '/vehicles.ws';
+const WS_PERIOD_MS = 20_000;
 const SF = {lat: 37.7749, lng: -122.4194};
 const COS_LAT = Math.cos((SF.lat * Math.PI) / 180);
 const KM_PER_DEG_LAT = 111.32;
@@ -88,6 +94,39 @@ function buildCsv(now = new Date()) {
   return `${header}\n${rows.join('\n')}\n`;
 }
 
+function wsVehicleAt(nowMs, index) {
+  const tau = (((nowMs % WS_PERIOD_MS) + WS_PERIOD_MS) % WS_PERIOD_MS) / WS_PERIOD_MS;
+  const radiusKm = 6.4 + index * 0.45;
+  const radiusLat = radiusKm / KM_PER_DEG_LAT;
+  const radiusLng = radiusKm / (KM_PER_DEG_LAT * COS_LAT);
+  const theta = tau * 2 * Math.PI + index * 1.7;
+  const lat = SF.lat + radiusLat * Math.sin(theta);
+  const lng = SF.lng + radiusLng * Math.cos(theta);
+  const heading = (((Math.atan2(-radiusLng * Math.sin(theta), radiusLat * Math.cos(theta)) * 180) /
+    Math.PI) +
+    360) %
+    360;
+  return {
+    id: `ws-${String(index + 1).padStart(2, '0')}`,
+    lat,
+    lng,
+    heading,
+    speed: ((2 * Math.PI * radiusKm) / (WS_PERIOD_MS / 1000)) * 3600,
+    ring: 8 + index,
+    progress: tau,
+    orbit_s: tau * (WS_PERIOD_MS / 1000),
+    updated_at: new Date(nowMs).toISOString()
+  };
+}
+
+function websocketPayload(nowMs = Date.now()) {
+  return {
+    op: 'upsert',
+    upsertBy: 'id',
+    rows: Array.from({length: WS_POINT_COUNT}, (_, index) => wsVehicleAt(nowMs, index))
+  };
+}
+
 function serveCsv(req, res) {
   const now = new Date();
   const csv = buildCsv(now);
@@ -110,7 +149,7 @@ function serveCsv(req, res) {
   res.end();
 }
 
-function serveIndex(res) {
+function serveIndex(res, port) {
   const tau = orbitProgress(Date.now());
   const body = `<!DOCTYPE html>
 <html>
@@ -122,6 +161,7 @@ function serveIndex(res) {
   }s (currently ${(tau * 100).toFixed(1)}% through the orbit).</p>
     <ul>
       <li><a href="/vehicles.csv">/vehicles.csv</a> — positions at request time</li>
+      <li><code>ws://localhost:${port}${WS_PATH}</code> — JSON upserts for the live-data example host</li>
     </ul>
     <p>Paste that URL into Kepler.gl Add Data → URL, then set Refresh to 1s (or Custom) on the dataset.</p>
   </body>
@@ -143,11 +183,17 @@ export function startLiveDataServer(port = DEFAULT_PORT) {
       return;
     }
     if (url.pathname === '/' || url.pathname === '/index.html') {
-      serveIndex(res);
+      serveIndex(res, port);
       return;
     }
     res.writeHead(404, corsHeaders({'Content-Type': 'text/plain'}));
     res.end('Not found\n');
+  });
+
+  attachWebSocketHub(server, {
+    pathname: WS_PATH,
+    intervalMs: WS_INTERVAL_MS,
+    getPayload: () => websocketPayload()
   });
 
   server.listen(port, () => {
@@ -155,6 +201,11 @@ export function startLiveDataServer(port = DEFAULT_PORT) {
       `Live CSV at http://localhost:${port}/vehicles.csv (${POINT_COUNT} points, ${
         PERIOD_MS / 1000
       }s orbit)`
+    );
+    console.info(
+      `Live WebSocket at ws://localhost:${port}${WS_PATH} (${WS_POINT_COUNT} points, ${
+        WS_INTERVAL_MS
+      }ms upsert)`
     );
   });
 

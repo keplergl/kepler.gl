@@ -18,6 +18,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 ## Unreleased
 
 - feat: `addToDataset` / `removeFromDataset` to append, upsert, and delete rows in place without breaking layers (#176). Row tables only; Arrow/DuckDB warn and no-op until INSERT/concat exist.
+- chore: live-data example WebSocket mode — host app maps `ws` JSON upserts to `addToDataset` (#322 transport; Kepler is not a websocket client).
 
 ## [3.3.0-alpha.8] - Aug 26 2026
 
