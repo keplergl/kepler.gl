@@ -18,6 +18,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 ## Unreleased
 
 - feat: `addToDataset` / `removeFromDataset` to append, upsert, and delete rows in place without breaking layers (#176). Row tables and Arrow tables with primitive columns (concat); DuckDB still warns and no-ops until INSERT exists.
+- fix: GeoJSON layer rebuilds features when the table revision or row count changes, not on filter-only updates.
 
 ## [3.3.0-alpha.8] - Aug 26 2026
 

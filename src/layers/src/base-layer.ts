@@ -1349,7 +1349,7 @@ class Layer implements KeplerLayer {
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
     if (triggerChanged && (triggerChanged.getMeta || triggerChanged.getData)) {
-      this.updateLayerMeta(effectiveDataset, getPosition);
+      this.updateLayerMeta(effectiveDataset, getPosition, triggerChanged);
 
       // reset filteredItemCount
       this.filteredItemCount = {};
@@ -1706,7 +1706,7 @@ class Layer implements KeplerLayer {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  updateLayerMeta(dataset: KeplerTable, getPosition) {
+  updateLayerMeta(dataset: KeplerTable, getPosition, triggerChanged?) {
     // implemented in subclasses
   }
 

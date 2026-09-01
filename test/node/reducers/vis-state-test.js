@@ -8299,6 +8299,101 @@ test('VisStateUpdater -> addToDataset appends rows and keeps layers', async t =>
   t.end();
 });
 
+test('VisStateUpdater -> addToDataset rebuilds GeoJSON dataToFeature', async t => {
+  const initialData = processGeojson({
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {id: 'a', ring: 1},
+        geometry: {type: 'Point', coordinates: [-122.42, 37.77]}
+      }
+    ]
+  });
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.geojson'},
+    data: initialData
+  });
+  const {props} = GeojsonLayer.findDefaultLayerProps(datasets.live);
+  t.ok(props.length, 'should find a geojson column');
+  const geoLayer = new GeojsonLayer({
+    id: 'g1',
+    dataId: 'live',
+    isVisible: true,
+    ...props[0]
+  });
+  const {layerData, layer} = calculateLayerData(
+    geoLayer,
+    {...INITIAL_VIS_STATE, datasets, layers: [geoLayer], layerData: [{}]},
+    undefined
+  );
+
+  t.equal(layer.dataToFeature.length, 1, 'should parse the initial feature');
+
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layerData],
+    layerOrder: [layer.id]
+  };
+
+  const appended = reducer(
+    state,
+    VisStateActions.addToDataset('live', {
+      id: 'b',
+      ring: 2,
+      _geojson: {
+        type: 'Feature',
+        properties: {id: 'b', ring: 2},
+        geometry: {type: 'Point', coordinates: [-122.5, 37.8]}
+      }
+    })
+  );
+
+  t.equal(appended.datasets.live.dataContainer.numRows(), 2, 'should append the feature row');
+  t.equal(appended.layers[0].dataToFeature.length, 2, 'should rebuild dataToFeature after append');
+  t.equal(appended.layerData[0].data.length, 2, 'should rebuild layer data after append');
+  t.deepEqual(
+    appended.layers[0].dataToFeature[1].geometry.coordinates,
+    [-122.5, 37.8],
+    'should include the appended point'
+  );
+
+  const replaced = reducer(
+    appended,
+    VisStateActions.addToDataset(
+      'live',
+      {
+        id: 'a',
+        ring: 1,
+        _geojson: {
+          type: 'Feature',
+          properties: {id: 'a', ring: 1},
+          geometry: {type: 'Point', coordinates: [-122.1, 37.1]}
+        }
+      },
+      {upsertBy: 'id'}
+    )
+  );
+
+  t.equal(replaced.datasets.live.dataContainer.numRows(), 2, 'upsert should keep row count');
+  t.deepEqual(
+    replaced.layers[0].dataToFeature[0].geometry.coordinates,
+    [-122.1, 37.1],
+    'should rebuild dataToFeature after in-place replace'
+  );
+
+  const removed = reducer(
+    replaced,
+    VisStateActions.removeFromDataset('live', {field: 'id', values: 'b'})
+  );
+  t.equal(removed.layers[0].dataToFeature.length, 1, 'should drop the removed feature');
+  t.equal(removed.layerData[0].data.length, 1, 'should drop layer data for the removed feature');
+
+  t.end();
+});
+
 test('VisStateUpdater -> addToDataset object rows ignore prototype keys', async t => {
   const initialData = processCsvData('lat,lng\n1,2');
   const datasets = await createNewDataEntryMock({
