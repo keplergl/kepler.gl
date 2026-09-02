@@ -1,8 +1,8 @@
 {
-  "name": "@kepler.gl/effects",
+  "name": "@kepler.gl/tasks-core",
   "author": "Shan He <shan@uber.com>",
   "version": "3.3.0-alpha.9",
-  "description": "kepler.gl viaual effects",
+  "description": "Lightweight built-in task runtime for kepler.gl async side effects",
   "license": "MIT",
   "main": "dist/cjs/index.js",
   "types": "dist/index.d.ts",
@@ -27,19 +27,6 @@
   "files": [
     "dist"
   ],
-  "dependencies": {
-    "@deck.gl/core": "^9.3.1",
-    "@kepler.gl/common-utils": "3.3.0-alpha.9",
-    "@kepler.gl/constants": "3.3.0-alpha.9",
-    "@kepler.gl/types": "3.3.0-alpha.9",
-    "@kepler.gl/utils": "3.3.0-alpha.9",
-    "@luma.gl/core": "^9.3.2",
-    "@luma.gl/effects": "^9.3.2",
-    "@luma.gl/engine": "^9.3.2",
-    "@luma.gl/shadertools": "^9.3.2",
-    "moment-timezone": "^0.5.35",
-    "suncalc": "^1.9.0"
-  },
   "nyc": {
     "sourceMap": false,
     "instrument": false

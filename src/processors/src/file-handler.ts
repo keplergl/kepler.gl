@@ -2,10 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {parseInBatches} from '@loaders.gl/core';
-import {JSONLoader, _JSONPath} from '@loaders.gl/json';
-import {CSVLoader} from '@loaders.gl/csv';
-import {GeoArrowLoader} from '@loaders.gl/arrow';
-import {ParquetArrowLoader} from '@loaders.gl/parquet';
 import {Loader} from '@loaders.gl/loader-utils';
 import {
   isPlainObject,
@@ -28,6 +24,7 @@ import {
 } from './data-processor';
 
 import {FileCacheItem, ValidKeplerGlMap} from './types';
+import {getKeplerLoaders} from './loader-registry';
 
 const BATCH_TYPE = {
   METADATA: 'metadata',
@@ -184,6 +181,7 @@ export async function* readBatch(
       // Set the streamed data correctly is Batch json path is set
       // and the path streamed is not the top level object (jsonpath = '$')
       if (batch.jsonpath && batch.jsonpath.length > 1) {
+        const {_JSONPath} = await import('@loaders.gl/json');
         const streamingPath = new _JSONPath(batch.jsonpath);
         streamingPath.setFieldAtPath(result, batches);
       } else if (batch.jsonpath && batch.jsonpath.length === 1) {
@@ -231,7 +229,7 @@ export async function readFileInBatches({
   loaders: Loader[];
   loadOptions: any;
 }): Promise<AsyncGenerator> {
-  loaders = [JSONLoader, CSVLoader, GeoArrowLoader, ParquetArrowLoader, ...loaders];
+  loaders = await getKeplerLoaders(file, loaders);
   const hasExtension = /\.[a-z0-9]+$/i.test(file.name);
   const mimeType = !hasExtension && file.type ? file.type : undefined;
   loadOptions = {
