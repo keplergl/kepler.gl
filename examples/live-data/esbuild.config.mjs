@@ -65,6 +65,9 @@ const config = {
   define: {
     NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
     'process.env.LIVE_DATA_URL': JSON.stringify(liveDataUrl),
+    'process.env.LIVE_WS_URL': JSON.stringify(
+      process.env.LIVE_WS_URL || `ws://localhost:${dataPort}/vehicles.ws`
+    ),
     'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
     'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
     'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken || ''),
