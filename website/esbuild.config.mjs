@@ -76,6 +76,16 @@ workspaces.forEach(workspace => {
   RESOLVE_LOCAL_ALIASES[`@kepler.gl/${moduleName}`] = join(SRC_DIR, `${moduleName}/src`);
 });
 
+// mcp ships the map-management skill markdown as a subpath export; the
+// longer key wins over the `@kepler.gl/mcp` src alias above.
+RESOLVE_LOCAL_ALIASES['@kepler.gl/mcp/skill/kepler/SKILL.md'] = join(
+  SRC_DIR,
+  'mcp',
+  'skill',
+  'kepler',
+  'SKILL.md'
+);
+
 const config = {
   platform: 'browser',
   format: 'iife',
@@ -84,6 +94,7 @@ const config = {
   loader: {
     '.js': 'jsx',
     '.css': 'css',
+    '.md': 'text',
     '.png': 'file',
     '.jpg': 'file',
     '.svg': 'file',
