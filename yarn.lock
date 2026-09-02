@@ -4201,6 +4201,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@kepler.gl/tasks-core@workspace:src/tasks-core":
+  version: 0.0.0-use.local
+  resolution: "@kepler.gl/tasks-core@workspace:src/tasks-core"
+  languageName: unknown
+  linkType: soft
+
 "@kepler.gl/tasks@npm:3.3.0-alpha.9, @kepler.gl/tasks@workspace:src/tasks":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/tasks@workspace:src/tasks"
