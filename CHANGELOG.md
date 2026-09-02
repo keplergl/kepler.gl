@@ -33,7 +33,6 @@ Ref: http://keepachangelog.com/en/0.3.0/
 - c45373a4 feat: reload and poll remotely hosted datasets (#3667)
 - 30b0f648 feat: add GeoHash layer (#3666)
 
-
 ## [3.3.0-alpha.8] - Aug 26 2026
 
 - af5d8173 chore: pin patched transitive deps via Yarn resolutions (#3654)

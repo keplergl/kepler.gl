@@ -52,7 +52,7 @@ yarn start
   Read `visState.clicked` from Redux and show a GeoJSON feature's `shapeName` in a host-app sidebar outside the map.
 
 - ### [Live Data][live-data]
-  Remotely hosted CSV of points orbiting San Francisco on a 2-minute loop. Toggle **Poll URL** (HTTP snapshot replace every 300 ms) and **Host rows** (`addToDataset` / `removeFromDataset`, including upsert and delete by `id`, without rebuilding the point layer).
+  Remotely hosted CSV of points orbiting San Francisco on a 2-minute loop. Toggle **Poll URL** (HTTP snapshot replace every 300 ms), **Host rows** (`addToDataset` / `removeFromDataset`, including upsert and delete by `id`), and **WebSocket** (host maps `ws` upserts onto `addToDataset`; Kepler is not a websocket client).
 
 - ### [Custom Layer][custom-layer]
   Add a custom deck.gl layer (`ContourLayer`) to kepler.gl's layer type selector, so it can be picked from the dropdown, configured with dataset columns, and rendered on the map.
