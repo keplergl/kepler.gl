@@ -1,0 +1,57 @@
+{
+  "name": "@kepler.gl/tasks-core",
+  "author": "Shan He <shan@uber.com>",
+  "version": "3.3.0-alpha.9",
+  "description": "Lightweight built-in task runtime for kepler.gl async side effects",
+  "license": "MIT",
+  "main": "dist/cjs/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "babel",
+    "es6",
+    "react",
+    "webgl",
+    "visualization",
+    "deck.gl"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keplergl/kepler.gl.git"
+  },
+  "scripts": {
+    "build": "rm -fr dist && babel src --out-dir dist/cjs --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts' && BABEL_ENV=esm babel src --out-dir dist/esm --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build:types": "tsc --project ./tsconfig.production.json",
+    "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
+    "stab": "mkdir -p dist/cjs dist/esm && touch dist/cjs/index.js dist/esm/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "nyc": {
+    "sourceMap": false,
+    "instrument": false
+  },
+  "maintainers": [
+    "Shan He <heshan0131@gmail.com>",
+    "Giuseppe Macri <gmacri@uber.com>",
+    "Igor Dykhta <dikhta.igor@gmail.com>",
+    "Xun Li <lixun910@gmail.com>"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "volta": {
+    "node": "20.19.3",
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0",
+  "module": "dist/esm/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/cjs/index.js"
+    }
+  }
+}
