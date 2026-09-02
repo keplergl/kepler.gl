@@ -4,6 +4,9 @@
 import {parse} from '@loaders.gl/core';
 import {TileJSONLoader, TileJSON} from '@loaders.gl/mvt';
 
+// TileJSONLoader omits the spec `attribution` field. parseVectorMetadata reads `attributions`.
+type TileJSONWithAttributions = TileJSON & {attributions?: string[]};
+
 /**
  * MVTSource in current loaders ignores attribution
  * TODO: remove once MVTSource is ready
@@ -27,7 +30,11 @@ export async function getMVTMetadata(metadataURL: string | null): Promise<TileJS
     return null;
   }
   const tileJSON = await response.text();
-  const metadata = (await parse(tileJSON, TileJSONLoader)) || null;
+  // parse() does not infer TileJSONLoader's data type.
+  const metadata = (await parse(tileJSON, TileJSONLoader)) as TileJSONWithAttributions | null;
+  if (!metadata) {
+    return null;
+  }
 
   const rawMetadata = JSON.parse(tileJSON);
   if (rawMetadata?.attribution) {
