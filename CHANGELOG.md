@@ -15,6 +15,11 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.10] - Sep 2 2026
+
+- 13d230b9 chore(deps): bump tornado from 6.5.7 to 6.5.8 in /bindings/python (#3690)
+- bfb43cd7 chore(deps): bump browserslist from 4.24.4 to 4.28.8 in /website (#3689)
+
 ## [3.3.0-alpha.9] - Sep 1 2026
 
 - bcf2be72 feat: addToDataset / removeFromDataset for in-place row edits (#176) (#3684)
