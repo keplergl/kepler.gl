@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/schemas",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.3.0-alpha.9",
+  "version": "3.3.0-alpha.10",
   "description": "kepler.gl schemas used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/cjs/index.js",
@@ -28,12 +28,12 @@
     "dist"
   ],
   "dependencies": {
-    "@kepler.gl/common-utils": "3.3.0-alpha.9",
-    "@kepler.gl/constants": "3.3.0-alpha.9",
-    "@kepler.gl/layers": "3.3.0-alpha.9",
-    "@kepler.gl/table": "3.3.0-alpha.9",
-    "@kepler.gl/types": "3.3.0-alpha.9",
-    "@kepler.gl/utils": "3.3.0-alpha.9",
+    "@kepler.gl/common-utils": "3.3.0-alpha.10",
+    "@kepler.gl/constants": "3.3.0-alpha.10",
+    "@kepler.gl/layers": "3.3.0-alpha.10",
+    "@kepler.gl/table": "3.3.0-alpha.10",
+    "@kepler.gl/types": "3.3.0-alpha.10",
+    "@kepler.gl/utils": "3.3.0-alpha.10",
     "@loaders.gl/loader-utils": "^4.4.1",
     "@types/keymirror": "^0.1.1",
     "apache-arrow": ">=15.0.0",
