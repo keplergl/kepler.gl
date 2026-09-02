@@ -15,8 +15,14 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.3.0-alpha.10] - Sep 2 2026
+## [3.3.0-alpha.10] - Sep 3 2026
 
+- 878d9651 chore: live-data example WebSocket host (ws → addToDataset) (#3687)
+- 13226dfb chore: add @kepler.gl/tasks-core as a dual CJS/ESM workspace package (#3691)
+- 4fce8abd feat: add async loaders.gl 4.4 loader registry (#3682)
+- 2ea91170 fix(layers): trip layer color-by-field reads correct row in TABLE mode (#3692)
+- cb94905f chore(deps): bump mistune from 3.3.0 to 3.3.3 in /bindings/python (#3693)
+- f6d66212 chore: patch release 3.3.0-alpha.10
 - 13d230b9 chore(deps): bump tornado from 6.5.7 to 6.5.8 in /bindings/python (#3690)
 - bfb43cd7 chore(deps): bump browserslist from 4.24.4 to 4.28.8 in /website (#3689)
 
