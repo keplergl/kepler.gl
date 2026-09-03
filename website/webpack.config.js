@@ -163,7 +163,7 @@ const addDevConfig = config => {
     test: /\.js$/,
     use: ['source-map-loader'],
     enforce: 'pre',
-    exclude: [/node_modules[\\/]react-palm/, /node_modules[\\/]react-data-grid/]
+    exclude: [/node_modules[\\/]react-data-grid/]
   });
 
   return Object.assign(config, {

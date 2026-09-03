@@ -48,6 +48,7 @@ const keplerPackages = [
   '@kepler.gl/styles',
   '@kepler.gl/table',
   '@kepler.gl/tasks',
+  '@kepler.gl/tasks-core',
   '@kepler.gl/utils'
 ];
 

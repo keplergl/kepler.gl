@@ -30,7 +30,6 @@ function localKeplerAliases() {
     'react-redux': `${NODE_MODULES_DIR}/react-redux`,
     'styled-components': `${NODE_MODULES_DIR}/styled-components`,
     'react-intl': `${NODE_MODULES_DIR}/react-intl`,
-    'react-palm': `${NODE_MODULES_DIR}/react-palm`,
     'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
     'tiny-warning': path.join(SRC_DIR, 'utils/src/noop.ts')
   };
@@ -88,7 +87,7 @@ const config = {
       name: 'dedupe-singletons',
       setup(build) {
         build.onResolve(
-          {filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$)/},
+          {filter: /^(styled-components|react$|react-dom$)/},
           async resolveArgs => {
             if (resolveArgs.pluginData?.deduped) return;
             const result = await build.resolve(resolveArgs.path, {
