@@ -433,7 +433,16 @@ function computeDeckLayersFromLayerOrder(
   },
   layerCallbacks?: any
 ): any[] {
-  const {datasets, hoverInfo, clicked, mapState, interactionConfig, animationConfig, mapLayers, hasShadowEffect} = renderProps;
+  const {
+    datasets,
+    hoverInfo,
+    clicked,
+    mapState,
+    interactionConfig,
+    animationConfig,
+    mapLayers,
+    hasShadowEffect
+  } = renderProps;
   return layerOrder
     .slice()
     .reverse()
@@ -538,7 +547,16 @@ export function computeDeckLayers(
               layers,
               layerData,
               currentLayersForDeck,
-              {datasets, hoverInfo, clicked, mapState, interactionConfig, animationConfig, mapLayers, hasShadowEffect},
+              {
+                datasets,
+                hoverInfo,
+                clicked,
+                mapState,
+                interactionConfig,
+                animationConfig,
+                mapLayers,
+                hasShadowEffect
+              },
               layerCallbacks
             )
           );

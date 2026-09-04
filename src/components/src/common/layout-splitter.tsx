@@ -103,7 +103,7 @@ const Handle = styled.div`
   padding: 4px;
   background-color: ${props => props.theme.panelBackground || '#29323C'};
   color: ${props => props.theme.textColor || '#FFFFFF'};
-  border: 2px solid #FFFFFF;
+  border: 2px solid #ffffff;
   border-radius: 50%;
   background-position: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);

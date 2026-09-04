@@ -172,11 +172,7 @@ test('#BitmapOverlayLayer -> formatLayerData', t => {
 
   t.ok(result, 'should return layer data');
   t.equal(result.imageUrl, 'https://example.com/image.png', 'should have imageUrl');
-  t.deepEqual(
-    result.bounds,
-    [-122.52, 37.7, -122.35, 37.82],
-    'should have bounds from visConfig'
-  );
+  t.deepEqual(result.bounds, [-122.52, 37.7, -122.35, 37.82], 'should have bounds from visConfig');
 
   t.end();
 });

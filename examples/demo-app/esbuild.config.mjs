@@ -121,7 +121,6 @@ const getThirdPartyLibraryAliases = useKeplerNodePackage => {
     'react-redux': `${nodeModulesDir}/react-redux`,
     'styled-components': `${nodeModulesDir}/styled-components`,
     'react-intl': `${nodeModulesDir}/react-intl`,
-    'react-palm': `${nodeModulesDir}/react-palm`,
     // kepler.gl and loaders.gl need to use same apache-arrow
     'apache-arrow': `${nodeModulesDir}/apache-arrow`
   };
@@ -233,7 +232,6 @@ const config = {
       }
     },
     // styled-components: @hubble.gl/react nests its own copy.
-    // react-palm: several @kepler.gl/* packages nest their own copy.
     // @sqlrooms/room-store: RoomStateProvider is a React context. Nested
     // copies each have their own context, so AI Settings throws
     // "Missing RoomStateProvider in the tree" and unmounts the app.
@@ -243,7 +241,7 @@ const config = {
       name: 'dedupe-singletons',
       setup(build) {
         build.onResolve(
-          {filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$|@sqlrooms\/room-store$)/},
+          {filter: /^(styled-components|react$|react-dom$|@sqlrooms\/room-store$)/},
           async args => {
             if (args.pluginData?.deduped) return;
             const result = await build.resolve(args.path, {

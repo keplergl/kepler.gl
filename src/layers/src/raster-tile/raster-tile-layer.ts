@@ -777,7 +777,10 @@ export default class RasterTileLayer extends KeplerLayer {
       // just after the HTTP response arrived), treat this as a failed load and
       // return null so deck.gl shows the parent tile as a placeholder and
       // re-requests this tile on the next viewport change.
-      if (!images.imageBands || (Array.isArray(images.imageBands) && images.imageBands.length === 0)) {
+      if (
+        !images.imageBands ||
+        (Array.isArray(images.imageBands) && images.imageBands.length === 0)
+      ) {
         return null;
       }
 

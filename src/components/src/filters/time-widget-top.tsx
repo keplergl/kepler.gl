@@ -70,8 +70,7 @@ function TimeWidgetTopFactory() {
         return `Count of Rows per ${intervalLabel}`;
       }
       const aggregation = filter.plotType?.aggregation || AGGREGATION_TYPES.average;
-      const aggLabel =
-        TIME_AGGREGATION.find(a => a.id === aggregation)?.label || aggregation;
+      const aggLabel = TIME_AGGREGATION.find(a => a.id === aggregation)?.label || aggregation;
       return `${aggLabel} ${filter.yAxis.name} per ${intervalLabel}`;
     }, [filter.yAxis, filter.plotType?.aggregation, filter.plotType?.interval]);
 

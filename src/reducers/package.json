@@ -56,7 +56,6 @@
     "deepmerge": "^4.2.2",
     "es-toolkit": "^1.39.10",
     "global": "^4.3.0",
-    "react-palm": "^3.3.8",
     "redux": "^5.0.0",
     "redux-actions": "^2.2.1",
     "reselect": "^5.0.0"

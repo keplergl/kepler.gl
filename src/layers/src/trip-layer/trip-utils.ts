@@ -73,9 +73,10 @@ export function isTripGeoJsonField(dataContainer: DataContainerInterface, field:
  * @param dataToFeature array of geojson feature objects, can be null
  * @returns
  */
-export function parseTripGeoJsonTimestamp(
-  dataToFeature: any[]
-): {dataToTimeStamp: number[][]; animationDomain: [number, number] | null} {
+export function parseTripGeoJsonTimestamp(dataToFeature: any[]): {
+  dataToTimeStamp: number[][];
+  animationDomain: [number, number] | null;
+} {
   // Analyze type based on coordinates of the 1st lineString
   // select a sample trip to analyze time format
   const empty: {dataToTimeStamp: number[][]; animationDomain: null} = {

@@ -39,7 +39,9 @@ const makePointAnnotation = (overrides = {}) => ({
   autoSizeY: true,
   anchorPoint: [10, 20],
   label: 'Point annotation',
-  editorState: {root: {children: [], direction: null, format: '', indent: 0, type: 'root', version: 1}},
+  editorState: {
+    root: {children: [], direction: null, format: '', indent: 0, type: 'root', version: 1}
+  },
   mapIndex: 0,
   lineColor: '#FF0000',
   lineWidth: 3,

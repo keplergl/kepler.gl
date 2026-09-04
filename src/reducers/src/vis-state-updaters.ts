@@ -12,7 +12,8 @@ import isEqual from 'es-toolkit/compat/isEqual';
 import pick from 'es-toolkit/compat/pick';
 import uniq from 'es-toolkit/compat/uniq';
 import xor from 'es-toolkit/compat/xor';
-import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
+import Task, {disableStackCapturing, withTask} from '@kepler.gl/tasks';
+import type {TaskDescriptor} from '@kepler.gl/tasks';
 // Tasks
 import {
   DELAY_TASK,
@@ -210,8 +211,7 @@ import {PayloadAction} from '@reduxjs/toolkit';
 
 import {findMapBounds} from './data-utils';
 
-// react-palm
-// disable capture exception for react-palm call to withTask
+// disable stack capture for withTask calls that happen outside strict reducer context
 disableStackCapturing();
 
 /**
@@ -3398,8 +3398,8 @@ export const updateVisDataUpdater = (
     return updatedState;
   }
 
-  const createDatasetTasks: Task[] = [];
-  const notificationTasks: Task[] = [];
+  const createDatasetTasks: TaskDescriptor[] = [];
+  const notificationTasks: TaskDescriptor[] = [];
 
   datasets.forEach(({info = {}, ...rest}, datasetIndex) => {
     const task = createNewDataEntryTask({info, ...rest}, state.datasets);
@@ -3440,7 +3440,7 @@ export const createNewDatasetSuccessUpdater = (
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
   const {results, addToMapOptions} = action.payload;
-  const notificationTasks: Task[] = [];
+  const notificationTasks: TaskDescriptor[] = [];
 
   const newDataEntries = results.reduce((accu, result, idx) => {
     if (result.status === 'fulfilled') {

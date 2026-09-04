@@ -133,10 +133,10 @@ export type SetMapViewModeUpdaterAction = {payload: {mapViewMode: MapViewMode}};
  */
 export const setMapViewMode: (
   mapViewMode: MapViewMode
-) => Merge<SetMapViewModeUpdaterAction, {type: typeof ActionTypes.SET_MAP_VIEW_MODE}> = createAction(
-  ActionTypes.SET_MAP_VIEW_MODE,
-  (mapViewMode: MapViewMode) => ({payload: {mapViewMode}})
-);
+) => Merge<SetMapViewModeUpdaterAction, {type: typeof ActionTypes.SET_MAP_VIEW_MODE}> =
+  createAction(ActionTypes.SET_MAP_VIEW_MODE, (mapViewMode: MapViewMode) => ({
+    payload: {mapViewMode}
+  }));
 
 export type GlobeConfigChangeUpdaterAction = {payload: Partial<GlobeConfig>};
 /**
@@ -166,7 +166,9 @@ export type SetMapSplitModeUpdaterAction = {
 export const setMapSplitMode: (payload: {
   mapSplitMode: MapSplitMode;
 }) => Merge<SetMapSplitModeUpdaterAction, {type: typeof ActionTypes.SET_MAP_SPLIT_MODE}> =
-  createAction(ActionTypes.SET_MAP_SPLIT_MODE, (payload: {mapSplitMode: MapSplitMode}) => ({payload}));
+  createAction(ActionTypes.SET_MAP_SPLIT_MODE, (payload: {mapSplitMode: MapSplitMode}) => ({
+    payload
+  }));
 
 export type SetSwipeComparePercentageUpdaterAction = {
   payload: {
@@ -185,11 +187,9 @@ export const setSwipeComparePercentage: (payload: {
 }) => Merge<
   SetSwipeComparePercentageUpdaterAction,
   {type: typeof ActionTypes.SET_SWIPE_COMPARE_PERCENTAGE}
-> =
-  createAction(
-    ActionTypes.SET_SWIPE_COMPARE_PERCENTAGE,
-    (payload: {percentage: number}) => ({payload})
-  );
+> = createAction(ActionTypes.SET_SWIPE_COMPARE_PERCENTAGE, (payload: {percentage: number}) => ({
+  payload
+}));
 
 /**
  * This declaration is needed to group actions in docs

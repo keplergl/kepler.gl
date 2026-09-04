@@ -10,7 +10,12 @@ const Tile3DLayerIcon: React.FC<Partial<BaseProps>> = ({
   totalColor = 2,
   ...props
 }) => (
-  <Base height={height} predefinedClassName={predefinedClassName} totalColor={totalColor} {...props}>
+  <Base
+    height={height}
+    predefinedClassName={predefinedClassName}
+    totalColor={totalColor}
+    {...props}
+  >
     <g transform="translate(6, 6)">
       <path d="M24 2L44 13.5V36.5L24 48L4 36.5V13.5L24 2Z" fill="currentColor" opacity="0.2" />
       <path d="M24 2L44 13.5L24 25L4 13.5L24 2Z" fill="currentColor" opacity="0.6" />

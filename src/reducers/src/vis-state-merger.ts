@@ -456,9 +456,7 @@ export function mergeLayerOrder<S extends VisState>(
   collectIds(restoredLayerOrder);
 
   // Add any missing layers at the top
-  const missingLayers = state.layers
-    .filter(l => !layerIdsInRestored.has(l.id))
-    .map(l => l.id);
+  const missingLayers = state.layers.filter(l => !layerIdsInRestored.has(l.id)).map(l => l.id);
 
   return {
     ...state,

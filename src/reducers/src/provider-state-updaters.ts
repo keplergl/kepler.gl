@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Task, {withTask} from 'react-palm/tasks';
+import Task, {withTask} from '@kepler.gl/tasks';
+import type {TaskDescriptor} from '@kepler.gl/tasks';
 import Console from 'global/console';
 import {getApplicationConfig, getError, isPlainObject} from '@kepler.gl/utils';
 import {generateHashId, toArray} from '@kepler.gl/common-utils';
@@ -166,7 +167,7 @@ export const exportFileSuccessUpdater = (
     createActionTask(onSuccess, {response, provider, options}),
     closeModal &&
       ACTION_TASK().map(() => postSaveLoadSuccess(`Map saved to ${state.currentProvider}!`))
-  ].filter(d => d);
+  ].filter((d): d is TaskDescriptor => Boolean(d));
 
   return tasks.length ? withTask(newState, tasks) : newState;
 };
@@ -407,7 +408,7 @@ export const loadCloudMapSuccess2Updater = (
     ACTION_TASK().map(() => addDataToMap(datasetsPayload)),
     createActionTask(onSuccess, {response, loadParams, provider}),
     ACTION_TASK().map(() => postSaveLoadSuccess(`Map from ${provider.name} loaded`))
-  ].filter(d => d);
+  ].filter((d): d is TaskDescriptor => Boolean(d));
 
   return tasks.length ? withTask(newState, tasks) : newState;
 };

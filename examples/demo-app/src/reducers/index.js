@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {combineReducers} from 'redux';
-import Task, {withTask} from 'react-palm/tasks';
+import Task, {withTask} from '@kepler.gl/tasks';
 
 import {aiAssistantReducer} from '@openassistant/kepler-assistant';
 import {EXPORT_MAP_FORMATS} from '@kepler.gl/constants';

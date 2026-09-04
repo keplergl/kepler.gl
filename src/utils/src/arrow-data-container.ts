@@ -191,7 +191,12 @@ function copyArrowSchemaMetadata(from?: arrow.Schema | null, to?: arrow.Schema |
 
   const fromMeta = from.metadata as Map<string, string> | undefined;
   const toMeta = to.metadata as Map<string, string> | undefined;
-  if (fromMeta && toMeta && typeof fromMeta.forEach === 'function' && typeof toMeta.set === 'function') {
+  if (
+    fromMeta &&
+    toMeta &&
+    typeof fromMeta.forEach === 'function' &&
+    typeof toMeta.set === 'function'
+  ) {
     fromMeta.forEach((value, key) => {
       toMeta.set(key, value);
     });
@@ -262,7 +267,10 @@ function arrowCellToBuilderValue(value: unknown): unknown {
   return value;
 }
 
-function compactArrowVector(column: arrow.Vector, type: arrow.DataType = column.type): arrow.Vector {
+function compactArrowVector(
+  column: arrow.Vector,
+  type: arrow.DataType = column.type
+): arrow.Vector {
   if (!column || !column.data || column.data.length <= 1) {
     return column;
   }
@@ -282,9 +290,10 @@ function compactArrowVector(column: arrow.Vector, type: arrow.DataType = column.
   const builder = arrow.makeBuilder({type, nullValues: [null]});
   const length = column.length;
   for (let i = 0; i < length; i++) {
-    const isValid = typeof (column as {isValid?: (index: number) => boolean}).isValid === 'function'
-      ? (column as {isValid: (index: number) => boolean}).isValid(i)
-      : true;
+    const isValid =
+      typeof (column as {isValid?: (index: number) => boolean}).isValid === 'function'
+        ? (column as {isValid: (index: number) => boolean}).isValid(i)
+        : true;
     // FixedSizeList/List .get() returns nested Vectors. Appending those
     // silently writes NaN (points) or throws (lines/polygons). Plain JS
     // arrays are what makeBuilder expects.

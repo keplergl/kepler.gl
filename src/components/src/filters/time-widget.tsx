@@ -205,14 +205,7 @@ function TimeWidgetFactory(
           setFilterAnimationTime(index, 'value', [clampedStart, clampedEnd]);
         }
       },
-      [
-        filterEnd,
-        filterStart,
-        fullDomain,
-        index,
-        setFilterAnimationTime,
-        timelineDomain
-      ]
+      [filterEnd, filterStart, fullDomain, index, setFilterAnimationTime, timelineDomain]
     );
 
     const handleTimelineZoom = useCallback(
@@ -267,14 +260,7 @@ function TimeWidgetFactory(
           setFilterAnimationTime(index, 'value', [windowStart, windowEnd]);
         }
       },
-      [
-        filterEnd,
-        filterStart,
-        fullDomain,
-        index,
-        setFilterAnimationTime,
-        timelineDomain
-      ]
+      [filterEnd, filterStart, fullDomain, index, setFilterAnimationTime, timelineDomain]
     );
 
     const throttledWindowZoom = useMemo(
@@ -299,8 +285,7 @@ function TimeWidgetFactory(
         if (isMinified || !sliderDomain) {
           return;
         }
-        const isPinch =
-          event.ctrlKey || event.metaKey || Math.abs(event.deltaZ || 0) > 0;
+        const isPinch = event.ctrlKey || event.metaKey || Math.abs(event.deltaZ || 0) > 0;
         const zoomFn = isPinch ? throttledTimelineZoom : throttledWindowZoom;
         if (!zoomFn) {
           return;
@@ -315,9 +300,7 @@ function TimeWidgetFactory(
 
         const baseStep = isPinch ? 0.02 : 0.08;
         const factor = event.deltaY < 0 ? 1 + baseStep : 1 / (1 + baseStep);
-        const sliderTrack = node.querySelector(
-          '.kg-range-slider__slider'
-        ) as HTMLElement | null;
+        const sliderTrack = node.querySelector('.kg-range-slider__slider') as HTMLElement | null;
         const rect = sliderTrack?.getBoundingClientRect() ?? node.getBoundingClientRect();
         if (!rect || rect.width === 0) {
           return;
@@ -374,7 +357,15 @@ function TimeWidgetFactory(
       };
       window.addEventListener('keydown', handler);
       return () => window.removeEventListener('keydown', handler);
-    }, [filterEnd, filterStart, fullDomain, index, isMinified, setFilterAnimationTime, timelineDomain]);
+    }, [
+      filterEnd,
+      filterStart,
+      fullDomain,
+      index,
+      isMinified,
+      setFilterAnimationTime,
+      timelineDomain
+    ]);
 
     const handleResetTimeline = useCallback(() => {
       setTimelineDomain(null);

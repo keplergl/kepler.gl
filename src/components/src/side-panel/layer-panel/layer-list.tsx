@@ -45,10 +45,7 @@ export type LayerListProps = {
   mapStateActions: typeof MapStateActions;
 };
 
-export type LayerListFactoryDeps = [
-  typeof LayerPanelFactory,
-  typeof LayerGroupHeaderFactory
-];
+export type LayerListFactoryDeps = [typeof LayerPanelFactory, typeof LayerGroupHeaderFactory];
 
 const Container = styled.div`
   display: flex;
@@ -169,7 +166,14 @@ function LayerListFactory(
     </NestedLayerContainer>
   );
 
-  const SortableLayerItem = ({layer, idx, panelProps, layerActions, disabled, parent}: {
+  const SortableLayerItem = ({
+    layer,
+    idx,
+    panelProps,
+    layerActions,
+    disabled,
+    parent
+  }: {
     layer: Layer;
     idx: number;
     panelProps: any;

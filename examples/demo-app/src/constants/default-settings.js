@@ -60,6 +60,5 @@ export const CLOUD_PROVIDERS_CONFIGURATION = {
   FOURSQUARE_DOMAIN: process.env.FoursquareDomain, // eslint-disable-line
   FOURSQUARE_API_URL: process.env.FoursquareAPIURL, // eslint-disable-line
   FOURSQUARE_USER_MAPS_URL: process.env.FoursquareUserMapsURL, // eslint-disable-line
-  GOOGLE_DRIVE_CLIENT_ID:
-    process.env.GoogleDriveClientId || DEFAULT_GOOGLE_DRIVE_CLIENT_ID // eslint-disable-line
+  GOOGLE_DRIVE_CLIENT_ID: process.env.GoogleDriveClientId || DEFAULT_GOOGLE_DRIVE_CLIENT_ID // eslint-disable-line
 };

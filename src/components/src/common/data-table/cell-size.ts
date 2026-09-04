@@ -177,8 +177,7 @@ function expandCellSize(
     let size = colSize.row;
     if (colSize.row < colSize.header && remaining > 0) {
       // if we are cutting off the header, expand to fit it
-      size =
-        colSize.header - colSize.row < remaining ? colSize.header : colSize.row + remaining;
+      size = colSize.header - colSize.row < remaining ? colSize.header : colSize.row + remaining;
       remaining -= size - colSize.row;
     }
 

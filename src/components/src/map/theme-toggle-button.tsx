@@ -26,9 +26,7 @@ export type ThemeToggleButtonProps = {
 
 ThemeToggleButtonFactory.deps = [MapControlTooltipFactory];
 
-function ThemeToggleButtonFactory(
-  MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>
-) {
+function ThemeToggleButtonFactory(MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>) {
   const defaultActionIcons = {
     sun: Sun,
     moon: Moon

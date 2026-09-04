@@ -22,11 +22,7 @@ test('Timeline Zoom Utils -> rangesEqual', t => {
 });
 
 test('Timeline Zoom Utils -> clampRange', t => {
-  t.deepEqual(
-    clampRange([10, 90], [0, 100]),
-    [10, 90],
-    'range within domain stays unchanged'
-  );
+  t.deepEqual(clampRange([10, 90], [0, 100]), [10, 90], 'range within domain stays unchanged');
 
   t.deepEqual(
     clampRange([-50, 50], [0, 100]),

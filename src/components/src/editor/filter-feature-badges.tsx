@@ -67,9 +67,7 @@ function FilterFeatureBadges({
     if (!viewport?.project) {
       return [];
     }
-    return filters.reduce<
-      {id: string; x: number; y: number; feature: Feature}[]
-    >((acc, filter) => {
+    return filters.reduce<{id: string; x: number; y: number; feature: Feature}[]>((acc, filter) => {
       const feature = filter?.value as Feature | undefined;
       if (!feature) {
         return acc;
@@ -82,11 +80,7 @@ function FilterFeatureBadges({
         return acc;
       }
       const projected = viewport.project(anchor);
-      if (
-        !projected ||
-        !Number.isFinite(projected[0]) ||
-        !Number.isFinite(projected[1])
-      ) {
+      if (!projected || !Number.isFinite(projected[0]) || !Number.isFinite(projected[1])) {
         return acc;
       }
       acc.push({

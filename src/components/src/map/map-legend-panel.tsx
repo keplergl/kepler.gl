@@ -21,7 +21,13 @@ import {useMergeRefs} from '@floating-ui/react';
 import {ActionHandler, setMapControlSettings, toggleSplitMapViewport} from '@kepler.gl/actions';
 import {Layer} from '@kepler.gl/layers';
 import {breakPointValues} from '@kepler.gl/styles';
-import {LayerVisConfig, LayerOrder, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
+import {
+  LayerVisConfig,
+  LayerOrder,
+  MapControlMapLegend,
+  MapControls,
+  MapState
+} from '@kepler.gl/types';
 import {hasPortableWidth} from '@kepler.gl/utils';
 import {MapLegendControlSettings} from '@kepler.gl/types';
 

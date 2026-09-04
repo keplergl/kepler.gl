@@ -1,8 +1,28 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Task, {taskCreator} from 'react-palm/tasks';
+import Task, {taskCreator} from '@kepler.gl/tasks-core';
 import {readFileInBatches, processFileData} from '@kepler.gl/processors';
+
+export {
+  Task,
+  taskCreator,
+  taskMiddleware,
+  withTask,
+  withTasks,
+  getGlobalTaskQueue,
+  disableStackCapturing,
+  drainTasksForTesting,
+  succeedTaskInTest,
+  errorTaskInTest,
+  succeedTaskWithValues,
+  simulateTask,
+  reportTasksForTesting,
+  all,
+  allSettled,
+  fromPromiseWithProgress
+} from '@kepler.gl/tasks-core';
+export type {TaskDescriptor} from '@kepler.gl/tasks-core';
 
 export const LOAD_FILE_TASK = Task.fromPromise(
   ({file, fileCache, loaders, loadOptions}) =>
@@ -68,3 +88,5 @@ export const UNWRAP_TASK = Task.fromPromise(
 
   'UNWRAP'
 );
+
+export default Task;

@@ -34,7 +34,12 @@ export type MapManagerProps = {
   panelMetadata: PanelMeta;
 } & WrappedComponentProps;
 
-MapManagerFactory.deps = [MapStyleSelectorFactory, LayerGroupSelectorFactory, PanelTitleFactory, GlobeConfigPanelFactory];
+MapManagerFactory.deps = [
+  MapStyleSelectorFactory,
+  LayerGroupSelectorFactory,
+  PanelTitleFactory,
+  GlobeConfigPanelFactory
+];
 
 function MapManagerFactory(
   MapStyleSelector: ReturnType<typeof MapStyleSelectorFactory>,

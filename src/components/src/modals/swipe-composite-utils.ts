@@ -33,11 +33,7 @@ const ARROW_SIZE = 6;
 /**
  * Draw a swipe divider (line + circular handle with arrows) onto a 2D canvas context.
  */
-function drawSwipeDivider(
-  ctx: CanvasRenderingContext2D,
-  splitX: number,
-  height: number
-): void {
+function drawSwipeDivider(ctx: CanvasRenderingContext2D, splitX: number, height: number): void {
   ctx.save();
 
   // Divider line
@@ -91,7 +87,7 @@ export function compositeSwipeFrame(
   rightCanvas: HTMLCanvasElement,
   outputCanvas: HTMLCanvasElement,
   percentage: number,
-  showDivider: boolean = true,
+  showDivider = true,
   backgroundColor?: string,
   showStars?: boolean
 ): void {

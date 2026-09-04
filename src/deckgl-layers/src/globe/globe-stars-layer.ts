@@ -103,4 +103,3 @@ export function drawStarsBackground(
   ctx.fillStyle = pattern;
   ctx.fillRect(0, 0, width, height);
 }
-

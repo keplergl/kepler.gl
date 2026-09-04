@@ -3,7 +3,7 @@
 
 import test from 'tape';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
-import Task, {withTask, drainTasksForTesting, succeedTaskInTest} from 'react-palm/tasks';
+import Task, {withTask, drainTasksForTesting, succeedTaskInTest} from '@kepler.gl/tasks';
 import CloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import keplerGlReducer, {
