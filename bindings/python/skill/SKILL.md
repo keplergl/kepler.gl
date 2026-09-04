@@ -1,5 +1,5 @@
 ---
-name: kepler.gl
+name: kepler-gl
 description: Create interactive map visualizations and export to standalone HTML using the keplergl Python package. Use when the user wants to create maps, visualize geospatial data, plot locations on a map, or generate HTML map files from DataFrames, GeoDataFrames, GeoJSON, or CSV data with coordinates.
 ---
 
@@ -10,10 +10,10 @@ Use the `keplergl` Python package to create standalone, interactive HTML map fil
 ## Installation
 
 ```bash
-pip install keplergl
+pip install keplergl==0.4.0rc4
 ```
 
-Requires `keplergl >= 0.4.0`. Earlier versions use a different widget/serialization API and the examples in this skill will not work. Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are installed automatically.
+The 0.3.x releases on PyPI use a different widget/serialization API and the examples in this skill will not work with them — install the 0.4.0 release line shown above (or newer: `pip install --pre "keplergl>=0.4.0"`). Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are installed automatically.
 
 ## Instructions
 
@@ -66,6 +66,7 @@ Read or set the map configuration dict. Use `map.config` after customizing in Ju
 ## Key Rules
 
 - **`dataId` must match the dataset `name`** — every layer and filter references a dataset by `dataId`; this must match the key in the `data` dict or the `name` passed to `add_data()`.
+- **The `flow` layer is never auto-created** — for aggregated O-D flow maps (migration, commute, trade), always pass an explicit layer config with `'type': 'flow'`; without one kepler.gl falls back to an `arc` layer. See [Flow Layer](skill-references/flow-layer.md).
 - **GeoJSON columns use `_geojson`** — when data is loaded as GeoJSON, the geometry column is internally named `_geojson` in configs.
 - **`colorField` / `colorScale` / `sizeField` / `heightField` etc. belong under `visualChannels`, NOT under `config`.** Putting them under `config` is silently ignored — the layer will render but the "Color Based On (field)" input shows empty. The layer object must have two siblings: `config` (for `dataId`, `columns`, `visConfig`, …) and `visualChannels` (for all field-to-channel mappings).
 - Columns named `latitude`/`lat`/`lng`/`longitude` are auto-detected as coordinates.
@@ -93,6 +94,7 @@ Read or set the map configuration dict. Use `map.config` after customizing in Ju
 |------------|---------------|--------------|
 | Point | `"point"` | DataFrame with lat/lng columns |
 | Arc | `"arc"` | DataFrame with origin/destination lat/lng |
+| Flow | `"flow"` | DataFrame with origin/destination lat/lng or H3 — **requires explicit config, never auto-created** |
 | Line | `"line"` | DataFrame with origin/destination lat/lng |
 | Hexbin | `"hexagon"` | DataFrame with lat/lng (aggregated spatially) |
 | Heatmap | `"heatmap"` | DataFrame with lat/lng |
@@ -102,6 +104,17 @@ Read or set the map configuration dict. Use `map.config` after customizing in Ju
 | Icon | `"icon"` | DataFrame with lat/lng |
 | Trip | `"trip"` | GeoJSON with LineString + timestamps |
 | S2 | `"s2"` | DataFrame with S2 token column |
+
+## Picking a Layer Type
+
+The layer `'type'` you put in the config is the only thing that determines what renders — describing a "flow map" in text does nothing.
+
+- Individual locations → `point` (`cluster` for zoomed-out density, `heatmap` for continuous intensity).
+- Density binned into cells → `hexagon`/`hexagonId` (H3) or `grid`; pre-aggregated H3 → `hexagonId`.
+- **Origin→destination requests → default to `flow`.** Any wording like "flow map", "flows", "movement between", or migration / commute / trade / supply-chain / flights-between data ⇒ `flow` — it renders fine even for a handful of pairs. Choose `arc` ONLY when the user explicitly asks for plain, unaggregated point-to-point arcs ("draw an arc from A to B", "connect each pair", "no clustering"). Do not substitute a `geojson`/`line` layer for an O-D request just because a geometry column is present.
+- Polylines / polygons → `geojson` (or `line` for straight segments).
+- Time-animated movement → `trip`.
+- Before finalizing, re-check that each layer's configured `'type'` matches what you told the user — saying "flow map" while the config says `'type': 'arc'` is the classic mismatch.
 
 ## Config Structure
 
@@ -146,6 +159,7 @@ For detailed per-layer-type examples with full config, see supporting files:
 - [GeoJSON / Polygon Map](skill-references/geojson-polygon-map.md) — Polygons, lines from GeoJSON or GeoDataFrame
 - [H3 Hexagon Map](skill-references/h3-hexagon-map.md) — H3 spatial index hexagons
 - [Arc / Line Map](skill-references/arc-line-map.md) — Origin-destination connections
+- [Flow Layer](skill-references/flow-layer.md) — Aggregated O-D flow maps with clustering, magnitude-proportional lines and location totals
 - [Heatmap](skill-references/heatmap.md) — Density heatmap from points
 - [Hexbin Aggregation Map](skill-references/hexbin-aggregation-map.md) — Spatial binning into hexagons
 - [Trip Animation Map](skill-references/trip-animation-map.md) — Animated trips along paths

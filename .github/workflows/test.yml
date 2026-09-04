@@ -87,3 +87,16 @@ jobs:
         continue-on-error: true
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  # The marketplace plugin (bindings/python/skill-plugin/skills/kepler-gl) must
+  # stay byte-identical to the single source of truth (bindings/python/skill).
+  # git-subdir marketplace installs copy the plugin dir, so a symlink would
+  # dangle; the mirror is committed and this job fails if it drifts.
+  skill-plugin-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check skill mirror is in sync
+        run: diff -r bindings/python/skill bindings/python/skill-plugin/skills/kepler-gl
+      - name: Check skill frontmatter name is platform-safe
+        run: grep -q '^name: kepler-gl$' bindings/python/skill/SKILL.md
