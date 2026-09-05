@@ -192,6 +192,9 @@ export function histogramFromTimeIntervals(
       continue;
     }
     const rawEnd = endAccessor(idx);
+    if (notNullorUndefined(rawEnd) && !Number.isNaN(rawEnd) && rawEnd < start) {
+      continue;
+    }
     const end = notNullorUndefined(rawEnd) && !Number.isNaN(rawEnd) ? rawEnd : lastThreshold;
 
     let startBin = bisectRight(thresholds, start) - 1;

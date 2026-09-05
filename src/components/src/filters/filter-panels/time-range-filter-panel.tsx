@@ -166,7 +166,7 @@ function TimeRangeFilterPanelFactory(
               supportedFields={supportedFields}
               syncTimeFilterWithLayerTimeline={syncTimeFilterWithLayerTimeline}
             />
-            {endTimeFields.length ? (
+            {!isSynced && endTimeFields.length ? (
               <SidePanelSection>
                 <PanelLabel htmlFor={`filter-${filter.id}-end-time`}>
                   <FormattedMessage id="filterManager.timeIntervalEndField" />

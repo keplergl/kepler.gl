@@ -927,6 +927,16 @@ test('filterUtils -> timeWindowOverlapsInterval', t => {
   );
   t.equal(timeWindowOverlapsInterval(20, null, [0, 10]), false, 'null end is hidden before start');
   t.equal(timeWindowOverlapsInterval(null, 10, [0, 10]), false, 'null start is hidden');
+  t.equal(
+    timeWindowOverlapsInterval(10, 0, [0, 20]),
+    false,
+    'inverted interval (end < start) is hidden'
+  );
+  t.equal(
+    timeWindowOverlapsInterval(5, 5, [0, 10]),
+    true,
+    'zero-length interval at a point overlaps'
+  );
   t.end();
 });
 

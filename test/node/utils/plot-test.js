@@ -237,5 +237,16 @@ test('Utils -> histogramFromTimeIntervals', t => {
     'should return no bins without thresholds'
   );
 
+  t.deepEqual(
+    histogramFromTimeIntervals(
+      thresholds,
+      [0],
+      () => 15,
+      () => 5
+    ),
+    [],
+    'should skip inverted intervals (end < start)'
+  );
+
   t.end();
 });

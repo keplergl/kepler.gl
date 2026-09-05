@@ -153,6 +153,7 @@ function isFullTimeDomainValue(filter: TimeRangeFilter): boolean {
 /**
  * Interval overlap: feature [start, end] intersects window [w0, w1].
  * A null/undefined end means the feature is still active (open-ended).
+ * Inverted intervals (end < start) are treated as invalid and hidden.
  */
 export function timeWindowOverlapsInterval(
   start: number | null | undefined,
@@ -163,6 +164,9 @@ export function timeWindowOverlapsInterval(
     return false;
   }
   const featureEnd = notNullorUndefined(end) && !Number.isNaN(end) ? end : Number.POSITIVE_INFINITY;
+  if (featureEnd < start) {
+    return false;
+  }
   return start <= window[1] && featureEnd >= window[0];
 }
 
