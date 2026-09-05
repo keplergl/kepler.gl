@@ -813,7 +813,7 @@ ${'```'}
       '*kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
       'No information or map data is sent to any server.',
     configUploadMessage:
-      'Upload {fileFormatNames} or saved map **Json**. Read more about [**supported file formats**]',
+      'Upload a supported file or saved map **Json**. Read more about [**supported file formats**]',
     browseFiles: 'browse your files',
     uploading: 'Uploading',
     downloading: 'Downloading',
