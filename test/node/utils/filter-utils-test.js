@@ -19,7 +19,10 @@ import {
   getTimestampFieldDomain,
   scaleSourceDomainToDestination,
   mergeFilterWithTimeline,
-  createDataContainer
+  createDataContainer,
+  isTimeIntervalFilter,
+  timeWindowOverlapsInterval,
+  applyTimeFilterEndFieldName
 } from '@kepler.gl/utils';
 
 import {FILTER_TYPES} from '@kepler.gl/constants';
@@ -907,6 +910,143 @@ test('filterUtils -> getPolygonFilterFunctor -> arc layer validates both endpoin
     false,
     'arc with destination outside should fail'
   );
+
+  t.end();
+});
+
+test('filterUtils -> timeWindowOverlapsInterval', t => {
+  t.equal(timeWindowOverlapsInterval(0, 10, [2, 8]), true, 'window inside feature interval');
+  t.equal(timeWindowOverlapsInterval(0, 10, [-5, 0]), true, 'window touches start');
+  t.equal(timeWindowOverlapsInterval(0, 10, [10, 15]), true, 'window touches end');
+  t.equal(timeWindowOverlapsInterval(0, 10, [11, 20]), false, 'window after feature');
+  t.equal(timeWindowOverlapsInterval(20, 30, [0, 10]), false, 'window before feature');
+  t.equal(
+    timeWindowOverlapsInterval(5, null, [0, 10]),
+    true,
+    'null end is still active once started'
+  );
+  t.equal(timeWindowOverlapsInterval(20, null, [0, 10]), false, 'null end is hidden before start');
+  t.equal(timeWindowOverlapsInterval(null, 10, [0, 10]), false, 'null start is hidden');
+  t.end();
+});
+
+test('filterUtils -> getFilterFunction time interval overlap', t => {
+  const startMapped = [0, 10, 20, 30];
+  const endMapped = [15, 15, 40, null];
+  const field = {
+    filterProps: {mappedValue: startMapped},
+    valueAccessor: () => null,
+    format: ''
+  };
+  const filter = {
+    type: FILTER_TYPES.timeRange,
+    dataId: ['ds'],
+    value: [12, 18],
+    endName: ['end'],
+    endMappedValue: [endMapped]
+  };
+
+  t.ok(isTimeIntervalFilter(filter, 0), 'should detect interval mode from endName');
+
+  const filterFunction = getFilterFunction(field, 'ds', filter, [], null);
+
+  t.equal(filterFunction({index: 0}), true, '[0, 15] overlaps window [12, 18]');
+  t.equal(filterFunction({index: 1}), true, '[10, 15] overlaps window [12, 18]');
+  t.equal(filterFunction({index: 2}), false, '[20, 40] starts after the window');
+  t.equal(filterFunction({index: 3}), false, '[30, inf] has not started yet');
+
+  const instantFn = getFilterFunction(
+    field,
+    'ds',
+    {
+      type: FILTER_TYPES.timeRange,
+      dataId: ['ds'],
+      value: [12, 18]
+    },
+    [],
+    null
+  );
+  t.equal(instantFn({index: 0}), false, 'instant mode still requires the timestamp in range');
+  t.equal(instantFn({index: 1}), false, 'timestamp 10 is outside [12, 18]');
+  t.end();
+});
+
+test('filterUtils -> applyTimeFilterEndFieldName', t => {
+  const dataset = {
+    id: 'ds',
+    fields: [
+      {
+        name: 'start',
+        type: 'timestamp',
+        filterProps: {
+          fieldType: 'timestamp',
+          mappedValue: [0, 10],
+          domain: [0, 10],
+          step: 1
+        }
+      },
+      {
+        name: 'end',
+        type: 'timestamp',
+        filterProps: {
+          fieldType: 'timestamp',
+          mappedValue: [20, 50],
+          domain: [20, 50],
+          step: 1
+        }
+      },
+      {
+        name: 'other',
+        type: 'real',
+        filterProps: {fieldType: 'real', domain: [0, 1], step: 0.1}
+      }
+    ],
+    getColumnFieldIdx(name) {
+      return this.fields.findIndex(f => f.name === name);
+    },
+    getColumnFilterProps(name) {
+      return this.fields.find(f => f.name === name)?.filterProps || null;
+    }
+  };
+
+  const filter = {
+    type: FILTER_TYPES.timeRange,
+    dataId: ['ds'],
+    name: ['start'],
+    fieldIdx: [0],
+    domain: [0, 10],
+    value: [0, 10],
+    step: 1
+  };
+
+  const {filter: withEnd} = applyTimeFilterEndFieldName(filter, {ds: dataset}, 'ds', 'end', 0);
+  t.ok(withEnd, 'should apply a timestamp end field');
+  t.deepEqual(withEnd.endName, ['end'], 'should store endName');
+  t.deepEqual(withEnd.endFieldIdx, [1], 'should store endFieldIdx');
+  t.deepEqual(withEnd.domain, [0, 50], 'domain should span start min to end max');
+  t.deepEqual(withEnd.value, [0, 50], 'full-range window should expand with domain');
+
+  const {filter: sameAsStart} = applyTimeFilterEndFieldName(
+    filter,
+    {ds: dataset},
+    'ds',
+    'start',
+    0
+  );
+  t.equal(sameAsStart, null, 'should reject using the start field as end');
+
+  const {filter: nonTimestamp} = applyTimeFilterEndFieldName(
+    filter,
+    {ds: dataset},
+    'ds',
+    'other',
+    0
+  );
+  t.equal(nonTimestamp, null, 'should reject a non-timestamp end field');
+
+  const {filter: cleared} = applyTimeFilterEndFieldName(withEnd, {ds: dataset}, 'ds', null, 0);
+  t.notOk(cleared.endName, 'clearing end field should remove endName');
+  t.deepEqual(cleared.domain, [0, 10], 'domain should shrink back to the start field');
 
   t.end();
 });

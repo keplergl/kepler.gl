@@ -168,7 +168,13 @@ export type FilterBase<L extends LineChart> = {
   // gpu filter
   gpu: boolean;
   gpuChannel?: number[];
+  gpuEndChannel?: number[];
   fieldType?: string;
+
+  // Optional end timestamp for duration-based time filters (parallel to name/fieldIdx)
+  endName?: (string | null | undefined)[];
+  endFieldIdx?: (number | null | undefined)[];
+  endMappedValue?: ((number | null)[] | null | undefined)[];
 
   // polygon
   layerId?: string[];
@@ -215,6 +221,14 @@ export type TimeRangeFilter = FilterBase<LineChart> &
     syncTimelineMode: SyncTimelineMode;
     animationWindow: string;
     invertTrendColor: boolean;
+    /**
+     * When set, a feature is visible while the playback window overlaps
+     * [startField, endField] rather than requiring a single timestamp in range.
+     */
+    endName?: (string | null | undefined)[];
+    endFieldIdx?: (number | null | undefined)[];
+    endMappedValue?: ((number | null)[] | null | undefined)[];
+    gpuEndChannel?: number[];
   };
 
 export type PolygonFilter = FilterBase<LineChart> & {

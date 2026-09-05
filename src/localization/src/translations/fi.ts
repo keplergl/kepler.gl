@@ -26,7 +26,8 @@ export default {
     selectValue: 'Valitse arvo',
     enterValue: 'Anna arvo',
     empty: 'tyhjä',
-    selectLayer: 'Valitse taso'
+    selectLayer: 'Valitse taso',
+    endTimeField: 'Valitse päättymisaika'
   },
   misc: {
     by: '',
@@ -289,7 +290,10 @@ export default {
     timeFilterSync: 'Synkronoidut aineistot',
     timeLayerSync: 'Linkitä tason aikajanaan',
     timeLayerUnsync: 'Poista linkitys tason aikajanasta',
-    column: 'Sarake'
+    column: 'Sarake',
+    timeIntervalEndField: 'Päättymisaika',
+    timeIntervalEndFieldHint:
+      'Valinnainen. Kohteet pysyvät näkyvissä, kun toistoikkuna osuu tälle aikavälille.'
   },
   datasetTitle: {
     showDataTable: 'Näytä attribuuttitaulu',

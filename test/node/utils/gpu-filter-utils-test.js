@@ -6,8 +6,10 @@ import {
   resetFilterGpuMode,
   assignGpuChannel,
   assignGpuChannels,
-  getDatasetFieldIndexForFilter
+  getDatasetFieldIndexForFilter,
+  getGpuFilterProps
 } from '@kepler.gl/table';
+import {FILTER_TYPES} from '@kepler.gl/constants';
 
 test('gpuFilterUtils -> resetFilterGpuMode', t => {
   const testFilters = [
@@ -196,6 +198,102 @@ test('gpuFilterUtils -> getDatasetFieldIndexForFilter', t => {
 
   fieldIndex = getDatasetFieldIndexForFilter(dataId, {dataId: ['different-id']});
   t.equal(fieldIndex, -1, 'FieldIndex should be -1');
+
+  t.end();
+});
+
+test('gpuFilterUtils -> assignGpuChannel interval time filter', t => {
+  const assigned = assignGpuChannel(
+    {
+      id: '3',
+      dataId: ['a'],
+      gpu: true,
+      type: FILTER_TYPES.timeRange,
+      endName: ['end']
+    },
+    [{id: '2', dataId: ['a'], gpu: true, gpuChannel: [0]}]
+  );
+
+  t.deepEqual(
+    assigned,
+    {
+      id: '3',
+      dataId: ['a'],
+      gpu: true,
+      type: FILTER_TYPES.timeRange,
+      endName: ['end'],
+      gpuChannel: [1],
+      gpuEndChannel: [2]
+    },
+    'should reserve two channels for start and end timestamps'
+  );
+
+  const noRoom = assignGpuChannel(
+    {
+      id: '6',
+      dataId: ['a'],
+      gpu: true,
+      type: FILTER_TYPES.timeRange,
+      endName: ['end']
+    },
+    [
+      {id: '2', dataId: ['a'], gpu: true, gpuChannel: [0]},
+      {id: '3', dataId: ['a'], gpu: true, gpuChannel: [1]},
+      {id: '4', dataId: ['a'], gpu: true, gpuChannel: [2]}
+    ]
+  );
+
+  t.deepEqual(
+    noRoom,
+    {
+      id: '6',
+      dataId: ['a'],
+      gpu: false,
+      type: FILTER_TYPES.timeRange,
+      endName: ['end']
+    },
+    'should fall back to CPU when two channels are not available'
+  );
+
+  t.end();
+});
+
+test('gpuFilterUtils -> getGpuFilterProps interval overlap ranges', t => {
+  const filters = [
+    {
+      id: 'f1',
+      gpu: true,
+      type: FILTER_TYPES.timeRange,
+      dataId: ['ds'],
+      name: ['start'],
+      endName: ['end'],
+      fieldIdx: [0],
+      endFieldIdx: [1],
+      gpuChannel: [0],
+      gpuEndChannel: [1],
+      domain: [1000, 5000],
+      value: [2000, 3000]
+    }
+  ];
+  const fields = [
+    {name: 'start', filterProps: {mappedValue: [1000, 2000]}, valueAccessor: d => d.start},
+    {name: 'end', filterProps: {mappedValue: [3000, 4000]}, valueAccessor: d => d.end}
+  ];
+
+  const gpu = getGpuFilterProps(filters, 'ds', fields);
+
+  t.deepEqual(gpu.filterRange[0], [0, 2000], 'start channel should be [0, windowEnd - domain0]');
+  t.deepEqual(
+    gpu.filterRange[1],
+    [1000, 4000],
+    'end channel should be [windowStart - domain0, domain1 - domain0]'
+  );
+  t.equal(
+    gpu.filterValueUpdateTriggers.gpuFilter_0.name,
+    'start',
+    'start trigger uses start field'
+  );
+  t.equal(gpu.filterValueUpdateTriggers.gpuFilter_1.name, 'end', 'end trigger uses end field');
 
   t.end();
 });

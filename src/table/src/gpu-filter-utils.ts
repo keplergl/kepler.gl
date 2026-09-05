@@ -3,14 +3,60 @@
 
 import moment from 'moment';
 import {MAX_GPU_FILTERS, FILTER_TYPES} from '@kepler.gl/constants';
-import {Field, Filter} from '@kepler.gl/types';
-import {set, DataContainerInterface} from '@kepler.gl/utils';
+import {Field, Filter, TimeRangeFilter} from '@kepler.gl/types';
+import {set, DataContainerInterface, isTimeIntervalFilter} from '@kepler.gl/utils';
 import {toArray, notNullorUndefined} from '@kepler.gl/common-utils';
 
 import {GpuFilter} from './kepler-table';
 
+type GpuFilterRole = 'value' | 'start' | 'end';
+type GpuChannelBinding = {filter: Filter; role: GpuFilterRole};
+
 /**
- * Set gpu mode based on current number of gpu filters exists
+ * Interval time filters occupy two GPU channels (start <= windowEnd AND end >= windowStart).
+ */
+export function getFilterGpuChannelCount(filter: Filter, datasetIdx = 0): number {
+  return isTimeIntervalFilter(filter, datasetIdx) ? 2 : 1;
+}
+
+function isGpuChannelTaken(
+  filters: Filter[],
+  dataId: string,
+  channel: number,
+  excludeFilterId?: string
+): boolean {
+  return filters.some(f => {
+    if (f.id === excludeFilterId || !f.gpu) {
+      return false;
+    }
+    const dataIdx = toArray(f.dataId).indexOf(dataId);
+    if (dataIdx < 0) {
+      return false;
+    }
+    return (
+      toArray(f.gpuChannel)[dataIdx] === channel || toArray(f.gpuEndChannel)[dataIdx] === channel
+    );
+  });
+}
+
+function findFreeGpuChannel(
+  filters: Filter[],
+  dataId: string,
+  excludeFilterId: string,
+  occupiedBySelf: number[] = []
+): number | undefined {
+  let i = 0;
+  while (i < MAX_GPU_FILTERS) {
+    if (!occupiedBySelf.includes(i) && !isGpuChannelTaken(filters, dataId, i, excludeFilterId)) {
+      return i;
+    }
+    i++;
+  }
+  return undefined;
+}
+
+/**
+ * Set gpu mode based on current number of gpu filter channels in use
  */
 export function setFilterGpuMode(filter: Filter, filters: Filter[]) {
   // filter can be applied to multiple datasets, hence gpu filter mode should also be
@@ -18,15 +64,23 @@ export function setFilterGpuMode(filter: Filter, filters: Filter[]) {
   // if all of them has, we set gpu mode to true
   // TODO: refactor filter so we don't keep an array of everything
 
-  filter.dataId.forEach(dataId => {
-    const gpuFilters = filters.filter(f => f.dataId.includes(dataId) && f.gpu);
+  let next = filter;
+  next.dataId.forEach((dataId, datasetIdx) => {
+    let used = 0;
+    filters.forEach(f => {
+      if (f.id === next.id || !f.gpu || !toArray(f.dataId).includes(dataId)) {
+        return;
+      }
+      const idx = toArray(f.dataId).indexOf(dataId);
+      used += getFilterGpuChannelCount(f, idx);
+    });
 
-    if (filter.gpu && gpuFilters.length === MAX_GPU_FILTERS) {
-      set(['gpu'], false, filter);
+    if (next.gpu && used + getFilterGpuChannelCount(next, datasetIdx) > MAX_GPU_FILTERS) {
+      next = set(['gpu'], false, next);
     }
   });
 
-  return filter;
+  return next;
 }
 
 /**
@@ -46,7 +100,8 @@ export function assignGpuChannels(allFilters: Filter[]) {
   }, allFilters);
 }
 /**
- * Assign a new gpu filter a channel based on first availability
+ * Assign a new gpu filter a channel based on first availability.
+ * Interval time filters receive a second channel for the end timestamp.
  */
 export function assignGpuChannel(filter: Filter, filters: Filter[]) {
   // find first available channel
@@ -54,48 +109,72 @@ export function assignGpuChannel(filter: Filter, filters: Filter[]) {
     return filter;
   }
 
-  const gpuChannel = filter.gpuChannel || [];
+  const gpuChannel = [...(filter.gpuChannel || [])];
+  const gpuEndChannel = [...(filter.gpuEndChannel || [])];
+  let assignedAll = true;
 
   filter.dataId.forEach((dataId, datasetIdx) => {
-    const findGpuChannel = channel => f => {
-      const dataIdx = toArray(f.dataId).indexOf(dataId);
-      return (
-        f.id !== filter.id && dataIdx > -1 && f.gpu && toArray(f.gpuChannel)[dataIdx] === channel
-      );
-    };
+    const needsEnd = isTimeIntervalFilter(filter, datasetIdx);
+    const occupiedBySelf: number[] = [];
 
+    const currentStart = gpuChannel[datasetIdx];
     if (
-      Number.isFinite(gpuChannel[datasetIdx]) &&
-      !filters.find(findGpuChannel(gpuChannel[datasetIdx]))
+      Number.isFinite(currentStart) &&
+      !isGpuChannelTaken(filters, dataId, currentStart, filter.id)
     ) {
-      // if value is already assigned and valid
-      return;
+      occupiedBySelf.push(currentStart);
+    } else {
+      const nextChannel = findFreeGpuChannel(filters, dataId, filter.id, occupiedBySelf);
+      if (Number.isFinite(nextChannel)) {
+        gpuChannel[datasetIdx] = nextChannel as number;
+        occupiedBySelf.push(nextChannel as number);
+      } else {
+        assignedAll = false;
+      }
     }
 
-    let i = 0;
-
-    while (i < MAX_GPU_FILTERS) {
-      if (!filters.find(findGpuChannel(i))) {
-        gpuChannel[datasetIdx] = i;
-        return;
+    if (needsEnd) {
+      const currentEnd = gpuEndChannel[datasetIdx];
+      if (
+        Number.isFinite(currentEnd) &&
+        currentEnd !== gpuChannel[datasetIdx] &&
+        !isGpuChannelTaken(filters, dataId, currentEnd, filter.id)
+      ) {
+        occupiedBySelf.push(currentEnd);
+      } else {
+        const nextEnd = findFreeGpuChannel(filters, dataId, filter.id, occupiedBySelf);
+        if (Number.isFinite(nextEnd)) {
+          gpuEndChannel[datasetIdx] = nextEnd as number;
+        } else {
+          assignedAll = false;
+        }
       }
-      i++;
+    } else {
+      gpuEndChannel[datasetIdx] = undefined as unknown as number;
     }
   });
 
   // if cannot find channel for all dataid, set gpu back to false
   // TODO: refactor filter to handle same filter different gpu mode
-  if (!gpuChannel.length || !gpuChannel.every(Number.isFinite)) {
+  if (!assignedAll || !gpuChannel.length || !gpuChannel.every(Number.isFinite)) {
     return {
       ...filter,
       gpu: false
     };
   }
 
-  return {
+  const next: Filter = {
     ...filter,
     gpuChannel
   };
+
+  if (filter.dataId.some((_, idx) => isTimeIntervalFilter(filter, idx))) {
+    next.gpuEndChannel = gpuEndChannel;
+  } else {
+    delete next.gpuEndChannel;
+  }
+
+  return next;
 }
 /**
  * Edit filter.gpu to ensure that only
@@ -107,13 +186,14 @@ export function resetFilterGpuMode(filters: Filter[]): Filter[] {
   return filters.map(f => {
     if (f.gpu) {
       let gpu = true;
-      toArray(f.dataId).forEach(dataId => {
-        const count = gpuPerDataset[dataId];
+      toArray(f.dataId).forEach((dataId, datasetIdx) => {
+        const count = gpuPerDataset[dataId] || 0;
+        const needed = getFilterGpuChannelCount(f, datasetIdx);
 
-        if (count === MAX_GPU_FILTERS) {
+        if (count + needed > MAX_GPU_FILTERS) {
           gpu = false;
         } else {
-          gpuPerDataset[dataId] = count ? count + 1 : 1;
+          gpuPerDataset[dataId] = count + needed;
         }
       });
 
@@ -140,8 +220,47 @@ function getEmptyFilterRange() {
  */
 const defaultGetIndex = d => d.index;
 
+function getGpuFilterRange(filter: Filter, role: GpuFilterRole): [number, number] {
+  const domain0 = filter.domain?.[0] ?? 0;
+  const domain1 = filter.domain?.[1] ?? 0;
+  const [v0, v1] = filter.value;
+  switch (role) {
+    case 'start':
+      // start <= windowEnd (and start >= domain min)
+      return [0, v1 - domain0];
+    case 'end':
+      // end >= windowStart (and end <= domain max)
+      return [v0 - domain0, domain1 - domain0];
+    default:
+      return [v0 - domain0, v1 - domain0];
+  }
+}
+
+function findGpuChannelBinding(
+  filters: Filter[],
+  dataId: string,
+  channel: number
+): GpuChannelBinding | undefined {
+  for (const filter of filters) {
+    if (!filter.gpu || !filter.dataId.includes(dataId)) {
+      continue;
+    }
+    const datasetIdx = filter.dataId.indexOf(dataId);
+    if (filter.gpuChannel && filter.gpuChannel[datasetIdx] === channel) {
+      return {
+        filter,
+        role: isTimeIntervalFilter(filter, datasetIdx) ? 'start' : 'value'
+      };
+    }
+    if (filter.gpuEndChannel && filter.gpuEndChannel[datasetIdx] === channel) {
+      return {filter, role: 'end'};
+    }
+  }
+  return undefined;
+}
+
 const getFilterValueAccessor =
-  (channels: (Filter | undefined)[], dataId: string, fields: any[]) =>
+  (channels: (GpuChannelBinding | undefined)[], dataId: string, fields: any[]) =>
   (dc: DataContainerInterface) =>
   (
     getIndex = defaultGetIndex,
@@ -149,11 +268,15 @@ const getFilterValueAccessor =
   ) =>
   (d, objectInfo?: {index: number}) => {
     // for empty channel, value is 0 and min max would be [0, 0]
-    const channelValues = channels.map(filter => {
-      if (!filter) {
+    const channelValues = channels.map(binding => {
+      if (!binding) {
         return 0;
       }
-      const fieldIndex = getDatasetFieldIndexForFilter(dataId, filter);
+      const {filter, role} = binding;
+      const fieldIndex =
+        role === 'end'
+          ? getDatasetEndFieldIndexForFilter(dataId, filter)
+          : getDatasetFieldIndexForFilter(dataId, filter);
       const field = fields[fieldIndex];
 
       let value;
@@ -173,11 +296,17 @@ const getFilterValueAccessor =
             : data;
       }
 
-      return notNullorUndefined(value)
-        ? Array.isArray(value)
-          ? value.map(v => v - filter.domain?.[0])
-          : value - filter.domain?.[0]
-        : Number.MIN_SAFE_INTEGER;
+      if (!notNullorUndefined(value)) {
+        // Null end timestamps mean "still active": map to domain max so end >= windowStart always holds.
+        if (role === 'end') {
+          return (filter.domain?.[1] ?? 0) - (filter.domain?.[0] ?? 0);
+        }
+        return Number.MIN_SAFE_INTEGER;
+      }
+
+      return Array.isArray(value)
+        ? value.map(v => v - filter.domain?.[0])
+        : value - filter.domain?.[0];
     });
 
     // TODO: can we refactor the above to avoid the transformation below?
@@ -212,24 +341,29 @@ export function getGpuFilterProps(
   const triggers: GpuFilter['filterValueUpdateTriggers'] = {};
 
   // array of filter for each channel, undefined, if no filter is assigned to that channel
-  const channels: (Filter | undefined)[] = [];
+  const channels: (GpuChannelBinding | undefined)[] = [];
 
   for (let i = 0; i < MAX_GPU_FILTERS; i++) {
-    const filter = filters.find(
-      f =>
-        f.gpu &&
-        f.dataId.includes(dataId) &&
-        f.gpuChannel &&
-        f.gpuChannel[f.dataId.indexOf(dataId)] === i
-    );
+    const binding = findGpuChannelBinding(filters, dataId, i);
+    const filter = binding?.filter;
 
-    filterRange[i][0] = filter ? filter.value[0] - filter.domain?.[0] : 0;
-    filterRange[i][1] = filter ? filter.value[1] - filter.domain?.[0] : 0;
+    if (filter && binding) {
+      const range = getGpuFilterRange(filter, binding.role);
+      filterRange[i][0] = range[0];
+      filterRange[i][1] = range[1];
+    } else {
+      filterRange[i][0] = 0;
+      filterRange[i][1] = 0;
+    }
     const oldFilterTrigger = oldGpuFilter?.filterValueUpdateTriggers?.[`gpuFilter_${i}`] || null;
 
+    const datasetIdx = filter ? filter.dataId.indexOf(dataId) : -1;
     const trigger = filter
       ? {
-          name: filter.name[filter.dataId.indexOf(dataId)],
+          name:
+            binding?.role === 'end'
+              ? toArray((filter as TimeRangeFilter).endName)[datasetIdx]
+              : filter.name[datasetIdx],
           domain0: filter.domain?.[0]
         }
       : null;
@@ -237,7 +371,7 @@ export function getGpuFilterProps(
     triggers[`gpuFilter_${i}`] = isFilterTriggerEqual(trigger, oldFilterTrigger)
       ? oldFilterTrigger
       : trigger;
-    channels.push(filter);
+    channels.push(binding);
   }
 
   const filterValueAccessor = getFilterValueAccessor(channels, dataId, fields);
@@ -260,6 +394,20 @@ export function getDatasetFieldIndexForFilter(dataId: string, filter: Filter): n
   }
 
   const fieldIndex = filter.fieldIdx[datasetIndex];
+
+  return notNullorUndefined(fieldIndex) ? fieldIndex : -1;
+}
+
+/**
+ * Return dataset field index from filter.endFieldIdx for interval time filters.
+ */
+export function getDatasetEndFieldIndexForFilter(dataId: string, filter: Filter): number {
+  const datasetIndex = toArray(filter.dataId).indexOf(dataId);
+  if (datasetIndex < 0) {
+    return -1;
+  }
+
+  const fieldIndex = toArray((filter as TimeRangeFilter).endFieldIdx)[datasetIndex];
 
   return notNullorUndefined(fieldIndex) ? fieldIndex : -1;
 }

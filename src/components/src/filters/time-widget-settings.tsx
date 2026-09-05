@@ -345,7 +345,10 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
           <AxisRow>
             <FieldBlock>
               <FieldLabel>Select Field</FieldLabel>
-              <FieldValue>{filter.name}</FieldValue>
+              <FieldValue>
+                {Array.isArray(filter.name) ? filter.name[0] : filter.name}
+                {filter.endName?.[0] ? ` → ${filter.endName[0]}` : ''}
+              </FieldValue>
             </FieldBlock>
             <FieldBlock>
               <FieldLabel>Interval</FieldLabel>

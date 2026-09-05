@@ -5,6 +5,7 @@ import test from 'tape';
 import {
   histogramFromThreshold,
   histogramFromValues,
+  histogramFromTimeIntervals,
   mergePolygonLayerIndexes,
   runGpuFilterForPlot
 } from '@kepler.gl/utils';
@@ -177,6 +178,64 @@ test('Utils -> histogramFromValues', t => {
   // d3.histogram uses ticks() to find nice number of breaks (bins), so the
   // number of returned bins may be different than the input number of bins
   t.deepEqual(bins5, expectedHistogram5, 'should create histogram with 3 bins from values.');
+
+  t.end();
+});
+
+test('Utils -> histogramFromTimeIntervals', t => {
+  const thresholds = [0, 10, 20, 30];
+  const starts = [5, 15, 0, 25];
+  const ends = [15, 15, 30, null];
+
+  const bins = histogramFromTimeIntervals(
+    thresholds,
+    [0, 1, 2, 3],
+    idx => starts[idx],
+    idx => ends[idx]
+  );
+
+  t.deepEqual(
+    bins.map(b => ({count: b.count, indexes: b.indexes, x0: b.x0, x1: b.x1})),
+    [
+      {count: 2, indexes: [0, 2], x0: 0, x1: 10},
+      {count: 3, indexes: [0, 1, 2], x0: 10, x1: 20},
+      {count: 2, indexes: [2, 3], x0: 20, x1: 30}
+    ],
+    'should count a feature in every bin that overlaps [start, end]'
+  );
+
+  t.deepEqual(
+    histogramFromTimeIntervals(
+      thresholds,
+      [0],
+      idx => 10,
+      idx => 10
+    ),
+    [{count: 1, indexes: [0], x0: 10, x1: 20}],
+    'an instant at a bin boundary should land in the following bin'
+  );
+
+  t.deepEqual(
+    histogramFromTimeIntervals(
+      thresholds,
+      [0],
+      () => null,
+      () => 20
+    ),
+    [],
+    'should skip rows with no start time'
+  );
+
+  t.deepEqual(
+    histogramFromTimeIntervals(
+      [],
+      [0],
+      () => 5,
+      () => 15
+    ),
+    [],
+    'should return no bins without thresholds'
+  );
 
   t.end();
 });

@@ -85,7 +85,8 @@ export const TimestampStepMap = [
 export const FILTER_UPDATER_PROPS = keyMirror({
   dataId: null,
   name: null,
-  layerId: null
+  layerId: null,
+  endName: null
 });
 
 export const FILTER_COMPONENTS = {
@@ -128,6 +129,86 @@ export const DEFAULT_FILTER_STRUCTURE = {
 export const FILTER_ID_LENGTH = 4;
 
 export const LAYER_FILTERS = [FILTER_TYPES.polygon];
+
+/**
+ * True when a timeRange filter has an end timestamp field for the given dataset.
+ * Features stay visible while the playback window overlaps [start, end].
+ */
+export function isTimeIntervalFilter(filter: Filter, datasetIdx = 0): boolean {
+  return Boolean(
+    filter?.type === FILTER_TYPES.timeRange &&
+      toArray((filter as TimeRangeFilter).endName)[datasetIdx]
+  );
+}
+
+function isFullTimeDomainValue(filter: TimeRangeFilter): boolean {
+  return (
+    Array.isArray(filter.value) &&
+    Array.isArray(filter.domain) &&
+    filter.value[0] === filter.domain[0] &&
+    filter.value[1] === filter.domain[1]
+  );
+}
+
+/**
+ * Interval overlap: feature [start, end] intersects window [w0, w1].
+ * A null/undefined end means the feature is still active (open-ended).
+ */
+export function timeWindowOverlapsInterval(
+  start: number | null | undefined,
+  end: number | null | undefined,
+  window: [number, number]
+): boolean {
+  if (!notNullorUndefined(start) || Number.isNaN(start)) {
+    return false;
+  }
+  const featureEnd = notNullorUndefined(end) && !Number.isNaN(end) ? end : Number.POSITIVE_INFINITY;
+  return start <= window[1] && featureEnd >= window[0];
+}
+
+function omitTimeIntervalFields<T extends Filter>(filter: T): T {
+  const {
+    endName: _endName,
+    endFieldIdx: _endFieldIdx,
+    endMappedValue: _endMappedValue,
+    gpuEndChannel: _gpuEndChannel,
+    ...rest
+  } = filter as T & {
+    endName?: unknown;
+    endFieldIdx?: unknown;
+    endMappedValue?: unknown;
+    gpuEndChannel?: unknown;
+  };
+  return rest as T;
+}
+
+function clearTimeFilterEndFieldAtIndex(
+  filter: TimeRangeFilter,
+  filterDatasetIndex: number
+): TimeRangeFilter {
+  const endName = [...toArray(filter.endName)];
+  const endFieldIdx = [...toArray(filter.endFieldIdx)];
+  const endMappedValue = [...toArray(filter.endMappedValue)];
+  const gpuEndChannel = [...toArray(filter.gpuEndChannel)];
+
+  endName[filterDatasetIndex] = null;
+  endFieldIdx[filterDatasetIndex] = null;
+  endMappedValue[filterDatasetIndex] = null;
+  gpuEndChannel[filterDatasetIndex] = undefined as unknown as number;
+
+  const hasAnyEnd = endName.some(Boolean);
+  if (!hasAnyEnd) {
+    return omitTimeIntervalFields(filter);
+  }
+
+  return {
+    ...filter,
+    endName,
+    endFieldIdx,
+    endMappedValue,
+    gpuEndChannel
+  };
+}
 
 /**
  * Generates a filter with a dataset id as dataId
@@ -236,7 +317,7 @@ export function validateFilter<K extends KeplerTableModel<K, L>, L>(
   };
 
   const fieldName = initializeFilter.name[filterDatasetIndex];
-  const {filter: updatedFilter, dataset: updatedDataset} = applyFilterFieldName(
+  let {filter: updatedFilter, dataset: updatedDataset} = applyFilterFieldName(
     initializeFilter,
     datasets,
     datasetId,
@@ -247,6 +328,29 @@ export function validateFilter<K extends KeplerTableModel<K, L>, L>(
 
   if (!updatedFilter) {
     return failed;
+  }
+
+  const endName = toArray((filter as TimeRangeFilter).endName)[filterDatasetIndex];
+  if (updatedFilter.type === FILTER_TYPES.timeRange && endName) {
+    const appliedEnd = applyTimeFilterEndFieldName(
+      updatedFilter,
+      {
+        ...datasets,
+        [datasetId]: updatedDataset
+      },
+      datasetId,
+      endName,
+      filterDatasetIndex
+    );
+    if (appliedEnd.filter) {
+      updatedFilter = appliedEnd.filter;
+      updatedDataset = appliedEnd.dataset;
+    } else {
+      updatedFilter = clearTimeFilterEndFieldAtIndex(
+        updatedFilter as TimeRangeFilter,
+        filterDatasetIndex
+      );
+    }
   }
 
   // don't adjust value yet before all datasets are loaded
@@ -530,6 +634,14 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
       const accessor = Array.isArray(mappedValue)
         ? data => mappedValue[data.index]
         : data => timeToUnixMilli(valueAccessor(data), field.format);
+
+      const datasetIdx = toArray(filter.dataId).indexOf(dataId);
+      const endMapped = (filter as TimeRangeFilter).endMappedValue?.[datasetIdx];
+      if (isTimeIntervalFilter(filter, datasetIdx) && Array.isArray(endMapped)) {
+        return data =>
+          timeWindowOverlapsInterval(accessor(data), endMapped[data.index], filter.value);
+      }
+
       return data => isInRange(accessor(data), filter.value);
     }
     case FILTER_TYPES.polygon: {
@@ -648,7 +760,7 @@ export function diffFilters(
         filterChanged = set([record, filter.id], 'added', filterChanged);
       } else {
         // check  what has changed
-        ['name', 'value', 'dataId'].forEach(prop => {
+        ['name', 'endName', 'value', 'dataId'].forEach(prop => {
           if (filter[prop] !== oldFilter[prop]) {
             filterChanged = set([record, filter.id], `${prop}_changed`, filterChanged);
           }
@@ -1027,9 +1139,17 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
     ...(filter.plotType ? {plotType: filter.plotType} : {})
   };
 
-  if (mergeDomain) {
-    const domainSteps: (Filter & {step?: number}) | null =
-      mergeFilterDomain(newFilter, datasets) ?? ({} as Filter);
+  if (newFilter.type !== FILTER_TYPES.timeRange) {
+    newFilter = omitTimeIntervalFields(newFilter);
+  } else if (toArray(newFilter.endName)[filterDatasetIndex] === fieldName) {
+    newFilter = clearTimeFilterEndFieldAtIndex(newFilter as TimeRangeFilter, filterDatasetIndex);
+  }
+
+  if (mergeDomain || isTimeIntervalFilter(newFilter, filterDatasetIndex)) {
+    const domainSteps: (Filter & {step?: number}) | null = mergeFilterDomain(newFilter, {
+      ...datasets,
+      [datasetId]: dataset
+    });
     if (domainSteps) {
       const {domain, step} = domainSteps;
       newFilter.domain = domain;
@@ -1046,12 +1166,120 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
       ...newFilter,
       value: filter.value
     };
+  } else if (
+    newFilter.type === FILTER_TYPES.timeRange &&
+    toArray(newFilter.endName).some(Boolean) &&
+    newFilter.domain
+  ) {
+    // Selecting a new start field resets the window to the merged start/end domain
+    newFilter = {
+      ...newFilter,
+      value: newFilter.domain
+    };
   }
 
   return {
     filter: newFilter,
     dataset
   };
+}
+
+/**
+ * Set or clear the optional end timestamp field on a timeRange filter.
+ * When set, animation uses interval overlap instead of a single timestamp.
+ */
+export function applyTimeFilterEndFieldName<K extends KeplerTableModel<K, L>, L>(
+  filter: Filter,
+  datasets: Record<string, K>,
+  datasetId: string,
+  fieldName: string | null | undefined,
+  filterDatasetIndex = 0
+): {
+  filter: Filter | null;
+  dataset: K;
+} {
+  const dataset = datasets[datasetId];
+  if (!dataset || filter.type !== FILTER_TYPES.timeRange) {
+    return {filter: null, dataset};
+  }
+
+  const timeFilter = filter as TimeRangeFilter;
+
+  if (!fieldName) {
+    const cleared = clearTimeFilterEndFieldAtIndex(timeFilter, filterDatasetIndex);
+    const merged = mergeFilterDomain(cleared, datasets);
+    if (merged?.domain) {
+      const wasFullDomain = isFullTimeDomainValue(timeFilter);
+      return {
+        filter: {
+          ...cleared,
+          domain: merged.domain,
+          step: merged.step ?? cleared.step,
+          value: wasFullDomain
+            ? merged.domain
+            : adjustValueToFilterDomain(timeFilter.value, {
+                ...cleared,
+                domain: merged.domain
+              })
+        },
+        dataset
+      };
+    }
+    return {filter: cleared, dataset};
+  }
+
+  const fieldIndex = dataset.getColumnFieldIdx(fieldName);
+  if (fieldIndex === -1) {
+    return {filter: null, dataset};
+  }
+
+  const field = dataset.fields[fieldIndex];
+  if (field?.type !== ALL_FIELD_TYPES.timestamp) {
+    return {filter: null, dataset};
+  }
+
+  if (toArray(timeFilter.name)[filterDatasetIndex] === fieldName) {
+    return {filter: null, dataset};
+  }
+
+  const filterProps = dataset.getColumnFilterProps(fieldName);
+  if (!filterProps || !('mappedValue' in filterProps)) {
+    return {filter: null, dataset};
+  }
+
+  const wasFullDomain = isFullTimeDomainValue(timeFilter);
+  let newFilter: TimeRangeFilter = {
+    ...timeFilter,
+    endName: Object.assign([...toArray(timeFilter.endName)], {
+      [filterDatasetIndex]: fieldName
+    }),
+    endFieldIdx: Object.assign([...toArray(timeFilter.endFieldIdx)], {
+      [filterDatasetIndex]: fieldIndex
+    }),
+    endMappedValue: Object.assign([...toArray(timeFilter.endMappedValue)], {
+      [filterDatasetIndex]: (filterProps as TimeRangeFieldDomain).mappedValue
+    })
+  };
+
+  const merged = mergeFilterDomain(newFilter, {
+    ...datasets,
+    [datasetId]: dataset
+  });
+  if (merged?.domain) {
+    newFilter = {
+      ...newFilter,
+      domain: merged.domain as [number, number],
+      step: merged.step ?? newFilter.step,
+      value: (wasFullDomain
+        ? merged.domain
+        : adjustValueToFilterDomain(timeFilter.value, {
+            ...newFilter,
+            domain: merged.domain
+          })) as [number, number]
+    };
+  }
+
+  return {filter: newFilter, dataset};
 }
 
 /**
@@ -1069,6 +1297,11 @@ export function mergeFilterDomain(
     const dataset = datasets[filterDataId];
     const filterProps = dataset.getColumnFilterProps(filter.name[idx]);
     domainSteps = mergeFilterDomainStep(domainSteps ?? ({} as Filter), filterProps);
+    const endName = toArray((filter as TimeRangeFilter).endName)[idx];
+    if (endName) {
+      const endProps = dataset.getColumnFilterProps(endName);
+      domainSteps = mergeFilterDomainStep(domainSteps ?? ({} as Filter), endProps);
+    }
   });
   return domainSteps;
 }

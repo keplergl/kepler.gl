@@ -60,6 +60,7 @@ import {
   addNewLayersToSplitMap,
   snapToMarks,
   applyFilterFieldName,
+  applyTimeFilterEndFieldName,
   applyFiltersToDatasets,
   arrayInsert,
   computeSplitMapLayers,
@@ -1388,7 +1389,16 @@ function _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets) {
     filter = removeFilterPlot(filter, dataId);
   }
 
-  for (const prop of ['dataId', 'name', 'fieldIdx', 'gpuChannel']) {
+  for (const prop of [
+    'dataId',
+    'name',
+    'fieldIdx',
+    'gpuChannel',
+    'endName',
+    'endFieldIdx',
+    'endMappedValue',
+    'gpuEndChannel'
+  ]) {
     if (Array.isArray(filter[prop])) {
       const nextVal = filter[prop].slice();
       nextVal.splice(valueIndex, 1);
@@ -1453,6 +1463,28 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
         datasetIdsToFilter = updatedFilter.dataId;
       }
       // only filter the current dataset
+      break;
+    }
+
+    case FILTER_UPDATER_PROPS.endName: {
+      const datasetId = filter.dataId[valueIndex];
+      const {filter: updatedFilter, dataset: newDataset} = applyTimeFilterEndFieldName(
+        filter,
+        state.datasets,
+        datasetId,
+        value,
+        valueIndex
+      );
+      if (updatedFilter) {
+        filter = updatedFilter;
+        filter = setFilterGpuMode(filter, state.filters);
+        filter = filter.gpu
+          ? assignGpuChannel(filter, state.filters)
+          : {...filter, gpuChannel: undefined, gpuEndChannel: undefined};
+        state = set(['datasets', datasetId], newDataset, state);
+        filter = removeFilterPlot(filter, datasetId);
+        datasetIdsToFilter = updatedFilter.dataId;
+      }
       break;
     }
 

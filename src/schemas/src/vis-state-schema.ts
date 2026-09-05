@@ -925,7 +925,10 @@ export const filterPropsV1 = {
   enabled: null,
 
   invertTrendColor: null,
-  timezone: null
+  timezone: null,
+
+  // Optional end timestamp for duration-based time animation (#3198)
+  endName: null
 };
 
 export const propertiesV0 = {
