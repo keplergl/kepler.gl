@@ -19,7 +19,9 @@ Follow these steps to create a playback video of an event:
 
 By default, playback uses a single timestamp field: a feature is visible only while that instant falls inside the moving window.
 
-To keep features visible for a whole time span (service coverage, deployments, availability windows), add a time filter on the **start** timestamp, then optionally choose an **End time** field in the filter panel. A feature stays on the map while the playback window overlaps `[start, end]`. Rows with a missing end time are treated as still active. The timeline histogram counts a feature in every bin that falls inside its start–end range.
+To keep features visible for a whole time span (service coverage, deployments, availability windows), add a time filter on the **start** timestamp, then optionally choose an **End time** field in the filter panel. A feature stays on the map while the playback window overlaps `[start, end]`. Rows with a missing end time are treated as still active. Rows whose end time is before the start time are ignored. The timeline histogram counts a feature in every bin that falls inside its start–end range.
+
+**End time** is available only on a time filter that is not synced across datasets. If you use Time Filter Sync, clear the extra datasets first, then set End time.
 
 ## Zoom & precision controls
 

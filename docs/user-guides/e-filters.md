@@ -15,7 +15,7 @@ To add a column filter:
 ![choose a dataset](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image29.png "choose a dataset")
 
 4. Your filter is applied to your map as soon as you specify the field and value.
-5. For timestamp fields, you can optionally choose an **End time** field so features stay visible for the whole `[start, end]` span during playback. See [Playback](./h-playback.md).
+5. For timestamp fields, you can optionally choose an **End time** field so features stay visible for the whole `[start, end]` span during playback. End time is hidden while the filter is synced across datasets. See [Playback](./h-playback.md).
 6. Delete a filter anytime by clicking the __trashcan__ to the right of the filter you wish to delete.
 
 __Note__: column filters apply to all layers in the same dataset on your map.

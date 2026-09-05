@@ -361,11 +361,12 @@ export function getGpuFilterProps(
 
     const oldFilterTrigger = oldGpuFilter?.filterValueUpdateTriggers?.[`gpuFilter_${i}`] || null;
 
+    const triggerName = endFilter
+      ? toArray((endFilter as TimeRangeFilter).endName)[datasetIdx]
+      : assigned?.name[datasetIdx];
     const trigger = assigned
       ? {
-          name: endFilter
-            ? toArray((endFilter as TimeRangeFilter).endName)[datasetIdx]
-            : assigned.name[datasetIdx],
+          name: triggerName || assigned.name[datasetIdx],
           domain0: assigned.domain?.[0]
         }
       : null;

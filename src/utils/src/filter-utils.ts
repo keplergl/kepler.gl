@@ -193,7 +193,7 @@ function clearTimeFilterEndFieldAtIndex(
   const endName = [...toArray(filter.endName)];
   const endFieldIdx = [...toArray(filter.endFieldIdx)];
   const endMappedValue = [...toArray(filter.endMappedValue)];
-  const gpuEndChannel = [...toArray(filter.gpuEndChannel)];
+  const gpuEndChannel: number[] = [...(filter.gpuEndChannel || [])];
 
   endName[filterDatasetIndex] = null;
   endFieldIdx[filterDatasetIndex] = null;
