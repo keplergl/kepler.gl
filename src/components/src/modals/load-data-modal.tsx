@@ -50,6 +50,8 @@ type LoadDataModalProps = {
   fileFormatNames: string[];
   /** A list of typically 3 letter extensions (without '.') for file matching */
   fileExtensions: string[];
+  /** Extensions shown as icons in the uploader. Defaults to `fileExtensions`. */
+  displayedFileExtensions?: string[];
   isCloudMapLoading: boolean;
   /** Set to true if app wants to do its own file filtering */
   disableExtensionFilter?: boolean;

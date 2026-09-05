@@ -2,7 +2,7 @@
 
 Polygon layer can display all geometry types defined by [RFC 7946 (GeoJSON)](https://tools.ietf.org/html/rfc7946): `Point`, `LineString`, `Polygon`, `MultiPoint`, `MultiLineString`, `MultiPolygon`. 
 
-You can load a GeoJSON file (with a single [`Feature`](https://tools.ietf.org/html/rfc7946#section-3.2) or a [`FeatureCollection`](https://tools.ietf.org/html/rfc7946#section-3.3)) or a GeoArrow file.
+You can load a GeoJSON file (with a single [`Feature`](https://tools.ietf.org/html/rfc7946#section-3.2) or a [`FeatureCollection`](https://tools.ietf.org/html/rfc7946#section-3.3)), newline-delimited GeoJSON (`.geojsonl`), KML, GPX, TCX, or a GeoArrow file. KML, GPX, TCX, and GeoJSONL are converted to GeoJSON features.
 
 
 ![GeoJSON layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image20.png "GeoJSON layer")

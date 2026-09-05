@@ -11,8 +11,8 @@
 
 |   |   |
 |---|---|
-| **Local files**  | <span style="font-weight:normal">Upload CSV / GeoJSON files. Because data is only stored in your browser, there is a **250mb** limit on how much data Chrome allows you to upload into a browser. For datasets larger than **250mb** you should directly load them from a remote URL. See below.<span>  |
-| **From URL**  | Directly load data or map json by pasting a remote URL. You can link it to CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension. CORS policy must be defined on your custom url domain. |
+| **Local files**  | <span style="font-weight:normal">Upload CSV, GeoJSON, GeoJSONL, KML, GPX, TCX, Arrow, or Parquet files. Files are parsed in your browser, so available memory limits how large a file you can load. For data that does not fit in memory, use a tileset instead.<span>  |
+| **From URL**  | Directly load data or map json by pasting a remote URL. Supported extensions include `csv`, `geojson`, `json`, `geojsonl`, `kml`, `gpx`, `tcx`, `arrow`, and `parquet`. Make sure the url contains the file extension. CORS policy must be defined on your custom url domain. |
 | **Sample data**  | Load one of kepler.gl’s sample datasets. The sample map data and config are directly loaded from  [kepler.gl-data github][kepler.gl-data-github] repo  |
 
 
@@ -24,6 +24,10 @@ Geometry coordinates should be presented with a geographic coordinate reference 
 ## Supported File Formats
  - [CSV](#csv)
  - [GeoJSON](#geojson)
+ - [GeoJSONL / NDJSON](#geojsonl--ndjson)
+ - [KML](#kml)
+ - [GPX](#gpx)
+ - [TCX](#tcx)
  - [GeoArrow](#geoarrow)
  - [kepler.gl Json](#keplergl-json)
 
@@ -191,6 +195,31 @@ kepler.gl will read styles from GeoJSON files. If you are a GeoJSON expert, you 
 }
 ```
 
+### GeoJSONL / NDJSON
+
+kepler.gl accepts newline-delimited GeoJSON: one [Feature](https://tools.ietf.org/html/rfc7946#section-3.2) per line. Common extensions are `.geojsonl`, `.ndgeojson`, `.ldgeojson`, `.jsonl`, and `.ndjson`. Features are combined into a FeatureCollection and visualized like a GeoJSON file.
+
+Generic NDJSON (one JSON object per line, without GeoJSON `geometry`) is loaded as a table, the same way as CSV.
+
+Example `places.geojsonl`:
+
+```json
+{"type":"Feature","properties":{"name":"alpha"},"geometry":{"type":"Point","coordinates":[-122.4,37.8]}}
+{"type":"Feature","properties":{"name":"beta"},"geometry":{"type":"Point","coordinates":[-122.5,37.9]}}
+```
+
+### KML
+
+kepler.gl accepts `.kml` files. Placemarks are converted to GeoJSON features and visualized with a **Polygon** layer. `.kmz` (zipped KML) is not supported; unzip the archive and upload the `.kml` file. KML styles, overlays, and network links are not preserved.
+
+### GPX
+
+kepler.gl accepts `.gpx` files. Waypoints, tracks, and routes are converted to GeoJSON features. NMEA log files are not supported.
+
+### TCX
+
+kepler.gl accepts Garmin `.tcx` activity files. Track points are converted to GeoJSON features.
+
 ### GeoArrow
 
 [GeoArrow](https://geoarrow.org/) file, a binary data format which can be visualized with the [PolygonLayer](https://docs.kepler.gl/docs/user-guides/c-types-of-layers/e-polygon).
@@ -201,9 +230,9 @@ JSON file exported from kepler.gl. See "[Export Map as JSON](https://docs.kepler
 
 ### Load Map Using URL
 
-You load data or map through custom URL. It currently supports URLs with file extension of `csv`, `json` and `kepler.gl.json`
+You load data or map through custom URL. It currently supports URLs with file extension of `csv`, `json`, `geojson`, `geojsonl`, `kml`, `gpx`, `tcx`, `arrow`, `parquet`, and `kepler.gl.json`.
 
-In addition, this also by-passes 250mb file upload size limit which allows you to upload larger file to Kepler.
+A remote URL still loads the full file into memory. For datasets that do not fit in memory, use a tileset (vector tiles, COG, or PMTiles).
 
 ![Load Map Using URL](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/a-load-map-using-url.gif "Load Map Using URL")
 
@@ -227,7 +256,7 @@ To add additional datasets to your map:
 
 ![Add more data](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image22.png "Add more data")
 
-2. Choose one of the options above: upload a JSON/CSV file, or use Kepler.gl’s sample data.
+2. Choose one of the options above: upload a supported file, paste a URL, or use Kepler.gl’s sample data.
 
 3. Repeat as needed. There is no limit on the number of datasets you can add. However, adding too many might cause its performance to suffer.
 

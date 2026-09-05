@@ -808,7 +808,7 @@ ${'```'}
   fileUploader: {
     message: 'Drag & Drop Your File(s) Here',
     chromeMessage:
-      '*Chrome user: Limit file size to 250mb, if need to upload larger file, try Safari',
+      '*Files are parsed in your browser. Large files can run out of memory; use a tileset for very large datasets.',
     disclaimer:
       '*kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
       'No information or map data is sent to any server.',

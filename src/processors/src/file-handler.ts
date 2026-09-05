@@ -12,9 +12,9 @@ import {
 } from '@kepler.gl/utils';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {DATASET_FORMATS, DatasetType, REMOTE_FILE_EXTENSIONS} from '@kepler.gl/constants';
-import {AddDataToMapPayload, Feature, LoadedMap, ProcessorResult} from '@kepler.gl/types';
+import {AddDataToMapPayload, LoadedMap, ProcessorResult} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
-import type {FeatureCollection} from 'geojson';
+import type {Feature, FeatureCollection} from 'geojson';
 
 import {
   processArrowBatches,
@@ -54,6 +54,10 @@ const JSON_LOADER_OPTIONS = {
     '$.features', // GeoJSON
     '$.datasets' // KeplerGL JSON
   ]
+};
+
+const KML_LOADER_OPTIONS = {
+  shape: 'geojson-table'
 };
 
 export type ProcessFileDataContent = {
@@ -105,6 +109,52 @@ export function isFeatureCollection(json: unknown): json is FeatureCollection {
   return isPlainObject(json) && json.type === 'FeatureCollection' && Boolean(json.features);
 }
 
+export function isGeoJsonFeatureArray(json: unknown): json is Feature[] {
+  return Array.isArray(json) && json.length > 0 && isFeature(json[0]);
+}
+
+/**
+ * Normalize loaders.gl GIS output (Feature arrays, geojson-table, object-row
+ * tables of Features) into a GeoJSON Feature or FeatureCollection Kepler can process.
+ */
+export function getGeoJsonFromLoaderResult(data: unknown): Feature | FeatureCollection | null {
+  if (isGeoJson(data)) {
+    return data;
+  }
+  if (isGeoJsonFeatureArray(data)) {
+    return {type: 'FeatureCollection', features: data};
+  }
+  if (!isPlainObject(data)) {
+    return null;
+  }
+  if (data.shape === 'geojson-table' && Array.isArray(data.features)) {
+    return {type: 'FeatureCollection', features: data.features as Feature[]};
+  }
+  if (
+    (data.shape === 'object-row-table' || data.shape === 'row-table') &&
+    isGeoJsonFeatureArray(data.data)
+  ) {
+    return {type: 'FeatureCollection', features: data.data};
+  }
+  return null;
+}
+
+function getBatchRows(batch: {
+  shape?: string;
+  type?: string;
+  features?: unknown;
+  data?: unknown;
+}): unknown[] | null {
+  if (
+    Array.isArray(batch?.features) &&
+    (batch.shape === 'geojson-table' || batch.type === 'FeatureCollection')
+  ) {
+    return batch.features;
+  }
+  const batchData = isArrowTable(batch.data) ? batch.data.batches : batch.data;
+  return Array.isArray(batchData) ? batchData : null;
+}
+
 export function isRowObject(json: any): boolean {
   return Array.isArray(json) && isPlainObject(json[0]);
 }
@@ -153,10 +203,18 @@ function getPersistedRemoteFormat(keplerFormat?: string, fileName?: string): str
     return keplerFormat;
   }
   const ext = fileName?.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
-  if (ext && Object.prototype.hasOwnProperty.call(REMOTE_FILE_EXTENSIONS, ext)) {
+  if (!ext) {
+    return undefined;
+  }
+  if (Object.prototype.hasOwnProperty.call(REMOTE_FILE_EXTENSIONS, ext)) {
     return ext;
   }
-  return undefined;
+  const extensionAliases: Record<string, string> = {
+    jsonl: 'ndjson',
+    ndgeojson: 'geojsonl',
+    ldgeojson: 'geojsonl'
+  };
+  return extensionAliases[ext];
 }
 
 export async function* readBatch(
@@ -168,7 +226,7 @@ export async function* readBatch(
   etag?: string,
   lastModified?: string
 ): AsyncGenerator {
-  let result = null;
+  let result: any = null;
   const batches = <any>[];
   for await (const batch of asyncIterator) {
     // Last batch will have this special type and will provide all the root
@@ -190,9 +248,14 @@ export async function* readBatch(
         result = batches;
       }
     } else {
-      const batchData = isArrowTable(batch.data) ? batch.data.batches : batch.data;
-      for (let i = 0; i < batchData?.length; i++) {
-        batches.push(batchData[i]);
+      const batchRows = getBatchRows(batch);
+      if (batchRows) {
+        for (let i = 0; i < batchRows.length; i++) {
+          batches.push(batchRows[i]);
+        }
+      }
+      if (batch.shape === 'geojson-table') {
+        result = {type: 'FeatureCollection', features: [...batches]};
       }
     }
 
@@ -237,6 +300,9 @@ export async function readFileInBatches({
     arrow: ARROW_LOADER_OPTIONS,
     json: JSON_LOADER_OPTIONS,
     parquet: PARQUET_LOADER_OPTIONS,
+    kml: KML_LOADER_OPTIONS,
+    gpx: KML_LOADER_OPTIONS,
+    tcx: KML_LOADER_OPTIONS,
     metadata: true,
     ...(mimeType ? {mimeType} : {}),
     ...loadOptions
@@ -286,19 +352,20 @@ export async function processFileData({
     processor = processorResult.processor;
   } else {
     // use default processors
+    const geojsonData = getGeoJsonFromLoaderResult(data);
     if (isArrowData(data)) {
       format = DATASET_FORMATS.arrow;
       processor = processArrowBatches;
     } else if (isKeplerGlMap(data)) {
       format = DATASET_FORMATS.keplergl;
       processor = processKeplerglJSON;
+    } else if (geojsonData) {
+      format = DATASET_FORMATS.geojson;
+      processor = () => processGeojson(geojsonData);
     } else if (isRowObject(data)) {
       // csv file goes here
       format = DATASET_FORMATS.row;
       processor = processRowObject;
-    } else if (isGeoJson(data)) {
-      format = DATASET_FORMATS.geojson;
-      processor = processGeojson;
     }
   }
   if (format && processor) {

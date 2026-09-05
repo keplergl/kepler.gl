@@ -697,7 +697,7 @@ export default {
   fileUploader: {
     message: 'Raahaa ja pudota tiedostosi tänne',
     chromeMessage:
-      '*Chromen käyttäjä: Rajoita tiedostokokosi 250Mb:hen. Jos haluat suurempia tiedostoja, kokeile Safaria',
+      '*Tiedostot käsitellään selaimessa. Suuret tiedostot voivat loppua muistista; käytä tilesetiä hyvin suurille aineistoille.',
     disclaimer:
       '*kepler.gl on client-side sovellus, data pysyy vain selaimessasi...' +
       'Tietoja ei lähetetä palvelimelle.',

@@ -699,7 +699,7 @@ export default {
   fileUploader: {
     message: "Arrossega i deixa anar l'arxiu aquí",
     chromeMessage:
-      '*usuari de Chrome: la mida màxima són 250mb, si has de carrgar un arxiu més gran fes servir Safari',
+      "*Els fitxers s'analitzen al navegador. Els fitxers grans poden esgotar la memòria; useu un tileset per a conjunts de dades molt grans.",
     disclaimer:
       '*kepler.gl és una aplicació a la banda client que no es recolza en cap servidor. Les dades només existeixen a la teva màquina/navegador. ' +
       "No s'envien dades ni mapes a cap servidor.",

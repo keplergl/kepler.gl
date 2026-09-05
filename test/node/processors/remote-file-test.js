@@ -32,6 +32,8 @@ test('#remote-file -> getMimeTypeForFormat', t => {
   t.equal(getMimeTypeForFormat('csv'), 'text/csv');
   t.equal(getMimeTypeForFormat('parquet'), 'application/vnd.apache.parquet');
   t.equal(getMimeTypeForFormat('arrow'), 'application/vnd.apache.arrow.file');
+  t.equal(getMimeTypeForFormat('kml'), 'application/vnd.google-earth.kml+xml');
+  t.equal(getMimeTypeForFormat('geojsonl'), 'application/geo+x-ndjson');
   t.end();
 });
 
