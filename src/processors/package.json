@@ -40,6 +40,7 @@
     "@loaders.gl/csv": "^4.4.1",
     "@loaders.gl/gis": "^4.4.1",
     "@loaders.gl/json": "^4.4.1",
+    "@loaders.gl/kml": "^4.4.1",
     "@loaders.gl/loader-utils": "^4.4.1",
     "@loaders.gl/parquet": "^4.4.1",
     "@loaders.gl/schema": "^4.4.1",

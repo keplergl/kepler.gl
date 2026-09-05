@@ -11,7 +11,19 @@ export enum DatasetType {
   BITMAP = 'bitmap'
 }
 
-export const REMOTE_FILE_FORMATS = ['auto', 'csv', 'geojson', 'json', 'arrow', 'parquet'] as const;
+export const REMOTE_FILE_FORMATS = [
+  'auto',
+  'csv',
+  'geojson',
+  'json',
+  'arrow',
+  'parquet',
+  'geojsonl',
+  'ndjson',
+  'kml',
+  'gpx',
+  'tcx'
+] as const;
 export type RemoteFileFormat = (typeof REMOTE_FILE_FORMATS)[number];
 
 export const REMOTE_FILE_MIME_TYPES: Record<Exclude<RemoteFileFormat, 'auto'>, string> = {
@@ -19,7 +31,12 @@ export const REMOTE_FILE_MIME_TYPES: Record<Exclude<RemoteFileFormat, 'auto'>, s
   geojson: 'application/geo+json',
   json: 'application/json',
   arrow: 'application/vnd.apache.arrow.file',
-  parquet: 'application/vnd.apache.parquet'
+  parquet: 'application/vnd.apache.parquet',
+  geojsonl: 'application/geo+x-ndjson',
+  ndjson: 'application/x-ndjson',
+  kml: 'application/vnd.google-earth.kml+xml',
+  gpx: 'application/gpx+xml',
+  tcx: 'application/vnd.garmin.tcx+xml'
 };
 
 export const REMOTE_FILE_EXTENSIONS: Record<Exclude<RemoteFileFormat, 'auto'>, string> = {
@@ -27,7 +44,12 @@ export const REMOTE_FILE_EXTENSIONS: Record<Exclude<RemoteFileFormat, 'auto'>, s
   geojson: 'geojson',
   json: 'json',
   arrow: 'arrow',
-  parquet: 'parquet'
+  parquet: 'parquet',
+  geojsonl: 'geojsonl',
+  ndjson: 'ndjson',
+  kml: 'kml',
+  gpx: 'gpx',
+  tcx: 'tcx'
 };
 
 export const MIME_TO_REMOTE_FILE_EXTENSION: Record<string, string> = {
@@ -39,7 +61,16 @@ export const MIME_TO_REMOTE_FILE_EXTENSION: Record<string, string> = {
   'application/vnd.apache.arrow.file': 'arrow',
   'application/vnd.apache.arrow.stream': 'arrow',
   'application/vnd.apache.parquet': 'parquet',
-  'application/x-parquet': 'parquet'
+  'application/x-parquet': 'parquet',
+  'application/geo+x-ndjson': 'geojsonl',
+  'application/geo+x-ldjson': 'geojsonl',
+  'application/geo+json-seq': 'geojsonl',
+  'application/x-ndjson': 'ndjson',
+  'application/jsonlines': 'ndjson',
+  'application/json-seq': 'ndjson',
+  'application/vnd.google-earth.kml+xml': 'kml',
+  'application/gpx+xml': 'gpx',
+  'application/vnd.garmin.tcx+xml': 'tcx'
 };
 
 export const DATASET_REFRESH_INTERVAL_OPTIONS: {value: number; labelId: string}[] = [

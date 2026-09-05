@@ -4100,6 +4100,7 @@ __metadata:
     "@loaders.gl/csv": "npm:^4.4.1"
     "@loaders.gl/gis": "npm:^4.4.1"
     "@loaders.gl/json": "npm:^4.4.1"
+    "@loaders.gl/kml": "npm:^4.4.1"
     "@loaders.gl/loader-utils": "npm:^4.4.1"
     "@loaders.gl/parquet": "npm:^4.4.1"
     "@loaders.gl/schema": "npm:^4.4.1"
@@ -5258,6 +5259,21 @@ __metadata:
   peerDependencies:
     "@loaders.gl/core": ~4.4.0
   checksum: 10c0/b41b3de967d68d4e0751a13876c0dd5cb7f70e3c1d3b5116d9e2e131d48fe3728fdddebf158e7d3fe73dc29dbc95be8f035d54c43f97a6c1b1e1e5db2d4a0f88
+  languageName: node
+  linkType: hard
+
+"@loaders.gl/kml@npm:4.4.1":
+  version: 4.4.1
+  resolution: "@loaders.gl/kml@npm:4.4.1"
+  dependencies:
+    "@loaders.gl/gis": "npm:4.4.1"
+    "@loaders.gl/loader-utils": "npm:4.4.1"
+    "@loaders.gl/schema": "npm:4.4.1"
+    "@tmcw/togeojson": "npm:^4.5.0"
+    "@xmldom/xmldom": "npm:^0.7.13"
+  peerDependencies:
+    "@loaders.gl/core": ~4.4.0
+  checksum: 10c0/a854b49cedcfee31e5ff193c42b901ebd9499b4c1a4f0630a55093a9607bc46c78c5c7543be7e1dd0d9a626ab7ed82a3d0a423b9f0ef7db02409fdfc4aa522b5
   languageName: node
   linkType: hard
 
@@ -7264,6 +7280,13 @@ __metadata:
     react: ">=16.8"
     react-dom: ">=16.8"
   checksum: 10c0/b174f2fbd27c16c5a8554ee8b26f3cc61bc37507669a1cef3e3333bfb3db85c84a57a93003c972ede8007786cf0e813d489781aa9caf46fb3bf1b851e3f4daba
+  languageName: node
+  linkType: hard
+
+"@tmcw/togeojson@npm:^4.5.0":
+  version: 4.7.0
+  resolution: "@tmcw/togeojson@npm:4.7.0"
+  checksum: 10c0/6c9585c4a50e28a187602348923500474b599ed459cef44b728f9e3aa6781f0c1bb7f96879c3047fe037f58a97ca13d2d8f4ddebd97e374d40098a9611715447
   languageName: node
   linkType: hard
 
@@ -9440,6 +9463,13 @@ __metadata:
   version: 2.0.2
   resolution: "@wojtekmaj/date-utils@npm:2.0.2"
   checksum: 10c0/6a55542cf1d5d9477b0267b1df040b1ff2edef36e6622a99e2cbd9c3830f87415f767dc969e796e02bdd722c29a901e4826ba0a3ad123afb4fac8f105d08064f
+  languageName: node
+  linkType: hard
+
+"@xmldom/xmldom@npm:^0.7.13":
+  version: 0.7.13
+  resolution: "@xmldom/xmldom@npm:0.7.13"
+  checksum: 10c0/cb02e4e8d986acf18578a5f25d1bce5e18d08718f40d8a0cdd922a4c112c8e00daf94de4e43f9556ed147c696b135f2ab81fa9a2a8a0416f60af15d156b60e40
   languageName: node
   linkType: hard
 

@@ -201,6 +201,7 @@ export {DataRow} from './data-row';
 export {getApplicationConfig, initApplicationConfig} from './application-config';
 export type {
   KeplerApplicationConfig,
+  KeplerAcceptedFileFormat,
   BaseMapLibraryConfig,
   MapLibInstance,
   GetMapRef,

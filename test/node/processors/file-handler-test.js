@@ -369,6 +369,33 @@ test('#file-handler -> processArrowBatches skip compact for incremental loads', 
   t.end();
 });
 
+test('#file-handler -> processFileData Feature array is geojson', async t => {
+  const features = [
+    {
+      type: 'Feature',
+      properties: {name: 'alpha'},
+      geometry: {type: 'Point', coordinates: [-122.4, 37.8]}
+    },
+    {
+      type: 'Feature',
+      properties: {name: 'beta'},
+      geometry: {type: 'Point', coordinates: [-122.5, 37.9]}
+    }
+  ];
+  const processed = await processFileData({
+    content: {fileName: 'places.geojsonl', data: features},
+    fileCache: []
+  });
+
+  t.equal(
+    processed[0].info.format,
+    'geojson',
+    'an array of Features should not be treated as rows'
+  );
+  t.equal(processed[0].data.rows.length, 2, 'should keep both features');
+  t.end();
+});
+
 test('#file-handler -> processFileData skipArrowCompact', async t => {
   const batchA = arrow.tableFromJSON([{lng: -122.4, lat: 37.8}]);
   const batchB = arrow.tableFromJSON([{lng: -122.5, lat: 37.9}]);

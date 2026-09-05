@@ -12,7 +12,7 @@ import {
 import {
   arrowSchemaToFields,
   isArrowData,
-  isGeoJson,
+  getGeoJsonFromLoaderResult,
   isKeplerGlMap,
   isRowObject,
   processArrowBatches
@@ -303,19 +303,20 @@ export class KeplerGlDuckDbTable extends KeplerTable {
   static getFileProcessor = function (data: any, inputFormat?: string) {
     let processor;
     let format;
+    const geojsonData = getGeoJsonFromLoaderResult(data);
     if (inputFormat === DATASET_FORMATS.arrow || isArrowData(data)) {
       format = DATASET_FORMATS.arrow;
       processor = processArrowBatches;
     } else if (inputFormat === DATASET_FORMATS.keplergl || isKeplerGlMap(data)) {
       format = DATASET_FORMATS.keplergl;
       processor = processKeplerglJSONforDuckDb;
+    } else if (inputFormat === DATASET_FORMATS.geojson || geojsonData) {
+      format = DATASET_FORMATS.geojson;
+      processor = (raw: unknown) => processGeojson(getGeoJsonFromLoaderResult(raw) ?? raw);
     } else if (inputFormat === DATASET_FORMATS.row || isRowObject(data)) {
       // csv file goes here
       format = DATASET_FORMATS.row;
       processor = processCsvRowObject; // directly import json object into duckdb-wasm
-    } else if (inputFormat === DATASET_FORMATS.geojson || isGeoJson(data)) {
-      format = DATASET_FORMATS.geojson;
-      processor = processGeojson;
     }
     return {processor, format};
   };

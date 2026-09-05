@@ -10,10 +10,11 @@ import FileUploadProgress from './file-upload-progress';
 import FileDrop from './file-drop';
 import {FileLoading, FileLoadingProgress} from '@kepler.gl/types';
 
-import {GUIDES_FILE_FORMAT_DOC, REMOTE_FILE_FORMATS} from '@kepler.gl/constants';
+import {GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {
   fetchRemoteFileAsKeplerFile,
+  getAcceptedRemoteFileFormats,
   getFileNameForRemoteUrl,
   isRemoteDatasetUrl
 } from '@kepler.gl/processors';
@@ -103,6 +104,10 @@ const StyledDragNDropIcon = styled.div`
 
 const StyledFileTypeFow = styled.div`
   width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 12px;
 `;
 
 const StyledFileUpload = styled.div`
@@ -224,6 +229,8 @@ type FileUploadProps = {
   fileFormatNames?: string[];
   /** A list of typically 3 letter extensions (without '.') for file matching */
   fileExtensions?: string[];
+  /** Extensions shown as icons. Defaults to `fileExtensions`. */
+  displayedFileExtensions?: string[];
   /** Set to true if app wants to do its own file filtering */
   disableExtensionFilter?: boolean;
 } & WrappedComponentProps;
@@ -414,7 +421,10 @@ function FileUploadFactory() {
         remoteProgress
       } = this.state;
       const {fileLoading, fileLoadingProgress, theme, intl} = this.props;
-      const {fileExtensions = [], fileFormatNames = []} = this.props;
+      const {fileExtensions = [], fileFormatNames = [], displayedFileExtensions} = this.props;
+      const iconExtensions = displayedFileExtensions?.length
+        ? displayedFileExtensions
+        : fileExtensions;
       const showFormatSelector = getApplicationConfig().enableRemoteFileFormatSelector;
       const fileUploadInfoText = `${intl.formatMessage(
         {
@@ -450,7 +460,7 @@ function FileUploadFactory() {
               <StyledFileDrop $dragOver={dragOver}>
                 <StyledDropBody>
                   <StyledFileTypeFow className="file-type-row">
-                    {fileExtensions.map(ext => (
+                    {iconExtensions.map(ext => (
                       <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
                     ))}
                   </StyledFileTypeFow>
@@ -519,7 +529,7 @@ function FileUploadFactory() {
                                   onChange={this._onRemoteFormatChange}
                                   disabled={remoteLoading}
                                 >
-                                  {REMOTE_FILE_FORMATS.map(format => (
+                                  {getAcceptedRemoteFileFormats().map(format => (
                                     <option key={format} value={format}>
                                       {format === 'auto'
                                         ? intl.formatMessage({id: 'fileUploader.formatAuto'})

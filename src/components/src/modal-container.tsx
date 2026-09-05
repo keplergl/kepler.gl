@@ -11,6 +11,7 @@ import {
   exportData,
   getFileFormatNames,
   getFileExtensions,
+  getDisplayedFileExtensions,
   MapStyle,
   ProviderState
 } from '@kepler.gl/reducers';
@@ -375,6 +376,7 @@ export default function ModalContainerFactory(
                 fileLoadingProgress={visState.fileLoadingProgress}
                 fileFormatNames={getFileFormatNames(this.props.visState)}
                 fileExtensions={getFileExtensions(this.props.visState)}
+                displayedFileExtensions={getDisplayedFileExtensions(this.props.visState)}
               />
             );
             modalProps = {

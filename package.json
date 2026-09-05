@@ -263,6 +263,7 @@
     "@loaders.gl/draco": "4.4.1",
     "@loaders.gl/gltf": "4.4.1",
     "@loaders.gl/json": "4.4.1",
+    "@loaders.gl/kml": "4.4.1",
     "@loaders.gl/loader-utils": "4.4.1",
     "@loaders.gl/polyfills": "4.4.1",
     "@loaders.gl/arrow": "4.4.1",

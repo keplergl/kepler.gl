@@ -76,6 +76,25 @@ export type BaseMapLibraryConfig = {
  */
 export type ReduxLogLevel = 0 | 1 | 2;
 
+/** Built-in file formats that can be listed in {@link KeplerApplicationConfig.acceptedFileFormats}. */
+export type KeplerAcceptedFileFormat =
+  | 'csv'
+  | 'tsv'
+  | 'dsv'
+  | 'json'
+  | 'geojson'
+  | 'ndjson'
+  | 'jsonl'
+  | 'geojsonl'
+  | 'ndgeojson'
+  | 'ldgeojson'
+  | 'kml'
+  | 'gpx'
+  | 'tcx'
+  | 'arrow'
+  | 'feather'
+  | 'parquet';
+
 export type KeplerApplicationConfig = {
   /** Default name of export HTML file, can be overridden by user */
   defaultHtmlName?: string;
@@ -189,6 +208,18 @@ export type KeplerApplicationConfig = {
    * Useful for extensionless URLs such as Azure SAS blobs. Disabled by default.
    */
   enableRemoteFileFormatSelector?: boolean;
+
+  /**
+   * File formats Kepler may load from drag-and-drop, the file picker, and remote URLs.
+   * Values are format ids or extensions (`csv`, `geojson`, `kml`, `geojsonl`, …).
+   * When omitted or `null`, every built-in format is accepted.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({acceptedFileFormats: ['csv', 'geojson', 'parquet']});
+   * ```
+   */
+  acceptedFileFormats?: KeplerAcceptedFileFormat[] | null;
 
   /**
    * Custom SVG icons to be made available in the icon layer.
@@ -337,6 +368,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableColumnStats: true,
 
   enableRemoteFileFormatSelector: false,
+
+  acceptedFileFormats: null,
 
   customIcons: [],
 
