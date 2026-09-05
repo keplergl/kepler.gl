@@ -706,7 +706,7 @@ export default {
       '*kepler.gl é uma aplicação client-side, sem um servidor backend. Os dados ficam apenas na sua máquina/browser. ' +
       'Nenhuma informação ou dados de mapa é enviado para qualquer server.',
     configUploadMessage:
-      'Envie {fileFormatNames} ou mapas salvos **Json**. Leia mais sobre [**tipos de arquivos suportados**]',
+      'Envie um arquivo suportado ou mapas salvos **Json**. Leia mais sobre [**tipos de arquivos suportados**]',
     browseFiles: 'procure seus arquivos',
     uploading: 'Enviando',
     downloading: 'Baixando',

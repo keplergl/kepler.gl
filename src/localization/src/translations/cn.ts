@@ -683,8 +683,7 @@ export default {
     disclaimer:
       '* kepler.gl 在客户端上工作。数据仅保留在您自己的设备/浏览器中。' +
       '没有信息或地图数据被发送到任何服务器。',
-    configUploadMessage:
-      '上传 {fileFormatNames} 或保存的地图 **Json**。阅读更多关于[**支持的文件格式**]',
+    configUploadMessage: '上传支持的文件或保存的地图 **Json**。阅读更多关于[**支持的文件格式**]',
     browseFiles: '浏览你的文件',
     uploading: '上传',
     downloading: '下载中',

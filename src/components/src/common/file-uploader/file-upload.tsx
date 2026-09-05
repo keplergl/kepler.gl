@@ -32,6 +32,10 @@ const StyledUploadMessage = styled.div`
   font-size: 14px;
   margin-bottom: 12px;
 
+  p {
+    margin: 0;
+  }
+
   ${media.portable`
     font-size: 12px;
   `};
@@ -421,19 +425,14 @@ function FileUploadFactory() {
         remoteProgress
       } = this.state;
       const {fileLoading, fileLoadingProgress, theme, intl} = this.props;
-      const {fileExtensions = [], fileFormatNames = [], displayedFileExtensions} = this.props;
+      const {fileExtensions = [], displayedFileExtensions} = this.props;
       const iconExtensions = displayedFileExtensions?.length
         ? displayedFileExtensions
         : fileExtensions;
       const showFormatSelector = getApplicationConfig().enableRemoteFileFormatSelector;
-      const fileUploadInfoText = `${intl.formatMessage(
-        {
-          id: 'fileUploader.configUploadMessage'
-        },
-        {
-          fileFormatNames: fileFormatNames.map(format => `**${format}**`).join(', ')
-        }
-      )}(${GUIDES_FILE_FORMAT_DOC}).`;
+      const fileUploadInfoText = `${intl.formatMessage({
+        id: 'fileUploader.configUploadMessage'
+      })}(${GUIDES_FILE_FORMAT_DOC}).`;
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
           {FileDrop ? (
@@ -563,10 +562,6 @@ function FileUploadFactory() {
               </StyledFileDrop>
             </FileDrop>
           ) : null}
-
-          <WarningMsg>
-            <FormattedMessage id={'fileUploader.chromeMessage'} />
-          </WarningMsg>
         </StyledFileUpload>
       );
     }
