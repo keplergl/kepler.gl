@@ -701,7 +701,7 @@ export default {
   fileUploader: {
     message: 'Arraste e solte seu(s) arquivo(s) aqui',
     chromeMessage:
-      '*Usuários do chrome: O limite de tamanho de arquivo é 250mb, se você precisa fazer upload de arquivos maiores tente o Safari',
+      '*Os arquivos são processados no navegador. Arquivos grandes podem esgotar a memória; use um tileset para conjuntos de dados muito grandes.',
     disclaimer:
       '*kepler.gl é uma aplicação client-side, sem um servidor backend. Os dados ficam apenas na sua máquina/browser. ' +
       'Nenhuma informação ou dados de mapa é enviado para qualquer server.',

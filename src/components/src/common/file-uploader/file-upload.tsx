@@ -19,7 +19,7 @@ import {
   isRemoteDatasetUrl
 } from '@kepler.gl/processors';
 import {media} from '@kepler.gl/styles';
-import {isChrome, getApplicationConfig} from '@kepler.gl/utils';
+import {getApplicationConfig} from '@kepler.gl/utils';
 import Markdown from 'markdown-to-jsx';
 
 import {Button, InputLight} from '../styled-components';
@@ -565,7 +565,7 @@ function FileUploadFactory() {
           ) : null}
 
           <WarningMsg>
-            {isChrome() ? <FormattedMessage id={'fileUploader.chromeMessage'} /> : ''}
+            <FormattedMessage id={'fileUploader.chromeMessage'} />
           </WarningMsg>
         </StyledFileUpload>
       );

@@ -7,7 +7,8 @@ import {
   makeProgressIterator,
   filesToDataPayload,
   processFileData,
-  processArrowBatches
+  processArrowBatches,
+  getGeoJsonFromLoaderResult
 } from '@kepler.gl/processors';
 import {getDatasetRefreshIntervalMs} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
@@ -393,6 +394,32 @@ test('#file-handler -> processFileData Feature array is geojson', async t => {
     'an array of Features should not be treated as rows'
   );
   t.equal(processed[0].data.rows.length, 2, 'should keep both features');
+  t.end();
+});
+
+test('#file-handler -> rows with type Feature but no geometry stay tables', async t => {
+  const rows = [
+    {type: 'Feature', name: 'alpha', lat: 37.8, lng: -122.4},
+    {type: 'Feature', name: 'beta', lat: 37.9, lng: -122.5}
+  ];
+
+  t.equal(
+    getGeoJsonFromLoaderResult(rows),
+    null,
+    'should not wrap tabular rows as a FeatureCollection'
+  );
+
+  const processed = await processFileData({
+    content: {fileName: 'places.csv', data: rows},
+    fileCache: []
+  });
+
+  t.equal(
+    processed[0].info.format,
+    'row',
+    'a type column equal to Feature should not force geojson'
+  );
+  t.equal(processed[0].data.rows.length, 2, 'should keep both rows');
   t.end();
 });
 

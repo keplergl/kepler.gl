@@ -109,12 +109,8 @@ export function isFeatureCollection(json: unknown): json is FeatureCollection {
   return isPlainObject(json) && json.type === 'FeatureCollection' && Boolean(json.features);
 }
 
-function isGeoJsonFeatureLike(json: unknown): json is Feature {
-  return isPlainObject(json) && json.type === 'Feature';
-}
-
 export function isGeoJsonFeatureArray(json: unknown): json is Feature[] {
-  return Array.isArray(json) && json.length > 0 && isGeoJsonFeatureLike(json[0]);
+  return Array.isArray(json) && json.length > 0 && isFeature(json[0]);
 }
 
 /**

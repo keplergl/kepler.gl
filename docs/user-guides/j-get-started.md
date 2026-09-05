@@ -7,7 +7,7 @@ Kepler.gl is a tool designed for geospatial data analysis. This guide will help 
 
 ![Add data to the map pop up](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image42.png "Add data to the map pop up")
 
-Kepler.gl will prompt you to add data to your map as soon as you open the web page. Upload your own CSV or GEOJSON file, or add kepler.gl sample data.
+Kepler.gl will prompt you to add data to your map as soon as you open the web page. Upload your own CSV, GeoJSON, KML, or other [supported file](./b-kepler-gl-workflow/a-add-data-to-the-map.md#supported-file-formats), or add kepler.gl sample data.
 Sample data is a great way to explore and get familiar with kepler.gl’s features.
 
 Read more about adding [Add data to the map](./b-kepler-gl-workflow/a-add-data-to-the-map.md).

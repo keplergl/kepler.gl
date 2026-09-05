@@ -700,7 +700,7 @@ export default {
   fileUploader: {
     message: 'Arrastra y suelta el archivo aquí',
     chromeMessage:
-      '*usuario de Chrome: la medida máxima son 250mb, si debes cargar un archivo más grande utiliza Safari',
+      '*Los archivos se analizan en el navegador. Los archivos grandes pueden agotar la memoria; use un tileset para conjuntos de datos muy grandes.',
     disclaimer:
       '*kepler.gl es una aplicación al lado cliente que no utiliza ningún servidor. Los datos sólo existen en tu máquina/navegador. ' +
       'No se envian datos ni mapas a ningún servidor.',

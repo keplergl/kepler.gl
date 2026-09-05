@@ -679,8 +679,7 @@ export default {
   },
   fileUploader: {
     message: '将您的文件拖放到此处（可多个）',
-    chromeMessage:
-      '*对于 Chrome 用户：文件大小最大为 250mb。如果需要上传更多文件，请尝试使用 Safari。',
+    chromeMessage: '*文件在浏览器中解析。过大的文件可能耗尽内存；超大数据集请使用瓦片（tileset）。',
     disclaimer:
       '* kepler.gl 在客户端上工作。数据仅保留在您自己的设备/浏览器中。' +
       '没有信息或地图数据被发送到任何服务器。',
