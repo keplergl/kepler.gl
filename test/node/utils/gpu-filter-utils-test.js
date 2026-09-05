@@ -258,6 +258,49 @@ test('gpuFilterUtils -> assignGpuChannel interval time filter', t => {
   t.end();
 });
 
+test('gpuFilterUtils -> getGpuFilterProps unchanged for single-channel filters', t => {
+  const filters = [
+    {
+      id: 'f1',
+      gpu: true,
+      type: FILTER_TYPES.timeRange,
+      dataId: ['ds'],
+      name: ['timestamp'],
+      fieldIdx: [0],
+      gpuChannel: [0],
+      domain: [1000, 5000],
+      value: [2000, 3000]
+    },
+    {
+      id: 'f2',
+      gpu: true,
+      type: FILTER_TYPES.range,
+      dataId: ['ds'],
+      name: ['value'],
+      fieldIdx: [1],
+      gpuChannel: [2],
+      domain: [0, 10],
+      value: [2, 8]
+    }
+  ];
+  const fields = [
+    {name: 'timestamp', filterProps: {mappedValue: [1000, 2000]}, valueAccessor: d => d.timestamp},
+    {name: 'value', valueAccessor: d => d.value}
+  ];
+
+  const gpu = getGpuFilterProps(filters, 'ds', fields);
+
+  t.deepEqual(gpu.filterRange[0], [1000, 2000], 'timeRange channel stays [v0-domain0, v1-domain0]');
+  t.deepEqual(gpu.filterRange[1], [0, 0], 'unused channel stays [0, 0]');
+  t.deepEqual(gpu.filterRange[2], [2, 8], 'range channel stays [v0-domain0, v1-domain0]');
+  t.equal(gpu.filterValueUpdateTriggers.gpuFilter_0.name, 'timestamp');
+  t.equal(gpu.filterValueUpdateTriggers.gpuFilter_2.name, 'value');
+  t.equal(gpu.filterValueUpdateTriggers.gpuFilter_1, null);
+  t.equal(Object.prototype.hasOwnProperty.call(filters[0], 'gpuEndChannel'), false);
+
+  t.end();
+});
+
 test('gpuFilterUtils -> getGpuFilterProps interval overlap ranges', t => {
   const filters = [
     {
