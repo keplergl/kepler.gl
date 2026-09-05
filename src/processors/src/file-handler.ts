@@ -12,9 +12,9 @@ import {
 } from '@kepler.gl/utils';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {DATASET_FORMATS, DatasetType, REMOTE_FILE_EXTENSIONS} from '@kepler.gl/constants';
-import {AddDataToMapPayload, Feature, LoadedMap, ProcessorResult} from '@kepler.gl/types';
+import {AddDataToMapPayload, LoadedMap, ProcessorResult} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
-import type {FeatureCollection} from 'geojson';
+import type {Feature, FeatureCollection} from 'geojson';
 
 import {
   processArrowBatches,
@@ -230,7 +230,7 @@ export async function* readBatch(
   etag?: string,
   lastModified?: string
 ): AsyncGenerator {
-  let result = null;
+  let result: any = null;
   const batches = <any>[];
   for await (const batch of asyncIterator) {
     // Last batch will have this special type and will provide all the root
