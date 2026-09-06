@@ -54,6 +54,7 @@ export {
   histogramFromValues,
   histogramFromDomain,
   histogramFromOrdinal,
+  histogramFromTimeIntervals,
   mergePolygonLayerIndexes,
   runGpuFilterForPlot,
   updateTimeFilterPlotType

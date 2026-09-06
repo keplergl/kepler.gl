@@ -27,7 +27,8 @@ export default {
     selectValue: '値を選択',
     enterValue: '値を入力',
     empty: '未選択',
-    selectLayer: 'レイヤを選択'
+    selectLayer: 'レイヤを選択',
+    endTimeField: '終了時刻を選択'
   },
   misc: {
     by: '',
@@ -288,7 +289,10 @@ export default {
     timeFilterSync: '同期データセット',
     timeLayerSync: 'レイヤタイムラインにリンク',
     timeLayerUnsync: 'レイヤタイムラインのリンクを解除',
-    column: '列'
+    column: '列',
+    timeIntervalEndField: '終了時刻',
+    timeIntervalEndFieldHint:
+      '任意。再生ウィンドウがこの期間と重なっている間、フィーチャは表示されたままになります。'
   },
   datasetTitle: {
     showDataTable: 'データ表を表示',

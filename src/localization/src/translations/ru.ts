@@ -27,7 +27,8 @@ export default {
     selectValue: 'Выберите A значение',
     enterValue: 'Введите значение',
     empty: 'пустой',
-    selectLayer: 'Выберите слой'
+    selectLayer: 'Выберите слой',
+    endTimeField: 'Выберите время окончания'
   },
   misc: {
     by: '',
@@ -290,7 +291,10 @@ export default {
     timeFilterSync: 'Синхронизированные наборы данных',
     timeLayerSync: 'Привязать к временной шкале слоя',
     timeLayerUnsync: 'Отвязать от временной шкалы слоя',
-    column: 'Столбец'
+    column: 'Столбец',
+    timeIntervalEndField: 'Время окончания',
+    timeIntervalEndFieldHint:
+      'Необязательно. Объекты остаются видимыми, пока окно воспроизведения пересекается с этим интервалом.'
   },
   datasetTitle: {
     showDataTable: 'Показать таблицу данных ',

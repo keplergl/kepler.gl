@@ -27,7 +27,8 @@ export default {
     selectValue: 'Selecione um valor',
     enterValue: 'Insira um valor',
     empty: 'Vazio',
-    selectLayer: 'Selecione uma camada'
+    selectLayer: 'Selecione uma camada',
+    endTimeField: 'Selecione a hora de término'
   },
   misc: {
     by: '',
@@ -291,7 +292,10 @@ export default {
     timeFilterSync: 'Conjuntos sincronizados',
     timeLayerSync: 'Vincular à linha do tempo da camada',
     timeLayerUnsync: 'Desvincular da linha do tempo da camada',
-    column: 'Coluna'
+    column: 'Coluna',
+    timeIntervalEndField: 'Hora de término',
+    timeIntervalEndFieldHint:
+      'Opcional. As entidades permanecem visíveis enquanto a janela de reprodução se sobrepõe a este intervalo.'
   },
   datasetTitle: {
     showDataTable: 'Mostrar tabela de dados',

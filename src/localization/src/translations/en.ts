@@ -27,7 +27,8 @@ export default {
     selectValue: 'Select A Value',
     enterValue: 'Enter a value',
     empty: 'empty',
-    selectLayer: 'Select a layer'
+    selectLayer: 'Select a layer',
+    endTimeField: 'Select end time'
   },
   misc: {
     by: '',
@@ -334,7 +335,10 @@ export default {
     timeFilterSync: 'Synced datasets',
     timeLayerSync: 'Link with the layer timeline',
     timeLayerUnsync: 'Unlink with the layer timeline',
-    column: 'Column'
+    column: 'Column',
+    timeIntervalEndField: 'End time',
+    timeIntervalEndFieldHint:
+      'Optional. Features stay visible while the playback window overlaps this time span.'
   },
   datasetTitle: {
     showDataTable: 'Show data table',

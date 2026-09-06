@@ -27,7 +27,8 @@ export default {
     selectValue: 'Selecciona un Valor',
     enterValue: 'Entra un valor',
     empty: 'buit',
-    selectLayer: 'Selecciona una capa'
+    selectLayer: 'Selecciona una capa',
+    endTimeField: 'Selecciona hora de fi'
   },
   misc: {
     by: '',
@@ -290,7 +291,10 @@ export default {
     timeFilterSync: 'Conjunts sincronitzats',
     timeLayerSync: 'Vincula amb la línia de temps de la capa',
     timeLayerUnsync: 'Desvincula de la línia de temps de la capa',
-    column: 'Columna'
+    column: 'Columna',
+    timeIntervalEndField: 'Hora de fi',
+    timeIntervalEndFieldHint:
+      'Opcional. Les entitats romanen visibles mentre la finestra de reproducció se superposa a aquest interval.'
   },
   datasetTitle: {
     showDataTable: 'Mostra taula de dades',

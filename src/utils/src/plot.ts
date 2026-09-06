@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {bisectLeft, extent, histogram as d3Histogram, ticks} from 'd3-array';
+import {bisectLeft, bisectRight, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import isEqual from 'es-toolkit/compat/isEqual';
 import {getFilterMappedValue, getInitialInterval, intervalToFunction} from './time';
 import moment from 'moment';
@@ -18,7 +18,7 @@ import {
   ValueOf,
   LineDatum
 } from '@kepler.gl/types';
-import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
 import {
   ANIMATION_WINDOW,
   BINS,
@@ -159,7 +159,78 @@ export function histogramFromOrdinal(
 }
 
 /**
- *
+ * Bin rows by time interval overlap: a feature [start, end] is counted in every
+ * bin whose range intersects that span. Null/undefined end is treated as still
+ * active through the last threshold (open-ended).
+ */
+export function histogramFromTimeIntervals(
+  thresholds: number[],
+  indexes: number[],
+  startAccessor: (idx: number) => number | null | undefined,
+  endAccessor: (idx: number) => number | null | undefined
+): Bin[] {
+  if (!thresholds || thresholds.length < 2) {
+    return [];
+  }
+
+  const nBins = thresholds.length - 1;
+  const bins: Bin[] = [];
+  for (let i = 0; i < nBins; i++) {
+    bins.push({
+      count: 0,
+      indexes: [],
+      x0: thresholds[i],
+      x1: thresholds[i + 1]
+    });
+  }
+
+  const lastThreshold = thresholds[nBins];
+
+  for (const idx of indexes) {
+    const start = startAccessor(idx);
+    if (!notNullorUndefined(start) || Number.isNaN(start)) {
+      continue;
+    }
+    const rawEnd = endAccessor(idx);
+    if (notNullorUndefined(rawEnd) && !Number.isNaN(rawEnd) && rawEnd < start) {
+      continue;
+    }
+    const end = notNullorUndefined(rawEnd) && !Number.isNaN(rawEnd) ? rawEnd : lastThreshold;
+
+    let startBin = bisectRight(thresholds, start) - 1;
+    let endBin = bisectRight(thresholds, end) - 1;
+
+    if (startBin < 0) startBin = 0;
+    if (startBin >= nBins && start === lastThreshold) startBin = nBins - 1;
+    if (endBin >= nBins) endBin = nBins - 1;
+    if (endBin < 0 || startBin >= nBins || endBin < startBin) {
+      continue;
+    }
+
+    for (let i = startBin; i <= endBin; i++) {
+      bins[i].indexes.push(idx);
+      bins[i].count += 1;
+    }
+  }
+
+  return bins.filter(b => b.count > 0);
+}
+
+function getEndMappedValue(dataset, filter: TimeRangeFilter): (number | null)[] | null {
+  const datasetIdx = toArray(filter.dataId).indexOf(dataset.id);
+  const fromFilter = filter.endMappedValue?.[datasetIdx];
+  if (Array.isArray(fromFilter)) {
+    return fromFilter;
+  }
+  const endName = toArray(filter.endName)[datasetIdx];
+  if (!endName || typeof dataset.getColumnField !== 'function') {
+    return null;
+  }
+  const field = dataset.getColumnField(endName);
+  return field?.filterProps?.mappedValue || null;
+}
+
+/**
  * @param domain
  * @param values
  * @param numBins
@@ -226,6 +297,15 @@ export function binByTime(indexes, dataset, interval, filter) {
     return null;
   }
   const intervalBins = getBinThresholds(interval, filter.domain);
+  const endMapped = getEndMappedValue(dataset, filter);
+  if (Array.isArray(endMapped)) {
+    return histogramFromTimeIntervals(
+      intervalBins,
+      indexes,
+      idx => mappedValue[idx],
+      idx => endMapped[idx]
+    );
+  }
   const valueAccessor = idx => mappedValue[idx];
   const bins = histogramFromThreshold(intervalBins, indexes, valueAccessor);
 

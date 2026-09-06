@@ -11,6 +11,7 @@ export type SavedFilter = {
   dataId: Filter['dataId'];
   id: Filter['id'];
   name: Filter['name'];
+  endName?: Filter['endName'];
   type: Filter['type'];
   value: Filter['value'];
   // deprecated

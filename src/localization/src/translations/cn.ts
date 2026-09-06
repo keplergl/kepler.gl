@@ -27,7 +27,8 @@ export default {
     selectValue: '选择值',
     enterValue: '输入值',
     empty: '未选择',
-    selectLayer: '选择图层'
+    selectLayer: '选择图层',
+    endTimeField: '选择结束时间'
   },
   misc: {
     by: '',
@@ -276,7 +277,9 @@ export default {
     timeFilterSync: '同步数据集',
     timeLayerSync: '与图层时间线联动',
     timeLayerUnsync: '取消与图层时间线联动',
-    column: '列'
+    column: '列',
+    timeIntervalEndField: '结束时间',
+    timeIntervalEndFieldHint: '可选。当播放窗口与该时间范围重叠时，要素保持可见。'
   },
   datasetTitle: {
     showDataTable: '显示数据表',
