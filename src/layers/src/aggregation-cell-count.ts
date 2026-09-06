@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-export const AGGREGATION_CELL_COUNT_WARNING_THRESHOLD = 20_000;
+export const AGGREGATION_CELL_COUNT_WARNING_THRESHOLD = 100_000;
 
 export type AggregationBinType = 'grid' | 'hexagon';
 
