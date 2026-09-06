@@ -37,7 +37,6 @@ export default function AggregationWorldUnitSizeControl({
     () => estimateAggregationCellCount(bounds, draft, kind, pointCount || undefined),
     [bounds, draft, kind, pointCount]
   );
-  const dangerous = isAggregationCellCountSlow(cellCount, pointCount);
 
   const sliderLayer = useMemo(
     () => ({
@@ -90,9 +89,9 @@ export default function AggregationWorldUnitSizeControl({
         layer={sliderLayer as Layer}
         onChange={onSliderChange}
       />
-      {pendingConfirm && dangerous && cellCount != null ? (
+      {pendingConfirm ? (
         <AggregationSizeWarning
-          cellCount={cellCount}
+          cellCount={cellCount ?? 0}
           requireConfirm
           onCancel={onCancel}
           onConfirm={onConfirm}
