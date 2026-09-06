@@ -1060,6 +1060,34 @@ export function layerTypeChangeUpdater(
 }
 
 /**
+ * Bind visual channel fields to the dataset field of the same name.
+ * `addDataToMap` and `layerVisualChannelConfigChange` often pass `{name, type}`
+ * or processor fields whose valueAccessor is not bound to the KeplerTable, which
+ * leaves strokeColorDomain at `[0, 1]` (kepler.gl #3061).
+ */
+function resolveVisualChannelFieldFromDataset(
+  newConfig: VisStateActions.LayerVisualChannelConfigChangeUpdaterAction['newConfig'],
+  dataset: KeplerTable | undefined,
+  visualChannel: Layer['visualChannels'][string] | undefined
+) {
+  if (!dataset || !visualChannel) {
+    return newConfig;
+  }
+  const incoming = newConfig[visualChannel.field];
+  if (!incoming || typeof incoming !== 'object' || !incoming.name) {
+    return newConfig;
+  }
+  const found = dataset.fields.find(fd => fd.name === incoming.name);
+  if (!found) {
+    return newConfig;
+  }
+  return {
+    ...newConfig,
+    [visualChannel.field]: found
+  };
+}
+
+/**
  * Update layer visual channel
  * @memberof visStateUpdaters
  * @returns {Object} nextState
@@ -1069,12 +1097,17 @@ export function layerVisualChannelChangeUpdater(
   state: VisState,
   action: VisStateActions.LayerVisualChannelConfigChangeUpdaterAction
 ): VisState {
-  const {oldLayer, newConfig, newVisConfig, channel} = action;
+  const {oldLayer, newVisConfig, channel} = action;
   if (!oldLayer.config.dataId) {
     return state;
   }
 
   const dataset = state.datasets[oldLayer.config.dataId];
+  const newConfig = resolveVisualChannelFieldFromDataset(
+    action.newConfig,
+    dataset,
+    oldLayer.visualChannels[channel]
+  );
 
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   let newLayer = oldLayer.updateLayerConfig(newConfig);
