@@ -358,7 +358,10 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     step: 0.0001,
     group: PROPERTY_GROUPS.cell,
     property: 'worldUnitSize',
-    allowCustomValue: true
+    allowCustomValue: true,
+    // First 20% of the slider covers 0–1 km so small radii are easier to pick.
+    focusRange: [MIN_WORLD_UNIT_SIZE, 1],
+    focusWeight: 0.2
   },
   elevationScale: {
     type: 'number',

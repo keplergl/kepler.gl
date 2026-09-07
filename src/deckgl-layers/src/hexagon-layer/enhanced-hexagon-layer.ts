@@ -3,11 +3,16 @@
 
 import {HexagonLayer, HexagonLayerPickingInfo} from '@deck.gl/aggregation-layers';
 import {GetPickingInfoParams, Layer, PickingInfo, Viewport} from '@deck.gl/core';
-import {enrichedAggregationUpdate, enrichedRenderLayers} from '../layer-utils/aggregation-utils';
+import {
+  enrichedAggregationUpdate,
+  enrichedRenderLayers,
+  getDisplayedAggregationLayout
+} from '../layer-utils/aggregation-utils';
 import {
   makeGlobeCellLayerClass,
   runBinOptionsWithMercatorViewport
 } from '../layer-utils/globe-cell-utils';
+import WorkerBackedCPUAggregator from '../layer-utils/worker-cpu-aggregator';
 
 const THIRD_PI = Math.PI / 3;
 const HexbinVertices = Array.from({length: 6}, (_, i) => {
@@ -50,6 +55,41 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
     ...HexagonLayer.defaultProps,
     gpuAggregation: false
   };
+
+  get isLoaded(): boolean {
+    const pending = Boolean(
+      (this.state as {aggregator?: {isPending?: boolean}})?.aggregator?.isPending
+    );
+    return super.isLoaded && !pending;
+  }
+
+  createAggregator(type: string) {
+    const aggregator = super.createAggregator(type);
+    if (type === 'cpu') {
+      return new WorkerBackedCPUAggregator({
+        syncAggregator: aggregator,
+        binType: 'hexagon',
+        requestRedraw: () => this.setNeedsRedraw(true)
+      });
+    }
+    return aggregator;
+  }
+
+  updateState(params: any) {
+    const aggregatorChanged = super.updateState(params);
+    const {changeFlags} = params;
+    if (changeFlags.updateTriggersChanged?.getColorWeight) {
+      (
+        this.state as {aggregator?: {setNeedsUpdate(channel: number): void}}
+      ).aggregator?.setNeedsUpdate(0);
+    }
+    if (changeFlags.updateTriggersChanged?.getElevationWeight) {
+      (
+        this.state as {aggregator?: {setNeedsUpdate(channel: number): void}}
+      ).aggregator?.setNeedsUpdate(1);
+    }
+    return aggregatorChanged;
+  }
 
   // HACK: deck.gl 9's _onAggregationUpdate is private and its onSetColorDomain
   // callback only provides [min, max].  That is sufficient for quantize/linear
@@ -94,8 +134,8 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
   getPickingInfo(params: GetPickingInfoParams): PickingInfo {
     const info = super.getPickingInfo(params) as HexagonLayerPickingInfo<Record<string, unknown>>;
     if (info.object) {
-      const {radiusCommon, hexOriginCommon, aggregatorViewport} = this
-        .state as unknown as HexInternalState;
+      const {aggregatorViewport} = this.state as unknown as HexInternalState;
+      const {radiusCommon, hexOriginCommon} = getDisplayedAggregationLayout(this);
       const coverage = this.props.coverage ?? 1;
       if (!radiusCommon || !aggregatorViewport) {
         console.error(

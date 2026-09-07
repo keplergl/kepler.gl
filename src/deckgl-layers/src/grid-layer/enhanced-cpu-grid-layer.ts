@@ -3,11 +3,16 @@
 
 import {GridLayer, GridLayerPickingInfo} from '@deck.gl/aggregation-layers';
 import {GetPickingInfoParams, Layer, PickingInfo, Viewport} from '@deck.gl/core';
-import {enrichedAggregationUpdate, enrichedRenderLayers} from '../layer-utils/aggregation-utils';
+import {
+  enrichedAggregationUpdate,
+  enrichedRenderLayers,
+  getDisplayedAggregationLayout
+} from '../layer-utils/aggregation-utils';
 import {
   makeGlobeCellLayerClass,
   runBinOptionsWithMercatorViewport
 } from '../layer-utils/globe-cell-utils';
+import WorkerBackedCPUAggregator from '../layer-utils/worker-cpu-aggregator';
 
 interface GridInternalState {
   cellOriginCommon?: [number, number];
@@ -39,6 +44,41 @@ export default class ScaleEnhancedGridLayer extends GridLayer<any> {
     ...GridLayer.defaultProps,
     gpuAggregation: false
   };
+
+  get isLoaded(): boolean {
+    const pending = Boolean(
+      (this.state as {aggregator?: {isPending?: boolean}})?.aggregator?.isPending
+    );
+    return super.isLoaded && !pending;
+  }
+
+  createAggregator(type: string) {
+    const aggregator = super.createAggregator(type);
+    if (type === 'cpu') {
+      return new WorkerBackedCPUAggregator({
+        syncAggregator: aggregator,
+        binType: 'grid',
+        requestRedraw: () => this.setNeedsRedraw(true)
+      });
+    }
+    return aggregator;
+  }
+
+  updateState(params: any) {
+    const aggregatorChanged = super.updateState(params);
+    const {changeFlags} = params;
+    if (changeFlags.updateTriggersChanged?.getColorWeight) {
+      (
+        this.state as {aggregator?: {setNeedsUpdate(channel: number): void}}
+      ).aggregator?.setNeedsUpdate(0);
+    }
+    if (changeFlags.updateTriggersChanged?.getElevationWeight) {
+      (
+        this.state as {aggregator?: {setNeedsUpdate(channel: number): void}}
+      ).aggregator?.setNeedsUpdate(1);
+    }
+    return aggregatorChanged;
+  }
 
   // HACK: deck.gl 9's _onAggregationUpdate is private and its onSetColorDomain
   // callback only provides [min, max].  That is sufficient for quantize/linear
@@ -83,8 +123,8 @@ export default class ScaleEnhancedGridLayer extends GridLayer<any> {
   getPickingInfo(params: GetPickingInfoParams): PickingInfo {
     const info = super.getPickingInfo(params) as GridLayerPickingInfo<Record<string, unknown>>;
     if (info.object) {
-      const {cellOriginCommon, cellSizeCommon, aggregatorViewport} = this
-        .state as unknown as GridInternalState;
+      const {aggregatorViewport} = this.state as unknown as GridInternalState;
+      const {cellOriginCommon, cellSizeCommon} = getDisplayedAggregationLayout(this);
       const coverage = this.props.coverage ?? 1;
       if (!cellOriginCommon || !cellSizeCommon || !aggregatorViewport) {
         console.error(
