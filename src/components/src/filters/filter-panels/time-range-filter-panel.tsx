@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useMemo} from 'react';
-import styled from 'styled-components';
 import TimeRangeFilterFactory from '../time-range-filter';
 import {Clock} from '../../common/icons';
 import {TimeRangeFilterPanelComponent} from './types';
@@ -10,7 +9,13 @@ import {isSideFilter, getTimelineFromFilter} from '@kepler.gl/utils';
 import FilterPanelHeaderFactory from '../../side-panel/filter-panel/filter-panel-header';
 import PanelHeaderActionFactory from '../../side-panel/panel-header-action';
 import FieldSelectorFactory from '../../common/field-selector';
-import {PanelLabel, SidePanelSection, StyledFilterContent} from '../../common/styled-components';
+import InfoHelperFactory from '../../common/info-helper';
+import {
+  PanelLabel,
+  PanelLabelWrapper,
+  SidePanelSection,
+  StyledFilterContent
+} from '../../common/styled-components';
 import {getSupportedFilterFields} from './new-filter-panel';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import TimeSyncedFieldSelectorFactory from './time-synced-field-selector';
@@ -19,20 +24,14 @@ import {FormattedMessage} from '@kepler.gl/localization';
 
 const SYNC_FILTER_ID_LENGTH = 2;
 
-const EndFieldHint = styled.div`
-  color: ${props => props.theme.subtextColor};
-  font-size: 11px;
-  line-height: 1.4;
-  margin-top: 6px;
-`;
-
 TimeRangeFilterPanelFactory.deps = [
   TimeRangeFilterFactory,
   FilterPanelHeaderFactory,
   FieldSelectorFactory,
   PanelHeaderActionFactory,
   TimeSyncedFieldSelectorFactory,
-  FilterSyncedDatasetPanelFactory
+  FilterSyncedDatasetPanelFactory,
+  InfoHelperFactory
 ];
 
 function TimeRangeFilterPanelFactory(
@@ -41,7 +40,8 @@ function TimeRangeFilterPanelFactory(
   FieldSelector: ReturnType<typeof FieldSelectorFactory>,
   PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>,
   TimeSyncedFieldSelector: ReturnType<typeof TimeSyncedFieldSelectorFactory>,
-  FilterSyncedDatasetPanel: ReturnType<typeof FilterSyncedDatasetPanelFactory>
+  FilterSyncedDatasetPanel: ReturnType<typeof FilterSyncedDatasetPanelFactory>,
+  InfoHelper: ReturnType<typeof InfoHelperFactory>
 ) {
   const TimeRangeFilterPanel: TimeRangeFilterPanelComponent = React.memo(
     ({
@@ -168,9 +168,16 @@ function TimeRangeFilterPanelFactory(
             />
             {!isSynced && endTimeFields.length ? (
               <SidePanelSection>
-                <PanelLabel htmlFor={`filter-${filter.id}-end-time`}>
-                  <FormattedMessage id="filterManager.timeIntervalEndField" />
-                </PanelLabel>
+                <PanelLabelWrapper>
+                  <PanelLabel htmlFor={`filter-${filter.id}-end-time`}>
+                    <FormattedMessage id="filterManager.timeIntervalEndField" />
+                  </PanelLabel>
+                  <InfoHelper
+                    id={`filter-${filter.id}-end-time-hint`}
+                    description="filterManager.timeIntervalEndFieldHint"
+                    width={220}
+                  />
+                </PanelLabelWrapper>
                 <FieldSelector
                   inputTheme="secondary"
                   fields={endTimeFields}
@@ -179,9 +186,6 @@ function TimeRangeFilterPanelFactory(
                   erasable
                   onSelect={field => onEndFieldSelector(field, 0)}
                 />
-                <EndFieldHint>
-                  <FormattedMessage id="filterManager.timeIntervalEndFieldHint" />
-                </EndFieldHint>
               </SidePanelSection>
             ) : null}
             {isHistogramVisible && (
