@@ -302,7 +302,7 @@ const CellInfo = ({
       <Row
         name={'total points'}
         key="count"
-        value={String(data.points && data.points.length)}
+        value={String(data.count ?? data.points?.length ?? 0)}
         isComparing={isComparing}
       />
       {colorField && layer.visualChannels.color && colorMeasure ? (

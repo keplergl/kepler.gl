@@ -28,6 +28,7 @@ import {booleanWithin} from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Feature, Polygon} from 'geojson';
 
+import {shouldUseAsyncCpuAggregation, toDeckAggregationOperation} from '@kepler.gl/deckgl-layers';
 import {getGeoArrowPointLayerProps, FindDefaultLayerPropsReturnValue} from './layer-utils';
 import {
   parseGeoJsonRawFeature,
@@ -130,6 +131,21 @@ function wrapOrdinalAccessor(
   };
 }
 
+/**
+ * Per-point weight for deck.gl built-in aggregation. Filtered-out points are
+ * 0 for count (SUM of ones) and NaN for field aggregations so MIN/MAX/MEAN skip them.
+ */
+function makeWeightAccessor(field: Field | null | undefined, filterData?: (d: unknown) => boolean) {
+  return (pt: {index: number}) => {
+    if (filterData && !filterData(pt)) {
+      return field ? NaN : 0;
+    }
+    if (!field) return 1;
+    const v = field.valueAccessor(pt);
+    return typeof v === 'number' && Number.isFinite(v) ? v : NaN;
+  };
+}
+
 const getLayerColorRange = (colorRange: ColorRange) => colorRange.colors.map(hexToRgb);
 
 export const aggregateRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
@@ -199,7 +215,9 @@ export default class AggregationLayer extends Layer {
       'elevationPercentile',
       'elevationScale',
       'enableElevationZoomFactor',
-      'fixedHeight'
+      'fixedHeight',
+      // Written back from onSetColorDomain after aggregation; must not rebuild layer data.
+      'aggregatedBins'
     ];
   }
 
@@ -309,18 +327,23 @@ export default class AggregationLayer extends Layer {
   getHoverData(object: any, dataContainer: DataContainerInterface, fields: Field[]): any {
     if (!object) return object;
     const measure = this.config.visConfig.colorAggregation;
-    // aggregate all fields for the hovered group
+    const points = object.points;
+    if (!Array.isArray(points)) {
+      const colorField = this.config.colorField;
+      const aggregatedData =
+        colorField != null ? {[colorField.name]: {measure, value: object.colorValue}} : {};
+      return {aggregatedData, ...object, points: []};
+    }
     const aggregatedData = fields.reduce((accu, field) => {
       accu[field.name] = {
         measure,
-        value: aggregate(object.points, measure, (d: {index: number}) => {
+        value: aggregate(points, measure, (d: {index: number}) => {
           return field.valueAccessor(d);
         })
       };
       return accu;
     }, {});
 
-    // return aggregated object
     return {aggregatedData, ...object};
   }
 
@@ -598,6 +621,37 @@ export default class AggregationLayer extends Layer {
       ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
       : undefined;
 
+    const {data} = this.updateData(datasets, oldLayerData);
+
+    // Large count/sum/avg/min/max jobs run in a worker using per-point weights.
+    // Custom getColorValue forces deck.gl onto a sync per-bin accessor path.
+    if (
+      shouldUseAsyncCpuAggregation(
+        data.length,
+        this.config.colorField ? this.config.visConfig.colorAggregation : 'count',
+        this.config.sizeField ? this.config.visConfig.sizeAggregation : 'count'
+      )
+    ) {
+      // No color/size field means "count points" (getValueAggrFunc ignores visConfig
+      // aggregation and returns points.length). Using MEAN of 1s makes every cell 1
+      // and the color shader divides by a zero-width domain — the grid is invisible.
+      return {
+        data,
+        getPosition,
+        _filterData: filterData,
+        getColorWeight: makeWeightAccessor(this.config.colorField, filterData),
+        getElevationWeight: makeWeightAccessor(this.config.sizeField, filterData),
+        colorAggregation: toDeckAggregationOperation(
+          this.config.colorField ? this.config.visConfig.colorAggregation : 'count',
+          {countAsSum: true}
+        ),
+        elevationAggregation: toDeckAggregationOperation(
+          this.config.sizeField ? this.config.visConfig.sizeAggregation : 'count',
+          {countAsSum: true}
+        )
+      };
+    }
+
     const aggregatePoints = getValueAggrFunc(this.getPointData);
     let getColorValue = aggregatePoints(
       this.config.colorField,
@@ -638,8 +692,6 @@ export default class AggregationLayer extends Layer {
         ? points => getElevationValue(points.filter(filterData))
         : getElevationValue;
 
-    const {data} = this.updateData(datasets, oldLayerData);
-
     const result = {
       data,
       getPosition,
@@ -667,21 +719,28 @@ export default class AggregationLayer extends Layer {
     const {visConfig} = this.config;
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
 
+    const colorWeightTriggers = {
+      colorField: this.config.colorField,
+      colorAggregation: this.config.visConfig.colorAggregation,
+      filterRange: gpuFilter.filterRange,
+      ...gpuFilter.filterValueUpdateTriggers
+    };
+    const elevationWeightTriggers = {
+      sizeField: this.config.sizeField,
+      sizeAggregation: this.config.visConfig.sizeAggregation,
+      filterRange: gpuFilter.filterRange,
+      ...gpuFilter.filterValueUpdateTriggers
+    };
+
     const updateTriggers = {
       getColorValue: {
-        colorField: this.config.colorField,
-        colorAggregation: this.config.visConfig.colorAggregation,
+        ...colorWeightTriggers,
         colorRange: visConfig.colorRange,
-        colorMap: visConfig.colorRange.colorMap,
-        filterRange: gpuFilter.filterRange,
-        ...gpuFilter.filterValueUpdateTriggers
+        colorMap: visConfig.colorRange.colorMap
       },
-      getElevationValue: {
-        sizeField: this.config.sizeField,
-        sizeAggregation: this.config.visConfig.sizeAggregation,
-        filterRange: gpuFilter.filterRange,
-        ...gpuFilter.filterValueUpdateTriggers
-      }
+      getElevationValue: elevationWeightTriggers,
+      getColorWeight: colorWeightTriggers,
+      getElevationWeight: elevationWeightTriggers
     };
 
     // deck.gl's aggregation shader maps bin values to a color texture using a

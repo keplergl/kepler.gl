@@ -47,6 +47,8 @@ const KEPLER_SRC_ALIASES = Object.fromEntries(
     'common-utils',
     'components',
     'constants',
+    'deckgl-arrow-layers',
+    'deckgl-layers',
     'duckdb',
     'layers',
     'localization',

@@ -4,7 +4,11 @@
 import React, {PropsWithChildren, useRef, useEffect} from 'react';
 import styled, {withTheme, keyframes} from 'styled-components';
 
-import {getNumRasterTilesBeingLoaded, getNumVectorTilesBeingLoaded} from '@kepler.gl/layers';
+import {
+  getNumRasterTilesBeingLoaded,
+  getNumVectorTilesBeingLoaded,
+  getNumAggregationsBeingLoaded
+} from '@kepler.gl/layers';
 
 type StyledContainerProps = {
   $isVisible?: boolean;
@@ -77,9 +81,12 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
   // Helper message to track number of tiles that are being loaded
   const numRasterTilesInProgress = getNumRasterTilesBeingLoaded();
   const numVectorTilesInProgress = getNumVectorTilesBeingLoaded();
+  const numAggregationsInProgress = getNumAggregationsBeingLoaded();
 
   let extraMessage = '';
-  if (numRasterTilesInProgress > 0 && numVectorTilesInProgress > 0) {
+  if (numAggregationsInProgress > 0) {
+    extraMessage = 'aggregating grid / hexagon cells';
+  } else if (numRasterTilesInProgress > 0 && numVectorTilesInProgress > 0) {
     // Both types loading: show combined count
     const totalTiles = numRasterTilesInProgress + numVectorTilesInProgress;
     extraMessage = `${totalTiles} tile${totalTiles === 1 ? ' is' : 's are'} being loaded`;

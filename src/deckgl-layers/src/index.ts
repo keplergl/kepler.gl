@@ -22,6 +22,13 @@ export {default as WMSLayer} from './wms/wms-layer';
 
 export * from './layer-utils/shader-utils';
 export * from './layer-utils/aggregation-utils';
+export {
+  ASYNC_CPU_AGGREGATION_THRESHOLD,
+  isWorkerCompatibleAggregation,
+  shouldUseAsyncCpuAggregation,
+  toDeckAggregationOperation
+} from './layer-utils/cpu-aggregation-core';
+export {getNumAggregationsBeingLoaded} from './layer-utils/worker-cpu-aggregator';
 
 export * from './3d-building-layer/types';
 export * from './3d-building-layer/3d-building-utils';

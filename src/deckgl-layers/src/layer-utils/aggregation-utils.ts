@@ -9,16 +9,28 @@ import type {AggregatedBin, ColorMap} from '@kepler.gl/types';
  * The resulting map is compatible with the format kepler.gl expects for
  * histogram rendering and color-scale selector.
  */
+/**
+ * Histogram / custom-break UI does not need one object per cell. Building a
+ * Record of ~2M bins and writing it through Redux freezes the map (~600ms).
+ */
+const MAX_AGGREGATED_BINS_FOR_UI = 8192;
+
 export function buildAggregatedBinMap(
   binValues: ArrayLike<number>,
   binCount: number,
   aggregator?: any
 ): Record<number, AggregatedBin> {
   const bins: Record<number, AggregatedBin> = {};
-  for (let i = 0; i < binCount; i++) {
+  const counts: ArrayLike<number> | null | undefined =
+    aggregator?.getBinCounts?.() ?? aggregator?.result?.counts;
+  const stride =
+    binCount > MAX_AGGREGATED_BINS_FOR_UI ? Math.ceil(binCount / MAX_AGGREGATED_BINS_FOR_UI) : 1;
+  let j = 0;
+  for (let i = 0; i < binCount; i += stride) {
     const val = binValues[i];
-    const count = aggregator?.getBin?.(i)?.count ?? 0;
-    bins[i] = {i, value: val, counts: count};
+    const count = counts ? counts[i] : aggregator?.getBin?.(i)?.count ?? 0;
+    bins[j] = {i: j, value: val, counts: count};
+    j++;
   }
   return bins;
 }
@@ -121,30 +133,67 @@ export function enrichedAggregationUpdate(layer: any, ParentClass: any, channel:
   const binValues = result?.value as Float32Array | undefined;
   if (!binValues || aggregator.binCount <= 0) return;
 
+  const binCount = aggregator.binCount;
   layer.setState({
-    rawColorBinValues: Float32Array.from(binValues.subarray(0, aggregator.binCount))
+    rawColorBinValues: binValues.length === binCount ? binValues : binValues.subarray(0, binCount)
   });
 
-  const domain = aggregator.getResultDomain(0);
-  const aggregatedBins = buildAggregatedBinMap(binValues, aggregator.binCount, aggregator);
-
   if (props.colorMap) {
-    classifyBinsByCustomBreaks(layer.state.colors, aggregator.binCount, props.colorMap, binValues);
+    classifyBinsByCustomBreaks(layer.state.colors, binCount, props.colorMap, binValues);
   }
 
-  let enrichedDomain = domain;
-  if (props.colorScaleType === 'quantile') {
-    enrichedDomain = Array.from(binValues)
-      .slice(0, aggregator.binCount)
-      .filter(Number.isFinite)
-      .sort((a: number, b: number) => a - b);
-  }
-  props.onSetColorDomain?.({domain: enrichedDomain, aggregatedBins});
+  const domain = aggregator.getResultDomain(0);
+  const colorScaleType = props.colorScaleType;
+  const onSetColorDomain = props.onSetColorDomain;
+  // Legend/Redux must not run in this frame: allocating ~2M bin objects and
+  // dispatching them keeps the spinner up while the map ignores input.
+  requestAnimationFrame(() => {
+    const aggregatedBins = buildAggregatedBinMap(binValues, binCount, aggregator);
+    let enrichedDomain: number[] | [number, number] = domain;
+    if (colorScaleType === 'quantile') {
+      enrichedDomain = Object.values(aggregatedBins)
+        .map(b => b.value)
+        .filter(Number.isFinite)
+        .sort((a: number, b: number) => a - b);
+    }
+    onSetColorDomain?.({domain: enrichedDomain, aggregatedBins});
+  });
+}
+
+export type DisplayedAggregationLayout = {
+  cellSizeCommon?: [number, number];
+  cellOriginCommon?: [number, number];
+  radiusCommon?: number;
+  hexOriginCommon?: [number, number];
+};
+
+/**
+ * Layout used to draw the currently visible bins. While a worker job is in
+ * flight this is the origin/size the last result was computed with, not the
+ * layer's already-updated `cellSizeCommon` / `radiusCommon`.
+ */
+export function getDisplayedAggregationLayout(layer: any): DisplayedAggregationLayout {
+  const displayed = layer.state?.aggregator?.displayedBinOptions as
+    | DisplayedAggregationLayout
+    | null
+    | undefined;
+  if (displayed) return displayed;
+  return {
+    cellSizeCommon: layer.state?.cellSizeCommon,
+    cellOriginCommon: layer.state?.cellOriginCommon,
+    radiusCommon: layer.state?.radiusCommon,
+    hexOriginCommon: layer.state?.hexOriginCommon
+  };
 }
 
 /**
  * Shared renderLayers() wrapper that re-classifies bins when custom colorMap
  * changes between renders without triggering a full re-aggregation.
+ *
+ * While async aggregation is pending, Grid/Hex cell layers must keep using the
+ * binOptions that match the last bins. Cells are placed as `origin + col * size`;
+ * drawing old col/row ids at the new worldUnitSize looks like the grid is
+ * scaling around the origin.
  *
  * @param layer       The enhanced layer instance (`this`)
  * @param ParentClass The deck.gl parent class (HexagonLayer or GridLayer)
@@ -156,5 +205,32 @@ export function enrichedRenderLayers(layer: any, ParentClass: any): any {
   if (props.colorMap && colors && rawColorBinValues && aggregator?.binCount > 0) {
     classifyBinsByCustomBreaks(colors, aggregator.binCount, props.colorMap, rawColorBinValues);
   }
-  return (ParentClass.prototype as any).renderLayers.call(layer);
+
+  const displayed = aggregator?.displayedBinOptions as
+    | DisplayedAggregationLayout
+    | null
+    | undefined;
+  if (!displayed) {
+    return (ParentClass.prototype as any).renderLayers.call(layer);
+  }
+
+  const saved = {
+    cellSizeCommon: layer.state.cellSizeCommon,
+    cellOriginCommon: layer.state.cellOriginCommon,
+    radiusCommon: layer.state.radiusCommon,
+    hexOriginCommon: layer.state.hexOriginCommon
+  };
+  if (displayed.cellSizeCommon) {
+    layer.state.cellSizeCommon = displayed.cellSizeCommon;
+    layer.state.cellOriginCommon = displayed.cellOriginCommon;
+  }
+  if (displayed.radiusCommon != null) {
+    layer.state.radiusCommon = displayed.radiusCommon;
+    layer.state.hexOriginCommon = displayed.hexOriginCommon;
+  }
+  try {
+    return (ParentClass.prototype as any).renderLayers.call(layer);
+  } finally {
+    Object.assign(layer.state, saved);
+  }
 }
