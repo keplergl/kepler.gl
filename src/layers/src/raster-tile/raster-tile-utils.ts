@@ -156,17 +156,13 @@ function getPixelRange(
   const minPixelValue = 0;
   const maxPixelValue = dtypeMaxValue[dtype];
 
-  // TODO check if this early return is expected
-  if (!maxPixelValue) {
+  // Data types without a fixed maximum, such as floats, can only be rescaled from the
+  // statistics reported by the STAC metadata.
+  if (maxPixelValue === null || !Number.isFinite(maxPixelValue)) {
+    if (typeof minRasterStatsValue === 'number' && typeof maxRasterStatsValue === 'number') {
+      return [minRasterStatsValue, maxRasterStatsValue];
+    }
     return null;
-  }
-
-  if (
-    !Number.isFinite(maxPixelValue) &&
-    typeof minRasterStatsValue === 'number' &&
-    typeof maxRasterStatsValue === 'number'
-  ) {
-    return [minRasterStatsValue, maxRasterStatsValue];
   }
 
   return [minPixelValue, maxPixelValue];

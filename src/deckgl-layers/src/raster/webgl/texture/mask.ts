@@ -4,7 +4,10 @@
 import type {Texture} from '@luma.gl/core';
 import {GetUniformsOutput, ShaderModule} from '../types';
 
-const inf = Math.pow(2, 62);
+// The "no bound" default for keepMin/keepMax. A tile server writes the mask in the band's own
+// data type and marks valid pixels with that type's maximum — 255 for uint8, 65535 for uint16,
+// FLT_MAX for float32 — so a smaller default discards every valid pixel of a float32 mask.
+const inf = 3.4028234663852886e38;
 
 function getUniforms(
   opts: {imageMask?: Texture; maskKeepMin?: number; maskKeepMax?: number} = {}

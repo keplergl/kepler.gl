@@ -8,8 +8,10 @@ import {
   findAssetWithName,
   getUsableAssets,
   getRasterStatisticsMinMax,
-  filterAvailablePresets
+  filterAvailablePresets,
+  getDataSourceParams
 } from '@kepler.gl/layers';
+import {RasterWebGL} from '@kepler.gl/deckgl-layers';
 import {parseRasterMetadata} from '@kepler.gl/table';
 import {testCreateCases} from 'test/helpers/layer-utils';
 
@@ -736,6 +738,86 @@ test('#RasterTileLayer -> showTileBorders default config', t => {
     layer.config.visConfig.showTileBorders,
     true,
     'showTileBorders should be updatable to true'
+  );
+  t.end();
+});
+
+const MOCK_STAC_FLOAT32_METADATA = {
+  type: 'Feature',
+  stac_version: '1.0.0',
+  stac_extensions: ['https://stac-extensions.github.io/raster/v1.1.0/schema.json'],
+  id: 'test-float32-cog',
+  geometry: {type: 'Point', coordinates: [0, 0]},
+  bbox: [-122.5, 37.5, -122.0, 38.0],
+  links: [],
+  properties: {datetime: '2023-01-01T00:00:00Z'},
+  assets: {
+    ndvi: {
+      href: 'https://example.com/ndvi.tif',
+      type: 'image/tiff; application=geotiff',
+      'raster:bands': [
+        {
+          data_type: 'float32',
+          statistics: {minimum: -0.2, maximum: 0.92}
+        }
+      ]
+    }
+  }
+};
+
+test('#RasterTileLayer -> getDataSourceParams float32 band with statistics', t => {
+  const params = getDataSourceParams(MOCK_STAC_FLOAT32_METADATA, 'singleBand', {
+    singleBand: {assetId: 'ndvi'}
+  });
+
+  t.ok(params, 'should return data source params for a float32 band');
+  t.equal(params?.dataType, 'float32', 'should keep the float32 data type');
+  t.equal(params?.minPixelValue, -0.2, 'should take the minimum from the band statistics');
+  t.equal(params?.maxPixelValue, 0.92, 'should take the maximum from the band statistics');
+  t.end();
+});
+
+test('#RasterTileLayer -> getDataSourceParams float32 band without statistics', t => {
+  const noStatsStac = {
+    ...MOCK_STAC_FLOAT32_METADATA,
+    assets: {
+      ndvi: {
+        ...MOCK_STAC_FLOAT32_METADATA.assets.ndvi,
+        'raster:bands': [{data_type: 'float32'}]
+      }
+    }
+  };
+
+  const params = getDataSourceParams(noStatsStac, 'singleBand', {singleBand: {assetId: 'ndvi'}});
+
+  t.equal(params, null, 'should return null when there is no range to rescale against');
+  t.end();
+});
+
+test('#RasterTileLayer -> getDataSourceParams integer band uses the data type range', t => {
+  const params = getDataSourceParams(MOCK_STAC_110_METADATA, 'singleBand', {
+    singleBand: {assetId: 'data'}
+  });
+
+  t.ok(params, 'should return data source params for a uint8 band');
+  t.equal(params?.minPixelValue, 0, 'should keep the data type minimum');
+  t.equal(params?.maxPixelValue, 255, 'should keep the data type maximum');
+  t.end();
+});
+
+test('#RasterTileLayer -> float mask keeps the pixels a float32 mask marks as valid', t => {
+  // A tile server writes the mask in the band's own data type, marking valid pixels with that
+  // type's maximum: 255 for uint8, 65535 for uint16, and FLT_MAX for float32. The default upper
+  // bound therefore has to sit at or above FLT_MAX, or every valid pixel of a float raster is
+  // discarded and the layer draws nothing.
+  const FLOAT32_MAX = 3.4028234663852886e38;
+  const uniforms = RasterWebGL.maskFloat.getUniforms({imageMask: {}, maskKeepMin: 1});
+
+  t.ok(uniforms, 'should return uniforms for a mask texture');
+  t.equal(uniforms.keepMin, 1, 'should keep the given lower bound');
+  t.ok(
+    uniforms.keepMax >= FLOAT32_MAX,
+    `should not discard valid float pixels: keepMax ${uniforms.keepMax} < ${FLOAT32_MAX}`
   );
   t.end();
 });
