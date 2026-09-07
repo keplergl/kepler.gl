@@ -992,6 +992,29 @@ export function validateSavedTextLabel(
 }
 
 /**
+ * Saved visual channel field/scale may live in any of:
+ * - `config[key]` after schema parse (VisualChannelSchemaV1 folds channels into config)
+ * - `visualChannels[key]` as a sibling of `config` (unparsed addDataToMap payload)
+ * - `config.visualChannels[key]` (common mistake of nesting visualChannels inside config)
+ *
+ * Without this lookup, programmatic GeoJSON strokeColorField never binds and
+ * strokeColorDomain stays at the default `[0, 1]` (kepler.gl #3061).
+ */
+function getSavedVisualChannelValue(savedLayer: ParsedLayer, key: string): any {
+  const config = savedLayer.config as Record<string, any> | undefined;
+  if (config && config[key] !== undefined) {
+    return config[key];
+  }
+  const channels =
+    (savedLayer as {visualChannels?: Record<string, any>}).visualChannels ||
+    (config && config.visualChannels);
+  if (channels && typeof channels === 'object' && channels[key] !== undefined) {
+    return channels[key];
+  }
+  return undefined;
+}
+
+/**
  * Validate saved visual channels config with new data,
  * refer to vis-state-schema.js VisualChannelSchemaV1
  */
@@ -1002,28 +1025,26 @@ export function validateSavedVisualChannels(
   options: {throwOnError?: boolean} = {}
 ): null | Layer {
   Object.values(newLayer.visualChannels).forEach(({field, scale, key}) => {
+    const savedField = getSavedVisualChannelValue(savedLayer, field);
+    const savedScale = getSavedVisualChannelValue(savedLayer, scale);
     let foundField;
-    if (savedLayer.config) {
-      if (savedLayer.config[field]) {
-        foundField = fields.find(
-          fd => savedLayer.config && fd.name === savedLayer.config[field].name
-        );
-      }
+    if (savedField?.name) {
+      foundField = fields.find(fd => fd.name === savedField.name);
+    }
 
-      const foundChannel = {
-        ...(foundField ? {[field]: foundField} : {}),
-        ...(savedLayer.config[scale] ? {[scale]: savedLayer.config[scale]} : {})
-      };
-      if (Object.keys(foundChannel).length) {
-        newLayer.updateLayerConfig(foundChannel);
-      }
+    const foundChannel = {
+      ...(foundField ? {[field]: foundField} : {}),
+      ...(savedScale ? {[scale]: savedScale} : {})
+    };
+    if (Object.keys(foundChannel).length) {
+      newLayer.updateLayerConfig(foundChannel);
+    }
 
-      newLayer.validateVisualChannel(key);
-      if (options.throwOnError) {
-        const fieldName = savedLayer.config?.[field]?.name;
-        if (fieldName && fieldName !== newLayer.config[field]?.name) {
-          throw new Error(`Layer has invalid visual channel field: ${field}`);
-        }
+    newLayer.validateVisualChannel(key);
+    if (options.throwOnError) {
+      const fieldName = savedField?.name;
+      if (fieldName && fieldName !== newLayer.config[field]?.name) {
+        throw new Error(`Layer has invalid visual channel field: ${field}`);
       }
     }
   });

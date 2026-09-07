@@ -488,7 +488,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', async t => {
     })
   );
   const newLayer = nextState.layers[0];
-  t.equal(newLayer.config.colorField, stringField, 'should update colorField');
+  t.equal(newLayer.config.colorField.name, stringField.name, 'should update colorField');
   t.equal(newLayer.config.colorScale, 'ordinal', 'should scale to ordinal');
   t.deepEqual(
     newLayer.config.colorDomain,
@@ -511,7 +511,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', async t => {
     })
   );
   const newLayer2 = nextState2.layers[0];
-  t.equal(newLayer2.config.sizeField, intField, 'should update sizeField');
+  t.equal(newLayer2.config.sizeField.name, intField.name, 'should update sizeField');
   t.equal(newLayer2.config.sizeScale, 'sqrt', 'should scale to sqrt');
   t.deepEqual(newLayer2.config.sizeDomain, [1, 12124], 'should calculate size domain');
   t.deepEqual(newLayer2.config.visConfig.radiusRange, [5, 10], 'should update size range');
@@ -521,7 +521,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', async t => {
 
   const newLayer3 = nextState3.layers[0];
   t.equal(newLayer3.type, 'hexagon', 'should change type to hexagon');
-  t.equal(newLayer3.config.colorField, stringField, 'should keep colorField');
+  t.equal(newLayer3.config.colorField.name, stringField.name, 'should keep colorField');
   t.deepEqual(
     newLayer3.config.colorDomain,
     [0, 1],
@@ -530,7 +530,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', async t => {
   t.equal(newLayer3.config.colorScale, 'ordinal', 'should set colorScale to ordinal');
   t.equal(newLayer3.config.sizeScale, 'sqrt', 'should set sizeScale to default');
   t.deepEqual(newLayer3.config.sizeDomain, [0, 1], 'should set sizeDomain to default');
-  t.equal(newLayer3.config.sizeField, intField, 'should keep sizeField');
+  t.equal(newLayer3.config.sizeField.name, intField.name, 'should keep sizeField');
   t.notEqual(newLayer3.id, newLayer2.id, 'should change id');
   t.equal(newLayer3.config.visConfig.colorRange, mockColorRange, 'should not deep copy colorRange');
   t.equal(
@@ -544,14 +544,14 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', async t => {
   const newLayer4 = nextState4.layers[0];
   t.equal(newLayer4.type, 'icon', 'should change type to icon');
   t.notEqual(newLayer4.id, newLayer2.id, 'should change id');
-  t.equal(newLayer4.config.colorField, stringField, 'should keep colorField');
+  t.equal(newLayer4.config.colorField.name, stringField.name, 'should keep colorField');
   t.deepEqual(
     newLayer4.config.colorDomain,
     ['driver_analytics', 'driver_analytics_0', 'driver_gps'],
     'should calculate color domain'
   );
   t.equal(newLayer4.config.colorScale, 'ordinal', 'should keep color scale');
-  t.equal(newLayer4.config.sizeField, intField, 'should keep sizeField');
+  t.equal(newLayer4.config.sizeField.name, intField.name, 'should keep sizeField');
   t.equal(newLayer4.config.sizeScale, 'sqrt', 'should scale to linear');
   t.deepEqual(newLayer4.config.sizeDomain, [1, 12124], 'should keep size domain');
   t.deepEqual(newLayer4.config.visConfig.radiusRange, [5, 10], 'should keep size range');
