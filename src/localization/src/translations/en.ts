@@ -152,7 +152,12 @@ export default {
       'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.',
     interaction: 'Interaction',
     heatmap: 'Heatmap',
-    aggregation: 'Aggregation'
+    aggregation: 'Aggregation',
+    aggregationSize: {
+      slow: 'The layer aggregation may be slow with up to {cells} cells',
+      continue: 'Continue',
+      cancel: 'Cancel'
+    }
   },
   layerVisConfigs: {
     angle: 'Angle',
