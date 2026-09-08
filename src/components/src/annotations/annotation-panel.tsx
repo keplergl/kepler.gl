@@ -148,6 +148,8 @@ const HeaderLabelSection = styled.div`
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
+  // leave space for eye and collapse icons
+  padding-right: 50px;
 `;
 
 const StyledAnnotationLabel = styled.div`
