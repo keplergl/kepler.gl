@@ -40,6 +40,8 @@ const StyledAnnotationPanelContainer = styled.div`
   flex-grow: 1;
   justify-content: space-between;
   overflow: hidden;
+  width: ${({theme}) => theme.effectPanelWidth}px;
+  min-width: 0;
 
   & > * {
     pointer-events: all;
@@ -53,6 +55,7 @@ const StyledAnnotationPanel = styled.div`
   flex-direction: column;
   flex-grow: 1;
   overflow: hidden;
+  min-width: 0;
 `;
 
 const StyledAnnotationPanelHeader = styled.div`
@@ -61,7 +64,6 @@ const StyledAnnotationPanelHeader = styled.div`
       theme.effectPanelPaddingSide || 16
     }px`};
   border-bottom: 1px solid ${props => props.theme.borderColor};
-  min-width: ${({theme}) => theme.effectPanelWidth}px;
 `;
 
 const StyledPanelHeaderRow = styled.div`
@@ -106,22 +108,28 @@ const StyledAddIcon = styled(Add)`
 const StyledAnnotationPanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
   padding: 10px 0;
+  overflow-x: hidden;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  min-width: 0;
 `;
 
 const StyledAnnotationItemWrapper = styled.div`
   font-size: 12px;
   border-radius: 1px;
   margin: 3px 16px;
+  min-width: 0;
+  overflow: hidden;
 `;
 
 const StyledAnnotationItemHeader = styled(StyledPanelHeader)`
   height: ${props => props.theme.effectPanelHeaderHeight}px;
   position: relative;
   align-items: stretch;
+  min-width: 0;
+  overflow: hidden;
 
   &:hover {
     cursor: pointer;
@@ -134,6 +142,8 @@ const StyledAnnotationItemHeader = styled(StyledPanelHeader)`
 const HeaderLabelSection = styled.div`
   margin-left: 10px;
   flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -143,6 +153,8 @@ const HeaderLabelSection = styled.div`
 const StyledAnnotationLabel = styled.div`
   font-size: 12px;
   color: ${props => props.theme.textColor};
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
