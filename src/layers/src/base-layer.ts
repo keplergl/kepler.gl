@@ -172,6 +172,28 @@ const dataFilterExtension = new DataFilterExtension({
 class KeplerCollisionFilterExtension extends CollisionFilterExtension {
   static extensionName = 'CollisionFilterExtension';
 
+  getShaders(this: any) {
+    return {
+      ...CollisionFilterExtension.prototype.getShaders.call(this),
+      inject: {
+        // CollisionFilterExtension fades over a 5x5 neighborhood. Kepler labels
+        // should be fully opaque or fully gone — not half-transparent ghosts.
+        'vs:DECKGL_FILTER_GL_POSITION': {
+          order: 1,
+          injection: `
+  if (collision.enabled) {
+    if (collision_fade < 0.5) {
+      collision_fade = 0.0;
+      position = vec4(0.0, 0.0, 2.0, 1.0);
+    } else {
+      collision_fade = 1.0;
+    }
+  }`
+        }
+      }
+    };
+  }
+
   updateState(this: any, _params: unknown, extension: this) {
     const attributeManager = this.getAttributeManager();
     if (attributeManager && !attributeManager.attributes.collisionPriorities) {

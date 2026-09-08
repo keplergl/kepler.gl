@@ -28,7 +28,10 @@ class CollisionTextBackgroundLayer extends TextBackgroundLayer {
     vs = vs.replace(
       'void main(void) {',
       `void main(void) {
-  vec4 _padding = textBackground.padding + instancePixelOffsets.xyxy * vec4(1.0, 1.0, -1.0, -1.0);`
+  // Expand toward the geographic origin (so pixelOffset still covers the
+  // sample point) and add extra padding so the 5x5 collision sample sits
+  // inside the hit box instead of on its edge (which fades labels).
+  vec4 _padding = textBackground.padding + instancePixelOffsets.xyxy * vec4(1.0, 1.0, -1.0, -1.0) + vec4(16.0);`
     );
     return {...shaders, vs};
   }
