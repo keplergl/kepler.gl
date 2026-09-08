@@ -61,7 +61,8 @@ export default {
       alignment: 'Alineació',
       addMoreLabel: 'Afegeix més etiquetes',
       outlineWidth: 'Amplada del contorn',
-      outlineColor: 'Color del contorn'
+      outlineColor: 'Color del contorn',
+      collisionEnabled: 'Amaga les etiquetes superposades'
     }
   },
   sidebar: {

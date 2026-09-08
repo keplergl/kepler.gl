@@ -169,6 +169,8 @@ export type LayerTextLabel = {
   outlineWidth: number;
   outlineColor: RGBAColor;
   backgroundColor: RGBAColor | null;
+  /** Hide labels that overlap other labels of the same field (GPU collision filter). */
+  collisionEnabled?: boolean;
 };
 
 export type ColorRangeConfig = {

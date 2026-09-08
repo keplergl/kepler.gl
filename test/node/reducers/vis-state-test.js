@@ -1186,6 +1186,17 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
   const expected8 = [{...DEFAULT_TEXT_LABEL, field: {name: 'blue', valueAccessor}}];
   t.deepEqual(nextState8.layers[0].config.textLabel, expected8, 'should remove text label blue');
 
+  // enable GPU collision filtering for all labels
+  const nextState9 = reducer(
+    nextState8,
+    VisStateActions.layerTextLabelChange(nextState8.layers[0], 'all', 'collisionEnabled', true)
+  );
+  t.equal(
+    nextState9.layers[0].config.textLabel[0].collisionEnabled,
+    true,
+    'should enable collision filtering on all text labels'
+  );
+
   t.end();
 });
 

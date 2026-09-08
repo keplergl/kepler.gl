@@ -699,6 +699,56 @@ test('#PointLayer -> renderLayer', t => {
       }
     },
     {
+      name: 'Point gps point.1 with text labels and collision filtering',
+      layer: {
+        config: {
+          dataId,
+          label: 'gps point',
+          columns: {
+            lat: 'lat',
+            lng: 'lng',
+            altitude: 'id'
+          },
+          textLabel: [
+            {
+              field: {
+                name: 'types',
+                type: 'string'
+              },
+              collisionEnabled: true
+            }
+          ]
+        },
+        type: 'point',
+        id: 'test_layer_1'
+      },
+      datasets: {
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+      },
+      assert: deckLayers => {
+        const labelLayer = deckLayers.find(l => l.id === 'test_layer_1-label-types');
+        t.ok(labelLayer, 'Should create a text label layer');
+        t.ok(
+          labelLayer.props.extensions.some(
+            ext => ext.constructor.extensionName === 'CollisionFilterExtension'
+          ),
+          'Should add CollisionFilterExtension to the text label layer'
+        );
+        t.equal(labelLayer.props.collisionEnabled, true, 'Should enable collision filtering');
+        t.equal(
+          labelLayer.props.collisionGroup,
+          'test_layer_1-text-label-0',
+          'Should use a per-label collision group'
+        );
+        t.equal(
+          labelLayer.constructor.layerName,
+          'CollisionTextLayer',
+          'Should use CollisionTextLayer so the hit area covers the anchor'
+        );
+        t.equal(labelLayer.props.background, true, 'Should enable a collision background');
+      }
+    },
+    {
       name: 'Point gps point.1 with text labels, color and sizeField',
       layer: {
         config: {

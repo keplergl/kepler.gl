@@ -3,8 +3,9 @@
 
 import {COORDINATE_SYSTEM} from '@deck.gl/core';
 import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
-import {DataFilterExtension} from '@deck.gl/extensions';
+import {CollisionFilterExtension, DataFilterExtension} from '@deck.gl/extensions';
 import {TextLayer} from '@deck.gl/layers';
+import CollisionTextLayer from './collision-text-layer';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import React from 'react';
@@ -160,6 +161,26 @@ const dataFilterExtension = new DataFilterExtension({
   filterSize: MAX_GPU_FILTERS,
   countItems: getApplicationConfig().useOnFilteredItemsChange ?? false
 });
+
+/**
+ * CollisionFilterExtension registers CollisionFilterEffect only in
+ * initializeState. Toggling the extension onto an already-matched TextLayer
+ * skips that hook, so luma.gl never gets collision_texture and aborts the
+ * draw (all labels vanish). Re-run initializeState from updateState when the
+ * collision attribute is missing.
+ */
+class KeplerCollisionFilterExtension extends CollisionFilterExtension {
+  static extensionName = 'CollisionFilterExtension';
+
+  updateState(this: any, _params: unknown, extension: this) {
+    const attributeManager = this.getAttributeManager();
+    if (attributeManager && !attributeManager.attributes.collisionPriorities) {
+      CollisionFilterExtension.prototype.initializeState.call(this, this.context, extension);
+    }
+  }
+}
+
+const collisionFilterExtension = new KeplerCollisionFilterExtension();
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultDataAccessor = dc => d => d;
@@ -1622,12 +1643,25 @@ class Layer implements KeplerLayer {
     const {data, mapState} = renderOpts;
     const {textLabel} = this.config;
 
-    const TextLayerClass = isArrowTable(data.data) ? GeoArrowTextLayer : TextLayer;
+    const isArrow = isArrowTable(data.data);
 
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {
-        const background = textLabel[i].background || backgroundProps?.background;
+        const userBackground = Boolean(textLabel[i].background || backgroundProps?.background);
+        const collisionEnabled = Boolean(textLabel[i].collisionEnabled);
+        // CollisionTextLayer draws an expanded background in the collision pass so
+        // the GPU hit-test still covers the geographic anchor after pixelOffset.
+        // GeoArrowTextLayer does not support background, so keep it for Arrow data.
+        const TextLayerClass = isArrow
+          ? GeoArrowTextLayer
+          : collisionEnabled
+          ? CollisionTextLayer
+          : TextLayer;
         const getText = animationConfig ? f => d.getText(f, animationConfig) : d.getText;
+        const extensions = collisionEnabled
+          ? [...(sharedProps.extensions || []), collisionFilterExtension]
+          : sharedProps.extensions;
+        const background = userBackground || (collisionEnabled && !isArrow);
 
         accu.push(
           // @ts-expect-error
@@ -1662,6 +1696,13 @@ class Layer implements KeplerLayer {
               depthTest: false,
               ...(mapState?.layerParameters ?? {})
             },
+            extensions,
+            ...(collisionEnabled
+              ? {
+                  collisionEnabled: true,
+                  collisionGroup: `${this.id}-text-label-${i}`
+                }
+              : {}),
 
             getFilterValue: data.getFilterValue,
             updateTriggers: {
@@ -1678,7 +1719,8 @@ class Layer implements KeplerLayer {
               },
               getTextAnchor: textLabel[i].anchor,
               getAlignmentBaseline: textLabel[i].alignment,
-              getColor: textLabel[i].color
+              getColor: textLabel[i].color,
+              collisionEnabled
             },
             _subLayerProps: {
               ...(background
