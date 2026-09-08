@@ -63,6 +63,11 @@ test('#visStateReducer -> ADD_ANNOTATION with TEXT kind', t => {
   t.equal(state.annotations[0].kind, AnnotationKind.TEXT, 'should create TEXT annotation');
   t.notOk('armLength' in state.annotations[0], 'TEXT should not have armLength');
   t.notOk('angle' in state.annotations[0], 'TEXT should not have angle');
+  t.notOk(state.annotations[0].textSide, 'TEXT should not stamp a default textSide');
+  t.notOk(
+    state.annotations[0].textVerticalPosition,
+    'TEXT should not stamp a default textVerticalPosition'
+  );
 
   t.end();
 });
@@ -79,6 +84,23 @@ test('#visStateReducer -> ADD_ANNOTATION with ARROW kind', t => {
   t.equal(state.annotations[0].kind, AnnotationKind.ARROW, 'should create ARROW annotation');
   t.ok('armLength' in state.annotations[0], 'ARROW should have armLength');
   t.ok('angle' in state.annotations[0], 'ARROW should have angle');
+
+  t.end();
+});
+
+test('#visStateReducer -> ADD_ANNOTATION derives placement from angle', t => {
+  const state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({
+      anchorPoint: [0, 0],
+      kind: AnnotationKind.POINT,
+      angle: 135
+    })
+  );
+
+  t.equal(state.annotations[0].angle, 135, 'should keep provided angle');
+  t.equal(state.annotations[0].textSide, 'left', 'should derive left from angle 135');
+  t.equal(state.annotations[0].textVerticalPosition, 'below', 'should derive below from angle 135');
 
   t.end();
 });

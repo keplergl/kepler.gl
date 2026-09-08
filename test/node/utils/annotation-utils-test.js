@@ -173,6 +173,33 @@ test('#getAnnotationTextBoxStyle -> left/below uses right + top', t => {
   t.end();
 });
 
+test('#getAnnotationTextBoxStyle -> TEXT without explicit side stays centered', t => {
+  const annotation = makeTextAnnotation({autoSize: false, textWidth: 100});
+  const style = getAnnotationTextBoxStyle(annotation, mockViewport);
+
+  t.equal(style.left, 450, 'TEXT should be centered on the anchor (x - width/2)');
+  t.equal(style.bottom, 300, 'TEXT should sit above the anchor');
+  t.notOk(style.right, 'should not set right when centered');
+  t.notOk(style.borderBottom, 'TEXT should not draw a leader');
+
+  t.end();
+});
+
+test('#getAnnotationTextBoxStyle -> TEXT left uses right edge at the anchor', t => {
+  const annotation = makeTextAnnotation({
+    autoSize: false,
+    textWidth: 100,
+    textSide: 'left',
+    textVerticalPosition: 'above'
+  });
+  const style = getAnnotationTextBoxStyle(annotation, mockViewport);
+
+  t.equal(style.right, 500, 'left-placed TEXT is anchored from the right');
+  t.notOk(style.left, 'should not set left when on the left');
+
+  t.end();
+});
+
 test('#makeMarker -> POINT annotation', t => {
   const annotation = makePointAnnotation({anchorPoint: [10, 20], armLength: 50, angle: 0});
   const marker = makeMarker(annotation, mockViewport);

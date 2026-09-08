@@ -8,7 +8,10 @@ import {
   AnnotationTextSide,
   AnnotationTextVerticalPosition,
   ANNOTATION_ANGLE_BY_PLACEMENT,
-  isAnnotationWithArm
+  isAnnotationWithArm,
+  isLeftOriented,
+  isBelowOriented,
+  textPlacementFromAngle
 } from '@kepler.gl/constants';
 
 export type MapViewport = {
@@ -80,13 +83,7 @@ export function makeMarker(annotation: Annotation, viewport: MapViewport): Annot
   }
 }
 
-export function isLeftOriented(angle: number): boolean {
-  return angle > 90 || angle < -90;
-}
-
-export function isBelowOriented(angle: number): boolean {
-  return angle > 0 && angle < 180;
-}
+export {isLeftOriented, isBelowOriented, textPlacementFromAngle};
 
 export type AnnotationTextPlacement = {
   side: AnnotationTextSide;
@@ -108,13 +105,6 @@ export function angleForTextPlacement(
   vertical: AnnotationTextVerticalPosition
 ): number {
   return ANNOTATION_ANGLE_BY_PLACEMENT[`${side}-${vertical}`];
-}
-
-export function textPlacementFromAngle(angle: number): AnnotationTextPlacement {
-  return {
-    side: isLeftOriented(angle) ? 'left' : 'right',
-    vertical: isBelowOriented(angle) ? 'below' : 'above'
-  };
 }
 
 export type AnnotationTextBoxStyle = {
@@ -151,7 +141,11 @@ export function getAnnotationTextBoxStyle(
     }
   }
 
-  if (side === 'left') {
+  if (kind === AnnotationKind.TEXT && side !== 'left') {
+    // TEXT has no leader; keep the box centered on the anchor unless it is
+    // explicitly placed on the left (matches pre-placement TEXT rendering).
+    style.left = px - (textWidth || 80) / 2;
+  } else if (side === 'left') {
     style.right = viewport.width - px;
   } else {
     style.left = px;

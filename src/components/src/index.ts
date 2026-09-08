@@ -386,6 +386,7 @@ export {
   isBelowOriented,
   getTextPlacement,
   angleForTextPlacement,
+  textPlacementFromAngle,
   getAnnotationTextBoxStyle,
   isPointVisibleOnGlobe
 } from './annotations';

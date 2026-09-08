@@ -120,6 +120,7 @@ import {
   INITIAL_ANNOTATION_TEXT_SIDE,
   INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION,
   ANNOTATION_ANGLE_BY_PLACEMENT,
+  textPlacementFromAngle,
   AnnotationKind,
   DatasetType,
   getDatasetRefreshIntervalMs,
@@ -2475,9 +2476,17 @@ export const updateEffectUpdater = (
 
 function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
   const kind = config?.kind ?? INITIAL_ANNOTATION_KIND;
-  const textSide = config?.textSide ?? INITIAL_ANNOTATION_TEXT_SIDE;
+  const providedAngle = Number.isFinite((config as any)?.angle) ? (config as any).angle : undefined;
+  const derivedFromAngle =
+    providedAngle != null ? textPlacementFromAngle(providedAngle) : undefined;
+  const textSide =
+    config?.textSide ??
+    derivedFromAngle?.side ??
+    (kind === AnnotationKind.TEXT ? undefined : INITIAL_ANNOTATION_TEXT_SIDE);
   const textVerticalPosition =
-    config?.textVerticalPosition ?? INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION;
+    config?.textVerticalPosition ??
+    derivedFromAngle?.vertical ??
+    (kind === AnnotationKind.TEXT ? undefined : INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION);
   const base = {
     id: config?.id ?? generateHashId(6),
     kind,
@@ -2491,14 +2500,15 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
     textWidth: config?.textWidth ?? INITIAL_ANNOTATION_TEXT_WIDTH,
     textHeight: config?.textHeight ?? INITIAL_ANNOTATION_TEXT_HEIGHT,
     textVerticalAlign: config?.textVerticalAlign ?? ('bottom' as const),
-    textSide,
-    textVerticalPosition,
+    ...(textSide ? {textSide} : {}),
+    ...(textVerticalPosition ? {textVerticalPosition} : {}),
     mapIndex: config?.mapIndex
   };
 
   const defaultAngle =
-    ANNOTATION_ANGLE_BY_PLACEMENT[`${textSide}-${textVerticalPosition}`] ??
-    INITIAL_ANNOTATION_ANGLE;
+    textSide && textVerticalPosition
+      ? ANNOTATION_ANGLE_BY_PLACEMENT[`${textSide}-${textVerticalPosition}`]
+      : INITIAL_ANNOTATION_ANGLE;
 
   switch (kind) {
     case AnnotationKind.POINT:
@@ -2506,21 +2516,21 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
         ...base,
         kind: AnnotationKind.POINT,
         armLength: (config as any)?.armLength ?? INITIAL_ANNOTATION_ARM_LENGTH,
-        angle: (config as any)?.angle ?? defaultAngle
+        angle: providedAngle ?? defaultAngle
       };
     case AnnotationKind.ARROW:
       return {
         ...base,
         kind: AnnotationKind.ARROW,
         armLength: (config as any)?.armLength ?? INITIAL_ANNOTATION_ARM_LENGTH,
-        angle: (config as any)?.angle ?? defaultAngle
+        angle: providedAngle ?? defaultAngle
       };
     case AnnotationKind.CIRCLE:
       return {
         ...base,
         kind: AnnotationKind.CIRCLE,
         armLength: (config as any)?.armLength ?? INITIAL_ANNOTATION_ARM_LENGTH,
-        angle: (config as any)?.angle ?? defaultAngle,
+        angle: providedAngle ?? defaultAngle,
         radiusInMeters: (config as any)?.radiusInMeters ?? 1000
       };
     case AnnotationKind.TEXT:

@@ -64,3 +64,21 @@ export const ANNOTATION_ANGLE_BY_PLACEMENT: Record<
   'right-below': 45,
   'left-below': 135
 };
+
+export function isLeftOriented(angle: number): boolean {
+  return angle > 90 || angle < -90;
+}
+
+export function isBelowOriented(angle: number): boolean {
+  return angle > 0 && angle < 180;
+}
+
+export function textPlacementFromAngle(angle: number): {
+  side: AnnotationTextSide;
+  vertical: AnnotationTextVerticalPosition;
+} {
+  return {
+    side: isLeftOriented(angle) ? 'left' : 'right',
+    vertical: isBelowOriented(angle) ? 'below' : 'above'
+  };
+}
