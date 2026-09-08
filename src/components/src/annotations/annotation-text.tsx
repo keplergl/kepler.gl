@@ -4,9 +4,8 @@
 import React, {FC, useCallback, useEffect, useMemo} from 'react';
 import styled from 'styled-components';
 import {useDraggable} from '@dnd-kit/core';
-import {Annotation, AnnotationWithArm} from '@kepler.gl/types';
-import {AnnotationKind} from '@kepler.gl/constants';
-import {makeMarker, isLeftOriented, MapViewport} from './annotation-utils';
+import {Annotation} from '@kepler.gl/types';
+import {getAnnotationTextBoxStyle, MapViewport} from './annotation-utils';
 import {LexicalRichTextEditor, LexicalToolbar} from './lexical-editor';
 import {SerializedEditorState} from 'lexical';
 
@@ -101,38 +100,11 @@ const AnnotationText: FC<AnnotationTextProps> = ({
     id: `${annotation.id}:MOVE_TEXT`
   });
 
-  const {textWidth, textHeight, lineColor, lineWidth, textVerticalAlign, autoSize, kind} =
-    annotation;
-  const {x, y, tx, ty} = makeMarker(annotation, viewport);
-
-  const isArm = 'armLength' in annotation;
-  const isLeft = isArm && isLeftOriented((annotation as AnnotationWithArm).angle);
+  const {textWidth, textHeight, textVerticalAlign} = annotation;
 
   const style = useMemo(
-    () => ({
-      ...(autoSize ? {minWidth: 80} : {width: textWidth || 120}),
-      bottom: viewport.height - (y + ty),
-      borderBottom: kind !== AnnotationKind.TEXT ? `${lineWidth}px solid ${lineColor}` : undefined,
-      ...(kind === AnnotationKind.TEXT
-        ? {left: x + tx - (textWidth || 80) / 2}
-        : isLeft
-        ? {right: viewport.width - x - tx}
-        : {left: x + tx})
-    }),
-    [
-      autoSize,
-      kind,
-      textWidth,
-      tx,
-      ty,
-      viewport.width,
-      viewport.height,
-      x,
-      y,
-      isLeft,
-      lineWidth,
-      lineColor
-    ]
+    () => getAnnotationTextBoxStyle(annotation, viewport),
+    [annotation, viewport]
   );
 
   const handleEditorChange = useCallback(

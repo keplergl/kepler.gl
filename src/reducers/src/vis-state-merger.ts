@@ -24,7 +24,9 @@ import {
   OVERLAY_BLENDINGS,
   isAnnotationKind,
   INITIAL_ANNOTATION_LINE_COLOR,
-  INITIAL_ANNOTATION_LINE_WIDTH
+  INITIAL_ANNOTATION_LINE_WIDTH,
+  INITIAL_ANNOTATION_TEXT_SIDE,
+  INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION
 } from '@kepler.gl/constants';
 import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
 
@@ -744,6 +746,8 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
       lineWidth: INITIAL_ANNOTATION_LINE_WIDTH,
       textWidth: 0,
       textHeight: 0,
+      textSide: INITIAL_ANNOTATION_TEXT_SIDE,
+      textVerticalPosition: INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION,
       ...a
     }));
   if (!validAnnotations.length) {

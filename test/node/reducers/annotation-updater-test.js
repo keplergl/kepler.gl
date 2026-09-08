@@ -21,6 +21,8 @@ test('#visStateReducer -> ADD_ANNOTATION', t => {
   t.equal(state.annotations[0].kind, AnnotationKind.POINT, 'should default to POINT kind');
   t.equal(state.annotations[0].isVisible, true, 'should be visible by default');
   t.equal(state.annotations[0].label, 'New Annotation', 'should have default label');
+  t.equal(state.annotations[0].textSide, 'right', 'should default text to the right');
+  t.equal(state.annotations[0].textVerticalPosition, 'above', 'should default text above');
   t.equal(state.selectedAnnotationId, state.annotations[0].id, 'should select new annotation');
   t.equal(state.isEditingAnnotationText, true, 'should start editing text');
 
@@ -145,6 +147,32 @@ test('#visStateReducer -> UPDATE_ANNOTATION with kind change', t => {
 
   t.equal(state.annotations[0].kind, AnnotationKind.CIRCLE, 'should change kind');
   t.ok('radiusInMeters' in state.annotations[0], 'should add CIRCLE-specific properties');
+
+  t.end();
+});
+
+test('#visStateReducer -> UPDATE_ANNOTATION text placement snaps arm angle', t => {
+  let state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({
+      anchorPoint: [0, 0],
+      kind: AnnotationKind.POINT
+    })
+  );
+  const id = state.annotations[0].id;
+
+  state = reducer(
+    state,
+    VisStateActions.updateAnnotation(id, {
+      textSide: 'left',
+      textVerticalPosition: 'below',
+      angle: 135
+    })
+  );
+
+  t.equal(state.annotations[0].textSide, 'left', 'should set text side');
+  t.equal(state.annotations[0].textVerticalPosition, 'below', 'should set vertical position');
+  t.equal(state.annotations[0].angle, 135, 'should snap arm toward bottom-left');
 
   t.end();
 });

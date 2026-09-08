@@ -21,6 +21,8 @@ const annotationPropsV1 = {
   textWidth: null,
   textHeight: null,
   textVerticalAlign: null,
+  textSide: null,
+  textVerticalPosition: null,
   armLength: null,
   angle: null,
   radiusInMeters: null
@@ -48,6 +50,8 @@ const makePointAnnotation = (overrides = {}) => ({
   textWidth: 120,
   textHeight: 40,
   textVerticalAlign: 'bottom',
+  textSide: 'right',
+  textVerticalPosition: 'above',
   armLength: 60,
   angle: -30,
   radiusInMeters: null,
@@ -69,6 +73,8 @@ const makeCircleAnnotation = (overrides = {}) => ({
   textWidth: 0,
   textHeight: 0,
   textVerticalAlign: 'bottom',
+  textSide: 'left',
+  textVerticalPosition: 'below',
   armLength: 50,
   angle: -45,
   radiusInMeters: 5000,
@@ -171,6 +177,12 @@ test('#AnnotationsSchema -> save/load round-trip', t => {
   t.deepEqual(loaded.annotations[0].anchorPoint, [10, 20], 'point anchorPoint round-trips');
   t.equal(loaded.annotations[0].armLength, 60, 'point armLength round-trips');
   t.equal(loaded.annotations[0].textVerticalAlign, 'bottom', 'point textVerticalAlign round-trips');
+  t.equal(loaded.annotations[0].textSide, 'right', 'point textSide round-trips');
+  t.equal(
+    loaded.annotations[0].textVerticalPosition,
+    'above',
+    'point textVerticalPosition round-trips'
+  );
   t.deepEqual(
     loaded.annotations[0].editorState,
     {root: {children: [], direction: null, format: '', indent: 0, type: 'root', version: 1}},
@@ -180,6 +192,12 @@ test('#AnnotationsSchema -> save/load round-trip', t => {
   // Check circle
   t.equal(loaded.annotations[1].id, 'ann-circle-1', 'circle id round-trips');
   t.equal(loaded.annotations[1].radiusInMeters, 5000, 'circle radiusInMeters round-trips');
+  t.equal(loaded.annotations[1].textSide, 'left', 'circle textSide round-trips');
+  t.equal(
+    loaded.annotations[1].textVerticalPosition,
+    'below',
+    'circle textVerticalPosition round-trips'
+  );
 
   // Check text
   t.equal(loaded.annotations[2].id, 'ann-text-1', 'text id round-trips');

@@ -9,6 +9,9 @@ import {
   moveText,
   resizeCircle,
   isLeftOriented,
+  isBelowOriented,
+  getTextPlacement,
+  getAnnotationTextBoxStyle,
   isPointVisibleOnGlobe
 } from '@kepler.gl/components';
 
@@ -81,6 +84,91 @@ test('#isLeftOriented', t => {
   t.equal(isLeftOriented(-90), false, '-90 degrees is right-oriented');
   t.equal(isLeftOriented(-91), true, '-91 degrees is left-oriented');
   t.equal(isLeftOriented(-180), true, '-180 degrees is left-oriented');
+
+  t.end();
+});
+
+test('#isBelowOriented', t => {
+  t.equal(isBelowOriented(-45), false, 'default -45 is above');
+  t.equal(isBelowOriented(-90), false, '-90 (up) is above');
+  t.equal(isBelowOriented(0), false, '0 (right) is not below');
+  t.equal(isBelowOriented(45), true, '45 is below');
+  t.equal(isBelowOriented(90), true, '90 (down) is below');
+  t.equal(isBelowOriented(135), true, '135 is below');
+  t.equal(isBelowOriented(180), false, '180 (left) is not below');
+
+  t.end();
+});
+
+test('#getTextPlacement -> stored values win over angle', t => {
+  const annotation = makePointAnnotation({
+    angle: 0,
+    textSide: 'left',
+    textVerticalPosition: 'below'
+  });
+  t.deepEqual(
+    getTextPlacement(annotation),
+    {side: 'left', vertical: 'below'},
+    'should use stored placement'
+  );
+  t.end();
+});
+
+test('#getTextPlacement -> derives from arm angle when unset', t => {
+  t.deepEqual(
+    getTextPlacement(makePointAnnotation({angle: -45})),
+    {side: 'right', vertical: 'above'},
+    'default angle is right + above'
+  );
+  t.deepEqual(
+    getTextPlacement(makePointAnnotation({angle: 180})),
+    {side: 'left', vertical: 'above'},
+    '180 degrees is left + above'
+  );
+  t.deepEqual(
+    getTextPlacement(makePointAnnotation({angle: 90})),
+    {side: 'right', vertical: 'below'},
+    '90 degrees is right + below'
+  );
+  t.end();
+});
+
+test('#getAnnotationTextBoxStyle -> right/above uses left + bottom', t => {
+  const annotation = makePointAnnotation({
+    autoSize: false,
+    textWidth: 100,
+    angle: 0,
+    armLength: 50,
+    textSide: 'right',
+    textVerticalPosition: 'above'
+  });
+  const style = getAnnotationTextBoxStyle(annotation, mockViewport);
+
+  t.equal(style.left, 550, 'text starts at arm endpoint x');
+  t.equal(style.bottom, 300, 'text sits above the arm endpoint');
+  t.ok(style.borderBottom, 'connector is on the bottom edge');
+  t.notOk(style.right, 'should not set right when on the right');
+  t.notOk(style.top, 'should not set top when above');
+
+  t.end();
+});
+
+test('#getAnnotationTextBoxStyle -> left/below uses right + top', t => {
+  const annotation = makePointAnnotation({
+    autoSize: false,
+    textWidth: 100,
+    angle: 135,
+    armLength: 50,
+    textSide: 'left',
+    textVerticalPosition: 'below'
+  });
+  const style = getAnnotationTextBoxStyle(annotation, mockViewport);
+
+  t.ok(typeof style.right === 'number', 'text is anchored from the right');
+  t.ok(typeof style.top === 'number', 'text sits below the arm endpoint');
+  t.ok(style.borderTop, 'connector is on the top edge');
+  t.notOk(style.left, 'should not set left when on the left');
+  t.notOk(style.bottom, 'should not set bottom when below');
 
   t.end();
 });
@@ -172,6 +260,8 @@ test('#moveText -> POINT annotation changes angle and armLength', t => {
 
   t.ok('angle' in changes, 'should return angle');
   t.ok('armLength' in changes, 'should return armLength');
+  t.ok('textSide' in changes, 'should return textSide');
+  t.ok('textVerticalPosition' in changes, 'should return textVerticalPosition');
   t.notOk('anchorPoint' in changes, 'should not return anchorPoint');
 
   t.end();

@@ -3,7 +3,13 @@
 
 import {addMetersToLngLat} from '@math.gl/web-mercator';
 import {Annotation, AnnotationWithArm} from '@kepler.gl/types';
-import {AnnotationKind, isAnnotationWithArm} from '@kepler.gl/constants';
+import {
+  AnnotationKind,
+  AnnotationTextSide,
+  AnnotationTextVerticalPosition,
+  ANNOTATION_ANGLE_BY_PLACEMENT,
+  isAnnotationWithArm
+} from '@kepler.gl/constants';
 
 export type MapViewport = {
   project: (lngLat: [number, number]) => [number, number];
@@ -78,6 +84,82 @@ export function isLeftOriented(angle: number): boolean {
   return angle > 90 || angle < -90;
 }
 
+export function isBelowOriented(angle: number): boolean {
+  return angle > 0 && angle < 180;
+}
+
+export type AnnotationTextPlacement = {
+  side: AnnotationTextSide;
+  vertical: AnnotationTextVerticalPosition;
+};
+
+export function getTextPlacement(annotation: Annotation): AnnotationTextPlacement {
+  const side: AnnotationTextSide =
+    annotation.textSide ??
+    (isAnnotationWithArm(annotation) && isLeftOriented(annotation.angle) ? 'left' : 'right');
+  const vertical: AnnotationTextVerticalPosition =
+    annotation.textVerticalPosition ??
+    (isAnnotationWithArm(annotation) && isBelowOriented(annotation.angle) ? 'below' : 'above');
+  return {side, vertical};
+}
+
+export function angleForTextPlacement(
+  side: AnnotationTextSide,
+  vertical: AnnotationTextVerticalPosition
+): number {
+  return ANNOTATION_ANGLE_BY_PLACEMENT[`${side}-${vertical}`];
+}
+
+export function textPlacementFromAngle(angle: number): AnnotationTextPlacement {
+  return {
+    side: isLeftOriented(angle) ? 'left' : 'right',
+    vertical: isBelowOriented(angle) ? 'below' : 'above'
+  };
+}
+
+export type AnnotationTextBoxStyle = {
+  minWidth?: number;
+  width?: number;
+  top?: number;
+  bottom?: number;
+  left?: number;
+  right?: number;
+  borderTop?: string;
+  borderBottom?: string;
+};
+
+export function getAnnotationTextBoxStyle(
+  annotation: Annotation,
+  viewport: MapViewport
+): AnnotationTextBoxStyle {
+  const {textWidth, lineColor, lineWidth, autoSize, kind} = annotation;
+  const {x, y, tx, ty} = makeMarker(annotation, viewport);
+  const {side, vertical} = getTextPlacement(annotation);
+  const px = x + tx;
+  const py = y + ty;
+  const style: AnnotationTextBoxStyle = autoSize ? {minWidth: 80} : {width: textWidth || 120};
+
+  if (vertical === 'below') {
+    style.top = py;
+    if (kind !== AnnotationKind.TEXT) {
+      style.borderTop = `${lineWidth}px solid ${lineColor}`;
+    }
+  } else {
+    style.bottom = viewport.height - py;
+    if (kind !== AnnotationKind.TEXT) {
+      style.borderBottom = `${lineWidth}px solid ${lineColor}`;
+    }
+  }
+
+  if (side === 'left') {
+    style.right = viewport.width - px;
+  } else {
+    style.left = px;
+  }
+
+  return style;
+}
+
 /** Great-circle angular distance between two lng/lat points, in degrees. */
 function angularDistanceDeg(a: [number, number], b: [number, number]): number {
   const toRad = Math.PI / 180;
@@ -147,6 +229,7 @@ export function moveText(
 
   const [tx1, ty1] = [tx + delta.x, ty + delta.y];
   const nextAngle = radiansToDegrees(Math.atan2(ty1, tx1));
+  const {side, vertical} = textPlacementFromAngle(nextAngle);
   let nextArm: number;
 
   switch (kind) {
@@ -160,7 +243,12 @@ export function moveText(
     default:
       nextArm = (annotation as AnnotationWithArm).armLength;
   }
-  return {angle: nextAngle, armLength: nextArm};
+  return {
+    angle: nextAngle,
+    armLength: nextArm,
+    textSide: side,
+    textVerticalPosition: vertical
+  };
 }
 
 export function resizeCircle(

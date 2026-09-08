@@ -285,7 +285,9 @@ export default {
     addAnnotation: 'Add',
     type: 'Type',
     lineWidth: 'Line Width',
-    color: 'Color'
+    color: 'Color',
+    textSide: 'Text Side',
+    textPlacement: 'Placement'
   },
   effectDescription: {
     lightAndShadow:

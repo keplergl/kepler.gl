@@ -26,6 +26,12 @@ export const INITIAL_ANNOTATION_TEXT_HEIGHT = 0;
 export const INITIAL_ANNOTATION_LINE_WIDTH = 2;
 export const INITIAL_ANNOTATION_LINE_COLOR = '#FFFFFF';
 
+export type AnnotationTextSide = 'left' | 'right';
+export type AnnotationTextVerticalPosition = 'above' | 'below';
+
+export const INITIAL_ANNOTATION_TEXT_SIDE: AnnotationTextSide = 'right';
+export const INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION: AnnotationTextVerticalPosition = 'above';
+
 export const ANNOTATION_KINDS = [
   {id: AnnotationKind.TEXT, label: 'Text'},
   {id: AnnotationKind.POINT, label: 'Point'},
@@ -34,3 +40,27 @@ export const ANNOTATION_KINDS = [
 ];
 
 export const ANNOTATION_LINE_WIDTH_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+export const ANNOTATION_TEXT_SIDES: Array<{id: AnnotationTextSide; label: string}> = [
+  {id: 'right', label: 'Right'},
+  {id: 'left', label: 'Left'}
+];
+
+export const ANNOTATION_TEXT_VERTICAL_POSITIONS: Array<{
+  id: AnnotationTextVerticalPosition;
+  label: string;
+}> = [
+  {id: 'above', label: 'Above'},
+  {id: 'below', label: 'Below'}
+];
+
+/** Canonical arm angle for a text-side + vertical-position pair (screen y-down). */
+export const ANNOTATION_ANGLE_BY_PLACEMENT: Record<
+  `${AnnotationTextSide}-${AnnotationTextVerticalPosition}`,
+  number
+> = {
+  'right-above': INITIAL_ANNOTATION_ANGLE,
+  'left-above': -135,
+  'right-below': 45,
+  'left-below': 135
+};

@@ -383,6 +383,10 @@ export {
   moveText,
   resizeCircle,
   isLeftOriented,
+  isBelowOriented,
+  getTextPlacement,
+  angleForTextPlacement,
+  getAnnotationTextBoxStyle,
   isPointVisibleOnGlobe
 } from './annotations';
 export type {MapViewport, AnnotationMarker} from './annotations';

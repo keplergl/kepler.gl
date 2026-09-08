@@ -237,7 +237,9 @@ export default {
     addAnnotation: '添加',
     type: '类型',
     lineWidth: '线宽',
-    color: '颜色'
+    color: '颜色',
+    textSide: '文本位置',
+    textPlacement: '对齐'
   },
   effectDescription: {
     lightAndShadow:

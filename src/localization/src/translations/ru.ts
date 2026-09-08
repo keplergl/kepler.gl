@@ -241,7 +241,9 @@ export default {
     addAnnotation: 'Добавить',
     type: 'Тип',
     lineWidth: 'Толщина линии',
-    color: 'Цвет'
+    color: 'Цвет',
+    textSide: 'Сторона текста',
+    textPlacement: 'Размещение'
   },
   effectDescription: {
     lightAndShadow:

@@ -239,7 +239,9 @@ export default {
     addAnnotation: '追加',
     type: 'タイプ',
     lineWidth: '線幅',
-    color: '色'
+    color: '色',
+    textSide: 'テキストの位置',
+    textPlacement: '配置'
   },
   effectDescription: {
     lightAndShadow:
