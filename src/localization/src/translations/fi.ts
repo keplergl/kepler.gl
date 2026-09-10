@@ -240,7 +240,9 @@ export default {
     addAnnotation: 'Lisää',
     type: 'Tyyppi',
     lineWidth: 'Viivan leveys',
-    color: 'Väri'
+    color: 'Väri',
+    textSide: 'Tekstin puoli',
+    textPlacement: 'Sijoittelu'
   },
   effectDescription: {
     lightAndShadow:

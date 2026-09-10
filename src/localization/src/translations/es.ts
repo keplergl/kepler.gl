@@ -242,7 +242,9 @@ export default {
     addAnnotation: 'Añadir',
     type: 'Tipo',
     lineWidth: 'Ancho de línea',
-    color: 'Color'
+    color: 'Color',
+    textSide: 'Lado del texto',
+    textPlacement: 'Colocación'
   },
   effectDescription: {
     lightAndShadow:

@@ -241,7 +241,9 @@ export default {
     addAnnotation: 'Afegir',
     type: 'Tipus',
     lineWidth: 'Amplada de línia',
-    color: 'Color'
+    color: 'Color',
+    textSide: 'Costat del text',
+    textPlacement: 'Col·locació'
   },
   effectDescription: {
     lightAndShadow:

@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {AnnotationKind} from '@kepler.gl/constants';
+import {
+  AnnotationKind,
+  AnnotationTextSide,
+  AnnotationTextVerticalPosition
+} from '@kepler.gl/constants';
 
 export {AnnotationKind} from '@kepler.gl/constants';
 export {isAnnotationKind, isAnnotationWithArm} from '@kepler.gl/constants';
@@ -21,6 +25,8 @@ export type BaseAnnotation = {
   textWidth: number;
   textHeight: number;
   textVerticalAlign?: 'top' | 'middle' | 'bottom';
+  textSide?: AnnotationTextSide;
+  textVerticalPosition?: AnnotationTextVerticalPosition;
 };
 
 export type AnnotationWithArm = BaseAnnotation & {
