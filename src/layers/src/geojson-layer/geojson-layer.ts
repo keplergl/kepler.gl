@@ -203,8 +203,10 @@ const geoColumnAccessor =
   (dc: DataContainerInterface): arrow.Vector | null =>
     dc.getColumn?.(geojson.fieldIdx) as arrow.Vector;
 
-const getTableModeValueAccessor = feature => {
-  // Called from gpu-filter-utils.getFilterValueAccessor()
+const getTableModeValueAccessor = (dc, feature) => {
+  // Called from gpu-filter-utils.getFilterValueAccessor(), which passes
+  // (dataContainer, feature, fieldIndex). The feature carries its own
+  // materialised rows in properties.values, so the data container is not needed.
   return field => feature.properties.values.map(v => field.valueAccessor(v));
 };
 

@@ -20,6 +20,8 @@ import {
   testFormatLayerDataCases,
   testRenderLayerCases,
   prepareTripGeoDataset,
+  prepareTripTableDataset,
+  speedFilterDomain0,
   valueFilterDomain0,
   animationConfig
 } from 'test/helpers/layer-utils';
@@ -238,6 +240,59 @@ test('#TripLayer -> formatLayerData', t => {
           layer.dataToFeature,
           dataToFeature,
           'should format correct geojson dataToFeature'
+        );
+      }
+    }
+  ];
+
+  testFormatLayerDataCases(t, TripLayer, TEST_CASES);
+  t.end();
+});
+
+test('#TripLayer -> formatLayerData -> table column mode with gpu filter', t => {
+  // The GPU filter reads a layer's values through the accessor the layer hands
+  // it, called as getData(dataContainer, feature, fieldIndex). Table column mode
+  // groups rows into trips, so the value of each channel is an array, one entry
+  // per vertex of the trip.
+  const TEST_CASES = [
+    {
+      name: 'Trip Table.1',
+      layer: {
+        type: 'trip',
+        id: 'test_trip_table_layer',
+        config: {
+          dataId,
+          label: 'gps trips',
+          columnMode: 'table',
+          columns: {
+            id: 'name',
+            lat: 'location-lat',
+            lng: 'location-lng',
+            timestamp: 'timestamp',
+            altitude: 'location-alt'
+          }
+        }
+      },
+      datasets: {
+        [dataId]: prepareTripTableDataset
+      },
+      assert: result => {
+        const {layerData} = result;
+
+        let filterValues;
+        t.doesNotThrow(() => {
+          filterValues = layerData.data.map(layerData.getFilterValue);
+        }, 'getFilterValue should not throw in table column mode');
+
+        // The first trip groups the 8 rows named Thuub that carry a coordinate
+        // and a timestamp; the row with an empty location is dropped.
+        const round = v => Math.round(v * 100) / 100;
+        const groundSpeeds = [0.22, 0.27, 0.32, 0.46, 0.51, 0.3, 0.33, 0.43];
+
+        t.deepEqual(
+          (filterValues?.[0] ?? []).map(vertex => round(vertex[0])),
+          groundSpeeds.map(speed => round(speed - speedFilterDomain0)),
+          'getFilterValue should return one filter value per vertex of the trip'
         );
       }
     }
