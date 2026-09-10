@@ -14,6 +14,7 @@ import {
 import {RasterWebGL} from '@kepler.gl/deckgl-layers';
 import {parseRasterMetadata} from '@kepler.gl/table';
 import {testCreateCases} from 'test/helpers/layer-utils';
+import {loadNpyArray} from '../../../src/layers/src/raster-tile/gpu-utils';
 
 const {RasterTileLayer} = KeplerGlLayers;
 
@@ -73,6 +74,49 @@ const createRenderOpts = (dataset, mapState = {dragRotate: false, bearing: 0, pi
   },
   mapState,
   interactionConfig: {tooltip: {enabled: true}}
+});
+
+test('#RasterTileLayer -> tile requests carry the abort signal', async t => {
+  // deck.gl aborts a tile that scrolls out of view by firing the AbortSignal it
+  // puts in the request. The signal has to reach the fetch, or the browser keeps
+  // downloading tiles nobody will draw and they queue ahead of the ones in view.
+  const controller = new AbortController();
+  const requests = [];
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (url, init) => {
+    requests.push(init);
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      url: String(url),
+      headers: new Map(),
+      arrayBuffer: async () => new ArrayBuffer(8)
+    });
+  };
+
+  try {
+    await loadNpyArray(
+      {
+        url: 'https://example.com/tile.npy',
+        rasterServerUrl: 'https://example.com',
+        options: {signal: controller.signal},
+        rasterServerMaxRetries: 0
+      },
+      true
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  t.equal(requests.length, 1, 'should issue one tile request');
+  t.equal(
+    requests[0]?.signal,
+    controller.signal,
+    'the tile request should carry the abort signal deck.gl provided'
+  );
+
+  t.end();
 });
 
 test('#RasterTileLayer -> constructor and basic properties', t => {
