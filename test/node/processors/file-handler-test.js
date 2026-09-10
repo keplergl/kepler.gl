@@ -12,6 +12,7 @@ import {
 } from '@kepler.gl/processors';
 import {getDatasetRefreshIntervalMs} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
+import {convertArrowToSchema} from '@loaders.gl/schema-utils';
 import {parsedFields, parsedRows} from 'test/fixtures/row-object';
 import {
   savedStateV1InteractionCoordinate as keplerglMap,
@@ -345,6 +346,30 @@ test('#file-handler -> processFileData remote ids do not collide on filename', a
     'reloading the same URL keeps a stable id so progressive batches can update in place'
   );
   t.ok(!String(remoteA[0].info.id).includes('http'), 'id is a hash, not the raw URL');
+
+  t.end();
+});
+
+test('#file-handler -> convertArrowToSchema uses a single apache-arrow copy', t => {
+  // Parquet loading serializes the Arrow schema via loaders.gl. If kepler.gl
+  // and @loaders.gl/schema-utils resolve different apache-arrow packages, that
+  // switch-on-constructor check throws `arrow type not supported: <Class>`
+  // (minified to e.g. `tL` in exported HTML).
+  const table = new arrow.Table({
+    lat: arrow.vectorFromArray(new Float64Array([37.8])),
+    lng: arrow.vectorFromArray(new Float64Array([-122.4])),
+    name: arrow.vectorFromArray(['alpha'], new arrow.Utf8())
+  });
+
+  let schema;
+  t.doesNotThrow(() => {
+    schema = convertArrowToSchema(table.schema);
+  }, 'schema conversion should not fail with a constructor identity mismatch');
+  t.deepEqual(
+    schema.fields.map(field => field.type),
+    ['float64', 'float64', 'utf8'],
+    'should serialize primitive Arrow types from the shared apache-arrow copy'
+  );
 
   t.end();
 });
