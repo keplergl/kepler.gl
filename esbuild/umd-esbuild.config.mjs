@@ -123,6 +123,15 @@ const config = {
   // of the external `React` global by jsxRuntimeShimPlugin below.
   external: ['react', 'react-dom', 'redux', 'react-redux', 'styled-components'],
 
+  // loaders.gl's ParquetArrowLoader calls convertArrowToSchema, which matches
+  // column types with `switch (arrowType.constructor)`. Duplicate apache-arrow
+  // copies (kepler 17 vs nested loaders.gl 21) make that identity check fail
+  // and throw `arrow type not supported: tL` in the minified exported HTML.
+  // Force a single copy, matching the demo-app / website bundler aliases.
+  alias: {
+    'apache-arrow': join(NODE_MODULES_DIR, 'apache-arrow')
+  },
+
   plugins: [
     jsxRuntimeShimPlugin,
     audioRecorderStubPlugin,
