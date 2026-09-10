@@ -17,6 +17,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.3.0-alpha.11] - Sep 10 2026
 
+- 862aa5cb fix(exported-html): include only one copy of arrow (#3717)
 - 34921e2d fix: cancel raster tile requests when deck.gl aborts the tile (#3715)
 - 58265900 feat: add left and below placement for annotation text (#3706)
 - 131f6642 fix: pass the feature to table-mode GPU filter accessors (#3710)
