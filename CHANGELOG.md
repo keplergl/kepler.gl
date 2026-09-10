@@ -15,6 +15,21 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.11] - Sep 10 2026
+
+- 34921e2d fix: cancel raster tile requests when deck.gl aborts the tile (#3715)
+- 58265900 feat: add left and below placement for annotation text (#3706)
+- 131f6642 fix: pass the feature to table-mode GPU filter accessors (#3710)
+- 17f2ae12 chore(deps): bump react-router-dom from 6.30.4 to 6.30.6 in /website (#3708)
+- d48bd5c2 fix: prevent long annotation names from stretching the annotations panel (#3705)
+- bcf42616 fix: draw float32 raster tiles (#3704)
+- e29bad01 chore: move filter panel interval message to a tooltip (#3701)
+- 68e844d2 fix: geojson stroke color via config (#3700)
+- 150246a0 feat: optional end time for time filter animation (#3699)
+- 54b620d8 fix: adjust labels in add data to map modal (#3698)
+- c3aeb45b feat: add KML, GPX, TCX, and GeoJSONL loaders (#3697)
+- d37b8a25 chore: remove react-palm, replace with built-in task runtime in @kepler.gl/tasks (#3592)
+
 ## [3.3.0-alpha.10] - Sep 3 2026
 
 - 878d9651 chore: live-data example WebSocket host (ws → addToDataset) (#3687)
