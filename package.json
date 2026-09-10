@@ -275,6 +275,7 @@
     "@loaders.gl/wkt": "4.4.1",
     "@loaders.gl/wms": "4.4.1",
     "@loaders.gl/zip": "4.4.1",
+    "apache-arrow": "17.0.0",
     "@luma.gl/constants": "9.3.2",
     "@luma.gl/core": "9.3.2",
     "@luma.gl/effects": "9.3.2",
