@@ -61,7 +61,8 @@ export default {
       addMoreLabel: 'Adicionar mais Rótulos',
       backgroundColor: 'Cor de fundo',
       outlineWidth: 'Largura do contorno',
-      outlineColor: 'Cor do contorno'
+      outlineColor: 'Cor do contorno',
+      collisionEnabled: 'Ocultar rótulos sobrepostos'
     }
   },
   sidebar: {

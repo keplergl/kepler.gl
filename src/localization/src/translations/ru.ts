@@ -61,7 +61,8 @@ export default {
       alignment: 'Положение',
       addMoreLabel: 'Добавить еще ярлык',
       outlineWidth: 'Ширина контура',
-      outlineColor: 'Цвет контура'
+      outlineColor: 'Цвет контура',
+      collisionEnabled: 'Скрывать пересекающиеся подписи'
     }
   },
   sidebar: {

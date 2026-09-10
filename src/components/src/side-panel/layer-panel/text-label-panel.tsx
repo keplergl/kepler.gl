@@ -70,6 +70,20 @@ function TextLabelPanelFactory(
             />
           </ConfigGroupCollapsibleHeader>
           <ConfigGroupCollapsibleContent>
+            <SidePanelSection>
+              <SwitchWrapper>
+                <PanelLabel>
+                  <FormattedMessage id="panel.text.collisionEnabled" />
+                </PanelLabel>
+                <Switch
+                  checked={Boolean(textLabel[0]?.collisionEnabled)}
+                  id={`${this.props.id}-textCollisionEnabled`}
+                  onChange={() =>
+                    updateLayerTextLabel('all', 'collisionEnabled', !textLabel[0]?.collisionEnabled)
+                  }
+                />
+              </SwitchWrapper>
+            </SidePanelSection>
             {textLabel.map((tl, idx) => (
               <div key={tl.field ? tl.field.name : `null-${idx}`}>
                 <PanelLabel>

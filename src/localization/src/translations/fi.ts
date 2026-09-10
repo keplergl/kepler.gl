@@ -60,7 +60,8 @@ export default {
       alignment: 'Sijoittelu',
       addMoreLabel: 'Lisää uusia nimiöitä',
       outlineWidth: 'Ääriviivan leveys',
-      outlineColor: 'Ääriviivan väri'
+      outlineColor: 'Ääriviivan väri',
+      collisionEnabled: 'Piilota päällekkäiset nimiöt'
     }
   },
   sidebar: {

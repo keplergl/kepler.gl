@@ -323,7 +323,8 @@ test('#H3Layer -> renderLayer', t => {
             outlineWidth: 0,
             outlineColor: [255, 0, 0, 255],
             background: false,
-            backgroundColor: [0, 0, 200, 255]
+            backgroundColor: [0, 0, 200, 255],
+            collisionEnabled: false
           }
         ];
 
