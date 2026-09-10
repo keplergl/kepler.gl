@@ -1723,6 +1723,10 @@ class Layer implements KeplerLayer {
   getLegendVisualChannels(): {[key: string]: VisualChannel} {
     return this.visualChannels;
   }
+
+  getLegendImageUrl(): string | null {
+    return null;
+  }
 }
 
 export default Layer;

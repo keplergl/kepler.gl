@@ -129,6 +129,53 @@ test('#WMSLayer -> constructor', t => {
   t.end();
 });
 
+test('#WMSLayer -> legend visual channels', t => {
+  const layer = createWMSLayer();
+
+  t.deepEqual(
+    layer.getLegendVisualChannels(),
+    {},
+    'should expose no legend channels (WMS has no fill color)'
+  );
+
+  t.end();
+});
+
+test('#WMSLayer -> getLegendImageUrl', t => {
+  const layer = createWMSLayer({
+    visConfig: {
+      wmsLayer: {
+        ...MOCK_WMS_LAYER_CONFIG,
+        legendUrl: 'https://example.com/legend.png'
+      }
+    }
+  });
+
+  t.equal(
+    layer.getLegendImageUrl(),
+    'https://example.com/legend.png',
+    'should use LegendURL stored on the selected WMS layer'
+  );
+
+  const layerWithoutLegend = createWMSLayer();
+  t.equal(
+    layerWithoutLegend.getLegendImageUrl(),
+    null,
+    'should return null before dataset meta has a service URL'
+  );
+
+  layerWithoutLegend.updateLayerMeta(MOCK_WMS_DATASET);
+  const constructed = layerWithoutLegend.getLegendImageUrl();
+  t.ok(constructed, 'should construct GetLegendGraphic from dataset URL');
+  t.ok(
+    constructed.includes('GetLegendGraphic'),
+    'constructed legend URL should request GetLegendGraphic'
+  );
+  t.ok(constructed.includes('test_layer'), 'constructed legend URL should include layer name');
+
+  t.end();
+});
+
 test('WMSLayer -> basic layer functionality', t => {
   const layer = createWMSLayer();
 

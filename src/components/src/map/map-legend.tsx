@@ -72,6 +72,19 @@ export const StyledMapControlLegend = styled.div<StyledMapControlLegendProps>`
   .legend--layer_color-legend {
     margin-top: 6px;
   }
+
+  .legend--layer_image-wrap {
+    max-height: 240px;
+    overflow: auto;
+    background: #fff;
+    border-radius: 2px;
+  }
+
+  .legend--layer_image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
 `;
 
 const StyledLegendHeaderRow = styled.div`
@@ -225,6 +238,7 @@ export function LayerColorLegendFactory(
       },
       [layer, onLayerVisConfigChange, colorRange, range]
     );
+    const isHeatmap = layer.type === 'heatmap';
     const [isExpanded, setIsExpanded] = useState(isExport);
     const handleToggleExpanded = () => setIsExpanded(!isExpanded);
     return (
@@ -234,7 +248,7 @@ export function LayerColorLegendFactory(
             {enableColorBy ? (
               <div className="legend--layer_size-title-row">
                 <VisualChannelMetric name={enableColorBy} />
-                {!isExport ? (
+                {!isExport && !isHeatmap ? (
                   <PanelHeaderAction
                     id="legend-collapse-button"
                     onClick={handleToggleExpanded}
@@ -257,6 +271,15 @@ export function LayerColorLegendFactory(
                   disableEdit={disableEdit || Boolean(isExport)}
                   isFixed={isFixed}
                   mapState={mapState}
+                  orientation={isHeatmap ? 'horizontal' : 'vertical'}
+                  endpointLabels={
+                    isHeatmap
+                      ? {
+                          min: intl.formatMessage({id: 'mapLegend.min', defaultMessage: 'Min'}),
+                          max: intl.formatMessage({id: 'mapLegend.max', defaultMessage: 'Max'})
+                        }
+                      : undefined
+                  }
                   labelFormat={
                     colorField?.displayFormat ? d3Format(colorField?.displayFormat) : null
                   }
@@ -445,6 +468,18 @@ const defaultActionIcons = {
   collapsed: ArrowRight
 };
 
+const LayerImageLegend: React.FC<{src: string; alt: string}> = ({src, alt}) => {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return null;
+  }
+  return (
+    <div className="legend--layer_image-wrap">
+      <img className="legend--layer_image" src={src} alt={alt} onError={() => setFailed(true)} />
+    </div>
+  );
+};
+
 export type LayerLegendContentProps = {
   layer: Layer;
   containerW: number;
@@ -470,6 +505,7 @@ export function LayerLegendContentFactory(
     actionIcons
   }) => {
     const visualChannels = layer.getLegendVisualChannels();
+    const legendImageUrl = layer.getLegendImageUrl();
     const channelKeys = Object.values(visualChannels);
     const colorChannels = channelKeys.filter(isColorChannel) as VisualChannel[];
     const nonColorChannels = channelKeys.filter(vc => !isColorChannel(vc));
@@ -489,6 +525,13 @@ export function LayerLegendContentFactory(
     }
     return (
       <>
+        {legendImageUrl ? (
+          <LayerImageLegend
+            key={legendImageUrl}
+            src={legendImageUrl}
+            alt={layer.config.label || 'Layer legend'}
+          />
+        ) : null}
         {colorChannelToRender.map(colorChannel => (
           <LayerColorLegend
             key={colorChannel.key}

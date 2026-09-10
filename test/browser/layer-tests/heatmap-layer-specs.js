@@ -44,6 +44,14 @@ test('#HeatmapLayer -> contructor', t => {
           t.ok(layer.isAggregated === true, 'heatmaplayer is aggregated');
           t.ok(layer.config.label === 'test heatmap layer', 'label should be correct');
           t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
+          t.equal(layer.config.colorScale, 'quantize', 'heatmap legend should use quantize scale');
+          t.deepEqual(layer.config.colorDomain, [0, 1], 'heatmap legend domain should be 0-1');
+          t.ok(layer.visualChannels.color, 'should expose a color channel for the legend');
+          t.deepEqual(
+            Object.keys(layer.getLegendVisualChannels()),
+            ['color'],
+            'legend should show the color ramp, not weight'
+          );
         }
       }
     ]
