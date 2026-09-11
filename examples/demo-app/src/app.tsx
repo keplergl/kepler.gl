@@ -12,7 +12,11 @@ import {useParams, useSearchParams, useLocation} from 'react-router-dom';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {setMapBoundary} from '@openassistant/kepler-assistant';
 import {AiAssistantPanel} from '@openassistant/kepler-assistant';
-import {panelBorderColor, theme} from '@kepler.gl/styles';
+import {theme} from '@kepler.gl/styles';
+import {SidebarFactory} from '@kepler.gl/components';
+import {KeplerAppShell, SqlroomsSidebarFactory} from '@kepler.gl/sqlrooms/shell';
+import {SqlroomsDemoLayout} from './components/sqlrooms-demo-layout';
+import {ThemeProvider as SqlroomsThemeProvider} from '@sqlrooms/ui';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
 import {SqlPanel} from '@kepler.gl/duckdb/components';
@@ -36,15 +40,16 @@ import {
   addDataToMap,
   replaceDataInMap,
   toggleMapControl,
-  toggleModal
+  toggleModal,
+  toggleSidePanel
 } from '@kepler.gl/actions';
 import {CLOUD_PROVIDERS} from './cloud-providers';
-import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
 
 const KeplerGl = require('@kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
-  replacePanelHeader()
+  replacePanelHeader(),
+  [SidebarFactory, SqlroomsSidebarFactory]
 ]);
 
 // Sample data
@@ -125,28 +130,14 @@ const CONTAINER_STYLE = {
   backgroundColor: '#333'
 };
 
-const StyledResizeHandle = styled(PanelResizeHandle)`
-  background-color: ${panelBorderColor};
-  &:hover {
-    background-color: #555;
-  }
-  width: 100%;
-  height: 5px;
-  cursor: row-resize;
-`;
+// The SQLRooms sidebar is outside the map viewport, so Kepler must not reserve
+// a second sidebar margin when positioning legends, timelines, and geocoders.
+const shellMapTheme = {
+  ...theme,
+  sidePanel: {...theme.sidePanel, margin: {top: 0, right: 0, bottom: 0, left: 0}}
+};
 
-const StyledVerticalResizeHandle = styled(PanelResizeHandle)`
-  background-color: ${panelBorderColor};
-  width: 4px;
-  height: 100%;
-  cursor: row-resize;
-
-  &:hover {
-    background-color: #555;
-  }
-`;
-
-const App = props => {
+const App = () => {
   const [showBanner, toggleShowBanner] = useState(false);
   const {id, provider} = useParams();
   const [searchParams] = useSearchParams();
@@ -154,6 +145,25 @@ const App = props => {
   const query = Object.fromEntries(searchParams.entries());
   const dispatch = useDispatch();
   const reduxStore = useStore();
+  const mapReady = useSelector((state: any) => Boolean(state?.demo?.keplerGl?.map));
+  const modalOpen = useSelector((state: any) =>
+    Boolean(state?.demo?.keplerGl?.map?.uiState.currentModal)
+  );
+  const activeSidePanel = useSelector(
+    (state: any) => state?.demo?.keplerGl?.map?.uiState.activeSidePanel
+  );
+  const readOnly = useSelector((state: any) => state?.demo?.keplerGl?.map?.uiState.readOnly);
+  const mapTitle = useSelector((state: any) => state?.demo?.keplerGl?.map?.visState.mapInfo?.title);
+  const lastSidePanel = useRef('layer');
+  useEffect(() => {
+    if (activeSidePanel) lastSidePanel.current = activeSidePanel;
+  }, [activeSidePanel]);
+  const onSidebarOpenChange = useCallback(
+    (open: boolean) => {
+      dispatch(toggleSidePanel(open ? lastSidePanel.current : ''));
+    },
+    [dispatch]
+  );
 
   // TODO find another way to check for existence of duckDb plugin
   const duckDbPluginEnabled = (getApplicationConfig().plugins || []).some(p => p.name === 'duckdb');
@@ -165,6 +175,16 @@ const App = props => {
   const isAiAssistantPanelOpen = useSelector(
     state => state?.demo?.keplerGl?.map?.uiState.mapControls.aiAssistant?.active
   );
+  const onPanelOpenChange = useCallback(
+    (panelId: string, open: boolean) => {
+      if (panelId === 'sql' && duckDbPluginEnabled && open !== Boolean(isSqlPanelOpen)) {
+        dispatch(toggleMapControl('sqlPanel'));
+      } else if (panelId === 'assistant' && open !== Boolean(isAiAssistantPanelOpen)) {
+        dispatch(toggleMapControl('aiAssistant'));
+      }
+    },
+    [dispatch, duckDbPluginEnabled, isSqlPanelOpen, isAiAssistantPanelOpen]
+  );
 
   const prevQueryRef = useRef<{
     provider?: string;
@@ -172,18 +192,18 @@ const App = props => {
     query: Record<string, string>;
   } | null>(null);
 
-  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [mapContainerNode, setMapContainerNode] = useState<HTMLDivElement | null>(null);
   const [mapDimensions, setMapDimensions] = useState({width: 0, height: 0});
 
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    if (!mapContainerNode) return;
     const observer = new ResizeObserver(entries => {
       const {width, height} = entries[0].contentRect;
       setMapDimensions({width, height});
     });
-    observer.observe(mapContainerRef.current);
+    observer.observe(mapContainerNode);
     return () => observer.disconnect();
-  }, []);
+  }, [mapContainerNode]);
 
   // Handle OAuth callback on /auth route
   useEffect(() => {
@@ -196,15 +216,16 @@ const App = props => {
   }, [location]);
 
   useEffect(() => {
+    // SQLRooms lazy-loads layout nodes. Wait for Kepler to register the map
+    // before dispatching route-driven loads, including cached sample responses.
+    if (!mapReady) return;
+    if (isEqual(prevQueryRef.current, {provider, id, query})) return;
+    prevQueryRef.current = {provider, id, query};
+
     // if we pass an id as part of the url
     // we try to fetch along map configurations
     const cloudProvider = CLOUD_PROVIDERS.find(c => c.name === provider);
     if (cloudProvider) {
-      // Prevent constant reloading after change of the location
-      if (isEqual(prevQueryRef.current, {provider, id, query})) {
-        return;
-      }
-
       dispatch(
         loadCloudMap({
           loadParams: query,
@@ -241,9 +262,9 @@ const App = props => {
 
     // Notifications
 
-    // no dependencies, as this was part of componentDidMount
+    // Route identity is compared above; sample helper closures use the same dispatch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mapReady, provider, id, searchParams]);
 
   /**
    * Update map boundary when view state changes, used by ai-assistant to
@@ -883,31 +904,46 @@ const App = props => {
   ]);
 
   return (
-    <StyleSheetManager shouldForwardProp={shouldForwardProp}>
-      <ThemeProvider theme={theme}>
-        <GlobalStyle
-        // this is to apply the same modal style as kepler.gl core
-        // because styled-components doesn't always return a node
-        // https://github.com/styled-components/styled-components/issues/617
-        // ref={node => {
-        //   node ? (this.root = node) : null;
-        // }}
-        >
-          <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
-            <Announcement onDisable={_disableBanner} />
-          </Banner>
-          <div style={CONTAINER_STYLE}>
-            <PanelGroup direction="horizontal">
-              <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
-                <PanelGroup direction="vertical">
-                  <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
-                    <div ref={mapContainerRef} style={{width: '100%', height: '100%'}}>
+    <SqlroomsThemeProvider defaultTheme="dark" storageKey="kepler-ui-theme">
+      <StyleSheetManager shouldForwardProp={shouldForwardProp}>
+        <ThemeProvider theme={theme}>
+          <GlobalStyle
+          // this is to apply the same modal style as kepler.gl core
+          // because styled-components doesn't always return a node
+          // https://github.com/styled-components/styled-components/issues/617
+          // ref={node => {
+          //   node ? (this.root = node) : null;
+          // }}
+          >
+            <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
+              <Announcement onDisable={_disableBanner} />
+            </Banner>
+            <div style={CONTAINER_STYLE}>
+              <KeplerAppShell
+                sidebarOpen={Boolean(activeSidePanel)}
+                onSidebarOpenChange={onSidebarOpenChange}
+                readOnly={readOnly}
+                modalOpen={modalOpen}
+                title={mapTitle || 'Untitled Map'}
+              >
+                <SqlroomsDemoLayout
+                  sqlEnabled={duckDbPluginEnabled}
+                  sqlOpen={Boolean(isSqlPanelOpen)}
+                  assistantOpen={Boolean(isAiAssistantPanelOpen)}
+                  onPanelOpenChange={onPanelOpenChange}
+                  map={
+                    <div
+                      ref={setMapContainerNode}
+                      style={{width: '100%', height: '100%', overflow: 'clip'}}
+                    >
                       <KeplerGl
                         mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
                         id="map"
                         getState={keplerGlGetState}
                         width={mapDimensions.width}
                         height={mapDimensions.height}
+                        sidePanelWidth={0}
+                        theme={shellMapTheme}
                         cloudProviders={CLOUD_PROVIDERS}
                         localeMessages={messages}
                         onExportToCloudSuccess={onExportFileSuccess}
@@ -916,22 +952,9 @@ const App = props => {
                         onViewStateChange={onViewStateChange}
                       />
                     </div>
-                  </Panel>
-
-                  {isSqlPanelOpen && (
-                    <>
-                      <StyledResizeHandle />
-                      <Panel defaultSize={40} minSize={20}>
-                        <SqlPanel initialSql={query.sql || ''} />
-                      </Panel>
-                    </>
-                  )}
-                </PanelGroup>
-              </Panel>
-              {isAiAssistantPanelOpen && (
-                <>
-                  <StyledVerticalResizeHandle />
-                  <Panel defaultSize={30} minSize={20}>
+                  }
+                  sql={<SqlPanel initialSql={query.sql || ''} />}
+                  assistant={
                     <AiAssistantPanel
                       reduxStore={reduxStore}
                       stateAccessors={{
@@ -941,14 +964,14 @@ const App = props => {
                           (reduxStore?.getState() as any)?.demo?.aiAssistant?.keplerGl?.mapBoundary
                       }}
                     />
-                  </Panel>
-                </>
-              )}
-            </PanelGroup>
-          </div>
-        </GlobalStyle>
-      </ThemeProvider>
-    </StyleSheetManager>
+                  }
+                />
+              </KeplerAppShell>
+            </div>
+          </GlobalStyle>
+        </ThemeProvider>
+      </StyleSheetManager>
+    </SqlroomsThemeProvider>
   );
 };
 

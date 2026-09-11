@@ -44,7 +44,7 @@ function buildTailwind({watch}) {
   const bin = resolveTailwindBin();
   const cliArgs = ['-i', TAILWIND_INPUT, '-o', TAILWIND_OUTPUT];
   if (watch) {
-    spawn(bin, [...cliArgs, '--watch'], {stdio: 'inherit'});
+    spawn(bin, [...cliArgs, '--watch=always'], {stdio: 'inherit'});
     return;
   }
   // Minify for production and fail the build if Tailwind cannot compile.
@@ -65,6 +65,9 @@ const RESOLVE_LOCAL_ALIASES = {
   'react-router': `${WEBSITE_NODE_MODULES_DIR}/react-router`,
   'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
   'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
+  '@kepler.gl/sqlrooms/shell': join(SRC_DIR, 'sqlrooms/src/components/KeplerAppShell.tsx'),
+  '@sqlrooms/ui': join(LIB_DIR, 'examples/demo-app/node_modules/@sqlrooms/ui'),
+  '@sqlrooms/layout': join(LIB_DIR, 'examples/demo-app/node_modules/@sqlrooms/layout'),
 };
 
 // Add kepler.gl submodule aliases

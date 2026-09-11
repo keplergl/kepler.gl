@@ -61,6 +61,7 @@ const KEPLER_SRC_ALIASES = Object.fromEntries(
 
 const getKeplerAliases = () => ({
   ...KEPLER_SRC_ALIASES,
+  '@kepler.gl/sqlrooms/shell': join(SRC_DIR, 'sqlrooms/src/components/KeplerAppShell.tsx'),
   // duckdb ships a components subpath (SqlPanel); esbuild picks the longest
   // matching alias key, so this wins for `@kepler.gl/duckdb/components`.
   '@kepler.gl/duckdb/components': join(SRC_DIR, 'duckdb', 'src', 'components', 'index.tsx')
@@ -115,6 +116,10 @@ const getThirdPartyLibraryAliases = useKeplerNodePackage => {
     ...getKeplerAliases(),
     ...getLocalSourceStackAliases(),
     ...localSources,
+    // Share SQLRooms UI/layout contexts across the local adapter and demo.
+    '@sqlrooms/ui': join(BASE_NODE_MODULES_DIR, '@sqlrooms/ui'),
+    '@sqlrooms/layout': join(BASE_NODE_MODULES_DIR, '@sqlrooms/layout'),
+    '@sqlrooms/room-store': join(BASE_NODE_MODULES_DIR, '@sqlrooms/room-store'),
     react: `${nodeModulesDir}/react`,
     'react-dom': `${nodeModulesDir}/react-dom`,
     'react-dom/client': `${nodeModulesDir}/react-dom/client`,
@@ -445,7 +450,7 @@ function openURL(url) {
     // Start Tailwind CSS watcher for sqlrooms UI components
     spawn(
       './node_modules/.bin/tailwindcss',
-      ['-i', 'src/styles.css', '-o', 'dist/tailwind.css', '--watch'],
+      ['-i', 'src/styles.css', '-o', 'dist/tailwind.css', '--watch=always'],
       {
         stdio: 'inherit'
       }

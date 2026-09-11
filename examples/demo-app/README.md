@@ -1,6 +1,7 @@
 # Demo App
 
-This is the src code of kepler.gl demo app. You can copy this folder out and run it locally.
+This is the main kepler.gl demo app. The website imports this same application
+for `https://kepler.gl/demo`; it builds against the local Kepler workspace.
 
 > The AI assistant (panel, control, reducer) comes from the published
 > **`@openassistant/kepler-assistant`** package (`^0.0.12`), which temporarily
@@ -67,3 +68,23 @@ yarn start:local
 ```
 
 [yarn-install]: https://yarnpkg.com/getting-started/install
+
+## SQLRooms shell and feature parity
+
+The application uses SQLRooms 0.29.0 for its collapsible sidebar and modular panel
+layout. The original Kepler Redux store and injected components remain in use:
+map controls (including split view, 3D, drawing, annotation, locale, legend,
+effects, assistant, and zoom), the initial Add Data dialog, sample/URL/cloud
+loading, data/layer/filter/style panels, logo/version, and export/storage actions.
+
+`src/components/sqlrooms-demo-layout.tsx` owns the SQLRooms layout and panel
+registry. Register new panels there through the layout slice; avoid a second map
+store or a separate database for the shell. Sidebar collapse is controlled by
+Kepler's active panel state, and reopening restores the previously selected panel.
+The `@kepler.gl/sqlrooms/shell` recipe moves existing sidebar components into the
+shell using a React portal so their original contexts and actions stay connected.
+
+Run `yarn start:local` here (port 8080), or `yarn start` at the repository root.
+`yarn build` here produces the standalone demo; `yarn build` in `website` produces
+the deployed website using the same demo sources. Cloud-provider login and AI
+requests still require the original environment configuration and credentials.

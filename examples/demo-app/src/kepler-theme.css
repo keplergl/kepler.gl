@@ -1,18 +1,3 @@
-@import 'tailwindcss';
-
-@import '@sqlrooms/ui/tailwind-preset.css';
-
-@source '../index.html';
-@source './**/*.{ts,tsx}';
-@source '../../../src/sqlrooms/src/**/*.{ts,tsx}';
-@source '../../../node_modules/@sqlrooms/*/dist/';
-@source '../node_modules/@sqlrooms/*/dist/';
-
-#root {
-  width: 100vw;
-  height: 100vh;
-}
-
 /* Match the typography used by @kepler.gl/styles, including its system fallbacks. */
 @theme {
   --font-sans: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
