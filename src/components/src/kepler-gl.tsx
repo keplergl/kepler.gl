@@ -191,7 +191,7 @@ export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => {
     locale: props.uiState.locale,
     uiTheme: props.uiState.theme,
     isLoadingIndicatorVisible: Number(props.visState.loadingIndicatorValue) > 0,
-    sidePanelWidth: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
+    sidePanelWidth: props.sidePanelWidth ?? DEFAULT_KEPLER_GL_PROPS.sidePanelWidth,
 
     // mapStyle
     topMapContainerProps: props.topMapContainerProps,
@@ -232,7 +232,7 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
   layerBlending: props.visState.layerBlending,
   overlayBlending: props.visState.overlayBlending,
 
-  width: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
+  width: props.sidePanelWidth ?? DEFAULT_KEPLER_GL_PROPS.sidePanelWidth,
   availableProviders,
   mapSaved: props.providerState.mapSaved
 });

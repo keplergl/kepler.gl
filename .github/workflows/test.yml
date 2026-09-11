@@ -74,6 +74,9 @@ jobs:
       - name: Typecheck
         run: yarn typescript
 
+      - name: SQLRooms package and runtime tests
+        run: yarn test:sqlrooms
+
       - name: Lint
         # Check-only (`yarn lint:check`) currently fails on ~650 existing
         # prettier/prettier issues. Switch after a formatting cleanup.

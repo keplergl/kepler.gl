@@ -1,0 +1,108 @@
+{
+  "name": "@kepler.gl/sqlrooms",
+  "version": "3.3.0-alpha.11",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keplergl/kepler.gl.git"
+  },
+  "license": "MIT",
+  "author": "SQLRooms Contributors",
+  "sideEffects": false,
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rm -fr dist && babel src --out-dir dist/cjs --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts' && BABEL_ENV=esm babel src --out-dir dist/esm --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build:types": "tsc --project ./tsconfig.production.json",
+    "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
+    "stab": "mkdir -p dist/cjs/config dist/esm/config && echo \"'use strict'; Object.assign(module.exports, require('../../src'));\" > dist/cjs/index.js && echo \"export * from '../../src';\" > dist/esm/index.js && echo \"'use strict'; Object.assign(module.exports, require('../../../src/config'));\" > dist/cjs/config/index.js && echo \"export * from '../../../src/config';\" > dist/esm/config/index.js",
+    "test": "node --test test/*.test.cjs"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.12.1",
+    "@dnd-kit/core": "^6.1.0",
+    "@kepler.gl/actions": "3.3.0-alpha.11",
+    "@kepler.gl/components": "3.3.0-alpha.11",
+    "@kepler.gl/constants": "3.3.0-alpha.11",
+    "@kepler.gl/duckdb": "3.3.0-alpha.11",
+    "@kepler.gl/layers": "3.3.0-alpha.11",
+    "@kepler.gl/localization": "3.3.0-alpha.11",
+    "@kepler.gl/processors": "3.3.0-alpha.11",
+    "@kepler.gl/reducers": "3.3.0-alpha.11",
+    "@kepler.gl/schemas": "3.3.0-alpha.11",
+    "@kepler.gl/styles": "3.3.0-alpha.11",
+    "@kepler.gl/table": "3.3.0-alpha.11",
+    "@kepler.gl/tasks-core": "3.3.0-alpha.11",
+    "@kepler.gl/types": "3.3.0-alpha.11",
+    "@kepler.gl/utils": "3.3.0-alpha.11",
+    "@paralleldrive/cuid2": "^3.0.0",
+    "@sqlrooms/duckdb-core": "0.29.0",
+    "@sqlrooms/room-shell": "0.29.0",
+    "@sqlrooms/s3-browser": "0.29.0",
+    "@sqlrooms/ui": "0.29.0",
+    "apache-arrow": "17.0.0",
+    "immer": "^11.0.1",
+    "lucide-react": "^0.556.0",
+    "react-intl": "^7.0.0",
+    "react-redux": "^9.1.0",
+    "redux": "^5.0.0",
+    "redux-logger": "^3.0.6",
+    "styled-components": "6.4.3",
+    "zod": "^4.1.8"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.12.1",
+    "@babel/core": "^7.29.6",
+    "@babel/node": "^7.12.1",
+    "@babel/plugin-transform-modules-commonjs": "^7.12.1",
+    "@babel/preset-typescript": "^7.16.7",
+    "@types/redux-logger": "^3.0.13",
+    "typescript": "5.6.3",
+    "zustand": "^5.0.8"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Kepler.gl maps and configuration for SQLRooms applications",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "yarn@4.4.0",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/cjs/index.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "import": "./dist/esm/config/index.js",
+      "require": "./dist/cjs/config/index.js",
+      "default": "./dist/cjs/config/index.js"
+    },
+    "./shell": {
+      "types": "./dist/components/KeplerAppShell.d.ts",
+      "import": "./dist/esm/components/KeplerAppShell.js",
+      "require": "./dist/cjs/components/KeplerAppShell.js",
+      "default": "./dist/cjs/components/KeplerAppShell.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "config": [
+        "dist/config/index.d.ts"
+      ],
+      "shell": [
+        "dist/components/KeplerAppShell.d.ts"
+      ]
+    }
+  }
+}
