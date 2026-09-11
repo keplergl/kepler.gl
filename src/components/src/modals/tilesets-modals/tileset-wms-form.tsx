@@ -7,7 +7,11 @@ import {WMSCapabilities} from '@loaders.gl/wms';
 
 import {validateUrl} from '@kepler.gl/common-utils';
 import {DatasetType, REMOTE_TILE, RemoteTileFormat, WMSDatasetMetadata} from '@kepler.gl/constants';
-import {getWMSCapabilities, wmsCapabilitiesToDatasetMetadata} from '@kepler.gl/table';
+import {
+  getWMSCapabilities,
+  wmsCapabilitiesToDatasetMetadata,
+  buildWmsGetCapabilitiesUrl
+} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
@@ -135,7 +139,7 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
 
         const data = await getWMSCapabilities(newWmsUrl);
 
-        const datasetMetadata = wmsCapabilitiesToDatasetMetadata(data);
+        const datasetMetadata = wmsCapabilitiesToDatasetMetadata(data, newWmsUrl);
 
         // Extract name or title from GetCapabilities response
         const serviceTitle = data?.title || data?.name;
@@ -167,7 +171,8 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
           type: REMOTE_TILE,
           remoteTileFormat: RemoteTileFormat.WMS,
           tilesetDataUrl: wmsUrl,
-          tilesetMetadataUrl: `${wmsUrl}?service=WMS&request=GetCapabilities`,
+          tilesetMetadataUrl:
+            buildWmsGetCapabilitiesUrl(wmsUrl) || `${wmsUrl}?service=WMS&request=GetCapabilities`,
           layers: wmsData?.layers || [],
           version: wmsData?.version || '1.3.0'
         }

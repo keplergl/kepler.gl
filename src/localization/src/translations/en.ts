@@ -862,6 +862,8 @@ ${'```'}
   Save: 'Save',
   Share: 'Share',
   mapLegend: {
+    min: 'Min',
+    max: 'Max',
     layers: {
       line: {
         singleColor: {

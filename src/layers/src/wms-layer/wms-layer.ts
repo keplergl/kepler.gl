@@ -4,7 +4,7 @@
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {DatasetType, WMSDatasetMetadata, LAYER_TYPES} from '@kepler.gl/constants';
 import {WMSLayer as DeckWMSLayer} from '@kepler.gl/deckgl-layers';
-import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
+import {KeplerTable as KeplerDataset, buildWmsGetLegendGraphicUrl} from '@kepler.gl/table';
 import {
   AnimationConfig,
   Field,
@@ -43,6 +43,7 @@ export type WMSLayerVisConfig = {
     title: string;
     boundingBox: number[][];
     queryable: boolean;
+    legendUrl?: string | null;
   } | null;
 };
 
@@ -122,6 +123,28 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     return [DatasetType.WMS_TILE];
   }
 
+  // Image overlay has no fill/stroke encoding to show in the map legend
+  getLegendVisualChannels() {
+    return {};
+  }
+
+  getLegendImageUrl(): string | null {
+    const serviceLayer = this._getCurrentServiceLayer();
+    if (!serviceLayer?.name) {
+      return null;
+    }
+    if (serviceLayer.legendUrl) {
+      return serviceLayer.legendUrl;
+    }
+    const tilesetDataUrl = this.meta?.tilesetDataUrl;
+    if (typeof tilesetDataUrl === 'string' && tilesetDataUrl) {
+      return buildWmsGetLegendGraphicUrl(tilesetDataUrl, serviceLayer.name, {
+        version: this.meta?.wmsVersion
+      });
+    }
+    return null;
+  }
+
   protected initTileDataset() {
     // Provide dummy accessors for raster/WMS
     return new TileDataset<WMSTile, any[]>({
@@ -173,6 +196,12 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     }
 
     const metadata = dataset.metadata as WMSDatasetMetadata | undefined;
+    if (metadata?.tilesetDataUrl) {
+      this.updateMeta({
+        tilesetDataUrl: metadata.tilesetDataUrl,
+        wmsVersion: metadata.version
+      });
+    }
     if (metadata?.attribution) {
       this.updateMeta({
         attribution: {title: metadata.attribution, url: metadata.tilesetDataUrl || ''}

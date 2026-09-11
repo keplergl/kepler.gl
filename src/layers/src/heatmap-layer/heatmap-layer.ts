@@ -6,9 +6,15 @@ import {
   CHANNEL_SCALES,
   ALL_FIELD_TYPES,
   GEOJSON_FIELDS,
-  GEOARROW_METADATA_KEY
+  GEOARROW_METADATA_KEY,
+  SCALE_TYPES
 } from '@kepler.gl/constants';
-import Layer, {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
+import Layer, {
+  LayerBaseConfigPartial,
+  LayerColorConfig,
+  LayerWeightConfig,
+  VisualChannels
+} from '../base-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 import {
   ColorRange,
@@ -72,7 +78,7 @@ export type HeatmapLayerVisConfig = {
   aggregation: string;
 };
 
-export type HeatmapLayerVisualChannelConfig = LayerWeightConfig;
+export type HeatmapLayerVisualChannelConfig = LayerWeightConfig & LayerColorConfig;
 export type HeatmapLayerConfig = Merge<
   LayerBaseConfig,
   {columns: HeatmapLayerColumnsConfig; visConfig: HeatmapLayerVisConfig}
@@ -310,6 +316,16 @@ class HeatmapLayer extends Layer {
 
   get visualChannels(): VisualChannels {
     return {
+      color: {
+        property: 'color',
+        field: 'colorField',
+        scale: 'colorScale',
+        domain: 'colorDomain',
+        range: 'colorRange',
+        key: 'color',
+        channelScaleType: CHANNEL_SCALES.color,
+        defaultMeasure: 'property.density'
+      },
       // @ts-expect-error
       weight: {
         property: 'weight',
@@ -322,6 +338,10 @@ class HeatmapLayer extends Layer {
         channelScaleType: CHANNEL_SCALES.size
       }
     };
+  }
+
+  getLegendVisualChannels() {
+    return {color: this.visualChannels.color};
   }
 
   get layerIcon() {
@@ -369,18 +389,17 @@ class HeatmapLayer extends Layer {
   }
 
   getDefaultLayerConfig(props: LayerBaseConfigPartial): HeatmapLayerConfig {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const {colorField, colorDomain, colorScale, ...layerConfig} = {
+    // Keep colorScale / colorDomain so the map legend can render the selected
+    // color ramp. colorField stays unused: heatmap color is density, not a field.
+    return {
       ...super.getDefaultLayerConfig(props),
       columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
-
+      colorScale: SCALE_TYPES.quantize,
+      colorDomain: [0, 1],
       weightField: null,
       weightDomain: [0, 1],
       weightScale: 'linear'
     };
-
-    // @ts-expect-error
-    return layerConfig;
   }
 
   updateLayerMeta(dataset: KeplerTable) {
