@@ -233,3 +233,22 @@ test('#AnnotationsSchema -> saves only known properties', t => {
 
   t.end();
 });
+
+test('#AnnotationsSchema -> 3D anchorPoint round-trips', t => {
+  const original = [makePointAnnotation({anchorPoint: [-122.4, 37.8, 120]})];
+  const saved = schema.save(original);
+  const loaded = schema.load(saved.annotations);
+
+  t.deepEqual(
+    saved.annotations[0].anchorPoint,
+    [-122.4, 37.8, 120],
+    'should save [lng, lat, altitude]'
+  );
+  t.deepEqual(
+    loaded.annotations[0].anchorPoint,
+    [-122.4, 37.8, 120],
+    'should load [lng, lat, altitude]'
+  );
+
+  t.end();
+});

@@ -734,8 +734,8 @@ export default function MapContainerFactory(
       const mergedState = {...mapState, ...internalViewState, width, height};
       const vp = getViewportFromMapState(mergedState) as any;
       const viewport = {
-        project: (lngLat: [number, number]) => vp.project(lngLat) as [number, number],
-        unproject: (xy: [number, number]) => vp.unproject(xy) as [number, number],
+        project: (lngLat: ReadonlyArray<number>) => vp.project(lngLat),
+        unproject: (xy: ReadonlyArray<number>) => vp.unproject(xy),
         longitude,
         latitude,
         width,
@@ -745,6 +745,34 @@ export default function MapContainerFactory(
       this._annotationViewportCache = {key, viewport};
       return viewport;
     }
+
+    _pickAnnotationWorldPosition = (xy: [number, number]): number[] | null => {
+      const deck = this._deck;
+      if (!deck || typeof deck.pickObject !== 'function') {
+        return null;
+      }
+      try {
+        const info = deck.pickObject({
+          x: xy[0],
+          y: xy[1],
+          radius: 0,
+          unproject3D: true
+        });
+        const coordinate = info?.coordinate;
+        // Only accept a reconstructed 3D hit. A 2D unproject (no depth) is the
+        // same as the ground-plane fallback in movePoint.
+        if (
+          !Array.isArray(coordinate) ||
+          coordinate.length < 3 ||
+          !Number.isFinite(coordinate[2])
+        ) {
+          return null;
+        }
+        return coordinate;
+      } catch {
+        return null;
+      }
+    };
 
     _onDeckError = (error, layer) => {
       const errorMessage = error?.message || 'unknown-error';
@@ -1001,6 +1029,7 @@ export default function MapContainerFactory(
           mapboxApiAccessToken,
           mapboxApiUrl,
           layersForDeck,
+          isAnnotationMode: Boolean(mapControls?.annotation?.active),
           editorInfo: primaryMap
             ? {
                 editor,
@@ -1500,6 +1529,7 @@ export default function MapContainerFactory(
             mapIndex={index || 0}
             viewport={this._getAnnotationViewport(mapState, internalViewState)}
             isGlobeEnabled={Boolean(mapState.globe?.enabled)}
+            pickWorldPosition={this._pickAnnotationWorldPosition}
             updateAnnotation={visStateActions.updateAnnotation}
             setSelectedAnnotation={visStateActions.setSelectedAnnotation}
           />

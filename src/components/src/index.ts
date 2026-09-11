@@ -388,9 +388,10 @@ export {
   angleForTextPlacement,
   textPlacementFromAngle,
   getAnnotationTextBoxStyle,
-  isPointVisibleOnGlobe
+  isPointVisibleOnGlobe,
+  normalizeAnchorPoint
 } from './annotations';
-export type {MapViewport, AnnotationMarker} from './annotations';
+export type {MapViewport, AnnotationMarker, PickWorldPosition, LngLatAltitude} from './annotations';
 export {default as AnnotationControlFactory} from './map/annotations/annotation-control';
 
 export {default as ColorBreaksPanelFactory} from './side-panel/layer-panel/color-breaks-panel';
