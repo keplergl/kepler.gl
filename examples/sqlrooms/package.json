@@ -1,0 +1,38 @@
+{
+  "name": "kepler-sqlrooms-example",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 8083",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 8083"
+  },
+  "dependencies": {
+    "@kepler.gl/sqlrooms": "workspace:*",
+    "@sqlrooms/artifacts": "0.29.0-rc.13",
+    "@sqlrooms/dropzone": "0.29.0-rc.13",
+    "@sqlrooms/duckdb": "0.29.0-rc.13",
+    "@sqlrooms/monaco-editor": "0.29.0-rc.13",
+    "@sqlrooms/room-shell": "0.29.0-rc.13",
+    "@sqlrooms/sql-editor": "0.29.0-rc.13",
+    "@sqlrooms/ui": "0.29.0-rc.13",
+    "@sqlrooms/utils": "0.29.0-rc.13",
+    "lucide-react": "^0.555.0",
+    "monaco-editor": "^0.55.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "^20",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "tailwindcss": "^4.1.18",
+    "typescript": "5.6.3",
+    "vite": "^6.3.5",
+    "vite-plugin-wasm": "^3.4.1"
+  }
+}

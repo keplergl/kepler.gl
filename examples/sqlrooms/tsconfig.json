@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "../.."
+  },
+  "include": ["src", "../../src/deckgl-types.d.ts", "../../src/styles/src/styled.d.ts"]
+}

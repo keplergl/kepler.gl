@@ -35,7 +35,9 @@
     "./src/effects",
     "./src/reducers",
     "./src/components",
-    "./src/duckdb"
+    "./src/duckdb",
+    "./src/sqlrooms",
+    "./examples/sqlrooms"
   ],
   "repository": {
     "type": "git",
@@ -70,6 +72,7 @@
     "start:replace-component": "yarn install-and-start examples/replace-component start:local",
     "start:custom-theme": "yarn install-and-start examples/custom-theme start-local",
     "start:custom-map-style": "yarn install-and-start examples/custom-map-style start-local",
+    "start:sqlrooms": "yarn workspace kepler-sqlrooms-example dev",
     "start:live-data": "node examples/live-data/esbuild.config.mjs --start",
     "start:node-app": "yarn install-and-start examples/node-app start-local",
     "start:web": "yarn install-and-start website start",
@@ -99,7 +102,8 @@
     "clean": "rm -rf node_modules examples/**/node_modules website/node_modules .nyc_output coverage jest-coverage tape-coverage",
     "release:patch": "git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags",
     "fix-dependencies": "./scripts/fix-dependencies.sh",
-    "bump-version": "node ./scripts/bump-version.js"
+    "bump-version": "node ./scripts/bump-version.js",
+    "test:sqlrooms": "yarn workspace @kepler.gl/sqlrooms build && yarn workspace @kepler.gl/sqlrooms test"
   },
   "files": [
     "dist",

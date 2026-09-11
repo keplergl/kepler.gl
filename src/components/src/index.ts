@@ -178,6 +178,8 @@ export {
   VisualChannelMetric
 } from './map/map-legend';
 
+export type {MapLegendProps, MapLegendIcons} from './map/map-legend';
+
 export {default as MapLegendPanelFactory} from './map/map-legend-panel';
 export {default as MapPopoverFactory, getSelectedFeature} from './map/map-popover';
 export {default as MapPopoverContentFactory} from './map/map-popover-content';
