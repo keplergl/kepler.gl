@@ -84,9 +84,9 @@ or if you would like, you can load a specific version:
 
 Take a look at the [development guide][developers] to develop kepler.gl locally.
 
-The [SQLRooms example](examples/sqlrooms) composes Kepler maps with a shared DuckDB
-database, SQL editor, and map tabs using [`@kepler.gl/sqlrooms`](src/sqlrooms).
-Run it with `yarn start:sqlrooms` after installing the root workspace dependencies.
+The [main demo](examples/demo-app), also served at `/demo` by the website, uses
+[`@kepler.gl/sqlrooms`](src/sqlrooms) for its collapsible application shell and
+SQLRooms for modular panel layout. Run it with `yarn start`.
 
 ## Basic Usage
 

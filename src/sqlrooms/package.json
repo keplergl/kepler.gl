@@ -87,12 +87,21 @@
       "import": "./dist/esm/config/index.js",
       "require": "./dist/cjs/config/index.js",
       "default": "./dist/cjs/config/index.js"
+    },
+    "./shell": {
+      "types": "./dist/components/KeplerAppShell.d.ts",
+      "import": "./dist/esm/components/KeplerAppShell.js",
+      "require": "./dist/cjs/components/KeplerAppShell.js",
+      "default": "./dist/cjs/components/KeplerAppShell.js"
     }
   },
   "typesVersions": {
     "*": {
       "config": [
         "dist/config/index.d.ts"
+      ],
+      "shell": [
+        "dist/components/KeplerAppShell.d.ts"
       ]
     }
   }

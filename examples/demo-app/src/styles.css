@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 
 @import '@sqlrooms/ui/tailwind-preset.css';
+@import './kepler-theme.css';
+
+@source '../../../src/sqlrooms/src/**/*.{ts,tsx}';
+@source '../node_modules/@sqlrooms/layout/dist/**/*.js';
 
 /*
  * The demo (CONTAINER_STYLE in app.tsx) is `position: absolute; height: 100%`.

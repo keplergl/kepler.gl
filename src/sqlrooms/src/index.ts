@@ -67,3 +67,6 @@ export {CustomAddDataButtonFactory, CustomPanelTitleFactory} from './components/
 export {createKeplerTheme, darkTheme} from './styles/theme';
 export type {KeplerThemeOverrides} from './styles/theme';
 export type {KeplerGLBasicProps} from './KeplerSlice';
+
+export {KeplerAppShell, SqlroomsSidebarFactory} from './components/KeplerAppShell';
+export type {KeplerAppShellProps} from './components/KeplerAppShell';
