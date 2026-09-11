@@ -243,7 +243,7 @@ format; moving the package does not require rewriting saved maps.
 
 The adapter depends on Kepler and SQLRooms. Kepler's foundational packages must
 not depend on this adapter. SQLRooms packages are pinned to the tested release
-`0.29.0-rc.13`; Kepler packages follow this repository's version. Keep React,
+`0.29.0`; Kepler packages follow this repository's version. Keep React,
 React Redux, React Intl, styled-components, and the deck.gl/luma.gl stack shared
 within the host application. SQLRooms room-store, room-shell, and UI contexts must
 also resolve to one copy (see the example Vite `resolve.dedupe` configuration).

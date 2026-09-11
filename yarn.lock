@@ -4500,10 +4500,10 @@ __metadata:
     "@kepler.gl/types": "npm:3.3.0-alpha.11"
     "@kepler.gl/utils": "npm:3.3.0-alpha.11"
     "@paralleldrive/cuid2": "npm:^3.0.0"
-    "@sqlrooms/duckdb-core": "npm:0.29.0-rc.13"
-    "@sqlrooms/room-shell": "npm:0.29.0-rc.13"
-    "@sqlrooms/s3-browser": "npm:0.29.0-rc.13"
-    "@sqlrooms/ui": "npm:0.29.0-rc.13"
+    "@sqlrooms/duckdb-core": "npm:0.29.0"
+    "@sqlrooms/room-shell": "npm:0.29.0"
+    "@sqlrooms/s3-browser": "npm:0.29.0"
+    "@sqlrooms/ui": "npm:0.29.0"
     "@types/redux-logger": "npm:^3.0.13"
     apache-arrow: "npm:17.0.0"
     immer: "npm:^11.0.1"
@@ -8860,25 +8860,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sqlrooms/ai-config@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/ai-config@npm:0.29.0-rc.13"
+"@sqlrooms/ai-config@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/ai-config@npm:0.29.0"
   dependencies:
     zod: "npm:^4.1.8"
-  checksum: 10c0/58c875546172c92b2020949051bcc34795c763f8a9f9af69d1f1af3242d1085c9c3088220842783a80951bdd014ec7f3926af0445bed57aef1a1ebf54cf670db
+  checksum: 10c0/184be65c27acdee8e89472a2e6d9235943292eb5262cb1ba9d6897a97b86f28c530b1b7e20758be615416ca7662e1e7fa84a8a49c993141fac8cb28fef194d04
   languageName: node
   linkType: hard
 
-"@sqlrooms/artifacts@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/artifacts@npm:0.29.0-rc.13"
+"@sqlrooms/artifacts@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/artifacts@npm:0.29.0"
   dependencies:
     "@paralleldrive/cuid2": "npm:^3.0.0"
-    "@sqlrooms/ai-config": "npm:0.29.0-rc.13"
-    "@sqlrooms/blocks": "npm:0.29.0-rc.13"
-    "@sqlrooms/layout": "npm:0.29.0-rc.13"
-    "@sqlrooms/room-store": "npm:0.29.0-rc.13"
-    "@sqlrooms/ui": "npm:0.29.0-rc.13"
+    "@sqlrooms/ai-config": "npm:0.29.0"
+    "@sqlrooms/blocks": "npm:0.29.0"
+    "@sqlrooms/layout": "npm:0.29.0"
+    "@sqlrooms/room-store": "npm:0.29.0"
+    "@sqlrooms/ui": "npm:0.29.0"
     ai: "npm:^6.0.177"
     immer: "npm:^11.0.1"
     lucide-react: "npm:^0.556.0"
@@ -8886,22 +8886,22 @@ __metadata:
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/cd12d8058220830ef4f99e0b57c98ddd1af80bb49e701590ecdf1dc59eccdcdbc86ad33ad7e3a7760051f078eeb2aa43c3a5ca5a6965715618dd40a028fd7748
+  checksum: 10c0/b5f88ccd8cdc99b16a66d70fd00dad727da2590f54d6ac56805e4dc7cb3e7c63e3611d6e53eaf39836f8208fee589889047765302aab09bc4a426662233eac9f
   languageName: node
   linkType: hard
 
-"@sqlrooms/blocks@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/blocks@npm:0.29.0-rc.13"
+"@sqlrooms/blocks@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/blocks@npm:0.29.0"
   peerDependencies:
     react: ">=18"
-  checksum: 10c0/4436c2ddd39ee4d2451fe24edc69fc27530cde08026d509884244435905f5ed032c6af59cb003c18248bfad4642f0d6e3f00a388223874fdb96a8a26e9a6cecf
+  checksum: 10c0/e5dcdbb4e8656fe69465d8533f691ceee7fcc39273b365b970b906605223e34602ddd539b60070d259188a924d6cc0fb12e3cd4a34b8e85fb509858544bc2865
   languageName: node
   linkType: hard
 
-"@sqlrooms/codemirror@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/codemirror@npm:0.29.0-rc.13"
+"@sqlrooms/codemirror@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/codemirror@npm:0.29.0"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.20.0"
     "@codemirror/commands": "npm:^6.7.0"
@@ -8913,8 +8913,8 @@ __metadata:
     "@codemirror/state": "npm:^6.4.0"
     "@codemirror/view": "npm:^6.33.0"
     "@lezer/highlight": "npm:^1.2.0"
-    "@sqlrooms/ui": "npm:0.29.0-rc.13"
-    "@sqlrooms/utils": "npm:0.29.0-rc.13"
+    "@sqlrooms/ui": "npm:0.29.0"
+    "@sqlrooms/utils": "npm:0.29.0"
     react-markdown: "npm:^10.1.0"
     remark-gfm: "npm:^4.0.1"
     vscode-json-languageservice: "npm:^5.7.2"
@@ -8923,18 +8923,18 @@ __metadata:
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/e2d2da0faa928c45d4b0eb82715dda2ad719a1830b2798b9211ff56106f838446c7973fff5e7c90212d89da59a8ff7dbdf475cdb03bc21e35026ed40fe6a8bc5
+  checksum: 10c0/3d3659f70de9d65748df0e87b65d156c90cd170767588b92743301c0a2ad44b85797a68a082a2587e7e9959bb26dfcb7bddfa29dee4ccfe2136e70d9eb7ae221
   languageName: node
   linkType: hard
 
-"@sqlrooms/data-table@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/data-table@npm:0.29.0-rc.13"
+"@sqlrooms/data-table@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/data-table@npm:0.29.0"
   dependencies:
-    "@sqlrooms/codemirror": "npm:0.29.0-rc.13"
-    "@sqlrooms/duckdb": "npm:0.29.0-rc.13"
-    "@sqlrooms/ui": "npm:0.29.0-rc.13"
-    "@sqlrooms/utils": "npm:0.29.0-rc.13"
+    "@sqlrooms/codemirror": "npm:0.29.0"
+    "@sqlrooms/duckdb": "npm:0.29.0"
+    "@sqlrooms/ui": "npm:0.29.0"
+    "@sqlrooms/utils": "npm:0.29.0"
     "@tanstack/react-table": "npm:^8.21.3"
     "@tanstack/table-core": "npm:^8.21.3"
     lucide-react: "npm:^0.556.0"
@@ -8942,83 +8942,83 @@ __metadata:
     apache-arrow: ">=17"
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/b012fdcfeb67c8e74ffc993234a5b5547955d53483fed7e5796abbe368e273edf38c94d4e700cdfb37271e151ecf1de03eee24844a06d2938c6940ed4720907d
+  checksum: 10c0/8bc05af99670892d1a53a8264cec9062cb795c90dc8ac14a71fcbf6c78e69382eb30310923e5319af4fb71a3eb65bb91409520be6a19576f82485d0f1e6a64e1
   languageName: node
   linkType: hard
 
-"@sqlrooms/db@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/db@npm:0.29.0-rc.13"
+"@sqlrooms/db@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/db@npm:0.29.0"
   dependencies:
-    "@sqlrooms/duckdb": "npm:0.29.0-rc.13"
-    "@sqlrooms/duckdb-core": "npm:0.29.0-rc.13"
-    "@sqlrooms/room-store": "npm:0.29.0-rc.13"
+    "@sqlrooms/duckdb": "npm:0.29.0"
+    "@sqlrooms/duckdb-core": "npm:0.29.0"
+    "@sqlrooms/room-store": "npm:0.29.0"
     immer: "npm:^11.0.1"
     zod: "npm:^4.1.8"
   peerDependencies:
     apache-arrow: 17.0.0
-  checksum: 10c0/c47f2512e48dd06b42c824199232a9ea75840522afbcce255d0c4bb7e2484cfeda8c87575d2c9712a3647b4ca41b07cd335acc1fff1ad1077e5adaa9aed69ea5
+  checksum: 10c0/fc510be3e4a5d9414fecdb96383455de8e65e44174218bddd4ef45231f3d8f6fbff5f87561cd911a603d3d9ee6656593b6114bd925cdecfccf3847628972a119
   languageName: node
   linkType: hard
 
-"@sqlrooms/dropzone@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/dropzone@npm:0.29.0-rc.13"
+"@sqlrooms/dropzone@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/dropzone@npm:0.29.0"
   dependencies:
-    "@sqlrooms/ui": "npm:0.29.0-rc.13"
+    "@sqlrooms/ui": "npm:0.29.0"
     lucide-react: "npm:^0.556.0"
     react-dropzone: "npm:^14.3.8"
-  checksum: 10c0/9e5810c33e07d3cebc249800f7cf87e1e90964353cf5f07af98081362b227e5bc992adeda23ee53497c973b448b27ec475fba04b4ed6002bb3e930eadf95bbf9
+  checksum: 10c0/8e6e42f50bf8e0442ede25730e2c90c1aa057c9e5ea063fcd6119199931c336b574dd8c26c911e0d1726a687faac3342dc840fdade7af9a1e84e5777cc4f7b94
   languageName: node
   linkType: hard
 
-"@sqlrooms/duckdb-core@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/duckdb-core@npm:0.29.0-rc.13"
+"@sqlrooms/duckdb-core@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/duckdb-core@npm:0.29.0"
   dependencies:
-    "@sqlrooms/room-config": "npm:0.29.0-rc.13"
+    "@sqlrooms/room-config": "npm:0.29.0"
   peerDependencies:
     apache-arrow: 17.0.0
-  checksum: 10c0/307aa10d19a54cf467da4d6d6b484d33777dcf5ed24e52c82b8105dccbe4aad350a15f1e7dbd8c0708661077944be1c17cfae2efd4d9d6647358b11b25205189
+  checksum: 10c0/54806d0a7d0adf3ba3f1b58f3d0c6a5e25b3f11e5c7a91fa553fa61092603c99b3c7868cced08065edf1a0c9c58980e30dcdf6364206ed466d7a1d26bf1c04cf
   languageName: node
   linkType: hard
 
-"@sqlrooms/duckdb@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/duckdb@npm:0.29.0-rc.13"
+"@sqlrooms/duckdb@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/duckdb@npm:0.29.0"
   dependencies:
     "@duckdb/duckdb-wasm": "npm:^1.32.0"
-    "@sqlrooms/duckdb-core": "npm:0.29.0-rc.13"
-    "@sqlrooms/room-config": "npm:0.29.0-rc.13"
-    "@sqlrooms/room-store": "npm:0.29.0-rc.13"
-    "@sqlrooms/utils": "npm:0.29.0-rc.13"
+    "@sqlrooms/duckdb-core": "npm:0.29.0"
+    "@sqlrooms/room-config": "npm:0.29.0"
+    "@sqlrooms/room-store": "npm:0.29.0"
+    "@sqlrooms/utils": "npm:0.29.0"
     fast-deep-equal: "npm:^3.1.3"
     immer: "npm:^11.0.1"
     zod: "npm:^4.1.8"
     zustand: "npm:^5.0.8"
   peerDependencies:
     apache-arrow: 17.0.0
-  checksum: 10c0/5aa84f189719606e8c3bc868abced2b2176809fe94d6a16c3c6f4740019303db1adde64b87e96512806b4300b6595f864a85d1136e43d75aaa725d6b49549394
+  checksum: 10c0/3eccd50ce6916e9fedf67758165a5cc0dc6c3d3802575ed937c7b9bceb12d329b82fab7ba36a34d140bf296cb97d90f2d0e1b98a7bcefa5a793d3c83a7c3a2bd
   languageName: node
   linkType: hard
 
-"@sqlrooms/layout-config@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/layout-config@npm:0.29.0-rc.13"
+"@sqlrooms/layout-config@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/layout-config@npm:0.29.0"
   dependencies:
     zod: "npm:^4.1.8"
-  checksum: 10c0/e94925d9e616fbd385ad34e0406f1d0b281041e971e1d02ffa3e0607c1221b0326c00378e7002792bc07d99c62e760675539582cdf0a737406b7b02a648ba332
+  checksum: 10c0/6ed6c37056b323d607b2e0ef39b6ab232ffffc78ba9710de7f1ba604b882bdface367e096767751fa0bfb379c865051e57eb2b393055870ec1cc068e466654c6
   languageName: node
   linkType: hard
 
-"@sqlrooms/layout@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/layout@npm:0.29.0-rc.13"
+"@sqlrooms/layout@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/layout@npm:0.29.0"
   dependencies:
     "@dnd-kit/core": "npm:^6.3.1"
-    "@sqlrooms/layout-config": "npm:0.29.0-rc.13"
-    "@sqlrooms/room-store": "npm:0.29.0-rc.13"
-    "@sqlrooms/ui": "npm:0.29.0-rc.13"
+    "@sqlrooms/layout-config": "npm:0.29.0"
+    "@sqlrooms/room-store": "npm:0.29.0"
+    "@sqlrooms/ui": "npm:0.29.0"
     immer: "npm:^11.0.1"
     lucide-react: "npm:^0.556.0"
     react-grid-layout: "npm:^1.5.2"
@@ -9029,52 +9029,52 @@ __metadata:
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/072c1316de5f96f6195d1cb4b2f408fd82ccb7d5aa1435eabbbfcd976908ab34eda7ff2a8ed2ea13e818ae59dffd0f1f4f4c953a5faa4e24e0604d3a50da0348
+  checksum: 10c0/a6266f0a4460b2c2e73f27ebe9d491a60c19439baf77bf5a26a6f21d2cf859b917e5ea843cab80f6fbc95d65329d6731ddc68f9680783214768045d522f8c465
   languageName: node
   linkType: hard
 
-"@sqlrooms/monaco-editor@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/monaco-editor@npm:0.29.0-rc.13"
+"@sqlrooms/monaco-editor@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/monaco-editor@npm:0.29.0"
   dependencies:
     "@monaco-editor/react": "npm:^4.7.0"
-    "@sqlrooms/ui": "npm:0.29.0-rc.13"
-    "@sqlrooms/utils": "npm:0.29.0-rc.13"
+    "@sqlrooms/ui": "npm:0.29.0"
+    "@sqlrooms/utils": "npm:0.29.0"
     monaco-editor: "npm:^0.55.0"
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/9ed4e9f11b4586410203145ce0ffe2d02f43ca92bdaebd228fedba9b49fe5680e1f6153cf76927a8bd05e4c9be369453d6ac346498a1c8b732446d15bb45dd8e
+  checksum: 10c0/80a264758a75529aff58bb16418e5256c3013306f78fc7c097071ee6fcb2916d46082e6e59cc20478b580e573c6abaa026fd934006d18658f15bc6d81fbe8bcb
   languageName: node
   linkType: hard
 
-"@sqlrooms/room-config@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/room-config@npm:0.29.0-rc.13"
+"@sqlrooms/room-config@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/room-config@npm:0.29.0"
   dependencies:
-    "@sqlrooms/layout-config": "npm:0.29.0-rc.13"
+    "@sqlrooms/layout-config": "npm:0.29.0"
     zod: "npm:^4.1.8"
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/0645906cea833388866198edfe1fed270b5de29897d466da065b00702243cedc1d13744a8a59a2c59b91189471233c07ed39e00390c898eafb0b575316b065fc
+  checksum: 10c0/5119cf3fae47a9eba0ff984b56a195e1eddca6c0169a6dedf88c48b8d772184bc1ad85ea984134ca7d4edb12067bf4aa9c5579f02913d69b7087132f5b829386
   languageName: node
   linkType: hard
 
-"@sqlrooms/room-shell@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/room-shell@npm:0.29.0-rc.13"
+"@sqlrooms/room-shell@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/room-shell@npm:0.29.0"
   dependencies:
-    "@sqlrooms/codemirror": "npm:0.29.0-rc.13"
-    "@sqlrooms/data-table": "npm:0.29.0-rc.13"
-    "@sqlrooms/db": "npm:0.29.0-rc.13"
-    "@sqlrooms/duckdb": "npm:0.29.0-rc.13"
-    "@sqlrooms/layout": "npm:0.29.0-rc.13"
-    "@sqlrooms/layout-config": "npm:0.29.0-rc.13"
-    "@sqlrooms/room-config": "npm:0.29.0-rc.13"
-    "@sqlrooms/room-store": "npm:0.29.0-rc.13"
-    "@sqlrooms/ui": "npm:0.29.0-rc.13"
-    "@sqlrooms/utils": "npm:0.29.0-rc.13"
+    "@sqlrooms/codemirror": "npm:0.29.0"
+    "@sqlrooms/data-table": "npm:0.29.0"
+    "@sqlrooms/db": "npm:0.29.0"
+    "@sqlrooms/duckdb": "npm:0.29.0"
+    "@sqlrooms/layout": "npm:0.29.0"
+    "@sqlrooms/layout-config": "npm:0.29.0"
+    "@sqlrooms/room-config": "npm:0.29.0"
+    "@sqlrooms/room-store": "npm:0.29.0"
+    "@sqlrooms/ui": "npm:0.29.0"
+    "@sqlrooms/utils": "npm:0.29.0"
     apache-arrow: "npm:17.0.0"
     immer: "npm:^11.0.1"
     lucide-react: "npm:^0.556.0"
@@ -9083,42 +9083,42 @@ __metadata:
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/b1668d2fe4802cfbe700a144cc525acc8b2380f1958f53ba499e64f2fe15f9f2ca9f83ac40670285b85f543d12b06ac61ac954df460b345d4e1bf05a20869683
+  checksum: 10c0/118de2c0b0aba3d267641b8e466e3fd50dbca5d09111a80062ad50b243e4d2e170f78a7f57b2426f6b2b8318fa6b65a1d35ef7c7e774b6485a646601ac2e574c
   languageName: node
   linkType: hard
 
-"@sqlrooms/room-store@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/room-store@npm:0.29.0-rc.13"
+"@sqlrooms/room-store@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/room-store@npm:0.29.0"
   dependencies:
-    "@sqlrooms/room-config": "npm:0.29.0-rc.13"
+    "@sqlrooms/room-config": "npm:0.29.0"
     immer: "npm:^11.0.1"
     zod: "npm:^4.1.8"
     zustand: "npm:^5.0.8"
   peerDependencies:
     react: ">=18"
-  checksum: 10c0/3ccd80280b1aebcfa672e9d7fa711a05f6725fdfa747f21322dd2fd4973e7a4f07435085dacf4b93a0a89bb21a6f25d70a71451c0a9a3c1f475a6f69f91a153d
+  checksum: 10c0/b62996a61312a1256c2b0d67a8ee955a18c4a60722a86d03d962b97f65b518cb722db7d06817c7c4c07d2043b3550b6e005d71c88dca5ef4afda87143af40af6
   languageName: node
   linkType: hard
 
-"@sqlrooms/s3-browser-config@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/s3-browser-config@npm:0.29.0-rc.13"
+"@sqlrooms/s3-browser-config@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/s3-browser-config@npm:0.29.0"
   dependencies:
     zod: "npm:^4.1.8"
-  checksum: 10c0/fde16f2d286da1df4117c3f810558b8a12adef56d6c7d7bd04a1ad2fd6279d8c059f0419109f694c705fe72445ba98159438af673516a884dc4998f23ac7b905
+  checksum: 10c0/48fecec4a88f45e881f96d4456fd10429c278462fbc2cf59a3c736f7f3b57d075e8790ca6fefb710dacc01e9692941915ef4175af9e1ad7bb985e030be43f754
   languageName: node
   linkType: hard
 
-"@sqlrooms/s3-browser@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/s3-browser@npm:0.29.0-rc.13"
+"@sqlrooms/s3-browser@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/s3-browser@npm:0.29.0"
   dependencies:
     "@hookform/resolvers": "npm:^5.0.0"
-    "@sqlrooms/room-shell": "npm:0.29.0-rc.13"
-    "@sqlrooms/s3-browser-config": "npm:0.29.0-rc.13"
-    "@sqlrooms/ui": "npm:0.29.0-rc.13"
-    "@sqlrooms/utils": "npm:0.29.0-rc.13"
+    "@sqlrooms/room-shell": "npm:0.29.0"
+    "@sqlrooms/s3-browser-config": "npm:0.29.0"
+    "@sqlrooms/ui": "npm:0.29.0"
+    "@sqlrooms/utils": "npm:0.29.0"
     immer: "npm:^11.0.1"
     lucide-react: "npm:^0.556.0"
     react-hook-form: "npm:^7.63.0"
@@ -9127,38 +9127,38 @@ __metadata:
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/5bd462f31ef732ace096c80b3dc2f0ace212e53f85a1129d966e1c58fef1808190bf2b5d5416ae755fdc623f587c986c24cc31c2d5d96103f1c9b1eddb3e18d0
+  checksum: 10c0/d72782269c71673c97092ef72f07a9b3f4ceab7785c729a9bf6092c5a57ceb82e88f2d8c99bb5cbccdc84040a3f47ec2e94b5872ec6f34b6498fda0dc697a42f
   languageName: node
   linkType: hard
 
-"@sqlrooms/schema-tree@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/schema-tree@npm:0.29.0-rc.13"
+"@sqlrooms/schema-tree@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/schema-tree@npm:0.29.0"
   dependencies:
-    "@sqlrooms/data-table": "npm:0.29.0-rc.13"
-    "@sqlrooms/duckdb": "npm:0.29.0-rc.13"
-    "@sqlrooms/ui": "npm:0.29.0-rc.13"
-    "@sqlrooms/utils": "npm:0.29.0-rc.13"
+    "@sqlrooms/data-table": "npm:0.29.0"
+    "@sqlrooms/duckdb": "npm:0.29.0"
+    "@sqlrooms/ui": "npm:0.29.0"
+    "@sqlrooms/utils": "npm:0.29.0"
     lucide-react: "npm:^0.556.0"
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/0d25283607c721214eee3f3333824b5c2e9ef0a9e3d5c9418db16f912567197b9e62108201b4210f9d6d6be4db6f9298ae658b7d3b2831547e1267343901b4ce
+  checksum: 10c0/ff27bba028c53e5b22f269f36d4a5f6316e370f756ab6ab1865f9f7c2447cf28c75ce3bd26d0f66b3b684ff4f34bc8c2edb2764f11e327ba96f628db89250cae
   languageName: node
   linkType: hard
 
-"@sqlrooms/sql-editor-config@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/sql-editor-config@npm:0.29.0-rc.13"
+"@sqlrooms/sql-editor-config@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/sql-editor-config@npm:0.29.0"
   dependencies:
     zod: "npm:^4.1.8"
-  checksum: 10c0/eea2ed02f60d4c1e24b0e597ba98ea80741c71d29b876bc3217199dd7eb19d84a9522bbb60ba2cdee539b00e8b41ef0fd1d84b26cfc7f649c473b1592a3b7686
+  checksum: 10c0/5399099a021c7aa4d58165a0ef36068c8ab6a1c20c5a9233e6642731eb1233b0de3ef08d54c33cbc354e0f3316700d203aa312df624891f5318952e5c4cf452b
   languageName: node
   linkType: hard
 
-"@sqlrooms/sql-editor@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/sql-editor@npm:0.29.0-rc.13"
+"@sqlrooms/sql-editor@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/sql-editor@npm:0.29.0"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.20.0"
     "@codemirror/lang-sql": "npm:^6.8.0"
@@ -9170,17 +9170,17 @@ __metadata:
     "@marimo-team/codemirror-sql": "npm:^0.2.0"
     "@monaco-editor/react": "npm:^4.7.0"
     "@paralleldrive/cuid2": "npm:^3.0.0"
-    "@sqlrooms/blocks": "npm:0.29.0-rc.13"
-    "@sqlrooms/codemirror": "npm:0.29.0-rc.13"
-    "@sqlrooms/data-table": "npm:0.29.0-rc.13"
-    "@sqlrooms/db": "npm:0.29.0-rc.13"
-    "@sqlrooms/duckdb": "npm:0.29.0-rc.13"
-    "@sqlrooms/monaco-editor": "npm:0.29.0-rc.13"
-    "@sqlrooms/room-shell": "npm:0.29.0-rc.13"
-    "@sqlrooms/schema-tree": "npm:0.29.0-rc.13"
-    "@sqlrooms/sql-editor-config": "npm:0.29.0-rc.13"
-    "@sqlrooms/ui": "npm:0.29.0-rc.13"
-    "@sqlrooms/utils": "npm:0.29.0-rc.13"
+    "@sqlrooms/blocks": "npm:0.29.0"
+    "@sqlrooms/codemirror": "npm:0.29.0"
+    "@sqlrooms/data-table": "npm:0.29.0"
+    "@sqlrooms/db": "npm:0.29.0"
+    "@sqlrooms/duckdb": "npm:0.29.0"
+    "@sqlrooms/monaco-editor": "npm:0.29.0"
+    "@sqlrooms/room-shell": "npm:0.29.0"
+    "@sqlrooms/schema-tree": "npm:0.29.0"
+    "@sqlrooms/sql-editor-config": "npm:0.29.0"
+    "@sqlrooms/ui": "npm:0.29.0"
+    "@sqlrooms/utils": "npm:0.29.0"
     "@tanstack/react-table": "npm:^8.21.3"
     d3-dsv: "npm:^3.0.1"
     es-toolkit: "npm:^1.39.9"
@@ -9197,13 +9197,13 @@ __metadata:
     react: ">=18"
     react-dom: ">=18"
     react-hook-form: ^7.57.0
-  checksum: 10c0/4ddfeae777a8ba5dba0ab18db2f6ed04212e8d841d434d139b5117923226f4ba2e0df502405f8b5f97554795133fdf7cf7b3b0884350dbac6486f0a859d7421c
+  checksum: 10c0/b3ae9ea759031091bd2e48ed3f75089b966b77825a54ef80e1e84bed45647dd367400d48485cb5034aa9f26bb2b92024904ad2651c4e1c55969742f021b9c6dc
   languageName: node
   linkType: hard
 
-"@sqlrooms/ui@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/ui@npm:0.29.0-rc.13"
+"@sqlrooms/ui@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/ui@npm:0.29.0"
   dependencies:
     "@dnd-kit/core": "npm:^6.3.1"
     "@dnd-kit/modifiers": "npm:^9.0.0"
@@ -9247,13 +9247,13 @@ __metadata:
     vaul: "npm:^1.1.2"
   peerDependencies:
     tailwindcss: ^4.1.18
-  checksum: 10c0/4023d2fadc6e0db1311a18b4cb53de60fda217a794e114c1fce97de98a4c1f298dc9b12eafd0a008827033c75b4b023f42ee111c4cfe8cba1d5f31e57b956467
+  checksum: 10c0/2f92a9c425e2e6152f9206091b1f3f08355d3d4764184cc10a4ed259e7519fd6cd2d7dac25636940ce28b635202b2c7572701a44ac319a24fbbde476a334f0af
   languageName: node
   linkType: hard
 
-"@sqlrooms/utils@npm:0.29.0-rc.13":
-  version: 0.29.0-rc.13
-  resolution: "@sqlrooms/utils@npm:0.29.0-rc.13"
+"@sqlrooms/utils@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/utils@npm:0.29.0"
   dependencies:
     d3-color: "npm:^3.1.0"
     d3-format: "npm:^3.1.0"
@@ -9262,7 +9262,7 @@ __metadata:
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/8b5b4e229f35b0c9a5ebf22cbf9771761361fd3b3c72950296790dac4d67d005226c6c0ceed290e28bb1f8d1a599a6dc57f470456b0b38554b08d2b3af9fbfba
+  checksum: 10c0/1b7e0d4ac9a183c3cb19641d48934deac0633cedc1e2f17b2591d9697fd6b1b0091c06a5871c444bb46120415d603cd096773fa4041d5501f650f23d74b8c76d
   languageName: node
   linkType: hard
 
@@ -22775,14 +22775,14 @@ __metadata:
   resolution: "kepler-sqlrooms-example@workspace:examples/sqlrooms"
   dependencies:
     "@kepler.gl/sqlrooms": "workspace:*"
-    "@sqlrooms/artifacts": "npm:0.29.0-rc.13"
-    "@sqlrooms/dropzone": "npm:0.29.0-rc.13"
-    "@sqlrooms/duckdb": "npm:0.29.0-rc.13"
-    "@sqlrooms/monaco-editor": "npm:0.29.0-rc.13"
-    "@sqlrooms/room-shell": "npm:0.29.0-rc.13"
-    "@sqlrooms/sql-editor": "npm:0.29.0-rc.13"
-    "@sqlrooms/ui": "npm:0.29.0-rc.13"
-    "@sqlrooms/utils": "npm:0.29.0-rc.13"
+    "@sqlrooms/artifacts": "npm:0.29.0"
+    "@sqlrooms/dropzone": "npm:0.29.0"
+    "@sqlrooms/duckdb": "npm:0.29.0"
+    "@sqlrooms/monaco-editor": "npm:0.29.0"
+    "@sqlrooms/room-shell": "npm:0.29.0"
+    "@sqlrooms/sql-editor": "npm:0.29.0"
+    "@sqlrooms/ui": "npm:0.29.0"
+    "@sqlrooms/utils": "npm:0.29.0"
     "@tailwindcss/vite": "npm:^4.1.18"
     "@types/node": "npm:^20"
     "@types/react": "npm:^19.0.0"

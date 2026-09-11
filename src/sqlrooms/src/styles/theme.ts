@@ -4,26 +4,28 @@
 import {theme} from '@kepler.gl/styles';
 import {DefaultTheme} from 'styled-components';
 
-// SQL Room dark theme exported from sqlRoom preset, maybe there is a better way to do this
-// but this is the only way I could find to make it work with tailwind
+// Bridge the host application's Tailwind tokens to Kepler's styled-components theme.
+// Surface colors must not depend on the text color used on primary buttons.
 
 export const darkTheme: DefaultTheme = {
   ...theme,
+  fontFamily: `var(--font-sans, ${theme.fontFamily})`,
+  btnFontFamily: `var(--font-sans, ${theme.btnFontFamily})`,
   sidePanelBg: 'hsl(var(--background))',
   bottomWidgetBgd: 'hsl(var(--background))',
   textColor: 'hsl(var(--foreground))',
-  titleTextColor: 'hsl(var(--foreground))',
+  titleTextColor: 'hsl(var(--card-foreground))',
   textColorHl: 'hsl(var(--foreground))',
-  activeColor: 'hsl(var(--primary))',
+  activeColor: 'hsl(var(--ring))',
   subtextColor: 'hsl(var(--muted-foreground))',
   labelColor: 'hsl(var(--muted-foreground))',
-  panelBackground: 'hsl(var(--primary-foreground))',
-  panelBorderColor: 'hsl(var(--muted-foreground) / 0.2)',
+  panelBackground: 'hsl(var(--card))',
+  panelBorderColor: 'hsl(var(--border))',
   panelContentBackground: 'hsl(var(--background))',
-  mapPanelBackgroundColor: 'hsl(var(--primary-foreground))',
+  mapPanelBackgroundColor: 'hsl(var(--background))',
   mapPanelHeaderBackgroundColor: 'hsl(var(--muted))',
 
-  inputBgd: 'hsl(var(--input))',
+  inputBgd: 'hsl(var(--secondary))',
   inputColor: 'hsl(var(--foreground))',
   inputPlaceholderColor: 'hsl(var(--muted-foreground))',
   selectColor: 'hsl(var(--foreground))',
@@ -42,7 +44,7 @@ export const darkTheme: DefaultTheme = {
   secondarySwitchBtnBgd: 'hsl(var(--muted-foreground) / 0.2)',
 
   secondaryInputColor: 'hsl(var(--foreground))',
-  secondaryInputBgd: 'hsl(var(--input))',
+  secondaryInputBgd: 'hsl(var(--background))',
   secondaryInputBgdHover: 'hsl(var(--input) / 0.8)',
   secondaryInputBgdActive: 'hsl(var(--input) / 0.8)',
   secondaryInputBorderActiveColor: 'hsl(var(--input) / 0.8)',
@@ -61,17 +63,17 @@ export const darkTheme: DefaultTheme = {
   primaryBtnColor: 'hsl(var(--primary-foreground))',
   primaryBtnActColor: 'hsl(var(--primary-foreground))',
   primaryBtnFontSizeDefault: '0.875rem',
-  floatingBtnRadius: '4px',
+  floatingBtnRadius: 'calc(var(--radius) - 2px)',
   ctaBtnBgd: 'hsl(var(--primary))',
   ctaBtnBgdHover: 'hsl(var(--primary) / 0.8)',
   ctaBtnActBgd: 'hsl(var(--primary) / 0.8)',
-  floatingBtnBgd: 'hsl(var(--primary-foreground))',
+  floatingBtnBgd: 'hsl(var(--secondary))',
   floatingBtnBgdHover: 'hsl(var(--accent))',
   floatingBtnActColor: 'hsl(var(--foreground))',
   floatingBtnColor: 'hsl(var(--foreground))',
 
   // dropdown
-  dropdownListBgd: 'hsl(var(--primary-foreground))',
+  dropdownListBgd: 'hsl(var(--popover))',
   toolbarItemBgdHover: 'hsl(var(--accent))',
   dropdownListHighlightBg: 'hsl(var(--accent))',
   chickletBgd: 'hsl(var(--muted-foreground) / 0.4)',
@@ -87,7 +89,7 @@ export const darkTheme: DefaultTheme = {
   bottomWidgetPaddingRight: 0,
   bottomWidgetPaddingBottom: 0,
   bottomWidgetPaddingLeft: 0,
-  panelHeaderBorderRadius: '4px'
+  panelHeaderBorderRadius: 'calc(var(--radius) - 4px)'
 };
 
 export type KeplerThemeOverrides = Partial<typeof theme> & Partial<DefaultTheme>;

@@ -32,3 +32,7 @@ storage, so reloading resets this demo workspace.
 
 The source is adapted from SQLRooms' Kepler example at commit
 `26d8e78e086cebdfc4eb6b4047c9035c5704a068` (MIT); see the adapter's LICENSE.
+
+The Tailwind tokens in `src/index.css` follow Kepler's charcoal surfaces, green
+actions, cyan focus color, and Helvetica font stack. The adapter maps those same
+tokens to Kepler controls so the shell and map panels share a theme.

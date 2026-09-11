@@ -35,12 +35,14 @@ const PanelTitle = getKeplerFactory(PanelTitleFactory);
 const layerPanelMetadata = SIDEBAR_PANELS.find(p => p.id === 'layer');
 
 const CustomLayerManagerContainer = styled.div`
-  .layer-manager-title {
-  }
-
   .add-layer-button {
-    background-color: ${props => props.theme.sidePanelBg || props.theme.panelBackground};
-    color: #2563EB;
+    background-color: ${props => props.theme.primaryBtnBgd};
+    color: ${props => props.theme.primaryBtnColor};
+    border-radius: ${props => props.theme.primaryBtnRadius};
+
+    &:hover:not(:disabled) {
+      background-color: ${props => props.theme.primaryBtnBgdHover};
+    }
     border: 0px;
     height: 28px;
     font-weight: 500;
