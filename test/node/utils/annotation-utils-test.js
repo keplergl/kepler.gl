@@ -12,11 +12,12 @@ import {
   isBelowOriented,
   getTextPlacement,
   getAnnotationTextBoxStyle,
-  isPointVisibleOnGlobe
+  isPointVisibleOnGlobe,
+  normalizeAnchorPoint
 } from '@kepler.gl/components';
 
 const mockViewport = {
-  project: ([lng, lat]) => [lng * 10 + 500, lat * -10 + 300],
+  project: ([lng, lat, alt = 0]) => [lng * 10 + 500, lat * -10 + 300 - alt],
   unproject: ([x, y]) => [(x - 500) / 10, (y - 300) / -10],
   longitude: 0,
   latitude: 0,
@@ -262,6 +263,54 @@ test('#movePoint -> zero delta returns same position', t => {
   const changes = movePoint(annotation, delta, mockViewport);
 
   t.deepEqual(changes.anchorPoint, [5, 10], 'should return same anchorPoint for zero delta');
+
+  t.end();
+});
+
+test('#movePoint -> uses pickWorldPosition xyz when provided', t => {
+  const annotation = makePointAnnotation({anchorPoint: [0, 0]});
+  const pickWorldPosition = () => [12.3, 45.6, 80];
+
+  const changes = movePoint(annotation, {x: 10, y: -5}, mockViewport, pickWorldPosition);
+
+  t.deepEqual(
+    changes.anchorPoint,
+    [12.3, 45.6, 80],
+    'should persist reconstructed [lng, lat, altitude]'
+  );
+
+  t.end();
+});
+
+test('#movePoint -> falls back to ground plane when pick returns no altitude', t => {
+  const annotation = makePointAnnotation({anchorPoint: [0, 0]});
+  const pickWorldPosition = () => null;
+
+  const changes = movePoint(annotation, {x: 10, y: -5}, mockViewport, pickWorldPosition);
+
+  t.equal(changes.anchorPoint.length, 2, 'fallback should be [lon, lat]');
+  t.equal(changes.anchorPoint[0], 1, 'longitude should use viewport unproject');
+  t.equal(changes.anchorPoint[1], 0.5, 'latitude should use viewport unproject');
+
+  t.end();
+});
+
+test('#normalizeAnchorPoint', t => {
+  t.deepEqual(normalizeAnchorPoint([1, 2]), [1, 2], 'keeps 2D anchors');
+  t.deepEqual(normalizeAnchorPoint([1, 2, 3]), [1, 2, 3], 'keeps 3D anchors');
+  t.deepEqual(normalizeAnchorPoint([1, 2, 0]), [1, 2, 0], 'keeps zero altitude');
+  t.equal(normalizeAnchorPoint([1]), null, 'rejects incomplete coords');
+  t.equal(normalizeAnchorPoint(null), null, 'rejects null');
+
+  t.end();
+});
+
+test('#makeMarker -> projects altitude into screen y', t => {
+  const ground = makeMarker(makePointAnnotation({anchorPoint: [10, 20]}), mockViewport);
+  const raised = makeMarker(makePointAnnotation({anchorPoint: [10, 20, 15]}), mockViewport);
+
+  t.equal(raised.x, ground.x, 'longitude projection is unchanged by altitude');
+  t.equal(raised.y, ground.y - 15, 'altitude should shift screen y');
 
   t.end();
 });

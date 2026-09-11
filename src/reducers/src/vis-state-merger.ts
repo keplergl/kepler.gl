@@ -733,7 +733,8 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
         !existingIds.has(a.id) &&
         isAnnotationKind(a.kind) &&
         Array.isArray(a.anchorPoint) &&
-        a.anchorPoint.length === 2
+        (a.anchorPoint.length === 2 || a.anchorPoint.length === 3) &&
+        a.anchorPoint.every(value => Number.isFinite(value))
     )
     .map(a => ({
       isVisible: true,

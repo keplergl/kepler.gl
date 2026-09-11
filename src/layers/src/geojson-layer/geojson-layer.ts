@@ -108,7 +108,8 @@ export const geojsonVisConfigs: {
   elevationScale: {
     ...LAYER_VIS_CONFIGS.elevationScale,
     focusRange: [0, 1],
-    focusWeight: 0.3
+    focusWeight: 0.3,
+    step: 0.01
   },
   stroked: 'stroked',
   filled: 'filled',
@@ -807,7 +808,9 @@ export default class GeoJsonLayer extends Layer {
       opacity: visConfig.strokeOpacity
     };
 
-    const pickable = interactionConfig.tooltip.enabled && visConfig.allowHover;
+    const pickable =
+      (interactionConfig.tooltip.enabled && visConfig.allowHover) ||
+      Boolean(opts.experimentalContext?.isAnnotationMode && visConfig.enable3d);
     const hoverOverlayData = visConfig.enable3d ? null : this._getHoverOverlayData(objectHovered);
 
     const {data, ...props} = dataProps;
