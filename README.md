@@ -84,6 +84,10 @@ or if you would like, you can load a specific version:
 
 Take a look at the [development guide][developers] to develop kepler.gl locally.
 
+The [SQLRooms example](examples/sqlrooms) composes Kepler maps with a shared DuckDB
+database, SQL editor, and map tabs using [`@kepler.gl/sqlrooms`](src/sqlrooms).
+Run it with `yarn start:sqlrooms` after installing the root workspace dependencies.
+
 ## Basic Usage
 
 Here are the basic steps to import kepler.gl into your app. You also take a look at the examples folder. Each example in the folder can be installed and run locally.
