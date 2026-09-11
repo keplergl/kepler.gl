@@ -51,6 +51,31 @@ test('WMS utils -> buildWmsGetCapabilitiesUrl', t => {
   t.end();
 });
 
+test('WMS utils -> collectWmsLegendUrlsFromRawJson unwraps WMS_Capabilities', t => {
+  const rawJson = {
+    WMS_Capabilities: {
+      Capability: {
+        Layer: {
+          Name: 'OSM-WMS',
+          Style: {
+            LegendURL: {
+              OnlineResource: {
+                'xlink:href': 'https://example.com/legend.png'
+              }
+            }
+          }
+        }
+      }
+    }
+  };
+
+  t.deepEqual(collectWmsLegendUrlsFromRawJson(rawJson), {
+    'OSM-WMS': 'https://example.com/legend.png'
+  });
+
+  t.end();
+});
+
 test('WMS utils -> collectWmsLegendUrlsFromRawJson', t => {
   const rawJson = {
     Capability: {
@@ -130,6 +155,37 @@ test('WMS utils -> wmsCapabilitiesToDatasetMetadata prefers LegendURL', t => {
   t.equal(metadata.layers[0].name, 'OSM-WMS');
   t.equal(metadata.layers[0].legendUrl, 'https://example.com/legend.png');
   t.deepEqual(metadata.layers[0].boundingBox, [-180, -90, 180, 90]);
+
+  t.end();
+});
+
+test('WMS utils -> wmsCapabilitiesToDatasetMetadata resolves relative LegendURL', t => {
+  const capabilities = {
+    version: '1.3.0',
+    layers: [
+      {
+        name: 'OSM-WMS',
+        title: 'OpenStreetMap'
+      }
+    ],
+    json: {
+      Capability: {
+        Layer: {
+          Name: 'OSM-WMS',
+          Style: {
+            LegendURL: {
+              OnlineResource: {
+                'xlink:href': '/legends/osm.png'
+              }
+            }
+          }
+        }
+      }
+    }
+  };
+
+  const metadata = wmsCapabilitiesToDatasetMetadata(capabilities, 'https://example.com/wms');
+  t.equal(metadata.layers[0].legendUrl, 'https://example.com/legends/osm.png');
 
   t.end();
 });

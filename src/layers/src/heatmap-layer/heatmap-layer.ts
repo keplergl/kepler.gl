@@ -9,7 +9,12 @@ import {
   GEOARROW_METADATA_KEY,
   SCALE_TYPES
 } from '@kepler.gl/constants';
-import Layer, {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
+import Layer, {
+  LayerBaseConfigPartial,
+  LayerColorConfig,
+  LayerWeightConfig,
+  VisualChannels
+} from '../base-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 import {
   ColorRange,
@@ -73,7 +78,7 @@ export type HeatmapLayerVisConfig = {
   aggregation: string;
 };
 
-export type HeatmapLayerVisualChannelConfig = LayerWeightConfig;
+export type HeatmapLayerVisualChannelConfig = LayerWeightConfig & LayerColorConfig;
 export type HeatmapLayerConfig = Merge<
   LayerBaseConfig,
   {columns: HeatmapLayerColumnsConfig; visConfig: HeatmapLayerVisConfig}

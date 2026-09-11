@@ -34,6 +34,27 @@ function decodeXmlEntities(value: string): string {
   return value.replace(/&amp;/g, '&').replace(/&quot;/g, '"');
 }
 
+/**
+ * LegendURL may be a relative URI. Resolve it against the WMS service URL so
+ * `<img src>` does not load it from the Kepler app origin.
+ */
+export function resolveWmsLegendUrl(href: string, serviceUrl?: string): string | null {
+  if (!href) {
+    return null;
+  }
+  try {
+    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href)) {
+      return href;
+    }
+    if (!serviceUrl) {
+      return href;
+    }
+    return new URL(href, serviceUrl).toString();
+  } catch {
+    return href;
+  }
+}
+
 function getHref(node: unknown): string | null {
   if (!node) {
     return null;
@@ -112,7 +133,14 @@ export function collectWmsLegendUrlsFromRawJson(json: unknown): Record<string, s
     }
   };
 
-  visit(json);
+  const root =
+    json && typeof json === 'object' && !Array.isArray(json)
+      ? (json as Record<string, unknown>).WMS_Capabilities ||
+        (json as Record<string, unknown>).WMT_MS_Capabilities ||
+        json
+      : json;
+
+  visit(root);
   return urls;
 }
 
@@ -213,8 +241,10 @@ export function wmsCapabilitiesToDatasetMetadata(
     }
 
     const layerName = layer.name;
+    const advertisedLegendUrl =
+      typeof layerName === 'string' ? legendUrlsFromCapabilities[layerName] : undefined;
     const legendUrl =
-      (typeof layerName === 'string' && legendUrlsFromCapabilities[layerName]) ||
+      (advertisedLegendUrl && resolveWmsLegendUrl(advertisedLegendUrl, serviceUrl)) ||
       (typeof layerName === 'string' && serviceUrl
         ? buildWmsGetLegendGraphicUrl(serviceUrl, layerName, {version})
         : null);
