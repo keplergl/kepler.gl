@@ -411,7 +411,7 @@ class HeatmapLayer extends Layer {
     };
   }
 
-  getDefaultLayerConfig(props: LayerBaseConfigPartial): HeatmapLayerConfig {
+  getDefaultLayerConfig(props: LayerBaseConfigPartial) {
     // Keep colorScale / colorDomain so the map legend can render the selected
     // color ramp. colorField stays unused: heatmap color is density, not a field.
     return {
@@ -419,9 +419,9 @@ class HeatmapLayer extends Layer {
       columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
       colorField: null,
       colorScale: SCALE_TYPES.quantize,
-      colorDomain: [0, 1],
+      colorDomain: [0, 1] as [number, number],
       weightField: null,
-      weightDomain: [0, 1],
+      weightDomain: [0, 1] as [number, number],
       weightScale: SCALE_TYPES.linear
     };
   }
@@ -578,7 +578,7 @@ class HeatmapLayer extends Layer {
     let getWeight: ((d: {index: number}) => number) | number = 1;
     if (weightField) {
       const weightRange = [0, 1];
-      const scaleFunc = this.getVisChannelScale(weightScale, weightDomain, weightRange);
+      const scaleFunc = this.getVisChannelScale(String(weightScale), weightDomain, weightRange);
       getWeight = (d: {index: number}) =>
         this.getEncodedChannelValue(scaleFunc || (x => x), d as any, weightField, 0 as any);
     }
