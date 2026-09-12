@@ -13,6 +13,7 @@ import Layer, {
   LayerBaseConfigPartial,
   LayerColorConfig,
   LayerWeightConfig,
+  VisualChannel,
   VisualChannels
 } from '../base-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
@@ -86,6 +87,19 @@ export type HeatmapLayerConfig = Merge<
   HeatmapLayerVisualChannelConfig;
 
 export const MAX_ZOOM_LEVEL = 18;
+
+// Legend-only: heatmap GPU color is density × colorRange, not a data field.
+// Keep this off `visualChannels` so layer type change does not copy colorField.
+const HEATMAP_LEGEND_COLOR_CHANNEL: VisualChannel = {
+  property: 'color',
+  field: 'colorField',
+  scale: 'colorScale',
+  domain: 'colorDomain',
+  range: 'colorRange',
+  key: 'color',
+  channelScaleType: CHANNEL_SCALES.color,
+  defaultMeasure: 'property.density'
+};
 
 export const pointPosAccessor =
   ({lat, lng}: HeatmapLayerColumnsConfig) =>
@@ -316,16 +330,6 @@ class HeatmapLayer extends Layer {
 
   get visualChannels(): VisualChannels {
     return {
-      color: {
-        property: 'color',
-        field: 'colorField',
-        scale: 'colorScale',
-        domain: 'colorDomain',
-        range: 'colorRange',
-        key: 'color',
-        channelScaleType: CHANNEL_SCALES.color,
-        defaultMeasure: 'property.density'
-      },
       // @ts-expect-error
       weight: {
         property: 'weight',
@@ -341,7 +345,26 @@ class HeatmapLayer extends Layer {
   }
 
   getLegendVisualChannels() {
-    return {color: this.visualChannels.color};
+    const channels: VisualChannels = {color: HEATMAP_LEGEND_COLOR_CHANNEL};
+    // Show "weight by <field>" when a weight column is selected. Default
+    // density weighting is already represented by the color ramp.
+    if (this.config.weightField) {
+      channels.weight = this.visualChannels.weight;
+    }
+    return channels;
+  }
+
+  assignConfigToLayer(
+    ...args: Parameters<Layer['assignConfigToLayer']>
+  ): ReturnType<Layer['assignConfigToLayer']> {
+    super.assignConfigToLayer(...args);
+    // Density legend is not a color-by-field channel. Drop copied colorField /
+    // colorScale / colorDomain from the previous layer type.
+    this.updateLayerConfig({
+      colorField: null,
+      colorScale: SCALE_TYPES.quantize,
+      colorDomain: [0, 1]
+    });
   }
 
   get layerIcon() {
@@ -394,6 +417,7 @@ class HeatmapLayer extends Layer {
     return {
       ...super.getDefaultLayerConfig(props),
       columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
+      colorField: null,
       colorScale: SCALE_TYPES.quantize,
       colorDomain: [0, 1],
       weightField: null,

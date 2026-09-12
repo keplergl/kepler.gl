@@ -367,6 +367,45 @@ test('Components -> MapLegend.render -> heatmap color scale', t => {
     'Max',
     'right end of the ramp should be labeled Max'
   );
+  t.equal(
+    wrapper.find(LayerDefaultLegend).length,
+    0,
+    'should not render weight by density when no weight field is set'
+  );
+
+  t.end();
+});
+
+test('Components -> MapLegend.render -> heatmap weight field', t => {
+  const heatmapLayer = new HeatmapLayer({
+    id: 'heatmap-legend-weight',
+    dataId: 'heatmap-dataset',
+    label: 'Heatmap weight legend',
+    isVisible: true
+  });
+  heatmapLayer.updateLayerConfig({
+    columns: {
+      lat: {value: 'lat', fieldIdx: 0},
+      lng: {value: 'lng', fieldIdx: 1}
+    },
+    weightField: {name: 'trip_distance', type: 'real'}
+  });
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <MapLegend layers={[heatmapLayer]} />
+      </IntlWrapper>
+    );
+  }, 'Should not fail with a weighted heatmap layer');
+
+  t.equal(wrapper.find(LayerColorLegend).length, 1, 'should still render heatmap color legend');
+  t.equal(wrapper.find(LayerDefaultLegend).length, 1, 'should render weight legend');
+  t.ok(
+    wrapper.find(LayerDefaultLegend).at(0).text().toLowerCase().includes('trip_distance'),
+    'weight legend should show the selected field name'
+  );
 
   t.end();
 });
