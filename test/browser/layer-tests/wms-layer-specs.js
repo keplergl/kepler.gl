@@ -173,6 +173,38 @@ test('#WMSLayer -> getLegendImageUrl', t => {
   );
   t.ok(constructed.includes('test_layer'), 'constructed legend URL should include layer name');
 
+  const restoredLayer = createWMSLayer({
+    visConfig: {
+      wmsLayer: {
+        ...MOCK_WMS_LAYER_CONFIG,
+        legendUrl: 'https://stale.example/old-legend.png'
+      }
+    }
+  });
+  restoredLayer.updateLayerMeta({
+    type: 'wms-tile',
+    metadata: {
+      tilesetDataUrl: 'http://example.com/wms',
+      version: '1.3.0',
+      layers: [
+        {
+          ...MOCK_WMS_LAYER_CONFIG,
+          legendUrl: 'https://example.com/refreshed-legend.png'
+        }
+      ]
+    }
+  });
+  t.equal(
+    restoredLayer.getLegendImageUrl(),
+    'https://example.com/refreshed-legend.png',
+    'should use advertised LegendURL from refreshed dataset metadata'
+  );
+  t.equal(
+    restoredLayer.config.visConfig.wmsLayer.legendUrl,
+    'https://example.com/refreshed-legend.png',
+    'should reconcile selected wmsLayer with refreshed metadata'
+  );
+
   t.end();
 });
 

@@ -14,6 +14,8 @@ import Layer, {
   LayerColorConfig,
   LayerWeightConfig,
   VisualChannel,
+  VisualChannelDomain,
+  VisualChannelScale,
   VisualChannels
 } from '../base-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
@@ -79,7 +81,11 @@ export type HeatmapLayerVisConfig = {
   aggregation: string;
 };
 
-export type HeatmapLayerVisualChannelConfig = LayerWeightConfig & LayerColorConfig;
+export type HeatmapLayerVisualChannelConfig = LayerWeightConfig &
+  LayerColorConfig & {
+    weightDomain: VisualChannelDomain;
+    weightScale: VisualChannelScale;
+  };
 export type HeatmapLayerConfig = Merge<
   LayerBaseConfig,
   {columns: HeatmapLayerColumnsConfig; visConfig: HeatmapLayerVisConfig}

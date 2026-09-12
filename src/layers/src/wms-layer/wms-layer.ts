@@ -133,8 +133,10 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     if (!serviceLayer?.name) {
       return null;
     }
-    if (serviceLayer.legendUrl) {
-      return serviceLayer.legendUrl;
+    const refreshedLegendUrl = this._getRefreshedServiceLayer(serviceLayer.name)?.legendUrl;
+    const legendUrl = refreshedLegendUrl || serviceLayer.legendUrl;
+    if (legendUrl) {
+      return legendUrl;
     }
     const tilesetDataUrl = this.meta?.tilesetDataUrl;
     if (typeof tilesetDataUrl === 'string' && tilesetDataUrl) {
@@ -183,19 +185,47 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     return visConfig.wmsLayer ?? null;
   }
 
+  _getRefreshedServiceLayer(layerName: string) {
+    const layers = this.meta?.layers;
+    if (!Array.isArray(layers)) {
+      return null;
+    }
+    return layers.find(layer => layer?.name === layerName) ?? null;
+  }
+
   updateLayerMeta(dataset: KeplerDataset): void {
     if (dataset.type !== DatasetType.WMS_TILE) {
       return;
     }
 
+    const metadata = dataset.metadata as WMSDatasetMetadata | undefined;
     const currentLayer = this._getCurrentServiceLayer();
-    if (currentLayer && currentLayer.boundingBox) {
-      this.updateMeta({
-        bounds: currentLayer.boundingBox
+    const refreshedLayer =
+      currentLayer?.name && metadata?.layers
+        ? metadata.layers.find(layer => layer.name === currentLayer.name)
+        : undefined;
+
+    if (currentLayer && refreshedLayer) {
+      this.updateLayerVisConfig({
+        wmsLayer: {
+          ...currentLayer,
+          ...refreshedLayer
+        }
       });
     }
 
-    const metadata = dataset.metadata as WMSDatasetMetadata | undefined;
+    const selectedLayer = this._getCurrentServiceLayer();
+    if (selectedLayer?.boundingBox) {
+      this.updateMeta({
+        bounds: selectedLayer.boundingBox
+      });
+    }
+
+    if (metadata?.layers) {
+      this.updateMeta({
+        layers: metadata.layers
+      });
+    }
     if (metadata?.tilesetDataUrl) {
       this.updateMeta({
         tilesetDataUrl: metadata.tilesetDataUrl,

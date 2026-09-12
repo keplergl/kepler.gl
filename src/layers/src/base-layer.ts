@@ -132,8 +132,8 @@ export type LayerRadiusConfig = {
 };
 export type LayerWeightConfig = {
   weightField: VisualChannelField;
-  weightDomain: VisualChannelDomain;
-  weightScale: VisualChannelScale;
+  weightDomain?: VisualChannelDomain;
+  weightScale?: VisualChannelScale;
 };
 
 export type VisualChannelDescription = {
