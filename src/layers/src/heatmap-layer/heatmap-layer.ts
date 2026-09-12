@@ -398,7 +398,7 @@ class HeatmapLayer extends Layer {
       colorDomain: [0, 1],
       weightField: null,
       weightDomain: [0, 1],
-      weightScale: 'linear'
+      weightScale: SCALE_TYPES.linear
     };
   }
 
@@ -522,10 +522,7 @@ class HeatmapLayer extends Layer {
       return {};
     }
     const dataset = datasets[dataId];
-    const {weightField, weightScale, weightDomain} = this.config as HeatmapLayerConfig & {
-      weightScale: string;
-      weightDomain: number[];
-    };
+    const {weightField, weightScale, weightDomain} = this.config;
     const {gpuFilter, dataContainer} = dataset;
 
     const oldData = oldLayerData as any;
