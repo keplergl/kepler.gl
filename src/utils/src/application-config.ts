@@ -161,6 +161,9 @@ export type KeplerApplicationConfig = {
   // GeoHash layer is optional. Enabled by default; disable via initApplicationConfig.
   enableGeohashLayer?: boolean;
 
+  // Flow Field (streamlines) layer config
+  enableFlowFieldLayer?: boolean;
+
   /** Whether to show example URLs in tileset setup forms (vector tile, raster tile, WMS, 3D tile) */
   showInlineTilesetExamples?: boolean;
 
@@ -340,6 +343,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   // GeoHash layer config
   enableGeohashLayer: true,
+
+  // Flow Field layer config
+  enableFlowFieldLayer: true,
 
   showInlineTilesetExamples: true,
 

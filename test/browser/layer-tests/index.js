@@ -19,6 +19,7 @@ import './trip-layer-specs';
 import './s2-geometry-layer-specs';
 import './a5-layer-specs';
 import './geohash-layer-specs';
+import './flow-field-layer-specs';
 import './wms-layer-specs';
 import './vector-tile-layer-specs';
 import './flow-layer-specs';
