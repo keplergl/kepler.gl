@@ -208,6 +208,7 @@ function LayerManagerFactory(
     const enableFlowLayer = getApplicationConfig().enableFlowLayer;
     const enableA5Layer = getApplicationConfig().enableA5Layer;
     const enableGeohashLayer = getApplicationConfig().enableGeohashLayer;
+    const enableFlowFieldLayer = getApplicationConfig().enableFlowFieldLayer;
     const enableLayerGroups = getApplicationConfig().enableLayerGroups;
 
     const filteredLayerClasses = useMemo(() => {
@@ -232,6 +233,10 @@ function LayerManagerFactory(
         const {geohash: _geohash, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
       }
+      if (!enableFlowFieldLayer) {
+        const {flowField: _flowField, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
       return filteredClasses as LayerClassesType;
     }, [
       enableRasterTileLayer,
@@ -239,6 +244,7 @@ function LayerManagerFactory(
       enableFlowLayer,
       enableA5Layer,
       enableGeohashLayer,
+      enableFlowFieldLayer,
       layerClasses
     ]);
 

@@ -46,6 +46,9 @@ export {defaultElevation as a5DefaultElevation} from './a5-layer/a5-layer';
 import {default as GeohashGeometryLayer} from './geohash-layer/geohash-layer';
 export {defaultElevation as geohashDefaultElevation} from './geohash-layer/geohash-layer';
 import {default as FlowLayer} from './flow-layer/flow-layer';
+import {default as FlowFieldLayer} from './flow-field-layer/flow-field-layer';
+export {FlowFieldColumnMode, flowFieldVisConfigs} from './flow-field-layer/flow-field-layer';
+export {default as FlowFieldLayerIcon} from './flow-field-layer/flow-field-layer-icon';
 export {getS2Center} from './s2-geometry-layer/s2-utils';
 export {getA5Center} from './a5-layer/a5-utils';
 export {getGeohashCenter} from './geohash-layer/geohash-utils';
@@ -113,6 +116,7 @@ export const KeplerGlLayers = {
   A5GeometryLayer,
   GeohashGeometryLayer,
   FlowLayer,
+  FlowFieldLayer,
   VectorTileLayer,
   RasterTileLayer,
   WMSLayer,
@@ -138,6 +142,7 @@ export const LayerClasses = {
   [LAYER_TYPES.a5]: A5GeometryLayer,
   [LAYER_TYPES.geohash]: GeohashGeometryLayer,
   [LAYER_TYPES.flow]: FlowLayer,
+  [LAYER_TYPES.flowField]: FlowFieldLayer,
   [LAYER_TYPES['vectorTile']]: VectorTileLayer,
   [LAYER_TYPES['rasterTile']]: RasterTileLayer,
   [LAYER_TYPES.wms]: WMSLayer,
