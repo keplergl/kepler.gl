@@ -2,8 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 // Flow Field / Streamlines kepler.gl layer.
-// Ventusky-style animated streamlines over a lat/lng + u/v (or speed/direction)
-// field. Rendered with deck.gl TripsLayer.
+// Ventusky-style animated streamlines over a lat/lng field from:
+//   - u/v components, or
+//   - speed + direction, or
+//   - altitude / elevation (downhill gradient → u/v).
+// Rendered with deck.gl TripsLayer.
 //
 // Not the origin–destination Flow layer, and not @deck.gl-community geo-layers
 // ParticleLayer / WindLayer (those take a station WindField).
@@ -20,6 +23,8 @@ import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import FlowFieldLayerIcon from './flow-field-layer-icon';
 
 type FlowPoint = {lat: number; lng: number; u: number; v: number; alt?: number};
+/** Point with a scalar height used to derive downhill u/v. */
+type AltitudePoint = {lat: number; lng: number; alt: number};
 type FlowTrip = {path: number[][]; timestamps: number[]; speed: number};
 type FlowGrid = {
   cols: number;
@@ -28,6 +33,8 @@ type FlowGrid = {
   lats: number[];
   u: Float32Array;
   v: Float32Array;
+  /** Terrain / height in meters; used as path Z when present. */
+  alt: Float32Array | null;
   filled: Uint8Array | null;
   minSpeed: number;
   maxSpeed: number;
@@ -60,7 +67,8 @@ const clipExtension = new ClipExtension();
 
 export const FlowFieldColumnMode = {
   UV: 'UV',
-  SPEED_DIR: 'SPEED_DIR'
+  SPEED_DIR: 'SPEED_DIR',
+  ELEVATION: 'ELEVATION'
 } as const;
 
 const SUPPORTED_COLUMN_MODES = [
@@ -75,6 +83,12 @@ const SUPPORTED_COLUMN_MODES = [
     label: 'Speed / direction',
     requiredColumns: ['lat', 'lng', 'speed', 'direction'],
     optionalColumns: ['altitude']
+  },
+  {
+    key: FlowFieldColumnMode.ELEVATION,
+    label: 'Altitude (downhill)',
+    requiredColumns: ['lat', 'lng', 'altitude'],
+    optionalColumns: []
   }
 ];
 
@@ -97,7 +111,7 @@ const LAT_FIELD_NAMES = ['lat', 'latitude'];
 const LNG_FIELD_NAMES = ['lon', 'lng', 'long', 'longitude'];
 const SPEED_FIELD_NAMES = ['speed', 'wind_speed', 'wspd'];
 const DIRECTION_FIELD_NAMES = ['direction', 'dir', 'wind_dir', 'wdir'];
-const ALT_FIELD_NAMES = ['altitude', 'alt', 'elevation', 'elv'];
+const ALT_FIELD_NAMES = ['altitude', 'alt', 'elevation', 'elev', 'elv', 'height', 'z'];
 
 function findNamedField(fields: Field[], names: string[]) {
   const wanted = names.map(name => name.toLowerCase());
@@ -438,9 +452,10 @@ function boxBlur(grid, radius) {
   if (radius <= 0) {
     return grid;
   }
-  const {cols, rows, u, v, filled} = grid;
+  const {cols, rows, u, v, alt, filled} = grid;
   const nextU = new Float32Array(u.length);
   const nextV = new Float32Array(v.length);
+  const nextAlt = alt ? new Float32Array(alt.length) : null;
   const nextFilled = filled ? new Uint8Array(filled) : null;
   const r = Math.max(1, Math.round(radius));
   for (let row = 0; row < rows; row++) {
@@ -453,6 +468,7 @@ function boxBlur(grid, radius) {
       }
       let su = 0;
       let sv = 0;
+      let sa = 0;
       let n = 0;
       for (let dy = -r; dy <= r; dy++) {
         const y = row + dy;
@@ -464,12 +480,14 @@ function boxBlur(grid, radius) {
           if (filled && !filled[j]) continue;
           su += u[j];
           sv += v[j];
+          if (alt) sa += alt[j];
           n++;
         }
       }
       if (n) {
         nextU[i] = su / n;
         nextV[i] = sv / n;
+        if (nextAlt) nextAlt[i] = sa / n;
       }
     }
   }
@@ -486,10 +504,193 @@ function boxBlur(grid, radius) {
     ...grid,
     u: nextU,
     v: nextV,
+    alt: nextAlt || alt || null,
     filled: nextFilled || filled,
     minSpeed: Number.isFinite(minSpeed) ? minSpeed : 0,
     maxSpeed: maxSpeed || 1
   };
+}
+
+/**
+ * Downhill flow from a gridded elevation field (same idea as the
+ * scripts/flow-field-from-elevation helper): u = -∂z/∂x, v = -∂z/∂y.
+ */
+function elevationFieldToUV(
+  z: Float32Array,
+  filled: Uint8Array,
+  cols: number,
+  rows: number,
+  lngs: number[],
+  lats: number[]
+): {u: Float32Array; v: Float32Array; minSpeed: number; maxSpeed: number} {
+  const u = new Float32Array(cols * rows);
+  const v = new Float32Array(cols * rows);
+  const outFilled = new Uint8Array(cols * rows);
+  const dlat = rows > 1 ? lats[1] - lats[0] : 1;
+  const dlng = cols > 1 ? lngs[1] - lngs[0] : 1;
+  let minSpeed = Infinity;
+  let maxSpeed = 0;
+
+  for (let ri = 0; ri < rows; ri++) {
+    const mEast = METERS_PER_DEG_LAT * Math.max(0.2, Math.cos((lats[ri] * Math.PI) / 180)) * dlng;
+    const mNorth = METERS_PER_DEG_LAT * dlat;
+    for (let ci = 0; ci < cols; ci++) {
+      const i = ri * cols + ci;
+      if (!filled[i] || !Number.isFinite(z[i])) continue;
+
+      let dzDlng: number | null = null;
+      if (ci > 0 && ci < cols - 1 && filled[i - 1] && filled[i + 1]) {
+        dzDlng = (z[i + 1] - z[i - 1]) / (2 * mEast);
+      } else if (ci < cols - 1 && filled[i + 1]) {
+        dzDlng = (z[i + 1] - z[i]) / mEast;
+      } else if (ci > 0 && filled[i - 1]) {
+        dzDlng = (z[i] - z[i - 1]) / mEast;
+      }
+
+      let dzDlat: number | null = null;
+      if (ri > 0 && ri < rows - 1 && filled[i - cols] && filled[i + cols]) {
+        dzDlat = (z[i + cols] - z[i - cols]) / (2 * mNorth);
+      } else if (ri < rows - 1 && filled[i + cols]) {
+        dzDlat = (z[i + cols] - z[i]) / mNorth;
+      } else if (ri > 0 && filled[i - cols]) {
+        dzDlat = (z[i] - z[i - cols]) / mNorth;
+      }
+
+      if (dzDlng == null || dzDlat == null) continue;
+
+      const uu = -dzDlng;
+      const vv = -dzDlat;
+      u[i] = uu;
+      v[i] = vv;
+      outFilled[i] = 1;
+      const speed = Math.hypot(uu, vv);
+      minSpeed = Math.min(minSpeed, speed);
+      maxSpeed = Math.max(maxSpeed, speed);
+    }
+  }
+
+  // Reuse filled mask: cells that had elevation but no gradient stay empty.
+  for (let i = 0; i < filled.length; i++) {
+    if (!outFilled[i]) {
+      filled[i] = 0;
+    }
+  }
+
+  return {
+    u,
+    v,
+    minSpeed: Number.isFinite(minSpeed) ? minSpeed : 0,
+    maxSpeed: maxSpeed || 1
+  };
+}
+
+function buildElevationScalarGrid(points: AltitudePoint[]): {
+  cols: number;
+  rows: number;
+  lngs: number[];
+  lats: number[];
+  z: Float32Array;
+  filled: Uint8Array;
+} | null {
+  if (points.length < 4) {
+    return null;
+  }
+
+  const lats = uniqueSorted(
+    points.map(p => p.lat),
+    1e-6
+  );
+  const lngs = uniqueSorted(
+    points.map(p => p.lng),
+    1e-6
+  );
+
+  const expandedLats = expandAxis(lats);
+  const expandedLngs = expandAxis(lngs);
+  const latAxis = expandedLats || (isRegularSpacing(lats) ? lats : null);
+  const lngAxis = expandedLngs || (isRegularSpacing(lngs) ? lngs : null);
+  const looksRegular = Boolean(
+    latAxis &&
+      lngAxis &&
+      latAxis.length >= 3 &&
+      lngAxis.length >= 3 &&
+      (expandedLats || expandedLngs || latAxis.length * lngAxis.length <= points.length * 1.4)
+  );
+
+  if (looksRegular && latAxis && lngAxis) {
+    const rows = latAxis.length;
+    const cols = lngAxis.length;
+    const z = new Float32Array(cols * rows);
+    const filled = new Uint8Array(cols * rows);
+    for (const p of points) {
+      const ri = snapToAxis(p.lat, latAxis);
+      const ci = snapToAxis(p.lng, lngAxis);
+      if (ri < 0 || ci < 0 || !Number.isFinite(p.alt)) continue;
+      const i = ri * cols + ci;
+      z[i] = p.alt;
+      filled[i] = 1;
+    }
+    return {cols, rows, lngs: lngAxis, lats: latAxis, z, filled};
+  }
+
+  const binsX = Math.min(512, Math.max(24, Math.round(Math.sqrt(points.length) * 2.2)));
+  const binsY = Math.min(384, Math.max(24, Math.round(binsX * 0.75)));
+  const minLng = Math.min(...points.map(p => p.lng));
+  const maxLng = Math.max(...points.map(p => p.lng));
+  const minLat = Math.min(...points.map(p => p.lat));
+  const maxLat = Math.max(...points.map(p => p.lat));
+  const zSum = new Float32Array(binsX * binsY);
+  const filled = new Uint8Array(binsX * binsY);
+  const counts = new Uint16Array(binsX * binsY);
+  for (const p of points) {
+    if (!Number.isFinite(p.alt)) continue;
+    const ci = Math.min(binsX - 1, Math.floor(((p.lng - minLng) / (maxLng - minLng || 1)) * binsX));
+    const ri = Math.min(binsY - 1, Math.floor(((p.lat - minLat) / (maxLat - minLat || 1)) * binsY));
+    const i = ri * binsX + ci;
+    zSum[i] += p.alt;
+    counts[i]++;
+  }
+  const z = new Float32Array(binsX * binsY);
+  for (let i = 0; i < zSum.length; i++) {
+    if (counts[i]) {
+      z[i] = zSum[i] / counts[i];
+      filled[i] = 1;
+    }
+  }
+  const scatterLngs = Array.from(
+    {length: binsX},
+    (_, i) => minLng + ((maxLng - minLng) * i) / Math.max(1, binsX - 1)
+  );
+  const scatterLats = Array.from(
+    {length: binsY},
+    (_, i) => minLat + ((maxLat - minLat) * i) / Math.max(1, binsY - 1)
+  );
+  return {cols: binsX, rows: binsY, lngs: scatterLngs, lats: scatterLats, z, filled};
+}
+
+function buildGridFromAltitude(points: AltitudePoint[], smoothing: number): FlowGrid | null {
+  const scalar = buildElevationScalarGrid(points);
+  if (!scalar) {
+    return null;
+  }
+  const {cols, rows, lngs, lats, z, filled} = scalar;
+  const {u, v, minSpeed, maxSpeed} = elevationFieldToUV(z, filled, cols, rows, lngs, lats);
+  return boxBlur(
+    {
+      cols,
+      rows,
+      lngs,
+      lats,
+      u,
+      v,
+      // Keep the height field so streamlines follow terrain in Z, not just slope in UV.
+      alt: z,
+      filled,
+      minSpeed,
+      maxSpeed
+    },
+    smoothing
+  );
 }
 
 function buildGrid(points: FlowPoint[], smoothing: number): FlowGrid | null {
@@ -523,9 +724,11 @@ function buildGrid(points: FlowPoint[], smoothing: number): FlowGrid | null {
     const cols = lngAxis.length;
     const u = new Float32Array(cols * rows);
     const v = new Float32Array(cols * rows);
+    const alt = new Float32Array(cols * rows);
     const filled = new Uint8Array(cols * rows);
     let minSpeed = Infinity;
     let maxSpeed = 0;
+    let hasAlt = false;
     for (const p of points) {
       const ri = snapToAxis(p.lat, latAxis);
       const ci = snapToAxis(p.lng, lngAxis);
@@ -533,6 +736,10 @@ function buildGrid(points: FlowPoint[], smoothing: number): FlowGrid | null {
       const i = ri * cols + ci;
       u[i] = p.u;
       v[i] = p.v;
+      if (Number.isFinite(p.alt)) {
+        alt[i] = p.alt as number;
+        hasAlt = true;
+      }
       filled[i] = 1;
       const speed = Math.hypot(p.u, p.v);
       minSpeed = Math.min(minSpeed, speed);
@@ -546,6 +753,7 @@ function buildGrid(points: FlowPoint[], smoothing: number): FlowGrid | null {
         lats: latAxis,
         u,
         v,
+        alt: hasAlt ? alt : null,
         filled,
         minSpeed: Number.isFinite(minSpeed) ? minSpeed : 0,
         maxSpeed: maxSpeed || 1
@@ -564,14 +772,20 @@ function buildGrid(points: FlowPoint[], smoothing: number): FlowGrid | null {
   const maxLat = Math.max(...points.map(p => p.lat));
   const su = new Float32Array(binsX * binsY);
   const sv = new Float32Array(binsX * binsY);
+  const sa = new Float32Array(binsX * binsY);
   const filled = new Uint8Array(binsX * binsY);
   const counts = new Uint16Array(binsX * binsY);
+  let hasAlt = false;
   for (const p of points) {
     const ci = Math.min(binsX - 1, Math.floor(((p.lng - minLng) / (maxLng - minLng || 1)) * binsX));
     const ri = Math.min(binsY - 1, Math.floor(((p.lat - minLat) / (maxLat - minLat || 1)) * binsY));
     const i = ri * binsX + ci;
     su[i] += p.u;
     sv[i] += p.v;
+    if (Number.isFinite(p.alt)) {
+      sa[i] += p.alt as number;
+      hasAlt = true;
+    }
     counts[i]++;
   }
   let minSpeed = Infinity;
@@ -580,6 +794,7 @@ function buildGrid(points: FlowPoint[], smoothing: number): FlowGrid | null {
     if (counts[i]) {
       su[i] /= counts[i];
       sv[i] /= counts[i];
+      sa[i] /= counts[i];
       filled[i] = 1;
       const speed = Math.hypot(su[i], sv[i]);
       minSpeed = Math.min(minSpeed, speed);
@@ -602,6 +817,7 @@ function buildGrid(points: FlowPoint[], smoothing: number): FlowGrid | null {
       lats: scatterLats,
       u: su,
       v: sv,
+      alt: hasAlt ? sa : null,
       filled,
       minSpeed: Number.isFinite(minSpeed) ? minSpeed : 0,
       maxSpeed: maxSpeed || 1
@@ -625,7 +841,7 @@ function findSpan(values, x) {
 }
 
 function sampleField(grid, lng, lat) {
-  const {lngs, lats, cols, rows, u, v, filled} = grid;
+  const {lngs, lats, cols, rows, u, v, alt, filled} = grid;
   const ci = findSpan(lngs, lng);
   const ri = findSpan(lats, lat);
   if (ci < 0 || ri < 0 || ci >= cols - 1 || ri >= rows - 1) {
@@ -646,20 +862,18 @@ function sampleField(grid, lng, lat) {
   const lat1 = lats[ri + 1];
   const tx = (lng - lng0) / (lng1 - lng0 || 1);
   const ty = (lat - lat0) / (lat1 - lat0 || 1);
-  const uu =
-    u[i00] * (1 - tx) * (1 - ty) +
-    u[i10] * tx * (1 - ty) +
-    u[i01] * (1 - tx) * ty +
-    u[i11] * tx * ty;
-  const vv =
-    v[i00] * (1 - tx) * (1 - ty) +
-    v[i10] * tx * (1 - ty) +
-    v[i01] * (1 - tx) * ty +
-    v[i11] * tx * ty;
+  const w00 = (1 - tx) * (1 - ty);
+  const w10 = tx * (1 - ty);
+  const w01 = (1 - tx) * ty;
+  const w11 = tx * ty;
+  const uu = u[i00] * w00 + u[i10] * w10 + u[i01] * w01 + u[i11] * w11;
+  const vv = v[i00] * w00 + v[i10] * w10 + v[i01] * w01 + v[i11] * w11;
   if (!Number.isFinite(uu) || !Number.isFinite(vv)) {
     return null;
   }
-  return {u: uu, v: vv};
+  const height =
+    alt != null ? alt[i00] * w00 + alt[i10] * w10 + alt[i01] * w01 + alt[i11] * w11 : 0;
+  return {u: uu, v: vv, alt: Number.isFinite(height) ? height : 0};
 }
 
 function viewportBounds(mapState) {
@@ -717,7 +931,6 @@ function integrateDir(
   grid: FlowGrid,
   startLng: number,
   startLat: number,
-  z: number,
   dt: number,
   sign: number,
   maxTravel: number
@@ -729,7 +942,7 @@ function integrateDir(
     if (!isFiniteNumber(lng) || !isFiniteNumber(lat)) break;
     const sample = sampleField(grid, lng, lat);
     if (!sample) break;
-    path.push([lng, lat, z]);
+    path.push([lng, lat, sample.alt || 0]);
     const next = advance(grid, lng, lat, dt, sign);
     if (!next) break;
     if (!isFiniteNumber(next.lng) || !isFiniteNumber(next.lat)) break;
@@ -753,8 +966,8 @@ function integrate(grid, startLng, startLat, lifetime, maxTravel, stepDeg) {
   const useStep = Math.max(1e-6, Math.min(gridStep * 0.55, stepDeg || gridStep));
   const dt = (useStep * METERS_PER_DEG_LAT) / Math.max(grid.maxSpeed, 1e-3);
   const travel = Math.max(maxTravel || useStep * 8, useStep * 4);
-  const fwd = integrateDir(grid, startLng, startLat, 0, dt, 1, travel);
-  const bwd = integrateDir(grid, startLng, startLat, 0, dt, -1, travel);
+  const fwd = integrateDir(grid, startLng, startLat, dt, 1, travel);
+  const bwd = integrateDir(grid, startLng, startLat, dt, -1, travel);
   const path = [...bwd.slice(1).reverse(), ...fwd];
   if (path.length < 4) {
     return null;
@@ -971,28 +1184,71 @@ export default class FlowFieldLayer extends Layer {
     const altField = findNamedField(fields, ALT_FIELD_NAMES);
     const hasUV = Boolean(uField && vField);
     const hasSpeed = Boolean(speedField && directionField);
+    const hasAltitude = Boolean(altField);
 
-    if (!latLng || (!hasUV && !hasSpeed)) {
+    if (!latLng || (!hasUV && !hasSpeed && !hasAltitude)) {
       return {props: [], foundLayers};
+    }
+
+    const baseLabel = (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'Flow Field';
+
+    if (hasUV) {
+      return {
+        props: [
+          {
+            label: baseLabel,
+            color: [255, 255, 255],
+            isVisible: true,
+            columnMode: FlowFieldColumnMode.UV,
+            columns: {
+              lat: latLng.lat,
+              lng: latLng.lng,
+              u: fieldToColumn(uField, fields)!,
+              v: fieldToColumn(vField, fields)!,
+              ...(latLng.altitude || fieldToColumn(altField, fields)
+                ? {altitude: (latLng.altitude || fieldToColumn(altField, fields))!}
+                : {})
+            }
+          }
+        ],
+        foundLayers
+      };
+    }
+
+    if (hasSpeed) {
+      return {
+        props: [
+          {
+            label: baseLabel,
+            color: [255, 255, 255],
+            isVisible: true,
+            columnMode: FlowFieldColumnMode.SPEED_DIR,
+            columns: {
+              lat: latLng.lat,
+              lng: latLng.lng,
+              speed: fieldToColumn(speedField, fields)!,
+              direction: fieldToColumn(directionField, fields)!,
+              ...(latLng.altitude || fieldToColumn(altField, fields)
+                ? {altitude: (latLng.altitude || fieldToColumn(altField, fields))!}
+                : {})
+            }
+          }
+        ],
+        foundLayers
+      };
     }
 
     return {
       props: [
         {
-          label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'Flow Field',
+          label: baseLabel,
           color: [255, 255, 255],
           isVisible: true,
-          columnMode: hasUV ? FlowFieldColumnMode.UV : FlowFieldColumnMode.SPEED_DIR,
+          columnMode: FlowFieldColumnMode.ELEVATION,
           columns: {
             lat: latLng.lat,
             lng: latLng.lng,
-            ...(uField ? {u: fieldToColumn(uField, fields)!} : {}),
-            ...(vField ? {v: fieldToColumn(vField, fields)!} : {}),
-            ...(speedField ? {speed: fieldToColumn(speedField, fields)!} : {}),
-            ...(directionField ? {direction: fieldToColumn(directionField, fields)!} : {}),
-            ...(latLng.altitude || fieldToColumn(altField, fields)
-              ? {altitude: (latLng.altitude || fieldToColumn(altField, fields))!}
-              : {})
+            altitude: fieldToColumn(altField, fields)!
           }
         }
       ],
@@ -1010,14 +1266,43 @@ export default class FlowFieldLayer extends Layer {
     }
     const {dataContainer, filteredIndex} = dataset;
     const {lat, lng, u, v, speed, direction, altitude} = this.config.columns;
-    const uvMode = this.config.columnMode !== FlowFieldColumnMode.SPEED_DIR;
+    const mode = this.config.columnMode;
     if (lat.fieldIdx < 0 || lng.fieldIdx < 0) {
       return {};
     }
-    if (uvMode && (u.fieldIdx < 0 || v.fieldIdx < 0)) {
+
+    const altitudeMode = mode === FlowFieldColumnMode.ELEVATION;
+    const speedMode = mode === FlowFieldColumnMode.SPEED_DIR;
+
+    if (altitudeMode) {
+      if (!altitude || altitude.fieldIdx < 0) {
+        return {};
+      }
+      const altPoints: AltitudePoint[] = [];
+      for (let i = 0; i < filteredIndex.length; i++) {
+        const idx = filteredIndex[i];
+        const latVal = dataContainer.valueAt(idx, lat.fieldIdx);
+        const lngVal = dataContainer.valueAt(idx, lng.fieldIdx);
+        const altVal = dataContainer.valueAt(idx, altitude.fieldIdx);
+        if (!Number.isFinite(latVal) || !Number.isFinite(lngVal) || !Number.isFinite(altVal)) {
+          continue;
+        }
+        altPoints.push({lat: latVal, lng: lngVal, alt: altVal});
+      }
+      this._streamlinesKey = '';
+      this._cacheMeta = '';
+      this._lineCache = new Map();
+      this._clipBounds = null;
+      this._viewSig = '';
+      this._moving = false;
+      const grid = buildGridFromAltitude(altPoints, this.config.visConfig.smoothing);
+      return {data: altPoints, grid};
+    }
+
+    if (!speedMode && (u.fieldIdx < 0 || v.fieldIdx < 0)) {
       return {};
     }
-    if (!uvMode && (speed.fieldIdx < 0 || direction.fieldIdx < 0)) {
+    if (speedMode && (speed.fieldIdx < 0 || direction.fieldIdx < 0)) {
       return {};
     }
 
@@ -1029,16 +1314,16 @@ export default class FlowFieldLayer extends Layer {
       if (!Number.isFinite(latVal) || !Number.isFinite(lngVal)) continue;
       let uu;
       let vv;
-      if (uvMode) {
-        uu = dataContainer.valueAt(idx, u.fieldIdx);
-        vv = dataContainer.valueAt(idx, v.fieldIdx);
-      } else {
+      if (speedMode) {
         const converted = meteorologicalToUV(
           dataContainer.valueAt(idx, speed.fieldIdx),
           dataContainer.valueAt(idx, direction.fieldIdx)
         );
         uu = converted.u;
         vv = converted.v;
+      } else {
+        uu = dataContainer.valueAt(idx, u.fieldIdx);
+        vv = dataContainer.valueAt(idx, v.fieldIdx);
       }
       if (!Number.isFinite(uu) || !Number.isFinite(vv)) continue;
       points.push({
@@ -1155,7 +1440,7 @@ export default class FlowFieldLayer extends Layer {
         // wrapLongitude splits paths in PathLayer but not TripsLayer timestamps,
         // which can throw during attribute update (reading undefined[0]).
         wrapLongitude: false,
-        parameters: {depthTest: Boolean(mapState.dragRotate)},
+        parameters: {depthTest: Boolean(mapState.dragRotate) || Boolean(data.grid?.alt)},
         extensions: [clipExtension],
         clipByInstance: false,
         clipBounds

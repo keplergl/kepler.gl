@@ -98,3 +98,74 @@ test('#FlowFieldLayer -> formatLayerData', t => {
   testFormatLayerDataCases(t, FlowFieldLayer, TEST_CASES);
   t.end();
 });
+
+test('#FlowFieldLayer -> findDefaultLayerProps altitude', t => {
+  const elevCsv = `latitude,longitude,elevation
+37.0,-122.0,10
+37.5,-122.0,20
+38.0,-122.0,15
+37.0,-121.5,25
+37.5,-121.5,30
+38.0,-121.5,18
+37.0,-121.0,12
+37.5,-121.0,22
+38.0,-121.0,16
+`;
+  const elevParsed = processCsvData(elevCsv);
+  const dataset = new KeplerTable({
+    info: {id: 'elev-data', label: 'elev-data'},
+    color: [255, 255, 255]
+  });
+  dataset.importData({data: {fields: elevParsed.fields, rows: elevParsed.rows}});
+  dataset.fieldPairs = findPointFieldPairs(dataset.fields);
+  dataset.gpuFilter = getGpuFilterProps([], 'elev-data', dataset.fields);
+
+  const {props} = FlowFieldLayer.findDefaultLayerProps(dataset);
+  t.equal(props.length, 1, 'should find one default flow field layer from altitude');
+  t.equal(props[0].columnMode, 'ELEVATION', 'should use ELEVATION mode');
+  t.ok(props[0].columns.altitude, 'should set altitude column (maps elevation field)');
+  t.end();
+});
+
+test('#FlowFieldLayer -> formatLayerData from altitude', t => {
+  const elevCsv = `latitude,longitude,elevation
+37.0,-122.0,10
+37.5,-122.0,20
+38.0,-122.0,15
+37.0,-121.5,25
+37.5,-121.5,30
+38.0,-121.5,18
+37.0,-121.0,12
+37.5,-121.0,22
+38.0,-121.0,16
+`;
+  const elevParsed = processCsvData(elevCsv);
+  const dataset = new KeplerTable({
+    info: {id: dataId, label: 'elev-data'},
+    color: [255, 255, 255]
+  });
+  dataset.importData({data: {fields: elevParsed.fields, rows: elevParsed.rows}});
+  dataset.fieldPairs = findPointFieldPairs(dataset.fields);
+  dataset.gpuFilter = getGpuFilterProps([], dataId, dataset.fields);
+
+  const {props} = FlowFieldLayer.findDefaultLayerProps(dataset);
+  const TEST_CASES = [
+    {
+      props: {
+        ...props[0],
+        dataId,
+        label: 'flow field altitude'
+      },
+      data: [dataset],
+      assert: result => {
+        const {layerData} = result;
+        t.ok(layerData.grid, 'should build a grid from altitude');
+        t.ok(Number.isFinite(layerData.grid.maxSpeed), 'grid has maxSpeed from slope');
+        t.ok(layerData.grid.maxSpeed > 0, 'downhill gradient should be non-zero');
+      }
+    }
+  ];
+
+  testFormatLayerDataCases(t, FlowFieldLayer, TEST_CASES);
+  t.end();
+});
