@@ -209,7 +209,16 @@ export function getVisibleDatasets(datasets) {
   return filterObjectByPredicate(datasets, key => key !== GEOCODER_DATASET_NAME);
 }
 
-export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filteredDatasets) => ({
+// sidePanelSelector is a plain function (not memoized at this level) because:
+// 1. It receives `availableProviders` and `filteredDatasets` as extra args, which are
+//    already individually memoized at the instance level in KeplerGL.
+// 2. A module-level createSelector with extra positional args only caches one result,
+//    so it would thrash on every render with multiple instances or changing extras.
+export const sidePanelSelector = (
+  props: KeplerGLProps,
+  availableProviders,
+  filteredDatasets
+) => ({
   appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
   version: props.version ? props.version : DEFAULT_KEPLER_GL_PROPS.version,
   appWebsite: props.appWebsite,
@@ -221,7 +230,6 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
   visStateActions: props.visStateActions,
   uiStateActions: props.uiStateActions,
   mapStateActions: props.mapStateActions,
-
   datasets: filteredDatasets,
   filters: props.visState.filters,
   layers: props.visState.layers,
@@ -231,7 +239,6 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
   mapInfo: props.visState.mapInfo,
   layerBlending: props.visState.layerBlending,
   overlayBlending: props.visState.overlayBlending,
-
   width: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
   availableProviders,
   mapSaved: props.providerState.mapSaved
@@ -258,6 +265,11 @@ export const plotContainerSelector = (props: KeplerGLProps) => ({
 export const isSplitSelector = (props: KeplerGLProps) =>
   props.visState.splitMaps && props.visState.splitMaps.length > 1;
 
+// bottomWidgetSelector is a plain function (not memoized at this level) because:
+// 1. It takes `theme` as a second positional argument.
+// 2. A module-level createSelector with extra positional args only caches one result,
+//    so it would thrash on every render with multiple instances or changing themes.
+// Individual fields (filters, layers, etc.) are already memoized by Redux selectors.
 export const bottomWidgetSelector = (props: KeplerGLProps, theme) => ({
   filters: props.visState.filters,
   datasets: props.visState.datasets,
@@ -266,7 +278,9 @@ export const bottomWidgetSelector = (props: KeplerGLProps, theme) => ({
   animationConfig: props.visState.animationConfig,
   visStateActions: props.visStateActions,
   toggleModal: props.uiStateActions.toggleModal,
-  sidePanelWidth: props.uiState.readOnly ? 0 : props.sidePanelWidth + theme.sidePanel.margin.left
+  sidePanelWidth: props.uiState.readOnly
+    ? 0
+    : props.sidePanelWidth + theme.sidePanel.margin.left
 });
 
 export const modalContainerSelector = (props: KeplerGLProps, rootNode) => ({
@@ -416,10 +430,16 @@ export const attributionSelector = createSelector(
   }
 );
 
-export const notificationPanelSelector = (props: KeplerGLProps) => ({
-  removeNotification: props.uiStateActions.removeNotification,
-  notifications: props.uiState.notifications
-});
+export const notificationPanelSelector = createSelector(
+  [
+    (props: KeplerGLProps) => props.uiStateActions.removeNotification,
+    (props: KeplerGLProps) => props.uiState.notifications
+  ],
+  (removeNotification, notifications) => ({
+    removeNotification,
+    notifications
+  })
+);
 
 export const DEFAULT_KEPLER_GL_PROPS = {
   mapStyles: [],
@@ -504,7 +524,13 @@ function KeplerGlFactory(
   SidePanel: ReturnType<typeof SidePanelFactory>,
   PlotContainer: ReturnType<typeof PlotContainerFactory>,
   NotificationPanel: ReturnType<typeof NotificationPanelFactory>,
-  DndContext: ReturnType<typeof DndContextFactory>
+  DndContext: ReturnType<typeof DndContextFactory>,
+  // EffectManager is listed in deps so the injector graph includes it and
+  // consumers can override it via injectComponents([EffectManagerFactory, Custom]).
+  // KeplerGl itself does not render EffectManager — that is handled by
+  // MapControl in custom factory overrides (see examples/demo-app).
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _EffectManager: ReturnType<typeof EffectManagerFactory>
 ): React.ComponentType<KeplerGLBasicProps & {selector: (...args: any[]) => KeplerGlState}> {
   /** @typedef {import('./kepler-gl').UnconnectedKeplerGlProps} KeplerGlProps */
   /** @augments React.Component<KeplerGlProps> */
