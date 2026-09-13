@@ -15,13 +15,22 @@ Follow these steps to create a playback video of an event:
 
 ![custom y axis](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/h-playback-3.png "select filters")
 
+## Animation window modes
+
+Use the animation window control on the playback bar to choose how the time range moves during playback:
+
+- **Moving Time Window** (default): a fixed-length window slides forward. Features appear while their time falls inside the window, then disappear when the window moves past them.
+- **Incremental Time Window**: the window start stays fixed and only the end advances. Features accumulate once their timestamp is reached and stay visible for the rest of playback. Use this when you have a single timestamp field and want cumulative playback (similar to “accumulate” in other GIS tools).
+
 ## Start and end time (duration)
 
-By default, playback uses a single timestamp field: a feature is visible only while that instant falls inside the moving window.
+By default, playback uses a single timestamp field: a feature is visible only while that instant falls inside the current time window (see [Animation window modes](#animation-window-modes) above).
 
 To keep features visible for a whole time span (service coverage, deployments, availability windows), add a time filter on the **start** timestamp, then optionally choose an **End time** field in the filter panel. A feature stays on the map while the playback window overlaps `[start, end]`. Rows with a missing end time are treated as still active. Rows whose end time is before the start time are ignored. The timeline histogram counts a feature in every bin that falls inside its start–end range.
 
 **End time** is available only on a time filter that is not synced across datasets. If you use Time Filter Sync, clear the extra datasets first, then set End time.
+
+**Incremental Time Window** and **End time** solve different problems: use Incremental when each feature is a single instant and you want them to accumulate; use End time when each feature has its own start–end duration.
 
 ## Zoom & precision controls
 
