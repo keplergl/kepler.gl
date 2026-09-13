@@ -23,6 +23,7 @@ import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import {CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS} from './constants/default-settings';
 import {messages} from './constants/localization';
+import {getRuntimeConfig} from './utils/runtime-config';
 
 import {
   loadRemoteMap,
@@ -174,6 +175,7 @@ const App = props => {
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapDimensions, setMapDimensions] = useState({width: 0, height: 0});
+  const runtime = getRuntimeConfig();
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -225,6 +227,8 @@ const App = props => {
     if (query.mapUrl) {
       // TODO?: validate map url
       dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
+    } else if (runtime.mapUrl) {
+      dispatch(loadRemoteMap({dataUrl: runtime.mapUrl}));
     }
 
     if (duckDbPluginEnabled && query.sql) {
@@ -914,6 +918,12 @@ const App = props => {
                         onLoadCloudMapSuccess={onLoadCloudMapSuccess}
                         featureFlags={DEFAULT_FEATURE_FLAGS}
                         onViewStateChange={onViewStateChange}
+                        {...(Array.isArray(runtime.mapStyles)
+                          ? {
+                              mapStyles: runtime.mapStyles,
+                              mapStylesReplaceDefault: Boolean(runtime.mapStylesReplaceDefault)
+                            }
+                          : {})}
                       />
                     </div>
                   </Panel>

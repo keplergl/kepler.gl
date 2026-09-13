@@ -66,4 +66,8 @@ For Google Drive, create an OAuth 2.0 **Web application** client in [Google Clou
 yarn start:local
 ```
 
+#### Optional: runtime `/config.json`
+
+After a production build (`yarn build`), you can override tokens and demo-app settings without rebuilding by placing a `config.json` next to `dist/index.html` (i.e. `examples/demo-app/dist/config.json`). See `docker/config.example.json` and `docker/README.md` for the schema, Docker Compose mounts, and `KEPLER_*` env overrides.
+
 [yarn-install]: https://yarnpkg.com/getting-started/install
