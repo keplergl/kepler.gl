@@ -93,11 +93,17 @@ describe('isGeoTiffContentType', () => {
 });
 
 describe('isTiffMagicBytes', () => {
-  test('detects little-endian and big-endian TIFF headers', () => {
+  test('detects little-endian and big-endian classic TIFF headers', () => {
     expect(isTiffMagicBytes(new Uint8Array([0x49, 0x49, 0x2a, 0x00]))).toBe(true);
     expect(isTiffMagicBytes(new Uint8Array([0x4d, 0x4d, 0x00, 0x2a]))).toBe(true);
     expect(isTiffMagicBytes(new Uint8Array([0x7b, 0x22, 0x74, 0x79]))).toBe(false);
     expect(isTiffMagicBytes(new Uint8Array([0x49, 0x49]))).toBe(false);
+  });
+
+  test('detects little-endian and big-endian BigTIFF headers', () => {
+    // BigTIFF uses version 43 (0x2b) instead of classic TIFF's 42 (0x2a).
+    expect(isTiffMagicBytes(new Uint8Array([0x49, 0x49, 0x2b, 0x00]))).toBe(true);
+    expect(isTiffMagicBytes(new Uint8Array([0x4d, 0x4d, 0x00, 0x2b]))).toBe(true);
   });
 });
 
@@ -175,5 +181,29 @@ describe('probeUrlIsCOG', () => {
     global.fetch = jest.fn() as unknown as typeof fetch;
     await expect(probeUrlIsCOG(EXTENSIONLESS, controller.signal)).resolves.toBe(false);
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test('returns false when the probe times out', async () => {
+    jest.useFakeTimers();
+    global.fetch = jest.fn((_input, init) => {
+      return new Promise((_resolve, reject) => {
+        const signal = (init as RequestInit | undefined)?.signal;
+        const abort = () => {
+          const err = new Error('Aborted');
+          err.name = 'AbortError';
+          reject(err);
+        };
+        if (signal?.aborted) {
+          abort();
+          return;
+        }
+        signal?.addEventListener('abort', abort);
+      });
+    }) as unknown as typeof fetch;
+
+    const promise = probeUrlIsCOG(EXTENSIONLESS, undefined, 50);
+    await jest.advanceTimersByTimeAsync(50);
+    await expect(promise).resolves.toBe(false);
+    jest.useRealTimers();
   });
 });

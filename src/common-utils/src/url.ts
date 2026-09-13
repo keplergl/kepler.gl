@@ -93,15 +93,23 @@ function isAbortError(error: unknown): boolean {
 }
 
 /**
- * GeoTIFF TIFF magic numbers: little-endian II*\0 or big-endian MM\0*.
+ * TIFF / BigTIFF magic numbers.
+ * Classic: little-endian II*\0 or big-endian MM\0*
+ * BigTIFF: little-endian II+\0 or big-endian MM\0+
  */
 export function isTiffMagicBytes(bytes?: ArrayBuffer | Uint8Array | null): boolean {
   if (!bytes) return false;
   const view = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   if (view.length < 4) return false;
-  const littleEndian = view[0] === 0x49 && view[1] === 0x49 && view[2] === 0x2a && view[3] === 0x00;
-  const bigEndian = view[0] === 0x4d && view[1] === 0x4d && view[2] === 0x00 && view[3] === 0x2a;
-  return littleEndian || bigEndian;
+  const littleEndianClassic =
+    view[0] === 0x49 && view[1] === 0x49 && view[2] === 0x2a && view[3] === 0x00;
+  const bigEndianClassic =
+    view[0] === 0x4d && view[1] === 0x4d && view[2] === 0x00 && view[3] === 0x2a;
+  const littleEndianBigTiff =
+    view[0] === 0x49 && view[1] === 0x49 && view[2] === 0x2b && view[3] === 0x00;
+  const bigEndianBigTiff =
+    view[0] === 0x4d && view[1] === 0x4d && view[2] === 0x00 && view[3] === 0x2b;
+  return littleEndianClassic || bigEndianClassic || littleEndianBigTiff || bigEndianBigTiff;
 }
 
 /**
@@ -193,49 +201,69 @@ function contentTypeFrom(response: Response): string | null {
   return response.headers.get('content-type');
 }
 
+/** Default bound so a hanging HEAD/GET cannot leave Add Data probing forever. */
+export const COG_PROBE_TIMEOUT_MS = 4000;
+
 /**
  * Probe a remote URL to decide whether it is a Cloud Optimized GeoTIFF.
  * Tries HEAD (Content-Type) first, then a small ranged GET for magic bytes.
  * HEAD often fails due to storage CORS settings; that is treated as a miss,
  * not an error, and the GET fallback is attempted.
+ * The whole probe is aborted after `timeoutMs` and treated as a miss.
  */
-export async function probeUrlIsCOG(url: string, signal?: AbortSignal): Promise<boolean> {
+export async function probeUrlIsCOG(
+  url: string,
+  signal?: AbortSignal,
+  timeoutMs: number = COG_PROBE_TIMEOUT_MS
+): Promise<boolean> {
   if (signal?.aborted) return false;
 
-  try {
-    const head = await fetch(url, {method: 'HEAD', signal});
-    if (head.ok) {
-      const contentType = contentTypeFrom(head);
-      if (isGeoTiffContentType(contentType)) return true;
-      if (isJsonContentType(contentType)) return false;
-    }
-  } catch (error) {
-    if (isAbortError(error)) return false;
-    // Continue to ranged GET. Vector-tile form notes HEAD often fails on storage CORS.
-  }
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
+  const onExternalAbort = () => timeoutController.abort();
+  signal?.addEventListener('abort', onExternalAbort);
+
+  const probeSignal = timeoutController.signal;
 
   try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {Range: 'bytes=0-15'},
-      signal
-    });
-    if (!response.ok) return false;
-
-    const contentType = contentTypeFrom(response);
-    if (isGeoTiffContentType(contentType)) {
-      response.body?.cancel?.().catch(() => undefined);
-      return true;
+    try {
+      const head = await fetch(url, {method: 'HEAD', signal: probeSignal});
+      if (head.ok) {
+        const contentType = contentTypeFrom(head);
+        if (isGeoTiffContentType(contentType)) return true;
+        if (isJsonContentType(contentType)) return false;
+      }
+    } catch (error) {
+      if (isAbortError(error)) return false;
+      // Continue to ranged GET. Vector-tile form notes HEAD often fails on storage CORS.
     }
-    if (isJsonContentType(contentType)) {
-      response.body?.cancel?.().catch(() => undefined);
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {Range: 'bytes=0-15'},
+        signal: probeSignal
+      });
+      if (!response.ok) return false;
+
+      const contentType = contentTypeFrom(response);
+      if (isGeoTiffContentType(contentType)) {
+        response.body?.cancel?.().catch(() => undefined);
+        return true;
+      }
+      if (isJsonContentType(contentType)) {
+        response.body?.cancel?.().catch(() => undefined);
+        return false;
+      }
+
+      const prefix = await readResponsePrefix(response);
+      return isTiffMagicBytes(prefix);
+    } catch (error) {
+      if (isAbortError(error)) return false;
       return false;
     }
-
-    const prefix = await readResponsePrefix(response);
-    return isTiffMagicBytes(prefix);
-  } catch (error) {
-    if (isAbortError(error)) return false;
-    return false;
+  } finally {
+    clearTimeout(timeoutId);
+    signal?.removeEventListener('abort', onExternalAbort);
   }
 }
