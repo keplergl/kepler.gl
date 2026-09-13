@@ -283,6 +283,8 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
 
     if (tileName && clearedMetadataUrl) {
       const pmtilesType = metadata?.pmtilesType;
+      // Known from URL before metadata loads; avoids a STAC server error flash on paste.
+      const isPMTiles = Boolean(pmtilesType) || isPMTilesUrl(clearedMetadataUrl);
 
       if (pmtilesType === PMTilesType.MVT) {
         return setResponse({
@@ -309,11 +311,12 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           rasterTileServers.length < 1 ||
           !rasterTileServers.every(server => validateUrl(server))
         ) {
-          if (pmtilesType) {
+          if (isPMTiles) {
             // For raster tiles elevation support is optional
             // TODO display a warning, but not a blocking error
             rasterTileServers = [];
-          } else {
+          } else if (!loading) {
+            // Only show after metadata has settled; avoids a flash while STAC/COG loads.
             error = new Error(
               'Provide valid raster tile server urls to support STAC and elevations.'
             );
