@@ -12,6 +12,7 @@ import KeplerGlSchema from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
 import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import keplerGlDuckdbPlugin, {KeplerGlDuckDbTable, DuckDBWasmAdapter} from '@kepler.gl/duckdb';
+import {getSqlConnector} from '../components/sql-connector';
 
 import {
   INIT,
@@ -33,13 +34,7 @@ initApplicationConfig({
   // async data ingestion to DuckDb
   table: KeplerGlDuckDbTable,
   // setup database for DuckDB plugin
-  database: new DuckDBWasmAdapter({
-    config: {
-      query: {
-        castBigIntToDouble: true
-      }
-    }
-  }),
+  database: new DuckDBWasmAdapter(getSqlConnector().then(connector => connector.getDb())),
   // progressive loading is sync, doesn't wait properly for a dataset to be created in DuckDB
   useArrowProgressiveLoading: false
 });

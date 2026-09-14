@@ -2636,16 +2636,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@duckdb/duckdb-wasm@npm:^1.28.0":
-  version: 1.29.0
-  resolution: "@duckdb/duckdb-wasm@npm:1.29.0"
-  dependencies:
-    apache-arrow: "npm:^17.0.0"
-  checksum: 10c0/caa550b09433adb709f997241ef00fd7ee93dc4cb4a03838d9d978536fdc640c80ef0f2c294248c688e4a38231be42287e4aba655e13d94bcd9aff4767a404a0
-  languageName: node
-  linkType: hard
-
-"@duckdb/duckdb-wasm@npm:^1.32.0":
+"@duckdb/duckdb-wasm@npm:1.32.0":
   version: 1.32.0
   resolution: "@duckdb/duckdb-wasm@npm:1.32.0"
   dependencies:
@@ -4196,7 +4187,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/duckdb@workspace:src/duckdb"
   dependencies:
-    "@duckdb/duckdb-wasm": "npm:^1.28.0"
+    "@duckdb/duckdb-wasm": "npm:^1.32.0"
     "@kepler.gl/common-utils": "npm:3.3.0-alpha.11"
     "@kepler.gl/constants": "npm:3.3.0-alpha.11"
     "@kepler.gl/processors": "npm:3.3.0-alpha.11"

@@ -4,7 +4,7 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
-import {Download, LoaderCircle, Play} from 'lucide-react';
+import {Download, LoaderCircle, Play, Square} from 'lucide-react';
 import {SchemaExplorer, SqlCodeMirrorEditor} from '@sqlrooms/sql-editor';
 import {DataTableArrowPaginated} from '@sqlrooms/data-table';
 import {TableSchemaTree} from '@sqlrooms/schema-tree';
@@ -12,9 +12,15 @@ import {useStoreWithDuckDb} from '@sqlrooms/duckdb';
 import {Button, TooltipProvider} from '@sqlrooms/ui';
 import {addDataToMap} from '@kepler.gl/actions';
 import {generateHashId} from '@kepler.gl/common-utils';
-import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {downloadQueryResult} from './sql-export';
-import {executeSql, type SqlResult} from './sql-query';
+import {
+  disposeSqlResult,
+  executeSql,
+  readFullSqlResult,
+  retainSqlResult,
+  SQL_PREVIEW_LIMIT,
+  type SqlResult
+} from './sql-query';
 
 export function useSqlPanelState(initialSql = '') {
   const dispatch = useDispatch();
@@ -27,6 +33,9 @@ export function useSqlPanelState(initialSql = '') {
   const [hasRun, setHasRun] = useState(false);
   const [schemaVersion, setSchemaVersion] = useState(0);
   const busy = useRef(false);
+  const currentResult = useRef<SqlResult | null>(null);
+  const queryController = useRef<AbortController | null>(null);
+  const [isReadingResult, setIsReadingResult] = useState(false);
   const resultCount = useRef(0);
   const editor = useRef<
     Parameters<NonNullable<React.ComponentProps<typeof SqlCodeMirrorEditor>['onMount']>>[0] | null
@@ -50,17 +59,34 @@ export function useSqlPanelState(initialSql = '') {
     setError(null);
     setResult(null);
     setHasRun(false);
+    const controller = new AbortController();
+    queryController.current = controller;
     try {
-      setResult(await executeSql(query));
+      await disposeSqlResult(currentResult.current);
+      currentResult.current = null;
+      const next = await executeSql(query, controller.signal);
+      currentResult.current = next;
+      setResult(next);
       setHasRun(true);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
     } finally {
       busy.current = false;
+      queryController.current = null;
       setIsRunning(false);
       setSchemaVersion(version => version + 1);
     }
   }, []);
+
+  useEffect(
+    () => () => {
+      queryController.current?.abort();
+      void disposeSqlResult(currentResult.current).catch(console.error);
+    },
+    []
+  );
+
+  const cancelQuery = useCallback(() => queryController.current?.abort(), []);
 
   const runSelection = useCallback(() => {
     const state = editor.current?.state;
@@ -70,27 +96,55 @@ export function useSqlPanelState(initialSql = '') {
     );
   }, [runQuery, sql]);
 
-  const addResultToMap = useCallback(() => {
-    if (!result) return;
-    const index = resultCount.current++;
-    dispatch(
-      addDataToMap({
-        datasets: [
-          {
-            data: {
-              fields: arrowSchemaToFields(result.table, result.tableDuckDBTypes),
-              rows: result.table as any
-            },
-            info: {
-              id: generateHashId(),
-              label: `query_result${index ? `_${index}` : ''}`,
-              format: 'arrow'
+  const addResultToMap = useCallback(async () => {
+    if (!result || busy.current) return;
+    busy.current = true;
+    setIsReadingResult(true);
+    setError(null);
+    try {
+      await retainSqlResult(result);
+      const index = resultCount.current++;
+      dispatch(
+        addDataToMap({
+          datasets: [
+            {
+              data: {
+                fields: [],
+                rows: [],
+                duckdbTableName: result.tableName
+              },
+              metadata: {tableName: result.tableName},
+              info: {
+                id: generateHashId(),
+                label: `query_result${index ? `_${index}` : ''}`,
+                format: 'arrow'
+              }
             }
-          }
-        ]
-      })
-    );
+          ]
+        })
+      );
+      setSchemaVersion(version => version + 1);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      busy.current = false;
+      setIsReadingResult(false);
+    }
   }, [dispatch, result]);
+
+  const exportResult = useCallback(async () => {
+    if (!result || busy.current) return;
+    busy.current = true;
+    setIsReadingResult(true);
+    try {
+      downloadQueryResult(await readFullSqlResult(result));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      busy.current = false;
+      setIsReadingResult(false);
+    }
+  }, [result]);
 
   return {
     sql,
@@ -98,12 +152,15 @@ export function useSqlPanelState(initialSql = '') {
     result,
     error,
     isRunning,
+    isReadingResult,
     hasRun,
     schemaVersion,
     editor,
     runQuery,
     runSelection,
-    addResultToMap
+    addResultToMap,
+    cancelQuery,
+    exportResult
   };
 }
 
@@ -114,12 +171,15 @@ export function SqlPanel({state}: {state: ReturnType<typeof useSqlPanelState>}) 
     result,
     error,
     isRunning,
+    isReadingResult,
     hasRun,
     schemaVersion,
     editor,
     runQuery,
     runSelection,
-    addResultToMap
+    addResultToMap,
+    cancelQuery,
+    exportResult
   } = state;
 
   const tables = useStoreWithDuckDb(s => s.db.tables);
@@ -171,12 +231,16 @@ export function SqlPanel({state}: {state: ReturnType<typeof useSqlPanelState>}) 
                     <Button
                       size="icon"
                       className="h-7 w-7"
-                      aria-label="Run query"
-                      title="Run query (⌘/Ctrl+Enter)"
-                      disabled={isRunning || !sql.trim()}
-                      onClick={runSelection}
+                      aria-label={isRunning ? 'Cancel query' : 'Run query'}
+                      title={isRunning ? 'Cancel query' : 'Run query (⌘/Ctrl+Enter)'}
+                      disabled={isReadingResult || (!isRunning && !sql.trim())}
+                      onClick={isRunning ? cancelQuery : runSelection}
                     >
-                      <Play className="h-4 w-4" aria-hidden="true" />
+                      {isRunning ? (
+                        <Square className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <Play className="h-4 w-4" aria-hidden="true" />
+                      )}
                     </Button>
                   </div>
                   <SqlCodeMirrorEditor
@@ -215,17 +279,24 @@ export function SqlPanel({state}: {state: ReturnType<typeof useSqlPanelState>}) 
                     table={result.table}
                     footerActions={
                       <div className="ml-auto flex shrink-0 items-center gap-2">
+                        {result.table.numRows >= SQL_PREVIEW_LIMIT && (
+                          <span className="text-xs text-muted-foreground">
+                            Preview: {SQL_PREVIEW_LIMIT.toLocaleString()} rows. Map and export use
+                            all rows.
+                          </span>
+                        )}
                         <Button
                           size="icon"
                           className="h-7 w-7"
                           variant="ghost"
                           aria-label="Export CSV"
                           title="Export CSV"
-                          onClick={() => downloadQueryResult(result.table)}
+                          disabled={isReadingResult}
+                          onClick={exportResult}
                         >
                           <Download className="h-4 w-4" aria-hidden="true" />
                         </Button>
-                        <Button size="sm" onClick={addResultToMap}>
+                        <Button size="sm" disabled={isReadingResult} onClick={addResultToMap}>
                           Add to Map
                         </Button>
                       </div>

@@ -251,6 +251,7 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "resolutions": {
+    "@duckdb/duckdb-wasm": "1.32.0",
     "@deck.gl/aggregation-layers": "9.3.1",
     "@deck.gl/core": "9.3.1",
     "@deck.gl/extensions": "9.3.1",

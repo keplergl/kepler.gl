@@ -60,7 +60,7 @@
     "@types/classnames": "^2.3.1",
     "@types/keymirror": "^0.1.1",
     "ai": "^7.0.31",
-    "apache-arrow": ">=15.0.0",
+    "apache-arrow": "17.0.0",
     "classnames": "^2.2.1",
     "color-interpolate": "^1.0.5",
     "d3-dsv": "^3.0.1",
@@ -103,6 +103,8 @@
   },
   "packageManager": "yarn@4.4.0",
   "resolutions": {
+    "@duckdb/duckdb-wasm": "1.32.0",
+    "apache-arrow": "17.0.0",
     "@sqlrooms/ai": "0.29.0",
     "@sqlrooms/ai-config": "0.29.0",
     "@sqlrooms/ai-core": "0.29.0",

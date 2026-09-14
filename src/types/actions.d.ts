@@ -57,6 +57,8 @@ export type ProtoDataset = {
     rows: any[][];
     cols?: any[];
     arrowTable?: arrow.Table;
+    /** Existing table in the configured DuckDB database; avoids re-importing its rows. */
+    duckdbTableName?: string;
   };
 
   // table-injected metadata

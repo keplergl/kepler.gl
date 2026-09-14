@@ -8,11 +8,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {buildSync} = require('esbuild');
 
-// Use the actual SQLRooms parser, with a controlled database connection to
-// exercise failures and cleanup without downloading a browser WASM runtime.
 const parserBundle = buildSync({
   stdin: {
-    contents: "export {splitSqlStatements} from '@sqlrooms/duckdb';",
+    contents:
+      "export {escapeVal, joinStatements, makeLimitQuery, splitSqlStatements} from '@sqlrooms/duckdb';",
     resolveDir: path.resolve(__dirname, '..')
   },
   bundle: true,
@@ -35,31 +34,36 @@ const {code} = transformSync(fs.readFileSync(filename, 'utf8'), {
   plugins: ['@babel/plugin-transform-modules-commonjs']
 });
 
-function setup({failPreview = false, failDrop = false} = {}) {
+function setup({failPreview = false, controller, isSelect = true} = {}) {
   const queries = [];
-  let closed = false;
-  const table = {numRows: 1};
-  const connection = {
-    query: async query => {
-      queries.push(query);
-      if (failPreview && query === 'preview') throw new Error('Preview failed');
-      if (failDrop && query.startsWith('DROP')) throw new Error('Cleanup failed');
-      return table;
-    },
-    close: async () => {
-      closed = true;
-    }
-  };
+  const signals = [];
+  const preview = {numRows: 1000};
+  const full = {numRows: 2500};
+  function query(sql, options) {
+    queries.push(sql);
+    signals.push(options?.signal);
+    const result = Promise.resolve().then(() => {
+      if (sql.startsWith('SELECT json_serialize_sql')) {
+        return {getChildAt: () => ({get: () => JSON.stringify({error: !isSelect})})};
+      }
+      if (sql.includes('LIMIT 1000')) {
+        if (controller) controller.abort();
+        options?.signal?.throwIfAborted();
+        if (failPreview) throw new Error('Preview failed');
+        return preview;
+      }
+      return full;
+    });
+    return Object.assign(result, {result});
+  }
+  const connector = {query, execute: query};
   const deps = {
     '@sqlrooms/duckdb': parser.exports,
-    '@kepler.gl/utils': {
-      getApplicationConfig: () => ({database: {connect: async () => connection}})
-    },
+    './sql-connector': {getSqlConnector: async () => connector},
     '@kepler.gl/duckdb': {
-      checkIsSelectQuery: async (_connection, query) => /^select/i.test(query),
-      getDuckDBColumnTypes: async () => [],
-      getDuckDBColumnTypesMap: () => ({}),
-      castDuckDBTypesForKepler: () => 'preview',
+      getDuckDBColumnTypes: async () => [{name: 'n', type: 'INTEGER'}],
+      getDuckDBColumnTypesMap: () => ({n: 'INTEGER'}),
+      castDuckDBTypesForKepler: table => `SELECT n FROM "${table}"`,
       setGeoArrowWKBExtension: () => {}
     }
   };
@@ -70,46 +74,63 @@ function setup({failPreview = false, failDrop = false} = {}) {
     module.exports,
     require('node:crypto').webcrypto
   );
-  return {run: module.exports.executeSql, queries, table, isClosed: () => closed};
+  return {...module.exports, queries, signals, preview, full};
 }
 
-test('runs preceding statements and previews only the last result', async () => {
+test('executes writes once and keeps a full snapshot behind a bounded preview', async () => {
   const db = setup();
-  const result = await db.run('CREATE TABLE test (n INTEGER); SELECT 1;');
-  assert.equal(db.queries[0], 'CREATE TABLE test (n INTEGER)');
-  assert.equal(result.table, db.table);
-  assert.match(db.queries[1], /^CREATE TEMP TABLE/);
+  const result = await db.executeSql('CREATE TABLE test (n INTEGER); SELECT * FROM test;');
+  assert.equal(result.table, db.preview);
+  assert.match(db.queries[1], /CREATE TABLE test \(n INTEGER\)[\s\S]*CREATE TABLE "__sqlrooms/);
+  assert.match(db.queries[2], /LIMIT 1000/);
+  assert.equal(await db.readFullSqlResult(result), db.full);
+  assert.equal(db.queries.filter(sql => sql.includes('CREATE TABLE test')).length, 1);
+  await db.disposeSqlResult(result);
   assert.match(db.queries.at(-1), /^DROP TABLE IF EXISTS/);
-  assert.equal(db.isClosed(), true);
 });
 
 test('preserves SQL literals containing comments and semicolons', async () => {
   const db = setup();
-  await db.run("-- comment\nSELECT 'a--b;/*c*/' AS value; /* trailing */");
-  assert.match(db.queries[0], /SELECT 'a--b;\/\*c\*\/' AS value$/);
+  await db.executeSql("-- comment\nSELECT 'a--b;/*c*/' AS value; /* trailing */");
+  assert.match(db.queries[1], /SELECT 'a--b;\/\*c\*\/' AS value$/);
 });
 
-test('rejects comment-only input before connecting', async () => {
+test('rejects comment-only input before querying', async () => {
   const db = setup();
-  await assert.rejects(db.run('-- empty\n/* empty */'), /Query is empty/);
+  await assert.rejects(db.executeSql('-- empty\n/* empty */'), /Query is empty/);
   assert.equal(db.queries.length, 0);
 });
 
-test('cleans temporary results and closes after a preview failure', async () => {
+test('cleans the snapshot after a preview failure', async () => {
   const db = setup({failPreview: true});
-  await assert.rejects(db.run('SELECT 1'), /Preview failed/);
+  await assert.rejects(db.executeSql('SELECT 1'), /Preview failed/);
   assert.match(db.queries.at(-1), /^DROP TABLE IF EXISTS/);
-  assert.equal(db.isClosed(), true);
 });
 
-test('closes even if temporary table cleanup fails', async () => {
-  const db = setup({failDrop: true});
-  await assert.rejects(db.run('SELECT 1'), /Cleanup failed/);
-  assert.equal(db.isClosed(), true);
+test('propagates cancellation and cleans up without the aborted signal', async () => {
+  const controller = new AbortController();
+  const db = setup({controller});
+  await assert.rejects(db.executeSql('SELECT 1', controller.signal), {name: 'AbortError'});
+  assert.equal(db.signals[2], controller.signal);
+  assert.match(db.queries.at(-1), /^DROP TABLE IF EXISTS/);
+  assert.equal(db.signals.at(-1), undefined);
+});
+
+test('retains mapped snapshots, renames once, and exports from the retained table', async () => {
+  const db = setup();
+  const result = await db.executeSql('SELECT 1');
+  await db.retainSqlResult(result);
+  await db.retainSqlResult(result);
+  await db.disposeSqlResult(result);
+  assert.equal(db.queries.filter(sql => sql.startsWith('ALTER')).length, 1);
+  assert.equal(db.queries.filter(sql => sql.startsWith('DROP')).length, 0);
+  assert.match(result.tableName, /^query_result_/);
+  assert.equal(await db.readFullSqlResult(result), db.full);
+  assert.ok(db.queries.at(-1).includes(result.tableName));
 });
 
 test('returns no stale preview when the last statement has no result', async () => {
-  const db = setup();
-  assert.equal(await db.run('SELECT 1; CREATE TABLE test (n INTEGER)'), null);
-  assert.equal(db.isClosed(), true);
+  const db = setup({isSelect: false});
+  assert.equal(await db.executeSql('SELECT 1; CREATE TABLE test (n INTEGER)'), null);
+  assert.equal(db.queries.length, 2);
 });
