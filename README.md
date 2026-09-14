@@ -84,9 +84,11 @@ or if you would like, you can load a specific version:
 
 Take a look at the [development guide][developers] to develop kepler.gl locally.
 
-The [main demo](examples/demo-app), also served at `/demo` by the website, uses
-[`@kepler.gl/sqlrooms`](src/sqlrooms) for its collapsible application shell and
-SQLRooms for modular panel layout. Run it with `yarn start`.
+The [SQLRooms demo](examples/demo-app-sqlrooms) tests a collapsible application
+shell and modular panel layout using [`@kepler.gl/sqlrooms`](src/sqlrooms). Run
+it with `yarn start:sqlrooms` (port 8083), alongside the original
+[main demo](examples/demo-app) with `yarn start` (port 8080). The website continues
+to serve the original app at `/demo`.
 
 ## Basic Usage
 

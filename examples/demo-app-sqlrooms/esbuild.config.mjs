@@ -29,11 +29,11 @@ const EXTERNAL_DECK_SRC = join(LIB_DIR, 'deck.gl');
 // For debugging loaders.gl, load loaders.gl from external loaders.gl directory
 const EXTERNAL_LOADERS_SRC = join(LIB_DIR, 'loaders.gl');
 
-const port = 8080;
+const port = 8083;
 
 /**
  * Run the demo against the local kepler.gl source tree instead of the published
- * `@kepler.gl/*` packages in examples/demo-app/node_modules (which shadow the
+ * `@kepler.gl/*` packages in examples/demo-app-sqlrooms/node_modules (which shadow the
  * root workspace symlinks and would leave core changes — e.g. the
  * `UPDATE_DATASET` action/reducer — invisible to the bundle). Mirrors the
  * existing `--env.deck_src` / `--env.loaders_src` flags; applied in both the
@@ -61,6 +61,7 @@ const KEPLER_SRC_ALIASES = Object.fromEntries(
 
 const getKeplerAliases = () => ({
   ...KEPLER_SRC_ALIASES,
+  '@kepler.gl/sqlrooms/shell': join(SRC_DIR, 'sqlrooms/src/components/KeplerAppShell.tsx'),
   // duckdb ships a components subpath (SqlPanel); esbuild picks the longest
   // matching alias key, so this wins for `@kepler.gl/duckdb/components`.
   '@kepler.gl/duckdb/components': join(SRC_DIR, 'duckdb', 'src', 'components', 'index.tsx')
@@ -115,6 +116,10 @@ const getThirdPartyLibraryAliases = useKeplerNodePackage => {
     ...getKeplerAliases(),
     ...getLocalSourceStackAliases(),
     ...localSources,
+    // Share SQLRooms UI/layout contexts across the local adapter and demo.
+    '@sqlrooms/ui': join(BASE_NODE_MODULES_DIR, '@sqlrooms/ui'),
+    '@sqlrooms/layout': join(BASE_NODE_MODULES_DIR, '@sqlrooms/layout'),
+    '@sqlrooms/room-store': join(BASE_NODE_MODULES_DIR, '@sqlrooms/room-store'),
     react: `${nodeModulesDir}/react`,
     'react-dom': `${nodeModulesDir}/react-dom`,
     'react-dom/client': `${nodeModulesDir}/react-dom/client`,
@@ -445,7 +450,7 @@ function openURL(url) {
     // Start Tailwind CSS watcher for sqlrooms UI components
     spawn(
       './node_modules/.bin/tailwindcss',
-      ['-i', 'src/styles.css', '-o', 'dist/tailwind.css', '--watch'],
+      ['-i', 'src/styles.css', '-o', 'dist/tailwind.css', '--watch=always'],
       {
         stdio: 'inherit'
       }

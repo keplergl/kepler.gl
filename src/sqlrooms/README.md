@@ -216,7 +216,8 @@ not change persisted dataset ids.
 
 ## Examples
 
-- Main demo and deployed `/demo` application: [examples/demo-app](../../examples/demo-app)
+- Experimental SQLRooms demo: [examples/demo-app-sqlrooms](../../examples/demo-app-sqlrooms)
+- Original demo and deployed `/demo` application: [examples/demo-app](../../examples/demo-app)
 
 ## Migration and package boundaries
 
@@ -246,7 +247,7 @@ not depend on this adapter. SQLRooms packages are pinned to the tested release
 `0.29.0`; Kepler packages follow this repository's version. Keep React,
 React Redux, React Intl, styled-components, and the deck.gl/luma.gl stack shared
 within the host application. SQLRooms room-store, room-shell, and UI contexts must
-also resolve to one copy (see the main demo and website esbuild aliases).
+also resolve to one copy (see the SQLRooms demo esbuild aliases).
 Do not force all third-party versions of Immer to
 one version; older Redux Toolkit dependencies require their own supported copy.
 
@@ -257,7 +258,7 @@ pushdown or automatic refresh of datasets already loaded in a map.
 
 Factory recipes and Kepler application configuration currently have global
 scope. Configure them before rendering. Host storage, project save/reopen, and
-locale policy are separate from the config schemas. The main demo retains its
+locale policy are separate from the config schemas. The SQLRooms demo retains its
 existing implementations of these features while migrating its shell.
 
 The SQLRooms repository's old packages are intentionally not removed by this
@@ -273,26 +274,26 @@ yarn install --immutable
 yarn workspaces foreach -At run stab
 yarn workspace @kepler.gl/sqlrooms build
 yarn workspace @kepler.gl/sqlrooms test
-yarn start
+yarn start:sqlrooms
 ```
 
 `build` produces CommonJS and ESM output. Run `build:types` after building the
 workspace dependencies and their declarations, as in the repository release workflow.
 `test` includes config entry-point checks and adapter/task runtime regressions.
-The main demo uses local Kepler sources and published SQLRooms packages, so no
-sibling SQLRooms checkout is required. Its website build imports the same app.
+The SQLRooms demo uses local Kepler sources and published SQLRooms packages, so no
+sibling SQLRooms checkout is required. The original demo and website remain unchanged for comparison.
 
-## Main application shell
+## Experimental application shell
 
 `@kepler.gl/sqlrooms/shell` exports `KeplerAppShell` and `SqlroomsSidebarFactory`.
 Pair the shell with the original injected Kepler application and `sidePanelWidth={0}`.
 The shell reserves sidebar space; the recipe portals the original sidebar content
 into it, preserving provider, localization, Redux, and drag-and-drop contexts.
 The existing logo/version, data and layer panels, and export/storage menus remain
-Kepler components. The main demo uses SQLRooms `LayoutRenderer` and a room layout
+Kepler components. The SQLRooms demo uses SQLRooms `LayoutRenderer` and a room layout
 slice for map, SQL, and assistant panels, with a ChordShell-style sidebar toggle.
 
-This migrates application composition first. The main demo keeps its existing
+This migrates application composition first. The SQLRooms demo keeps its existing
 Redux map store, data loading, saved-map format, URLs, cloud providers, and query
 integration. It does not convert all maps to `KeplerSlice` or to DuckDB tables.
 Applications designed around SQLRooms-owned maps can still compose `KeplerSlice`
