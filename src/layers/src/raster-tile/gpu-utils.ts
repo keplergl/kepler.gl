@@ -305,7 +305,9 @@ export async function loadNpyArray(
 
           const response = (await load(request.url, NPYLoader as Loader<NPYLoaderResponse>, {
             npy: npyOptions,
-            fetch: options?.fetch
+            // Without the signal the browser keeps downloading a tile deck.gl has
+            // already abandoned, and it queues ahead of the tiles still in view.
+            fetch: options?.fetch ?? {signal: request.options?.signal}
           })) as NPYLoaderResponse;
 
           if (!response || !response.data || request.options.signal?.aborted) {

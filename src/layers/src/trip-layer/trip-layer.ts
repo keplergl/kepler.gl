@@ -603,7 +603,10 @@ export default class TripLayer extends Layer {
     });
   }
 
-  _getColumnModeValueAccessor = feature => {
+  // Called from gpu-filter-utils.getFilterValueAccessor(), which passes
+  // (dataContainer, feature, fieldIndex). The trip carries its own materialised
+  // rows in properties.values, so the data container is not needed here.
+  _getColumnModeValueAccessor = (dc, feature) => {
     return field => {
       if (field.fieldIdx === this.config.columns.timestamp?.fieldIdx) {
         return this.dataToTimeStamp[feature.properties.index];

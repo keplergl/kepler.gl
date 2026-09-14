@@ -133,6 +133,8 @@ export type LayerRadiusConfig = {
 };
 export type LayerWeightConfig = {
   weightField: VisualChannelField;
+  weightDomain?: VisualChannelDomain;
+  weightScale?: VisualChannelScale;
 };
 
 export type VisualChannelDescription = {
@@ -1786,6 +1788,10 @@ class Layer implements KeplerLayer {
 
   getLegendVisualChannels(): {[key: string]: VisualChannel} {
     return this.visualChannels;
+  }
+
+  getLegendImageUrl(): string | null {
+    return null;
   }
 }
 

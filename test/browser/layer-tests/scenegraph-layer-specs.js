@@ -37,6 +37,11 @@ test('#ScenegraphLayer -> constructor', t => {
           t.ok(layer.isAggregated === false, 'ScenegraphLayer is not aggregated');
           t.ok(layer.config.label === 'test 3d layer', 'label should be correct');
           t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
+          t.deepEqual(
+            layer.getLegendVisualChannels(),
+            {},
+            'should expose no legend channels (mesh has no fill color)'
+          );
         }
       }
     ]

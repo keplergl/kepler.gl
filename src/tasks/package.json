@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/tasks",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.3.0-alpha.10",
+  "version": "3.3.0-alpha.11",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/cjs/index.js",
@@ -28,8 +28,8 @@
     "dist"
   ],
   "dependencies": {
-    "@kepler.gl/processors": "3.3.0-alpha.10",
-    "@kepler.gl/tasks-core": "3.3.0-alpha.10"
+    "@kepler.gl/processors": "3.3.0-alpha.11",
+    "@kepler.gl/tasks-core": "3.3.0-alpha.11"
   },
   "nyc": {
     "sourceMap": false,
