@@ -24,14 +24,26 @@ The production image reads `/config.json` from the static root (`/app/dist/confi
 cp docker/config.example.json docker/config.json
 ```
 
-Mount it when running:
+Mount it when running (uncomment the `volumes` block in `docker-compose.yml` after creating the file). Pick **one** of these patterns — do not combine a read-only mount with `KEPLER_*` overrides (the entrypoint must write the merged file):
 
 ```yaml
+# A) Config file only (read-only is fine)
 volumes:
   - ./config.json:/app/dist/config.json:ro
+
+# B) Config file + KEPLER_* env overrides (read-write mount required)
+volumes:
+  - ./config.json:/app/dist/config.json
+environment:
+  KEPLER_MAPBOX_ACCESS_TOKEN: ${MapboxAccessToken}
+
+# C) Env only — no volume; entrypoint writes /app/dist/config.json inside the container
+environment:
+  KEPLER_MAPBOX_ACCESS_TOKEN: ${MapboxAccessToken}
+  KEPLER_PAGE_TITLE: My Kepler
 ```
 
-Or pass env vars (merged by the entrypoint into `config.json` before `serve` starts):
+Supported `KEPLER_*` env vars (used in patterns B and C):
 
 | Env var | Config path |
 | --- | --- |
@@ -57,10 +69,14 @@ Not JSON-configurable (need a source build): `plugins`, `table`, `database`, `ba
 From the repository root:
 
 ```bash
+# Optional full config (feature flags, basemaps, etc.) — then uncomment `volumes` in docker-compose.yml
+cp docker/config.example.json docker/config.json
+
 # Development mode (esbuild watch inside the container; still uses build-time .env)
 docker compose -f docker/docker-compose.yml --env-file .env up kepler-dev
 
 # Production mode (static build + runtime config / KEPLER_* from .env)
+# Without a mounted config.json, credential and KEPLER_MAP_* / KEPLER_PAGE_TITLE env still apply.
 docker compose -f docker/docker-compose.yml --env-file .env up kepler-prod
 ```
 
@@ -91,19 +107,41 @@ docker run -p 8080:8080 --env-file .env -e NODE_ENV=local kepler-dev
 
 ### Production
 
+Build once, then choose a single runtime pattern.
+
+Creating a root `.env` does **not** export variables into your shell. For `docker run`, either pass values explicitly, use `--env-file` with `KEPLER_*` keys, or load `.env` into the shell first (`set -a && source .env && set +a`) so `$MapboxAccessToken` expands.
+
 ```bash
 docker build -f docker/Dockerfile -t kepler-prod .
+
+# A) Config file only
 docker run -p 8080:8080 \
-  -e KEPLER_MAPBOX_ACCESS_TOKEN="$MapboxAccessToken" \
   -v "$PWD/docker/config.json:/app/dist/config.json:ro" \
   kepler-prod
+
+# B) Config file + KEPLER_* overrides (RW mount)
+#    Option: explicit value
+docker run -p 8080:8080 \
+  -e KEPLER_MAPBOX_ACCESS_TOKEN='pk.your-token' \
+  -v "$PWD/docker/config.json:/app/dist/config.json" \
+  kepler-prod
+#    Option: load root .env into the shell, then expand MapboxAccessToken
+# set -a && source .env && set +a
+# docker run ... -e KEPLER_MAPBOX_ACCESS_TOKEN="$MapboxAccessToken" ...
+
+# C) Env only — prefer --env-file with KEPLER_* keys (see table above)
+docker run -p 8080:8080 --env-file .env.kepler \
+  kepler-prod
+# Example .env.kepler:
+#   KEPLER_MAPBOX_ACCESS_TOKEN=pk.your-token
+#   KEPLER_PAGE_TITLE=kepler.gl demo
 ```
 
-No-build deploy once a registry image exists (future):
+No-build deploy once a registry image exists (future) — env-only example:
 
 ```bash
 docker run -p 8080:8080 \
-  -e KEPLER_MAPBOX_ACCESS_TOKEN="$MapboxAccessToken" \
+  -e KEPLER_MAPBOX_ACCESS_TOKEN='pk.your-token' \
   ghcr.io/keplergl/kepler.gl:<tag>
 ```
 

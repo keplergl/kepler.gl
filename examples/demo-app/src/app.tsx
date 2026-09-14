@@ -223,11 +223,12 @@ const App = props => {
       dispatch(loadSampleConfigurations(id));
     }
 
-    // Load map using a custom
+    // Load map using a custom URL. Prefer ?mapUrl=; otherwise use runtime config
+    // only when no /demo/:id sample is being loaded (avoids racing two map loads).
     if (query.mapUrl) {
       // TODO?: validate map url
       dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
-    } else if (runtime.mapUrl) {
+    } else if (!id && runtime.mapUrl) {
       dispatch(loadRemoteMap({dataUrl: runtime.mapUrl}));
     }
 

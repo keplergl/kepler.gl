@@ -94,8 +94,13 @@ export function applyDemoApplicationDefaults() {
  * @param {DemoAppRuntimeConfig['credentials']} credentials
  */
 export function applyCredentials(credentials = {}) {
+  const safeCredentials =
+    credentials && typeof credentials === 'object' && !Array.isArray(credentials)
+      ? credentials
+      : {};
+
   Object.entries(CREDENTIAL_TO_CLOUD_KEY).forEach(([fromKey, toKey]) => {
-    const value = credentials[fromKey];
+    const value = safeCredentials[fromKey];
     if (typeof value === 'string' && value.length > 0) {
       CLOUD_PROVIDERS_CONFIGURATION[toKey] = value;
     }
