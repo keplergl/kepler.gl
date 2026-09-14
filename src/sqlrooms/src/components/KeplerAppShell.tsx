@@ -25,7 +25,6 @@ const SidebarTargetContext = createContext<HTMLDivElement | null>(null);
 export type KeplerAppShellProps = PropsWithChildren<{
   sidebarOpen: boolean;
   onSidebarOpenChange: (open: boolean) => void;
-  title?: string;
   readOnly?: boolean;
   modalOpen?: boolean;
   sidebarWidth?: number;
@@ -36,7 +35,6 @@ export function KeplerAppShell({
   children,
   sidebarOpen,
   onSidebarOpenChange,
-  title = 'Kepler.gl',
   readOnly = false,
   modalOpen = false,
   sidebarWidth = 320
@@ -61,13 +59,16 @@ export function KeplerAppShell({
             </Sidebar>
           )}
           <SidebarInset className="min-h-0 min-w-0 bg-background">
-            {!readOnly && (
-              <header className="flex h-11 shrink-0 items-center gap-3 border-b border-border bg-card px-3">
-                <SidebarTrigger aria-label="Toggle sidebar" title="Toggle sidebar" />
-                <span className="truncate text-sm text-foreground">{title}</span>
-              </header>
-            )}
-            <div className="relative min-h-0 flex-1 overflow-hidden">{children}</div>
+            <div className="relative min-h-0 flex-1 overflow-hidden">
+              {children}
+              {!readOnly && !modalOpen && (
+                <SidebarTrigger
+                  aria-label="Toggle sidebar"
+                  title="Toggle sidebar"
+                  className="absolute left-3 top-3 z-10 h-8 w-8 rounded-sm border border-border bg-card text-foreground shadow-sm hover:bg-accent"
+                />
+              )}
+            </div>
           </SidebarInset>
         </SidebarProvider>
       </TooltipProvider>
