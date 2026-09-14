@@ -12,12 +12,19 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import styled from 'styled-components';
 
 import {ActionHandler, MapStateActions, VisStateActions, toggleModal} from '@kepler.gl/actions';
-import {dataTestIds, GLOBE_SUPPORTED_LAYERS} from '@kepler.gl/constants';
-import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
+import {dataTestIds, GLOBE_SUPPORTED_LAYERS, LAYER_TYPES} from '@kepler.gl/constants';
+import {
+  Layer,
+  LayerBaseConfig,
+  estimateAggregationCellCount,
+  getLayerPointCount,
+  isAggregationCellCountSlow
+} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
 import {ColorUI, LayerVisConfig, MapState, NestedPartial, SplitMap} from '@kepler.gl/types';
 import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
+import AggregationSizeWarning from './aggregation-size-warning';
 
 type LayerPanelProps = {
   className?: string;
@@ -64,16 +71,46 @@ const PanelWrapper = styled.div`
 
 LayerPanelFactory.deps = [LayerConfiguratorFactory, LayerPanelHeaderFactory];
 
+type LayerPanelState = {
+  typeWarning: {
+    cellCount: number;
+    nextType: string;
+  } | null;
+};
+
 function LayerPanelFactory(
   LayerConfigurator: ReturnType<typeof LayerConfiguratorFactory>,
   LayerPanelHeader: ReturnType<typeof LayerPanelHeaderFactory>
 ): React.ComponentType<LayerPanelProps> {
-  class LayerPanel extends Component<LayerPanelProps> {
+  class LayerPanel extends Component<LayerPanelProps, LayerPanelState> {
+    state: LayerPanelState = {typeWarning: null};
+
     updateLayerConfig = (newProp: Partial<LayerBaseConfig>) => {
       this.props.layerConfigChange(this.props.layer, newProp);
     };
 
     updateLayerType = (newType: string) => {
+      if (newType === LAYER_TYPES.grid || newType === LAYER_TYPES.hexagon) {
+        const sizeKm = Number(this.props.layer.config.visConfig?.worldUnitSize) || 1;
+        const dataset = this.props.datasets[this.props.layer.config.dataId || ''];
+        const pointCount = getLayerPointCount(dataset);
+        const cellCount = estimateAggregationCellCount(
+          this.props.layer.meta?.bounds,
+          sizeKm,
+          newType,
+          pointCount
+        );
+        if (isAggregationCellCountSlow(cellCount, pointCount)) {
+          this.setState({
+            typeWarning: {
+              cellCount: cellCount as number,
+              nextType: newType
+            }
+          });
+          return;
+        }
+      }
+      this.setState({typeWarning: null});
       this.props.layerTypeChange(this.props.layer, newType);
     };
 
@@ -184,6 +221,22 @@ function LayerPanelFactory(
             isDragNDropEnabled={isDraggable}
             listeners={listeners}
           />
+          {this.state.typeWarning ? (
+            <div style={{padding: '0 12px 8px'}}>
+              <AggregationSizeWarning
+                cellCount={this.state.typeWarning.cellCount}
+                requireConfirm
+                onCancel={() => this.setState({typeWarning: null})}
+                onConfirm={() => {
+                  const nextType = this.state.typeWarning?.nextType;
+                  this.setState({typeWarning: null});
+                  if (nextType) {
+                    this.props.layerTypeChange(this.props.layer, nextType);
+                  }
+                }}
+              />
+            </div>
+          ) : null}
           {isConfigActive && (
             <LayerConfigurator
               layer={layer}

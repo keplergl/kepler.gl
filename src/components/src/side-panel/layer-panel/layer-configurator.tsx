@@ -30,6 +30,7 @@ import LayerErrorMessage from './layer-error-message';
 import LayerTypeSelectorFactory from './layer-type-selector';
 import TextLabelPanelFactory from './text-label-panel';
 import VisConfigSliderFactory from './vis-config-slider';
+import AggregationWorldUnitSizeControl from './aggregation-world-unit-size-control';
 import VisConfigSwitchFactory from './vis-config-switch';
 import ScenegraphModelSelectorFactory, {
   ScenegraphCustomModelUrlInput
@@ -674,7 +675,7 @@ export default function LayerConfiguratorFactory(
       return this._renderAggregationLayerConfig(props);
     }
 
-    _renderAggregationLayerConfig({layer, visConfiguratorProps, layerChannelConfigProps}) {
+    _renderAggregationLayerConfig({layer, dataset, visConfiguratorProps, layerChannelConfigProps}) {
       const {config} = layer;
       const {
         visConfig: {enable3d, fixedHeight}
@@ -715,7 +716,12 @@ export default function LayerConfiguratorFactory(
 
           {/* Cell size */}
           <LayerConfigGroup label={'layer.radius'} collapsible>
-            <VisConfigSlider {...layer.visConfigSettings.worldUnitSize} {...visConfiguratorProps} />
+            <AggregationWorldUnitSizeControl
+              layer={layer}
+              VisConfigSlider={VisConfigSlider}
+              visConfiguratorProps={visConfiguratorProps}
+              pointCount={dataset?.filteredIndex?.length ?? dataset?.length ?? 0}
+            />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider {...layer.visConfigSettings.coverage} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>

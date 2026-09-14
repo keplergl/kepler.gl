@@ -175,6 +175,14 @@ export const EditorLayerUtils = {
 };
 
 export {getFilterDataFunc} from './aggregation-layer';
+export {
+  AGGREGATION_CELL_COUNT_WARNING_THRESHOLD,
+  estimateAggregationCellCount,
+  estimateBboxAggregationCellCount,
+  getLayerPointCount,
+  isAggregationCellCountSlow
+} from './aggregation-cell-count';
+export type {AggregationBinType} from './aggregation-cell-count';
 
 export * from './layer-update';
 export * from './layer-utils';
