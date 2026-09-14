@@ -86,7 +86,7 @@ function SidebarToggleButton() {
       aria-expanded={expanded}
       title={label}
       onClick={toggleSidebar}
-      className="absolute left-1 top-2.5 z-10 h-7 w-7 rounded-sm border border-border bg-card p-0 text-foreground shadow-sm hover:bg-accent"
+      className="absolute left-2.5 top-2.5 z-10 h-7 w-7 rounded-sm border border-border bg-card p-0 text-foreground shadow-sm hover:bg-accent"
     >
       <Icon className="size-4" aria-hidden="true" />
     </Button>
