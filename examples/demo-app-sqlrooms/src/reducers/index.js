@@ -10,12 +10,8 @@ import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/pr
 import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/reducers';
 import KeplerGlSchema from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
-import {getApplicationConfig} from '@kepler.gl/utils';
-
-// import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
-// import keplerGlDuckdbPlugin, {KeplerGlDuckDbTable, DuckDBWasmAdapter} from '@kepler.gl/duckdb';
-
-import {initApplicationConfig} from '@kepler.gl/utils';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
+import keplerGlDuckdbPlugin, {KeplerGlDuckDbTable, DuckDBWasmAdapter} from '@kepler.gl/duckdb';
 
 import {
   INIT,
@@ -30,8 +26,7 @@ import {
 import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
 
-// initialize kepler demo-app with DuckDB plugin
-/*
+// Share DuckDB between map imports and the SQLRooms SQL editor.
 initApplicationConfig({
   // Custom UI for DuckDB
   plugins: [keplerGlDuckdbPlugin],
@@ -48,7 +43,6 @@ initApplicationConfig({
   // progressive loading is sync, doesn't wait properly for a dataset to be created in DuckDB
   useArrowProgressiveLoading: false
 });
-*/
 
 // Example: Register custom icons for the icon layer.
 // These will be merged with the default icons fetched from CDN.
@@ -161,6 +155,7 @@ const demoReducer = combineReducers({
 async function loadRemoteResourceSuccessTask({
   dataUrl,
   datasetId,
+  datasetLabel,
   processorMethod,
   remoteDatasetConfig,
   unprocessedData
@@ -169,7 +164,8 @@ async function loadRemoteResourceSuccessTask({
     const data = await processorMethod(unprocessedData);
     return {
       info: {
-        id: datasetId
+        id: datasetId,
+        label: datasetLabel
       },
       data
     };
@@ -229,6 +225,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
   const task = LOAD_REMOTE_RESOURCE_SUCCESS_TASK({
     dataUrl,
     datasetId,
+    datasetLabel: action.options.label || datasetId,
     processorMethod,
     remoteDatasetConfig: action.remoteDatasetConfig,
     unprocessedData

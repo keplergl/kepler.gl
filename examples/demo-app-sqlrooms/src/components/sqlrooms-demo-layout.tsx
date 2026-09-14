@@ -10,6 +10,8 @@ import {
 } from '@sqlrooms/room-store';
 import {createLayoutSlice, LayoutRenderer, type LayoutSliceState} from '@sqlrooms/layout';
 import {useStore} from 'zustand';
+import {createDuckDbSlice, type DuckDbSliceState} from '@sqlrooms/duckdb';
+import {createSqlConnector} from './sql-connector';
 
 type DemoPanels = {map: ReactNode; sql: ReactNode; assistant: ReactNode};
 const PanelContent = createContext<DemoPanels>({map: null, sql: null, assistant: null});
@@ -17,7 +19,7 @@ const MapPanel = () => <>{useContext(PanelContent).map}</>;
 const SqlPanel = () => <>{useContext(PanelContent).sql}</>;
 const AssistantPanel = () => <>{useContext(PanelContent).assistant}</>;
 
-type DemoRoomState = BaseRoomStoreState & LayoutSliceState;
+type DemoRoomState = BaseRoomStoreState & LayoutSliceState & DuckDbSliceState;
 
 // The room owns panel composition and sizes. Kepler's existing Redux store
 // remains the owner of maps, loading, exports, providers, and the assistant.
@@ -25,6 +27,7 @@ type DemoRoomState = BaseRoomStoreState & LayoutSliceState;
 export function createDemoRoomStore(sqlEnabled = true) {
   return createRoomStore<DemoRoomState>((set, get, store) => ({
     ...createBaseRoomSlice()(set, get, store),
+    ...createDuckDbSlice({connector: createSqlConnector()})(set, get, store),
     ...createLayoutSlice({
       config: {
         id: 'workspace',

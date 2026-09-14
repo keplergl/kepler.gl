@@ -50,3 +50,23 @@ the datasets; application code and dependency installation are separate.
 
 This example is a test harness for the migration, not the website's deployment
 entry point. Use it to establish feature parity before replacing the main app.
+
+## SQL panel
+
+Use the map's bottom-left **SQL panel** button to open the full-width bottom panel. It uses SQLRooms' standard schema tree and
+`SqlCodeMirrorEditor` from `@sqlrooms/sql-editor` and SQLRooms' paginated Arrow
+result table. Map imports and queries share Kepler's DuckDB connection.
+
+- Run the selection or full query with **⌘/Ctrl+Enter** or **Run query**.
+- Use **Add to Map** to create a dataset from the last query result.
+- Use **Export CSV** in the results footer to download the displayed result.
+- Import files through the existing **Add Data** dialog; the schema tree refreshes automatically.
+- Editor text and results survive closing/reopening the panel; `?sql=` links retain the SQL text.
+
+For example, open `/demo/earthquakes?sql=SELECT%20*%20FROM%20%22California%20Earthquakes%22%20LIMIT%20100`.
+
+From the repository root, run the query execution and CSV export checks with:
+
+```sh
+node --test examples/demo-app-sqlrooms/test/*.test.cjs
+```

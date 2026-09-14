@@ -46,9 +46,12 @@
     "@sqlrooms/ai": "0.29.0",
     "@sqlrooms/ai-core": "0.29.0",
     "@sqlrooms/ai-settings": "0.29.0",
+    "@sqlrooms/data-table": "0.29.0",
     "@sqlrooms/duckdb": "0.29.0",
     "@sqlrooms/layout": "0.29.0",
     "@sqlrooms/room-store": "0.29.0",
+    "@sqlrooms/schema-tree": "0.29.0",
+    "@sqlrooms/sql-editor": "0.29.0",
     "@sqlrooms/ui": "0.29.0",
     "@tailwindcss/vite": "^4.3.3",
     "@turf/bbox": "^7.0.0",
@@ -60,6 +63,7 @@
     "apache-arrow": ">=15.0.0",
     "classnames": "^2.2.1",
     "color-interpolate": "^1.0.5",
+    "d3-dsv": "^3.0.1",
     "d3-format": "^2.0.0",
     "dropbox": "^4.0.12",
     "echarts": "^5.5.1",
@@ -120,6 +124,7 @@
   "devDependencies": {
     "@dotenv-run/esbuild": "^1.5.0",
     "@tailwindcss/cli": "^4.3.3",
+    "@types/d3-dsv": "^3.0.7",
     "esbuild-plugin-replace": "^1.4.0"
   },
   "name": "kepler-sqlrooms-demo",

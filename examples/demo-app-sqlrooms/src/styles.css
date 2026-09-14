@@ -93,3 +93,24 @@ body > [data-state='open'][role='dialog'] {
   width: 80vw;
   max-width: 80vw;
 }
+
+@source '../node_modules/@sqlrooms/sql-editor/dist/**/*.js';
+@source '../node_modules/@sqlrooms/codemirror/dist/**/*.js';
+@source '../node_modules/@sqlrooms/data-table/dist/**/*.js';
+
+/* The map's sidebar shares its resizable pane, above the full-width SQL panel. */
+.sqlrooms-map-pane .kepler-app-shell {
+  position: relative;
+  min-height: 0;
+}
+.sqlrooms-map-pane [data-slot='sidebar-container'] {
+  position: absolute;
+  height: 100%;
+}
+
+@source '../node_modules/@sqlrooms/schema-tree/dist/**/*.js';
+
+/* Reserve space beside the SQL toggle for the map scale. */
+.sqlrooms-map-pane[data-sql-control='true'] .map-scale {
+  margin-left: 48px;
+}

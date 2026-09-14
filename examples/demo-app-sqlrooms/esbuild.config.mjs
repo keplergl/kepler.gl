@@ -61,10 +61,7 @@ const KEPLER_SRC_ALIASES = Object.fromEntries(
 
 const getKeplerAliases = () => ({
   ...KEPLER_SRC_ALIASES,
-  '@kepler.gl/sqlrooms/shell': join(SRC_DIR, 'sqlrooms/src/components/KeplerAppShell.tsx'),
-  // duckdb ships a components subpath (SqlPanel); esbuild picks the longest
-  // matching alias key, so this wins for `@kepler.gl/duckdb/components`.
-  '@kepler.gl/duckdb/components': join(SRC_DIR, 'duckdb', 'src', 'components', 'index.tsx')
+  '@kepler.gl/sqlrooms/shell': join(SRC_DIR, 'sqlrooms/src/components/KeplerAppShell.tsx')
 });
 
 /**
