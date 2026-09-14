@@ -4,7 +4,6 @@
 import esbuild from 'esbuild';
 import {replace} from 'esbuild-plugin-replace';
 import {dotenvRun} from '@dotenv-run/esbuild';
-import {assistantDuckDbPlugin} from './assistant-duckdb-plugin.mjs';
 
 import process from 'node:process';
 import fs from 'node:fs';
@@ -200,7 +199,6 @@ const config = {
     'process.env.NODE_ENV': NODE_ENV
   },
   plugins: [
-    assistantDuckDbPlugin,
     dotenvRun({
       verbose: true,
       environment: NODE_ENV,
@@ -218,21 +216,6 @@ const config = {
         build.onResolve({filter: /^monaco-editor\/esm\//}, args => {
           if (args.path.endsWith('.js') || args.path.endsWith('.css')) return null;
           const subpath = args.path + '.js';
-          const resolved = join(process.cwd(), BASE_NODE_MODULES_DIR, subpath);
-          return {path: resolved};
-        });
-      }
-    },
-    // Resolve @sqlrooms/ai-core internal component imports that bypass the package exports map
-    {
-      name: 'resolve-sqlrooms-ai-core-internals',
-      setup(build) {
-        build.onResolve({filter: /^@sqlrooms\/ai-core\/components\//}, args => {
-          const subpath =
-            args.path.replace(
-              '@sqlrooms/ai-core/components/',
-              '@sqlrooms/ai-core/dist/components/'
-            ) + '.js';
           const resolved = join(process.cwd(), BASE_NODE_MODULES_DIR, subpath);
           return {path: resolved};
         });

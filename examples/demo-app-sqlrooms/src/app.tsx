@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
 import {useDispatch, useStore} from 'react-redux';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
@@ -11,7 +11,7 @@ import isPropValid from '@emotion/is-prop-valid';
 import {useParams, useSearchParams, useLocation} from 'react-router-dom';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {setMapBoundary} from '@openassistant/kepler-assistant';
-import {AiAssistantPanel} from '@openassistant/kepler-assistant';
+import {AiAssistantPanel} from './components/assistant';
 import {theme} from '@kepler.gl/styles';
 import {SidebarFactory} from '@kepler.gl/components';
 import {KeplerAppShell, SqlroomsSidebarFactory} from '@kepler.gl/sqlrooms/shell';
@@ -156,6 +156,17 @@ const App = () => {
   const sqlPanelState = useSqlPanelState(query.sql || '');
   const dispatch = useDispatch();
   const reduxStore = useStore();
+  const assistantHost = useMemo(
+    () => ({
+      reduxStore,
+      stateAccessors: {
+        getVisState: () => (reduxStore.getState() as any)?.demo?.keplerGl?.map?.visState,
+        getMapBoundary: () =>
+          (reduxStore.getState() as any)?.demo?.aiAssistant?.keplerGl?.mapBoundary
+      }
+    }),
+    [reduxStore]
+  );
   const mapReady = useSelector((state: any) => Boolean(state?.demo?.keplerGl?.map));
   const modalOpen = useSelector((state: any) =>
     Boolean(state?.demo?.keplerGl?.map?.uiState.currentModal)
@@ -935,6 +946,7 @@ const App = () => {
                 sqlEnabled={duckDbPluginEnabled}
                 sqlOpen={Boolean(isSqlPanelOpen)}
                 assistantOpen={Boolean(isAiAssistantPanelOpen)}
+                assistantHost={assistantHost}
                 onPanelOpenChange={onPanelOpenChange}
                 map={
                   <div
@@ -989,17 +1001,7 @@ const App = () => {
                   </div>
                 }
                 sql={<SqlPanel state={sqlPanelState} />}
-                assistant={
-                  <AiAssistantPanel
-                    reduxStore={reduxStore}
-                    stateAccessors={{
-                      getVisState: () =>
-                        (reduxStore?.getState() as any)?.demo?.keplerGl?.map?.visState,
-                      getMapBoundary: () =>
-                        (reduxStore?.getState() as any)?.demo?.aiAssistant?.keplerGl?.mapBoundary
-                    }}
-                  />
-                }
+                assistant={<AiAssistantPanel />}
               />
             </div>
           </GlobalStyle>

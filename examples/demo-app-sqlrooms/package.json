@@ -42,7 +42,7 @@
     "@loaders.gl/csv": "^4.3.2",
     "@loaders.gl/json": "^4.3.2",
     "@loaders.gl/parquet": "^4.3.2",
-    "@openassistant/kepler-assistant": "^0.0.15",
+    "@openassistant/kepler-assistant": "patch:@openassistant/kepler-assistant@npm%3A0.0.15#~/.yarn/patches/@openassistant-kepler-assistant-npm-0.0.15-33432e22b5.patch",
     "@sqlrooms/ai": "0.29.0",
     "@sqlrooms/ai-core": "0.29.0",
     "@sqlrooms/ai-settings": "0.29.0",

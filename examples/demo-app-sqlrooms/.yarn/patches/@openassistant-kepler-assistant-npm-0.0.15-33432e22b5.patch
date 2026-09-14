@@ -1,0 +1,167 @@
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index 632d4efab92a1abf105e63177ceedf3183f6ded2..dab837c945b885f58001e6ef3ba4be52bebf667e 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -5,13 +5,12 @@ export { ANALYSIS_TOOL_IDS, AnalysisEngine, isAnalysisTool } from './analysis-co
+ export { DuckDbEngine, QueryResult, QueryableConnector } from './duckdb-engine.js';
+ export { createMockConnector } from './mock-connector.js';
+ export { Agent, AgentResult, AgentStep, KeywordPlanner, Planner, ToolRunner } from './agent.js';
+-export { RoomState, getKeplerContext, getKeplerVisState, getReduxDispatch, getReduxStore, roomStore, setKeplerStateAccessors, setReduxStore, skillStorage, useRoomStore } from './store.js';
++export { RoomState, getKeplerContext, getKeplerVisState, getReduxDispatch, getReduxStore, setKeplerStateAccessors, setReduxStore, skillStorage } from './store.js';
+ export { KEPLER_COMMAND_OWNER, getAllCommands, getChartCommands, getGeoCommands, getGeodaAnalysisCommand, getKeplerCommands, getQueryCommands } from './commands/index.js';
+ export { getAnalysisEngine, runAnalysis, runSql } from './analysis/index.js';
+ export { DuckdbTableInfo, KeplerDispatch, LLM_PREVIEW_MAX_TOTAL_LENGTH, LLM_PREVIEW_MAX_VALUE_LENGTH, NUMBER_OF_ROWS_RETURN_TO_LLM, SpatialJoinGeometries, appendColumnsToDataset, arrowTableToObjects, buildAddColumnPayload, convertArrowRowToObject, datasetNameToTableName, dropTable, ensureKeplerDatasetsMaterialized, ensureSpatialExtension, formatResultsForLLM, getConnector, getDatasetContext, getDuckdbTableContext, getDuckdbTableContextSync, getDuckdbTableNames, getGeometriesFromDataset, getTableAsGeoJSON, getTableColumns, getValuesFromDataset, getValuesFromVectorTileLayer, hasGeometryColumn, highlightRows, interpolateColor, isObjectColumn, loadTableToKepler, queryTable, resetMaterializedDatasets, restoreObjectColumns, saveAsDataset, saveColumnsToDuckdb, saveGeojsonToDuckdb, saveRowsToDuckdb, saveToDuckdb, setStoreConnectorProvider, stringifyObjectColumn, tableExists, tableToLLMResult } from './glue/index.js';
+ import { z } from 'zod';
+ import { ToolRendererRegistry } from '@sqlrooms/ai-core';
+-export { AiAssistantPanel } from './assistant-panel.js';
+ import React, { ComponentType } from 'react';
+ import { MapControls } from '@kepler.gl/types';
+ import { MapControlTooltipFactory } from '@kepler.gl/components';
+@@ -211,3 +210,11 @@ declare namespace AiAssistantControlFactory {
+ }
+ 
+ export { AiAssistantControlFactory, type AiAssistantState, type BoxplotToolOutput, type BoxplotUiPayload, type HistogramBin, type HistogramToolOutput, type HistogramUiPayload, QueryToolParameters, SET_MAP_BOUNDARY, SET_SCREEN_CAPTURED, SET_START_SCREEN_CAPTURE, aiAssistantReducer, createWrappedQueryTool, getEchartsHoistedRenderers, getEchartsToolRenderers, setChartSelectionHandler, setMapBoundary, setScreenCaptured, setStartScreenCapture };
++
++/** Host-owned SQLRooms integration used by the Kepler SQLRooms demo. */
++export {AI_SETTINGS} from './chat/index.js';
++export declare function createKeplerAssistantInstructions(): string;
++export declare function createKeplerAssistantTools(store: import('@sqlrooms/room-store').StoreApi<import('./store.js').RoomState>): {
++  discoverSkill: ReturnType<typeof import('./chat/index.js').createDiscoverSkillTool>;
++  runSkill: ReturnType<typeof import('./chat/index.js').createRunSkillTool>;
++};
+diff --git a/dist/index.js b/dist/index.js
+index 1c646cd0a88276180484fee82749c72e4d9b1106..3d65ba7c49290bd41ff3014af8831579d5c30e34 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -7023,6 +7023,22 @@ async function refreshSkillListings() {
+     console.error("[store] Failed to refresh skill listings:", err);
+   }
+ }
++// Host integration: the application owns the SQLRooms store and its lifecycle.
++function createKeplerAssistantTools(store) {
++  const surface = createRegistryChatSurface(store);
++  return {
++    discoverSkill: createDiscoverSkillTool({ store, storage: skillStorage }),
++    runSkill: createRunSkillTool({
++      store,
++      storage: skillStorage,
++      getChatToolSurface: () => surface,
++      getModel: () => getModel(store)
++    })
++  };
++}
++function createKeplerAssistantInstructions() {
++  return `${createKeplerAiInstructions()}\n\n${buildSkillsPromptFromListings(cachedListings)}`;
++}
+ var reduxStore, keplerStateAccessors, skillStorage, cachedListings, refreshSeq, roomStore, useRoomStore, chatToolSurface;
+ var init_store = __esm({
+   "src/store.ts"() {
+@@ -7045,78 +7061,6 @@ var init_store = __esm({
+     skillStorage.subscribe?.(() => {
+       void refreshSkillListings();
+     });
+-    ({ roomStore, useRoomStore } = createRoomStore(
+-      persistSliceConfigs(
+-        {
+-          name: "kepler-ai-assistant-state",
+-          version: 1,
+-          migrate: (persistedState, version) => {
+-            if (version >= 1) return persistedState;
+-            if (typeof persistedState !== "object" || persistedState === null || !("aiSettings" in persistedState)) {
+-              return persistedState;
+-            }
+-            const defaults = createDefaultAiSettingsConfig(AI_SETTINGS);
+-            const state = persistedState;
+-            return {
+-              ...state,
+-              aiSettings: AiSettingsSliceConfig.parse({
+-                defaults,
+-                persisted: state.aiSettings
+-              })
+-            };
+-          },
+-          sliceConfigSchemas: {
+-            ai: AiSliceConfig,
+-            aiSettings: AiSettingsSliceConfig
+-          }
+-        },
+-        (set, get, store) => ({
+-          ...createBaseRoomSlice()(set, get, store),
+-          ...createDuckDbSlice()(set, get, store),
+-          ...createCommandSlice()(set, get, store),
+-          ...createAiSettingsSlice({ config: AI_SETTINGS })(set, get, store),
+-          ...createAiSlice({
+-            config: createDefaultAiConfig(),
+-            getInstructions: () => {
+-              const base = createKeplerAiInstructions(store);
+-              const skillsBlock = buildSkillsPromptFromListings(cachedListings);
+-              return skillsBlock ? `${base}
+-
+-${skillsBlock}` : base;
+-            },
+-            toolRenderers: {
+-              ...createDefaultAiToolRenderers(),
+-              ...getEchartsToolRenderers()
+-            },
+-            tools: {
+-              ...createDefaultAiTools(store, { query: {}, commands: {}, tables: false }),
+-              // Override the stock `query` tool (which hides all rows from the LLM
+-              // because numberOfRowsToShareWithLLM defaults to 0) with a wrapper
+-              // that runs against the kepler tools' DuckDB connector and surfaces
+-              // the first N rows as a ~1000-char preview. See query-tool-wrapper.ts.
+-              query: createWrappedQueryTool(),
+-              discoverSkill: createDiscoverSkillTool({ store, storage: skillStorage }),
+-              runSkill: createRunSkillTool({
+-                store,
+-                storage: skillStorage,
+-                getChatToolSurface: () => chatToolSurface,
+-                getModel: () => getModel(store)
+-              })
+-            }
+-          })(set, get, store)
+-        })
+-      )
+-    ));
+-    if (typeof window !== "undefined") {
+-      window.__keplerRoomStore = roomStore;
+-    }
+-    chatToolSurface = createRegistryChatSurface(roomStore);
+-    setStoreConnectorProvider(async () => roomStore.getState().db.getConnector());
+-    registerCommandsForOwner(
+-      roomStore,
+-      KEPLER_COMMAND_OWNER,
+-      Object.values(getAllCommands(getKeplerContext()))
+-    );
+   }
+ });
+ 
+@@ -8052,10 +7996,12 @@ function AiAssistantControlFactory(MapControlTooltip) {
+   return React10.memo(AiAssistantControl);
+ }
+ export {
++  AI_SETTINGS,
++  createKeplerAssistantTools,
++  createKeplerAssistantInstructions,
+   ANALYSIS_TOOL_IDS,
+   Agent,
+   AiAssistantControlFactory,
+-  AiAssistantPanel,
+   AnalysisEngine,
+   DuckDbEngine,
+   KEPLER_COMMAND_OWNER,
+@@ -8112,7 +8058,6 @@ export {
+   queryTable,
+   resetMaterializedDatasets,
+   restoreObjectColumns,
+-  roomStore,
+   runAnalysis,
+   runSql,
+   saveAsDataset,
+@@ -8132,6 +8077,4 @@ export {
+   tableExists,
+   tableToLLMResult,
+   toChatToolSurface,
+-  useRoomStore
+ };
+-//# sourceMappingURL=index.js.map
+\ No newline at end of file
