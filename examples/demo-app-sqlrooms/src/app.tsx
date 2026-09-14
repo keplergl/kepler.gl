@@ -162,7 +162,6 @@ const App = () => {
     (state: any) => state?.demo?.keplerGl?.map?.uiState.activeSidePanel
   );
   const readOnly = useSelector((state: any) => state?.demo?.keplerGl?.map?.uiState.readOnly);
-  const mapTitle = useSelector((state: any) => state?.demo?.keplerGl?.map?.visState.mapInfo?.title);
   const lastSidePanel = useRef('layer');
   useEffect(() => {
     if (activeSidePanel) lastSidePanel.current = activeSidePanel;
@@ -933,7 +932,6 @@ const App = () => {
                 onSidebarOpenChange={onSidebarOpenChange}
                 readOnly={readOnly}
                 modalOpen={modalOpen}
-                title={mapTitle || 'Untitled Map'}
               >
                 <SqlroomsDemoLayout
                   sqlEnabled={duckDbPluginEnabled}
