@@ -52,10 +52,18 @@ function degreesToRadians(degree: number): number {
   return degree * (Math.PI / 180);
 }
 
+function offsetLngLatByMeters(point: LngLatAltitude, eastMeters: number): LngLatAltitude {
+  const shifted = addMetersToLngLat(point, [eastMeters, 0, 0]);
+  // addMetersToLngLat returns [lng, lat]; keep altitude so rim and center
+  // project from the same height.
+  return point.length >= 3 && Number.isFinite(point[2])
+    ? [shifted[0], shifted[1], point[2]]
+    : [shifted[0], shifted[1]];
+}
+
 function calcRadius(viewport: MapViewport, point: LngLatAltitude, radiusInMeters: number): number {
   const [x, y] = viewport.project(point);
-  const shifted = addMetersToLngLat(point, [radiusInMeters, 0, 0]);
-  const [x1, y1] = viewport.project(shifted);
+  const [x1, y1] = viewport.project(offsetLngLatByMeters(point, radiusInMeters));
   const dx = x1 - x;
   const dy = y1 - y;
   return Math.sqrt(dx * dx + dy * dy);
@@ -277,12 +285,13 @@ export function resizeCircle(
 ): Partial<Annotation> {
   if (annotation.kind !== AnnotationKind.CIRCLE) return {};
   const {anchorPoint, radiusInMeters} = annotation;
-  const shifted = addMetersToLngLat(anchorPoint, [radiusInMeters, 0, 0]);
-  const [x] = viewport.project(shifted);
-  const newPoint = viewport.unproject([x + delta.x, viewport.project(anchorPoint)[1]]);
-  const dx = newPoint[0] - anchorPoint[0];
-  const currentRadius = shifted[0] - anchorPoint[0];
-  const ratio = currentRadius !== 0 ? (currentRadius + dx) / currentRadius : 1;
+  // Scale by the on-screen radius at the anchor's altitude. Unprojecting onto
+  // the ground plane would change radius with pitch even when delta.x is 0.
+  const currentScreenRadius = calcRadius(viewport, anchorPoint, radiusInMeters);
+  if (!(currentScreenRadius > 0)) {
+    return {radiusInMeters: Math.max(0, radiusInMeters)};
+  }
+  const ratio = (currentScreenRadius + delta.x) / currentScreenRadius;
   return {radiusInMeters: Math.max(0, radiusInMeters * ratio)};
 }
 

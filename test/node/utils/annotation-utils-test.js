@@ -377,6 +377,57 @@ test('#resizeCircle -> radius cannot go below 0', t => {
   t.end();
 });
 
+test('#resizeCircle -> zero delta keeps radius for a 3D anchor', t => {
+  const annotation = makeCircleAnnotation({
+    anchorPoint: [10, 20, 80],
+    radiusInMeters: 1000
+  });
+  const pitchedViewport = {
+    ...mockViewport,
+    // Mimic pitch: altitude shifts y, so ground-plane unproject would drift.
+    project: ([lng, lat, alt = 0]) => [lng * 10 + 500 + alt * 0.2, lat * -10 + 300 - alt]
+  };
+
+  const changes = resizeCircle(annotation, {x: 0, y: 0}, pitchedViewport);
+
+  t.equal(changes.radiusInMeters, 1000, 'zero handle movement should not change radius');
+
+  t.end();
+});
+
+test('#resizeCircle -> scales radius by screen-space handle delta', t => {
+  const annotation = makeCircleAnnotation({
+    anchorPoint: [0, 0, 50],
+    radiusInMeters: 1000
+  });
+  const marker = makeMarker(annotation, mockViewport);
+  t.ok(marker.r > 0, 'circle should have a screen radius');
+
+  const doubled = resizeCircle(annotation, {x: marker.r, y: 0}, mockViewport);
+  t.equal(doubled.radiusInMeters, 2000, 'dragging the handle by one radius should double meters');
+
+  t.end();
+});
+
+test('#makeMarker -> CIRCLE screen radius is independent of altitude', t => {
+  const ground = makeMarker(
+    makeCircleAnnotation({anchorPoint: [10, 20], radiusInMeters: 1000}),
+    mockViewport
+  );
+  const raised = makeMarker(
+    makeCircleAnnotation({anchorPoint: [10, 20, 40], radiusInMeters: 1000}),
+    mockViewport
+  );
+
+  t.equal(
+    Math.round(raised.r * 1000) / 1000,
+    Math.round(ground.r * 1000) / 1000,
+    'raised and ground circles should have the same screen radius in this projection'
+  );
+
+  t.end();
+});
+
 test('#isPointVisibleOnGlobe -> front-facing point round-trips to itself', t => {
   // A GlobeViewport-like mock where project/unproject are inverses: any point
   // resolves back to itself, i.e. it is on the near (visible) hemisphere.
