@@ -5,10 +5,8 @@ import classnames from 'classnames';
 import React, {useState} from 'react';
 import Markdown from 'markdown-to-jsx';
 import styled from 'styled-components';
-import {useLocalStorage} from 'usehooks-ts';
 
 import {Icons, IconRoundSmall, LinkRenderer, MapControlButton} from '@kepler.gl/components';
-import {getApplicationConfig} from '@kepler.gl/utils';
 
 const StyledFloatingPanel = styled.div`
   margin-right: 12px;
@@ -139,64 +137,6 @@ export function SampleMapPanel(props) {
               iconComponent={Icons.CodeAlt}
               height="17px"
             />
-          </div>
-        </StyledProjectPanel>
-      ) : (
-        <MapControlButton
-          className={classnames('map-control-button', 'info-panel', {isActive})}
-          onClick={e => {
-            e.preventDefault();
-            setActive(true);
-          }}
-        >
-          <Icons.Docs height="18px" />
-        </MapControlButton>
-      )}
-    </StyledFloatingPanel>
-  );
-}
-
-export function BannerMapPanel() {
-  const [isActive, setActive] = useState(true);
-  // Once the banner is closed, the user won't see the banner during next sessions.
-  const [showBanner, setShowBanner] = useLocalStorage(
-    'show-duckdb-preview-banner',
-    getApplicationConfig().showReleaseBanner
-  );
-  const [wasVisible] = useState(showBanner);
-
-  if (!showBanner && !wasVisible) {
-    return null;
-  }
-
-  return (
-    <StyledFloatingPanel>
-      {isActive ? (
-        <StyledProjectPanel>
-          <div className="project-title">
-            <div>{'Kepler.gl 3.1 + DuckDB is here!'}</div>
-
-            <CloseButton
-              onClick={() => {
-                setShowBanner(false);
-                setActive(false);
-              }}
-            />
-          </div>
-          <div className="project-description">
-            <Markdown
-              options={{
-                overrides: {
-                  a: {
-                    component: LinkRenderer
-                  }
-                }
-              }}
-            >
-              {
-                '[Click here](https://kepler-preview.foursquare.com) to check out the preview of Kepler.gl 3.1 with DuckDB enabled!'
-              }
-            </Markdown>
           </div>
         </StyledProjectPanel>
       ) : (
