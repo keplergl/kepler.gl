@@ -5744,9 +5744,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/kepler-assistant@npm:^0.0.15":
-  version: 0.0.15
-  resolution: "@openassistant/kepler-assistant@npm:0.0.15"
+"@openassistant/kepler-assistant@npm:^0.0.16":
+  version: 0.0.16
+  resolution: "@openassistant/kepler-assistant@npm:0.0.16"
   dependencies:
     "@ai-sdk/openai-compatible": "npm:^1.0.18"
     "@geoda/core": "npm:^0.0.25"
@@ -5781,7 +5781,7 @@ __metadata:
     zip3: "npm:^1.0.4"
     zod: "npm:^4.4.0"
     zustand: "npm:^5.0.14"
-  checksum: 10c0/e491276aaabdb4a04ecff57c6d3003a2029da15d7a4b370ff38835868a77ddf7131f55541c65853d570f1ae1fe38c6c6a556fef0a62032827669a631ad546169
+  checksum: 10c0/2a9a9c2d4b08d41af66721c72a50673800491570593743782246b2be642dcf8fb653715f0ebc92e29867759891937abdc2b7111e382ccd39b6c2f89ddb794e1c
   languageName: node
   linkType: hard
 
@@ -16487,7 +16487,7 @@ __metadata:
     "@loaders.gl/csv": "npm:^4.3.2"
     "@loaders.gl/json": "npm:^4.3.2"
     "@loaders.gl/parquet": "npm:^4.3.2"
-    "@openassistant/kepler-assistant": "npm:^0.0.15"
+    "@openassistant/kepler-assistant": "npm:^0.0.16"
     "@sqlrooms/ai": "npm:0.29.0-rc.12"
     "@sqlrooms/ai-core": "npm:0.29.0-rc.12"
     "@sqlrooms/ai-settings": "npm:0.29.0-rc.12"
