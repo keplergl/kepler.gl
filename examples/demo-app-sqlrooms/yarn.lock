@@ -398,6 +398,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@codemirror/lang-sql@npm:^6.8.0":
+  version: 6.10.0
+  resolution: "@codemirror/lang-sql@npm:6.10.0"
+  dependencies:
+    "@codemirror/autocomplete": "npm:^6.0.0"
+    "@codemirror/language": "npm:^6.0.0"
+    "@codemirror/state": "npm:^6.0.0"
+    "@lezer/common": "npm:^1.2.0"
+    "@lezer/highlight": "npm:^1.0.0"
+    "@lezer/lr": "npm:^1.0.0"
+  checksum: 10c0/05875f1d03fb741c392d9beed61d29398edd9bcb057340ad14e301e2576bb1652c6bfe9e4d8b14afbab42449b2db03dce15e81348ea57c2daddb94604e3671b0
+  languageName: node
+  linkType: hard
+
 "@codemirror/language@npm:^6.0.0, @codemirror/language@npm:^6.10.0, @codemirror/language@npm:^6.6.0":
   version: 6.12.4
   resolution: "@codemirror/language@npm:6.12.4"
@@ -1531,6 +1545,90 @@ __metadata:
   version: 0.0.25
   resolution: "@geoda/regression@npm:0.0.25"
   checksum: 10c0/9ef54074a38a1a77902c840384436702f51531de8e1c663d070513d090b7de29e2ccbde4010b80caf24f9ed762008d5e237189198423cf45745aed3e8d885c71
+  languageName: node
+  linkType: hard
+
+"@hookform/resolvers@npm:^5.0.0":
+  version: 5.9.1
+  resolution: "@hookform/resolvers@npm:5.9.1"
+  dependencies:
+    "@standard-schema/utils": "npm:^0.3.0"
+  peerDependencies:
+    "@sinclair/typebox": ">=0.25.24"
+    "@standard-schema/spec": ^1.0.0
+    "@typeschema/main": ">=0.13.7"
+    "@vinejs/vine": ^2.0.0 || ^3.0.0 || ^4.0.0
+    ajv: ^8.12.0
+    ajv-errors: ^3.0.0
+    ajv-formats: ^2.1.1
+    arktype: ^2.0.0
+    ata-validator: ^1.2.0
+    class-transformer: ">=0.4.0"
+    class-validator: ">=0.12.0"
+    computed-types: ^1.0.0
+    effect: ^3.10.3
+    fluentvalidation-ts: ^3.0.0
+    fp-ts: ^2.7.0
+    io-ts: ^2.0.0
+    joi: ^17.0.0 || ^18.0.0
+    nope-validator: ">=0.12.0"
+    react-hook-form: ^7.55.0
+    superstruct: ">=0.12.0"
+    typanion: ^3.3.2
+    valibot: ">=0.31.0 || ^1.0.0-beta.4 || ^1.0.0-rc"
+    vest: ">=6.0.0"
+    yup: ^1.0.0
+    zod: ^3.25.0 || ^4.0.0
+  peerDependenciesMeta:
+    "@sinclair/typebox":
+      optional: true
+    "@standard-schema/spec":
+      optional: true
+    "@typeschema/main":
+      optional: true
+    "@vinejs/vine":
+      optional: true
+    ajv:
+      optional: true
+    ajv-errors:
+      optional: true
+    ajv-formats:
+      optional: true
+    arktype:
+      optional: true
+    ata-validator:
+      optional: true
+    class-transformer:
+      optional: true
+    class-validator:
+      optional: true
+    computed-types:
+      optional: true
+    effect:
+      optional: true
+    fluentvalidation-ts:
+      optional: true
+    fp-ts:
+      optional: true
+    io-ts:
+      optional: true
+    joi:
+      optional: true
+    nope-validator:
+      optional: true
+    superstruct:
+      optional: true
+    typanion:
+      optional: true
+    valibot:
+      optional: true
+    vest:
+      optional: true
+    yup:
+      optional: true
+    zod:
+      optional: true
+  checksum: 10c0/08d4e1455a072bea182468d878527e2e99c6d079fe56ffc5297e03a8219fe7544db092afcdf7a950e5421390d4dae3a21398c8ccd0b2c8639d0e0ff9e21410c2
   languageName: node
   linkType: hard
 
@@ -5439,6 +5537,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@marimo-team/codemirror-sql@npm:^0.2.0":
+  version: 0.2.8
+  resolution: "@marimo-team/codemirror-sql@npm:0.2.8"
+  dependencies:
+    node-sql-parser: "npm:^5.3.13"
+  peerDependencies:
+    "@codemirror/autocomplete": ^6
+    "@codemirror/lint": ^6
+    "@codemirror/state": ^6
+    "@codemirror/view": ^6
+  checksum: 10c0/a82c2148735707eba3fa40649c56b57faa9f549d50385add2744471f0aff5666f408c71d7cda0d905767ceed74289ee0c604d5d9e8d9fdafba6b10c952acab45
+  languageName: node
+  linkType: hard
+
 "@math.gl/core@npm:3.6.3, @math.gl/core@npm:^3.5.0, @math.gl/core@npm:^3.5.1, @math.gl/core@npm:^3.6.0, @math.gl/core@npm:^3.6.2":
   version: 3.6.3
   resolution: "@math.gl/core@npm:3.6.3"
@@ -7397,6 +7509,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@sqlrooms/blocks@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/blocks@npm:0.29.0"
+  peerDependencies:
+    react: ">=18"
+  checksum: 10c0/e5dcdbb4e8656fe69465d8533f691ceee7fcc39273b365b970b906605223e34602ddd539b60070d259188a924d6cc0fb12e3cd4a34b8e85fb509858544bc2865
+  languageName: node
+  linkType: hard
+
 "@sqlrooms/codemirror@npm:0.29.0":
   version: 0.29.0
   resolution: "@sqlrooms/codemirror@npm:0.29.0"
@@ -7520,6 +7641,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@sqlrooms/monaco-editor@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/monaco-editor@npm:0.29.0"
+  dependencies:
+    "@monaco-editor/react": "npm:^4.7.0"
+    "@sqlrooms/ui": "npm:0.29.0"
+    "@sqlrooms/utils": "npm:0.29.0"
+    monaco-editor: "npm:^0.55.0"
+  peerDependencies:
+    react: ">=18"
+    react-dom: ">=18"
+  checksum: 10c0/80a264758a75529aff58bb16418e5256c3013306f78fc7c097071ee6fcb2916d46082e6e59cc20478b580e573c6abaa026fd934006d18658f15bc6d81fbe8bcb
+  languageName: node
+  linkType: hard
+
 "@sqlrooms/recharts@npm:0.29.0":
   version: 0.29.0
   resolution: "@sqlrooms/recharts@npm:0.29.0"
@@ -7583,6 +7719,76 @@ __metadata:
   peerDependencies:
     react: ">=18"
   checksum: 10c0/b62996a61312a1256c2b0d67a8ee955a18c4a60722a86d03d962b97f65b518cb722db7d06817c7c4c07d2043b3550b6e005d71c88dca5ef4afda87143af40af6
+  languageName: node
+  linkType: hard
+
+"@sqlrooms/schema-tree@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/schema-tree@npm:0.29.0"
+  dependencies:
+    "@sqlrooms/data-table": "npm:0.29.0"
+    "@sqlrooms/duckdb": "npm:0.29.0"
+    "@sqlrooms/ui": "npm:0.29.0"
+    "@sqlrooms/utils": "npm:0.29.0"
+    lucide-react: "npm:^0.556.0"
+  peerDependencies:
+    react: ">=18"
+    react-dom: ">=18"
+  checksum: 10c0/ff27bba028c53e5b22f269f36d4a5f6316e370f756ab6ab1865f9f7c2447cf28c75ce3bd26d0f66b3b684ff4f34bc8c2edb2764f11e327ba96f628db89250cae
+  languageName: node
+  linkType: hard
+
+"@sqlrooms/sql-editor-config@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/sql-editor-config@npm:0.29.0"
+  dependencies:
+    zod: "npm:^4.1.8"
+  checksum: 10c0/5399099a021c7aa4d58165a0ef36068c8ab6a1c20c5a9233e6642731eb1233b0de3ef08d54c33cbc354e0f3316700d203aa312df624891f5318952e5c4cf452b
+  languageName: node
+  linkType: hard
+
+"@sqlrooms/sql-editor@npm:0.29.0":
+  version: 0.29.0
+  resolution: "@sqlrooms/sql-editor@npm:0.29.0"
+  dependencies:
+    "@codemirror/autocomplete": "npm:^6.20.0"
+    "@codemirror/lang-sql": "npm:^6.8.0"
+    "@codemirror/language": "npm:^6.10.0"
+    "@codemirror/state": "npm:^6.4.0"
+    "@codemirror/view": "npm:^6.33.0"
+    "@hookform/resolvers": "npm:^5.0.0"
+    "@lezer/highlight": "npm:^1.2.0"
+    "@marimo-team/codemirror-sql": "npm:^0.2.0"
+    "@monaco-editor/react": "npm:^4.7.0"
+    "@paralleldrive/cuid2": "npm:^3.0.0"
+    "@sqlrooms/blocks": "npm:0.29.0"
+    "@sqlrooms/codemirror": "npm:0.29.0"
+    "@sqlrooms/data-table": "npm:0.29.0"
+    "@sqlrooms/db": "npm:0.29.0"
+    "@sqlrooms/duckdb": "npm:0.29.0"
+    "@sqlrooms/monaco-editor": "npm:0.29.0"
+    "@sqlrooms/room-shell": "npm:0.29.0"
+    "@sqlrooms/schema-tree": "npm:0.29.0"
+    "@sqlrooms/sql-editor-config": "npm:0.29.0"
+    "@sqlrooms/ui": "npm:0.29.0"
+    "@sqlrooms/utils": "npm:0.29.0"
+    "@tanstack/react-table": "npm:^8.21.3"
+    d3-dsv: "npm:^3.0.1"
+    es-toolkit: "npm:^1.39.9"
+    file-saver: "npm:^2.0.5"
+    immer: "npm:^11.0.1"
+    lucide-react: "npm:^0.556.0"
+    monaco-editor: "npm:^0.55.1"
+    react-hook-form: "npm:^7.63.0"
+    react-markdown: "npm:^10.1.0"
+    remark-gfm: "npm:^4.0.1"
+    zod: "npm:^4.1.8"
+  peerDependencies:
+    apache-arrow: ">=17"
+    react: ">=18"
+    react-dom: ">=18"
+    react-hook-form: ^7.57.0
+  checksum: 10c0/b3ae9ea759031091bd2e48ed3f75089b966b77825a54ef80e1e84bed45647dd367400d48485cb5034aa9f26bb2b92024904ad2651c4e1c55969742f021b9c6dc
   languageName: node
   linkType: hard
 
@@ -7655,6 +7861,13 @@ __metadata:
   version: 1.1.0
   resolution: "@standard-schema/spec@npm:1.1.0"
   checksum: 10c0/d90f55acde4b2deb983529c87e8025fa693de1a5e8b49ecc6eb84d1fd96328add0e03d7d551442156c7432fd78165b2c26ff561b970a9a881f046abb78d6a526
+  languageName: node
+  linkType: hard
+
+"@standard-schema/utils@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@standard-schema/utils@npm:0.3.0"
+  checksum: 10c0/6eb74cd13e52d5fc74054df51e37d947ef53f3ab9e02c085665dcca3c38c60ece8d735cebbdf18fbb13c775fbcb9becb3f53109b0e092a63f0f7389ce0993fd0
   languageName: node
   linkType: hard
 
@@ -8803,6 +9016,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/d3-dsv@npm:^3.0.7":
+  version: 3.0.7
+  resolution: "@types/d3-dsv@npm:3.0.7"
+  checksum: 10c0/c0f01da862465594c8a28278b51c850af3b4239cc22b14fd1a19d7a98f93d94efa477bf59d8071beb285dca45bf614630811451e18e7c52add3a0abfee0a1871
+  languageName: node
+  linkType: hard
+
 "@types/d3-ease@npm:^3.0.0":
   version: 3.0.2
   resolution: "@types/d3-ease@npm:3.0.2"
@@ -9112,6 +9332,13 @@ __metadata:
   version: 3.0.5
   resolution: "@types/pbf@npm:3.0.5"
   checksum: 10c0/c32348c6c81e6c31fe4a1f59983e3a9904727b809fb1e5ddec4fad49abaf93070ec26ee0c04c6516536c181c945b3c7d9e226549eaac3b2e12cb7b57f549a49c
+  languageName: node
+  linkType: hard
+
+"@types/pegjs@npm:^0.10.0":
+  version: 0.10.6
+  resolution: "@types/pegjs@npm:0.10.6"
+  checksum: 10c0/ee4a31cf07679ae5422fec95e499ad059483a9ab2815af1ada0ee858a00af6c7e6579a8e172810c1c9db04005941bef96d0dd2c28648769211f57df330f9c30f
   languageName: node
   linkType: hard
 
@@ -9731,6 +9958,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"big-integer@npm:^1.6.48":
+  version: 1.6.52
+  resolution: "big-integer@npm:1.6.52"
+  checksum: 10c0/9604224b4c2ab3c43c075d92da15863077a9f59e5d4205f4e7e76acd0cd47e8d469ec5e5dba8d9b32aa233951893b29329ca56ac80c20ce094b4a647a66abae0
+  languageName: node
+  linkType: hard
+
 "bignumber.js@npm:^9.1.0, bignumber.js@npm:^9.3.1":
   version: 9.3.1
   resolution: "bignumber.js@npm:9.3.1"
@@ -10236,6 +10470,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"commander@npm:7":
+  version: 7.2.0
+  resolution: "commander@npm:7.2.0"
+  checksum: 10c0/8d690ff13b0356df7e0ebbe6c59b4712f754f4b724d4f473d3cc5b3fdcf978e3a5dc3078717858a2ceb50b0f84d0660a7f22a96cdc50fb877d0c9bb31593d23a
+  languageName: node
+  linkType: hard
+
 "copy-to-clipboard@npm:^3.3.1, copy-to-clipboard@npm:^3.3.3":
   version: 3.3.3
   resolution: "copy-to-clipboard@npm:3.3.3"
@@ -10485,6 +10726,27 @@ __metadata:
     tsv2csv: bin/dsv2dsv
     tsv2json: bin/dsv2json
   checksum: 10c0/b5e4a0945664a941ad37d3c5ee8c8cbb3c99712ff7f36b2420446ebfc3b3909eb3d9ef2682b4a77afa6a6c5f5af1d659e17d6678863d95b244aed479b6c7c5c3
+  languageName: node
+  linkType: hard
+
+"d3-dsv@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "d3-dsv@npm:3.0.1"
+  dependencies:
+    commander: "npm:7"
+    iconv-lite: "npm:0.6"
+    rw: "npm:1"
+  bin:
+    csv2json: bin/dsv2json.js
+    csv2tsv: bin/dsv2dsv.js
+    dsv2dsv: bin/dsv2dsv.js
+    dsv2json: bin/dsv2json.js
+    json2csv: bin/json2dsv.js
+    json2dsv: bin/json2dsv.js
+    json2tsv: bin/json2dsv.js
+    tsv2csv: bin/dsv2dsv.js
+    tsv2json: bin/dsv2json.js
+  checksum: 10c0/10e6af9e331950ed258f34ab49ac1b7060128ef81dcf32afc790bd1f7e8c3cc2aac7f5f875250a83f21f39bb5925fbd0872bb209f8aca32b3b77d32bab8a65ab
   languageName: node
   linkType: hard
 
@@ -11394,6 +11656,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"es-toolkit@npm:^1.39.9":
+  version: 1.52.0
+  resolution: "es-toolkit@npm:1.52.0"
+  dependenciesMeta:
+    "@trivago/prettier-plugin-sort-imports@4.3.0":
+      unplugged: true
+    prettier-plugin-sort-re-exports@0.0.1:
+      unplugged: true
+    vitepress-plugin-sandpack@1.1.4:
+      unplugged: true
+  checksum: 10c0/465988c0a6b84b6d1d171287cbbe40c3247a1f94acea210ae14bc66b7d90c93e6839bd6937cbaf2a1d206669f3179eb26141a89d9125969a4b8e58cb7d86a2ca
+  languageName: node
+  linkType: hard
+
 "esbuild-plugin-replace@npm:^1.4.0":
   version: 1.4.0
   resolution: "esbuild-plugin-replace@npm:1.4.0"
@@ -11672,6 +11948,13 @@ __metadata:
   version: 0.8.2
   resolution: "fflate@npm:0.8.2"
   checksum: 10c0/03448d630c0a583abea594835a9fdb2aaf7d67787055a761515bf4ed862913cfd693b4c4ffd5c3f3b355a70cf1e19033e9ae5aedcca103188aaff91b8bd6e293
+  languageName: node
+  linkType: hard
+
+"file-saver@npm:^2.0.5":
+  version: 2.0.5
+  resolution: "file-saver@npm:2.0.5"
+  checksum: 10c0/0a361f683786c34b2574aea53744cb70d0a6feb0fa5e3af00f2fcb6c9d40d3049cc1470e38c6c75df24219f247f6fb3076f86943958f580e62ee2ffe897af8b1
   languageName: node
   linkType: hard
 
@@ -12444,7 +12727,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"iconv-lite@npm:^0.6.2":
+"iconv-lite@npm:0.6, iconv-lite@npm:^0.6.2":
   version: 0.6.3
   resolution: "iconv-lite@npm:0.6.3"
   dependencies:
@@ -13167,9 +13450,12 @@ __metadata:
     "@sqlrooms/ai": "npm:0.29.0"
     "@sqlrooms/ai-core": "npm:0.29.0"
     "@sqlrooms/ai-settings": "npm:0.29.0"
+    "@sqlrooms/data-table": "npm:0.29.0"
     "@sqlrooms/duckdb": "npm:0.29.0"
     "@sqlrooms/layout": "npm:0.29.0"
     "@sqlrooms/room-store": "npm:0.29.0"
+    "@sqlrooms/schema-tree": "npm:0.29.0"
+    "@sqlrooms/sql-editor": "npm:0.29.0"
     "@sqlrooms/ui": "npm:0.29.0"
     "@tailwindcss/cli": "npm:^4.3.3"
     "@tailwindcss/vite": "npm:^4.3.3"
@@ -13177,11 +13463,13 @@ __metadata:
     "@turf/helpers": "npm:^7.0.0"
     "@turf/rectangle-grid": "npm:^7.4.0"
     "@types/classnames": "npm:^2.3.1"
+    "@types/d3-dsv": "npm:^3.0.7"
     "@types/keymirror": "npm:^0.1.1"
     ai: "npm:^7.0.31"
     apache-arrow: "npm:>=15.0.0"
     classnames: "npm:^2.2.1"
     color-interpolate: "npm:^1.0.5"
+    d3-dsv: "npm:^3.0.1"
     d3-format: "npm:^2.0.0"
     dropbox: "npm:^4.0.12"
     echarts: "npm:^5.5.1"
@@ -14681,7 +14969,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"monaco-editor@npm:^0.55.1":
+"monaco-editor@npm:^0.55.0, monaco-editor@npm:^0.55.1":
   version: 0.55.1
   resolution: "monaco-editor@npm:0.55.1"
   dependencies:
@@ -14791,6 +15079,16 @@ __metadata:
   version: 0.4.0
   resolution: "node-int64@npm:0.4.0"
   checksum: 10c0/a6a4d8369e2f2720e9c645255ffde909c0fbd41c92ea92a5607fc17055955daac99c1ff589d421eee12a0d24e99f7bfc2aabfeb1a4c14742f6c099a51863f31a
+  languageName: node
+  linkType: hard
+
+"node-sql-parser@npm:^5.3.13":
+  version: 5.4.0
+  resolution: "node-sql-parser@npm:5.4.0"
+  dependencies:
+    "@types/pegjs": "npm:^0.10.0"
+    big-integer: "npm:^1.6.48"
+  checksum: 10c0/fb62be3f5b960e3ce41440e6f2b4060f0f0df7b3734f7aefe169d245fc250773a43d49c811e0dda9b7e24e44ace54df6765be0cf4d7dad4eb9e6855eeef63b8e
   languageName: node
   linkType: hard
 

@@ -16,7 +16,6 @@ const AnnotationManagerFactory = require('@kepler.gl/components').AnnotationMana
 import {AiAssistantControlFactory} from '@openassistant/kepler-assistant';
 
 import {SampleMapPanel} from '../components/map-control/map-control';
-import SqlPanelControlFactory from '../components/map-control/sql-panel-control';
 
 const StyledMapControlPanel = styled.div`
   position: relative;
@@ -73,7 +72,6 @@ CustomMapControlFactory.deps = [
   EffectControlFactory,
   EffectManagerFactory,
   SafeAnnotationManagerFactory,
-  SqlPanelControlFactory,
   AiAssistantControlFactory,
   ...MapControlFactory.deps
 ];
@@ -81,7 +79,6 @@ function CustomMapControlFactory(
   EffectControl,
   EffectManager,
   AnnotationManager,
-  SqlPanelControl,
   AiAssistantControl,
   ...deps
 ) {
@@ -89,7 +86,6 @@ function CustomMapControlFactory(
   const actionComponents = [
     ...(MapControl.defaultActionComponents ?? []),
     EffectControl,
-    SqlPanelControl,
     AiAssistantControl
   ];
 

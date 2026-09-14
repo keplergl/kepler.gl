@@ -16,10 +16,11 @@ import {theme} from '@kepler.gl/styles';
 import {SidebarFactory} from '@kepler.gl/components';
 import {KeplerAppShell, SqlroomsSidebarFactory} from '@kepler.gl/sqlrooms/shell';
 import {SqlroomsDemoLayout} from './components/sqlrooms-demo-layout';
-import {ThemeProvider as SqlroomsThemeProvider} from '@sqlrooms/ui';
+import {Button, ThemeProvider as SqlroomsThemeProvider} from '@sqlrooms/ui';
+import {SquareTerminal} from 'lucide-react';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
-import {SqlPanel} from '@kepler.gl/duckdb/components';
+import {SqlPanel, useSqlPanelState} from './components/sql-panel';
 import Banner from './components/banner';
 import Announcement, {FormLink} from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
@@ -152,6 +153,7 @@ const App = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const query = Object.fromEntries(searchParams.entries());
+  const sqlPanelState = useSqlPanelState(query.sql || '');
   const dispatch = useDispatch();
   const reduxStore = useStore();
   const mapReady = useSelector((state: any) => Boolean(state?.demo?.keplerGl?.map));
@@ -179,6 +181,8 @@ const App = () => {
   const isSqlPanelOpen = useSelector(
     state => duckDbPluginEnabled && state?.demo?.keplerGl?.map?.uiState.mapControls.sqlPanel?.active
   );
+
+  const showSqlControl = duckDbPluginEnabled && !readOnly && !modalOpen;
 
   const isAiAssistantPanelOpen = useSelector(
     state => state?.demo?.keplerGl?.map?.uiState.mapControls.aiAssistant?.active
@@ -927,53 +931,76 @@ const App = () => {
               <Announcement onDisable={_disableBanner} />
             </Banner>
             <div style={CONTAINER_STYLE}>
-              <KeplerAppShell
-                sidebarOpen={Boolean(activeSidePanel)}
-                onSidebarOpenChange={onSidebarOpenChange}
-                readOnly={readOnly}
-                modalOpen={modalOpen}
-              >
-                <SqlroomsDemoLayout
-                  sqlEnabled={duckDbPluginEnabled}
-                  sqlOpen={Boolean(isSqlPanelOpen)}
-                  assistantOpen={Boolean(isAiAssistantPanelOpen)}
-                  onPanelOpenChange={onPanelOpenChange}
-                  map={
-                    <div
-                      ref={setMapContainerNode}
-                      style={{width: '100%', height: '100%', overflow: 'clip'}}
+              <SqlroomsDemoLayout
+                sqlEnabled={duckDbPluginEnabled}
+                sqlOpen={Boolean(isSqlPanelOpen)}
+                assistantOpen={Boolean(isAiAssistantPanelOpen)}
+                onPanelOpenChange={onPanelOpenChange}
+                map={
+                  <div
+                    className="sqlrooms-map-pane h-full min-h-0"
+                    data-sql-control={showSqlControl}
+                  >
+                    <KeplerAppShell
+                      sidebarOpen={Boolean(activeSidePanel)}
+                      onSidebarOpenChange={onSidebarOpenChange}
+                      readOnly={readOnly}
+                      modalOpen={modalOpen}
                     >
-                      <KeplerGl
-                        mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                        id="map"
-                        getState={keplerGlGetState}
-                        width={mapDimensions.width}
-                        height={mapDimensions.height}
-                        sidePanelWidth={0}
-                        theme={shellMapTheme}
-                        cloudProviders={CLOUD_PROVIDERS}
-                        localeMessages={messages}
-                        onExportToCloudSuccess={onExportFileSuccess}
-                        onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                        featureFlags={DEFAULT_FEATURE_FLAGS}
-                        onViewStateChange={onViewStateChange}
-                      />
-                    </div>
-                  }
-                  sql={<SqlPanel initialSql={query.sql || ''} />}
-                  assistant={
-                    <AiAssistantPanel
-                      reduxStore={reduxStore}
-                      stateAccessors={{
-                        getVisState: () =>
-                          (reduxStore?.getState() as any)?.demo?.keplerGl?.map?.visState,
-                        getMapBoundary: () =>
-                          (reduxStore?.getState() as any)?.demo?.aiAssistant?.keplerGl?.mapBoundary
-                      }}
-                    />
-                  }
-                />
-              </KeplerAppShell>
+                      <div
+                        ref={setMapContainerNode}
+                        style={{
+                          position: 'relative',
+                          width: '100%',
+                          height: '100%',
+                          overflow: 'clip'
+                        }}
+                      >
+                        <KeplerGl
+                          mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                          id="map"
+                          getState={keplerGlGetState}
+                          width={mapDimensions.width}
+                          height={mapDimensions.height}
+                          sidePanelWidth={0}
+                          theme={shellMapTheme}
+                          cloudProviders={CLOUD_PROVIDERS}
+                          localeMessages={messages}
+                          onExportToCloudSuccess={onExportFileSuccess}
+                          onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                          featureFlags={DEFAULT_FEATURE_FLAGS}
+                          onViewStateChange={onViewStateChange}
+                        />
+                        {showSqlControl && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={isSqlPanelOpen ? 'Hide SQL panel' : 'Show SQL panel'}
+                            aria-expanded={Boolean(isSqlPanelOpen)}
+                            title={isSqlPanelOpen ? 'Hide SQL panel' : 'Show SQL panel'}
+                            onClick={() => onPanelOpenChange('sql', !isSqlPanelOpen)}
+                            className="absolute bottom-2.5 left-2.5 z-10 h-7 w-7 rounded-sm border border-border bg-card p-0 text-foreground shadow-sm hover:bg-accent"
+                          >
+                            <SquareTerminal className="size-4" aria-hidden="true" />
+                          </Button>
+                        )}
+                      </div>
+                    </KeplerAppShell>
+                  </div>
+                }
+                sql={<SqlPanel state={sqlPanelState} />}
+                assistant={
+                  <AiAssistantPanel
+                    reduxStore={reduxStore}
+                    stateAccessors={{
+                      getVisState: () =>
+                        (reduxStore?.getState() as any)?.demo?.keplerGl?.map?.visState,
+                      getMapBoundary: () =>
+                        (reduxStore?.getState() as any)?.demo?.aiAssistant?.keplerGl?.mapBoundary
+                    }}
+                  />
+                }
+              />
             </div>
           </GlobalStyle>
         </ThemeProvider>
