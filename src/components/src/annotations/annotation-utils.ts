@@ -56,9 +56,11 @@ function offsetLngLatByMeters(point: LngLatAltitude, eastMeters: number): LngLat
   const shifted = addMetersToLngLat(point, [eastMeters, 0, 0]);
   // addMetersToLngLat returns [lng, lat]; keep altitude so rim and center
   // project from the same height.
-  return point.length >= 3 && Number.isFinite(point[2])
-    ? [shifted[0], shifted[1], point[2]]
-    : [shifted[0], shifted[1]];
+  const altitude = point[2];
+  if (altitude !== undefined && Number.isFinite(altitude)) {
+    return [shifted[0], shifted[1], altitude];
+  }
+  return [shifted[0], shifted[1]];
 }
 
 function calcRadius(viewport: MapViewport, point: LngLatAltitude, radiusInMeters: number): number {
