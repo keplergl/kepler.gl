@@ -166,14 +166,21 @@ export function SqlPanel({state}: {state: ReturnType<typeof useSqlPanelState>}) 
           <Panel minSize={40}>
             <PanelGroup direction="vertical">
               <Panel defaultSize={40} minSize={20}>
-                <div className="flex h-full min-h-0 flex-col">
-                  <div className="flex items-center border-b px-3 py-2">
-                    <Button size="sm" disabled={isRunning || !sql.trim()} onClick={runSelection}>
-                      <Play className="mr-2 h-4 w-4" /> Run query
+                <div className="flex h-full min-h-0">
+                  <div className="shrink-0 p-1">
+                    <Button
+                      size="icon"
+                      className="h-7 w-7"
+                      aria-label="Run query"
+                      title="Run query (⌘/Ctrl+Enter)"
+                      disabled={isRunning || !sql.trim()}
+                      onClick={runSelection}
+                    >
+                      <Play className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                   <SqlCodeMirrorEditor
-                    className="min-h-0 flex-1"
+                    className="min-h-0 min-w-0 flex-1 pt-2"
                     value={sql}
                     onChange={setSql}
                     readOnly={isRunning}
@@ -207,15 +214,18 @@ export function SqlPanel({state}: {state: ReturnType<typeof useSqlPanelState>}) 
                     className="h-full"
                     table={result.table}
                     footerActions={
-                      <div className="flex items-center gap-2">
+                      <div className="ml-auto flex shrink-0 items-center gap-2">
                         <Button
-                          size="sm"
+                          size="icon"
+                          className="h-7 w-7"
                           variant="ghost"
+                          aria-label="Export CSV"
+                          title="Export CSV"
                           onClick={() => downloadQueryResult(result.table)}
                         >
-                          <Download className="mr-2 h-4 w-4" /> Export CSV
+                          <Download className="h-4 w-4" aria-hidden="true" />
                         </Button>
-                        <Button size="sm" variant="secondary" onClick={addResultToMap}>
+                        <Button size="sm" onClick={addResultToMap}>
                           Add to Map
                         </Button>
                       </div>
