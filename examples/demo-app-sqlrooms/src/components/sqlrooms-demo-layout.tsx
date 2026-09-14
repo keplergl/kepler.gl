@@ -11,7 +11,7 @@ import {
 import {createLayoutSlice, LayoutRenderer, type LayoutSliceState} from '@sqlrooms/layout';
 import {useStore} from 'zustand';
 import {createDuckDbSlice, type DuckDbSliceState} from '@sqlrooms/duckdb';
-import {createSqlConnector} from './sql-connector';
+import {borrowSqlConnector} from './sql-connector';
 
 type DemoPanels = {map: ReactNode; sql: ReactNode; assistant: ReactNode};
 const PanelContent = createContext<DemoPanels>({map: null, sql: null, assistant: null});
@@ -27,7 +27,7 @@ type DemoRoomState = BaseRoomStoreState & LayoutSliceState & DuckDbSliceState;
 export function createDemoRoomStore(sqlEnabled = true) {
   return createRoomStore<DemoRoomState>((set, get, store) => ({
     ...createBaseRoomSlice()(set, get, store),
-    ...createDuckDbSlice({connector: createSqlConnector()})(set, get, store),
+    ...createDuckDbSlice({connector: borrowSqlConnector()})(set, get, store),
     ...createLayoutSlice({
       config: {
         id: 'workspace',

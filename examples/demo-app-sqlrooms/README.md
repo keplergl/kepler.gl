@@ -55,11 +55,18 @@ entry point. Use it to establish feature parity before replacing the main app.
 
 Use the map's bottom-left **SQL panel** button to open the full-width bottom panel. It uses SQLRooms' standard schema tree and
 `SqlCodeMirrorEditor` from `@sqlrooms/sql-editor` and SQLRooms' paginated Arrow
-result table. Map imports and queries share Kepler's DuckDB connection.
+result table. SQLRooms owns one DuckDB-Wasm 1.32.0 database shared by map imports,
+the SQL panel, and the assistant. Apache Arrow is pinned to SQLRooms' 17.0.0 peer.
+Panel stores borrow the connector; closing a panel does not destroy the database.
+The assistant initializes its store during import, so `assistant-duckdb-plugin.mjs`
+routes its DuckDB import through a small adapter that supplies the shared connector
+at store creation. Restart the dev server after changing this build wiring.
 
 - Run the selection or full query with **⌘/Ctrl+Enter** or **Run query**.
-- Use **Add to Map** to create a dataset from the last query result.
-- Use **Export CSV** in the results footer to download the displayed result.
+- Use **Add to Map** to load all rows of the last query result from its existing
+  DuckDB table, without re-importing Arrow.
+- Previews transfer at most 1,000 rows. **Export CSV** downloads the full result.
+- Cancel a running query with the stop button. SQLRooms handles cancellation.
 - Import files through the existing **Add Data** dialog; the schema tree refreshes automatically.
 - Editor text and results survive closing/reopening the panel; `?sql=` links retain the SQL text.
 
@@ -69,4 +76,21 @@ From the repository root, run the query execution and CSV export checks with:
 
 ```sh
 node --test examples/demo-app-sqlrooms/test/*.test.cjs
+```
+
+The query runner keeps a database snapshot so mapping and exporting never rerun
+preceding SQL writes. Unmapped snapshots are dropped on the next query or app
+unmount. Mapped snapshots are retained as `query_result_*` tables for the page's
+lifetime. Kepler datasets are Arrow snapshots; subsequent SQL edits do not
+implicitly update an already-loaded map. The assistant still creates its own
+transformed `tbl_*` tables when its analysis tools need their legacy geometry
+shape, but these now live in the same database.
+
+The browser integration test exercises the actual WASM engine, shared assistant
+lifecycle, bounded previews, full map/export results, spatial metadata, and query
+cancellation. It needs Chromium (or `PUPPETEER_EXECUTABLE_PATH`) and network access
+to the versioned DuckDB CDN assets:
+
+```sh
+node --test examples/demo-app-sqlrooms/test/duckdb.browser.cjs
 ```

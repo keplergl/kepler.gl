@@ -2,47 +2,107 @@
 // Copyright contributors to the kepler.gl project
 
 import type {Table} from 'apache-arrow';
-import {splitSqlStatements} from '@sqlrooms/duckdb';
-import {getApplicationConfig} from '@kepler.gl/utils';
+import {escapeVal, joinStatements, makeLimitQuery, splitSqlStatements} from '@sqlrooms/duckdb';
 import {
   castDuckDBTypesForKepler,
-  checkIsSelectQuery,
   getDuckDBColumnTypes,
   getDuckDBColumnTypesMap,
-  setGeoArrowWKBExtension
+  setGeoArrowWKBExtension,
+  type DuckDBColumnDesc
 } from '@kepler.gl/duckdb';
+import {getSqlConnector} from './sql-connector';
 
-export type SqlResult = {table: Table; tableDuckDBTypes: Record<string, string>};
+export const SQL_PREVIEW_LIMIT = 1000;
 
-// Reuse Kepler's connection so SQL sees the same tables as map imports.
-export async function executeSql(sql: string): Promise<SqlResult | null> {
+export type SqlResult = {
+  table: Table;
+  tableDuckDBTypes: Record<string, string>;
+  tableName: string;
+  // A map keeps the snapshot alive after the SQL panel moves on to another query.
+  retained: boolean;
+};
+
+export async function disposeSqlResult(result: SqlResult | null) {
+  if (result && !result.retained) {
+    const connector = await getSqlConnector();
+    await connector.execute(`DROP TABLE IF EXISTS "${result.tableName}"`);
+  }
+}
+
+// SQLRooms owns execution and cancellation. A database-scoped snapshot survives
+// its per-query connections; TEMP tables would disappear between these calls.
+// It also lets Add to Map / export read all rows without rerunning user writes.
+export async function executeSql(sql: string, signal?: AbortSignal): Promise<SqlResult | null> {
   const statements = splitSqlStatements(sql);
-  if (!statements.length) throw new Error('Query is empty');
-  const database = getApplicationConfig().database;
-  if (!database) throw new Error('The database is not configured properly.');
-  const connection = await database.connect();
-  const tempTable = `kepler_sql_result_${crypto.randomUUID().replaceAll('-', '')}`;
-  let temporaryTableCreated = false;
+  const lastStatement = statements.pop();
+  if (!lastStatement) throw new Error('Query is empty');
+  const connector = await getSqlConnector();
+  signal?.throwIfAborted();
+  const parsed = await connector.query(`SELECT json_serialize_sql(${escapeVal(lastStatement)})`, {
+    signal
+  });
+  const serialized = parsed.getChildAt(0)?.get(0);
+  if (typeof serialized !== 'string') throw new Error('DuckDB did not return a SQL parse result');
+  const isSelect = !JSON.parse(serialized).error;
+  if (!isSelect) {
+    await connector.execute(sql, {signal});
+    return null;
+  }
+
+  const tableName = `__sqlrooms_kepler_result_${crypto.randomUUID().replace(/-/g, '')}`;
   try {
-    let result: SqlResult | null = null;
-    for (const [index, statement] of statements.entries()) {
-      if (index === statements.length - 1 && (await checkIsSelectQuery(connection, statement))) {
-        await connection.query(`CREATE TEMP TABLE "${tempTable}" AS ${statement}`);
-        temporaryTableCreated = true;
-        const columns = await getDuckDBColumnTypes(connection, tempTable);
-        const table = await connection.query(castDuckDBTypesForKepler(tempTable, columns));
-        setGeoArrowWKBExtension(table, columns);
-        result = {table, tableDuckDBTypes: getDuckDBColumnTypesMap(columns)};
-      } else {
-        await connection.query(statement);
-      }
-    }
-    return result;
-  } finally {
+    await connector.execute(
+      joinStatements(statements, `CREATE TABLE "${tableName}" AS ${lastStatement}`),
+      {signal}
+    );
+    const connection = {query: (query: string) => connector.query(query, {signal}).result};
+    const columns = await getDuckDBColumnTypes(connection, tableName);
+    const table = await readResultTable(tableName, columns, SQL_PREVIEW_LIMIT, signal);
+    return {table, tableDuckDBTypes: getDuckDBColumnTypesMap(columns), tableName, retained: false};
+  } catch (error) {
+    // Cleanup must run even when the user's query signal has been aborted.
+    await connector.execute(`DROP TABLE IF EXISTS "${tableName}"`);
+    throw error;
+  }
+}
+
+export async function readFullSqlResult(result: SqlResult): Promise<Table> {
+  const columns = Object.entries(result.tableDuckDBTypes).map(([name, type]) => ({name, type}));
+  return readResultTable(result.tableName, columns);
+}
+
+async function readResultTable(
+  tableName: string,
+  columns: DuckDBColumnDesc[],
+  limit?: number,
+  signal?: AbortSignal
+): Promise<Table> {
+  const connector = await getSqlConnector();
+  const sql = castDuckDBTypesForKepler(tableName, columns);
+  let table = await connector.query(limit === undefined ? sql : makeLimitQuery(sql, {limit}), {
+    signal
+  });
+  // SQLRooms 0.29 discards the schema when its stream has no nonempty batches.
+  // Read only the schema through WASM so empty results keep their CSV headers.
+  if (table.numCols === 0) {
+    signal?.throwIfAborted();
+    const connection = await connector.getDb().connect();
     try {
-      if (temporaryTableCreated) await connection.query(`DROP TABLE IF EXISTS "${tempTable}"`);
+      table = await connection.query(makeLimitQuery(sql, {limit: 0}));
     } finally {
       await connection.close();
     }
   }
+  signal?.throwIfAborted();
+  setGeoArrowWKBExtension(table, columns);
+  return table;
+}
+
+export async function retainSqlResult(result: SqlResult) {
+  if (result.retained) return;
+  const connector = await getSqlConnector();
+  const tableName = result.tableName.replace('__sqlrooms_kepler_result_', 'query_result_');
+  await connector.execute(`ALTER TABLE "${result.tableName}" RENAME TO "${tableName}"`);
+  result.tableName = tableName;
+  result.retained = true;
 }

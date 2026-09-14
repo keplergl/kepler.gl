@@ -4,6 +4,7 @@
 import esbuild from 'esbuild';
 import {replace} from 'esbuild-plugin-replace';
 import {dotenvRun} from '@dotenv-run/esbuild';
+import {assistantDuckDbPlugin} from './assistant-duckdb-plugin.mjs';
 
 import process from 'node:process';
 import fs from 'node:fs';
@@ -117,6 +118,9 @@ const getThirdPartyLibraryAliases = useKeplerNodePackage => {
     '@sqlrooms/ui': join(BASE_NODE_MODULES_DIR, '@sqlrooms/ui'),
     '@sqlrooms/layout': join(BASE_NODE_MODULES_DIR, '@sqlrooms/layout'),
     '@sqlrooms/room-store': join(BASE_NODE_MODULES_DIR, '@sqlrooms/room-store'),
+    '@sqlrooms/duckdb': join(BASE_NODE_MODULES_DIR, '@sqlrooms/duckdb'),
+    '@sqlrooms/duckdb-core': join(BASE_NODE_MODULES_DIR, '@sqlrooms/duckdb-core'),
+    '@duckdb/duckdb-wasm': join(BASE_NODE_MODULES_DIR, '@duckdb/duckdb-wasm'),
     react: `${nodeModulesDir}/react`,
     'react-dom': `${nodeModulesDir}/react-dom`,
     'react-dom/client': `${nodeModulesDir}/react-dom/client`,
@@ -124,7 +128,7 @@ const getThirdPartyLibraryAliases = useKeplerNodePackage => {
     'styled-components': `${nodeModulesDir}/styled-components`,
     'react-intl': `${nodeModulesDir}/react-intl`,
     // kepler.gl and loaders.gl need to use same apache-arrow
-    'apache-arrow': `${nodeModulesDir}/apache-arrow`
+    'apache-arrow': join(BASE_NODE_MODULES_DIR, 'apache-arrow')
   };
 };
 
@@ -196,6 +200,7 @@ const config = {
     'process.env.NODE_ENV': NODE_ENV
   },
   plugins: [
+    assistantDuckDbPlugin,
     dotenvRun({
       verbose: true,
       environment: NODE_ENV,
