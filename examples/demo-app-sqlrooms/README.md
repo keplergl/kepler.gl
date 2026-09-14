@@ -118,10 +118,16 @@ page-scoped; this is not a multi-room assistant API.
 
 This patch applies only to this example's dependency installation. It replaces
 the esbuild DuckDB import interception without copying the analysis or map tools.
-Remove it when the assistant publishes an equivalent host integration API. When
-upgrading the assistant, review the patch against the new version and run the
-browser test below; do not silently drop it or import the standalone panel from
-another package entry point.
+The source replacement is proposed in
+[Kepler Assistant PR #4](https://github.com/geodaai/kepler-assistant/pull/4).
+Once that API is published, replace the patched dependency with the released
+version, switch all assistant imports to
+`@openassistant/kepler-assistant/integration`, and delete the patch. That migration
+has passed the browser test and production build using a locally packed source
+package. Yarn cannot currently install the pnpm repository as a Git dependency,
+so this demo keeps its reproducible patched installation until publication.
+When upgrading, run the browser test below and keep imports on the integration
+subpath; the upstream root entry still initializes its standalone room.
 
 The browser integration test exercises the actual WASM engine, shared assistant
 lifecycle, stock chat and chart rendering, session/settings persistence across
