@@ -37,10 +37,7 @@ class CollisionTextBackgroundLayer extends TextBackgroundLayer {
   }
 }
 
-export default class CollisionTextLayer<
-  DataT = any,
-  ExtraProps extends {} = {}
-> extends TextLayer<DataT, ExtraProps> {
+export default class CollisionTextLayer<DataT = any> extends TextLayer<DataT> {
   static layerName = 'CollisionTextLayer';
 
   getSubLayerClass(subLayerId: string, DefaultLayerClass: any): any {
@@ -51,7 +48,9 @@ export default class CollisionTextLayer<
   }
 
   filterSubLayer({layer, renderPass}: FilterContext): boolean {
-    const isBackground = layer.id.includes('background');
+    // TextLayer names the hit-area sublayer `${parentId}-background`. Match the
+    // suffix so a label field named "background" is not treated as that sublayer.
+    const isBackground = layer.id.endsWith('-background');
     if (renderPass === 'collision') {
       return isBackground;
     }

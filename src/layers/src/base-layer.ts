@@ -175,14 +175,26 @@ class KeplerCollisionFilterExtension extends CollisionFilterExtension {
   static extensionName = 'CollisionFilterExtension';
 
   getShaders(this: any) {
+    const base = CollisionFilterExtension.prototype.getShaders.call(this) || {};
+    const positionHook = 'vs:DECKGL_FILTER_GL_POSITION';
+    const basePositionInject = base.inject?.[positionHook];
+    const basePositionCode =
+      typeof basePositionInject === 'string'
+        ? basePositionInject
+        : basePositionInject?.injection || '';
+
     return {
-      ...CollisionFilterExtension.prototype.getShaders.call(this),
+      ...base,
       inject: {
+        ...base.inject,
         // CollisionFilterExtension fades over a 5x5 neighborhood. Kepler labels
         // should be fully opaque or fully gone — not half-transparent ghosts.
-        'vs:DECKGL_FILTER_GL_POSITION': {
-          order: 1,
-          injection: `
+        [positionHook]: {
+          order: Math.max(
+            1,
+            typeof basePositionInject === 'object' ? basePositionInject?.order || 0 : 0
+          ),
+          injection: `${basePositionCode}
   if (collision.enabled) {
     if (collision_fade < 0.5) {
       collision_fade = 0.0;
