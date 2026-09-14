@@ -119,7 +119,7 @@ export function SqlroomsDemoLayout({
         value={{map, sql: sqlOpen ? sql : null, assistant: assistantOpen ? assistant : null}}
       >
         <LayoutRenderer
-          className="h-full"
+          className="sqlrooms-demo-layout h-full"
           rootLayout={layout.config}
           onLayoutChange={next => next && layout.setConfig(next)}
           onCollapse={panelId => onPanelOpenChange(panelId, false)}

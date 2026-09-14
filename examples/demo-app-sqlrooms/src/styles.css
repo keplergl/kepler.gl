@@ -113,4 +113,10 @@ body > [data-state='open'][role='dialog'] {
 /* Reserve space beside the SQL toggle for the map scale. */
 .sqlrooms-map-pane[data-sql-control='true'] .map-scale {
   margin-left: 48px;
+  margin-bottom: 10px;
+}
+
+/* Match the SQL panel's top divider to its inner resize handles. */
+.sqlrooms-demo-layout [data-layout-panel-handle-after='map'] {
+  height: 4px;
 }
