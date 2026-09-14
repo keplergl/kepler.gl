@@ -16,7 +16,8 @@ export type BaseAnnotation = {
   isVisible: boolean;
   autoSize: boolean;
   autoSizeY: boolean;
-  anchorPoint: [number, number];
+  /** [lng, lat] or [lng, lat, altitudeMeters]. Missing altitude is treated as 0. */
+  anchorPoint: [number, number] | [number, number, number];
   label: string;
   editorState?: Record<string, any>;
   mapIndex?: number;

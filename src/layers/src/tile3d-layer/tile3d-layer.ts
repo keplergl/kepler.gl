@@ -667,7 +667,9 @@ export default class Tile3DLayer extends Layer {
         onTileUnload: this._onTileUnload,
         getPointColor: pointColor,
         pointSize: visConfig.pointSize ?? 2,
-        pickable: false,
+        // Picking is off by default (no tooltip fields). Enable it while
+        // placing annotations so snap can reconstruct XYZ from mesh depth.
+        pickable: Boolean(opts.experimentalContext?.isAnnotationMode),
         opacity: visConfig.opacity ?? 1,
         extensions: EMPTY_EXTENSIONS,
         parameters: DEPTH_TEST_PARAMS
