@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {KEPLER_FORMAT, Provider} from '@kepler.gl/cloud-providers';
+import {DEMO_BASE_PATH} from '../../constants/default-settings';
 import {loadScript} from '../../utils/load-script';
 import GoogleDriveIcon from './google-drive-icon';
 
@@ -291,7 +292,7 @@ export default class GoogleDriveProvider extends Provider {
 
     if (options.isPublic) {
       await this._makePublic(token, fileMeta.id);
-      this._shareUrl = `/demo/map/${NAME}?id=${fileMeta.id}`;
+      this._shareUrl = `${DEMO_BASE_PATH}/map/${NAME}?id=${fileMeta.id}`;
       return {
         id: fileMeta.id,
         title,

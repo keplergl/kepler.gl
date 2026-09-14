@@ -6,6 +6,7 @@ import CartoIcon from './carto-icon';
 import {Provider} from '@kepler.gl/cloud-providers';
 import {createDataContainer} from '@kepler.gl/utils';
 import {formatCsv} from '@kepler.gl/reducers';
+import {DEMO_BASE_PATH} from '../../constants/default-settings';
 
 const NAME = 'carto';
 const DISPLAY_NAME = 'CARTO';
@@ -378,7 +379,9 @@ export default class CartoProvider extends Provider {
   }
 
   _composeURL({mapId, owner, privateMap}) {
-    return `demo/map/carto?mapId=${mapId}&owner=${owner}&privateMap=${privateMap}`;
+    return `${DEMO_BASE_PATH.slice(
+      1
+    )}/map/carto?mapId=${mapId}&owner=${owner}&privateMap=${privateMap}`;
   }
 
   _blobToBase64(blob) {

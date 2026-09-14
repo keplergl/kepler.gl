@@ -10,6 +10,7 @@ import {_GeoJSONLoader as GeoJSONLoader} from '@loaders.gl/json';
 import {ParquetWasmLoader} from '@loaders.gl/parquet';
 
 import {
+  DEMO_BASE_PATH,
   LOADING_SAMPLE_ERROR_MESSAGE,
   LOADING_SAMPLE_LIST_ERROR_MESSAGE,
   MAP_CONFIG_URL
@@ -94,7 +95,7 @@ export function onLoadCloudMapSuccess({provider, loadParams}) {
   return () => {
     const mapUrl = provider?.getMapUrl(loadParams);
     if (mapUrl) {
-      const url = `/demo/map/${provider.name}?path=${mapUrl}`;
+      const url = `${DEMO_BASE_PATH}/map/${provider.name}?path=${mapUrl}`;
       window.history.pushState(null, '', url);
     }
   };
@@ -174,7 +175,7 @@ export function loadSample(options, pushRoute = true) {
   return dispatch => {
     if (options.id && pushRoute) {
       const search = window.location.search || '';
-      window.history.pushState(null, '', `/demo/${options.id}${search}`);
+      window.history.pushState(null, '', `${DEMO_BASE_PATH}/${options.id}${search}`);
     }
     // if the sample has a kepler.gl config file url we load it
     if (options.keplergl) {

@@ -7,6 +7,7 @@ import {Provider} from 'react-redux';
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import store from './store';
 import App from './app';
+import {DEMO_BASE_PATH} from './constants/default-settings';
 
 const Root = () => (
   <Provider store={store}>
@@ -14,10 +15,10 @@ const Root = () => (
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/auth" element={<App />} />
-        <Route path="/demo" element={<App />} />
-        <Route path="/demo/map" element={<App />} />
-        <Route path="/demo/map/:provider" element={<App />} />
-        <Route path="/demo/:id" element={<App />} />
+        <Route path={DEMO_BASE_PATH} element={<App />} />
+        <Route path={`${DEMO_BASE_PATH}/map`} element={<App />} />
+        <Route path={`${DEMO_BASE_PATH}/map/:provider`} element={<App />} />
+        <Route path={`${DEMO_BASE_PATH}/:id`} element={<App />} />
       </Routes>
     </BrowserRouter>
   </Provider>

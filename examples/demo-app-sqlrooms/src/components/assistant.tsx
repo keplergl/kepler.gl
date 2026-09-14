@@ -44,9 +44,10 @@ import type {DemoRoomState} from './sqlrooms-demo-layout';
 import {getOpenAiModel} from './assistant-model';
 import {createAssistantSkillTools} from './assistant-tools';
 
-// Keep existing sessions, provider keys, and the pre-v1 settings migration.
+// Keep SQLRooms assistant state separate from the original demo on the same origin.
+// Retain the provider-settings schema and pre-v1 migration.
 export const assistantPersistence = {
-  name: 'kepler-ai-assistant-state',
+  name: 'kepler-sqlrooms-ai-assistant-state',
   version: 1,
   sliceConfigSchemas: {ai: AiSliceConfig, aiSettings: AiSettingsSliceConfig},
   migrate: (state: unknown, version: number): Record<string, unknown> => {
