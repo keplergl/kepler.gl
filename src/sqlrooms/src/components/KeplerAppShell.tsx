@@ -11,11 +11,12 @@ import React, {
 } from 'react';
 import {createPortal} from 'react-dom';
 import {RootContext, SidebarFactory} from '@kepler.gl/components';
+import {PanelLeftClose, PanelLeftOpen} from 'lucide-react';
 import {
+  Button,
   Sidebar,
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
   TooltipProvider,
   useSidebar
 } from '@sqlrooms/ui';
@@ -61,18 +62,34 @@ export function KeplerAppShell({
           <SidebarInset className="min-h-0 min-w-0 bg-background">
             <div className="relative min-h-0 flex-1 overflow-hidden">
               {children}
-              {!readOnly && !modalOpen && (
-                <SidebarTrigger
-                  aria-label="Toggle sidebar"
-                  title="Toggle sidebar"
-                  className="absolute left-3 top-3 z-10 h-8 w-8 rounded-sm border border-border bg-card text-foreground shadow-sm hover:bg-accent"
-                />
-              )}
+              {!readOnly && !modalOpen && <SidebarToggleButton />}
             </div>
           </SidebarInset>
         </SidebarProvider>
       </TooltipProvider>
     </SidebarTargetContext.Provider>
+  );
+}
+
+function SidebarToggleButton() {
+  const {open, openMobile, isMobile, toggleSidebar} = useSidebar();
+  const expanded = isMobile ? openMobile : open;
+  const label = expanded ? 'Close sidebar' : 'Open sidebar';
+  const Icon = expanded ? PanelLeftClose : PanelLeftOpen;
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      data-sidebar="trigger"
+      aria-label={label}
+      aria-expanded={expanded}
+      title={label}
+      onClick={toggleSidebar}
+      className="absolute left-1 top-2.5 z-10 h-7 w-7 rounded-sm border border-border bg-card p-0 text-foreground shadow-sm hover:bg-accent"
+    >
+      <Icon className="size-4" aria-hidden="true" />
+    </Button>
   );
 }
 
