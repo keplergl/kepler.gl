@@ -1581,7 +1581,7 @@ class Layer implements KeplerLayer {
       filterRange: gpuFilter ? gpuFilter.filterRange : undefined,
       onFilteredItemsChange: gpuFilter ? layerCallbacks?.onFilteredItemsChange : undefined,
 
-      // layer should be visible and if splitMap, shown in to one of panel
+      // layer should be visible and, if splitMap, shown in one of the panels
       visible: this.config.isVisible && visible
     };
   }
@@ -1621,8 +1621,10 @@ class Layer implements KeplerLayer {
     },
     renderOpts
   ) {
-    const {data, mapState} = renderOpts;
+    const {data, mapState, visible: visibleInMap} = renderOpts;
     const {textLabel} = this.config;
+    // labels should be visible and, if splitMap, shown in one of the panels
+    const visible = this.config.isVisible && visibleInMap;
 
     const TextLayerClass = isArrowTable(data.data) ? GeoArrowTextLayer : TextLayer;
 
@@ -1637,7 +1639,7 @@ class Layer implements KeplerLayer {
             ...sharedProps,
             id: `${this.id}-label-${textLabel[i].field?.name}`,
             data: data.data,
-            visible: this.config.isVisible,
+            visible,
             getText,
             getPosition,
             getFiltered,

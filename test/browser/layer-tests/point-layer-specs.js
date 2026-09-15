@@ -10,7 +10,7 @@ import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {processGeojson} from '@kepler.gl/processors';
-import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE, renderDeckGlLayer} from '@kepler.gl/reducers';
 import {copyTableAndUpdate} from '@kepler.gl/table';
 import {hexToRgb} from '@kepler.gl/utils';
 
@@ -20,6 +20,8 @@ import {StateWArcNeighbors} from 'test/helpers/mock-state';
 import {createNewDataEntryMock} from 'test/helpers/table-utils';
 import {
   testCreateCases,
+  testCreateLayerFromConfig,
+  testFormatLayerData,
   testFormatLayerDataCases,
   testRenderLayerCases,
   testUpdateLayer,
@@ -770,6 +772,81 @@ test('#PointLayer -> renderLayer', t => {
   ];
 
   testRenderLayerCases(t, PointLayer, TEST_CASES);
+  t.end();
+});
+
+test('#PointLayer -> renderLayer split map label visibility', t => {
+  const filteredIndex = [0, 2, 4];
+  const tc = {
+    layer: {
+      config: {
+        dataId,
+        label: 'gps point',
+        columns: {
+          lat: 'lat',
+          lng: 'lng',
+          altitude: 'id'
+        },
+        textLabel: [
+          {
+            field: {
+              name: 'types',
+              type: 'string'
+            }
+          }
+        ]
+      },
+      type: 'point',
+      id: 'test_layer_1'
+    },
+    datasets: {
+      [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+    }
+  };
+
+  const layer = testCreateLayerFromConfig(t, tc, {point: PointLayer});
+  const data = testFormatLayerData(t, layer, tc.datasets);
+
+  const renderWithMapLayers = mapLayers =>
+    renderDeckGlLayer(
+      {
+        datasets: tc.datasets,
+        layer,
+        layerIndex: 0,
+        data,
+        mapState: INITIAL_MAP_STATE,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        mapLayers
+      },
+      {}
+    );
+
+  const assertVisible = (deckLayers, expected, message) => {
+    const labelLayers = deckLayers.filter(l => String(l.id).includes('-label-'));
+    t.ok(labelLayers.length > 0, `should create text label layers (${message})`);
+    t.equal(deckLayers[0].props.visible, expected, `geometry ${message}`);
+    labelLayers.forEach(l => {
+      t.equal(l.props.visible, expected, `${l.id} ${message}`);
+    });
+  };
+
+  assertVisible(
+    renderWithMapLayers(undefined),
+    true,
+    'should be visible when mapLayers is not set'
+  );
+  assertVisible(
+    renderWithMapLayers({[layer.id]: true}),
+    true,
+    'should be visible when the panel entry is true'
+  );
+  assertVisible(
+    renderWithMapLayers({[layer.id]: false}),
+    false,
+    'should be hidden when the panel entry is false'
+  );
+  assertVisible(renderWithMapLayers({}), false, 'should be hidden when the panel entry is missing');
+
   t.end();
 });
 
