@@ -6,10 +6,6 @@ import {_MultiIconLayer as MultiIconLayer} from '@deck.gl/layers';
 
 import {injectGlobeBackfaceCull} from './globe-backface-cull';
 
-/**
- * Glyph sublayer for globe-mode text labels: culls glyphs anchored on the far side of
- * the globe so they aren't drawn through the planet. See globe-backface-cull.
- */
 export default class EnhancedMultiIconLayer extends (MultiIconLayer as any) {
   static layerName = 'EnhancedMultiIconLayer';
 
