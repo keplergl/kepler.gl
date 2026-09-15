@@ -6,6 +6,7 @@ import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {CollisionFilterExtension, DataFilterExtension} from '@deck.gl/extensions';
 import {TextLayer} from '@deck.gl/layers';
 import CollisionTextLayer from './collision-text-layer';
+import {installCollisionFilterEffectAlignment} from './collision-filter-effect';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import React from 'react';
@@ -208,10 +209,18 @@ class KeplerCollisionFilterExtension extends CollisionFilterExtension {
     };
   }
 
+  initializeState(this: any, context: any, extension: this) {
+    // Align CollisionFilterEffect to the live drawing buffer before deck.gl
+    // registers it. Video export scales the GL canvas above CSS size; without
+    // this the collision map only covers the top-left of the frame.
+    installCollisionFilterEffectAlignment(this.context?.deck || context?.deck);
+    CollisionFilterExtension.prototype.initializeState.call(this, context, extension);
+  }
+
   updateState(this: any, _params: unknown, extension: this) {
     const attributeManager = this.getAttributeManager();
     if (attributeManager && !attributeManager.attributes.collisionPriorities) {
-      CollisionFilterExtension.prototype.initializeState.call(this, this.context, extension);
+      KeplerCollisionFilterExtension.prototype.initializeState.call(this, this.context, extension);
     }
   }
 }
@@ -1694,9 +1703,11 @@ class Layer implements KeplerLayer {
           ? CollisionTextLayer
           : TextLayer;
         const getText = animationConfig ? f => d.getText(f, animationConfig) : d.getText;
-        const extensions = collisionEnabled
-          ? [...(sharedProps.extensions || []), collisionFilterExtension]
-          : sharedProps.extensions;
+        // Keep CollisionFilterExtension on the layer when collision is off.
+        // Removing it leaves a stale collisionPriorities attribute on the
+        // matched MultiIconLayer, and deck.gl errors because getCollisionPriority
+        // is no longer an accessor.
+        const extensions = [...(sharedProps.extensions || []), collisionFilterExtension];
         const background = userBackground || (collisionEnabled && !isArrow);
 
         accu.push(
@@ -1733,12 +1744,9 @@ class Layer implements KeplerLayer {
               ...(mapState?.layerParameters ?? {})
             },
             extensions,
-            ...(collisionEnabled
-              ? {
-                  collisionEnabled: true,
-                  collisionGroup: `${this.id}-text-label-${i}`
-                }
-              : {}),
+            collisionEnabled,
+            collisionGroup: `${this.id}-text-label-${i}`,
+            getCollisionPriority: 0,
 
             getFilterValue: data.getFilterValue,
             updateTriggers: {

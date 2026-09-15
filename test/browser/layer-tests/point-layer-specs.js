@@ -696,6 +696,17 @@ test('#PointLayer -> renderLayer', t => {
           [Number.MIN_SAFE_INTEGER, 0, 0, 0],
           'Should calculate correct instancePixelOffset'
         );
+        t.ok(
+          deckLayers[1].props.extensions.some(
+            ext => ext.constructor.extensionName === 'CollisionFilterExtension'
+          ),
+          'Should keep CollisionFilterExtension when collision is off'
+        );
+        t.equal(
+          deckLayers[1].props.collisionEnabled,
+          false,
+          'Should leave collision filtering disabled by default'
+        );
       }
     },
     {
