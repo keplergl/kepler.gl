@@ -5688,7 +5688,12 @@ export function replaceDatasetDepsInState<T extends VisState>(
           ? replacePropValueInState(replacedState, replacedItem, mergerOptions)
           : replacedState;
 
+        // Only when this dataset had items of its own to park. The toBeMerged list
+        // can still hold another dataset's items, replaced a moment earlier and
+        // not merged back yet; overwriting the order they were parked with would
+        // merge them back in reverse.
         if (
+          replacedItem &&
           mergerOptions.toMergeProp !== undefined &&
           replacedState[mergerOptions.toMergeProp]?.length &&
           preserveOrder

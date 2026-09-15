@@ -777,6 +777,53 @@ test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
   t.end();
 });
 
+test('#composerStateReducer - replaceDataInMapUpdater: replacing a dataset with no layers before the previous replace merges', t => {
+  const noLayersId = 'dataset_without_layers';
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: [
+        {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+        {data: processCsvData(testCsvData), info: {id: noLayersId}}
+      ],
+      config: sampleConfig.config,
+      options: {autoCreateLayers: false}
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+  drainTasksForTesting();
+
+  const layerOrder = oldState.visState.layerOrder;
+  t.ok(layerOrder.length > 1, 'should start with more than one layer on the first dataset');
+
+  // Refresh both datasets back to back, the way an app refreshing every query
+  // does: the second replace is prepared before the first one has merged.
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = replaceDataInMapUpdater(nextState, {
+    payload: {
+      datasetToReplaceId: noLayersId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: noLayersId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.deepEqual(nextState.visState.layerToBeMerged, [], 'should merge every layer back');
+  t.deepEqual(nextState.visState.layerOrder, layerOrder, 'should keep the layer order');
+  t.end();
+});
+
 test('#composerStateReducer - replaceDataInMapUpdater: syncedTimeFilter & match', t => {
   const oldState = StateWSyncedTimeFilter;
   const dataIdToReplace = 'dataset_to_replace';
