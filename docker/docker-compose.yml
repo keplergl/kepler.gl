@@ -16,3 +16,22 @@ services:
       dockerfile: docker/Dockerfile
     ports:
       - "8080:8080"
+    # Optional: mount a runtime config after `cp docker/config.example.json docker/config.json`.
+    # Do not enable this line until the file exists — Docker will otherwise create a directory
+    # named config.json and the container will fail.
+    # volumes:
+    #   - ./config.json:/app/dist/config.json
+    environment:
+      # Optional overrides (merged into /app/dist/config.json by the entrypoint)
+      KEPLER_MAPBOX_ACCESS_TOKEN: ${MapboxAccessToken:-}
+      KEPLER_MAPBOX_EXPORT_TOKEN: ${MapboxExportToken:-}
+      KEPLER_DROPBOX_CLIENT_ID: ${DropboxClientId:-}
+      KEPLER_CARTO_CLIENT_ID: ${CartoClientId:-}
+      KEPLER_FOURSQUARE_CLIENT_ID: ${FoursquareClientId:-}
+      KEPLER_FOURSQUARE_DOMAIN: ${FoursquareDomain:-}
+      KEPLER_FOURSQUARE_API_URL: ${FoursquareAPIURL:-}
+      KEPLER_FOURSQUARE_USER_MAPS_URL: ${FoursquareUserMapsURL:-}
+      KEPLER_GOOGLE_DRIVE_CLIENT_ID: ${GoogleDriveClientId:-}
+      KEPLER_MAP_CONFIG_URL: ${KEPLER_MAP_CONFIG_URL:-}
+      KEPLER_MAP_URL: ${KEPLER_MAP_URL:-}
+      KEPLER_PAGE_TITLE: ${KEPLER_PAGE_TITLE:-}
