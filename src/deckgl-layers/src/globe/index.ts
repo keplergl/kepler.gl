@@ -11,10 +11,11 @@
 //   ScaleEnhancedHexagonLayer swap in a globe-aware cell subclass (see
 //   layer-utils/globe-cell-utils) that remaps each cell vertex from common space back to
 //   lng/lat and onto the sphere.
-// - Text/Label rendering with back-face culling: MVTLabelLayer renders place labels via a
-//   TextLayer whose glyph sublayer is EnhancedMultiIconLayer, which degenerates glyph
-//   vertices on the far side of the globe (dot(surfaceNormal, toCamera) < 0.1) so labels
-//   don't show through the planet. Implemented as a GLSL inject.
+// - Text/Label rendering with back-face culling: globe labels (both the MVTLabelLayer
+//   basemap place names and user layer text labels) render through a TextLayer whose
+//   glyph and background sublayers are EnhancedMultiIconLayer / EnhancedTextBackgroundLayer.
+//   Those degenerate vertices anchored beyond the sphere horizon so labels on the far side
+//   don't show through the planet. Implemented as a GLSL inject, see globe-backface-cull.
 
 export {
   AtmosphereLayerRealistic,
@@ -38,5 +39,7 @@ export {
 export type {GlobeBasemapProvider, GlobeAttribution} from './globe-layers';
 export {MVTLabelLayer} from './mvt-label-layer';
 export {default as EnhancedMultiIconLayer} from './enhanced-multi-icon-layer';
+export {default as EnhancedTextBackgroundLayer} from './enhanced-text-background-layer';
+export {injectGlobeBackfaceCull} from './globe-backface-cull';
 export {KeplerGlobeView} from './globe-view';
 export {getStarsBackgroundImage, drawStarsBackground} from './globe-stars-layer';

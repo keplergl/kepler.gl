@@ -8,6 +8,7 @@ import {scaleQuantize} from 'd3-scale';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
+import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/deckgl-layers';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {processGeojson} from '@kepler.gl/processors';
 import {INITIAL_MAP_STATE, INITIAL_VIS_STATE, renderDeckGlLayer} from '@kepler.gl/reducers';
@@ -846,6 +847,76 @@ test('#PointLayer -> renderLayer split map label visibility', t => {
     'should be hidden when the panel entry is false'
   );
   assertVisible(renderWithMapLayers({}), false, 'should be hidden when the panel entry is missing');
+
+  t.end();
+});
+
+test('#PointLayer -> renderLayer globe mode text labels', t => {
+  const tc = {
+    layer: {
+      config: {
+        dataId,
+        label: 'gps point',
+        columns: {
+          lat: 'lat',
+          lng: 'lng',
+          altitude: 'id'
+        },
+        textLabel: [
+          {
+            field: {
+              name: 'types',
+              type: 'string'
+            },
+            background: true
+          }
+        ]
+      },
+      type: 'point',
+      id: 'test_layer_1'
+    },
+    datasets: {
+      [dataId]: preparedDataset
+    }
+  };
+
+  const layer = testCreateLayerFromConfig(t, tc, {point: PointLayer});
+  const data = testFormatLayerData(t, layer, tc.datasets);
+
+  const renderWithMapState = mapState =>
+    renderDeckGlLayer(
+      {
+        datasets: tc.datasets,
+        layer,
+        layerIndex: 0,
+        data,
+        mapState,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig
+      },
+      {}
+    ).find(l => String(l.id).includes('-label-'));
+
+  const flatLabel = renderWithMapState(INITIAL_MAP_STATE);
+  t.ok(flatLabel, 'should create a text label layer in flat mode');
+  t.notOk('cull' in flatLabel.props.parameters, 'should not touch culling outside globe mode');
+  t.notOk(
+    flatLabel.props._subLayerProps.characters,
+    'should not override the glyph sublayer outside globe mode'
+  );
+
+  // globe mode sets a global `cull: true`, which would otherwise discard the glyph quads
+  const globeLabel = renderWithMapState({...INITIAL_MAP_STATE, globe: {enabled: true}});
+  t.equal(globeLabel.props.parameters.cull, false, 'should disable culling in globe mode');
+  t.equal(
+    globeLabel.props._subLayerProps.characters.type,
+    EnhancedMultiIconLayer,
+    'should render glyphs with the globe back-face culling sublayer'
+  );
+  t.equal(
+    globeLabel.props._subLayerProps.background.type,
+    EnhancedTextBackgroundLayer,
+    'should render the label background with the globe back-face culling sublayer'
+  );
 
   t.end();
 });
