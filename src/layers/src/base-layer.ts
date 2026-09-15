@@ -7,7 +7,10 @@ import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/de
 import {CollisionFilterExtension, DataFilterExtension} from '@deck.gl/extensions';
 import {TextLayer} from '@deck.gl/layers';
 import CollisionTextLayer from './collision-text-layer';
-import {installCollisionFilterEffectAlignment} from './collision-filter-effect';
+import {
+  installCollisionFilterEffectAlignment,
+  snapCollisionModuleFade
+} from './collision-filter-effect';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import React from 'react';
@@ -178,36 +181,7 @@ class KeplerCollisionFilterExtension extends CollisionFilterExtension {
 
   getShaders(this: any) {
     const base = CollisionFilterExtension.prototype.getShaders.call(this) || {};
-    const positionHook = 'vs:DECKGL_FILTER_GL_POSITION';
-    const basePositionInject = base.inject?.[positionHook];
-    const basePositionCode =
-      typeof basePositionInject === 'string'
-        ? basePositionInject
-        : basePositionInject?.injection || '';
-
-    return {
-      ...base,
-      inject: {
-        ...base.inject,
-        // CollisionFilterExtension fades over a 5x5 neighborhood. Kepler labels
-        // should be fully opaque or fully gone — not half-transparent ghosts.
-        [positionHook]: {
-          order: Math.max(
-            1,
-            typeof basePositionInject === 'object' ? basePositionInject?.order || 0 : 0
-          ),
-          injection: `${basePositionCode}
-  if (collision.enabled) {
-    if (collision_fade < 0.5) {
-      collision_fade = 0.0;
-      position = vec4(0.0, 0.0, 2.0, 1.0);
-    } else {
-      collision_fade = 1.0;
-    }
-  }`
-        }
-      }
-    };
+    return snapCollisionModuleFade(base);
   }
 
   initializeState(this: any, context: any, extension: this) {

@@ -12,6 +12,45 @@
  * from the live GL buffer and project with drawingBuffer / viewport CSS.
  */
 
+/**
+ * Append binary fade snapping to the collision shader *module* inject.
+ *
+ * Do not put an `{order, injection}` object on the extension's own `inject` map.
+ * deck.gl mergeShaders concatenates injects with `+`, so an object becomes
+ * `[object Object]` in GLSL (`'[' : syntax error`) when another layer (globe
+ * back-face cull) already injected a string at the same hook.
+ */
+export function snapCollisionModuleFade(shaders: {modules?: any[]; inject?: any} = {}): {
+  modules?: any[];
+  inject?: any;
+} {
+  const positionHook = 'vs:DECKGL_FILTER_GL_POSITION';
+  const modules = (shaders.modules || []).map((module: any) => {
+    if (module?.name !== 'collision') {
+      return module;
+    }
+    const baseInject = module.inject?.[positionHook];
+    const baseInjectCode =
+      typeof baseInject === 'string' ? baseInject : baseInject?.injection || '';
+    return {
+      ...module,
+      inject: {
+        ...module.inject,
+        [positionHook]: `${baseInjectCode}
+  if (collision.enabled) {
+    if (collision_fade < 0.5) {
+      collision_fade = 0.0;
+      position = vec4(0.0, 0.0, 2.0, 1.0);
+    } else {
+      collision_fade = 1.0;
+    }
+  }`
+      }
+    };
+  });
+  return {...shaders, modules};
+}
+
 type CollisionFilterEffectLike = {
   id?: string;
   preRender?: (opts: unknown) => void;
