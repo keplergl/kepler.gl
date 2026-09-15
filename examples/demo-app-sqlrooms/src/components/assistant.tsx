@@ -5,7 +5,6 @@ import React from 'react';
 import {
   AI_SETTINGS,
   createKeplerAssistantInstructions,
-  createKeplerAssistantTools,
   getEchartsToolRenderers,
   setKeplerStateAccessors,
   setReduxStore,
@@ -42,6 +41,8 @@ import {
 import {Settings} from 'lucide-react';
 import type {Store} from 'redux';
 import type {DemoRoomState} from './sqlrooms-demo-layout';
+import {getOpenAiModel} from './assistant-model';
+import {createAssistantSkillTools} from './assistant-tools';
 
 // Keep existing sessions, provider keys, and the pre-v1 settings migration.
 export const assistantPersistence = {
@@ -95,6 +96,7 @@ export const createAssistantSlice: StateCreator<
   return {
     ...createAiSettingsSlice({config: AI_SETTINGS})(set, get, store),
     ...createAiSlice({
+      getCustomModel: () => getOpenAiModel(store),
       getInstructions: () =>
         `${createDefaultAiInstructions(store)}\n\n${createKeplerAssistantInstructions()}\n\n` +
         'Use the registered Kepler commands for map edits, spatial analysis, and charts. ' +
@@ -117,7 +119,7 @@ export const createAssistantSlice: StateCreator<
             })
           })
         },
-        ...createKeplerAssistantTools(store)
+        ...createAssistantSkillTools(store)
       },
       toolRenderers: {
         ...createDefaultAiToolRenderers(),

@@ -3,12 +3,9 @@
 
 import {DuckDBWasmAdapter, KeplerGlDuckDbTable} from '@kepler.gl/duckdb';
 import {initApplicationConfig} from '@kepler.gl/utils';
-import {
-  getConnector,
-  setKeplerStateAccessors,
-  type createKeplerAssistantTools
-} from '@openassistant/kepler-assistant/integration';
+import {getConnector, setKeplerStateAccessors} from '@openassistant/kepler-assistant/integration';
 import type {createDefaultAiTools} from '@sqlrooms/ai';
+import type {createAssistantSkillTools} from '../src/components/assistant-tools';
 import {createDemoRoomStore} from '../src/components/sqlrooms-demo-layout';
 import {
   AiAssistantPanel,
@@ -57,7 +54,7 @@ export async function run() {
   );
   await assistantStore.getState().db.refreshTableSchemas();
   const tools = assistantStore.getState().ai.tools as ReturnType<typeof createDefaultAiTools> &
-    ReturnType<typeof createKeplerAssistantTools>;
+    ReturnType<typeof createAssistantSkillTools>;
   const options = {toolCallId: 'test-query', messages: []};
   const query = await tools.query.execute!(
     {type: 'query', sqlQuery: 'SELECT * FROM source', reasoning: 'Preview source'},

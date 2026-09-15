@@ -107,16 +107,28 @@ Map, geographic, GeoDa, skill, and chart capabilities remain provided by
 ### Assistant integration package
 
 The demo uses the published `@openassistant/kepler-assistant@0.0.17` integration
-API. All assistant imports use `@openassistant/kepler-assistant/integration`,
-which exposes the map bridge, command catalog, skill tools, and chart renderers
-without constructing a standalone room. The demo owns persistence, slice
+API. The `/integration`, `/chat`, and `/tool-surface` entry points expose the
+map bridge, command catalog, skill factories, and chart renderers without
+constructing a standalone room. The demo owns persistence, slice
 composition, command registration, connector binding, and the chat UI.
 
 No Yarn patch or DuckDB import interception is needed. Keep all assistant
-imports on the integration subpath: importing the root initializes the
+imports on these headless subpaths: importing the root initializes the
 standalone room. The package's single-map Redux/analysis bridge remains
 page-scoped; this is not a multi-room assistant API. Run the browser test below
 when upgrading the package.
+
+OpenAI models use the native AI SDK Responses provider for chat, skill discovery,
+and skill subagents, so reasoning models can call tools. The resolver reads the
+current model, API key, and base URL at request time. It disables server-side
+response storage; the room retains conversation history and the SDK carries
+encrypted reasoning between tool steps. Other providers keep their existing
+resolution. The demo uses AI SDK 6 to match SQLRooms 0.29's model interface.
+The skill factories accept the same resolver without a dependency patch.
+
+The model tests exercise Responses requests, tool-result and reasoning replay,
+model/settings changes, and the fallback for other providers with mocked HTTP.
+Run them alongside the SQL/export tests using the unit-test command above.
 
 The browser integration test exercises the actual WASM engine, shared assistant
 lifecycle, stock chat and chart rendering, session/settings persistence across
