@@ -10,7 +10,7 @@ import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
 import {useParams, useSearchParams, useLocation} from 'react-router-dom';
 import {WebMercatorViewport} from '@deck.gl/core';
-import {setMapBoundary} from '@openassistant/kepler-assistant';
+import {setMapBoundary} from '@openassistant/kepler-assistant/integration';
 import {AiAssistantPanel} from './components/assistant';
 import {theme} from '@kepler.gl/styles';
 import {SidebarFactory} from '@kepler.gl/components';

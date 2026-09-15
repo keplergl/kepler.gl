@@ -51,10 +51,6 @@ lerna-debug.log
 !.yarn/sdks
 !.yarn/versions
 
-!examples/demo-app-sqlrooms/.yarn/
-examples/demo-app-sqlrooms/.yarn/*
-!examples/demo-app-sqlrooms/.yarn/patches/
-
 # Local Netlify folder
 .netlify
 meta.json

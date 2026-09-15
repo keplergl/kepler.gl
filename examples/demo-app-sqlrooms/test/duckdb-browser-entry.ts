@@ -7,7 +7,7 @@ import {
   getConnector,
   setKeplerStateAccessors,
   type createKeplerAssistantTools
-} from '@openassistant/kepler-assistant';
+} from '@openassistant/kepler-assistant/integration';
 import type {createDefaultAiTools} from '@sqlrooms/ai';
 import {createDemoRoomStore} from '../src/components/sqlrooms-demo-layout';
 import {
@@ -34,6 +34,10 @@ function check(condition: unknown, message: string): asserts condition {
 }
 
 export async function run() {
+  check(
+    !('__keplerRoomStore' in window),
+    'Importing the integration entry initialized the standalone room'
+  );
   const assistantStore = createDemoRoomStore();
   const connector = await getSqlConnector();
   const adapter = new DuckDBWasmAdapter(Promise.resolve(connector.getDb()));

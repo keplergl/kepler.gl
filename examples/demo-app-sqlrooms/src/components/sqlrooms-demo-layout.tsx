@@ -22,7 +22,7 @@ import {
   getKeplerContext,
   KEPLER_COMMAND_OWNER,
   setStoreConnectorProvider
-} from '@openassistant/kepler-assistant';
+} from '@openassistant/kepler-assistant/integration';
 import type {AiSliceState, AiSettingsSliceState} from '@sqlrooms/ai';
 import {
   assistantPersistence,

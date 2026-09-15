@@ -104,30 +104,19 @@ preview cap prevents large geometry/object values from flooding model context.
 Map, geographic, GeoDa, skill, and chart capabilities remain provided by
 `@openassistant/kepler-assistant`.
 
-### Temporary assistant package patch
+### Assistant integration package
 
-The pinned `@openassistant/kepler-assistant@0.0.15` root entry creates a private
-room as an import side effect and exposes no host-store factory. The versioned
-Yarn patch in `.yarn/patches/` removes that construction and its standalone
-`AiAssistantPanel`, `roomStore`, and `useRoomStore` exports from the root entry.
-It exposes `AI_SETTINGS`, `createKeplerAssistantTools(store)`, and
-`createKeplerAssistantInstructions()` using the package's existing implementation.
-The demo owns persistence, slice composition, command registration, connector
-binding, and the chat UI. The package's single-map Redux/analysis bridge remains
-page-scoped; this is not a multi-room assistant API.
+The demo uses the published `@openassistant/kepler-assistant@0.0.17` integration
+API. All assistant imports use `@openassistant/kepler-assistant/integration`,
+which exposes the map bridge, command catalog, skill tools, and chart renderers
+without constructing a standalone room. The demo owns persistence, slice
+composition, command registration, connector binding, and the chat UI.
 
-This patch applies only to this example's dependency installation. It replaces
-the esbuild DuckDB import interception without copying the analysis or map tools.
-The source replacement is proposed in
-[Kepler Assistant PR #4](https://github.com/geodaai/kepler-assistant/pull/4).
-Once that API is published, replace the patched dependency with the released
-version, switch all assistant imports to
-`@openassistant/kepler-assistant/integration`, and delete the patch. That migration
-has passed the browser test and production build using a locally packed source
-package. Yarn cannot currently install the pnpm repository as a Git dependency,
-so this demo keeps its reproducible patched installation until publication.
-When upgrading, run the browser test below and keep imports on the integration
-subpath; the upstream root entry still initializes its standalone room.
+No Yarn patch or DuckDB import interception is needed. Keep all assistant
+imports on the integration subpath: importing the root initializes the
+standalone room. The package's single-map Redux/analysis bridge remains
+page-scoped; this is not a multi-room assistant API. Run the browser test below
+when upgrading the package.
 
 The browser integration test exercises the actual WASM engine, shared assistant
 lifecycle, stock chat and chart rendering, session/settings persistence across

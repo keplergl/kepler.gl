@@ -10,7 +10,7 @@ import {
   setKeplerStateAccessors,
   setReduxStore,
   tableToLLMResult
-} from '@openassistant/kepler-assistant';
+} from '@openassistant/kepler-assistant/integration';
 import {
   AiSettingsPanel,
   AiSettingsSliceConfig,
