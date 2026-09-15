@@ -1664,12 +1664,22 @@ class Layer implements KeplerLayer {
               sdf: textLabel[i].outlineWidth > 0
             },
             parameters: {
-              // text will always show on top of all layers
-              depthTest: false,
-              // Globe mode sets a global `cull: true` to backface-cull the sphere
-              // surface. That also culls the glyph quads, hiding every label, so
-              // disable culling for the label layer (see mvt-label-layer.ts).
-              ...(isGlobeMode ? {cull: false} : null),
+              ...(isGlobeMode
+                ? {
+                    // Globe far-side occlusion is the depth disk (see globe-layers.ts),
+                    // not GPU face culling. Labels used to force depthTest off so they
+                    // always drew on top; with cull also disabled they then showed
+                    // through the planet when the parent object was on the back side.
+                    // Match the editor overlay: depth-test against the disk, don't write
+                    // depth, and keep cull off so billboard glyph quads are not discarded.
+                    depthTest: true,
+                    depthMask: false,
+                    cull: false
+                  }
+                : {
+                    // text will always show on top of all layers
+                    depthTest: false
+                  }),
               ...(mapState?.layerParameters ?? {})
             },
 
@@ -1701,6 +1711,7 @@ class Layer implements KeplerLayer {
                       ...(isGlobeMode ? {type: EnhancedTextBackgroundLayer} : null),
                       parameters: {
                         cull: false,
+                        ...(isGlobeMode ? {depthTest: true, depthMask: false} : null),
                         ...(mapState?.layerParameters ?? {})
                       }
                     }
