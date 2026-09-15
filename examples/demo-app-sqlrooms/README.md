@@ -1,7 +1,8 @@
 # SQLRooms Demo App
 
 An experimental version of the Kepler demo for testing SQLRooms 0.29.0. It runs
-beside the original `examples/demo-app`; the website still uses the original app.
+beside the original `examples/demo-app`. The website serves the original app at
+`/demo` and this app at `/demo-next` as separate bundles.
 
 ## Run both apps
 
@@ -48,8 +49,34 @@ It keeps Kepler's colors and font stack and removes the obsolete DuckDB preview
 callout. Sample fixtures are imported from the original demo to avoid duplicating
 the datasets; application code and dependency installation are separate.
 
-This example is a test harness for the migration, not the website's deployment
-entry point. Use it to establish feature parity before replacing the main app.
+Use this preview to establish feature parity before replacing the main app.
+
+## Website deployment
+
+The existing root `yarn deploy` / website `yarn build` pipeline installs this
+example's locked dependencies, builds it with `--demo-next`, and copies its
+output into `website/dist/demo-next/`. Netlify continues publishing the same
+`website/dist` directory. No dashboard, domain, or new environment variable
+configuration is required for this addition to an existing deployment.
+
+The website's `_redirects` routes `/demo-next` and its child routes to the new
+entry point before the website catch-all. Assets use `/demo-next/` URLs, and
+sample and cloud-share links stay under `/demo-next`. Regular `yarn build` and
+local development retain `/demo` routes and root asset URLs. To try the deployed
+paths locally, run `yarn start:local --demo-next` from this directory.
+
+Assistant sessions/settings use `kepler-sqlrooms-ai-assistant-state`, separate
+from the original demo. Provider login storage remains shared on the same
+origin. Existing OAuth callback URLs are retained, including the website's
+`/auth` popup handler for Dropbox; no new callback registration is introduced.
+Live login still depends on the existing provider configuration, and preview
+origins must already be allowed by the provider to support login.
+
+After building the website, run the deployment browser check from the repository
+root with `node --test website/test/demo-next.browser.cjs`. It serves the combined
+publish directory using its SPA rewrites and checks both entry points, nested
+sample routes, asset URLs, and assistant storage isolation. It requires Chromium
+(or `PUPPETEER_EXECUTABLE_PATH`) and access to public sample data and DuckDB assets.
 
 ## SQL panel
 
@@ -92,8 +119,9 @@ The demo composes `createAiSlice`, `createAiSettingsSlice`, and
 components, Kepler instructions, skill tools, and chart renderers. Kepler map
 commands still access the existing Redux store through explicit accessors.
 Closing the assistant unmounts its UI without destroying the room or interrupting
-its database. Sessions and provider settings retain the existing
-`kepler-ai-assistant-state` storage key and settings migration.
+its database. Sessions and provider settings use the demo-owned
+`kepler-sqlrooms-ai-assistant-state` storage key, preserving settings migration
+while keeping the original demo's state separate.
 
 The stock SQLRooms query tool shares five result rows with the model and accepts
 read-only queries. It no longer materializes every map dataset into `tbl_*`

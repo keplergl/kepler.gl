@@ -221,7 +221,7 @@ export async function run() {
     assistantStore.getState().aiSettings.config.providers.openai.apiKey === 'test-only-key',
     'Closing assistant lost provider settings'
   );
-  const persisted = JSON.parse(localStorage.getItem('kepler-ai-assistant-state')!);
+  const persisted = JSON.parse(localStorage.getItem('kepler-sqlrooms-ai-assistant-state')!);
   check(
     persisted.state.ai.sessions.some((s: {id: string}) => s.id === sessionId),
     'Existing persistence key was not retained'

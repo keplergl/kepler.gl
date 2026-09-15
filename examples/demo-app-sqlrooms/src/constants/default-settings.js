@@ -7,7 +7,8 @@ import keyMirror from 'keymirror';
 
 export const ASSETS_URL = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/';
 export const DATA_URL = 'https://raw.githubusercontent.com/keplergl/kepler.gl-data/master/';
-export const MAP_URI = 'demo/map?mapUrl=';
+export const DEMO_BASE_PATH = process.env.DEMO_BASE_PATH || '/demo';
+export const MAP_URI = `${DEMO_BASE_PATH.slice(1)}/map?mapUrl=`;
 /*
  * If you want to add more samples, feel free to edit the json file on github kepler.gl data repo
  */

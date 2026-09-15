@@ -5,7 +5,7 @@
 import {Dropbox} from 'dropbox';
 import Window from 'global/window';
 import DropboxIcon from './dropbox-icon';
-import {MAP_URI} from '../../constants/default-settings';
+import {DEMO_BASE_PATH, MAP_URI} from '../../constants/default-settings';
 import {KEPLER_FORMAT, Provider} from '@kepler.gl/cloud-providers';
 
 const NAME = 'dropbox';
@@ -421,7 +421,7 @@ export default class DropboxProvider extends Provider {
   // append map url after load map from storage, this url is not meant
   // to be directly shared with others
   _getMapPermalinkFromParams({path}, fullURL = true) {
-    const mapLink = `demo/map/dropbox?path=${path}`;
+    const mapLink = `${DEMO_BASE_PATH.slice(1)}/map/dropbox?path=${path}`;
     return fullURL
       ? `${Window.location.protocol}//${Window.location.host}/${mapLink}`
       : `/${mapLink}`;

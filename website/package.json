@@ -7,13 +7,14 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "node esbuild.config.mjs --start",
-    "esbuild": "yarn build-clean && yarn build-static && node esbuild.config.mjs --build",
+    "esbuild": "yarn build-clean && yarn build-static && node esbuild.config.mjs --build && yarn build:demo-next",
     "start": "webpack serve --mode development --env prod --static-directory ./src/static --progress --open",
     "start-prod": "webpack serve --mode production --env prod --static-directory ./src/static --progress --open",
     "build-clean": "rm -rf ./dist && mkdir dist",
     "build-static": "cp -r ./src/static/* dist",
     "build-script": "NODE_OPTIONS=--openssl-legacy-provider webpack --mode production --env prod",
-    "build": "yarn build-clean && yarn build-static && yarn esbuild",
+    "build": "yarn esbuild",
+    "build:demo-next": "cd ../examples/demo-app-sqlrooms && yarn install --immutable && yarn build --demo-next && cp -R dist/demo-next ../../website/dist/",
     "lint": "eslint src"
   },
   "dependencies": {
