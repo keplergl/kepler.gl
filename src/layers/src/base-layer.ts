@@ -3,6 +3,7 @@
 
 import {COORDINATE_SYSTEM} from '@deck.gl/core';
 import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
+import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/deckgl-layers';
 import {CollisionFilterExtension, DataFilterExtension} from '@deck.gl/extensions';
 import {TextLayer} from '@deck.gl/layers';
 import CollisionTextLayer from './collision-text-layer';
@@ -1645,7 +1646,7 @@ class Layer implements KeplerLayer {
       filterRange: gpuFilter ? gpuFilter.filterRange : undefined,
       onFilteredItemsChange: gpuFilter ? layerCallbacks?.onFilteredItemsChange : undefined,
 
-      // layer should be visible and if splitMap, shown in to one of panel
+      // layer should be visible and, if splitMap, shown in one of the panels
       visible: this.config.isVisible && visible
     };
   }
@@ -1685,10 +1686,13 @@ class Layer implements KeplerLayer {
     },
     renderOpts
   ) {
-    const {data, mapState} = renderOpts;
+    const {data, mapState, visible: visibleInMap} = renderOpts;
     const {textLabel} = this.config;
+    // labels should be visible and, if splitMap, shown in one of the panels
+    const visible = this.config.isVisible && visibleInMap;
 
     const isArrow = isArrowTable(data.data);
+    const isGlobeMode = Boolean(mapState?.globe?.enabled);
 
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {
@@ -1720,7 +1724,7 @@ class Layer implements KeplerLayer {
             ...sharedProps,
             id: labelId,
             data: data.data,
-            visible: this.config.isVisible,
+            visible,
             getText,
             getPosition,
             getFiltered,
@@ -1743,8 +1747,22 @@ class Layer implements KeplerLayer {
               sdf: textLabel[i].outlineWidth > 0
             },
             parameters: {
-              // text will always show on top of all layers
-              depthTest: false,
+              ...(isGlobeMode
+                ? {
+                    // Globe far-side occlusion is the depth disk (see globe-layers.ts),
+                    // not GPU face culling. Labels used to force depthTest off so they
+                    // always drew on top; with cull also disabled they then showed
+                    // through the planet when the parent object was on the back side.
+                    // Match the editor overlay: depth-test against the disk, don't write
+                    // depth, and keep cull off so billboard glyph quads are not discarded.
+                    depthTest: true,
+                    depthMask: false,
+                    cull: false
+                  }
+                : {
+                    // text will always show on top of all layers
+                    depthTest: false
+                  }),
               ...(mapState?.layerParameters ?? {})
             },
             ...(collisionEnabled
@@ -1776,11 +1794,17 @@ class Layer implements KeplerLayer {
               collisionEnabled
             },
             _subLayerProps: {
+              // Labels anchored on the far hemisphere would otherwise be drawn
+              // through the planet, since depthTest is off. Both the glyphs and the
+              // label background need it, or a far-side label leaves an empty box.
+              ...(isGlobeMode ? {characters: {type: EnhancedMultiIconLayer}} : null),
               ...(background
                 ? {
                     background: {
+                      ...(isGlobeMode ? {type: EnhancedTextBackgroundLayer} : null),
                       parameters: {
                         cull: false,
+                        ...(isGlobeMode ? {depthTest: true, depthMask: false} : null),
                         ...(mapState?.layerParameters ?? {})
                       }
                     }

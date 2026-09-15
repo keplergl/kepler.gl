@@ -2,7 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {console as Console} from 'global/window';
-import {TextLayer, _TextBackgroundLayer as TextBackgroundLayer} from '@deck.gl/layers';
+import {EnhancedTextBackgroundLayer} from '@kepler.gl/deckgl-layers';
+import {TextLayer} from '@deck.gl/layers';
 import type {FilterContext} from '@deck.gl/core';
 
 type CollisionTextLayerProps = {
@@ -19,7 +20,7 @@ type CollisionTextLayerProps = {
  * the expanded padding is skipped so a user-configured background keeps its
  * normal size.
  */
-class CollisionTextBackgroundLayer extends TextBackgroundLayer {
+class CollisionTextBackgroundLayer extends EnhancedTextBackgroundLayer {
   static layerName = 'CollisionTextBackgroundLayer';
 
   getShaders() {
@@ -54,6 +55,9 @@ export default class CollisionTextLayer<DataT = any> extends TextLayer<DataT> {
 
   getSubLayerClass(subLayerId: string, DefaultLayerClass: any): any {
     if (subLayerId === 'background') {
+      // Prefer CollisionTextBackgroundLayer over _subLayerProps.background.type
+      // (EnhancedTextBackgroundLayer). This subclass already injects globe
+      // back-face culling via EnhancedTextBackgroundLayer.
       return CollisionTextBackgroundLayer;
     }
     return super.getSubLayerClass(subLayerId, DefaultLayerClass);
