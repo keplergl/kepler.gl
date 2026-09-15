@@ -696,15 +696,14 @@ test('#PointLayer -> renderLayer', t => {
           [Number.MIN_SAFE_INTEGER, 0, 0, 0],
           'Should calculate correct instancePixelOffset'
         );
-        t.ok(
-          deckLayers[1].props.extensions.some(
+        t.notOk(
+          (deckLayers[1].props.extensions || []).some(
             ext => ext.constructor.extensionName === 'CollisionFilterExtension'
           ),
-          'Should keep CollisionFilterExtension when collision is off'
+          'Should not add CollisionFilterExtension when collision is off'
         );
-        t.equal(
+        t.notOk(
           deckLayers[1].props.collisionEnabled,
-          false,
           'Should leave collision filtering disabled by default'
         );
       }
@@ -737,7 +736,7 @@ test('#PointLayer -> renderLayer', t => {
         [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: deckLayers => {
-        const labelLayer = deckLayers.find(l => l.id === 'test_layer_1-label-types');
+        const labelLayer = deckLayers.find(l => l.id === 'test_layer_1-label-types-collision');
         t.ok(labelLayer, 'Should create a text label layer');
         t.ok(
           labelLayer.props.extensions.some(

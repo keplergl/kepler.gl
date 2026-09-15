@@ -1703,18 +1703,20 @@ class Layer implements KeplerLayer {
           ? CollisionTextLayer
           : TextLayer;
         const getText = animationConfig ? f => d.getText(f, animationConfig) : d.getText;
-        // Keep CollisionFilterExtension on the layer when collision is off.
-        // Removing it leaves a stale collisionPriorities attribute on the
-        // matched MultiIconLayer, and deck.gl errors because getCollisionPriority
-        // is no longer an accessor.
-        const extensions = [...(sharedProps.extensions || []), collisionFilterExtension];
         const background = userBackground || (collisionEnabled && !isArrow);
+        // Distinct id when collision is on so deck.gl does not rematch the
+        // previous TextLayer. Matching would keep a stale collisionPriorities
+        // attribute after the extension is removed, and skip initializeState
+        // (no collision_texture) when it is added.
+        const labelId = `${this.id}-label-${textLabel[i].field?.name}${
+          collisionEnabled ? '-collision' : ''
+        }`;
 
         accu.push(
           // @ts-expect-error
           new TextLayerClass({
             ...sharedProps,
-            id: `${this.id}-label-${textLabel[i].field?.name}`,
+            id: labelId,
             data: data.data,
             visible: this.config.isVisible,
             getText,
@@ -1743,10 +1745,14 @@ class Layer implements KeplerLayer {
               depthTest: false,
               ...(mapState?.layerParameters ?? {})
             },
-            extensions,
-            collisionEnabled,
-            collisionGroup: `${this.id}-text-label-${i}`,
-            getCollisionPriority: 0,
+            ...(collisionEnabled
+              ? {
+                  extensions: [...(sharedProps.extensions || []), collisionFilterExtension],
+                  collisionEnabled: true,
+                  collisionGroup: `${this.id}-text-label-${i}`,
+                  getCollisionPriority: 0
+                }
+              : {}),
 
             getFilterValue: data.getFilterValue,
             updateTriggers: {
