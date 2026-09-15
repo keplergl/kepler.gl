@@ -49,9 +49,12 @@ class CollisionTextBackgroundLayer extends EnhancedTextBackgroundLayer {
 
 export default class CollisionTextLayer<DataT = any> extends TextLayer<DataT> {
   static layerName = 'CollisionTextLayer';
+  // Kepler-only prop; TextLayer.defaultProps is typed as DefaultProps<TextLayerProps>
+  // so an extra key cannot be declared on the static side.
   static defaultProps = {
+    ...(TextLayer.defaultProps as object),
     collisionShowBackground: false
-  };
+  } as typeof TextLayer.defaultProps;
 
   getSubLayerClass(subLayerId: string, DefaultLayerClass: any): any {
     if (subLayerId === 'background') {

@@ -4,14 +4,15 @@
 import {
   alignCollisionFilterEffect,
   installCollisionFilterEffectAlignment,
-  snapCollisionModuleFade
+  snapCollisionModuleFade,
+  type DeckLike
 } from './collision-filter-effect';
 
 describe('alignCollisionFilterEffect', () => {
   function createEffect() {
     const canvasContext = {
-      getPixelSize: jest.fn((): [number, number] => [1080, 608]),
-      getDevicePixelRatio: jest.fn(() => 3.555),
+      getPixelSize: jest.fn((_opts?: unknown): [number, number] => [1080, 608]),
+      getDevicePixelRatio: jest.fn((_opts?: unknown) => 3.555),
       getDrawingBufferSize: jest.fn((): [number, number] => [1080, 608]),
       cssToDeviceRatio: jest.fn(() => 2)
     };
@@ -21,15 +22,13 @@ describe('alignCollisionFilterEffect', () => {
     };
     const effect = {
       id: 'collision-filter-effect',
-      lastViewport: {id: 'stale'},
+      lastViewport: {id: 'stale'} as unknown,
       context: {device: {gl, canvasContext}},
-      preRender: jest.fn(function (this: {lastViewport?: unknown}) {
-        return {
-          pixelSize: canvasContext.getPixelSize(),
-          devicePixelRatio: canvasContext.getDevicePixelRatio(),
-          lastViewport: this.lastViewport
-        };
-      })
+      preRender: jest.fn((_opts?: unknown) => ({
+        pixelSize: canvasContext.getPixelSize(),
+        devicePixelRatio: canvasContext.getDevicePixelRatio(),
+        lastViewport: effect.lastViewport
+      }))
     };
     return {effect, canvasContext};
   }
@@ -53,14 +52,14 @@ describe('alignCollisionFilterEffect', () => {
 
   test('falls back to luma drawing-buffer size when GL sizes are missing', () => {
     const canvasContext = {
-      getPixelSize: jest.fn((): [number, number] => [800, 600]),
-      getDevicePixelRatio: jest.fn(() => 2),
+      getPixelSize: jest.fn((_opts?: unknown): [number, number] => [800, 600]),
+      getDevicePixelRatio: jest.fn((_opts?: unknown) => 2),
       getDrawingBufferSize: jest.fn((): [number, number] => [1600, 1200]),
       cssToDeviceRatio: jest.fn(() => 2)
     };
     const effect = {
       context: {device: {canvasContext}},
-      preRender: jest.fn(() => ({
+      preRender: jest.fn((_opts?: unknown) => ({
         pixelSize: canvasContext.getPixelSize(),
         devicePixelRatio: canvasContext.getDevicePixelRatio()
       }))
@@ -88,10 +87,12 @@ describe('alignCollisionFilterEffect', () => {
 describe('installCollisionFilterEffectAlignment', () => {
   test('wraps CollisionFilterEffect before Deck adds it as a default effect', () => {
     const added: unknown[] = [];
-    const addDefaultEffect = jest.fn((effect: {id?: string; preRender?: () => string}) => {
-      added.push(effect.preRender?.());
-    });
-    const deck = {
+    const addDefaultEffect = jest.fn(
+      (effect: {id?: string; preRender?: (opts?: unknown) => unknown}) => {
+        added.push(effect.preRender?.());
+      }
+    );
+    const deck: DeckLike = {
       _addDefaultEffect: addDefaultEffect
     };
     installCollisionFilterEffectAlignment(deck);
@@ -105,10 +106,10 @@ describe('installCollisionFilterEffectAlignment', () => {
     const effect = {
       id: 'collision-filter-effect',
       context: {device: {canvasContext}},
-      preRender: () => String(canvasContext.getPixelSize())
+      preRender: (_opts?: unknown) => String(canvasContext.getPixelSize())
     };
 
-    deck._addDefaultEffect(effect);
+    deck._addDefaultEffect?.(effect);
     expect(added).toEqual(['200,200']);
     expect(deck.__keplerCollisionFilterAligned).toBe(true);
 
@@ -118,11 +119,11 @@ describe('installCollisionFilterEffectAlignment', () => {
 
   test('does not wrap unrelated default effects', () => {
     const lighting = {id: 'lighting', preRender: jest.fn()};
-    const deck = {
+    const deck: DeckLike = {
       _addDefaultEffect: jest.fn()
     };
     installCollisionFilterEffectAlignment(deck);
-    deck._addDefaultEffect(lighting);
+    deck._addDefaultEffect?.(lighting);
     expect(lighting.preRender.mock.calls.length).toBe(0);
   });
 });

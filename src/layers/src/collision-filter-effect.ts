@@ -51,9 +51,9 @@ export function snapCollisionModuleFade(shaders: {modules?: any[]; inject?: any}
   return {...shaders, modules};
 }
 
-type CollisionFilterEffectLike = {
+export type CollisionFilterEffectLike = {
   id?: string;
-  preRender?: (opts: unknown) => void;
+  preRender?: (opts?: unknown) => unknown;
   lastViewport?: unknown;
   context?: {device?: CanvasDevice};
   collisionFilterPass?: {device?: CanvasDevice};
@@ -72,7 +72,7 @@ type CanvasDevice = {
   };
 };
 
-type DeckLike = {
+export type DeckLike = {
   __keplerCollisionFilterAligned?: boolean;
   _addDefaultEffect?: (effect: CollisionFilterEffectLike) => void;
 };
