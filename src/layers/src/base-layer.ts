@@ -1693,17 +1693,19 @@ class Layer implements KeplerLayer {
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {
         const userBackground = Boolean(textLabel[i].background || backgroundProps?.background);
-        const collisionEnabled = Boolean(textLabel[i].collisionEnabled);
+        // GeoArrowTextLayer cannot draw a collision hit-area background, so GPU
+        // collision would sample the geographic anchor and cull offset labels.
+        // Leave Arrow labels unfiltered until that path exists.
+        const collisionEnabled = Boolean(textLabel[i].collisionEnabled) && !isArrow;
         // CollisionTextLayer draws an expanded background in the collision pass so
         // the GPU hit-test still covers the geographic anchor after pixelOffset.
-        // GeoArrowTextLayer does not support background, so keep it for Arrow data.
-        const TextLayerClass = isArrow
-          ? GeoArrowTextLayer
-          : collisionEnabled
+        const TextLayerClass = collisionEnabled
           ? CollisionTextLayer
+          : isArrow
+          ? GeoArrowTextLayer
           : TextLayer;
         const getText = animationConfig ? f => d.getText(f, animationConfig) : d.getText;
-        const background = userBackground || (collisionEnabled && !isArrow);
+        const background = userBackground || collisionEnabled;
         // Distinct id when collision is on so deck.gl does not rematch the
         // previous TextLayer. Matching would keep a stale collisionPriorities
         // attribute after the extension is removed, and skip initializeState
@@ -1750,7 +1752,8 @@ class Layer implements KeplerLayer {
                   extensions: [...(sharedProps.extensions || []), collisionFilterExtension],
                   collisionEnabled: true,
                   collisionGroup: `${this.id}-text-label-${i}`,
-                  getCollisionPriority: 0
+                  getCollisionPriority: 0,
+                  collisionShowBackground: userBackground
                 }
               : {}),
 

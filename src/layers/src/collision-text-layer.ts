@@ -5,14 +5,19 @@ import {console as Console} from 'global/window';
 import {TextLayer, _TextBackgroundLayer as TextBackgroundLayer} from '@deck.gl/layers';
 import type {FilterContext} from '@deck.gl/core';
 
+type CollisionTextLayerProps = {
+  collisionShowBackground?: boolean;
+};
+
 /**
  * CollisionFilterExtension samples geometry.worldPosition (the geographic
  * anchor). Kepler's labels are shifted with getPixelOffset / non-centered
  * anchors, so that sample misses the glyphs and every label is culled.
  *
  * PointLabelLayer's approach: draw an expanded text background in the
- * collision pass so the hit area still covers the anchor, then hide that
- * background in the color pass.
+ * collision pass so the hit area still covers the anchor. In the color pass
+ * the expanded padding is skipped so a user-configured background keeps its
+ * normal size.
  */
 class CollisionTextBackgroundLayer extends TextBackgroundLayer {
   static layerName = 'CollisionTextBackgroundLayer';
@@ -28,10 +33,14 @@ class CollisionTextBackgroundLayer extends TextBackgroundLayer {
     vs = vs.replace(
       'void main(void) {',
       `void main(void) {
-  // Expand toward the geographic origin (so pixelOffset still covers the
-  // sample point) and add extra padding so the 5x5 collision sample sits
-  // inside the hit box instead of on its edge (which fades labels).
-  vec4 _padding = textBackground.padding + instancePixelOffsets.xyxy * vec4(1.0, 1.0, -1.0, -1.0) + vec4(16.0);`
+  // collision.sort is true only while drawing the collision map. Expand toward
+  // the geographic origin (so pixelOffset still covers the sample point) and
+  // add extra padding so the 5x5 collision sample sits inside the hit box.
+  // Color/picking keep the configured background size.
+  vec4 _padding = textBackground.padding;
+  if (collision.sort) {
+    _padding += instancePixelOffsets.xyxy * vec4(1.0, 1.0, -1.0, -1.0) + vec4(16.0);
+  }`
     );
     return {...shaders, vs};
   }
@@ -39,6 +48,9 @@ class CollisionTextBackgroundLayer extends TextBackgroundLayer {
 
 export default class CollisionTextLayer<DataT = any> extends TextLayer<DataT> {
   static layerName = 'CollisionTextLayer';
+  static defaultProps = {
+    collisionShowBackground: false
+  };
 
   getSubLayerClass(subLayerId: string, DefaultLayerClass: any): any {
     if (subLayerId === 'background') {
@@ -54,6 +66,9 @@ export default class CollisionTextLayer<DataT = any> extends TextLayer<DataT> {
     if (renderPass === 'collision') {
       return isBackground;
     }
-    return !isBackground;
+    if (isBackground) {
+      return Boolean((this.props as CollisionTextLayerProps).collisionShowBackground);
+    }
+    return true;
   }
 }
