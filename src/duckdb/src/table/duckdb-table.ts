@@ -53,6 +53,7 @@ import {
   quoteTableName,
   removeUnsupportedExtensions,
   restoreArrowTable,
+  setGeoArrowWKBExtension,
   restoreUnsupportedExtensions
 } from '../table/duckdb-table-utils';
 
@@ -217,63 +218,68 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
     const c = await db.connect();
 
-    const tableName = this.label;
-    await dropTableIfExists(c, tableName);
-
-    let format = this.metadata.format;
-    if (!format) {
-      // format is missing when we load Kepler.gl examples
-      if (Array.isArray(data.rows?.[0]) || typeof data.rows?.[0] === 'object') {
-        format = DATASET_FORMATS.row;
-      } else if (data.rows?.type === 'FeatureCollection') {
-        format = DATASET_FORMATS.geojson;
-      } else if (isArrowVector(data.cols?.[0])) {
-        format = DATASET_FORMATS.arrow;
-      }
-    }
-
-    let importDetails: ImportDataToDuckResult | undefined;
-    if (format === DATASET_FORMATS.row) {
-      await this.importRowData({data, db, c});
-    } else if (format === DATASET_FORMATS.geojson) {
-      importDetails = await this.importGeoJsonData({data, db, c});
-    } else if (format === DATASET_FORMATS.arrow) {
-      importDetails = await this.importArrowData({data, db, c});
-    } else {
-      console.error('Unrecognized format', format);
-    }
-
-    let fields: Field[] = [];
-    let cols: arrow.Vector[] = [];
-
     try {
-      const {geoarrowMetadata = {}, useNewFields = false} = importDetails || {};
+      const tableName = data.duckdbTableName ?? this.label;
+      if (!data.duckdbTableName) await dropTableIfExists(c, tableName);
 
-      const duckDbColumns = await getDuckDBColumnTypes(c, tableName);
-      const tableDuckDBTypes = getDuckDBColumnTypesMap(duckDbColumns);
-      const adjustedQuery = castDuckDBTypesForKepler(tableName, duckDbColumns);
-      const arrowResult = await c.query(adjustedQuery);
+      let format = this.metadata.format;
+      if (!format) {
+        // format is missing when we load Kepler.gl examples
+        if (Array.isArray(data.rows?.[0]) || typeof data.rows?.[0] === 'object') {
+          format = DATASET_FORMATS.row;
+        } else if (data.rows?.type === 'FeatureCollection') {
+          format = DATASET_FORMATS.geojson;
+        } else if (isArrowVector(data.cols?.[0])) {
+          format = DATASET_FORMATS.arrow;
+        }
+      }
 
-      // TODO if format is an arrow table then just use the original one, instead of the new table from the query?
+      let importDetails: ImportDataToDuckResult | undefined;
+      if (data.duckdbTableName) {
+        importDetails = {useNewFields: true};
+      } else if (format === DATASET_FORMATS.row) {
+        await this.importRowData({data, db, c});
+      } else if (format === DATASET_FORMATS.geojson) {
+        importDetails = await this.importGeoJsonData({data, db, c});
+      } else if (format === DATASET_FORMATS.arrow) {
+        importDetails = await this.importArrowData({data, db, c});
+      } else {
+        console.error('Unrecognized format', format);
+      }
 
-      restoreGeoarrowMetadata(arrowResult, geoarrowMetadata);
+      let fields: Field[] = [];
+      let cols: arrow.Vector[] = [];
 
-      const compactedResult = compactArrowTable(arrowResult);
+      try {
+        const {geoarrowMetadata = {}, useNewFields = false} = importDetails || {};
 
-      fields = useNewFields
-        ? arrowSchemaToFields(compactedResult, tableDuckDBTypes)
-        : data.fields ?? arrowSchemaToFields(compactedResult, tableDuckDBTypes);
-      cols = [...Array(compactedResult.numCols).keys()]
-        .map(i => compactedResult.getChildAt(i))
-        .filter(col => col) as arrow.Vector[];
-    } catch (error) {
-      console.error('DuckDB table: createTableAndGetArrow', error);
-      throw error;
+        const duckDbColumns = await getDuckDBColumnTypes(c, tableName);
+        const tableDuckDBTypes = getDuckDBColumnTypesMap(duckDbColumns);
+        const adjustedQuery = castDuckDBTypesForKepler(tableName, duckDbColumns);
+        const arrowResult = await c.query(adjustedQuery);
+        setGeoArrowWKBExtension(arrowResult, duckDbColumns);
+
+        // TODO if format is an arrow table then just use the original one, instead of the new table from the query?
+
+        restoreGeoarrowMetadata(arrowResult, geoarrowMetadata);
+
+        const compactedResult = compactArrowTable(arrowResult);
+
+        fields = useNewFields
+          ? arrowSchemaToFields(compactedResult, tableDuckDBTypes)
+          : data.fields ?? arrowSchemaToFields(compactedResult, tableDuckDBTypes);
+        cols = [...Array(compactedResult.numCols).keys()]
+          .map(i => compactedResult.getChildAt(i))
+          .filter(col => col) as arrow.Vector[];
+      } catch (error) {
+        console.error('DuckDB table: createTableAndGetArrow', error);
+        throw error;
+      }
+
+      return {fields, cols};
+    } finally {
+      await c.close();
     }
-
-    await c.close();
-
-    return {fields, cols};
   }
 
   async importData({data}: {data: ProcessorResult}): Promise<void> {

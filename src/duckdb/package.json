@@ -43,7 +43,7 @@
     "dist"
   ],
   "dependencies": {
-    "@duckdb/duckdb-wasm": "^1.28.0",
+    "@duckdb/duckdb-wasm": "^1.32.0",
     "@kepler.gl/common-utils": "3.3.0-alpha.11",
     "@kepler.gl/constants": "3.3.0-alpha.11",
     "@kepler.gl/processors": "3.3.0-alpha.11",

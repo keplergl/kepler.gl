@@ -1,0 +1,85 @@
+/* Match the typography used by @kepler.gl/styles, including its system fallbacks. */
+@theme {
+  --font-sans: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: hsl(var(--card-foreground));
+    font-weight: 400;
+  }
+}
+
+:root {
+  --radius: 4px;
+  --background: 0 0% 100%; /* #FFFFFF */
+  --foreground: 216.67 13.43% 26.27%; /* #3A414C */
+  --card: 240 7.69% 97.45%; /* #F8F8F9 */
+  --card-foreground: 211.58 18.81% 19.8%; /* #29323C */
+  --popover: 0 0% 100%; /* #FFFFFF */
+  --popover-foreground: 216.67 13.43% 26.27%; /* #3A414C */
+  --primary: 159.56 81.82% 32.35%; /* #0F9668 */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF */
+  --secondary: 0 0% 94.51%; /* #F1F1F1 */
+  --secondary-foreground: 216.67 13.43% 26.27%; /* #3A414C */
+  --muted: 0 0% 94.51%; /* #F1F1F1 */
+  --muted-foreground: 217.78 11.3% 46.86%; /* #6A7485 */
+  --accent: 210 15.79% 92.55%; /* #E9ECEF */
+  --accent-foreground: 211.58 18.81% 19.8%; /* #29323C */
+  --destructive: 350.2 96.84% 49.61%; /* #F9042C */
+  --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+  --border: 216.92 17.33% 85.29%; /* #D3D8E0 */
+  --input: 216.92 17.33% 85.29%; /* #D3D8E0 */
+  --ring: 189.18 74.69% 48.04%; /* #1FBAD6 */
+  --sidebar-background: var(--secondary);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--ring);
+  --sidebar-primary-foreground: var(--background);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  --chart-1: var(--ring);
+}
+
+.dark {
+  /* Kepler: sidePanelBg, panelBackground, textColor, and activeColor. */
+  --background: 225 14.29% 16.47%; /* #242730 */
+  --foreground: 219 11.76% 66.67%; /* #A0A7B4 */
+  --card: 211.58 18.81% 19.8%; /* #29323C */
+  --card-foreground: 0 0% 100%; /* #FFFFFF */
+  --popover: 211.58 18.81% 19.8%; /* #29323C */
+  --popover-foreground: 219 11.76% 66.67%; /* #A0A7B4 */
+  --primary: 159.56 81.82% 32.35%; /* #0F9668 */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF */
+  --secondary: 211.58 18.81% 19.8%; /* #29323C */
+  --secondary-foreground: 219 11.76% 66.67%; /* #A0A7B4 */
+  --muted: 211.58 18.81% 19.8%; /* #29323C */
+  --muted-foreground: 217.78 11.3% 46.86%; /* #6A7485 */
+  --accent: 212.5 17.14% 27.45%; /* #3A4552 */
+  --accent-foreground: 0 0% 94.12%; /* #F0F0F0 */
+  --destructive: 350.2 96.84% 49.61%; /* #F9042C */
+  --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+  --border: 216.67 13.43% 26.27%; /* #3A414C */
+  --input: 216.67 13.43% 26.27%; /* #3A414C */
+  --ring: 189.18 74.69% 48.04%; /* #1FBAD6 */
+  --sidebar-background: var(--secondary);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--ring);
+  --sidebar-primary-foreground: var(--background);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  --chart-1: var(--ring);
+}

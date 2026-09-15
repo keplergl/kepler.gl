@@ -35,7 +35,8 @@
     "./src/effects",
     "./src/reducers",
     "./src/components",
-    "./src/duckdb"
+    "./src/duckdb",
+    "./src/sqlrooms"
   ],
   "repository": {
     "type": "git",
@@ -62,6 +63,7 @@
     "cover-merge": "istanbul-merge --out=coverage/coverage-all.json tape-coverage/coverage-final.json jest-coverage/coverage-final.json",
     "cover-report": "nyc report -t coverage --report-dir coverage --reporter=json --reporter=lcov",
     "start": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start:local",
+    "start:sqlrooms": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app-sqlrooms start:local",
     "start:deck": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start:local-deck",
     "start:deck-src": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start:local-deck-src",
     "start:loaders-src": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start:local-loaders-src",
@@ -99,7 +101,8 @@
     "clean": "rm -rf node_modules examples/**/node_modules website/node_modules .nyc_output coverage jest-coverage tape-coverage",
     "release:patch": "git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags",
     "fix-dependencies": "./scripts/fix-dependencies.sh",
-    "bump-version": "node ./scripts/bump-version.js"
+    "bump-version": "node ./scripts/bump-version.js",
+    "test:sqlrooms": "yarn workspace @kepler.gl/sqlrooms build && yarn workspace @kepler.gl/sqlrooms test"
   },
   "files": [
     "dist",
@@ -248,6 +251,7 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "resolutions": {
+    "@duckdb/duckdb-wasm": "1.32.0",
     "@deck.gl/aggregation-layers": "9.3.1",
     "@deck.gl/core": "9.3.1",
     "@deck.gl/extensions": "9.3.1",
