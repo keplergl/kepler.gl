@@ -122,6 +122,7 @@ export default {
       trip: 'viatge',
       s2: 'S2',
       geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'mosaic vectorial',

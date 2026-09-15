@@ -139,6 +139,7 @@ export default {
       geohash: 'GeoHash',
       '3d': '3D',
       flow: 'flow',
+      flowfield: 'Flow Field',
       vectortile: 'vector tile',
       rastertile: 'raster tile',
       wms: 'WMS',
@@ -254,6 +255,36 @@ export default {
       lineCurviness: 'Curviness',
       locationTotalsEnabled: 'Location Totals',
       maxTopFlowsDisplayNum: 'Max Top Flows'
+    },
+    flowField: {
+      streamlines: 'Streamlines',
+      animation: 'Animation',
+      field: 'Field',
+      colorGroupDescription: 'Single layer color, or a speed palette when Color By Speed is on.',
+      linesPerScreen: 'Lines Per Screen',
+      linesPerScreenDescription:
+        'Target number of streamlines in the current view. Higher is denser.',
+      zoomResponse: 'Zoom Response',
+      zoomResponseDescription:
+        '0 keeps the same number of lines on screen as you zoom. 1 keeps geographic spacing (lines thin out as you zoom in). Values in between mix the two.',
+      strokeWidth: 'Stroke Width',
+      strokeWidthDescription: 'Width of each streamline, in pixels.',
+      colorBySpeed: 'Color By Speed',
+      colorBySpeedDescription:
+        'Color streamlines by speed using the palette. Off uses a single layer color.',
+      opacityDescription: 'Transparency of the streamlines.',
+      trailLength: 'Trail Length',
+      trailLengthDescription: 'Visible trail length as a percent of the animation cycle.',
+      cycle: 'Cycle',
+      cycleDescription: 'Length of one full animation loop, in seconds.',
+      lineLifetime: 'Line Lifetime',
+      lineLifetimeDescription:
+        'How long each trail stays visible, as a fraction of the cycle (1 = the whole cycle).',
+      seamlessLoop: 'Seamless Loop',
+      seamlessLoopDescription: 'Repeat trails so they do not pop off at the end of the cycle.',
+      smoothing: 'Smoothing',
+      smoothingDescription:
+        'Blur u/v over this many neighboring cells. 0 uses raw samples and does not fill empty cells.'
     }
   },
   layerManager: {
