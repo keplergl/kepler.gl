@@ -28,6 +28,15 @@ describe('globe-backface-cull', () => {
     expect(glsl).toMatch(/if\s*\(project\.projectionMode\s*==\s*PROJECTION_MODE_GLOBE\)/);
   });
 
+  test('appends to an object-form position hook without stringifying it', () => {
+    const shaders = injectGlobeBackfaceCull({
+      inject: {[HOOK]: {order: 1, injection: 'existing_inject();'}}
+    });
+    expect(shaders.inject[HOOK]).toContain('existing_inject();');
+    expect(shaders.inject[HOOK]).toContain('PROJECTION_MODE_GLOBE');
+    expect(shaders.inject[HOOK]).not.toContain('[object Object]');
+  });
+
   test('keeps the original EnhancedMultiIconLayer horizon formula', () => {
     const glsl = injectGlobeBackfaceCull({}).inject[HOOK];
     expect(glsl).toContain('radius / camDist + 0.02');

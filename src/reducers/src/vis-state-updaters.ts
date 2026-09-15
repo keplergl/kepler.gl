@@ -791,7 +791,11 @@ function addOrRemoveTextLabels(newFields, textLabel, defaultTextLabel = DEFAULT_
     ...newTextLabel.filter(tl => tl.field),
     ...addFields.map(af => ({
       ...defaultTextLabel,
-      field: af
+      field: af,
+      collisionEnabled: Boolean(
+        textLabel.find(tl => tl.collisionEnabled)?.collisionEnabled ??
+          defaultTextLabel.collisionEnabled
+      )
     }))
   ];
 
@@ -835,11 +839,19 @@ export function layerTextLabelChangeUpdater(
   let newTextLabel = textLabel.slice();
   if (!textLabel[idx] && idx === textLabel.length) {
     // if idx is set to length, add empty text label
-    newTextLabel = [...textLabel, defaultTextLabel];
+    newTextLabel = [
+      ...textLabel,
+      {
+        ...defaultTextLabel,
+        collisionEnabled: Boolean(textLabel[0]?.collisionEnabled)
+      }
+    ];
   }
 
   if (idx === 'all' && prop === 'fields') {
     newTextLabel = addOrRemoveTextLabels(value, textLabel, defaultTextLabel);
+  } else if (idx === 'all' && prop) {
+    newTextLabel = textLabel.map(tl => ({...tl, [prop]: value}));
   } else {
     newTextLabel = updateTextLabelPropAndValue(idx, prop, value, newTextLabel);
   }
