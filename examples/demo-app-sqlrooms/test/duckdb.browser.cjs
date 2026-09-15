@@ -17,7 +17,6 @@ test(
   'one DuckDB serves map, SQL, and assistant; snapshots and cancellation work',
   {timeout: 120000},
   async () => {
-    const {assistantDuckDbPlugin} = await import('../assistant-duckdb-plugin.mjs');
     const alias = {};
     for (const pkg of [
       'actions',
@@ -61,7 +60,6 @@ test(
       globalName: 'duckdbTest',
       write: false,
       alias,
-      plugins: [assistantDuckDbPlugin],
       loader: {'.js': 'jsx', '.css': 'empty'},
       define: {'process.env.NODE_ENV': '"production"'}
     });
@@ -93,12 +91,17 @@ test(
           }
         };
       });
-      page.on('pageerror', error => console.error(error.message));
+      const pageErrors = [];
+      page.on('pageerror', error => pageErrors.push(error.message));
       await page.goto(`http://127.0.0.1:${server.address().port}`);
       const result = await page.evaluate(() => duckdbTest.run());
+      assert.deepEqual(pageErrors, [], 'Assistant rendering produced browser errors');
       const workers = await page.evaluate(() => Promise.all(window.workerSources));
       // Count database workers, excluding unrelated library workers.
       assert.equal(workers.filter(source => /duckdb.*worker/.test(source)).length, 1);
+      await page.reload();
+      await page.evaluate(() => duckdbTest.verifyRestoredAssistant());
+      assert.deepEqual(pageErrors, [], 'Reload produced browser errors');
       console.log(result);
     } finally {
       await browser?.close();

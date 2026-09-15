@@ -57,10 +57,8 @@ Use the map's bottom-left **SQL panel** button to open the full-width bottom pan
 `SqlCodeMirrorEditor` from `@sqlrooms/sql-editor` and SQLRooms' paginated Arrow
 result table. SQLRooms owns one DuckDB-Wasm 1.32.0 database shared by map imports,
 the SQL panel, and the assistant. Apache Arrow is pinned to SQLRooms' 17.0.0 peer.
-Panel stores borrow the connector; closing a panel does not destroy the database.
-The assistant initializes its store during import, so `assistant-duckdb-plugin.mjs`
-routes its DuckDB import through a small adapter that supplies the shared connector
-at store creation. Restart the dev server after changing this build wiring.
+The app's room borrows the connector; closing a panel does not destroy the database.
+Layout, the SQL panel, and the assistant all use that room and its database slice.
 
 - Run the selection or full query with **⌘/Ctrl+Enter** or **Run query**.
 - Use **Add to Map** to load all rows of the last query result from its existing
@@ -82,13 +80,62 @@ The query runner keeps a database snapshot so mapping and exporting never rerun
 preceding SQL writes. Unmapped snapshots are dropped on the next query or app
 unmount. Mapped snapshots are retained as `query_result_*` tables for the page's
 lifetime. Kepler datasets are Arrow snapshots; subsequent SQL edits do not
-implicitly update an already-loaded map. The assistant still creates its own
-transformed `tbl_*` tables when its analysis tools need their legacy geometry
-shape, but these now live in the same database.
+implicitly update an already-loaded map. The assistant's spatial analysis tools
+still create transformed `tbl_*` tables when they need their legacy geometry
+shape. Ordinary AI SQL queries read the existing tables directly.
+
+## AI assistant
+
+The demo composes `createAiSlice`, `createAiSettingsSlice`, and
+`createCommandSlice` into its layout room, following SQLRooms' AI example.
+`src/components/assistant.tsx` supplies standard `Chat` and `AiSettingsPanel`
+components, Kepler instructions, skill tools, and chart renderers. Kepler map
+commands still access the existing Redux store through explicit accessors.
+Closing the assistant unmounts its UI without destroying the room or interrupting
+its database. Sessions and provider settings retain the existing
+`kepler-ai-assistant-state` storage key and settings migration.
+
+The stock SQLRooms query tool shares five result rows with the model and accepts
+read-only queries. It no longer materializes every map dataset into `tbl_*`
+copies before a query. Table discovery uses the shared SQLRooms catalog. Use the
+SQL panel or the existing map/data commands for writes and derived datasets.
+Only model-output formatting is customized: the existing roughly 1,000-character
+preview cap prevents large geometry/object values from flooding model context.
+Map, geographic, GeoDa, skill, and chart capabilities remain provided by
+`@openassistant/kepler-assistant`.
+
+### Assistant integration package
+
+The demo uses the published `@openassistant/kepler-assistant@0.0.17` integration
+API. The `/integration`, `/chat`, and `/tool-surface` entry points expose the
+map bridge, command catalog, skill factories, and chart renderers without
+constructing a standalone room. The demo owns persistence, slice
+composition, command registration, connector binding, and the chat UI.
+
+No Yarn patch or DuckDB import interception is needed. Keep all assistant
+imports on these headless subpaths: importing the root initializes the
+standalone room. The package's single-map Redux/analysis bridge remains
+page-scoped; this is not a multi-room assistant API. Run the browser test below
+when upgrading the package.
+
+OpenAI models use the native AI SDK Responses provider for chat, skill discovery,
+and skill subagents, so reasoning models can call tools. The resolver reads the
+current model, API key, and base URL at request time. It disables server-side
+response storage; the room retains conversation history and the SDK carries
+encrypted reasoning between tool steps. Other providers keep their existing
+resolution. The demo uses AI SDK 6 to match SQLRooms 0.29's model interface.
+The skill factories accept the same resolver without a dependency patch.
+
+The model tests exercise Responses requests, tool-result and reasoning replay,
+model/settings changes, and the fallback for other providers with mocked HTTP.
+Run them alongside the SQL/export tests using the unit-test command above.
 
 The browser integration test exercises the actual WASM engine, shared assistant
-lifecycle, bounded previews, full map/export results, spatial metadata, and query
-cancellation. It needs Chromium (or `PUPPETEER_EXECUTABLE_PATH`) and network access
+lifecycle, stock chat and chart rendering, session/settings persistence across
+reloads, table discovery, bounded previews, full map/export results, spatial
+metadata, and query cancellation. Skill discovery uses a mocked model response;
+live provider requests require manual verification with credentials.
+It needs Chromium (or `PUPPETEER_EXECUTABLE_PATH`) and network access
 to the versioned DuckDB CDN assets:
 
 ```sh

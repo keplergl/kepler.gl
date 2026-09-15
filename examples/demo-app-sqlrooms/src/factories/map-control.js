@@ -13,7 +13,7 @@ import {
 // AnnotationManagerFactory is available in the workspace source (src/components) but not yet
 // published in the @kepler.gl/components version this example currently depends on.
 const AnnotationManagerFactory = require('@kepler.gl/components').AnnotationManagerFactory;
-import {AiAssistantControlFactory} from '@openassistant/kepler-assistant';
+import {AiAssistantControlFactory} from '@openassistant/kepler-assistant/integration';
 
 import {SampleMapPanel} from '../components/map-control/map-control';
 

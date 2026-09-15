@@ -92,6 +92,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ai-sdk/openai@npm:3.0.112":
+  version: 3.0.112
+  resolution: "@ai-sdk/openai@npm:3.0.112"
+  dependencies:
+    "@ai-sdk/provider": "npm:3.0.16"
+    "@ai-sdk/provider-utils": "npm:4.0.51"
+  peerDependencies:
+    zod: ^3.25.76 || ^4.1.8
+  checksum: 10c0/c68679777230ae51aab1894b692d7d9c2320926b462df520d37b6a5254ad701586f44c23ebc4d10d1ab878c83fdd979c9ae9a9a41c1a5dcb8b2a60f30b171418
+  languageName: node
+  linkType: hard
+
 "@ai-sdk/provider-utils@npm:2.1.6":
   version: 2.1.6
   resolution: "@ai-sdk/provider-utils@npm:2.1.6"
@@ -150,6 +162,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ai-sdk/provider-utils@npm:4.0.51":
+  version: 4.0.51
+  resolution: "@ai-sdk/provider-utils@npm:4.0.51"
+  dependencies:
+    "@ai-sdk/provider": "npm:3.0.16"
+    "@standard-schema/spec": "npm:^1.1.0"
+    eventsource-parser: "npm:^3.0.8"
+    undici: "npm:^6.28.0"
+  peerDependencies:
+    zod: ^3.25.76 || ^4.1.8
+  checksum: 10c0/7db18edc47a7cebc1e5644d9e8f149f22ac6194ba19ec80f4182a014cde99f6d69e5ffe8107a44d565b451013b62aad1746761d300e3bd2f13b35155e4ca20c4
+  languageName: node
+  linkType: hard
+
 "@ai-sdk/provider-utils@npm:5.0.32":
   version: 5.0.32
   resolution: "@ai-sdk/provider-utils@npm:5.0.32"
@@ -198,6 +224,15 @@ __metadata:
   dependencies:
     json-schema: "npm:^0.4.0"
   checksum: 10c0/0a17eca818c6d821e9488188cf02789502e426eff125d9c9572c2308baead3ed2e93ad53856887b207f287e6907441da81860e31350b12a11c91a6dfd1c6f344
+  languageName: node
+  linkType: hard
+
+"@ai-sdk/provider@npm:3.0.16":
+  version: 3.0.16
+  resolution: "@ai-sdk/provider@npm:3.0.16"
+  dependencies:
+    json-schema: "npm:^0.4.0"
+  checksum: 10c0/82edd6cc3a0ac3b632e216ae2336f141d162ad7cb1ccdd988bb16a053bcbd5c6b77f1c96a2dd8052ebb77b14a2bc5dbbf3dfc65c0de035532eccefb940bb82a7
   languageName: node
   linkType: hard
 
@@ -5847,9 +5882,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openassistant/kepler-assistant@npm:^0.0.15":
-  version: 0.0.15
-  resolution: "@openassistant/kepler-assistant@npm:0.0.15"
+"@openassistant/kepler-assistant@npm:0.0.17":
+  version: 0.0.17
+  resolution: "@openassistant/kepler-assistant@npm:0.0.17"
   dependencies:
     "@ai-sdk/openai-compatible": "npm:^1.0.18"
     "@geoda/core": "npm:^0.0.25"
@@ -5884,7 +5919,7 @@ __metadata:
     zip3: "npm:^1.0.4"
     zod: "npm:^4.4.0"
     zustand: "npm:^5.0.14"
-  checksum: 10c0/e491276aaabdb4a04ecff57c6d3003a2029da15d7a4b370ff38835868a77ddf7131f55541c65853d570f1ae1fe38c6c6a556fef0a62032827669a631ad546169
+  checksum: 10c0/040ce58b7a5f7a56436229c2de033d05c101be3994620b70defcd0b0f60592a0a64aee8a3b81d4eb1da953c2fcd17b33cbdcf45ccbefdb5e6d45d76e5f91ee7d
   languageName: node
   linkType: hard
 
@@ -13320,6 +13355,7 @@ __metadata:
     "@ai-sdk/anthropic": "npm:^1.2.11"
     "@ai-sdk/deepseek": "npm:^0.2.14"
     "@ai-sdk/google": "npm:^1.2.18"
+    "@ai-sdk/openai": "npm:3.0.112"
     "@ai-sdk/openai-compatible": "npm:^1.0.18"
     "@ai-sdk/xai": "npm:^1.2.16"
     "@auth0/auth0-spa-js": "npm:^2.1.2"
@@ -13352,7 +13388,7 @@ __metadata:
     "@loaders.gl/csv": "npm:^4.3.2"
     "@loaders.gl/json": "npm:^4.3.2"
     "@loaders.gl/parquet": "npm:^4.3.2"
-    "@openassistant/kepler-assistant": "npm:^0.0.15"
+    "@openassistant/kepler-assistant": "npm:0.0.17"
     "@sqlrooms/ai": "npm:0.29.0"
     "@sqlrooms/ai-core": "npm:0.29.0"
     "@sqlrooms/ai-settings": "npm:0.29.0"
@@ -13371,7 +13407,7 @@ __metadata:
     "@types/classnames": "npm:^2.3.1"
     "@types/d3-dsv": "npm:^3.0.7"
     "@types/keymirror": "npm:^0.1.1"
-    ai: "npm:^7.0.31"
+    ai: "npm:6.0.271"
     apache-arrow: "npm:17.0.0"
     classnames: "npm:^2.2.1"
     color-interpolate: "npm:^1.0.5"

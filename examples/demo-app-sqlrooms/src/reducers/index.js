@@ -4,7 +4,7 @@
 import {combineReducers} from 'redux';
 import Task, {withTask} from '@kepler.gl/tasks';
 
-import {aiAssistantReducer} from '@openassistant/kepler-assistant';
+import {aiAssistantReducer} from '@openassistant/kepler-assistant/integration';
 import {EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/processors';
 import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/reducers';
