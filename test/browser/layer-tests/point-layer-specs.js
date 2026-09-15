@@ -898,6 +898,11 @@ test('#PointLayer -> renderLayer globe mode text labels', t => {
 
   const flatLabel = renderWithMapState(INITIAL_MAP_STATE);
   t.ok(flatLabel, 'should create a text label layer in flat mode');
+  t.equal(
+    flatLabel.props.parameters.depthTest,
+    false,
+    'should not depth-test labels outside globe mode'
+  );
   t.notOk('cull' in flatLabel.props.parameters, 'should not touch culling outside globe mode');
   t.notOk(
     flatLabel.props._subLayerProps.characters,
@@ -907,6 +912,16 @@ test('#PointLayer -> renderLayer globe mode text labels', t => {
   // globe mode sets a global `cull: true`, which would otherwise discard the glyph quads
   const globeLabel = renderWithMapState({...INITIAL_MAP_STATE, globe: {enabled: true}});
   t.equal(globeLabel.props.parameters.cull, false, 'should disable culling in globe mode');
+  t.equal(
+    globeLabel.props.parameters.depthTest,
+    true,
+    'should depth-test labels against the globe depth disk'
+  );
+  t.equal(
+    globeLabel.props.parameters.depthMask,
+    false,
+    'should not write depth so labels do not occlude each other'
+  );
   t.equal(
     globeLabel.props._subLayerProps.characters.type,
     EnhancedMultiIconLayer,
