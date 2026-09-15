@@ -3,6 +3,7 @@
 
 import {COORDINATE_SYSTEM} from '@deck.gl/core';
 import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
+import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/deckgl-layers';
 import {DataFilterExtension} from '@deck.gl/extensions';
 import {TextLayer} from '@deck.gl/layers';
 import {console as Console} from 'global/window';
@@ -1627,6 +1628,7 @@ class Layer implements KeplerLayer {
     const visible = this.config.isVisible && visibleInMap;
 
     const TextLayerClass = isArrowTable(data.data) ? GeoArrowTextLayer : TextLayer;
+    const isGlobeMode = Boolean(mapState?.globe?.enabled);
 
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {
@@ -1664,6 +1666,10 @@ class Layer implements KeplerLayer {
             parameters: {
               // text will always show on top of all layers
               depthTest: false,
+              // Globe mode sets a global `cull: true` to backface-cull the sphere
+              // surface. That also culls the glyph quads, hiding every label, so
+              // disable culling for the label layer (see mvt-label-layer.ts).
+              ...(isGlobeMode ? {cull: false} : null),
               ...(mapState?.layerParameters ?? {})
             },
 
@@ -1685,9 +1691,14 @@ class Layer implements KeplerLayer {
               getColor: textLabel[i].color
             },
             _subLayerProps: {
+              // Labels anchored on the far hemisphere would otherwise be drawn
+              // through the planet, since depthTest is off. Both the glyphs and the
+              // label background need it, or a far-side label leaves an empty box.
+              ...(isGlobeMode ? {characters: {type: EnhancedMultiIconLayer}} : null),
               ...(background
                 ? {
                     background: {
+                      ...(isGlobeMode ? {type: EnhancedTextBackgroundLayer} : null),
                       parameters: {
                         cull: false,
                         ...(mapState?.layerParameters ?? {})
