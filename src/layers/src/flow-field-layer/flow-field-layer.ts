@@ -6,6 +6,7 @@
 //   - u/v components, or
 //   - speed + direction, or
 //   - altitude / elevation (downhill gradient → u/v).
+// Positions can come from lat/lng columns or GeoJSON feature centroids.
 // Rendered with deck.gl TripsLayer.
 //
 // Not the origin–destination Flow layer, and not @deck.gl-community geo-layers
@@ -15,10 +16,12 @@ import {WebMercatorViewport} from '@deck.gl/core';
 import {ClipExtension} from '@deck.gl/extensions';
 import {PathLayer} from '@deck.gl/layers';
 import {TripsLayer} from '@deck.gl/geo-layers';
-import {LAYER_TYPES} from '@kepler.gl/constants';
+import {GEOJSON_FIELDS, GEOARROW_METADATA_KEY, LAYER_TYPES} from '@kepler.gl/constants';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {Field} from '@kepler.gl/types';
+import {DATA_TYPES} from 'type-analyzer';
 import Layer, {LayerBaseConfigPartial} from '../base-layer';
+import {getCentroidFromGeometry, parseGeoJsonRawFeature} from '../geojson-layer/geojson-utils';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import FlowFieldLayerIcon from './flow-field-layer-icon';
 
@@ -68,8 +71,17 @@ const clipExtension = new ClipExtension();
 export const FlowFieldColumnMode = {
   UV: 'UV',
   SPEED_DIR: 'SPEED_DIR',
-  ELEVATION: 'ELEVATION'
+  ELEVATION: 'ELEVATION',
+  GEOJSON_UV: 'GEOJSON_UV',
+  GEOJSON_SPEED_DIR: 'GEOJSON_SPEED_DIR',
+  GEOJSON_ELEVATION: 'GEOJSON_ELEVATION'
 } as const;
+
+const SUPPORTED_ANALYZER_TYPES = {
+  [DATA_TYPES.GEOMETRY]: true,
+  [DATA_TYPES.GEOMETRY_FROM_STRING]: true,
+  [DATA_TYPES.PAIR_GEOMETRY_FROM_STRING]: true
+};
 
 const SUPPORTED_COLUMN_MODES = [
   {
@@ -79,9 +91,21 @@ const SUPPORTED_COLUMN_MODES = [
     optionalColumns: ['altitude']
   },
   {
+    key: FlowFieldColumnMode.GEOJSON_UV,
+    label: 'U / V (GeoJSON)',
+    requiredColumns: ['geojson', 'u', 'v'],
+    optionalColumns: ['altitude']
+  },
+  {
     key: FlowFieldColumnMode.SPEED_DIR,
     label: 'Speed / direction',
     requiredColumns: ['lat', 'lng', 'speed', 'direction'],
+    optionalColumns: ['altitude']
+  },
+  {
+    key: FlowFieldColumnMode.GEOJSON_SPEED_DIR,
+    label: 'Speed / direction (GeoJSON)',
+    requiredColumns: ['geojson', 'speed', 'direction'],
     optionalColumns: ['altitude']
   },
   {
@@ -89,18 +113,41 @@ const SUPPORTED_COLUMN_MODES = [
     label: 'Altitude (downhill)',
     requiredColumns: ['lat', 'lng', 'altitude'],
     optionalColumns: []
+  },
+  {
+    key: FlowFieldColumnMode.GEOJSON_ELEVATION,
+    label: 'Altitude (GeoJSON)',
+    requiredColumns: ['geojson', 'altitude'],
+    optionalColumns: []
   }
 ];
 
 const COLUMN_LABELS = {
   lat: 'Lat',
   lng: 'Lng',
+  geojson: 'GeoJSON',
   u: 'U (Eastward)',
   v: 'V (Northward)',
   speed: 'Speed',
   direction: 'Direction (From)',
   altitude: 'Altitude'
 };
+
+function isGeojsonPositionMode(mode: string | undefined): boolean {
+  return (
+    mode === FlowFieldColumnMode.GEOJSON_UV ||
+    mode === FlowFieldColumnMode.GEOJSON_SPEED_DIR ||
+    mode === FlowFieldColumnMode.GEOJSON_ELEVATION
+  );
+}
+
+function isElevationMode(mode: string | undefined): boolean {
+  return mode === FlowFieldColumnMode.ELEVATION || mode === FlowFieldColumnMode.GEOJSON_ELEVATION;
+}
+
+function isSpeedDirMode(mode: string | undefined): boolean {
+  return mode === FlowFieldColumnMode.SPEED_DIR || mode === FlowFieldColumnMode.GEOJSON_SPEED_DIR;
+}
 
 // Default UV names are exact `u` / `v`. Aliases are fallbacks only.
 const DEFAULT_U_FIELD_NAMES = ['u'];
@@ -151,6 +198,43 @@ function latLngColumnsFromDataset(dataset: KeplerTable) {
     return null;
   }
   return {lat, lng, altitude: null};
+}
+
+function geojsonFieldNames(fields: Field[]): string[] {
+  return fields
+    .filter(
+      f =>
+        (f.type === 'geojson' || f.type === 'geoarrow') &&
+        f.analyzerType &&
+        SUPPORTED_ANALYZER_TYPES[f.analyzerType]
+    )
+    .map(f => f.name);
+}
+
+function getGeoArrowEncoding(field: Field | undefined): string | undefined {
+  if (!field?.metadata) {
+    return undefined;
+  }
+  if (typeof (field.metadata as Map<string, string>).get === 'function') {
+    return (field.metadata as Map<string, string>).get(GEOARROW_METADATA_KEY) || undefined;
+  }
+  return (field.metadata as Record<string, string>)[GEOARROW_METADATA_KEY];
+}
+
+/** Centroid [lng, lat] from a raw GeoJSON / WKT / WKB cell value. */
+function centroidFromRawFeature(
+  rawFeature: unknown,
+  geoArrowEncoding?: string | null
+): [number, number] | null {
+  const feature = parseGeoJsonRawFeature(rawFeature, geoArrowEncoding);
+  if (!feature?.geometry) {
+    return null;
+  }
+  const centroid = getCentroidFromGeometry(feature.geometry);
+  if (!centroid || !Number.isFinite(centroid[0]) || !Number.isFinite(centroid[1])) {
+    return null;
+  }
+  return [centroid[0], centroid[1]];
 }
 
 export const flowFieldVisConfigs = {
@@ -250,13 +334,35 @@ export const flowFieldVisConfigs = {
     range: [0, 12],
     step: 1,
     property: 'smoothing'
+  },
+  gridResolution: {
+    type: 'number',
+    defaultValue: 64,
+    label: 'layerVisConfigs.flowField.gridResolution',
+    description: 'layerVisConfigs.flowField.gridResolutionDescription',
+    isRanged: false,
+    range: [16, 256],
+    step: 8,
+    property: 'gridResolution'
+  },
+  elevationMultiplier: {
+    type: 'number',
+    defaultValue: 1,
+    label: 'layerVisConfigs.flowField.elevationMultiplier',
+    description: 'layerVisConfigs.flowField.elevationMultiplierDescription',
+    isRanged: false,
+    range: [0, 1000],
+    step: 1,
+    property: 'elevationMultiplier',
+    allowCustomValue: true
   }
 };
 
 const METERS_PER_DEG_LAT = 111320;
 const MAX_STEPS = 96;
 const FINE_CELL = 1 / 4096;
-const MAX_GRID_AXIS = 2048;
+// Cap axis size so smoothing (O(cells * radius^2)) stays interactive on the main thread.
+const MAX_GRID_AXIS = 512;
 const SETTLE_MS = 180;
 
 function degToStride(targetDeg) {
@@ -330,7 +436,11 @@ function viewSignature(mapState) {
   return [
     Math.round(mapState.longitude * 1000),
     Math.round(mapState.latitude * 1000),
-    Math.round(mapState.zoom * 40)
+    Math.round(mapState.zoom * 40),
+    Math.round(mapState.width || 0),
+    Math.round(mapState.height || 0),
+    Math.round(mapState.pitch || 0),
+    Math.round(mapState.bearing || 0)
   ].join(':');
 }
 
@@ -392,7 +502,7 @@ function medianSpacing(values: number[]) {
 
 function isRegularSpacing(values: number[], tol = 0.2) {
   const median = medianSpacing(values);
-  if (median == null || !(median > 0) || values.length < 3) {
+  if (median == null || !(median > 0) || values.length < 2) {
     return false;
   }
   for (let i = 1; i < values.length; i++) {
@@ -453,11 +563,14 @@ function boxBlur(grid, radius) {
     return grid;
   }
   const {cols, rows, u, v, alt, filled} = grid;
+  // Bound work: dense grids with large radius can freeze the UI on format.
+  const cellCount = cols * rows;
+  const maxRadius = cellCount > 120_000 ? 2 : cellCount > 40_000 ? 3 : 12;
+  const r = Math.min(Math.max(1, Math.round(radius)), maxRadius);
   const nextU = new Float32Array(u.length);
   const nextV = new Float32Array(v.length);
   const nextAlt = alt ? new Float32Array(alt.length) : null;
   const nextFilled = filled ? new Uint8Array(filled) : null;
-  const r = Math.max(1, Math.round(radius));
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
       const i = row * cols + col;
@@ -584,7 +697,32 @@ function elevationFieldToUV(
   };
 }
 
-function buildElevationScalarGrid(points: AltitudePoint[]): {
+function computeBinCounts(
+  minLng: number,
+  maxLng: number,
+  minLat: number,
+  maxLat: number,
+  gridResolution: number
+) {
+  const res = Math.max(16, Math.min(MAX_GRID_AXIS, Math.round(gridResolution || 64)));
+  const lngSpan = Math.max(1e-9, maxLng - minLng);
+  const latSpan = Math.max(1e-9, maxLat - minLat);
+  if (lngSpan >= latSpan) {
+    return {
+      binsX: res,
+      binsY: Math.max(16, Math.min(MAX_GRID_AXIS, Math.round((res * latSpan) / lngSpan)))
+    };
+  }
+  return {
+    binsX: Math.max(16, Math.min(MAX_GRID_AXIS, Math.round((res * lngSpan) / latSpan))),
+    binsY: res
+  };
+}
+
+function buildElevationScalarGrid(
+  points: AltitudePoint[],
+  gridResolution = 64
+): {
   cols: number;
   rows: number;
   lngs: number[];
@@ -612,12 +750,18 @@ function buildElevationScalarGrid(points: AltitudePoint[]): {
   const looksRegular = Boolean(
     latAxis &&
       lngAxis &&
-      latAxis.length >= 3 &&
-      lngAxis.length >= 3 &&
+      latAxis.length >= 2 &&
+      lngAxis.length >= 2 &&
       (expandedLats || expandedLngs || latAxis.length * lngAxis.length <= points.length * 1.4)
   );
 
-  if (looksRegular && latAxis && lngAxis) {
+  // Keep the native regular grid when it is already coarser than the target.
+  if (
+    looksRegular &&
+    latAxis &&
+    lngAxis &&
+    Math.max(latAxis.length, lngAxis.length) <= gridResolution
+  ) {
     const rows = latAxis.length;
     const cols = lngAxis.length;
     const z = new Float32Array(cols * rows);
@@ -633,12 +777,11 @@ function buildElevationScalarGrid(points: AltitudePoint[]): {
     return {cols, rows, lngs: lngAxis, lats: latAxis, z, filled};
   }
 
-  const binsX = Math.min(512, Math.max(24, Math.round(Math.sqrt(points.length) * 2.2)));
-  const binsY = Math.min(384, Math.max(24, Math.round(binsX * 0.75)));
   const minLng = Math.min(...points.map(p => p.lng));
   const maxLng = Math.max(...points.map(p => p.lng));
   const minLat = Math.min(...points.map(p => p.lat));
   const maxLat = Math.max(...points.map(p => p.lat));
+  const {binsX, binsY} = computeBinCounts(minLng, maxLng, minLat, maxLat, gridResolution);
   const zSum = new Float32Array(binsX * binsY);
   const filled = new Uint8Array(binsX * binsY);
   const counts = new Uint16Array(binsX * binsY);
@@ -668,8 +811,12 @@ function buildElevationScalarGrid(points: AltitudePoint[]): {
   return {cols: binsX, rows: binsY, lngs: scatterLngs, lats: scatterLats, z, filled};
 }
 
-function buildGridFromAltitude(points: AltitudePoint[], smoothing: number): FlowGrid | null {
-  const scalar = buildElevationScalarGrid(points);
+function buildGridFromAltitude(
+  points: AltitudePoint[],
+  smoothing: number,
+  gridResolution = 64
+): FlowGrid | null {
+  const scalar = buildElevationScalarGrid(points, gridResolution);
   if (!scalar) {
     return null;
   }
@@ -693,7 +840,7 @@ function buildGridFromAltitude(points: AltitudePoint[], smoothing: number): Flow
   );
 }
 
-function buildGrid(points: FlowPoint[], smoothing: number): FlowGrid | null {
+function buildGrid(points: FlowPoint[], smoothing: number, gridResolution = 64): FlowGrid | null {
   if (points.length < 4) {
     return null;
   }
@@ -714,12 +861,17 @@ function buildGrid(points: FlowPoint[], smoothing: number): FlowGrid | null {
   const looksRegular = Boolean(
     latAxis &&
       lngAxis &&
-      latAxis.length >= 3 &&
-      lngAxis.length >= 3 &&
+      latAxis.length >= 2 &&
+      lngAxis.length >= 2 &&
       (expandedLats || expandedLngs || latAxis.length * lngAxis.length <= points.length * 1.4)
   );
 
-  if (looksRegular && latAxis && lngAxis) {
+  if (
+    looksRegular &&
+    latAxis &&
+    lngAxis &&
+    Math.max(latAxis.length, lngAxis.length) <= gridResolution
+  ) {
     const rows = latAxis.length;
     const cols = lngAxis.length;
     const u = new Float32Array(cols * rows);
@@ -762,14 +914,12 @@ function buildGrid(points: FlowPoint[], smoothing: number): FlowGrid | null {
     );
   }
 
-  // Scatter: bin into a dense grid. Empty bins stay masked so streamlines
-  // cannot fill the bounding box around an irregular point field.
-  const binsX = Math.min(512, Math.max(24, Math.round(Math.sqrt(points.length) * 2.2)));
-  const binsY = Math.min(384, Math.max(24, Math.round(binsX * 0.75)));
+  // Scatter / downsample into a target-resolution grid.
   const minLng = Math.min(...points.map(p => p.lng));
   const maxLng = Math.max(...points.map(p => p.lng));
   const minLat = Math.min(...points.map(p => p.lat));
   const maxLat = Math.max(...points.map(p => p.lat));
+  const {binsX, binsY} = computeBinCounts(minLng, maxLng, minLat, maxLat, gridResolution);
   const su = new Float32Array(binsX * binsY);
   const sv = new Float32Array(binsX * binsY);
   const sa = new Float32Array(binsX * binsY);
@@ -851,29 +1001,45 @@ function sampleField(grid, lng, lat) {
   const i10 = ri * cols + ci + 1;
   const i01 = (ri + 1) * cols + ci;
   const i11 = (ri + 1) * cols + ci + 1;
-  // Only interpolate inside quads whose four corners are real samples.
-  // Mixing in empty (zero) cells bleeds flow into holes and past the point field.
-  if (filled && !(filled[i00] && filled[i10] && filled[i01] && filled[i11])) {
-    return null;
-  }
   const lng0 = lngs[ci];
   const lng1 = lngs[ci + 1];
   const lat0 = lats[ri];
   const lat1 = lats[ri + 1];
   const tx = (lng - lng0) / (lng1 - lng0 || 1);
   const ty = (lat - lat0) / (lat1 - lat0 || 1);
-  const w00 = (1 - tx) * (1 - ty);
-  const w10 = tx * (1 - ty);
-  const w01 = (1 - tx) * ty;
-  const w11 = tx * ty;
-  const uu = u[i00] * w00 + u[i10] * w10 + u[i01] * w01 + u[i11] * w11;
-  const vv = v[i00] * w00 + v[i10] * w10 + v[i01] * w01 + v[i11] * w11;
+  const corners = [
+    {i: i00, w: (1 - tx) * (1 - ty)},
+    {i: i10, w: tx * (1 - ty)},
+    {i: i01, w: (1 - tx) * ty},
+    {i: i11, w: tx * ty}
+  ];
+  // Prefer fully filled quads. For sparse scatter grids, fall back to the
+  // filled corners of this cell (renormalized) so streamlines still appear.
+  const usable = filled ? corners.filter(c => filled[c.i]) : corners;
+  if (!usable.length) {
+    return null;
+  }
+  let wSum = 0;
+  let uu = 0;
+  let vv = 0;
+  let aa = 0;
+  for (const c of usable) {
+    wSum += c.w;
+    uu += u[c.i] * c.w;
+    vv += v[c.i] * c.w;
+    if (alt) aa += alt[c.i] * c.w;
+  }
+  if (wSum < 1e-8) {
+    const c = usable[0];
+    return {u: u[c.i], v: v[c.i], alt: alt ? alt[c.i] : 0};
+  }
+  uu /= wSum;
+  vv /= wSum;
+  aa = alt ? aa / wSum : 0;
   if (!Number.isFinite(uu) || !Number.isFinite(vv)) {
     return null;
   }
-  const height =
-    alt != null ? alt[i00] * w00 + alt[i10] * w10 + alt[i01] * w01 + alt[i11] * w11 : 0;
-  return {u: uu, v: vv, alt: Number.isFinite(height) ? height : 0};
+  return {u: uu, v: vv, alt: Number.isFinite(aa) ? aa : 0};
 }
 
 function viewportBounds(mapState) {
@@ -1057,7 +1223,8 @@ function collectStreamlines(
         if (!sampleField(grid, lng, lat)) {
           cache.set(key, null);
         } else {
-          const built = integrate(grid, lng, lat, visConfig.lineLifetime, maxTravel, stepDeg);
+          const pathLifetime = visConfig.seamlessLoop ? 1 : visConfig.lineLifetime;
+          const built = integrate(grid, lng, lat, pathLifetime, maxTravel, stepDeg);
           if (!built) {
             cache.set(key, null);
           } else {
@@ -1159,7 +1326,8 @@ export default class FlowFieldLayer extends Layer {
       'linesPerScreen',
       'zoomResponse',
       'colorBySpeed',
-      'colorRange'
+      'colorRange',
+      'elevationMultiplier'
     ];
   }
 
@@ -1186,61 +1354,45 @@ export default class FlowFieldLayer extends Layer {
     const hasSpeed = Boolean(speedField && directionField);
     const hasAltitude = Boolean(altField);
 
-    if (!latLng || (!hasUV && !hasSpeed && !hasAltitude)) {
+    if (!hasUV && !hasSpeed && !hasAltitude) {
       return {props: [], foundLayers};
     }
 
     const baseLabel = (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'Flow Field';
+    const altColumn = latLng?.altitude || fieldToColumn(altField, fields);
 
-    if (hasUV) {
-      return {
-        props: [
-          {
-            label: baseLabel,
-            color: [255, 255, 255],
-            isVisible: true,
-            columnMode: FlowFieldColumnMode.UV,
-            columns: {
-              lat: latLng.lat,
-              lng: latLng.lng,
-              u: fieldToColumn(uField, fields)!,
-              v: fieldToColumn(vField, fields)!,
-              ...(latLng.altitude || fieldToColumn(altField, fields)
-                ? {altitude: (latLng.altitude || fieldToColumn(altField, fields))!}
-                : {})
-            }
+    const props: any[] = [];
+    if (latLng) {
+      if (hasUV) {
+        props.push({
+          label: baseLabel,
+          color: [255, 255, 255],
+          isVisible: true,
+          columnMode: FlowFieldColumnMode.UV,
+          columns: {
+            lat: latLng.lat,
+            lng: latLng.lng,
+            u: fieldToColumn(uField, fields)!,
+            v: fieldToColumn(vField, fields)!,
+            ...(altColumn ? {altitude: altColumn} : {})
           }
-        ],
-        foundLayers
-      };
-    }
-
-    if (hasSpeed) {
-      return {
-        props: [
-          {
-            label: baseLabel,
-            color: [255, 255, 255],
-            isVisible: true,
-            columnMode: FlowFieldColumnMode.SPEED_DIR,
-            columns: {
-              lat: latLng.lat,
-              lng: latLng.lng,
-              speed: fieldToColumn(speedField, fields)!,
-              direction: fieldToColumn(directionField, fields)!,
-              ...(latLng.altitude || fieldToColumn(altField, fields)
-                ? {altitude: (latLng.altitude || fieldToColumn(altField, fields))!}
-                : {})
-            }
+        });
+      } else if (hasSpeed) {
+        props.push({
+          label: baseLabel,
+          color: [255, 255, 255],
+          isVisible: true,
+          columnMode: FlowFieldColumnMode.SPEED_DIR,
+          columns: {
+            lat: latLng.lat,
+            lng: latLng.lng,
+            speed: fieldToColumn(speedField, fields)!,
+            direction: fieldToColumn(directionField, fields)!,
+            ...(altColumn ? {altitude: altColumn} : {})
           }
-        ],
-        foundLayers
-      };
-    }
-
-    return {
-      props: [
-        {
+        });
+      } else {
+        props.push({
           label: baseLabel,
           color: [255, 255, 255],
           isVisible: true,
@@ -1250,10 +1402,66 @@ export default class FlowFieldLayer extends Layer {
             lng: latLng.lng,
             altitude: fieldToColumn(altField, fields)!
           }
+        });
+      }
+    }
+
+    const altProps: any[] = [];
+    const foundGeojson = this.findDefaultColumnField(
+      {geojson: [...(GEOJSON_FIELDS.geojson || []), ...geojsonFieldNames(fields)]},
+      fields
+    );
+    if (foundGeojson?.length) {
+      // Prefer lat/lng props when available; otherwise promote GeoJSON into props
+      // so findDefaultLayer can auto-create a Flow Field for geometry + u/v datasets.
+      const target = props.length ? altProps : props;
+      for (const geoColumns of foundGeojson) {
+        if (hasUV) {
+          target.push({
+            label: baseLabel,
+            color: [255, 255, 255],
+            isVisible: true,
+            columnMode: FlowFieldColumnMode.GEOJSON_UV,
+            columns: {
+              ...geoColumns,
+              u: fieldToColumn(uField, fields)!,
+              v: fieldToColumn(vField, fields)!,
+              ...(fieldToColumn(altField, fields)
+                ? {altitude: fieldToColumn(altField, fields)!}
+                : {})
+            }
+          });
+        } else if (hasSpeed) {
+          target.push({
+            label: baseLabel,
+            color: [255, 255, 255],
+            isVisible: true,
+            columnMode: FlowFieldColumnMode.GEOJSON_SPEED_DIR,
+            columns: {
+              ...geoColumns,
+              speed: fieldToColumn(speedField, fields)!,
+              direction: fieldToColumn(directionField, fields)!,
+              ...(fieldToColumn(altField, fields)
+                ? {altitude: fieldToColumn(altField, fields)!}
+                : {})
+            }
+          });
+        } else {
+          target.push({
+            label: baseLabel,
+            color: [255, 255, 255],
+            isVisible: true,
+            columnMode: FlowFieldColumnMode.GEOJSON_ELEVATION,
+            columns: {
+              ...geoColumns,
+              altitude: fieldToColumn(altField, fields)!
+            }
+          });
         }
-      ],
-      foundLayers
-    };
+      }
+    }
+
+    return {props, altProps, foundLayers};
   }
 
   formatLayerData(datasets: any) {
@@ -1264,15 +1472,41 @@ export default class FlowFieldLayer extends Layer {
     if (!dataset) {
       return {};
     }
-    const {dataContainer, filteredIndex} = dataset;
-    const {lat, lng, u, v, speed, direction, altitude} = this.config.columns;
+    const {dataContainer, filteredIndex, fields} = dataset;
+    const {lat, lng, geojson, u, v, speed, direction, altitude} = this.config.columns;
     const mode = this.config.columnMode;
-    if (lat.fieldIdx < 0 || lng.fieldIdx < 0) {
+    const geojsonMode = isGeojsonPositionMode(mode);
+    const altitudeMode = isElevationMode(mode);
+    const speedMode = isSpeedDirMode(mode);
+
+    if (geojsonMode) {
+      if (!geojson || geojson.fieldIdx < 0) {
+        return {};
+      }
+    } else if (!lat || lat.fieldIdx < 0 || !lng || lng.fieldIdx < 0) {
       return {};
     }
 
-    const altitudeMode = mode === FlowFieldColumnMode.ELEVATION;
-    const speedMode = mode === FlowFieldColumnMode.SPEED_DIR;
+    const geoEncoding = geojsonMode ? getGeoArrowEncoding(fields?.[geojson.fieldIdx]) : undefined;
+
+    const readLatLng = (idx: number): {lat: number; lng: number} | null => {
+      if (geojsonMode) {
+        const centroid = centroidFromRawFeature(
+          dataContainer.valueAt(idx, geojson.fieldIdx),
+          geoEncoding
+        );
+        if (!centroid) {
+          return null;
+        }
+        return {lng: centroid[0], lat: centroid[1]};
+      }
+      const latVal = dataContainer.valueAt(idx, lat.fieldIdx);
+      const lngVal = dataContainer.valueAt(idx, lng.fieldIdx);
+      if (!Number.isFinite(latVal) || !Number.isFinite(lngVal)) {
+        return null;
+      }
+      return {lat: latVal, lng: lngVal};
+    };
 
     if (altitudeMode) {
       if (!altitude || altitude.fieldIdx < 0) {
@@ -1281,13 +1515,12 @@ export default class FlowFieldLayer extends Layer {
       const altPoints: AltitudePoint[] = [];
       for (let i = 0; i < filteredIndex.length; i++) {
         const idx = filteredIndex[i];
-        const latVal = dataContainer.valueAt(idx, lat.fieldIdx);
-        const lngVal = dataContainer.valueAt(idx, lng.fieldIdx);
+        const pos = readLatLng(idx);
         const altVal = dataContainer.valueAt(idx, altitude.fieldIdx);
-        if (!Number.isFinite(latVal) || !Number.isFinite(lngVal) || !Number.isFinite(altVal)) {
+        if (!pos || !Number.isFinite(altVal)) {
           continue;
         }
-        altPoints.push({lat: latVal, lng: lngVal, alt: altVal});
+        altPoints.push({lat: pos.lat, lng: pos.lng, alt: altVal});
       }
       this._streamlinesKey = '';
       this._cacheMeta = '';
@@ -1295,7 +1528,11 @@ export default class FlowFieldLayer extends Layer {
       this._clipBounds = null;
       this._viewSig = '';
       this._moving = false;
-      const grid = buildGridFromAltitude(altPoints, this.config.visConfig.smoothing);
+      const grid = buildGridFromAltitude(
+        altPoints,
+        this.config.visConfig.smoothing,
+        this.config.visConfig.gridResolution
+      );
       return {data: altPoints, grid};
     }
 
@@ -1309,9 +1546,8 @@ export default class FlowFieldLayer extends Layer {
     const points: FlowPoint[] = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       const idx = filteredIndex[i];
-      const latVal = dataContainer.valueAt(idx, lat.fieldIdx);
-      const lngVal = dataContainer.valueAt(idx, lng.fieldIdx);
-      if (!Number.isFinite(latVal) || !Number.isFinite(lngVal)) continue;
+      const pos = readLatLng(idx);
+      if (!pos) continue;
       let uu;
       let vv;
       if (speedMode) {
@@ -1326,12 +1562,14 @@ export default class FlowFieldLayer extends Layer {
         vv = dataContainer.valueAt(idx, v.fieldIdx);
       }
       if (!Number.isFinite(uu) || !Number.isFinite(vv)) continue;
+      const altVal =
+        altitude?.fieldIdx > -1 ? dataContainer.valueAt(idx, altitude.fieldIdx) : undefined;
       points.push({
-        lat: latVal,
-        lng: lngVal,
+        lat: pos.lat,
+        lng: pos.lng,
         u: uu,
         v: vv,
-        alt: altitude?.fieldIdx > -1 ? dataContainer.valueAt(idx, altitude.fieldIdx) : 0
+        ...(Number.isFinite(altVal) ? {alt: altVal} : {})
       });
     }
 
@@ -1341,14 +1579,19 @@ export default class FlowFieldLayer extends Layer {
     this._clipBounds = null;
     this._viewSig = '';
     this._moving = false;
-    const grid = buildGrid(points, this.config.visConfig.smoothing);
+    const grid = buildGrid(
+      points,
+      this.config.visConfig.smoothing,
+      this.config.visConfig.gridResolution
+    );
     return {data: points, grid};
   }
 
   renderLayer(opts: any) {
-    const {data, mapState, layerCallbacks} = opts;
+    const {data, mapState, layerCallbacks, visible} = opts;
     const {visConfig, isVisible, color} = this.config;
-    if (!isVisible || !data?.grid) {
+    // Honor split-map visibility from renderDeckGlLayer (`visible`), not only config.
+    if (!isVisible || visible === false || !data?.grid) {
       return [];
     }
 
@@ -1416,14 +1659,22 @@ export default class FlowFieldLayer extends Layer {
         : [r, g, b, Math.round(opacity * 255)]
     ) as any;
 
+    const hasAltitude = Boolean(data.grid?.alt);
+    const elevationMultiplier = Math.max(0, visConfig.elevationMultiplier ?? 1);
+    const blendingParameters = mapState?.layerParameters ?? {};
+
     return [
       new AnimatedTripsLayer({
         id: this.id,
         data: trips,
-        getPath: d => d.path,
+        getPath:
+          elevationMultiplier === 1
+            ? d => d.path
+            : d => d.path.map(p => [p[0], p[1], (p[2] || 0) * elevationMultiplier]),
         getTimestamps: d => d.timestamps,
         getColor,
         updateTriggers: {
+          getPath: elevationMultiplier,
           getColor: visConfig.colorBySpeed
             ? [true, visConfig.colorRange, opacity, minSpeed, maxSpeed]
             : [false, r, g, b, opacity]
@@ -1440,7 +1691,10 @@ export default class FlowFieldLayer extends Layer {
         // wrapLongitude splits paths in PathLayer but not TripsLayer timestamps,
         // which can throw during attribute update (reading undefined[0]).
         wrapLongitude: false,
-        parameters: {depthTest: Boolean(mapState.dragRotate) || Boolean(data.grid?.alt)},
+        parameters: {
+          depthTest: Boolean(mapState.dragRotate) || (hasAltitude && elevationMultiplier > 0),
+          ...blendingParameters
+        },
         extensions: [clipExtension],
         clipByInstance: false,
         clipBounds

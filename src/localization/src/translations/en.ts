@@ -285,7 +285,13 @@ export default {
       seamlessLoopDescription: 'Repeat trails so they do not pop off at the end of the cycle.',
       smoothing: 'Smoothing',
       smoothingDescription:
-        'Blur u/v over this many neighboring cells. 0 uses raw samples and does not fill empty cells.'
+        'Blur u/v over this many neighboring cells. 0 uses raw samples and does not fill empty cells.',
+      gridResolution: 'Grid Resolution',
+      gridResolutionDescription:
+        'Target number of cells along the longer geographic axis of the field. Lower is coarser and faster; higher keeps more detail.',
+      elevationMultiplier: 'Elevation Multiplier',
+      elevationMultiplierDescription:
+        'Scale path height from the altitude/elevation column. 1 is real meters; higher values exaggerate relief in 3D.'
     }
   },
   layerManager: {

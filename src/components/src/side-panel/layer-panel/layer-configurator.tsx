@@ -1749,6 +1749,16 @@ export default function LayerConfiguratorFactory(
           </LayerConfigGroup>
           <LayerConfigGroup label="layerVisConfigs.flowField.field" collapsible>
             <VisConfigSlider {...layer.visConfigSettings.smoothing} {...visConfiguratorProps} />
+            <VisConfigSlider
+              {...layer.visConfigSettings.gridResolution}
+              {...visConfiguratorProps}
+            />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.elevationMultiplier}
+                {...visConfiguratorProps}
+              />
+            </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );
