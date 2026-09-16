@@ -53,7 +53,7 @@ entry point. Use it to establish feature parity before replacing the main app.
 
 ## Component overrides
 
-See [Component overrides and possible core migration](docs/component-overrides-and-core-migration.md)
+See [Component overrides and possible core migration](../../src/sqlrooms/docs-dev/component-overrides-and-core-migration.md)
 for the app and adapter override inventory and proposed migration into Kepler core.
 
 ## SQL panel
