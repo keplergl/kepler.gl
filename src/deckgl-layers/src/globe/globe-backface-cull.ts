@@ -52,7 +52,8 @@ const BACKFACE_CULL_INJECT = /* glsl */ `
  * Copied from EnhancedMultiIconLayer.getShaders().
  */
 export function injectGlobeBackfaceCull(shaders: any): any {
-  const existing = shaders.inject?.['vs:DECKGL_FILTER_GL_POSITION'] || '';
+  const existingRaw = shaders.inject?.['vs:DECKGL_FILTER_GL_POSITION'] || '';
+  const existing = typeof existingRaw === 'string' ? existingRaw : existingRaw.injection || '';
   return {
     ...shaders,
     inject: {

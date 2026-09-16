@@ -61,7 +61,8 @@ export default {
       addMoreLabel: 'ラベルを追加',
       backgroundColor: '背景色',
       outlineWidth: '輪郭線の幅',
-      outlineColor: '輪郭線の色'
+      outlineColor: '輪郭線の色',
+      collisionEnabled: '重なったラベルを非表示'
     }
   },
   sidebar: {
