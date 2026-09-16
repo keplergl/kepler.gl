@@ -220,6 +220,8 @@ export class KeplerGlDuckDbTable extends KeplerTable {
 
     try {
       const tableName = data.duckdbTableName ?? this.label;
+      // An explicit duckdbTableName reuses an existing table (for example, a SQL query result).
+      // Preserve it; only replace tables that Kepler will populate from imported data below.
       if (!data.duckdbTableName) await dropTableIfExists(c, tableName);
 
       let format = this.metadata.format;
