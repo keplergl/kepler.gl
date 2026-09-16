@@ -30,6 +30,7 @@ function loadTypeScript(filename, dependencies = {}) {
 const sourceDir = path.resolve(__dirname, '../src');
 const tasks = loadTypeScript(path.resolve(sourceDir, '../../tasks-core/src/index.ts'));
 const config = loadTypeScript(path.join(sourceDir, 'config/index.ts'));
+const persistence = loadTypeScript(path.join(sourceDir, 'keplerConfigPersistence.ts'));
 const tableIdentity = table => `"${table.database}"."${table.schema}"."${table.table}"`;
 const duckdbCore = {
   getTableIdentity: tableIdentity,
@@ -53,7 +54,16 @@ const actions = {
 
 function emptyMap() {
   return {
-    visState: {layers: [], filters: [], datasets: {}, layerToBeMerged: [], filterToBeMerged: []},
+    visState: {
+      layers: [],
+      filters: [],
+      datasets: {},
+      layerToBeMerged: [],
+      filterToBeMerged: [],
+      splitMapsToBeMerged: [],
+      interactionToBeMerged: {},
+      isMergingDatasets: {}
+    },
     mapState: {},
     mapStyle: {mapStyles: {}, styleType: 'positron'},
     uiState: {}
@@ -155,6 +165,7 @@ const {createKeplerSlice} = loadTypeScript(path.join(sourceDir, 'KeplerSlice.ts'
   '@sqlrooms/ui': {getTheme: () => 'light'},
   '@sqlrooms/duckdb-core': duckdbCore,
   './config': config,
+  './keplerConfigPersistence': persistence,
   './keplerTableSelection': tableSelection
 });
 

@@ -28,6 +28,7 @@ export type {
   KeplerTableLayerOption,
   KeplerTableSelectionOptions
 } from './keplerTableSelection';
+export {getReferencedKeplerDatasetIds, hasPendingKeplerConfig} from './keplerConfigPersistence';
 
 export {FileDropInput} from './components/FileDropInput';
 export {KeplerAddDataDialog} from './components/KeplerAddDataDialog';
