@@ -16,6 +16,9 @@ import KeplerPackage from '../../package.json' assert {type: 'json'};
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const args = process.argv;
+const demoNext = args.includes('--demo-next');
+const outdir = demoNext ? 'dist/demo-next' : 'dist';
+const publicPath = demoNext ? '/demo-next/' : '/';
 
 const BASE_NODE_MODULES_DIR = './node_modules';
 
@@ -182,10 +185,12 @@ const config = {
     '.woff2': 'file'
   },
   entryPoints: ['src/main.js'],
-  outfile: 'dist/bundle.js',
+  outfile: join(outdir, 'bundle.js'),
+  publicPath,
   bundle: true,
   define: {
     NODE_ENV,
+    __DEMO_BASE_PATH__: JSON.stringify(demoNext ? '/demo-next' : '/demo'),
     // Define process.env variables for browser environment
     'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
     'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
@@ -337,6 +342,14 @@ function openURL(url) {
 }
 
 (async () => {
+  if (args.includes('--build')) {
+    fs.rmSync(outdir, {recursive: true, force: true});
+  }
+  fs.mkdirSync(outdir, {recursive: true});
+  fs.writeFileSync(
+    join(outdir, 'index.html'),
+    fs.readFileSync(join(__dirname, 'index.html'), 'utf8').replaceAll('%PUBLIC_PATH%', publicPath)
+  );
   // local dev
 
   const modules = ['@deck.gl', '@loaders.gl', '@luma.gl', '@probe.gl'];
@@ -377,7 +390,7 @@ function openURL(url) {
     // popups portaled to <body> — shipped unstyled.
     console.log('⚡ Building Tailwind CSS...');
     execSync(
-      './node_modules/.bin/tailwindcss -i src/styles.css -o dist/tailwind.css --minify',
+      `./node_modules/.bin/tailwindcss -i src/styles.css -o ${outdir}/tailwind.css --minify`,
       {stdio: 'inherit'}
     );
 
@@ -435,7 +448,7 @@ function openURL(url) {
     // Start Tailwind CSS watcher for sqlrooms UI components
     spawn(
       './node_modules/.bin/tailwindcss',
-      ['-i', 'src/styles.css', '-o', 'dist/tailwind.css', '--watch=always'],
+      ['-i', 'src/styles.css', '-o', join(outdir, 'tailwind.css'), '--watch=always'],
       {
         stdio: 'inherit'
       }
@@ -444,10 +457,7 @@ function openURL(url) {
     await esbuild
       .context({
         ...config,
-        plugins: [
-          ...config.plugins,
-          ...(useDeckOverride ? [] : [dedupeWebglPlugin])
-        ],
+        plugins: [...config.plugins, ...(useDeckOverride ? [] : [dedupeWebglPlugin])],
         minify: false,
         sourcemap: true,
         alias: {
@@ -465,7 +475,7 @@ function openURL(url) {
         await ctx.serve({
           servedir: 'dist',
           port,
-          fallback: 'dist/index.html',
+          fallback: join(outdir, 'index.html'),
           onRequest: ({remoteAddress, method, path, status, timeInMS}) => {
             console.info(remoteAddress, status, `"${method} ${path}" [${timeInMS}ms]`);
           }
@@ -473,7 +483,7 @@ function openURL(url) {
         console.info(
           `kepler.gl demo app running at ${`http://localhost:${port}`}, press Ctrl+C to stop`
         );
-        openURL(`http://localhost:${port}`);
+        openURL(`http://localhost:${port}${demoNext ? '/demo-next' : ''}`);
       })
       .catch(e => {
         console.error(e);
