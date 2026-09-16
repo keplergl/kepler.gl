@@ -55,3 +55,4 @@ lerna-debug.log
 .netlify
 meta.json
 .env
+docker/config.json

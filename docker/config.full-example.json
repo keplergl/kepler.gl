@@ -1,0 +1,141 @@
+{
+  "credentials": {
+    "MapboxAccessToken": "pk.your-mapbox-token",
+    "MapboxExportToken": "pk.your-mapbox-export-token",
+    "DropboxClientId": "your-dropbox-client-id",
+    "CartoClientId": "your-carto-client-id",
+    "FoursquareClientId": "your-foursquare-client-id",
+    "FoursquareDomain": "your-tenant.auth0.com",
+    "FoursquareAPIURL": "https://api.foursquare.com",
+    "FoursquareUserMapsURL": "https://foursquare.com/user/maps",
+    "GoogleDriveClientId": "your-id.apps.googleusercontent.com"
+  },
+
+  "pageTitle": "kepler.gl demo",
+
+  "mapConfigUrl": "https://raw.githubusercontent.com/keplergl/kepler.gl-data/master/samples.json",
+
+  "mapUrl": "https://raw.githubusercontent.com/keplergl/kepler.gl-data/master/nyctrips/config.json",
+
+  "mapStyle": {
+    "styleType": "voyager",
+    "mapStyles": {
+      "voyager": {
+        "id": "voyager",
+        "label": "Voyager",
+        "url": "https://api.maptiler.com/maps/voyager/style.json?key=YOUR_KEY",
+        "icon": "https://api.maptiler.com/maps/voyager/256/0/0/0.png?key=YOUR_KEY"
+      },
+      "outdoor": {
+        "id": "outdoor",
+        "label": "Outdoor",
+        "url": "https://api.maptiler.com/maps/outdoor/style.json?key=YOUR_KEY",
+        "icon": "https://openmaptiles.org/img/styles/terrain.jpg"
+      }
+    }
+  },
+
+  "mapStyles": [
+    {
+      "id": "voyager",
+      "label": "Voyager",
+      "url": "https://api.maptiler.com/maps/voyager/style.json?key=YOUR_KEY",
+      "icon": "https://api.maptiler.com/maps/voyager/256/0/0/0.png?key=YOUR_KEY"
+    }
+  ],
+  "mapStylesReplaceDefault": false,
+
+  "applicationConfig": {
+    "defaultHtmlName": "kepler.gl.html",
+    "defaultImageName": "kepler.gl.png",
+    "defaultJsonName": "kepler.gl.json",
+    "defaultDataName": "kepler.gl",
+    "defaultExportJsonSettings": {
+      "hasData": true
+    },
+
+    "cdnUrl": "https://studio-public-data.foursquare.com/statics/keplergl",
+
+    "useArrowProgressiveLoading": true,
+    "showReleaseBanner": true,
+    "useOnFilteredItemsChange": false,
+    "escapeXhtmlForWebpack": true,
+    "maxPitch": 60,
+    "maxArrowBatches": 1,
+    "reduxLogLevel": 1,
+
+    "enableRasterTileLayer": true,
+    "rasterServerUseLatestTitiler": true,
+    "rasterServerShowServerInput": true,
+    "rasterServerUrls": [
+      "https://your-titiler.example.com"
+    ],
+    "rasterServerSupportsElevation": true,
+    "rasterServerMaxRetries": 1,
+    "rasterServerRetryDelay": 10000,
+    "rasterServerServerErrorsToRetry": [503],
+    "rasterServerMaxPerServerRequests": 0,
+
+    "enableWMSLayer": true,
+    "enableFlowLayer": true,
+    "enableBitmapLayer": true,
+    "enableA5Layer": true,
+    "enableGeohashLayer": true,
+
+    "showInlineTilesetExamples": true,
+
+    "enableAnnotations": true,
+    "enableDrawOnMapSketches": true,
+    "enableMapNavigationControl": true,
+    "enableMapScale": true,
+    "enableSwipeMode": true,
+    "enableGlobeView": true,
+    "enableLayerGroups": true,
+    "enableThemeToggle": true,
+    "enableColumnStats": true,
+    "enableRemoteFileFormatSelector": false,
+
+    "acceptedFileFormats": [
+      "csv",
+      "tsv",
+      "dsv",
+      "json",
+      "geojson",
+      "ndjson",
+      "jsonl",
+      "geojsonl",
+      "ndgeojson",
+      "ldgeojson",
+      "kml",
+      "gpx",
+      "tcx",
+      "arrow",
+      "feather",
+      "parquet"
+    ],
+
+    "customIconUrl": "https://raw.githubusercontent.com/keplergl/kepler.gl-data/refs/heads/master/layers/icon/custom-icons.json",
+    "customIcons": [
+      {
+        "id": "custom-star",
+        "mesh": {
+          "cells": [
+            [5, 1, 0],
+            [5, 2, 1],
+            [5, 3, 2],
+            [5, 4, 3],
+            [5, 0, 4]
+          ],
+          "positions": [
+            [0, 1, 0],
+            [0.95, 0.31, 0],
+            [0.59, -0.81, 0],
+            [-0.59, -0.81, 0],
+            [-0.95, 0.31, 0],
+            [0, 0, 0]
+          ]
+        }
+      }
+    ]
+  }
+}
