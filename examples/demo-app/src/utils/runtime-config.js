@@ -47,7 +47,9 @@ const CREDENTIAL_TO_CLOUD_KEY = {
 
 /**
  * Built-in demo-app applicationConfig defaults (previously set in reducers/index.js).
- * Applied before any `/config.json` overlay so source builds keep the same behavior.
+ * Applied on first import so kepler.gl.com (website store/app) keeps the same
+ * icons/flags, and again from {@link loadAndApplyRuntimeConfig} before any
+ * `/config.json` overlay so Docker/source builds can still override them.
  *
  * To enable DuckDB in a source build, also register the plugin here (or via a custom
  * bootstrap), e.g.:
@@ -89,6 +91,9 @@ export function applyDemoApplicationDefaults() {
       'https://raw.githubusercontent.com/keplergl/kepler.gl-data/refs/heads/master/layers/icon/custom-icons.json'
   });
 }
+
+// Website imports demo-app reducers/app without going through demo-app main.js.
+applyDemoApplicationDefaults();
 
 /**
  * @param {DemoAppRuntimeConfig['credentials']} credentials
