@@ -224,7 +224,7 @@ export async function run() {
   const persisted = JSON.parse(localStorage.getItem('kepler-sqlrooms-ai-assistant-state')!);
   check(
     persisted.state.ai.sessions.some((s: {id: string}) => s.id === sessionId),
-    'Existing persistence key was not retained'
+    'SQLRooms assistant state was not persisted'
   );
   check(
     assistantPersistence.migrate(persisted.state, 1) === persisted.state,

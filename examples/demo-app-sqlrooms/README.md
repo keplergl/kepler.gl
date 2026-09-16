@@ -26,10 +26,11 @@ yarn start:local
 yarn build
 ```
 
-Both apps support `/demo` and sample routes such as `/demo/earthquakes`.
-Different ports keep their browser storage separate. Provider credentials use the
-same repository environment configuration as the original demo. Cloud login and
-AI requests require credentials; local OAuth testing also requires registering
+In standalone development, both apps support `/demo` and sample routes such as
+`/demo/earthquakes`. On the website, the SQLRooms preview uses `/demo-next` and
+`/demo-next/earthquakes`. Different local ports keep browser storage separate.
+Provider credentials use the same repository environment configuration as the
+original demo. Cloud login and AI requests require credentials; local OAuth testing also requires registering
 this app's origin with the provider.
 
 ## What to compare
@@ -53,17 +54,25 @@ Use this preview to establish feature parity before replacing the main app.
 
 ## Website deployment
 
-The existing root `yarn deploy` / website `yarn build` pipeline installs this
-example's locked dependencies, builds it with `--demo-next`, and copies its
-output into `website/dist/demo-next/`. Netlify continues publishing the same
+The root `yarn install:web` installs both examples and the website, including this
+example's locked dependencies via `yarn install:sqlrooms`. The root `yarn deploy`
+runs that install step followed by the website's `yarn build`, which builds both
+apps and copies this example's `--demo-next` output into `website/dist/demo-next/`.
+To build locally, first run `yarn install:web` from the repository root, then
+`cd website && yarn build`. The website's `yarn esbuild` only rebuilds the original
+website bundle; `yarn build:demo-next` builds and copies the preview without
+installing dependencies. Netlify continues publishing the same
 `website/dist` directory. No dashboard, domain, or new environment variable
 configuration is required for this addition to an existing deployment.
 
 The website's `_redirects` routes `/demo-next` and its child routes to the new
 entry point before the website catch-all. Assets use `/demo-next/` URLs, and
-sample and cloud-share links stay under `/demo-next`. Regular `yarn build` and
-local development retain `/demo` routes and root asset URLs. To try the deployed
+sample and cloud-share links stay under `/demo-next`. This example's regular
+`yarn build` and local development retain `/demo` routes and root asset URLs. To try the deployed
 paths locally, run `yarn start:local --demo-next` from this directory.
+The flag controls both routing and asset paths through a dedicated build
+identifier; setting `DEMO_BASE_PATH` in the environment or `.env` does not change
+the route. The preview remains unlisted in the marketing site's navigation.
 
 Assistant sessions/settings use `kepler-sqlrooms-ai-assistant-state`, separate
 from the original demo. Provider login storage remains shared on the same
@@ -95,13 +104,17 @@ Layout, the SQL panel, and the assistant all use that room and its database slic
 - Import files through the existing **Add Data** dialog; the schema tree refreshes automatically.
 - Editor text and results survive closing/reopening the panel; `?sql=` links retain the SQL text.
 
-For example, open `/demo/earthquakes?sql=SELECT%20*%20FROM%20%22California%20Earthquakes%22%20LIMIT%20100`.
+On the website, open `/demo-next/earthquakes?sql=SELECT%20*%20FROM%20%22California%20Earthquakes%22%20LIMIT%20100`.
+For standalone development, use `/demo/earthquakes?sql=SELECT%20*%20FROM%20%22California%20Earthquakes%22%20LIMIT%20100`.
 
 From the repository root, run the query execution and CSV export checks with:
 
 ```sh
 node --test examples/demo-app-sqlrooms/test/*.test.cjs
 ```
+
+The SQLRooms demo CI workflow runs these unit tests for PRs targeting `master`
+or `feat/sqlrooms-integration`. Browser checks remain manual.
 
 The query runner keeps a database snapshot so mapping and exporting never rerun
 preceding SQL writes. Unmapped snapshots are dropped on the next query or app

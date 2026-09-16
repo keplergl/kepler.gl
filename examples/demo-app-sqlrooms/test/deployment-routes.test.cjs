@@ -29,7 +29,8 @@ for (const basePath of ['/demo', '/demo-next']) {
       vm.runInNewContext(code, {
         exports,
         window,
-        process: {env: basePath === '/demo' ? {} : {DEMO_BASE_PATH: basePath}},
+        ...(basePath === '/demo' ? {} : {__DEMO_BASE_PATH__: basePath}),
+        process: {env: {DEMO_BASE_PATH: '/must-not-override-build-path'}},
         require: name => {
           if (name.endsWith('constants/default-settings')) return settings;
           if (name === 'keymirror') return values => values;

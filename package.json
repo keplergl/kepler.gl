@@ -45,7 +45,8 @@
   "scripts": {
     "bootstrap": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true git submodule update --init --recursive && yarn install --immutable && yarn fix-dependencies && yarn workspaces foreach -At run stab",
     "install:example": "cd examples/demo-app && NODE_OPTIONS=--openssl-legacy-provider yarn",
-    "install:web": "yarn install:example && cd website && yarn",
+    "install:sqlrooms": "cd examples/demo-app-sqlrooms && yarn install --immutable",
+    "install:web": "yarn install:example && yarn install:sqlrooms && cd website && yarn",
     "install-and-start": "node ./scripts/install-and-start",
     "test-fast": "yarn test-node-debug && yarn test-browser-debug",
     "test-node": "yarn test-node-debug | tap-spec",

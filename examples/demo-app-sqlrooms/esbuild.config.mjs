@@ -190,7 +190,7 @@ const config = {
   bundle: true,
   define: {
     NODE_ENV,
-    'process.env.DEMO_BASE_PATH': JSON.stringify(demoNext ? '/demo-next' : '/demo'),
+    __DEMO_BASE_PATH__: JSON.stringify(demoNext ? '/demo-next' : '/demo'),
     // Define process.env variables for browser environment
     'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
     'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
