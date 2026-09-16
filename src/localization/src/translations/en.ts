@@ -71,7 +71,8 @@ export default {
       alignment: 'Alignment',
       addMoreLabel: 'Add More Label',
       outlineWidth: 'Outline width',
-      outlineColor: 'Outline color'
+      outlineColor: 'Outline color',
+      collisionEnabled: 'Hide overlapping labels'
     }
   },
   sidebar: {
@@ -893,6 +894,8 @@ ${'```'}
   Save: 'Save',
   Share: 'Share',
   mapLegend: {
+    min: 'Min',
+    max: 'Max',
     layers: {
       line: {
         singleColor: {

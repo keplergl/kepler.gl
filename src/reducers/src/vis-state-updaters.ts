@@ -791,7 +791,11 @@ function addOrRemoveTextLabels(newFields, textLabel, defaultTextLabel = DEFAULT_
     ...newTextLabel.filter(tl => tl.field),
     ...addFields.map(af => ({
       ...defaultTextLabel,
-      field: af
+      field: af,
+      collisionEnabled: Boolean(
+        textLabel.find(tl => tl.collisionEnabled)?.collisionEnabled ??
+          defaultTextLabel.collisionEnabled
+      )
     }))
   ];
 
@@ -835,11 +839,19 @@ export function layerTextLabelChangeUpdater(
   let newTextLabel = textLabel.slice();
   if (!textLabel[idx] && idx === textLabel.length) {
     // if idx is set to length, add empty text label
-    newTextLabel = [...textLabel, defaultTextLabel];
+    newTextLabel = [
+      ...textLabel,
+      {
+        ...defaultTextLabel,
+        collisionEnabled: Boolean(textLabel[0]?.collisionEnabled)
+      }
+    ];
   }
 
   if (idx === 'all' && prop === 'fields') {
     newTextLabel = addOrRemoveTextLabels(value, textLabel, defaultTextLabel);
+  } else if (idx === 'all' && prop) {
+    newTextLabel = textLabel.map(tl => ({...tl, [prop]: value}));
   } else {
     newTextLabel = updateTextLabelPropAndValue(idx, prop, value, newTextLabel);
   }
@@ -5688,7 +5700,12 @@ export function replaceDatasetDepsInState<T extends VisState>(
           ? replacePropValueInState(replacedState, replacedItem, mergerOptions)
           : replacedState;
 
+        // Only when this dataset had items of its own to park. The toBeMerged list
+        // can still hold another dataset's items, replaced a moment earlier and
+        // not merged back yet; overwriting the order they were parked with would
+        // merge them back in reverse.
         if (
+          replacedItem &&
           mergerOptions.toMergeProp !== undefined &&
           replacedState[mergerOptions.toMergeProp]?.length &&
           preserveOrder

@@ -144,3 +144,20 @@ test('#mergeAnnotations -> should return same state when all annotations are inv
 
   t.end();
 });
+
+test('#mergeAnnotations -> should accept 3D anchorPoint', t => {
+  const state = makeState();
+  const annotations = [
+    makeAnnotation({id: 'xyz', anchorPoint: [-122.4, 37.8, 45]}),
+    makeAnnotation({id: 'too-long', anchorPoint: [1, 2, 3, 4]}),
+    makeAnnotation({id: 'nan-z', anchorPoint: [1, 2, Number.NaN]})
+  ];
+
+  const result = mergeAnnotations(state, annotations);
+
+  t.equal(result.annotations.length, 1, 'should only accept [lng, lat] or [lng, lat, alt]');
+  t.equal(result.annotations[0].id, 'xyz', 'should keep the 3D annotation');
+  t.deepEqual(result.annotations[0].anchorPoint, [-122.4, 37.8, 45], 'should keep altitude');
+
+  t.end();
+});

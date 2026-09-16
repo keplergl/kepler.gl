@@ -61,7 +61,8 @@ export default {
       alignment: 'Alineación',
       addMoreLabel: 'Añadir más etiquetas',
       outlineWidth: 'Ancho del contorno',
-      outlineColor: 'Color del contorno'
+      outlineColor: 'Color del contorno',
+      collisionEnabled: 'Ocultar etiquetas superpuestas'
     }
   },
   sidebar: {

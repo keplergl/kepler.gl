@@ -4,7 +4,7 @@
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {DatasetType, WMSDatasetMetadata, LAYER_TYPES} from '@kepler.gl/constants';
 import {WMSLayer as DeckWMSLayer} from '@kepler.gl/deckgl-layers';
-import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
+import {KeplerTable as KeplerDataset, buildWmsGetLegendGraphicUrl} from '@kepler.gl/table';
 import {
   AnimationConfig,
   Field,
@@ -43,6 +43,7 @@ export type WMSLayerVisConfig = {
     title: string;
     boundingBox: number[][];
     queryable: boolean;
+    legendUrl?: string | null;
   } | null;
 };
 
@@ -122,6 +123,30 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     return [DatasetType.WMS_TILE];
   }
 
+  // Image overlay has no fill/stroke encoding to show in the map legend
+  getLegendVisualChannels() {
+    return {};
+  }
+
+  getLegendImageUrl(): string | null {
+    const serviceLayer = this._getCurrentServiceLayer();
+    if (!serviceLayer?.name) {
+      return null;
+    }
+    const refreshedLegendUrl = this._getRefreshedServiceLayer(serviceLayer.name)?.legendUrl;
+    const legendUrl = refreshedLegendUrl || serviceLayer.legendUrl;
+    if (legendUrl) {
+      return legendUrl;
+    }
+    const tilesetDataUrl = this.meta?.tilesetDataUrl;
+    if (typeof tilesetDataUrl === 'string' && tilesetDataUrl) {
+      return buildWmsGetLegendGraphicUrl(tilesetDataUrl, serviceLayer.name, {
+        version: this.meta?.wmsVersion
+      });
+    }
+    return null;
+  }
+
   protected initTileDataset() {
     // Provide dummy accessors for raster/WMS
     return new TileDataset<WMSTile, any[]>({
@@ -160,19 +185,53 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     return visConfig.wmsLayer ?? null;
   }
 
+  _getRefreshedServiceLayer(layerName: string) {
+    const layers = this.meta?.layers;
+    if (!Array.isArray(layers)) {
+      return null;
+    }
+    return layers.find(layer => layer?.name === layerName) ?? null;
+  }
+
   updateLayerMeta(dataset: KeplerDataset): void {
     if (dataset.type !== DatasetType.WMS_TILE) {
       return;
     }
 
+    const metadata = dataset.metadata as WMSDatasetMetadata | undefined;
     const currentLayer = this._getCurrentServiceLayer();
-    if (currentLayer && currentLayer.boundingBox) {
-      this.updateMeta({
-        bounds: currentLayer.boundingBox
+    const refreshedLayer =
+      currentLayer?.name && metadata?.layers
+        ? metadata.layers.find(layer => layer.name === currentLayer.name)
+        : undefined;
+
+    if (currentLayer && refreshedLayer) {
+      this.updateLayerVisConfig({
+        wmsLayer: {
+          ...currentLayer,
+          ...refreshedLayer
+        }
       });
     }
 
-    const metadata = dataset.metadata as WMSDatasetMetadata | undefined;
+    const selectedLayer = this._getCurrentServiceLayer();
+    if (selectedLayer?.boundingBox) {
+      this.updateMeta({
+        bounds: selectedLayer.boundingBox
+      });
+    }
+
+    if (metadata?.layers) {
+      this.updateMeta({
+        layers: metadata.layers
+      });
+    }
+    if (metadata?.tilesetDataUrl) {
+      this.updateMeta({
+        tilesetDataUrl: metadata.tilesetDataUrl,
+        wmsVersion: metadata.version
+      });
+    }
     if (metadata?.attribution) {
       this.updateMeta({
         attribution: {title: metadata.attribution, url: metadata.tilesetDataUrl || ''}

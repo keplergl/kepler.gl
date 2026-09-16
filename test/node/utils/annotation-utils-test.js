@@ -12,11 +12,12 @@ import {
   isBelowOriented,
   getTextPlacement,
   getAnnotationTextBoxStyle,
-  isPointVisibleOnGlobe
+  isPointVisibleOnGlobe,
+  normalizeAnchorPoint
 } from '@kepler.gl/components';
 
 const mockViewport = {
-  project: ([lng, lat]) => [lng * 10 + 500, lat * -10 + 300],
+  project: ([lng, lat, alt = 0]) => [lng * 10 + 500, lat * -10 + 300 - alt],
   unproject: ([x, y]) => [(x - 500) / 10, (y - 300) / -10],
   longitude: 0,
   latitude: 0,
@@ -266,6 +267,54 @@ test('#movePoint -> zero delta returns same position', t => {
   t.end();
 });
 
+test('#movePoint -> uses pickWorldPosition xyz when provided', t => {
+  const annotation = makePointAnnotation({anchorPoint: [0, 0]});
+  const pickWorldPosition = () => [12.3, 45.6, 80];
+
+  const changes = movePoint(annotation, {x: 10, y: -5}, mockViewport, pickWorldPosition);
+
+  t.deepEqual(
+    changes.anchorPoint,
+    [12.3, 45.6, 80],
+    'should persist reconstructed [lng, lat, altitude]'
+  );
+
+  t.end();
+});
+
+test('#movePoint -> falls back to ground plane when pick returns no altitude', t => {
+  const annotation = makePointAnnotation({anchorPoint: [0, 0]});
+  const pickWorldPosition = () => null;
+
+  const changes = movePoint(annotation, {x: 10, y: -5}, mockViewport, pickWorldPosition);
+
+  t.equal(changes.anchorPoint.length, 2, 'fallback should be [lon, lat]');
+  t.equal(changes.anchorPoint[0], 1, 'longitude should use viewport unproject');
+  t.equal(changes.anchorPoint[1], 0.5, 'latitude should use viewport unproject');
+
+  t.end();
+});
+
+test('#normalizeAnchorPoint', t => {
+  t.deepEqual(normalizeAnchorPoint([1, 2]), [1, 2], 'keeps 2D anchors');
+  t.deepEqual(normalizeAnchorPoint([1, 2, 3]), [1, 2, 3], 'keeps 3D anchors');
+  t.deepEqual(normalizeAnchorPoint([1, 2, 0]), [1, 2, 0], 'keeps zero altitude');
+  t.equal(normalizeAnchorPoint([1]), null, 'rejects incomplete coords');
+  t.equal(normalizeAnchorPoint(null), null, 'rejects null');
+
+  t.end();
+});
+
+test('#makeMarker -> projects altitude into screen y', t => {
+  const ground = makeMarker(makePointAnnotation({anchorPoint: [10, 20]}), mockViewport);
+  const raised = makeMarker(makePointAnnotation({anchorPoint: [10, 20, 15]}), mockViewport);
+
+  t.equal(raised.x, ground.x, 'longitude projection is unchanged by altitude');
+  t.equal(raised.y, ground.y - 15, 'altitude should shift screen y');
+
+  t.end();
+});
+
 test('#moveText -> TEXT annotation delegates to movePoint', t => {
   const annotation = makeTextAnnotation({anchorPoint: [0, 0]});
   const delta = {x: 20, y: 10};
@@ -324,6 +373,57 @@ test('#resizeCircle -> radius cannot go below 0', t => {
   const changes = resizeCircle(annotation, delta, mockViewport);
 
   t.ok(changes.radiusInMeters >= 0, 'radius should not be negative');
+
+  t.end();
+});
+
+test('#resizeCircle -> zero delta keeps radius for a 3D anchor', t => {
+  const annotation = makeCircleAnnotation({
+    anchorPoint: [10, 20, 80],
+    radiusInMeters: 1000
+  });
+  const pitchedViewport = {
+    ...mockViewport,
+    // Mimic pitch: altitude shifts y, so ground-plane unproject would drift.
+    project: ([lng, lat, alt = 0]) => [lng * 10 + 500 + alt * 0.2, lat * -10 + 300 - alt]
+  };
+
+  const changes = resizeCircle(annotation, {x: 0, y: 0}, pitchedViewport);
+
+  t.equal(changes.radiusInMeters, 1000, 'zero handle movement should not change radius');
+
+  t.end();
+});
+
+test('#resizeCircle -> scales radius by screen-space handle delta', t => {
+  const annotation = makeCircleAnnotation({
+    anchorPoint: [0, 0, 50],
+    radiusInMeters: 1000
+  });
+  const marker = makeMarker(annotation, mockViewport);
+  t.ok(marker.r > 0, 'circle should have a screen radius');
+
+  const doubled = resizeCircle(annotation, {x: marker.r, y: 0}, mockViewport);
+  t.equal(doubled.radiusInMeters, 2000, 'dragging the handle by one radius should double meters');
+
+  t.end();
+});
+
+test('#makeMarker -> CIRCLE screen radius is independent of altitude', t => {
+  const ground = makeMarker(
+    makeCircleAnnotation({anchorPoint: [10, 20], radiusInMeters: 1000}),
+    mockViewport
+  );
+  const raised = makeMarker(
+    makeCircleAnnotation({anchorPoint: [10, 20, 40], radiusInMeters: 1000}),
+    mockViewport
+  );
+
+  t.equal(
+    Math.round(raised.r * 1000) / 1000,
+    Math.round(ground.r * 1000) / 1000,
+    'raised and ground circles should have the same screen radius in this projection'
+  );
 
   t.end();
 });

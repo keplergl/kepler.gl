@@ -3,8 +3,14 @@
 
 import {COORDINATE_SYSTEM} from '@deck.gl/core';
 import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
-import {DataFilterExtension} from '@deck.gl/extensions';
+import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/deckgl-layers';
+import {CollisionFilterExtension, DataFilterExtension} from '@deck.gl/extensions';
 import {TextLayer} from '@deck.gl/layers';
+import CollisionTextLayer from './collision-text-layer';
+import {
+  installCollisionFilterEffectAlignment,
+  snapCollisionModuleFade
+} from './collision-filter-effect';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import React from 'react';
@@ -132,6 +138,8 @@ export type LayerRadiusConfig = {
 };
 export type LayerWeightConfig = {
   weightField: VisualChannelField;
+  weightDomain?: VisualChannelDomain;
+  weightScale?: VisualChannelScale;
 };
 
 export type VisualChannelDescription = {
@@ -160,6 +168,39 @@ const dataFilterExtension = new DataFilterExtension({
   filterSize: MAX_GPU_FILTERS,
   countItems: getApplicationConfig().useOnFilteredItemsChange ?? false
 });
+
+/**
+ * CollisionFilterExtension registers CollisionFilterEffect only in
+ * initializeState. Toggling the extension onto an already-matched TextLayer
+ * skips that hook, so luma.gl never gets collision_texture and aborts the
+ * draw (all labels vanish). Re-run initializeState from updateState when the
+ * collision attribute is missing.
+ */
+class KeplerCollisionFilterExtension extends CollisionFilterExtension {
+  static extensionName = 'CollisionFilterExtension';
+
+  getShaders(this: any) {
+    const base = CollisionFilterExtension.prototype.getShaders.call(this) || {};
+    return snapCollisionModuleFade(base);
+  }
+
+  initializeState(this: any, context: any, extension: this) {
+    // Align CollisionFilterEffect to the live drawing buffer before deck.gl
+    // registers it. Video export scales the GL canvas above CSS size; without
+    // this the collision map only covers the top-left of the frame.
+    installCollisionFilterEffectAlignment(this.context?.deck || context?.deck);
+    CollisionFilterExtension.prototype.initializeState.call(this, context, extension);
+  }
+
+  updateState(this: any, _params: unknown, extension: this) {
+    const attributeManager = this.getAttributeManager();
+    if (attributeManager && !attributeManager.attributes.collisionPriorities) {
+      KeplerCollisionFilterExtension.prototype.initializeState.call(this, this.context, extension);
+    }
+  }
+}
+
+const collisionFilterExtension = new KeplerCollisionFilterExtension();
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultDataAccessor = dc => d => d;
@@ -1579,7 +1620,7 @@ class Layer implements KeplerLayer {
       filterRange: gpuFilter ? gpuFilter.filterRange : undefined,
       onFilteredItemsChange: gpuFilter ? layerCallbacks?.onFilteredItemsChange : undefined,
 
-      // layer should be visible and if splitMap, shown in to one of panel
+      // layer should be visible and, if splitMap, shown in one of the panels
       visible: this.config.isVisible && visible
     };
   }
@@ -1619,23 +1660,45 @@ class Layer implements KeplerLayer {
     },
     renderOpts
   ) {
-    const {data, mapState} = renderOpts;
+    const {data, mapState, visible: visibleInMap} = renderOpts;
     const {textLabel} = this.config;
+    // labels should be visible and, if splitMap, shown in one of the panels
+    const visible = this.config.isVisible && visibleInMap;
 
-    const TextLayerClass = isArrowTable(data.data) ? GeoArrowTextLayer : TextLayer;
+    const isArrow = isArrowTable(data.data);
+    const isGlobeMode = Boolean(mapState?.globe?.enabled);
 
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {
-        const background = textLabel[i].background || backgroundProps?.background;
+        const userBackground = Boolean(textLabel[i].background || backgroundProps?.background);
+        // GeoArrowTextLayer cannot draw a collision hit-area background, so GPU
+        // collision would sample the geographic anchor and cull offset labels.
+        // Leave Arrow labels unfiltered until that path exists.
+        const collisionEnabled = Boolean(textLabel[i].collisionEnabled) && !isArrow;
+        // CollisionTextLayer draws an expanded background in the collision pass so
+        // the GPU hit-test still covers the geographic anchor after pixelOffset.
+        const TextLayerClass = collisionEnabled
+          ? CollisionTextLayer
+          : isArrow
+          ? GeoArrowTextLayer
+          : TextLayer;
         const getText = animationConfig ? f => d.getText(f, animationConfig) : d.getText;
+        const background = userBackground || collisionEnabled;
+        // Distinct id when collision is on so deck.gl does not rematch the
+        // previous TextLayer. Matching would keep a stale collisionPriorities
+        // attribute after the extension is removed, and skip initializeState
+        // (no collision_texture) when it is added.
+        const labelId = `${this.id}-label-${textLabel[i].field?.name}${
+          collisionEnabled ? '-collision' : ''
+        }`;
 
         accu.push(
           // @ts-expect-error
           new TextLayerClass({
             ...sharedProps,
-            id: `${this.id}-label-${textLabel[i].field?.name}`,
+            id: labelId,
             data: data.data,
-            visible: this.config.isVisible,
+            visible,
             getText,
             getPosition,
             getFiltered,
@@ -1658,10 +1721,33 @@ class Layer implements KeplerLayer {
               sdf: textLabel[i].outlineWidth > 0
             },
             parameters: {
-              // text will always show on top of all layers
-              depthTest: false,
+              ...(isGlobeMode
+                ? {
+                    // Globe far-side occlusion is the depth disk (see globe-layers.ts),
+                    // not GPU face culling. Labels used to force depthTest off so they
+                    // always drew on top; with cull also disabled they then showed
+                    // through the planet when the parent object was on the back side.
+                    // Match the editor overlay: depth-test against the disk, don't write
+                    // depth, and keep cull off so billboard glyph quads are not discarded.
+                    depthTest: true,
+                    depthMask: false,
+                    cull: false
+                  }
+                : {
+                    // text will always show on top of all layers
+                    depthTest: false
+                  }),
               ...(mapState?.layerParameters ?? {})
             },
+            ...(collisionEnabled
+              ? {
+                  extensions: [...(sharedProps.extensions || []), collisionFilterExtension],
+                  collisionEnabled: true,
+                  collisionGroup: `${this.id}-text-label-${i}`,
+                  getCollisionPriority: 0,
+                  collisionShowBackground: userBackground
+                }
+              : {}),
 
             getFilterValue: data.getFilterValue,
             updateTriggers: {
@@ -1678,14 +1764,21 @@ class Layer implements KeplerLayer {
               },
               getTextAnchor: textLabel[i].anchor,
               getAlignmentBaseline: textLabel[i].alignment,
-              getColor: textLabel[i].color
+              getColor: textLabel[i].color,
+              collisionEnabled
             },
             _subLayerProps: {
+              // Labels anchored on the far hemisphere would otherwise be drawn
+              // through the planet, since depthTest is off. Both the glyphs and the
+              // label background need it, or a far-side label leaves an empty box.
+              ...(isGlobeMode ? {characters: {type: EnhancedMultiIconLayer}} : null),
               ...(background
                 ? {
                     background: {
+                      ...(isGlobeMode ? {type: EnhancedTextBackgroundLayer} : null),
                       parameters: {
                         cull: false,
+                        ...(isGlobeMode ? {depthTest: true, depthMask: false} : null),
                         ...(mapState?.layerParameters ?? {})
                       }
                     }
@@ -1722,6 +1815,10 @@ class Layer implements KeplerLayer {
 
   getLegendVisualChannels(): {[key: string]: VisualChannel} {
     return this.visualChannels;
+  }
+
+  getLegendImageUrl(): string | null {
+    return null;
   }
 }
 

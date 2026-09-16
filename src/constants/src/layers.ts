@@ -51,7 +51,8 @@ export const DEFAULT_TEXT_LABEL: LayerTextLabel = {
   outlineWidth: 0,
   outlineColor: [255, 0, 0, 255],
   background: false,
-  backgroundColor: [0, 0, 200, 255]
+  backgroundColor: [0, 0, 200, 255],
+  collisionEnabled: false
 };
 
 const DEFAULT_COLOR_PALETTE = KEPLER_COLOR_PALETTES.find(

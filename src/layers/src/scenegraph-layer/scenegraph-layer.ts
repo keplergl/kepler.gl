@@ -148,6 +148,11 @@ export default class ScenegraphLayer extends Layer {
     return ScenegraphLayerIcon;
   }
 
+  // Mesh appearance comes from the GLTF, not layer fill/stroke encoding
+  getLegendVisualChannels() {
+    return {};
+  }
+
   get layerInfoModal() {
     return {
       id: 'scenegraphInfo',

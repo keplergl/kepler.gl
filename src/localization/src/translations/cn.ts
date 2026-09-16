@@ -61,7 +61,8 @@ export default {
       alignment: '对齐方式',
       addMoreLabel: '添加更多标签',
       outlineWidth: '轮廓宽度',
-      outlineColor: '轮廓颜色'
+      outlineColor: '轮廓颜色',
+      collisionEnabled: '隐藏重叠标签'
     }
   },
   sidebar: {

@@ -11,6 +11,7 @@ Use WMS Layer to render imagery from OGC Web Map Service (WMS) endpoints.
 Notes:
 
 - Feature info on click is supported for queryable layers (`queryable=true`).
+- The map legend shows a GetLegendGraphic / LegendURL image when the service provides one.
 
 Example WMS services:
 
