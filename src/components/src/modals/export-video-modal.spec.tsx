@@ -19,6 +19,16 @@ jest.mock('@hubble.gl/react', () => ({
   KeplerUIContext: MockKeplerUIContext
 }));
 
+// loadHubble imports these containers even for regular export. Keep their WebGL
+// and encoder dependencies out of the modal unit tests and first-render timeout.
+jest.mock('./swipe-export-video-container', () => ({
+  SwipeExportVideoPanelContainer: jest.fn(() => null)
+}));
+
+jest.mock('./globe-export-video-container', () => ({
+  GlobeExportVideoPanelContainer: jest.fn(() => null)
+}));
+
 const mockComputeDeckEffects = jest.fn(() => []);
 
 jest.mock('@kepler.gl/utils', () => {
