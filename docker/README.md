@@ -18,11 +18,13 @@ Fill in at least `MapboxAccessToken` if you want Mapbox basemaps. MapLibre/Carto
 
 ## Runtime configuration
 
-The production image reads `/config.json` from the static root (`/app/dist/config.json`). Copy the example and edit:
+The production image reads `/config.json` from the static root (`/app/dist/config.json`). Copy the minimal starter and fill in only what you need (empty credential strings are ignored):
 
 ```bash
 cp docker/config.example.json docker/config.json
 ```
+
+`docker/config.full-example.json` lists every supported key. Use it as a reference — do not mount it as-is (`mapUrl` boots a sample map, and `mapStyle.mapStyles` replaces the built-in basemap list).
 
 Mount it when running (uncomment the `volumes` block in `docker-compose.yml` after creating the file). Pick **one** of these patterns — do not combine a read-only mount with `KEPLER_*` overrides (the entrypoint must write the merged file):
 
@@ -60,7 +62,7 @@ Supported `KEPLER_*` env vars (used in patterns B and C):
 | `KEPLER_MAP_URL` | `mapUrl` |
 | `KEPLER_PAGE_TITLE` | `pageTitle` |
 
-See `docker/config.example.json` for every key supported today (credentials, `pageTitle`, `mapConfigUrl`, `mapUrl`, reducer `mapStyle`, KeplerGl `mapStyles` / `mapStylesReplaceDefault`, and serializable `applicationConfig` fields).
+See `docker/config.full-example.json` for every key supported today (credentials, `pageTitle`, `mapConfigUrl`, `mapUrl`, reducer `mapStyle`, KeplerGl `mapStyles` / `mapStylesReplaceDefault`, and serializable `applicationConfig` fields).
 
 Not JSON-configurable (need a source build): `plugins`, `table`, `database`, `baseMapLibraryConfig` (functions). Map style `layerGroups[].filter` callbacks also cannot be expressed in JSON.
 
@@ -69,7 +71,7 @@ Not JSON-configurable (need a source build): `plugins`, `table`, `database`, `ba
 From the repository root:
 
 ```bash
-# Optional full config (feature flags, basemaps, etc.) — then uncomment `volumes` in docker-compose.yml
+# Optional runtime config — then uncomment `volumes` in docker-compose.yml
 cp docker/config.example.json docker/config.json
 
 # Development mode (esbuild watch inside the container; still uses build-time .env)

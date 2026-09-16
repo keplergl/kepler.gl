@@ -9,6 +9,7 @@ import test from 'tape';
 
 const MERGE_SCRIPT = path.resolve(__dirname, '../../../docker/merge-runtime-config.js');
 const EXAMPLE_CONFIG = path.resolve(__dirname, '../../../docker/config.example.json');
+const FULL_EXAMPLE_CONFIG = path.resolve(__dirname, '../../../docker/config.full-example.json');
 
 function runMerge(env, configPath) {
   return spawnSync(process.execPath, [MERGE_SCRIPT], {
@@ -25,11 +26,21 @@ function readConfig(configPath) {
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
 
-test('docker/config.example.json is valid JSON', t => {
+test('docker/config.example.json is a valid minimal starter', t => {
   const example = JSON.parse(fs.readFileSync(EXAMPLE_CONFIG, 'utf8'));
   t.ok(example.credentials && typeof example.credentials === 'object', 'has credentials');
+  t.notOk(example.mapUrl, 'minimal starter does not boot a map');
+  t.end();
+});
+
+test('docker/config.full-example.json lists supported keys', t => {
+  const example = JSON.parse(fs.readFileSync(FULL_EXAMPLE_CONFIG, 'utf8'));
+  t.ok(example.credentials && typeof example.credentials === 'object', 'has credentials');
   t.ok('mapUrl' in example, 'has mapUrl');
-  t.ok('applicationConfig' in example, 'has applicationConfig');
+  t.ok(
+    example.applicationConfig && typeof example.applicationConfig === 'object',
+    'has applicationConfig'
+  );
   t.end();
 });
 

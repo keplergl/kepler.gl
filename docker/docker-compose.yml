@@ -16,7 +16,8 @@ services:
       dockerfile: docker/Dockerfile
     ports:
       - "8080:8080"
-    # Optional: mount a runtime config after `cp docker/config.example.json docker/config.json`.
+    # Optional: mount a runtime config after `cp docker/config.example.json docker/config.json`
+    # (minimal starter). See config.full-example.json for every key.
     # Do not enable this line until the file exists — Docker will otherwise create a directory
     # named config.json and the container will fail.
     # volumes:

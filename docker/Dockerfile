@@ -42,7 +42,7 @@ RUN npm install -g serve@14
 
 COPY --from=builder /app/examples/demo-app/dist ./dist
 COPY docker/entrypoint.sh docker/merge-runtime-config.js ./
-COPY docker/config.example.json ./config.example.json
+COPY docker/config.example.json docker/config.full-example.json ./
 
 RUN chmod +x /app/entrypoint.sh
 
