@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /**
  * Merge KEPLER_* environment variables into dist/config.json before serve.
  * Existing config.json (e.g. volume mount) wins for keys not set via env;

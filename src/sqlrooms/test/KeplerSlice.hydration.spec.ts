@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /** @jest-environment node */
 // SPDX-License-Identifier: MIT
 // Copyright SQLRooms Contributors and contributors to the kepler.gl project
