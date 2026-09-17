@@ -10,6 +10,7 @@ import test from 'tape';
 const MERGE_SCRIPT = path.resolve(__dirname, '../../../docker/merge-runtime-config.js');
 const EXAMPLE_CONFIG = path.resolve(__dirname, '../../../docker/config.example.json');
 const FULL_EXAMPLE_CONFIG = path.resolve(__dirname, '../../../docker/config.full-example.json');
+const SAMPLE_GALLERY_EXAMPLE = path.resolve(__dirname, '../../../docker/samples.example.json');
 
 function runMerge(env, configPath) {
   return spawnSync(process.execPath, [MERGE_SCRIPT], {
@@ -41,6 +42,16 @@ test('docker/config.full-example.json lists supported keys', t => {
     example.applicationConfig && typeof example.applicationConfig === 'object',
     'has applicationConfig'
   );
+  t.end();
+});
+
+test('docker/samples.example.json uses absolute catalogue URLs', t => {
+  const samples = JSON.parse(fs.readFileSync(SAMPLE_GALLERY_EXAMPLE, 'utf8'));
+  t.ok(Array.isArray(samples) && samples.length > 0, 'is a catalogue array');
+  const row = samples[0];
+  ['imageUrl', 'dataUrl', 'configUrl'].forEach(key => {
+    t.ok(/^https?:\/\//.test(row[key]), `${key} is absolute`);
+  });
   t.end();
 });
 
@@ -110,6 +121,169 @@ test('merge-runtime-config writes empty credentials when nothing is set', t => {
   const result = runMerge({}, configPath);
   t.equal(result.status, 0, result.stderr || 'exit 0');
   t.deepEqual(readConfig(configPath), {credentials: {}});
+
+  fs.rmSync(dir, {recursive: true, force: true});
+  t.end();
+});
+
+test('merge-runtime-config injects KEPLER_CONFIG_HREF into index.html', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-runtime-config-'));
+  const configPath = path.join(dir, 'config.json');
+  const indexPath = path.join(dir, 'index.html');
+  fs.writeFileSync(
+    indexPath,
+    `<!doctype html>
+<html>
+  <head>
+    <title>kepler.gl demo</title>
+  </head>
+  <body></body>
+</html>
+`
+  );
+
+  const result = runMerge(
+    {
+      KEPLER_INDEX_PATH: indexPath,
+      KEPLER_CONFIG_HREF: '/kepler/config.json'
+    },
+    configPath
+  );
+
+  t.equal(result.status, 0, result.stderr || 'exit 0');
+  const html = fs.readFileSync(indexPath, 'utf8');
+  t.ok(
+    html.includes('window.__KEPLER_CONFIG_HREF__="/kepler/config.json"'),
+    'injects the config href script'
+  );
+
+  const again = runMerge(
+    {
+      KEPLER_INDEX_PATH: indexPath,
+      KEPLER_CONFIG_HREF: '/other/config.json'
+    },
+    configPath
+  );
+  t.equal(again.status, 0, again.stderr || 're-inject exit 0');
+  const updated = fs.readFileSync(indexPath, 'utf8');
+  t.ok(
+    updated.includes('window.__KEPLER_CONFIG_HREF__="/other/config.json"'),
+    'replaces prior href'
+  );
+  t.equal(
+    (updated.match(/window\.__KEPLER_CONFIG_HREF__/g) || []).length,
+    1,
+    'does not stack snippets'
+  );
+
+  fs.rmSync(dir, {recursive: true, force: true});
+  t.end();
+});
+
+test('merge-runtime-config escapes the injected KEPLER_CONFIG_HREF', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-runtime-config-'));
+  const configPath = path.join(dir, 'config.json');
+  const indexPath = path.join(dir, 'index.html');
+  fs.writeFileSync(indexPath, '<!doctype html>\n<html><head></head><body></body></html>\n');
+
+  const result = runMerge(
+    {
+      KEPLER_INDEX_PATH: indexPath,
+      KEPLER_CONFIG_HREF: '</script><script>alert(1)</script>'
+    },
+    configPath
+  );
+
+  t.equal(result.status, 0, result.stderr || 'exit 0');
+  const html = fs.readFileSync(indexPath, 'utf8');
+  t.notOk(html.includes('<script>alert(1)</script>'), 'does not emit a breakout script tag');
+  t.ok(html.includes('\\u003c/script>'), 'escapes `<` in the injected value');
+  t.equal(
+    (html.match(/<script>/g) || []).length,
+    1,
+    'index.html still has a single injected script'
+  );
+
+  fs.rmSync(dir, {recursive: true, force: true});
+  t.end();
+});
+
+test('merge-runtime-config anchors the default index.html to the served dist dir', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-runtime-config-'));
+  const configPath = path.join(dir, 'config.json');
+
+  // Custom KEPLER_CONFIG_PATH must not move the index.html lookup next to it.
+  const result = runMerge({KEPLER_CONFIG_HREF: '/kepler/config.json'}, configPath);
+  const output = `${result.stderr}\n${result.stdout}`;
+  t.notOk(output.includes(path.join(dir, 'index.html')), 'does not look beside the config file');
+  t.ok(output.includes(path.join('dist', 'index.html')), 'looks in the served dist directory');
+
+  fs.rmSync(dir, {recursive: true, force: true});
+  t.end();
+});
+
+test('merge-runtime-config skips index.html when KEPLER_CONFIG_HREF is unset', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-runtime-config-'));
+  const configPath = path.join(dir, 'config.json');
+
+  const result = runMerge({}, configPath);
+  t.equal(result.status, 0, result.stderr || 'exit 0 without index.html');
+
+  fs.rmSync(dir, {recursive: true, force: true});
+  t.end();
+});
+
+test('merge-runtime-config exits when KEPLER_CONFIG_HREF cannot be injected', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-runtime-config-'));
+  const configPath = path.join(dir, 'config.json');
+  const indexPath = path.join(dir, 'missing-index.html');
+
+  const result = runMerge(
+    {
+      KEPLER_INDEX_PATH: indexPath,
+      KEPLER_CONFIG_HREF: '/kepler/config.json'
+    },
+    configPath
+  );
+  t.notEqual(result.status, 0, 'non-zero exit when index.html cannot be read');
+  t.ok(
+    /KEPLER_CONFIG_HREF is set but could not read/.test(`${result.stderr}\n${result.stdout}`),
+    'error explains the failed inject'
+  );
+
+  fs.rmSync(dir, {recursive: true, force: true});
+  t.end();
+});
+
+test('merge-runtime-config exits when KEPLER_* cannot be written', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-runtime-config-'));
+  const notDir = path.join(dir, 'not-a-dir');
+  fs.writeFileSync(notDir, 'x');
+  const configPath = path.join(notDir, 'config.json');
+
+  const result = runMerge({KEPLER_MAPBOX_ACCESS_TOKEN: 'pk.ci-test'}, configPath);
+  t.notEqual(result.status, 0, 'non-zero exit when env merge cannot be persisted');
+  t.ok(
+    /Could not write/.test(`${result.stderr}\n${result.stdout}`),
+    'error explains the failed write'
+  );
+
+  fs.rmSync(dir, {recursive: true, force: true});
+  t.end();
+});
+
+test('merge-runtime-config serves on a read-only root when nothing is configured', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-runtime-config-'));
+  const notDir = path.join(dir, 'not-a-dir');
+  fs.writeFileSync(notDir, 'x');
+  const configPath = path.join(notDir, 'config.json');
+
+  const result = runMerge({}, configPath);
+  t.equal(result.status, 0, 'starts anyway so the app can use build-time defaults');
+  t.ok(
+    /No KEPLER_\* overrides were set/.test(`${result.stderr}\n${result.stdout}`),
+    'warns instead of failing the container'
+  );
 
   fs.rmSync(dir, {recursive: true, force: true});
   t.end();

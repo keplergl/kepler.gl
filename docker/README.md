@@ -26,7 +26,7 @@ cp docker/config.example.json docker/config.json
 
 `docker/config.full-example.json` lists every supported key. Use it as a reference — do not mount it as-is (`mapUrl` boots a sample map, and `mapStyle.mapStyles` replaces the built-in basemap list).
 
-Mount it when running (uncomment the `volumes` block in `docker-compose.yml` after creating the file). Pick **one** of these patterns — do not combine a read-only mount with `KEPLER_*` overrides (the entrypoint must write the merged file):
+Mount it when running (uncomment the `volumes` block in `docker-compose.yml` after creating the file). Pick **one** of these patterns — do not combine a read-only mount with `KEPLER_*` overrides (the entrypoint must write the merged file, and the container **exits** if that write fails). Without `KEPLER_*` overrides there is nothing to write, so a read-only root filesystem still starts and serves with build-time defaults:
 
 ```yaml
 # A) Config file only (read-only is fine)
@@ -61,6 +61,13 @@ Supported `KEPLER_*` env vars (used in patterns B and C):
 | `KEPLER_MAP_CONFIG_URL` | `mapConfigUrl` |
 | `KEPLER_MAP_URL` | `mapUrl` |
 | `KEPLER_PAGE_TITLE` | `pageTitle` |
+| `KEPLER_CONFIG_HREF` | Browser fetch URL for `config.json` (injected into `index.html`) |
+
+The browser requests `/config.json` by default (origin root — same as GHCR, kepler.gl.com, and this image on port 8080). SPA routes like `/demo/:id` still hit that origin-root file, so the default needs no env. Set `KEPLER_CONFIG_HREF` only to read the config from somewhere else, for example `KEPLER_CONFIG_HREF=/shared/kepler-config.json` or an absolute URL on another host (CORS applies).
+
+Serving the app itself at a browser-visible sub-path such as `https://host/kepler/` is **not supported**: `index.html` loads `/bundle.js` and `/bundle.css` from the origin root, the router declares its routes at `/`, `/auth`, and `/demo…` with no `basename`, and `loadSample` pushes `/demo/<id>`. A prefixed pathname therefore matches no route and renders an empty page. `KEPLER_CONFIG_HREF` relocates the config request only — it does not add sub-path support. Serve the app at the origin root; a reverse proxy in front is fine as long as it maps those root paths.
+
+`mapConfigUrl` / `KEPLER_MAP_CONFIG_URL` replaces only the sample-gallery catalogue (`samples.json`). It does not rewrite compile-time `DATA_URL` or `ASSETS_URL`. Each catalogue row must use absolute `dataUrl`, `configUrl`, `imageUrl` (and `keplergl` / `remoteDatasetConfigUrl` when present) — the app does not prefix those paths. `ASSETS_URL` is only the "Try sample data" tab thumbnail CDN. A fully self-hosted gallery works by pointing `mapConfigUrl` at your own catalogue; see `docker/samples.example.json`.
 
 See `docker/config.full-example.json` for every key supported today (credentials, `pageTitle`, `mapConfigUrl`, `mapUrl`, reducer `mapStyle`, KeplerGl `mapStyles` / `mapStylesReplaceDefault`, and serializable `applicationConfig` fields).
 
