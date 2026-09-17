@@ -21,11 +21,15 @@
  *   KEPLER_MAP_CONFIG_URL
  *   KEPLER_MAP_URL
  *   KEPLER_PAGE_TITLE
+ *   KEPLER_CONFIG_HREF   browser fetch URL; injected into index.html
  */
 const fs = require('fs');
 const path = require('path');
 
 const CONFIG_PATH = process.env.KEPLER_CONFIG_PATH || path.join(__dirname, 'dist', 'config.json');
+const INDEX_PATH =
+  process.env.KEPLER_INDEX_PATH || path.join(path.dirname(CONFIG_PATH), 'index.html');
+const CONFIG_HREF_SNIPPET_RE = /\s*<script>window\.__KEPLER_CONFIG_HREF__=.*?<\/script>/g;
 
 const ENV_CREDENTIALS = {
   KEPLER_MAPBOX_ACCESS_TOKEN: 'MapboxAccessToken',
@@ -89,13 +93,67 @@ function mergeRuntimeConfig() {
       fs.writeFileSync(CONFIG_PATH, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
       console.log(`[kepler-entrypoint] Wrote runtime config to ${CONFIG_PATH}`);
     } catch (err) {
-      // Read-only volume mounts are expected; keep serving the mounted file.
-      console.warn(
-        `[kepler-entrypoint] Could not write ${CONFIG_PATH} (${err.message}). ` +
-          'Using existing config as-is; KEPLER_* env overrides were not applied.'
+      const reason = changed
+        ? 'KEPLER_* env overrides were set but could not be written (read-only mount?). ' +
+          'Use a writable volume, or drop the env overrides and rely on the mounted file.'
+        : 'Could not create runtime config.json.';
+      console.error(
+        `[kepler-entrypoint] Could not write ${CONFIG_PATH} (${err.message}). ${reason}`
       );
+      process.exit(1);
     }
   }
 }
 
+function getConfigHrefFromEnv() {
+  const href = process.env.KEPLER_CONFIG_HREF;
+  return typeof href === 'string' && href.trim() ? href.trim() : '';
+}
+
+function injectConfigHrefSnippet(html, href) {
+  const snippet = `<script>window.__KEPLER_CONFIG_HREF__=${JSON.stringify(href)};</script>`;
+  const withoutPrev = html.replace(CONFIG_HREF_SNIPPET_RE, '');
+  if (!/<head[^>]*>/i.test(withoutPrev)) {
+    throw new Error('index.html has no <head> to inject config href');
+  }
+  return withoutPrev.replace(/<head([^>]*)>/i, `<head$1>\n    ${snippet}`);
+}
+
+function injectConfigHref() {
+  const href = getConfigHrefFromEnv();
+  if (!href) {
+    return;
+  }
+
+  let html;
+  try {
+    html = fs.readFileSync(INDEX_PATH, 'utf8');
+  } catch (err) {
+    console.error(
+      `[kepler-entrypoint] KEPLER_CONFIG_HREF is set but could not read ${INDEX_PATH} (${err.message}).`
+    );
+    process.exit(1);
+  }
+
+  let next;
+  try {
+    next = injectConfigHrefSnippet(html, href);
+  } catch (err) {
+    console.error(`[kepler-entrypoint] ${err.message}.`);
+    process.exit(1);
+  }
+
+  try {
+    fs.writeFileSync(INDEX_PATH, next, 'utf8');
+    console.log(`[kepler-entrypoint] Injected KEPLER_CONFIG_HREF into ${INDEX_PATH}`);
+  } catch (err) {
+    console.error(
+      `[kepler-entrypoint] Could not write ${INDEX_PATH} (${err.message}). ` +
+        'KEPLER_CONFIG_HREF requires a writable index.html.'
+    );
+    process.exit(1);
+  }
+}
+
 mergeRuntimeConfig();
+injectConfigHref();

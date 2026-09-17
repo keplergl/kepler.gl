@@ -68,6 +68,6 @@ yarn start:local
 
 #### Optional: runtime `/config.json`
 
-After a production build (`yarn build`), you can override tokens and demo-app settings without rebuilding by placing a `config.json` next to `dist/index.html` (i.e. `examples/demo-app/dist/config.json`). Copy `docker/config.example.json` as a starter; see `docker/config.full-example.json` and `docker/README.md` for the full schema, Compose mounts, and `KEPLER_*` env overrides.
+After a production build (`yarn build`), you can override tokens and demo-app settings without rebuilding by placing a `config.json` next to `dist/index.html` (i.e. `examples/demo-app/dist/config.json`). The app fetches origin-root `/config.json` so SPA routes like `/demo/:id` still find it. Behind a reverse-proxy sub-path, set `window.__KEPLER_CONFIG_HREF__` (Docker: `KEPLER_CONFIG_HREF`) or add a `<base href>` and the client will load `config.json` relative to that base. Copy `docker/config.example.json` as a starter; see `docker/config.full-example.json` and `docker/README.md` for the full schema, Compose mounts, and `KEPLER_*` env overrides. `mapConfigUrl` only replaces the `samples.json` catalogue — sample rows still need absolute data/config URLs (see `docker/samples.example.json`). `ASSETS_URL` is the gallery tab thumbnail CDN and is not runtime-configurable.
 
 [yarn-install]: https://yarnpkg.com/getting-started/install

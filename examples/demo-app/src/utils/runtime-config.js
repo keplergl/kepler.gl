@@ -4,9 +4,12 @@
 import {initApplicationConfig} from '@kepler.gl/utils';
 
 import {CLOUD_PROVIDERS_CONFIGURATION, setMapConfigUrl} from '../constants/default-settings';
+import {getRuntimeConfigHref} from './get-runtime-config-href';
+
+export {getRuntimeConfigHref};
 
 /**
- * Demo-app-only runtime config loaded from `/config.json` (volume mount or
+ * Demo-app-only runtime config loaded from `config.json` (volume mount or
  * Docker entrypoint). Kept separate from library {@link KeplerApplicationConfig}
  * so tokens, sample gallery URL, boot map, and branding stay out of the core type.
  *
@@ -25,7 +28,7 @@ import {CLOUD_PROVIDERS_CONFIGURATION, setMapConfigUrl} from '../constants/defau
  * @property {{mapStyles?: object, styleType?: string}} [mapStyle]
  * @property {Array<object>} [mapStyles] KeplerGl prop form (array of styles)
  * @property {boolean} [mapStylesReplaceDefault]
- * @property {string} [mapConfigUrl] Sample gallery `samples.json` URL
+ * @property {string} [mapConfigUrl] Sample gallery catalogue URL (`samples.json` only)
  * @property {string} [mapUrl] Map JSON to load on boot when `?mapUrl=` is absent
  * @property {string} [pageTitle]
  */
@@ -49,7 +52,7 @@ const CREDENTIAL_TO_CLOUD_KEY = {
  * Built-in demo-app applicationConfig defaults (previously set in reducers/index.js).
  * Applied on first import so kepler.gl.com (website store/app) keeps the same
  * icons/flags, and again from {@link loadAndApplyRuntimeConfig} before any
- * `/config.json` overlay so Docker/source builds can still override them.
+ * runtime config overlay so Docker/source builds can still override them.
  *
  * To enable DuckDB in a source build, also register the plugin here (or via a custom
  * bootstrap), e.g.:
@@ -139,13 +142,13 @@ export function getRuntimeConfig() {
 }
 
 /**
- * Fetch `/config.json` when present. Missing or invalid files are a no-op so
- * local source builds and static hosting without a mount keep working.
+ * Fetch runtime `config.json` when present. Missing or invalid files are a
+ * no-op so local source builds and static hosting without a mount keep working.
  * @returns {Promise<DemoAppRuntimeConfig>}
  */
 export async function loadRuntimeConfigJson() {
   try {
-    const response = await fetch('/config.json', {cache: 'no-store'});
+    const response = await fetch(getRuntimeConfigHref(), {cache: 'no-store'});
     if (!response.ok) {
       return {};
     }
@@ -157,7 +160,7 @@ export async function loadRuntimeConfigJson() {
 }
 
 /**
- * Apply demo defaults, then overlay `/config.json` when available.
+ * Apply demo defaults, then overlay runtime `config.json` when available.
  * Must run before dynamic import of the Redux store so reducer initial state
  * and cloud providers see runtime credentials / mapStyle.
  * @returns {Promise<DemoAppRuntimeConfig>}

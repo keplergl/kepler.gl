@@ -5,15 +5,19 @@
 and segments both use queryRunner */
 import keyMirror from 'keymirror';
 
+/** Compile-time CDN for the "Try sample data" tab thumbnail only (`icon-demo-map.jpg`). */
 export const ASSETS_URL = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/';
+/** Compile-time host of the default `samples.json` catalogue (not a URL prefix for sample rows). */
 export const DATA_URL = 'https://raw.githubusercontent.com/keplergl/kepler.gl-data/master/';
 export const MAP_URI = 'demo/map?mapUrl=';
 
-/** Override via `/config.json` `mapConfigUrl` (see runtime-config.js). */
+/** Override via `config.json` `mapConfigUrl` (see runtime-config.js). */
 let mapConfigUrlOverride = null;
 
 /**
- * Sample gallery catalogue URL. Cache-busted by default; runtime config can replace it.
+ * Sample gallery catalogue URL. Cache-busted by default; `mapConfigUrl` replaces the
+ * catalogue only. Rows in that JSON must use absolute `dataUrl` / `configUrl` /
+ * `imageUrl` (the app does not prefix {@link DATA_URL}).
  * @returns {string}
  */
 export function getMapConfigUrl() {
