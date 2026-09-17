@@ -8,9 +8,10 @@
  * GHCR / kepler.gl.com / Docker-at-/ still find it. A naive relative
  * `config.json` would 404 under those routes.
  *
- * Sub-path reverse proxies (`/kepler/`) can set `window.__KEPLER_CONFIG_HREF__`
- * (Docker: `KEPLER_CONFIG_HREF`) or a `<base href>`; then `config.json` is
- * resolved against that base.
+ * `window.__KEPLER_CONFIG_HREF__` (Docker: `KEPLER_CONFIG_HREF`) reads the config
+ * from another path or host; a `<base href>` resolves `config.json` against that
+ * base. Neither hosts the app at a browser-visible sub-path — `index.html` assets
+ * and the router routes in `main.js` are root-absolute.
  *
  * @param {Window} [win]
  * @returns {string}

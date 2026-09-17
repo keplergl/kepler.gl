@@ -63,7 +63,9 @@ Supported `KEPLER_*` env vars (used in patterns B and C):
 | `KEPLER_PAGE_TITLE` | `pageTitle` |
 | `KEPLER_CONFIG_HREF` | Browser fetch URL for `config.json` (injected into `index.html`) |
 
-The browser requests `/config.json` by default (origin root — same as GHCR, kepler.gl.com, and this image on port 8080). SPA routes like `/demo/:id` still hit that origin-root file. If a reverse proxy serves the app under a sub-path such as `/kepler/`, set `KEPLER_CONFIG_HREF=/kepler/config.json` so the fetch does not miss the file and fall back to defaults. That env only relocates the config request; `/bundle.js` and other assets stay origin-root unless the proxy maps them too.
+The browser requests `/config.json` by default (origin root — same as GHCR, kepler.gl.com, and this image on port 8080). SPA routes like `/demo/:id` still hit that origin-root file, so the default needs no env. Set `KEPLER_CONFIG_HREF` only to read the config from somewhere else, for example `KEPLER_CONFIG_HREF=/shared/kepler-config.json` or an absolute URL on another host (CORS applies).
+
+Serving the app itself at a browser-visible sub-path such as `https://host/kepler/` is **not supported**: `index.html` loads `/bundle.js` and `/bundle.css` from the origin root, the router declares its routes at `/`, `/auth`, and `/demo…` with no `basename`, and `loadSample` pushes `/demo/<id>`. A prefixed pathname therefore matches no route and renders an empty page. `KEPLER_CONFIG_HREF` relocates the config request only — it does not add sub-path support. Serve the app at the origin root; a reverse proxy in front is fine as long as it maps those root paths.
 
 `mapConfigUrl` / `KEPLER_MAP_CONFIG_URL` replaces only the sample-gallery catalogue (`samples.json`). It does not rewrite compile-time `DATA_URL` or `ASSETS_URL`. Each catalogue row must use absolute `dataUrl`, `configUrl`, `imageUrl` (and `keplergl` / `remoteDatasetConfigUrl` when present) — the app does not prefix those paths. `ASSETS_URL` is only the "Try sample data" tab thumbnail CDN. A fully self-hosted gallery works by pointing `mapConfigUrl` at your own catalogue; see `docker/samples.example.json`.
 
