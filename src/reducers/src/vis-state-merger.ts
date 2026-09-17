@@ -1108,17 +1108,24 @@ function _getColumnConfigForValidation(newLayer) {
   if (colModeConfig) {
     // only validate columns in column mode (including tabbed columnGroups)
     const groupColumns = (colModeConfig.columnGroups || []).flatMap(group => group.columns || []);
+    const requiredKeys = new Set(colModeConfig.requiredColumns || []);
     columnConfig = [
       ...(colModeConfig.requiredColumns || []),
       ...(colModeConfig.optionalColumns || []),
       ...groupColumns
-    ].reduce(
-      (accu, key) => ({
-        ...accu,
-        [key]: columnConfig[key]
-      }),
-      {}
-    );
+    ].reduce((accu, key) => {
+      const col = columnConfig[key];
+      if (!col) {
+        return accu;
+      }
+      // Optionality must follow the active mode: a field optional in another mode
+      // (e.g. altitude in UV) is still required when this mode lists it in requiredColumns.
+      if (requiredKeys.has(key)) {
+        const {optional: _optional, ...requiredCol} = col;
+        return {...accu, [key]: requiredCol};
+      }
+      return {...accu, [key]: {...col, optional: true}};
+    }, {});
   }
 
   return columnConfig;

@@ -118,11 +118,22 @@ export function ColumnModeConfigFactory(
           ? supportedColumnModes.map(
               ({key, label, requiredColumns, optionalColumns, columnGroups}) => {
                 const groupColumns = (columnGroups || []).flatMap(group => group.columns || []);
+                const requiredKeys = new Set(requiredColumns || []);
                 const allColumns = (requiredColumns || [])
                   .concat(optionalColumns || [])
                   .concat(groupColumns)
                   .reduce((acc, k) => {
-                    acc[k] = columns[k];
+                    const col = columns[k];
+                    if (!col) {
+                      return acc;
+                    }
+                    // Show required * from this mode's requiredColumns (e.g. altitude in ELEVATION).
+                    if (requiredKeys.has(k)) {
+                      const {optional: _optional, ...requiredCol} = col;
+                      acc[k] = requiredCol;
+                    } else {
+                      acc[k] = {...col, optional: true};
+                    }
                     return acc;
                   }, {});
                 return {key, label, columns: allColumns, columnGroups};

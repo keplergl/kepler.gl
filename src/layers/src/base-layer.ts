@@ -852,6 +852,13 @@ class Layer implements KeplerLayer {
 
   getLayerColumns(propsColumns = {}) {
     const columnValidators = this.columnValidators || {};
+    // A column can be optional in one mode and required in another (e.g. Flow Field
+    // altitude). Prefer the active mode's requiredColumns so optional does not win.
+    const activeMode = this.config?.columnMode
+      ? (this.supportedColumnModes || []).find(mode => mode.key === this.config.columnMode)
+      : null;
+    const activeRequired = new Set(activeMode?.requiredColumns || []);
+
     const required = this.requiredLayerColumns.reduce(
       (accu, key) => ({
         ...accu,
@@ -865,17 +872,19 @@ class Layer implements KeplerLayer {
       }),
       {}
     );
-    const optional = this.optionalColumns.reduce(
-      (accu, key) => ({
+    const optional = this.optionalColumns.reduce((accu, key) => {
+      if (activeRequired.has(key)) {
+        return accu;
+      }
+      return {
         ...accu,
         [key]: {
           value: propsColumns[key]?.value ?? null,
           fieldIdx: propsColumns[key]?.fieldIdx ?? -1,
           optional: true
         }
-      }),
-      {}
-    );
+      };
+    }, {});
 
     const columns = {...required, ...optional};
 

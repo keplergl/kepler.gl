@@ -350,8 +350,8 @@ export const flowFieldVisConfigs = {
     label: 'layerVisConfigs.flowField.gridResolution',
     description: 'layerVisConfigs.flowField.gridResolutionDescription',
     isRanged: false,
-    range: [16, 256],
-    step: 8,
+    range: [4, 256],
+    step: 4,
     property: 'gridResolution'
   },
   elevationMultiplier: {
@@ -372,6 +372,7 @@ const METERS_PER_DEG_LAT = 111320;
 const MAX_STEPS = 96;
 const FINE_CELL = 1 / 4096;
 // Cap axis size so smoothing (O(cells * radius^2)) stays interactive on the main thread.
+const MIN_GRID_AXIS = 4;
 const MAX_GRID_AXIS = 512;
 const SETTLE_MS = 180;
 
@@ -714,19 +715,34 @@ function computeBinCounts(
   maxLat: number,
   gridResolution: number
 ) {
-  const res = Math.max(16, Math.min(MAX_GRID_AXIS, Math.round(gridResolution || 64)));
+  const res = Math.max(MIN_GRID_AXIS, Math.min(MAX_GRID_AXIS, Math.round(gridResolution || 64)));
   const lngSpan = Math.max(1e-9, maxLng - minLng);
   const latSpan = Math.max(1e-9, maxLat - minLat);
   if (lngSpan >= latSpan) {
     return {
       binsX: res,
-      binsY: Math.max(16, Math.min(MAX_GRID_AXIS, Math.round((res * latSpan) / lngSpan)))
+      binsY: Math.max(MIN_GRID_AXIS, Math.min(MAX_GRID_AXIS, Math.round((res * latSpan) / lngSpan)))
     };
   }
   return {
-    binsX: Math.max(16, Math.min(MAX_GRID_AXIS, Math.round((res * lngSpan) / latSpan))),
+    binsX: Math.max(MIN_GRID_AXIS, Math.min(MAX_GRID_AXIS, Math.round((res * lngSpan) / latSpan))),
     binsY: res
   };
+}
+
+/** Bounds without Math.min/max spread (avoids RangeError on large grids). */
+function boundsFromPoints(points: {lat: number; lng: number}[]) {
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+  for (const p of points) {
+    if (p.lng < minLng) minLng = p.lng;
+    if (p.lng > maxLng) maxLng = p.lng;
+    if (p.lat < minLat) minLat = p.lat;
+    if (p.lat > maxLat) maxLat = p.lat;
+  }
+  return {minLng, maxLng, minLat, maxLat};
 }
 
 function buildElevationScalarGrid(
@@ -787,14 +803,11 @@ function buildElevationScalarGrid(
     return {cols, rows, lngs: lngAxis, lats: latAxis, z, filled};
   }
 
-  const minLng = Math.min(...points.map(p => p.lng));
-  const maxLng = Math.max(...points.map(p => p.lng));
-  const minLat = Math.min(...points.map(p => p.lat));
-  const maxLat = Math.max(...points.map(p => p.lat));
+  const {minLng, maxLng, minLat, maxLat} = boundsFromPoints(points);
   const {binsX, binsY} = computeBinCounts(minLng, maxLng, minLat, maxLat, gridResolution);
   const zSum = new Float32Array(binsX * binsY);
   const filled = new Uint8Array(binsX * binsY);
-  const counts = new Uint16Array(binsX * binsY);
+  const counts = new Uint32Array(binsX * binsY);
   for (const p of points) {
     if (!Number.isFinite(p.alt)) continue;
     const ci = Math.min(binsX - 1, Math.floor(((p.lng - minLng) / (maxLng - minLng || 1)) * binsX));
@@ -925,16 +938,13 @@ function buildGrid(points: FlowPoint[], smoothing: number, gridResolution = 64):
   }
 
   // Scatter / downsample into a target-resolution grid.
-  const minLng = Math.min(...points.map(p => p.lng));
-  const maxLng = Math.max(...points.map(p => p.lng));
-  const minLat = Math.min(...points.map(p => p.lat));
-  const maxLat = Math.max(...points.map(p => p.lat));
+  const {minLng, maxLng, minLat, maxLat} = boundsFromPoints(points);
   const {binsX, binsY} = computeBinCounts(minLng, maxLng, minLat, maxLat, gridResolution);
   const su = new Float32Array(binsX * binsY);
   const sv = new Float32Array(binsX * binsY);
   const sa = new Float32Array(binsX * binsY);
   const filled = new Uint8Array(binsX * binsY);
-  const counts = new Uint16Array(binsX * binsY);
+  const counts = new Uint32Array(binsX * binsY);
   let hasAlt = false;
   for (const p of points) {
     const ci = Math.min(binsX - 1, Math.floor(((p.lng - minLng) / (maxLng - minLng || 1)) * binsX));

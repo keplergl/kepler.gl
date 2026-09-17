@@ -95,10 +95,14 @@ const ColumnGroupTabs = styled.div`
   border-bottom: 1px solid ${({theme}) => theme.panelBorderColor || theme.dropdownListBorderTop};
   margin-bottom: 8px;
   .column-group-tab {
+    appearance: none;
+    background: none;
+    border: none;
     padding: 6px 0;
     margin: 0 10px 0 0;
     color: ${({theme}) => theme.subtextColor};
     border-bottom: 2px solid transparent;
+    font: inherit;
     font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.2px;
@@ -106,9 +110,11 @@ const ColumnGroupTabs = styled.div`
       color: ${({theme}) => theme.textColorHl};
       border-bottom-color: ${({theme}) => theme.panelToggleBorderColor};
     }
-    &:hover {
+    &:hover,
+    &:focus-visible {
       cursor: pointer;
       color: ${({theme}) => theme.textColorHl};
+      outline: none;
     }
   }
 `;
@@ -209,6 +215,52 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
       [activeGroupKey, assignColumn, columnGroups, updateLayerConfig]
     );
 
+    const onColumnGroupTabKeyDown = useCallback(
+      (event: React.KeyboardEvent<HTMLButtonElement>, groupKey: string) => {
+        if (!columnGroups?.length) {
+          return;
+        }
+        const currentIndex = columnGroups.findIndex(group => group.key === groupKey);
+        if (currentIndex < 0) {
+          return;
+        }
+
+        let nextIndex = currentIndex;
+        switch (event.key) {
+          case 'ArrowRight':
+          case 'ArrowDown':
+            nextIndex = (currentIndex + 1) % columnGroups.length;
+            break;
+          case 'ArrowLeft':
+          case 'ArrowUp':
+            nextIndex = (currentIndex - 1 + columnGroups.length) % columnGroups.length;
+            break;
+          case 'Home':
+            nextIndex = 0;
+            break;
+          case 'End':
+            nextIndex = columnGroups.length - 1;
+            break;
+          case 'Enter':
+          case ' ':
+            event.preventDefault();
+            onSelectColumnGroup(groupKey);
+            return;
+          default:
+            return;
+        }
+
+        event.preventDefault();
+        const nextKey = columnGroups[nextIndex].key;
+        onSelectColumnGroup(nextKey);
+        // Move focus to the newly selected tab after selection.
+        const tablist = event.currentTarget.parentElement;
+        const nextTab = tablist?.querySelector<HTMLElement>(`[data-column-group-tab="${nextKey}"]`);
+        nextTab?.focus();
+      },
+      [columnGroups, onSelectColumnGroup]
+    );
+
     const visibleColumnKeys = useMemo(() => {
       const allKeys = Object.keys(columns);
       if (!columnGroups?.length || !activeGroupKey) {
@@ -225,25 +277,50 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
       return <div />;
     }
 
+    const tabPanelId = 'layer-column-group-panel';
+
     return (
       <div>
         {columnGroups && columnGroups.length > 1 ? (
-          <ColumnGroupTabs className="layer-config__column-groups">
-            {columnGroups.map(group => (
-              <div
-                key={group.key}
-                className={classnames('column-group-tab', {
-                  active: group.key === activeGroupKey
-                })}
-                onClick={() => onSelectColumnGroup(group.key)}
-              >
-                {group.label}
-              </div>
-            ))}
+          <ColumnGroupTabs
+            className="layer-config__column-groups"
+            role="tablist"
+            aria-label="Position columns"
+          >
+            {columnGroups.map(group => {
+              const selected = group.key === activeGroupKey;
+              const tabId = `layer-column-group-tab-${group.key}`;
+              return (
+                <button
+                  key={group.key}
+                  type="button"
+                  id={tabId}
+                  role="tab"
+                  data-column-group-tab={group.key}
+                  className={classnames('column-group-tab', {active: selected})}
+                  aria-selected={selected}
+                  aria-controls={tabPanelId}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => onSelectColumnGroup(group.key)}
+                  onKeyDown={event => onColumnGroupTabKeyDown(event, group.key)}
+                >
+                  {group.label}
+                </button>
+              );
+            })}
           </ColumnGroupTabs>
         ) : null}
         <SidePanelSection>
-          <div className="layer-config__column">
+          <div
+            className="layer-config__column"
+            id={tabPanelId}
+            role={columnGroups && columnGroups.length > 1 ? 'tabpanel' : undefined}
+            aria-labelledby={
+              columnGroups && columnGroups.length > 1 && activeGroupKey
+                ? `layer-column-group-tab-${activeGroupKey}`
+                : undefined
+            }
+          >
             {visibleColumnKeys.map(key => (
               <ColumnSelector
                 column={columns[key]}
