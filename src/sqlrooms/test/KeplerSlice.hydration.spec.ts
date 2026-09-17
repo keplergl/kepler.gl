@@ -23,6 +23,11 @@ jest.mock('@sqlrooms/room-shell', () =>
   jest.requireActual('@sqlrooms/room-store/dist/BaseRoomStore')
 );
 jest.mock('@sqlrooms/ui', () => ({getTheme: () => 'light'}));
+// DuckDB WASM's browser bundle reads `Worker` at import time. This node suite
+// never instantiates the adapter; it only needs the table-helper exports.
+jest.mock('@duckdb/duckdb-wasm', () => ({
+  DuckDBDataProtocol: {BROWSER_FILEREADER: 2}
+}));
 
 function table(name: string): DataTable {
   return {
