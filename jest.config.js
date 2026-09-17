@@ -20,9 +20,10 @@ const config = {
   // Per https://jestjs.io/docs/configuration#transformignorepatterns-arraystring, transformIgnorePatterns ignores
   // node_modules and pnp folders by default so that they are not transpiled
   // Some libraries (even if transitive) are transitioning to ESM and need additional transpilation. Relevant issues:
+  // - SQLRooms and cuid2/hashes: ESM dependencies used by the adapter hydration tests.
   // - tiny-sdf: https://github.com/visgl/deck.gl/issues/7735
   transformIgnorePatterns: [
-    '/node_modules\\/(?!(.*@mapbox\\/tiny-sdf\\.*|@loaders\\.gl|@deck\\.gl|@deck\\.gl-community|@luma\\.gl|@hubble\\.gl|@flowmap\\.gl|@math\\.gl|d3-.*|kdbush|preact|maplibregl-mapbox-request-transformer|react-date-picker|react-time-picker|react-calendar|react-clock|react-fit|@wojtekmaj\\/date-utils|get-user-locale|make-event-props|update-input-width|detect-element-overflow|memoize|mimic-function))',
+    '/node_modules\\/(?!(.*@mapbox\\/tiny-sdf\\.*|@loaders\\.gl|@deck\\.gl|@deck\\.gl-community|@luma\\.gl|@hubble\\.gl|@flowmap\\.gl|@math\\.gl|d3-.*|@sqlrooms|@paralleldrive/cuid2|@noble/hashes|kdbush|preact|maplibregl-mapbox-request-transformer|react-date-picker|react-time-picker|react-calendar|react-clock|react-fit|@wojtekmaj\\/date-utils|get-user-locale|make-event-props|update-input-width|detect-element-overflow|memoize|mimic-function))',
     '\\.pnp\\.[^\\/]+$'
   ]
 };

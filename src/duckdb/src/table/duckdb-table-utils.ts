@@ -28,7 +28,7 @@ export type DuckDBColumnDesc = {name: string; type: string};
  * @returns An array of column names and DuckDB types.
  */
 export async function getDuckDBColumnTypes(
-  connection: DatabaseConnection,
+  connection: Pick<DatabaseConnection, 'query'>,
   tableName: string
 ): Promise<DuckDBColumnDesc[]> {
   const quotedTableName = quoteTableName(tableName);

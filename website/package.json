@@ -13,7 +13,8 @@
     "build-clean": "rm -rf ./dist && mkdir dist",
     "build-static": "cp -r ./src/static/* dist",
     "build-script": "NODE_OPTIONS=--openssl-legacy-provider webpack --mode production --env prod",
-    "build": "yarn build-clean && yarn build-static && yarn esbuild",
+    "build": "yarn esbuild && yarn build:demo-next",
+    "build:demo-next": "cd ../examples/demo-app-sqlrooms && yarn build --demo-next && cp -R dist/demo-next ../../website/dist/",
     "lint": "eslint src"
   },
   "dependencies": {

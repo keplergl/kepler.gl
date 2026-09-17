@@ -84,6 +84,12 @@ or if you would like, you can load a specific version:
 
 Take a look at the [development guide][developers] to develop kepler.gl locally.
 
+The [SQLRooms demo](examples/demo-app-sqlrooms) tests a collapsible application
+shell and modular panel layout using [`@kepler.gl/sqlrooms`](src/sqlrooms). Run
+it with `yarn start:sqlrooms` (port 8083), alongside the original
+[main demo](examples/demo-app) with `yarn start` (port 8080). The website continues
+to serve the original app at `/demo`.
+
 ## Basic Usage
 
 Here are the basic steps to import kepler.gl into your app. You also take a look at the examples folder. Each example in the folder can be installed and run locally.
