@@ -1759,6 +1759,7 @@ export default function LayerConfiguratorFactory(
                 {...layer.visConfigSettings.elevationMultiplier}
                 {...visConfiguratorProps}
               />
+              <VisConfigSwitch {...layer.visConfigSettings.debugGrid} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>

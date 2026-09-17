@@ -292,7 +292,10 @@ export default {
       elevationMultiplier: 'Elevation Multiplier',
       elevationMultiplierDescription:
         'Scale path height from the altitude/elevation column. 1 is real meters; higher values exaggerate relief in 3D.',
-      customElevation: 'custom elevation'
+      customElevation: 'custom elevation',
+      debugGrid: 'Debug Grid',
+      debugGridDescription:
+        'Draw the flow grid and highlight cells that have data. Useful when streamlines look sparse or empty.'
     }
   },
   layerManager: {

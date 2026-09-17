@@ -14,7 +14,7 @@
 
 import {WebMercatorViewport} from '@deck.gl/core';
 import {ClipExtension} from '@deck.gl/extensions';
-import {PathLayer} from '@deck.gl/layers';
+import {PathLayer, PolygonLayer} from '@deck.gl/layers';
 import {TripsLayer} from '@deck.gl/geo-layers';
 import {GEOJSON_FIELDS, GEOARROW_METADATA_KEY, LAYER_TYPES} from '@kepler.gl/constants';
 import {default as KeplerTable} from '@kepler.gl/table';
@@ -365,6 +365,13 @@ export const flowFieldVisConfigs = {
     property: 'elevationMultiplier',
     allowCustomValue: true,
     customInputLabel: 'layerVisConfigs.flowField.customElevation'
+  },
+  debugGrid: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.flowField.debugGrid',
+    description: 'layerVisConfigs.flowField.debugGridDescription',
+    property: 'debugGrid'
   }
 };
 
@@ -1290,6 +1297,101 @@ function collectStreamlines(
   return lines;
 }
 
+/** Midpoint cell bounds around axis node i (half-way to neighbors). */
+function axisCellEdges(values: number[], i: number): [number, number] {
+  const n = values.length;
+  const lo = i === 0 ? values[0] : (values[i - 1] + values[i]) / 2;
+  const hi = i === n - 1 ? values[n - 1] : (values[i] + values[i + 1]) / 2;
+  return [lo, hi];
+}
+
+function buildDebugGridGeometry(grid: FlowGrid, elevationMultiplier: number) {
+  const {cols, rows, lngs, lats, alt, filled} = grid;
+  const zAt = (ci: number, ri: number) => {
+    if (!alt) return 0;
+    const z = alt[ri * cols + ci];
+    return Number.isFinite(z) ? z * elevationMultiplier : 0;
+  };
+
+  const gridLines: {path: number[][]}[] = [];
+  for (let ci = 0; ci < cols; ci++) {
+    const path: number[][] = [];
+    for (let ri = 0; ri < rows; ri++) {
+      path.push([lngs[ci], lats[ri], zAt(ci, ri)]);
+    }
+    if (path.length >= 2) {
+      gridLines.push({path});
+    }
+  }
+  for (let ri = 0; ri < rows; ri++) {
+    const path: number[][] = [];
+    for (let ci = 0; ci < cols; ci++) {
+      path.push([lngs[ci], lats[ri], zAt(ci, ri)]);
+    }
+    if (path.length >= 2) {
+      gridLines.push({path});
+    }
+  }
+
+  const filledCells: {polygon: number[][]}[] = [];
+  if (filled) {
+    for (let ri = 0; ri < rows; ri++) {
+      for (let ci = 0; ci < cols; ci++) {
+        if (!filled[ri * cols + ci]) continue;
+        const [lng0, lng1] = axisCellEdges(lngs, ci);
+        const [lat0, lat1] = axisCellEdges(lats, ri);
+        const z = zAt(ci, ri);
+        filledCells.push({
+          polygon: [
+            [lng0, lat0, z],
+            [lng1, lat0, z],
+            [lng1, lat1, z],
+            [lng0, lat1, z],
+            [lng0, lat0, z]
+          ]
+        });
+      }
+    }
+  }
+
+  return {gridLines, filledCells};
+}
+
+function buildDebugGridLayers(
+  grid: FlowGrid,
+  layerId: string,
+  elevationMultiplier: number,
+  blendingParameters: Record<string, unknown>
+) {
+  const {gridLines, filledCells} = buildDebugGridGeometry(grid, elevationMultiplier);
+  return [
+    new PathLayer({
+      id: `${layerId}-debug-grid`,
+      data: gridLines,
+      getPath: d => d.path,
+      getColor: [120, 140, 160, 120],
+      getWidth: 1,
+      widthUnits: 'pixels',
+      pickable: false,
+      wrapLongitude: false,
+      parameters: {depthTest: false, ...blendingParameters}
+    }),
+    new PolygonLayer({
+      id: `${layerId}-debug-filled`,
+      data: filledCells,
+      getPolygon: d => d.polygon,
+      getFillColor: [80, 220, 140, 90],
+      getLineColor: [40, 180, 110, 200],
+      lineWidthMinPixels: 1,
+      stroked: true,
+      filled: true,
+      pickable: false,
+      wrapLongitude: false,
+      parameters: {depthTest: false, ...blendingParameters}
+    })
+  ];
+}
+
 export default class FlowFieldLayer extends Layer {
   declare _streamlines: FlowTrip[];
   declare _streamlinesKey: string;
@@ -1620,8 +1722,18 @@ export default class FlowFieldLayer extends Layer {
     }
 
     const trips = (this._streamlines || []).filter(isValidTrip);
-    if (!trips.length) {
+    const blendingParameters = mapState?.layerParameters ?? {};
+    const elevationMultiplier = Math.max(0, visConfig.elevationMultiplier ?? 1);
+    const debugLayers = visConfig.debugGrid
+      ? buildDebugGridLayers(data.grid, this.id, elevationMultiplier, blendingParameters)
+      : [];
+
+    if (!trips.length && !debugLayers.length) {
       return [];
+    }
+
+    if (!trips.length) {
+      return debugLayers;
     }
 
     const opacity = Math.max(0, Math.min(1, visConfig.opacity ?? 0.85));
@@ -1629,7 +1741,7 @@ export default class FlowFieldLayer extends Layer {
     const view = viewportBounds(mapState);
     const clipBounds = this._clipBounds || [view.minLng, view.minLat, view.maxLng, view.maxLat];
     if (!clipBounds.every(isFiniteNumber)) {
-      return [];
+      return debugLayers;
     }
     const minSpeed = data.grid.minSpeed || 0;
     const maxSpeed = data.grid.maxSpeed || 1;
@@ -1641,10 +1753,9 @@ export default class FlowFieldLayer extends Layer {
     ) as any;
 
     const hasAltitude = Boolean(data.grid?.alt);
-    const elevationMultiplier = Math.max(0, visConfig.elevationMultiplier ?? 1);
-    const blendingParameters = mapState?.layerParameters ?? {};
 
     return [
+      ...debugLayers,
       new AnimatedTripsLayer({
         id: this.id,
         data: trips,
