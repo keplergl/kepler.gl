@@ -27,8 +27,9 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG_PATH = process.env.KEPLER_CONFIG_PATH || path.join(__dirname, 'dist', 'config.json');
-const INDEX_PATH =
-  process.env.KEPLER_INDEX_PATH || path.join(path.dirname(CONFIG_PATH), 'index.html');
+// Anchored to the directory `entrypoint.sh` serves, not to CONFIG_PATH: a custom
+// KEPLER_CONFIG_PATH does not move the served index.html.
+const INDEX_PATH = process.env.KEPLER_INDEX_PATH || path.join(__dirname, 'dist', 'index.html');
 const CONFIG_HREF_SNIPPET_RE = /\s*<script>window\.__KEPLER_CONFIG_HREF__=.*?<\/script>/g;
 
 const ENV_CREDENTIALS = {
@@ -93,12 +94,19 @@ function mergeRuntimeConfig() {
       fs.writeFileSync(CONFIG_PATH, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
       console.log(`[kepler-entrypoint] Wrote runtime config to ${CONFIG_PATH}`);
     } catch (err) {
-      const reason = changed
-        ? 'KEPLER_* env overrides were set but could not be written (read-only mount?). ' +
-          'Use a writable volume, or drop the env overrides and rely on the mounted file.'
-        : 'Could not create runtime config.json.';
+      if (!changed) {
+        // Nothing to persist (no env overrides), so a read-only root filesystem is
+        // fine: the client treats a missing config.json as a no-op.
+        console.warn(
+          `[kepler-entrypoint] Could not create ${CONFIG_PATH} (${err.message}). ` +
+            'No KEPLER_* overrides were set; serving with build-time defaults.'
+        );
+        return;
+      }
       console.error(
-        `[kepler-entrypoint] Could not write ${CONFIG_PATH} (${err.message}). ${reason}`
+        `[kepler-entrypoint] Could not write ${CONFIG_PATH} (${err.message}). ` +
+          'KEPLER_* env overrides were set but could not be written (read-only mount?). ' +
+          'Use a writable volume, or drop the env overrides and rely on the mounted file.'
       );
       process.exit(1);
     }
@@ -110,8 +118,19 @@ function getConfigHrefFromEnv() {
   return typeof href === 'string' && href.trim() ? href.trim() : '';
 }
 
+/**
+ * `JSON.stringify` leaves `<` and the JS line separators as-is, so a value containing
+ * `</script>` would close this inline script and corrupt index.html for every client.
+ */
+function toInlineScriptLiteral(value) {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
 function injectConfigHrefSnippet(html, href) {
-  const snippet = `<script>window.__KEPLER_CONFIG_HREF__=${JSON.stringify(href)};</script>`;
+  const snippet = `<script>window.__KEPLER_CONFIG_HREF__=${toInlineScriptLiteral(href)};</script>`;
   const withoutPrev = html.replace(CONFIG_HREF_SNIPPET_RE, '');
   if (!/<head[^>]*>/i.test(withoutPrev)) {
     throw new Error('index.html has no <head> to inject config href');

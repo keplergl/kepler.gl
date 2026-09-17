@@ -26,7 +26,7 @@ cp docker/config.example.json docker/config.json
 
 `docker/config.full-example.json` lists every supported key. Use it as a reference — do not mount it as-is (`mapUrl` boots a sample map, and `mapStyle.mapStyles` replaces the built-in basemap list).
 
-Mount it when running (uncomment the `volumes` block in `docker-compose.yml` after creating the file). Pick **one** of these patterns — do not combine a read-only mount with `KEPLER_*` overrides (the entrypoint must write the merged file, and the container **exits** if that write fails):
+Mount it when running (uncomment the `volumes` block in `docker-compose.yml` after creating the file). Pick **one** of these patterns — do not combine a read-only mount with `KEPLER_*` overrides (the entrypoint must write the merged file, and the container **exits** if that write fails). Without `KEPLER_*` overrides there is nothing to write, so a read-only root filesystem still starts and serves with build-time defaults:
 
 ```yaml
 # A) Config file only (read-only is fine)
