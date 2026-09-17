@@ -7,6 +7,7 @@ import flattenDeep from 'es-toolkit/compat/flattenDeep';
 import deepmerge from 'deepmerge';
 import {
   arrayInsert,
+  combineSplitMapsByIndex,
   getInitialMapLayersForSplitMap,
   applyFiltersToDatasets,
   validateFiltersUpdateDatasets,
@@ -640,45 +641,53 @@ function replaceInteractionDatasetIds(interactionConfig, dataId: string, dataIdT
 
 /**
  * Merge splitMaps config with current visStete.
+ * Panels are matched by index: index i of `splitMaps`, `state.splitMaps` and
+ * `state.splitMapsToBeMerged` is the same map panel.
  * 1. if current map is split, but splitMap DOESNOT contain maps
  *    : don't merge anything
  * 2. if current map is NOT split, but splitMaps contain maps
- *    : add to splitMaps, and add current layers to splitMaps
+ *    : add to splitMaps, and add current layers to splitMaps.
+ *      Panels are created once one of them can be merged: it has no layers, or one of its layers exists
+ * 3. layers that don't exist yet
+ *    : save to splitMapsToBeMerged, in the panel at the same index
+ * A layer listed in splitMaps only shows in the panels that list it.
  */
 export function mergeSplitMaps<S extends VisState>(
   state: S,
   splitMaps: NonNullable<ParsedConfig['visState']>['splitMaps'] = []
 ): S {
+  const layerExists = (id: string) => state.layers.some(l => l.id === id);
+  const createPanels =
+    state.splitMaps.length > 0 ||
+    splitMaps.some(sm => {
+      const ids = Object.keys(sm.layers);
+      return !ids.length || ids.some(layerExists);
+    });
+  const currentLayers = getInitialMapLayersForSplitMap(
+    state.layers.filter(l => !splitMaps.some(sm => l.id in sm.layers))
+  );
+
   const merged = [...state.splitMaps];
-  const unmerged = [];
+  const unmerged: typeof splitMaps = [];
   splitMaps.forEach((sm, i) => {
     const entries = Object.entries(sm.layers);
-    if (entries.length > 0) {
-      entries.forEach(([id, value]) => {
-        // check if layer exists
-        const pushTo = state.layers.find(l => l.id === id) ? merged : unmerged;
-
-        // create map panel if current map is not split
-        pushTo[i] = pushTo[i] || {
-          // keep id
-          ...sm,
-          layers: pushTo === merged ? getInitialMapLayersForSplitMap(state.layers) : []
-        };
-        pushTo[i].layers = {
-          ...pushTo[i].layers,
-          [id]: value
-        };
-      });
-    } else {
-      // We are merging if there are no layers in both split map
-      merged.push(sm);
+    if (createPanels) {
+      // create map panel if current map is not split, keep id
+      const panel = merged[i] || {...sm, layers: currentLayers};
+      merged[i] = {
+        ...panel,
+        layers: {...panel.layers, ...Object.fromEntries(entries.filter(([id]) => layerExists(id)))}
+      };
     }
+    unmerged[i] = {...sm, layers: Object.fromEntries(entries.filter(([id]) => !layerExists(id)))};
   });
 
   return {
     ...state,
     splitMaps: merged,
-    splitMapsToBeMerged: [...state.splitMapsToBeMerged, ...unmerged]
+    splitMapsToBeMerged: unmerged.some(sm => Object.keys(sm.layers).length)
+      ? combineSplitMapsByIndex(state.splitMapsToBeMerged, unmerged)
+      : state.splitMapsToBeMerged
   };
 }
 

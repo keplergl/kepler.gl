@@ -63,6 +63,7 @@ import {
   applyTimeFilterEndFieldName,
   applyFiltersToDatasets,
   arrayInsert,
+  combineSplitMapsByIndex,
   computeSplitMapLayers,
   adjustValueToFilterDomain,
   errorNotification,
@@ -3680,9 +3681,13 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
     newLayers = mergedState.layers.filter(
       l => l.config.dataId && newDataIds.includes(l.config.dataId)
     );
+    // a layer already in a panel was merged from split maps, which decide the panels showing it
+    const layersNotInSplitMaps = newLayers.filter(
+      l => !mergedState.splitMaps.some(sm => l.id in sm.layers)
+    );
     mergedState = {
       ...mergedState,
-      splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, newLayers)
+      splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, layersNotInSplitMaps)
     };
   }
 
@@ -5660,8 +5665,13 @@ export function prepareStateForDatasetReplace<T extends VisState>(
 
   // preserveLayerOrder
   if (nextState.layerToBeMerged?.length) {
-    // copy split maps to be merged, because it will be reset in remove layer
-    nextState.splitMapsToBeMerged = serializedState?.splitMaps ?? [];
+    // copy split maps to be merged, because it will be reset in remove layer.
+    // Keep the ones of a dataset replaced a moment earlier and not merged back yet:
+    // its layers are no longer in the current split maps.
+    nextState.splitMapsToBeMerged = combineSplitMapsByIndex(
+      state.splitMapsToBeMerged,
+      serializedState?.splitMaps ?? []
+    );
     nextState.layerOrder = [...preserveLayerOrder];
   }
 
