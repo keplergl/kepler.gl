@@ -1394,40 +1394,37 @@ export default class FlowFieldLayer extends Layer {
     const baseLabel = (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'Flow Field';
     const altField = findNamedField(fields, ALT_FIELD_NAMES);
     const altColumn = latLng?.altitude || fieldToColumn(altField, fields);
+    const defaultColor: [number, number, number] = [255, 255, 255];
     const uvColumns = {
       u: fieldToColumn(uField, fields)!,
       v: fieldToColumn(vField, fields)!,
       ...(altColumn ? {altitude: altColumn} : {})
     };
 
-    const props = [
+    const props: FindDefaultLayerPropsReturnValue['props'] = [
       {
         label: baseLabel,
-        color: [255, 255, 255],
+        color: defaultColor,
         isVisible: true,
         columnMode: FlowFieldColumnMode.UV,
-        columns: {
-          ...positionColumns,
-          ...uvColumns
-        }
+        columns: latLng
+          ? {lat: latLng.lat, lng: latLng.lng, ...uvColumns}
+          : {geojson: geoColumn!, ...uvColumns}
       }
     ];
 
     // When lat/lng is primary, also offer a GeoJSON-backed alt config for layer-type switches.
-    const altProps =
+    const altProps: FindDefaultLayerPropsReturnValue['altProps'] =
       latLng && geoColumn
         ? [
             {
               label: baseLabel,
-              color: [255, 255, 255],
+              color: defaultColor,
               isVisible: true,
               columnMode: FlowFieldColumnMode.UV,
               columns: {
                 geojson: geoColumn,
-                ...uvColumns,
-                ...(fieldToColumn(altField, fields)
-                  ? {altitude: fieldToColumn(altField, fields)!}
-                  : {})
+                ...uvColumns
               }
             }
           ]
