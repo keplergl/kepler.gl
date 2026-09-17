@@ -6,10 +6,27 @@ const {test} = require('node:test');
 const path = require('node:path');
 const {buildSync} = require('esbuild');
 
+// assistant-model builds every non-openai provider through kepler-assistant,
+// whose browser bundle cannot load under node — it reaches stylesheets and a
+// wasm DuckDB. Keep that import external and hand the bundle a stand-in: the
+// openai path these tests exercise never calls it, and kepler-assistant's own
+// src/chat/getModel.test.ts asserts the request headers it attaches.
+const providerModelStub = {specificationVersion: 'stub'};
+const providerCalls = [];
+const testRequire = id => {
+  if (id !== '@openassistant/kepler-assistant/integration') return require(id);
+  return {
+    getChatModel: store => {
+      providerCalls.push(store);
+      return providerModelStub;
+    }
+  };
+};
+
 const bundle = buildSync({
   stdin: {
     contents: `
-      export {getOpenAiModel} from './src/components/assistant-model';
+      export {getChatModel, getOpenAiModel} from './src/components/assistant-model';
       export {generateText, tool, stepCountIs} from 'ai';
       export {z} from 'zod';
     `,
@@ -18,15 +35,16 @@ const bundle = buildSync({
   bundle: true,
   platform: 'node',
   format: 'cjs',
-  write: false
+  write: false,
+  external: ['@openassistant/kepler-assistant/integration']
 });
 const moduleExports = {exports: {}};
 new Function('require', 'module', 'exports', bundle.outputFiles[0].text)(
-  require,
+  testRequire,
   moduleExports,
   moduleExports.exports
 );
-const {getOpenAiModel, generateText, tool, stepCountIs, z} = moduleExports.exports;
+const {getChatModel, getOpenAiModel, generateText, tool, stepCountIs, z} = moduleExports.exports;
 
 function setup() {
   const config = {
@@ -169,4 +187,19 @@ test('missing credentials and other providers retain SQLRooms default resolution
     config.modelProvider = modelProvider;
     assert.equal(getOpenAiModel(store), undefined);
   }
+});
+
+test('every other provider is built by kepler-assistant, which attaches its request headers', () => {
+  const {store, config} = setup();
+  providerCalls.length = 0;
+  for (const modelProvider of ['anthropic', 'google', 'ollama', 'custom']) {
+    config.modelProvider = modelProvider;
+    assert.equal(getChatModel(store), providerModelStub);
+  }
+  assert.equal(providerCalls.length, 4);
+  assert.ok(providerCalls.every(seen => seen === store));
+  config.modelProvider = 'openai';
+  assert.notEqual(getChatModel(store), providerModelStub);
+  config.apiKey = '';
+  assert.equal(getChatModel(store), undefined);
 });
