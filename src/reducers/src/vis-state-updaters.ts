@@ -5818,6 +5818,37 @@ export function prepareStateForDatasetReplace<T extends VisState>(
   return nextState;
 }
 
+/**
+ * The order to preserve for the items that will be merged back.
+ *
+ * `ids` comes from the serialized state, so it lists everything but the items
+ * another dataset's replacement parked a moment ago: an app refreshing several
+ * datasets in a row prepares the second replacement before the first one's
+ * items have merged back. Writing `ids` as it is would drop those, and
+ * `insertItemBasedOnPreservedOrder` puts an item it cannot place at the front —
+ * so they would come back reversed. Where they belong is what the order written
+ * when they were parked already says, so that order is kept for them.
+ */
+export function preservedOrderWithParked(
+  previousOrder: string[] = [],
+  ids: string[],
+  parked: {id?: string}[]
+): string[] {
+  const parkedIds = parked
+    .map(item => item?.id)
+    .filter((id): id is string => Boolean(id) && !ids.includes(id as string));
+
+  if (!parkedIds.length) {
+    return ids;
+  }
+
+  const known = new Set([...ids, ...parkedIds]);
+  const ordered = (previousOrder || []).filter(id => known.has(id));
+  const rest = [...ids, ...parkedIds].filter(id => !ordered.includes(id));
+
+  return [...ordered, ...rest];
+}
+
 export function replaceDatasetDepsInState<T extends VisState>(
   state: T,
   {dataId, dataIdToUse}: {dataId: string; dataIdToUse: string}
@@ -5843,6 +5874,13 @@ export function replaceDatasetDepsInState<T extends VisState>(
           saveUnmerged
         };
 
+        // What another dataset's replacement parked a moment ago and has not
+        // merged back yet, read before this one parks anything of its own.
+        const parkedElsewhere =
+          mergerOptions.toMergeProp !== undefined
+            ? toArray(replacedState[mergerOptions.toMergeProp] ?? [])
+            : [];
+
         const replacedItem =
           replaceParentDatasetIds?.(propValue, dataId, dataIdToUse) ||
           defaultReplaceParentDatasetIds(propValue, dataId, dataIdToUse);
@@ -5860,7 +5898,11 @@ export function replaceDatasetDepsInState<T extends VisState>(
           replacedState[mergerOptions.toMergeProp]?.length &&
           preserveOrder
         ) {
-          replacedState[preserveOrder] = propValue.map(item => item.id);
+          replacedState[preserveOrder] = preservedOrderWithParked(
+            replacedState[preserveOrder],
+            propValue.map(item => item.id),
+            parkedElsewhere
+          );
         }
       });
 

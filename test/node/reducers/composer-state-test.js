@@ -827,6 +827,78 @@ test('#composerStateReducer - replaceDataInMapUpdater: replacing a dataset with 
   t.end();
 });
 
+test('#composerStateReducer - replaceDataInMapUpdater: replacing a dataset that has layers before the previous replace merges', t => {
+  const secondDataId = 'dataset_with_its_own_layer';
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  // Two layers on the first dataset and one on the second, which is what an app
+  // drawing a query per dataset ends up with.
+  const configWithBothDatasets = {
+    ...sampleConfig.config,
+    config: {
+      ...sampleConfig.config.config,
+      visState: {
+        ...sampleConfig.config.config.visState,
+        layers: [
+          ...sampleConfig.config.config.visState.layers,
+          {
+            id: 'second_ds_layer',
+            type: 'point',
+            config: {
+              dataId: secondDataId,
+              label: 'second dataset',
+              columns: {lat: 'gps_data.lat', lng: 'gps_data.lng', altitude: null},
+              isVisible: true
+            }
+          }
+        ]
+      }
+    }
+  };
+
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: [
+        {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+        {data: processCsvData(testCsvData), info: {id: secondDataId}}
+      ],
+      config: configWithBothDatasets,
+      options: {autoCreateLayers: false}
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+  drainTasksForTesting();
+
+  const layerOrder = oldState.visState.layerOrder;
+  t.equal(layerOrder.length, 3, 'should start with the three layers of the config');
+
+  // Refresh both datasets back to back: the second replace is prepared while the
+  // first one's layers are still parked in layerToBeMerged.
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = replaceDataInMapUpdater(nextState, {
+    payload: {
+      datasetToReplaceId: secondDataId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: secondDataId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.deepEqual(nextState.visState.layerToBeMerged, [], 'should merge every layer back');
+  t.deepEqual(nextState.visState.layerOrder, layerOrder, 'should keep the layer order');
+  t.end();
+});
+
 test('#composerStateReducer - replaceDataInMapUpdater: replacing datasets back to back keeps the split map panels', t => {
   const noLayersId = 'dataset_without_layers';
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
