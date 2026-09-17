@@ -291,7 +291,8 @@ export default {
         'Target number of cells along the longer geographic axis of the field. Lower is coarser and faster; higher keeps more detail.',
       elevationMultiplier: 'Elevation Multiplier',
       elevationMultiplierDescription:
-        'Scale path height from the altitude/elevation column. 1 is real meters; higher values exaggerate relief in 3D.'
+        'Scale path height from the altitude/elevation column. 1 is real meters; higher values exaggerate relief in 3D.',
+      customElevation: 'custom elevation'
     }
   },
   layerManager: {

@@ -71,10 +71,14 @@ const clipExtension = new ClipExtension();
 export const FlowFieldColumnMode = {
   UV: 'UV',
   SPEED_DIR: 'SPEED_DIR',
-  ELEVATION: 'ELEVATION',
-  GEOJSON_UV: 'GEOJSON_UV',
-  GEOJSON_SPEED_DIR: 'GEOJSON_SPEED_DIR',
-  GEOJSON_ELEVATION: 'GEOJSON_ELEVATION'
+  ELEVATION: 'ELEVATION'
+} as const;
+
+/** Legacy GeoJSON-specific modes; normalized to the three modes above. */
+const LEGACY_GEOJSON_COLUMN_MODE = {
+  GEOJSON_UV: FlowFieldColumnMode.UV,
+  GEOJSON_SPEED_DIR: FlowFieldColumnMode.SPEED_DIR,
+  GEOJSON_ELEVATION: FlowFieldColumnMode.ELEVATION
 } as const;
 
 const SUPPORTED_ANALYZER_TYPES = {
@@ -83,42 +87,33 @@ const SUPPORTED_ANALYZER_TYPES = {
   [DATA_TYPES.PAIR_GEOMETRY_FROM_STRING]: true
 };
 
+// Position source is chosen via Lat/Lng ↔ GeoJSON tabs (columnGroups).
+const POSITION_COLUMN_GROUPS = [
+  {key: 'latlng', label: 'Lat / Lng', columns: ['lat', 'lng']},
+  {key: 'geojson', label: 'GeoJSON', columns: ['geojson']}
+];
+
 const SUPPORTED_COLUMN_MODES = [
   {
     key: FlowFieldColumnMode.UV,
     label: 'U / V components',
-    requiredColumns: ['lat', 'lng', 'u', 'v'],
-    optionalColumns: ['altitude']
-  },
-  {
-    key: FlowFieldColumnMode.GEOJSON_UV,
-    label: 'U / V (GeoJSON)',
-    requiredColumns: ['geojson', 'u', 'v'],
-    optionalColumns: ['altitude']
+    requiredColumns: ['u', 'v'],
+    optionalColumns: ['altitude'],
+    columnGroups: POSITION_COLUMN_GROUPS
   },
   {
     key: FlowFieldColumnMode.SPEED_DIR,
     label: 'Speed / direction',
-    requiredColumns: ['lat', 'lng', 'speed', 'direction'],
-    optionalColumns: ['altitude']
-  },
-  {
-    key: FlowFieldColumnMode.GEOJSON_SPEED_DIR,
-    label: 'Speed / direction (GeoJSON)',
-    requiredColumns: ['geojson', 'speed', 'direction'],
-    optionalColumns: ['altitude']
+    requiredColumns: ['speed', 'direction'],
+    optionalColumns: ['altitude'],
+    columnGroups: POSITION_COLUMN_GROUPS
   },
   {
     key: FlowFieldColumnMode.ELEVATION,
     label: 'Altitude (downhill)',
-    requiredColumns: ['lat', 'lng', 'altitude'],
-    optionalColumns: []
-  },
-  {
-    key: FlowFieldColumnMode.GEOJSON_ELEVATION,
-    label: 'Altitude (GeoJSON)',
-    requiredColumns: ['geojson', 'altitude'],
-    optionalColumns: []
+    requiredColumns: ['altitude'],
+    optionalColumns: [],
+    columnGroups: POSITION_COLUMN_GROUPS
   }
 ];
 
@@ -133,20 +128,41 @@ const COLUMN_LABELS = {
   altitude: 'Altitude'
 };
 
-function isGeojsonPositionMode(mode: string | undefined): boolean {
-  return (
-    mode === FlowFieldColumnMode.GEOJSON_UV ||
-    mode === FlowFieldColumnMode.GEOJSON_SPEED_DIR ||
-    mode === FlowFieldColumnMode.GEOJSON_ELEVATION
+function normalizeColumnMode(mode: string | undefined): string {
+  if (!mode) {
+    return FlowFieldColumnMode.UV;
+  }
+  return LEGACY_GEOJSON_COLUMN_MODE[mode as keyof typeof LEGACY_GEOJSON_COLUMN_MODE] || mode;
+}
+
+function hasGeojsonPosition(columns: {geojson?: {fieldIdx?: number; value?: unknown}}): boolean {
+  const geo = columns?.geojson;
+  return Boolean(geo && typeof geo.fieldIdx === 'number' && geo.fieldIdx > -1 && geo.value);
+}
+
+function hasLatLngPosition(columns: {
+  lat?: {fieldIdx?: number; value?: unknown};
+  lng?: {fieldIdx?: number; value?: unknown};
+}): boolean {
+  const {lat, lng} = columns || {};
+  return Boolean(
+    lat &&
+      typeof lat.fieldIdx === 'number' &&
+      lat.fieldIdx > -1 &&
+      lat.value &&
+      lng &&
+      typeof lng.fieldIdx === 'number' &&
+      lng.fieldIdx > -1 &&
+      lng.value
   );
 }
 
 function isElevationMode(mode: string | undefined): boolean {
-  return mode === FlowFieldColumnMode.ELEVATION || mode === FlowFieldColumnMode.GEOJSON_ELEVATION;
+  return normalizeColumnMode(mode) === FlowFieldColumnMode.ELEVATION;
 }
 
 function isSpeedDirMode(mode: string | undefined): boolean {
-  return mode === FlowFieldColumnMode.SPEED_DIR || mode === FlowFieldColumnMode.GEOJSON_SPEED_DIR;
+  return normalizeColumnMode(mode) === FlowFieldColumnMode.SPEED_DIR;
 }
 
 // Default UV names are exact `u` / `v`. Aliases are fallbacks only.
@@ -242,7 +258,6 @@ export const flowFieldVisConfigs = {
     type: 'number',
     defaultValue: 0.55,
     label: 'layerVisConfigs.opacity',
-    description: 'layerVisConfigs.flowField.opacityDescription',
     isRanged: false,
     range: [0, 1],
     step: 0.01,
@@ -273,12 +288,11 @@ export const flowFieldVisConfigs = {
     type: 'number',
     defaultValue: 3,
     label: 'layerVisConfigs.flowField.strokeWidth',
-    description: 'layerVisConfigs.flowField.strokeWidthDescription',
     isRanged: false,
-    range: [0.2, 8],
+    range: [0.2, 50],
     step: 0.1,
     property: 'strokeWidth',
-    allowCustomValue: true
+    allowCustomValue: false
   },
   colorBySpeed: {
     type: 'boolean',
@@ -292,7 +306,6 @@ export const flowFieldVisConfigs = {
     type: 'number',
     defaultValue: 22,
     label: 'layerVisConfigs.flowField.trailLength',
-    description: 'layerVisConfigs.flowField.trailLengthDescription',
     isRanged: false,
     range: [1, 100],
     step: 1,
@@ -354,7 +367,8 @@ export const flowFieldVisConfigs = {
     range: [0, 1000],
     step: 1,
     property: 'elevationMultiplier',
-    allowCustomValue: true
+    allowCustomValue: true,
+    customInputLabel: 'layerVisConfigs.flowField.customElevation'
   }
 };
 
@@ -1311,6 +1325,10 @@ export default class FlowFieldLayer extends Layer {
     return COLUMN_LABELS;
   }
 
+  get columnPairs() {
+    return this.defaultPointColumnPairs;
+  }
+
   get supportedColumnModes() {
     return SUPPORTED_COLUMN_MODES;
   }
@@ -1331,10 +1349,19 @@ export default class FlowFieldLayer extends Layer {
     ];
   }
 
+  hasAllColumns(): boolean {
+    if (!super.hasAllColumns()) {
+      return false;
+    }
+    // Position: either lat+lng or a GeoJSON geometry column.
+    return hasLatLngPosition(this.config.columns) || hasGeojsonPosition(this.config.columns);
+  }
+
   getDefaultLayerConfig(config: LayerBaseConfigPartial = {} as LayerBaseConfigPartial) {
+    const rawMode = (config as any).columnMode;
     return {
       ...super.getDefaultLayerConfig(config),
-      columnMode: (config as any).columnMode ?? FlowFieldColumnMode.UV,
+      columnMode: normalizeColumnMode(rawMode) || FlowFieldColumnMode.UV,
       color: config.color ?? [255, 255, 255]
     };
   }
@@ -1360,104 +1387,104 @@ export default class FlowFieldLayer extends Layer {
 
     const baseLabel = (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'Flow Field';
     const altColumn = latLng?.altitude || fieldToColumn(altField, fields);
+    const foundGeojson = this.findDefaultColumnField(
+      {geojson: [...(GEOJSON_FIELDS.geojson || []), ...geojsonFieldNames(fields)]},
+      fields
+    );
+    const geoColumn = foundGeojson?.[0]?.geojson || null;
+
+    // Prefer lat/lng when available; otherwise use GeoJSON centroids.
+    const positionColumns = latLng
+      ? {lat: latLng.lat, lng: latLng.lng}
+      : geoColumn
+      ? {geojson: geoColumn}
+      : null;
+
+    if (!positionColumns) {
+      return {props: [], foundLayers};
+    }
 
     const props: any[] = [];
-    if (latLng) {
+    if (hasUV) {
+      props.push({
+        label: baseLabel,
+        color: [255, 255, 255],
+        isVisible: true,
+        columnMode: FlowFieldColumnMode.UV,
+        columns: {
+          ...positionColumns,
+          u: fieldToColumn(uField, fields)!,
+          v: fieldToColumn(vField, fields)!,
+          ...(altColumn ? {altitude: altColumn} : {})
+        }
+      });
+    } else if (hasSpeed) {
+      props.push({
+        label: baseLabel,
+        color: [255, 255, 255],
+        isVisible: true,
+        columnMode: FlowFieldColumnMode.SPEED_DIR,
+        columns: {
+          ...positionColumns,
+          speed: fieldToColumn(speedField, fields)!,
+          direction: fieldToColumn(directionField, fields)!,
+          ...(altColumn ? {altitude: altColumn} : {})
+        }
+      });
+    } else {
+      props.push({
+        label: baseLabel,
+        color: [255, 255, 255],
+        isVisible: true,
+        columnMode: FlowFieldColumnMode.ELEVATION,
+        columns: {
+          ...positionColumns,
+          altitude: fieldToColumn(altField, fields)!
+        }
+      });
+    }
+
+    // When lat/lng is primary, also offer a GeoJSON-backed alt config for layer-type switches.
+    const altProps: any[] = [];
+    if (latLng && geoColumn) {
+      const geoPosition = {geojson: geoColumn};
       if (hasUV) {
-        props.push({
+        altProps.push({
           label: baseLabel,
           color: [255, 255, 255],
           isVisible: true,
           columnMode: FlowFieldColumnMode.UV,
           columns: {
-            lat: latLng.lat,
-            lng: latLng.lng,
+            ...geoPosition,
             u: fieldToColumn(uField, fields)!,
             v: fieldToColumn(vField, fields)!,
-            ...(altColumn ? {altitude: altColumn} : {})
+            ...(fieldToColumn(altField, fields) ? {altitude: fieldToColumn(altField, fields)!} : {})
           }
         });
       } else if (hasSpeed) {
-        props.push({
+        altProps.push({
           label: baseLabel,
           color: [255, 255, 255],
           isVisible: true,
           columnMode: FlowFieldColumnMode.SPEED_DIR,
           columns: {
-            lat: latLng.lat,
-            lng: latLng.lng,
+            ...geoPosition,
             speed: fieldToColumn(speedField, fields)!,
             direction: fieldToColumn(directionField, fields)!,
-            ...(altColumn ? {altitude: altColumn} : {})
+            ...(fieldToColumn(altField, fields) ? {altitude: fieldToColumn(altField, fields)!} : {})
           }
         });
       } else {
-        props.push({
+        altProps.push({
           label: baseLabel,
           color: [255, 255, 255],
           isVisible: true,
           columnMode: FlowFieldColumnMode.ELEVATION,
           columns: {
-            lat: latLng.lat,
-            lng: latLng.lng,
+            ...geoPosition,
             altitude: fieldToColumn(altField, fields)!
           }
         });
-      }
-    }
-
-    const altProps: any[] = [];
-    const foundGeojson = this.findDefaultColumnField(
-      {geojson: [...(GEOJSON_FIELDS.geojson || []), ...geojsonFieldNames(fields)]},
-      fields
-    );
-    if (foundGeojson?.length) {
-      // Prefer lat/lng props when available; otherwise promote GeoJSON into props
-      // so findDefaultLayer can auto-create a Flow Field for geometry + u/v datasets.
-      const target = props.length ? altProps : props;
-      for (const geoColumns of foundGeojson) {
-        if (hasUV) {
-          target.push({
-            label: baseLabel,
-            color: [255, 255, 255],
-            isVisible: true,
-            columnMode: FlowFieldColumnMode.GEOJSON_UV,
-            columns: {
-              ...geoColumns,
-              u: fieldToColumn(uField, fields)!,
-              v: fieldToColumn(vField, fields)!,
-              ...(fieldToColumn(altField, fields)
-                ? {altitude: fieldToColumn(altField, fields)!}
-                : {})
-            }
-          });
-        } else if (hasSpeed) {
-          target.push({
-            label: baseLabel,
-            color: [255, 255, 255],
-            isVisible: true,
-            columnMode: FlowFieldColumnMode.GEOJSON_SPEED_DIR,
-            columns: {
-              ...geoColumns,
-              speed: fieldToColumn(speedField, fields)!,
-              direction: fieldToColumn(directionField, fields)!,
-              ...(fieldToColumn(altField, fields)
-                ? {altitude: fieldToColumn(altField, fields)!}
-                : {})
-            }
-          });
-        } else {
-          target.push({
-            label: baseLabel,
-            color: [255, 255, 255],
-            isVisible: true,
-            columnMode: FlowFieldColumnMode.GEOJSON_ELEVATION,
-            columns: {
-              ...geoColumns,
-              altitude: fieldToColumn(altField, fields)!
-            }
-          });
-        }
       }
     }
 
@@ -1474,12 +1501,14 @@ export default class FlowFieldLayer extends Layer {
     }
     const {dataContainer, filteredIndex, fields} = dataset;
     const {lat, lng, geojson, u, v, speed, direction, altitude} = this.config.columns;
-    const mode = this.config.columnMode;
-    const geojsonMode = isGeojsonPositionMode(mode);
+    const mode = normalizeColumnMode(this.config.columnMode);
+    // Prefer lat/lng when both are set; GeoJSON is the fallback position source.
+    const useGeojson =
+      hasGeojsonPosition(this.config.columns) && !hasLatLngPosition(this.config.columns);
     const altitudeMode = isElevationMode(mode);
     const speedMode = isSpeedDirMode(mode);
 
-    if (geojsonMode) {
+    if (useGeojson) {
       if (!geojson || geojson.fieldIdx < 0) {
         return {};
       }
@@ -1487,10 +1516,10 @@ export default class FlowFieldLayer extends Layer {
       return {};
     }
 
-    const geoEncoding = geojsonMode ? getGeoArrowEncoding(fields?.[geojson.fieldIdx]) : undefined;
+    const geoEncoding = useGeojson ? getGeoArrowEncoding(fields?.[geojson.fieldIdx]) : undefined;
 
     const readLatLng = (idx: number): {lat: number; lng: number} | null => {
-      if (geojsonMode) {
+      if (useGeojson) {
         const centroid = centroidFromRawFeature(
           dataContainer.valueAt(idx, geojson.fieldIdx),
           geoEncoding

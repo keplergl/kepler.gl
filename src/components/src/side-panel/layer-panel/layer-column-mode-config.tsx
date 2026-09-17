@@ -91,7 +91,7 @@ export type ColumnModeConfigProps = {
   id: string;
   columns: LayerColumns;
   renderColumnConfig: (
-    mode: {key: string; label: string; columns: any},
+    mode: {key: string; label: string; columns: any; columnGroups?: any},
     selected: boolean
   ) => JSX.Element;
   selectColumnMode: (mode: SupportedColumnModeConfig) => void;
@@ -115,17 +115,21 @@ export function ColumnModeConfigFactory(
     const columnModes = useMemo(
       () =>
         supportedColumnModes
-          ? supportedColumnModes.map(({key, label, requiredColumns, optionalColumns}) => {
-              const allColumns = (requiredColumns || [])
-                .concat(optionalColumns || [])
-                .reduce((acc, k) => {
-                  acc[k] = columns[k];
-                  return acc;
-                }, {});
-              return {key, label, columns: allColumns};
-            })
+          ? supportedColumnModes.map(
+              ({key, label, requiredColumns, optionalColumns, columnGroups}) => {
+                const groupColumns = (columnGroups || []).flatMap(group => group.columns || []);
+                const allColumns = (requiredColumns || [])
+                  .concat(optionalColumns || [])
+                  .concat(groupColumns)
+                  .reduce((acc, k) => {
+                    acc[k] = columns[k];
+                    return acc;
+                  }, {});
+                return {key, label, columns: allColumns, columnGroups};
+              }
+            )
           : Object.keys(columns).length > 0
-          ? [{key: 'default', label: '', columns}]
+          ? [{key: 'default', label: '', columns, columnGroups: undefined}]
           : [],
       [supportedColumnModes, columns]
     );
@@ -239,13 +243,21 @@ function LayerColumnModeConfigFactory(
     );
 
     const renderColumnConfig = useCallback(
-      ({key: columnMode, columns: cols}, isSelected) => (
+      (
+        {
+          key: columnMode,
+          columns: cols,
+          columnGroups
+        }: {key: string; label: string; columns: any; columnGroups?: any},
+        isSelected: boolean
+      ) => (
         <LayerColumnConfig
           columnPairs={layer.columnPairs}
           columns={cols}
           assignColumnPairs={layer.assignColumnPairs.bind(layer)}
           assignColumn={layer.assignColumn.bind(layer)}
           columnLabels={layer.columnLabels}
+          columnGroups={columnGroups}
           fields={fields}
           fieldPairs={fieldPairs}
           updateLayerConfig={config =>

@@ -1106,10 +1106,12 @@ function _getColumnConfigForValidation(newLayer) {
     : null;
 
   if (colModeConfig) {
-    // only validate columns in column mode
+    // only validate columns in column mode (including tabbed columnGroups)
+    const groupColumns = (colModeConfig.columnGroups || []).flatMap(group => group.columns || []);
     columnConfig = [
       ...(colModeConfig.requiredColumns || []),
-      ...(colModeConfig.optionalColumns || [])
+      ...(colModeConfig.optionalColumns || []),
+      ...groupColumns
     ].reduce(
       (accu, key) => ({
         ...accu,

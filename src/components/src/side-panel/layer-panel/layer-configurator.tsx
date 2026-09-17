@@ -1720,11 +1720,7 @@ export default function LayerConfiguratorFactory(
       const colorBySpeed = Boolean(layer.config.visConfig.colorBySpeed);
       return (
         <StyledLayerVisualConfigurator>
-          <LayerConfigGroup
-            label="layer.color"
-            description="layerVisConfigs.flowField.colorGroupDescription"
-            collapsible
-          >
+          <LayerConfigGroup label="layer.color">
             <VisConfigSwitch {...layer.visConfigSettings.colorBySpeed} {...visConfiguratorProps} />
             {colorBySpeed ? (
               <LayerColorRangeSelector {...visConfiguratorProps} property="colorRange" />
@@ -1738,22 +1734,27 @@ export default function LayerConfiguratorFactory(
               {...layer.visConfigSettings.linesPerScreen}
               {...visConfiguratorProps}
             />
-            <VisConfigSlider {...layer.visConfigSettings.zoomResponse} {...visConfiguratorProps} />
             <VisConfigSlider {...layer.visConfigSettings.strokeWidth} {...visConfiguratorProps} />
             <VisConfigSlider {...layer.visConfigSettings.trailLength} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.zoomResponse}
+                {...visConfiguratorProps}
+              />
+            </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
-          <LayerConfigGroup label="layerVisConfigs.flowField.animation" collapsible>
+          <LayerConfigGroup label="layerVisConfigs.flowField.animation">
             <VisConfigSlider {...layer.visConfigSettings.cycleSeconds} {...visConfiguratorProps} />
             <VisConfigSlider {...layer.visConfigSettings.lineLifetime} {...visConfiguratorProps} />
             <VisConfigSwitch {...layer.visConfigSettings.seamlessLoop} {...visConfiguratorProps} />
           </LayerConfigGroup>
           <LayerConfigGroup label="layerVisConfigs.flowField.field" collapsible>
             <VisConfigSlider {...layer.visConfigSettings.smoothing} {...visConfiguratorProps} />
-            <VisConfigSlider
-              {...layer.visConfigSettings.gridResolution}
-              {...visConfiguratorProps}
-            />
             <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.gridResolution}
+                {...visConfiguratorProps}
+              />
               <VisConfigSlider
                 {...layer.visConfigSettings.elevationMultiplier}
                 {...visConfiguratorProps}

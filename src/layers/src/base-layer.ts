@@ -316,10 +316,14 @@ class Layer implements KeplerLayer {
   get optionalColumns(): string[] {
     const {supportedColumnModes} = this;
     if (supportedColumnModes) {
-      return supportedColumnModes.reduce<string[]>(
-        (acc, obj) => (obj.optionalColumns ? acc.concat(obj.optionalColumns) : acc),
-        []
-      );
+      return supportedColumnModes.reduce<string[]>((acc, obj) => {
+        const fromOptional = obj.optionalColumns || [];
+        const fromGroups = (obj.columnGroups || []).reduce<string[]>(
+          (groupAcc, group) => groupAcc.concat(group.columns || []),
+          []
+        );
+        return acc.concat(fromOptional, fromGroups);
+      }, []);
     }
     return [];
   }

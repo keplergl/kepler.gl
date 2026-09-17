@@ -88,17 +88,15 @@ test('#FlowFieldLayer -> constructor', t => {
         t.equal(layer.config.visConfig.cycleSeconds, 20, 'default cycleSeconds');
         t.equal(layer.config.visConfig.smoothing, 4, 'default smoothing');
         t.deepEqual(layer.config.color, [255, 255, 255], 'default color white');
+        t.equal(layer.supportedColumnModes.length, 3, 'should have 3 column modes');
         t.ok(
-          layer.supportedColumnModes.some(m => m.key === 'GEOJSON_UV'),
-          'should support GEOJSON_UV column mode'
-        );
-        t.ok(
-          layer.supportedColumnModes.some(m => m.key === 'GEOJSON_SPEED_DIR'),
-          'should support GEOJSON_SPEED_DIR column mode'
-        );
-        t.ok(
-          layer.supportedColumnModes.some(m => m.key === 'GEOJSON_ELEVATION'),
-          'should support GEOJSON_ELEVATION column mode'
+          layer.supportedColumnModes.every(
+            m =>
+              Array.isArray(m.columnGroups) &&
+              m.columnGroups.some(g => g.key === 'latlng') &&
+              m.columnGroups.some(g => g.key === 'geojson')
+          ),
+          'each mode should expose Lat/Lng and GeoJSON position tabs'
         );
       }
     }
@@ -358,7 +356,7 @@ test('#FlowFieldLayer -> findDefaultLayerProps geojson', t => {
   const {props, altProps} = FlowFieldLayer.findDefaultLayerProps(dataset);
   t.equal(props.length, 1, 'geojson-only dataset should create a Flow Field prop');
   t.equal(altProps?.length || 0, 0, 'should not need altProps when geojson is primary');
-  t.equal(props[0].columnMode, 'GEOJSON_UV', 'should use GEOJSON_UV mode');
+  t.equal(props[0].columnMode, 'UV', 'should use UV mode with geojson position');
   t.ok(props[0].columns.geojson, 'should set geojson column');
   t.ok(props[0].columns.u, 'should set u');
   t.ok(props[0].columns.v, 'should set v');
@@ -376,7 +374,7 @@ test('#FlowFieldLayer -> formatLayerData from geojson centroids', t => {
         config: {
           dataId,
           label: 'flow field geojson',
-          columnMode: 'GEOJSON_UV',
+          columnMode: 'UV',
           columns: {
             geojson: '_geojson',
             u: 'u',
