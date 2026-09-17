@@ -172,7 +172,6 @@ export const tripVisConfigs: {
   sizeScale: {
     ...LAYER_VIS_CONFIGS.sizeScale,
     label: 'layerVisConfigs.adjustSize',
-    description: 'layerVisConfigs.adjustSizeDescription',
     defaultValue: 1,
     isRanged: false,
     range: [-10, 10],

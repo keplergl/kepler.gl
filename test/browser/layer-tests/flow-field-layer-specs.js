@@ -159,9 +159,7 @@ test('#FlowFieldLayer -> formatLayerData', t => {
 test('#FlowFieldLayer -> findDefaultLayerProps altitude', t => {
   const dataset = createDatasetFromCsv(elevCsv, 'elev-data');
   const {props} = FlowFieldLayer.findDefaultLayerProps(dataset);
-  t.equal(props.length, 1, 'should find one default flow field layer from altitude');
-  t.equal(props[0].columnMode, 'ELEVATION', 'should use ELEVATION mode');
-  t.ok(props[0].columns.altitude, 'should set altitude column (maps elevation field)');
+  t.equal(props.length, 0, 'should not auto-create from altitude alone');
   t.end();
 });
 
@@ -205,10 +203,7 @@ test('#FlowFieldLayer -> formatLayerData from altitude', t => {
 test('#FlowFieldLayer -> findDefaultLayerProps speed/direction', t => {
   const dataset = createDatasetFromCsv(speedDirCsv, 'speed-dir-data');
   const {props} = FlowFieldLayer.findDefaultLayerProps(dataset);
-  t.equal(props.length, 1, 'should find one default flow field layer from speed/dir');
-  t.equal(props[0].columnMode, 'SPEED_DIR', 'should use SPEED_DIR mode');
-  t.ok(props[0].columns.speed, 'should set speed');
-  t.ok(props[0].columns.direction, 'should set direction');
+  t.equal(props.length, 0, 'should not auto-create from speed/direction alone');
   t.end();
 });
 

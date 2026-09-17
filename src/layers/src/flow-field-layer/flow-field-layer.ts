@@ -165,15 +165,11 @@ function isSpeedDirMode(mode: string | undefined): boolean {
   return normalizeColumnMode(mode) === FlowFieldColumnMode.SPEED_DIR;
 }
 
-// Default UV names are exact `u` / `v`. Aliases are fallbacks only.
+// Auto-detect requires exact `u` / `v` column names.
 const DEFAULT_U_FIELD_NAMES = ['u'];
 const DEFAULT_V_FIELD_NAMES = ['v'];
-const U_FIELD_ALIASES = ['ugrd', 'eastward'];
-const V_FIELD_ALIASES = ['vgrd', 'northward'];
 const LAT_FIELD_NAMES = ['lat', 'latitude'];
 const LNG_FIELD_NAMES = ['lon', 'lng', 'long', 'longitude'];
-const SPEED_FIELD_NAMES = ['speed', 'wind_speed', 'wspd'];
-const DIRECTION_FIELD_NAMES = ['direction', 'dir', 'wind_dir', 'wdir'];
 const ALT_FIELD_NAMES = ['altitude', 'alt', 'elevation', 'elev', 'elv', 'height', 'z'];
 
 function findNamedField(fields: Field[], names: string[]) {
@@ -1371,29 +1367,20 @@ export default class FlowFieldLayer extends Layer {
     foundLayers?: any[]
   ): FindDefaultLayerPropsReturnValue {
     const {fields = [], label} = dataset;
-    const latLng = latLngColumnsFromDataset(dataset);
-    const uField = findNamedField(fields, [...DEFAULT_U_FIELD_NAMES, ...U_FIELD_ALIASES]);
-    const vField = findNamedField(fields, [...DEFAULT_V_FIELD_NAMES, ...V_FIELD_ALIASES]);
-    const speedField = findNamedField(fields, SPEED_FIELD_NAMES);
-    const directionField = findNamedField(fields, DIRECTION_FIELD_NAMES);
-    const altField = findNamedField(fields, ALT_FIELD_NAMES);
-    const hasUV = Boolean(uField && vField);
-    const hasSpeed = Boolean(speedField && directionField);
-    const hasAltitude = Boolean(altField);
-
-    if (!hasUV && !hasSpeed && !hasAltitude) {
+    // Auto-create only for explicit `u` / `v` (not aliases) plus lat/lng or GeoJSON.
+    // Speed/direction and elevation modes stay manual.
+    const uField = findNamedField(fields, DEFAULT_U_FIELD_NAMES);
+    const vField = findNamedField(fields, DEFAULT_V_FIELD_NAMES);
+    if (!uField || !vField) {
       return {props: [], foundLayers};
     }
 
-    const baseLabel = (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'Flow Field';
-    const altColumn = latLng?.altitude || fieldToColumn(altField, fields);
+    const latLng = latLngColumnsFromDataset(dataset);
     const foundGeojson = this.findDefaultColumnField(
       {geojson: [...(GEOJSON_FIELDS.geojson || []), ...geojsonFieldNames(fields)]},
       fields
     );
     const geoColumn = foundGeojson?.[0]?.geojson || null;
-
-    // Prefer lat/lng when available; otherwise use GeoJSON centroids.
     const positionColumns = latLng
       ? {lat: latLng.lat, lng: latLng.lng}
       : geoColumn
@@ -1404,89 +1391,47 @@ export default class FlowFieldLayer extends Layer {
       return {props: [], foundLayers};
     }
 
-    const props: any[] = [];
-    if (hasUV) {
-      props.push({
+    const baseLabel = (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || 'Flow Field';
+    const altField = findNamedField(fields, ALT_FIELD_NAMES);
+    const altColumn = latLng?.altitude || fieldToColumn(altField, fields);
+    const uvColumns = {
+      u: fieldToColumn(uField, fields)!,
+      v: fieldToColumn(vField, fields)!,
+      ...(altColumn ? {altitude: altColumn} : {})
+    };
+
+    const props = [
+      {
         label: baseLabel,
         color: [255, 255, 255],
         isVisible: true,
         columnMode: FlowFieldColumnMode.UV,
         columns: {
           ...positionColumns,
-          u: fieldToColumn(uField, fields)!,
-          v: fieldToColumn(vField, fields)!,
-          ...(altColumn ? {altitude: altColumn} : {})
+          ...uvColumns
         }
-      });
-    } else if (hasSpeed) {
-      props.push({
-        label: baseLabel,
-        color: [255, 255, 255],
-        isVisible: true,
-        columnMode: FlowFieldColumnMode.SPEED_DIR,
-        columns: {
-          ...positionColumns,
-          speed: fieldToColumn(speedField, fields)!,
-          direction: fieldToColumn(directionField, fields)!,
-          ...(altColumn ? {altitude: altColumn} : {})
-        }
-      });
-    } else {
-      props.push({
-        label: baseLabel,
-        color: [255, 255, 255],
-        isVisible: true,
-        columnMode: FlowFieldColumnMode.ELEVATION,
-        columns: {
-          ...positionColumns,
-          altitude: fieldToColumn(altField, fields)!
-        }
-      });
-    }
+      }
+    ];
 
     // When lat/lng is primary, also offer a GeoJSON-backed alt config for layer-type switches.
-    const altProps: any[] = [];
-    if (latLng && geoColumn) {
-      const geoPosition = {geojson: geoColumn};
-      if (hasUV) {
-        altProps.push({
-          label: baseLabel,
-          color: [255, 255, 255],
-          isVisible: true,
-          columnMode: FlowFieldColumnMode.UV,
-          columns: {
-            ...geoPosition,
-            u: fieldToColumn(uField, fields)!,
-            v: fieldToColumn(vField, fields)!,
-            ...(fieldToColumn(altField, fields) ? {altitude: fieldToColumn(altField, fields)!} : {})
-          }
-        });
-      } else if (hasSpeed) {
-        altProps.push({
-          label: baseLabel,
-          color: [255, 255, 255],
-          isVisible: true,
-          columnMode: FlowFieldColumnMode.SPEED_DIR,
-          columns: {
-            ...geoPosition,
-            speed: fieldToColumn(speedField, fields)!,
-            direction: fieldToColumn(directionField, fields)!,
-            ...(fieldToColumn(altField, fields) ? {altitude: fieldToColumn(altField, fields)!} : {})
-          }
-        });
-      } else {
-        altProps.push({
-          label: baseLabel,
-          color: [255, 255, 255],
-          isVisible: true,
-          columnMode: FlowFieldColumnMode.ELEVATION,
-          columns: {
-            ...geoPosition,
-            altitude: fieldToColumn(altField, fields)!
-          }
-        });
-      }
-    }
+    const altProps =
+      latLng && geoColumn
+        ? [
+            {
+              label: baseLabel,
+              color: [255, 255, 255],
+              isVisible: true,
+              columnMode: FlowFieldColumnMode.UV,
+              columns: {
+                geojson: geoColumn,
+                ...uvColumns,
+                ...(fieldToColumn(altField, fields)
+                  ? {altitude: fieldToColumn(altField, fields)!}
+                  : {})
+              }
+            }
+          ]
+        : [];
 
     return {props, altProps, foundLayers};
   }
