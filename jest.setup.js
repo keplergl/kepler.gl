@@ -3,11 +3,15 @@
 
 import '@testing-library/jest-dom';
 
-// jsdom does not provide TextEncoder/TextDecoder even though Node 20+ has them as globals
+// jsdom / Jest's node environment omit some Web/Node globals that Node 20+ has.
 const {TextDecoder, TextEncoder} = require('node:util');
+const {deserialize, serialize} = require('node:v8');
 Object.defineProperties(globalThis, {
   TextDecoder: {value: TextDecoder},
-  TextEncoder: {value: TextEncoder}
+  TextEncoder: {value: TextEncoder},
+  ...(typeof globalThis.structuredClone === 'function'
+    ? {}
+    : {structuredClone: {value: value => deserialize(serialize(value))}})
 });
 
 jest.mock('mapbox-gl/dist/mapbox-gl', () => ({

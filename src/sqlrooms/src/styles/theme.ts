@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
+// SPDX-License-Identifier: MIT
 // Copyright SQLRooms Contributors and contributors to the kepler.gl project
 
 import {theme} from '@kepler.gl/styles';

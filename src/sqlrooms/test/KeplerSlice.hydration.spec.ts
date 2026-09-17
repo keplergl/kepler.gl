@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /** @jest-environment node */
 // SPDX-License-Identifier: MIT
 // Copyright SQLRooms Contributors and contributors to the kepler.gl project
@@ -20,6 +23,11 @@ jest.mock('@sqlrooms/room-shell', () =>
   jest.requireActual('@sqlrooms/room-store/dist/BaseRoomStore')
 );
 jest.mock('@sqlrooms/ui', () => ({getTheme: () => 'light'}));
+// DuckDB WASM's browser bundle reads `Worker` at import time. This node suite
+// never instantiates the adapter; it only needs the table-helper exports.
+jest.mock('@duckdb/duckdb-wasm', () => ({
+  DuckDBDataProtocol: {BROWSER_FILEREADER: 2}
+}));
 
 function table(name: string): DataTable {
   return {
