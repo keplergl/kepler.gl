@@ -382,7 +382,9 @@ export default {
     column: 'Column',
     timeIntervalEndField: 'End time',
     timeIntervalEndFieldHint:
-      'Optional. Features stay visible while the playback window overlaps this time span.'
+      'Optional. Features stay visible while the playback window overlaps this time span.',
+    timezone: 'Time Zone',
+    selectTimezone: 'Select display timezone'
   },
   datasetTitle: {
     showDataTable: 'Show data table',
