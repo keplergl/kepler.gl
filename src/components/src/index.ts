@@ -136,6 +136,10 @@ export {default as DatasetInfoFactory} from './side-panel/common/dataset-info';
 export {default as DatasetTagFactory} from './side-panel/common/dataset-tag';
 export {default as DatasetTitleFactory} from './side-panel/common/dataset-title';
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
+export {default as DatasetOpsPanelsFactory} from './side-panel/dataset-ops/dataset-ops-panels';
+export {default as GroupByPanelFactory} from './side-panel/dataset-ops/group-by-panel';
+export {default as JoinPanelFactory} from './side-panel/dataset-ops/join-panel';
+export {default as SpatialJoinPanelFactory} from './side-panel/dataset-ops/spatial-join-panel';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
 
 export {default as FilterManagerFactory} from './side-panel/filter-manager';

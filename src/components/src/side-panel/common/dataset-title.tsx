@@ -17,6 +17,7 @@ import {rgbToHex} from '@kepler.gl/utils';
 import {openDeleteModal, VisStateActions, ActionHandler} from '@kepler.gl/actions';
 import {RGBColor} from '@kepler.gl/types';
 import {StyledDatasetTitleProps, RemoveDatasetProps, ShowDataTableProps} from './types';
+import DatasetOpsMenu from '../dataset-ops/dataset-ops-menu';
 
 const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
   color: ${props => props.theme.textColor};
@@ -98,6 +99,9 @@ export type DatasetTitleProps = {
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset?: ActionHandler<typeof openDeleteModal>;
   onToggleRefreshSettings?: () => void;
+  addGroupBy?: ActionHandler<typeof VisStateActions.addGroupBy>;
+  addJoin?: ActionHandler<typeof VisStateActions.addJoin>;
+  addSpatialJoin?: ActionHandler<typeof VisStateActions.addSpatialJoin>;
 };
 
 const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
@@ -194,7 +198,10 @@ export default function DatasetTitleFactory(
     removeDataset,
     dataset,
     updateTableColor,
-    onToggleRefreshSettings
+    onToggleRefreshSettings,
+    addGroupBy,
+    addJoin,
+    addSpatialJoin
   }) => {
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
     const root = useRef(null);
@@ -258,6 +265,13 @@ export default function DatasetTitleFactory(
           {showDatasetTable && !dataset.disableDataOperation ? (
             <ShowDataTable id={datasetId} showDatasetTable={showDatasetTable} />
           ) : null}
+          <DatasetOpsMenu
+            datasetId={datasetId}
+            dataset={dataset}
+            addGroupBy={addGroupBy}
+            addJoin={addJoin}
+            addSpatialJoin={addSpatialJoin}
+          />
           {onToggleRefreshSettings && isRemote ? (
             <RefreshDatasetSettings id={datasetId} onToggle={onToggleRefreshSettings} />
           ) : null}

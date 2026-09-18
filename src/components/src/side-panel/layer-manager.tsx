@@ -263,6 +263,7 @@ function LayerManagerFactory(
           showAddDataModal={showAddDataModal}
           refreshDataset={visStateActions.refreshDataset}
           updateDatasetProps={visStateActions.updateDatasetProps}
+          visStateActions={visStateActions}
         />
         <SidePanelDivider />
         <SidePanelSection>

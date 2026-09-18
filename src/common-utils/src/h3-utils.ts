@@ -1,11 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {getResolution, isValidCell, cellToLatLng, cellToBoundary} from 'h3-js';
+import {
+  getResolution,
+  isValidCell,
+  cellToLatLng,
+  cellToBoundary,
+  latLngToCell,
+  cellToParent
+} from 'h3-js';
 import type {H3Index} from 'h3-js';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
-export {getResolution, isValidCell};
+export {getResolution, isValidCell, latLngToCell, cellToParent};
 export {getResolution as h3GetResolution, isValidCell as h3IsValid};
 
 export type Centroid = [number, number];

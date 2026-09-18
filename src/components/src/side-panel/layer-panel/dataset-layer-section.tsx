@@ -122,6 +122,9 @@ function DatasetLayerSectionFactory(
           showDeleteDataset={showDeleteDataset}
           refreshDataset={visStateActions.refreshDataset}
           updateDatasetProps={visStateActions.updateDatasetProps}
+          addGroupBy={visStateActions.addGroupBy}
+          addJoin={visStateActions.addJoin}
+          addSpatialJoin={visStateActions.addSpatialJoin}
         />
         <LayerList
           datasets={datasets}
