@@ -1,0 +1,30 @@
+# No-build demo-app. Pulls the published image; does not clone or compile kepler.gl.
+#
+#   curl -fsSO https://raw.githubusercontent.com/keplergl/kepler.gl/master/docker/docker-compose.ghcr.yml
+#   docker compose -f docker-compose.ghcr.yml up
+#
+# Optional config.json (same schema as docker/config.example.json):
+#   volumes:
+#     - ./config.json:/app/dist/config.json:ro
+#
+# Pin a digest or sha tag in production instead of :latest.
+
+services:
+  kepler:
+    image: ghcr.io/keplergl/kepler.gl:latest
+    ports:
+      - "8080:8080"
+    environment:
+      KEPLER_MAPBOX_ACCESS_TOKEN: ${MapboxAccessToken:-}
+      KEPLER_MAPBOX_EXPORT_TOKEN: ${MapboxExportToken:-}
+      KEPLER_DROPBOX_CLIENT_ID: ${DropboxClientId:-}
+      KEPLER_CARTO_CLIENT_ID: ${CartoClientId:-}
+      KEPLER_FOURSQUARE_CLIENT_ID: ${FoursquareClientId:-}
+      KEPLER_FOURSQUARE_DOMAIN: ${FoursquareDomain:-}
+      KEPLER_FOURSQUARE_API_URL: ${FoursquareAPIURL:-}
+      KEPLER_FOURSQUARE_USER_MAPS_URL: ${FoursquareUserMapsURL:-}
+      KEPLER_GOOGLE_DRIVE_CLIENT_ID: ${GoogleDriveClientId:-}
+      KEPLER_MAP_CONFIG_URL: ${KEPLER_MAP_CONFIG_URL:-}
+      KEPLER_MAP_URL: ${KEPLER_MAP_URL:-}
+      KEPLER_PAGE_TITLE: ${KEPLER_PAGE_TITLE:-}
+      KEPLER_CONFIG_HREF: ${KEPLER_CONFIG_HREF:-}

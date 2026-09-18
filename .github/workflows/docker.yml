@@ -1,13 +1,8 @@
-# Prod image smoke test (env-only /config.json). Skipped unless docker packaging changes.
+# Prod image smoke test (env-only /config.json). PRs that touch docker packaging.
+# Master / tags publish via docker-publish.yml (broader path filter, pushes GHCR).
 name: Docker CI
 
 on:
-  push:
-    branches: [master]
-    paths:
-      - 'docker/**'
-      - '.dockerignore'
-      - '.github/workflows/docker.yml'
   pull_request:
     branches: [master]
     paths:
@@ -32,10 +27,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Validate Compose file
+      - name: Validate Compose files
         run: |
           printf 'MapboxAccessToken=pk.ci-test\nKEPLER_PAGE_TITLE=ci-title\n' > .env
           docker compose -f docker/docker-compose.yml --env-file .env config >/dev/null
+          docker compose -f docker/docker-compose.ghcr.yml --env-file .env config >/dev/null
 
       - name: Build production image
         uses: docker/build-push-action@v6
