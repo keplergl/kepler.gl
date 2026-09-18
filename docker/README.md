@@ -91,7 +91,44 @@ docker compose -f docker/docker-compose.yml --env-file .env up kepler-prod
 
 Then open http://localhost:8080.
 
-Once the image exists, omit `--build` so Compose reuses it and starts in seconds, not minutes. Pass `--build` only after source or Dockerfile changes. If Compose still starts a build, force the existing image with `--no-build`:
+## Published image (GHCR)
+
+The production image is built from this repo (local `@kepler.gl/*` source, not npm) and published to `ghcr.io/keplergl/kepler.gl`. Tokens are still injected at runtime. No npm publish is required. The image is **not** rebuilt on every `master` commit.
+
+Publish from GitHub Actions: **Actions → Docker publish → Run workflow**. Use the branch/tag picker at the top, then launch. Check **Also push the latest tag** only when this build should become `:latest` (off by default so a branch test cannot overwrite it).
+
+Tags that get pushed:
+
+- `sha-<short>` — always
+- the git tag name — when you run the workflow from a tag
+- `latest` — when that checkbox is on
+
+No-build (no clone). Env-only:
+
+```bash
+docker run -p 8080:8080 \
+  -e KEPLER_MAPBOX_ACCESS_TOKEN='pk.your-token' \
+  ghcr.io/keplergl/kepler.gl:latest
+```
+
+Or Compose — download `docker/docker-compose.ghcr.yml` and run:
+
+```bash
+curl -fsSO https://raw.githubusercontent.com/keplergl/kepler.gl/master/docker/docker-compose.ghcr.yml
+docker compose -f docker-compose.ghcr.yml up
+```
+
+From this repo, with the root `.env` mapped like the build-from-source Compose file:
+
+```bash
+docker compose -f docker/docker-compose.ghcr.yml --env-file .env up
+```
+
+Pin `sha-…` (or a release tag) in production instead of `latest`. After the first publish, set the `kepler.gl` package visibility to **public** under the keplergl GitHub Packages settings if pulls are anonymous.
+
+## Running with Docker Compose (build from source)
+
+Once a locally built image exists, omit `--build` so Compose reuses it and starts in seconds, not minutes. Pass `--build` only after source or Dockerfile changes. If Compose still starts a build, force the existing image with `--no-build`:
 
 ```bash
 docker compose -f docker/docker-compose.yml up --no-build kepler-prod
@@ -144,14 +181,6 @@ docker run -p 8080:8080 --env-file .env.kepler \
 # Example .env.kepler:
 #   KEPLER_MAPBOX_ACCESS_TOKEN=pk.your-token
 #   KEPLER_PAGE_TITLE=kepler.gl demo
-```
-
-No-build deploy once a registry image exists (future) — env-only example:
-
-```bash
-docker run -p 8080:8080 \
-  -e KEPLER_MAPBOX_ACCESS_TOKEN='pk.your-token' \
-  ghcr.io/keplergl/kepler.gl:<tag>
 ```
 
 ## Notes
