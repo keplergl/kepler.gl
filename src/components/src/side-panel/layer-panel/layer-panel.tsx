@@ -18,7 +18,8 @@ import {
   LayerBaseConfig,
   estimateAggregationCellCount,
   getLayerPointCount,
-  isAggregationCellCountSlow
+  isAggregationCellCountSlow,
+  type AggregationBinType
 } from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
 import {ColorUI, LayerVisConfig, MapState, NestedPartial, SplitMap} from '@kepler.gl/types';
@@ -91,13 +92,14 @@ function LayerPanelFactory(
 
     updateLayerType = (newType: string) => {
       if (newType === LAYER_TYPES.grid || newType === LAYER_TYPES.hexagon) {
+        const binType: AggregationBinType = newType === LAYER_TYPES.hexagon ? 'hexagon' : 'grid';
         const sizeKm = Number(this.props.layer.config.visConfig?.worldUnitSize) || 1;
         const dataset = this.props.datasets[this.props.layer.config.dataId || ''];
         const pointCount = getLayerPointCount(dataset);
         const cellCount = estimateAggregationCellCount(
           this.props.layer.meta?.bounds,
           sizeKm,
-          newType,
+          binType,
           pointCount
         );
         if (isAggregationCellCountSlow(cellCount, pointCount)) {

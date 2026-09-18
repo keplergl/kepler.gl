@@ -50,7 +50,7 @@ describe('aggregation-cell-count', () => {
     expect(isAggregationCellCountSlow(100_000, 100_000)).toBe(true);
     expect(isAggregationCellCountSlow(500, 200_000)).toBe(false);
     expect(isAggregationCellCountSlow(200_000, 200_000)).toBe(true);
-    expect(100_000).toBe(AGGREGATION_CELL_COUNT_WARNING_THRESHOLD);
+    expect(AGGREGATION_CELL_COUNT_WARNING_THRESHOLD).toBe(100_000);
   });
 
   test('occupied count is the bbox count when cells are coarser than the point set', () => {

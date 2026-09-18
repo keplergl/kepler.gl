@@ -2,9 +2,14 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {Layer, estimateAggregationCellCount, isAggregationCellCountSlow} from '@kepler.gl/layers';
+import {
+  Layer,
+  estimateAggregationCellCount,
+  isAggregationCellCountSlow,
+  type AggregationBinType
+} from '@kepler.gl/layers';
 import AggregationSizeWarning from './aggregation-size-warning';
-import VisConfigSliderFactory from './vis-config-slider';
+import type VisConfigSliderFactory from './vis-config-slider';
 
 type VisConfigSlider = ReturnType<typeof VisConfigSliderFactory>;
 
@@ -22,7 +27,7 @@ export default function AggregationWorldUnitSizeControl({
   pointCount = 0
 }: AggregationWorldUnitSizeControlProps) {
   const committed = layer.config.visConfig.worldUnitSize as number;
-  const kind = (layer.type === 'hexagon' ? 'hexagon' : 'grid') as 'grid' | 'hexagon';
+  const kind: AggregationBinType = layer.type === 'hexagon' ? 'hexagon' : 'grid';
   const bounds = layer.meta?.bounds as number[] | undefined;
 
   const [draft, setDraft] = useState(committed);
@@ -39,16 +44,18 @@ export default function AggregationWorldUnitSizeControl({
   );
 
   const sliderLayer = useMemo(
-    () => ({
-      config: {
-        ...layer.config,
-        visConfig: {
-          ...layer.config.visConfig,
-          worldUnitSize: draft
+    () =>
+      ({
+        id: layer.id,
+        config: {
+          ...layer.config,
+          visConfig: {
+            ...layer.config.visConfig,
+            worldUnitSize: draft
+          }
         }
-      }
-    }),
-    [layer.config, draft]
+      } as unknown as Layer),
+    [layer.config, layer.id, draft]
   );
 
   const onSliderChange = useCallback(
@@ -86,7 +93,7 @@ export default function AggregationWorldUnitSizeControl({
       <VisConfigSlider
         {...layer.visConfigSettings.worldUnitSize}
         {...visConfiguratorProps}
-        layer={sliderLayer as Layer}
+        layer={sliderLayer}
         onChange={onSliderChange}
       />
       {pendingConfirm ? (
