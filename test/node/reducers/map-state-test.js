@@ -13,7 +13,8 @@ import {
   setMapSplitMode,
   setSwipeComparePercentage,
   setMapViewMode,
-  globeConfigChange
+  globeConfigChange,
+  applyMapState
 } from '@kepler.gl/actions';
 
 import {
@@ -66,6 +67,29 @@ test('#mapStateReducer -> UPDATE_MAP', t => {
   const newState = reducer(undefined, updateMap(mapUpdate, 0));
 
   t.deepEqual(newState, expectedState, 'should update map longitude and latitude');
+
+  t.end();
+});
+
+test('#mapStateReducer -> APPLY_MAP_STATE', t => {
+  const next = reducer(
+    undefined,
+    applyMapState({
+      latitude: 40.7128,
+      longitude: -74.006,
+      zoom: 11,
+      pitch: 30,
+      width: 10,
+      height: 10
+    })
+  );
+
+  t.equal(next.latitude, 40.7128, 'should apply latitude from JSON');
+  t.equal(next.longitude, -74.006, 'should apply longitude from JSON');
+  t.equal(next.zoom, 11, 'should apply zoom from JSON');
+  t.equal(next.pitch, 30, 'should apply pitch from JSON');
+  t.equal(next.width, INITIAL_MAP_STATE.width, 'should preserve current width');
+  t.equal(next.height, INITIAL_MAP_STATE.height, 'should preserve current height');
 
   t.end();
 });

@@ -11,6 +11,8 @@ import {Effect} from '@kepler.gl/types';
 
 import EffectPanelHeaderFactory from './effect-panel-header';
 import EffectConfiguratorFactory from './effect-configurator';
+import EffectJsonEditorFactory from './effect-json-editor';
+import {areJsonEditorsEnabled} from '../common/json-editor-utils';
 
 export type EffectPanelProps = {
   className: string;
@@ -39,11 +41,16 @@ const PanelWrapper = styled.div<PanelWrapperProps>`
   margin: 3px 16px;
 `;
 
-EffectPanelFactory.deps = [EffectPanelHeaderFactory, EffectConfiguratorFactory];
+EffectPanelFactory.deps = [
+  EffectPanelHeaderFactory,
+  EffectConfiguratorFactory,
+  EffectJsonEditorFactory
+];
 
 function EffectPanelFactory(
   EffectPanelHeader: ReturnType<typeof EffectPanelHeaderFactory>,
-  EffectConfigurator: ReturnType<typeof EffectConfiguratorFactory>
+  EffectConfigurator: ReturnType<typeof EffectConfiguratorFactory>,
+  EffectJsonEditor: ReturnType<typeof EffectJsonEditorFactory>
 ): ComponentType<EffectPanelProps> {
   const EffectPanel: React.FC<EffectPanelProps> = ({
     className,
@@ -88,6 +95,17 @@ function EffectPanelFactory(
       [updateEffectAction]
     );
 
+    const toggleJsonEditor = useCallback(
+      (event?: Event) => {
+        event?.stopPropagation();
+        updateEffectAction(effect.id, {
+          ...(!effect.isConfigActive ? {isConfigActive: true} : {}),
+          isJsonEditorActive: !effect.isJsonEditorActive
+        });
+      },
+      [updateEffectAction, effect.id, effect.isConfigActive, effect.isJsonEditorActive]
+    );
+
     const {id, type, isConfigActive, isJsonEditorActive, isEnabled} = effect;
     const sortingAllowed = type !== LIGHT_AND_SHADOW_EFFECT.type;
 
@@ -109,17 +127,22 @@ function EffectPanelFactory(
           onToggleEnabled={toggleEnabled}
           onRemoveEffect={handleRemoveEffect}
           onToggleEnableConfig={toggleConfigActive}
+          onToggleJsonEditor={toggleJsonEditor}
+          showJsonEditor={areJsonEditorsEnabled()}
           isDragNDropEnabled={isDraggable && sortingAllowed}
           listeners={listeners}
           showSortHandle={type !== LIGHT_AND_SHADOW_EFFECT.type}
         />
-        {isConfigActive && (
-          <EffectConfigurator
-            key={`effect-configurator-${id}`}
-            effect={effect}
-            updateEffectConfig={handleUpdateEffectConfig}
-          />
-        )}
+        {isConfigActive &&
+          (isJsonEditorActive ? (
+            <EffectJsonEditor effect={effect} />
+          ) : (
+            <EffectConfigurator
+              key={`effect-configurator-${id}`}
+              effect={effect}
+              updateEffectConfig={handleUpdateEffectConfig}
+            />
+          ))}
       </PanelWrapper>
     );
   };

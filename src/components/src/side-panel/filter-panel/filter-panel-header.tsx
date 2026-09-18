@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {ComponentType, useMemo} from 'react';
+import React, {ComponentType, useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
+import {PanelHeaderActionIcon} from '../../side-panel/panel-header-action';
 import PanelHeaderActionFactory from '../../side-panel/panel-header-action';
-import {Trash} from '../../common/icons';
+import {CodeAlt, Trash} from '../../common/icons';
 import {createLinearGradient} from '@kepler.gl/utils';
 import {StyledPanelHeader, StyledPanelHeaderProps} from '../../common/styled-components';
 import {RGBColor, Filter, Field} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
+import FilterJsonEditorFactory from './filter-json-editor';
+import {areJsonEditorsEnabled} from '../../common/json-editor-utils';
 
 interface StyledFilterHeaderProps extends StyledPanelHeaderProps {
   $labelRCGColorValues: RGBColor[];
@@ -37,32 +40,40 @@ const StyledChildrenContainer = styled.div`
   overflow: hidden;
 `;
 
+export type FilterPanelHeaderActionItem = {
+  key: string;
+  tooltip: string;
+  onClick: (event?: React.MouseEvent) => void;
+  icon: PanelHeaderActionIcon;
+  tooltipType?: 'error' | 'dark' | 'success' | 'warning';
+  hoverColor?: string;
+  active?: boolean;
+};
+
 export type FilterPanelHeaderProps = {
   className?: string;
   datasets: KeplerTable[];
   filter: Filter;
   removeFilter: () => void;
-  actionItems?: {
-    key: string;
-    tooltip: string;
-    onClick: () => void;
-    icon: React.ElementType;
-  }[];
+  actionItems?: FilterPanelHeaderActionItem[];
   actionIcons?: {
     delete: ComponentType;
+    json?: ComponentType;
   };
   allAvailableFields?: Field[];
   idx?: number;
   children: React.ReactNode;
 };
 
-FilterPanelHeaderFactory.deps = [PanelHeaderActionFactory];
+FilterPanelHeaderFactory.deps = [PanelHeaderActionFactory, FilterJsonEditorFactory];
 
 function FilterPanelHeaderFactory(
-  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
+  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>,
+  FilterJsonEditor: ReturnType<typeof FilterJsonEditorFactory>
 ): React.ComponentType<FilterPanelHeaderProps> {
   const defaultActionIcons = {
-    delete: Trash
+    delete: Trash,
+    json: CodeAlt
   };
   const FilterPanelHeader: React.FC<FilterPanelHeaderProps> = ({
     children,
@@ -73,36 +84,67 @@ function FilterPanelHeaderFactory(
     actionItems,
     actionIcons = defaultActionIcons
   }: FilterPanelHeaderProps) => {
-    const items = useMemo(
-      () =>
-        actionItems ?? [
-          {
-            key: 'delete',
-            tooltip: 'tooltip.delete',
-            onClick: removeFilter,
-            icon: actionIcons.delete
-          }
-        ],
-      [removeFilter, actionIcons, actionItems]
-    );
+    const [isJsonEditorActive, setIsJsonEditorActive] = useState(false);
+    const showJsonEditor = areJsonEditorsEnabled();
+    const toggleJsonEditor = useCallback((event?: React.MouseEvent) => {
+      event?.stopPropagation();
+      setIsJsonEditorActive(active => !active);
+    }, []);
+
+    const items: FilterPanelHeaderActionItem[] = useMemo(() => {
+      const baseItems: FilterPanelHeaderActionItem[] = actionItems ?? [
+        {
+          key: 'delete',
+          tooltip: 'tooltip.delete',
+          onClick: removeFilter,
+          icon: actionIcons.delete as PanelHeaderActionIcon,
+          tooltipType: 'error',
+          hoverColor: 'errorColor'
+        }
+      ];
+      if (!showJsonEditor) {
+        return baseItems;
+      }
+      return [
+        {
+          key: 'json',
+          tooltip: 'tooltip.editFilterJson',
+          onClick: toggleJsonEditor,
+          icon: (actionIcons.json || CodeAlt) as PanelHeaderActionIcon,
+          active: isJsonEditorActive
+        },
+        ...baseItems
+      ];
+    }, [
+      removeFilter,
+      actionIcons,
+      actionItems,
+      showJsonEditor,
+      toggleJsonEditor,
+      isJsonEditorActive
+    ]);
     return (
-      <StyledFilterHeader
-        className={classnames('filter-panel__header', className)}
-        $labelRCGColorValues={datasets.map((d: KeplerTable) => d.color)}
-      >
-        <StyledChildrenContainer>{children}</StyledChildrenContainer>
-        {items.map(item => (
-          <PanelHeaderAction
-            key={item.key}
-            id={filter.id}
-            tooltip={item.tooltip}
-            tooltipType="error"
-            onClick={item.onClick}
-            hoverColor={'errorColor'}
-            IconComponent={item.icon}
-          />
-        ))}
-      </StyledFilterHeader>
+      <>
+        <StyledFilterHeader
+          className={classnames('filter-panel__header', className)}
+          $labelRCGColorValues={datasets.map((d: KeplerTable) => d.color)}
+        >
+          <StyledChildrenContainer>{children}</StyledChildrenContainer>
+          {items.map(item => (
+            <PanelHeaderAction
+              key={item.key}
+              id={filter.id}
+              tooltip={item.tooltip}
+              tooltipType={item.tooltipType}
+              onClick={item.onClick}
+              hoverColor={item.hoverColor}
+              IconComponent={item.icon}
+              active={item.active}
+            />
+          ))}
+        </StyledFilterHeader>
+        {isJsonEditorActive ? <FilterJsonEditor filter={filter} /> : null}
+      </>
     );
   };
 

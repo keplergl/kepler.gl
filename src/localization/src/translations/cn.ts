@@ -371,7 +371,12 @@ export default {
     annotationSettings: '注释设置',
     removeEffect: '移除效果',
     disableEffect: '禁用效果',
-    effectSettings: '效果设置'
+    effectSettings: '效果设置',
+    editLayerJson: '编辑图层 JSON',
+    editFilterJson: '编辑筛选器 JSON',
+    editEffectJson: '编辑效果 JSON',
+    editViewportJson: '编辑视口 JSON',
+    editAnimationJson: '编辑动画 JSON'
   },
   toolbar: {
     exportImage: '导出图片',

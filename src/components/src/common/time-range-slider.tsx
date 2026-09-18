@@ -9,7 +9,7 @@ import RangeSliderFactory from './range-slider';
 import TimeSliderMarkerFactory from './time-slider-marker';
 import PlaybackControlsFactory from './animation-control/playback-controls';
 import TimeRangeSliderTimeTitleFactory from './time-range-slider-time-title';
-import {LineChart, Timeline, AnimationConfig, TimeBins} from '@kepler.gl/types';
+import {LineChart, Timeline, AnimationConfig, TimeBins, Filter} from '@kepler.gl/types';
 import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
 import AnimationControlFactory from './animation-control/animation-control';
 import {BaseComponentProps} from '../types';
@@ -45,6 +45,7 @@ type TimeRangeSliderProps = {
   timeline: Timeline;
   invertTrendColor?: boolean;
   animationConfig?: AnimationConfig;
+  filter?: Filter;
 };
 
 export type StyledSliderContainerProps = BaseComponentProps & {
@@ -120,7 +121,8 @@ export default function TimeRangeSliderFactory(
       exportAnimation,
       onChange,
       setFilterPlot,
-      timeline
+      timeline,
+      filter
     } = props;
 
     const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
@@ -185,6 +187,7 @@ export default function TimeRangeSliderFactory(
               exportAnimation={exportAnimation}
               showTimeDisplay={false}
               timeline={timeline}
+              filter={filter}
             />
           )}
           {isEnlarged && !isMinified ? (
@@ -200,6 +203,7 @@ export default function TimeRangeSliderFactory(
               exportAnimation={exportAnimation}
               isAnimating={isAnimating}
               startAnimation={toggleAnimation}
+              filter={filter}
             />
           ) : null}
         </StyledSliderContainer>

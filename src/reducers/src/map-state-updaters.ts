@@ -177,6 +177,28 @@ export const updateMapUpdater = (
 };
 
 /**
+ * Apply a partial map state from the viewport JSON editor.
+ * Preserves current width/height so saved JSON cannot resize the map container.
+ * @memberof mapStateUpdaters
+ * @public
+ */
+export const applyMapStateUpdater = (
+  state: MapState,
+  action: MapStateActions.ApplyMapStateUpdaterAction
+): MapState => {
+  const next = action.payload || {};
+  const {width, height} = state;
+  const mergedState = deepmerge<MapState>(state, next, {
+    arrayMerge: (_destinationArray, sourceArray) => sourceArray
+  });
+  return validateViewPort({
+    ...mergedState,
+    width,
+    height
+  });
+};
+
+/**
  * Fit map viewport to bounds
  * @memberof mapStateUpdaters
  * @public
