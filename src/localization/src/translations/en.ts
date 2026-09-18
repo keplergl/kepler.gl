@@ -398,6 +398,37 @@ export default {
     refresh15m: '15 min',
     refreshCustom: 'Custom'
   },
+  datasetOps: {
+    groupBy: 'Group by',
+    join: 'Join',
+    spatialJoin: 'Spatial join',
+    groupByField: 'Group by field',
+    aggregations: 'Aggregations',
+    resultName: 'Result name',
+    run: 'Run',
+    cancel: 'Cancel',
+    leftKey: 'Left key',
+    rightKey: 'Right key',
+    joinTypeLabel: 'Join type',
+    leftGeometry: 'Left geometry',
+    rightGeometry: 'Right geometry',
+    predicate: 'Predicate',
+    contains: 'Contains',
+    joinType: {
+      left: 'Left',
+      inner: 'Inner',
+      full: 'Full'
+    },
+    aggregation: {
+      count: 'Count',
+      sum: 'Sum',
+      average: 'Mean',
+      maximum: 'Max',
+      minimum: 'Min',
+      median: 'Median',
+      countUnique: 'Unique'
+    }
+  },
   datasetInfo: {
     rowCount: '{rowCount} rows',
     vectorTile: 'Vector tile',

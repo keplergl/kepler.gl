@@ -198,6 +198,20 @@ import {
 import {getPropValueToMerger, hasPropsToMerge} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
 import {
+  addGroupByUpdater,
+  addJoinUpdater,
+  addSpatialJoinUpdater,
+  collectDerivedDescendants,
+  executeGroupBy,
+  executeJoin,
+  executeSpatialJoin,
+  removeDatasetOpUpdater,
+  removeOpsForDatasets,
+  setGroupByConfigUpdater,
+  setJoinConfigUpdater,
+  setSpatialJoinConfigUpdater
+} from './dataset-ops-updaters';
+import {
   fixEffectOrder,
   getAnimatableVisibleLayers,
   getIntervalBasedAnimationLayers,
@@ -344,6 +358,8 @@ export const INITIAL_VIS_STATE: VisState = {
   // a collection of multiple dataset
   datasets: {},
   editingDataset: undefined,
+  groupBys: [],
+  joins: [],
 
   // effects
   effects: [],
@@ -2680,38 +2696,46 @@ export function removeDatasetUpdater<T extends VisState>(
   state: T,
   action: VisStateActions.RemoveDatasetUpdaterAction
 ): T {
-  // extract dataset key
   const {dataId: datasetKey} = action;
   const {datasets} = state;
 
-  // check if dataset is present
+  if (!datasets[datasetKey]) {
+    return state;
+  }
+
+  const descendantIds = collectDerivedDescendants(datasets, datasetKey);
+  const idsToRemove = [datasetKey, ...descendantIds];
+  let nextState = removeOpsForDatasets(state, idsToRemove) as T;
+  for (const id of idsToRemove) {
+    nextState = removeSingleDatasetUpdater(nextState, id);
+  }
+  return nextState;
+}
+
+function removeSingleDatasetUpdater<T extends VisState>(state: T, datasetKey: string): T {
+  const {datasets} = state;
   if (!datasets[datasetKey]) {
     return state;
   }
 
   const {
     layers,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    datasets: {[datasetKey]: dataset, ...newDatasets}
+    datasets: {[datasetKey]: _dataset, ...newDatasets}
   } = state;
 
   const layersToRemove = layers.filter(l => l.config.dataId === datasetKey).map(l => l.id);
 
-  // remove layers and datasets
   let newState = layersToRemove.reduce((accu, id) => removeLayerUpdater(accu, {id}), {
     ...state,
     datasets: newDatasets
   });
 
-  // update filters
   const filters: Filter[] = [];
   for (const filter of newState.filters) {
     const valueIndex = filter.dataId.indexOf(datasetKey);
     if (valueIndex >= 0 && filter.dataId.length > 1) {
-      // only remove one synced dataset from the filter
       filters.push(_removeFilterDataIdAtValueIndex(filter, valueIndex, datasets));
     } else if (valueIndex < 0) {
-      // leave the filter as is
       filters.push(filter);
     }
   }
@@ -5587,12 +5611,14 @@ function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToRepl
 // Find datasetIds derived a saved visState Property;
 function findChildDatasetIds(value) {
   if (Array.isArray(value)) {
-    // for layers, filters, call defaultReplaceParentDatasetIds on each item in array
     const childDataIds = value.map(findChildDatasetIds).filter(d => d);
     return childDataIds.length ? childDataIds : null;
   }
 
-  // child data id usually stores in the derived dataset info
+  if (value?.metadata?.derivedDataset) {
+    return value.id || null;
+  }
+
   return value?.newDataset?.info.id || null;
 }
 
@@ -5653,13 +5679,18 @@ export function prepareStateForDatasetReplace<T extends VisState>(
   dataId: string,
   dataIdToUse: string
 ): T {
-  const serializedState = serializeVisState(state, state.schema);
-  const nextState = replaceDatasetAndDeps(state, dataId, dataIdToUse);
+  const derivedChildIds = collectDerivedDescendants(state.datasets, dataId);
+  const stateWithoutChildren = derivedChildIds.reduce(
+    (accu, childId) => removeDatasetUpdater(accu, {dataId: childId}),
+    state
+  );
+  const serializedState = serializeVisState(stateWithoutChildren, stateWithoutChildren.schema);
+  const nextState = replaceDatasetAndDeps(stateWithoutChildren, dataId, dataIdToUse);
   // make a copy of layerOrder, because layer id will be removed from it by calling removeLayerUpdater
-  const preserveLayerOrder = [...state.layerOrder];
+  const preserveLayerOrder = [...stateWithoutChildren.layerOrder];
 
   // preserve dataset order
-  nextState.preserveDatasetOrder = Object.keys(state.datasets).map(d =>
+  nextState.preserveDatasetOrder = Object.keys(stateWithoutChildren.datasets).map(d =>
     d === dataId ? dataIdToUse : d
   );
 
@@ -5751,3 +5782,67 @@ function replacePropValueInState(
   }
   return nextState;
 }
+
+const DATASET_OP_ADD_OPTIONS = {
+  autoCreateLayers: true,
+  centerMap: false,
+  keepExistingConfig: true
+};
+
+function applyDerivedProtoDataset(state: VisState, proto: ProtoDataset): VisState {
+  const resultId = proto.info.id;
+  if (!resultId) {
+    return state;
+  }
+  if (state.datasets[resultId]) {
+    const nextState = updateDatasetUpdater(state, {dataId: resultId, data: proto.data});
+    const existing = nextState.datasets[resultId];
+    if (!existing) {
+      return nextState;
+    }
+    existing.metadata = {
+      ...existing.metadata,
+      ...proto.metadata
+    };
+    existing.label = proto.info.label || existing.label;
+    return nextState;
+  }
+  return updateVisDataUpdater(state, {
+    datasets: proto,
+    options: DATASET_OP_ADD_OPTIONS
+  });
+}
+
+export function runGroupByUpdater(
+  state: VisState,
+  action: VisStateActions.RunGroupByUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeGroupBy(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
+export function runJoinUpdater(
+  state: VisState,
+  action: VisStateActions.RunJoinUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeJoin(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
+export function runSpatialJoinUpdater(
+  state: VisState,
+  action: VisStateActions.RunSpatialJoinUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeSpatialJoin(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
+export {
+  addGroupByUpdater,
+  addJoinUpdater,
+  addSpatialJoinUpdater,
+  removeDatasetOpUpdater,
+  setGroupByConfigUpdater,
+  setJoinConfigUpdater,
+  setSpatialJoinConfigUpdater
+};

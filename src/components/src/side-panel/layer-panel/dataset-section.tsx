@@ -26,6 +26,7 @@ type DatasetSectionProps = {
   showAddDataModal: () => void;
   refreshDataset?: ActionHandler<typeof VisStateActions.refreshDataset>;
   updateDatasetProps?: ActionHandler<typeof VisStateActions.updateDatasetProps>;
+  visStateActions?: typeof VisStateActions;
 };
 
 const StyledDatasetTitle = styled.div<{$showDatasetList?: boolean}>`
@@ -77,7 +78,8 @@ function DatasetSectionFactory(
       showDatasetList,
       showAddDataModal,
       refreshDataset,
-      updateDatasetProps
+      updateDatasetProps,
+      visStateActions
     } = props;
     const datasetCount = Object.keys(datasets).length;
 
@@ -96,6 +98,9 @@ function DatasetSectionFactory(
             showDeleteDataset={showDeleteDataset}
             refreshDataset={refreshDataset}
             updateDatasetProps={updateDatasetProps}
+            addGroupBy={visStateActions?.addGroupBy}
+            addJoin={visStateActions?.addJoin}
+            addSpatialJoin={visStateActions?.addSpatialJoin}
           />
         )}
       </StyledDatasetSection>

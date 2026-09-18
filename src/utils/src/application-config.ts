@@ -206,6 +206,9 @@ export type KeplerApplicationConfig = {
   /** Whether to show column statistics in the data table modal. Enabled by default. */
   enableColumnStats?: boolean;
 
+  /** Group-by, attribute join, and simple spatial join UI on local datasets. Enabled by default. */
+  enableDatasetOps?: boolean;
+
   /**
    * Show a format dropdown next to the remote dataset URL field (Auto / CSV / GeoJSON / JSON / Arrow / Parquet).
    * Useful for extensionless URLs such as Azure SAS blobs. Disabled by default.
@@ -372,6 +375,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableThemeToggle: false,
 
   enableColumnStats: true,
+
+  enableDatasetOps: true,
 
   enableRemoteFileFormatSelector: false,
 

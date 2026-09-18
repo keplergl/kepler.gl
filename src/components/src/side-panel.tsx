@@ -26,6 +26,7 @@ import FilterManagerFactory from './side-panel/filter-manager';
 import InteractionManagerFactory from './side-panel/interaction-manager';
 import MapManagerFactory from './side-panel/map-manager';
 import CustomPanelsFactory from './side-panel/custom-panel';
+import DatasetOpsPanelsFactory from './side-panel/dataset-ops/dataset-ops-panels';
 
 import styled from 'styled-components';
 import {SidePanelProps, SidePanelItem} from './types';
@@ -52,7 +53,8 @@ SidePanelFactory.deps = [
   FilterManagerFactory,
   InteractionManagerFactory,
   MapManagerFactory,
-  CustomPanelsFactory
+  CustomPanelsFactory,
+  DatasetOpsPanelsFactory
 ];
 
 /**
@@ -66,7 +68,8 @@ export default function SidePanelFactory(
   FilterManager: ReturnType<typeof FilterManagerFactory>,
   InteractionManager: ReturnType<typeof InteractionManagerFactory>,
   MapManager: ReturnType<typeof MapManagerFactory>,
-  CustomPanels: ReturnType<typeof CustomPanelsFactory>
+  CustomPanels: ReturnType<typeof CustomPanelsFactory>,
+  DatasetOpsPanels: ReturnType<typeof DatasetOpsPanelsFactory>
 ) {
   // inject components
   const SIDEBAR_COMPONENTS = {
@@ -122,7 +125,9 @@ export default function SidePanelFactory(
       uiStateActions,
       visStateActions,
       version,
-      width
+      width,
+      groupBys,
+      joins
     } = props;
     const {openDeleteModal, toggleModal, toggleSidePanel} = uiStateActions;
     const {activeSidePanel} = uiState;
@@ -242,6 +247,12 @@ export default function SidePanelFactory(
               {...customPanelProps}
               activeSidePanel={activeSidePanel}
               updateTableColor={onUpdateTableColor}
+            />
+            <DatasetOpsPanels
+              datasets={datasets}
+              groupBys={groupBys}
+              joins={joins}
+              visStateActions={visStateActions}
             />
           </div>
         </StyledSidePanelContent>
