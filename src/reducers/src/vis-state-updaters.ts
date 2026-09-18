@@ -5529,8 +5529,8 @@ function adjustTimeFilterInterval(state, filter) {
       }
     }, TIME_INTERVALS_ORDERED.length - 1);
     // @ts-ignore
-    const hexTileInterval = TIME_INTERVALS_ORDERED[intervalIndex];
-    interval = LayerToFilterTimeInterval[hexTileInterval];
+    const layerTimeInterval = TIME_INTERVALS_ORDERED[intervalIndex];
+    interval = LayerToFilterTimeInterval[layerTimeInterval];
   }
 
   if (!interval) {

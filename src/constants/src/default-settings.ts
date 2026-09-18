@@ -1466,7 +1466,6 @@ export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
   hexagonId: true,
   '3D': true,
   vectorTile: true,
-  hexTile: true,
   line: true,
   trip: true,
   rasterTile: true,
