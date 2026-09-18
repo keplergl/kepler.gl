@@ -264,6 +264,12 @@ export {
 } from './filters/time-range-filter';
 export {default as TimeWidgetFactory} from './filters/time-widget';
 export {default as TimeWidgetTopFactory} from './filters/time-widget-top';
+export {default as TimeWidgetSettingsFactory} from './filters/time-widget-settings';
+export {
+  default as TimezoneSelector,
+  getTimezonesFromMoment,
+  getTimezoneOptions
+} from './filters/timezone-selector';
 
 // // Editor Factory
 export {default as EditorFactory} from './editor/editor';

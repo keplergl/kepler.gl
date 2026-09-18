@@ -298,7 +298,9 @@ export default {
     column: 'Columna',
     timeIntervalEndField: 'Hora de fi',
     timeIntervalEndFieldHint:
-      'Opcional. Les entitats romanen visibles mentre la finestra de reproducció se superposa a aquest interval.'
+      'Opcional. Les entitats romanen visibles mentre la finestra de reproducció se superposa a aquest interval.',
+    timezone: 'Zona horària',
+    selectTimezone: 'Selecciona la zona horària de visualització'
   },
   datasetTitle: {
     showDataTable: 'Mostra taula de dades',

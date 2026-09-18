@@ -83,6 +83,7 @@ function TimeWidgetFactory(
     toggleAnimation,
     exportAnimation,
     setFilterPlot,
+    setFilterAnimationTimeConfig,
     setFilterAnimationWindow,
     animationConfig,
     timeline
@@ -112,6 +113,11 @@ function TimeWidgetFactory(
     const _setFilterPlot = useCallback(
       (newProp, valueIndex) => setFilterPlot(index, newProp, valueIndex),
       [index, setFilterPlot]
+    );
+
+    const _onTimezoneChange = useCallback(
+      (timezone: string) => setFilterAnimationTimeConfig(index, {timezone}),
+      [index, setFilterAnimationTimeConfig]
     );
 
     const _onToggleSettings = useCallback(() => {
@@ -382,7 +388,12 @@ function TimeWidgetFactory(
           isMinified={isMinified}
         />
         {showSettings && !isMinified ? (
-          <TimeWidgetSettings filter={filter} datasets={datasets} setFilterPlot={_setFilterPlot} />
+          <TimeWidgetSettings
+            filter={filter}
+            datasets={datasets}
+            setFilterPlot={_setFilterPlot}
+            onTimezoneChange={_onTimezoneChange}
+          />
         ) : null}
         <TimelineSection>
           {timelineZoomed && timelineRangeLabel ? (

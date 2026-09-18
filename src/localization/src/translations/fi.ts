@@ -297,7 +297,9 @@ export default {
     column: 'Sarake',
     timeIntervalEndField: 'Päättymisaika',
     timeIntervalEndFieldHint:
-      'Valinnainen. Kohteet pysyvät näkyvissä, kun toistoikkuna osuu tälle aikavälille.'
+      'Valinnainen. Kohteet pysyvät näkyvissä, kun toistoikkuna osuu tälle aikavälille.',
+    timezone: 'Aikavyöhyke',
+    selectTimezone: 'Valitse näyttöaikavyöhyke'
   },
   datasetTitle: {
     showDataTable: 'Näytä attribuuttitaulu',

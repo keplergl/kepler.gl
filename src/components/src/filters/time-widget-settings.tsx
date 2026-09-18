@@ -22,6 +22,9 @@ import {
 import {TimeRangeFilter, Field} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {getDefaultTimeFormat} from '@kepler.gl/utils';
+import {FormattedMessage} from '@kepler.gl/localization';
+
+import TimezoneSelector from './timezone-selector';
 
 const MAX_BINS = 2048;
 
@@ -62,6 +65,7 @@ const AxisHeader = styled.div`
 const AxisRow = styled.div`
   display: flex;
   align-items: flex-end;
+  flex-wrap: wrap;
   gap: 25px;
 `;
 
@@ -189,6 +193,7 @@ export type TimeWidgetSettingsProps = {
   filter: TimeRangeFilter;
   datasets: Datasets;
   setFilterPlot: (newProp: any, valueIndex?: number) => void;
+  onTimezoneChange: (timezone: string) => void;
 };
 
 function parseInterval(intervalId: string | undefined): {step: number; unit: string} {
@@ -206,7 +211,8 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
   const TimeWidgetSettings: React.FC<TimeWidgetSettingsProps> = ({
     filter,
     datasets,
-    setFilterPlot
+    setFilterPlot,
+    onTimezoneChange
   }) => {
     const {plotType} = filter;
     const currentInterval = plotType?.interval;
@@ -375,6 +381,12 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
                   />
                 </UnitSelectorWrapper>
               </IntervalGroup>
+            </FieldBlock>
+            <FieldBlock>
+              <FieldLabel>
+                <FormattedMessage id="filterManager.timezone" />
+              </FieldLabel>
+              <TimezoneSelector timezone={filter.timezone} onChange={onTimezoneChange} />
             </FieldBlock>
           </AxisRow>
           {intervalTooSmall ? <ErrorMessage>Interval is too small</ErrorMessage> : null}
