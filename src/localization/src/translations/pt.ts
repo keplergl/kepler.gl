@@ -61,7 +61,8 @@ export default {
       addMoreLabel: 'Adicionar mais Rótulos',
       backgroundColor: 'Cor de fundo',
       outlineWidth: 'Largura do contorno',
-      outlineColor: 'Cor do contorno'
+      outlineColor: 'Cor do contorno',
+      collisionEnabled: 'Ocultar rótulos sobrepostos'
     }
   },
   sidebar: {
@@ -122,6 +123,7 @@ export default {
       trip: 'viagem',
       s2: 'S2',
       geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'mosaico vetorial',
@@ -242,7 +244,9 @@ export default {
     addAnnotation: 'Adicionar',
     type: 'Tipo',
     lineWidth: 'Largura da linha',
-    color: 'Cor'
+    color: 'Cor',
+    textSide: 'Lado do texto',
+    textPlacement: 'Posição'
   },
   effectDescription: {
     lightAndShadow:

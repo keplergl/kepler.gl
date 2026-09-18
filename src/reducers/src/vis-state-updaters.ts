@@ -63,6 +63,7 @@ import {
   applyTimeFilterEndFieldName,
   applyFiltersToDatasets,
   arrayInsert,
+  combineSplitMapsByIndex,
   computeSplitMapLayers,
   adjustValueToFilterDomain,
   errorNotification,
@@ -117,6 +118,10 @@ import {
   INITIAL_ANNOTATION_TEXT_HEIGHT,
   INITIAL_ANNOTATION_LINE_WIDTH,
   INITIAL_ANNOTATION_LINE_COLOR,
+  INITIAL_ANNOTATION_TEXT_SIDE,
+  INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION,
+  ANNOTATION_ANGLE_BY_PLACEMENT,
+  textPlacementFromAngle,
   AnnotationKind,
   DatasetType,
   getDatasetRefreshIntervalMs,
@@ -787,7 +792,11 @@ function addOrRemoveTextLabels(newFields, textLabel, defaultTextLabel = DEFAULT_
     ...newTextLabel.filter(tl => tl.field),
     ...addFields.map(af => ({
       ...defaultTextLabel,
-      field: af
+      field: af,
+      collisionEnabled: Boolean(
+        textLabel.find(tl => tl.collisionEnabled)?.collisionEnabled ??
+          defaultTextLabel.collisionEnabled
+      )
     }))
   ];
 
@@ -831,11 +840,19 @@ export function layerTextLabelChangeUpdater(
   let newTextLabel = textLabel.slice();
   if (!textLabel[idx] && idx === textLabel.length) {
     // if idx is set to length, add empty text label
-    newTextLabel = [...textLabel, defaultTextLabel];
+    newTextLabel = [
+      ...textLabel,
+      {
+        ...defaultTextLabel,
+        collisionEnabled: Boolean(textLabel[0]?.collisionEnabled)
+      }
+    ];
   }
 
   if (idx === 'all' && prop === 'fields') {
     newTextLabel = addOrRemoveTextLabels(value, textLabel, defaultTextLabel);
+  } else if (idx === 'all' && prop) {
+    newTextLabel = textLabel.map(tl => ({...tl, [prop]: value}));
   } else {
     newTextLabel = updateTextLabelPropAndValue(idx, prop, value, newTextLabel);
   }
@@ -1060,6 +1077,34 @@ export function layerTypeChangeUpdater(
 }
 
 /**
+ * Bind visual channel fields to the dataset field of the same name.
+ * `addDataToMap` and `layerVisualChannelConfigChange` often pass `{name, type}`
+ * or processor fields whose valueAccessor is not bound to the KeplerTable, which
+ * leaves strokeColorDomain at `[0, 1]` (kepler.gl #3061).
+ */
+function resolveVisualChannelFieldFromDataset(
+  newConfig: VisStateActions.LayerVisualChannelConfigChangeUpdaterAction['newConfig'],
+  dataset: KeplerTable | undefined,
+  visualChannel: Layer['visualChannels'][string] | undefined
+) {
+  if (!dataset || !visualChannel) {
+    return newConfig;
+  }
+  const incoming = newConfig[visualChannel.field];
+  if (!incoming || typeof incoming !== 'object' || !incoming.name) {
+    return newConfig;
+  }
+  const found = dataset.fields.find(fd => fd.name === incoming.name);
+  if (!found) {
+    return newConfig;
+  }
+  return {
+    ...newConfig,
+    [visualChannel.field]: found
+  };
+}
+
+/**
  * Update layer visual channel
  * @memberof visStateUpdaters
  * @returns {Object} nextState
@@ -1069,12 +1114,17 @@ export function layerVisualChannelChangeUpdater(
   state: VisState,
   action: VisStateActions.LayerVisualChannelConfigChangeUpdaterAction
 ): VisState {
-  const {oldLayer, newConfig, newVisConfig, channel} = action;
+  const {oldLayer, newVisConfig, channel} = action;
   if (!oldLayer.config.dataId) {
     return state;
   }
 
   const dataset = state.datasets[oldLayer.config.dataId];
+  const newConfig = resolveVisualChannelFieldFromDataset(
+    action.newConfig,
+    dataset,
+    oldLayer.visualChannels[channel]
+  );
 
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   let newLayer = oldLayer.updateLayerConfig(newConfig);
@@ -2439,6 +2489,17 @@ export const updateEffectUpdater = (
 
 function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
   const kind = config?.kind ?? INITIAL_ANNOTATION_KIND;
+  const providedAngle = Number.isFinite((config as any)?.angle) ? (config as any).angle : undefined;
+  const derivedFromAngle =
+    providedAngle != null ? textPlacementFromAngle(providedAngle) : undefined;
+  const textSide =
+    config?.textSide ??
+    derivedFromAngle?.side ??
+    (kind === AnnotationKind.TEXT ? undefined : INITIAL_ANNOTATION_TEXT_SIDE);
+  const textVerticalPosition =
+    config?.textVerticalPosition ??
+    derivedFromAngle?.vertical ??
+    (kind === AnnotationKind.TEXT ? undefined : INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION);
   const base = {
     id: config?.id ?? generateHashId(6),
     kind,
@@ -2452,8 +2513,15 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
     textWidth: config?.textWidth ?? INITIAL_ANNOTATION_TEXT_WIDTH,
     textHeight: config?.textHeight ?? INITIAL_ANNOTATION_TEXT_HEIGHT,
     textVerticalAlign: config?.textVerticalAlign ?? ('bottom' as const),
+    ...(textSide ? {textSide} : {}),
+    ...(textVerticalPosition ? {textVerticalPosition} : {}),
     mapIndex: config?.mapIndex
   };
+
+  const defaultAngle =
+    textSide && textVerticalPosition
+      ? ANNOTATION_ANGLE_BY_PLACEMENT[`${textSide}-${textVerticalPosition}`]
+      : INITIAL_ANNOTATION_ANGLE;
 
   switch (kind) {
     case AnnotationKind.POINT:
@@ -2461,21 +2529,21 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
         ...base,
         kind: AnnotationKind.POINT,
         armLength: (config as any)?.armLength ?? INITIAL_ANNOTATION_ARM_LENGTH,
-        angle: (config as any)?.angle ?? INITIAL_ANNOTATION_ANGLE
+        angle: providedAngle ?? defaultAngle
       };
     case AnnotationKind.ARROW:
       return {
         ...base,
         kind: AnnotationKind.ARROW,
         armLength: (config as any)?.armLength ?? INITIAL_ANNOTATION_ARM_LENGTH,
-        angle: (config as any)?.angle ?? INITIAL_ANNOTATION_ANGLE
+        angle: providedAngle ?? defaultAngle
       };
     case AnnotationKind.CIRCLE:
       return {
         ...base,
         kind: AnnotationKind.CIRCLE,
         armLength: (config as any)?.armLength ?? INITIAL_ANNOTATION_ARM_LENGTH,
-        angle: (config as any)?.angle ?? INITIAL_ANNOTATION_ANGLE,
+        angle: providedAngle ?? defaultAngle,
         radiusInMeters: (config as any)?.radiusInMeters ?? 1000
       };
     case AnnotationKind.TEXT:
@@ -3613,9 +3681,13 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
     newLayers = mergedState.layers.filter(
       l => l.config.dataId && newDataIds.includes(l.config.dataId)
     );
+    // a layer already in a panel was merged from split maps, which decide the panels showing it
+    const layersNotInSplitMaps = newLayers.filter(
+      l => !mergedState.splitMaps.some(sm => l.id in sm.layers)
+    );
     mergedState = {
       ...mergedState,
-      splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, newLayers)
+      splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, layersNotInSplitMaps)
     };
   }
 
@@ -5593,8 +5665,13 @@ export function prepareStateForDatasetReplace<T extends VisState>(
 
   // preserveLayerOrder
   if (nextState.layerToBeMerged?.length) {
-    // copy split maps to be merged, because it will be reset in remove layer
-    nextState.splitMapsToBeMerged = serializedState?.splitMaps ?? [];
+    // copy split maps to be merged, because it will be reset in remove layer.
+    // Keep the ones of a dataset replaced a moment earlier and not merged back yet:
+    // its layers are no longer in the current split maps.
+    nextState.splitMapsToBeMerged = combineSplitMapsByIndex(
+      state.splitMapsToBeMerged,
+      serializedState?.splitMaps ?? []
+    );
     nextState.layerOrder = [...preserveLayerOrder];
   }
 
@@ -5633,7 +5710,12 @@ export function replaceDatasetDepsInState<T extends VisState>(
           ? replacePropValueInState(replacedState, replacedItem, mergerOptions)
           : replacedState;
 
+        // Only when this dataset had items of its own to park. The toBeMerged list
+        // can still hold another dataset's items, replaced a moment earlier and
+        // not merged back yet; overwriting the order they were parked with would
+        // merge them back in reverse.
         if (
+          replacedItem &&
           mergerOptions.toMergeProp !== undefined &&
           replacedState[mergerOptions.toMergeProp]?.length &&
           preserveOrder

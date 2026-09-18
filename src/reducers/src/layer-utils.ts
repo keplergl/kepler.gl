@@ -297,7 +297,9 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
   const dataset = datasets[layer.config.dataId];
   const {gpuFilter} = dataset || {};
   const objectHovered = clicked || hoverInfo;
-  const visible = !mapLayers || (mapLayers && mapLayers[layer.id]);
+  // in split mode a layer missing from mapLayers is hidden, so coerce to a boolean
+  // instead of leaking undefined into deck.gl's visible prop
+  const visible = !mapLayers || Boolean(mapLayers[layer.id]);
   // Layer is Layer class
   return layer.renderLayer({
     data,
@@ -384,6 +386,7 @@ export type ComputeDeckLayersProps = {
   mapboxApiAccessToken?: string;
   mapboxApiUrl?: string;
   primaryMap?: boolean;
+  isAnnotationMode?: boolean;
   layersForDeck?: {[key: string]: boolean};
   editorInfo?: {
     editor: Editor;
@@ -430,6 +433,7 @@ function computeDeckLayersFromLayerOrder(
     animationConfig: any;
     mapLayers: any;
     hasShadowEffect: boolean;
+    isAnnotationMode?: boolean;
   },
   layerCallbacks?: any
 ): any[] {
@@ -441,7 +445,8 @@ function computeDeckLayersFromLayerOrder(
     interactionConfig,
     animationConfig,
     mapLayers,
-    hasShadowEffect
+    hasShadowEffect,
+    isAnnotationMode
   } = renderProps;
   return layerOrder
     .slice()
@@ -489,7 +494,8 @@ function computeDeckLayersFromLayerOrder(
           animationConfig,
           mapLayers,
           experimentalContext: {
-            hasShadowEffect
+            hasShadowEffect,
+            isAnnotationMode
           }
         },
         bindedLayerCallbacks
@@ -518,8 +524,15 @@ export function computeDeckLayers(
     splitMaps
   } = visState;
 
-  const {mapIndex, mapboxApiAccessToken, mapboxApiUrl, primaryMap, layersForDeck, editorInfo} =
-    options || {};
+  const {
+    mapIndex,
+    mapboxApiAccessToken,
+    mapboxApiUrl,
+    primaryMap,
+    layersForDeck,
+    editorInfo,
+    isAnnotationMode
+  } = options || {};
 
   let dataLayers: any[] = [];
 
@@ -555,7 +568,8 @@ export function computeDeckLayers(
                 interactionConfig,
                 animationConfig,
                 mapLayers,
-                hasShadowEffect
+                hasShadowEffect,
+                isAnnotationMode
               },
               layerCallbacks
             )
@@ -587,7 +601,8 @@ export function computeDeckLayers(
             animationConfig,
             mapLayers,
             experimentalContext: {
-              hasShadowEffect
+              hasShadowEffect,
+              isAnnotationMode
             }
           },
           bindedLayerCallbacks
@@ -612,6 +627,7 @@ export function computeDeckLayers(
         mapboxApiAccessToken,
         mapboxApiUrl,
         threeDBuildingColor: mapStyle.threeDBuildingColor,
+        pickable: Boolean(isAnnotationMode),
         updateTriggers: {
           getFillColor: mapStyle.threeDBuildingColor
         }

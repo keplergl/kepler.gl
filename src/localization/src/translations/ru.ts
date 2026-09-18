@@ -61,7 +61,8 @@ export default {
       alignment: 'Положение',
       addMoreLabel: 'Добавить еще ярлык',
       outlineWidth: 'Ширина контура',
-      outlineColor: 'Цвет контура'
+      outlineColor: 'Цвет контура',
+      collisionEnabled: 'Скрывать пересекающиеся подписи'
     }
   },
   sidebar: {
@@ -122,6 +123,7 @@ export default {
       trip: 'пути',
       s2: 'S2',
       geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'поток',
       vectortile: 'векторный тайл',
@@ -241,7 +243,9 @@ export default {
     addAnnotation: 'Добавить',
     type: 'Тип',
     lineWidth: 'Толщина линии',
-    color: 'Цвет'
+    color: 'Цвет',
+    textSide: 'Сторона текста',
+    textPlacement: 'Размещение'
   },
   effectDescription: {
     lightAndShadow:

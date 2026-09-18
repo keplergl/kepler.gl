@@ -26,7 +26,7 @@ import {
 } from 'test/helpers/mock-state';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-const {PointLayer} = KeplerGlLayers;
+const {PointLayer, WMSLayer, HeatmapLayer} = KeplerGlLayers;
 
 const MapLegend = appInjector.get(MapLegendFactory);
 const LayerColorLegend = appInjector.get(LayerColorLegendFactory);
@@ -272,6 +272,139 @@ test('Components -> MapLegend.render -> with colorLegends', t => {
     onLayerVisConfigChange.args[0][1].colorRange.colorLegends,
     {},
     'second arg should be empty'
+  );
+
+  t.end();
+});
+
+test('Components -> MapLegend.render -> WMS legend image', t => {
+  const wmsLayer = new WMSLayer({
+    id: 'wms-legend',
+    dataId: 'wms-dataset',
+    label: 'WMS legend layer',
+    isVisible: true
+  });
+  wmsLayer.updateLayerVisConfig({
+    wmsLayer: {
+      name: 'OSM-WMS',
+      title: 'OpenStreetMap',
+      boundingBox: [
+        [-180, -90],
+        [180, 90]
+      ],
+      queryable: true,
+      legendUrl: 'https://example.com/legend.png'
+    }
+  });
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <MapLegend layers={[wmsLayer]} />
+      </IntlWrapper>
+    );
+  }, 'Should not fail with a WMS layer');
+
+  t.equal(wrapper.find(StyledMapControlLegend).length, 1, 'should render 1 layer legend');
+  t.equal(
+    wrapper.find('.legend--layer_name').at(0).text(),
+    'WMS legend layer',
+    'should render WMS layer label'
+  );
+  t.equal(wrapper.find('img.legend--layer_image').length, 1, 'should render WMS legend image');
+  t.equal(
+    wrapper.find('img.legend--layer_image').at(0).props().src,
+    'https://example.com/legend.png',
+    'should use GetLegendGraphic / LegendURL'
+  );
+  t.equal(wrapper.find(LayerColorLegend).length, 0, 'should not render fill color legend for WMS');
+
+  t.end();
+});
+
+test('Components -> MapLegend.render -> heatmap color scale', t => {
+  const heatmapLayer = new HeatmapLayer({
+    id: 'heatmap-legend',
+    dataId: 'heatmap-dataset',
+    label: 'Heatmap legend layer',
+    isVisible: true
+  });
+  heatmapLayer.updateLayerConfig({
+    columns: {
+      lat: {value: 'lat', fieldIdx: 0},
+      lng: {value: 'lng', fieldIdx: 1}
+    }
+  });
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <MapLegend layers={[heatmapLayer]} />
+      </IntlWrapper>
+    );
+  }, 'Should not fail with a heatmap layer');
+
+  t.equal(wrapper.find(StyledMapControlLegend).length, 1, 'should render 1 layer legend');
+  t.equal(wrapper.find(LayerColorLegend).length, 1, 'should render heatmap color legend');
+  t.equal(
+    wrapper.find('.legend--layer_color_field').at(0).text().toLowerCase(),
+    'density',
+    'should label heatmap legend as density'
+  );
+  t.ok(
+    wrapper.find('.legend--color-ramp__segment').length >= 2,
+    'should render a horizontal color ramp'
+  );
+  t.equal(
+    wrapper.find('.legend--color-ramp__min').at(0).text(),
+    'Min',
+    'left end of the ramp should be labeled Min'
+  );
+  t.equal(
+    wrapper.find('.legend--color-ramp__max').at(0).text(),
+    'Max',
+    'right end of the ramp should be labeled Max'
+  );
+  t.equal(
+    wrapper.find(LayerDefaultLegend).length,
+    0,
+    'should not render weight by density when no weight field is set'
+  );
+
+  t.end();
+});
+
+test('Components -> MapLegend.render -> heatmap weight field', t => {
+  const heatmapLayer = new HeatmapLayer({
+    id: 'heatmap-legend-weight',
+    dataId: 'heatmap-dataset',
+    label: 'Heatmap weight legend',
+    isVisible: true
+  });
+  heatmapLayer.updateLayerConfig({
+    columns: {
+      lat: {value: 'lat', fieldIdx: 0},
+      lng: {value: 'lng', fieldIdx: 1}
+    },
+    weightField: {name: 'trip_distance', type: 'real'}
+  });
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <MapLegend layers={[heatmapLayer]} />
+      </IntlWrapper>
+    );
+  }, 'Should not fail with a weighted heatmap layer');
+
+  t.equal(wrapper.find(LayerColorLegend).length, 1, 'should still render heatmap color legend');
+  t.equal(wrapper.find(LayerDefaultLegend).length, 1, 'should render weight legend');
+  t.ok(
+    wrapper.find(LayerDefaultLegend).at(0).text().toLowerCase().includes('trip_distance'),
+    'weight legend should show the selected field name'
   );
 
   t.end();

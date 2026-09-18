@@ -60,7 +60,8 @@ export default {
       alignment: 'Sijoittelu',
       addMoreLabel: 'Lisää uusia nimiöitä',
       outlineWidth: 'Ääriviivan leveys',
-      outlineColor: 'Ääriviivan väri'
+      outlineColor: 'Ääriviivan väri',
+      collisionEnabled: 'Piilota päällekkäiset nimiöt'
     }
   },
   sidebar: {
@@ -121,6 +122,7 @@ export default {
       trip: 'matka',
       s2: 'S2',
       geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'virtaus',
       vectortile: 'vektoritiili',
@@ -240,7 +242,9 @@ export default {
     addAnnotation: 'Lisää',
     type: 'Tyyppi',
     lineWidth: 'Viivan leveys',
-    color: 'Väri'
+    color: 'Väri',
+    textSide: 'Tekstin puoli',
+    textPlacement: 'Sijoittelu'
   },
   effectDescription: {
     lightAndShadow:

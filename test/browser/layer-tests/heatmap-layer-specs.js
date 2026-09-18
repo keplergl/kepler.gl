@@ -17,7 +17,7 @@ import {KeplerGlLayers} from '@kepler.gl/layers';
 import {copyTableAndUpdate} from '@kepler.gl/table';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
 
-const {HeatmapLayer} = KeplerGlLayers;
+const {HeatmapLayer, PointLayer} = KeplerGlLayers;
 
 const columns = {
   lat: 'lat',
@@ -44,12 +44,100 @@ test('#HeatmapLayer -> contructor', t => {
           t.ok(layer.isAggregated === true, 'heatmaplayer is aggregated');
           t.ok(layer.config.label === 'test heatmap layer', 'label should be correct');
           t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
+          t.equal(layer.config.colorScale, 'quantize', 'heatmap legend should use quantize scale');
+          t.deepEqual(layer.config.colorDomain, [0, 1], 'heatmap legend domain should be 0-1');
+          t.notOk(
+            layer.visualChannels.color,
+            'color is legend-only and should not be a visual channel'
+          );
+          t.ok(
+            layer.getLegendVisualChannels().color,
+            'should expose a color channel for the legend'
+          );
+          t.deepEqual(
+            Object.keys(layer.getLegendVisualChannels()),
+            ['color'],
+            'legend should not show weight when no weight field is set'
+          );
         }
       }
     ]
   };
 
   testCreateCases(t, HeatmapLayer, TEST_CASES.CREATE);
+  t.end();
+});
+
+test('#HeatmapLayer -> assignConfigToLayer does not copy colorField', t => {
+  const pointLayer = new PointLayer({
+    dataId: 'taro',
+    isVisible: true,
+    label: 'points'
+  });
+  pointLayer.updateLayerConfig({
+    colorField: {name: 'trip_distance', type: 'real'},
+    colorScale: 'quantile',
+    colorDomain: [0, 100]
+  });
+
+  const heatmapLayer = new HeatmapLayer({
+    dataId: 'taro',
+    isVisible: true,
+    label: 'heatmap'
+  });
+  heatmapLayer.assignConfigToLayer(pointLayer.config, pointLayer.visConfigSettings);
+
+  t.equal(
+    heatmapLayer.config.colorField,
+    null,
+    'should not copy colorField from the previous layer type'
+  );
+  t.equal(
+    heatmapLayer.config.colorScale,
+    'quantize',
+    'should keep quantize legend scale after type change'
+  );
+  t.deepEqual(
+    heatmapLayer.config.colorDomain,
+    [0, 1],
+    'should keep 0-1 density domain after type change'
+  );
+  t.ok(
+    heatmapLayer.getLegendVisualChannels().color,
+    'legend should still expose the density color ramp'
+  );
+
+  t.end();
+});
+
+test('#HeatmapLayer -> getLegendVisualChannels includes weight field', t => {
+  const heatmapLayer = new HeatmapLayer({
+    dataId: 'taro',
+    isVisible: true,
+    label: 'heatmap'
+  });
+
+  t.deepEqual(
+    Object.keys(heatmapLayer.getLegendVisualChannels()),
+    ['color'],
+    'legend should only show the color ramp by default'
+  );
+
+  heatmapLayer.updateLayerConfig({
+    weightField: {name: 'trip_distance', type: 'real'}
+  });
+
+  t.deepEqual(
+    Object.keys(heatmapLayer.getLegendVisualChannels()),
+    ['color', 'weight'],
+    'legend should include weight when a weight field is selected'
+  );
+  t.equal(
+    heatmapLayer.getVisualChannelDescription('weight').measure,
+    'trip_distance',
+    'weight legend should use the selected field name'
+  );
+
   t.end();
 });
 

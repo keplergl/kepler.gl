@@ -872,6 +872,8 @@ const annotationPropsV1 = {
   textWidth: null,
   textHeight: null,
   textVerticalAlign: null,
+  textSide: null,
+  textVerticalPosition: null,
   armLength: null,
   angle: null,
   radiusInMeters: null

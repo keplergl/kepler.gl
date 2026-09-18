@@ -61,7 +61,8 @@ export default {
       alignment: 'Alineación',
       addMoreLabel: 'Añadir más etiquetas',
       outlineWidth: 'Ancho del contorno',
-      outlineColor: 'Color del contorno'
+      outlineColor: 'Color del contorno',
+      collisionEnabled: 'Ocultar etiquetas superpuestas'
     }
   },
   sidebar: {
@@ -122,6 +123,7 @@ export default {
       trip: 'viaje',
       s2: 'S2',
       geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'mosaico vectorial',
@@ -242,7 +244,9 @@ export default {
     addAnnotation: 'Añadir',
     type: 'Tipo',
     lineWidth: 'Ancho de línea',
-    color: 'Color'
+    color: 'Color',
+    textSide: 'Lado del texto',
+    textPlacement: 'Colocación'
   },
   effectDescription: {
     lightAndShadow:

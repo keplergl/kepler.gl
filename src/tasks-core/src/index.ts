@@ -366,7 +366,20 @@ export const taskMiddleware =
     const runEffect: RunnerFn = (effect, resolve, reject, ctx) => effect(resolve, reject, ctx);
 
     return Promise.all(
-      tasks.map(task => task.run(runEffect, dispatch, dispatch, {onProgress: dispatch}))
+      tasks.map(
+        task =>
+          new Promise((resolve, reject) => {
+            // Callback tasks and parallel combinators can return before their
+            // effects finish. Completion is signalled by their continuation,
+            // including the dispatch of any follow-up tasks it produces.
+            const complete = (nextAction: any) => dispatch(nextAction).then(resolve, reject);
+            // Still propagate a rejected runner (for example a throwing map
+            // callback) when it fails before invoking either continuation.
+            Promise.resolve(task.run(runEffect, complete, complete, {onProgress: dispatch})).catch(
+              reject
+            );
+          })
+      )
     );
   };
 

@@ -178,6 +178,8 @@ export {
   VisualChannelMetric
 } from './map/map-legend';
 
+export type {MapLegendProps, MapLegendIcons} from './map/map-legend';
+
 export {default as MapLegendPanelFactory} from './map/map-legend-panel';
 export {default as MapPopoverFactory, getSelectedFeature} from './map/map-popover';
 export {default as MapPopoverContentFactory} from './map/map-popover-content';
@@ -383,9 +385,15 @@ export {
   moveText,
   resizeCircle,
   isLeftOriented,
-  isPointVisibleOnGlobe
+  isBelowOriented,
+  getTextPlacement,
+  angleForTextPlacement,
+  textPlacementFromAngle,
+  getAnnotationTextBoxStyle,
+  isPointVisibleOnGlobe,
+  normalizeAnchorPoint
 } from './annotations';
-export type {MapViewport, AnnotationMarker} from './annotations';
+export type {MapViewport, AnnotationMarker, PickWorldPosition, LngLatAltitude} from './annotations';
 export {default as AnnotationControlFactory} from './map/annotations/annotation-control';
 
 export {default as ColorBreaksPanelFactory} from './side-panel/layer-panel/color-breaks-panel';

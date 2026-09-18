@@ -1,0 +1,90 @@
+# Manual GHCR publish. Actions → Docker publish → Run workflow → pick branch or tag.
+# The image is built from this repo (not from npm). Smoke-test before push so a
+# failing image never becomes :latest.
+name: Docker publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      update_latest:
+        description: 'Also push the latest tag'
+        type: boolean
+        default: false
+
+concurrency:
+  group: docker-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest,enable=${{ inputs.update_latest }}
+            type=sha,prefix=sha-
+            type=ref,event=tag
+
+      - name: Build production image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          load: true
+          provenance: false
+          sbom: false
+          tags: kepler-prod:ci
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke-test runtime config
+        run: |
+          docker run -d --name kepler-prod -p 8080:8080 \
+            -e KEPLER_MAPBOX_ACCESS_TOKEN=pk.ci-test \
+            -e KEPLER_PAGE_TITLE=ci-title \
+            kepler-prod:ci
+
+          cleanup() { docker logs kepler-prod || true; docker rm -f kepler-prod || true; }
+          trap cleanup EXIT
+
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/config.json >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+
+          curl -fsS http://127.0.0.1:8080/config.json > /tmp/kepler-config.json
+          python3 -c 'import json; c=json.load(open("/tmp/kepler-config.json")); assert c["credentials"]["MapboxAccessToken"]=="pk.ci-test", c; assert c["pageTitle"]=="ci-title", c'
+          curl -fsS http://127.0.0.1:8080/ | grep -q 'id="root"'
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push tags
+        run: |
+          set -euo pipefail
+          echo "${{ steps.meta.outputs.tags }}" | while IFS= read -r tag; do
+            [ -z "$tag" ] && continue
+            docker tag kepler-prod:ci "$tag"
+            docker push "$tag"
+          done

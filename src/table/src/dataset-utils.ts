@@ -34,6 +34,7 @@ import {
   getFieldsFromTile,
   VectorTileMetadata
 } from './tileset/vector-tile-utils';
+import {buildWmsGetCapabilitiesUrl, wmsCapabilitiesToDatasetMetadata} from './tileset/wms-utils';
 
 // apply a color for each dataset
 // to use as label colors
@@ -262,7 +263,7 @@ async function refreshWMSMetadata(datasetInfo: CreateTableProps): Promise<any | 
 
   try {
     const data = await getWMSCapabilities(tilesetDataUrl);
-    return wmsCapabilitiesToDatasetMetadata(data);
+    return wmsCapabilitiesToDatasetMetadata(data, tilesetDataUrl);
   } catch (err) {
     // ignore for now, and use old metadata
   }
@@ -270,42 +271,8 @@ async function refreshWMSMetadata(datasetInfo: CreateTableProps): Promise<any | 
 }
 
 export async function getWMSCapabilities(wsmUrl: string): Promise<WMSCapabilities> {
-  return (await load(
-    `${wsmUrl}?service=WMS&request=GetCapabilities`,
-    WMSCapabilitiesLoader
-  )) as WMSCapabilities;
-}
-
-export function wmsCapabilitiesToDatasetMetadata(capabilities: WMSCapabilities): any | null {
-  // Flatten layers if they are nested
-  const layers = capabilities.layers.flatMap(layer => {
-    if (layer.layers && layer.layers.length > 0) {
-      return layer.layers;
-    }
-    return layer;
-  });
-
-  let availableLayers: WMSDatasetMetadata['layers'] = [];
-  if (Array.isArray(layers)) {
-    availableLayers = layers.map((layer: any) => {
-      const bb = layer.geographicBoundingBox;
-
-      let boundingBox: number[] | null = null;
-      if (Array.isArray(bb) && Array.isArray(bb[0]) && Array.isArray(bb[1])) {
-        boundingBox = [bb[0][0], bb[0][1], bb[1][0], bb[1][1]];
-      }
-
-      return {
-        name: layer.name,
-        title: layer.title || layer.name,
-        boundingBox,
-        queryable: layer.queryable
-      };
-    });
-  }
-
-  return {
-    layers: availableLayers,
-    version: capabilities.version || '1.3.0'
-  };
+  const capabilitiesUrl = buildWmsGetCapabilitiesUrl(wsmUrl) || wsmUrl;
+  return (await load(capabilitiesUrl, WMSCapabilitiesLoader, {
+    wms: {includeRawJSON: true}
+  })) as WMSCapabilities;
 }

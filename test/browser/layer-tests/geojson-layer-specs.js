@@ -15,6 +15,8 @@ import {
   testFormatLayerDataCases,
   testRenderLayerCases,
   prepareGeojsonDataset,
+  prepareTripTableDataset,
+  speedFilterDomain0,
   geoFilterDomain0,
   geojsonFilterDomain0
 } from 'test/helpers/layer-utils';
@@ -506,6 +508,58 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           layer.dataToFeature,
           expectedDataToFeature,
           'should format correct geojson layer dataToFeature'
+        );
+      }
+    }
+  ];
+
+  testFormatLayerDataCases(t, GeojsonLayer, TEST_CASES);
+  t.end();
+});
+
+test('#GeojsonLayer -> formatLayerData -> table column mode with gpu filter', t => {
+  // The GPU filter reads a layer's values through the accessor the layer hands
+  // it, called as getData(dataContainer, feature, fieldIndex). Table column mode
+  // groups rows by id, so the value of each channel is an array, one entry per
+  // point of the grouped feature.
+  const TEST_CASES = [
+    {
+      name: 'Geojson Table.1',
+      layer: {
+        type: 'geojson',
+        id: 'test_geojson_table_layer',
+        config: {
+          dataId,
+          label: 'gps tracks',
+          columnMode: 'table',
+          columns: {
+            id: 'name',
+            lat: 'location-lat',
+            lng: 'location-lng',
+            altitude: 'location-alt'
+          }
+        }
+      },
+      datasets: {
+        [dataId]: prepareTripTableDataset
+      },
+      assert: result => {
+        const {layerData} = result;
+
+        let filterValues;
+        t.doesNotThrow(() => {
+          filterValues = layerData.data.map(layerData.getFilterValue);
+        }, 'getFilterValue should not throw in table column mode');
+
+        // The first feature groups the 8 rows named Thuub that carry a
+        // coordinate; the row with an empty location is dropped.
+        const round = v => Math.round(v * 100) / 100;
+        const groundSpeeds = [0.22, 0.27, 0.32, 0.46, 0.51, 0.3, 0.33, 0.43];
+
+        t.deepEqual(
+          (filterValues?.[0] ?? []).map(point => round(point[0])),
+          groundSpeeds.map(speed => round(speed - speedFilterDomain0)),
+          'getFilterValue should return one filter value per point of the feature'
         );
       }
     }

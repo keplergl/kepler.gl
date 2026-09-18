@@ -1520,6 +1520,109 @@ test('VisStateMerger - mergeSplitMaps', t => {
     'should create split maps panel, add current layer to splitMaps and merge split maps'
   );
 
+  const emptySM = [{layers: {}}, {layers: {}}];
+  const testState5 = {
+    layers: [],
+    splitMaps: [],
+    splitMapsToBeMerged: []
+  };
+  t.deepEqual(
+    mergeSplitMaps(testState5, emptySM),
+    {
+      ...testState5,
+      splitMaps: emptySM,
+      splitMapsToBeMerged: []
+    },
+    'should create split maps panel from split maps without layers'
+  );
+
+  const testState6 = {
+    layers: [{id: 'a', config: {isVisible: true}}],
+    splitMaps: [{layers: {a: true}}, {layers: {a: false}}],
+    splitMapsToBeMerged: []
+  };
+  t.deepEqual(
+    mergeSplitMaps(testState6, emptySM),
+    {
+      ...testState6,
+      splitMapsToBeMerged: []
+    },
+    'should not add panels when merging split maps without layers into a split map'
+  );
+
+  t.end();
+});
+
+test('VisStateMerger - mergeSplitMaps -> keep panels index-aligned', t => {
+  const layerA = {id: 'a', config: {isVisible: true}};
+  const layerB = {id: 'b', config: {isVisible: true}};
+
+  // saved from DUAL_MAP mode: every layer on the left panel, nothing on the right one
+  const dualMap = [{layers: {a: true}}, {layers: {}}];
+  const loading = mergeSplitMaps({layers: [], splitMaps: [], splitMapsToBeMerged: []}, dualMap);
+  t.deepEqual(
+    loading.splitMaps,
+    [{layers: {}}, {layers: {}}],
+    'should create both panels while layer a is not loaded, without a hole on the left'
+  );
+  t.deepEqual(loading.splitMapsToBeMerged, dualMap, 'should wait for layer a in the left panel');
+  t.deepEqual(
+    mergeSplitMaps(
+      {...loading, layers: [layerA], splitMapsToBeMerged: []},
+      loading.splitMapsToBeMerged
+    ).splitMaps,
+    dualMap,
+    'should show layer a only in the left panel once loaded'
+  );
+
+  t.deepEqual(
+    mergeSplitMaps(
+      {
+        layers: [],
+        splitMaps: [{layers: {}}, {layers: {}}],
+        splitMapsToBeMerged: [{layers: {p: true}}, {layers: {p: false}}]
+      },
+      [{layers: {q: true}}, {layers: {q: false}}]
+    ).splitMapsToBeMerged,
+    [{layers: {p: true, q: true}}, {layers: {p: false, q: false}}],
+    'should add layers waiting to be merged to the panel at the same index'
+  );
+
+  t.deepEqual(
+    mergeSplitMaps(
+      {layers: [layerA], splitMaps: [{layers: {}}, {layers: {}}], splitMapsToBeMerged: []},
+      [{layers: {a: true}}, {layers: {b: true}}]
+    ).splitMapsToBeMerged,
+    [{layers: {}}, {layers: {b: true}}],
+    'should keep layer b waiting in the right panel, without a hole on the left'
+  );
+
+  t.deepEqual(
+    mergeSplitMaps({layers: [layerA], splitMaps: [], splitMapsToBeMerged: []}, [
+      {layers: {}},
+      {layers: {}}
+    ]).splitMaps,
+    [{layers: {a: true}}, {layers: {a: true}}],
+    'should add current layers to panels created without layers'
+  );
+
+  t.deepEqual(
+    mergeSplitMaps({layers: [layerA, layerB], splitMaps: [], splitMapsToBeMerged: []}, [
+      {layers: {a: true, b: true}},
+      {layers: {b: true}}
+    ]).splitMaps,
+    [{layers: {a: true, b: true}}, {layers: {b: true}}],
+    'should not add a layer of the merged split maps to a panel that does not list it'
+  );
+
+  const config = [{layers: {a: true}}, {layers: {}}];
+  const configBefore = cloneDeep(config);
+  const merged = mergeSplitMaps({layers: [layerA], splitMaps: [], splitMapsToBeMerged: []}, config);
+  const mergedBefore = cloneDeep(merged);
+  mergeSplitMaps(merged, [{layers: {a: false}}, {layers: {a: true}}]);
+  t.deepEqual(merged, mergedBefore, 'should not change the split maps of the previous state');
+  t.deepEqual(config, configBefore, 'should not change the merged split maps');
+
   t.end();
 });
 

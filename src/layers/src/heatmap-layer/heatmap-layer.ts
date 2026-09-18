@@ -6,9 +6,18 @@ import {
   CHANNEL_SCALES,
   ALL_FIELD_TYPES,
   GEOJSON_FIELDS,
-  GEOARROW_METADATA_KEY
+  GEOARROW_METADATA_KEY,
+  SCALE_TYPES
 } from '@kepler.gl/constants';
-import Layer, {LayerBaseConfigPartial, LayerWeightConfig, VisualChannels} from '../base-layer';
+import Layer, {
+  LayerBaseConfigPartial,
+  LayerColorConfig,
+  LayerWeightConfig,
+  VisualChannel,
+  VisualChannelDomain,
+  VisualChannelScale,
+  VisualChannels
+} from '../base-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 import {
   ColorRange,
@@ -72,7 +81,11 @@ export type HeatmapLayerVisConfig = {
   aggregation: string;
 };
 
-export type HeatmapLayerVisualChannelConfig = LayerWeightConfig;
+export type HeatmapLayerVisualChannelConfig = LayerWeightConfig &
+  LayerColorConfig & {
+    weightDomain: VisualChannelDomain;
+    weightScale: VisualChannelScale;
+  };
 export type HeatmapLayerConfig = Merge<
   LayerBaseConfig,
   {columns: HeatmapLayerColumnsConfig; visConfig: HeatmapLayerVisConfig}
@@ -80,6 +93,19 @@ export type HeatmapLayerConfig = Merge<
   HeatmapLayerVisualChannelConfig;
 
 export const MAX_ZOOM_LEVEL = 18;
+
+// Legend-only: heatmap GPU color is density × colorRange, not a data field.
+// Keep this off `visualChannels` so layer type change does not copy colorField.
+const HEATMAP_LEGEND_COLOR_CHANNEL: VisualChannel = {
+  property: 'color',
+  field: 'colorField',
+  scale: 'colorScale',
+  domain: 'colorDomain',
+  range: 'colorRange',
+  key: 'color',
+  channelScaleType: CHANNEL_SCALES.color,
+  defaultMeasure: 'property.density'
+};
 
 export const pointPosAccessor =
   ({lat, lng}: HeatmapLayerColumnsConfig) =>
@@ -324,6 +350,29 @@ class HeatmapLayer extends Layer {
     };
   }
 
+  getLegendVisualChannels() {
+    const channels: VisualChannels = {color: HEATMAP_LEGEND_COLOR_CHANNEL};
+    // Show "weight by <field>" when a weight column is selected. Default
+    // density weighting is already represented by the color ramp.
+    if (this.config.weightField) {
+      channels.weight = this.visualChannels.weight;
+    }
+    return channels;
+  }
+
+  assignConfigToLayer(
+    ...args: Parameters<Layer['assignConfigToLayer']>
+  ): ReturnType<Layer['assignConfigToLayer']> {
+    super.assignConfigToLayer(...args);
+    // Density legend is not a color-by-field channel. Drop copied colorField /
+    // colorScale / colorDomain from the previous layer type.
+    this.updateLayerConfig({
+      colorField: null,
+      colorScale: SCALE_TYPES.quantize,
+      colorDomain: [0, 1]
+    });
+  }
+
   get layerIcon() {
     return HeatmapLayerIcon;
   }
@@ -368,19 +417,19 @@ class HeatmapLayer extends Layer {
     };
   }
 
-  getDefaultLayerConfig(props: LayerBaseConfigPartial): HeatmapLayerConfig {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const {colorField, colorDomain, colorScale, ...layerConfig} = {
+  getDefaultLayerConfig(props: LayerBaseConfigPartial) {
+    // Keep colorScale / colorDomain so the map legend can render the selected
+    // color ramp. colorField stays unused: heatmap color is density, not a field.
+    return {
       ...super.getDefaultLayerConfig(props),
       columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
-
+      colorField: null,
+      colorScale: SCALE_TYPES.quantize,
+      colorDomain: [0, 1] as [number, number],
       weightField: null,
-      weightDomain: [0, 1],
-      weightScale: 'linear'
+      weightDomain: [0, 1] as [number, number],
+      weightScale: SCALE_TYPES.linear
     };
-
-    // @ts-expect-error
-    return layerConfig;
   }
 
   updateLayerMeta(dataset: KeplerTable) {
@@ -503,10 +552,7 @@ class HeatmapLayer extends Layer {
       return {};
     }
     const dataset = datasets[dataId];
-    const {weightField, weightScale, weightDomain} = this.config as HeatmapLayerConfig & {
-      weightScale: string;
-      weightDomain: number[];
-    };
+    const {weightField, weightScale, weightDomain} = this.config;
     const {gpuFilter, dataContainer} = dataset;
 
     const oldData = oldLayerData as any;
@@ -538,7 +584,7 @@ class HeatmapLayer extends Layer {
     let getWeight: ((d: {index: number}) => number) | number = 1;
     if (weightField) {
       const weightRange = [0, 1];
-      const scaleFunc = this.getVisChannelScale(weightScale, weightDomain, weightRange);
+      const scaleFunc = this.getVisChannelScale(String(weightScale), weightDomain, weightRange);
       getWeight = (d: {index: number}) =>
         this.getEncodedChannelValue(scaleFunc || (x => x), d as any, weightField, 0 as any);
     }

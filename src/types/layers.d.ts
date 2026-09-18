@@ -62,11 +62,23 @@ export type EnhancedFieldPair = {
   pair: FieldPair['pair'];
 };
 
+export type ColumnGroup = {
+  key: string;
+  label: string;
+  /** Column keys shown when this group is active (mutually exclusive with other groups). */
+  columns: string[];
+};
+
 export type SupportedColumnMode = {
   key: string;
   label: string;
   requiredColumns: string[];
   optionalColumns?: string[];
+  /**
+   * Optional mutually exclusive column sets rendered as tabs
+   * (e.g. Lat/Lng vs GeoJSON position source).
+   */
+  columnGroups?: ColumnGroup[];
   hasHelp?: boolean;
   verifyField?: (field: Field) => boolean;
 };
@@ -107,6 +119,8 @@ export type LayerRadiusConfig = {
 };
 export type LayerWeightConfig = {
   weightField: VisualChannelField;
+  weightDomain?: VisualChannelDomain;
+  weightScale?: VisualChannelScale;
 };
 
 export type IndexBy = {
@@ -169,6 +183,8 @@ export type LayerTextLabel = {
   outlineWidth: number;
   outlineColor: RGBAColor;
   backgroundColor: RGBAColor | null;
+  /** Hide labels that overlap other labels of the same field (GPU collision filter). */
+  collisionEnabled?: boolean;
 };
 
 export type ColorRangeConfig = {
@@ -236,6 +252,8 @@ export type VisConfig = {
   ) => boolean;
 
   allowCustomValue?: boolean;
+  /** Checkbox label shown when allowCustomValue is true. Defaults to "custom input". */
+  customInputLabel?: string;
 };
 
 export type VisConfigNumber = VisConfig & {

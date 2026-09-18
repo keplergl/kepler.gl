@@ -61,7 +61,8 @@ export default {
       alignment: '对齐方式',
       addMoreLabel: '添加更多标签',
       outlineWidth: '轮廓宽度',
-      outlineColor: '轮廓颜色'
+      outlineColor: '轮廓颜色',
+      collisionEnabled: '隐藏重叠标签'
     }
   },
   sidebar: {
@@ -121,6 +122,7 @@ export default {
       trip: 'trip',
       s2: 'S2',
       geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'vector tile',
@@ -237,7 +239,9 @@ export default {
     addAnnotation: '添加',
     type: '类型',
     lineWidth: '线宽',
-    color: '颜色'
+    color: '颜色',
+    textSide: '文本位置',
+    textPlacement: '对齐'
   },
   effectDescription: {
     lightAndShadow:

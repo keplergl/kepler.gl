@@ -1,0 +1,13 @@
+[
+  {
+    "id": "my-sample",
+    "label": "My sample",
+    "queryType": "sample",
+    "visible": true,
+    "size": 0,
+    "description": "Point mapConfigUrl at this catalogue. Each row uses absolute URLs; the app does not prefix DATA_URL.",
+    "imageUrl": "https://example.com/gallery/preview.png",
+    "dataUrl": "https://example.com/gallery/data.csv",
+    "configUrl": "https://example.com/gallery/config.json"
+  }
+]

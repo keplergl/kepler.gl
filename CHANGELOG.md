@@ -15,6 +15,38 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.12] - Sep 17 2026
+
+- 5ae15302 feat: add experimental Flow Field layer (#3722)
+- ccf6aa45 chore(deps): bump react-router-dom in /examples/demo-app-sqlrooms (#3732)
+- 0b9f576a feat: add SQLRooms integration and a separate experimental demo (#3721)
+- 3c28dfd3 feat: detect extensionless COG URLs in raster tile add-data (#3723)
+- f9a29942 feat(docker): runtime config for demo-app image (#3725)
+- 52a769e2 feat: hide overlapping text labels (#3707)
+- f6e4f636 fix(globe): text labels not occluded for objects on the back side of the globe (#3731)
+- 5cae52f5 fix: keep layer order when replacing datasets back to back (#3728)
+- 9c95180f (igr/globe-label-occlusion) fix(layers): show layer text labels in globe mode (#3730)
+- 698fc230 fix: text labels ignore left/right visibility in split/swipe modes (#3729)
+- 5d71d1c1 feat: snap annotations to 3D surfaces (#3719)
+- ad4abb6f docs: document Incremental Time Window for playback (#3724)
+- e090e7c2 feat: add heatmap and WMS legends to the map legend (#3718)
+
+## [3.3.0-alpha.11] - Sep 10 2026
+
+- 862aa5cb fix(exported-html): include only one copy of arrow (#3717)
+- 34921e2d fix: cancel raster tile requests when deck.gl aborts the tile (#3715)
+- 58265900 feat: add left and below placement for annotation text (#3706)
+- 131f6642 fix: pass the feature to table-mode GPU filter accessors (#3710)
+- 17f2ae12 chore(deps): bump react-router-dom from 6.30.4 to 6.30.6 in /website (#3708)
+- d48bd5c2 fix: prevent long annotation names from stretching the annotations panel (#3705)
+- bcf42616 fix: draw float32 raster tiles (#3704)
+- e29bad01 chore: move filter panel interval message to a tooltip (#3701)
+- 68e844d2 fix: geojson stroke color via config (#3700)
+- 150246a0 feat: optional end time for time filter animation (#3699)
+- 54b620d8 fix: adjust labels in add data to map modal (#3698)
+- c3aeb45b feat: add KML, GPX, TCX, and GeoJSONL loaders (#3697)
+- d37b8a25 chore: remove react-palm, replace with built-in task runtime in @kepler.gl/tasks (#3592)
+
 ## [3.3.0-alpha.10] - Sep 3 2026
 
 - 878d9651 chore: live-data example WebSocket host (ws → addToDataset) (#3687)

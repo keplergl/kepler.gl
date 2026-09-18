@@ -18,6 +18,7 @@ typedoc/
 
 examples/**/yarn.lock
 !examples/demo-app/yarn.lock
+!examples/demo-app-sqlrooms/yarn.lock
 !examples/custom-reducer/yarn.lock
 !examples/custom-theme/yarn.lock
 !examples/open-modal/yarn.lock
@@ -55,3 +56,4 @@ lerna-debug.log
 .netlify
 meta.json
 .env
+docker/config.json

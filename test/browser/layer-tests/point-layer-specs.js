@@ -8,9 +8,10 @@ import {scaleQuantize} from 'd3-scale';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
+import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/deckgl-layers';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {processGeojson} from '@kepler.gl/processors';
-import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE, renderDeckGlLayer} from '@kepler.gl/reducers';
 import {copyTableAndUpdate} from '@kepler.gl/table';
 import {hexToRgb} from '@kepler.gl/utils';
 
@@ -20,6 +21,8 @@ import {StateWArcNeighbors} from 'test/helpers/mock-state';
 import {createNewDataEntryMock} from 'test/helpers/table-utils';
 import {
   testCreateCases,
+  testCreateLayerFromConfig,
+  testFormatLayerData,
   testFormatLayerDataCases,
   testRenderLayerCases,
   testUpdateLayer,
@@ -696,6 +699,115 @@ test('#PointLayer -> renderLayer', t => {
           [Number.MIN_SAFE_INTEGER, 0, 0, 0],
           'Should calculate correct instancePixelOffset'
         );
+        t.notOk(
+          (deckLayers[1].props.extensions || []).some(
+            ext => ext.constructor.extensionName === 'CollisionFilterExtension'
+          ),
+          'Should not add CollisionFilterExtension when collision is off'
+        );
+        t.notOk(
+          deckLayers[1].props.collisionEnabled,
+          'Should leave collision filtering disabled by default'
+        );
+      }
+    },
+    {
+      name: 'Point gps point.1 with text labels and collision filtering',
+      layer: {
+        config: {
+          dataId,
+          label: 'gps point',
+          columns: {
+            lat: 'lat',
+            lng: 'lng',
+            altitude: 'id'
+          },
+          textLabel: [
+            {
+              field: {
+                name: 'types',
+                type: 'string'
+              },
+              collisionEnabled: true
+            }
+          ]
+        },
+        type: 'point',
+        id: 'test_layer_1'
+      },
+      datasets: {
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+      },
+      assert: deckLayers => {
+        const labelLayer = deckLayers.find(l => l.id === 'test_layer_1-label-types-collision');
+        t.ok(labelLayer, 'Should create a text label layer');
+        t.ok(
+          labelLayer.props.extensions.some(
+            ext => ext.constructor.extensionName === 'CollisionFilterExtension'
+          ),
+          'Should add CollisionFilterExtension to the text label layer'
+        );
+        t.equal(labelLayer.props.collisionEnabled, true, 'Should enable collision filtering');
+        t.equal(
+          labelLayer.props.collisionGroup,
+          'test_layer_1-text-label-0',
+          'Should use a per-label collision group'
+        );
+        t.equal(
+          labelLayer.constructor.layerName,
+          'CollisionTextLayer',
+          'Should use CollisionTextLayer so the hit area covers the anchor'
+        );
+        t.equal(labelLayer.props.background, true, 'Should enable a collision background');
+        t.equal(
+          labelLayer.props.collisionShowBackground,
+          false,
+          'Should hide the collision-only background in the color pass'
+        );
+      }
+    },
+    {
+      name: 'Point gps point.1 with text labels, collision filtering and visible background',
+      layer: {
+        config: {
+          dataId,
+          label: 'gps point',
+          columns: {
+            lat: 'lat',
+            lng: 'lng',
+            altitude: 'id'
+          },
+          textLabel: [
+            {
+              field: {
+                name: 'types',
+                type: 'string'
+              },
+              background: true,
+              collisionEnabled: true
+            }
+          ]
+        },
+        type: 'point',
+        id: 'test_layer_1'
+      },
+      datasets: {
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+      },
+      assert: deckLayers => {
+        const labelLayer = deckLayers.find(l => l.id === 'test_layer_1-label-types-collision');
+        t.ok(labelLayer, 'Should create a text label layer');
+        t.equal(
+          labelLayer.constructor.layerName,
+          'CollisionTextLayer',
+          'Should use CollisionTextLayer so the hit area covers the anchor'
+        );
+        t.equal(labelLayer.props.background, true, 'Should keep the user background enabled');
+        t.equal(
+          labelLayer.props.collisionShowBackground,
+          true,
+          'Should still draw the user background in the color pass'
+        );
       }
     },
     {
@@ -770,6 +882,166 @@ test('#PointLayer -> renderLayer', t => {
   ];
 
   testRenderLayerCases(t, PointLayer, TEST_CASES);
+  t.end();
+});
+
+test('#PointLayer -> renderLayer split map label visibility', t => {
+  const filteredIndex = [0, 2, 4];
+  const tc = {
+    layer: {
+      config: {
+        dataId,
+        label: 'gps point',
+        columns: {
+          lat: 'lat',
+          lng: 'lng',
+          altitude: 'id'
+        },
+        textLabel: [
+          {
+            field: {
+              name: 'types',
+              type: 'string'
+            }
+          }
+        ]
+      },
+      type: 'point',
+      id: 'test_layer_1'
+    },
+    datasets: {
+      [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+    }
+  };
+
+  const layer = testCreateLayerFromConfig(t, tc, {point: PointLayer});
+  const data = testFormatLayerData(t, layer, tc.datasets);
+
+  const renderWithMapLayers = mapLayers =>
+    renderDeckGlLayer(
+      {
+        datasets: tc.datasets,
+        layer,
+        layerIndex: 0,
+        data,
+        mapState: INITIAL_MAP_STATE,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        mapLayers
+      },
+      {}
+    );
+
+  const assertVisible = (deckLayers, expected, message) => {
+    const labelLayers = deckLayers.filter(l => String(l.id).includes('-label-'));
+    t.ok(labelLayers.length > 0, `should create text label layers (${message})`);
+    t.equal(deckLayers[0].props.visible, expected, `geometry ${message}`);
+    labelLayers.forEach(l => {
+      t.equal(l.props.visible, expected, `${l.id} ${message}`);
+    });
+  };
+
+  assertVisible(
+    renderWithMapLayers(undefined),
+    true,
+    'should be visible when mapLayers is not set'
+  );
+  assertVisible(
+    renderWithMapLayers({[layer.id]: true}),
+    true,
+    'should be visible when the panel entry is true'
+  );
+  assertVisible(
+    renderWithMapLayers({[layer.id]: false}),
+    false,
+    'should be hidden when the panel entry is false'
+  );
+  assertVisible(renderWithMapLayers({}), false, 'should be hidden when the panel entry is missing');
+
+  t.end();
+});
+
+test('#PointLayer -> renderLayer globe mode text labels', t => {
+  const tc = {
+    layer: {
+      config: {
+        dataId,
+        label: 'gps point',
+        columns: {
+          lat: 'lat',
+          lng: 'lng',
+          altitude: 'id'
+        },
+        textLabel: [
+          {
+            field: {
+              name: 'types',
+              type: 'string'
+            },
+            background: true
+          }
+        ]
+      },
+      type: 'point',
+      id: 'test_layer_1'
+    },
+    datasets: {
+      [dataId]: preparedDataset
+    }
+  };
+
+  const layer = testCreateLayerFromConfig(t, tc, {point: PointLayer});
+  const data = testFormatLayerData(t, layer, tc.datasets);
+
+  const renderWithMapState = mapState =>
+    renderDeckGlLayer(
+      {
+        datasets: tc.datasets,
+        layer,
+        layerIndex: 0,
+        data,
+        mapState,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig
+      },
+      {}
+    ).find(l => String(l.id).includes('-label-'));
+
+  const flatLabel = renderWithMapState(INITIAL_MAP_STATE);
+  t.ok(flatLabel, 'should create a text label layer in flat mode');
+  t.equal(
+    flatLabel.props.parameters.depthTest,
+    false,
+    'should not depth-test labels outside globe mode'
+  );
+  t.notOk('cull' in flatLabel.props.parameters, 'should not touch culling outside globe mode');
+  t.notOk(
+    flatLabel.props._subLayerProps.characters,
+    'should not override the glyph sublayer outside globe mode'
+  );
+
+  // globe mode sets a global `cull: true`, which would otherwise discard the glyph quads
+  const globeLabel = renderWithMapState({...INITIAL_MAP_STATE, globe: {enabled: true}});
+  t.equal(globeLabel.props.parameters.cull, false, 'should disable culling in globe mode');
+  t.equal(
+    globeLabel.props.parameters.depthTest,
+    true,
+    'should depth-test labels against the globe depth disk'
+  );
+  t.equal(
+    globeLabel.props.parameters.depthMask,
+    false,
+    'should not write depth so labels do not occlude each other'
+  );
+  t.equal(
+    globeLabel.props._subLayerProps.characters.type,
+    EnhancedMultiIconLayer,
+    'should render glyphs with the globe back-face culling sublayer'
+  );
+  t.equal(
+    globeLabel.props._subLayerProps.background.type,
+    EnhancedTextBackgroundLayer,
+    'should render the label background with the globe back-face culling sublayer'
+  );
+
   t.end();
 });
 

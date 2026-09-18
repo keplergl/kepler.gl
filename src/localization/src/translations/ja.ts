@@ -61,7 +61,8 @@ export default {
       addMoreLabel: 'ラベルを追加',
       backgroundColor: '背景色',
       outlineWidth: '輪郭線の幅',
-      outlineColor: '輪郭線の色'
+      outlineColor: '輪郭線の色',
+      collisionEnabled: '重なったラベルを非表示'
     }
   },
   sidebar: {
@@ -122,6 +123,7 @@ export default {
       trip: 'trip',
       s2: 'S2',
       geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'vector tile',
@@ -239,7 +241,9 @@ export default {
     addAnnotation: '追加',
     type: 'タイプ',
     lineWidth: '線幅',
-    color: '色'
+    color: '色',
+    textSide: 'テキストの位置',
+    textPlacement: '配置'
   },
   effectDescription: {
     lightAndShadow:

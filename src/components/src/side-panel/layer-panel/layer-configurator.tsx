@@ -1722,6 +1722,56 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    _renderFlowFieldLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
+      const colorBySpeed = Boolean(layer.config.visConfig.colorBySpeed);
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label="layer.color">
+            <VisConfigSwitch {...layer.visConfigSettings.colorBySpeed} {...visConfiguratorProps} />
+            {colorBySpeed ? (
+              <LayerColorRangeSelector {...visConfiguratorProps} property="colorRange" />
+            ) : (
+              <LayerColorSelector {...layerConfiguratorProps} />
+            )}
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label="layerVisConfigs.flowField.streamlines" collapsible>
+            <VisConfigSlider
+              {...layer.visConfigSettings.linesPerScreen}
+              {...visConfiguratorProps}
+            />
+            <VisConfigSlider {...layer.visConfigSettings.strokeWidth} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.trailLength} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.zoomResponse}
+                {...visConfiguratorProps}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup label="layerVisConfigs.flowField.animation">
+            <VisConfigSlider {...layer.visConfigSettings.cycleSeconds} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.lineLifetime} {...visConfiguratorProps} />
+            <VisConfigSwitch {...layer.visConfigSettings.seamlessLoop} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label="layerVisConfigs.flowField.field" collapsible>
+            <VisConfigSlider {...layer.visConfigSettings.smoothing} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.gridResolution}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSlider
+                {...layer.visConfigSettings.elevationMultiplier}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSwitch {...layer.visConfigSettings.debugGrid} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
     _renderFlowLayerConfig({layer, visConfiguratorProps}) {
       const {visConfig} = layer.config;
       const renderingModeOptions = (

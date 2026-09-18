@@ -17,8 +17,13 @@ import {visStateLens, mapStateLens} from '@kepler.gl/reducers';
 import {Annotation} from '@kepler.gl/types';
 import {
   AnnotationKind,
+  AnnotationTextSide,
+  AnnotationTextVerticalPosition,
   ANNOTATION_KINDS,
-  ANNOTATION_LINE_WIDTH_OPTIONS
+  ANNOTATION_LINE_WIDTH_OPTIONS,
+  ANNOTATION_TEXT_SIDES,
+  ANNOTATION_TEXT_VERTICAL_POSITIONS,
+  isAnnotationWithArm
 } from '@kepler.gl/constants';
 import {VisState} from '@kepler.gl/schemas';
 import {MapState} from '@kepler.gl/types';
@@ -30,6 +35,7 @@ import Portaled from '../common/portaled';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
 import {hexToRgb, rgbToHex} from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {angleForTextPlacement, getTextPlacement} from './annotation-utils';
 
 // Styled components
 
@@ -40,6 +46,8 @@ const StyledAnnotationPanelContainer = styled.div`
   flex-grow: 1;
   justify-content: space-between;
   overflow: hidden;
+  width: ${({theme}) => theme.effectPanelWidth}px;
+  min-width: 0;
 
   & > * {
     pointer-events: all;
@@ -53,6 +61,7 @@ const StyledAnnotationPanel = styled.div`
   flex-direction: column;
   flex-grow: 1;
   overflow: hidden;
+  min-width: 0;
 `;
 
 const StyledAnnotationPanelHeader = styled.div`
@@ -61,7 +70,6 @@ const StyledAnnotationPanelHeader = styled.div`
       theme.effectPanelPaddingSide || 16
     }px`};
   border-bottom: 1px solid ${props => props.theme.borderColor};
-  min-width: ${({theme}) => theme.effectPanelWidth}px;
 `;
 
 const StyledPanelHeaderRow = styled.div`
@@ -106,22 +114,28 @@ const StyledAddIcon = styled(Add)`
 const StyledAnnotationPanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
   padding: 10px 0;
+  overflow-x: hidden;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  min-width: 0;
 `;
 
 const StyledAnnotationItemWrapper = styled.div`
   font-size: 12px;
   border-radius: 1px;
   margin: 3px 16px;
+  min-width: 0;
+  overflow: hidden;
 `;
 
 const StyledAnnotationItemHeader = styled(StyledPanelHeader)`
   height: ${props => props.theme.effectPanelHeaderHeight}px;
   position: relative;
   align-items: stretch;
+  min-width: 0;
+  overflow: hidden;
 
   &:hover {
     cursor: pointer;
@@ -134,15 +148,21 @@ const StyledAnnotationItemHeader = styled(StyledPanelHeader)`
 const HeaderLabelSection = styled.div`
   margin-left: 10px;
   flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
+  // leave space for eye and collapse icons
+  padding-right: 50px;
 `;
 
 const StyledAnnotationLabel = styled.div`
   font-size: 12px;
   color: ${props => props.theme.textColor};
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -383,6 +403,28 @@ export default function AnnotationManagerFactory(): React.FC<any> {
       [visStateActions]
     );
 
+    const handleChangeTextPlacement = useCallback(
+      (
+        annotation: Annotation,
+        next: {
+          textSide?: AnnotationTextSide;
+          textVerticalPosition?: AnnotationTextVerticalPosition;
+        }
+      ) => {
+        const current = getTextPlacement(annotation);
+        const textSide = next.textSide ?? current.side;
+        const textVerticalPosition = next.textVerticalPosition ?? current.vertical;
+        visStateActions.updateAnnotation(annotation.id, {
+          textSide,
+          textVerticalPosition,
+          ...(isAnnotationWithArm(annotation)
+            ? {angle: angleForTextPlacement(textSide, textVerticalPosition)}
+            : {})
+        });
+      },
+      [visStateActions]
+    );
+
     return (
       <StyledAnnotationPanelContainer className="annotation-manager">
         <StyledAnnotationPanel>
@@ -400,6 +442,7 @@ export default function AnnotationManagerFactory(): React.FC<any> {
           <StyledAnnotationPanelContent>
             {annotations.map(annotation => {
               const isSelected = annotation.id === selectedAnnotationId;
+              const textPlacement = getTextPlacement(annotation);
               return (
                 <StyledAnnotationItemWrapper key={annotation.id}>
                   <StyledAnnotationItemHeader
@@ -553,6 +596,50 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           color={hexToRgb(annotation.lineColor)}
                           onSetColor={rgb => handleChangeLineColor(annotation.id, rgb)}
                         />
+                      </StyledConfigRow>
+                      <StyledConfigRow>
+                        <StyledConfigLabel>
+                          {intl.formatMessage({
+                            id: 'annotationManager.textSide',
+                            defaultMessage: 'Text Side'
+                          })}
+                        </StyledConfigLabel>
+                        <StyledSelect
+                          value={textPlacement.side}
+                          onChange={e =>
+                            handleChangeTextPlacement(annotation, {
+                              textSide: e.target.value as AnnotationTextSide
+                            })
+                          }
+                        >
+                          {ANNOTATION_TEXT_SIDES.map(s => (
+                            <option key={s.id} value={s.id}>
+                              {s.label}
+                            </option>
+                          ))}
+                        </StyledSelect>
+                      </StyledConfigRow>
+                      <StyledConfigRow>
+                        <StyledConfigLabel>
+                          {intl.formatMessage({
+                            id: 'annotationManager.textPlacement',
+                            defaultMessage: 'Placement'
+                          })}
+                        </StyledConfigLabel>
+                        <StyledSelect
+                          value={textPlacement.vertical}
+                          onChange={e =>
+                            handleChangeTextPlacement(annotation, {
+                              textVerticalPosition: e.target.value as AnnotationTextVerticalPosition
+                            })
+                          }
+                        >
+                          {ANNOTATION_TEXT_VERTICAL_POSITIONS.map(p => (
+                            <option key={p.id} value={p.id}>
+                              {p.label}
+                            </option>
+                          ))}
+                        </StyledSelect>
                       </StyledConfigRow>
                     </StyledConfigSection>
                   ) : null}

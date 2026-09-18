@@ -13,7 +13,8 @@
     "build-clean": "rm -rf ./dist && mkdir dist",
     "build-static": "cp -r ./src/static/* dist",
     "build-script": "NODE_OPTIONS=--openssl-legacy-provider webpack --mode production --env prod",
-    "build": "yarn build-clean && yarn build-static && yarn esbuild",
+    "build": "yarn esbuild && yarn build:demo-next",
+    "build:demo-next": "cd ../examples/demo-app-sqlrooms && yarn build --demo-next && cp -R dist/demo-next ../../website/dist/",
     "lint": "eslint src"
   },
   "dependencies": {
@@ -24,7 +25,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.1.0",
-    "react-router-dom": "^6.30.0",
+    "react-router-dom": "^6.30.6",
     "react-waypoint": "^9.0.1",
     "redux": "^5.0.0",
     "redux-actions": "^1.2.0",

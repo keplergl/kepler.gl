@@ -220,13 +220,21 @@ export type RasterTileMetadataSourceType = {
 export type RasterTileDatasetMetadata = (RasterTileLocalMetadata | RasterTileRemoteMetadata) &
   RasterTileMetadataSourceType;
 
+export type WMSServiceLayer = {
+  name: string;
+  title: string;
+  boundingBox: number[] | null;
+  queryable?: boolean;
+  legendUrl?: string | null;
+};
+
 export type WMSDatasetMetadata = {
   type: typeof REMOTE_TILE;
   remoteTileFormat: RemoteTileFormat.WMS;
   tilesetDataUrl: string;
   tilesetMetadataUrl: string;
   version: string;
-  layers: {name: string; title: string; boundingBox: number[] | null}[];
+  layers: WMSServiceLayer[];
   label?: string;
   attribution?: string;
 };

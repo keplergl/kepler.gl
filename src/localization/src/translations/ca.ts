@@ -61,7 +61,8 @@ export default {
       alignment: 'Alineació',
       addMoreLabel: 'Afegeix més etiquetes',
       outlineWidth: 'Amplada del contorn',
-      outlineColor: 'Color del contorn'
+      outlineColor: 'Color del contorn',
+      collisionEnabled: 'Amaga les etiquetes superposades'
     }
   },
   sidebar: {
@@ -122,6 +123,7 @@ export default {
       trip: 'viatge',
       s2: 'S2',
       geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'mosaic vectorial',
@@ -241,7 +243,9 @@ export default {
     addAnnotation: 'Afegir',
     type: 'Tipus',
     lineWidth: 'Amplada de línia',
-    color: 'Color'
+    color: 'Color',
+    textSide: 'Costat del text',
+    textPlacement: 'Col·locació'
   },
   effectDescription: {
     lightAndShadow:

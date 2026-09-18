@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {AnnotationKind} from '@kepler.gl/constants';
+import {
+  AnnotationKind,
+  AnnotationTextSide,
+  AnnotationTextVerticalPosition
+} from '@kepler.gl/constants';
 
 export {AnnotationKind} from '@kepler.gl/constants';
 export {isAnnotationKind, isAnnotationWithArm} from '@kepler.gl/constants';
@@ -12,7 +16,8 @@ export type BaseAnnotation = {
   isVisible: boolean;
   autoSize: boolean;
   autoSizeY: boolean;
-  anchorPoint: [number, number];
+  /** [lng, lat] or [lng, lat, altitudeMeters]. Missing altitude is treated as 0. */
+  anchorPoint: [number, number] | [number, number, number];
   label: string;
   editorState?: Record<string, any>;
   mapIndex?: number;
@@ -21,6 +26,8 @@ export type BaseAnnotation = {
   textWidth: number;
   textHeight: number;
   textVerticalAlign?: 'top' | 'middle' | 'bottom';
+  textSide?: AnnotationTextSide;
+  textVerticalPosition?: AnnotationTextVerticalPosition;
 };
 
 export type AnnotationWithArm = BaseAnnotation & {

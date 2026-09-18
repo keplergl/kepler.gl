@@ -7,6 +7,7 @@ import flattenDeep from 'es-toolkit/compat/flattenDeep';
 import deepmerge from 'deepmerge';
 import {
   arrayInsert,
+  combineSplitMapsByIndex,
   getInitialMapLayersForSplitMap,
   applyFiltersToDatasets,
   validateFiltersUpdateDatasets,
@@ -640,45 +641,53 @@ function replaceInteractionDatasetIds(interactionConfig, dataId: string, dataIdT
 
 /**
  * Merge splitMaps config with current visStete.
+ * Panels are matched by index: index i of `splitMaps`, `state.splitMaps` and
+ * `state.splitMapsToBeMerged` is the same map panel.
  * 1. if current map is split, but splitMap DOESNOT contain maps
  *    : don't merge anything
  * 2. if current map is NOT split, but splitMaps contain maps
- *    : add to splitMaps, and add current layers to splitMaps
+ *    : add to splitMaps, and add current layers to splitMaps.
+ *      Panels are created once one of them can be merged: it has no layers, or one of its layers exists
+ * 3. layers that don't exist yet
+ *    : save to splitMapsToBeMerged, in the panel at the same index
+ * A layer listed in splitMaps only shows in the panels that list it.
  */
 export function mergeSplitMaps<S extends VisState>(
   state: S,
   splitMaps: NonNullable<ParsedConfig['visState']>['splitMaps'] = []
 ): S {
+  const layerExists = (id: string) => state.layers.some(l => l.id === id);
+  const createPanels =
+    state.splitMaps.length > 0 ||
+    splitMaps.some(sm => {
+      const ids = Object.keys(sm.layers);
+      return !ids.length || ids.some(layerExists);
+    });
+  const currentLayers = getInitialMapLayersForSplitMap(
+    state.layers.filter(l => !splitMaps.some(sm => l.id in sm.layers))
+  );
+
   const merged = [...state.splitMaps];
-  const unmerged = [];
+  const unmerged: typeof splitMaps = [];
   splitMaps.forEach((sm, i) => {
     const entries = Object.entries(sm.layers);
-    if (entries.length > 0) {
-      entries.forEach(([id, value]) => {
-        // check if layer exists
-        const pushTo = state.layers.find(l => l.id === id) ? merged : unmerged;
-
-        // create map panel if current map is not split
-        pushTo[i] = pushTo[i] || {
-          // keep id
-          ...sm,
-          layers: pushTo === merged ? getInitialMapLayersForSplitMap(state.layers) : []
-        };
-        pushTo[i].layers = {
-          ...pushTo[i].layers,
-          [id]: value
-        };
-      });
-    } else {
-      // We are merging if there are no layers in both split map
-      merged.push(sm);
+    if (createPanels) {
+      // create map panel if current map is not split, keep id
+      const panel = merged[i] || {...sm, layers: currentLayers};
+      merged[i] = {
+        ...panel,
+        layers: {...panel.layers, ...Object.fromEntries(entries.filter(([id]) => layerExists(id)))}
+      };
     }
+    unmerged[i] = {...sm, layers: Object.fromEntries(entries.filter(([id]) => !layerExists(id)))};
   });
 
   return {
     ...state,
     splitMaps: merged,
-    splitMapsToBeMerged: [...state.splitMapsToBeMerged, ...unmerged]
+    splitMapsToBeMerged: unmerged.some(sm => Object.keys(sm.layers).length)
+      ? combineSplitMapsByIndex(state.splitMapsToBeMerged, unmerged)
+      : state.splitMapsToBeMerged
   };
 }
 
@@ -733,7 +742,8 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
         !existingIds.has(a.id) &&
         isAnnotationKind(a.kind) &&
         Array.isArray(a.anchorPoint) &&
-        a.anchorPoint.length === 2
+        (a.anchorPoint.length === 2 || a.anchorPoint.length === 3) &&
+        a.anchorPoint.every(value => Number.isFinite(value))
     )
     .map(a => ({
       isVisible: true,
@@ -992,6 +1002,29 @@ export function validateSavedTextLabel(
 }
 
 /**
+ * Saved visual channel field/scale may live in any of:
+ * - `config[key]` after schema parse (VisualChannelSchemaV1 folds channels into config)
+ * - `visualChannels[key]` as a sibling of `config` (unparsed addDataToMap payload)
+ * - `config.visualChannels[key]` (common mistake of nesting visualChannels inside config)
+ *
+ * Without this lookup, programmatic GeoJSON strokeColorField never binds and
+ * strokeColorDomain stays at the default `[0, 1]` (kepler.gl #3061).
+ */
+function getSavedVisualChannelValue(savedLayer: ParsedLayer, key: string): any {
+  const config = savedLayer.config as Record<string, any> | undefined;
+  if (config && config[key] !== undefined) {
+    return config[key];
+  }
+  const channels =
+    (savedLayer as {visualChannels?: Record<string, any>}).visualChannels ||
+    (config && config.visualChannels);
+  if (channels && typeof channels === 'object' && channels[key] !== undefined) {
+    return channels[key];
+  }
+  return undefined;
+}
+
+/**
  * Validate saved visual channels config with new data,
  * refer to vis-state-schema.js VisualChannelSchemaV1
  */
@@ -1002,28 +1035,26 @@ export function validateSavedVisualChannels(
   options: {throwOnError?: boolean} = {}
 ): null | Layer {
   Object.values(newLayer.visualChannels).forEach(({field, scale, key}) => {
+    const savedField = getSavedVisualChannelValue(savedLayer, field);
+    const savedScale = getSavedVisualChannelValue(savedLayer, scale);
     let foundField;
-    if (savedLayer.config) {
-      if (savedLayer.config[field]) {
-        foundField = fields.find(
-          fd => savedLayer.config && fd.name === savedLayer.config[field].name
-        );
-      }
+    if (savedField?.name) {
+      foundField = fields.find(fd => fd.name === savedField.name);
+    }
 
-      const foundChannel = {
-        ...(foundField ? {[field]: foundField} : {}),
-        ...(savedLayer.config[scale] ? {[scale]: savedLayer.config[scale]} : {})
-      };
-      if (Object.keys(foundChannel).length) {
-        newLayer.updateLayerConfig(foundChannel);
-      }
+    const foundChannel = {
+      ...(foundField ? {[field]: foundField} : {}),
+      ...(savedScale ? {[scale]: savedScale} : {})
+    };
+    if (Object.keys(foundChannel).length) {
+      newLayer.updateLayerConfig(foundChannel);
+    }
 
-      newLayer.validateVisualChannel(key);
-      if (options.throwOnError) {
-        const fieldName = savedLayer.config?.[field]?.name;
-        if (fieldName && fieldName !== newLayer.config[field]?.name) {
-          throw new Error(`Layer has invalid visual channel field: ${field}`);
-        }
+    newLayer.validateVisualChannel(key);
+    if (options.throwOnError) {
+      const fieldName = savedField?.name;
+      if (fieldName && fieldName !== newLayer.config[field]?.name) {
+        throw new Error(`Layer has invalid visual channel field: ${field}`);
       }
     }
   });
@@ -1084,17 +1115,26 @@ function _getColumnConfigForValidation(newLayer) {
     : null;
 
   if (colModeConfig) {
-    // only validate columns in column mode
+    // only validate columns in column mode (including tabbed columnGroups)
+    const groupColumns = (colModeConfig.columnGroups || []).flatMap(group => group.columns || []);
+    const requiredKeys = new Set(colModeConfig.requiredColumns || []);
     columnConfig = [
       ...(colModeConfig.requiredColumns || []),
-      ...(colModeConfig.optionalColumns || [])
-    ].reduce(
-      (accu, key) => ({
-        ...accu,
-        [key]: columnConfig[key]
-      }),
-      {}
-    );
+      ...(colModeConfig.optionalColumns || []),
+      ...groupColumns
+    ].reduce((accu, key) => {
+      const col = columnConfig[key];
+      if (!col) {
+        return accu;
+      }
+      // Optionality must follow the active mode: a field optional in another mode
+      // (e.g. altitude in UV) is still required when this mode lists it in requiredColumns.
+      if (requiredKeys.has(key)) {
+        const {optional: _optional, ...requiredCol} = col;
+        return {...accu, [key]: requiredCol};
+      }
+      return {...accu, [key]: {...col, optional: true}};
+    }, {});
   }
 
   return columnConfig;
