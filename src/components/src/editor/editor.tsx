@@ -46,6 +46,7 @@ interface EditorProps {
   onDeleteFeature: (f: Feature) => any;
   onSetFeatureProperties: (f: Feature, properties: Record<string, unknown>) => any;
   onTogglePolygonFilter: (l: Layer, f: Feature) => any;
+  onExtractData?: (l: Layer) => any;
 }
 
 export type PortalEditorProps = FeatureActionPanelProps & {
@@ -68,6 +69,7 @@ export default function EditorFactory(
     onDeleteFeature,
     onSetFeatureProperties,
     onToggleLayer,
+    onExtractData,
     position
   }) => {
     return (
@@ -86,6 +88,7 @@ export default function EditorFactory(
                     onDeleteFeature={onDeleteFeature}
                     onSetFeatureProperties={onSetFeatureProperties}
                     onToggleLayer={onToggleLayer}
+                    onExtractData={onExtractData}
                     position={position || null}
                   />
                 ) : null}
@@ -202,6 +205,10 @@ export default function EditorFactory(
       }
     };
 
+    _onExtractData = (layer: Layer) => {
+      this.props.onExtractData?.(layer);
+    };
+
     _onSetFeatureProperties = (feature: Feature, properties: Record<string, unknown>) => {
       this.props.onSetFeatureProperties(feature, properties);
     };
@@ -227,6 +234,7 @@ export default function EditorFactory(
             this._onSetFeatureProperties as FeatureActionPanelProps['onSetFeatureProperties']
           }
           onToggleLayer={this._togglePolygonFilter}
+          onExtractData={this._onExtractData}
           position={position || null}
           className={className}
           style={style}

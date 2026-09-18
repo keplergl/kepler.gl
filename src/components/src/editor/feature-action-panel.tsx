@@ -12,10 +12,10 @@ import {Layer} from '@kepler.gl/layers';
 import {Filter} from '@kepler.gl/types';
 import {Feature} from '@deck.gl-community/editable-layers';
 import {Datasets} from '@kepler.gl/table';
-import {canApplyFeatureFilter, getApplicationConfig} from '@kepler.gl/utils';
+import {canApplyFeatureFilter, getApplicationConfig, isExtractableLayer} from '@kepler.gl/utils';
 
 import ActionPanel, {ActionPanelItem} from '../common/action-panel';
-import {Trash, Layers, Copy, Checkmark, Edit} from '../common/icons';
+import {Trash, Layers, Copy, Checkmark, Edit, Files} from '../common/icons';
 import FeaturePropertiesEditor from './feature-properties-editor';
 
 const LAYOVER_OFFSET = 4;
@@ -35,7 +35,8 @@ const defaultActionIcons = {
   layer: Layers,
   copy: Copy,
   copied: Checkmark,
-  edit: Edit
+  edit: Edit,
+  extract: Files
 };
 PureFeatureActionPanelFactory.deps = [];
 
@@ -51,6 +52,7 @@ export interface FeatureActionPanelProps {
   currentFilter?: Filter;
   onToggleLayer: (layer: Layer) => void;
   onDeleteFeature: () => void;
+  onExtractData?: (layer: Layer) => void;
   onSetFeatureProperties?: (feature: Feature, properties: Record<string, unknown>) => void;
   onClose?: () => void;
   children?: React.ReactNode;
@@ -69,6 +71,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
     currentFilter,
     onToggleLayer,
     onDeleteFeature,
+    onExtractData,
     onSetFeatureProperties,
     actionIcons = defaultActionIcons,
     children,
@@ -106,6 +109,9 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
 
     const canFilterLayers = canApplyFeatureFilter(selectedFeature as any);
     const enableSketches = getApplicationConfig().enableDrawOnMapSketches;
+    const extractableLayers = canFilterLayers
+      ? layers.filter(layer => isExtractableLayer(layer, datasets))
+      : [];
     return (
       <StyledActionsLayer
         ref={refs.setFloating}
@@ -145,6 +151,43 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
                   label={intl.formatMessage({
                     id: 'editor.noLayersToFilter',
                     defaultMessage: 'No layers to filter'
+                  })}
+                  isSelection={false}
+                  isActive={false}
+                  className="layer-panel-item-disabled"
+                />
+              )}
+            </ActionPanelItem>
+          ) : null}
+          {canFilterLayers ? (
+            <ActionPanelItem
+              className="editor-extract-list"
+              label={intl.formatMessage({
+                id: 'editor.extractData',
+                defaultMessage: 'Extract data'
+              })}
+              Icon={actionIcons.extract}
+            >
+              {extractableLayers.length ? (
+                extractableLayers.map((layer, index) => (
+                  <ActionPanelItem
+                    key={layer.id || index}
+                    label={layer.config.label}
+                    // @ts-ignore
+                    color={datasets[layer.config.dataId].color}
+                    onClick={() => {
+                      onExtractData?.(layer);
+                      onClose?.();
+                    }}
+                    className="extract-layer-panel-item"
+                  />
+                ))
+              ) : (
+                <ActionPanelItem
+                  key={'no-layers-extract'}
+                  label={intl.formatMessage({
+                    id: 'editor.noLayersToExtract',
+                    defaultMessage: 'No layers to extract'
                   })}
                   isSelection={false}
                   isActive={false}

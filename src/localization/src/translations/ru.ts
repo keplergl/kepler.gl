@@ -411,12 +411,14 @@ export default {
     filterLayer: 'Слои фильтров',
     filterLayerDisabled: 'Неполигональные геометрии нельзя использовать для фильтрации',
     copyGeometry: 'Копировать геометрию',
+    extractData: 'Извлечь данные',
     editProperties: 'Изменить свойства',
     propertyName: 'Свойство',
     propertyValue: 'Значение',
     removeProperty: 'Удалить свойство',
     polygonFilter: 'Полигональный фильтр',
-    noLayersToFilter: 'Нет слоев для фильтрации'
+    noLayersToFilter: 'Нет слоев для фильтрации',
+    noLayersToExtract: 'Нет слоев для извлечения'
   },
   exportVideoModal: {
     animation: 'Анимация',

@@ -160,6 +160,8 @@ const actionHandler = {
   [ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER]:
     visStateUpdaters.convertEditorFeaturesToLayerUpdater,
 
+  [ActionTypes.EXTRACT_DATA_FROM_FEATURE]: visStateUpdaters.extractDataFromFeatureUpdater,
+
   [ActionTypes.TOGGLE_FILTER_FEATURE]: visStateUpdaters.toggleFilterFeatureUpdater,
 
   [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater,

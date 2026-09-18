@@ -164,6 +164,12 @@ export * from './filter-utils';
 export type {FilterChanged, FilterResult, dataValueAccessor} from './filter-utils';
 export * from './editor-feature-utils';
 export type {EditorFeatureCollection} from './editor-feature-utils';
+export {
+  extractRowsInsideFeature,
+  isExtractableDataset,
+  isExtractableLayer
+} from './extract-dataset-utils';
+export type {ExtractableDataset} from './extract-dataset-utils';
 
 export {
   colorMapToColorBreaks,

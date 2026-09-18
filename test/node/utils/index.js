@@ -24,6 +24,7 @@ import './a5-utils-test';
 import './geohash-utils-test';
 import './editor-utils-test';
 import './editor-feature-utils-test';
+import './extract-dataset-utils-test';
 import './kepler-gl-utils-test';
 import './timeline-test';
 import './timeline-zoom-test';

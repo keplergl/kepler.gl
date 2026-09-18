@@ -396,12 +396,14 @@ export default {
     filterLayer: '过滤图层',
     filterLayerDisabled: '非多边形几何图形不能用于过滤',
     copyGeometry: '复制几何图形',
+    extractData: '提取数据',
     editProperties: '编辑属性',
     propertyName: '属性',
     propertyValue: '值',
     removeProperty: '删除属性',
     polygonFilter: '多边形过滤器',
-    noLayersToFilter: '没有可过滤的图层'
+    noLayersToFilter: '没有可过滤的图层',
+    noLayersToExtract: '没有可提取的图层'
   },
   exportVideoModal: {
     animation: '动画',

@@ -68,6 +68,7 @@ import {
   adjustValueToFilterDomain,
   errorNotification,
   editorFeaturesToFeatureCollection,
+  extractRowsInsideFeature,
   mergeUserFeatureProperties,
   toSketchFeature,
   featureToFilterValue,
@@ -5189,6 +5190,79 @@ export function convertEditorFeaturesToLayerUpdater(
       autoCreateLayers: true
     }
   });
+}
+
+/**
+ * Copy in-memory rows inside the selected Draw on Map polygon into a new dataset.
+ */
+export function extractDataFromFeatureUpdater(
+  state: VisState,
+  {layerId}: VisStateActions.ExtractDataFromFeatureUpdaterAction
+): VisState {
+  const feature = state.editor.selectedFeature;
+  const layer = state.layers.find(l => l.id === layerId);
+  const dataId = layer?.config.dataId;
+  const dataset = dataId ? state.datasets[dataId] : null;
+
+  if (!layer || !dataset) {
+    return state;
+  }
+
+  let extracted;
+  try {
+    extracted = extractRowsInsideFeature({layer, dataset, feature});
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to extract data: ${message}`,
+            id: 'extract-data-from-feature'
+          })
+        )
+      )
+    );
+  }
+
+  if (!extracted) {
+    return state;
+  }
+
+  if (!extracted.rowCount) {
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: 'No rows found inside the selected drawing',
+            id: 'extract-data-from-feature-empty'
+          })
+        )
+      )
+    );
+  }
+
+  const nextState = updateVisDataUpdater(state, {
+    datasets: {
+      info: {
+        id: `extract-${generateHashId(6)}`,
+        label: `Extract ${dataset.label}`
+      },
+      data: {
+        fields: extracted.fields,
+        rows: extracted.rows
+      }
+    },
+    options: {
+      keepExistingConfig: true,
+      centerMap: false,
+      autoCreateLayers: true
+    }
+  });
+
+  return nextState;
 }
 
 export function setFilterAnimationTimeConfigUpdater(

@@ -411,12 +411,14 @@ export default {
     filterLayer: 'Filtra capes',
     filterLayerDisabled: 'Les geometries no poligonals no es poden utilitzar per filtrar',
     copyGeometry: 'Copia geometria',
+    extractData: 'Extreu dades',
     editProperties: 'Edita propietats',
     propertyName: 'Propietat',
     propertyValue: 'Valor',
     removeProperty: 'Suprimeix la propietat',
     polygonFilter: 'Filtre de polígon',
-    noLayersToFilter: 'No hi ha capes per filtrar'
+    noLayersToFilter: 'No hi ha capes per filtrar',
+    noLayersToExtract: 'No hi ha capes per extreure'
   },
   exportVideoModal: {
     animation: 'Animació',

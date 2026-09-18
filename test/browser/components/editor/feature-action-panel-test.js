@@ -27,7 +27,8 @@ test('FeatureActionPanel -> display layers', t => {
 
   const datasets = {
     puppy: {
-      color: [123, 123, 123]
+      color: [123, 123, 123],
+      dataContainer: {numRows: () => 4}
     }
   };
 
@@ -118,6 +119,72 @@ test('FeatureActionPanel -> edit properties', t => {
     onSetFeatureProperties.lastCall.args[1],
     {name: 'Park'},
     'Should pass user properties without editor internals'
+  );
+
+  t.end();
+});
+
+test('FeatureActionPanel -> extract data', t => {
+  const layers = [
+    {
+      id: 'layer-1',
+      config: {
+        label: 'layer 1',
+        dataId: 'puppy'
+      }
+    }
+  ];
+  const datasets = {
+    puppy: {
+      color: [123, 123, 123],
+      dataContainer: {numRows: () => 4}
+    }
+  };
+  const selectedFeature = {type: 'Feature', geometry: {type: 'Polygon', coordinates: []}};
+  const onExtractData = sinon.spy();
+  const onClose = sinon.spy();
+
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FeatureActionPanel
+        className="action-item-test"
+        layers={layers}
+        datasets={datasets}
+        selectedFeature={selectedFeature}
+        onToggleLayer={() => {}}
+        onDeleteFeature={() => {}}
+        onExtractData={onExtractData}
+        onClose={onClose}
+        position={{x: 0, y: 0}}
+      />
+    </IntlWrapper>
+  );
+
+  t.ok(wrapper.find('.editor-extract-list').length, 'Should show Extract data for polygons');
+
+  wrapper.find('.extract-layer-panel-item').simulate('click');
+  t.ok(onExtractData.calledOnce, 'Clicking a layer should extract from that layer');
+  t.equal(onExtractData.firstCall.args[0].id, 'layer-1', 'Should pass the clicked layer');
+  t.ok(onClose.calledOnce, 'Extract should close the action panel');
+
+  const pointWrapper = mountWithTheme(
+    <IntlWrapper>
+      <FeatureActionPanel
+        layers={layers}
+        datasets={datasets}
+        selectedFeature={{type: 'Feature', geometry: {type: 'Point', coordinates: [0, 0]}}}
+        onToggleLayer={() => {}}
+        onDeleteFeature={() => {}}
+        onExtractData={onExtractData}
+        position={{x: 0, y: 0}}
+      />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    pointWrapper.find('.editor-extract-list').length,
+    0,
+    'Should hide Extract data for non-polygon drawings'
   );
 
   t.end();

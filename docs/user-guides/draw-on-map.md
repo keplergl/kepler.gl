@@ -6,6 +6,7 @@
   - [Select, move, and edit](#select-move-and-edit)
   - [Edit properties](#edit-properties)
   - [Filter layers](#filter-layers)
+  - [Extract data](#extract-data)
   - [Copy and convert to a layer](#copy-and-convert-to-a-layer)
   - [Disable sketch tools](#disable-sketch-tools)
 <!-- /TOC -->
@@ -36,7 +37,7 @@ Press **Escape** while a draw tool is active to return to **Select**.
 3. Drag the **body of a line** to move the whole line. Drag a vertex to reshape it. Click the line to insert a vertex.
 4. Drag the **interior of a polygon, rectangle, or circle** to move it. Drag a vertex to reshape it.
 
-Right-click a selected sketch for **Edit Properties**, **Copy Geometry**, and **Delete**. **Filter Layers** appears only for polygons, rectangles, and circles.
+Right-click a selected sketch for **Edit Properties**, **Copy Geometry**, and **Delete**. **Filter Layers** and **Extract data** appear only for polygons, rectangles, and circles.
 
 ## Edit properties
 
@@ -54,6 +55,18 @@ Filtered shapes use a dashed outline. A filter icon appears on the shape; click 
 Points and lines cannot be used as filters.
 
 If you turn off every filtered layer, the polygon returns to a sketch.
+
+## Extract data
+
+Polygons, rectangles, and circles can copy in-memory rows that fall inside the drawing into a **new dataset**. This is independent of **Convert to Layer**, which turns the drawing itself into GeoJSON.
+
+1. Draw a polygon, rectangle, or circle.
+2. Right-click the shape and choose **Extract data**.
+3. Pick the layer to extract from.
+
+kepler.gl keeps currently filtered rows (range, select, time) and then clips them to the drawing. The new dataset is named `Extract` plus the source dataset label, and a layer is created automatically. Tiled datasets (vector tiles, raster, WMS, 3D tiles) cannot be extracted because their rows are not fully in memory.
+
+The original dataset and the drawing stay on the map.
 
 ## Copy and convert to a layer
 
