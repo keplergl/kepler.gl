@@ -21,7 +21,8 @@ import {
   VertDots,
   WarningSign,
   Reset,
-  ZoomIn
+  ZoomIn,
+  CodeAlt
 } from '../../common/icons';
 
 import {InlineInput, StyledPanelHeader} from '../../common/styled-components';
@@ -58,7 +59,10 @@ export type LayerPanelHeaderProps = {
   onZoomToLayer: MouseEventHandler;
   onDuplicateLayer: MouseEventHandler;
   onResetIsValid: MouseEventHandler;
+  onToggleJsonEditor?: MouseEventHandler;
   isConfigActive: boolean;
+  isJsonEditorActive?: boolean;
+  showJsonEditor?: boolean;
   showRemoveLayer?: boolean;
   label?: string;
   layerType?: string | null;
@@ -75,6 +79,7 @@ export type LayerPanelHeaderProps = {
     resetIsValid: ComponentType<Partial<BaseProps>>;
     duplicate: ComponentType<Partial<BaseProps>>;
     crosshairs: ComponentType<Partial<BaseProps>>;
+    json?: ComponentType<Partial<BaseProps>>;
   };
   listeners?: React.ElementType;
 };
@@ -279,6 +284,9 @@ export function LayerPanelHeaderActionSectionFactory(
       onDuplicateLayer,
       onRemoveLayer,
       onZoomToLayer,
+      onToggleJsonEditor,
+      isJsonEditorActive,
+      showJsonEditor,
       showRemoveLayer = true,
       isEditingLabel,
       actionIcons: customActionIcons
@@ -314,6 +322,16 @@ export function LayerPanelHeaderActionSectionFactory(
             onClick={onZoomToLayer}
             IconComponent={actionIcons.crosshairs}
           />
+          {showJsonEditor && onToggleJsonEditor ? (
+            <PanelHeaderAction
+              className="layer__json-editor"
+              id={layerId}
+              tooltip={'tooltip.editLayerJson'}
+              onClick={onToggleJsonEditor}
+              IconComponent={actionIcons.json || CodeAlt}
+              active={isJsonEditorActive}
+            />
+          ) : null}
         </StyledPanelHeaderHiddenActions>
         {isValid ? (
           <PanelHeaderAction
@@ -386,7 +404,8 @@ const defaultActionIcons = {
   ),
   duplicate: props => <Copy {...props} height="14px" />,
   resetIsValid: Reset,
-  crosshairs: props => <ZoomIn {...props} height="14px" />
+  crosshairs: props => <ZoomIn {...props} height="14px" />,
+  json: props => <CodeAlt {...props} height="14px" />
 };
 
 LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, LayerPanelHeaderActionSectionFactory];

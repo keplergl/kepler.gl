@@ -387,7 +387,12 @@ export default {
     annotationSettings: 'Configuración de anotación',
     removeEffect: 'Eliminar efecto',
     disableEffect: 'Desactivar efecto',
-    effectSettings: 'Configuración de efecto'
+    effectSettings: 'Configuración de efecto',
+    editLayerJson: 'Editar JSON de la capa',
+    editFilterJson: 'Editar JSON del filtro',
+    editEffectJson: 'Editar JSON del efecto',
+    editViewportJson: 'Editar JSON de la vista',
+    editAnimationJson: 'Editar JSON de la animación'
   },
   toolbar: {
     exportImage: 'Exportar imagen',

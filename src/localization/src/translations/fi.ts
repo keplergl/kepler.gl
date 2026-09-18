@@ -384,6 +384,11 @@ export default {
     removeEffect: 'Poista efekti',
     disableEffect: 'Poista efekti käytöstä',
     effectSettings: 'Efektiasetukset',
+    editLayerJson: 'Muokkaa tason JSON-määritystä',
+    editFilterJson: 'Muokkaa suodattimen JSON-määritystä',
+    editEffectJson: 'Muokkaa efektin JSON-määritystä',
+    editViewportJson: 'Muokkaa näkymän JSON-määritystä',
+    editAnimationJson: 'Muokkaa animaation JSON-määritystä',
     timeLayerSync: 'Linkitä tason aikajanaan',
     timeLayerUnsync: 'Poista linkitys tason aikajanasta'
   },

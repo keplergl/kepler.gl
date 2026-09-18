@@ -3,7 +3,7 @@
 
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
-import {Bounds, Merge, Viewport, ViewportPadding} from '@kepler.gl/types';
+import {Bounds, MapState, Merge, Viewport, ViewportPadding} from '@kepler.gl/types';
 import {MapSplitMode, MapViewMode, GlobeConfig} from '@kepler.gl/constants';
 
 export type TogglePerspectiveUpdaterAction = void;
@@ -78,6 +78,21 @@ export const updateMap: (
       mapIndex
     }
   })
+);
+
+export type ApplyMapStateUpdaterAction = {payload: Partial<MapState>};
+/**
+ * Apply a partial map state, as used by the viewport JSON editor.
+ * Width and height of the current viewport are preserved.
+ * @memberof mapStateActions
+ * @param mapState - Partial map state from saved JSON
+ * @public
+ */
+export const applyMapState: (
+  mapState: Partial<MapState>
+) => Merge<ApplyMapStateUpdaterAction, {type: typeof ActionTypes.APPLY_MAP_STATE}> = createAction(
+  ActionTypes.APPLY_MAP_STATE,
+  (mapState: Partial<MapState>) => ({payload: mapState})
 );
 
 export type ToggleSplitMapUpdaterAction = {

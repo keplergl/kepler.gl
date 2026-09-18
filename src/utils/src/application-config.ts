@@ -207,6 +207,12 @@ export type KeplerApplicationConfig = {
   enableColumnStats?: boolean;
 
   /**
+   * Whether to show power-user JSON editors for layer, filter, effect, viewport, and animation
+   * configs. Enabled by default.
+   */
+  enableJsonEditors?: boolean;
+
+  /**
    * Show a format dropdown next to the remote dataset URL field (Auto / CSV / GeoJSON / JSON / Arrow / Parquet).
    * Useful for extensionless URLs such as Azure SAS blobs. Disabled by default.
    */
@@ -372,6 +378,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableThemeToggle: false,
 
   enableColumnStats: true,
+
+  enableJsonEditors: true,
 
   enableRemoteFileFormatSelector: false,
 

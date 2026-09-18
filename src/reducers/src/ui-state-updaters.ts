@@ -110,6 +110,7 @@ const DEFAULT_MAP_LEGEND_CONTROL = {
  * @property mapDraw Default: `{show: true, active: false}`
  * @property mapLocale Default: `{show: true, active: false}`
  * @property mapTheme Default: `{show: true, active: false}`
+ * @property viewportJson Default: `{show: true, active: false}`
  * @public
  */
 export const DEFAULT_MAP_CONTROLS: MapControls = (
