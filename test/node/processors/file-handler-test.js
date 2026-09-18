@@ -422,6 +422,44 @@ test('#file-handler -> processFileData Feature array is geojson', async t => {
   t.end();
 });
 
+test('#file-handler -> shapefile-shaped loader output becomes GeoJSON', async t => {
+  const data = {
+    data: [
+      {
+        type: 'Feature',
+        properties: {name: 'alpha'},
+        geometry: {type: 'Point', coordinates: [-122.4, 37.8]}
+      }
+    ]
+  };
+  t.equal(
+    getGeoJsonFromLoaderResult(data).features.length,
+    1,
+    'should unwrap shapefile Feature arrays'
+  );
+
+  const processed = await processFileData({
+    content: {fileName: 'places.shp', data},
+    fileCache: []
+  });
+  t.equal(processed[0].info.format, 'geojson', 'shapefile output should process as geojson');
+  t.equal(processed[0].data.rows.length, 1, 'should keep the shapefile feature');
+  t.end();
+});
+
+test('#file-handler -> object-row-table becomes a row dataset', async t => {
+  const processed = await processFileData({
+    content: {
+      fileName: 'table.xlsx',
+      data: {shape: 'object-row-table', data: [{name: 'alpha', value: 1}]}
+    },
+    fileCache: []
+  });
+  t.equal(processed[0].info.format, 'row', 'Excel-shaped tables should process as rows');
+  t.equal(processed[0].data.rows.length, 1, 'should keep the spreadsheet row');
+  t.end();
+});
+
 test('#file-handler -> rows with type Feature but no geometry stay tables', async t => {
   const rows = [
     {type: 'Feature', name: 'alpha', lat: 37.8, lng: -122.4},

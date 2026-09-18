@@ -6501,7 +6501,8 @@ test('#visStateReducer -> LOAD_FILES', async t => {
       file: {type: 'text/csv', name: 'test-file.csv'},
       fileCache: [],
       loaders: [],
-      loadOptions: {}
+      loadOptions: {},
+      companionFiles: mockFiles
     }
   };
 
@@ -6512,6 +6513,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   const expectedFileLoading = {
     fileCache: [],
     filesToLoad: [{type: 'text/csv', name: 'test-file-2.csv'}],
+    companionFiles: mockFiles,
     onFinish: VisStateActions.loadFilesSuccess
   };
   const expectedFileLoadingProgress = {
@@ -6578,7 +6580,8 @@ test('#visStateReducer -> LOAD_FILES', async t => {
       file: {type: 'text/csv', name: 'test-file-2.csv'},
       fileCache: [],
       loaders: [],
-      loadOptions: {}
+      loadOptions: {},
+      companionFiles: mockFiles
     },
     'should return an LOAD_FILE_TASK with 2nd file to load'
   );
@@ -6596,6 +6599,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     {
       fileCache: [],
       filesToLoad: [],
+      companionFiles: mockFiles,
       onFinish: VisStateActions.loadFilesSuccess
     },
     'fileLoading should not add result to fileCache when error'
@@ -6680,6 +6684,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     {
       fileCache: fileProcessResult,
       filesToLoad: [{type: 'text/csv', name: 'test-file-2.csv'}],
+      companionFiles: mockFiles,
       onFinish: VisStateActions.loadFilesSuccess
     },
     'fileLoading should update to add result to fileCache 1'
@@ -6699,7 +6704,8 @@ test('#visStateReducer -> LOAD_FILES', async t => {
       file: {type: 'text/csv', name: 'test-file-2.csv'},
       fileCache: fileProcessResult,
       loaders: [],
-      loadOptions: {}
+      loadOptions: {},
+      companionFiles: mockFiles
     },
     'should return an LOAD_FILE_TASK with 2nd file to load 2'
   );
@@ -6717,6 +6723,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     {
       fileCache: fileProcessResult,
       filesToLoad: [],
+      companionFiles: mockFiles,
       onFinish: VisStateActions.loadFilesSuccess
     },
     'fileLoading should update to add result to fileCache 3'
@@ -6759,6 +6766,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     {
       fileCache: file2ProcessResult,
       filesToLoad: [],
+      companionFiles: mockFiles,
       onFinish: VisStateActions.loadFilesSuccess
     },
     'fileLoading should update to add 2nd file result to fileCache'

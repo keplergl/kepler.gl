@@ -89,6 +89,35 @@ const DEFAULT_LOADER_ENTRIES: KeplerLoaderEntry[] = [
     extensions: ['parquet'],
     mimeTypes: ['application/vnd.apache.parquet'],
     load: async () => (await import('@loaders.gl/parquet')).ParquetArrowLoader
+  },
+  {
+    id: 'shapefile',
+    extensions: ['shp'],
+    mimeTypes: ['application/octet-stream', 'application/x-esri-shapefile', 'application/shp'],
+    load: async () => {
+      const {ShapefileLoader} = await import('@loaders.gl/shapefile');
+      // loaders.gl SHP magic also matches .shx sidecar files
+      const loader = {...ShapefileLoader};
+      delete (loader as {tests?: unknown}).tests;
+      return loader;
+    }
+  },
+  {
+    id: 'excel',
+    extensions: ['xlsx', 'xls', 'xlsm', 'xlsb'],
+    mimeTypes: [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'application/vnd.ms-excel.sheet.macroenabled.12',
+      'application/vnd.ms-excel.sheet.binary.macroenabled.12'
+    ],
+    load: async () => (await import('@loaders.gl/excel')).ExcelLoader
+  },
+  {
+    id: 'flatgeobuf',
+    extensions: ['fgb'],
+    mimeTypes: ['application/x-flatgeobuf', 'application/flatgeobuf'],
+    load: async () => (await import('@loaders.gl/flatgeobuf')).FlatGeobufLoader
   }
 ];
 
@@ -111,7 +140,21 @@ const TOKEN_TO_LOADER_ID: Record<string, string> = {
   tcx: 'tcx',
   arrow: 'arrow',
   feather: 'arrow',
-  parquet: 'parquet'
+  parquet: 'parquet',
+  shp: 'shapefile',
+  shapefile: 'shapefile',
+  zip: 'shapefile',
+  dbf: 'shapefile',
+  shx: 'shapefile',
+  prj: 'shapefile',
+  cpg: 'shapefile',
+  xlsx: 'excel',
+  xls: 'excel',
+  xlsm: 'excel',
+  xlsb: 'excel',
+  excel: 'excel',
+  fgb: 'flatgeobuf',
+  flatgeobuf: 'flatgeobuf'
 };
 
 const REMOTE_FORMAT_TO_LOADER_ID: Record<Exclude<RemoteFileFormat, 'auto'>, string> = {
@@ -124,7 +167,10 @@ const REMOTE_FORMAT_TO_LOADER_ID: Record<Exclude<RemoteFileFormat, 'auto'>, stri
   ndjson: 'ndjson',
   kml: 'kml',
   gpx: 'gpx',
-  tcx: 'tcx'
+  tcx: 'tcx',
+  shp: 'shapefile',
+  xlsx: 'excel',
+  fgb: 'flatgeobuf'
 };
 
 function getAcceptedLoaderIdSet(): Set<string> | null {

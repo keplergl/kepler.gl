@@ -150,7 +150,7 @@ import {
 } from './vis-state-merger';
 
 import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
-import {loadExternallyHostedDataset, processGeojson} from '@kepler.gl/processors';
+import {getFilesToParse, loadExternallyHostedDataset, processGeojson} from '@kepler.gl/processors';
 
 import {
   Filter,
@@ -4121,14 +4121,21 @@ export const loadFilesUpdater = (
     return state;
   }
 
-  const fileLoadingProgress = Array.from(files).reduce(
+  const companionFiles = Array.from(files);
+  const filesToLoad = getFilesToParse(companionFiles);
+  if (!filesToLoad.length) {
+    return state;
+  }
+
+  const fileLoadingProgress = filesToLoad.reduce(
     (accu, f, i) => merge_(initialFileLoadingProgress(f, i))(accu),
     {}
   );
 
   const fileLoading = {
     fileCache: [],
-    filesToLoad: files,
+    filesToLoad,
+    companionFiles,
     onFinish
   };
 
@@ -4194,13 +4201,20 @@ export function loadNextFileUpdater(state: VisState): VisState {
       file,
       nextState.fileLoading && nextState.fileLoading.fileCache,
       loaders,
-      loadOptions
+      loadOptions,
+      nextState.fileLoading?.companionFiles
     )
   );
 }
 
-export function makeLoadFileTask(file, fileCache, loaders: Loader[] = [], loadOptions = {}) {
-  return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions}).bimap(
+export function makeLoadFileTask(
+  file,
+  fileCache,
+  loaders: Loader[] = [],
+  loadOptions = {},
+  companionFiles?: File[]
+) {
+  return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions, companionFiles}).bimap(
     // prettier ignore
     // success
     gen =>

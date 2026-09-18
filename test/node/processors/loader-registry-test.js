@@ -51,6 +51,16 @@ test('#loader-registry -> resolves NDJSON and GIS loaders by extension', async t
 
   const tcx = await getKeplerLoaders({name: 'activity.tcx', type: ''});
   t.equal(tcx[0].id, 'tcx', 'tcx should resolve to the TCX loader');
+
+  const shp = await getKeplerLoaders({name: 'places.shp', type: ''});
+  t.equal(shp[0].id, 'shapefile', 'shp should resolve to the shapefile loader');
+  t.notOk(shp[0].tests, 'shapefile magic tests should be stripped so .shx is not parsed as data');
+
+  const xlsx = await getKeplerLoaders({name: 'table.xlsx', type: ''});
+  t.equal(xlsx[0].id, 'excel', 'xlsx should resolve to the Excel loader');
+
+  const fgb = await getKeplerLoaders({name: 'places.fgb', type: ''});
+  t.equal(fgb[0].id, 'flatgeobuf', 'fgb should resolve to the FlatGeobuf loader');
   t.end();
 });
 
@@ -187,6 +197,43 @@ test('#loader-registry -> tcx files become GeoJSON datasets', async t => {
   t.end();
 });
 
+test('#loader-registry -> excel files become row datasets', async t => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const XLSX = require('xlsx');
+  const workbook = XLSX.utils.book_new();
+  const sheet = XLSX.utils.json_to_sheet([{name: 'alpha', value: 1}]);
+  XLSX.utils.book_append_sheet(workbook, sheet, 'Sheet1');
+  const buffer = XLSX.write(workbook, {type: 'array', bookType: 'xlsx'});
+  const file = new File([buffer], 'table.xlsx', {type: ''});
+  const batch = await readLastBatch(file);
+  const processed = await processFileData({content: batch, fileCache: []});
+
+  t.equal(processed[0].info.format, 'row', 'Excel should process as rows');
+  t.equal(processed[0].data.rows.length, 1, 'should keep the spreadsheet row');
+  t.end();
+});
+
+test('#loader-registry -> flatgeobuf files become GeoJSON datasets', async t => {
+  const {serialize} = await import('flatgeobuf/lib/mjs/geojson.js');
+  const bytes = serialize({
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {name: 'alpha'},
+        geometry: {type: 'Point', coordinates: [-122.4, 37.8]}
+      }
+    ]
+  });
+  const file = new File([bytes], 'places.fgb', {type: ''});
+  const batch = await readLastBatch(file);
+  const processed = await processFileData({content: batch, fileCache: []});
+
+  t.equal(processed[0].info.format, 'geojson', 'FlatGeobuf should process as geojson');
+  t.equal(processed[0].data.rows.length, 1, 'should keep the FlatGeobuf feature');
+  t.end();
+});
+
 test('#loader-registry -> acceptedFileFormats defaults to all formats', t => {
   t.ok(isKeplerFileFormatAccepted('kml'), 'kml is accepted by default');
   t.ok(isKeplerFileFormatAccepted('geojsonl'), 'geojsonl is accepted by default');
@@ -203,14 +250,50 @@ test('#loader-registry -> acceptedFileFormats defaults to all formats', t => {
     getFileExtensions({loaders: []}).includes('geojsonl'),
     'aliases stay accepted even when not shown as icons'
   );
+  t.ok(isKeplerFileFormatAccepted('shp'), 'shp is accepted by default');
+  t.ok(isKeplerFileFormatAccepted('xlsx'), 'xlsx is accepted by default');
+  t.ok(isKeplerFileFormatAccepted('fgb'), 'fgb is accepted by default');
+  t.ok(getFileExtensions({loaders: []}).includes('shp'), 'file picker includes shp');
+  t.ok(getFileExtensions({loaders: []}).includes('zip'), 'file picker includes shapefile zip');
+  t.ok(getFileExtensions({loaders: []}).includes('xlsx'), 'file picker includes xlsx');
+  t.ok(getFileExtensions({loaders: []}).includes('fgb'), 'file picker includes fgb');
+  t.ok(getAcceptedRemoteFileFormats().includes('shp'), 'remote format list includes shp');
+  t.ok(getAcceptedRemoteFileFormats().includes('xlsx'), 'remote format list includes xlsx');
+  t.ok(getAcceptedRemoteFileFormats().includes('fgb'), 'remote format list includes fgb');
   t.deepEqual(
     getDisplayedFileExtensions({loaders: []}),
-    ['csv', 'json', 'geojson', 'arrow', 'parquet', 'geojsonl', 'kml', 'gpx', 'tcx'],
+    [
+      'csv',
+      'json',
+      'geojson',
+      'arrow',
+      'parquet',
+      'geojsonl',
+      'kml',
+      'gpx',
+      'tcx',
+      'shp',
+      'xlsx',
+      'fgb'
+    ],
     'Add Data icons show one chip per format family'
   );
   t.deepEqual(
     getFileFormatNames({loaders: []}),
-    ['CSV', 'Json', 'GeoJSON', 'Arrow', 'Parquet', 'GeoJSONL', 'KML', 'GPX', 'TCX'],
+    [
+      'CSV',
+      'Json',
+      'GeoJSON',
+      'Arrow',
+      'Parquet',
+      'GeoJSONL',
+      'KML',
+      'GPX',
+      'TCX',
+      'Shapefile',
+      'Excel',
+      'FlatGeobuf'
+    ],
     'upload copy lists format families, not every alias'
   );
   t.end();
@@ -224,6 +307,8 @@ test('#loader-registry -> acceptedFileFormats restricts loaders and UI lists', a
     t.ok(isKeplerFileFormatAccepted('GeoJSON'), 'geojson remains accepted');
     t.notOk(isKeplerFileFormatAccepted('kml'), 'kml is rejected');
     t.notOk(isKeplerFileFormatAccepted('parquet'), 'parquet is rejected');
+    t.notOk(isKeplerFileFormatAccepted('shp'), 'shp is rejected');
+    t.notOk(isKeplerFileFormatAccepted('xlsx'), 'xlsx is rejected');
 
     const ids = getAcceptedKeplerLoaderEntries().map(entry => entry.id);
     t.deepEqual(ids.sort(), ['csv', 'json'], 'only matching built-in loaders remain');
