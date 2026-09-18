@@ -377,6 +377,8 @@ export default {
     syncTimelineEnd: 'Fi del període de temps del filtre actual',
     showEffectPanel: "Mostra el panell d'efectes",
     hideEffectPanel: "Amaga el panell d'efectes",
+    showChartPanel: 'Mostra els gràfics',
+    hideChartPanel: 'Amaga els gràfics',
     showAnnotationPanel: 'Mostra les anotacions',
     hideAnnotationPanel: 'Amaga les anotacions',
     removeAnnotation: "Elimina l'anotació",

@@ -46,6 +46,7 @@ initApplicationConfig({
 initApplicationConfig({
   enableA5Layer: true,
   enableGeohashLayer: true,
+  enableChartsPanel: true,
   customIcons: [
     {
       id: 'custom-star',

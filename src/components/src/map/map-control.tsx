@@ -14,13 +14,21 @@ import LocalePanelFactory from './locale-panel';
 import ThemeToggleButtonFactory from './theme-toggle-button';
 import MapNavigationControlFactory from './map-navigation-control';
 import {Layer} from '@kepler.gl/layers';
-import {Editor, LayerVisConfig, LayerOrder, MapControls, MapState} from '@kepler.gl/types';
+import {
+  Editor,
+  LayerVisConfig,
+  LayerOrder,
+  MapControls,
+  MapState,
+  ChartConfig
+} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
-import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
+import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
 import {getApplicationConfig} from '@kepler.gl/utils';
 import {MapViewMode} from '@kepler.gl/constants';
 
 import AnnotationControlFactory from './annotations/annotation-control';
+import ChartControlFactory from './charts/chart-control';
 
 interface StyledMapControlProps {
   $top?: number;
@@ -96,6 +104,8 @@ export type MapControlProps = {
   mapHeight?: number;
   splitMaps?: {layers: {[key: string]: boolean}}[];
   onToggleLayerForMap?: (mapIndex: number, layerId: string) => void;
+  charts?: ChartConfig[];
+  visStateActions?: typeof VisStateActions;
 };
 
 MapControlFactory.deps = [
@@ -106,6 +116,7 @@ MapControlFactory.deps = [
   LocalePanelFactory,
   ThemeToggleButtonFactory,
   AnnotationControlFactory,
+  ChartControlFactory,
   MapNavigationControlFactory
 ];
 
@@ -117,6 +128,7 @@ function MapControlFactory(
   LocalePanel: ReturnType<typeof LocalePanelFactory>,
   ThemeToggleButton: ReturnType<typeof ThemeToggleButtonFactory>,
   AnnotationControl: ReturnType<typeof AnnotationControlFactory>,
+  ChartControl: ReturnType<typeof ChartControlFactory>,
   MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>
 ) {
   const DEFAULT_ACTIONS = [
@@ -126,7 +138,8 @@ function MapControlFactory(
     AnnotationControl,
     LocalePanel,
     ThemeToggleButton,
-    MapLegendPanel
+    MapLegendPanel,
+    ChartControl
   ];
 
   const MapControl: React.FC<MapControlProps> & {

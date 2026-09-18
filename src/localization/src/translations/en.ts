@@ -466,6 +466,8 @@ export default {
     syncTimelineEnd: 'End of current filter timeframe',
     showEffectPanel: 'Show effect panel',
     hideEffectPanel: 'Hide effect panel',
+    showChartPanel: 'Show charts',
+    hideChartPanel: 'Hide charts',
     showAnnotationPanel: 'Show annotations',
     hideAnnotationPanel: 'Hide annotations',
     removeAnnotation: 'Remove annotation',
@@ -506,6 +508,22 @@ export default {
     removeProperty: 'Remove property',
     polygonFilter: 'Polygon filter',
     noLayersToFilter: 'No layers to filter'
+  },
+
+  chartPanel: {
+    addChart: 'Add chart',
+    selectType: 'Select chart type',
+    empty: 'Add a chart to summarize the current map data.',
+    layer: 'Layer',
+    field: 'Field',
+    xAxis: 'X axis',
+    yAxis: 'Y axis',
+    value: 'Value',
+    idField: 'Feature id field',
+    aggregation: 'Aggregation',
+    applyFilters: 'Apply map filters',
+    crossFilter: 'Cross-filter map',
+    configure: 'Configure'
   },
 
   exportVideoModal: {
@@ -766,7 +784,8 @@ ${'```'}
   header: {
     visibleLayers: 'Visible layers',
     layerLegend: 'Legend',
-    annotations: 'Annotations'
+    annotations: 'Annotations',
+    charts: 'Charts'
   },
   interactions: {
     tooltip: 'Tooltip',

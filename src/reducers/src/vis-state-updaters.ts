@@ -164,7 +164,9 @@ import {
   TimeRangeFilter,
   Annotation,
   AnnotationPropsPartial,
-  ProtoDataset
+  ProtoDataset,
+  ChartConfig,
+  LayerChartConfig
 } from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
@@ -348,6 +350,9 @@ export const INITIAL_VIS_STATE: VisState = {
   // effects
   effects: [],
   effectOrder: [],
+
+  // charts (optional panel; gated by enableChartsPanel)
+  charts: [],
 
   // annotations
   annotations: [],
@@ -2003,7 +2008,12 @@ export function removeLayerUpdater<T extends VisState>(
     // TODO: update filters, create helper to remove layer form filter (remove layerid and dataid) if mapped
   };
 
-  return updateAnimationDomain(newState);
+  return updateAnimationDomain(
+    removeChartsAndFilters(
+      newState,
+      chart => isLayerChartConfig(chart) && chart.layerId === layerToRemove.id
+    )
+  );
 }
 
 /**
@@ -2485,6 +2495,117 @@ export const updateEffectUpdater = (
   };
 };
 
+function isLayerChartConfig(chart: ChartConfig): chart is LayerChartConfig {
+  return chart.type === 'layerChart';
+}
+
+function mergeChartConfig(chart: ChartConfig, props: Partial<ChartConfig>): ChartConfig {
+  return {
+    ...chart,
+    ...props,
+    display: {
+      ...chart.display,
+      ...(props.display || {})
+    },
+    chartDisplay: {
+      ...chart.chartDisplay,
+      ...((props as ChartConfig).chartDisplay || {})
+    }
+  } as ChartConfig;
+}
+
+function removeChartsAndFilters<T extends VisState>(
+  state: T,
+  shouldRemove: (chart: ChartConfig) => boolean
+): T {
+  const charts = state.charts || [];
+  const removed = charts.filter(shouldRemove);
+  if (!removed.length) {
+    return state;
+  }
+  const removedIds = new Set(removed.map(chart => chart.id));
+  const filterIds = new Set(
+    removed.map(chart => chart.crossFilter?.filterId).filter((id): id is string => Boolean(id))
+  );
+  let nextState: VisState = {
+    ...state,
+    charts: charts.filter(chart => !removedIds.has(chart.id))
+  };
+  if (filterIds.size) {
+    nextState = nextState.filters.reduceRight((accu, filter, idx) => {
+      return filterIds.has(filter.id) ? removeFilterUpdater(accu, {idx}) : accu;
+    }, nextState);
+  }
+  return nextState as T;
+}
+
+/**
+ * Add a chart
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const addChartUpdater = (
+  state: VisState,
+  {chart}: VisStateActions.AddChartUpdaterAction
+): VisState => {
+  if (!chart?.id) {
+    return state;
+  }
+  if ((state.charts || []).some(existing => existing.id === chart.id)) {
+    return state;
+  }
+  return {
+    ...state,
+    charts: [
+      ...(state.charts || []).map(existing => ({
+        ...existing,
+        display: {
+          ...existing.display,
+          isConfigActive: false
+        }
+      })),
+      {
+        ...chart,
+        display: {
+          ...chart.display,
+          isConfigActive: chart.display?.isConfigActive ?? true
+        }
+      }
+    ]
+  };
+};
+
+/**
+ * Update a chart
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const updateChartUpdater = (
+  state: VisState,
+  {id, props}: VisStateActions.UpdateChartUpdaterAction
+): VisState => {
+  const idx = (state.charts || []).findIndex(chart => chart.id === id);
+  if (idx < 0) {
+    return state;
+  }
+  const charts = [...state.charts];
+  charts[idx] = mergeChartConfig(charts[idx], props);
+  return {
+    ...state,
+    charts
+  };
+};
+
+/**
+ * Remove a chart and any cross-filter it owns
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const removeChartUpdater = (
+  state: VisState,
+  {id}: VisStateActions.RemoveChartUpdaterAction
+): VisState => removeChartsAndFilters(state, chart => chart.id === id);
+
 // ANNOTATION UPDATERS
 
 function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
@@ -2718,7 +2839,18 @@ export function removeDatasetUpdater<T extends VisState>(
 
   newState = {...newState, filters};
 
-  return removeDatasetFromInteractionConfig(newState, {dataId: datasetKey});
+  return removeChartsAndFilters(
+    removeDatasetFromInteractionConfig(newState, {dataId: datasetKey}),
+    chart => {
+      if (chart.dataId === datasetKey) {
+        return true;
+      }
+      if (isLayerChartConfig(chart)) {
+        return layersToRemove.includes(chart.layerId);
+      }
+      return false;
+    }
+  );
 }
 
 function removeDatasetFromInteractionConfig(state, {dataId}) {

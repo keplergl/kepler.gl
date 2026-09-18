@@ -378,6 +378,8 @@ export default {
     syncTimelineEnd: 'Fim do período de tempo do filtro atual',
     showEffectPanel: 'Mostrar painel de efeitos',
     hideEffectPanel: 'Ocultar painel de efeitos',
+    showChartPanel: 'Mostrar gráficos',
+    hideChartPanel: 'Ocultar gráficos',
     showAnnotationPanel: 'Mostrar anotações',
     hideAnnotationPanel: 'Ocultar anotações',
     removeAnnotation: 'Remover anotação',

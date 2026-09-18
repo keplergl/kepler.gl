@@ -374,6 +374,8 @@ export default {
     syncTimelineEnd: 'Nykyisen suodattimen aikajakson loppu',
     showEffectPanel: 'Näytä efektipaneeli',
     hideEffectPanel: 'Piilota efektipaneeli',
+    showChartPanel: 'Näytä kaaviot',
+    hideChartPanel: 'Piilota kaaviot',
     showAnnotationPanel: 'Näytä merkinnät',
     hideAnnotationPanel: 'Piilota merkinnät',
     removeAnnotation: 'Poista merkintä',

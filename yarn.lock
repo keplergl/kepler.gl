@@ -3947,6 +3947,7 @@ __metadata:
   resolution: "@kepler.gl/actions@workspace:src/actions"
   dependencies:
     "@deck.gl/core": "npm:^9.3.1"
+    "@kepler.gl/charts": "npm:3.3.0-alpha.12"
     "@kepler.gl/cloud-providers": "npm:3.3.0-alpha.12"
     "@kepler.gl/constants": "npm:3.3.0-alpha.12"
     "@kepler.gl/layers": "npm:3.3.0-alpha.12"
@@ -3961,6 +3962,25 @@ __metadata:
     react-redux: "npm:^8.0.5"
     redux: "npm:^5.0.0"
     redux-actions: "npm:^2.2.1"
+  languageName: unknown
+  linkType: soft
+
+"@kepler.gl/charts@npm:3.3.0-alpha.12, @kepler.gl/charts@workspace:src/charts":
+  version: 0.0.0-use.local
+  resolution: "@kepler.gl/charts@workspace:src/charts"
+  dependencies:
+    "@kepler.gl/common-utils": "npm:3.3.0-alpha.12"
+    "@kepler.gl/constants": "npm:3.3.0-alpha.12"
+    "@kepler.gl/types": "npm:3.3.0-alpha.12"
+    "@kepler.gl/utils": "npm:3.3.0-alpha.12"
+    "@types/d3-array": "npm:^2.8.0"
+    "@types/d3-time": "npm:^2"
+    "@types/react": "npm:^19.0.0"
+    d3-array: "npm:^2.8.0"
+    d3-time: "npm:^2.1.1"
+  peerDependencies:
+    react: ">=18"
+    styled-components: ^6.x
   languageName: unknown
   linkType: soft
 
@@ -4003,6 +4023,7 @@ __metadata:
     "@hubble.gl/core": "npm:2.0.0-alpha.4"
     "@hubble.gl/react": "npm:2.0.0-alpha.4"
     "@kepler.gl/actions": "npm:3.3.0-alpha.12"
+    "@kepler.gl/charts": "npm:3.3.0-alpha.12"
     "@kepler.gl/cloud-providers": "npm:3.3.0-alpha.12"
     "@kepler.gl/common-utils": "npm:3.3.0-alpha.12"
     "@kepler.gl/constants": "npm:3.3.0-alpha.12"
@@ -4334,6 +4355,7 @@ __metadata:
   resolution: "@kepler.gl/reducers@workspace:src/reducers"
   dependencies:
     "@kepler.gl/actions": "npm:3.3.0-alpha.12"
+    "@kepler.gl/charts": "npm:3.3.0-alpha.12"
     "@kepler.gl/cloud-providers": "npm:3.3.0-alpha.12"
     "@kepler.gl/common-utils": "npm:3.3.0-alpha.12"
     "@kepler.gl/constants": "npm:3.3.0-alpha.12"
@@ -4371,6 +4393,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/schemas@workspace:src/schemas"
   dependencies:
+    "@kepler.gl/charts": "npm:3.3.0-alpha.12"
     "@kepler.gl/common-utils": "npm:3.3.0-alpha.12"
     "@kepler.gl/constants": "npm:3.3.0-alpha.12"
     "@kepler.gl/layers": "npm:3.3.0-alpha.12"
@@ -15031,7 +15054,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-time@npm:^2.0.0":
+"d3-time@npm:^2.0.0, d3-time@npm:^2.1.1":
   version: 2.1.1
   resolution: "d3-time@npm:2.1.1"
   dependencies:

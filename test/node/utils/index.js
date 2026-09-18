@@ -32,6 +32,7 @@ import './composer-helpers-test';
 import './dom-to-image';
 import './wms-utils-test';
 import './effect-utils-test';
+import './chart-aggregation-test';
 import './duckdb-utils-test';
 import './annotation-utils-test';
 import './slider-scale-utils-test';

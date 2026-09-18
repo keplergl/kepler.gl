@@ -45,7 +45,8 @@ import {
   NestedPartial,
   SavedAnimationConfig,
   LayerOrder,
-  LayerOrderGroup
+  LayerOrderGroup,
+  ChartConfig
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
@@ -692,8 +693,38 @@ export function mergeSplitMaps<S extends VisState>(
 }
 
 /**
- * Merge effects with saved config
+ * Merge charts with saved config
  */
+export function mergeCharts<S extends VisState>(
+  state: S,
+  charts: ChartConfig[] | undefined,
+  fromConfig?: boolean
+): S {
+  if (!Array.isArray(charts) || !charts.length) {
+    return state;
+  }
+  const existingIds = new Set((state.charts || []).map(chart => chart.id));
+  const nextCharts = charts
+    .filter(chart => chart && chart.id && !existingIds.has(chart.id))
+    .map(chart =>
+      fromConfig
+        ? {
+            ...chart,
+            display: {
+              ...chart.display,
+              isConfigActive: false
+            }
+          }
+        : chart
+    );
+  if (!nextCharts.length) {
+    return state;
+  }
+  return {
+    ...state,
+    charts: [...(state.charts || []), ...nextCharts]
+  };
+}
 export function mergeEffects<S extends VisState>(
   state: S,
   effects: NonNullable<ParsedConfig['visState']>['effects'],
@@ -1341,6 +1372,10 @@ export const VIS_STATE_MERGERS: VisStateMergers<any> = [
   {
     merge: mergeEffects,
     prop: 'effects'
+  },
+  {
+    merge: mergeCharts,
+    prop: 'charts'
   },
   {
     merge: mergeAnnotations,

@@ -41,6 +41,7 @@
     "@hubble.gl/core": "2.0.0-alpha.4",
     "@hubble.gl/react": "2.0.0-alpha.4",
     "@kepler.gl/actions": "3.3.0-alpha.12",
+    "@kepler.gl/charts": "3.3.0-alpha.12",
     "@kepler.gl/cloud-providers": "3.3.0-alpha.12",
     "@kepler.gl/common-utils": "3.3.0-alpha.12",
     "@kepler.gl/constants": "3.3.0-alpha.12",
