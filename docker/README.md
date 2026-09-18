@@ -95,7 +95,7 @@ Then open http://localhost:8080.
 
 The production image is built from this repo (local `@kepler.gl/*` source, not npm) and published to `ghcr.io/keplergl/kepler.gl`. Tokens are still injected at runtime. No npm publish is required. The image is **not** rebuilt on every `master` commit.
 
-Publish from GitHub Actions: **Actions → Docker publish → Run workflow**. Use the branch/tag picker at the top, then launch. Check **Also push the latest tag** when this build should become `:latest`.
+Publish from GitHub Actions: **Actions → Docker publish → Run workflow**. Use the branch/tag picker at the top, then launch. Check **Also push the latest tag** only when this build should become `:latest` (off by default so a branch test cannot overwrite it).
 
 Tags that get pushed:
 

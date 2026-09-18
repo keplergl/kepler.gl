@@ -3,7 +3,9 @@
 #   curl -fsSO https://raw.githubusercontent.com/keplergl/kepler.gl/master/docker/docker-compose.ghcr.yml
 #   docker compose -f docker-compose.ghcr.yml up
 #
-# Optional config.json (same schema as docker/config.example.json):
+# Optional config.json (same schema as docker/config.example.json).
+# :ro is fine with no KEPLER_* overrides. If you also set env overrides, use a
+# writable mount — the entrypoint must write the merged file.
 #   volumes:
 #     - ./config.json:/app/dist/config.json:ro
 #

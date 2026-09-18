@@ -9,7 +9,7 @@ on:
       update_latest:
         description: 'Also push the latest tag'
         type: boolean
-        default: true
+        default: false
 
 concurrency:
   group: docker-publish
@@ -38,7 +38,6 @@ jobs:
             type=raw,value=latest,enable=${{ inputs.update_latest }}
             type=sha,prefix=sha-
             type=ref,event=tag
-            type=semver,pattern={{version}}
 
       - name: Build production image
         uses: docker/build-push-action@v6
