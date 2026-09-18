@@ -362,6 +362,8 @@ export default {
     syncTimelineEnd: '当前过滤时间段的结束',
     showEffectPanel: '显示效果面板',
     hideEffectPanel: '隐藏效果面板',
+    showChartPanel: '显示图表',
+    hideChartPanel: '隐藏图表',
     showAnnotationPanel: '显示注释',
     hideAnnotationPanel: '隐藏注释',
     removeAnnotation: '删除注释',

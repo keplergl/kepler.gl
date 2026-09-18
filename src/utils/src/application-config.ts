@@ -207,6 +207,13 @@ export type KeplerApplicationConfig = {
   enableColumnStats?: boolean;
 
   /**
+   * Whether to show the optional charts map-control panel (big number, bar,
+   * line, heatmap, pivot table, tooltip charts, and chart cross-filters).
+   * Disabled by default; enable with {@link initApplicationConfig}.
+   */
+  enableChartsPanel?: boolean;
+
+  /**
    * Show a format dropdown next to the remote dataset URL field (Auto / CSV / GeoJSON / JSON / Arrow / Parquet).
    * Useful for extensionless URLs such as Azure SAS blobs. Disabled by default.
    */
@@ -372,6 +379,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableThemeToggle: false,
 
   enableColumnStats: true,
+
+  enableChartsPanel: false,
 
   enableRemoteFileFormatSelector: false,
 

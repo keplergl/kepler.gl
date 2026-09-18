@@ -29,7 +29,8 @@ import {
   FilterAnimationConfig,
   LayerOrder,
   LayerOrderGroup,
-  ProtoDataset
+  ProtoDataset,
+  ChartConfig
 } from '@kepler.gl/types';
 import {createAction} from '@reduxjs/toolkit';
 
@@ -772,6 +773,72 @@ export function updateEffect(
     type: ActionTypes.UPDATE_EFFECT,
     id,
     props
+  };
+}
+
+// Chart Actions
+
+export type AddChartUpdaterAction = {
+  chart: ChartConfig;
+};
+
+/**
+ * Add a chart to the optional charts panel
+ * @memberof visStateActions
+ * @param chart - chart config
+ * @returns action
+ * @public
+ */
+export function addChart(
+  chart: ChartConfig
+): Merge<AddChartUpdaterAction, {type: typeof ActionTypes.ADD_CHART}> {
+  return {
+    type: ActionTypes.ADD_CHART,
+    chart
+  };
+}
+
+export type UpdateChartUpdaterAction = {
+  id: string;
+  props: Partial<ChartConfig>;
+};
+
+/**
+ * Update a chart
+ * @memberof visStateActions
+ * @param id - chart id
+ * @param props - partial chart config
+ * @returns action
+ * @public
+ */
+export function updateChart(
+  id: string,
+  props: Partial<ChartConfig>
+): Merge<UpdateChartUpdaterAction, {type: typeof ActionTypes.UPDATE_CHART}> {
+  return {
+    type: ActionTypes.UPDATE_CHART,
+    id,
+    props
+  };
+}
+
+export type RemoveChartUpdaterAction = {
+  id: string;
+};
+
+/**
+ * Remove a chart
+ * @memberof visStateActions
+ * @param id - chart id
+ * @returns action
+ * @public
+ */
+export function removeChart(
+  id: string
+): Merge<RemoveChartUpdaterAction, {type: typeof ActionTypes.REMOVE_CHART}> {
+  return {
+    type: ActionTypes.REMOVE_CHART,
+    id
   };
 }
 

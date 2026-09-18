@@ -375,6 +375,8 @@ export default {
     syncTimelineEnd: 'Конец текущего периода фильтра',
     showEffectPanel: 'Показать панель эффектов',
     hideEffectPanel: 'Скрыть панель эффектов',
+    showChartPanel: 'Показать графики',
+    hideChartPanel: 'Скрыть графики',
     showAnnotationPanel: 'Показать аннотации',
     hideAnnotationPanel: 'Скрыть аннотации',
     removeAnnotation: 'Удалить аннотацию',

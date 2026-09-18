@@ -4,6 +4,7 @@
 import React, {useState, useCallback, useContext} from 'react';
 import styled from 'styled-components';
 import MapPopoverContentFactory from './map-popover-content';
+import LayerChartHover from './charts/layer-chart-hover';
 import {Pin, ArrowLeft, ArrowRight, CursorPoint} from '../common/icons';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -13,6 +14,8 @@ import {generateHashId, idToPolygonGeo} from '@kepler.gl/common-utils';
 import {LAYER_TYPES} from '@kepler.gl/constants';
 import {LayerHoverProp, getLayerHoverPropValue} from '@kepler.gl/reducers';
 import {Feature, FeatureSelectionContext} from '@kepler.gl/types';
+import {ChartConfig} from '@kepler.gl/types';
+import {Datasets} from '@kepler.gl/table';
 import {
   FloatingPortal,
   flip,
@@ -189,6 +192,8 @@ export type MapPopoverProps = {
     type: string;
     features: Feature[];
   };
+  charts?: ChartConfig[];
+  datasets?: Datasets;
 };
 
 type IntlProps = {
@@ -210,7 +215,9 @@ export default function MapPopoverFactory(
     onClose,
     onSetFeatures,
     setSelectedFeature,
-    featureCollection
+    featureCollection,
+    charts,
+    datasets
   }) => {
     const [horizontalPlacement, setHorizontalPlacement] = useState('start');
     const moveLeft = () => setHorizontalPlacement('end');
@@ -279,6 +286,8 @@ export default function MapPopoverFactory(
               coordinate={coordinate}
               zoom={zoom}
               layerHoverProp={layerHoverProp}
+              charts={charts}
+              datasets={datasets}
             />
           </PopoverContent>
           {layerHoverProp?.layer?.type &&

@@ -102,6 +102,7 @@ export type SavedVisState = {
   filters: SavedFilter[];
   layers: SavedLayer[];
   effects: SavedEffect[];
+  charts?: any[];
   interactionConfig: SavedInteractionConfig;
   layerBlending: string;
   overlayBlending?: string;
@@ -116,6 +117,7 @@ export type MinSavedVisStateV1 = {
   filters?: MinSavedFilter[];
   layers?: MinSavedLayer[];
   effects?: SavedEffect[];
+  charts?: any[];
   interactionConfig?: Partial<SavedInteractionConfig>;
   layerBlending?: string;
   overlayBlending?: string;
@@ -127,8 +129,8 @@ export type MinSavedVisStateV1 = {
 export type ParsedVisState = {
   layers?: ParsedLayer[];
   effects?: ParsedEffect[];
+  charts?: any[];
   filters?: ParsedFilter[];
-  effects?: ParsedEffect[];
   interactionConfig?: Partial<SavedInteractionConfig>;
   layerBlending?: string;
   overlayBlending?: string;

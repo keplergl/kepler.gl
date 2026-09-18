@@ -1354,7 +1354,8 @@ export const MAP_CONTROLS = keyMirror({
   mapLocale: null,
   mapTheme: null,
   effect: null,
-  annotation: null
+  annotation: null,
+  chart: null
 });
 
 export enum MapViewMode {

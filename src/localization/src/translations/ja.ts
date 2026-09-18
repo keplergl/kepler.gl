@@ -372,6 +372,8 @@ export default {
     syncTimelineEnd: '現在のフィルタ期間の終了',
     showEffectPanel: 'エフェクトパネルを表示',
     hideEffectPanel: 'エフェクトパネルを非表示',
+    showChartPanel: 'チャートを表示',
+    hideChartPanel: 'チャートを非表示',
     showAnnotationPanel: 'アノテーションを表示',
     hideAnnotationPanel: 'アノテーションを非表示',
     removeAnnotation: 'アノテーションを削除',
