@@ -2,6 +2,17 @@
 // Copyright contributors to the kepler.gl project
 
 import type {AggregatedBin, ColorMap} from '@kepler.gl/types';
+import {naturalBreaks} from '@kepler.gl/utils';
+
+function getJenksColorMap(values: number[], k: number): {breaks: number[]; colorMap: ColorMap} {
+  const breaks = naturalBreaks(values, k);
+  // classifyBinsByCustomBreaks only reads numeric thresholds from colorMap.
+  const colorMap: ColorMap = [
+    ...breaks.map(threshold => [threshold, '#000000'] as [number, string]),
+    [null, '#000000']
+  ];
+  return {breaks, colorMap};
+}
 
 /**
  * Build a Record<index, AggregatedBin> from the raw Float32Array of per-bin
@@ -138,6 +149,14 @@ export function enrichedAggregationUpdate(layer: any, ParentClass: any, channel:
       .slice(0, aggregator.binCount)
       .filter(Number.isFinite)
       .sort((a: number, b: number) => a - b);
+  } else if (props.jenksScale) {
+    const values = Array.from(binValues)
+      .slice(0, aggregator.binCount)
+      .filter(Number.isFinite) as number[];
+    const k = Array.isArray(props.colorRange) ? props.colorRange.length : 0;
+    const {breaks, colorMap} = getJenksColorMap(values, k);
+    classifyBinsByCustomBreaks(layer.state.colors, aggregator.binCount, colorMap, binValues);
+    enrichedDomain = breaks;
   }
   props.onSetColorDomain?.({domain: enrichedDomain, aggregatedBins});
 }
@@ -153,8 +172,17 @@ export function enrichedAggregationUpdate(layer: any, ParentClass: any, channel:
 export function enrichedRenderLayers(layer: any, ParentClass: any): any {
   const props = layer.getCurrentLayer().props;
   const {colors, rawColorBinValues, aggregator} = layer.state;
-  if (props.colorMap && colors && rawColorBinValues && aggregator?.binCount > 0) {
-    classifyBinsByCustomBreaks(colors, aggregator.binCount, props.colorMap, rawColorBinValues);
+  if (colors && rawColorBinValues && aggregator?.binCount > 0) {
+    if (props.colorMap) {
+      classifyBinsByCustomBreaks(colors, aggregator.binCount, props.colorMap, rawColorBinValues);
+    } else if (props.jenksScale) {
+      const values = Array.from(rawColorBinValues)
+        .slice(0, aggregator.binCount)
+        .filter(Number.isFinite) as number[];
+      const k = Array.isArray(props.colorRange) ? props.colorRange.length : 0;
+      const {colorMap} = getJenksColorMap(values, k);
+      classifyBinsByCustomBreaks(colors, aggregator.binCount, colorMap, rawColorBinValues);
+    }
   }
   return (ParentClass.prototype as any).renderLayers.call(layer);
 }

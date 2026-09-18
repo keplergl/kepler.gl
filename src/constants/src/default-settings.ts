@@ -451,6 +451,7 @@ export type SCALE_TYPES_DEF = {
   ordinal: 'ordinal';
   quantile: 'quantile';
   quantize: 'quantize';
+  jenks: 'jenks';
   linear: 'linear';
   sqrt: 'sqrt';
   log: 'log';
@@ -464,6 +465,7 @@ export const SCALE_TYPES: SCALE_TYPES_DEF = keyMirror({
   ordinal: null,
   quantile: null,
   quantize: null,
+  jenks: null,
   linear: null,
   sqrt: null,
   log: null,
@@ -477,6 +479,7 @@ export const SCALE_TYPE_NAMES: {[key in keyof SCALE_TYPES_DEF]: string} = {
   ordinal: 'Ordinal',
   quantile: 'Quantile',
   quantize: 'Quantize',
+  jenks: 'Jenks Natural Breaks',
   linear: 'Linear',
   sqrt: 'Sqrt',
   log: 'Log',
@@ -494,6 +497,7 @@ export const SCALE_FUNC = {
   [SCALE_TYPES.linear]: scaleLinear,
   [SCALE_TYPES.quantize]: scaleQuantize,
   [SCALE_TYPES.quantile]: scaleQuantile,
+  [SCALE_TYPES.jenks]: scaleThreshold,
   [SCALE_TYPES.ordinal]: scaleOrdinal,
   [SCALE_TYPES.sqrt]: scaleSqrt,
   [SCALE_TYPES.log]: scaleLog,
@@ -702,7 +706,12 @@ export const AGGREGATION_TYPE_OPTIONS: {id: string; label: string}[] = Object.en
 }));
 
 export const linearFieldScaleFunctions = {
-  [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.custom],
+  [CHANNEL_SCALES.color]: [
+    SCALE_TYPES.quantize,
+    SCALE_TYPES.quantile,
+    SCALE_TYPES.jenks,
+    SCALE_TYPES.custom
+  ],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt],
   [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
   [CHANNEL_SCALES.angle]: [SCALE_TYPES.linear]
@@ -711,6 +720,7 @@ export const linearFieldScaleFunctions = {
 const DEFAULT_AGGREGATION_COLOR_SCALES = [
   SCALE_TYPES.quantize,
   SCALE_TYPES.quantile,
+  SCALE_TYPES.jenks,
   SCALE_TYPES.custom
 ];
 

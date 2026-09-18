@@ -413,6 +413,9 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
   getScaleOptions(channelKey: string): string[] {
     let options = KeplerLayer.prototype.getScaleOptions.call(this, channelKey);
 
+    // Jenks needs the full value distribution, which tilesets don't provide.
+    options = options.filter(scale => scale !== SCALE_TYPES.jenks);
+
     const channel = this.visualChannels.strokeColor;
     const field = this.config[channel.field];
     if (
