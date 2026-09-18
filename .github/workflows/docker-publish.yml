@@ -1,29 +1,19 @@
-# Build the prod demo-app image from this repo (not from npm) and push to GHCR.
-# Smoke-tests locally first so a failing image never becomes :latest.
+# Manual GHCR publish. Actions → Docker publish → Run workflow → pick branch or tag.
+# The image is built from this repo (not from npm). Smoke-test before push so a
+# failing image never becomes :latest.
 name: Docker publish
 
 on:
-  push:
-    branches: [master]
-    paths:
-      - 'docker/**'
-      - 'examples/demo-app/**'
-      - 'src/**'
-      - 'scripts/**'
-      - 'package.json'
-      - 'yarn.lock'
-      - '.yarnrc.yml'
-      - '.dockerignore'
-      - '.github/workflows/docker-publish.yml'
-  # Path filters do not apply here, so a GitHub Release still gets a version tag
-  # even when that commit did not touch docker/src (same event as npm publish).
-  release:
-    types: [published]
   workflow_dispatch:
+    inputs:
+      update_latest:
+        description: 'Also push the latest tag'
+        type: boolean
+        default: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref == 'refs/heads/master' }}
+  group: docker-publish
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -45,7 +35,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ inputs.update_latest }}
             type=sha,prefix=sha-
             type=ref,event=tag
             type=semver,pattern={{version}}

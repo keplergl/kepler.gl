@@ -1,5 +1,5 @@
 # Prod image smoke test (env-only /config.json). PRs that touch docker packaging.
-# Master / tags publish via docker-publish.yml (broader path filter, pushes GHCR).
+# Master / tags: publish is manual (Actions → Docker publish → Run workflow).
 name: Docker CI
 
 on:
