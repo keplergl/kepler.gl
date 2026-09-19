@@ -4202,7 +4202,7 @@ export function loadNextFileUpdater(state: VisState): VisState {
       nextState.fileLoading && nextState.fileLoading.fileCache,
       loaders,
       loadOptions,
-      nextState.fileLoading?.companionFiles
+      nextState.fileLoading ? nextState.fileLoading.companionFiles : undefined
     )
   );
 }

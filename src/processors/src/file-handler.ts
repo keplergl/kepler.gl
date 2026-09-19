@@ -424,13 +424,15 @@ export async function processFileData({
       // csv file goes here
       format = DATASET_FORMATS.row;
       processor = processRowObject;
-    } else if (
-      isPlainObject(data) &&
-      (data.shape === 'object-row-table' || data.shape === 'row-table') &&
-      Array.isArray(data.data)
-    ) {
-      format = DATASET_FORMATS.row;
-      processor = () => processRowObject(data.data);
+    } else if (isPlainObject(data)) {
+      const tableRows = data.data;
+      if (
+        (data.shape === 'object-row-table' || data.shape === 'row-table') &&
+        Array.isArray(tableRows)
+      ) {
+        format = DATASET_FORMATS.row;
+        processor = () => processRowObject(tableRows);
+      }
     }
   }
   if (format && processor) {
