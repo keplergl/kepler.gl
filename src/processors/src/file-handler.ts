@@ -144,14 +144,16 @@ export function getGeoJsonFromLoaderResult(data: unknown): Feature | FeatureColl
   if (data.shape === 'geojson-table' && Array.isArray(data.features)) {
     return {type: 'FeatureCollection', features: data.features as Feature[]};
   }
-  if (
-    (data.shape === 'object-row-table' || data.shape === 'row-table') &&
-    isGeoJsonFeatureArray(data.data)
-  ) {
-    return {type: 'FeatureCollection', features: data.data};
+  if (data.shape === 'object-row-table' || data.shape === 'row-table') {
+    if (isGeoJsonFeatureArray(data.data)) {
+      return {type: 'FeatureCollection', features: data.data};
+    }
+    // Empty spreadsheet tables stay rows, not empty GeoJSON.
+    return null;
   }
-  // ShapefileLoader parseInBatches (v3 shape) yields `{data: Feature[]}`
-  if (isGeoJsonFeatureArray(data.data)) {
+  // ShapefileLoader parseInBatches (v3 shape) yields `{data: Feature[]}`,
+  // including empty files as `{data: []}`.
+  if (Array.isArray(data.data) && (data.data.length === 0 || isGeoJsonFeatureArray(data.data))) {
     return {type: 'FeatureCollection', features: data.data};
   }
   return null;
@@ -310,14 +312,18 @@ export async function readFileInBatches({
   file,
   loaders = [],
   loadOptions = {},
-  companionFiles
+  companionFiles,
+  fileName
 }: {
   file: File;
   fileCache?: FileCacheItem[];
   loaders?: Loader[];
   loadOptions?: any;
   companionFiles?: File[];
+  /** Display/progress name. Kept across zip → shapefile recursion. */
+  fileName?: string;
 }): Promise<AsyncGenerator> {
+  const displayFileName = fileName || file.name;
   if (isZipFileName(file.name) && isKeplerFileFormatAccepted('shp')) {
     const unzipped = await unzipShapefileArchive(file);
     const shapefile = unzipped.find(entry => getDroppedFileExtension(entry.name) === 'shp');
@@ -328,14 +334,18 @@ export async function readFileInBatches({
       file: shapefile,
       loaders,
       loadOptions,
-      companionFiles: [...unzipped, ...(companionFiles || [])]
+      companionFiles: [...unzipped, ...(companionFiles || [])],
+      fileName: displayFileName
     });
   }
 
   loaders = await getKeplerLoaders(file, loaders);
   const hasExtension = /\.[a-z0-9]+$/i.test(file.name);
   const mimeType = !hasExtension && file.type ? file.type : undefined;
-  const companionFetch = createCompanionFetch(companionFiles);
+  // Shapefile sidecars are resolved via a custom fetch that cannot be cloned
+  // into a worker. Other formats keep loaders.gl worker parsing.
+  const isShapefile = getDroppedFileExtension(file.name) === 'shp';
+  const companionFetch = isShapefile ? createCompanionFetch(companionFiles) : undefined;
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
     arrow: ARROW_LOADER_OPTIONS,
@@ -349,8 +359,8 @@ export async function readFileInBatches({
     excel: EXCEL_LOADER_OPTIONS,
     flatgeobuf: GIS_TABLE_LOADER_OPTIONS,
     gis: {reproject: true, _targetCrs: 'WGS84'},
-    worker: false,
     metadata: true,
+    ...(isShapefile ? {worker: false} : {}),
     ...(mimeType ? {mimeType} : {}),
     ...(companionFetch ? {fetch: companionFetch} : {}),
     ...loadOptions
@@ -367,7 +377,7 @@ export async function readFileInBatches({
 
   return readBatch(
     progressIterator,
-    file.name,
+    displayFileName,
     sourceUrl,
     keplerFormat,
     refreshIntervalMs,

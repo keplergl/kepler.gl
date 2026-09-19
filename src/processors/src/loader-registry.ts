@@ -93,7 +93,7 @@ const DEFAULT_LOADER_ENTRIES: KeplerLoaderEntry[] = [
   {
     id: 'shapefile',
     extensions: ['shp'],
-    mimeTypes: ['application/octet-stream', 'application/x-esri-shapefile', 'application/shp'],
+    mimeTypes: ['application/x-esri-shapefile', 'application/shp'],
     load: async () => {
       const {ShapefileLoader} = await import('@loaders.gl/shapefile');
       // loaders.gl SHP magic also matches .shx sidecar files

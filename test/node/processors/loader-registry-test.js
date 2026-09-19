@@ -64,6 +64,38 @@ test('#loader-registry -> resolves NDJSON and GIS loaders by extension', async t
   t.end();
 });
 
+test('#loader-registry -> generic octet-stream does not lock in shapefile', async t => {
+  const extensionless = await getKeplerLoaders({
+    name: 'abc123',
+    type: 'application/octet-stream'
+  });
+  t.ok(
+    extensionless.length > 1,
+    'extensionless octet-stream should keep content-based loader selection'
+  );
+  t.ok(
+    extensionless.some(loader => loader.id === 'arrow'),
+    'Arrow should stay a candidate for generic binary MIME'
+  );
+  t.ok(
+    extensionless.some(loader => loader.id === 'flatgeobuf'),
+    'FlatGeobuf should stay a candidate for generic binary MIME'
+  );
+
+  const fgb = await getKeplerLoaders({
+    name: 'places.fgb',
+    type: 'application/octet-stream'
+  });
+  t.equal(fgb[0].id, 'flatgeobuf', '.fgb should still win from the extension, not shapefile MIME');
+
+  const shpMime = await getKeplerLoaders({
+    name: 'dataset',
+    type: 'application/x-esri-shapefile'
+  });
+  t.equal(shpMime[0].id, 'shapefile', 'specific shapefile MIME should still resolve shapefile');
+  t.end();
+});
+
 test('#loader-registry -> custom loaders take precedence', async t => {
   const customLoader = {...KeplerCSVLoader, name: 'Custom CSV'};
   const loaders = await getKeplerLoaders({name: 'data.csv', type: ''}, [customLoader]);

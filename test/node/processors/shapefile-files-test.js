@@ -209,7 +209,9 @@ test('#shapefile-files -> shapefile zip unpacks before parse', async t => {
   const batch = await readLastBatch(new File([zip], 'places.zip'));
   const processed = await processFileData({content: batch, fileCache: []});
 
+  t.equal(batch.fileName, 'places.zip', 'batches should keep the original zip name for progress');
   t.equal(processed[0].info.format, 'geojson', 'shapefile zip should process as geojson');
+  t.equal(processed[0].info.label, 'places.zip', 'the dataset label should stay the zip name');
   t.equal(processed[0].data.rows.length, 1, 'should keep the unzipped shapefile feature');
   t.end();
 });

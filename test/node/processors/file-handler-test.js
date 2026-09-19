@@ -447,6 +447,32 @@ test('#file-handler -> shapefile-shaped loader output becomes GeoJSON', async t 
   t.end();
 });
 
+test('#file-handler -> empty GIS loader output becomes an empty GeoJSON dataset', async t => {
+  const emptyShapefile = await processFileData({
+    content: {fileName: 'empty.shp', data: {data: []}},
+    fileCache: []
+  });
+  t.equal(emptyShapefile[0].info.format, 'geojson', 'empty shapefile output should be geojson');
+  t.equal(emptyShapefile[0].data.rows.length, 0, 'should keep zero features');
+
+  const emptyTable = await processFileData({
+    content: {
+      fileName: 'empty.fgb',
+      data: {shape: 'geojson-table', type: 'FeatureCollection', features: []}
+    },
+    fileCache: []
+  });
+  t.equal(emptyTable[0].info.format, 'geojson', 'empty geojson-table should be geojson');
+  t.equal(emptyTable[0].data.rows.length, 0, 'should keep zero geojson-table features');
+
+  const emptyExcel = await processFileData({
+    content: {fileName: 'empty.xlsx', data: {shape: 'object-row-table', data: []}},
+    fileCache: []
+  });
+  t.equal(emptyExcel[0].info.format, 'row', 'empty spreadsheet tables should stay rows');
+  t.end();
+});
+
 test('#file-handler -> object-row-table becomes a row dataset', async t => {
   const processed = await processFileData({
     content: {
