@@ -47,6 +47,7 @@ export type ExtractableDataset = {
   }>;
   dataContainer: DataContainerInterface;
   filteredIndex?: number[];
+  filteredIdxCPU?: number[];
   allIndexes?: number[];
 };
 
@@ -229,7 +230,8 @@ export function extractVectorTileFeaturesInsideFeature({
 
 /**
  * Copy in-memory rows whose geometry falls inside a drawn polygon.
- * Existing table filters (range/select/time) are applied; the polygon clip is extra.
+ * Existing table filters (range/select/time), including GPU-backed ones via
+ * `filteredIdxCPU`, are applied; the polygon clip is extra.
  * Vector tiles use currently loaded viewport tiles instead of dataset.rows.
  */
 export function extractRowsInsideFeature({
@@ -251,7 +253,8 @@ export function extractRowsInsideFeature({
 
   const polygonFilter = generatePolygonFilter([layer as any], feature);
   const isInside = getPolygonFilterFunctor(layer, polygonFilter, dataset.dataContainer);
-  const sourceIndexes = dataset.filteredIndex || dataset.allIndexes || [];
+  // Prefer CPU-evaluated indexes so GPU-backed range/time filters are included.
+  const sourceIndexes = dataset.filteredIdxCPU ?? dataset.filteredIndex ?? dataset.allIndexes ?? [];
 
   const rows: any[][] = [];
   for (let i = 0; i < sourceIndexes.length; i++) {

@@ -5204,10 +5204,20 @@ export function extractDataFromFeatureUpdater(
   const feature = state.editor.selectedFeature;
   const layer = state.layers.find(l => l.id === layerId);
   const dataId = layer?.config.dataId;
-  const dataset = dataId ? state.datasets[dataId] : null;
+  let dataset = dataId ? state.datasets[dataId] : null;
 
-  if (!layer || !dataset) {
+  if (!layer || !dataset || !dataId) {
     return state;
+  }
+
+  // GPU range/time filters are not reflected in filteredIndex; evaluate them on CPU
+  // the same way export data does, then clip the result to the drawing.
+  if (!isVectorTileExtractLayer(layer)) {
+    state = filterDatasetCPU(state, dataId);
+    dataset = state.datasets[dataId];
+    if (!dataset) {
+      return state;
+    }
   }
 
   let extracted;
