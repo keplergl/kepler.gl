@@ -136,6 +136,7 @@ test('FeatureActionPanel -> extract data', t => {
   ];
   const datasets = {
     puppy: {
+      label: 'puppy.csv',
       color: [123, 123, 123],
       dataContainer: {numRows: () => 4}
     }
@@ -161,6 +162,10 @@ test('FeatureActionPanel -> extract data', t => {
   );
 
   t.ok(wrapper.find('.editor-extract-list').length, 'Should show Extract data for polygons');
+  t.ok(
+    wrapper.find('.extract-layer-panel-item .label').text().includes('from puppy.csv dataset'),
+    'Extract options should name the source dataset'
+  );
 
   wrapper.find('.extract-layer-panel-item').simulate('click');
   t.ok(onExtractData.calledOnce, 'Clicking a layer should extract from that layer');

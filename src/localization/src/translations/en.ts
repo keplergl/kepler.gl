@@ -501,6 +501,7 @@ export default {
     filterLayerDisabled: 'Non-polygon geometries cannot be used for filtering',
     copyGeometry: 'Copy Geometry',
     extractData: 'Extract data',
+    extractFromDataset: 'from {datasetName} dataset',
     editProperties: 'Edit Properties',
     propertyName: 'Property',
     propertyValue: 'Value',

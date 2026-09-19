@@ -62,9 +62,9 @@ Polygons, rectangles, and circles can copy in-memory rows that fall inside the d
 
 1. Draw a polygon, rectangle, or circle.
 2. Right-click the shape and choose **Extract data**.
-3. Pick the layer to extract from.
+3. Pick the dataset to extract from.
 
-kepler.gl keeps currently filtered rows (range, select, time) and then clips them to the drawing. The new dataset is named `Extract` plus the source dataset label, and a layer is created automatically. Tiled datasets (vector tiles, raster, WMS, 3D tiles) cannot be extracted because their rows are not fully in memory.
+kepler.gl keeps currently filtered rows (range, select, time) and then clips them to the drawing. The new dataset is named `Extracted` plus the source dataset label, and a layer is created automatically. Tiled datasets (vector tiles, raster, WMS, 3D tiles) cannot be extracted because their rows are not fully in memory.
 
 The original dataset and the drawing stay on the map.
 

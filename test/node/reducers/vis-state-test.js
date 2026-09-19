@@ -6187,7 +6187,7 @@ test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE', t => {
 
   const extracted = state.datasets[extractedIds[0]];
   t.equal(extracted.dataContainer.numRows(), 2, 'Should copy the two points inside the polygon');
-  t.ok(extracted.label.startsWith('Extract '), 'Extracted dataset should use Extract prefix');
+  t.ok(extracted.label.startsWith('Extracted '), 'Extracted dataset should use Extracted prefix');
   t.equal(
     state.datasets[sourceDataId].dataContainer.numRows(),
     sourceRowCount,

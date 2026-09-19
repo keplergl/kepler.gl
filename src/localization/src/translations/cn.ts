@@ -397,6 +397,7 @@ export default {
     filterLayerDisabled: '非多边形几何图形不能用于过滤',
     copyGeometry: '复制几何图形',
     extractData: '提取数据',
+    extractFromDataset: '从 {datasetName} 数据集',
     editProperties: '编辑属性',
     propertyName: '属性',
     propertyValue: '值',

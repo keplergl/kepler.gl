@@ -5248,7 +5248,7 @@ export function extractDataFromFeatureUpdater(
     datasets: {
       info: {
         id: `extract-${generateHashId(6)}`,
-        label: `Extract ${dataset.label}`
+        label: `Extracted ${dataset.label}`
       },
       data: {
         fields: extracted.fields,

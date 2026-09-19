@@ -29,6 +29,24 @@ const StyledActionsLayer = styled.div`
   .layer-panel-item-disabled {
     color: ${props => props.theme.textColor};
   }
+  .editor-extract-list .nested-group {
+    max-width: none;
+    overflow: visible;
+    width: max-content;
+  }
+  .editor-extract-list:hover .nested-group {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .editor-extract-list .nested-group > .action-panel-item {
+    max-width: none;
+    width: auto;
+  }
+  .extract-layer-panel-item .label {
+    overflow: visible;
+    text-overflow: unset;
+  }
 `;
 const defaultActionIcons = {
   remove: Trash,
@@ -169,19 +187,28 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
               Icon={actionIcons.extract}
             >
               {extractableLayers.length ? (
-                extractableLayers.map((layer, index) => (
-                  <ActionPanelItem
-                    key={layer.id || index}
-                    label={layer.config.label}
-                    // @ts-ignore
-                    color={datasets[layer.config.dataId].color}
-                    onClick={() => {
-                      onExtractData?.(layer);
-                      onClose?.();
-                    }}
-                    className="extract-layer-panel-item"
-                  />
-                ))
+                extractableLayers.map((layer, index) => {
+                  const dataset = datasets[layer.config.dataId];
+                  return (
+                    <ActionPanelItem
+                      key={layer.id || index}
+                      label={intl.formatMessage(
+                        {
+                          id: 'editor.extractFromDataset',
+                          defaultMessage: 'from {datasetName} dataset'
+                        },
+                        {datasetName: dataset?.label || layer.config.dataId}
+                      )}
+                      // @ts-ignore
+                      color={dataset?.color}
+                      onClick={() => {
+                        onExtractData?.(layer);
+                        onClose?.();
+                      }}
+                      className="extract-layer-panel-item"
+                    />
+                  );
+                })
               ) : (
                 <ActionPanelItem
                   key={'no-layers-extract'}

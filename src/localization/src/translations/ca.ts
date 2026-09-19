@@ -412,6 +412,7 @@ export default {
     filterLayerDisabled: 'Les geometries no poligonals no es poden utilitzar per filtrar',
     copyGeometry: 'Copia geometria',
     extractData: 'Extreu dades',
+    extractFromDataset: 'del conjunt de dades {datasetName}',
     editProperties: 'Edita propietats',
     propertyName: 'Propietat',
     propertyValue: 'Valor',

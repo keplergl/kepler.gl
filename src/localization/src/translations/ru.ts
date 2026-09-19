@@ -412,6 +412,7 @@ export default {
     filterLayerDisabled: 'Неполигональные геометрии нельзя использовать для фильтрации',
     copyGeometry: 'Копировать геометрию',
     extractData: 'Извлечь данные',
+    extractFromDataset: 'из набора данных {datasetName}',
     editProperties: 'Изменить свойства',
     propertyName: 'Свойство',
     propertyValue: 'Значение',
