@@ -194,3 +194,47 @@ test('FeatureActionPanel -> extract data', t => {
 
   t.end();
 });
+
+test('FeatureActionPanel -> extract vector tile dataset', t => {
+  const extractLayers = [
+    {
+      id: 'vt-1',
+      type: 'vectorTile',
+      config: {
+        label: 'Buildings',
+        dataId: 'tiles'
+      }
+    }
+  ];
+  const datasets = {
+    tiles: {
+      label: 'buildings.pmtiles',
+      color: [123, 123, 123],
+      disableDataOperation: true,
+      dataContainer: {numRows: () => 0}
+    }
+  };
+
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FeatureActionPanel
+        layers={[]}
+        extractLayers={extractLayers}
+        datasets={datasets}
+        selectedFeature={{type: 'Feature', geometry: {type: 'Polygon', coordinates: []}}}
+        onToggleLayer={() => {}}
+        onDeleteFeature={() => {}}
+        position={{x: 0, y: 0}}
+      />
+    </IntlWrapper>
+  );
+
+  t.ok(
+    wrapper
+      .find('.extract-layer-panel-item .label')
+      .text()
+      .includes('from buildings.pmtiles dataset'),
+    'Vector tile datasets should appear in Extract data'
+  );
+  t.end();
+});

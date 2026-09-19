@@ -166,10 +166,18 @@ export * from './editor-feature-utils';
 export type {EditorFeatureCollection} from './editor-feature-utils';
 export {
   extractRowsInsideFeature,
+  extractVectorTileFeaturesInsideFeature,
   isExtractableDataset,
-  isExtractableLayer
+  isExtractableLayer,
+  isVectorTileExtractLayer
 } from './extract-dataset-utils';
-export type {ExtractableDataset} from './extract-dataset-utils';
+export type {
+  ExtractableDataset,
+  ExtractableLayer,
+  ExtractedGeojson,
+  ExtractedTable,
+  ExtractResult
+} from './extract-dataset-utils';
 
 export {
   colorMapToColorBreaks,

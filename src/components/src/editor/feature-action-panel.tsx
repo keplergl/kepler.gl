@@ -67,6 +67,7 @@ export interface FeatureActionPanelProps {
     y: number;
   } | null;
   layers: Layer[];
+  extractLayers?: Layer[];
   currentFilter?: Filter;
   onToggleLayer: (layer: Layer) => void;
   onDeleteFeature: () => void;
@@ -86,6 +87,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
     selectedFeature,
     position = null,
     layers,
+    extractLayers,
     currentFilter,
     onToggleLayer,
     onDeleteFeature,
@@ -128,7 +130,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
     const canFilterLayers = canApplyFeatureFilter(selectedFeature as any);
     const enableSketches = getApplicationConfig().enableDrawOnMapSketches;
     const extractableLayers = canFilterLayers
-      ? layers.filter(layer => isExtractableLayer(layer, datasets))
+      ? (extractLayers ?? layers).filter(layer => isExtractableLayer(layer, datasets))
       : [];
     return (
       <StyledActionsLayer

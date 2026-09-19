@@ -69,6 +69,7 @@ import {
   errorNotification,
   editorFeaturesToFeatureCollection,
   extractRowsInsideFeature,
+  isVectorTileExtractLayer,
   mergeUserFeatureProperties,
   toSketchFeature,
   featureToFilterValue,
@@ -5193,7 +5194,8 @@ export function convertEditorFeaturesToLayerUpdater(
 }
 
 /**
- * Copy in-memory rows inside the selected Draw on Map polygon into a new dataset.
+ * Copy in-memory rows (or loaded vector-tile features) inside the selected
+ * Draw on Map polygon into a new dataset.
  */
 export function extractDataFromFeatureUpdater(
   state: VisState,
@@ -5236,7 +5238,9 @@ export function extractDataFromFeatureUpdater(
       ACTION_TASK_ADD_NOTIFICATION().map(() =>
         addNotification(
           errorNotification({
-            message: 'No rows found inside the selected drawing',
+            message: isVectorTileExtractLayer(layer)
+              ? 'No loaded vector tile features found inside the selected drawing'
+              : 'No rows found inside the selected drawing',
             id: 'extract-data-from-feature-empty'
           })
         )
@@ -5244,16 +5248,37 @@ export function extractDataFromFeatureUpdater(
     );
   }
 
-  const nextState = updateVisDataUpdater(state, {
+  let data;
+  try {
+    data =
+      extracted.kind === 'geojson'
+        ? processGeojson({
+            type: 'FeatureCollection',
+            features: extracted.features
+          })
+        : {fields: extracted.fields, rows: extracted.rows};
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to extract data: ${message}`,
+            id: 'extract-data-from-feature'
+          })
+        )
+      )
+    );
+  }
+
+  return updateVisDataUpdater(state, {
     datasets: {
       info: {
         id: `extract-${generateHashId(6)}`,
         label: `Extracted ${dataset.label}`
       },
-      data: {
-        fields: extracted.fields,
-        rows: extracted.rows
-      }
+      data
     },
     options: {
       keepExistingConfig: true,
@@ -5261,8 +5286,6 @@ export function extractDataFromFeatureUpdater(
       autoCreateLayers: true
     }
   });
-
-  return nextState;
 }
 
 export function setFilterAnimationTimeConfigUpdater(

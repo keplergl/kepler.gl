@@ -64,7 +64,9 @@ Polygons, rectangles, and circles can copy in-memory rows that fall inside the d
 2. Right-click the shape and choose **Extract data**.
 3. Pick the dataset to extract from.
 
-kepler.gl keeps currently filtered rows (range, select, time) and then clips them to the drawing. The new dataset is named `Extracted` plus the source dataset label, and a layer is created automatically. Tiled datasets (vector tiles, raster, WMS, 3D tiles) cannot be extracted because their rows are not fully in memory.
+kepler.gl keeps currently filtered rows (range, select, time) and then clips them to the drawing. The new dataset is named `Extracted` plus the source dataset label, and a layer is created automatically.
+
+**Vector tiles:** extract copies GeoJSON features from tiles that are **already loaded in the current view** (current zoom). It is a snapshot, not a download of the whole tileset. Features split across tiles are deduped when they share an id. Raster, WMS, and 3D tiles cannot be extracted.
 
 The original dataset and the drawing stay on the map.
 
