@@ -15,6 +15,7 @@ import {
 } from 'test/helpers/layer-utils';
 
 import {KeplerGlLayers} from '@kepler.gl/layers';
+import {naturalBreaks} from '@kepler.gl/utils';
 const {HexagonLayer} = KeplerGlLayers;
 
 const columns = {
@@ -691,5 +692,38 @@ test('#HexagonLayer -> renderHover', t => {
   ];
 
   testRenderLayerCases(t, HexagonLayer, TEST_CASES);
+  t.end();
+});
+
+test('#HexagonLayer -> updateLayerVisualChannel jenks', t => {
+  const layer = new HexagonLayer({dataId: 'blue'});
+  const binValues = [1, 1, 1, 50, 51, 52, 1000, 1001, 1002];
+  const colors = ['#000000', '#888888', '#ffffff'];
+
+  layer.updateLayerConfig({
+    colorScale: 'jenks',
+    aggregatedBins: Object.fromEntries(binValues.map((value, i) => [i, {i, value, counts: 1}])),
+    visConfig: {
+      ...layer.config.visConfig,
+      colorRange: {
+        ...layer.config.visConfig.colorRange,
+        colors
+      }
+    }
+  });
+
+  layer.updateLayerVisualChannel({}, 'color');
+
+  t.deepEqual(
+    layer.config.colorDomain,
+    naturalBreaks(binValues, colors.length),
+    'Jenks aggregation domain should recompute thresholds from bins when the palette changes'
+  );
+  t.notDeepEqual(
+    layer.config.colorDomain,
+    [1, 1002],
+    'Jenks aggregation domain should not fall back to [min, max]'
+  );
+
   t.end();
 });

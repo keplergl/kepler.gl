@@ -1200,6 +1200,25 @@ export function layerVisConfigChangeUpdater(
 
   const newLayer = oldLayer.updateLayerConfig({visConfig: newVisConfig});
 
+  // Jenks breaks depend on the number of colors. Recalculate the domain when
+  // the color range of a Jenks channel changes.
+  if (oldLayer.config.dataId) {
+    const dataset = state.datasets[oldLayer.config.dataId];
+    if (dataset) {
+      Object.keys(newLayer.visualChannels).forEach(channelKey => {
+        const channel = newLayer.visualChannels[channelKey];
+        if (
+          channel?.scale &&
+          newLayer.config[channel.scale] === SCALE_TYPES.jenks &&
+          channel.range &&
+          Object.prototype.hasOwnProperty.call(action.newVisConfig, channel.range)
+        ) {
+          newLayer.updateLayerVisualChannel(dataset, channelKey);
+        }
+      });
+    }
+  }
+
   let nextState = state;
 
   // Exclusive bitmap editing: when editBounds is turned on for one bitmap layer,

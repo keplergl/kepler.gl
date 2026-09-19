@@ -170,6 +170,7 @@ export {
   colorBreaksToColorMap,
   getLayerColorScale,
   getLegendOfScale,
+  getJenksDomain,
   getLinearDomain,
   getLogDomain,
   getOrdinalDomain,
@@ -215,6 +216,7 @@ export type {DatabaseAdapter, DatabaseConnection} from './application-config-typ
 export {isAppleDevice} from './browser-utils';
 
 export {default as quickInsertionSort} from './quick-insertion-sort';
+export {default as naturalBreaks} from './jenks';
 
 export type {KeplerTableModel} from './types';
 
