@@ -4,6 +4,7 @@
 import {booleanIntersects} from '@turf/boolean-intersects';
 import {DatasetType, LAYER_TYPES} from '@kepler.gl/constants';
 import {Feature, ProtoDatasetField} from '@kepler.gl/types';
+import type {Geometry} from 'geojson';
 
 import {DataContainerInterface} from './data-container-interface';
 import {
@@ -138,33 +139,25 @@ function getTileFeatures(tile: any): any[] {
   return Array.isArray(content) ? content : [];
 }
 
-function toGeojsonFeature(feature: any): Feature | null {
+function toGeojsonGeometry(feature: any): Geometry | null {
   if (!feature) {
     return null;
   }
-  if (feature.type === 'Feature' && feature.geometry) {
-    return feature;
+  const geometry = feature.type === 'Feature' || feature.geometry ? feature.geometry : feature;
+  if (!geometry?.type) {
+    return null;
   }
-  if (feature.geometry) {
-    return {
-      type: 'Feature',
-      geometry: feature.geometry,
-      properties: feature.properties || {}
-    };
-  }
-  if (feature.type && feature.coordinates) {
-    return {type: 'Feature', geometry: feature, properties: {}};
-  }
-  return null;
+  return geometry as Geometry;
 }
 
 function featureIntersectsDrawnPolygon(feature: any, polygon: Feature): boolean {
-  const geojson = toGeojsonFeature(feature);
-  if (!geojson?.geometry) {
+  const geometry = toGeojsonGeometry(feature);
+  const drawnGeometry = polygon?.geometry as Geometry | undefined;
+  if (!geometry || !drawnGeometry) {
     return false;
   }
   try {
-    return booleanIntersects(geojson, polygon);
+    return booleanIntersects(geometry, drawnGeometry);
   } catch {
     return false;
   }
