@@ -33,6 +33,9 @@ export const LayerTimeInterval = {
   MINUTE: 'T'
 };
 
+/** @deprecated Use {@link LayerTimeInterval}. */
+export const TileTimeInterval = LayerTimeInterval;
+
 export const TIME_INTERVALS_ORDERED = [
   LayerTimeInterval.MINUTE,
   LayerTimeInterval.HOUR,

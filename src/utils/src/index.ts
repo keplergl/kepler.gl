@@ -69,6 +69,7 @@ export {
   TIME_INTERVALS_ORDERED,
   LayerToFilterTimeInterval,
   LayerTimeInterval,
+  TileTimeInterval,
   getTimelineFromAnimationConfig,
   getTimelineFromFilter,
   filterIntervalOptions
