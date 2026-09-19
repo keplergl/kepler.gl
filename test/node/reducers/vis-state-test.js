@@ -35,7 +35,7 @@ import {
   getAnimatableVisibleLayers,
   getDefaultFilter,
   histogramFromDomain,
-  TileTimeInterval,
+  LayerTimeInterval,
   initApplicationConfig
 } from '@kepler.gl/utils';
 import {
@@ -6916,7 +6916,7 @@ function mockStateWithFilterAndIntervalBasedAnimationLayer() {
       }
     ],
     resolutionOffset: 4,
-    targetTimeInterval: TileTimeInterval.DAY,
+    targetTimeInterval: LayerTimeInterval.DAY,
     tilesetIndex: undefined,
     zipUrl: undefined
   };
@@ -7116,7 +7116,7 @@ test('#visStateReducer -> sync with time filter with trip layer', t => {
   t.end();
 });
 
-test('#visStateReducer -> sync with time filter with hextile layer', t => {
+test('#visStateReducer -> sync with time filter with interval-based animation layer', t => {
   let visState = mockStateWithFilterAndIntervalBasedAnimationLayer();
   const animatableLayers = getAnimatableVisibleLayers(visState.layers);
   t.equal(animatableLayers.length, 2, 'Should find 1 animatable layer');
@@ -7155,7 +7155,7 @@ test('#visStateReducer -> sync with time filter with hextile layer', t => {
     'Should have set filter animation window to interval'
   );
 
-  // check plotType interval to match hextile interval
+  // check plotType interval to match the layer time interval
   t.equal(
     newFilter.plotType.interval,
     INTERVAL['1-day'],
