@@ -128,6 +128,7 @@ test('FeatureActionPanel -> extract data', t => {
   const layers = [
     {
       id: 'layer-1',
+      type: 'point',
       config: {
         label: 'layer 1',
         dataId: 'puppy'

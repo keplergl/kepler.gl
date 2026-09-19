@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {booleanIntersects} from '@turf/boolean-intersects';
-import {DatasetType, LAYER_TYPES} from '@kepler.gl/constants';
+import {DatasetType, EDITOR_AVAILABLE_LAYERS, LAYER_TYPES} from '@kepler.gl/constants';
 import {Feature, ProtoDatasetField} from '@kepler.gl/types';
 import type {Geometry} from 'geojson';
 
@@ -113,6 +113,11 @@ export function isExtractableLayer(
 ): boolean {
   if (isVectorTileExtractLayer(layer)) {
     return Boolean(layer.config?.dataId);
+  }
+  // getPolygonFilterFunctor returns true for unsupported types, which would copy
+  // every filtered row. Only layers with a real spatial predicate can extract.
+  if (!EDITOR_AVAILABLE_LAYERS.includes(layer.type || '')) {
+    return false;
   }
   const dataId = layer.config.dataId;
   return Boolean(dataId && isExtractableDataset(datasets[dataId]));
@@ -244,7 +249,12 @@ export function extractRowsInsideFeature({
     return extractVectorTileFeaturesInsideFeature({layer, feature});
   }
 
-  if (!feature || !canApplyFeatureFilter(feature) || !isExtractableDataset(dataset)) {
+  if (
+    !feature ||
+    !canApplyFeatureFilter(feature) ||
+    !isExtractableDataset(dataset) ||
+    !EDITOR_AVAILABLE_LAYERS.includes(layer.type || '')
+  ) {
     return null;
   }
 

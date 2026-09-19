@@ -40,12 +40,24 @@ test('extract-dataset-utils -> isExtractableLayer', t => {
     }
   };
   t.ok(
-    isExtractableLayer({config: {dataId: 'local'}}, datasets),
+    isExtractableLayer({type: LAYER_TYPES.point, config: {dataId: 'local'}}, datasets),
     'layers on local datasets are extractable'
   );
   t.notOk(
     isExtractableLayer({config: {dataId: 'missing'}}, datasets),
     'layers without a dataset are not extractable'
+  );
+  t.notOk(
+    isExtractableLayer({type: LAYER_TYPES.trip, config: {dataId: 'local'}}, datasets),
+    'trip layers have no polygon clip and should not be extractable'
+  );
+  t.notOk(
+    isExtractableLayer({type: LAYER_TYPES.geohash, config: {dataId: 'local'}}, datasets),
+    'geohash layers have no polygon clip and should not be extractable'
+  );
+  t.notOk(
+    isExtractableLayer({type: LAYER_TYPES.s2, config: {dataId: 'local'}}, datasets),
+    's2 layers have no polygon clip and should not be extractable'
   );
   t.ok(
     isExtractableLayer(
@@ -186,5 +198,20 @@ test('extract-dataset-utils -> extractRowsInsideFeature vector tiles intersectio
     ['containing-polygon', 'crossing-line'],
     'Should keep a crossing line and a polygon that contains the drawing'
   );
+  t.end();
+});
+
+test('extract-dataset-utils -> extractRowsInsideFeature unsupported layer', t => {
+  const extracted = extractRowsInsideFeature({
+    layer: {type: LAYER_TYPES.trip, config: {dataId: 'local'}},
+    dataset: {
+      fields: [{name: 'lat', type: 'real'}],
+      dataContainer: createDataContainer([[12.25, 30.5]]),
+      allIndexes: [0],
+      filteredIndex: [0]
+    },
+    feature: mockPolygonFeature
+  });
+  t.equal(extracted, null, 'Unsupported layers should not copy every filtered row');
   t.end();
 });
