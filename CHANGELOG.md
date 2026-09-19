@@ -15,6 +15,16 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.13] - Sep 19 2026
+
+- e9551a97 feat: extract in-memory rows from a drawn polygon (#3739)
+- 3be42f85 feat: add Jenks natural breaks color scale (#3742)
+- 08b8c4d2 chore: remove leftover names (#3740)
+- 0f4eac59 feat(demo): bump kepler-assistant to 0.0.18 so anthropic works in the browser (#3695)
+- 156bdd38 fix: keep split map panels index-aligned when merging split maps (#3735)
+- 2ecf2cd7 feat(docker): manual GHCR publish for the demo-app image (#3737)
+- 715d5753 feat(docker): runtime config fail-fast, sub-path href, gallery docs (#3736)
+
 ## [3.3.0-alpha.12] - Sep 17 2026
 
 - 5ae15302 feat: add experimental Flow Field layer (#3722)
