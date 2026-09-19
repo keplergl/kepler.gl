@@ -40,13 +40,14 @@ export default function naturalBreaks(data: number[], k: number): number[] {
     }
 
     if (k >= uniqueValuesSize) {
-      // Each unique value is its own class. Threshold scale wants the inner edges.
+      // Each unique value is its own class. A threshold scale with k colors
+      // needs exactly k-1 edges, so pad duplicate thresholds only up to that.
       let breaks = uniqueValPositions.map(i => sortedData[i]);
       if (uniqueValuesSize > 1) {
         breaks = breaks.slice(1);
       }
       const lastBreak = breaks[breaks.length - 1];
-      for (let i = breaks.length; i < k; ++i) {
+      for (let i = breaks.length; i < k - 1; ++i) {
         breaks.push(lastBreak);
       }
       return breaks;

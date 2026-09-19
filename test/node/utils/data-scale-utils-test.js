@@ -148,7 +148,8 @@ test('DataScaleUtils -> naturalBreaks', t => {
   );
 
   const padded = naturalBreaks([1, 2, 3], 5);
-  t.equal(padded.length, 5, 'should pad breaks when k exceeds unique values');
+  t.equal(padded.length, 4, 'should pad to k-1 thresholds when k exceeds unique values');
+  t.deepEqual(padded, [2, 3, 3, 3], 'padded thresholds should be the inner unique edges');
 
   t.end();
 });
