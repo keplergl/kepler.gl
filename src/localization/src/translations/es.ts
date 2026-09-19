@@ -412,12 +412,15 @@ export default {
     filterLayer: 'Filtrar capas',
     filterLayerDisabled: 'Las geometrías no poligonales no se pueden usar para filtrar',
     copyGeometry: 'Copiar geometría',
+    extractData: 'Extraer datos',
+    extractFromLayer: 'de la capa {layerName}',
     editProperties: 'Editar propiedades',
     propertyName: 'Propiedad',
     propertyValue: 'Valor',
     removeProperty: 'Quitar propiedad',
     polygonFilter: 'Filtro de polígono',
-    noLayersToFilter: 'No hay capas para filtrar'
+    noLayersToFilter: 'No hay capas para filtrar',
+    noLayersToExtract: 'No hay capas para extraer'
   },
   exportVideoModal: {
     animation: 'Animación',

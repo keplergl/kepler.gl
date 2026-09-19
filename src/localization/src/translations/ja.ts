@@ -408,12 +408,15 @@ export default {
     filterLayer: 'レイヤをフィルタ',
     filterLayerDisabled: 'ポリゴン以外のジオメトリはフィルタリングに使用できません',
     copyGeometry: 'ジオメトリをコピー',
+    extractData: 'データを抽出',
+    extractFromLayer: '{layerName} レイヤーから',
     editProperties: 'プロパティを編集',
     propertyName: 'プロパティ',
     propertyValue: '値',
     removeProperty: 'プロパティを削除',
     polygonFilter: 'ポリゴンフィルタ',
-    noLayersToFilter: 'フィルタするレイヤがありません'
+    noLayersToFilter: 'フィルタするレイヤがありません',
+    noLayersToExtract: '抽出できるレイヤがありません'
   },
   exportVideoModal: {
     animation: 'アニメーション',

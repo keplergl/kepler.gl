@@ -20,6 +20,7 @@ import {Layer, EditorLayerUtils} from '@kepler.gl/layers';
 import {Filter, FeatureSelectionContext, Feature} from '@kepler.gl/types';
 import {Feature as EditableFeature, Polygon} from '@deck.gl-community/editable-layers';
 import {Datasets} from '@kepler.gl/table';
+import {isExtractableLayer} from '@kepler.gl/utils';
 
 import {RootContext} from '../context';
 
@@ -46,6 +47,7 @@ interface EditorProps {
   onDeleteFeature: (f: Feature) => any;
   onSetFeatureProperties: (f: Feature, properties: Record<string, unknown>) => any;
   onTogglePolygonFilter: (l: Layer, f: Feature) => any;
+  onExtractData?: (l: Layer) => any;
 }
 
 export type PortalEditorProps = FeatureActionPanelProps & {
@@ -63,11 +65,13 @@ export default function EditorFactory(
     selectedFeature,
     datasets,
     layers,
+    extractLayers,
     currentFilter,
     onClose,
     onDeleteFeature,
     onSetFeatureProperties,
     onToggleLayer,
+    onExtractData,
     position
   }) => {
     return (
@@ -81,11 +85,13 @@ export default function EditorFactory(
                     selectedFeature={selectedFeature as EditableFeature<Polygon>}
                     datasets={datasets}
                     layers={layers}
+                    extractLayers={extractLayers}
                     currentFilter={currentFilter}
                     onClose={onClose}
                     onDeleteFeature={onDeleteFeature}
                     onSetFeatureProperties={onSetFeatureProperties}
                     onToggleLayer={onToggleLayer}
+                    onExtractData={onExtractData}
                     position={position || null}
                   />
                 ) : null}
@@ -113,6 +119,7 @@ export default function EditorFactory(
     }
 
     layerSelector = (props: EditorProps) => props.layers;
+    datasetsSelector = (props: EditorProps) => props.datasets;
     filterSelector = (props: EditorProps) => props.filters;
     selectedFeatureIdSelector = (props: EditorProps) =>
       get(props, ['editor', 'selectedFeature', 'id']);
@@ -128,6 +135,18 @@ export default function EditorFactory(
       layers
         .filter(editorLayerFilter)
         .filter(layer => layer.config?.isVisible && layer.id !== GEOCODER_LAYER_ID)
+    );
+
+    extractableLayersSelector = createSelector(
+      this.layerSelector,
+      this.datasetsSelector,
+      (layers, datasets) =>
+        layers.filter(
+          layer =>
+            layer.config?.isVisible &&
+            layer.id !== GEOCODER_LAYER_ID &&
+            isExtractableLayer(layer, datasets)
+        )
     );
 
     allFeaturesSelector = createSelector(
@@ -202,6 +221,10 @@ export default function EditorFactory(
       }
     };
 
+    _onExtractData = (layer: Layer) => {
+      this.props.onExtractData?.(layer);
+    };
+
     _onSetFeatureProperties = (feature: Feature, properties: Record<string, unknown>) => {
       this.props.onSetFeatureProperties(feature, properties);
     };
@@ -211,6 +234,7 @@ export default function EditorFactory(
       const {selectedFeature, selectionContext} = editor;
       const currentFilter = this.currentFilterSelector(this.props);
       const availableLayers = this.availableLayersSelector(this.props);
+      const extractableLayers = this.extractableLayersSelector(this.props);
 
       const {rightClick, position, mapIndex} = selectionContext || {};
 
@@ -220,6 +244,7 @@ export default function EditorFactory(
           visiblePanel={Boolean(rightClick) && selectedFeature && index === mapIndex}
           datasets={datasets}
           layers={availableLayers}
+          extractLayers={extractableLayers}
           currentFilter={currentFilter}
           onClose={this._closeFeatureAction}
           onDeleteFeature={this._onDeleteSelectedFeature}
@@ -227,6 +252,7 @@ export default function EditorFactory(
             this._onSetFeatureProperties as FeatureActionPanelProps['onSetFeatureProperties']
           }
           onToggleLayer={this._togglePolygonFilter}
+          onExtractData={this._onExtractData}
           position={position || null}
           className={className}
           style={style}

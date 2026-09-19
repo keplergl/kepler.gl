@@ -101,6 +101,7 @@ import {
 } from 'test/helpers/comparison-utils';
 import {
   applyActions,
+  applyExistingDatasetTasks,
   StateWTripGeojson,
   StateWSplitMaps,
   StateWFilters,
@@ -6137,6 +6138,188 @@ test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER', t => {
     /Drawn Geometry \d{2}/.test(JSON.stringify(tasks)),
     'Converted layer should be named Drawn Geometry plus a two-digit number'
   );
+  t.end();
+});
+
+test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE', t => {
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {name: 'start_point_lat', format: '', fieldIdx: 0, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'start_point_lng', format: '', fieldIdx: 1, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lat', format: '', fieldIdx: 2, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lng', format: '', fieldIdx: 3, type: 'real', analyzerType: 'FLOAT'}
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv',
+        size: 144
+      }
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: true, keepExistingConfig: false}, {}]
+    }
+  ]);
+
+  const pointLayer = state.layers.find(layer => layer.type === 'point');
+  t.ok(pointLayer, 'Should create a point layer from lat/lng columns');
+
+  state = reducer(state, VisStateActions.setFeatures([mockPolygonFeature]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockPolygonFeature));
+
+  const sourceDataId = pointLayer.config.dataId;
+  const sourceRowCount = state.datasets[sourceDataId].dataContainer.numRows();
+  const layerCount = state.layers.length;
+
+  state = applyExistingDatasetTasks(
+    reducer,
+    reducer(state, VisStateActions.extractDataFromFeature({layerId: pointLayer.id}))
+  );
+
+  const extractedIds = Object.keys(state.datasets).filter(id => id !== sourceDataId);
+  t.equal(extractedIds.length, 1, 'Should create one extracted dataset');
+
+  const extracted = state.datasets[extractedIds[0]];
+  t.equal(extracted.dataContainer.numRows(), 2, 'Should copy the two points inside the polygon');
+  t.ok(extracted.label.startsWith('Extracted '), 'Extracted dataset should use Extracted prefix');
+  t.equal(
+    state.datasets[sourceDataId].dataContainer.numRows(),
+    sourceRowCount,
+    'Source dataset should stay unchanged'
+  );
+  t.equal(state.editor.features.length, 1, 'Should keep the drawing after extract');
+  t.ok(state.layers.length > layerCount, 'Should auto-create a layer for the extracted dataset');
+
+  const emptyState = reducer(
+    state,
+    VisStateActions.extractDataFromFeature({layerId: 'missing-layer'})
+  );
+  t.equal(emptyState, state, 'Should no-op when the layer id is unknown');
+
+  t.end();
+});
+
+test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE respects GPU range filter', t => {
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {name: 'start_point_lat', format: '', fieldIdx: 0, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'start_point_lng', format: '', fieldIdx: 1, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lat', format: '', fieldIdx: 2, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lng', format: '', fieldIdx: 3, type: 'real', analyzerType: 'FLOAT'}
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv'
+      }
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: false, keepExistingConfig: false}, {}]
+    }
+  ]);
+
+  const pointLayer = state.layers.find(layer => layer.type === 'point');
+  t.ok(pointLayer, 'Should create a point layer from lat/lng columns');
+  const sourceDataId = pointLayer.config.dataId;
+
+  state = reducer(state, VisStateActions.addFilter(sourceDataId));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'start_point_lat'));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [12, 12.5]));
+
+  t.equal(state.filters[0].gpu, true, 'Range filter should be GPU-backed');
+  t.equal(
+    state.datasets[sourceDataId].filteredIndex.length,
+    state.datasets[sourceDataId].dataContainer.numRows(),
+    'GPU filter should not shrink filteredIndex'
+  );
+
+  state = reducer(state, VisStateActions.setFeatures([mockPolygonFeature]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockPolygonFeature));
+
+  state = applyExistingDatasetTasks(
+    reducer,
+    reducer(state, VisStateActions.extractDataFromFeature({layerId: pointLayer.id}))
+  );
+
+  const extractedIds = Object.keys(state.datasets).filter(id => id !== sourceDataId);
+  t.equal(extractedIds.length, 1, 'Should create one extracted dataset');
+  t.equal(
+    state.datasets[extractedIds[0]].dataContainer.numRows(),
+    1,
+    'Should keep only the in-polygon row that also passes the range filter'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE empty polygon', t => {
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {name: 'start_point_lat', format: '', fieldIdx: 0, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'start_point_lng', format: '', fieldIdx: 1, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lat', format: '', fieldIdx: 2, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lng', format: '', fieldIdx: 3, type: 'real', analyzerType: 'FLOAT'}
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv'
+      }
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: false, keepExistingConfig: false}, {}]
+    }
+  ]);
+
+  const farAwayPolygon = {
+    type: 'Feature',
+    id: 'far-away',
+    properties: {isClosed: true},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [1, 0],
+          [1, 1],
+          [0, 1],
+          [0, 0]
+        ]
+      ]
+    }
+  };
+
+  const pointLayer = state.layers.find(layer => layer.type === 'point');
+  state = reducer(state, VisStateActions.setFeatures([farAwayPolygon]));
+  state = reducer(state, VisStateActions.setSelectedFeature(farAwayPolygon));
+  const datasetCount = Object.keys(state.datasets).length;
+
+  state = reducer(state, VisStateActions.extractDataFromFeature({layerId: pointLayer.id}));
+  t.equal(
+    Object.keys(state.datasets).length,
+    datasetCount,
+    'Should not create a dataset when no rows fall inside the drawing'
+  );
+  drainTasksForTesting();
+
   t.end();
 });
 

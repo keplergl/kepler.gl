@@ -68,6 +68,8 @@ import {
   adjustValueToFilterDomain,
   errorNotification,
   editorFeaturesToFeatureCollection,
+  extractRowsInsideFeature,
+  isVectorTileExtractLayer,
   mergeUserFeatureProperties,
   toSketchFeature,
   featureToFilterValue,
@@ -5199,6 +5201,111 @@ export function convertEditorFeaturesToLayerUpdater(
       info: {
         id: `drawn-geometry-${generateHashId(6)}`,
         label: `Drawn Geometry ${labelId}`
+      },
+      data
+    },
+    options: {
+      keepExistingConfig: true,
+      centerMap: false,
+      autoCreateLayers: true
+    }
+  });
+}
+
+/**
+ * Copy in-memory rows (or loaded vector-tile features) inside the selected
+ * Draw on Map polygon into a new dataset.
+ */
+export function extractDataFromFeatureUpdater(
+  state: VisState,
+  {layerId}: VisStateActions.ExtractDataFromFeatureUpdaterAction
+): VisState {
+  const feature = state.editor.selectedFeature;
+  const layer = state.layers.find(l => l.id === layerId);
+  const dataId = layer?.config.dataId;
+  let dataset = dataId ? state.datasets[dataId] : null;
+
+  if (!layer || !dataset || !dataId) {
+    return state;
+  }
+
+  // GPU range/time filters are not reflected in filteredIndex; evaluate them on CPU
+  // the same way export data does, then clip the result to the drawing.
+  if (!isVectorTileExtractLayer(layer)) {
+    state = filterDatasetCPU(state, dataId);
+    dataset = state.datasets[dataId];
+    if (!dataset) {
+      return state;
+    }
+  }
+
+  let extracted;
+  try {
+    extracted = extractRowsInsideFeature({layer, dataset, feature});
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to extract data: ${message}`,
+            id: 'extract-data-from-feature'
+          })
+        )
+      )
+    );
+  }
+
+  if (!extracted) {
+    return state;
+  }
+
+  if (!extracted.rowCount) {
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: isVectorTileExtractLayer(layer)
+              ? 'No loaded vector tile features found inside the selected drawing'
+              : 'No rows found inside the selected drawing',
+            id: 'extract-data-from-feature-empty'
+          })
+        )
+      )
+    );
+  }
+
+  let data;
+  try {
+    data =
+      extracted.kind === 'geojson'
+        ? processGeojson({
+            type: 'FeatureCollection',
+            features: extracted.features
+          })
+        : {fields: extracted.fields, rows: extracted.rows};
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to extract data: ${message}`,
+            id: 'extract-data-from-feature'
+          })
+        )
+      )
+    );
+  }
+
+  return updateVisDataUpdater(state, {
+    datasets: {
+      info: {
+        id: `extract-${generateHashId(6)}`,
+        label: `Extracted ${dataset.label}`
       },
       data
     },
