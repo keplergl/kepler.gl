@@ -10,7 +10,7 @@ import Layer, {
   VisualChannelDescription,
   VisualChannels
 } from './base-layer';
-import {hexToRgb, aggregate, DataContainerInterface} from '@kepler.gl/utils';
+import {hexToRgb, aggregate, DataContainerInterface, naturalBreaks} from '@kepler.gl/utils';
 import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
@@ -337,8 +337,9 @@ export default class AggregationLayer extends Layer {
   updateLayerVisualChannel({dataContainer}, channel) {
     this.validateVisualChannel(channel);
 
-    // When the color scale type changes, recompute colorDomain from stored aggregatedBins.
-    // quantile scale needs the full sorted array of bin values; other scales need [min, max].
+    // When the color scale type or palette size changes, recompute colorDomain from
+    // stored aggregatedBins. Quantile needs the full sorted array; Jenks needs k-1
+    // thresholds from those bins; other scales need [min, max].
     // aggregatedBins is only populated from onSetColorDomain, so restrict to the color channel.
     const visualChannel = this.visualChannels[channel];
     if (channel === 'color' && visualChannel && this.config.aggregatedBins) {
@@ -352,6 +353,13 @@ export default class AggregationLayer extends Layer {
             .filter(Number.isFinite)
             .sort((a, b) => a - b);
           this.updateLayerConfig({[domainKey]: sorted});
+        } else if (scaleType === SCALE_TYPES.jenks) {
+          const values = bins.map(b => b.value).filter(Number.isFinite) as number[];
+          const colorRange = visualChannel.range
+            ? this.config.visConfig[visualChannel.range]
+            : undefined;
+          const k = Array.isArray(colorRange?.colors) ? colorRange.colors.length : 0;
+          this.updateLayerConfig({[domainKey]: naturalBreaks(values, k)});
         } else {
           let min = Infinity;
           let max = -Infinity;

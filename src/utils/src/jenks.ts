@@ -117,11 +117,13 @@ export default function naturalBreaks(data: number[], k: number): number[] {
   function pickRandomPositions(seed: number): number[] {
     const rng = mulberry32(seed);
     const randomPositions = new Set<number>();
-    const poolSize = uniqueValPositions.length;
+    // Skip index 0: a break at the first element creates an empty first class.
+    const candidatePositions = uniqueValPositions.slice(1);
+    const poolSize = candidatePositions.length;
     const maxRandNumber = k - 1;
     while (randomPositions.size < maxRandNumber) {
       const i = Math.floor(rng() * poolSize);
-      randomPositions.add(uniqueValPositions[i]);
+      randomPositions.add(candidatePositions[i]);
     }
     const positions = Array.from(randomPositions);
     positions.sort((a, b) => a - b);

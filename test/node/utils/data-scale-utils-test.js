@@ -146,6 +146,18 @@ test('DataScaleUtils -> naturalBreaks', t => {
     breaks,
     'seeded permutation should be deterministic'
   );
+  t.ok(
+    breaks.every(b => b > clustered[0]),
+    'should not place a break at the first value'
+  );
+
+  const sequential = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const sequentialBreaks = naturalBreaks(sequential, 3);
+  t.equal(sequentialBreaks.length, 2, 'should return k-1 interior thresholds');
+  t.ok(
+    sequentialBreaks.every(b => b > 0),
+    'should not sample a break at index 0'
+  );
 
   const padded = naturalBreaks([1, 2, 3], 5);
   t.equal(padded.length, 4, 'should pad to k-1 thresholds when k exceeds unique values');

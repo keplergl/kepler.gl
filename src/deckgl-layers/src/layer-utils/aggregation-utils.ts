@@ -4,6 +4,13 @@
 import type {AggregatedBin, ColorMap} from '@kepler.gl/types';
 import {naturalBreaks} from '@kepler.gl/utils';
 
+type JenksColorMapCache = {
+  source: Float32Array;
+  k: number;
+  breaks: number[];
+  colorMap: ColorMap;
+};
+
 function getJenksColorMap(values: number[], k: number): {breaks: number[]; colorMap: ColorMap} {
   const breaks = naturalBreaks(values, k);
   // classifyBinsByCustomBreaks only reads numeric thresholds from colorMap.
@@ -12,6 +19,20 @@ function getJenksColorMap(values: number[], k: number): {breaks: number[]; color
     [null, '#000000']
   ];
   return {breaks, colorMap};
+}
+
+function resolveJenksColorMapCache(
+  source: Float32Array,
+  binCount: number,
+  k: number,
+  cached?: JenksColorMapCache | null
+): JenksColorMapCache {
+  if (cached && cached.source === source && cached.k === k) {
+    return cached;
+  }
+  const values = Array.from(source.subarray(0, binCount)).filter(Number.isFinite) as number[];
+  const {breaks, colorMap} = getJenksColorMap(values, k);
+  return {source, k, breaks, colorMap};
 }
 
 /**
@@ -132,10 +153,7 @@ export function enrichedAggregationUpdate(layer: any, ParentClass: any, channel:
   const binValues = result?.value as Float32Array | undefined;
   if (!binValues || aggregator.binCount <= 0) return;
 
-  layer.setState({
-    rawColorBinValues: Float32Array.from(binValues.subarray(0, aggregator.binCount))
-  });
-
+  const rawColorBinValues = Float32Array.from(binValues.subarray(0, aggregator.binCount));
   const domain = aggregator.getResultDomain(0);
   const aggregatedBins = buildAggregatedBinMap(binValues, aggregator.binCount, aggregator);
 
@@ -144,26 +162,36 @@ export function enrichedAggregationUpdate(layer: any, ParentClass: any, channel:
   }
 
   let enrichedDomain = domain;
+  let jenksColorMapCache: JenksColorMapCache | null = null;
   if (props.colorScaleType === 'quantile') {
     enrichedDomain = Array.from(binValues)
       .slice(0, aggregator.binCount)
       .filter(Number.isFinite)
       .sort((a: number, b: number) => a - b);
   } else if (props.jenksScale) {
-    const values = Array.from(binValues)
-      .slice(0, aggregator.binCount)
-      .filter(Number.isFinite) as number[];
     const k = Array.isArray(props.colorRange) ? props.colorRange.length : 0;
-    const {breaks, colorMap} = getJenksColorMap(values, k);
-    classifyBinsByCustomBreaks(layer.state.colors, aggregator.binCount, colorMap, binValues);
-    enrichedDomain = breaks;
+    jenksColorMapCache = resolveJenksColorMapCache(rawColorBinValues, aggregator.binCount, k, null);
+    classifyBinsByCustomBreaks(
+      layer.state.colors,
+      aggregator.binCount,
+      jenksColorMapCache.colorMap,
+      binValues
+    );
+    enrichedDomain = jenksColorMapCache.breaks;
   }
+
+  layer.setState({
+    rawColorBinValues,
+    jenksColorMapCache
+  });
   props.onSetColorDomain?.({domain: enrichedDomain, aggregatedBins});
 }
 
 /**
  * Shared renderLayers() wrapper that re-classifies bins when custom colorMap
- * changes between renders without triggering a full re-aggregation.
+ * or Jenks class count changes between renders without a full re-aggregation.
+ * Jenks breaks are reused from `jenksColorMapCache` until the bin values or
+ * palette size change.
  *
  * @param layer       The enhanced layer instance (`this`)
  * @param ParentClass The deck.gl parent class (HexagonLayer or GridLayer)
@@ -171,17 +199,23 @@ export function enrichedAggregationUpdate(layer: any, ParentClass: any, channel:
  */
 export function enrichedRenderLayers(layer: any, ParentClass: any): any {
   const props = layer.getCurrentLayer().props;
-  const {colors, rawColorBinValues, aggregator} = layer.state;
+  const {colors, rawColorBinValues, aggregator, jenksColorMapCache} = layer.state;
   if (colors && rawColorBinValues && aggregator?.binCount > 0) {
     if (props.colorMap) {
       classifyBinsByCustomBreaks(colors, aggregator.binCount, props.colorMap, rawColorBinValues);
     } else if (props.jenksScale) {
-      const values = Array.from(rawColorBinValues)
-        .slice(0, aggregator.binCount)
-        .filter(Number.isFinite) as number[];
       const k = Array.isArray(props.colorRange) ? props.colorRange.length : 0;
-      const {colorMap} = getJenksColorMap(values, k);
-      classifyBinsByCustomBreaks(colors, aggregator.binCount, colorMap, rawColorBinValues);
+      const cache = resolveJenksColorMapCache(
+        rawColorBinValues,
+        aggregator.binCount,
+        k,
+        jenksColorMapCache
+      );
+      // Assign on state directly: setState during renderLayers would retrigger rendering.
+      if (cache !== jenksColorMapCache) {
+        layer.state.jenksColorMapCache = cache;
+      }
+      classifyBinsByCustomBreaks(colors, aggregator.binCount, cache.colorMap, rawColorBinValues);
     }
   }
   return (ParentClass.prototype as any).renderLayers.call(layer);
