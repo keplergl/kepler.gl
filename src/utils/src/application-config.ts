@@ -93,7 +93,21 @@ export type KeplerAcceptedFileFormat =
   | 'tcx'
   | 'arrow'
   | 'feather'
-  | 'parquet';
+  | 'parquet'
+  | 'shp'
+  | 'shapefile'
+  | 'zip'
+  | 'dbf'
+  | 'shx'
+  | 'prj'
+  | 'cpg'
+  | 'xlsx'
+  | 'xls'
+  | 'xlsm'
+  | 'xlsb'
+  | 'excel'
+  | 'fgb'
+  | 'flatgeobuf';
 
 export type KeplerApplicationConfig = {
   /** Default name of export HTML file, can be overridden by user */
@@ -214,7 +228,7 @@ export type KeplerApplicationConfig = {
 
   /**
    * File formats Kepler may load from drag-and-drop, the file picker, and remote URLs.
-   * Values are format ids or extensions (`csv`, `geojson`, `kml`, `geojsonl`, …).
+   * Values are format ids or extensions (`csv`, `geojson`, `kml`, `shp`, `xlsx`, `fgb`, …).
    * When omitted or `null`, every built-in format is accepted.
    *
    * @example

@@ -5,7 +5,7 @@ import {createSelector} from 'reselect';
 import {isKeplerFileFormatAccepted} from '@kepler.gl/processors';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
-// NOTE: default formats must match file-handler-test.js
+// NOTE: default formats must match loader-registry-test.js
 const DEFAULT_FILE_EXTENSIONS = [
   'csv',
   'tsv',
@@ -21,10 +21,21 @@ const DEFAULT_FILE_EXTENSIONS = [
   'ldgeojson',
   'kml',
   'gpx',
-  'tcx'
+  'tcx',
+  'shp',
+  'zip',
+  'dbf',
+  'shx',
+  'prj',
+  'cpg',
+  'xlsx',
+  'xls',
+  'xlsm',
+  'xlsb',
+  'fgb'
 ];
-// One chip per format family. Aliases (tsv, jsonl, ndgeojson, …) stay accepted
-// via DEFAULT_FILE_EXTENSIONS but are not shown as separate icons/labels.
+// One chip per format family. Aliases (tsv, jsonl, ndgeojson, zip, shapefile sidecars, …)
+// stay accepted via DEFAULT_FILE_EXTENSIONS but are not shown as separate icons/labels.
 const DISPLAY_FILE_EXTENSIONS = [
   'csv',
   'json',
@@ -34,7 +45,10 @@ const DISPLAY_FILE_EXTENSIONS = [
   'geojsonl',
   'kml',
   'gpx',
-  'tcx'
+  'tcx',
+  'shp',
+  'xlsx',
+  'fgb'
 ];
 const DISPLAY_FILE_FORMATS = [
   'CSV',
@@ -45,7 +59,10 @@ const DISPLAY_FILE_FORMATS = [
   'GeoJSONL',
   'KML',
   'GPX',
-  'TCX'
+  'TCX',
+  'Shapefile',
+  'Excel',
+  'FlatGeobuf'
 ];
 
 interface LoaderInfo {
