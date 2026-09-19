@@ -4504,6 +4504,7 @@ __metadata:
     "@luma.gl/constants": "npm:^9.3.2"
     "@luma.gl/core": "npm:^9.3.2"
     "@mapbox/geo-viewport": "npm:^0.4.1"
+    "@turf/boolean-intersects": "npm:^7.2.0"
     "@turf/boolean-within": "npm:^7.2.0"
     "@turf/helpers": "npm:^7.2.0"
     "@types/d3-array": "npm:^2.8.0"
@@ -9144,6 +9145,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@turf/boolean-disjoint@npm:7.4.0":
+  version: 7.4.0
+  resolution: "@turf/boolean-disjoint@npm:7.4.0"
+  dependencies:
+    "@turf/boolean-point-in-polygon": "npm:7.4.0"
+    "@turf/helpers": "npm:7.4.0"
+    "@turf/line-intersect": "npm:7.4.0"
+    "@turf/meta": "npm:7.4.0"
+    "@turf/polygon-to-line": "npm:7.4.0"
+    "@types/geojson": "npm:^7946.0.10"
+    tslib: "npm:^2.8.1"
+  checksum: 10c0/fe52efd592fa8756c5428c005a9a4e81f531f7b1b9014184db117e11b396f8da940424cdcf4cb4a771238263d14ea477c45543408c3e880d71b670e46036d68f
+  languageName: node
+  linkType: hard
+
+"@turf/boolean-intersects@npm:^7.2.0":
+  version: 7.4.0
+  resolution: "@turf/boolean-intersects@npm:7.4.0"
+  dependencies:
+    "@turf/boolean-disjoint": "npm:7.4.0"
+    "@types/geojson": "npm:^7946.0.10"
+    tslib: "npm:^2.8.1"
+  checksum: 10c0/699e54f4b397c8f5a6874ac84c98861483f163937cd9b24cff1dc12f30303f1caf5f6d7c3c21e82b008318079cb3bbe99e86fc07a11fd14c29686bb5b9b6852c
+  languageName: node
+  linkType: hard
+
 "@turf/boolean-point-in-polygon@npm:7.3.4, @turf/boolean-point-in-polygon@npm:^7.2.0":
   version: 7.3.4
   resolution: "@turf/boolean-point-in-polygon@npm:7.3.4"
@@ -9154,6 +9181,19 @@ __metadata:
     point-in-polygon-hao: "npm:^1.1.0"
     tslib: "npm:^2.8.1"
   checksum: 10c0/047aba73768b0a837c3992955b52e98beba34cad86c2157e8a83fd10e47c80c35c75852cc2943fd54efa901d0eb7c0f6659c0a382a6dc497f2ca3c3f56bf4f0a
+  languageName: node
+  linkType: hard
+
+"@turf/boolean-point-in-polygon@npm:7.4.0":
+  version: 7.4.0
+  resolution: "@turf/boolean-point-in-polygon@npm:7.4.0"
+  dependencies:
+    "@turf/helpers": "npm:7.4.0"
+    "@turf/invariant": "npm:7.4.0"
+    "@types/geojson": "npm:^7946.0.10"
+    point-in-polygon-hao: "npm:^1.1.0"
+    tslib: "npm:^2.8.1"
+  checksum: 10c0/c4d92534d6e2de4602a6507bf35626a2fc825bb0edb7643908978d98069a14aee1e9cce41812a0575fc08039716b2c74def3bb6f530121f54d86fc2062964b84
   languageName: node
   linkType: hard
 
@@ -9333,6 +9373,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@turf/helpers@npm:7.4.0":
+  version: 7.4.0
+  resolution: "@turf/helpers@npm:7.4.0"
+  dependencies:
+    "@types/geojson": "npm:^7946.0.10"
+    tslib: "npm:^2.8.1"
+  checksum: 10c0/2fb850f41deb834260e655cae29bc3c0efd53614c8444737bd0bba64121cb183b8f641556b4e97d235c5ef5066e56bdb25b83b5b54ba563f60462dd21aac2273
+  languageName: node
+  linkType: hard
+
 "@turf/helpers@npm:^5.1.5":
   version: 5.1.5
   resolution: "@turf/helpers@npm:5.1.5"
@@ -9371,6 +9421,17 @@ __metadata:
     "@types/geojson": "npm:^7946.0.10"
     tslib: "npm:^2.8.1"
   checksum: 10c0/8c5c420981d42304ebf32a984892b15150c6dcafabacefd165a5950eaf16024551272071426bfa23e5198b03c7c9495a2547ea9ee455ce3ff77d6449f51df1b3
+  languageName: node
+  linkType: hard
+
+"@turf/invariant@npm:7.4.0":
+  version: 7.4.0
+  resolution: "@turf/invariant@npm:7.4.0"
+  dependencies:
+    "@turf/helpers": "npm:7.4.0"
+    "@types/geojson": "npm:^7946.0.10"
+    tslib: "npm:^2.8.1"
+  checksum: 10c0/d8ddc9883699471cf578a41fb269aa0538f91fc2425ad0f79c1627cdaa717d23b3f0f5b803ee7052a054e9de79a7e31a83476850f4ab4a78679af4ef6f17b7b3
   languageName: node
   linkType: hard
 
@@ -9415,6 +9476,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@turf/line-intersect@npm:7.4.0":
+  version: 7.4.0
+  resolution: "@turf/line-intersect@npm:7.4.0"
+  dependencies:
+    "@turf/helpers": "npm:7.4.0"
+    "@types/geojson": "npm:^7946.0.10"
+    robust-predicates: "npm:^2.0.4"
+    tinyqueue: "npm:^2.0.3"
+    tslib: "npm:^2.8.1"
+  checksum: 10c0/02945aab639a8ae3b735f9d68dcf2a0b4885ceac95ec9dc6d34b5311e4771041ed133e2aeb0d4cf848b2839403a7059df639761a9f675315ae2fa190046912c3
+  languageName: node
+  linkType: hard
+
 "@turf/line-segment@npm:7.3.4":
   version: 7.3.4
   resolution: "@turf/line-segment@npm:7.3.4"
@@ -9455,6 +9529,17 @@ __metadata:
     "@types/geojson": "npm:^7946.0.10"
     tslib: "npm:^2.8.1"
   checksum: 10c0/756bb9e227323fbd9262fbe8323962f0d82852a6452e9e4db1ac5f6947081a450b9389a71b15f109d1d0621cc1b45cc1b68ee4b6c8eaf7e01442ef5cb2dee71b
+  languageName: node
+  linkType: hard
+
+"@turf/meta@npm:7.4.0":
+  version: 7.4.0
+  resolution: "@turf/meta@npm:7.4.0"
+  dependencies:
+    "@turf/helpers": "npm:7.4.0"
+    "@types/geojson": "npm:^7946.0.10"
+    tslib: "npm:^2.8.1"
+  checksum: 10c0/6d08c84c6573757d6f6df1272ea07d3f8daf4a81e83aa1fea2ed85cdc8047d984bcbc4ae3cc7708d374108c2cba92c78d6e885c475ff32a23ef54f77dc41e767
   languageName: node
   linkType: hard
 
@@ -9521,6 +9606,18 @@ __metadata:
     "@types/geojson": "npm:^7946.0.10"
     tslib: "npm:^2.8.1"
   checksum: 10c0/b7c95e9f502259d75e647fce95deab7d51495aa1190652435618b05f7dce77b62d2a4631984a16462739e725004dc6fde7d6c898eed7e774391c5b2d4af62729
+  languageName: node
+  linkType: hard
+
+"@turf/polygon-to-line@npm:7.4.0":
+  version: 7.4.0
+  resolution: "@turf/polygon-to-line@npm:7.4.0"
+  dependencies:
+    "@turf/helpers": "npm:7.4.0"
+    "@turf/invariant": "npm:7.4.0"
+    "@types/geojson": "npm:^7946.0.10"
+    tslib: "npm:^2.8.1"
+  checksum: 10c0/d5b46a30c2a87f3c0422280d04e6a39232774476cc6bca83b1e0a6caa6283bf96b58ca16118392b2dcf23affc26a0206cbffc526fd583eb4e18d88759d5d611e
   languageName: node
   linkType: hard
 
@@ -28931,6 +29028,13 @@ __metadata:
     hash-base: "npm:^3.1.2"
     inherits: "npm:^2.0.4"
   checksum: 10c0/3f472fb453241cfe692a77349accafca38dbcdc9d96d5848c088b2932ba41eb968630ecff7b175d291c7487a4945aee5a81e30c064d1f94e36070f7e0c37ed6c
+  languageName: node
+  linkType: hard
+
+"robust-predicates@npm:^2.0.4":
+  version: 2.0.4
+  resolution: "robust-predicates@npm:2.0.4"
+  checksum: 10c0/3c801ff1ea5ce842c1818da62e2be0cc427ab507dc7a21f3ff2e6278f1d32b5c2f2fc740f8e9c188b4e7a2946228c0173607534432314940e89eae15ded79b5f
   languageName: node
   linkType: hard
 

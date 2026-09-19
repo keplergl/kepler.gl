@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {booleanIntersects} from '@turf/boolean-intersects';
 import {DatasetType, LAYER_TYPES} from '@kepler.gl/constants';
 import {Feature, ProtoDatasetField} from '@kepler.gl/types';
 
@@ -8,8 +9,7 @@ import {DataContainerInterface} from './data-container-interface';
 import {
   canApplyFeatureFilter,
   generatePolygonFilter,
-  getPolygonFilterFunctor,
-  isInPolygon
+  getPolygonFilterFunctor
 } from './filter-utils';
 
 const NON_EXTRACTABLE_DATASET_TYPES = new Set<string>([
@@ -138,32 +138,36 @@ function getTileFeatures(tile: any): any[] {
   return Array.isArray(content) ? content : [];
 }
 
-function anyCoordinateInPolygon(node: any, polygon: Feature): boolean {
-  if (!Array.isArray(node) || !node.length) {
-    return false;
+function toGeojsonFeature(feature: any): Feature | null {
+  if (!feature) {
+    return null;
   }
-  if (typeof node[0] === 'number') {
-    return isInPolygon(node, polygon);
+  if (feature.type === 'Feature' && feature.geometry) {
+    return feature;
   }
-  for (let i = 0; i < node.length; i++) {
-    if (anyCoordinateInPolygon(node[i], polygon)) {
-      return true;
-    }
+  if (feature.geometry) {
+    return {
+      type: 'Feature',
+      geometry: feature.geometry,
+      properties: feature.properties || {}
+    };
   }
-  return false;
+  if (feature.type && feature.coordinates) {
+    return {type: 'Feature', geometry: feature, properties: {}};
+  }
+  return null;
 }
 
 function featureIntersectsDrawnPolygon(feature: any, polygon: Feature): boolean {
-  const geometry = feature?.geometry;
-  if (!geometry) {
+  const geojson = toGeojsonFeature(feature);
+  if (!geojson?.geometry) {
     return false;
   }
-  if (geometry.type === 'GeometryCollection' && Array.isArray(geometry.geometries)) {
-    return geometry.geometries.some(geom =>
-      featureIntersectsDrawnPolygon({type: 'Feature', geometry: geom, properties: {}}, polygon)
-    );
+  try {
+    return booleanIntersects(geojson, polygon);
+  } catch {
+    return false;
   }
-  return anyCoordinateInPolygon(geometry.coordinates, polygon);
 }
 
 function vectorTileFeatureId(feature: any, uniqueIdField?: string): string | null {
@@ -188,7 +192,7 @@ function cloneGeojsonFeature(feature: any) {
 }
 
 /**
- * Copy GeoJSON features from currently loaded vector tiles that fall inside a drawing.
+ * Copy GeoJSON features from currently loaded vector tiles that intersect a drawing.
  * Coverage is the current viewport/zoom tile cache, not the full tileset.
  */
 export function extractVectorTileFeaturesInsideFeature({

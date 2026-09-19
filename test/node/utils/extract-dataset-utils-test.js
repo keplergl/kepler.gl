@@ -116,3 +116,75 @@ test('extract-dataset-utils -> extractRowsInsideFeature vector tiles', t => {
   t.equal(extracted.features[0].properties.name, 'inside');
   t.end();
 });
+
+test('extract-dataset-utils -> extractRowsInsideFeature vector tiles intersection', t => {
+  const layer = {
+    type: LAYER_TYPES.vectorTile,
+    config: {dataId: 'tiles', uniqueIdField: 'id'},
+    tileDataset: {
+      getTiles: () => [
+        {
+          content: [
+            {
+              type: 'Feature',
+              properties: {id: 1, name: 'crossing-line'},
+              geometry: {
+                type: 'LineString',
+                coordinates: [
+                  [27, 13],
+                  [34, 13]
+                ]
+              }
+            },
+            {
+              type: 'Feature',
+              properties: {id: 2, name: 'containing-polygon'},
+              geometry: {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [20, 5],
+                    [40, 5],
+                    [40, 20],
+                    [20, 20],
+                    [20, 5]
+                  ]
+                ]
+              }
+            },
+            {
+              type: 'Feature',
+              properties: {id: 3, name: 'disjoint-line'},
+              geometry: {
+                type: 'LineString',
+                coordinates: [
+                  [40, 20],
+                  [41, 21]
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  const extracted = extractRowsInsideFeature({
+    layer,
+    dataset: {
+      type: DatasetType.VECTOR_TILE,
+      disableDataOperation: true,
+      fields: [],
+      dataContainer: createDataContainer([])
+    },
+    feature: mockPolygonFeature
+  });
+
+  t.equal(extracted.kind, 'geojson', 'Vector tile extract should return GeoJSON features');
+  t.deepEqual(
+    extracted.features.map(feature => feature.properties.name).sort(),
+    ['containing-polygon', 'crossing-line'],
+    'Should keep a crossing line and a polygon that contains the drawing'
+  );
+  t.end();
+});
