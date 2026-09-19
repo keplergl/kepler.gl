@@ -413,7 +413,7 @@ export default {
     filterLayerDisabled: 'Las geometrías no poligonales no se pueden usar para filtrar',
     copyGeometry: 'Copiar geometría',
     extractData: 'Extraer datos',
-    extractFromDataset: 'del conjunto de datos {datasetName}',
+    extractFromLayer: 'de la capa {layerName}',
     editProperties: 'Editar propiedades',
     propertyName: 'Propiedad',
     propertyValue: 'Valor',

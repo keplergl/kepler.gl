@@ -411,7 +411,7 @@ export default {
     filterLayerDisabled: 'Ei-monikulmiogeometrioita ei voi käyttää suodatukseen',
     copyGeometry: 'Kopioi geometria',
     extractData: 'Poimi tiedot',
-    extractFromDataset: 'aineistosta {datasetName}',
+    extractFromLayer: 'tasosta {layerName}',
     editProperties: 'Muokkaa ominaisuuksia',
     propertyName: 'Ominaisuus',
     propertyValue: 'Arvo',

@@ -409,7 +409,7 @@ export default {
     filterLayerDisabled: 'ポリゴン以外のジオメトリはフィルタリングに使用できません',
     copyGeometry: 'ジオメトリをコピー',
     extractData: 'データを抽出',
-    extractFromDataset: '{datasetName} データセットから',
+    extractFromLayer: '{layerName} レイヤーから',
     editProperties: 'プロパティを編集',
     propertyName: 'プロパティ',
     propertyValue: '値',

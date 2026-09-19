@@ -163,8 +163,8 @@ test('FeatureActionPanel -> extract data', t => {
 
   t.ok(wrapper.find('.editor-extract-list').length, 'Should show Extract data for polygons');
   t.ok(
-    wrapper.find('.extract-layer-panel-item .label').text().includes('from puppy.csv dataset'),
-    'Extract options should name the source dataset'
+    wrapper.find('.extract-layer-panel-item .label').text().includes('from layer 1 layer'),
+    'Extract options should name the source layer'
   );
 
   wrapper.find('.extract-layer-panel-item').simulate('click');
@@ -230,11 +230,8 @@ test('FeatureActionPanel -> extract vector tile dataset', t => {
   );
 
   t.ok(
-    wrapper
-      .find('.extract-layer-panel-item .label')
-      .text()
-      .includes('from buildings.pmtiles dataset'),
-    'Vector tile datasets should appear in Extract data'
+    wrapper.find('.extract-layer-panel-item .label').text().includes('from Buildings layer'),
+    'Vector tile layers should appear in Extract data'
   );
   t.end();
 });

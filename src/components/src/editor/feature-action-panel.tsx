@@ -196,10 +196,10 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
                       key={layer.id || index}
                       label={intl.formatMessage(
                         {
-                          id: 'editor.extractFromDataset',
-                          defaultMessage: 'from {datasetName} dataset'
+                          id: 'editor.extractFromLayer',
+                          defaultMessage: 'from {layerName} layer'
                         },
-                        {datasetName: dataset?.label || layer.config.dataId}
+                        {layerName: layer.config.label}
                       )}
                       // @ts-ignore
                       color={dataset?.color}
