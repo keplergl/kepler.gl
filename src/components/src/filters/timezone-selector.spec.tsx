@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+// @ts-nocheck
 import React from 'react';
 import {screen} from '@testing-library/react';
 

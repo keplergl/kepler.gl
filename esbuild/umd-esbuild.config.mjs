@@ -6,9 +6,11 @@ import {replace} from 'esbuild-plugin-replace';
 import {umdWrapper} from 'esbuild-plugin-umd-wrapper';
 
 import process from 'node:process';
-import {spawn} from 'node:child_process';
+import {createRequire} from 'node:module';
 import {join} from 'node:path';
-import KeplerPackage from '../package.json' assert {type: 'json'};
+
+const require = createRequire(import.meta.url);
+const KeplerPackage = require('../package.json');
 
 const LIB_DIR = './';
 const NODE_MODULES_DIR = join(LIB_DIR, 'node_modules');
@@ -110,6 +112,9 @@ const config = {
   format: 'umd',
   logLevel: 'error',
   minify: true,
+  banner: {
+    js: '// SPDX-License-Identifier: MIT\n// Copyright contributors to the kepler.gl project\n'
+  },
   sourcemap: false,
   treeShaking: true,
 
