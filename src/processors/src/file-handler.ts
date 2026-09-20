@@ -175,6 +175,38 @@ function getBatchRows(batch: {
   return Array.isArray(batchData) ? batchData : null;
 }
 
+/**
+ * Reconstruct the loader table/GIS identity from the current batch. Empty
+ * shapefile (`{data: []}`) and spreadsheet (`object-row-table`) batches must
+ * not be flattened to a bare `[]`, which processFileData cannot classify.
+ */
+function getAggregatedLoaderResult(
+  batch: {
+    shape?: string;
+    type?: string;
+    header?: unknown;
+    data?: unknown;
+  },
+  rows: unknown[],
+  current: unknown
+): unknown {
+  if (batch.shape === 'geojson-table' || batch.type === 'FeatureCollection') {
+    return {type: 'FeatureCollection', features: [...rows]};
+  }
+  // Non-empty CSV/Excel stay a flat row array (existing readBatch contract).
+  if (rows.length > 0) {
+    return current;
+  }
+  if (batch.shape === 'object-row-table' || batch.shape === 'row-table') {
+    return {shape: batch.shape, data: []};
+  }
+  // ShapefileLoader parseInBatches always yields v3 `{header, data: Feature[]}`.
+  if (batch.header != null && Array.isArray(batch.data)) {
+    return {data: []};
+  }
+  return current;
+}
+
 export function isRowObject(json: any): boolean {
   return Array.isArray(json) && isPlainObject(json[0]);
 }
@@ -280,9 +312,7 @@ export async function* readBatch(
           batches.push(batchRows[i]);
         }
       }
-      if (batch.shape === 'geojson-table') {
-        result = {type: 'FeatureCollection', features: [...batches]};
-      }
+      result = getAggregatedLoaderResult(batch, batches, result);
     }
 
     yield {

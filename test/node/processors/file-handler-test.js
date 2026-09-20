@@ -8,7 +8,8 @@ import {
   filesToDataPayload,
   processFileData,
   processArrowBatches,
-  getGeoJsonFromLoaderResult
+  getGeoJsonFromLoaderResult,
+  readBatch
 } from '@kepler.gl/processors';
 import {getDatasetRefreshIntervalMs} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
@@ -447,6 +448,15 @@ test('#file-handler -> shapefile-shaped loader output becomes GeoJSON', async t 
   t.end();
 });
 
+async function readLastAggregatedBatch(iterator, fileName) {
+  const generator = readBatch(iterator, fileName);
+  let last;
+  for await (const batch of generator) {
+    last = batch;
+  }
+  return last;
+}
+
 test('#file-handler -> empty GIS loader output becomes an empty GeoJSON dataset', async t => {
   const emptyShapefile = await processFileData({
     content: {fileName: 'empty.shp', data: {data: []}},
@@ -470,6 +480,34 @@ test('#file-handler -> empty GIS loader output becomes an empty GeoJSON dataset'
     fileCache: []
   });
   t.equal(emptyExcel[0].info.format, 'row', 'empty spreadsheet tables should stay rows');
+  t.end();
+});
+
+test('#file-handler -> readBatch preserves empty loader identity', async t => {
+  async function* emptyShapefileBatches() {
+    yield {header: {length: 50}, data: []};
+  }
+  const shapefileBatch = await readLastAggregatedBatch(emptyShapefileBatches(), 'empty.shp');
+  const emptyShapefile = await processFileData({content: shapefileBatch, fileCache: []});
+  t.equal(emptyShapefile[0].info.format, 'geojson', 'empty shapefile batches should stay geojson');
+  t.equal(emptyShapefile[0].data.rows.length, 0, 'should keep zero shapefile features');
+
+  async function* emptyExcelBatches() {
+    yield {shape: 'object-row-table', data: []};
+  }
+  const excelBatch = await readLastAggregatedBatch(emptyExcelBatches(), 'empty.xlsx');
+  const emptyExcel = await processFileData({content: excelBatch, fileCache: []});
+  t.equal(emptyExcel[0].info.format, 'row', 'empty spreadsheet batches should stay rows');
+  t.equal(emptyExcel[0].data.rows.length, 0, 'should keep zero spreadsheet rows');
+
+  async function* emptyFlatGeobufBatches() {
+    yield {batchType: 'metadata'};
+    yield {shape: 'geojson-table', type: 'FeatureCollection', features: []};
+  }
+  const fgbBatch = await readLastAggregatedBatch(emptyFlatGeobufBatches(), 'empty.fgb');
+  const emptyFgb = await processFileData({content: fgbBatch, fileCache: []});
+  t.equal(emptyFgb[0].info.format, 'geojson', 'empty FlatGeobuf batches should stay geojson');
+  t.equal(emptyFgb[0].data.rows.length, 0, 'should keep zero FlatGeobuf features');
   t.end();
 });
 
