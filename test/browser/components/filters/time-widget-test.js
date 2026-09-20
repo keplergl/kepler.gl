@@ -122,13 +122,13 @@ test('Components -> TimeWidget.mount -> timezone selector', t => {
 
   t.equal(wrapper.find(TimezoneSelector).length, 1, 'should render TimezoneSelector');
   t.equal(
-    wrapper.find('.timezone-field-selector').length,
+    wrapper.find('[data-testid="time-widget-timezone"]').hostNodes().length,
     1,
     'should render timezone field selector'
   );
 
   const timezoneSelector = wrapper.find(TimezoneSelector).at(0);
-  t.equal(timezoneSelector.props().timezone, null, 'should default timezone to null (UTC display)');
+  t.ok(timezoneSelector.props().timezone == null, 'should default timezone to null (UTC display)');
 
   timezoneSelector.props().onChange('America/Los_Angeles');
 
