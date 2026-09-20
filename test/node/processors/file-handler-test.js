@@ -483,6 +483,39 @@ test('#file-handler -> empty GIS loader output becomes an empty GeoJSON dataset'
   t.end();
 });
 
+test('#file-handler -> readBatch does not wrap JSON streaming placeholders', async t => {
+  async function* geojsonStream() {
+    yield {batchType: 'metadata', shape: 'metadata', data: []};
+    yield {
+      shape: 'object-row-table',
+      batchType: 'partial-result',
+      container: {type: 'FeatureCollection', features: []},
+      data: [],
+      jsonpath: '$.features'
+    };
+    yield {
+      data: [
+        {
+          type: 'Feature',
+          properties: {name: 'alpha'},
+          geometry: {type: 'Point', coordinates: [0, 1]}
+        }
+      ],
+      jsonpath: '$.features',
+      length: 1
+    };
+  }
+
+  const generator = readBatch(geojsonStream(), 'places.geojson');
+  await generator.next();
+  const partial = await generator.next();
+  t.equal(partial.value.batchType, 'partial-result', 'should yield the JSON partial-result');
+  t.equal(partial.value.data.length, 0, 'partial-result should keep an empty array');
+  const dataBatch = await generator.next();
+  t.equal(dataBatch.value.data.length, 1, 'data batch should stay a feature array');
+  t.end();
+});
+
 test('#file-handler -> readBatch preserves empty loader identity', async t => {
   async function* emptyShapefileBatches() {
     yield {header: {length: 50}, data: []};

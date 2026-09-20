@@ -179,6 +179,9 @@ function getBatchRows(batch: {
  * Reconstruct the loader table/GIS identity from the current batch. Empty
  * shapefile (`{data: []}`) and spreadsheet (`object-row-table`) batches must
  * not be flattened to a bare `[]`, which processFileData cannot classify.
+ *
+ * JSON streaming first yields an empty `object-row-table` `partial-result`
+ * (with `jsonpath` / `container`). That is a placeholder, not the dataset.
  */
 function getAggregatedLoaderResult(
   batch: {
@@ -186,11 +189,23 @@ function getAggregatedLoaderResult(
     type?: string;
     header?: unknown;
     data?: unknown;
+    batchType?: string;
+    jsonpath?: unknown;
+    container?: unknown;
   },
   rows: unknown[],
   current: unknown
 ): unknown {
-  if (batch.shape === 'geojson-table' || batch.type === 'FeatureCollection') {
+  if (
+    batch.batchType === BATCH_TYPE.METADATA ||
+    batch.batchType === BATCH_TYPE.PARTIAL_RESULT ||
+    batch.batchType === BATCH_TYPE.FINAL_RESULT ||
+    batch.jsonpath ||
+    batch.container
+  ) {
+    return current;
+  }
+  if (batch.shape === 'geojson-table') {
     return {type: 'FeatureCollection', features: [...rows]};
   }
   // Non-empty CSV/Excel stay a flat row array (existing readBatch contract).
