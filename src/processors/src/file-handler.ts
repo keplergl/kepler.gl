@@ -24,7 +24,13 @@ import {
 } from './data-processor';
 
 import {FileCacheItem, ValidKeplerGlMap} from './types';
-import {getKeplerLoaders} from './loader-registry';
+import {getKeplerLoaders, isKeplerFileFormatAccepted} from './loader-registry';
+import {
+  createCompanionFetch,
+  getDroppedFileExtension,
+  isZipFileName,
+  unzipShapefileArchive
+} from './shapefile-files';
 
 const BATCH_TYPE = {
   METADATA: 'metadata',
@@ -58,6 +64,14 @@ const JSON_LOADER_OPTIONS = {
 
 const KML_LOADER_OPTIONS = {
   shape: 'geojson-table'
+};
+
+const GIS_TABLE_LOADER_OPTIONS = {
+  shape: 'geojson-table'
+};
+
+const EXCEL_LOADER_OPTIONS = {
+  shape: 'object-row-table'
 };
 
 export type ProcessFileDataContent = {
@@ -130,10 +144,16 @@ export function getGeoJsonFromLoaderResult(data: unknown): Feature | FeatureColl
   if (data.shape === 'geojson-table' && Array.isArray(data.features)) {
     return {type: 'FeatureCollection', features: data.features as Feature[]};
   }
-  if (
-    (data.shape === 'object-row-table' || data.shape === 'row-table') &&
-    isGeoJsonFeatureArray(data.data)
-  ) {
+  if (data.shape === 'object-row-table' || data.shape === 'row-table') {
+    if (isGeoJsonFeatureArray(data.data)) {
+      return {type: 'FeatureCollection', features: data.data};
+    }
+    // Empty spreadsheet tables stay rows, not empty GeoJSON.
+    return null;
+  }
+  // ShapefileLoader parseInBatches (v3 shape) yields `{data: Feature[]}`,
+  // including empty files as `{data: []}`.
+  if (Array.isArray(data.data) && (data.data.length === 0 || isGeoJsonFeatureArray(data.data))) {
     return {type: 'FeatureCollection', features: data.data};
   }
   return null;
@@ -153,6 +173,53 @@ function getBatchRows(batch: {
   }
   const batchData = isArrowTable(batch.data) ? batch.data.batches : batch.data;
   return Array.isArray(batchData) ? batchData : null;
+}
+
+/**
+ * Reconstruct the loader table/GIS identity from the current batch. Empty
+ * shapefile (`{data: []}`) and spreadsheet (`object-row-table`) batches must
+ * not be flattened to a bare `[]`, which processFileData cannot classify.
+ *
+ * JSON streaming first yields an empty `object-row-table` `partial-result`
+ * (with `jsonpath` / `container`). That is a placeholder, not the dataset.
+ */
+function getAggregatedLoaderResult(
+  batch: {
+    shape?: string;
+    type?: string;
+    header?: unknown;
+    data?: unknown;
+    batchType?: string;
+    jsonpath?: unknown;
+    container?: unknown;
+  },
+  rows: unknown[],
+  current: unknown
+): unknown {
+  if (
+    batch.batchType === BATCH_TYPE.METADATA ||
+    batch.batchType === BATCH_TYPE.PARTIAL_RESULT ||
+    batch.batchType === BATCH_TYPE.FINAL_RESULT ||
+    batch.jsonpath ||
+    batch.container
+  ) {
+    return current;
+  }
+  if (batch.shape === 'geojson-table') {
+    return {type: 'FeatureCollection', features: [...rows]};
+  }
+  // Non-empty CSV/Excel stay a flat row array (existing readBatch contract).
+  if (rows.length > 0) {
+    return current;
+  }
+  if (batch.shape === 'object-row-table' || batch.shape === 'row-table') {
+    return {shape: batch.shape, data: []};
+  }
+  // ShapefileLoader parseInBatches always yields v3 `{header, data: Feature[]}`.
+  if (batch.header != null && Array.isArray(batch.data)) {
+    return {data: []};
+  }
+  return current;
 }
 
 export function isRowObject(json: any): boolean {
@@ -212,7 +279,13 @@ function getPersistedRemoteFormat(keplerFormat?: string, fileName?: string): str
   const extensionAliases: Record<string, string> = {
     jsonl: 'ndjson',
     ndgeojson: 'geojsonl',
-    ldgeojson: 'geojsonl'
+    ldgeojson: 'geojsonl',
+    xls: 'xlsx',
+    xlsm: 'xlsx',
+    xlsb: 'xlsx',
+    shapefile: 'shp',
+    excel: 'xlsx',
+    flatgeobuf: 'fgb'
   };
   return extensionAliases[ext];
 }
@@ -254,9 +327,7 @@ export async function* readBatch(
           batches.push(batchRows[i]);
         }
       }
-      if (batch.shape === 'geojson-table') {
-        result = {type: 'FeatureCollection', features: [...batches]};
-      }
+      result = getAggregatedLoaderResult(batch, batches, result);
     }
 
     yield {
@@ -285,16 +356,41 @@ export async function* readBatch(
 export async function readFileInBatches({
   file,
   loaders = [],
-  loadOptions = {}
+  loadOptions = {},
+  companionFiles,
+  fileName
 }: {
   file: File;
-  fileCache: FileCacheItem[];
-  loaders: Loader[];
-  loadOptions: any;
+  fileCache?: FileCacheItem[];
+  loaders?: Loader[];
+  loadOptions?: any;
+  companionFiles?: File[];
+  /** Display/progress name. Kept across zip → shapefile recursion. */
+  fileName?: string;
 }): Promise<AsyncGenerator> {
+  const displayFileName = fileName || file.name;
+  if (isZipFileName(file.name) && isKeplerFileFormatAccepted('shp')) {
+    const unzipped = await unzipShapefileArchive(file);
+    const shapefile = unzipped.find(entry => getDroppedFileExtension(entry.name) === 'shp');
+    if (!shapefile) {
+      throw new Error('Zip archive does not contain a shapefile (.shp)');
+    }
+    return readFileInBatches({
+      file: shapefile,
+      loaders,
+      loadOptions,
+      companionFiles: [...unzipped, ...(companionFiles || [])],
+      fileName: displayFileName
+    });
+  }
+
   loaders = await getKeplerLoaders(file, loaders);
   const hasExtension = /\.[a-z0-9]+$/i.test(file.name);
   const mimeType = !hasExtension && file.type ? file.type : undefined;
+  // Shapefile sidecars are resolved via a custom fetch that cannot be cloned
+  // into a worker. Other formats keep loaders.gl worker parsing.
+  const isShapefile = getDroppedFileExtension(file.name) === 'shp';
+  const companionFetch = isShapefile ? createCompanionFetch(companionFiles) : undefined;
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
     arrow: ARROW_LOADER_OPTIONS,
@@ -303,8 +399,15 @@ export async function readFileInBatches({
     kml: KML_LOADER_OPTIONS,
     gpx: KML_LOADER_OPTIONS,
     tcx: KML_LOADER_OPTIONS,
+    shapefile: GIS_TABLE_LOADER_OPTIONS,
+    shp: {_maxDimensions: 2},
+    excel: EXCEL_LOADER_OPTIONS,
+    flatgeobuf: GIS_TABLE_LOADER_OPTIONS,
+    gis: {reproject: true, _targetCrs: 'WGS84'},
     metadata: true,
+    ...(isShapefile ? {worker: false} : {}),
     ...(mimeType ? {mimeType} : {}),
+    ...(companionFetch ? {fetch: companionFetch} : {}),
     ...loadOptions
   };
 
@@ -319,7 +422,7 @@ export async function readFileInBatches({
 
   return readBatch(
     progressIterator,
-    file.name,
+    displayFileName,
     sourceUrl,
     keplerFormat,
     refreshIntervalMs,
@@ -366,6 +469,15 @@ export async function processFileData({
       // csv file goes here
       format = DATASET_FORMATS.row;
       processor = processRowObject;
+    } else if (isPlainObject(data)) {
+      const tableRows = data.data;
+      if (
+        (data.shape === 'object-row-table' || data.shape === 'row-table') &&
+        Array.isArray(tableRows)
+      ) {
+        format = DATASET_FORMATS.row;
+        processor = () => processRowObject(tableRows);
+      }
     }
   }
   if (format && processor) {

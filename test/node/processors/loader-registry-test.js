@@ -17,6 +17,7 @@ import {
   getFileFormatNames
 } from '@kepler.gl/reducers';
 import {initApplicationConfig} from '@kepler.gl/utils';
+import {tableFromJSON, tableToIPC} from 'apache-arrow';
 
 test('#loader-registry -> resolves matching loaders lazily', async t => {
   const loaders = await getKeplerLoaders({name: 'data.csv', type: ''});
@@ -51,6 +52,56 @@ test('#loader-registry -> resolves NDJSON and GIS loaders by extension', async t
 
   const tcx = await getKeplerLoaders({name: 'activity.tcx', type: ''});
   t.equal(tcx[0].id, 'tcx', 'tcx should resolve to the TCX loader');
+
+  const shp = await getKeplerLoaders({name: 'places.shp', type: ''});
+  t.equal(shp[0].id, 'shapefile', 'shp should resolve to the shapefile loader');
+  t.notOk(shp[0].tests, 'shapefile magic tests should be stripped so .shx is not parsed as data');
+
+  const xlsx = await getKeplerLoaders({name: 'table.xlsx', type: ''});
+  t.equal(xlsx[0].id, 'excel', 'xlsx should resolve to the Excel loader');
+
+  const fgb = await getKeplerLoaders({name: 'places.fgb', type: ''});
+  t.equal(fgb[0].id, 'flatgeobuf', 'fgb should resolve to the FlatGeobuf loader');
+  t.end();
+});
+
+test('#loader-registry -> generic octet-stream does not lock in shapefile', async t => {
+  const extensionless = await getKeplerLoaders({
+    name: 'abc123',
+    type: 'application/octet-stream'
+  });
+  t.ok(
+    extensionless.length > 1,
+    'extensionless octet-stream should keep content-based loader selection'
+  );
+  t.ok(
+    extensionless.some(loader => loader.id === 'arrow'),
+    'Arrow should stay a candidate for generic binary MIME'
+  );
+  t.ok(
+    extensionless.some(loader => loader.id === 'flatgeobuf'),
+    'FlatGeobuf should stay a candidate for generic binary MIME'
+  );
+  t.ok(
+    extensionless.every(loader => !(loader.mimeTypes || []).includes('application/octet-stream')),
+    'no candidate should claim application/octet-stream (selectLoader matches MIME before magic)'
+  );
+
+  const fgb = await getKeplerLoaders({
+    name: 'places.fgb',
+    type: 'application/octet-stream'
+  });
+  t.equal(fgb[0].id, 'flatgeobuf', '.fgb should still win from the extension, not shapefile MIME');
+  t.notOk(
+    (fgb[0].mimeTypes || []).includes('application/octet-stream'),
+    'FlatGeobuf should not advertise the generic octet-stream MIME'
+  );
+
+  const shpMime = await getKeplerLoaders({
+    name: 'dataset',
+    type: 'application/x-esri-shapefile'
+  });
+  t.equal(shpMime[0].id, 'shapefile', 'specific shapefile MIME should still resolve shapefile');
   t.end();
 });
 
@@ -79,6 +130,20 @@ async function readLastBatch(file) {
   }
   return last;
 }
+
+test('#loader-registry -> extensionless octet-stream Arrow is not parsed as FlatGeobuf', async t => {
+  const bytes = tableToIPC(tableFromJSON([{name: 'alpha', value: 1}]), 'file');
+  const file = new File([bytes], 'abc123', {type: 'application/octet-stream'});
+  const batch = await readLastBatch(file);
+  const processed = await processFileData({content: batch, fileCache: []});
+
+  t.equal(processed[0].info.format, 'arrow', 'extensionless octet-stream Arrow should stay Arrow');
+  t.ok(
+    processed[0].data.fields.some(field => field.name === 'name'),
+    'should keep Arrow columns, not GIS features'
+  );
+  t.end();
+});
 
 test('#loader-registry -> file loading uses the async loader path', async t => {
   const file = new File(['name,value\nalpha,1\n'], 'data.csv', {type: 'text/csv'});
@@ -187,6 +252,43 @@ test('#loader-registry -> tcx files become GeoJSON datasets', async t => {
   t.end();
 });
 
+test('#loader-registry -> excel files become row datasets', async t => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const XLSX = require('xlsx');
+  const workbook = XLSX.utils.book_new();
+  const sheet = XLSX.utils.json_to_sheet([{name: 'alpha', value: 1}]);
+  XLSX.utils.book_append_sheet(workbook, sheet, 'Sheet1');
+  const buffer = XLSX.write(workbook, {type: 'array', bookType: 'xlsx'});
+  const file = new File([buffer], 'table.xlsx', {type: ''});
+  const batch = await readLastBatch(file);
+  const processed = await processFileData({content: batch, fileCache: []});
+
+  t.equal(processed[0].info.format, 'row', 'Excel should process as rows');
+  t.equal(processed[0].data.rows.length, 1, 'should keep the spreadsheet row');
+  t.end();
+});
+
+test('#loader-registry -> flatgeobuf files become GeoJSON datasets', async t => {
+  const {serialize} = await import('flatgeobuf/lib/mjs/geojson.js');
+  const bytes = serialize({
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {name: 'alpha'},
+        geometry: {type: 'Point', coordinates: [-122.4, 37.8]}
+      }
+    ]
+  });
+  const file = new File([bytes], 'places.fgb', {type: ''});
+  const batch = await readLastBatch(file);
+  const processed = await processFileData({content: batch, fileCache: []});
+
+  t.equal(processed[0].info.format, 'geojson', 'FlatGeobuf should process as geojson');
+  t.equal(processed[0].data.rows.length, 1, 'should keep the FlatGeobuf feature');
+  t.end();
+});
+
 test('#loader-registry -> acceptedFileFormats defaults to all formats', t => {
   t.ok(isKeplerFileFormatAccepted('kml'), 'kml is accepted by default');
   t.ok(isKeplerFileFormatAccepted('geojsonl'), 'geojsonl is accepted by default');
@@ -203,14 +305,37 @@ test('#loader-registry -> acceptedFileFormats defaults to all formats', t => {
     getFileExtensions({loaders: []}).includes('geojsonl'),
     'aliases stay accepted even when not shown as icons'
   );
+  t.ok(isKeplerFileFormatAccepted('shp'), 'shp is accepted by default');
+  t.ok(isKeplerFileFormatAccepted('xlsx'), 'xlsx is accepted by default');
+  t.ok(isKeplerFileFormatAccepted('fgb'), 'fgb is accepted by default');
+  t.ok(getFileExtensions({loaders: []}).includes('shp'), 'file picker includes shp');
+  t.ok(getFileExtensions({loaders: []}).includes('zip'), 'file picker includes shapefile zip');
+  t.ok(getFileExtensions({loaders: []}).includes('xlsx'), 'file picker includes xlsx');
+  t.ok(getFileExtensions({loaders: []}).includes('fgb'), 'file picker includes fgb');
+  t.ok(getAcceptedRemoteFileFormats().includes('shp'), 'remote format list includes shp');
+  t.ok(getAcceptedRemoteFileFormats().includes('xlsx'), 'remote format list includes xlsx');
+  t.ok(getAcceptedRemoteFileFormats().includes('fgb'), 'remote format list includes fgb');
   t.deepEqual(
     getDisplayedFileExtensions({loaders: []}),
     ['csv', 'json', 'geojson', 'arrow', 'parquet', 'geojsonl', 'kml', 'gpx', 'tcx'],
-    'Add Data icons show one chip per format family'
+    'Add Data icons omit Shapefile, Excel, and FlatGeobuf'
   );
   t.deepEqual(
     getFileFormatNames({loaders: []}),
-    ['CSV', 'Json', 'GeoJSON', 'Arrow', 'Parquet', 'GeoJSONL', 'KML', 'GPX', 'TCX'],
+    [
+      'CSV',
+      'Json',
+      'GeoJSON',
+      'Arrow',
+      'Parquet',
+      'GeoJSONL',
+      'KML',
+      'GPX',
+      'TCX',
+      'Shapefile',
+      'Excel',
+      'FlatGeobuf'
+    ],
     'upload copy lists format families, not every alias'
   );
   t.end();
@@ -224,6 +349,8 @@ test('#loader-registry -> acceptedFileFormats restricts loaders and UI lists', a
     t.ok(isKeplerFileFormatAccepted('GeoJSON'), 'geojson remains accepted');
     t.notOk(isKeplerFileFormatAccepted('kml'), 'kml is rejected');
     t.notOk(isKeplerFileFormatAccepted('parquet'), 'parquet is rejected');
+    t.notOk(isKeplerFileFormatAccepted('shp'), 'shp is rejected');
+    t.notOk(isKeplerFileFormatAccepted('xlsx'), 'xlsx is rejected');
 
     const ids = getAcceptedKeplerLoaderEntries().map(entry => entry.id);
     t.deepEqual(ids.sort(), ['csv', 'json'], 'only matching built-in loaders remain');

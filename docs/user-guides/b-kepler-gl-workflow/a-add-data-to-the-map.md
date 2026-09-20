@@ -11,8 +11,8 @@
 
 |   |   |
 |---|---|
-| **Local files**  | <span style="font-weight:normal">Upload CSV, GeoJSON, GeoJSONL, KML, GPX, TCX, Arrow, or Parquet files. Files are parsed in your browser, so available memory limits how large a file you can load. For data that does not fit in memory, use a tileset instead.<span>  |
-| **From URL**  | Directly load data or map json by pasting a remote URL. Supported extensions include `csv`, `geojson`, `json`, `geojsonl`, `kml`, `gpx`, `tcx`, `arrow`, and `parquet`. Make sure the url contains the file extension. CORS policy must be defined on your custom url domain. |
+| **Local files**  | <span style="font-weight:normal">Upload CSV, GeoJSON, GeoJSONL, KML, GPX, TCX, Shapefile, Excel, FlatGeobuf, Arrow, or Parquet files. Files are parsed in your browser, so available memory limits how large a file you can load. For data that does not fit in memory, use a tileset instead.<span>  |
+| **From URL**  | Directly load data or map json by pasting a remote URL. Supported extensions include `csv`, `geojson`, `json`, `geojsonl`, `kml`, `gpx`, `tcx`, `shp`, `xlsx`, `fgb`, `arrow`, and `parquet`. Make sure the url contains the file extension. CORS policy must be defined on your custom url domain. |
 | **Sample data**  | Load one of kepler.gl’s sample datasets. The sample map data and config are directly loaded from  [kepler.gl-data github][kepler.gl-data-github] repo  |
 
 
@@ -28,6 +28,9 @@ Geometry coordinates should be presented with a geographic coordinate reference 
  - [KML](#kml)
  - [GPX](#gpx)
  - [TCX](#tcx)
+ - [Shapefile](#shapefile)
+ - [Excel](#excel)
+ - [FlatGeobuf](#flatgeobuf)
  - [GeoArrow](#geoarrow)
  - [kepler.gl Json](#keplergl-json)
 
@@ -220,6 +223,18 @@ kepler.gl accepts `.gpx` files. Waypoints, tracks, and routes are converted to G
 
 kepler.gl accepts Garmin `.tcx` activity files. Track points are converted to GeoJSON features.
 
+### Shapefile
+
+kepler.gl accepts ESRI Shapefiles. Drop a `.shp` together with its sidecars (`.dbf`, `.shx`, and optionally `.prj` / `.cpg`), or a `.zip` that contains those files at the top level. Features are converted to GeoJSON and visualized with a **Polygon** layer. If a `.prj` file is present, geometries are reprojected to WGS84. Nested folders inside the zip are ignored.
+
+### Excel
+
+kepler.gl accepts `.xlsx` and `.xls` workbooks. The first sheet is loaded as a table, the same way as CSV. Additional sheets are not imported.
+
+### FlatGeobuf
+
+kepler.gl accepts `.fgb` files. Features are converted to GeoJSON and visualized with a **Polygon** layer.
+
 ### GeoArrow
 
 [GeoArrow](https://geoarrow.org/) file, a binary data format which can be visualized with the [PolygonLayer](https://docs.kepler.gl/docs/user-guides/c-types-of-layers/e-polygon).
@@ -230,7 +245,7 @@ JSON file exported from kepler.gl. See "[Export Map as JSON](https://docs.kepler
 
 ### Load Map Using URL
 
-You load data or map through custom URL. It currently supports URLs with file extension of `csv`, `json`, `geojson`, `geojsonl`, `kml`, `gpx`, `tcx`, `arrow`, `parquet`, and `kepler.gl.json`.
+You load data or map through custom URL. It currently supports URLs with file extension of `csv`, `json`, `geojson`, `geojsonl`, `kml`, `gpx`, `tcx`, `shp`, `xlsx`, `fgb`, `arrow`, `parquet`, and `kepler.gl.json`.
 
 A remote URL still loads the full file into memory. For datasets that do not fit in memory, use a tileset (vector tiles, COG, or PMTiles).
 

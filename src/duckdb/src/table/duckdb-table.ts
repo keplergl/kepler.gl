@@ -325,6 +325,14 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       // csv file goes here
       format = DATASET_FORMATS.row;
       processor = processCsvRowObject; // directly import json object into duckdb-wasm
+    } else if (
+      data &&
+      typeof data === 'object' &&
+      (data.shape === 'object-row-table' || data.shape === 'row-table') &&
+      Array.isArray(data.data)
+    ) {
+      format = DATASET_FORMATS.row;
+      processor = () => processCsvRowObject(data.data);
     }
     return {processor, format};
   };
