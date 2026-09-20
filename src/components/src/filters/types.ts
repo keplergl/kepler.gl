@@ -15,6 +15,7 @@ import {Layer} from '@kepler.gl/layers';
 import {
   ActionHandler,
   setFilterAnimationTime,
+  setFilterAnimationTimeConfig,
   setFilterAnimationWindow,
   setTimeFilterSyncTimelineMode,
   setFilterPlot,
@@ -91,6 +92,7 @@ export type TimeWidgetProps = {
   updateAnimationSpeed: ActionHandler<typeof updateFilterAnimationSpeed>;
   toggleAnimation: ActionHandler<typeof toggleFilterAnimation>;
   setFilterPlot: ActionHandler<typeof setFilterPlot>;
+  setFilterAnimationTimeConfig: ActionHandler<typeof setFilterAnimationTimeConfig>;
   setFilterAnimationWindow: ActionHandler<typeof setFilterAnimationWindow>;
   setFilterSyncTimelineMode: ActionHandler<typeof setTimeFilterSyncTimelineMode>;
   timeline: Timeline;
