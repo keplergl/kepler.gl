@@ -299,7 +299,9 @@ export default {
     column: 'Coluna',
     timeIntervalEndField: 'Hora de término',
     timeIntervalEndFieldHint:
-      'Opcional. As entidades permanecem visíveis enquanto a janela de reprodução se sobrepõe a este intervalo.'
+      'Opcional. As entidades permanecem visíveis enquanto a janela de reprodução se sobrepõe a este intervalo.',
+    timezone: 'Fuso horário',
+    selectTimezone: 'Selecionar fuso horário de exibição'
   },
   datasetTitle: {
     showDataTable: 'Mostrar tabela de dados',

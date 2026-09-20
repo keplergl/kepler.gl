@@ -296,7 +296,9 @@ export default {
     column: '列',
     timeIntervalEndField: '終了時刻',
     timeIntervalEndFieldHint:
-      '任意。再生ウィンドウがこの期間と重なっている間、フィーチャは表示されたままになります。'
+      '任意。再生ウィンドウがこの期間と重なっている間、フィーチャは表示されたままになります。',
+    timezone: 'タイムゾーン',
+    selectTimezone: '表示タイムゾーンを選択'
   },
   datasetTitle: {
     showDataTable: 'データ表を表示',
