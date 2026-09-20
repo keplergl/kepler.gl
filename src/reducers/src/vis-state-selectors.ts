@@ -34,8 +34,9 @@ const DEFAULT_FILE_EXTENSIONS = [
   'xlsb',
   'fgb'
 ];
-// One chip per format family. Aliases (tsv, jsonl, ndgeojson, zip, shapefile sidecars, …)
-// stay accepted via DEFAULT_FILE_EXTENSIONS but are not shown as separate icons/labels.
+// One chip per format family. Aliases (tsv, jsonl, ndgeojson, zip, shapefile,
+// excel, flatgeobuf, sidecars, …) stay accepted via DEFAULT_FILE_EXTENSIONS
+// and listed in DISPLAY_FILE_FORMATS, but are not shown as extra icons.
 const DISPLAY_FILE_EXTENSIONS = [
   'csv',
   'json',
@@ -45,10 +46,7 @@ const DISPLAY_FILE_EXTENSIONS = [
   'geojsonl',
   'kml',
   'gpx',
-  'tcx',
-  'shp',
-  'xlsx',
-  'fgb'
+  'tcx'
 ];
 const DISPLAY_FILE_FORMATS = [
   'CSV',

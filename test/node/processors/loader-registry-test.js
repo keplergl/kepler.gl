@@ -294,21 +294,8 @@ test('#loader-registry -> acceptedFileFormats defaults to all formats', t => {
   t.ok(getAcceptedRemoteFileFormats().includes('fgb'), 'remote format list includes fgb');
   t.deepEqual(
     getDisplayedFileExtensions({loaders: []}),
-    [
-      'csv',
-      'json',
-      'geojson',
-      'arrow',
-      'parquet',
-      'geojsonl',
-      'kml',
-      'gpx',
-      'tcx',
-      'shp',
-      'xlsx',
-      'fgb'
-    ],
-    'Add Data icons show one chip per format family'
+    ['csv', 'json', 'geojson', 'arrow', 'parquet', 'geojsonl', 'kml', 'gpx', 'tcx'],
+    'Add Data icons omit Shapefile, Excel, and FlatGeobuf'
   );
   t.deepEqual(
     getFileFormatNames({loaders: []}),
