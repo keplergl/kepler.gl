@@ -87,11 +87,13 @@ const TimezoneSelector: React.FC<TimezoneSelectorProps> = ({timezone, onChange})
   }, []);
 
   const onSelect = useCallback(
-    (value: string | TimezoneOption | null) => {
-      if (!value) {
-        return;
-      }
-      const name = typeof value === 'string' ? value : value.name;
+    (value: ReadonlyArray<TimezoneOption> | string | number | boolean | object | null) => {
+      const name =
+        typeof value === 'string'
+          ? value
+          : value && typeof value === 'object' && !Array.isArray(value)
+          ? (value as TimezoneOption).name
+          : undefined;
       if (name) {
         onChange(name);
       }
