@@ -33,6 +33,7 @@ const NDJSON_MIME_TYPES = [
   'application/geo+x-ldjson',
   'application/geo+json-seq'
 ];
+const FLATGEOBUF_MIME_TYPES = ['application/x-flatgeobuf', 'application/flatgeobuf'];
 
 const DEFAULT_LOADER_ENTRIES: KeplerLoaderEntry[] = [
   {
@@ -116,8 +117,13 @@ const DEFAULT_LOADER_ENTRIES: KeplerLoaderEntry[] = [
   {
     id: 'flatgeobuf',
     extensions: ['fgb'],
-    mimeTypes: ['application/x-flatgeobuf', 'application/flatgeobuf'],
-    load: async () => (await import('@loaders.gl/flatgeobuf')).FlatGeobufLoader
+    mimeTypes: FLATGEOBUF_MIME_TYPES,
+    load: async () => {
+      const {FlatGeobufLoader} = await import('@loaders.gl/flatgeobuf');
+      // loaders.gl 4.4.1 advertises application/octet-stream, which selectLoader
+      // matches before magic bytes.
+      return {...FlatGeobufLoader, mimeTypes: FLATGEOBUF_MIME_TYPES};
+    }
   }
 ];
 
@@ -225,6 +231,18 @@ function matchesFile(entry: KeplerLoaderEntry, file: FileMetadata): boolean {
 }
 
 /**
+ * loaders.gl selectLoader matches MIME before magic bytes. Drop catch-all types
+ * such as application/octet-stream so extensionless Arrow/Parquet still
+ * use content detection.
+ */
+function withKeplerMimeTypes(loader: Loader, mimeTypes: string[]): Loader {
+  if (!(loader.mimeTypes || []).includes('application/octet-stream')) {
+    return loader;
+  }
+  return {...loader, mimeTypes};
+}
+
+/**
  * Resolve the loaders needed for a file. Loader modules are imported only for
  * matching extensions/MIME types; extensionless or unknown files retain core's
  * content-based selection by loading all default candidates.
@@ -236,7 +254,9 @@ export async function getKeplerLoaders(
   const availableEntries = getAcceptedKeplerLoaderEntries();
   const matchingEntries = availableEntries.filter(entry => matchesFile(entry, file));
   const entries = matchingEntries.length ? matchingEntries : availableEntries;
-  const defaultLoaders = await Promise.all(entries.map(entry => entry.load()));
+  const defaultLoaders = await Promise.all(
+    entries.map(async entry => withKeplerMimeTypes(await entry.load(), entry.mimeTypes))
+  );
   const customLoaderIds = new Set(customLoaders.map(loader => loader.id));
 
   return [...customLoaders, ...defaultLoaders.filter(loader => !customLoaderIds.has(loader.id))];

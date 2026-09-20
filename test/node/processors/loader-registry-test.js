@@ -17,6 +17,7 @@ import {
   getFileFormatNames
 } from '@kepler.gl/reducers';
 import {initApplicationConfig} from '@kepler.gl/utils';
+import {tableFromJSON, tableToIPC} from 'apache-arrow';
 
 test('#loader-registry -> resolves matching loaders lazily', async t => {
   const loaders = await getKeplerLoaders({name: 'data.csv', type: ''});
@@ -81,12 +82,20 @@ test('#loader-registry -> generic octet-stream does not lock in shapefile', asyn
     extensionless.some(loader => loader.id === 'flatgeobuf'),
     'FlatGeobuf should stay a candidate for generic binary MIME'
   );
+  t.ok(
+    extensionless.every(loader => !(loader.mimeTypes || []).includes('application/octet-stream')),
+    'no candidate should claim application/octet-stream (selectLoader matches MIME before magic)'
+  );
 
   const fgb = await getKeplerLoaders({
     name: 'places.fgb',
     type: 'application/octet-stream'
   });
   t.equal(fgb[0].id, 'flatgeobuf', '.fgb should still win from the extension, not shapefile MIME');
+  t.notOk(
+    (fgb[0].mimeTypes || []).includes('application/octet-stream'),
+    'FlatGeobuf should not advertise the generic octet-stream MIME'
+  );
 
   const shpMime = await getKeplerLoaders({
     name: 'dataset',
@@ -121,6 +130,20 @@ async function readLastBatch(file) {
   }
   return last;
 }
+
+test('#loader-registry -> extensionless octet-stream Arrow is not parsed as FlatGeobuf', async t => {
+  const bytes = tableToIPC(tableFromJSON([{name: 'alpha', value: 1}]), 'file');
+  const file = new File([bytes], 'abc123', {type: 'application/octet-stream'});
+  const batch = await readLastBatch(file);
+  const processed = await processFileData({content: batch, fileCache: []});
+
+  t.equal(processed[0].info.format, 'arrow', 'extensionless octet-stream Arrow should stay Arrow');
+  t.ok(
+    processed[0].data.fields.some(field => field.name === 'name'),
+    'should keep Arrow columns, not GIS features'
+  );
+  t.end();
+});
 
 test('#loader-registry -> file loading uses the async loader path', async t => {
   const file = new File(['name,value\nalpha,1\n'], 'data.csv', {type: 'text/csv'});
