@@ -148,8 +148,6 @@ test('Components -> TimeWidget.mount -> timezone selector', t => {
     )
   });
   wrapper.update();
-  wrapper.find(Icons.Gear).at(0).simulate('click');
-  wrapper.update();
 
   t.equal(
     wrapper.find(TimezoneSelector).at(0).props().timezone,
