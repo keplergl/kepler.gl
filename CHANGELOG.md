@@ -15,8 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.3.0-alpha.13] - Sep 19 2026
+## [3.3.0-alpha.13] - Sep 20 2026
 
+- 98cbeccf feat: add Shapefile, Excel, and FlatGeobuf support (#3741)
+- 524add9e feat: timezone selector for time filter settings (#3743)
 - e9551a97 feat: extract in-memory rows from a drawn polygon (#3739)
 - 3be42f85 feat: add Jenks natural breaks color scale (#3742)
 - 08b8c4d2 chore: remove leftover names (#3740)
