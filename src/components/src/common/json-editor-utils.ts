@@ -4,10 +4,10 @@
 import {useEffect, useState} from 'react';
 
 import {
+  isSavedLayerConfigV1,
   parseLayerConfig,
   serializeEffect,
   serializeFilter,
-  serializeLayer,
   validateLayerWithData
 } from '@kepler.gl/reducers';
 import KeplerGlSchema, {CURRENT_VERSION, KeplerGLSchemaClass} from '@kepler.gl/schemas';
@@ -82,7 +82,10 @@ export function useDebounce<T>(value: T, delay = 300): T {
 }
 
 export function layerToJson(layer: Layer, schema: KeplerGLSchemaClass): string {
-  return stringifyJson(serializeLayer(layer, schema) ?? {});
+  const saved = schema.getConfigToSave({
+    visState: {layers: [layer], layerOrder: [layer.id]}
+  });
+  return stringifyJson(saved?.config?.visState?.layers?.[0] ?? {});
 }
 
 export function parseAndValidateLayerConfig(
@@ -92,7 +95,9 @@ export function parseAndValidateLayerConfig(
   schema: KeplerGLSchemaClass
 ): ParsedLayer {
   const nextConfigJson = parseJsonObject(text) as unknown as ParsedLayer;
-  const parsedConfig = parseLayerConfig(schema, nextConfigJson);
+  const parsedConfig = isSavedLayerConfigV1(nextConfigJson)
+    ? parseLayerConfig(schema, nextConfigJson)
+    : nextConfigJson;
   if (!parsedConfig) {
     throw new Error('Invalid layer config');
   }

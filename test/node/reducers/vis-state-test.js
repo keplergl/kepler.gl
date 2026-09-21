@@ -7677,6 +7677,41 @@ test('VisStateUpdater -> applyLayerConfig', t => {
   );
   t.equal(getUpdatedLayerJson(nextState).type, '3D', 'should change layer type');
 
+  nextState = reducer(
+    initialState,
+    VisStateActions.applyLayerConfig(
+      oldLayerId,
+      transformConfig(layer => {
+        layer.visualChannels.colorField = {name: 'gps_data.lat', type: 'real'};
+        layer.visualChannels.colorScale = 'quantile';
+        return layer;
+      })
+    )
+  );
+  t.equal(
+    getUpdatedLayerJson(nextState).visualChannels.colorField?.name,
+    'gps_data.lat',
+    'should set colorField'
+  );
+
+  const parsedLayer = serializeLayer(nextState.layers[oldLayerIndex], schema);
+  const parsedWithRadius = CloneDeep(parsedLayer);
+  parsedWithRadius.config.visConfig.radius = 25;
+  const afterParsedRadius = reducer(
+    nextState,
+    VisStateActions.applyLayerConfig(oldLayerId, parsedWithRadius)
+  );
+  t.equal(
+    getUpdatedLayerJson(afterParsedRadius).visualChannels.colorField?.name,
+    'gps_data.lat',
+    'parsed-format radius change should keep colorField'
+  );
+  t.equal(
+    getUpdatedLayerJson(afterParsedRadius).config.visConfig.radius,
+    25,
+    'parsed-format radius change should update radius'
+  );
+
   t.end();
 });
 
