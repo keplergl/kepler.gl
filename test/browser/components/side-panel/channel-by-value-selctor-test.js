@@ -215,12 +215,11 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
     'Should not disabled color scale select'
   );
 
-  // scale optons
-  t.equal(
-    wrapper.find(ColorScaleSelector).at(0).find('.list__item').length,
-    4,
-    'should render 4 scale options'
-  );
+  // scale options: quantize, quantile, jenks, custom
+  const scaleOptions = wrapper.find(ColorScaleSelector).at(0).find('.list__item');
+  t.equal(scaleOptions.length, 5, 'should render 5 scale options');
+  t.equal(scaleOptions.at(2).text(), 'Jenks Natural Breaks', '3rd scale option should be jenks');
+  t.equal(scaleOptions.at(3).text(), 'Custom Breaks', '4th scale option should be custom');
 
   t.equal(wrapper.find(ColorBreaksPanel).length, 1, 'Should render 1 ColorBreaksPanel');
   t.equal(wrapper.find(ColorBreaksDisplay).length, 1, 'Should render 1 ColorBreaksDisplay');
@@ -250,7 +249,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColorBreakDi
   }
 
   // select custom scale
-  wrapper.find(ColorScaleSelector).at(0).find('.list__item').at(2).simulate('click');
+  wrapper.find(ColorScaleSelector).at(0).find('.list__item').at(3).simulate('click');
 
   t.ok(setColorUI.calledOnce, 'should call setColorUI');
   const expectedArgs = [
@@ -525,7 +524,7 @@ test('Components -> ChannelByValueSelector -> ColorScaleSelector -> ColumnStatsC
   };
 
   const customTestCase = {
-    optionIndex: 2,
+    optionIndex: 3,
     optionName: 'custom',
     // uses tick positions from the previous test case!
     expectedTickPositions: [0, 0, 1]

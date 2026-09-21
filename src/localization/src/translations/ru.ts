@@ -298,7 +298,9 @@ export default {
     column: 'Столбец',
     timeIntervalEndField: 'Время окончания',
     timeIntervalEndFieldHint:
-      'Необязательно. Объекты остаются видимыми, пока окно воспроизведения пересекается с этим интервалом.'
+      'Необязательно. Объекты остаются видимыми, пока окно воспроизведения пересекается с этим интервалом.',
+    timezone: 'Часовой пояс',
+    selectTimezone: 'Выберите часовой пояс отображения'
   },
   datasetTitle: {
     showDataTable: 'Показать таблицу данных ',
@@ -416,12 +418,15 @@ export default {
     filterLayer: 'Слои фильтров',
     filterLayerDisabled: 'Неполигональные геометрии нельзя использовать для фильтрации',
     copyGeometry: 'Копировать геометрию',
+    extractData: 'Извлечь данные',
+    extractFromLayer: 'из слоя {layerName}',
     editProperties: 'Изменить свойства',
     propertyName: 'Свойство',
     propertyValue: 'Значение',
     removeProperty: 'Удалить свойство',
     polygonFilter: 'Полигональный фильтр',
-    noLayersToFilter: 'Нет слоев для фильтрации'
+    noLayersToFilter: 'Нет слоев для фильтрации',
+    noLayersToExtract: 'Нет слоев для извлечения'
   },
   exportVideoModal: {
     animation: 'Анимация',

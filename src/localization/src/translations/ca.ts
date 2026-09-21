@@ -298,7 +298,9 @@ export default {
     column: 'Columna',
     timeIntervalEndField: 'Hora de fi',
     timeIntervalEndFieldHint:
-      'Opcional. Les entitats romanen visibles mentre la finestra de reproducció se superposa a aquest interval.'
+      'Opcional. Les entitats romanen visibles mentre la finestra de reproducció se superposa a aquest interval.',
+    timezone: 'Zona horària',
+    selectTimezone: 'Selecciona la zona horària de visualització'
   },
   datasetTitle: {
     showDataTable: 'Mostra taula de dades',
@@ -416,12 +418,15 @@ export default {
     filterLayer: 'Filtra capes',
     filterLayerDisabled: 'Les geometries no poligonals no es poden utilitzar per filtrar',
     copyGeometry: 'Copia geometria',
+    extractData: 'Extreu dades',
+    extractFromLayer: 'de la capa {layerName}',
     editProperties: 'Edita propietats',
     propertyName: 'Propietat',
     propertyValue: 'Valor',
     removeProperty: 'Suprimeix la propietat',
     polygonFilter: 'Filtre de polígon',
-    noLayersToFilter: 'No hi ha capes per filtrar'
+    noLayersToFilter: 'No hi ha capes per filtrar',
+    noLayersToExtract: 'No hi ha capes per extreure'
   },
   exportVideoModal: {
     animation: 'Animació',

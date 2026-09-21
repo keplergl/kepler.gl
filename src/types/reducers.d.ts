@@ -416,7 +416,8 @@ export type MapInfo = {
   description: string;
 };
 export type FileLoading = {
-  filesToLoad: FileList;
+  filesToLoad: FileList | File[];
+  companionFiles?: File[];
   onFinish: (payload: any) => any;
   fileCache: any[];
 };

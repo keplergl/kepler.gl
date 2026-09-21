@@ -1286,9 +1286,11 @@ class Layer implements KeplerLayer {
       return getScale;
     }
 
-    return SCALE_FUNC[fixed ? 'linear' : scale]()
+    const scaleFunc = SCALE_FUNC[fixed ? 'linear' : scale]()
       .domain(domain)
       .range(fixed ? domain : range);
+    (scaleFunc as {scaleType?: string}).scaleType = fixed ? 'linear' : scale;
+    return scaleFunc;
   }
 
   /**
@@ -1553,7 +1555,8 @@ class Layer implements KeplerLayer {
       return defaultDomain;
     }
 
-    return dataset.getColumnLayerDomain(field, scaleType) || defaultDomain;
+    const range = this.config.visConfig[visualChannel.range];
+    return dataset.getColumnLayerDomain(field, scaleType, range) || defaultDomain;
   }
 
   hasHoveredObject(objectInfo) {

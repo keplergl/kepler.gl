@@ -41,7 +41,7 @@ import {
 import {Settings} from 'lucide-react';
 import type {Store} from 'redux';
 import type {DemoRoomState} from './sqlrooms-demo-layout';
-import {getOpenAiModel} from './assistant-model';
+import {getChatModel} from './assistant-model';
 import {createAssistantSkillTools} from './assistant-tools';
 
 // Keep SQLRooms assistant state separate from the original demo on the same origin.
@@ -97,7 +97,7 @@ export const createAssistantSlice: StateCreator<
   return {
     ...createAiSettingsSlice({config: AI_SETTINGS})(set, get, store),
     ...createAiSlice({
-      getCustomModel: () => getOpenAiModel(store),
+      getCustomModel: () => getChatModel(store),
       getInstructions: () =>
         `${createDefaultAiInstructions(store)}\n\n${createKeplerAssistantInstructions()}\n\n` +
         'Use the registered Kepler commands for map edits, spatial analysis, and charts. ' +

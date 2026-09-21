@@ -25,8 +25,8 @@ export {
 export type {TaskDescriptor} from '@kepler.gl/tasks-core';
 
 export const LOAD_FILE_TASK = Task.fromPromise(
-  ({file, fileCache, loaders, loadOptions}) =>
-    readFileInBatches({file, fileCache, loaders, loadOptions}),
+  ({file, fileCache, loaders, loadOptions, companionFiles}) =>
+    readFileInBatches({file, fileCache, loaders, loadOptions, companionFiles}),
   'LOAD_FILE_TASK'
 );
 

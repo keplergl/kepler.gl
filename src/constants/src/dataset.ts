@@ -22,7 +22,10 @@ export const REMOTE_FILE_FORMATS = [
   'ndjson',
   'kml',
   'gpx',
-  'tcx'
+  'tcx',
+  'shp',
+  'xlsx',
+  'fgb'
 ] as const;
 export type RemoteFileFormat = (typeof REMOTE_FILE_FORMATS)[number];
 
@@ -36,7 +39,10 @@ export const REMOTE_FILE_MIME_TYPES: Record<Exclude<RemoteFileFormat, 'auto'>, s
   ndjson: 'application/x-ndjson',
   kml: 'application/vnd.google-earth.kml+xml',
   gpx: 'application/gpx+xml',
-  tcx: 'application/vnd.garmin.tcx+xml'
+  tcx: 'application/vnd.garmin.tcx+xml',
+  shp: 'application/x-esri-shapefile',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  fgb: 'application/x-flatgeobuf'
 };
 
 export const REMOTE_FILE_EXTENSIONS: Record<Exclude<RemoteFileFormat, 'auto'>, string> = {
@@ -49,7 +55,10 @@ export const REMOTE_FILE_EXTENSIONS: Record<Exclude<RemoteFileFormat, 'auto'>, s
   ndjson: 'ndjson',
   kml: 'kml',
   gpx: 'gpx',
-  tcx: 'tcx'
+  tcx: 'tcx',
+  shp: 'shp',
+  xlsx: 'xlsx',
+  fgb: 'fgb'
 };
 
 export const MIME_TO_REMOTE_FILE_EXTENSION: Record<string, string> = {
@@ -70,7 +79,12 @@ export const MIME_TO_REMOTE_FILE_EXTENSION: Record<string, string> = {
   'application/json-seq': 'ndjson',
   'application/vnd.google-earth.kml+xml': 'kml',
   'application/gpx+xml': 'gpx',
-  'application/vnd.garmin.tcx+xml': 'tcx'
+  'application/vnd.garmin.tcx+xml': 'tcx',
+  'application/x-esri-shapefile': 'shp',
+  'application/shp': 'shp',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/x-flatgeobuf': 'fgb',
+  'application/flatgeobuf': 'fgb'
 };
 
 export const DATASET_REFRESH_INTERVAL_OPTIONS: {value: number; labelId: string}[] = [

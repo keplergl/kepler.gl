@@ -297,7 +297,9 @@ export default {
     column: 'Sarake',
     timeIntervalEndField: 'Päättymisaika',
     timeIntervalEndFieldHint:
-      'Valinnainen. Kohteet pysyvät näkyvissä, kun toistoikkuna osuu tälle aikavälille.'
+      'Valinnainen. Kohteet pysyvät näkyvissä, kun toistoikkuna osuu tälle aikavälille.',
+    timezone: 'Aikavyöhyke',
+    selectTimezone: 'Valitse näyttöaikavyöhyke'
   },
   datasetTitle: {
     showDataTable: 'Näytä attribuuttitaulu',
@@ -415,12 +417,15 @@ export default {
     filterLayer: 'Suodata tasoja',
     filterLayerDisabled: 'Ei-monikulmiogeometrioita ei voi käyttää suodatukseen',
     copyGeometry: 'Kopioi geometria',
+    extractData: 'Poimi tiedot',
+    extractFromLayer: 'tasosta {layerName}',
     editProperties: 'Muokkaa ominaisuuksia',
     propertyName: 'Ominaisuus',
     propertyValue: 'Arvo',
     removeProperty: 'Poista ominaisuus',
     polygonFilter: 'Polygonisuodatin',
-    noLayersToFilter: 'Ei tasoja suodatettavaksi'
+    noLayersToFilter: 'Ei tasoja suodatettavaksi',
+    noLayersToExtract: 'Ei tasoja poimittavaksi'
   },
   exportVideoModal: {
     animation: 'Animaatio',

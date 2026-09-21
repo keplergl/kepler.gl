@@ -104,7 +104,6 @@ The following layers render correctly in globe view:
 - Trip
 - Vector Tile
 - Raster Tile
-- Hex Tile
 - Heatmap (see caveat below)
 
 > **Heatmap in globe view.** The heatmap layer is supported in globe view, but

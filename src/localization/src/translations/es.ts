@@ -299,7 +299,9 @@ export default {
     column: 'Columna',
     timeIntervalEndField: 'Hora de fin',
     timeIntervalEndFieldHint:
-      'Opcional. Las entidades permanecen visibles mientras la ventana de reproducción se superpone a este intervalo.'
+      'Opcional. Las entidades permanecen visibles mientras la ventana de reproducción se superpone a este intervalo.',
+    timezone: 'Zona horaria',
+    selectTimezone: 'Seleccionar zona horaria de visualización'
   },
   datasetTitle: {
     showDataTable: 'Mostar la tabla de datos',
@@ -417,12 +419,15 @@ export default {
     filterLayer: 'Filtrar capas',
     filterLayerDisabled: 'Las geometrías no poligonales no se pueden usar para filtrar',
     copyGeometry: 'Copiar geometría',
+    extractData: 'Extraer datos',
+    extractFromLayer: 'de la capa {layerName}',
     editProperties: 'Editar propiedades',
     propertyName: 'Propiedad',
     propertyValue: 'Valor',
     removeProperty: 'Quitar propiedad',
     polygonFilter: 'Filtro de polígono',
-    noLayersToFilter: 'No hay capas para filtrar'
+    noLayersToFilter: 'No hay capas para filtrar',
+    noLayersToExtract: 'No hay capas para extraer'
   },
   exportVideoModal: {
     animation: 'Animación',
