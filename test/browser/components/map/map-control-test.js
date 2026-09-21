@@ -32,6 +32,7 @@ import {
   StateWSplitMaps,
   StateWFiles
 } from '../../../helpers/mock-state';
+import {initApplicationConfig} from '@kepler.gl/utils';
 
 const {Cube3d, Split, Legend, DrawPolygon, Delete} = Icons;
 const MapControl = appInjector.get(MapControlFactory);
@@ -80,6 +81,48 @@ test('MapControlFactory - display all options', t => {
     </IntlWrapper>
   );
   t.equal($.find('.map-control-action').length, 9, 'Should show 9 action panels');
+  t.end();
+});
+
+test('MapControlFactory - viewport JSON control', t => {
+  initApplicationConfig({enableViewportJsonEditor: true});
+  const $ = mountWithTheme(
+    <IntlWrapper>
+      <MapViewStateContextProvider mapState={{latitude: 0, longitude: 0, zoom: 1}}>
+        <MapControl
+          mapControls={{
+            splitMap: {show: true},
+            visibleLayers: {show: true},
+            toggle3d: {show: true},
+            mapLegend: {show: true},
+            mapDraw: {show: true},
+            mapLocale: {show: true},
+            effect: {show: true},
+            viewportJson: {show: true}
+          }}
+          datasets={{}}
+          layers={[]}
+          locale={'en'}
+          layersToRender={{}}
+          dragRotate={true}
+          mapIndex={0}
+          onToggleSplitMap={() => {}}
+          onTogglePerspective={() => {}}
+          onToggleMapControl={() => {}}
+          onSetEditorMode={() => {}}
+          onToggleEditorVisibility={() => {}}
+          onSetLocale={() => {}}
+        />
+      </MapViewStateContextProvider>
+    </IntlWrapper>
+  );
+
+  t.equal(
+    $.find('.viewport-json-editor-controls').hostNodes().length,
+    1,
+    'Should show the viewport JSON control when enabled'
+  );
+  initApplicationConfig({enableViewportJsonEditor: false});
   t.end();
 });
 

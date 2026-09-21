@@ -178,24 +178,62 @@ export const updateMapUpdater = (
 
 /**
  * Apply a partial map state from the viewport JSON editor.
- * Preserves current width/height so saved JSON cannot resize the map container.
+ * Preserves current width/height so saved JSON cannot resize the map container,
+ * including nested split-map viewports. When viewports are unsynced, camera
+ * fields are applied to the opened map pane (`mapIndex`), matching `updateMap`.
  * @memberof mapStateUpdaters
  * @public
  */
+const APPLY_MAP_STATE_VIEWPORT_KEYS: (keyof Viewport)[] = [
+  'latitude',
+  'longitude',
+  'zoom',
+  'pitch',
+  'bearing',
+  'dragRotate',
+  'minZoom',
+  'maxZoom',
+  'maxPitch'
+];
+
 export const applyMapStateUpdater = (
   state: MapState,
   action: MapStateActions.ApplyMapStateUpdaterAction
 ): MapState => {
   const next = action.payload || {};
+  const mapIndex = action.meta?.mapIndex ?? 0;
   const {width, height} = state;
-  const mergedState = deepmerge<MapState>(state, next, {
+
+  const nextConfig: Partial<MapState> = {...next};
+  delete nextConfig.width;
+  delete nextConfig.height;
+  if (Array.isArray(next.splitMapViewports)) {
+    nextConfig.splitMapViewports = next.splitMapViewports.map((viewport, i) => ({
+      ...viewport,
+      width: state.splitMapViewports[i]?.width ?? width,
+      height: state.splitMapViewports[i]?.height ?? height
+    }));
+  }
+
+  const mergedState = deepmerge<MapState>(state, nextConfig, {
     arrayMerge: (_destinationArray, sourceArray) => sourceArray
   });
-  return validateViewPort({
+  const applied = validateViewPort({
     ...mergedState,
     width,
     height
   });
+
+  if (!state.isViewportSynced && state.splitMapViewports.length) {
+    const viewport = pick(next, APPLY_MAP_STATE_VIEWPORT_KEYS);
+    if (Object.keys(viewport).length) {
+      return updateMapUpdater(applied, {
+        payload: {viewport, mapIndex}
+      } as MapStateActions.UpdateMapUpdaterAction);
+    }
+  }
+
+  return applied;
 };
 
 /**

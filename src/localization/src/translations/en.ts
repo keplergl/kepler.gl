@@ -956,6 +956,8 @@ ${'```'}
     apply: 'Apply',
     format: 'Format',
     reset: 'Reset',
-    configApplied: 'Config applied'
+    configApplied: 'Config applied',
+    applyFailed: "Couldn't apply config",
+    textarea: 'JSON configuration'
   }
 };

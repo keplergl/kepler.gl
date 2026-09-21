@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {useIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import styled from 'styled-components';
 
@@ -104,6 +105,7 @@ function JsonEditor({
   height = 240,
   className
 }: JsonEditorProps) {
+  const intl = useIntl();
   const [internalText, setInternalText] = useState(jsonText);
   const [status, setStatus] = useState<JsonEditorStatus | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -151,6 +153,14 @@ function JsonEditor({
       isDirtyRef.current = false;
     }
   }, [canApply, internalText, onApply]);
+
+  const handleReset = useCallback(() => {
+    isDirtyRef.current = false;
+    setInternalText(jsonText);
+    setParseError(null);
+    setStatus(null);
+    onReset?.();
+  }, [jsonText, onReset]);
 
   const handleFormat = useCallback(() => {
     try {
@@ -204,8 +214,14 @@ function JsonEditor({
             <Close height="14px" />
           </button>
         ) : null}
-        {onReset ? (
-          <Button secondary small width="60px" onClick={onReset} data-testid="json-editor-reset">
+        {touched ? (
+          <Button
+            secondary
+            small
+            width="60px"
+            onClick={handleReset}
+            data-testid="json-editor-reset"
+          >
             <FormattedMessage id="jsonEditor.reset" defaultMessage="Reset" />
           </Button>
         ) : null}
@@ -244,6 +260,10 @@ function JsonEditor({
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
+          aria-label={intl.formatMessage({
+            id: 'jsonEditor.textarea',
+            defaultMessage: 'JSON configuration'
+          })}
           style={{height}}
         />
         {parseError ? (
@@ -256,7 +276,16 @@ function JsonEditor({
           <StyledEditorStatus status={status.status}>
             {status.status === 'success' ? <Checkmark height="14px" /> : <Warning height="14px" />}
             {status.message ?? (
-              <FormattedMessage id="jsonEditor.configApplied" defaultMessage="Config applied" />
+              <FormattedMessage
+                id={
+                  status.status === 'success'
+                    ? 'jsonEditor.configApplied'
+                    : 'jsonEditor.applyFailed'
+                }
+                defaultMessage={
+                  status.status === 'success' ? 'Config applied' : "Couldn't apply config"
+                }
+              />
             )}
           </StyledEditorStatus>
         ) : null}

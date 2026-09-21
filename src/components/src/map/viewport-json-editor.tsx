@@ -5,7 +5,6 @@ import React, {useCallback} from 'react';
 import classnames from 'classnames';
 import {applyMapState} from '@kepler.gl/actions';
 import {MapControls, MapState} from '@kepler.gl/types';
-import {mapStateLens} from '@kepler.gl/reducers';
 
 import {CodeAlt} from '../common/icons';
 import {MapControlButton} from '../common/styled-components';
@@ -27,6 +26,7 @@ export type ViewportJsonEditorControlProps = {
   mapControls: MapControls;
   onToggleMapControl: (control: string) => void;
   mapState?: MapState;
+  mapIndex?: number;
   applyMapState?: typeof applyMapState;
   className?: string;
 };
@@ -39,12 +39,14 @@ function ViewportJsonEditorControlFactory(
 ) {
   type ViewportJsonEditorProps = {
     mapState?: MapState;
+    mapIndex?: number;
     applyMapState?: typeof applyMapState;
     onClose?: (event?: React.MouseEvent) => void;
   };
 
   const ViewportJsonEditor: React.FC<ViewportJsonEditorProps> = ({
     mapState,
+    mapIndex = 0,
     applyMapState: applyMapStateAction,
     onClose
   }) => {
@@ -57,13 +59,13 @@ function ViewportJsonEditorControlFactory(
           if (!applyMapStateAction) {
             return applyStatus(false);
           }
-          applyMapStateAction(jsonToMapState(text));
+          applyMapStateAction(jsonToMapState(text), mapIndex);
           return applyStatus(true);
         } catch (error) {
           return errorStatus(error);
         }
       },
-      [applyMapStateAction]
+      [applyMapStateAction, mapIndex]
     );
 
     return (
@@ -76,13 +78,15 @@ function ViewportJsonEditorControlFactory(
     );
   };
 
-  const ConnectedViewportJsonEditor = withState([mapStateLens], () => ({}), {applyMapState})(
+  const ConnectedViewportJsonEditor = withState([], () => ({}), {applyMapState})(
     ViewportJsonEditor
   ) as React.FC<ViewportJsonEditorProps>;
 
   const ViewportJsonEditorControl: React.FC<ViewportJsonEditorControlProps> = ({
     mapControls,
     onToggleMapControl,
+    mapState,
+    mapIndex = 0,
     className
   }) => {
     const onClick = useCallback(
@@ -112,7 +116,11 @@ function ViewportJsonEditorControlFactory(
             pinnable={false}
             disableClose={false}
           >
-            <ConnectedViewportJsonEditor onClose={onClick} />
+            <ConnectedViewportJsonEditor
+              mapState={mapState}
+              mapIndex={mapIndex}
+              onClose={onClick}
+            />
           </MapControlPanel>
         ) : null}
         <MapControlTooltip id="show-viewport-json-editor" message="tooltip.editViewportJson">

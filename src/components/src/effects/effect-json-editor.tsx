@@ -44,13 +44,13 @@ function EffectJsonEditorFactory() {
           if (!updateEffectAction) {
             return applyStatus(false);
           }
-          updateEffectAction(effect.id, jsonToEffectProps(text) as EffectPropsPartial);
+          updateEffectAction(effect.id, jsonToEffectProps(text, effect) as EffectPropsPartial);
           return applyStatus(true);
         } catch (error) {
           return errorStatus(error);
         }
       },
-      [effect.id, updateEffectAction]
+      [effect, updateEffectAction]
     );
 
     return (

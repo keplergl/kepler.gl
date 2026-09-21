@@ -94,6 +94,83 @@ test('#mapStateReducer -> APPLY_MAP_STATE', t => {
   t.end();
 });
 
+test('#mapStateReducer -> APPLY_MAP_STATE split viewports', t => {
+  let splitState = reducer(INITIAL_MAP_STATE, toggleSplitMap());
+  splitState = reducer(splitState, toggleSplitMapViewport({isViewportSynced: false}));
+  splitState = reducer(
+    splitState,
+    updateMap({latitude: 10, longitude: 20, zoom: 4, width: 400, height: 300}, 0)
+  );
+  splitState = reducer(
+    splitState,
+    updateMap({latitude: 30, longitude: 40, zoom: 6, width: 400, height: 300}, 1)
+  );
+
+  const leftSize = {
+    width: splitState.splitMapViewports[0].width,
+    height: splitState.splitMapViewports[0].height
+  };
+  const rightSize = {
+    width: splitState.splitMapViewports[1].width,
+    height: splitState.splitMapViewports[1].height
+  };
+
+  const afterSizes = reducer(
+    splitState,
+    applyMapState({
+      splitMapViewports: [
+        {...splitState.splitMapViewports[0], width: 1, height: 2},
+        {...splitState.splitMapViewports[1], width: 3, height: 4}
+      ]
+    })
+  );
+
+  t.deepEqual(
+    {
+      width: afterSizes.splitMapViewports[0].width,
+      height: afterSizes.splitMapViewports[0].height
+    },
+    leftSize,
+    'should preserve left split viewport dimensions'
+  );
+  t.deepEqual(
+    {
+      width: afterSizes.splitMapViewports[1].width,
+      height: afterSizes.splitMapViewports[1].height
+    },
+    rightSize,
+    'should preserve right split viewport dimensions'
+  );
+
+  const afterRight = reducer(
+    splitState,
+    applyMapState({latitude: 51.5, longitude: -0.1, zoom: 8}, 1)
+  );
+
+  t.equal(
+    afterRight.splitMapViewports[1].latitude,
+    51.5,
+    'should update the targeted split viewport'
+  );
+  t.equal(
+    afterRight.splitMapViewports[1].longitude,
+    -0.1,
+    'should update the targeted split viewport longitude'
+  );
+  t.equal(
+    afterRight.splitMapViewports[1].zoom,
+    8,
+    'should update the targeted split viewport zoom'
+  );
+  t.equal(
+    afterRight.splitMapViewports[0].latitude,
+    splitState.splitMapViewports[0].latitude,
+    'should not move the other split viewport'
+  );
+
+  t.end();
+});
+
 // eslint-disable-next-line max-statements
 test('#mapStateReducer -> UPDATE_MAP - minZoom/maxZoom', t => {
   let mapUpdate = {

@@ -38,8 +38,6 @@ const JSON_EDITOR_FLAGS: Record<
   animation: 'enableAnimationJsonEditor'
 };
 
-const DEFAULT_SUCCESS_MESSAGE = 'Config applied';
-
 export function isJsonEditorEnabled(section: JsonEditorSection): boolean {
   const config = getApplicationConfig();
   return Boolean(config.enableJsonEditors && config[JSON_EDITOR_FLAGS[section]]);
@@ -62,9 +60,11 @@ export function formatJsonText(text: string): string {
 }
 
 export function applyStatus(ok: boolean, message?: string): JsonEditorStatus {
-  return ok
-    ? {status: 'success', message: message ?? DEFAULT_SUCCESS_MESSAGE}
-    : {status: 'error', message: message ?? "Couldn't apply config"};
+  return {
+    status: ok ? 'success' : 'error',
+    // Omit the default copy so JsonEditor can render the localized fallback.
+    message
+  };
 }
 
 export function errorStatus(error: unknown): JsonEditorStatus {
@@ -115,7 +115,15 @@ export function filterToJson(filter: Filter, schema: KeplerGLSchemaClass): strin
 }
 
 export function jsonToFilterConfig(text: string, filter: Filter): Filter {
-  return {...filter, ...parseJsonObject(text), id: filter.id} as Filter;
+  return {
+    ...filter,
+    ...parseJsonObject(text),
+    // Identity fields are not rebuilt by applyFilterConfigUpdater; changing them
+    // can nest dataId (["id"] -> [["id"]]) or leave an incompatible filter subtype.
+    id: filter.id,
+    type: filter.type,
+    dataId: filter.dataId
+  } as Filter;
 }
 
 export function effectToJson(effect: Effect, schema: KeplerGLSchemaClass): string {
@@ -129,10 +137,13 @@ export function effectToJson(effect: Effect, schema: KeplerGLSchemaClass): strin
   );
 }
 
-export function jsonToEffectProps(text: string): Record<string, unknown> {
+export function jsonToEffectProps(text: string, effect: Effect): Record<string, unknown> {
   const parsed = parseJsonObject(text);
   // deckEffect is runtime-only and can contain circular references
   delete parsed.deckEffect;
+  // Changing type via setProps leaves the old deckEffect and parameter validator.
+  parsed.id = effect.id;
+  parsed.type = effect.type;
   return parsed;
 }
 

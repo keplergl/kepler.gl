@@ -80,19 +80,27 @@ export const updateMap: (
   })
 );
 
-export type ApplyMapStateUpdaterAction = {payload: Partial<MapState>};
+export type ApplyMapStateUpdaterAction = {
+  payload: Partial<MapState>;
+  meta?: {mapIndex?: number};
+};
 /**
  * Apply a partial map state, as used by the viewport JSON editor.
  * Width and height of the current viewport are preserved.
  * @memberof mapStateActions
  * @param mapState - Partial map state from saved JSON
+ * @param mapIndex - Split-map pane to apply camera fields to when viewports are unsynced
  * @public
  */
 export const applyMapState: (
-  mapState: Partial<MapState>
+  mapState: Partial<MapState>,
+  mapIndex?: number
 ) => Merge<ApplyMapStateUpdaterAction, {type: typeof ActionTypes.APPLY_MAP_STATE}> = createAction(
   ActionTypes.APPLY_MAP_STATE,
-  (mapState: Partial<MapState>) => ({payload: mapState})
+  (mapState: Partial<MapState>, mapIndex?: number) => ({
+    payload: mapState,
+    meta: {mapIndex}
+  })
 );
 
 export type ToggleSplitMapUpdaterAction = {
