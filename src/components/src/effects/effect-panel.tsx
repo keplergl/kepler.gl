@@ -96,7 +96,7 @@ function EffectPanelFactory(
     );
 
     const toggleJsonEditor = useCallback(
-      (event?: Event) => {
+      (event?: React.MouseEvent) => {
         event?.stopPropagation();
         updateEffectAction(effect.id, {
           ...(!effect.isConfigActive ? {isConfigActive: true} : {}),
@@ -107,7 +107,7 @@ function EffectPanelFactory(
     );
 
     const closeJsonEditor = useCallback(
-      (event?: Event) => {
+      (event?: React.MouseEvent) => {
         event?.stopPropagation();
         updateEffectAction(effect.id, {isJsonEditorActive: false});
       },

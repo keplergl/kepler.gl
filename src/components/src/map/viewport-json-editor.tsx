@@ -37,11 +37,17 @@ function ViewportJsonEditorControlFactory(
   MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>,
   MapControlPanel: ReturnType<typeof MapControlPanelFactory>
 ) {
-  const ViewportJsonEditor: React.FC<{
+  type ViewportJsonEditorProps = {
     mapState?: MapState;
     applyMapState?: typeof applyMapState;
     onClose?: (event?: React.MouseEvent) => void;
-  }> = ({mapState, applyMapState: applyMapStateAction, onClose}) => {
+  };
+
+  const ViewportJsonEditor: React.FC<ViewportJsonEditorProps> = ({
+    mapState,
+    applyMapState: applyMapStateAction,
+    onClose
+  }) => {
     const jsonText = mapState ? mapStateToJson(mapState) : '{}';
     const debouncedJsonText = useDebounce(jsonText, 300);
 
@@ -72,7 +78,7 @@ function ViewportJsonEditorControlFactory(
 
   const ConnectedViewportJsonEditor = withState([mapStateLens], () => ({}), {applyMapState})(
     ViewportJsonEditor
-  );
+  ) as React.FC<ViewportJsonEditorProps>;
 
   const ViewportJsonEditorControl: React.FC<ViewportJsonEditorControlProps> = ({
     mapControls,

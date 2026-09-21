@@ -156,7 +156,7 @@ function LayerPanelFactory(
       }
     };
 
-    _closeJsonEditor: MouseEventHandler = e => {
+    _closeJsonEditor = (e?: React.MouseEvent) => {
       e?.stopPropagation();
       this.setState({isJsonEditorActive: false});
     };
