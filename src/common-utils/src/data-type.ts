@@ -11,6 +11,21 @@ import {h3IsValid} from './h3-utils';
 
 const H3_ANALYZER_TYPE = 'H3';
 
+/**
+ * type-analyzer uses `isNaN(value)`, which throws on BigInt
+ * ("Cannot convert a BigInt value to a number"). Arrow/Parquet Int64
+ * columns yield BigInt in JS, so stringify those samples first.
+ */
+function toTypeAnalyzerValue(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+  return value;
+}
+
 export const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.DATE,
   AnalyzerDATA_TYPES.TIME,
@@ -68,7 +83,7 @@ export function getSampleForTypeAnalyze({
         j++;
       } else if (notNullorUndefined(rows[i][isRowObject ? field : fieldIdx])) {
         const value = rows[i][isRowObject ? field : fieldIdx];
-        sample[j][field] = typeof value === 'string' ? value.trim() : value;
+        sample[j][field] = toTypeAnalyzerValue(value);
         j++;
         i++;
       } else {
@@ -116,7 +131,7 @@ export function getSampleForTypeAnalyzeArrow(
         sampleIndex++;
       } else if (notNullorUndefined(getVector(fieldIdx)?.get(rowIndex))) {
         const value = getVector(fieldIdx)?.get(rowIndex);
-        sample[sampleIndex][field] = typeof value === 'string' ? value.trim() : value;
+        sample[sampleIndex][field] = toTypeAnalyzerValue(value);
         sampleIndex++;
         rowIndex++;
       } else {
@@ -230,8 +245,15 @@ export function analyzerTypeToFieldType(aType: string): string {
  */
 export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] {
   // add a check for epoch timestamp
+  const analyzerData = data.map(row => {
+    const next: RowData[number] = {};
+    for (const key of fieldOrder) {
+      next[key] = toTypeAnalyzerValue(row[key]);
+    }
+    return next;
+  });
   const metadata = Analyzer.computeColMeta(
-    data,
+    analyzerData,
     [
       {regex: /.*geojson|all_points/g, dataType: 'GEOMETRY'},
       {regex: /.*census/g, dataType: 'STRING'}
@@ -254,9 +276,9 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
 
     // quick check if first valid string in column is H3
     if (type === AnalyzerDATA_TYPES.STRING) {
-      for (let i = 0, n = data.length; i < n; ++i) {
-        if (notNullorUndefined(data[i][name])) {
-          type = h3IsValid(data[i][name] || '') ? H3_ANALYZER_TYPE : type;
+      for (let i = 0, n = analyzerData.length; i < n; ++i) {
+        if (notNullorUndefined(analyzerData[i][name])) {
+          type = h3IsValid(analyzerData[i][name] || '') ? H3_ANALYZER_TYPE : type;
           break;
         }
       }

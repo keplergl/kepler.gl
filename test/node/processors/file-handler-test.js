@@ -396,6 +396,32 @@ test('#file-handler -> processArrowBatches skip compact for incremental loads', 
   t.end();
 });
 
+test('#file-handler -> processArrowBatches Int64/Uint64 columns', async t => {
+  const table = arrow.tableFromArrays({
+    hexId: new BigUint64Array([610625465232654335n, 610625465081659391n]),
+    total: new BigInt64Array([29436887n, 40685227n])
+  });
+
+  let result;
+  t.doesNotThrow(() => {
+    result = processArrowBatches(table.batches);
+  }, 'should process Arrow Int64/Uint64 columns without BigInt TypeError');
+
+  t.equal(result.fields[0].name, 'hexId');
+  t.equal(result.fields[0].type, 'integer', 'uint64 columns should stay integer, not h3');
+  t.equal(result.fields[1].name, 'total');
+  t.equal(result.fields[1].type, 'integer', 'int64 counts should stay integer');
+
+  const processed = await processFileData({
+    content: {fileName: 'congo.parquet', data: table.batches},
+    fileCache: []
+  });
+  t.equal(processed.length, 1, 'processFileData should accept uint64 Arrow batches');
+  t.equal(processed[0].data.fields[0].type, 'integer');
+
+  t.end();
+});
+
 test('#file-handler -> processFileData Feature array is geojson', async t => {
   const features = [
     {

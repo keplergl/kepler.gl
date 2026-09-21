@@ -134,6 +134,31 @@ test('Processor -> getFieldsFromData', t => {
   t.end();
 });
 
+test('Processor -> getFieldsFromData BigInt columns', t => {
+  const data = [
+    {hexId: 610625465232654335n, total: 29436887n},
+    {hexId: 610625465081659391n, total: 40685227n}
+  ];
+
+  t.doesNotThrow(
+    () => getFieldsFromData(data, ['hexId', 'total']),
+    'should not throw when samples contain BigInt (type-analyzer isNaN)'
+  );
+
+  const fields = getFieldsFromData(data, ['hexId', 'total']);
+  t.notEqual(
+    fields[0].type,
+    ALL_FIELD_TYPES.h3,
+    'integer BigInt columns should not be typed as h3'
+  );
+  t.equal(
+    fields[1].type,
+    ALL_FIELD_TYPES.integer,
+    'int64 counts within safe range should stay integer'
+  );
+  t.end();
+});
+
 test('Processor -> processCsvData', t => {
   t.throws(() => processCsvData(''), 'should throw if csv is empty');
 
