@@ -22,13 +22,15 @@ export type EffectJsonEditorProps = {
   effect: Effect;
   visState?: VisState;
   updateEffect?: typeof updateEffect;
+  onClose?: (event?: React.MouseEvent) => void;
 };
 
 function EffectJsonEditorFactory() {
   const EffectJsonEditor: React.FC<EffectJsonEditorProps> = ({
     effect,
     visState,
-    updateEffect: updateEffectAction
+    updateEffect: updateEffectAction,
+    onClose
   }) => {
     const jsonText = useMemo(
       () => (visState?.schema ? effectToJson(effect, visState.schema) : '{}'),
@@ -51,7 +53,14 @@ function EffectJsonEditorFactory() {
       [effect.id, updateEffectAction]
     );
 
-    return <JsonEditor jsonText={debouncedJsonText} onApply={handleApply} height={260} />;
+    return (
+      <JsonEditor
+        jsonText={debouncedJsonText}
+        onApply={handleApply}
+        onClose={onClose}
+        height={260}
+      />
+    );
   };
 
   return withState([visStateLens], () => ({}), {updateEffect})(

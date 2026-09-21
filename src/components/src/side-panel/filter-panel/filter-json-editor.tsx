@@ -28,13 +28,15 @@ export type FilterJsonEditorProps = {
   filter: Filter;
   visState?: VisState;
   applyFilterConfig?: typeof applyFilterConfig;
+  onClose?: (event?: React.MouseEvent) => void;
 };
 
 function FilterJsonEditorFactory() {
   const FilterJsonEditor: React.FC<FilterJsonEditorProps> = ({
     filter,
     visState,
-    applyFilterConfig: applyFilterConfigAction
+    applyFilterConfig: applyFilterConfigAction,
+    onClose
   }) => {
     const jsonText = useMemo(
       () => (visState?.schema ? filterToJson(filter, visState.schema) : '{}'),
@@ -59,7 +61,12 @@ function FilterJsonEditorFactory() {
 
     return (
       <StyledFilterJsonEditor className="filter-json-editor">
-        <JsonEditor jsonText={debouncedJsonText} onApply={handleApply} height={220} />
+        <JsonEditor
+          jsonText={debouncedJsonText}
+          onApply={handleApply}
+          onClose={onClose}
+          height={220}
+        />
       </StyledFilterJsonEditor>
     );
   };

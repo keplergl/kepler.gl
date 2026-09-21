@@ -6,13 +6,14 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import styled from 'styled-components';
 
 import {Button} from './styled-components';
-import {Checkmark, Clipboard, Warning} from './icons';
+import {Checkmark, Close, Copy, Warning} from './icons';
 import {formatJsonText, JsonEditorStatus} from './json-editor-utils';
 
 export type JsonEditorProps = {
   jsonText: string;
   onApply?: (value: string) => JsonEditorStatus | null;
   onReset?: () => void;
+  onClose?: (event?: React.MouseEvent) => void;
   isReadOnly?: boolean;
   height?: number;
   className?: string;
@@ -69,6 +70,7 @@ const StyledTextArea = styled.textarea`
   background-color: ${props => props.theme.inputBgd};
   border: 1px solid ${props => props.theme.inputBgdHover || props.theme.panelBackgroundHover};
   border-radius: 2px;
+  overflow-y: auto;
   outline: none;
   &:focus {
     border-color: ${props => props.theme.activeColor};
@@ -97,6 +99,7 @@ function JsonEditor({
   jsonText,
   onApply,
   onReset,
+  onClose,
   isReadOnly = false,
   height = 240,
   className
@@ -185,9 +188,22 @@ function JsonEditor({
           className="json-editor-icon-button"
           onClick={handleCopy}
           aria-label="Copy JSON"
+          title="Copy JSON"
         >
-          <Clipboard height="14px" />
+          <Copy height="14px" />
         </button>
+        {onClose ? (
+          <button
+            type="button"
+            className="json-editor-icon-button"
+            onClick={onClose}
+            aria-label="Close"
+            title="Close"
+            data-testid="json-editor-close"
+          >
+            <Close height="14px" />
+          </button>
+        ) : null}
         {onReset ? (
           <Button secondary small width="60px" onClick={onReset} data-testid="json-editor-reset">
             <FormattedMessage id="jsonEditor.reset" defaultMessage="Reset" />

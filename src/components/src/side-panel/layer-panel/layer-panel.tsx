@@ -19,7 +19,7 @@ import {ColorUI, LayerVisConfig, MapState, NestedPartial, SplitMap} from '@keple
 import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
 import LayerJsonEditorFactory from './layer-json-editor';
-import {areJsonEditorsEnabled} from '../../common/json-editor-utils';
+import {isJsonEditorEnabled} from '../../common/json-editor-utils';
 
 type LayerPanelProps = {
   className?: string;
@@ -156,6 +156,11 @@ function LayerPanelFactory(
       }
     };
 
+    _closeJsonEditor: MouseEventHandler = e => {
+      e?.stopPropagation();
+      this.setState({isJsonEditorActive: false});
+    };
+
     render() {
       const {layer, datasets, isDraggable, layerTypeOptions, listeners, splitMap, mapState} =
         this.props;
@@ -200,13 +205,13 @@ function LayerPanelFactory(
             onDuplicateLayer={this._duplicateLayer}
             onToggleJsonEditor={this._toggleJsonEditor}
             isJsonEditorActive={this.state.isJsonEditorActive}
-            showJsonEditor={areJsonEditorsEnabled()}
+            showJsonEditor={isJsonEditorEnabled('layer')}
             isDragNDropEnabled={isDraggable}
             listeners={listeners}
           />
           {isConfigActive &&
             (this.state.isJsonEditorActive ? (
-              <LayerJsonEditor layer={layer} />
+              <LayerJsonEditor layer={layer} onClose={this._closeJsonEditor} />
             ) : (
               <LayerConfigurator
                 layer={layer}

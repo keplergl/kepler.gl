@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {applyFilterConfig, setAnimationConfig} from '@kepler.gl/actions';
@@ -19,7 +19,7 @@ import JsonEditor from '../json-editor';
 import {
   animationConfigToJson,
   applyStatus,
-  areJsonEditorsEnabled,
+  isJsonEditorEnabled,
   errorStatus,
   jsonToAnimationConfig,
   jsonToFilterConfig,
@@ -31,8 +31,10 @@ const StyledPopover = styled.div`
   position: absolute;
   bottom: 40px;
   right: 0;
-  z-index: 100;
+  z-index: 1000;
   width: 360px;
+  padding: 0 12px 12px;
+  pointer-events: auto;
   background-color: ${props => props.theme.sidePanelBg || props.theme.panelBackground};
   border: 1px solid ${props => props.theme.panelBorderColor || props.theme.panelBackgroundHover};
   box-shadow: ${props => props.theme.panelBoxShadow};
@@ -42,7 +44,7 @@ const StyledHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px 0;
+  padding: 10px 0 0;
   color: ${props => props.theme.titleTextColor || props.theme.textColor};
   font-size: 12px;
   letter-spacing: 0.4px;
@@ -90,6 +92,25 @@ function AnimationJsonEditorFactory() {
       [config, visState?.schema]
     );
     const debouncedJsonText = useDebounce(jsonText, 300);
+    const popoverRef = useRef<HTMLDivElement>(null);
+
+    // Keep wheel / drag on the overlay; the parent timeline listens for wheel on a container
+    // that includes this popover and would otherwise zoom the chart instead of scrolling JSON.
+    useEffect(() => {
+      const node = popoverRef.current;
+      if (!node) {
+        return undefined;
+      }
+      const stop = (event: Event) => {
+        event.stopPropagation();
+      };
+      node.addEventListener('wheel', stop, {passive: false});
+      node.addEventListener('mousedown', stop);
+      return () => {
+        node.removeEventListener('wheel', stop);
+        node.removeEventListener('mousedown', stop);
+      };
+    }, []);
 
     const handleApply = useCallback(
       (text: string): JsonEditorStatus => {
@@ -115,24 +136,16 @@ function AnimationJsonEditorFactory() {
     );
 
     return (
-      <StyledPopover className="animation-json-editor">
+      <StyledPopover ref={popoverRef} className="animation-json-editor">
         <StyledHeader>
           <FormattedMessage id="tooltip.editAnimationJson" defaultMessage="Edit animation JSON" />
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            style={{
-              border: 'none',
-              background: 'transparent',
-              color: 'inherit',
-              cursor: 'pointer'
-            }}
-          >
-            ×
-          </button>
         </StyledHeader>
-        <JsonEditor jsonText={debouncedJsonText} onApply={handleApply} height={220} />
+        <JsonEditor
+          jsonText={debouncedJsonText}
+          onApply={handleApply}
+          onClose={onClose}
+          height={220}
+        />
       </StyledPopover>
     );
   };
@@ -157,7 +170,7 @@ function AnimationJsonEditorControlFactory(
     const handleToggle = useCallback(() => setIsOpen(open => !open), []);
     const handleClose = useCallback(() => setIsOpen(false), []);
 
-    if (!areJsonEditorsEnabled() || showAnimationWindowControl) {
+    if (!isJsonEditorEnabled('animation') || showAnimationWindowControl) {
       return null;
     }
 

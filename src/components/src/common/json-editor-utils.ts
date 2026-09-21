@@ -21,10 +21,28 @@ export type JsonEditorStatus = {
   message?: string;
 };
 
+export type JsonEditorSection = 'layer' | 'filter' | 'effect' | 'viewport' | 'animation';
+
+const JSON_EDITOR_FLAGS: Record<
+  JsonEditorSection,
+  | 'enableLayerJsonEditor'
+  | 'enableFilterJsonEditor'
+  | 'enableEffectJsonEditor'
+  | 'enableViewportJsonEditor'
+  | 'enableAnimationJsonEditor'
+> = {
+  layer: 'enableLayerJsonEditor',
+  filter: 'enableFilterJsonEditor',
+  effect: 'enableEffectJsonEditor',
+  viewport: 'enableViewportJsonEditor',
+  animation: 'enableAnimationJsonEditor'
+};
+
 const DEFAULT_SUCCESS_MESSAGE = 'Config applied';
 
-export function areJsonEditorsEnabled(): boolean {
-  return Boolean(getApplicationConfig().enableJsonEditors);
+export function isJsonEditorEnabled(section: JsonEditorSection): boolean {
+  const config = getApplicationConfig();
+  return Boolean(config.enableJsonEditors && config[JSON_EDITOR_FLAGS[section]]);
 }
 
 export function stringifyJson(value: unknown): string {

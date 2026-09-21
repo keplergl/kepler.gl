@@ -13,7 +13,7 @@ import {withState} from '../injector';
 import JsonEditor from '../common/json-editor';
 import {
   applyStatus,
-  areJsonEditorsEnabled,
+  isJsonEditorEnabled,
   errorStatus,
   jsonToMapState,
   JsonEditorStatus,
@@ -40,7 +40,8 @@ function ViewportJsonEditorControlFactory(
   const ViewportJsonEditor: React.FC<{
     mapState?: MapState;
     applyMapState?: typeof applyMapState;
-  }> = ({mapState, applyMapState: applyMapStateAction}) => {
+    onClose?: (event?: React.MouseEvent) => void;
+  }> = ({mapState, applyMapState: applyMapStateAction, onClose}) => {
     const jsonText = mapState ? mapStateToJson(mapState) : '{}';
     const debouncedJsonText = useDebounce(jsonText, 300);
 
@@ -59,7 +60,14 @@ function ViewportJsonEditorControlFactory(
       [applyMapStateAction]
     );
 
-    return <JsonEditor jsonText={debouncedJsonText} onApply={handleApply} height={280} />;
+    return (
+      <JsonEditor
+        jsonText={debouncedJsonText}
+        onApply={handleApply}
+        onClose={onClose}
+        height={280}
+      />
+    );
   };
 
   const ConnectedViewportJsonEditor = withState([mapStateLens], () => ({}), {applyMapState})(
@@ -79,7 +87,7 @@ function ViewportJsonEditorControlFactory(
       [onToggleMapControl]
     );
 
-    const showControl = areJsonEditorsEnabled() && mapControls?.viewportJson?.show;
+    const showControl = isJsonEditorEnabled('viewport') && mapControls?.viewportJson?.show;
     if (!showControl) {
       return null;
     }
@@ -98,7 +106,7 @@ function ViewportJsonEditorControlFactory(
             pinnable={false}
             disableClose={false}
           >
-            <ConnectedViewportJsonEditor />
+            <ConnectedViewportJsonEditor onClose={onClick} />
           </MapControlPanel>
         ) : null}
         <MapControlTooltip id="show-viewport-json-editor" message="tooltip.editViewportJson">

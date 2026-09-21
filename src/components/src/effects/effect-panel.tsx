@@ -12,7 +12,7 @@ import {Effect} from '@kepler.gl/types';
 import EffectPanelHeaderFactory from './effect-panel-header';
 import EffectConfiguratorFactory from './effect-configurator';
 import EffectJsonEditorFactory from './effect-json-editor';
-import {areJsonEditorsEnabled} from '../common/json-editor-utils';
+import {isJsonEditorEnabled} from '../common/json-editor-utils';
 
 export type EffectPanelProps = {
   className: string;
@@ -106,6 +106,14 @@ function EffectPanelFactory(
       [updateEffectAction, effect.id, effect.isConfigActive, effect.isJsonEditorActive]
     );
 
+    const closeJsonEditor = useCallback(
+      (event?: Event) => {
+        event?.stopPropagation();
+        updateEffectAction(effect.id, {isJsonEditorActive: false});
+      },
+      [updateEffectAction, effect.id]
+    );
+
     const {id, type, isConfigActive, isJsonEditorActive, isEnabled} = effect;
     const sortingAllowed = type !== LIGHT_AND_SHADOW_EFFECT.type;
 
@@ -128,14 +136,14 @@ function EffectPanelFactory(
           onRemoveEffect={handleRemoveEffect}
           onToggleEnableConfig={toggleConfigActive}
           onToggleJsonEditor={toggleJsonEditor}
-          showJsonEditor={areJsonEditorsEnabled()}
+          showJsonEditor={isJsonEditorEnabled('effect')}
           isDragNDropEnabled={isDraggable && sortingAllowed}
           listeners={listeners}
           showSortHandle={type !== LIGHT_AND_SHADOW_EFFECT.type}
         />
         {isConfigActive &&
           (isJsonEditorActive ? (
-            <EffectJsonEditor effect={effect} />
+            <EffectJsonEditor effect={effect} onClose={closeJsonEditor} />
           ) : (
             <EffectConfigurator
               key={`effect-configurator-${id}`}

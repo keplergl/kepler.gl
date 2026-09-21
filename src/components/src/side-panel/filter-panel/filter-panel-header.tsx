@@ -12,7 +12,7 @@ import {StyledPanelHeader, StyledPanelHeaderProps} from '../../common/styled-com
 import {RGBColor, Filter, Field} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import FilterJsonEditorFactory from './filter-json-editor';
-import {areJsonEditorsEnabled} from '../../common/json-editor-utils';
+import {isJsonEditorEnabled} from '../../common/json-editor-utils';
 
 interface StyledFilterHeaderProps extends StyledPanelHeaderProps {
   $labelRCGColorValues: RGBColor[];
@@ -85,10 +85,14 @@ function FilterPanelHeaderFactory(
     actionIcons = defaultActionIcons
   }: FilterPanelHeaderProps) => {
     const [isJsonEditorActive, setIsJsonEditorActive] = useState(false);
-    const showJsonEditor = areJsonEditorsEnabled();
+    const showJsonEditor = isJsonEditorEnabled('filter');
     const toggleJsonEditor = useCallback((event?: React.MouseEvent) => {
       event?.stopPropagation();
       setIsJsonEditorActive(active => !active);
+    }, []);
+    const closeJsonEditor = useCallback((event?: React.MouseEvent) => {
+      event?.stopPropagation();
+      setIsJsonEditorActive(false);
     }, []);
 
     const items: FilterPanelHeaderActionItem[] = useMemo(() => {
@@ -143,7 +147,7 @@ function FilterPanelHeaderFactory(
             />
           ))}
         </StyledFilterHeader>
-        {isJsonEditorActive ? <FilterJsonEditor filter={filter} /> : null}
+        {isJsonEditorActive ? <FilterJsonEditor filter={filter} onClose={closeJsonEditor} /> : null}
       </>
     );
   };

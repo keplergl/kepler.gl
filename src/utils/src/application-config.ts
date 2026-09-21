@@ -221,10 +221,36 @@ export type KeplerApplicationConfig = {
   enableColumnStats?: boolean;
 
   /**
-   * Whether to show power-user JSON editors for layer, filter, effect, viewport, and animation
-   * configs. Enabled by default.
+   * Master switch for power-user JSON editors. When false, every section editor is hidden.
+   * Defaults to true; each section also has its own flag.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({
+   *   enableViewportJsonEditor: true,
+   *   enableLayerJsonEditor: false
+   * });
+   * ```
    */
   enableJsonEditors?: boolean;
+
+  /** Layer panel `{ }` JSON editor. Enabled by default. */
+  enableLayerJsonEditor?: boolean;
+
+  /** Filter panel `{ }` JSON editor. Enabled by default. */
+  enableFilterJsonEditor?: boolean;
+
+  /** Effect panel `{ }` JSON editor. Enabled by default. */
+  enableEffectJsonEditor?: boolean;
+
+  /**
+   * Viewport JSON editor map-control button. Disabled by default because it adds an extra
+   * map control.
+   */
+  enableViewportJsonEditor?: boolean;
+
+  /** Animation / time-filter playback `{ }` JSON editor. Enabled by default. */
+  enableAnimationJsonEditor?: boolean;
 
   /**
    * Show a format dropdown next to the remote dataset URL field (Auto / CSV / GeoJSON / JSON / Arrow / Parquet).
@@ -394,6 +420,11 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableColumnStats: true,
 
   enableJsonEditors: true,
+  enableLayerJsonEditor: true,
+  enableFilterJsonEditor: true,
+  enableEffectJsonEditor: true,
+  enableViewportJsonEditor: false,
+  enableAnimationJsonEditor: true,
 
   enableRemoteFileFormatSelector: false,
 

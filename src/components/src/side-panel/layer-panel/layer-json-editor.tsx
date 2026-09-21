@@ -22,13 +22,15 @@ export type LayerJsonEditorProps = {
   layer: Layer;
   visState?: VisState;
   applyLayerConfig?: typeof applyLayerConfig;
+  onClose?: (event?: React.MouseEvent) => void;
 };
 
 function LayerJsonEditorFactory() {
   const LayerJsonEditor: React.FC<LayerJsonEditorProps> = ({
     layer,
     visState,
-    applyLayerConfig: applyLayerConfigAction
+    applyLayerConfig: applyLayerConfigAction,
+    onClose
   }) => {
     const jsonText = useMemo(
       () => (visState?.schema ? layerToJson(layer, visState.schema) : '{}'),
@@ -59,7 +61,14 @@ function LayerJsonEditorFactory() {
       [applyLayerConfigAction, layer.id, visState]
     );
 
-    return <JsonEditor jsonText={debouncedJsonText} onApply={handleApply} height={280} />;
+    return (
+      <JsonEditor
+        jsonText={debouncedJsonText}
+        onApply={handleApply}
+        onClose={onClose}
+        height={280}
+      />
+    );
   };
 
   return withState([visStateLens], () => ({}), {applyLayerConfig})(
