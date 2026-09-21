@@ -246,7 +246,7 @@ export function analyzerTypeToFieldType(aType: string): string {
 export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] {
   // add a check for epoch timestamp
   const analyzerData = data.map(row => {
-    const next: RowData[number] = {};
+    const next: Record<string, unknown> = {};
     for (const key of fieldOrder) {
       next[key] = toTypeAnalyzerValue(row[key]);
     }
@@ -277,8 +277,12 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     // quick check if first valid string in column is H3
     if (type === AnalyzerDATA_TYPES.STRING) {
       for (let i = 0, n = analyzerData.length; i < n; ++i) {
-        if (notNullorUndefined(analyzerData[i][name])) {
-          type = h3IsValid(analyzerData[i][name] || '') ? H3_ANALYZER_TYPE : type;
+        const sampleValue = analyzerData[i][name];
+        if (typeof sampleValue === 'string') {
+          type = h3IsValid(sampleValue) ? H3_ANALYZER_TYPE : type;
+          break;
+        }
+        if (notNullorUndefined(sampleValue)) {
           break;
         }
       }
