@@ -2589,7 +2589,7 @@ export const addChartUpdater = (
         ...chart,
         display: {
           ...chart.display,
-          isConfigActive: chart.display?.isConfigActive ?? true
+          isConfigActive: chart.display?.isConfigActive ?? false
         }
       }
     ]

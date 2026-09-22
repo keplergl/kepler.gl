@@ -48,7 +48,7 @@ function baseChart(
     dataId: props.dataId ?? null,
     applyFilters: props.applyFilters ?? true,
     display: {
-      isConfigActive: props.display?.isConfigActive ?? true
+      isConfigActive: props.display?.isConfigActive ?? false
     },
     chartDisplay: props.chartDisplay || {},
     ...(props.crossFilter ? {crossFilter: props.crossFilter} : {})
@@ -94,7 +94,8 @@ export function createLineChart(props: Partial<DatasetChartConfig> = {}): Datase
     xAxis: props.xAxis || makeAxis(null, BinType.uniqueBin),
     yAxis: props.yAxis || makeAxis(null, 'count'),
     groupBy: props.groupBy || makeAxis(null, BinType.uniqueBin),
-    numGroups: props.numGroups ?? DEFAULT_NUM_GROUPS,
+    // 0 = no top-N truncation (line charts show the full series)
+    numGroups: props.numGroups ?? 0,
     title: props.title || 'Line chart'
   };
 }
@@ -173,7 +174,7 @@ export function createChart(args: {
   const temporal = firstField(dataset, TIME_FIELD_TYPES);
   const categoricalY =
     firstField(dataset, CATEGORICAL_FIELD_TYPES, categorical?.name) || categorical;
-  const display = {isConfigActive: options?.activateConfig ?? true};
+  const display = {isConfigActive: options?.activateConfig ?? false};
 
   switch (type) {
     case ChartType.bigNumber:

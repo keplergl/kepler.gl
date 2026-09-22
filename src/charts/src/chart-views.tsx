@@ -231,7 +231,15 @@ export function LineChartView({bins}: {bins: ChartBin[]}): React.ReactElement {
   return (
     <ChartWrap>
       <LineSvg viewBox="0 0 100 100" preserveAspectRatio="none">
-        <polyline fill="none" stroke={bins[0].color} strokeWidth="2" points={points} />
+        <polyline
+          fill="none"
+          stroke={bins[0].color}
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
+          points={points}
+        />
       </LineSvg>
     </ChartWrap>
   );

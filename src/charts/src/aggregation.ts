@@ -244,7 +244,7 @@ function numericGroupMap(
   }
   const hist = histogram<{idx: number; value: number}, number>()
     .value(d => d.value)
-    .thresholds(Math.max(2, numBins));
+    .thresholds(Math.max(2, numBins > 0 ? numBins : DEFAULT_NUM_GROUPS));
   const bins = hist(values);
   const groups = new Map<string, number[]>();
   bins.forEach(bin => {

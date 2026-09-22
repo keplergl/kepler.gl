@@ -479,7 +479,9 @@ export default {
     annotationSettings: 'Annotation settings',
     removeEffect: 'Remove effect',
     disableEffect: 'Disable effect',
-    effectSettings: 'Effect settings'
+    effectSettings: 'Effect settings',
+    chartSettings: 'Chart settings',
+    removeChart: 'Remove chart'
   },
   toolbar: {
     exportImage: 'Export Image',

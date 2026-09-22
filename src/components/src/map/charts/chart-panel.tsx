@@ -20,13 +20,28 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
 import {generateHashId} from '@kepler.gl/common-utils';
+import {runGpuFilterForPlot} from '@kepler.gl/utils';
 
-import {Trash} from '../../common/icons';
-import {Button, Input, PanelLabel, SidePanelSection} from '../../common/styled-components';
+import {Settings, Trash} from '../../common/icons';
+import {Input, PanelLabel, SidePanelSection, Tooltip} from '../../common/styled-components';
 import Switch from '../../common/switch';
 import ItemSelector from '../../common/item-selector/item-selector';
 import FieldSelectorFactory from '../../common/field-selector';
 import SourceDataSelectorFactory from '../../side-panel/common/source-data-selector';
+
+/**
+ * Charts should respect the same filters as the map. Kepler keeps range/time
+ * filters on the GPU, so `dataset.filteredIndex` alone is not enough — apply
+ * GPU filters on CPU the same way filter histograms do.
+ */
+function toMapFilteredChartDataset(dataset: Datasets[string] | undefined) {
+  if (!dataset) {
+    return null;
+  }
+  const filteredIndex =
+    dataset.gpuFilter?.filterValueAccessor != null ? runGpuFilterForPlot(dataset) : undefined;
+  return toChartableDataset(dataset, filteredIndex ? {filteredIndex} : undefined);
+}
 
 const ChartList = styled.div`
   width: 100%;
@@ -43,30 +58,38 @@ const ChartCard = styled.div`
 const ChartCardHeader = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   padding: 8px 8px 0;
+  min-width: 0;
 `;
 
-const RemoveChartButton = styled(Button)`
-  flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  padding: 0;
-  display: inline-flex;
+const ChartTitleInput = styled(Input)`
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+`;
+
+const ChartHeaderActions = styled.div`
+  display: flex;
   align-items: center;
-  justify-content: center;
-
-  svg {
-    margin: 0;
-  }
+  flex: 0 0 auto;
 `;
 
-const EmptyCopy = styled.div`
-  color: ${props => props.theme.subtextColor};
-  font-size: 11px;
-  padding: 12px 4px;
+const ChartHeaderAction = styled.div<{
+  $active?: boolean;
+  $hoverColor?: string;
+}>`
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  color: ${props =>
+    props.$active ? props.theme.panelHeaderIconActive : props.theme.panelHeaderIcon};
+  cursor: pointer;
+
+  &:hover {
+    color: ${props =>
+      props.$hoverColor ? props.theme[props.$hoverColor] : props.theme.panelHeaderIconHover};
+  }
 `;
 
 const ConfigBlock = styled.div`
@@ -169,16 +192,13 @@ export function ChartPanelContentFactory(
 
     return (
       <ChartList className="chart-panel">
-        {!charts.length ? (
-          <EmptyCopy>
-            <FormattedMessage
-              id="chartPanel.empty"
-              defaultMessage="Add a chart to summarize the current map data."
-            />
-          </EmptyCopy>
-        ) : null}
         {charts.map(chart => {
-          const dataset = chart.dataId ? toChartableDataset(datasets[chart.dataId]) : null;
+          const rawDataset = chart.dataId ? datasets[chart.dataId] : undefined;
+          const dataset = chart.dataId
+            ? chart.applyFilters
+              ? toMapFilteredChartDataset(rawDataset)
+              : toChartableDataset(rawDataset)
+            : null;
           const fields = dataset?.fields || [];
           const view = computeChart(chart, dataset);
           const selectedKey =
@@ -188,19 +208,46 @@ export function ChartPanelContentFactory(
           return (
             <ChartCard key={chart.id} className="chart-card">
               <ChartCardHeader>
-                <Input
+                <ChartTitleInput
                   type="text"
                   value={chart.title}
                   onChange={event => onUpdate(chart.id, {title: event.target.value})}
                 />
-                <RemoveChartButton
-                  small
-                  negative
-                  aria-label="Remove chart"
-                  onClick={() => onRemove(chart.id)}
-                >
-                  <Trash height="14px" />
-                </RemoveChartButton>
+                <ChartHeaderActions>
+                  <ChartHeaderAction
+                    $active={Boolean(chart.display?.isConfigActive)}
+                    data-tip
+                    data-for={`chart-settings_${chart.id}`}
+                    onClick={() =>
+                      onUpdate(chart.id, {
+                        display: {isConfigActive: !chart.display?.isConfigActive}
+                      })
+                    }
+                  >
+                    <Settings height="16px" />
+                  </ChartHeaderAction>
+                  <Tooltip id={`chart-settings_${chart.id}`} effect="solid" delayShow={500}>
+                    <span>
+                      <FormattedMessage
+                        id="tooltip.chartSettings"
+                        defaultMessage="Chart settings"
+                      />
+                    </span>
+                  </Tooltip>
+                  <ChartHeaderAction
+                    aria-label="Remove chart"
+                    data-tip
+                    data-for={`chart-remove_${chart.id}`}
+                    onClick={() => onRemove(chart.id)}
+                  >
+                    <Trash height="16px" />
+                  </ChartHeaderAction>
+                  <Tooltip id={`chart-remove_${chart.id}`} effect="solid" delayShow={500}>
+                    <span>
+                      <FormattedMessage id="tooltip.removeChart" defaultMessage="Remove chart" />
+                    </span>
+                  </Tooltip>
+                </ChartHeaderActions>
               </ChartCardHeader>
               <ChartRenderer
                 data={view}
@@ -475,16 +522,7 @@ export function ChartPanelContentFactory(
                     </>
                   ) : null}
                 </ConfigBlock>
-              ) : (
-                <Button
-                  link
-                  small
-                  width="100%"
-                  onClick={() => onUpdate(chart.id, {display: {isConfigActive: true}})}
-                >
-                  <FormattedMessage id="chartPanel.configure" defaultMessage="Configure" />
-                </Button>
-              )}
+              ) : null}
             </ChartCard>
           );
         })}

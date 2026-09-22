@@ -120,13 +120,15 @@ export function computeDatasetChart(
     case ChartType.lineChart:
       return {
         kind: 'line',
+        // Line charts plot a full series; do not apply the categorical top-N
+        // truncation used by bar charts (DEFAULT_NUM_GROUPS = 10).
         bins: buildGroupedBins({
           dataset,
           applyFilters: chart.applyFilters,
           binAxis: chart.xAxis,
           valueAxis: chart.yAxis,
           groupByAxis: chart.groupBy,
-          numGroups: chart.numGroups,
+          numGroups: 0,
           sort: SortType.alphaAsc
         })
       };

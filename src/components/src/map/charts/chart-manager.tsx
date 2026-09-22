@@ -133,8 +133,7 @@ export default function ChartManagerFactory(
           type,
           dataId,
           dataset: dataset || undefined,
-          layerId: layer?.id,
-          options: {activateConfig: true}
+          layerId: layer?.id
         });
         if (chart) {
           visStateActions.addChart(chart);
