@@ -9,7 +9,11 @@ export const CHART_AGGREGATIONS = [
   'average',
   'maximum',
   'minimum',
-  'median'
+  'median',
+  'stdev',
+  'variance',
+  'mode',
+  'countUnique'
 ] as const;
 
 export enum ChartType {

@@ -1,7 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {CHART_ID_LENGTH, ChartType, LayerChartType, BinType, DEFAULT_NUM_GROUPS} from './constants';
+import {
+  CHART_ID_LENGTH,
+  ChartType,
+  LayerChartType,
+  BinType,
+  DEFAULT_NUM_GROUPS,
+  CATEGORICAL_FIELD_TYPES,
+  NUMERIC_FIELD_TYPES,
+  TIME_FIELD_TYPES
+} from './constants';
 import {
   ChartConfig,
   ChartAxis,
@@ -141,9 +150,12 @@ export function createLayerChart(
 
 function firstField(
   dataset: ChartableDataset | undefined,
-  types: string[]
+  types: string[],
+  skipName?: string | null
 ): {name: string; type: string} | null {
-  const field = dataset?.fields.find(f => types.includes(f.type));
+  const field = dataset?.fields.find(
+    f => types.includes(f.type) && (!skipName || f.name !== skipName)
+  );
   return field ? {name: field.name, type: field.type} : null;
 }
 
@@ -155,9 +167,11 @@ export function createChart(args: {
   options?: {activateConfig?: boolean};
 }): ChartConfig | null {
   const {type, dataId, dataset, layerId, options} = args;
-  const categorical = firstField(dataset, ['string', 'boolean']);
-  const numeric = firstField(dataset, ['integer', 'real']);
-  const temporal = firstField(dataset, ['timestamp', 'date']);
+  const categorical = firstField(dataset, CATEGORICAL_FIELD_TYPES);
+  const numeric = firstField(dataset, NUMERIC_FIELD_TYPES);
+  const temporal = firstField(dataset, TIME_FIELD_TYPES);
+  const categoricalY =
+    firstField(dataset, CATEGORICAL_FIELD_TYPES, categorical?.name) || categorical;
   const display = {isConfigActive: options?.activateConfig ?? true};
 
   switch (type) {
@@ -196,10 +210,7 @@ export function createChart(args: {
       return createHeatmapChart({
         dataId: dataId ?? dataset?.id ?? null,
         xAxis: makeAxis(categorical, BinType.uniqueBin),
-        yAxis: makeAxis(
-          firstField(dataset, ['string', 'boolean']) || categorical,
-          BinType.uniqueBin
-        ),
+        yAxis: makeAxis(categoricalY, BinType.uniqueBin),
         value: makeAxis(numeric, numeric ? 'sum' : 'count'),
         title: 'Heatmap',
         display
@@ -208,10 +219,7 @@ export function createChart(args: {
       return createPivotTableChart({
         dataId: dataId ?? dataset?.id ?? null,
         xAxis: makeAxis(categorical, BinType.uniqueBin),
-        yAxis: makeAxis(
-          firstField(dataset, ['string', 'boolean']) || categorical,
-          BinType.uniqueBin
-        ),
+        yAxis: makeAxis(categoricalY, BinType.uniqueBin),
         value: makeAxis(numeric, numeric ? 'sum' : 'count'),
         title: 'Pivot table',
         display

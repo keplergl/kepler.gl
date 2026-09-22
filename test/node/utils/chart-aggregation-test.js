@@ -137,6 +137,58 @@ test('charts -> time series and hover indexes', t => {
   t.end();
 });
 
+test('charts -> extra aggregations', t => {
+  const dataset = mockDataset([
+    {category: 'A', value: 10, time: new Date('2020-01-01'), id: '1'},
+    {category: 'A', value: 2, time: new Date('2020-01-01'), id: '1'},
+    {category: 'B', value: 5, time: new Date('2020-01-02'), id: '2'}
+  ]);
+  const unique = buildGroupedBins({
+    dataset,
+    applyFilters: true,
+    binAxis: {field: {name: 'category', type: 'string'}, aggregation: BinType.uniqueBin},
+    valueAxis: {field: {name: 'value', type: 'real'}, aggregation: 'countUnique'}
+  });
+  t.equal(unique.find(bin => bin.key === 'A').value, 2);
+  const mode = buildGroupedBins({
+    dataset,
+    applyFilters: true,
+    binAxis: {field: {name: 'category', type: 'string'}, aggregation: BinType.uniqueBin},
+    valueAxis: {field: {name: 'value', type: 'real'}, aggregation: 'mode'}
+  });
+  t.ok(mode.find(bin => bin.key === 'A'));
+  const stdev = buildGroupedBins({
+    dataset,
+    applyFilters: true,
+    binAxis: {field: {name: 'category', type: 'string'}, aggregation: BinType.uniqueBin},
+    valueAxis: {field: {name: 'value', type: 'real'}, aggregation: 'stdev'}
+  });
+  t.ok(stdev.find(bin => bin.key === 'A').value > 0);
+  t.end();
+});
+
+test('charts -> integer categorical fields', t => {
+  const fields = [
+    {name: 'code', type: 'integer'},
+    {name: 'value', type: 'real'}
+  ];
+  const rows = [
+    {code: 1, value: 10},
+    {code: 2, value: 5}
+  ];
+  const dataset = {
+    id: 'codes',
+    label: 'Codes',
+    allIndexes: [0, 1],
+    filteredIndex: [0, 1],
+    fields,
+    getValue: (name, idx) => rows[idx][name]
+  };
+  const chart = createChart({type: ChartType.barChart, dataset});
+  t.equal(chart.xAxis.field.name, 'code');
+  t.end();
+});
+
 test('charts -> computeDatasetChart big number', t => {
   const dataset = mockDataset([{category: 'A', value: 3, time: new Date('2020-01-01'), id: '1'}]);
   const chart = createChart({type: ChartType.bigNumber, dataset});

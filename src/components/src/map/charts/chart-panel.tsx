@@ -163,7 +163,6 @@ export function ChartPanelContentFactory(
         const alreadySelected =
           chart.crossFilter?.enabled && String(chart.crossFilter.value?.x) === key;
         if (alreadySelected) {
-          visStateActions?.createOrUpdateFilter(filterId, chart.dataId, fieldName, []);
           visStateActions?.updateChart(chart.id, {
             crossFilter: {enabled: false, filterId, fieldNames: {x: fieldName}, value: {}}
           });

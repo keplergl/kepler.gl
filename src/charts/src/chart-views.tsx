@@ -34,12 +34,16 @@ const BigNumberCaption = styled.div`
   margin-top: 4px;
 `;
 
-const BarRow = styled.div`
+const BarRow = styled.div<{$clickable?: boolean}>`
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 4px 0;
-  cursor: pointer;
+  cursor: ${props => (props.$clickable ? 'pointer' : 'default')};
+  &:focus-visible {
+    outline: 1px solid ${props => props.theme.activeColor};
+    outline-offset: 1px;
+  }
 `;
 
 const BarLabel = styled.div`
@@ -85,6 +89,10 @@ const HeatCell = styled.div<{$bg: string; $clickable?: boolean}>`
   min-height: 18px;
   background: ${props => props.$bg};
   cursor: ${props => (props.$clickable ? 'pointer' : 'default')};
+  &:focus-visible {
+    outline: 1px solid ${props => props.theme.activeColor};
+    outline-offset: 1px;
+  }
 `;
 
 const HeatLabel = styled.div`
@@ -117,6 +125,16 @@ const LineSvg = styled.svg`
 `;
 
 type ClickHandler = (key: string, extra?: Record<string, string>) => void;
+
+function onActivateKey(event: React.KeyboardEvent, activate?: () => void): void {
+  if (!activate) {
+    return;
+  }
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    activate();
+  }
+}
 
 function maxValue(bins: ChartBin[]): number {
   return Math.max(1, ...bins.map(bin => bin.value));
@@ -158,23 +176,29 @@ export function BarChartView({
   const max = maxValue(bins);
   return (
     <ChartWrap className={horizontal ? 'horizontal-bar-chart' : 'bar-chart'}>
-      {bins.map(bin => (
-        <BarRow
-          key={bin.key}
-          onClick={() => onSelect?.(String(bin.key))}
-          title={`${bin.key}: ${formatNumber(bin.value)}`}
-        >
-          <BarLabel>{bin.key}</BarLabel>
-          <BarTrack>
-            <BarFill
-              $color={bin.color}
-              $width={(bin.value / max) * 100}
-              $active={selectedKey === String(bin.key)}
-            />
-          </BarTrack>
-          <BarValue>{formatNumber(bin.value)}</BarValue>
-        </BarRow>
-      ))}
+      {bins.map(bin => {
+        const activate = onSelect ? () => onSelect(String(bin.key)) : undefined;
+        const selected = selectedKey === String(bin.key);
+        return (
+          <BarRow
+            key={bin.key}
+            $clickable={Boolean(activate)}
+            role={activate ? 'button' : undefined}
+            tabIndex={activate ? 0 : undefined}
+            aria-pressed={activate ? selected : undefined}
+            aria-label={`${bin.key}: ${formatNumber(bin.value)}`}
+            onClick={activate}
+            onKeyDown={event => onActivateKey(event, activate)}
+            title={`${bin.key}: ${formatNumber(bin.value)}`}
+          >
+            <BarLabel>{bin.key}</BarLabel>
+            <BarTrack>
+              <BarFill $color={bin.color} $width={(bin.value / max) * 100} $active={selected} />
+            </BarTrack>
+            <BarValue>{formatNumber(bin.value)}</BarValue>
+          </BarRow>
+        );
+      })}
     </ChartWrap>
   );
 }
@@ -247,13 +271,18 @@ export function HeatmapView({
             {xs.map(x => {
               const cell = lookup.get(`${x}|${y}`);
               const value = cell?.value ?? 0;
+              const activate = onSelect ? () => onSelect(x, {x, y}) : undefined;
               return (
                 <HeatCell
                   key={`${x}|${y}`}
                   $bg={heatColor(value, max)}
-                  $clickable={Boolean(onSelect)}
+                  $clickable={Boolean(activate)}
+                  role={activate ? 'button' : undefined}
+                  tabIndex={activate ? 0 : undefined}
+                  aria-label={`${x} / ${y}: ${formatNumber(value)}`}
                   title={`${x} / ${y}: ${formatNumber(value)}`}
-                  onClick={() => onSelect?.(x, {x, y})}
+                  onClick={activate}
+                  onKeyDown={event => onActivateKey(event, activate)}
                 />
               );
             })}

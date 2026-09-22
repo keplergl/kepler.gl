@@ -1,7 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {histogram, max as d3Max, mean, median, min as d3Min, sum} from 'd3-array';
+import {
+  deviation,
+  histogram,
+  max as d3Max,
+  mean,
+  median,
+  min as d3Min,
+  sum,
+  variance as d3Variance
+} from 'd3-array';
 import {utcDay, utcHour, utcMonth, utcWeek, utcYear} from 'd3-time';
 
 import {
@@ -34,6 +43,21 @@ export function formatNumber(n: number): string {
   return n.toLocaleString(undefined, {maximumFractionDigits: 4});
 }
 
+function modeValue(values: number[]): number {
+  const counts = new Map<number, number>();
+  let best = values[0];
+  let bestCount = 0;
+  for (const value of values) {
+    const next = (counts.get(value) || 0) + 1;
+    counts.set(value, next);
+    if (next > bestCount) {
+      best = value;
+      bestCount = next;
+    }
+  }
+  return best;
+}
+
 function aggregateValues(values: number[], technique: ChartAggregation | null | undefined): number {
   if (!values.length) {
     return 0;
@@ -49,6 +73,15 @@ function aggregateValues(values: number[], technique: ChartAggregation | null | 
       return d3Min(values) ?? 0;
     case 'median':
       return median(values) ?? 0;
+    case 'stdev':
+      return deviation(values) ?? 0;
+    case 'variance':
+      return d3Variance(values) ?? 0;
+    case 'mode':
+      return modeValue(values);
+    case 'countUnique':
+      return new Set(values).size;
+    case 'count':
     default:
       return values.length;
   }

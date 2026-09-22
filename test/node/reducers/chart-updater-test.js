@@ -48,3 +48,25 @@ test('#VisStateUpdater -> charts stay empty by default', t => {
   t.equal(createBarChart().type, ChartType.barChart);
   t.end();
 });
+
+test('#VisStateUpdater -> disabling cross-filter removes owned filter', t => {
+  const chart = createBarChart({
+    id: 'c1',
+    dataId: 'd1',
+    crossFilter: {enabled: true, filterId: 'chart-c1-f', fieldNames: {x: 'cat'}, value: {x: 'A'}}
+  });
+  let nextState = {
+    ...INITIAL_VIS_STATE,
+    charts: [chart],
+    filters: [{id: 'chart-c1-f', dataId: [], name: ['cat'], value: ['A']}]
+  };
+  nextState = reducer(
+    nextState,
+    VisStateActions.updateChart('c1', {
+      crossFilter: {enabled: false, filterId: 'chart-c1-f', fieldNames: {x: 'cat'}, value: {}}
+    })
+  );
+  t.equal(nextState.charts[0].crossFilter.enabled, false);
+  t.equal(nextState.filters.length, 0, 'should drop the chart-owned filter');
+  t.end();
+});

@@ -6,6 +6,7 @@ import {RGBColor, Merge, RequireFrom} from './types';
 import {Filter, InteractionConfig, AnimationConfig, SplitMap, Feature} from './reducers';
 
 import {LayerTextLabel} from './layers';
+import {ChartConfig} from './charts';
 
 export type SavedFilter = {
   dataId: Filter['dataId'];
@@ -102,7 +103,7 @@ export type SavedVisState = {
   filters: SavedFilter[];
   layers: SavedLayer[];
   effects: SavedEffect[];
-  charts?: any[];
+  charts?: ChartConfig[];
   interactionConfig: SavedInteractionConfig;
   layerBlending: string;
   overlayBlending?: string;
@@ -117,7 +118,7 @@ export type MinSavedVisStateV1 = {
   filters?: MinSavedFilter[];
   layers?: MinSavedLayer[];
   effects?: SavedEffect[];
-  charts?: any[];
+  charts?: ChartConfig[];
   interactionConfig?: Partial<SavedInteractionConfig>;
   layerBlending?: string;
   overlayBlending?: string;
@@ -129,7 +130,7 @@ export type MinSavedVisStateV1 = {
 export type ParsedVisState = {
   layers?: ParsedLayer[];
   effects?: ParsedEffect[];
-  charts?: any[];
+  charts?: ChartConfig[];
   filters?: ParsedFilter[];
   interactionConfig?: Partial<SavedInteractionConfig>;
   layerBlending?: string;

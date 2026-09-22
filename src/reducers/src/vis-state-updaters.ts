@@ -2609,12 +2609,22 @@ export const updateChartUpdater = (
   if (idx < 0) {
     return state;
   }
+  const prev = state.charts[idx];
   const charts = [...state.charts];
-  charts[idx] = mergeChartConfig(charts[idx], props);
-  return {
+  charts[idx] = mergeChartConfig(prev, props);
+  const next = charts[idx];
+  let nextState: VisState = {
     ...state,
     charts
   };
+  const filterId = next.crossFilter?.filterId || prev.crossFilter?.filterId;
+  if (prev.crossFilter?.enabled && !next.crossFilter?.enabled && filterId) {
+    const filterIdx = nextState.filters.findIndex(filter => filter.id === filterId);
+    if (filterIdx > -1) {
+      nextState = removeFilterUpdater(nextState, {idx: filterIdx});
+    }
+  }
+  return nextState;
 };
 
 /**

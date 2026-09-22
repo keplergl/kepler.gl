@@ -28,6 +28,37 @@ export type ChartViewData =
   | {kind: 'heatmap'; cells: HeatmapCell[]}
   | {kind: 'pivot'; table: PivotTableResult};
 
+const hoverIdIndexCache = new WeakMap<number[], Map<string, Map<string, number[]>>>();
+
+function getIdRowIndex(dataset: ChartableDataset, idField: string): Map<string, number[]> {
+  const indexes = dataset.allIndexes;
+  let byField = hoverIdIndexCache.get(indexes);
+  if (!byField) {
+    byField = new Map();
+    hoverIdIndexCache.set(indexes, byField);
+  }
+  let index = byField.get(idField);
+  if (!index) {
+    index = new Map();
+    for (let i = 0; i < indexes.length; i++) {
+      const idx = indexes[i];
+      const value = dataset.getValue(idField, idx);
+      if (value === null || value === undefined || value === '') {
+        continue;
+      }
+      const key = String(value);
+      const rows = index.get(key);
+      if (rows) {
+        rows.push(idx);
+      } else {
+        index.set(key, [idx]);
+      }
+    }
+    byField.set(idField, index);
+  }
+  return index;
+}
+
 export function getHoverRowIndexes(
   dataset: ChartableDataset,
   chart: LayerChartConfig,
@@ -44,8 +75,7 @@ export function getHoverRowIndexes(
   if (id === null || id === undefined || id === '') {
     return [hoverRowIndex];
   }
-  const key = String(id);
-  return dataset.allIndexes.filter(idx => String(dataset.getValue(idField, idx)) === key);
+  return getIdRowIndex(dataset, idField).get(String(id)) || [hoverRowIndex];
 }
 
 export function computeDatasetChart(
