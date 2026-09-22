@@ -3,17 +3,12 @@
 
 import React, {ComponentType, useCallback} from 'react';
 
-import {VisStateActions} from '@kepler.gl/actions';
-import {ChartConfig, MapControls} from '@kepler.gl/types';
-import {Layer} from '@kepler.gl/layers';
-import {Datasets} from '@kepler.gl/table';
+import {MapControls} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {LineChart} from '../../common/icons';
 import {MapControlButton} from '../../common/styled-components';
-import MapControlPanelFactory from '../map-control-panel';
 import MapControlTooltipFactory from '../map-control-tooltip';
-import ChartPanelContentFactory from './chart-panel';
 
 interface ChartControlIcons {
   chartIcon: ComponentType<any>;
@@ -22,24 +17,13 @@ interface ChartControlIcons {
 export type ChartControlProps = {
   mapControls: MapControls;
   onToggleMapControl: (control: string) => void;
-  datasets: Datasets;
-  layers: Layer[];
-  charts?: ChartConfig[];
-  visStateActions?: typeof VisStateActions;
-  scale?: number;
   actionIcons?: ChartControlIcons;
 };
 
-ChartControlFactory.deps = [
-  MapControlTooltipFactory,
-  MapControlPanelFactory,
-  ChartPanelContentFactory
-];
+ChartControlFactory.deps = [MapControlTooltipFactory];
 
 export default function ChartControlFactory(
-  MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>,
-  MapControlPanel: ReturnType<typeof MapControlPanelFactory>,
-  ChartPanelContent: ReturnType<typeof ChartPanelContentFactory>
+  MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>
 ): React.FC<ChartControlProps> {
   const defaultActionIcons = {
     chartIcon: LineChart
@@ -48,11 +32,6 @@ export default function ChartControlFactory(
   const ChartControl = ({
     mapControls,
     onToggleMapControl,
-    datasets,
-    layers,
-    charts,
-    visStateActions,
-    scale,
     actionIcons = defaultActionIcons
   }: ChartControlProps) => {
     const onClick = useCallback(
@@ -74,36 +53,18 @@ export default function ChartControlFactory(
 
     const active = mapControls?.chart?.active;
     return (
-      <div className="map-chart-control">
-        {active ? (
-          <MapControlPanel
-            scale={scale}
-            header="header.charts"
-            onClick={onClick}
-            pinnable={false}
-            disableClose={false}
-          >
-            <ChartPanelContent
-              charts={charts}
-              datasets={datasets}
-              layers={layers}
-              visStateActions={visStateActions}
-            />
-          </MapControlPanel>
-        ) : null}
-        <MapControlTooltip
-          id="show-chart-panel"
-          message={active ? 'tooltip.hideChartPanel' : 'tooltip.showChartPanel'}
+      <MapControlTooltip
+        id="show-chart-panel"
+        message={active ? 'tooltip.hideChartPanel' : 'tooltip.showChartPanel'}
+      >
+        <MapControlButton
+          className="map-control-button toggle-chart-panel"
+          onClick={onClick}
+          active={active}
         >
-          <MapControlButton
-            className="map-control-button toggle-chart-panel"
-            onClick={onClick}
-            active={active}
-          >
-            <actionIcons.chartIcon height="18px" />
-          </MapControlButton>
-        </MapControlTooltip>
-      </div>
+          <actionIcons.chartIcon height="22px" />
+        </MapControlButton>
+      </MapControlTooltip>
     );
   };
 

@@ -623,7 +623,8 @@ export default {
   header: {
     visibleLayers: 'Capes visibles',
     layerLegend: 'Llegenda de capes',
-    annotations: 'Anotacions'
+    annotations: 'Anotacions',
+    charts: 'Gràfics'
   },
   interactions: {
     tooltip: 'Suggeriment',

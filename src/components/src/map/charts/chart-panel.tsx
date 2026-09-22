@@ -31,8 +31,7 @@ import FieldSelectorFactory from '../../common/field-selector';
 import SourceDataSelectorFactory from '../../side-panel/common/source-data-selector';
 
 const ChartList = styled.div`
-  min-width: 280px;
-  max-width: 340px;
+  width: 100%;
   padding: 8px;
 `;
 

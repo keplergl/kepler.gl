@@ -621,7 +621,8 @@ export default {
   header: {
     visibleLayers: 'Näkyvissä olevat tasot',
     layerLegend: 'Tason selite',
-    annotations: 'Merkinnät'
+    annotations: 'Merkinnät',
+    charts: 'Kaaviot'
   },
   interactions: {
     tooltip: 'Vihje',

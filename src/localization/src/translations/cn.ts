@@ -604,7 +604,8 @@ export default {
   header: {
     visibleLayers: '可见图层',
     layerLegend: '图层图例',
-    annotations: '注释'
+    annotations: '注释',
+    charts: '图表'
   },
   interactions: {
     tooltip: '工具提示',

@@ -624,7 +624,8 @@ export default {
   header: {
     visibleLayers: 'Capas visibles',
     layerLegend: 'Capa de leyenda',
-    annotations: 'Anotaciones'
+    annotations: 'Anotaciones',
+    charts: 'Gráficos'
   },
   interactions: {
     tooltip: 'Sugerencias',

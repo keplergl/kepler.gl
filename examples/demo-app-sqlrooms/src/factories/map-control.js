@@ -10,9 +10,10 @@ import {
   EffectControlFactory,
   EffectManagerFactory
 } from '@kepler.gl/components';
-// AnnotationManagerFactory is available in the workspace source (src/components) but not yet
-// published in the @kepler.gl/components version this example currently depends on.
-const AnnotationManagerFactory = require('@kepler.gl/components').AnnotationManagerFactory;
+// AnnotationManagerFactory / ChartManagerFactory are available in the workspace source
+// (src/components) but may not yet be published in the @kepler.gl/components version this
+// example currently depends on.
+const {AnnotationManagerFactory, ChartManagerFactory} = require('@kepler.gl/components');
 import {AiAssistantControlFactory} from '@openassistant/kepler-assistant/integration';
 
 import {SampleMapPanel} from '../components/map-control/map-control';
@@ -57,21 +58,23 @@ const StyledMapControlOverlay = styled.div`
   }
 `;
 
-// `AnnotationManagerFactory` may be missing when this example is built against a published
-// `@kepler.gl/components` that predates it (see the require shim above). The component
+// These manager factories may be missing when this example is built against a published
+// `@kepler.gl/components` that predates them (see the require shim above). The component
 // injector calls `.deps` on every entry of this array and on their transitive deps, so an
 // `undefined` here crashes injection at startup. Substitute a harmless no-op factory so the
 // deps array stays positionally aligned with `CustomMapControlFactory`'s parameters while
-// remaining injectable. `CustomMapControlFactory` already renders the annotation manager
-// conditionally, so the stub is never actually mounted.
-const NoopAnnotationManagerFactory = () => () => null;
-NoopAnnotationManagerFactory.deps = [];
-const SafeAnnotationManagerFactory = AnnotationManagerFactory || NoopAnnotationManagerFactory;
+// remaining injectable. `CustomMapControlFactory` already renders the managers
+// conditionally, so the stubs are never actually mounted.
+const noopManagerFactory = () => () => null;
+noopManagerFactory.deps = [];
+const SafeAnnotationManagerFactory = AnnotationManagerFactory || noopManagerFactory;
+const SafeChartManagerFactory = ChartManagerFactory || noopManagerFactory;
 
 CustomMapControlFactory.deps = [
   EffectControlFactory,
   EffectManagerFactory,
   SafeAnnotationManagerFactory,
+  SafeChartManagerFactory,
   AiAssistantControlFactory,
   ...MapControlFactory.deps
 ];
@@ -79,6 +82,7 @@ function CustomMapControlFactory(
   EffectControl,
   EffectManager,
   AnnotationManager,
+  ChartManager,
   AiAssistantControl,
   ...deps
 ) {
@@ -92,7 +96,8 @@ function CustomMapControlFactory(
   const CustomMapControl = props => {
     const showEffects = Boolean(props.mapControls?.effect?.active);
     const showAnnotations = Boolean(props.mapControls?.annotation?.active);
-    const rightPanelVisible = showEffects || showAnnotations;
+    const showCharts = Boolean(props.mapControls?.chart?.active);
+    const rightPanelVisible = showEffects || showAnnotations || showCharts;
     return (
       <StyledMapControlOverlay top={props.top} rightPanelVisible={rightPanelVisible}>
         <StyledMapControlPanel>
@@ -100,8 +105,9 @@ function CustomMapControlFactory(
           <MapControl {...props} top={0} actionComponents={actionComponents} />
         </StyledMapControlPanel>
         <StyledMapControlContextPanel>
-          {showEffects ? <EffectManager /> : null}
           {showAnnotations ? <AnnotationManager /> : null}
+          {showCharts ? <ChartManager /> : null}
+          {showEffects ? <EffectManager /> : null}
         </StyledMapControlContextPanel>
       </StyledMapControlOverlay>
     );

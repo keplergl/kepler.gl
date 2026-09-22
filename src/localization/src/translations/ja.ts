@@ -620,7 +620,8 @@ export default {
   header: {
     visibleLayers: '表示中のレイヤ',
     layerLegend: 'レイヤ判例',
-    annotations: 'アノテーション'
+    annotations: 'アノテーション',
+    charts: 'チャート'
   },
   interactions: {
     tooltip: 'ツールチップ',

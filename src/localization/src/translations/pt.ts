@@ -625,7 +625,8 @@ export default {
   header: {
     visibleLayers: 'Camadas Visíveis',
     layerLegend: 'Legenda da Camada',
-    annotations: 'Anotações'
+    annotations: 'Anotações',
+    charts: 'Gráficos'
   },
   interactions: {
     tooltip: 'Dica de contexto',

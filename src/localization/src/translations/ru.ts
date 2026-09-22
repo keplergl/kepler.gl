@@ -625,7 +625,8 @@ export default {
   header: {
     visibleLayers: 'Видимые слои',
     layerLegend: 'Легенда слоя',
-    annotations: 'Аннотации'
+    annotations: 'Аннотации',
+    charts: 'Графики'
   },
   interactions: {
     tooltip: 'Подсказка',
