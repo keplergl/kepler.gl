@@ -4,7 +4,6 @@
 import React, {useState, useCallback, useContext} from 'react';
 import styled from 'styled-components';
 import MapPopoverContentFactory from './map-popover-content';
-import LayerChartHover from './charts/layer-chart-hover';
 import {Pin, ArrowLeft, ArrowRight, CursorPoint} from '../common/icons';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -13,8 +12,7 @@ import {parseGeoJsonRawFeature} from '@kepler.gl/layers';
 import {generateHashId, idToPolygonGeo} from '@kepler.gl/common-utils';
 import {LAYER_TYPES} from '@kepler.gl/constants';
 import {LayerHoverProp, getLayerHoverPropValue} from '@kepler.gl/reducers';
-import {Feature, FeatureSelectionContext} from '@kepler.gl/types';
-import {ChartConfig} from '@kepler.gl/types';
+import {ChartConfig, Feature, FeatureSelectionContext} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {
   FloatingPortal,

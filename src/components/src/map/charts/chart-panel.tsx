@@ -242,7 +242,7 @@ export function ChartPanelContentFactory(
                   {!isLayerChartConfig(chart) ? (
                     <SourceDataSelector
                       datasets={datasets}
-                      dataId={chart.dataId || undefined}
+                      dataId={chart.dataId}
                       onSelect={dataId => onUpdate(chart.id, {dataId: String(dataId)})}
                     />
                   ) : (
@@ -284,7 +284,7 @@ export function ChartPanelContentFactory(
                               (item as any) || null,
                               chart.type === ChartType.bigNumber
                                 ? chart.axis?.aggregation || 'count'
-                                : chart.axis?.aggregation
+                                : chart.axis?.aggregation ?? null
                             )
                           })
                         }
