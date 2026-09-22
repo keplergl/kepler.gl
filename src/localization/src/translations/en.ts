@@ -481,7 +481,12 @@ export default {
     disableEffect: 'Disable effect',
     effectSettings: 'Effect settings',
     chartSettings: 'Chart settings',
-    removeChart: 'Remove chart'
+    removeChart: 'Remove chart',
+    editLayerJson: 'Edit layer JSON',
+    editFilterJson: 'Edit filter JSON',
+    editEffectJson: 'Edit effect JSON',
+    editViewportJson: 'Edit viewport JSON',
+    editAnimationJson: 'Edit animation JSON'
   },
   toolbar: {
     exportImage: 'Export Image',
@@ -968,5 +973,13 @@ ${'```'}
         count: 'Count'
       }
     }
+  },
+  jsonEditor: {
+    apply: 'Apply',
+    format: 'Format',
+    reset: 'Reset',
+    configApplied: 'Config applied',
+    applyFailed: "Couldn't apply config",
+    textarea: 'JSON configuration'
   }
 };

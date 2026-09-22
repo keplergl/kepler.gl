@@ -32,6 +32,7 @@ import {
   StateWSplitMaps,
   StateWFiles
 } from '../../../helpers/mock-state';
+import {initApplicationConfig} from '@kepler.gl/utils';
 
 const {Cube3d, Split, Legend, DrawPolygon, Delete} = Icons;
 const MapControl = appInjector.get(MapControlFactory);
@@ -88,6 +89,48 @@ test('MapControlFactory - display all options', t => {
   t.end();
 });
 
+test('MapControlFactory - viewport JSON control', t => {
+  initApplicationConfig({enableViewportJsonEditor: true});
+  const $ = mountWithTheme(
+    <IntlWrapper>
+      <MapViewStateContextProvider mapState={{latitude: 0, longitude: 0, zoom: 1}}>
+        <MapControl
+          mapControls={{
+            splitMap: {show: true},
+            visibleLayers: {show: true},
+            toggle3d: {show: true},
+            mapLegend: {show: true},
+            mapDraw: {show: true},
+            mapLocale: {show: true},
+            effect: {show: true},
+            viewportJson: {show: true}
+          }}
+          datasets={{}}
+          layers={[]}
+          locale={'en'}
+          layersToRender={{}}
+          dragRotate={true}
+          mapIndex={0}
+          onToggleSplitMap={() => {}}
+          onTogglePerspective={() => {}}
+          onToggleMapControl={() => {}}
+          onSetEditorMode={() => {}}
+          onToggleEditorVisibility={() => {}}
+          onSetLocale={() => {}}
+        />
+      </MapViewStateContextProvider>
+    </IntlWrapper>
+  );
+
+  t.equal(
+    $.find('.viewport-json-editor-controls').hostNodes().length,
+    1,
+    'Should show the viewport JSON control when enabled'
+  );
+  initApplicationConfig({enableViewportJsonEditor: false});
+  t.end();
+});
+
 test('MapControlFactory - display options', t => {
   const store = mockStore({
     uiState: StateWSplitMaps.uiState
@@ -134,7 +177,7 @@ test('MapControlFactory - display options', t => {
     )
   });
 
-  // 6 control buttons as legend is opened automatically in split map mode
+  // legend is opened automatically in split map mode
   t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 6 MapControlButton');
   t.equal(wrapper.find(Split).length, 0, 'Should show 0 split map split button');
   t.equal(wrapper.find(Delete).length, 1, 'Should show 1 split map delete button');

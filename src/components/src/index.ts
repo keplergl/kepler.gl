@@ -102,6 +102,7 @@ export {
   getVisConfiguratorProps
 } from './side-panel/layer-panel/layer-configurator';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
+export {default as LayerJsonEditorFactory} from './side-panel/layer-panel/layer-json-editor';
 export {default as SingleColorPalette} from './side-panel/layer-panel/single-color-palette';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 export {default as ScenegraphModelSelectorFactory} from './side-panel/layer-panel/scenegraph-model-selector';
@@ -164,6 +165,7 @@ export {default as ChartControlFactory} from './map/charts/chart-control';
 export {default as ChartManagerFactory} from './map/charts/chart-manager';
 export {default as ChartPanelContentFactory} from './map/charts/chart-panel';
 export {default as ChartTypeSelectorFactory} from './map/charts/chart-type-selector';
+export {default as ViewportJsonEditorControlFactory} from './map/viewport-json-editor';
 export {default as MapControlFactory} from './map/map-control';
 export {default as MapNavigationControlFactory} from './map/map-navigation-control';
 export {default as MapScaleFactory} from './map/map-scale';
@@ -228,6 +230,10 @@ export {default as ResetControlFactory} from './common/animation-control/reset-c
 export {default as SpeedControlFactory} from './common/animation-control/speed-control';
 export {default as ExportVideoControlFactory} from './common/animation-control/export-video-control';
 export {default as WindowActionControlFactory} from './common/animation-control/window-action-control';
+export {
+  default as AnimationJsonEditorControlFactory,
+  AnimationJsonEditorFactory
+} from './common/animation-control/animation-json-editor';
 
 export {default as HistogramPlotFactory, HISTOGRAM_MASK_MODE} from './common/histogram-plot';
 export type {HistogramPlotProps} from './common/histogram-plot';
@@ -287,6 +293,8 @@ export * from './injector';
 
 // Common Components
 export {default as ActionPanel, ActionPanelItem} from './common/action-panel';
+export {default as JsonEditor} from './common/json-editor';
+export * from './common/json-editor-utils';
 export {default as Checkbox} from './common/checkbox';
 export {
   default as ColorLegendFactory,
@@ -360,6 +368,7 @@ export {default as CustomPaletteFactory} from './side-panel/layer-panel/custom-p
 // side pane components
 export {default as StyledDropdownSelect} from './common/item-selector/item-selector';
 export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
+export {default as FilterJsonEditorFactory} from './side-panel/filter-panel/filter-json-editor';
 export {default as ColumnSelectorFactory} from './side-panel/layer-panel/column-selector';
 export {
   ConfigGroupCollapsibleContent,
@@ -377,6 +386,7 @@ export {default as LayerTypeDropdownListFactory} from './side-panel/layer-panel/
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
 
 export {default as EffectConfiguratorFactory} from './effects/effect-configurator';
+export {default as EffectJsonEditorFactory} from './effects/effect-json-editor';
 export {default as SurfaceFogElevationSectionFactory} from './effects/surface-fog-section';
 export {default as EffectListFactory} from './effects/effect-list';
 export {default as EffectManagerFactory} from './effects/effect-manager';

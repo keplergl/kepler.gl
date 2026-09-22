@@ -29,6 +29,7 @@ import {MapViewMode} from '@kepler.gl/constants';
 
 import AnnotationControlFactory from './annotations/annotation-control';
 import ChartControlFactory from './charts/chart-control';
+import ViewportJsonEditorControlFactory from './viewport-json-editor';
 
 interface StyledMapControlProps {
   $top?: number;
@@ -117,7 +118,8 @@ MapControlFactory.deps = [
   ThemeToggleButtonFactory,
   AnnotationControlFactory,
   ChartControlFactory,
-  MapNavigationControlFactory
+  MapNavigationControlFactory,
+  ViewportJsonEditorControlFactory
 ];
 
 function MapControlFactory(
@@ -129,7 +131,8 @@ function MapControlFactory(
   ThemeToggleButton: ReturnType<typeof ThemeToggleButtonFactory>,
   AnnotationControl: ReturnType<typeof AnnotationControlFactory>,
   ChartControl: ReturnType<typeof ChartControlFactory>,
-  MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>
+  MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>,
+  ViewportJsonEditorControl: ReturnType<typeof ViewportJsonEditorControlFactory>
 ) {
   const DEFAULT_ACTIONS = [
     SplitMapButton,
@@ -138,6 +141,7 @@ function MapControlFactory(
     AnnotationControl,
     LocalePanel,
     ThemeToggleButton,
+    ViewportJsonEditorControl,
     MapLegendPanel,
     ChartControl
   ];

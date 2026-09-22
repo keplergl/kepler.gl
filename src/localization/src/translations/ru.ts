@@ -389,6 +389,11 @@ export default {
     removeEffect: 'Удалить эффект',
     disableEffect: 'Отключить эффект',
     effectSettings: 'Настройки эффекта',
+    editLayerJson: 'Редактировать JSON слоя',
+    editFilterJson: 'Редактировать JSON фильтра',
+    editEffectJson: 'Редактировать JSON эффекта',
+    editViewportJson: 'Редактировать JSON вида',
+    editAnimationJson: 'Редактировать JSON анимации',
     timeLayerSync: 'Привязать к временной шкале слоя',
     timeLayerUnsync: 'Отвязать от временной шкалы слоя'
   },

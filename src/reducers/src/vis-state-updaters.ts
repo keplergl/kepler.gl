@@ -144,6 +144,7 @@ import {isValidMerger, mergeStateFromMergers} from './merger-handler';
 import {
   VIS_STATE_MERGERS,
   createLayerFromConfig,
+  isSavedLayerConfigV1,
   parseLayerConfig,
   serializeFilter,
   serializeLayer,
@@ -494,9 +495,11 @@ export function applyLayerConfigUpdater(
   action: VisStateActions.ApplyLayerConfigUpdaterAction
 ): VisState {
   const {oldLayerId, newLayerConfig, layerIndex} = action;
-  const newParsedLayer =
-    // will move visualChannels to the config prop
-    parseLayerConfig(state.schema, newLayerConfig);
+  // Saved configs have a visualChannels sibling; parsed/editor JSON folds those
+  // fields into config. Re-parsing the latter drops colorField and resets the scale.
+  const newParsedLayer = isSavedLayerConfigV1(newLayerConfig)
+    ? parseLayerConfig(state.schema, newLayerConfig)
+    : newLayerConfig;
   const oldLayer = state.layers.find(l => l.id === oldLayerId);
   if (!oldLayer || !newParsedLayer) {
     return state;
