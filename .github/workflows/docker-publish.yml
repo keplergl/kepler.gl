@@ -1,6 +1,6 @@
 # Manual GHCR publish. Actions → Docker publish → Run workflow → pick branch or tag.
-# The image is built from this repo (not from npm). Smoke-test before push so a
-# failing image never becomes :latest.
+# Builds linux/amd64 and linux/arm64 in parallel, smokes amd64, then pushes one
+# multi-arch manifest. The image is built from this repo (not from npm).
 name: Docker publish
 
 on:
@@ -15,10 +15,23 @@ concurrency:
   group: docker-publish
   cancel-in-progress: false
 
+env:
+  REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
+
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            slug: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            slug: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
     permissions:
       contents: read
       packages: write
@@ -33,31 +46,39 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=raw,value=latest,enable=${{ inputs.update_latest }}
-            type=sha,prefix=sha-
-            type=ref,event=tag
+          images: ${{ env.REGISTRY_IMAGE }}
+          labels: |
+            org.opencontainers.image.description=kepler.gl demo-app
 
-      - name: Build production image
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push by digest
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/Dockerfile
-          load: true
+          platforms: ${{ matrix.platform }}
           provenance: false
           sbom: false
-          tags: kepler-prod:ci
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.slug }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.slug }}
 
       - name: Smoke-test runtime config
+        if: matrix.slug == 'amd64'
         run: |
+          docker pull ${{ env.REGISTRY_IMAGE }}@${{ steps.build.outputs.digest }}
           docker run -d --name kepler-prod -p 8080:8080 \
             -e KEPLER_MAPBOX_ACCESS_TOKEN=pk.ci-test \
             -e KEPLER_PAGE_TITLE=ci-title \
-            kepler-prod:ci
+            ${{ env.REGISTRY_IMAGE }}@${{ steps.build.outputs.digest }}
 
           cleanup() { docker logs kepler-prod || true; docker rm -f kepler-prod || true; }
           trap cleanup EXIT
@@ -73,6 +94,48 @@ jobs:
           python3 -c 'import json; c=json.load(open("/tmp/kepler-config.json")); assert c["credentials"]["MapboxAccessToken"]=="pk.ci-test", c; assert c["pageTitle"]=="ci-title", c'
           curl -fsS http://127.0.0.1:8080/ | grep -q 'id="root"'
 
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.slug }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+          tags: |
+            type=raw,value=latest,enable=${{ inputs.update_latest }}
+            type=sha,prefix=sha-
+            type=ref,event=tag
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -80,11 +143,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push tags
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
         run: |
           set -euo pipefail
-          echo "${{ steps.meta.outputs.tags }}" | while IFS= read -r tag; do
-            [ -z "$tag" ] && continue
-            docker tag kepler-prod:ci "$tag"
-            docker push "$tag"
-          done
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)

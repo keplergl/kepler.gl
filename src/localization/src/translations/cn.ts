@@ -283,7 +283,9 @@ export default {
     timeLayerUnsync: '取消与图层时间线联动',
     column: '列',
     timeIntervalEndField: '结束时间',
-    timeIntervalEndFieldHint: '可选。当播放窗口与该时间范围重叠时，要素保持可见。'
+    timeIntervalEndFieldHint: '可选。当播放窗口与该时间范围重叠时，要素保持可见。',
+    timezone: '时区',
+    selectTimezone: '选择显示时区'
   },
   datasetTitle: {
     showDataTable: '显示数据表',
@@ -398,12 +400,15 @@ export default {
     filterLayer: '过滤图层',
     filterLayerDisabled: '非多边形几何图形不能用于过滤',
     copyGeometry: '复制几何图形',
+    extractData: '提取数据',
+    extractFromLayer: '从 {layerName} 图层',
     editProperties: '编辑属性',
     propertyName: '属性',
     propertyValue: '值',
     removeProperty: '删除属性',
     polygonFilter: '多边形过滤器',
-    noLayersToFilter: '没有可过滤的图层'
+    noLayersToFilter: '没有可过滤的图层',
+    noLayersToExtract: '没有可提取的图层'
   },
   exportVideoModal: {
     animation: '动画',

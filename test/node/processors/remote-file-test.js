@@ -34,6 +34,12 @@ test('#remote-file -> getMimeTypeForFormat', t => {
   t.equal(getMimeTypeForFormat('arrow'), 'application/vnd.apache.arrow.file');
   t.equal(getMimeTypeForFormat('kml'), 'application/vnd.google-earth.kml+xml');
   t.equal(getMimeTypeForFormat('geojsonl'), 'application/geo+x-ndjson');
+  t.equal(getMimeTypeForFormat('shp'), 'application/x-esri-shapefile');
+  t.equal(
+    getMimeTypeForFormat('xlsx'),
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  );
+  t.equal(getMimeTypeForFormat('fgb'), 'application/x-flatgeobuf');
   t.end();
 });
 

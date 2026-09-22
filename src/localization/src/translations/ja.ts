@@ -296,7 +296,9 @@ export default {
     column: '列',
     timeIntervalEndField: '終了時刻',
     timeIntervalEndFieldHint:
-      '任意。再生ウィンドウがこの期間と重なっている間、フィーチャは表示されたままになります。'
+      '任意。再生ウィンドウがこの期間と重なっている間、フィーチャは表示されたままになります。',
+    timezone: 'タイムゾーン',
+    selectTimezone: '表示タイムゾーンを選択'
   },
   datasetTitle: {
     showDataTable: 'データ表を表示',
@@ -410,12 +412,15 @@ export default {
     filterLayer: 'レイヤをフィルタ',
     filterLayerDisabled: 'ポリゴン以外のジオメトリはフィルタリングに使用できません',
     copyGeometry: 'ジオメトリをコピー',
+    extractData: 'データを抽出',
+    extractFromLayer: '{layerName} レイヤーから',
     editProperties: 'プロパティを編集',
     propertyName: 'プロパティ',
     propertyValue: '値',
     removeProperty: 'プロパティを削除',
     polygonFilter: 'ポリゴンフィルタ',
-    noLayersToFilter: 'フィルタするレイヤがありません'
+    noLayersToFilter: 'フィルタするレイヤがありません',
+    noLayersToExtract: '抽出できるレイヤがありません'
   },
   exportVideoModal: {
     animation: 'アニメーション',

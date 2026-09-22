@@ -28,6 +28,7 @@
   "exclude": [
     "src/deckgl-layers",
     "src/layers",
-    "*.js" //TODO remove one all translations finished
+    "*.js", //TODO remove one all translations finished
+    "**/*.spec.*"
   ]
 }

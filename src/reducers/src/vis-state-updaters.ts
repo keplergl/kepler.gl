@@ -68,6 +68,8 @@ import {
   adjustValueToFilterDomain,
   errorNotification,
   editorFeaturesToFeatureCollection,
+  extractRowsInsideFeature,
+  isVectorTileExtractLayer,
   mergeUserFeatureProperties,
   toSketchFeature,
   featureToFilterValue,
@@ -150,7 +152,7 @@ import {
 } from './vis-state-merger';
 
 import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
-import {loadExternallyHostedDataset, processGeojson} from '@kepler.gl/processors';
+import {getFilesToParse, loadExternallyHostedDataset, processGeojson} from '@kepler.gl/processors';
 
 import {
   Filter,
@@ -1204,6 +1206,25 @@ export function layerVisConfigChangeUpdater(
   };
 
   const newLayer = oldLayer.updateLayerConfig({visConfig: newVisConfig});
+
+  // Jenks breaks depend on the number of colors. Recalculate the domain when
+  // the color range of a Jenks channel changes.
+  if (oldLayer.config.dataId) {
+    const dataset = state.datasets[oldLayer.config.dataId];
+    if (dataset) {
+      Object.keys(newLayer.visualChannels).forEach(channelKey => {
+        const channel = newLayer.visualChannels[channelKey];
+        if (
+          channel?.scale &&
+          newLayer.config[channel.scale] === SCALE_TYPES.jenks &&
+          channel.range &&
+          Object.prototype.hasOwnProperty.call(action.newVisConfig, channel.range)
+        ) {
+          newLayer.updateLayerVisualChannel(dataset, channelKey);
+        }
+      });
+    }
+  }
 
   let nextState = state;
 
@@ -4253,14 +4274,21 @@ export const loadFilesUpdater = (
     return state;
   }
 
-  const fileLoadingProgress = Array.from(files).reduce(
+  const companionFiles = Array.from(files);
+  const filesToLoad = getFilesToParse(companionFiles);
+  if (!filesToLoad.length) {
+    return state;
+  }
+
+  const fileLoadingProgress = filesToLoad.reduce(
     (accu, f, i) => merge_(initialFileLoadingProgress(f, i))(accu),
     {}
   );
 
   const fileLoading = {
     fileCache: [],
-    filesToLoad: files,
+    filesToLoad,
+    companionFiles,
     onFinish
   };
 
@@ -4326,13 +4354,20 @@ export function loadNextFileUpdater(state: VisState): VisState {
       file,
       nextState.fileLoading && nextState.fileLoading.fileCache,
       loaders,
-      loadOptions
+      loadOptions,
+      nextState.fileLoading ? nextState.fileLoading.companionFiles : undefined
     )
   );
 }
 
-export function makeLoadFileTask(file, fileCache, loaders: Loader[] = [], loadOptions = {}) {
-  return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions}).bimap(
+export function makeLoadFileTask(
+  file,
+  fileCache,
+  loaders: Loader[] = [],
+  loadOptions = {},
+  companionFiles?: File[]
+) {
+  return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions, companionFiles}).bimap(
     // prettier ignore
     // success
     gen =>
@@ -5323,6 +5358,111 @@ export function convertEditorFeaturesToLayerUpdater(
   });
 }
 
+/**
+ * Copy in-memory rows (or loaded vector-tile features) inside the selected
+ * Draw on Map polygon into a new dataset.
+ */
+export function extractDataFromFeatureUpdater(
+  state: VisState,
+  {layerId}: VisStateActions.ExtractDataFromFeatureUpdaterAction
+): VisState {
+  const feature = state.editor.selectedFeature;
+  const layer = state.layers.find(l => l.id === layerId);
+  const dataId = layer?.config.dataId;
+  let dataset = dataId ? state.datasets[dataId] : null;
+
+  if (!layer || !dataset || !dataId) {
+    return state;
+  }
+
+  // GPU range/time filters are not reflected in filteredIndex; evaluate them on CPU
+  // the same way export data does, then clip the result to the drawing.
+  if (!isVectorTileExtractLayer(layer)) {
+    state = filterDatasetCPU(state, dataId);
+    dataset = state.datasets[dataId];
+    if (!dataset) {
+      return state;
+    }
+  }
+
+  let extracted;
+  try {
+    extracted = extractRowsInsideFeature({layer, dataset, feature});
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to extract data: ${message}`,
+            id: 'extract-data-from-feature'
+          })
+        )
+      )
+    );
+  }
+
+  if (!extracted) {
+    return state;
+  }
+
+  if (!extracted.rowCount) {
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: isVectorTileExtractLayer(layer)
+              ? 'No loaded vector tile features found inside the selected drawing'
+              : 'No rows found inside the selected drawing',
+            id: 'extract-data-from-feature-empty'
+          })
+        )
+      )
+    );
+  }
+
+  let data;
+  try {
+    data =
+      extracted.kind === 'geojson'
+        ? processGeojson({
+            type: 'FeatureCollection',
+            features: extracted.features
+          })
+        : {fields: extracted.fields, rows: extracted.rows};
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to extract data: ${message}`,
+            id: 'extract-data-from-feature'
+          })
+        )
+      )
+    );
+  }
+
+  return updateVisDataUpdater(state, {
+    datasets: {
+      info: {
+        id: `extract-${generateHashId(6)}`,
+        label: `Extracted ${dataset.label}`
+      },
+      data
+    },
+    options: {
+      keepExistingConfig: true,
+      centerMap: false,
+      autoCreateLayers: true
+    }
+  });
+}
+
 export function setFilterAnimationTimeConfigUpdater(
   state: VisState,
   {idx, config}: VisStateActions.SetFilterAnimationTimeConfigAction
@@ -5661,8 +5801,8 @@ function adjustTimeFilterInterval(state, filter) {
       }
     }, TIME_INTERVALS_ORDERED.length - 1);
     // @ts-ignore
-    const hexTileInterval = TIME_INTERVALS_ORDERED[intervalIndex];
-    interval = LayerToFilterTimeInterval[hexTileInterval];
+    const layerTimeInterval = TIME_INTERVALS_ORDERED[intervalIndex];
+    interval = LayerToFilterTimeInterval[layerTimeInterval];
   }
 
   if (!interval) {
@@ -5810,6 +5950,37 @@ export function prepareStateForDatasetReplace<T extends VisState>(
   return nextState;
 }
 
+/**
+ * The order to preserve for the items that will be merged back.
+ *
+ * `ids` comes from the serialized state, so it lists everything but the items
+ * another dataset's replacement parked a moment ago: an app refreshing several
+ * datasets in a row prepares the second replacement before the first one's
+ * items have merged back. Writing `ids` as it is would drop those, and
+ * `insertItemBasedOnPreservedOrder` puts an item it cannot place at the front —
+ * so they would come back reversed. Where they belong is what the order written
+ * when they were parked already says, so that order is kept for them.
+ */
+export function preservedOrderWithParked(
+  previousOrder: string[] = [],
+  ids: string[],
+  parked: {id?: string}[]
+): string[] {
+  const parkedIds = parked
+    .map(item => item?.id)
+    .filter((id): id is string => Boolean(id) && !ids.includes(id as string));
+
+  if (!parkedIds.length) {
+    return ids;
+  }
+
+  const known = new Set([...ids, ...parkedIds]);
+  const ordered = (previousOrder || []).filter(id => known.has(id));
+  const rest = [...ids, ...parkedIds].filter(id => !ordered.includes(id));
+
+  return [...ordered, ...rest];
+}
+
 export function replaceDatasetDepsInState<T extends VisState>(
   state: T,
   {dataId, dataIdToUse}: {dataId: string; dataIdToUse: string}
@@ -5835,6 +6006,13 @@ export function replaceDatasetDepsInState<T extends VisState>(
           saveUnmerged
         };
 
+        // What another dataset's replacement parked a moment ago and has not
+        // merged back yet, read before this one parks anything of its own.
+        const parkedElsewhere =
+          mergerOptions.toMergeProp !== undefined
+            ? toArray(replacedState[mergerOptions.toMergeProp] ?? [])
+            : [];
+
         const replacedItem =
           replaceParentDatasetIds?.(propValue, dataId, dataIdToUse) ||
           defaultReplaceParentDatasetIds(propValue, dataId, dataIdToUse);
@@ -5852,7 +6030,11 @@ export function replaceDatasetDepsInState<T extends VisState>(
           replacedState[mergerOptions.toMergeProp]?.length &&
           preserveOrder
         ) {
-          replacedState[preserveOrder] = propValue.map(item => item.id);
+          replacedState[preserveOrder] = preservedOrderWithParked(
+            replacedState[preserveOrder],
+            propValue.map(item => item.id),
+            parkedElsewhere
+          );
         }
       });
 

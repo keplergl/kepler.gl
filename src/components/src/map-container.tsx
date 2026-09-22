@@ -1512,6 +1512,7 @@ export default function MapContainerFactory(
             onSetFeatureProperties={visStateActions.setEditorFeatureProperties}
             onSelect={visStateActions.setSelectedFeature}
             onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
+            onExtractData={layer => visStateActions.extractDataFromFeature({layerId: layer.id})}
             onSetEditorMode={visStateActions.setEditorMode}
             style={{
               pointerEvents: 'all',

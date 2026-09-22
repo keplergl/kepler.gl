@@ -2136,6 +2136,35 @@ export function convertEditorFeaturesToLayer(): Merge<
   };
 }
 
+export type ExtractDataFromFeatureUpdaterAction = {
+  layerId: string;
+};
+/**
+ * Copy in-memory rows that fall inside the currently selected Draw on Map polygon
+ * into a new local dataset. Vector tile layers extract a snapshot of features
+ * already loaded in the current view. No-ops for raster/WMS/3D/bitmap tiles,
+ * unsupported layer types, and non-polygon drawings.
+ * @memberof visStateActions
+ * @param layerId Layer whose dataset should be extracted
+ * @return action
+ * @public
+ * @example
+ * import {extractDataFromFeature} from '@kepler.gl/actions';
+ *
+ * this.props.dispatch(extractDataFromFeature({layerId: 'point-layer-id'}));
+ */
+export function extractDataFromFeature({
+  layerId
+}: ExtractDataFromFeatureUpdaterAction): Merge<
+  ExtractDataFromFeatureUpdaterAction,
+  {type: typeof ActionTypes.EXTRACT_DATA_FROM_FEATURE}
+> {
+  return {
+    type: ActionTypes.EXTRACT_DATA_FROM_FEATURE,
+    layerId
+  };
+}
+
 type FileContent = {
   fileName: string;
   header: string[];

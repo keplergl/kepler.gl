@@ -25,6 +25,7 @@ import {
   IconButton,
   SliderHandle,
   Typeahead,
+  TimezoneSelector,
   appInjector
 } from '@kepler.gl/components';
 
@@ -57,6 +58,7 @@ const defaultProps = {
   onClose: nop,
   onToggleMinify: nop,
   setFilterPlot: nop,
+  setFilterAnimationTimeConfig: nop,
   setFilterAnimationWindow: nop,
   animationConfig: DEFAULT_ANIMATION_CONFIG
 };
@@ -91,6 +93,7 @@ test('Components -> TimeWidget.mount -> with time filter', t => {
   wrapper.update();
 
   t.equal(wrapper.find(FieldSelector).length, 1, 'should render FieldSelector');
+  t.equal(wrapper.find(TimezoneSelector).length, 1, 'should render TimezoneSelector');
 
   // check yAxisFields
   const yAxisFields = wrapper.find(FieldSelector).at(0).props().fields;
@@ -98,6 +101,58 @@ test('Components -> TimeWidget.mount -> with time filter', t => {
     yAxisFields.map(f => f.name),
     ['gps_data.lat', 'gps_data.lng', 'uid'],
     'should only pass real / integer fields to yAxis'
+  );
+
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> timezone selector', t => {
+  const setFilterAnimationTimeConfig = sinon.spy();
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget {...defaultProps} setFilterAnimationTimeConfig={setFilterAnimationTimeConfig} />
+      </IntlWrapper>
+    );
+  }, 'TimeWidget should not fail without props');
+
+  wrapper.find(Icons.Gear).at(0).simulate('click');
+  wrapper.update();
+
+  t.equal(wrapper.find(TimezoneSelector).length, 1, 'should render TimezoneSelector');
+  t.equal(
+    wrapper.find('[data-testid="time-widget-timezone"]').hostNodes().length,
+    1,
+    'should render timezone field selector'
+  );
+
+  const timezoneSelector = wrapper.find(TimezoneSelector).at(0);
+  t.ok(timezoneSelector.props().timezone == null, 'should default timezone to null (UTC display)');
+
+  timezoneSelector.props().onChange('America/Los_Angeles');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.args[0],
+    [0, {timezone: 'America/Los_Angeles'}],
+    'should call setFilterAnimationTimeConfig with selected timezone'
+  );
+
+  wrapper.setProps({
+    children: (
+      <TimeWidget
+        {...defaultProps}
+        filter={nextState.filters[0]}
+        setFilterAnimationTimeConfig={setFilterAnimationTimeConfig}
+      />
+    )
+  });
+  wrapper.update();
+
+  t.equal(
+    wrapper.find(TimezoneSelector).at(0).props().timezone,
+    'America/New_York',
+    'should show the filter timezone'
   );
 
   t.end();

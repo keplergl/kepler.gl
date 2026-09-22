@@ -382,7 +382,9 @@ export default {
     column: 'Column',
     timeIntervalEndField: 'End time',
     timeIntervalEndFieldHint:
-      'Optional. Features stay visible while the playback window overlaps this time span.'
+      'Optional. Features stay visible while the playback window overlaps this time span.',
+    timezone: 'Time Zone',
+    selectTimezone: 'Select display timezone'
   },
   datasetTitle: {
     showDataTable: 'Show data table',
@@ -502,12 +504,15 @@ export default {
     filterLayer: 'Filter Layers',
     filterLayerDisabled: 'Non-polygon geometries cannot be used for filtering',
     copyGeometry: 'Copy Geometry',
+    extractData: 'Extract data',
+    extractFromLayer: 'from {layerName} layer',
     editProperties: 'Edit Properties',
     propertyName: 'Property',
     propertyValue: 'Value',
     removeProperty: 'Remove property',
     polygonFilter: 'Polygon filter',
-    noLayersToFilter: 'No layers to filter'
+    noLayersToFilter: 'No layers to filter',
+    noLayersToExtract: 'No layers to extract'
   },
 
   chartPanel: {

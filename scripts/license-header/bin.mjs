@@ -40,7 +40,7 @@ if (typeof argv.file === 'string') {
     fileFilter = argv.file;
 }
 
-var directoryFilter = ['!.git', '!node_modules', '!coverage', '!env', '!.tox', '!vendor', '!Godeps', '!dist'];
+var directoryFilter = ['!.git', '!node_modules', '!coverage', '!env', '!.tox', '!vendor', '!Godeps', '!dist', '!umd'];
 if (typeof argv.dir === 'string') {
     directoryFilter = [argv.dir];
 } else if (Array.isArray(argv.dir)) {
