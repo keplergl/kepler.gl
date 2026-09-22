@@ -291,6 +291,17 @@ function TimeWidgetFactory(
         if (isMinified || !sliderDomain) {
           return;
         }
+        // Overlays such as the animation JSON editor sit inside this container.
+        // Don't steal their scroll / pointer input for timeline zoom.
+        const target = event.target;
+        if (
+          target instanceof Element &&
+          target.closest(
+            'textarea, input, select, [data-testid="json-editor"], .animation-json-editor'
+          )
+        ) {
+          return;
+        }
         const isPinch = event.ctrlKey || event.metaKey || Math.abs(event.deltaZ || 0) > 0;
         const zoomFn = isPinch ? throttledTimelineZoom : throttledWindowZoom;
         if (!zoomFn) {

@@ -384,6 +384,11 @@ export default {
     removeEffect: 'エフェクトを削除',
     disableEffect: 'エフェクトを無効化',
     effectSettings: 'エフェクト設定',
+    editLayerJson: 'レイヤーJSONを編集',
+    editFilterJson: 'フィルターJSONを編集',
+    editEffectJson: 'エフェクトJSONを編集',
+    editViewportJson: 'ビューポートJSONを編集',
+    editAnimationJson: 'アニメーションJSONを編集',
     timeLayerSync: 'レイヤタイムラインにリンク',
     timeLayerUnsync: 'レイヤタイムラインのリンクを解除'
   },

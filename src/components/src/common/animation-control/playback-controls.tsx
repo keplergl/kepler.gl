@@ -14,6 +14,7 @@ import ResetControlFactory from './reset-control';
 import PlayControlFactory from './play-control';
 import SpeedControlFactory from './speed-control';
 import ExportVideoControlFactory from './export-video-control';
+import AnimationJsonEditorControlFactory from './animation-json-editor';
 import {BaseComponentProps} from '../../types';
 
 const DEFAULT_BUTTON_HEIGHT = '20px';
@@ -91,7 +92,8 @@ PlaybackControlsFactory.deps = [
   AnimationWindowControlFactory,
   ResetControlFactory,
   PlayControlFactory,
-  ExportVideoControlFactory
+  ExportVideoControlFactory,
+  AnimationJsonEditorControlFactory
 ];
 
 function PlaybackControlsFactory(
@@ -100,7 +102,8 @@ function PlaybackControlsFactory(
   AnimationWindowControl,
   ResetControl,
   PlayControl,
-  ExportVideoControl
+  ExportVideoControl,
+  AnimationJsonEditorControl
 ) {
   const PLAYBACK_CONTROLS_DEFAULT_ACTION_COMPONENTS = [
     PlayControl,
@@ -108,7 +111,8 @@ function PlaybackControlsFactory(
     ResetControl,
     WindowActionControl,
     AnimationWindowControl,
-    ExportVideoControl
+    ExportVideoControl,
+    AnimationJsonEditorControl
   ];
 
   // eslint-disable-next-line complexity

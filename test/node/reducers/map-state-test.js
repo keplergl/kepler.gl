@@ -13,7 +13,8 @@ import {
   setMapSplitMode,
   setSwipeComparePercentage,
   setMapViewMode,
-  globeConfigChange
+  globeConfigChange,
+  applyMapState
 } from '@kepler.gl/actions';
 
 import {
@@ -66,6 +67,106 @@ test('#mapStateReducer -> UPDATE_MAP', t => {
   const newState = reducer(undefined, updateMap(mapUpdate, 0));
 
   t.deepEqual(newState, expectedState, 'should update map longitude and latitude');
+
+  t.end();
+});
+
+test('#mapStateReducer -> APPLY_MAP_STATE', t => {
+  const next = reducer(
+    undefined,
+    applyMapState({
+      latitude: 40.7128,
+      longitude: -74.006,
+      zoom: 11,
+      pitch: 30,
+      width: 10,
+      height: 10
+    })
+  );
+
+  t.equal(next.latitude, 40.7128, 'should apply latitude from JSON');
+  t.equal(next.longitude, -74.006, 'should apply longitude from JSON');
+  t.equal(next.zoom, 11, 'should apply zoom from JSON');
+  t.equal(next.pitch, 30, 'should apply pitch from JSON');
+  t.equal(next.width, INITIAL_MAP_STATE.width, 'should preserve current width');
+  t.equal(next.height, INITIAL_MAP_STATE.height, 'should preserve current height');
+
+  t.end();
+});
+
+test('#mapStateReducer -> APPLY_MAP_STATE split viewports', t => {
+  let splitState = reducer(INITIAL_MAP_STATE, toggleSplitMap());
+  splitState = reducer(splitState, toggleSplitMapViewport({isViewportSynced: false}));
+  splitState = reducer(
+    splitState,
+    updateMap({latitude: 10, longitude: 20, zoom: 4, width: 400, height: 300}, 0)
+  );
+  splitState = reducer(
+    splitState,
+    updateMap({latitude: 30, longitude: 40, zoom: 6, width: 400, height: 300}, 1)
+  );
+
+  const leftSize = {
+    width: splitState.splitMapViewports[0].width,
+    height: splitState.splitMapViewports[0].height
+  };
+  const rightSize = {
+    width: splitState.splitMapViewports[1].width,
+    height: splitState.splitMapViewports[1].height
+  };
+
+  const afterSizes = reducer(
+    splitState,
+    applyMapState({
+      splitMapViewports: [
+        {...splitState.splitMapViewports[0], width: 1, height: 2},
+        {...splitState.splitMapViewports[1], width: 3, height: 4}
+      ]
+    })
+  );
+
+  t.deepEqual(
+    {
+      width: afterSizes.splitMapViewports[0].width,
+      height: afterSizes.splitMapViewports[0].height
+    },
+    leftSize,
+    'should preserve left split viewport dimensions'
+  );
+  t.deepEqual(
+    {
+      width: afterSizes.splitMapViewports[1].width,
+      height: afterSizes.splitMapViewports[1].height
+    },
+    rightSize,
+    'should preserve right split viewport dimensions'
+  );
+
+  const afterRight = reducer(
+    splitState,
+    applyMapState({latitude: 51.5, longitude: -0.1, zoom: 8}, 1)
+  );
+
+  t.equal(
+    afterRight.splitMapViewports[1].latitude,
+    51.5,
+    'should update the targeted split viewport'
+  );
+  t.equal(
+    afterRight.splitMapViewports[1].longitude,
+    -0.1,
+    'should update the targeted split viewport longitude'
+  );
+  t.equal(
+    afterRight.splitMapViewports[1].zoom,
+    8,
+    'should update the targeted split viewport zoom'
+  );
+  t.equal(
+    afterRight.splitMapViewports[0].latitude,
+    splitState.splitMapViewports[0].latitude,
+    'should not move the other split viewport'
+  );
 
   t.end();
 });

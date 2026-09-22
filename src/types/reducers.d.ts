@@ -539,6 +539,7 @@ export type MapControls = {
   mapTheme?: MapControlItem;
   effect?: MapControlItem;
   annotation?: MapControlItem;
+  viewportJson?: MapControlItem;
   sqlPanel?: MapControlItem;
   aiAssistant?: MapControlItem;
   [key: string]: MapControlItem | MapControlMapLegend | undefined;
