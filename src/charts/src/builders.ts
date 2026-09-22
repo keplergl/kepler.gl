@@ -40,7 +40,7 @@ function baseChart(
   props: Partial<ChartConfig> = {}
 ): Pick<
   DatasetChartConfig,
-  'id' | 'title' | 'dataId' | 'applyFilters' | 'display' | 'chartDisplay'
+  'id' | 'title' | 'dataId' | 'applyFilters' | 'display' | 'chartDisplay' | 'crossFilter'
 > {
   return {
     id: props.id || generateHashId(CHART_ID_LENGTH),
@@ -50,7 +50,8 @@ function baseChart(
     display: {
       isConfigActive: props.display?.isConfigActive ?? true
     },
-    chartDisplay: props.chartDisplay || {}
+    chartDisplay: props.chartDisplay || {},
+    ...(props.crossFilter ? {crossFilter: props.crossFilter} : {})
   };
 }
 
