@@ -516,6 +516,7 @@ export default {
   },
 
   chartPanel: {
+    add: 'Add',
     addChart: 'Add chart',
     selectType: 'Select chart type',
     empty: 'Add a chart to summarize the current map data.',

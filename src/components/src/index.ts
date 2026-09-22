@@ -163,6 +163,7 @@ export {default as ThemeToggleButtonFactory} from './map/theme-toggle-button';
 export {default as ChartControlFactory} from './map/charts/chart-control';
 export {default as ChartManagerFactory} from './map/charts/chart-manager';
 export {default as ChartPanelContentFactory} from './map/charts/chart-panel';
+export {default as ChartTypeSelectorFactory} from './map/charts/chart-type-selector';
 export {default as MapControlFactory} from './map/map-control';
 export {default as MapNavigationControlFactory} from './map/map-navigation-control';
 export {default as MapScaleFactory} from './map/map-scale';

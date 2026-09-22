@@ -846,8 +846,12 @@ export class ChartsSchema extends Schema {
   key = 'charts';
 
   save(charts) {
+    if (!Array.isArray(charts) || !charts.length) {
+      // Keep saved maps unchanged when the optional charts panel is unused.
+      return {};
+    }
     return {
-      [this.key]: (charts || []).map(
+      [this.key]: charts.map(
         chart =>
           this.savePropertiesOrApplySchema({
             ...chart,

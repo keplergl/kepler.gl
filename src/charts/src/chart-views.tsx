@@ -106,11 +106,18 @@ const PivotTableEl = styled.table`
   width: 100%;
   border-collapse: collapse;
   font-size: 11px;
+  color: ${props => props.theme.textColor};
+
   th,
   td {
     border: 1px solid ${props => props.theme.panelBorderColor};
     padding: 4px 6px;
     text-align: right;
+    color: inherit;
+  }
+  th {
+    color: ${props => props.theme.titleTextColor};
+    font-weight: 500;
   }
   th:first-child,
   td:first-child {

@@ -9,10 +9,8 @@ import {
   ChartConfig,
   ChartType,
   ChartRenderer,
-  DEFAULT_CHART_TYPE_OPTIONS,
   LayerChartType,
   computeChart,
-  createChart,
   getCrossFilterField,
   isLayerChartConfig,
   toChartableDataset,
@@ -48,6 +46,21 @@ const ChartCardHeader = styled.div`
   justify-content: space-between;
   gap: 8px;
   padding: 8px 8px 0;
+`;
+
+const RemoveChartButton = styled(Button)`
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    margin: 0;
+  }
 `;
 
 const EmptyCopy = styled.div`
@@ -109,32 +122,6 @@ export function ChartPanelContentFactory(
     layers,
     visStateActions
   }) => {
-    const datasetList = Object.values(datasets || {});
-    const firstDataset = datasetList[0];
-
-    const onAdd = useCallback(
-      (type: ChartType | LayerChartType) => {
-        const isLayer =
-          type === LayerChartType.BREAKDOWN_BY_CATEGORY || type === LayerChartType.TIME_SERIES;
-        const layer = isLayer ? layers[0] : undefined;
-        const dataId = layer?.config.dataId || firstDataset?.id;
-        const dataset = dataId
-          ? toChartableDataset(datasets[dataId])
-          : toChartableDataset(firstDataset);
-        const chart = createChart({
-          type,
-          dataId,
-          dataset: dataset || undefined,
-          layerId: layer?.id,
-          options: {activateConfig: true}
-        });
-        if (chart) {
-          visStateActions?.addChart(chart);
-        }
-      },
-      [datasets, firstDataset, layers, visStateActions]
-    );
-
     const onUpdate = useCallback(
       (id: string, props: Partial<ChartConfig>) => {
         visStateActions?.updateChart(id, props);
@@ -182,31 +169,11 @@ export function ChartPanelContentFactory(
 
     return (
       <ChartList className="chart-panel">
-        <SidePanelSection>
-          <PanelLabel>
-            <FormattedMessage id="chartPanel.addChart" defaultMessage="Add chart" />
-          </PanelLabel>
-          <ItemSelector
-            selectedItems={null}
-            options={DEFAULT_CHART_TYPE_OPTIONS}
-            displayOption={(d: {label: string}) => d.label}
-            getOptionValue={(d: {id: string}) => d.id}
-            multiSelect={false}
-            searchable={false}
-            placeholder="chartPanel.selectType"
-            onChange={value => {
-              const type = typeof value === 'string' ? value : (value as {id?: string})?.id;
-              if (type) {
-                onAdd(type as ChartType | LayerChartType);
-              }
-            }}
-          />
-        </SidePanelSection>
         {!charts.length ? (
           <EmptyCopy>
             <FormattedMessage
               id="chartPanel.empty"
-              defaultMessage="Add a chart to summarize the current map data. Charts stay optional and are not dashboards."
+              defaultMessage="Add a chart to summarize the current map data."
             />
           </EmptyCopy>
         ) : null}
@@ -226,9 +193,14 @@ export function ChartPanelContentFactory(
                   value={chart.title}
                   onChange={event => onUpdate(chart.id, {title: event.target.value})}
                 />
-                <Button link small negative onClick={() => onRemove(chart.id)}>
+                <RemoveChartButton
+                  small
+                  negative
+                  aria-label="Remove chart"
+                  onClick={() => onRemove(chart.id)}
+                >
                   <Trash height="14px" />
-                </Button>
+                </RemoveChartButton>
               </ChartCardHeader>
               <ChartRenderer
                 data={view}

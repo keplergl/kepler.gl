@@ -14,6 +14,7 @@ import {
   buildTimeSeries,
   createChart,
   computeDatasetChart,
+  formatNumber,
   getHoverRowIndexes
 } from '@kepler.gl/charts';
 
@@ -195,5 +196,16 @@ test('charts -> computeDatasetChart big number', t => {
   const view = computeDatasetChart(chart, dataset);
   t.equal(view.kind, 'bigNumber');
   t.ok(typeof view.value === 'number');
+  t.end();
+});
+
+test('charts -> formatNumber uses compact SI instead of scientific notation', t => {
+  t.equal(formatNumber(767000), '767k');
+  t.equal(formatNumber(123456), '123.5k');
+  t.equal(formatNumber(1500000), '1.5M');
+  t.equal(formatNumber(9999), '9,999');
+  t.equal(formatNumber(42), '42');
+  t.equal(formatNumber(3.14159), '3.142');
+  t.equal(formatNumber(-1500000), '-1.5M');
   t.end();
 });

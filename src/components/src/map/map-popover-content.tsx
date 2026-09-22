@@ -6,9 +6,10 @@ import {injectIntl, IntlShape} from 'react-intl';
 import {LayerHoverProp} from '@kepler.gl/reducers';
 import LayerHoverInfoFactory from './layer-hover-info';
 import CoordinateInfoFactory from './coordinate-info';
-import LayerChartHover from './charts/layer-chart-hover';
 import {ChartConfig} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
+import {getApplicationConfig} from '@kepler.gl/utils';
+import LayerChartHover from './charts/layer-chart-hover';
 
 MapPopoverContentFactory.deps = [LayerHoverInfoFactory, CoordinateInfoFactory];
 
@@ -39,7 +40,9 @@ export default function MapPopoverContentFactory(
       <>
         {Array.isArray(coordinate) && <CoordinateInfo coordinate={coordinate} zoom={zoom} />}
         {layerHoverProp && <LayerHoverInfo {...layerHoverProp} />}
-        <LayerChartHover charts={charts} datasets={datasets} layerHoverProp={layerHoverProp} />
+        {getApplicationConfig().enableChartsPanel ? (
+          <LayerChartHover charts={charts} datasets={datasets} layerHoverProp={layerHoverProp} />
+        ) : null}
       </>
     );
   };

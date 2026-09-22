@@ -30,17 +30,45 @@ import {
   PivotTableResult
 } from './types';
 
+/**
+ * Format chart values for display. Prefer compact SI suffixes for large
+ * magnitudes so Big Number (and other chart labels) never fall back to
+ * scientific notation like `7.67e+5`.
+ */
 export function formatNumber(n: number): string {
   if (!Number.isFinite(n)) {
     return '0';
   }
-  if (Math.abs(n) >= 10000) {
-    return n.toExponential(2);
+
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+
+  const compact = (value: number, suffix: string, digits: number): string => {
+    const scaled =
+      value / (suffix === 'k' ? 1e3 : suffix === 'M' ? 1e6 : suffix === 'G' ? 1e9 : 1e12);
+    const rounded = Number(scaled.toFixed(digits));
+    return `${sign}${rounded}${suffix}`;
+  };
+
+  if (abs >= 1e12) {
+    return compact(abs, 'T', 2);
+  }
+  if (abs >= 1e9) {
+    return compact(abs, 'G', 2);
+  }
+  if (abs >= 1e6) {
+    return compact(abs, 'M', 2);
+  }
+  if (abs >= 10000) {
+    return compact(abs, 'k', 1);
+  }
+  if (abs >= 1000) {
+    return `${sign}${Math.round(abs).toLocaleString('en-US')}`;
   }
   if (Number.isInteger(n)) {
     return String(n);
   }
-  return n.toLocaleString(undefined, {maximumFractionDigits: 4});
+  return Number(n.toPrecision(4)).toString();
 }
 
 function modeValue(values: number[]): number {
