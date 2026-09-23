@@ -30,9 +30,34 @@ const BigNumberValue = styled.div`
 `;
 
 const BigNumberCaption = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   color: ${props => props.theme.subtextColor};
   margin-top: 4px;
+`;
+
+const BigNumberCaptionText = styled.span`
+  min-width: 0;
+`;
+
+const BigNumberCaptionToggle = styled.button`
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: ${props => props.theme.subtextColor};
+  cursor: pointer;
+  line-height: 0;
+
+  &:hover {
+    color: ${props => props.theme.textColor};
+  }
 `;
 
 const BarRow = styled.div<{$clickable?: boolean}>`
@@ -285,16 +310,57 @@ function maxValue(bins: ChartBin[]): number {
 export function BigNumberView({
   value,
   caption,
-  formattedValue
+  formattedValue,
+  showCaption = true,
+  onToggleCaption,
+  captionToggleIcon,
+  captionToggleLabel
 }: {
   value: number;
   caption?: string;
   formattedValue?: string;
+  showCaption?: boolean;
+  onToggleCaption?: () => void;
+  captionToggleIcon?: React.ReactNode;
+  captionToggleLabel?: string;
 }): React.ReactElement {
+  const captionVisible = showCaption !== false && Boolean(caption);
+  const toggleLabel = captionToggleLabel || (captionVisible ? 'Hide caption' : 'Show caption');
   return (
     <ChartWrap>
       <BigNumberValue>{formattedValue ?? formatNumber(value)}</BigNumberValue>
-      {caption ? <BigNumberCaption>{caption}</BigNumberCaption> : null}
+      {captionVisible ? (
+        <BigNumberCaption>
+          <BigNumberCaptionText>{caption}</BigNumberCaptionText>
+          {onToggleCaption && captionToggleIcon ? (
+            <BigNumberCaptionToggle
+              type="button"
+              aria-label={toggleLabel}
+              title={toggleLabel}
+              onClick={event => {
+                event.stopPropagation();
+                onToggleCaption();
+              }}
+            >
+              {captionToggleIcon}
+            </BigNumberCaptionToggle>
+          ) : null}
+        </BigNumberCaption>
+      ) : onToggleCaption && captionToggleIcon ? (
+        <BigNumberCaption>
+          <BigNumberCaptionToggle
+            type="button"
+            aria-label={toggleLabel}
+            title={toggleLabel}
+            onClick={event => {
+              event.stopPropagation();
+              onToggleCaption();
+            }}
+          >
+            {captionToggleIcon}
+          </BigNumberCaptionToggle>
+        </BigNumberCaption>
+      ) : null}
     </ChartWrap>
   );
 }
@@ -530,11 +596,19 @@ export function PivotTableView({table}: {table: PivotTableResult}): React.ReactE
 export function ChartRenderer({
   data,
   selectedKey,
-  onSelect
+  onSelect,
+  showCaption,
+  onToggleCaption,
+  captionToggleIcon,
+  captionToggleLabel
 }: {
   data: ChartViewData;
   selectedKey?: string;
   onSelect?: ClickHandler;
+  showCaption?: boolean;
+  onToggleCaption?: () => void;
+  captionToggleIcon?: React.ReactNode;
+  captionToggleLabel?: string;
 }): React.ReactElement {
   switch (data.kind) {
     case 'bigNumber':
@@ -543,6 +617,10 @@ export function ChartRenderer({
           value={data.value}
           caption={data.caption}
           formattedValue={data.formattedValue}
+          showCaption={showCaption}
+          onToggleCaption={onToggleCaption}
+          captionToggleIcon={captionToggleIcon}
+          captionToggleLabel={captionToggleLabel}
         />
       );
     case 'bars':

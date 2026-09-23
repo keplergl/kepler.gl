@@ -65,6 +65,7 @@ export function createBigNumberChart(props: Partial<DatasetChartConfig> = {}): D
       ...props,
       chartDisplay: {
         format: 'DECIMAL_SHORT_COMMA',
+        showCaption: true,
         ...props.chartDisplay
       }
     }),

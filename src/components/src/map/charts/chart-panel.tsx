@@ -36,7 +36,7 @@ import {
   updateCustomColorRangeByColorUI
 } from '@kepler.gl/utils';
 
-import {Settings, Trash, Pin} from '../../common/icons';
+import {Settings, Trash, Pin, EyeSeen, EyeUnseen} from '../../common/icons';
 import {Input, PanelLabel, Tooltip} from '../../common/styled-components';
 import Switch from '../../common/switch';
 import ItemSelector from '../../common/item-selector/item-selector';
@@ -579,6 +579,41 @@ export function ChartPanelContentFactory(
                 data={view}
                 selectedKey={selectedKey}
                 onSelect={(key, extra) => onSelectBin(chart, key, extra?.filterValue)}
+                showCaption={
+                  chart.type === ChartType.bigNumber
+                    ? // While editing, always show the caption; hide only applies in pinned mode.
+                      readOnly
+                      ? chart.chartDisplay?.showCaption !== false
+                      : true
+                    : undefined
+                }
+                onToggleCaption={
+                  !readOnly && chart.type === ChartType.bigNumber && !isLayerChartConfig(chart)
+                    ? () =>
+                        onUpdate(chart.id, {
+                          chartDisplay: {
+                            ...chart.chartDisplay,
+                            showCaption: chart.chartDisplay?.showCaption === false
+                          }
+                        })
+                    : undefined
+                }
+                captionToggleIcon={
+                  !readOnly && chart.type === ChartType.bigNumber ? (
+                    chart.chartDisplay?.showCaption === false ? (
+                      <EyeUnseen height="12px" />
+                    ) : (
+                      <EyeSeen height="12px" />
+                    )
+                  ) : undefined
+                }
+                captionToggleLabel={
+                  !readOnly && chart.type === ChartType.bigNumber
+                    ? chart.chartDisplay?.showCaption === false
+                      ? 'Show caption when pinned'
+                      : 'Hide caption when pinned'
+                    : undefined
+                }
               />
               {!readOnly && chart.display?.isConfigActive ? (
                 <ConfigBlock>

@@ -484,6 +484,8 @@ export default {
     removeChart: 'Remove chart',
     pinChart: 'Pin chart',
     unpinChart: 'Unpin chart',
+    showChartCaption: 'Show caption',
+    hideChartCaption: 'Hide caption',
     editLayerJson: 'Edit layer JSON',
     editFilterJson: 'Edit filter JSON',
     editEffectJson: 'Edit effect JSON',
