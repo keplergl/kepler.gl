@@ -614,7 +614,7 @@ export function LineChartView({
         <polyline
           fill="none"
           stroke={stroke}
-          strokeWidth={1.75}
+          strokeWidth={1.25}
           strokeLinejoin="round"
           strokeLinecap="round"
           points={points.join(' ')}
