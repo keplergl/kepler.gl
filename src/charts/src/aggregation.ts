@@ -323,58 +323,129 @@ function getTimeFloor(interval?: string) {
   }
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+function formatUtcDate(ms: number): string {
+  const date = new Date(ms);
+  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}`;
+}
+
+function formatUtcDateTime(ms: number): string {
+  const date = new Date(ms);
+  return `${formatUtcDate(ms)} ${pad2(date.getUTCHours())}:${pad2(date.getUTCMinutes())}`;
+}
+
+/** Label a time bin; omit clock time when the bin spans a day or more. */
+function formatTimeBinRange(x0: number, x1: number): string {
+  const span = Math.max(0, x1 - x0);
+  const crossesDay = formatUtcDate(x0) !== formatUtcDate(x1);
+  if (span >= DAY_MS || crossesDay) {
+    return `${formatUtcDate(x0)} – ${formatUtcDate(x1)}`;
+  }
+  return `${formatUtcDateTime(x0)} – ${formatUtcDateTime(x1)}`;
+}
+
 function timeGroupMap(
   indexes: number[],
   dataset: ChartableDataset,
   fieldName: string,
-  interval?: string
+  interval?: string,
+  numBins = 0
 ): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number>>} {
+  const points = indexes
+    .map(idx => {
+      const raw = dataset.getValue(fieldName, idx);
+      const date = raw instanceof Date ? raw : new Date(raw);
+      const t = date.getTime();
+      return Number.isNaN(t) ? null : {idx, t};
+    })
+    .filter((d): d is {idx: number; t: number} => d !== null);
+
+  if (!points.length) {
+    return {groups: new Map(), filterValues: new Map()};
+  }
+
+  // Bar charts: split the full [min, max] domain into exactly numBins equal ranges.
+  if (numBins > 0) {
+    const min = d3Min(points, d => d.t);
+    const max = d3Max(points, d => d.t);
+    if (min === undefined || max === undefined) {
+      return {groups: new Map(), filterValues: new Map()};
+    }
+    const binCount = Math.max(2, numBins);
+    const hist = histogram<{idx: number; t: number}, number>()
+      .value(d => d.t)
+      .domain([min, max])
+      .thresholds(exactBinThresholds(min, max, binCount));
+    const bins = hist(points);
+    const groups = new Map<string, number[]>();
+    const filterValues = new Map<string, Array<string | number>>();
+    bins.forEach(bin => {
+      const x0 = bin.x0 ?? min;
+      const x1 = bin.x1 ?? max;
+      const key = formatTimeBinRange(x0, x1);
+      groups.set(
+        key,
+        bin.map(d => d.idx)
+      );
+      filterValues.set(key, [x0, x1]);
+    });
+    return {groups, filterValues};
+  }
+
+  // Full series (e.g. line / tooltip charts): one bucket per interval floor.
   const floor = getTimeFloor(interval);
   const groups = new Map<string, number[]>();
-  for (const idx of indexes) {
-    const raw = dataset.getValue(fieldName, idx);
-    const date = raw instanceof Date ? raw : new Date(raw);
-    if (Number.isNaN(date.getTime())) {
-      continue;
-    }
-    const key = floor(date).toISOString();
+  for (const point of points) {
+    const key = floor(new Date(point.t)).toISOString();
     const list = groups.get(key);
     if (list) {
-      list.push(idx);
+      list.push(point.idx);
     } else {
-      groups.set(key, [idx]);
+      groups.set(key, [point.idx]);
     }
   }
   const filterValues = new Map<string, Array<string | number>>();
-  groups.forEach((_, key) => {
-    const start = Date.parse(key);
-    if (Number.isNaN(start)) {
-      filterValues.set(key, [key]);
-      return;
-    }
-    const startDate = new Date(start);
-    let endDate: Date;
-    switch (interval) {
-      case 'year':
-        endDate = utcYear.offset(startDate, 1);
-        break;
-      case 'month':
-        endDate = utcMonth.offset(startDate, 1);
-        break;
-      case 'week':
-        endDate = utcWeek.offset(startDate, 1);
-        break;
-      case 'hour':
-        endDate = utcHour.offset(startDate, 1);
-        break;
-      case 'day':
-      default:
-        endDate = utcDay.offset(startDate, 1);
-        break;
-    }
-    filterValues.set(key, [start, endDate.getTime()]);
-  });
-  return {groups, filterValues};
+  Array.from(groups.keys())
+    .sort((a, b) => Date.parse(a) - Date.parse(b) || String(a).localeCompare(String(b)))
+    .forEach(key => {
+      const start = Date.parse(key);
+      if (Number.isNaN(start)) {
+        filterValues.set(key, [key]);
+        return;
+      }
+      const startDate = new Date(start);
+      let endDate: Date;
+      switch (interval) {
+        case 'year':
+          endDate = utcYear.offset(startDate, 1);
+          break;
+        case 'month':
+          endDate = utcMonth.offset(startDate, 1);
+          break;
+        case 'week':
+          endDate = utcWeek.offset(startDate, 1);
+          break;
+        case 'hour':
+          endDate = utcHour.offset(startDate, 1);
+          break;
+        case 'day':
+        default:
+          endDate = utcDay.offset(startDate, 1);
+          break;
+      }
+      filterValues.set(key, [start, endDate.getTime()]);
+    });
+  // Rebuild in chronological order.
+  const ordered = new Map<string, number[]>();
+  Array.from(groups.keys())
+    .sort((a, b) => Date.parse(a) - Date.parse(b) || String(a).localeCompare(String(b)))
+    .forEach(key => ordered.set(key, groups.get(key) || []));
+  return {groups: ordered, filterValues};
 }
 
 function uniqueGroupFilterValues(
@@ -416,7 +487,7 @@ export function groupIndexes(
     aggregation !== BinType.uniqueBin &&
     aggregation !== BinType.numericBin
   ) {
-    return timeGroupMap(indexes, dataset, fieldName, (axis as any).interval);
+    return timeGroupMap(indexes, dataset, fieldName, (axis as any).interval, numBins);
   }
 
   // Continuous reals (and explicit numericBin) → histogram across the full domain.
