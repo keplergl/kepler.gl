@@ -837,6 +837,7 @@ export const chartPropsV1 = {
   axis: null,
   numGroups: null,
   groupOthers: null,
+  colorBy: null,
   chartDisplay: null,
   layerId: null,
   layerChartType: null

@@ -10,6 +10,11 @@ export type ChartAggregation =
   | 'median'
   | 'stdev'
   | 'variance'
+  | 'p05'
+  | 'p25'
+  | 'p50'
+  | 'p75'
+  | 'p95'
   | 'mode'
   | 'countUnique';
 
@@ -51,6 +56,8 @@ export type DatasetChartConfig = BaseChartConfig & {
   axis?: ChartAxis;
   numGroups?: number;
   groupOthers?: boolean;
+  /** How bar/series colors are assigned. */
+  colorBy?: 'none' | 'category' | string;
   chartDisplay: Record<string, any>;
 };
 

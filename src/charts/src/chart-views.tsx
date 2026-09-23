@@ -78,6 +78,70 @@ const BarValue = styled.div`
   color: ${props => props.theme.subtextColor};
 `;
 
+const VerticalBarChart = styled.div`
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  height: 140px;
+  min-height: 140px;
+`;
+
+const VerticalBarCol = styled.div<{$clickable?: boolean}>`
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: ${props => (props.$clickable ? 'pointer' : 'default')};
+  &:focus-visible {
+    outline: 1px solid ${props => props.theme.activeColor};
+    outline-offset: 1px;
+  }
+`;
+
+const VerticalBarValue = styled.div`
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: ${props => props.theme.subtextColor};
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const VerticalBarTrack = styled.div`
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 32px;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  background: ${props => props.theme.sliderBarBgd};
+  border-radius: 2px;
+  overflow: hidden;
+`;
+
+const VerticalBarFill = styled.div<{$color: string; $height: number; $active?: boolean}>`
+  width: 100%;
+  height: ${props => props.$height}%;
+  background: ${props => props.$color};
+  opacity: ${props => (props.$active ? 1 : 0.85)};
+  outline: ${props => (props.$active ? `1px solid ${props.theme.activeColor}` : 'none')};
+`;
+
+const VerticalBarLabel = styled.div`
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: ${props => props.theme.textColor};
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+`;
+
 const HeatGrid = styled.div<{$cols: number}>`
   display: grid;
   grid-template-columns: 72px repeat(${props => props.$cols}, minmax(18px, 1fr));
@@ -149,14 +213,16 @@ function maxValue(bins: ChartBin[]): number {
 
 export function BigNumberView({
   value,
-  caption
+  caption,
+  formattedValue
 }: {
   value: number;
   caption?: string;
+  formattedValue?: string;
 }): React.ReactElement {
   return (
     <ChartWrap>
-      <BigNumberValue>{formatNumber(value)}</BigNumberValue>
+      <BigNumberValue>{formattedValue ?? formatNumber(value)}</BigNumberValue>
       {caption ? <BigNumberCaption>{caption}</BigNumberCaption> : null}
     </ChartWrap>
   );
@@ -181,8 +247,45 @@ export function BarChartView({
     );
   }
   const max = maxValue(bins);
+
+  if (!horizontal) {
+    return (
+      <ChartWrap className="bar-chart">
+        <VerticalBarChart>
+          {bins.map(bin => {
+            const activate = onSelect ? () => onSelect(String(bin.key)) : undefined;
+            const selected = selectedKey === String(bin.key);
+            return (
+              <VerticalBarCol
+                key={bin.key}
+                $clickable={Boolean(activate)}
+                role={activate ? 'button' : undefined}
+                tabIndex={activate ? 0 : undefined}
+                aria-pressed={activate ? selected : undefined}
+                aria-label={`${bin.key}: ${formatNumber(bin.value)}`}
+                onClick={activate}
+                onKeyDown={event => onActivateKey(event, activate)}
+                title={`${bin.key}: ${formatNumber(bin.value)}`}
+              >
+                <VerticalBarValue>{formatNumber(bin.value)}</VerticalBarValue>
+                <VerticalBarTrack>
+                  <VerticalBarFill
+                    $color={bin.color}
+                    $height={(bin.value / max) * 100}
+                    $active={selected}
+                  />
+                </VerticalBarTrack>
+                <VerticalBarLabel>{bin.key}</VerticalBarLabel>
+              </VerticalBarCol>
+            );
+          })}
+        </VerticalBarChart>
+      </ChartWrap>
+    );
+  }
+
   return (
-    <ChartWrap className={horizontal ? 'horizontal-bar-chart' : 'bar-chart'}>
+    <ChartWrap className="horizontal-bar-chart">
       {bins.map(bin => {
         const activate = onSelect ? () => onSelect(String(bin.key)) : undefined;
         const selected = selectedKey === String(bin.key);
@@ -353,7 +456,13 @@ export function ChartRenderer({
 }): React.ReactElement {
   switch (data.kind) {
     case 'bigNumber':
-      return <BigNumberView value={data.value} caption={data.caption} />;
+      return (
+        <BigNumberView
+          value={data.value}
+          caption={data.caption}
+          formattedValue={data.formattedValue}
+        />
+      );
     case 'bars':
       return (
         <BarChartView

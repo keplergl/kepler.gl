@@ -8,18 +8,13 @@ import {
   mean,
   median,
   min as d3Min,
+  quantile,
   sum,
   variance as d3Variance
 } from 'd3-array';
 import {utcDay, utcHour, utcMonth, utcWeek, utcYear} from 'd3-time';
 
-import {
-  CHART_COLORS,
-  DEFAULT_NUM_GROUPS,
-  OTHERS_KEY,
-  TIME_FIELD_TYPES,
-  NUMERIC_FIELD_TYPES
-} from './constants';
+import {CHART_COLORS, DEFAULT_NUM_GROUPS, OTHERS_KEY, TIME_FIELD_TYPES} from './constants';
 import {BinType, SortType} from './constants';
 import {
   ChartableDataset,
@@ -29,6 +24,14 @@ import {
   HeatmapCell,
   PivotTableResult
 } from './types';
+
+const PERCENTILE_AGGREGATIONS: Partial<Record<ChartAggregation, number>> = {
+  p05: 0.05,
+  p25: 0.25,
+  p50: 0.5,
+  p75: 0.75,
+  p95: 0.95
+};
 
 /**
  * Format chart values for display. Prefer compact SI suffixes for large
@@ -105,6 +108,12 @@ function aggregateValues(values: number[], technique: ChartAggregation | null | 
       return deviation(values) ?? 0;
     case 'variance':
       return d3Variance(values) ?? 0;
+    case 'p05':
+    case 'p25':
+    case 'p50':
+    case 'p75':
+    case 'p95':
+      return quantile(values, PERCENTILE_AGGREGATIONS[technique] as number) ?? 0;
     case 'mode':
       return modeValue(values);
     case 'countUnique':
@@ -160,6 +169,18 @@ function aggregateIndexes(
   const technique = aggregation || 'count';
   if (technique === 'count' || !valueField) {
     return indexes.length;
+  }
+  // Count unique / mode should consider raw field values (incl. categorical),
+  // not only values that coerce to numbers.
+  if (technique === 'countUnique') {
+    const keys = new Set<string>();
+    for (const idx of indexes) {
+      const key = toKey(dataset.getValue(valueField, idx));
+      if (key) {
+        keys.add(key);
+      }
+    }
+    return keys.size;
   }
   const values = indexes
     .map(idx => toNumber(dataset.getValue(valueField, idx)))
@@ -312,16 +333,35 @@ export function groupIndexes(
   }
   const fieldType = axis.field?.type;
   const aggregation = axis.aggregation;
-  if (aggregation === BinType.numericBin || NUMERIC_FIELD_TYPES.includes(fieldType || '')) {
+
+  // Time fields → time bins (unless explicitly forced to unique categories)
+  if (
+    (aggregation === BinType.timeBin || TIME_FIELD_TYPES.includes(fieldType || '')) &&
+    aggregation !== BinType.uniqueBin &&
+    aggregation !== BinType.numericBin
+  ) {
+    return timeGroupMap(indexes, dataset, fieldName, (axis as any).interval);
+  }
+
+  // Continuous reals (and explicit numericBin) → histogram across the full domain.
+  // uniqueBin on floats only shows a few clustered values after top-N truncation.
+  if (aggregation === BinType.numericBin || fieldType === 'real') {
+    return numericGroupMap(indexes, dataset, fieldName, numBins);
+  }
+
+  // Integers: prefer unique categories, but fall back to a histogram when cardinality
+  // exceeds the chart's group budget.
+  if (fieldType === 'integer') {
     if (aggregation === BinType.numericBin) {
       return numericGroupMap(indexes, dataset, fieldName, numBins);
     }
-  }
-  if (aggregation === BinType.timeBin || TIME_FIELD_TYPES.includes(fieldType || '')) {
-    if (aggregation === BinType.timeBin || TIME_FIELD_TYPES.includes(fieldType || '')) {
-      return timeGroupMap(indexes, dataset, fieldName, (axis as any).interval);
+    const uniques = uniqueGroupMap(indexes, dataset, fieldName);
+    if (numBins > 0 && uniques.size > numBins) {
+      return numericGroupMap(indexes, dataset, fieldName, numBins);
     }
+    return uniques;
   }
+
   return uniqueGroupMap(indexes, dataset, fieldName);
 }
 
@@ -335,7 +375,9 @@ export function buildGroupedBins({
   numGroups = DEFAULT_NUM_GROUPS,
   groupOthers = false,
   sort,
-  color
+  color,
+  colors,
+  truncate = true
 }: {
   dataset: ChartableDataset;
   applyFilters: boolean;
@@ -346,7 +388,12 @@ export function buildGroupedBins({
   numGroups?: number;
   groupOthers?: boolean;
   sort?: SortType;
+  /** Single color applied to every bin. */
   color?: string;
+  /** Palette used to color bins by category when `color` is not set. */
+  colors?: string[];
+  /** When false, keep every bin (used for numeric/time domain bins). */
+  truncate?: boolean;
 }): ChartBin[] {
   const indexes = indexesOverride || getChartIndexes(dataset, applyFilters);
   const groups = groupIndexes(indexes, dataset, binAxis, numGroups);
@@ -363,7 +410,7 @@ export function buildGroupedBins({
             key: seriesKey,
             value: aggregateIndexes(seriesIndexes, dataset, valueField, aggregation),
             count: seriesIndexes.length,
-            color: colorAt(seriesIdx)
+            color: colors?.length ? colors[seriesIdx % colors.length] : colorAt(seriesIdx)
           })
         )
       : undefined;
@@ -373,13 +420,19 @@ export function buildGroupedBins({
         ? series.reduce((sum, item) => sum + item.value, 0)
         : aggregateIndexes(groupIndexesList, dataset, valueField, aggregation),
       count: groupIndexesList.length,
-      color: color || colorAt(colorIndex),
+      color:
+        color ||
+        (colors?.length ? colors[colorIndex % colors.length] : undefined) ||
+        colorAt(colorIndex),
       series
     });
     colorIndex += 1;
   });
 
   bins = sortBins(bins, sort);
+  if (!truncate || numGroups <= 0) {
+    return bins;
+  }
   return truncateBins(bins, numGroups, groupOthers);
 }
 

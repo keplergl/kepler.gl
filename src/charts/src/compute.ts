@@ -8,11 +8,20 @@ import {
   buildPivotTable,
   buildTimeSeries
 } from './aggregation';
-import {ChartType, LayerChartType, SortType} from './constants';
+import {
+  ChartType,
+  LayerChartType,
+  SortType,
+  BinType,
+  TIME_FIELD_TYPES,
+  ChartColorBy,
+  CHART_COLORS
+} from './constants';
 import {
   ChartBin,
   ChartConfig,
   ChartableDataset,
+  ChartAxis,
   DatasetChartConfig,
   HeatmapCell,
   LayerChartConfig,
@@ -22,11 +31,53 @@ import {
 
 export type ChartViewData =
   | {kind: 'empty'; message?: string}
-  | {kind: 'bigNumber'; value: number; caption?: string}
+  | {
+      kind: 'bigNumber';
+      value: number;
+      caption?: string;
+      format?: string | null;
+      formattedValue?: string;
+    }
   | {kind: 'bars'; bins: ChartBin[]; horizontal?: boolean}
   | {kind: 'line'; bins: ChartBin[]}
   | {kind: 'heatmap'; cells: HeatmapCell[]}
   | {kind: 'pivot'; table: PivotTableResult};
+
+function isOrderedBinAxis(axis?: ChartAxis): boolean {
+  if (!axis?.field) {
+    return false;
+  }
+  const fieldType = axis.field.type;
+  return (
+    axis.aggregation === BinType.numericBin ||
+    axis.aggregation === BinType.timeBin ||
+    fieldType === 'real' ||
+    TIME_FIELD_TYPES.includes(fieldType || '')
+  );
+}
+
+function rgbCss(rgb?: number[]): string | undefined {
+  if (!rgb || rgb.length < 3) {
+    return undefined;
+  }
+  return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+}
+
+function barColorOptions(
+  chart: DatasetChartConfig,
+  dataset: ChartableDataset
+): {color?: string; colors?: string[]} {
+  const colorBy = chart.colorBy ?? ChartColorBy.category;
+  if (colorBy === ChartColorBy.none) {
+    return {
+      color: rgbCss(chart.chartDisplay?.color) || rgbCss(dataset.color) || CHART_COLORS[0]
+    };
+  }
+  const palette = chart.chartDisplay?.colorRange?.colors;
+  return {
+    colors: Array.isArray(palette) && palette.length ? palette : CHART_COLORS
+  };
+}
 
 const hoverIdIndexCache = new WeakMap<number[], Map<string, Map<string, number[]>>>();
 
@@ -95,28 +146,37 @@ export function computeDatasetChart(
       return {
         kind: 'bigNumber',
         value: result.value,
+        format: chart.chartDisplay?.format ?? null,
         caption: chart.axis?.field?.name
           ? `${chart.axis.aggregation || 'count'} of ${chart.axis.field.name}`
           : 'Count of rows'
       };
     }
     case ChartType.barChart:
-    case ChartType.horizontalBar:
+    case ChartType.horizontalBar: {
+      const binAxis = chart.type === ChartType.horizontalBar ? chart.yAxis : chart.xAxis;
+      const ordered = isOrderedBinAxis(binAxis);
+      const {color, colors} = barColorOptions(chart, dataset);
       return {
         kind: 'bars',
         horizontal: chart.type === ChartType.horizontalBar,
         bins: buildGroupedBins({
           dataset,
           applyFilters: chart.applyFilters,
-          binAxis: chart.type === ChartType.horizontalBar ? chart.yAxis : chart.xAxis,
+          binAxis,
           valueAxis: chart.type === ChartType.horizontalBar ? chart.xAxis : chart.yAxis,
           groupByAxis: chart.groupBy,
           numGroups: chart.numGroups,
-          groupOthers: chart.groupOthers,
-          sort: SortType.descending,
-          color: dataset.color ? `rgb(${dataset.color.join(',')})` : undefined
+          groupOthers: ordered ? false : chart.groupOthers,
+          // Numeric/time bins stay in domain order; categories rank by value.
+          sort: ordered ? SortType.dataOrder : SortType.descending,
+          // Histogram/time bins already span the domain — do not top-N truncate.
+          truncate: !ordered,
+          color,
+          colors
         })
       };
+    }
     case ChartType.lineChart:
       return {
         kind: 'line',

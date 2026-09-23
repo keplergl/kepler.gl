@@ -12,9 +12,33 @@ export const CHART_AGGREGATIONS = [
   'median',
   'stdev',
   'variance',
+  'p05',
+  'p25',
+  'p50',
+  'p75',
+  'p95',
   'mode',
   'countUnique'
 ] as const;
+
+export const CHART_AGGREGATION_OPTIONS: {id: (typeof CHART_AGGREGATIONS)[number]; label: string}[] =
+  [
+    {id: 'count', label: 'Count'},
+    {id: 'sum', label: 'Sum'},
+    {id: 'average', label: 'Average'},
+    {id: 'maximum', label: 'Maximum'},
+    {id: 'minimum', label: 'Minimum'},
+    {id: 'median', label: 'Median'},
+    {id: 'stdev', label: 'Std Deviation'},
+    {id: 'variance', label: 'Variance'},
+    {id: 'p05', label: 'P05'},
+    {id: 'p25', label: 'P25'},
+    {id: 'p50', label: 'P50'},
+    {id: 'p75', label: 'P75'},
+    {id: 'p95', label: 'P95'},
+    {id: 'mode', label: 'Mode'},
+    {id: 'countUnique', label: 'Count Unique'}
+  ];
 
 export enum ChartType {
   bigNumber = 'bigNumber',
@@ -50,6 +74,11 @@ export enum SortType {
   alphaDesc = 'alphaDesc'
 }
 
+export enum ChartColorBy {
+  none = 'none',
+  category = 'category'
+}
+
 export const DEFAULT_NUM_GROUPS = 10;
 export const OTHERS_KEY = 'Other';
 
@@ -70,6 +99,29 @@ export const CHART_COLORS = [
   '#FFCB99',
   '#F89570'
 ];
+
+export const CHART_COLOR_BY_OPTIONS: {id: ChartColorBy; label: string}[] = [
+  {id: ChartColorBy.none, label: 'Single color'},
+  {id: ChartColorBy.category, label: 'Category'}
+];
+
+export function getDefaultChartColorRange(steps = DEFAULT_NUM_GROUPS): {
+  name: string;
+  type: string;
+  category: string;
+  colors: string[];
+} {
+  const colors = Array.from(
+    {length: Math.max(2, steps)},
+    (_, i) => CHART_COLORS[i % CHART_COLORS.length]
+  );
+  return {
+    name: 'Chart Colors',
+    type: 'ordinal',
+    category: 'Uber',
+    colors
+  };
+}
 
 export const NUMERIC_FIELD_TYPES = ['integer', 'real'];
 export const CATEGORICAL_FIELD_TYPES = ['string', 'boolean', 'integer'];

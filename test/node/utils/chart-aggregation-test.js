@@ -70,6 +70,32 @@ test('charts -> buildBigNumber count and sum', t => {
   t.end();
 });
 
+test('charts -> buildBigNumber percentiles and countUnique', t => {
+  const dataset = mockDataset([
+    {category: 'A', value: 10, time: new Date('2020-01-01'), id: '1'},
+    {category: 'A', value: 20, time: new Date('2020-01-01'), id: '2'},
+    {category: 'B', value: 30, time: new Date('2020-01-02'), id: '3'},
+    {category: 'C', value: 40, time: new Date('2020-01-02'), id: '4'}
+  ]);
+  t.equal(
+    buildBigNumber({
+      dataset,
+      applyFilters: true,
+      axis: {field: {name: 'value', type: 'real'}, aggregation: 'p50'}
+    }).value,
+    25
+  );
+  t.equal(
+    buildBigNumber({
+      dataset,
+      applyFilters: true,
+      axis: {field: {name: 'category', type: 'string'}, aggregation: 'countUnique'}
+    }).value,
+    3
+  );
+  t.end();
+});
+
 test('charts -> buildGroupedBins unique categories', t => {
   const dataset = mockDataset([
     {category: 'A', value: 10, time: new Date('2020-01-01'), id: '1'},
@@ -85,6 +111,32 @@ test('charts -> buildGroupedBins unique categories', t => {
   const byKey = Object.fromEntries(bins.map(bin => [bin.key, bin.value]));
   t.equal(byKey.A, 12);
   t.equal(byKey.B, 5);
+  t.end();
+});
+
+test('charts -> numeric bin axis spans full domain', t => {
+  const dataset = mockDataset([
+    {category: 'A', value: 2.54, time: new Date('2020-01-01'), id: '1'},
+    {category: 'A', value: 2.55, time: new Date('2020-01-01'), id: '2'},
+    {category: 'A', value: 2.56, time: new Date('2020-01-01'), id: '3'},
+    {category: 'B', value: 5, time: new Date('2020-01-02'), id: '4'},
+    {category: 'C', value: 8, time: new Date('2020-01-02'), id: '5'}
+  ]);
+  const bins = buildGroupedBins({
+    dataset,
+    applyFilters: true,
+    // uniqueBin leftover should still histogram real fields
+    binAxis: {field: {name: 'value', type: 'real'}, aggregation: BinType.uniqueBin},
+    valueAxis: {field: null, aggregation: 'count'},
+    numGroups: 5,
+    sort: 'dataOrder',
+    truncate: false
+  });
+  t.ok(bins.length >= 2, 'should produce multiple numeric bins');
+  const first = String(bins[0].key);
+  const last = String(bins[bins.length - 1].key);
+  t.ok(/2(\.\d+)?/.test(first), `first bin starts near min, got ${first}`);
+  t.ok(/[78]/.test(last), `last bin reaches max, got ${last}`);
   t.end();
 });
 

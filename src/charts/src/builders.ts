@@ -6,10 +6,12 @@ import {
   ChartType,
   LayerChartType,
   BinType,
+  ChartColorBy,
   DEFAULT_NUM_GROUPS,
   CATEGORICAL_FIELD_TYPES,
   NUMERIC_FIELD_TYPES,
-  TIME_FIELD_TYPES
+  TIME_FIELD_TYPES,
+  getDefaultChartColorRange
 } from './constants';
 import {
   ChartConfig,
@@ -57,7 +59,13 @@ function baseChart(
 
 export function createBigNumberChart(props: Partial<DatasetChartConfig> = {}): DatasetChartConfig {
   return {
-    ...baseChart(props),
+    ...baseChart({
+      ...props,
+      chartDisplay: {
+        format: 'DECIMAL_SHORT_COMMA',
+        ...props.chartDisplay
+      }
+    }),
     type: ChartType.bigNumber,
     axis: props.axis || makeAxis(null, 'count'),
     title: props.title || 'Count of rows'
@@ -65,14 +73,22 @@ export function createBigNumberChart(props: Partial<DatasetChartConfig> = {}): D
 }
 
 export function createBarChart(props: Partial<DatasetChartConfig> = {}): DatasetChartConfig {
+  const numGroups = props.numGroups ?? DEFAULT_NUM_GROUPS;
   return {
-    ...baseChart(props),
+    ...baseChart({
+      ...props,
+      chartDisplay: {
+        colorRange: getDefaultChartColorRange(numGroups),
+        ...props.chartDisplay
+      }
+    }),
     type: ChartType.barChart,
     xAxis: props.xAxis || makeAxis(null, BinType.uniqueBin),
     yAxis: props.yAxis || makeAxis(null, 'count'),
     groupBy: props.groupBy || makeAxis(null, BinType.uniqueBin),
-    numGroups: props.numGroups ?? DEFAULT_NUM_GROUPS,
+    numGroups,
     groupOthers: props.groupOthers ?? false,
+    colorBy: props.colorBy ?? ChartColorBy.category,
     title: props.title || 'Bar chart'
   };
 }
