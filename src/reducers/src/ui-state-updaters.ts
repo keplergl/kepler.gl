@@ -1032,6 +1032,22 @@ export const receiveMapConfigUpdater = (
     };
   }
 
+  if (uiState.mapControls?.chart?.active) {
+    const currentChart = newState.mapControls.chart;
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        chart: {
+          show: true,
+          ...currentChart,
+          active: true,
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+
   if (uiState.mapControls?.mapLegend?.settings) {
     newState = setMapControlSettingsUpdater(newState, {
       payload: {panelId: 'mapLegend', settings: uiState.mapControls.mapLegend.settings}

@@ -96,7 +96,9 @@ function CustomMapControlFactory(
   const CustomMapControl = props => {
     const showEffects = Boolean(props.mapControls?.effect?.active);
     const showAnnotations = Boolean(props.mapControls?.annotation?.active);
-    const showCharts = Boolean(props.mapControls?.chart?.active);
+    const showChartsPanel = Boolean(props.mapControls?.chart?.active);
+    const hasPinnedCharts = (props.charts || []).some(chart => chart.pinned !== false);
+    const showCharts = showChartsPanel || hasPinnedCharts;
     const rightPanelVisible = showEffects || showAnnotations || showCharts;
     return (
       <StyledMapControlOverlay top={props.top} rightPanelVisible={rightPanelVisible}>
@@ -106,7 +108,7 @@ function CustomMapControlFactory(
         </StyledMapControlPanel>
         <StyledMapControlContextPanel>
           {showAnnotations ? <AnnotationManager /> : null}
-          {showCharts ? <ChartManager /> : null}
+          {showCharts ? <ChartManager panelActive={showChartsPanel} /> : null}
           {showEffects ? <EffectManager /> : null}
         </StyledMapControlContextPanel>
       </StyledMapControlOverlay>

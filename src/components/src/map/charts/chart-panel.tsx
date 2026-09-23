@@ -29,9 +29,14 @@ import {Layer} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
 import {ColorRange, ColorUI, NestedPartial, RGBColor} from '@kepler.gl/types';
 import {generateHashId} from '@kepler.gl/common-utils';
-import {applyDefaultFormat, runGpuFilterForPlot} from '@kepler.gl/utils';
+import {
+  applyDefaultFormat,
+  runGpuFilterForPlot,
+  updateColorRangeByMatchingPalette,
+  updateCustomColorRangeByColorUI
+} from '@kepler.gl/utils';
 
-import {Settings, Trash} from '../../common/icons';
+import {Settings, Trash, Pin} from '../../common/icons';
 import {Input, PanelLabel, Tooltip} from '../../common/styled-components';
 import Switch from '../../common/switch';
 import ItemSelector from '../../common/item-selector/item-selector';
@@ -72,6 +77,97 @@ function formatBigNumberTick(value: number, formatId?: string | null): string {
   return applyDefaultFormat(tooltipFormat)(value);
 }
 
+const COLOR_RANGE_UI_KEYS = ['reversed', 'steps', 'colorBlindSafe', 'type'] as const;
+
+function shouldUpdateChartColorRange(next: NestedPartial<ColorUI>, current: ColorUI): boolean {
+  const config = next.colorRangeConfig;
+  if (!config) {
+    return false;
+  }
+  return COLOR_RANGE_UI_KEYS.some(
+    key =>
+      Object.prototype.hasOwnProperty.call(config, key) &&
+      config[key] !== current.colorRangeConfig?.[key]
+  );
+}
+
+function colorRangeFromColorUI(
+  currentRange: ColorRange,
+  colorRangeConfig: ColorUI['colorRangeConfig'],
+  next: NestedPartial<ColorUI>
+): ColorRange {
+  const isCustomReversed =
+    currentRange.category === 'Custom' &&
+    Boolean(next.colorRangeConfig) &&
+    Object.prototype.hasOwnProperty.call(next.colorRangeConfig, 'reversed');
+  if (isCustomReversed) {
+    return updateCustomColorRangeByColorUI(currentRange, colorRangeConfig);
+  }
+
+  const updated = updateColorRangeByMatchingPalette(currentRange, colorRangeConfig);
+  if (updated !== currentRange) {
+    return updated;
+  }
+
+  // Fallback for custom chart palettes that are not in KEPLER_COLOR_PALETTES.
+  const baseColors = currentRange.colors?.length
+    ? currentRange.colors
+    : getDefaultChartColorRange(colorRangeConfig.steps || 10).colors;
+  const steps = Math.max(2, colorRangeConfig.steps || baseColors.length);
+  const colors = Array.from({length: steps}, (_, i) => baseColors[i % baseColors.length]);
+  if (colorRangeConfig.reversed) {
+    colors.reverse();
+  }
+  return {
+    ...currentRange,
+    colors,
+    ...(colorRangeConfig.reversed ? {reversed: true} : {reversed: false})
+  };
+}
+
+/** Resize / rematch a chart color range to a target step count. */
+function colorRangeWithSteps(currentRange: ColorRange | undefined, steps: number): ColorRange {
+  const stepsClamped = Math.max(2, steps);
+  const range = (currentRange || getDefaultChartColorRange(stepsClamped)) as ColorRange;
+  if ((range.colors?.length || 0) === stepsClamped) {
+    return range;
+  }
+  const colorRangeConfig = {
+    type: (range.type as ColorUI['colorRangeConfig']['type']) || 'all',
+    steps: stepsClamped,
+    reversed: Boolean(range.reversed),
+    custom: false,
+    customBreaks: false,
+    colorBlindSafe: false
+  };
+  return colorRangeFromColorUI(range, colorRangeConfig, {colorRangeConfig: {steps: stepsClamped}});
+}
+
+/**
+ * After a bar chart bin-axis change, sync palette steps to the resulting bin count.
+ */
+function withColorRangeSyncedToBins(
+  chart: ChartConfig,
+  dataset: ReturnType<typeof toChartableDataset> | null,
+  axisUpdate: Partial<ChartConfig>
+): Partial<ChartConfig> {
+  if (chart.type !== ChartType.barChart && chart.type !== ChartType.horizontalBar) {
+    return axisUpdate;
+  }
+  const nextChart = {...chart, ...axisUpdate} as ChartConfig;
+  const view = computeChart(nextChart, dataset);
+  if (view.kind !== 'bars' || view.bins.length < 2) {
+    return axisUpdate;
+  }
+  return {
+    ...axisUpdate,
+    chartDisplay: {
+      ...chart.chartDisplay,
+      colorRange: colorRangeWithSteps(chart.chartDisplay?.colorRange, view.bins.length)
+    }
+  };
+}
+
 /**
  * Charts should respect the same filters as the map. Kepler keeps range/time
  * filters on the GPU, so `dataset.filteredIndex` alone is not enough — apply
@@ -104,11 +200,39 @@ const ChartList = styled.div`
   padding: 8px;
 `;
 
-const ChartCard = styled.div`
+const ChartCard = styled.div<{
+  $showPinOnHover?: boolean;
+}>`
   border: 1px solid ${props => props.theme.panelBorderColor};
   border-radius: 4px;
   margin-bottom: 8px;
   background-color: ${props => props.theme.panelBackground};
+  position: relative;
+
+  ${props =>
+    props.$showPinOnHover
+      ? `
+    .chart-card__pin-action {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      z-index: 2;
+      margin-left: 0;
+      padding: 4px;
+      border-radius: 2px;
+      background-color: ${props.theme.panelBackground};
+      box-shadow: 0 0 0 1px ${props.theme.panelBorderColor};
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+    &:hover .chart-card__pin-action,
+    &:focus-within .chart-card__pin-action {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  `
+      : ''}
 `;
 
 const ChartCardHeader = styled.div`
@@ -123,6 +247,18 @@ const ChartTitleInput = styled(Input)`
   flex: 1 1 auto;
   min-width: 0;
   width: auto;
+`;
+
+const ChartTitleText = styled.div`
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: ${props => props.theme.textColor};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 6px 0;
 `;
 
 const ChartHeaderActions = styled.div`
@@ -172,6 +308,14 @@ const CompactFieldSelector = styled.div`
   }
 `;
 
+/** Keep the palette panel compact inside the chart settings column. */
+const ChartColorSelectorWrapper = styled.div`
+  .color-selector__dropdown {
+    max-height: 220px;
+    overflow-y: auto;
+  }
+`;
+
 function axisFromField(
   field: {name: string; type: string} | null,
   aggregation: ChartAxis['aggregation']
@@ -188,6 +332,8 @@ export type ChartPanelProps = {
   datasets: Datasets;
   layers: Layer[];
   visStateActions?: typeof VisStateActions;
+  /** When true, hide edit chrome and only render chart views (pinned overlay). */
+  readOnly?: boolean;
 };
 
 ChartPanelContentFactory.deps = [
@@ -205,7 +351,8 @@ export function ChartPanelContentFactory(
     charts = [],
     datasets,
     layers,
-    visStateActions
+    visStateActions,
+    readOnly = false
   }) => {
     const [colorUIByChart, setColorUIByChart] = useState<Record<string, ColorUI>>({});
 
@@ -214,6 +361,41 @@ export function ChartPanelContentFactory(
         visStateActions?.updateChart(id, props);
       },
       [visStateActions]
+    );
+
+    const syncColorUISteps = useCallback((chartId: string, colorRange?: ColorRange) => {
+      if (!colorRange?.colors?.length) {
+        return;
+      }
+      setColorUIByChart(prev => {
+        const current = prev[chartId] || DEFAULT_COLOR_UI;
+        return {
+          ...prev,
+          [chartId]: {
+            ...current,
+            colorRangeConfig: {
+              ...current.colorRangeConfig,
+              steps: colorRange.colors.length,
+              reversed: Boolean(colorRange.reversed)
+            }
+          }
+        };
+      });
+    }, []);
+
+    const updateBarBinAxis = useCallback(
+      (
+        chart: ChartConfig,
+        dataset: ReturnType<typeof toChartableDataset> | null,
+        axisUpdate: Partial<ChartConfig>
+      ) => {
+        const updates = withColorRangeSyncedToBins(chart, dataset, axisUpdate);
+        onUpdate(chart.id, updates);
+        const colorRange = (updates.chartDisplay as {colorRange?: ColorRange} | undefined)
+          ?.colorRange;
+        syncColorUISteps(chart.id, colorRange);
+      },
+      [onUpdate, syncColorUISteps]
     );
 
     const onRemove = useCallback(
@@ -277,55 +459,102 @@ export function ChartPanelContentFactory(
               ? String(chart.crossFilter.value.x)
               : undefined;
           return (
-            <ChartCard key={chart.id} className="chart-card">
+            <ChartCard key={chart.id} className="chart-card" $showPinOnHover={readOnly}>
+              {readOnly ? (
+                <>
+                  <ChartHeaderAction
+                    className="chart-card__pin-action"
+                    $active
+                    data-tip
+                    data-for={`chart-pin_${chart.id}`}
+                    aria-label="Unpin chart"
+                    onClick={() => onUpdate(chart.id, {pinned: false})}
+                  >
+                    <Pin height="16px" />
+                  </ChartHeaderAction>
+                  <Tooltip id={`chart-pin_${chart.id}`} effect="solid" delayShow={500}>
+                    <span>
+                      <FormattedMessage id="tooltip.unpinChart" defaultMessage="Unpin chart" />
+                    </span>
+                  </Tooltip>
+                </>
+              ) : null}
               <ChartCardHeader>
-                <ChartTitleInput
-                  type="text"
-                  value={chart.title}
-                  onChange={event => onUpdate(chart.id, {title: event.target.value})}
-                />
-                <ChartHeaderActions>
-                  <ChartHeaderAction
-                    $active={Boolean(chart.display?.isConfigActive)}
-                    data-tip
-                    data-for={`chart-settings_${chart.id}`}
-                    onClick={() =>
-                      onUpdate(chart.id, {
-                        display: {isConfigActive: !chart.display?.isConfigActive}
-                      })
-                    }
-                  >
-                    <Settings height="16px" />
-                  </ChartHeaderAction>
-                  <Tooltip id={`chart-settings_${chart.id}`} effect="solid" delayShow={500}>
-                    <span>
-                      <FormattedMessage
-                        id="tooltip.chartSettings"
-                        defaultMessage="Chart settings"
-                      />
-                    </span>
-                  </Tooltip>
-                  <ChartHeaderAction
-                    aria-label="Remove chart"
-                    data-tip
-                    data-for={`chart-remove_${chart.id}`}
-                    onClick={() => onRemove(chart.id)}
-                  >
-                    <Trash height="16px" />
-                  </ChartHeaderAction>
-                  <Tooltip id={`chart-remove_${chart.id}`} effect="solid" delayShow={500}>
-                    <span>
-                      <FormattedMessage id="tooltip.removeChart" defaultMessage="Remove chart" />
-                    </span>
-                  </Tooltip>
-                </ChartHeaderActions>
+                {readOnly ? (
+                  <ChartTitleText>{chart.title}</ChartTitleText>
+                ) : (
+                  <ChartTitleInput
+                    type="text"
+                    value={chart.title}
+                    onChange={event => onUpdate(chart.id, {title: event.target.value})}
+                  />
+                )}
+                {readOnly ? null : (
+                  <ChartHeaderActions>
+                    <ChartHeaderAction
+                      className="chart-card__pin-action"
+                      $active={chart.pinned !== false}
+                      data-tip
+                      data-for={`chart-pin_${chart.id}`}
+                      aria-label={chart.pinned !== false ? 'Unpin chart' : 'Pin chart'}
+                      onClick={() =>
+                        onUpdate(chart.id, {
+                          pinned: chart.pinned === false
+                        })
+                      }
+                    >
+                      <Pin height="16px" />
+                    </ChartHeaderAction>
+                    <Tooltip id={`chart-pin_${chart.id}`} effect="solid" delayShow={500}>
+                      <span>
+                        <FormattedMessage
+                          id={chart.pinned !== false ? 'tooltip.unpinChart' : 'tooltip.pinChart'}
+                          defaultMessage={chart.pinned !== false ? 'Unpin chart' : 'Pin chart'}
+                        />
+                      </span>
+                    </Tooltip>
+                    <ChartHeaderAction
+                      $active={Boolean(chart.display?.isConfigActive)}
+                      data-tip
+                      data-for={`chart-settings_${chart.id}`}
+                      onClick={() =>
+                        onUpdate(chart.id, {
+                          display: {isConfigActive: !chart.display?.isConfigActive}
+                        })
+                      }
+                    >
+                      <Settings height="16px" />
+                    </ChartHeaderAction>
+                    <Tooltip id={`chart-settings_${chart.id}`} effect="solid" delayShow={500}>
+                      <span>
+                        <FormattedMessage
+                          id="tooltip.chartSettings"
+                          defaultMessage="Chart settings"
+                        />
+                      </span>
+                    </Tooltip>
+                    <ChartHeaderAction
+                      aria-label="Remove chart"
+                      data-tip
+                      data-for={`chart-remove_${chart.id}`}
+                      onClick={() => onRemove(chart.id)}
+                    >
+                      <Trash height="16px" />
+                    </ChartHeaderAction>
+                    <Tooltip id={`chart-remove_${chart.id}`} effect="solid" delayShow={500}>
+                      <span>
+                        <FormattedMessage id="tooltip.removeChart" defaultMessage="Remove chart" />
+                      </span>
+                    </Tooltip>
+                  </ChartHeaderActions>
+                )}
               </ChartCardHeader>
               <ChartRenderer
                 data={view}
                 selectedKey={selectedKey}
                 onSelect={key => onSelectBin(chart, key)}
               />
-              {chart.display?.isConfigActive ? (
+              {!readOnly && chart.display?.isConfigActive ? (
                 <ConfigBlock>
                   <ChartConfigGroup
                     label="chartPanel.dataset"
@@ -446,7 +675,7 @@ export function ChartPanelContentFactory(
                     isLayerChartConfig(chart) &&
                     chart.layerChartType === LayerChartType.BREAKDOWN_BY_CATEGORY
                   ) ? (
-                    <ChartConfigGroup label="chartPanel.xAxis" defaultMessage="X axis" expanded>
+                    <ChartConfigGroup label="chartPanel.xAxis" defaultMessage="X axis">
                       <ConfigUncollapsibleContent>
                         <ChartConfigSection>
                           <CompactFieldSelector>
@@ -454,51 +683,55 @@ export function ChartPanelContentFactory(
                               fields={fields as any}
                               value={chart.xAxis?.field?.name}
                               erasable
-                              onSelect={item =>
-                                onUpdate(chart.id, {
-                                  xAxis: axisFromField(
-                                    (item as any) || null,
-                                    chart.type === ChartType.horizontalBar
-                                      ? chart.xAxis?.aggregation || 'count'
-                                      : binAggregationForField((item as any) || null)
-                                  )
-                                })
-                              }
+                              onSelect={item => {
+                                const xAxis = axisFromField(
+                                  (item as any) || null,
+                                  chart.type === ChartType.horizontalBar
+                                    ? chart.xAxis?.aggregation || 'count'
+                                    : binAggregationForField((item as any) || null)
+                                );
+                                // Vertical bar: X is the bin axis — sync palette steps to bins.
+                                if (chart.type === ChartType.barChart) {
+                                  updateBarBinAxis(chart, dataset, {xAxis});
+                                  return;
+                                }
+                                onUpdate(chart.id, {xAxis});
+                              }}
                             />
                           </CompactFieldSelector>
                         </ChartConfigSection>
-                        {chart.type === ChartType.horizontalBar ? (
-                          <ChartConfigSectionWrapper>
-                            <PanelLabel>
-                              <FormattedMessage
-                                id="chartPanel.aggregation"
-                                defaultMessage="Aggregation"
-                              />
-                            </PanelLabel>
-                            <ItemSelector
-                              selectedItems={
-                                CHART_AGGREGATION_OPTIONS.find(
-                                  option => option.id === chart.xAxis?.aggregation
-                                ) || CHART_AGGREGATION_OPTIONS[0]
-                              }
-                              options={CHART_AGGREGATION_OPTIONS}
-                              displayOption={(d: {label: string}) => d.label}
-                              getOptionValue={(d: {id: string}) => d.id}
-                              multiSelect={false}
-                              searchable={false}
-                              size="small"
-                              onChange={aggregation =>
-                                onUpdate(chart.id, {
-                                  xAxis: {
-                                    ...(chart.xAxis as ChartAxis),
-                                    aggregation: aggregation as ChartAxis['aggregation']
-                                  }
-                                })
-                              }
-                            />
-                          </ChartConfigSectionWrapper>
-                        ) : null}
                       </ConfigUncollapsibleContent>
+                      {chart.type === ChartType.horizontalBar ? (
+                        <ChartConfigSectionWrapper>
+                          <PanelLabel>
+                            <FormattedMessage
+                              id="chartPanel.aggregation"
+                              defaultMessage="Aggregation"
+                            />
+                          </PanelLabel>
+                          <ItemSelector
+                            selectedItems={
+                              CHART_AGGREGATION_OPTIONS.find(
+                                option => option.id === chart.xAxis?.aggregation
+                              ) || CHART_AGGREGATION_OPTIONS[0]
+                            }
+                            options={CHART_AGGREGATION_OPTIONS}
+                            displayOption={(d: {label: string}) => d.label}
+                            getOptionValue={(d: {id: string}) => d.id}
+                            multiSelect={false}
+                            searchable={false}
+                            size="small"
+                            onChange={aggregation =>
+                              onUpdate(chart.id, {
+                                xAxis: {
+                                  ...(chart.xAxis as ChartAxis),
+                                  aggregation: aggregation as ChartAxis['aggregation']
+                                }
+                              })
+                            }
+                          />
+                        </ChartConfigSectionWrapper>
+                      ) : null}
                     </ChartConfigGroup>
                   ) : null}
 
@@ -507,7 +740,7 @@ export function ChartPanelContentFactory(
                   chart.type === ChartType.lineChart ||
                   (isLayerChartConfig(chart) &&
                     chart.layerChartType === LayerChartType.TIME_SERIES) ? (
-                    <ChartConfigGroup label="chartPanel.yAxis" defaultMessage="Y axis" expanded>
+                    <ChartConfigGroup label="chartPanel.yAxis" defaultMessage="Y axis">
                       <ConfigUncollapsibleContent>
                         <ChartConfigSection>
                           <CompactFieldSelector>
@@ -515,57 +748,61 @@ export function ChartPanelContentFactory(
                               fields={fields as any}
                               value={chart.yAxis?.field?.name}
                               erasable
-                              onSelect={item =>
-                                onUpdate(chart.id, {
-                                  yAxis: axisFromField(
-                                    (item as any) || null,
-                                    chart.type === ChartType.horizontalBar
-                                      ? binAggregationForField((item as any) || null)
-                                      : chart.yAxis?.aggregation || 'count'
-                                  )
-                                })
-                              }
+                              onSelect={item => {
+                                const yAxis = axisFromField(
+                                  (item as any) || null,
+                                  chart.type === ChartType.horizontalBar
+                                    ? binAggregationForField((item as any) || null)
+                                    : chart.yAxis?.aggregation || 'count'
+                                );
+                                // Horizontal bar: Y is the bin axis — sync palette steps to bins.
+                                if (chart.type === ChartType.horizontalBar) {
+                                  updateBarBinAxis(chart, dataset, {yAxis});
+                                  return;
+                                }
+                                onUpdate(chart.id, {yAxis});
+                              }}
                             />
                           </CompactFieldSelector>
                         </ChartConfigSection>
-                        {chart.type !== ChartType.horizontalBar ? (
-                          <ChartConfigSectionWrapper>
-                            <PanelLabel>
-                              <FormattedMessage
-                                id="chartPanel.aggregation"
-                                defaultMessage="Aggregation"
-                              />
-                            </PanelLabel>
-                            <ItemSelector
-                              selectedItems={
-                                CHART_AGGREGATION_OPTIONS.find(
-                                  option => option.id === chart.yAxis?.aggregation
-                                ) || CHART_AGGREGATION_OPTIONS[0]
-                              }
-                              options={CHART_AGGREGATION_OPTIONS}
-                              displayOption={(d: {label: string}) => d.label}
-                              getOptionValue={(d: {id: string}) => d.id}
-                              multiSelect={false}
-                              searchable={false}
-                              size="small"
-                              onChange={aggregation =>
-                                onUpdate(chart.id, {
-                                  yAxis: {
-                                    ...(chart.yAxis as ChartAxis),
-                                    aggregation: aggregation as ChartAxis['aggregation']
-                                  }
-                                })
-                              }
-                            />
-                          </ChartConfigSectionWrapper>
-                        ) : null}
                       </ConfigUncollapsibleContent>
+                      {chart.type !== ChartType.horizontalBar ? (
+                        <ChartConfigSectionWrapper>
+                          <PanelLabel>
+                            <FormattedMessage
+                              id="chartPanel.aggregation"
+                              defaultMessage="Aggregation"
+                            />
+                          </PanelLabel>
+                          <ItemSelector
+                            selectedItems={
+                              CHART_AGGREGATION_OPTIONS.find(
+                                option => option.id === chart.yAxis?.aggregation
+                              ) || CHART_AGGREGATION_OPTIONS[0]
+                            }
+                            options={CHART_AGGREGATION_OPTIONS}
+                            displayOption={(d: {label: string}) => d.label}
+                            getOptionValue={(d: {id: string}) => d.id}
+                            multiSelect={false}
+                            searchable={false}
+                            size="small"
+                            onChange={aggregation =>
+                              onUpdate(chart.id, {
+                                yAxis: {
+                                  ...(chart.yAxis as ChartAxis),
+                                  aggregation: aggregation as ChartAxis['aggregation']
+                                }
+                              })
+                            }
+                          />
+                        </ChartConfigSectionWrapper>
+                      ) : null}
                     </ChartConfigGroup>
                   ) : null}
 
                   {chart.type === ChartType.heatmapChart || chart.type === ChartType.pivotTable ? (
                     <>
-                      <ChartConfigGroup label="chartPanel.yAxis" defaultMessage="Y axis" expanded>
+                      <ChartConfigGroup label="chartPanel.yAxis" defaultMessage="Y axis">
                         <ConfigUncollapsibleContent>
                           <ChartConfigSection>
                             <CompactFieldSelector>
@@ -586,7 +823,7 @@ export function ChartPanelContentFactory(
                           </ChartConfigSection>
                         </ConfigUncollapsibleContent>
                       </ChartConfigGroup>
-                      <ChartConfigGroup label="chartPanel.value" defaultMessage="Value" expanded>
+                      <ChartConfigGroup label="chartPanel.value" defaultMessage="Value">
                         <ConfigUncollapsibleContent>
                           <ChartConfigSection>
                             <CompactFieldSelector>
@@ -605,36 +842,36 @@ export function ChartPanelContentFactory(
                               />
                             </CompactFieldSelector>
                           </ChartConfigSection>
-                          <ChartConfigSectionWrapper>
-                            <PanelLabel>
-                              <FormattedMessage
-                                id="chartPanel.aggregation"
-                                defaultMessage="Aggregation"
-                              />
-                            </PanelLabel>
-                            <ItemSelector
-                              selectedItems={
-                                CHART_AGGREGATION_OPTIONS.find(
-                                  option => option.id === chart.value?.aggregation
-                                ) || CHART_AGGREGATION_OPTIONS[0]
-                              }
-                              options={CHART_AGGREGATION_OPTIONS}
-                              displayOption={(d: {label: string}) => d.label}
-                              getOptionValue={(d: {id: string}) => d.id}
-                              multiSelect={false}
-                              searchable={false}
-                              size="small"
-                              onChange={aggregation =>
-                                onUpdate(chart.id, {
-                                  value: {
-                                    ...(chart.value as ChartAxis),
-                                    aggregation: aggregation as ChartAxis['aggregation']
-                                  }
-                                })
-                              }
-                            />
-                          </ChartConfigSectionWrapper>
                         </ConfigUncollapsibleContent>
+                        <ChartConfigSectionWrapper>
+                          <PanelLabel>
+                            <FormattedMessage
+                              id="chartPanel.aggregation"
+                              defaultMessage="Aggregation"
+                            />
+                          </PanelLabel>
+                          <ItemSelector
+                            selectedItems={
+                              CHART_AGGREGATION_OPTIONS.find(
+                                option => option.id === chart.value?.aggregation
+                              ) || CHART_AGGREGATION_OPTIONS[0]
+                            }
+                            options={CHART_AGGREGATION_OPTIONS}
+                            displayOption={(d: {label: string}) => d.label}
+                            getOptionValue={(d: {id: string}) => d.id}
+                            multiSelect={false}
+                            searchable={false}
+                            size="small"
+                            onChange={aggregation =>
+                              onUpdate(chart.id, {
+                                value: {
+                                  ...(chart.value as ChartAxis),
+                                  aggregation: aggregation as ChartAxis['aggregation']
+                                }
+                              })
+                            }
+                          />
+                        </ChartConfigSectionWrapper>
                       </ChartConfigGroup>
                     </>
                   ) : null}
@@ -665,8 +902,8 @@ export function ChartPanelContentFactory(
 
                   {chart.type === ChartType.barChart || chart.type === ChartType.horizontalBar ? (
                     <ChartConfigGroup label="chartPanel.color" defaultMessage="Color">
-                      <ConfigUncollapsibleContent>
-                        <ChartConfigSection>
+                      <ChartConfigSection>
+                        <ChartColorSelectorWrapper>
                           <ColorSelector
                             colorSets={[
                               ((chart.colorBy ?? ChartColorBy.category) === ChartColorBy.none
@@ -697,53 +934,81 @@ export function ChartPanelContentFactory(
                             ]}
                             colorUI={colorUIByChart[chart.id] || DEFAULT_COLOR_UI}
                             setColorUI={(next: NestedPartial<ColorUI>) => {
-                              setColorUIByChart(prev => {
-                                const current = prev[chart.id] || DEFAULT_COLOR_UI;
-                                return {
-                                  ...prev,
-                                  [chart.id]: {
-                                    ...current,
-                                    ...next,
-                                    colorRangeConfig: {
-                                      ...current.colorRangeConfig,
-                                      ...(next.colorRangeConfig || {})
-                                    }
-                                  } as ColorUI
-                                };
-                              });
+                              const current = colorUIByChart[chart.id] || DEFAULT_COLOR_UI;
+                              const merged = {
+                                ...current,
+                                ...next,
+                                colorRangeConfig: {
+                                  ...current.colorRangeConfig,
+                                  ...(next.colorRangeConfig || {})
+                                }
+                              } as ColorUI;
+                              setColorUIByChart(prev => ({
+                                ...prev,
+                                [chart.id]: merged
+                              }));
+
+                              // Steps / reversed / type changes should refresh bar colors
+                              // immediately (same as layer color UI), not only after picking
+                              // another palette.
+                              if (shouldUpdateChartColorRange(next, current)) {
+                                const currentRange = (chart.chartDisplay?.colorRange ||
+                                  getDefaultChartColorRange(chart.numGroups || 10)) as ColorRange;
+                                const colorRange = colorRangeFromColorUI(
+                                  currentRange,
+                                  merged.colorRangeConfig,
+                                  next
+                                );
+                                onUpdate(chart.id, {
+                                  chartDisplay: {
+                                    ...chart.chartDisplay,
+                                    colorRange
+                                  }
+                                });
+                              }
                             }}
                           />
-                        </ChartConfigSection>
-                        <ChartConfigSectionWrapper>
-                          <PanelLabel>
-                            <FormattedMessage id="chartPanel.colorBy" defaultMessage="Color by" />
-                          </PanelLabel>
-                          <ItemSelector
-                            selectedItems={
-                              CHART_COLOR_BY_OPTIONS.find(
-                                option => option.id === (chart.colorBy ?? ChartColorBy.category)
-                              ) || CHART_COLOR_BY_OPTIONS[1]
-                            }
-                            options={CHART_COLOR_BY_OPTIONS}
-                            displayOption={(d: {label: string}) => d.label}
-                            getOptionValue={(d: {id: string}) => d.id}
-                            multiSelect={false}
-                            searchable={false}
-                            size="small"
-                            onChange={value =>
-                              onUpdate(chart.id, {
-                                colorBy: String(value) as ChartColorBy
-                              })
-                            }
-                          />
-                        </ChartConfigSectionWrapper>
-                      </ConfigUncollapsibleContent>
+                        </ChartColorSelectorWrapper>
+                      </ChartConfigSection>
+                      <ChartConfigSectionWrapper>
+                        <PanelLabel>
+                          <FormattedMessage id="chartPanel.colorBy" defaultMessage="Color by" />
+                        </PanelLabel>
+                        <ItemSelector
+                          selectedItems={
+                            CHART_COLOR_BY_OPTIONS.find(
+                              option => option.id === (chart.colorBy ?? ChartColorBy.category)
+                            ) || CHART_COLOR_BY_OPTIONS[1]
+                          }
+                          options={CHART_COLOR_BY_OPTIONS}
+                          displayOption={(d: {label: string}) => d.label}
+                          getOptionValue={(d: {id: string}) => d.id}
+                          multiSelect={false}
+                          searchable={false}
+                          size="small"
+                          onChange={value =>
+                            onUpdate(chart.id, {
+                              colorBy: String(value) as ChartColorBy
+                            })
+                          }
+                        />
+                      </ChartConfigSectionWrapper>
                     </ChartConfigGroup>
                   ) : null}
 
                   {!isLayerChartConfig(chart) ? (
                     chart.type === ChartType.bigNumber ? (
                       <ChartConfigGroup label="chartPanel.options" defaultMessage="Options">
+                        <ChartConfigSectionWrapper>
+                          <PanelLabel>
+                            <FormattedMessage id="chartPanel.pinned" defaultMessage="Pinned" />
+                          </PanelLabel>
+                          <Switch
+                            id={`${chart.id}-pinned`}
+                            checked={chart.pinned !== false}
+                            onChange={() => onUpdate(chart.id, {pinned: chart.pinned === false})}
+                          />
+                        </ChartConfigSectionWrapper>
                         <ChartConfigSectionWrapper>
                           <PanelLabel>
                             <FormattedMessage
@@ -778,53 +1043,59 @@ export function ChartPanelContentFactory(
                       </ChartConfigGroup>
                     ) : (
                       <ChartConfigGroup label="chartPanel.options" defaultMessage="Options">
-                        <ConfigUncollapsibleContent>
+                        <ChartConfigSectionWrapper>
+                          <PanelLabel>
+                            <FormattedMessage id="chartPanel.pinned" defaultMessage="Pinned" />
+                          </PanelLabel>
+                          <Switch
+                            id={`${chart.id}-pinned`}
+                            checked={chart.pinned !== false}
+                            onChange={() => onUpdate(chart.id, {pinned: chart.pinned === false})}
+                          />
+                        </ChartConfigSectionWrapper>
+                        <ChartConfigSectionWrapper>
+                          <PanelLabel>
+                            <FormattedMessage
+                              id="chartPanel.applyFilters"
+                              defaultMessage="Apply map filters"
+                            />
+                          </PanelLabel>
+                          <Switch
+                            id={`${chart.id}-apply-filters`}
+                            checked={chart.applyFilters}
+                            onChange={() => onUpdate(chart.id, {applyFilters: !chart.applyFilters})}
+                          />
+                        </ChartConfigSectionWrapper>
+                        {chart.type === ChartType.barChart ||
+                        chart.type === ChartType.horizontalBar ||
+                        chart.type === ChartType.heatmapChart ? (
                           <ChartConfigSectionWrapper>
                             <PanelLabel>
                               <FormattedMessage
-                                id="chartPanel.applyFilters"
-                                defaultMessage="Apply map filters"
+                                id="chartPanel.crossFilter"
+                                defaultMessage="Cross-filter map"
                               />
                             </PanelLabel>
                             <Switch
-                              id={`${chart.id}-apply-filters`}
-                              checked={chart.applyFilters}
-                              onChange={() =>
-                                onUpdate(chart.id, {applyFilters: !chart.applyFilters})
-                              }
+                              id={`${chart.id}-cross-filter`}
+                              checked={Boolean(chart.crossFilter?.enabled)}
+                              onChange={() => {
+                                const fieldName = getCrossFilterField(chart);
+                                const filterId =
+                                  chart.crossFilter?.filterId ||
+                                  `chart-${chart.id}-${generateHashId(4)}`;
+                                onUpdate(chart.id, {
+                                  crossFilter: {
+                                    enabled: !chart.crossFilter?.enabled,
+                                    filterId,
+                                    fieldNames: fieldName ? {x: fieldName} : {},
+                                    value: {}
+                                  }
+                                });
+                              }}
                             />
                           </ChartConfigSectionWrapper>
-                          {chart.type === ChartType.barChart ||
-                          chart.type === ChartType.horizontalBar ||
-                          chart.type === ChartType.heatmapChart ? (
-                            <ChartConfigSectionWrapper>
-                              <PanelLabel>
-                                <FormattedMessage
-                                  id="chartPanel.crossFilter"
-                                  defaultMessage="Cross-filter map"
-                                />
-                              </PanelLabel>
-                              <Switch
-                                id={`${chart.id}-cross-filter`}
-                                checked={Boolean(chart.crossFilter?.enabled)}
-                                onChange={() => {
-                                  const fieldName = getCrossFilterField(chart);
-                                  const filterId =
-                                    chart.crossFilter?.filterId ||
-                                    `chart-${chart.id}-${generateHashId(4)}`;
-                                  onUpdate(chart.id, {
-                                    crossFilter: {
-                                      enabled: !chart.crossFilter?.enabled,
-                                      filterId,
-                                      fieldNames: fieldName ? {x: fieldName} : {},
-                                      value: {}
-                                    }
-                                  });
-                                }}
-                              />
-                            </ChartConfigSectionWrapper>
-                          ) : null}
-                        </ConfigUncollapsibleContent>
+                        ) : null}
                       </ChartConfigGroup>
                     )
                   ) : null}

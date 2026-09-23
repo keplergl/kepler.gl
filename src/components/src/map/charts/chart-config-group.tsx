@@ -102,11 +102,21 @@ const StyledChartConfigGroup = styled.div`
 
       .chart-config-group__content__uncollapsible {
         width: 100%;
+        display: flex;
+        align-items: center;
+        min-width: 0;
       }
 
       .chart-config-group__content__uncollapsible > * {
         margin-bottom: 0;
         width: 100%;
+        min-width: 0;
+      }
+
+      /* Color swatch stays on the same row as the group label. */
+      .chart-config-group__content__uncollapsible .side-panel-section,
+      .chart-config-group__content__uncollapsible .color-selector {
+        margin-bottom: 0;
       }
     }
   }

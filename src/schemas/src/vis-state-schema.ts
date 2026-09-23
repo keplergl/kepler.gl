@@ -828,6 +828,7 @@ export const chartPropsV1 = {
   type: null,
   dataId: null,
   applyFilters: null,
+  pinned: null,
   display: null,
   crossFilter: null,
   xAxis: null,
@@ -870,7 +871,14 @@ export class ChartsSchema extends Schema {
       return {[this.key]: []};
     }
     return {
-      [this.key]: charts.map(chart => this.loadPropertiesOrApplySchema(chart, charts).charts)
+      [this.key]: charts.map(chart => {
+        const loaded = this.loadPropertiesOrApplySchema(chart, charts).charts;
+        // Older saved maps omit `pinned`; keep charts visible like the legend.
+        return {
+          ...loaded,
+          pinned: loaded.pinned !== false
+        };
+      })
     };
   }
 }

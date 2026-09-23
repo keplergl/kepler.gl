@@ -32,6 +32,8 @@ export type ChartManagerState = {
     removeChart: ActionHandler<typeof removeChart>;
     createOrUpdateFilter: ActionHandler<typeof createOrUpdateFilter>;
   };
+  /** When false, only pinned charts are shown (panel control is inactive). */
+  panelActive?: boolean;
   children?: React.ReactNode;
 };
 
@@ -97,7 +99,7 @@ export default function ChartManagerFactory(
   ChartTypeSelector: ReturnType<typeof ChartTypeSelectorFactory>
 ): React.FC<ChartManagerProps> {
   const ChartManager = (props: ChartManagerProps) => {
-    const {intl, children} = props;
+    const {intl, children, panelActive = true} = props;
     const dispatch = useDispatch();
     const {selector} = useContext(KeplerGlContext);
     const visStateFromStore = useSelector(state => selector(state)?.visState);
@@ -114,7 +116,10 @@ export default function ChartManagerFactory(
       [dispatch, props.visStateActions]
     );
 
-    const charts = visState?.charts ?? [];
+    const charts = useMemo(() => {
+      const allCharts = visState?.charts ?? [];
+      return panelActive ? allCharts : allCharts.filter(chart => chart.pinned !== false);
+    }, [visState?.charts, panelActive]);
     const datasets = useMemo<Datasets>(() => visState?.datasets ?? {}, [visState?.datasets]);
     const layers = useMemo(() => visState?.layers ?? [], [visState?.layers]);
     const [typeSelectorOpened, setTypeSelectorOpened] = useState(false);
@@ -154,27 +159,36 @@ export default function ChartManagerFactory(
       return null;
     }
 
+    if (!panelActive && charts.length === 0) {
+      return null;
+    }
+
     return (
       <StyledChartPanelContainer className="chart-manager">
         <StyledChartPanel>
-          <StyledChartPanelHeader className="chart-panel-header">
-            <SidePanelTitle
-              className="chart-manager-title"
-              title={intl.formatMessage({id: 'header.charts'})}
-            >
-              <ChartTypeSelector
-                onSelect={onAddChart}
-                onOpen={onTypeSelectOpen}
-                onBlur={onTypeSelectClose}
-              />
-            </SidePanelTitle>
-          </StyledChartPanelHeader>
-          <StyledChartPanelContent $extended={typeSelectorOpened && charts.length === 0}>
+          {panelActive ? (
+            <StyledChartPanelHeader className="chart-panel-header">
+              <SidePanelTitle
+                className="chart-manager-title"
+                title={intl.formatMessage({id: 'header.charts'})}
+              >
+                <ChartTypeSelector
+                  onSelect={onAddChart}
+                  onOpen={onTypeSelectOpen}
+                  onBlur={onTypeSelectClose}
+                />
+              </SidePanelTitle>
+            </StyledChartPanelHeader>
+          ) : null}
+          <StyledChartPanelContent
+            $extended={panelActive && typeSelectorOpened && charts.length === 0}
+          >
             <ChartPanelContent
               charts={charts}
               datasets={datasets}
               layers={layers}
               visStateActions={visStateActions as typeof VisStateActions}
+              readOnly={!panelActive}
             />
           </StyledChartPanelContent>
         </StyledChartPanel>

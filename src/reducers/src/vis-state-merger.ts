@@ -710,6 +710,8 @@ export function mergeCharts<S extends VisState>(
       fromConfig
         ? {
             ...chart,
+            // Older configs omit `pinned`; keep charts visible like the legend.
+            pinned: chart.pinned !== false,
             display: {
               ...chart.display,
               isConfigActive: false

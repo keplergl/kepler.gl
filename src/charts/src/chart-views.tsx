@@ -13,6 +13,7 @@ const ChartWrap = styled.div`
   width: 100%;
   padding: 8px 12px 12px;
   box-sizing: border-box;
+  overflow: visible;
 `;
 
 const EmptyState = styled.div`
@@ -47,12 +48,14 @@ const BarRow = styled.div<{$clickable?: boolean}>`
 `;
 
 const BarLabel = styled.div`
-  flex: 0 0 88px;
+  flex: 0 1 auto;
+  max-width: 40%;
+  min-width: 72px;
   font-size: 11px;
   color: ${props => props.theme.textColor};
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
 `;
 
 const BarTrack = styled.div`
@@ -72,28 +75,35 @@ const BarFill = styled.div<{$color: string; $width: number; $active?: boolean}>`
 `;
 
 const BarValue = styled.div`
-  flex: 0 0 52px;
+  flex: 0 0 auto;
+  min-width: 52px;
   font-size: 11px;
   text-align: right;
   color: ${props => props.theme.subtextColor};
+  white-space: nowrap;
 `;
 
 const VerticalBarChart = styled.div`
   display: flex;
   align-items: stretch;
-  gap: 6px;
+  gap: 8px;
   height: 140px;
   min-height: 140px;
+  /* Reserve space below the bar area so angled labels don't shrink bars */
+  margin-bottom: 72px;
+  overflow: visible;
 `;
 
 const VerticalBarCol = styled.div<{$clickable?: boolean}>`
+  position: relative;
   flex: 1 1 0;
-  min-width: 0;
+  min-width: 28px;
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  overflow: visible;
   cursor: ${props => (props.$clickable ? 'pointer' : 'default')};
   &:focus-visible {
     outline: 1px solid ${props => props.theme.activeColor};
@@ -104,11 +114,11 @@ const VerticalBarCol = styled.div<{$clickable?: boolean}>`
 const VerticalBarValue = styled.div`
   flex: 0 0 auto;
   font-size: 10px;
+  line-height: 1.1;
   color: ${props => props.theme.subtextColor};
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  overflow: visible;
+  text-align: center;
 `;
 
 const VerticalBarTrack = styled.div`
@@ -132,14 +142,17 @@ const VerticalBarFill = styled.div<{$color: string; $height: number; $active?: b
 `;
 
 const VerticalBarLabel = styled.div`
-  flex: 0 0 auto;
+  position: absolute;
+  top: calc(100% + 28px);
+  left: 0%;
   font-size: 10px;
   color: ${props => props.theme.textColor};
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: center;
+  overflow: visible;
+  transform: rotate(-40deg);
+  transform-origin: top left;
+  line-height: 1.1;
+  pointer-events: none;
 `;
 
 const HeatGrid = styled.div<{$cols: number}>`
@@ -265,7 +278,6 @@ export function BarChartView({
                 aria-label={`${bin.key}: ${formatNumber(bin.value)}`}
                 onClick={activate}
                 onKeyDown={event => onActivateKey(event, activate)}
-                title={`${bin.key}: ${formatNumber(bin.value)}`}
               >
                 <VerticalBarValue>{formatNumber(bin.value)}</VerticalBarValue>
                 <VerticalBarTrack>
@@ -299,7 +311,6 @@ export function BarChartView({
             aria-label={`${bin.key}: ${formatNumber(bin.value)}`}
             onClick={activate}
             onKeyDown={event => onActivateKey(event, activate)}
-            title={`${bin.key}: ${formatNumber(bin.value)}`}
           >
             <BarLabel>{bin.key}</BarLabel>
             <BarTrack>

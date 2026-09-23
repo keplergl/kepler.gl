@@ -42,13 +42,15 @@ function baseChart(
   props: Partial<ChartConfig> = {}
 ): Pick<
   DatasetChartConfig,
-  'id' | 'title' | 'dataId' | 'applyFilters' | 'display' | 'chartDisplay' | 'crossFilter'
+  'id' | 'title' | 'dataId' | 'applyFilters' | 'pinned' | 'display' | 'chartDisplay' | 'crossFilter'
 > {
   return {
     id: props.id || generateHashId(CHART_ID_LENGTH),
     title: props.title || 'New Chart',
     dataId: props.dataId ?? null,
     applyFilters: props.applyFilters ?? true,
+    // Default pinned so charts remain visible after save/load like the legend.
+    pinned: props.pinned ?? true,
     display: {
       isConfigActive: props.display?.isConfigActive ?? false
     },

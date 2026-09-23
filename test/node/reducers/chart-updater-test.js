@@ -46,6 +46,16 @@ test('#VisStateUpdater -> removeDataset drops charts', t => {
 test('#VisStateUpdater -> charts stay empty by default', t => {
   t.deepEqual(INITIAL_VIS_STATE.charts, []);
   t.equal(createBarChart().type, ChartType.barChart);
+  t.equal(createBarChart().pinned, true, 'new charts are pinned by default');
+  t.end();
+});
+
+test('#VisStateUpdater -> updateChart can unpin a chart', t => {
+  const chart = createBarChart({id: 'c1', dataId: 'd1'});
+  let nextState = reducer(INITIAL_VIS_STATE, VisStateActions.addChart(chart));
+  t.equal(nextState.charts[0].pinned, true);
+  nextState = reducer(nextState, VisStateActions.updateChart('c1', {pinned: false}));
+  t.equal(nextState.charts[0].pinned, false);
   t.end();
 });
 

@@ -42,6 +42,11 @@ export type BaseChartConfig = {
   type: string;
   dataId: string | null;
   applyFilters: boolean;
+  /**
+   * When true, the chart stays visible on the map even if the charts panel
+   * control is inactive (similar to a pinned legend). Persisted in saved maps.
+   */
+  pinned?: boolean;
   display: {
     isConfigActive?: boolean;
   };
