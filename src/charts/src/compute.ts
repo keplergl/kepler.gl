@@ -39,9 +39,32 @@ export type ChartViewData =
       formattedValue?: string;
     }
   | {kind: 'bars'; bins: ChartBin[]; horizontal?: boolean}
-  | {kind: 'line'; bins: ChartBin[]}
+  | {kind: 'line'; bins: ChartBin[]; xLabel?: string; yLabel?: string}
   | {kind: 'heatmap'; cells: HeatmapCell[]}
   | {kind: 'pivot'; table: PivotTableResult};
+
+function axisTitle(axis?: ChartAxis, fallback = ''): string {
+  if (!axis) {
+    return fallback;
+  }
+  if (axis.title) {
+    return axis.title;
+  }
+  const fieldName = axis.field?.name;
+  if (!fieldName) {
+    return fallback;
+  }
+  const aggregation = axis.aggregation;
+  if (
+    !aggregation ||
+    aggregation === 'uniqueBin' ||
+    aggregation === 'numericBin' ||
+    aggregation === 'timeBin'
+  ) {
+    return fieldName;
+  }
+  return `${aggregation} of ${fieldName}`;
+}
 
 function isOrderedBinAxis(axis?: ChartAxis): boolean {
   if (!axis?.field) {
@@ -177,21 +200,28 @@ export function computeDatasetChart(
         })
       };
     }
-    case ChartType.lineChart:
+    case ChartType.lineChart: {
+      const ordered = isOrderedBinAxis(chart.xAxis);
+      const interval = chart.xAxis?.interval ?? chart.chartDisplay?.interval ?? null;
+      const binAxis = chart.xAxis ? {...chart.xAxis, interval: interval || undefined} : chart.xAxis;
       return {
         kind: 'line',
         // Line charts plot a full series; do not apply the categorical top-N
         // truncation used by bar charts (DEFAULT_NUM_GROUPS = 10).
+        // Datetime X uses period grouping (auto hour/day/week/month/year).
         bins: buildGroupedBins({
           dataset,
           applyFilters: chart.applyFilters,
-          binAxis: chart.xAxis,
+          binAxis,
           valueAxis: chart.yAxis,
           groupByAxis: chart.groupBy,
           numGroups: 0,
-          sort: SortType.alphaAsc
-        })
+          sort: ordered ? SortType.dataOrder : SortType.alphaAsc
+        }),
+        xLabel: axisTitle(chart.xAxis, 'X'),
+        yLabel: axisTitle(chart.yAxis, 'Y')
       };
+    }
     case ChartType.heatmapChart:
       return {
         kind: 'heatmap',
@@ -240,7 +270,7 @@ export function computeLayerChart(
         indexes: hoverIndexes,
         xAxis: chart.xAxis,
         yAxis: chart.yAxis,
-        interval: chart.chartDisplay?.interval
+        interval: chart.xAxis?.interval || chart.chartDisplay?.interval
       })
     };
   }

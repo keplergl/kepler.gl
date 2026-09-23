@@ -539,6 +539,7 @@ export default {
     value: 'Value',
     idField: 'Feature id field',
     aggregation: 'Aggregation',
+    period: 'Period',
     color: 'Color',
     colorBy: 'Color by',
     colors: 'Colors',

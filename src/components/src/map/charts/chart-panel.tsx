@@ -20,6 +20,7 @@ import {
   ChartColorBy,
   BinType,
   TIME_FIELD_TYPES,
+  TIME_INTERVAL_OPTIONS,
   getDefaultChartColorRange,
   formatNumber
 } from '@kepler.gl/charts';
@@ -207,6 +208,20 @@ function binAggregationForField(field: {type: string} | null): ChartAxis['aggreg
     return BinType.numericBin;
   }
   return BinType.uniqueBin;
+}
+
+function isTimeAxis(axis?: ChartAxis | null): boolean {
+  if (!axis) {
+    return false;
+  }
+  if (axis.aggregation === BinType.timeBin) {
+    return true;
+  }
+  return Boolean(axis.field?.type && TIME_FIELD_TYPES.includes(axis.field.type));
+}
+
+function resolveTimeInterval(chart: ChartConfig): string | null {
+  return chart.xAxis?.interval || chart.chartDisplay?.interval || null;
 }
 
 const ChartList = styled.div`
@@ -745,12 +760,17 @@ export function ChartPanelContentFactory(
                               value={chart.xAxis?.field?.name}
                               erasable
                               onSelect={item => {
+                                const field = (item as any) || null;
                                 const xAxis = axisFromField(
-                                  (item as any) || null,
+                                  field,
                                   chart.type === ChartType.horizontalBar
                                     ? chart.xAxis?.aggregation || 'count'
-                                    : binAggregationForField((item as any) || null)
+                                    : binAggregationForField(field)
                                 );
+                                // Keep period when switching between time fields.
+                                if (field && TIME_FIELD_TYPES.includes(field.type)) {
+                                  xAxis.interval = resolveTimeInterval(chart);
+                                }
                                 // Vertical bar: X is the bin axis — sync palette steps to bins.
                                 if (chart.type === ChartType.barChart) {
                                   updateBarBinAxis(chart, dataset, {xAxis});
@@ -790,6 +810,43 @@ export function ChartPanelContentFactory(
                                 }
                               })
                             }
+                          />
+                        </ChartConfigSectionWrapper>
+                      ) : null}
+                      {(chart.type === ChartType.lineChart ||
+                        (isLayerChartConfig(chart) &&
+                          chart.layerChartType === LayerChartType.TIME_SERIES)) &&
+                      isTimeAxis(chart.xAxis) ? (
+                        <ChartConfigSectionWrapper>
+                          <PanelLabel>
+                            <FormattedMessage id="chartPanel.period" defaultMessage="Period" />
+                          </PanelLabel>
+                          <ItemSelector
+                            selectedItems={
+                              TIME_INTERVAL_OPTIONS.find(
+                                option => option.id === (resolveTimeInterval(chart) || 'auto')
+                              ) || TIME_INTERVAL_OPTIONS[0]
+                            }
+                            options={TIME_INTERVAL_OPTIONS}
+                            displayOption={(d: {label: string}) => d.label}
+                            getOptionValue={(d: {id: string}) => d.id}
+                            multiSelect={false}
+                            searchable={false}
+                            size="small"
+                            onChange={period => {
+                              const interval = !period || period === 'auto' ? null : String(period);
+                              onUpdate(chart.id, {
+                                xAxis: {
+                                  ...(chart.xAxis as ChartAxis),
+                                  interval
+                                },
+                                chartDisplay: {
+                                  ...chart.chartDisplay,
+                                  // Keep in sync so compute / layer time series both see it.
+                                  interval: interval || undefined
+                                }
+                              });
+                            }}
                           />
                         </ChartConfigSectionWrapper>
                       ) : null}

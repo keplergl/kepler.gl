@@ -284,9 +284,16 @@ const PivotTableEl = styled.table`
 
 const LineSvg = styled.svg`
   width: 100%;
-  height: 120px;
+  height: 160px;
   display: block;
+  overflow: visible;
+  color: ${props => props.theme.textColor};
 `;
+
+const LINE_CHART_WIDTH = 320;
+const LINE_CHART_HEIGHT = 160;
+const LINE_MARGIN = {top: 12, right: 12, bottom: 40, left: 56};
+const LINE_Y_AXIS_TITLE_X = 10;
 
 type ClickHandler = (
   key: string,
@@ -461,7 +468,55 @@ export function BarChartView({
   );
 }
 
-export function LineChartView({bins}: {bins: ChartBin[]}): React.ReactElement {
+function niceTicks(min: number, max: number, count = 4): number[] {
+  if (!(max > min)) {
+    return [min];
+  }
+  const span = max - min;
+  const step = span / Math.max(1, count - 1);
+  const ticks: number[] = [];
+  for (let i = 0; i < count; i++) {
+    ticks.push(min + step * i);
+  }
+  return ticks;
+}
+
+function sampleBinIndexes(length: number, count = 4): number[] {
+  if (length <= 0) {
+    return [];
+  }
+  if (length <= count) {
+    return Array.from({length}, (_, i) => i);
+  }
+  const indexes = new Set<number>();
+  for (let i = 0; i < count; i++) {
+    indexes.add(Math.round((i * (length - 1)) / (count - 1)));
+  }
+  return Array.from(indexes).sort((a, b) => a - b);
+}
+
+function shortenAxisLabel(label: string, maxLen = 12): string {
+  const text = String(label);
+  if (text.length <= maxLen) {
+    return text;
+  }
+  // Prefer date-looking prefixes when present.
+  const dateMatch = text.match(/^\d{4}-\d{2}-\d{2}/);
+  if (dateMatch) {
+    return dateMatch[0];
+  }
+  return `${text.slice(0, maxLen - 1)}…`;
+}
+
+export function LineChartView({
+  bins,
+  xLabel,
+  yLabel
+}: {
+  bins: ChartBin[];
+  xLabel?: string;
+  yLabel?: string;
+}): React.ReactElement {
   if (bins.length < 2) {
     return (
       <ChartWrap>
@@ -469,28 +524,127 @@ export function LineChartView({bins}: {bins: ChartBin[]}): React.ReactElement {
       </ChartWrap>
     );
   }
-  const max = maxValue(bins);
-  const min = Math.min(0, ...bins.map(b => b.value));
-  const span = Math.max(1, max - min);
-  const points = bins
-    .map((bin, i) => {
-      const x = (i / (bins.length - 1)) * 100;
-      const y = 100 - ((bin.value - min) / span) * 100;
-      return `${x},${y}`;
-    })
-    .join(' ');
+  const values = bins.map(b => b.value);
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const span = Math.max(1e-9, max - min);
+  const plotW = LINE_CHART_WIDTH - LINE_MARGIN.left - LINE_MARGIN.right;
+  const plotH = LINE_CHART_HEIGHT - LINE_MARGIN.top - LINE_MARGIN.bottom;
+  const points = bins.map((bin, i) => {
+    const x = LINE_MARGIN.left + (i / (bins.length - 1)) * plotW;
+    const y = LINE_MARGIN.top + (1 - (bin.value - min) / span) * plotH;
+    return `${x},${y}`;
+  });
+  const yTicks = niceTicks(min, max, 4);
+  const xIndexes = sampleBinIndexes(bins.length, Math.min(4, bins.length));
+  const stroke = bins[0].color || '#1F71C5';
+
   return (
     <ChartWrap>
-      <LineSvg viewBox="0 0 100 100" preserveAspectRatio="none">
+      <LineSvg
+        viewBox={`0 0 ${LINE_CHART_WIDTH} ${LINE_CHART_HEIGHT}`}
+        preserveAspectRatio="xMidYMid meet"
+      >
+        {/* Plot frame */}
+        <rect
+          x={LINE_MARGIN.left}
+          y={LINE_MARGIN.top}
+          width={plotW}
+          height={plotH}
+          fill="none"
+          stroke="currentColor"
+          strokeOpacity={0.15}
+          strokeWidth={1}
+        />
+        {/* Y grid + ticks */}
+        {yTicks.map(tick => {
+          const y = LINE_MARGIN.top + (1 - (tick - min) / span) * plotH;
+          return (
+            <g key={`y-${tick}`}>
+              <line
+                x1={LINE_MARGIN.left}
+                x2={LINE_MARGIN.left + plotW}
+                y1={y}
+                y2={y}
+                stroke="currentColor"
+                strokeOpacity={0.08}
+                strokeWidth={1}
+              />
+              <text
+                x={LINE_MARGIN.left - 4}
+                y={y}
+                textAnchor="end"
+                dominantBaseline="middle"
+                fill="currentColor"
+                opacity={0.9}
+                fontSize={9}
+              >
+                {formatNumber(tick)}
+              </text>
+            </g>
+          );
+        })}
+        {/* X ticks */}
+        {xIndexes.map(index => {
+          const x = LINE_MARGIN.left + (index / (bins.length - 1)) * plotW;
+          return (
+            <g key={`x-${index}`}>
+              <line
+                x1={x}
+                x2={x}
+                y1={LINE_MARGIN.top + plotH}
+                y2={LINE_MARGIN.top + plotH + 4}
+                stroke="currentColor"
+                strokeOpacity={0.35}
+                strokeWidth={1}
+              />
+              <text
+                x={x}
+                y={LINE_MARGIN.top + plotH + 14}
+                textAnchor="middle"
+                fill="currentColor"
+                opacity={0.9}
+                fontSize={9}
+              >
+                {shortenAxisLabel(String(bins[index].key))}
+              </text>
+            </g>
+          );
+        })}
         <polyline
           fill="none"
-          stroke={bins[0].color}
-          strokeWidth="1.5"
+          stroke={stroke}
+          strokeWidth={1.75}
           strokeLinejoin="round"
           strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-          points={points}
+          points={points.join(' ')}
         />
+        {/* Axis names */}
+        {yLabel ? (
+          <text
+            x={LINE_Y_AXIS_TITLE_X}
+            y={LINE_MARGIN.top + plotH / 2}
+            textAnchor="middle"
+            fill="currentColor"
+            opacity={1}
+            fontSize={10}
+            transform={`rotate(-90 ${LINE_Y_AXIS_TITLE_X} ${LINE_MARGIN.top + plotH / 2})`}
+          >
+            {shortenAxisLabel(yLabel, 18)}
+          </text>
+        ) : null}
+        {xLabel ? (
+          <text
+            x={LINE_MARGIN.left + plotW / 2}
+            y={LINE_CHART_HEIGHT - 4}
+            textAnchor="middle"
+            fill="currentColor"
+            opacity={1}
+            fontSize={10}
+          >
+            {shortenAxisLabel(xLabel, 24)}
+          </text>
+        ) : null}
       </LineSvg>
     </ChartWrap>
   );
@@ -633,7 +787,7 @@ export function ChartRenderer({
         />
       );
     case 'line':
-      return <LineChartView bins={data.bins} />;
+      return <LineChartView bins={data.bins} xLabel={data.xLabel} yLabel={data.yLabel} />;
     case 'heatmap':
       return <HeatmapView cells={data.cells} onSelect={onSelect} />;
     case 'pivot':

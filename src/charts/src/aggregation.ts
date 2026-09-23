@@ -14,7 +14,13 @@ import {
 } from 'd3-array';
 import {utcDay, utcHour, utcMonth, utcWeek, utcYear} from 'd3-time';
 
-import {CHART_COLORS, DEFAULT_NUM_GROUPS, OTHERS_KEY, TIME_FIELD_TYPES} from './constants';
+import {
+  CHART_COLORS,
+  DEFAULT_NUM_GROUPS,
+  MAX_CHART_POINTS,
+  OTHERS_KEY,
+  TIME_FIELD_TYPES
+} from './constants';
 import {BinType, SortType} from './constants';
 import {
   ChartableDataset,
@@ -323,7 +329,29 @@ function getTimeFloor(interval?: string) {
   }
 }
 
+function getTimeOffset(interval: string | undefined, startDate: Date): Date {
+  switch (interval) {
+    case 'year':
+      return utcYear.offset(startDate, 1);
+    case 'month':
+      return utcMonth.offset(startDate, 1);
+    case 'week':
+      return utcWeek.offset(startDate, 1);
+    case 'hour':
+      return utcHour.offset(startDate, 1);
+    case 'day':
+    default:
+      return utcDay.offset(startDate, 1);
+  }
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+const WEEK_MS = 7 * DAY_MS;
+const MONTH_MS = 30 * DAY_MS;
+const YEAR_MS = 365 * DAY_MS;
+/** Soft target for auto period selection; hard cap is MAX_CHART_POINTS. */
+const TARGET_TIME_BUCKETS = 200;
 
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
@@ -349,6 +377,74 @@ function formatTimeBinRange(x0: number, x1: number): string {
   return `${formatUtcDateTime(x0)} – ${formatUtcDateTime(x1)}`;
 }
 
+function formatTimePeriodLabel(ms: number, interval?: string): string {
+  const date = new Date(ms);
+  if (Number.isNaN(date.getTime())) {
+    return String(ms);
+  }
+  switch (interval) {
+    case 'year':
+      return String(date.getUTCFullYear());
+    case 'month':
+      return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}`;
+    case 'week':
+      return `Week of ${formatUtcDate(ms)}`;
+    case 'day':
+      return formatUtcDate(ms);
+    case 'hour':
+    default:
+      return formatUtcDateTime(ms);
+  }
+}
+
+/**
+ * Pick a time period so the [min, max] span yields about `targetBuckets` buckets.
+ */
+function chooseTimeInterval(spanMs: number, targetBuckets = TARGET_TIME_BUCKETS): string {
+  if (!(spanMs > 0)) {
+    return 'day';
+  }
+  const candidates: Array<[string, number]> = [
+    ['hour', HOUR_MS],
+    ['day', DAY_MS],
+    ['week', WEEK_MS],
+    ['month', MONTH_MS],
+    ['year', YEAR_MS]
+  ];
+  for (const [name, size] of candidates) {
+    if (spanMs / size <= targetBuckets) {
+      return name;
+    }
+  }
+  return 'year';
+}
+
+function equalWidthTimeBins(
+  points: Array<{idx: number; t: number}>,
+  min: number,
+  max: number,
+  binCount: number
+): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number>>} {
+  const hist = histogram<{idx: number; t: number}, number>()
+    .value(d => d.t)
+    .domain([min, max])
+    .thresholds(exactBinThresholds(min, max, binCount));
+  const bins = hist(points);
+  const groups = new Map<string, number[]>();
+  const filterValues = new Map<string, Array<string | number>>();
+  bins.forEach(bin => {
+    const x0 = bin.x0 ?? min;
+    const x1 = bin.x1 ?? max;
+    const key = formatTimeBinRange(x0, x1);
+    groups.set(
+      key,
+      bin.map(d => d.idx)
+    );
+    filterValues.set(key, [x0, x1]);
+  });
+  return {groups, filterValues};
+}
+
 function timeGroupMap(
   indexes: number[],
   dataset: ChartableDataset,
@@ -369,82 +465,76 @@ function timeGroupMap(
     return {groups: new Map(), filterValues: new Map()};
   }
 
-  // Bar charts: split the full [min, max] domain into exactly numBins equal ranges.
-  if (numBins > 0) {
-    const min = d3Min(points, d => d.t);
-    const max = d3Max(points, d => d.t);
-    if (min === undefined || max === undefined) {
-      return {groups: new Map(), filterValues: new Map()};
-    }
-    const binCount = Math.max(2, numBins);
-    const hist = histogram<{idx: number; t: number}, number>()
-      .value(d => d.t)
-      .domain([min, max])
-      .thresholds(exactBinThresholds(min, max, binCount));
-    const bins = hist(points);
-    const groups = new Map<string, number[]>();
-    const filterValues = new Map<string, Array<string | number>>();
-    bins.forEach(bin => {
-      const x0 = bin.x0 ?? min;
-      const x1 = bin.x1 ?? max;
-      const key = formatTimeBinRange(x0, x1);
-      groups.set(
-        key,
-        bin.map(d => d.idx)
-      );
-      filterValues.set(key, [x0, x1]);
-    });
-    return {groups, filterValues};
+  const min = d3Min(points, d => d.t);
+  const max = d3Max(points, d => d.t);
+  if (min === undefined || max === undefined) {
+    return {groups: new Map(), filterValues: new Map()};
   }
 
-  // Full series (e.g. line / tooltip charts): one bucket per interval floor.
-  const floor = getTimeFloor(interval);
-  const groups = new Map<string, number[]>();
-  for (const point of points) {
-    const key = floor(new Date(point.t)).toISOString();
-    const list = groups.get(key);
-    if (list) {
-      list.push(point.idx);
-    } else {
-      groups.set(key, [point.idx]);
-    }
+  // Bar charts: split the full [min, max] domain into exactly numBins equal ranges.
+  if (numBins > 0) {
+    return equalWidthTimeBins(points, min, max, Math.max(2, numBins));
   }
+
+  // Line / full series: period-group by interval (auto-chosen from span when unset).
+  // When Auto, coarsen hour → day → week → month → year until under the point cap.
+  const INTERVAL_ORDER = ['hour', 'day', 'week', 'month', 'year'];
+  const autoInterval = !interval;
+  let resolvedInterval = interval || chooseTimeInterval(max - min, TARGET_TIME_BUCKETS);
+  let groups = new Map<string, number[]>();
+  let keyStarts = new Map<string, number>();
+
+  const buildPeriodGroups = (period: string) => {
+    const floor = getTimeFloor(period);
+    const nextGroups = new Map<string, number[]>();
+    const nextStarts = new Map<string, number>();
+    for (const point of points) {
+      const start = floor(new Date(point.t)).getTime();
+      const key = formatTimePeriodLabel(start, period);
+      const list = nextGroups.get(key);
+      if (list) {
+        list.push(point.idx);
+      } else {
+        nextGroups.set(key, [point.idx]);
+        nextStarts.set(key, start);
+      }
+    }
+    return {nextGroups, nextStarts};
+  };
+
+  for (;;) {
+    const built = buildPeriodGroups(resolvedInterval);
+    groups = built.nextGroups;
+    keyStarts = built.nextStarts;
+    if (groups.size <= MAX_CHART_POINTS) {
+      break;
+    }
+    // Too dense for this period: coarsen when Auto, otherwise equal-width cap.
+    if (!autoInterval) {
+      return equalWidthTimeBins(points, min, max, MAX_CHART_POINTS);
+    }
+    const idx = INTERVAL_ORDER.indexOf(resolvedInterval);
+    if (idx < 0 || idx >= INTERVAL_ORDER.length - 1) {
+      return equalWidthTimeBins(points, min, max, MAX_CHART_POINTS);
+    }
+    resolvedInterval = INTERVAL_ORDER[idx + 1];
+  }
+
   const filterValues = new Map<string, Array<string | number>>();
-  Array.from(groups.keys())
-    .sort((a, b) => Date.parse(a) - Date.parse(b) || String(a).localeCompare(String(b)))
-    .forEach(key => {
-      const start = Date.parse(key);
-      if (Number.isNaN(start)) {
-        filterValues.set(key, [key]);
-        return;
-      }
-      const startDate = new Date(start);
-      let endDate: Date;
-      switch (interval) {
-        case 'year':
-          endDate = utcYear.offset(startDate, 1);
-          break;
-        case 'month':
-          endDate = utcMonth.offset(startDate, 1);
-          break;
-        case 'week':
-          endDate = utcWeek.offset(startDate, 1);
-          break;
-        case 'hour':
-          endDate = utcHour.offset(startDate, 1);
-          break;
-        case 'day':
-        default:
-          endDate = utcDay.offset(startDate, 1);
-          break;
-      }
-      filterValues.set(key, [start, endDate.getTime()]);
-    });
-  // Rebuild in chronological order.
   const ordered = new Map<string, number[]>();
   Array.from(groups.keys())
-    .sort((a, b) => Date.parse(a) - Date.parse(b) || String(a).localeCompare(String(b)))
-    .forEach(key => ordered.set(key, groups.get(key) || []));
+    .sort(
+      (a, b) =>
+        (keyStarts.get(a) || 0) - (keyStarts.get(b) || 0) || String(a).localeCompare(String(b))
+    )
+    .forEach(key => {
+      const floored = keyStarts.get(key) || 0;
+      ordered.set(key, groups.get(key) || []);
+      filterValues.set(key, [
+        floored,
+        getTimeOffset(resolvedInterval, new Date(floored)).getTime()
+      ]);
+    });
   return {groups: ordered, filterValues};
 }
 
@@ -487,7 +577,7 @@ export function groupIndexes(
     aggregation !== BinType.uniqueBin &&
     aggregation !== BinType.numericBin
   ) {
-    return timeGroupMap(indexes, dataset, fieldName, (axis as any).interval, numBins);
+    return timeGroupMap(indexes, dataset, fieldName, axis.interval || undefined, numBins);
   }
 
   // Continuous reals (and explicit numericBin) → histogram across the full domain.
@@ -580,7 +670,8 @@ export function buildGroupedBins({
 
   bins = sortBins(bins, sort);
   if (!truncate || numGroups <= 0) {
-    return bins;
+    // Line charts pass numGroups=0 (no categorical top-N); still hard-cap points.
+    return bins.length > MAX_CHART_POINTS ? bins.slice(0, MAX_CHART_POINTS) : bins;
   }
   return truncateBins(bins, numGroups, groupOthers);
 }
@@ -764,7 +855,8 @@ export function buildTimeSeries({
       filterValue: filterValues.get(key) || [key]
     });
   });
-  return bins.sort((a, b) => String(a.key).localeCompare(String(b.key)));
+  // Preserve chronological order from timeGroupMap (period labels are not ISO strings).
+  return bins;
 }
 
 export {toKey};

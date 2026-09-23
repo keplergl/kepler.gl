@@ -40,6 +40,19 @@ export const CHART_AGGREGATION_OPTIONS: {id: (typeof CHART_AGGREGATIONS)[number]
     {id: 'countUnique', label: 'Count Unique'}
   ];
 
+/** Time-series period options. `auto` lets aggregation pick from the data span. */
+export const TIME_INTERVALS = ['auto', 'hour', 'day', 'week', 'month', 'year'] as const;
+export type TimeInterval = (typeof TIME_INTERVALS)[number];
+
+export const TIME_INTERVAL_OPTIONS: {id: TimeInterval; label: string}[] = [
+  {id: 'auto', label: 'Auto'},
+  {id: 'hour', label: 'Hour'},
+  {id: 'day', label: 'Day'},
+  {id: 'week', label: 'Week'},
+  {id: 'month', label: 'Month'},
+  {id: 'year', label: 'Year'}
+];
+
 export enum ChartType {
   bigNumber = 'bigNumber',
   barChart = 'barChart',
@@ -80,6 +93,8 @@ export enum ChartColorBy {
 }
 
 export const DEFAULT_NUM_GROUPS = 10;
+/** Hard cap on line / time-series points after grouping. */
+export const MAX_CHART_POINTS = 1000;
 export const OTHERS_KEY = 'Other';
 
 export const CHART_COLORS = [

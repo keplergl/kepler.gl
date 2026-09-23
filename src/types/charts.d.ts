@@ -27,6 +27,8 @@ export type ChartAxis = {
   field: ChartAxisField | null;
   aggregation: ChartAggregation | string | null;
   title?: string | null;
+  /** Time binning period for timestamp/date axes: hour | day | week | month | year */
+  interval?: string | null;
 };
 
 export type ChartCrossFilter = {

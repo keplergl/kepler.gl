@@ -163,7 +163,8 @@ export function createLayerChart(
     chartDisplay: {
       idField: props.chartDisplay?.idField ?? null,
       numEntries: props.chartDisplay?.numEntries ?? 5,
-      interval: props.chartDisplay?.interval ?? 'day',
+      // Leave unset so aggregation auto-picks hour/day/week/month/year from the span.
+      interval: props.chartDisplay?.interval,
       ...props.chartDisplay
     }
   };
