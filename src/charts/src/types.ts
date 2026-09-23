@@ -31,6 +31,11 @@ export type ChartBin = {
   value: number;
   count: number;
   color: string;
+  /**
+   * Value to apply when cross-filtering from this bin. For numeric/time bins this
+   * is a `[min, max]` range; for categories it is `[key]`.
+   */
+  filterValue?: Array<string | number>;
   series?: ChartBin[];
 };
 

@@ -49,8 +49,8 @@ function baseChart(
     title: props.title || 'New Chart',
     dataId: props.dataId ?? null,
     applyFilters: props.applyFilters ?? true,
-    // Default pinned so charts remain visible after save/load like the legend.
-    pinned: props.pinned ?? true,
+    // New charts start unpinned; user can pin to keep them visible when the panel is off.
+    pinned: props.pinned ?? false,
     display: {
       isConfigActive: props.display?.isConfigActive ?? false
     },

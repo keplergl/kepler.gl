@@ -251,23 +251,49 @@ function uniqueGroupMap(
   return groups;
 }
 
+/**
+ * Build interior thresholds for exactly `numBins` equal-width bins over [min, max].
+ * d3.bin treats a numeric thresholds() argument as a *hint* (nice ticks), which can
+ * yield fewer/more bins than requested — pass an explicit array instead.
+ */
+function exactBinThresholds(min: number, max: number, numBins: number): number[] {
+  const n = Math.max(2, numBins);
+  if (!(Number.isFinite(min) && Number.isFinite(max)) || !(max > min)) {
+    return [];
+  }
+  const step = (max - min) / n;
+  const thresholds: number[] = [];
+  for (let i = 1; i < n; i++) {
+    thresholds.push(min + step * i);
+  }
+  return thresholds;
+}
+
 function numericGroupMap(
   indexes: number[],
   dataset: ChartableDataset,
   fieldName: string,
   numBins: number
-): Map<string, number[]> {
+): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number>>} {
   const values = indexes
     .map(idx => ({idx, value: toNumber(dataset.getValue(fieldName, idx))}))
     .filter((d): d is {idx: number; value: number} => d.value !== null);
   if (!values.length) {
-    return new Map();
+    return {groups: new Map(), filterValues: new Map()};
   }
+  const min = d3Min(values, d => d.value);
+  const max = d3Max(values, d => d.value);
+  if (min === undefined || max === undefined) {
+    return {groups: new Map(), filterValues: new Map()};
+  }
+  const binCount = Math.max(2, numBins > 0 ? numBins : DEFAULT_NUM_GROUPS);
   const hist = histogram<{idx: number; value: number}, number>()
     .value(d => d.value)
-    .thresholds(Math.max(2, numBins > 0 ? numBins : DEFAULT_NUM_GROUPS));
+    .domain([min, max])
+    .thresholds(exactBinThresholds(min, max, binCount));
   const bins = hist(values);
   const groups = new Map<string, number[]>();
+  const filterValues = new Map<string, Array<string | number>>();
   bins.forEach(bin => {
     const x0 = bin.x0 ?? 0;
     const x1 = bin.x1 ?? x0;
@@ -276,8 +302,9 @@ function numericGroupMap(
       key,
       bin.map(d => d.idx)
     );
+    filterValues.set(key, [x0, x1]);
   });
-  return groups;
+  return {groups, filterValues};
 }
 
 function getTimeFloor(interval?: string) {
@@ -301,7 +328,7 @@ function timeGroupMap(
   dataset: ChartableDataset,
   fieldName: string,
   interval?: string
-): Map<string, number[]> {
+): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number>>} {
   const floor = getTimeFloor(interval);
   const groups = new Map<string, number[]>();
   for (const idx of indexes) {
@@ -318,7 +345,53 @@ function timeGroupMap(
       groups.set(key, [idx]);
     }
   }
-  return groups;
+  const filterValues = new Map<string, Array<string | number>>();
+  groups.forEach((_, key) => {
+    const start = Date.parse(key);
+    if (Number.isNaN(start)) {
+      filterValues.set(key, [key]);
+      return;
+    }
+    const startDate = new Date(start);
+    let endDate: Date;
+    switch (interval) {
+      case 'year':
+        endDate = utcYear.offset(startDate, 1);
+        break;
+      case 'month':
+        endDate = utcMonth.offset(startDate, 1);
+        break;
+      case 'week':
+        endDate = utcWeek.offset(startDate, 1);
+        break;
+      case 'hour':
+        endDate = utcHour.offset(startDate, 1);
+        break;
+      case 'day':
+      default:
+        endDate = utcDay.offset(startDate, 1);
+        break;
+    }
+    filterValues.set(key, [start, endDate.getTime()]);
+  });
+  return {groups, filterValues};
+}
+
+function uniqueGroupFilterValues(
+  groups: Map<string, number[]>,
+  fieldType?: string
+): Map<string, Array<string | number>> {
+  const filterValues = new Map<string, Array<string | number>>();
+  const numeric = fieldType === 'real' || fieldType === 'integer';
+  groups.forEach((_, key) => {
+    if (numeric) {
+      const n = Number(key);
+      filterValues.set(key, Number.isFinite(n) ? [n, n] : [key]);
+    } else {
+      filterValues.set(key, [key]);
+    }
+  });
+  return filterValues;
 }
 
 export function groupIndexes(
@@ -326,10 +399,13 @@ export function groupIndexes(
   dataset: ChartableDataset,
   axis: ChartAxis | undefined,
   numBins = DEFAULT_NUM_GROUPS
-): Map<string, number[]> {
+): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number>>} {
   const fieldName = axis?.field?.name;
   if (!fieldName) {
-    return new Map([['All', indexes]]);
+    return {
+      groups: new Map([['All', indexes]]),
+      filterValues: new Map([['All', ['All']]])
+    };
   }
   const fieldType = axis.field?.type;
   const aggregation = axis.aggregation;
@@ -359,10 +435,11 @@ export function groupIndexes(
     if (numBins > 0 && uniques.size > numBins) {
       return numericGroupMap(indexes, dataset, fieldName, numBins);
     }
-    return uniques;
+    return {groups: uniques, filterValues: uniqueGroupFilterValues(uniques, fieldType)};
   }
 
-  return uniqueGroupMap(indexes, dataset, fieldName);
+  const groups = uniqueGroupMap(indexes, dataset, fieldName);
+  return {groups, filterValues: uniqueGroupFilterValues(groups, fieldType)};
 }
 
 export function buildGroupedBins({
@@ -396,7 +473,7 @@ export function buildGroupedBins({
   truncate?: boolean;
 }): ChartBin[] {
   const indexes = indexesOverride || getChartIndexes(dataset, applyFilters);
-  const groups = groupIndexes(indexes, dataset, binAxis, numGroups);
+  const {groups, filterValues} = groupIndexes(indexes, dataset, binAxis, numGroups);
   const valueField = valueAxis?.field?.name;
   const aggregation = (valueAxis?.aggregation as ChartAggregation) || 'count';
   const groupByField = groupByAxis?.field?.name;
@@ -424,6 +501,7 @@ export function buildGroupedBins({
         color ||
         (colors?.length ? colors[colorIndex % colors.length] : undefined) ||
         colorAt(colorIndex),
+      filterValue: filterValues.get(key) || [key],
       series
     });
     colorIndex += 1;
@@ -599,7 +677,7 @@ export function buildTimeSeries({
   if (!xAxis?.field?.name) {
     return [];
   }
-  const groups = timeGroupMap(indexes, dataset, xAxis.field.name, interval);
+  const {groups, filterValues} = timeGroupMap(indexes, dataset, xAxis.field.name, interval);
   const bins: ChartBin[] = [];
   groups.forEach((groupIndexes, key) => {
     bins.push({
@@ -611,7 +689,8 @@ export function buildTimeSeries({
         (yAxis?.aggregation as ChartAggregation) || 'count'
       ),
       count: groupIndexes.length,
-      color: CHART_COLORS[0]
+      color: CHART_COLORS[0],
+      filterValue: filterValues.get(key) || [key]
     });
   });
   return bins.sort((a, b) => String(a.key).localeCompare(String(b.key)));

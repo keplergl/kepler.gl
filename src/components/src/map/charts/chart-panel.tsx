@@ -172,13 +172,27 @@ function withColorRangeSyncedToBins(
  * Charts should respect the same filters as the map. Kepler keeps range/time
  * filters on the GPU, so `dataset.filteredIndex` alone is not enough — apply
  * GPU filters on CPU the same way filter histograms do.
+ * When `skipFieldName` is set, that GPU channel is ignored so a chart's own
+ * cross-filter does not empty its bins (map still filters).
  */
-function toMapFilteredChartDataset(dataset: Datasets[string] | undefined) {
+function toMapFilteredChartDataset(
+  dataset: Datasets[string] | undefined,
+  options?: {dataId?: string | null; skipFieldName?: string | null}
+) {
   if (!dataset) {
     return null;
   }
+  const skipFilter =
+    options?.dataId && options?.skipFieldName
+      ? ({
+          dataId: [options.dataId],
+          name: [options.skipFieldName]
+        } as Parameters<typeof runGpuFilterForPlot>[1])
+      : undefined;
   const filteredIndex =
-    dataset.gpuFilter?.filterValueAccessor != null ? runGpuFilterForPlot(dataset) : undefined;
+    dataset.gpuFilter?.filterValueAccessor != null
+      ? runGpuFilterForPlot(dataset, skipFilter)
+      : undefined;
   return toChartableDataset(dataset, filteredIndex ? {filteredIndex} : undefined);
 }
 
@@ -197,7 +211,7 @@ function binAggregationForField(field: {type: string} | null): ChartAxis['aggreg
 
 const ChartList = styled.div`
   width: 100%;
-  padding: 8px;
+  padding: 4px 8px;
 `;
 
 const ChartCard = styled.div<{
@@ -208,6 +222,10 @@ const ChartCard = styled.div<{
   margin-bottom: 8px;
   background-color: ${props => props.theme.panelBackground};
   position: relative;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 
   ${props =>
     props.$showPinOnHover
@@ -406,7 +424,7 @@ export function ChartPanelContentFactory(
     );
 
     const onSelectBin = useCallback(
-      (chart: ChartConfig, key: string) => {
+      (chart: ChartConfig, key: string, filterValue?: Array<string | number>) => {
         if (isLayerChartConfig(chart) || !chart.dataId) {
           return;
         }
@@ -423,7 +441,10 @@ export function ChartPanelContentFactory(
           });
           return;
         }
-        visStateActions?.createOrUpdateFilter(filterId, chart.dataId, fieldName, [key]);
+        // Numeric/time bins pass [min, max]; categories pass [key]. Never pass the
+        // display label alone — that breaks GPU range filters (NaN ranges → no rows).
+        const value = filterValue?.length ? filterValue : [key];
+        visStateActions?.createOrUpdateFilter(filterId, chart.dataId, fieldName, value);
         visStateActions?.updateChart(chart.id, {
           crossFilter: {
             enabled: true,
@@ -440,9 +461,14 @@ export function ChartPanelContentFactory(
       <ChartList className="chart-panel">
         {charts.map(chart => {
           const rawDataset = chart.dataId ? datasets[chart.dataId] : undefined;
+          const crossFilterField = getCrossFilterField(chart);
           const dataset = chart.dataId
             ? chart.applyFilters
-              ? toMapFilteredChartDataset(rawDataset)
+              ? toMapFilteredChartDataset(rawDataset, {
+                  dataId: chart.dataId,
+                  // Keep this chart's bins stable while its own cross-filter drives the map.
+                  skipFieldName: chart.crossFilter?.enabled ? crossFilterField : null
+                })
               : toChartableDataset(rawDataset)
             : null;
           const fields = dataset?.fields || [];
@@ -552,7 +578,7 @@ export function ChartPanelContentFactory(
               <ChartRenderer
                 data={view}
                 selectedKey={selectedKey}
-                onSelect={key => onSelectBin(chart, key)}
+                onSelect={(key, extra) => onSelectBin(chart, key, extra?.filterValue)}
               />
               {!readOnly && chart.display?.isConfigActive ? (
                 <ConfigBlock>

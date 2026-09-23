@@ -11,7 +11,7 @@ import {ChartViewData} from './compute';
 
 const ChartWrap = styled.div`
   width: 100%;
-  padding: 8px 12px 12px;
+  padding: 8px 12px 8px;
   box-sizing: border-box;
   overflow: visible;
 `;
@@ -83,21 +83,27 @@ const BarValue = styled.div`
   white-space: nowrap;
 `;
 
-const VerticalBarChart = styled.div`
+const VerticalBarChart = styled.div<{$padRight?: number; $gap?: number}>`
+  display: flex;
+  flex-direction: column;
+  gap: ${props => props.$gap ?? 20}px;
+  overflow: visible;
+  padding-right: ${props => props.$padRight || 0}px;
+  box-sizing: border-box;
+`;
+
+const VerticalBarBars = styled.div`
   display: flex;
   align-items: stretch;
   gap: 8px;
   height: 140px;
   min-height: 140px;
-  /* Reserve space below the bar area so angled labels don't shrink bars */
-  margin-bottom: 72px;
   overflow: visible;
 `;
 
 const VerticalBarCol = styled.div<{$clickable?: boolean}>`
-  position: relative;
   flex: 1 1 0;
-  min-width: 28px;
+  min-width: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -141,19 +147,68 @@ const VerticalBarFill = styled.div<{$color: string; $height: number; $active?: b
   outline: ${props => (props.$active ? `1px solid ${props.theme.activeColor}` : 'none')};
 `;
 
-const VerticalBarLabel = styled.div`
-  position: absolute;
-  top: calc(100% + 28px);
-  left: 0%;
+const VerticalBarLabels = styled.div<{$height: number; $rotated?: boolean}>`
+  display: flex;
+  /* Top-align rotated labels so they hang down into the band instead of into the bars. */
+  align-items: ${props => (props.$rotated ? 'flex-start' : 'center')};
+  gap: 8px;
+  height: ${props => props.$height}px;
+  overflow: visible;
+`;
+
+const VerticalBarLabelCell = styled.div<{$rotated?: boolean}>`
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: ${props => (props.$rotated ? 'flex-start' : 'center')};
+  justify-content: ${props => (props.$rotated ? 'flex-start' : 'center')};
+  overflow: visible;
+`;
+
+const VerticalBarLabel = styled.div<{$rotated?: boolean}>`
   font-size: 10px;
   color: ${props => props.theme.textColor};
   white-space: nowrap;
   overflow: visible;
-  transform: rotate(-40deg);
+  /* Clockwise so text hangs down-right from top-left into the label band (not up into bars). */
+  transform: ${props => (props.$rotated ? `rotate(${LABEL_ROTATE_DEG}deg)` : 'none')};
   transform-origin: top left;
   line-height: 1.1;
   pointer-events: none;
 `;
+
+/** ~px per character at 10px font; used to decide rotation + label band height. */
+const LABEL_CHAR_WIDTH = 6;
+const LABEL_ROTATE_DEG = 40;
+/** Approximate chart plot width inside the panel (for fit checks). */
+const VERTICAL_BAR_PLOT_WIDTH = 260;
+
+function getVerticalBarLabelLayout(bins: ChartBin[]): {
+  rotated: boolean;
+  labelBand: number;
+  padRight: number;
+  gap: number;
+} {
+  const maxLen = Math.max(1, ...bins.map(bin => String(bin.key).length));
+  const slotWidth = VERTICAL_BAR_PLOT_WIDTH / Math.max(1, bins.length);
+  const labelWidth = maxLen * LABEL_CHAR_WIDTH;
+  // Keep short labels horizontal (Studio-like); rotate when they won't fit in their slot.
+  const rotated = labelWidth > slotWidth * 0.9 || maxLen > 8;
+  if (!rotated) {
+    return {rotated: false, labelBand: 5, padRight: 0, gap: 6};
+  }
+  const sin = Math.sin((LABEL_ROTATE_DEG * Math.PI) / 180);
+  // Full downward projection of the angled label (origin is top-left, rotates clockwise).
+  const projectedHeight = labelWidth * sin + 10;
+  // Small fixed clearance under bars; length is absorbed by the label band below.
+  return {
+    rotated: true,
+    labelBand: Math.max(24, Math.ceil(projectedHeight)),
+    padRight: 2,
+    gap: 8
+  };
+}
 
 const HeatGrid = styled.div<{$cols: number}>`
   display: grid;
@@ -208,7 +263,10 @@ const LineSvg = styled.svg`
   display: block;
 `;
 
-type ClickHandler = (key: string, extra?: Record<string, string>) => void;
+type ClickHandler = (
+  key: string,
+  extra?: {filterValue?: Array<string | number>; x?: string; y?: string}
+) => void;
 
 function onActivateKey(event: React.KeyboardEvent, activate?: () => void): void {
   if (!activate) {
@@ -262,35 +320,46 @@ export function BarChartView({
   const max = maxValue(bins);
 
   if (!horizontal) {
+    const {rotated, labelBand, padRight, gap} = getVerticalBarLabelLayout(bins);
     return (
       <ChartWrap className="bar-chart">
-        <VerticalBarChart>
-          {bins.map(bin => {
-            const activate = onSelect ? () => onSelect(String(bin.key)) : undefined;
-            const selected = selectedKey === String(bin.key);
-            return (
-              <VerticalBarCol
-                key={bin.key}
-                $clickable={Boolean(activate)}
-                role={activate ? 'button' : undefined}
-                tabIndex={activate ? 0 : undefined}
-                aria-pressed={activate ? selected : undefined}
-                aria-label={`${bin.key}: ${formatNumber(bin.value)}`}
-                onClick={activate}
-                onKeyDown={event => onActivateKey(event, activate)}
-              >
-                <VerticalBarValue>{formatNumber(bin.value)}</VerticalBarValue>
-                <VerticalBarTrack>
-                  <VerticalBarFill
-                    $color={bin.color}
-                    $height={(bin.value / max) * 100}
-                    $active={selected}
-                  />
-                </VerticalBarTrack>
-                <VerticalBarLabel>{bin.key}</VerticalBarLabel>
-              </VerticalBarCol>
-            );
-          })}
+        <VerticalBarChart $padRight={padRight} $gap={gap}>
+          <VerticalBarBars>
+            {bins.map(bin => {
+              const activate = onSelect
+                ? () => onSelect(String(bin.key), {filterValue: bin.filterValue})
+                : undefined;
+              const selected = selectedKey === String(bin.key);
+              return (
+                <VerticalBarCol
+                  key={bin.key}
+                  $clickable={Boolean(activate)}
+                  role={activate ? 'button' : undefined}
+                  tabIndex={activate ? 0 : undefined}
+                  aria-pressed={activate ? selected : undefined}
+                  aria-label={`${bin.key}: ${formatNumber(bin.value)}`}
+                  onClick={activate}
+                  onKeyDown={event => onActivateKey(event, activate)}
+                >
+                  <VerticalBarValue>{formatNumber(bin.value)}</VerticalBarValue>
+                  <VerticalBarTrack>
+                    <VerticalBarFill
+                      $color={bin.color}
+                      $height={(bin.value / max) * 100}
+                      $active={selected}
+                    />
+                  </VerticalBarTrack>
+                </VerticalBarCol>
+              );
+            })}
+          </VerticalBarBars>
+          <VerticalBarLabels $height={labelBand} $rotated={rotated}>
+            {bins.map(bin => (
+              <VerticalBarLabelCell key={`label-${bin.key}`} $rotated={rotated}>
+                <VerticalBarLabel $rotated={rotated}>{bin.key}</VerticalBarLabel>
+              </VerticalBarLabelCell>
+            ))}
+          </VerticalBarLabels>
         </VerticalBarChart>
       </ChartWrap>
     );
@@ -299,7 +368,9 @@ export function BarChartView({
   return (
     <ChartWrap className="horizontal-bar-chart">
       {bins.map(bin => {
-        const activate = onSelect ? () => onSelect(String(bin.key)) : undefined;
+        const activate = onSelect
+          ? () => onSelect(String(bin.key), {filterValue: bin.filterValue})
+          : undefined;
         const selected = selectedKey === String(bin.key);
         return (
           <BarRow

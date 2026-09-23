@@ -78,7 +78,7 @@ type StyledChartPanelContentProps = {
 };
 const StyledChartPanelContent = styled.div<StyledChartPanelContentProps>`
   ${props => props.theme.sidePanelScrollBar};
-  padding: ${props => (props.$extended ? '32px' : '10px 0')};
+  padding: ${props => (props.$extended ? '32px' : '3px 0')};
   overflow-x: hidden;
   overflow-y: auto;
   display: flex;
