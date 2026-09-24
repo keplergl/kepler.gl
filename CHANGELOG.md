@@ -15,6 +15,14 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.14] - Sep 24 2026
+
+- c07a1f27 fix: redraw flows when a replaced dataset brings a new flow layer (#3751)
+- 59048d02 feat: add JSON editors for layer, filter, effect, viewport, and animation (#3744)
+- ce25658f fix: keep the parked layers' place when another dataset is replaced (#3750)
+- 4b8e5de0 fix: load Parquet/Arrow Int64 columns without BigInt TypeError (#3749)
+- fed9669a fix: docker image build improvements (#3748)
+
 ## [3.3.0-alpha.13] - Sep 20 2026
 
 - 98cbeccf feat: add Shapefile, Excel, and FlatGeobuf support (#3741)
