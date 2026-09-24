@@ -154,6 +154,9 @@ export type ParsedUiState = {
         contentHeight?: number;
       };
     };
+    chart?: {
+      active?: boolean;
+    };
   };
   locale?: string;
   theme?: string;
