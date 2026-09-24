@@ -48,7 +48,9 @@ For full documentation, visit [https://docs.kepler.gl/docs/keplergl-jupyter](htt
 
 ## AI Assistant Skill Setup
 
-If you use AI coding assistants, add your project skill/instructions file in this directory:
+This repository ships a ready-made **kepler.gl agent skill** at [`skill/`](./skill/) — instructions and per-layer-type references that help AI coding assistants (Claude Code, Codex, Cursor, etc.) generate `keplergl` map scripts and standalone HTML exports consistently. Download a pre-built package from the [skill releases](https://github.com/keplergl/kepler.gl/releases?q=skill-v&expanded=false) and install it with your assistant, or prompt your agent to install it from the kepler.gl GitHub repo — see [skill/README.md](./skill/README.md).
+
+If you prefer to write your own project skill/instructions file, add it in this directory:
 
 - **Claude Code**: `CLAUDE.md`
 - **Codex-compatible tools**:

@@ -10,6 +10,7 @@ This directory contains the **kepler.gl** agent skill — a set of instructions 
 | [geojson-polygon-map.md](skill-references/geojson-polygon-map.md) | Polygons & lines from GeoJSON / GeoDataFrame |
 | [h3-hexagon-map.md](skill-references/h3-hexagon-map.md) | H3 spatial index hexagons |
 | [arc-line-map.md](skill-references/arc-line-map.md) | Origin–destination arcs & lines |
+| [flow-layer.md](skill-references/flow-layer.md) | Aggregated O–D flow maps (clustering, magnitude, location totals) |
 | [heatmap.md](skill-references/heatmap.md) | Density heatmap from points |
 | [hexbin-aggregation-map.md](skill-references/hexbin-aggregation-map.md) | Spatial binning into hexagons |
 | [trip-animation-map.md](skill-references/trip-animation-map.md) | Animated trips along paths |
@@ -28,6 +29,26 @@ The easiest way to get started is to prompt your AI agent:
 or just "kepler.gl github repo"
 
 The agent will locate the skill file and set it up for you automatically.
+
+## Install via Marketplace (Claude Code & Codex)
+
+The repo root hosts a marketplace manifest (`.claude-plugin/marketplace.json`,
+read by both agents). This installs the wrapper plugin — which bundles the same
+skill content — and picks up updates whenever this repo changes:
+
+```bash
+# Claude Code
+/plugin marketplace add keplergl/kepler.gl
+/plugin install kepler-gl
+
+# Codex
+codex plugin marketplace add keplergl/kepler.gl
+codex plugin install kepler-gl@kepler-gl
+```
+
+To install from a not-yet-merged branch, pass a ref instead of relying on the
+default branch (e.g. `--ref xli-move-skill-to-bindings-python` in Claude Code, or
+`codex plugin marketplace add keplergl/kepler.gl --ref <branch>`).
 
 ## Example Prompt
 

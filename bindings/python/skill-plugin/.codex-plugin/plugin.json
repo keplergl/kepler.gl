@@ -1,0 +1,29 @@
+{
+  "name": "kepler-gl",
+  "version": "0.0.1",
+  "description": "Create interactive map visualizations and export to standalone HTML using the keplergl Python package. Use when the user wants to create maps, visualize geospatial data, plot locations on a map, or generate HTML map files from DataFrames, GeoDataFrames, GeoJSON, or CSV data.",
+  "author": {
+    "name": "kepler.gl"
+  },
+  "homepage": "https://kepler.gl",
+  "repository": "https://github.com/keplergl/kepler.gl",
+  "license": "MIT",
+  "keywords": [
+    "maps",
+    "geospatial",
+    "visualization",
+    "kepler.gl",
+    "GeoJSON",
+    "DataFrame",
+    "HTML",
+    "interactive"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "kepler.gl Map",
+    "shortDescription": "Create kepler.gl maps from DataFrames, GeoDataFrames, GeoJSON, or CSV and export standalone HTML.",
+    "developerName": "kepler.gl",
+    "category": "data",
+    "capabilities": ["generate HTML map files with the keplergl Python package"]
+  }
+}
