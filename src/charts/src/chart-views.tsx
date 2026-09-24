@@ -279,7 +279,6 @@ const HeatAxisTitles = styled.div<{$sideWidth: number}>`
 
 const HeatAxisTitle = styled.div<{
   $align?: 'left' | 'center' | 'right';
-  $allowWrap?: boolean;
 }>`
   padding: 0 2px;
   text-align: ${props => props.$align || 'center'};
@@ -287,10 +286,8 @@ const HeatAxisTitle = styled.div<{
   line-height: 1.2;
   color: ${props => props.theme.textColor};
   opacity: 0.95;
-  white-space: ${props => (props.$allowWrap ? 'normal' : 'nowrap')};
-  overflow: ${props => (props.$allowWrap ? 'visible' : 'hidden')};
-  text-overflow: ${props => (props.$allowWrap ? 'clip' : 'ellipsis')};
-  word-break: ${props => (props.$allowWrap ? 'break-word' : 'normal')};
+  white-space: nowrap;
+  overflow: visible;
 `;
 
 const HEAT_CELL_MIN_HEIGHT = 22;
@@ -343,7 +340,6 @@ const HeatCell = styled.div<{
   $fg: string;
   $clickable?: boolean;
   $dimmed?: boolean;
-  $crosshair?: boolean;
   $selected?: boolean;
 }>`
   min-height: ${HEAT_CELL_MIN_HEIGHT}px;
@@ -365,23 +361,6 @@ const HeatCell = styled.div<{
   cursor: ${props => (props.$clickable ? 'pointer' : 'default')};
   transition: opacity 80ms ease, border-color 80ms ease, box-shadow 80ms ease;
   position: relative;
-
-  &:hover,
-  &[data-hovered='true'] {
-    border-color: ${props => props.theme.textColor};
-    box-shadow: inset 0 0 0 1px ${props => props.theme.textColor};
-    opacity: 1;
-    z-index: 1;
-  }
-
-  ${props =>
-    props.$crosshair && !props.$selected
-      ? `
-    border-color: ${props.theme.activeColor || props.theme.textColor};
-    box-shadow: inset 0 0 0 1px ${props.theme.activeColor || props.theme.textColor};
-    opacity: 1;
-  `
-      : ''}
 
   ${props =>
     props.$selected
@@ -868,12 +847,17 @@ export function HeatmapView({
   // Tighter band than bars: smaller char width + less padding; labels may clip slightly.
   const heatCharW = 4.2;
   const headerHeight = Math.max(16, Math.ceil(Math.min(maxHeaderLen, 12) * heatCharW * sin + 4));
-  const sideWidth = Math.max(14, Math.ceil(Math.min(maxSideLen, 12) * heatCharW * cos + 2));
+  const sideWidth = Math.max(
+    14,
+    Math.ceil(Math.min(maxSideLen, 12) * heatCharW * cos + 2),
+    // Keep Y axis title on one line in the left title slot.
+    yLabel ? Math.ceil(String(yLabel).length * 5.2) : 0
+  );
   return (
     <HeatChartWrap>
       {xLabel || yLabel ? (
         <HeatAxisTitles $sideWidth={sideWidth}>
-          <HeatAxisTitle $align="right" $allowWrap title={yLabel}>
+          <HeatAxisTitle $align="right" title={yLabel}>
             {yLabel || null}
           </HeatAxisTitle>
           <HeatAxisTitle $align="center" title={xLabel}>
@@ -908,8 +892,6 @@ export function HeatmapView({
               const label = formatNumber(value);
               const isSelected = selectedKey === cellKey;
               const isHovered = hovered?.x === x && hovered?.y === y;
-              const onCrosshair =
-                hasHover && !isHovered && !isSelected && (hovered?.x === x || hovered?.y === y);
               const activate = onSelect
                 ? () =>
                     onSelect(cellKey, {
@@ -925,10 +907,8 @@ export function HeatmapView({
                   $bg={heatColor(value, max, palette)}
                   $fg={heatLabelColor(value, max, palette)}
                   $clickable={Boolean(activate)}
-                  $dimmed={hasHover && !isHovered && !onCrosshair && !isSelected}
-                  $crosshair={onCrosshair}
+                  $dimmed={hasHover && !isHovered && !isSelected}
                   $selected={isSelected}
-                  data-hovered={isHovered ? 'true' : undefined}
                   role={activate ? 'button' : undefined}
                   tabIndex={activate ? 0 : undefined}
                   aria-label={`${x} / ${y}: ${label}`}
