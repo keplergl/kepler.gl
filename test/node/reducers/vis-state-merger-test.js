@@ -27,7 +27,13 @@ import {SYNC_TIMELINE_MODES} from '@kepler.gl/constants';
 
 import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas';
 import {processKeplerglJSON} from '@kepler.gl/processors';
-import {updateVisData, receiveMapConfig, addDataToMap, registerEntry} from '@kepler.gl/actions';
+import {
+  updateVisData,
+  receiveMapConfig,
+  addDataToMap,
+  registerEntry,
+  setLayerAnimationTimeConfig
+} from '@kepler.gl/actions';
 
 import {createDataContainer, findById} from '@kepler.gl/utils';
 
@@ -79,6 +85,7 @@ import {
   StateWFilesFiltersLayerColor,
   StateWSyncedTimeFilter,
   StateWSplitMaps,
+  StateWTripGeojson,
   testCsvDataId,
   testGeoJsonDataId,
   StateWFiles,
@@ -2187,6 +2194,35 @@ test('VisStateMerger -> load time filter/trip layer synced map', t => {
     visState.animationConfig.currentTime,
     oldState.visState.animationConfig.currentTime,
     'Should have set animationConfig value to filter value[0]'
+  );
+
+  t.end();
+});
+
+test('VisStateMerger -> load trip layer animation timezone and time format', t => {
+  const oldState = cloneDeep(StateWTripGeojson);
+  oldState.visState = visStateReducer(
+    oldState.visState,
+    setLayerAnimationTimeConfig({timezone: 'America/Guayaquil', timeFormat: 'L LTS'})
+  );
+
+  const appStateToSave = SchemaManager.save(oldState);
+  const stateParsed = SchemaManager.load(appStateToSave);
+  const initialVisState = cloneDeep(InitialState).visState;
+
+  const visState = applyActions(visStateReducer, initialVisState, [
+    {action: updateVisData, payload: [stateParsed.datasets, {}, stateParsed.config]}
+  ]);
+
+  t.equal(
+    visState.animationConfig.timezone,
+    'America/Guayaquil',
+    'Should load the saved animation timezone'
+  );
+  t.equal(
+    visState.animationConfig.timeFormat,
+    'L LTS',
+    'Should load the saved animation time format'
   );
 
   t.end();

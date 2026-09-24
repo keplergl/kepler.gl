@@ -317,7 +317,12 @@ test('#visStateSchema -> v1 -> save animation', t => {
   );
 
   const expectedSavedLayers = [expectedSavedTripLayer];
-  const expectedAnimationConfig = {currentTime: 1565577261000, speed: 1};
+  const expectedAnimationConfig = {
+    currentTime: 1565577261000,
+    speed: 1,
+    timeFormat: null,
+    timezone: null
+  };
   cmpSavedLayers(t, expectedSavedLayers, vsToSave.layers);
 
   t.deepEqual(vsToSave.animationConfig, expectedAnimationConfig, 'should save animationConfig');
