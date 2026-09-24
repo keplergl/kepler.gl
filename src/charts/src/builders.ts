@@ -19,7 +19,8 @@ import {
   ChartAxis,
   DatasetChartConfig,
   LayerChartConfig,
-  ChartableDataset
+  ChartableDataset,
+  isLayerChartConfig
 } from './types';
 
 function generateHashId(len: number): string {
@@ -276,4 +277,58 @@ export function serializeCharts(charts: ChartConfig[]): ChartConfig[] {
       isConfigActive: false
     }
   }));
+}
+
+/**
+ * Rebuild field-bearing axes for a new dataset (or layer) so stale names like
+ * `Join_Count` are not looked up row-by-row on a table that does not have them.
+ */
+export function propsForChartDatasetChange(
+  chart: ChartConfig,
+  dataset: ChartableDataset | null | undefined,
+  next: {dataId?: string | null; layerId?: string}
+): Partial<ChartConfig> {
+  const dataId = next.dataId ?? chart.dataId ?? null;
+  const layerId = next.layerId ?? (isLayerChartConfig(chart) ? chart.layerId : undefined);
+  const type = isLayerChartConfig(chart) ? chart.layerChartType : chart.type;
+  const rebuilt = createChart({
+    type,
+    dataId,
+    dataset: dataset || undefined,
+    layerId,
+    options: {activateConfig: chart.display?.isConfigActive}
+  });
+  const crossFilter = chart.crossFilter
+    ? {...chart.crossFilter, enabled: false, value: {}, fieldNames: {}}
+    : undefined;
+  if (!rebuilt) {
+    return {
+      dataId,
+      ...(layerId ? {layerId} : {}),
+      xAxis: makeAxis(null),
+      yAxis: makeAxis(null),
+      axis: makeAxis(null),
+      groupBy: makeAxis(null),
+      value: makeAxis(null),
+      crossFilter
+    };
+  }
+  return {
+    ...rebuilt,
+    id: chart.id,
+    pinned: chart.pinned,
+    applyFilters: chart.applyFilters,
+    display: chart.display,
+    title: chart.title,
+    dataId,
+    ...(layerId ? {layerId} : {}),
+    chartDisplay: {
+      ...rebuilt.chartDisplay,
+      format: chart.chartDisplay?.format,
+      color: chart.chartDisplay?.color,
+      colorRange: chart.chartDisplay?.colorRange,
+      showCaption: chart.chartDisplay?.showCaption
+    },
+    crossFilter
+  };
 }

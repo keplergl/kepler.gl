@@ -426,7 +426,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableColumnStats: true,
 
-  enableChartsPanel: false,
+  enableChartsPanel: true,
 
   enableJsonEditors: true,
   enableLayerJsonEditor: true,

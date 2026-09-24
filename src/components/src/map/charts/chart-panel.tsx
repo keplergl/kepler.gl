@@ -14,6 +14,7 @@ import {
   getCrossFilterFields,
   isLayerChartConfig,
   toChartableDataset,
+  propsForChartDatasetChange,
   ChartAxis,
   CHART_AGGREGATION_OPTIONS,
   CHART_COLOR_BY_OPTIONS,
@@ -795,7 +796,17 @@ export function ChartPanelContentFactory(
                           <SourceDataSelector
                             datasets={datasets}
                             dataId={chart.dataId}
-                            onSelect={dataId => onUpdate(chart.id, {dataId: String(dataId)})}
+                            onSelect={dataId => {
+                              const nextDataId = String(dataId);
+                              onUpdate(
+                                chart.id,
+                                propsForChartDatasetChange(
+                                  chart,
+                                  toChartableDataset(datasets[nextDataId]),
+                                  {dataId: nextDataId}
+                                )
+                              );
+                            }}
                           />
                         </SourceDataSelectorWrapper>
                       ) : (
@@ -813,10 +824,15 @@ export function ChartPanelContentFactory(
                             size="small"
                             onChange={layerId => {
                               const layer = layers.find(l => l.id === layerId);
-                              onUpdate(chart.id, {
-                                layerId: String(layerId),
-                                dataId: layer?.config.dataId ?? chart.dataId
-                              } as Partial<ChartConfig>);
+                              const nextDataId = layer?.config.dataId ?? chart.dataId;
+                              onUpdate(
+                                chart.id,
+                                propsForChartDatasetChange(
+                                  chart,
+                                  nextDataId ? toChartableDataset(datasets[nextDataId]) : null,
+                                  {dataId: nextDataId, layerId: String(layerId)}
+                                )
+                              );
                             }}
                           />
                         </ChartConfigSectionWrapper>

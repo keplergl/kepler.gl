@@ -24,6 +24,6 @@
     "isolatedModules": true,
     "baseUrl": "./src"
   },
-  "include": ["src"],
+  "include": ["src", "../styles/src/styled.d.ts"],
   "exclude": ["**/*.spec.*"]
 }

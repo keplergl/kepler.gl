@@ -13,6 +13,8 @@ import {
   buildPivotTable,
   buildTimeSeries,
   createChart,
+  propsForChartDatasetChange,
+  toChartableDataset,
   computeDatasetChart,
   formatNumber,
   displayBinKey,
@@ -323,5 +325,58 @@ test('charts -> formatNumber uses compact SI instead of scientific notation', t 
   t.equal(formatNumber(42), '42');
   t.equal(formatNumber(3.14159), '3.142');
   t.equal(formatNumber(-1500000), '-1.5M');
+  t.end();
+});
+
+test('charts -> toChartableDataset does not look up missing fields', t => {
+  const missingLookups = [];
+  const raw = {
+    id: 'new-ds',
+    allIndexes: [0, 1, 2],
+    filteredIndex: [0, 1, 2],
+    fields: [{name: 'mag', type: 'real'}],
+    getValue: name => {
+      missingLookups.push(name);
+      return null;
+    }
+  };
+  const dataset = toChartableDataset(raw);
+  t.equal(dataset.getValue('Join_Count', 0), null);
+  t.equal(dataset.getValue('Join_Count', 1), null);
+  t.deepEqual(missingLookups, [], 'KeplerTable.getValue must not run for unknown fields');
+  t.equal(dataset.getValue('mag', 0), null);
+  t.deepEqual(missingLookups, ['mag']);
+  t.end();
+});
+
+test('charts -> switching dataset rebuilds line-chart axes from the new table', t => {
+  const oldDataset = mockDataset([
+    {category: 'A', value: 1, time: new Date('2020-01-01'), id: '1'}
+  ]);
+  const chart = createChart({type: ChartType.lineChart, dataset: oldDataset, dataId: 'old'});
+  chart.xAxis = {field: {name: 'Join_Count', type: 'integer'}, aggregation: BinType.uniqueBin};
+  chart.yAxis = {field: {name: 'Join_Count', type: 'integer'}, aggregation: 'sum'};
+  const nextDataset = mockDataset([
+    {category: 'B', value: 2, time: new Date('2021-01-01'), id: '2'}
+  ]);
+  nextDataset.id = 'new';
+  const props = propsForChartDatasetChange(chart, nextDataset, {dataId: 'new'});
+  t.equal(props.dataId, 'new');
+  t.notEqual(props.xAxis.field.name, 'Join_Count');
+  t.ok(nextDataset.fields.some(field => field.name === props.xAxis.field.name));
+  t.notEqual(props.yAxis.field && props.yAxis.field.name, 'Join_Count');
+  const view = computeDatasetChart({...chart, ...props}, nextDataset);
+  t.equal(view.kind, 'line');
+  t.ok(view.bins.length > 0);
+  t.end();
+});
+
+test('charts -> stale line-chart field does not emit bins', t => {
+  const dataset = mockDataset([{category: 'A', value: 1, time: new Date('2020-01-01'), id: '1'}]);
+  const chart = createChart({type: ChartType.lineChart, dataset});
+  chart.xAxis = {field: {name: 'Join_Count', type: 'integer'}, aggregation: BinType.uniqueBin};
+  const view = computeDatasetChart(chart, dataset);
+  t.equal(view.kind, 'line');
+  t.deepEqual(view.bins, []);
   t.end();
 });

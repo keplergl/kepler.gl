@@ -209,6 +209,15 @@ export function computeDatasetChart(
       };
     }
     case ChartType.lineChart: {
+      const xField = chart.xAxis?.field?.name;
+      if (xField && !dataset.fields.some(field => field.name === xField)) {
+        return {
+          kind: 'line',
+          bins: [],
+          xLabel: axisTitle(chart.xAxis, 'X'),
+          yLabel: axisTitle(chart.yAxis, 'Y')
+        };
+      }
       const ordered = isOrderedBinAxis(chart.xAxis);
       const interval = chart.xAxis?.interval ?? chart.chartDisplay?.interval ?? null;
       const binAxis = chart.xAxis ? {...chart.xAxis, interval: interval || undefined} : chart.xAxis;

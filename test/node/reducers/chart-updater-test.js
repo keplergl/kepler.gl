@@ -80,6 +80,40 @@ test('#VisStateUpdater -> disabling cross-filter removes owned filter', t => {
   t.end();
 });
 
+test('#VisStateUpdater -> switching chart dataId drops fields missing from the new dataset', t => {
+  const chart = createBarChart({
+    id: 'c1',
+    dataId: 'd1',
+    xAxis: {field: {name: 'Join_Count', type: 'integer'}, aggregation: 'uniqueBin'},
+    yAxis: {field: {name: 'Join_Count', type: 'integer'}, aggregation: 'sum'}
+  });
+  let nextState = {
+    ...INITIAL_VIS_STATE,
+    datasets: {
+      d1: {id: 'd1', fields: [{name: 'Join_Count'}]},
+      d2: {id: 'd2', fields: [{name: 'mag'}, {name: 'place'}]}
+    },
+    charts: [chart],
+    filters: [{id: 'chart-c1-f', dataId: ['d1'], name: ['Join_Count'], value: [1]}]
+  };
+  nextState.charts[0] = {
+    ...nextState.charts[0],
+    crossFilter: {
+      enabled: true,
+      filterId: 'chart-c1-f',
+      fieldNames: {x: 'Join_Count'},
+      value: {x: 1}
+    }
+  };
+  nextState = reducer(nextState, VisStateActions.updateChart('c1', {dataId: 'd2'}));
+  t.equal(nextState.charts[0].dataId, 'd2');
+  t.equal(nextState.charts[0].xAxis.field, null, 'stale x field should be cleared');
+  t.equal(nextState.charts[0].yAxis.field, null, 'stale y field should be cleared');
+  t.equal(nextState.charts[0].crossFilter.enabled, false);
+  t.equal(nextState.filters.length, 0, 'owned cross-filter should be removed');
+  t.end();
+});
+
 test('#VisStateUpdater -> mergeCharts skips duplicate ids in the loaded array', t => {
   const first = createBarChart({id: 'dup', dataId: 'd1', title: 'First'});
   const second = createBarChart({id: 'dup', dataId: 'd1', title: 'Second'});

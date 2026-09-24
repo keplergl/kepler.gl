@@ -2538,6 +2538,37 @@ function mergeChartConfig(chart: ChartConfig, props: Partial<ChartConfig>): Char
   } as ChartConfig;
 }
 
+function axisFieldIfPresent<T extends {field?: {name: string} | null; title?: string | null}>(
+  axis: T | undefined,
+  fieldNames: Set<string>
+): T | undefined {
+  if (!axis?.field?.name || fieldNames.has(axis.field.name)) {
+    return axis;
+  }
+  return {...axis, field: null, title: null};
+}
+
+function dropMissingChartFields(
+  chart: ChartConfig,
+  dataset: {fields?: {name: string}[]} | undefined
+): ChartConfig {
+  const fieldNames = new Set((dataset?.fields || []).map(field => field.name));
+  const next = chart as ChartConfig & {
+    xAxis?: {field?: {name: string} | null};
+    yAxis?: {field?: {name: string} | null};
+    axis?: {field?: {name: string} | null};
+    groupBy?: {field?: {name: string} | null};
+    value?: {field?: {name: string} | null};
+  };
+  return mergeChartConfig(chart, {
+    xAxis: axisFieldIfPresent(next.xAxis, fieldNames),
+    yAxis: axisFieldIfPresent(next.yAxis, fieldNames),
+    axis: axisFieldIfPresent(next.axis, fieldNames),
+    groupBy: axisFieldIfPresent(next.groupBy, fieldNames),
+    value: axisFieldIfPresent(next.value, fieldNames)
+  } as Partial<ChartConfig>);
+}
+
 function removeChartsAndFilters<T extends VisState>(
   state: T,
   shouldRemove: (chart: ChartConfig) => boolean
@@ -2616,9 +2647,23 @@ export const updateChartUpdater = (
     return state;
   }
   const prev = state.charts[idx];
+  const dataIdChanged = typeof props.dataId === 'string' && props.dataId !== prev.dataId;
+  const layerIdChanged =
+    isLayerChartConfig(prev) &&
+    typeof (props as LayerChartConfig).layerId === 'string' &&
+    (props as LayerChartConfig).layerId !== prev.layerId;
+  let next = mergeChartConfig(prev, props);
+  if (dataIdChanged || layerIdChanged) {
+    const dataId = next.dataId || undefined;
+    next = dropMissingChartFields(next, dataId ? state.datasets[dataId] : undefined);
+    if (next.crossFilter?.enabled) {
+      next = mergeChartConfig(next, {
+        crossFilter: {...next.crossFilter, enabled: false, value: {}, fieldNames: {}}
+      });
+    }
+  }
   const charts = [...state.charts];
-  charts[idx] = mergeChartConfig(prev, props);
-  const next = charts[idx];
+  charts[idx] = next;
   let nextState: VisState = {
     ...state,
     charts

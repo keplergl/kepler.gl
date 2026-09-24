@@ -580,6 +580,17 @@ function uniqueGroupFilterValues(
   return filterValues;
 }
 
+function datasetHasField(dataset: ChartableDataset, fieldName?: string | null): boolean {
+  return Boolean(fieldName && dataset.fields.some(field => field.name === fieldName));
+}
+
+function presentFieldName(
+  dataset: ChartableDataset,
+  fieldName?: string | null
+): string | undefined {
+  return datasetHasField(dataset, fieldName) ? fieldName || undefined : undefined;
+}
+
 export function groupIndexes(
   indexes: number[],
   dataset: ChartableDataset,
@@ -592,6 +603,9 @@ export function groupIndexes(
       groups: new Map([['All', indexes]]),
       filterValues: new Map([['All', ['All']]])
     };
+  }
+  if (!datasetHasField(dataset, fieldName)) {
+    return {groups: new Map(), filterValues: new Map()};
   }
   const fieldType = axis.field?.type;
   const aggregation = axis.aggregation;
@@ -660,9 +674,13 @@ export function buildGroupedBins({
 }): ChartBin[] {
   const indexes = indexesOverride || getChartIndexes(dataset, applyFilters);
   const {groups, filterValues} = groupIndexes(indexes, dataset, binAxis, numGroups);
-  const valueField = valueAxis?.field?.name;
+  const valueField = datasetHasField(dataset, valueAxis?.field?.name)
+    ? valueAxis?.field?.name
+    : undefined;
   const aggregation = (valueAxis?.aggregation as ChartAggregation) || 'count';
-  const groupByField = groupByAxis?.field?.name;
+  const groupByField = datasetHasField(dataset, groupByAxis?.field?.name)
+    ? groupByAxis?.field?.name
+    : undefined;
 
   let bins: ChartBin[] = [];
   let colorIndex = 0;
@@ -716,7 +734,7 @@ export function buildBigNumber({
     value: aggregateIndexes(
       indexes,
       dataset,
-      axis?.field?.name,
+      presentFieldName(dataset, axis?.field?.name),
       (axis?.aggregation as ChartAggregation) || 'count'
     )
   };
@@ -790,7 +808,7 @@ export function buildHeatmapCells({
     ySets.set(key, new Set(idxs));
   });
 
-  const valueField = valueAxis?.field?.name;
+  const valueField = presentFieldName(dataset, valueAxis?.field?.name);
   const aggregation = (valueAxis?.aggregation as ChartAggregation) || 'count';
   const cells: HeatmapCell[] = [];
 
@@ -866,7 +884,7 @@ export function buildPivotTable({
     rowSets.set(key, new Set(idxs));
   });
 
-  const valueField = valueAxis?.field?.name;
+  const valueField = presentFieldName(dataset, valueAxis?.field?.name);
   const aggregation = (valueAxis?.aggregation as ChartAggregation) || 'count';
   const values: Record<string, Record<string, number>> = {};
 
@@ -897,7 +915,7 @@ export function buildTimeSeries({
   yAxis?: ChartAxis;
   interval?: string;
 }): ChartBin[] {
-  if (!xAxis?.field?.name) {
+  if (!presentFieldName(dataset, xAxis?.field?.name) || !xAxis?.field?.name) {
     return [];
   }
   const {groups, filterValues} = timeGroupMap(indexes, dataset, xAxis.field.name, interval);
@@ -908,7 +926,7 @@ export function buildTimeSeries({
       value: aggregateIndexes(
         groupIndexes,
         dataset,
-        yAxis?.field?.name,
+        presentFieldName(dataset, yAxis?.field?.name),
         (yAxis?.aggregation as ChartAggregation) || 'count'
       ),
       count: groupIndexes.length,

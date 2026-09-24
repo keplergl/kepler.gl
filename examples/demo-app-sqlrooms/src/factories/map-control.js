@@ -10,6 +10,7 @@ import {
   EffectControlFactory,
   EffectManagerFactory
 } from '@kepler.gl/components';
+import {getApplicationConfig} from '@kepler.gl/utils';
 // AnnotationManagerFactory / ChartManagerFactory are available in the workspace source
 // (src/components) but may not yet be published in the @kepler.gl/components version this
 // example currently depends on.
@@ -94,10 +95,12 @@ function CustomMapControlFactory(
   ];
 
   const CustomMapControl = props => {
+    const chartsEnabled = Boolean(getApplicationConfig().enableChartsPanel);
     const showEffects = Boolean(props.mapControls?.effect?.active);
     const showAnnotations = Boolean(props.mapControls?.annotation?.active);
-    const showChartsPanel = Boolean(props.mapControls?.chart?.active);
-    const hasPinnedCharts = (props.charts || []).some(chart => chart.pinned !== false);
+    const showChartsPanel = chartsEnabled && Boolean(props.mapControls?.chart?.active);
+    const hasPinnedCharts =
+      chartsEnabled && (props.charts || []).some(chart => chart.pinned !== false);
     const showCharts = showChartsPanel || hasPinnedCharts;
     const rightPanelVisible = showEffects || showAnnotations || showCharts;
     return (

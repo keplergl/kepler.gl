@@ -31,12 +31,13 @@
     "@types/d3-array": "^2.8.0",
     "@types/d3-time": "^2",
     "@types/react": "^19.0.0",
+    "@types/styled-components": "^5.1.32",
     "d3-array": "^2.8.0",
-    "d3-time": "^2.1.1"
+    "d3-time": "^2.1.1",
+    "styled-components": "6.4.3"
   },
   "peerDependencies": {
-    "react": ">=18",
-    "styled-components": "^6.x"
+    "react": ">=18"
   },
   "nyc": {
     "sourceMap": false,

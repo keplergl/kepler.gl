@@ -3972,11 +3972,12 @@ __metadata:
     "@types/d3-array": "npm:^2.8.0"
     "@types/d3-time": "npm:^2"
     "@types/react": "npm:^19.0.0"
+    "@types/styled-components": "npm:^5.1.32"
     d3-array: "npm:^2.8.0"
     d3-time: "npm:^2.1.1"
+    styled-components: "npm:6.4.3"
   peerDependencies:
     react: ">=18"
-    styled-components: ^6.x
   languageName: unknown
   linkType: soft
 
