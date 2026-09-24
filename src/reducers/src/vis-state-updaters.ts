@@ -2549,7 +2549,10 @@ function removeChartsAndFilters<T extends VisState>(
   }
   const removedIds = new Set(removed.map(chart => chart.id));
   const filterIds = new Set(
-    removed.map(chart => chart.crossFilter?.filterId).filter((id): id is string => Boolean(id))
+    removed.flatMap(chart => {
+      const id = chart.crossFilter?.filterId;
+      return id ? [id, `${id}-x`, `${id}-y`] : [];
+    })
   );
   let nextState: VisState = {
     ...state,
@@ -2622,10 +2625,10 @@ export const updateChartUpdater = (
   };
   const filterId = next.crossFilter?.filterId || prev.crossFilter?.filterId;
   if (prev.crossFilter?.enabled && !next.crossFilter?.enabled && filterId) {
-    const filterIdx = nextState.filters.findIndex(filter => filter.id === filterId);
-    if (filterIdx > -1) {
-      nextState = removeFilterUpdater(nextState, {idx: filterIdx});
-    }
+    const ownedFilterIds = new Set([filterId, `${filterId}-x`, `${filterId}-y`]);
+    nextState = nextState.filters.reduceRight((accu, filter, idx) => {
+      return ownedFilterIds.has(filter.id) ? removeFilterUpdater(accu, {idx}) : accu;
+    }, nextState);
   }
   return nextState;
 };

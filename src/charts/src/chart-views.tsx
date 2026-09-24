@@ -8,12 +8,18 @@ import {formatNumber} from './aggregation';
 
 import {ChartBin, HeatmapCell, PivotTableResult} from './types';
 import {ChartViewData} from './compute';
+import {HEATMAP_COLORS, HEATMAP_COLOR_STEPS} from './constants';
 
 const ChartWrap = styled.div`
   width: 100%;
   padding: 8px 12px 8px;
   box-sizing: border-box;
   overflow: visible;
+`;
+
+/** Heatmap: less left inset so side labels sit closer to the panel edge. */
+const HeatChartWrap = styled(ChartWrap)`
+  padding-left: 4px;
 `;
 
 const EmptyState = styled.div`
@@ -235,28 +241,164 @@ function getVerticalBarLabelLayout(bins: ChartBin[]): {
   };
 }
 
-const HeatGrid = styled.div<{$cols: number}>`
+const HeatGrid = styled.div<{
+  $cols: number;
+  $rows: number;
+  $sideWidth: number;
+  $headerHeight: number;
+}>`
   display: grid;
-  grid-template-columns: 72px repeat(${props => props.$cols}, minmax(18px, 1fr));
-  gap: 2px;
-  font-size: 10px;
+  grid-template-columns: ${props => props.$sideWidth}px repeat(
+      ${props => props.$cols},
+      minmax(22px, 1fr)
+    );
+  grid-template-rows: ${props => props.$headerHeight}px repeat(
+      ${props => props.$rows},
+      minmax(22px, auto)
+    );
+  gap: 1px;
+  font-size: 8px;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
 `;
 
-const HeatCell = styled.div<{$bg: string; $clickable?: boolean}>`
-  min-height: 18px;
+const HeatCorner = styled.div`
+  min-width: 0;
+`;
+
+const HeatAxisTitles = styled.div<{$sideWidth: number}>`
+  display: grid;
+  grid-template-columns: ${props => props.$sideWidth}px 1fr;
+  align-items: center;
+  margin-bottom: 4px;
+  min-height: 14px;
+  gap: 2px;
+`;
+
+const HeatAxisTitle = styled.div<{
+  $align?: 'left' | 'center' | 'right';
+  $allowWrap?: boolean;
+}>`
+  padding: 0 2px;
+  text-align: ${props => props.$align || 'center'};
+  font-size: 9px;
+  line-height: 1.2;
+  color: ${props => props.theme.textColor};
+  opacity: 0.95;
+  white-space: ${props => (props.$allowWrap ? 'normal' : 'nowrap')};
+  overflow: ${props => (props.$allowWrap ? 'visible' : 'hidden')};
+  text-overflow: ${props => (props.$allowWrap ? 'clip' : 'ellipsis')};
+  word-break: ${props => (props.$allowWrap ? 'break-word' : 'normal')};
+`;
+
+const HEAT_CELL_MIN_HEIGHT = 22;
+
+const HeatLabel = styled.div<{
+  $header?: boolean;
+  $active?: boolean;
+  $rotated?: boolean;
+}>`
+  position: relative;
+  display: flex;
+  align-items: ${props => (props.$rotated ? 'flex-start' : 'center')};
+  justify-content: ${props => {
+    if (props.$header) {
+      return props.$rotated ? 'flex-start' : 'center';
+    }
+    // Side labels: hug the grid (right edge of the side column).
+    return 'flex-end';
+  }};
+  min-width: 0;
+  overflow: visible;
+  color: ${props => (props.$active ? props.theme.textColor : props.theme.subtextColor)};
+  font-weight: ${props => (props.$active ? 600 : 400)};
+  padding: 0;
+  font-size: 8px;
+  line-height: 1.1;
+  transition: color 80ms ease;
+`;
+
+const HeatLabelText = styled.span<{$header?: boolean; $rotated?: boolean}>`
+  display: inline-block;
+  white-space: nowrap;
+  /* Same clockwise angle as vertical bar labels; hang into the label band.
+     Side labels also shift down by half a row so they sit on the row center. */
+  transform: ${props => {
+    if (!props.$rotated) {
+      return 'none';
+    }
+    if (props.$header) {
+      return `rotate(${LABEL_ROTATE_DEG}deg)`;
+    }
+    return `translateY(${HEAT_CELL_MIN_HEIGHT / 2}px) rotate(${LABEL_ROTATE_DEG}deg)`;
+  }};
+  transform-origin: ${props => (props.$header ? 'top left' : 'top right')};
+  max-width: none;
+`;
+
+const HeatCell = styled.div<{
+  $bg: string;
+  $fg: string;
+  $clickable?: boolean;
+  $dimmed?: boolean;
+  $crosshair?: boolean;
+  $selected?: boolean;
+}>`
+  min-height: ${HEAT_CELL_MIN_HEIGHT}px;
+  min-width: 0;
+  padding: 1px 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   background: ${props => props.$bg};
+  color: ${props => props.$fg};
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  opacity: ${props => (props.$dimmed && !props.$selected ? 0.45 : 1)};
   cursor: ${props => (props.$clickable ? 'pointer' : 'default')};
+  transition: opacity 80ms ease, border-color 80ms ease, box-shadow 80ms ease;
+  position: relative;
+
+  &:hover,
+  &[data-hovered='true'] {
+    border-color: ${props => props.theme.textColor};
+    box-shadow: inset 0 0 0 1px ${props => props.theme.textColor};
+    opacity: 1;
+    z-index: 1;
+  }
+
+  ${props =>
+    props.$crosshair && !props.$selected
+      ? `
+    border-color: ${props.theme.activeColor || props.theme.textColor};
+    box-shadow: inset 0 0 0 1px ${props.theme.activeColor || props.theme.textColor};
+    opacity: 1;
+  `
+      : ''}
+
+  ${props =>
+    props.$selected
+      ? `
+    border-color: ${props.theme.activeColor || '#1F71C5'};
+    box-shadow:
+      inset 0 0 0 2px ${props.theme.activeColor || '#1F71C5'},
+      0 0 0 1px ${props.theme.activeColor || '#1F71C5'};
+    opacity: 1;
+    z-index: 2;
+  `
+      : ''}
+
   &:focus-visible {
     outline: 1px solid ${props => props.theme.activeColor};
     outline-offset: 1px;
   }
-`;
-
-const HeatLabel = styled.div`
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: ${props => props.theme.subtextColor};
 `;
 
 const PivotTableEl = styled.table`
@@ -297,7 +439,12 @@ const LINE_Y_AXIS_TITLE_X = 10;
 
 type ClickHandler = (
   key: string,
-  extra?: {filterValue?: Array<string | number>; x?: string; y?: string}
+  extra?: {
+    filterValue?: Array<string | number>;
+    filterValueY?: Array<string | number>;
+    x?: string;
+    y?: string;
+  }
 ) => void;
 
 function onActivateKey(event: React.KeyboardEvent, activate?: () => void): void {
@@ -650,21 +797,58 @@ export function LineChartView({
   );
 }
 
-function heatColor(value: number, max: number): string {
-  const t = max <= 0 ? 0 : value / max;
-  const r = Math.round(18 + t * 237);
-  const g = Math.round(63 + (1 - t) * 80);
-  const b = Math.round(90 + (1 - t) * 60);
-  return `rgb(${r}, ${g}, ${b})`;
+function heatColorIndex(value: number, max: number, steps: number): number {
+  if (!(max > 0) || !(value > 0) || steps <= 1) {
+    return 0;
+  }
+  const t = Math.min(1, Math.max(0, value / max));
+  return Math.min(steps - 1, Math.floor(t * steps));
+}
+
+function heatColor(value: number, max: number, colors: string[]): string {
+  if (!(value > 0)) {
+    return 'transparent';
+  }
+  const steps = Math.max(2, colors.length);
+  return colors[heatColorIndex(value, max, steps)] || colors[0];
+}
+
+/** Light text on dark/saturated cells; dark text on pale cells. */
+function heatLabelColor(value: number, max: number, colors: string[]): string {
+  if (!(value > 0)) {
+    return 'rgba(128, 128, 128, 0.55)';
+  }
+  const hex = heatColor(value, max, colors);
+  const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!match) {
+    return 'rgba(0, 0, 0, 0.85)';
+  }
+  const r = parseInt(match[1], 16);
+  const g = parseInt(match[2], 16);
+  const b = parseInt(match[3], 16);
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return luminance > 0.55 ? 'rgba(0, 0, 0, 0.85)' : 'rgba(255, 255, 255, 0.95)';
 }
 
 export function HeatmapView({
   cells,
+  colors,
+  xLabel,
+  yLabel,
+  selectedKey,
   onSelect
 }: {
   cells: HeatmapCell[];
+  colors?: string[];
+  xLabel?: string;
+  yLabel?: string;
+  selectedKey?: string;
   onSelect?: ClickHandler;
 }): React.ReactElement {
+  const [hovered, setHovered] = React.useState<{x: string; y: string} | null>(null);
+  const palette =
+    colors && colors.length >= 2 ? colors : HEATMAP_COLORS.slice(0, HEATMAP_COLOR_STEPS);
+
   if (!cells.length) {
     return (
       <ChartWrap>
@@ -676,40 +860,92 @@ export function HeatmapView({
   const ys = Array.from(new Set(cells.map(c => c.y)));
   const max = Math.max(1, ...cells.map(c => c.value));
   const lookup = new Map(cells.map(c => [`${c.x}|${c.y}`, c]));
+  const hasHover = Boolean(hovered);
+  const maxHeaderLen = Math.max(1, ...xs.map(x => String(x).length));
+  const maxSideLen = Math.max(1, ...ys.map(y => String(y).length));
+  const sin = Math.sin((LABEL_ROTATE_DEG * Math.PI) / 180);
+  const cos = Math.cos((LABEL_ROTATE_DEG * Math.PI) / 180);
+  // Tighter band than bars: smaller char width + less padding; labels may clip slightly.
+  const heatCharW = 4.2;
+  const headerHeight = Math.max(16, Math.ceil(Math.min(maxHeaderLen, 12) * heatCharW * sin + 4));
+  const sideWidth = Math.max(14, Math.ceil(Math.min(maxSideLen, 12) * heatCharW * cos + 2));
   return (
-    <ChartWrap>
-      <HeatGrid $cols={xs.length}>
-        <div />
+    <HeatChartWrap>
+      {xLabel || yLabel ? (
+        <HeatAxisTitles $sideWidth={sideWidth}>
+          <HeatAxisTitle $align="right" $allowWrap title={yLabel}>
+            {yLabel || null}
+          </HeatAxisTitle>
+          <HeatAxisTitle $align="center" title={xLabel}>
+            {xLabel ? shortenAxisLabel(xLabel, 28) : null}
+          </HeatAxisTitle>
+        </HeatAxisTitles>
+      ) : null}
+      <HeatGrid
+        $cols={xs.length}
+        $rows={ys.length}
+        $sideWidth={sideWidth}
+        $headerHeight={headerHeight}
+        onMouseLeave={() => setHovered(null)}
+      >
+        <HeatCorner />
         {xs.map(x => (
-          <HeatLabel key={`h-${x}`} title={x}>
-            {x}
+          <HeatLabel key={`h-${x}`} $header $rotated $active={hovered?.x === x} title={x}>
+            <HeatLabelText $header $rotated>
+              {shortenAxisLabel(String(x), 12)}
+            </HeatLabelText>
           </HeatLabel>
         ))}
         {ys.map(y => (
           <React.Fragment key={`r-${y}`}>
-            <HeatLabel title={y}>{y}</HeatLabel>
+            <HeatLabel $rotated title={y} $active={hovered?.y === y}>
+              <HeatLabelText $rotated>{shortenAxisLabel(String(y), 12)}</HeatLabelText>
+            </HeatLabel>
             {xs.map(x => {
-              const cell = lookup.get(`${x}|${y}`);
+              const cellKey = `${x}|${y}`;
+              const cell = lookup.get(cellKey);
               const value = cell?.value ?? 0;
-              const activate = onSelect ? () => onSelect(x, {x, y}) : undefined;
+              const label = formatNumber(value);
+              const isSelected = selectedKey === cellKey;
+              const isHovered = hovered?.x === x && hovered?.y === y;
+              const onCrosshair =
+                hasHover && !isHovered && !isSelected && (hovered?.x === x || hovered?.y === y);
+              const activate = onSelect
+                ? () =>
+                    onSelect(cellKey, {
+                      x,
+                      y,
+                      filterValue: cell?.filterValueX,
+                      filterValueY: cell?.filterValueY
+                    })
+                : undefined;
               return (
                 <HeatCell
-                  key={`${x}|${y}`}
-                  $bg={heatColor(value, max)}
+                  key={cellKey}
+                  $bg={heatColor(value, max, palette)}
+                  $fg={heatLabelColor(value, max, palette)}
                   $clickable={Boolean(activate)}
+                  $dimmed={hasHover && !isHovered && !onCrosshair && !isSelected}
+                  $crosshair={onCrosshair}
+                  $selected={isSelected}
+                  data-hovered={isHovered ? 'true' : undefined}
                   role={activate ? 'button' : undefined}
                   tabIndex={activate ? 0 : undefined}
-                  aria-label={`${x} / ${y}: ${formatNumber(value)}`}
-                  title={`${x} / ${y}: ${formatNumber(value)}`}
+                  aria-label={`${x} / ${y}: ${label}`}
+                  aria-pressed={isSelected || undefined}
+                  title={`${x} / ${y}: ${label}`}
+                  onMouseEnter={() => setHovered({x, y})}
                   onClick={activate}
                   onKeyDown={event => onActivateKey(event, activate)}
-                />
+                >
+                  {label}
+                </HeatCell>
               );
             })}
           </React.Fragment>
         ))}
       </HeatGrid>
-    </ChartWrap>
+    </HeatChartWrap>
   );
 }
 
@@ -789,7 +1025,16 @@ export function ChartRenderer({
     case 'line':
       return <LineChartView bins={data.bins} xLabel={data.xLabel} yLabel={data.yLabel} />;
     case 'heatmap':
-      return <HeatmapView cells={data.cells} onSelect={onSelect} />;
+      return (
+        <HeatmapView
+          cells={data.cells}
+          colors={data.colors}
+          xLabel={data.xLabel}
+          yLabel={data.yLabel}
+          selectedKey={selectedKey}
+          onSelect={onSelect}
+        />
+      );
     case 'pivot':
       return <PivotTableView table={data.table} />;
     case 'empty':

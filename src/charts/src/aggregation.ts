@@ -713,56 +713,95 @@ export function buildHeatmapCells({
   numGroups?: number;
 }): HeatmapCell[] {
   const indexes = getChartIndexes(dataset, applyFilters);
-  const xField = xAxis?.field?.name;
-  const yField = yAxis?.field?.name;
-  if (!xField || !yField) {
+  if (!xAxis?.field?.name || !yAxis?.field?.name) {
     return [];
   }
-  const nested = new Map<string, Map<string, number[]>>();
-  for (const idx of indexes) {
-    const x = toKey(dataset.getValue(xField, idx));
-    const y = toKey(dataset.getValue(yField, idx));
-    if (!x || !y) {
-      continue;
-    }
-    if (!nested.has(x)) {
-      nested.set(x, new Map());
-    }
-    const yMap = nested.get(x) as Map<string, number[]>;
-    const list = yMap.get(y);
-    if (list) {
-      list.push(idx);
-    } else {
-      yMap.set(y, [idx]);
-    }
-  }
+  // Cap both axes at 10×10 (Studio-style labeled table).
+  const limit = Math.min(
+    Math.max(1, numGroups > 0 ? numGroups : DEFAULT_NUM_GROUPS),
+    DEFAULT_NUM_GROUPS
+  );
 
-  const xKeys = Array.from(nested.keys()).slice(0, numGroups);
+  const xResult = groupIndexes(indexes, dataset, xAxis, limit);
+  const yResult = groupIndexes(indexes, dataset, yAxis, limit);
+
+  const xEntries = pickHeatmapAxisEntries(xResult.groups, xResult.filterValues, xAxis, limit);
+  const yEntries = pickHeatmapAxisEntries(yResult.groups, yResult.filterValues, yAxis, limit);
+  const yKeys = yEntries.map(([key]) => key);
+
+  // Index → set for O(1) membership when intersecting X and Y buckets.
+  const ySets = new Map<string, Set<number>>();
+  yEntries.forEach(([key, idxs]) => {
+    ySets.set(key, new Set(idxs));
+  });
+
+  const valueField = valueAxis?.field?.name;
+  const aggregation = (valueAxis?.aggregation as ChartAggregation) || 'count';
   const cells: HeatmapCell[] = [];
-  xKeys.forEach(x => {
-    const yMap = nested.get(x);
-    if (!yMap) {
-      return;
-    }
-    Array.from(yMap.keys())
-      .slice(0, numGroups)
-      .forEach(y => {
-        const idxs = yMap.get(y) || [];
-        cells.push({
-          x,
-          y,
-          value: aggregateIndexes(
-            idxs,
-            dataset,
-            valueAxis?.field?.name,
-            (valueAxis?.aggregation as ChartAggregation) || 'count'
-          )
-        });
+
+  // Full cartesian grid so the view always shows a table (zeros for empty cells).
+  xEntries.forEach(([x, xIdxs]) => {
+    yKeys.forEach(y => {
+      const ySet = ySets.get(y);
+      const intersected = ySet ? xIdxs.filter(idx => ySet.has(idx)) : [];
+      cells.push({
+        x,
+        y,
+        value: intersected.length
+          ? aggregateIndexes(intersected, dataset, valueField, aggregation)
+          : 0,
+        filterValueX: xResult.filterValues.get(x) || [x],
+        filterValueY: yResult.filterValues.get(y) || [y]
       });
+    });
   });
   return cells;
 }
 
+/** True when axis bins are a continuous domain (should stay in min→max order). */
+function isOrderedHeatAxis(axis?: ChartAxis): boolean {
+  if (!axis?.field) {
+    return false;
+  }
+  const fieldType = axis.field.type;
+  return (
+    axis.aggregation === BinType.numericBin ||
+    axis.aggregation === BinType.timeBin ||
+    fieldType === 'real' ||
+    fieldType === 'integer' ||
+    TIME_FIELD_TYPES.includes(fieldType || '')
+  );
+}
+
+/**
+ * Numeric/time: keep domain order from groupIndexes.
+ * Categories: take the top-N by frequency, then sort labels A→Z.
+ */
+function pickHeatmapAxisEntries(
+  groups: Map<string, number[]>,
+  filterValues: Map<string, Array<string | number>>,
+  axis: ChartAxis | undefined,
+  limit: number
+): Array<[string, number[]]> {
+  const entries = Array.from(groups.entries());
+  if (isOrderedHeatAxis(axis)) {
+    // Prefer sorting by numeric filter range start when available (histogram order).
+    return entries
+      .sort((a, b) => {
+        const a0 = filterValues.get(a[0])?.[0];
+        const b0 = filterValues.get(b[0])?.[0];
+        if (typeof a0 === 'number' && typeof b0 === 'number') {
+          return a0 - b0;
+        }
+        return String(a[0]).localeCompare(String(b[0]));
+      })
+      .slice(0, limit);
+  }
+  return entries
+    .sort((a, b) => b[1].length - a[1].length || String(a[0]).localeCompare(String(b[0])))
+    .slice(0, limit)
+    .sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+}
 export function buildPivotTable({
   dataset,
   applyFilters,

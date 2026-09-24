@@ -15,7 +15,8 @@ import {
   BinType,
   TIME_FIELD_TYPES,
   ChartColorBy,
-  CHART_COLORS
+  CHART_COLORS,
+  getDefaultHeatmapColorRange
 } from './constants';
 import {
   ChartBin,
@@ -40,7 +41,7 @@ export type ChartViewData =
     }
   | {kind: 'bars'; bins: ChartBin[]; horizontal?: boolean}
   | {kind: 'line'; bins: ChartBin[]; xLabel?: string; yLabel?: string}
-  | {kind: 'heatmap'; cells: HeatmapCell[]}
+  | {kind: 'heatmap'; cells: HeatmapCell[]; colors?: string[]; xLabel?: string; yLabel?: string}
   | {kind: 'pivot'; table: PivotTableResult};
 
 function axisTitle(axis?: ChartAxis, fallback = ''): string {
@@ -222,7 +223,12 @@ export function computeDatasetChart(
         yLabel: axisTitle(chart.yAxis, 'Y')
       };
     }
-    case ChartType.heatmapChart:
+    case ChartType.heatmapChart: {
+      const palette = chart.chartDisplay?.colorRange?.colors;
+      const colors =
+        Array.isArray(palette) && palette.length >= 2
+          ? palette
+          : getDefaultHeatmapColorRange().colors;
       return {
         kind: 'heatmap',
         cells: buildHeatmapCells({
@@ -232,8 +238,12 @@ export function computeDatasetChart(
           yAxis: chart.yAxis,
           valueAxis: chart.value,
           numGroups: chart.numGroups
-        })
+        }),
+        colors,
+        xLabel: axisTitle(chart.xAxis, 'X'),
+        yLabel: axisTitle(chart.yAxis, 'Y')
       };
+    }
     case ChartType.pivotTable:
       return {
         kind: 'pivot',
@@ -300,11 +310,26 @@ export function computeChart(
 }
 
 export function getCrossFilterField(chart: ChartConfig): string | null {
+  return getCrossFilterFields(chart)[0] ?? null;
+}
+
+/** Fields that a chart click should drive as map filters (heatmap uses X and Y). */
+export function getCrossFilterFields(chart: ChartConfig): string[] {
   if (isLayerChartConfig(chart)) {
-    return null;
+    return [];
   }
   if (chart.type === ChartType.horizontalBar) {
-    return chart.yAxis?.field?.name ?? null;
+    return chart.yAxis?.field?.name ? [chart.yAxis.field.name] : [];
   }
-  return chart.xAxis?.field?.name ?? null;
+  if (chart.type === ChartType.heatmapChart) {
+    const fields: string[] = [];
+    if (chart.xAxis?.field?.name) {
+      fields.push(chart.xAxis.field.name);
+    }
+    if (chart.yAxis?.field?.name && chart.yAxis.field.name !== chart.xAxis?.field?.name) {
+      fields.push(chart.yAxis.field.name);
+    }
+    return fields;
+  }
+  return chart.xAxis?.field?.name ? [chart.xAxis.field.name] : [];
 }

@@ -48,6 +48,10 @@ export type HeatmapCell = {
   x: string;
   y: string;
   value: number;
+  /** Numeric/time `[min, max]` or categorical `[key]` for the X bin. */
+  filterValueX?: Array<string | number>;
+  /** Numeric/time `[min, max]` or categorical `[key]` for the Y bin. */
+  filterValueY?: Array<string | number>;
 };
 
 export type PivotTableResult = {

@@ -11,7 +11,8 @@ import {
   CATEGORICAL_FIELD_TYPES,
   NUMERIC_FIELD_TYPES,
   TIME_FIELD_TYPES,
-  getDefaultChartColorRange
+  getDefaultChartColorRange,
+  getDefaultHeatmapColorRange
 } from './constants';
 import {
   ChartConfig,
@@ -127,7 +128,11 @@ export function createHeatmapChart(props: Partial<DatasetChartConfig> = {}): Dat
     yAxis: props.yAxis || makeAxis(null, BinType.uniqueBin),
     value: props.value || makeAxis(null, 'count'),
     numGroups: props.numGroups ?? DEFAULT_NUM_GROUPS,
-    title: props.title || 'Heatmap'
+    title: props.title || 'Heatmap',
+    chartDisplay: {
+      colorRange: getDefaultHeatmapColorRange(),
+      ...props.chartDisplay
+    }
   };
 }
 

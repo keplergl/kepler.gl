@@ -380,11 +380,15 @@ function getSkipIndexes(dataset, filter) {
   const gpuFilters = Object.values(dataset.gpuFilter.filterValueUpdateTriggers) as ({
     name: string;
   } | null)[];
-  const valueIndex = filter.dataId.findIndex(id => id === dataset.id);
-  const filterColumn = filter.name[valueIndex];
+  // Skip every field listed on the filter (charts may pass multiple cross-filter fields).
+  const skipNames = new Set(
+    (Array.isArray(filter.name) ? filter.name : [filter.name]).filter(
+      (n): n is string => typeof n === 'string' && Boolean(n)
+    )
+  );
 
   return gpuFilters.reduce((accu, item, idx) => {
-    if (item && filterColumn === item.name) {
+    if (item && skipNames.has(item.name)) {
       accu.push(idx);
     }
     return accu;

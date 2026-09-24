@@ -95,6 +95,44 @@ export enum ChartColorBy {
 export const DEFAULT_NUM_GROUPS = 10;
 /** Hard cap on line / time-series points after grouping. */
 export const MAX_CHART_POINTS = 1000;
+/** Discrete color steps for heatmap cell fills. */
+export const HEATMAP_COLOR_STEPS = 20;
+/** Third sequential palette in KEPLER_COLOR_PALETTES (Uber Viz Sequential, Global Warming, Sunrise, …). */
+export const DEFAULT_HEATMAP_COLOR_PALETTE = 'Sunrise';
+
+/** Control points from the Sunrise sequential palette (dark → light). */
+const HEATMAP_RGB_STOPS: Array<[number, number, number]> = [
+  [53, 92, 125], // #355C7D
+  [192, 108, 132], // #C06C84
+  [248, 177, 149] // #F8B195
+];
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+function sampleHeatmapRgb(t: number): [number, number, number] {
+  const clamped = Math.min(1, Math.max(0, t));
+  const scaled = clamped * (HEATMAP_RGB_STOPS.length - 1);
+  const i = Math.min(HEATMAP_RGB_STOPS.length - 2, Math.floor(scaled));
+  const local = scaled - i;
+  const a = HEATMAP_RGB_STOPS[i];
+  const b = HEATMAP_RGB_STOPS[i + 1];
+  return [
+    Math.round(lerp(a[0], b[0], local)),
+    Math.round(lerp(a[1], b[1], local)),
+    Math.round(lerp(a[2], b[2], local))
+  ];
+}
+
+function rgbToHex(rgb: [number, number, number]): string {
+  return `#${rgb.map(c => c.toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** Sunrise sequential palette sampled to HEATMAP_COLOR_STEPS. */
+export const HEATMAP_COLORS: string[] = Array.from({length: HEATMAP_COLOR_STEPS}, (_, i) =>
+  rgbToHex(sampleHeatmapRgb(i / Math.max(1, HEATMAP_COLOR_STEPS - 1)))
+);
 export const OTHERS_KEY = 'Other';
 
 export const CHART_COLORS = [
@@ -135,6 +173,21 @@ export function getDefaultChartColorRange(steps = DEFAULT_NUM_GROUPS): {
     type: 'ordinal',
     category: 'Uber',
     colors
+  };
+}
+
+/** Default sequential palette for heatmap charts (Sunrise, 20 steps). */
+export function getDefaultHeatmapColorRange(): {
+  name: string;
+  type: string;
+  category: string;
+  colors: string[];
+} {
+  return {
+    name: DEFAULT_HEATMAP_COLOR_PALETTE,
+    type: 'sequential',
+    category: 'Uber',
+    colors: HEATMAP_COLORS.slice(0, HEATMAP_COLOR_STEPS)
   };
 }
 

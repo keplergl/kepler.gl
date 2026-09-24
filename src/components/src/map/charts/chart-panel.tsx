@@ -11,7 +11,7 @@ import {
   ChartRenderer,
   LayerChartType,
   computeChart,
-  getCrossFilterField,
+  getCrossFilterFields,
   isLayerChartConfig,
   toChartableDataset,
   ChartAxis,
@@ -22,9 +22,16 @@ import {
   TIME_FIELD_TYPES,
   TIME_INTERVAL_OPTIONS,
   getDefaultChartColorRange,
+  HEATMAP_COLOR_STEPS,
   formatNumber
 } from '@kepler.gl/charts';
-import {DEFAULT_COLOR_UI, TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES} from '@kepler.gl/constants';
+import {
+  DEFAULT_COLOR_UI,
+  TOOLTIP_FORMATS,
+  TOOLTIP_FORMAT_TYPES,
+  KEPLER_COLOR_PALETTES,
+  colorPaletteToColorRange
+} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
@@ -61,6 +68,16 @@ const BIG_NUMBER_FORMAT_TYPES = [
 const BIG_NUMBER_FORMAT_OPTIONS = Object.values(TOOLTIP_FORMATS).filter(fm =>
   BIG_NUMBER_FORMAT_TYPES.includes(fm.type)
 );
+
+/** Third sequential palette (Uber Viz Sequential, Global Warming, Sunrise, …) at 20 steps. */
+function defaultHeatmapColorRange(): ColorRange {
+  const sequential = KEPLER_COLOR_PALETTES.filter(palette => palette.type === 'sequential');
+  const palette = sequential[2] || sequential[0];
+  return colorPaletteToColorRange(palette, {
+    steps: HEATMAP_COLOR_STEPS,
+    reversed: false
+  }) as ColorRange;
+}
 
 function asRgbColor(value: unknown): RGBColor {
   if (Array.isArray(value) && value.length >= 3) {
@@ -178,16 +195,25 @@ function withColorRangeSyncedToBins(
  */
 function toMapFilteredChartDataset(
   dataset: Datasets[string] | undefined,
-  options?: {dataId?: string | null; skipFieldName?: string | null}
+  options?: {
+    dataId?: string | null;
+    skipFieldName?: string | null;
+    skipFieldNames?: string[] | null;
+  }
 ) {
   if (!dataset) {
     return null;
   }
+  const skipNames = (options?.skipFieldNames || []).filter(Boolean) as string[];
+  if (options?.skipFieldName) {
+    skipNames.push(options.skipFieldName);
+  }
+  const uniqueSkip = Array.from(new Set(skipNames));
   const skipFilter =
-    options?.dataId && options?.skipFieldName
+    options?.dataId && uniqueSkip.length
       ? ({
           dataId: [options.dataId],
-          name: [options.skipFieldName]
+          name: uniqueSkip
         } as Parameters<typeof runGpuFilterForPlot>[1])
       : undefined;
   const filteredIndex =
@@ -439,32 +465,76 @@ export function ChartPanelContentFactory(
     );
 
     const onSelectBin = useCallback(
-      (chart: ChartConfig, key: string, filterValue?: Array<string | number>) => {
+      (
+        chart: ChartConfig,
+        key: string,
+        extra?: {
+          filterValue?: Array<string | number>;
+          filterValueY?: Array<string | number>;
+          x?: string;
+          y?: string;
+        }
+      ) => {
         if (isLayerChartConfig(chart) || !chart.dataId) {
           return;
         }
-        const fieldName = getCrossFilterField(chart);
-        if (!fieldName) {
+        const fields = getCrossFilterFields(chart);
+        if (!fields.length) {
           return;
         }
         const filterId = chart.crossFilter?.filterId || `chart-${chart.id}-${generateHashId(4)}`;
         const alreadySelected =
           chart.crossFilter?.enabled && String(chart.crossFilter.value?.x) === key;
         if (alreadySelected) {
+          // Disable and drop owned filters (heatmap uses filterId-x / filterId-y).
           visStateActions?.updateChart(chart.id, {
-            crossFilter: {enabled: false, filterId, fieldNames: {x: fieldName}, value: {}}
+            crossFilter: {
+              enabled: false,
+              filterId,
+              fieldNames: Object.fromEntries(fields.map((name, i) => [i === 0 ? 'x' : 'y', name])),
+              value: {}
+            }
           });
           return;
         }
+
+        const filterValueX = extra?.filterValue?.length ? extra.filterValue : [key];
+        const xField = fields[0];
+        const yField = fields[1];
+
+        if (chart.type === ChartType.heatmapChart && yField && extra?.y != null) {
+          const filterValueY = extra.filterValueY?.length ? extra.filterValueY : [extra.y];
+          visStateActions?.createOrUpdateFilter(
+            `${filterId}-x`,
+            chart.dataId,
+            xField,
+            filterValueX
+          );
+          visStateActions?.createOrUpdateFilter(
+            `${filterId}-y`,
+            chart.dataId,
+            yField,
+            filterValueY
+          );
+          visStateActions?.updateChart(chart.id, {
+            crossFilter: {
+              enabled: true,
+              filterId,
+              fieldNames: {x: xField, y: yField},
+              value: {x: key, y: extra.y}
+            }
+          });
+          return;
+        }
+
         // Numeric/time bins pass [min, max]; categories pass [key]. Never pass the
-        // display label alone — that breaks GPU range filters (NaN ranges → no rows).
-        const value = filterValue?.length ? filterValue : [key];
-        visStateActions?.createOrUpdateFilter(filterId, chart.dataId, fieldName, value);
+        // display label alone when a numeric filterValue is available.
+        visStateActions?.createOrUpdateFilter(filterId, chart.dataId, xField, filterValueX);
         visStateActions?.updateChart(chart.id, {
           crossFilter: {
             enabled: true,
             filterId,
-            fieldNames: {x: fieldName},
+            fieldNames: {x: xField},
             value: {x: key}
           }
         });
@@ -476,13 +546,13 @@ export function ChartPanelContentFactory(
       <ChartList className="chart-panel">
         {charts.map(chart => {
           const rawDataset = chart.dataId ? datasets[chart.dataId] : undefined;
-          const crossFilterField = getCrossFilterField(chart);
+          const crossFilterFields = getCrossFilterFields(chart);
           const dataset = chart.dataId
             ? chart.applyFilters
               ? toMapFilteredChartDataset(rawDataset, {
                   dataId: chart.dataId,
                   // Keep this chart's bins stable while its own cross-filter drives the map.
-                  skipFieldName: chart.crossFilter?.enabled ? crossFilterField : null
+                  skipFieldNames: chart.crossFilter?.enabled ? crossFilterFields : null
                 })
               : toChartableDataset(rawDataset)
             : null;
@@ -511,7 +581,7 @@ export function ChartPanelContentFactory(
                     aria-label="Unpin chart"
                     onClick={() => onUpdate(chart.id, {pinned: false})}
                   >
-                    <Pin height="16px" />
+                    <Pin height="16px" filled />
                   </ChartHeaderAction>
                   <Tooltip id={`chart-pin_${chart.id}`} effect="solid" delayShow={500}>
                     <span>
@@ -544,7 +614,7 @@ export function ChartPanelContentFactory(
                         })
                       }
                     >
-                      <Pin height="16px" />
+                      <Pin height="16px" filled={chart.pinned !== false} />
                     </ChartHeaderAction>
                     <Tooltip id={`chart-pin_${chart.id}`} effect="solid" delayShow={500}>
                       <span>
@@ -593,7 +663,7 @@ export function ChartPanelContentFactory(
               <ChartRenderer
                 data={view}
                 selectedKey={selectedKey}
-                onSelect={(key, extra) => onSelectBin(chart, key, extra?.filterValue)}
+                onSelect={(key, extra) => onSelectBin(chart, key, extra)}
                 showCaption={
                   chart.type === ChartType.bigNumber
                     ? // While editing, always show the caption; hide only applies in pinned mode.
@@ -1114,6 +1184,84 @@ export function ChartPanelContentFactory(
                     </ChartConfigGroup>
                   ) : null}
 
+                  {chart.type === ChartType.heatmapChart ? (
+                    <ChartConfigGroup label="chartPanel.color" defaultMessage="Color">
+                      <ChartConfigSection>
+                        <ChartColorSelectorWrapper>
+                          <ColorSelector
+                            colorSets={[
+                              {
+                                selectedColor: (chart.chartDisplay?.colorRange ||
+                                  defaultHeatmapColorRange()) as ColorRange,
+                                isRange: true,
+                                setColor: colorRange => {
+                                  const nextRange = colorRange as ColorRange;
+                                  onUpdate(chart.id, {
+                                    chartDisplay: {
+                                      ...chart.chartDisplay,
+                                      colorRange: nextRange
+                                    }
+                                  });
+                                  syncColorUISteps(chart.id, nextRange);
+                                }
+                              } as ColorSet
+                            ]}
+                            colorUI={
+                              colorUIByChart[chart.id] || {
+                                ...DEFAULT_COLOR_UI,
+                                colorRangeConfig: {
+                                  ...DEFAULT_COLOR_UI.colorRangeConfig,
+                                  type: 'sequential',
+                                  steps: HEATMAP_COLOR_STEPS
+                                }
+                              }
+                            }
+                            setColorUI={(next: NestedPartial<ColorUI>) => {
+                              const current =
+                                colorUIByChart[chart.id] ||
+                                ({
+                                  ...DEFAULT_COLOR_UI,
+                                  colorRangeConfig: {
+                                    ...DEFAULT_COLOR_UI.colorRangeConfig,
+                                    type: 'sequential',
+                                    steps: HEATMAP_COLOR_STEPS
+                                  }
+                                } as ColorUI);
+                              const merged = {
+                                ...current,
+                                ...next,
+                                colorRangeConfig: {
+                                  ...current.colorRangeConfig,
+                                  ...(next.colorRangeConfig || {})
+                                }
+                              } as ColorUI;
+                              setColorUIByChart(prev => ({
+                                ...prev,
+                                [chart.id]: merged
+                              }));
+
+                              if (shouldUpdateChartColorRange(next, current)) {
+                                const currentRange = (chart.chartDisplay?.colorRange ||
+                                  defaultHeatmapColorRange()) as ColorRange;
+                                const colorRange = colorRangeFromColorUI(
+                                  currentRange,
+                                  merged.colorRangeConfig,
+                                  next
+                                );
+                                onUpdate(chart.id, {
+                                  chartDisplay: {
+                                    ...chart.chartDisplay,
+                                    colorRange
+                                  }
+                                });
+                              }
+                            }}
+                          />
+                        </ChartColorSelectorWrapper>
+                      </ChartConfigSection>
+                    </ChartConfigGroup>
+                  ) : null}
+
                   {!isLayerChartConfig(chart) ? (
                     chart.type === ChartType.bigNumber ? (
                       <ChartConfigGroup label="chartPanel.options" defaultMessage="Options">
@@ -1198,7 +1346,7 @@ export function ChartPanelContentFactory(
                               id={`${chart.id}-cross-filter`}
                               checked={Boolean(chart.crossFilter?.enabled)}
                               onChange={() => {
-                                const fieldName = getCrossFilterField(chart);
+                                const fieldNames = getCrossFilterFields(chart);
                                 const filterId =
                                   chart.crossFilter?.filterId ||
                                   `chart-${chart.id}-${generateHashId(4)}`;
@@ -1206,7 +1354,9 @@ export function ChartPanelContentFactory(
                                   crossFilter: {
                                     enabled: !chart.crossFilter?.enabled,
                                     filterId,
-                                    fieldNames: fieldName ? {x: fieldName} : {},
+                                    fieldNames: Object.fromEntries(
+                                      fieldNames.map((name, i) => [i === 0 ? 'x' : 'y', name])
+                                    ),
                                     value: {}
                                   }
                                 });
