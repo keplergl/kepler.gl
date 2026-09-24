@@ -5,7 +5,7 @@ import test from 'tape-catch';
 
 import {VisStateActions} from '@kepler.gl/actions';
 import {ChartType, createBigNumberChart, createBarChart} from '@kepler.gl/charts';
-import {visStateReducer as reducer, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
+import {visStateReducer as reducer, INITIAL_VIS_STATE, mergeCharts} from '@kepler.gl/reducers';
 
 test('#VisStateUpdater -> add/update/remove chart', t => {
   const chart = createBigNumberChart({id: 'c1', dataId: 'd1', title: 'Count'});
@@ -77,5 +77,17 @@ test('#VisStateUpdater -> disabling cross-filter removes owned filter', t => {
   );
   t.equal(nextState.charts[0].crossFilter.enabled, false);
   t.equal(nextState.filters.length, 0, 'should drop the chart-owned filter');
+  t.end();
+});
+
+test('#VisStateUpdater -> mergeCharts skips duplicate ids in the loaded array', t => {
+  const first = createBarChart({id: 'dup', dataId: 'd1', title: 'First'});
+  const second = createBarChart({id: 'dup', dataId: 'd1', title: 'Second'});
+  const other = createBarChart({id: 'other', dataId: 'd1', title: 'Other'});
+  const nextState = mergeCharts(INITIAL_VIS_STATE, [first, second, other], true);
+  t.equal(nextState.charts.length, 2);
+  t.equal(nextState.charts[0].id, 'dup');
+  t.equal(nextState.charts[0].title, 'First');
+  t.equal(nextState.charts[1].id, 'other');
   t.end();
 });

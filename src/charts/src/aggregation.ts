@@ -275,12 +275,34 @@ function exactBinThresholds(min: number, max: number, numBins: number): number[]
   return thresholds;
 }
 
+/** Separates lossless numeric-bin identity (`x0`, `x1`) from compact display labels. */
+const NUMERIC_BIN_KEY_SEP = '\u001f';
+
+function numericBinKey(x0: number, x1: number): string {
+  return `${x0}${NUMERIC_BIN_KEY_SEP}${x1}`;
+}
+
+/** Display label for a bin key; numeric histogram keys decode to compact ranges. */
+export function displayBinKey(key: string): string {
+  const text = String(key);
+  const sep = text.indexOf(NUMERIC_BIN_KEY_SEP);
+  if (sep < 0) {
+    return text;
+  }
+  const x0 = Number(text.slice(0, sep));
+  const x1 = Number(text.slice(sep + 1));
+  if (Number.isFinite(x0) && Number.isFinite(x1)) {
+    return `${formatNumber(x0)} – ${formatNumber(x1)}`;
+  }
+  return text;
+}
+
 function numericGroupMap(
   indexes: number[],
   dataset: ChartableDataset,
   fieldName: string,
   numBins: number
-): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number>>} {
+): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number | boolean>>} {
   const values = indexes
     .map(idx => ({idx, value: toNumber(dataset.getValue(fieldName, idx))}))
     .filter((d): d is {idx: number; value: number} => d.value !== null);
@@ -299,11 +321,11 @@ function numericGroupMap(
     .thresholds(exactBinThresholds(min, max, binCount));
   const bins = hist(values);
   const groups = new Map<string, number[]>();
-  const filterValues = new Map<string, Array<string | number>>();
+  const filterValues = new Map<string, Array<string | number | boolean>>();
   bins.forEach(bin => {
     const x0 = bin.x0 ?? 0;
     const x1 = bin.x1 ?? x0;
-    const key = `${formatNumber(x0)} – ${formatNumber(x1)}`;
+    const key = numericBinKey(x0, x1);
     groups.set(
       key,
       bin.map(d => d.idx)
@@ -424,14 +446,14 @@ function equalWidthTimeBins(
   min: number,
   max: number,
   binCount: number
-): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number>>} {
+): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number | boolean>>} {
   const hist = histogram<{idx: number; t: number}, number>()
     .value(d => d.t)
     .domain([min, max])
     .thresholds(exactBinThresholds(min, max, binCount));
   const bins = hist(points);
   const groups = new Map<string, number[]>();
-  const filterValues = new Map<string, Array<string | number>>();
+  const filterValues = new Map<string, Array<string | number | boolean>>();
   bins.forEach(bin => {
     const x0 = bin.x0 ?? min;
     const x1 = bin.x1 ?? max;
@@ -451,7 +473,7 @@ function timeGroupMap(
   fieldName: string,
   interval?: string,
   numBins = 0
-): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number>>} {
+): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number | boolean>>} {
   const points = indexes
     .map(idx => {
       const raw = dataset.getValue(fieldName, idx);
@@ -520,7 +542,7 @@ function timeGroupMap(
     resolvedInterval = INTERVAL_ORDER[idx + 1];
   }
 
-  const filterValues = new Map<string, Array<string | number>>();
+  const filterValues = new Map<string, Array<string | number | boolean>>();
   const ordered = new Map<string, number[]>();
   Array.from(groups.keys())
     .sort(
@@ -541,13 +563,16 @@ function timeGroupMap(
 function uniqueGroupFilterValues(
   groups: Map<string, number[]>,
   fieldType?: string
-): Map<string, Array<string | number>> {
-  const filterValues = new Map<string, Array<string | number>>();
+): Map<string, Array<string | number | boolean>> {
+  const filterValues = new Map<string, Array<string | number | boolean>>();
   const numeric = fieldType === 'real' || fieldType === 'integer';
   groups.forEach((_, key) => {
     if (numeric) {
       const n = Number(key);
       filterValues.set(key, Number.isFinite(n) ? [n, n] : [key]);
+    } else if (fieldType === 'boolean') {
+      // Kepler boolean filters are select filters with a scalar boolean value.
+      filterValues.set(key, [key === 'true']);
     } else {
       filterValues.set(key, [key]);
     }
@@ -560,7 +585,7 @@ export function groupIndexes(
   dataset: ChartableDataset,
   axis: ChartAxis | undefined,
   numBins = DEFAULT_NUM_GROUPS
-): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number>>} {
+): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number | boolean>>} {
   const fieldName = axis?.field?.name;
   if (!fieldName) {
     return {
@@ -703,7 +728,7 @@ export function buildBigNumber({
  */
 function pickAxisEntries(
   groups: Map<string, number[]>,
-  filterValues: Map<string, Array<string | number>>,
+  filterValues: Map<string, Array<string | number | boolean>>,
   axis: ChartAxis | undefined,
   limit: number
 ): Array<[string, number[]]> {

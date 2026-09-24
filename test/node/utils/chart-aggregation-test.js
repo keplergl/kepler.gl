@@ -15,6 +15,7 @@ import {
   createChart,
   computeDatasetChart,
   formatNumber,
+  displayBinKey,
   getHoverRowIndexes
 } from '@kepler.gl/charts';
 
@@ -50,6 +51,46 @@ test('charts -> createChart builders', t => {
     LayerChartType.BREAKDOWN_BY_CATEGORY
   );
   t.equal(createChart({type: LayerChartType.TIME_SERIES, dataset}), null);
+  t.end();
+});
+
+test('charts -> boolean unique bins keep scalar boolean filter values', t => {
+  const rows = [
+    {flag: true, value: 1},
+    {flag: false, value: 2},
+    {flag: true, value: 3}
+  ];
+  const dataset = {
+    id: 'bools',
+    label: 'Bools',
+    allIndexes: [0, 1, 2],
+    filteredIndex: [0, 1, 2],
+    fields: [
+      {name: 'flag', type: 'boolean'},
+      {name: 'value', type: 'real'}
+    ],
+    getValue: (name, idx) => rows[idx][name]
+  };
+  const bins = buildGroupedBins({
+    dataset,
+    applyFilters: true,
+    binAxis: {field: {name: 'flag', type: 'boolean'}, aggregation: BinType.uniqueBin},
+    valueAxis: {field: {name: 'value', type: 'real'}, aggregation: 'sum'}
+  });
+  const byKey = Object.fromEntries(bins.map(bin => [String(bin.key), bin]));
+  t.deepEqual(byKey.true.filterValue, [true]);
+  t.deepEqual(byKey.false.filterValue, [false]);
+  t.equal(byKey.true.value, 4);
+  t.end();
+});
+
+test('charts -> bar without category field is empty', t => {
+  const dataset = mockDataset([{category: 'A', value: 10, time: new Date('2020-01-01'), id: '1'}]);
+  const chart = createChart({type: ChartType.barChart, dataset});
+  chart.xAxis = {field: null, aggregation: BinType.uniqueBin};
+  const view = computeDatasetChart(chart, dataset);
+  t.equal(view.kind, 'bars');
+  t.deepEqual(view.bins, []);
   t.end();
 });
 
@@ -133,10 +174,33 @@ test('charts -> numeric bin axis spans full domain', t => {
     truncate: false
   });
   t.ok(bins.length >= 2, 'should produce multiple numeric bins');
-  const first = String(bins[0].key);
-  const last = String(bins[bins.length - 1].key);
+  const first = displayBinKey(String(bins[0].key));
+  const last = displayBinKey(String(bins[bins.length - 1].key));
   t.ok(/2(\.\d+)?/.test(first), `first bin starts near min, got ${first}`);
   t.ok(/[78]/.test(last), `last bin reaches max, got ${last}`);
+  t.end();
+});
+
+test('charts -> numeric bins keep distinct keys when compact labels collide', t => {
+  const rows = Array.from({length: 20}, (_, i) => ({
+    category: 'A',
+    value: 1e6 + i * 500,
+    time: new Date('2020-01-01'),
+    id: String(i)
+  }));
+  const dataset = mockDataset(rows);
+  const bins = buildGroupedBins({
+    dataset,
+    applyFilters: true,
+    binAxis: {field: {name: 'value', type: 'real'}, aggregation: BinType.numericBin},
+    valueAxis: {field: null, aggregation: 'count'},
+    numGroups: 10,
+    sort: 'dataOrder',
+    truncate: false
+  });
+  const keys = bins.map(bin => bin.key);
+  t.equal(new Set(keys).size, keys.length, 'numeric bin keys must be unique');
+  t.ok(bins.length >= 8, `expected ~10 bins, got ${bins.length}`);
   t.end();
 });
 

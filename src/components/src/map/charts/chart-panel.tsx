@@ -35,10 +35,11 @@ import {
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
-import {ColorRange, ColorUI, NestedPartial, RGBColor} from '@kepler.gl/types';
+import {ColorRange, ColorUI, Filter, NestedPartial, RGBColor} from '@kepler.gl/types';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {
   applyDefaultFormat,
+  getFilterFunction,
   runGpuFilterForPlot,
   updateColorRangeByMatchingPalette,
   updateCustomColorRangeByColorUI
@@ -186,12 +187,76 @@ function withColorRangeSyncedToBins(
   };
 }
 
+/** Kepler boolean filters are select filters with a scalar boolean, not `['true']`. */
+function toCrossFilterValue(
+  raw: Array<string | number | boolean> | undefined,
+  fallback: string
+): Array<string | number | boolean> | boolean {
+  if (raw?.length === 1 && typeof raw[0] === 'boolean') {
+    return raw[0];
+  }
+  if (raw?.length) {
+    return raw;
+  }
+  return [fallback];
+}
+
+function chartOwnedFilterIds(chart: ChartConfig): string[] {
+  const id = chart.crossFilter?.filterId;
+  if (!id) {
+    return [];
+  }
+  return [id, `${id}-x`, `${id}-y`];
+}
+
+function fieldNameForFilter(
+  filter: {dataId?: string | string[] | null; name?: string | string[] | null},
+  dataId: string
+): string | null {
+  const names = Array.isArray(filter.name) ? filter.name : [filter.name];
+  const dataIds = Array.isArray(filter.dataId) ? filter.dataId : [filter.dataId];
+  const idx = dataIds.indexOf(dataId);
+  const name = names[idx >= 0 ? idx : 0];
+  return typeof name === 'string' && name ? name : null;
+}
+
+/**
+ * Rebuild CPU filteredIndex without this chart's own select/multiSelect filters
+ * so category bins stay visible after a cross-filter click.
+ */
+function cpuIndexExcludingFilterIds(
+  dataset: Datasets[string],
+  dataId: string,
+  skipFilterIds: string[],
+  layers: Layer[]
+): number[] | undefined {
+  const cpuFilters = dataset.filterRecord?.cpu;
+  if (!cpuFilters?.length || !skipFilterIds.length || !dataset.dataContainer) {
+    return undefined;
+  }
+  const skip = new Set(skipFilterIds);
+  const remaining = cpuFilters.filter(filter => !skip.has(filter.id));
+  if (remaining.length === cpuFilters.length) {
+    return undefined;
+  }
+  if (!remaining.length) {
+    return dataset.allIndexes;
+  }
+  const {dataContainer, fields = []} = dataset;
+  const funcs = remaining.map(filter => {
+    const fieldName = fieldNameForFilter(filter, dataId);
+    const field = fieldName ? fields.find(item => item.name === fieldName) || null : null;
+    return getFilterFunction(field, dataId, filter as Filter, layers, dataContainer);
+  });
+  return dataset.allIndexes.filter(index => funcs.every(fn => fn({index})));
+}
+
 /**
  * Charts should respect the same filters as the map. Kepler keeps range/time
  * filters on the GPU, so `dataset.filteredIndex` alone is not enough — apply
  * GPU filters on CPU the same way filter histograms do.
- * When `skipFieldName` is set, that GPU channel is ignored so a chart's own
- * cross-filter does not empty its bins (map still filters).
+ * When skip lists are set, this chart's own cross-filter is ignored so bins
+ * stay visible (map still filters).
  */
 function toMapFilteredChartDataset(
   dataset: Datasets[string] | undefined,
@@ -199,6 +264,8 @@ function toMapFilteredChartDataset(
     dataId?: string | null;
     skipFieldName?: string | null;
     skipFieldNames?: string[] | null;
+    skipFilterIds?: string[] | null;
+    layers?: Layer[];
   }
 ) {
   if (!dataset) {
@@ -209,6 +276,11 @@ function toMapFilteredChartDataset(
     skipNames.push(options.skipFieldName);
   }
   const uniqueSkip = Array.from(new Set(skipNames));
+  const skipFilterIds = (options?.skipFilterIds || []).filter(Boolean);
+  const cpuIndex =
+    options?.dataId && skipFilterIds.length
+      ? cpuIndexExcludingFilterIds(dataset, options.dataId, skipFilterIds, options.layers || [])
+      : undefined;
   const skipFilter =
     options?.dataId && uniqueSkip.length
       ? ({
@@ -216,10 +288,11 @@ function toMapFilteredChartDataset(
           name: uniqueSkip
         } as Parameters<typeof runGpuFilterForPlot>[1])
       : undefined;
+  const plotSource = cpuIndex ? ({...dataset, filteredIndex: cpuIndex} as typeof dataset) : dataset;
   const filteredIndex =
-    dataset.gpuFilter?.filterValueAccessor != null
-      ? runGpuFilterForPlot(dataset, skipFilter)
-      : undefined;
+    plotSource.gpuFilter?.filterValueAccessor != null
+      ? runGpuFilterForPlot(plotSource, skipFilter)
+      : cpuIndex;
   return toChartableDataset(dataset, filteredIndex ? {filteredIndex} : undefined);
 }
 
@@ -476,8 +549,8 @@ export function ChartPanelContentFactory(
         chart: ChartConfig,
         key: string,
         extra?: {
-          filterValue?: Array<string | number>;
-          filterValueY?: Array<string | number>;
+          filterValue?: Array<string | number | boolean>;
+          filterValueY?: Array<string | number | boolean>;
           x?: string;
           y?: string;
         }
@@ -505,12 +578,12 @@ export function ChartPanelContentFactory(
           return;
         }
 
-        const filterValueX = extra?.filterValue?.length ? extra.filterValue : [key];
+        const filterValueX = toCrossFilterValue(extra?.filterValue, key);
         const xField = fields[0];
         const yField = fields[1];
 
         if (chart.type === ChartType.heatmapChart && yField && extra?.y != null) {
-          const filterValueY = extra.filterValueY?.length ? extra.filterValueY : [extra.y];
+          const filterValueY = toCrossFilterValue(extra.filterValueY, extra.y);
           visStateActions?.createOrUpdateFilter(
             `${filterId}-x`,
             chart.dataId,
@@ -559,7 +632,9 @@ export function ChartPanelContentFactory(
               ? toMapFilteredChartDataset(rawDataset, {
                   dataId: chart.dataId,
                   // Keep this chart's bins stable while its own cross-filter drives the map.
-                  skipFieldNames: chart.crossFilter?.enabled ? crossFilterFields : null
+                  skipFieldNames: chart.crossFilter?.enabled ? crossFilterFields : null,
+                  skipFilterIds: chart.crossFilter?.enabled ? chartOwnedFilterIds(chart) : null,
+                  layers
                 })
               : toChartableDataset(rawDataset)
             : null;

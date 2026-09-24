@@ -4,7 +4,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import {formatNumber} from './aggregation';
+import {displayBinKey, formatNumber} from './aggregation';
 
 import {ChartBin, HeatmapCell, PivotTableResult} from './types';
 import {ChartViewData} from './compute';
@@ -228,7 +228,7 @@ function getVerticalBarLabelLayout(bins: ChartBin[]): {
   padRight: number;
   gap: number;
 } {
-  const maxLen = Math.max(1, ...bins.map(bin => String(bin.key).length));
+  const maxLen = Math.max(1, ...bins.map(bin => displayBinKey(String(bin.key)).length));
   const slotWidth = VERTICAL_BAR_PLOT_WIDTH / Math.max(1, bins.length);
   const labelWidth = maxLen * LABEL_CHAR_WIDTH;
   // Keep short labels horizontal (Studio-like); rotate when they won't fit in their slot.
@@ -472,8 +472,8 @@ const LINE_Y_AXIS_TITLE_X = 10;
 type ClickHandler = (
   key: string,
   extra?: {
-    filterValue?: Array<string | number>;
-    filterValueY?: Array<string | number>;
+    filterValue?: Array<string | number | boolean>;
+    filterValueY?: Array<string | number | boolean>;
     x?: string;
     y?: string;
   }
@@ -589,7 +589,7 @@ export function BarChartView({
                   role={activate ? 'button' : undefined}
                   tabIndex={activate ? 0 : undefined}
                   aria-pressed={activate ? selected : undefined}
-                  aria-label={`${bin.key}: ${formatNumber(bin.value)}`}
+                  aria-label={`${displayBinKey(String(bin.key))}: ${formatNumber(bin.value)}`}
                   onClick={activate}
                   onKeyDown={event => onActivateKey(event, activate)}
                 >
@@ -608,7 +608,9 @@ export function BarChartView({
           <VerticalBarLabels $height={labelBand} $rotated={rotated}>
             {bins.map(bin => (
               <VerticalBarLabelCell key={`label-${bin.key}`} $rotated={rotated}>
-                <VerticalBarLabel $rotated={rotated}>{bin.key}</VerticalBarLabel>
+                <VerticalBarLabel $rotated={rotated}>
+                  {displayBinKey(String(bin.key))}
+                </VerticalBarLabel>
               </VerticalBarLabelCell>
             ))}
           </VerticalBarLabels>
@@ -631,11 +633,11 @@ export function BarChartView({
             role={activate ? 'button' : undefined}
             tabIndex={activate ? 0 : undefined}
             aria-pressed={activate ? selected : undefined}
-            aria-label={`${bin.key}: ${formatNumber(bin.value)}`}
+            aria-label={`${displayBinKey(String(bin.key))}: ${formatNumber(bin.value)}`}
             onClick={activate}
             onKeyDown={event => onActivateKey(event, activate)}
           >
-            <BarLabel>{bin.key}</BarLabel>
+            <BarLabel>{displayBinKey(String(bin.key))}</BarLabel>
             <BarTrack>
               <BarFill $color={bin.color} $width={(bin.value / max) * 100} $active={selected} />
             </BarTrack>
@@ -785,7 +787,7 @@ export function LineChartView({
                 opacity={0.9}
                 fontSize={9}
               >
-                {shortenAxisLabel(String(bins[index].key))}
+                {shortenAxisLabel(displayBinKey(String(bins[index].key)))}
               </text>
             </g>
           );
@@ -893,8 +895,8 @@ export function HeatmapView({
   const max = Math.max(1, ...cells.map(c => c.value));
   const lookup = new Map(cells.map(c => [`${c.x}|${c.y}`, c]));
   const hasHover = Boolean(hovered);
-  const maxHeaderLen = Math.max(1, ...xs.map(x => String(x).length));
-  const maxSideLen = Math.max(1, ...ys.map(y => String(y).length));
+  const maxHeaderLen = Math.max(1, ...xs.map(x => displayBinKey(String(x)).length));
+  const maxSideLen = Math.max(1, ...ys.map(y => displayBinKey(String(y)).length));
   const sin = Math.sin((LABEL_ROTATE_DEG * Math.PI) / 180);
   const cos = Math.cos((LABEL_ROTATE_DEG * Math.PI) / 180);
   // Tighter band than bars: smaller char width + less padding; labels may clip slightly.
@@ -927,16 +929,24 @@ export function HeatmapView({
       >
         <HeatCorner />
         {xs.map(x => (
-          <HeatLabel key={`h-${x}`} $header $rotated $active={hovered?.x === x} title={x}>
+          <HeatLabel
+            key={`h-${x}`}
+            $header
+            $rotated
+            $active={hovered?.x === x}
+            title={displayBinKey(String(x))}
+          >
             <HeatLabelText $header $rotated>
-              {shortenAxisLabel(String(x), 12)}
+              {shortenAxisLabel(displayBinKey(String(x)), 12)}
             </HeatLabelText>
           </HeatLabel>
         ))}
         {ys.map(y => (
           <React.Fragment key={`r-${y}`}>
-            <HeatLabel $rotated title={y} $active={hovered?.y === y}>
-              <HeatLabelText $rotated>{shortenAxisLabel(String(y), 12)}</HeatLabelText>
+            <HeatLabel $rotated title={displayBinKey(String(y))} $active={hovered?.y === y}>
+              <HeatLabelText $rotated>
+                {shortenAxisLabel(displayBinKey(String(y)), 12)}
+              </HeatLabelText>
             </HeatLabel>
             {xs.map(x => {
               const cellKey = `${x}|${y}`;
@@ -998,7 +1008,7 @@ export function PivotTableView({
       </ChartWrap>
     );
   }
-  const maxRowLen = Math.max(1, ...table.rowKeys.map(r => String(r).length));
+  const maxRowLen = Math.max(1, ...table.rowKeys.map(r => displayBinKey(String(r)).length));
   const sideWidth = Math.max(
     48,
     Math.ceil(Math.min(maxRowLen, 18) * 6.2 + 8),
@@ -1022,8 +1032,8 @@ export function PivotTableView({
             <tr>
               <th />
               {table.columnKeys.map(col => (
-                <th key={col} title={col}>
-                  {col}
+                <th key={col} title={displayBinKey(String(col))}>
+                  {displayBinKey(String(col))}
                 </th>
               ))}
             </tr>
@@ -1031,7 +1041,7 @@ export function PivotTableView({
           <tbody>
             {table.rowKeys.map(row => (
               <tr key={row}>
-                <td title={row}>{row}</td>
+                <td title={displayBinKey(String(row))}>{displayBinKey(String(row))}</td>
                 {table.columnKeys.map(col => (
                   <td key={col}>{formatNumber(table.values[row]?.[col] ?? 0)}</td>
                 ))}

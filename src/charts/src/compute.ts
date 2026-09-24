@@ -179,6 +179,13 @@ export function computeDatasetChart(
     case ChartType.barChart:
     case ChartType.horizontalBar: {
       const binAxis = chart.type === ChartType.horizontalBar ? chart.yAxis : chart.xAxis;
+      if (!binAxis?.field?.name) {
+        return {
+          kind: 'bars',
+          horizontal: chart.type === ChartType.horizontalBar,
+          bins: []
+        };
+      }
       const ordered = isOrderedBinAxis(binAxis);
       const {color, colors} = barColorOptions(chart, dataset);
       return {

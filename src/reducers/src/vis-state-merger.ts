@@ -704,9 +704,13 @@ export function mergeCharts<S extends VisState>(
     return state;
   }
   const existingIds = new Set((state.charts || []).map(chart => chart.id));
-  const nextCharts = charts
-    .filter(chart => chart && chart.id && !existingIds.has(chart.id))
-    .map(chart =>
+  const nextCharts: ChartConfig[] = [];
+  charts.forEach(chart => {
+    if (!chart || !chart.id || existingIds.has(chart.id)) {
+      return;
+    }
+    existingIds.add(chart.id);
+    nextCharts.push(
       fromConfig
         ? {
             ...chart,
@@ -719,6 +723,7 @@ export function mergeCharts<S extends VisState>(
           }
         : chart
     );
+  });
   if (!nextCharts.length) {
     return state;
   }
