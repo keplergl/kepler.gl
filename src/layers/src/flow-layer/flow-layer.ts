@@ -211,6 +211,13 @@ export const flowVisConfigs = {
 
 type Props = ConstructorParameters<typeof Layer>[0];
 
+// Counted across all flow layers rather than per layer. Replacing a dataset
+// builds a new layer with the same id, and deck matches the new FlowmapLayer to
+// the old one by that id; FlowmapLayer takes up a new data provider only when
+// `data` changes. A counter that started again from zero would hand deck the
+// value the old layer already passed, and the old flows would stay on the map.
+let flowDataVersion = 0;
+
 export default class FlowLayer extends Layer {
   _locationsByLatLon: Record<string, LocationDatum> | null = null;
   _dataProvider: LocalFlowmapDataProvider<LocationDatum, FlowDatum>;
@@ -505,7 +512,7 @@ export default class FlowLayer extends Layer {
     if (dataContentChanged) {
       this._dataProvider.setFlowmapData(layerData);
       this._lastLayerData = layerData;
-      this._dataVersion++;
+      this._dataVersion = ++flowDataVersion;
     }
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
 
