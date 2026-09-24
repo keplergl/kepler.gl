@@ -25,7 +25,14 @@ const HeatChartWrap = styled(ChartWrap)`
 const EmptyState = styled.div`
   color: ${props => props.theme.subtextColor};
   font-size: 11px;
-  padding: 12px 0;
+  padding: 3px 0;
+  line-height: 1.3;
+`;
+
+/** Compact padding when the chart only shows a placeholder message. */
+const EmptyChartWrap = styled(ChartWrap)`
+  padding-top: 4px;
+  padding-bottom: 4px;
 `;
 
 const BigNumberValue = styled.div`
@@ -1094,9 +1101,9 @@ export function ChartRenderer({
     case 'empty':
     default:
       return (
-        <ChartWrap>
+        <EmptyChartWrap>
           <EmptyState>{data.kind === 'empty' ? data.message : undefined}</EmptyState>
-        </ChartWrap>
+        </EmptyChartWrap>
       );
   }
 }
