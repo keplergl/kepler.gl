@@ -5836,6 +5836,9 @@ function adjustTimeFilterInterval(state, filter) {
 // layers, filters, interactions, layerBlending, overlayBlending, splitMaps, animationConfig, editor
 // replace it with another dataId
 function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToReplace: string) {
+  if (value == null) {
+    return null;
+  }
   if (Array.isArray(value)) {
     // for layers, filters, call defaultReplaceParentDatasetIds on each item in array
     const replaced = value
@@ -6015,6 +6018,9 @@ export function replaceDatasetDepsInState<T extends VisState>(
 
       let replacedState = accuState;
       savedProps.forEach((propValue, i) => {
+        if (propValue == null) {
+          return;
+        }
         const mergerOptions = {
           prop: props[i],
           toMergeProp: toMergeProps[i],
