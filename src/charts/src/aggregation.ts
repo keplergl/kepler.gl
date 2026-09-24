@@ -697,6 +697,36 @@ export function buildBigNumber({
   };
 }
 
+/**
+ * Numeric/time: keep domain order from groupIndexes.
+ * Categories: take the top-N by frequency, then sort labels A→Z.
+ */
+function pickAxisEntries(
+  groups: Map<string, number[]>,
+  filterValues: Map<string, Array<string | number>>,
+  axis: ChartAxis | undefined,
+  limit: number
+): Array<[string, number[]]> {
+  const entries = Array.from(groups.entries());
+  if (isOrderedAxis(axis)) {
+    // Prefer sorting by numeric filter range start when available (histogram order).
+    return entries
+      .sort((a, b) => {
+        const a0 = filterValues.get(a[0])?.[0];
+        const b0 = filterValues.get(b[0])?.[0];
+        if (typeof a0 === 'number' && typeof b0 === 'number') {
+          return a0 - b0;
+        }
+        return String(a[0]).localeCompare(String(b[0]));
+      })
+      .slice(0, limit);
+  }
+  return entries
+    .sort((a, b) => b[1].length - a[1].length || String(a[0]).localeCompare(String(b[0])))
+    .slice(0, limit)
+    .sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+}
+
 export function buildHeatmapCells({
   dataset,
   applyFilters,
@@ -725,8 +755,8 @@ export function buildHeatmapCells({
   const xResult = groupIndexes(indexes, dataset, xAxis, limit);
   const yResult = groupIndexes(indexes, dataset, yAxis, limit);
 
-  const xEntries = pickHeatmapAxisEntries(xResult.groups, xResult.filterValues, xAxis, limit);
-  const yEntries = pickHeatmapAxisEntries(yResult.groups, yResult.filterValues, yAxis, limit);
+  const xEntries = pickAxisEntries(xResult.groups, xResult.filterValues, xAxis, limit);
+  const yEntries = pickAxisEntries(yResult.groups, yResult.filterValues, yAxis, limit);
   const yKeys = yEntries.map(([key]) => key);
 
   // Index → set for O(1) membership when intersecting X and Y buckets.
@@ -759,7 +789,7 @@ export function buildHeatmapCells({
 }
 
 /** True when axis bins are a continuous domain (should stay in min→max order). */
-function isOrderedHeatAxis(axis?: ChartAxis): boolean {
+function isOrderedAxis(axis?: ChartAxis): boolean {
   if (!axis?.field) {
     return false;
   }
@@ -773,92 +803,59 @@ function isOrderedHeatAxis(axis?: ChartAxis): boolean {
   );
 }
 
-/**
- * Numeric/time: keep domain order from groupIndexes.
- * Categories: take the top-N by frequency, then sort labels A→Z.
- */
-function pickHeatmapAxisEntries(
-  groups: Map<string, number[]>,
-  filterValues: Map<string, Array<string | number>>,
-  axis: ChartAxis | undefined,
-  limit: number
-): Array<[string, number[]]> {
-  const entries = Array.from(groups.entries());
-  if (isOrderedHeatAxis(axis)) {
-    // Prefer sorting by numeric filter range start when available (histogram order).
-    return entries
-      .sort((a, b) => {
-        const a0 = filterValues.get(a[0])?.[0];
-        const b0 = filterValues.get(b[0])?.[0];
-        if (typeof a0 === 'number' && typeof b0 === 'number') {
-          return a0 - b0;
-        }
-        return String(a[0]).localeCompare(String(b[0]));
-      })
-      .slice(0, limit);
-  }
-  return entries
-    .sort((a, b) => b[1].length - a[1].length || String(a[0]).localeCompare(String(b[0])))
-    .slice(0, limit)
-    .sort((a, b) => String(a[0]).localeCompare(String(b[0])));
-}
 export function buildPivotTable({
   dataset,
   applyFilters,
-  rowField,
-  columnField,
+  xAxis,
+  yAxis,
   valueAxis,
   numGroups = DEFAULT_NUM_GROUPS
 }: {
   dataset: ChartableDataset;
   applyFilters: boolean;
-  rowField?: string;
-  columnField?: string;
+  xAxis?: ChartAxis;
+  yAxis?: ChartAxis;
   valueAxis?: ChartAxis;
   numGroups?: number;
 }): PivotTableResult {
   const empty: PivotTableResult = {rowKeys: [], columnKeys: [], values: {}};
-  if (!rowField || !columnField) {
+  if (!xAxis?.field?.name || !yAxis?.field?.name) {
     return empty;
   }
   const indexes = getChartIndexes(dataset, applyFilters);
-  const nested = new Map<string, Map<string, number[]>>();
-  for (const idx of indexes) {
-    const row = toKey(dataset.getValue(rowField, idx));
-    const col = toKey(dataset.getValue(columnField, idx));
-    if (!row || !col) {
-      continue;
-    }
-    if (!nested.has(row)) {
-      nested.set(row, new Map());
-    }
-    const colMap = nested.get(row) as Map<string, number[]>;
-    const list = colMap.get(col);
-    if (list) {
-      list.push(idx);
-    } else {
-      colMap.set(col, [idx]);
-    }
-  }
-  const rowKeys = Array.from(nested.keys()).slice(0, numGroups);
-  const columnKeySet = new Set<string>();
-  nested.forEach(colMap => {
-    colMap.forEach((_v, col) => columnKeySet.add(col));
+  // Same 10×10 cap and binning as heatmap (numeric histogram, category top-N).
+  const limit = Math.min(
+    Math.max(1, numGroups > 0 ? numGroups : DEFAULT_NUM_GROUPS),
+    DEFAULT_NUM_GROUPS
+  );
+
+  const xResult = groupIndexes(indexes, dataset, xAxis, limit);
+  const yResult = groupIndexes(indexes, dataset, yAxis, limit);
+  const columnEntries = pickAxisEntries(xResult.groups, xResult.filterValues, xAxis, limit);
+  const rowEntries = pickAxisEntries(yResult.groups, yResult.filterValues, yAxis, limit);
+  const columnKeys = columnEntries.map(([key]) => key);
+  const rowKeys = rowEntries.map(([key]) => key);
+
+  const rowSets = new Map<string, Set<number>>();
+  rowEntries.forEach(([key, idxs]) => {
+    rowSets.set(key, new Set(idxs));
   });
-  const columnKeys = Array.from(columnKeySet).slice(0, numGroups);
+
+  const valueField = valueAxis?.field?.name;
+  const aggregation = (valueAxis?.aggregation as ChartAggregation) || 'count';
   const values: Record<string, Record<string, number>> = {};
+
   rowKeys.forEach(row => {
     values[row] = {};
-    columnKeys.forEach(col => {
-      const idxs = nested.get(row)?.get(col) || [];
-      values[row][col] = aggregateIndexes(
-        idxs,
-        dataset,
-        valueAxis?.field?.name,
-        (valueAxis?.aggregation as ChartAggregation) || 'count'
-      );
+    const rowSet = rowSets.get(row);
+    columnEntries.forEach(([col, colIdxs]) => {
+      const intersected = rowSet ? colIdxs.filter(idx => rowSet.has(idx)) : [];
+      values[row][col] = intersected.length
+        ? aggregateIndexes(intersected, dataset, valueField, aggregation)
+        : 0;
     });
   });
+
   return {rowKeys, columnKeys, values};
 }
 

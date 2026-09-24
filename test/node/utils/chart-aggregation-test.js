@@ -157,8 +157,8 @@ test('charts -> heatmap and pivot table', t => {
   const table = buildPivotTable({
     dataset,
     applyFilters: true,
-    rowField: 'category',
-    columnField: 'id',
+    xAxis: {field: {name: 'id', type: 'string'}, aggregation: BinType.uniqueBin},
+    yAxis: {field: {name: 'category', type: 'string'}, aggregation: BinType.uniqueBin},
     valueAxis: {field: {name: 'value', type: 'real'}, aggregation: 'sum'}
   });
   t.equal(table.values.A.x, 10);

@@ -252,7 +252,10 @@ function resolveTimeInterval(chart: ChartConfig): string | null {
 
 const ChartList = styled.div`
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 4px 8px;
+  box-sizing: border-box;
 `;
 
 const ChartCard = styled.div<{
@@ -263,6 +266,10 @@ const ChartCard = styled.div<{
   margin-bottom: 8px;
   background-color: ${props => props.theme.panelBackground};
   position: relative;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 
   &:last-child {
     margin-bottom: 0;

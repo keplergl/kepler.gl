@@ -380,11 +380,31 @@ const HeatCell = styled.div<{
   }
 `;
 
-const PivotTableEl = styled.table`
+const PivotChartWrap = styled(ChartWrap)`
+  padding-bottom: 4px;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+`;
+
+const PivotTableScroll = styled.div`
+  display: block;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+`;
+
+const PivotTableEl = styled.table`
   border-collapse: collapse;
   font-size: 11px;
   color: ${props => props.theme.textColor};
+  /* Content-sized; scroll parent clips to the panel. */
+  width: max-content;
+  max-width: none;
+  table-layout: auto;
 
   th,
   td {
@@ -392,14 +412,40 @@ const PivotTableEl = styled.table`
     padding: 4px 6px;
     text-align: right;
     color: inherit;
+    white-space: nowrap;
   }
   th {
     color: ${props => props.theme.titleTextColor};
     font-weight: 500;
   }
+  /* Row header column stays horizontal; match column header type. */
   th:first-child,
   td:first-child {
     text-align: left;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: ${props => props.theme.panelBackground};
+    color: ${props => props.theme.titleTextColor};
+    font-size: 11px;
+    font-weight: 500;
+  }
+  /* Column headers: full label, vertical. Column width follows cell values. */
+  thead th:not(:first-child) {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: left;
+    vertical-align: bottom;
+    padding: 8px 2px;
+    min-width: 26px;
+    box-sizing: border-box;
+  }
+  td:not(:first-child) {
+    min-width: 26px;
+    text-align: center;
+    padding: 4px 4px;
+    box-sizing: border-box;
+    overflow: visible;
   }
 `;
 
@@ -929,7 +975,15 @@ export function HeatmapView({
   );
 }
 
-export function PivotTableView({table}: {table: PivotTableResult}): React.ReactElement {
+export function PivotTableView({
+  table,
+  xLabel,
+  yLabel
+}: {
+  table: PivotTableResult;
+  xLabel?: string;
+  yLabel?: string;
+}): React.ReactElement {
   if (!table.rowKeys.length || !table.columnKeys.length) {
     return (
       <ChartWrap>
@@ -937,29 +991,49 @@ export function PivotTableView({table}: {table: PivotTableResult}): React.ReactE
       </ChartWrap>
     );
   }
+  const maxRowLen = Math.max(1, ...table.rowKeys.map(r => String(r).length));
+  const sideWidth = Math.max(
+    48,
+    Math.ceil(Math.min(maxRowLen, 18) * 6.2 + 8),
+    yLabel ? Math.ceil(String(yLabel).length * 5.2) : 0
+  );
   return (
-    <ChartWrap>
-      <PivotTableEl>
-        <thead>
-          <tr>
-            <th />
-            {table.columnKeys.map(col => (
-              <th key={col}>{col}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {table.rowKeys.map(row => (
-            <tr key={row}>
-              <td>{row}</td>
+    <PivotChartWrap>
+      {xLabel || yLabel ? (
+        <HeatAxisTitles $sideWidth={sideWidth}>
+          <HeatAxisTitle $align="right" title={yLabel}>
+            {yLabel || null}
+          </HeatAxisTitle>
+          <HeatAxisTitle $align="center" title={xLabel}>
+            {xLabel || null}
+          </HeatAxisTitle>
+        </HeatAxisTitles>
+      ) : null}
+      <PivotTableScroll>
+        <PivotTableEl>
+          <thead>
+            <tr>
+              <th />
               {table.columnKeys.map(col => (
-                <td key={col}>{formatNumber(table.values[row]?.[col] ?? 0)}</td>
+                <th key={col} title={col}>
+                  {col}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </PivotTableEl>
-    </ChartWrap>
+          </thead>
+          <tbody>
+            {table.rowKeys.map(row => (
+              <tr key={row}>
+                <td title={row}>{row}</td>
+                {table.columnKeys.map(col => (
+                  <td key={col}>{formatNumber(table.values[row]?.[col] ?? 0)}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </PivotTableEl>
+      </PivotTableScroll>
+    </PivotChartWrap>
   );
 }
 
@@ -1016,7 +1090,7 @@ export function ChartRenderer({
         />
       );
     case 'pivot':
-      return <PivotTableView table={data.table} />;
+      return <PivotTableView table={data.table} xLabel={data.xLabel} yLabel={data.yLabel} />;
     case 'empty':
     default:
       return (

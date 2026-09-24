@@ -42,7 +42,7 @@ export type ChartViewData =
   | {kind: 'bars'; bins: ChartBin[]; horizontal?: boolean}
   | {kind: 'line'; bins: ChartBin[]; xLabel?: string; yLabel?: string}
   | {kind: 'heatmap'; cells: HeatmapCell[]; colors?: string[]; xLabel?: string; yLabel?: string}
-  | {kind: 'pivot'; table: PivotTableResult};
+  | {kind: 'pivot'; table: PivotTableResult; xLabel?: string; yLabel?: string};
 
 function axisTitle(axis?: ChartAxis, fallback = ''): string {
   if (!axis) {
@@ -250,11 +250,13 @@ export function computeDatasetChart(
         table: buildPivotTable({
           dataset,
           applyFilters: chart.applyFilters,
-          rowField: chart.yAxis?.field?.name,
-          columnField: chart.xAxis?.field?.name,
+          xAxis: chart.xAxis,
+          yAxis: chart.yAxis,
           valueAxis: chart.value,
           numGroups: chart.numGroups
-        })
+        }),
+        xLabel: axisTitle(chart.xAxis, 'X'),
+        yLabel: axisTitle(chart.yAxis, 'Y')
       };
     default:
       return {kind: 'empty'};
