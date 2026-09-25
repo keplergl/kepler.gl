@@ -15,7 +15,7 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.3.0-alpha.14] - Sep 24 2026
+## [3.3.0-alpha.14] - Sep 25 2026
 
 - c07a1f27 fix: redraw flows when a replaced dataset brings a new flow layer (#3751)
 - 59048d02 feat: add JSON editors for layer, filter, effect, viewport, and animation (#3744)
