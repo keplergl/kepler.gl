@@ -6,6 +6,7 @@ import './color-legend-test';
 import './range-slider-test';
 import './item-selector-test';
 import './range-plot-test';
+import './histogram-plot-test';
 import './animation-control-test';
 import './column-stats-chart-test';
 import './json-editor-test';
