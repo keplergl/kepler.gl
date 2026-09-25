@@ -92,6 +92,8 @@ export type SavedEffect = ParsedEffect;
 export type SavedAnimationConfig = {
   currentTime: AnimationConfig['currentTime'];
   speed: AnimationConfig['speed'];
+  timeFormat?: AnimationConfig['timeFormat'];
+  timezone?: AnimationConfig['timezone'];
 };
 
 export type SavedEditor = {

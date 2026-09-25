@@ -1049,7 +1049,9 @@ export const propertiesV1 = {
     version: VERSIONS.v1,
     properties: {
       currentTime: null,
-      speed: null
+      speed: null,
+      timeFormat: null,
+      timezone: null
     },
     key: 'animationConfig'
   }),

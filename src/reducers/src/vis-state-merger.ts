@@ -951,7 +951,10 @@ function combineAnimationConfigs(configs: SavedAnimationConfig[]): SavedAnimatio
   // get the smallest values of currentTime and speed among all configs
   return {
     currentTime: aggregate(configs, AGGREGATION_TYPES.minimum, c => c.currentTime) ?? null,
-    speed: aggregate(configs, AGGREGATION_TYPES.minimum, c => c.speed) ?? null
+    speed: aggregate(configs, AGGREGATION_TYPES.minimum, c => c.speed) ?? null,
+    // and the most common time format and timezone among the configs that set one
+    timeFormat: getValueWithHighestOccurrence(configs.map(c => c.timeFormat)),
+    timezone: getValueWithHighestOccurrence(configs.map(c => c.timezone))
   };
 }
 
