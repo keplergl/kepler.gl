@@ -26,6 +26,7 @@ import {StyledModalContent, SelectionButton, CheckMark} from '../common/styled-c
 import Switch from '../common/switch';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 const ImageOptionList = styled.div`
   display: flex;
@@ -124,7 +125,8 @@ const ExportImageModalFactory = () => {
     cleanupExportImage,
     intl
   }) => {
-    const {legend, ratio, resolution} = exportImage;
+    const {legend, charts, ratio, resolution} = exportImage;
+    const chartsEnabled = Boolean(getApplicationConfig().enableChartsPanel);
 
     // Filter resolutions based on selected ratio
     const filteredResolutions = useMemo(() => {
@@ -253,6 +255,20 @@ const ExportImageModalFactory = () => {
               onChange={() => onUpdateImageSetting({legend: !legend})}
             />
           </div>
+          {chartsEnabled ? (
+            <div className="image-option-section">
+              <div className="image-option-section-title">
+                <FormattedMessage id={'modal.exportImage.chartsTitle'} />
+              </div>
+              <Switch
+                type="checkbox"
+                id="add-map-charts"
+                checked={Boolean(charts)}
+                label={intl.formatMessage({id: 'modal.exportImage.chartsAdd'})}
+                onChange={() => onUpdateImageSetting({charts: !charts})}
+              />
+            </div>
+          ) : null}
         </ImageOptionList>
         <ImagePreview exportImage={exportImage} />
       </StyledModalContent>

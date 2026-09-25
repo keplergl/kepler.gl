@@ -1,0 +1,69 @@
+{
+  "name": "@kepler.gl/charts",
+  "author": "Shan He <shan@uber.com>",
+  "version": "3.3.0-alpha.14",
+  "description": "kepler.gl chart panel types, builders and renderers",
+  "license": "MIT",
+  "main": "dist/cjs/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "babel",
+    "es6",
+    "react",
+    "visualization",
+    "charts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keplergl/kepler.gl.git"
+  },
+  "scripts": {
+    "build": "rm -fr dist && babel src --out-dir dist/cjs --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts' && BABEL_ENV=esm babel src --out-dir dist/esm --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build:types": "tsc --project ./tsconfig.production.json",
+    "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
+    "stab": "mkdir -p dist/cjs dist/esm && touch dist/cjs/index.js dist/esm/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@kepler.gl/types": "3.3.0-alpha.14",
+    "@types/d3-array": "^2.8.0",
+    "@types/d3-time": "^2",
+    "@types/react": "^19.0.0",
+    "@types/styled-components": "^5.1.32",
+    "d3-array": "^2.8.0",
+    "d3-time": "^2.1.1",
+    "styled-components": "6.4.3"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "nyc": {
+    "sourceMap": false,
+    "instrument": false
+  },
+  "maintainers": [
+    "Shan He <heshan0131@gmail.com>",
+    "Giuseppe Macri <gmacri@uber.com>",
+    "Igor Dykhta <dikhta.igor@gmail.com>",
+    "Xun Li <lixun910@gmail.com>"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "volta": {
+    "node": "20.19.3",
+    "yarn": "4.4.0"
+  },
+  "packageManager": "yarn@4.4.0",
+  "module": "dist/esm/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/cjs/index.js"
+    }
+  }
+}

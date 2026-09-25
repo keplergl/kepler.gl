@@ -46,6 +46,7 @@ const keplerPackages = [
   '@kepler.gl/deckgl-arrow-layers',
   '@kepler.gl/deckgl-layers',
   '@kepler.gl/effects',
+  '@kepler.gl/charts',
   '@kepler.gl/layers',
   '@kepler.gl/localization',
   '@kepler.gl/processors',

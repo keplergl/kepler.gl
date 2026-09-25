@@ -4,8 +4,8 @@
 /* eslint-disable guard-for-in */
 import {console as Console} from 'global/window';
 
-import {aggregate} from '@kepler.gl/utils';
-import {AGGREGATION_TYPES, SCALE_FUNC} from '@kepler.gl/constants';
+import {aggregate, naturalBreaks} from '@kepler.gl/utils';
+import {AGGREGATION_TYPES, SCALE_FUNC, SCALE_TYPES} from '@kepler.gl/constants';
 import {RGBAColor} from '@kepler.gl/types';
 import type ClusterBuilder from './cluster-utils';
 
@@ -303,6 +303,14 @@ export function getDimensionValueDomain(this: CPUAggregator, step, props, dimens
     );
   }
 
+  if (props.colorScaleType === SCALE_TYPES.jenks) {
+    const values = this.state.dimensions[key].sortedBins.aggregatedBins
+      .map(bin => bin.value)
+      .filter(Number.isFinite);
+    const k = Array.isArray(props.colorRange) ? props.colorRange.length : 0;
+    valueDomain = naturalBreaks(values, k);
+  }
+
   this._setDimensionState(key, {valueDomain});
 }
 
@@ -411,7 +419,7 @@ function getSubLayerAccessor(
     const domain = scaleFunc.domain();
 
     const isValueInDomain =
-      scaleFunc.scaleType === 'custom'
+      scaleFunc.scaleType === 'custom' || scaleFunc.scaleType === SCALE_TYPES.jenks
         ? cv >= sortedBins.minValue && cv <= sortedBins.maxValue
         : cv >= domain[0] && cv <= domain[domain.length - 1];
 

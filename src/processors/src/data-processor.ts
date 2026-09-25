@@ -585,6 +585,9 @@ const CAST_BIGINTS = false;
  * Cast 64-bit integer Arrow columns (Int64, Uint64) to Float64 to avoid BigInt values
  * that are incompatible with d3 scales, sorting, and other numeric operations.
  * Mirrors the DuckDB approach of casting BIGINT/UBIGINT to DOUBLE.
+ *
+ * Left off so Uint64 values are not rounded through Float64. Samples are
+ * stringified for type-analyzer instead.
  */
 function castBigIntColumnsToFloat64(arrowTable: arrow.Table): arrow.Table {
   if (!CAST_BIGINTS) {

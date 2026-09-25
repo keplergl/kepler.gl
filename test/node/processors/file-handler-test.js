@@ -8,7 +8,8 @@ import {
   filesToDataPayload,
   processFileData,
   processArrowBatches,
-  getGeoJsonFromLoaderResult
+  getGeoJsonFromLoaderResult,
+  readBatch
 } from '@kepler.gl/processors';
 import {getDatasetRefreshIntervalMs} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
@@ -395,6 +396,32 @@ test('#file-handler -> processArrowBatches skip compact for incremental loads', 
   t.end();
 });
 
+test('#file-handler -> processArrowBatches Int64/Uint64 columns', async t => {
+  const table = arrow.tableFromArrays({
+    hexId: new BigUint64Array([610625465232654335n, 610625465081659391n]),
+    total: new BigInt64Array([29436887n, 40685227n])
+  });
+
+  let result;
+  t.doesNotThrow(() => {
+    result = processArrowBatches(table.batches);
+  }, 'should process Arrow Int64/Uint64 columns without BigInt TypeError');
+
+  t.equal(result.fields[0].name, 'hexId');
+  t.equal(result.fields[0].type, 'integer', 'uint64 columns should stay integer, not h3');
+  t.equal(result.fields[1].name, 'total');
+  t.equal(result.fields[1].type, 'integer', 'int64 counts should stay integer');
+
+  const processed = await processFileData({
+    content: {fileName: 'congo.parquet', data: table.batches},
+    fileCache: []
+  });
+  t.equal(processed.length, 1, 'processFileData should accept uint64 Arrow batches');
+  t.equal(processed[0].data.fields[0].type, 'integer');
+
+  t.end();
+});
+
 test('#file-handler -> processFileData Feature array is geojson', async t => {
   const features = [
     {
@@ -419,6 +446,140 @@ test('#file-handler -> processFileData Feature array is geojson', async t => {
     'an array of Features should not be treated as rows'
   );
   t.equal(processed[0].data.rows.length, 2, 'should keep both features');
+  t.end();
+});
+
+test('#file-handler -> shapefile-shaped loader output becomes GeoJSON', async t => {
+  const data = {
+    data: [
+      {
+        type: 'Feature',
+        properties: {name: 'alpha'},
+        geometry: {type: 'Point', coordinates: [-122.4, 37.8]}
+      }
+    ]
+  };
+  t.equal(
+    getGeoJsonFromLoaderResult(data).features.length,
+    1,
+    'should unwrap shapefile Feature arrays'
+  );
+
+  const processed = await processFileData({
+    content: {fileName: 'places.shp', data},
+    fileCache: []
+  });
+  t.equal(processed[0].info.format, 'geojson', 'shapefile output should process as geojson');
+  t.equal(processed[0].data.rows.length, 1, 'should keep the shapefile feature');
+  t.end();
+});
+
+async function readLastAggregatedBatch(iterator, fileName) {
+  const generator = readBatch(iterator, fileName);
+  let last;
+  for await (const batch of generator) {
+    last = batch;
+  }
+  return last;
+}
+
+test('#file-handler -> empty GIS loader output becomes an empty GeoJSON dataset', async t => {
+  const emptyShapefile = await processFileData({
+    content: {fileName: 'empty.shp', data: {data: []}},
+    fileCache: []
+  });
+  t.equal(emptyShapefile[0].info.format, 'geojson', 'empty shapefile output should be geojson');
+  t.equal(emptyShapefile[0].data.rows.length, 0, 'should keep zero features');
+
+  const emptyTable = await processFileData({
+    content: {
+      fileName: 'empty.fgb',
+      data: {shape: 'geojson-table', type: 'FeatureCollection', features: []}
+    },
+    fileCache: []
+  });
+  t.equal(emptyTable[0].info.format, 'geojson', 'empty geojson-table should be geojson');
+  t.equal(emptyTable[0].data.rows.length, 0, 'should keep zero geojson-table features');
+
+  const emptyExcel = await processFileData({
+    content: {fileName: 'empty.xlsx', data: {shape: 'object-row-table', data: []}},
+    fileCache: []
+  });
+  t.equal(emptyExcel[0].info.format, 'row', 'empty spreadsheet tables should stay rows');
+  t.end();
+});
+
+test('#file-handler -> readBatch does not wrap JSON streaming placeholders', async t => {
+  async function* geojsonStream() {
+    yield {batchType: 'metadata', shape: 'metadata', data: []};
+    yield {
+      shape: 'object-row-table',
+      batchType: 'partial-result',
+      container: {type: 'FeatureCollection', features: []},
+      data: [],
+      jsonpath: '$.features'
+    };
+    yield {
+      data: [
+        {
+          type: 'Feature',
+          properties: {name: 'alpha'},
+          geometry: {type: 'Point', coordinates: [0, 1]}
+        }
+      ],
+      jsonpath: '$.features',
+      length: 1
+    };
+  }
+
+  const generator = readBatch(geojsonStream(), 'places.geojson');
+  await generator.next();
+  const partial = await generator.next();
+  t.equal(partial.value.batchType, 'partial-result', 'should yield the JSON partial-result');
+  t.equal(partial.value.data.length, 0, 'partial-result should keep an empty array');
+  const dataBatch = await generator.next();
+  t.equal(dataBatch.value.data.length, 1, 'data batch should stay a feature array');
+  t.end();
+});
+
+test('#file-handler -> readBatch preserves empty loader identity', async t => {
+  async function* emptyShapefileBatches() {
+    yield {header: {length: 50}, data: []};
+  }
+  const shapefileBatch = await readLastAggregatedBatch(emptyShapefileBatches(), 'empty.shp');
+  const emptyShapefile = await processFileData({content: shapefileBatch, fileCache: []});
+  t.equal(emptyShapefile[0].info.format, 'geojson', 'empty shapefile batches should stay geojson');
+  t.equal(emptyShapefile[0].data.rows.length, 0, 'should keep zero shapefile features');
+
+  async function* emptyExcelBatches() {
+    yield {shape: 'object-row-table', data: []};
+  }
+  const excelBatch = await readLastAggregatedBatch(emptyExcelBatches(), 'empty.xlsx');
+  const emptyExcel = await processFileData({content: excelBatch, fileCache: []});
+  t.equal(emptyExcel[0].info.format, 'row', 'empty spreadsheet batches should stay rows');
+  t.equal(emptyExcel[0].data.rows.length, 0, 'should keep zero spreadsheet rows');
+
+  async function* emptyFlatGeobufBatches() {
+    yield {batchType: 'metadata'};
+    yield {shape: 'geojson-table', type: 'FeatureCollection', features: []};
+  }
+  const fgbBatch = await readLastAggregatedBatch(emptyFlatGeobufBatches(), 'empty.fgb');
+  const emptyFgb = await processFileData({content: fgbBatch, fileCache: []});
+  t.equal(emptyFgb[0].info.format, 'geojson', 'empty FlatGeobuf batches should stay geojson');
+  t.equal(emptyFgb[0].data.rows.length, 0, 'should keep zero FlatGeobuf features');
+  t.end();
+});
+
+test('#file-handler -> object-row-table becomes a row dataset', async t => {
+  const processed = await processFileData({
+    content: {
+      fileName: 'table.xlsx',
+      data: {shape: 'object-row-table', data: [{name: 'alpha', value: 1}]}
+    },
+    fileCache: []
+  });
+  t.equal(processed[0].info.format, 'row', 'Excel-shaped tables should process as rows');
+  t.equal(processed[0].data.rows.length, 1, 'should keep the spreadsheet row');
   t.end();
 });
 

@@ -283,7 +283,9 @@ export default {
     timeLayerUnsync: '取消与图层时间线联动',
     column: '列',
     timeIntervalEndField: '结束时间',
-    timeIntervalEndFieldHint: '可选。当播放窗口与该时间范围重叠时，要素保持可见。'
+    timeIntervalEndFieldHint: '可选。当播放窗口与该时间范围重叠时，要素保持可见。',
+    timezone: '时区',
+    selectTimezone: '选择显示时区'
   },
   datasetTitle: {
     showDataTable: '显示数据表',
@@ -362,6 +364,8 @@ export default {
     syncTimelineEnd: '当前过滤时间段的结束',
     showEffectPanel: '显示效果面板',
     hideEffectPanel: '隐藏效果面板',
+    showChartPanel: '显示图表',
+    hideChartPanel: '隐藏图表',
     showAnnotationPanel: '显示注释',
     hideAnnotationPanel: '隐藏注释',
     removeAnnotation: '删除注释',
@@ -371,7 +375,12 @@ export default {
     annotationSettings: '注释设置',
     removeEffect: '移除效果',
     disableEffect: '禁用效果',
-    effectSettings: '效果设置'
+    effectSettings: '效果设置',
+    editLayerJson: '编辑图层 JSON',
+    editFilterJson: '编辑筛选器 JSON',
+    editEffectJson: '编辑效果 JSON',
+    editViewportJson: '编辑视口 JSON',
+    editAnimationJson: '编辑动画 JSON'
   },
   toolbar: {
     exportImage: '导出图片',
@@ -396,12 +405,15 @@ export default {
     filterLayer: '过滤图层',
     filterLayerDisabled: '非多边形几何图形不能用于过滤',
     copyGeometry: '复制几何图形',
+    extractData: '提取数据',
+    extractFromLayer: '从 {layerName} 图层',
     editProperties: '编辑属性',
     propertyName: '属性',
     propertyValue: '值',
     removeProperty: '删除属性',
     polygonFilter: '多边形过滤器',
-    noLayersToFilter: '没有可过滤的图层'
+    noLayersToFilter: '没有可过滤的图层',
+    noLayersToExtract: '没有可提取的图层'
   },
   exportVideoModal: {
     animation: '动画',
@@ -439,7 +451,9 @@ export default {
       resolutionDescription: '高分辨率更适合打印。',
       resolutionPlaceholder: '选择分辨率...',
       mapLegendTitle: '地图图例',
-      mapLegendAdd: '在地图上添加图例'
+      mapLegendAdd: '在地图上添加图例',
+      chartsTitle: '图表',
+      chartsAdd: '在地图上添加图表'
     },
     exportVideo: {
       animation: '动画',
@@ -597,7 +611,8 @@ export default {
   header: {
     visibleLayers: '可见图层',
     layerLegend: '图层图例',
-    annotations: '注释'
+    annotations: '注释',
+    charts: '图表'
   },
   interactions: {
     tooltip: '工具提示',

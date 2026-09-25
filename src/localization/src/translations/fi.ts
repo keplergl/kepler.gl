@@ -297,7 +297,9 @@ export default {
     column: 'Sarake',
     timeIntervalEndField: 'Päättymisaika',
     timeIntervalEndFieldHint:
-      'Valinnainen. Kohteet pysyvät näkyvissä, kun toistoikkuna osuu tälle aikavälille.'
+      'Valinnainen. Kohteet pysyvät näkyvissä, kun toistoikkuna osuu tälle aikavälille.',
+    timezone: 'Aikavyöhyke',
+    selectTimezone: 'Valitse näyttöaikavyöhyke'
   },
   datasetTitle: {
     showDataTable: 'Näytä attribuuttitaulu',
@@ -374,6 +376,8 @@ export default {
     syncTimelineEnd: 'Nykyisen suodattimen aikajakson loppu',
     showEffectPanel: 'Näytä efektipaneeli',
     hideEffectPanel: 'Piilota efektipaneeli',
+    showChartPanel: 'Näytä kaaviot',
+    hideChartPanel: 'Piilota kaaviot',
     showAnnotationPanel: 'Näytä merkinnät',
     hideAnnotationPanel: 'Piilota merkinnät',
     removeAnnotation: 'Poista merkintä',
@@ -384,6 +388,11 @@ export default {
     removeEffect: 'Poista efekti',
     disableEffect: 'Poista efekti käytöstä',
     effectSettings: 'Efektiasetukset',
+    editLayerJson: 'Muokkaa tason JSON-määritystä',
+    editFilterJson: 'Muokkaa suodattimen JSON-määritystä',
+    editEffectJson: 'Muokkaa efektin JSON-määritystä',
+    editViewportJson: 'Muokkaa näkymän JSON-määritystä',
+    editAnimationJson: 'Muokkaa animaation JSON-määritystä',
     timeLayerSync: 'Linkitä tason aikajanaan',
     timeLayerUnsync: 'Poista linkitys tason aikajanasta'
   },
@@ -410,12 +419,15 @@ export default {
     filterLayer: 'Suodata tasoja',
     filterLayerDisabled: 'Ei-monikulmiogeometrioita ei voi käyttää suodatukseen',
     copyGeometry: 'Kopioi geometria',
+    extractData: 'Poimi tiedot',
+    extractFromLayer: 'tasosta {layerName}',
     editProperties: 'Muokkaa ominaisuuksia',
     propertyName: 'Ominaisuus',
     propertyValue: 'Arvo',
     removeProperty: 'Poista ominaisuus',
     polygonFilter: 'Polygonisuodatin',
-    noLayersToFilter: 'Ei tasoja suodatettavaksi'
+    noLayersToFilter: 'Ei tasoja suodatettavaksi',
+    noLayersToExtract: 'Ei tasoja poimittavaksi'
   },
   exportVideoModal: {
     animation: 'Animaatio',
@@ -453,7 +465,9 @@ export default {
       resolutionDescription: 'Korkea resoluutio on parempi tulostamista varten.',
       resolutionPlaceholder: 'Valitse resoluutio...',
       mapLegendTitle: 'Kartan selite',
-      mapLegendAdd: 'Lisää selite karttaan'
+      mapLegendAdd: 'Lisää selite karttaan',
+      chartsTitle: 'Kaaviot',
+      chartsAdd: 'Lisää kaaviot karttaan'
     },
     exportVideo: {
       animation: 'Animaatio',
@@ -614,7 +628,8 @@ export default {
   header: {
     visibleLayers: 'Näkyvissä olevat tasot',
     layerLegend: 'Tason selite',
-    annotations: 'Merkinnät'
+    annotations: 'Merkinnät',
+    charts: 'Kaaviot'
   },
   interactions: {
     tooltip: 'Vihje',

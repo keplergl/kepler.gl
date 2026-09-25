@@ -93,7 +93,21 @@ export type KeplerAcceptedFileFormat =
   | 'tcx'
   | 'arrow'
   | 'feather'
-  | 'parquet';
+  | 'parquet'
+  | 'shp'
+  | 'shapefile'
+  | 'zip'
+  | 'dbf'
+  | 'shx'
+  | 'prj'
+  | 'cpg'
+  | 'xlsx'
+  | 'xls'
+  | 'xlsm'
+  | 'xlsb'
+  | 'excel'
+  | 'fgb'
+  | 'flatgeobuf';
 
 export type KeplerApplicationConfig = {
   /** Default name of export HTML file, can be overridden by user */
@@ -210,6 +224,45 @@ export type KeplerApplicationConfig = {
   enableDatasetOps?: boolean;
 
   /**
+   * Whether to show the charts map-control panel (big number, bar, line,
+   * heatmap, pivot table, tooltip charts, and chart cross-filters).
+   * Enabled by default. Disable with {@link initApplicationConfig}.
+   */
+  enableChartsPanel?: boolean;
+
+  /**
+   * Master switch for power-user JSON editors. When false, every section editor is hidden.
+   * Defaults to true; each section also has its own flag.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({
+   *   enableViewportJsonEditor: true,
+   *   enableLayerJsonEditor: false
+   * });
+   * ```
+   */
+  enableJsonEditors?: boolean;
+
+  /** Layer panel `{ }` JSON editor. Enabled by default. */
+  enableLayerJsonEditor?: boolean;
+
+  /** Filter panel `{ }` JSON editor. Enabled by default. */
+  enableFilterJsonEditor?: boolean;
+
+  /** Effect panel `{ }` JSON editor. Enabled by default. */
+  enableEffectJsonEditor?: boolean;
+
+  /**
+   * Viewport JSON editor map-control button. Disabled by default because it adds an extra
+   * map control.
+   */
+  enableViewportJsonEditor?: boolean;
+
+  /** Animation / time-filter playback `{ }` JSON editor. Enabled by default. */
+  enableAnimationJsonEditor?: boolean;
+
+  /**
    * Show a format dropdown next to the remote dataset URL field (Auto / CSV / GeoJSON / JSON / Arrow / Parquet).
    * Useful for extensionless URLs such as Azure SAS blobs. Disabled by default.
    */
@@ -217,7 +270,7 @@ export type KeplerApplicationConfig = {
 
   /**
    * File formats Kepler may load from drag-and-drop, the file picker, and remote URLs.
-   * Values are format ids or extensions (`csv`, `geojson`, `kml`, `geojsonl`, …).
+   * Values are format ids or extensions (`csv`, `geojson`, `kml`, `shp`, `xlsx`, `fgb`, …).
    * When omitted or `null`, every built-in format is accepted.
    *
    * @example
@@ -377,6 +430,15 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableColumnStats: true,
 
   enableDatasetOps: true,
+
+  enableChartsPanel: true,
+
+  enableJsonEditors: true,
+  enableLayerJsonEditor: true,
+  enableFilterJsonEditor: true,
+  enableEffectJsonEditor: true,
+  enableViewportJsonEditor: false,
+  enableAnimationJsonEditor: true,
 
   enableRemoteFileFormatSelector: false,
 

@@ -68,7 +68,7 @@ export {
   TIMELINE_MODES,
   TIME_INTERVALS_ORDERED,
   LayerToFilterTimeInterval,
-  TileTimeInterval,
+  LayerTimeInterval,
   getTimelineFromAnimationConfig,
   getTimelineFromFilter,
   filterIntervalOptions
@@ -164,12 +164,27 @@ export * from './filter-utils';
 export type {FilterChanged, FilterResult, dataValueAccessor} from './filter-utils';
 export * from './editor-feature-utils';
 export type {EditorFeatureCollection} from './editor-feature-utils';
+export {
+  extractRowsInsideFeature,
+  extractVectorTileFeaturesInsideFeature,
+  isExtractableDataset,
+  isExtractableLayer,
+  isVectorTileExtractLayer
+} from './extract-dataset-utils';
+export type {
+  ExtractableDataset,
+  ExtractableLayer,
+  ExtractedGeojson,
+  ExtractedTable,
+  ExtractResult
+} from './extract-dataset-utils';
 
 export {
   colorMapToColorBreaks,
   colorBreaksToColorMap,
   getLayerColorScale,
   getLegendOfScale,
+  getJenksDomain,
   getLinearDomain,
   getLogDomain,
   getOrdinalDomain,
@@ -215,6 +230,7 @@ export type {DatabaseAdapter, DatabaseConnection} from './application-config-typ
 export {isAppleDevice} from './browser-utils';
 
 export {default as quickInsertionSort} from './quick-insertion-sort';
+export {default as naturalBreaks} from './jenks';
 
 export type {KeplerTableModel} from './types';
 

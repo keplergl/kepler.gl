@@ -35,7 +35,7 @@ import {
   getAnimatableVisibleLayers,
   getDefaultFilter,
   histogramFromDomain,
-  TileTimeInterval,
+  LayerTimeInterval,
   initApplicationConfig
 } from '@kepler.gl/utils';
 import {
@@ -101,6 +101,7 @@ import {
 } from 'test/helpers/comparison-utils';
 import {
   applyActions,
+  applyExistingDatasetTasks,
   StateWTripGeojson,
   StateWSplitMaps,
   StateWFilters,
@@ -6140,6 +6141,188 @@ test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER', t => {
   t.end();
 });
 
+test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE', t => {
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {name: 'start_point_lat', format: '', fieldIdx: 0, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'start_point_lng', format: '', fieldIdx: 1, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lat', format: '', fieldIdx: 2, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lng', format: '', fieldIdx: 3, type: 'real', analyzerType: 'FLOAT'}
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv',
+        size: 144
+      }
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: true, keepExistingConfig: false}, {}]
+    }
+  ]);
+
+  const pointLayer = state.layers.find(layer => layer.type === 'point');
+  t.ok(pointLayer, 'Should create a point layer from lat/lng columns');
+
+  state = reducer(state, VisStateActions.setFeatures([mockPolygonFeature]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockPolygonFeature));
+
+  const sourceDataId = pointLayer.config.dataId;
+  const sourceRowCount = state.datasets[sourceDataId].dataContainer.numRows();
+  const layerCount = state.layers.length;
+
+  state = applyExistingDatasetTasks(
+    reducer,
+    reducer(state, VisStateActions.extractDataFromFeature({layerId: pointLayer.id}))
+  );
+
+  const extractedIds = Object.keys(state.datasets).filter(id => id !== sourceDataId);
+  t.equal(extractedIds.length, 1, 'Should create one extracted dataset');
+
+  const extracted = state.datasets[extractedIds[0]];
+  t.equal(extracted.dataContainer.numRows(), 2, 'Should copy the two points inside the polygon');
+  t.ok(extracted.label.startsWith('Extracted '), 'Extracted dataset should use Extracted prefix');
+  t.equal(
+    state.datasets[sourceDataId].dataContainer.numRows(),
+    sourceRowCount,
+    'Source dataset should stay unchanged'
+  );
+  t.equal(state.editor.features.length, 1, 'Should keep the drawing after extract');
+  t.ok(state.layers.length > layerCount, 'Should auto-create a layer for the extracted dataset');
+
+  const emptyState = reducer(
+    state,
+    VisStateActions.extractDataFromFeature({layerId: 'missing-layer'})
+  );
+  t.equal(emptyState, state, 'Should no-op when the layer id is unknown');
+
+  t.end();
+});
+
+test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE respects GPU range filter', t => {
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {name: 'start_point_lat', format: '', fieldIdx: 0, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'start_point_lng', format: '', fieldIdx: 1, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lat', format: '', fieldIdx: 2, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lng', format: '', fieldIdx: 3, type: 'real', analyzerType: 'FLOAT'}
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv'
+      }
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: false, keepExistingConfig: false}, {}]
+    }
+  ]);
+
+  const pointLayer = state.layers.find(layer => layer.type === 'point');
+  t.ok(pointLayer, 'Should create a point layer from lat/lng columns');
+  const sourceDataId = pointLayer.config.dataId;
+
+  state = reducer(state, VisStateActions.addFilter(sourceDataId));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'start_point_lat'));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [12, 12.5]));
+
+  t.equal(state.filters[0].gpu, true, 'Range filter should be GPU-backed');
+  t.equal(
+    state.datasets[sourceDataId].filteredIndex.length,
+    state.datasets[sourceDataId].dataContainer.numRows(),
+    'GPU filter should not shrink filteredIndex'
+  );
+
+  state = reducer(state, VisStateActions.setFeatures([mockPolygonFeature]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockPolygonFeature));
+
+  state = applyExistingDatasetTasks(
+    reducer,
+    reducer(state, VisStateActions.extractDataFromFeature({layerId: pointLayer.id}))
+  );
+
+  const extractedIds = Object.keys(state.datasets).filter(id => id !== sourceDataId);
+  t.equal(extractedIds.length, 1, 'Should create one extracted dataset');
+  t.equal(
+    state.datasets[extractedIds[0]].dataContainer.numRows(),
+    1,
+    'Should keep only the in-polygon row that also passes the range filter'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE empty polygon', t => {
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {name: 'start_point_lat', format: '', fieldIdx: 0, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'start_point_lng', format: '', fieldIdx: 1, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lat', format: '', fieldIdx: 2, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lng', format: '', fieldIdx: 3, type: 'real', analyzerType: 'FLOAT'}
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv'
+      }
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: false, keepExistingConfig: false}, {}]
+    }
+  ]);
+
+  const farAwayPolygon = {
+    type: 'Feature',
+    id: 'far-away',
+    properties: {isClosed: true},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [1, 0],
+          [1, 1],
+          [0, 1],
+          [0, 0]
+        ]
+      ]
+    }
+  };
+
+  const pointLayer = state.layers.find(layer => layer.type === 'point');
+  state = reducer(state, VisStateActions.setFeatures([farAwayPolygon]));
+  state = reducer(state, VisStateActions.setSelectedFeature(farAwayPolygon));
+  const datasetCount = Object.keys(state.datasets).length;
+
+  state = reducer(state, VisStateActions.extractDataFromFeature({layerId: pointLayer.id}));
+  t.equal(
+    Object.keys(state.datasets).length,
+    datasetCount,
+    'Should not create a dataset when no rows fall inside the drawing'
+  );
+  drainTasksForTesting();
+
+  t.end();
+});
+
 test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER disabled by config', t => {
   initApplicationConfig({enableDrawOnMapSketches: false});
 
@@ -6501,7 +6684,8 @@ test('#visStateReducer -> LOAD_FILES', async t => {
       file: {type: 'text/csv', name: 'test-file.csv'},
       fileCache: [],
       loaders: [],
-      loadOptions: {}
+      loadOptions: {},
+      companionFiles: mockFiles
     }
   };
 
@@ -6512,6 +6696,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   const expectedFileLoading = {
     fileCache: [],
     filesToLoad: [{type: 'text/csv', name: 'test-file-2.csv'}],
+    companionFiles: mockFiles,
     onFinish: VisStateActions.loadFilesSuccess
   };
   const expectedFileLoadingProgress = {
@@ -6578,7 +6763,8 @@ test('#visStateReducer -> LOAD_FILES', async t => {
       file: {type: 'text/csv', name: 'test-file-2.csv'},
       fileCache: [],
       loaders: [],
-      loadOptions: {}
+      loadOptions: {},
+      companionFiles: mockFiles
     },
     'should return an LOAD_FILE_TASK with 2nd file to load'
   );
@@ -6596,6 +6782,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     {
       fileCache: [],
       filesToLoad: [],
+      companionFiles: mockFiles,
       onFinish: VisStateActions.loadFilesSuccess
     },
     'fileLoading should not add result to fileCache when error'
@@ -6680,6 +6867,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     {
       fileCache: fileProcessResult,
       filesToLoad: [{type: 'text/csv', name: 'test-file-2.csv'}],
+      companionFiles: mockFiles,
       onFinish: VisStateActions.loadFilesSuccess
     },
     'fileLoading should update to add result to fileCache 1'
@@ -6699,7 +6887,8 @@ test('#visStateReducer -> LOAD_FILES', async t => {
       file: {type: 'text/csv', name: 'test-file-2.csv'},
       fileCache: fileProcessResult,
       loaders: [],
-      loadOptions: {}
+      loadOptions: {},
+      companionFiles: mockFiles
     },
     'should return an LOAD_FILE_TASK with 2nd file to load 2'
   );
@@ -6717,6 +6906,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     {
       fileCache: fileProcessResult,
       filesToLoad: [],
+      companionFiles: mockFiles,
       onFinish: VisStateActions.loadFilesSuccess
     },
     'fileLoading should update to add result to fileCache 3'
@@ -6759,6 +6949,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     {
       fileCache: file2ProcessResult,
       filesToLoad: [],
+      companionFiles: mockFiles,
       onFinish: VisStateActions.loadFilesSuccess
     },
     'fileLoading should update to add 2nd file result to fileCache'
@@ -6916,7 +7107,7 @@ function mockStateWithFilterAndIntervalBasedAnimationLayer() {
       }
     ],
     resolutionOffset: 4,
-    targetTimeInterval: TileTimeInterval.DAY,
+    targetTimeInterval: LayerTimeInterval.DAY,
     tilesetIndex: undefined,
     zipUrl: undefined
   };
@@ -7116,7 +7307,7 @@ test('#visStateReducer -> sync with time filter with trip layer', t => {
   t.end();
 });
 
-test('#visStateReducer -> sync with time filter with hextile layer', t => {
+test('#visStateReducer -> sync with time filter with interval-based animation layer', t => {
   let visState = mockStateWithFilterAndIntervalBasedAnimationLayer();
   const animatableLayers = getAnimatableVisibleLayers(visState.layers);
   t.equal(animatableLayers.length, 2, 'Should find 1 animatable layer');
@@ -7155,7 +7346,7 @@ test('#visStateReducer -> sync with time filter with hextile layer', t => {
     'Should have set filter animation window to interval'
   );
 
-  // check plotType interval to match hextile interval
+  // check plotType interval to match the layer time interval
   t.equal(
     newFilter.plotType.interval,
     INTERVAL['1-day'],
@@ -7485,6 +7676,41 @@ test('VisStateUpdater -> applyLayerConfig', t => {
     )
   );
   t.equal(getUpdatedLayerJson(nextState).type, '3D', 'should change layer type');
+
+  nextState = reducer(
+    initialState,
+    VisStateActions.applyLayerConfig(
+      oldLayerId,
+      transformConfig(layer => {
+        layer.visualChannels.colorField = {name: 'gps_data.lat', type: 'real'};
+        layer.visualChannels.colorScale = 'quantile';
+        return layer;
+      })
+    )
+  );
+  t.equal(
+    getUpdatedLayerJson(nextState).visualChannels.colorField?.name,
+    'gps_data.lat',
+    'should set colorField'
+  );
+
+  const parsedLayer = serializeLayer(nextState.layers[oldLayerIndex], schema);
+  const parsedWithRadius = CloneDeep(parsedLayer);
+  parsedWithRadius.config.visConfig.radius = 25;
+  const afterParsedRadius = reducer(
+    nextState,
+    VisStateActions.applyLayerConfig(oldLayerId, parsedWithRadius)
+  );
+  t.equal(
+    getUpdatedLayerJson(afterParsedRadius).visualChannels.colorField?.name,
+    'gps_data.lat',
+    'parsed-format radius change should keep colorField'
+  );
+  t.equal(
+    getUpdatedLayerJson(afterParsedRadius).config.visConfig.radius,
+    25,
+    'parsed-format radius change should update radius'
+  );
 
   t.end();
 });

@@ -40,6 +40,7 @@ import {
   HexagonalPixelateEffectIcon,
   DistanceFogEffectIcon,
   SurfaceFogEffectIcon,
+  CodeAlt,
   BaseProps
 } from '../common/icons';
 import {StyledPanelHeader, Tooltip} from '../common/styled-components';
@@ -75,12 +76,15 @@ export type EffectPanelHeaderProps = {
   onToggleEnabled: () => void;
   onRemoveEffect: () => void;
   onToggleEnableConfig: () => void;
+  onToggleJsonEditor?: () => void;
+  showJsonEditor?: boolean;
   actionIcons?: {
     remove: React.ComponentType<Partial<BaseProps>>;
     visible: React.ComponentType<Partial<BaseProps>>;
     hidden: React.ComponentType<Partial<BaseProps>>;
     enableConfig: React.ComponentType<Partial<BaseProps>>;
     disableConfig: React.ComponentType<Partial<BaseProps>>;
+    json?: React.ComponentType<Partial<BaseProps>>;
   };
   actionItems?: ActionItem[];
 };
@@ -94,7 +98,8 @@ const defaultActionIcons = {
   visible: EyeSeen,
   hidden: EyeUnseen,
   enableConfig: ArrowDown,
-  disableConfig: ArrowUp
+  disableConfig: ArrowUp,
+  json: CodeAlt
 };
 
 const defaultEffectIcons = {
@@ -207,6 +212,9 @@ export function EffectPanelHeaderActionSectionFactory(
       onToggleEnabled,
       onRemoveEffect,
       onToggleEnableConfig,
+      onToggleJsonEditor,
+      isJsonEditorActive,
+      showJsonEditor,
       actionItems,
       actionIcons = defaultActionIcons
     } = props;
@@ -222,6 +230,17 @@ export function EffectPanelHeaderActionSectionFactory(
             onClick: onRemoveEffect,
             icon: actionIcons.remove
           },
+          ...(showJsonEditor && onToggleJsonEditor
+            ? [
+                {
+                  key: 'edit-json',
+                  isHidden: true,
+                  tooltip: 'tooltip.editEffectJson',
+                  onClick: onToggleJsonEditor,
+                  icon: actionIcons.json || CodeAlt
+                }
+              ]
+            : []),
           {
             key: 'visibility-toggle',
             tooltip: isEnabled ? 'tooltip.disableEffect' : 'tooltip.enabledEffect',
@@ -241,9 +260,12 @@ export function EffectPanelHeaderActionSectionFactory(
         actionIcons,
         isEnabled,
         isConfigActive,
+        isJsonEditorActive,
+        showJsonEditor,
         onRemoveEffect,
         onToggleEnabled,
-        onToggleEnableConfig
+        onToggleEnableConfig,
+        onToggleJsonEditor
       ]
     );
 

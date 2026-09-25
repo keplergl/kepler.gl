@@ -14,13 +14,21 @@ import LocalePanelFactory from './locale-panel';
 import ThemeToggleButtonFactory from './theme-toggle-button';
 import MapNavigationControlFactory from './map-navigation-control';
 import {Layer} from '@kepler.gl/layers';
-import {Editor, LayerVisConfig, LayerOrder, MapControls, MapState} from '@kepler.gl/types';
+import {
+  Editor,
+  LayerVisConfig,
+  LayerOrder,
+  MapControls,
+  MapState,
+  ChartConfig
+} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
-import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
+import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
 import {getApplicationConfig} from '@kepler.gl/utils';
 import {MapViewMode} from '@kepler.gl/constants';
 
 import AnnotationControlFactory from './annotations/annotation-control';
+import ViewportJsonEditorControlFactory from './viewport-json-editor';
 
 interface StyledMapControlProps {
   $top?: number;
@@ -96,6 +104,8 @@ export type MapControlProps = {
   mapHeight?: number;
   splitMaps?: {layers: {[key: string]: boolean}}[];
   onToggleLayerForMap?: (mapIndex: number, layerId: string) => void;
+  charts?: ChartConfig[];
+  visStateActions?: typeof VisStateActions;
 };
 
 MapControlFactory.deps = [
@@ -106,7 +116,8 @@ MapControlFactory.deps = [
   LocalePanelFactory,
   ThemeToggleButtonFactory,
   AnnotationControlFactory,
-  MapNavigationControlFactory
+  MapNavigationControlFactory,
+  ViewportJsonEditorControlFactory
 ];
 
 function MapControlFactory(
@@ -117,7 +128,8 @@ function MapControlFactory(
   LocalePanel: ReturnType<typeof LocalePanelFactory>,
   ThemeToggleButton: ReturnType<typeof ThemeToggleButtonFactory>,
   AnnotationControl: ReturnType<typeof AnnotationControlFactory>,
-  MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>
+  MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>,
+  ViewportJsonEditorControl: ReturnType<typeof ViewportJsonEditorControlFactory>
 ) {
   const DEFAULT_ACTIONS = [
     SplitMapButton,
@@ -126,6 +138,7 @@ function MapControlFactory(
     AnnotationControl,
     LocalePanel,
     ThemeToggleButton,
+    ViewportJsonEditorControl,
     MapLegendPanel
   ];
 

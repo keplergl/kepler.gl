@@ -299,7 +299,9 @@ export default {
     column: 'Columna',
     timeIntervalEndField: 'Hora de fin',
     timeIntervalEndFieldHint:
-      'Opcional. Las entidades permanecen visibles mientras la ventana de reproducción se superpone a este intervalo.'
+      'Opcional. Las entidades permanecen visibles mientras la ventana de reproducción se superpone a este intervalo.',
+    timezone: 'Zona horaria',
+    selectTimezone: 'Seleccionar zona horaria de visualización'
   },
   datasetTitle: {
     showDataTable: 'Mostar la tabla de datos',
@@ -378,6 +380,8 @@ export default {
     syncTimelineEnd: 'Fin del período de tiempo del filtro actual',
     showEffectPanel: 'Mostrar panel de efectos',
     hideEffectPanel: 'Ocultar panel de efectos',
+    showChartPanel: 'Mostrar gráficos',
+    hideChartPanel: 'Ocultar gráficos',
     showAnnotationPanel: 'Mostrar anotaciones',
     hideAnnotationPanel: 'Ocultar anotaciones',
     removeAnnotation: 'Eliminar anotación',
@@ -387,7 +391,12 @@ export default {
     annotationSettings: 'Configuración de anotación',
     removeEffect: 'Eliminar efecto',
     disableEffect: 'Desactivar efecto',
-    effectSettings: 'Configuración de efecto'
+    effectSettings: 'Configuración de efecto',
+    editLayerJson: 'Editar JSON de la capa',
+    editFilterJson: 'Editar JSON del filtro',
+    editEffectJson: 'Editar JSON del efecto',
+    editViewportJson: 'Editar JSON de la vista',
+    editAnimationJson: 'Editar JSON de la animación'
   },
   toolbar: {
     exportImage: 'Exportar imagen',
@@ -412,12 +421,15 @@ export default {
     filterLayer: 'Filtrar capas',
     filterLayerDisabled: 'Las geometrías no poligonales no se pueden usar para filtrar',
     copyGeometry: 'Copiar geometría',
+    extractData: 'Extraer datos',
+    extractFromLayer: 'de la capa {layerName}',
     editProperties: 'Editar propiedades',
     propertyName: 'Propiedad',
     propertyValue: 'Valor',
     removeProperty: 'Quitar propiedad',
     polygonFilter: 'Filtro de polígono',
-    noLayersToFilter: 'No hay capas para filtrar'
+    noLayersToFilter: 'No hay capas para filtrar',
+    noLayersToExtract: 'No hay capas para extraer'
   },
   exportVideoModal: {
     animation: 'Animación',
@@ -455,7 +467,9 @@ export default {
       resolutionDescription: 'Una alta resolución es mejor para las impresiones.',
       resolutionPlaceholder: 'Seleccionar resolución...',
       mapLegendTitle: 'Leyenda del mapa',
-      mapLegendAdd: 'Añadir leyenda al mapa'
+      mapLegendAdd: 'Añadir leyenda al mapa',
+      chartsTitle: 'Gráficos',
+      chartsAdd: 'Añadir gráficos al mapa'
     },
     exportVideo: {
       animation: 'Animación',
@@ -617,7 +631,8 @@ export default {
   header: {
     visibleLayers: 'Capas visibles',
     layerLegend: 'Capa de leyenda',
-    annotations: 'Anotaciones'
+    annotations: 'Anotaciones',
+    charts: 'Gráficos'
   },
   interactions: {
     tooltip: 'Sugerencias',

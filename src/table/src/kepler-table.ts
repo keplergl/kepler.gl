@@ -14,6 +14,7 @@ import {
 } from '@kepler.gl/constants';
 import {
   RGBColor,
+  ColorRange,
   Field,
   FieldPair,
   FieldDomain,
@@ -49,6 +50,7 @@ import {
   getLogDomain,
   getOrdinalDomain,
   getQuantileDomain,
+  getJenksDomain,
   DataContainerInterface,
   FilterChanged
 } from '@kepler.gl/utils';
@@ -795,7 +797,11 @@ class KeplerTable<F extends Field = Field> {
   /**
    *  Get the domain of this column based on scale type
    */
-  getColumnLayerDomain(field: F, scaleType: string): number[] | string[] | [number, number] | null {
+  getColumnLayerDomain(
+    field: F,
+    scaleType: string,
+    range?: ColorRange
+  ): number[] | string[] | [number, number] | null {
     const {dataContainer, filteredIndexForDomain} = this;
 
     if (!SCALE_TYPES[scaleType]) {
@@ -817,6 +823,15 @@ class KeplerTable<F extends Field = Field> {
 
       case SCALE_TYPES.quantile:
         return getQuantileDomain(filteredIndexForDomain, indexValueAccessor, sortFunction);
+
+      case SCALE_TYPES.jenks:
+        if (!range?.colors) {
+          Console.error(
+            'the range is either missing or it does not have colors available for Jenks scale domain calculation'
+          );
+          return null;
+        }
+        return getJenksDomain(filteredIndexForDomain, indexValueAccessor, range.colors.length);
 
       case SCALE_TYPES.log:
         return getLogDomain(filteredIndexForDomain, indexValueAccessor);

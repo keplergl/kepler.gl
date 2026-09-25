@@ -160,6 +160,8 @@ const actionHandler = {
   [ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER]:
     visStateUpdaters.convertEditorFeaturesToLayerUpdater,
 
+  [ActionTypes.EXTRACT_DATA_FROM_FEATURE]: visStateUpdaters.extractDataFromFeatureUpdater,
+
   [ActionTypes.TOGGLE_FILTER_FEATURE]: visStateUpdaters.toggleFilterFeatureUpdater,
 
   [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater,
@@ -201,6 +203,12 @@ const actionHandler = {
   [ActionTypes.REMOVE_EFFECT]: visStateUpdaters.removeEffectUpdater,
 
   [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater,
+
+  [ActionTypes.ADD_CHART]: visStateUpdaters.addChartUpdater,
+
+  [ActionTypes.UPDATE_CHART]: visStateUpdaters.updateChartUpdater,
+
+  [ActionTypes.REMOVE_CHART]: visStateUpdaters.removeChartUpdater,
 
   [ActionTypes.ADD_ANNOTATION]: visStateUpdaters.addAnnotationUpdater,
 

@@ -382,7 +382,9 @@ export default {
     column: 'Column',
     timeIntervalEndField: 'End time',
     timeIntervalEndFieldHint:
-      'Optional. Features stay visible while the playback window overlaps this time span.'
+      'Optional. Features stay visible while the playback window overlaps this time span.',
+    timezone: 'Time Zone',
+    selectTimezone: 'Select display timezone'
   },
   datasetTitle: {
     showDataTable: 'Show data table',
@@ -497,6 +499,8 @@ export default {
     syncTimelineEnd: 'End of current filter timeframe',
     showEffectPanel: 'Show effect panel',
     hideEffectPanel: 'Hide effect panel',
+    showChartPanel: 'Show charts',
+    hideChartPanel: 'Hide charts',
     showAnnotationPanel: 'Show annotations',
     hideAnnotationPanel: 'Hide annotations',
     removeAnnotation: 'Remove annotation',
@@ -506,7 +510,18 @@ export default {
     annotationSettings: 'Annotation settings',
     removeEffect: 'Remove effect',
     disableEffect: 'Disable effect',
-    effectSettings: 'Effect settings'
+    effectSettings: 'Effect settings',
+    chartSettings: 'Chart settings',
+    removeChart: 'Remove chart',
+    pinChart: 'Pin chart',
+    unpinChart: 'Unpin chart',
+    showChartCaption: 'Show caption',
+    hideChartCaption: 'Hide caption',
+    editLayerJson: 'Edit layer JSON',
+    editFilterJson: 'Edit filter JSON',
+    editEffectJson: 'Edit effect JSON',
+    editViewportJson: 'Edit viewport JSON',
+    editAnimationJson: 'Edit animation JSON'
   },
   toolbar: {
     exportImage: 'Export Image',
@@ -531,12 +546,40 @@ export default {
     filterLayer: 'Filter Layers',
     filterLayerDisabled: 'Non-polygon geometries cannot be used for filtering',
     copyGeometry: 'Copy Geometry',
+    extractData: 'Extract data',
+    extractFromLayer: 'from {layerName} layer',
     editProperties: 'Edit Properties',
     propertyName: 'Property',
     propertyValue: 'Value',
     removeProperty: 'Remove property',
     polygonFilter: 'Polygon filter',
-    noLayersToFilter: 'No layers to filter'
+    noLayersToFilter: 'No layers to filter',
+    noLayersToExtract: 'No layers to extract'
+  },
+
+  chartPanel: {
+    add: 'Add',
+    addChart: 'Add chart',
+    selectType: 'Select chart type',
+    empty: 'Add a chart to summarize the current map data.',
+    dataset: 'Dataset',
+    layer: 'Layer',
+    field: 'Field',
+    xAxis: 'X axis',
+    yAxis: 'Y axis',
+    value: 'Value',
+    idField: 'Feature id field',
+    aggregation: 'Aggregation',
+    period: 'Period',
+    color: 'Color',
+    colorBy: 'Color by',
+    colors: 'Colors',
+    options: 'Options',
+    pinned: 'Pinned',
+    formatTicks: 'Format Ticks',
+    applyFilters: 'Apply map filters',
+    crossFilter: 'Cross-filter map',
+    configure: 'Configure'
   },
 
   exportVideoModal: {
@@ -576,7 +619,9 @@ export default {
       resolutionDescription: 'High resolution is better for prints.',
       resolutionPlaceholder: 'Select resolution...',
       mapLegendTitle: 'Map Legend',
-      mapLegendAdd: 'Add legend on map'
+      mapLegendAdd: 'Add legend on map',
+      chartsTitle: 'Charts',
+      chartsAdd: 'Add charts on map'
     },
     exportVideo: {
       animation: 'Animation',
@@ -797,7 +842,8 @@ ${'```'}
   header: {
     visibleLayers: 'Visible layers',
     layerLegend: 'Legend',
-    annotations: 'Annotations'
+    annotations: 'Annotations',
+    charts: 'Charts'
   },
   interactions: {
     tooltip: 'Tooltip',
@@ -972,5 +1018,13 @@ ${'```'}
         count: 'Count'
       }
     }
+  },
+  jsonEditor: {
+    apply: 'Apply',
+    format: 'Format',
+    reset: 'Reset',
+    configApplied: 'Config applied',
+    applyFailed: "Couldn't apply config",
+    textarea: 'JSON configuration'
   }
 };

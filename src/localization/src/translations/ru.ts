@@ -298,7 +298,9 @@ export default {
     column: 'Столбец',
     timeIntervalEndField: 'Время окончания',
     timeIntervalEndFieldHint:
-      'Необязательно. Объекты остаются видимыми, пока окно воспроизведения пересекается с этим интервалом.'
+      'Необязательно. Объекты остаются видимыми, пока окно воспроизведения пересекается с этим интервалом.',
+    timezone: 'Часовой пояс',
+    selectTimezone: 'Выберите часовой пояс отображения'
   },
   datasetTitle: {
     showDataTable: 'Показать таблицу данных ',
@@ -375,6 +377,8 @@ export default {
     syncTimelineEnd: 'Конец текущего периода фильтра',
     showEffectPanel: 'Показать панель эффектов',
     hideEffectPanel: 'Скрыть панель эффектов',
+    showChartPanel: 'Показать графики',
+    hideChartPanel: 'Скрыть графики',
     showAnnotationPanel: 'Показать аннотации',
     hideAnnotationPanel: 'Скрыть аннотации',
     removeAnnotation: 'Удалить аннотацию',
@@ -385,6 +389,11 @@ export default {
     removeEffect: 'Удалить эффект',
     disableEffect: 'Отключить эффект',
     effectSettings: 'Настройки эффекта',
+    editLayerJson: 'Редактировать JSON слоя',
+    editFilterJson: 'Редактировать JSON фильтра',
+    editEffectJson: 'Редактировать JSON эффекта',
+    editViewportJson: 'Редактировать JSON вида',
+    editAnimationJson: 'Редактировать JSON анимации',
     timeLayerSync: 'Привязать к временной шкале слоя',
     timeLayerUnsync: 'Отвязать от временной шкалы слоя'
   },
@@ -411,12 +420,15 @@ export default {
     filterLayer: 'Слои фильтров',
     filterLayerDisabled: 'Неполигональные геометрии нельзя использовать для фильтрации',
     copyGeometry: 'Копировать геометрию',
+    extractData: 'Извлечь данные',
+    extractFromLayer: 'из слоя {layerName}',
     editProperties: 'Изменить свойства',
     propertyName: 'Свойство',
     propertyValue: 'Значение',
     removeProperty: 'Удалить свойство',
     polygonFilter: 'Полигональный фильтр',
-    noLayersToFilter: 'Нет слоев для фильтрации'
+    noLayersToFilter: 'Нет слоев для фильтрации',
+    noLayersToExtract: 'Нет слоев для извлечения'
   },
   exportVideoModal: {
     animation: 'Анимация',
@@ -455,7 +467,9 @@ export default {
       resolutionDescription: 'Для печати лучше использовать высокое разрешение',
       resolutionPlaceholder: 'Выберите разрешение...',
       mapLegendTitle: 'Легенда карты',
-      mapLegendAdd: 'Добавить легенду на карту'
+      mapLegendAdd: 'Добавить легенду на карту',
+      chartsTitle: 'Графики',
+      chartsAdd: 'Добавить графики на карту'
     },
     exportVideo: {
       animation: 'Анимация',
@@ -618,7 +632,8 @@ export default {
   header: {
     visibleLayers: 'Видимые слои',
     layerLegend: 'Легенда слоя',
-    annotations: 'Аннотации'
+    annotations: 'Аннотации',
+    charts: 'Графики'
   },
   interactions: {
     tooltip: 'Подсказка',

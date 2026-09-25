@@ -68,6 +68,8 @@ import {
   adjustValueToFilterDomain,
   errorNotification,
   editorFeaturesToFeatureCollection,
+  extractRowsInsideFeature,
+  isVectorTileExtractLayer,
   mergeUserFeatureProperties,
   toSketchFeature,
   featureToFilterValue,
@@ -142,6 +144,7 @@ import {isValidMerger, mergeStateFromMergers} from './merger-handler';
 import {
   VIS_STATE_MERGERS,
   createLayerFromConfig,
+  isSavedLayerConfigV1,
   parseLayerConfig,
   serializeFilter,
   serializeLayer,
@@ -150,7 +153,7 @@ import {
 } from './vis-state-merger';
 
 import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
-import {loadExternallyHostedDataset, processGeojson} from '@kepler.gl/processors';
+import {getFilesToParse, loadExternallyHostedDataset, processGeojson} from '@kepler.gl/processors';
 
 import {
   Filter,
@@ -164,7 +167,9 @@ import {
   TimeRangeFilter,
   Annotation,
   AnnotationPropsPartial,
-  ProtoDataset
+  ProtoDataset,
+  ChartConfig,
+  LayerChartConfig
 } from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
@@ -365,6 +370,10 @@ export const INITIAL_VIS_STATE: VisState = {
   effects: [],
   effectOrder: [],
 
+  // charts (enabled by default; gated by enableChartsPanel)
+  charts: [],
+  chartsToBeMerged: [],
+
   // annotations
   annotations: [],
   annotationsToBeMerged: [],
@@ -503,9 +512,11 @@ export function applyLayerConfigUpdater(
   action: VisStateActions.ApplyLayerConfigUpdaterAction
 ): VisState {
   const {oldLayerId, newLayerConfig, layerIndex} = action;
-  const newParsedLayer =
-    // will move visualChannels to the config prop
-    parseLayerConfig(state.schema, newLayerConfig);
+  // Saved configs have a visualChannels sibling; parsed/editor JSON folds those
+  // fields into config. Re-parsing the latter drops colorField and resets the scale.
+  const newParsedLayer = isSavedLayerConfigV1(newLayerConfig)
+    ? parseLayerConfig(state.schema, newLayerConfig)
+    : newLayerConfig;
   const oldLayer = state.layers.find(l => l.id === oldLayerId);
   if (!oldLayer || !newParsedLayer) {
     return state;
@@ -1215,6 +1226,25 @@ export function layerVisConfigChangeUpdater(
   };
 
   const newLayer = oldLayer.updateLayerConfig({visConfig: newVisConfig});
+
+  // Jenks breaks depend on the number of colors. Recalculate the domain when
+  // the color range of a Jenks channel changes.
+  if (oldLayer.config.dataId) {
+    const dataset = state.datasets[oldLayer.config.dataId];
+    if (dataset) {
+      Object.keys(newLayer.visualChannels).forEach(channelKey => {
+        const channel = newLayer.visualChannels[channelKey];
+        if (
+          channel?.scale &&
+          newLayer.config[channel.scale] === SCALE_TYPES.jenks &&
+          channel.range &&
+          Object.prototype.hasOwnProperty.call(action.newVisConfig, channel.range)
+        ) {
+          newLayer.updateLayerVisualChannel(dataset, channelKey);
+        }
+      });
+    }
+  }
 
   let nextState = state;
 
@@ -2019,7 +2049,12 @@ export function removeLayerUpdater<T extends VisState>(
     // TODO: update filters, create helper to remove layer form filter (remove layerid and dataid) if mapped
   };
 
-  return updateAnimationDomain(newState);
+  return updateAnimationDomain(
+    removeChartsAndFilters(
+      newState,
+      chart => isLayerChartConfig(chart) && chart.layerId === layerToRemove.id
+    )
+  );
 }
 
 /**
@@ -2501,6 +2536,175 @@ export const updateEffectUpdater = (
   };
 };
 
+function isLayerChartConfig(chart: ChartConfig): chart is LayerChartConfig {
+  return chart.type === 'layerChart';
+}
+
+function mergeChartConfig(chart: ChartConfig, props: Partial<ChartConfig>): ChartConfig {
+  return {
+    ...chart,
+    ...props,
+    display: {
+      ...chart.display,
+      ...(props.display || {})
+    },
+    chartDisplay: {
+      ...chart.chartDisplay,
+      ...((props as ChartConfig).chartDisplay || {})
+    }
+  } as ChartConfig;
+}
+
+function axisFieldIfPresent<T extends {field?: {name: string} | null; title?: string | null}>(
+  axis: T | undefined,
+  fieldNames: Set<string>
+): T | undefined {
+  if (!axis?.field?.name || fieldNames.has(axis.field.name)) {
+    return axis;
+  }
+  return {...axis, field: null, title: null};
+}
+
+function dropMissingChartFields(
+  chart: ChartConfig,
+  dataset: {fields?: {name: string}[]} | undefined
+): ChartConfig {
+  const fieldNames = new Set((dataset?.fields || []).map(field => field.name));
+  const next = chart as ChartConfig & {
+    xAxis?: {field?: {name: string} | null};
+    yAxis?: {field?: {name: string} | null};
+    axis?: {field?: {name: string} | null};
+    groupBy?: {field?: {name: string} | null};
+    value?: {field?: {name: string} | null};
+  };
+  return mergeChartConfig(chart, {
+    xAxis: axisFieldIfPresent(next.xAxis, fieldNames),
+    yAxis: axisFieldIfPresent(next.yAxis, fieldNames),
+    axis: axisFieldIfPresent(next.axis, fieldNames),
+    groupBy: axisFieldIfPresent(next.groupBy, fieldNames),
+    value: axisFieldIfPresent(next.value, fieldNames)
+  } as Partial<ChartConfig>);
+}
+
+function removeChartsAndFilters<T extends VisState>(
+  state: T,
+  shouldRemove: (chart: ChartConfig) => boolean
+): T {
+  const charts = state.charts || [];
+  const removed = charts.filter(shouldRemove);
+  if (!removed.length) {
+    return state;
+  }
+  const removedIds = new Set(removed.map(chart => chart.id));
+  const filterIds = new Set(
+    removed.flatMap(chart => {
+      const id = chart.crossFilter?.filterId;
+      return id ? [id, `${id}-x`, `${id}-y`] : [];
+    })
+  );
+  let nextState: VisState = {
+    ...state,
+    charts: charts.filter(chart => !removedIds.has(chart.id))
+  };
+  if (filterIds.size) {
+    nextState = nextState.filters.reduceRight((accu, filter, idx) => {
+      return filterIds.has(filter.id) ? removeFilterUpdater(accu, {idx}) : accu;
+    }, nextState);
+  }
+  return nextState as T;
+}
+
+/**
+ * Add a chart
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const addChartUpdater = (
+  state: VisState,
+  {chart}: VisStateActions.AddChartUpdaterAction
+): VisState => {
+  if (!chart?.id) {
+    return state;
+  }
+  if ((state.charts || []).some(existing => existing.id === chart.id)) {
+    return state;
+  }
+  return {
+    ...state,
+    charts: [
+      ...(state.charts || []).map(existing => ({
+        ...existing,
+        display: {
+          ...existing.display,
+          isConfigActive: false
+        }
+      })),
+      {
+        ...chart,
+        display: {
+          ...chart.display,
+          isConfigActive: chart.display?.isConfigActive ?? false
+        }
+      }
+    ]
+  };
+};
+
+/**
+ * Update a chart
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const updateChartUpdater = (
+  state: VisState,
+  {id, props}: VisStateActions.UpdateChartUpdaterAction
+): VisState => {
+  const idx = (state.charts || []).findIndex(chart => chart.id === id);
+  if (idx < 0) {
+    return state;
+  }
+  const prev = state.charts[idx];
+  const dataIdChanged = typeof props.dataId === 'string' && props.dataId !== prev.dataId;
+  const layerIdChanged =
+    isLayerChartConfig(prev) &&
+    typeof (props as LayerChartConfig).layerId === 'string' &&
+    (props as LayerChartConfig).layerId !== prev.layerId;
+  let next = mergeChartConfig(prev, props);
+  if (dataIdChanged || layerIdChanged) {
+    const dataId = next.dataId || undefined;
+    next = dropMissingChartFields(next, dataId ? state.datasets[dataId] : undefined);
+    if (next.crossFilter?.enabled) {
+      next = mergeChartConfig(next, {
+        crossFilter: {...next.crossFilter, enabled: false, value: {}, fieldNames: {}}
+      });
+    }
+  }
+  const charts = [...state.charts];
+  charts[idx] = next;
+  let nextState: VisState = {
+    ...state,
+    charts
+  };
+  const filterId = next.crossFilter?.filterId || prev.crossFilter?.filterId;
+  if (prev.crossFilter?.enabled && !next.crossFilter?.enabled && filterId) {
+    const ownedFilterIds = new Set([filterId, `${filterId}-x`, `${filterId}-y`]);
+    nextState = nextState.filters.reduceRight((accu, filter, idx) => {
+      return ownedFilterIds.has(filter.id) ? removeFilterUpdater(accu, {idx}) : accu;
+    }, nextState);
+  }
+  return nextState;
+};
+
+/**
+ * Remove a chart and any cross-filter it owns
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const removeChartUpdater = (
+  state: VisState,
+  {id}: VisStateActions.RemoveChartUpdaterAction
+): VisState => removeChartsAndFilters(state, chart => chart.id === id);
+
 // ANNOTATION UPDATERS
 
 function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
@@ -2742,7 +2946,18 @@ function removeSingleDatasetUpdater<T extends VisState>(state: T, datasetKey: st
 
   newState = {...newState, filters};
 
-  return removeDatasetFromInteractionConfig(newState, {dataId: datasetKey});
+  return removeChartsAndFilters(
+    removeDatasetFromInteractionConfig(newState, {dataId: datasetKey}),
+    chart => {
+      if (chart.dataId === datasetKey) {
+        return true;
+      }
+      if (isLayerChartConfig(chart)) {
+        return layersToRemove.includes(chart.layerId);
+      }
+      return false;
+    }
+  );
 }
 
 function removeDatasetFromInteractionConfig(state, {dataId}) {
@@ -4145,14 +4360,21 @@ export const loadFilesUpdater = (
     return state;
   }
 
-  const fileLoadingProgress = Array.from(files).reduce(
+  const companionFiles = Array.from(files);
+  const filesToLoad = getFilesToParse(companionFiles);
+  if (!filesToLoad.length) {
+    return state;
+  }
+
+  const fileLoadingProgress = filesToLoad.reduce(
     (accu, f, i) => merge_(initialFileLoadingProgress(f, i))(accu),
     {}
   );
 
   const fileLoading = {
     fileCache: [],
-    filesToLoad: files,
+    filesToLoad,
+    companionFiles,
     onFinish
   };
 
@@ -4218,13 +4440,20 @@ export function loadNextFileUpdater(state: VisState): VisState {
       file,
       nextState.fileLoading && nextState.fileLoading.fileCache,
       loaders,
-      loadOptions
+      loadOptions,
+      nextState.fileLoading ? nextState.fileLoading.companionFiles : undefined
     )
   );
 }
 
-export function makeLoadFileTask(file, fileCache, loaders: Loader[] = [], loadOptions = {}) {
-  return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions}).bimap(
+export function makeLoadFileTask(
+  file,
+  fileCache,
+  loaders: Loader[] = [],
+  loadOptions = {},
+  companionFiles?: File[]
+) {
+  return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions, companionFiles}).bimap(
     // prettier ignore
     // success
     gen =>
@@ -5215,6 +5444,111 @@ export function convertEditorFeaturesToLayerUpdater(
   });
 }
 
+/**
+ * Copy in-memory rows (or loaded vector-tile features) inside the selected
+ * Draw on Map polygon into a new dataset.
+ */
+export function extractDataFromFeatureUpdater(
+  state: VisState,
+  {layerId}: VisStateActions.ExtractDataFromFeatureUpdaterAction
+): VisState {
+  const feature = state.editor.selectedFeature;
+  const layer = state.layers.find(l => l.id === layerId);
+  const dataId = layer?.config.dataId;
+  let dataset = dataId ? state.datasets[dataId] : null;
+
+  if (!layer || !dataset || !dataId) {
+    return state;
+  }
+
+  // GPU range/time filters are not reflected in filteredIndex; evaluate them on CPU
+  // the same way export data does, then clip the result to the drawing.
+  if (!isVectorTileExtractLayer(layer)) {
+    state = filterDatasetCPU(state, dataId);
+    dataset = state.datasets[dataId];
+    if (!dataset) {
+      return state;
+    }
+  }
+
+  let extracted;
+  try {
+    extracted = extractRowsInsideFeature({layer, dataset, feature});
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to extract data: ${message}`,
+            id: 'extract-data-from-feature'
+          })
+        )
+      )
+    );
+  }
+
+  if (!extracted) {
+    return state;
+  }
+
+  if (!extracted.rowCount) {
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: isVectorTileExtractLayer(layer)
+              ? 'No loaded vector tile features found inside the selected drawing'
+              : 'No rows found inside the selected drawing',
+            id: 'extract-data-from-feature-empty'
+          })
+        )
+      )
+    );
+  }
+
+  let data;
+  try {
+    data =
+      extracted.kind === 'geojson'
+        ? processGeojson({
+            type: 'FeatureCollection',
+            features: extracted.features
+          })
+        : {fields: extracted.fields, rows: extracted.rows};
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to extract data: ${message}`,
+            id: 'extract-data-from-feature'
+          })
+        )
+      )
+    );
+  }
+
+  return updateVisDataUpdater(state, {
+    datasets: {
+      info: {
+        id: `extract-${generateHashId(6)}`,
+        label: `Extracted ${dataset.label}`
+      },
+      data
+    },
+    options: {
+      keepExistingConfig: true,
+      centerMap: false,
+      autoCreateLayers: true
+    }
+  });
+}
+
 export function setFilterAnimationTimeConfigUpdater(
   state: VisState,
   {idx, config}: VisStateActions.SetFilterAnimationTimeConfigAction
@@ -5553,8 +5887,8 @@ function adjustTimeFilterInterval(state, filter) {
       }
     }, TIME_INTERVALS_ORDERED.length - 1);
     // @ts-ignore
-    const hexTileInterval = TIME_INTERVALS_ORDERED[intervalIndex];
-    interval = LayerToFilterTimeInterval[hexTileInterval];
+    const layerTimeInterval = TIME_INTERVALS_ORDERED[intervalIndex];
+    interval = LayerToFilterTimeInterval[layerTimeInterval];
   }
 
   if (!interval) {
@@ -5572,6 +5906,9 @@ function adjustTimeFilterInterval(state, filter) {
 // layers, filters, interactions, layerBlending, overlayBlending, splitMaps, animationConfig, editor
 // replace it with another dataId
 function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToReplace: string) {
+  if (value == null) {
+    return null;
+  }
   if (Array.isArray(value)) {
     // for layers, filters, call defaultReplaceParentDatasetIds on each item in array
     const replaced = value
@@ -5709,6 +6046,37 @@ export function prepareStateForDatasetReplace<T extends VisState>(
   return nextState;
 }
 
+/**
+ * The order to preserve for the items that will be merged back.
+ *
+ * `ids` comes from the serialized state, so it lists everything but the items
+ * another dataset's replacement parked a moment ago: an app refreshing several
+ * datasets in a row prepares the second replacement before the first one's
+ * items have merged back. Writing `ids` as it is would drop those, and
+ * `insertItemBasedOnPreservedOrder` puts an item it cannot place at the front —
+ * so they would come back reversed. Where they belong is what the order written
+ * when they were parked already says, so that order is kept for them.
+ */
+export function preservedOrderWithParked(
+  previousOrder: string[] = [],
+  ids: string[],
+  parked: {id?: string}[]
+): string[] {
+  const parkedIds = parked
+    .map(item => item?.id)
+    .filter((id): id is string => Boolean(id) && !ids.includes(id as string));
+
+  if (!parkedIds.length) {
+    return ids;
+  }
+
+  const known = new Set([...ids, ...parkedIds]);
+  const ordered = (previousOrder || []).filter(id => known.has(id));
+  const rest = [...ids, ...parkedIds].filter(id => !ordered.includes(id));
+
+  return [...ordered, ...rest];
+}
+
 export function replaceDatasetDepsInState<T extends VisState>(
   state: T,
   {dataId, dataIdToUse}: {dataId: string; dataIdToUse: string}
@@ -5727,12 +6095,22 @@ export function replaceDatasetDepsInState<T extends VisState>(
 
       let replacedState = accuState;
       savedProps.forEach((propValue, i) => {
+        if (propValue == null) {
+          return;
+        }
         const mergerOptions = {
           prop: props[i],
           toMergeProp: toMergeProps[i],
           getChildDatasetIds,
           saveUnmerged
         };
+
+        // What another dataset's replacement parked a moment ago and has not
+        // merged back yet, read before this one parks anything of its own.
+        const parkedElsewhere =
+          mergerOptions.toMergeProp !== undefined
+            ? toArray(replacedState[mergerOptions.toMergeProp] ?? [])
+            : [];
 
         const replacedItem =
           replaceParentDatasetIds?.(propValue, dataId, dataIdToUse) ||
@@ -5751,7 +6129,11 @@ export function replaceDatasetDepsInState<T extends VisState>(
           replacedState[mergerOptions.toMergeProp]?.length &&
           preserveOrder
         ) {
-          replacedState[preserveOrder] = propValue.map(item => item.id);
+          replacedState[preserveOrder] = preservedOrderWithParked(
+            replacedState[preserveOrder],
+            propValue.map(item => item.id),
+            parkedElsewhere
+          );
         }
       });
 

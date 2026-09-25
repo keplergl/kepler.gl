@@ -416,7 +416,8 @@ export type MapInfo = {
   description: string;
 };
 export type FileLoading = {
-  filesToLoad: FileList;
+  filesToLoad: FileList | File[];
+  companionFiles?: File[];
   onFinish: (payload: any) => any;
   fileCache: any[];
 };
@@ -460,6 +461,8 @@ export declare type ExportImage = {
   ratio: EXPORT_IMG_RATIOS;
   resolution: ExportResolutionOption;
   legend: boolean;
+  /** When true, include the charts panel in the exported image. */
+  charts: boolean;
   mapH: number;
   mapW: number;
   imageSize: {
@@ -538,6 +541,8 @@ export type MapControls = {
   mapTheme?: MapControlItem;
   effect?: MapControlItem;
   annotation?: MapControlItem;
+  chart?: MapControlItem;
+  viewportJson?: MapControlItem;
   sqlPanel?: MapControlItem;
   aiAssistant?: MapControlItem;
   [key: string]: MapControlItem | MapControlMapLegend | undefined;

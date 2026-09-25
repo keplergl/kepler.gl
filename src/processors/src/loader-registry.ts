@@ -33,6 +33,7 @@ const NDJSON_MIME_TYPES = [
   'application/geo+x-ldjson',
   'application/geo+json-seq'
 ];
+const FLATGEOBUF_MIME_TYPES = ['application/x-flatgeobuf', 'application/flatgeobuf'];
 
 const DEFAULT_LOADER_ENTRIES: KeplerLoaderEntry[] = [
   {
@@ -89,6 +90,40 @@ const DEFAULT_LOADER_ENTRIES: KeplerLoaderEntry[] = [
     extensions: ['parquet'],
     mimeTypes: ['application/vnd.apache.parquet'],
     load: async () => (await import('@loaders.gl/parquet')).ParquetArrowLoader
+  },
+  {
+    id: 'shapefile',
+    extensions: ['shp'],
+    mimeTypes: ['application/x-esri-shapefile', 'application/shp'],
+    load: async () => {
+      const {ShapefileLoader} = await import('@loaders.gl/shapefile');
+      // loaders.gl SHP magic also matches .shx sidecar files
+      const loader = {...ShapefileLoader};
+      delete (loader as {tests?: unknown}).tests;
+      return loader;
+    }
+  },
+  {
+    id: 'excel',
+    extensions: ['xlsx', 'xls', 'xlsm', 'xlsb'],
+    mimeTypes: [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'application/vnd.ms-excel.sheet.macroenabled.12',
+      'application/vnd.ms-excel.sheet.binary.macroenabled.12'
+    ],
+    load: async () => (await import('@loaders.gl/excel')).ExcelLoader
+  },
+  {
+    id: 'flatgeobuf',
+    extensions: ['fgb'],
+    mimeTypes: FLATGEOBUF_MIME_TYPES,
+    load: async () => {
+      const {FlatGeobufLoader} = await import('@loaders.gl/flatgeobuf');
+      // loaders.gl 4.4.1 advertises application/octet-stream, which selectLoader
+      // matches before magic bytes.
+      return {...FlatGeobufLoader, mimeTypes: FLATGEOBUF_MIME_TYPES};
+    }
   }
 ];
 
@@ -111,7 +146,21 @@ const TOKEN_TO_LOADER_ID: Record<string, string> = {
   tcx: 'tcx',
   arrow: 'arrow',
   feather: 'arrow',
-  parquet: 'parquet'
+  parquet: 'parquet',
+  shp: 'shapefile',
+  shapefile: 'shapefile',
+  zip: 'shapefile',
+  dbf: 'shapefile',
+  shx: 'shapefile',
+  prj: 'shapefile',
+  cpg: 'shapefile',
+  xlsx: 'excel',
+  xls: 'excel',
+  xlsm: 'excel',
+  xlsb: 'excel',
+  excel: 'excel',
+  fgb: 'flatgeobuf',
+  flatgeobuf: 'flatgeobuf'
 };
 
 const REMOTE_FORMAT_TO_LOADER_ID: Record<Exclude<RemoteFileFormat, 'auto'>, string> = {
@@ -124,7 +173,10 @@ const REMOTE_FORMAT_TO_LOADER_ID: Record<Exclude<RemoteFileFormat, 'auto'>, stri
   ndjson: 'ndjson',
   kml: 'kml',
   gpx: 'gpx',
-  tcx: 'tcx'
+  tcx: 'tcx',
+  shp: 'shapefile',
+  xlsx: 'excel',
+  fgb: 'flatgeobuf'
 };
 
 function getAcceptedLoaderIdSet(): Set<string> | null {
@@ -179,6 +231,18 @@ function matchesFile(entry: KeplerLoaderEntry, file: FileMetadata): boolean {
 }
 
 /**
+ * loaders.gl selectLoader matches MIME before magic bytes. Drop catch-all types
+ * such as application/octet-stream so extensionless Arrow/Parquet still
+ * use content detection.
+ */
+function withKeplerMimeTypes(loader: Loader, mimeTypes: string[]): Loader {
+  if (!(loader.mimeTypes || []).includes('application/octet-stream')) {
+    return loader;
+  }
+  return {...loader, mimeTypes};
+}
+
+/**
  * Resolve the loaders needed for a file. Loader modules are imported only for
  * matching extensions/MIME types; extensionless or unknown files retain core's
  * content-based selection by loading all default candidates.
@@ -190,7 +254,9 @@ export async function getKeplerLoaders(
   const availableEntries = getAcceptedKeplerLoaderEntries();
   const matchingEntries = availableEntries.filter(entry => matchesFile(entry, file));
   const entries = matchingEntries.length ? matchingEntries : availableEntries;
-  const defaultLoaders = await Promise.all(entries.map(entry => entry.load()));
+  const defaultLoaders = await Promise.all(
+    entries.map(async entry => withKeplerMimeTypes(await entry.load(), entry.mimeTypes))
+  );
   const customLoaderIds = new Set(customLoaders.map(loader => loader.id));
 
   return [...customLoaders, ...defaultLoaders.filter(loader => !customLoaderIds.has(loader.id))];

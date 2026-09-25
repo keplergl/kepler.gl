@@ -12,7 +12,8 @@ import KeplerGl from '@kepler.gl/components';
 import {initApplicationConfig} from '@kepler.gl/utils';
 
 // Annotations require a custom MapControl that mounts AnnotationManager.
-// Disable them here so the default get-started example stays minimal.
+// Charts are enabled by default but still need ChartControl + ChartManager injected
+// (see demo-app) so stock MapControl never shows a dead charts button.
 initApplicationConfig({
   enableAnnotations: false
 });

@@ -296,7 +296,9 @@ export default {
     column: '列',
     timeIntervalEndField: '終了時刻',
     timeIntervalEndFieldHint:
-      '任意。再生ウィンドウがこの期間と重なっている間、フィーチャは表示されたままになります。'
+      '任意。再生ウィンドウがこの期間と重なっている間、フィーチャは表示されたままになります。',
+    timezone: 'タイムゾーン',
+    selectTimezone: '表示タイムゾーンを選択'
   },
   datasetTitle: {
     showDataTable: 'データ表を表示',
@@ -372,6 +374,8 @@ export default {
     syncTimelineEnd: '現在のフィルタ期間の終了',
     showEffectPanel: 'エフェクトパネルを表示',
     hideEffectPanel: 'エフェクトパネルを非表示',
+    showChartPanel: 'チャートを表示',
+    hideChartPanel: 'チャートを非表示',
     showAnnotationPanel: 'アノテーションを表示',
     hideAnnotationPanel: 'アノテーションを非表示',
     removeAnnotation: 'アノテーションを削除',
@@ -382,6 +386,11 @@ export default {
     removeEffect: 'エフェクトを削除',
     disableEffect: 'エフェクトを無効化',
     effectSettings: 'エフェクト設定',
+    editLayerJson: 'レイヤーJSONを編集',
+    editFilterJson: 'フィルターJSONを編集',
+    editEffectJson: 'エフェクトJSONを編集',
+    editViewportJson: 'ビューポートJSONを編集',
+    editAnimationJson: 'アニメーションJSONを編集',
     timeLayerSync: 'レイヤタイムラインにリンク',
     timeLayerUnsync: 'レイヤタイムラインのリンクを解除'
   },
@@ -408,12 +417,15 @@ export default {
     filterLayer: 'レイヤをフィルタ',
     filterLayerDisabled: 'ポリゴン以外のジオメトリはフィルタリングに使用できません',
     copyGeometry: 'ジオメトリをコピー',
+    extractData: 'データを抽出',
+    extractFromLayer: '{layerName} レイヤーから',
     editProperties: 'プロパティを編集',
     propertyName: 'プロパティ',
     propertyValue: '値',
     removeProperty: 'プロパティを削除',
     polygonFilter: 'ポリゴンフィルタ',
-    noLayersToFilter: 'フィルタするレイヤがありません'
+    noLayersToFilter: 'フィルタするレイヤがありません',
+    noLayersToExtract: '抽出できるレイヤがありません'
   },
   exportVideoModal: {
     animation: 'アニメーション',
@@ -451,7 +463,9 @@ export default {
       resolutionDescription: '印刷には高解像度が適しています。',
       resolutionPlaceholder: '解像度を選択...',
       mapLegendTitle: '地図の凡例',
-      mapLegendAdd: '地図に判例を追加'
+      mapLegendAdd: '地図に判例を追加',
+      chartsTitle: 'チャート',
+      chartsAdd: '地図にチャートを追加'
     },
     exportVideo: {
       animation: 'アニメーション',
@@ -613,7 +627,8 @@ export default {
   header: {
     visibleLayers: '表示中のレイヤ',
     layerLegend: 'レイヤ判例',
-    annotations: 'アノテーション'
+    annotations: 'アノテーション',
+    charts: 'チャート'
   },
   interactions: {
     tooltip: 'ツールチップ',

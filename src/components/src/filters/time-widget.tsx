@@ -83,6 +83,7 @@ function TimeWidgetFactory(
     toggleAnimation,
     exportAnimation,
     setFilterPlot,
+    setFilterAnimationTimeConfig,
     setFilterAnimationWindow,
     animationConfig,
     timeline
@@ -112,6 +113,11 @@ function TimeWidgetFactory(
     const _setFilterPlot = useCallback(
       (newProp, valueIndex) => setFilterPlot(index, newProp, valueIndex),
       [index, setFilterPlot]
+    );
+
+    const _onTimezoneChange = useCallback(
+      (timezone: string) => setFilterAnimationTimeConfig(index, {timezone}),
+      [index, setFilterAnimationTimeConfig]
     );
 
     const _onToggleSettings = useCallback(() => {
@@ -285,6 +291,17 @@ function TimeWidgetFactory(
         if (isMinified || !sliderDomain) {
           return;
         }
+        // Overlays such as the animation JSON editor sit inside this container.
+        // Don't steal their scroll / pointer input for timeline zoom.
+        const target = event.target;
+        if (
+          target instanceof Element &&
+          target.closest(
+            'textarea, input, select, [data-testid="json-editor"], .animation-json-editor'
+          )
+        ) {
+          return;
+        }
         const isPinch = event.ctrlKey || event.metaKey || Math.abs(event.deltaZ || 0) > 0;
         const zoomFn = isPinch ? throttledTimelineZoom : throttledWindowZoom;
         if (!zoomFn) {
@@ -382,7 +399,12 @@ function TimeWidgetFactory(
           isMinified={isMinified}
         />
         {showSettings && !isMinified ? (
-          <TimeWidgetSettings filter={filter} datasets={datasets} setFilterPlot={_setFilterPlot} />
+          <TimeWidgetSettings
+            filter={filter}
+            datasets={datasets}
+            setFilterPlot={_setFilterPlot}
+            onTimezoneChange={_onTimezoneChange}
+          />
         ) : null}
         <TimelineSection>
           {timelineZoomed && timelineRangeLabel ? (

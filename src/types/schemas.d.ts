@@ -6,6 +6,7 @@ import {RGBColor, Merge, RequireFrom} from './types';
 import {Filter, InteractionConfig, AnimationConfig, SplitMap, Feature} from './reducers';
 
 import {LayerTextLabel} from './layers';
+import {ChartConfig} from './charts';
 
 export type SavedFilter = {
   dataId: Filter['dataId'];
@@ -91,6 +92,8 @@ export type SavedEffect = ParsedEffect;
 export type SavedAnimationConfig = {
   currentTime: AnimationConfig['currentTime'];
   speed: AnimationConfig['speed'];
+  timeFormat?: AnimationConfig['timeFormat'];
+  timezone?: AnimationConfig['timezone'];
 };
 
 export type SavedEditor = {
@@ -102,6 +105,7 @@ export type SavedVisState = {
   filters: SavedFilter[];
   layers: SavedLayer[];
   effects: SavedEffect[];
+  charts?: ChartConfig[];
   interactionConfig: SavedInteractionConfig;
   layerBlending: string;
   overlayBlending?: string;
@@ -118,6 +122,7 @@ export type MinSavedVisStateV1 = {
   filters?: MinSavedFilter[];
   layers?: MinSavedLayer[];
   effects?: SavedEffect[];
+  charts?: ChartConfig[];
   interactionConfig?: Partial<SavedInteractionConfig>;
   layerBlending?: string;
   overlayBlending?: string;
@@ -129,8 +134,8 @@ export type MinSavedVisStateV1 = {
 export type ParsedVisState = {
   layers?: ParsedLayer[];
   effects?: ParsedEffect[];
+  charts?: ChartConfig[];
   filters?: ParsedFilter[];
-  effects?: ParsedEffect[];
   interactionConfig?: Partial<SavedInteractionConfig>;
   layerBlending?: string;
   overlayBlending?: string;
@@ -154,6 +159,9 @@ export type ParsedUiState = {
         };
         contentHeight?: number;
       };
+    };
+    chart?: {
+      active?: boolean;
     };
   };
   locale?: string;

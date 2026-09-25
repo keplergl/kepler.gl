@@ -110,6 +110,7 @@ const DEFAULT_MAP_LEGEND_CONTROL = {
  * @property mapDraw Default: `{show: true, active: false}`
  * @property mapLocale Default: `{show: true, active: false}`
  * @property mapTheme Default: `{show: true, active: false}`
+ * @property viewportJson Default: `{show: true, active: false}`
  * @public
  */
 export const DEFAULT_MAP_CONTROLS: MapControls = (
@@ -132,6 +133,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = (
  * @property ratio Default: `'SCREEN'`,
  * @property resolution Default: `'ONE_X'`,
  * @property legend Default: `false`,
+ * @property charts Default: `false`,
  * @property mapH Default: 0,
  * @property mapW Default: 0,
  * @property imageSize Default: {zoomOffset: 0, scale: 1, imageW: 0, imageH: 0},
@@ -146,6 +148,7 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   ratio: EXPORT_IMG_RATIOS.SCREEN,
   resolution: RESOLUTIONS.ONE_X,
   legend: false,
+  charts: false,
   mapH: 0,
   mapW: 0,
   imageSize: {
@@ -528,7 +531,7 @@ export const openDeleteModalUpdater = (
 });
 
 /**
- * Set `exportImage.legend` to `true` or `false`
+ * Set `exportImage` options such as `legend` and `charts` to `true` or `false`
  * @memberof uiStateUpdaters
  * @param state `uiState`
  * @returns nextState
@@ -1024,6 +1027,22 @@ export const receiveMapConfigUpdater = (
         mapLegend: {
           show: true,
           ...currentLegend,
+          active: true,
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+
+  if (uiState.mapControls?.chart?.active) {
+    const currentChart = newState.mapControls.chart;
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        chart: {
+          show: true,
+          ...currentChart,
           active: true,
           activeMapIndex: 0
         }

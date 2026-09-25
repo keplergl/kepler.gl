@@ -298,7 +298,9 @@ export default {
     column: 'Columna',
     timeIntervalEndField: 'Hora de fi',
     timeIntervalEndFieldHint:
-      'Opcional. Les entitats romanen visibles mentre la finestra de reproducció se superposa a aquest interval.'
+      'Opcional. Les entitats romanen visibles mentre la finestra de reproducció se superposa a aquest interval.',
+    timezone: 'Zona horària',
+    selectTimezone: 'Selecciona la zona horària de visualització'
   },
   datasetTitle: {
     showDataTable: 'Mostra taula de dades',
@@ -377,6 +379,8 @@ export default {
     syncTimelineEnd: 'Fi del període de temps del filtre actual',
     showEffectPanel: "Mostra el panell d'efectes",
     hideEffectPanel: "Amaga el panell d'efectes",
+    showChartPanel: 'Mostra els gràfics',
+    hideChartPanel: 'Amaga els gràfics',
     showAnnotationPanel: 'Mostra les anotacions',
     hideAnnotationPanel: 'Amaga les anotacions',
     removeAnnotation: "Elimina l'anotació",
@@ -386,7 +390,12 @@ export default {
     annotationSettings: "Configuració de l'anotació",
     removeEffect: "Elimina l'efecte",
     disableEffect: "Desactiva l'efecte",
-    effectSettings: "Configuració de l'efecte"
+    effectSettings: "Configuració de l'efecte",
+    editLayerJson: 'Edita JSON de la capa',
+    editFilterJson: 'Edita JSON del filtre',
+    editEffectJson: "Edita JSON de l'efecte",
+    editViewportJson: 'Edita JSON de la vista',
+    editAnimationJson: "Edita JSON de l'animació"
   },
   toolbar: {
     exportImage: 'Exporta imatge',
@@ -411,12 +420,15 @@ export default {
     filterLayer: 'Filtra capes',
     filterLayerDisabled: 'Les geometries no poligonals no es poden utilitzar per filtrar',
     copyGeometry: 'Copia geometria',
+    extractData: 'Extreu dades',
+    extractFromLayer: 'de la capa {layerName}',
     editProperties: 'Edita propietats',
     propertyName: 'Propietat',
     propertyValue: 'Valor',
     removeProperty: 'Suprimeix la propietat',
     polygonFilter: 'Filtre de polígon',
-    noLayersToFilter: 'No hi ha capes per filtrar'
+    noLayersToFilter: 'No hi ha capes per filtrar',
+    noLayersToExtract: 'No hi ha capes per extreure'
   },
   exportVideoModal: {
     animation: 'Animació',
@@ -454,7 +466,9 @@ export default {
       resolutionDescription: 'Alta resolució és millor per a les impressions.',
       resolutionPlaceholder: 'Selecciona resolució...',
       mapLegendTitle: 'Llegenda del mapa',
-      mapLegendAdd: 'Afegir llegenda al mapa'
+      mapLegendAdd: 'Afegir llegenda al mapa',
+      chartsTitle: 'Gràfics',
+      chartsAdd: 'Afegir gràfics al mapa'
     },
     exportVideo: {
       animation: 'Animació',
@@ -616,7 +630,8 @@ export default {
   header: {
     visibleLayers: 'Capes visibles',
     layerLegend: 'Llegenda de capes',
-    annotations: 'Anotacions'
+    annotations: 'Anotacions',
+    charts: 'Gràfics'
   },
   interactions: {
     tooltip: 'Suggeriment',

@@ -48,6 +48,7 @@ const KEPLER_SRC_ALIASES = Object.fromEntries(
     'actions',
     'cloud-providers',
     'common-utils',
+    'charts',
     'components',
     'constants',
     'duckdb',
@@ -64,7 +65,11 @@ const KEPLER_SRC_ALIASES = Object.fromEntries(
 
 const getKeplerAliases = () => ({
   ...KEPLER_SRC_ALIASES,
-  '@kepler.gl/sqlrooms/shell': join(SRC_DIR, 'sqlrooms/src/components/KeplerAppShell.tsx')
+  '@kepler.gl/sqlrooms/shell': join(SRC_DIR, 'sqlrooms/src/components/KeplerAppShell.tsx'),
+  // Chart factories live on a package subpath so the main components barrel
+  // does not load `@kepler.gl/charts`. The `@kepler.gl/components` alias is a
+  // file (index.ts), so this longer key is required.
+  '@kepler.gl/components/charts': join(SRC_DIR, 'components', 'src', 'charts.ts')
 });
 
 /**

@@ -45,6 +45,7 @@ const KEPLER_SRC_ALIASES = Object.fromEntries(
     'actions',
     'cloud-providers',
     'common-utils',
+    'charts',
     'components',
     'constants',
     'duckdb',
@@ -63,7 +64,11 @@ const getKeplerAliases = () => ({
   ...KEPLER_SRC_ALIASES,
   // duckdb ships a components subpath (SqlPanel); esbuild picks the longest
   // matching alias key, so this wins for `@kepler.gl/duckdb/components`.
-  '@kepler.gl/duckdb/components': join(SRC_DIR, 'duckdb', 'src', 'components', 'index.tsx')
+  '@kepler.gl/duckdb/components': join(SRC_DIR, 'duckdb', 'src', 'components', 'index.tsx'),
+  // Chart factories live on a package subpath so the main components barrel
+  // does not load `@kepler.gl/charts`. The `@kepler.gl/components` alias is a
+  // file (index.ts), so this longer key is required.
+  '@kepler.gl/components/charts': join(SRC_DIR, 'components', 'src', 'charts.ts')
 });
 
 /**

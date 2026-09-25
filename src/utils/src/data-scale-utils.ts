@@ -27,6 +27,7 @@ import {isRgbColor, rgbToHex, hexToRgb} from './color-utils';
 import {DataContainerInterface} from './data-container-interface';
 import {formatNumber, isNumber, reverseFormatNumber, unique} from './data-utils';
 import {getTimeWidgetHintFormatter} from './filter-utils';
+import naturalBreaks from './jenks';
 import {isPlainObject} from './utils';
 
 export type ColorBreak = {
@@ -61,6 +62,23 @@ export function getQuantileDomain(
   const values = typeof valueAccessor === 'function' ? data.map(valueAccessor) : data;
 
   return values.filter(notNullorUndefined).sort(sortFunc);
+}
+
+/**
+ * Return Jenks natural-break thresholds for an array of data.
+ * `k` is the number of color classes (range length).
+ */
+export function getJenksDomain(
+  data: any[],
+  valueAccessor: dataValueAccessor | undefined,
+  k: number
+): number[] {
+  const values =
+    typeof valueAccessor === 'function'
+      ? data.map(valueAccessor).filter(isNumber)
+      : data.filter(isNumber);
+
+  return naturalBreaks(values, k);
 }
 
 /**
@@ -237,7 +255,7 @@ export function getQuantLegends(scale: D3ScaleFunction, labelFormat: LabelFormat
   const thresholdLabelFormat = (n, type) =>
     n && labelFormat ? labelFormat(n) : n ? formatNumber(n, type) : 'no value';
   const labels =
-    scale.scaleType === 'threshold'
+    scale.scaleType === 'threshold' || scale.scaleType === SCALE_TYPES.jenks
       ? getThresholdLabels(scale, thresholdLabelFormat)
       : scale.scaleType === 'custom'
       ? getThresholdLabels(scale, customScaleLabelFormat)
@@ -307,6 +325,9 @@ export function getLegendOfScale({
   }
 
   const formatLabel = labelFormat || getQuantLabelFormat(scale.domain(), fieldType);
+  if (scaleType === SCALE_TYPES.jenks) {
+    scale.scaleType = SCALE_TYPES.jenks;
+  }
 
   return getQuantLegends(scale, formatLabel);
 }

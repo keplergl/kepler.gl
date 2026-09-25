@@ -29,7 +29,8 @@ import {
   FilterAnimationConfig,
   LayerOrder,
   LayerOrderGroup,
-  ProtoDataset
+  ProtoDataset,
+  ChartConfig
 } from '@kepler.gl/types';
 import {createAction} from '@reduxjs/toolkit';
 
@@ -772,6 +773,72 @@ export function updateEffect(
     type: ActionTypes.UPDATE_EFFECT,
     id,
     props
+  };
+}
+
+// Chart Actions
+
+export type AddChartUpdaterAction = {
+  chart: ChartConfig;
+};
+
+/**
+ * Add a chart to the charts panel
+ * @memberof visStateActions
+ * @param chart - chart config
+ * @returns action
+ * @public
+ */
+export function addChart(
+  chart: ChartConfig
+): Merge<AddChartUpdaterAction, {type: typeof ActionTypes.ADD_CHART}> {
+  return {
+    type: ActionTypes.ADD_CHART,
+    chart
+  };
+}
+
+export type UpdateChartUpdaterAction = {
+  id: string;
+  props: Partial<ChartConfig>;
+};
+
+/**
+ * Update a chart
+ * @memberof visStateActions
+ * @param id - chart id
+ * @param props - partial chart config
+ * @returns action
+ * @public
+ */
+export function updateChart(
+  id: string,
+  props: Partial<ChartConfig>
+): Merge<UpdateChartUpdaterAction, {type: typeof ActionTypes.UPDATE_CHART}> {
+  return {
+    type: ActionTypes.UPDATE_CHART,
+    id,
+    props
+  };
+}
+
+export type RemoveChartUpdaterAction = {
+  id: string;
+};
+
+/**
+ * Remove a chart
+ * @memberof visStateActions
+ * @param id - chart id
+ * @returns action
+ * @public
+ */
+export function removeChart(
+  id: string
+): Merge<RemoveChartUpdaterAction, {type: typeof ActionTypes.REMOVE_CHART}> {
+  return {
+    type: ActionTypes.REMOVE_CHART,
+    id
   };
 }
 
@@ -2066,6 +2133,35 @@ export function convertEditorFeaturesToLayer(): Merge<
 > {
   return {
     type: ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER
+  };
+}
+
+export type ExtractDataFromFeatureUpdaterAction = {
+  layerId: string;
+};
+/**
+ * Copy in-memory rows that fall inside the currently selected Draw on Map polygon
+ * into a new local dataset. Vector tile layers extract a snapshot of features
+ * already loaded in the current view. No-ops for raster/WMS/3D/bitmap tiles,
+ * unsupported layer types, and non-polygon drawings.
+ * @memberof visStateActions
+ * @param layerId Layer whose dataset should be extracted
+ * @return action
+ * @public
+ * @example
+ * import {extractDataFromFeature} from '@kepler.gl/actions';
+ *
+ * this.props.dispatch(extractDataFromFeature({layerId: 'point-layer-id'}));
+ */
+export function extractDataFromFeature({
+  layerId
+}: ExtractDataFromFeatureUpdaterAction): Merge<
+  ExtractDataFromFeatureUpdaterAction,
+  {type: typeof ActionTypes.EXTRACT_DATA_FROM_FEATURE}
+> {
+  return {
+    type: ActionTypes.EXTRACT_DATA_FROM_FEATURE,
+    layerId
   };
 }
 

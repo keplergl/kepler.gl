@@ -92,8 +92,9 @@ const StyledPlotContainer = styled.div<StyledPlotContainerProps>`
   top: ${OUT_OF_SCREEN_POSITION}px;
   left: ${OUT_OF_SCREEN_POSITION}px;
 
-  /* Apply zoom to legend panel based on export height */
-  .map-control-panel {
+  /* Apply zoom to legend/chart panels based on export height */
+  .map-control-panel,
+  .chart-manager {
     zoom: ${props => props.$legendZoom || 1} !important;
   }
 `;
@@ -114,6 +115,7 @@ interface PlotContainerProps {
   ratio?: string;
   resolution?: string;
   legend?: boolean;
+  charts?: boolean;
   center?: boolean;
   imageSize: ExportImage['imageSize'];
   escapeXhtmlForWebpack?: boolean;
@@ -144,6 +146,7 @@ export default function PlotContainerFactory(
     ratio,
     resolution,
     legend = false,
+    charts = false,
     center,
     imageSize,
     escapeXhtmlForWebpack,
@@ -299,11 +302,16 @@ export default function PlotContainerFactory(
 
     // Screenshot update effect
     useEffect(() => {
-      if (ratio !== undefined || resolution !== undefined || legend !== undefined) {
+      if (
+        ratio !== undefined ||
+        resolution !== undefined ||
+        legend !== undefined ||
+        charts !== undefined
+      ) {
         setExportImageSetting({processing: true});
         tryScreenshot();
       }
-    }, [ratio, resolution, legend, setExportImageSetting, tryScreenshot]);
+    }, [ratio, resolution, legend, charts, setExportImageSetting, tryScreenshot]);
 
     // Memoize size calculations
     const {size, width, height} = useMemo(() => {
@@ -363,6 +371,10 @@ export default function PlotContainerFactory(
             show: Boolean(legend),
             active: true,
             settings: mapFields.mapControls?.mapLegend?.settings
+          },
+          chart: {
+            show: false,
+            active: Boolean(charts)
           }
         },
         onMapRender,
@@ -390,6 +402,7 @@ export default function PlotContainerFactory(
         scaledMapStyle,
         newMapState,
         legend,
+        charts,
         onMapRender,
         deckRenderCallbacks,
         plotEffects,
