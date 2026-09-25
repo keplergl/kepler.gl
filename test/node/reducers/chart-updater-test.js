@@ -85,6 +85,12 @@ test('#VisStateUpdater -> disabling cross-filter removes owned filter', t => {
   t.end();
 });
 
+function mockChartDataset(id, fields) {
+  const dataset = {id, fields};
+  dataset.filterTable = () => dataset;
+  return dataset;
+}
+
 test('#VisStateUpdater -> switching chart dataId drops fields missing from the new dataset', t => {
   const chart = createBarChart({
     id: 'c1',
@@ -95,8 +101,8 @@ test('#VisStateUpdater -> switching chart dataId drops fields missing from the n
   let nextState = {
     ...INITIAL_VIS_STATE,
     datasets: {
-      d1: {id: 'd1', fields: [{name: 'Join_Count'}]},
-      d2: {id: 'd2', fields: [{name: 'mag'}, {name: 'place'}]}
+      d1: mockChartDataset('d1', [{name: 'Join_Count'}]),
+      d2: mockChartDataset('d2', [{name: 'mag'}, {name: 'place'}])
     },
     charts: [chart],
     filters: [{id: 'chart-c1-f', dataId: ['d1'], name: ['Join_Count'], value: [1]}]
