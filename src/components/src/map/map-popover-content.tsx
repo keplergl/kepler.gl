@@ -34,7 +34,7 @@ function hasHoverLayerChart(
     return false;
   }
   const layerId = layerHoverProp.layer.id;
-  return charts.some(chart => chart?.type === 'layerChart' && chart.layerId === layerId);
+  return charts.some(chart => 'layerId' in chart && chart.layerId === layerId);
 }
 
 export default function MapPopoverContentFactory(
