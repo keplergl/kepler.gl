@@ -45,7 +45,8 @@ import {
   NestedPartial,
   SavedAnimationConfig,
   LayerOrder,
-  LayerOrderGroup
+  LayerOrderGroup,
+  ChartConfig
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
@@ -692,8 +693,75 @@ export function mergeSplitMaps<S extends VisState>(
 }
 
 /**
- * Merge effects with saved config
+ * Merge charts with saved config. Charts whose dataset is not loaded yet are
+ * parked on `chartsToBeMerged` (same as filters) so dataset replace can remap
+ * `dataId` and restore them after the new table lands.
  */
+export function mergeCharts<S extends VisState>(
+  state: S,
+  charts: ChartConfig[] | undefined,
+  fromConfig?: boolean
+): S {
+  if (!Array.isArray(charts) || !charts.length) {
+    return state;
+  }
+  const incomingIds = new Set(
+    charts.map(chart => chart?.id).filter((id): id is string => Boolean(id))
+  );
+  const existingIds = new Set((state.charts || []).map(chart => chart.id));
+  const nextCharts: ChartConfig[] = [];
+  const failed: ChartConfig[] = [];
+  charts.forEach(chart => {
+    if (!chart || !chart.id || existingIds.has(chart.id)) {
+      return;
+    }
+    const normalized: ChartConfig = fromConfig
+      ? {
+          ...chart,
+          // Older configs omit `pinned`; keep charts visible like the legend.
+          pinned: chart.pinned !== false,
+          display: {
+            ...chart.display,
+            isConfigActive: false
+          }
+        }
+      : chart;
+    if (
+      normalized.dataId &&
+      (!state.datasets[normalized.dataId] || state.isMergingDatasets[normalized.dataId])
+    ) {
+      failed.push(normalized);
+      return;
+    }
+    existingIds.add(normalized.id);
+    nextCharts.push(normalized);
+  });
+  if (!nextCharts.length && !failed.length) {
+    return state;
+  }
+  return {
+    ...state,
+    charts: nextCharts.length ? [...(state.charts || []), ...nextCharts] : state.charts,
+    chartsToBeMerged: [
+      ...(state.chartsToBeMerged || []).filter(chart => !incomingIds.has(chart.id)),
+      ...failed
+    ]
+  };
+}
+
+export function replaceChartDatasetIds(
+  savedCharts: ChartConfig[] | undefined,
+  dataId: string,
+  dataIdToUse: string
+): ChartConfig[] | null {
+  if (!Array.isArray(savedCharts) || !savedCharts.length) {
+    return null;
+  }
+  const replaced = savedCharts
+    .filter(chart => chart?.dataId === dataId)
+    .map(chart => ({...chart, dataId: dataIdToUse}));
+  return replaced.length ? replaced : null;
+}
 export function mergeEffects<S extends VisState>(
   state: S,
   effects: NonNullable<ParsedConfig['visState']>['effects'],
@@ -1341,6 +1409,12 @@ export const VIS_STATE_MERGERS: VisStateMergers<any> = [
   {
     merge: mergeEffects,
     prop: 'effects'
+  },
+  {
+    merge: mergeCharts,
+    prop: 'charts',
+    toMergeProp: 'chartsToBeMerged',
+    replaceParentDatasetIds: replaceChartDatasetIds
   },
   {
     merge: mergeAnnotations,

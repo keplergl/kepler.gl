@@ -468,6 +468,8 @@ export default {
     syncTimelineEnd: 'End of current filter timeframe',
     showEffectPanel: 'Show effect panel',
     hideEffectPanel: 'Hide effect panel',
+    showChartPanel: 'Show charts',
+    hideChartPanel: 'Hide charts',
     showAnnotationPanel: 'Show annotations',
     hideAnnotationPanel: 'Hide annotations',
     removeAnnotation: 'Remove annotation',
@@ -478,6 +480,12 @@ export default {
     removeEffect: 'Remove effect',
     disableEffect: 'Disable effect',
     effectSettings: 'Effect settings',
+    chartSettings: 'Chart settings',
+    removeChart: 'Remove chart',
+    pinChart: 'Pin chart',
+    unpinChart: 'Unpin chart',
+    showChartCaption: 'Show caption',
+    hideChartCaption: 'Hide caption',
     editLayerJson: 'Edit layer JSON',
     editFilterJson: 'Edit filter JSON',
     editEffectJson: 'Edit effect JSON',
@@ -518,6 +526,31 @@ export default {
     noLayersToExtract: 'No layers to extract'
   },
 
+  chartPanel: {
+    add: 'Add',
+    addChart: 'Add chart',
+    selectType: 'Select chart type',
+    empty: 'Add a chart to summarize the current map data.',
+    dataset: 'Dataset',
+    layer: 'Layer',
+    field: 'Field',
+    xAxis: 'X axis',
+    yAxis: 'Y axis',
+    value: 'Value',
+    idField: 'Feature id field',
+    aggregation: 'Aggregation',
+    period: 'Period',
+    color: 'Color',
+    colorBy: 'Color by',
+    colors: 'Colors',
+    options: 'Options',
+    pinned: 'Pinned',
+    formatTicks: 'Format Ticks',
+    applyFilters: 'Apply map filters',
+    crossFilter: 'Cross-filter map',
+    configure: 'Configure'
+  },
+
   exportVideoModal: {
     animation: 'Animation',
     settings: 'Settings'
@@ -555,7 +588,9 @@ export default {
       resolutionDescription: 'High resolution is better for prints.',
       resolutionPlaceholder: 'Select resolution...',
       mapLegendTitle: 'Map Legend',
-      mapLegendAdd: 'Add legend on map'
+      mapLegendAdd: 'Add legend on map',
+      chartsTitle: 'Charts',
+      chartsAdd: 'Add charts on map'
     },
     exportVideo: {
       animation: 'Animation',
@@ -776,7 +811,8 @@ ${'```'}
   header: {
     visibleLayers: 'Visible layers',
     layerLegend: 'Legend',
-    annotations: 'Annotations'
+    annotations: 'Annotations',
+    charts: 'Charts'
   },
   interactions: {
     tooltip: 'Tooltip',

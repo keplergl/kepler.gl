@@ -364,6 +364,8 @@ export default {
     syncTimelineEnd: '当前过滤时间段的结束',
     showEffectPanel: '显示效果面板',
     hideEffectPanel: '隐藏效果面板',
+    showChartPanel: '显示图表',
+    hideChartPanel: '隐藏图表',
     showAnnotationPanel: '显示注释',
     hideAnnotationPanel: '隐藏注释',
     removeAnnotation: '删除注释',
@@ -449,7 +451,9 @@ export default {
       resolutionDescription: '高分辨率更适合打印。',
       resolutionPlaceholder: '选择分辨率...',
       mapLegendTitle: '地图图例',
-      mapLegendAdd: '在地图上添加图例'
+      mapLegendAdd: '在地图上添加图例',
+      chartsTitle: '图表',
+      chartsAdd: '在地图上添加图表'
     },
     exportVideo: {
       animation: '动画',
@@ -607,7 +611,8 @@ export default {
   header: {
     visibleLayers: '可见图层',
     layerLegend: '图层图例',
-    annotations: '注释'
+    annotations: '注释',
+    charts: '图表'
   },
   interactions: {
     tooltip: '工具提示',

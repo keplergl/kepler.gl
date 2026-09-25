@@ -8,11 +8,21 @@ import {
   withState,
   MapControlFactory,
   EffectControlFactory,
-  EffectManagerFactory
+  EffectManagerFactory,
+  ChartControlFactory
 } from '@kepler.gl/components';
-// AnnotationManagerFactory is available in the workspace source (src/components) but not yet
-// published in the @kepler.gl/components version this example currently depends on.
-const AnnotationManagerFactory = require('@kepler.gl/components').AnnotationManagerFactory;
+import {getApplicationConfig} from '@kepler.gl/utils';
+// AnnotationManagerFactory is available in the workspace source (src/components)
+// but may not yet be published in the @kepler.gl/components version this example
+// currently depends on. ChartManagerFactory lives on `@kepler.gl/components/charts`
+// so the main components barrel does not load `@kepler.gl/charts`.
+const {AnnotationManagerFactory} = require('@kepler.gl/components');
+let ChartManagerFactory;
+try {
+  ChartManagerFactory = require('@kepler.gl/components/charts').ChartManagerFactory;
+} catch {
+  ChartManagerFactory = undefined;
+}
 import {AiAssistantControlFactory} from '@openassistant/kepler-assistant/integration';
 
 import {SampleMapPanel} from '../components/map-control/map-control';
@@ -57,21 +67,24 @@ const StyledMapControlOverlay = styled.div`
   }
 `;
 
-// `AnnotationManagerFactory` may be missing when this example is built against a published
-// `@kepler.gl/components` that predates it (see the require shim above). The component
+// These manager factories may be missing when this example is built against a published
+// `@kepler.gl/components` that predates them (see the require shim above). The component
 // injector calls `.deps` on every entry of this array and on their transitive deps, so an
 // `undefined` here crashes injection at startup. Substitute a harmless no-op factory so the
 // deps array stays positionally aligned with `CustomMapControlFactory`'s parameters while
-// remaining injectable. `CustomMapControlFactory` already renders the annotation manager
-// conditionally, so the stub is never actually mounted.
-const NoopAnnotationManagerFactory = () => () => null;
-NoopAnnotationManagerFactory.deps = [];
-const SafeAnnotationManagerFactory = AnnotationManagerFactory || NoopAnnotationManagerFactory;
+// remaining injectable. `CustomMapControlFactory` already renders the managers
+// conditionally, so the stubs are never actually mounted.
+const noopManagerFactory = () => () => null;
+noopManagerFactory.deps = [];
+const SafeAnnotationManagerFactory = AnnotationManagerFactory || noopManagerFactory;
+const SafeChartManagerFactory = ChartManagerFactory || noopManagerFactory;
 
 CustomMapControlFactory.deps = [
   EffectControlFactory,
   EffectManagerFactory,
   SafeAnnotationManagerFactory,
+  SafeChartManagerFactory,
+  ChartControlFactory,
   AiAssistantControlFactory,
   ...MapControlFactory.deps
 ];
@@ -79,20 +92,29 @@ function CustomMapControlFactory(
   EffectControl,
   EffectManager,
   AnnotationManager,
+  ChartManager,
+  ChartControl,
   AiAssistantControl,
   ...deps
 ) {
   const MapControl = MapControlFactory(...deps);
-  const actionComponents = [
-    ...(MapControl.defaultActionComponents ?? []),
-    EffectControl,
-    AiAssistantControl
-  ];
 
   const CustomMapControl = props => {
+    const isExport = Boolean(props.isExport);
+    const chartsEnabled = Boolean(getApplicationConfig().enableChartsPanel);
+    const actionComponents = [
+      ...(MapControl.defaultActionComponents ?? []),
+      ...(chartsEnabled ? [ChartControl] : []),
+      EffectControl,
+      AiAssistantControl
+    ];
     const showEffects = Boolean(props.mapControls?.effect?.active);
     const showAnnotations = Boolean(props.mapControls?.annotation?.active);
-    const rightPanelVisible = showEffects || showAnnotations;
+    const showChartsPanel = chartsEnabled && Boolean(props.mapControls?.chart?.active);
+    const hasPinnedCharts =
+      !isExport && chartsEnabled && (props.charts || []).some(chart => chart.pinned !== false);
+    const showCharts = showChartsPanel || hasPinnedCharts;
+    const rightPanelVisible = showEffects || showAnnotations || showCharts;
     return (
       <StyledMapControlOverlay top={props.top} rightPanelVisible={rightPanelVisible}>
         <StyledMapControlPanel>
@@ -100,8 +122,9 @@ function CustomMapControlFactory(
           <MapControl {...props} top={0} actionComponents={actionComponents} />
         </StyledMapControlPanel>
         <StyledMapControlContextPanel>
-          {showEffects ? <EffectManager /> : null}
           {showAnnotations ? <AnnotationManager /> : null}
+          {showCharts ? <ChartManager panelActive={showChartsPanel} isExport={isExport} /> : null}
+          {showEffects ? <EffectManager /> : null}
         </StyledMapControlContextPanel>
       </StyledMapControlOverlay>
     );

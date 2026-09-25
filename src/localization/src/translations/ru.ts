@@ -377,6 +377,8 @@ export default {
     syncTimelineEnd: 'Конец текущего периода фильтра',
     showEffectPanel: 'Показать панель эффектов',
     hideEffectPanel: 'Скрыть панель эффектов',
+    showChartPanel: 'Показать графики',
+    hideChartPanel: 'Скрыть графики',
     showAnnotationPanel: 'Показать аннотации',
     hideAnnotationPanel: 'Скрыть аннотации',
     removeAnnotation: 'Удалить аннотацию',
@@ -465,7 +467,9 @@ export default {
       resolutionDescription: 'Для печати лучше использовать высокое разрешение',
       resolutionPlaceholder: 'Выберите разрешение...',
       mapLegendTitle: 'Легенда карты',
-      mapLegendAdd: 'Добавить легенду на карту'
+      mapLegendAdd: 'Добавить легенду на карту',
+      chartsTitle: 'Графики',
+      chartsAdd: 'Добавить графики на карту'
     },
     exportVideo: {
       animation: 'Анимация',
@@ -628,7 +632,8 @@ export default {
   header: {
     visibleLayers: 'Видимые слои',
     layerLegend: 'Легенда слоя',
-    annotations: 'Аннотации'
+    annotations: 'Аннотации',
+    charts: 'Графики'
   },
   interactions: {
     tooltip: 'Подсказка',

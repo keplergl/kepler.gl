@@ -42,6 +42,30 @@ test('Utils -> mergePolygonLayerIndexes', t => {
   t.end();
 });
 
+function mockGpuPlotDataset(rows) {
+  return {
+    id: 'dsA',
+    filteredIndex: rows.map((_, i) => i),
+    filteredIndexByLayer: {},
+    dataContainer: {},
+    gpuFilter: {
+      filterRange: [
+        [0, 10],
+        [0, 10]
+      ],
+      filterValueUpdateTriggers: {
+        gpu0: {name: 'colA'},
+        gpu1: {name: 'colB'}
+      },
+      filterValueAccessor:
+        () =>
+        () =>
+        ({index}) =>
+          rows[index]
+    }
+  };
+}
+
 test('Utils -> runGpuFilterForPlot applies polygon layer indexes', t => {
   const dataset = {
     id: 'puppy',
@@ -65,6 +89,43 @@ test('Utils -> runGpuFilterForPlot applies polygon layer indexes', t => {
     runGpuFilterForPlot({...dataset, filteredIndexByLayer: {}}),
     [0, 1, 2, 3],
     'should fall back to filteredIndex when no polygon layer indexes exist'
+  );
+
+  t.end();
+});
+
+test('Utils -> runGpuFilterForPlot skips only this dataset column on multi-dataset filters', t => {
+  // GPU channel 0 = colA, channel 1 = colB. Range [0, 10] on both.
+  // Row 0: both in range. Row 1: colB out. Row 2: colA out. Row 3: both out.
+  const dataset = mockGpuPlotDataset([
+    [5, 5],
+    [5, 100],
+    [100, 5],
+    [100, 100]
+  ]);
+
+  t.deepEqual(
+    runGpuFilterForPlot(dataset, {
+      dataId: ['dsA', 'dsB'],
+      name: ['colA', 'colB']
+    }),
+    [0, 2],
+    'should skip only this dataset column and still apply sibling GPU channels'
+  );
+
+  t.deepEqual(
+    runGpuFilterForPlot(dataset, {
+      dataId: ['dsA'],
+      name: ['colA']
+    }),
+    [0, 2],
+    'should skip the plotted field on a single-dataset filter and still apply other GPU channels'
+  );
+
+  t.deepEqual(
+    runGpuFilterForPlot(dataset, undefined, ['colA', 'colB']),
+    [0, 1, 2, 3],
+    'should skip every extra field name passed by charts without changing filter pairing'
   );
 
   t.end();

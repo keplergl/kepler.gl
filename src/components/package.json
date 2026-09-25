@@ -41,6 +41,7 @@
     "@hubble.gl/core": "2.0.0-alpha.4",
     "@hubble.gl/react": "2.0.0-alpha.4",
     "@kepler.gl/actions": "3.3.0-alpha.13",
+    "@kepler.gl/charts": "3.3.0-alpha.13",
     "@kepler.gl/cloud-providers": "3.3.0-alpha.13",
     "@kepler.gl/common-utils": "3.3.0-alpha.13",
     "@kepler.gl/constants": "3.3.0-alpha.13",
@@ -147,6 +148,12 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
       "default": "./dist/cjs/index.js"
+    },
+    "./charts": {
+      "types": "./dist/charts.d.ts",
+      "import": "./dist/esm/charts.js",
+      "require": "./dist/cjs/charts.js",
+      "default": "./dist/cjs/charts.js"
     },
     "./*": {
       "types": "./dist/*.d.ts",

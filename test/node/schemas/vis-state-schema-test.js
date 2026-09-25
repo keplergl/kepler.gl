@@ -494,3 +494,39 @@ test('#visStateSchema -> create point and arc layers', t => {
   t.equal(state.visState.layers[2].type, 'arc', 'should create arc layer');
   t.end();
 });
+
+test('#visStateSchema -> v1 -> charts are optional', t => {
+  const initialState = cloneDeep(StateWFiles);
+  const vsToSave = SchemaManager.getConfigToSave(initialState).config.visState;
+  t.false('charts' in vsToSave, 'should omit empty charts from saved config');
+
+  const stateWithChart = {
+    ...initialState,
+    visState: {
+      ...initialState.visState,
+      charts: [
+        {
+          id: 'c1',
+          type: 'bigNumber',
+          title: 'Count',
+          dataId: testCsvDataId,
+          applyFilters: true,
+          display: {isConfigActive: true}
+        }
+      ]
+    }
+  };
+  const savedConfig = SchemaManager.getConfigToSave(stateWithChart);
+  const savedWithChart = savedConfig.config.visState;
+  t.equal(savedWithChart.charts.length, 1, 'should persist charts when present');
+  t.equal(savedWithChart.charts[0].id, 'c1');
+  t.equal(
+    savedWithChart.charts[0].display.isConfigActive,
+    false,
+    'should collapse chart config on save'
+  );
+
+  const loaded = SchemaManager.parseSavedConfig(savedConfig).visState;
+  t.equal(loaded.charts.length, 1, 'should load saved charts');
+  t.end();
+});

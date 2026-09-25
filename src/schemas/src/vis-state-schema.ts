@@ -35,7 +35,8 @@ import {
   SplitMap,
   ValueOf,
   Effect,
-  Annotation
+  Annotation,
+  ChartConfig
 } from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
@@ -64,6 +65,8 @@ export interface VisState {
   layerOrderToBeMerged: any[] | null;
   effects: Effect[];
   effectOrder: string[];
+  charts: ChartConfig[];
+  chartsToBeMerged: ChartConfig[];
   annotations: Annotation[];
   annotationsToBeMerged: any[];
   selectedAnnotationId: string | null;
@@ -819,6 +822,67 @@ export const effectPropsV1 = {
   isEnabled: null,
   parameters: null
 };
+
+export const chartPropsV1 = {
+  id: null,
+  title: null,
+  type: null,
+  dataId: null,
+  applyFilters: null,
+  pinned: null,
+  display: null,
+  crossFilter: null,
+  xAxis: null,
+  yAxis: null,
+  groupBy: null,
+  value: null,
+  axis: null,
+  numGroups: null,
+  groupOthers: null,
+  colorBy: null,
+  chartDisplay: null,
+  layerId: null,
+  layerChartType: null
+};
+
+export class ChartsSchema extends Schema {
+  key = 'charts';
+
+  save(charts) {
+    if (!Array.isArray(charts) || !charts.length) {
+      // Keep saved maps unchanged when the charts panel is unused.
+      return {};
+    }
+    return {
+      [this.key]: charts.map(
+        chart =>
+          this.savePropertiesOrApplySchema({
+            ...chart,
+            display: {
+              ...chart.display,
+              isConfigActive: false
+            }
+          }).charts
+      )
+    };
+  }
+
+  load(charts) {
+    if (!Array.isArray(charts)) {
+      return {[this.key]: []};
+    }
+    return {
+      [this.key]: charts.map(chart => {
+        const loaded = this.loadPropertiesOrApplySchema(chart, charts).charts;
+        // Older saved maps omit `pinned`; keep charts visible like the legend.
+        return {
+          ...loaded,
+          pinned: loaded.pinned !== false
+        };
+      })
+    };
+  }
+}
 export class EffectsSchema extends Schema {
   key = 'effects';
 
@@ -962,6 +1026,10 @@ export const propertiesV1 = {
   effects: new EffectsSchema({
     version: VERSIONS.v1,
     properties: effectPropsV1
+  }),
+  charts: new ChartsSchema({
+    version: VERSIONS.v1,
+    properties: chartPropsV1
   }),
   annotations: new AnnotationsSchema({
     version: VERSIONS.v1,
