@@ -221,9 +221,9 @@ export type KeplerApplicationConfig = {
   enableColumnStats?: boolean;
 
   /**
-   * Whether to show the optional charts map-control panel (big number, bar,
-   * line, heatmap, pivot table, tooltip charts, and chart cross-filters).
-   * Disabled by default; enable with {@link initApplicationConfig}.
+   * Whether to show the charts map-control panel (big number, bar, line,
+   * heatmap, pivot table, tooltip charts, and chart cross-filters).
+   * Enabled by default. Disable with {@link initApplicationConfig}.
    */
   enableChartsPanel?: boolean;
 

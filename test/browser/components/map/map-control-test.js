@@ -84,7 +84,7 @@ test('MapControlFactory - display all options', t => {
   t.equal(
     $.find('.toggle-chart-panel').length,
     0,
-    'Should hide chart panel when enableChartsPanel is off'
+    'Should not show a charts button on default MapControl'
   );
   t.end();
 });
@@ -132,7 +132,7 @@ test('MapControlFactory - chart control is not a default action', t => {
     0,
     'Should not mount a charts panel on default MapControl'
   );
-  initApplicationConfig({enableChartsPanel: false});
+  initApplicationConfig({enableChartsPanel: true});
   t.end();
 });
 

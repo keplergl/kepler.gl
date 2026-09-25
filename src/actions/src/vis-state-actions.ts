@@ -783,7 +783,7 @@ export type AddChartUpdaterAction = {
 };
 
 /**
- * Add a chart to the optional charts panel
+ * Add a chart to the charts panel
  * @memberof visStateActions
  * @param chart - chart config
  * @returns action

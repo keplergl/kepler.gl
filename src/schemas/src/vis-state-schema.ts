@@ -850,7 +850,7 @@ export class ChartsSchema extends Schema {
 
   save(charts) {
     if (!Array.isArray(charts) || !charts.length) {
-      // Keep saved maps unchanged when the optional charts panel is unused.
+      // Keep saved maps unchanged when the charts panel is unused.
       return {};
     }
     return {
