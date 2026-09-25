@@ -149,6 +149,12 @@
       "require": "./dist/cjs/index.js",
       "default": "./dist/cjs/index.js"
     },
+    "./charts": {
+      "types": "./dist/charts.d.ts",
+      "import": "./dist/esm/charts.js",
+      "require": "./dist/cjs/charts.js",
+      "default": "./dist/cjs/charts.js"
+    },
     "./*": {
       "types": "./dist/*.d.ts",
       "import": "./dist/esm/*.js",

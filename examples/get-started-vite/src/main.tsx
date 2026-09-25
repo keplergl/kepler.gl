@@ -11,7 +11,8 @@ import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import {initApplicationConfig} from '@kepler.gl/utils';
 
 // Annotations require a custom MapControl that mounts AnnotationManager.
-// Disable them here so the default get-started example stays minimal.
+// Charts are off by default and also need ChartControl + ChartManager injected
+// (see demo-app) so stock MapControl never shows a dead charts button.
 initApplicationConfig({
   enableAnnotations: false
 });

@@ -356,6 +356,7 @@ export const INITIAL_VIS_STATE: VisState = {
 
   // charts (optional panel; gated by enableChartsPanel)
   charts: [],
+  chartsToBeMerged: [],
 
   // annotations
   annotations: [],

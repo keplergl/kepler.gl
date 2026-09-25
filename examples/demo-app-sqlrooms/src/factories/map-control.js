@@ -8,13 +8,21 @@ import {
   withState,
   MapControlFactory,
   EffectControlFactory,
-  EffectManagerFactory
+  EffectManagerFactory,
+  ChartControlFactory
 } from '@kepler.gl/components';
 import {getApplicationConfig} from '@kepler.gl/utils';
-// AnnotationManagerFactory / ChartManagerFactory are available in the workspace source
-// (src/components) but may not yet be published in the @kepler.gl/components version this
-// example currently depends on.
-const {AnnotationManagerFactory, ChartManagerFactory} = require('@kepler.gl/components');
+// AnnotationManagerFactory is available in the workspace source (src/components)
+// but may not yet be published in the @kepler.gl/components version this example
+// currently depends on. ChartManagerFactory lives on `@kepler.gl/components/charts`
+// so the main components barrel does not load `@kepler.gl/charts`.
+const {AnnotationManagerFactory} = require('@kepler.gl/components');
+let ChartManagerFactory;
+try {
+  ChartManagerFactory = require('@kepler.gl/components/charts').ChartManagerFactory;
+} catch {
+  ChartManagerFactory = undefined;
+}
 import {AiAssistantControlFactory} from '@openassistant/kepler-assistant/integration';
 
 import {SampleMapPanel} from '../components/map-control/map-control';
@@ -76,6 +84,7 @@ CustomMapControlFactory.deps = [
   EffectManagerFactory,
   SafeAnnotationManagerFactory,
   SafeChartManagerFactory,
+  ChartControlFactory,
   AiAssistantControlFactory,
   ...MapControlFactory.deps
 ];
@@ -84,19 +93,21 @@ function CustomMapControlFactory(
   EffectManager,
   AnnotationManager,
   ChartManager,
+  ChartControl,
   AiAssistantControl,
   ...deps
 ) {
   const MapControl = MapControlFactory(...deps);
-  const actionComponents = [
-    ...(MapControl.defaultActionComponents ?? []),
-    EffectControl,
-    AiAssistantControl
-  ];
 
   const CustomMapControl = props => {
     const isExport = Boolean(props.isExport);
     const chartsEnabled = Boolean(getApplicationConfig().enableChartsPanel);
+    const actionComponents = [
+      ...(MapControl.defaultActionComponents ?? []),
+      ...(chartsEnabled ? [ChartControl] : []),
+      EffectControl,
+      AiAssistantControl
+    ];
     const showEffects = Boolean(props.mapControls?.effect?.active);
     const showAnnotations = Boolean(props.mapControls?.annotation?.active);
     const showChartsPanel = chartsEnabled && Boolean(props.mapControls?.chart?.active);

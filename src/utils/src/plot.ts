@@ -337,13 +337,15 @@ export function getBinThresholds(interval: string, domain: number[]): number[] {
  * Run GPU filter on current filter result to generate indexes for ploting chart
  * Skip ruuning for the same field
  * @param dataset
- * @param filter
+ * @param filter Histogram filter whose dataId-paired column should be skipped
+ * @param skipFieldNames Extra GPU field names to skip (charts cross-filter). Histogram callers omit this.
  */
 export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
   dataset: K,
-  filter?: Filter
+  filter?: Filter,
+  skipFieldNames?: string[]
 ): number[] {
-  const skipIndexes = getSkipIndexes(dataset, filter);
+  const skipIndexes = getSkipIndexes(dataset, filter, skipFieldNames);
 
   const {
     gpuFilter: {filterValueUpdateTriggers, filterRange, filterValueAccessor},
@@ -372,23 +374,32 @@ export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
   return plotFilteredIndex.filter(filterData);
 }
 
-function getSkipIndexes(dataset, filter) {
+function getSkipIndexes(dataset, filter, skipFieldNames?: string[]) {
   // array of gpu filter names
-  if (!filter) {
-    return [];
-  }
   const gpuFilters = Object.values(dataset.gpuFilter.filterValueUpdateTriggers) as ({
     name: string;
   } | null)[];
-  // Skip every field listed on the filter (charts may pass multiple cross-filter fields).
-  const skipNames = new Set(
-    (Array.isArray(filter.name) ? filter.name : [filter.name]).filter(
-      (n): n is string => typeof n === 'string' && Boolean(n)
-    )
-  );
+
+  // Charts pass extra field names so a cross-filter does not hide its own bins.
+  // Histogram plots never pass this list and keep the original dataId pairing.
+  if (skipFieldNames?.length) {
+    const skipNames = new Set(skipFieldNames.filter((name): name is string => Boolean(name)));
+    return gpuFilters.reduce((accu, item, idx) => {
+      if (item && skipNames.has(item.name)) {
+        accu.push(idx);
+      }
+      return accu;
+    }, [] as number[]);
+  }
+
+  if (!filter) {
+    return [];
+  }
+  const valueIndex = filter.dataId.findIndex(id => id === dataset.id);
+  const filterColumn = filter.name[valueIndex];
 
   return gpuFilters.reduce((accu, item, idx) => {
-    if (item && skipNames.has(item.name)) {
+    if (item && filterColumn === item.name) {
       accu.push(idx);
     }
     return accu;

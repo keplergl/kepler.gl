@@ -282,17 +282,10 @@ function toMapFilteredChartDataset(
     options?.dataId && skipFilterIds.length
       ? cpuIndexExcludingFilterIds(dataset, options.dataId, skipFilterIds, options.layers || [])
       : undefined;
-  const skipFilter =
-    options?.dataId && uniqueSkip.length
-      ? ({
-          dataId: [options.dataId],
-          name: uniqueSkip
-        } as Parameters<typeof runGpuFilterForPlot>[1])
-      : undefined;
   const plotSource = cpuIndex ? ({...dataset, filteredIndex: cpuIndex} as typeof dataset) : dataset;
   const filteredIndex =
     plotSource.gpuFilter?.filterValueAccessor != null
-      ? runGpuFilterForPlot(plotSource, skipFilter)
+      ? runGpuFilterForPlot(plotSource, undefined, uniqueSkip.length ? uniqueSkip : undefined)
       : cpuIndex;
   return toChartableDataset(dataset, filteredIndex ? {filteredIndex} : undefined);
 }

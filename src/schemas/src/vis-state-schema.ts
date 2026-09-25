@@ -66,6 +66,7 @@ export interface VisState {
   effects: Effect[];
   effectOrder: string[];
   charts: ChartConfig[];
+  chartsToBeMerged: ChartConfig[];
   annotations: Annotation[];
   annotationsToBeMerged: any[];
   selectedAnnotationId: string | null;

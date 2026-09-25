@@ -28,7 +28,6 @@ import {getApplicationConfig} from '@kepler.gl/utils';
 import {MapViewMode} from '@kepler.gl/constants';
 
 import AnnotationControlFactory from './annotations/annotation-control';
-import ChartControlFactory from './charts/chart-control';
 import ViewportJsonEditorControlFactory from './viewport-json-editor';
 
 interface StyledMapControlProps {
@@ -117,7 +116,6 @@ MapControlFactory.deps = [
   LocalePanelFactory,
   ThemeToggleButtonFactory,
   AnnotationControlFactory,
-  ChartControlFactory,
   MapNavigationControlFactory,
   ViewportJsonEditorControlFactory
 ];
@@ -130,7 +128,6 @@ function MapControlFactory(
   LocalePanel: ReturnType<typeof LocalePanelFactory>,
   ThemeToggleButton: ReturnType<typeof ThemeToggleButtonFactory>,
   AnnotationControl: ReturnType<typeof AnnotationControlFactory>,
-  ChartControl: ReturnType<typeof ChartControlFactory>,
   MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>,
   ViewportJsonEditorControl: ReturnType<typeof ViewportJsonEditorControlFactory>
 ) {
@@ -142,8 +139,7 @@ function MapControlFactory(
     LocalePanel,
     ThemeToggleButton,
     ViewportJsonEditorControl,
-    MapLegendPanel,
-    ChartControl
+    MapLegendPanel
   ];
 
   const MapControl: React.FC<MapControlProps> & {
