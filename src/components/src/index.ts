@@ -161,6 +161,7 @@ export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as LazyTippy} from './map/lazy-tippy';
 export {default as LocalePanelFactory} from './map/locale-panel';
 export {default as ThemeToggleButtonFactory} from './map/theme-toggle-button';
+export {default as ChartControlFactory} from './map/charts/chart-control';
 export {default as ViewportJsonEditorControlFactory} from './map/viewport-json-editor';
 export {default as MapControlFactory} from './map/map-control';
 export {default as MapNavigationControlFactory} from './map/map-navigation-control';

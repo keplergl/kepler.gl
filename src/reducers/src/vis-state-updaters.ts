@@ -167,7 +167,9 @@ import {
   TimeRangeFilter,
   Annotation,
   AnnotationPropsPartial,
-  ProtoDataset
+  ProtoDataset,
+  ChartConfig,
+  LayerChartConfig
 } from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
@@ -351,6 +353,10 @@ export const INITIAL_VIS_STATE: VisState = {
   // effects
   effects: [],
   effectOrder: [],
+
+  // charts (enabled by default; gated by enableChartsPanel)
+  charts: [],
+  chartsToBeMerged: [],
 
   // annotations
   annotations: [],
@@ -2027,7 +2033,12 @@ export function removeLayerUpdater<T extends VisState>(
     // TODO: update filters, create helper to remove layer form filter (remove layerid and dataid) if mapped
   };
 
-  return updateAnimationDomain(newState);
+  return updateAnimationDomain(
+    removeChartsAndFilters(
+      newState,
+      chart => isLayerChartConfig(chart) && chart.layerId === layerToRemove.id
+    )
+  );
 }
 
 /**
@@ -2509,6 +2520,175 @@ export const updateEffectUpdater = (
   };
 };
 
+function isLayerChartConfig(chart: ChartConfig): chart is LayerChartConfig {
+  return chart.type === 'layerChart';
+}
+
+function mergeChartConfig(chart: ChartConfig, props: Partial<ChartConfig>): ChartConfig {
+  return {
+    ...chart,
+    ...props,
+    display: {
+      ...chart.display,
+      ...(props.display || {})
+    },
+    chartDisplay: {
+      ...chart.chartDisplay,
+      ...((props as ChartConfig).chartDisplay || {})
+    }
+  } as ChartConfig;
+}
+
+function axisFieldIfPresent<T extends {field?: {name: string} | null; title?: string | null}>(
+  axis: T | undefined,
+  fieldNames: Set<string>
+): T | undefined {
+  if (!axis?.field?.name || fieldNames.has(axis.field.name)) {
+    return axis;
+  }
+  return {...axis, field: null, title: null};
+}
+
+function dropMissingChartFields(
+  chart: ChartConfig,
+  dataset: {fields?: {name: string}[]} | undefined
+): ChartConfig {
+  const fieldNames = new Set((dataset?.fields || []).map(field => field.name));
+  const next = chart as ChartConfig & {
+    xAxis?: {field?: {name: string} | null};
+    yAxis?: {field?: {name: string} | null};
+    axis?: {field?: {name: string} | null};
+    groupBy?: {field?: {name: string} | null};
+    value?: {field?: {name: string} | null};
+  };
+  return mergeChartConfig(chart, {
+    xAxis: axisFieldIfPresent(next.xAxis, fieldNames),
+    yAxis: axisFieldIfPresent(next.yAxis, fieldNames),
+    axis: axisFieldIfPresent(next.axis, fieldNames),
+    groupBy: axisFieldIfPresent(next.groupBy, fieldNames),
+    value: axisFieldIfPresent(next.value, fieldNames)
+  } as Partial<ChartConfig>);
+}
+
+function removeChartsAndFilters<T extends VisState>(
+  state: T,
+  shouldRemove: (chart: ChartConfig) => boolean
+): T {
+  const charts = state.charts || [];
+  const removed = charts.filter(shouldRemove);
+  if (!removed.length) {
+    return state;
+  }
+  const removedIds = new Set(removed.map(chart => chart.id));
+  const filterIds = new Set(
+    removed.flatMap(chart => {
+      const id = chart.crossFilter?.filterId;
+      return id ? [id, `${id}-x`, `${id}-y`] : [];
+    })
+  );
+  let nextState: VisState = {
+    ...state,
+    charts: charts.filter(chart => !removedIds.has(chart.id))
+  };
+  if (filterIds.size) {
+    nextState = nextState.filters.reduceRight((accu, filter, idx) => {
+      return filterIds.has(filter.id) ? removeFilterUpdater(accu, {idx}) : accu;
+    }, nextState);
+  }
+  return nextState as T;
+}
+
+/**
+ * Add a chart
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const addChartUpdater = (
+  state: VisState,
+  {chart}: VisStateActions.AddChartUpdaterAction
+): VisState => {
+  if (!chart?.id) {
+    return state;
+  }
+  if ((state.charts || []).some(existing => existing.id === chart.id)) {
+    return state;
+  }
+  return {
+    ...state,
+    charts: [
+      ...(state.charts || []).map(existing => ({
+        ...existing,
+        display: {
+          ...existing.display,
+          isConfigActive: false
+        }
+      })),
+      {
+        ...chart,
+        display: {
+          ...chart.display,
+          isConfigActive: chart.display?.isConfigActive ?? false
+        }
+      }
+    ]
+  };
+};
+
+/**
+ * Update a chart
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const updateChartUpdater = (
+  state: VisState,
+  {id, props}: VisStateActions.UpdateChartUpdaterAction
+): VisState => {
+  const idx = (state.charts || []).findIndex(chart => chart.id === id);
+  if (idx < 0) {
+    return state;
+  }
+  const prev = state.charts[idx];
+  const dataIdChanged = typeof props.dataId === 'string' && props.dataId !== prev.dataId;
+  const layerIdChanged =
+    isLayerChartConfig(prev) &&
+    typeof (props as LayerChartConfig).layerId === 'string' &&
+    (props as LayerChartConfig).layerId !== prev.layerId;
+  let next = mergeChartConfig(prev, props);
+  if (dataIdChanged || layerIdChanged) {
+    const dataId = next.dataId || undefined;
+    next = dropMissingChartFields(next, dataId ? state.datasets[dataId] : undefined);
+    if (next.crossFilter?.enabled) {
+      next = mergeChartConfig(next, {
+        crossFilter: {...next.crossFilter, enabled: false, value: {}, fieldNames: {}}
+      });
+    }
+  }
+  const charts = [...state.charts];
+  charts[idx] = next;
+  let nextState: VisState = {
+    ...state,
+    charts
+  };
+  const filterId = next.crossFilter?.filterId || prev.crossFilter?.filterId;
+  if (prev.crossFilter?.enabled && !next.crossFilter?.enabled && filterId) {
+    const ownedFilterIds = new Set([filterId, `${filterId}-x`, `${filterId}-y`]);
+    nextState = nextState.filters.reduceRight((accu, filter, idx) => {
+      return ownedFilterIds.has(filter.id) ? removeFilterUpdater(accu, {idx}) : accu;
+    }, nextState);
+  }
+  return nextState;
+};
+
+/**
+ * Remove a chart and any cross-filter it owns
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const removeChartUpdater = (
+  state: VisState,
+  {id}: VisStateActions.RemoveChartUpdaterAction
+): VisState => removeChartsAndFilters(state, chart => chart.id === id);
+
 // ANNOTATION UPDATERS
 
 function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
@@ -2742,7 +2922,18 @@ export function removeDatasetUpdater<T extends VisState>(
 
   newState = {...newState, filters};
 
-  return removeDatasetFromInteractionConfig(newState, {dataId: datasetKey});
+  return removeChartsAndFilters(
+    removeDatasetFromInteractionConfig(newState, {dataId: datasetKey}),
+    chart => {
+      if (chart.dataId === datasetKey) {
+        return true;
+      }
+      if (isLayerChartConfig(chart)) {
+        return layersToRemove.includes(chart.layerId);
+      }
+      return false;
+    }
+  );
 }
 
 function removeDatasetFromInteractionConfig(state, {dataId}) {
@@ -5691,6 +5882,9 @@ function adjustTimeFilterInterval(state, filter) {
 // layers, filters, interactions, layerBlending, overlayBlending, splitMaps, animationConfig, editor
 // replace it with another dataId
 function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToReplace: string) {
+  if (value == null) {
+    return null;
+  }
   if (Array.isArray(value)) {
     // for layers, filters, call defaultReplaceParentDatasetIds on each item in array
     const replaced = value
@@ -5870,6 +6064,9 @@ export function replaceDatasetDepsInState<T extends VisState>(
 
       let replacedState = accuState;
       savedProps.forEach((propValue, i) => {
+        if (propValue == null) {
+          return;
+        }
         const mergerOptions = {
           prop: props[i],
           toMergeProp: toMergeProps[i],

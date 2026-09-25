@@ -379,6 +379,8 @@ export default {
     syncTimelineEnd: 'Fi del període de temps del filtre actual',
     showEffectPanel: "Mostra el panell d'efectes",
     hideEffectPanel: "Amaga el panell d'efectes",
+    showChartPanel: 'Mostra els gràfics',
+    hideChartPanel: 'Amaga els gràfics',
     showAnnotationPanel: 'Mostra les anotacions',
     hideAnnotationPanel: 'Amaga les anotacions',
     removeAnnotation: "Elimina l'anotació",
@@ -464,7 +466,9 @@ export default {
       resolutionDescription: 'Alta resolució és millor per a les impressions.',
       resolutionPlaceholder: 'Selecciona resolució...',
       mapLegendTitle: 'Llegenda del mapa',
-      mapLegendAdd: 'Afegir llegenda al mapa'
+      mapLegendAdd: 'Afegir llegenda al mapa',
+      chartsTitle: 'Gràfics',
+      chartsAdd: 'Afegir gràfics al mapa'
     },
     exportVideo: {
       animation: 'Animació',
@@ -626,7 +630,8 @@ export default {
   header: {
     visibleLayers: 'Capes visibles',
     layerLegend: 'Llegenda de capes',
-    annotations: 'Anotacions'
+    annotations: 'Anotacions',
+    charts: 'Gràfics'
   },
   interactions: {
     tooltip: 'Suggeriment',

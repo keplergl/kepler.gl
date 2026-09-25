@@ -204,6 +204,12 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater,
 
+  [ActionTypes.ADD_CHART]: visStateUpdaters.addChartUpdater,
+
+  [ActionTypes.UPDATE_CHART]: visStateUpdaters.updateChartUpdater,
+
+  [ActionTypes.REMOVE_CHART]: visStateUpdaters.removeChartUpdater,
+
   [ActionTypes.ADD_ANNOTATION]: visStateUpdaters.addAnnotationUpdater,
 
   [ActionTypes.REMOVE_ANNOTATION]: visStateUpdaters.removeAnnotationUpdater,

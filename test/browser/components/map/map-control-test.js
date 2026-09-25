@@ -81,6 +81,58 @@ test('MapControlFactory - display all options', t => {
     </IntlWrapper>
   );
   t.equal($.find('.map-control-action').length, 9, 'Should show 9 action panels');
+  t.equal(
+    $.find('.toggle-chart-panel').length,
+    0,
+    'Should not show a charts button on default MapControl'
+  );
+  t.end();
+});
+
+test('MapControlFactory - chart control is not a default action', t => {
+  initApplicationConfig({enableChartsPanel: true});
+  const $ = mountWithTheme(
+    <IntlWrapper>
+      <MapViewStateContextProvider mapState={{latitude: 0, longitude: 0, zoom: 1}}>
+        <MapControl
+          mapControls={{
+            splitMap: {show: true},
+            visibleLayers: {show: true},
+            toggle3d: {show: true},
+            mapLegend: {show: true},
+            mapDraw: {show: true},
+            mapLocale: {show: true},
+            effect: {show: true},
+            chart: {show: true, active: true}
+          }}
+          datasets={{}}
+          layers={[]}
+          locale={'en'}
+          layersToRender={{}}
+          dragRotate={true}
+          mapIndex={0}
+          onToggleSplitMap={() => {}}
+          onTogglePerspective={() => {}}
+          onToggleMapControl={() => {}}
+          onSetEditorMode={() => {}}
+          onToggleEditorVisibility={() => {}}
+          onSetLocale={() => {}}
+          charts={[]}
+        />
+      </MapViewStateContextProvider>
+    </IntlWrapper>
+  );
+  t.equal(
+    $.find('.toggle-chart-panel').length,
+    0,
+    'Should not show a charts button on default MapControl'
+  );
+  t.equal(
+    $.find('.chart-manager').length,
+    0,
+    'Should not mount a charts panel on default MapControl'
+  );
+  initApplicationConfig({enableChartsPanel: true});
   t.end();
 });
 

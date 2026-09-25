@@ -221,6 +221,13 @@ export type KeplerApplicationConfig = {
   enableColumnStats?: boolean;
 
   /**
+   * Whether to show the charts map-control panel (big number, bar, line,
+   * heatmap, pivot table, tooltip charts, and chart cross-filters).
+   * Enabled by default. Disable with {@link initApplicationConfig}.
+   */
+  enableChartsPanel?: boolean;
+
+  /**
    * Master switch for power-user JSON editors. When false, every section editor is hidden.
    * Defaults to true; each section also has its own flag.
    *
@@ -418,6 +425,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableThemeToggle: false,
 
   enableColumnStats: true,
+
+  enableChartsPanel: true,
 
   enableJsonEditors: true,
   enableLayerJsonEditor: true,

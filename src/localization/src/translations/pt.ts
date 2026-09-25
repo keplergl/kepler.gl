@@ -380,6 +380,8 @@ export default {
     syncTimelineEnd: 'Fim do período de tempo do filtro atual',
     showEffectPanel: 'Mostrar painel de efeitos',
     hideEffectPanel: 'Ocultar painel de efeitos',
+    showChartPanel: 'Mostrar gráficos',
+    hideChartPanel: 'Ocultar gráficos',
     showAnnotationPanel: 'Mostrar anotações',
     hideAnnotationPanel: 'Ocultar anotações',
     removeAnnotation: 'Remover anotação',
@@ -465,7 +467,9 @@ export default {
       resolutionDescription: 'Alta resolução é melhor para impressões.',
       resolutionPlaceholder: 'Selecionar resolução...',
       mapLegendTitle: 'Legenda do Mapa',
-      mapLegendAdd: 'Adicionar Legenda no mapa'
+      mapLegendAdd: 'Adicionar Legenda no mapa',
+      chartsTitle: 'Gráficos',
+      chartsAdd: 'Adicionar gráficos no mapa'
     },
     exportVideo: {
       animation: 'Animação',
@@ -628,7 +632,8 @@ export default {
   header: {
     visibleLayers: 'Camadas Visíveis',
     layerLegend: 'Legenda da Camada',
-    annotations: 'Anotações'
+    annotations: 'Anotações',
+    charts: 'Gráficos'
   },
   interactions: {
     tooltip: 'Dica de contexto',

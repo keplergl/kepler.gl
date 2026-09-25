@@ -376,6 +376,8 @@ export default {
     syncTimelineEnd: 'Nykyisen suodattimen aikajakson loppu',
     showEffectPanel: 'Näytä efektipaneeli',
     hideEffectPanel: 'Piilota efektipaneeli',
+    showChartPanel: 'Näytä kaaviot',
+    hideChartPanel: 'Piilota kaaviot',
     showAnnotationPanel: 'Näytä merkinnät',
     hideAnnotationPanel: 'Piilota merkinnät',
     removeAnnotation: 'Poista merkintä',
@@ -463,7 +465,9 @@ export default {
       resolutionDescription: 'Korkea resoluutio on parempi tulostamista varten.',
       resolutionPlaceholder: 'Valitse resoluutio...',
       mapLegendTitle: 'Kartan selite',
-      mapLegendAdd: 'Lisää selite karttaan'
+      mapLegendAdd: 'Lisää selite karttaan',
+      chartsTitle: 'Kaaviot',
+      chartsAdd: 'Lisää kaaviot karttaan'
     },
     exportVideo: {
       animation: 'Animaatio',
@@ -624,7 +628,8 @@ export default {
   header: {
     visibleLayers: 'Näkyvissä olevat tasot',
     layerLegend: 'Tason selite',
-    annotations: 'Merkinnät'
+    annotations: 'Merkinnät',
+    charts: 'Kaaviot'
   },
   interactions: {
     tooltip: 'Vihje',

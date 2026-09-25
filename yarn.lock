@@ -3964,6 +3964,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@kepler.gl/charts@npm:3.3.0-alpha.14, @kepler.gl/charts@workspace:src/charts":
+  version: 0.0.0-use.local
+  resolution: "@kepler.gl/charts@workspace:src/charts"
+  dependencies:
+    "@kepler.gl/types": "npm:3.3.0-alpha.14"
+    "@types/d3-array": "npm:^2.8.0"
+    "@types/d3-time": "npm:^2"
+    "@types/react": "npm:^19.0.0"
+    "@types/styled-components": "npm:^5.1.32"
+    d3-array: "npm:^2.8.0"
+    d3-time: "npm:^2.1.1"
+    styled-components: "npm:6.4.3"
+  peerDependencies:
+    react: ">=18"
+  languageName: unknown
+  linkType: soft
+
 "@kepler.gl/cloud-providers@npm:3.3.0-alpha.14, @kepler.gl/cloud-providers@workspace:src/cloud-providers":
   version: 0.0.0-use.local
   resolution: "@kepler.gl/cloud-providers@workspace:src/cloud-providers"
@@ -4003,6 +4020,7 @@ __metadata:
     "@hubble.gl/core": "npm:2.0.0-alpha.4"
     "@hubble.gl/react": "npm:2.0.0-alpha.4"
     "@kepler.gl/actions": "npm:3.3.0-alpha.14"
+    "@kepler.gl/charts": "npm:3.3.0-alpha.14"
     "@kepler.gl/cloud-providers": "npm:3.3.0-alpha.14"
     "@kepler.gl/common-utils": "npm:3.3.0-alpha.14"
     "@kepler.gl/constants": "npm:3.3.0-alpha.14"
@@ -15232,7 +15250,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-time@npm:^2.0.0":
+"d3-time@npm:^2.0.0, d3-time@npm:^2.1.1":
   version: 2.1.1
   resolution: "d3-time@npm:2.1.1"
   dependencies:

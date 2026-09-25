@@ -896,6 +896,8 @@ export default function MapContainerFactory(
               setSelectedFeature={this.props.visStateActions.setSelectedFeature}
               // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
               featureCollection={this.featureCollectionSelector(this.props)}
+              charts={this.props.visState.charts}
+              datasets={datasets}
             />
           )}
           {layerHoverProp && (!layerPinnedProp || compareMode) && (
@@ -910,6 +912,8 @@ export default function MapContainerFactory(
               setSelectedFeature={this.props.visStateActions.setSelectedFeature}
               // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
               featureCollection={this.featureCollectionSelector(this.props)}
+              charts={this.props.visState.charts}
+              datasets={datasets}
             />
           )}
         </ErrorBoundary>
@@ -1490,6 +1494,8 @@ export default function MapContainerFactory(
               activeSidePanel={activeSidePanel}
               splitMaps={this.props.visState.splitMaps}
               onToggleLayerForMap={visStateActions.toggleLayerForMap}
+              charts={this.props.visState.charts}
+              visStateActions={visStateActions}
             />
           )}
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}

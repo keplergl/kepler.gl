@@ -183,7 +183,18 @@ const TEST_CASES = [
       {currentTime: 500, speed: 1},
       {currentTime: 100, speed: 5}
     ],
-    expected: {currentTime: 100, speed: 1}
+    expected: {currentTime: 100, speed: 1, timeFormat: null, timezone: null}
+  },
+  {
+    testMessage: 'animationConfig with timezone and time format',
+    propName: 'animationConfig',
+    configsToMerge: [
+      {currentTime: 500, speed: 1, timeFormat: 'L LTS', timezone: 'America/Guayaquil'},
+      {currentTime: 300, speed: 2, timeFormat: null, timezone: 'UTC'},
+      {currentTime: 100, speed: 5, timeFormat: null, timezone: 'America/Guayaquil'},
+      {currentTime: 200, speed: 3}
+    ],
+    expected: {currentTime: 100, speed: 1, timeFormat: 'L LTS', timezone: 'America/Guayaquil'}
   },
   {
     testMessage: 'editor',

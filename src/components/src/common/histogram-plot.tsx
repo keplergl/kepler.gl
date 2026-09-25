@@ -287,7 +287,6 @@ function HistogramPlotFactory() {
             <rect x="0" y="0" width={width} height={height} />
           </clipPath>
         </defs>
-        <g transform={`translate(${isRanged ? 0 : fallbackBarWidth / 2}, 0)`}>{brushComponent}</g>
         <g clipPath={`url(#${clipId})`} style={{pointerEvents: 'none'}}>
           {groupKeys.map((key, i) => (
             <g key={key} className="histogram-bars">
@@ -338,6 +337,7 @@ function HistogramPlotFactory() {
             ))}
           </g>
         ) : null}
+        <g transform={`translate(${isRanged ? 0 : fallbackBarWidth / 2}, 0)`}>{brushComponent}</g>
       </HistogramWrapper>
     );
   };

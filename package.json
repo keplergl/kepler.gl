@@ -33,6 +33,7 @@
     "./src/tasks",
     "./src/actions",
     "./src/effects",
+    "./src/charts",
     "./src/reducers",
     "./src/components",
     "./src/duckdb",

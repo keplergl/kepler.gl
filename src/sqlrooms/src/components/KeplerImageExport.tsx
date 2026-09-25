@@ -58,7 +58,7 @@ export const KeplerImageExport: React.FC<KeplerImageExportProps> = ({
   fileName,
   onExportStart
 }) => {
-  const {legend, resolution, processing, imageDataUri} = exportImageSettings;
+  const {legend, charts, resolution, processing, imageDataUri} = exportImageSettings;
 
   useEffect(() => {
     // hardcode default resolution only when incoming resolution is not a supported custom option
@@ -126,6 +126,17 @@ export const KeplerImageExport: React.FC<KeplerImageExportProps> = ({
           onCheckedChange={checked =>
             setExportImageSetting({
               legend: checked === true
+            })
+          }
+          disabled={processing}
+        />
+
+        <Label className="font-normal">Show charts</Label>
+        <Switch
+          checked={Boolean(charts)}
+          onCheckedChange={checked =>
+            setExportImageSetting({
+              charts: checked === true
             })
           }
           disabled={processing}
