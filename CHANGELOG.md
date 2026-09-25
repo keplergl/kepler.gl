@@ -17,6 +17,9 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.3.0-alpha.14] - Sep 25 2026
 
+- 5e3f0794 fix: paint the range brush above the histogram bars (#3753)
+- 7aac1799 fix: keep the animation timezone and time format in saved maps (#3754)
+- e3fecd1d feat: optional charts panel (#3745)
 - c07a1f27 fix: redraw flows when a replaced dataset brings a new flow layer (#3751)
 - 59048d02 feat: add JSON editors for layer, filter, effect, viewport, and animation (#3744)
 - ce25658f fix: keep the parked layers' place when another dataset is replaced (#3750)
