@@ -465,7 +465,9 @@ export default {
       resolutionDescription: 'Korkea resoluutio on parempi tulostamista varten.',
       resolutionPlaceholder: 'Valitse resoluutio...',
       mapLegendTitle: 'Kartan selite',
-      mapLegendAdd: 'Lisää selite karttaan'
+      mapLegendAdd: 'Lisää selite karttaan',
+      chartsTitle: 'Kaaviot',
+      chartsAdd: 'Lisää kaaviot karttaan'
     },
     exportVideo: {
       animation: 'Animaatio',

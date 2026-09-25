@@ -451,7 +451,9 @@ export default {
       resolutionDescription: '高分辨率更适合打印。',
       resolutionPlaceholder: '选择分辨率...',
       mapLegendTitle: '地图图例',
-      mapLegendAdd: '在地图上添加图例'
+      mapLegendAdd: '在地图上添加图例',
+      chartsTitle: '图表',
+      chartsAdd: '在地图上添加图表'
     },
     exportVideo: {
       animation: '动画',

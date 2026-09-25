@@ -34,6 +34,8 @@ export type ChartManagerState = {
   };
   /** When false, only pinned charts are shown (panel control is inactive). */
   panelActive?: boolean;
+  /** Image export: show all charts without edit chrome. */
+  isExport?: boolean;
   children?: React.ReactNode;
 };
 
@@ -99,7 +101,7 @@ export default function ChartManagerFactory(
   ChartTypeSelector: ReturnType<typeof ChartTypeSelectorFactory>
 ): React.FC<ChartManagerProps> {
   const ChartManager = (props: ChartManagerProps) => {
-    const {intl, children, panelActive = true} = props;
+    const {intl, children, panelActive = true, isExport = false} = props;
     const dispatch = useDispatch();
     const {selector} = useContext(KeplerGlContext);
     const visStateFromStore = useSelector(state => selector(state)?.visState);
@@ -118,8 +120,10 @@ export default function ChartManagerFactory(
 
     const charts = useMemo(() => {
       const allCharts = visState?.charts ?? [];
-      return panelActive ? allCharts : allCharts.filter(chart => chart.pinned !== false);
-    }, [visState?.charts, panelActive]);
+      return panelActive || isExport
+        ? allCharts
+        : allCharts.filter(chart => chart.pinned !== false);
+    }, [visState?.charts, panelActive, isExport]);
     const datasets = useMemo<Datasets>(() => visState?.datasets ?? {}, [visState?.datasets]);
     const layers = useMemo(() => visState?.layers ?? [], [visState?.layers]);
     const [typeSelectorOpened, setTypeSelectorOpened] = useState(false);
@@ -160,14 +164,14 @@ export default function ChartManagerFactory(
       return null;
     }
 
-    if (!panelActive && charts.length === 0) {
+    if (!panelActive && !isExport && charts.length === 0) {
       return null;
     }
 
     return (
       <StyledChartPanelContainer className="chart-manager">
         <StyledChartPanel>
-          {panelActive ? (
+          {panelActive && !isExport ? (
             <StyledChartPanelHeader className="chart-panel-header">
               <SidePanelTitle
                 className="chart-manager-title"
@@ -182,14 +186,14 @@ export default function ChartManagerFactory(
             </StyledChartPanelHeader>
           ) : null}
           <StyledChartPanelContent
-            $extended={panelActive && typeSelectorOpened && charts.length === 0}
+            $extended={panelActive && !isExport && typeSelectorOpened && charts.length === 0}
           >
             <ChartPanelContent
               charts={charts}
               datasets={datasets}
               layers={layers}
               visStateActions={visStateActions as typeof VisStateActions}
-              readOnly={!panelActive}
+              readOnly={!panelActive || isExport}
             />
           </StyledChartPanelContent>
         </StyledChartPanel>

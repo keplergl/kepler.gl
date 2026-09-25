@@ -466,7 +466,9 @@ export default {
       resolutionDescription: 'Alta resolució és millor per a les impressions.',
       resolutionPlaceholder: 'Selecciona resolució...',
       mapLegendTitle: 'Llegenda del mapa',
-      mapLegendAdd: 'Afegir llegenda al mapa'
+      mapLegendAdd: 'Afegir llegenda al mapa',
+      chartsTitle: 'Gràfics',
+      chartsAdd: 'Afegir gràfics al mapa'
     },
     exportVideo: {
       animation: 'Animació',

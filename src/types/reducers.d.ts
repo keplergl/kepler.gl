@@ -461,6 +461,8 @@ export declare type ExportImage = {
   ratio: EXPORT_IMG_RATIOS;
   resolution: ExportResolutionOption;
   legend: boolean;
+  /** When true, include the charts panel in the exported image. */
+  charts: boolean;
   mapH: number;
   mapW: number;
   imageSize: {

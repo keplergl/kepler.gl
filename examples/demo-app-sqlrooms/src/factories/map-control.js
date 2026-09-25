@@ -95,12 +95,13 @@ function CustomMapControlFactory(
   ];
 
   const CustomMapControl = props => {
+    const isExport = Boolean(props.isExport);
     const chartsEnabled = Boolean(getApplicationConfig().enableChartsPanel);
     const showEffects = Boolean(props.mapControls?.effect?.active);
     const showAnnotations = Boolean(props.mapControls?.annotation?.active);
     const showChartsPanel = chartsEnabled && Boolean(props.mapControls?.chart?.active);
     const hasPinnedCharts =
-      chartsEnabled && (props.charts || []).some(chart => chart.pinned !== false);
+      !isExport && chartsEnabled && (props.charts || []).some(chart => chart.pinned !== false);
     const showCharts = showChartsPanel || hasPinnedCharts;
     const rightPanelVisible = showEffects || showAnnotations || showCharts;
     return (
@@ -111,7 +112,7 @@ function CustomMapControlFactory(
         </StyledMapControlPanel>
         <StyledMapControlContextPanel>
           {showAnnotations ? <AnnotationManager /> : null}
-          {showCharts ? <ChartManager panelActive={showChartsPanel} /> : null}
+          {showCharts ? <ChartManager panelActive={showChartsPanel} isExport={isExport} /> : null}
           {showEffects ? <EffectManager /> : null}
         </StyledMapControlContextPanel>
       </StyledMapControlOverlay>

@@ -240,7 +240,7 @@ export type SetExportImageSettingUpdaterAction = {
   payload: Partial<ExportImage>;
 };
 /**
- * Set `exportImage` settings: ratio, resolution, legend
+ * Set `exportImage` settings: ratio, resolution, legend, charts
  * @memberof uiStateActions
  * @param newSetting - {ratio: '1x'}
  * @public

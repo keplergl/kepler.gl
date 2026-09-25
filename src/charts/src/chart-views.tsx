@@ -73,11 +73,13 @@ const BigNumberCaptionToggle = styled.button`
   }
 `;
 
-const BarRow = styled.div<{$clickable?: boolean}>`
+const BarRow = styled.div<{$clickable?: boolean; $selected?: boolean}>`
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 4px 0;
+  position: relative;
+  z-index: ${props => (props.$selected ? 1 : 0)};
   cursor: ${props => (props.$clickable ? 'pointer' : 'default')};
   &:focus-visible {
     outline: 1px solid ${props => props.theme.activeColor};
@@ -96,20 +98,35 @@ const BarLabel = styled.div`
   line-height: 1.2;
 `;
 
-const BarTrack = styled.div`
+const selectedBinRing = (theme: {activeColor?: string; panelBackground?: string}) => `
+  box-shadow:
+    0 0 0 1px ${theme.panelBackground || '#242730'},
+    0 0 0 3px ${theme.activeColor || '#1FBAD6'};
+`;
+
+const BarTrack = styled.div<{$selected?: boolean}>`
   flex: 1;
   height: 10px;
   background: ${props => props.theme.sliderBarBgd};
   border-radius: 2px;
-  overflow: hidden;
+  overflow: ${props => (props.$selected ? 'visible' : 'hidden')};
 `;
 
-const BarFill = styled.div<{$color: string; $width: number; $active?: boolean}>`
+const BarFill = styled.div<{
+  $color: string;
+  $width: number;
+  $active?: boolean;
+  $dimmed?: boolean;
+}>`
   height: 100%;
   width: ${props => props.$width}%;
   background: ${props => props.$color};
-  opacity: ${props => (props.$active ? 1 : 0.85)};
-  outline: ${props => (props.$active ? `1px solid ${props.theme.activeColor}` : 'none')};
+  border-radius: 2px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: ${props => (props.$active ? 1 : 0)};
+  opacity: ${props => (props.$active ? 1 : props.$dimmed ? 0.4 : 0.85)};
+  ${props => (props.$active ? selectedBinRing(props.theme) : '')}
 `;
 
 const BarValue = styled.div`
@@ -139,7 +156,7 @@ const VerticalBarBars = styled.div`
   overflow: visible;
 `;
 
-const VerticalBarCol = styled.div<{$clickable?: boolean}>`
+const VerticalBarCol = styled.div<{$clickable?: boolean; $selected?: boolean}>`
   flex: 1 1 0;
   min-width: 0;
   height: 100%;
@@ -148,6 +165,7 @@ const VerticalBarCol = styled.div<{$clickable?: boolean}>`
   align-items: center;
   gap: 4px;
   overflow: visible;
+  z-index: ${props => (props.$selected ? 1 : 0)};
   cursor: ${props => (props.$clickable ? 'pointer' : 'default')};
   &:focus-visible {
     outline: 1px solid ${props => props.theme.activeColor};
@@ -165,7 +183,7 @@ const VerticalBarValue = styled.div`
   text-align: center;
 `;
 
-const VerticalBarTrack = styled.div`
+const VerticalBarTrack = styled.div<{$selected?: boolean}>`
   flex: 1 1 auto;
   width: 100%;
   max-width: 32px;
@@ -174,15 +192,24 @@ const VerticalBarTrack = styled.div`
   align-items: flex-end;
   background: ${props => props.theme.sliderBarBgd};
   border-radius: 2px;
-  overflow: hidden;
+  overflow: ${props => (props.$selected ? 'visible' : 'hidden')};
 `;
 
-const VerticalBarFill = styled.div<{$color: string; $height: number; $active?: boolean}>`
+const VerticalBarFill = styled.div<{
+  $color: string;
+  $height: number;
+  $active?: boolean;
+  $dimmed?: boolean;
+}>`
   width: 100%;
   height: ${props => props.$height}%;
   background: ${props => props.$color};
-  opacity: ${props => (props.$active ? 1 : 0.85)};
-  outline: ${props => (props.$active ? `1px solid ${props.theme.activeColor}` : 'none')};
+  border-radius: 2px 2px 0 0;
+  box-sizing: border-box;
+  position: relative;
+  z-index: ${props => (props.$active ? 1 : 0)};
+  opacity: ${props => (props.$active ? 1 : props.$dimmed ? 0.4 : 0.85)};
+  ${props => (props.$active ? selectedBinRing(props.theme) : '')}
 `;
 
 const VerticalBarLabels = styled.div<{$height: number; $rotated?: boolean}>`
@@ -361,7 +388,7 @@ const HeatCell = styled.div<{
   font-size: 8px;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
-  overflow: hidden;
+  overflow: ${props => (props.$selected ? 'visible' : 'hidden')};
   box-sizing: border-box;
   border: 1px solid transparent;
   opacity: ${props => (props.$dimmed && !props.$selected ? 0.45 : 1)};
@@ -372,10 +399,8 @@ const HeatCell = styled.div<{
   ${props =>
     props.$selected
       ? `
-    border-color: ${props.theme.activeColor || '#1F71C5'};
-    box-shadow:
-      inset 0 0 0 2px ${props.theme.activeColor || '#1F71C5'},
-      0 0 0 1px ${props.theme.activeColor || '#1F71C5'};
+    border-color: ${props.theme.activeColor || '#1FBAD6'};
+    ${selectedBinRing(props.theme)}
     opacity: 1;
     z-index: 2;
   `
@@ -462,6 +487,17 @@ const LineSvg = styled.svg`
   display: block;
   overflow: visible;
   color: ${props => props.theme.textColor};
+`;
+
+const LineSelectedRing = styled.circle`
+  fill: none;
+  stroke: ${props => props.theme.activeColor || '#1FBAD6'};
+  stroke-width: 2;
+`;
+
+const LinePointHit = styled.circle<{$clickable?: boolean}>`
+  fill: transparent;
+  cursor: ${props => (props.$clickable ? 'pointer' : 'default')};
 `;
 
 const LINE_CHART_WIDTH = 320;
@@ -586,6 +622,7 @@ export function BarChartView({
                 <VerticalBarCol
                   key={bin.key}
                   $clickable={Boolean(activate)}
+                  $selected={selected}
                   role={activate ? 'button' : undefined}
                   tabIndex={activate ? 0 : undefined}
                   aria-pressed={activate ? selected : undefined}
@@ -594,11 +631,12 @@ export function BarChartView({
                   onKeyDown={event => onActivateKey(event, activate)}
                 >
                   <VerticalBarValue>{formatNumber(bin.value)}</VerticalBarValue>
-                  <VerticalBarTrack>
+                  <VerticalBarTrack $selected={selected}>
                     <VerticalBarFill
                       $color={bin.color}
                       $height={(bin.value / max) * 100}
                       $active={selected}
+                      $dimmed={Boolean(selectedKey) && !selected}
                     />
                   </VerticalBarTrack>
                 </VerticalBarCol>
@@ -630,6 +668,7 @@ export function BarChartView({
           <BarRow
             key={bin.key}
             $clickable={Boolean(activate)}
+            $selected={selected}
             role={activate ? 'button' : undefined}
             tabIndex={activate ? 0 : undefined}
             aria-pressed={activate ? selected : undefined}
@@ -638,8 +677,13 @@ export function BarChartView({
             onKeyDown={event => onActivateKey(event, activate)}
           >
             <BarLabel>{displayBinKey(String(bin.key))}</BarLabel>
-            <BarTrack>
-              <BarFill $color={bin.color} $width={(bin.value / max) * 100} $active={selected} />
+            <BarTrack $selected={selected}>
+              <BarFill
+                $color={bin.color}
+                $width={(bin.value / max) * 100}
+                $active={selected}
+                $dimmed={Boolean(selectedKey) && !selected}
+              />
             </BarTrack>
             <BarValue>{formatNumber(bin.value)}</BarValue>
           </BarRow>
@@ -692,11 +736,15 @@ function shortenAxisLabel(label: string, maxLen = 12): string {
 export function LineChartView({
   bins,
   xLabel,
-  yLabel
+  yLabel,
+  selectedKey,
+  onSelect
 }: {
   bins: ChartBin[];
   xLabel?: string;
   yLabel?: string;
+  selectedKey?: string;
+  onSelect?: ClickHandler;
 }): React.ReactElement {
   if (bins.length < 2) {
     return (
@@ -800,6 +848,37 @@ export function LineChartView({
           strokeLinecap="round"
           points={points.join(' ')}
         />
+        {bins.map((bin, i) => {
+          const x = LINE_MARGIN.left + (i / (bins.length - 1)) * plotW;
+          const y = LINE_MARGIN.top + (1 - (bin.value - min) / span) * plotH;
+          const selected = selectedKey === String(bin.key);
+          const activate = onSelect
+            ? () => onSelect(String(bin.key), {filterValue: bin.filterValue})
+            : undefined;
+          return (
+            <g
+              key={`pt-${bin.key}`}
+              role={activate ? 'button' : undefined}
+              tabIndex={activate ? 0 : undefined}
+              aria-pressed={activate ? selected : undefined}
+              aria-label={`${displayBinKey(String(bin.key))}: ${formatNumber(bin.value)}`}
+              onClick={activate}
+              onKeyDown={event => onActivateKey(event, activate)}
+            >
+              {selected ? <LineSelectedRing cx={x} cy={y} r={8} /> : null}
+              <circle
+                cx={x}
+                cy={y}
+                r={selected ? 4.5 : activate ? 3 : 0}
+                fill={stroke}
+                stroke={selected ? '#fff' : 'none'}
+                strokeWidth={selected ? 1.5 : 0}
+                pointerEvents="none"
+              />
+              {activate ? <LinePointHit cx={x} cy={y} r={10} $clickable /> : null}
+            </g>
+          );
+        })}
         {/* Axis names */}
         {yLabel ? (
           <text
@@ -1094,7 +1173,15 @@ export function ChartRenderer({
         />
       );
     case 'line':
-      return <LineChartView bins={data.bins} xLabel={data.xLabel} yLabel={data.yLabel} />;
+      return (
+        <LineChartView
+          bins={data.bins}
+          xLabel={data.xLabel}
+          yLabel={data.yLabel}
+          selectedKey={selectedKey}
+          onSelect={onSelect}
+        />
+      );
     case 'heatmap':
       return (
         <HeatmapView

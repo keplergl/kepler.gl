@@ -588,7 +588,9 @@ export default {
       resolutionDescription: 'High resolution is better for prints.',
       resolutionPlaceholder: 'Select resolution...',
       mapLegendTitle: 'Map Legend',
-      mapLegendAdd: 'Add legend on map'
+      mapLegendAdd: 'Add legend on map',
+      chartsTitle: 'Charts',
+      chartsAdd: 'Add charts on map'
     },
     exportVideo: {
       animation: 'Animation',

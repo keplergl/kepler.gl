@@ -463,7 +463,9 @@ export default {
       resolutionDescription: '印刷には高解像度が適しています。',
       resolutionPlaceholder: '解像度を選択...',
       mapLegendTitle: '地図の凡例',
-      mapLegendAdd: '地図に判例を追加'
+      mapLegendAdd: '地図に判例を追加',
+      chartsTitle: 'チャート',
+      chartsAdd: '地図にチャートを追加'
     },
     exportVideo: {
       animation: 'アニメーション',

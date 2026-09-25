@@ -467,7 +467,9 @@ export default {
       resolutionDescription: 'Для печати лучше использовать высокое разрешение',
       resolutionPlaceholder: 'Выберите разрешение...',
       mapLegendTitle: 'Легенда карты',
-      mapLegendAdd: 'Добавить легенду на карту'
+      mapLegendAdd: 'Добавить легенду на карту',
+      chartsTitle: 'Графики',
+      chartsAdd: 'Добавить графики на карту'
     },
     exportVideo: {
       animation: 'Анимация',

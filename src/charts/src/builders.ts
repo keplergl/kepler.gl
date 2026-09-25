@@ -290,7 +290,9 @@ export function propsForChartDatasetChange(
 ): Partial<ChartConfig> {
   const dataId = next.dataId ?? chart.dataId ?? null;
   const layerId = next.layerId ?? (isLayerChartConfig(chart) ? chart.layerId : undefined);
-  const type = isLayerChartConfig(chart) ? chart.layerChartType : chart.type;
+  const type: ChartType | LayerChartType = isLayerChartConfig(chart)
+    ? (chart.layerChartType as LayerChartType)
+    : (chart.type as ChartType);
   const rebuilt = createChart({
     type,
     dataId,
@@ -313,6 +315,7 @@ export function propsForChartDatasetChange(
       crossFilter
     };
   }
+  const prevDisplay = (chart.chartDisplay || {}) as Record<string, unknown>;
   return {
     ...rebuilt,
     id: chart.id,
@@ -324,10 +327,10 @@ export function propsForChartDatasetChange(
     ...(layerId ? {layerId} : {}),
     chartDisplay: {
       ...rebuilt.chartDisplay,
-      format: chart.chartDisplay?.format,
-      color: chart.chartDisplay?.color,
-      colorRange: chart.chartDisplay?.colorRange,
-      showCaption: chart.chartDisplay?.showCaption
+      format: prevDisplay.format,
+      color: prevDisplay.color,
+      colorRange: prevDisplay.colorRange,
+      showCaption: prevDisplay.showCaption
     },
     crossFilter
   };
