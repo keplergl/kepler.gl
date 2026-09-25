@@ -492,7 +492,7 @@ const LineSvg = styled.svg`
 const LineSelectedRing = styled.circle`
   fill: none;
   stroke: ${props => props.theme.activeColor || '#1FBAD6'};
-  stroke-width: 2;
+  stroke-width: 1.2;
 `;
 
 const LinePointHit = styled.circle<{$clickable?: boolean}>`
@@ -504,6 +504,10 @@ const LINE_CHART_WIDTH = 320;
 const LINE_CHART_HEIGHT = 160;
 const LINE_MARGIN = {top: 12, right: 12, bottom: 40, left: 56};
 const LINE_Y_AXIS_TITLE_X = 10;
+const LINE_POINT_R = 1;
+const LINE_POINT_SELECTED_R = 2.5;
+const LINE_POINT_RING_R = 5;
+const LINE_POINT_HIT_R = 8;
 
 type ClickHandler = (
   key: string,
@@ -865,17 +869,17 @@ export function LineChartView({
               onClick={activate}
               onKeyDown={event => onActivateKey(event, activate)}
             >
-              {selected ? <LineSelectedRing cx={x} cy={y} r={8} /> : null}
+              {selected ? <LineSelectedRing cx={x} cy={y} r={LINE_POINT_RING_R} /> : null}
               <circle
                 cx={x}
                 cy={y}
-                r={selected ? 4.5 : activate ? 3 : 0}
+                r={selected ? LINE_POINT_SELECTED_R : activate ? LINE_POINT_R : 0}
                 fill={stroke}
                 stroke={selected ? '#fff' : 'none'}
-                strokeWidth={selected ? 1.5 : 0}
+                strokeWidth={selected ? 1 : 0}
                 pointerEvents="none"
               />
-              {activate ? <LinePointHit cx={x} cy={y} r={10} $clickable /> : null}
+              {activate ? <LinePointHit cx={x} cy={y} r={LINE_POINT_HIT_R} $clickable /> : null}
             </g>
           );
         })}
