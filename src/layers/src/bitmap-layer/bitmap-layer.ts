@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {BitmapLayer as DeckBitmapLayer, PathLayer, ScatterplotLayer} from '@deck.gl/layers';
 import {
-  EditableGeoJsonLayer,
-  ModifyMode,
-  TranslateMode,
-  CompositeMode,
-  GeoJsonEditMode
-} from '@deck.gl-community/editable-layers';
+  BitmapLayer as DeckBitmapLayer,
+  IconLayer,
+  PathLayer,
+  ScatterplotLayer
+} from '@deck.gl/layers';
+import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
 
 import Layer from '../base-layer';
 import BitmapLayerIcon from './bitmap-layer-icon';
+import {BITMAP_BOUNDS_EDIT_MODE, BITMAP_MOVE_HANDLE_TYPE} from './bitmap-bounds-edit-mode';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import {
   LAYER_VIS_CONFIGS,
@@ -23,10 +23,21 @@ import {
 import {KeplerTable as KeplerDataset, Datasets as KeplerDatasets} from '@kepler.gl/table';
 import {VisConfigNumber, VisConfigBoolean} from '@kepler.gl/types';
 
-const EDIT_MODE = new CompositeMode([
-  new TranslateMode() as unknown as GeoJsonEditMode,
-  new ModifyMode() as unknown as GeoJsonEditMode
-]);
+const CORNER_HANDLE_COLOR: [number, number, number, number] = [255, 200, 0, 255];
+const MOVE_HANDLE_COLOR: [number, number, number, number] = [38, 181, 242, 255];
+const MOVE_HANDLE_RADIUS = 10;
+const CORNER_HANDLE_RADIUS = 6;
+
+const MOVE_HANDLE_ICON_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+      <g fill="#fff" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" stroke-linejoin="round">
+        <path d="M32 6l8 12h-5v10h-6V18h-5z"/>
+        <path d="M58 32l-12 8v-5H36v-6h10v-5z"/>
+        <path d="M32 58l-8-12h5V36h6v10h5z"/>
+        <path d="M6 32l12-8v5h10v6H18v5z"/>
+      </g>
+    </svg>`
+)}`;
 
 export type BitmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -503,7 +514,7 @@ export default class BitmapOverlayLayer extends Layer {
           id: `${this.id}-edit`,
           // @ts-ignore
           data: this._editFeatureCollection,
-          mode: EDIT_MODE,
+          mode: BITMAP_BOUNDS_EDIT_MODE,
           selectedFeatureIndexes: [0],
           pickable: true,
           pickingRadius: 12,
@@ -516,9 +527,16 @@ export default class BitmapOverlayLayer extends Layer {
           getLineColor: [255, 255, 255, 200],
           getLineWidth: 2,
           lineWidthUnits: 'pixels',
-          getEditHandlePointColor: [255, 200, 0, 255],
-          getEditHandlePointRadius: 6,
+          getEditHandlePointColor: (handle: {properties?: {editHandleType?: string}}) =>
+            handle?.properties?.editHandleType === BITMAP_MOVE_HANDLE_TYPE
+              ? MOVE_HANDLE_COLOR
+              : CORNER_HANDLE_COLOR,
+          getEditHandlePointRadius: (handle: {properties?: {editHandleType?: string}}) =>
+            handle?.properties?.editHandleType === BITMAP_MOVE_HANDLE_TYPE
+              ? MOVE_HANDLE_RADIUS
+              : CORNER_HANDLE_RADIUS,
           editHandlePointRadiusUnits: 'pixels',
+          editHandlePointRadiusMaxPixels: 12,
           onEdit: ({updatedData, editType}) => {
             this._editFeatureCollection = updatedData;
 
@@ -555,6 +573,26 @@ export default class BitmapOverlayLayer extends Layer {
               });
             }
           }
+        })
+      );
+
+      const [aW, aS, aE, aN] = activeBounds;
+      layers.push(
+        new IconLayer({
+          id: `${this.id}-move-handle`,
+          data: [{position: [(aW + aE) / 2, (aS + aN) / 2]}],
+          getPosition: (d: {position: [number, number]}) => d.position,
+          getIcon: () => ({
+            url: MOVE_HANDLE_ICON_URL,
+            width: 64,
+            height: 64,
+            anchorX: 32,
+            anchorY: 32
+          }),
+          getSize: 16,
+          sizeUnits: 'pixels',
+          pickable: false,
+          visible
         })
       );
     }
