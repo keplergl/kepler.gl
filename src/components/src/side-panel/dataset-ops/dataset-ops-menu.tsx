@@ -18,6 +18,12 @@ const MenuToggle = styled.div`
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  color: ${props => props.theme.panelHeaderIcon};
+  cursor: pointer;
+
+  &:hover {
+    color: ${props => props.theme.panelHeaderIconHover};
+  }
 `;
 
 const PortalAnchor = styled.div`
@@ -120,6 +126,31 @@ export function DatasetOpsMenu({
 
   if (!showOps && !showRemove) {
     return null;
+  }
+
+  if (!showOps && showRemove) {
+    const removeTooltipId = `remove-dataset-${datasetId}`;
+    const removeLabel = intl.formatMessage({id: 'datasetTitle.removeDataset'});
+    return (
+      <MenuToggle
+        className="dataset-action dataset-ops-menu__remove"
+        data-tip
+        data-for={removeTooltipId}
+        role="button"
+        aria-label={removeLabel}
+        onClick={e => {
+          e.stopPropagation();
+          removeDataset?.(datasetId);
+        }}
+      >
+        <Trash height="16px" />
+        <Tooltip id={removeTooltipId} effect="solid">
+          <span>
+            <FormattedMessage id="datasetTitle.removeDataset" />
+          </span>
+        </Tooltip>
+      </MenuToggle>
+    );
   }
 
   const opItems: MenuAction[] = [];

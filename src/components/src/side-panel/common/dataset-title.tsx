@@ -35,6 +35,11 @@ const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
     min-width: 0;
     overflow: hidden;
   }
+
+  .dataset-action {
+    color: ${props => props.theme.panelHeaderIcon};
+  }
+
   &:hover {
     cursor: ${props => (props.$clickable ? 'pointer' : 'auto')};
 
@@ -43,12 +48,11 @@ const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
     }
 
     .dataset-action {
-      color: ${props => props.theme.textColor};
       opacity: 1;
     }
 
     .dataset-action:hover {
-      color: ${props => props.theme.textColorHl};
+      color: ${props => props.theme.panelHeaderIconHover};
     }
   }
 `;

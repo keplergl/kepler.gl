@@ -35,6 +35,10 @@ function MockFieldSelector({
 }
 
 describe('DatasetOpsMenu', () => {
+  beforeEach(() => {
+    initApplicationConfig({enableDatasetOps: true});
+  });
+
   afterEach(() => {
     initApplicationConfig({enableDatasetOps: true});
   });
@@ -109,13 +113,16 @@ describe('DatasetOpsMenu', () => {
       <DatasetOpsMenu
         datasetId="cities"
         dataset={{type: 'local'}}
+        addGroupBy={jest.fn()}
+        addJoin={jest.fn()}
+        addSpatialJoin={jest.fn()}
         showDeleteDataset
         removeDataset={removeDataset}
       />
     );
-    fireEvent.click(deleteOnly.querySelector('.dataset-ops-menu__toggle') as HTMLElement);
+    expect(deleteOnly.querySelector('.dataset-ops-menu__toggle')).toBeNull();
     expect(document.querySelector('.dataset-ops-menu__group-by')).toBeNull();
-    fireEvent.click(document.querySelector('.dataset-ops-menu__remove') as HTMLButtonElement);
+    fireEvent.click(deleteOnly.querySelector('.dataset-ops-menu__remove') as HTMLElement);
     expect(removeDataset).toHaveBeenCalledWith('cities');
   });
 });
