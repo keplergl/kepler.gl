@@ -20,9 +20,9 @@ export const DATASET_OPS_AGGREGATION_OPTIONS: {id: DatasetOpAggregation; labelId
   {id: DATASET_OPS_AGGREGATIONS.countUnique, labelId: 'datasetOps.aggregation.countUnique'}
 ];
 
-const NUMERIC_FIELD_TYPES = new Set([ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real]);
-const CATEGORICAL_FIELD_TYPES = new Set([ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.h3]);
-const TIME_FIELD_TYPES = new Set([ALL_FIELD_TYPES.timestamp, ALL_FIELD_TYPES.date]);
+const NUMERIC_FIELD_TYPES = new Set<string>([ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real]);
+const CATEGORICAL_FIELD_TYPES = new Set<string>([ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.h3]);
+const TIME_FIELD_TYPES = new Set<string>([ALL_FIELD_TYPES.timestamp, ALL_FIELD_TYPES.date]);
 
 export function aggregationIdsForFieldType(type?: string): DatasetOpAggregation[] {
   if (type && NUMERIC_FIELD_TYPES.has(type)) {

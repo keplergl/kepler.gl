@@ -251,7 +251,7 @@ function JoinPanelFactory(
           </DatasetOpsSectionTitle>
           <SourceDataSelector
             datasets={rightDatasets}
-            dataId={op.rightDataId || undefined}
+            dataId={op.rightDataId}
             onSelect={value => {
               const dataId = typeof value === 'string' ? value : null;
               if (!dataId || !datasets[dataId]) {

@@ -8,7 +8,7 @@ import {Add} from '../../common/icons';
 import {Button} from '../../common/styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
-import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {UIStateActions, VisStateActions, ActionHandler, ActionHandlers} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 
 type AddDataButtonProps = {
@@ -26,7 +26,7 @@ type DatasetSectionProps = {
   showAddDataModal: () => void;
   refreshDataset?: ActionHandler<typeof VisStateActions.refreshDataset>;
   updateDatasetProps?: ActionHandler<typeof VisStateActions.updateDatasetProps>;
-  visStateActions?: typeof VisStateActions;
+  visStateActions?: ActionHandlers<typeof VisStateActions>;
 };
 
 const StyledDatasetTitle = styled.div<{$showDatasetList?: boolean}>`

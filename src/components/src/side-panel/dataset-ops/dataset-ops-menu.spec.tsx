@@ -3,6 +3,8 @@
 
 import React from 'react';
 import {fireEvent} from '@testing-library/react';
+import {Datasets} from '@kepler.gl/table';
+import {Field} from '@kepler.gl/types';
 import {initApplicationConfig} from '@kepler.gl/utils';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import {DatasetOpsMenu} from './dataset-ops-menu';
@@ -148,16 +150,18 @@ describe('GroupByPanel field selection', () => {
           resultLabel: 'cities grouped',
           isConfigActive: true
         }}
-        datasets={{
-          cities: {
-            id: 'cities',
-            label: 'cities',
-            fields: [
-              {name: 'region', displayName: 'region', type: 'string'},
-              {name: 'pop', displayName: 'pop', type: 'integer'}
-            ]
-          }
-        }}
+        datasets={
+          {
+            cities: {
+              id: 'cities',
+              label: 'cities',
+              fields: [
+                {name: 'region', displayName: 'region', type: 'string'},
+                {name: 'pop', displayName: 'pop', type: 'integer'}
+              ] as Field[]
+            }
+          } as unknown as Datasets
+        }
         setGroupByConfig={setGroupByConfig}
         runGroupBy={jest.fn()}
         removeDatasetOp={jest.fn()}
@@ -177,7 +181,7 @@ describe('GroupByPanel field selection', () => {
       name: `col_${i}`,
       displayName: `col_${i}`,
       type: 'integer'
-    }));
+    })) as Field[];
     const {container} = renderWithTheme(
       <GroupByPanel
         op={{
@@ -189,13 +193,7 @@ describe('GroupByPanel field selection', () => {
           resultLabel: 'wide grouped',
           isConfigActive: true
         }}
-        datasets={{
-          wide: {
-            id: 'wide',
-            label: 'wide',
-            fields
-          }
-        }}
+        datasets={{wide: {id: 'wide', label: 'wide', fields}} as unknown as Datasets}
         setGroupByConfig={jest.fn()}
         runGroupBy={jest.fn()}
         removeDatasetOp={jest.fn()}

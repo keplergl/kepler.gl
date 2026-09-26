@@ -4,11 +4,13 @@
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
 import {KeplerTable} from '@kepler.gl/table';
-import SchemaManager from '@kepler.gl/schemas';
+import SchemaManager, {VisState} from '@kepler.gl/schemas';
 import {drainTasksForTesting, succeedTaskWithValues} from '@kepler.gl/tasks';
 
 import visStateReducer from './vis-state';
 import {INITIAL_VIS_STATE} from './vis-state-updaters';
+
+const reduceVisState = visStateReducer as (state: VisState, action: unknown) => VisState;
 
 function makeTable(id: string, fields: {name: string; type: string}[], rows: any[][]) {
   const table = new KeplerTable({
@@ -26,7 +28,7 @@ function makeTable(id: string, fields: {name: string; type: string}[], rows: any
   return table;
 }
 
-function flushCreateTableTasks(state: typeof INITIAL_VIS_STATE) {
+function flushCreateTableTasks(state: VisState) {
   const tasks = drainTasksForTesting();
   return tasks.reduce((nextState, task) => {
     if (!String(task.label || '').includes('CREATE_TABLE_TASK')) {
@@ -37,7 +39,7 @@ function flushCreateTableTasks(state: typeof INITIAL_VIS_STATE) {
       table.updateSchema(payload.data);
       return table;
     });
-    return visStateReducer(nextState, succeedTaskWithValues(task, tables));
+    return reduceVisState(nextState, succeedTaskWithValues(task, tables));
   }, state);
 }
 
@@ -59,23 +61,23 @@ describe('dataset ops vis-state', () => {
         ['east', 40]
       ]
     );
-    let state = {
+    let state: VisState = {
       ...INITIAL_VIS_STATE,
       datasets: {cities}
     };
 
-    state = visStateReducer(state, VisStateActions.addGroupBy('cities'));
+    state = reduceVisState(state, VisStateActions.addGroupBy('cities'));
     expect(state.groupBys).toHaveLength(1);
     const opId = state.groupBys[0].id;
 
-    state = visStateReducer(
+    state = reduceVisState(
       state,
       VisStateActions.setGroupByConfig(opId, {
         fieldName: 'region',
         aggregations: {pop: 'sum'}
       })
     );
-    state = visStateReducer(state, VisStateActions.runGroupBy(opId));
+    state = reduceVisState(state, VisStateActions.runGroupBy(opId));
     state = flushCreateTableTasks(state);
 
     const resultId = state.groupBys[0].resultId;
@@ -97,24 +99,24 @@ describe('dataset ops vis-state', () => {
       ],
       [['west', 10]]
     );
-    let state = {
+    let state: VisState = {
       ...INITIAL_VIS_STATE,
       datasets: {cities}
     };
-    state = visStateReducer(state, VisStateActions.addGroupBy('cities'));
+    state = reduceVisState(state, VisStateActions.addGroupBy('cities'));
     const op = state.groupBys[0];
-    state = visStateReducer(
+    state = reduceVisState(
       state,
       VisStateActions.setGroupByConfig(op.id, {
         fieldName: 'region',
         aggregations: {pop: 'sum'}
       })
     );
-    state = visStateReducer(state, VisStateActions.runGroupBy(op.id));
+    state = reduceVisState(state, VisStateActions.runGroupBy(op.id));
     state = flushCreateTableTasks(state);
 
     expect(Object.keys(state.datasets)).toHaveLength(2);
-    state = visStateReducer(state, VisStateActions.removeDataset('cities'));
+    state = reduceVisState(state, VisStateActions.removeDataset('cities'));
     expect(state.datasets.cities).toBeUndefined();
     expect(state.datasets[op.resultId]).toBeTruthy();
     expect(state.groupBys).toHaveLength(0);
@@ -126,35 +128,35 @@ describe('dataset ops vis-state', () => {
       [{name: 'region', type: ALL_FIELD_TYPES.string}],
       [['west']]
     );
-    let state = {
+    let state: VisState = {
       ...INITIAL_VIS_STATE,
       datasets: {cities}
     };
-    state = visStateReducer(state, VisStateActions.addGroupBy('cities'));
+    state = reduceVisState(state, VisStateActions.addGroupBy('cities'));
     expect(state.groupBys[0].resultLabel).toMatch(/^group-by-\d{2}$/);
   });
 
   test('addJoin uses a short random result name', () => {
     const cities = makeTable('cities', [{name: 'id', type: ALL_FIELD_TYPES.string}], [['1']]);
-    let state = {
+    let state: VisState = {
       ...INITIAL_VIS_STATE,
       datasets: {cities}
     };
-    state = visStateReducer(state, VisStateActions.addJoin('cities'));
+    state = reduceVisState(state, VisStateActions.addJoin('cities'));
     expect(state.joins[0].resultLabel).toMatch(/^join-dataset-\d{2}$/);
   });
 
   test('setSpatialJoinConfig updates the predicate', () => {
     const polys = makeTable('polys', [{name: 'geom', type: ALL_FIELD_TYPES.geojson}], []);
-    let state = {
+    let state: VisState = {
       ...INITIAL_VIS_STATE,
       datasets: {polys}
     };
-    state = visStateReducer(state, VisStateActions.addSpatialJoin('polys'));
+    state = reduceVisState(state, VisStateActions.addSpatialJoin('polys'));
     const op = state.joins[0];
     expect(state.joins[0].predicate).toBe('intersects');
     expect(state.joins[0].resultLabel).toBe(`spatial-join-${state.joins[0].resultId}`);
-    state = visStateReducer(
+    state = reduceVisState(
       state,
       VisStateActions.setSpatialJoinConfig(op.id, {predicate: 'within'})
     );
@@ -191,13 +193,13 @@ describe('dataset ops vis-state', () => {
       ],
       [[0, 0, 10]]
     );
-    let state = {
+    let state: VisState = {
       ...INITIAL_VIS_STATE,
       datasets: {polys, pts}
     };
-    state = visStateReducer(state, VisStateActions.addSpatialJoin('polys'));
+    state = reduceVisState(state, VisStateActions.addSpatialJoin('polys'));
     const op = state.joins[0];
-    state = visStateReducer(
+    state = reduceVisState(
       state,
       VisStateActions.setSpatialJoinConfig(op.id, {
         rightDataId: 'pts',
@@ -206,11 +208,11 @@ describe('dataset ops vis-state', () => {
         aggregations: {value: 'sum'}
       })
     );
-    state = visStateReducer(state, VisStateActions.runSpatialJoin(op.id));
+    state = reduceVisState(state, VisStateActions.runSpatialJoin(op.id));
     state = flushCreateTableTasks(state);
 
     expect(state.datasets[op.resultId]).toBeTruthy();
-    state = visStateReducer(state, VisStateActions.removeDataset('pts'));
+    state = reduceVisState(state, VisStateActions.removeDataset('pts'));
     expect(state.datasets.pts).toBeUndefined();
     expect(state.datasets.polys).toBeTruthy();
     expect(state.datasets[op.resultId]).toBeTruthy();
@@ -226,20 +228,20 @@ describe('dataset ops vis-state', () => {
       ],
       [['west', 10]]
     );
-    let state = {
+    let state: VisState = {
       ...INITIAL_VIS_STATE,
       datasets: {cities}
     };
-    state = visStateReducer(state, VisStateActions.addGroupBy('cities'));
+    state = reduceVisState(state, VisStateActions.addGroupBy('cities'));
     const op = state.groupBys[0];
-    state = visStateReducer(
+    state = reduceVisState(
       state,
       VisStateActions.setGroupByConfig(op.id, {
         fieldName: 'region',
         aggregations: {pop: 'sum'}
       })
     );
-    state = visStateReducer(state, VisStateActions.runGroupBy(op.id));
+    state = reduceVisState(state, VisStateActions.runGroupBy(op.id));
     state = flushCreateTableTasks(state);
 
     const saved = SchemaManager.save({
@@ -249,7 +251,10 @@ describe('dataset ops vis-state', () => {
       uiState: {}
     });
     const derived = saved.datasets.find(dataset => dataset.data.id === op.resultId);
-    expect(derived?.data.metadata.derivedDataset.type).toBe('groupBy');
-    expect(saved.config.config.visState.groupBys[0].fieldName).toBe('region');
+    const derivedMeta = derived?.data.metadata as
+      | {derivedDataset?: {type?: string} | null}
+      | undefined;
+    expect(derivedMeta?.derivedDataset?.type).toBe('groupBy');
+    expect(saved.config.config.visState.groupBys?.[0].fieldName).toBe('region');
   });
 });
