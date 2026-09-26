@@ -40,7 +40,9 @@ const expectedVisStateEntries = [
   'splitMaps',
   'animationConfig',
   'editor',
-  'layerOrder'
+  'layerOrder',
+  'groupBys',
+  'joins'
 ];
 
 test('#visStateSchema -> v1 -> save layers', t => {
