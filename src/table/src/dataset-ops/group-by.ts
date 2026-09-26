@@ -10,6 +10,12 @@ import {copyFieldAs, makeResultProtoDataset, uniqueColumnName} from './proto-dat
 import {findFieldByName, rowCount, rowValue} from './table-helpers';
 import {DatasetOpsTable, GroupByDatasetConfig} from './types';
 
+const NULL_GROUP_KEY = Symbol('dataset-ops-null-group');
+
+function groupMapKey(key: unknown): string | symbol {
+  return key === null || key === undefined ? NULL_GROUP_KEY : String(key);
+}
+
 export function groupByDataset(
   dataset: DatasetOpsTable,
   config: GroupByDatasetConfig
@@ -22,12 +28,12 @@ export function groupByDataset(
   const aggregationEntries = Object.entries(config.aggregations).filter(
     ([fieldName]) => fieldName !== groupField.name
   );
-  const grouped = new Map<string, {key: unknown; indexes: number[]}>();
+  const grouped = new Map<string | symbol, {key: unknown; indexes: number[]}>();
   const n = rowCount(dataset);
 
   for (let i = 0; i < n; i++) {
     const key = rowValue(dataset, i, groupField);
-    const mapKey = key === null || key === undefined ? '__null__' : String(key);
+    const mapKey = groupMapKey(key);
     const existing = grouped.get(mapKey);
     if (existing) {
       existing.indexes.push(i);

@@ -97,6 +97,36 @@ describe('dataset-ops engine', () => {
     expect(byRegion.east).toEqual(['east', 40, 1]);
   });
 
+  test('groupByDataset keeps null groups distinct from the string __null__', () => {
+    const dataset = makeTable({
+      id: 'cities',
+      fields: [
+        {name: 'region', type: ALL_FIELD_TYPES.string},
+        {name: 'pop', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [null, 1],
+        [null, 2],
+        ['__null__', 10],
+        ['__null__', 20],
+        ['west', 3]
+      ]
+    });
+
+    const result = groupByDataset(dataset, {
+      fieldName: 'region',
+      aggregations: {pop: DATASET_OPS_AGGREGATIONS.sum}
+    });
+
+    const byRegion = Object.fromEntries(
+      result.data.rows.map(row => [row[0] === null ? 'null' : String(row[0]), row])
+    );
+    expect(result.data.rows).toHaveLength(3);
+    expect(byRegion.null).toEqual([null, 3]);
+    expect(byRegion.__null__).toEqual(['__null__', 30]);
+    expect(byRegion.west).toEqual(['west', 3]);
+  });
+
   test('groupByDataset merges geojson geometries so the result stays mappable', () => {
     const dataset = makeTable({
       id: 'shapes',
