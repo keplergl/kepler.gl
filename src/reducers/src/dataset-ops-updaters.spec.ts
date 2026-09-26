@@ -88,7 +88,7 @@ describe('dataset ops vis-state', () => {
     expect(state.datasets[resultId].dataContainer.numRows()).toBe(2);
   });
 
-  test('delete parent removes derived child', () => {
+  test('delete parent keeps derived child snapshot', () => {
     const cities = makeTable(
       'cities',
       [
@@ -116,8 +116,81 @@ describe('dataset ops vis-state', () => {
     expect(Object.keys(state.datasets)).toHaveLength(2);
     state = visStateReducer(state, VisStateActions.removeDataset('cities'));
     expect(state.datasets.cities).toBeUndefined();
-    expect(state.datasets[op.resultId]).toBeUndefined();
+    expect(state.datasets[op.resultId]).toBeTruthy();
     expect(state.groupBys).toHaveLength(0);
+  });
+
+  test('setSpatialJoinConfig updates the predicate', () => {
+    const polys = makeTable('polys', [{name: 'geom', type: ALL_FIELD_TYPES.geojson}], []);
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets: {polys}
+    };
+    state = visStateReducer(state, VisStateActions.addSpatialJoin('polys'));
+    const op = state.joins[0];
+    expect(state.joins[0].predicate).toBe('intersects');
+    expect(state.joins[0].resultLabel).toBe(`spatial-join-${state.joins[0].resultId}`);
+    state = visStateReducer(
+      state,
+      VisStateActions.setSpatialJoinConfig(op.id, {predicate: 'within'})
+    );
+    expect(state.joins[0].predicate).toBe('within');
+  });
+
+  test('delete spatial join source keeps result snapshot', () => {
+    const polygon = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-10, -10],
+          [10, -10],
+          [10, 10],
+          [-10, 10],
+          [-10, -10]
+        ]
+      ]
+    };
+    const polys = makeTable(
+      'polys',
+      [
+        {name: 'name', type: ALL_FIELD_TYPES.string},
+        {name: 'geom', type: ALL_FIELD_TYPES.geojson}
+      ],
+      [['west', polygon]]
+    );
+    const pts = makeTable(
+      'pts',
+      [
+        {name: 'lat', type: ALL_FIELD_TYPES.real},
+        {name: 'lng', type: ALL_FIELD_TYPES.real},
+        {name: 'value', type: ALL_FIELD_TYPES.integer}
+      ],
+      [[0, 0, 10]]
+    );
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets: {polys, pts}
+    };
+    state = visStateReducer(state, VisStateActions.addSpatialJoin('polys'));
+    const op = state.joins[0];
+    state = visStateReducer(
+      state,
+      VisStateActions.setSpatialJoinConfig(op.id, {
+        rightDataId: 'pts',
+        leftGeo: {kind: 'geojson', fieldName: 'geom'},
+        rightGeo: {kind: 'latlng', latField: 'lat', lngField: 'lng'},
+        aggregations: {value: 'sum'}
+      })
+    );
+    state = visStateReducer(state, VisStateActions.runSpatialJoin(op.id));
+    state = flushCreateTableTasks(state);
+
+    expect(state.datasets[op.resultId]).toBeTruthy();
+    state = visStateReducer(state, VisStateActions.removeDataset('pts'));
+    expect(state.datasets.pts).toBeUndefined();
+    expect(state.datasets.polys).toBeTruthy();
+    expect(state.datasets[op.resultId]).toBeTruthy();
+    expect(state.joins).toHaveLength(0);
   });
 
   test('save/load roundtrip keeps derivedDataset metadata and drafts', () => {

@@ -21,16 +21,6 @@ export type DerivedDatasetOpResult = {
   proto?: ProtoDataset;
 };
 
-export function collectDerivedDescendants(
-  datasets: VisState['datasets'],
-  parentId: string
-): string[] {
-  const children = Object.values(datasets)
-    .filter(dataset => dataset.metadata?.derivedDataset?.sourceDataIds?.includes(parentId))
-    .map(dataset => dataset.id);
-  return children.concat(children.flatMap(childId => collectDerivedDescendants(datasets, childId)));
-}
-
 function deactivateOps<T extends {isConfigActive?: boolean}>(ops: T[]): T[] {
   return ops.map(op => ({...op, isConfigActive: false}));
 }
@@ -41,6 +31,10 @@ function defaultGroupByLabel(datasetLabel: string, fieldName?: string | null): s
 
 function defaultJoinLabel(leftLabel: string, rightLabel?: string | null): string {
   return rightLabel ? `${leftLabel} join ${rightLabel}` : `${leftLabel} join`;
+}
+
+function defaultSpatialJoinLabel(resultId: string): string {
+  return `spatial-join-${resultId}`;
 }
 
 export function addGroupByUpdater(
@@ -146,8 +140,12 @@ export function addJoinUpdater(
     aggregations: {},
     leftGeo: implementation === 'spatial' ? suggestSpatialGeo(dataset.fields) : null,
     rightGeo: null,
+    predicate: implementation === 'spatial' ? 'intersects' : undefined,
     resultId,
-    resultLabel: defaultJoinLabel(dataset.label),
+    resultLabel:
+      implementation === 'spatial'
+        ? defaultSpatialJoinLabel(resultId)
+        : defaultJoinLabel(dataset.label),
     isConfigActive: true,
     error: null
   };
@@ -251,6 +249,8 @@ export function executeSpatialJoin(
       leftGeo: op.leftGeo,
       rightGeo: op.rightGeo,
       aggregations: op.aggregations,
+      leftColumns: op.leftColumns,
+      predicate: op.predicate || 'intersects',
       label: op.resultLabel,
       resultId: op.resultId,
       operationId: op.id

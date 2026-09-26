@@ -7,7 +7,10 @@ import {latLngToCell} from '@kepler.gl/common-utils';
 import KeplerTable from './kepler-table';
 import {
   DATASET_OPS_AGGREGATIONS,
+  aggregationOptionsForField,
+  defaultAggregationsForFields,
   groupByDataset,
+  isDatasetOpsAggregationField,
   isTabularDatasetForOps,
   joinDatasets,
   spatialJoinDatasets
@@ -190,6 +193,36 @@ describe('dataset-ops engine', () => {
     expect(result.metadata.derivedDataset.type).toBe('spatialJoin');
   });
 
+  test('spatialJoinDatasets leftColumns omits unselected attributes and keeps geometry', () => {
+    const polygons = makeTable({
+      id: 'polys',
+      fields: [
+        {name: 'name', type: ALL_FIELD_TYPES.string},
+        {name: 'geom', type: ALL_FIELD_TYPES.geojson}
+      ],
+      rows: [['west', square(-10, -10, 10, 10)]]
+    });
+    const points = makeTable({
+      id: 'pts',
+      fields: [
+        {name: 'lat', type: ALL_FIELD_TYPES.real},
+        {name: 'lng', type: ALL_FIELD_TYPES.real},
+        {name: 'value', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [[0, 0, 10]]
+    });
+
+    const result = spatialJoinDatasets(polygons, points, {
+      leftGeo: {kind: 'geojson', fieldName: 'geom'},
+      rightGeo: {kind: 'latlng', latField: 'lat', lngField: 'lng'},
+      aggregations: {value: DATASET_OPS_AGGREGATIONS.sum},
+      leftColumns: []
+    });
+
+    expect(result.data.fields.map(field => field.name)).toEqual(['geom', 'count', 'value_sum']);
+    expect(result.data.rows[0]).toHaveLength(3);
+  });
+
   test('spatialJoinDatasets joins points contained by H3 cells', () => {
     const cell = latLngToCell(37.77, -122.42, 8);
     const hexes = makeTable({
@@ -251,10 +284,89 @@ describe('dataset-ops engine', () => {
     expect(result.data.rows[0][2]).toBe(4);
   });
 
+  test('spatialJoinDatasets intersects overlapping polygons and not disjoint ones', () => {
+    const left = makeTable({
+      id: 'left',
+      fields: [{name: 'geom', type: ALL_FIELD_TYPES.geojson}],
+      rows: [[square(-10, -10, 10, 10)]]
+    });
+    const right = makeTable({
+      id: 'right',
+      fields: [
+        {name: 'geom', type: ALL_FIELD_TYPES.geojson},
+        {name: 'value', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [square(0, 0, 20, 20), 3],
+        [square(40, 40, 50, 50), 9]
+      ]
+    });
+
+    const result = spatialJoinDatasets(left, right, {
+      leftGeo: {kind: 'geojson', fieldName: 'geom'},
+      rightGeo: {kind: 'geojson', fieldName: 'geom'},
+      aggregations: {value: DATASET_OPS_AGGREGATIONS.sum},
+      predicate: 'intersects'
+    });
+
+    expect(result.data.rows[0][1]).toBe(1);
+    expect(result.data.rows[0][2]).toBe(3);
+  });
+
+  test('spatialJoinDatasets within matches when the target is inside the join geometry', () => {
+    const inner = makeTable({
+      id: 'inner',
+      fields: [{name: 'geom', type: ALL_FIELD_TYPES.geojson}],
+      rows: [[square(-1, -1, 1, 1)]]
+    });
+    const outer = makeTable({
+      id: 'outer',
+      fields: [
+        {name: 'geom', type: ALL_FIELD_TYPES.geojson},
+        {name: 'value', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [[square(-10, -10, 10, 10), 7]]
+    });
+
+    const result = spatialJoinDatasets(inner, outer, {
+      leftGeo: {kind: 'geojson', fieldName: 'geom'},
+      rightGeo: {kind: 'geojson', fieldName: 'geom'},
+      aggregations: {value: DATASET_OPS_AGGREGATIONS.sum},
+      predicate: 'within'
+    });
+
+    expect(result.data.rows[0][1]).toBe(1);
+    expect(result.data.rows[0][2]).toBe(7);
+  });
+
   test('isTabularDatasetForOps skips tiles and disabled datasets', () => {
     expect(isTabularDatasetForOps({type: 'local'})).toBe(true);
     expect(isTabularDatasetForOps({type: ''})).toBe(true);
     expect(isTabularDatasetForOps({type: 'vector-tile'})).toBe(false);
     expect(isTabularDatasetForOps({type: 'local', disableDataOperation: true})).toBe(false);
+  });
+
+  test('aggregation options depend on field type', () => {
+    const ids = (type: string) => aggregationOptionsForField({type}).map(option => option.id);
+
+    expect(ids(ALL_FIELD_TYPES.integer)).toEqual([
+      'count',
+      'sum',
+      'average',
+      'maximum',
+      'minimum',
+      'median',
+      'countUnique'
+    ]);
+    expect(ids(ALL_FIELD_TYPES.boolean)).toEqual(['count', 'sum', 'average', 'countUnique']);
+    expect(ids(ALL_FIELD_TYPES.string)).toEqual(['count', 'countUnique']);
+    expect(ids(ALL_FIELD_TYPES.timestamp)).toEqual(['count', 'maximum', 'minimum', 'countUnique']);
+    expect(ids(ALL_FIELD_TYPES.geojson)).toEqual(['count']);
+    expect(isDatasetOpsAggregationField({type: ALL_FIELD_TYPES.real})).toBe(true);
+    expect(isDatasetOpsAggregationField({type: ALL_FIELD_TYPES.boolean})).toBe(true);
+    expect(isDatasetOpsAggregationField({type: ALL_FIELD_TYPES.geojson})).toBe(false);
+    expect(
+      defaultAggregationsForFields([{name: 'geom', type: ALL_FIELD_TYPES.geojson} as any])
+    ).toEqual({});
   });
 });

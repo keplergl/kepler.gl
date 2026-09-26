@@ -388,6 +388,7 @@ export default {
   },
   datasetTitle: {
     showDataTable: 'Show data table',
+    moreSettings: 'More settings',
     removeDataset: 'Remove dataset',
     refreshDataset: 'Refresh dataset',
     refreshFailed: 'Refresh failed',
@@ -403,19 +404,54 @@ export default {
   datasetOps: {
     groupBy: 'Group by',
     join: 'Join',
-    spatialJoin: 'Spatial join',
+    spatialJoin: 'Spatial Join',
+    spatialJoinHelp:
+      'Combines columns from one dataset to another based on their spatial relationship. To perform spatial join, select geo columns in both datasets and select the type of spatial join operation to perform. The results will be a new joined dataset.',
     groupByField: 'Group by field',
     aggregations: 'Aggregations',
+    aggregationRules: 'Aggregation Rules',
+    columnsToInclude: 'Columns to include',
+    columnsToIncludeHelp: 'Select and modify columns to be included in the joined dataset.',
+    selectAll: 'Select All',
+    unselectAll: 'Unselect All',
     resultName: 'Result name',
+    back: 'Back',
     run: 'Run',
     cancel: 'Cancel',
     leftKey: 'Left key',
     rightKey: 'Right key',
     joinTypeLabel: 'Join type',
+    targetDataset: 'Target Dataset',
+    targetDatasetHelp:
+      'Select the dataset that will keep one output row per feature. Matching features from the join dataset are aggregated onto that row.',
+    joinDataset: 'Join Dataset',
+    joinDatasetHelp:
+      'Select the dataset that will be combined into the target dataset based on the spatial relationship.',
+    joinOperation: 'Join Operation',
+    joinOperationHelp:
+      'Intersects: they share any space. Within: target is completely inside join. Equals: they occupy the same space. Crosses: they share some interior points but not all. Overlaps: they share space and neither contains the other. Touches: they share a boundary but not interiors.',
+    geometryColumn: 'Geometry Column',
     leftGeometry: 'Left geometry',
     rightGeometry: 'Right geometry',
     predicate: 'Predicate',
-    contains: 'Contains',
+    predicateOption: {
+      intersects: 'Intersects',
+      equals: 'Equals',
+      crosses: 'Crosses',
+      overlaps: 'Overlaps',
+      within: 'Within',
+      touches: 'Touches'
+    },
+    predicateHelp: {
+      intersects: 'True when the geometries share any interior or boundary.',
+      equals: 'True when the geometries occupy the same space.',
+      crosses:
+        'True when the geometries share interior space but neither contains the other, typically a line crossing a polygon or another line.',
+      overlaps:
+        'True when the geometries share interior space, have the same dimension, and neither contains the other.',
+      within: 'True when the target geometry is completely inside the join geometry.',
+      touches: 'True when the geometries share a boundary but not their interiors.'
+    },
     joinType: {
       left: 'Left',
       inner: 'Inner',

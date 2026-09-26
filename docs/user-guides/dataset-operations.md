@@ -6,7 +6,7 @@ Open the **⋯** menu on a local dataset in the Layers catalog to:
 
 - **Group by** one column and aggregate the rest
 - **Join** two tables on a shared key (left, inner, or full)
-- **Spatial join** left geometries to right geometries with a **contains** predicate
+- **Spatial join** a **target dataset** to a **join dataset** with a spatial join operation (intersects, equals, crosses, overlaps, within, touches)
 
 Operations run entirely in the browser. They are available for local (and remote file) tables, and are hidden for vector tiles, raster tiles, WMS, and 3D tiles.
 
@@ -28,20 +28,29 @@ Null keys never match. Duplicate keys produce one output row per match.
 
 ## Spatial join
 
-Each left feature becomes one output row. Matching right features are aggregated onto that row (including a `count` of matches).
+Each **target** feature becomes one output row. Matching **join** features are aggregated onto that row (including a `count` of matches).
 
-Supported **contains** cases:
+The panel is arranged like this:
 
-| Left | Right | How |
-| --- | --- | --- |
-| Polygon / MultiPolygon | Point (lat/lng, GeoJSON Point) | Point in polygon |
-| H3 index | Point | Point’s cell equals the stored index |
-| Polygon | Polygon | Right centroid inside left polygon |
+1. **Target Dataset** — output rows and target geometry
+2. **Join Operation** — spatial predicate
+3. **Join Dataset** — features to match and aggregate
 
-Distance joins, topology predicates (touches, overlaps, crosses), and geometry merge are not included. For SQL predicates, use the [SQL/DuckDB Data Explorer](./sql-data-explorer.md).
+Choose a **Join Operation**:
+
+| Predicate | Match when |
+| --- | --- |
+| Intersects | Geometries share any interior or boundary |
+| Equals | Geometries occupy the same space |
+| Crosses | Geometries share interior space but neither contains the other (typically a line vs polygon/line) |
+| Overlaps | Same-dimension geometries share interior space and neither contains the other |
+| Within | Target is completely inside join |
+| Touches | Geometries share a boundary but not their interiors |
+
+Distance joins and geometry merge are not included. For SQL predicates, use the [SQL/DuckDB Data Explorer](./sql-data-explorer.md).
 
 ## Saving maps
 
-Result tables are saved like any other dataset. Draft operation panels are stored in the map config so you can reopen them. Re-running an operation with the same result name replaces that table so existing layers keep their bindings.
+Result tables are snapshots. Deleting a source dataset does not remove the result. Re-running an operation with the same result name replaces that table so existing layers keep their bindings.
 
 Disable the UI with `enableDatasetOps: false` in `initApplicationConfig`.

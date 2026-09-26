@@ -4,14 +4,24 @@
 import React from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {DATASET_OPS_AGGREGATION_OPTIONS, DatasetOpAggregation, GroupByOp} from '@kepler.gl/table';
+import {
+  DatasetOpAggregation,
+  GroupByOp,
+  aggregationOptionsForField,
+  defaultAggregationForField,
+  isDatasetOpsAggregationField
+} from '@kepler.gl/table';
 import {Datasets} from '@kepler.gl/table';
 import {VisStateActions, ActionHandler} from '@kepler.gl/actions';
 
 import FieldSelectorFactory from '../../common/field-selector';
 import ItemSelector from '../../common/item-selector/item-selector';
 import {PanelLabel, SidePanelSection} from '../../common/styled-components';
-import DatasetOpPanel, {ResultNameInput, fieldNameFromSelector} from './dataset-op-panel';
+import DatasetOpPanel, {
+  ResultNameInput,
+  ScrollableColumnList,
+  fieldNameFromSelector
+} from './dataset-op-panel';
 
 const AggRow = styled.div`
   display: flex;
@@ -81,40 +91,47 @@ function GroupByPanelFactory(FieldSelector: ReturnType<typeof FieldSelectorFacto
           <PanelLabel>
             <FormattedMessage id="datasetOps.aggregations" />
           </PanelLabel>
-          {dataset.fields
-            .filter(field => field.name !== op.fieldName)
-            .map(field => {
-              const selected = op.aggregations[field.name];
-              return (
-                <AggRow key={field.name}>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(selected)}
-                    onChange={e =>
-                      onToggleAgg(
-                        field.name,
-                        e.target.checked,
-                        selected || DATASET_OPS_AGGREGATION_OPTIONS[0].id
-                      )
-                    }
-                  />
-                  <FieldName>{field.displayName || field.name}</FieldName>
-                  <ItemSelector
-                    options={DATASET_OPS_AGGREGATION_OPTIONS}
-                    selectedItems={
-                      DATASET_OPS_AGGREGATION_OPTIONS.find(option => option.id === selected) || null
-                    }
-                    displayOption={option => option.id}
-                    getOptionValue={option => option.id}
-                    onChange={value =>
-                      onToggleAgg(field.name, true, String(value) as DatasetOpAggregation)
-                    }
-                    disabled={!selected}
-                    searchable={false}
-                  />
-                </AggRow>
-              );
-            })}
+          <ScrollableColumnList>
+            {dataset.fields
+              .filter(field => field.name !== op.fieldName && isDatasetOpsAggregationField(field))
+              .map(field => {
+                const options = aggregationOptionsForField(field);
+                const selected = op.aggregations[field.name];
+                const selectedOption =
+                  options.find(option => option.id === selected) ||
+                  options.find(option => option.id === defaultAggregationForField(field)) ||
+                  options[0] ||
+                  null;
+                return (
+                  <AggRow key={field.name}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(selected)}
+                      onChange={e =>
+                        onToggleAgg(
+                          field.name,
+                          e.target.checked,
+                          selected || defaultAggregationForField(field)
+                        )
+                      }
+                    />
+                    <FieldName>{field.displayName || field.name}</FieldName>
+                    <ItemSelector
+                      options={options}
+                      selectedItems={selectedOption}
+                      displayOption={option => option.id}
+                      getOptionValue={option => option.id}
+                      onChange={value =>
+                        onToggleAgg(field.name, true, String(value) as DatasetOpAggregation)
+                      }
+                      disabled={!selected}
+                      searchable={false}
+                      multiSelect={false}
+                    />
+                  </AggRow>
+                );
+              })}
+          </ScrollableColumnList>
         </SidePanelSection>
         <ResultNameInput
           value={op.resultLabel}

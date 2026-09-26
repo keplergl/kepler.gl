@@ -206,7 +206,6 @@ import {
   addGroupByUpdater,
   addJoinUpdater,
   addSpatialJoinUpdater,
-  collectDerivedDescendants,
   executeGroupBy,
   executeJoin,
   executeSpatialJoin,
@@ -2907,13 +2906,10 @@ export function removeDatasetUpdater<T extends VisState>(
     return state;
   }
 
-  const descendantIds = collectDerivedDescendants(datasets, datasetKey);
-  const idsToRemove = [datasetKey, ...descendantIds];
-  let nextState = removeOpsForDatasets(state, idsToRemove) as T;
-  for (const id of idsToRemove) {
-    nextState = removeSingleDatasetUpdater(nextState, id);
-  }
-  return nextState;
+  // Derived tables are snapshots: keep them when a source dataset is deleted.
+  // Only drop in-progress group-by / join drafts that referenced this dataset.
+  const nextState = removeOpsForDatasets(state, [datasetKey]) as T;
+  return removeSingleDatasetUpdater(nextState, datasetKey);
 }
 
 function removeSingleDatasetUpdater<T extends VisState>(state: T, datasetKey: string): T {
@@ -5952,10 +5948,6 @@ function findChildDatasetIds(value) {
     return childDataIds.length ? childDataIds : null;
   }
 
-  if (value?.metadata?.derivedDataset) {
-    return value.id || null;
-  }
-
   return value?.newDataset?.info.id || null;
 }
 
@@ -6016,18 +6008,13 @@ export function prepareStateForDatasetReplace<T extends VisState>(
   dataId: string,
   dataIdToUse: string
 ): T {
-  const derivedChildIds = collectDerivedDescendants(state.datasets, dataId);
-  const stateWithoutChildren = derivedChildIds.reduce(
-    (accu, childId) => removeDatasetUpdater(accu, {dataId: childId}),
-    state
-  );
-  const serializedState = serializeVisState(stateWithoutChildren, stateWithoutChildren.schema);
-  const nextState = replaceDatasetAndDeps(stateWithoutChildren, dataId, dataIdToUse);
+  const serializedState = serializeVisState(state, state.schema);
+  const nextState = replaceDatasetAndDeps(state, dataId, dataIdToUse);
   // make a copy of layerOrder, because layer id will be removed from it by calling removeLayerUpdater
-  const preserveLayerOrder = [...stateWithoutChildren.layerOrder];
+  const preserveLayerOrder = [...state.layerOrder];
 
   // preserve dataset order
-  nextState.preserveDatasetOrder = Object.keys(stateWithoutChildren.datasets).map(d =>
+  nextState.preserveDatasetOrder = Object.keys(state.datasets).map(d =>
     d === dataId ? dataIdToUse : d
   );
 

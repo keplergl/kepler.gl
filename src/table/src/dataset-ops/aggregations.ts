@@ -18,14 +18,56 @@ export const DATASET_OPS_AGGREGATION_OPTIONS: {id: DatasetOpAggregation; labelId
   {id: DATASET_OPS_AGGREGATIONS.countUnique, labelId: 'datasetOps.aggregation.countUnique'}
 ];
 
+const NUMERIC_FIELD_TYPES = new Set([ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real]);
+const CATEGORICAL_FIELD_TYPES = new Set([ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.h3]);
+const TIME_FIELD_TYPES = new Set([ALL_FIELD_TYPES.timestamp, ALL_FIELD_TYPES.date]);
+
+export function aggregationIdsForFieldType(type?: string): DatasetOpAggregation[] {
+  if (type && NUMERIC_FIELD_TYPES.has(type)) {
+    return DATASET_OPS_AGGREGATION_OPTIONS.map(option => option.id);
+  }
+  if (type === ALL_FIELD_TYPES.boolean) {
+    return [
+      DATASET_OPS_AGGREGATIONS.count,
+      DATASET_OPS_AGGREGATIONS.sum,
+      DATASET_OPS_AGGREGATIONS.average,
+      DATASET_OPS_AGGREGATIONS.countUnique
+    ];
+  }
+  if (type && TIME_FIELD_TYPES.has(type)) {
+    return [
+      DATASET_OPS_AGGREGATIONS.count,
+      DATASET_OPS_AGGREGATIONS.maximum,
+      DATASET_OPS_AGGREGATIONS.minimum,
+      DATASET_OPS_AGGREGATIONS.countUnique
+    ];
+  }
+  if (type && CATEGORICAL_FIELD_TYPES.has(type)) {
+    return [DATASET_OPS_AGGREGATIONS.count, DATASET_OPS_AGGREGATIONS.countUnique];
+  }
+  return [DATASET_OPS_AGGREGATIONS.count];
+}
+
+export function aggregationOptionsForField(field: {
+  type?: string;
+}): typeof DATASET_OPS_AGGREGATION_OPTIONS {
+  const allowed = new Set(aggregationIdsForFieldType(field.type));
+  return DATASET_OPS_AGGREGATION_OPTIONS.filter(option => allowed.has(option.id));
+}
+
+export function isDatasetOpsAggregationField(field: {type?: string}): boolean {
+  return aggregationIdsForFieldType(field.type).length > 1;
+}
+
 export function defaultAggregationForField(field: Field): DatasetOpAggregation {
+  const allowed = aggregationIdsForFieldType(field.type);
   if (field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real) {
     return DATASET_OPS_AGGREGATIONS.average;
   }
-  if (field.type === ALL_FIELD_TYPES.string) {
+  if (field.type === ALL_FIELD_TYPES.string || field.type === ALL_FIELD_TYPES.h3) {
     return DATASET_OPS_AGGREGATIONS.countUnique;
   }
-  return DATASET_OPS_AGGREGATIONS.count;
+  return allowed[0];
 }
 
 export function defaultAggregationsForFields(
@@ -35,7 +77,7 @@ export function defaultAggregationsForFields(
   const excluded = new Set(excludeNames);
   const aggregations: Record<string, DatasetOpAggregation> = {};
   fields.forEach(field => {
-    if (!excluded.has(field.name)) {
+    if (!excluded.has(field.name) && isDatasetOpsAggregationField(field)) {
       aggregations[field.name] = defaultAggregationForField(field);
     }
   });

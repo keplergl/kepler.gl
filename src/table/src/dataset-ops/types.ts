@@ -63,10 +63,37 @@ export type SpatialGeoSource =
   | {kind: 'h3'; fieldName: string}
   | {kind: 'latlng'; latField: string; lngField: string};
 
+export function fieldNamesForGeoSource(geo: SpatialGeoSource): string[] {
+  return geo.kind === 'latlng' ? [geo.latField, geo.lngField] : [geo.fieldName];
+}
+
+export const SPATIAL_JOIN_PREDICATES = {
+  intersects: 'intersects',
+  equals: 'equals',
+  crosses: 'crosses',
+  overlaps: 'overlaps',
+  within: 'within',
+  touches: 'touches'
+} as const;
+
+export type SpatialJoinPredicate =
+  (typeof SPATIAL_JOIN_PREDICATES)[keyof typeof SPATIAL_JOIN_PREDICATES];
+
+export const SPATIAL_JOIN_PREDICATE_OPTIONS: {id: SpatialJoinPredicate; labelId: string}[] = [
+  {id: 'intersects', labelId: 'datasetOps.predicateOption.intersects'},
+  {id: 'equals', labelId: 'datasetOps.predicateOption.equals'},
+  {id: 'crosses', labelId: 'datasetOps.predicateOption.crosses'},
+  {id: 'overlaps', labelId: 'datasetOps.predicateOption.overlaps'},
+  {id: 'within', labelId: 'datasetOps.predicateOption.within'},
+  {id: 'touches', labelId: 'datasetOps.predicateOption.touches'}
+];
+
 export type SpatialJoinDatasetConfig = {
   leftGeo: SpatialGeoSource;
   rightGeo: SpatialGeoSource;
   aggregations: Record<string, DatasetOpAggregation>;
+  leftColumns?: string[];
+  predicate?: SpatialJoinPredicate;
   label?: string;
   resultId?: string;
   operationId?: string;
@@ -97,6 +124,7 @@ export type JoinOp = {
   rightColumns?: string[];
   leftGeo?: SpatialGeoSource | null;
   rightGeo?: SpatialGeoSource | null;
+  predicate?: SpatialJoinPredicate;
   aggregations: Record<string, DatasetOpAggregation>;
   resultId: string;
   resultLabel: string;

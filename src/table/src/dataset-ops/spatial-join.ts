@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {getCentroid, generateHashId, h3IsValid} from '@kepler.gl/common-utils';
+import {getCentroid, generateHashId, h3IsValid, idToPolygonGeo} from '@kepler.gl/common-utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {Field, ProtoDataset} from '@kepler.gl/types';
+import {booleanCrosses} from '@turf/boolean-crosses';
+import {booleanEqual} from '@turf/boolean-equal';
+import {booleanIntersects} from '@turf/boolean-intersects';
+import {booleanOverlap} from '@turf/boolean-overlap';
+import {booleanTouches} from '@turf/boolean-touches';
+import type {Feature} from 'geojson';
 
 import {aggregateValues, resultFieldType} from './aggregations';
 import {
@@ -17,7 +23,14 @@ import {
 } from './geometry';
 import {copyFieldAs, makeResultProtoDataset, uniqueColumnName} from './proto-dataset';
 import {findFieldByName, rowCount, rowValue} from './table-helpers';
-import {DatasetOpsTable, SpatialGeoSource, SpatialJoinDatasetConfig} from './types';
+import {
+  DatasetOpsTable,
+  SpatialGeoSource,
+  SpatialJoinDatasetConfig,
+  SpatialJoinPredicate,
+  SPATIAL_JOIN_PREDICATES,
+  fieldNamesForGeoSource
+} from './types';
 
 export type ParsedSpatialValue =
   | {kind: 'polygon'; feature: NonNullable<ReturnType<typeof parseGeometry>>}
@@ -121,6 +134,90 @@ export function leftContainsRight(left: ParsedSpatialValue, right: ParsedSpatial
   return false;
 }
 
+function pointFeature(lngLat: [number, number]): Feature {
+  return {
+    type: 'Feature',
+    geometry: {type: 'Point', coordinates: lngLat},
+    properties: {}
+  };
+}
+
+function h3ToPolygonFeature(index: string): Feature | null {
+  const feature = idToPolygonGeo({id: index}, {isClosed: true}) as Feature | null;
+  const ring = feature?.geometry?.type === 'Polygon' ? feature.geometry.coordinates[0] : null;
+  if (!feature || !ring?.length) {
+    return null;
+  }
+  const first = ring[0];
+  const last = ring[ring.length - 1];
+  if (first[0] !== last[0] || first[1] !== last[1]) {
+    ring.push(first);
+  }
+  return feature;
+}
+
+function toFeature(value: ParsedSpatialValue): Feature | null {
+  if (!value) {
+    return null;
+  }
+  if (value.kind === 'polygon') {
+    return value.feature;
+  }
+  if (value.kind === 'point') {
+    return pointFeature(value.lngLat);
+  }
+  return h3ToPolygonFeature(value.index);
+}
+
+function turfMatch(
+  fn: (a: Feature, b: Feature) => boolean,
+  left: ParsedSpatialValue,
+  right: ParsedSpatialValue
+): boolean {
+  const leftFeature = toFeature(left);
+  const rightFeature = toFeature(right);
+  if (!leftFeature || !rightFeature) {
+    return false;
+  }
+  try {
+    return Boolean(fn(leftFeature, rightFeature));
+  } catch {
+    return false;
+  }
+}
+
+export function geometriesMatchPredicate(
+  left: ParsedSpatialValue,
+  right: ParsedSpatialValue,
+  predicate: SpatialJoinPredicate = SPATIAL_JOIN_PREDICATES.intersects
+): boolean {
+  switch (predicate) {
+    case SPATIAL_JOIN_PREDICATES.within:
+      return leftContainsRight(right, left);
+    case SPATIAL_JOIN_PREDICATES.equals:
+      if (left?.kind === 'h3' && right?.kind === 'h3') {
+        return left.index === right.index;
+      }
+      if (left?.kind === 'point' && right?.kind === 'point') {
+        return left.lngLat[0] === right.lngLat[0] && left.lngLat[1] === right.lngLat[1];
+      }
+      return turfMatch(booleanEqual, left, right);
+    case SPATIAL_JOIN_PREDICATES.crosses:
+      return turfMatch(booleanCrosses, left, right);
+    case SPATIAL_JOIN_PREDICATES.overlaps:
+      return turfMatch(booleanOverlap, left, right);
+    case SPATIAL_JOIN_PREDICATES.touches:
+      return turfMatch(booleanTouches, left, right);
+    case SPATIAL_JOIN_PREDICATES.intersects:
+    default:
+      return (
+        leftContainsRight(left, right) ||
+        leftContainsRight(right, left) ||
+        turfMatch(booleanIntersects, left, right)
+      );
+  }
+}
+
 export function spatialJoinDatasets(
   left: DatasetOpsTable,
   right: DatasetOpsTable,
@@ -128,12 +225,20 @@ export function spatialJoinDatasets(
 ): ProtoDataset {
   const nLeft = rowCount(left);
   const nRight = rowCount(right);
+  const predicate = config.predicate || SPATIAL_JOIN_PREDICATES.intersects;
   const rightValues = Array.from({length: nRight}, (_, i) =>
     readSpatialValue(right, i, config.rightGeo)
   );
 
   const usedNames = new Set<string>();
-  const leftFields = left.fields.map(field =>
+  const geoNames = new Set(fieldNamesForGeoSource(config.leftGeo));
+  const includedLeft =
+    config.leftColumns === undefined
+      ? left.fields
+      : left.fields.filter(
+          field => geoNames.has(field.name) || config.leftColumns?.includes(field.name)
+        );
+  const leftFields = includedLeft.map(field =>
     copyFieldAs(field, uniqueColumnName(field.name, usedNames))
   );
   const aggregationEntries = Object.entries(config.aggregations);
@@ -164,11 +269,11 @@ export function spatialJoinDatasets(
     const leftValue = readSpatialValue(left, leftIndex, config.leftGeo);
     const matched: number[] = [];
     for (let rightIndex = 0; rightIndex < nRight; rightIndex++) {
-      if (leftContainsRight(leftValue, rightValues[rightIndex])) {
+      if (geometriesMatchPredicate(leftValue, rightValues[rightIndex], predicate)) {
         matched.push(rightIndex);
       }
     }
-    const row: unknown[] = left.fields.map(field => rowValue(left, leftIndex, field));
+    const row: unknown[] = includedLeft.map(field => rowValue(left, leftIndex, field));
     row.push(matched.length);
     for (const {sourceField, technique} of aggMeta) {
       const values = matched.map(index => rowValue(right, index, sourceField));
@@ -182,7 +287,7 @@ export function spatialJoinDatasets(
     extraSources: [right],
     type: 'spatialJoin',
     operationId: config.operationId || generateHashId(6),
-    label: config.label || `${left.label} spatial join ${right.label}`,
+    label: config.label || `spatial-join-${config.resultId || generateHashId(6)}`,
     resultId: config.resultId,
     fields,
     rows

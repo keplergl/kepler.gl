@@ -3,57 +3,77 @@
 
 import React, {useCallback, useState} from 'react';
 import styled from 'styled-components';
+import {useIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {getApplicationConfig} from '@kepler.gl/utils';
 import {isTabularDatasetForOps} from '@kepler.gl/table';
-import {VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {VisStateActions, ActionHandler, openDeleteModal} from '@kepler.gl/actions';
 
-import {VertDots} from '../../common/icons';
+import {BaseProps, Grouping, Join, Overflow, SpatialJoin, Trash} from '../../common/icons';
+import {Tooltip} from '../../common/styled-components';
 import Portaled from '../../common/portaled';
 
-const MenuButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 8px;
-  width: 16px;
+const MenuToggle = styled.div`
+  margin-left: 12px;
   height: 16px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  opacity: 0;
+`;
 
-  &:focus-visible {
-    opacity: 1;
-  }
+const PortalAnchor = styled.div`
+  width: 0;
+  height: 16px;
 `;
 
 const Menu = styled.div`
   min-width: 160px;
+  width: max-content;
   background: ${props => props.theme.dropdownListBgd};
-  box-shadow: ${props => props.theme.dropdownListShadow};
-  border-radius: 2px;
-  padding: 6px 0;
+  box-shadow: ${props => props.theme.tooltipBoxShadow};
+  border-radius: 4px;
+  overflow: hidden;
 `;
 
 const MenuItem = styled.button`
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
-  padding: 8px 12px;
+  height: 32px;
+  padding: 0 8px;
   border: 0;
   background: transparent;
   color: ${props => props.theme.textColor};
   text-align: left;
   cursor: pointer;
   font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
 
   &:hover {
     background: ${props => props.theme.dropdownListHighlightBg};
-    color: ${props => props.theme.textColorHl};
   }
 `;
+
+const MenuItemIcon = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  flex-shrink: 0;
+  color: ${props => props.theme.subtextColor};
+`;
+
+const MenuSeparator = styled.div`
+  border-top: 1px solid ${props => props.theme.dropdownListHighlightBg};
+`;
+
+type MenuAction = {
+  className: string;
+  labelId: string;
+  Icon: React.ComponentType<Partial<BaseProps>>;
+  iconHeight: string;
+  onClick: () => void;
+};
 
 export type DatasetOpsMenuProps = {
   datasetId: string;
@@ -61,6 +81,8 @@ export type DatasetOpsMenuProps = {
   addGroupBy?: ActionHandler<typeof VisStateActions.addGroupBy>;
   addJoin?: ActionHandler<typeof VisStateActions.addJoin>;
   addSpatialJoin?: ActionHandler<typeof VisStateActions.addSpatialJoin>;
+  showDeleteDataset?: boolean;
+  removeDataset?: ActionHandler<typeof openDeleteModal>;
 };
 
 export function DatasetOpsMenu({
@@ -68,11 +90,19 @@ export function DatasetOpsMenu({
   dataset,
   addGroupBy,
   addJoin,
-  addSpatialJoin
+  addSpatialJoin,
+  showDeleteDataset,
+  removeDataset
 }: DatasetOpsMenuProps) {
+  const intl = useIntl();
   const [open, setOpen] = useState(false);
-  const enabled =
-    getApplicationConfig().enableDatasetOps !== false && isTabularDatasetForOps(dataset);
+  const showOps =
+    getApplicationConfig().enableDatasetOps !== false &&
+    isTabularDatasetForOps(dataset) &&
+    Boolean(addGroupBy || addJoin || addSpatialJoin);
+  const showRemove = Boolean(showDeleteDataset && removeDataset);
+  const tooltipId = `dataset-ops-${datasetId}`;
+  const tooltipLabel = intl.formatMessage({id: 'datasetTitle.moreSettings'});
 
   const onSelect = useCallback(
     (fn?: (id: string) => void) => {
@@ -82,55 +112,96 @@ export function DatasetOpsMenu({
     [datasetId]
   );
 
-  if (!enabled || (!addGroupBy && !addJoin && !addSpatialJoin)) {
+  if (!showOps && !showRemove) {
     return null;
   }
 
+  const opItems: MenuAction[] = [];
+  if (showOps && addGroupBy) {
+    opItems.push({
+      className: 'dataset-ops-menu__group-by',
+      labelId: 'datasetOps.groupBy',
+      Icon: Grouping,
+      iconHeight: '18px',
+      onClick: () => onSelect(addGroupBy)
+    });
+  }
+  if (showOps && addJoin) {
+    opItems.push({
+      className: 'dataset-ops-menu__join',
+      labelId: 'datasetOps.join',
+      Icon: Join,
+      iconHeight: '14px',
+      onClick: () => onSelect(() => addJoin(datasetId))
+    });
+  }
+  if (showOps && addSpatialJoin) {
+    opItems.push({
+      className: 'dataset-ops-menu__spatial-join',
+      labelId: 'datasetOps.spatialJoin',
+      Icon: SpatialJoin,
+      iconHeight: '14px',
+      onClick: () => onSelect(addSpatialJoin)
+    });
+  }
+
   return (
-    <span className="dataset-ops-menu">
-      <MenuButton
-        className="dataset-action dataset-ops-menu__toggle"
-        type="button"
-        aria-label="Dataset operations"
+    <>
+      <MenuToggle
+        className="dataset-action dataset-ops-menu dataset-ops-menu__toggle"
+        data-tip
+        data-for={tooltipId}
+        role="button"
+        aria-label={tooltipLabel}
         onClick={e => {
           e.stopPropagation();
           setOpen(value => !value);
         }}
       >
-        <VertDots height="14px" />
-      </MenuButton>
-      <Portaled isOpened={open} left={16} top={16} onClose={() => setOpen(false)}>
+        <Overflow height="16px" />
+        <Tooltip id={tooltipId} effect="solid">
+          <span>
+            <FormattedMessage id="datasetTitle.moreSettings" />
+          </span>
+        </Tooltip>
+      </MenuToggle>
+      <Portaled
+        component={PortalAnchor}
+        isOpened={open}
+        left={0}
+        top={0}
+        onClose={() => setOpen(false)}
+      >
         <Menu>
-          {addGroupBy ? (
+          {opItems.map(item => (
             <MenuItem
-              className="dataset-ops-menu__group-by"
+              key={item.className}
+              className={item.className}
               type="button"
-              onClick={() => onSelect(addGroupBy)}
+              onClick={item.onClick}
             >
-              <FormattedMessage id="datasetOps.groupBy" />
+              <MenuItemIcon>
+                <item.Icon height={item.iconHeight} />
+              </MenuItemIcon>
+              <FormattedMessage id={item.labelId} />
             </MenuItem>
-          ) : null}
-          {addJoin ? (
+          ))}
+          {opItems.length > 0 && showRemove ? <MenuSeparator /> : null}
+          {showRemove ? (
             <MenuItem
-              className="dataset-ops-menu__join"
+              className="dataset-ops-menu__remove"
               type="button"
-              onClick={() => onSelect(() => addJoin(datasetId))}
+              onClick={() => onSelect(removeDataset)}
             >
-              <FormattedMessage id="datasetOps.join" />
-            </MenuItem>
-          ) : null}
-          {addSpatialJoin ? (
-            <MenuItem
-              className="dataset-ops-menu__spatial-join"
-              type="button"
-              onClick={() => onSelect(addSpatialJoin)}
-            >
-              <FormattedMessage id="datasetOps.spatialJoin" />
+              <MenuItemIcon>
+                <Trash height="16px" />
+              </MenuItemIcon>
+              <FormattedMessage id="datasetTitle.removeDataset" />
             </MenuItem>
           ) : null}
         </Menu>
       </Portaled>
-    </span>
+    </>
   );
 }
 

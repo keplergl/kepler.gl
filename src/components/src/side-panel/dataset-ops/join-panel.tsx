@@ -103,6 +103,7 @@ function JoinPanelFactory(
             getOptionValue={option => option.id}
             onChange={value => setJoinConfig(op.id, {type: String(value) as AttributeJoinType})}
             searchable={false}
+            multiSelect={false}
           />
         </SidePanelSection>
         <ResultNameInput
