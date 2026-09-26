@@ -214,7 +214,14 @@ export type {ColorBreak, ColorBreakOrdinal, DomainQuantiles, DomainStops} from '
 export {DataRow} from './data-row';
 
 // Application config
-export {getApplicationConfig, initApplicationConfig} from './application-config';
+export {
+  getApplicationConfig,
+  initApplicationConfig,
+  getConfiguredThemes,
+  shouldShowThemeSwitcher,
+  getDefaultUiTheme,
+  getNextUiTheme
+} from './application-config';
 export type {
   KeplerApplicationConfig,
   KeplerAcceptedFileFormat,

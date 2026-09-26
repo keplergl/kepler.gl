@@ -443,6 +443,7 @@ export default {
     selectLocale: 'Select locale',
     switchToLightTheme: 'Switch to light theme',
     switchToDarkTheme: 'Switch to dark theme',
+    switchToSpaceTheme: 'Switch to space theme',
     showAiAssistantPanel: 'Show AI Assistant',
     hideAiAssistantPanel: 'Hide AI Assistant',
     hideLayerPanel: 'Hide layer panel',

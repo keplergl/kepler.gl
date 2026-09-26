@@ -480,7 +480,7 @@ export type SetThemeUpdaterAction = {
   payload: {theme: string};
 };
 /**
- * Set UI `theme` value (`light` or `dark`)
+ * Set UI `theme` value (`light`, `dark`, or `space`)
  * @memberof uiStateActions
  * @param theme - theme of the UI
  * @public

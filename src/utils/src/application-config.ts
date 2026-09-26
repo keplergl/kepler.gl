@@ -3,7 +3,7 @@
 
 import type {MapLib, MapRef} from 'react-map-gl/mapbox-legacy';
 
-import {KEPLER_UNFOLDED_BUCKET} from '@kepler.gl/constants';
+import {KEPLER_UNFOLDED_BUCKET, THEME} from '@kepler.gl/constants';
 import type {BaseMapLibraryType} from '@kepler.gl/constants';
 
 import type {DatabaseAdapter} from './application-config-types';
@@ -214,8 +214,13 @@ export type KeplerApplicationConfig = {
   /** Whether to enable the layer groups feature. Enabled by default. */
   enableLayerGroups?: boolean;
 
-  /** Whether to show a map control to toggle between light and dark UI themes. Disabled by default. */
-  enableThemeToggle?: boolean;
+  /**
+   * Named UI themes to cycle (`dark`, `light`, `space`, `base`).
+   * Empty (default): dark theme, no switcher.
+   * One theme: that theme is used, no switcher.
+   * Two or more: first is the default, a map control cycles the list.
+   */
+  themes?: string[];
 
   /** Whether to show column statistics in the data table modal. Enabled by default. */
   enableColumnStats?: boolean;
@@ -422,7 +427,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableLayerGroups: true,
 
-  enableThemeToggle: false,
+  themes: ['space', 'light'],
 
   enableColumnStats: true,
 
@@ -454,4 +459,33 @@ export const getApplicationConfig = (): Required<KeplerApplicationConfig> => app
 
 export function initApplicationConfig(appConfig: KeplerApplicationConfig = {}) {
   Object.assign(applicationConfig, appConfig);
+}
+
+/** Configured UI theme names, in cycle order. Empty when unset. */
+export function getConfiguredThemes(): string[] {
+  const {themes} = getApplicationConfig();
+  if (!Array.isArray(themes)) {
+    return [];
+  }
+  return themes.filter((name): name is string => typeof name === 'string' && name.length > 0);
+}
+
+/** True when the map control should cycle themes (two or more names). */
+export function shouldShowThemeSwitcher(): boolean {
+  return getConfiguredThemes().length > 1;
+}
+
+/** First configured theme, or dark when none are set. */
+export function getDefaultUiTheme(): string {
+  return getConfiguredThemes()[0] || THEME.dark;
+}
+
+/** Next theme in the configured cycle. */
+export function getNextUiTheme(current?: string): string {
+  const themes = getConfiguredThemes();
+  if (themes.length === 0) {
+    return THEME.dark;
+  }
+  const index = current ? themes.indexOf(current) : -1;
+  return themes[index === -1 ? 0 : (index + 1) % themes.length];
 }

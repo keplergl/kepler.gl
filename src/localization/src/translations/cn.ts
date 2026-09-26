@@ -339,6 +339,7 @@ export default {
     selectLocale: '选择语言',
     switchToLightTheme: '切换到浅色主题',
     switchToDarkTheme: '切换到深色主题',
+    switchToSpaceTheme: '切换到 Space 主题',
     showAiAssistantPanel: '显示 AI 助手面板',
     hideAiAssistantPanel: '隐藏 AI 助手面板',
     hideLayerPanel: '隐藏图层面板',

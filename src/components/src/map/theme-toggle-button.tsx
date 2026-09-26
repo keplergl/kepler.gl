@@ -6,16 +6,23 @@ import classnames from 'classnames';
 
 import {THEME} from '@kepler.gl/constants';
 import {MapControls} from '@kepler.gl/types';
-import {getApplicationConfig} from '@kepler.gl/utils';
+import {getNextUiTheme, shouldShowThemeSwitcher} from '@kepler.gl/utils';
 
-import {Moon, Sun} from '../common/icons';
+import {Moon, Space, Sun} from '../common/icons';
 import {MapControlButton} from '../common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
 
 interface ThemeToggleButtonIcons {
   sun: ComponentType<any>;
   moon: ComponentType<any>;
+  space: ComponentType<any>;
 }
+
+const NEXT_THEME_TOOLTIP: Record<string, string> = {
+  [THEME.light]: 'tooltip.switchToLightTheme',
+  [THEME.dark]: 'tooltip.switchToDarkTheme',
+  [THEME.space]: 'tooltip.switchToSpaceTheme'
+};
 
 export type ThemeToggleButtonProps = {
   themeName?: string;
@@ -29,7 +36,8 @@ ThemeToggleButtonFactory.deps = [MapControlTooltipFactory];
 function ThemeToggleButtonFactory(MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>) {
   const defaultActionIcons = {
     sun: Sun,
-    moon: Moon
+    moon: Moon,
+    space: Space
   };
 
   const ThemeToggleButton: React.FC<ThemeToggleButtonProps> = ({
@@ -38,17 +46,17 @@ function ThemeToggleButtonFactory(MapControlTooltip: ReturnType<typeof MapContro
     mapControls,
     actionIcons = defaultActionIcons
   }) => {
-    const isLight = themeName === THEME.light;
+    const upcomingTheme = getNextUiTheme(themeName);
 
     const onClick = useCallback(
       event => {
         event.preventDefault();
-        onSetTheme(isLight ? THEME.dark : THEME.light);
+        onSetTheme(getNextUiTheme(themeName));
       },
-      [isLight, onSetTheme]
+      [themeName, onSetTheme]
     );
 
-    if (!getApplicationConfig().enableThemeToggle) {
+    if (!shouldShowThemeSwitcher()) {
       return null;
     }
 
@@ -57,17 +65,25 @@ function ThemeToggleButtonFactory(MapControlTooltip: ReturnType<typeof MapContro
       return null;
     }
 
-    const Icon = isLight ? actionIcons.moon : actionIcons.sun;
+    const Icon =
+      upcomingTheme === THEME.light
+        ? actionIcons.sun
+        : upcomingTheme === THEME.space
+        ? actionIcons.space
+        : actionIcons.moon;
 
     return (
       <MapControlTooltip
         id="toggle-theme"
-        message={isLight ? 'tooltip.switchToDarkTheme' : 'tooltip.switchToLightTheme'}
+        message={NEXT_THEME_TOOLTIP[upcomingTheme] || 'tooltip.switchToDarkTheme'}
       >
         <MapControlButton
-          className={classnames('map-control-button', 'toggle-theme', {light: isLight})}
+          className={classnames('map-control-button', 'toggle-theme', {
+            light: themeName === THEME.light,
+            space: themeName === THEME.space
+          })}
           onClick={onClick}
-          active={isLight}
+          active={themeName !== THEME.dark}
         >
           <Icon height="18px" />
         </MapControlButton>

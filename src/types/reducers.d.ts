@@ -589,7 +589,7 @@ export type UiState = {
   loadFiles: LoadFiles;
   // Locale of the UI
   locale: Locale;
-  // Theme of the UI (`light` | `dark`), used when enableThemeToggle is on
+  // Theme of the UI (`light` | `dark` | `space`). First of `themes` is the default when set.
   theme: UiTheme;
   // view layers by list or dataset
   layerPanelListView: PanelListView;
