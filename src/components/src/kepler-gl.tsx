@@ -69,10 +69,17 @@ import {
   observeDimensions,
   unobserveDimensions,
   hasPortableWidth,
-  getApplicationConfig
+  getApplicationConfig,
+  getConfiguredThemes
 } from '@kepler.gl/utils';
 
-import {theme as basicTheme, themeLT, themeBS, breakPointValues} from '@kepler.gl/styles';
+import {
+  theme as basicTheme,
+  themeLT,
+  themeBS,
+  themeSpace,
+  breakPointValues
+} from '@kepler.gl/styles';
 import {KeplerGlState} from '@kepler.gl/reducers';
 import {Provider} from '@kepler.gl/cloud-providers';
 
@@ -554,8 +561,13 @@ function KeplerGlFactory(
       this.themeSelector,
       this.uiThemeSelector,
       (theme, uiTheme) => {
-        // When theme toggle is enabled, uiState.theme drives light/dark switching.
-        const themeInput = getApplicationConfig().enableThemeToggle ? uiTheme || THEME.dark : theme;
+        const configuredThemes = getConfiguredThemes();
+        // A configured list drives named theme switching; otherwise the `theme` prop is used.
+        const themeInput = configuredThemes.length
+          ? configuredThemes.includes(uiTheme)
+            ? uiTheme
+            : configuredThemes[0]
+          : theme;
 
         if (typeof themeInput === 'object' && themeInput !== null) {
           return {
@@ -568,6 +580,9 @@ function KeplerGlFactory(
         }
         if (themeInput === THEME.base) {
           return themeBS;
+        }
+        if (themeInput === THEME.space) {
+          return themeSpace;
         }
         // THEME.dark and unknown values fall back to the default dark theme
         return basicTheme;

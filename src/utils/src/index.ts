@@ -215,6 +215,12 @@ export {DataRow} from './data-row';
 
 // Application config
 export {getApplicationConfig, initApplicationConfig} from './application-config';
+export {
+  getConfiguredThemes,
+  shouldShowThemeSwitcher,
+  getDefaultUiTheme,
+  getNextUiTheme
+} from './theme-utils';
 export type {
   KeplerApplicationConfig,
   KeplerAcceptedFileFormat,

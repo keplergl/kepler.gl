@@ -214,8 +214,13 @@ export type KeplerApplicationConfig = {
   /** Whether to enable the layer groups feature. Enabled by default. */
   enableLayerGroups?: boolean;
 
-  /** Whether to show a map control to toggle between light and dark UI themes. Disabled by default. */
-  enableThemeToggle?: boolean;
+  /**
+   * Named UI themes to cycle (`dark`, `light`, `space`, `base`).
+   * Empty (default): dark theme, no switcher.
+   * One theme: that theme is used, no switcher.
+   * Two or more: first is the default, a map control cycles the list.
+   */
+  themes?: string[];
 
   /** Whether to show column statistics in the data table modal. Enabled by default. */
   enableColumnStats?: boolean;
@@ -422,7 +427,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableLayerGroups: true,
 
-  enableThemeToggle: false,
+  themes: ['space', 'light'],
 
   enableColumnStats: true,
 

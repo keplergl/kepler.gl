@@ -19,7 +19,9 @@ import {
   createNotification,
   errorNotification,
   calculateExportImageSize,
-  getApplicationConfig
+  getApplicationConfig,
+  getConfiguredThemes,
+  getDefaultUiTheme
 } from '@kepler.gl/utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
@@ -295,7 +297,7 @@ export const INITIAL_UI_STATE: UiState = {
   loadFiles: DEFAULT_LOAD_FILES,
   // Locale of the UI
   locale: LOCALE_CODES.en,
-  // Theme of the UI (used when enableThemeToggle is on)
+  // Theme of the UI (`light` | `dark` | `space`). First of `themes` is the default when set.
   theme: THEME.dark,
   layerPanelListView: 'list',
   filterPanelListView: 'list',
@@ -312,10 +314,19 @@ export const initUiStateUpdater = (
     type?: (typeof ActionTypes)['INIT'];
     payload: KeplerGlInitPayload;
   }
-): UiState => ({
-  ...state,
-  ...(action.payload || {}).initialUiState
-});
+): UiState => {
+  const initialUiState = (action.payload || {}).initialUiState || {};
+  const themes = getConfiguredThemes();
+  const requested = initialUiState.theme ?? state.theme;
+  const theme =
+    themes.length === 0 ? requested : themes.includes(requested) ? requested : getDefaultUiTheme();
+
+  return {
+    ...state,
+    ...initialUiState,
+    theme
+  };
+};
 
 /**
  * Toggle active side panel
