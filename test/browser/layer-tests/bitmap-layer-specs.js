@@ -5,6 +5,10 @@ import test from 'tape-catch';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {DatasetType} from '@kepler.gl/constants';
 import {testCreateCases} from 'test/helpers/layer-utils';
+import {
+  BitmapBoundsEditMode,
+  BITMAP_MOVE_HANDLE_TYPE
+} from '../../../src/layers/src/bitmap-layer/bitmap-bounds-edit-mode';
 
 const {BitmapOverlayLayer} = KeplerGlLayers;
 
@@ -287,9 +291,148 @@ test('#BitmapOverlayLayer -> renderLayer with editBounds', t => {
 
   const deckLayers = layer.renderLayer(opts);
 
-  t.equal(deckLayers.length, 2, 'should render bitmap + editable layer (no static bounds)');
+  t.ok(deckLayers.length >= 2, 'should render bitmap + editable layer (no static bounds)');
   t.equal(deckLayers[0].id, layer.id, 'first should be bitmap');
   t.equal(deckLayers[1].id, `${layer.id}-edit`, 'second should be editable layer');
+  const moveHandleLayer = deckLayers.find(l => l.id === `${layer.id}-move-handle`);
+  t.ok(moveHandleLayer, 'should render a center move-handle icon');
+
+  t.end();
+});
+
+test('#BitmapOverlayLayer -> edit mode includes center move handle', t => {
+  const mode = new BitmapBoundsEditMode();
+  const bounds = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-122.52, 37.82],
+              [-122.35, 37.82],
+              [-122.35, 37.7],
+              [-122.52, 37.7],
+              [-122.52, 37.82]
+            ]
+          ]
+        },
+        properties: {shape: 'Rectangle'}
+      }
+    ]
+  };
+
+  const guides = mode.getGuides({
+    data: bounds,
+    selectedIndexes: [0],
+    modeConfig: {lockRectangles: true},
+    lastPointerMoveEvent: null,
+    onEdit: () => {},
+    onUpdateCursor: () => {}
+  });
+
+  const moveHandle = guides.features.find(
+    feature => feature.properties?.editHandleType === BITMAP_MOVE_HANDLE_TYPE
+  );
+  t.ok(moveHandle, 'should add a center move handle');
+  t.equal(moveHandle.geometry.coordinates[0], -122.435, 'move handle lng should be the centroid');
+  t.ok(
+    Math.abs(moveHandle.geometry.coordinates[1] - 37.76) < 1e-10,
+    'move handle lat should be the centroid'
+  );
+
+  t.end();
+});
+
+test('#BitmapOverlayLayer -> dragging the center handle translates the rectangle', t => {
+  const mode = new BitmapBoundsEditMode();
+  const data = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-122.52, 37.82],
+              [-122.35, 37.82],
+              [-122.35, 37.7],
+              [-122.52, 37.7],
+              [-122.52, 37.82]
+            ]
+          ]
+        },
+        properties: {shape: 'Rectangle'}
+      }
+    ]
+  };
+
+  let lastEdit = null;
+  const props = {
+    data,
+    selectedIndexes: [0],
+    modeConfig: {lockRectangles: true},
+    lastPointerMoveEvent: null,
+    onEdit: action => {
+      lastEdit = action;
+    },
+    onUpdateCursor: () => {}
+  };
+
+  const movePick = {
+    isGuide: true,
+    index: 0,
+    object: {
+      type: 'Feature',
+      properties: {
+        guideType: 'editHandle',
+        editHandleType: BITMAP_MOVE_HANDLE_TYPE,
+        featureIndex: 0
+      },
+      geometry: {type: 'Point', coordinates: [-122.435, 37.76]}
+    }
+  };
+
+  const start = [-122.435, 37.76];
+  const end = [-122.335, 37.86];
+  const cancelPan = () => {};
+
+  mode.handlePointerMove({picks: [movePick], mapCoords: start}, props);
+  mode.handleStartDragging(
+    {
+      picks: [movePick],
+      pointerDownPicks: [movePick],
+      mapCoords: start,
+      pointerDownMapCoords: start,
+      cancelPan
+    },
+    props
+  );
+  mode.handleDragging(
+    {
+      picks: [movePick],
+      pointerDownPicks: [movePick],
+      mapCoords: end,
+      pointerDownMapCoords: start,
+      cancelPan
+    },
+    props
+  );
+
+  t.ok(lastEdit, 'should emit an edit action');
+  t.equal(lastEdit.editType, 'translating', 'should translate rather than resize');
+  const coords = lastEdit.updatedData.features[0].geometry.coordinates[0];
+  const lngs = coords.slice(0, -1).map(c => c[0]);
+  const lats = coords.slice(0, -1).map(c => c[1]);
+  const width = Math.max(...lngs) - Math.min(...lngs);
+  const height = Math.max(...lats) - Math.min(...lats);
+  t.ok(Math.abs(width - 0.17) < 0.02, 'translated rectangle should keep its width');
+  t.ok(Math.abs(height - 0.12) < 0.02, 'translated rectangle should keep its height');
+  t.ok(Math.min(...lngs) > -122.52, 'rectangle should move east');
+  t.ok(Math.min(...lats) > 37.7, 'rectangle should move north');
 
   t.end();
 });
