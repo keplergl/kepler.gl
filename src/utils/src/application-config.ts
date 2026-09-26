@@ -220,6 +220,9 @@ export type KeplerApplicationConfig = {
   /** Whether to show column statistics in the data table modal. Enabled by default. */
   enableColumnStats?: boolean;
 
+  /** Group-by, attribute join, and simple spatial join UI on local datasets. Enabled by default. */
+  enableDatasetOps?: boolean;
+
   /**
    * Whether to show the charts map-control panel (big number, bar, line,
    * heatmap, pivot table, tooltip charts, and chart cross-filters).
@@ -425,6 +428,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableThemeToggle: false,
 
   enableColumnStats: true,
+
+  enableDatasetOps: true,
 
   enableChartsPanel: true,
 

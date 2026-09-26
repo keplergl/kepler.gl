@@ -5,7 +5,7 @@
 import {default as ActionTypes} from './action-types';
 import {FileCacheItem} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {KeplerTable} from '@kepler.gl/table';
+import {GroupByOp, JoinOp, KeplerTable} from '@kepler.gl/table';
 import {
   AddDataToMapPayload,
   ViewportPadding,
@@ -2378,13 +2378,148 @@ export type CreateNewDatasetSuccessPayload = {
   addToMapOptions: AddDataToMapPayload['options'];
 };
 
-/**
- * Called when a new dataset is created successfully via async table methods
- * @memberof visStateActions
- * @param payload
- * @param payload.results - results of promises.allSettlted
- * @returns
- */
+export type AddGroupByUpdaterAction = {
+  dataId: string;
+};
+
+export function addGroupBy(
+  dataId: string
+): Merge<AddGroupByUpdaterAction, {type: typeof ActionTypes.ADD_GROUP_BY}> {
+  return {
+    type: ActionTypes.ADD_GROUP_BY,
+    dataId
+  };
+}
+
+export type SetGroupByConfigUpdaterAction = {
+  id: string;
+  config: Partial<GroupByOp>;
+};
+
+export function setGroupByConfig(
+  id: string,
+  config: Partial<GroupByOp>
+): Merge<SetGroupByConfigUpdaterAction, {type: typeof ActionTypes.SET_GROUP_BY_CONFIG}> {
+  return {
+    type: ActionTypes.SET_GROUP_BY_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunGroupByUpdaterAction = {
+  id: string;
+};
+
+export function runGroupBy(
+  id: string
+): Merge<RunGroupByUpdaterAction, {type: typeof ActionTypes.RUN_GROUP_BY}> {
+  return {
+    type: ActionTypes.RUN_GROUP_BY,
+    id
+  };
+}
+
+export type AddJoinUpdaterAction = {
+  dataId: string;
+  implementation?: JoinOp['implementation'];
+};
+
+export function addJoin(
+  dataId: string,
+  implementation: JoinOp['implementation'] = 'simple'
+): Merge<AddJoinUpdaterAction, {type: typeof ActionTypes.ADD_JOIN}> {
+  return {
+    type: ActionTypes.ADD_JOIN,
+    dataId,
+    implementation
+  };
+}
+
+export type SetJoinConfigUpdaterAction = {
+  id: string;
+  config: Partial<JoinOp>;
+};
+
+export function setJoinConfig(
+  id: string,
+  config: Partial<JoinOp>
+): Merge<SetJoinConfigUpdaterAction, {type: typeof ActionTypes.SET_JOIN_CONFIG}> {
+  return {
+    type: ActionTypes.SET_JOIN_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunJoinUpdaterAction = {
+  id: string;
+};
+
+export function runJoin(
+  id: string
+): Merge<RunJoinUpdaterAction, {type: typeof ActionTypes.RUN_JOIN}> {
+  return {
+    type: ActionTypes.RUN_JOIN,
+    id
+  };
+}
+
+export type AddSpatialJoinUpdaterAction = {
+  dataId: string;
+};
+
+export function addSpatialJoin(
+  dataId: string
+): Merge<AddSpatialJoinUpdaterAction, {type: typeof ActionTypes.ADD_SPATIAL_JOIN}> {
+  return {
+    type: ActionTypes.ADD_SPATIAL_JOIN,
+    dataId
+  };
+}
+
+export type SetSpatialJoinConfigUpdaterAction = {
+  id: string;
+  config: Partial<JoinOp>;
+};
+
+export function setSpatialJoinConfig(
+  id: string,
+  config: Partial<JoinOp>
+): Merge<SetSpatialJoinConfigUpdaterAction, {type: typeof ActionTypes.SET_SPATIAL_JOIN_CONFIG}> {
+  return {
+    type: ActionTypes.SET_SPATIAL_JOIN_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunSpatialJoinUpdaterAction = {
+  id: string;
+};
+
+export function runSpatialJoin(
+  id: string
+): Merge<RunSpatialJoinUpdaterAction, {type: typeof ActionTypes.RUN_SPATIAL_JOIN}> {
+  return {
+    type: ActionTypes.RUN_SPATIAL_JOIN,
+    id
+  };
+}
+
+export type RemoveDatasetOpUpdaterAction = {
+  id: string;
+};
+
+export function removeDatasetOp(
+  id: string
+): Merge<RemoveDatasetOpUpdaterAction, {type: typeof ActionTypes.REMOVE_DATASET_OP}> {
+  return {
+    type: ActionTypes.REMOVE_DATASET_OP,
+    id
+  };
+}
+
 export const createNewDatasetSuccess = createAction<CreateNewDatasetSuccessPayload>(
   ActionTypes.CREATE_NEW_DATASET_SUCCESS
 );

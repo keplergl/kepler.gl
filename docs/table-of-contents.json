@@ -21,7 +21,8 @@
             {"entry": "docs/user-guides/j-get-started"},
             {"entry": "docs/user-guides/k-save-and-export"},
             {"entry": "docs/user-guides/l-color-attributes"},
-            {"entry": "docs/user-guides/m-map-settings"}
+            {"entry": "docs/user-guides/m-map-settings"},
+            {"entry": "docs/user-guides/dataset-operations"}
           ]
         },
         {

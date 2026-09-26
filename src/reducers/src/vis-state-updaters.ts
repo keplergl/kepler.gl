@@ -203,6 +203,19 @@ import {
 import {getPropValueToMerger, hasPropsToMerge} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
 import {
+  addGroupByUpdater,
+  addJoinUpdater,
+  addSpatialJoinUpdater,
+  executeGroupBy,
+  executeJoin,
+  executeSpatialJoin,
+  removeDatasetOpUpdater,
+  removeOpsForDatasets,
+  setGroupByConfigUpdater,
+  setJoinConfigUpdater,
+  setSpatialJoinConfigUpdater
+} from './dataset-ops-updaters';
+import {
   fixEffectOrder,
   getAnimatableVisibleLayers,
   getIntervalBasedAnimationLayers,
@@ -349,6 +362,8 @@ export const INITIAL_VIS_STATE: VisState = {
   // a collection of multiple dataset
   datasets: {},
   editingDataset: undefined,
+  groupBys: [],
+  joins: [],
 
   // effects
   effects: [],
@@ -2884,38 +2899,43 @@ export function removeDatasetUpdater<T extends VisState>(
   state: T,
   action: VisStateActions.RemoveDatasetUpdaterAction
 ): T {
-  // extract dataset key
   const {dataId: datasetKey} = action;
   const {datasets} = state;
 
-  // check if dataset is present
+  if (!datasets[datasetKey]) {
+    return state;
+  }
+
+  // Derived tables are snapshots: keep them when a source dataset is deleted.
+  // Only drop in-progress group-by / join drafts that referenced this dataset.
+  const nextState = removeOpsForDatasets(state, [datasetKey]) as T;
+  return removeSingleDatasetUpdater(nextState, datasetKey);
+}
+
+function removeSingleDatasetUpdater<T extends VisState>(state: T, datasetKey: string): T {
+  const {datasets} = state;
   if (!datasets[datasetKey]) {
     return state;
   }
 
   const {
     layers,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    datasets: {[datasetKey]: dataset, ...newDatasets}
+    datasets: {[datasetKey]: _dataset, ...newDatasets}
   } = state;
 
   const layersToRemove = layers.filter(l => l.config.dataId === datasetKey).map(l => l.id);
 
-  // remove layers and datasets
   let newState = layersToRemove.reduce((accu, id) => removeLayerUpdater(accu, {id}), {
     ...state,
     datasets: newDatasets
   });
 
-  // update filters
   const filters: Filter[] = [];
   for (const filter of newState.filters) {
     const valueIndex = filter.dataId.indexOf(datasetKey);
     if (valueIndex >= 0 && filter.dataId.length > 1) {
-      // only remove one synced dataset from the filter
       filters.push(_removeFilterDataIdAtValueIndex(filter, valueIndex, datasets));
     } else if (valueIndex < 0) {
-      // leave the filter as is
       filters.push(filter);
     }
   }
@@ -5924,12 +5944,10 @@ function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToRepl
 // Find datasetIds derived a saved visState Property;
 function findChildDatasetIds(value) {
   if (Array.isArray(value)) {
-    // for layers, filters, call defaultReplaceParentDatasetIds on each item in array
     const childDataIds = value.map(findChildDatasetIds).filter(d => d);
     return childDataIds.length ? childDataIds : null;
   }
 
-  // child data id usually stores in the derived dataset info
   return value?.newDataset?.info.id || null;
 }
 
@@ -6133,3 +6151,67 @@ function replacePropValueInState(
   }
   return nextState;
 }
+
+const DATASET_OP_ADD_OPTIONS = {
+  autoCreateLayers: true,
+  centerMap: false,
+  keepExistingConfig: true
+};
+
+function applyDerivedProtoDataset(state: VisState, proto: ProtoDataset): VisState {
+  const resultId = proto.info.id;
+  if (!resultId) {
+    return state;
+  }
+  if (state.datasets[resultId]) {
+    const nextState = updateDatasetUpdater(state, {dataId: resultId, data: proto.data});
+    const existing = nextState.datasets[resultId];
+    if (!existing) {
+      return nextState;
+    }
+    existing.metadata = {
+      ...existing.metadata,
+      ...proto.metadata
+    };
+    existing.label = proto.info.label || existing.label;
+    return nextState;
+  }
+  return updateVisDataUpdater(state, {
+    datasets: proto,
+    options: DATASET_OP_ADD_OPTIONS
+  });
+}
+
+export function runGroupByUpdater(
+  state: VisState,
+  action: VisStateActions.RunGroupByUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeGroupBy(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
+export function runJoinUpdater(
+  state: VisState,
+  action: VisStateActions.RunJoinUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeJoin(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
+export function runSpatialJoinUpdater(
+  state: VisState,
+  action: VisStateActions.RunSpatialJoinUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeSpatialJoin(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
+export {
+  addGroupByUpdater,
+  addJoinUpdater,
+  addSpatialJoinUpdater,
+  removeDatasetOpUpdater,
+  setGroupByConfigUpdater,
+  setJoinConfigUpdater,
+  setSpatialJoinConfigUpdater
+};

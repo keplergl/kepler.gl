@@ -222,7 +222,18 @@ const actionHandler = {
 
   [ActionTypes.CREATE_NEW_DATASET_SUCCESS]: visStateUpdaters.createNewDatasetSuccessUpdater,
 
-  [ActionTypes.SET_LOADING_INDICATOR]: visStateUpdaters.setLoadingIndicatorUpdater
+  [ActionTypes.SET_LOADING_INDICATOR]: visStateUpdaters.setLoadingIndicatorUpdater,
+
+  [ActionTypes.ADD_GROUP_BY]: visStateUpdaters.addGroupByUpdater,
+  [ActionTypes.SET_GROUP_BY_CONFIG]: visStateUpdaters.setGroupByConfigUpdater,
+  [ActionTypes.RUN_GROUP_BY]: visStateUpdaters.runGroupByUpdater,
+  [ActionTypes.ADD_JOIN]: visStateUpdaters.addJoinUpdater,
+  [ActionTypes.SET_JOIN_CONFIG]: visStateUpdaters.setJoinConfigUpdater,
+  [ActionTypes.RUN_JOIN]: visStateUpdaters.runJoinUpdater,
+  [ActionTypes.ADD_SPATIAL_JOIN]: visStateUpdaters.addSpatialJoinUpdater,
+  [ActionTypes.SET_SPATIAL_JOIN_CONFIG]: visStateUpdaters.setSpatialJoinConfigUpdater,
+  [ActionTypes.RUN_SPATIAL_JOIN]: visStateUpdaters.runSpatialJoinUpdater,
+  [ActionTypes.REMOVE_DATASET_OP]: visStateUpdaters.removeDatasetOpUpdater
 };
 
 // construct vis-state reducer
