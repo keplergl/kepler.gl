@@ -43,6 +43,7 @@ const SideBarContainer = styled.div<{left: number}>`
   left: ${props => props.left}px;
   align-items: stretch;
   flex-grow: 1;
+  min-width: 0;
 `;
 
 const SideBarInner = styled.div`
@@ -51,6 +52,9 @@ const SideBarInner = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
   border-left: ${props => props.theme.sidePanelBorder}px solid
     ${props => props.theme.sidePanelBorderColor};
 `;
@@ -111,7 +115,7 @@ function SidebarFactory(CollapseButton: ReturnType<typeof CollapseButtonFactory>
         <StyledSidePanelContainer width={isOpen ? width : 0} className="side-panel--container">
           <SideBarContainer
             className="side-bar"
-            style={{width: `${width}px`}}
+            style={{width: `${width}px`, maxWidth: `${width}px`}}
             left={horizontalOffset}
           >
             {isOpen ? (

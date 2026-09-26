@@ -26,14 +26,14 @@ export function joinDatasets(
     throw new Error('Join key fields were not found on both datasets');
   }
 
-  const leftColumns = (
-    config.leftColumns?.length ? config.leftColumns : left.fields.map(f => f.name)
-  )
+  const leftColumnNames =
+    config.leftColumns === undefined ? left.fields.map(f => f.name) : config.leftColumns;
+  const rightColumnNames =
+    config.rightColumns === undefined ? right.fields.map(f => f.name) : config.rightColumns;
+  const leftColumns = leftColumnNames
     .map(name => findFieldByName(left.fields, name))
     .filter((field): field is NonNullable<typeof field> => Boolean(field));
-  const rightColumns = (
-    config.rightColumns?.length ? config.rightColumns : right.fields.map(f => f.name)
-  )
+  const rightColumns = rightColumnNames
     .map(name => findFieldByName(right.fields, name))
     .filter((field): field is NonNullable<typeof field> => Boolean(field));
 
@@ -103,7 +103,7 @@ export function joinDatasets(
     extraSources: [right],
     type: 'join',
     operationId: config.operationId || generateHashId(6),
-    label: config.label || `${left.label} ${config.type} join ${right.label}`,
+    label: config.label || `join-dataset-${config.resultId || generateHashId(6)}`,
     resultId: config.resultId,
     fields,
     rows

@@ -36,6 +36,7 @@ import {SidePanelProps, SidePanelItem} from './types';
 export const StyledSidePanelContent = styled.div<{$fill?: boolean}>`
   ${props => props.theme.sidePanelScrollBar};
   flex-grow: 1;
+  min-width: 0;
   min-height: 0;
   padding: ${props => props.theme.sidePanelInnerPadding}px;
   overflow-y: ${props => (props.$fill ? 'hidden' : 'scroll')};
@@ -46,6 +47,8 @@ export const StyledSidePanelContent = styled.div<{$fill?: boolean}>`
   .side-panel__content__inner {
     display: flex;
     height: 100%;
+    width: 100%;
+    min-width: 0;
     flex-direction: column;
     flex: ${props => (props.$fill ? '1' : 'initial')};
     min-height: 0;

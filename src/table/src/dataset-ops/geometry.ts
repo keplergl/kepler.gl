@@ -67,6 +67,84 @@ export function getLngLat(feature: Feature | null): [number, number] | null {
   return getCentroidLngLat(feature);
 }
 
+function asFeature(geometry: Geometry): Feature {
+  return {type: 'Feature', geometry, properties: {}};
+}
+
+function flattenGeometry(geometry: Geometry): Geometry[] {
+  if (geometry.type === 'GeometryCollection') {
+    return geometry.geometries.flatMap(flattenGeometry);
+  }
+  return [geometry];
+}
+
+/**
+ * Combine geometries in a group into one GeoJSON Feature so the result stays mappable.
+ * Same-type inputs become Multi* geometries; mixed types become a GeometryCollection.
+ */
+export function mergeGeometries(values: unknown[]): Feature | null {
+  const geometries = values
+    .map(value => parseGeometry(value)?.geometry)
+    .filter((geometry): geometry is Geometry => Boolean(geometry))
+    .flatMap(flattenGeometry);
+  if (!geometries.length) {
+    return null;
+  }
+  if (geometries.length === 1) {
+    return asFeature(geometries[0]);
+  }
+
+  const type = geometries[0].type;
+  const sameType = geometries.every(geometry => geometry.type === type);
+  if (sameType && type === 'Polygon') {
+    return asFeature({
+      type: 'MultiPolygon',
+      coordinates: geometries.map(
+        geometry => (geometry as Geometry & {type: 'Polygon'}).coordinates
+      )
+    });
+  }
+  if (sameType && type === 'MultiPolygon') {
+    return asFeature({
+      type: 'MultiPolygon',
+      coordinates: geometries.flatMap(
+        geometry => (geometry as Geometry & {type: 'MultiPolygon'}).coordinates
+      )
+    });
+  }
+  if (sameType && type === 'Point') {
+    return asFeature({
+      type: 'MultiPoint',
+      coordinates: geometries.map(geometry => (geometry as Geometry & {type: 'Point'}).coordinates)
+    });
+  }
+  if (sameType && type === 'MultiPoint') {
+    return asFeature({
+      type: 'MultiPoint',
+      coordinates: geometries.flatMap(
+        geometry => (geometry as Geometry & {type: 'MultiPoint'}).coordinates
+      )
+    });
+  }
+  if (sameType && type === 'LineString') {
+    return asFeature({
+      type: 'MultiLineString',
+      coordinates: geometries.map(
+        geometry => (geometry as Geometry & {type: 'LineString'}).coordinates
+      )
+    });
+  }
+  if (sameType && type === 'MultiLineString') {
+    return asFeature({
+      type: 'MultiLineString',
+      coordinates: geometries.flatMap(
+        geometry => (geometry as Geometry & {type: 'MultiLineString'}).coordinates
+      )
+    });
+  }
+  return asFeature({type: 'GeometryCollection', geometries});
+}
+
 export function getCentroidLngLat(feature: Feature | null): [number, number] | null {
   const geometry = feature?.geometry;
   if (!geometry || geometry.type === 'GeometryCollection') {

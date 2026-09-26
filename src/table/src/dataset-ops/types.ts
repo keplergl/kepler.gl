@@ -12,7 +12,8 @@ export const DATASET_OPS_AGGREGATIONS = {
   maximum: AGGREGATION_TYPES.maximum,
   minimum: AGGREGATION_TYPES.minimum,
   median: AGGREGATION_TYPES.median,
-  countUnique: AGGREGATION_TYPES.countUnique
+  countUnique: AGGREGATION_TYPES.countUnique,
+  merge: 'merge'
 } as const;
 
 export type DatasetOpAggregation =

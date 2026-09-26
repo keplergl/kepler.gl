@@ -97,6 +97,35 @@ describe('dataset-ops engine', () => {
     expect(byRegion.east).toEqual(['east', 40, 1]);
   });
 
+  test('groupByDataset merges geojson geometries so the result stays mappable', () => {
+    const dataset = makeTable({
+      id: 'shapes',
+      fields: [
+        {name: 'region', type: ALL_FIELD_TYPES.string},
+        {name: 'geom', type: ALL_FIELD_TYPES.geojson}
+      ],
+      rows: [
+        ['west', square(-10, -10, 0, 0)],
+        ['west', square(0, 0, 10, 10)],
+        ['east', square(20, -10, 40, 10)]
+      ]
+    });
+
+    const result = groupByDataset(dataset, {
+      fieldName: 'region',
+      aggregations: {geom: DATASET_OPS_AGGREGATIONS.merge}
+    });
+
+    expect(result.data.fields.map(field => ({name: field.name, type: field.type}))).toEqual([
+      {name: 'region', type: ALL_FIELD_TYPES.string},
+      {name: 'geom_merge', type: ALL_FIELD_TYPES.geojson}
+    ]);
+    const byRegion = Object.fromEntries(result.data.rows.map(row => [row[0], row[1]]));
+    expect(byRegion.west.geometry.type).toBe('MultiPolygon');
+    expect(byRegion.west.geometry.coordinates).toHaveLength(2);
+    expect(byRegion.east.geometry.type).toBe('Polygon');
+  });
+
   test('joinDatasets supports LEFT, INNER, and FULL with null keys', () => {
     const left = makeTable({
       id: 'orders',
@@ -150,6 +179,35 @@ describe('dataset-ops engine', () => {
     expect(fullJoin.data.rows.some(row => row[0] === null && row[3] === 50)).toBe(true);
     expect(fullJoin.metadata.derivedDataset.type).toBe('join');
     expect(fullJoin.metadata.derivedDataset.sourceDataIds).toEqual(['orders', 'cities']);
+  });
+
+  test('joinDatasets leftColumns and rightColumns omit unselected fields', () => {
+    const left = makeTable({
+      id: 'orders',
+      fields: [
+        {name: 'id', type: ALL_FIELD_TYPES.string},
+        {name: 'city', type: ALL_FIELD_TYPES.string}
+      ],
+      rows: [['1', 'sf']]
+    });
+    const right = makeTable({
+      id: 'cities',
+      fields: [
+        {name: 'city', type: ALL_FIELD_TYPES.string},
+        {name: 'pop', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [['sf', 100]]
+    });
+
+    const result = joinDatasets(left, right, {
+      leftField: 'city',
+      rightField: 'city',
+      type: 'LEFT',
+      leftColumns: ['city'],
+      rightColumns: []
+    });
+    expect(result.data.fields.map(field => field.name)).toEqual(['city']);
+    expect(result.data.rows[0]).toEqual(['sf']);
   });
 
   test('spatialJoinDatasets joins points contained by polygons', () => {
@@ -361,12 +419,12 @@ describe('dataset-ops engine', () => {
     expect(ids(ALL_FIELD_TYPES.boolean)).toEqual(['count', 'sum', 'average', 'countUnique']);
     expect(ids(ALL_FIELD_TYPES.string)).toEqual(['count', 'countUnique']);
     expect(ids(ALL_FIELD_TYPES.timestamp)).toEqual(['count', 'maximum', 'minimum', 'countUnique']);
-    expect(ids(ALL_FIELD_TYPES.geojson)).toEqual(['count']);
+    expect(ids(ALL_FIELD_TYPES.geojson)).toEqual(['merge', 'count', 'countUnique']);
     expect(isDatasetOpsAggregationField({type: ALL_FIELD_TYPES.real})).toBe(true);
     expect(isDatasetOpsAggregationField({type: ALL_FIELD_TYPES.boolean})).toBe(true);
-    expect(isDatasetOpsAggregationField({type: ALL_FIELD_TYPES.geojson})).toBe(false);
+    expect(isDatasetOpsAggregationField({type: ALL_FIELD_TYPES.geojson})).toBe(true);
     expect(
       defaultAggregationsForFields([{name: 'geom', type: ALL_FIELD_TYPES.geojson} as any])
-    ).toEqual({});
+    ).toEqual({geom: 'merge'});
   });
 });

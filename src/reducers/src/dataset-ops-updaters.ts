@@ -25,12 +25,16 @@ function deactivateOps<T extends {isConfigActive?: boolean}>(ops: T[]): T[] {
   return ops.map(op => ({...op, isConfigActive: false}));
 }
 
-function defaultGroupByLabel(datasetLabel: string, fieldName?: string | null): string {
-  return fieldName ? `${datasetLabel} grouped by ${fieldName}` : `${datasetLabel} grouped`;
+function randomTwoDigitSuffix(): string {
+  return String(Math.floor(Math.random() * 100)).padStart(2, '0');
 }
 
-function defaultJoinLabel(leftLabel: string, rightLabel?: string | null): string {
-  return rightLabel ? `${leftLabel} join ${rightLabel}` : `${leftLabel} join`;
+function defaultGroupByLabel(): string {
+  return `group-by-${randomTwoDigitSuffix()}`;
+}
+
+function defaultJoinLabel(): string {
+  return `join-dataset-${randomTwoDigitSuffix()}`;
 }
 
 function defaultSpatialJoinLabel(resultId: string): string {
@@ -53,7 +57,7 @@ export function addGroupByUpdater(
     fieldName: null,
     aggregations: defaultAggregationsForFields(dataset.fields),
     resultId,
-    resultLabel: defaultGroupByLabel(dataset.label),
+    resultLabel: defaultGroupByLabel(),
     isConfigActive: true,
     error: null
   };
@@ -143,9 +147,7 @@ export function addJoinUpdater(
     predicate: implementation === 'spatial' ? 'intersects' : undefined,
     resultId,
     resultLabel:
-      implementation === 'spatial'
-        ? defaultSpatialJoinLabel(resultId)
-        : defaultJoinLabel(dataset.label),
+      implementation === 'spatial' ? defaultSpatialJoinLabel(resultId) : defaultJoinLabel(),
     isConfigActive: true,
     error: null
   };

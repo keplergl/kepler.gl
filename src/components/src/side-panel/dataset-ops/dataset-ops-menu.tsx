@@ -14,13 +14,19 @@ import {Tooltip} from '../../common/styled-components';
 import Portaled from '../../common/portaled';
 
 const MenuToggle = styled.div`
-  margin-left: 12px;
+  margin-left: 8px;
+  width: 16px;
   height: 16px;
+  flex-shrink: 0;
 `;
 
 const PortalAnchor = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
   width: 0;
   height: 16px;
+  pointer-events: none;
 `;
 
 const Menu = styled.div`

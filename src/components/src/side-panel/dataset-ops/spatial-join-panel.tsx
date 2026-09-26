@@ -22,7 +22,7 @@ import {
 import {Datasets} from '@kepler.gl/table';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {VisStateActions, ActionHandler} from '@kepler.gl/actions';
-import {Field, RGBColor} from '@kepler.gl/types';
+import {Field} from '@kepler.gl/types';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
 import ItemSelector from '../../common/item-selector/item-selector';
@@ -33,36 +33,18 @@ import LayerTypeListItemFactory, {
 } from '../layer-panel/layer-type-list-item';
 import {SpatialJoin} from '../../common/icons';
 import DatasetOpPanel, {
+  AggregationSelector,
   CollapsibleSection,
+  DATASET_OPS_ACCENT,
   DatasetOpHelp,
+  DatasetOpsAggRow,
+  DatasetOpsFieldName,
+  DatasetOpsSection,
+  DatasetOpsSectionTitle,
   ResultNameInput,
   ScrollableColumnList
 } from './dataset-op-panel';
 import {SPATIAL_JOIN_PREDICATE_ICONS} from './spatial-join-predicate-icons';
-
-const DatasetSection = styled.div<{sectionColor?: RGBColor}>`
-  border-left: 2px solid
-    ${props =>
-      props.sectionColor ? `rgb(${props.sectionColor.join(',')})` : props.theme.activeColor};
-  padding-left: 8px;
-  margin-bottom: 12px;
-
-  .data-source-selector .side-panel-panel__label {
-    display: none;
-  }
-  .data-source-selector {
-    margin-bottom: 8px;
-  }
-`;
-
-const SectionTitle = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 500;
-`;
 
 const GeometryHeader = styled.div`
   margin-bottom: 4px;
@@ -94,22 +76,7 @@ const PredicateListItemWrap = styled.div`
   }
 `;
 
-const AggRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-`;
-
-const FieldName = styled.div`
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-`;
-
-const JOIN_OPERATION_COLOR: RGBColor = [85, 88, 219];
+const JOIN_OPERATION_COLOR = DATASET_OPS_ACCENT;
 
 type GeoOption = {id: string; label: string; geo: SpatialGeoSource};
 
@@ -246,11 +213,11 @@ function SpatialJoinPanelFactory(
         onRun={() => runSpatialJoin(op.id)}
         canRun={Boolean(op.rightDataId && op.leftGeo && op.rightGeo)}
       >
-        <DatasetSection sectionColor={left.color}>
-          <SectionTitle>
+        <DatasetOpsSection sectionColor={left.color}>
+          <DatasetOpsSectionTitle>
             <FormattedMessage id="datasetOps.targetDataset" />
             <DatasetOpHelp helpId="datasetOps.targetDatasetHelp" />
-          </SectionTitle>
+          </DatasetOpsSectionTitle>
           <SourceDataSelector
             datasets={targetDatasets}
             dataId={op.leftDataId}
@@ -292,7 +259,7 @@ function SpatialJoinPanelFactory(
               {leftIncludeFields.map(field => {
                 const checked = selectedLeftColumns.has(field.name);
                 return (
-                  <AggRow key={field.name}>
+                  <DatasetOpsAggRow key={field.name}>
                     <input
                       type="checkbox"
                       checked={checked}
@@ -305,19 +272,19 @@ function SpatialJoinPanelFactory(
                         setSpatialJoinConfig(op.id, {leftColumns: next});
                       }}
                     />
-                    <FieldName>{field.displayName || field.name}</FieldName>
-                  </AggRow>
+                    <DatasetOpsFieldName>{field.displayName || field.name}</DatasetOpsFieldName>
+                  </DatasetOpsAggRow>
                 );
               })}
             </ScrollableColumnList>
           </CollapsibleSection>
-        </DatasetSection>
+        </DatasetOpsSection>
 
-        <DatasetSection sectionColor={JOIN_OPERATION_COLOR}>
-          <SectionTitle>
+        <DatasetOpsSection sectionColor={JOIN_OPERATION_COLOR}>
+          <DatasetOpsSectionTitle>
             <FormattedMessage id="datasetOps.joinOperation" />
             <DatasetOpHelp helpId="datasetOps.joinOperationHelp" />
-          </SectionTitle>
+          </DatasetOpsSectionTitle>
           <PredicateValue>
             <ItemSelector
               options={predicateOptions}
@@ -334,13 +301,13 @@ function SpatialJoinPanelFactory(
               DropDownRenderComponent={LayerTypeDropdownList}
             />
           </PredicateValue>
-        </DatasetSection>
+        </DatasetOpsSection>
 
-        <DatasetSection sectionColor={right?.color}>
-          <SectionTitle>
+        <DatasetOpsSection sectionColor={right?.color}>
+          <DatasetOpsSectionTitle>
             <FormattedMessage id="datasetOps.joinDataset" />
             <DatasetOpHelp helpId="datasetOps.joinDatasetHelp" />
-          </SectionTitle>
+          </DatasetOpsSectionTitle>
           <SourceDataSelector
             datasets={joinDatasets}
             dataId={op.rightDataId}
@@ -404,7 +371,7 @@ function SpatialJoinPanelFactory(
                     options[0] ||
                     null;
                   return (
-                    <AggRow key={field.name}>
+                    <DatasetOpsAggRow key={field.name}>
                       <input
                         type="checkbox"
                         checked={Boolean(selected)}
@@ -419,31 +386,34 @@ function SpatialJoinPanelFactory(
                           setSpatialJoinConfig(op.id, {aggregations});
                         }}
                       />
-                      <FieldName>{field.displayName || field.name}</FieldName>
-                      <ItemSelector
-                        options={options}
-                        selectedItems={selectedOption}
-                        displayOption={option => option.id}
-                        getOptionValue={option => option.id}
-                        onChange={value =>
-                          setSpatialJoinConfig(op.id, {
-                            aggregations: {
-                              ...op.aggregations,
-                              [field.name]: String(value) as DatasetOpAggregation
-                            }
-                          })
-                        }
-                        disabled={!selected}
-                        searchable={false}
-                        multiSelect={false}
-                      />
-                    </AggRow>
+                      <DatasetOpsFieldName>{field.displayName || field.name}</DatasetOpsFieldName>
+                      <AggregationSelector>
+                        <ItemSelector
+                          options={options}
+                          selectedItems={selectedOption}
+                          displayOption={option => option.id}
+                          getOptionValue={option => option.id}
+                          onChange={value =>
+                            setSpatialJoinConfig(op.id, {
+                              aggregations: {
+                                ...op.aggregations,
+                                [field.name]: String(value) as DatasetOpAggregation
+                              }
+                            })
+                          }
+                          disabled={!selected}
+                          searchable={false}
+                          multiSelect={false}
+                          size="small"
+                        />
+                      </AggregationSelector>
+                    </DatasetOpsAggRow>
                   );
                 })}
               </ScrollableColumnList>
             </CollapsibleSection>
           ) : null}
-        </DatasetSection>
+        </DatasetOpsSection>
 
         <ResultNameInput
           value={op.resultLabel}

@@ -65,11 +65,14 @@ const DatasetAction = styled.div`
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  position: relative;
 `;
 
 const DataTagAction = styled.div<{$alwaysVisible?: boolean}>`
-  margin-left: 12px;
+  margin-left: 8px;
+  width: 16px;
   height: 16px;
+  flex-shrink: 0;
   opacity: ${props => (props.$alwaysVisible ? 1 : 0)};
 `;
 
@@ -192,6 +195,11 @@ const RefreshErrorIcon = ({id, message}: {id: string; message: string}) => (
   </StyledRefreshError>
 );
 
+const DatasetTitleRoot = styled.div`
+  min-width: 0;
+  overflow: hidden;
+`;
+
 DatasetTitleFactory.deps = [DatasetTagFactory];
 
 export default function DatasetTitleFactory(
@@ -243,7 +251,7 @@ export default function DatasetTitleFactory(
     const refreshError = dataset.metadata?.refreshError;
 
     return (
-      <div className="custom-palette-panel" ref={root}>
+      <DatasetTitleRoot className="custom-palette-panel" ref={root}>
         <StyledDatasetTitle
           className="source-data-title"
           $clickable={Boolean(showDatasetTable || onTitleClick)}
@@ -288,7 +296,7 @@ export default function DatasetTitleFactory(
             ) : null}
           </DatasetAction>
         </StyledDatasetTitle>
-      </div>
+      </DatasetTitleRoot>
     );
   };
 

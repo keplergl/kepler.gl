@@ -402,14 +402,20 @@ export default {
     refreshCustom: 'Custom'
   },
   datasetOps: {
-    groupBy: 'Group by',
+    groupBy: 'Group By',
+    groupByHelp:
+      'Create groups to combine data based on a selected field. Result will be added as a new dataset.',
+    groupByField: 'Group by field',
+    groupByFieldHelp: 'Select the field used to create groups.',
+    aggregations: 'Aggregations',
+    aggregationRules: 'Aggregation Rules',
+    aggregationRulesHelp: 'Describe aggregation rules for combining data in each column.',
     join: 'Join',
+    joinHelp:
+      'Combine rows from two datasets based on a common field. Result will be added as a new dataset.',
     spatialJoin: 'Spatial Join',
     spatialJoinHelp:
       'Combines columns from one dataset to another based on their spatial relationship. To perform spatial join, select geo columns in both datasets and select the type of spatial join operation to perform. The results will be a new joined dataset.',
-    groupByField: 'Group by field',
-    aggregations: 'Aggregations',
-    aggregationRules: 'Aggregation Rules',
     columnsToInclude: 'Columns to include',
     columnsToIncludeHelp: 'Select and modify columns to be included in the joined dataset.',
     selectAll: 'Select All',
@@ -420,7 +426,13 @@ export default {
     cancel: 'Cancel',
     leftKey: 'Left key',
     rightKey: 'Right key',
-    joinTypeLabel: 'Join type',
+    leftDataset: 'Left',
+    leftDatasetHelp: 'Select dataset to join on the left',
+    leftFieldHelp: 'Select common field of the left dataset',
+    rightDataset: 'Right',
+    rightDatasetHelp: 'Select dataset to join on the right',
+    rightFieldHelp: 'Select common field of the right dataset',
+    joinTypeLabel: 'Join Type',
     targetDataset: 'Target Dataset',
     targetDatasetHelp:
       'Select the dataset that will keep one output row per feature. Matching features from the join dataset are aggregated onto that row.',
@@ -455,7 +467,10 @@ export default {
     joinType: {
       left: 'Left',
       inner: 'Inner',
-      full: 'Full'
+      full: 'Full',
+      leftHelp: 'Left Join: Returns all rows from the left, and the matched rows from the right.',
+      innerHelp: 'Inner Join: Returns rows that have matching values in both.',
+      fullHelp: 'Full Join: Returns all rows when there is a match in either left or right.'
     },
     aggregation: {
       count: 'Count',
@@ -464,7 +479,8 @@ export default {
       maximum: 'Max',
       minimum: 'Min',
       median: 'Median',
-      countUnique: 'Unique'
+      countUnique: 'Unique',
+      merge: 'Merge'
     }
   },
   datasetInfo: {

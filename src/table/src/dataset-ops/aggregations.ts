@@ -7,8 +7,10 @@ import {aggregate} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 
 import {DATASET_OPS_AGGREGATIONS, DatasetOpAggregation} from './types';
+import {mergeGeometries} from './geometry';
 
 export const DATASET_OPS_AGGREGATION_OPTIONS: {id: DatasetOpAggregation; labelId: string}[] = [
+  {id: DATASET_OPS_AGGREGATIONS.merge, labelId: 'datasetOps.aggregation.merge'},
   {id: DATASET_OPS_AGGREGATIONS.count, labelId: 'datasetOps.aggregation.count'},
   {id: DATASET_OPS_AGGREGATIONS.sum, labelId: 'datasetOps.aggregation.sum'},
   {id: DATASET_OPS_AGGREGATIONS.average, labelId: 'datasetOps.aggregation.average'},
@@ -24,7 +26,15 @@ const TIME_FIELD_TYPES = new Set([ALL_FIELD_TYPES.timestamp, ALL_FIELD_TYPES.dat
 
 export function aggregationIdsForFieldType(type?: string): DatasetOpAggregation[] {
   if (type && NUMERIC_FIELD_TYPES.has(type)) {
-    return DATASET_OPS_AGGREGATION_OPTIONS.map(option => option.id);
+    return [
+      DATASET_OPS_AGGREGATIONS.count,
+      DATASET_OPS_AGGREGATIONS.sum,
+      DATASET_OPS_AGGREGATIONS.average,
+      DATASET_OPS_AGGREGATIONS.maximum,
+      DATASET_OPS_AGGREGATIONS.minimum,
+      DATASET_OPS_AGGREGATIONS.median,
+      DATASET_OPS_AGGREGATIONS.countUnique
+    ];
   }
   if (type === ALL_FIELD_TYPES.boolean) {
     return [
@@ -44,6 +54,13 @@ export function aggregationIdsForFieldType(type?: string): DatasetOpAggregation[
   }
   if (type && CATEGORICAL_FIELD_TYPES.has(type)) {
     return [DATASET_OPS_AGGREGATIONS.count, DATASET_OPS_AGGREGATIONS.countUnique];
+  }
+  if (type === ALL_FIELD_TYPES.geojson || type === ALL_FIELD_TYPES.point) {
+    return [
+      DATASET_OPS_AGGREGATIONS.merge,
+      DATASET_OPS_AGGREGATIONS.count,
+      DATASET_OPS_AGGREGATIONS.countUnique
+    ];
   }
   return [DATASET_OPS_AGGREGATIONS.count];
 }
@@ -67,6 +84,9 @@ export function defaultAggregationForField(field: Field): DatasetOpAggregation {
   if (field.type === ALL_FIELD_TYPES.string || field.type === ALL_FIELD_TYPES.h3) {
     return DATASET_OPS_AGGREGATIONS.countUnique;
   }
+  if (field.type === ALL_FIELD_TYPES.geojson || field.type === ALL_FIELD_TYPES.point) {
+    return DATASET_OPS_AGGREGATIONS.merge;
+  }
   return allowed[0];
 }
 
@@ -85,6 +105,9 @@ export function defaultAggregationsForFields(
 }
 
 export function aggregateValues(values: unknown[], technique: DatasetOpAggregation): unknown {
+  if (technique === DATASET_OPS_AGGREGATIONS.merge) {
+    return mergeGeometries(values);
+  }
   const defined = values.filter(notNullorUndefined);
   if (technique === DATASET_OPS_AGGREGATIONS.count) {
     return values.length;
@@ -96,6 +119,9 @@ export function aggregateValues(values: unknown[], technique: DatasetOpAggregati
 }
 
 export function resultFieldType(technique: DatasetOpAggregation, sourceType?: string): string {
+  if (technique === DATASET_OPS_AGGREGATIONS.merge) {
+    return ALL_FIELD_TYPES.geojson;
+  }
   if (
     technique === DATASET_OPS_AGGREGATIONS.count ||
     technique === DATASET_OPS_AGGREGATIONS.countUnique

@@ -5,13 +5,18 @@ import React, {useState} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
+import {RGBColor} from '@kepler.gl/types';
+
 import {Button, Input, PanelLabel, SidePanelSection, Tooltip} from '../../common/styled-components';
 import {ArrowLeft, ArrowRight, Help} from '../../common/icons';
+
+export const DATASET_OPS_ACCENT: RGBColor = [85, 88, 219];
 
 const Panel = styled.div`
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
   min-height: 0;
   height: 100%;
   width: 100%;
@@ -68,8 +73,14 @@ const HelpButton = styled.span.attrs({
 })`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
   color: ${props => props.theme.labelColor};
   cursor: pointer;
+  svg {
+    display: block;
+  }
   &:hover {
     color: ${props => props.theme.textColorHl};
   }
@@ -99,6 +110,13 @@ const CollapsibleHeader = styled.div.attrs({
   }
 `;
 
+const CollapsibleTitle = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 12px;
+`;
+
 const SelectAllButton = styled.span.attrs({
   className: 'dataset-ops-collapsible__select-all'
 })`
@@ -124,15 +142,11 @@ export function CollapsibleSection({
   return (
     <SidePanelSection className="dataset-ops-collapsible">
       <CollapsibleHeader isOpen={open} onClick={() => setOpen(!open)}>
-        <span>
+        <CollapsibleTitle>
           <FormattedMessage id={titleId} />
-        </span>
+          {helpId ? <DatasetOpHelp helpId={helpId} /> : null}
+        </CollapsibleTitle>
         <ArrowRight className="collapsible-arrow" height="12px" />
-        {helpId ? (
-          <span onClick={event => event.stopPropagation()}>
-            <DatasetOpHelp helpId={helpId} />
-          </span>
-        ) : null}
         {open && onToggleSelectAll ? (
           <SelectAllButton
             onClick={event => {
@@ -152,8 +166,13 @@ export function CollapsibleSection({
 export function DatasetOpHelp({helpId}: {helpId: string}) {
   const tooltipId = `${helpId.replace(/\./g, '-')}-help`;
   return (
-    <HelpButton data-tip data-for={tooltipId} aria-label="Help">
-      <Help height="14px" />
+    <HelpButton
+      data-tip
+      data-for={tooltipId}
+      aria-label="Help"
+      onClick={event => event.stopPropagation()}
+    >
+      <Help height="12px" />
       <Tooltip id={tooltipId} effect="solid" place="right">
         <HelpText>
           <FormattedMessage id={helpId} />
@@ -193,6 +212,81 @@ export const ScrollableColumnList = styled.div.attrs({
 })`
   overflow-x: hidden;
   padding-right: 4px;
+`;
+
+export const DatasetOpsSection = styled.div<{sectionColor?: RGBColor}>`
+  border-left: 2px solid
+    ${props =>
+      props.sectionColor ? `rgb(${props.sectionColor.join(',')})` : props.theme.activeColor};
+  padding-left: 8px;
+  margin-bottom: 12px;
+
+  .data-source-selector .side-panel-panel__label {
+    display: none;
+  }
+  .data-source-selector {
+    margin-bottom: 8px;
+  }
+`;
+
+export const DatasetOpsSectionTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+`;
+
+export const DatasetOpsFieldRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  > :first-child {
+    flex: 1;
+    min-width: 0;
+  }
+`;
+
+export const DatasetOpsAggRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+`;
+
+export const DatasetOpsFieldName = styled.div`
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+`;
+
+export const AggregationSelector = styled.div.attrs({
+  className: 'dataset-ops-aggregation-selector'
+})`
+  flex: 0 0 108px;
+  width: 108px;
+  min-width: 108px;
+  overflow: hidden;
+
+  .item-selector {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .item-selector__dropdown {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .item-selector__dropdown__value {
+    min-width: 0;
+    flex: 1;
+  }
 `;
 
 export function DatasetOpPanel({

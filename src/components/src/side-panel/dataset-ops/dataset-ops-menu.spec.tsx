@@ -195,6 +195,8 @@ describe('GroupByPanel field selection', () => {
       />
     );
 
+    fireEvent.click(container.querySelector('.dataset-ops-collapsible__header') as HTMLElement);
+
     const list = container.querySelector('.dataset-ops-column-list') as HTMLElement;
     const body = container.querySelector('.dataset-ops-panel__body') as HTMLElement;
     expect(list).toBeTruthy();
@@ -247,6 +249,23 @@ describe('DatasetOpPanel help', () => {
     expect(queryByLabelText('Help')).toBeNull();
     expect(container.querySelector('.dataset-ops-panel__description')).toBeTruthy();
     expect(container.querySelector('.data-ex-icons-spatial-join')).toBeNull();
+  });
+
+  test('shows join description text when descriptionId is provided', () => {
+    const {container, queryByLabelText} = renderWithTheme(
+      <DatasetOpPanel
+        titleId="datasetOps.join"
+        descriptionId="datasetOps.joinHelp"
+        onClose={jest.fn()}
+        onRun={jest.fn()}
+        canRun={false}
+      >
+        <div />
+      </DatasetOpPanel>
+    );
+
+    expect(queryByLabelText('Help')).toBeNull();
+    expect(container.querySelector('.dataset-ops-panel__description')).toBeTruthy();
   });
 });
 

@@ -68,7 +68,7 @@ export function groupByDataset(
     source: dataset,
     type: 'groupBy',
     operationId: config.operationId || generateHashId(6),
-    label: config.label || `${dataset.label} grouped by ${groupField.name}`,
+    label: config.label || `group-by-${config.resultId || generateHashId(6)}`,
     resultId: config.resultId,
     fields,
     rows

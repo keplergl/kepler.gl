@@ -12,19 +12,28 @@ Operations run entirely in the browser. They are available for local (and remote
 
 ## Group by
 
-1. Choose the grouping column.
-2. Pick an aggregation per remaining column (`COUNT`, `SUM`, `MEAN`, `MIN`, `MAX`, `MEDIAN`, `UNIQUE`). Numeric fields default to **MEAN**, strings to **UNIQUE**, others to **COUNT**.
-3. Name the result and click **Run**.
+Create one output row per unique value in the grouping column. Remaining columns are aggregated.
+
+The panel is arranged like this:
+
+1. **Group by field** — column that defines the groups
+2. **Aggregation Rules** — aggregation per remaining column (`COUNT`, `SUM`, `MEAN`, `MIN`, `MAX`, `MEDIAN`, `UNIQUE`, `MERGE`)
+
+Numeric fields default to **MEAN**, strings to **UNIQUE**, geometry (`geojson` / `point`) to **MERGE**, others to **COUNT**. **MERGE** keeps location by combining features in each group into a MultiPolygon, MultiPoint, or GeometryCollection. Name the result and click **Run**.
 
 ## Attribute join
 
-Join two datasets on matching key values.
+Join two datasets on matching key values. The panel is arranged like this:
+
+1. **Left** — left dataset, join key, and columns to include
+2. **Join Type** — left, inner, or full
+3. **Right** — right dataset, join key, and columns to include
 
 - **Left** keeps every row from the left table and fills unmatched right columns with empty values.
 - **Inner** keeps only rows with a match.
 - **Full** keeps unmatched rows from both tables.
 
-Null keys never match. Duplicate keys produce one output row per match.
+Null keys never match. Duplicate keys produce one output row per match. Right-side columns are prefixed with the right dataset name when names collide.
 
 ## Spatial join
 

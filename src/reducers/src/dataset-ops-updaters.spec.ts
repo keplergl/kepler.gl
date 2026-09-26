@@ -120,6 +120,30 @@ describe('dataset ops vis-state', () => {
     expect(state.groupBys).toHaveLength(0);
   });
 
+  test('addGroupBy uses a short random result name', () => {
+    const cities = makeTable(
+      'cities',
+      [{name: 'region', type: ALL_FIELD_TYPES.string}],
+      [['west']]
+    );
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets: {cities}
+    };
+    state = visStateReducer(state, VisStateActions.addGroupBy('cities'));
+    expect(state.groupBys[0].resultLabel).toMatch(/^group-by-\d{2}$/);
+  });
+
+  test('addJoin uses a short random result name', () => {
+    const cities = makeTable('cities', [{name: 'id', type: ALL_FIELD_TYPES.string}], [['1']]);
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets: {cities}
+    };
+    state = visStateReducer(state, VisStateActions.addJoin('cities'));
+    expect(state.joins[0].resultLabel).toMatch(/^join-dataset-\d{2}$/);
+  });
+
   test('setSpatialJoinConfig updates the predicate', () => {
     const polys = makeTable('polys', [{name: 'geom', type: ALL_FIELD_TYPES.geojson}], []);
     let state = {
