@@ -56,7 +56,8 @@ export type BaseMapLibraryConfig = {
  *
  * - `0` — log every action (no filtering)
  * - `1` — suppress the highest-frequency UI noise:
- *          MOUSE_MOVE, LAYER_HOVER, SET_MAP_BOUNDARY, SET_LOADING_INDICATOR
+ *          MOUSE_MOVE, LAYER_HOVER, SET_MAP_BOUNDARY, SET_LOADING_INDICATOR,
+ *          SET_LOADING_PROGRESS
  * - `2` — suppress everything in level 1 plus map/layer update chatter:
  *          LOAD_MAP_STYLES, UPDATE_MAP, LAYER_VISUAL_CHANGE,
  *          ON_MAP_CLICK, FILTER_CHANGE, MAP_LOAD_STARTED
