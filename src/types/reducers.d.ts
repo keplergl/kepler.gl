@@ -477,6 +477,7 @@ export declare type ExportImage = {
   error: Error | false;
   center: boolean;
   escapeXhtmlForWebpack?: boolean;
+  fileName: string;
 };
 
 export type ExportData = {
@@ -497,6 +498,7 @@ export type ExportMap = {
   HTML: ExportHtml;
   JSON: ExportJson;
   format: 'HTML' | 'JSON';
+  fileName: string;
 };
 
 export type ExportVideo = {

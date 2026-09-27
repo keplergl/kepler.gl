@@ -94,6 +94,8 @@ export {
   exportMap,
   exportToJsonString,
   default as exporters,
+  getExportFileName,
+  getExportFileNameBase,
   getMapJSON,
   getScaleFromImageSize,
   isMSEdge
