@@ -259,6 +259,9 @@ export type KeplerApplicationConfig = {
   /** Animation / time-filter playback `{ }` JSON editor. Enabled by default. */
   enableAnimationJsonEditor?: boolean;
 
+  /** Charts panel `{ }` JSON editor. Enabled by default. */
+  enableChartJsonEditor?: boolean;
+
   /**
    * Show a format dropdown next to the remote dataset URL field (Auto / CSV / GeoJSON / JSON / Arrow / Parquet).
    * Useful for extensionless URLs such as Azure SAS blobs. Disabled by default.
@@ -434,6 +437,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableEffectJsonEditor: true,
   enableViewportJsonEditor: false,
   enableAnimationJsonEditor: true,
+  enableChartJsonEditor: true,
 
   enableRemoteFileFormatSelector: false,
 

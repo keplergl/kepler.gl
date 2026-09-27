@@ -860,7 +860,8 @@ export class ChartsSchema extends Schema {
             ...chart,
             display: {
               ...chart.display,
-              isConfigActive: false
+              isConfigActive: false,
+              isJsonEditorActive: false
             }
           }).charts
       )
