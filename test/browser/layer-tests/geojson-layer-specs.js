@@ -627,7 +627,7 @@ test('#GeojsonLayer -> renderLayer', t => {
 
         const expectedFillLayerProp = {
           extruded: false,
-          elevationScale: 5,
+          elevationScale: 1,
           filled: false,
           wireframe: false,
           opacity: 0.8,

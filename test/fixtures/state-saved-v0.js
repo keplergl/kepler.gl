@@ -1415,7 +1415,7 @@ mergedLayer4.config = {
     sizeRange: [0, 10],
     radiusRange: [0, 50],
     heightRange: [0, 500],
-    elevationScale: 5,
+    elevationScale: 1,
     fixedHeight: false,
     elevationOffset: 0,
     elevationOffsetRange: [0, 500],

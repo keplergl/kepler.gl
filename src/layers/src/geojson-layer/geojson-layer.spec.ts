@@ -35,6 +35,7 @@ describe('GeoJsonLayer default deck parameters', () => {
 
   test('defaults elevationOffset to 0 so existing maps stay on the ground', () => {
     const layer = new GeoJsonLayer({id: 'geojson_offset'});
+    expect(layer.config.visConfig.elevationScale).toBe(1);
     expect(layer.config.visConfig.elevationOffset).toBe(0);
     expect(layer.config.visConfig.elevationOffsetRange).toEqual([0, 500]);
     expect(layer.config.visConfig.fixedElevation).toBe(true);
