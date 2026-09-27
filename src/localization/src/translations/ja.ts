@@ -16,6 +16,7 @@ export default {
     stroke: '線の太さ',
     density: '密度',
     height: '高さ',
+    elevationOffset: '標高オフセット',
     sum: '合計',
     pointCount: '点の数'
   },
@@ -168,6 +169,9 @@ export default {
     sizeScale: 'サイズのスケール',
     worldUnitSize: 'World Unit Size',
     elevationScale: '標高のスケール',
+    elevationOffset: '標高オフセット',
+    elevationOffsetDescription: '押し出したポリゴンを地面から持ち上げます（高さと同じ単位）',
+    elevationOffsetRange: '標高オフセットの範囲',
     enableElevationZoomFactor: '標高ズーム係数を使用する',
     enableElevationZoomFactorDescription: '現在のズーム率に基づいて高さ/標高を調整します',
     enableHeightZoomFactor: '高さズーム係数を使用する',
@@ -188,6 +192,8 @@ export default {
     heightMultiplier: '高さ乗数',
     fixedHeight: '固定高さ',
     fixedHeightDescription: '高さを変更せずに使用する',
+    fixedElevation: '固定標高',
+    fixedElevationDescription: '標高オフセットを変更せずに使用する',
     allowHover: 'ツールチップを表示',
     allowHoverDescription: 'レイヤー要素にホバーしたときにツールチップを表示または非表示にする',
     flow: {

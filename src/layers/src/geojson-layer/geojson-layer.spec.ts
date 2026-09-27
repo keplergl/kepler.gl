@@ -33,6 +33,79 @@ describe('GeoJsonLayer default deck parameters', () => {
     });
   });
 
+  test('defaults elevationOffset to 0 so existing maps stay on the ground', () => {
+    const layer = new GeoJsonLayer({id: 'geojson_offset'});
+    expect(layer.config.visConfig.elevationOffset).toBe(0);
+    expect(layer.config.visConfig.elevationOffsetRange).toEqual([0, 500]);
+    expect(layer.config.visConfig.fixedElevation).toBe(true);
+    expect(layer.config.elevationOffsetField).toBeNull();
+    expect(layer.visualChannels.elevationOffset.accessor).toBe('getElevationOffset');
+    expect(layer.isElevationOffsetActive()).toBe(false);
+    expect(layer.isExtruded()).toBe(false);
+  });
+
+  test('treats a positive offset or mapped field as elevation offset in use', () => {
+    const layer = new GeoJsonLayer({id: 'geojson_offset'});
+    layer.config.visConfig.elevationOffset = 12;
+    expect(layer.isElevationOffsetActive()).toBe(true);
+
+    layer.config.visConfig.elevationOffset = 0;
+    layer.config.elevationOffsetField = {name: 'offset'} as any;
+    expect(layer.isElevationOffsetActive()).toBe(true);
+    expect(layer.isExtruded()).toBe(true);
+  });
+
+  test('rebuilds elevation when Enable height is toggled after offset', () => {
+    const layer = new GeoJsonLayer({id: 'geojson_offset'});
+    expect(layer.getVisualChannelUpdateTriggers().getElevation.enable3d).toBe(false);
+    layer.config.visConfig.enable3d = true;
+    expect(layer.getVisualChannelUpdateTriggers().getElevation.enable3d).toBe(true);
+  });
+
+  test('writes depth when elevation offset is used even if height is off', () => {
+    const layer = new GeoJsonLayer({id: 'geojson_offset'});
+    layer.config.visConfig.elevationOffset = 12;
+    expect(propsFor(layer, {dragRotate: false})).toMatchObject({
+      depthTest: true,
+      depthMask: true
+    });
+  });
+
+  test('reads elevationOffset from visConfig or GeoJSON properties', () => {
+    const layer = new GeoJsonLayer({id: 'geojson_offset'});
+    layer.config.visConfig.elevationOffset = 120;
+    const accessors = layer.getAttributeAccessors({
+      dataContainer: {} as any
+    });
+
+    expect(accessors.getElevationOffset({})).toBe(120);
+    expect(accessors.getElevationOffset({properties: {elevationOffset: 50}})).toBe(50);
+  });
+
+  test('uses raw elevationOffset field values instead of normalizing to the min', () => {
+    const layer = new GeoJsonLayer({id: 'geojson_offset'});
+    expect(layer.visualChannels.elevationOffset.fixed).toBe('fixedElevation');
+    expect(layer.config.visConfig.fixedElevation).toBe(true);
+
+    layer.config.elevationOffsetField = {
+      name: 'offset',
+      type: 'real',
+      valueAccessor: d => d.offset
+    } as any;
+    layer.config.elevationOffsetDomain = [10, 40];
+    layer.config.visConfig.elevationOffsetRange = [0, 500];
+
+    const accessors = layer.getAttributeAccessors({
+      dataAccessor: () => d => d,
+      dataContainer: {} as any
+    });
+
+    // Linear mapping of [10, 40] onto [0, 500] would put 10 on the ground.
+    expect(accessors.getElevationOffset({offset: 10})).toBe(10);
+    expect(accessors.getElevationOffset({offset: 20})).toBe(20);
+    expect(accessors.getElevationOffset({offset: 40})).toBe(40);
+  });
+
   test('3D view writes depth for flat layers so they participate in occlusion', () => {
     const layer = new GeoJsonLayer({id: 'geojson_depth'});
     expect(propsFor(layer, {dragRotate: true})).toMatchObject({
