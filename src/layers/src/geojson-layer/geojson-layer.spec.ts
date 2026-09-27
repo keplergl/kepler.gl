@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import GeoJsonLayer from './geojson-layer';
+import GeoJsonLayer, {getTextLabelPosition} from './geojson-layer';
 
 describe('GeoJsonLayer default deck parameters', () => {
   const gpuFilter = null as any;
@@ -112,6 +112,12 @@ describe('GeoJsonLayer default deck parameters', () => {
       depthTest: true,
       depthMask: true
     });
+  });
+
+  test('places text labels at the elevation offset, not on the extrusion top', () => {
+    const feature = {properties: {index: 0}};
+    expect(getTextLabelPosition([-122, 37], feature, 0)).toEqual([-122, 37]);
+    expect(getTextLabelPosition([-122, 37], feature, 40)).toEqual([-122, 37, 40]);
   });
 });
 

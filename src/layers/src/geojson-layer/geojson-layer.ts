@@ -261,6 +261,29 @@ function wrapElevationOffsetAccessor(
   };
 }
 
+function readAccessorValue(
+  accessor: ((d: any) => number) | number | undefined,
+  d: any,
+  fallback = 0
+): number {
+  if (typeof accessor === 'function') {
+    return accessor(d) ?? fallback;
+  }
+  return accessor ?? fallback;
+}
+
+/** Place a text label at the polygon centroid, at the base (elevation offset). */
+export function getTextLabelPosition(
+  xy: number[] | null | undefined,
+  feature: {properties: {index: number}},
+  getElevationOffset: ((d: any) => number) | number | undefined
+): number[] {
+  const lng = xy?.[0] ?? 0;
+  const lat = xy?.[1] ?? 0;
+  const offset = readAccessorValue(wrapElevationOffsetAccessor(getElevationOffset), feature);
+  return offset ? [lng, lat, offset] : [lng, lat];
+}
+
 // don't use strokes by default for datasets with large number of polygons
 const DEFAULT_POLYGON_STROKE_LIMIT = 100000;
 
@@ -986,10 +1009,18 @@ export default class GeoJsonLayer extends Layer {
       ...(dataProps.textLabelData.length > 0
         ? this.renderTextLabelLayer(
             {
-              getPosition: dataProps.getPosition,
+              getPosition: d =>
+                getTextLabelPosition(
+                  dataProps.getPosition(d),
+                  {properties: {index: d.index}},
+                  props.getElevationOffset
+                ),
               sharedProps,
               getPixelOffset,
-              updateTriggers,
+              updateTriggers: {
+                ...updateTriggers,
+                getPosition: updateTriggers.getElevationOffset
+              },
               getFiltered: dataProps.textLabelFiltered
             },
             {
