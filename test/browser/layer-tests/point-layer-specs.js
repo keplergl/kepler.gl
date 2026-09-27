@@ -1017,6 +1017,11 @@ test('#PointLayer -> renderLayer globe mode text labels', t => {
     flatLabel.props._subLayerProps.characters,
     'should not override the glyph sublayer outside globe mode'
   );
+  t.equal(
+    flatLabel.props._subLayerProps.background.parameters.depthTest,
+    false,
+    'should not depth-test the label background outside globe mode'
+  );
 
   // globe mode sets a global `cull: true`, which would otherwise discard the glyph quads
   const globeLabel = renderWithMapState({...INITIAL_MAP_STATE, globe: {enabled: true}});
@@ -1040,6 +1045,16 @@ test('#PointLayer -> renderLayer globe mode text labels', t => {
     globeLabel.props._subLayerProps.background.type,
     EnhancedTextBackgroundLayer,
     'should render the label background with the globe back-face culling sublayer'
+  );
+  t.equal(
+    globeLabel.props._subLayerProps.background.parameters.depthTest,
+    true,
+    'should depth-test the label background against the globe depth disk'
+  );
+  t.equal(
+    globeLabel.props._subLayerProps.background.parameters.depthMask,
+    false,
+    'should not write depth from the label background'
   );
 
   t.end();

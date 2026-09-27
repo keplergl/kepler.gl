@@ -1707,6 +1707,27 @@ class Layer implements KeplerLayer {
         const labelId = `${this.id}-label-${textLabel[i].field?.name}${
           collisionEnabled ? '-collision' : ''
         }`;
+        // Glyphs inherit these from the TextLayer. The background sublayer's
+        // `_subLayerProps.background.parameters` replaces that object, so the
+        // same depth settings have to be repeated there. Otherwise the box
+        // keeps deck.gl's default depth test and is discarded against extruded
+        // geometry while the text (depthTest off) still draws on top.
+        const labelDepthParameters = isGlobeMode
+          ? {
+              // Globe far-side occlusion is the depth disk (see globe-layers.ts),
+              // not GPU face culling. Labels used to force depthTest off so they
+              // always drew on top; with cull also disabled they then showed
+              // through the planet when the parent object was on the back side.
+              // Match the editor overlay: depth-test against the disk, don't write
+              // depth, and keep cull off so billboard glyph quads are not discarded.
+              depthTest: true,
+              depthMask: false,
+              cull: false
+            }
+          : {
+              // text will always show on top of all layers
+              depthTest: false
+            };
 
         accu.push(
           // @ts-expect-error
@@ -1737,22 +1758,7 @@ class Layer implements KeplerLayer {
               sdf: textLabel[i].outlineWidth > 0
             },
             parameters: {
-              ...(isGlobeMode
-                ? {
-                    // Globe far-side occlusion is the depth disk (see globe-layers.ts),
-                    // not GPU face culling. Labels used to force depthTest off so they
-                    // always drew on top; with cull also disabled they then showed
-                    // through the planet when the parent object was on the back side.
-                    // Match the editor overlay: depth-test against the disk, don't write
-                    // depth, and keep cull off so billboard glyph quads are not discarded.
-                    depthTest: true,
-                    depthMask: false,
-                    cull: false
-                  }
-                : {
-                    // text will always show on top of all layers
-                    depthTest: false
-                  }),
+              ...labelDepthParameters,
               ...(mapState?.layerParameters ?? {})
             },
             ...(collisionEnabled
@@ -1784,17 +1790,20 @@ class Layer implements KeplerLayer {
               collisionEnabled
             },
             _subLayerProps: {
-              // Labels anchored on the far hemisphere would otherwise be drawn
-              // through the planet, since depthTest is off. Both the glyphs and the
-              // label background need it, or a far-side label leaves an empty box.
+              // Far-side labels would otherwise draw through the planet. Both the
+              // glyphs and the label background need the back-face cull shader, or
+              // a far-side label leaves an empty box.
               ...(isGlobeMode ? {characters: {type: EnhancedMultiIconLayer}} : null),
               ...(background
                 ? {
                     background: {
                       ...(isGlobeMode ? {type: EnhancedTextBackgroundLayer} : null),
                       parameters: {
-                        cull: false,
-                        ...(isGlobeMode ? {depthTest: true, depthMask: false} : null),
+                        ...labelDepthParameters,
+                        // Flat mode leaves parent culling alone; the background quad
+                        // is camera-facing and must not be discarded if a parent
+                        // parameter enables cull.
+                        ...(isGlobeMode ? null : {cull: false}),
                         ...(mapState?.layerParameters ?? {})
                       }
                     }
