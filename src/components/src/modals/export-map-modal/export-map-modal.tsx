@@ -16,13 +16,25 @@ import {
 import ExportHtmlMapFactory from './export-html-map';
 import ExportJsonMapFactory from './export-json-map';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {ActionHandler, setExportHTMLMapMode, setUserMapboxAccessToken} from '@kepler.gl/actions';
+import {
+  ActionHandler,
+  setExportHTMLMapMode,
+  setExportIncludeLayerApiKeys,
+  setUserMapboxAccessToken
+} from '@kepler.gl/actions';
+
+interface ExportMapModalOptions {
+  format: string;
+  includeLayerApiKeys?: boolean;
+  [key: string]: any;
+}
 
 interface ExportMapModalFactoryProps {
-  options?: {format: string};
+  options?: ExportMapModalOptions;
   config: any;
   onEditUserMapboxAccessToken: ActionHandler<typeof setUserMapboxAccessToken>;
   onChangeExportMapHTMLMode?: ActionHandler<typeof setExportHTMLMapMode>;
+  onChangeExportIncludeLayerApiKeys?: ActionHandler<typeof setExportIncludeLayerApiKeys>;
   onChangeExportMapFormat?: (format: string) => any;
   mapFormat?: string;
 }
@@ -47,6 +59,7 @@ function ExportMapModalFactory(
     config = {},
     onChangeExportMapFormat = NO_OP,
     onChangeExportMapHTMLMode = NO_OP,
+    onChangeExportIncludeLayerApiKeys = NO_OP,
     onEditUserMapboxAccessToken = NO_OP,
     options = {format: ''}
   }: ExportMapModalFactoryProps) => (
@@ -83,13 +96,19 @@ function ExportMapModalFactory(
           >
             <ExportHtmlMap
               onChangeExportMapHTMLMode={onChangeExportMapHTMLMode}
+              onChangeExportIncludeLayerApiKeys={onChangeExportIncludeLayerApiKeys}
               onEditUserMapboxAccessToken={onEditUserMapboxAccessToken}
+              includeLayerApiKeys={Boolean(options.includeLayerApiKeys)}
               options={options[EXPORT_MAP_FORMATS.HTML]}
             />
           </StyledExportMapFormatPanel>
           {options.format === EXPORT_MAP_FORMATS.JSON ? (
             <StyledExportMapFormatPanel $active>
-              <ExportJsonMap config={config} />
+              <ExportJsonMap
+                config={config}
+                includeLayerApiKeys={Boolean(options.includeLayerApiKeys)}
+                onChangeExportIncludeLayerApiKeys={onChangeExportIncludeLayerApiKeys}
+              />
             </StyledExportMapFormatPanel>
           ) : null}
         </StyledExportMapFormatPanels>

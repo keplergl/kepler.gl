@@ -115,6 +115,15 @@ export default {
     service: 'Service',
     layer: 'Layer',
     appearance: 'Appearance',
+    apiKey: 'Access Token',
+    apiKeyPlaceholder: 'Enter a new access token',
+    apiKeyHint:
+      'The current token is hidden. Enter a new token and press Enter to reload this layer.',
+    tile3dTokenError:
+      '3D tiles failed to load. The access token may be missing, invalid, or expired. Update it in the layer settings.',
+    tile3dTokenErrorField:
+      '3D tiles failed to load. The access token may be missing, invalid, or expired. Enter a new access token below.',
+    tile3dLoadError: '3D tiles failed to load. Check the tileset URL and try again.',
     bounds: 'Bounds',
     imageSource: 'Image Source',
     alignment: 'Alignment',
@@ -659,6 +668,9 @@ export default {
     exportMap: {
       formatTitle: 'Map format',
       formatSubtitle: 'Choose the format to export your map to',
+      includeApiKeys: 'Include layer API keys',
+      includeApiKeysSubtitle:
+        'When unchecked, access tokens stored on layers are removed from the exported file.',
       html: {
         selection: 'Export your map into an interactive html file.',
         tokenTitle: 'Mapbox access token',

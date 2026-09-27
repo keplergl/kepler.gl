@@ -70,6 +70,8 @@ function _checkLightingActive(context: any): boolean {
  */
 // @ts-expect-error Types have separate declarations of a private property '_loadTileset'.
 class KeplerTile3DLayer extends DeckTile3DLayer {
+  private _tilesetLoadId = 0;
+
   shouldUpdateState(params: any): boolean {
     if (super.shouldUpdateState(params)) return true;
     const lightingActive = _checkLightingActive(this.context);
@@ -90,7 +92,20 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
   // and force sublayer re-creation so models revert to their default (unlit)
   // materials.
   updateState(params: any): void {
+    const {props, oldProps} = params;
+    // deck.gl reloads a tileset only when the data URL changes. Cesium keeps
+    // the same URL and puts the API key in loadOptions, so a new key has to
+    // be requested explicitly.
+    const credentialsChanged =
+      Boolean(props?.data) &&
+      props.data === oldProps?.data &&
+      props.loadOptions !== oldProps?.loadOptions;
+
     super.updateState(params);
+
+    if (credentialsChanged) {
+      void this._loadTileset(props.data);
+    }
 
     const lightingActive = _checkLightingActive(this.context);
     const prevLightingActive = (this.state as any)?._lightingWasActive ?? false;
@@ -112,15 +127,32 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
 
   // @ts-ignore override of private method called by deck.gl internals
   private async _loadTileset(tilesetUrl: string) {
+    const loadId = ++this._tilesetLoadId;
+    this.setState({_tilesetLoadFailed: false});
+    const notify = (this.props as {onTilesetError?: (kind: Tile3DLoadErrorKind | null) => void})
+      .onTilesetError;
+    // Defer so a retry does not dispatch while deck is still updating this layer.
+    queueMicrotask(() => {
+      if (loadId === this._tilesetLoadId) notify?.(null);
+    });
     try {
+      const previousTileset = (this.state as any)?.tileset3d;
+      if (previousTileset) {
+        previousTileset.destroy?.();
+        this.setState({tileset3d: null, layerMap: {}});
+      }
       // @ts-expect-error _loadTileset is private in DeckTile3DLayer
       await super._loadTileset(tilesetUrl);
     } catch (error: any) {
-      if (error?.message?.includes("reading 'refine'")) {
-        this.raiseError(new Error('Bad tileset format or invalid API key'), '_loadTileset');
-      } else {
-        console.error('Tile3DLayer: tileset load error', error);
+      if (loadId !== this._tilesetLoadId) {
+        return;
       }
+      const kind = tile3dLoadErrorKind(error);
+      this.setState({_tilesetLoadFailed: true, tileset3d: null, layerMap: {}});
+      queueMicrotask(() => {
+        if (loadId === this._tilesetLoadId) notify?.(kind);
+      });
+      console.error('Tile3DLayer: tileset load error', error);
     }
   }
 
@@ -327,6 +359,12 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
    * complete — no frame is captured with missing tiles.
    */
   get isLoaded(): boolean {
+    // A failed tileset request never creates tileset3d, so the base getter
+    // stays false and the map spinner never stops.
+    if ((this.state as any)?._tilesetLoadFailed) {
+      return true;
+    }
+
     const baseLoaded = super.isLoaded;
     if (!baseLoaded) {
       return false;
@@ -358,6 +396,34 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
 (KeplerTile3DLayer as any).layerName = 'KeplerTile3DLayer';
 
 export const TILE3D_LAYER_TYPE = LAYER_TYPES.tile3d;
+
+export type Tile3DLoadErrorKind = 'token' | 'generic';
+
+/** Classify a tileset fetch failure so the UI can tell a bad key from other errors. */
+export function tile3dLoadErrorKind(error: unknown): Tile3DLoadErrorKind {
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  const status =
+    typeof (error as {status?: unknown})?.status === 'number'
+      ? (error as {status: number}).status
+      : undefined;
+  if (
+    status === 400 ||
+    status === 401 ||
+    status === 403 ||
+    /\b(400|401|403)\b/.test(message) ||
+    /api key|access token|unauthorized|forbidden/i.test(message) ||
+    message.includes("reading 'refine'")
+  ) {
+    return 'token';
+  }
+  return 'generic';
+}
+
+export const TILE3D_LOAD_ERROR_MESSAGE: Record<Tile3DLoadErrorKind, string> = {
+  token:
+    '3D tiles failed to load. The access token may be missing, invalid, or expired. Update it in the layer settings.',
+  generic: '3D tiles failed to load. Check the tileset URL and try again.'
+};
 
 export type Tile3DLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -412,6 +478,8 @@ export default class Tile3DLayer extends Layer {
 
   private _layerCallbacks: BindedLayerCallbacks | null = null;
   private _hasFittedBounds = false;
+  /** Set when the tileset request fails, so the layer panel can explain why nothing drew. */
+  tilesetLoadError: Tile3DLoadErrorKind | null = null;
 
   constructor(props: {dataId: string} & Record<string, any>) {
     super(props);
@@ -548,6 +616,10 @@ export default class Tile3DLayer extends Layer {
   }
 
   _onTilesetLoad = (tileset3d: Tileset3D): void => {
+    if (this.tilesetLoadError) {
+      this.tilesetLoadError = null;
+      this._layerCallbacks?.onTilesetLoadError?.(null);
+    }
     this._extractBoundsFromTileset(tileset3d);
 
     const tileUrl = tileset3d.url || '';
@@ -663,6 +735,15 @@ export default class Tile3DLayer extends Layer {
         loader,
         loadOptions,
         onTilesetLoad: this._onTilesetLoad,
+        // Deck forwards this prop; _loadTileset reads it when the tileset request fails.
+        // @ts-expect-error onTilesetError is not part of deck.gl Tile3DLayer props
+        onTilesetError: (kind: Tile3DLoadErrorKind | null) => {
+          const previous = this.tilesetLoadError;
+          this.tilesetLoadError = kind;
+          if (kind || previous) {
+            this._layerCallbacks?.onTilesetLoadError?.(kind);
+          }
+        },
         onTileLoad: this._onTileLoad,
         onTileUnload: this._onTileUnload,
         getPointColor: pointColor,

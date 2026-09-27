@@ -497,6 +497,8 @@ export type ExportMap = {
   HTML: ExportHtml;
   JSON: ExportJson;
   format: 'HTML' | 'JSON';
+  /** When false, dataset access tokens are omitted from exported HTML and JSON. */
+  includeLayerApiKeys: boolean;
 };
 
 export type ExportVideo = {

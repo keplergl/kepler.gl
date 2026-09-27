@@ -4050,13 +4050,19 @@ export function updateDatasetPropsUpdater(
     //  validate props: just color for now
     //  we only allow label, color and meta to be updated
     // const newTable = copyTableAndUpdate(existing, validatedProps);
-    return {
+    const nextState = {
       ...state,
       datasets: {
         ...datasets,
         [dataId]: copyTableAndUpdate(existing, validatedProps)
       }
     };
+    // Metadata such as a tileset access token is read while formatting layer
+    // data. Refresh layers on this dataset so a new key is used immediately.
+    if (props.metadata) {
+      return updateAllLayerDomainData(nextState, dataId);
+    }
+    return nextState;
   }
 
   return state;

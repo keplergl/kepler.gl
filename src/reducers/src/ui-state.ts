@@ -40,6 +40,8 @@ const actionHandler = {
   [ActionTypes.SET_EXPORT_MAP_FORMAT]: uiStateUpdaters.setExportMapFormatUpdater,
 
   [ActionTypes.SET_EXPORT_MAP_HTML_MODE]: uiStateUpdaters.setExportMapHTMLModeUpdater,
+  [ActionTypes.SET_EXPORT_INCLUDE_LAYER_API_KEYS]:
+    uiStateUpdaters.setExportIncludeLayerApiKeysUpdater,
   [ActionTypes.LOAD_FILES]: uiStateUpdaters.loadFilesUpdater,
   [ActionTypes.LOAD_FILES_ERR]: uiStateUpdaters.loadFilesErrUpdater,
 
