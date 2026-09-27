@@ -17,7 +17,8 @@ import Layer, {
   LayerHeightConfig,
   LayerRadiusConfig,
   LayerSizeConfig,
-  LayerStrokeColorConfig
+  LayerStrokeColorConfig,
+  UpdateTriggers
 } from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer, GeoJsonLayerProps} from '@deck.gl/layers';
 import {
@@ -914,7 +915,7 @@ export default class GeoJsonLayer extends Layer {
       ...this.getVisualChannelUpdateTriggers(),
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger
-    };
+    } as UpdateTriggers;
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const opaOverwrite = {

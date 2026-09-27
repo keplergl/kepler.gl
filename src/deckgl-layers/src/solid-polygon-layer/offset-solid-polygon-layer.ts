@@ -56,6 +56,8 @@ export default class OffsetSolidPolygonLayer<DataT = any> extends SolidPolygonLa
 }
 
 OffsetSolidPolygonLayer.layerName = 'OffsetSolidPolygonLayer';
+// Kepler-only prop; SolidPolygonLayer.defaultProps is DefaultProps<SolidPolygonLayerProps>.
 OffsetSolidPolygonLayer.defaultProps = {
+  ...(SolidPolygonLayer.defaultProps as object),
   getElevationOffset: {type: 'accessor', value: 0}
-};
+} as typeof SolidPolygonLayer.defaultProps;
