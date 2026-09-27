@@ -1018,6 +1018,9 @@ export const expectedSavedLayer2 = {
       heightRange: [0, 500],
       elevationScale: 5,
       fixedHeight: false,
+      elevationOffset: 0,
+      elevationOffsetRange: [0, 500],
+      fixedElevation: true,
       stroked: true,
       filled: true,
       enable3d: false,
@@ -1036,6 +1039,8 @@ export const expectedSavedLayer2 = {
     sizeScale: 'linear',
     heightField: null,
     heightScale: 'linear',
+    elevationOffsetField: null,
+    elevationOffsetScale: 'linear',
     radiusField: null,
     radiusScale: 'linear'
   }
@@ -1068,6 +1073,9 @@ export const expectedLoadedLayer2 = {
       heightRange: [0, 500],
       elevationScale: 5,
       fixedHeight: false,
+      elevationOffset: 0,
+      elevationOffsetRange: [0, 500],
+      fixedElevation: true,
       stroked: true,
       filled: true,
       enable3d: false,
@@ -1082,6 +1090,8 @@ export const expectedLoadedLayer2 = {
     sizeScale: 'linear',
     heightField: null,
     heightScale: 'linear',
+    elevationOffsetField: null,
+    elevationOffsetScale: 'linear',
     radiusField: null,
     radiusScale: 'linear',
     textLabel: [DEFAULT_TEXT_LABEL]

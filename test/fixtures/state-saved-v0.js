@@ -1352,6 +1352,11 @@ mergedLayer4.config = {
   heightDomain: [0, 1],
   heightScale: 'linear',
 
+  // add elevation offset visual channel
+  elevationOffsetField: null,
+  elevationOffsetDomain: [0, 1],
+  elevationOffsetScale: 'linear',
+
   // add radius visual channel
   radiusField: null,
   radiusDomain: [0, 1],
@@ -1412,6 +1417,9 @@ mergedLayer4.config = {
     heightRange: [0, 500],
     elevationScale: 5,
     fixedHeight: false,
+    elevationOffset: 0,
+    elevationOffsetRange: [0, 500],
+    fixedElevation: true,
     stroked: false,
     filled: true,
     enable3d: false,
