@@ -22,7 +22,8 @@ import {
   VisConfigBoolean,
   VisConfigInput,
   VisConfigRange,
-  VisConfigNumber
+  VisConfigNumber,
+  BindedLayerCallbacks
 } from '@kepler.gl/types';
 
 import {notNullorUndefined, withPublicTitilerCorsCacheKey} from '@kepler.gl/common-utils';
@@ -81,6 +82,7 @@ import {
   KeplerRasterDataset,
   Tile2DHeader,
   PresetOption,
+  ExtendedKeplerSTAC,
   CompleteSTACObject
 } from './types';
 
@@ -201,7 +203,7 @@ export default class RasterTileLayer extends KeplerLayer {
     bandCombination: 'rgb'
   };
   /** STAC object used by the last render, for Titiler identify / crop */
-  _stac: CompleteSTACObject | null = null;
+  _stac: (CompleteSTACObject & ExtendedKeplerSTAC) | null = null;
   _useSTACSearching = false;
 
   getDataSourceParams: (
@@ -460,14 +462,23 @@ export default class RasterTileLayer extends KeplerLayer {
     }
   }
 
-  private async _onClickIdentify(layerCallbacks, info): Promise<void> {
+  private async _onClickIdentify(
+    layerCallbacks: BindedLayerCallbacks | undefined,
+    info: {coordinate?: number[]}
+  ): Promise<void> {
     const coordinate = info?.coordinate;
     if (!Array.isArray(coordinate) || coordinate.length < 2) {
       return;
     }
-    const rows = await this._fetchTitilerPoint(coordinate[0], coordinate[1]);
-    if (rows?.length && layerCallbacks?.onWMSFeatureInfo) {
-      layerCallbacks.onWMSFeatureInfo({featureInfo: rows, coordinate});
+    const rows: RasterIdentifyRow[] | null = await this._fetchTitilerPoint(
+      coordinate[0],
+      coordinate[1]
+    );
+    if (rows && rows.length > 0 && layerCallbacks?.onWMSFeatureInfo) {
+      layerCallbacks.onWMSFeatureInfo({
+        featureInfo: rows,
+        coordinate: [coordinate[0], coordinate[1]]
+      });
     }
   }
 
@@ -851,7 +862,11 @@ export default class RasterTileLayer extends KeplerLayer {
       zoomOffset: visConfig.zoomOffset || 0,
       getTileData: (args: any) => this.getTileData({...args, ...getTileDataCustomProps}),
       onViewportLoad: this.onViewportLoad.bind(this),
-      onClick: pickable ? this._onClickIdentify.bind(this, layerCallbacks) : null,
+      onClick: pickable
+        ? info => {
+            void this._onClickIdentify(layerCallbacks, info);
+          }
+        : undefined,
       // @ts-expect-error - TS doesn't know we'll pass appropriate props here
       renderSubLayers: renderSubLayersStac,
       maxRequests: getMaxRequests(stac.rasterTileServerUrls || []),

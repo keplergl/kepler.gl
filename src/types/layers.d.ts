@@ -462,10 +462,10 @@ export type BindedLayerCallbacks = {
   onLayerHover?: (value: any) => void;
   onSetLayerDomain?: (value: any) => void;
   onFilteredItemsChange?: (event: {id: string; count: number}) => void;
-  onWMSFeatureInfo?: (
-    featureInfo: Array<{name: string; value: string}> | string | null,
-    coordinate?: [number, number]
-  ) => void;
+  onWMSFeatureInfo?: (props: {
+    featureInfo: Array<{name: string; value: string}> | string | null;
+    coordinate?: [number, number] | null;
+  }) => void;
   onRedrawNeeded?: () => void;
   onFitBounds?: (bounds: [number, number, number, number]) => void;
 };

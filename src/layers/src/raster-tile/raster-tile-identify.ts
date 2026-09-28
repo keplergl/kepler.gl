@@ -637,7 +637,7 @@ export function zonalStatsToProperties(
 export function rasterZonalStatsToSidecar(
   stats: RasterZonalStats,
   extra: {layer?: string; preset?: string; geometry?: Polygon | null} = {}
-): FeatureCollection {
+): FeatureCollection<Polygon | null> {
   const properties = zonalStatsToProperties(stats, {
     layer: extra.layer,
     preset: extra.preset,
