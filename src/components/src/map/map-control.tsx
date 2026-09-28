@@ -81,6 +81,9 @@ export type MapControlProps = {
   onConvertEditorFeaturesToLayer?: () => void;
   onLayerVisConfigChange: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   onToggleLayerVisibility?: (layer: Layer) => void;
+  hideInvisibleLayers?: boolean;
+  legendEnabled?: boolean;
+  legendEnabled?: boolean;
   top: number;
   onSetLocale: typeof UIStateActions.setLocale;
   onSetTheme: typeof UIStateActions.setTheme;

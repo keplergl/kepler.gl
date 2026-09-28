@@ -535,6 +535,10 @@ class Layer implements KeplerLayer {
       isConfigActive: props.isConfigActive ?? false,
       highlightColor: props.highlightColor || DEFAULT_HIGHLIGHT_COLOR,
       hidden: props.hidden ?? false,
+      // Only persist an explicit choice so saved maps stay compatible until the user toggles it.
+      ...(typeof props.isIncludedInLegend === 'boolean'
+        ? {isIncludedInLegend: props.isIncludedInLegend}
+        : {}),
 
       // TODO: refactor this into separate visual Channel config
       // color by field, domain is set by filters, field, scale type

@@ -724,6 +724,60 @@ export function getLayerGroupFromLayerOrder(
  * Find the parent group that contains a given layer ID.
  * Returns undefined if the layer is at the root level.
  */
+/**
+ * Groups that contain `entryId`, nearest parent first.
+ * `entryId` may be a layer id or a nested group id.
+ */
+export function getAncestorLayerGroups(layerOrder: LayerOrder, entryId: string): LayerOrderGroup[] {
+  const ancestors: LayerOrderGroup[] = [];
+
+  const visit = (entries: LayerOrder): boolean => {
+    for (const entry of entries) {
+      if (typeof entry === 'string') {
+        if (entry === entryId) {
+          return true;
+        }
+        continue;
+      }
+      if (!isPlainObject(entry)) {
+        continue;
+      }
+      const group = entry as LayerOrderGroup;
+      if (group.id === entryId) {
+        return true;
+      }
+      if (visit(group.layerOrder)) {
+        ancestors.push(group);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  visit(layerOrder);
+  return ancestors;
+}
+
+/**
+ * Whether a layer should be drawn in the map legend.
+ * A layer stays on the map when this is false. Missing flags count as included.
+ * An ancestor group with `isIncludedInLegend: false` hides the layer as well.
+ */
+export function isLayerShownInLegend(
+  layer: {id: string; config: {isIncludedInLegend?: boolean}},
+  layerOrder?: LayerOrder
+): boolean {
+  if (layer.config.isIncludedInLegend === false) {
+    return false;
+  }
+  if (!layerOrder?.length) {
+    return true;
+  }
+  return getAncestorLayerGroups(layerOrder, layer.id).every(
+    group => group.isIncludedInLegend !== false
+  );
+}
+
 export function findParentGroupForLayer(
   layerOrder: LayerOrder,
   layerId: string

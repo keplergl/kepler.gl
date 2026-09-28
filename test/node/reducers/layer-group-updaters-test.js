@@ -191,6 +191,33 @@ test('#visStateReducer -> UPDATE_LAYER_GROUP -> toggle visibility cascades to la
   t.end();
 });
 
+test('#visStateReducer -> UPDATE_LAYER_GROUP -> legend flag does not change map visibility', t => {
+  const state = createStateWithGroup();
+  const layer0Id = state.layers[0].id;
+  state.layers[0].config.isVisible = true;
+
+  const nextState = reducer(
+    state,
+    VisStateActions.updateLayerGroup({
+      id: 'test_group_1',
+      options: {isIncludedInLegend: false}
+    })
+  );
+
+  const group = getLayerGroupFromLayerOrder(nextState.layerOrder, 'test_group_1');
+  t.equal(group.isIncludedInLegend, false, 'group should be omitted from the legend');
+  t.equal(group.isVisible, true, 'group should stay visible on the map');
+
+  const layer0 = nextState.layers.find(l => l.id === layer0Id);
+  t.equal(layer0.config.isVisible, true, 'child layer should stay visible on the map');
+  t.equal(
+    layer0.config.isIncludedInLegend,
+    undefined,
+    'child legend choice should stay independent of the group'
+  );
+  t.end();
+});
+
 test('#visStateReducer -> UPDATE_LAYER_GROUP -> nonexistent group returns same state', t => {
   const state = createStateWithGroup();
   const nextState = reducer(

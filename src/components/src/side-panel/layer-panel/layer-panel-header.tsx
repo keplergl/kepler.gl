@@ -17,6 +17,7 @@ import {
   ArrowDown,
   EyeSeen,
   EyeUnseen,
+  Legend,
   Trash,
   VertDots,
   WarningSign,
@@ -52,7 +53,10 @@ export type LayerPanelHeaderProps = {
   layerId: string;
   isVisible: boolean;
   isValid: boolean;
+  /** When false, the layer stays on the map but is left out of the legend. */
+  isIncludedInLegend?: boolean;
   onToggleVisibility: MouseEventHandler;
+  onToggleLegend?: MouseEventHandler;
   onUpdateLayerLabel: ChangeEventHandler;
   onToggleEnableConfig: MouseEventHandler;
   onRemoveLayer: MouseEventHandler;
@@ -80,6 +84,7 @@ export type LayerPanelHeaderProps = {
     duplicate: ComponentType<Partial<BaseProps>>;
     crosshairs: ComponentType<Partial<BaseProps>>;
     json?: ComponentType<Partial<BaseProps>>;
+    legend?: ComponentType<Partial<BaseProps>>;
   };
   listeners?: React.ElementType;
 };
@@ -131,8 +136,8 @@ const HeaderLabelSection = styled.div`
   color: ${props => props.theme.textColor};
   flex-grow: 1;
   align-items: stretch;
-  // leave space for eye and collapse icon
-  padding-right: 50px;
+  // leave space for legend, eye, and collapse icons
+  padding-right: 78px;
 `;
 
 const HeaderActionSection = styled.div.withConfig({shouldForwardProp})<HeaderActionSectionProps>`
@@ -170,6 +175,12 @@ const StyledPanelHeaderHiddenActions = styled.div.withConfig({shouldForwardProp}
   &:hover {
     opacity: 1;
   }
+`;
+
+const LegendToggle = styled.div<{$included: boolean}>`
+  display: flex;
+  align-items: center;
+  opacity: ${props => (props.$included ? 1 : 0.4)};
 `;
 
 const StyledDragHandle = styled.div`
@@ -276,9 +287,11 @@ export function LayerPanelHeaderActionSectionFactory(
       isConfigActive,
       allowDuplicate,
       isVisible,
+      isIncludedInLegend = true,
       isValid,
       layerId,
       onToggleVisibility,
+      onToggleLegend,
       onResetIsValid,
       onToggleEnableConfig,
       onDuplicateLayer,
@@ -333,6 +346,18 @@ export function LayerPanelHeaderActionSectionFactory(
             />
           ) : null}
         </StyledPanelHeaderHiddenActions>
+        {onToggleLegend ? (
+          <LegendToggle $included={isIncludedInLegend}>
+            <PanelHeaderAction
+              className="layer__legend-toggle"
+              id={layerId}
+              testId="layer-legend-toggle"
+              tooltip={isIncludedInLegend ? 'tooltip.hideFromLegend' : 'tooltip.showInLegend'}
+              onClick={onToggleLegend}
+              IconComponent={actionIcons.legend || Legend}
+            />
+          </LegendToggle>
+        ) : null}
         {isValid ? (
           <PanelHeaderAction
             className="layer__visibility-toggle"
@@ -405,7 +430,8 @@ const defaultActionIcons = {
   duplicate: props => <Copy {...props} height="14px" />,
   resetIsValid: Reset,
   crosshairs: props => <ZoomIn {...props} height="14px" />,
-  json: props => <CodeAlt {...props} height="14px" />
+  json: props => <CodeAlt {...props} height="14px" />,
+  legend: props => <Legend {...props} height="16px" />
 };
 
 LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, LayerPanelHeaderActionSectionFactory];

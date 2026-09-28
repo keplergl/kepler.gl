@@ -11,7 +11,15 @@ import {getFlatLayerOrder} from '@kepler.gl/reducers';
 
 import {StyledPanelHeader, InlineInput} from '../../common/styled-components';
 import {DragHandle} from './layer-panel-header';
-import {VertDots, EyeSeen, EyeUnseen, Trash, ArrowDown, ArrowRight} from '../../common/icons';
+import {
+  VertDots,
+  EyeSeen,
+  EyeUnseen,
+  Legend,
+  Trash,
+  ArrowDown,
+  ArrowRight
+} from '../../common/icons';
 import PanelHeaderActionFactory from '../panel-header-action';
 
 const GROUP_COLORS = [
@@ -85,6 +93,12 @@ const Actions = styled.div`
   .panel--header__action {
     height: 16px;
   }
+`;
+
+const LegendToggle = styled.div<{$included: boolean}>`
+  display: flex;
+  align-items: center;
+  opacity: ${props => (props.$included ? 1 : 0.4)};
 `;
 
 const LeftSection = styled.div`
@@ -174,6 +188,16 @@ function LayerGroupHeaderFactory(
       dispatch(updateLayerGroup({id, options: {isVisible: !layerGroup.isVisible}}));
     }, [dispatch, id, layerGroup.isVisible]);
 
+    const includedInLegend = layerGroup.isIncludedInLegend !== false;
+    const onToggleLegend = useCallback(() => {
+      dispatch(
+        updateLayerGroup({
+          id,
+          options: {isIncludedInLegend: !includedInLegend}
+        })
+      );
+    }, [dispatch, id, includedInLegend]);
+
     const onDelete = useCallback(
       (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -228,6 +252,16 @@ function LayerGroupHeaderFactory(
                 IconComponent={Trash}
               />
             </RemoveAction>
+            <LegendToggle $included={includedInLegend}>
+              <PanelHeaderAction
+                className="layer-group__legend-toggle"
+                id={`${id}-legend`}
+                testId="layer-group-legend-toggle"
+                tooltip={includedInLegend ? 'tooltip.hideFromLegend' : 'tooltip.showInLegend'}
+                onClick={onToggleLegend}
+                IconComponent={Legend}
+              />
+            </LegendToggle>
             <PanelHeaderAction
               className="layer-group__visibility-toggle"
               id={`${id}-visibility`}

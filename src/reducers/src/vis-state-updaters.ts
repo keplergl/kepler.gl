@@ -301,6 +301,14 @@ export const defaultInteractionConfig: InteractionConfig = {
     label: 'interactions.coordinate',
     enabled: false,
     position: null
+  },
+  legend: {
+    id: 'legend',
+    label: 'interactions.legend',
+    enabled: true,
+    config: {
+      hideInvisibleLayers: false
+    }
   }
 };
 

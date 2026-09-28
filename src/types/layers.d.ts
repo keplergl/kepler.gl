@@ -13,6 +13,8 @@ export type LayerBaseConfig = {
   isConfigActive: boolean;
   highlightColor: RGBColor | RGBAColor;
   hidden: boolean;
+  /** Omit from the map legend when false. Missing or true keeps the layer in the legend. */
+  isIncludedInLegend?: boolean;
 
   visConfig: LayerVisConfig;
   textLabel: LayerTextLabel[];

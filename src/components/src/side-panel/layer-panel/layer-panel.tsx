@@ -115,6 +115,13 @@ function LayerPanelFactory(
       this.props.layerToggleVisibility(this.props.layer.id, isVisible);
     };
 
+    _toggleLegend: MouseEventHandler = e => {
+      e.stopPropagation();
+      // false means excluded; anything else (including unset) means included.
+      const isIncludedInLegend = this.props.layer.config.isIncludedInLegend === false;
+      this.updateLayerConfig({isIncludedInLegend});
+    };
+
     _resetIsValid: MouseEventHandler = e => {
       e?.stopPropagation();
       // Make the layer valid and visible again after an error
@@ -190,6 +197,7 @@ function LayerPanelFactory(
             isConfigActive={isConfigActive}
             layerId={layer.id}
             isVisible={isVisible}
+            isIncludedInLegend={config.isIncludedInLegend !== false}
             isValid={isValid}
             label={config.label}
             labelRCGColorValues={config.dataId ? datasets[config.dataId].color : null}
@@ -198,6 +206,7 @@ function LayerPanelFactory(
             warning={globeWarning}
             onToggleEnableConfig={this._toggleEnableConfig}
             onToggleVisibility={this._toggleVisibility}
+            onToggleLegend={this._toggleLegend}
             onResetIsValid={this._resetIsValid}
             onUpdateLayerLabel={this._updateLayerLabel}
             onRemoveLayer={this._removeLayer}

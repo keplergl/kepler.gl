@@ -347,6 +347,8 @@ export default {
     dualView: 'Doble',
     swipeView: 'Comparar',
     showLegend: 'mostra llegenda',
+    hideFromLegend: 'Amaga de la llegenda',
+    showInLegend: 'Mostra a la llegenda',
     disable3DMap: 'Desactiva mapa 3D',
     DrawOnMap: 'Dibuixa al mapa',
     copyAllSketches: 'Copia tots els esbossos al porta-retalls com a GeoJSON',
@@ -638,7 +640,13 @@ export default {
     tooltip: 'Suggeriment',
     brush: 'Pinzell',
     coordinate: 'Coordenades',
-    geocoder: 'Geocodificador'
+    geocoder: 'Geocodificador',
+    legend: 'Llegenda',
+    legendHint: 'Tria quines capes apareixen a la llegenda. Les capes segueixen al mapa.',
+    legendEmpty: 'Afegeix una capa per triar què apareix a la llegenda.',
+    legendHiddenByGroup: 'Oculta perquè un grup està exclòs de la llegenda',
+    legendHideInvisible: 'Amaga les capes ocultes a la llegenda',
+    legendAllLayers: 'Totes les capes'
   },
   layerBlending: {
     title: 'Combinació de capes',

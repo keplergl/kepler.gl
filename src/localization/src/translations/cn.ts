@@ -332,6 +332,8 @@ export default {
     dualView: '双屏',
     swipeView: '对比',
     showLegend: '显示图例',
+    hideFromLegend: '从图例中隐藏',
+    showInLegend: '在图例中显示',
     disable3DMap: '禁用 3D 地图',
     DrawOnMap: '在地图上绘制',
     copyAllSketches: '将所有草图以 GeoJSON 复制到剪贴板',
@@ -619,7 +621,13 @@ export default {
     tooltip: '工具提示',
     brush: '刷',
     coordinate: '坐标',
-    geocoder: '地理编码器'
+    geocoder: '地理编码器',
+    legend: '图例',
+    legendHint: '选择哪些图层显示在图例中。图层仍会留在地图上。',
+    legendEmpty: '添加图层后即可选择图例中显示的内容。',
+    legendHiddenByGroup: '因图层组已从图例中排除而隐藏',
+    legendHideInvisible: '在图例中隐藏已隐藏的图层',
+    legendAllLayers: '所有图层'
   },
   layerBlending: {
     title: '图层混合',

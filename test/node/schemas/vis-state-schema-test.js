@@ -26,7 +26,7 @@ import {
   testCsvDataId,
   testGeoJsonDataId
 } from 'test/helpers/mock-state';
-import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
+import {keplerGlReducerCore as keplerGlReducer, validateLayerWithData} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 
 const expectedVisStateEntries = [
@@ -221,6 +221,10 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     geocoder: {
       enabled: false,
       limitSearch: false
+    },
+    legend: {
+      enabled: true,
+      hideInvisibleLayers: false
     }
   };
 
@@ -279,6 +283,10 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
     geocoder: {
       enabled: false,
       limitSearch: false
+    },
+    legend: {
+      enabled: true,
+      hideInvisibleLayers: false
     }
   };
 
@@ -533,5 +541,51 @@ test('#visStateSchema -> v1 -> charts are optional', t => {
 
   const loaded = SchemaManager.parseSavedConfig(savedConfig).visState;
   t.equal(loaded.charts.length, 1, 'should load saved charts');
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load layer isIncludedInLegend', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  const layer = initialState.visState.layers[0];
+  layer.config.isIncludedInLegend = false;
+
+  const savedState = SchemaManager.getConfigToSave(initialState);
+  const savedLayers = savedState.config.visState.layers;
+  const savedLayer = savedLayers.find(item => item.id === layer.id);
+  t.equal(savedLayer.config.isIncludedInLegend, false, 'should persist legend exclusion');
+
+  const untouched = savedLayers.find(item => item.id !== layer.id);
+  t.equal(
+    Object.prototype.hasOwnProperty.call(untouched.config, 'isIncludedInLegend'),
+    false,
+    'layers left at the default should omit the flag'
+  );
+
+  const loadedLayer = SchemaManager.parseSavedConfig(savedState).visState.layers.find(
+    item => item.id === layer.id
+  );
+  t.equal(loadedLayer.config.isIncludedInLegend, false, 'should load legend exclusion');
+
+  const dataset = initialState.visState.datasets[layer.config.dataId];
+  const instance = validateLayerWithData(dataset, loadedLayer, initialState.visState.layerClasses);
+  t.ok(instance, 'should rebuild the layer');
+  t.equal(instance.config.isIncludedInLegend, false, 'rebuilt layer stays out of the legend');
+  t.equal(instance.config.isVisible, true, 'legend exclusion does not hide the layer on the map');
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load hideInvisibleLayers', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  initialState.visState.interactionConfig.legend.config.hideInvisibleLayers = true;
+
+  const savedState = SchemaManager.getConfigToSave(initialState);
+  t.equal(
+    savedState.config.visState.interactionConfig.legend.hideInvisibleLayers,
+    true,
+    'should persist hideInvisibleLayers'
+  );
+
+  const loaded = SchemaManager.parseSavedConfig(savedState).visState.interactionConfig;
+  t.equal(loaded.legend.hideInvisibleLayers, true, 'should load hideInvisibleLayers');
   t.end();
 });

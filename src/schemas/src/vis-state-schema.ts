@@ -565,6 +565,7 @@ export const layerPropsV1 = {
         key: 'columns'
       }),
       isVisible: null,
+      isIncludedInLegend: null,
       visConfig: new VisConfigSchemaV1({
         version: VERSIONS.v1
       }),
@@ -696,7 +697,7 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV1 = [...interactionPropsV0, 'geocoder', 'coordinate'];
+const interactionPropsV1 = [...interactionPropsV0, 'geocoder', 'coordinate', 'legend'];
 
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';

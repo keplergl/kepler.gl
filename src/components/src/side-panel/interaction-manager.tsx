@@ -4,11 +4,13 @@
 import React from 'react';
 import {useIntl} from 'react-intl';
 
-import {InteractionConfig} from '@kepler.gl/types';
+import {InteractionConfig, LayerOrder} from '@kepler.gl/types';
 import {VisStateActions} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
+import {Layer} from '@kepler.gl/layers';
 
 import InteractionPanelFactory from './interaction-panel/interaction-panel';
+import LegendConfig from './interaction-panel/legend-config';
 import PanelTitleFactory from './panel-title';
 
 import {PanelMeta} from './common/types';
@@ -18,6 +20,8 @@ type InteractionManagerProps = {
   datasets: Datasets;
   visStateActions: typeof VisStateActions;
   panelMetadata: PanelMeta;
+  layers?: readonly Layer[];
+  layerOrder?: LayerOrder;
 };
 
 InteractionManagerFactory.deps = [InteractionPanelFactory, PanelTitleFactory];
@@ -30,7 +34,9 @@ function InteractionManagerFactory(
     interactionConfig,
     datasets,
     visStateActions,
-    panelMetadata
+    panelMetadata,
+    layers,
+    layerOrder
   }) => {
     const {interactionConfigChange: onConfigChange, setColumnDisplayFormat} = visStateActions;
     const intl = useIntl();
@@ -40,15 +46,25 @@ function InteractionManagerFactory(
           className="interaction-manager-title"
           title={intl.formatMessage({id: panelMetadata.label})}
         />
-        {Object.keys(interactionConfig).map(key => (
-          <InteractionPanel
-            datasets={datasets}
-            config={interactionConfig[key]}
-            key={key}
-            onConfigChange={onConfigChange}
-            setColumnDisplayFormat={setColumnDisplayFormat}
+        {layers ? (
+          <LegendConfig
+            layers={layers}
+            layerOrder={layerOrder}
+            visStateActions={visStateActions}
+            legendConfig={interactionConfig.legend}
           />
-        ))}
+        ) : null}
+        {Object.keys(interactionConfig)
+          .filter(key => key !== 'legend')
+          .map(key => (
+            <InteractionPanel
+              datasets={datasets}
+              config={interactionConfig[key]}
+              key={key}
+              onConfigChange={onConfigChange}
+              setColumnDisplayFormat={setColumnDisplayFormat}
+            />
+          ))}
       </div>
     );
   };

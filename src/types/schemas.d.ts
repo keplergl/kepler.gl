@@ -45,6 +45,10 @@ export type SavedInteractionConfig = {
   coordinate: {
     enabled: boolean;
   };
+  legend?: {
+    enabled: boolean;
+    hideInvisibleLayers?: boolean;
+  };
 };
 
 export type SavedScale = string;
@@ -67,6 +71,7 @@ export type SavedLayer = {
     isVisible: boolean;
     visConfig: Record<string, any>;
     hidden: boolean;
+    isIncludedInLegend?: boolean;
     textLabel: Merge<LayerTextLabel, {field: {name: string; type: string} | null}>;
   };
   visualChannels: SavedVisualChannels;

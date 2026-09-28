@@ -14,6 +14,7 @@ import {
 import {MapLegendIcons, MapLegendProps} from '@kepler.gl/components';
 import {DIMENSIONS} from '@kepler.gl/constants';
 import {Layer} from '@kepler.gl/layers';
+import {isLayerShownInLegend} from '@kepler.gl/reducers';
 import {Button} from '@sqlrooms/ui';
 import {ChevronDownIcon, ChevronRightIcon, XIcon} from 'lucide-react';
 import {useCallback, useContext, useRef, useState} from 'react';
@@ -41,8 +42,11 @@ export function CustomMapLegendFactory(
 ) {
   const MapLegend: React.FC<MapLegendProps & {mapIndex?: number; onClose?: () => void}> = ({
     layers = [],
+    layerOrder,
     width,
     isExport,
+    disableEdit,
+    hideInvisibleLayers,
     mapIndex: mapIndexProp,
     onClose,
     ...restProps
@@ -65,9 +69,24 @@ export function CustomMapLegendFactory(
     const isSplit = splitMaps && splitMaps.length > 1;
     const panelLayers = isSplit && mapIndex != null ? splitMaps[mapIndex]?.layers : undefined;
 
-    const visibleLayers = layers.filter(
-      layer => layer.config.isVisible && (!panelLayers || panelLayers[layer.id])
+    const storeHideInvisible = useStoreWithKepler(
+      state =>
+        state.kepler.map[mapId]?.visState?.interactionConfig?.legend?.config?.hideInvisibleLayers
     );
+    const shouldHideInvisible = hideInvisibleLayers ?? Boolean(storeHideInvisible);
+
+    const visibleLayers = layers.filter(layer => {
+      if (panelLayers && !panelLayers[layer.id]) {
+        return false;
+      }
+      if (!isLayerShownInLegend(layer, layerOrder)) {
+        return false;
+      }
+      if (shouldHideInvisible && !layer.config.isVisible) {
+        return false;
+      }
+      return true;
+    });
 
     return (
       <div className="map-legend border-border border" style={{width: containerW}}>
@@ -88,6 +107,7 @@ export function CustomMapLegendFactory(
                   layer={layer}
                   containerW={containerW}
                   isExport={isExport}
+                  disableEdit={disableEdit}
                   {...restProps}
                 />
               );
@@ -103,7 +123,6 @@ export function CustomMapLegendFactory(
     containerW,
     isExport,
     mapState,
-    disableEdit,
     onLayerVisConfigChange
   }: {layer: Layer; containerW: number} & MapLegendProps) => {
     const [isExpanded, setIsExpanded] = useState(layer.config.isVisible);

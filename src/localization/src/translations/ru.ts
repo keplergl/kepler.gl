@@ -345,6 +345,8 @@ export default {
     dualView: 'Двойная',
     swipeView: 'Сравнение',
     showLegend: 'Показать легенду',
+    hideFromLegend: 'Скрыть из легенды',
+    showInLegend: 'Показать в легенде',
     disable3DMap: 'Отключить 3D Карту',
     DrawOnMap: 'Рисовать на карте',
     copyAllSketches: 'Скопировать все наброски в буфер обмена как GeoJSON',
@@ -640,7 +642,13 @@ export default {
     tooltip: 'Подсказка',
     brush: 'Кисть',
     coordinate: 'Координаты',
-    geocoder: 'Геокодер'
+    geocoder: 'Геокодер',
+    legend: 'Легенда',
+    legendHint: 'Выберите, какие слои видны в легенде. На карте слои остаются.',
+    legendEmpty: 'Добавьте слой, чтобы выбрать, что видно в легенде.',
+    legendHiddenByGroup: 'Скрыто, потому что группа исключена из легенды',
+    legendHideInvisible: 'Скрывать скрытые слои в легенде',
+    legendAllLayers: 'Все слои'
   },
   layerBlending: {
     title: 'Смешивание слоев',

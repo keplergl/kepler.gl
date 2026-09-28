@@ -348,6 +348,8 @@ export default {
     dualView: 'Duplo',
     swipeView: 'Comparar',
     showLegend: 'mostrar legenda',
+    hideFromLegend: 'Ocultar da legenda',
+    showInLegend: 'Mostrar na legenda',
     disable3DMap: 'Desabilitar Mapa 3D',
     DrawOnMap: 'Desenhar no mapa',
     copyAllSketches: 'Copiar todos os esboços para a área de transferência como GeoJSON',
@@ -640,7 +642,13 @@ export default {
     tooltip: 'Dica de contexto',
     brush: 'Pincel',
     coordinate: 'Coordenadas',
-    geocoder: 'Geocoder'
+    geocoder: 'Geocoder',
+    legend: 'Legenda',
+    legendHint: 'Escolha quais camadas aparecem na legenda. As camadas continuam no mapa.',
+    legendEmpty: 'Adicione uma camada para escolher o que aparece na legenda.',
+    legendHiddenByGroup: 'Oculta porque um grupo está excluído da legenda',
+    legendHideInvisible: 'Ocultar camadas ocultas na legenda',
+    legendAllLayers: 'Todas as camadas'
   },
   layerBlending: {
     title: 'Mistura de Camadas',

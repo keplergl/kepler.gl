@@ -346,6 +346,8 @@ export default {
     dualView: 'Kaksois',
     swipeView: 'Vertaa',
     showLegend: 'Näytä selite',
+    hideFromLegend: 'Piilota selitteestä',
+    showInLegend: 'Näytä selitteessä',
     disable3DMap: 'Poistu 3D-näkymästä',
     DrawOnMap: 'Piirrä kartalle',
     copyAllSketches: 'Kopioi kaikki luonnokset leikepöydälle GeoJSON-muodossa',
@@ -636,7 +638,13 @@ export default {
     tooltip: 'Vihje',
     brush: 'Harja',
     coordinate: 'Koordinaatit',
-    geocoder: 'Geocoder'
+    geocoder: 'Geocoder',
+    legend: 'Selite',
+    legendHint: 'Valitse, mitkä tasot näkyvät selitteessä. Tasot pysyvät kartalla.',
+    legendEmpty: 'Lisää taso valitaksesi, mitä selitteessä näkyy.',
+    legendHiddenByGroup: 'Piilotettu, koska ryhmä on jätetty pois selitteestä',
+    legendHideInvisible: 'Piilota piilotetut tasot selitteestä',
+    legendAllLayers: 'Kaikki tasot'
   },
   layerBlending: {
     title: 'Tasojen sekoittuvuus',

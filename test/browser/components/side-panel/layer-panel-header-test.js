@@ -41,6 +41,21 @@ test('Components -> LayerPanelHeader.mount -> no prop', t => {
   t.ok(wrapper.find('.layer__title__editor').length, 'should render title eidtor');
   t.ok(wrapper.find('.layer__visibility-toggle').length, 'should render visibility toggle');
   t.ok(wrapper.find('.layer__enable-config').length, 'should render enable config toggle');
+  t.equal(
+    wrapper.find('.layer__legend-toggle').length,
+    0,
+    'legend toggle stays hidden until a handler is provided'
+  );
+
+  const withLegend = mountWithTheme(
+    <IntlWrapper>
+      <LayerPanelHeader {...defaultProps} isIncludedInLegend={false} onToggleLegend={nop} />
+    </IntlWrapper>
+  );
+  t.ok(
+    withLegend.find('.layer__legend-toggle').hostNodes().length >= 1,
+    'should render legend toggle'
+  );
 
   // mount
   const layerAfterErrorProps = {...defaultProps, ...{isValid: false}};

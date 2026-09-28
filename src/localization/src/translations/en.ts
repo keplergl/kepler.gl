@@ -432,6 +432,8 @@ export default {
     dualView: 'Dual',
     swipeView: 'Swipe',
     showLegend: 'Show legend',
+    hideFromLegend: 'Hide from legend',
+    showInLegend: 'Show in legend',
     disable3DMap: 'Disable 3D Map',
     globeMap: 'Globe Map',
     disableGlobeMap: 'Disable Globe Map',
@@ -825,7 +827,13 @@ ${'```'}
     tooltip: 'Tooltip',
     brush: 'Brush',
     coordinate: 'Coordinates',
-    geocoder: 'Geocoder'
+    geocoder: 'Geocoder',
+    legend: 'Legend',
+    legendHint: 'Choose which layers appear in the map legend. Layers stay on the map.',
+    legendEmpty: 'Add a layer to choose what appears in the legend.',
+    legendHiddenByGroup: 'Hidden because a group is excluded from the legend',
+    legendHideInvisible: 'Hide hidden layers in legend',
+    legendAllLayers: 'All Layers'
   },
   layerBlending: {
     title: 'Layer Blending',

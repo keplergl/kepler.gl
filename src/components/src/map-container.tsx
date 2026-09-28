@@ -1489,6 +1489,8 @@ export default function MapContainerFactory(
               onConvertEditorFeaturesToLayer={visStateActions.convertEditorFeaturesToLayer}
               onLayerVisConfigChange={visStateActions.layerVisConfigChange}
               onToggleLayerVisibility={this._handleToggleLayerVisibility}
+              hideInvisibleLayers={Boolean(interactionConfig.legend?.config?.hideInvisibleLayers)}
+              legendEnabled={interactionConfig.legend?.enabled !== false}
               mapHeight={mapState.height}
               setMapControlSettings={uiStateActions.setMapControlSettings}
               activeSidePanel={activeSidePanel}

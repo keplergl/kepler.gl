@@ -348,6 +348,8 @@ export default {
     dualView: 'Doble',
     swipeView: 'Comparar',
     showLegend: 'Mostrar leyenda',
+    hideFromLegend: 'Ocultar de la leyenda',
+    showInLegend: 'Mostrar en la leyenda',
     disable3DMap: 'Desactivar mapa 3D',
     DrawOnMap: 'Dibujar en el mapa',
     copyAllSketches: 'Copiar todos los bocetos al portapapeles como GeoJSON',
@@ -639,7 +641,13 @@ export default {
     tooltip: 'Sugerencias',
     brush: 'Pincel',
     coordinate: 'Coordenadas',
-    geocoder: 'Geocodificador'
+    geocoder: 'Geocodificador',
+    legend: 'Leyenda',
+    legendHint: 'Elige qué capas aparecen en la leyenda. Las capas siguen en el mapa.',
+    legendEmpty: 'Añade una capa para elegir qué aparece en la leyenda.',
+    legendHiddenByGroup: 'Oculta porque un grupo está excluido de la leyenda',
+    legendHideInvisible: 'Ocultar capas ocultas en la leyenda',
+    legendAllLayers: 'Todas las capas'
   },
   layerBlending: {
     title: 'Combinación de capas',

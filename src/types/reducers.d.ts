@@ -405,11 +405,18 @@ export type Coordinate = BaseInteraction & {
   id: 'coordinate';
   position: number[] | null;
 };
+export type LegendInfo = BaseInteraction & {
+  id: 'legend';
+  config: {
+    hideInvisibleLayers: boolean;
+  };
+};
 export type InteractionConfig = {
   tooltip: TooltipInfo;
   geocoder: Geocoder;
   brush: Brush;
   coordinate: Coordinate;
+  legend: LegendInfo;
 };
 export type MapInfo = {
   title: string;
