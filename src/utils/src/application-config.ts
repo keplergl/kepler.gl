@@ -427,7 +427,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableLayerGroups: true,
 
-  themes: ['space', 'light'],
+  themes: [],
 
   enableColumnStats: true,
 
