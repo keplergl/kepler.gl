@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {
-  getPublicTitilerCorsCachePatchScript,
   getTitilerCorsCacheOrigin,
   isCOGUrl,
   isGeoTiffContentType,
@@ -253,12 +252,5 @@ describe('withPublicTitilerCorsCacheKey', () => {
         'kepler_origin'
       )
     ).toBe('null');
-  });
-
-  test('emits a fetch patch that rewrites public titiler URLs', () => {
-    const script = getPublicTitilerCorsCachePatchScript();
-    expect(script).toContain('titiler.xyz');
-    expect(script).toContain('kepler_origin');
-    expect(script).toContain('window.fetch');
   });
 });

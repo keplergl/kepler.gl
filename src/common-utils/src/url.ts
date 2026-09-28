@@ -76,7 +76,7 @@ export const isPMTilesUrl = (url?: string | null) => url?.includes('.pmtiles');
 const COG_EXTENSIONS = ['.tif', '.tiff', '.geotiff', '.geotif', '.gtiff', '.cog'];
 
 /** Public TiTiler instance used for COG preview in the Add Data modal. */
-export const PUBLIC_TITILER_HOST = 'titiler.xyz';
+const PUBLIC_TITILER_HOST = 'titiler.xyz';
 
 /**
  * Query param used to partition CloudFront's cache for titiler.xyz.
@@ -88,27 +88,25 @@ export const PUBLIC_TITILER_HOST = 'titiler.xyz';
  * Values must not contain `://` — CloudFront's WAF 403s query strings that
  * look like nested URLs (`kepler_origin=http://localhost:8080`).
  */
-export const PUBLIC_TITILER_CORS_CACHE_PARAM = 'kepler_origin';
+const PUBLIC_TITILER_CORS_CACHE_PARAM = 'kepler_origin';
 
 /** CORS origin sent by file:// documents and other opaque origins. */
-export const OPAQUE_CORS_ORIGIN = 'null';
+const OPAQUE_CORS_ORIGIN = 'null';
 
 function isHttpUrlOrigin(origin: string): boolean {
   return /^https?:\/\//i.test(origin);
 }
 
-/**
- * Sanitize an origin so it can be used as a titiler.xyz query value.
- * `http://localhost:8080` → `http_localhost_8080`
- */
-export function sanitizeTitilerCorsCacheKey(origin: string): string {
+/** `http://localhost:8080` → `http_localhost_8080` */
+function sanitizeTitilerCorsCacheKey(origin: string): string {
   return origin.replace(/:\/\//g, '_').replace(/:/g, '_');
 }
 
 /**
  * Origin used to partition titiler.xyz CloudFront CORS caches.
  * file:// HTML exports send `Origin: null`; use that same cache key so they
- * do not inherit a header cached for https://kepler.gl.
+ * do not inherit a header cached for https://kepler.gl after an npm release
+ * that includes this helper in the UMD bundle.
  */
 export function getTitilerCorsCacheOrigin(locationOrigin?: string | null): string | null {
   const origin =
@@ -155,45 +153,6 @@ export function withPublicTitilerCorsCacheKey(url: string, origin?: string | nul
   } catch {
     return url;
   }
-}
-
-/**
- * Classic-script fetch patch for exported HTML maps. Those files load kepler.gl
- * from the published UMD bundle, so this keeps file:// COG tiles working even
- * before that bundle includes {@link withPublicTitilerCorsCacheKey}.
- */
-export function getPublicTitilerCorsCachePatchScript(): string {
-  return `(function(){
-  var origFetch = window.fetch;
-  if (!origFetch) return;
-  var host = ${JSON.stringify(PUBLIC_TITILER_HOST)};
-  var param = ${JSON.stringify(PUBLIC_TITILER_CORS_CACHE_PARAM)};
-  var opaque = ${JSON.stringify(OPAQUE_CORS_ORIGIN)};
-  function cacheOrigin() {
-    var origin = (window.location && window.location.origin) || '';
-    if (!/^https?:\\/\\//i.test(origin)) origin = opaque;
-    return origin.replace(/:\\/\\//g, '_').replace(/:/g, '_');
-  }
-  function withKey(url) {
-    try {
-      var parsed = new URL(url, document.baseURI);
-      if (parsed.hostname !== host) return url;
-      parsed.searchParams.set(param, cacheOrigin());
-      return parsed.toString();
-    } catch (e) {
-      return url;
-    }
-  }
-  window.fetch = function(input, init) {
-    if (typeof input === 'string') {
-      return origFetch.call(this, withKey(input), init);
-    }
-    if (typeof Request !== 'undefined' && input instanceof Request) {
-      return origFetch.call(this, new Request(withKey(input.url), input), init);
-    }
-    return origFetch.call(this, input, init);
-  };
-})();`;
 }
 
 function getUrlPathname(url: string): string {
