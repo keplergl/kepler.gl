@@ -2142,8 +2142,9 @@ export type ExtractDataFromFeatureUpdaterAction = {
 /**
  * Copy in-memory rows that fall inside the currently selected Draw on Map polygon
  * into a new local dataset. Vector tile layers extract a snapshot of features
- * already loaded in the current view. No-ops for raster/WMS/3D/bitmap tiles,
- * unsupported layer types, and non-polygon drawings.
+ * already loaded in the current view. Raster tile layers download a PNG clip and
+ * a GeoJSON file with the export rectangle and zonal stats. No-ops for WMS/3D/bitmap tiles, unsupported layer types,
+ * and non-polygon drawings.
  * @memberof visStateActions
  * @param layerId Layer whose dataset should be extracted
  * @return action

@@ -107,11 +107,15 @@ export function isVectorTileExtractLayer(layer?: ExtractableLayer | null): boole
   return Boolean(layer && layer.type === LAYER_TYPES.vectorTile);
 }
 
+export function isRasterTileExtractLayer(layer?: ExtractableLayer | null): boolean {
+  return Boolean(layer && layer.type === LAYER_TYPES.rasterTile);
+}
+
 export function isExtractableLayer(
   layer: ExtractableLayer,
   datasets: Record<string, ExtractableDataset | undefined>
 ): boolean {
-  if (isVectorTileExtractLayer(layer)) {
+  if (isVectorTileExtractLayer(layer) || isRasterTileExtractLayer(layer)) {
     return Boolean(layer.config?.dataId);
   }
   // getPolygonFilterFunctor returns true for unsupported types, which would copy
@@ -230,11 +234,28 @@ export function extractVectorTileFeaturesInsideFeature({
   return {kind: 'geojson', features, rowCount: features.length};
 }
 
+export function extractRasterInsideFeature({
+  layer,
+  feature
+}: {
+  layer: ExtractableLayer;
+  feature: Feature | null;
+}): ExtractedGeojson | null {
+  if (!feature || !canApplyFeatureFilter(feature) || !isRasterTileExtractLayer(layer)) {
+    return null;
+  }
+  if (typeof layer.extractInsideFeature === 'function') {
+    return layer.extractInsideFeature(feature);
+  }
+  return null;
+}
+
 /**
  * Copy in-memory rows whose geometry falls inside a drawn polygon.
  * Existing table filters (range/select/time), including GPU-backed ones via
  * `filteredIdxCPU`, are applied; the polygon clip is extra.
  * Vector tiles use currently loaded viewport tiles instead of dataset.rows.
+ * Raster tiles report whether any loaded pixels fall inside the drawing.
  */
 export function extractRowsInsideFeature({
   layer,
@@ -247,6 +268,9 @@ export function extractRowsInsideFeature({
 }): ExtractResult | null {
   if (isVectorTileExtractLayer(layer)) {
     return extractVectorTileFeaturesInsideFeature({layer, feature});
+  }
+  if (isRasterTileExtractLayer(layer)) {
+    return extractRasterInsideFeature({layer, feature});
   }
 
   if (

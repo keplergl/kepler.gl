@@ -25,9 +25,10 @@ import {
   VisConfigNumber
 } from '@kepler.gl/types';
 
-import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {notNullorUndefined, withPublicTitilerCorsCacheKey} from '@kepler.gl/common-utils';
 import {Datasets, KeplerTable as KeplerDataset, VectorTileMetadata} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
+import type {Feature, Polygon} from 'geojson';
 
 import {
   rasterVisConfigs,
@@ -38,6 +39,24 @@ import {
 import {getModules} from './gpu-utils';
 import {getSTACImageRequests, loadImages, loadTerrain} from './image';
 import RasterIcon from './raster-tile-icon';
+import {
+  computeRasterZonalStats,
+  formatRasterIdentifyRows,
+  parseTitilerPointResponse,
+  sampleRasterTileAtLngLat,
+  zonalStatsToProperties,
+  rasterZonalStatsToSidecar,
+  type RasterIdentifyContext,
+  type RasterIdentifyRow
+} from './raster-tile-identify';
+import {
+  downloadBlob,
+  fetchTitilerBboxPng,
+  mosaicTilesToPng,
+  polygonBbox,
+  polygonToBboxRectangle
+} from './raster-tile-extract';
+import {getSingleCOGUrlParams, getTitilerPointUrl} from './url';
 import {
   getDataSourceParams,
   getDataType,
@@ -173,6 +192,16 @@ export default class RasterTileLayer extends KeplerLayer {
   _lastRenderedPreset: string | undefined;
   /** Timeout ID for deferred redraws */
   _redrawTimeout: ReturnType<typeof setTimeout> | undefined;
+  /** Viewport tiles currently held by deck.gl, used for identify / extract */
+  _loadedTiles: any[] = [];
+  /** Band/preset context for sampling currently loaded tiles */
+  _identifyContext: RasterIdentifyContext = {
+    isPMTiles: false,
+    bandCombination: 'rgb'
+  };
+  /** STAC object used by the last render, for Titiler identify / crop */
+  _stac: CompleteSTACObject | null = null;
+  _useSTACSearching = false;
 
   getDataSourceParams: (
     stac: CompleteSTACObject,
@@ -267,8 +296,209 @@ export default class RasterTileLayer extends KeplerLayer {
     };
   }
 
-  getHoverData() {
+  getHoverData(
+    object,
+    _dataContainer,
+    _fields,
+    _animationConfig,
+    hoverInfo?: {index?: number; coordinate?: number[]}
+  ) {
+    if (object?.wmsFeatureInfo) {
+      if (Array.isArray(object.wmsFeatureInfo)) {
+        return {rasterFeatureData: object.wmsFeatureInfo};
+      }
+      return {
+        rasterFeatureData: [{name: 'Raster', value: String(object.wmsFeatureInfo)}]
+      };
+    }
+
+    const coordinate = hoverInfo?.coordinate || object?.coordinate;
+    if (!Array.isArray(coordinate) || coordinate.length < 2) {
+      return null;
+    }
+
+    const sample = sampleRasterTileAtLngLat(
+      this._loadedTiles,
+      coordinate[0],
+      coordinate[1],
+      this._identifyContext
+    );
+    if (!sample) {
+      return {
+        rasterFeatureData: [
+          {name: 'Longitude', value: Number(coordinate[0]).toFixed(6)},
+          {name: 'Latitude', value: Number(coordinate[1]).toFixed(6)},
+          {name: 'Value', value: 'No raster tile loaded'}
+        ]
+      };
+    }
+
+    return {rasterFeatureData: formatRasterIdentifyRows(sample, this._identifyContext)};
+  }
+
+  isLayerHovered(objectInfo): boolean {
+    if (!objectInfo?.picked || !objectInfo?.layer) {
+      return false;
+    }
+    const id = objectInfo.layer.props?.id;
+    if (id === this.id) {
+      return true;
+    }
+    return (
+      typeof id === 'string' &&
+      (id.includes(`raster-2d-layer-${this.id}`) || id.includes(`raster-3d-layer-${this.id}`))
+    );
+  }
+
+  hasHoveredObject(objectInfo: any) {
+    if (this.isLayerHovered(objectInfo)) {
+      return {
+        index: 0,
+        ...objectInfo
+      };
+    }
     return null;
+  }
+
+  /**
+   * Copy zonal stats for pixels currently loaded under a drawn polygon.
+   * Also used by Extract data in the editor.
+   */
+  extractInsideFeature(feature: Feature<Polygon> | null): {
+    kind: 'geojson';
+    features: Array<{type: 'Feature'; geometry: any; properties: Record<string, string | number>}>;
+    rowCount: number;
+  } | null {
+    if (!feature?.geometry) {
+      return null;
+    }
+    const exportFeature = polygonToBboxRectangle(feature) || feature;
+    const stats = computeRasterZonalStats(this._loadedTiles, exportFeature, this._identifyContext);
+    if (!stats.pixelCount) {
+      return {kind: 'geojson', features: [], rowCount: 0};
+    }
+    const properties = zonalStatsToProperties(stats, {
+      layer: this.config.label,
+      preset: this._identifyContext.preset
+    });
+    return {
+      kind: 'geojson',
+      features: [
+        {
+          type: 'Feature',
+          geometry: exportFeature.geometry,
+          properties
+        }
+      ],
+      rowCount: 1
+    };
+  }
+
+  /**
+   * Download a PNG clip of currently loaded tiles under the polygon, plus a GeoJSON
+   * sidecar with the lon/lat bbox rectangle and zonal stats. Tries Titiler bbox crop
+   * first for single-asset COGs, then a client mosaic.
+   */
+  async downloadClip(feature: Feature<Polygon> | null): Promise<void> {
+    if (!feature?.geometry) {
+      return;
+    }
+    const exportFeature = polygonToBboxRectangle(feature) || feature;
+    const stats = computeRasterZonalStats(this._loadedTiles, exportFeature, this._identifyContext);
+    const fileBase = (this.config.label || 'raster').replace(/[^\w.-]+/g, '_');
+    if (stats.pixelCount) {
+      const sidecar = rasterZonalStatsToSidecar(stats, {
+        layer: this.config.label,
+        preset: this._identifyContext.preset,
+        geometry: exportFeature.geometry
+      });
+      downloadBlob(
+        new Blob([JSON.stringify(sidecar, null, 2)], {type: 'application/json'}),
+        `${fileBase}-clip.json`
+      );
+    }
+    const bbox = polygonBbox(exportFeature);
+
+    if (
+      this._stac &&
+      !this._identifyContext.isPMTiles &&
+      bbox &&
+      this._identifyContext.loadAssetIds?.length === 1
+    ) {
+      try {
+        const blob = await fetchTitilerBboxPng({
+          stac: this._stac,
+          loadAssetId: this._identifyContext.loadAssetIds[0],
+          loadBandIndexes: this._identifyContext.loadBandIndexes?.length
+            ? this._identifyContext.loadBandIndexes
+            : [0],
+          bbox
+        });
+        if (blob) {
+          downloadBlob(blob, `${fileBase}-clip.png`);
+          return;
+        }
+      } catch {
+        // Fall back to the in-memory mosaic
+      }
+    }
+
+    const mosaic = await mosaicTilesToPng(this._loadedTiles, exportFeature, this._identifyContext);
+    if (mosaic) {
+      downloadBlob(mosaic, `${fileBase}-clip.png`);
+    }
+  }
+
+  private async _onClickIdentify(layerCallbacks, info): Promise<void> {
+    const coordinate = info?.coordinate;
+    if (!Array.isArray(coordinate) || coordinate.length < 2) {
+      return;
+    }
+    const rows = await this._fetchTitilerPoint(coordinate[0], coordinate[1]);
+    if (rows?.length && layerCallbacks?.onWMSFeatureInfo) {
+      layerCallbacks.onWMSFeatureInfo({featureInfo: rows, coordinate});
+    }
+  }
+
+  private async _fetchTitilerPoint(lon: number, lat: number): Promise<RasterIdentifyRow[] | null> {
+    const stac = this._stac;
+    const assetId = this._identifyContext.loadAssetIds?.[0];
+    if (
+      !stac?.rasterTileServerUrls?.length ||
+      !assetId ||
+      stac.type !== 'Feature' ||
+      (this._identifyContext.loadAssetIds?.length ?? 0) !== 1
+    ) {
+      return null;
+    }
+    try {
+      const params = getSingleCOGUrlParams({
+        stac: stac as any,
+        loadAssetId: assetId,
+        loadBandIndexes: this._identifyContext.loadBandIndexes?.length
+          ? this._identifyContext.loadBandIndexes
+          : [0],
+        mask: false
+      });
+      if (!params) {
+        return null;
+      }
+      const urlInfo = getTitilerPointUrl({
+        stac: stac as any,
+        useSTACSearching: this._useSTACSearching,
+        lon,
+        lat
+      });
+      const response = await fetch(
+        withPublicTitilerCorsCacheKey(`${urlInfo.url}?${params.toString()}`)
+      );
+      if (!response.ok) {
+        return null;
+      }
+      return parseTitilerPointResponse(await response.json());
+    } catch {
+      return null;
+    }
   }
 
   // We can render without columns, so we redefine this method
@@ -410,6 +640,7 @@ export default class RasterTileLayer extends KeplerLayer {
    * @param tiles Array of tiles in current viewport
    */
   onViewportLoad(tiles: (Tile2DHeader | null)[]): void {
+    this._loadedTiles = tiles.filter(Boolean);
     this.updateMinMaxPixelValue(tiles);
     const newZRange = computeZRange(tiles);
     if (!newZRange) {
@@ -491,7 +722,9 @@ export default class RasterTileLayer extends KeplerLayer {
     }
 
     const {visConfig} = this.config;
-    const {id, opacity, visible} = this.getDefaultDeckLayerProps(opts);
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const {id, opacity, visible, idx} = defaultLayerProps;
+    const pickable = Boolean(opts.interactionConfig?.tooltip?.enabled);
 
     const hasShadowEffect = experimentalContext?.hasShadowEffect;
 
@@ -586,14 +819,28 @@ export default class RasterTileLayer extends KeplerLayer {
       maxCategoricalBandValue
     };
 
+    this._stac = stac;
+    this._useSTACSearching = Boolean(useSTACSearching);
+    this._identifyContext = {
+      isPMTiles: false,
+      bandCombination,
+      preset,
+      loadAssetIds,
+      loadBandIndexes,
+      renderBandIndexes
+    };
+
     const tileLayer = new TileLayer<any, RenderSubLayersProps>({
       id,
+      idx,
+      pickable,
       minZoom,
       maxZoom,
       tileSize: 512 / devicePixelRatio,
       zoomOffset: visConfig.zoomOffset || 0,
       getTileData: (args: any) => this.getTileData({...args, ...getTileDataCustomProps}),
       onViewportLoad: this.onViewportLoad.bind(this),
+      onClick: pickable ? this._onClickIdentify.bind(this, layerCallbacks) : null,
       // @ts-expect-error - TS doesn't know we'll pass appropriate props here
       renderSubLayers: renderSubLayersStac,
       maxRequests: getMaxRequests(stac.rasterTileServerUrls || []),
@@ -653,7 +900,9 @@ export default class RasterTileLayer extends KeplerLayer {
   }
 
   private renderPMTilesLayer(opts): TileLayer<any>[] {
-    const {id, opacity, visible} = this.getDefaultDeckLayerProps(opts);
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const {id, opacity, visible, idx} = defaultLayerProps;
+    const pickable = Boolean(opts.interactionConfig?.tooltip?.enabled);
 
     const {data, mapState, layerCallbacks} = opts;
     const metadata = data?.dataset?.metadata as VectorTileMetadata;
@@ -667,16 +916,24 @@ export default class RasterTileLayer extends KeplerLayer {
 
     const shouldLoadTerrain = getShouldLoadTerrain(metadata, mapState, visConfig);
 
+    this._stac = null;
+    this._identifyContext = {
+      isPMTiles: true,
+      bandCombination: 'rgb',
+      preset: 'pmtiles'
+    };
+
     return [
       new TileLayer<any, RasterTileLayerVisConfigCommonSettings>({
         id,
+        idx,
         getTileData: (args: any) =>
           this.getTileDataPMTiles({...args, shouldLoadTerrain, metadata}, tileSource),
 
         // Assume the pmtiles file support HTTP/2, so we aren't limited by the browser to a certain number per domain.
         maxRequests: 20,
 
-        pickable: true,
+        pickable,
         autoHighlight: showTileBorders,
 
         onViewportLoad: this.onViewportLoad.bind(this),

@@ -9,7 +9,15 @@ import {
   getUsableAssets,
   getRasterStatisticsMinMax,
   filterAvailablePresets,
-  getDataSourceParams
+  getDataSourceParams,
+  computeDerivedValue,
+  formatRasterIdentifyRows,
+  lngLatToTileUV,
+  mercatorPixelSizeForBbox,
+  parseTitilerPointResponse,
+  polygonToBboxRectangle,
+  rasterZonalStatsToSidecar,
+  sampleRasterTileAtLngLat
 } from '@kepler.gl/layers';
 import {RasterWebGL} from '@kepler.gl/deckgl-layers';
 import {parseRasterMetadata} from '@kepler.gl/table';
@@ -862,6 +870,233 @@ test('#RasterTileLayer -> float mask keeps the pixels a float32 mask marks as va
   t.ok(
     uniforms.keepMax >= FLOAT32_MAX,
     `should not discard valid float pixels: keepMax ${uniforms.keepMax} < ${FLOAT32_MAX}`
+  );
+  t.end();
+});
+
+test('#RasterTileLayer -> identify samples band values at lng/lat', t => {
+  const [u, v] = lngLatToTileUV(0, 0, {x: 0, y: 0, z: 0});
+  t.ok(Math.abs(u - 0.5) < 1e-6, 'lng 0 is the center of tile 0/0/0 in x');
+  t.ok(Math.abs(v - 0.5) < 1e-6, 'lat 0 is the center of tile 0/0/0 in y');
+
+  const data = new Float32Array([1, 2, 3, 4]);
+  const tile = {
+    index: {x: 0, y: 0, z: 0},
+    bbox: {west: -180, south: -85, east: 180, north: 85},
+    data: {
+      images: {
+        imageBands: [{data, width: 2, height: 2}]
+      }
+    }
+  };
+
+  const sample = sampleRasterTileAtLngLat([tile], 0, 0, {
+    isPMTiles: false,
+    bandCombination: 'single',
+    loadAssetIds: ['ndvi']
+  });
+  t.ok(sample, 'should sample a loaded tile');
+  t.equal(sample.col, 1, 'center of a 2x2 tile is column 1');
+  t.equal(sample.row, 1, 'center of a 2x2 tile is row 1');
+  t.equal(sample.bandValues[0], 4, 'should read the bottom-right pixel');
+
+  const rows = formatRasterIdentifyRows(sample, {
+    isPMTiles: false,
+    bandCombination: 'single',
+    loadAssetIds: ['ndvi']
+  });
+  t.ok(
+    rows.some(row => row.name === 'ndvi' && row.value === '4'),
+    'tooltip rows include the band value'
+  );
+
+  const ndvi = computeDerivedValue([0.8, 0.2], 'normalizedDifference');
+  t.ok(ndvi, 'should compute NDVI');
+  t.equal(ndvi.name, 'NDVI');
+  t.ok(Math.abs(ndvi.value - 0.6) < 1e-6, 'NDVI (0.8-0.2)/(0.8+0.2) = 0.6');
+
+  const parsed = parseTitilerPointResponse({
+    coordinates: [-122.4, 37.8],
+    values: [12.5, 8],
+    band_names: ['red', 'nir']
+  });
+  t.equal(parsed.length, 4, 'should format lon/lat plus two bands');
+  t.equal(parsed[2].name, 'red');
+  t.end();
+});
+
+test('#RasterTileLayer -> hover, picking, and extract from loaded tiles', t => {
+  const layer = new RasterTileLayer({id: 'raster-id', dataId: 'stac-data', label: 'Rivers'});
+  layer._loadedTiles = [
+    {
+      index: {x: 0, y: 0, z: 0},
+      bbox: {west: -180, south: -85, east: 180, north: 85},
+      data: {
+        images: {
+          imageBands: [{data: new Uint8Array([40]), width: 1, height: 1}]
+        }
+      }
+    }
+  ];
+  layer._identifyContext = {
+    isPMTiles: false,
+    bandCombination: 'single',
+    loadAssetIds: ['red']
+  };
+
+  const hover = layer.getHoverData(null, null, [], null, {index: 0, coordinate: [0, 0]});
+  t.ok(hover.rasterFeatureData, 'hover should return raster feature rows');
+  t.ok(
+    hover.rasterFeatureData.some(row => row.name === 'red'),
+    'hover includes the sampled band'
+  );
+
+  const hovered = layer.hasHoveredObject({
+    picked: true,
+    layer: {props: {id: `raster-2d-layer-${layer.id}`}}
+  });
+  t.ok(hovered, 'child RasterLayer ids should count as hovered');
+
+  const pmtilesLayer = new RasterTileLayer({id: 'pmtiles-id', dataId: 'pmtiles-data'});
+  const pmtilesLayers = pmtilesLayer.renderLayer({
+    ...createRenderOpts(MOCK_PMTILES_DATASET),
+    idx: 2
+  });
+  t.equal(
+    pmtilesLayers[0]?.props.pickable,
+    true,
+    'PMTiles should be pickable when tooltips are on'
+  );
+  t.equal(pmtilesLayers[0]?.props.idx, 2, 'idx should be forwarded onto the TileLayer');
+
+  const extracted = layer.extractInsideFeature({
+    type: 'Feature',
+    properties: {shape: 'Rectangle'},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-10, -10],
+          [10, -10],
+          [10, 10],
+          [-10, 10],
+          [-10, -10]
+        ]
+      ]
+    }
+  });
+  t.equal(extracted.kind, 'geojson', 'extract should return geojson stats');
+  t.equal(extracted.rowCount, 1, 'extract should keep the polygon as one feature');
+  t.ok(extracted.features[0].properties.pixel_count > 0, 'extract should count pixels');
+  t.end();
+});
+
+test('#RasterTileLayer -> raster stats sidecar is GeoJSON with bbox rectangle', t => {
+  const geometry = {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [0, 0],
+        [10, 0],
+        [10, 5],
+        [0, 5],
+        [0, 0]
+      ]
+    ]
+  };
+  const sidecar = rasterZonalStatsToSidecar(
+    {
+      pixelCount: 12,
+      bands: {red: {count: 12, min: 1, max: 9, mean: 4, sum: 48}},
+      derived: {count: 12, min: 0.1, max: 0.8, mean: 0.4, sum: 4.8},
+      derivedName: 'NDVI'
+    },
+    {layer: 'Rivers', preset: 'ndvi', geometry}
+  );
+  t.equal(sidecar.type, 'FeatureCollection');
+  t.equal(sidecar.features.length, 1);
+  t.equal(sidecar.features[0].type, 'Feature');
+  t.deepEqual(sidecar.features[0].geometry, geometry);
+  t.equal(sidecar.features[0].properties.layer, 'Rivers');
+  t.equal(sidecar.features[0].properties.pixel_count, 12);
+  t.equal(sidecar.features[0].properties.red_mean, 4);
+  t.equal(sidecar.features[0].properties.ndvi_mean, 0.4);
+  t.equal(sidecar.features[0].properties.shape, 'Rectangle');
+  t.end();
+});
+
+test('#RasterTileLayer -> extract PNG size follows rectangle aspect ratio', t => {
+  const wide = mercatorPixelSizeForBbox([-20, 10, 20, 12], 1000);
+  t.ok(wide.width > wide.height, 'a wide geographic rectangle should export a wide image');
+  t.equal(wide.width, 1000, 'the long side should use the max size');
+
+  const tall = mercatorPixelSizeForBbox([0, 0, 1, 20], 1000);
+  t.ok(tall.height > tall.width, 'a tall geographic rectangle should export a tall image');
+  t.equal(tall.height, 1000, 'the long side should use the max size');
+
+  const square = mercatorPixelSizeForBbox([-1, -1, 1, 1], 512);
+  t.ok(
+    Math.abs(square.width / square.height - 1) < 0.15,
+    'a square geographic bbox should stay roughly square in mercator near the equator'
+  );
+  t.end();
+});
+
+test('#RasterTileLayer -> non-rectangular polygon export uses lon/lat bbox rectangle', t => {
+  const triangle = {
+    type: 'Feature',
+    properties: {shape: 'Polygon'},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [10, 0],
+          [0, 5],
+          [0, 0]
+        ]
+      ]
+    }
+  };
+  const rect = polygonToBboxRectangle(triangle);
+  t.ok(rect, 'should build a bbox rectangle');
+  t.equal(rect.properties.shape, 'Rectangle');
+  t.deepEqual(rect.geometry.coordinates[0], [
+    [0, 0],
+    [10, 0],
+    [10, 5],
+    [0, 5],
+    [0, 0]
+  ]);
+
+  const layer = new RasterTileLayer({id: 'raster-bbox-id', dataId: 'stac-data', label: 'Rivers'});
+  layer._loadedTiles = [
+    {
+      index: {x: 0, y: 0, z: 0},
+      bbox: {west: -180, south: -85, east: 180, north: 85},
+      data: {
+        images: {
+          imageBands: [{data: new Uint8Array([40]), width: 1, height: 1}]
+        }
+      }
+    }
+  ];
+  layer._identifyContext = {
+    isPMTiles: false,
+    bandCombination: 'single',
+    loadAssetIds: ['red']
+  };
+  const extracted = layer.extractInsideFeature(triangle);
+  t.deepEqual(
+    extracted.features[0].geometry.coordinates[0],
+    [
+      [0, 0],
+      [10, 0],
+      [10, 5],
+      [0, 5],
+      [0, 0]
+    ],
+    'extract should use the lon/lat bbox rectangle, not the triangle'
   );
   t.end();
 });
