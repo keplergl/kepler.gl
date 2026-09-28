@@ -355,6 +355,7 @@ export default {
     selectLocale: 'Selecionar língua',
     switchToLightTheme: 'Mudar para tema claro',
     switchToDarkTheme: 'Mudar para tema escuro',
+    switchToSpaceTheme: 'Mudar para tema space',
     showAiAssistantPanel: 'Mostrar painel de AI Assistant',
     hideAiAssistantPanel: 'Esconder painel de AI Assistant',
     hideLayerPanel: 'Esconder painel de camada',

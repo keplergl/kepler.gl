@@ -99,6 +99,7 @@ export {default as CursorPoint} from './cursor-point';
 export {default as Calendar} from './calendar';
 export {default as LocationMarker} from './location-marker';
 export {default as Globe} from './globe';
+export {default as Space} from './space';
 export {default as Sun} from './sun';
 export {default as Sunrise} from './sunrise';
 export {default as Sunset} from './sunset';
