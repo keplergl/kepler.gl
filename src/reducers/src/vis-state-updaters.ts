@@ -51,7 +51,8 @@ import {
   loadColumnStatsError,
   refreshDatasetSuccess,
   refreshDatasetError,
-  refreshDatasetProgress
+  refreshDatasetProgress,
+  setLoadingProgress
 } from '@kepler.gl/actions';
 
 // Utils
@@ -399,6 +400,7 @@ export const INITIAL_VIS_STATE: VisState = {
   fileLoadingProgress: {},
   // for loading datasets
   loadingIndicatorValue: 0,
+  loadingProgress: {},
 
   loaders: [],
   loadOptions: {},
@@ -3232,7 +3234,13 @@ function needsExternallyHostedHydrate(dataset: ProtoDataset): boolean {
   );
 }
 
-async function hydrateExternallyHostedProtoDataset(dataset: ProtoDataset): Promise<ProtoDataset> {
+async function hydrateExternallyHostedProtoDataset({
+  arg: dataset,
+  onProgress
+}: {
+  arg: ProtoDataset;
+  onProgress: (progress: {loaded: number; total?: number; percent: number}) => void;
+}): Promise<ProtoDataset> {
   if (!needsExternallyHostedHydrate(dataset)) {
     return dataset;
   }
@@ -3240,7 +3248,8 @@ async function hydrateExternallyHostedProtoDataset(dataset: ProtoDataset): Promi
     source: dataset.metadata?.source as string,
     format: getRemoteSourceFormat(dataset.metadata),
     size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined,
-    bypassCache: getDatasetRefreshIntervalMs(dataset.metadata) > 0
+    bypassCache: getDatasetRefreshIntervalMs(dataset.metadata) > 0,
+    onProgress
   });
   if (!loaded.data) {
     throw new Error(`No data loaded from ${dataset.metadata?.source}`);
@@ -3259,7 +3268,7 @@ async function hydrateExternallyHostedProtoDataset(dataset: ProtoDataset): Promi
   };
 }
 
-const HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromise(
+const HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromiseWithProgress(
   hydrateExternallyHostedProtoDataset,
   'HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK'
 );
@@ -3268,17 +3277,50 @@ const FAIL_CREATE_DATASET_TASK = Task.fromPromise(async (message: string) => {
   throw new Error(message);
 }, 'FAIL_CREATE_DATASET_TASK');
 
+function getDatasetProgressId(dataset: ProtoDataset, index = 0): string {
+  if (typeof dataset.info?.id === 'string' && dataset.info.id) {
+    return dataset.info.id;
+  }
+  if (typeof dataset.metadata?.source === 'string' && dataset.metadata.source) {
+    return dataset.metadata.source;
+  }
+  return `dataset-${index}`;
+}
+
 function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets) {
   if (!needsExternallyHostedHydrate(dataset)) {
     return createNewDataEntry(dataset, datasets);
   }
-  return HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK(dataset).chain(hydrated => {
+  const progressId = getDatasetProgressId(dataset);
+  return HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK({
+    arg: dataset,
+    onProgress: progress =>
+      setLoadingProgress(progressId, Math.round((progress?.percent ?? 0) * 100))
+  }).chain(hydrated => {
     const task = createNewDataEntry(hydrated, datasets);
     return (
       task ||
       FAIL_CREATE_DATASET_TASK('Failed to create a new dataset due to data verification errors')
     );
   });
+}
+
+function clearLoadingProgress(state: VisState, ids?: string[]): VisState {
+  const current = state.loadingProgress || {};
+  if (!Object.keys(current).length) {
+    return state;
+  }
+  if ((state.loadingIndicatorValue || 0) <= 0) {
+    return {...state, loadingProgress: {}};
+  }
+  if (!ids?.length) {
+    return state;
+  }
+  const next = {...current};
+  ids.forEach(id => {
+    delete next[id];
+  });
+  return {...state, loadingProgress: next};
 }
 
 function patchDatasetMetadata(dataset: Datasets[string], patch: Record<string, unknown>) {
@@ -3715,9 +3757,14 @@ export const updateVisDataUpdater = (
 
   const createDatasetTasks: TaskDescriptor[] = [];
   const notificationTasks: TaskDescriptor[] = [];
+  const hydrateProgress: Record<string, number> = {};
 
   datasets.forEach(({info = {}, ...rest}, datasetIndex) => {
-    const task = createNewDataEntryTask({info, ...rest}, state.datasets);
+    const proto = {info, ...rest};
+    if (needsExternallyHostedHydrate(proto)) {
+      hydrateProgress[getDatasetProgressId(proto, datasetIndex)] = 0;
+    }
+    const task = createNewDataEntryTask(proto, state.datasets);
     if (task) {
       createDatasetTasks.push(task);
     } else {
@@ -3734,14 +3781,24 @@ export const updateVisDataUpdater = (
     }
   });
 
+  const progressIds = Object.keys(hydrateProgress);
   const datasetsAllSettledTask = createDatasetTasks.length
     ? Task.allSettled(createDatasetTasks).map(results =>
-        createNewDatasetSuccess({results, addToMapOptions: options})
+        createNewDatasetSuccess({results, addToMapOptions: options, progressIds})
       )
     : null;
 
   if (datasetsAllSettledTask) {
     updatedState = setLoadingIndicatorUpdater(updatedState, payload_({change: 1, type: ''}));
+    if (progressIds.length) {
+      updatedState = {
+        ...updatedState,
+        loadingProgress: {
+          ...updatedState.loadingProgress,
+          ...hydrateProgress
+        }
+      };
+    }
   }
 
   return withTask(updatedState, [
@@ -3754,7 +3811,7 @@ export const createNewDatasetSuccessUpdater = (
   state: VisState,
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
-  const {results, addToMapOptions} = action.payload;
+  const {results, addToMapOptions, progressIds} = action.payload;
   const notificationTasks: TaskDescriptor[] = [];
 
   const newDataEntries = results.reduce((accu, result, idx) => {
@@ -3800,7 +3857,10 @@ export const createNewDatasetSuccessUpdater = (
   });
 
   return withTask(
-    setLoadingIndicatorUpdater(updatedState, payload_({change: -1})),
+    clearLoadingProgress(
+      setLoadingIndicatorUpdater(updatedState, payload_({change: -1})),
+      progressIds
+    ),
     notificationTasks
   );
 };
@@ -5814,11 +5874,42 @@ export const setLoadingIndicatorUpdater = (
     loadingIndicatorValue = 0;
   }
 
+  const nextValue = Math.max(loadingIndicatorValue + change, 0);
   return {
     ...state,
-    loadingIndicatorValue: Math.max(loadingIndicatorValue + change, 0)
+    loadingIndicatorValue: nextValue,
+    ...(nextValue === 0 && Object.keys(state.loadingProgress || {}).length
+      ? {loadingProgress: {}}
+      : {})
   };
 };
+
+/**
+ * Record download progress for an in-flight remote dataset hydrate.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function setLoadingProgressUpdater(
+  state: VisState,
+  {id, percent}: VisStateActions.SetLoadingProgressUpdaterAction
+): VisState {
+  if ((state.loadingIndicatorValue || 0) <= 0) {
+    return state;
+  }
+  const nextPercent = Number.isFinite(percent)
+    ? Math.max(0, Math.min(100, Math.round(percent)))
+    : 0;
+  if (state.loadingProgress?.[id] === nextPercent) {
+    return state;
+  }
+  return {
+    ...state,
+    loadingProgress: {
+      ...state.loadingProgress,
+      [id]: nextPercent
+    }
+  };
+}
 
 function adjustAnimationConfigWithFilter<S extends VisState>(state: S, filterIdx: number): S {
   const filter = state.filters[filterIdx];
