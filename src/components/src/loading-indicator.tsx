@@ -34,7 +34,7 @@ const StyledTrack = styled.div`
   margin-top: 4px;
   height: 4px;
   width: 100%;
-  background-color: ${props => props.theme.activeColor}33;
+  background-color: color-mix(in srgb, ${props => props.theme.activeColor} 20%, transparent);
   border-radius: 4px;
   overflow: hidden;
 `;
@@ -166,7 +166,8 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
 
   const displayMessage = isVisible ? extraMessage : lastMessageRef.current;
   const displayPercent = isVisible ? (hasProgress ? percent : undefined) : lastPercentRef.current;
-  const determinate = typeof displayPercent === 'number' && displayPercent > 0;
+  const determinatePercent =
+    typeof displayPercent === 'number' && displayPercent > 0 ? displayPercent : null;
 
   return (
     <StyledContainer $isVisible={isVisible} $left={left} $bottomOffset={bottomOffset}>
@@ -178,10 +179,14 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-valuenow={determinate ? Math.round(displayPercent) : undefined}
+        aria-valuenow={determinatePercent === null ? undefined : Math.round(determinatePercent)}
         aria-label="Loading"
       >
-        {determinate ? <StyledBar $percent={displayPercent} /> : <StyledIndeterminateBar />}
+        {determinatePercent === null ? (
+          <StyledIndeterminateBar />
+        ) : (
+          <StyledBar $percent={determinatePercent} />
+        )}
       </StyledTrack>
     </StyledContainer>
   );
