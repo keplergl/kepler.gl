@@ -212,12 +212,19 @@ describe('probeUrlIsCOG', () => {
 });
 
 describe('withPublicTitilerCorsCacheKey', () => {
-  test('appends the current origin to public titiler.xyz URLs', () => {
+  test('appends a sanitized origin token to public titiler.xyz URLs', () => {
     const result = withPublicTitilerCorsCacheKey(TITILER_STAC, 'https://kepler.gl');
     const parsed = new URL(result);
     expect(parsed.hostname).toBe('titiler.xyz');
     expect(parsed.searchParams.get('url')).toBe(NEXTGIS_COG);
-    expect(parsed.searchParams.get('kepler_origin')).toBe('https://kepler.gl');
+    expect(parsed.searchParams.get('kepler_origin')).toBe('https_kepler.gl');
+  });
+
+  test('does not put :// in the query value (CloudFront WAF 403s nested URLs)', () => {
+    const result = withPublicTitilerCorsCacheKey(TITILER_STAC, 'http://localhost:8080');
+    const token = new URL(result).searchParams.get('kepler_origin');
+    expect(token).toBe('http_localhost_8080');
+    expect(token).not.toContain('://');
   });
 
   test('leaves non-titiler URLs unchanged', () => {
@@ -232,10 +239,10 @@ describe('withPublicTitilerCorsCacheKey', () => {
     expect(withPublicTitilerCorsCacheKey(TITILER_STAC, '')).toBe(TITILER_STAC);
   });
 
-  test('overwrites a stale kepler_origin with the current origin', () => {
+  test('overwrites a stale kepler_origin with the current origin token', () => {
     const stale = `${TITILER_STAC}&kepler_origin=${encodeURIComponent('http://localhost:8080')}`;
     const result = withPublicTitilerCorsCacheKey(stale, 'https://kepler.gl');
-    expect(new URL(result).searchParams.get('kepler_origin')).toBe('https://kepler.gl');
+    expect(new URL(result).searchParams.get('kepler_origin')).toBe('https_kepler.gl');
   });
 
   test('maps file:// and opaque origins to the null CORS origin', () => {

@@ -84,6 +84,9 @@ export const PUBLIC_TITILER_HOST = 'titiler.xyz';
  * `public, max-age=3600` but without Vary: Origin. A request from
  * http://localhost:8080 (or a file:// HTML export, origin `null`) can then
  * be served to https://kepler.gl with a mismatched CORS header.
+ *
+ * Values must not contain `://` — CloudFront's WAF 403s query strings that
+ * look like nested URLs (`kepler_origin=http://localhost:8080`).
  */
 export const PUBLIC_TITILER_CORS_CACHE_PARAM = 'kepler_origin';
 
@@ -92,6 +95,14 @@ export const OPAQUE_CORS_ORIGIN = 'null';
 
 function isHttpUrlOrigin(origin: string): boolean {
   return /^https?:\/\//i.test(origin);
+}
+
+/**
+ * Sanitize an origin so it can be used as a titiler.xyz query value.
+ * `http://localhost:8080` → `http_localhost_8080`
+ */
+export function sanitizeTitilerCorsCacheKey(origin: string): string {
+  return origin.replace(/:\/\//g, '_').replace(/:/g, '_');
 }
 
 /**
@@ -108,7 +119,7 @@ export function getTitilerCorsCacheOrigin(locationOrigin?: string | null): strin
       : locationOrigin;
 
   if (origin && isHttpUrlOrigin(origin)) {
-    return origin;
+    return sanitizeTitilerCorsCacheKey(origin);
   }
   if (origin === OPAQUE_CORS_ORIGIN || (typeof origin === 'string' && origin.startsWith('file:'))) {
     return OPAQUE_CORS_ORIGIN;
@@ -160,8 +171,8 @@ export function getPublicTitilerCorsCachePatchScript(): string {
   var opaque = ${JSON.stringify(OPAQUE_CORS_ORIGIN)};
   function cacheOrigin() {
     var origin = (window.location && window.location.origin) || '';
-    if (/^https?:\\/\\//i.test(origin)) return origin;
-    return opaque;
+    if (!/^https?:\\/\\//i.test(origin)) origin = opaque;
+    return origin.replace(/:\\/\\//g, '_').replace(/:/g, '_');
   }
   function withKey(url) {
     try {
