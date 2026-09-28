@@ -577,6 +577,11 @@ export default {
       defaultCancel: 'Cancel',
       defaultConfirm: 'Confirm'
     },
+    exportFileName: {
+      title: 'File name',
+      subtitle: 'The file type is added automatically.',
+      placeholder: 'kepler.gl'
+    },
     exportImage: {
       ratioTitle: 'Ratio',
       ratioDescription: 'Choose the ratio for various usages.',
@@ -587,6 +592,7 @@ export default {
       resolutionTitle: 'Resolution',
       resolutionDescription: 'High resolution is better for prints.',
       resolutionPlaceholder: 'Select resolution...',
+      optionsTitle: 'Options',
       mapLegendTitle: 'Map Legend',
       mapLegendAdd: 'Add legend on map',
       chartsTitle: 'Charts',
