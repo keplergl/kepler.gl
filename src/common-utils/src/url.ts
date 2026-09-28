@@ -75,6 +75,116 @@ export const isPMTilesUrl = (url?: string | null) => url?.includes('.pmtiles');
 
 const COG_EXTENSIONS = ['.tif', '.tiff', '.geotiff', '.geotif', '.gtiff', '.cog'];
 
+/** Public TiTiler instance used for COG preview in the Add Data modal. */
+export const PUBLIC_TITILER_HOST = 'titiler.xyz';
+
+/**
+ * Query param used to partition CloudFront's cache for titiler.xyz.
+ * The public service echoes Access-Control-Allow-Origin and caches with
+ * `public, max-age=3600` but without Vary: Origin. A request from
+ * http://localhost:8080 (or a file:// HTML export, origin `null`) can then
+ * be served to https://kepler.gl with a mismatched CORS header.
+ */
+export const PUBLIC_TITILER_CORS_CACHE_PARAM = 'kepler_origin';
+
+/** CORS origin sent by file:// documents and other opaque origins. */
+export const OPAQUE_CORS_ORIGIN = 'null';
+
+function isHttpUrlOrigin(origin: string): boolean {
+  return /^https?:\/\//i.test(origin);
+}
+
+/**
+ * Origin used to partition titiler.xyz CloudFront CORS caches.
+ * file:// HTML exports send `Origin: null`; use that same cache key so they
+ * do not inherit a header cached for https://kepler.gl.
+ */
+export function getTitilerCorsCacheOrigin(locationOrigin?: string | null): string | null {
+  const origin =
+    locationOrigin === undefined
+      ? typeof window === 'undefined'
+        ? null
+        : window.location?.origin ?? null
+      : locationOrigin;
+
+  if (origin && isHttpUrlOrigin(origin)) {
+    return origin;
+  }
+  if (origin === OPAQUE_CORS_ORIGIN || (typeof origin === 'string' && origin.startsWith('file:'))) {
+    return OPAQUE_CORS_ORIGIN;
+  }
+  if (
+    locationOrigin === undefined &&
+    typeof window !== 'undefined' &&
+    window.location?.protocol === 'file:'
+  ) {
+    return OPAQUE_CORS_ORIGIN;
+  }
+  return null;
+}
+
+/**
+ * Append the current page origin to public titiler.xyz URLs so CloudFront
+ * caches CORS responses per origin. No-ops for other hosts or when origin
+ * cannot be determined (Node).
+ */
+export function withPublicTitilerCorsCacheKey(url: string, origin?: string | null): string {
+  const cacheOrigin = getTitilerCorsCacheOrigin(origin);
+  if (!url || !cacheOrigin) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== PUBLIC_TITILER_HOST) {
+      return url;
+    }
+    parsed.searchParams.set(PUBLIC_TITILER_CORS_CACHE_PARAM, cacheOrigin);
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Classic-script fetch patch for exported HTML maps. Those files load kepler.gl
+ * from the published UMD bundle, so this keeps file:// COG tiles working even
+ * before that bundle includes {@link withPublicTitilerCorsCacheKey}.
+ */
+export function getPublicTitilerCorsCachePatchScript(): string {
+  return `(function(){
+  var origFetch = window.fetch;
+  if (!origFetch) return;
+  var host = ${JSON.stringify(PUBLIC_TITILER_HOST)};
+  var param = ${JSON.stringify(PUBLIC_TITILER_CORS_CACHE_PARAM)};
+  var opaque = ${JSON.stringify(OPAQUE_CORS_ORIGIN)};
+  function cacheOrigin() {
+    var origin = (window.location && window.location.origin) || '';
+    if (/^https?:\\/\\//i.test(origin)) return origin;
+    return opaque;
+  }
+  function withKey(url) {
+    try {
+      var parsed = new URL(url, document.baseURI);
+      if (parsed.hostname !== host) return url;
+      parsed.searchParams.set(param, cacheOrigin());
+      return parsed.toString();
+    } catch (e) {
+      return url;
+    }
+  }
+  window.fetch = function(input, init) {
+    if (typeof input === 'string') {
+      return origFetch.call(this, withKey(input), init);
+    }
+    if (typeof Request !== 'undefined' && input instanceof Request) {
+      return origFetch.call(this, new Request(withKey(input.url), input), init);
+    }
+    return origFetch.call(this, input, init);
+  };
+})();`;
+}
+
 function getUrlPathname(url: string): string {
   try {
     return new URL(url).pathname.toLowerCase().replace(/\/+$/, '');
