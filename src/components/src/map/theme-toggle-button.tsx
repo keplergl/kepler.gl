@@ -28,7 +28,7 @@ export type ThemeToggleButtonProps = {
   themeName?: string;
   onSetTheme: (theme: string) => void;
   mapControls: MapControls;
-  actionIcons?: ThemeToggleButtonIcons;
+  actionIcons?: Partial<ThemeToggleButtonIcons>;
 };
 
 ThemeToggleButtonFactory.deps = [MapControlTooltipFactory];
@@ -44,8 +44,9 @@ function ThemeToggleButtonFactory(MapControlTooltip: ReturnType<typeof MapContro
     themeName = THEME.dark,
     onSetTheme,
     mapControls,
-    actionIcons = defaultActionIcons
+    actionIcons: customActionIcons
   }) => {
+    const actionIcons = {...defaultActionIcons, ...customActionIcons};
     const upcomingTheme = getNextUiTheme(themeName);
 
     const onClick = useCallback(
