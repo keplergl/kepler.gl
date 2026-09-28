@@ -439,6 +439,12 @@ function RasterTileLayerConfiguratorFactory(
       }
     }, [onVisConfigChange, preset, singleBandName, singleBandOptions]);
 
+    const interactionUI = (
+      <LayerConfigGroup {...visConfiguratorProps} label="layer.interaction" collapsible={false}>
+        <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.allowHover} />
+      </LayerConfigGroup>
+    );
+
     const elevationUI = (
       <>
         {(stac.rasterServerSupportsElevation ??
@@ -467,6 +473,7 @@ function RasterTileLayerConfiguratorFactory(
           <LayerConfigGroup {...visConfiguratorProps} label="Visual Settings" collapsible={false}>
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
+          {interactionUI}
           {elevationUI}
           <LayerConfigGroup {...visConfiguratorProps} label="Debug" collapsible>
             <ConfigGroupCollapsibleContent>
@@ -706,6 +713,7 @@ function RasterTileLayerConfiguratorFactory(
         )}
 
         {elevationUI}
+        {interactionUI}
 
         <LayerConfigGroup {...visConfiguratorProps} label="Debug" collapsible>
           <ConfigGroupCollapsibleContent>

@@ -144,6 +144,11 @@ test('#RasterTileLayer -> constructor and basic properties', t => {
           t.equal(layer.config.isVisible, true, 'should be visible');
           t.equal(layer.config.visConfig.opacity, 1, 'should have default opacity');
           t.equal(
+            layer.config.visConfig.allowHover,
+            false,
+            'should disable hover tooltips by default'
+          );
+          t.equal(
             layer.config.visConfig.enableTerrain,
             true,
             'should have terrain enabled by default'
@@ -210,11 +215,13 @@ test('#RasterTileLayer -> configuration and visual settings', t => {
   layer.updateLayerVisConfig({
     opacity: 0.7,
     enableTerrain: false,
-    enableTerrainTopView: true
+    enableTerrainTopView: true,
+    allowHover: true
   });
   t.equal(layer.config.visConfig.opacity, 0.7, 'should update opacity');
   t.equal(layer.config.visConfig.enableTerrain, false, 'should update terrain');
   t.equal(layer.config.visConfig.enableTerrainTopView, true, 'should update terrain top view');
+  t.equal(layer.config.visConfig.allowHover, true, 'should update allowHover');
 
   // Test shouldRenderLayer
   t.notOk(layer.shouldRenderLayer(), 'should not render when not visible');
@@ -927,6 +934,7 @@ test('#RasterTileLayer -> identify samples band values at lng/lat', t => {
 
 test('#RasterTileLayer -> hover, picking, and extract from loaded tiles', t => {
   const layer = new RasterTileLayer({id: 'raster-id', dataId: 'stac-data', label: 'Rivers'});
+  layer.config.visConfig.allowHover = true;
   layer._loadedTiles = [
     {
       index: {x: 0, y: 0, z: 0},
@@ -958,16 +966,53 @@ test('#RasterTileLayer -> hover, picking, and extract from loaded tiles', t => {
   t.ok(hovered, 'child RasterLayer ids should count as hovered');
 
   const pmtilesLayer = new RasterTileLayer({id: 'pmtiles-id', dataId: 'pmtiles-data'});
-  const pmtilesLayers = pmtilesLayer.renderLayer({
+  const pmtilesLayersDefault = pmtilesLayer.renderLayer({
     ...createRenderOpts(MOCK_PMTILES_DATASET),
     idx: 2
   });
   t.equal(
-    pmtilesLayers[0]?.props.pickable,
-    true,
-    'PMTiles should be pickable when tooltips are on'
+    pmtilesLayersDefault[0]?.props.pickable,
+    false,
+    'PMTiles should not be pickable by default'
   );
-  t.equal(pmtilesLayers[0]?.props.idx, 2, 'idx should be forwarded onto the TileLayer');
+  t.equal(pmtilesLayersDefault[0]?.props.idx, 2, 'idx should be forwarded onto the TileLayer');
+
+  pmtilesLayer.config.visConfig.allowHover = true;
+  const pmtilesLayersHoverOn = pmtilesLayer.renderLayer({
+    ...createRenderOpts(MOCK_PMTILES_DATASET),
+    idx: 2
+  });
+  t.equal(
+    pmtilesLayersHoverOn[0]?.props.pickable,
+    true,
+    'PMTiles should be pickable when allowHover and tooltips are on'
+  );
+
+  pmtilesLayer.config.visConfig.allowHover = false;
+  const pmtilesLayersHoverOff = pmtilesLayer.renderLayer({
+    ...createRenderOpts(MOCK_PMTILES_DATASET),
+    idx: 2
+  });
+  t.equal(
+    pmtilesLayersHoverOff[0]?.props.pickable,
+    false,
+    'PMTiles should not be pickable when allowHover is off'
+  );
+
+  layer.config.visConfig.allowHover = false;
+  t.equal(
+    layer.hasHoveredObject({
+      picked: true,
+      layer: {props: {id: `raster-2d-layer-${layer.id}`}}
+    }),
+    null,
+    'should not report hover when allowHover is off'
+  );
+  t.equal(
+    layer.getHoverData(null, null, [], null, {index: 0, coordinate: [0, 0]}),
+    null,
+    'should not build tooltip rows when allowHover is off'
+  );
 
   const extracted = layer.extractInsideFeature({
     type: 'Feature',

@@ -143,6 +143,7 @@ const getShouldLoadTerrain = (stac, mapState, visConfig) => {
 
 export type RasterTileLayerVisConfigCommonSettings = {
   opacity: VisConfigNumber;
+  allowHover: VisConfigBoolean;
   enableTerrain: VisConfigBoolean;
   enableTerrainTopView: VisConfigBoolean;
   showTileBorders: VisConfigBoolean;
@@ -303,6 +304,9 @@ export default class RasterTileLayer extends KeplerLayer {
     _animationConfig,
     hoverInfo?: {index?: number; coordinate?: number[]}
   ) {
+    if (!this.config.visConfig.allowHover) {
+      return null;
+    }
     if (object?.wmsFeatureInfo) {
       if (Array.isArray(object.wmsFeatureInfo)) {
         return {rasterFeatureData: object.wmsFeatureInfo};
@@ -337,6 +341,9 @@ export default class RasterTileLayer extends KeplerLayer {
   }
 
   isLayerHovered(objectInfo): boolean {
+    if (!this.config.visConfig.allowHover) {
+      return false;
+    }
     if (!objectInfo?.picked || !objectInfo?.layer) {
       return false;
     }
@@ -358,6 +365,10 @@ export default class RasterTileLayer extends KeplerLayer {
       };
     }
     return null;
+  }
+
+  private isPickable(opts): boolean {
+    return Boolean(opts.interactionConfig?.tooltip?.enabled && this.config.visConfig.allowHover);
   }
 
   /**
@@ -724,7 +735,7 @@ export default class RasterTileLayer extends KeplerLayer {
     const {visConfig} = this.config;
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const {id, opacity, visible, idx} = defaultLayerProps;
-    const pickable = Boolean(opts.interactionConfig?.tooltip?.enabled);
+    const pickable = this.isPickable(opts);
 
     const hasShadowEffect = experimentalContext?.hasShadowEffect;
 
@@ -902,7 +913,7 @@ export default class RasterTileLayer extends KeplerLayer {
   private renderPMTilesLayer(opts): TileLayer<any>[] {
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const {id, opacity, visible, idx} = defaultLayerProps;
-    const pickable = Boolean(opts.interactionConfig?.tooltip?.enabled);
+    const pickable = this.isPickable(opts);
 
     const {data, mapState, layerCallbacks} = opts;
     const metadata = data?.dataset?.metadata as VectorTileMetadata;
