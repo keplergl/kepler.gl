@@ -4137,9 +4137,10 @@ export function updateDatasetPropsUpdater(
         [dataId]: copyTableAndUpdate(existing, validatedProps)
       }
     };
-    // Metadata such as a tileset access token is read while formatting layer
-    // data. Refresh layers on this dataset so a new key is used immediately.
-    if (props.metadata) {
+    // A tileset access token is read while formatting layer data. Refresh
+    // only when that field changes so other metadata edits (e.g. refresh
+    // interval) do not rebuild every layer on the dataset.
+    if (props.metadata && 'tile3dAccessToken' in props.metadata) {
       return updateAllLayerDomainData(nextState, dataId);
     }
     return nextState;
