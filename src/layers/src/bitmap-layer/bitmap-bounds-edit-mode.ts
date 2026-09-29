@@ -26,6 +26,27 @@ function isMoveHandlePick(picks?: PickLike[]): boolean {
 }
 
 /**
+ * Only the center handle may translate the rectangle. Dragging the bitmap
+ * itself (or a corner) must not move it, so the map can still pan.
+ */
+class BitmapTranslateMode extends TranslateMode {
+  handlePointerMove(event, props) {
+    this._isTranslatable = isMoveHandlePick(event?.pointerDownPicks || event?.picks);
+    this.updateCursor(props);
+  }
+
+  handleStartDragging(event, props) {
+    this._isTranslatable = isMoveHandlePick(event?.picks);
+    super.handleStartDragging(event, props);
+  }
+
+  handleDragging(event, props) {
+    this._isTranslatable = isMoveHandlePick(event?.pointerDownPicks);
+    super.handleDragging(event, props);
+  }
+}
+
+/**
  * Corner resize must not treat the center move handle as a vertex.
  * Skip modify when that handle is the drag target so TranslateMode can
  * move the whole rectangle.
@@ -67,7 +88,7 @@ class BitmapModifyMode extends ModifyMode {
 export class BitmapBoundsEditMode extends CompositeMode {
   constructor() {
     super([
-      new TranslateMode() as unknown as GeoJsonEditMode,
+      new BitmapTranslateMode() as unknown as GeoJsonEditMode,
       new BitmapModifyMode() as unknown as GeoJsonEditMode
     ]);
   }

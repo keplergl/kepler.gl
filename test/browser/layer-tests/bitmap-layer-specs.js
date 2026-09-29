@@ -437,6 +437,83 @@ test('#BitmapOverlayLayer -> dragging the center handle translates the rectangle
   t.end();
 });
 
+test('#BitmapOverlayLayer -> dragging the bitmap body does not translate', t => {
+  const mode = new BitmapBoundsEditMode();
+  const data = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-122.52, 37.82],
+              [-122.35, 37.82],
+              [-122.35, 37.7],
+              [-122.52, 37.7],
+              [-122.52, 37.82]
+            ]
+          ]
+        },
+        properties: {shape: 'Rectangle'}
+      }
+    ]
+  };
+
+  let lastEdit = null;
+  let cancelPanCalled = false;
+  const props = {
+    data,
+    selectedIndexes: [0],
+    modeConfig: {lockRectangles: true},
+    lastPointerMoveEvent: null,
+    onEdit: action => {
+      lastEdit = action;
+    },
+    onUpdateCursor: () => {}
+  };
+
+  const bodyPick = {
+    isGuide: false,
+    index: 0,
+    object: data.features[0]
+  };
+
+  const start = [-122.435, 37.76];
+  const end = [-122.335, 37.86];
+  const cancelPan = () => {
+    cancelPanCalled = true;
+  };
+
+  mode.handlePointerMove({picks: [bodyPick], mapCoords: start}, props);
+  mode.handleStartDragging(
+    {
+      picks: [bodyPick],
+      pointerDownPicks: [bodyPick],
+      mapCoords: start,
+      pointerDownMapCoords: start,
+      cancelPan
+    },
+    props
+  );
+  mode.handleDragging(
+    {
+      picks: [bodyPick],
+      pointerDownPicks: [bodyPick],
+      mapCoords: end,
+      pointerDownMapCoords: start,
+      cancelPan
+    },
+    props
+  );
+
+  t.equal(lastEdit, null, 'should not translate when dragging the image body');
+  t.equal(cancelPanCalled, false, 'should not block map pan');
+
+  t.end();
+});
+
 test('#BitmapOverlayLayer -> renderLayer with no data', t => {
   const layer = createBitmapLayer();
 
