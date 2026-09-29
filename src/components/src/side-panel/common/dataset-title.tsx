@@ -7,8 +7,8 @@ import {useIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import {Table} from '@kepler.gl/layers';
-import {CenterFlexbox, Tooltip} from '../../common/styled-components';
-import {ArrowRight, Clock, WarningSign} from '../../common/icons';
+import {Tooltip} from '../../common/styled-components';
+import {Clock, WarningSign} from '../../common/icons';
 import {DatasetType} from '@kepler.gl/constants';
 import DatasetTagFactory from './dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
@@ -26,10 +26,6 @@ const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
   justify-content: space-between;
   gap: 8px;
 
-  .source-data-arrow {
-    height: 16px;
-    flex-shrink: 0;
-  }
   .source-data-tag {
     flex: 1;
     min-width: 0;
@@ -57,12 +53,13 @@ const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
   }
 `;
 
-const DatasetTitleHeader = styled.div`
+const DatasetTitleHeader = styled.div<{$clickable?: boolean}>`
   display: flex;
   align-items: center;
   min-width: 0;
   flex: 1;
   overflow: hidden;
+  cursor: ${props => (props.$clickable ? 'pointer' : 'auto')};
 `;
 
 const DatasetAction = styled.div`
@@ -224,9 +221,13 @@ export default function DatasetTitleFactory(
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
     const root = useRef(null);
     const datasetId = dataset.id;
-    const _handleClick = useCallback(() => {
-      setDisplayColorPicker(!displayColorPicker);
-    }, [setDisplayColorPicker, displayColorPicker]);
+    const _handleClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setDisplayColorPicker(!displayColorPicker);
+      },
+      [setDisplayColorPicker, displayColorPicker]
+    );
 
     const _handleClosePicker = useCallback(() => {
       setDisplayColorPicker(false);
@@ -260,28 +261,25 @@ export default function DatasetTitleFactory(
           className="source-data-title"
           $clickable={Boolean(showDatasetTable || onTitleClick)}
         >
-          <DatasetTitleHeader>
+          <DatasetTitleHeader $clickable={Boolean(showDatasetTable || onTitleClick)}>
             <DatasetTag
               dataset={dataset}
               onClick={_onClickTitle}
               updateTableColor={updateTableColor}
               onClickSquare={_handleClick}
             />
-            <Portaled
-              isOpened={displayColorPicker !== false}
-              left={110}
-              top={-50}
-              onClose={_handleClosePicker}
-            >
-              <CustomPicker color={rgbToHex(dataset.color)} onChange={_handleCustomPicker} />
-            </Portaled>
-            {showDatasetTable ? (
-              <CenterFlexbox className="source-data-arrow">
-                <ArrowRight height="12px" />
-              </CenterFlexbox>
-            ) : null}
             {refreshError ? <RefreshErrorIcon id={datasetId} message={refreshError} /> : null}
           </DatasetTitleHeader>
+          <Portaled
+            isOpened={displayColorPicker !== false}
+            left={110}
+            top={-50}
+            onClose={_handleClosePicker}
+          >
+            <div onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
+              <CustomPicker color={rgbToHex(dataset.color)} onChange={_handleCustomPicker} />
+            </div>
+          </Portaled>
           <DatasetAction>
             {showDatasetTable && !dataset.disableDataOperation ? (
               <ShowDataTable id={datasetId} showDatasetTable={showDatasetTable} />

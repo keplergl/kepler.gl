@@ -86,6 +86,28 @@ describe('DatasetOpsMenu', () => {
     expect(removeDataset).toHaveBeenCalledWith('cities');
   });
 
+  test('shows a delete-only overflow menu for vector tiles', () => {
+    const removeDataset = jest.fn();
+    const {container} = renderWithTheme(
+      <DatasetOpsMenu
+        datasetId="tiles"
+        dataset={{type: 'vector-tile'}}
+        addGroupBy={jest.fn()}
+        addJoin={jest.fn()}
+        addSpatialJoin={jest.fn()}
+        showDeleteDataset
+        removeDataset={removeDataset}
+      />
+    );
+
+    fireEvent.click(container.querySelector('.dataset-ops-menu__toggle') as HTMLElement);
+    expect(document.querySelector('.dataset-ops-menu__group-by')).toBeNull();
+    expect(document.querySelector('.dataset-ops-menu__join')).toBeNull();
+    expect(document.querySelector('.dataset-ops-menu__spatial-join')).toBeNull();
+    fireEvent.click(document.querySelector('.dataset-ops-menu__remove') as HTMLButtonElement);
+    expect(removeDataset).toHaveBeenCalledWith('tiles');
+  });
+
   test('hides menu for vector tiles and when ops are disabled', () => {
     const {container: tiles} = renderWithTheme(
       <DatasetOpsMenu

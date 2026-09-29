@@ -108,8 +108,9 @@ export function DatasetOpsMenu({
 }: DatasetOpsMenuProps) {
   const intl = useIntl();
   const [open, setOpen] = useState(false);
+  const opsEnabled = getApplicationConfig().enableDatasetOps !== false;
   const showOps =
-    getApplicationConfig().enableDatasetOps !== false &&
+    opsEnabled &&
     isTabularDatasetForOps(dataset) &&
     Boolean(addGroupBy || addJoin || addSpatialJoin);
   const showRemove = Boolean(showDeleteDataset && removeDataset);
@@ -128,7 +129,7 @@ export function DatasetOpsMenu({
     return null;
   }
 
-  if (!showOps && showRemove) {
+  if (!opsEnabled && showRemove) {
     const removeTooltipId = `remove-dataset-${datasetId}`;
     const removeLabel = intl.formatMessage({id: 'datasetTitle.removeDataset'});
     return (

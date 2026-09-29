@@ -54,7 +54,6 @@ const SideBarInner = styled.div`
   height: 100%;
   width: 100%;
   min-width: 0;
-  overflow: hidden;
   border-left: ${props => props.theme.sidePanelBorder}px solid
     ${props => props.theme.sidePanelBorderColor};
 `;
