@@ -227,13 +227,16 @@ export const DEFAULT_EXPORT_JSON: ExportJson = {
  * @property JSON - Default: 'DEFAULT_EXPORT_JSON',
  * @property format - Default: 'HTML',
  * @property fileName Default: `''`,
+ * @property includeLayerApiKeys Default: `false`,
  * @public
  */
 export const DEFAULT_EXPORT_MAP: ExportMap = {
   [EXPORT_MAP_FORMATS.HTML]: DEFAULT_EXPORT_HTML,
   [EXPORT_MAP_FORMATS.JSON]: DEFAULT_EXPORT_JSON,
   format: EXPORT_MAP_FORMATS.HTML,
-  fileName: ''
+  fileName: '',
+  // Private layer tokens stay out of the file unless the user opts in.
+  includeLayerApiKeys: false
 };
 
 /**
@@ -827,6 +830,24 @@ export const setExportMapHTMLModeUpdater = (
       ...state.exportMap[EXPORT_MAP_FORMATS.HTML],
       mode
     }
+  }
+});
+
+/**
+ * Whether to keep layer access tokens in exported HTML and JSON maps.
+ * @param state - `uiState`
+ * @param action
+ * @param action.payload - include layer API keys
+ * @return nextState
+ */
+export const setExportIncludeLayerApiKeysUpdater = (
+  state: UiState,
+  {payload: includeLayerApiKeys}: UIStateActions.SetExportIncludeLayerApiKeysUpdaterAction
+): UiState => ({
+  ...state,
+  exportMap: {
+    ...state.exportMap,
+    includeLayerApiKeys
   }
 });
 

@@ -98,7 +98,8 @@ export {
   getExportFileNameBase,
   getMapJSON,
   getScaleFromImageSize,
-  isMSEdge
+  isMSEdge,
+  omitLayerApiKeys
 } from './export-utils';
 export {getFormatValue, getDefaultTimeFormat} from './format';
 export {getLayerBlendingParameters, patchDeckRendererForPostProcessing} from './gl-utils';

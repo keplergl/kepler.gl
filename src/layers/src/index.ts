@@ -68,7 +68,7 @@ export {
 } from './raster-tile/raster-tile-layer';
 
 import {default as Tile3DLayer} from './tile3d-layer/tile3d-layer';
-export {default as Tile3DLayer} from './tile3d-layer/tile3d-layer';
+export {default as Tile3DLayer, TILE3D_LOAD_ERROR_MESSAGE} from './tile3d-layer/tile3d-layer';
 export {default as Tile3DLayerIcon} from './tile3d-layer/tile3d-layer-icon';
 
 import {default as BitmapOverlayLayer} from './bitmap-layer/bitmap-layer';

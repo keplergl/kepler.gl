@@ -4130,13 +4130,20 @@ export function updateDatasetPropsUpdater(
     //  validate props: just color for now
     //  we only allow label, color and meta to be updated
     // const newTable = copyTableAndUpdate(existing, validatedProps);
-    return {
+    const nextState = {
       ...state,
       datasets: {
         ...datasets,
         [dataId]: copyTableAndUpdate(existing, validatedProps)
       }
     };
+    // A tileset access token is read while formatting layer data. Refresh
+    // only when that field changes so other metadata edits (e.g. refresh
+    // interval) do not rebuild every layer on the dataset.
+    if (props.metadata && 'tile3dAccessToken' in props.metadata) {
+      return updateAllLayerDomainData(nextState, dataId);
+    }
+    return nextState;
   }
 
   return state;

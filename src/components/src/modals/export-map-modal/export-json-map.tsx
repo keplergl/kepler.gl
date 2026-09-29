@@ -6,7 +6,13 @@ import JSONPretty from 'react-json-pretty';
 import {ADD_DATA_TO_MAP_DOC} from '@kepler.gl/constants';
 import styled from 'styled-components';
 import {StyledExportSection, Button} from '../../common/styled-components';
-import {StyledExportMapNote, StyledWarning, ExportMapLink} from './components';
+import {
+  StyledExportMapNote,
+  StyledWarning,
+  ExportMapLink,
+  IncludeLayerApiKeysToggle
+} from './components';
+import {ActionHandler, setExportIncludeLayerApiKeys} from '@kepler.gl/actions';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
 
@@ -48,15 +54,28 @@ const StyledJsonExportSection = styled(StyledExportSection)`
 
 type ExportJsonPropTypes = {
   config: any;
+  includeLayerApiKeys?: boolean;
+  onChangeExportIncludeLayerApiKeys?: ActionHandler<typeof setExportIncludeLayerApiKeys>;
 };
 
-const ExportJsonMapUnmemoized = ({config = {}}: ExportJsonPropTypes) => {
+const ExportJsonMapUnmemoized = ({
+  config = {},
+  includeLayerApiKeys = false,
+  onChangeExportIncludeLayerApiKeys = () => {
+    return;
+  }
+}: ExportJsonPropTypes) => {
   const [copied, setCopy] = useState(false);
   return (
     <div>
       <StyledExportMapNote>
         <FormattedMessage id={'modal.exportMap.json.selection'} />
       </StyledExportMapNote>
+      <IncludeLayerApiKeysToggle
+        id="export-include-layer-api-keys-json"
+        checked={includeLayerApiKeys}
+        onChange={onChangeExportIncludeLayerApiKeys}
+      />
       <StyledJsonExportSection className="export-map-modal__json-options">
         <div className="description">
           <div className="title">

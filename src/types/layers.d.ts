@@ -467,6 +467,7 @@ export type LayerCallbacks = {
   ) => void;
   onRedrawNeeded?: (idx: number) => void;
   onFitBounds?: (idx: number, bounds: [number, number, number, number]) => void;
+  onTilesetLoadError?: (idx: number, kind: 'token' | 'generic' | null) => void;
 };
 
 export type BindedLayerCallbacks = {
@@ -479,6 +480,7 @@ export type BindedLayerCallbacks = {
   ) => void;
   onRedrawNeeded?: () => void;
   onFitBounds?: (bounds: [number, number, number, number]) => void;
+  onTilesetLoadError?: (kind: 'token' | 'generic' | null) => void;
 };
 
 export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';
