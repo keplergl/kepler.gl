@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {renderHook} from '@testing-library/react';
+import {renderHook, act} from '@testing-library/react';
 import {useLegendPosition} from '@kepler.gl/components';
 
 const THEME = {
@@ -16,7 +16,9 @@ describe('useLegendPosition', () => {
       style="position: absolute; width: 800px; height: 600px"
     >
       <div id="map-legend">
-        <div id="map-legend-content"/>
+        <div id="map-legend-content">
+          <div class="map-control__panel-content"/>
+        </div>
       </div>
     </div>`;
   });
@@ -133,4 +135,117 @@ describe('useLegendPosition', () => {
       ).toBeLessThanOrEqual(526);
     }
   });
+
+  test('top-edge resize grows a bottom-anchored legend without moving it', () => {
+    const onChangeSettings = jest.fn();
+    const legendContent = setupResizeFixture({
+      contentHeight: 150,
+      legendRect: {top: 386, left: 600, bottom: 570, right: 790},
+      rootRect: {top: 0, left: 0, bottom: 600, right: 800}
+    });
+
+    const {result} = renderHook(() =>
+      useLegendPosition({
+        legendContentRef: {current: legendContent},
+        isSidePanelShown: false,
+        settings: {
+          position: {x: 10, y: 30, anchorX: 'right', anchorY: 'bottom'},
+          contentHeight: 150
+        },
+        onChangeSettings,
+        theme: THEME
+      })
+    );
+
+    act(() => {
+      result.current.startResize();
+      result.current.resize(-40, 'top');
+    });
+
+    expect(onChangeSettings).toHaveBeenCalledWith({contentHeight: 190});
+  });
+
+  test('bottom-edge resize cannot grow a legend already at the bottom', () => {
+    const onChangeSettings = jest.fn();
+    const legendContent = setupResizeFixture({
+      contentHeight: 150,
+      legendRect: {top: 386, left: 600, bottom: 570, right: 790},
+      rootRect: {top: 0, left: 0, bottom: 600, right: 800}
+    });
+
+    const {result} = renderHook(() =>
+      useLegendPosition({
+        legendContentRef: {current: legendContent},
+        isSidePanelShown: false,
+        settings: {
+          position: {x: 10, y: 30, anchorX: 'right', anchorY: 'bottom'},
+          contentHeight: 150
+        },
+        onChangeSettings,
+        theme: THEME
+      })
+    );
+
+    act(() => {
+      result.current.startResize();
+      result.current.resize(40, 'bottom');
+    });
+
+    expect(onChangeSettings).toHaveBeenCalledWith({contentHeight: 150});
+  });
+
+  test('top-edge resize keeps the bottom fixed when top-anchored', () => {
+    const onChangeSettings = jest.fn();
+    const legendContent = setupResizeFixture({
+      contentHeight: 150,
+      legendRect: {top: 100, left: 20, bottom: 284, right: 210},
+      rootRect: {top: 0, left: 0, bottom: 600, right: 800}
+    });
+
+    const {result} = renderHook(() =>
+      useLegendPosition({
+        legendContentRef: {current: legendContent},
+        isSidePanelShown: false,
+        settings: {
+          position: {x: 20, y: 100, anchorX: 'left', anchorY: 'top'},
+          contentHeight: 150
+        },
+        onChangeSettings,
+        theme: THEME
+      })
+    );
+
+    act(() => {
+      result.current.startResize();
+      result.current.resize(-40, 'top');
+    });
+
+    expect(onChangeSettings).toHaveBeenCalledWith({
+      contentHeight: 190,
+      position: {x: 20, y: 60, anchorX: 'left', anchorY: 'top'}
+    });
+  });
 });
+
+function rect(values) {
+  return {
+    width: values.right - values.left,
+    height: values.bottom - values.top,
+    x: values.left,
+    y: values.top,
+    ...values,
+    toJSON() {
+      return this;
+    }
+  };
+}
+
+function setupResizeFixture({contentHeight, legendRect, rootRect}) {
+  const root = document.querySelector('.kepler-gl');
+  const legendContent = document.querySelector('#map-legend-content');
+  const content = legendContent.querySelector('.map-control__panel-content');
+  root.getBoundingClientRect = jest.fn(() => rect(rootRect));
+  legendContent.getBoundingClientRect = jest.fn(() => rect(legendRect));
+  Object.defineProperty(content, 'offsetHeight', {configurable: true, value: contentHeight});
+  return legendContent;
+}

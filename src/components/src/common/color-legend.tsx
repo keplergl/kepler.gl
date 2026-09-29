@@ -32,6 +32,8 @@ const inputCss = css`
 const StyledLegend = styled.div<{$disableEdit: boolean; isExpanded?: boolean}>`
   ${props => props.theme.sidePanelScrollBar};
   ${props => (props.isExpanded ? '' : `max-height: 156px;`)};
+  box-sizing: border-box;
+  width: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   margin-bottom: ${GAP}px;
