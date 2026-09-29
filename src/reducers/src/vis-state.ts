@@ -54,6 +54,8 @@ const actionHandler = {
 
   [ActionTypes.LOAD_FILES_ERR]: visStateUpdaters.loadFilesErrUpdater,
 
+  [ActionTypes.CLEAR_STAGED_LOADED_FILES]: visStateUpdaters.clearStagedLoadedFilesUpdater,
+
   [ActionTypes.LOAD_NEXT_FILE]: visStateUpdaters.loadNextFileUpdater,
 
   [ActionTypes.LOAD_FILE_STEP_SUCCESS]: visStateUpdaters.loadFileStepSuccessUpdater,

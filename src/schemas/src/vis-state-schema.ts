@@ -90,6 +90,8 @@ export interface VisState {
   splitMapsToBeMerged: SplitMap[];
   fileLoading: FileLoading | false;
   fileLoadingProgress: FileLoadingProgress;
+  /** Parsed files held until the Add Data button commits them. */
+  stagedToAdd: any[] | null;
   loadingIndicatorValue: number;
   /** Per-dataset download progress (0–100) while hydrating remote files. */
   loadingProgress: Record<string, number>;

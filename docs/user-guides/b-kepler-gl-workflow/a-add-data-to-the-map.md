@@ -64,7 +64,7 @@ Because CSV file content is uploaded as strings, kepler.gl will attempt to detec
 
 #### 2. Layer detection based on column names
 
-kepler.gl will auto detect layer, if the column names follows certain naming convention. kepler.gl creates a point layer if  your CSV has columns that are named `<name>_lat` and `<name>_lng` or `<name>_latitude` and `<name>_longitude`, or `<name>_lat` and `<name>_lon`.
+kepler.gl will auto detect layer, if the column names follows certain naming convention. kepler.gl creates a point layer if  your CSV has columns that are named `<name>_lat` and `<name>_lng` or `<name>_latitude` and `<name>_longitude`, or `<name>_lat` and `<name>_lon`. Uncheck **Auto create layers**, then click **Add Data**, to load a file or tileset without creating layers.
 
 | layer | auto create layer from column names
 |---|---

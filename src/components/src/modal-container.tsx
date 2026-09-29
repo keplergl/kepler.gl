@@ -15,6 +15,7 @@ import {
   MapStyle,
   ProviderState
 } from '@kepler.gl/reducers';
+import {remoteDatasetFromUrl} from '@kepler.gl/processors';
 import {exportHtml, exportMap, exportJson, exportImage} from '@kepler.gl/utils';
 
 import ModalDialogFactory from './modals/modal-dialog';
@@ -85,6 +86,11 @@ const smallModalCss = css`
 
 const LoadDataModalStyle = css`
   top: 60px;
+  padding-bottom: 0;
+
+  ${media.portable`
+    padding-bottom: 0;
+  `}
 `;
 
 const ExportVideoModalStyle = css`
@@ -166,6 +172,9 @@ export default function ModalContainerFactory(
     };
 
     _closeModal = () => {
+      if (this.props.uiState.currentModal === ADD_DATA_ID) {
+        this.props.visStateActions.clearStagedLoadedFiles();
+      }
       this.props.uiStateActions.toggleModal(null);
     };
 
@@ -180,12 +189,32 @@ export default function ModalContainerFactory(
     };
 
     _onFileUpload = fileList => {
-      this.props.visStateActions.loadFiles(fileList);
+      this.props.visStateActions.loadFiles(fileList, VisStateActions.stageLoadedFiles, {
+        deferAddToMap: true
+      });
+    };
+
+    _onAddRemoteDataset = ({url, format}: {url: string; format?: string}) => {
+      this.props.visStateActions.appendStagedLoadedFiles([remoteDatasetFromUrl(url, format)]);
+    };
+
+    _onConfirmAddData = ({
+      autoCreateLayers,
+      datasets
+    }: {autoCreateLayers?: boolean; datasets?: any[]} = {}) => {
+      const staged = datasets || this.props.visState.stagedToAdd;
+      if (!staged?.length) {
+        return;
+      }
+      this.props.visStateActions.loadFilesSuccess(staged, {
+        autoCreateLayers: autoCreateLayers !== false
+      });
     };
 
     _onTilesetAdded = (
       tileset: {name: string; type: string; metadata: Record<string, any>},
-      processedMetadata?: Record<string, any>
+      processedMetadata?: Record<string, any>,
+      options?: {autoCreateLayers?: boolean}
     ) => {
       this.props.visStateActions.updateVisData(
         {
@@ -207,7 +236,7 @@ export default function ModalContainerFactory(
           disableDataOperation: true
         },
         {
-          autoCreateLayers: true,
+          autoCreateLayers: options?.autoCreateLayers !== false,
           centerMap: true
         }
       );
@@ -372,6 +401,9 @@ export default function ModalContainerFactory(
                 {...providerState}
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
+                onAddRemoteDataset={this._onAddRemoteDataset}
+                onConfirmAddData={this._onConfirmAddData}
+                stagedToAdd={visState.stagedToAdd}
                 onTilesetAdded={this._onTilesetAdded}
                 onLoadCloudMap={this._onLoadCloudMap}
                 loadFiles={uiState.loadFiles}

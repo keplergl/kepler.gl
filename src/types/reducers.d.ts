@@ -415,11 +415,19 @@ export type MapInfo = {
   title: string;
   description: string;
 };
+/** Options captured when a file load starts and forwarded to `addDataToMap`. */
+export type FileLoadingOptions = {
+  autoCreateLayers?: boolean;
+  /** Parse the files, then wait for an explicit add instead of calling `addDataToMap`. */
+  deferAddToMap?: boolean;
+};
+
 export type FileLoading = {
   filesToLoad: FileList | File[];
   companionFiles?: File[];
-  onFinish: (payload: any) => any;
+  onFinish: (payload: any, options?: FileLoadingOptions) => any;
   fileCache: any[];
+  options?: FileLoadingOptions;
 };
 export type FileLoadingProgress = {
   [key: string]: {
