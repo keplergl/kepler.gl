@@ -354,6 +354,7 @@ export default {
     selectLocale: 'Selecciona configuració regional',
     switchToLightTheme: 'Canvia al tema clar',
     switchToDarkTheme: 'Canvia al tema fosc',
+    switchToSpaceTheme: 'Canvia al tema space',
     showAiAssistantPanel: 'Mostra el tauler de AI Assistant',
     hideAiAssistantPanel: 'Oculta el tauler de AI Assistant',
     hideLayerPanel: 'Oculta el tauler de capes',

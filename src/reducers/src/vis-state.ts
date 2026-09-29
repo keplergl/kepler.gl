@@ -224,6 +224,8 @@ const actionHandler = {
 
   [ActionTypes.SET_LOADING_INDICATOR]: visStateUpdaters.setLoadingIndicatorUpdater,
 
+  [ActionTypes.SET_LOADING_PROGRESS]: visStateUpdaters.setLoadingProgressUpdater,
+
   [ActionTypes.ADD_GROUP_BY]: visStateUpdaters.addGroupByUpdater,
   [ActionTypes.SET_GROUP_BY_CONFIG]: visStateUpdaters.setGroupByConfigUpdater,
   [ActionTypes.RUN_GROUP_BY]: visStateUpdaters.runGroupByUpdater,

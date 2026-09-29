@@ -22,6 +22,7 @@ const LEVEL1_ACTIONS = new Set([
   '@@kepler.gl/MOUSE_MOVE',
   '@@kepler.gl/LAYER_HOVER',
   '@@kepler.gl/SET_LOADING_INDICATOR',
+  '@@kepler.gl/SET_LOADING_PROGRESS',
   '@@openassistant/SET_MAP_BOUNDARY'
 ]);
 

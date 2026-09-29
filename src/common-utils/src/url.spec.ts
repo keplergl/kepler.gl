@@ -2,11 +2,13 @@
 // Copyright contributors to the kepler.gl project
 
 import {
+  getTitilerCorsCacheOrigin,
   isCOGUrl,
   isGeoTiffContentType,
   isTiffMagicBytes,
   probeUrlIsCOG,
-  shouldProbeForCOG
+  shouldProbeForCOG,
+  withPublicTitilerCorsCacheKey
 } from './url';
 
 const NEXTGIS_COG = 'https://nextgis-web.prod.heritagewatch.ai/api/resource/2564/cog';
@@ -205,5 +207,50 @@ describe('probeUrlIsCOG', () => {
     await jest.advanceTimersByTimeAsync(50);
     await expect(promise).resolves.toBe(false);
     jest.useRealTimers();
+  });
+});
+
+describe('withPublicTitilerCorsCacheKey', () => {
+  test('appends a sanitized origin token to public titiler.xyz URLs', () => {
+    const result = withPublicTitilerCorsCacheKey(TITILER_STAC, 'https://kepler.gl');
+    const parsed = new URL(result);
+    expect(parsed.hostname).toBe('titiler.xyz');
+    expect(parsed.searchParams.get('url')).toBe(NEXTGIS_COG);
+    expect(parsed.searchParams.get('kepler_origin')).toBe('https_kepler.gl');
+  });
+
+  test('does not put :// in the query value (CloudFront WAF 403s nested URLs)', () => {
+    const result = withPublicTitilerCorsCacheKey(TITILER_STAC, 'http://localhost:8080');
+    const token = new URL(result).searchParams.get('kepler_origin');
+    expect(token).toBe('http_localhost_8080');
+    expect(token).not.toContain('://');
+  });
+
+  test('leaves non-titiler URLs unchanged', () => {
+    expect(withPublicTitilerCorsCacheKey(TIF_URL, 'https://kepler.gl')).toBe(TIF_URL);
+    expect(withPublicTitilerCorsCacheKey(STAC_COLLECTION, 'https://kepler.gl')).toBe(
+      STAC_COLLECTION
+    );
+  });
+
+  test('leaves titiler URLs unchanged when origin is missing', () => {
+    expect(withPublicTitilerCorsCacheKey(TITILER_STAC, null)).toBe(TITILER_STAC);
+    expect(withPublicTitilerCorsCacheKey(TITILER_STAC, '')).toBe(TITILER_STAC);
+  });
+
+  test('overwrites a stale kepler_origin with the current origin token', () => {
+    const stale = `${TITILER_STAC}&kepler_origin=${encodeURIComponent('http://localhost:8080')}`;
+    const result = withPublicTitilerCorsCacheKey(stale, 'https://kepler.gl');
+    expect(new URL(result).searchParams.get('kepler_origin')).toBe('https_kepler.gl');
+  });
+
+  test('maps file:// and opaque origins to the null CORS origin', () => {
+    expect(getTitilerCorsCacheOrigin('file://')).toBe('null');
+    expect(getTitilerCorsCacheOrigin('null')).toBe('null');
+    expect(
+      new URL(withPublicTitilerCorsCacheKey(TITILER_STAC, 'file://')).searchParams.get(
+        'kepler_origin'
+      )
+    ).toBe('null');
   });
 });

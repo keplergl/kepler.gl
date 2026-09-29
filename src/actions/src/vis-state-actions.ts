@@ -2376,6 +2376,8 @@ export function setTimeFilterSyncTimelineMode({
 export type CreateNewDatasetSuccessPayload = {
   results: (PromiseFulfilledResult<KeplerTable> | PromiseRejectedResult)[];
   addToMapOptions: AddDataToMapPayload['options'];
+  /** Dataset ids whose hydrate download progress should be cleared. */
+  progressIds?: string[];
 };
 
 export type AddGroupByUpdaterAction = {
@@ -2538,6 +2540,28 @@ export type SetLoadingIndicatorPayload = {
 export const setLoadingIndicator = createAction<SetLoadingIndicatorPayload>(
   ActionTypes.SET_LOADING_INDICATOR
 );
+
+export type SetLoadingProgressUpdaterAction = {
+  id: string;
+  percent: number;
+};
+
+/**
+ * Update download progress for an in-flight dataset load shown on the map
+ * loading indicator (0–100).
+ * @memberof visStateActions
+ * @returns action
+ */
+export function setLoadingProgress(
+  id: string,
+  percent: number
+): Merge<SetLoadingProgressUpdaterAction, {type: typeof ActionTypes.SET_LOADING_PROGRESS}> {
+  return {
+    type: ActionTypes.SET_LOADING_PROGRESS,
+    id,
+    percent
+  };
+}
 
 /**
  * This declaration is needed to group actions in docs
