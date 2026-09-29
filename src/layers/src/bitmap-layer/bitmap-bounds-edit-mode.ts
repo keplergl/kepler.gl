@@ -8,7 +8,9 @@ import {
   TranslateMode
 } from '@deck.gl-community/editable-layers';
 
-export const BITMAP_MOVE_HANDLE_TYPE = 'move';
+// Use the library's non-vertex handle type so ModifyMode does not treat this as a corner.
+// ('move' is not in EditHandleType: existing | intermediate | snap-* | scale | rotate)
+export const BITMAP_MOVE_HANDLE_TYPE = 'scale';
 
 type PickLike = {isGuide?: boolean; object?: any};
 
