@@ -39,6 +39,9 @@ export type SourceDataCatalogProps = {
   removeDataset?: ActionHandler<typeof openDeleteModal>;
   refreshDataset?: ActionHandler<typeof VisStateActions.refreshDataset>;
   updateDatasetProps?: ActionHandler<typeof VisStateActions.updateDatasetProps>;
+  addGroupBy?: ActionHandler<typeof VisStateActions.addGroupBy>;
+  addJoin?: ActionHandler<typeof VisStateActions.addJoin>;
+  addSpatialJoin?: ActionHandler<typeof VisStateActions.addSpatialJoin>;
 };
 
 SourceDataCatalogFactory.deps = [DatasetTitleFactory, DatasetInfoFactory];
@@ -55,7 +58,10 @@ function SourceDataCatalogFactory(
     updateTableColor,
     showDeleteDataset = false,
     refreshDataset,
-    updateDatasetProps
+    updateDatasetProps,
+    addGroupBy,
+    addJoin,
+    addSpatialJoin
   }: SourceDataCatalogProps) => {
     const [openRefreshSettingsId, setOpenRefreshSettingsId] = useState<string | null>(null);
 
@@ -79,6 +85,9 @@ function SourceDataCatalogFactory(
                 dataset={dataset}
                 onTitleClick={onTitleClick}
                 updateTableColor={updateTableColor}
+                addGroupBy={addGroupBy}
+                addJoin={addJoin}
+                addSpatialJoin={addSpatialJoin}
                 onToggleRefreshSettings={
                   (refreshDataset || updateDatasetProps) &&
                   dataset.type === DatasetType.EXTERNALLY_HOSTED

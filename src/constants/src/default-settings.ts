@@ -137,7 +137,8 @@ export const DIMENSIONS = {
 
 /**
  * Theme name that can be passed to `KeplerGl` `prop.theme`.
- * Available themes are `THEME.light` and `THEME.dark`. Default theme is `THEME.dark`
+ * Available themes are `THEME.light`, `THEME.dark`, and `THEME.space`.
+ * Default theme is `THEME.dark`
  * @constant
  * @type {object}
  * @public
@@ -149,6 +150,7 @@ export const DIMENSIONS = {
 export const THEME = keyMirror({
   light: null,
   dark: null,
+  space: null,
   base: null
 });
 

@@ -216,7 +216,10 @@ export default function ModalContainerFactory(
 
     _onExportImage = () => {
       if (!this.props.uiState.exportImage.processing) {
-        exportImage(this.props.uiState.exportImage, `${this.props.appName}.png`);
+        exportImage(
+          this.props.uiState.exportImage,
+          this.props.uiState.exportImage.fileName || `${this.props.appName}.png`
+        );
         this.props.uiStateActions.cleanupExportImage();
         this._closeModal();
       }
@@ -229,11 +232,12 @@ export default function ModalContainerFactory(
 
     _onExportMap = () => {
       const {uiState} = this.props;
-      const {format} = uiState.exportMap;
-      (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(
-        this.props,
-        this.props.uiState.exportMap[format] || {}
-      );
+      const {format, includeLayerApiKeys, fileName} = uiState.exportMap;
+      (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(this.props, {
+        ...(uiState.exportMap[format] || {}),
+        includeLayerApiKeys,
+        fileName
+      });
       this._closeModal();
     };
 
@@ -447,6 +451,8 @@ export default function ModalContainerFactory(
                 onChangeExportMapFormat={uiStateActions.setExportMapFormat}
                 onEditUserMapboxAccessToken={uiStateActions.setUserMapboxAccessToken}
                 onChangeExportMapHTMLMode={uiStateActions.setExportHTMLMapMode}
+                onChangeExportIncludeLayerApiKeys={uiStateActions.setExportIncludeLayerApiKeys}
+                onChangeExportMapFileName={uiStateActions.setExportMapFileName}
               />
             );
             modalProps = {

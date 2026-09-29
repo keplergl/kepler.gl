@@ -364,7 +364,8 @@ function LayerListFactory(
         removeLayer: visStateActions.removeLayer,
         zoomToLayer: mapStateActions.fitBounds,
         duplicateLayer: visStateActions.duplicateLayer,
-        layerSetIsValid: visStateActions.layerSetIsValid
+        layerSetIsValid: visStateActions.layerSetIsValid,
+        updateDatasetProps: visStateActions.updateDatasetProps
       }),
       [visStateActions, mapStateActions]
     );
