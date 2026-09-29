@@ -74,6 +74,10 @@ import {default as BitmapOverlayLayer} from './bitmap-layer/bitmap-layer';
 export {default as BitmapOverlayLayer} from './bitmap-layer/bitmap-layer';
 export {default as BitmapLayerIcon} from './bitmap-layer/bitmap-layer-icon';
 export {
+  BitmapBoundsEditMode,
+  BITMAP_MOVE_HANDLE_TYPE
+} from './bitmap-layer/bitmap-bounds-edit-mode';
+export {
   CATEGORICAL_COLORMAP_ID,
   DATA_SOURCE_COLOR_DEFAULTS,
   RASTER_COLOR_RESET_PARAMS,
