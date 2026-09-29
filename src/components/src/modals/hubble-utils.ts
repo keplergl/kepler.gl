@@ -354,15 +354,28 @@ export function getAnimatableFilters(keplerState: KeplerState): TimeRangeFilter[
 
 // --- Video export utilities (inlined from @hubble.gl internals) ---
 
+type VideoExportViewState = MapViewState & {
+  width?: number;
+  height?: number;
+  altitude?: number;
+  globe?: {enabled?: boolean};
+};
+
+type ScaledVideoViewState = MapViewState & {
+  width: number;
+  height: number;
+  altitude?: number;
+};
+
 export function scaleToVideoExport(
-  viewState: MapViewState,
+  viewState: VideoExportViewState,
   container: {width: number; height: number}
-): MapViewState & {width: number; height: number} {
+): ScaledVideoViewState {
   // Keep the camera pointed at the same lat/lng as the main map. The previous
   // WebMercatorViewport.fitBounds(screen-corners) path recentered the view:
   // with pitch/bearing it uses the AABB of a trapezoid, and at globe zooms a
   // mercator unproject silently pulls the target toward the equator.
-  const isGlobe = Boolean((viewState as {globe?: {enabled?: boolean}}).globe?.enabled);
+  const isGlobe = Boolean(viewState.globe?.enabled);
   const srcWidth = Number(viewState.width) || 0;
   const srcHeight = Number(viewState.height) || 0;
   const canScaleZoom = !isGlobe && srcWidth > 0 && srcHeight > 0;
@@ -377,12 +390,12 @@ export function scaleToVideoExport(
     zoom,
     pitch: viewState.pitch,
     bearing: viewState.bearing,
-    altitude: (viewState as {altitude?: number}).altitude,
+    altitude: viewState.altitude,
     minZoom: viewState.minZoom,
     maxZoom: viewState.maxZoom,
     width: container.width,
     height: container.height
-  } as MapViewState & {width: number; height: number};
+  };
 }
 
 export function parseSetCameraType(strCameraType: string, viewState: MapViewState): MapViewState {
