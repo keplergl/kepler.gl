@@ -17,6 +17,7 @@ import {default as HexagonLayer} from './hexagon-layer/hexagon-layer';
 import {default as GeojsonLayer} from './geojson-layer/geojson-layer';
 export {
   defaultElevation,
+  defaultElevationOffset,
   defaultLineWidth,
   defaultRadius,
   COLUMN_MODE_TABLE
