@@ -71,6 +71,8 @@ function _checkLightingActive(context: any): boolean {
 // @ts-expect-error Types have separate declarations of a private property '_loadTileset'.
 class KeplerTile3DLayer extends DeckTile3DLayer {
   private _tilesetLoadId = 0;
+  private _acceptedLoadId = 0;
+  private _acceptedTileset: {destroy?: () => void} | null = null;
 
   shouldUpdateState(params: any): boolean {
     if (super.shouldUpdateState(params)) return true;
@@ -139,10 +141,29 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
       const previousTileset = (this.state as any)?.tileset3d;
       if (previousTileset) {
         previousTileset.destroy?.();
+        if (this._acceptedTileset === previousTileset) {
+          this._acceptedTileset = null;
+          this._acceptedLoadId = 0;
+        }
         this.setState({tileset3d: null, layerMap: {}});
       }
       // @ts-expect-error _loadTileset is private in DeckTile3DLayer
       await super._loadTileset(tilesetUrl);
+      const installed = (this.state as any)?.tileset3d;
+      if (loadId !== this._tilesetLoadId) {
+        // A newer token retry started. Drop this tileset so the old key
+        // cannot overwrite the in-flight or already-accepted request.
+        if (installed && installed !== this._acceptedTileset) {
+          installed.destroy?.();
+        }
+        this.setState({
+          tileset3d: this._acceptedLoadId === this._tilesetLoadId ? this._acceptedTileset : null,
+          layerMap: {}
+        });
+        return;
+      }
+      this._acceptedLoadId = loadId;
+      this._acceptedTileset = installed ?? null;
     } catch (error: any) {
       if (loadId !== this._tilesetLoadId) {
         return;
