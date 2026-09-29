@@ -388,6 +388,7 @@ export default {
   },
   datasetTitle: {
     showDataTable: 'Show data table',
+    moreSettings: 'More settings',
     removeDataset: 'Remove dataset',
     refreshDataset: 'Refresh dataset',
     refreshFailed: 'Refresh failed',
@@ -399,6 +400,88 @@ export default {
     refresh5m: '5 min',
     refresh15m: '15 min',
     refreshCustom: 'Custom'
+  },
+  datasetOps: {
+    groupBy: 'Group By',
+    groupByHelp:
+      'Create groups to combine data based on a selected field. Result will be added as a new dataset.',
+    groupByField: 'Group by field',
+    groupByFieldHelp: 'Select the field used to create groups.',
+    aggregations: 'Aggregations',
+    aggregationRules: 'Aggregation Rules',
+    aggregationRulesHelp: 'Describe aggregation rules for combining data in each column.',
+    join: 'Join',
+    joinHelp:
+      'Combine rows from two datasets based on a common field. Result will be added as a new dataset.',
+    spatialJoin: 'Spatial Join',
+    spatialJoinHelp:
+      'Combines columns from one dataset to another based on their spatial relationship. To perform spatial join, select geo columns in both datasets and select the type of spatial join operation to perform. The results will be a new joined dataset.',
+    columnsToInclude: 'Columns to include',
+    columnsToIncludeHelp: 'Select and modify columns to be included in the joined dataset.',
+    selectAll: 'Select All',
+    unselectAll: 'Unselect All',
+    resultName: 'Result name',
+    back: 'Back',
+    run: 'Run',
+    cancel: 'Cancel',
+    leftKey: 'Left key',
+    rightKey: 'Right key',
+    leftDataset: 'Left',
+    leftDatasetHelp: 'Select dataset to join on the left',
+    leftFieldHelp: 'Select common field of the left dataset',
+    rightDataset: 'Right',
+    rightDatasetHelp: 'Select dataset to join on the right',
+    rightFieldHelp: 'Select common field of the right dataset',
+    joinTypeLabel: 'Join Type',
+    targetDataset: 'Target Dataset',
+    targetDatasetHelp:
+      'Select the dataset that will keep one output row per feature. Matching features from the join dataset are aggregated onto that row.',
+    joinDataset: 'Join Dataset',
+    joinDatasetHelp:
+      'Select the dataset that will be combined into the target dataset based on the spatial relationship.',
+    joinOperation: 'Join Operation',
+    joinOperationHelp:
+      'Intersects: they share any space. Within: target is completely inside join. Equals: they occupy the same space. Crosses: they share some interior points but not all. Overlaps: they share space and neither contains the other. Touches: they share a boundary but not interiors.',
+    geometryColumn: 'Geometry Column',
+    leftGeometry: 'Left geometry',
+    rightGeometry: 'Right geometry',
+    predicate: 'Predicate',
+    predicateOption: {
+      intersects: 'Intersects',
+      equals: 'Equals',
+      crosses: 'Crosses',
+      overlaps: 'Overlaps',
+      within: 'Within',
+      touches: 'Touches'
+    },
+    predicateHelp: {
+      intersects: 'True when the geometries share any interior or boundary.',
+      equals: 'True when the geometries occupy the same space.',
+      crosses:
+        'True when the geometries share interior space but neither contains the other, typically a line crossing a polygon or another line.',
+      overlaps:
+        'True when the geometries share interior space, have the same dimension, and neither contains the other.',
+      within: 'True when the target geometry is completely inside the join geometry.',
+      touches: 'True when the geometries share a boundary but not their interiors.'
+    },
+    joinType: {
+      left: 'Left',
+      inner: 'Inner',
+      full: 'Full',
+      leftHelp: 'Left Join: Returns all rows from the left, and the matched rows from the right.',
+      innerHelp: 'Inner Join: Returns rows that have matching values in both.',
+      fullHelp: 'Full Join: Returns all rows when there is a match in either left or right.'
+    },
+    aggregation: {
+      count: 'Count',
+      sum: 'Sum',
+      average: 'Mean',
+      maximum: 'Max',
+      minimum: 'Min',
+      median: 'Median',
+      countUnique: 'Unique',
+      merge: 'Merge'
+    }
   },
   datasetInfo: {
     rowCount: '{rowCount} rows',
