@@ -10,7 +10,10 @@ import {
   exportToJsonString,
   getScaleFromImageSize,
   isMSEdge,
-  calculateExportImageSize
+  calculateExportImageSize,
+  omitLayerApiKeys,
+  getExportFileName,
+  getExportFileNameBase
 } from '@kepler.gl/utils';
 import {EXPORT_IMG_RATIOS, RESOLUTIONS} from '@kepler.gl/constants';
 
@@ -168,5 +171,94 @@ test('exportUtils -> isMSEdge', t => {
 
 test('exportUtils -> exportToJsonString', t => {
   t.equal(exportToJsonString({test: 1}), '{"test":1}', 'Should convert object to string');
+  t.end();
+});
+
+test('exportUtils -> omitLayerApiKeys', t => {
+  const saved = {
+    datasets: [
+      {
+        data: {
+          id: 'tiles',
+          metadata: {
+            tile3dUrl: 'https://tile.googleapis.com/v1/3dtiles/root.json',
+            tile3dAccessToken: 'secret-key',
+            tile3dProvider: 'google'
+          }
+        }
+      },
+      {
+        data: {
+          id: 'points',
+          metadata: {source: 'https://example.com/data.geojson'}
+        }
+      }
+    ],
+    config: {version: 'v1'}
+  };
+
+  const stripped = omitLayerApiKeys(saved);
+
+  t.equal(
+    stripped.datasets[0].data.metadata.tile3dAccessToken,
+    undefined,
+    'Should drop the tileset access token'
+  );
+  t.equal(
+    stripped.datasets[0].data.metadata.tile3dUrl,
+    saved.datasets[0].data.metadata.tile3dUrl,
+    'Should keep the tileset URL'
+  );
+  t.equal(
+    stripped.datasets[0].data.metadata.tile3dProvider,
+    'google',
+    'Should keep the tileset provider'
+  );
+  t.deepEqual(
+    stripped.datasets[1].data.metadata,
+    saved.datasets[1].data.metadata,
+    'Should leave datasets without an API key unchanged'
+  );
+  t.equal(
+    saved.datasets[0].data.metadata.tile3dAccessToken,
+    'secret-key',
+    'Should not mutate the original saved map'
+  );
+  t.deepEqual(
+    omitLayerApiKeys({config: {}}),
+    {config: {}},
+    'Should return maps without datasets as-is'
+  );
+
+  t.end();
+});
+
+test('exportUtils -> getExportFileName', t => {
+  t.equal(
+    getExportFileName('', 'kepler.gl.json', 'json'),
+    'kepler.gl.json',
+    'empty name uses fallback'
+  );
+  t.equal(
+    getExportFileName('census-2020', 'kepler.gl.json', 'json'),
+    'census-2020.json',
+    'appends format'
+  );
+  t.equal(
+    getExportFileName('census-2020.json', 'kepler.gl.json', 'json'),
+    'census-2020.json',
+    'strips a matching extension before adding it again'
+  );
+  t.equal(
+    getExportFileName('census-2020.html', 'kepler.gl.html', 'html'),
+    'census-2020.html',
+    'strips html extension typed by the user'
+  );
+  t.equal(
+    getExportFileName('bad/name:file', 'kepler.gl.png', 'png'),
+    'bad-name-file.png',
+    'replaces illegal filename characters'
+  );
+  t.equal(getExportFileNameBase('', 'kepler.gl'), 'kepler.gl', 'base fallback is unchanged');
   t.end();
 });

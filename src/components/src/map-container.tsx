@@ -38,7 +38,8 @@ import {
   LayerBaseConfig,
   VisualChannelDomain,
   EditorLayerUtils,
-  AggregatedBin
+  AggregatedBin,
+  TILE3D_LOAD_ERROR_MESSAGE
 } from '@kepler.gl/layers';
 import {
   AttributionWithStyle,
@@ -112,7 +113,7 @@ import {
 } from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
 
-import LoadingIndicator from './loading-indicator';
+import LoadingIndicator, {aggregateLoadingPercent} from './loading-indicator';
 
 // Debounce the propagation of viewport change and mouse moves to redux store.
 // This is to avoid too many renders of other components when the map is
@@ -813,6 +814,21 @@ export default function MapContainerFactory(
       }
     };
 
+    _onTilesetLoadError = (idx: number, kind: 'token' | 'generic' | null) => {
+      const layer = this.props.visState.layers[idx];
+      const id = `tile3d-load-${layer?.id ?? idx}`;
+      if (!kind) {
+        this.props.uiStateActions.removeNotification?.(id);
+        return;
+      }
+      this.props.uiStateActions.addNotification(
+        errorNotification({
+          id,
+          message: TILE3D_LOAD_ERROR_MESSAGE[kind]
+        })
+      );
+    };
+
     /* component render functions */
 
     /* eslint-disable complexity */
@@ -1057,7 +1073,8 @@ export default function MapContainerFactory(
           onFilteredItemsChange: this._onLayerFilteredItemsChange,
           onWMSFeatureInfo: this._onWMSFeatureInfo,
           onRedrawNeeded: this._onRedrawNeeded,
-          onFitBounds: this._onFitBounds
+          onFitBounds: this._onFitBounds,
+          onTilesetLoadError: this._onTilesetLoadError
         },
         deckGlProps
       );
@@ -1579,6 +1596,8 @@ export default function MapContainerFactory(
               sidePanelWidth={sidePanelWidth}
               hasAttributionLogos={attributionLogos.length > 0}
               hasMapScale={getApplicationConfig().enableMapScale}
+              percent={aggregateLoadingPercent(visState.loadingProgress)}
+              remoteDatasetCount={Object.keys(visState.loadingProgress || {}).length}
             />
           ) : null}
           {this.props.primary ? (

@@ -8428,6 +8428,37 @@ test('VisStateUpdater -> refreshDatasetProgress', async t => {
   t.end();
 });
 
+test('VisStateUpdater -> hydrate remote dataset loading progress', t => {
+  drainTasksForTesting();
+  const proto = {
+    info: {id: 'remote-1', type: DatasetType.EXTERNALLY_HOSTED, label: 'quakes.csv'},
+    data: {fields: [], rows: []},
+    metadata: {source: 'https://example.com/quakes.csv', sourceFormat: 'csv'}
+  };
+
+  const loadingState = reducer(INITIAL_VIS_STATE, VisStateActions.updateVisData([proto]));
+  t.equal(loadingState.loadingIndicatorValue, 1, 'should show the map loading indicator');
+  t.equal(loadingState.loadingProgress['remote-1'], 0, 'should seed hydrate progress');
+
+  const progressed = reducer(loadingState, VisStateActions.setLoadingProgress('remote-1', 42));
+  t.equal(progressed.loadingProgress['remote-1'], 42, 'should store download percent');
+
+  const same = reducer(progressed, VisStateActions.setLoadingProgress('remote-1', 42));
+  t.equal(same, progressed, 'should skip redundant progress updates');
+
+  const idle = reducer(INITIAL_VIS_STATE, VisStateActions.setLoadingProgress('remote-1', 50));
+  t.equal(idle, INITIAL_VIS_STATE, 'should ignore progress when nothing is loading');
+
+  const [task] = drainTasksForTesting();
+  t.ok(task, 'should schedule a hydrate/create task');
+
+  const cleared = reducer(progressed, VisStateActions.setLoadingIndicator({change: -1}));
+  t.equal(cleared.loadingIndicatorValue, 0, 'should hide the loading indicator');
+  t.deepEqual(cleared.loadingProgress, {}, 'should clear hydrate progress');
+
+  t.end();
+});
+
 test('VisStateUpdater -> refreshDataset 304 and error', async t => {
   drainTasksForTesting();
   const initialData = processCsvData('lat,lng\n1,2');

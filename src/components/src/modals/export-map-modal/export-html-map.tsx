@@ -3,7 +3,12 @@
 
 import React from 'react';
 import {StyledExportSection, StyledType, CheckMark} from '../../common/styled-components';
-import {StyledExportMapNote, StyledWarning, ExportMapLink} from './components';
+import {
+  StyledExportMapNote,
+  StyledWarning,
+  ExportMapLink,
+  IncludeLayerApiKeysToggle
+} from './components';
 import {
   EXPORT_HTML_MAP_MODE_OPTIONS,
   EXPORT_HTML_MAP_DOC,
@@ -14,7 +19,12 @@ import {injectIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {IntlShape} from 'react-intl';
 
-import {setUserMapboxAccessToken, setExportHTMLMapMode, ActionHandler} from '@kepler.gl/actions';
+import {
+  setUserMapboxAccessToken,
+  setExportHTMLMapMode,
+  setExportIncludeLayerApiKeys,
+  ActionHandler
+} from '@kepler.gl/actions';
 
 const ExportMapStyledExportSection = styled(StyledExportSection)`
   margin: 8px 0 12px;
@@ -68,7 +78,9 @@ const BigStyledTile = styled(StyledType)`
 
 type ExportHtmlMapProps = {
   onChangeExportMapHTMLMode: ActionHandler<typeof setExportHTMLMapMode>;
+  onChangeExportIncludeLayerApiKeys: ActionHandler<typeof setExportIncludeLayerApiKeys>;
   onEditUserMapboxAccessToken: ActionHandler<typeof setUserMapboxAccessToken>;
+  includeLayerApiKeys?: boolean;
   options: {
     userMapboxToken?: string;
     mode?: string;
@@ -85,9 +97,13 @@ function ExportHtmlMapFactory(): React.ComponentType<ExportHtmlMapProps> {
     onChangeExportMapHTMLMode = () => {
       return;
     },
+    onChangeExportIncludeLayerApiKeys = () => {
+      return;
+    },
     onEditUserMapboxAccessToken = () => {
       return;
     },
+    includeLayerApiKeys = false,
     options = {},
     intl
   }) => (
@@ -95,6 +111,11 @@ function ExportHtmlMapFactory(): React.ComponentType<ExportHtmlMapProps> {
       <StyledExportMapNote>
         <FormattedMessage id={'modal.exportMap.html.selection'} />
       </StyledExportMapNote>
+      <IncludeLayerApiKeysToggle
+        id="export-include-layer-api-keys-html"
+        checked={includeLayerApiKeys}
+        onChange={onChangeExportIncludeLayerApiKeys}
+      />
       <ExportMapStyledExportSection className="export-map-modal__html-options">
         <div className="description">
           <div className="title">
