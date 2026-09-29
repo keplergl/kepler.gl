@@ -454,6 +454,24 @@ export const setExportHTMLMapMode: (
     (payload: SetExportHTMLMapModeUpdaterAction['payload']) => ({payload})
   );
 
+/** SET_EXPORT_MAP_FILE_NAME */
+export type SetExportMapFileNameUpdaterAction = {
+  payload: string;
+};
+/**
+ * Set the filename used when exporting an HTML or JSON map
+ * @memberof uiStateActions
+ * @param fileName - download name without extension
+ * @public
+ */
+export const setExportMapFileName: (
+  fileName: SetExportMapFileNameUpdaterAction['payload']
+) => Merge<SetExportMapFileNameUpdaterAction, {type: typeof ActionTypes.SET_EXPORT_MAP_FILE_NAME}> =
+  createAction(
+    ActionTypes.SET_EXPORT_MAP_FILE_NAME,
+    (payload: SetExportMapFileNameUpdaterAction['payload']) => ({payload})
+  );
+
 /** SET_LOCALE */
 export type SetLocaleUpdaterAction = {
   payload: {locale: string};
@@ -480,7 +498,7 @@ export type SetThemeUpdaterAction = {
   payload: {theme: string};
 };
 /**
- * Set UI `theme` value (`light` or `dark`)
+ * Set UI `theme` value (`light`, `dark`, or `space`)
  * @memberof uiStateActions
  * @param theme - theme of the UI
  * @public

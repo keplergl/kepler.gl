@@ -3,3 +3,4 @@
 
 export {default} from './bitmap-layer';
 export {default as BitmapLayerIcon} from './bitmap-layer-icon';
+export {BitmapBoundsEditMode, BITMAP_MOVE_HANDLE_TYPE} from './bitmap-bounds-edit-mode';

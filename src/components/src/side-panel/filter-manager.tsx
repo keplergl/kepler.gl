@@ -154,6 +154,9 @@ function FilterManagerFactory(
           showDeleteDataset={showDeleteDataset}
           refreshDataset={visStateActions.refreshDataset}
           updateDatasetProps={visStateActions.updateDatasetProps}
+          addGroupBy={visStateActions.addGroupBy}
+          addJoin={visStateActions.addJoin}
+          addSpatialJoin={visStateActions.addSpatialJoin}
         />
         <FilterList
           filtersByIndex={filtersByIndex}
@@ -229,7 +232,8 @@ function FilterManagerFactory(
       removeDataset,
       showDeleteDataset: true,
       refreshDataset: visStateActions.refreshDataset,
-      updateDatasetProps: visStateActions.updateDatasetProps
+      updateDatasetProps: visStateActions.updateDatasetProps,
+      visStateActions
     };
 
     return (
