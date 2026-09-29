@@ -352,6 +352,7 @@ export default {
     selectLocale: 'Выберите регион',
     switchToLightTheme: 'Переключить на светлую тему',
     switchToDarkTheme: 'Переключить на тёмную тему',
+    switchToSpaceTheme: 'Переключить на тему Space',
     showAiAssistantPanel: 'Показать панель AI Assistant',
     hideAiAssistantPanel: 'Скрыть панель AI Assistant',
     hideLayerPanel: 'Скрыть панель слоев',

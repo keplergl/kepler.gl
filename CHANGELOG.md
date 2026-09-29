@@ -15,6 +15,13 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.15] - Sep 28 2026
+
+- ac36f69f feat: progress bar when loading remote datasets from a saved map (#3764)
+- d49a5200 fix: titiler.xyz CORS cache breaking COG tiles on demo and HTML export (#3765)
+- af5ded87 feat: add space theme and configurable theme cycle (#3755)
+- 5bc73e37 feat: export map filename; export image filename (#3760)
+
 ## [3.3.0-alpha.14] - Sep 25 2026
 
 - 5e3f0794 fix: paint the range brush above the histogram bars (#3753)

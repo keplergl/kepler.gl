@@ -353,6 +353,7 @@ export default {
     selectLocale: 'Valitse kielisyys',
     switchToLightTheme: 'Vaihda vaaleaan teemaan',
     switchToDarkTheme: 'Vaihda tummaan teemaan',
+    switchToSpaceTheme: 'Vaihda Space-teemaan',
     showAiAssistantPanel: 'Näytä AI-apuohjelman paneeli',
     hideAiAssistantPanel: 'Piilota AI-apuohjelman paneeli',
     hideLayerPanel: 'Piilota tasopaneeli',

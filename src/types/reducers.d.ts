@@ -477,6 +477,7 @@ export declare type ExportImage = {
   error: Error | false;
   center: boolean;
   escapeXhtmlForWebpack?: boolean;
+  fileName: string;
 };
 
 export type ExportData = {
@@ -497,6 +498,7 @@ export type ExportMap = {
   HTML: ExportHtml;
   JSON: ExportJson;
   format: 'HTML' | 'JSON';
+  fileName: string;
 };
 
 export type ExportVideo = {
@@ -589,7 +591,7 @@ export type UiState = {
   loadFiles: LoadFiles;
   // Locale of the UI
   locale: Locale;
-  // Theme of the UI (`light` | `dark`), used when enableThemeToggle is on
+  // Theme of the UI (`light` | `dark` | `space`). First of `themes` is the default when set.
   theme: UiTheme;
   // view layers by list or dataset
   layerPanelListView: PanelListView;

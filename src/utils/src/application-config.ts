@@ -56,7 +56,8 @@ export type BaseMapLibraryConfig = {
  *
  * - `0` — log every action (no filtering)
  * - `1` — suppress the highest-frequency UI noise:
- *          MOUSE_MOVE, LAYER_HOVER, SET_MAP_BOUNDARY, SET_LOADING_INDICATOR
+ *          MOUSE_MOVE, LAYER_HOVER, SET_MAP_BOUNDARY, SET_LOADING_INDICATOR,
+ *          SET_LOADING_PROGRESS
  * - `2` — suppress everything in level 1 plus map/layer update chatter:
  *          LOAD_MAP_STYLES, UPDATE_MAP, LAYER_VISUAL_CHANGE,
  *          ON_MAP_CLICK, FILTER_CHANGE, MAP_LOAD_STARTED
@@ -214,11 +215,19 @@ export type KeplerApplicationConfig = {
   /** Whether to enable the layer groups feature. Enabled by default. */
   enableLayerGroups?: boolean;
 
-  /** Whether to show a map control to toggle between light and dark UI themes. Disabled by default. */
-  enableThemeToggle?: boolean;
+  /**
+   * Named UI themes to cycle (`dark`, `light`, `space`, `base`).
+   * Empty (default): dark theme, no switcher.
+   * One theme: that theme is used, no switcher.
+   * Two or more: first is the default, a map control cycles the list.
+   */
+  themes?: string[];
 
   /** Whether to show column statistics in the data table modal. Enabled by default. */
   enableColumnStats?: boolean;
+
+  /** Group-by, attribute join, and simple spatial join UI on local datasets. Enabled by default. */
+  enableDatasetOps?: boolean;
 
   /**
    * Whether to show the charts map-control panel (big number, bar, line,
@@ -422,9 +431,11 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableLayerGroups: true,
 
-  enableThemeToggle: false,
+  themes: [],
 
   enableColumnStats: true,
+
+  enableDatasetOps: true,
 
   enableChartsPanel: true,
 
