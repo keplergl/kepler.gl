@@ -20,12 +20,15 @@ import {
   ActionHandler,
   setExportHTMLMapMode,
   setExportIncludeLayerApiKeys,
+  setExportMapFileName,
   setUserMapboxAccessToken
 } from '@kepler.gl/actions';
+import ExportFileNameSection from '../export-file-name';
 
 interface ExportMapModalOptions {
   format: string;
   includeLayerApiKeys?: boolean;
+  fileName?: string;
   [key: string]: any;
 }
 
@@ -36,6 +39,7 @@ interface ExportMapModalFactoryProps {
   onChangeExportMapHTMLMode?: ActionHandler<typeof setExportHTMLMapMode>;
   onChangeExportIncludeLayerApiKeys?: ActionHandler<typeof setExportIncludeLayerApiKeys>;
   onChangeExportMapFormat?: (format: string) => any;
+  onChangeExportMapFileName?: ActionHandler<typeof setExportMapFileName>;
   mapFormat?: string;
 }
 
@@ -60,11 +64,18 @@ function ExportMapModalFactory(
     onChangeExportMapFormat = NO_OP,
     onChangeExportMapHTMLMode = NO_OP,
     onChangeExportIncludeLayerApiKeys = NO_OP,
+    onChangeExportMapFileName = NO_OP,
     onEditUserMapboxAccessToken = NO_OP,
     options = {format: ''}
   }: ExportMapModalFactoryProps) => (
     <StyledExportMapModalContent className="export-map-modal">
       <div style={style}>
+        <ExportFileNameSection
+          fileName={options.fileName}
+          inputId="export-map-file-name"
+          compact
+          onChange={onChangeExportMapFileName}
+        />
         <StyledExportMapSection>
           <div className="description">
             <div className="title">

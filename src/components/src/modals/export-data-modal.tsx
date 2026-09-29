@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useEffect} from 'react';
+import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
 import {DatasetType, EXPORT_DATA_TYPE_OPTIONS} from '@kepler.gl/constants';
@@ -17,6 +18,10 @@ import {
   CheckMark
 } from '../common/styled-components';
 import {StyledWarning} from './export-map-modal/components';
+
+const CompactExportSection = styled(StyledExportSection)`
+  margin: 12px 0;
+`;
 
 const getDataRowCount = (
   datasets: Datasets,
@@ -105,7 +110,7 @@ const ExportDataModalFactory = () => {
     return (
       <StyledModalContent className="export-data-modal">
         <div>
-          <StyledExportSection>
+          <CompactExportSection>
             <div className="description">
               <div className="title">
                 <FormattedMessage id={'modal.exportData.datasetTitle'} />
@@ -125,8 +130,8 @@ const ExportDataModalFactory = () => {
                   ))}
               </select>
             </div>
-          </StyledExportSection>
-          <StyledExportSection>
+          </CompactExportSection>
+          <CompactExportSection>
             <div className="description">
               <div className="title">
                 <FormattedMessage id={'modal.exportData.dataTypeTitle'} />
@@ -147,11 +152,11 @@ const ExportDataModalFactory = () => {
                 </StyledType>
               ))}
             </div>
-          </StyledExportSection>
-          <StyledExportSection>
+          </CompactExportSection>
+          <CompactExportSection>
             <div className="description">
               <div className="title">
-                <FormattedMessage id={'modal.exportData.dataTypeTitle'} />
+                <FormattedMessage id={'modal.exportData.filterDataTitle'} />
               </div>
               <div className="subtitle">
                 <FormattedMessage id={'modal.exportData.filterDataSubtitle'} />
@@ -185,7 +190,7 @@ const ExportDataModalFactory = () => {
                 {filtered && <CheckMark />}
               </StyledFilteredOption>
             </div>
-          </StyledExportSection>
+          </CompactExportSection>
           {showTiledDatasetWarning ? (
             <div className="title">
               <StyledWarning>

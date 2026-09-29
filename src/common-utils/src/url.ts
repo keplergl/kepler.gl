@@ -75,6 +75,86 @@ export const isPMTilesUrl = (url?: string | null) => url?.includes('.pmtiles');
 
 const COG_EXTENSIONS = ['.tif', '.tiff', '.geotiff', '.geotif', '.gtiff', '.cog'];
 
+/** Public TiTiler instance used for COG preview in the Add Data modal. */
+const PUBLIC_TITILER_HOST = 'titiler.xyz';
+
+/**
+ * Query param used to partition CloudFront's cache for titiler.xyz.
+ * The public service echoes Access-Control-Allow-Origin and caches with
+ * `public, max-age=3600` but without Vary: Origin. A request from
+ * http://localhost:8080 (or a file:// HTML export, origin `null`) can then
+ * be served to https://kepler.gl with a mismatched CORS header.
+ *
+ * Values must not contain `://` — CloudFront's WAF 403s query strings that
+ * look like nested URLs (`kepler_origin=http://localhost:8080`).
+ */
+const PUBLIC_TITILER_CORS_CACHE_PARAM = 'kepler_origin';
+
+/** CORS origin sent by file:// documents and other opaque origins. */
+const OPAQUE_CORS_ORIGIN = 'null';
+
+function isHttpUrlOrigin(origin: string): boolean {
+  return /^https?:\/\//i.test(origin);
+}
+
+/** `http://localhost:8080` → `http_localhost_8080` */
+function sanitizeTitilerCorsCacheKey(origin: string): string {
+  return origin.replace(/:\/\//g, '_').replace(/:/g, '_');
+}
+
+/**
+ * Origin used to partition titiler.xyz CloudFront CORS caches.
+ * file:// HTML exports send `Origin: null`; use that same cache key so they
+ * do not inherit a header cached for https://kepler.gl after an npm release
+ * that includes this helper in the UMD bundle.
+ */
+export function getTitilerCorsCacheOrigin(locationOrigin?: string | null): string | null {
+  const origin =
+    locationOrigin === undefined
+      ? typeof window === 'undefined'
+        ? null
+        : window.location?.origin ?? null
+      : locationOrigin;
+
+  if (origin && isHttpUrlOrigin(origin)) {
+    return sanitizeTitilerCorsCacheKey(origin);
+  }
+  if (origin === OPAQUE_CORS_ORIGIN || (typeof origin === 'string' && origin.startsWith('file:'))) {
+    return OPAQUE_CORS_ORIGIN;
+  }
+  if (
+    locationOrigin === undefined &&
+    typeof window !== 'undefined' &&
+    window.location?.protocol === 'file:'
+  ) {
+    return OPAQUE_CORS_ORIGIN;
+  }
+  return null;
+}
+
+/**
+ * Append the current page origin to public titiler.xyz URLs so CloudFront
+ * caches CORS responses per origin. No-ops for other hosts or when origin
+ * cannot be determined (Node).
+ */
+export function withPublicTitilerCorsCacheKey(url: string, origin?: string | null): string {
+  const cacheOrigin = getTitilerCorsCacheOrigin(origin);
+  if (!url || !cacheOrigin) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== PUBLIC_TITILER_HOST) {
+      return url;
+    }
+    parsed.searchParams.set(PUBLIC_TITILER_CORS_CACHE_PARAM, cacheOrigin);
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 function getUrlPathname(url: string): string {
   try {
     return new URL(url).pathname.toLowerCase().replace(/\/+$/, '');

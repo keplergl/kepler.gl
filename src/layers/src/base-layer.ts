@@ -121,6 +121,11 @@ export type LayerHeightConfig = {
   heightDomain: VisualChannelDomain;
   heightScale: VisualChannelScale;
 };
+export type LayerElevationOffsetConfig = {
+  elevationOffsetField: VisualChannelField;
+  elevationOffsetDomain: VisualChannelDomain;
+  elevationOffsetScale: VisualChannelScale;
+};
 export type LayerStrokeColorConfig = {
   strokeColorField: VisualChannelField;
   strokeColorDomain: VisualChannelDomain;

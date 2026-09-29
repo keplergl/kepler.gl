@@ -33,6 +33,9 @@ export type LayerBaseConfig = {
   heightField?: VisualChannelField;
   heightDomain?: VisualChannelDomain;
   heightScale?: string;
+  elevationOffsetField?: VisualChannelField;
+  elevationOffsetDomain?: VisualChannelDomain;
+  elevationOffsetScale?: string;
 };
 
 /**
@@ -101,6 +104,11 @@ export type LayerHeightConfig = {
   heightField: VisualChannelField;
   heightDomain: VisualChannelDomain;
   heightScale: VisualChannelScale;
+};
+export type LayerElevationOffsetConfig = {
+  elevationOffsetField: VisualChannelField;
+  elevationOffsetDomain: VisualChannelDomain;
+  elevationOffsetScale: VisualChannelScale;
 };
 export type LayerStrokeColorConfig = {
   strokeColorField: VisualChannelField;
@@ -345,6 +353,8 @@ export type LayerVisConfigSettings = {
   angle: VisConfigNumber;
   worldUnitSize: VisConfigNumber;
   elevationScale: VisConfigNumber;
+  elevationOffset: VisConfigNumber;
+  elevationOffsetRange: VisConfigRange;
   enableElevationZoomFactor: VisConfigBoolean;
   elevationRange: VisConfigRange;
   heightRange: VisConfigRange;
@@ -359,6 +369,7 @@ export type LayerVisConfigSettings = {
   heatmapRadius: VisConfigNumber;
   darkBaseMapEnabled: VisConfigBoolean;
   fixedHeight: VisConfigBoolean;
+  fixedElevation: VisConfigBoolean;
   allowHover: VisConfigBoolean;
   showNeighborOnHover: VisConfigBoolean;
   showHighlightColor: VisConfigBoolean;

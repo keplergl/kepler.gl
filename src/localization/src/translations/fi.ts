@@ -15,6 +15,7 @@ export default {
     stroke: 'viiva',
     density: 'tiheys',
     coverage: 'kattavuus',
+    elevationOffset: 'korkeuspoikkeama',
     sum: 'summa',
     pointCount: 'pisteiden lukumäärä'
   },
@@ -168,6 +169,10 @@ export default {
     sizeScale: 'Koon skaala',
     worldUnitSize: 'Yksikkö',
     elevationScale: 'Korottamisen skaala',
+    elevationOffset: 'Korkeuspoikkeama',
+    elevationOffsetDescription:
+      'Nosta pursotetut polygoni irti maasta (samat yksiköt kuin korkeus)',
+    elevationOffsetRange: 'Korkeuspoikkeaman rajat',
     enableElevationZoomFactor: 'Käytä korkeuden zoomauskerrointa',
     enableElevationZoomFactorDescription:
       'Säädä korkeus / korkeus nykyisen zoomauskertoimen perusteella',
@@ -189,6 +194,8 @@ export default {
     heightMultiplier: 'Korkeuskerroin',
     fixedHeight: 'Kiinteä korkeus',
     fixedHeightDescription: 'Käytä korkeutta ilman muutoksia',
+    fixedElevation: 'Kiinteä korkeuspoikkeama',
+    fixedElevationDescription: 'Käytä korkeuspoikkeamaa ilman muutoksia',
     allowHover: 'Näytä työkaluvihje',
     allowHoverDescription:
       'Näytä tai piilota työkaluvihje, kun osoitin on tason ominaisuuksien päällä',
@@ -353,6 +360,7 @@ export default {
     selectLocale: 'Valitse kielisyys',
     switchToLightTheme: 'Vaihda vaaleaan teemaan',
     switchToDarkTheme: 'Vaihda tummaan teemaan',
+    switchToSpaceTheme: 'Vaihda Space-teemaan',
     showAiAssistantPanel: 'Näytä AI-apuohjelman paneeli',
     hideAiAssistantPanel: 'Piilota AI-apuohjelman paneeli',
     hideLayerPanel: 'Piilota tasopaneeli',

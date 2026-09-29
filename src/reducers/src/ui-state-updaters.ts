@@ -19,7 +19,9 @@ import {
   createNotification,
   errorNotification,
   calculateExportImageSize,
-  getApplicationConfig
+  getApplicationConfig,
+  getConfiguredThemes,
+  getDefaultUiTheme
 } from '@kepler.gl/utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
@@ -141,6 +143,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = (
  * @property exporting Default: `false`
  * @property error Default: `false`
  * @property escapeXhtmlForWebpack Default: from application config (auto-detected: `true` for webpack)
+ * @property fileName Default: `''`
  * @public
  */
 export const DEFAULT_EXPORT_IMAGE: ExportImage = {
@@ -167,7 +170,8 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   processing: false,
   error: false,
   // whether to apply fix for uglify error in dom-to-image (from application config, auto-detects build tool)
-  escapeXhtmlForWebpack: getApplicationConfig().escapeXhtmlForWebpack
+  escapeXhtmlForWebpack: getApplicationConfig().escapeXhtmlForWebpack,
+  fileName: ''
 };
 
 export const DEFAULT_LOAD_FILES = {
@@ -222,12 +226,15 @@ export const DEFAULT_EXPORT_JSON: ExportJson = {
  * @property HTML - Default: 'DEFAULT_EXPORT_HTML',
  * @property JSON - Default: 'DEFAULT_EXPORT_JSON',
  * @property format - Default: 'HTML',
+ * @property fileName Default: `''`,
+ * @property includeLayerApiKeys Default: `false`,
  * @public
  */
 export const DEFAULT_EXPORT_MAP: ExportMap = {
   [EXPORT_MAP_FORMATS.HTML]: DEFAULT_EXPORT_HTML,
   [EXPORT_MAP_FORMATS.JSON]: DEFAULT_EXPORT_JSON,
   format: EXPORT_MAP_FORMATS.HTML,
+  fileName: '',
   // Private layer tokens stay out of the file unless the user opts in.
   includeLayerApiKeys: false
 };
@@ -297,7 +304,7 @@ export const INITIAL_UI_STATE: UiState = {
   loadFiles: DEFAULT_LOAD_FILES,
   // Locale of the UI
   locale: LOCALE_CODES.en,
-  // Theme of the UI (used when enableThemeToggle is on)
+  // Theme of the UI (`light` | `dark` | `space`). First of `themes` is the default when set.
   theme: THEME.dark,
   layerPanelListView: 'list',
   filterPanelListView: 'list',
@@ -314,10 +321,19 @@ export const initUiStateUpdater = (
     type?: (typeof ActionTypes)['INIT'];
     payload: KeplerGlInitPayload;
   }
-): UiState => ({
-  ...state,
-  ...(action.payload || {}).initialUiState
-});
+): UiState => {
+  const initialUiState = (action.payload || {}).initialUiState || {};
+  const themes = getConfiguredThemes();
+  const requested = initialUiState.theme ?? state.theme;
+  const theme =
+    themes.length === 0 ? requested : themes.includes(requested) ? requested : getDefaultUiTheme();
+
+  return {
+    ...state,
+    ...initialUiState,
+    theme
+  };
+};
 
 /**
  * Toggle active side panel
@@ -773,6 +789,26 @@ export const setExportMapFormatUpdater = (
     ...state.exportMap,
     // @ts-expect-error
     format
+  }
+});
+
+/**
+ * Set the filename used when exporting an HTML or JSON map
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload file name without extension
+ * @returns nextState
+ * @public
+ */
+export const setExportMapFileNameUpdater = (
+  state: UiState,
+  {payload: fileName}: UIStateActions.SetExportMapFileNameUpdaterAction
+): UiState => ({
+  ...state,
+  exportMap: {
+    ...state.exportMap,
+    fileName
   }
 });
 

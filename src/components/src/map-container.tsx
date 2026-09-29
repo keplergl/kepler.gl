@@ -113,7 +113,7 @@ import {
 } from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
 
-import LoadingIndicator from './loading-indicator';
+import LoadingIndicator, {aggregateLoadingPercent} from './loading-indicator';
 
 // Debounce the propagation of viewport change and mouse moves to redux store.
 // This is to avoid too many renders of other components when the map is
@@ -1596,6 +1596,8 @@ export default function MapContainerFactory(
               sidePanelWidth={sidePanelWidth}
               hasAttributionLogos={attributionLogos.length > 0}
               hasMapScale={getApplicationConfig().enableMapScale}
+              percent={aggregateLoadingPercent(visState.loadingProgress)}
+              remoteDatasetCount={Object.keys(visState.loadingProgress || {}).length}
             />
           ) : null}
           {this.props.primary ? (

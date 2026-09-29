@@ -1201,6 +1201,9 @@ export default function LayerConfiguratorFactory(
         meta: {featureTypes = {}},
         config: {visConfig}
       } = layer;
+      const elevationOffsetActive = Boolean(
+        layer.config.elevationOffsetField || visConfig.elevationOffset > 0
+      );
 
       return (
         <StyledLayerVisualConfigurator>
@@ -1233,6 +1236,7 @@ export default function LayerConfiguratorFactory(
             {...visConfiguratorProps}
             label="layer.strokeColor"
             collapsible
+            disabled={Boolean(featureTypes.polygon && elevationOffsetActive)}
           >
             <ChannelByValueSelector
               channel={layer.visualChannels.strokeColor}
@@ -1261,6 +1265,7 @@ export default function LayerConfiguratorFactory(
             {...(featureTypes.polygon ? layer.visConfigSettings.stroked : {})}
             label="layer.strokeWidth"
             collapsible
+            disabled={Boolean(featureTypes.polygon && elevationOffsetActive)}
           >
             {layer.config.sizeField ? (
               <VisConfigSlider
@@ -1306,6 +1311,30 @@ export default function LayerConfiguratorFactory(
                   {...visConfiguratorProps}
                 />
                 <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.wireframe} />
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          ) : null}
+
+          {/* Elevation Offset */}
+          {featureTypes.polygon ? (
+            <LayerConfigGroup
+              label={'layerVisConfigs.elevationOffset'}
+              description={'layerVisConfigs.elevationOffsetDescription'}
+              collapsible
+              disabled={!visConfig.filled}
+            >
+              {!layer.config.elevationOffsetField ? (
+                <VisConfigSlider
+                  {...layer.visConfigSettings.elevationOffset}
+                  {...visConfiguratorProps}
+                  label={false}
+                />
+              ) : null}
+              <ConfigGroupCollapsibleContent>
+                <ChannelByValueSelector
+                  channel={layer.visualChannels.elevationOffset}
+                  {...layerChannelConfigProps}
+                />
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}

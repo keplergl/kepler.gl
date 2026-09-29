@@ -96,6 +96,34 @@ export function dataURItoBlob(dataURI: string): Blob {
   return new Blob([ab], {type: mimeString});
 }
 
+const ILLEGAL_FILENAME_CHARS = /[/\\?%*:|"<>]/g;
+const KNOWN_EXPORT_EXTENSION = /\.(json|html|png|csv|jpe?g|webp)$/i;
+
+/**
+ * Turn a user-entered export name into a safe basename.
+ * Empty input falls back to `fallback`. Known extensions are stripped so the
+ * caller can add the format-specific suffix.
+ */
+export function getExportFileNameBase(name: string | undefined, fallback: string): string {
+  const fallbackBase = fallback.replace(KNOWN_EXPORT_EXTENSION, '').trim() || fallback;
+  const raw = (name || '').trim() || fallbackBase;
+  const stripped = raw.replace(KNOWN_EXPORT_EXTENSION, '').replace(ILLEGAL_FILENAME_CHARS, '-');
+  const cleaned = stripped.replace(/\.+$/, '').trim();
+  return cleaned || fallbackBase;
+}
+
+/**
+ * Resolve a download filename with the given extension.
+ */
+export function getExportFileName(
+  name: string | undefined,
+  fallback: string,
+  extension: string
+): string {
+  const cleanExt = extension.replace(/^\./, '');
+  return `${getExportFileNameBase(name, fallback)}.${cleanExt}`;
+}
+
 export function downloadFile(fileBlob: Blob, fileName: string) {
   if (isMSEdge(window)) {
     (window.navigator as any).msSaveOrOpenBlob(fileBlob, fileName);
@@ -125,14 +153,18 @@ export function downloadFile(fileBlob: Blob, fileName: string) {
  * Whether color is rgb
  * @returns
  */
-export function exportImage(
-  uiStateExportImage: ExportImage,
-  filename = getApplicationConfig().defaultImageName
-) {
+export function exportImage(uiStateExportImage: ExportImage, filename?: string) {
   const {imageDataUri} = uiStateExportImage;
   if (imageDataUri) {
     const file = dataURItoBlob(imageDataUri);
-    downloadFile(file, filename);
+    downloadFile(
+      file,
+      getExportFileName(
+        filename ?? uiStateExportImage.fileName,
+        getApplicationConfig().defaultImageName,
+        'png'
+      )
+    );
   }
 }
 
@@ -225,7 +257,11 @@ export function exportJson(state, options: any = {}) {
   const map = getMapJSON(state, options);
   map.info.source = 'kepler.gl';
   const fileBlob = new Blob([exportToJsonString(map)], {type: 'application/json'});
-  const fileName = state.appName ? `${state.appName}.json` : getApplicationConfig().defaultJsonName;
+  const fileName = getExportFileName(
+    options.fileName,
+    state.appName ? `${state.appName}.json` : getApplicationConfig().defaultJsonName,
+    'json'
+  );
   downloadFile(fileBlob, fileName);
 }
 
@@ -242,7 +278,11 @@ export function exportHtml(state, options) {
   const fileBlob = new Blob([exportMapToHTML(data)], {type: 'text/html'});
   downloadFile(
     fileBlob,
-    state.appName ? `${state.appName}.html` : getApplicationConfig().defaultHtmlName
+    getExportFileName(
+      options.fileName,
+      state.appName ? `${state.appName}.html` : getApplicationConfig().defaultHtmlName,
+      'html'
+    )
   );
 }
 

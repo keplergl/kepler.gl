@@ -11,7 +11,9 @@ import {
   getScaleFromImageSize,
   isMSEdge,
   calculateExportImageSize,
-  omitLayerApiKeys
+  omitLayerApiKeys,
+  getExportFileName,
+  getExportFileNameBase
 } from '@kepler.gl/utils';
 import {EXPORT_IMG_RATIOS, RESOLUTIONS} from '@kepler.gl/constants';
 
@@ -228,5 +230,35 @@ test('exportUtils -> omitLayerApiKeys', t => {
     'Should return maps without datasets as-is'
   );
 
+  t.end();
+});
+
+test('exportUtils -> getExportFileName', t => {
+  t.equal(
+    getExportFileName('', 'kepler.gl.json', 'json'),
+    'kepler.gl.json',
+    'empty name uses fallback'
+  );
+  t.equal(
+    getExportFileName('census-2020', 'kepler.gl.json', 'json'),
+    'census-2020.json',
+    'appends format'
+  );
+  t.equal(
+    getExportFileName('census-2020.json', 'kepler.gl.json', 'json'),
+    'census-2020.json',
+    'strips a matching extension before adding it again'
+  );
+  t.equal(
+    getExportFileName('census-2020.html', 'kepler.gl.html', 'html'),
+    'census-2020.html',
+    'strips html extension typed by the user'
+  );
+  t.equal(
+    getExportFileName('bad/name:file', 'kepler.gl.png', 'png'),
+    'bad-name-file.png',
+    'replaces illegal filename characters'
+  );
+  t.equal(getExportFileNameBase('', 'kepler.gl'), 'kepler.gl', 'base fallback is unchanged');
   t.end();
 });

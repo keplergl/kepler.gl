@@ -15,6 +15,7 @@ import {
   VectorTileDatasetMetadata,
   WMSDatasetMetadata
 } from '@kepler.gl/constants';
+import {withPublicTitilerCorsCacheKey} from '@kepler.gl/common-utils';
 import {
   hexToRgb,
   validateInputData,
@@ -234,7 +235,7 @@ async function refreshRasterTileMetadata(datasetInfo: CreateTableProps): Promise
       }
     } else {
       // it's stac raster tiles
-      const response = await fetch(metadataUrl);
+      const response = await fetch(withPublicTitilerCorsCacheKey(metadataUrl));
       if (!response.ok) {
         throw new Error(`Failed Fetch ${metadataUrl}`);
       }
