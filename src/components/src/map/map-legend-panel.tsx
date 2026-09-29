@@ -204,6 +204,7 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
           className="legend-resize-handle legend-resize-handle--top"
           aria-label="Resize legend"
           ref={draggableResizeTop.setNodeRef}
+          {...draggableResizeTop.attributes}
           {...draggableResizeTop.listeners}
         >
           <HorizontalResizeHandle height="16px" />
@@ -220,6 +221,7 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
         className="legend-resize-handle"
         aria-label="Resize legend"
         ref={draggableResize.setNodeRef}
+        {...draggableResize.attributes}
         {...draggableResize.listeners}
       >
         <HorizontalResizeHandle height="16px" />
