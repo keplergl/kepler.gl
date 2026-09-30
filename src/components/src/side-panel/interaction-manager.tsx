@@ -12,6 +12,7 @@ import {Layer} from '@kepler.gl/layers';
 import InteractionPanelFactory from './interaction-panel/interaction-panel';
 import LegendConfig from './interaction-panel/legend-config';
 import PanelTitleFactory from './panel-title';
+import {PanelHeaderActionIcon} from './panel-header-action';
 
 import {PanelMeta} from './common/types';
 
@@ -25,7 +26,7 @@ type InteractionManagerProps = {
   layerOrder?: LayerOrder;
   mapLegendActive?: boolean;
   actionIcons?: {
-    settings?: React.ElementType;
+    settings?: PanelHeaderActionIcon;
   };
   interactionConfigIcons?: {
     [key: string]: React.ElementType;

@@ -22,7 +22,7 @@ import {
   PanelContent
 } from '../../common/styled-components';
 import {Messages, Crosshairs, CursorClick, Pin, Settings} from '../../common/icons';
-import PanelHeaderActionFactory from '../panel-header-action';
+import PanelHeaderActionFactory, {PanelHeaderActionIcon} from '../panel-header-action';
 
 import {FormattedMessage} from '@kepler.gl/localization';
 
@@ -34,7 +34,7 @@ interface InteractionPanelProps {
     [key: string]: React.ElementType;
   };
   actionIcons?: {
-    settings?: React.ElementType;
+    settings?: PanelHeaderActionIcon;
   };
   setColumnDisplayFormat: ActionHandler<typeof setColumnDisplayFormatAction>;
 }

@@ -19,7 +19,7 @@ import {
 
 import Switch from '../../common/switch';
 import {Legend, Settings} from '../../common/icons';
-import PanelHeaderActionFactory from '../panel-header-action';
+import PanelHeaderActionFactory, {PanelHeaderActionIcon} from '../panel-header-action';
 import {
   PanelContent,
   PanelHeaderContent,
@@ -104,7 +104,7 @@ type LegendConfigProps = {
   legendConfig?: InteractionConfig['legend'];
   mapLegendActive?: boolean;
   actionIcons?: {
-    settings?: React.ElementType;
+    settings?: PanelHeaderActionIcon;
   };
 };
 

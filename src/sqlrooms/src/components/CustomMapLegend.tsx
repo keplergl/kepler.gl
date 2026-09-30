@@ -122,6 +122,7 @@ export function CustomMapLegendFactory(
     layer,
     containerW,
     isExport,
+    disableEdit,
     mapState,
     onLayerVisConfigChange
   }: {layer: Layer; containerW: number} & MapLegendProps) => {
