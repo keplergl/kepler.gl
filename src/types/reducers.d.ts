@@ -413,10 +413,10 @@ export type LegendInfo = BaseInteraction & {
 };
 export type InteractionConfig = {
   tooltip: TooltipInfo;
+  legend: LegendInfo;
   geocoder: Geocoder;
   brush: Brush;
   coordinate: Coordinate;
-  legend: LegendInfo;
 };
 export type MapInfo = {
   title: string;

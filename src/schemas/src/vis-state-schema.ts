@@ -699,7 +699,7 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV1 = [...interactionPropsV0, 'geocoder', 'coordinate', 'legend'];
+const interactionPropsV1 = ['tooltip', 'legend', 'brush', 'geocoder', 'coordinate'];
 
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';

@@ -53,22 +53,6 @@ function InteractionManagerFactory(
   }) => {
     const {interactionConfigChange: onConfigChange, setColumnDisplayFormat} = visStateActions;
     const intl = useIntl();
-    // Legend sits after Tooltip; other sections keep their configured order.
-    const interactionKeys = Object.keys(interactionConfig).filter(key => key !== 'legend');
-    const tooltipIndex = interactionKeys.indexOf('tooltip');
-    const legendInsertAt = tooltipIndex === -1 ? interactionKeys.length : tooltipIndex + 1;
-
-    const legendPanel = layers ? (
-      <LegendConfig
-        layers={layers}
-        layerOrder={layerOrder}
-        visStateActions={visStateActions}
-        uiStateActions={uiStateActions}
-        legendConfig={interactionConfig.legend}
-        mapLegendActive={mapLegendActive}
-        actionIcons={actionIcons}
-      />
-    ) : null;
 
     return (
       <div className="interaction-manager">
@@ -76,9 +60,23 @@ function InteractionManagerFactory(
           className="interaction-manager-title"
           title={intl.formatMessage({id: panelMetadata.label})}
         />
-        {interactionKeys.map((key, index) => (
-          <React.Fragment key={key}>
+        {Object.keys(interactionConfig).map(key =>
+          key === 'legend' ? (
+            layers ? (
+              <LegendConfig
+                key={key}
+                layers={layers}
+                layerOrder={layerOrder}
+                visStateActions={visStateActions}
+                uiStateActions={uiStateActions}
+                legendConfig={interactionConfig.legend}
+                mapLegendActive={mapLegendActive}
+                actionIcons={actionIcons}
+              />
+            ) : null
+          ) : (
             <InteractionPanel
+              key={key}
               datasets={datasets}
               config={interactionConfig[key]}
               onConfigChange={onConfigChange}
@@ -86,10 +84,8 @@ function InteractionManagerFactory(
               actionIcons={actionIcons}
               interactionConfigIcons={interactionConfigIcons}
             />
-            {index + 1 === legendInsertAt ? legendPanel : null}
-          </React.Fragment>
-        ))}
-        {interactionKeys.length === 0 ? legendPanel : null}
+          )
+        )}
       </div>
     );
   };

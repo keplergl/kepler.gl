@@ -6,6 +6,7 @@ import test from 'tape';
 import sinon from 'sinon';
 
 import {InteractionManagerFactory, appInjector} from '@kepler.gl/components';
+import {defaultInteractionConfig} from '@kepler.gl/reducers';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 const InteractionManager = appInjector.get(InteractionManagerFactory);
@@ -143,7 +144,7 @@ test('Components -> InteractionManager legend section default off', t => {
   const wrapper = mountWithTheme(
     <IntlWrapper>
       <InteractionManager
-        interactionConfig={{}}
+        interactionConfig={defaultInteractionConfig}
         datasets={{}}
         panelMetadata={panelMetadata}
         layers={[{id: 'layer-1', config: {label: 'Quakes', hidden: false}}]}
