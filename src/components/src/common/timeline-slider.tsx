@@ -3,7 +3,7 @@
 
 import React, {useMemo} from 'react';
 import styled, {IStyledComponent} from 'styled-components';
-import throttle from 'lodash/throttle';
+import throttle from 'es-toolkit/compat/throttle';
 import classnames from 'classnames';
 import {clamp, datetimeFormatter} from '@kepler.gl/utils';
 import {media} from '@kepler.gl/styles';
@@ -103,9 +103,7 @@ function TimelineSliderFactory() {
     const [onSlider0Change, onSlider1Change] = useMemo(() => {
       if (!domain) return [noop, noop];
       return [
-        isRanged
-          ? (newValue: number) => onThrottleUpdate([clamp(domain, newValue), value1])
-          : noop,
+        isRanged ? (newValue: number) => onThrottleUpdate([clamp(domain, newValue), value1]) : noop,
         isRanged
           ? (newValue: number) => onThrottleUpdate([value0, clamp(domain, newValue)])
           : (newValue: number) =>

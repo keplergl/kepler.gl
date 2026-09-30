@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import pick from 'lodash/pick';
+import pick from 'es-toolkit/compat/pick';
 import {VERSIONS} from './versions';
 import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {colorRangeBackwardCompatibility, isFilterValidToSave, findById, isPlainObject} from '@kepler.gl/utils';
+import {
+  colorRangeBackwardCompatibility,
+  isFilterValidToSave,
+  findById,
+  isPlainObject
+} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import Schema from './schema';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {
   AddDataToMapOptions,
   AnimationConfig,
@@ -30,9 +35,10 @@ import {
   SplitMap,
   ValueOf,
   Effect,
-  Annotation
+  Annotation,
+  ChartConfig
 } from '@kepler.gl/types';
-import {Datasets} from '@kepler.gl/table';
+import {Datasets, GroupByOp, JoinOp} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Loader} from '@loaders.gl/loader-utils';
 import KeplerGLSchema from './schema-manager';
@@ -59,6 +65,8 @@ export interface VisState {
   layerOrderToBeMerged: any[] | null;
   effects: Effect[];
   effectOrder: string[];
+  charts: ChartConfig[];
+  chartsToBeMerged: ChartConfig[];
   annotations: Annotation[];
   annotationsToBeMerged: any[];
   selectedAnnotationId: string | null;
@@ -67,6 +75,8 @@ export interface VisState {
   filterToBeMerged: any[];
   datasets: Datasets;
   editingDataset: string | undefined;
+  groupBys: GroupByOp[];
+  joins: JoinOp[];
   interactionConfig: InteractionConfig;
   interactionToBeMerged: any;
   layerBlending: string;
@@ -83,6 +93,8 @@ export interface VisState {
   fileLoading: FileLoading | false;
   fileLoadingProgress: FileLoadingProgress;
   loadingIndicatorValue: number;
+  /** Per-dataset download progress (0–100) while hydrating remote files. */
+  loadingProgress: Record<string, number>;
   loaders: Loader[];
   loadOptions: object;
   initialState?: Partial<VisState>;
@@ -555,6 +567,7 @@ export const layerPropsV1 = {
         key: 'columns'
       }),
       isVisible: null,
+      isIncludedInLegend: null,
       visConfig: new VisConfigSchemaV1({
         version: VERSIONS.v1
       }),
@@ -686,7 +699,7 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV1 = [...interactionPropsV0, 'geocoder', 'coordinate'];
+const interactionPropsV1 = ['tooltip', 'legend', 'brush', 'geocoder', 'coordinate'];
 
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
@@ -814,6 +827,68 @@ export const effectPropsV1 = {
   isEnabled: null,
   parameters: null
 };
+
+export const chartPropsV1 = {
+  id: null,
+  title: null,
+  type: null,
+  dataId: null,
+  applyFilters: null,
+  pinned: null,
+  display: null,
+  crossFilter: null,
+  xAxis: null,
+  yAxis: null,
+  groupBy: null,
+  value: null,
+  axis: null,
+  numGroups: null,
+  groupOthers: null,
+  colorBy: null,
+  chartDisplay: null,
+  layerId: null,
+  layerChartType: null
+};
+
+export class ChartsSchema extends Schema {
+  key = 'charts';
+
+  save(charts) {
+    if (!Array.isArray(charts) || !charts.length) {
+      // Keep saved maps unchanged when the charts panel is unused.
+      return {};
+    }
+    return {
+      [this.key]: charts.map(
+        chart =>
+          this.savePropertiesOrApplySchema({
+            ...chart,
+            display: {
+              ...chart.display,
+              isConfigActive: false,
+              isJsonEditorActive: false
+            }
+          }).charts
+      )
+    };
+  }
+
+  load(charts) {
+    if (!Array.isArray(charts)) {
+      return {[this.key]: []};
+    }
+    return {
+      [this.key]: charts.map(chart => {
+        const loaded = this.loadPropertiesOrApplySchema(chart, charts).charts;
+        // Older saved maps omit `pinned`; keep charts visible like the legend.
+        return {
+          ...loaded,
+          pinned: loaded.pinned !== false
+        };
+      })
+    };
+  }
+}
 export class EffectsSchema extends Schema {
   key = 'effects';
 
@@ -867,6 +942,8 @@ const annotationPropsV1 = {
   textWidth: null,
   textHeight: null,
   textVerticalAlign: null,
+  textSide: null,
+  textVerticalPosition: null,
   armLength: null,
   angle: null,
   radiusInMeters: null
@@ -920,7 +997,10 @@ export const filterPropsV1 = {
   enabled: null,
 
   invertTrendColor: null,
-  timezone: null
+  timezone: null,
+
+  // Optional end timestamp for duration-based time animation (#3198)
+  endName: null
 };
 
 export const propertiesV0 = {
@@ -953,6 +1033,10 @@ export const propertiesV1 = {
     version: VERSIONS.v1,
     properties: effectPropsV1
   }),
+  charts: new ChartsSchema({
+    version: VERSIONS.v1,
+    properties: chartPropsV1
+  }),
   annotations: new AnnotationsSchema({
     version: VERSIONS.v1,
     properties: annotationPropsV1
@@ -971,7 +1055,9 @@ export const propertiesV1 = {
     version: VERSIONS.v1,
     properties: {
       currentTime: null,
-      speed: null
+      speed: null,
+      timeFormat: null,
+      timezone: null
     },
     key: 'animationConfig'
   }),
@@ -983,7 +1069,9 @@ export const propertiesV1 = {
     },
     key: 'editor'
   }),
-  layerOrder: null
+  layerOrder: null,
+  groupBys: null,
+  joins: null
 };
 
 export class VisStateSchemaV1 extends Schema {

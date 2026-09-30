@@ -16,6 +16,7 @@ import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {
   ColumnLabels,
   ColumnPairs,
+  Field,
   SupportedColumnMode,
   VisConfigBoolean,
   VisConfigNumber,
@@ -210,6 +211,13 @@ export const flowVisConfigs = {
 
 type Props = ConstructorParameters<typeof Layer>[0];
 
+// Counted across all flow layers rather than per layer. Replacing a dataset
+// builds a new layer with the same id, and deck matches the new FlowmapLayer to
+// the old one by that id; FlowmapLayer takes up a new data provider only when
+// `data` changes. A counter that started again from zero would hand deck the
+// value the old layer already passed, and the old flows would stay on the map.
+let flowDataVersion = 0;
+
 export default class FlowLayer extends Layer {
   _locationsByLatLon: Record<string, LocationDatum> | null = null;
   _dataProvider: LocalFlowmapDataProvider<LocationDatum, FlowDatum>;
@@ -313,9 +321,12 @@ export default class FlowLayer extends Layer {
   private getLocationFromPosition = (pos: number[]) =>
     this._locationsByLatLon?.[FlowLayer.getLatLonKey(pos)];
 
-  private getMagnitude = (dataContainer: DataContainerInterface) => (rowIndex: number) => {
+  private getMagnitude = (fields: Field[]) => (rowIndex: number) => {
     const fieldIdx = this.config.columns.count?.fieldIdx;
-    return fieldIdx != null && fieldIdx >= 0 ? dataContainer.valueAt(rowIndex, fieldIdx) : 1;
+    if (fieldIdx == null || fieldIdx < 0) {
+      return 1;
+    }
+    return fields[fieldIdx].valueAccessor({index: rowIndex});
   };
 
   private getSourceName = (dataContainer: DataContainerInterface, d: {index: number}) => {
@@ -385,7 +396,7 @@ export default class FlowLayer extends Layer {
     const getLocationWeight = makeLocationWeightGetter(flowIndices, {
       getFlowOriginId,
       getFlowDestId,
-      getFlowMagnitude: this.getMagnitude(dataContainer)
+      getFlowMagnitude: this.getMagnitude(dataset.fields)
     });
 
     const clusterLevels = clusterLocations(locations, flowmapDataAccessors, getLocationWeight, {
@@ -396,14 +407,14 @@ export default class FlowLayer extends Layer {
   }
 
   calculateDataAttribute(
-    {dataContainer, filteredIndex}: KeplerTable,
+    {dataContainer, filteredIndex, fields}: KeplerTable,
     getPosition: (d: any) => number[]
   ): FlowDatum[] {
     const data: FlowDatum[] = [];
     const datum = {index: 0};
     const getSource = this.getSourcePosition(dataContainer);
     const getTarget = this.getTargetPosition(dataContainer);
-    const getMag = this.getMagnitude(dataContainer);
+    const getMag = this.getMagnitude(fields);
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
       datum.index = index;
@@ -456,15 +467,7 @@ export default class FlowLayer extends Layer {
         diffUpdateTriggers(filterUpdateTriggers, this._oldFilterUpdateTriggers);
       if (filterChanged || dataChanged) {
         const indexAccessor = (d: FlowDatum) => d.index;
-        const valueAccessor = (
-          dc: DataContainerInterface,
-          d: {index: number},
-          fieldIndex: number
-        ) => dc.valueAt(d.index, fieldIndex);
-        const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
-          indexAccessor,
-          valueAccessor
-        );
+        const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(indexAccessor);
         resultingFlows = resultingFlows.filter(getFilterDataFunc(filterRange, getFilterValue));
       }
       this._oldFilterUpdateTriggers = filterUpdateTriggers;
@@ -509,7 +512,7 @@ export default class FlowLayer extends Layer {
     if (dataContentChanged) {
       this._dataProvider.setFlowmapData(layerData);
       this._lastLayerData = layerData;
-      this._dataVersion++;
+      this._dataVersion = ++flowDataVersion;
     }
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
 
@@ -535,7 +538,13 @@ export default class FlowLayer extends Layer {
     const globeSubLayerProps = isGlobeMode
       ? (() => {
           const depthParams = {
-            parameters: {cull: false, depthTest: true, depthCompare: 'less-equal', cullMode: 'none', ...blendingParameters}
+            parameters: {
+              cull: false,
+              depthTest: true,
+              depthCompare: 'less-equal',
+              cullMode: 'none',
+              ...blendingParameters
+            }
           };
           return {
             _subLayerProps: {
@@ -584,7 +593,7 @@ export default class FlowLayer extends Layer {
     object: Record<string, any>;
     fieldValues: Array<{labelMessage: string; value: any}>;
   } | null {
-    const fmt = d3Format(TOOLTIP_FORMATS.DECIMAL_COMMA.format);
+    const fmt = v => d3Format(TOOLTIP_FORMATS.DECIMAL_COMMA.format)(Number(v));
     switch (object?.type) {
       case PickingType.LOCATION:
         return {

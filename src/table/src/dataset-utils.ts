@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import uniq from 'lodash/uniq';
+import uniq from 'es-toolkit/compat/uniq';
 import KeplerTable, {Datasets} from './kepler-table';
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
-import Task from 'react-palm/tasks';
+import Task from '@kepler.gl/tasks-core';
+import type {TaskDescriptor} from '@kepler.gl/tasks-core';
 
 import {
   DatasetType,
@@ -14,6 +15,7 @@ import {
   VectorTileDatasetMetadata,
   WMSDatasetMetadata
 } from '@kepler.gl/constants';
+import {withPublicTitilerCorsCacheKey} from '@kepler.gl/common-utils';
 import {
   hexToRgb,
   validateInputData,
@@ -33,6 +35,7 @@ import {
   getFieldsFromTile,
   VectorTileMetadata
 } from './tileset/vector-tile-utils';
+import {buildWmsGetCapabilitiesUrl, wmsCapabilitiesToDatasetMetadata} from './tileset/wms-utils';
 
 // apply a color for each dataset
 // to use as label colors
@@ -71,7 +74,7 @@ export function getNewDatasetColor(datasets: Datasets): RGBColor {
 export function createNewDataEntry(
   {info, data, ...opts}: ProtoDataset,
   datasets: Datasets = {}
-): Datasets | null {
+): TaskDescriptor | null {
   const TableClass = getApplicationConfig().table ?? KeplerTable;
   let dataValidator = validateInputData;
   if (typeof TableClass.getInputDataValidator === 'function') {
@@ -117,7 +120,8 @@ type CreateTableProps = {
 };
 
 async function createTable(datasetInfo: CreateTableProps) {
-  const {info, color, opts, data} = datasetInfo;
+  const {info, color, opts} = datasetInfo;
+  const {data} = datasetInfo;
 
   // update metadata for remote tiled datasets
   const refreshedMetadata = await refreshRemoteData(datasetInfo);
@@ -165,6 +169,8 @@ async function refreshRemoteData(datasetInfo: CreateTableProps): Promise<object 
     case DatasetType.TILE_3D:
       return null;
     case DatasetType.BITMAP:
+      return null;
+    case DatasetType.EXTERNALLY_HOSTED:
       return null;
     default:
       return null;
@@ -229,7 +235,7 @@ async function refreshRasterTileMetadata(datasetInfo: CreateTableProps): Promise
       }
     } else {
       // it's stac raster tiles
-      const response = await fetch(metadataUrl);
+      const response = await fetch(withPublicTitilerCorsCacheKey(metadataUrl));
       if (!response.ok) {
         throw new Error(`Failed Fetch ${metadataUrl}`);
       }
@@ -258,7 +264,7 @@ async function refreshWMSMetadata(datasetInfo: CreateTableProps): Promise<any | 
 
   try {
     const data = await getWMSCapabilities(tilesetDataUrl);
-    return wmsCapabilitiesToDatasetMetadata(data);
+    return wmsCapabilitiesToDatasetMetadata(data, tilesetDataUrl);
   } catch (err) {
     // ignore for now, and use old metadata
   }
@@ -266,42 +272,8 @@ async function refreshWMSMetadata(datasetInfo: CreateTableProps): Promise<any | 
 }
 
 export async function getWMSCapabilities(wsmUrl: string): Promise<WMSCapabilities> {
-  return (await load(
-    `${wsmUrl}?service=WMS&request=GetCapabilities`,
-    WMSCapabilitiesLoader
-  )) as WMSCapabilities;
-}
-
-export function wmsCapabilitiesToDatasetMetadata(capabilities: WMSCapabilities): any | null {
-  // Flatten layers if they are nested
-  const layers = capabilities.layers.flatMap(layer => {
-    if (layer.layers && layer.layers.length > 0) {
-      return layer.layers;
-    }
-    return layer;
-  });
-
-  let availableLayers: WMSDatasetMetadata['layers'] = [];
-  if (Array.isArray(layers)) {
-    availableLayers = layers.map((layer: any) => {
-      const bb = layer.geographicBoundingBox;
-
-      let boundingBox: number[] | null = null;
-      if (Array.isArray(bb) && Array.isArray(bb[0]) && Array.isArray(bb[1])) {
-        boundingBox = [bb[0][0], bb[0][1], bb[1][0], bb[1][1]];
-      }
-
-      return {
-        name: layer.name,
-        title: layer.title || layer.name,
-        boundingBox,
-        queryable: layer.queryable
-      };
-    });
-  }
-
-  return {
-    layers: availableLayers,
-    version: capabilities.version || '1.3.0'
-  };
+  const capabilitiesUrl = buildWmsGetCapabilitiesUrl(wsmUrl) || wsmUrl;
+  return (await load(capabilitiesUrl, WMSCapabilitiesLoader, {
+    wms: {includeRawJSON: true}
+  })) as WMSCapabilities;
 }

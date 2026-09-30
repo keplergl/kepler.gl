@@ -11,6 +11,7 @@ import * as mapStateUpdaters from './map-state-updaters';
  */
 const actionHandler = {
   [ActionTypes.UPDATE_MAP]: mapStateUpdaters.updateMapUpdater,
+  [ActionTypes.APPLY_MAP_STATE]: mapStateUpdaters.applyMapStateUpdater,
   [ActionTypes.FIT_BOUNDS]: mapStateUpdaters.fitBoundsUpdater,
   [ActionTypes.TOGGLE_PERSPECTIVE]: mapStateUpdaters.togglePerspectiveUpdater,
   [ActionTypes.RECEIVE_MAP_CONFIG]: mapStateUpdaters.receiveMapConfigUpdater,

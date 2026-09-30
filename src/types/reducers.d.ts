@@ -46,6 +46,9 @@ export type MapState = {
     enabled: boolean;
     config: {
       atmosphere: boolean;
+      hugeHalo: boolean;
+      hugeHaloRadius: number;
+      hugeHaloOpacity: number;
       azimuth: boolean;
       azimuthAngle: number;
       terminator: boolean;
@@ -70,6 +73,19 @@ export type MapState = {
 };
 
 export type Bounds = [number, number, number, number];
+
+/**
+ * Padding in pixels used when fitting the map viewport to bounds.
+ * A number applies the same padding on all sides.
+ */
+export type ViewportPadding =
+  | number
+  | {
+      top?: number;
+      bottom?: number;
+      left?: number;
+      right?: number;
+    };
 
 export type RangeFieldDomain = {
   domain: number[];
@@ -152,7 +168,13 @@ export type FilterBase<L extends LineChart> = {
   // gpu filter
   gpu: boolean;
   gpuChannel?: number[];
+  gpuEndChannel?: number[];
   fieldType?: string;
+
+  // Optional end timestamp for duration-based time filters (parallel to name/fieldIdx)
+  endName?: (string | null | undefined)[];
+  endFieldIdx?: (number | null | undefined)[];
+  endMappedValue?: ((number | null)[] | null | undefined)[];
 
   // polygon
   layerId?: string[];
@@ -199,6 +221,14 @@ export type TimeRangeFilter = FilterBase<LineChart> &
     syncTimelineMode: SyncTimelineMode;
     animationWindow: string;
     invertTrendColor: boolean;
+    /**
+     * When set, a feature is visible while the playback window overlaps
+     * [startField, endField] rather than requiring a single timestamp in range.
+     */
+    endName?: (string | null | undefined)[];
+    endFieldIdx?: (number | null | undefined)[];
+    endMappedValue?: ((number | null)[] | null | undefined)[];
+    gpuEndChannel?: number[];
   };
 
 export type PolygonFilter = FilterBase<LineChart> & {
@@ -375,8 +405,15 @@ export type Coordinate = BaseInteraction & {
   id: 'coordinate';
   position: number[] | null;
 };
+export type LegendInfo = BaseInteraction & {
+  id: 'legend';
+  config: {
+    hideInvisibleLayers: boolean;
+  };
+};
 export type InteractionConfig = {
   tooltip: TooltipInfo;
+  legend: LegendInfo;
   geocoder: Geocoder;
   brush: Brush;
   coordinate: Coordinate;
@@ -386,7 +423,8 @@ export type MapInfo = {
   description: string;
 };
 export type FileLoading = {
-  filesToLoad: FileList;
+  filesToLoad: FileList | File[];
+  companionFiles?: File[];
   onFinish: (payload: any) => any;
   fileCache: any[];
 };
@@ -430,6 +468,8 @@ export declare type ExportImage = {
   ratio: EXPORT_IMG_RATIOS;
   resolution: ExportResolutionOption;
   legend: boolean;
+  /** When true, include the charts panel in the exported image. */
+  charts: boolean;
   mapH: number;
   mapW: number;
   imageSize: {
@@ -444,6 +484,7 @@ export declare type ExportImage = {
   error: Error | false;
   center: boolean;
   escapeXhtmlForWebpack?: boolean;
+  fileName: string;
 };
 
 export type ExportData = {
@@ -464,6 +505,9 @@ export type ExportMap = {
   HTML: ExportHtml;
   JSON: ExportJson;
   format: 'HTML' | 'JSON';
+  fileName: string;
+  /** When false, dataset access tokens are omitted from exported HTML and JSON. */
+  includeLayerApiKeys: boolean;
 };
 
 export type ExportVideo = {
@@ -505,9 +549,14 @@ export type MapControls = {
   splitMap?: MapControlItem;
   mapDraw?: MapControlItem;
   mapLocale?: MapControlItem;
+  mapTheme?: MapControlItem;
   effect?: MapControlItem;
   annotation?: MapControlItem;
+  chart?: MapControlItem;
+  viewportJson?: MapControlItem;
+  sqlPanel?: MapControlItem;
   aiAssistant?: MapControlItem;
+  [key: string]: MapControlItem | MapControlMapLegend | undefined;
 };
 
 export type LoadFiles = {
@@ -524,6 +573,8 @@ export type Notifications = {
 };
 
 export type Locale = string;
+
+export type UiTheme = string;
 
 export type PanelListView = string;
 
@@ -549,6 +600,8 @@ export type UiState = {
   loadFiles: LoadFiles;
   // Locale of the UI
   locale: Locale;
+  // Theme of the UI (`light` | `dark` | `space`). First of `themes` is the default when set.
+  theme: UiTheme;
   // view layers by list or dataset
   layerPanelListView: PanelListView;
   // view filters by list or dataset

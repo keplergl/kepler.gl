@@ -4,7 +4,7 @@
 // libraries
 import React, {useRef, useEffect, useState, useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-import debounce from 'lodash/debounce';
+import debounce from 'es-toolkit/compat/debounce';
 import {
   exportImageError,
   scaleMapStyleByResolution,
@@ -33,9 +33,17 @@ const CLASS_FILTER = [
   'mapboxgl-control-container',
   'attrition-link',
   'attrition-logo',
-  'map-control__panel-split-viewport-tools'
+  'map-control__panel-split-viewport-tools',
+  'map-navigation-control'
 ];
-const DOM_FILTER_FUNC = node => !CLASS_FILTER.includes(node.className);
+const DOM_FILTER_FUNC = node => {
+  const className = typeof node.className === 'string' ? node.className : '';
+  if (!className) {
+    return true;
+  }
+  const classes = className.split(/\s+/);
+  return !CLASS_FILTER.some(cls => classes.includes(cls));
+};
 const OUT_OF_SCREEN_POSITION = -9999;
 
 /**
@@ -75,7 +83,8 @@ const StyledPlotContainer = styled.div<StyledPlotContainerProps>`
   .mapboxgl-ctrl-bottom-left,
   .mapboxgl-ctrl-bottom-right,
   .mapbox-attribution-container,
-  .map-control__panel-split-viewport-tools {
+  .map-control__panel-split-viewport-tools,
+  .map-navigation-control {
     display: none;
   }
 
@@ -83,8 +92,9 @@ const StyledPlotContainer = styled.div<StyledPlotContainerProps>`
   top: ${OUT_OF_SCREEN_POSITION}px;
   left: ${OUT_OF_SCREEN_POSITION}px;
 
-  /* Apply zoom to legend panel based on export height */
-  .map-control-panel {
+  /* Apply zoom to legend/chart panels based on export height */
+  .map-control-panel,
+  .chart-manager {
     zoom: ${props => props.$legendZoom || 1} !important;
   }
 `;
@@ -105,6 +115,7 @@ interface PlotContainerProps {
   ratio?: string;
   resolution?: string;
   legend?: boolean;
+  charts?: boolean;
   center?: boolean;
   imageSize: ExportImage['imageSize'];
   escapeXhtmlForWebpack?: boolean;
@@ -135,6 +146,7 @@ export default function PlotContainerFactory(
     ratio,
     resolution,
     legend = false,
+    charts = false,
     center,
     imageSize,
     escapeXhtmlForWebpack,
@@ -290,11 +302,16 @@ export default function PlotContainerFactory(
 
     // Screenshot update effect
     useEffect(() => {
-      if (ratio !== undefined || resolution !== undefined || legend !== undefined) {
+      if (
+        ratio !== undefined ||
+        resolution !== undefined ||
+        legend !== undefined ||
+        charts !== undefined
+      ) {
         setExportImageSetting({processing: true});
         tryScreenshot();
       }
-    }, [ratio, resolution, legend, setExportImageSetting, tryScreenshot]);
+    }, [ratio, resolution, legend, charts, setExportImageSetting, tryScreenshot]);
 
     // Memoize size calculations
     const {size, width, height} = useMemo(() => {
@@ -354,6 +371,10 @@ export default function PlotContainerFactory(
             show: Boolean(legend),
             active: true,
             settings: mapFields.mapControls?.mapLegend?.settings
+          },
+          chart: {
+            show: false,
+            active: Boolean(charts)
           }
         },
         onMapRender,
@@ -381,6 +402,7 @@ export default function PlotContainerFactory(
         scaledMapStyle,
         newMapState,
         legend,
+        charts,
         onMapRender,
         deckRenderCallbacks,
         plotEffects,

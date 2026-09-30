@@ -244,8 +244,12 @@ export class GeoArrowTextLayer<ExtraProps extends object = object> extends Compo
         dataComparator: (d1: {data: unknown}, d2: {data: unknown}) => {
           return d1.data === d2.data;
         },
+        // Keep any `_subLayerProps` the caller passed in (e.g. a globe-aware
+        // `characters` sublayer class) instead of replacing them wholesale.
         _subLayerProps: {
+          ...(this.props._subLayerProps as Record<string, any> | undefined),
           characters: {
+            ...(this.props._subLayerProps as Record<string, any> | undefined)?.characters,
             dataComparator: (d1: {data: unknown}, d2: {data: unknown}) => {
               return d1.data === d2.data;
             }

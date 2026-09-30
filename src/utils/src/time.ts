@@ -25,7 +25,7 @@ export const TIMELINE_MODES = {
   outer: 'outer'
 };
 
-export const TileTimeInterval = {
+export const LayerTimeInterval = {
   YEAR: 'Y',
   MONTH: 'M',
   DAY: 'D',
@@ -34,19 +34,19 @@ export const TileTimeInterval = {
 };
 
 export const TIME_INTERVALS_ORDERED = [
-  TileTimeInterval.MINUTE,
-  TileTimeInterval.HOUR,
-  TileTimeInterval.DAY,
-  TileTimeInterval.MONTH,
-  TileTimeInterval.YEAR
+  LayerTimeInterval.MINUTE,
+  LayerTimeInterval.HOUR,
+  LayerTimeInterval.DAY,
+  LayerTimeInterval.MONTH,
+  LayerTimeInterval.YEAR
 ];
 
 export const LayerToFilterTimeInterval = {
-  [TileTimeInterval.MINUTE]: INTERVAL['1-minute'],
-  [TileTimeInterval.HOUR]: INTERVAL['1-hour'],
-  [TileTimeInterval.DAY]: INTERVAL['1-day'],
-  [TileTimeInterval.MONTH]: INTERVAL['1-month'],
-  [TileTimeInterval.YEAR]: INTERVAL['1-year']
+  [LayerTimeInterval.MINUTE]: INTERVAL['1-minute'],
+  [LayerTimeInterval.HOUR]: INTERVAL['1-hour'],
+  [LayerTimeInterval.DAY]: INTERVAL['1-day'],
+  [LayerTimeInterval.MONTH]: INTERVAL['1-month'],
+  [LayerTimeInterval.YEAR]: INTERVAL['1-year']
 };
 
 export const SAMPLE_TIMELINE = {

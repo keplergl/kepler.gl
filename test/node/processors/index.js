@@ -2,3 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import './file-handler-test';
+import './remote-file-test';
+import './loader-registry-test';
+import './shapefile-files-test';

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState, useRef, useMemo, useCallback} from 'react';
+import React, {useState, useRef, useMemo, useCallback, useEffect} from 'react';
 import styled, {withTheme, IStyledComponent} from 'styled-components';
 import DatasetLabel from '../common/dataset-label';
 import DataTableFactory from '../common/data-table';
@@ -10,12 +10,13 @@ import CanvasHack from '../common/data-table/canvas';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
 import {UIStateActions} from '@kepler.gl/actions';
 import {UiState} from '@kepler.gl/types';
+import {getApplicationConfig} from '@kepler.gl/utils';
 import {Gear} from '../common/icons';
 import Portaled from '../common/portaled';
 import DataTableConfigFactory from '../common/data-table/display-format';
 import {BaseComponentProps} from '../types';
+import {STATS_WIDTH} from '../common/data-table/column-statistics-components';
 
-const MIN_STATS_CELL_SIZE = 122;
 const DEFAULT_SORT_COLUMN = {};
 
 // sidePadding changes from 38 to 68, 30px for configuration button
@@ -137,6 +138,7 @@ interface DataTableModalProps {
   ) => void;
   uiStateActions: typeof UIStateActions;
   uiState: UiState;
+  loadColumnStats?: (dataId: string, fieldName: string | string[]) => void;
 }
 
 function DataTableModalFactory(
@@ -154,10 +156,13 @@ function DataTableModalFactory(
     showTab = true,
     setColumnDisplayFormat: setColumnDisplayFormatProp,
     uiStateActions,
-    uiState
+    uiState,
+    loadColumnStats
   }) => {
     const [showConfig, setShowConfig] = useState(false);
     const datasetCellSizeCache = useRef<Record<string, any>>({});
+
+    const enableColumnStats = getApplicationConfig().enableColumnStats;
 
     const fields = useMemo(
       () => (datasets && dataId ? (datasets[dataId] || {}).fields : undefined),
@@ -169,14 +174,15 @@ function DataTableModalFactory(
     const colMeta = useMemo(
       () =>
         fields?.reduce(
-          (acc, {name, displayName, type, filterProps, format, displayFormat}) => ({
+          (acc, {name, displayName, type, filterProps, format, displayFormat, isLoadingStats}) => ({
             ...acc,
             [name]: {
               name: displayName || name,
               type,
               ...(format ? {format} : {}),
               ...(displayFormat ? {displayFormat} : {}),
-              ...(filterProps?.columnStats ? {columnStats: filterProps.columnStats} : {})
+              ...(filterProps?.columnStats ? {columnStats: filterProps.columnStats} : {}),
+              ...(typeof isLoadingStats === 'boolean' ? {isLoadingStats} : {})
             }
           }),
           {}
@@ -184,51 +190,58 @@ function DataTableModalFactory(
       [fields]
     );
 
-    const cellSizeCache = useMemo(() => {
+    const [cellSizeCache, setCellSizeCache] = useState<
+      Record<string, {row: number; header: number}>
+    >({});
+
+    useEffect(() => {
       if (!datasets || !dataId || !datasets[dataId]) {
-        return {};
+        setCellSizeCache({});
+        return;
       }
+
       const {fields, dataContainer} = datasets[dataId];
-
-      let showCalculate: boolean | null = null;
-      if (!datasetCellSizeCache.current[dataId]) {
-        showCalculate = true;
-      } else if (
-        datasetCellSizeCache.current[dataId].fields !== fields ||
-        datasetCellSizeCache.current[dataId].dataContainer !== dataContainer
+      const cached = datasetCellSizeCache.current[dataId];
+      if (
+        cached &&
+        cached.fields === fields &&
+        cached.dataContainer === dataContainer &&
+        cached.enableColumnStats === enableColumnStats
       ) {
-        showCalculate = true;
+        setCellSizeCache(cached.cellSizeCache);
+        return;
       }
 
-      if (!showCalculate) {
-        return datasetCellSizeCache.current[dataId].cellSizeCache;
-      }
-
-      const cellSizeCache = fields.reduce(
-        (acc, field, colIdx) => ({
+      const nextCache = fields.reduce((acc, field, colIdx) => {
+        const size = renderedSize({
+          text: {
+            dataContainer,
+            column: field.displayName
+          },
+          colIdx,
+          type: field.type,
+          fontSize: theme.cellFontSize,
+          font: theme.fontFamily
+        });
+        return {
           ...acc,
-          [field.name]: renderedSize({
-            text: {
-              dataContainer,
-              column: field.displayName
-            },
-            colIdx,
-            type: field.type,
-            fontSize: theme.cellFontSize,
-            font: theme.fontFamily,
-            minCellSize: MIN_STATS_CELL_SIZE
-          })
-        }),
-        {}
-      );
+          [field.name]: enableColumnStats
+            ? {
+                row: Math.max(size.row, STATS_WIDTH),
+                header: Math.max(size.header, STATS_WIDTH)
+              }
+            : size
+        };
+      }, {});
 
       datasetCellSizeCache.current[dataId] = {
-        cellSizeCache,
+        cellSizeCache: nextCache,
         fields,
-        dataContainer
+        dataContainer,
+        enableColumnStats
       };
-      return cellSizeCache;
-    }, [dataId, datasets, theme]);
+      setCellSizeCache(nextCache);
+    }, [dataId, datasets, theme, enableColumnStats]);
 
     const handleCopyTableColumn = useCallback(
       (column: string) => {
@@ -309,7 +322,8 @@ function DataTableModalFactory(
               pinTableColumn={handlePinTableColumn}
               sortTableColumn={handleSortTableColumn}
               setColumnDisplayFormat={handleSetColumnDisplayFormat}
-              hasStats={false}
+              hasStats={enableColumnStats}
+              loadColumnStats={enableColumnStats ? loadColumnStats : undefined}
             />
           ) : null}
         </TableContainer>

@@ -3,7 +3,7 @@
 
 import React, {useEffect, useRef, useMemo} from 'react';
 import styled from 'styled-components';
-import truncate from 'lodash/truncate';
+import truncate from 'es-toolkit/compat/truncate';
 import {CompareType, Field, Merge, TooltipField} from '@kepler.gl/types';
 import {CenterFlexbox} from '../common/styled-components';
 import {Layers} from '../common/icons';
@@ -216,6 +216,51 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
   );
 };
 
+const FeatureInfoRows: React.FC<{
+  rows: Array<{name: string; value: string}>;
+  primaryRows?: Array<{name: string; value: string}> | null;
+  compareType?: CompareType;
+  isComparing: boolean;
+}> = ({rows, primaryRows, compareType, isComparing}) => {
+  const primaryByName = useMemo(() => {
+    const map = new Map<string, string>();
+    (primaryRows || []).forEach(row => {
+      map.set(row.name, row.value);
+    });
+    return map;
+  }, [primaryRows]);
+
+  return (
+    <tbody>
+      {rows.map(({name, value}, i) => {
+        let deltaValue: string | null = null;
+        if (isComparing) {
+          const primaryValue = primaryByName.get(name);
+          const numericValue = Number(value);
+          const numericPrimary = primaryValue === undefined ? NaN : Number(primaryValue);
+          if (Number.isFinite(numericValue) && Number.isFinite(numericPrimary)) {
+            deltaValue = getTooltipDisplayDeltaValue({
+              field: {type: 'real', name} as Field,
+              value: numericValue,
+              primaryValue: numericPrimary,
+              compareType
+            });
+          }
+        }
+        return (
+          <Row
+            key={`${name}-${i}`}
+            name={name}
+            value={value}
+            deltaValue={deltaValue}
+            isComparing={isComparing}
+          />
+        );
+      })}
+    </tbody>
+  );
+};
+
 const CellInfo = ({
   fieldsToShow,
   data,
@@ -270,30 +315,27 @@ const CellInfo = ({
 
   const aggregatedData = useMemo(() => {
     if (data.aggregatedData && fieldsToShow) {
-      return fieldsToShow.reduce(
-        (acc, field) => {
-          const dataForField = data.aggregatedData?.[field.name];
-          if (dataForField?.measure && field.name !== colorField?.name) {
-            const primaryDataForField = primaryData?.aggregatedData?.[field.name];
-            const deltaValue = primaryDataForField
-              ? getTooltipDisplayDeltaValue({
-                  field: {type: 'real', name: field.name} as Field,
-                  value: dataForField.value != null ? Number(dataForField.value) : null,
-                  primaryValue:
-                    primaryDataForField.value != null ? Number(primaryDataForField.value) : null,
-                  compareType
-                })
-              : null;
-            acc.push({
-              name: `${capitalizeFirstLetter(dataForField.measure)} of ${field.name}`,
-              value: dataForField.value,
-              deltaValue
-            });
-          }
-          return acc;
-        },
-        [] as {name: string; value?: string; deltaValue: string | null}[]
-      );
+      return fieldsToShow.reduce((acc, field) => {
+        const dataForField = data.aggregatedData?.[field.name];
+        if (dataForField?.measure && field.name !== colorField?.name) {
+          const primaryDataForField = primaryData?.aggregatedData?.[field.name];
+          const deltaValue = primaryDataForField
+            ? getTooltipDisplayDeltaValue({
+                field: {type: 'real', name: field.name} as Field,
+                value: dataForField.value != null ? Number(dataForField.value) : null,
+                primaryValue:
+                  primaryDataForField.value != null ? Number(primaryDataForField.value) : null,
+                compareType
+              })
+            : null;
+          acc.push({
+            name: `${capitalizeFirstLetter(dataForField.measure)} of ${field.name}`,
+            value: dataForField.value,
+            deltaValue
+          });
+        }
+        return acc;
+      }, [] as {name: string; value?: string; deltaValue: string | null}[]);
     }
     return [];
   }, [data.aggregatedData, fieldsToShow, colorField?.name, primaryData, compareType]);
@@ -350,6 +392,7 @@ const LayerHoverInfoFactory = () => {
     const hasFieldsToShow =
       (data.fieldValues && Object.keys(data.fieldValues).length > 0) ||
       (data.wmsFeatureData && data.wmsFeatureData.length > 0) ||
+      (data.rasterFeatureData && data.rasterFeatureData.length > 0) ||
       (props.fieldsToShow && props.fieldsToShow.length > 0);
 
     return (
@@ -360,16 +403,24 @@ const LayerHoverInfoFactory = () => {
         </StyledLayerName>
         {hasFieldsToShow && <StyledDivider />}
         <StyledTable className={props.primaryData ? 'comparing' : undefined}>
-          {data.wmsFeatureData ? (
-            <tbody>
-              {data.wmsFeatureData.map(({name, value}, i) => (
-                <Row key={i} name={name} value={value} />
-              ))}
-            </tbody>
+          {data.wmsFeatureData || data.rasterFeatureData ? (
+            <FeatureInfoRows
+              rows={data.wmsFeatureData || data.rasterFeatureData}
+              primaryRows={
+                props.primaryData?.wmsFeatureData || props.primaryData?.rasterFeatureData
+              }
+              compareType={props.compareType}
+              isComparing={Boolean(props.primaryData)}
+            />
           ) : data.fieldValues ? (
             <tbody>
               {data.fieldValues.map(({labelMessage, value}, i) => (
-                <Row key={i} name={intl.formatMessage({id: labelMessage})} value={value} />
+                <Row
+                  key={i}
+                  name={intl.formatMessage({id: labelMessage})}
+                  value={value}
+                  isComparing={Boolean(props.primaryData)}
+                />
               ))}
             </tbody>
           ) : props.layer.isAggregated ? (

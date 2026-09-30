@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {easeInOut} from 'popmotion';
+import {drawStarsBackground} from '@kepler.gl/deckgl-layers';
 
 export type SwipeEasing = 'linear' | 'ease-in-out';
 
@@ -32,11 +33,7 @@ const ARROW_SIZE = 6;
 /**
  * Draw a swipe divider (line + circular handle with arrows) onto a 2D canvas context.
  */
-function drawSwipeDivider(
-  ctx: CanvasRenderingContext2D,
-  splitX: number,
-  height: number
-): void {
+function drawSwipeDivider(ctx: CanvasRenderingContext2D, splitX: number, height: number): void {
   ctx.save();
 
   // Divider line
@@ -90,8 +87,9 @@ export function compositeSwipeFrame(
   rightCanvas: HTMLCanvasElement,
   outputCanvas: HTMLCanvasElement,
   percentage: number,
-  showDivider: boolean = true,
-  backgroundColor?: string
+  showDivider = true,
+  backgroundColor?: string,
+  showStars?: boolean
 ): void {
   const ctx = outputCanvas.getContext('2d');
   if (!ctx) return;
@@ -109,6 +107,12 @@ export function compositeSwipeFrame(
   if (backgroundColor) {
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, w, h);
+  }
+
+  // Stars are a CSS background on the live globe map, so they must be tiled
+  // onto the composite canvas or they won't appear in preview or export.
+  if (showStars) {
+    drawStarsBackground(ctx, w, h);
   }
 
   // Draw right (background) canvas fully

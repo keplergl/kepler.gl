@@ -2,7 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {Editor, Feature, FeatureSelectionContext, PickInfo} from '@kepler.gl/types';
-import {EDITOR_LAYER_ID, EDITOR_MODES} from '@kepler.gl/constants';
+import {EDITOR_DRAW_MODES, EDITOR_LAYER_ID, EDITOR_MODES} from '@kepler.gl/constants';
+import {isFilterFeature} from './feature-styles';
 
 /**
  * Returns true if drawing is active.
@@ -11,9 +12,7 @@ import {EDITOR_LAYER_ID, EDITOR_MODES} from '@kepler.gl/constants';
  * @returs Returns true if drawing is active.
  */
 export function isDrawingActive(editorMenuActive: boolean, mode: string): boolean {
-  return (
-    editorMenuActive && (mode === EDITOR_MODES.DRAW_POLYGON || mode === EDITOR_MODES.DRAW_RECTANGLE)
-  );
+  return editorMenuActive && EDITOR_DRAW_MODES.includes(mode);
 }
 
 /**
@@ -52,13 +51,15 @@ export function onClick(
   const drawingActive = isDrawingActive(editorMenuActive, editor.mode);
 
   if (info?.layer?.id === EDITOR_LAYER_ID && info?.object) {
-    const objectType = info.object.geometry?.type;
+    const isEditHandle = Boolean(
+      info.object.properties?.editHandleType || info.object.properties?.guideType
+    );
 
     if (drawingActive) {
       if (editor.selectedFeature) {
         setSelectedFeature(null);
       }
-    } else if (objectType?.endsWith('Polygon') || objectType?.endsWith('Point')) {
+    } else {
       let clickContext;
       if (event.rightButton && Array.isArray(event.srcEvent?.point)) {
         const {point} = event.srcEvent;
@@ -72,10 +73,10 @@ export function onClick(
         };
       }
 
-      if (objectType?.endsWith('Polygon')) {
+      if (!isEditHandle && info.object.geometry) {
         setSelectedFeature(info.object, clickContext);
       } else {
-        // don't select points
+        // Keep the current feature selected when clicking an edit handle
         setSelectedFeature(editor.selectedFeature, clickContext);
       }
     }
@@ -165,6 +166,12 @@ export function getTooltip(
     const tooltipText =
       editor.mode === EDITOR_MODES.DRAW_RECTANGLE
         ? 'Click or drag to draw rectangle'
+        : editor.mode === EDITOR_MODES.DRAW_CIRCLE
+        ? 'Click or drag to draw circle'
+        : editor.mode === EDITOR_MODES.DRAW_POINT
+        ? 'Click to add a point'
+        : editor.mode === EDITOR_MODES.DRAW_LINESTRING
+        ? 'Click to start a line. Double-click to finish'
         : 'Click to start new feature';
 
     return getTooltipObject(tooltipText, theme, {
@@ -178,7 +185,10 @@ export function getTooltip(
 
     if (selectedFeature) {
       if (!object || (object.id && object.id === selectedFeature.id)) {
-        return getTooltipObject('Right click to view options\nDrag to move the feature', theme, {
+        const tooltipText = isFilterFeature(selectedFeature)
+          ? 'Filter region\nRight click to view options\nDrag to move the feature'
+          : 'Right click to view options\nDrag to move the feature';
+        return getTooltipObject(tooltipText, theme, {
           leftOfCursor: closeToLeftEdge,
           aboveCursor: closeToBottomEdge
         });
@@ -186,10 +196,17 @@ export function getTooltip(
     }
 
     if (object?.properties?.editHandleType === 'intermediate') {
-      return getTooltipObject('Click to insert a point', theme, {
-        leftOfCursor: closeToLeftEdge,
-        aboveCursor: closeToBottomEdge
-      });
+      const isLine =
+        selectedFeature?.geometry?.type === 'LineString' ||
+        selectedFeature?.geometry?.type === 'MultiLineString';
+      return getTooltipObject(
+        isLine ? 'Drag to move the line\nClick to insert a point' : 'Click to insert a point',
+        theme,
+        {
+          leftOfCursor: closeToLeftEdge,
+          aboveCursor: closeToBottomEdge
+        }
+      );
     }
 
     if (object?.geometry?.type === 'Point' || object?.properties?.guideType === 'tentative') {
@@ -199,10 +216,16 @@ export function getTooltip(
       });
     }
 
-    return getTooltipObject('Click to select the feature\nRight click to view options', theme, {
-      leftOfCursor: closeToLeftEdge,
-      aboveCursor: closeToBottomEdge
-    });
+    return getTooltipObject(
+      isFilterFeature(object)
+        ? 'Click to select the filter\nRight click to view options'
+        : 'Click to select the feature\nRight click to view options',
+      theme,
+      {
+        leftOfCursor: closeToLeftEdge,
+        aboveCursor: closeToBottomEdge
+      }
+    );
   }
 
   return null;

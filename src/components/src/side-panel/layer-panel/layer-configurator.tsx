@@ -7,7 +7,13 @@ import React, {Component, Fragment, useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
 
 import ItemSelector from '../../common/item-selector/item-selector';
-import {Input, InputLight, PanelLabel, PanelLabelWrapper, SidePanelSection} from '../../common/styled-components';
+import {
+  Input,
+  InputLight,
+  PanelLabel,
+  PanelLabelWrapper,
+  SidePanelSection
+} from '../../common/styled-components';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
 import AggrScaleSelectorFactory from './aggr-scale-selector';
@@ -31,15 +37,23 @@ import ScenegraphModelSelectorFactory, {
 
 import RasterTileLayerConfiguratorFactory from './raster-tile-layer-configurator';
 import VectorTileLayerConfiguratorFactory from './vector-tile-layer-configurator';
+import LayerApiKeyInput from './layer-api-key-input';
 
-import {ActionHandler, toggleModal} from '@kepler.gl/actions';
+import {ActionHandler, toggleModal, updateDatasetProps} from '@kepler.gl/actions';
 import {
   AGGREGATION_TYPE_OPTIONS,
   LAYER_TYPES,
   CUSTOM_SCENEGRAPH_MODEL_ID,
-  BitmapDatasetMetadata
+  BitmapDatasetMetadata,
+  Tile3DDatasetMetadata
 } from '@kepler.gl/constants';
-import {AggregationLayer, Layer, LayerBaseConfig, VisualChannel, COLUMN_MODE_GEOJSON} from '@kepler.gl/layers';
+import {
+  AggregationLayer,
+  Layer,
+  LayerBaseConfig,
+  VisualChannel,
+  COLUMN_MODE_GEOJSON
+} from '@kepler.gl/layers';
 
 import {matchDatasetType, Datasets} from '@kepler.gl/table';
 import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
@@ -71,6 +85,7 @@ type LayerConfiguratorProps = {
   ) => void;
   updateLayerColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
   updateLayerTextLabel: (idx: number | 'all', prop: string, value: any) => void;
+  updateDatasetProps?: ActionHandler<typeof updateDatasetProps>;
   disableTypeSelect?: boolean;
 };
 
@@ -107,7 +122,8 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
 `;
 
 const BitmapDropZone = styled.div<{$isDragging: boolean}>`
-  border: 2px dashed ${props => (props.$isDragging ? props.theme.activeColor : props.theme.borderColor)};
+  border: 2px dashed
+    ${props => (props.$isDragging ? props.theme.activeColor : props.theme.borderColor)};
   border-radius: 4px;
   padding: 12px;
   text-align: center;
@@ -177,13 +193,10 @@ const BitmapImageSourceSection: React.FC<BitmapImageSourceProps> = ({dataset, on
     [dataset, onChange]
   );
 
-  const onUrlChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setUrl(e.target.value);
-      setError(null);
-    },
-    []
-  );
+  const onUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setUrl(e.target.value);
+    setError(null);
+  }, []);
 
   const onUrlBlur = useCallback(() => {
     if (url) {
@@ -268,7 +281,9 @@ const BitmapImageSourceSection: React.FC<BitmapImageSourceProps> = ({dataset, on
       />
       <BitmapDropZoneWrapper>
         {isCurrentDataUri && (
-          <BitmapClearButton onClick={onClearLocal} title="Clear image">✕</BitmapClearButton>
+          <BitmapClearButton onClick={onClearLocal} title="Clear image">
+            ✕
+          </BitmapClearButton>
         )}
         <BitmapDropZone
           $isDragging={isDragging}
@@ -277,7 +292,9 @@ const BitmapImageSourceSection: React.FC<BitmapImageSourceProps> = ({dataset, on
           onDragLeave={onDragLeave}
           onClick={onDropZoneClick}
         >
-          {isCurrentDataUri ? 'Local image loaded. Drop another to replace.' : 'Drop image here or click to select'}
+          {isCurrentDataUri
+            ? 'Local image loaded. Drop another to replace.'
+            : 'Drop image here or click to select'}
         </BitmapDropZone>
       </BitmapDropZoneWrapper>
       <input
@@ -301,7 +318,7 @@ const AlignModeContainer = styled.div`
 const AlignModeStatus = styled.div<{$highlight?: boolean}>`
   padding: 6px 8px;
   border-radius: 4px;
-  background: ${props => props.$highlight ? props.theme.panelBackgroundHover : 'transparent'};
+  background: ${props => (props.$highlight ? props.theme.panelBackgroundHover : 'transparent')};
   margin-bottom: 6px;
   line-height: 1.4;
 `;
@@ -1184,6 +1201,9 @@ export default function LayerConfiguratorFactory(
         meta: {featureTypes = {}},
         config: {visConfig}
       } = layer;
+      const elevationOffsetActive = Boolean(
+        layer.config.elevationOffsetField || visConfig.elevationOffset > 0
+      );
 
       return (
         <StyledLayerVisualConfigurator>
@@ -1216,6 +1236,7 @@ export default function LayerConfiguratorFactory(
             {...visConfiguratorProps}
             label="layer.strokeColor"
             collapsible
+            disabled={Boolean(featureTypes.polygon && elevationOffsetActive)}
           >
             <ChannelByValueSelector
               channel={layer.visualChannels.strokeColor}
@@ -1244,6 +1265,7 @@ export default function LayerConfiguratorFactory(
             {...(featureTypes.polygon ? layer.visConfigSettings.stroked : {})}
             label="layer.strokeWidth"
             collapsible
+            disabled={Boolean(featureTypes.polygon && elevationOffsetActive)}
           >
             {layer.config.sizeField ? (
               <VisConfigSlider
@@ -1289,6 +1311,30 @@ export default function LayerConfiguratorFactory(
                   {...visConfiguratorProps}
                 />
                 <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.wireframe} />
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          ) : null}
+
+          {/* Elevation Offset */}
+          {featureTypes.polygon ? (
+            <LayerConfigGroup
+              label={'layerVisConfigs.elevationOffset'}
+              description={'layerVisConfigs.elevationOffsetDescription'}
+              collapsible
+              disabled={!visConfig.filled}
+            >
+              {!layer.config.elevationOffsetField ? (
+                <VisConfigSlider
+                  {...layer.visConfigSettings.elevationOffset}
+                  {...visConfiguratorProps}
+                  label={false}
+                />
+              ) : null}
+              <ConfigGroupCollapsibleContent>
+                <ChannelByValueSelector
+                  channel={layer.visualChannels.elevationOffset}
+                  {...layerChannelConfigProps}
+                />
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}
@@ -1487,9 +1533,148 @@ export default function LayerConfiguratorFactory(
       );
     }
 
-    _renderTile3dLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
+    _renderGeohashLayerConfig({
+      layer,
+      visConfiguratorProps,
+      layerConfiguratorProps,
+      layerChannelConfigProps
+    }) {
+      return this._renderA5LayerConfig({
+        layer,
+        visConfiguratorProps,
+        layerConfiguratorProps,
+        layerChannelConfigProps
+      });
+    }
+
+    _renderA5LayerConfig({
+      layer,
+      visConfiguratorProps,
+      layerConfiguratorProps,
+      layerChannelConfigProps
+    }) {
+      const {
+        config: {visConfig}
+      } = layer;
+
       return (
         <StyledLayerVisualConfigurator>
+          {/* Color */}
+          <LayerConfigGroup
+            {...layer.visConfigSettings.filled}
+            {...visConfiguratorProps}
+            label="layer.fillColor"
+            collapsible
+          >
+            <ChannelByValueSelector
+              channel={layer.visualChannels.color}
+              {...layerChannelConfigProps}
+            />
+            {layer.config.colorField ? (
+              <LayerColorRangeSelector {...visConfiguratorProps} />
+            ) : (
+              <LayerColorSelector {...layerConfiguratorProps} />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* Stroke */}
+          <LayerConfigGroup
+            {...layer.visConfigSettings.stroked}
+            {...visConfiguratorProps}
+            label="layer.strokeColor"
+            collapsible
+          >
+            {layer.config.strokeColorField ? (
+              <LayerColorRangeSelector {...visConfiguratorProps} property="strokeColorRange" />
+            ) : (
+              <LayerColorSelector
+                {...visConfiguratorProps}
+                selectedColor={layer.config.visConfig.strokeColor}
+                property="strokeColor"
+              />
+            )}
+            <ChannelByValueSelector
+              channel={layer.visualChannels.strokeColor}
+              {...layerChannelConfigProps}
+            />
+          </LayerConfigGroup>
+
+          {/* Stroke Width */}
+          <LayerConfigGroup {...visConfiguratorProps} label="layer.strokeWidth" collapsible>
+            {layer.config.sizeField ? (
+              <VisConfigSlider
+                {...layer.visConfigSettings.sizeRange}
+                {...visConfiguratorProps}
+                label={false}
+              />
+            ) : (
+              <VisConfigSlider
+                {...layer.visConfigSettings.thickness}
+                {...visConfiguratorProps}
+                label={false}
+              />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <ChannelByValueSelector
+                channel={layer.visualChannels.size}
+                {...layerChannelConfigProps}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* Elevation */}
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            {...layer.visConfigSettings.enable3d}
+            disabled={!visConfig.filled}
+            collapsible
+          >
+            <ChannelByValueSelector
+              channel={layer.visualChannels.height}
+              {...layerChannelConfigProps}
+            />
+            <VisConfigSlider
+              {...layer.visConfigSettings.elevationScale}
+              {...visConfiguratorProps}
+              label={'layerVisConfigs.heightMultiplier'}
+            />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.heightRange}
+                {...visConfiguratorProps}
+                label="layerVisConfigs.heightRange"
+              />
+              <VisConfigSwitch {...layer.visConfigSettings.fixedHeight} {...visConfiguratorProps} />
+              <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.wireframe} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
+    _renderTile3dLayerConfig({layer, dataset, visConfiguratorProps, layerConfiguratorProps}) {
+      const metadata = (dataset?.metadata || {}) as Tile3DDatasetMetadata;
+      const {updateDatasetProps: onUpdateDatasetProps} = this.props;
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label={'layer.apiKey'}>
+            <LayerApiKeyInput
+              accessToken={metadata.tile3dAccessToken}
+              loadError={
+                (layer as {tilesetLoadError?: 'token' | 'generic' | null}).tilesetLoadError
+              }
+              onCommit={token => {
+                const dataId = layer.config.dataId;
+                if (!dataId || !onUpdateDatasetProps) {
+                  return;
+                }
+                onUpdateDatasetProps(dataId, {metadata: {tile3dAccessToken: token}});
+              }}
+            />
+          </LayerConfigGroup>
           <LayerConfigGroup label={'layer.appearance'}>
             <LayerColorSelector {...layerConfiguratorProps} />
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
@@ -1503,10 +1688,7 @@ export default function LayerConfiguratorFactory(
       return (
         <StyledLayerVisualConfigurator>
           <LayerConfigGroup label={'layer.imageSource'} collapsible>
-            <BitmapImageSourceSection
-              dataset={dataset}
-              onChange={visConfiguratorProps.onChange}
-            />
+            <BitmapImageSourceSection dataset={dataset} onChange={visConfiguratorProps.onChange} />
           </LayerConfigGroup>
           <LayerConfigGroup label={'layer.appearance'}>
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
@@ -1578,6 +1760,56 @@ export default function LayerConfiguratorFactory(
               {...visConfiguratorProps}
               property="transparent"
             />
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
+    _renderFlowFieldLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
+      const colorBySpeed = Boolean(layer.config.visConfig.colorBySpeed);
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label="layer.color">
+            <VisConfigSwitch {...layer.visConfigSettings.colorBySpeed} {...visConfiguratorProps} />
+            {colorBySpeed ? (
+              <LayerColorRangeSelector {...visConfiguratorProps} property="colorRange" />
+            ) : (
+              <LayerColorSelector {...layerConfiguratorProps} />
+            )}
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label="layerVisConfigs.flowField.streamlines" collapsible>
+            <VisConfigSlider
+              {...layer.visConfigSettings.linesPerScreen}
+              {...visConfiguratorProps}
+            />
+            <VisConfigSlider {...layer.visConfigSettings.strokeWidth} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.trailLength} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.zoomResponse}
+                {...visConfiguratorProps}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup label="layerVisConfigs.flowField.animation">
+            <VisConfigSlider {...layer.visConfigSettings.cycleSeconds} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.lineLifetime} {...visConfiguratorProps} />
+            <VisConfigSwitch {...layer.visConfigSettings.seamlessLoop} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label="layerVisConfigs.flowField.field" collapsible>
+            <VisConfigSlider {...layer.visConfigSettings.smoothing} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.gridResolution}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSlider
+                {...layer.visConfigSettings.elevationMultiplier}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSwitch {...layer.visConfigSettings.debugGrid} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );

@@ -58,6 +58,7 @@ declare module '@deck.gl/core' {
   export type {CoordinateSystem} from '@deck.gl/core/dist/lib/constants';
   export type {ChangeFlags} from '@deck.gl/core/dist/lib/layer-state';
   export type {MapViewState} from '@deck.gl/core/dist/views/map-view';
+  export type {FilterContext} from '@deck.gl/core/dist/passes/layers-pass';
   export type {Effect, PreRenderOptions, PostRenderOptions} from '@deck.gl/core/dist/lib/effect';
   export type {ControllerProps} from '@deck.gl/core/dist/controllers/controller';
   export type {BinaryAttribute} from '@deck.gl/core/dist/lib/attribute/attribute';
@@ -78,6 +79,7 @@ declare module '@deck.gl/layers' {
   export {default as PolygonLayer} from '@deck.gl/layers/dist/polygon-layer/polygon-layer';
   export {default as GeoJsonLayer} from '@deck.gl/layers/dist/geojson-layer/geojson-layer';
   export {default as TextLayer} from '@deck.gl/layers/dist/text-layer/text-layer';
+  export {default as _TextBackgroundLayer} from '@deck.gl/layers/dist/text-layer/text-background-layer/text-background-layer';
   export {default as SolidPolygonLayer} from '@deck.gl/layers/dist/solid-polygon-layer/solid-polygon-layer';
   export {default as PointCloudLayer} from '@deck.gl/layers/dist/point-cloud-layer/point-cloud-layer';
 
@@ -104,6 +106,8 @@ declare module '@deck.gl/geo-layers' {
   export {default as H3HexagonLayer} from '@deck.gl/geo-layers/dist/h3-layers/h3-hexagon-layer';
   export {default as H3ClusterLayer} from '@deck.gl/geo-layers/dist/h3-layers/h3-cluster-layer';
   export {default as S2Layer} from '@deck.gl/geo-layers/dist/s2-layer/s2-layer';
+  export {default as A5Layer} from '@deck.gl/geo-layers/dist/a5-layer/a5-layer';
+  export {default as GeohashLayer} from '@deck.gl/geo-layers/dist/geohash-layer/geohash-layer';
   export {default as TripsLayer} from '@deck.gl/geo-layers/dist/trips-layer/trips-layer';
   export {default as TileLayer} from '@deck.gl/geo-layers/dist/tile-layer/tile-layer';
   export {default as MVTLayer} from '@deck.gl/geo-layers/dist/mvt-layer/mvt-layer';
@@ -113,6 +117,8 @@ declare module '@deck.gl/geo-layers' {
 
   export type {H3HexagonLayerProps} from '@deck.gl/geo-layers/dist/h3-layers/h3-hexagon-layer';
   export type {S2LayerProps} from '@deck.gl/geo-layers/dist/s2-layer/s2-layer';
+  export type {A5LayerProps} from '@deck.gl/geo-layers/dist/a5-layer/a5-layer';
+  export type {GeohashLayerProps} from '@deck.gl/geo-layers/dist/geohash-layer/geohash-layer';
   export type {
     TileLayerProps,
     TileLayerPickingInfo

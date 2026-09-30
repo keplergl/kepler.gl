@@ -15,7 +15,7 @@ import {LayerVisConfig, LayerOrder, MapState, RGBColor} from '@kepler.gl/types';
 import {getDistanceScales} from 'viewport-mercator-project';
 import {ArrowDown, ArrowRight, EyeSeen, EyeUnseen} from '../common/icons';
 import PanelHeaderActionFactory from '../side-panel/panel-header-action';
-import {getFlatLayerOrder} from '@kepler.gl/reducers';
+import {getFlatLayerOrder, isLayerShownInLegend} from '@kepler.gl/reducers';
 
 interface StyledMapControlLegendProps {
   width?: number;
@@ -31,7 +31,9 @@ export const StyledMapControlLegend = styled.div<StyledMapControlLegendProps>`
   border-bottom-style: solid;
   border-bottom-width: ${props => (props.$last ? 0 : '1px')};
   width: ${props => props.width}px;
+  max-width: 100%;
   box-sizing: border-box;
+  overflow-x: hidden;
 
   .legend--layer_name {
     font-size: 12px;
@@ -71,6 +73,19 @@ export const StyledMapControlLegend = styled.div<StyledMapControlLegendProps>`
 
   .legend--layer_color-legend {
     margin-top: 6px;
+  }
+
+  .legend--layer_image-wrap {
+    max-height: 240px;
+    overflow: auto;
+    background: #fff;
+    border-radius: 2px;
+  }
+
+  .legend--layer_image {
+    display: block;
+    max-width: 100%;
+    height: auto;
   }
 `;
 
@@ -225,6 +240,7 @@ export function LayerColorLegendFactory(
       },
       [layer, onLayerVisConfigChange, colorRange, range]
     );
+    const isHeatmap = layer.type === 'heatmap';
     const [isExpanded, setIsExpanded] = useState(isExport);
     const handleToggleExpanded = () => setIsExpanded(!isExpanded);
     return (
@@ -234,7 +250,7 @@ export function LayerColorLegendFactory(
             {enableColorBy ? (
               <div className="legend--layer_size-title-row">
                 <VisualChannelMetric name={enableColorBy} />
-                {!isExport ? (
+                {!isExport && !isHeatmap ? (
                   <PanelHeaderAction
                     id="legend-collapse-button"
                     onClick={handleToggleExpanded}
@@ -257,6 +273,15 @@ export function LayerColorLegendFactory(
                   disableEdit={disableEdit || Boolean(isExport)}
                   isFixed={isFixed}
                   mapState={mapState}
+                  orientation={isHeatmap ? 'horizontal' : 'vertical'}
+                  endpointLabels={
+                    isHeatmap
+                      ? {
+                          min: intl.formatMessage({id: 'mapLegend.min', defaultMessage: 'Min'}),
+                          max: intl.formatMessage({id: 'mapLegend.max', defaultMessage: 'Max'})
+                        }
+                      : undefined
+                  }
                   labelFormat={
                     colorField?.displayFormat ? d3Format(colorField?.displayFormat) : null
                   }
@@ -445,6 +470,18 @@ const defaultActionIcons = {
   collapsed: ArrowRight
 };
 
+const LayerImageLegend: React.FC<{src: string; alt: string}> = ({src, alt}) => {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return null;
+  }
+  return (
+    <div className="legend--layer_image-wrap">
+      <img className="legend--layer_image" src={src} alt={alt} onError={() => setFailed(true)} />
+    </div>
+  );
+};
+
 export type LayerLegendContentProps = {
   layer: Layer;
   containerW: number;
@@ -470,6 +507,7 @@ export function LayerLegendContentFactory(
     actionIcons
   }) => {
     const visualChannels = layer.getLegendVisualChannels();
+    const legendImageUrl = layer.getLegendImageUrl();
     const channelKeys = Object.values(visualChannels);
     const colorChannels = channelKeys.filter(isColorChannel) as VisualChannel[];
     const nonColorChannels = channelKeys.filter(vc => !isColorChannel(vc));
@@ -489,6 +527,13 @@ export function LayerLegendContentFactory(
     }
     return (
       <>
+        {legendImageUrl ? (
+          <LayerImageLegend
+            key={legendImageUrl}
+            src={legendImageUrl}
+            alt={layer.config.label || 'Layer legend'}
+          />
+        ) : null}
         {colorChannelToRender.map(colorChannel => (
           <LayerColorLegend
             key={colorChannel.key}
@@ -549,6 +594,7 @@ export type MapLegendProps = {
   isExport?: boolean;
   onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   onToggleLayerVisibility?: (layer: Layer) => void;
+  hideInvisibleLayers?: boolean;
   onMapToggleLayer?: (mapIndex: number, layerId: string) => void;
   isSplit?: boolean;
   splitMaps?: {layers: {[key: string]: boolean}}[];
@@ -635,6 +681,7 @@ function MapLegendFactory(
     isExport,
     onLayerVisConfigChange,
     onToggleLayerVisibility,
+    hideInvisibleLayers,
     onMapToggleLayer,
     isSplit,
     splitMaps,
@@ -648,12 +695,29 @@ function MapLegendFactory(
         }, [])
       : layers;
 
+    const legendLayers = orderedLayers.filter(layer => {
+      if (
+        !layer.isValidToSave() ||
+        layer.config.hidden ||
+        !isLayerShownInLegend(layer, layerOrder)
+      ) {
+        return false;
+      }
+      if (!hideInvisibleLayers) {
+        return true;
+      }
+      if (isSplit && splitMaps && splitMaps.length > 1) {
+        return (
+          layer.config.isVisible &&
+          (Boolean(splitMaps[0]?.layers?.[layer.id]) || Boolean(splitMaps[1]?.layers?.[layer.id]))
+        );
+      }
+      return layer.config.isVisible;
+    });
+
     return (
       <div className="map-legend">
-        {orderedLayers.map((layer, index) => {
-          if (!layer.isValidToSave() || layer.config.hidden) {
-            return null;
-          }
+        {legendLayers.map((layer, index) => {
           const containerW = width || DIMENSIONS.mapControl.width;
 
           const isLayerVisible =
@@ -668,7 +732,7 @@ function MapLegendFactory(
               key={layer.id}
               layer={layer}
               containerW={containerW}
-              isLast={index === orderedLayers.length - 1}
+              isLast={index === legendLayers.length - 1}
               isLayerVisible={isLayerVisible}
               isExport={isExport}
               options={options}

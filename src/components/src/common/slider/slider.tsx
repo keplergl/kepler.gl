@@ -174,12 +174,8 @@ export default class Slider extends Component<SliderProps> {
       const pos1Px = this.getPositionFromValue(value1) * baseDistance;
       const deltaPx = x - anchor;
 
-      const newVal0Raw = this.normalizeValue(
-        this.getValueFromPixelOffset(pos0Px + deltaPx)
-      );
-      const newVal1Raw = this.normalizeValue(
-        this.getValueFromPixelOffset(pos1Px + deltaPx)
-      );
+      const newVal0Raw = this.normalizeValue(this.getValueFromPixelOffset(pos0Px + deltaPx));
+      const newVal1Raw = this.normalizeValue(this.getValueFromPixelOffset(pos1Px + deltaPx));
 
       const val0 = clamp([minValue, maxValue - (newVal1Raw - newVal0Raw)], newVal0Raw);
       const val1 = clamp([val0 + (newVal1Raw - newVal0Raw), maxValue], newVal1Raw);

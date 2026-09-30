@@ -17,6 +17,7 @@ import StatusPanel from './status-panel';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
 import {ProviderSelect} from './cloud-components/provider-select';
+import {CloudStorageDisclaimer} from './cloud-components/cloud-storage-disclaimer';
 import {Provider} from '@kepler.gl/cloud-providers';
 import {cleanupExportImage as cleanupExportImageAction} from '@kepler.gl/actions';
 import {dataTestIds} from '@kepler.gl/constants';
@@ -73,10 +74,11 @@ const StyledShareMapModal = styled(StyledModalContent)`
   margin: 0 -72px -40px -72px;
   display: flex;
   flex-direction: column;
+  min-height: 500px;
 `;
 
 const StyledInnerDiv = styled.div`
-  min-height: 500px;
+  flex: 1;
 `;
 
 const UNDERLINE_TEXT_DECORATION_STYLE = {textDecoration: 'underline'};
@@ -192,6 +194,7 @@ export default function ShareMapUrlModalFactory() {
                 )}
               </StyledInnerDiv>
             ) : null}
+            <CloudStorageDisclaimer />
           </StyledShareMapModal>
         </ImageModalContainer>
       </ThemeProvider>

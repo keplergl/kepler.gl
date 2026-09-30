@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import memoize from 'lodash/memoize';
-import uniq from 'lodash/uniq';
+import memoize from 'es-toolkit/compat/memoize';
+import uniq from 'es-toolkit/compat/uniq';
 import {interpolateArray} from 'd3-interpolate';
 import Layer, {LayerBaseConfig, defaultGetFieldValue, VisualChannelField} from '../base-layer';
 import {TripsLayer as DeckGLTripsLayer} from '@deck.gl/geo-layers';
@@ -172,7 +172,6 @@ export const tripVisConfigs: {
   sizeScale: {
     ...LAYER_VIS_CONFIGS.sizeScale,
     label: 'layerVisConfigs.adjustSize',
-    description: 'layerVisConfigs.adjustSizeDescription',
     defaultValue: 1,
     isRanged: false,
     range: [-10, 10],
@@ -603,7 +602,10 @@ export default class TripLayer extends Layer {
     });
   }
 
-  _getColumnModeValueAccessor = feature => {
+  // Called from gpu-filter-utils.getFilterValueAccessor(), which passes
+  // (dataContainer, feature, fieldIndex). The trip carries its own materialised
+  // rows in properties.values, so the data container is not needed here.
+  _getColumnModeValueAccessor = (dc, feature) => {
     return field => {
       if (field.fieldIdx === this.config.columns.timestamp?.fieldIdx) {
         return this.dataToTimeStamp[feature.properties.index];
@@ -626,7 +628,7 @@ export default class TripLayer extends Layer {
     switch (this.config.columnMode) {
       case COLUMN_MODE_GEOJSON: {
         valueAccessor = (dc: DataContainerInterface, f, fieldIndex: number) => {
-          return dc.valueAt(f.properties.index, fieldIndex);
+          return fields[fieldIndex].valueAccessor({index: f.properties.index});
         };
         const textLabelAccessor = tl => dc => {
           const {field} = tl;
@@ -653,7 +655,15 @@ export default class TripLayer extends Layer {
         throw new Error(`Unsupported column mode: ${this.config.columnMode}`);
     }
     const indexAccessor = f => f.properties.index;
-    const dataAccessor = dc => d => ({index: d.properties.index});
+    // For GEOJSON mode, properties.index is the row index in the data container.
+    // For TABLE mode, properties.index is the feature index (not a row index), so
+    // read field values from the first row of the trip (properties.values) instead.
+    let dataAccessor;
+    if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
+      dataAccessor = dc => d => ({index: d.properties.index});
+    } else {
+      dataAccessor = () => d => d.properties.values[0];
+    }
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
     const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
       indexAccessor,
@@ -1033,7 +1043,7 @@ export default class TripLayer extends Layer {
   private _findDatumForFeatureByTime(
     featureIndex: number,
     animationConfig: AnimationConfig,
-    interpolateCoords: boolean = true
+    interpolateCoords = true
   ): DatumForFeatureByTime {
     const {currentTime} = animationConfig ?? {};
     if (notNullorUndefined(currentTime)) {
@@ -1046,10 +1056,7 @@ export default class TripLayer extends Layer {
         return {idx: -1, coords: null, datum: null, prevDatum: null, advancement: 0};
       }
       if (idx >= coordinates.length) idx = coordinates.length - 1;
-      if (
-        timestamps[0] <= currentTime &&
-        currentTime <= timestamps[timestamps.length - 1]
-      ) {
+      if (timestamps[0] <= currentTime && currentTime <= timestamps[timestamps.length - 1]) {
         const datum = coordinates[idx]?.datum;
         let coords = coordinates[idx].slice(0, 3);
         const prevCoords = idx > 0 ? coordinates[idx - 1].slice(0, 3) : null;

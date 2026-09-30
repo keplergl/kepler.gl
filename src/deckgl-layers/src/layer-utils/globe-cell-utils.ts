@@ -146,6 +146,27 @@ const globeCellClassCache = new WeakMap<object, object>();
 
 type LayerConstructor = {new (...args: any[]): any; layerName?: string};
 
+/**
+ * deck.gl's GridCellLayer / HexagonCellLayer bind the `colorRange` palette
+ * texture only when the `colorRange` *prop* changes. ColumnLayer (the parent)
+ * destroys and recreates `fillModel` whenever `extensionsChanged` fires —
+ * which happens when Light & Shadow registers the shadow shader module.
+ * The new model starts with empty bindings, the colorRange check is a no-op,
+ * and luma.gl skips the draw: "Binding colorRange not found in …-cells-fill-cached".
+ * Recreating the Kepler layer "fixes" it because initialize/update then sees a
+ * colorRange change against empty oldProps and binds the texture again.
+ *
+ * Re-bind the existing texture onto whatever fillModel is current. Harmless
+ * when the parent already bound it; required after a model rebuild.
+ */
+function bindColorRangeTexture(layer: any, moduleName: string): void {
+  const model = layer.state?.fillModel;
+  const colorTexture = layer.state?.colorTexture;
+  if (model?.shaderInputs && colorTexture) {
+    model.shaderInputs.setProps({[moduleName]: {colorRange: colorTexture}});
+  }
+}
+
 export function makeGlobeCellLayerClass<T extends LayerConstructor>(
   BaseCellLayer: T,
   type: string
@@ -157,12 +178,17 @@ export function makeGlobeCellLayerClass<T extends LayerConstructor>(
 
   class GlobeCellLayer extends (BaseCellLayer as {new (...args: any[]): any}) {
     getShaders() {
-      const shaders = (super.getShaders as () => any)();
+      const shaders = super.getShaders();
       return {
         ...shaders,
         vs: addGlobeCellProjection(shaders.vs, type),
         modules: [...(shaders.modules || []), globeCellUniforms]
       };
+    }
+
+    updateState(params: any) {
+      super.updateState(params);
+      bindColorRangeTexture(this, type);
     }
 
     draw(opts: any) {
@@ -175,7 +201,8 @@ export function makeGlobeCellLayerClass<T extends LayerConstructor>(
       if (model?.shaderInputs) {
         model.shaderInputs.setProps({globeCell: {globeMode}});
       }
-      (super.draw as (o: any) => void)(opts);
+      bindColorRangeTexture(this, type);
+      super.draw(opts);
     }
   }
   (GlobeCellLayer as unknown as {layerName: string}).layerName = `Globe${type}CellLayer`;

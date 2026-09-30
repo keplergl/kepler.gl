@@ -44,6 +44,9 @@ const StyledTileWrapper: IStyledComponent<'web', StyledTileWrapperProps> = style
 const StyledBox = styled(CenterVerticalFlexbox)`
   margin-right: 12px;
   position: relative;
+  width: 120px;
+  max-width: 120px;
+  flex: 0 0 120px;
 `;
 
 const StyledCloudName = styled.div`
@@ -101,6 +104,12 @@ const NewTag = styled.div`
 export const StyledWarning = styled.span`
   color: ${props => props.theme.errorColor};
   font-weight: ${props => props.theme.selectFontWeightBold};
+  display: block;
+  width: 100%;
+  text-align: center;
+  overflow-wrap: break-word;
+  font-size: 11px;
+  line-height: 1.3;
 `;
 
 interface CloudTileProps {
@@ -126,30 +135,47 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
     if (!provider) {
       return;
     }
+    let cancelled = false;
     setError(null);
     setIsLoading(true);
-    setError(null);
     provider
       .getUser()
-      .then(setUser)
-      .catch(setError)
+      .then(nextUser => {
+        if (!cancelled) {
+          setUser(nextUser);
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          setUser(null);
+          setError(err as Error);
+        }
+      })
       .finally(() => {
-        setError(null);
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       });
+    return () => {
+      cancelled = true;
+    };
   }, [provider]);
 
   const onLogin = useCallback(async () => {
     setError(null);
     setIsLoading(true);
     try {
-      const user = await provider.login();
-      setUser(user);
+      const nextUser = await provider.login();
+      setUser(nextUser);
       setProvider(provider);
+      return nextUser;
     } catch (error) {
+      // Swallow: also used as LoginButton onClick (must not reject)
       setError(error as Error);
+      return null;
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [provider, setProvider]);
 
   const onSelect = useCallback(async () => {
@@ -157,20 +183,39 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
       return;
     }
     if (user) {
-      setProvider(provider);
-      return;
+      // Re-check on click: mount-time getUser() can go stale if the modal stays
+      // open past token expiry. Null means the session is gone — fall through
+      // to login() (this click is a user gesture). A throw is a transient
+      // failure (e.g. Dropbox network); keep the cached user and do not
+      // force another provider login popup.
+      setError(null);
+      setIsLoading(true);
+      try {
+        const currentUser = await provider.getUser();
+        if (currentUser) {
+          setUser(currentUser);
+          setIsLoading(false);
+          setProvider(provider);
+          return;
+        }
+        setUser(null);
+        setIsLoading(false);
+      } catch {
+        setIsLoading(false);
+        setProvider(provider);
+        return;
+      }
     }
-    try {
-      await onLogin();
-      setProvider(provider);
-    } catch (err) {
-      setError(err as Error);
+    const nextUser = await onLogin();
+    if (!nextUser) {
       setProvider(null);
     }
+    // onLogin already selected the provider on success
   }, [setProvider, provider, user, isLoading, onLogin]);
 
   const onLogout = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       await provider.logout();
     } catch (error) {

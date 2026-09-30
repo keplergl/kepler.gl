@@ -12,7 +12,7 @@ import {ParquetWasmLoader} from '@loaders.gl/parquet';
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
   LOADING_SAMPLE_LIST_ERROR_MESSAGE,
-  MAP_CONFIG_URL
+  getMapConfigUrl
 } from './constants/default-settings';
 
 // CONSTANTS
@@ -171,7 +171,7 @@ function loadRemoteRawData(url) {
  * @returns {Function}
  */
 export function loadSample(options, pushRoute = true) {
-  return (dispatch) => {
+  return dispatch => {
     if (options.id && pushRoute) {
       const search = window.location.search || '';
       window.history.pushState(null, '', `/demo/${options.id}${search}`);
@@ -287,7 +287,8 @@ function loadRemoteData(url) {
  */
 export function loadSampleConfigurations(sampleMapId = null) {
   return dispatch => {
-    fetch(MAP_CONFIG_URL)
+    const mapConfigUrl = getMapConfigUrl();
+    fetch(mapConfigUrl)
       .then(response => {
         if (!response.ok) {
           return response.text().then(text => {
@@ -318,7 +319,7 @@ export function loadSampleConfigurations(sampleMapId = null) {
         dispatch(
           loadRemoteResourceError(
             {message: `${error} - ${LOADING_SAMPLE_LIST_ERROR_MESSAGE}`},
-            MAP_CONFIG_URL
+            mapConfigUrl
           )
         );
       });

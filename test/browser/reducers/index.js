@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {visStateReducer as reducer} from '@kepler.gl/reducers';
-import CloneDeep from 'lodash/cloneDeep';
+import CloneDeep from 'es-toolkit/compat/cloneDeep';
 import test from 'tape-catch';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
 import {VisStateActions} from '@kepler.gl/actions';

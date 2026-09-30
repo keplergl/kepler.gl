@@ -1,0 +1,28 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "exclude": ["exports", "nsExports", "types", "nsTypes", "enumMembers", "duplicates"],
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
+  "ignore": [
+    "bindings/**",
+    "website/**",
+    "examples/**",
+    "scripts/ts-smoosh/tests/**"
+  ],
+  "ignoreWorkspaces": ["src/types"],
+  "workspaces": {
+    ".": {
+      "entry": [
+        "scripts/**/*.{js,mjs,cjs}",
+        "webpack/**/*.js",
+        "esbuild/**/*.mjs",
+        "test/**/*.{js,ts,tsx}"
+      ]
+    },
+    "src/*": {
+      "entry": ["src/index.{ts,tsx,js}"]
+    }
+  }
+}

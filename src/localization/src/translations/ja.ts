@@ -16,6 +16,7 @@ export default {
     stroke: '線の太さ',
     density: '密度',
     height: '高さ',
+    elevationOffset: '標高オフセット',
     sum: '合計',
     pointCount: '点の数'
   },
@@ -27,7 +28,8 @@ export default {
     selectValue: '値を選択',
     enterValue: '値を入力',
     empty: '未選択',
-    selectLayer: 'レイヤを選択'
+    selectLayer: 'レイヤを選択',
+    endTimeField: '終了時刻を選択'
   },
   misc: {
     by: '',
@@ -60,7 +62,8 @@ export default {
       addMoreLabel: 'ラベルを追加',
       backgroundColor: '背景色',
       outlineWidth: '輪郭線の幅',
-      outlineColor: '輪郭線の色'
+      outlineColor: '輪郭線の色',
+      collisionEnabled: '重なったラベルを非表示'
     }
   },
   sidebar: {
@@ -102,6 +105,9 @@ export default {
     layer: 'レイヤ',
     appearance: '外観',
     uniqueIdField: '一意IDフィールド',
+    hideNulls: 'Null値を非表示',
+    hideNullsDescription:
+      'オンにすると、塗りつぶし色の値がないフィーチャは非表示になります。オフの場合は灰色で表示されます。',
     type: {
       point: 'point',
       arc: 'arc',
@@ -117,6 +123,8 @@ export default {
       hexagonid: 'H3',
       trip: 'trip',
       s2: 'S2',
+      geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'vector tile',
@@ -161,6 +169,9 @@ export default {
     sizeScale: 'サイズのスケール',
     worldUnitSize: 'World Unit Size',
     elevationScale: '標高のスケール',
+    elevationOffset: '標高オフセット',
+    elevationOffsetDescription: '押し出したポリゴンを地面から持ち上げます（高さと同じ単位）',
+    elevationOffsetRange: '標高オフセットの範囲',
     enableElevationZoomFactor: '標高ズーム係数を使用する',
     enableElevationZoomFactorDescription: '現在のズーム率に基づいて高さ/標高を調整します',
     enableHeightZoomFactor: '高さズーム係数を使用する',
@@ -181,6 +192,8 @@ export default {
     heightMultiplier: '高さ乗数',
     fixedHeight: '固定高さ',
     fixedHeightDescription: '高さを変更せずに使用する',
+    fixedElevation: '固定標高',
+    fixedElevationDescription: '標高オフセットを変更せずに使用する',
     allowHover: 'ツールチップを表示',
     allowHoverDescription: 'レイヤー要素にホバーしたときにツールチップを表示または非表示にする',
     flow: {
@@ -234,7 +247,9 @@ export default {
     addAnnotation: '追加',
     type: 'タイプ',
     lineWidth: '線幅',
-    color: '色'
+    color: '色',
+    textSide: 'テキストの位置',
+    textPlacement: '配置'
   },
   effectDescription: {
     lightAndShadow:
@@ -284,18 +299,38 @@ export default {
     timeFilterSync: '同期データセット',
     timeLayerSync: 'レイヤタイムラインにリンク',
     timeLayerUnsync: 'レイヤタイムラインのリンクを解除',
-    column: '列'
+    column: '列',
+    timeIntervalEndField: '終了時刻',
+    timeIntervalEndFieldHint:
+      '任意。再生ウィンドウがこの期間と重なっている間、フィーチャは表示されたままになります。',
+    timezone: 'タイムゾーン',
+    selectTimezone: '表示タイムゾーンを選択'
   },
   datasetTitle: {
     showDataTable: 'データ表を表示',
-    removeDataset: 'データセットを削除'
+    removeDataset: 'データセットを削除',
+    refreshDataset: 'データセットを更新',
+    refreshFailed: '更新に失敗しました',
+    refreshSettings: '更新設定',
+    refreshOff: 'オフ',
+    refresh10s: '10秒',
+    refresh15s: '15秒',
+    refresh1m: '1分',
+    refresh5m: '5分',
+    refresh15m: '15分',
+    refreshCustom: 'カスタム'
   },
   datasetInfo: {
     rowCount: '{rowCount}行',
     vectorTile: 'ベクタータイル',
     rasterTile: 'ラスタータイル',
     wmsTile: 'WMSタイル',
-    tile3d: '3Dタイル'
+    tile3d: '3Dタイル',
+    remoteFile: '{rowCount}行（リモート）',
+    refreshInterval: '更新',
+    refreshCustomSeconds: '秒',
+    refreshing: '更新中…',
+    refreshingPercent: '更新中 {percent}%'
   },
   tooltip: {
     hideLayer: 'レイヤを非表示',
@@ -316,7 +351,12 @@ export default {
     showLegend: '凡例を表示',
     disable3DMap: '3D地図を無効化',
     DrawOnMap: '地図上に図形を描画',
+    copyAllSketches: 'すべてのスケッチを GeoJSON としてクリップボードにコピー',
+    convertToLayer: 'スケッチを GeoJSON レイヤに変換し、描画をクリア',
     selectLocale: '言語設定',
+    switchToLightTheme: 'ライトテーマに切り替え',
+    switchToDarkTheme: 'ダークテーマに切り替え',
+    switchToSpaceTheme: 'Spaceテーマに切り替え',
     showAiAssistantPanel: 'AI 助手パネルを表示',
     hideAiAssistantPanel: 'AI 助手パネルを非表示',
     hideLayerPanel: 'レイヤパネルを非表示',
@@ -341,6 +381,8 @@ export default {
     syncTimelineEnd: '現在のフィルタ期間の終了',
     showEffectPanel: 'エフェクトパネルを表示',
     hideEffectPanel: 'エフェクトパネルを非表示',
+    showChartPanel: 'チャートを表示',
+    hideChartPanel: 'チャートを非表示',
     showAnnotationPanel: 'アノテーションを表示',
     hideAnnotationPanel: 'アノテーションを非表示',
     removeAnnotation: 'アノテーションを削除',
@@ -351,6 +393,12 @@ export default {
     removeEffect: 'エフェクトを削除',
     disableEffect: 'エフェクトを無効化',
     effectSettings: 'エフェクト設定',
+    editLayerJson: 'レイヤーJSONを編集',
+    editFilterJson: 'フィルターJSONを編集',
+    editEffectJson: 'エフェクトJSONを編集',
+    editViewportJson: 'ビューポートJSONを編集',
+    editAnimationJson: 'アニメーションJSONを編集',
+    editChartJson: 'チャートJSONを編集',
     timeLayerSync: 'レイヤタイムラインにリンク',
     timeLayerUnsync: 'レイヤタイムラインのリンクを解除'
   },
@@ -362,8 +410,13 @@ export default {
     shareMapURL: '地図のURLを共有',
     saveMap: '地図を保存',
     select: '選択',
+    point: 'ポイント',
+    line: 'ライン',
     polygon: 'ポリゴン',
     rectangle: '長方形',
+    circle: '円',
+    copyAll: 'すべてコピー',
+    convertToLayer: 'レイヤに\n変換',
     hide: '非表示',
     show: '表示',
     ...LOCALES
@@ -372,7 +425,15 @@ export default {
     filterLayer: 'レイヤをフィルタ',
     filterLayerDisabled: 'ポリゴン以外のジオメトリはフィルタリングに使用できません',
     copyGeometry: 'ジオメトリをコピー',
-    noLayersToFilter: 'フィルタするレイヤがありません'
+    extractData: 'データを抽出',
+    extractFromLayer: '{layerName} レイヤーから',
+    editProperties: 'プロパティを編集',
+    propertyName: 'プロパティ',
+    propertyValue: '値',
+    removeProperty: 'プロパティを削除',
+    polygonFilter: 'ポリゴンフィルタ',
+    noLayersToFilter: 'フィルタするレイヤがありません',
+    noLayersToExtract: '抽出できるレイヤがありません'
   },
   exportVideoModal: {
     animation: 'アニメーション',
@@ -410,7 +471,9 @@ export default {
       resolutionDescription: '印刷には高解像度が適しています。',
       resolutionPlaceholder: '解像度を選択...',
       mapLegendTitle: '地図の凡例',
-      mapLegendAdd: '地図に判例を追加'
+      mapLegendAdd: '地図に判例を追加',
+      chartsTitle: 'チャート',
+      chartsAdd: '地図にチャートを追加'
     },
     exportVideo: {
       animation: 'アニメーション',
@@ -472,6 +535,10 @@ export default {
     saveMap: {
       title: 'クラウドストレージ',
       subtitle: '地図を個人用クラウドストレージに保存するためにログインする'
+    },
+    providerSelect: {
+      disclaimer:
+        'ご自身のアカウントでログインします。マップは選択したプロバイダーの個人ストレージに保存され、Kepler.gl 上には保存されません。'
     },
     exportMap: {
       formatTitle: '地図の形式',
@@ -568,13 +635,20 @@ export default {
   header: {
     visibleLayers: '表示中のレイヤ',
     layerLegend: 'レイヤ判例',
-    annotations: 'アノテーション'
+    annotations: 'アノテーション',
+    charts: 'チャート'
   },
   interactions: {
     tooltip: 'ツールチップ',
     brush: 'ブラシ',
     coordinate: '座標',
-    geocoder: 'ジオコーダー'
+    geocoder: 'ジオコーダー',
+    legend: '凡例',
+    legendHint: '凡例に表示するレイヤを選びます。マップ上のレイヤはそのままです。',
+    legendEmpty: 'レイヤを追加すると、凡例に表示する項目を選べます。',
+    legendHiddenByGroup: 'グループが凡例から除外されているため非表示です',
+    legendHideInvisible: '非表示のレイヤを凡例から隠す',
+    legendAllLayers: 'すべてのレイヤ'
   },
   layerBlending: {
     title: 'レイヤのブレンド',
@@ -659,16 +733,23 @@ export default {
   fileUploader: {
     message: 'ここにファイルをドロップ（複数可）',
     chromeMessage:
-      '*Chromeユーザーの場合: ファイルサイズは250mbまでにしてください。それ以上のファイルをアップロードする必要がある場合、Safariを試してください。',
+      '*ファイルはブラウザ内で解析されます。大きなファイルはメモリ不足になることがあります。非常に大きなデータセットにはタイルセットを使用してください。',
     disclaimer:
       '*kepler.glはクライアント上で動作します。データは自身の機器・ブラウザにのみ保持されます。' +
       '情報や地図データは、いかなるサーバーにも送信されません。',
     configUploadMessage:
-      '{fileFormatNames} または保存済地図の**Json**をアップロードします。詳細は以下を参照してください：[**対応ファイル形式**]',
+      '対応ファイルまたは保存済地図の**Json**をアップロードします。詳細は以下を参照してください：[**対応ファイル形式**]',
     browseFiles: 'デバイスのファイルを選択',
     uploading: 'アップロード中',
+    downloading: 'ダウンロード中',
     fileNotSupported: '{errorFiles} はサポートされていないファイルです。',
-    or: 'または'
+    or: 'または',
+    dropMessage: 'ここにファイルをドロップ（複数可）、{browse}、または',
+    urlPlaceholder: 'データセットの URL を入力',
+    fetch: '取得',
+    format: '形式',
+    formatAuto: '自動',
+    cors: 'URL は [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) を許可する必要があります。'
   },
   geocoder: {
     title: '住所または座標を入力（例： 37.79,-122.40）'

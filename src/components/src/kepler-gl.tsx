@@ -60,6 +60,7 @@ import GeoCoderPanelFactory from './geocoder-panel';
 import EffectManagerFactory from './effects/effect-manager';
 import DndContextFactory from './dnd-context';
 import {CloudListProvider} from './hooks/use-cloud-list-provider';
+import RemoteDatasetRefreshController from './remote-dataset-refresh-controller';
 
 import {
   filterObjectByPredicate,
@@ -68,10 +69,17 @@ import {
   observeDimensions,
   unobserveDimensions,
   hasPortableWidth,
-  getApplicationConfig
+  getApplicationConfig,
+  getConfiguredThemes
 } from '@kepler.gl/utils';
 
-import {theme as basicTheme, themeLT, themeBS, breakPointValues} from '@kepler.gl/styles';
+import {
+  theme as basicTheme,
+  themeLT,
+  themeBS,
+  themeSpace,
+  breakPointValues
+} from '@kepler.gl/styles';
 import {KeplerGlState} from '@kepler.gl/reducers';
 import {Provider} from '@kepler.gl/cloud-providers';
 
@@ -188,8 +196,9 @@ export const mapFieldsSelector = (props: KeplerGLProps, index = 0) => {
     mapControls: props.uiState.mapControls,
     readOnly: props.uiState.readOnly,
     locale: props.uiState.locale,
+    uiTheme: props.uiState.theme,
     isLoadingIndicatorVisible: Number(props.visState.loadingIndicatorValue) > 0,
-    sidePanelWidth: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
+    sidePanelWidth: props.sidePanelWidth ?? DEFAULT_KEPLER_GL_PROPS.sidePanelWidth,
 
     // mapStyle
     topMapContainerProps: props.topMapContainerProps,
@@ -229,8 +238,10 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
   mapInfo: props.visState.mapInfo,
   layerBlending: props.visState.layerBlending,
   overlayBlending: props.visState.overlayBlending,
+  groupBys: props.visState.groupBys,
+  joins: props.visState.joins,
 
-  width: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
+  width: props.sidePanelWidth ?? DEFAULT_KEPLER_GL_PROPS.sidePanelWidth,
   availableProviders,
   mapSaved: props.providerState.mapSaved
 });
@@ -241,6 +252,7 @@ export const plotContainerSelector = (props: KeplerGLProps) => ({
   ratio: props.uiState.exportImage.ratio,
   resolution: props.uiState.exportImage.resolution,
   legend: props.uiState.exportImage.legend,
+  charts: props.uiState.exportImage.charts,
   center: props.uiState.exportImage.center,
   imageSize: props.uiState.exportImage.imageSize,
   escapeXhtmlForWebpack: props.uiState.exportImage.escapeXhtmlForWebpack,
@@ -546,17 +558,37 @@ function KeplerGlFactory(
 
     /* selectors */
     themeSelector = props => props.theme;
-    availableThemeSelector = createSelector(this.themeSelector, theme =>
-      typeof theme === 'object'
-        ? {
+    uiThemeSelector = props => props.uiState?.theme;
+    availableThemeSelector = createSelector(
+      this.themeSelector,
+      this.uiThemeSelector,
+      (theme, uiTheme) => {
+        const configuredThemes = getConfiguredThemes();
+        // A configured list drives named theme switching; otherwise the `theme` prop is used.
+        const themeInput = configuredThemes.length
+          ? configuredThemes.includes(uiTheme)
+            ? uiTheme
+            : configuredThemes[0]
+          : theme;
+
+        if (typeof themeInput === 'object' && themeInput !== null) {
+          return {
             ...basicTheme,
-            ...theme
-          }
-        : theme === THEME.light
-        ? themeLT
-        : theme === THEME.base
-        ? themeBS
-        : theme
+            ...themeInput
+          };
+        }
+        if (themeInput === THEME.light) {
+          return themeLT;
+        }
+        if (themeInput === THEME.base) {
+          return themeBS;
+        }
+        if (themeInput === THEME.space) {
+          return themeSpace;
+        }
+        // THEME.dark and unknown values fall back to the default dark theme
+        return basicTheme;
+      }
     );
 
     datasetsSelector = props => props.visState.datasets;
@@ -686,12 +718,18 @@ function KeplerGlFactory(
                       ref={this.root}
                     >
                       <NotificationPanel {...notificationPanelFields} />
+                      <RemoteDatasetRefreshController
+                        datasets={visState.datasets}
+                        refreshDataset={this.props.visStateActions.refreshDataset}
+                      />
                       <DndContext visState={visState}>
                         {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
                         <MapsLayout
                           className="maps"
                           mapState={this.props.mapState}
-                          onSetSwipeComparePercentage={this.props.mapStateActions.setSwipeComparePercentage}
+                          onSetSwipeComparePercentage={
+                            this.props.mapStateActions.setSwipeComparePercentage
+                          }
                         >
                           {mapContainers}
                         </MapsLayout>

@@ -9,7 +9,7 @@ type EnhancedFormattedMessageProps = {
   defaultMessage?: string;
   defaultValue?: string;
   values?: {
-    [key: string]: string | number | null;
+    [key: string]: React.ReactNode;
   };
   children?: (chunks: React.ReactNode[]) => React.ReactElement;
 };

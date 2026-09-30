@@ -3,4 +3,8 @@
 
 export * from './data-processor';
 export * from './file-handler';
+export * from './remote-file';
 export * from './types';
+export * from './kepler-csv-loader';
+export * from './loader-registry';
+export * from './shapefile-files';

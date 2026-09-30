@@ -8,7 +8,7 @@ import {Add} from '../../common/icons';
 import {Button} from '../../common/styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
-import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {UIStateActions, VisStateActions, ActionHandler, ActionHandlers} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 
 type AddDataButtonProps = {
@@ -24,6 +24,9 @@ type DatasetSectionProps = {
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   showAddDataModal: () => void;
+  refreshDataset?: ActionHandler<typeof VisStateActions.refreshDataset>;
+  updateDatasetProps?: ActionHandler<typeof VisStateActions.updateDatasetProps>;
+  visStateActions?: ActionHandlers<typeof VisStateActions>;
 };
 
 const StyledDatasetTitle = styled.div<{$showDatasetList?: boolean}>`
@@ -73,7 +76,10 @@ function DatasetSectionFactory(
       showDeleteDataset,
       removeDataset,
       showDatasetList,
-      showAddDataModal
+      showAddDataModal,
+      refreshDataset,
+      updateDatasetProps,
+      visStateActions
     } = props;
     const datasetCount = Object.keys(datasets).length;
 
@@ -90,6 +96,11 @@ function DatasetSectionFactory(
             updateTableColor={updateTableColor}
             removeDataset={removeDataset}
             showDeleteDataset={showDeleteDataset}
+            refreshDataset={refreshDataset}
+            updateDatasetProps={updateDatasetProps}
+            addGroupBy={visStateActions?.addGroupBy}
+            addJoin={visStateActions?.addJoin}
+            addSpatialJoin={visStateActions?.addSpatialJoin}
           />
         )}
       </StyledDatasetSection>

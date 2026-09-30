@@ -1,0 +1,42 @@
+name: SQLRooms demo tests
+
+on:
+  pull_request:
+    branches: [master, feat/sqlrooms-integration]
+    paths:
+      - 'examples/demo-app-sqlrooms/**'
+      - 'website/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.github/workflows/sqlrooms-demo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: volta-cli/action@v4
+      - name: Get Yarn cache directory
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-sqlrooms-demo-${{ hashFiles('yarn.lock', 'examples/demo-app-sqlrooms/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-sqlrooms-demo-
+      - name: Install dependencies
+        run: yarn install --immutable && yarn install:sqlrooms
+        env:
+          HUSKY: 0
+          PUPPETEER_SKIP_DOWNLOAD: true
+      - name: Test SQLRooms demo, including deployment routes
+        run: node --test examples/demo-app-sqlrooms/test/*.test.cjs

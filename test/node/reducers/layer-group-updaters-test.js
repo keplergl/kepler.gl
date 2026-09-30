@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape-catch';
-import CloneDeep from 'lodash/cloneDeep';
+import CloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import {VisStateActions} from '@kepler.gl/actions';
 import {
@@ -129,8 +129,14 @@ test('#visStateReducer -> REMOVE_LAYER_GROUP -> removes group and its layers', t
   t.notOk(group, 'group should be removed');
 
   // Layers inside group should be removed
-  t.notOk(nextState.layers.find(l => l.id === layer0Id), 'layer0 should be removed');
-  t.notOk(nextState.layers.find(l => l.id === layer1Id), 'layer1 should be removed');
+  t.notOk(
+    nextState.layers.find(l => l.id === layer0Id),
+    'layer0 should be removed'
+  );
+  t.notOk(
+    nextState.layers.find(l => l.id === layer1Id),
+    'layer1 should be removed'
+  );
 
   // Layer count should decrease
   t.equal(nextState.layers.length, initialLayerCount - 2, 'should have 2 fewer layers');
@@ -182,6 +188,33 @@ test('#visStateReducer -> UPDATE_LAYER_GROUP -> toggle visibility cascades to la
   const l1 = nextState.layers.find(l => l.id === layer1Id);
   t.equal(l0.config.isVisible, false, 'layer0 should be hidden');
   t.equal(l1.config.isVisible, false, 'layer1 should be hidden');
+  t.end();
+});
+
+test('#visStateReducer -> UPDATE_LAYER_GROUP -> legend flag does not change map visibility', t => {
+  const state = createStateWithGroup();
+  const layer0Id = state.layers[0].id;
+  state.layers[0].config.isVisible = true;
+
+  const nextState = reducer(
+    state,
+    VisStateActions.updateLayerGroup({
+      id: 'test_group_1',
+      options: {isIncludedInLegend: false}
+    })
+  );
+
+  const group = getLayerGroupFromLayerOrder(nextState.layerOrder, 'test_group_1');
+  t.equal(group.isIncludedInLegend, false, 'group should be omitted from the legend');
+  t.equal(group.isVisible, true, 'group should stay visible on the map');
+
+  const layer0 = nextState.layers.find(l => l.id === layer0Id);
+  t.equal(layer0.config.isVisible, true, 'child layer should stay visible on the map');
+  t.equal(
+    layer0.config.isIncludedInLegend,
+    undefined,
+    'child legend choice should stay independent of the group'
+  );
   t.end();
 });
 
@@ -261,7 +294,10 @@ test('#visStateReducer -> REMOVE_LAYER_FROM_LAYER_GROUP -> removes layer from gr
   t.notOk(group.layerOrder.includes(layer0Id), 'layer0 should be removed from group');
 
   // Layer should still exist in state.layers (not deleted)
-  t.ok(nextState.layers.find(l => l.id === layer0Id), 'layer should still exist');
+  t.ok(
+    nextState.layers.find(l => l.id === layer0Id),
+    'layer should still exist'
+  );
   t.end();
 });
 
@@ -287,7 +323,11 @@ test('#visStateReducer -> SWAP_LAYER_ORDER_ENTRIES -> root to root', t => {
   );
 
   // First and last should be swapped
-  t.equal(nextState.layerOrder[nextState.layerOrder.length - 1], firstEntry, 'origin moved to destination');
+  t.equal(
+    nextState.layerOrder[nextState.layerOrder.length - 1],
+    firstEntry,
+    'origin moved to destination'
+  );
   t.end();
 });
 
@@ -308,10 +348,7 @@ test('#visStateReducer -> SWAP_LAYER_ORDER_ENTRIES -> group to root', t => {
 
   // layer0 should now be at root level
   const group = getLayerGroupFromLayerOrder(nextState.layerOrder, 'test_group_1');
-  t.notOk(
-    group.layerOrder.includes(layer0Id),
-    'layer0 should be removed from group'
-  );
+  t.notOk(group.layerOrder.includes(layer0Id), 'layer0 should be removed from group');
   t.ok(
     nextState.layerOrder.some(e => e === layer0Id),
     'layer0 should be at root level'
@@ -333,10 +370,7 @@ test('#visStateReducer -> SWAP_LAYER_ORDER_ENTRIES -> root to group', t => {
   );
 
   const group = getLayerGroupFromLayerOrder(nextState.layerOrder, 'test_group_1');
-  t.ok(
-    group.layerOrder.includes(layer2Id),
-    'layer2 should be moved into the group'
-  );
+  t.ok(group.layerOrder.includes(layer2Id), 'layer2 should be moved into the group');
   t.end();
 });
 
@@ -355,10 +389,7 @@ test('#visStateReducer -> DUPLICATE_LAYER -> layer inside group', t => {
   const group = getLayerGroupFromLayerOrder(nextState.layerOrder, 'test_group_1');
 
   t.ok(group, 'group should still exist');
-  t.ok(
-    group.layerOrder.includes(newLayer.id),
-    'duplicated layer should be inside the same group'
-  );
+  t.ok(group.layerOrder.includes(newLayer.id), 'duplicated layer should be inside the same group');
   t.end();
 });
 
@@ -373,7 +404,10 @@ test('#visStateReducer -> REMOVE_LAYER -> layer inside group', t => {
   const nextState = reducer(state, VisStateActions.removeLayer(layer0Id));
 
   // Layer should be removed from state
-  t.notOk(nextState.layers.find(l => l.id === layer0Id), 'layer should be removed');
+  t.notOk(
+    nextState.layers.find(l => l.id === layer0Id),
+    'layer should be removed'
+  );
 
   // Layer should be removed from group
   const group = getLayerGroupFromLayerOrder(nextState.layerOrder, 'test_group_1');

@@ -206,6 +206,9 @@ function LayerManagerFactory(
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
     const enableWMSLayer = getApplicationConfig().enableWMSLayer;
     const enableFlowLayer = getApplicationConfig().enableFlowLayer;
+    const enableA5Layer = getApplicationConfig().enableA5Layer;
+    const enableGeohashLayer = getApplicationConfig().enableGeohashLayer;
+    const enableFlowFieldLayer = getApplicationConfig().enableFlowFieldLayer;
     const enableLayerGroups = getApplicationConfig().enableLayerGroups;
 
     const filteredLayerClasses = useMemo(() => {
@@ -222,8 +225,28 @@ function LayerManagerFactory(
         const {flow: _flow, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
       }
+      if (!enableA5Layer) {
+        const {a5: _a5, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
+      if (!enableGeohashLayer) {
+        const {geohash: _geohash, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
+      if (!enableFlowFieldLayer) {
+        const {flowField: _flowField, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
       return filteredClasses as LayerClassesType;
-    }, [enableRasterTileLayer, enableWMSLayer, enableFlowLayer, layerClasses]);
+    }, [
+      enableRasterTileLayer,
+      enableWMSLayer,
+      enableFlowLayer,
+      enableA5Layer,
+      enableGeohashLayer,
+      enableFlowFieldLayer,
+      layerClasses
+    ]);
 
     return (
       <div className="layer-manager">
@@ -238,6 +261,9 @@ function LayerManagerFactory(
           showDeleteDataset={showDeleteDataset}
           showDatasetList={!isSortByDatasetMode}
           showAddDataModal={showAddDataModal}
+          refreshDataset={visStateActions.refreshDataset}
+          updateDatasetProps={visStateActions.updateDatasetProps}
+          visStateActions={visStateActions}
         />
         <SidePanelDivider />
         <SidePanelSection>

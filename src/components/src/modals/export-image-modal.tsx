@@ -26,6 +26,7 @@ import {StyledModalContent, SelectionButton, CheckMark} from '../common/styled-c
 import Switch from '../common/switch';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {getApplicationConfig} from '@kepler.gl/utils';
 
 const ImageOptionList = styled.div`
   display: flex;
@@ -46,6 +47,42 @@ const ImageOptionList = styled.div`
     padding: 8px 0px;
     flex-wrap: wrap;
     gap: 4px;
+  }
+
+  .option-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+
+    .kg-checkbox__label {
+      margin-bottom: 0;
+    }
+  }
+
+  .file-name-input {
+    margin-top: 8px;
+
+    input {
+      width: 100%;
+      padding: 6px 12px;
+      border: 1px solid #d3d3d3;
+      border-radius: 2px;
+      font-size: ${props => props.theme.inputFontSize};
+      font-family: inherit;
+      height: 32px;
+      box-sizing: border-box;
+
+      &:hover {
+        border-color: #999;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: #0066cc;
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+      }
+    }
   }
 
   .resolution-dropdown {
@@ -124,7 +161,8 @@ const ExportImageModalFactory = () => {
     cleanupExportImage,
     intl
   }) => {
-    const {legend, ratio, resolution} = exportImage;
+    const {legend, charts, ratio, resolution, fileName} = exportImage;
+    const chartsEnabled = Boolean(getApplicationConfig().enableChartsPanel);
 
     // Filter resolutions based on selected ratio
     const filteredResolutions = useMemo(() => {
@@ -173,6 +211,23 @@ const ExportImageModalFactory = () => {
     return (
       <StyledModalContent className="export-image-modal">
         <ImageOptionList>
+          <div className="image-option-section">
+            <div className="image-option-section-title">
+              <FormattedMessage id={'modal.exportFileName.title'} />
+            </div>
+            <FormattedMessage id={'modal.exportFileName.subtitle'} />
+            <div className="file-name-input">
+              <input
+                id="export-image-file-name"
+                type="text"
+                value={fileName || ''}
+                placeholder={intl.formatMessage({id: 'modal.exportFileName.placeholder'})}
+                aria-label={intl.formatMessage({id: 'modal.exportFileName.title'})}
+                onChange={event => onUpdateImageSetting({fileName: event.target.value})}
+                onMouseDown={event => event.stopPropagation()}
+              />
+            </div>
+          </div>
           <div className="image-option-section">
             <div className="image-option-section-title">
               <FormattedMessage id={'modal.exportImage.ratioTitle'} />
@@ -243,15 +298,26 @@ const ExportImageModalFactory = () => {
           )}
           <div className="image-option-section">
             <div className="image-option-section-title">
-              <FormattedMessage id={'modal.exportImage.mapLegendTitle'} />
+              <FormattedMessage id={'modal.exportImage.optionsTitle'} />
             </div>
-            <Switch
-              type="checkbox"
-              id="add-map-legend"
-              checked={legend}
-              label={intl.formatMessage({id: 'modal.exportImage.mapLegendAdd'})}
-              onChange={() => onUpdateImageSetting({legend: !legend})}
-            />
+            <div className="option-list">
+              <Switch
+                type="checkbox"
+                id="add-map-legend"
+                checked={legend}
+                label={intl.formatMessage({id: 'modal.exportImage.mapLegendAdd'})}
+                onChange={() => onUpdateImageSetting({legend: !legend})}
+              />
+              {chartsEnabled ? (
+                <Switch
+                  type="checkbox"
+                  id="add-map-charts"
+                  checked={Boolean(charts)}
+                  label={intl.formatMessage({id: 'modal.exportImage.chartsAdd'})}
+                  onChange={() => onUpdateImageSetting({charts: !charts})}
+                />
+              ) : null}
+            </div>
           </div>
         </ImageOptionList>
         <ImagePreview exportImage={exportImage} />

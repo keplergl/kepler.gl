@@ -3,7 +3,7 @@
 
 import React, {useState, useCallback} from 'react';
 import styled from 'styled-components';
-import get from 'lodash/get';
+import get from 'es-toolkit/compat/get';
 import {IntlShape, useIntl} from 'react-intl';
 
 import FileUploadFactory from '../common/file-uploader/file-upload';
@@ -20,7 +20,7 @@ const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
 })`
   padding: ${props => props.theme.modalPadding};
-  min-height: 440px;
+  min-height: 360px;
   display: flex;
   flex-direction: column;
 `;
@@ -57,6 +57,8 @@ type LoadDataModalProps = {
   fileFormatNames: string[];
   /** A list of typically 3 letter extensions (without '.') for file matching */
   fileExtensions: string[];
+  /** Extensions shown as icons in the uploader. Defaults to `fileExtensions`. */
+  displayedFileExtensions?: string[];
   isCloudMapLoading: boolean;
   /** Set to true if app wants to do its own file filtering */
   disableExtensionFilter?: boolean;

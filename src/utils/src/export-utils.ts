@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
-import get from 'lodash/get';
+import get from 'es-toolkit/compat/get';
 
 import {
   EXPORT_IMG_RESOLUTION_OPTIONS,
@@ -96,6 +96,34 @@ export function dataURItoBlob(dataURI: string): Blob {
   return new Blob([ab], {type: mimeString});
 }
 
+const ILLEGAL_FILENAME_CHARS = /[/\\?%*:|"<>]/g;
+const KNOWN_EXPORT_EXTENSION = /\.(json|html|png|csv|jpe?g|webp)$/i;
+
+/**
+ * Turn a user-entered export name into a safe basename.
+ * Empty input falls back to `fallback`. Known extensions are stripped so the
+ * caller can add the format-specific suffix.
+ */
+export function getExportFileNameBase(name: string | undefined, fallback: string): string {
+  const fallbackBase = fallback.replace(KNOWN_EXPORT_EXTENSION, '').trim() || fallback;
+  const raw = (name || '').trim() || fallbackBase;
+  const stripped = raw.replace(KNOWN_EXPORT_EXTENSION, '').replace(ILLEGAL_FILENAME_CHARS, '-');
+  const cleaned = stripped.replace(/\.+$/, '').trim();
+  return cleaned || fallbackBase;
+}
+
+/**
+ * Resolve a download filename with the given extension.
+ */
+export function getExportFileName(
+  name: string | undefined,
+  fallback: string,
+  extension: string
+): string {
+  const cleanExt = extension.replace(/^\./, '');
+  return `${getExportFileNameBase(name, fallback)}.${cleanExt}`;
+}
+
 export function downloadFile(fileBlob: Blob, fileName: string) {
   if (isMSEdge(window)) {
     (window.navigator as any).msSaveOrOpenBlob(fileBlob, fileName);
@@ -125,14 +153,18 @@ export function downloadFile(fileBlob: Blob, fileName: string) {
  * Whether color is rgb
  * @returns
  */
-export function exportImage(
-  uiStateExportImage: ExportImage,
-  filename = getApplicationConfig().defaultImageName
-) {
+export function exportImage(uiStateExportImage: ExportImage, filename?: string) {
   const {imageDataUri} = uiStateExportImage;
   if (imageDataUri) {
     const file = dataURItoBlob(imageDataUri);
-    downloadFile(file, filename);
+    downloadFile(
+      file,
+      getExportFileName(
+        filename ?? uiStateExportImage.fileName,
+        getApplicationConfig().defaultImageName,
+        'png'
+      )
+    );
   }
 }
 
@@ -146,8 +178,63 @@ export function exportToJsonString(data) {
   }
 }
 
-export function getMapJSON(state, options = getApplicationConfig().defaultExportJsonSettings) {
-  const {hasData} = options;
+/** Dataset metadata fields that hold a private layer API key. */
+const LAYER_API_KEY_METADATA_FIELDS = ['tile3dAccessToken'];
+
+/**
+ * Remove access tokens stored on layer datasets. The tileset URL and the rest
+ * of the metadata stay so the map can be reopened and a new key entered.
+ */
+export function omitLayerApiKeys<T>(mapToSave: T): T {
+  const saved = mapToSave as {datasets?: Array<{data?: {metadata?: Record<string, unknown>}}>};
+  if (!saved || !Array.isArray(saved.datasets)) {
+    return mapToSave;
+  }
+
+  let changed = false;
+  const datasets = saved.datasets.map(dataset => {
+    const metadata = dataset?.data?.metadata;
+    if (!metadata || typeof metadata !== 'object') {
+      return dataset;
+    }
+    const nextMetadata = {...metadata};
+    let metadataChanged = false;
+    for (const field of LAYER_API_KEY_METADATA_FIELDS) {
+      if (field in nextMetadata) {
+        delete nextMetadata[field];
+        metadataChanged = true;
+      }
+    }
+    if (!metadataChanged) {
+      return dataset;
+    }
+    changed = true;
+    return {
+      ...dataset,
+      data: {
+        ...dataset.data,
+        metadata: nextMetadata
+      }
+    };
+  });
+
+  if (!changed) {
+    return mapToSave;
+  }
+  return {...saved, datasets} as T;
+}
+
+type MapJsonOptions = {
+  hasData?: boolean;
+  /** When false, access tokens stored on layer datasets are removed. */
+  includeLayerApiKeys?: boolean;
+};
+
+export function getMapJSON(
+  state,
+  options: MapJsonOptions = getApplicationConfig().defaultExportJsonSettings
+) {
+  const {hasData, includeLayerApiKeys} = options;
   const schema = state.visState.schema;
 
   if (!hasData) {
@@ -160,6 +247,9 @@ export function getMapJSON(state, options = getApplicationConfig().defaultExport
   if (!title || !title.length) {
     mapToSave = set(['info', 'title'], `keplergl_${generateHashId(6)}`, mapToSave);
   }
+  if (includeLayerApiKeys === false) {
+    mapToSave = omitLayerApiKeys(mapToSave);
+  }
   return mapToSave;
 }
 
@@ -167,15 +257,19 @@ export function exportJson(state, options: any = {}) {
   const map = getMapJSON(state, options);
   map.info.source = 'kepler.gl';
   const fileBlob = new Blob([exportToJsonString(map)], {type: 'application/json'});
-  const fileName = state.appName ? `${state.appName}.json` : getApplicationConfig().defaultJsonName;
+  const fileName = getExportFileName(
+    options.fileName,
+    state.appName ? `${state.appName}.json` : getApplicationConfig().defaultJsonName,
+    'json'
+  );
   downloadFile(fileBlob, fileName);
 }
 
 export function exportHtml(state, options) {
-  const {userMapboxToken, exportMapboxAccessToken, mode} = options;
+  const {userMapboxToken, exportMapboxAccessToken, mode, includeLayerApiKeys} = options;
 
   const data = {
-    ...getMapJSON(state),
+    ...getMapJSON(state, {hasData: true, includeLayerApiKeys}),
     mapboxApiAccessToken:
       (userMapboxToken || '') !== '' ? userMapboxToken : exportMapboxAccessToken,
     mode
@@ -184,7 +278,11 @@ export function exportHtml(state, options) {
   const fileBlob = new Blob([exportMapToHTML(data)], {type: 'text/html'});
   downloadFile(
     fileBlob,
-    state.appName ? `${state.appName}.html` : getApplicationConfig().defaultHtmlName
+    getExportFileName(
+      options.fileName,
+      state.appName ? `${state.appName}.html` : getApplicationConfig().defaultHtmlName,
+      'html'
+    )
   );
 }
 

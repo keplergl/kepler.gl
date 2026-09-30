@@ -11,7 +11,13 @@ const WMSLayerIcon: React.FC<Partial<BaseProps>> = ({
   viewBox = '0 0 30 30',
   ...props
 }) => (
-  <Base height={height} predefinedClassName={predefinedClassName} totalColor={totalColor} viewBox={viewBox} {...props}>
+  <Base
+    height={height}
+    predefinedClassName={predefinedClassName}
+    totalColor={totalColor}
+    viewBox={viewBox}
+    {...props}
+  >
     <g clipPath="url(#clip0_13806_131258)">
       <path
         d="M14.7595 12.2358L1 19.9828L15.2405 28L29 20.2536L14.7595 12.2358Z"

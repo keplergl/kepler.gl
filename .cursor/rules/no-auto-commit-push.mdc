@@ -15,8 +15,10 @@ the user has explicitly asked for that action in the current turn.
 - Making local file edits is fine. Staging (`git add`) for inspection is fine.
 - Before committing or pushing, ask the user to confirm and wait for approval.
 - Never use `--no-verify` or bypass pre-commit / pre-push hooks.
-- If the user says something ambiguous like "fix the tests", stop after the fix
-  and ask whether they want it committed/pushed — do not assume.
+- If the user says something ambiguous like "fix the tests", "fix 1 and 2",
+  "address the PR comments", or "update the defaults", stop after the code
+  change and ask whether they want it committed/pushed — do not assume.
+- Working on an open PR branch does **not** imply permission to commit or push.
 
 ## Example
 
@@ -24,6 +26,10 @@ the user has explicitly asked for that action in the current turn.
 // ❌ BAD: user asked to fix a failing test
 <fix the test>
 git commit -m "fix test" && git push   // committed without being asked
+
+// ❌ BAD: user asked to fix review findings
+<Fix 1 - cap radius. Fix 2 - update defaults.>
+git commit && git push   // still not an explicit commit request
 
 // ✅ GOOD
 <fix the test>

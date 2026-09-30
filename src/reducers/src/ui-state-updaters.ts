@@ -11,14 +11,17 @@ import {
   EXPORT_IMG_RATIOS,
   EXPORT_MAP_FORMATS,
   RESOLUTIONS,
-  MAP_CONTROLS
+  MAP_CONTROLS,
+  THEME
 } from '@kepler.gl/constants';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {
   createNotification,
   errorNotification,
   calculateExportImageSize,
-  getApplicationConfig
+  getApplicationConfig,
+  getConfiguredThemes,
+  getDefaultUiTheme
 } from '@kepler.gl/utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
@@ -37,6 +40,7 @@ import {
   ExportImage,
   ExportVideo,
   MapControlItem,
+  MapControlMapLegend,
   MapControls,
   UiState
 } from '@kepler.gl/types';
@@ -106,7 +110,9 @@ const DEFAULT_MAP_LEGEND_CONTROL = {
  * @property toggle3d Default: `{show: true}`
  * @property splitMap Default: `{show: true}`
  * @property mapDraw Default: `{show: true, active: false}`
- * @property mapLocale Default: `{show: false, active: false}`
+ * @property mapLocale Default: `{show: true, active: false}`
+ * @property mapTheme Default: `{show: true, active: false}`
+ * @property viewportJson Default: `{show: true, active: false}`
  * @public
  */
 export const DEFAULT_MAP_CONTROLS: MapControls = (
@@ -129,6 +135,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = (
  * @property ratio Default: `'SCREEN'`,
  * @property resolution Default: `'ONE_X'`,
  * @property legend Default: `false`,
+ * @property charts Default: `false`,
  * @property mapH Default: 0,
  * @property mapW Default: 0,
  * @property imageSize Default: {zoomOffset: 0, scale: 1, imageW: 0, imageH: 0},
@@ -136,6 +143,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = (
  * @property exporting Default: `false`
  * @property error Default: `false`
  * @property escapeXhtmlForWebpack Default: from application config (auto-detected: `true` for webpack)
+ * @property fileName Default: `''`
  * @public
  */
 export const DEFAULT_EXPORT_IMAGE: ExportImage = {
@@ -143,6 +151,7 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   ratio: EXPORT_IMG_RATIOS.SCREEN,
   resolution: RESOLUTIONS.ONE_X,
   legend: false,
+  charts: false,
   mapH: 0,
   mapW: 0,
   imageSize: {
@@ -161,7 +170,8 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   processing: false,
   error: false,
   // whether to apply fix for uglify error in dom-to-image (from application config, auto-detects build tool)
-  escapeXhtmlForWebpack: getApplicationConfig().escapeXhtmlForWebpack
+  escapeXhtmlForWebpack: getApplicationConfig().escapeXhtmlForWebpack,
+  fileName: ''
 };
 
 export const DEFAULT_LOAD_FILES = {
@@ -216,12 +226,17 @@ export const DEFAULT_EXPORT_JSON: ExportJson = {
  * @property HTML - Default: 'DEFAULT_EXPORT_HTML',
  * @property JSON - Default: 'DEFAULT_EXPORT_JSON',
  * @property format - Default: 'HTML',
+ * @property fileName Default: `''`,
+ * @property includeLayerApiKeys Default: `false`,
  * @public
  */
 export const DEFAULT_EXPORT_MAP: ExportMap = {
   [EXPORT_MAP_FORMATS.HTML]: DEFAULT_EXPORT_HTML,
   [EXPORT_MAP_FORMATS.JSON]: DEFAULT_EXPORT_JSON,
-  format: EXPORT_MAP_FORMATS.HTML
+  format: EXPORT_MAP_FORMATS.HTML,
+  fileName: '',
+  // Private layer tokens stay out of the file unless the user opts in.
+  includeLayerApiKeys: false
 };
 
 /**
@@ -262,6 +277,8 @@ export const DEFAULT_EXPORT_VIDEO: ExportVideo = {
  * @property notifications Default: `[]`
  * @property notifications Default: `[]`
  * @property loadFiles
+ * @property locale Default: `'en'`
+ * @property theme Default: `'dark'`
  * @property isSidePanelCloseButtonVisible Default: `true`
  * @public
  */
@@ -287,6 +304,8 @@ export const INITIAL_UI_STATE: UiState = {
   loadFiles: DEFAULT_LOAD_FILES,
   // Locale of the UI
   locale: LOCALE_CODES.en,
+  // Theme of the UI (`light` | `dark` | `space`). First of `themes` is the default when set.
+  theme: THEME.dark,
   layerPanelListView: 'list',
   filterPanelListView: 'list',
   isSidePanelCloseButtonVisible: true
@@ -302,10 +321,19 @@ export const initUiStateUpdater = (
     type?: (typeof ActionTypes)['INIT'];
     payload: KeplerGlInitPayload;
   }
-): UiState => ({
-  ...state,
-  ...(action.payload || {}).initialUiState
-});
+): UiState => {
+  const initialUiState = (action.payload || {}).initialUiState || {};
+  const themes = getConfiguredThemes();
+  const requested = initialUiState.theme ?? state.theme;
+  const theme =
+    themes.length === 0 ? requested : themes.includes(requested) ? requested : getDefaultUiTheme();
+
+  return {
+    ...state,
+    ...initialUiState,
+    theme
+  };
+};
 
 /**
  * Toggle active side panel
@@ -411,28 +439,6 @@ export const toggleMapControlUpdater = (
   {payload: {panelId, index = 0}}: UIStateActions.ToggleMapControlUpdaterAction
 ): UiState => {
   let updatedState = state;
-  // The effect panel and ai assistant panel can not be active at the same time
-  // so we need to deactivate the other panel when one is activated
-  const panelToDeactivate =
-    panelId === MAP_CONTROLS.effect
-      ? MAP_CONTROLS.aiAssistant
-      : panelId === MAP_CONTROLS.aiAssistant
-      ? MAP_CONTROLS.effect
-      : null;
-
-  // If we need to deactivate a competing panel and it's currently active
-  if (panelToDeactivate && state.mapControls[panelToDeactivate]?.active) {
-    updatedState = {
-      ...state,
-      mapControls: {
-        ...updatedState.mapControls,
-        [panelToDeactivate]: {
-          ...updatedState.mapControls[panelToDeactivate],
-          active: false
-        }
-      }
-    };
-  }
 
   // The overlapping map control menus should be mutually exclusive: when one of
   // them is being opened, deactivate every other one that is currently active
@@ -457,8 +463,8 @@ export const toggleMapControlUpdater = (
     mapControls: {
       ...updatedState.mapControls,
       [panelId]: {
-        ...updatedState.mapControls[panelId],
-        active: !updatedState.mapControls[panelId].active,
+        ...(updatedState.mapControls[panelId] as MapControlItem),
+        active: !updatedState.mapControls[panelId]?.active,
         activeMapIndex: index
       }
     }
@@ -507,7 +513,7 @@ export const setMapControlSettingsUpdater = (
   state: UiState,
   {payload: {panelId, settings}}: UIStateActions.setMapControlSettingsUpdaterAction
 ): UiState => {
-  const mapControl = state.mapControls?.[panelId];
+  const mapControl = state.mapControls?.[panelId] as MapControlMapLegend | undefined;
   if (!mapControl) {
     return state;
   }
@@ -516,7 +522,10 @@ export const setMapControlSettingsUpdater = (
     ...state,
     mapControls: {
       ...state.mapControls,
-      [panelId]: {...mapControl, settings: {...mapControl.settings, ...settings}}
+      [panelId]: {
+        ...mapControl,
+        settings: {...mapControl.settings, ...settings}
+      } as MapControlMapLegend
     }
   };
 };
@@ -540,7 +549,7 @@ export const openDeleteModalUpdater = (
 });
 
 /**
- * Set `exportImage.legend` to `true` or `false`
+ * Set `exportImage` options such as `legend` and `charts` to `true` or `false`
  * @memberof uiStateUpdaters
  * @param state `uiState`
  * @returns nextState
@@ -784,6 +793,26 @@ export const setExportMapFormatUpdater = (
 });
 
 /**
+ * Set the filename used when exporting an HTML or JSON map
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload file name without extension
+ * @returns nextState
+ * @public
+ */
+export const setExportMapFileNameUpdater = (
+  state: UiState,
+  {payload: fileName}: UIStateActions.SetExportMapFileNameUpdaterAction
+): UiState => ({
+  ...state,
+  exportMap: {
+    ...state.exportMap,
+    fileName
+  }
+});
+
+/**
  * Set the export html map mode
  * @param state - `uiState`
  * @param action
@@ -801,6 +830,24 @@ export const setExportMapHTMLModeUpdater = (
       ...state.exportMap[EXPORT_MAP_FORMATS.HTML],
       mode
     }
+  }
+});
+
+/**
+ * Whether to keep layer access tokens in exported HTML and JSON maps.
+ * @param state - `uiState`
+ * @param action
+ * @param action.payload - include layer API keys
+ * @return nextState
+ */
+export const setExportIncludeLayerApiKeysUpdater = (
+  state: UiState,
+  {payload: includeLayerApiKeys}: UIStateActions.SetExportIncludeLayerApiKeysUpdaterAction
+): UiState => ({
+  ...state,
+  exportMap: {
+    ...state.exportMap,
+    includeLayerApiKeys
   }
 });
 
@@ -920,7 +967,7 @@ export const toggleSplitMapUpdater = (state: UiState): UiState => ({
     (acc, entry) => ({
       ...acc,
       [entry[0]]: {
-        ...entry[1],
+        ...(entry[1] as MapControlItem),
         activeMapIndex: 0
       }
     }),
@@ -954,6 +1001,24 @@ export const setLocaleUpdater = (
 ): UiState => ({
   ...state,
   locale
+});
+
+/**
+ * Set the theme of the UI
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload
+ * @param action.payload.theme theme
+ * @returns nextState
+ * @public
+ */
+export const setThemeUpdater = (
+  state: UiState,
+  {payload: {theme}}: UIStateActions.SetThemeUpdaterAction
+): UiState => ({
+  ...state,
+  theme
 });
 
 /**
@@ -1025,6 +1090,22 @@ export const receiveMapConfigUpdater = (
     };
   }
 
+  if (uiState.mapControls?.chart?.active) {
+    const currentChart = newState.mapControls.chart;
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        chart: {
+          show: true,
+          ...currentChart,
+          active: true,
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+
   if (uiState.mapControls?.mapLegend?.settings) {
     newState = setMapControlSettingsUpdater(newState, {
       payload: {panelId: 'mapLegend', settings: uiState.mapControls.mapLegend.settings}
@@ -1035,6 +1116,12 @@ export const receiveMapConfigUpdater = (
     newState = setLocaleUpdater(newState, {
       payload: {locale: uiState.locale}
     } as UIStateActions.SetLocaleUpdaterAction);
+  }
+
+  if (uiState.theme) {
+    newState = setThemeUpdater(newState, {
+      payload: {theme: uiState.theme}
+    } as UIStateActions.SetThemeUpdaterAction);
   }
 
   return newState;

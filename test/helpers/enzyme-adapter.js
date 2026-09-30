@@ -44,9 +44,18 @@ function fiberMatchesSelector(fiber, selector) {
 
   if (typeof selector === 'function' || typeof selector === 'object') {
     // Plain object prop selector: {children: 'text', className: 'foo'}
-    if (typeof selector === 'object' && selector !== null && !selector.$$typeof && !selector.type && !selector.styledComponentId) {
-      const isPlainPropSelector = Object.keys(selector).every(k =>
-        typeof selector[k] === 'string' || typeof selector[k] === 'number' || typeof selector[k] === 'boolean'
+    if (
+      typeof selector === 'object' &&
+      selector !== null &&
+      !selector.$$typeof &&
+      !selector.type &&
+      !selector.styledComponentId
+    ) {
+      const isPlainPropSelector = Object.keys(selector).every(
+        k =>
+          typeof selector[k] === 'string' ||
+          typeof selector[k] === 'number' ||
+          typeof selector[k] === 'boolean'
       );
       if (isPlainPropSelector && Object.keys(selector).length > 0) {
         const props = fiber.memoizedProps;
@@ -185,7 +194,11 @@ function _isNoopHandler(fn) {
   if (!fn) return true;
   const src = fn.toString();
   // Match common no-op patterns: () => {}, function nop() { return; }, function() {}
-  if (/^\s*(?:function\s*\w*\s*\([^)]*\)\s*\{[\s;]*(?:return;?)?\s*\}|(?:\([^)]*\)|[a-zA-Z_$]\w*)\s*=>\s*\{[\s;]*(?:return;?)?\s*\})\s*$/.test(src)) {
+  if (
+    /^\s*(?:function\s*\w*\s*\([^)]*\)\s*\{[\s;]*(?:return;?)?\s*\}|(?:\([^)]*\)|[a-zA-Z_$]\w*)\s*=>\s*\{[\s;]*(?:return;?)?\s*\})\s*$/.test(
+      src
+    )
+  ) {
     return true;
   }
   // Also match coverage-instrumented nop: function nop() { cov_... }
@@ -214,20 +227,140 @@ function isHtmlTag(selector) {
   // Only match lowercase strings - capitalized names like "Button" are React component names
   if (selector !== selector.toLowerCase()) return false;
   const tags = new Set([
-    'a','abbr','address','area','article','aside','audio','b','base','bdi','bdo',
-    'blockquote','body','br','button','canvas','caption','cite','code','col',
-    'colgroup','data','datalist','dd','del','details','dfn','dialog','div','dl',
-    'dt','em','embed','fieldset','figcaption','figure','footer','form','h1','h2',
-    'h3','h4','h5','h6','head','header','hgroup','hr','html','i','iframe','img',
-    'input','ins','kbd','label','legend','li','link','main','map','mark','menu',
-    'meta','meter','nav','noscript','object','ol','optgroup','option','output',
-    'p','param','picture','pre','progress','q','rp','rt','ruby','s','samp',
-    'script','section','select','slot','small','source','span','strong','style',
-    'sub','summary','sup','svg','table','tbody','td','template','textarea','tfoot',
-    'th','thead','time','title','tr','track','u','ul','var','video','wbr',
-    'path','g','circle','rect','line','polyline','polygon','text','tspan','defs',
-    'clipPath','use','symbol','marker','pattern','mask','linearGradient',
-    'radialGradient','stop','foreignObject','ellipse'
+    'a',
+    'abbr',
+    'address',
+    'area',
+    'article',
+    'aside',
+    'audio',
+    'b',
+    'base',
+    'bdi',
+    'bdo',
+    'blockquote',
+    'body',
+    'br',
+    'button',
+    'canvas',
+    'caption',
+    'cite',
+    'code',
+    'col',
+    'colgroup',
+    'data',
+    'datalist',
+    'dd',
+    'del',
+    'details',
+    'dfn',
+    'dialog',
+    'div',
+    'dl',
+    'dt',
+    'em',
+    'embed',
+    'fieldset',
+    'figcaption',
+    'figure',
+    'footer',
+    'form',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'head',
+    'header',
+    'hgroup',
+    'hr',
+    'html',
+    'i',
+    'iframe',
+    'img',
+    'input',
+    'ins',
+    'kbd',
+    'label',
+    'legend',
+    'li',
+    'link',
+    'main',
+    'map',
+    'mark',
+    'menu',
+    'meta',
+    'meter',
+    'nav',
+    'noscript',
+    'object',
+    'ol',
+    'optgroup',
+    'option',
+    'output',
+    'p',
+    'param',
+    'picture',
+    'pre',
+    'progress',
+    'q',
+    'rp',
+    'rt',
+    'ruby',
+    's',
+    'samp',
+    'script',
+    'section',
+    'select',
+    'slot',
+    'small',
+    'source',
+    'span',
+    'strong',
+    'style',
+    'sub',
+    'summary',
+    'sup',
+    'svg',
+    'table',
+    'tbody',
+    'td',
+    'template',
+    'textarea',
+    'tfoot',
+    'th',
+    'thead',
+    'time',
+    'title',
+    'tr',
+    'track',
+    'u',
+    'ul',
+    'var',
+    'video',
+    'wbr',
+    'path',
+    'g',
+    'circle',
+    'rect',
+    'line',
+    'polyline',
+    'polygon',
+    'text',
+    'tspan',
+    'defs',
+    'clipPath',
+    'use',
+    'symbol',
+    'marker',
+    'pattern',
+    'mask',
+    'linearGradient',
+    'radialGradient',
+    'stop',
+    'foreignObject',
+    'ellipse'
   ]);
   return tags.has(selector);
 }
@@ -304,8 +437,10 @@ class MountWrapper {
         // The old children is a wrapper (e.g. IntlWrapper) around the actual component
         // Try to preserve the wrapper by nesting new children inside it
         const oldChildChildren = oldChildren.props && oldChildren.props.children;
-        if (React.isValidElement(oldChildChildren) &&
-            oldChildChildren.type === newProps.children.type) {
+        if (
+          React.isValidElement(oldChildChildren) &&
+          oldChildChildren.type === newProps.children.type
+        ) {
           // Wrap the new children in the same wrapper as before
           const rewrapped = React.cloneElement(oldChildren, {}, newProps.children);
           merged = {...merged, children: rewrapped};
@@ -420,7 +555,7 @@ function getReactHandlerName(event) {
     pointermove: 'onPointerMove'
   };
   if (eventMap[event]) return eventMap[event];
-  return 'on' + event.charAt(0).toUpperCase() + event.slice(1);
+  return `on${event.charAt(0).toUpperCase()}${event.slice(1)}`;
 }
 
 function simulateOnDom(dom, event, mockEvent, _flushContainer) {
@@ -506,8 +641,14 @@ function simulateOnDom(dom, event, mockEvent, _flushContainer) {
       if (mockEvent) {
         Object.keys(mockEvent).forEach(key => {
           try {
-            Object.defineProperty(domEvent, key, {value: mockEvent[key], writable: true, configurable: true});
-          } catch (e) { /* some properties are read-only */ }
+            Object.defineProperty(domEvent, key, {
+              value: mockEvent[key],
+              writable: true,
+              configurable: true
+            });
+          } catch (e) {
+            /* some properties are read-only */
+          }
         });
       }
       dom.dispatchEvent(domEvent);
@@ -736,7 +877,11 @@ class ResultSet {
 
         // If the first host fiber has the handler AND it's not a trivial no-op,
         // use it (handles FileDrop/styled scenarios where the host div has the real handler).
-        if (hostFiber && hostFiber.memoizedProps && typeof hostFiber.memoizedProps[handlerName] === 'function') {
+        if (
+          hostFiber &&
+          hostFiber.memoizedProps &&
+          typeof hostFiber.memoizedProps[handlerName] === 'function'
+        ) {
           const hostHandler = hostFiber.memoizedProps[handlerName];
           if (!_isNoopHandler(hostHandler)) {
             const syntheticEvent = {
@@ -827,7 +972,9 @@ class ResultSet {
             ReactDOM.flushSync(() => {
               current.stateNode.setState(newState);
             });
-          } catch (e) { /* ignore */ }
+          } catch (e) {
+            /* ignore */
+          }
           globalThis.IS_REACT_ACT_ENVIRONMENT = prev;
         }
         break;
@@ -839,7 +986,9 @@ class ResultSet {
           ReactDOM.flushSync(() => {
             current.stateNode.componentDidCatch(error, {componentStack: ''});
           });
-        } catch (e) { /* ignore */ }
+        } catch (e) {
+          /* ignore */
+        }
         globalThis.IS_REACT_ACT_ENVIRONMENT = prev;
         break;
       }
@@ -1160,4 +1309,3 @@ export function mount(element) {
 export function configure() {}
 export const shallow = mount;
 export {mount as render};
-

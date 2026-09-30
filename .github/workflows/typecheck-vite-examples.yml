@@ -1,0 +1,52 @@
+# Run after npm publish (and on manual dispatch), not on every PR.
+name: Typecheck examples
+
+on:
+  workflow_run:
+    workflows: [Node.js Package]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  wait-for-published-version:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait until this version is on npm
+        if: github.event_name == 'workflow_run'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Waiting for @kepler.gl/components@$VERSION"
+          for _ in $(seq 1 24); do
+            if npm view "@kepler.gl/components@$VERSION" version; then
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::Timed out waiting for @kepler.gl/components@$VERSION on npm"
+          exit 1
+
+  typecheck-examples:
+    name: Typecheck ${{ matrix.example }}
+    needs: wait-for-published-version
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example: [get-started-vite, duckdb-vite]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: volta-cli/action@v4
+
+      - name: Enable Yarn 4
+        run: corepack enable && corepack prepare yarn@4.4.0 --activate
+
+      - name: Install and typecheck
+        working-directory: examples/${{ matrix.example }}
+        run: |
+          touch yarn.lock
+          yarn install
+          yarn tsc -b --pretty false

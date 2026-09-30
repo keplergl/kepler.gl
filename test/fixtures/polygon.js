@@ -179,6 +179,58 @@ export const mockPolygonData = {
   }
 };
 
+/**
+ * Closed rectangular polygon in GeoJSON [lng, lat] order.
+ */
+export function rectPolygonFeature(id, west, south, east, north) {
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [west, south],
+          [east, south],
+          [east, north],
+          [west, north],
+          [west, south]
+        ]
+      ]
+    },
+    properties: {
+      renderType: 'Polygon',
+      isClosed: true
+    },
+    id
+  };
+}
+
+/**
+ * One dataset with two lon/lat pairs (start + end).
+ * start (lng, lat): (10,10), (12,10), (14,10), (12,14)
+ * end   (lng, lat): (30,10), (32,10), (34,10), (32,14)
+ * Row format: [start_lat, start_lng, end_lat, end_lng]
+ */
+export const mockDualLonLatRows = [
+  [10, 10, 10, 30],
+  [10, 12, 10, 32],
+  [10, 14, 10, 34],
+  [14, 12, 14, 32]
+];
+
+// Covers start rows 0 and 1; none of the end points
+export const mockStartRegionPolygon = rectPolygonFeature('start-region-poly', 9, 9, 13, 11);
+
+// Covers end rows 1 and 2; none of the start points
+export const mockEndRegionPolygon = rectPolygonFeature('end-region-poly', 31, 9, 35, 11);
+
+// Overlaps mockStartRegionPolygon on start row 1 only
+export const mockEastOverlapPolygon = rectPolygonFeature('east-overlap-poly', 11, 9, 15, 11);
+
+// Disjoint from mockWestOnlyPolygon: start row 0 vs start row 2
+export const mockWestOnlyPolygon = rectPolygonFeature('west-only-poly', 9, 9, 11, 11);
+export const mockEastOnlyPolygon = rectPolygonFeature('east-only-poly', 13, 9, 15, 11);
+
 export const mockPolygonFeature2 = {
   type: 'Feature',
   geometry: {

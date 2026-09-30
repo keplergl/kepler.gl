@@ -386,7 +386,7 @@ export const notificationPanelItemWidth = notificationPanelWidth - 60;
 export const notificationPanelItemHeight = 60;
 
 // Data Table
-const headerRowHeight = 70;
+const headerRowHeight = 40;
 const headerStatsControlHeight = 32;
 const headerRowWStatsHeight = 364;
 const rowHeight = 32;
@@ -461,8 +461,6 @@ export const breakPoints = {
   palm: 588,
   desk: 768
 };
-
-export const aiAssistantPanelWidth = 415;
 
 // effect manager
 export const effectConfiguratorMargin = '18px 0 18px 0';
@@ -1093,35 +1091,25 @@ const scrollBar = css`
 export const modalScrollBar = css`
   &::-webkit-scrollbar {
     width: 14px;
-    height: 16px;
+    height: 14px;
   }
 
   &::-webkit-scrollbar-track {
     background: white;
   }
-  &::-webkit-scrollbar-track:horizontal {
-    background: ${props => props.theme.textColorHl};
-  }
+
   &::-webkit-scrollbar-thumb {
     background: ${props => props.theme.scrollbarThumbColorLT};
     border: 4px solid white;
+    border-radius: 7px;
   }
 
   &::-webkit-scrollbar-corner {
-    background: ${props => props.theme.textColorHl};
+    background: white;
   }
 
   &::-webkit-scrollbar-thumb:hover {
     background: ${props => props.theme.scrollbarThumbColorHoverLT};
-  }
-
-  &::-webkit-scrollbar-thumb:vertical {
-    border-radius: 7px;
-  }
-
-  &::-webkit-scrollbar-thumb:horizontal {
-    border-radius: 9px;
-    border: 4px solid ${props => props.theme.textColorHl};
   }
 `;
 
@@ -1580,9 +1568,6 @@ export const theme = {
 
   // COLORS
   BLUE2: 'rgba(85, 88, 219, 0.2)',
-
-  // AI Assistant Panel
-  aiAssistantPanelWidth,
 
   // Effect panel
   effectPanelWidth,

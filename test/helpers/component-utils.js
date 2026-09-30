@@ -11,11 +11,7 @@ import {messages} from '@kepler.gl/localization';
 import {Typeahead} from '@kepler.gl/components';
 
 export function mountWithTheme(node, _options) {
-  return mount(
-    <ThemeProvider theme={theme}>
-      {node}
-    </ThemeProvider>
-  );
+  return mount(<ThemeProvider theme={theme}>{node}</ThemeProvider>);
 }
 
 export const IntlWrapper = ({children, locale = 'en'}) => (

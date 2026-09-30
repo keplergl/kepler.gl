@@ -80,11 +80,7 @@ test('MapContainerFactory - display all options', t => {
   );
 
   // Attribution renders when primary=true (default); its root div has className="attrition-logo"
-  t.equal(
-    container.querySelectorAll('.attrition-logo').length,
-    1,
-    'Should display 1 Attribution'
-  );
+  t.equal(container.querySelectorAll('.attrition-logo').length, 1, 'Should display 1 Attribution');
 
   // Verify instance-level callback wiring via React ref (class component)
   const instance = containerRef.current;
@@ -172,7 +168,11 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           assert.is(hoverEvents[0].info.mapIndex, 0, 'onHover includes mapIndex value');
 
           // pixel / screen-space coords are reliable regardless of GPU picking
-          assert.deepEqual(hoverEvents[0].info.pixel, [192, 187], 'picking info.pixel should be correct');
+          assert.deepEqual(
+            hoverEvents[0].info.pixel,
+            [192, 187],
+            'picking info.pixel should be correct'
+          );
           assert.is(hoverEvents[0].info.x, 192, 'picking info.x should be correct');
           assert.is(hoverEvents[0].info.y, 187, 'picking info.y should be correct');
 
@@ -269,12 +269,11 @@ test('MapContainerFactory - MapPopover', t => {
   t.equal(rows.length, 5, 'should render 5 tooltip rows');
 
   // These field names / values come from the CSV fixture in mock-state.js.
-  // The timestamp field (gps_data.utc_timestamp) is displayed as a raw epoch
-  // millisecond string because FIELD_DISPLAY_FORMAT[timestamp] = defaultFormatter.
+  // Timestamp fields default to DATE_TIME_L_LTS ('L LTS') so hover shows a date.
   const expectedTooltips = [
-    ['gps_data.utc_timestamp', '1474071864000'],
+    ['gps_data.utc_timestamp', '09/17/2016 12:24:24 AM'],
     ['gps_data.types', 'driver_analytics'],
-    ['epoch', '1472754400000'],
+    ['epoch', '09/01/2016 6:26:40 PM'],
     ['has_result', ''],
     ['uid', '1']
   ];

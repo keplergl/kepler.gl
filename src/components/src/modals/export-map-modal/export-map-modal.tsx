@@ -2,26 +2,54 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
+import styled from 'styled-components';
 
 import {FileType} from '../../common/icons';
-import {StyledModalContent, StyledType, CheckMark} from '../../common/styled-components';
+import {StyledType, CheckMark} from '../../common/styled-components';
 import {EXPORT_MAP_FORMATS, EXPORT_MAP_FORMAT_OPTIONS} from '@kepler.gl/constants';
-import {StyledExportMapSection} from './components';
+import {
+  StyledExportMapModalContent,
+  StyledExportMapSection,
+  StyledExportMapFormatPanels,
+  StyledExportMapFormatPanel
+} from './components';
 import ExportHtmlMapFactory from './export-html-map';
 import ExportJsonMapFactory from './export-json-map';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {ActionHandler, setExportHTMLMapMode, setUserMapboxAccessToken} from '@kepler.gl/actions';
+import {
+  ActionHandler,
+  setExportHTMLMapMode,
+  setExportIncludeLayerApiKeys,
+  setExportMapFileName,
+  setUserMapboxAccessToken
+} from '@kepler.gl/actions';
+import ExportFileNameSection from '../export-file-name';
+
+interface ExportMapModalOptions {
+  format: string;
+  includeLayerApiKeys?: boolean;
+  fileName?: string;
+  [key: string]: any;
+}
 
 interface ExportMapModalFactoryProps {
-  options?: {format: string};
+  options?: ExportMapModalOptions;
   config: any;
   onEditUserMapboxAccessToken: ActionHandler<typeof setUserMapboxAccessToken>;
   onChangeExportMapHTMLMode?: ActionHandler<typeof setExportHTMLMapMode>;
+  onChangeExportIncludeLayerApiKeys?: ActionHandler<typeof setExportIncludeLayerApiKeys>;
   onChangeExportMapFormat?: (format: string) => any;
+  onChangeExportMapFileName?: ActionHandler<typeof setExportMapFileName>;
   mapFormat?: string;
 }
 
 const style = {width: '100%'};
+
+const CompactType = styled(StyledType)`
+  height: 64px;
+  width: 64px;
+  padding: 4px;
+`;
 
 const NO_OP = () => ({} as any);
 
@@ -35,11 +63,19 @@ function ExportMapModalFactory(
     config = {},
     onChangeExportMapFormat = NO_OP,
     onChangeExportMapHTMLMode = NO_OP,
+    onChangeExportIncludeLayerApiKeys = NO_OP,
+    onChangeExportMapFileName = NO_OP,
     onEditUserMapboxAccessToken = NO_OP,
     options = {format: ''}
   }: ExportMapModalFactoryProps) => (
-    <StyledModalContent className="export-map-modal">
+    <StyledExportMapModalContent className="export-map-modal">
       <div style={style}>
+        <ExportFileNameSection
+          fileName={options.fileName}
+          inputId="export-map-file-name"
+          compact
+          onChange={onChangeExportMapFileName}
+        />
         <StyledExportMapSection>
           <div className="description">
             <div className="title">
@@ -51,35 +87,44 @@ function ExportMapModalFactory(
           </div>
           <div className="selection">
             {EXPORT_MAP_FORMAT_OPTIONS.map(op => (
-              <StyledType
+              <CompactType
                 key={op.id}
                 selected={options.format === op.id}
                 onClick={() => op.available && onChangeExportMapFormat(op.id)}
               >
-                <FileType ext={op.label} height="80px" fontSize="11px" />
+                <FileType ext={op.label} height="48px" fontSize="10px" />
 
                 {options.format === op.id && <CheckMark />}
-              </StyledType>
+              </CompactType>
             ))}
           </div>
         </StyledExportMapSection>
-        {
-          {
-            [EXPORT_MAP_FORMATS.HTML]: (
-              <ExportHtmlMap
-                onChangeExportMapHTMLMode={onChangeExportMapHTMLMode}
-                onEditUserMapboxAccessToken={onEditUserMapboxAccessToken}
-                options={options[options.format]}
+        <StyledExportMapFormatPanels>
+          <StyledExportMapFormatPanel
+            $active={options.format === EXPORT_MAP_FORMATS.HTML}
+            aria-hidden={options.format !== EXPORT_MAP_FORMATS.HTML}
+            inert={options.format !== EXPORT_MAP_FORMATS.HTML ? true : undefined}
+          >
+            <ExportHtmlMap
+              onChangeExportMapHTMLMode={onChangeExportMapHTMLMode}
+              onChangeExportIncludeLayerApiKeys={onChangeExportIncludeLayerApiKeys}
+              onEditUserMapboxAccessToken={onEditUserMapboxAccessToken}
+              includeLayerApiKeys={Boolean(options.includeLayerApiKeys)}
+              options={options[EXPORT_MAP_FORMATS.HTML]}
+            />
+          </StyledExportMapFormatPanel>
+          {options.format === EXPORT_MAP_FORMATS.JSON ? (
+            <StyledExportMapFormatPanel $active>
+              <ExportJsonMap
+                config={config}
+                includeLayerApiKeys={Boolean(options.includeLayerApiKeys)}
+                onChangeExportIncludeLayerApiKeys={onChangeExportIncludeLayerApiKeys}
               />
-            ),
-            [EXPORT_MAP_FORMATS.JSON]: <ExportJsonMap config={config} />
-          }[
-            // @ts-ignore
-            options.format
-          ]
-        }
+            </StyledExportMapFormatPanel>
+          ) : null}
+        </StyledExportMapFormatPanels>
       </div>
-    </StyledModalContent>
+    </StyledExportMapModalContent>
   );
 
   ExportMapModalUnmemoized.displayName = 'ExportMapModal';

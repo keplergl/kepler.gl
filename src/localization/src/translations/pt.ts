@@ -15,6 +15,7 @@ export default {
     stroke: 'Traçado',
     density: 'Densidade',
     height: 'Altura',
+    elevationOffset: 'deslocamento de elevação',
     coverage: 'Cobertura',
     sum: 'Soma',
     pointCount: 'Contagem de Pontos'
@@ -27,7 +28,8 @@ export default {
     selectValue: 'Selecione um valor',
     enterValue: 'Insira um valor',
     empty: 'Vazio',
-    selectLayer: 'Selecione uma camada'
+    selectLayer: 'Selecione uma camada',
+    endTimeField: 'Selecione a hora de término'
   },
   misc: {
     by: '',
@@ -60,7 +62,8 @@ export default {
       addMoreLabel: 'Adicionar mais Rótulos',
       backgroundColor: 'Cor de fundo',
       outlineWidth: 'Largura do contorno',
-      outlineColor: 'Cor do contorno'
+      outlineColor: 'Cor do contorno',
+      collisionEnabled: 'Ocultar rótulos sobrepostos'
     }
   },
   sidebar: {
@@ -102,6 +105,9 @@ export default {
     layer: 'Camada',
     appearance: 'Aparência',
     uniqueIdField: 'Campo ID único',
+    hideNulls: 'Ocultar valores nulos',
+    hideNullsDescription:
+      'Quando ativado, entidades sem valor de cor de preenchimento são ocultadas. Quando desativado, elas são exibidas em cinza.',
     type: {
       point: 'ponto',
       arc: 'arco',
@@ -117,6 +123,8 @@ export default {
       hexagonid: 'H3',
       trip: 'viagem',
       s2: 'S2',
+      geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'mosaico vetorial',
@@ -162,6 +170,9 @@ export default {
     sizeScale: 'Escala de tamanho',
     worldUnitSize: 'Tamanho unitário do mundo',
     elevationScale: 'Escala de Elevação',
+    elevationOffset: 'Deslocamento de Elevação',
+    elevationOffsetDescription: 'Eleva polígonos extrudidos do chão (mesmas unidades que a altura)',
+    elevationOffsetRange: 'Intervalo de Deslocamento de Elevação',
     enableElevationZoomFactor: 'Use fator de zoom de elevação',
     enableElevationZoomFactorDescription:
       'Ajuste a altura / elevação com base no fator de zoom atual',
@@ -184,6 +195,8 @@ export default {
     heightMultiplier: 'Multiplicador de altura',
     fixedHeight: 'Altura fixa',
     fixedHeightDescription: 'Use a altura sem modificações',
+    fixedElevation: 'Elevação fixa',
+    fixedElevationDescription: 'Use o deslocamento de elevação sem modificações',
     allowHover: 'Mostrar dica de ferramenta',
     allowHoverDescription:
       'Mostrar ou ocultar dica de ferramenta ao passar o cursor sobre os recursos da camada',
@@ -237,7 +250,9 @@ export default {
     addAnnotation: 'Adicionar',
     type: 'Tipo',
     lineWidth: 'Largura da linha',
-    color: 'Cor'
+    color: 'Cor',
+    textSide: 'Lado do texto',
+    textPlacement: 'Posição'
   },
   effectDescription: {
     lightAndShadow:
@@ -287,18 +302,38 @@ export default {
     timeFilterSync: 'Conjuntos sincronizados',
     timeLayerSync: 'Vincular à linha do tempo da camada',
     timeLayerUnsync: 'Desvincular da linha do tempo da camada',
-    column: 'Coluna'
+    column: 'Coluna',
+    timeIntervalEndField: 'Hora de término',
+    timeIntervalEndFieldHint:
+      'Opcional. As entidades permanecem visíveis enquanto a janela de reprodução se sobrepõe a este intervalo.',
+    timezone: 'Fuso horário',
+    selectTimezone: 'Selecionar fuso horário de exibição'
   },
   datasetTitle: {
     showDataTable: 'Mostrar tabela de dados',
-    removeDataset: 'Remover tabela de dados'
+    removeDataset: 'Remover tabela de dados',
+    refreshDataset: 'Atualizar conjunto de dados',
+    refreshFailed: 'Falha ao atualizar',
+    refreshSettings: 'Configurações de atualização',
+    refreshOff: 'Off',
+    refresh10s: '10s',
+    refresh15s: '15s',
+    refresh1m: '1 min',
+    refresh5m: '5 min',
+    refresh15m: '15 min',
+    refreshCustom: 'Personalizado'
   },
   datasetInfo: {
     rowCount: '{rowCount} linhas',
     vectorTile: 'Mosaico vetorial',
     rasterTile: 'Mosaico raster',
     wmsTile: 'Mosaico WMS',
-    tile3d: 'Mosaico 3D'
+    tile3d: 'Mosaico 3D',
+    remoteFile: '{rowCount} linhas (remoto)',
+    refreshInterval: 'Atualizar',
+    refreshCustomSeconds: 'Segundos',
+    refreshing: 'Atualizando…',
+    refreshingPercent: 'Atualizando {percent}%'
   },
   tooltip: {
     hideLayer: 'esconder camada',
@@ -321,7 +356,12 @@ export default {
     showLegend: 'mostrar legenda',
     disable3DMap: 'Desabilitar Mapa 3D',
     DrawOnMap: 'Desenhar no mapa',
+    copyAllSketches: 'Copiar todos os esboços para a área de transferência como GeoJSON',
+    convertToLayer: 'Transformar os esboços em uma camada GeoJSON e limpar o desenho',
     selectLocale: 'Selecionar língua',
+    switchToLightTheme: 'Mudar para tema claro',
+    switchToDarkTheme: 'Mudar para tema escuro',
+    switchToSpaceTheme: 'Mudar para tema space',
     showAiAssistantPanel: 'Mostrar painel de AI Assistant',
     hideAiAssistantPanel: 'Esconder painel de AI Assistant',
     hideLayerPanel: 'Esconder painel de camada',
@@ -347,6 +387,8 @@ export default {
     syncTimelineEnd: 'Fim do período de tempo do filtro atual',
     showEffectPanel: 'Mostrar painel de efeitos',
     hideEffectPanel: 'Ocultar painel de efeitos',
+    showChartPanel: 'Mostrar gráficos',
+    hideChartPanel: 'Ocultar gráficos',
     showAnnotationPanel: 'Mostrar anotações',
     hideAnnotationPanel: 'Ocultar anotações',
     removeAnnotation: 'Remover anotação',
@@ -356,7 +398,13 @@ export default {
     annotationSettings: 'Configurações da anotação',
     removeEffect: 'Remover efeito',
     disableEffect: 'Desativar efeito',
-    effectSettings: 'Configurações de efeito'
+    effectSettings: 'Configurações de efeito',
+    editLayerJson: 'Editar JSON da camada',
+    editFilterJson: 'Editar JSON do filtro',
+    editEffectJson: 'Editar JSON do efeito',
+    editViewportJson: 'Editar JSON da viewport',
+    editAnimationJson: 'Editar JSON da animação',
+    editChartJson: 'Editar JSON do gráfico'
   },
   toolbar: {
     exportImage: 'Exportar Imagem',
@@ -366,8 +414,13 @@ export default {
     shareMapURL: 'Compartilhar URL do Mapa',
     saveMap: 'Salvar Mapa',
     select: 'selecionar',
+    point: 'ponto',
+    line: 'linha',
     polygon: 'polígono',
     rectangle: 'retângulo',
+    circle: 'círculo',
+    copyAll: 'Copiar tudo',
+    convertToLayer: 'Converter\nem camada',
     hide: 'esconder',
     show: 'mostrar',
     ...LOCALES
@@ -376,7 +429,15 @@ export default {
     filterLayer: 'Filtrar camadas',
     filterLayerDisabled: 'Geometrias não poligonais não podem ser usadas para filtragem',
     copyGeometry: 'Copiar geometria',
-    noLayersToFilter: 'Sem camadas para filtrar'
+    extractData: 'Extrair dados',
+    extractFromLayer: 'da camada {layerName}',
+    editProperties: 'Editar propriedades',
+    propertyName: 'Propriedade',
+    propertyValue: 'Valor',
+    removeProperty: 'Remover propriedade',
+    polygonFilter: 'Filtro de polígono',
+    noLayersToFilter: 'Sem camadas para filtrar',
+    noLayersToExtract: 'Sem camadas para extrair'
   },
   exportVideoModal: {
     animation: 'Animação',
@@ -414,7 +475,9 @@ export default {
       resolutionDescription: 'Alta resolução é melhor para impressões.',
       resolutionPlaceholder: 'Selecionar resolução...',
       mapLegendTitle: 'Legenda do Mapa',
-      mapLegendAdd: 'Adicionar Legenda no mapa'
+      mapLegendAdd: 'Adicionar Legenda no mapa',
+      chartsTitle: 'Gráficos',
+      chartsAdd: 'Adicionar gráficos no mapa'
     },
     exportVideo: {
       animation: 'Animação',
@@ -475,6 +538,10 @@ export default {
     saveMap: {
       title: 'Armazenamento Cloud',
       subtitle: 'Conecte-se para salvar o mapa para o seu armazenamento cloud pessoal'
+    },
+    providerSelect: {
+      disclaimer:
+        'Entre com a sua própria conta. Os mapas são armazenados no seu armazenamento pessoal do provedor que você escolher, não no Kepler.gl.'
     },
     exportMap: {
       formatTitle: 'Formato do mapa',
@@ -573,13 +640,20 @@ export default {
   header: {
     visibleLayers: 'Camadas Visíveis',
     layerLegend: 'Legenda da Camada',
-    annotations: 'Anotações'
+    annotations: 'Anotações',
+    charts: 'Gráficos'
   },
   interactions: {
     tooltip: 'Dica de contexto',
     brush: 'Pincel',
     coordinate: 'Coordenadas',
-    geocoder: 'Geocoder'
+    geocoder: 'Geocoder',
+    legend: 'Legenda',
+    legendHint: 'Escolha quais camadas aparecem na legenda. As camadas continuam no mapa.',
+    legendEmpty: 'Adicione uma camada para escolher o que aparece na legenda.',
+    legendHiddenByGroup: 'Oculta porque um grupo está excluído da legenda',
+    legendHideInvisible: 'Ocultar camadas ocultas na legenda',
+    legendAllLayers: 'Todas as camadas'
   },
   layerBlending: {
     title: 'Mistura de Camadas',
@@ -664,16 +738,23 @@ export default {
   fileUploader: {
     message: 'Arraste e solte seu(s) arquivo(s) aqui',
     chromeMessage:
-      '*Usuários do chrome: O limite de tamanho de arquivo é 250mb, se você precisa fazer upload de arquivos maiores tente o Safari',
+      '*Os arquivos são processados no navegador. Arquivos grandes podem esgotar a memória; use um tileset para conjuntos de dados muito grandes.',
     disclaimer:
       '*kepler.gl é uma aplicação client-side, sem um servidor backend. Os dados ficam apenas na sua máquina/browser. ' +
       'Nenhuma informação ou dados de mapa é enviado para qualquer server.',
     configUploadMessage:
-      'Envie {fileFormatNames} ou mapas salvos **Json**. Leia mais sobre [**tipos de arquivos suportados**]',
+      'Envie um arquivo suportado ou mapas salvos **Json**. Leia mais sobre [**tipos de arquivos suportados**]',
     browseFiles: 'procure seus arquivos',
     uploading: 'Enviando',
+    downloading: 'Baixando',
     fileNotSupported: 'Arquivo {errorFiles} não é suportado.',
-    or: 'ou'
+    or: 'ou',
+    dropMessage: 'Arraste e solte seu(s) arquivo(s) aqui, {browse}, ou',
+    urlPlaceholder: 'Insira a URL do conjunto de dados',
+    fetch: 'Buscar',
+    format: 'Formato',
+    formatAuto: 'Auto',
+    cors: 'A URL deve permitir [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {
     header: 'Configurar mosaicos vetoriais',

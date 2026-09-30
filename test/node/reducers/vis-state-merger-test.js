@@ -2,9 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import cloneDeep from 'lodash/cloneDeep';
-import Task, {withTask, drainTasksForTesting, succeedTaskInTest} from 'react-palm/tasks';
-import CloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
+import Task, {withTask, drainTasksForTesting, succeedTaskInTest} from '@kepler.gl/tasks';
+import CloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import keplerGlReducer, {
   mergeFilters,
@@ -27,7 +27,13 @@ import {SYNC_TIMELINE_MODES} from '@kepler.gl/constants';
 
 import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas';
 import {processKeplerglJSON} from '@kepler.gl/processors';
-import {updateVisData, receiveMapConfig, addDataToMap, registerEntry} from '@kepler.gl/actions';
+import {
+  updateVisData,
+  receiveMapConfig,
+  addDataToMap,
+  registerEntry,
+  setLayerAnimationTimeConfig
+} from '@kepler.gl/actions';
 
 import {createDataContainer, findById} from '@kepler.gl/utils';
 
@@ -79,6 +85,7 @@ import {
   StateWFilesFiltersLayerColor,
   StateWSyncedTimeFilter,
   StateWSplitMaps,
+  StateWTripGeojson,
   testCsvDataId,
   testGeoJsonDataId,
   StateWFiles,
@@ -105,7 +112,6 @@ import {
   mergedTripFilter,
   mergedRateFilter
 } from 'test/fixtures/geojson';
-import {mockStateWithPolygonFilter} from 'test/fixtures/points-with-polygon-filter-map';
 import {mockStateWithSyncedFilterAndTripLayer} from 'test/fixtures/synced-filter-with-trip-layer';
 
 test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
@@ -540,6 +546,22 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
         {tooltip: parsedConfig.visState.interactionConfig.tooltip},
         'Should save interactionConfig to interactionToBeMerged'
       );
+    } else if (key === 'interactionConfig') {
+      t.deepEqual(
+        mergedState.interactionConfig,
+        {
+          ...oldVisState.interactionConfig,
+          brush: {
+            ...oldVisState.interactionConfig.brush,
+            enabled: false,
+            config: {
+              ...oldVisState.interactionConfig.brush.config,
+              size: 0.5
+            }
+          }
+        },
+        'Should merge brush from saved map into interactionConfig'
+      );
     } else {
       t.deepEqual(mergedState[key], oldVisState[key], `Should keep ${key} the same`);
     }
@@ -859,7 +881,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
           [testCsvDataId]: [
             {
               name: 'gps_data.utc_timestamp',
-              format: null
+              format: 'L LTS'
             },
             {
               name: 'gps_data.types',
@@ -867,7 +889,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
             },
             {
               name: 'epoch',
-              format: null
+              format: 'L LTS'
             },
             {
               name: 'has_result',
@@ -1084,7 +1106,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
                 [testCsvDataId]: [
                   {
                     name: 'gps_data.utc_timestamp',
-                    format: null
+                    format: 'L LTS'
                   },
                   {
                     name: 'gps_data.types',
@@ -1092,7 +1114,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
                   },
                   {
                     name: 'epoch',
-                    format: null
+                    format: 'L LTS'
                   },
                   {
                     name: 'has_result',
@@ -1168,7 +1190,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
           [testCsvDataId]: [
             {
               name: 'gps_data.utc_timestamp',
-              format: null
+              format: 'L LTS'
             },
             {
               name: 'gps_data.types',
@@ -1176,7 +1198,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
             },
             {
               name: 'epoch',
-              format: null
+              format: 'L LTS'
             },
             {
               name: 'has_result',
@@ -1520,6 +1542,109 @@ test('VisStateMerger - mergeSplitMaps', t => {
     },
     'should create split maps panel, add current layer to splitMaps and merge split maps'
   );
+
+  const emptySM = [{layers: {}}, {layers: {}}];
+  const testState5 = {
+    layers: [],
+    splitMaps: [],
+    splitMapsToBeMerged: []
+  };
+  t.deepEqual(
+    mergeSplitMaps(testState5, emptySM),
+    {
+      ...testState5,
+      splitMaps: emptySM,
+      splitMapsToBeMerged: []
+    },
+    'should create split maps panel from split maps without layers'
+  );
+
+  const testState6 = {
+    layers: [{id: 'a', config: {isVisible: true}}],
+    splitMaps: [{layers: {a: true}}, {layers: {a: false}}],
+    splitMapsToBeMerged: []
+  };
+  t.deepEqual(
+    mergeSplitMaps(testState6, emptySM),
+    {
+      ...testState6,
+      splitMapsToBeMerged: []
+    },
+    'should not add panels when merging split maps without layers into a split map'
+  );
+
+  t.end();
+});
+
+test('VisStateMerger - mergeSplitMaps -> keep panels index-aligned', t => {
+  const layerA = {id: 'a', config: {isVisible: true}};
+  const layerB = {id: 'b', config: {isVisible: true}};
+
+  // saved from DUAL_MAP mode: every layer on the left panel, nothing on the right one
+  const dualMap = [{layers: {a: true}}, {layers: {}}];
+  const loading = mergeSplitMaps({layers: [], splitMaps: [], splitMapsToBeMerged: []}, dualMap);
+  t.deepEqual(
+    loading.splitMaps,
+    [{layers: {}}, {layers: {}}],
+    'should create both panels while layer a is not loaded, without a hole on the left'
+  );
+  t.deepEqual(loading.splitMapsToBeMerged, dualMap, 'should wait for layer a in the left panel');
+  t.deepEqual(
+    mergeSplitMaps(
+      {...loading, layers: [layerA], splitMapsToBeMerged: []},
+      loading.splitMapsToBeMerged
+    ).splitMaps,
+    dualMap,
+    'should show layer a only in the left panel once loaded'
+  );
+
+  t.deepEqual(
+    mergeSplitMaps(
+      {
+        layers: [],
+        splitMaps: [{layers: {}}, {layers: {}}],
+        splitMapsToBeMerged: [{layers: {p: true}}, {layers: {p: false}}]
+      },
+      [{layers: {q: true}}, {layers: {q: false}}]
+    ).splitMapsToBeMerged,
+    [{layers: {p: true, q: true}}, {layers: {p: false, q: false}}],
+    'should add layers waiting to be merged to the panel at the same index'
+  );
+
+  t.deepEqual(
+    mergeSplitMaps(
+      {layers: [layerA], splitMaps: [{layers: {}}, {layers: {}}], splitMapsToBeMerged: []},
+      [{layers: {a: true}}, {layers: {b: true}}]
+    ).splitMapsToBeMerged,
+    [{layers: {}}, {layers: {b: true}}],
+    'should keep layer b waiting in the right panel, without a hole on the left'
+  );
+
+  t.deepEqual(
+    mergeSplitMaps({layers: [layerA], splitMaps: [], splitMapsToBeMerged: []}, [
+      {layers: {}},
+      {layers: {}}
+    ]).splitMaps,
+    [{layers: {a: true}}, {layers: {a: true}}],
+    'should add current layers to panels created without layers'
+  );
+
+  t.deepEqual(
+    mergeSplitMaps({layers: [layerA, layerB], splitMaps: [], splitMapsToBeMerged: []}, [
+      {layers: {a: true, b: true}},
+      {layers: {b: true}}
+    ]).splitMaps,
+    [{layers: {a: true, b: true}}, {layers: {b: true}}],
+    'should not add a layer of the merged split maps to a panel that does not list it'
+  );
+
+  const config = [{layers: {a: true}}, {layers: {}}];
+  const configBefore = cloneDeep(config);
+  const merged = mergeSplitMaps({layers: [layerA], splitMaps: [], splitMapsToBeMerged: []}, config);
+  const mergedBefore = cloneDeep(merged);
+  mergeSplitMaps(merged, [{layers: {a: false}}, {layers: {a: true}}]);
+  t.deepEqual(merged, mergedBefore, 'should not change the split maps of the previous state');
+  t.deepEqual(config, configBefore, 'should not change the merged split maps');
 
   t.end();
 });
@@ -1996,23 +2121,43 @@ test('VisStateMerger -> insertLayerAtRightOrder -> to empty config', t => {
 });
 
 test('VisStateMerger -> load polygon filter map', t => {
-  const oldState = mockStateWithPolygonFilter();
+  const parsedMap = processKeplerglJSON(polygonFilterMap);
+  const oldState = applyActions(coreReducer, cloneDeep(InitialState), [
+    {action: addDataToMap, payload: [parsedMap]}
+  ]);
 
   const oldFilter = oldState.visState.filters[0];
+  const filteredLayerId = oldFilter.layerId[0];
+  const oldLayerIdx = oldState.visState.layers.findIndex(l => l.id === filteredLayerId);
+  const oldLayer = oldState.visState.layers[oldLayerIdx];
+  const oldLayerDataCount = oldState.visState.layerData[oldLayerIdx]?.data?.length;
+
+  t.ok(oldFilter, 'Source map should have a polygon filter');
+  t.ok(oldLayerDataCount > 0, 'Source map should show polygon-filtered layer data');
 
   const appStateToSave = SchemaManager.save(oldState);
   const stateParsed = SchemaManager.load(appStateToSave);
   const initialState = cloneDeep(InitialState);
   const initialVisState = initialState.visState;
 
-  const visState = visStateReducer(
-    initialVisState,
-    updateVisData(stateParsed.datasets, {}, stateParsed.config)
-  );
+  const visState = applyActions(visStateReducer, initialVisState, [
+    {action: updateVisData, payload: [stateParsed.datasets, {}, stateParsed.config]}
+  ]);
 
   const newFilter = visState.filters[0];
+  const reloadedIdx = visState.layers.findIndex(l => l.id === oldLayer.id);
 
   t.deepEqual(newFilter, oldFilter, 'Should have loaded the polygon filter correctly');
+  t.equal(
+    visState.layerData[reloadedIdx].data.length,
+    oldLayerDataCount,
+    'Reloaded point layer should show polygon-filtered features without toggling the filter'
+  );
+  t.equal(
+    visState.datasets[oldLayer.config.dataId].filteredIndexByLayer[oldLayer.id].length,
+    oldLayerDataCount,
+    'Reloaded per-layer polygon index should match layer data'
+  );
   t.end();
 });
 
@@ -2065,6 +2210,35 @@ test('VisStateMerger -> load time filter/trip layer synced map', t => {
     visState.animationConfig.currentTime,
     oldState.visState.animationConfig.currentTime,
     'Should have set animationConfig value to filter value[0]'
+  );
+
+  t.end();
+});
+
+test('VisStateMerger -> load trip layer animation timezone and time format', t => {
+  const oldState = cloneDeep(StateWTripGeojson);
+  oldState.visState = visStateReducer(
+    oldState.visState,
+    setLayerAnimationTimeConfig({timezone: 'America/Guayaquil', timeFormat: 'L LTS'})
+  );
+
+  const appStateToSave = SchemaManager.save(oldState);
+  const stateParsed = SchemaManager.load(appStateToSave);
+  const initialVisState = cloneDeep(InitialState).visState;
+
+  const visState = applyActions(visStateReducer, initialVisState, [
+    {action: updateVisData, payload: [stateParsed.datasets, {}, stateParsed.config]}
+  ]);
+
+  t.equal(
+    visState.animationConfig.timezone,
+    'America/Guayaquil',
+    'Should load the saved animation timezone'
+  );
+  t.equal(
+    visState.animationConfig.timeFormat,
+    'L LTS',
+    'Should load the saved animation time format'
   );
 
   t.end();

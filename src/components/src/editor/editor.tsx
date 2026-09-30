@@ -6,7 +6,7 @@ import {createPortal} from 'react-dom';
 import styled from 'styled-components';
 import Window from 'global/window';
 import classnames from 'classnames';
-import get from 'lodash/get';
+import get from 'es-toolkit/compat/get';
 import {createSelector} from 'reselect';
 import FeatureActionPanelFactory, {FeatureActionPanelProps} from './feature-action-panel';
 import {
@@ -20,6 +20,7 @@ import {Layer, EditorLayerUtils} from '@kepler.gl/layers';
 import {Filter, FeatureSelectionContext, Feature} from '@kepler.gl/types';
 import {Feature as EditableFeature, Polygon} from '@deck.gl-community/editable-layers';
 import {Datasets} from '@kepler.gl/table';
+import {isExtractableLayer} from '@kepler.gl/utils';
 
 import {RootContext} from '../context';
 
@@ -44,7 +45,9 @@ interface EditorProps {
   onSelect: (f: Feature | null) => any;
   onSetEditorMode: (m: any) => void;
   onDeleteFeature: (f: Feature) => any;
+  onSetFeatureProperties: (f: Feature, properties: Record<string, unknown>) => any;
   onTogglePolygonFilter: (l: Layer, f: Feature) => any;
+  onExtractData?: (l: Layer) => any;
 }
 
 export type PortalEditorProps = FeatureActionPanelProps & {
@@ -62,10 +65,13 @@ export default function EditorFactory(
     selectedFeature,
     datasets,
     layers,
+    extractLayers,
     currentFilter,
     onClose,
     onDeleteFeature,
+    onSetFeatureProperties,
     onToggleLayer,
+    onExtractData,
     position
   }) => {
     return (
@@ -79,10 +85,13 @@ export default function EditorFactory(
                     selectedFeature={selectedFeature as EditableFeature<Polygon>}
                     datasets={datasets}
                     layers={layers}
+                    extractLayers={extractLayers}
                     currentFilter={currentFilter}
                     onClose={onClose}
                     onDeleteFeature={onDeleteFeature}
+                    onSetFeatureProperties={onSetFeatureProperties}
                     onToggleLayer={onToggleLayer}
+                    onExtractData={onExtractData}
                     position={position || null}
                   />
                 ) : null}
@@ -110,6 +119,7 @@ export default function EditorFactory(
     }
 
     layerSelector = (props: EditorProps) => props.layers;
+    datasetsSelector = (props: EditorProps) => props.datasets;
     filterSelector = (props: EditorProps) => props.filters;
     selectedFeatureIdSelector = (props: EditorProps) =>
       get(props, ['editor', 'selectedFeature', 'id']);
@@ -127,6 +137,18 @@ export default function EditorFactory(
         .filter(layer => layer.config?.isVisible && layer.id !== GEOCODER_LAYER_ID)
     );
 
+    extractableLayersSelector = createSelector(
+      this.layerSelector,
+      this.datasetsSelector,
+      (layers, datasets) =>
+        layers.filter(
+          layer =>
+            layer.config?.isVisible &&
+            layer.id !== GEOCODER_LAYER_ID &&
+            isExtractableLayer(layer, datasets)
+        )
+    );
+
     allFeaturesSelector = createSelector(
       this.filterSelector,
       this.editorFeatureSelector,
@@ -139,20 +161,38 @@ export default function EditorFactory(
 
     isInFocus = () => document.activeElement?.id === DECKGL_RENDER_LAYER;
 
+    isTypingTarget = (target: EventTarget | null) => {
+      const element = target as HTMLElement | null;
+      if (!element) {
+        return false;
+      }
+      const tagName = element.tagName;
+      return (
+        tagName === 'INPUT' ||
+        tagName === 'TEXTAREA' ||
+        tagName === 'SELECT' ||
+        Boolean(element.isContentEditable)
+      );
+    };
+
     _onKeyPressed = (event: KeyboardEvent) => {
+      const isEscape = event.keyCode === KeyEvent.DOM_VK_ESCAPE || event.key === 'Escape';
+      if (isEscape && !this.isTypingTarget(event.target)) {
+        const drawing = EditorLayerUtils.isDrawingActive(true, this.props.editor.mode);
+        if (drawing) {
+          this.props.onSetEditorMode(EDITOR_MODES.EDIT);
+          this.props.onSelect(null);
+        } else if (this.isInFocus()) {
+          this.props.onSelect(null);
+        }
+        return;
+      }
+
       if (this.isInFocus()) {
         switch (event.keyCode) {
           case KeyEvent.DOM_VK_DELETE:
           case KeyEvent.DOM_VK_BACK_SPACE:
             this._onDeleteSelectedFeature();
-            break;
-          case KeyEvent.DOM_VK_ESCAPE:
-            // reset active drawing
-            if (EditorLayerUtils.isDrawingActive(true, this.props.editor.mode)) {
-              this.props.onSetEditorMode(EDITOR_MODES.EDIT);
-            }
-
-            this.props.onSelect(null);
             break;
           default:
             break;
@@ -181,11 +221,20 @@ export default function EditorFactory(
       }
     };
 
+    _onExtractData = (layer: Layer) => {
+      this.props.onExtractData?.(layer);
+    };
+
+    _onSetFeatureProperties = (feature: Feature, properties: Record<string, unknown>) => {
+      this.props.onSetFeatureProperties(feature, properties);
+    };
+
     render() {
       const {className, datasets, editor, style, index} = this.props;
       const {selectedFeature, selectionContext} = editor;
       const currentFilter = this.currentFilterSelector(this.props);
       const availableLayers = this.availableLayersSelector(this.props);
+      const extractableLayers = this.extractableLayersSelector(this.props);
 
       const {rightClick, position, mapIndex} = selectionContext || {};
 
@@ -195,10 +244,15 @@ export default function EditorFactory(
           visiblePanel={Boolean(rightClick) && selectedFeature && index === mapIndex}
           datasets={datasets}
           layers={availableLayers}
+          extractLayers={extractableLayers}
           currentFilter={currentFilter}
           onClose={this._closeFeatureAction}
           onDeleteFeature={this._onDeleteSelectedFeature}
+          onSetFeatureProperties={
+            this._onSetFeatureProperties as FeatureActionPanelProps['onSetFeatureProperties']
+          }
           onToggleLayer={this._togglePolygonFilter}
+          onExtractData={this._onExtractData}
           position={position || null}
           className={className}
           style={style}

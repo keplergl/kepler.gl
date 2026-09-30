@@ -6,11 +6,13 @@ import {RGBColor, Merge, RequireFrom} from './types';
 import {Filter, InteractionConfig, AnimationConfig, SplitMap, Feature} from './reducers';
 
 import {LayerTextLabel} from './layers';
+import {ChartConfig} from './charts';
 
 export type SavedFilter = {
   dataId: Filter['dataId'];
   id: Filter['id'];
   name: Filter['name'];
+  endName?: Filter['endName'];
   type: Filter['type'];
   value: Filter['value'];
   // deprecated
@@ -43,6 +45,10 @@ export type SavedInteractionConfig = {
   coordinate: {
     enabled: boolean;
   };
+  legend?: {
+    enabled: boolean;
+    hideInvisibleLayers?: boolean;
+  };
 };
 
 export type SavedScale = string;
@@ -65,6 +71,7 @@ export type SavedLayer = {
     isVisible: boolean;
     visConfig: Record<string, any>;
     hidden: boolean;
+    isIncludedInLegend?: boolean;
     textLabel: Merge<LayerTextLabel, {field: {name: string; type: string} | null}>;
   };
   visualChannels: SavedVisualChannels;
@@ -90,6 +97,8 @@ export type SavedEffect = ParsedEffect;
 export type SavedAnimationConfig = {
   currentTime: AnimationConfig['currentTime'];
   speed: AnimationConfig['speed'];
+  timeFormat?: AnimationConfig['timeFormat'];
+  timezone?: AnimationConfig['timezone'];
 };
 
 export type SavedEditor = {
@@ -101,6 +110,7 @@ export type SavedVisState = {
   filters: SavedFilter[];
   layers: SavedLayer[];
   effects: SavedEffect[];
+  charts?: ChartConfig[];
   interactionConfig: SavedInteractionConfig;
   layerBlending: string;
   overlayBlending?: string;
@@ -108,6 +118,8 @@ export type SavedVisState = {
   animationConfig: SavedAnimationConfig;
   editor?: SavedEditor;
   layerOrder?: any[];
+  groupBys?: any[];
+  joins?: any[];
 };
 
 // Min saved config can be passed to addDataToMap
@@ -115,6 +127,7 @@ export type MinSavedVisStateV1 = {
   filters?: MinSavedFilter[];
   layers?: MinSavedLayer[];
   effects?: SavedEffect[];
+  charts?: ChartConfig[];
   interactionConfig?: Partial<SavedInteractionConfig>;
   layerBlending?: string;
   overlayBlending?: string;
@@ -126,14 +139,16 @@ export type MinSavedVisStateV1 = {
 export type ParsedVisState = {
   layers?: ParsedLayer[];
   effects?: ParsedEffect[];
+  charts?: ChartConfig[];
   filters?: ParsedFilter[];
-  effects?: ParsedEffect[];
   interactionConfig?: Partial<SavedInteractionConfig>;
   layerBlending?: string;
   overlayBlending?: string;
   splitMaps?: SplitMap[];
   animationConfig?: Partial<SavedAnimationConfig>;
   layerOrder?: any[];
+  groupBys?: any[];
+  joins?: any[];
 };
 
 export type ParsedUiState = {
@@ -150,8 +165,12 @@ export type ParsedUiState = {
         contentHeight?: number;
       };
     };
+    chart?: {
+      active?: boolean;
+    };
   };
   locale?: string;
+  theme?: string;
 };
 
 export type SavedMapState = {

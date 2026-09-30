@@ -240,7 +240,7 @@ export type SetExportImageSettingUpdaterAction = {
   payload: Partial<ExportImage>;
 };
 /**
- * Set `exportImage` settings: ratio, resolution, legend
+ * Set `exportImage` settings: ratio, resolution, legend, charts
  * @memberof uiStateActions
  * @param newSetting - {ratio: '1x'}
  * @public
@@ -454,6 +454,44 @@ export const setExportHTMLMapMode: (
     (payload: SetExportHTMLMapModeUpdaterAction['payload']) => ({payload})
   );
 
+/** SET_EXPORT_MAP_FILE_NAME */
+export type SetExportMapFileNameUpdaterAction = {
+  payload: string;
+};
+/**
+ * Set the filename used when exporting an HTML or JSON map
+ * @memberof uiStateActions
+ * @param fileName - download name without extension
+ * @public
+ */
+export const setExportMapFileName: (
+  fileName: SetExportMapFileNameUpdaterAction['payload']
+) => Merge<SetExportMapFileNameUpdaterAction, {type: typeof ActionTypes.SET_EXPORT_MAP_FILE_NAME}> =
+  createAction(
+    ActionTypes.SET_EXPORT_MAP_FILE_NAME,
+    (payload: SetExportMapFileNameUpdaterAction['payload']) => ({payload})
+  );
+
+/** SET_EXPORT_INCLUDE_LAYER_API_KEYS */
+export type SetExportIncludeLayerApiKeysUpdaterAction = {
+  payload: boolean;
+};
+/**
+ * Whether exported HTML and JSON maps keep access tokens stored on layers.
+ * @memberof uiStateActions
+ * @param includeLayerApiKeys - include layer API keys in the export
+ * @public
+ */
+export const setExportIncludeLayerApiKeys: (
+  includeLayerApiKeys: SetExportIncludeLayerApiKeysUpdaterAction['payload']
+) => Merge<
+  SetExportIncludeLayerApiKeysUpdaterAction,
+  {type: typeof ActionTypes.SET_EXPORT_INCLUDE_LAYER_API_KEYS}
+> = createAction(
+  ActionTypes.SET_EXPORT_INCLUDE_LAYER_API_KEYS,
+  (payload: SetExportIncludeLayerApiKeysUpdaterAction['payload']) => ({payload})
+);
+
 /** SET_LOCALE */
 export type SetLocaleUpdaterAction = {
   payload: {locale: string};
@@ -471,6 +509,27 @@ export const setLocale: (
   (locale: SetLocaleUpdaterAction['payload']['locale']) => ({
     payload: {
       locale
+    }
+  })
+);
+
+/** SET_THEME */
+export type SetThemeUpdaterAction = {
+  payload: {theme: string};
+};
+/**
+ * Set UI `theme` value (`light`, `dark`, or `space`)
+ * @memberof uiStateActions
+ * @param theme - theme of the UI
+ * @public
+ */
+export const setTheme: (
+  theme: SetThemeUpdaterAction['payload']['theme']
+) => Merge<SetThemeUpdaterAction, {type: typeof ActionTypes.SET_THEME}> = createAction(
+  ActionTypes.SET_THEME,
+  (theme: SetThemeUpdaterAction['payload']['theme']) => ({
+    payload: {
+      theme
     }
   })
 );

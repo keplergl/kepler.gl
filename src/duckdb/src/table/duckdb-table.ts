@@ -12,7 +12,7 @@ import {
 import {
   arrowSchemaToFields,
   isArrowData,
-  isGeoJson,
+  getGeoJsonFromLoaderResult,
   isKeplerGlMap,
   isRowObject,
   processArrowBatches
@@ -23,6 +23,7 @@ import {
   getApplicationConfig,
   DatabaseAdapter,
   DatabaseConnection,
+  compactArrowTable,
   isArrowTable,
   isArrowVector
 } from '@kepler.gl/utils';
@@ -48,8 +49,11 @@ import {
   dropTableIfExists,
   getDuckDBColumnTypes,
   getDuckDBColumnTypesMap,
+  quoteColumnName,
+  quoteTableName,
   removeUnsupportedExtensions,
   restoreArrowTable,
+  setGeoArrowWKBExtension,
   restoreUnsupportedExtensions
 } from '../table/duckdb-table-utils';
 
@@ -124,7 +128,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       }, '');
 
       const createTableSql = `
-        CREATE TABLE '${this.label}' AS
+        CREATE TABLE ${quoteTableName(this.label)} AS
         SELECT *
         FROM read_json('${this.id}',
                        columns = {${columns}});
@@ -141,13 +145,17 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       const {rows} = data;
       await db.registerFileText(this.id, JSON.stringify(rows));
 
+      // Identifiers need double quotes; file paths stay single-quoted string literals.
+      const tableName = quoteTableName(this.label);
       const createTableSql = `
         install spatial;
         load spatial;
-        CREATE TABLE '${this.label}' AS
+        CREATE TABLE ${tableName} AS
         SELECT *
         FROM ST_READ('${this.id}', keep_wkb = TRUE);
-        ALTER TABLE '${this.label}' RENAME '${DUCKDB_WKB_COLUMN}' TO '${KEPLER_GEOM_FROM_GEOJSON_COLUMN}';
+        ALTER TABLE ${tableName}
+        RENAME ${quoteColumnName(DUCKDB_WKB_COLUMN)}
+        TO ${quoteColumnName(KEPLER_GEOM_FROM_GEOJSON_COLUMN)};
       `;
 
       await c.query(createTableSql);
@@ -210,61 +218,70 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     }
     const c = await db.connect();
 
-    const tableName = this.label;
-    await dropTableIfExists(c, tableName);
-
-    let format = this.metadata.format;
-    if (!format) {
-      // format is missing when we load Kepler.gl examples
-      if (Array.isArray(data.rows?.[0]) || typeof data.rows?.[0] === 'object') {
-        format = DATASET_FORMATS.row;
-      } else if (data.rows?.type === 'FeatureCollection') {
-        format = DATASET_FORMATS.geojson;
-      } else if (isArrowVector(data.cols?.[0])) {
-        format = DATASET_FORMATS.arrow;
-      }
-    }
-
-    let importDetails: ImportDataToDuckResult | undefined;
-    if (format === DATASET_FORMATS.row) {
-      await this.importRowData({data, db, c});
-    } else if (format === DATASET_FORMATS.geojson) {
-      importDetails = await this.importGeoJsonData({data, db, c});
-    } else if (format === DATASET_FORMATS.arrow) {
-      importDetails = await this.importArrowData({data, db, c});
-    } else {
-      console.error('Unrecognized format', format);
-    }
-
-    let fields: Field[] = [];
-    let cols: arrow.Vector[] = [];
-
     try {
-      const {geoarrowMetadata = {}, useNewFields = false} = importDetails || {};
+      const tableName = data.duckdbTableName ?? this.label;
+      // An explicit duckdbTableName reuses an existing table (for example, a SQL query result).
+      // Preserve it; only replace tables that Kepler will populate from imported data below.
+      if (!data.duckdbTableName) await dropTableIfExists(c, tableName);
 
-      const duckDbColumns = await getDuckDBColumnTypes(c, tableName);
-      const tableDuckDBTypes = getDuckDBColumnTypesMap(duckDbColumns);
-      const adjustedQuery = castDuckDBTypesForKepler(tableName, duckDbColumns);
-      const arrowResult = await c.query(adjustedQuery);
+      let format = this.metadata.format;
+      if (!format) {
+        // format is missing when we load Kepler.gl examples
+        if (Array.isArray(data.rows?.[0]) || typeof data.rows?.[0] === 'object') {
+          format = DATASET_FORMATS.row;
+        } else if (data.rows?.type === 'FeatureCollection') {
+          format = DATASET_FORMATS.geojson;
+        } else if (isArrowVector(data.cols?.[0])) {
+          format = DATASET_FORMATS.arrow;
+        }
+      }
 
-      // TODO if format is an arrow table then just use the original one, instead of the new table from the query?
+      let importDetails: ImportDataToDuckResult | undefined;
+      if (data.duckdbTableName) {
+        importDetails = {useNewFields: true};
+      } else if (format === DATASET_FORMATS.row) {
+        await this.importRowData({data, db, c});
+      } else if (format === DATASET_FORMATS.geojson) {
+        importDetails = await this.importGeoJsonData({data, db, c});
+      } else if (format === DATASET_FORMATS.arrow) {
+        importDetails = await this.importArrowData({data, db, c});
+      } else {
+        console.error('Unrecognized format', format);
+      }
 
-      restoreGeoarrowMetadata(arrowResult, geoarrowMetadata);
+      let fields: Field[] = [];
+      let cols: arrow.Vector[] = [];
 
-      fields = useNewFields
-        ? arrowSchemaToFields(arrowResult, tableDuckDBTypes)
-        : data.fields ?? arrowSchemaToFields(arrowResult, tableDuckDBTypes);
-      cols = [...Array(arrowResult.numCols).keys()]
-        .map(i => arrowResult.getChildAt(i))
-        .filter(col => col) as arrow.Vector[];
-    } catch (error) {
-      console.error('DuckDB table: createTableAndGetArrow', error);
-      throw error;
+      try {
+        const {geoarrowMetadata = {}, useNewFields = false} = importDetails || {};
+
+        const duckDbColumns = await getDuckDBColumnTypes(c, tableName);
+        const tableDuckDBTypes = getDuckDBColumnTypesMap(duckDbColumns);
+        const adjustedQuery = castDuckDBTypesForKepler(tableName, duckDbColumns);
+        const arrowResult = await c.query(adjustedQuery);
+        setGeoArrowWKBExtension(arrowResult, duckDbColumns);
+
+        // TODO if format is an arrow table then just use the original one, instead of the new table from the query?
+
+        restoreGeoarrowMetadata(arrowResult, geoarrowMetadata);
+
+        const compactedResult = compactArrowTable(arrowResult);
+
+        fields = useNewFields
+          ? arrowSchemaToFields(compactedResult, tableDuckDBTypes)
+          : data.fields ?? arrowSchemaToFields(compactedResult, tableDuckDBTypes);
+        cols = [...Array(compactedResult.numCols).keys()]
+          .map(i => compactedResult.getChildAt(i))
+          .filter(col => col) as arrow.Vector[];
+      } catch (error) {
+        console.error('DuckDB table: createTableAndGetArrow', error);
+        throw error;
+      }
+
+      return {fields, cols};
+    } finally {
+      await c.close();
     }
-
-    await c.close();
-
-    return {fields, cols};
   }
 
   async importData({data}: {data: ProcessorResult}): Promise<void> {
@@ -294,19 +311,28 @@ export class KeplerGlDuckDbTable extends KeplerTable {
   static getFileProcessor = function (data: any, inputFormat?: string) {
     let processor;
     let format;
+    const geojsonData = getGeoJsonFromLoaderResult(data);
     if (inputFormat === DATASET_FORMATS.arrow || isArrowData(data)) {
       format = DATASET_FORMATS.arrow;
       processor = processArrowBatches;
     } else if (inputFormat === DATASET_FORMATS.keplergl || isKeplerGlMap(data)) {
       format = DATASET_FORMATS.keplergl;
       processor = processKeplerglJSONforDuckDb;
+    } else if (inputFormat === DATASET_FORMATS.geojson || geojsonData) {
+      format = DATASET_FORMATS.geojson;
+      processor = (raw: unknown) => processGeojson(getGeoJsonFromLoaderResult(raw) ?? raw);
     } else if (inputFormat === DATASET_FORMATS.row || isRowObject(data)) {
       // csv file goes here
       format = DATASET_FORMATS.row;
       processor = processCsvRowObject; // directly import json object into duckdb-wasm
-    } else if (inputFormat === DATASET_FORMATS.geojson || isGeoJson(data)) {
-      format = DATASET_FORMATS.geojson;
-      processor = processGeojson;
+    } else if (
+      data &&
+      typeof data === 'object' &&
+      (data.shape === 'object-row-table' || data.shape === 'row-table') &&
+      Array.isArray(data.data)
+    ) {
+      format = DATASET_FORMATS.row;
+      processor = () => processCsvRowObject(data.data);
     }
     return {processor, format};
   };

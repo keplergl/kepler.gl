@@ -17,6 +17,7 @@ import {default as HexagonLayer} from './hexagon-layer/hexagon-layer';
 import {default as GeojsonLayer} from './geojson-layer/geojson-layer';
 export {
   defaultElevation,
+  defaultElevationOffset,
   defaultLineWidth,
   defaultRadius,
   COLUMN_MODE_TABLE
@@ -41,8 +42,17 @@ export {
 } from './trip-layer/trip-utils';
 import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer';
 export {defaultElevation as s2DefaultElevation} from './s2-geometry-layer/s2-geometry-layer';
+import {default as A5GeometryLayer} from './a5-layer/a5-layer';
+export {defaultElevation as a5DefaultElevation} from './a5-layer/a5-layer';
+import {default as GeohashGeometryLayer} from './geohash-layer/geohash-layer';
+export {defaultElevation as geohashDefaultElevation} from './geohash-layer/geohash-layer';
 import {default as FlowLayer} from './flow-layer/flow-layer';
+import {default as FlowFieldLayer} from './flow-field-layer/flow-field-layer';
+export {FlowFieldColumnMode, flowFieldVisConfigs} from './flow-field-layer/flow-field-layer';
+export {default as FlowFieldLayerIcon} from './flow-field-layer/flow-field-layer-icon';
 export {getS2Center} from './s2-geometry-layer/s2-utils';
+export {getA5Center} from './a5-layer/a5-utils';
+export {getGeohashCenter} from './geohash-layer/geohash-utils';
 export {default as AggregationLayer} from './aggregation-layer';
 import {default as VectorTileLayer} from './vector-tile/vector-tile-layer';
 
@@ -58,20 +68,41 @@ export {
 } from './raster-tile/raster-tile-layer';
 
 import {default as Tile3DLayer} from './tile3d-layer/tile3d-layer';
-export {default as Tile3DLayer} from './tile3d-layer/tile3d-layer';
+export {default as Tile3DLayer, TILE3D_LOAD_ERROR_MESSAGE} from './tile3d-layer/tile3d-layer';
 export {default as Tile3DLayerIcon} from './tile3d-layer/tile3d-layer-icon';
 
 import {default as BitmapOverlayLayer} from './bitmap-layer/bitmap-layer';
 export {default as BitmapOverlayLayer} from './bitmap-layer/bitmap-layer';
 export {default as BitmapLayerIcon} from './bitmap-layer/bitmap-layer-icon';
 export {
+  BitmapBoundsEditMode,
+  BITMAP_MOVE_HANDLE_TYPE
+} from './bitmap-layer/bitmap-bounds-edit-mode';
+export {
   CATEGORICAL_COLORMAP_ID,
   DATA_SOURCE_COLOR_DEFAULTS,
   RASTER_COLOR_RESET_PARAMS,
   PRESET_OPTIONS
 } from './raster-tile/config';
-export {RasterLayerResources} from './raster-tile/url';
 export {getCategoricalColormapDataUrl} from './raster-tile/image';
+export {
+  computeDerivedValue,
+  computeRasterZonalStats,
+  findBestTileAtLngLat,
+  formatRasterIdentifyRows,
+  formatRasterValue,
+  latToMercatorY,
+  lngLatToTileUV,
+  lngToMercatorX,
+  mercatorPixelSizeForBbox,
+  parseTitilerPointResponse,
+  rasterZonalStatsToSidecar,
+  sampleRasterTileAtLngLat,
+  tilePixelToLngLat,
+  zonalStatsToProperties
+} from './raster-tile/raster-tile-identify';
+export {RasterLayerResources, getTitilerBboxUrl, getTitilerPointUrl} from './raster-tile/url';
+export {polygonToBboxRectangle, isDownloadableImageBlob} from './raster-tile/raster-tile-extract';
 export * from './raster-tile/types';
 export * from './raster-tile/raster-tile-utils';
 
@@ -104,7 +135,10 @@ export const KeplerGlLayers = {
   ScenegraphLayer,
   TripLayer,
   S2GeometryLayer,
+  A5GeometryLayer,
+  GeohashGeometryLayer,
   FlowLayer,
+  FlowFieldLayer,
   VectorTileLayer,
   RasterTileLayer,
   WMSLayer,
@@ -127,7 +161,10 @@ export const LayerClasses = {
   [LAYER_TYPES['3D']]: ScenegraphLayer,
   [LAYER_TYPES.trip]: TripLayer,
   [LAYER_TYPES.s2]: S2GeometryLayer,
+  [LAYER_TYPES.a5]: A5GeometryLayer,
+  [LAYER_TYPES.geohash]: GeohashGeometryLayer,
   [LAYER_TYPES.flow]: FlowLayer,
+  [LAYER_TYPES.flowField]: FlowFieldLayer,
   [LAYER_TYPES['vectorTile']]: VectorTileLayer,
   [LAYER_TYPES['rasterTile']]: RasterTileLayer,
   [LAYER_TYPES.wms]: WMSLayer,
@@ -140,6 +177,7 @@ export * from './h3-hexagon-layer';
 export {default as Table} from './table';
 
 export {getEditorLayer} from './editor-layer/editor-layer';
+export {formatCircleRadiusLabel, formatLineLengthLabel} from './editor-layer/editor-measure-labels';
 
 export {
   default as ScenegraphLayer,

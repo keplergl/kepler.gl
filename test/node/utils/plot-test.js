@@ -2,9 +2,134 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {histogramFromThreshold, histogramFromValues} from '@kepler.gl/utils';
+import {
+  histogramFromThreshold,
+  histogramFromValues,
+  histogramFromTimeIntervals,
+  mergePolygonLayerIndexes,
+  runGpuFilterForPlot
+} from '@kepler.gl/utils';
 
 const values1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+
+test('Utils -> mergePolygonLayerIndexes', t => {
+  const baseIndex = [0, 1, 2, 3];
+
+  t.deepEqual(
+    mergePolygonLayerIndexes(baseIndex, {}),
+    baseIndex,
+    'should return base index when no layers are polygon-filtered'
+  );
+
+  t.deepEqual(
+    mergePolygonLayerIndexes(baseIndex, {layerA: [0, 2]}),
+    [0, 2],
+    'should keep rows visible on a single targeted layer'
+  );
+
+  t.deepEqual(
+    mergePolygonLayerIndexes(baseIndex, {layerA: [0, 2], layerB: [1]}),
+    [0, 1, 2],
+    'should keep the union of rows visible on any targeted layer'
+  );
+
+  t.deepEqual(
+    mergePolygonLayerIndexes(baseIndex, {layerA: [], layerB: []}),
+    [],
+    'should export no rows when all targeted layers are empty'
+  );
+
+  t.end();
+});
+
+function mockGpuPlotDataset(rows) {
+  return {
+    id: 'dsA',
+    filteredIndex: rows.map((_, i) => i),
+    filteredIndexByLayer: {},
+    dataContainer: {},
+    gpuFilter: {
+      filterRange: [
+        [0, 10],
+        [0, 10]
+      ],
+      filterValueUpdateTriggers: {
+        gpu0: {name: 'colA'},
+        gpu1: {name: 'colB'}
+      },
+      filterValueAccessor:
+        () =>
+        () =>
+        ({index}) =>
+          rows[index]
+    }
+  };
+}
+
+test('Utils -> runGpuFilterForPlot applies polygon layer indexes', t => {
+  const dataset = {
+    id: 'puppy',
+    filteredIndex: [0, 1, 2, 3],
+    filteredIndexByLayer: {layerA: [0, 2]},
+    dataContainer: {},
+    gpuFilter: {
+      filterRange: [],
+      filterValueUpdateTriggers: {},
+      filterValueAccessor: () => () => () => []
+    }
+  };
+
+  t.deepEqual(
+    runGpuFilterForPlot(dataset),
+    [0, 2],
+    'should start plots from polygon-visible rows when filteredIndexByLayer is set'
+  );
+
+  t.deepEqual(
+    runGpuFilterForPlot({...dataset, filteredIndexByLayer: {}}),
+    [0, 1, 2, 3],
+    'should fall back to filteredIndex when no polygon layer indexes exist'
+  );
+
+  t.end();
+});
+
+test('Utils -> runGpuFilterForPlot skips only this dataset column on multi-dataset filters', t => {
+  // GPU channel 0 = colA, channel 1 = colB. Range [0, 10] on both.
+  // Row 0: both in range. Row 1: colB out. Row 2: colA out. Row 3: both out.
+  const dataset = mockGpuPlotDataset([
+    [5, 5],
+    [5, 100],
+    [100, 5],
+    [100, 100]
+  ]);
+
+  t.deepEqual(
+    runGpuFilterForPlot(dataset, {
+      dataId: ['dsA', 'dsB'],
+      name: ['colA', 'colB']
+    }),
+    [0, 2],
+    'should skip only this dataset column and still apply sibling GPU channels'
+  );
+
+  t.deepEqual(
+    runGpuFilterForPlot(dataset, {
+      dataId: ['dsA'],
+      name: ['colA']
+    }),
+    [0, 2],
+    'should skip the plotted field on a single-dataset filter and still apply other GPU channels'
+  );
+
+  t.deepEqual(
+    runGpuFilterForPlot(dataset, undefined, ['colA', 'colB']),
+    [0, 1, 2, 3],
+    'should skip every extra field name passed by charts without changing filter pairing'
+  );
+
+  t.end();
+});
 
 test('Utils -> histogramFromThreshold', t => {
   const thresholds1 = [1, 3, 6, 13];
@@ -114,6 +239,75 @@ test('Utils -> histogramFromValues', t => {
   // d3.histogram uses ticks() to find nice number of breaks (bins), so the
   // number of returned bins may be different than the input number of bins
   t.deepEqual(bins5, expectedHistogram5, 'should create histogram with 3 bins from values.');
+
+  t.end();
+});
+
+test('Utils -> histogramFromTimeIntervals', t => {
+  const thresholds = [0, 10, 20, 30];
+  const starts = [5, 15, 0, 25];
+  const ends = [15, 15, 30, null];
+
+  const bins = histogramFromTimeIntervals(
+    thresholds,
+    [0, 1, 2, 3],
+    idx => starts[idx],
+    idx => ends[idx]
+  );
+
+  t.deepEqual(
+    bins.map(b => ({count: b.count, indexes: b.indexes, x0: b.x0, x1: b.x1})),
+    [
+      {count: 2, indexes: [0, 2], x0: 0, x1: 10},
+      {count: 3, indexes: [0, 1, 2], x0: 10, x1: 20},
+      {count: 2, indexes: [2, 3], x0: 20, x1: 30}
+    ],
+    'should count a feature in every bin that overlaps [start, end]'
+  );
+
+  t.deepEqual(
+    histogramFromTimeIntervals(
+      thresholds,
+      [0],
+      idx => 10,
+      idx => 10
+    ),
+    [{count: 1, indexes: [0], x0: 10, x1: 20}],
+    'an instant at a bin boundary should land in the following bin'
+  );
+
+  t.deepEqual(
+    histogramFromTimeIntervals(
+      thresholds,
+      [0],
+      () => null,
+      () => 20
+    ),
+    [],
+    'should skip rows with no start time'
+  );
+
+  t.deepEqual(
+    histogramFromTimeIntervals(
+      [],
+      [0],
+      () => 5,
+      () => 15
+    ),
+    [],
+    'should return no bins without thresholds'
+  );
+
+  t.deepEqual(
+    histogramFromTimeIntervals(
+      thresholds,
+      [0],
+      () => 15,
+      () => 5
+    ),
+    [],
+    'should skip inverted intervals (end < start)'
+  );
 
   t.end();
 });

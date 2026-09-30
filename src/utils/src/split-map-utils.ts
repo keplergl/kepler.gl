@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 
 /**
  * Add new layers to both existing maps
@@ -73,6 +73,20 @@ export function getInitialMapLayersForSplitMap(layers) {
       }),
       {}
     );
+}
+
+/**
+ * Combine the layers of the split map panels at the same index
+ * @param {Array<Object>} baseSplitMaps
+ * @param {Array<Object>} splitMaps layers override the ones of baseSplitMaps
+ * @returns {Array<Object>} new splitMaps, without holes
+ */
+export function combineSplitMapsByIndex(baseSplitMaps, splitMaps) {
+  return Array.from({length: Math.max(baseSplitMaps.length, splitMaps.length)}, (_, i) => ({
+    ...baseSplitMaps[i],
+    ...splitMaps[i],
+    layers: {...baseSplitMaps[i]?.layers, ...splitMaps[i]?.layers}
+  }));
 }
 
 /**

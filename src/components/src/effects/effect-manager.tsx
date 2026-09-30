@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useMemo, useState, useCallback} from 'react';
+import React, {useMemo, useState, useCallback, useContext} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
@@ -18,11 +19,10 @@ import {
   DISTANCE_FOG_TYPE,
   SURFACE_FOG_TYPE
 } from '@kepler.gl/constants';
-import {visStateLens} from '@kepler.gl/reducers';
 import {Effect} from '@kepler.gl/types';
 import {VisState} from '@kepler.gl/schemas';
 
-import {withState} from '../injector';
+import KeplerGlContext from '../context';
 import SidePanelTitleFactory from './side-panel-title';
 import EffectListFactory from './effect-list';
 import EffectTypeSelectorFactory, {EffectTypeSelectorProps} from './effect-type-selector';
@@ -39,7 +39,7 @@ export type EffectManagerState = {
   effectOrder: string[];
   children: React.ReactNode;
 };
-export type EffectManagerProps = EffectManagerWithIntlProp & EffectManagerState;
+export type EffectManagerProps = EffectManagerWithIntlProp & Partial<EffectManagerState>;
 
 export type EffectManagerWithIntlProp = {intl: IntlShape};
 
@@ -92,9 +92,25 @@ function EffectManagerFactory(
   SidePanelTitle: ReturnType<typeof SidePanelTitleFactory>,
   EffectTypeSelector: ReturnType<typeof EffectTypeSelectorFactory>
 ): React.FC<EffectManagerProps> {
-  const EffectManager = (props: EffectManagerWithIntlProp & EffectManagerState) => {
-    const {intl, visStateActions, visState, children} = props;
-    const {effects, effectOrder} = visState;
+  const EffectManager = (props: EffectManagerWithIntlProp & Partial<EffectManagerState>) => {
+    const {intl, children} = props;
+    const dispatch = useDispatch();
+    const {selector} = useContext(KeplerGlContext);
+    const visStateFromStore = useSelector(state => selector(state)?.visState);
+    const visState = props.visState ?? visStateFromStore;
+    const visStateActions = useMemo(
+      () =>
+        props.visStateActions ?? {
+          addEffect: payload => dispatch(addEffect(payload)),
+          updateEffect: (id, next) => dispatch(updateEffect(id, next)),
+          removeEffect: id => dispatch(removeEffect(id)),
+          reorderEffect: order => dispatch(reorderEffect(order))
+        },
+      [dispatch, props.visStateActions]
+    );
+
+    const effects = visState?.effects ?? [];
+    const effectOrder = visState?.effectOrder ?? [];
     const {addEffect: visStateAddEffect} = visStateActions;
     const [typeSelectorOpened, setTypeSelectorOpened] = useState(false);
 
@@ -168,9 +184,7 @@ function EffectManagerFactory(
     );
   };
 
-  return withState([visStateLens], state => state, {
-    visStateActions: {addEffect, updateEffect, removeEffect, reorderEffect}
-  })(injectIntl(EffectManager)) as React.FC<EffectManagerProps>;
+  return injectIntl(EffectManager) as React.FC<EffectManagerProps>;
 }
 
 export default EffectManagerFactory;

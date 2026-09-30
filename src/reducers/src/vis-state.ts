@@ -103,6 +103,18 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_TABLE_COLOR]: visStateUpdaters.updateTableColorUpdater,
 
+  [ActionTypes.REFRESH_DATASET]: visStateUpdaters.refreshDatasetUpdater,
+
+  [ActionTypes.REFRESH_DATASET_SUCCESS]: visStateUpdaters.refreshDatasetSuccessUpdater,
+
+  [ActionTypes.REFRESH_DATASET_ERROR]: visStateUpdaters.refreshDatasetErrorUpdater,
+
+  [ActionTypes.REFRESH_DATASET_PROGRESS]: visStateUpdaters.refreshDatasetProgressUpdater,
+
+  [ActionTypes.ADD_TO_DATASET]: visStateUpdaters.addToDatasetUpdater,
+
+  [ActionTypes.REMOVE_FROM_DATASET]: visStateUpdaters.removeFromDatasetUpdater,
+
   [ActionTypes.TOGGLE_FILTER_ANIMATION]: visStateUpdaters.toggleFilterAnimationUpdater,
 
   [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateFilterAnimationSpeedUpdater,
@@ -127,7 +139,11 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_DATASET_PROPS]: visStateUpdaters.updateDatasetPropsUpdater,
 
+  [ActionTypes.UPDATE_DATASET]: visStateUpdaters.updateDatasetUpdater,
+
   [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
+
+  [ActionTypes.SET_EDITOR_FEATURE_PROPERTIES]: visStateUpdaters.setEditorFeaturePropertiesUpdater,
 
   [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater,
 
@@ -141,6 +157,11 @@ const actionHandler = {
 
   [ActionTypes.TOGGLE_EDITOR_VISIBILITY]: visStateUpdaters.toggleEditorVisibilityUpdater,
 
+  [ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER]:
+    visStateUpdaters.convertEditorFeaturesToLayerUpdater,
+
+  [ActionTypes.EXTRACT_DATA_FROM_FEATURE]: visStateUpdaters.extractDataFromFeatureUpdater,
+
   [ActionTypes.TOGGLE_FILTER_FEATURE]: visStateUpdaters.toggleFilterFeatureUpdater,
 
   [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater,
@@ -152,6 +173,12 @@ const actionHandler = {
   [ActionTypes.COPY_TABLE_COLUMN]: visStateUpdaters.copyTableColumnUpdater,
 
   [ActionTypes.SET_COLUMN_DISPLAY_FORMAT]: visStateUpdaters.setColumnDisplayFormatUpdater,
+
+  [ActionTypes.LOAD_COLUMN_STATS]: visStateUpdaters.loadColumnStatsUpdater,
+
+  [ActionTypes.LOAD_COLUMN_STATS_SUCCESS]: visStateUpdaters.loadColumnStatsSuccessUpdater,
+
+  [ActionTypes.LOAD_COLUMN_STATS_ERROR]: visStateUpdaters.loadColumnStatsErrorUpdater,
 
   [ActionTypes.NEXT_FILE_BATCH]: visStateUpdaters.nextFileBatchUpdater,
 
@@ -177,6 +204,12 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater,
 
+  [ActionTypes.ADD_CHART]: visStateUpdaters.addChartUpdater,
+
+  [ActionTypes.UPDATE_CHART]: visStateUpdaters.updateChartUpdater,
+
+  [ActionTypes.REMOVE_CHART]: visStateUpdaters.removeChartUpdater,
+
   [ActionTypes.ADD_ANNOTATION]: visStateUpdaters.addAnnotationUpdater,
 
   [ActionTypes.REMOVE_ANNOTATION]: visStateUpdaters.removeAnnotationUpdater,
@@ -189,7 +222,20 @@ const actionHandler = {
 
   [ActionTypes.CREATE_NEW_DATASET_SUCCESS]: visStateUpdaters.createNewDatasetSuccessUpdater,
 
-  [ActionTypes.SET_LOADING_INDICATOR]: visStateUpdaters.setLoadingIndicatorUpdater
+  [ActionTypes.SET_LOADING_INDICATOR]: visStateUpdaters.setLoadingIndicatorUpdater,
+
+  [ActionTypes.SET_LOADING_PROGRESS]: visStateUpdaters.setLoadingProgressUpdater,
+
+  [ActionTypes.ADD_GROUP_BY]: visStateUpdaters.addGroupByUpdater,
+  [ActionTypes.SET_GROUP_BY_CONFIG]: visStateUpdaters.setGroupByConfigUpdater,
+  [ActionTypes.RUN_GROUP_BY]: visStateUpdaters.runGroupByUpdater,
+  [ActionTypes.ADD_JOIN]: visStateUpdaters.addJoinUpdater,
+  [ActionTypes.SET_JOIN_CONFIG]: visStateUpdaters.setJoinConfigUpdater,
+  [ActionTypes.RUN_JOIN]: visStateUpdaters.runJoinUpdater,
+  [ActionTypes.ADD_SPATIAL_JOIN]: visStateUpdaters.addSpatialJoinUpdater,
+  [ActionTypes.SET_SPATIAL_JOIN_CONFIG]: visStateUpdaters.setSpatialJoinConfigUpdater,
+  [ActionTypes.RUN_SPATIAL_JOIN]: visStateUpdaters.runSpatialJoinUpdater,
+  [ActionTypes.REMOVE_DATASET_OP]: visStateUpdaters.removeDatasetOpUpdater
 };
 
 // construct vis-state reducer

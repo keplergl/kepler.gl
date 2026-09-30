@@ -5,9 +5,10 @@
 import {default as ActionTypes} from './action-types';
 import {FileCacheItem} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {KeplerTable} from '@kepler.gl/table';
+import {GroupByOp, JoinOp, KeplerTable} from '@kepler.gl/table';
 import {
   AddDataToMapPayload,
+  ViewportPadding,
   ValueOf,
   Merge,
   PickInfo,
@@ -27,7 +28,9 @@ import {
   AnimationConfig,
   FilterAnimationConfig,
   LayerOrder,
-  LayerOrderGroup
+  LayerOrderGroup,
+  ProtoDataset,
+  ChartConfig
 } from '@kepler.gl/types';
 import {createAction} from '@reduxjs/toolkit';
 
@@ -773,6 +776,72 @@ export function updateEffect(
   };
 }
 
+// Chart Actions
+
+export type AddChartUpdaterAction = {
+  chart: ChartConfig;
+};
+
+/**
+ * Add a chart to the charts panel
+ * @memberof visStateActions
+ * @param chart - chart config
+ * @returns action
+ * @public
+ */
+export function addChart(
+  chart: ChartConfig
+): Merge<AddChartUpdaterAction, {type: typeof ActionTypes.ADD_CHART}> {
+  return {
+    type: ActionTypes.ADD_CHART,
+    chart
+  };
+}
+
+export type UpdateChartUpdaterAction = {
+  id: string;
+  props: Partial<ChartConfig>;
+};
+
+/**
+ * Update a chart
+ * @memberof visStateActions
+ * @param id - chart id
+ * @param props - partial chart config
+ * @returns action
+ * @public
+ */
+export function updateChart(
+  id: string,
+  props: Partial<ChartConfig>
+): Merge<UpdateChartUpdaterAction, {type: typeof ActionTypes.UPDATE_CHART}> {
+  return {
+    type: ActionTypes.UPDATE_CHART,
+    id,
+    props
+  };
+}
+
+export type RemoveChartUpdaterAction = {
+  id: string;
+};
+
+/**
+ * Remove a chart
+ * @memberof visStateActions
+ * @param id - chart id
+ * @returns action
+ * @public
+ */
+export function removeChart(
+  id: string
+): Merge<RemoveChartUpdaterAction, {type: typeof ActionTypes.REMOVE_CHART}> {
+  return {
+    type: ActionTypes.REMOVE_CHART,
+    id
+  };
+}
+
 // Annotation Actions
 
 export type AddAnnotationUpdaterAction = {
@@ -944,6 +1013,186 @@ export function updateTableColor(
   };
 }
 
+export type RefreshDatasetUpdaterAction = {
+  dataId: string;
+};
+/**
+ * Re-fetch an externally hosted dataset from its source URL.
+ * @memberof visStateActions
+ * @param dataId dataset id
+ * @returns action
+ * @public
+ */
+export function refreshDataset(
+  dataId: string
+): Merge<RefreshDatasetUpdaterAction, {type: typeof ActionTypes.REFRESH_DATASET}> {
+  return {
+    type: ActionTypes.REFRESH_DATASET,
+    dataId
+  };
+}
+
+export type RefreshDatasetSuccessUpdaterAction = {
+  dataId: string;
+  result: {
+    data: ProtoDataset['data'] | null;
+    notModified: boolean;
+    etag?: string;
+    lastModified?: string;
+    size?: number;
+  };
+};
+/**
+ * Apply a successful remote dataset refresh.
+ * @memberof visStateActions
+ * @returns action
+ */
+export function refreshDatasetSuccess(
+  dataId: string,
+  result: RefreshDatasetSuccessUpdaterAction['result']
+): Merge<RefreshDatasetSuccessUpdaterAction, {type: typeof ActionTypes.REFRESH_DATASET_SUCCESS}> {
+  return {
+    type: ActionTypes.REFRESH_DATASET_SUCCESS,
+    dataId,
+    result
+  };
+}
+
+export type RefreshDatasetErrorUpdaterAction = {
+  dataId: string;
+  error: Error;
+};
+/**
+ * Record a failed remote dataset refresh.
+ * @memberof visStateActions
+ * @returns action
+ */
+export function refreshDatasetError(
+  dataId: string,
+  error: Error
+): Merge<RefreshDatasetErrorUpdaterAction, {type: typeof ActionTypes.REFRESH_DATASET_ERROR}> {
+  return {
+    type: ActionTypes.REFRESH_DATASET_ERROR,
+    dataId,
+    error
+  };
+}
+
+export type RefreshDatasetProgressUpdaterAction = {
+  dataId: string;
+  percent: number;
+};
+/**
+ * Update download progress for an in-flight remote dataset refresh (0–100).
+ * @memberof visStateActions
+ * @returns action
+ */
+export function refreshDatasetProgress(
+  dataId: string,
+  percent: number
+): Merge<RefreshDatasetProgressUpdaterAction, {type: typeof ActionTypes.REFRESH_DATASET_PROGRESS}> {
+  return {
+    type: ActionTypes.REFRESH_DATASET_PROGRESS,
+    dataId,
+    percent
+  };
+}
+
+/**
+ * One dataset row: a column-ordered array (same as `ProtoDataset.data.rows`)
+ * or a field-name record. Missing keys become `null`.
+ */
+export type DatasetRow = any[] | Record<string, unknown>;
+
+export type AddToDatasetOptions = {
+  /**
+   * Field name used as a unique key. Matching rows are replaced in place;
+   * keys that are not in the table are appended. Last incoming row wins when
+   * the same key appears twice. Row tables only — Arrow/DuckDB no-op with a warning.
+   */
+  upsertBy?: string;
+};
+
+export type AddToDatasetUpdaterAction = {
+  dataId: string;
+  rows: DatasetRow | DatasetRow[];
+  options?: AddToDatasetOptions;
+};
+/**
+ * Append rows to an existing in-memory row dataset without `addDataToMap`.
+ * Keeps layer identity and style. Pass `options.upsertBy` to replace rows that
+ * share that key and append the rest.
+ *
+ * Not implemented for Arrow or DuckDB tables (no INSERT / concat yet); those
+ * calls warn and leave the table unchanged. Use `addDataToMap` with
+ * `keepExistingConfig` for a full replace.
+ * @memberof visStateActions
+ * @param dataId dataset id
+ * @param rows one row or an array of rows (arrays in field order, or objects keyed by field name)
+ * @param options optional `{upsertBy}` field name
+ * @returns action
+ * @public
+ */
+export function addToDataset(
+  dataId: string,
+  rows: DatasetRow | DatasetRow[],
+  options?: AddToDatasetOptions
+): Merge<AddToDatasetUpdaterAction, {type: typeof ActionTypes.ADD_TO_DATASET}> {
+  return {
+    type: ActionTypes.ADD_TO_DATASET,
+    dataId,
+    rows,
+    options
+  };
+}
+
+export type RemoveFromDatasetByField = {
+  field: string;
+  values: unknown | unknown[];
+};
+
+export type RemoveFromDatasetUpdaterAction = {
+  dataId: string;
+  rowIndexes?: number | number[];
+  byField?: RemoveFromDatasetByField;
+};
+/**
+ * Delete rows from an existing in-memory row dataset without restyling layers.
+ * The second argument is either row indexes or `{field, values}` to match a
+ * column (e.g. an id). Out-of-range indexes are a no-op for the whole action.
+ *
+ * Not implemented for Arrow or DuckDB tables; those calls warn and leave the
+ * table unchanged. For a full table replace use `addDataToMap` with
+ * `keepExistingConfig`.
+ * @memberof visStateActions
+ * @param dataId dataset id
+ * @param rowIndexesOrMatcher one index, an array of indexes, or `{field, values}`
+ * @returns action
+ * @public
+ */
+export function removeFromDataset(
+  dataId: string,
+  rowIndexesOrMatcher: number | number[] | RemoveFromDatasetByField
+): Merge<RemoveFromDatasetUpdaterAction, {type: typeof ActionTypes.REMOVE_FROM_DATASET}> {
+  if (
+    rowIndexesOrMatcher &&
+    typeof rowIndexesOrMatcher === 'object' &&
+    !Array.isArray(rowIndexesOrMatcher) &&
+    'field' in rowIndexesOrMatcher
+  ) {
+    return {
+      type: ActionTypes.REMOVE_FROM_DATASET,
+      dataId,
+      byField: rowIndexesOrMatcher
+    };
+  }
+  return {
+    type: ActionTypes.REMOVE_FROM_DATASET,
+    dataId,
+    rowIndexes: rowIndexesOrMatcher
+  };
+}
+
 export type SortTableColumnUpdaterAction = {
   dataId: string;
   column: string;
@@ -1043,8 +1292,86 @@ export function setColumnDisplayFormat(
   };
 }
 
+export type LoadColumnStatsUpdaterAction = {
+  dataId: string;
+  fieldName: string | string[];
+};
+
+/**
+ * Lazily compute column statistics for the data table header.
+ * @param dataId
+ * @param fieldName one or more field names
+ * @returns action
+ * @public
+ */
+export function loadColumnStats(
+  dataId: string,
+  fieldName: string | string[]
+): Merge<LoadColumnStatsUpdaterAction, {type: typeof ActionTypes.LOAD_COLUMN_STATS}> {
+  return {
+    type: ActionTypes.LOAD_COLUMN_STATS,
+    dataId,
+    fieldName
+  };
+}
+
+export type LoadColumnStatsSuccessUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  result: any;
+  filterProps?: any;
+};
+
+/**
+ * Column statistics finished loading
+ * @returns action
+ * @public
+ */
+export function loadColumnStatsSuccess(
+  dataId: string,
+  fieldName: string,
+  result: any,
+  filterProps?: any
+): Merge<
+  LoadColumnStatsSuccessUpdaterAction,
+  {type: typeof ActionTypes.LOAD_COLUMN_STATS_SUCCESS}
+> {
+  return {
+    type: ActionTypes.LOAD_COLUMN_STATS_SUCCESS,
+    dataId,
+    fieldName,
+    result,
+    filterProps
+  };
+}
+
+export type LoadColumnStatsErrorUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  error: Error;
+};
+
+/**
+ * Column statistics failed to load
+ * @returns action
+ * @public
+ */
+export function loadColumnStatsError(
+  dataId: string,
+  fieldName: string,
+  error: Error
+): Merge<LoadColumnStatsErrorUpdaterAction, {type: typeof ActionTypes.LOAD_COLUMN_STATS_ERROR}> {
+  return {
+    type: ActionTypes.LOAD_COLUMN_STATS_ERROR,
+    dataId,
+    fieldName,
+    error
+  };
+}
+
 export type AddDataToMapUpdaterOptions = {
   centerMap?: boolean;
+  padding?: ViewportPadding;
   readOnly?: boolean;
   keepExistingConfig?: boolean;
 };
@@ -1069,6 +1396,8 @@ export type UpdateVisDataUpdaterAction = {
  * @param {object} options
  * @param options.centerMap `default: true` if `centerMap` is set to `true` kepler.gl will
  * place the map view within the data points boundaries
+ * @param options.padding padding in pixels applied when `centerMap` is true so data is not hidden
+ * under the side panel or other UI. Can be a number or `{top, bottom, left, right}`.
  * @param options.readOnly `default: false` if `readOnly` is set to `true`
  * the left setting panel will be hidden
  * @param config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
@@ -1137,6 +1466,40 @@ export function updateDatasetProps(
     type: ActionTypes.UPDATE_DATASET_PROPS,
     dataId,
     props
+  };
+}
+
+export type UpdateDatasetUpdaterAction = {
+  dataId: string;
+  /** New column data + field descriptors, e.g. `{cols, fields, arrowTable}` (same shape `KeplerTable.importData` accepts). */
+  data: ProtoDataset['data'];
+  /**
+   * Optional old → new column-name map, used to carry layers/filters/tooltips
+   * across a rename (name-based reconciliation alone would treat a renamed
+   * column as removed).
+   */
+  renames?: Record<string, string>;
+};
+/**
+ * Update an existing dataset's schema (columns + fields) in place.
+ * Unlike `addDataToMap`, this keeps the dataset `id`/`label`/`color`/`metadata`
+ * and reconciles layers, filters and tooltip config that referenced the old
+ * columns. Used by the AI assistant's `map.add-column` command.
+ * @param dataId - ***required** Id of the dataset to update
+ * @param data - ***required** New column data + field descriptors
+ * @param renames - (Optional) old column name → new column name, so layers/filters follow a rename
+ * @returns action
+ */
+export function updateDataset(
+  dataId: string,
+  data: ProtoDataset['data'],
+  renames?: Record<string, string>
+): Merge<UpdateDatasetUpdaterAction, {type: typeof ActionTypes.UPDATE_DATASET}> {
+  return {
+    type: ActionTypes.UPDATE_DATASET,
+    dataId,
+    data,
+    renames
   };
 }
 
@@ -1567,6 +1930,32 @@ export function loadFilesErr(
 export type SetFeaturesUpdaterAction = {
   features: Feature[];
 };
+
+export type SetEditorFeaturePropertiesUpdaterAction = {
+  feature: Feature;
+  properties: Record<string, unknown>;
+};
+/**
+ * Set user-facing GeoJSON properties on a Draw on Map sketch.
+ * Editor-only keys such as `filterId` and `isClosed` are preserved.
+ * @memberof visStateActions
+ * @param feature
+ * @param properties
+ * @returns action
+ */
+export function setEditorFeatureProperties(
+  feature: Feature,
+  properties: Record<string, unknown>
+): Merge<
+  SetEditorFeaturePropertiesUpdaterAction,
+  {type: typeof ActionTypes.SET_EDITOR_FEATURE_PROPERTIES}
+> {
+  return {
+    type: ActionTypes.SET_EDITOR_FEATURE_PROPERTIES,
+    feature,
+    properties
+  };
+}
 /**
  * Store features to state
  * @memberof visStateActions
@@ -1671,16 +2060,16 @@ export function deleteFeature(
 export type SetEditorModeUpdaterAction = {
   mode: string;
 };
-/** Set the map mode
+/** Set the Draw on Map editor mode.
  * @memberof visStateActions
- * @param mode one of EDITOR_MODES
+ * @param mode one of `EDITOR_MODES`: `EDIT`, `DRAW_POINT`, `DRAW_LINESTRING`, `DRAW_POLYGON`, `DRAW_RECTANGLE`, `DRAW_CIRCLE`
  * @returns action
  * @public
  * @example
- * import {setMapMode} from '@kepler.gl/actions';
+ * import {setEditorMode} from '@kepler.gl/actions';
  * import {EDITOR_MODES} from '@kepler.gl/constants';
  *
- * this.props.dispatch(setMapMode(EDITOR_MODES.DRAW_POLYGON));
+ * this.props.dispatch(setEditorMode(EDITOR_MODES.DRAW_LINESTRING));
  */
 export function setEditorMode(
   mode: string
@@ -1722,6 +2111,58 @@ export function toggleEditorVisibility(): Merge<
 > {
   return {
     type: ActionTypes.TOGGLE_EDITOR_VISIBILITY
+  };
+}
+
+export type ConvertEditorFeaturesToLayerUpdaterAction = void;
+/**
+ * Convert editor sketch features into a GeoJSON dataset and layer, then clear the sketches.
+ * The new dataset/layer is labeled `Drawn Geometry` plus a two-digit number.
+ * No-ops when `enableDrawOnMapSketches` is false in application config.
+ * @memberof visStateActions
+ * @return action
+ * @public
+ * @example
+ * import {convertEditorFeaturesToLayer} from '@kepler.gl/actions';
+ *
+ * this.props.dispatch(convertEditorFeaturesToLayer());
+ */
+export function convertEditorFeaturesToLayer(): Merge<
+  ConvertEditorFeaturesToLayerUpdaterAction,
+  {type: typeof ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER}
+> {
+  return {
+    type: ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER
+  };
+}
+
+export type ExtractDataFromFeatureUpdaterAction = {
+  layerId: string;
+};
+/**
+ * Copy in-memory rows that fall inside the currently selected Draw on Map polygon
+ * into a new local dataset. Vector tile layers extract a snapshot of features
+ * already loaded in the current view. Raster tile layers download a PNG clip and
+ * a GeoJSON file with the export rectangle and zonal stats. No-ops for WMS/3D/bitmap tiles, unsupported layer types,
+ * and non-polygon drawings.
+ * @memberof visStateActions
+ * @param layerId Layer whose dataset should be extracted
+ * @return action
+ * @public
+ * @example
+ * import {extractDataFromFeature} from '@kepler.gl/actions';
+ *
+ * this.props.dispatch(extractDataFromFeature({layerId: 'point-layer-id'}));
+ */
+export function extractDataFromFeature({
+  layerId
+}: ExtractDataFromFeatureUpdaterAction): Merge<
+  ExtractDataFromFeatureUpdaterAction,
+  {type: typeof ActionTypes.EXTRACT_DATA_FROM_FEATURE}
+> {
+  return {
+    type: ActionTypes.EXTRACT_DATA_FROM_FEATURE,
+    layerId
   };
 }
 
@@ -1936,15 +2377,152 @@ export function setTimeFilterSyncTimelineMode({
 export type CreateNewDatasetSuccessPayload = {
   results: (PromiseFulfilledResult<KeplerTable> | PromiseRejectedResult)[];
   addToMapOptions: AddDataToMapPayload['options'];
+  /** Dataset ids whose hydrate download progress should be cleared. */
+  progressIds?: string[];
 };
 
-/**
- * Called when a new dataset is created successfully via async table methods
- * @memberof visStateActions
- * @param payload
- * @param payload.results - results of promises.allSettlted
- * @returns
- */
+export type AddGroupByUpdaterAction = {
+  dataId: string;
+};
+
+export function addGroupBy(
+  dataId: string
+): Merge<AddGroupByUpdaterAction, {type: typeof ActionTypes.ADD_GROUP_BY}> {
+  return {
+    type: ActionTypes.ADD_GROUP_BY,
+    dataId
+  };
+}
+
+export type SetGroupByConfigUpdaterAction = {
+  id: string;
+  config: Partial<GroupByOp>;
+};
+
+export function setGroupByConfig(
+  id: string,
+  config: Partial<GroupByOp>
+): Merge<SetGroupByConfigUpdaterAction, {type: typeof ActionTypes.SET_GROUP_BY_CONFIG}> {
+  return {
+    type: ActionTypes.SET_GROUP_BY_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunGroupByUpdaterAction = {
+  id: string;
+};
+
+export function runGroupBy(
+  id: string
+): Merge<RunGroupByUpdaterAction, {type: typeof ActionTypes.RUN_GROUP_BY}> {
+  return {
+    type: ActionTypes.RUN_GROUP_BY,
+    id
+  };
+}
+
+export type AddJoinUpdaterAction = {
+  dataId: string;
+  implementation?: JoinOp['implementation'];
+};
+
+export function addJoin(
+  dataId: string,
+  implementation: JoinOp['implementation'] = 'simple'
+): Merge<AddJoinUpdaterAction, {type: typeof ActionTypes.ADD_JOIN}> {
+  return {
+    type: ActionTypes.ADD_JOIN,
+    dataId,
+    implementation
+  };
+}
+
+export type SetJoinConfigUpdaterAction = {
+  id: string;
+  config: Partial<JoinOp>;
+};
+
+export function setJoinConfig(
+  id: string,
+  config: Partial<JoinOp>
+): Merge<SetJoinConfigUpdaterAction, {type: typeof ActionTypes.SET_JOIN_CONFIG}> {
+  return {
+    type: ActionTypes.SET_JOIN_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunJoinUpdaterAction = {
+  id: string;
+};
+
+export function runJoin(
+  id: string
+): Merge<RunJoinUpdaterAction, {type: typeof ActionTypes.RUN_JOIN}> {
+  return {
+    type: ActionTypes.RUN_JOIN,
+    id
+  };
+}
+
+export type AddSpatialJoinUpdaterAction = {
+  dataId: string;
+};
+
+export function addSpatialJoin(
+  dataId: string
+): Merge<AddSpatialJoinUpdaterAction, {type: typeof ActionTypes.ADD_SPATIAL_JOIN}> {
+  return {
+    type: ActionTypes.ADD_SPATIAL_JOIN,
+    dataId
+  };
+}
+
+export type SetSpatialJoinConfigUpdaterAction = {
+  id: string;
+  config: Partial<JoinOp>;
+};
+
+export function setSpatialJoinConfig(
+  id: string,
+  config: Partial<JoinOp>
+): Merge<SetSpatialJoinConfigUpdaterAction, {type: typeof ActionTypes.SET_SPATIAL_JOIN_CONFIG}> {
+  return {
+    type: ActionTypes.SET_SPATIAL_JOIN_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunSpatialJoinUpdaterAction = {
+  id: string;
+};
+
+export function runSpatialJoin(
+  id: string
+): Merge<RunSpatialJoinUpdaterAction, {type: typeof ActionTypes.RUN_SPATIAL_JOIN}> {
+  return {
+    type: ActionTypes.RUN_SPATIAL_JOIN,
+    id
+  };
+}
+
+export type RemoveDatasetOpUpdaterAction = {
+  id: string;
+};
+
+export function removeDatasetOp(
+  id: string
+): Merge<RemoveDatasetOpUpdaterAction, {type: typeof ActionTypes.REMOVE_DATASET_OP}> {
+  return {
+    type: ActionTypes.REMOVE_DATASET_OP,
+    id
+  };
+}
+
 export const createNewDatasetSuccess = createAction<CreateNewDatasetSuccessPayload>(
   ActionTypes.CREATE_NEW_DATASET_SUCCESS
 );
@@ -1963,6 +2541,28 @@ export type SetLoadingIndicatorPayload = {
 export const setLoadingIndicator = createAction<SetLoadingIndicatorPayload>(
   ActionTypes.SET_LOADING_INDICATOR
 );
+
+export type SetLoadingProgressUpdaterAction = {
+  id: string;
+  percent: number;
+};
+
+/**
+ * Update download progress for an in-flight dataset load shown on the map
+ * loading indicator (0–100).
+ * @memberof visStateActions
+ * @returns action
+ */
+export function setLoadingProgress(
+  id: string,
+  percent: number
+): Merge<SetLoadingProgressUpdaterAction, {type: typeof ActionTypes.SET_LOADING_PROGRESS}> {
+  return {
+    type: ActionTypes.SET_LOADING_PROGRESS,
+    id,
+    percent
+  };
+}
 
 /**
  * This declaration is needed to group actions in docs

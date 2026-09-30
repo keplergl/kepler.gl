@@ -1,0 +1,95 @@
+@import 'tailwindcss';
+
+@import '@sqlrooms/ui/tailwind-preset.css';
+
+/*
+ * The demo (CONTAINER_STYLE in app.tsx) is `position: absolute; height: 100%`.
+ * That resolves against the viewport while `body` is `position: static`. Opening
+ * a Radix dropdown/popover (session history, rename, delete, model picker)
+ * sets `body[data-scroll-locked] { position: relative !important }`, which
+ * makes `body` the containing block. Without an explicit height, body
+ * collapses to 0 (in-flow children are empty wrappers; the map is
+ * absolutely positioned) and the dark `bg-background` paints the viewport,
+ * so the popup looks unstyled and full-screen. The website build also
+ * mounts into an unstyled div with no html/body height.
+ */
+html,
+body,
+#root,
+.kg-web-content {
+  width: 100%;
+  height: 100%;
+}
+
+/* Scan our local components. Include the whole demo-app `src` tree so
+ * app-level Tailwind classes in app.tsx are also generated. */
+@source "./**/*.{ts,tsx}";
+
+/* Scan package dist files for their Tailwind classes. These live in the
+ * demo-app's own node_modules — `../node_modules` from this file (src/) is the
+ * demo-app package root, not the kepler.gl repo root (`../..`). `@source`
+ * paths are resolved relative to the CSS file, not the CLI's working dir. */
+@source "../node_modules/@sqlrooms/ui/dist/**/*.js";
+@source "../node_modules/@sqlrooms/ai/dist/**/*.js";
+@source "../node_modules/@sqlrooms/ai-core/dist/**/*.js";
+@source "../node_modules/@sqlrooms/ai-settings/dist/**/*.js";
+@source "../node_modules/@sqlrooms/duckdb/dist/**/*.js";
+@source "../node_modules/@sqlrooms/room-store/dist/**/*.js";
+@source "../node_modules/@openassistant/kepler-assistant/dist/**/*.js";
+
+/*
+ * Override kepler.gl's Tailwind v3 preflight which sets a global
+ * `*, ::before, ::after { border-color: ... }` outside of any CSS layer.
+ * Since unlayered styles beat @layer, we scope to .dark for higher specificity.
+ */
+.dark *, .dark ::before, .dark ::after {
+  border-color: hsl(var(--border));
+}
+
+/*
+ * Scale prose (markdown) content to match kepler.gl's ~12px base font.
+ * The prose plugin uses rem units relative to the 16px root, so text-sm prose
+ * renders at 14px. Override to 12px to stay consistent with the rest of the UI.
+ */
+.dark .prose {
+  font-size: 12px;
+}
+.dark .prose :where(p, li, blockquote) {
+  line-height: 1.6;
+}
+
+/*
+ * The "Show Query Result" modal (Radix Dialog from @sqlrooms/ui, opened by the
+ * QueryToolResult renderer) portals its overlay + content to <body> at
+ * Tailwind's z-50 (z-index: 50). kepler.gl's left side panel sits at z-index:
+ * 99 and other stacked map UI reaches 10000 (e.g. notification-panel). Because
+ * the kepler container (CONTAINER_STYLE in app.tsx) is position:absolute with
+ * no z-index, it does not create a stacking context, so those internal
+ * z-indices compete directly in the body's root stacking context and cover
+ * the z-50 popup.
+ *
+ * Hoist any Radix layer portaled to <body> above all kepler.gl layers.
+ * Dialog overlay/content are `body > [data-state=open]`; dropdown/popover
+ * content is wrapped in `body > [data-radix-popper-content-wrapper]`.
+ * Unlayered CSS beats Tailwind's layered .z-50, so no !important is needed.
+ */
+body > [data-state='open'],
+body > [data-radix-popper-content-wrapper] {
+  z-index: 10001;
+}
+
+/*
+ * The "Show Query Result" dialog content (Radix DialogContent portaled to
+ * <body>) is sized by @sqlrooms/data-table as max-w-[75vw]. Override to 80vw
+ * so the table fills 80% of the screen width. Targets only the dialog content
+ * (role="dialog"), not the overlay. Unlayered CSS beats Tailwind's layered
+ * max-w-*, so no !important is needed.
+ */
+body > [data-state='open'][role='dialog'] {
+  width: 80vw;
+  max-width: 80vw;
+}
+
+
+
+

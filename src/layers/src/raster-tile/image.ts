@@ -7,9 +7,9 @@
 
 import {load, FetchError} from '@loaders.gl/core';
 import {QuantizedMeshLoader} from '@loaders.gl/terrain';
-import memoize from 'lodash/memoize';
+import memoize from 'es-toolkit/compat/memoize';
 
-import {sleep} from '@kepler.gl/common-utils';
+import {sleep, withPublicTitilerCorsCacheKey} from '@kepler.gl/common-utils';
 import {getLoaderOptions} from '@kepler.gl/constants';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
@@ -198,7 +198,9 @@ export async function getAssetRequest({
   const requestParams = params ?? new URLSearchParams();
   const requestOptions = options;
 
-  const assetUrl = requestParams ? `${requestUrl}?${requestParams.toString()}` : requestUrl;
+  const assetUrl = withPublicTitilerCorsCacheKey(
+    requestParams ? `${requestUrl}?${requestParams.toString()}` : requestUrl
+  );
   return {
     url: assetUrl,
     rasterServerUrl,

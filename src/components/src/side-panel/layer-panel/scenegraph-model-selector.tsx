@@ -74,10 +74,10 @@ function ScenegraphModelSelectorFactory(
     disabled,
     onSelect
   }) => {
-    const selectedItems = useMemo(() => options.find(op => op.id === selected), [
-      options,
-      selected
-    ]);
+    const selectedItems = useMemo(
+      () => options.find(op => op.id === selected),
+      [options, selected]
+    );
 
     return (
       <SidePanelSection>

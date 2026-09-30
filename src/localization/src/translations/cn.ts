@@ -16,6 +16,7 @@ export default {
     stroke: '线条粗细',
     density: '密度',
     height: '高度',
+    elevationOffset: '海拔偏移',
     sum: '总和',
     pointCount: '点数'
   },
@@ -27,7 +28,8 @@ export default {
     selectValue: '选择值',
     enterValue: '输入值',
     empty: '未选择',
-    selectLayer: '选择图层'
+    selectLayer: '选择图层',
+    endTimeField: '选择结束时间'
   },
   misc: {
     by: '',
@@ -60,7 +62,8 @@ export default {
       alignment: '对齐方式',
       addMoreLabel: '添加更多标签',
       outlineWidth: '轮廓宽度',
-      outlineColor: '轮廓颜色'
+      outlineColor: '轮廓颜色',
+      collisionEnabled: '隐藏重叠标签'
     }
   },
   sidebar: {
@@ -102,6 +105,8 @@ export default {
     layer: '图层',
     appearance: '外观',
     uniqueIdField: '唯一ID字段',
+    hideNulls: '隐藏空值',
+    hideNullsDescription: '开启后，没有填充颜色值的要素将被隐藏。关闭时，这些要素显示为灰色。',
     type: {
       point: 'point',
       arc: 'arc',
@@ -117,6 +122,8 @@ export default {
       hexagonid: 'H3',
       trip: 'trip',
       s2: 'S2',
+      geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'vector tile',
@@ -161,6 +168,9 @@ export default {
     sizeScale: '大小比例',
     worldUnitSize: '世界单位大小',
     elevationScale: '海拔比例',
+    elevationOffset: '海拔偏移',
+    elevationOffsetDescription: '将挤出的多边形抬离地面（单位与高度相同）',
+    elevationOffsetRange: '海拔偏移范围',
     enableElevationZoomFactor: '使用高程缩放系数',
     enableElevationZoomFactorDescription: '根据当前缩放系数调整海拔',
     enableHeightZoomFactor: '使用高度缩放因子',
@@ -181,6 +191,8 @@ export default {
     heightMultiplier: '高度倍增器',
     fixedHeight: '固定高度',
     fixedHeightDescription: '使用未修改的高度',
+    fixedElevation: '固定海拔',
+    fixedElevationDescription: '使用未修改的海拔偏移',
     allowHover: '显示工具提示',
     allowHoverDescription: '悬停在图层要素上时显示或隐藏工具提示',
     flow: {
@@ -233,7 +245,9 @@ export default {
     addAnnotation: '添加',
     type: '类型',
     lineWidth: '线宽',
-    color: '颜色'
+    color: '颜色',
+    textSide: '文本位置',
+    textPlacement: '对齐'
   },
   effectDescription: {
     lightAndShadow:
@@ -273,18 +287,37 @@ export default {
     timeFilterSync: '同步数据集',
     timeLayerSync: '与图层时间线联动',
     timeLayerUnsync: '取消与图层时间线联动',
-    column: '列'
+    column: '列',
+    timeIntervalEndField: '结束时间',
+    timeIntervalEndFieldHint: '可选。当播放窗口与该时间范围重叠时，要素保持可见。',
+    timezone: '时区',
+    selectTimezone: '选择显示时区'
   },
   datasetTitle: {
     showDataTable: '显示数据表',
-    removeDataset: '删除数据集'
+    removeDataset: '删除数据集',
+    refreshDataset: '刷新数据集',
+    refreshFailed: '刷新失败',
+    refreshSettings: '刷新设置',
+    refreshOff: '关闭',
+    refresh10s: '10秒',
+    refresh15s: '15秒',
+    refresh1m: '1分钟',
+    refresh5m: '5分钟',
+    refresh15m: '15分钟',
+    refreshCustom: '自定义'
   },
   datasetInfo: {
     rowCount: '{rowCount}行',
     vectorTile: '矢量瓦片',
     rasterTile: '栅格瓦片',
     wmsTile: 'WMS瓦片',
-    tile3d: '3D瓦片'
+    tile3d: '3D瓦片',
+    remoteFile: '{rowCount}行（远程）',
+    refreshInterval: '刷新',
+    refreshCustomSeconds: '秒',
+    refreshing: '正在刷新…',
+    refreshingPercent: '正在刷新 {percent}%'
   },
   tooltip: {
     hideLayer: '隐藏图层',
@@ -307,7 +340,12 @@ export default {
     showLegend: '显示图例',
     disable3DMap: '禁用 3D 地图',
     DrawOnMap: '在地图上绘制',
+    copyAllSketches: '将所有草图以 GeoJSON 复制到剪贴板',
+    convertToLayer: '将草图转为 GeoJSON 图层并清除绘制',
     selectLocale: '选择语言',
+    switchToLightTheme: '切换到浅色主题',
+    switchToDarkTheme: '切换到深色主题',
+    switchToSpaceTheme: '切换到 Space 主题',
     showAiAssistantPanel: '显示 AI 助手面板',
     hideAiAssistantPanel: '隐藏 AI 助手面板',
     hideLayerPanel: '隐藏图层面板',
@@ -333,6 +371,8 @@ export default {
     syncTimelineEnd: '当前过滤时间段的结束',
     showEffectPanel: '显示效果面板',
     hideEffectPanel: '隐藏效果面板',
+    showChartPanel: '显示图表',
+    hideChartPanel: '隐藏图表',
     showAnnotationPanel: '显示注释',
     hideAnnotationPanel: '隐藏注释',
     removeAnnotation: '删除注释',
@@ -342,7 +382,13 @@ export default {
     annotationSettings: '注释设置',
     removeEffect: '移除效果',
     disableEffect: '禁用效果',
-    effectSettings: '效果设置'
+    effectSettings: '效果设置',
+    editLayerJson: '编辑图层 JSON',
+    editFilterJson: '编辑筛选器 JSON',
+    editEffectJson: '编辑效果 JSON',
+    editViewportJson: '编辑视口 JSON',
+    editAnimationJson: '编辑动画 JSON',
+    editChartJson: '编辑图表 JSON'
   },
   toolbar: {
     exportImage: '导出图片',
@@ -352,8 +398,13 @@ export default {
     shareMapURL: '分享地图网址',
     saveMap: '保存地图',
     select: '选择',
+    point: '点',
+    line: '线',
     polygon: 'polygon',
     rectangle: 'rectangle',
+    circle: '圆形',
+    copyAll: '复制全部',
+    convertToLayer: '转换为\n图层',
     hide: '隐藏',
     show: '显示',
     ...LOCALES
@@ -362,7 +413,15 @@ export default {
     filterLayer: '过滤图层',
     filterLayerDisabled: '非多边形几何图形不能用于过滤',
     copyGeometry: '复制几何图形',
-    noLayersToFilter: '没有可过滤的图层'
+    extractData: '提取数据',
+    extractFromLayer: '从 {layerName} 图层',
+    editProperties: '编辑属性',
+    propertyName: '属性',
+    propertyValue: '值',
+    removeProperty: '删除属性',
+    polygonFilter: '多边形过滤器',
+    noLayersToFilter: '没有可过滤的图层',
+    noLayersToExtract: '没有可提取的图层'
   },
   exportVideoModal: {
     animation: '动画',
@@ -400,7 +459,9 @@ export default {
       resolutionDescription: '高分辨率更适合打印。',
       resolutionPlaceholder: '选择分辨率...',
       mapLegendTitle: '地图图例',
-      mapLegendAdd: '在地图上添加图例'
+      mapLegendAdd: '在地图上添加图例',
+      chartsTitle: '图表',
+      chartsAdd: '在地图上添加图表'
     },
     exportVideo: {
       animation: '动画',
@@ -460,6 +521,9 @@ export default {
     saveMap: {
       title: '云存储',
       subtitle: '登录以将地图保存到个人云存储'
+    },
+    providerSelect: {
+      disclaimer: '请使用您自己的账号登录。地图保存在您所选提供商的个人云存储中，而非 Kepler.gl。'
     },
     exportMap: {
       formatTitle: '地图的格式',
@@ -555,13 +619,20 @@ export default {
   header: {
     visibleLayers: '可见图层',
     layerLegend: '图层图例',
-    annotations: '注释'
+    annotations: '注释',
+    charts: '图表'
   },
   interactions: {
     tooltip: '工具提示',
     brush: '刷',
     coordinate: '坐标',
-    geocoder: '地理编码器'
+    geocoder: '地理编码器',
+    legend: '图例',
+    legendHint: '选择哪些图层显示在图例中。图层仍会留在地图上。',
+    legendEmpty: '添加图层后即可选择图例中显示的内容。',
+    legendHiddenByGroup: '因图层组已从图例中排除而隐藏',
+    legendHideInvisible: '在图例中隐藏已隐藏的图层',
+    legendAllLayers: '所有图层'
   },
   layerBlending: {
     title: '图层混合',
@@ -644,17 +715,22 @@ export default {
   },
   fileUploader: {
     message: '将您的文件拖放到此处（可多个）',
-    chromeMessage:
-      '*对于 Chrome 用户：文件大小最大为 250mb。如果需要上传更多文件，请尝试使用 Safari。',
+    chromeMessage: '*文件在浏览器中解析。过大的文件可能耗尽内存；超大数据集请使用瓦片（tileset）。',
     disclaimer:
       '* kepler.gl 在客户端上工作。数据仅保留在您自己的设备/浏览器中。' +
       '没有信息或地图数据被发送到任何服务器。',
-    configUploadMessage:
-      '上传 {fileFormatNames} 或保存的地图 **Json**。阅读更多关于[**支持的文件格式**]',
+    configUploadMessage: '上传支持的文件或保存的地图 **Json**。阅读更多关于[**支持的文件格式**]',
     browseFiles: '浏览你的文件',
     uploading: '上传',
+    downloading: '下载中',
     fileNotSupported: '不支持文件 {errorFiles}。',
-    or: '或'
+    or: '或',
+    dropMessage: '将您的文件拖放到此处，{browse}，或',
+    urlPlaceholder: '输入数据集 URL',
+    fetch: '获取',
+    format: '格式',
+    formatAuto: '自动',
+    cors: 'URL 必须允许 [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)。'
   },
   tilesetSetup: {
     header: '设置矢量瓦片',

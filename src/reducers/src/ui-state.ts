@@ -40,12 +40,16 @@ const actionHandler = {
   [ActionTypes.SET_EXPORT_MAP_FORMAT]: uiStateUpdaters.setExportMapFormatUpdater,
 
   [ActionTypes.SET_EXPORT_MAP_HTML_MODE]: uiStateUpdaters.setExportMapHTMLModeUpdater,
+  [ActionTypes.SET_EXPORT_MAP_FILE_NAME]: uiStateUpdaters.setExportMapFileNameUpdater,
+  [ActionTypes.SET_EXPORT_INCLUDE_LAYER_API_KEYS]:
+    uiStateUpdaters.setExportIncludeLayerApiKeysUpdater,
   [ActionTypes.LOAD_FILES]: uiStateUpdaters.loadFilesUpdater,
   [ActionTypes.LOAD_FILES_ERR]: uiStateUpdaters.loadFilesErrUpdater,
 
   [ActionTypes.TOGGLE_SPLIT_MAP]: uiStateUpdaters.toggleSplitMapUpdater,
   [ActionTypes.SHOW_DATASET_TABLE]: uiStateUpdaters.showDatasetTableUpdater,
   [ActionTypes.SET_LOCALE]: uiStateUpdaters.setLocaleUpdater,
+  [ActionTypes.SET_THEME]: uiStateUpdaters.setThemeUpdater,
   [ActionTypes.TOGGLE_PANEL_LIST_VIEW]: uiStateUpdaters.togglePanelListViewUpdater,
   [ActionTypes.RECEIVE_MAP_CONFIG]: uiStateUpdaters.receiveMapConfigUpdater
 };

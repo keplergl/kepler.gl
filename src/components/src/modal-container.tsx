@@ -3,7 +3,7 @@
 
 import React, {Component} from 'react';
 import {css} from 'styled-components';
-import get from 'lodash/get';
+import get from 'es-toolkit/compat/get';
 import document from 'global/document';
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
@@ -11,6 +11,7 @@ import {
   exportData,
   getFileFormatNames,
   getFileExtensions,
+  getDisplayedFileExtensions,
   MapStyle,
   ProviderState
 } from '@kepler.gl/reducers';
@@ -215,7 +216,10 @@ export default function ModalContainerFactory(
 
     _onExportImage = () => {
       if (!this.props.uiState.exportImage.processing) {
-        exportImage(this.props.uiState.exportImage, `${this.props.appName}.png`);
+        exportImage(
+          this.props.uiState.exportImage,
+          this.props.uiState.exportImage.fileName || `${this.props.appName}.png`
+        );
         this.props.uiStateActions.cleanupExportImage();
         this._closeModal();
       }
@@ -228,11 +232,12 @@ export default function ModalContainerFactory(
 
     _onExportMap = () => {
       const {uiState} = this.props;
-      const {format} = uiState.exportMap;
-      (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(
-        this.props,
-        this.props.uiState.exportMap[format] || {}
-      );
+      const {format, includeLayerApiKeys, fileName} = uiState.exportMap;
+      (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(this.props, {
+        ...(uiState.exportMap[format] || {}),
+        includeLayerApiKeys,
+        fileName
+      });
       this._closeModal();
     };
 
@@ -325,6 +330,7 @@ export default function ModalContainerFactory(
                 pinTableColumn={visStateActions.pinTableColumn}
                 copyTableColumn={visStateActions.copyTableColumn}
                 setColumnDisplayFormat={visStateActions.setColumnDisplayFormat}
+                loadColumnStats={visStateActions.loadColumnStats}
                 uiStateActions={uiStateActions}
                 uiState={uiState}
               />
@@ -374,6 +380,7 @@ export default function ModalContainerFactory(
                 fileLoadingProgress={visState.fileLoadingProgress}
                 fileFormatNames={getFileFormatNames(this.props.visState)}
                 fileExtensions={getFileExtensions(this.props.visState)}
+                displayedFileExtensions={getDisplayedFileExtensions(this.props.visState)}
               />
             );
             modalProps = {
@@ -444,6 +451,8 @@ export default function ModalContainerFactory(
                 onChangeExportMapFormat={uiStateActions.setExportMapFormat}
                 onEditUserMapboxAccessToken={uiStateActions.setUserMapboxAccessToken}
                 onChangeExportMapHTMLMode={uiStateActions.setExportHTMLMapMode}
+                onChangeExportIncludeLayerApiKeys={uiStateActions.setExportIncludeLayerApiKeys}
+                onChangeExportMapFileName={uiStateActions.setExportMapFileName}
               />
             );
             modalProps = {

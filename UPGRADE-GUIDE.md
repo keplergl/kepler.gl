@@ -27,6 +27,7 @@ See the full upgrade guide: **[Upgrade Guide — kepler.gl 3.3](docs/upgrade-gui
 - **HeatmapLayer** — rewritten from Mapbox GL to deck.gl base
 - **`layerOrder`** — type changed from flat `string[]` to `(string | LayerOrderGroup)[]`
 - **`LayerSelectorPanelFactory`** — removed from `@kepler.gl/components`
+- **`react-palm` removed** — replace `import {taskMiddleware} from 'react-palm/tasks'` with `import {taskMiddleware} from '@kepler.gl/tasks'`
 
 ## Upgrade from v2.4 to v3.0
 

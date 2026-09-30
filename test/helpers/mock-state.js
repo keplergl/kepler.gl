@@ -3,7 +3,7 @@
 
 // @ts-nocheck
 
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {colorPaletteToColorRange} from '@kepler.gl/constants';
 import {
   getInitialInputStyle,
@@ -1016,8 +1016,11 @@ export const expectedSavedLayer2 = {
       sizeRange: [0, 10],
       radiusRange: [0, 50],
       heightRange: [0, 500],
-      elevationScale: 5,
+      elevationScale: 1,
       fixedHeight: false,
+      elevationOffset: 0,
+      elevationOffsetRange: [0, 500],
+      fixedElevation: true,
       stroked: true,
       filled: true,
       enable3d: false,
@@ -1036,6 +1039,8 @@ export const expectedSavedLayer2 = {
     sizeScale: 'linear',
     heightField: null,
     heightScale: 'linear',
+    elevationOffsetField: null,
+    elevationOffsetScale: 'linear',
     radiusField: null,
     radiusScale: 'linear'
   }
@@ -1066,8 +1071,11 @@ export const expectedLoadedLayer2 = {
       sizeRange: [0, 10],
       radiusRange: [0, 50],
       heightRange: [0, 500],
-      elevationScale: 5,
+      elevationScale: 1,
       fixedHeight: false,
+      elevationOffset: 0,
+      elevationOffsetRange: [0, 500],
+      fixedElevation: true,
       stroked: true,
       filled: true,
       enable3d: false,
@@ -1082,6 +1090,8 @@ export const expectedLoadedLayer2 = {
     sizeScale: 'linear',
     heightField: null,
     heightScale: 'linear',
+    elevationOffsetField: null,
+    elevationOffsetScale: 'linear',
     radiusField: null,
     radiusScale: 'linear',
     textLabel: [DEFAULT_TEXT_LABEL]

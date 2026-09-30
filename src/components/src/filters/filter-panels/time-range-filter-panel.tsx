@@ -9,11 +9,18 @@ import {isSideFilter, getTimelineFromFilter} from '@kepler.gl/utils';
 import FilterPanelHeaderFactory from '../../side-panel/filter-panel/filter-panel-header';
 import PanelHeaderActionFactory from '../../side-panel/panel-header-action';
 import FieldSelectorFactory from '../../common/field-selector';
-import {StyledFilterContent} from '../../common/styled-components';
+import InfoHelperFactory from '../../common/info-helper';
+import {
+  PanelLabel,
+  PanelLabelWrapper,
+  SidePanelSection,
+  StyledFilterContent
+} from '../../common/styled-components';
 import {getSupportedFilterFields} from './new-filter-panel';
-import {FILTER_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import TimeSyncedFieldSelectorFactory from './time-synced-field-selector';
 import FilterSyncedDatasetPanelFactory from './filter-synced-dataset-panel';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 const SYNC_FILTER_ID_LENGTH = 2;
 
@@ -23,7 +30,8 @@ TimeRangeFilterPanelFactory.deps = [
   FieldSelectorFactory,
   PanelHeaderActionFactory,
   TimeSyncedFieldSelectorFactory,
-  FilterSyncedDatasetPanelFactory
+  FilterSyncedDatasetPanelFactory,
+  InfoHelperFactory
 ];
 
 function TimeRangeFilterPanelFactory(
@@ -32,7 +40,8 @@ function TimeRangeFilterPanelFactory(
   FieldSelector: ReturnType<typeof FieldSelectorFactory>,
   PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>,
   TimeSyncedFieldSelector: ReturnType<typeof TimeSyncedFieldSelectorFactory>,
-  FilterSyncedDatasetPanel: ReturnType<typeof FilterSyncedDatasetPanelFactory>
+  FilterSyncedDatasetPanel: ReturnType<typeof FilterSyncedDatasetPanelFactory>,
+  InfoHelper: ReturnType<typeof InfoHelperFactory>
 ) {
   const TimeRangeFilterPanel: TimeRangeFilterPanelComponent = React.memo(
     ({
@@ -78,6 +87,11 @@ function TimeRangeFilterPanelFactory(
         [setFilter, idx]
       );
 
+      const onEndFieldSelector = useCallback(
+        (field, valueIndex = 0) => setFilter(idx, 'endName', field ? field.name : null, valueIndex),
+        [setFilter, idx]
+      );
+
       const onSourceDataSelector = useCallback(
         value => setFilter(idx, 'dataId', value, 0),
         [idx, setFilter]
@@ -88,6 +102,13 @@ function TimeRangeFilterPanelFactory(
         () => getSupportedFilterFields(dataset.supportedFilterTypes, allAvailableFields),
         [dataset.supportedFilterTypes, allAvailableFields]
       );
+
+      const endTimeFields = useMemo(() => {
+        const startName = Array.isArray(filter.name) ? filter.name[0] : filter.name;
+        return supportedFields.filter(
+          field => field.type === ALL_FIELD_TYPES.timestamp && field.name !== startName
+        );
+      }, [supportedFields, filter.name]);
 
       const isSynced = useMemo(() => {
         return (
@@ -145,6 +166,28 @@ function TimeRangeFilterPanelFactory(
               supportedFields={supportedFields}
               syncTimeFilterWithLayerTimeline={syncTimeFilterWithLayerTimeline}
             />
+            {!isSynced && endTimeFields.length ? (
+              <SidePanelSection>
+                <PanelLabelWrapper>
+                  <PanelLabel htmlFor={`filter-${filter.id}-end-time`}>
+                    <FormattedMessage id="filterManager.timeIntervalEndField" />
+                  </PanelLabel>
+                  <InfoHelper
+                    id={`filter-${filter.id}-end-time-hint`}
+                    description="filterManager.timeIntervalEndFieldHint"
+                    width={220}
+                  />
+                </PanelLabelWrapper>
+                <FieldSelector
+                  inputTheme="secondary"
+                  fields={endTimeFields}
+                  value={Array.isArray(filter.endName) ? filter.endName[0] : filter.endName}
+                  placeholder="placeholder.endTimeField"
+                  erasable
+                  onSelect={field => onEndFieldSelector(field, 0)}
+                />
+              </SidePanelSection>
+            ) : null}
             {isHistogramVisible && (
               <div className="filter-panel__filter">
                 <TimeRangeFilter

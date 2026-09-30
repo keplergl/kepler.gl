@@ -137,7 +137,8 @@ export const DIMENSIONS = {
 
 /**
  * Theme name that can be passed to `KeplerGl` `prop.theme`.
- * Available themes are `THEME.light` and `THEME.dark`. Default theme is `THEME.dark`
+ * Available themes are `THEME.light`, `THEME.dark`, and `THEME.space`.
+ * Default theme is `THEME.dark`
  * @constant
  * @type {object}
  * @public
@@ -149,6 +150,7 @@ export const DIMENSIONS = {
 export const THEME = keyMirror({
   light: null,
   dark: null,
+  space: null,
   base: null
 });
 
@@ -451,6 +453,7 @@ export type SCALE_TYPES_DEF = {
   ordinal: 'ordinal';
   quantile: 'quantile';
   quantize: 'quantize';
+  jenks: 'jenks';
   linear: 'linear';
   sqrt: 'sqrt';
   log: 'log';
@@ -464,6 +467,7 @@ export const SCALE_TYPES: SCALE_TYPES_DEF = keyMirror({
   ordinal: null,
   quantile: null,
   quantize: null,
+  jenks: null,
   linear: null,
   sqrt: null,
   log: null,
@@ -477,6 +481,7 @@ export const SCALE_TYPE_NAMES: {[key in keyof SCALE_TYPES_DEF]: string} = {
   ordinal: 'Ordinal',
   quantile: 'Quantile',
   quantize: 'Quantize',
+  jenks: 'Jenks Natural Breaks',
   linear: 'Linear',
   sqrt: 'Sqrt',
   log: 'Log',
@@ -494,6 +499,7 @@ export const SCALE_FUNC = {
   [SCALE_TYPES.linear]: scaleLinear,
   [SCALE_TYPES.quantize]: scaleQuantize,
   [SCALE_TYPES.quantile]: scaleQuantile,
+  [SCALE_TYPES.jenks]: scaleThreshold,
   [SCALE_TYPES.ordinal]: scaleOrdinal,
   [SCALE_TYPES.sqrt]: scaleSqrt,
   [SCALE_TYPES.log]: scaleLog,
@@ -702,7 +708,12 @@ export const AGGREGATION_TYPE_OPTIONS: {id: string; label: string}[] = Object.en
 }));
 
 export const linearFieldScaleFunctions = {
-  [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.custom],
+  [CHANNEL_SCALES.color]: [
+    SCALE_TYPES.quantize,
+    SCALE_TYPES.quantile,
+    SCALE_TYPES.jenks,
+    SCALE_TYPES.custom
+  ],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt],
   [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
   [CHANNEL_SCALES.angle]: [SCALE_TYPES.linear]
@@ -711,6 +722,7 @@ export const linearFieldScaleFunctions = {
 const DEFAULT_AGGREGATION_COLOR_SCALES = [
   SCALE_TYPES.quantize,
   SCALE_TYPES.quantile,
+  SCALE_TYPES.jenks,
   SCALE_TYPES.custom
 ];
 
@@ -943,6 +955,8 @@ export const DEFAULT_LAYER_COLOR_PALETTE_STEPS = 6;
 export const DEFAULT_TOOLTIP_FIELDS: any[] = [];
 
 export const NO_VALUE_COLOR: RGBAColor = [0, 0, 0, 0];
+/** Visible gray used when a color field has no value and missing features should stay on the map. */
+export const MISSING_VALUE_COLOR: RGBAColor = [128, 128, 128, 255];
 
 export const DEFAULT_PICKING_RADIUS = 3;
 
@@ -1288,8 +1302,19 @@ export const EDITOR_LAYER_PICKING_RADIUS = 6;
 export const EDITOR_MODES = {
   DRAW_POLYGON: 'DRAW_POLYGON',
   DRAW_RECTANGLE: 'DRAW_RECTANGLE',
+  DRAW_CIRCLE: 'DRAW_CIRCLE',
+  DRAW_LINESTRING: 'DRAW_LINESTRING',
+  DRAW_POINT: 'DRAW_POINT',
   EDIT: 'EDIT_VERTEX'
 };
+
+export const EDITOR_DRAW_MODES: string[] = [
+  EDITOR_MODES.DRAW_POLYGON,
+  EDITOR_MODES.DRAW_RECTANGLE,
+  EDITOR_MODES.DRAW_CIRCLE,
+  EDITOR_MODES.DRAW_LINESTRING,
+  EDITOR_MODES.DRAW_POINT
+];
 
 export const PLOT_TYPES = keyMirror({
   histogram: null,
@@ -1339,9 +1364,11 @@ export const MAP_CONTROLS = keyMirror({
   splitMap: null,
   mapDraw: null,
   mapLocale: null,
+  mapTheme: null,
   effect: null,
   annotation: null,
-  aiAssistant: null
+  chart: null,
+  viewportJson: null
 });
 
 export enum MapViewMode {
@@ -1383,6 +1410,18 @@ export const GLOBE_MAX_LATITUDE = 75;
 
 export type GlobeConfig = {
   atmosphere: boolean;
+  /**
+   * When true, draw a large sun-independent uniform glow in addition to the
+   * realistic scattering sky halo.
+   */
+  hugeHalo: boolean;
+  /**
+   * Multiplier for huge-halo shell thickness. `1` is the baseline (~14% beyond
+   * the globe); the configured default is 3.5.
+   */
+  hugeHaloRadius: number;
+  /** Opacity of the huge-halo glow (0–1). Default: 0.2. */
+  hugeHaloOpacity: number;
   azimuth: boolean;
   azimuthAngle: number;
   terminator: boolean;
@@ -1407,6 +1446,9 @@ export type Globe = {
 
 export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
   atmosphere: true,
+  hugeHalo: true,
+  hugeHaloRadius: 3.5,
+  hugeHaloOpacity: 0.2,
   azimuth: false,
   azimuthAngle: 45,
   terminator: true,
@@ -1423,7 +1465,8 @@ export const DEFAULT_GLOBE_CONFIG: GlobeConfig = {
   // Color of the empty space rendered around the globe (deck.gl clear color).
   // Matches the previous hardcoded clear color [0.015, 0.035, 0.065] in 0-1 space.
   backgroundColor: [4, 9, 17],
-  stars: false
+  // Starfield behind the globe is on by default in globe view.
+  stars: true
 };
 
 export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
@@ -1437,7 +1480,6 @@ export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
   hexagonId: true,
   '3D': true,
   vectorTile: true,
-  hexTile: true,
   line: true,
   trip: true,
   rasterTile: true,
@@ -1446,7 +1488,9 @@ export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
   tile3d: false,
   // Flow arrows are flat quads in common space (equatorial plane) and collapse when
   // viewed edge-on on the globe, so the flow layer is not supported in Globe mode.
-  flow: false
+  flow: false,
+  // Flow Field uses mercator ClipExtension bounds; stock clipping is wrong on globe.
+  flowField: false
 };
 
 export enum MapSplitMode {
@@ -1473,6 +1517,7 @@ export const dataTestIds: Record<string, string> = {
   errorIcon: 'error-icon',
   successIcon: 'success-icon',
   checkmarkIcon: 'checkmark-icon',
+  copyNotificationIcon: 'copy-notification-icon',
   sortableLayerItem: 'sortable-layer-item',
   staticLayerItem: 'static-layer-item',
   layerTitleEditor: 'layer__title__editor',

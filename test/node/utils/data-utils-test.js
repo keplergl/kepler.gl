@@ -155,6 +155,15 @@ test('dataUtils -> getFormatter', t => {
       assert: [4223, '4,200']
     },
     {
+      input: [
+        ',.2r',
+        {
+          type: ALL_FIELD_TYPES.integer
+        }
+      ],
+      assert: [4223n, '4,200']
+    },
+    {
       input: ['01'],
       assert: [true, '1']
     },

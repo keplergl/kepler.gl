@@ -1,12 +1,54 @@
-dist/
-.venv/
-.conda/
-node_modules/
-__pycache__/
-build/
-.git/
-website/
-bindings/
-test/
-docs/
-*.log
+# Nested installs are not matched by a root-only `node_modules/` pattern.
+**/node_modules
+**/.yarn
+**/.pnp.*
+
+# Build artifacts
+**/dist
+**/build
+**/umd
+**/coverage
+**/*-coverage
+**/.nyc_output
+**/*.tsbuildinfo
+**/__pycache__
+**/*.log
+**/.DS_Store
+
+# VCS and local tooling
+.git
+.github
+.cursor
+.vscode
+.idea
+.history
+.venv
+.conda
+.netlify
+
+# Secrets must not be baked into publishable images (use runtime /config.json)
+.env
+.env.*
+!.env.template
+docker/config.json
+
+# Not used by the demo-app image
+bindings
+website
+test
+docs
+screenshots
+skill
+contributing
+typedoc
+
+# Compose/docs/Dockerfiles are read by the CLI, not needed inside the build context
+docker/docker-compose.yml
+docker/Dockerfile
+docker/Dockerfile.dev
+docker/README.md
+
+# Other examples (keep demo-app only)
+examples/*
+!examples/demo-app
+!examples/demo-app/**

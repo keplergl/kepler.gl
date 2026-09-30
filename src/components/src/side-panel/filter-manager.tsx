@@ -152,6 +152,11 @@ function FilterManagerFactory(
           updateTableColor={updateTableColor}
           removeDataset={removeDataset}
           showDeleteDataset={showDeleteDataset}
+          refreshDataset={visStateActions.refreshDataset}
+          updateDatasetProps={visStateActions.updateDatasetProps}
+          addGroupBy={visStateActions.addGroupBy}
+          addJoin={visStateActions.addJoin}
+          addSpatialJoin={visStateActions.addSpatialJoin}
         />
         <FilterList
           filtersByIndex={filtersByIndex}
@@ -225,7 +230,10 @@ function FilterManagerFactory(
       showDatasetTable,
       updateTableColor,
       removeDataset,
-      showDeleteDataset: true
+      showDeleteDataset: true,
+      refreshDataset: visStateActions.refreshDataset,
+      updateDatasetProps: visStateActions.updateDatasetProps,
+      visStateActions
     };
 
     return (

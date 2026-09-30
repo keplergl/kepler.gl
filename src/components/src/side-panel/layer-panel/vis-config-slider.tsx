@@ -6,6 +6,7 @@ import styled from 'styled-components';
 
 import {PanelLabel, SidePanelSection} from '../../common/styled-components';
 import RangeSliderFactory from '../../common/range-slider';
+import InfoHelperFactory from '../../common/info-helper';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {KeyEvent} from '@kepler.gl/constants';
 import {Checkbox} from '../..';
@@ -29,12 +30,15 @@ type VisConfigSliderProps = {
   property: string;
   onChange: (v: Record<string, number | string | number[] | string[]>) => void;
   label?: string | ((c: LayerBaseConfig) => string);
+  description?: string;
   range: [number, number];
   step?: number;
   isRanged: boolean;
   disabled?: boolean;
   inputTheme?: string;
   allowCustomValue?: boolean;
+  /** i18n id or plain label for the custom-value checkbox. Defaults to "custom input". */
+  customInputLabel?: string;
   focusRange?: [number, number];
   focusWeight?: number;
 };
@@ -43,6 +47,11 @@ const InputWrapper = styled.div`
   display: flex;
   line-height: 12px;
   margin-bottom: 12px;
+`;
+
+const LabelRow = styled.div`
+  display: flex;
+  align-items: center;
 `;
 
 const CustomInputWrapper = styled.div`
@@ -151,17 +160,22 @@ const CustomInput: React.FC<CustomInputProps> = ({isRanged, value, onChangeCusto
   );
 };
 
-VisConfigSliderFactory.deps = [RangeSliderFactory];
+VisConfigSliderFactory.deps = [RangeSliderFactory, InfoHelperFactory];
 
-export default function VisConfigSliderFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
+export default function VisConfigSliderFactory(
+  RangeSlider: ReturnType<typeof RangeSliderFactory>,
+  InfoHelper: ReturnType<typeof InfoHelperFactory>
+) {
   const VisConfigSlider: React.FC<VisConfigSliderProps> = ({
-    layer: {config},
+    layer: {id, config},
     property,
     label,
+    description,
     range,
     step,
     isRanged,
     allowCustomValue,
+    customInputLabel,
     disabled,
     onChange,
     inputTheme,
@@ -187,20 +201,27 @@ export default function VisConfigSliderFactory(RangeSlider: ReturnType<typeof Ra
     return (
       <SidePanelSection disabled={Boolean(disabled)}>
         {label ? (
-          <PanelLabel>
-            {typeof label === 'string' ? (
-              <FormattedMessage id={label} />
-            ) : typeof label === 'function' ? (
-              <FormattedMessage id={label(config)} />
-            ) : (
-              <FormattedMessage id={`property.${property}`} />
-            )}
-          </PanelLabel>
+          <LabelRow>
+            <PanelLabel>
+              {typeof label === 'string' ? (
+                <FormattedMessage id={label} />
+              ) : typeof label === 'function' ? (
+                <FormattedMessage id={label(config)} />
+              ) : (
+                <FormattedMessage id={`property.${property}`} />
+              )}
+            </PanelLabel>
+            {description ? (
+              <InfoHelper description={description} id={`${id}-${property}-description`} />
+            ) : null}
+          </LabelRow>
         ) : null}
 
         {allowCustomValue ? (
           <InputWrapper>
-            <CustomInputLabel>custom input</CustomInputLabel>
+            <CustomInputLabel>
+              {customInputLabel ? <FormattedMessage id={customInputLabel} /> : 'custom input'}
+            </CustomInputLabel>
             <Checkbox id={`property.${property}`} checked={custom} onChange={onChangeCheckbox} />
           </InputWrapper>
         ) : null}

@@ -2,9 +2,15 @@
 // Copyright contributors to the kepler.gl project
 
 import Supercluster from 'supercluster';
-import memoize from 'lodash/memoize';
-import {MemoizedFunction} from 'lodash';
+import memoize from 'es-toolkit/compat/memoize';
 import {BBox, Position} from 'geojson';
+
+// es-toolkit/compat memoize does not export lodash's MemoizedFunction type.
+type MemoizedFunction = {
+  cache: {
+    clear?: () => void;
+  };
+};
 
 export function getGeoJSON(data, getPosition, filterData) {
   const raw = typeof filterData === 'function' ? data.filter(filterData) : data;

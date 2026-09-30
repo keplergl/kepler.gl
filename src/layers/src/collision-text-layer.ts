@@ -1,0 +1,81 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
+import {console as Console} from 'global/window';
+import {EnhancedTextBackgroundLayer} from '@kepler.gl/deckgl-layers';
+import {TextLayer} from '@deck.gl/layers';
+import type {FilterContext} from '@deck.gl/core';
+
+type CollisionTextLayerProps = {
+  collisionShowBackground?: boolean;
+};
+
+/**
+ * CollisionFilterExtension samples geometry.worldPosition (the geographic
+ * anchor). Kepler's labels are shifted with getPixelOffset / non-centered
+ * anchors, so that sample misses the glyphs and every label is culled.
+ *
+ * PointLabelLayer's approach: draw an expanded text background in the
+ * collision pass so the hit area still covers the anchor. In the color pass
+ * the expanded padding is skipped so a user-configured background keeps its
+ * normal size.
+ */
+class CollisionTextBackgroundLayer extends EnhancedTextBackgroundLayer {
+  static layerName = 'CollisionTextBackgroundLayer';
+
+  getShaders() {
+    const shaders = super.getShaders();
+    let vs = shaders.vs as string;
+    if (!vs.includes('textBackground.padding.') || !vs.includes('void main(void) {')) {
+      Console.error('Cannot edit text-background-layer shader for collision');
+      return shaders;
+    }
+    vs = vs.split('textBackground.padding.').join('_padding.');
+    vs = vs.replace(
+      'void main(void) {',
+      `void main(void) {
+  // collision.sort is true only while drawing the collision map. Expand toward
+  // the geographic origin (so pixelOffset still covers the sample point) and
+  // add extra padding so the 5x5 collision sample sits inside the hit box.
+  // Color/picking keep the configured background size.
+  vec4 _padding = textBackground.padding;
+  if (collision.sort) {
+    _padding += instancePixelOffsets.xyxy * vec4(1.0, 1.0, -1.0, -1.0) + vec4(16.0);
+  }`
+    );
+    return {...shaders, vs};
+  }
+}
+
+export default class CollisionTextLayer<DataT = any> extends TextLayer<DataT> {
+  static layerName = 'CollisionTextLayer';
+  // Kepler-only prop; TextLayer.defaultProps is typed as DefaultProps<TextLayerProps>
+  // so an extra key cannot be declared on the static side.
+  static defaultProps = {
+    ...(TextLayer.defaultProps as object),
+    collisionShowBackground: false
+  } as typeof TextLayer.defaultProps;
+
+  getSubLayerClass(subLayerId: string, DefaultLayerClass: any): any {
+    if (subLayerId === 'background') {
+      // Prefer CollisionTextBackgroundLayer over _subLayerProps.background.type
+      // (EnhancedTextBackgroundLayer). This subclass already injects globe
+      // back-face culling via EnhancedTextBackgroundLayer.
+      return CollisionTextBackgroundLayer;
+    }
+    return super.getSubLayerClass(subLayerId, DefaultLayerClass);
+  }
+
+  filterSubLayer({layer, renderPass}: FilterContext): boolean {
+    // TextLayer names the hit-area sublayer `${parentId}-background`. Match the
+    // suffix so a label field named "background" is not treated as that sublayer.
+    const isBackground = layer.id.endsWith('-background');
+    if (renderPass === 'collision') {
+      return isBackground;
+    }
+    if (isBackground) {
+      return Boolean((this.props as CollisionTextLayerProps).collisionShowBackground);
+    }
+    return true;
+  }
+}

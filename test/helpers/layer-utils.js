@@ -7,7 +7,7 @@ import {device} from '@deck.gl/test-utils';
 import sinon from 'sinon';
 import {render} from '@testing-library/react';
 import {console as Console} from 'global/window';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import {
   INITIAL_MAP_STATE,
@@ -29,6 +29,7 @@ import csvData, {wktCsv} from '../fixtures/test-csv-data';
 import testLayerData, {bounds, fieldDomain, iconGeometry} from '../fixtures/test-layer-data';
 import {geojsonData} from '../fixtures/geojson';
 import tripGeoJson from '../fixtures/trip-geojson';
+import tripCsvData from '../fixtures/test-trip-csv-data';
 import {IntlWrapper} from './component-utils';
 
 import {logStep} from '../../scripts/log';
@@ -479,3 +480,18 @@ export const prepareTripGeoDataset = stateWithTripGeojsonFilter.datasets[dataId]
 export const prepareTripGeoDatasetFilter = stateWithTripGeojsonFilter.filters[0];
 export const valueFilterDomain0 = prepareTripGeoDatasetFilter.domain[0];
 export const {animationConfig} = stateWithTripGeojsonFilter;
+
+/*
+ * trip table dataset (id / lat / lng / timestamp columns) with gpu filter
+ */
+export const {rows: tripCsvRows, fields: tripCsvFields} = processCsvData(tripCsvData);
+
+const stateWithTripTableFilter = addFilterToData(
+  {fields: tripCsvFields, rows: tripCsvRows},
+  dataId,
+  [{name: 'ground-speed', value: [0.3, 16]}]
+);
+
+export const prepareTripTableDataset = stateWithTripTableFilter.datasets[dataId];
+export const prepareTripTableDatasetFilter = stateWithTripTableFilter.filters[0];
+export const speedFilterDomain0 = prepareTripTableDatasetFilter.domain[0];

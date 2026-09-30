@@ -9,10 +9,12 @@ import {
   SORT_ORDER,
   ALL_FIELD_TYPES,
   ALTITUDE_FIELDS,
-  SCALE_TYPES
+  SCALE_TYPES,
+  FILTER_TYPES
 } from '@kepler.gl/constants';
 import {
   RGBColor,
+  ColorRange,
   Field,
   FieldPair,
   FieldDomain,
@@ -39,12 +41,16 @@ import {
   getFilterFunction,
   getFilterProps,
   getFilterRecord,
+  getPolygonFilterFunctor,
+  isValidFilterValue,
+  mergePolygonLayerIndexes,
   getNumericFieldDomain,
   getTimestampFieldDomain,
   getLinearDomain,
   getLogDomain,
   getOrdinalDomain,
   getQuantileDomain,
+  getJenksDomain,
   DataContainerInterface,
   FilterChanged
 } from '@kepler.gl/utils';
@@ -103,19 +109,90 @@ export type TimeFieldFilterProps = TimeRangeFieldDomain & {
 // Unique identifier of each field
 const FID_KEY = 'name';
 
+const ROW_EDIT_NOT_IMPLEMENTED =
+  'In-place row edits (append, upsert, delete) are not implemented for Arrow/DuckDB tables. DuckDB INSERT and Arrow concat are not supported yet. Use addDataToMap with keepExistingConfig to replace the table.';
+
+function warnRowEditsUnavailable(method: string): void {
+  Console.warn(`KeplerTable.${method}: ${ROW_EDIT_NOT_IMPLEMENTED}`);
+}
+
+function readFieldValue(
+  fieldIdx: number,
+  dc: DataContainerInterface,
+  // An object with row index or a materialized row array (for materialized hover info from trip layer)
+  d: {index: number} | any[]
+) {
+  return Array.isArray(d) ? d[fieldIdx] : dc.valueAt(d.index, fieldIdx);
+}
+
 export function maybeToDate(
   isTime: boolean,
   fieldIdx: number,
   format: string,
   dc: DataContainerInterface,
-  // An object with row index or a materialized row array (for materialized hover info from trip layer)
   d: {index: number} | any[]
 ) {
-  if (isTime) {
-    return timeToUnixMilli(Array.isArray(d) ? d[fieldIdx] : dc.valueAt(d.index, fieldIdx), format);
+  const value = readFieldValue(fieldIdx, dc, d);
+  return isTime ? timeToUnixMilli(value, format) : value;
+}
+
+/**
+ * Compute per-layer filtered indices for polygon filters.
+ * Polygon filters are layer-specific: they should only affect the layers listed in filter.layerId.
+ * For each layer on this dataset, compute a filtered index that applies only the polygon filters
+ * targeting that specific layer. Multiple polygon filters targeting the same layer are ANDed.
+ */
+function computePolygonFilteredIndexByLayer(
+  filters: Filter[],
+  layers: Layer[],
+  dataId: string,
+  dataContainer: DataContainerInterface,
+  baseFilteredIndex: number[]
+): Record<string, number[]> {
+  const polygonFilters = filters.filter(
+    f =>
+      f.type === FILTER_TYPES.polygon &&
+      f.dataId.includes(dataId) &&
+      f.enabled !== false &&
+      isValidFilterValue(f.type, f.value)
+  );
+
+  if (!polygonFilters.length) {
+    return {};
   }
 
-  return Array.isArray(d) ? d[fieldIdx] : dc.valueAt(d.index, fieldIdx);
+  const layersOnDataset = layers.filter(l => l.config?.dataId === dataId);
+  const result: Record<string, number[]> = {};
+
+  for (const layer of layersOnDataset) {
+    // For each polygon filter, check if this layer is targeted
+    const applicableFilters = polygonFilters.filter(f => f.layerId && f.layerId.includes(layer.id));
+
+    if (!applicableFilters.length) {
+      // This layer is not targeted by any polygon filter - use base index
+      continue;
+    }
+
+    // Build polygon filter functors for this layer
+    const filterFunctors = applicableFilters.map(filter =>
+      getPolygonFilterFunctor(layer, filter, dataContainer)
+    );
+
+    // Filter the base filtered index: a row passes if it passes ALL polygon filters
+    // (each polygon filter already uses this layer's position accessor)
+    const layerFilteredIndex: number[] = [];
+    const filterContext = {index: -1};
+    for (let i = 0; i < baseFilteredIndex.length; i++) {
+      filterContext.index = baseFilteredIndex[i];
+      if (filterFunctors.every(fn => fn(filterContext))) {
+        layerFilteredIndex.push(baseFilteredIndex[i]);
+      }
+    }
+
+    result[layer.id] = layerFilteredIndex;
+  }
+
+  return result;
 }
 
 class KeplerTable<F extends Field = Field> {
@@ -129,11 +206,17 @@ class KeplerTable<F extends Field = Field> {
   fields: F[] = [];
 
   dataContainer: DataContainerInterface;
+  /**
+   * Bumped in {@link update} so layer `dataUpdateTriggers` notice in-place row
+   * snapshots (the dataContainer instance stays the same).
+   */
+  dataRevision = 0;
 
   allIndexes: number[] = [];
   filteredIndex: number[] = [];
   filteredIdxCPU?: number[];
   filteredIndexForDomain: number[] = [];
+  filteredIndexByLayer: Record<string, number[]> = {};
   fieldPairs: FieldPair[] = [];
   gpuFilter: GpuFilter;
   filterRecord?: FilterRecord;
@@ -206,6 +289,27 @@ class KeplerTable<F extends Field = Field> {
   }
 
   async importData({data}: {data: ProtoDataset['data']}) {
+    this.updateSchema(data);
+  }
+
+  /**
+   * Replace this table's columns and fields with new data in place.
+   *
+   * Unlike `update()` (which only refreshes the rows of the existing data
+   * container), `updateSchema` rebuilds the schema — it can add, remove, rename
+   * or re-type columns. It preserves the table identity (`id`, `label`, `color`,
+   * `metadata`, `type`, `supportedFilterTypes`, `disableDataOperation`) set in
+   * the constructor.
+   *
+   * Synchronous on purpose: reducers call it directly to commit a schema change
+   * (see `UPDATE_DATASET`), while `importData` remains the async entry point for
+   * the task-based loading pipeline.
+   *
+   * @param data - new column data + field descriptors, e.g. `{cols, fields, arrowTable}`.
+   *   When replacing columns, pass `cols` (the arrow vectors) so an
+   *   `ArrowDataContainer` is built; a rows-only payload cannot express a schema change.
+   */
+  updateSchema(data: ProtoDataset['data']): this {
     const dataContainerData = data.cols ? data.cols : data.rows;
     const inputDataFormat = data.cols ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY;
 
@@ -230,24 +334,228 @@ class KeplerTable<F extends Field = Field> {
     this.allIndexes = allIndexes;
     this.filteredIndex = allIndexes;
     this.filteredIndexForDomain = allIndexes;
+    this.filteredIndexByLayer = {};
     this.fieldPairs = findPointFieldPairs(fields);
     // @ts-expect-error Make sure that fields satisfies F extends Field
     this.fields = fields;
     this.gpuFilter = getGpuFilterProps([], this.id, fields, undefined);
+
+    return this;
   }
 
   /**
    * update table with new data
-   * @param data - new data e.g. the arrow data with new batches loaded
+   * @param data - new data e.g. the arrow data with new batches loaded, or a full row snapshot
    */
   async update(data: ProtoDataset['data']) {
-    const dataContainerData = data.arrowTable ?? data.cols ?? data.rows;
-    this.dataContainer.update?.(dataContainerData);
+    // Arrow/DuckDB incremental loads pass `cols` (and empty `rows`). Row snapshots
+    // for remote refresh pass `rows` only. Keep the column path close to the
+    // pre-refresh update() so filters/gpuFilter are not wiped on a normal load.
+    const isRowSnapshot = !data.cols && Array.isArray(data.rows);
+
+    if (data.fields?.length && !fieldNamesMatch(this.fields, data.fields)) {
+      await this.importData({data});
+      this.dataRevision += 1;
+      return this;
+    }
+
+    // Row snapshots must not pass leftover arrowTable into RowDataContainer.
+    const dataContainerData = isRowSnapshot ? data.rows : data.arrowTable ?? data.cols ?? data.rows;
+
+    if (typeof this.dataContainer.update === 'function') {
+      this.dataContainer.update(dataContainerData);
+    } else if (isRowSnapshot) {
+      this.dataContainer = createDataContainer(dataContainerData, {
+        fields: data.fields || this.fields,
+        inputDataFormat: DataForm.ROWS_ARRAY
+      });
+    }
+
+    if (isRowSnapshot) {
+      this.fields = this.fields.map((f, i) => {
+        const {filterProps: _filterProps, ...rest} = f;
+        return {
+          ...rest,
+          valueAccessor: getFieldValueAccessor(f, i, this.dataContainer)
+        };
+      }) as F[];
+      this.filterRecord = undefined;
+      this.filterRecordCPU = undefined;
+      this.changedFilters = undefined;
+      this.gpuFilter = getGpuFilterProps([], this.id, this.fields, undefined);
+    }
+
     this.allIndexes = this.dataContainer.getPlainIndex();
     this.filteredIndex = this.allIndexes;
     this.filteredIndexForDomain = this.allIndexes;
+    this.filteredIndexByLayer = {};
+    this.dataRevision += 1;
 
     return this;
+  }
+
+  /**
+   * Append column-ordered rows in place. No-op for Arrow/DuckDB (no `append`).
+   * Accessors stay bound: the container instance is not replaced.
+   * @returns false when the payload is rejected and the table is unchanged.
+   */
+  appendRows(rows: any[][]): boolean {
+    if (typeof this.dataContainer.append !== 'function') {
+      warnRowEditsUnavailable('appendRows');
+      return false;
+    }
+    if (!rows.length) {
+      return false;
+    }
+    const columnCount = this.fields.length;
+    if (!columnCount || rows.some(row => !Array.isArray(row) || row.length !== columnCount)) {
+      return false;
+    }
+
+    const start = this.dataContainer.numRows();
+    if (!this.dataContainer.append(rows)) {
+      return false;
+    }
+
+    const nextIndexes =
+      this.allIndexes.length === start
+        ? this.allIndexes.concat(rows.map((_, i) => start + i))
+        : this.dataContainer.getPlainIndex();
+    this.afterRowMutation(nextIndexes);
+    return true;
+  }
+
+  /**
+   * Replace rows that share `keyField` and append the rest. Last incoming row
+   * wins for a repeated key. No-op for Arrow/DuckDB.
+   * @returns false when the payload is rejected and the table is unchanged.
+   */
+  upsertRows(rows: any[][], keyField: string): boolean {
+    if (
+      typeof this.dataContainer.append !== 'function' ||
+      typeof this.dataContainer.replace !== 'function'
+    ) {
+      warnRowEditsUnavailable('upsertRows');
+      return false;
+    }
+    const keyIdx = this.fields.findIndex(field => field.name === keyField);
+    if (keyIdx < 0 || !rows.length) {
+      return false;
+    }
+    const columnCount = this.fields.length;
+    if (rows.some(row => !Array.isArray(row) || row.length !== columnCount)) {
+      return false;
+    }
+
+    const start = this.dataContainer.numRows();
+    const keyToIndex = new Map<unknown, number>();
+    for (let i = 0; i < start; i++) {
+      const key = this.dataContainer.valueAt(i, keyIdx);
+      if (!keyToIndex.has(key)) {
+        keyToIndex.set(key, i);
+      }
+    }
+
+    const lastByKey = new Map<unknown, any[]>();
+    const keyOrder: unknown[] = [];
+    for (const row of rows) {
+      const key = row[keyIdx];
+      if (!lastByKey.has(key)) {
+        keyOrder.push(key);
+      }
+      lastByKey.set(key, row);
+    }
+
+    const toAppend: any[][] = [];
+    for (const key of keyOrder) {
+      const row = lastByKey.get(key);
+      if (!row) {
+        continue;
+      }
+      const existing = keyToIndex.get(key);
+      if (existing !== undefined) {
+        this.dataContainer.replace(existing, row);
+      } else {
+        toAppend.push(row);
+      }
+    }
+
+    if (toAppend.length && !this.dataContainer.append(toAppend)) {
+      return false;
+    }
+
+    const nextIndexes =
+      toAppend.length && this.allIndexes.length === start
+        ? this.allIndexes.concat(toAppend.map((_, i) => start + i))
+        : toAppend.length
+        ? this.dataContainer.getPlainIndex()
+        : this.allIndexes;
+    this.afterRowMutation(nextIndexes);
+    return true;
+  }
+
+  /**
+   * Remove rows by index in place. No-op for Arrow/DuckDB (no `remove`).
+   * @returns false when any index is invalid and the table is unchanged.
+   */
+  removeRows(indexes: number[]): boolean {
+    if (typeof this.dataContainer.remove !== 'function') {
+      warnRowEditsUnavailable('removeRows');
+      return false;
+    }
+    if (!indexes.length) {
+      return false;
+    }
+    if (!this.dataContainer.remove(indexes)) {
+      return false;
+    }
+    this.afterRowMutation(this.dataContainer.getPlainIndex());
+    return true;
+  }
+
+  /**
+   * Indexes of rows whose `fieldName` value is in `values` (first-column-wins
+   * equality via Set). Empty when the field is missing.
+   */
+  findRowIndexesByFieldValues(fieldName: string, values: unknown[]): number[] {
+    const fieldIdx = this.fields.findIndex(field => field.name === fieldName);
+    if (fieldIdx < 0 || !values.length) {
+      return [];
+    }
+    const match = new Set(values);
+    const indexes: number[] = [];
+    const numRows = this.dataContainer.numRows();
+    for (let i = 0; i < numRows; i++) {
+      if (match.has(this.dataContainer.valueAt(i, fieldIdx))) {
+        indexes.push(i);
+      }
+    }
+    return indexes;
+  }
+
+  private afterRowMutation(allIndexes: number[]): void {
+    const fieldsToRebuild = this.fields.filter(f => f.filterProps).map(f => f.name);
+
+    // Drop cached per-row props (mappedValue is indexed by row). Same as a
+    // snapshot update(); getColumnFilterProps rebuilds after indexes are current.
+    this.fields = this.fields.map(f => {
+      const {filterProps: _filterProps, ...rest} = f;
+      return rest;
+    }) as F[];
+
+    this.allIndexes = allIndexes;
+    this.filteredIndex = allIndexes;
+    this.filteredIndexForDomain = allIndexes;
+    this.filteredIndexByLayer = {};
+    this.filteredIdxCPU = undefined;
+    this.filterRecord = undefined;
+    this.filterRecordCPU = undefined;
+    this.changedFilters = undefined;
+    this.sortColumn = undefined;
+    this.sortOrder = null;
+    this.dataRevision += 1;
+
+    fieldsToRebuild.forEach(name => this.getColumnFilterProps(name));
   }
 
   get length() {
@@ -359,6 +667,7 @@ class KeplerTable<F extends Field = Field> {
     if (!filters.length) {
       this.filteredIndex = this.allIndexes;
       this.filteredIndexForDomain = this.allIndexes;
+      this.filteredIndexByLayer = {};
       return this;
     }
 
@@ -393,6 +702,15 @@ class KeplerTable<F extends Field = Field> {
     this.filteredIndexForDomain =
       filterResult.filteredIndexForDomain || this.filteredIndexForDomain;
 
+    // Compute per-layer filtered indices for polygon filters
+    this.filteredIndexByLayer = computePolygonFilteredIndexByLayer(
+      filters,
+      layers,
+      dataId,
+      dataContainer,
+      this.filteredIndex
+    );
+
     return this;
   }
 
@@ -414,23 +732,31 @@ class KeplerTable<F extends Field = Field> {
       return this;
     }
 
+    let baseIndex: number[];
+    let indexByLayer: Record<string, number[]>;
+
     // no gpu filter
     if (!filters.find(f => f.gpu)) {
-      this.filteredIdxCPU = this.filteredIndex;
+      baseIndex = this.filteredIndex;
+      indexByLayer = this.filteredIndexByLayer;
       this.filterRecordCPU = getFilterRecord(this.id, filters, opt);
-      return this;
+    } else {
+      // make a copy for cpu filtering
+      const copied = copyTable(this);
+
+      copied.filterRecord = this.filterRecordCPU;
+      copied.filteredIndex = this.filteredIdxCPU || [];
+
+      const filtered = copied.filterTable(filters, layers, opt);
+
+      baseIndex = filtered.filteredIndex;
+      indexByLayer = filtered.filteredIndexByLayer;
+      this.filterRecordCPU = filtered.filterRecord;
     }
 
-    // make a copy for cpu filtering
-    const copied = copyTable(this);
-
-    copied.filterRecord = this.filterRecordCPU;
-    copied.filteredIndex = this.filteredIdxCPU || [];
-
-    const filtered = copied.filterTable(filters, layers, opt);
-
-    this.filteredIdxCPU = filtered.filteredIndex;
-    this.filterRecordCPU = filtered.filterRecord;
+    // Polygon filters are applied per-layer (not in filteredIndex). For export, keep rows
+    // visible on any polygon-targeted layer.
+    this.filteredIdxCPU = mergePolygonLayerIndexes(baseIndex, indexByLayer);
 
     return this;
   }
@@ -471,7 +797,11 @@ class KeplerTable<F extends Field = Field> {
   /**
    *  Get the domain of this column based on scale type
    */
-  getColumnLayerDomain(field: F, scaleType: string): number[] | string[] | [number, number] | null {
+  getColumnLayerDomain(
+    field: F,
+    scaleType: string,
+    range?: ColorRange
+  ): number[] | string[] | [number, number] | null {
     const {dataContainer, filteredIndexForDomain} = this;
 
     if (!SCALE_TYPES[scaleType]) {
@@ -493,6 +823,15 @@ class KeplerTable<F extends Field = Field> {
 
       case SCALE_TYPES.quantile:
         return getQuantileDomain(filteredIndexForDomain, indexValueAccessor, sortFunction);
+
+      case SCALE_TYPES.jenks:
+        if (!range?.colors) {
+          Console.error(
+            'the range is either missing or it does not have colors available for Jenks scale domain calculation'
+          );
+          return null;
+        }
+        return getJenksDomain(filteredIndexForDomain, indexValueAccessor, range.colors.length);
 
       case SCALE_TYPES.log:
         return getLogDomain(filteredIndexForDomain, indexValueAccessor);
@@ -692,20 +1031,39 @@ export function copyTableAndUpdate(
   }, copyTable(original));
 }
 
+function fieldNamesMatch(current: {name: string}[], incoming: {name: string}[]): boolean {
+  if (current.length !== incoming.length) {
+    return false;
+  }
+  return current.every((field, i) => field.name === incoming[i].name);
+}
+
+/**
+ * Arrow Int64/Uint64 columns yield JS BigInt. Detect from the column type once
+ * at bind time so other columns keep the existing accessor with no extra checks.
+ */
+function isInt64ArrowColumn(dc: DataContainerInterface, fieldIdx: number): boolean {
+  const type = (dc.getColumn?.(fieldIdx) as {type?: {bitWidth?: number; isSigned?: boolean}})?.type;
+  return type?.bitWidth === 64 && typeof type.isSigned === 'boolean';
+}
+
 export function getFieldValueAccessor<
   F extends {
     type?: Field['type'];
     format?: Field['format'];
   }
 >(f: F, i: number, dc: DataContainerInterface) {
-  return maybeToDate.bind(
-    null,
-    // is time
-    f.type === ALL_FIELD_TYPES.timestamp,
-    i,
-    f.format || '',
-    dc
-  );
+  if (f.type === ALL_FIELD_TYPES.timestamp) {
+    const format = f.format || '';
+    return (d: {index: number} | any[]) => timeToUnixMilli(readFieldValue(i, dc, d), format);
+  }
+  if (isInt64ArrowColumn(dc, i)) {
+    return (d: {index: number} | any[]) => {
+      const value = readFieldValue(i, dc, d);
+      return value == null ? value : Number(value);
+    };
+  }
+  return readFieldValue.bind(null, i, dc);
 }
 
 export default KeplerTable;

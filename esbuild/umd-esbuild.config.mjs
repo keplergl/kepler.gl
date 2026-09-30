@@ -6,9 +6,11 @@ import {replace} from 'esbuild-plugin-replace';
 import {umdWrapper} from 'esbuild-plugin-umd-wrapper';
 
 import process from 'node:process';
-import {spawn} from 'node:child_process';
+import {createRequire} from 'node:module';
 import {join} from 'node:path';
-import KeplerPackage from '../package.json' assert {type: 'json'};
+
+const require = createRequire(import.meta.url);
+const KeplerPackage = require('../package.json');
 
 const LIB_DIR = './';
 const NODE_MODULES_DIR = join(LIB_DIR, 'node_modules');
@@ -110,6 +112,9 @@ const config = {
   format: 'umd',
   logLevel: 'error',
   minify: true,
+  banner: {
+    js: '// SPDX-License-Identifier: MIT\n// Copyright contributors to the kepler.gl project\n'
+  },
   sourcemap: false,
   treeShaking: true,
 
@@ -122,6 +127,15 @@ const config = {
   // Note: `react/jsx-runtime` is intentionally NOT external; it is shimmed on top
   // of the external `React` global by jsxRuntimeShimPlugin below.
   external: ['react', 'react-dom', 'redux', 'react-redux', 'styled-components'],
+
+  // loaders.gl's ParquetArrowLoader calls convertArrowToSchema, which matches
+  // column types with `switch (arrowType.constructor)`. Duplicate apache-arrow
+  // copies (kepler 17 vs nested loaders.gl 21) make that identity check fail
+  // and throw `arrow type not supported: tL` in the minified exported HTML.
+  // Force a single copy, matching the demo-app / website bundler aliases.
+  alias: {
+    'apache-arrow': join(NODE_MODULES_DIR, 'apache-arrow')
+  },
 
   plugins: [
     jsxRuntimeShimPlugin,

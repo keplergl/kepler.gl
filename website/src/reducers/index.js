@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {taskMiddleware} from 'react-palm/tasks';
+import {taskMiddleware} from '@kepler.gl/tasks';
 import thunk from 'redux-thunk';
 
 import appReducer from './app';
@@ -17,11 +17,7 @@ const reducers = {
 
 const combinedReducers = combineReducers(reducers);
 
-export const middlewares = [
-  taskMiddleware,
-  thunk,
-  analyticsMiddleware
-];
+export const middlewares = [taskMiddleware, thunk, analyticsMiddleware];
 
 export const enhancers = [applyMiddleware(...middlewares)];
 

@@ -6,8 +6,8 @@ import test from 'tape-catch';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 
-import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
-import CloneDeep from 'lodash/cloneDeep';
+import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from '@kepler.gl/tasks';
+import CloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import SchemaManager from '@kepler.gl/schemas';
 import {VisStateActions, MapStateActions} from '@kepler.gl/actions';
@@ -22,7 +22,8 @@ import {
   syncTimeFilterWithLayerTimelineUpdater,
   setTimeFilterTimelineModeUpdater,
   setFilterAnimationTimeUpdater,
-  setFilterAnimationWindowUpdater
+  setFilterAnimationWindowUpdater,
+  calculateLayerData
 } from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
@@ -34,10 +35,12 @@ import {
   getAnimatableVisibleLayers,
   getDefaultFilter,
   histogramFromDomain,
-  TileTimeInterval
+  LayerTimeInterval,
+  initApplicationConfig
 } from '@kepler.gl/utils';
 import {
   ALL_FIELD_TYPES,
+  DatasetType,
   EDITOR_MODES,
   LAYER_VIS_CONFIGS,
   DEFAULT_TEXT_LABEL,
@@ -73,7 +76,17 @@ import {
 } from 'test/fixtures/geojson';
 import tripCsvData, {tripCsvDataInfo, expectedCoordinates} from 'test/fixtures/test-trip-csv-data';
 import tripGeojson, {timeStampDomain, tripDataInfo} from 'test/fixtures/trip-geojson';
-import {mockPolygonFeature, mockPolygonFeature2, mockPolygonData} from 'test/fixtures/polygon';
+import {
+  mockPolygonFeature,
+  mockPolygonFeature2,
+  mockPolygonData,
+  mockDualLonLatRows,
+  mockStartRegionPolygon,
+  mockEndRegionPolygon,
+  mockEastOverlapPolygon,
+  mockWestOnlyPolygon,
+  mockEastOnlyPolygon
+} from 'test/fixtures/polygon';
 
 // test helpers
 import {
@@ -88,6 +101,7 @@ import {
 } from 'test/helpers/comparison-utils';
 import {
   applyActions,
+  applyExistingDatasetTasks,
   StateWTripGeojson,
   StateWSplitMaps,
   StateWFilters,
@@ -475,7 +489,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', async t => {
     })
   );
   const newLayer = nextState.layers[0];
-  t.equal(newLayer.config.colorField, stringField, 'should update colorField');
+  t.equal(newLayer.config.colorField.name, stringField.name, 'should update colorField');
   t.equal(newLayer.config.colorScale, 'ordinal', 'should scale to ordinal');
   t.deepEqual(
     newLayer.config.colorDomain,
@@ -498,7 +512,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', async t => {
     })
   );
   const newLayer2 = nextState2.layers[0];
-  t.equal(newLayer2.config.sizeField, intField, 'should update sizeField');
+  t.equal(newLayer2.config.sizeField.name, intField.name, 'should update sizeField');
   t.equal(newLayer2.config.sizeScale, 'sqrt', 'should scale to sqrt');
   t.deepEqual(newLayer2.config.sizeDomain, [1, 12124], 'should calculate size domain');
   t.deepEqual(newLayer2.config.visConfig.radiusRange, [5, 10], 'should update size range');
@@ -508,7 +522,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', async t => {
 
   const newLayer3 = nextState3.layers[0];
   t.equal(newLayer3.type, 'hexagon', 'should change type to hexagon');
-  t.equal(newLayer3.config.colorField, stringField, 'should keep colorField');
+  t.equal(newLayer3.config.colorField.name, stringField.name, 'should keep colorField');
   t.deepEqual(
     newLayer3.config.colorDomain,
     [0, 1],
@@ -517,7 +531,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', async t => {
   t.equal(newLayer3.config.colorScale, 'ordinal', 'should set colorScale to ordinal');
   t.equal(newLayer3.config.sizeScale, 'sqrt', 'should set sizeScale to default');
   t.deepEqual(newLayer3.config.sizeDomain, [0, 1], 'should set sizeDomain to default');
-  t.equal(newLayer3.config.sizeField, intField, 'should keep sizeField');
+  t.equal(newLayer3.config.sizeField.name, intField.name, 'should keep sizeField');
   t.notEqual(newLayer3.id, newLayer2.id, 'should change id');
   t.equal(newLayer3.config.visConfig.colorRange, mockColorRange, 'should not deep copy colorRange');
   t.equal(
@@ -531,14 +545,14 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', async t => {
   const newLayer4 = nextState4.layers[0];
   t.equal(newLayer4.type, 'icon', 'should change type to icon');
   t.notEqual(newLayer4.id, newLayer2.id, 'should change id');
-  t.equal(newLayer4.config.colorField, stringField, 'should keep colorField');
+  t.equal(newLayer4.config.colorField.name, stringField.name, 'should keep colorField');
   t.deepEqual(
     newLayer4.config.colorDomain,
     ['driver_analytics', 'driver_analytics_0', 'driver_gps'],
     'should calculate color domain'
   );
   t.equal(newLayer4.config.colorScale, 'ordinal', 'should keep color scale');
-  t.equal(newLayer4.config.sizeField, intField, 'should keep sizeField');
+  t.equal(newLayer4.config.sizeField.name, intField.name, 'should keep sizeField');
   t.equal(newLayer4.config.sizeScale, 'sqrt', 'should scale to linear');
   t.deepEqual(newLayer4.config.sizeDomain, [1, 12124], 'should keep size domain');
   t.deepEqual(newLayer4.config.visConfig.radiusRange, [5, 10], 'should keep size range');
@@ -932,7 +946,11 @@ test('visStateReducer -> layerDataIdChangeUpdater -> not valid to save layer rem
 
   // Verify precondition: layer has colorField set
   t.ok(pointLayer.config.colorField, 'point layer should have colorField set');
-  t.equal(pointLayer.config.colorField.name, 'gps_data.types', 'colorField should be gps_data.types');
+  t.equal(
+    pointLayer.config.colorField.name,
+    'gps_data.types',
+    'colorField should be gps_data.types'
+  );
 
   // Add a new dataset with fewer rows but containing the same colorField name
   const newFields = [
@@ -950,7 +968,10 @@ test('visStateReducer -> layerDataIdChangeUpdater -> not valid to save layer rem
       action: VisStateActions.updateVisData,
       payload: [
         [
-          {info: {id: 'small-dataset', label: 'Small Data'}, data: {fields: newFields, rows: newRows}}
+          {
+            info: {id: 'small-dataset', label: 'Small Data'},
+            data: {fields: newFields, rows: newRows}
+          }
         ]
       ]
     }
@@ -987,7 +1008,11 @@ test('visStateReducer -> layerDataIdChangeUpdater -> not valid to save layer rem
   t.equal(updatedLayer.config.dataId, 'small-dataset', 'should update layer dataId');
   // colorField should be remapped to the new dataset's field (same name exists)
   t.ok(updatedLayer.config.colorField, 'colorField should be remapped');
-  t.equal(updatedLayer.config.colorField.name, 'gps_data.types', 'colorField should match by name in new dataset');
+  t.equal(
+    updatedLayer.config.colorField.name,
+    'gps_data.types',
+    'colorField should match by name in new dataset'
+  );
 
   // Now test clearing: switch to a dataset without the colorField name
   const noMatchFields = [
@@ -1001,7 +1026,10 @@ test('visStateReducer -> layerDataIdChangeUpdater -> not valid to save layer rem
       action: VisStateActions.updateVisData,
       payload: [
         [
-          {info: {id: 'no-match-dataset', label: 'No Match'}, data: {fields: noMatchFields, rows: noMatchRows}}
+          {
+            info: {id: 'no-match-dataset', label: 'No Match'},
+            data: {fields: noMatchFields, rows: noMatchRows}
+          }
         ]
       ]
     }
@@ -1021,7 +1049,11 @@ test('visStateReducer -> layerDataIdChangeUpdater -> not valid to save layer rem
 
   const finalLayer = finalState.layers[0];
   t.equal(finalLayer.config.dataId, 'no-match-dataset', 'should update dataId to no-match-dataset');
-  t.equal(finalLayer.config.colorField, null, 'colorField should be null when no matching field in new dataset');
+  t.equal(
+    finalLayer.config.colorField,
+    null,
+    'colorField should be null when no matching field in new dataset'
+  );
 
   t.end();
 });
@@ -1154,6 +1186,17 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
   );
   const expected8 = [{...DEFAULT_TEXT_LABEL, field: {name: 'blue', valueAccessor}}];
   t.deepEqual(nextState8.layers[0].config.textLabel, expected8, 'should remove text label blue');
+
+  // enable GPU collision filtering for all labels
+  const nextState9 = reducer(
+    nextState8,
+    VisStateActions.layerTextLabelChange(nextState8.layers[0], 'all', 'collisionEnabled', true)
+  );
+  t.equal(
+    nextState9.layers[0].config.textLabel[0].collisionEnabled,
+    true,
+    'should enable collision filtering on all text labels'
+  );
 
   t.end();
 });
@@ -3959,7 +4002,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
             [testCsvDataId]: [
               {
                 name: 'gps_data.utc_timestamp',
-                format: null
+                format: 'L LTS'
               },
               {
                 name: 'gps_data.types',
@@ -3967,7 +4010,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
               },
               {
                 name: 'epoch',
-                format: null
+                format: 'L LTS'
               },
               {
                 name: 'has_result',
@@ -5026,7 +5069,11 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
 
   t.equal(newReducer.layerData[0].data.length, 2, 'Layer Point 1 should only show 2 points');
 
-  t.equal(newReducer.layerData[1].data.length, 2, 'Layer Point 2 should only show 2 points');
+  t.equal(
+    newReducer.layerData[1].data.length,
+    4,
+    'Layer Point 2 should show all 4 points (not targeted by filter)'
+  );
 
   const filterFeature = newReducer.filters[0].value;
 
@@ -5040,9 +5087,17 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
 
   t.equal(newReducer.filters[0].layerId.length, 2, 'Should have two values in filter.layerId');
 
-  t.equal(newReducer.layerData[0].data.length, 0, 'Layer Point 1 should show 0 points');
+  t.equal(
+    newReducer.layerData[0].data.length,
+    2,
+    'Layer Point 1 should show 2 points (filtered by its own position)'
+  );
 
-  t.equal(newReducer.layerData[1].data.length, 0, 'Layer Point 2 show show 0 points');
+  t.equal(
+    newReducer.layerData[1].data.length,
+    0,
+    'Layer Point 2 should show 0 points (end positions are outside polygon)'
+  );
 
   // Adding a new dataset - creates extra 4 layers
   newReducer = applyActions(reducer, newReducer, [
@@ -5079,17 +5134,41 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   t.equal(
     newReducer.layerData[0].data.length,
     2,
-    'Layer Point 1 show 2 points because we removed layer 2'
+    'Layer Point 1 show 2 points because it is still filtered'
   );
 
   t.equal(newReducer.layerData[4].data.length, 2, 'Layer Point 5 should 2 points because filtered');
 
   t.equal(
-    newReducer.layerData[2].data.length,
-    2,
-    'Layer Point 2 should still show 2 filters because layer 1 is still filtered'
+    newReducer.layerData[1].data.length,
+    4,
+    'Layer Point 2 should show full data because it was removed from filter'
   );
 
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: unselecting all layers returns sketch', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const layer = initialState.layers[0];
+  let state = reducer(initialState, VisStateActions.setFeatures([mockPolygonFeature]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockPolygonFeature));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(layer, mockPolygonFeature));
+
+  t.equal(state.filters.length, 1, 'Should create a polygon filter');
+  t.equal(state.editor.features.length, 0, 'Sketch should move into the filter');
+
+  const filterFeature = state.filters[0].value;
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(layer, filterFeature));
+
+  t.equal(state.filters.length, 0, 'Should remove the filter when no layers remain');
+  t.equal(state.editor.features.length, 1, 'Should return the polygon to sketches');
+  t.notOk(state.editor.features[0].properties.filterId, 'Returned sketch should not be a filter');
+  t.equal(
+    state.editor.selectedFeature.id,
+    mockPolygonFeature.id,
+    'Should keep the polygon selected'
+  );
   t.end();
 });
 
@@ -5250,8 +5329,18 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
   );
   t.deepEqual(
     newReducer.datasets.puppy.filteredIndex,
+    [0, 1, 2, 3],
+    'The dataset filteredIndex should not be affected by polygon filters'
+  );
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndexByLayer[newReducer.layers[0].id],
     [0, 2],
-    'The polygon filter should be applied'
+    'Should have per-layer polygon filtered index'
+  );
+  t.equal(
+    newReducer.layerData[0].data.length,
+    2,
+    'Targeted layer should show polygon-filtered points'
   );
 
   newReducer = reducer(newReducer, VisStateActions.toggleFilterFeature(0));
@@ -5263,6 +5352,120 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
     newReducer.datasets.puppy.filteredIndex,
     [0, 1, 2, 3],
     "The polygon filter shouldn't be applied"
+  );
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndexByLayer,
+    {},
+    'Per-layer polygon filtered index should be cleared when filter is disabled'
+  );
+  t.equal(
+    newReducer.layerData[0].data.length,
+    4,
+    'Targeted layer should restore full data when polygon filter is disabled'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> APPLY_CPU_FILTER with polygon filter', t => {
+  const state = {
+    ...INITIAL_VIS_STATE
+  };
+
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {
+            name: 'start_point_lat',
+            format: '',
+            fieldIdx: 0,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'start_point_lng',
+            format: '',
+            fieldIdx: 1,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lat',
+            format: '',
+            fieldIdx: 2,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lng',
+            format: '',
+            fieldIdx: 3,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          }
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv',
+        size: 144,
+        id: 'puppy'
+      }
+    }
+  ];
+
+  let newReducer = applyActions(reducer, state, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: true, keepExistingConfig: false}, {}]
+    }
+  ]);
+
+  newReducer = reducer(newReducer, VisStateActions.setFeatures([mockPolygonFeature]));
+  newReducer = reducer(newReducer, VisStateActions.setSelectedFeature(mockPolygonFeature));
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[0], mockPolygonFeature)
+  );
+
+  const layerId = newReducer.layers[0].id;
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndex,
+    [0, 1, 2, 3],
+    'dataset filteredIndex should ignore polygon filters'
+  );
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndexByLayer[layerId],
+    [0, 2],
+    'per-layer index should keep rows inside the polygon'
+  );
+
+  newReducer = reducer(newReducer, VisStateActions.applyCPUFilter('puppy'));
+
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIdxCPU,
+    [0, 2],
+    'filtered export should apply polygon filters via per-layer indices'
+  );
+
+  // Targeting a second layer whose positions are outside the polygon:
+  // export should be the union of both layers' visible rows.
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[1], mockPolygonFeature)
+  );
+  newReducer = reducer(newReducer, VisStateActions.applyCPUFilter('puppy'));
+
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndexByLayer[newReducer.layers[1].id],
+    [],
+    'second layer should have no rows inside the polygon'
+  );
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIdxCPU,
+    [0, 2],
+    'filtered export should keep the union of polygon-visible rows across targeted layers'
   );
 
   t.end();
@@ -5403,6 +5606,70 @@ test('#visStateReducer -> POLYGON: delete polygon filter', t => {
   t.end();
 });
 
+test('#visStateReducer -> POLYGON: reload saved geojson map keeps filtered layer data', t => {
+  const appState = CloneDeep(StateWFiles);
+  const geojsonLayer = appState.visState.layers.find(l => l.type === 'geojson');
+  t.ok(geojsonLayer, 'should have a geojson layer');
+
+  const bounds = geojsonLayer.meta.bounds || [-122.5, 37.7, -122.3, 37.9];
+  const pad = 1;
+  const coveringPolygon = {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [bounds[0] - pad, bounds[1] - pad],
+          [bounds[0] - pad, bounds[3] + pad],
+          [bounds[2] + pad, bounds[3] + pad],
+          [bounds[2] + pad, bounds[1] - pad],
+          [bounds[0] - pad, bounds[1] - pad]
+        ]
+      ]
+    },
+    properties: {
+      renderType: 'Polygon',
+      isClosed: true,
+      isVisible: true
+    },
+    id: 'reload-polygon-filter'
+  };
+
+  const filteredState = reducer(
+    appState.visState,
+    VisStateActions.setPolygonFilterLayer(geojsonLayer, coveringPolygon)
+  );
+
+  const layerIdx = filteredState.layers.findIndex(l => l.id === geojsonLayer.id);
+  const expectedCount = filteredState.layerData[layerIdx].data.length;
+  t.ok(expectedCount > 0, 'geojson layer should have polygon-filtered features before save');
+
+  const saved = SchemaManager.save({...appState, visState: filteredState});
+  const loaded = SchemaManager.load(saved);
+
+  const reloaded = applyActions(reducer, INITIAL_VIS_STATE, [
+    {action: VisStateActions.updateVisData, payload: [loaded.datasets, {}, loaded.config]}
+  ]);
+
+  const reloadedIdx = reloaded.layers.findIndex(l => l.id === geojsonLayer.id);
+  t.ok(
+    reloaded.filters.some(f => f.type === 'polygon'),
+    'should restore the polygon filter'
+  );
+  t.equal(
+    reloaded.layerData[reloadedIdx].data.length,
+    expectedCount,
+    'reloaded geojson layer should show polygon-filtered features without toggling the filter'
+  );
+  t.equal(
+    reloaded.datasets[geojsonLayer.config.dataId].filteredIndexByLayer[geojsonLayer.id].length,
+    expectedCount,
+    'reloaded per-layer polygon index should match layer data'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> POLYGON: setPolygonFilterLayer: H3', t => {
   const initialState = CloneDeep(StateWH3Layer).visState;
   const newState = reducer(
@@ -5412,15 +5679,206 @@ test('#visStateReducer -> POLYGON: setPolygonFilterLayer: H3', t => {
 
   const expectedFilteredIndex = [1, 3, 5, 8];
   t.deepEqual(
-    newState.datasets['190vdll3di'].filteredIndex,
+    newState.datasets['190vdll3di'].filteredIndexByLayer[newState.layers[0].id],
     expectedFilteredIndex,
-    'should filter data based on h3 layer'
+    'should have per-layer polygon filtered index for h3 layer'
   );
   t.deepEqual(
     newState.layerData[0].data.map(d => d.index),
     [1, 3, 5, 8],
     'should filter layer data'
   );
+  t.end();
+});
+
+function loadDualLonLatPolygonState() {
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {
+            name: 'start_point_lat',
+            format: '',
+            fieldIdx: 0,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'start_point_lng',
+            format: '',
+            fieldIdx: 1,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lat',
+            format: '',
+            fieldIdx: 2,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lng',
+            format: '',
+            fieldIdx: 3,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          }
+        ],
+        rows: mockDualLonLatRows
+      },
+      info: {
+        label: 'trips.csv',
+        size: 144,
+        id: 'trips'
+      }
+    }
+  ];
+
+  return applyActions(reducer, {...INITIAL_VIS_STATE}, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: true, keepExistingConfig: false}, {}]
+    }
+  ]);
+}
+
+function pointLayerByLat(state, latField) {
+  return state.layers.find(l => l.type === 'point' && l.config.columns?.lat?.value === latField);
+}
+
+function layerDataIndexes(state, layer) {
+  return state.layerData[state.layers.indexOf(layer)].data.map(d => d.index);
+}
+
+test('#visStateReducer -> POLYGON: independent polygons on two layers', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+  const endLayer = pointLayerByLat(state, 'end_point_lat');
+
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([mockStartRegionPolygon, mockEndRegionPolygon])
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockStartRegionPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEndRegionPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(endLayer, mockEndRegionPolygon));
+
+  t.equal(state.filters.length, 2, 'Should create one polygon filter per feature');
+  t.deepEqual(
+    state.datasets.trips.filteredIndex,
+    [0, 1, 2, 3],
+    'dataset filteredIndex should ignore polygon filters'
+  );
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [0, 1],
+    'start layer should keep only points inside the start-region polygon'
+  );
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[endLayer.id],
+    [1, 2],
+    'end layer should keep only points inside the end-region polygon'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [0, 1],
+    'start layer data should match its per-layer polygon index'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, endLayer),
+    [1, 2],
+    'end layer data should match its per-layer polygon index'
+  );
+
+  state = reducer(state, VisStateActions.applyCPUFilter('trips'));
+  t.deepEqual(
+    state.datasets.trips.filteredIdxCPU,
+    [0, 1, 2],
+    'filtered export should be the union of independently visible rows'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: intersecting polygons AND on the same layer', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+  const endLayer = pointLayerByLat(state, 'end_point_lat');
+
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([mockStartRegionPolygon, mockEastOverlapPolygon])
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockStartRegionPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEastOverlapPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockEastOverlapPolygon));
+
+  t.equal(state.filters.length, 2, 'Should create two polygon filters on the same layer');
+  t.deepEqual(
+    state.filters.map(f => f.layerId),
+    [[startLayer.id], [startLayer.id]],
+    'Both polygons should target only the start layer'
+  );
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [1],
+    'start layer should keep only the intersection of both polygons'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [1],
+    'start layer data should show only the intersecting point'
+  );
+  t.equal(
+    state.datasets.trips.filteredIndexByLayer[endLayer.id],
+    undefined,
+    'untargeted end layer should not have a per-layer polygon index'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, endLayer),
+    [0, 1, 2, 3],
+    'untargeted end layer should keep all points'
+  );
+
+  state = reducer(state, VisStateActions.toggleFilterFeature(1));
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [0, 1],
+    'disabling one polygon should restore the remaining polygon filter'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [0, 1],
+    'start layer data should match the remaining polygon'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: disjoint polygons AND on the same layer', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+
+  state = reducer(state, VisStateActions.setFeatures([mockWestOnlyPolygon, mockEastOnlyPolygon]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockWestOnlyPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockWestOnlyPolygon));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEastOnlyPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockEastOnlyPolygon));
+
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [],
+    'start layer should keep no points when two polygons do not overlap'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [],
+    'start layer data should be empty when polygon filters have no intersection'
+  );
+
   t.end();
 });
 
@@ -5578,6 +6036,469 @@ test('#uiStateReducer -> SET_FEATURES/SET_SELECTED_FEATURE/DELETE_FEATURE', t =>
   t.end();
 });
 
+test('#visStateReducer -> SET_FEATURES line keeps draw mode', t => {
+  let state = reducer(
+    INITIAL_VIS_STATE,
+    VisStateActions.setEditorMode(EDITOR_MODES.DRAW_LINESTRING)
+  );
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([
+      {
+        type: 'Feature',
+        id: 'line-1',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            [0, 0],
+            [1, 1]
+          ]
+        }
+      }
+    ])
+  );
+
+  t.equal(
+    state.editor.mode,
+    EDITOR_MODES.DRAW_LINESTRING,
+    'Line sketches should stay in line drawing mode'
+  );
+  t.equal(state.editor.features.length, 1, 'Should store the line sketch');
+  t.end();
+});
+
+test('#visStateReducer -> SET_FEATURES closed circle switches to edit', t => {
+  let state = reducer(INITIAL_VIS_STATE, VisStateActions.setEditorMode(EDITOR_MODES.DRAW_CIRCLE));
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([
+      {
+        type: 'Feature',
+        id: 'circle-1',
+        properties: {
+          isClosed: true,
+          shape: 'Circle'
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 1],
+              [1, 0],
+              [0, -1],
+              [-1, 0],
+              [0, 1]
+            ]
+          ]
+        }
+      }
+    ])
+  );
+
+  t.equal(state.editor.mode, EDITOR_MODES.EDIT, 'Closed circle sketches should switch to select');
+  t.equal(state.editor.features.length, 1, 'Should store the circle sketch');
+  t.end();
+});
+
+test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER', t => {
+  const emptyState = reducer(INITIAL_VIS_STATE, VisStateActions.convertEditorFeaturesToLayer());
+  t.equal(emptyState, INITIAL_VIS_STATE, 'Should no-op when there are no sketch features');
+
+  const lineFeature = {
+    type: 'Feature',
+    id: 'line-1',
+    properties: {isClosed: false},
+    geometry: {
+      type: 'LineString',
+      coordinates: [
+        [0, 0],
+        [1, 1]
+      ]
+    }
+  };
+
+  let state = {
+    ...INITIAL_VIS_STATE,
+    editor: {
+      ...INITIAL_VIS_STATE.editor,
+      features: [lineFeature],
+      selectedFeature: lineFeature,
+      mode: EDITOR_MODES.DRAW_LINESTRING
+    }
+  };
+
+  state = reducer(state, VisStateActions.convertEditorFeaturesToLayer());
+  t.deepEqual(state.editor.features, [], 'Should clear sketch features after convert');
+  t.equal(state.editor.selectedFeature, null, 'Should clear selected feature after convert');
+  t.equal(state.editor.mode, EDITOR_MODES.EDIT, 'Should switch to select mode after convert');
+
+  const tasks = drainTasksForTesting();
+  t.ok(
+    /Drawn Geometry \d{2}/.test(JSON.stringify(tasks)),
+    'Converted layer should be named Drawn Geometry plus a two-digit number'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE', t => {
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {name: 'start_point_lat', format: '', fieldIdx: 0, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'start_point_lng', format: '', fieldIdx: 1, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lat', format: '', fieldIdx: 2, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lng', format: '', fieldIdx: 3, type: 'real', analyzerType: 'FLOAT'}
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv',
+        size: 144
+      }
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: true, keepExistingConfig: false}, {}]
+    }
+  ]);
+
+  const pointLayer = state.layers.find(layer => layer.type === 'point');
+  t.ok(pointLayer, 'Should create a point layer from lat/lng columns');
+
+  state = reducer(state, VisStateActions.setFeatures([mockPolygonFeature]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockPolygonFeature));
+
+  const sourceDataId = pointLayer.config.dataId;
+  const sourceRowCount = state.datasets[sourceDataId].dataContainer.numRows();
+  const layerCount = state.layers.length;
+
+  state = applyExistingDatasetTasks(
+    reducer,
+    reducer(state, VisStateActions.extractDataFromFeature({layerId: pointLayer.id}))
+  );
+
+  const extractedIds = Object.keys(state.datasets).filter(id => id !== sourceDataId);
+  t.equal(extractedIds.length, 1, 'Should create one extracted dataset');
+
+  const extracted = state.datasets[extractedIds[0]];
+  t.equal(extracted.dataContainer.numRows(), 2, 'Should copy the two points inside the polygon');
+  t.ok(extracted.label.startsWith('Extracted '), 'Extracted dataset should use Extracted prefix');
+  t.equal(
+    state.datasets[sourceDataId].dataContainer.numRows(),
+    sourceRowCount,
+    'Source dataset should stay unchanged'
+  );
+  t.equal(state.editor.features.length, 1, 'Should keep the drawing after extract');
+  t.ok(state.layers.length > layerCount, 'Should auto-create a layer for the extracted dataset');
+
+  const emptyState = reducer(
+    state,
+    VisStateActions.extractDataFromFeature({layerId: 'missing-layer'})
+  );
+  t.equal(emptyState, state, 'Should no-op when the layer id is unknown');
+
+  t.end();
+});
+
+test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE respects GPU range filter', t => {
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {name: 'start_point_lat', format: '', fieldIdx: 0, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'start_point_lng', format: '', fieldIdx: 1, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lat', format: '', fieldIdx: 2, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lng', format: '', fieldIdx: 3, type: 'real', analyzerType: 'FLOAT'}
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv'
+      }
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: false, keepExistingConfig: false}, {}]
+    }
+  ]);
+
+  const pointLayer = state.layers.find(layer => layer.type === 'point');
+  t.ok(pointLayer, 'Should create a point layer from lat/lng columns');
+  const sourceDataId = pointLayer.config.dataId;
+
+  state = reducer(state, VisStateActions.addFilter(sourceDataId));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'start_point_lat'));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [12, 12.5]));
+
+  t.equal(state.filters[0].gpu, true, 'Range filter should be GPU-backed');
+  t.equal(
+    state.datasets[sourceDataId].filteredIndex.length,
+    state.datasets[sourceDataId].dataContainer.numRows(),
+    'GPU filter should not shrink filteredIndex'
+  );
+
+  state = reducer(state, VisStateActions.setFeatures([mockPolygonFeature]));
+  state = reducer(state, VisStateActions.setSelectedFeature(mockPolygonFeature));
+
+  state = applyExistingDatasetTasks(
+    reducer,
+    reducer(state, VisStateActions.extractDataFromFeature({layerId: pointLayer.id}))
+  );
+
+  const extractedIds = Object.keys(state.datasets).filter(id => id !== sourceDataId);
+  t.equal(extractedIds.length, 1, 'Should create one extracted dataset');
+  t.equal(
+    state.datasets[extractedIds[0]].dataContainer.numRows(),
+    1,
+    'Should keep only the in-polygon row that also passes the range filter'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE empty polygon', t => {
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {name: 'start_point_lat', format: '', fieldIdx: 0, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'start_point_lng', format: '', fieldIdx: 1, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lat', format: '', fieldIdx: 2, type: 'real', analyzerType: 'FLOAT'},
+          {name: 'end_point_lng', format: '', fieldIdx: 3, type: 'real', analyzerType: 'FLOAT'}
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv'
+      }
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [datasets, {centerMap: false, keepExistingConfig: false}, {}]
+    }
+  ]);
+
+  const farAwayPolygon = {
+    type: 'Feature',
+    id: 'far-away',
+    properties: {isClosed: true},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [1, 0],
+          [1, 1],
+          [0, 1],
+          [0, 0]
+        ]
+      ]
+    }
+  };
+
+  const pointLayer = state.layers.find(layer => layer.type === 'point');
+  state = reducer(state, VisStateActions.setFeatures([farAwayPolygon]));
+  state = reducer(state, VisStateActions.setSelectedFeature(farAwayPolygon));
+  const datasetCount = Object.keys(state.datasets).length;
+
+  state = reducer(state, VisStateActions.extractDataFromFeature({layerId: pointLayer.id}));
+  t.equal(
+    Object.keys(state.datasets).length,
+    datasetCount,
+    'Should not create a dataset when no rows fall inside the drawing'
+  );
+  drainTasksForTesting();
+
+  t.end();
+});
+
+test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE raster awaits clip download', t => {
+  drainTasksForTesting();
+  const layer = {
+    id: 'raster-extract',
+    type: LAYER_TYPES.rasterTile,
+    config: {dataId: 'stac-data', label: 'Africa Farms'},
+    extractInsideFeature: () => ({
+      kind: 'geojson',
+      features: [
+        {
+          type: 'Feature',
+          geometry: mockPolygonFeature.geometry,
+          properties: {pixel_count: 1}
+        }
+      ],
+      rowCount: 1
+    }),
+    downloadClip: () => Promise.resolve({png: true, json: true})
+  };
+  const startState = {
+    ...INITIAL_VIS_STATE,
+    layers: [layer],
+    datasets: {
+      'stac-data': {
+        id: 'stac-data',
+        fields: [],
+        dataContainer: createDataContainer([])
+      }
+    },
+    editor: {
+      ...INITIAL_VIS_STATE.editor,
+      selectedFeature: mockPolygonFeature
+    }
+  };
+
+  const pendingState = reducer(
+    startState,
+    VisStateActions.extractDataFromFeature({layerId: layer.id})
+  );
+  const downloadTasks = drainTasksForTesting();
+  t.equal(downloadTasks.length, 1, 'Should wait on downloadClip instead of toasting immediately');
+
+  const successAction = succeedTaskInTest(downloadTasks[0], {png: true, json: true});
+  t.ok(
+    JSON.stringify(successAction).includes('Downloaded raster clip image'),
+    'Should toast success after a PNG is produced'
+  );
+  reducer(pendingState, successAction);
+  drainTasksForTesting();
+
+  const pendingFailState = reducer(
+    startState,
+    VisStateActions.extractDataFromFeature({layerId: layer.id})
+  );
+  const failDownloadTasks = drainTasksForTesting();
+  const failAction = succeedTaskInTest(failDownloadTasks[0], {png: false, json: true});
+  t.ok(
+    JSON.stringify(failAction).includes('Failed to download raster clip image'),
+    'Should toast an error when no PNG is produced'
+  );
+  reducer(pendingFailState, failAction);
+  drainTasksForTesting();
+  t.end();
+});
+
+test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER disabled by config', t => {
+  initApplicationConfig({enableDrawOnMapSketches: false});
+
+  try {
+    const lineFeature = {
+      type: 'Feature',
+      id: 'line-1',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [0, 0],
+          [1, 1]
+        ]
+      }
+    };
+    const startState = {
+      ...INITIAL_VIS_STATE,
+      editor: {
+        ...INITIAL_VIS_STATE.editor,
+        features: [lineFeature],
+        selectedFeature: lineFeature
+      }
+    };
+
+    const nextState = reducer(startState, VisStateActions.convertEditorFeaturesToLayer());
+    t.equal(nextState, startState, 'Should no-op convert when draw-on-map sketches are disabled');
+
+    const ignoredMode = reducer(startState, VisStateActions.setEditorMode(EDITOR_MODES.DRAW_POINT));
+    t.equal(
+      ignoredMode.editor.mode,
+      startState.editor.mode,
+      'Should ignore point draw mode when sketches are disabled'
+    );
+
+    const circleMode = reducer(startState, VisStateActions.setEditorMode(EDITOR_MODES.DRAW_CIRCLE));
+    t.equal(
+      circleMode.editor.mode,
+      EDITOR_MODES.DRAW_CIRCLE,
+      'Should allow circle draw mode when sketches are disabled'
+    );
+
+    const ignoredProperties = reducer(
+      startState,
+      VisStateActions.setEditorFeatureProperties(lineFeature, {name: 'route'})
+    );
+    t.equal(
+      ignoredProperties,
+      startState,
+      'Should ignore edit properties when sketches are disabled'
+    );
+  } finally {
+    initApplicationConfig({enableDrawOnMapSketches: true});
+  }
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_EDITOR_FEATURE_PROPERTIES', t => {
+  const pointFeature = {
+    type: 'Feature',
+    id: 'point-1',
+    properties: {isClosed: false},
+    geometry: {type: 'Point', coordinates: [0, 0]}
+  };
+
+  let state = {
+    ...INITIAL_VIS_STATE,
+    editor: {
+      ...INITIAL_VIS_STATE.editor,
+      features: [pointFeature],
+      selectedFeature: pointFeature
+    }
+  };
+
+  state = reducer(
+    state,
+    VisStateActions.setEditorFeatureProperties(pointFeature, {
+      name: 'Stop',
+      filterId: 'nope',
+      isClosed: true
+    })
+  );
+
+  t.equal(state.editor.features[0].properties.name, 'Stop', 'Should store user properties');
+  t.equal(
+    state.editor.selectedFeature.properties.name,
+    'Stop',
+    'Should keep the selected feature in sync'
+  );
+  t.equal(
+    state.editor.features[0].properties.isClosed,
+    false,
+    'Should preserve editor-only properties'
+  );
+  t.notOk(
+    state.editor.features[0].properties.filterId,
+    'Should ignore reserved keys from the payload'
+  );
+
+  state = reducer(state, VisStateActions.setEditorFeatureProperties(pointFeature, {}));
+  t.notOk(state.editor.features[0].properties.name, 'Should remove user properties when cleared');
+  t.equal(
+    state.editor.features[0].properties.isClosed,
+    false,
+    'Should keep editor-only properties'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> APPLY_CPU_FILTER has multi datasets', t => {
   const initialState = CloneDeep(StateWFilters.visState);
   const previousDataset1 = initialState.datasets[testCsvDataId];
@@ -5694,6 +6615,64 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   t.end();
 });
 
+test('#visStateReducer -> LOAD_COLUMN_STATS', t => {
+  drainTasksForTesting();
+  const initialState = CloneDeep(StateWFiles.visState);
+
+  const noOpState = reducer(
+    initialState,
+    VisStateActions.loadColumnStats('missing', 'gps_data.lat')
+  );
+  t.equal(noOpState, initialState, 'state should not change when dataset is missing');
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.loadColumnStats(testCsvDataId, 'gps_data.lat')
+  );
+  const loadingField = nextState.datasets[testCsvDataId].fields.find(
+    f => f.name === 'gps_data.lat'
+  );
+  t.equal(loadingField.isLoadingStats, true, 'should set isLoadingStats while loading');
+
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 1, 'should create a column stats task');
+
+  const result = {
+    type: 'numeric',
+    mean: 30,
+    std: 1,
+    percentNulls: 0,
+    bins: [],
+    quantiles: [
+      {label: 'Min', value: 29},
+      {label: 'Max', value: 31}
+    ]
+  };
+  const successState = reducer(
+    nextState,
+    VisStateActions.loadColumnStatsSuccess(testCsvDataId, 'gps_data.lat', result, {})
+  );
+  const successField = successState.datasets[testCsvDataId].fields.find(
+    f => f.name === 'gps_data.lat'
+  );
+  t.equal(successField.isLoadingStats, false, 'should clear isLoadingStats on success');
+  t.deepEqual(
+    successField.filterProps.columnStats,
+    result,
+    'should store columnStats on filterProps'
+  );
+
+  const errorState = reducer(
+    nextState,
+    VisStateActions.loadColumnStatsError(testCsvDataId, 'gps_data.lat', new Error('stats failed'))
+  );
+  const errorField = errorState.datasets[testCsvDataId].fields.find(f => f.name === 'gps_data.lat');
+  t.equal(errorField.isLoadingStats, false, 'should clear isLoadingStats on error');
+
+  drainTasksForTesting();
+  t.end();
+});
+
 test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
   const initialState = CloneDeep(StateWFiles.visState);
 
@@ -5770,7 +6749,8 @@ test('#visStateReducer -> LOAD_FILES', async t => {
       file: {type: 'text/csv', name: 'test-file.csv'},
       fileCache: [],
       loaders: [],
-      loadOptions: {}
+      loadOptions: {},
+      companionFiles: mockFiles
     }
   };
 
@@ -5781,6 +6761,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   const expectedFileLoading = {
     fileCache: [],
     filesToLoad: [{type: 'text/csv', name: 'test-file-2.csv'}],
+    companionFiles: mockFiles,
     onFinish: VisStateActions.loadFilesSuccess
   };
   const expectedFileLoadingProgress = {
@@ -5847,7 +6828,8 @@ test('#visStateReducer -> LOAD_FILES', async t => {
       file: {type: 'text/csv', name: 'test-file-2.csv'},
       fileCache: [],
       loaders: [],
-      loadOptions: {}
+      loadOptions: {},
+      companionFiles: mockFiles
     },
     'should return an LOAD_FILE_TASK with 2nd file to load'
   );
@@ -5865,6 +6847,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     {
       fileCache: [],
       filesToLoad: [],
+      companionFiles: mockFiles,
       onFinish: VisStateActions.loadFilesSuccess
     },
     'fileLoading should not add result to fileCache when error'
@@ -5949,6 +6932,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     {
       fileCache: fileProcessResult,
       filesToLoad: [{type: 'text/csv', name: 'test-file-2.csv'}],
+      companionFiles: mockFiles,
       onFinish: VisStateActions.loadFilesSuccess
     },
     'fileLoading should update to add result to fileCache 1'
@@ -5968,7 +6952,8 @@ test('#visStateReducer -> LOAD_FILES', async t => {
       file: {type: 'text/csv', name: 'test-file-2.csv'},
       fileCache: fileProcessResult,
       loaders: [],
-      loadOptions: {}
+      loadOptions: {},
+      companionFiles: mockFiles
     },
     'should return an LOAD_FILE_TASK with 2nd file to load 2'
   );
@@ -5986,6 +6971,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     {
       fileCache: fileProcessResult,
       filesToLoad: [],
+      companionFiles: mockFiles,
       onFinish: VisStateActions.loadFilesSuccess
     },
     'fileLoading should update to add result to fileCache 3'
@@ -6028,6 +7014,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     {
       fileCache: file2ProcessResult,
       filesToLoad: [],
+      companionFiles: mockFiles,
       onFinish: VisStateActions.loadFilesSuccess
     },
     'fileLoading should update to add 2nd file result to fileCache'
@@ -6185,7 +7172,7 @@ function mockStateWithFilterAndIntervalBasedAnimationLayer() {
       }
     ],
     resolutionOffset: 4,
-    targetTimeInterval: TileTimeInterval.DAY,
+    targetTimeInterval: LayerTimeInterval.DAY,
     tilesetIndex: undefined,
     zipUrl: undefined
   };
@@ -6385,7 +7372,7 @@ test('#visStateReducer -> sync with time filter with trip layer', t => {
   t.end();
 });
 
-test('#visStateReducer -> sync with time filter with hextile layer', t => {
+test('#visStateReducer -> sync with time filter with interval-based animation layer', t => {
   let visState = mockStateWithFilterAndIntervalBasedAnimationLayer();
   const animatableLayers = getAnimatableVisibleLayers(visState.layers);
   t.equal(animatableLayers.length, 2, 'Should find 1 animatable layer');
@@ -6424,7 +7411,7 @@ test('#visStateReducer -> sync with time filter with hextile layer', t => {
     'Should have set filter animation window to interval'
   );
 
-  // check plotType interval to match hextile interval
+  // check plotType interval to match the layer time interval
   t.equal(
     newFilter.plotType.interval,
     INTERVAL['1-day'],
@@ -6755,6 +7742,41 @@ test('VisStateUpdater -> applyLayerConfig', t => {
   );
   t.equal(getUpdatedLayerJson(nextState).type, '3D', 'should change layer type');
 
+  nextState = reducer(
+    initialState,
+    VisStateActions.applyLayerConfig(
+      oldLayerId,
+      transformConfig(layer => {
+        layer.visualChannels.colorField = {name: 'gps_data.lat', type: 'real'};
+        layer.visualChannels.colorScale = 'quantile';
+        return layer;
+      })
+    )
+  );
+  t.equal(
+    getUpdatedLayerJson(nextState).visualChannels.colorField?.name,
+    'gps_data.lat',
+    'should set colorField'
+  );
+
+  const parsedLayer = serializeLayer(nextState.layers[oldLayerIndex], schema);
+  const parsedWithRadius = CloneDeep(parsedLayer);
+  parsedWithRadius.config.visConfig.radius = 25;
+  const afterParsedRadius = reducer(
+    nextState,
+    VisStateActions.applyLayerConfig(oldLayerId, parsedWithRadius)
+  );
+  t.equal(
+    getUpdatedLayerJson(afterParsedRadius).visualChannels.colorField?.name,
+    'gps_data.lat',
+    'parsed-format radius change should keep colorField'
+  );
+  t.equal(
+    getUpdatedLayerJson(afterParsedRadius).config.visConfig.radius,
+    25,
+    'parsed-format radius change should update radius'
+  );
+
   t.end();
 });
 
@@ -6866,6 +7888,39 @@ test('#VisStateUpdater -> updateEffect', t => {
   nextState = reducer(nextState, VisStateActions.updateEffect('e_2', {id: 'e_3'}));
   cmpEffects(t, {...expectedEffect, id: 'e_2'}, nextState.effects[0], {id: true});
   t.equal(nextState.effectOrder[2], 'e_2', "Effect id shouldn't be updated");
+
+  t.end();
+});
+
+test('#VisStateUpdater -> updateEffect: skip no-op timestamp', t => {
+  const initialState = InitialState.visState;
+  let nextState = reducer(
+    initialState,
+    VisStateActions.addEffect({id: 'e_shadow', type: LIGHT_AND_SHADOW_EFFECT.type})
+  );
+  const shadow = nextState.effects.find(e => e.id === 'e_shadow');
+  const timestamp = shadow.parameters.timestamp;
+
+  const afterSameTimestamp = reducer(
+    nextState,
+    VisStateActions.updateEffect('e_shadow', {parameters: {timestamp}})
+  );
+  t.equal(
+    afterSameTimestamp,
+    nextState,
+    'timestamp-only no-op should return the same visState reference'
+  );
+
+  const afterNewTimestamp = reducer(
+    nextState,
+    VisStateActions.updateEffect('e_shadow', {parameters: {timestamp: timestamp + 60000}})
+  );
+  t.notEqual(afterNewTimestamp, nextState, 'a new timestamp should still produce a new visState');
+  t.equal(
+    afterNewTimestamp.effects.find(e => e.id === 'e_shadow').parameters.timestamp,
+    timestamp + 60000,
+    'timestamp should update when the value actually changes'
+  );
 
   t.end();
 });
@@ -7205,6 +8260,672 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom palette - select new ste
     expectedVisConfigColorRange,
     'should set predefined palette in visConfig.colorRange when one deletes a color item from Custom Palette and select new steps'
   );
+
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset', async t => {
+  drainTasksForTesting();
+  const initialData = processCsvData('lat,lng\n1,2\n3,4');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'remote-1', type: DatasetType.EXTERNALLY_HOSTED, label: 'quakes.csv'},
+    data: initialData,
+    metadata: {source: 'https://example.com/quakes.csv', sourceFormat: 'csv'}
+  });
+
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets
+  };
+
+  t.equal(state.datasets['remote-1'].dataContainer.numRows(), 2, 'starts with 2 rows');
+
+  const loadingState = reducer(state, VisStateActions.refreshDataset('remote-1'));
+  t.equal(
+    loadingState.datasets['remote-1'].metadata.refreshStatus,
+    'loading',
+    'should mark the dataset as loading'
+  );
+
+  const skipped = reducer(loadingState, VisStateActions.refreshDataset('remote-1'));
+  t.equal(skipped, loadingState, 'should ignore a second refresh while loading');
+
+  const [task, ...more] = drainTasksForTesting();
+  t.equal(more.length, 0, 'should create one refresh task');
+  t.equal(task.type, 'REFRESH_EXTERNALLY_HOSTED_DATASET_TASK', 'should fetch the remote file');
+
+  const refreshed = processCsvData('lat,lng\n10,20\n30,40\n50,60');
+
+  const successState = reducer(
+    loadingState,
+    succeedTaskInTest(task, {
+      data: refreshed,
+      notModified: false,
+      etag: '"v2"',
+      lastModified: 'Wed, 21 Oct 2015 07:28:00 GMT',
+      size: 32
+    })
+  );
+
+  t.equal(successState.datasets['remote-1'].dataContainer.numRows(), 3, 'should replace rows');
+  t.equal(successState.datasets['remote-1'].metadata.refreshStatus, 'idle', 'should clear loading');
+  t.equal(successState.datasets['remote-1'].metadata.etag, '"v2"', 'should store etag');
+  t.equal(
+    successState.datasets['remote-1'].metadata.lastModified,
+    'Wed, 21 Oct 2015 07:28:00 GMT',
+    'should store Last-Modified'
+  );
+  t.ok(successState.datasets['remote-1'].metadata.lastFetchedAt, 'should record lastFetchedAt');
+  t.equal(
+    successState.datasets['remote-1'].metadata.refreshProgress,
+    undefined,
+    'should clear refresh progress'
+  );
+
+  const loadingAgain = reducer(successState, VisStateActions.refreshDataset('remote-1'));
+  const [taskAgain] = drainTasksForTesting();
+  const clearedValidators = reducer(
+    loadingAgain,
+    succeedTaskInTest(taskAgain, {
+      data: processCsvData('lat,lng\n7,8'),
+      notModified: false
+    })
+  );
+  t.equal(
+    clearedValidators.datasets['remote-1'].metadata.etag,
+    undefined,
+    'a 200 without ETag should drop the previous validator'
+  );
+  t.equal(
+    clearedValidators.datasets['remote-1'].metadata.lastModified,
+    undefined,
+    'a 200 without Last-Modified should drop the previous validator'
+  );
+
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset rebuilds point layer positions', async t => {
+  drainTasksForTesting();
+  const initialData = processCsvData('lat,lng\n37.77,-122.42');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'remote-1', type: DatasetType.EXTERNALLY_HOSTED, label: 'live.csv'},
+    data: initialData,
+    metadata: {source: 'https://example.com/live.csv', sourceFormat: 'csv'}
+  });
+  const {props} = PointLayer.findDefaultLayerProps(datasets['remote-1']);
+  const pointLayer = new PointLayer({
+    id: 'p1',
+    dataId: 'remote-1',
+    isVisible: true,
+    ...props[0]
+  });
+  const stateWithLayer = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [pointLayer],
+    layerData: [{}]
+  };
+  const {layerData: initialLayerData, layer} = calculateLayerData(
+    pointLayer,
+    stateWithLayer,
+    undefined
+  );
+  const state = {
+    ...stateWithLayer,
+    layers: [layer],
+    layerData: [initialLayerData]
+  };
+
+  t.ok(initialLayerData.data?.[0]?.position, 'should format an initial point');
+  const firstPos = initialLayerData.data[0].position.slice();
+
+  const loadingState = reducer(state, VisStateActions.refreshDataset('remote-1'));
+  const progressed = reducer(loadingState, VisStateActions.refreshDatasetProgress('remote-1', 50));
+  t.notEqual(
+    progressed.datasets['remote-1'],
+    loadingState.datasets['remote-1'],
+    'progress should copy the table'
+  );
+
+  const [task] = drainTasksForTesting();
+  const refreshed = processCsvData('lat,lng\n10,20');
+  t.equal(
+    progressed.datasets['remote-1'].dataContainer.numRows(),
+    1,
+    'progress must not apply the snapshot'
+  );
+
+  const successState = reducer(
+    progressed,
+    succeedTaskInTest(task, {
+      data: refreshed,
+      notModified: false,
+      etag: '"v2"'
+    })
+  );
+
+  const nextPos = successState.layerData[0].data[0].position;
+  t.notDeepEqual(nextPos, firstPos, 'should rebuild point positions after refresh');
+  t.deepEqual(nextPos.slice(0, 2), [20, 10], 'should use the new lng/lat');
+
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset rebinds or drops layers when field names change', async t => {
+  drainTasksForTesting();
+  const initialData = processCsvData('lat,lng\n37.77,-122.42');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'remote-1', type: DatasetType.EXTERNALLY_HOSTED, label: 'live.csv'},
+    data: initialData,
+    metadata: {source: 'https://example.com/live.csv', sourceFormat: 'csv'}
+  });
+  const {props} = PointLayer.findDefaultLayerProps(datasets['remote-1']);
+  const pointLayer = new PointLayer({
+    id: 'p1',
+    dataId: 'remote-1',
+    isVisible: true,
+    ...props[0]
+  });
+  const {layerData, layer} = calculateLayerData(
+    pointLayer,
+    {...INITIAL_VIS_STATE, datasets, layers: [pointLayer], layerData: [{}]},
+    undefined
+  );
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layerData],
+    layerOrder: [layer.id]
+  };
+
+  const loadingCompatible = reducer(state, VisStateActions.refreshDataset('remote-1'));
+  const [compatibleTask] = drainTasksForTesting();
+  const withExtraColumn = processCsvData('lat,lng,value\n10,20,3');
+  const kept = reducer(
+    loadingCompatible,
+    succeedTaskInTest(compatibleTask, {data: withExtraColumn, notModified: false})
+  );
+  t.equal(kept.layers.length, 1, 'should keep the point layer when lat/lng still exist');
+  t.equal(kept.layers[0].id, 'p1', 'should keep the same layer id');
+  t.equal(kept.datasets['remote-1'].fields.length, 3, 'should load the extra column');
+
+  const loadingIncompatible = reducer(kept, VisStateActions.refreshDataset('remote-1'));
+  const [incompatibleTask] = drainTasksForTesting();
+  const renamed = processCsvData('foo,bar\n1,2');
+  const dropped = reducer(
+    loadingIncompatible,
+    succeedTaskInTest(incompatibleTask, {data: renamed, notModified: false})
+  );
+  t.equal(dropped.layers.length, 0, 'should drop the point layer when lat/lng are gone');
+  t.deepEqual(dropped.layerOrder, [], 'should remove the layer from layerOrder');
+  t.equal(dropped.datasets['remote-1'].fields[0].name, 'foo', 'should still apply the snapshot');
+
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDatasetProgress', async t => {
+  drainTasksForTesting();
+  const initialData = processCsvData('lat,lng\n1,2');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'remote-1', type: DatasetType.EXTERNALLY_HOSTED, label: 'quakes.csv'},
+    data: initialData,
+    metadata: {source: 'https://example.com/quakes.csv', sourceFormat: 'csv'}
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+  const loadingState = reducer(state, VisStateActions.refreshDataset('remote-1'));
+  drainTasksForTesting();
+
+  const progressed = reducer(loadingState, VisStateActions.refreshDatasetProgress('remote-1', 42));
+  t.equal(
+    progressed.datasets['remote-1'].metadata.refreshProgress,
+    42,
+    'should store download percent'
+  );
+
+  const same = reducer(progressed, VisStateActions.refreshDatasetProgress('remote-1', 42));
+  t.equal(same, progressed, 'should skip redundant progress updates');
+
+  const idle = reducer(state, VisStateActions.refreshDatasetProgress('remote-1', 50));
+  t.equal(idle, state, 'should ignore progress when not loading');
+
+  t.end();
+});
+
+test('VisStateUpdater -> hydrate remote dataset loading progress', t => {
+  drainTasksForTesting();
+  const proto = {
+    info: {id: 'remote-1', type: DatasetType.EXTERNALLY_HOSTED, label: 'quakes.csv'},
+    data: {fields: [], rows: []},
+    metadata: {source: 'https://example.com/quakes.csv', sourceFormat: 'csv'}
+  };
+
+  const loadingState = reducer(INITIAL_VIS_STATE, VisStateActions.updateVisData([proto]));
+  t.equal(loadingState.loadingIndicatorValue, 1, 'should show the map loading indicator');
+  t.equal(loadingState.loadingProgress['remote-1'], 0, 'should seed hydrate progress');
+
+  const progressed = reducer(loadingState, VisStateActions.setLoadingProgress('remote-1', 42));
+  t.equal(progressed.loadingProgress['remote-1'], 42, 'should store download percent');
+
+  const same = reducer(progressed, VisStateActions.setLoadingProgress('remote-1', 42));
+  t.equal(same, progressed, 'should skip redundant progress updates');
+
+  const idle = reducer(INITIAL_VIS_STATE, VisStateActions.setLoadingProgress('remote-1', 50));
+  t.equal(idle, INITIAL_VIS_STATE, 'should ignore progress when nothing is loading');
+
+  const [task] = drainTasksForTesting();
+  t.ok(task, 'should schedule a hydrate/create task');
+
+  const cleared = reducer(progressed, VisStateActions.setLoadingIndicator({change: -1}));
+  t.equal(cleared.loadingIndicatorValue, 0, 'should hide the loading indicator');
+  t.deepEqual(cleared.loadingProgress, {}, 'should clear hydrate progress');
+
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset 304 and error', async t => {
+  drainTasksForTesting();
+  const initialData = processCsvData('lat,lng\n1,2');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'remote-1', type: DatasetType.EXTERNALLY_HOSTED, label: 'quakes.csv'},
+    data: initialData,
+    metadata: {source: 'https://example.com/quakes.csv'}
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+
+  const loadingState = reducer(state, VisStateActions.refreshDataset('remote-1'));
+  const [task] = drainTasksForTesting();
+
+  const notModified = reducer(
+    loadingState,
+    succeedTaskInTest(task, {data: null, notModified: true, etag: '"same"'})
+  );
+  t.equal(notModified.datasets['remote-1'].dataContainer.numRows(), 1, '304 keeps existing rows');
+  t.equal(notModified.datasets['remote-1'].metadata.refreshStatus, 'idle');
+  t.equal(notModified.datasets['remote-1'].metadata.etag, '"same"');
+
+  const loadingAgain = reducer(notModified, VisStateActions.refreshDataset('remote-1'));
+  const [errorTask] = drainTasksForTesting();
+  const failed = reducer(loadingAgain, errorTaskInTest(errorTask, new Error('network down')));
+  t.equal(failed.datasets['remote-1'].metadata.refreshStatus, 'error');
+  t.ok(
+    String(failed.datasets['remote-1'].metadata.refreshError).includes('network down'),
+    'should store the error message'
+  );
+  t.equal(failed.datasets['remote-1'].dataContainer.numRows(), 1, 'error keeps existing rows');
+  drainTasksForTesting();
+
+  const ignored = reducer(state, VisStateActions.refreshDataset('missing'));
+  t.equal(ignored, state, 'unknown dataset is a no-op');
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset appends rows and keeps layers', async t => {
+  const initialData = processCsvData('lat,lng\n37.77,-122.42');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const {props} = PointLayer.findDefaultLayerProps(datasets['live']);
+  const pointLayer = new PointLayer({
+    id: 'p1',
+    dataId: 'live',
+    isVisible: true,
+    ...props[0]
+  });
+  const {layerData, layer} = calculateLayerData(
+    pointLayer,
+    {...INITIAL_VIS_STATE, datasets, layers: [pointLayer], layerData: [{}]},
+    undefined
+  );
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layerData],
+    layerOrder: [layer.id]
+  };
+
+  const revisionBefore = state.datasets.live.dataRevision;
+  const appended = reducer(
+    state,
+    VisStateActions.addToDataset('live', [
+      [10, 20],
+      [30, 40]
+    ])
+  );
+
+  t.equal(appended.datasets.live.dataContainer.numRows(), 3, 'should append both rows');
+  t.deepEqual(appended.datasets.live.allIndexes, [0, 1, 2], 'should extend allIndexes');
+  t.notEqual(appended.datasets.live.dataRevision, revisionBefore, 'should bump dataRevision');
+  t.notEqual(appended.datasets.live, state.datasets.live, 'should copy the table for Redux');
+  t.equal(appended.layers.length, 1, 'should not create extra layers');
+  t.equal(appended.layers[0].id, 'p1', 'should keep the same layer id');
+  t.equal(appended.layerOrder[0], 'p1', 'should keep layerOrder');
+  t.equal(appended.layerData[0].data.length, 3, 'should rebuild layer data for the new rows');
+  t.deepEqual(
+    appended.layerData[0].data[1].position.slice(0, 2),
+    [20, 10],
+    'should plot the first appended point'
+  );
+
+  const asObjects = reducer(appended, VisStateActions.addToDataset('live', {lat: 11, lng: 22}));
+  t.equal(asObjects.datasets.live.dataContainer.numRows(), 4, 'should append a field-name record');
+  t.equal(asObjects.datasets.live.dataContainer.valueAt(3, 0), 11, 'should map lat by field name');
+  t.equal(asObjects.layers[0].id, 'p1', 'object rows should not restyle layers');
+
+  const missingKeys = reducer(asObjects, VisStateActions.addToDataset('live', {lat: 99}));
+  t.equal(
+    missingKeys.datasets.live.dataContainer.numRows(),
+    5,
+    'should accept a partial object row'
+  );
+  t.equal(
+    missingKeys.datasets.live.dataContainer.valueAt(4, 1),
+    null,
+    'missing object keys should become null'
+  );
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset object rows ignore prototype keys', async t => {
+  const initialData = processCsvData('lat,lng\n1,2');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+
+  const inheritedLng = Object.assign(Object.create({lng: 999}), {lat: 50});
+  const missing = reducer(state, VisStateActions.addToDataset('live', inheritedLng));
+  t.equal(missing.datasets.live.dataContainer.numRows(), 2, 'should append the object row');
+  t.equal(missing.datasets.live.dataContainer.valueAt(1, 0), 50, 'own lat should be copied');
+  t.equal(
+    missing.datasets.live.dataContainer.valueAt(1, 1),
+    null,
+    'inherited lng should become null'
+  );
+
+  const own = reducer(missing, VisStateActions.addToDataset('live', {lat: 7, lng: 8}));
+  t.equal(own.datasets.live.dataContainer.valueAt(2, 1), 8, 'own lng should still be copied');
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset no-ops', async t => {
+  const initialData = processCsvData('lat,lng\n1,2');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+
+  t.equal(
+    reducer(state, VisStateActions.addToDataset('missing', [1, 2])),
+    state,
+    'unknown dataset is a no-op'
+  );
+  t.equal(
+    reducer(state, VisStateActions.addToDataset('live', [1])),
+    state,
+    'wrong column count is a no-op'
+  );
+  t.equal(
+    reducer(state, VisStateActions.addToDataset('live', [])),
+    state,
+    'empty row list is a no-op'
+  );
+
+  datasets.live.dataContainer.append = undefined;
+  const warn = sinon.stub(console, 'warn');
+  t.equal(
+    reducer(state, VisStateActions.addToDataset('live', [3, 4])),
+    state,
+    'tables without append (Arrow/DuckDB) are a no-op'
+  );
+  t.ok(warn.called, 'should warn that in-place row edits are not implemented for Arrow/DuckDB');
+  warn.restore();
+  t.equal(state.datasets.live.dataContainer.numRows(), 1, 'no-op must not mutate rows');
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset reapplies filters', async t => {
+  const initialData = processCsvData('lat,lng,value\n37.77,-122.42,10\n37.78,-122.43,20');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const withFilter = reducer({...INITIAL_VIS_STATE, datasets}, VisStateActions.addFilter('live'));
+  const named = reducer(withFilter, VisStateActions.setFilter(0, 'name', 'value'));
+  const filtered = reducer(named, VisStateActions.setFilter(0, 'value', [0, 15]));
+
+  t.deepEqual(
+    filtered.datasets.live.filteredIndexForDomain,
+    [0],
+    'range filter should hide the out-of-range seed row'
+  );
+
+  const appended = reducer(
+    filtered,
+    VisStateActions.addToDataset('live', [
+      [37.79, -122.44, 12],
+      [37.8, -122.45, 99]
+    ])
+  );
+
+  t.equal(
+    appended.datasets.live.dataContainer.numRows(),
+    4,
+    'should still store both appended rows'
+  );
+  t.deepEqual(
+    appended.datasets.live.filteredIndexForDomain,
+    [0, 2],
+    'should keep in-range rows and hide the out-of-range append'
+  );
+  t.equal(appended.filters.length, 1, 'should keep the existing filter');
+
+  t.end();
+});
+
+test('VisStateUpdater -> removeFromDataset deletes rows and keeps layers', async t => {
+  const initialData = processCsvData('lat,lng\n1,2\n3,4\n5,6\n7,8');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const {props} = PointLayer.findDefaultLayerProps(datasets['live']);
+  const pointLayer = new PointLayer({
+    id: 'p1',
+    dataId: 'live',
+    isVisible: true,
+    ...props[0]
+  });
+  const {layerData, layer} = calculateLayerData(
+    pointLayer,
+    {...INITIAL_VIS_STATE, datasets, layers: [pointLayer], layerData: [{}]},
+    undefined
+  );
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layerData],
+    layerOrder: [layer.id]
+  };
+
+  const removed = reducer(state, VisStateActions.removeFromDataset('live', [0, 2]));
+  t.equal(removed.datasets.live.dataContainer.numRows(), 2, 'should drop both indexes');
+  t.deepEqual(removed.datasets.live.allIndexes, [0, 1], 'should rebuild contiguous indexes');
+  t.equal(removed.datasets.live.dataContainer.valueAt(0, 0), 3, 'should keep the former row 1');
+  t.equal(removed.datasets.live.dataContainer.valueAt(1, 0), 7, 'should keep the former row 3');
+  t.equal(removed.layers.length, 1, 'should not create extra layers');
+  t.equal(removed.layers[0].id, 'p1', 'should keep the same layer id');
+  t.equal(removed.layerData[0].data.length, 2, 'should rebuild layer data');
+
+  const oneIndex = reducer(removed, VisStateActions.removeFromDataset('live', 0));
+  t.equal(oneIndex.datasets.live.dataContainer.numRows(), 1, 'should accept a single index');
+  t.equal(
+    oneIndex.datasets.live.dataContainer.valueAt(0, 0),
+    7,
+    'should keep the last remaining row'
+  );
+
+  t.equal(
+    reducer(oneIndex, VisStateActions.removeFromDataset('missing', 0)),
+    oneIndex,
+    'unknown dataset is a no-op'
+  );
+  t.equal(
+    reducer(oneIndex, VisStateActions.removeFromDataset('live', 99)),
+    oneIndex,
+    'out-of-range index is a no-op'
+  );
+
+  oneIndex.datasets.live.dataContainer.remove = undefined;
+  const warn = sinon.stub(console, 'warn');
+  t.equal(
+    reducer(oneIndex, VisStateActions.removeFromDataset('live', 0)),
+    oneIndex,
+    'tables without remove (Arrow/DuckDB) are a no-op'
+  );
+  t.ok(warn.called, 'should warn that in-place deletes are not implemented for Arrow/DuckDB');
+  warn.restore();
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset rebuilds timestamp mappedValue', async t => {
+  const initialData = processCsvData(
+    'lat,lng,ts\n37.77,-122.42,2016-09-17 00:09:55\n37.78,-122.43,2016-09-17 00:10:55'
+  );
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const withFilter = reducer({...INITIAL_VIS_STATE, datasets}, VisStateActions.addFilter('live'));
+  const filtered = reducer(withFilter, VisStateActions.setFilter(0, 'name', 'ts'));
+  const tsField = filtered.datasets.live.fields.find(f => f.name === 'ts');
+  t.equal(
+    tsField.filterProps.mappedValue.length,
+    2,
+    'time filter should cache mappedValue per row'
+  );
+
+  const appended = reducer(
+    filtered,
+    VisStateActions.addToDataset('live', [37.79, -122.44, '2016-09-17 00:11:55'])
+  );
+  const nextTs = appended.datasets.live.fields.find(f => f.name === 'ts');
+  t.equal(
+    nextTs.filterProps.mappedValue.length,
+    3,
+    'mappedValue should cover the appended timestamp row'
+  );
+  t.ok(
+    nextTs.filterProps.mappedValue[2] > nextTs.filterProps.mappedValue[1],
+    'appended timestamp should parse into mappedValue'
+  );
+
+  const removed = reducer(appended, VisStateActions.removeFromDataset('live', 0));
+  const afterRemove = removed.datasets.live.fields.find(f => f.name === 'ts');
+  t.equal(
+    afterRemove.filterProps.mappedValue.length,
+    2,
+    'mappedValue should shrink after a row is removed'
+  );
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset upserts by key', async t => {
+  const initialData = processCsvData('id,lat,lng\na,1,2\nb,3,4');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+
+  const upserted = reducer(
+    state,
+    VisStateActions.addToDataset(
+      'live',
+      [
+        {id: 'b', lat: 30, lng: 40},
+        {id: 'c', lat: 5, lng: 6},
+        {id: 'b', lat: 33, lng: 44}
+      ],
+      {upsertBy: 'id'}
+    )
+  );
+
+  t.equal(upserted.datasets.live.dataContainer.numRows(), 3, 'should append only the new key');
+  t.equal(upserted.datasets.live.dataContainer.valueAt(0, 0), 'a', 'should keep unmatched rows');
+  t.equal(
+    upserted.datasets.live.dataContainer.valueAt(1, 1),
+    33,
+    'should replace the matching key with the last incoming row'
+  );
+  t.equal(upserted.datasets.live.dataContainer.valueAt(2, 0), 'c', 'should append the new key');
+  t.equal(upserted.layers.length, 0, 'upsert should not create layers');
+
+  t.end();
+});
+
+test('VisStateUpdater -> removeFromDataset by field values', async t => {
+  const initialData = processCsvData('id,lat,lng\na,1,2\nb,3,4\nc,5,6\nb,7,8');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const state = {...INITIAL_VIS_STATE, datasets};
+
+  const removed = reducer(
+    state,
+    VisStateActions.removeFromDataset('live', {field: 'id', values: ['b', 'missing']})
+  );
+  t.equal(removed.datasets.live.dataContainer.numRows(), 2, 'should drop every row with that id');
+  t.equal(removed.datasets.live.dataContainer.valueAt(0, 0), 'a', 'should keep unmatched ids');
+  t.equal(
+    removed.datasets.live.dataContainer.valueAt(1, 0),
+    'c',
+    'should keep later unmatched ids'
+  );
+
+  const none = reducer(
+    removed,
+    VisStateActions.removeFromDataset('live', {field: 'id', values: 'zzz'})
+  );
+  t.equal(none, removed, 'unknown values are a no-op');
+
+  t.end();
+});
+
+test('VisStateUpdater -> addToDataset and removeFromDataset clear table sort', async t => {
+  const initialData = processCsvData('lat,lng\n1,2\n3,4\n5,6');
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'live', label: 'live.csv'},
+    data: initialData
+  });
+  const unsorted = {...INITIAL_VIS_STATE, datasets};
+  const sorted = reducer(unsorted, VisStateActions.sortTableColumn('live', 'lat'));
+  t.ok(sorted.datasets.live.sortOrder, 'should have a sort permutation before mutate');
+  t.ok(sorted.datasets.live.sortColumn, 'should have sortColumn before mutate');
+
+  const appended = reducer(sorted, VisStateActions.addToDataset('live', [7, 8]));
+  t.equal(appended.datasets.live.sortOrder, null, 'append should drop sortOrder');
+  t.equal(appended.datasets.live.sortColumn, undefined, 'append should drop sortColumn');
+
+  const sortedAgain = reducer(appended, VisStateActions.sortTableColumn('live', 'lat'));
+  t.ok(sortedAgain.datasets.live.sortOrder, 'should be able to sort again after append');
+
+  const removed = reducer(sortedAgain, VisStateActions.removeFromDataset('live', 0));
+  t.equal(removed.datasets.live.sortOrder, null, 'remove should drop sortOrder');
+  t.equal(removed.datasets.live.sortColumn, undefined, 'remove should drop sortColumn');
 
   t.end();
 });

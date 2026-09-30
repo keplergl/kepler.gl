@@ -5,7 +5,7 @@ import * as arrow from 'apache-arrow';
 import {point as turfPoint} from '@turf/helpers';
 import {booleanWithin} from '@turf/boolean-within';
 import {Feature, Polygon} from 'geojson';
-import uniq from 'lodash/uniq';
+import uniq from 'es-toolkit/compat/uniq';
 import {DATA_TYPES} from 'type-analyzer';
 import Layer, {
   colorMaker,
@@ -13,10 +13,12 @@ import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
   LayerColorConfig,
+  LayerElevationOffsetConfig,
   LayerHeightConfig,
   LayerRadiusConfig,
   LayerSizeConfig,
-  LayerStrokeColorConfig
+  LayerStrokeColorConfig,
+  UpdateTriggers
 } from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer, GeoJsonLayerProps} from '@deck.gl/layers';
 import {
@@ -26,7 +28,8 @@ import {
   detectTableColumns,
   COLUMN_MODE_GEOJSON,
   applyFiltersToTableColumns,
-  fieldIsGeoArrow
+  fieldIsGeoArrow,
+  featureToHoverOutline
 } from './geojson-utils';
 import {
   getGeojsonLayerMetaFromArrow,
@@ -56,7 +59,7 @@ import {
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
-import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
+import {FilterArrowExtension, OffsetSolidPolygonLayer} from '@kepler.gl/deckgl-layers';
 import GeojsonInfoModalFactory from './geojson-info-modal';
 
 const SUPPORTED_ANALYZER_TYPES = {
@@ -78,11 +81,14 @@ export const geojsonVisConfigs: {
   radiusRange: 'radiusRange';
   heightRange: 'elevationRange';
   elevationScale: VisConfigNumber;
+  elevationOffset: 'elevationOffset';
+  elevationOffsetRange: 'elevationOffsetRange';
   stroked: 'stroked';
   filled: 'filled';
   enable3d: 'enable3d';
   wireframe: 'wireframe';
   fixedHeight: 'fixedHeight';
+  fixedElevation: 'fixedElevation';
   allowHover: 'allowHover';
 } = {
   opacity: 'opacity',
@@ -106,14 +112,19 @@ export const geojsonVisConfigs: {
   heightRange: 'elevationRange',
   elevationScale: {
     ...LAYER_VIS_CONFIGS.elevationScale,
-    focusRange: [0, 1],
-    focusWeight: 0.3
+    focusRange: [0, 5],
+    defaultValue: 1,
+    focusWeight: 0.3,
+    step: 0.01
   },
+  elevationOffset: 'elevationOffset',
+  elevationOffsetRange: 'elevationOffsetRange',
   stroked: 'stroked',
   filled: 'filled',
   enable3d: 'enable3d',
   wireframe: 'wireframe',
   fixedHeight: 'fixedHeight',
+  fixedElevation: 'fixedElevation',
   allowHover: 'allowHover'
 };
 
@@ -130,7 +141,10 @@ export type GeoJsonVisConfigSettings = {
   radiusRange: VisConfigRange;
   heightRange: VisConfigRange;
   elevationScale: VisConfigNumber;
+  elevationOffset: VisConfigNumber;
+  elevationOffsetRange: VisConfigRange;
   fixedHeight: VisConfigBoolean;
+  fixedElevation: VisConfigBoolean;
   stroked: VisConfigBoolean;
   filled: VisConfigBoolean;
   enable3d: VisConfigBoolean;
@@ -155,11 +169,14 @@ export type GeoJsonLayerVisConfig = {
   radiusRange: [number, number];
   heightRange: [number, number];
   elevationScale: number;
+  elevationOffset: number;
+  elevationOffsetRange: [number, number];
   stroked: boolean;
   filled: boolean;
   enable3d: boolean;
   wireframe: boolean;
   fixedHeight: boolean;
+  fixedElevation: boolean;
   allowHover: boolean;
 };
 
@@ -167,6 +184,7 @@ type GeoJsonLayerVisualChannelConfig = LayerColorConfig &
   LayerStrokeColorConfig &
   LayerSizeConfig &
   LayerHeightConfig &
+  LayerElevationOffsetConfig &
   LayerRadiusConfig;
 export type GeoJsonLayerConfig = Merge<
   LayerBaseConfig,
@@ -185,7 +203,8 @@ type ObjectInfo = {
   index: number;
   object?: Feature | undefined;
   picked: boolean;
-  layer: Layer;
+  // deck.gl picking info; only `props.id` is read for hover matching
+  layer: {props: {id: string}};
   radius?: number;
   id?: string;
 };
@@ -201,8 +220,10 @@ const geoColumnAccessor =
   (dc: DataContainerInterface): arrow.Vector | null =>
     dc.getColumn?.(geojson.fieldIdx) as arrow.Vector;
 
-const getTableModeValueAccessor = feature => {
-  // Called from gpu-filter-utils.getFilterValueAccessor()
+const getTableModeValueAccessor = (dc, feature) => {
+  // Called from gpu-filter-utils.getFilterValueAccessor(), which passes
+  // (dataContainer, feature, fieldIndex). The feature carries its own
+  // materialised rows in properties.values, so the data container is not needed.
   return field => feature.properties.values.map(v => field.valueAccessor(v));
 };
 
@@ -223,8 +244,46 @@ const geoFieldAccessor =
 
 // access feature properties from geojson sub layer
 export const defaultElevation = 500;
+export const defaultElevationOffset = 0;
 export const defaultLineWidth = 1;
 export const defaultRadius = 1;
+
+function wrapElevationOffsetAccessor(
+  getElevationOffset?: ((d: any) => number) | number
+): ((object: any, info?: {index?: number}) => number) | number {
+  if (typeof getElevationOffset !== 'function') {
+    return getElevationOffset ?? defaultElevationOffset;
+  }
+  return (object, info) => {
+    if (object?.properties || Number.isFinite(object?.index)) {
+      return getElevationOffset(object);
+    }
+    return getElevationOffset({properties: {index: info?.index ?? 0}});
+  };
+}
+
+function readAccessorValue(
+  accessor: ((d: any) => number) | number | undefined,
+  d: any,
+  fallback = 0
+): number {
+  if (typeof accessor === 'function') {
+    return accessor(d) ?? fallback;
+  }
+  return accessor ?? fallback;
+}
+
+/** Place a text label at the polygon centroid, at the base (elevation offset). */
+export function getTextLabelPosition(
+  xy: number[] | null | undefined,
+  feature: {properties: {index: number}},
+  getElevationOffset: ((d: any) => number) | number | undefined
+): number[] {
+  const lng = xy?.[0] ?? 0;
+  const lat = xy?.[1] ?? 0;
+  const offset = readAccessorValue(wrapElevationOffsetAccessor(getElevationOffset), feature);
+  return offset ? [lng, lat, offset] : [lng, lat];
+}
 
 // don't use strokes by default for datasets with large number of polygons
 const DEFAULT_POLYGON_STROKE_LIMIT = 100000;
@@ -256,6 +315,9 @@ export default class GeoJsonLayer extends Layer {
   filteredIndex: Uint8ClampedArray | null = null;
   filteredIndexTrigger: number[] | null = null;
   centroids: Array<number[] | null> = [];
+  // Stable hover overlay data so deck.gl does not re-parse the feature every redraw.
+  _hoverOverlayIndex: number | null = null;
+  _hoverOverlayData: Feature[] | null = null;
 
   _layerInfoModal: {
     [COLUMN_MODE_TABLE]: () => React.JSX.Element;
@@ -373,6 +435,26 @@ export default class GeoJsonLayer extends Layer {
         nullValue: 0,
         getAttributeValue: () => d => d.properties.elevation || defaultElevation
       },
+      elevationOffset: {
+        property: 'elevationOffset',
+        field: 'elevationOffsetField',
+        scale: 'elevationOffsetScale',
+        domain: 'elevationOffsetDomain',
+        range: 'elevationOffsetRange',
+        key: 'elevationOffset',
+        fixed: 'fixedElevation',
+        channelScaleType: CHANNEL_SCALES.size,
+        accessor: 'getElevationOffset',
+        nullValue: 0,
+        defaultValue: config => config.visConfig.elevationOffset ?? defaultElevationOffset,
+        getAttributeValue: config => d => {
+          const fromProps = d?.properties?.elevationOffset;
+          if (Number.isFinite(fromProps)) {
+            return fromProps;
+          }
+          return config.visConfig.elevationOffset ?? defaultElevationOffset;
+        }
+      },
       radius: {
         property: 'radius',
         field: 'radiusField',
@@ -426,6 +508,11 @@ export default class GeoJsonLayer extends Layer {
       heightField: null,
       heightDomain: [0, 1],
       heightScale: 'linear',
+
+      // add elevation offset visual channel
+      elevationOffsetField: null,
+      elevationOffsetDomain: [0, 1],
+      elevationOffsetScale: 'linear',
 
       // add radius visual channel
       radiusField: null,
@@ -520,7 +607,7 @@ export default class GeoJsonLayer extends Layer {
       return {};
     }
     const {textLabel} = this.config;
-    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
+    const {gpuFilter, dataContainer, fields} = datasets[this.config.dataId];
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
 
     // Text labels are only supported in GEOJSON column mode where properties.index
@@ -547,7 +634,8 @@ export default class GeoJsonLayer extends Layer {
     let filterValueAccessor;
     let dataAccessor;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
-      filterValueAccessor = (dc, d, fieldIndex) => dc.valueAt(d.properties.index, fieldIndex);
+      filterValueAccessor = (dc, d, fieldIndex) =>
+        fields[fieldIndex].valueAccessor({index: d.properties.index});
       // For GEOJSON mode, properties.index is the row index in the data container
       dataAccessor = () => d => ({index: d.properties.index});
     } else {
@@ -577,10 +665,7 @@ export default class GeoJsonLayer extends Layer {
         indexAccessor,
         filterValueAccessor
       ),
-      textLabelFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
-        textLabelIndexAccessor,
-        (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex)
-      ),
+      textLabelFilterValue: gpuFilter.filterValueAccessor(dataContainer)(textLabelIndexAccessor),
       getFiltered: isFilteredAccessor,
       textLabelFiltered: textLabelFilteredAccessor,
       textLabels,
@@ -619,9 +704,33 @@ export default class GeoJsonLayer extends Layer {
       const geoField = geoFieldAccessor(this.config.columns)(dataContainer);
 
       // update the latest batch/chunk of geoarrow data when loading data incrementally
-      if (geoColumn && geoField && this.dataToFeature.length < dataContainer.numChunks()) {
-        // for incrementally loading data, we only load and render the latest batch; otherwise, we will load and render all batches
-        const isIncrementalLoad = dataContainer.numChunks() - this.dataToFeature.length === 1;
+      const processedRows = this.centroids.length;
+      const numRows = dataContainer.numRows();
+      const numChunks = dataContainer.numChunks();
+      // WKB (and other whole-column collections) keep dataToFeature.length at 1
+      // even when numChunks() is large. Row count is the progress signal then;
+      // comparing length to numChunks would re-parse WKB on every meta update.
+      const processedWholeColumn =
+        this.dataToFeature.length > 0 && processedRows > 0 && processedRows >= numRows;
+      // Progressive loads keep one dataToFeature entry per chunk, then compact
+      // the finished table to one chunk. Row count already matches, so without
+      // this check we would skip the rebuild and keep excess Deck layers.
+      const compactedAfterProgressiveLoad = this.dataToFeature.length > numChunks;
+      const needsUpdate =
+        this.dataToFeature.length === 0 ||
+        (!processedWholeColumn && this.dataToFeature.length < numChunks) ||
+        (processedRows > 0 && processedRows < numRows) ||
+        compactedAfterProgressiveLoad;
+
+      if (geoColumn && geoField && needsUpdate) {
+        // Incremental only when a new chunk appeared. Compacted tables stay at 1
+        // chunk while row count grows, so those updates reprocess the whole table.
+        const isIncrementalLoad =
+          this.dataToFeature.length > 0 &&
+          !processedWholeColumn &&
+          numChunks - this.dataToFeature.length === 1 &&
+          processedRows > 0 &&
+          processedRows < numRows;
         // TODO: add support for COLUMN_MODE_TABLE in getGeojsonLayerMetaFromArrow
         const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} =
           getGeojsonLayerMetaFromArrow({
@@ -630,9 +739,14 @@ export default class GeoJsonLayer extends Layer {
             geoField,
             ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
           });
-        if (centroids) this.centroids = this.centroids.concat(centroids);
+        if (isIncrementalLoad) {
+          if (centroids) this.centroids = this.centroids.concat(centroids);
+          this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
+        } else {
+          this.centroids = centroids || [];
+          this.dataToFeature = dataToFeature;
+        }
         this.updateMeta({bounds, fixedRadius, featureTypes});
-        this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
       }
     } else if (this.dataToFeature.length === 0 || this.config.columnMode === COLUMN_MODE_TABLE) {
       const getFeature = this.getPositionAccessor(dataContainer);
@@ -713,6 +827,67 @@ export default class GeoJsonLayer extends Layer {
       : super.hasHoveredObject(objectInfo);
   }
 
+  /**
+   * Memoized hover overlay features. Rebuilding `data: [hoveredObject]` on every
+   * pan/zoom frame makes deck.gl re-convert (and tessellate) huge polygons.
+   */
+  _getHoverOverlayData(objectInfo: ObjectInfo | null | undefined): Feature[] | null {
+    if (!objectInfo || !this.isLayerHovered(objectInfo)) {
+      this._hoverOverlayIndex = null;
+      this._hoverOverlayData = null;
+      return null;
+    }
+
+    const {index} = objectInfo;
+    if (Number.isFinite(index) && this._hoverOverlayData && this._hoverOverlayIndex === index) {
+      return this._hoverOverlayData;
+    }
+
+    const hoveredObject = this.hasHoveredObject(objectInfo);
+    if (!hoveredObject) {
+      this._hoverOverlayIndex = null;
+      this._hoverOverlayData = null;
+      return null;
+    }
+
+    this._hoverOverlayIndex = index;
+    this._hoverOverlayData = [featureToHoverOutline(hoveredObject)];
+    return this._hoverOverlayData;
+  }
+
+  isElevationOffsetActive(): boolean {
+    return Boolean(this.config.elevationOffsetField || this.config.visConfig.elevationOffset > 0);
+  }
+
+  isExtruded(): boolean {
+    return Boolean(this.config.visConfig.enable3d || this.isElevationOffsetActive());
+  }
+
+  getDefaultDeckLayerProps(opts: Parameters<Layer['getDefaultDeckLayerProps']>[0]) {
+    const props = super.getDefaultDeckLayerProps(opts);
+    if (!this.isElevationOffsetActive()) {
+      return props;
+    }
+    return {
+      ...props,
+      parameters: {
+        ...props.parameters,
+        depthMask: true
+      }
+    };
+  }
+
+  getVisualChannelUpdateTriggers() {
+    const triggers = super.getVisualChannelUpdateTriggers();
+    if (triggers.getElevation) {
+      triggers.getElevation = {
+        ...triggers.getElevation,
+        enable3d: this.config.visConfig.enable3d
+      };
+    }
+    return triggers;
+  }
+
   getElevationZoomFactor({zoom, zoomOffset = 0}) {
     return this.config.visConfig.fixedHeight ? 1 : Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }
@@ -726,6 +901,8 @@ export default class GeoJsonLayer extends Layer {
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
 
     const {visConfig} = this.config;
+    const offsetActive = this.isElevationOffsetActive();
+    const extruded = this.isExtruded();
 
     const layerProps = {
       lineWidthScale: visConfig.thickness * zoomFactor * 8,
@@ -738,15 +915,17 @@ export default class GeoJsonLayer extends Layer {
       ...this.getVisualChannelUpdateTriggers(),
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger
-    };
+    } as UpdateTriggers;
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const opaOverwrite = {
       opacity: visConfig.strokeOpacity
     };
 
-    const pickable = interactionConfig.tooltip.enabled && visConfig.allowHover;
-    const hoveredObject = this.hasHoveredObject(objectHovered);
+    const pickable =
+      (interactionConfig.tooltip.enabled && visConfig.allowHover) ||
+      Boolean(opts.experimentalContext?.isAnnotationMode && extruded);
+    const hoverOverlayData = extruded ? null : this._getHoverOverlayData(objectHovered);
 
     const {data, ...props} = dataProps;
 
@@ -769,18 +948,29 @@ export default class GeoJsonLayer extends Layer {
         id: deckLayerData.length > 1 ? `${this.id}-${i}` : this.id,
         pickable,
         highlightColor: HIGHLIGH_COLOR_3D,
-        autoHighlight: visConfig.enable3d && pickable,
-        stroked: visConfig.stroked,
+        autoHighlight: extruded && pickable,
+        stroked: visConfig.stroked && !offsetActive,
         filled: visConfig.filled,
-        extruded: visConfig.enable3d,
+        extruded,
         wireframe: visConfig.wireframe,
         wrapLongitude: false,
         lineMiterLimit: 2,
         capRounded: true,
         jointRounded: true,
+        getElevation: offsetActive && !visConfig.enable3d ? 0 : props.getElevation,
         updateTriggers,
         extensions: [...defaultLayerProps.extensions, new FilterArrowExtension()],
         _subLayerProps: {
+          'polygons-fill': {
+            type: OffsetSolidPolygonLayer,
+            getElevationOffset: wrapElevationOffsetAccessor(props.getElevationOffset),
+            getElevation: offsetActive && !visConfig.enable3d ? 0 : props.getElevation,
+            updateTriggers: {
+              ...updateTriggers,
+              getElevationOffset: updateTriggers.getElevationOffset,
+              getElevation: updateTriggers.getElevation
+            }
+          },
           ...(featureTypes?.polygon ? {'polygons-stroke': opaOverwrite} : {}),
           ...(featureTypes?.line ? {linestrings: opaOverwrite} : {}),
           ...(featureTypes?.point
@@ -797,14 +987,14 @@ export default class GeoJsonLayer extends Layer {
     return [
       ...deckLayers,
       // hover layer
-      ...(hoveredObject && !visConfig.enable3d
+      ...(hoverOverlayData
         ? [
             new DeckGLGeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
               visible: defaultLayerProps.visible,
               wrapLongitude: false,
-              data: [hoveredObject] as Feature[],
+              data: hoverOverlayData,
               getLineWidth: props.getLineWidth,
               getPointRadius: props.getPointRadius,
               getElevation: props.getElevation,
@@ -820,10 +1010,18 @@ export default class GeoJsonLayer extends Layer {
       ...(dataProps.textLabelData.length > 0
         ? this.renderTextLabelLayer(
             {
-              getPosition: dataProps.getPosition,
+              getPosition: d =>
+                getTextLabelPosition(
+                  dataProps.getPosition(d),
+                  {properties: {index: d.index}},
+                  props.getElevationOffset
+                ),
               sharedProps,
               getPixelOffset,
-              updateTriggers,
+              updateTriggers: {
+                ...updateTriggers,
+                getPosition: updateTriggers.getElevationOffset
+              },
               getFiltered: dataProps.textLabelFiltered
             },
             {

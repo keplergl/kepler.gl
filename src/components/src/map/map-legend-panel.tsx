@@ -21,7 +21,13 @@ import {useMergeRefs} from '@floating-ui/react';
 import {ActionHandler, setMapControlSettings, toggleSplitMapViewport} from '@kepler.gl/actions';
 import {Layer} from '@kepler.gl/layers';
 import {breakPointValues} from '@kepler.gl/styles';
-import {LayerVisConfig, LayerOrder, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
+import {
+  LayerVisConfig,
+  LayerOrder,
+  MapControlMapLegend,
+  MapControls,
+  MapState
+} from '@kepler.gl/types';
 import {hasPortableWidth} from '@kepler.gl/utils';
 import {MapLegendControlSettings} from '@kepler.gl/types';
 
@@ -35,6 +41,7 @@ import MapLegendFactory from './map-legend';
 import {restrictToWindowEdges} from '@dnd-kit/modifiers';
 
 const DRAG_RESIZE_ID = 'map-legend-resize';
+const DRAG_RESIZE_TOP_ID = 'map-legend-resize-top';
 const DRAG_MOVE_ID = 'map-legend-move';
 
 const StyledDraggableLegendContent = styled.div<{
@@ -59,12 +66,13 @@ const StyledDraggableLegendContent = styled.div<{
   }
   &:hover,
   &.is-dragging {
-    .legend-move-handle {
-      opacity: 1;
-      pointer-events: auto;
-    }
+    .legend-top-handles,
+    .legend-move-handle,
     .legend-resize-handle {
       opacity: 1;
+    }
+    .legend-move-handle,
+    .legend-resize-handle {
       pointer-events: auto;
     }
     border-color: ${props => props.theme.activeColor};
@@ -81,24 +89,46 @@ const StyledDraggableLegendContent = styled.div<{
   }
 `;
 
-const StyledMoveHandle = styled.div`
+const StyledTopHandles = styled.div`
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
   position: absolute;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   color: white;
   z-index: 2;
   top: 0;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 48px;
   height: 16px;
   border-radius: 4px;
-  cursor: move;
   background-color: ${props => props.theme.activeColor};
+`;
+
+const StyledMoveHandle = styled.div`
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 16px;
+  cursor: move;
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+`;
+
+const StyledTopResizeHandle = styled.div`
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 16px;
+  cursor: ns-resize;
+  color: #f7f8fa;
 `;
 
 const StyledResizeHandle = styled.div`
@@ -154,8 +184,10 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
   const {positionStyles, children, contentHeight, maxContentHeight} = props;
   const draggableMove = useDraggable({id: DRAG_MOVE_ID});
   const draggableResize = useDraggable({id: DRAG_RESIZE_ID});
+  const draggableResizeTop = useDraggable({id: DRAG_RESIZE_TOP_ID});
   const refs = useMergeRefs([draggableMove.setNodeRef, ref]);
-  const isDragging = draggableMove.isDragging || draggableResize.isDragging;
+  const isDragging =
+    draggableMove.isDragging || draggableResize.isDragging || draggableResizeTop.isDragging;
   return (
     <StyledDraggableLegendContent
       ref={refs}
@@ -167,12 +199,29 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
     >
       {children}
       {isDragging ? <div className="legend-input-block" /> : null}
-      <StyledMoveHandle className="legend-move-handle" {...draggableMove.listeners}>
-        <DraggableDots height="16px" />
-      </StyledMoveHandle>
+      <StyledTopHandles className="legend-top-handles">
+        <StyledTopResizeHandle
+          className="legend-resize-handle legend-resize-handle--top"
+          aria-label="Resize legend"
+          ref={draggableResizeTop.setNodeRef}
+          {...draggableResizeTop.attributes}
+          {...draggableResizeTop.listeners}
+        >
+          <HorizontalResizeHandle height="16px" />
+        </StyledTopResizeHandle>
+        <StyledMoveHandle
+          className="legend-move-handle"
+          aria-label="Move legend"
+          {...draggableMove.listeners}
+        >
+          <DraggableDots height="16px" />
+        </StyledMoveHandle>
+      </StyledTopHandles>
       <StyledResizeHandle
         className="legend-resize-handle"
+        aria-label="Resize legend"
         ref={draggableResize.setNodeRef}
+        {...draggableResize.attributes}
         {...draggableResize.listeners}
       >
         <HorizontalResizeHandle height="16px" />
@@ -219,6 +268,7 @@ const DraggableLegend = withTheme(
       event => {
         switch (event.active.id) {
           case DRAG_RESIZE_ID:
+          case DRAG_RESIZE_TOP_ID:
             startResize();
             break;
           default:
@@ -232,7 +282,10 @@ const DraggableLegend = withTheme(
       event => {
         switch (event.active.id) {
           case DRAG_RESIZE_ID:
-            resize(event.delta.y);
+            resize(event.delta.y, 'bottom');
+            break;
+          case DRAG_RESIZE_TOP_ID:
+            resize(event.delta.y, 'top');
             break;
         }
       },
@@ -322,6 +375,7 @@ export type MapLegendPanelProps = {
   mapState?: MapState;
   onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   onToggleLayerVisibility?: (layer: Layer) => void;
+  hideInvisibleLayers?: boolean;
   onToggleSplitMapViewport?: ActionHandler<typeof toggleSplitMapViewport>;
   isViewportUnsyncAllowed?: boolean;
   onClickControlBtn?: (e?: MouseEvent) => void;
@@ -360,6 +414,7 @@ const MapLegendPanelComponent = ({
   mapState,
   onLayerVisConfigChange,
   onToggleLayerVisibility,
+  hideInvisibleLayers,
   onToggleSplitMapViewport,
   onClickControlBtn,
   activeSidePanel,
@@ -423,6 +478,7 @@ const MapLegendPanelComponent = ({
         isExport={isExport}
         onLayerVisConfigChange={onLayerVisConfigChange}
         onToggleLayerVisibility={onToggleLayerVisibility}
+        hideInvisibleLayers={hideInvisibleLayers}
         isSplit={isSplit}
         splitMaps={splitMaps}
         onMapToggleLayer={onToggleLayerForMap}

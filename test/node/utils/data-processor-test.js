@@ -5,7 +5,7 @@ import test from 'tape';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 import {DATA_TYPES} from 'type-analyzer';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import testData, {
   dataWithNulls,
@@ -130,6 +130,31 @@ test('Processor -> getFieldsFromData', t => {
 
   fields.forEach((f, i) =>
     t.equal(f.type, expectedFieldTypes[i], `should find field type as ${expectedFieldTypes[i]}`)
+  );
+  t.end();
+});
+
+test('Processor -> getFieldsFromData BigInt columns', t => {
+  const data = [
+    {hexId: 610625465232654335n, total: 29436887n},
+    {hexId: 610625465081659391n, total: 40685227n}
+  ];
+
+  t.doesNotThrow(
+    () => getFieldsFromData(data, ['hexId', 'total']),
+    'should not throw when samples contain BigInt (type-analyzer isNaN)'
+  );
+
+  const fields = getFieldsFromData(data, ['hexId', 'total']);
+  t.notEqual(
+    fields[0].type,
+    ALL_FIELD_TYPES.h3,
+    'integer BigInt columns should not be typed as h3'
+  );
+  t.equal(
+    fields[1].type,
+    ALL_FIELD_TYPES.integer,
+    'int64 counts within safe range should stay integer'
   );
   t.end();
 });

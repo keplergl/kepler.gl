@@ -56,7 +56,8 @@ export type BaseMapLibraryConfig = {
  *
  * - `0` — log every action (no filtering)
  * - `1` — suppress the highest-frequency UI noise:
- *          MOUSE_MOVE, LAYER_HOVER, SET_MAP_BOUNDARY, SET_LOADING_INDICATOR
+ *          MOUSE_MOVE, LAYER_HOVER, SET_MAP_BOUNDARY, SET_LOADING_INDICATOR,
+ *          SET_LOADING_PROGRESS
  * - `2` — suppress everything in level 1 plus map/layer update chatter:
  *          LOAD_MAP_STYLES, UPDATE_MAP, LAYER_VISUAL_CHANGE,
  *          ON_MAP_CLICK, FILTER_CHANGE, MAP_LOAD_STARTED
@@ -75,6 +76,39 @@ export type BaseMapLibraryConfig = {
  * ```
  */
 export type ReduxLogLevel = 0 | 1 | 2;
+
+/** Built-in file formats that can be listed in {@link KeplerApplicationConfig.acceptedFileFormats}. */
+export type KeplerAcceptedFileFormat =
+  | 'csv'
+  | 'tsv'
+  | 'dsv'
+  | 'json'
+  | 'geojson'
+  | 'ndjson'
+  | 'jsonl'
+  | 'geojsonl'
+  | 'ndgeojson'
+  | 'ldgeojson'
+  | 'kml'
+  | 'gpx'
+  | 'tcx'
+  | 'arrow'
+  | 'feather'
+  | 'parquet'
+  | 'shp'
+  | 'shapefile'
+  | 'zip'
+  | 'dbf'
+  | 'shx'
+  | 'prj'
+  | 'cpg'
+  | 'xlsx'
+  | 'xls'
+  | 'xlsm'
+  | 'xlsb'
+  | 'excel'
+  | 'fgb'
+  | 'flatgeobuf';
 
 export type KeplerApplicationConfig = {
   /** Default name of export HTML file, can be overridden by user */
@@ -134,6 +168,17 @@ export type KeplerApplicationConfig = {
   // Bitmap layer config
   enableBitmapLayer?: boolean;
 
+  // A5 layer config
+  // A5 DGGS layer is optional. Disabled by default; enable via initApplicationConfig.
+  enableA5Layer?: boolean;
+
+  // GeoHash layer config
+  // GeoHash layer is optional. Enabled by default; disable via initApplicationConfig.
+  enableGeohashLayer?: boolean;
+
+  // Flow Field (streamlines) layer config
+  enableFlowFieldLayer?: boolean;
+
   /** Whether to show example URLs in tileset setup forms (vector tile, raster tile, WMS, 3D tile) */
   showInlineTilesetExamples?: boolean;
 
@@ -147,6 +192,13 @@ export type KeplerApplicationConfig = {
 
   /** Whether to enable the annotations feature. Enabled by default. */
   enableAnnotations?: boolean;
+
+  /**
+   * Whether to enable extended Draw on Map sketch tools: Point, Line, Copy all,
+   * Convert to Layer, and Edit Properties.
+   * Polygon and rectangle drawing remain available when this is disabled. Enabled by default.
+   */
+  enableDrawOnMapSketches?: boolean;
 
   /** Whether to show the map navigation control (zoom buttons and compass). Enabled by default. */
   enableMapNavigationControl?: boolean;
@@ -162,7 +214,81 @@ export type KeplerApplicationConfig = {
 
   /** Whether to enable the layer groups feature. Enabled by default. */
   enableLayerGroups?: boolean;
-  
+
+  /**
+   * Named UI themes to cycle (`dark`, `light`, `space`, `base`).
+   * Empty (default): dark theme, no switcher.
+   * One theme: that theme is used, no switcher.
+   * Two or more: first is the default, a map control cycles the list.
+   */
+  themes?: string[];
+
+  /** Whether to show column statistics in the data table modal. Enabled by default. */
+  enableColumnStats?: boolean;
+
+  /** Group-by, attribute join, and simple spatial join UI on local datasets. Enabled by default. */
+  enableDatasetOps?: boolean;
+
+  /**
+   * Whether to show the charts map-control panel (big number, bar, line,
+   * heatmap, pivot table, tooltip charts, and chart cross-filters).
+   * Enabled by default. Disable with {@link initApplicationConfig}.
+   */
+  enableChartsPanel?: boolean;
+
+  /**
+   * Master switch for power-user JSON editors. When false, every section editor is hidden.
+   * Defaults to true; each section also has its own flag.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({
+   *   enableViewportJsonEditor: true,
+   *   enableLayerJsonEditor: false
+   * });
+   * ```
+   */
+  enableJsonEditors?: boolean;
+
+  /** Layer panel `{ }` JSON editor. Enabled by default. */
+  enableLayerJsonEditor?: boolean;
+
+  /** Filter panel `{ }` JSON editor. Enabled by default. */
+  enableFilterJsonEditor?: boolean;
+
+  /** Effect panel `{ }` JSON editor. Enabled by default. */
+  enableEffectJsonEditor?: boolean;
+
+  /**
+   * Viewport JSON editor map-control button. Disabled by default because it adds an extra
+   * map control.
+   */
+  enableViewportJsonEditor?: boolean;
+
+  /** Animation / time-filter playback `{ }` JSON editor. Enabled by default. */
+  enableAnimationJsonEditor?: boolean;
+
+  /** Charts panel `{ }` JSON editor. Enabled by default. */
+  enableChartJsonEditor?: boolean;
+
+  /**
+   * Show a format dropdown next to the remote dataset URL field (Auto / CSV / GeoJSON / JSON / Arrow / Parquet).
+   * Useful for extensionless URLs such as Azure SAS blobs. Disabled by default.
+   */
+  enableRemoteFileFormatSelector?: boolean;
+
+  /**
+   * File formats Kepler may load from drag-and-drop, the file picker, and remote URLs.
+   * Values are format ids or extensions (`csv`, `geojson`, `kml`, `shp`, `xlsx`, `fgb`, …).
+   * When omitted or `null`, every built-in format is accepted.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({acceptedFileFormats: ['csv', 'geojson', 'parquet']});
+   * ```
+   */
+  acceptedFileFormats?: KeplerAcceptedFileFormat[] | null;
+
   /**
    * Custom SVG icons to be made available in the icon layer.
    * These icons will be merged with the default icons fetched from CDN.
@@ -201,6 +327,22 @@ export type KeplerApplicationConfig = {
 
   /** Controls Redux action logging verbosity in dev mode. See {@link ReduxLogLevel}. */
   reduxLogLevel?: ReduxLogLevel;
+
+  /**
+   * If an Arrow/Parquet table has more record batches than this, they are
+   * compacted into a single batch. The default is `1`, so any table with more
+   * than one record batch is compacted. Deck.gl picking supports at most 255
+   * pickable leaf layers, and GeoJSON adds fill/stroke/point sublayers per
+   * batch, so a higher cap still overruns picking. Compacting copies the table.
+   * Progressive Arrow loading skips compaction on intermediate batches and
+   * compacts the completed file once. Set a very large number to never compact.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({maxArrowBatches: 64});
+   * ```
+   */
+  maxArrowBatches?: number;
 };
 
 const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
@@ -261,6 +403,15 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   // Bitmap layer config
   enableBitmapLayer: true,
 
+  // A5 layer config
+  enableA5Layer: true,
+
+  // GeoHash layer config
+  enableGeohashLayer: true,
+
+  // Flow Field layer config
+  enableFlowFieldLayer: true,
+
   showInlineTilesetExamples: true,
 
   // Image export config
@@ -270,6 +421,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   maxPitch: 60,
 
   enableAnnotations: true,
+
+  enableDrawOnMapSketches: true,
 
   enableMapNavigationControl: true,
 
@@ -281,11 +434,33 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableLayerGroups: true,
 
+  themes: [],
+
+  enableColumnStats: true,
+
+  enableDatasetOps: true,
+
+  enableChartsPanel: true,
+
+  enableJsonEditors: true,
+  enableLayerJsonEditor: true,
+  enableFilterJsonEditor: true,
+  enableEffectJsonEditor: true,
+  enableViewportJsonEditor: false,
+  enableAnimationJsonEditor: true,
+  enableChartJsonEditor: true,
+
+  enableRemoteFileFormatSelector: false,
+
+  acceptedFileFormats: null,
+
   customIcons: [],
 
   customIconUrl: '',
 
-  reduxLogLevel: 1
+  reduxLogLevel: 1,
+
+  maxArrowBatches: 1
 };
 
 const applicationConfig: Required<KeplerApplicationConfig> = DEFAULT_APPLICATION_CONFIG;

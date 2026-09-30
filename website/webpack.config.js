@@ -72,7 +72,7 @@ const COMMON_CONFIG = {
         ],
         exclude: [/node_modules\/(?!(@monaco-editor|@radix-ui))/]
       },
-      // Add css loader for ai-assistant
+      // css loader
       {
         test: /\.css$/,
         use: ['style-loader', 'css-loader']
@@ -163,7 +163,7 @@ const addDevConfig = config => {
     test: /\.js$/,
     use: ['source-map-loader'],
     enforce: 'pre',
-    exclude: [/node_modules[\\/]react-palm/, /node_modules[\\/]react-data-grid/]
+    exclude: [/node_modules[\\/]react-data-grid/]
   });
 
   return Object.assign(config, {

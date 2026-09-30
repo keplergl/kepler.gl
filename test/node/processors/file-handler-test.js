@@ -2,7 +2,18 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {isKeplerGlMap, makeProgressIterator, filesToDataPayload} from '@kepler.gl/processors';
+import {
+  isKeplerGlMap,
+  makeProgressIterator,
+  filesToDataPayload,
+  processFileData,
+  processArrowBatches,
+  getGeoJsonFromLoaderResult,
+  readBatch
+} from '@kepler.gl/processors';
+import {getDatasetRefreshIntervalMs} from '@kepler.gl/constants';
+import * as arrow from 'apache-arrow';
+import {convertArrowToSchema} from '@loaders.gl/schema-utils';
 import {parsedFields, parsedRows} from 'test/fixtures/row-object';
 import {
   savedStateV1InteractionCoordinate as keplerglMap,
@@ -151,6 +162,483 @@ test('#file-handler -> filesToDataPayload', t => {
     Object.keys(result[1].datasets[0].info),
     ['id', 'label', 'format'],
     'result[0] datasets[0].info should have 3 key'
+  );
+
+  t.end();
+});
+
+test('#file-handler -> filesToDataPayload remote metadata', t => {
+  const fileCache = [
+    {
+      data: {
+        fields: parsedFields,
+        rows: parsedRows
+      },
+      info: {
+        id: 'remote-ds',
+        label: 'quakes.csv',
+        format: 'row',
+        type: 'externally-hosted'
+      },
+      metadata: {
+        source: 'https://example.com/quakes.csv',
+        sourceFormat: 'csv'
+      }
+    }
+  ];
+
+  const result = filesToDataPayload(fileCache);
+  t.equal(result.length, 1, 'result should have 1 entry');
+  t.equal(result[0].datasets[0].info.type, 'externally-hosted', 'should pass type');
+  t.deepEqual(
+    result[0].datasets[0].metadata,
+    {source: 'https://example.com/quakes.csv', sourceFormat: 'csv'},
+    'should pass remote source metadata'
+  );
+
+  t.end();
+});
+
+test('#file-handler -> processFileData one-shot load does not enable polling', async t => {
+  const rows = [{lat: 1, lng: 2}];
+  const local = await processFileData({
+    content: {fileName: 'local.csv', data: rows},
+    fileCache: []
+  });
+  t.equal(local[0].info.type, undefined, 'local files are not marked externally-hosted');
+  t.equal(local[0].metadata, undefined, 'local files get no remote refresh metadata');
+
+  const remote = await processFileData({
+    content: {
+      fileName: 'remote.csv',
+      data: rows,
+      sourceUrl: 'https://example.com/remote.csv'
+    },
+    fileCache: []
+  });
+  t.equal(remote[0].info.type, 'externally-hosted', 'URL loads are still externally-hosted');
+  t.equal(
+    remote[0].metadata.refreshIntervalMs,
+    undefined,
+    'a one-shot URL load does not set a poll interval'
+  );
+  t.equal(
+    getDatasetRefreshIntervalMs(remote[0].metadata),
+    0,
+    'polling helper treats omitted interval as off'
+  );
+
+  t.end();
+});
+
+test('#file-handler -> processFileData persists remote file format', async t => {
+  const cache = await processFileData({
+    content: {
+      fileName: 'quakes.csv',
+      data: [{lat: 1, lng: 2}],
+      sourceUrl: 'https://example.com/abc123?sv=1',
+      keplerFormat: 'csv'
+    },
+    fileCache: []
+  });
+
+  t.equal(cache[0].info.type, 'externally-hosted', 'should mark the dataset as externally-hosted');
+  t.equal(cache[0].info.format, 'row', 'processor format stays row for CSV');
+  t.equal(cache[0].metadata.source, 'https://example.com/abc123?sv=1');
+  t.equal(
+    cache[0].metadata.sourceFormat,
+    'csv',
+    'should persist the file format, not the processor format'
+  );
+  t.equal(
+    typeof cache[0].metadata.lastFetchedAt,
+    'number',
+    'should record lastFetchedAt on remote load'
+  );
+  t.equal(cache[0].metadata.etag, undefined, 'should omit etag when the fetch did not provide one');
+  t.equal(
+    cache[0].metadata.lastModified,
+    undefined,
+    'should omit lastModified when the fetch did not provide one'
+  );
+
+  const withValidators = await processFileData({
+    content: {
+      fileName: 'quakes.csv',
+      data: [{lat: 1, lng: 2}],
+      sourceUrl: 'https://example.com/quakes.csv',
+      keplerFormat: 'csv',
+      etag: '"abc"',
+      lastModified: 'Wed, 21 Oct 2015 07:28:00 GMT'
+    },
+    fileCache: []
+  });
+  t.equal(withValidators[0].metadata.etag, '"abc"', 'should persist ETag for the next refresh');
+  t.equal(
+    withValidators[0].metadata.lastModified,
+    'Wed, 21 Oct 2015 07:28:00 GMT',
+    'should persist Last-Modified for the next refresh'
+  );
+
+  const parquetCache = await processFileData({
+    content: {
+      fileName: 'data.parquet',
+      data: [{lat: 1, lng: 2}],
+      sourceUrl: 'https://example.com/data.parquet'
+    },
+    fileCache: []
+  });
+
+  t.equal(
+    parquetCache[0].metadata.sourceFormat,
+    'parquet',
+    'should infer parquet from the filename when no format was selected'
+  );
+
+  t.end();
+});
+
+test('#file-handler -> processFileData remote ids do not collide on filename', async t => {
+  const rows = [{lat: 1, lng: 2}];
+  const local = await processFileData({
+    content: {fileName: 'quakes.csv', data: rows},
+    fileCache: []
+  });
+  const remoteA = await processFileData({
+    content: {
+      fileName: 'quakes.csv',
+      data: rows,
+      sourceUrl: 'https://a.example.com/quakes.csv'
+    },
+    fileCache: []
+  });
+  const remoteB = await processFileData({
+    content: {
+      fileName: 'quakes.csv',
+      data: rows,
+      sourceUrl: 'https://b.example.com/quakes.csv'
+    },
+    fileCache: []
+  });
+  const remoteAAgain = await processFileData({
+    content: {
+      fileName: 'quakes.csv',
+      data: rows,
+      sourceUrl: 'https://a.example.com/quakes.csv'
+    },
+    fileCache: []
+  });
+
+  t.equal(local[0].info.label, 'quakes.csv', 'local label stays the filename');
+  t.equal(remoteA[0].info.label, 'quakes.csv', 'remote label stays the filename');
+  t.notEqual(
+    local[0].info.id,
+    remoteA[0].info.id,
+    'local and remote files with the same name get different ids'
+  );
+  t.notEqual(
+    remoteA[0].info.id,
+    remoteB[0].info.id,
+    'two remote URLs with the same filename get different ids'
+  );
+  t.equal(
+    remoteA[0].info.id,
+    remoteAAgain[0].info.id,
+    'reloading the same URL keeps a stable id so progressive batches can update in place'
+  );
+  t.ok(!String(remoteA[0].info.id).includes('http'), 'id is a hash, not the raw URL');
+
+  t.end();
+});
+
+test('#file-handler -> convertArrowToSchema uses a single apache-arrow copy', t => {
+  // Parquet loading serializes the Arrow schema via loaders.gl. If kepler.gl
+  // and @loaders.gl/schema-utils resolve different apache-arrow packages, that
+  // switch-on-constructor check throws `arrow type not supported: <Class>`
+  // (minified to e.g. `tL` in exported HTML).
+  const table = new arrow.Table({
+    lat: arrow.vectorFromArray(new Float64Array([37.8])),
+    lng: arrow.vectorFromArray(new Float64Array([-122.4])),
+    name: arrow.vectorFromArray(['alpha'], new arrow.Utf8())
+  });
+
+  let schema;
+  t.doesNotThrow(() => {
+    schema = convertArrowToSchema(table.schema);
+  }, 'schema conversion should not fail with a constructor identity mismatch');
+  t.deepEqual(
+    schema.fields.map(field => field.type),
+    ['float64', 'float64', 'utf8'],
+    'should serialize primitive Arrow types from the shared apache-arrow copy'
+  );
+
+  t.end();
+});
+
+test('#file-handler -> processArrowBatches skip compact for incremental loads', t => {
+  const batchA = arrow.tableFromJSON([{lng: -122.4, lat: 37.8}]);
+  const batchB = arrow.tableFromJSON([{lng: -122.5, lat: 37.9}]);
+  const combined = batchA.concat(batchB);
+
+  t.ok(combined.batches.length > 1, 'fixture should have multiple record batches');
+
+  const skipped = processArrowBatches(combined.batches, {compact: false});
+  t.equal(
+    skipped.cols[0].data.length,
+    combined.batches.length,
+    'compact:false should leave record batches unchanged'
+  );
+
+  const compacted = processArrowBatches(combined.batches);
+  t.equal(compacted.cols[0].data.length, 1, 'default processArrowBatches should compact');
+  t.equal(compacted.cols[0].length, 2, 'compacted table should keep all rows');
+
+  t.end();
+});
+
+test('#file-handler -> processArrowBatches Int64/Uint64 columns', async t => {
+  const table = arrow.tableFromArrays({
+    hexId: new BigUint64Array([610625465232654335n, 610625465081659391n]),
+    total: new BigInt64Array([29436887n, 40685227n])
+  });
+
+  let result;
+  t.doesNotThrow(() => {
+    result = processArrowBatches(table.batches);
+  }, 'should process Arrow Int64/Uint64 columns without BigInt TypeError');
+
+  t.equal(result.fields[0].name, 'hexId');
+  t.equal(result.fields[0].type, 'integer', 'uint64 columns should stay integer, not h3');
+  t.equal(result.fields[1].name, 'total');
+  t.equal(result.fields[1].type, 'integer', 'int64 counts should stay integer');
+
+  const processed = await processFileData({
+    content: {fileName: 'congo.parquet', data: table.batches},
+    fileCache: []
+  });
+  t.equal(processed.length, 1, 'processFileData should accept uint64 Arrow batches');
+  t.equal(processed[0].data.fields[0].type, 'integer');
+
+  t.end();
+});
+
+test('#file-handler -> processFileData Feature array is geojson', async t => {
+  const features = [
+    {
+      type: 'Feature',
+      properties: {name: 'alpha'},
+      geometry: {type: 'Point', coordinates: [-122.4, 37.8]}
+    },
+    {
+      type: 'Feature',
+      properties: {name: 'beta'},
+      geometry: {type: 'Point', coordinates: [-122.5, 37.9]}
+    }
+  ];
+  const processed = await processFileData({
+    content: {fileName: 'places.geojsonl', data: features},
+    fileCache: []
+  });
+
+  t.equal(
+    processed[0].info.format,
+    'geojson',
+    'an array of Features should not be treated as rows'
+  );
+  t.equal(processed[0].data.rows.length, 2, 'should keep both features');
+  t.end();
+});
+
+test('#file-handler -> shapefile-shaped loader output becomes GeoJSON', async t => {
+  const data = {
+    data: [
+      {
+        type: 'Feature',
+        properties: {name: 'alpha'},
+        geometry: {type: 'Point', coordinates: [-122.4, 37.8]}
+      }
+    ]
+  };
+  t.equal(
+    getGeoJsonFromLoaderResult(data).features.length,
+    1,
+    'should unwrap shapefile Feature arrays'
+  );
+
+  const processed = await processFileData({
+    content: {fileName: 'places.shp', data},
+    fileCache: []
+  });
+  t.equal(processed[0].info.format, 'geojson', 'shapefile output should process as geojson');
+  t.equal(processed[0].data.rows.length, 1, 'should keep the shapefile feature');
+  t.end();
+});
+
+async function readLastAggregatedBatch(iterator, fileName) {
+  const generator = readBatch(iterator, fileName);
+  let last;
+  for await (const batch of generator) {
+    last = batch;
+  }
+  return last;
+}
+
+test('#file-handler -> empty GIS loader output becomes an empty GeoJSON dataset', async t => {
+  const emptyShapefile = await processFileData({
+    content: {fileName: 'empty.shp', data: {data: []}},
+    fileCache: []
+  });
+  t.equal(emptyShapefile[0].info.format, 'geojson', 'empty shapefile output should be geojson');
+  t.equal(emptyShapefile[0].data.rows.length, 0, 'should keep zero features');
+
+  const emptyTable = await processFileData({
+    content: {
+      fileName: 'empty.fgb',
+      data: {shape: 'geojson-table', type: 'FeatureCollection', features: []}
+    },
+    fileCache: []
+  });
+  t.equal(emptyTable[0].info.format, 'geojson', 'empty geojson-table should be geojson');
+  t.equal(emptyTable[0].data.rows.length, 0, 'should keep zero geojson-table features');
+
+  const emptyExcel = await processFileData({
+    content: {fileName: 'empty.xlsx', data: {shape: 'object-row-table', data: []}},
+    fileCache: []
+  });
+  t.equal(emptyExcel[0].info.format, 'row', 'empty spreadsheet tables should stay rows');
+  t.end();
+});
+
+test('#file-handler -> readBatch does not wrap JSON streaming placeholders', async t => {
+  async function* geojsonStream() {
+    yield {batchType: 'metadata', shape: 'metadata', data: []};
+    yield {
+      shape: 'object-row-table',
+      batchType: 'partial-result',
+      container: {type: 'FeatureCollection', features: []},
+      data: [],
+      jsonpath: '$.features'
+    };
+    yield {
+      data: [
+        {
+          type: 'Feature',
+          properties: {name: 'alpha'},
+          geometry: {type: 'Point', coordinates: [0, 1]}
+        }
+      ],
+      jsonpath: '$.features',
+      length: 1
+    };
+  }
+
+  const generator = readBatch(geojsonStream(), 'places.geojson');
+  await generator.next();
+  const partial = await generator.next();
+  t.equal(partial.value.batchType, 'partial-result', 'should yield the JSON partial-result');
+  t.equal(partial.value.data.length, 0, 'partial-result should keep an empty array');
+  const dataBatch = await generator.next();
+  t.equal(dataBatch.value.data.length, 1, 'data batch should stay a feature array');
+  t.end();
+});
+
+test('#file-handler -> readBatch preserves empty loader identity', async t => {
+  async function* emptyShapefileBatches() {
+    yield {header: {length: 50}, data: []};
+  }
+  const shapefileBatch = await readLastAggregatedBatch(emptyShapefileBatches(), 'empty.shp');
+  const emptyShapefile = await processFileData({content: shapefileBatch, fileCache: []});
+  t.equal(emptyShapefile[0].info.format, 'geojson', 'empty shapefile batches should stay geojson');
+  t.equal(emptyShapefile[0].data.rows.length, 0, 'should keep zero shapefile features');
+
+  async function* emptyExcelBatches() {
+    yield {shape: 'object-row-table', data: []};
+  }
+  const excelBatch = await readLastAggregatedBatch(emptyExcelBatches(), 'empty.xlsx');
+  const emptyExcel = await processFileData({content: excelBatch, fileCache: []});
+  t.equal(emptyExcel[0].info.format, 'row', 'empty spreadsheet batches should stay rows');
+  t.equal(emptyExcel[0].data.rows.length, 0, 'should keep zero spreadsheet rows');
+
+  async function* emptyFlatGeobufBatches() {
+    yield {batchType: 'metadata'};
+    yield {shape: 'geojson-table', type: 'FeatureCollection', features: []};
+  }
+  const fgbBatch = await readLastAggregatedBatch(emptyFlatGeobufBatches(), 'empty.fgb');
+  const emptyFgb = await processFileData({content: fgbBatch, fileCache: []});
+  t.equal(emptyFgb[0].info.format, 'geojson', 'empty FlatGeobuf batches should stay geojson');
+  t.equal(emptyFgb[0].data.rows.length, 0, 'should keep zero FlatGeobuf features');
+  t.end();
+});
+
+test('#file-handler -> object-row-table becomes a row dataset', async t => {
+  const processed = await processFileData({
+    content: {
+      fileName: 'table.xlsx',
+      data: {shape: 'object-row-table', data: [{name: 'alpha', value: 1}]}
+    },
+    fileCache: []
+  });
+  t.equal(processed[0].info.format, 'row', 'Excel-shaped tables should process as rows');
+  t.equal(processed[0].data.rows.length, 1, 'should keep the spreadsheet row');
+  t.end();
+});
+
+test('#file-handler -> rows with type Feature but no geometry stay tables', async t => {
+  const rows = [
+    {type: 'Feature', name: 'alpha', lat: 37.8, lng: -122.4},
+    {type: 'Feature', name: 'beta', lat: 37.9, lng: -122.5}
+  ];
+
+  t.equal(
+    getGeoJsonFromLoaderResult(rows),
+    null,
+    'should not wrap tabular rows as a FeatureCollection'
+  );
+
+  const processed = await processFileData({
+    content: {fileName: 'places.csv', data: rows},
+    fileCache: []
+  });
+
+  t.equal(
+    processed[0].info.format,
+    'row',
+    'a type column equal to Feature should not force geojson'
+  );
+  t.equal(processed[0].data.rows.length, 2, 'should keep both rows');
+  t.end();
+});
+
+test('#file-handler -> processFileData skipArrowCompact', async t => {
+  const batchA = arrow.tableFromJSON([{lng: -122.4, lat: 37.8}]);
+  const batchB = arrow.tableFromJSON([{lng: -122.5, lat: 37.9}]);
+  const combined = batchA.concat(batchB);
+
+  const incremental = await processFileData({
+    content: {
+      fileName: 'points.arrow',
+      data: combined.batches,
+      skipArrowCompact: true
+    },
+    fileCache: []
+  });
+  t.equal(
+    incremental[0].data.cols[0].data.length,
+    combined.batches.length,
+    'progressive processFileData should not compact Arrow batches'
+  );
+
+  const finished = await processFileData({
+    content: {
+      fileName: 'points.arrow',
+      data: combined.batches
+    },
+    fileCache: []
+  });
+  t.equal(
+    finished[0].data.cols[0].data.length,
+    1,
+    'final processFileData should compact Arrow batches'
   );
 
   t.end();

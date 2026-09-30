@@ -16,6 +16,8 @@ export type MapListItem = {
   description: string;
   loadParams: any;
   imageUrl?: string;
+  /** Data URL or remote URL for the map preview; may be filled lazily via getMapThumbnail */
+  thumbnail?: string;
   updatedAt?: Millisecond;
   privateMap?: boolean;
 };
@@ -222,6 +224,28 @@ export default class Provider {
    */
   async listMaps(): Promise<MapListItem[]> {
     return [];
+  }
+
+  /**
+   * Optional: resolve a map preview when the storage gallery tile becomes visible.
+   * Providers that omit thumbnails from `listMaps` can implement this to lazy-load them.
+   * Default returns `map.thumbnail` when already present.
+   * @param map - list item from `listMaps`
+   * @returns thumbnail data URL / URL, or undefined
+   * @public
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getMapThumbnail(map: MapListItem): Promise<string | undefined> {
+    return map.thumbnail || undefined;
+  }
+
+  /**
+   * When true, storage gallery tiles call `getMapThumbnail` once they become visible
+   * instead of expecting `listMaps` to include thumbnail bytes/URLs.
+   * @public
+   */
+  hasLazyThumbnails(): boolean {
+    return false;
   }
 
   /**

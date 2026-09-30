@@ -35,6 +35,8 @@ export const PROPERTY_GROUPS = keyMirror({
 });
 
 export const DEFAULT_LAYER_OPACITY = 0.8;
+/** Minimum grid / hexagon cell size in kilometers. Zero is invalid for aggregation. */
+export const MIN_WORLD_UNIT_SIZE = 0.001;
 export const DEFAULT_HIGHLIGHT_COLOR: RGBAColor = [252, 242, 26, 255];
 export const DEFAULT_LAYER_LABEL = 'new layer';
 
@@ -49,7 +51,8 @@ export const DEFAULT_TEXT_LABEL: LayerTextLabel = {
   outlineWidth: 0,
   outlineColor: [255, 0, 0, 255],
   background: false,
-  backgroundColor: [0, 0, 200, 255]
+  backgroundColor: [0, 0, 200, 255],
+  collisionEnabled: false
 };
 
 const DEFAULT_COLOR_PALETTE = KEPLER_COLOR_PALETTES.find(
@@ -166,6 +169,14 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     description: 'layerVisConfigs.fixedHeightDescription',
     group: PROPERTY_GROUPS.height,
     property: 'fixedHeight'
+  },
+  fixedElevation: {
+    defaultValue: true,
+    type: 'boolean',
+    label: 'layerVisConfigs.fixedElevation',
+    description: 'layerVisConfigs.fixedElevationDescription',
+    group: PROPERTY_GROUPS.height,
+    property: 'fixedElevation'
   },
   radiusRange: {
     type: 'number',
@@ -352,7 +363,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     defaultValue: 1,
     label: 'layerVisConfigs.worldUnitSize',
     isRanged: false,
-    range: [0, 500],
+    range: [MIN_WORLD_UNIT_SIZE, 500],
     step: 0.0001,
     group: PROPERTY_GROUPS.cell,
     property: 'worldUnitSize',
@@ -367,6 +378,31 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     step: 0.1,
     group: PROPERTY_GROUPS.height,
     property: 'elevationScale',
+    allowCustomValue: true
+  },
+  elevationOffset: {
+    type: 'number',
+    defaultValue: 0,
+    label: 'layerVisConfigs.elevationOffset',
+    description: 'layerVisConfigs.elevationOffsetDescription',
+    isRanged: false,
+    range: [0, 10000],
+    step: 0.01,
+    focusRange: [0, 500],
+    focusWeight: 0.3,
+    group: PROPERTY_GROUPS.height,
+    property: 'elevationOffset',
+    allowCustomValue: true
+  },
+  elevationOffsetRange: {
+    type: 'number',
+    defaultValue: [0, 500],
+    label: 'layerVisConfigs.elevationOffsetRange',
+    isRanged: true,
+    range: [0, 10000],
+    step: 0.1,
+    group: PROPERTY_GROUPS.height,
+    property: 'elevationOffsetRange',
     allowCustomValue: true
   },
   enableElevationZoomFactor: {
@@ -473,7 +509,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     defaultValue: 20,
     label: 'layerVisConfigs.radius',
     isRanged: false,
-    range: [0, 100],
+    range: [0.1, 100],
     step: 0.1,
     group: PROPERTY_GROUPS.cell,
     property: 'radius',
@@ -607,7 +643,10 @@ export const LAYER_TYPES = keyMirror({
   '3D': null,
   trip: null,
   s2: null,
+  a5: null,
+  geohash: null,
   flow: null,
+  flowField: null,
   vectorTile: null,
   rasterTile: null,
   wms: null,

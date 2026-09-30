@@ -46,9 +46,12 @@ export type ActionHandlers<T extends {[k: string]: Handler}> = {
  * @param {Object} data.options
  * @param {boolean} data.options.centerMap `default: true` if `centerMap` is set to `true` kepler.gl will
  * place the map view within the data points boundaries.  `options.centerMap` will override `config.mapState` if passed in.
+ * @param {Number|Object} data.options.padding padding in pixels applied when `centerMap` is true so data is not hidden
+ * under the side panel or other UI. Can be a number or `{top, bottom, left, right}`.
  * @param {boolean} data.options.readOnly `default: false` if `readOnly` is set to `true`
  * the left setting panel will be hidden
  * @param {boolean} data.options.keepExistingConfig whether to keep exiting map data and associated layer filter  interaction config `default: false`.
+ * To append, upsert, or delete rows on an existing in-memory row dataset without replacing it or creating layers, use `addToDataset` / `removeFromDataset`. Arrow and DuckDB tables do not support those actions yet.
  * @param {Object} data.config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
  * @public
  * @example
@@ -94,6 +97,7 @@ export type ActionHandlers<T extends {[k: string]: Handler}> = {
  *     },
  *     options: {
  *       centerMap: true,
+ *       padding: {left: 300, top: 24, right: 24, bottom: 24},
  *       readOnly: false,
  *       keepExistingConfig: false
  *     },
@@ -140,6 +144,8 @@ export type ReceiveMapConfigPayload = {
  * @param {Object} options - ***optional** The Option object
  * @param {boolean} options.centerMap `default: true` if `centerMap` is set to `true` kepler.gl will
  * place the map view within the data points boundaries
+ * @param {Number|Object} options.padding padding in pixels applied when `centerMap` is true so data is not hidden
+ * under the side panel or other UI. Can be a number or `{top, bottom, left, right}`.
  * @param {boolean} options.readOnly `default: false` if `readOnly` is set to `true`
  * the left setting panel will be hidden
  * @param {boolean} options.keepExistingConfig whether to keep exiting layer filter and interaction config `default: false`.
@@ -192,6 +198,7 @@ export const keplerGlInit: (options?: KeplerGlInitPayload) => {
 
 export type ReplaceDataToMapOptions = {
   centerMap?: boolean;
+  padding?: AddDataToMapOptions['padding'];
   keepExistingConfig?: boolean;
   autoCreateLayers?: boolean;
 };

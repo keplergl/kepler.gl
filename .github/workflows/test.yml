@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,17 +22,65 @@ jobs:
       # use Volta to manage yarn/node versions
       - uses: volta-cli/action@v4
 
+      - name: Get Yarn cache directory
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Yarn
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
       - name: Install XVFB
         run: sudo apt-get install xvfb
 
       - name: Install Dependencies
-        run: yarn install && yarn bootstrap
+        run: yarn install --immutable && yarn bootstrap
+        env:
+          HUSKY: 0
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
+
+      # Install dependencies for the standalone example apps and website so
+      # that `yarn lint` (eslint over `examples website`) can resolve their
+      # third-party modules. These projects are NOT yarn workspaces of the
+      # root package and therefore need their own `yarn install`.
+      # Use `corepack yarn` (not bare `yarn`): bare `yarn` resolves through
+      # Volta, which falls back to the system yarn 1.x in directories without
+      # a local `volta` config (the example apps) and fails with
+      # "packageManager ... However the current global version of Yarn is
+      # 1.22.22". `corepack yarn` honors the root package.json's
+      # `packageManager` field and runs yarn 4.4.0 everywhere.
+      - name: Install Example & Website Dependencies
+        run: |
+          corepack yarn install:example
+          cd website && corepack yarn && cd ..
+          for d in examples/custom-reducer examples/custom-theme examples/open-modal examples/replace-component examples/node-app; do
+            (cd "$d" && corepack yarn)
+          done
 
       # - name: Install Puppeteer
       #   run: yarn dlx "puppeteer@23.1.0"
 
+      - name: Check circular dependencies
+        run: yarn check-circular-deps
+
+      - name: Unused dependencies and exports
+        continue-on-error: true
+        run: yarn knip
+
+      - name: Typecheck
+        run: yarn typescript
+
+      - name: SQLRooms package and runtime tests
+        run: yarn test:sqlrooms
+
       - name: Lint
-        run: yarn lint
+        # Check-only (`yarn lint:check`) currently fails on ~650 existing
+        # prettier/prettier issues. Switch after a formatting cleanup.
+        run: yarn eslint src test webpack examples website --fix --ignore-path .gitignore
 
       - name: Test
         run: xvfb-run --auto-servernum yarn cover

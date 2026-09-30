@@ -26,6 +26,7 @@
 - [visStateActions][42]
   - [addFilter][43]
   - [addLayer][45]
+  - [addToDataset](#addtodataset)
   - [applyCPUFilter][47]
   - [enlargeFilter][49]
   - [interactionConfigChange][51]
@@ -41,6 +42,7 @@
   - [onMapClick][71]
   - [onMouseMove][72]
   - [removeDataset][74]
+  - [removeFromDataset](#removefromdataset)
   - [removeFilter][76]
   - [removeLayer][78]
   - [reorderLayer][80]
@@ -202,7 +204,7 @@ Type: [Object][164]
 // store.js
 import {handleActions} from 'redux-actions';
 import {createStore, combineReducers, applyMiddleware} from 'redux';
-import {taskMiddleware} from 'react-palm/tasks';
+import {taskMiddleware} from '@kepler.gl/tasks';
 
 import keplerGlReducer from '@kepler.gl/reducers';
 import {ActionTypes} from '@kepler.gl/actions';
@@ -524,6 +526,23 @@ Add a new layer
 
 Returns **{type: ActionTypes.ADD_LAYER, props: props}**
 
+### addToDataset
+
+Append or upsert rows on an existing in-memory row dataset without `addDataToMap`. Keeps layer identity and style. Pass `options.upsertBy` to replace rows that share that key and append the rest.
+
+Not implemented for Arrow or DuckDB tables (no INSERT / concat yet); those calls warn and leave the table unchanged. Use `addDataToMap` with `keepExistingConfig` for a full replace.
+
+- **ActionTypes**: `ActionTypes.ADD_TO_DATASET`
+- **Updaters**: `visStateUpdaters.addToDatasetUpdater`
+
+**Parameters**
+
+- `dataId` **[string][162]** dataset id
+- `rows` one row or an array of rows (column-ordered arrays, or objects keyed by field name)
+- `options` **[Object][164]** (optional) `{upsertBy: string}` unique key field
+
+Returns **{type: ActionTypes.ADD_TO_DATASET, dataId, rows, options}**
+
 ### applyCPUFilter
 
 Trigger CPU filter of selected dataset
@@ -723,6 +742,22 @@ Remove a dataset and all layers, filters, tooltip configs that based on it
 
 Returns **{type: ActionTypes.REMOVE_DATASET, key: key}**
 
+### removeFromDataset
+
+Delete rows from an existing in-memory row dataset without restyling layers. The second argument is either row indexes or `{field, values}` to match a column (for example an id).
+
+Not implemented for Arrow or DuckDB tables; those calls warn and leave the table unchanged.
+
+- **ActionTypes**: `ActionTypes.REMOVE_FROM_DATASET`
+- **Updaters**: `visStateUpdaters.removeFromDatasetUpdater`
+
+**Parameters**
+
+- `dataId` **[string][162]** dataset id
+- `rowIndexesOrMatcher` one index, an array of indexes, or `{field, values}`
+
+Returns **{type: ActionTypes.REMOVE_FROM_DATASET, dataId, rowIndexes?, byField?}**
+
 ### removeFilter
 
 Remove a filter from `visState.filters`, once a filter is removed, data will be re-filtered and layer will be updated
@@ -772,14 +807,14 @@ Returns **{type: ActionTypes.REORDER_LAYER, order: order}**
 
 ### setEditorMode
 
-Set the map mode
+Set the Draw on Map editor mode
 
 - **ActionTypes**: [`ActionTypes.SET_EDITOR_MODE`][12]
 - **Updaters**: [`visStateUpdaters.setEditorModeUpdater`][208]
 
 **Parameters**
 
-- `mode` **[string][162]** one of EDITOR_MODES
+- `mode` **[string][162]** one of `EDITOR_MODES`: `EDIT`, `DRAW_POINT`, `DRAW_LINESTRING`, `DRAW_POLYGON`, `DRAW_RECTANGLE`, `DRAW_CIRCLE`
 
 **Examples**
 
@@ -787,7 +822,7 @@ Set the map mode
 import {setEditorMode} from '@kepler.gl/actions';
 import {EDITOR_MODES} from '@kepler.gl/constants';
 
-this.props.dispatch(setEditorMode(EDITOR_MODES.DRAW_POLYGON));
+this.props.dispatch(setEditorMode(EDITOR_MODES.DRAW_LINESTRING));
 ```
 
 ### setFilter

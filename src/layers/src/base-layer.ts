@@ -3,8 +3,14 @@
 
 import {COORDINATE_SYSTEM} from '@deck.gl/core';
 import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
-import {DataFilterExtension} from '@deck.gl/extensions';
+import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/deckgl-layers';
+import {CollisionFilterExtension, DataFilterExtension} from '@deck.gl/extensions';
 import {TextLayer} from '@deck.gl/layers';
+import CollisionTextLayer from './collision-text-layer';
+import {
+  installCollisionFilterEffectAlignment,
+  snapCollisionModuleFade
+} from './collision-filter-effect';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import React from 'react';
@@ -45,7 +51,7 @@ import {
   isArrowTable
 } from '@kepler.gl/utils';
 import {generateHashId, toArray, notNullorUndefined} from '@kepler.gl/common-utils';
-import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
+import {Datasets, GpuFilter, KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
 import {
   AggregatedBin,
   ColorRange,
@@ -79,7 +85,7 @@ import {
   getCategoricalColorScale,
   updateCustomColorRangeByColorUI
 } from '@kepler.gl/utils';
-import memoize from 'lodash/memoize';
+import memoize from 'es-toolkit/compat/memoize';
 import {
   initializeCustomPalette,
   isDomainQuantile,
@@ -115,6 +121,11 @@ export type LayerHeightConfig = {
   heightDomain: VisualChannelDomain;
   heightScale: VisualChannelScale;
 };
+export type LayerElevationOffsetConfig = {
+  elevationOffsetField: VisualChannelField;
+  elevationOffsetDomain: VisualChannelDomain;
+  elevationOffsetScale: VisualChannelScale;
+};
 export type LayerStrokeColorConfig = {
   strokeColorField: VisualChannelField;
   strokeColorDomain: VisualChannelDomain;
@@ -132,6 +143,8 @@ export type LayerRadiusConfig = {
 };
 export type LayerWeightConfig = {
   weightField: VisualChannelField;
+  weightDomain?: VisualChannelDomain;
+  weightScale?: VisualChannelScale;
 };
 
 export type VisualChannelDescription = {
@@ -160,6 +173,39 @@ const dataFilterExtension = new DataFilterExtension({
   filterSize: MAX_GPU_FILTERS,
   countItems: getApplicationConfig().useOnFilteredItemsChange ?? false
 });
+
+/**
+ * CollisionFilterExtension registers CollisionFilterEffect only in
+ * initializeState. Toggling the extension onto an already-matched TextLayer
+ * skips that hook, so luma.gl never gets collision_texture and aborts the
+ * draw (all labels vanish). Re-run initializeState from updateState when the
+ * collision attribute is missing.
+ */
+class KeplerCollisionFilterExtension extends CollisionFilterExtension {
+  static extensionName = 'CollisionFilterExtension';
+
+  getShaders(this: any) {
+    const base = CollisionFilterExtension.prototype.getShaders.call(this) || {};
+    return snapCollisionModuleFade(base);
+  }
+
+  initializeState(this: any, context: any, extension: this) {
+    // Align CollisionFilterEffect to the live drawing buffer before deck.gl
+    // registers it. Video export scales the GL canvas above CSS size; without
+    // this the collision map only covers the top-left of the frame.
+    installCollisionFilterEffectAlignment(this.context?.deck || context?.deck);
+    CollisionFilterExtension.prototype.initializeState.call(this, context, extension);
+  }
+
+  updateState(this: any, _params: unknown, extension: this) {
+    const attributeManager = this.getAttributeManager();
+    if (attributeManager && !attributeManager.attributes.collisionPriorities) {
+      KeplerCollisionFilterExtension.prototype.initializeState.call(this, this.context, extension);
+    }
+  }
+}
+
+const collisionFilterExtension = new KeplerCollisionFilterExtension();
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultDataAccessor = dc => d => d;
@@ -275,10 +321,14 @@ class Layer implements KeplerLayer {
   get optionalColumns(): string[] {
     const {supportedColumnModes} = this;
     if (supportedColumnModes) {
-      return supportedColumnModes.reduce<string[]>(
-        (acc, obj) => (obj.optionalColumns ? acc.concat(obj.optionalColumns) : acc),
-        []
-      );
+      return supportedColumnModes.reduce<string[]>((acc, obj) => {
+        const fromOptional = obj.optionalColumns || [];
+        const fromGroups = (obj.columnGroups || []).reduce<string[]>(
+          (groupAcc, group) => groupAcc.concat(group.columns || []),
+          []
+        );
+        return acc.concat(fromOptional, fromGroups);
+      }, []);
     }
     return [];
   }
@@ -490,6 +540,10 @@ class Layer implements KeplerLayer {
       isConfigActive: props.isConfigActive ?? false,
       highlightColor: props.highlightColor || DEFAULT_HIGHLIGHT_COLOR,
       hidden: props.hidden ?? false,
+      // Only persist an explicit choice so saved maps stay compatible until the user toggles it.
+      ...(typeof props.isIncludedInLegend === 'boolean'
+        ? {isIncludedInLegend: props.isIncludedInLegend}
+        : {}),
 
       // TODO: refactor this into separate visual Channel config
       // color by field, domain is set by filters, field, scale type
@@ -807,6 +861,13 @@ class Layer implements KeplerLayer {
 
   getLayerColumns(propsColumns = {}) {
     const columnValidators = this.columnValidators || {};
+    // A column can be optional in one mode and required in another (e.g. Flow Field
+    // altitude). Prefer the active mode's requiredColumns so optional does not win.
+    const activeMode = this.config?.columnMode
+      ? (this.supportedColumnModes || []).find(mode => mode.key === this.config.columnMode)
+      : null;
+    const activeRequired = new Set(activeMode?.requiredColumns || []);
+
     const required = this.requiredLayerColumns.reduce(
       (accu, key) => ({
         ...accu,
@@ -820,17 +881,19 @@ class Layer implements KeplerLayer {
       }),
       {}
     );
-    const optional = this.optionalColumns.reduce(
-      (accu, key) => ({
+    const optional = this.optionalColumns.reduce((accu, key) => {
+      if (activeRequired.has(key)) {
+        return accu;
+      }
+      return {
         ...accu,
         [key]: {
           value: propsColumns[key]?.value ?? null,
           fieldIdx: propsColumns[key]?.fieldIdx ?? -1,
           optional: true
         }
-      }),
-      {}
-    );
+      };
+    }, {});
 
     const columns = {...required, ...optional};
 
@@ -1147,6 +1210,8 @@ class Layer implements KeplerLayer {
                 );
 
           const getFieldValue = this.accessVSFieldValue(this.config[field], indexKey);
+          const resolveNullValue = () =>
+            typeof nullValue === 'function' ? nullValue(this.config) : nullValue;
 
           if (scaleFunction) {
             attributeAccessors[accessor] = scaleFunction.byZoom
@@ -1157,7 +1222,7 @@ class Layer implements KeplerLayer {
                       scaleFunc,
                       dataAccessor(dataContainer)(d),
                       this.config[field],
-                      nullValue,
+                      resolveNullValue(),
                       getFieldValue
                     );
                 })
@@ -1166,7 +1231,7 @@ class Layer implements KeplerLayer {
                     scaleFunction,
                     dataAccessor(dataContainer)(d),
                     this.config[field],
-                    nullValue,
+                    resolveNullValue(),
                     getFieldValue
                   );
 
@@ -1230,9 +1295,11 @@ class Layer implements KeplerLayer {
       return getScale;
     }
 
-    return SCALE_FUNC[fixed ? 'linear' : scale]()
+    const scaleFunc = SCALE_FUNC[fixed ? 'linear' : scale]()
       .domain(domain)
       .range(fixed ? domain : range);
+    (scaleFunc as {scaleType?: string}).scaleType = fixed ? 'linear' : scale;
+    return scaleFunc;
   }
 
   /**
@@ -1299,12 +1366,25 @@ class Layer implements KeplerLayer {
     this.meta = {...this.meta, ...meta};
   }
 
-  getDataUpdateTriggers({filteredIndex, id, dataContainer}: KeplerTable): any {
+  getDataUpdateTriggers({
+    filteredIndex,
+    filteredIndexByLayer,
+    id,
+    dataContainer,
+    dataRevision
+  }: KeplerTable): any {
     const {columns} = this.config;
+    const layerFilteredIndex = filteredIndexByLayer?.[this.id] ?? filteredIndex;
 
     return {
-      getData: {datasetId: id, dataContainer, columns, filteredIndex},
-      getMeta: {datasetId: id, dataContainer, columns},
+      getData: {
+        datasetId: id,
+        dataContainer,
+        columns,
+        filteredIndex: layerFilteredIndex,
+        dataRevision
+      },
+      getMeta: {datasetId: id, dataContainer, columns, dataRevision},
       ...(this.config.textLabel || []).reduce(
         (accu, tl, i) => ({
           ...accu,
@@ -1322,12 +1402,19 @@ class Layer implements KeplerLayer {
     const layerDataset = datasets[this.config.dataId];
     const {dataContainer} = layerDataset;
 
-    const getPosition = this.getPositionAccessor(dataContainer, layerDataset);
+    // Use per-layer polygon-filtered index if available
+    const layerFilteredIndex = layerDataset.filteredIndexByLayer?.[this.id];
+    const effectiveDataset =
+      layerFilteredIndex != null
+        ? copyTableAndUpdate(layerDataset, {filteredIndex: layerFilteredIndex})
+        : layerDataset;
+
+    const getPosition = this.getPositionAccessor(dataContainer, effectiveDataset);
     const dataUpdateTriggers = this.getDataUpdateTriggers(layerDataset);
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
     if (triggerChanged && (triggerChanged.getMeta || triggerChanged.getData)) {
-      this.updateLayerMeta(layerDataset, getPosition);
+      this.updateLayerMeta(effectiveDataset, getPosition);
 
       // reset filteredItemCount
       this.filteredItemCount = {};
@@ -1339,7 +1426,7 @@ class Layer implements KeplerLayer {
       // same data
       data = oldLayerData.data;
     } else {
-      data = this.calculateDataAttribute(layerDataset, getPosition);
+      data = this.calculateDataAttribute(effectiveDataset, getPosition);
     }
 
     return {data, triggerChanged};
@@ -1477,7 +1564,8 @@ class Layer implements KeplerLayer {
       return defaultDomain;
     }
 
-    return dataset.getColumnLayerDomain(field, scaleType) || defaultDomain;
+    const range = this.config.visConfig[visualChannel.range];
+    return dataset.getColumnLayerDomain(field, scaleType, range) || defaultDomain;
   }
 
   hasHoveredObject(objectInfo) {
@@ -1532,6 +1620,11 @@ class Layer implements KeplerLayer {
     visible: boolean;
   }) {
     const blendingParameters = mapState.layerParameters ?? {};
+    const enable3d = Boolean(this.config.visConfig.enable3d);
+    const is3dView = Boolean(mapState.dragRotate);
+    // Always depth-test so a flat layer cannot paint over closer extruded
+    // geometry (e.g. a ground plane covering buildings in top view). Only 3D
+    // layers / 3D view write depth, so coplanar 2D layers still stack by order.
     return {
       id: this.id,
       idx,
@@ -1539,7 +1632,8 @@ class Layer implements KeplerLayer {
       pickable: true,
       wrapLongitude: true,
       parameters: {
-        depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d),
+        depthTest: true,
+        depthMask: is3dView || enable3d,
         ...blendingParameters
       },
       hidden: this.config.hidden,
@@ -1551,7 +1645,7 @@ class Layer implements KeplerLayer {
       filterRange: gpuFilter ? gpuFilter.filterRange : undefined,
       onFilteredItemsChange: gpuFilter ? layerCallbacks?.onFilteredItemsChange : undefined,
 
-      // layer should be visible and if splitMap, shown in to one of panel
+      // layer should be visible and, if splitMap, shown in one of the panels
       visible: this.config.isVisible && visible
     };
   }
@@ -1578,7 +1672,11 @@ class Layer implements KeplerLayer {
       getPosition?: ((d: any) => number[]) | arrow.Vector;
       getFiltered?: (data: {index: number}, objectInfo: {index: number}) => number;
       getPixelOffset: (textLabel: any) => number[] | ((d: any) => number[]);
-      backgroundProps?: {background: boolean; backgroundPadding?: number[]; getBackgroundColor?: any};
+      backgroundProps?: {
+        background: boolean;
+        backgroundPadding?: number[];
+        getBackgroundColor?: any;
+      };
       updateTriggers: {
         [key: string]: any;
       };
@@ -1587,25 +1685,66 @@ class Layer implements KeplerLayer {
     },
     renderOpts
   ) {
-    const {data, mapState} = renderOpts;
+    const {data, mapState, visible: visibleInMap} = renderOpts;
     const {textLabel} = this.config;
+    // labels should be visible and, if splitMap, shown in one of the panels
+    const visible = this.config.isVisible && visibleInMap;
 
-    const TextLayerClass = isArrowTable(data.data) ? GeoArrowTextLayer : TextLayer;
+    const isArrow = isArrowTable(data.data);
+    const isGlobeMode = Boolean(mapState?.globe?.enabled);
 
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {
-        const background = textLabel[i].background || backgroundProps?.background;
-        const getText = animationConfig
-          ? f => d.getText(f, animationConfig)
-          : d.getText;
+        const userBackground = Boolean(textLabel[i].background || backgroundProps?.background);
+        // GeoArrowTextLayer cannot draw a collision hit-area background, so GPU
+        // collision would sample the geographic anchor and cull offset labels.
+        // Leave Arrow labels unfiltered until that path exists.
+        const collisionEnabled = Boolean(textLabel[i].collisionEnabled) && !isArrow;
+        // CollisionTextLayer draws an expanded background in the collision pass so
+        // the GPU hit-test still covers the geographic anchor after pixelOffset.
+        const TextLayerClass = collisionEnabled
+          ? CollisionTextLayer
+          : isArrow
+          ? GeoArrowTextLayer
+          : TextLayer;
+        const getText = animationConfig ? f => d.getText(f, animationConfig) : d.getText;
+        const background = userBackground || collisionEnabled;
+        // Distinct id when collision is on so deck.gl does not rematch the
+        // previous TextLayer. Matching would keep a stale collisionPriorities
+        // attribute after the extension is removed, and skip initializeState
+        // (no collision_texture) when it is added.
+        const labelId = `${this.id}-label-${textLabel[i].field?.name}${
+          collisionEnabled ? '-collision' : ''
+        }`;
+        // Glyphs inherit these from the TextLayer. The background sublayer's
+        // `_subLayerProps.background.parameters` replaces that object, so the
+        // same depth settings have to be repeated there. Otherwise the box
+        // keeps deck.gl's default depth test and is discarded against extruded
+        // geometry while the text (depthTest off) still draws on top.
+        const labelDepthParameters = isGlobeMode
+          ? {
+              // Globe far-side occlusion is the depth disk (see globe-layers.ts),
+              // not GPU face culling. Labels used to force depthTest off so they
+              // always drew on top; with cull also disabled they then showed
+              // through the planet when the parent object was on the back side.
+              // Match the editor overlay: depth-test against the disk, don't write
+              // depth, and keep cull off so billboard glyph quads are not discarded.
+              depthTest: true,
+              depthMask: false,
+              cull: false
+            }
+          : {
+              // text will always show on top of all layers
+              depthTest: false
+            };
 
         accu.push(
           // @ts-expect-error
           new TextLayerClass({
             ...sharedProps,
-            id: `${this.id}-label-${textLabel[i].field?.name}`,
+            id: labelId,
             data: data.data,
-            visible: this.config.isVisible,
+            visible,
             getText,
             getPosition,
             getFiltered,
@@ -1623,16 +1762,23 @@ class Layer implements KeplerLayer {
             ...(backgroundProps?.backgroundPadding
               ? {backgroundPadding: backgroundProps.backgroundPadding}
               : null),
-            getBackgroundColor:
-              backgroundProps?.getBackgroundColor ?? textLabel[i].backgroundColor,
+            getBackgroundColor: backgroundProps?.getBackgroundColor ?? textLabel[i].backgroundColor,
             fontSettings: {
               sdf: textLabel[i].outlineWidth > 0
             },
             parameters: {
-              // text will always show on top of all layers
-              depthTest: false,
+              ...labelDepthParameters,
               ...(mapState?.layerParameters ?? {})
             },
+            ...(collisionEnabled
+              ? {
+                  extensions: [...(sharedProps.extensions || []), collisionFilterExtension],
+                  collisionEnabled: true,
+                  collisionGroup: `${this.id}-text-label-${i}`,
+                  getCollisionPriority: 0,
+                  collisionShowBackground: userBackground
+                }
+              : {}),
 
             getFilterValue: data.getFilterValue,
             updateTriggers: {
@@ -1649,14 +1795,24 @@ class Layer implements KeplerLayer {
               },
               getTextAnchor: textLabel[i].anchor,
               getAlignmentBaseline: textLabel[i].alignment,
-              getColor: textLabel[i].color
+              getColor: textLabel[i].color,
+              collisionEnabled
             },
             _subLayerProps: {
+              // Far-side labels would otherwise draw through the planet. Both the
+              // glyphs and the label background need the back-face cull shader, or
+              // a far-side label leaves an empty box.
+              ...(isGlobeMode ? {characters: {type: EnhancedMultiIconLayer}} : null),
               ...(background
                 ? {
                     background: {
+                      ...(isGlobeMode ? {type: EnhancedTextBackgroundLayer} : null),
                       parameters: {
-                        cull: false,
+                        ...labelDepthParameters,
+                        // Flat mode leaves parent culling alone; the background quad
+                        // is camera-facing and must not be discarded if a parent
+                        // parameter enables cull.
+                        ...(isGlobeMode ? null : {cull: false}),
                         ...(mapState?.layerParameters ?? {})
                       }
                     }
@@ -1693,6 +1849,10 @@ class Layer implements KeplerLayer {
 
   getLegendVisualChannels(): {[key: string]: VisualChannel} {
     return this.visualChannels;
+  }
+
+  getLegendImageUrl(): string | null {
+    return null;
   }
 }
 

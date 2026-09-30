@@ -14,7 +14,6 @@ const resolveAlias = {
   'react-redux': `${NODE_MODULES_DIR}/react-redux/lib`,
   'styled-components': `${NODE_MODULES_DIR}/styled-components`,
   'react-intl': `${NODE_MODULES_DIR}/react-intl`,
-  'react-palm': `${NODE_MODULES_DIR}/react-palm`,
   // Suppress useless warnings from react-date-picker's dep
   'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
   // kepler.gl and loaders.gl need to use same apache-arrow
@@ -46,7 +45,10 @@ const WEBPACK_ENV_VARIABLES = Object.keys(ENV_VARIABLES_WITH_INSTRUCTIONS).reduc
     ...acc,
     [key]: null
   }),
-  {}
+  {
+    // Optional until set in Netlify / local env (not required for production build validation)
+    GoogleDriveClientId: null
+  }
 );
 
 module.exports = {

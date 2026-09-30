@@ -6,7 +6,7 @@
 import {ActionTypes} from '@kepler.gl/actions';
 import Window from 'global/window';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import get from 'lodash/get';
+import get from 'es-toolkit/compat/get';
 
 const getPayload = action => (action ? action.payload : null);
 

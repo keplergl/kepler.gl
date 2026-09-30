@@ -37,10 +37,67 @@ kepler.gl 3.3 upgrades the rendering stack from **deck.gl 8 / luma.gl 8** to **d
 | ----------------------------------- | ------------------------------------------------ |
 | `hubble.gl/core`, `hubble.gl/react` | Removed from kepler.gl                           |
 | `@nebula.gl/layers`                 | Replaced by `@deck.gl-community/editable-layers` |
+| `react-palm`                        | Replaced by built-in task runtime in `@kepler.gl/tasks` |
 
 ### Yarn resolutions
 
 All `@deck.gl/*`, `@loaders.gl/*`, and `@luma.gl/*` packages are pinned via resolutions. If your project has its own resolutions for these packages, make sure they are consistent with the versions above.
+
+---
+
+## Breaking Changes — `react-palm` removed
+
+kepler.gl no longer depends on `react-palm`. The task middleware that handles async side effects is now built into `@kepler.gl/tasks`.
+
+### Store setup migration
+
+**Before (v3.2 and earlier):**
+
+```js
+import {taskMiddleware} from 'react-palm/tasks';
+import {createStore, applyMiddleware} from 'redux';
+import keplerGlReducer from '@kepler.gl/reducers';
+
+const store = createStore(reducer, {}, applyMiddleware(taskMiddleware));
+```
+
+**After (v3.3+) — recommended:**
+
+```js
+import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
+import {createStore, applyMiddleware} from 'redux';
+
+const store = createStore(reducer, {}, applyMiddleware(...enhanceReduxMiddleware()));
+```
+
+**After (v3.3+) — if you prefer importing `taskMiddleware` directly:**
+
+```js
+import {taskMiddleware} from '@kepler.gl/tasks';
+import {createStore, applyMiddleware} from 'redux';
+
+const store = createStore(reducer, {}, applyMiddleware(taskMiddleware));
+```
+
+### Why this matters
+
+If you continue to import `taskMiddleware` from `react-palm/tasks` after upgrading, kepler.gl's internal async operations (file loading, map style fetching, cloud save/load) will **silently stop working** — the middleware will watch the wrong task queue. There is no runtime error; tasks simply never complete.
+
+### What to do
+
+1. Remove `react-palm` from your `package.json` dependencies.
+2. Replace any `import {taskMiddleware} from 'react-palm/tasks'` with `import {taskMiddleware} from '@kepler.gl/tasks'` — or switch to `enhanceReduxMiddleware` from `@kepler.gl/reducers` (recommended).
+3. Run `npm install` / `yarn install` to remove the `react-palm` package.
+
+### `enhanceReduxMiddleware` is unchanged
+
+The `enhanceReduxMiddleware` helper from `@kepler.gl/reducers` — the recommended way to set up the store — continues to work identically. If your app already uses `enhanceReduxMiddleware`, **no migration is needed**.
+
+```js
+// This pattern requires zero changes
+import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
+const middlewares = enhanceReduxMiddleware([thunk, myOtherMiddleware]);
+```
 
 ---
 

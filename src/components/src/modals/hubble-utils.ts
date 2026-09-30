@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {MapView, WebMercatorViewport, type MapViewState} from '@deck.gl/core';
+import {MapView, type MapViewState} from '@deck.gl/core';
 import {
   DEFAULT_MAPBOX_API_URL,
   EMPTY_MAPBOX_STYLE,
@@ -313,8 +313,14 @@ export function getGlobeExportLayers(
   {
     mapIndex,
     mapboxApiAccessToken,
-    mapboxApiUrl
-  }: {mapIndex: number; mapboxApiAccessToken?: string; mapboxApiUrl?: string}
+    mapboxApiUrl,
+    viewState
+  }: {
+    mapIndex: number;
+    mapboxApiAccessToken?: string;
+    mapboxApiUrl?: string;
+    viewState?: MapViewState;
+  }
 ) {
   const globe = keplerState.mapState?.globe;
   const globeBaseLayers = getGlobeBaseLayers({
@@ -323,12 +329,17 @@ export function getGlobeExportLayers(
     mapStyleType: keplerState.mapStyle?.styleType
   });
   const globeTopLayers = getGlobeTopLayers({globe});
-  const dataLayers = computeDeckLayers(keplerState, {
-    mapIndex,
-    primaryMap: mapIndex === 0,
-    mapboxApiAccessToken,
-    mapboxApiUrl
-  });
+  // Same as hubble createKeplerLayers: fold the animated camera into mapState so
+  // zoom-dependent props (scatterplot radiusScale) update each frame.
+  const dataLayers = computeDeckLayers(
+    viewState ? {...keplerState, mapState: {...keplerState.mapState, ...viewState}} : keplerState,
+    {
+      mapIndex,
+      primaryMap: mapIndex === 0,
+      mapboxApiAccessToken,
+      mapboxApiUrl
+    }
+  );
   return [...globeBaseLayers, ...dataLayers, ...globeTopLayers];
 }
 
@@ -343,41 +354,48 @@ export function getAnimatableFilters(keplerState: KeplerState): TimeRangeFilter[
 
 // --- Video export utilities (inlined from @hubble.gl internals) ---
 
+type VideoExportViewState = MapViewState & {
+  width?: number;
+  height?: number;
+  altitude?: number;
+  globe?: {enabled?: boolean};
+};
+
+type ScaledVideoViewState = MapViewState & {
+  width: number;
+  height: number;
+  altitude?: number;
+};
+
 export function scaleToVideoExport(
-  viewState: MapViewState,
+  viewState: VideoExportViewState,
   container: {width: number; height: number}
-): MapViewState & {width: number; height: number} {
-  // In globe mode (and at extreme zooms) the WebMercatorViewport used below can
-  // produce a non-invertible projection matrix, making `unproject` throw. The
-  // Mercator fit-bounds rescaling only makes sense for the flat MapView anyway,
-  // so fall back to simply resizing the viewport to the export container.
-  try {
-    const viewport = new WebMercatorViewport(viewState);
-    const nw = viewport.unproject([0, 0]) as [number, number];
-    const se = viewport.unproject([viewport.width, viewport.height]) as [number, number];
-    const videoViewport = new WebMercatorViewport({
-      ...viewState,
-      width: container.width,
-      height: container.height
-    }).fitBounds([nw, se]);
-    const {height, width, latitude, longitude, zoom, altitude} = videoViewport;
-    return {
-      height,
-      width,
-      latitude,
-      longitude,
-      pitch: viewState.pitch,
-      zoom,
-      bearing: viewState.bearing,
-      altitude
-    } as any;
-  } catch (e) {
-    return {
-      ...viewState,
-      width: container.width,
-      height: container.height
-    } as any;
-  }
+): ScaledVideoViewState {
+  // Keep the camera pointed at the same lat/lng as the main map. The previous
+  // WebMercatorViewport.fitBounds(screen-corners) path recentered the view:
+  // with pitch/bearing it uses the AABB of a trapezoid, and at globe zooms a
+  // mercator unproject silently pulls the target toward the equator.
+  const isGlobe = Boolean(viewState.globe?.enabled);
+  const srcWidth = Number(viewState.width) || 0;
+  const srcHeight = Number(viewState.height) || 0;
+  const canScaleZoom = !isGlobe && srcWidth > 0 && srcHeight > 0;
+  const zoom = canScaleZoom
+    ? viewState.zoom +
+      (Math.log2(Math.min(container.width / srcWidth, container.height / srcHeight)) || 0)
+    : viewState.zoom;
+
+  return {
+    longitude: viewState.longitude,
+    latitude: viewState.latitude,
+    zoom,
+    pitch: viewState.pitch,
+    bearing: viewState.bearing,
+    altitude: viewState.altitude,
+    minZoom: viewState.minZoom,
+    maxZoom: viewState.maxZoom,
+    width: container.width,
+    height: container.height
+  };
 }
 
 export function parseSetCameraType(strCameraType: string, viewState: MapViewState): MapViewState {
@@ -422,4 +440,14 @@ const RESOLUTIONS: Resolution[] = [
 
 export function getResolutionSetting(value: string): Resolution {
   return RESOLUTIONS.find(r => r.value === value) || RESOLUTIONS[0];
+}
+
+/** CSS size of the video-export preview, matching hubble's `_getContainer`. */
+export function getVideoExportContainer(
+  exportVideoWidth: number,
+  resolution: string
+): {width: number; height: number} {
+  const {width, height} = getResolutionSetting(resolution);
+  const aspectRatio = width / height;
+  return {width: exportVideoWidth, height: exportVideoWidth / aspectRatio};
 }

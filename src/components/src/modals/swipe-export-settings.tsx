@@ -196,9 +196,7 @@ const LightSlider: React.FC<any> = props => {
   );
 };
 
-const LightItemSelector: React.FC<any> = props => (
-  <ItemSelector {...props} inputTheme="light" />
-);
+const LightItemSelector: React.FC<any> = props => <ItemSelector {...props} inputTheme="light" />;
 
 const getOptionValue = (o: any) => o.value;
 const displayOption = (o: any) => o.label;
@@ -246,7 +244,9 @@ const AnimationTab: React.FC<{
             step={100}
             minValue={100}
             maxValue={10000}
-            onSlider1Change={(v: number) => { if (!disabled) onChangeDuration(v); }}
+            onSlider1Change={(v: number) => {
+              if (!disabled) onChangeDuration(v);
+            }}
           />
           <VideoLengthDisplay>{printDuration(durationMs)}</VideoLengthDisplay>
         </SliderWrapper>
@@ -275,7 +275,9 @@ const AnimationTab: React.FC<{
             minValue={0}
             maxValue={100}
             step={1}
-            onSlider1Change={(v: number) => { if (!disabled) onChangeStartPct(v); }}
+            onSlider1Change={(v: number) => {
+              if (!disabled) onChangeStartPct(v);
+            }}
             disabled={disabled}
           />
 
@@ -287,7 +289,9 @@ const AnimationTab: React.FC<{
             minValue={0}
             maxValue={100}
             step={1}
-            onSlider1Change={(v: number) => { if (!disabled) onChangeEndPct(v); }}
+            onSlider1Change={(v: number) => {
+              if (!disabled) onChangeEndPct(v);
+            }}
             disabled={disabled}
           />
 
@@ -334,7 +338,10 @@ const SettingsTab: React.FC<{
   const [aspRatio, setAspRatio] = useState<string>('16:9');
 
   const resolutionParts = resolution.split('x').map(Number);
-  const currentResolution: [number, number] = [resolutionParts[0] || 1280, resolutionParts[1] || 720];
+  const currentResolution: [number, number] = [
+    resolutionParts[0] || 1280,
+    resolutionParts[1] || 720
+  ];
 
   return (
     <InputGrid>
@@ -373,7 +380,9 @@ const SettingsTab: React.FC<{
 
       <StyledLabelCell>Quality</StyledLabelCell>
       <LightItemSelector
-        selectedItems={RESOLUTION_OPTIONS.find(o => o.value === resolution) || RESOLUTION_OPTIONS[1]}
+        selectedItems={
+          RESOLUTION_OPTIONS.find(o => o.value === resolution) || RESOLUTION_OPTIONS[1]
+        }
         options={RESOLUTION_OPTIONS.filter(o => o.aspectRatio === aspRatio)}
         multiSelect={false}
         searchable={false}

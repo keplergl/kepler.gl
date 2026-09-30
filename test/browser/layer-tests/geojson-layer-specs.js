@@ -15,6 +15,8 @@ import {
   testFormatLayerDataCases,
   testRenderLayerCases,
   prepareGeojsonDataset,
+  prepareTripTableDataset,
+  speedFilterDomain0,
   geoFilterDomain0,
   geojsonFilterDomain0
 } from 'test/helpers/layer-utils';
@@ -78,6 +80,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const expectedDataKeys = [
           'data',
           'getElevation',
+          'getElevationOffset',
           'getFillColor',
           'getFilterValue',
           'getFiltered',
@@ -108,6 +111,11 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           layerData.data.map(layerData.getElevation),
           [defaultElevation, defaultElevation],
           'getElevation should return correct value'
+        );
+        t.deepEqual(
+          layerData.data.map(layerData.getElevationOffset),
+          [0, 0],
+          'getElevationOffset should default to 0'
         );
         t.deepEqual(
           layerData.data.map(layerData.getFillColor),
@@ -203,6 +211,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const expectedDataKeys = [
           'data',
           'getElevation',
+          'getElevationOffset',
           'getFillColor',
           'getFilterValue',
           'getFiltered',
@@ -322,6 +331,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const expectedDataKeys = [
           'data',
           'getElevation',
+          'getElevationOffset',
           'getFillColor',
           'getFilterValue',
           'getFiltered',
@@ -429,6 +439,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const expectedDataKeys = [
           'data',
           'getElevation',
+          'getElevationOffset',
           'getFillColor',
           'getFilterValue',
           'getFiltered',
@@ -515,6 +526,58 @@ test('#GeojsonLayer -> formatLayerData', async t => {
   t.end();
 });
 
+test('#GeojsonLayer -> formatLayerData -> table column mode with gpu filter', t => {
+  // The GPU filter reads a layer's values through the accessor the layer hands
+  // it, called as getData(dataContainer, feature, fieldIndex). Table column mode
+  // groups rows by id, so the value of each channel is an array, one entry per
+  // point of the grouped feature.
+  const TEST_CASES = [
+    {
+      name: 'Geojson Table.1',
+      layer: {
+        type: 'geojson',
+        id: 'test_geojson_table_layer',
+        config: {
+          dataId,
+          label: 'gps tracks',
+          columnMode: 'table',
+          columns: {
+            id: 'name',
+            lat: 'location-lat',
+            lng: 'location-lng',
+            altitude: 'location-alt'
+          }
+        }
+      },
+      datasets: {
+        [dataId]: prepareTripTableDataset
+      },
+      assert: result => {
+        const {layerData} = result;
+
+        let filterValues;
+        t.doesNotThrow(() => {
+          filterValues = layerData.data.map(layerData.getFilterValue);
+        }, 'getFilterValue should not throw in table column mode');
+
+        // The first feature groups the 8 rows named Thuub that carry a
+        // coordinate; the row with an empty location is dropped.
+        const round = v => Math.round(v * 100) / 100;
+        const groundSpeeds = [0.22, 0.27, 0.32, 0.46, 0.51, 0.3, 0.33, 0.43];
+
+        t.deepEqual(
+          (filterValues?.[0] ?? []).map(point => round(point[0])),
+          groundSpeeds.map(speed => round(speed - speedFilterDomain0)),
+          'getFilterValue should return one filter value per point of the feature'
+        );
+      }
+    }
+  ];
+
+  testFormatLayerDataCases(t, GeojsonLayer, TEST_CASES);
+  t.end();
+});
+
 test('#GeojsonLayer -> renderLayer', t => {
   const filteredIndex = [0, 2, 4];
   const TEST_CASES = [
@@ -550,6 +613,11 @@ test('#GeojsonLayer -> renderLayer', t => {
           ids,
           'Should render 3 deck layers'
         );
+        t.equal(
+          deckLayers[1].constructor.layerName,
+          'OffsetSolidPolygonLayer',
+          'polygon fill should use OffsetSolidPolygonLayer so elevation offset is applied'
+        );
         // polygon fill attributes;
         const {attributes} = deckLayers[1].state.attributeManager;
         const indices = attributes.indices.value;
@@ -559,11 +627,11 @@ test('#GeojsonLayer -> renderLayer', t => {
 
         const expectedFillLayerProp = {
           extruded: false,
-          elevationScale: 5,
+          elevationScale: 1,
           filled: false,
           wireframe: false,
           opacity: 0.8,
-          parameters: {depthTest: false},
+          parameters: {depthTest: true, depthMask: false},
           visible: true,
           autoHighlight: false,
           wrapLongitude: false,
@@ -672,5 +740,97 @@ test('#GeojsonLayer -> renderLayer', t => {
   ];
 
   testRenderLayerCases(t, GeojsonLayer, TEST_CASES);
+  t.end();
+});
+
+test('#GeojsonLayer -> hover overlay caches outline data', t => {
+  const layer = new GeojsonLayer({id: 'hover_geojson'});
+  const polygonFeature = {
+    type: 'Feature',
+    properties: {index: 0},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [1, 0],
+          [1, 1],
+          [0, 0]
+        ]
+      ]
+    }
+  };
+  const objectHovered = {
+    picked: true,
+    index: 0,
+    layer: {props: {id: 'hover_geojson'}},
+    object: polygonFeature
+  };
+
+  const first = layer._getHoverOverlayData(objectHovered);
+  const second = layer._getHoverOverlayData({...objectHovered});
+
+  t.ok(first, 'should create hover overlay data');
+  t.equal(first, second, 'should reuse hover overlay data for the same feature across redraws');
+  t.equal(
+    first[0].geometry.type,
+    'MultiLineString',
+    'should stroke polygons as lines so hover overlay skips fill tessellation'
+  );
+  t.deepEqual(
+    first[0].geometry.coordinates,
+    polygonFeature.geometry.coordinates,
+    'should keep polygon rings as line coordinates'
+  );
+
+  const other = layer._getHoverOverlayData({
+    ...objectHovered,
+    index: 1,
+    object: {...polygonFeature, properties: {index: 1}}
+  });
+  t.notEqual(first, other, 'should rebuild hover overlay data when the hovered feature changes');
+
+  const multi = layer._getHoverOverlayData({
+    picked: true,
+    index: 2,
+    layer: {props: {id: 'hover_geojson'}},
+    object: {
+      type: 'Feature',
+      properties: {index: 2},
+      geometry: {
+        type: 'MultiPolygon',
+        coordinates: [
+          [
+            [
+              [0, 0],
+              [1, 0],
+              [1, 1],
+              [0, 0]
+            ]
+          ],
+          [
+            [
+              [2, 2],
+              [3, 2],
+              [3, 3],
+              [2, 2]
+            ]
+          ]
+        ]
+      }
+    }
+  });
+  t.equal(
+    multi[0].geometry.type,
+    'MultiLineString',
+    'should flatten MultiPolygon rings into lines'
+  );
+  t.equal(multi[0].geometry.coordinates.length, 2, 'should keep one line per polygon ring');
+
+  t.equal(
+    layer._getHoverOverlayData({...objectHovered, picked: false}),
+    null,
+    'should clear hover overlay data when nothing is picked'
+  );
   t.end();
 });

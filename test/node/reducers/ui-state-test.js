@@ -15,6 +15,7 @@ import {
   setExportSelectedDataset,
   setExportDataType,
   setExportFiltered,
+  setExportMapFileName,
   startExportingImage,
   addNotification,
   removeNotification,
@@ -253,6 +254,22 @@ test('#uiStateReducer -> SET_EXPORT_DATA_TYPE', t => {
   };
 
   t.deepEqual(newReducer, expectedState, 'should set the dataType to json');
+
+  t.end();
+});
+
+test('#uiStateReducer -> SET_EXPORT_MAP_FILE_NAME', t => {
+  const newReducer = reducer(INITIAL_UI_STATE, setExportMapFileName('downtown-map'));
+
+  const expectedState = {
+    ...INITIAL_UI_STATE,
+    exportMap: {
+      ...INITIAL_UI_STATE.exportMap,
+      fileName: 'downtown-map'
+    }
+  };
+
+  t.deepEqual(newReducer, expectedState, 'should set the export map file name');
 
   t.end();
 });

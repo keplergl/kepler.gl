@@ -19,7 +19,10 @@ import {
   getTimestampFieldDomain,
   scaleSourceDomainToDestination,
   mergeFilterWithTimeline,
-  createDataContainer
+  createDataContainer,
+  isTimeIntervalFilter,
+  timeWindowOverlapsInterval,
+  applyTimeFilterEndFieldName
 } from '@kepler.gl/utils';
 
 import {FILTER_TYPES} from '@kepler.gl/constants';
@@ -790,17 +793,270 @@ test('filterUtils -> getPolygonFilterFunctor -> aggregation layers (grid/hexagon
     };
 
     const fn2 = getPolygonFilterFunctor(pointLayer, filter, null);
-    t.equal(
-      fn2({position: [0.5, 0.5]}),
-      true,
-      `${type} points: point inside should return true`
-    );
-    t.equal(
-      fn2({position: [10, 10]}),
-      false,
-      `${type} points: point outside should return false`
-    );
+    t.equal(fn2({position: [0.5, 0.5]}), true, `${type} points: point inside should return true`);
+    t.equal(fn2({position: [10, 10]}), false, `${type} points: point outside should return false`);
   });
+
+  t.end();
+});
+
+test('filterUtils -> getPolygonFilterFunctor -> point layer ignores non-finite altitude', t => {
+  const squarePolygon = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-1, -1],
+          [1, -1],
+          [1, 1],
+          [-1, 1],
+          [-1, -1]
+        ]
+      ]
+    }
+  };
+
+  const filter = {value: squarePolygon};
+  const layer = {
+    type: 'point',
+    config: {columnMode: 'points'},
+    getPositionAccessor: () => d => d.position,
+    dataToFeature: []
+  };
+
+  const fn = getPolygonFilterFunctor(layer, filter, null);
+
+  t.equal(fn({position: [0.5, 0.5, 0]}), true, 'finite altitude should keep a point inside');
+  t.equal(
+    fn({position: [0.5, 0.5, null]}),
+    true,
+    'null altitude should not exclude a valid lng/lat'
+  );
+  t.equal(
+    fn({position: [0.5, 0.5, undefined]}),
+    true,
+    'undefined altitude should not exclude a valid lng/lat'
+  );
+  t.equal(
+    fn({position: [10, 10, null]}),
+    false,
+    'null altitude should not include a point outside'
+  );
+  t.equal(
+    fn({position: new Float64Array([0.5, 0.5, 0])}),
+    true,
+    'typed-array lng/lat should be treated as a valid position'
+  );
+  t.equal(
+    fn({position: [null, 0.5, 0]}),
+    false,
+    'null longitude should not coerce to 0 and pass the polygon filter'
+  );
+  t.equal(
+    fn({position: ['', 0.5, 0]}),
+    false,
+    'empty-string longitude should not coerce to 0 and pass the polygon filter'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> getPolygonFilterFunctor -> arc layer validates both endpoints', t => {
+  const squarePolygon = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-1, -1],
+          [1, -1],
+          [1, 1],
+          [-1, 1],
+          [-1, -1]
+        ]
+      ]
+    }
+  };
+
+  const fn = getPolygonFilterFunctor(
+    {
+      type: 'arc',
+      getPositionAccessor: () => d => d.position
+    },
+    {value: squarePolygon},
+    null
+  );
+
+  t.equal(
+    fn({position: [0.5, 0.5, 0, 0.2, 0.2, 0]}),
+    true,
+    'arc with both endpoints inside should pass'
+  );
+  t.equal(
+    fn({position: [0.5, 0.5, null, 0.2, 0.2, undefined]}),
+    true,
+    'null altitude should not exclude a valid arc'
+  );
+  t.equal(
+    fn({position: [0.5, 0.5, 0, null, 0.2, 0]}),
+    false,
+    'missing destination longitude should not reach turfPoint'
+  );
+  t.equal(
+    fn({position: [0.5, 0.5, 0, 10, 10, 0]}),
+    false,
+    'arc with destination outside should fail'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> timeWindowOverlapsInterval', t => {
+  t.equal(timeWindowOverlapsInterval(0, 10, [2, 8]), true, 'window inside feature interval');
+  t.equal(timeWindowOverlapsInterval(0, 10, [-5, 0]), true, 'window touches start');
+  t.equal(timeWindowOverlapsInterval(0, 10, [10, 15]), true, 'window touches end');
+  t.equal(timeWindowOverlapsInterval(0, 10, [11, 20]), false, 'window after feature');
+  t.equal(timeWindowOverlapsInterval(20, 30, [0, 10]), false, 'window before feature');
+  t.equal(
+    timeWindowOverlapsInterval(5, null, [0, 10]),
+    true,
+    'null end is still active once started'
+  );
+  t.equal(timeWindowOverlapsInterval(20, null, [0, 10]), false, 'null end is hidden before start');
+  t.equal(timeWindowOverlapsInterval(null, 10, [0, 10]), false, 'null start is hidden');
+  t.equal(
+    timeWindowOverlapsInterval(10, 0, [0, 20]),
+    false,
+    'inverted interval (end < start) is hidden'
+  );
+  t.equal(
+    timeWindowOverlapsInterval(5, 5, [0, 10]),
+    true,
+    'zero-length interval at a point overlaps'
+  );
+  t.end();
+});
+
+test('filterUtils -> getFilterFunction time interval overlap', t => {
+  const startMapped = [0, 10, 20, 30];
+  const endMapped = [15, 15, 40, null];
+  const field = {
+    filterProps: {mappedValue: startMapped},
+    valueAccessor: () => null,
+    format: ''
+  };
+  const filter = {
+    type: FILTER_TYPES.timeRange,
+    dataId: ['ds'],
+    value: [12, 18],
+    endName: ['end'],
+    endMappedValue: [endMapped]
+  };
+
+  t.ok(isTimeIntervalFilter(filter, 0), 'should detect interval mode from endName');
+
+  const filterFunction = getFilterFunction(field, 'ds', filter, [], null);
+
+  t.equal(filterFunction({index: 0}), true, '[0, 15] overlaps window [12, 18]');
+  t.equal(filterFunction({index: 1}), true, '[10, 15] overlaps window [12, 18]');
+  t.equal(filterFunction({index: 2}), false, '[20, 40] starts after the window');
+  t.equal(filterFunction({index: 3}), false, '[30, inf] has not started yet');
+
+  const instantFn = getFilterFunction(
+    field,
+    'ds',
+    {
+      type: FILTER_TYPES.timeRange,
+      dataId: ['ds'],
+      value: [12, 18]
+    },
+    [],
+    null
+  );
+  t.equal(instantFn({index: 0}), false, 'instant mode still requires the timestamp in range');
+  t.equal(instantFn({index: 1}), false, 'timestamp 10 is outside [12, 18]');
+  t.end();
+});
+
+test('filterUtils -> applyTimeFilterEndFieldName', t => {
+  const dataset = {
+    id: 'ds',
+    fields: [
+      {
+        name: 'start',
+        type: 'timestamp',
+        filterProps: {
+          fieldType: 'timestamp',
+          mappedValue: [0, 10],
+          domain: [0, 10],
+          step: 1
+        }
+      },
+      {
+        name: 'end',
+        type: 'timestamp',
+        filterProps: {
+          fieldType: 'timestamp',
+          mappedValue: [20, 50],
+          domain: [20, 50],
+          step: 1
+        }
+      },
+      {
+        name: 'other',
+        type: 'real',
+        filterProps: {fieldType: 'real', domain: [0, 1], step: 0.1}
+      }
+    ],
+    getColumnFieldIdx(name) {
+      return this.fields.findIndex(f => f.name === name);
+    },
+    getColumnFilterProps(name) {
+      return this.fields.find(f => f.name === name)?.filterProps || null;
+    }
+  };
+
+  const filter = {
+    type: FILTER_TYPES.timeRange,
+    dataId: ['ds'],
+    name: ['start'],
+    fieldIdx: [0],
+    domain: [0, 10],
+    value: [0, 10],
+    step: 1
+  };
+
+  const {filter: withEnd} = applyTimeFilterEndFieldName(filter, {ds: dataset}, 'ds', 'end', 0);
+  t.ok(withEnd, 'should apply a timestamp end field');
+  t.deepEqual(withEnd.endName, ['end'], 'should store endName');
+  t.deepEqual(withEnd.endFieldIdx, [1], 'should store endFieldIdx');
+  t.deepEqual(withEnd.domain, [0, 50], 'domain should span start min to end max');
+  t.deepEqual(withEnd.value, [0, 50], 'full-range window should expand with domain');
+
+  const {filter: sameAsStart} = applyTimeFilterEndFieldName(
+    filter,
+    {ds: dataset},
+    'ds',
+    'start',
+    0
+  );
+  t.equal(sameAsStart, null, 'should reject using the start field as end');
+
+  const {filter: nonTimestamp} = applyTimeFilterEndFieldName(
+    filter,
+    {ds: dataset},
+    'ds',
+    'other',
+    0
+  );
+  t.equal(nonTimestamp, null, 'should reject a non-timestamp end field');
+
+  const {filter: cleared} = applyTimeFilterEndFieldName(withEnd, {ds: dataset}, 'ds', null, 0);
+  t.notOk(cleared.endName, 'clearing end field should remove endName');
+  t.deepEqual(cleared.domain, [0, 10], 'domain should shrink back to the start field');
 
   t.end();
 });

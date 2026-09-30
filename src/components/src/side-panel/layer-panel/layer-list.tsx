@@ -45,10 +45,7 @@ export type LayerListProps = {
   mapStateActions: typeof MapStateActions;
 };
 
-export type LayerListFactoryDeps = [
-  typeof LayerPanelFactory,
-  typeof LayerGroupHeaderFactory
-];
+export type LayerListFactoryDeps = [typeof LayerPanelFactory, typeof LayerGroupHeaderFactory];
 
 const Container = styled.div`
   display: flex;
@@ -169,7 +166,14 @@ function LayerListFactory(
     </NestedLayerContainer>
   );
 
-  const SortableLayerItem = ({layer, idx, panelProps, layerActions, disabled, parent}: {
+  const SortableLayerItem = ({
+    layer,
+    idx,
+    panelProps,
+    layerActions,
+    disabled,
+    parent
+  }: {
     layer: Layer;
     idx: number;
     panelProps: any;
@@ -360,7 +364,8 @@ function LayerListFactory(
         removeLayer: visStateActions.removeLayer,
         zoomToLayer: mapStateActions.fitBounds,
         duplicateLayer: visStateActions.duplicateLayer,
-        layerSetIsValid: visStateActions.layerSetIsValid
+        layerSetIsValid: visStateActions.layerSetIsValid,
+        updateDatasetProps: visStateActions.updateDatasetProps
       }),
       [visStateActions, mapStateActions]
     );

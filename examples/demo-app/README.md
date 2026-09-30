@@ -2,6 +2,17 @@
 
 This is the src code of kepler.gl demo app. You can copy this folder out and run it locally.
 
+> The AI assistant (panel, control, reducer) comes from the published
+> **`@openassistant/kepler-assistant`** package (`^0.0.12`), which temporarily
+> vendors the `@kepler.gl/mcp` map surface (this repo's `src/mcp/` module is
+> removed for now). kepler.gl is a **static website**: it only provides the map
+> surface *interface* (`@kepler.gl/mcp`) plus a WebSocket listener — it never
+> runs an MCP server. Any MCP server (kepler-assistant's own, or any harness
+> like Claude Code / Codex driving the map) is **user-provided** and follows the
+> `@kepler.gl/mcp` interface, while the command registry executes on the
+> in-browser map. See [`docs/NEXT_PLAN.md`](docs/NEXT_PLAN.md) for the permanent
+> separation back into a kepler.gl `src/mcp/` module.
+
 #### Pre requirement
 - [Node.js ^20.x](http://nodejs.org): We use Node to generate the documentation, run a
   development web server, run tests, and generate distributable files. Depending on your system,
@@ -44,12 +55,19 @@ CARTO_CLIENT_ID=<your_carto_client_id>
 FOURSQUARE_CLIENT_ID=<your_foursquare_client_id>
 FOURSQUARE_DOMAIN=<your_foursquare_domain>
 FOURSQUARE_USER_MAPS_URL=<your_foursquare_user_map_url>
+GoogleDriveClientId=<your_google_oauth_web_client_id>
 ```
+
+For Google Drive, create an OAuth 2.0 **Web application** client in [Google Cloud Console](https://console.cloud.google.com/), enable the **Google Drive API**, and add your demo-app origin (e.g. `http://localhost:8080`) to Authorized JavaScript origins. Only the client ID is required (no API key).
 
 #### 3. Start the app
 
 ```sh
 yarn start:local
 ```
+
+#### Optional: runtime `/config.json`
+
+After a production build (`yarn build`), you can override tokens and demo-app settings without rebuilding by placing a `config.json` next to `dist/index.html` (i.e. `examples/demo-app/dist/config.json`). The app fetches origin-root `/config.json` so SPA routes like `/demo/:id` still find it. To read the config from another location, set `window.__KEPLER_CONFIG_HREF__` (Docker: `KEPLER_CONFIG_HREF`) before `bundle.js` loads, or add a `<base href>` and `config.json` resolves against that base. Neither option hosts the app at a browser-visible sub-path — assets and router routes are root-absolute (see `docker/README.md`). Copy `docker/config.example.json` as a starter; see `docker/config.full-example.json` and `docker/README.md` for the full schema, Compose mounts, and `KEPLER_*` env overrides. `mapConfigUrl` only replaces the `samples.json` catalogue — sample rows still need absolute data/config URLs (see `docker/samples.example.json`). `ASSETS_URL` is the gallery tab thumbnail CDN and is not runtime-configurable.
 
 [yarn-install]: https://yarnpkg.com/getting-started/install

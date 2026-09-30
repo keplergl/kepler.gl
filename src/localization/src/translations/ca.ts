@@ -16,6 +16,7 @@ export default {
     stroke: 'traç',
     density: 'densitat',
     height: 'alçada',
+    elevationOffset: "desplaçament d'elevació",
     sum: 'suma',
     pointCount: 'Recompte de Punts'
   },
@@ -27,7 +28,8 @@ export default {
     selectValue: 'Selecciona un Valor',
     enterValue: 'Entra un valor',
     empty: 'buit',
-    selectLayer: 'Selecciona una capa'
+    selectLayer: 'Selecciona una capa',
+    endTimeField: 'Selecciona hora de fi'
   },
   misc: {
     by: '',
@@ -60,7 +62,8 @@ export default {
       alignment: 'Alineació',
       addMoreLabel: 'Afegeix més etiquetes',
       outlineWidth: 'Amplada del contorn',
-      outlineColor: 'Color del contorn'
+      outlineColor: 'Color del contorn',
+      collisionEnabled: 'Amaga les etiquetes superposades'
     }
   },
   sidebar: {
@@ -102,6 +105,9 @@ export default {
     layer: 'Capa',
     appearance: 'Aparença',
     uniqueIdField: 'Camp ID únic',
+    hideNulls: 'Amaga els valors nuls',
+    hideNullsDescription:
+      "Quan està activat, les entitats sense valor de color de fons s'amaguen. Quan està desactivat, es mostren en gris.",
     type: {
       point: 'punt',
       arc: 'arc',
@@ -117,6 +123,8 @@ export default {
       hexagonid: 'H3',
       trip: 'viatge',
       s2: 'S2',
+      geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'mosaic vectorial',
@@ -162,6 +170,10 @@ export default {
     sizeScale: 'Mida escala',
     worldUnitSize: 'Mida de la unitat mundial',
     elevationScale: 'Escala elevació',
+    elevationOffset: "Desplaçament d'elevació",
+    elevationOffsetDescription:
+      "Aixeca els polígons extrudits del terra (mateixes unitats que l'alçada)",
+    elevationOffsetRange: "Rang de desplaçament d'elevació",
     enableElevationZoomFactor: 'Utilitzeu el factor de zoom d’elevació',
     enableElevationZoomFactorDescription:
       "'Ajusteu l'alçada / elevació en funció del factor de zoom actual",
@@ -183,6 +195,8 @@ export default {
     heightMultiplier: "Multiplicador d'alçada",
     fixedHeight: 'Alçada fixa',
     fixedHeightDescription: "Utilitzeu l'alçada sense modificacions",
+    fixedElevation: 'Elevació fixa',
+    fixedElevationDescription: "Utilitzeu el desplaçament d'elevació sense modificacions",
     allowHover: "Mostra informació d'eina",
     allowHoverDescription:
       "Mostra o oculta la informació d'eina en passar el cursor per sobre de les característiques de la capa",
@@ -235,8 +249,10 @@ export default {
     title: 'Anotacions',
     addAnnotation: 'Afegir',
     type: 'Tipus',
-    lineWidth: "Amplada de línia",
-    color: 'Color'
+    lineWidth: 'Amplada de línia',
+    color: 'Color',
+    textSide: 'Costat del text',
+    textPlacement: 'Col·locació'
   },
   effectDescription: {
     lightAndShadow:
@@ -286,18 +302,38 @@ export default {
     timeFilterSync: 'Conjunts sincronitzats',
     timeLayerSync: 'Vincula amb la línia de temps de la capa',
     timeLayerUnsync: 'Desvincula de la línia de temps de la capa',
-    column: 'Columna'
+    column: 'Columna',
+    timeIntervalEndField: 'Hora de fi',
+    timeIntervalEndFieldHint:
+      'Opcional. Les entitats romanen visibles mentre la finestra de reproducció se superposa a aquest interval.',
+    timezone: 'Zona horària',
+    selectTimezone: 'Selecciona la zona horària de visualització'
   },
   datasetTitle: {
     showDataTable: 'Mostra taula de dades',
-    removeDataset: 'Elimina conjunt de dades'
+    removeDataset: 'Elimina conjunt de dades',
+    refreshDataset: 'Actualitza el conjunt de dades',
+    refreshFailed: 'Error d’actualització',
+    refreshSettings: 'Configuració d’actualització',
+    refreshOff: 'Off',
+    refresh10s: '10s',
+    refresh15s: '15s',
+    refresh1m: '1 min',
+    refresh5m: '5 min',
+    refresh15m: '15 min',
+    refreshCustom: 'Personalitzat'
   },
   datasetInfo: {
     rowCount: '{rowCount} files',
     vectorTile: 'Mosaic vectorial',
     rasterTile: 'Mosaic ràster',
     wmsTile: 'Mosaic WMS',
-    tile3d: 'Mosaic 3D'
+    tile3d: 'Mosaic 3D',
+    remoteFile: '{rowCount} files (remot)',
+    refreshInterval: 'Actualitza',
+    refreshCustomSeconds: 'Segons',
+    refreshing: 'S’està actualitzant…',
+    refreshingPercent: 'S’està actualitzant {percent}%'
   },
   tooltip: {
     hideLayer: 'oculta la capa',
@@ -313,14 +349,19 @@ export default {
     layerSettings: 'Configuració de capa',
     closePanel: 'Tanca panel actual',
     switchToDualView: 'Canvia a la vista de mapa dual',
-    selectSplitMode: "Selecciona el mode de vista del mapa",
-    singleView: "Únic",
-    dualView: "Doble",
-    swipeView: "Comparar",
+    selectSplitMode: 'Selecciona el mode de vista del mapa',
+    singleView: 'Únic',
+    dualView: 'Doble',
+    swipeView: 'Comparar',
     showLegend: 'mostra llegenda',
     disable3DMap: 'Desactiva mapa 3D',
     DrawOnMap: 'Dibuixa al mapa',
+    copyAllSketches: 'Copia tots els esbossos al porta-retalls com a GeoJSON',
+    convertToLayer: 'Converteix els esbossos en una capa GeoJSON i esborra el dibuix',
     selectLocale: 'Selecciona configuració regional',
+    switchToLightTheme: 'Canvia al tema clar',
+    switchToDarkTheme: 'Canvia al tema fosc',
+    switchToSpaceTheme: 'Canvia al tema space',
     showAiAssistantPanel: 'Mostra el tauler de AI Assistant',
     hideAiAssistantPanel: 'Oculta el tauler de AI Assistant',
     hideLayerPanel: 'Oculta el tauler de capes',
@@ -346,8 +387,10 @@ export default {
     syncTimelineEnd: 'Fi del període de temps del filtre actual',
     showEffectPanel: "Mostra el panell d'efectes",
     hideEffectPanel: "Amaga el panell d'efectes",
-    showAnnotationPanel: "Mostra les anotacions",
-    hideAnnotationPanel: "Amaga les anotacions",
+    showChartPanel: 'Mostra els gràfics',
+    hideChartPanel: 'Amaga els gràfics',
+    showAnnotationPanel: 'Mostra les anotacions',
+    hideAnnotationPanel: 'Amaga les anotacions',
     removeAnnotation: "Elimina l'anotació",
     duplicateAnnotation: "Duplica l'anotació",
     hideAnnotation: "Amaga l'anotació",
@@ -355,7 +398,13 @@ export default {
     annotationSettings: "Configuració de l'anotació",
     removeEffect: "Elimina l'efecte",
     disableEffect: "Desactiva l'efecte",
-    effectSettings: "Configuració de l'efecte"
+    effectSettings: "Configuració de l'efecte",
+    editLayerJson: 'Edita JSON de la capa',
+    editFilterJson: 'Edita JSON del filtre',
+    editEffectJson: "Edita JSON de l'efecte",
+    editViewportJson: 'Edita JSON de la vista',
+    editAnimationJson: "Edita JSON de l'animació",
+    editChartJson: 'Edita JSON del gràfic'
   },
   toolbar: {
     exportImage: 'Exporta imatge',
@@ -365,8 +414,13 @@ export default {
     shareMapURL: 'Comparteix URL del mapa',
     saveMap: 'Desa mapa',
     select: 'selecciona',
+    point: 'punt',
+    line: 'línia',
     polygon: 'polígon',
     rectangle: 'rectangle',
+    circle: 'cercle',
+    copyAll: 'Copia-ho tot',
+    convertToLayer: 'Converteix\na capa',
     hide: 'amaga',
     show: 'mostra',
     ...LOCALES
@@ -375,7 +429,15 @@ export default {
     filterLayer: 'Filtra capes',
     filterLayerDisabled: 'Les geometries no poligonals no es poden utilitzar per filtrar',
     copyGeometry: 'Copia geometria',
-    noLayersToFilter: 'No hi ha capes per filtrar'
+    extractData: 'Extreu dades',
+    extractFromLayer: 'de la capa {layerName}',
+    editProperties: 'Edita propietats',
+    propertyName: 'Propietat',
+    propertyValue: 'Valor',
+    removeProperty: 'Suprimeix la propietat',
+    polygonFilter: 'Filtre de polígon',
+    noLayersToFilter: 'No hi ha capes per filtrar',
+    noLayersToExtract: 'No hi ha capes per extreure'
   },
   exportVideoModal: {
     animation: 'Animació',
@@ -413,7 +475,9 @@ export default {
       resolutionDescription: 'Alta resolució és millor per a les impressions.',
       resolutionPlaceholder: 'Selecciona resolució...',
       mapLegendTitle: 'Llegenda del mapa',
-      mapLegendAdd: 'Afegir llegenda al mapa'
+      mapLegendAdd: 'Afegir llegenda al mapa',
+      chartsTitle: 'Gràfics',
+      chartsAdd: 'Afegir gràfics al mapa'
     },
     exportVideo: {
       animation: 'Animació',
@@ -474,6 +538,10 @@ export default {
     saveMap: {
       title: 'Emmagatzematge al núvol',
       subtitle: 'Accedeix per desar el mapa al teu emmagatzematge al núvol'
+    },
+    providerSelect: {
+      disclaimer:
+        'Inicieu la sessió amb el vostre compte. Els mapes es desen al vostre emmagatzematge personal del proveïdor que trieu, no a Kepler.gl.'
     },
     exportMap: {
       formatTitle: 'Format de mapa',
@@ -571,13 +639,20 @@ export default {
   header: {
     visibleLayers: 'Capes visibles',
     layerLegend: 'Llegenda de capes',
-    annotations: 'Anotacions'
+    annotations: 'Anotacions',
+    charts: 'Gràfics'
   },
   interactions: {
     tooltip: 'Suggeriment',
     brush: 'Pinzell',
     coordinate: 'Coordenades',
-    geocoder: 'Geocodificador'
+    geocoder: 'Geocodificador',
+    legend: 'Llegenda',
+    legendHint: 'Tria quines capes apareixen a la llegenda. Les capes segueixen al mapa.',
+    legendEmpty: 'Afegeix una capa per triar què apareix a la llegenda.',
+    legendHiddenByGroup: 'Oculta perquè un grup està exclòs de la llegenda',
+    legendHideInvisible: 'Amaga les capes ocultes a la llegenda',
+    legendAllLayers: 'Totes les capes'
   },
   layerBlending: {
     title: 'Combinació de capes',
@@ -662,16 +737,23 @@ export default {
   fileUploader: {
     message: "Arrossega i deixa anar l'arxiu aquí",
     chromeMessage:
-      '*usuari de Chrome: la mida màxima són 250mb, si has de carrgar un arxiu més gran fes servir Safari',
+      "*Els fitxers s'analitzen al navegador. Els fitxers grans poden esgotar la memòria; useu un tileset per a conjunts de dades molt grans.",
     disclaimer:
       '*kepler.gl és una aplicació a la banda client que no es recolza en cap servidor. Les dades només existeixen a la teva màquina/navegador. ' +
       "No s'envien dades ni mapes a cap servidor.",
     configUploadMessage:
-      'Carrega {fileFormatNames} o un mapa desat en **Json**. Més informació sobre [**supported file formats**]',
+      'Carrega un fitxer compatible o un mapa desat en **Json**. Més informació sobre [**supported file formats**]',
     browseFiles: 'navega pels teus arxius',
     uploading: 'Carregant',
+    downloading: 'Descarregant',
     fileNotSupported: "L'arxiu {errorFiles} no és compatible.",
-    or: 'o'
+    or: 'o',
+    dropMessage: "Arrossega i deixa anar l'arxiu aquí, {browse}, o",
+    urlPlaceholder: 'Introdueix l’URL del conjunt de dades',
+    fetch: 'Carrega',
+    format: 'Format',
+    formatAuto: 'Auto',
+    cors: 'L’URL ha de permetre [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   tilesetSetup: {
     header: 'Configurar mosaics vectorials',

@@ -84,6 +84,8 @@ const EXCLUDED_DEFAULT_FIELDS = [
   'cbgs',
   'h3',
   's2',
+  'a5',
+  'geohash',
   // Geographic coords (but not z/elevation/altitude
   // since that might be a metric)
   'lat',

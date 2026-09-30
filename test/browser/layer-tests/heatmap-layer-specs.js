@@ -15,8 +15,9 @@ import {gpsPointBounds} from 'test/fixtures/test-csv-data';
 
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {copyTableAndUpdate} from '@kepler.gl/table';
+import {convertGeometryToWKB} from '@loaders.gl/gis';
 
-const {HeatmapLayer} = KeplerGlLayers;
+const {HeatmapLayer, PointLayer} = KeplerGlLayers;
 
 const columns = {
   lat: 'lat',
@@ -34,17 +35,109 @@ test('#HeatmapLayer -> contructor', t => {
         },
         test: layer => {
           t.equal(layer.config.visConfig.radius, 20, 'Heatmap default radius should be 20');
+          t.ok(
+            layer.visConfigSettings.radius.range[0] > 0,
+            'heatmap radius should have a positive minimum'
+          );
           t.ok(layer.config.dataId === 'taro', 'heatmaplayer dataId should be correct');
           t.ok(layer.type === 'heatmap', 'type should be heatmap');
           t.ok(layer.isAggregated === true, 'heatmaplayer is aggregated');
           t.ok(layer.config.label === 'test heatmap layer', 'label should be correct');
           t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
+          t.equal(layer.config.colorScale, 'quantize', 'heatmap legend should use quantize scale');
+          t.deepEqual(layer.config.colorDomain, [0, 1], 'heatmap legend domain should be 0-1');
+          t.notOk(
+            layer.visualChannels.color,
+            'color is legend-only and should not be a visual channel'
+          );
+          t.ok(
+            layer.getLegendVisualChannels().color,
+            'should expose a color channel for the legend'
+          );
+          t.deepEqual(
+            Object.keys(layer.getLegendVisualChannels()),
+            ['color'],
+            'legend should not show weight when no weight field is set'
+          );
         }
       }
     ]
   };
 
   testCreateCases(t, HeatmapLayer, TEST_CASES.CREATE);
+  t.end();
+});
+
+test('#HeatmapLayer -> assignConfigToLayer does not copy colorField', t => {
+  const pointLayer = new PointLayer({
+    dataId: 'taro',
+    isVisible: true,
+    label: 'points'
+  });
+  pointLayer.updateLayerConfig({
+    colorField: {name: 'trip_distance', type: 'real'},
+    colorScale: 'quantile',
+    colorDomain: [0, 100]
+  });
+
+  const heatmapLayer = new HeatmapLayer({
+    dataId: 'taro',
+    isVisible: true,
+    label: 'heatmap'
+  });
+  heatmapLayer.assignConfigToLayer(pointLayer.config, pointLayer.visConfigSettings);
+
+  t.equal(
+    heatmapLayer.config.colorField,
+    null,
+    'should not copy colorField from the previous layer type'
+  );
+  t.equal(
+    heatmapLayer.config.colorScale,
+    'quantize',
+    'should keep quantize legend scale after type change'
+  );
+  t.deepEqual(
+    heatmapLayer.config.colorDomain,
+    [0, 1],
+    'should keep 0-1 density domain after type change'
+  );
+  t.ok(
+    heatmapLayer.getLegendVisualChannels().color,
+    'legend should still expose the density color ramp'
+  );
+
+  t.end();
+});
+
+test('#HeatmapLayer -> getLegendVisualChannels includes weight field', t => {
+  const heatmapLayer = new HeatmapLayer({
+    dataId: 'taro',
+    isVisible: true,
+    label: 'heatmap'
+  });
+
+  t.deepEqual(
+    Object.keys(heatmapLayer.getLegendVisualChannels()),
+    ['color'],
+    'legend should only show the color ramp by default'
+  );
+
+  heatmapLayer.updateLayerConfig({
+    weightField: {name: 'trip_distance', type: 'real'}
+  });
+
+  t.deepEqual(
+    Object.keys(heatmapLayer.getLegendVisualChannels()),
+    ['color', 'weight'],
+    'legend should include weight when a weight field is selected'
+  );
+  t.equal(
+    heatmapLayer.getVisualChannelDescription('weight').measure,
+    'trip_distance',
+    'weight legend should use the selected field name'
+  );
+
   t.end();
 });
 
@@ -375,6 +468,111 @@ test('#HeatmapLayer -> geojson mode handles Point, LineString, Polygon geometrie
   t.ok(minLat <= 37.8, 'minLat should include southernmost point');
   t.ok(maxLat >= 37.9, 'maxLat should include northernmost point');
 
+  const data = layer.calculateDataAttribute(mockDataset, null);
+  t.equal(data.length, 3, 'should emit a heatmap point for Point, LineString, and Polygon');
+  t.deepEqual(data[0].position, [-122.4, 37.8], 'Point heatmap position should be the point');
+  t.ok(Number.isFinite(data[1].position[0]), 'LineString heatmap position should be finite');
+  t.ok(Number.isFinite(data[2].position[0]), 'Polygon heatmap position should be finite');
+
+  t.end();
+});
+
+function createHeatmapGeojsonLayer(values) {
+  const layer = new HeatmapLayer({
+    dataId: 'test',
+    label: 'test',
+    columns: {geojson: {value: '_geojson', fieldIdx: 0}},
+    columnMode: 'geojson'
+  });
+  layer.config.columns = {
+    lat: {value: null, fieldIdx: -1},
+    lng: {value: null, fieldIdx: -1},
+    geoarrow: {value: null, fieldIdx: -1},
+    geojson: {value: '_geojson', fieldIdx: 0}
+  };
+  layer.config.columnMode = 'geojson';
+
+  const mockDataset = {
+    dataContainer: {
+      numRows: () => values.length,
+      valueAt: index => values[index]
+    },
+    filteredIndex: values.map((_, i) => i),
+    id: 'test'
+  };
+  layer.updateLayerMeta(mockDataset);
+  return {layer, mockDataset};
+}
+
+test('#HeatmapLayer -> geojson mode parses Feature objects, WKT, and WKB', t => {
+  const point = {
+    type: 'Feature',
+    geometry: {type: 'Point', coordinates: [-122.4, 37.8]},
+    properties: {}
+  };
+  const line = {
+    type: 'Feature',
+    geometry: {
+      type: 'LineString',
+      coordinates: [
+        [-122.4, 37.8],
+        [-122.5, 37.9]
+      ]
+    },
+    properties: {}
+  };
+  const polygon = {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-122.4, 37.8],
+          [-122.5, 37.8],
+          [-122.5, 37.9],
+          [-122.4, 37.9],
+          [-122.4, 37.8]
+        ]
+      ]
+    },
+    properties: {}
+  };
+
+  // Feature objects (how processGeojson stores rows)
+  const fromObjects = createHeatmapGeojsonLayer([point, line, polygon]);
+  t.equal(
+    fromObjects.layer.calculateDataAttribute(fromObjects.mockDataset, null).length,
+    3,
+    'Feature objects should produce heatmap points for Point, LineString, and Polygon'
+  );
+  t.deepEqual(fromObjects.layer.centroids[0], [-122.4, 37.8], 'Point Feature centroid');
+
+  // WKT strings (CSV / PostGIS geometry columns)
+  const fromWkt = createHeatmapGeojsonLayer([
+    'POINT (-122.4 37.8)',
+    'LINESTRING (-122.4 37.8, -122.5 37.9)',
+    'POLYGON ((-122.4 37.8, -122.5 37.8, -122.5 37.9, -122.4 37.9, -122.4 37.8))'
+  ]);
+  t.equal(
+    fromWkt.layer.calculateDataAttribute(fromWkt.mockDataset, null).length,
+    3,
+    'WKT strings should produce heatmap points for POINT, LINESTRING, and POLYGON'
+  );
+  t.deepEqual(fromWkt.layer.centroids[0], [-122.4, 37.8], 'WKT POINT centroid');
+
+  // WKB bytes (DuckDB / GeoParquet geometry columns)
+  const fromWkb = createHeatmapGeojsonLayer([
+    new Uint8Array(convertGeometryToWKB(point.geometry)),
+    new Uint8Array(convertGeometryToWKB(line.geometry)),
+    new Uint8Array(convertGeometryToWKB(polygon.geometry))
+  ]);
+  t.equal(
+    fromWkb.layer.calculateDataAttribute(fromWkb.mockDataset, null).length,
+    3,
+    'WKB bytes should produce heatmap points for Point, LineString, and Polygon'
+  );
+  t.deepEqual(fromWkb.layer.centroids[0], [-122.4, 37.8], 'WKB Point centroid');
+
   t.end();
 });
 
@@ -387,11 +585,7 @@ test('#HeatmapLayer -> isInPolygon with geojson mode', t => {
   });
 
   // Set up centroids manually
-  layer.centroids = [
-    [-122.4, 37.8],
-    [-122.5, 37.9],
-    null
-  ];
+  layer.centroids = [[-122.4, 37.8], [-122.5, 37.9], null];
 
   // Rectangle polygon that contains the first centroid but not the second
   const filterPolygon = {
@@ -414,22 +608,10 @@ test('#HeatmapLayer -> isInPolygon with geojson mode', t => {
     }
   };
 
-  t.ok(
-    layer.isInPolygon(null, 0, filterPolygon),
-    'first point should be inside polygon'
-  );
-  t.notOk(
-    layer.isInPolygon(null, 1, filterPolygon),
-    'second point should be outside polygon'
-  );
-  t.notOk(
-    layer.isInPolygon(null, 2, filterPolygon),
-    'null centroid should return false'
-  );
-  t.notOk(
-    layer.isInPolygon(null, 99, filterPolygon),
-    'out-of-bounds index should return false'
-  );
+  t.ok(layer.isInPolygon(null, 0, filterPolygon), 'first point should be inside polygon');
+  t.notOk(layer.isInPolygon(null, 1, filterPolygon), 'second point should be outside polygon');
+  t.notOk(layer.isInPolygon(null, 2, filterPolygon), 'null centroid should return false');
+  t.notOk(layer.isInPolygon(null, 99, filterPolygon), 'out-of-bounds index should return false');
 
   t.end();
 });

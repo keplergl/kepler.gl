@@ -6,7 +6,15 @@
 
 function noop() {
   return {
-    find: () => ({length: 0, at: noop, first: noop, text: () => '', simulate: noop, prop: () => undefined, props: () => ({})}),
+    find: () => ({
+      length: 0,
+      at: noop,
+      first: noop,
+      text: () => '',
+      simulate: noop,
+      prop: () => undefined,
+      props: () => ({})
+    }),
     length: 0,
     at: noop,
     first: noop,

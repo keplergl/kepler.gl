@@ -13,7 +13,8 @@ import {
   setMapSplitMode,
   setSwipeComparePercentage,
   setMapViewMode,
-  globeConfigChange
+  globeConfigChange,
+  applyMapState
 } from '@kepler.gl/actions';
 
 import {
@@ -66,6 +67,106 @@ test('#mapStateReducer -> UPDATE_MAP', t => {
   const newState = reducer(undefined, updateMap(mapUpdate, 0));
 
   t.deepEqual(newState, expectedState, 'should update map longitude and latitude');
+
+  t.end();
+});
+
+test('#mapStateReducer -> APPLY_MAP_STATE', t => {
+  const next = reducer(
+    undefined,
+    applyMapState({
+      latitude: 40.7128,
+      longitude: -74.006,
+      zoom: 11,
+      pitch: 30,
+      width: 10,
+      height: 10
+    })
+  );
+
+  t.equal(next.latitude, 40.7128, 'should apply latitude from JSON');
+  t.equal(next.longitude, -74.006, 'should apply longitude from JSON');
+  t.equal(next.zoom, 11, 'should apply zoom from JSON');
+  t.equal(next.pitch, 30, 'should apply pitch from JSON');
+  t.equal(next.width, INITIAL_MAP_STATE.width, 'should preserve current width');
+  t.equal(next.height, INITIAL_MAP_STATE.height, 'should preserve current height');
+
+  t.end();
+});
+
+test('#mapStateReducer -> APPLY_MAP_STATE split viewports', t => {
+  let splitState = reducer(INITIAL_MAP_STATE, toggleSplitMap());
+  splitState = reducer(splitState, toggleSplitMapViewport({isViewportSynced: false}));
+  splitState = reducer(
+    splitState,
+    updateMap({latitude: 10, longitude: 20, zoom: 4, width: 400, height: 300}, 0)
+  );
+  splitState = reducer(
+    splitState,
+    updateMap({latitude: 30, longitude: 40, zoom: 6, width: 400, height: 300}, 1)
+  );
+
+  const leftSize = {
+    width: splitState.splitMapViewports[0].width,
+    height: splitState.splitMapViewports[0].height
+  };
+  const rightSize = {
+    width: splitState.splitMapViewports[1].width,
+    height: splitState.splitMapViewports[1].height
+  };
+
+  const afterSizes = reducer(
+    splitState,
+    applyMapState({
+      splitMapViewports: [
+        {...splitState.splitMapViewports[0], width: 1, height: 2},
+        {...splitState.splitMapViewports[1], width: 3, height: 4}
+      ]
+    })
+  );
+
+  t.deepEqual(
+    {
+      width: afterSizes.splitMapViewports[0].width,
+      height: afterSizes.splitMapViewports[0].height
+    },
+    leftSize,
+    'should preserve left split viewport dimensions'
+  );
+  t.deepEqual(
+    {
+      width: afterSizes.splitMapViewports[1].width,
+      height: afterSizes.splitMapViewports[1].height
+    },
+    rightSize,
+    'should preserve right split viewport dimensions'
+  );
+
+  const afterRight = reducer(
+    splitState,
+    applyMapState({latitude: 51.5, longitude: -0.1, zoom: 8}, 1)
+  );
+
+  t.equal(
+    afterRight.splitMapViewports[1].latitude,
+    51.5,
+    'should update the targeted split viewport'
+  );
+  t.equal(
+    afterRight.splitMapViewports[1].longitude,
+    -0.1,
+    'should update the targeted split viewport longitude'
+  );
+  t.equal(
+    afterRight.splitMapViewports[1].zoom,
+    8,
+    'should update the targeted split viewport zoom'
+  );
+  t.equal(
+    afterRight.splitMapViewports[0].latitude,
+    splitState.splitMapViewports[0].latitude,
+    'should not move the other split viewport'
+  );
 
   t.end();
 });
@@ -370,6 +471,31 @@ test('#mapStateReducer -> FIT_BOUNDS', t => {
   t.end();
 });
 
+test('#mapStateReducer -> FIT_BOUNDS with padding', t => {
+  const bounds = [5.668343999999995, 45.111511000000014, 5.852471999999996, 45.26800200000002];
+  const mapUpdate = {
+    width: 640,
+    height: 480
+  };
+
+  const stateWidthMapDimension = reducer(undefined, updateMap(mapUpdate, 0));
+  const unpadded = reducer(stateWidthMapDimension, fitBounds(bounds));
+  const paddedLeft = reducer(stateWidthMapDimension, fitBounds(bounds, {left: 300}));
+  const paddedUniform = reducer(stateWidthMapDimension, fitBounds(bounds, 80));
+
+  t.ok(
+    paddedLeft.zoom < unpadded.zoom,
+    'left padding should zoom out so bounds fit in the remaining viewport'
+  );
+  t.ok(
+    paddedLeft.longitude < unpadded.longitude,
+    'left padding should pan west so bounds sit in the visible area to the right of the side panel'
+  );
+  t.ok(paddedUniform.zoom < unpadded.zoom, 'uniform padding should zoom out');
+
+  t.end();
+});
+
 test('#mapStateReducer -> FIT_BOUNDS - split map and unsynced viewports', t => {
   // default input and output in @mapbox/geo-viewport
   // https://github.com/mapbox/geo-viewport
@@ -469,7 +595,7 @@ test('#mapStateReducer -> FIT_BOUNDS - globe mode clamps zoom to globe range', t
   );
 
   // Test with very small bounds that would zoom in very far (above GLOBE_MAX_ZOOM)
-  const smallBounds = [5.668, 45.111, 5.670, 45.113];
+  const smallBounds = [5.668, 45.111, 5.67, 45.113];
   state = reducer(state, fitBounds(smallBounds));
 
   t.ok(

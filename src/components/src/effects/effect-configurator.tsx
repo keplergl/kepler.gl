@@ -255,7 +255,7 @@ export default function EffectConfiguratorFactory(
       parameters => {
         updateEffectConfig(null, id, {
           parameters: {
-            ...(parameters.timestamp ? {timestamp: parameters.timestamp} : null),
+            ...(parameters.timestamp != null ? {timestamp: parameters.timestamp} : null),
             ...(parameters.timezone ? {timezone: parameters.timezone} : null),
             ...(parameters.timeMode ? {timeMode: parameters.timeMode} : null)
           }

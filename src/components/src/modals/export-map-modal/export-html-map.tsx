@@ -3,7 +3,12 @@
 
 import React from 'react';
 import {StyledExportSection, StyledType, CheckMark} from '../../common/styled-components';
-import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
+import {
+  StyledExportMapNote,
+  StyledWarning,
+  ExportMapLink,
+  IncludeLayerApiKeysToggle
+} from './components';
 import {
   EXPORT_HTML_MAP_MODE_OPTIONS,
   EXPORT_HTML_MAP_DOC,
@@ -14,13 +19,25 @@ import {injectIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {IntlShape} from 'react-intl';
 
-import {setUserMapboxAccessToken, setExportHTMLMapMode, ActionHandler} from '@kepler.gl/actions';
+import {
+  setUserMapboxAccessToken,
+  setExportHTMLMapMode,
+  setExportIncludeLayerApiKeys,
+  ActionHandler
+} from '@kepler.gl/actions';
 
 const ExportMapStyledExportSection = styled(StyledExportSection)`
+  margin: 8px 0 12px;
+
+  &.export-map-modal__html-options {
+    margin-top: 20px;
+  }
+
   .disclaimer {
     font-size: ${props => props.theme.inputFontSize};
     color: ${props => props.theme.inputColor};
-    margin-top: 12px;
+    line-height: 1.35;
+    margin-top: 8px;
   }
 `;
 
@@ -47,15 +64,23 @@ const StyledInput = styled.input<StyledInputProps>`
 const BigStyledTile = styled(StyledType)`
   height: unset;
   width: unset;
+  padding: 6px;
   img {
-    width: 180px;
-    height: 120px;
+    width: 120px;
+    height: 80px;
+  }
+  p {
+    font-size: 11px;
+    line-height: 1.3;
+    margin: 6px 0 0;
   }
 `;
 
 type ExportHtmlMapProps = {
   onChangeExportMapHTMLMode: ActionHandler<typeof setExportHTMLMapMode>;
+  onChangeExportIncludeLayerApiKeys: ActionHandler<typeof setExportIncludeLayerApiKeys>;
   onEditUserMapboxAccessToken: ActionHandler<typeof setUserMapboxAccessToken>;
+  includeLayerApiKeys?: boolean;
   options: {
     userMapboxToken?: string;
     mode?: string;
@@ -72,19 +97,25 @@ function ExportHtmlMapFactory(): React.ComponentType<ExportHtmlMapProps> {
     onChangeExportMapHTMLMode = () => {
       return;
     },
+    onChangeExportIncludeLayerApiKeys = () => {
+      return;
+    },
     onEditUserMapboxAccessToken = () => {
       return;
     },
+    includeLayerApiKeys = false,
     options = {},
     intl
   }) => (
     <div>
-      <StyledExportMapSection>
-        <div className="description" />
-        <div className="selection">
-          <FormattedMessage id={'modal.exportMap.html.selection'} />
-        </div>
-      </StyledExportMapSection>
+      <StyledExportMapNote>
+        <FormattedMessage id={'modal.exportMap.html.selection'} />
+      </StyledExportMapNote>
+      <IncludeLayerApiKeysToggle
+        id="export-include-layer-api-keys-html"
+        checked={includeLayerApiKeys}
+        onChange={onChangeExportIncludeLayerApiKeys}
+      />
       <ExportMapStyledExportSection className="export-map-modal__html-options">
         <div className="description">
           <div className="title">

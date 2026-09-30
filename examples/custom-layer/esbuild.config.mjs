@@ -38,12 +38,11 @@ const config = {
   },
   plugins: [
     // styled-components: @hubble.gl/react nests its own copy.
-    // react-palm: @kepler.gl/actions, reducers, table, tasks each nest their own copy.
-    // Both are singletons that break when loaded more than once.
+    // Singleton that breaks when loaded more than once.
     {
       name: 'dedupe-singletons',
       setup(build) {
-        build.onResolve({filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$)/}, async args => {
+        build.onResolve({filter: /^(styled-components|react$|react-dom$)/}, async args => {
           if (args.pluginData?.deduped) return;
           const result = await build.resolve(args.path, {
             resolveDir: __dirname,

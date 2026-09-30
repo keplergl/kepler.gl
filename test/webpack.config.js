@@ -18,9 +18,7 @@ const COMMON_CONFIG = {
   // @turf/jsts ships a minified build that references a .map file it doesn't
   // include — suppress the resulting source-map-loader noise so real warnings
   // are not lost in the output.
-  ignoreWarnings: [
-    {module: /@turf\/jsts/}
-  ],
+  ignoreWarnings: [{module: /@turf\/jsts/}],
 
   devServer: {
     client: {
@@ -45,7 +43,10 @@ const COMMON_CONFIG = {
       enzyme: resolve(TEST_DIR, 'helpers/enzyme-mock.js'),
       // @probe.gl/test-utils only exports "." in its exports map; webpack 5 blocks
       // the /polyfill subpath. Alias directly to the file to bypass the restriction.
-      '@probe.gl/test-utils/polyfill': resolve(__dirname, '../node_modules/@probe.gl/test-utils/polyfill.js')
+      '@probe.gl/test-utils/polyfill': resolve(
+        __dirname,
+        '../node_modules/@probe.gl/test-utils/polyfill.js'
+      )
     },
     // webpack 5 no longer ships node core polyfills; the browser test bundle
     // (tape, pngjs, etc.) still relies on a handful of them.

@@ -153,6 +153,34 @@ const TEST_CASES = [
     }
   },
   {
+    testMessage: 'interactionConfig (legend present only on later configs)',
+    propName: 'interactionConfig',
+    configsToMerge: [
+      {
+        tooltip: {enabled: true, fieldsToShow: {}, compareMode: false, compareType: 'absolute'},
+        brush: {enabled: false, size: 0.5},
+        coordinate: {enabled: false}
+      },
+      {
+        tooltip: {enabled: false, fieldsToShow: {}, compareMode: false, compareType: 'absolute'},
+        brush: {enabled: false, size: 0.5},
+        coordinate: {enabled: false},
+        legend: {enabled: true, hideInvisibleLayers: true}
+      }
+    ],
+    expected: {
+      tooltip: {
+        enabled: true,
+        fieldsToShow: {},
+        compareMode: false,
+        compareType: 'absolute'
+      },
+      brush: {enabled: false, size: 0.5},
+      coordinate: {enabled: false},
+      legend: {enabled: true, hideInvisibleLayers: true}
+    }
+  },
+  {
     testMessage: 'layerBlending (with a majority of "additive" values)',
     propName: 'layerBlending',
     configsToMerge: ['normal', 'additive', 'additive'],
@@ -183,7 +211,18 @@ const TEST_CASES = [
       {currentTime: 500, speed: 1},
       {currentTime: 100, speed: 5}
     ],
-    expected: {currentTime: 100, speed: 1}
+    expected: {currentTime: 100, speed: 1, timeFormat: null, timezone: null}
+  },
+  {
+    testMessage: 'animationConfig with timezone and time format',
+    propName: 'animationConfig',
+    configsToMerge: [
+      {currentTime: 500, speed: 1, timeFormat: 'L LTS', timezone: 'America/Guayaquil'},
+      {currentTime: 300, speed: 2, timeFormat: null, timezone: 'UTC'},
+      {currentTime: 100, speed: 5, timeFormat: null, timezone: 'America/Guayaquil'},
+      {currentTime: 200, speed: 3}
+    ],
+    expected: {currentTime: 100, speed: 1, timeFormat: 'L LTS', timezone: 'America/Guayaquil'}
   },
   {
     testMessage: 'editor',

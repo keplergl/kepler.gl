@@ -10,7 +10,7 @@ import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import {useDroppable} from '@dnd-kit/core';
-import debounce from 'lodash/debounce';
+import debounce from 'es-toolkit/compat/debounce';
 
 import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actions';
 
@@ -27,6 +27,7 @@ import {
 } from './map/attribution';
 
 import EditorFactory from './editor/editor';
+import FilterFeatureBadges from './editor/filter-feature-badges';
 import {AnnotationOverlay} from './annotations';
 
 // utils
@@ -37,7 +38,8 @@ import {
   LayerBaseConfig,
   VisualChannelDomain,
   EditorLayerUtils,
-  AggregatedBin
+  AggregatedBin,
+  TILE3D_LOAD_ERROR_MESSAGE
 } from '@kepler.gl/layers';
 import {
   AttributionWithStyle,
@@ -111,7 +113,7 @@ import {
 } from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
 
-import LoadingIndicator from './loading-indicator';
+import LoadingIndicator, {aggregateLoadingPercent} from './loading-indicator';
 
 // Debounce the propagation of viewport change and mouse moves to redux store.
 // This is to avoid too many renders of other components when the map is
@@ -238,6 +240,7 @@ export interface MapContainerProps {
   sidePanelWidth?: number;
 
   locale?: any;
+  uiTheme?: string;
   theme?: any;
   editor?: any;
   MapComponent?: typeof MapboxLegacyMap | typeof MaplibreMap;
@@ -732,8 +735,8 @@ export default function MapContainerFactory(
       const mergedState = {...mapState, ...internalViewState, width, height};
       const vp = getViewportFromMapState(mergedState) as any;
       const viewport = {
-        project: (lngLat: [number, number]) => vp.project(lngLat) as [number, number],
-        unproject: (xy: [number, number]) => vp.unproject(xy) as [number, number],
+        project: (lngLat: ReadonlyArray<number>) => vp.project(lngLat),
+        unproject: (xy: ReadonlyArray<number>) => vp.unproject(xy),
         longitude,
         latitude,
         width,
@@ -743,6 +746,34 @@ export default function MapContainerFactory(
       this._annotationViewportCache = {key, viewport};
       return viewport;
     }
+
+    _pickAnnotationWorldPosition = (xy: [number, number]): number[] | null => {
+      const deck = this._deck;
+      if (!deck || typeof deck.pickObject !== 'function') {
+        return null;
+      }
+      try {
+        const info = deck.pickObject({
+          x: xy[0],
+          y: xy[1],
+          radius: 0,
+          unproject3D: true
+        });
+        const coordinate = info?.coordinate;
+        // Only accept a reconstructed 3D hit. A 2D unproject (no depth) is the
+        // same as the ground-plane fallback in movePoint.
+        if (
+          !Array.isArray(coordinate) ||
+          coordinate.length < 3 ||
+          !Number.isFinite(coordinate[2])
+        ) {
+          return null;
+        }
+        return coordinate;
+      } catch {
+        return null;
+      }
+    };
 
     _onDeckError = (error, layer) => {
       const errorMessage = error?.message || 'unknown-error';
@@ -781,6 +812,21 @@ export default function MapContainerFactory(
           })
         );
       }
+    };
+
+    _onTilesetLoadError = (idx: number, kind: 'token' | 'generic' | null) => {
+      const layer = this.props.visState.layers[idx];
+      const id = `tile3d-load-${layer?.id ?? idx}`;
+      if (!kind) {
+        this.props.uiStateActions.removeNotification?.(id);
+        return;
+      }
+      this.props.uiStateActions.addNotification(
+        errorNotification({
+          id,
+          message: TILE3D_LOAD_ERROR_MESSAGE[kind]
+        })
+      );
     };
 
     /* component render functions */
@@ -866,6 +912,8 @@ export default function MapContainerFactory(
               setSelectedFeature={this.props.visStateActions.setSelectedFeature}
               // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
               featureCollection={this.featureCollectionSelector(this.props)}
+              charts={this.props.visState.charts}
+              datasets={datasets}
             />
           )}
           {layerHoverProp && (!layerPinnedProp || compareMode) && (
@@ -880,6 +928,8 @@ export default function MapContainerFactory(
               setSelectedFeature={this.props.visStateActions.setSelectedFeature}
               // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
               featureCollection={this.featureCollectionSelector(this.props)}
+              charts={this.props.visState.charts}
+              datasets={datasets}
             />
           )}
         </ErrorBoundary>
@@ -999,6 +1049,7 @@ export default function MapContainerFactory(
           mapboxApiAccessToken,
           mapboxApiUrl,
           layersForDeck,
+          isAnnotationMode: Boolean(mapControls?.annotation?.active),
           editorInfo: primaryMap
             ? {
                 editor,
@@ -1022,7 +1073,8 @@ export default function MapContainerFactory(
           onFilteredItemsChange: this._onLayerFilteredItemsChange,
           onWMSFeatureInfo: this._onWMSFeatureInfo,
           onRedrawNeeded: this._onRedrawNeeded,
-          onFitBounds: this._onFitBounds
+          onFitBounds: this._onFitBounds,
+          onTilesetLoadError: this._onTilesetLoadError
         },
         deckGlProps
       );
@@ -1306,7 +1358,19 @@ export default function MapContainerFactory(
     };
 
     _toggleMapControl = panelId => {
-      const {index, uiStateActions} = this.props;
+      const {index, uiStateActions, mapControls, visState, visStateActions} = this.props;
+
+      // Keep Interactions > Legend enabled in sync with the map-control legend button.
+      if (panelId === 'mapLegend') {
+        const nextActive = !mapControls?.mapLegend?.active;
+        const legend = visState.interactionConfig?.legend;
+        if (legend && Boolean(legend.enabled) !== nextActive) {
+          visStateActions.interactionConfigChange({
+            ...legend,
+            enabled: nextActive
+          });
+        }
+      }
 
       uiStateActions.toggleMapControl(panelId, Number(index));
     };
@@ -1323,6 +1387,7 @@ export default function MapContainerFactory(
         mapControls,
         isExport,
         locale,
+        uiTheme,
         uiStateActions,
         visStateActions,
         index,
@@ -1438,6 +1503,7 @@ export default function MapContainerFactory(
               }
               editor={editor}
               locale={locale}
+              themeName={uiTheme}
               onTogglePerspective={mapStateActions.togglePerspective}
               onSetMapViewMode={mapStateActions.setMapViewMode}
               mapViewMode={mapState.mapViewMode}
@@ -1447,14 +1513,19 @@ export default function MapContainerFactory(
               onToggleSplitMapViewport={mapStateActions.toggleSplitMapViewport}
               onSetEditorMode={visStateActions.setEditorMode}
               onSetLocale={uiStateActions.setLocale}
+              onSetTheme={uiStateActions.setTheme}
               onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
+              onConvertEditorFeaturesToLayer={visStateActions.convertEditorFeaturesToLayer}
               onLayerVisConfigChange={visStateActions.layerVisConfigChange}
               onToggleLayerVisibility={this._handleToggleLayerVisibility}
+              hideInvisibleLayers={Boolean(interactionConfig.legend?.config?.hideInvisibleLayers)}
               mapHeight={mapState.height}
               setMapControlSettings={uiStateActions.setMapControlSettings}
               activeSidePanel={activeSidePanel}
               splitMaps={this.props.visState.splitMaps}
               onToggleLayerForMap={visStateActions.toggleLayerForMap}
+              charts={this.props.visState.charts}
+              visStateActions={visStateActions}
             />
           )}
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}
@@ -1468,8 +1539,10 @@ export default function MapContainerFactory(
             filters={this.polygonFiltersSelector(this.props)}
             layers={layers}
             onDeleteFeature={visStateActions.deleteFeature}
+            onSetFeatureProperties={visStateActions.setEditorFeatureProperties}
             onSelect={visStateActions.setSelectedFeature}
             onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
+            onExtractData={layer => visStateActions.extractDataFromFeature({layerId: layer.id})}
             onSetEditorMode={visStateActions.setEditorMode}
             style={{
               pointerEvents: 'all',
@@ -1477,6 +1550,14 @@ export default function MapContainerFactory(
               display: editor.visible ? 'block' : 'none'
             }}
           />
+          {editor.visible ? (
+            <FilterFeatureBadges
+              filters={this.polygonFiltersSelector(this.props)}
+              viewport={this._getAnnotationViewport(mapState, internalViewState)}
+              isGlobeEnabled={Boolean(mapState.globe?.enabled)}
+              onSelect={visStateActions.setSelectedFeature}
+            />
+          ) : null}
           <AnnotationOverlay
             annotations={visState.annotations}
             selectedAnnotationId={visState.selectedAnnotationId}
@@ -1485,6 +1566,7 @@ export default function MapContainerFactory(
             mapIndex={index || 0}
             viewport={this._getAnnotationViewport(mapState, internalViewState)}
             isGlobeEnabled={Boolean(mapState.globe?.enabled)}
+            pickWorldPosition={this._pickAnnotationWorldPosition}
             updateAnnotation={visStateActions.updateAnnotation}
             setSelectedAnnotation={visStateActions.setSelectedAnnotation}
           />
@@ -1527,6 +1609,8 @@ export default function MapContainerFactory(
               sidePanelWidth={sidePanelWidth}
               hasAttributionLogos={attributionLogos.length > 0}
               hasMapScale={getApplicationConfig().enableMapScale}
+              percent={aggregateLoadingPercent(visState.loadingProgress)}
+              remoteDatasetCount={Object.keys(visState.loadingProgress || {}).length}
             />
           ) : null}
           {this.props.primary ? (

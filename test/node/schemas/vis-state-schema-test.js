@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {cmpFilters, cmpSavedLayers} from 'test/helpers/comparison-utils';
 import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas';
 
@@ -26,7 +26,7 @@ import {
   testCsvDataId,
   testGeoJsonDataId
 } from 'test/helpers/mock-state';
-import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
+import {keplerGlReducerCore as keplerGlReducer, validateLayerWithData} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 
 const expectedVisStateEntries = [
@@ -40,7 +40,9 @@ const expectedVisStateEntries = [
   'splitMaps',
   'animationConfig',
   'editor',
-  'layerOrder'
+  'layerOrder',
+  'groupBys',
+  'joins'
 ];
 
 test('#visStateSchema -> v1 -> save layers', t => {
@@ -168,7 +170,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
         [testCsvDataId]: [
           {
             name: 'gps_data.utc_timestamp',
-            format: null
+            format: 'L LTS'
           },
           {
             name: 'gps_data.types',
@@ -176,7 +178,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
           },
           {
             name: 'epoch',
-            format: null
+            format: 'L LTS'
           },
           {
             name: 'has_result',
@@ -213,7 +215,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     },
     brush: {
       enabled: false,
-      size: 0.5
+      size: 2.5
     },
     coordinate: {
       enabled: false
@@ -221,6 +223,10 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     geocoder: {
       enabled: false,
       limitSearch: false
+    },
+    legend: {
+      enabled: false,
+      hideInvisibleLayers: false
     }
   };
 
@@ -271,7 +277,7 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
     },
     brush: {
       enabled: false,
-      size: 0.5
+      size: 2.5
     },
     coordinate: {
       enabled: false
@@ -279,6 +285,10 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
     geocoder: {
       enabled: false,
       limitSearch: false
+    },
+    legend: {
+      enabled: false,
+      hideInvisibleLayers: false
     }
   };
 
@@ -317,7 +327,12 @@ test('#visStateSchema -> v1 -> save animation', t => {
   );
 
   const expectedSavedLayers = [expectedSavedTripLayer];
-  const expectedAnimationConfig = {currentTime: 1565577261000, speed: 1};
+  const expectedAnimationConfig = {
+    currentTime: 1565577261000,
+    speed: 1,
+    timeFormat: null,
+    timezone: null
+  };
   cmpSavedLayers(t, expectedSavedLayers, vsToSave.layers);
 
   t.deepEqual(vsToSave.animationConfig, expectedAnimationConfig, 'should save animationConfig');
@@ -492,5 +507,92 @@ test('#visStateSchema -> create point and arc layers', t => {
   t.equal(state.visState.layers[0].type, 'point', 'should create point layer');
   t.equal(state.visState.layers[1].type, 'arc', 'should create arc layer');
   t.equal(state.visState.layers[2].type, 'arc', 'should create arc layer');
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> charts are optional', t => {
+  const initialState = cloneDeep(StateWFiles);
+  const vsToSave = SchemaManager.getConfigToSave(initialState).config.visState;
+  t.false('charts' in vsToSave, 'should omit empty charts from saved config');
+
+  const stateWithChart = {
+    ...initialState,
+    visState: {
+      ...initialState.visState,
+      charts: [
+        {
+          id: 'c1',
+          type: 'bigNumber',
+          title: 'Count',
+          dataId: testCsvDataId,
+          applyFilters: true,
+          display: {isConfigActive: true, isJsonEditorActive: true}
+        }
+      ]
+    }
+  };
+  const savedConfig = SchemaManager.getConfigToSave(stateWithChart);
+  const savedWithChart = savedConfig.config.visState;
+  t.equal(savedWithChart.charts.length, 1, 'should persist charts when present');
+  t.equal(savedWithChart.charts[0].id, 'c1');
+  t.equal(
+    savedWithChart.charts[0].display.isConfigActive,
+    false,
+    'should collapse chart config on save'
+  );
+  t.equal(
+    savedWithChart.charts[0].display.isJsonEditorActive,
+    false,
+    'should collapse chart JSON editor on save'
+  );
+
+  const loaded = SchemaManager.parseSavedConfig(savedConfig).visState;
+  t.equal(loaded.charts.length, 1, 'should load saved charts');
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load layer isIncludedInLegend', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  const layer = initialState.visState.layers[0];
+  layer.config.isIncludedInLegend = false;
+
+  const savedState = SchemaManager.getConfigToSave(initialState);
+  const savedLayers = savedState.config.visState.layers;
+  const savedLayer = savedLayers.find(item => item.id === layer.id);
+  t.equal(savedLayer.config.isIncludedInLegend, false, 'should persist legend exclusion');
+
+  const untouched = savedLayers.find(item => item.id !== layer.id);
+  t.equal(
+    Object.prototype.hasOwnProperty.call(untouched.config, 'isIncludedInLegend'),
+    false,
+    'layers left at the default should omit the flag'
+  );
+
+  const loadedLayer = SchemaManager.parseSavedConfig(savedState).visState.layers.find(
+    item => item.id === layer.id
+  );
+  t.equal(loadedLayer.config.isIncludedInLegend, false, 'should load legend exclusion');
+
+  const dataset = initialState.visState.datasets[layer.config.dataId];
+  const instance = validateLayerWithData(dataset, loadedLayer, initialState.visState.layerClasses);
+  t.ok(instance, 'should rebuild the layer');
+  t.equal(instance.config.isIncludedInLegend, false, 'rebuilt layer stays out of the legend');
+  t.equal(instance.config.isVisible, true, 'legend exclusion does not hide the layer on the map');
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load hideInvisibleLayers', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  initialState.visState.interactionConfig.legend.config.hideInvisibleLayers = true;
+
+  const savedState = SchemaManager.getConfigToSave(initialState);
+  t.equal(
+    savedState.config.visState.interactionConfig.legend.hideInvisibleLayers,
+    true,
+    'should persist hideInvisibleLayers'
+  );
+
+  const loaded = SchemaManager.parseSavedConfig(savedState).visState.interactionConfig;
+  t.equal(loaded.legend.hideInvisibleLayers, true, 'should load hideInvisibleLayers');
   t.end();
 });

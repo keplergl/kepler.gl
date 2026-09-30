@@ -25,4 +25,5 @@ export interface KeplerTableModel<K, L, F extends Field = any> {
     ) => (d: any) => (number | number[])[];
   };
   filteredIndex: number[];
+  filteredIndexByLayer?: Record<string, number[]>;
 }

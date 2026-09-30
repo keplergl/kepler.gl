@@ -415,12 +415,14 @@ export function applyDefaultFormat(tooltipFormat: TooltipFormat): (v: any) => st
 
   switch (tooltipFormat.type) {
     case TOOLTIP_FORMAT_TYPES.DECIMAL:
-      return d3Format(tooltipFormat.format);
+      return formatNumeric(tooltipFormat.format);
     case TOOLTIP_FORMAT_TYPES.DATE:
     case TOOLTIP_FORMAT_TYPES.DATE_TIME:
       return datetimeFormatter(null)(tooltipFormat.format);
-    case TOOLTIP_FORMAT_TYPES.PERCENTAGE:
-      return v => `${d3Format(TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format)(v)}%`;
+    case TOOLTIP_FORMAT_TYPES.PERCENTAGE: {
+      const format = formatNumeric(TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format);
+      return v => `${format(v)}%`;
+    }
     case TOOLTIP_FORMAT_TYPES.BOOLEAN:
       return getBooleanFormatter(tooltipFormat.format);
     default:
@@ -443,13 +445,19 @@ export function applyCustomFormat(format, field: {type?: string}): FieldFormatte
   switch (field.type) {
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
-      return d3Format(format);
+      return formatNumeric(format);
     case ALL_FIELD_TYPES.date:
     case ALL_FIELD_TYPES.timestamp:
       return datetimeFormatter(null)(format);
     default:
       return v => v;
   }
+}
+
+/** d3-format cannot take BigInt; Int64 table cells are still raw bigint from valueAt. */
+function formatNumeric(spec: string): FieldFormatter {
+  const format = d3Format(spec);
+  return v => format(Number(v));
 }
 
 function formatLargeNumber(n) {

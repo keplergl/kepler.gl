@@ -3,7 +3,7 @@
 
 /* eslint-disable max-statements */
 
-import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
+import {drainTasksForTesting, succeedTaskWithValues} from '@kepler.gl/tasks';
 import test from 'tape';
 
 import {registerEntry} from '@kepler.gl/actions';
@@ -11,11 +11,14 @@ import {processCsvData} from '@kepler.gl/processors';
 import keplerGlReducer, {
   addDataToMapUpdater,
   replaceDataInMapUpdater,
+  combinedUpdaters,
   fitBoundsUpdater,
   INITIAL_UI_STATE,
   visStateReducer,
   mapStateReducer
 } from '@kepler.gl/reducers';
+import {MapSplitMode} from '@kepler.gl/constants';
+import KeplerGlSchema from '@kepler.gl/schemas';
 import {getTimeBins} from '@kepler.gl/utils';
 
 import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
@@ -133,6 +136,44 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should be centered (
 
   t.equal(newState.mapState.latitude, 29.23, 'centerMap: true should override mapState config');
   t.equal(newState.mapState.longitude, 60.71, 'centerMap: true should override mapState config');
+
+  t.end();
+});
+
+test('#composerStateReducer - addDataToMapUpdater: centerMap padding', t => {
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  const datasets = {
+    data: mockRawData,
+    info: {
+      id: 'foo'
+    }
+  };
+
+  const fitMapAfterAdd = options => {
+    let nextState = addDataToMapUpdater(state, {
+      payload: {
+        datasets,
+        options
+      }
+    });
+    nextState.visState = applyExistingDatasetTasks(visStateReducer, nextState.visState);
+    const tasks = drainTasksForTesting();
+    nextState.mapState = mapStateReducer(nextState.mapState, succeedTaskWithValues(tasks[0], {}));
+    drainTasksForTesting();
+    return nextState;
+  };
+
+  const unpadded = fitMapAfterAdd({centerMap: true});
+  const padded = fitMapAfterAdd({centerMap: true, padding: {left: 300}});
+
+  t.ok(
+    padded.mapState.zoom < unpadded.mapState.zoom,
+    'padding should zoom out relative to unpadded centerMap'
+  );
+  t.ok(
+    padded.mapState.longitude < unpadded.mapState.longitude,
+    'left padding should pan west so points are not hidden under the side panel'
+  );
 
   t.end();
 });
@@ -736,6 +777,267 @@ test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
     }
   }));
   t.deepEqual(nextSavedConfig.visState.layers, expectedLayers, 'should replace layer dataId');
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater: replacing a dataset with no layers before the previous replace merges', t => {
+  const noLayersId = 'dataset_without_layers';
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: [
+        {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+        {data: processCsvData(testCsvData), info: {id: noLayersId}}
+      ],
+      config: sampleConfig.config,
+      options: {autoCreateLayers: false}
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+  drainTasksForTesting();
+
+  const layerOrder = oldState.visState.layerOrder;
+  t.ok(layerOrder.length > 1, 'should start with more than one layer on the first dataset');
+
+  // Refresh both datasets back to back, the way an app refreshing every query
+  // does: the second replace is prepared before the first one has merged.
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = replaceDataInMapUpdater(nextState, {
+    payload: {
+      datasetToReplaceId: noLayersId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: noLayersId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.deepEqual(nextState.visState.layerToBeMerged, [], 'should merge every layer back');
+  t.deepEqual(nextState.visState.layerOrder, layerOrder, 'should keep the layer order');
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater: replacing a dataset that has layers before the previous replace merges', t => {
+  const secondDataId = 'dataset_with_its_own_layer';
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  // Two layers on the first dataset and one on the second, which is what an app
+  // drawing a query per dataset ends up with.
+  const configWithBothDatasets = {
+    ...sampleConfig.config,
+    config: {
+      ...sampleConfig.config.config,
+      visState: {
+        ...sampleConfig.config.config.visState,
+        layers: [
+          ...sampleConfig.config.config.visState.layers,
+          {
+            id: 'second_ds_layer',
+            type: 'point',
+            config: {
+              dataId: secondDataId,
+              label: 'second dataset',
+              columns: {lat: 'gps_data.lat', lng: 'gps_data.lng', altitude: null},
+              isVisible: true
+            }
+          }
+        ]
+      }
+    }
+  };
+
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: [
+        {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+        {data: processCsvData(testCsvData), info: {id: secondDataId}}
+      ],
+      config: configWithBothDatasets,
+      options: {autoCreateLayers: false}
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+  drainTasksForTesting();
+
+  const layerOrder = oldState.visState.layerOrder;
+  t.equal(layerOrder.length, 3, 'should start with the three layers of the config');
+
+  // Refresh both datasets back to back: the second replace is prepared while the
+  // first one's layers are still parked in layerToBeMerged.
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = replaceDataInMapUpdater(nextState, {
+    payload: {
+      datasetToReplaceId: secondDataId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: secondDataId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.deepEqual(nextState.visState.layerToBeMerged, [], 'should merge every layer back');
+  t.deepEqual(nextState.visState.layerOrder, layerOrder, 'should keep the layer order');
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater: replacing datasets back to back keeps the split map panels', t => {
+  const noLayersId = 'dataset_without_layers';
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: [
+        {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+        {data: processCsvData(testCsvData), info: {id: noLayersId}}
+      ],
+      config: sampleConfig.config,
+      options: {autoCreateLayers: false}
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+  drainTasksForTesting();
+  const splitMaps = [
+    {layers: {'3zucml7': true, nob639j: false}},
+    {layers: {'3zucml7': false, nob639j: true}}
+  ];
+  t.deepEqual(oldState.visState.splitMaps, splitMaps, 'should start with one layer on each side');
+
+  // Refresh both datasets back to back, several times, the way an app refreshing
+  // every query does.
+  let nextState = oldState;
+  for (let refresh = 0; refresh < 3; refresh++) {
+    nextState = replaceDataInMapUpdater(nextState, {
+      payload: {
+        datasetToReplaceId: sampleConfig.dataId,
+        datasetToUse: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+        options: {autoCreateLayers: false, centerMap: false}
+      }
+    });
+    nextState = replaceDataInMapUpdater(nextState, {
+      payload: {
+        datasetToReplaceId: noLayersId,
+        datasetToUse: {data: processCsvData(testCsvData), info: {id: noLayersId}},
+        options: {autoCreateLayers: false, centerMap: false}
+      }
+    });
+    nextState = {
+      ...nextState,
+      visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+    };
+    drainTasksForTesting();
+
+    t.deepEqual(
+      nextState.visState.splitMaps,
+      splitMaps,
+      `should keep one layer on each side after refresh ${refresh + 1}`
+    );
+  }
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater: keeps the right panel of a dual map empty', t => {
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  const config = {
+    ...sampleConfig.config,
+    config: {
+      ...sampleConfig.config.config,
+      visState: {...sampleConfig.config.config.visState, splitMaps: []},
+      mapState: {...sampleConfig.config.config.mapState, isSplit: false}
+    }
+  };
+
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+      config,
+      options: {autoCreateLayers: false}
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+  drainTasksForTesting();
+
+  // split the map: every layer on the left panel, nothing on the right one
+  oldState = combinedUpdaters.setMapSplitModeUpdater(oldState, {
+    payload: {mapSplitMode: MapSplitMode.DUAL_MAP}
+  });
+  const splitMaps = [{layers: {'3zucml7': true, nob639j: true}}, {layers: {}}];
+  t.deepEqual(oldState.visState.splitMaps, splitMaps, 'should split the map');
+
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.deepEqual(nextState.visState.splitMaps, splitMaps, 'should keep the right panel empty');
+  t.end();
+});
+
+test('#composerStateReducer - addDataToMapUpdater: loads a dual map saved with an empty panel', t => {
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  // saved from DUAL_MAP mode: every layer on the left panel, nothing on the right one
+  const splitMaps = [{layers: {'3zucml7': true, nob639j: true}}, {layers: {}}];
+  const config = {
+    ...sampleConfig.config,
+    config: {
+      ...sampleConfig.config.config,
+      visState: {...sampleConfig.config.config.visState, splitMaps}
+    }
+  };
+
+  let nextState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+      config,
+      options: {autoCreateLayers: false}
+    }
+  });
+
+  // the dataset is still loading, its layers are waiting to be merged
+  t.deepEqual(
+    nextState.visState.splitMaps,
+    [{layers: {}}, {layers: {}}],
+    'should create both panels while the layers load'
+  );
+  const savedConfig = JSON.parse(JSON.stringify(KeplerGlSchema.getConfigToSave(nextState)));
+  t.doesNotThrow(
+    () => KeplerGlSchema.parseSavedConfig(savedConfig),
+    'should save a config that loads while the layers load'
+  );
+
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.deepEqual(nextState.visState.splitMaps, splitMaps, 'should keep the right panel empty');
   t.end();
 });
 

@@ -14,7 +14,9 @@ import classNames from 'classnames';
 
 const StyledMapControlPanel = styled.div`
   background-color: ${props => props.theme.mapPanelBackgroundColor};
+  box-sizing: border-box;
   flex-grow: 1;
+  width: ${props => props.theme.mapControl.width}px;
   z-index: 1;
   p {
     margin-bottom: 0;
@@ -29,10 +31,12 @@ const StyledMapControlPanelContent = styled.div.attrs({
   className: 'map-control__panel-content'
 })<StyledMapControlPanelContentProps>`
   ${props => props.theme.sidePanelScrollBar};
+  box-sizing: border-box;
   max-height: 500px;
   min-height: 100px;
-  min-width: ${props => props.theme.mapControl.width}px;
-  overflow: ${props => (props.isExport ? 'hidden' : 'overlay')};
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: ${props => (props.isExport ? 'hidden' : 'auto')};
 `;
 
 type MapControlPanelHeaderProps = {
@@ -151,7 +155,9 @@ function MapControlPanelFactory() {
           }}
           className={classNames('map-control-panel', className)}
         >
-          {mapState?.isSplit && isViewportUnsyncAllowed && mapState?.mapSplitMode !== MapSplitMode.SWIPE_COMPARE ? (
+          {mapState?.isSplit &&
+          isViewportUnsyncAllowed &&
+          mapState?.mapSplitMode !== MapSplitMode.SWIPE_COMPARE ? (
             <StyledMapControlPanelHeaderSplitViewportsTools>
               <StyledSBCenterFlexbox style={{paddingBottom: '6px'}}>
                 <FormattedMessage id="Unlock Viewport" />

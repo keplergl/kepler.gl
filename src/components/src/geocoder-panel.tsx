@@ -14,7 +14,14 @@ import {
   GEOCODER_ICON_COLOR,
   GEOCODER_ICON_SIZE
 } from '@kepler.gl/constants';
-import {AddDataToMapOptions, LayerOrder, MapState, ProtoDataset, UiState, Viewport} from '@kepler.gl/types';
+import {
+  AddDataToMapOptions,
+  LayerOrder,
+  MapState,
+  ProtoDataset,
+  UiState,
+  Viewport
+} from '@kepler.gl/types';
 import {ActionHandler, removeDataset, updateMap, updateVisData} from '@kepler.gl/actions';
 
 import Geocoder, {Result} from './geocoder/geocoder';
@@ -211,14 +218,7 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
           index
         );
       },
-      [
-        index,
-        mapState,
-        removeGeocoderDataset,
-        transitionDuration,
-        updateMap,
-        updateVisData
-      ]
+      [index, mapState, removeGeocoderDataset, transitionDuration, updateMap, updateVisData]
     );
 
     return (

@@ -18,9 +18,41 @@ const DEFAULT_LIGHTING_EFFECT = new LightingEffect();
  */
 interface LightingEffectPrivate {
   shadow: boolean;
-  shadowPasses: {delete(): void; render(params: Record<string, unknown>): void}[];
+  shadowPasses: {
+    delete(): void;
+    render(params: Record<string, unknown>): void;
+    getLayerParameters: (
+      layer: unknown,
+      layerIndex: number,
+      viewport: unknown
+    ) => Record<string, unknown>;
+  }[];
   dummyShadowMap: Texture | null;
   _createShadowPasses(device: unknown): void;
+}
+
+// WebGL applies GL-style depthTest/depthMask; deck.gl's ShadowPass only sets
+// depthWriteEnabled. Disable polygonOffset so a later ground plane is not
+// pulled toward the sun and cannot overwrite building walls in the shadow map.
+const SHADOW_PASS_DEPTH_PARAMETERS = {
+  depthTest: true,
+  depthMask: true,
+  polygonOffsetFill: false,
+  polygonOffset: [0, 0]
+};
+
+export function patchShadowPassDepth(pass: {
+  getLayerParameters: (
+    layer: unknown,
+    layerIndex: number,
+    viewport: unknown
+  ) => Record<string, unknown>;
+}) {
+  const originalGetLayerParameters = pass.getLayerParameters.bind(pass);
+  pass.getLayerParameters = (layer, layerIndex, viewport) => ({
+    ...originalGetLayerParameters(layer, layerIndex, viewport),
+    ...SHADOW_PASS_DEPTH_PARAMETERS
+  });
 }
 
 /** Extended shadow module props with our custom field. */
@@ -29,6 +61,42 @@ interface CustomShadowProps {
   useSimplePhong?: boolean;
   dummyShadowMap?: Texture | null;
   [key: string]: unknown;
+}
+
+/**
+ * Video export shares MapLibre's canvas. Luma's cssToDeviceRatio() can lag that
+ * bitmap, so ShadowPass draws into a corner of its FBO and the rest samples as
+ * fully shadowed. For the shadow pass only, read the live GL buffer; restore
+ * afterward so the color pass / basemap stay aligned.
+ */
+export function alignExportShadowPass(shadowPass: any, isExportMode: () => boolean): void {
+  const render = shadowPass.render.bind(shadowPass);
+  shadowPass.render = params => {
+    if (!isExportMode()) return render(params);
+
+    const gl = shadowPass.device?.gl;
+    const canvasContext = shadowPass.device?.canvasContext;
+    const viewport = params?.viewports?.[0];
+    const width = gl?.drawingBufferWidth;
+    const height = gl?.drawingBufferHeight;
+    if (!gl || !canvasContext || !viewport?.width || !width || !height) {
+      return render(params);
+    }
+
+    const prevSize = canvasContext.getDrawingBufferSize;
+    const prevRatio = canvasContext.cssToDeviceRatio;
+    const prevDepth = gl.getParameter?.(gl.DEPTH_RANGE ?? 0x0b70);
+    canvasContext.getDrawingBufferSize = () => [width, height];
+    canvasContext.cssToDeviceRatio = () => width / viewport.width;
+    gl.depthRange?.(0, 1);
+    try {
+      return render(params);
+    } finally {
+      canvasContext.getDrawingBufferSize = prevSize;
+      canvasContext.cssToDeviceRatio = prevRatio;
+      if (prevDepth) gl.depthRange?.(prevDepth[0], prevDepth[1]);
+    }
+  };
 }
 
 /**
@@ -128,6 +196,26 @@ function createCustomShadowModule(): ShaderModule | null {
 
 const CustomShadowModule = createCustomShadowModule();
 
+// deck.gl picking injects at order 99 and blends highlightColor over the
+// fragment. In the shadow pass that overwrites encoded depth, so a hovered
+// extruded feature stops casting a shadow. Re-encode after picking.
+// Color-pass highlight compositing is unchanged (shadow still runs first).
+const PICKING_FILTER_COLOR_ORDER = 99;
+
+export const shadowMapHoverFixModule = {
+  name: 'shadow-map-hover-fix',
+  inject: {
+    'fs:DECKGL_FILTER_COLOR': {
+      order: PICKING_FILTER_COLOR_ORDER + 1,
+      injection: `
+  if (shadow.drawShadowMap) {
+    color = shadow_filterShadowColor(color);
+  }
+      `
+    }
+  }
+} as unknown as ShaderModule;
+
 /**
  * Detect layers that use the PBR shader module (3D tile sublayers:
  * ScenegraphLayer sets `_lighting: 'pbr'`, SimpleMeshLayer sets `pbrMaterial`).
@@ -143,6 +231,8 @@ function isPbrLayer(layer: any): boolean {
  * - A patched shadow module with `outputUniformShadow` for uniform shadow
  *   during nighttime (avoids partial shadows from below).
  * - Simple phong replacement for PBR layers (avoids microfacet specular).
+ * - Shadow-map depth re-encoded after picking highlight so hovered extruded
+ *   features still cast shadows.
  * - getShaderModuleProps override that always provides dummyShadowMap
  *   to prevent "Bad texture binding" errors when shadows are disabled.
  */
@@ -165,7 +255,12 @@ class CustomDeckLightingEffect extends LightingEffect {
     const {device, deck} = context;
     if (this._private.shadow && !this._private.dummyShadowMap) {
       this._private._createShadowPasses(device);
+      for (const shadowPass of this._private.shadowPasses) {
+        patchShadowPassDepth(shadowPass);
+        alignExportShadowPass(shadowPass, () => this.isExportMode);
+      }
       deck._addDefaultShaderModule(CustomShadowModule || shadow);
+      deck._addDefaultShaderModule(shadowMapHoverFixModule);
       this._private.dummyShadowMap = device.createTexture({width: 1, height: 1});
     }
   }
@@ -198,6 +293,7 @@ class CustomDeckLightingEffect extends LightingEffect {
       this._private.dummyShadowMap.destroy();
       this._private.dummyShadowMap = null;
       context.deck._removeDefaultShaderModule(CustomShadowModule || shadow);
+      context.deck._removeDefaultShaderModule(shadowMapHoverFixModule);
     }
   }
 

@@ -21,7 +21,8 @@
             {"entry": "docs/user-guides/j-get-started"},
             {"entry": "docs/user-guides/k-save-and-export"},
             {"entry": "docs/user-guides/l-color-attributes"},
-            {"entry": "docs/user-guides/m-map-settings"}
+            {"entry": "docs/user-guides/m-map-settings"},
+            {"entry": "docs/user-guides/dataset-operations"}
           ]
         },
         {
@@ -46,7 +47,9 @@
             {"entry": "docs/user-guides/c-types-of-layers/h-hexbin"},
             {"entry": "docs/user-guides/c-types-of-layers/i-heatmap"},
             {"entry": "docs/user-guides/c-types-of-layers/j-h3"},
-            {"entry": "docs/user-guides/c-types-of-layers/k.trip"}
+            {"entry": "docs/user-guides/c-types-of-layers/k.trip"},
+            {"entry": "docs/user-guides/c-types-of-layers/q-a5"},
+            {"entry": "docs/user-guides/c-types-of-layers/r-geohash"}
           ]
         }
       ]

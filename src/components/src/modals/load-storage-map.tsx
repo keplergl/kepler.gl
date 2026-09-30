@@ -6,8 +6,15 @@ import CloudHeaderFactory from './cloud-components/cloud-header';
 import {CloudMaps} from './cloud-components/cloud-maps';
 import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
 import {ProviderSelect} from './cloud-components/provider-select';
+import {CloudStorageDisclaimer} from './cloud-components/cloud-storage-disclaimer';
 import {FlexColContainer} from '../common/flex-container';
 import {Provider, MapListItem} from '@kepler.gl/cloud-providers';
+import styled from 'styled-components';
+
+const StyledLoadStorageMap = styled(FlexColContainer)`
+  flex: 1;
+  width: 100%;
+`;
 
 LoadStorageMapFactory.deps = [CloudHeaderFactory];
 
@@ -48,7 +55,7 @@ function LoadStorageMapFactory(CloudHeader: ReturnType<typeof CloudHeaderFactory
     );
 
     return (
-      <FlexColContainer>
+      <StyledLoadStorageMap>
         {!currentProvider ? (
           <ProviderSelect cloudProviders={cloudProviders} />
         ) : (
@@ -63,7 +70,8 @@ function LoadStorageMapFactory(CloudHeader: ReturnType<typeof CloudHeaderFactory
             />
           </>
         )}
-      </FlexColContainer>
+        <CloudStorageDisclaimer />
+      </StyledLoadStorageMap>
     );
   };
 

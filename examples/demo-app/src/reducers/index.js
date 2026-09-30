@@ -2,16 +2,19 @@
 // Copyright contributors to the kepler.gl project
 
 import {combineReducers} from 'redux';
-import Task, {withTask} from 'react-palm/tasks';
+import Task, {withTask} from '@kepler.gl/tasks';
 
-import {aiAssistantReducer} from '@kepler.gl/ai-assistant';
+import {aiAssistantReducer} from '@openassistant/kepler-assistant';
 import {EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/processors';
 import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/reducers';
 import KeplerGlSchema from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
-import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
-import keplerGlDuckdbPlugin, {KeplerGlDuckDbTable, DuckDBWasmAdapter} from '@kepler.gl/duckdb';
+import {getApplicationConfig} from '@kepler.gl/utils';
+
+// DuckDB plugin, icons, and other applicationConfig defaults live in
+// utils/runtime-config.js (applied on import, then overlaid from /config.json
+// in demo-app main.js).
 
 import {
   INIT,
@@ -25,58 +28,15 @@ import {
 
 import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
-
-// initialize kepler demo-app with DuckDB plugin
-
-initApplicationConfig({
-  // Custom UI for DuckDB
-  plugins: [keplerGlDuckdbPlugin],
-  // async data ingestion to DuckDb
-  table: KeplerGlDuckDbTable,
-  // setup database for DuckDB plugin
-  database: new DuckDBWasmAdapter({
-    config: {
-      query: {
-        castBigIntToDouble: true
-      }
-    }
-  }),
-  // progressive loading is sync, doesn't wait properly for a dataset to be created in DuckDB
-  useArrowProgressiveLoading: false,
-  showReleaseBanner: false
-});
-
-// Example: Register custom icons for the icon layer.
-// These will be merged with the default icons fetched from CDN.
-// Data values in the "icon" column matching these IDs will render the custom shapes.
-// NOTE: Cell winding must be counter-clockwise (CCW) to match the CDN icon convention.
-initApplicationConfig({
-  customIcons: [
-    {
-      id: 'custom-star',
-      mesh: {
-        cells: [
-          [5, 1, 0],
-          [5, 2, 1],
-          [5, 3, 2],
-          [5, 4, 3],
-          [5, 0, 4]
-        ],
-        positions: [
-          [0, 1, 0],
-          [0.95, 0.31, 0],
-          [0.59, -0.81, 0],
-          [-0.59, -0.81, 0],
-          [-0.95, 0.31, 0],
-          [0, 0, 0]
-        ]
-      }
-    }
-  ],
-  customIconUrl: 'https://raw.githubusercontent.com/keplergl/kepler.gl-data/refs/heads/master/layers/icon/custom-icons.json'
-});
+import {getRuntimeConfig} from '../utils/runtime-config';
 
 const {DEFAULT_MAP_CONTROLS} = uiStateUpdaters;
+
+const runtimeConfig = getRuntimeConfig();
+const runtimeMapStyle =
+  runtimeConfig.mapStyle && (runtimeConfig.mapStyle.mapStyles || runtimeConfig.mapStyle.styleType)
+    ? runtimeConfig.mapStyle
+    : null;
 
 // INITIAL_APP_STATE
 const initialAppState = {
@@ -119,7 +79,7 @@ const demoReducer = combineReducers({
       exportMap: {
         ...DEFAULT_EXPORT_MAP,
         [EXPORT_MAP_FORMATS.HTML]: {
-          ...DEFAULT_EXPORT_MAP[[EXPORT_MAP_FORMATS.HTML]],
+          ...DEFAULT_EXPORT_MAP[EXPORT_MAP_FORMATS.HTML],
           exportMapboxAccessToken: CLOUD_PROVIDERS_CONFIGURATION.EXPORT_MAPBOX_TOKEN
         }
       },
@@ -135,13 +95,26 @@ const demoReducer = combineReducers({
                 show: true
               }
             }
-          : {})
+          : {}),
+        aiAssistant: {
+          active: false,
+          show: true
+        }
       }
     },
     visState: {
       loaders: [], // Add additional loaders.gl loaders here
       loadOptions: {} // Add additional loaders.gl loader options here
-    }
+    },
+    // Optional custom base maps from /config.json (see docs/custom-map-styles.md option 2)
+    ...(runtimeMapStyle
+      ? {
+          mapStyle: {
+            ...(runtimeMapStyle.mapStyles ? {mapStyles: runtimeMapStyle.mapStyles} : {}),
+            ...(runtimeMapStyle.styleType ? {styleType: runtimeMapStyle.styleType} : {})
+          }
+        }
+      : {})
   }),
   app: appReducer,
   aiAssistant: aiAssistantReducer
@@ -234,7 +207,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
 const loadRemoteDatasetProcessedSuccess = (state, action) => {
   const {config, datasets, options} = action.payload;
 
-  const parsedConfig = config ? KeplerGlSchema.parseSavedConfig(config) : null;
+  const parsedConfig = config ? KeplerGlSchema.parseSavedConfig(config) : undefined;
 
   // a hack to use minZoom and maxZoom from examples
   if (parsedConfig?.mapState) {

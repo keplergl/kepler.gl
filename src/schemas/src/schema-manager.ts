@@ -32,6 +32,9 @@ export type SavedMapState = {
     enabled: boolean;
     config: {
       atmosphere: boolean;
+      hugeHalo?: boolean;
+      hugeHaloRadius?: number;
+      hugeHaloOpacity?: number;
       azimuth: boolean;
       azimuthAngle: number;
       terminator: boolean;

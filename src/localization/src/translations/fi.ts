@@ -15,6 +15,7 @@ export default {
     stroke: 'viiva',
     density: 'tiheys',
     coverage: 'kattavuus',
+    elevationOffset: 'korkeuspoikkeama',
     sum: 'summa',
     pointCount: 'pisteiden lukumäärä'
   },
@@ -26,7 +27,8 @@ export default {
     selectValue: 'Valitse arvo',
     enterValue: 'Anna arvo',
     empty: 'tyhjä',
-    selectLayer: 'Valitse taso'
+    selectLayer: 'Valitse taso',
+    endTimeField: 'Valitse päättymisaika'
   },
   misc: {
     by: '',
@@ -59,7 +61,8 @@ export default {
       alignment: 'Sijoittelu',
       addMoreLabel: 'Lisää uusia nimiöitä',
       outlineWidth: 'Ääriviivan leveys',
-      outlineColor: 'Ääriviivan väri'
+      outlineColor: 'Ääriviivan väri',
+      collisionEnabled: 'Piilota päällekkäiset nimiöt'
     }
   },
   sidebar: {
@@ -101,6 +104,9 @@ export default {
     layer: 'Taso',
     appearance: 'Ulkoasu',
     uniqueIdField: 'Yksilöivä ID-kenttä',
+    hideNulls: 'Piilota tyhjät arvot',
+    hideNullsDescription:
+      'Kun asetus on päällä, kohteet ilman täyttöväriarvoa piilotetaan. Kun se on pois päältä, ne näytetään harmaana.',
     type: {
       point: 'piste',
       arc: 'kaari',
@@ -116,6 +122,8 @@ export default {
       hexagonid: 'H3',
       trip: 'matka',
       s2: 'S2',
+      geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'virtaus',
       vectortile: 'vektoritiili',
@@ -161,6 +169,10 @@ export default {
     sizeScale: 'Koon skaala',
     worldUnitSize: 'Yksikkö',
     elevationScale: 'Korottamisen skaala',
+    elevationOffset: 'Korkeuspoikkeama',
+    elevationOffsetDescription:
+      'Nosta pursotetut polygoni irti maasta (samat yksiköt kuin korkeus)',
+    elevationOffsetRange: 'Korkeuspoikkeaman rajat',
     enableElevationZoomFactor: 'Käytä korkeuden zoomauskerrointa',
     enableElevationZoomFactorDescription:
       'Säädä korkeus / korkeus nykyisen zoomauskertoimen perusteella',
@@ -182,6 +194,8 @@ export default {
     heightMultiplier: 'Korkeuskerroin',
     fixedHeight: 'Kiinteä korkeus',
     fixedHeightDescription: 'Käytä korkeutta ilman muutoksia',
+    fixedElevation: 'Kiinteä korkeuspoikkeama',
+    fixedElevationDescription: 'Käytä korkeuspoikkeamaa ilman muutoksia',
     allowHover: 'Näytä työkaluvihje',
     allowHoverDescription:
       'Näytä tai piilota työkaluvihje, kun osoitin on tason ominaisuuksien päällä',
@@ -235,7 +249,9 @@ export default {
     addAnnotation: 'Lisää',
     type: 'Tyyppi',
     lineWidth: 'Viivan leveys',
-    color: 'Väri'
+    color: 'Väri',
+    textSide: 'Tekstin puoli',
+    textPlacement: 'Sijoittelu'
   },
   effectDescription: {
     lightAndShadow:
@@ -285,18 +301,38 @@ export default {
     timeFilterSync: 'Synkronoidut aineistot',
     timeLayerSync: 'Linkitä tason aikajanaan',
     timeLayerUnsync: 'Poista linkitys tason aikajanasta',
-    column: 'Sarake'
+    column: 'Sarake',
+    timeIntervalEndField: 'Päättymisaika',
+    timeIntervalEndFieldHint:
+      'Valinnainen. Kohteet pysyvät näkyvissä, kun toistoikkuna osuu tälle aikavälille.',
+    timezone: 'Aikavyöhyke',
+    selectTimezone: 'Valitse näyttöaikavyöhyke'
   },
   datasetTitle: {
     showDataTable: 'Näytä attribuuttitaulu',
-    removeDataset: 'Poista aineisto'
+    removeDataset: 'Poista aineisto',
+    refreshDataset: 'Päivitä aineisto',
+    refreshFailed: 'Päivitys epäonnistui',
+    refreshSettings: 'Päivitysasetukset',
+    refreshOff: 'Pois',
+    refresh10s: '10 s',
+    refresh15s: '15 s',
+    refresh1m: '1 min',
+    refresh5m: '5 min',
+    refresh15m: '15 min',
+    refreshCustom: 'Mukautettu'
   },
   datasetInfo: {
     rowCount: '{rowCount} riviä',
     vectorTile: 'Vektoritiili',
     rasterTile: 'Rasteritiili',
     wmsTile: 'WMS-tiili',
-    tile3d: '3D-tiili'
+    tile3d: '3D-tiili',
+    remoteFile: '{rowCount} riviä (etä)',
+    refreshInterval: 'Päivitys',
+    refreshCustomSeconds: 'Sekuntia',
+    refreshing: 'Päivitetään…',
+    refreshingPercent: 'Päivitetään {percent}%'
   },
   tooltip: {
     hideLayer: 'Piilota taso',
@@ -319,7 +355,12 @@ export default {
     showLegend: 'Näytä selite',
     disable3DMap: 'Poistu 3D-näkymästä',
     DrawOnMap: 'Piirrä kartalle',
+    copyAllSketches: 'Kopioi kaikki luonnokset leikepöydälle GeoJSON-muodossa',
+    convertToLayer: 'Muunna luonnokset GeoJSON-tasoksi ja tyhjennä piirros',
     selectLocale: 'Valitse kielisyys',
+    switchToLightTheme: 'Vaihda vaaleaan teemaan',
+    switchToDarkTheme: 'Vaihda tummaan teemaan',
+    switchToSpaceTheme: 'Vaihda Space-teemaan',
     showAiAssistantPanel: 'Näytä AI-apuohjelman paneeli',
     hideAiAssistantPanel: 'Piilota AI-apuohjelman paneeli',
     hideLayerPanel: 'Piilota tasopaneeli',
@@ -343,6 +384,8 @@ export default {
     syncTimelineEnd: 'Nykyisen suodattimen aikajakson loppu',
     showEffectPanel: 'Näytä efektipaneeli',
     hideEffectPanel: 'Piilota efektipaneeli',
+    showChartPanel: 'Näytä kaaviot',
+    hideChartPanel: 'Piilota kaaviot',
     showAnnotationPanel: 'Näytä merkinnät',
     hideAnnotationPanel: 'Piilota merkinnät',
     removeAnnotation: 'Poista merkintä',
@@ -353,6 +396,12 @@ export default {
     removeEffect: 'Poista efekti',
     disableEffect: 'Poista efekti käytöstä',
     effectSettings: 'Efektiasetukset',
+    editLayerJson: 'Muokkaa tason JSON-määritystä',
+    editFilterJson: 'Muokkaa suodattimen JSON-määritystä',
+    editEffectJson: 'Muokkaa efektin JSON-määritystä',
+    editViewportJson: 'Muokkaa näkymän JSON-määritystä',
+    editAnimationJson: 'Muokkaa animaation JSON-määritystä',
+    editChartJson: 'Muokkaa kaavion JSON-määritystä',
     timeLayerSync: 'Linkitä tason aikajanaan',
     timeLayerUnsync: 'Poista linkitys tason aikajanasta'
   },
@@ -364,8 +413,13 @@ export default {
     shareMapURL: 'Jaa kartan URL',
     saveMap: 'Tallenna kartta',
     select: 'valitse',
+    point: 'piste',
+    line: 'viiva',
     polygon: 'polygoni',
     rectangle: 'nelikulmio',
+    circle: 'ympyrä',
+    copyAll: 'Kopioi kaikki',
+    convertToLayer: 'Muunna\ntasoksi',
     hide: 'piilota',
     show: 'näytä',
     ...LOCALES
@@ -374,7 +428,15 @@ export default {
     filterLayer: 'Suodata tasoja',
     filterLayerDisabled: 'Ei-monikulmiogeometrioita ei voi käyttää suodatukseen',
     copyGeometry: 'Kopioi geometria',
-    noLayersToFilter: 'Ei tasoja suodatettavaksi'
+    extractData: 'Poimi tiedot',
+    extractFromLayer: 'tasosta {layerName}',
+    editProperties: 'Muokkaa ominaisuuksia',
+    propertyName: 'Ominaisuus',
+    propertyValue: 'Arvo',
+    removeProperty: 'Poista ominaisuus',
+    polygonFilter: 'Polygonisuodatin',
+    noLayersToFilter: 'Ei tasoja suodatettavaksi',
+    noLayersToExtract: 'Ei tasoja poimittavaksi'
   },
   exportVideoModal: {
     animation: 'Animaatio',
@@ -412,7 +474,9 @@ export default {
       resolutionDescription: 'Korkea resoluutio on parempi tulostamista varten.',
       resolutionPlaceholder: 'Valitse resoluutio...',
       mapLegendTitle: 'Kartan selite',
-      mapLegendAdd: 'Lisää selite karttaan'
+      mapLegendAdd: 'Lisää selite karttaan',
+      chartsTitle: 'Kaaviot',
+      chartsAdd: 'Lisää kaaviot karttaan'
     },
     exportVideo: {
       animation: 'Animaatio',
@@ -473,6 +537,10 @@ export default {
     saveMap: {
       title: 'Pilvitallennus',
       subtitle: 'Kirjaudu sisään pilvipalveluusi tallentaaksesi kartan'
+    },
+    providerSelect: {
+      disclaimer:
+        'Kirjaudu omalla tililläsi. Kartat tallennetaan valitsemasi palvelun henkilökohtaiseen pilveen, ei Kepler.gl:ään.'
     },
     exportMap: {
       formatTitle: 'Kartan formaatti',
@@ -569,13 +637,20 @@ export default {
   header: {
     visibleLayers: 'Näkyvissä olevat tasot',
     layerLegend: 'Tason selite',
-    annotations: 'Merkinnät'
+    annotations: 'Merkinnät',
+    charts: 'Kaaviot'
   },
   interactions: {
     tooltip: 'Vihje',
     brush: 'Harja',
     coordinate: 'Koordinaatit',
-    geocoder: 'Geocoder'
+    geocoder: 'Geocoder',
+    legend: 'Selite',
+    legendHint: 'Valitse, mitkä tasot näkyvät selitteessä. Tasot pysyvät kartalla.',
+    legendEmpty: 'Lisää taso valitaksesi, mitä selitteessä näkyy.',
+    legendHiddenByGroup: 'Piilotettu, koska ryhmä on jätetty pois selitteestä',
+    legendHideInvisible: 'Piilota piilotetut tasot selitteestä',
+    legendAllLayers: 'Kaikki tasot'
   },
   layerBlending: {
     title: 'Tasojen sekoittuvuus',
@@ -660,16 +735,23 @@ export default {
   fileUploader: {
     message: 'Raahaa ja pudota tiedostosi tänne',
     chromeMessage:
-      '*Chromen käyttäjä: Rajoita tiedostokokosi 250Mb:hen. Jos haluat suurempia tiedostoja, kokeile Safaria',
+      '*Tiedostot käsitellään selaimessa. Suuret tiedostot voivat loppua muistista; käytä tilesetiä hyvin suurille aineistoille.',
     disclaimer:
       '*kepler.gl on client-side sovellus, data pysyy vain selaimessasi...' +
       'Tietoja ei lähetetä palvelimelle.',
     configUploadMessage:
-      'Lisää {fileFormatNames} tai tallennettu kartta **Json**. Lue lisää [**tuetuista formaateista**]',
+      'Lisää tuettu tiedosto tai tallennettu kartta **Json**. Lue lisää [**tuetuista formaateista**]',
     browseFiles: 'selaa tiedostojasi',
     uploading: 'ladataan',
+    downloading: 'Ladataan',
     fileNotSupported: 'Tiedosto {errorFiles} ei ole tuettu.',
-    or: 'tai'
+    or: 'tai',
+    dropMessage: 'Raahaa ja pudota tiedostosi tänne, {browse} tai',
+    urlPlaceholder: 'Syötä aineiston URL',
+    fetch: 'Hae',
+    format: 'Muoto',
+    formatAuto: 'Auto',
+    cors: 'URL-osoitteen on sallittava [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
   },
   density: 'tiheys',
   'Bug Report': 'Bugiraportointi',

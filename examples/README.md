@@ -1,6 +1,9 @@
 # Examples
 
-A list of examples demonstrating how to add `kepler.gl` to your app. Each example is a standalone project that can be run locally.
+A list of examples demonstrating how to add `kepler.gl` to your app. Most
+examples are standalone projects that can be run locally. The [Live Data][live-data]
+harness is started from the repo root (`yarn start:live-data`) so it can bundle
+local `src/`.
 
 ## Getting started
 
@@ -27,6 +30,9 @@ yarn start
 - ### [Get Started (Vite)][get-started-vite]
   Minimal kepler.gl setup with Vite.
 
+- ### [DuckDB (Vite)][duckdb-vite]
+  Minimal kepler.gl setup with the DuckDB plugin and Vite.
+
 - ### [Demo App][demo-app]
   kepler.gl as a full single-page app — loads sample maps from remote URLs and saves map data to Dropbox. This is also the source code of kepler.gl/#/demo.
 
@@ -42,6 +48,12 @@ yarn start
 - ### [Custom Theme][custom-theme]
   Customize the kepler.gl theme by overriding default style properties.
 
+- ### [Clicked Feature][clicked-feature]
+  Read `visState.clicked` from Redux and show a GeoJSON feature's `shapeName` in a host-app sidebar outside the map.
+
+- ### [Live Data][live-data]
+  Remotely hosted CSV of points orbiting San Francisco on a 2-minute loop. Toggle **Poll URL** (HTTP snapshot replace every 300 ms), **Host rows** (`addToDataset` / `removeFromDataset`, including upsert and delete by `id`), and **WebSocket** (host maps `ws` upserts onto `addToDataset`; Kepler is not a websocket client).
+
 - ### [Custom Layer][custom-layer]
   Add a custom deck.gl layer (`ContourLayer`) to kepler.gl's layer type selector, so it can be picked from the dropdown, configured with dataset columns, and rendered on the map.
 
@@ -56,11 +68,14 @@ yarn start
 
 [get-started]: get-started/README.md
 [get-started-vite]: get-started-vite/README.md
+[duckdb-vite]: duckdb-vite/README.md
 [demo-app]: demo-app/README.md
 [open-modal]: open-modal/README.md
 [custom-reducer]: custom-reducer/README.md
 [replace-component]: replace-component/README.md
 [custom-theme]: custom-theme/README.md
+[clicked-feature]: clicked-feature/README.md
+[live-data]: live-data/README.md
 [custom-layer]: custom-layer/README.md
 [custom-map-style]: custom-map-style/README.md
 [node-app]: node-app/README.md

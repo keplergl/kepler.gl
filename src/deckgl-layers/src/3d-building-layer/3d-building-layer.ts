@@ -29,6 +29,7 @@ export default class ThreeDBuildingLayer extends CompositeLayer<ThreeDBuildingLa
     return [
       new DeckGLTileLayer({
         id: `${this.id}-deck-3d-building` as string,
+        pickable: this.props.pickable,
         getTileData: (tile: TileLoadProps) =>
           getTileData(this.props.mapboxApiUrl, this.props.mapboxApiAccessToken, tile),
         minZoom: 13,

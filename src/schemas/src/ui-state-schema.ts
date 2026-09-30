@@ -22,11 +22,19 @@ export const propertiesV1 = {
           })
         },
         key: 'mapLegend'
+      }),
+      chart: new Schema({
+        version: VERSIONS.v1,
+        properties: {
+          active: null
+        },
+        key: 'chart'
       })
     },
     key: 'mapControls'
   }),
-  locale: null
+  locale: null,
+  theme: null
 };
 
 const uiStateSchema = {

@@ -12,3 +12,6 @@ import './schemas';
 
 // test processers
 import './processors';
+
+// docker runtime config (entrypoint merge script)
+import './docker';

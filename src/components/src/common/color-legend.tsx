@@ -32,6 +32,8 @@ const inputCss = css`
 const StyledLegend = styled.div<{$disableEdit: boolean; isExpanded?: boolean}>`
   ${props => props.theme.sidePanelScrollBar};
   ${props => (props.isExpanded ? '' : `max-height: 156px;`)};
+  box-sizing: border-box;
+  width: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   margin-bottom: ${GAP}px;
@@ -40,6 +42,31 @@ const StyledLegend = styled.div<{$disableEdit: boolean; isExpanded?: boolean}>`
   padding: 2px 0;
 
   ${props => (props.$disableEdit ? inputCss : '')}
+`;
+
+const StyledHorizontalLegend = styled.div`
+  padding: 2px 0;
+`;
+
+const StyledColorRamp = styled.div`
+  display: flex;
+  height: 12px;
+  width: 100%;
+  overflow: hidden;
+`;
+
+const StyledRampSegment = styled.div<{$color: string}>`
+  flex: 1;
+  background-color: ${props => props.$color};
+`;
+
+const StyledRampLabels = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  font-size: 9.5px;
+  line-height: 12px;
+  color: ${props => props.theme.textColor};
 `;
 
 const StyledLegendRow = styled.div`
@@ -301,6 +328,8 @@ export type ColorLegendProps = {
   isFixed?: boolean;
   isExpanded?: boolean;
   onUpdateColorLegend?: (colorLegends: {[key: HexColor]: string}) => void;
+  endpointLabels?: {min: string; max: string};
+  orientation?: 'vertical' | 'horizontal';
 };
 
 export type Legend = {
@@ -323,7 +352,9 @@ function ColorLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
     mapState,
     onUpdateColorLegend,
     displayLabel = true,
-    disableEdit = false
+    disableEdit = false,
+    endpointLabels,
+    orientation = 'vertical'
   }) => {
     const {colorLegends} = range || {};
 
@@ -363,22 +394,54 @@ function ColorLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
       [onUpdateColorLegend, colorLegends]
     );
 
+    if (orientation === 'horizontal') {
+      return (
+        <StyledHorizontalLegend className="styled-color-legend legend--color-ramp">
+          <StyledColorRamp>
+            {legends.map((legend, i) => (
+              <StyledRampSegment
+                key={`${legend.data}-${i}`}
+                className="legend--color-ramp__segment"
+                $color={legend.data}
+              />
+            ))}
+          </StyledColorRamp>
+          {endpointLabels ? (
+            <StyledRampLabels className="legend--color-ramp__labels">
+              <span className="legend--color-ramp__min">{endpointLabels.min}</span>
+              <span className="legend--color-ramp__max">{endpointLabels.max}</span>
+            </StyledRampLabels>
+          ) : null}
+        </StyledHorizontalLegend>
+      );
+    }
+
     return (
       <StyledLegend
         className="styled-color-legend"
         $disableEdit={disableEdit}
         isExpanded={isExpanded}
       >
-        {legends.map((legend, i) => (
-          <LegendRow
-            key={`${legend.data}-${i}`}
-            label={legend.label}
-            displayLabel={displayLabel}
-            color={legend.data}
-            onUpdateLabel={!disableEdit ? onUpdateLabel : undefined}
-            onResetLabel={legend.override && !disableEdit ? onResetLabel : undefined}
-          />
-        ))}
+        {legends.map((legend, i) => {
+          const endpointLabel =
+            endpointLabels && legends.length
+              ? i === 0
+                ? endpointLabels.min
+                : i === legends.length - 1
+                ? endpointLabels.max
+                : ''
+              : undefined;
+          return (
+            <LegendRow
+              key={`${legend.data}-${i}`}
+              label={endpointLabel !== undefined ? endpointLabel : legend.label}
+              displayLabel={displayLabel}
+              color={legend.data}
+              onUpdateLabel={!disableEdit ? onUpdateLabel : undefined}
+              onResetLabel={legend.override && !disableEdit ? onResetLabel : undefined}
+            />
+          );
+        })}
       </StyledLegend>
     );
   };

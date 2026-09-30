@@ -10,7 +10,7 @@ You can create a react redux app with kepler.gl as your map display component, r
 There is no limit, but the more datasets you add, the more likely it is that performance will suffer. 
 
 ## What is the maximum file upload size?
-Kepler.gl accepts files no larger than 250mb in chrome. You can load bigger files in safari, but performance will be limited.
+kepler.gl does not enforce a file size cap. Files are parsed in the browser, so the limit is available memory. Very large files can freeze or crash the tab. For data that does not fit in memory, use a tileset (vector tiles, COG, or PMTiles) instead of a single file.
 
 ## How many layers can I add to a map?
 There is no limit on the amount of layers you can add. However, note that the more layers you have on your map, the more likely it is that performance will suffer. 

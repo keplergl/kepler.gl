@@ -75,7 +75,10 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
   // deck.gl's HexagonCellLayer positions cells in flat common space, which lands
   // them on the XY plane through the globe center. Swap in a globe-aware subclass
   // that curves cells onto the sphere surface (no-op in 2D/3D mode).
-  getSubLayerClass<T extends Layer>(subLayerId: string, DefaultLayerClass: {new (...args: any[]): T}) {
+  getSubLayerClass<T extends Layer>(
+    subLayerId: string,
+    DefaultLayerClass: {new (...args: any[]): T}
+  ) {
     const resolved = super.getSubLayerClass(subLayerId, DefaultLayerClass);
     if (subLayerId === 'cells') {
       return makeGlobeCellLayerClass(

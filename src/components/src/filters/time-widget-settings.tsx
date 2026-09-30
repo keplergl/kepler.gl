@@ -22,6 +22,9 @@ import {
 import {TimeRangeFilter, Field} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {getDefaultTimeFormat} from '@kepler.gl/utils';
+import {FormattedMessage} from '@kepler.gl/localization';
+
+import TimezoneSelector from './timezone-selector';
 
 const MAX_BINS = 2048;
 
@@ -62,6 +65,7 @@ const AxisHeader = styled.div`
 const AxisRow = styled.div`
   display: flex;
   align-items: flex-end;
+  flex-wrap: wrap;
   gap: 25px;
 `;
 
@@ -189,6 +193,7 @@ export type TimeWidgetSettingsProps = {
   filter: TimeRangeFilter;
   datasets: Datasets;
   setFilterPlot: (newProp: any, valueIndex?: number) => void;
+  onTimezoneChange: (timezone: string) => void;
 };
 
 function parseInterval(intervalId: string | undefined): {step: number; unit: string} {
@@ -206,7 +211,8 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
   const TimeWidgetSettings: React.FC<TimeWidgetSettingsProps> = ({
     filter,
     datasets,
-    setFilterPlot
+    setFilterPlot,
+    onTimezoneChange
   }) => {
     const {plotType} = filter;
     const currentInterval = plotType?.interval;
@@ -269,13 +275,10 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
       [setFilterPlot, isIntervalTooSmall]
     );
 
-    const onStepChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        setStepValue(val);
-      },
-      []
-    );
+    const onStepChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      setStepValue(val);
+    }, []);
 
     const onStepBlur = useCallback(() => {
       const num = parseInt(stepValue, 10);
@@ -286,14 +289,11 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
       }
     }, [stepValue, unitValue, parsedStep, applyInterval]);
 
-    const onStepKeyDown = useCallback(
-      (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-          (e.target as HTMLInputElement).blur();
-        }
-      },
-      []
-    );
+    const onStepKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        (e.target as HTMLInputElement).blur();
+      }
+    }, []);
 
     const onUnitChange = useCallback(
       (value: any) => {
@@ -345,11 +345,16 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
     return (
       <SettingsPanel className="time-widget--settings">
         <AxisSection>
-          <AxisHeader><ArrowRight height="10px" />X Axis</AxisHeader>
+          <AxisHeader>
+            <ArrowRight height="10px" />X Axis
+          </AxisHeader>
           <AxisRow>
             <FieldBlock>
               <FieldLabel>Select Field</FieldLabel>
-              <FieldValue>{filter.name}</FieldValue>
+              <FieldValue>
+                {Array.isArray(filter.name) ? filter.name[0] : filter.name}
+                {filter.endName?.[0] ? ` → ${filter.endName[0]}` : ''}
+              </FieldValue>
             </FieldBlock>
             <FieldBlock>
               <FieldLabel>Interval</FieldLabel>
@@ -363,27 +368,33 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
                   onKeyDown={onStepKeyDown}
                   $hasError={intervalTooSmall}
                 />
-            <UnitSelectorWrapper $hasError={intervalTooSmall}>
-              <ItemSelector
-                selectedItems={unitValue}
-                options={INTERVAL_UNITS}
-                multiSelect={false}
-                onChange={onUnitChange}
-                getOptionValue={o => o.id}
-                displayOption={displayUnitOption}
-                placement="top"
-                searchable={false}
-              />
-            </UnitSelectorWrapper>
+                <UnitSelectorWrapper $hasError={intervalTooSmall}>
+                  <ItemSelector
+                    selectedItems={unitValue}
+                    options={INTERVAL_UNITS}
+                    multiSelect={false}
+                    onChange={onUnitChange}
+                    getOptionValue={o => o.id}
+                    displayOption={displayUnitOption}
+                    placement="top"
+                    searchable={false}
+                  />
+                </UnitSelectorWrapper>
               </IntervalGroup>
             </FieldBlock>
+            <FieldBlock>
+              <FieldLabel>
+                <FormattedMessage id="filterManager.timezone" />
+              </FieldLabel>
+              <TimezoneSelector timezone={filter.timezone} onChange={onTimezoneChange} />
+            </FieldBlock>
           </AxisRow>
-          {intervalTooSmall ? (
-            <ErrorMessage>Interval is too small</ErrorMessage>
-          ) : null}
+          {intervalTooSmall ? <ErrorMessage>Interval is too small</ErrorMessage> : null}
         </AxisSection>
         <AxisSection>
-          <AxisHeader><ArrowRight height="10px" />Y Axis</AxisHeader>
+          <AxisHeader>
+            <ArrowRight height="10px" />Y Axis
+          </AxisHeader>
           <AxisRow>
             <FieldBlock>
               <FieldLabel>Select Field</FieldLabel>

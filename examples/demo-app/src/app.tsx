@@ -3,20 +3,15 @@
 
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import styled, {ThemeProvider, StyleSheetManager} from 'styled-components';
-import {useDispatch} from 'react-redux';
-import cloneDeep from 'lodash/cloneDeep';
-import isEqual from 'lodash/isEqual';
+import {useDispatch, useStore} from 'react-redux';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
+import isEqual from 'es-toolkit/compat/isEqual';
 import {useSelector} from 'react-redux';
 import isPropValid from '@emotion/is-prop-valid';
 import {useParams, useSearchParams, useLocation} from 'react-router-dom';
 import {WebMercatorViewport} from '@deck.gl/core';
-import {ScreenshotWrapper} from '@openassistant/ui';
-import {
-  setStartScreenCapture,
-  setScreenCaptured,
-  AiAssistantPanel,
-  setMapBoundary
-} from '@kepler.gl/ai-assistant';
+import {setMapBoundary} from '@openassistant/kepler-assistant';
+import {AiAssistantPanel} from '@openassistant/kepler-assistant';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -29,6 +24,7 @@ import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import {CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS} from './constants/default-settings';
 import {messages} from './constants/localization';
+import {getRuntimeConfig} from './utils/runtime-config';
 
 import {
   loadRemoteMap,
@@ -57,10 +53,11 @@ const KeplerGl = injectComponents([
 /* eslint-disable no-unused-vars */
 import sampleTripData, {testCsvData, sampleTripDataConfig} from './data/sample-trip-data';
 // import sampleGeojson from './data/sample-small-geojson';
-// import sampleGeojsonPoints from './data/sample-geojson-points';
+import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
 import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sample-s2-data';
+import sampleA5Data, {config as a5MapConfig, dataId as a5DataId} from './data/sample-a5-data';
 import sampleAnimateTrip, {
   pointData,
   pointDataId,
@@ -76,7 +73,7 @@ import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/proce
 /* eslint-enable no-unused-vars */
 
 // This implements the default behavior from styled-components v5
-function shouldForwardProp(propName, target) {
+function shouldForwardProp(propName: string, target: unknown) {
   if (typeof target === 'string') {
     // For HTML elements, forward the prop if it is a valid HTML attribute
     return isPropValid(propName);
@@ -158,6 +155,7 @@ const App = props => {
   const location = useLocation();
   const query = Object.fromEntries(searchParams.entries());
   const dispatch = useDispatch();
+  const reduxStore = useStore();
 
   // TODO find another way to check for existence of duckDb plugin
   const duckDbPluginEnabled = (getApplicationConfig().plugins || []).some(p => p.name === 'duckdb');
@@ -170,14 +168,15 @@ const App = props => {
     state => state?.demo?.keplerGl?.map?.uiState.mapControls.aiAssistant?.active
   );
 
-  const prevQueryRef = useRef<number>(null);
-
-  const startScreenCapture = useSelector(
-    (state: any) => state.demo.aiAssistant.screenshotToAsk.startScreenCapture
-  );
+  const prevQueryRef = useRef<{
+    provider?: string;
+    id?: string;
+    query: Record<string, string>;
+  } | null>(null);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapDimensions, setMapDimensions] = useState({width: 0, height: 0});
+  const runtime = getRuntimeConfig();
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -225,10 +224,13 @@ const App = props => {
       dispatch(loadSampleConfigurations(id));
     }
 
-    // Load map using a custom
+    // Load map using a custom URL. Prefer ?mapUrl=; otherwise use runtime config
+    // only when no /demo/:id sample is being loaded (avoids racing two map loads).
     if (query.mapUrl) {
       // TODO?: validate map url
       dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
+    } else if (!id && runtime.mapUrl) {
+      dispatch(loadRemoteMap({dataUrl: runtime.mapUrl}));
     }
 
     if (duckDbPluginEnabled && query.sql) {
@@ -259,20 +261,6 @@ const App = props => {
       const nw = viewport.unproject([0, 0]);
       const se = viewport.unproject([viewport.width, viewport.height]);
       dispatch(setMapBoundary(nw, se));
-    },
-    [dispatch]
-  );
-
-  const _setStartScreenCapture = useCallback(
-    flag => {
-      dispatch(setStartScreenCapture(flag));
-    },
-    [dispatch]
-  );
-
-  const _setScreenCaptured = useCallback(
-    screenshot => {
-      dispatch(setScreenCaptured(screenshot));
     },
     [dispatch]
   );
@@ -599,7 +587,7 @@ const App = props => {
             info: {label: 'Bart Stops Geo Replaced', id: 'bart-stops-geo-2'},
             data: sliceData
           }
-        })
+        } as any)
       );
     }, 1000);
   }, [dispatch, _loadGeojsonData]);
@@ -639,6 +627,26 @@ const App = props => {
           }
         ],
         config: s2MapConfig as ParsedConfig,
+        options: {
+          keepExistingConfig: true
+        }
+      })
+    );
+  }, [dispatch]);
+
+  const _loadA5Data = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'A5 Data',
+              id: a5DataId
+            },
+            data: processCsvData(sampleA5Data)
+          }
+        ],
+        config: a5MapConfig as ParsedConfig,
         options: {
           keepExistingConfig: true
         }
@@ -845,14 +853,15 @@ const App = props => {
     // _loadIconData();
     // _loadH3HexagonData();
     // _loadS2Data();
+    // _loadA5Data();
     // _loadScenegraphLayer();
     // _loadGpsData();
     // _loadRowData();
     // _loadVectorTileData();
     // _loadFlowData();
-    //_loadWmsLayer();
-    //_loadRasterTileLayer();
-    //_loadBitmapLayer();
+    // _loadWmsLayer();
+    // _loadRasterTileLayer();
+    // _loadBitmapLayer();
     // _loadTile3DLayer();
     // _loadSyncedFilterWTripLayer();
     // _replaceSyncedFilterWTripLayer();
@@ -864,6 +873,7 @@ const App = props => {
     _loadIconData,
     _loadH3HexagonData,
     _loadS2Data,
+    _loadA5Data,
     _loadScenegraphLayer,
     _loadGpsData,
     _loadRowData,
@@ -889,58 +899,65 @@ const App = props => {
         //   node ? (this.root = node) : null;
         // }}
         >
-          <ScreenshotWrapper
-            startScreenCapture={startScreenCapture}
-            setScreenCaptured={_setScreenCaptured}
-            setStartScreenCapture={_setStartScreenCapture}
-            className="h-screen"
-          >
-            <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
-              <Announcement onDisable={_disableBanner} />
-            </Banner>
-            <div style={CONTAINER_STYLE}>
-              <PanelGroup direction="horizontal">
-                <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
-                  <PanelGroup direction="vertical">
-                    <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
-                      <div ref={mapContainerRef} style={{width: '100%', height: '100%'}}>
-                        <KeplerGl
-                          mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                          id="map"
-                          getState={keplerGlGetState}
-                          width={mapDimensions.width}
-                          height={mapDimensions.height}
-                          cloudProviders={CLOUD_PROVIDERS}
-                          localeMessages={messages}
-                          onExportToCloudSuccess={onExportFileSuccess}
-                          onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                          featureFlags={DEFAULT_FEATURE_FLAGS}
-                          onViewStateChange={onViewStateChange}
-                        />
-                      </div>
-                    </Panel>
+          <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
+            <Announcement onDisable={_disableBanner} />
+          </Banner>
+          <div style={CONTAINER_STYLE}>
+            <PanelGroup direction="horizontal">
+              <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
+                <PanelGroup direction="vertical">
+                  <Panel defaultSize={isSqlPanelOpen ? 60 : 100}>
+                    <div ref={mapContainerRef} style={{width: '100%', height: '100%'}}>
+                      <KeplerGl
+                        mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                        id="map"
+                        getState={keplerGlGetState}
+                        width={mapDimensions.width}
+                        height={mapDimensions.height}
+                        cloudProviders={CLOUD_PROVIDERS}
+                        localeMessages={messages}
+                        onExportToCloudSuccess={onExportFileSuccess}
+                        onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                        featureFlags={DEFAULT_FEATURE_FLAGS}
+                        onViewStateChange={onViewStateChange}
+                        {...(Array.isArray(runtime.mapStyles)
+                          ? {
+                              mapStyles: runtime.mapStyles,
+                              mapStylesReplaceDefault: Boolean(runtime.mapStylesReplaceDefault)
+                            }
+                          : {})}
+                      />
+                    </div>
+                  </Panel>
 
-                    {isSqlPanelOpen && (
-                      <>
-                        <StyledResizeHandle />
-                        <Panel defaultSize={40} minSize={20}>
-                          <SqlPanel initialSql={query.sql || ''} />
-                        </Panel>
-                      </>
-                    )}
-                  </PanelGroup>
-                </Panel>
-                {isAiAssistantPanelOpen && (
-                  <>
-                    <StyledVerticalResizeHandle />
-                    <Panel defaultSize={30} minSize={20}>
-                      <AiAssistantPanel />
-                    </Panel>
-                  </>
-                )}
-              </PanelGroup>
-            </div>
-          </ScreenshotWrapper>
+                  {isSqlPanelOpen && (
+                    <>
+                      <StyledResizeHandle />
+                      <Panel defaultSize={40} minSize={20}>
+                        <SqlPanel initialSql={query.sql || ''} />
+                      </Panel>
+                    </>
+                  )}
+                </PanelGroup>
+              </Panel>
+              {isAiAssistantPanelOpen && (
+                <>
+                  <StyledVerticalResizeHandle />
+                  <Panel defaultSize={30} minSize={20}>
+                    <AiAssistantPanel
+                      reduxStore={reduxStore}
+                      stateAccessors={{
+                        getVisState: () =>
+                          (reduxStore?.getState() as any)?.demo?.keplerGl?.map?.visState,
+                        getMapBoundary: () =>
+                          (reduxStore?.getState() as any)?.demo?.aiAssistant?.keplerGl?.mapBoundary
+                      }}
+                    />
+                  </Panel>
+                </>
+              )}
+            </PanelGroup>
+          </div>
         </GlobalStyle>
       </ThemeProvider>
     </StyleSheetManager>

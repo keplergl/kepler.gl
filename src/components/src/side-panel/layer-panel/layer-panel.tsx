@@ -18,6 +18,8 @@ import {Datasets} from '@kepler.gl/table';
 import {ColorUI, LayerVisConfig, MapState, NestedPartial, SplitMap} from '@kepler.gl/types';
 import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
+import LayerJsonEditorFactory from './layer-json-editor';
+import {isJsonEditorEnabled} from '../../common/json-editor-utils';
 
 type LayerPanelProps = {
   className?: string;
@@ -50,6 +52,7 @@ type LayerPanelProps = {
   duplicateLayer: ActionHandler<typeof VisStateActions.duplicateLayer>;
   listeners?: React.ElementType;
   layerToggleVisibility: ActionHandler<typeof VisStateActions.layerToggleVisibility>;
+  updateDatasetProps?: ActionHandler<typeof VisStateActions.updateDatasetProps>;
   splitMap?: SplitMap;
 };
 
@@ -62,13 +65,19 @@ const PanelWrapper = styled.div`
   }
 `;
 
-LayerPanelFactory.deps = [LayerConfiguratorFactory, LayerPanelHeaderFactory];
+LayerPanelFactory.deps = [
+  LayerConfiguratorFactory,
+  LayerPanelHeaderFactory,
+  LayerJsonEditorFactory
+];
 
 function LayerPanelFactory(
   LayerConfigurator: ReturnType<typeof LayerConfiguratorFactory>,
-  LayerPanelHeader: ReturnType<typeof LayerPanelHeaderFactory>
+  LayerPanelHeader: ReturnType<typeof LayerPanelHeaderFactory>,
+  LayerJsonEditor: ReturnType<typeof LayerJsonEditorFactory>
 ): React.ComponentType<LayerPanelProps> {
-  class LayerPanel extends Component<LayerPanelProps> {
+  class LayerPanel extends Component<LayerPanelProps, {isJsonEditorActive: boolean}> {
+    state = {isJsonEditorActive: false};
     updateLayerConfig = (newProp: Partial<LayerBaseConfig>) => {
       this.props.layerConfigChange(this.props.layer, newProp);
     };
@@ -139,6 +148,20 @@ function LayerPanelFactory(
       this.props.duplicateLayer(this.props.layer.id);
     };
 
+    _toggleJsonEditor: MouseEventHandler = e => {
+      e?.stopPropagation();
+      const next = !this.state.isJsonEditorActive;
+      this.setState({isJsonEditorActive: next});
+      if (next && !this.props.layer.config.isConfigActive) {
+        this.updateLayerConfig({isConfigActive: true});
+      }
+    };
+
+    _closeJsonEditor = (e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      this.setState({isJsonEditorActive: false});
+    };
+
     render() {
       const {layer, datasets, isDraggable, layerTypeOptions, listeners, splitMap, mapState} =
         this.props;
@@ -155,6 +178,13 @@ function LayerPanelFactory(
         GLOBE_SUPPORTED_LAYERS[layer.type ?? ''] === false ? (
           <FormattedMessage id={'layerManager.globeUnsupported'} values={{layerType: layer.type}} />
         ) : undefined;
+      const tilesetLoadError = (layer as {tilesetLoadError?: 'token' | 'generic' | null})
+        .tilesetLoadError;
+      const tilesetWarning = tilesetLoadError ? (
+        <FormattedMessage
+          id={tilesetLoadError === 'token' ? 'layer.tile3dTokenError' : 'layer.tile3dLoadError'}
+        />
+      ) : undefined;
 
       return (
         <PanelWrapper
@@ -173,7 +203,7 @@ function LayerPanelFactory(
             labelRCGColorValues={config.dataId ? datasets[config.dataId].color : null}
             layerType={layer.type}
             allowDuplicate={allowDuplicate}
-            warning={globeWarning}
+            warning={tilesetWarning || globeWarning}
             onToggleEnableConfig={this._toggleEnableConfig}
             onToggleVisibility={this._toggleVisibility}
             onResetIsValid={this._resetIsValid}
@@ -181,23 +211,30 @@ function LayerPanelFactory(
             onRemoveLayer={this._removeLayer}
             onZoomToLayer={this._zoomToLayer}
             onDuplicateLayer={this._duplicateLayer}
+            onToggleJsonEditor={this._toggleJsonEditor}
+            isJsonEditorActive={this.state.isJsonEditorActive}
+            showJsonEditor={isJsonEditorEnabled('layer')}
             isDragNDropEnabled={isDraggable}
             listeners={listeners}
           />
-          {isConfigActive && (
-            <LayerConfigurator
-              layer={layer}
-              datasets={datasets}
-              layerTypeOptions={layerTypeOptions}
-              openModal={this.props.openModal}
-              updateLayerColorUI={this.updateLayerColorUI}
-              updateLayerConfig={this.updateLayerConfig}
-              updateLayerVisualChannelConfig={this.updateLayerVisualChannelConfig}
-              updateLayerType={this.updateLayerType}
-              updateLayerTextLabel={this.updateLayerTextLabel}
-              updateLayerVisConfig={this.updateLayerVisConfig}
-            />
-          )}
+          {isConfigActive &&
+            (this.state.isJsonEditorActive ? (
+              <LayerJsonEditor layer={layer} onClose={this._closeJsonEditor} />
+            ) : (
+              <LayerConfigurator
+                layer={layer}
+                datasets={datasets}
+                layerTypeOptions={layerTypeOptions}
+                openModal={this.props.openModal}
+                updateLayerColorUI={this.updateLayerColorUI}
+                updateLayerConfig={this.updateLayerConfig}
+                updateLayerVisualChannelConfig={this.updateLayerVisualChannelConfig}
+                updateLayerType={this.updateLayerType}
+                updateLayerTextLabel={this.updateLayerTextLabel}
+                updateLayerVisConfig={this.updateLayerVisConfig}
+                updateDatasetProps={this.props.updateDatasetProps}
+              />
+            ))}
         </PanelWrapper>
       );
     }

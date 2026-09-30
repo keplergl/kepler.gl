@@ -13,14 +13,18 @@
 //   lng/lat and onto the sphere.
 // - Text/Label rendering with back-face culling: MVTLabelLayer renders place labels via a
 //   TextLayer whose glyph sublayer is EnhancedMultiIconLayer, which degenerates glyph
-//   vertices on the far side of the globe (dot(surfaceNormal, toCamera) < 0.1) so labels
-//   don't show through the planet. Implemented as a GLSL inject.
+//   vertices on the far side of the globe so labels don't show through the planet.
+//   User layer text labels reuse the same inject (see globe-backface-cull) and, when a
+//   background is enabled, EnhancedTextBackgroundLayer — a copy of EnhancedMultiIconLayer
+//   for the background sublayer. The GLSL itself is unchanged from EnhancedMultiIconLayer.
 
 export {
   AtmosphereLayerRealistic,
   AtmosphereSkyLayerRealistic,
+  AtmosphereHugeHaloLayer,
   getGlobeAtmosphereLayer,
-  getGlobeAtmosphereSkyLayer
+  getGlobeAtmosphereSkyLayer,
+  getGlobeHugeHaloLayer
 } from './atmosphere-layer';
 export {GlobeDepthDiskLayer, getGlobeDepthDiskLayer} from './globe-depth-disk-layer';
 export {
@@ -36,5 +40,6 @@ export {
 export type {GlobeBasemapProvider, GlobeAttribution} from './globe-layers';
 export {MVTLabelLayer} from './mvt-label-layer';
 export {default as EnhancedMultiIconLayer} from './enhanced-multi-icon-layer';
+export {default as EnhancedTextBackgroundLayer} from './enhanced-text-background-layer';
 export {KeplerGlobeView} from './globe-view';
-export {getStarsBackgroundImage} from './globe-stars-layer';
+export {getStarsBackgroundImage, drawStarsBackground} from './globe-stars-layer';

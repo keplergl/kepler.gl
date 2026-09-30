@@ -34,12 +34,28 @@ export {setStyleSheetBaseHref} from './dom-utils';
 export {default as domtoimage} from './dom-to-image';
 export {getFrequency, getMode, aggregate} from './aggregation';
 export {
+  ColumnStatsType,
+  NUMERIC_BIN_COUNT,
+  collectColumnValues,
+  computeColumnStats,
+  getColumnStatistics
+} from './column-statistics';
+export type {
+  ColumnStats,
+  NumericColumnStats,
+  CategoricalColumnStats,
+  TimeColumnStats,
+  Quantile
+} from './column-statistics';
+export {
   adjustValueToAnimationWindow,
   getBinThresholds,
   histogramFromThreshold,
   histogramFromValues,
   histogramFromDomain,
   histogramFromOrdinal,
+  histogramFromTimeIntervals,
+  mergePolygonLayerIndexes,
   runGpuFilterForPlot,
   updateTimeFilterPlotType
 } from './plot';
@@ -52,7 +68,7 @@ export {
   TIMELINE_MODES,
   TIME_INTERVALS_ORDERED,
   LayerToFilterTimeInterval,
-  TileTimeInterval,
+  LayerTimeInterval,
   getTimelineFromAnimationConfig,
   getTimelineFromFilter,
   filterIntervalOptions
@@ -78,9 +94,12 @@ export {
   exportMap,
   exportToJsonString,
   default as exporters,
+  getExportFileName,
+  getExportFileNameBase,
   getMapJSON,
   getScaleFromImageSize,
-  isMSEdge
+  isMSEdge,
+  omitLayerApiKeys
 } from './export-utils';
 export {getFormatValue, getDefaultTimeFormat} from './format';
 export {getLayerBlendingParameters, patchDeckRendererForPostProcessing} from './gl-utils';
@@ -129,6 +148,7 @@ export * from './map-utils';
 
 export {
   ArrowDataContainer,
+  compactArrowTable,
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,
   isArrowTable,
@@ -145,12 +165,31 @@ export {
 } from './data-container-utils';
 export * from './filter-utils';
 export type {FilterChanged, FilterResult, dataValueAccessor} from './filter-utils';
+export * from './editor-feature-utils';
+export type {EditorFeatureCollection} from './editor-feature-utils';
+export {
+  extractRowsInsideFeature,
+  extractVectorTileFeaturesInsideFeature,
+  extractRasterInsideFeature,
+  isExtractableDataset,
+  isExtractableLayer,
+  isRasterTileExtractLayer,
+  isVectorTileExtractLayer
+} from './extract-dataset-utils';
+export type {
+  ExtractableDataset,
+  ExtractableLayer,
+  ExtractedGeojson,
+  ExtractedTable,
+  ExtractResult
+} from './extract-dataset-utils';
 
 export {
   colorMapToColorBreaks,
   colorBreaksToColorMap,
   getLayerColorScale,
   getLegendOfScale,
+  getJenksDomain,
   getLinearDomain,
   getLogDomain,
   getOrdinalDomain,
@@ -181,8 +220,15 @@ export {DataRow} from './data-row';
 
 // Application config
 export {getApplicationConfig, initApplicationConfig} from './application-config';
+export {
+  getConfiguredThemes,
+  shouldShowThemeSwitcher,
+  getDefaultUiTheme,
+  getNextUiTheme
+} from './theme-utils';
 export type {
   KeplerApplicationConfig,
+  KeplerAcceptedFileFormat,
   BaseMapLibraryConfig,
   MapLibInstance,
   GetMapRef,
@@ -195,6 +241,7 @@ export type {DatabaseAdapter, DatabaseConnection} from './application-config-typ
 export {isAppleDevice} from './browser-utils';
 
 export {default as quickInsertionSort} from './quick-insertion-sort';
+export {default as naturalBreaks} from './jenks';
 
 export type {KeplerTableModel} from './types';
 

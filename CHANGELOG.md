@@ -15,6 +15,147 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.15] - Sep 28 2026
+
+- ac36f69f feat: progress bar when loading remote datasets from a saved map (#3764)
+- d49a5200 fix: titiler.xyz CORS cache breaking COG tiles on demo and HTML export (#3765)
+- af5ded87 feat: add space theme and configurable theme cycle (#3755)
+- 5bc73e37 feat: export map filename; export image filename (#3760)
+
+## [3.3.0-alpha.14] - Sep 25 2026
+
+- 5e3f0794 fix: paint the range brush above the histogram bars (#3753)
+- 7aac1799 fix: keep the animation timezone and time format in saved maps (#3754)
+- e3fecd1d feat: optional charts panel (#3745)
+- c07a1f27 fix: redraw flows when a replaced dataset brings a new flow layer (#3751)
+- 59048d02 feat: add JSON editors for layer, filter, effect, viewport, and animation (#3744)
+- ce25658f fix: keep the parked layers' place when another dataset is replaced (#3750)
+- 4b8e5de0 fix: load Parquet/Arrow Int64 columns without BigInt TypeError (#3749)
+- fed9669a fix: docker image build improvements (#3748)
+
+## [3.3.0-alpha.13] - Sep 20 2026
+
+- 98cbeccf feat: add Shapefile, Excel, and FlatGeobuf support (#3741)
+- 524add9e feat: timezone selector for time filter settings (#3743)
+- e9551a97 feat: extract in-memory rows from a drawn polygon (#3739)
+- 3be42f85 feat: add Jenks natural breaks color scale (#3742)
+- 08b8c4d2 chore: remove leftover names (#3740)
+- 0f4eac59 feat(demo): bump kepler-assistant to 0.0.18 so anthropic works in the browser (#3695)
+- 156bdd38 fix: keep split map panels index-aligned when merging split maps (#3735)
+- 2ecf2cd7 feat(docker): manual GHCR publish for the demo-app image (#3737)
+- 715d5753 feat(docker): runtime config fail-fast, sub-path href, gallery docs (#3736)
+
+## [3.3.0-alpha.12] - Sep 17 2026
+
+- 5ae15302 feat: add experimental Flow Field layer (#3722)
+- ccf6aa45 chore(deps): bump react-router-dom in /examples/demo-app-sqlrooms (#3732)
+- 0b9f576a feat: add SQLRooms integration and a separate experimental demo (#3721)
+- 3c28dfd3 feat: detect extensionless COG URLs in raster tile add-data (#3723)
+- f9a29942 feat(docker): runtime config for demo-app image (#3725)
+- 52a769e2 feat: hide overlapping text labels (#3707)
+- f6e4f636 fix(globe): text labels not occluded for objects on the back side of the globe (#3731)
+- 5cae52f5 fix: keep layer order when replacing datasets back to back (#3728)
+- 9c95180f (igr/globe-label-occlusion) fix(layers): show layer text labels in globe mode (#3730)
+- 698fc230 fix: text labels ignore left/right visibility in split/swipe modes (#3729)
+- 5d71d1c1 feat: snap annotations to 3D surfaces (#3719)
+- ad4abb6f docs: document Incremental Time Window for playback (#3724)
+- e090e7c2 feat: add heatmap and WMS legends to the map legend (#3718)
+
+## [3.3.0-alpha.11] - Sep 10 2026
+
+- 862aa5cb fix(exported-html): include only one copy of arrow (#3717)
+- 34921e2d fix: cancel raster tile requests when deck.gl aborts the tile (#3715)
+- 58265900 feat: add left and below placement for annotation text (#3706)
+- 131f6642 fix: pass the feature to table-mode GPU filter accessors (#3710)
+- 17f2ae12 chore(deps): bump react-router-dom from 6.30.4 to 6.30.6 in /website (#3708)
+- d48bd5c2 fix: prevent long annotation names from stretching the annotations panel (#3705)
+- bcf42616 fix: draw float32 raster tiles (#3704)
+- e29bad01 chore: move filter panel interval message to a tooltip (#3701)
+- 68e844d2 fix: geojson stroke color via config (#3700)
+- 150246a0 feat: optional end time for time filter animation (#3699)
+- 54b620d8 fix: adjust labels in add data to map modal (#3698)
+- c3aeb45b feat: add KML, GPX, TCX, and GeoJSONL loaders (#3697)
+- d37b8a25 chore: remove react-palm, replace with built-in task runtime in @kepler.gl/tasks (#3592)
+
+## [3.3.0-alpha.10] - Sep 3 2026
+
+- 878d9651 chore: live-data example WebSocket host (ws → addToDataset) (#3687)
+- 13226dfb chore: add @kepler.gl/tasks-core as a dual CJS/ESM workspace package (#3691)
+- 4fce8abd feat: add async loaders.gl 4.4 loader registry (#3682)
+- 2ea91170 fix(layers): trip layer color-by-field reads correct row in TABLE mode (#3692)
+- cb94905f chore(deps): bump mistune from 3.3.0 to 3.3.3 in /bindings/python (#3693)
+- f6d66212 chore: patch release 3.3.0-alpha.10
+- 13d230b9 chore(deps): bump tornado from 6.5.7 to 6.5.8 in /bindings/python (#3690)
+- bfb43cd7 chore(deps): bump browserslist from 4.24.4 to 4.28.8 in /website (#3689)
+
+## [3.3.0-alpha.9] - Sep 1 2026
+
+- bcf2be72 feat: addToDataset / removeFromDataset for in-place row edits (#176) (#3684)
+- adab6c25 fix: shadows effect issues with highlighted objects (#3683)
+- 99599585 fix: Light & Shadow layer order shading and top-view occlusion (#3681)
+- 78ab050c fix: Light & Shadow regression in video export (#3680)
+- 4c8c8f7a fix: Light & Shadow day slider max update depth crash (#3679)
+- 08f41de6 fix: Grid and Hexagon layers disappear when Light & Shadow is added (#3677)
+- f6b29bdf feat: an option to show vector tile features with not set attributes (#3676)
+- a734cd8f fix: lag when hovering large GeoJSON polygons (#3675)
+- 790dfe87 fix: export map button not visible (#3674)
+- 55c90ece feat: copy error notifications to clipboard (#3668)
+- 56ac6ff4 fix: set aggregation layers min radius above 0 (#3669)
+- bb1fe5e6 fix: add default format for timestamps / datetime (#3670)
+- 9bc3fea1 chore: move AI assistant out of kepler.gl core package (#3532)
+- c45373a4 feat: reload and poll remotely hosted datasets (#3667)
+- 30b0f648 feat: add GeoHash layer (#3666)
+
+## [3.3.0-alpha.8] - Aug 26 2026
+
+- af5d8173 chore: pin patched transitive deps via Yarn resolutions (#3654)
+- 854099ff feat: add circle draw tool and live length/radius labels (#3661)
+- d810e51c fix: collapse Arrow record batches above configurable cap (#3663)
+- 7dec2e70 feat: load CSV, GeoJSON, Arrow, and Parquet from a remote URL (#3662)
+- 2f60c22b fix: google drive provider prevent auto popup (#3660)
+- df9abf68 fix: remove ui buttons from map preview image (#3659)
+- be12d109 chore: replace lodash with es-toolkit (#3653)
+- 59eada01 chore: run Vite example typecheck after npm publish (#3652)
+- 2fe86102 fix: polygon filter not applied on map load (#3651)
+- f33e93b4 chore: typecheck Vite examples in CI (#3650)
+- 2926c507 chore: add circular-dep and unused-export CI checks (#3649)
+- 5b430334 chore: run Prettier and ESLint on staged files (#3648)
+- 56cad19d chore: cache Yarn, freeze lockfile, and skip Python CI on JS PRs (#3647)
+
+## [3.3.0-alpha.7] - Aug 14 2026
+
+- 34fd0bfc (origin/master, origin/HEAD, master) feat: add column statistics to the data table (#3646)
+- 90467113 feat: add point and line sketching to Draw on Map (#3639)
+- 423e1767 chore(examples): add click info example (#3643)
+- 8c03ee49 fix: handle Arrow Int64 BigInt values in accessors and filters (#3641)
+- 5030285a fix: heatmap centroids from point and line geometries (#3642)
+- 525b54ac feat: centerMap - add optional padding (#3644)
+- dbca1806 chore: update docs (#3645)
+- e26ed9c0 chore(docker): shrink build context and cache yarn installs (#3640)
+- fd3bc652 chore: fix dependabot vulnerabilities (#3638)
+- edd4e20c fix(video-export): points in video export don't react to zoom changes (#3637)
+- 24d554d0 fix(video-export): show globe stars in preview and exported video (#3636)
+- 6296973d fix(video-export): pixel ratio in preview mode regression (#3634)
+- 8fba10a2 chore: upgrade d3 (#3632)
+- 495d2995 chore: react-intl bump to 7 (#3633)
+- 2107ed8c Root now pins node-fetch 2.7.0 and thrift 0.23.0 (#3631)
+- 551dc3ff chore: Lodash is now 4.18.1 across the published packages and the website (#3630)
+- 54db300f chore: remove unused not exported files / utils (#3628)
+- e379e332 fix: polygon filtered index per layer, instead of per dataset (#3452)
+- 40a64eb7 fix: dropbox full logout; error on stale access token (#3627)
+- b313dfa2 feat(demo-app): add Google Drive cloud storage provider (#3623)
+- dead655a feat: A5 layer (#3625)
+- 29b8e479 fix: GlobehexagonCellLayer crash from Babel unbound super calls (#3622)
+- e8a644e4 fix: dropbox storage provider login issues (#3624)
+- a0bee767 feat: add optional theme switch toggle (#3620)
+- 997cba29 feat(globe): larger halo; globe controls fixes (#3621)
+- 621bb236 chore(deps): bump postcss from 8.4.49 to 8.5.26 in /website (#3619)
+- 24e6478c chore(deps): bump nanoid from 3.3.8 to 3.3.18 in /examples/demo-app (#3617)
+- 8458ee7f chore(deps): bump fast-uri from 3.1.2 to 3.1.5 (#3618)
+- 07422bfc fix: DuckDB GeoJSON import on newer duckdb-wasm (#3616)
+- b6ac552b chore: add duckdb vite example (#3615)
+- cb70edfa chore: upgrade examples to kepler.gl 3.3.0-alpha.6 (#3528)
+
 ## [3.3.0-alpha.6] - Aug 4 2026
 
 - 426d6051 feat: add loading spinner to exported HTML maps (#3612)
