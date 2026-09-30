@@ -485,7 +485,7 @@ export function mergeInteractions<S extends VisState>(
       }
 
       const currentConfig =
-        key === 'tooltip' || key === 'brush' || key === 'geocoder'
+        key === 'tooltip' || key === 'brush' || key === 'geocoder' || key === 'legend'
           ? state.interactionConfig[key].config
           : null;
 
@@ -544,6 +544,13 @@ export function mergeInteractions<S extends VisState>(
 
 function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInteractionConfig {
   const combined = {...configs[0]};
+  // `legend` is optional on older saved maps; seed it so a later config is not dropped.
+  if (!combined.legend) {
+    const withLegend = configs.find(c => c.legend);
+    if (withLegend?.legend) {
+      combined.legend = withLegend.legend;
+    }
+  }
   // handle each property key of an `InteractionConfig`, e.g. tooltip, geocoder, brush, coordinate
   // by combining values for each among all passed in configs
 
@@ -598,6 +605,10 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
 
     if (key === 'geocoder') {
       combined[key].limitSearch = toBeCombinedProps.some(p => p?.limitSearch);
+    }
+
+    if (key === 'legend') {
+      combined[key].hideInvisibleLayers = toBeCombinedProps.some(p => p?.hideInvisibleLayers);
     }
   }
 
@@ -1241,6 +1252,7 @@ export function validateLayerWithData(
     color: savedLayer.config.color,
     isVisible: savedLayer.config.isVisible,
     hidden: savedLayer.config.hidden,
+    isIncludedInLegend: savedLayer.config.isIncludedInLegend,
     columnMode: savedLayer.config.columnMode,
     highlightColor: savedLayer.config.highlightColor
   });

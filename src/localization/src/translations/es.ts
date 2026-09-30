@@ -647,7 +647,13 @@ export default {
     tooltip: 'Sugerencias',
     brush: 'Pincel',
     coordinate: 'Coordenadas',
-    geocoder: 'Geocodificador'
+    geocoder: 'Geocodificador',
+    legend: 'Leyenda',
+    legendHint: 'Elige qué capas aparecen en la leyenda. Las capas siguen en el mapa.',
+    legendEmpty: 'Añade una capa para elegir qué aparece en la leyenda.',
+    legendHiddenByGroup: 'Oculta porque un grupo está excluido de la leyenda',
+    legendHideInvisible: 'Ocultar capas ocultas en la leyenda',
+    legendAllLayers: 'Todas las capas'
   },
   layerBlending: {
     title: 'Combinación de capas',

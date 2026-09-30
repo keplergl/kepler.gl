@@ -293,6 +293,14 @@ export const defaultInteractionConfig: InteractionConfig = {
       compareType: COMPARE_TYPES.ABSOLUTE
     }
   },
+  legend: {
+    id: 'legend',
+    label: 'interactions.legend',
+    enabled: false,
+    config: {
+      hideInvisibleLayers: false
+    }
+  },
   geocoder: {
     id: 'geocoder',
     label: 'interactions.geocoder',
@@ -308,7 +316,7 @@ export const defaultInteractionConfig: InteractionConfig = {
     enabled: false,
     config: {
       // size is in km
-      size: 0.5
+      size: 2.5
     }
   },
   coordinate: {

@@ -255,6 +255,7 @@ export default function SidePanelFactory(
                     showAddMapStyleModal={onShowAddMapStyleModal}
                     uiStateActions={uiStateActions}
                     visStateActions={visStateActions}
+                    mapLegendActive={Boolean(uiState.mapControls?.mapLegend?.active)}
                     panelMetadata={currentPanel}
                     panelListView={
                       currentPanel?.id === 'layer'

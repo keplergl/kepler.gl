@@ -13,6 +13,8 @@ import {
   replaceLayerEntryInLayerOrder,
   updateLayerGroupInLayerOrder,
   getFlatLayerOrder,
+  getAncestorLayerGroups,
+  isLayerShownInLegend,
   buildLayerOrderHierarchy,
   removeGhostLayerFromLayerOrder,
   reorderLayerOrder,
@@ -509,6 +511,62 @@ test('layerGroupUtils -> mergeLayerOrder -> filters out deleted layers', t => {
 
   const group = result.layerOrder.find(e => typeof e !== 'string' && e.id === 'g1');
   t.deepEqual(group.layerOrder, ['a'], 'should filter out deleted_layer from group');
+  t.end();
+});
+
+test('layerGroupUtils -> isLayerShownInLegend -> layer and group flags', t => {
+  const layer = id => ({id, config: {}});
+  const excludedLayer = {id: 'layer_a', config: {isIncludedInLegend: false}};
+
+  t.equal(isLayerShownInLegend(layer('layer_0'), MOCK_LAYER_ORDER), true, 'root layer is included');
+  t.equal(
+    isLayerShownInLegend(layer('layer_a'), MOCK_LAYER_ORDER),
+    true,
+    'layer in an included group is included'
+  );
+  t.equal(
+    isLayerShownInLegend(excludedLayer, MOCK_LAYER_ORDER),
+    false,
+    'layer flag hides it without hiding the map layer'
+  );
+
+  const hiddenGroup = {
+    ...GROUP_1,
+    isIncludedInLegend: false
+  };
+  const order = ['layer_0', hiddenGroup];
+  t.equal(
+    isLayerShownInLegend(layer('layer_a'), order),
+    false,
+    'excluded group hides its layers from the legend'
+  );
+  t.equal(
+    isLayerShownInLegend(layer('layer_b'), order),
+    false,
+    'every layer in an excluded group is hidden from the legend'
+  );
+  t.equal(isLayerShownInLegend(layer('layer_0'), order), true, 'layers outside the group stay');
+
+  const hiddenNested = {
+    ...GROUP_WITH_NESTED,
+    layerOrder: [{...NESTED_GROUP, isIncludedInLegend: false}, 'layer_e']
+  };
+  t.equal(
+    isLayerShownInLegend(layer('layer_d'), [hiddenNested]),
+    false,
+    'an excluded nested group hides its layer'
+  );
+  t.equal(
+    isLayerShownInLegend(layer('layer_e'), [hiddenNested]),
+    true,
+    'a sibling layer in the parent group stays in the legend'
+  );
+  t.deepEqual(
+    getAncestorLayerGroups([hiddenNested], 'layer_d').map(group => group.id),
+    ['nested_group', 'group_nested'],
+    'ancestors are nearest parent first'
+  );
+
   t.end();
 });
 

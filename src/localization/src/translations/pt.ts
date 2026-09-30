@@ -647,7 +647,13 @@ export default {
     tooltip: 'Dica de contexto',
     brush: 'Pincel',
     coordinate: 'Coordenadas',
-    geocoder: 'Geocoder'
+    geocoder: 'Geocoder',
+    legend: 'Legenda',
+    legendHint: 'Escolha quais camadas aparecem na legenda. As camadas continuam no mapa.',
+    legendEmpty: 'Adicione uma camada para escolher o que aparece na legenda.',
+    legendHiddenByGroup: 'Oculta porque um grupo está excluído da legenda',
+    legendHideInvisible: 'Ocultar camadas ocultas na legenda',
+    legendAllLayers: 'Todas as camadas'
   },
   layerBlending: {
     title: 'Mistura de Camadas',

@@ -523,6 +523,7 @@ export default {
     zoomToLayer: 'Zoom to layer',
     resetAfterError: 'Try to enable the layer after an error',
     layerSettings: 'Layer settings',
+    interactionSettings: 'Interaction settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',
     selectSplitMode: 'Select map view mode',
@@ -927,7 +928,13 @@ ${'```'}
     tooltip: 'Tooltip',
     brush: 'Brush',
     coordinate: 'Coordinates',
-    geocoder: 'Geocoder'
+    geocoder: 'Geocoder',
+    legend: 'Legend',
+    legendHint: 'Choose which layers appear in the map legend. Layers stay on the map.',
+    legendEmpty: 'Add a layer to choose what appears in the legend.',
+    legendHiddenByGroup: 'Hidden because a group is excluded from the legend',
+    legendHideInvisible: 'Hide hidden layers in legend',
+    legendAllLayers: 'All Layers'
   },
   layerBlending: {
     title: 'Layer Blending',

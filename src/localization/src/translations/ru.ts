@@ -648,7 +648,13 @@ export default {
     tooltip: 'Подсказка',
     brush: 'Кисть',
     coordinate: 'Координаты',
-    geocoder: 'Геокодер'
+    geocoder: 'Геокодер',
+    legend: 'Легенда',
+    legendHint: 'Выберите, какие слои видны в легенде. На карте слои остаются.',
+    legendEmpty: 'Добавьте слой, чтобы выбрать, что видно в легенде.',
+    legendHiddenByGroup: 'Скрыто, потому что группа исключена из легенды',
+    legendHideInvisible: 'Скрывать скрытые слои в легенде',
+    legendAllLayers: 'Все слои'
   },
   layerBlending: {
     title: 'Смешивание слоев',

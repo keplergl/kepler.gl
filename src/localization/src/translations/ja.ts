@@ -642,7 +642,13 @@ export default {
     tooltip: 'ツールチップ',
     brush: 'ブラシ',
     coordinate: '座標',
-    geocoder: 'ジオコーダー'
+    geocoder: 'ジオコーダー',
+    legend: '凡例',
+    legendHint: '凡例に表示するレイヤを選びます。マップ上のレイヤはそのままです。',
+    legendEmpty: 'レイヤを追加すると、凡例に表示する項目を選べます。',
+    legendHiddenByGroup: 'グループが凡例から除外されているため非表示です',
+    legendHideInvisible: '非表示のレイヤを凡例から隠す',
+    legendAllLayers: 'すべてのレイヤ'
   },
   layerBlending: {
     title: 'レイヤのブレンド',

@@ -1358,7 +1358,19 @@ export default function MapContainerFactory(
     };
 
     _toggleMapControl = panelId => {
-      const {index, uiStateActions} = this.props;
+      const {index, uiStateActions, mapControls, visState, visStateActions} = this.props;
+
+      // Keep Interactions > Legend enabled in sync with the map-control legend button.
+      if (panelId === 'mapLegend') {
+        const nextActive = !mapControls?.mapLegend?.active;
+        const legend = visState.interactionConfig?.legend;
+        if (legend && Boolean(legend.enabled) !== nextActive) {
+          visStateActions.interactionConfigChange({
+            ...legend,
+            enabled: nextActive
+          });
+        }
+      }
 
       uiStateActions.toggleMapControl(panelId, Number(index));
     };
@@ -1506,6 +1518,7 @@ export default function MapContainerFactory(
               onConvertEditorFeaturesToLayer={visStateActions.convertEditorFeaturesToLayer}
               onLayerVisConfigChange={visStateActions.layerVisConfigChange}
               onToggleLayerVisibility={this._handleToggleLayerVisibility}
+              hideInvisibleLayers={Boolean(interactionConfig.legend?.config?.hideInvisibleLayers)}
               mapHeight={mapState.height}
               setMapControlSettings={uiStateActions.setMapControlSettings}
               activeSidePanel={activeSidePanel}
