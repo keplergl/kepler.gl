@@ -8,4 +8,5 @@
  */
 export {default as ChartManagerFactory} from './map/charts/chart-manager';
 export {default as ChartPanelContentFactory} from './map/charts/chart-panel';
+export {default as ChartJsonEditorFactory} from './map/charts/chart-json-editor';
 export {default as ChartTypeSelectorFactory} from './map/charts/chart-type-selector';

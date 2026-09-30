@@ -51,6 +51,7 @@ export type BaseChartConfig = {
   pinned?: boolean;
   display: {
     isConfigActive?: boolean;
+    isJsonEditorActive?: boolean;
   };
   crossFilter?: ChartCrossFilter;
 };

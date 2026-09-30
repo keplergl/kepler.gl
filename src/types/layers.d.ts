@@ -33,6 +33,9 @@ export type LayerBaseConfig = {
   heightField?: VisualChannelField;
   heightDomain?: VisualChannelDomain;
   heightScale?: string;
+  elevationOffsetField?: VisualChannelField;
+  elevationOffsetDomain?: VisualChannelDomain;
+  elevationOffsetScale?: string;
 };
 
 /**
@@ -101,6 +104,11 @@ export type LayerHeightConfig = {
   heightField: VisualChannelField;
   heightDomain: VisualChannelDomain;
   heightScale: VisualChannelScale;
+};
+export type LayerElevationOffsetConfig = {
+  elevationOffsetField: VisualChannelField;
+  elevationOffsetDomain: VisualChannelDomain;
+  elevationOffsetScale: VisualChannelScale;
 };
 export type LayerStrokeColorConfig = {
   strokeColorField: VisualChannelField;
@@ -345,6 +353,8 @@ export type LayerVisConfigSettings = {
   angle: VisConfigNumber;
   worldUnitSize: VisConfigNumber;
   elevationScale: VisConfigNumber;
+  elevationOffset: VisConfigNumber;
+  elevationOffsetRange: VisConfigRange;
   enableElevationZoomFactor: VisConfigBoolean;
   elevationRange: VisConfigRange;
   heightRange: VisConfigRange;
@@ -359,6 +369,7 @@ export type LayerVisConfigSettings = {
   heatmapRadius: VisConfigNumber;
   darkBaseMapEnabled: VisConfigBoolean;
   fixedHeight: VisConfigBoolean;
+  fixedElevation: VisConfigBoolean;
   allowHover: VisConfigBoolean;
   showNeighborOnHover: VisConfigBoolean;
   showHighlightColor: VisConfigBoolean;
@@ -456,6 +467,7 @@ export type LayerCallbacks = {
   ) => void;
   onRedrawNeeded?: (idx: number) => void;
   onFitBounds?: (idx: number, bounds: [number, number, number, number]) => void;
+  onTilesetLoadError?: (idx: number, kind: 'token' | 'generic' | null) => void;
 };
 
 export type BindedLayerCallbacks = {
@@ -468,6 +480,7 @@ export type BindedLayerCallbacks = {
   }) => void;
   onRedrawNeeded?: () => void;
   onFitBounds?: (bounds: [number, number, number, number]) => void;
+  onTilesetLoadError?: (kind: 'token' | 'generic' | null) => void;
 };
 
 export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';

@@ -40,7 +40,9 @@ const expectedVisStateEntries = [
   'splitMaps',
   'animationConfig',
   'editor',
-  'layerOrder'
+  'layerOrder',
+  'groupBys',
+  'joins'
 ];
 
 test('#visStateSchema -> v1 -> save layers', t => {
@@ -516,7 +518,7 @@ test('#visStateSchema -> v1 -> charts are optional', t => {
           title: 'Count',
           dataId: testCsvDataId,
           applyFilters: true,
-          display: {isConfigActive: true}
+          display: {isConfigActive: true, isJsonEditorActive: true}
         }
       ]
     }
@@ -529,6 +531,11 @@ test('#visStateSchema -> v1 -> charts are optional', t => {
     savedWithChart.charts[0].display.isConfigActive,
     false,
     'should collapse chart config on save'
+  );
+  t.equal(
+    savedWithChart.charts[0].display.isJsonEditorActive,
+    false,
+    'should collapse chart JSON editor on save'
   );
 
   const loaded = SchemaManager.parseSavedConfig(savedConfig).visState;

@@ -15,6 +15,7 @@ export default {
     stroke: 'Traçado',
     density: 'Densidade',
     height: 'Altura',
+    elevationOffset: 'deslocamento de elevação',
     coverage: 'Cobertura',
     sum: 'Soma',
     pointCount: 'Contagem de Pontos'
@@ -169,6 +170,9 @@ export default {
     sizeScale: 'Escala de tamanho',
     worldUnitSize: 'Tamanho unitário do mundo',
     elevationScale: 'Escala de Elevação',
+    elevationOffset: 'Deslocamento de Elevação',
+    elevationOffsetDescription: 'Eleva polígonos extrudidos do chão (mesmas unidades que a altura)',
+    elevationOffsetRange: 'Intervalo de Deslocamento de Elevação',
     enableElevationZoomFactor: 'Use fator de zoom de elevação',
     enableElevationZoomFactorDescription:
       'Ajuste a altura / elevação com base no fator de zoom atual',
@@ -191,6 +195,8 @@ export default {
     heightMultiplier: 'Multiplicador de altura',
     fixedHeight: 'Altura fixa',
     fixedHeightDescription: 'Use a altura sem modificações',
+    fixedElevation: 'Elevação fixa',
+    fixedElevationDescription: 'Use o deslocamento de elevação sem modificações',
     allowHover: 'Mostrar dica de ferramenta',
     allowHoverDescription:
       'Mostrar ou ocultar dica de ferramenta ao passar o cursor sobre os recursos da camada',
@@ -397,7 +403,8 @@ export default {
     editFilterJson: 'Editar JSON do filtro',
     editEffectJson: 'Editar JSON do efeito',
     editViewportJson: 'Editar JSON da viewport',
-    editAnimationJson: 'Editar JSON da animação'
+    editAnimationJson: 'Editar JSON da animação',
+    editChartJson: 'Editar JSON do gráfico'
   },
   toolbar: {
     exportImage: 'Exportar Imagem',

@@ -80,6 +80,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const expectedDataKeys = [
           'data',
           'getElevation',
+          'getElevationOffset',
           'getFillColor',
           'getFilterValue',
           'getFiltered',
@@ -110,6 +111,11 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           layerData.data.map(layerData.getElevation),
           [defaultElevation, defaultElevation],
           'getElevation should return correct value'
+        );
+        t.deepEqual(
+          layerData.data.map(layerData.getElevationOffset),
+          [0, 0],
+          'getElevationOffset should default to 0'
         );
         t.deepEqual(
           layerData.data.map(layerData.getFillColor),
@@ -205,6 +211,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const expectedDataKeys = [
           'data',
           'getElevation',
+          'getElevationOffset',
           'getFillColor',
           'getFilterValue',
           'getFiltered',
@@ -324,6 +331,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const expectedDataKeys = [
           'data',
           'getElevation',
+          'getElevationOffset',
           'getFillColor',
           'getFilterValue',
           'getFiltered',
@@ -431,6 +439,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const expectedDataKeys = [
           'data',
           'getElevation',
+          'getElevationOffset',
           'getFillColor',
           'getFilterValue',
           'getFiltered',
@@ -604,6 +613,11 @@ test('#GeojsonLayer -> renderLayer', t => {
           ids,
           'Should render 3 deck layers'
         );
+        t.equal(
+          deckLayers[1].constructor.layerName,
+          'OffsetSolidPolygonLayer',
+          'polygon fill should use OffsetSolidPolygonLayer so elevation offset is applied'
+        );
         // polygon fill attributes;
         const {attributes} = deckLayers[1].state.attributeManager;
         const indices = attributes.indices.value;
@@ -613,7 +627,7 @@ test('#GeojsonLayer -> renderLayer', t => {
 
         const expectedFillLayerProp = {
           extruded: false,
-          elevationScale: 5,
+          elevationScale: 1,
           filled: false,
           wireframe: false,
           opacity: 0.8,

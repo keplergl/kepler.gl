@@ -232,10 +232,11 @@ export default function ModalContainerFactory(
 
     _onExportMap = () => {
       const {uiState} = this.props;
-      const {format} = uiState.exportMap;
+      const {format, includeLayerApiKeys, fileName} = uiState.exportMap;
       (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(this.props, {
-        ...(this.props.uiState.exportMap[format] || {}),
-        fileName: uiState.exportMap.fileName
+        ...(uiState.exportMap[format] || {}),
+        includeLayerApiKeys,
+        fileName
       });
       this._closeModal();
     };
@@ -450,6 +451,7 @@ export default function ModalContainerFactory(
                 onChangeExportMapFormat={uiStateActions.setExportMapFormat}
                 onEditUserMapboxAccessToken={uiStateActions.setUserMapboxAccessToken}
                 onChangeExportMapHTMLMode={uiStateActions.setExportHTMLMapMode}
+                onChangeExportIncludeLayerApiKeys={uiStateActions.setExportIncludeLayerApiKeys}
                 onChangeExportMapFileName={uiStateActions.setExportMapFileName}
               />
             );

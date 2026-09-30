@@ -16,6 +16,7 @@ export default {
     stroke: 'обводка',
     density: 'плотность',
     height: 'высота',
+    elevationOffset: 'смещение высоты',
     sum: 'сумма',
     pointCount: 'Кол-во точек'
   },
@@ -170,6 +171,10 @@ export default {
     sizeScale: 'Шкала размеров',
     worldUnitSize: 'Мировые ед.изм.',
     elevationScale: 'Шкала возвышения',
+    elevationOffset: 'Смещение высоты',
+    elevationOffsetDescription:
+      'Поднимает выдавленные полигоны над землёй (те же единицы, что и высота)',
+    elevationOffsetRange: 'Диапазон смещения высоты',
     enableElevationZoomFactor: 'Использовать коэффициент увеличения по высоте',
     enableElevationZoomFactorDescription:
       'Отрегулируйте высоту / возвышение на основе текущего коэффициента масштабирования',
@@ -191,6 +196,8 @@ export default {
     heightMultiplier: 'Множитель высоты',
     fixedHeight: 'Фиксированная высота',
     fixedHeightDescription: 'Использовать высоту без изменений',
+    fixedElevation: 'Фиксированное смещение',
+    fixedElevationDescription: 'Использовать смещение высоты без изменений',
     allowHover: 'Показать подсказку',
     allowHoverDescription: 'Показать или скрыть подсказку при наведении на элементы слоя',
     flow: {
@@ -395,6 +402,7 @@ export default {
     editEffectJson: 'Редактировать JSON эффекта',
     editViewportJson: 'Редактировать JSON вида',
     editAnimationJson: 'Редактировать JSON анимации',
+    editChartJson: 'Редактировать JSON графика',
     timeLayerSync: 'Привязать к временной шкале слоя',
     timeLayerUnsync: 'Отвязать от временной шкалы слоя'
   },

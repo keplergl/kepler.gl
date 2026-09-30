@@ -7,7 +7,9 @@ import {
   getTimeRangeFilterKeyframes,
   getBeforeLayerId,
   getStaticMapProps,
-  getAnimatableFilters
+  getAnimatableFilters,
+  scaleToVideoExport,
+  getVideoExportContainer
 } from './hubble-utils';
 
 jest.mock('@kepler.gl/utils', () => ({
@@ -306,6 +308,71 @@ describe('hubble-utils', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('synced');
+    });
+  });
+
+  describe('getVideoExportContainer', () => {
+    test('returns preview size matching the resolution aspect ratio', () => {
+      expect(getVideoExportContainer(540, '1280x720')).toEqual({width: 540, height: 303.75});
+    });
+  });
+
+  describe('scaleToVideoExport', () => {
+    const container = {width: 540, height: 304};
+
+    test('keeps the original camera target in 2D', () => {
+      const viewState = {
+        latitude: 37.75,
+        longitude: -122.35,
+        zoom: 11,
+        pitch: 0,
+        bearing: 0,
+        width: 1400,
+        height: 900
+      };
+      const result = scaleToVideoExport(viewState, container);
+
+      expect(result.latitude).toBe(37.75);
+      expect(result.longitude).toBe(-122.35);
+      expect(result.width).toBe(container.width);
+      expect(result.height).toBe(container.height);
+      expect(result.zoom).toBeLessThan(viewState.zoom);
+    });
+
+    test('keeps the original camera target when the map is pitched', () => {
+      const viewState = {
+        latitude: 37.75,
+        longitude: -122.35,
+        zoom: 12,
+        pitch: 50,
+        bearing: 30,
+        width: 1400,
+        height: 900
+      };
+      const result = scaleToVideoExport(viewState, container);
+
+      expect(result.latitude).toBe(37.75);
+      expect(result.longitude).toBe(-122.35);
+      expect(result.pitch).toBe(50);
+      expect(result.bearing).toBe(30);
+    });
+
+    test('does not recenter globe cameras toward the equator', () => {
+      const viewState = {
+        latitude: 37.75,
+        longitude: -122.35,
+        zoom: 1,
+        pitch: 0,
+        bearing: 0,
+        width: 1400,
+        height: 900,
+        globe: {enabled: true}
+      };
+      const result = scaleToVideoExport(viewState as any, container);
+
+      expect(result.latitude).toBe(37.75);
+      expect(result.longitude).toBe(-122.35);
+      expect(result.zoom).toBe(1);
     });
   });
 });

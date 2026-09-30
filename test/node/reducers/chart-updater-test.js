@@ -64,6 +64,27 @@ test('#VisStateUpdater -> updateChart can pin a chart', t => {
   t.end();
 });
 
+test('#VisStateUpdater -> updateChart applies JSON editor config and keeps id', t => {
+  const chart = createBarChart({id: 'c1', dataId: 'd1', title: 'Bars'});
+  let nextState = reducer(INITIAL_VIS_STATE, VisStateActions.addChart(chart));
+  nextState = reducer(
+    nextState,
+    VisStateActions.updateChart('c1', {
+      type: 'bigNumber',
+      title: 'Count',
+      dataId: 'd1',
+      applyFilters: false,
+      display: {isConfigActive: false, isJsonEditorActive: true}
+    })
+  );
+  t.equal(nextState.charts[0].id, 'c1', 'should keep chart id');
+  t.equal(nextState.charts[0].type, 'bigNumber');
+  t.equal(nextState.charts[0].title, 'Count');
+  t.equal(nextState.charts[0].applyFilters, false);
+  t.equal(nextState.charts[0].display.isJsonEditorActive, true);
+  t.end();
+});
+
 test('#VisStateUpdater -> disabling cross-filter removes owned filter', t => {
   const chart = {
     ...createBarChart({id: 'c1', dataId: 'd1'}),

@@ -46,7 +46,7 @@ import {
   updateCustomColorRangeByColorUI
 } from '@kepler.gl/utils';
 
-import {Settings, Trash, Pin, EyeSeen, EyeUnseen} from '../../common/icons';
+import {CodeAlt, Settings, Trash, Pin, EyeSeen, EyeUnseen} from '../../common/icons';
 import {Input, PanelLabel, Tooltip} from '../../common/styled-components';
 import Switch from '../../common/switch';
 import ItemSelector from '../../common/item-selector/item-selector';
@@ -59,6 +59,8 @@ import {
   ChartConfigSectionWrapper,
   ConfigUncollapsibleContent
 } from './chart-config-group';
+import ChartJsonEditorFactory from './chart-json-editor';
+import {isJsonEditorEnabled} from '../../common/json-editor-utils';
 
 const DEFAULT_SINGLE_COLOR: RGBColor = [18, 147, 154];
 const DEFAULT_BIG_NUMBER_FORMAT = TOOLTIP_FORMATS.DECIMAL_SHORT_COMMA.id;
@@ -472,13 +474,15 @@ export type ChartPanelProps = {
 ChartPanelContentFactory.deps = [
   FieldSelectorFactory,
   SourceDataSelectorFactory,
-  ColorSelectorFactory
+  ColorSelectorFactory,
+  ChartJsonEditorFactory
 ];
 
 export function ChartPanelContentFactory(
   FieldSelector: ReturnType<typeof FieldSelectorFactory>,
   SourceDataSelector: ReturnType<typeof SourceDataSelectorFactory>,
-  ColorSelector: ReturnType<typeof ColorSelectorFactory>
+  ColorSelector: ReturnType<typeof ColorSelectorFactory>,
+  ChartJsonEditor: ReturnType<typeof ChartJsonEditorFactory>
 ): React.FC<ChartPanelProps> {
   const ChartPanelContent: React.FC<ChartPanelProps> = ({
     charts = [],
@@ -706,7 +710,10 @@ export function ChartPanelContentFactory(
                       data-for={`chart-settings_${chart.id}`}
                       onClick={() =>
                         onUpdate(chart.id, {
-                          display: {isConfigActive: !chart.display?.isConfigActive}
+                          display: {
+                            isConfigActive: !chart.display?.isConfigActive,
+                            isJsonEditorActive: false
+                          }
                         })
                       }
                     >
@@ -720,6 +727,34 @@ export function ChartPanelContentFactory(
                         />
                       </span>
                     </Tooltip>
+                    {isJsonEditorEnabled('chart') ? (
+                      <>
+                        <ChartHeaderAction
+                          $active={Boolean(chart.display?.isJsonEditorActive)}
+                          data-tip
+                          data-for={`chart-json_${chart.id}`}
+                          aria-label="Edit chart JSON"
+                          onClick={() =>
+                            onUpdate(chart.id, {
+                              display: {
+                                isConfigActive: false,
+                                isJsonEditorActive: !chart.display?.isJsonEditorActive
+                              }
+                            })
+                          }
+                        >
+                          <CodeAlt height="16px" />
+                        </ChartHeaderAction>
+                        <Tooltip id={`chart-json_${chart.id}`} effect="solid" delayShow={500}>
+                          <span>
+                            <FormattedMessage
+                              id="tooltip.editChartJson"
+                              defaultMessage="Edit chart JSON"
+                            />
+                          </span>
+                        </Tooltip>
+                      </>
+                    ) : null}
                     <ChartHeaderAction
                       aria-label="Remove chart"
                       data-tip
@@ -776,6 +811,19 @@ export function ChartPanelContentFactory(
                     : undefined
                 }
               />
+              {!readOnly && chart.display?.isJsonEditorActive ? (
+                <ChartJsonEditor
+                  chart={chart}
+                  onClose={() =>
+                    onUpdate(chart.id, {
+                      display: {
+                        ...chart.display,
+                        isJsonEditorActive: false
+                      }
+                    })
+                  }
+                />
+              ) : null}
               {!readOnly && chart.display?.isConfigActive ? (
                 <ConfigBlock>
                   <ChartConfigGroup
