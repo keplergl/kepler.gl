@@ -68,8 +68,10 @@ import {
   computeSplitMapLayers,
   adjustValueToFilterDomain,
   errorNotification,
+  successNotification,
   editorFeaturesToFeatureCollection,
   extractRowsInsideFeature,
+  isRasterTileExtractLayer,
   isVectorTileExtractLayer,
   mergeUserFeatureProperties,
   toSketchFeature,
@@ -5510,7 +5512,8 @@ export function convertEditorFeaturesToLayerUpdater(
 
 /**
  * Copy in-memory rows (or loaded vector-tile features) inside the selected
- * Draw on Map polygon into a new dataset.
+ * Draw on Map polygon into a new dataset. Raster tiles download a PNG clip and a
+ * GeoJSON sidecar (bbox rectangle + stats) instead of creating a dataset.
  */
 export function extractDataFromFeatureUpdater(
   state: VisState,
@@ -5525,9 +5528,11 @@ export function extractDataFromFeatureUpdater(
     return state;
   }
 
+  const isTiledExtract = isVectorTileExtractLayer(layer) || isRasterTileExtractLayer(layer);
+
   // GPU range/time filters are not reflected in filteredIndex; evaluate them on CPU
   // the same way export data does, then clip the result to the drawing.
-  if (!isVectorTileExtractLayer(layer)) {
+  if (!isTiledExtract) {
     state = filterDatasetCPU(state, dataId);
     dataset = state.datasets[dataId];
     if (!dataset) {
@@ -5563,12 +5568,48 @@ export function extractDataFromFeatureUpdater(
       ACTION_TASK_ADD_NOTIFICATION().map(() =>
         addNotification(
           errorNotification({
-            message: isVectorTileExtractLayer(layer)
+            message: isRasterTileExtractLayer(layer)
+              ? 'No loaded raster pixels found inside the selected drawing'
+              : isVectorTileExtractLayer(layer)
               ? 'No loaded vector tile features found inside the selected drawing'
               : 'No rows found inside the selected drawing',
             id: 'extract-data-from-feature-empty'
           })
         )
+      )
+    );
+  }
+
+  if (isRasterTileExtractLayer(layer)) {
+    const polygon = feature;
+    const download =
+      typeof (layer as any).downloadClip === 'function'
+        ? Promise.resolve((layer as any).downloadClip(polygon))
+        : Promise.resolve({png: false, json: false});
+    return withTask(
+      state,
+      UNWRAP_TASK(download).bimap(
+        (result: {png?: boolean} | null) =>
+          addNotification(
+            result?.png
+              ? successNotification({
+                  message: 'Downloaded raster clip image and stats file',
+                  id: 'extract-raster-clip'
+                })
+              : errorNotification({
+                  message: 'Failed to download raster clip image',
+                  id: 'extract-raster-clip'
+                })
+          ),
+        err =>
+          addNotification(
+            errorNotification({
+              message: `Failed to download raster clip: ${
+                err instanceof Error ? err.message : String(err)
+              }`,
+              id: 'extract-raster-clip'
+            })
+          )
       )
     );
   }

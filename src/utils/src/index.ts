@@ -170,8 +170,10 @@ export type {EditorFeatureCollection} from './editor-feature-utils';
 export {
   extractRowsInsideFeature,
   extractVectorTileFeaturesInsideFeature,
+  extractRasterInsideFeature,
   isExtractableDataset,
   isExtractableLayer,
+  isRasterTileExtractLayer,
   isVectorTileExtractLayer
 } from './extract-dataset-utils';
 export type {

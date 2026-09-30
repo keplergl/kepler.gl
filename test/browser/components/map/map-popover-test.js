@@ -214,3 +214,55 @@ test('Map Popover - render comparison mode with delta column', t => {
 
   t.end();
 });
+
+test('Map Popover - raster tooltip keeps a delta column in comparison mode', t => {
+  const rasterHoverProp = {
+    data: {
+      rasterFeatureData: [
+        {name: 'Longitude', value: '33.738085'},
+        {name: 'Latitude', value: '16.720055'},
+        {name: 'Tile', value: '12/2431/1855'},
+        {name: 'b1', value: '255'},
+        {name: 'b2', value: '178'}
+      ]
+    },
+    layer: {config: {label: 'Africa Farms'}, isAggregated: false},
+    fields: [],
+    fieldsToShow: [],
+    primaryData: {
+      rasterFeatureData: [
+        {name: 'Longitude', value: '33.683164'},
+        {name: 'Latitude', value: '16.714997'},
+        {name: 'b1', value: '131'},
+        {name: 'b2', value: '113'}
+      ]
+    },
+    compareType: COMPARE_TYPES.ABSOLUTE
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <MapPopover {...defaultProps} layerHoverProp={rasterHoverProp} />
+      </IntlWrapper>
+    );
+  }, 'Should render raster tooltip in comparison mode');
+
+  const table = wrapper.find('table').at(0);
+  t.ok(table.hasClass('comparing'), 'Table should use the comparing grid');
+
+  const rows = table.find('.layer-hover-info__row');
+  t.equal(rows.length, 5, 'Should render all raster identify rows');
+  for (let i = 0; i < rows.length; i++) {
+    t.equal(
+      rows.at(i).find('td').length,
+      3,
+      `Row ${i} should have name, value, and delta cells so the grid does not wrap`
+    );
+  }
+  t.equal(rows.at(0).find('.row__name').text(), 'Longitude');
+  t.equal(rows.at(1).find('.row__name').text(), 'Latitude');
+  t.equal(rows.at(3).find('.row__name').text(), 'b1');
+  t.end();
+});

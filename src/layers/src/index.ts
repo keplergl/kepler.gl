@@ -84,8 +84,25 @@ export {
   RASTER_COLOR_RESET_PARAMS,
   PRESET_OPTIONS
 } from './raster-tile/config';
-export {RasterLayerResources} from './raster-tile/url';
 export {getCategoricalColormapDataUrl} from './raster-tile/image';
+export {
+  computeDerivedValue,
+  computeRasterZonalStats,
+  findBestTileAtLngLat,
+  formatRasterIdentifyRows,
+  formatRasterValue,
+  latToMercatorY,
+  lngLatToTileUV,
+  lngToMercatorX,
+  mercatorPixelSizeForBbox,
+  parseTitilerPointResponse,
+  rasterZonalStatsToSidecar,
+  sampleRasterTileAtLngLat,
+  tilePixelToLngLat,
+  zonalStatsToProperties
+} from './raster-tile/raster-tile-identify';
+export {RasterLayerResources, getTitilerBboxUrl, getTitilerPointUrl} from './raster-tile/url';
+export {polygonToBboxRectangle, isDownloadableImageBlob} from './raster-tile/raster-tile-extract';
 export * from './raster-tile/types';
 export * from './raster-tile/raster-tile-utils';
 

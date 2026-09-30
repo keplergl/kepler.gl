@@ -695,7 +695,7 @@ function hasCoreBandsWithDataType(assetData: Record<string, unknown>): boolean {
  * @param stac STAC object
  * @return Number of permissible concurrent requests
  */
-export function getMaxRequests(rasterTileServerUrls: []): number {
+export function getMaxRequests(rasterTileServerUrls: string[]): number {
   return (rasterTileServerUrls.length || 1) * 6;
 }
 
