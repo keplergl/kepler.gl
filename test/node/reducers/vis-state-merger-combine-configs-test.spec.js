@@ -153,6 +153,34 @@ const TEST_CASES = [
     }
   },
   {
+    testMessage: 'interactionConfig (legend present only on later configs)',
+    propName: 'interactionConfig',
+    configsToMerge: [
+      {
+        tooltip: {enabled: true, fieldsToShow: {}, compareMode: false, compareType: 'absolute'},
+        brush: {enabled: false, size: 0.5},
+        coordinate: {enabled: false}
+      },
+      {
+        tooltip: {enabled: false, fieldsToShow: {}, compareMode: false, compareType: 'absolute'},
+        brush: {enabled: false, size: 0.5},
+        coordinate: {enabled: false},
+        legend: {enabled: true, hideInvisibleLayers: true}
+      }
+    ],
+    expected: {
+      tooltip: {
+        enabled: true,
+        fieldsToShow: {},
+        compareMode: false,
+        compareType: 'absolute'
+      },
+      brush: {enabled: false, size: 0.5},
+      coordinate: {enabled: false},
+      legend: {enabled: true, hideInvisibleLayers: true}
+    }
+  },
+  {
     testMessage: 'layerBlending (with a majority of "additive" values)',
     propName: 'layerBlending',
     configsToMerge: ['normal', 'additive', 'additive'],

@@ -544,6 +544,13 @@ export function mergeInteractions<S extends VisState>(
 
 function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInteractionConfig {
   const combined = {...configs[0]};
+  // `legend` is optional on older saved maps; seed it so a later config is not dropped.
+  if (!combined.legend) {
+    const withLegend = configs.find(c => c.legend);
+    if (withLegend?.legend) {
+      combined.legend = withLegend.legend;
+    }
+  }
   // handle each property key of an `InteractionConfig`, e.g. tooltip, geocoder, brush, coordinate
   // by combining values for each among all passed in configs
 
