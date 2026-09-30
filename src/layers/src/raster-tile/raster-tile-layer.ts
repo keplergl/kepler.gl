@@ -412,13 +412,15 @@ export default class RasterTileLayer extends KeplerLayer {
    * sidecar with the lon/lat bbox rectangle and zonal stats. Tries Titiler bbox crop
    * first for single-asset COGs, then a client mosaic.
    */
-  async downloadClip(feature: Feature<Polygon> | null): Promise<void> {
+  async downloadClip(feature: Feature<Polygon> | null): Promise<{png: boolean; json: boolean}> {
     if (!feature?.geometry) {
-      return;
+      return {png: false, json: false};
     }
     const exportFeature = polygonToBboxRectangle(feature) || feature;
     const stats = computeRasterZonalStats(this._loadedTiles, exportFeature, this._identifyContext);
     const fileBase = (this.config.label || 'raster').replace(/[^\w.-]+/g, '_');
+    let json = false;
+    let png = false;
     if (stats.pixelCount) {
       const sidecar = rasterZonalStatsToSidecar(stats, {
         layer: this.config.label,
@@ -429,6 +431,7 @@ export default class RasterTileLayer extends KeplerLayer {
         new Blob([JSON.stringify(sidecar, null, 2)], {type: 'application/json'}),
         `${fileBase}-clip.json`
       );
+      json = true;
     }
     const bbox = polygonBbox(exportFeature);
 
@@ -449,17 +452,27 @@ export default class RasterTileLayer extends KeplerLayer {
         });
         if (blob) {
           downloadBlob(blob, `${fileBase}-clip.png`);
-          return;
+          return {png: true, json};
         }
       } catch {
         // Fall back to the in-memory mosaic
       }
     }
 
-    const mosaic = await mosaicTilesToPng(this._loadedTiles, exportFeature, this._identifyContext);
-    if (mosaic) {
-      downloadBlob(mosaic, `${fileBase}-clip.png`);
+    try {
+      const mosaic = await mosaicTilesToPng(
+        this._loadedTiles,
+        exportFeature,
+        this._identifyContext
+      );
+      if (mosaic) {
+        downloadBlob(mosaic, `${fileBase}-clip.png`);
+        png = true;
+      }
+    } catch {
+      // Report a missing PNG to the caller
     }
+    return {png, json};
   }
 
   private async _onClickIdentify(

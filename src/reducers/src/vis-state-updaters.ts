@@ -5582,21 +5582,36 @@ export function extractDataFromFeatureUpdater(
 
   if (isRasterTileExtractLayer(layer)) {
     const polygon = feature;
-    return withTask(state, [
-      ACTION_TASK().map(() => {
-        if (typeof (layer as any).downloadClip === 'function') {
-          (layer as any).downloadClip(polygon);
-        }
-      }),
-      ACTION_TASK_ADD_NOTIFICATION().map(() =>
-        addNotification(
-          successNotification({
-            message: 'Downloaded raster clip image and stats file',
-            id: 'extract-raster-clip'
-          })
-        )
+    const download =
+      typeof (layer as any).downloadClip === 'function'
+        ? Promise.resolve((layer as any).downloadClip(polygon))
+        : Promise.resolve({png: false, json: false});
+    return withTask(
+      state,
+      UNWRAP_TASK(download).bimap(
+        (result: {png?: boolean} | null) =>
+          addNotification(
+            result?.png
+              ? successNotification({
+                  message: 'Downloaded raster clip image and stats file',
+                  id: 'extract-raster-clip'
+                })
+              : errorNotification({
+                  message: 'Failed to download raster clip image',
+                  id: 'extract-raster-clip'
+                })
+          ),
+        err =>
+          addNotification(
+            errorNotification({
+              message: `Failed to download raster clip: ${
+                err instanceof Error ? err.message : String(err)
+              }`,
+              id: 'extract-raster-clip'
+            })
+          )
       )
-    ]);
+    );
   }
 
   let data;

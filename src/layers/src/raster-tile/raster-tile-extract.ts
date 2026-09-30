@@ -174,6 +174,10 @@ function drawTileOntoCanvas(
   ctx.drawImage(tileCanvas, dx, dy, dw, dh);
 }
 
+export function isDownloadableImageBlob(blob: Blob | null | undefined): boolean {
+  return Boolean(blob && blob.size > 0 && blob.type.startsWith('image/'));
+}
+
 function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob | null> {
   return new Promise(resolve => {
     canvas.toBlob(blob => resolve(blob), 'image/png');
@@ -280,7 +284,7 @@ export async function fetchTitilerBboxPng(options: {
     return null;
   }
   const blob = await response.blob();
-  return blob.type.startsWith('image/') || blob.size > 0 ? blob : null;
+  return isDownloadableImageBlob(blob) ? blob : null;
 }
 
 export function downloadBlob(blob: Blob, fileName: string): void {

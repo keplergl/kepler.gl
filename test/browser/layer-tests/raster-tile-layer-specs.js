@@ -16,6 +16,7 @@ import {
   mercatorPixelSizeForBbox,
   parseTitilerPointResponse,
   polygonToBboxRectangle,
+  isDownloadableImageBlob,
   rasterZonalStatsToSidecar,
   sampleRasterTileAtLngLat
 } from '@kepler.gl/layers';
@@ -922,6 +923,9 @@ test('#RasterTileLayer -> identify samples band values at lng/lat', t => {
   t.equal(ndvi.name, 'NDVI');
   t.ok(Math.abs(ndvi.value - 0.6) < 1e-6, 'NDVI (0.8-0.2)/(0.8+0.2) = 0.6');
 
+  const ndmi = computeDerivedValue([0.8, 0.2], 'normalizedDifference', 'NDMI');
+  t.equal(ndmi.name, 'NDMI', 'normalized-difference presets should use the active index label');
+
   const parsed = parseTitilerPointResponse({
     coordinates: [-122.4, 37.8],
     values: [12.5, 8],
@@ -1142,6 +1146,22 @@ test('#RasterTileLayer -> non-rectangular polygon export uses lon/lat bbox recta
       [0, 0]
     ],
     'extract should use the lon/lat bbox rectangle, not the triangle'
+  );
+  t.end();
+});
+
+test('#RasterTileLayer -> only image blobs are treated as downloadable PNGs', t => {
+  t.ok(
+    isDownloadableImageBlob({type: 'image/png', size: 12}),
+    'a non-empty PNG blob should download'
+  );
+  t.notOk(
+    isDownloadableImageBlob({type: 'application/json', size: 80}),
+    'a JSON error body should not be saved as a PNG'
+  );
+  t.notOk(
+    isDownloadableImageBlob({type: 'image/png', size: 0}),
+    'an empty image blob should not download'
   );
   t.end();
 });

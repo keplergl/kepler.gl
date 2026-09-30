@@ -102,7 +102,7 @@ export {
   zonalStatsToProperties
 } from './raster-tile/raster-tile-identify';
 export {RasterLayerResources, getTitilerBboxUrl, getTitilerPointUrl} from './raster-tile/url';
-export {polygonToBboxRectangle} from './raster-tile/raster-tile-extract';
+export {polygonToBboxRectangle, isDownloadableImageBlob} from './raster-tile/raster-tile-extract';
 export * from './raster-tile/types';
 export * from './raster-tile/raster-tile-utils';
 

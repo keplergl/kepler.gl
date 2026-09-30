@@ -7,6 +7,7 @@ import type {Feature, FeatureCollection, Polygon} from 'geojson';
 import type {TypedArray} from '@loaders.gl/loader-utils';
 
 import {BandCombination} from './types';
+import {PRESET_OPTIONS} from './config';
 
 export type RasterIdentifyRow = {name: string; value: string};
 
@@ -43,6 +44,10 @@ type TileLike = {
 };
 
 const MAX_ZONAL_PIXELS = 2_000_000;
+
+function derivedLabelFromContext(context: RasterIdentifyContext): string | undefined {
+  return context.preset ? PRESET_OPTIONS[context.preset]?.label : undefined;
+}
 
 /**
  * Convert lng/lat to fractional pixel coordinates within an XYZ WebMercator tile.
@@ -213,7 +218,8 @@ function isNodataMask(
 
 export function computeDerivedValue(
   values: number[],
-  bandCombination: BandCombination | string
+  bandCombination: BandCombination | string,
+  derivedLabel?: string
 ): {name: string; value: number} | null {
   const r = values[0];
   const g = values[1];
@@ -228,7 +234,7 @@ export function computeDerivedValue(
       if (!Number.isFinite(g) || r + g === 0) {
         return null;
       }
-      return {name: 'NDVI', value: (r - g) / (r + g)};
+      return {name: derivedLabel || 'NDVI', value: (r - g) / (r + g)};
     }
     case BandCombination.EnhancedVegetationIndex:
     case 'enhancedVegetationIndex': {
@@ -239,7 +245,7 @@ export function computeDerivedValue(
       if (denominator === 0) {
         return null;
       }
-      return {name: 'EVI', value: (2.5 * (r - g)) / denominator};
+      return {name: derivedLabel || 'EVI', value: (2.5 * (r - g)) / denominator};
     }
     case BandCombination.SoilAdjustedVegetationIndex:
     case 'soilAdjustedVegetationIndex': {
@@ -250,7 +256,7 @@ export function computeDerivedValue(
       if (denominator === 0) {
         return null;
       }
-      return {name: 'SAVI', value: (r - g) / denominator};
+      return {name: derivedLabel || 'SAVI', value: (r - g) / denominator};
     }
     case BandCombination.ModifiedSoilAdjustedVegetationIndex:
     case 'modifiedSoilAdjustedVegetationIndex': {
@@ -261,7 +267,7 @@ export function computeDerivedValue(
       if (toSqrt < 0) {
         return null;
       }
-      return {name: 'MSAVI', value: (2 * r + 1 - Math.sqrt(toSqrt)) / 2};
+      return {name: derivedLabel || 'MSAVI', value: (2 * r + 1 - Math.sqrt(toSqrt)) / 2};
     }
     default:
       return null;
@@ -378,7 +384,11 @@ export function formatRasterIdentifyRows(
     });
   }
 
-  const derived = computeDerivedValue(sample.bandValues, context.bandCombination);
+  const derived = computeDerivedValue(
+    sample.bandValues,
+    context.bandCombination,
+    derivedLabelFromContext(context)
+  );
   if (derived) {
     rows.push({name: derived.name, value: formatRasterValue(derived.value)});
   }
@@ -523,7 +533,11 @@ export function computeRasterZonalStats(
           }
           addStat(bandStats[label], sample.bandValues[i]);
         }
-        const derived = computeDerivedValue(sample.bandValues, context.bandCombination);
+        const derived = computeDerivedValue(
+          sample.bandValues,
+          context.bandCombination,
+          derivedLabelFromContext(context)
+        );
         if (derived) {
           derivedName = derived.name;
           addStat(derivedAcc, derived.value);
