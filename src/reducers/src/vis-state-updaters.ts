@@ -172,8 +172,7 @@ import {
   AnnotationPropsPartial,
   ProtoDataset,
   ChartConfig,
-  LayerChartConfig,
-  AddDataToMapOptions
+  LayerChartConfig
 } from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
