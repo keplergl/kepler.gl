@@ -403,7 +403,8 @@ export default {
     editFilterJson: 'Editar JSON do filtro',
     editEffectJson: 'Editar JSON do efeito',
     editViewportJson: 'Editar JSON da viewport',
-    editAnimationJson: 'Editar JSON da animação'
+    editAnimationJson: 'Editar JSON da animação',
+    editChartJson: 'Editar JSON do gráfico'
   },
   toolbar: {
     exportImage: 'Exportar Imagem',

@@ -401,6 +401,7 @@ export default {
     editEffectJson: 'Muokkaa efektin JSON-määritystä',
     editViewportJson: 'Muokkaa näkymän JSON-määritystä',
     editAnimationJson: 'Muokkaa animaation JSON-määritystä',
+    editChartJson: 'Muokkaa kaavion JSON-määritystä',
     timeLayerSync: 'Linkitä tason aikajanaan',
     timeLayerUnsync: 'Poista linkitys tason aikajanasta'
   },

@@ -722,7 +722,8 @@ export function mergeCharts<S extends VisState>(
           pinned: chart.pinned !== false,
           display: {
             ...chart.display,
-            isConfigActive: false
+            isConfigActive: false,
+            isJsonEditorActive: false
           }
         }
       : chart;

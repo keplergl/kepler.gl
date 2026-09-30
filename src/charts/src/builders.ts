@@ -54,7 +54,8 @@ function baseChart(
     // New charts start unpinned; user can pin to keep them visible when the panel is off.
     pinned: props.pinned ?? false,
     display: {
-      isConfigActive: props.display?.isConfigActive ?? false
+      isConfigActive: props.display?.isConfigActive ?? false,
+      isJsonEditorActive: props.display?.isJsonEditorActive ?? false
     },
     chartDisplay: props.chartDisplay || {},
     ...(props.crossFilter ? {crossFilter: props.crossFilter} : {})
@@ -274,7 +275,8 @@ export function serializeCharts(charts: ChartConfig[]): ChartConfig[] {
     ...chart,
     display: {
       ...chart.display,
-      isConfigActive: false
+      isConfigActive: false,
+      isJsonEditorActive: false
     }
   }));
 }

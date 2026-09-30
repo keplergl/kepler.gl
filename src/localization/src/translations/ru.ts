@@ -402,6 +402,7 @@ export default {
     editEffectJson: 'Редактировать JSON эффекта',
     editViewportJson: 'Редактировать JSON вида',
     editAnimationJson: 'Редактировать JSON анимации',
+    editChartJson: 'Редактировать JSON графика',
     timeLayerSync: 'Привязать к временной шкале слоя',
     timeLayerUnsync: 'Отвязать от временной шкалы слоя'
   },

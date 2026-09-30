@@ -387,7 +387,8 @@ export default {
     editFilterJson: '编辑筛选器 JSON',
     editEffectJson: '编辑效果 JSON',
     editViewportJson: '编辑视口 JSON',
-    editAnimationJson: '编辑动画 JSON'
+    editAnimationJson: '编辑动画 JSON',
+    editChartJson: '编辑图表 JSON'
   },
   toolbar: {
     exportImage: '导出图片',

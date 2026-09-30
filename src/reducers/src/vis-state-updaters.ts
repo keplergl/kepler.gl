@@ -2637,7 +2637,8 @@ export const addChartUpdater = (
         ...existing,
         display: {
           ...existing.display,
-          isConfigActive: false
+          isConfigActive: false,
+          isJsonEditorActive: false
         }
       })),
       {
