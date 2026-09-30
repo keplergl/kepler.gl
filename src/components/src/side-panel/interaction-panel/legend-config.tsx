@@ -39,8 +39,11 @@ const HeaderActions = styled.div`
   display: flex;
   align-items: center;
   gap: 24px;
+  /* Undo StyledPanelHeader's 10px right padding, then match vertical inset around the switch. */
+  margin-right: -10px;
+  padding-right: ${props => (props.theme.panelHeaderHeight - props.theme.switchHeight) / 2}px;
 
-  /* Unlabeled switch reserves empty label padding on the right; pull the track to the edge. */
+  /* Unlabeled switch reserves empty label padding on the right; pull the track flush. */
   .kg-checkbox {
     margin-left: 0;
     margin-right: -${props => props.theme.switchLabelMargin}px;
