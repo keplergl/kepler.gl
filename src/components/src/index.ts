@@ -151,6 +151,7 @@ export {default as InteractionManagerFactory} from './side-panel/interaction-man
 export {default as BrushConfigFactory} from './side-panel/interaction-panel/brush-config';
 export {default as TooltipConfigFactory} from './side-panel/interaction-panel/tooltip-config';
 export {default as GeocoderConfigFactory} from './side-panel/interaction-panel/geocoder-config';
+export {default as LegendConfigFactory} from './side-panel/interaction-panel/legend-config';
 
 export {default as DndContextFactory} from './dnd-context';
 export {default as CustomPanelsFactory} from './side-panel/custom-panel';

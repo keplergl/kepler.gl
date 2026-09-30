@@ -10,7 +10,7 @@ import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
 
 import InteractionPanelFactory from './interaction-panel/interaction-panel';
-import LegendConfig from './interaction-panel/legend-config';
+import LegendConfigFactory from './interaction-panel/legend-config';
 import PanelTitleFactory from './panel-title';
 import {PanelHeaderActionIcon} from './panel-header-action';
 
@@ -33,11 +33,12 @@ type InteractionManagerProps = {
   };
 };
 
-InteractionManagerFactory.deps = [InteractionPanelFactory, PanelTitleFactory];
+InteractionManagerFactory.deps = [InteractionPanelFactory, PanelTitleFactory, LegendConfigFactory];
 
 function InteractionManagerFactory(
   InteractionPanel: ReturnType<typeof InteractionPanelFactory>,
-  PanelTitle: ReturnType<typeof PanelTitleFactory>
+  PanelTitle: ReturnType<typeof PanelTitleFactory>,
+  LegendConfig: ReturnType<typeof LegendConfigFactory>
 ) {
   const InteractionManager: React.FC<InteractionManagerProps> = ({
     interactionConfig,
