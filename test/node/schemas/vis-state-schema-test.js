@@ -225,7 +225,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
       limitSearch: false
     },
     legend: {
-      enabled: true,
+      enabled: false,
       hideInvisibleLayers: false
     }
   };
@@ -287,7 +287,7 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
       limitSearch: false
     },
     legend: {
-      enabled: true,
+      enabled: false,
       hideInvisibleLayers: false
     }
   };

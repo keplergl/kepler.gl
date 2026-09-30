@@ -3,6 +3,7 @@
 
 import React, {useState, ComponentType, ReactElement, useCallback} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
 import Switch from '../../common/switch';
 import BrushConfigFactory from './brush-config';
 import TooltipConfigFactory from './tooltip-config';
@@ -20,7 +21,8 @@ import {
   PanelHeaderContent,
   PanelContent
 } from '../../common/styled-components';
-import {Messages, Crosshairs, CursorClick, Pin} from '../../common/icons';
+import {Messages, Crosshairs, CursorClick, Pin, Settings} from '../../common/icons';
+import PanelHeaderActionFactory from '../panel-header-action';
 
 import {FormattedMessage} from '@kepler.gl/localization';
 
@@ -31,6 +33,9 @@ interface InteractionPanelProps {
   interactionConfigIcons?: {
     [key: string]: React.ElementType;
   };
+  actionIcons?: {
+    settings?: React.ElementType;
+  };
   setColumnDisplayFormat: ActionHandler<typeof setColumnDisplayFormatAction>;
 }
 
@@ -39,7 +44,24 @@ const StyledInteractionPanel = styled.div`
   contain: layout paint;
 `;
 
-InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory, GeocoderConfigFactory];
+const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  /* Unlabeled switch reserves empty label padding on the right; pull the track to the edge. */
+  .kg-checkbox {
+    margin-left: 0;
+    margin-right: -${props => props.theme.switchLabelMargin}px;
+  }
+`;
+
+InteractionPanelFactory.deps = [
+  TooltipConfigFactory,
+  BrushConfigFactory,
+  GeocoderConfigFactory,
+  PanelHeaderActionFactory
+];
 
 const INTERACTION_CONFIG_ICONS: {[key: string]: React.ElementType} = {
   tooltip: Messages,
@@ -48,19 +70,26 @@ const INTERACTION_CONFIG_ICONS: {[key: string]: React.ElementType} = {
   coordinate: CursorClick
 };
 
+const defaultActionIcons = {
+  settings: Settings
+};
+
 function InteractionPanelFactory(
   TooltipConfig: ReturnType<typeof TooltipConfigFactory>,
   BrushConfig: ReturnType<typeof BrushConfigFactory>,
-  GeocoderConfig: ReturnType<typeof GeocoderConfigFactory>
+  GeocoderConfig: ReturnType<typeof GeocoderConfigFactory>,
+  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
 ): ComponentType<InteractionPanelProps> {
   const InteractionPanel: React.FC<InteractionPanelProps> = ({
     config,
     onConfigChange,
     datasets,
     setColumnDisplayFormat,
-    interactionConfigIcons = INTERACTION_CONFIG_ICONS
+    interactionConfigIcons = INTERACTION_CONFIG_ICONS,
+    actionIcons: customActionIcons
   }) => {
-    const [isConfigActive, setIsConfigAction] = useState(false);
+    const actionIcons = {...defaultActionIcons, ...customActionIcons};
+    const [isConfigActive, setIsConfigActive] = useState(false);
 
     const _updateConfig = useCallback(
       newProp => {
@@ -80,8 +109,8 @@ function InteractionPanelFactory(
     );
 
     const togglePanelActive = useCallback(() => {
-      setIsConfigAction(!isConfigActive);
-    }, [setIsConfigAction, isConfigActive]);
+      setIsConfigActive(prev => !prev);
+    }, []);
 
     const {enabled} = config;
     const toggleEnableConfig = useCallback(() => {
@@ -115,9 +144,15 @@ function InteractionPanelFactory(
       default:
         break;
     }
+
+    const canExpand = Boolean(template);
+
     return (
       <StyledInteractionPanel className="interaction-panel">
-        <StyledPanelHeader className="interaction-panel__header" onClick={togglePanelActive}>
+        <StyledPanelHeader
+          className={classnames('interaction-panel__header', {'is-open': isConfigActive})}
+          onClick={canExpand ? togglePanelActive : undefined}
+        >
           <PanelHeaderContent className="interaction-panel__header__content">
             <div className="interaction-panel__header__icon icon">
               {IconComponent ? <IconComponent height="16px" /> : null}
@@ -128,18 +163,34 @@ function InteractionPanelFactory(
               </PanelHeaderTitle>
             </div>
           </PanelHeaderContent>
-          <div className="interaction-panel__header__actions">
+          <HeaderActions
+            className="interaction-panel__header__actions"
+            onClick={e => e.stopPropagation()}
+          >
+            {canExpand ? (
+              <PanelHeaderAction
+                className={classnames('interaction-panel__enable-config', {
+                  'is-open': isConfigActive
+                })}
+                id={`${config.id}-config`}
+                tooltip="tooltip.interactionSettings"
+                active={isConfigActive}
+                flush
+                onClick={togglePanelActive}
+                IconComponent={actionIcons.settings}
+              />
+            ) : null}
             <Switch
               checked={config.enabled}
               id={`${config.id}-toggle`}
               onChange={toggleEnableConfig}
               secondary
             />
-          </div>
+          </HeaderActions>
         </StyledPanelHeader>
-        {config.enabled && template && (
+        {isConfigActive && template ? (
           <PanelContent className="interaction-panel__content">{template}</PanelContent>
-        )}
+        ) : null}
       </StyledInteractionPanel>
     );
   };

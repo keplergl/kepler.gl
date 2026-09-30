@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useState} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
 import {useIntl} from 'react-intl';
 
-import {VisStateActions} from '@kepler.gl/actions';
+import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer} from '@kepler.gl/layers';
 import {buildLayerOrderHierarchy, getAncestorLayerGroups} from '@kepler.gl/reducers';
@@ -17,7 +18,8 @@ import {
 } from '@kepler.gl/types';
 
 import Switch from '../../common/switch';
-import {Legend} from '../../common/icons';
+import {Legend, Settings} from '../../common/icons';
+import PanelHeaderActionFactory from '../panel-header-action';
 import {
   PanelContent,
   PanelHeaderContent,
@@ -31,6 +33,18 @@ import {
 const StyledLegendPanel = styled.div`
   padding-bottom: 6px;
   contain: layout paint;
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  /* Unlabeled switch reserves empty label padding on the right; pull the track to the edge. */
+  .kg-checkbox {
+    margin-left: 0;
+    margin-right: -${props => props.theme.switchLabelMargin}px;
+  }
 `;
 
 const LegendHint = styled.div`
@@ -75,7 +89,7 @@ const LegendOptionRow = styled.div`
 const DEFAULT_LEGEND_CONFIG: InteractionConfig['legend'] = {
   id: 'legend',
   label: 'interactions.legend',
-  enabled: true,
+  enabled: false,
   config: {hideInvisibleLayers: false}
 };
 
@@ -83,7 +97,12 @@ type LegendConfigProps = {
   layers: readonly Layer[];
   layerOrder?: LayerOrder;
   visStateActions: typeof VisStateActions;
+  uiStateActions?: typeof UIStateActions;
   legendConfig?: InteractionConfig['legend'];
+  mapLegendActive?: boolean;
+  actionIcons?: {
+    settings?: React.ElementType;
+  };
 };
 
 function isHiddenByGroup(layerOrder: LayerOrder | undefined, entryId: string): boolean {
@@ -182,15 +201,30 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
   );
 };
 
+const PanelHeaderAction = PanelHeaderActionFactory();
+
+const defaultActionIcons = {
+  settings: Settings
+};
+
 const LegendConfig: React.FC<LegendConfigProps> = ({
   layers,
   layerOrder,
   visStateActions,
-  legendConfig
+  uiStateActions,
+  legendConfig,
+  mapLegendActive,
+  actionIcons: customActionIcons
 }) => {
+  const actionIcons = {...defaultActionIcons, ...customActionIcons};
+  const [isConfigActive, setIsConfigActive] = useState(false);
   const legendInteraction = legendConfig ?? DEFAULT_LEGEND_CONFIG;
   const hideInvisibleLayers = legendInteraction.config.hideInvisibleLayers === true;
   const enabled = legendInteraction.enabled !== false;
+
+  const togglePanelActive = useCallback(() => {
+    setIsConfigActive(prev => !prev);
+  }, []);
 
   const onToggleLayer = useCallback(
     (layer: Layer) => {
@@ -212,11 +246,16 @@ const LegendConfig: React.FC<LegendConfigProps> = ({
   );
 
   const onToggleEnabled = useCallback(() => {
+    const nextEnabled = !enabled;
     visStateActions.interactionConfigChange({
       ...legendInteraction,
-      enabled: !enabled
+      enabled: nextEnabled
     });
-  }, [visStateActions, legendInteraction, enabled]);
+    // Keep the map-control legend panel in sync with this switch.
+    if (uiStateActions?.toggleMapControl && Boolean(mapLegendActive) !== nextEnabled) {
+      uiStateActions.toggleMapControl('mapLegend', 0);
+    }
+  }, [visStateActions, legendInteraction, enabled, uiStateActions, mapLegendActive]);
 
   const onToggleHideInvisible = useCallback(() => {
     visStateActions.interactionConfigChange({
@@ -234,7 +273,10 @@ const LegendConfig: React.FC<LegendConfigProps> = ({
 
   return (
     <StyledLegendPanel className="interaction-panel interaction-legend">
-      <StyledPanelHeader className="interaction-legend__header">
+      <StyledPanelHeader
+        className={classnames('interaction-legend__header', {'is-open': isConfigActive})}
+        onClick={togglePanelActive}
+      >
         <PanelHeaderContent className="interaction-legend__header__content">
           <div className="interaction-legend__header__icon icon">
             <Legend height="16px" />
@@ -245,11 +287,25 @@ const LegendConfig: React.FC<LegendConfigProps> = ({
             </PanelHeaderTitle>
           </div>
         </PanelHeaderContent>
-        <div className="interaction-legend__header__actions">
+        <HeaderActions
+          className="interaction-legend__header__actions"
+          onClick={e => e.stopPropagation()}
+        >
+          <PanelHeaderAction
+            className={classnames('interaction-legend__enable-config', {
+              'is-open': isConfigActive
+            })}
+            id="legend-config"
+            tooltip="tooltip.interactionSettings"
+            active={isConfigActive}
+            flush
+            onClick={togglePanelActive}
+            IconComponent={actionIcons.settings}
+          />
           <Switch checked={enabled} id="legend-toggle" onChange={onToggleEnabled} secondary />
-        </div>
+        </HeaderActions>
       </StyledPanelHeader>
-      {enabled ? (
+      {isConfigActive ? (
         <PanelContent className="interaction-legend__content">
           <LegendHint>
             <FormattedMessage id="interactions.legendHint" />

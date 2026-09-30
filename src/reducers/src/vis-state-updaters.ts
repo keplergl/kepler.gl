@@ -320,7 +320,7 @@ export const defaultInteractionConfig: InteractionConfig = {
   legend: {
     id: 'legend',
     label: 'interactions.legend',
-    enabled: true,
+    enabled: false,
     config: {
       hideInvisibleLayers: false
     }

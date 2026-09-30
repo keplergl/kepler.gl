@@ -376,8 +376,6 @@ export type MapLegendPanelProps = {
   onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   onToggleLayerVisibility?: (layer: Layer) => void;
   hideInvisibleLayers?: boolean;
-  legendEnabled?: boolean;
-  legendEnabled?: boolean;
   onToggleSplitMapViewport?: ActionHandler<typeof toggleSplitMapViewport>;
   isViewportUnsyncAllowed?: boolean;
   onClickControlBtn?: (e?: MouseEvent) => void;
@@ -417,7 +415,6 @@ const MapLegendPanelComponent = ({
   onLayerVisConfigChange,
   onToggleLayerVisibility,
   hideInvisibleLayers,
-  legendEnabled = true,
   onToggleSplitMapViewport,
   onClickControlBtn,
   activeSidePanel,
@@ -461,8 +458,7 @@ const MapLegendPanelComponent = ({
     return null;
   }
 
-  const showLegendPanel = Boolean(active && legendEnabled);
-  const legendPanel = showLegendPanel ? (
+  const legendPanel = active ? (
     <MapControlPanel
       scale={scale}
       header="header.layerLegend"
@@ -492,7 +488,7 @@ const MapLegendPanelComponent = ({
 
   return (
     <>
-      {showLegendPanel ? (
+      {active ? (
         hasPortableWidth(breakPointValues) ? (
           legendPanel
         ) : isExport ? (
