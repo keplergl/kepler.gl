@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
+import classnames from 'classnames';
 import styled from 'styled-components';
 import {Icons} from '@kepler.gl/components';
 import {media} from '@kepler.gl/styles';
@@ -25,16 +26,25 @@ const StyledMapIcon = styled.div`
 
 const StyledTrySampleData = styled.div`
   display: flex;
-  margin-bottom: 12px;
+  margin-bottom: 0px;
+  margin-left: 84px;
+  padding-bottom: 9px;
   flex-grow: 1;
   justify-content: flex-end;
   color: ${props => props.theme.subtextColorLT};
+  border-bottom: 3px solid transparent;
 
   .demo-map-title {
     margin-left: 16px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+  }
+
+  .load-data-modal__tab__item.active {
+    color: ${props => props.theme.textColorLT};
+    border-bottom: 3px solid ${props => props.theme.textColorLT};
+    font-weight: 500;
   }
 
   .demo-map-label {
@@ -70,9 +80,9 @@ const StyledTrySampleData = styled.div`
   }
 `;
 
-const SampleMapsTab = ({onClick}) => {
+const SampleMapsTab = ({onClick, className}) => {
   return (
-    <StyledTrySampleData className="try-sample-data">
+    <StyledTrySampleData className={classnames('try-sample-data', className)}>
       <StyledMapIcon className="demo-map-icon" />
       <div className="demo-map-title">
         <div className="demo-map-label">

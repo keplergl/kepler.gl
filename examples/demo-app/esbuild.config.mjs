@@ -3,6 +3,7 @@
 
 import esbuild from 'esbuild';
 import {replace} from 'esbuild-plugin-replace';
+import copy from 'esbuild-plugin-copy';
 import {dotenvRun} from '@dotenv-run/esbuild';
 
 import process from 'node:process';
@@ -48,7 +49,10 @@ const KEPLER_SRC_ALIASES = Object.fromEntries(
     'charts',
     'components',
     'constants',
+    'deckgl-arrow-layers',
+    'deckgl-layers',
     'duckdb',
+    'effects',
     'layers',
     'localization',
     'processors',
@@ -56,6 +60,8 @@ const KEPLER_SRC_ALIASES = Object.fromEntries(
     'schemas',
     'styles',
     'table',
+    'tasks',
+    'tasks-core',
     'utils'
   ].map(pkg => [`@kepler.gl/${pkg}`, join(SRC_DIR, pkg, 'src', 'index.ts')])
 );
@@ -65,6 +71,7 @@ const getKeplerAliases = () => ({
   // duckdb ships a components subpath (SqlPanel); esbuild picks the longest
   // matching alias key, so this wins for `@kepler.gl/duckdb/components`.
   '@kepler.gl/duckdb/components': join(SRC_DIR, 'duckdb', 'src', 'components', 'index.tsx'),
+  '@kepler.gl/duckdb/table': join(SRC_DIR, 'duckdb', 'src', 'table', 'index.ts'),
   // Chart factories live on a package subpath so the main components barrel
   // does not load `@kepler.gl/charts`. The `@kepler.gl/components` alias is a
   // file (index.ts), so this longer key is required.
@@ -173,6 +180,10 @@ const config = {
   logOverride: {
     'unsupported-jsx-comment': 'silent'
   },
+  // Use demo-app tsconfig (no path mappings). Walking up to the monorepo
+  // tsconfig would rewrite `@kepler.gl/pkg` → `src/pkg/src` but not subpaths
+  // like `@kepler.gl/duckdb/components`, splitting the applicationConfig singleton.
+  tsconfig: join(__dirname, 'tsconfig.json'),
   inject: ['src/react19-shim.js'],
   loader: {
     '.js': 'jsx',
@@ -258,7 +269,15 @@ const config = {
           }
         );
       }
-    }
+    },
+    // copy files to dist
+    copy({
+      resolveFrom: 'cwd',
+      assets: {
+        from: ['./src/static/_redirects'],
+        to: ['./dist/']
+      }
+    })
   ]
 };
 
@@ -391,10 +410,9 @@ function openURL(url) {
     // missing and the @sqlrooms UI — including the Radix dropdown/dialog
     // popups portaled to <body> — shipped unstyled.
     console.log('⚡ Building Tailwind CSS...');
-    execSync(
-      './node_modules/.bin/tailwindcss -i src/styles.css -o dist/tailwind.css --minify',
-      {stdio: 'inherit'}
-    );
+    execSync('./node_modules/.bin/tailwindcss -i src/styles.css -o dist/tailwind.css --minify', {
+      stdio: 'inherit'
+    });
 
     await esbuild
       .build({
@@ -459,10 +477,7 @@ function openURL(url) {
     await esbuild
       .context({
         ...config,
-        plugins: [
-          ...config.plugins,
-          ...(useDeckOverride ? [] : [dedupeWebglPlugin])
-        ],
+        plugins: [...config.plugins, ...(useDeckOverride ? [] : [dedupeWebglPlugin])],
         minify: false,
         sourcemap: true,
         alias: {

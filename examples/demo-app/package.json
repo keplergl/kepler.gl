@@ -121,6 +121,7 @@
   "devDependencies": {
     "@dotenv-run/esbuild": "^1.5.0",
     "@tailwindcss/cli": "^4.3.3",
+    "esbuild-plugin-copy": "^2.1.1",
     "esbuild-plugin-replace": "^1.4.0"
   }
 }

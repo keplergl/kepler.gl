@@ -15,6 +15,7 @@ import {AiAssistantPanel} from '@openassistant/kepler-assistant';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
+import {injectComponents} from '@kepler.gl/components';
 import {SqlPanel} from '@kepler.gl/duckdb/components';
 import Banner from './components/banner';
 import Announcement, {FormLink} from './components/announcement';
@@ -42,7 +43,7 @@ import {
 import {CLOUD_PROVIDERS} from './cloud-providers';
 import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
 
-const KeplerGl = require('@kepler.gl/components').injectComponents([
+const KeplerGl = injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
   replacePanelHeader()
