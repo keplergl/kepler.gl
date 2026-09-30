@@ -721,10 +721,6 @@ export function getLayerGroupFromLayerOrder(
 }
 
 /**
- * Find the parent group that contains a given layer ID.
- * Returns undefined if the layer is at the root level.
- */
-/**
  * Groups that contain `entryId`, nearest parent first.
  * `entryId` may be a layer id or a nested group id.
  */
@@ -778,6 +774,10 @@ export function isLayerShownInLegend(
   );
 }
 
+/**
+ * Find the parent group that contains a given layer ID.
+ * Returns undefined if the layer is at the root level.
+ */
 export function findParentGroupForLayer(
   layerOrder: LayerOrder,
   layerId: string
