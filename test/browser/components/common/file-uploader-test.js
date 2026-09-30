@@ -151,6 +151,11 @@ test('Components -> FileUpload.onDrop keeps earlier files', t => {
   const fileChecks = wrapper.find('.upload-file-list').find('Checkbox');
   t.equal(fileChecks.length, 3, 'each dataset card has a checkbox');
   t.equal(fileChecks.at(0).props().checked, true, 'datasets start selected');
+  t.equal(
+    fileChecks.at(0).find('.upload-file-list__check-label').text(),
+    'Include kept.csv',
+    'checkbox names the dataset it includes'
+  );
   fileChecks.at(0).simulate('change');
   t.equal(
     wrapper.find('.upload-file-list').find('Checkbox').at(0).props().checked,

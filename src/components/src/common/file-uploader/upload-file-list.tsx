@@ -130,6 +130,21 @@ const CardCheck = styled.div`
   }
 `;
 
+/** Names the checkbox for assistive tech without taking space in the card. */
+const CheckLabel = styled.span.attrs({
+  className: 'upload-file-list__check-label'
+})`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+`;
+
 const CardStatus = styled.div<{$isError?: boolean}>`
   margin-top: 2px;
   overflow: hidden;
@@ -168,6 +183,9 @@ const UploadFileList: FC<UploadFileListProps> = ({title, items}) => {
                 <Checkbox
                   id={`upload-file-${index}`}
                   type="checkbox"
+                  label={
+                    item.selectionLabel ? <CheckLabel>{item.selectionLabel}</CheckLabel> : undefined
+                  }
                   checked={Boolean(item.selected)}
                   onChange={() => item.onToggle?.()}
                 />

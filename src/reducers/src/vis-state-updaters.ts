@@ -4462,6 +4462,14 @@ export const loadFilesUpdater = (
 
   const companionFiles = Array.from(files);
   const filesToLoad = getFilesToParse(companionFiles);
+
+  // Another drop while a deferred parse is running must join that load.
+  // Replacing `fileLoading` makes the in-flight file finish against the new
+  // cache and drop the files that were already being parsed.
+  if (state.fileLoading && state.fileLoading.options?.deferAddToMap && options?.deferAddToMap) {
+    return appendDeferredFileLoad(state, {filesToLoad, companionFiles});
+  }
+
   if (!filesToLoad.length) {
     return state;
   }
@@ -4496,6 +4504,41 @@ export const loadFilesUpdater = (
 
   return loadNextFileUpdater(nextState);
 };
+
+/**
+ * Add a drop to the deferred load that is already parsing.
+ * The current file keeps its cache; the new files run after it.
+ */
+function appendDeferredFileLoad(
+  state: VisState,
+  {
+    filesToLoad,
+    companionFiles
+  }: {
+    filesToLoad: File[];
+    companionFiles: File[];
+  }
+): VisState {
+  const loading = state.fileLoading;
+  if (!loading || (!filesToLoad.length && !companionFiles.length)) {
+    return state;
+  }
+
+  const fileLoadingProgress = filesToLoad.reduce(
+    (accu, file, index) => merge_(initialFileLoadingProgress(file, index))(accu),
+    state.fileLoadingProgress
+  );
+
+  return {
+    ...state,
+    fileLoadingProgress,
+    fileLoading: {
+      ...loading,
+      filesToLoad: [...Array.from(loading.filesToLoad), ...filesToLoad],
+      companionFiles: [...(loading.companionFiles || []), ...companionFiles]
+    }
+  };
+}
 
 /**
  * Sucessfully loaded one file, move on to the next one

@@ -7108,6 +7108,29 @@ test('#visStateReducer -> LOAD_FILES deferAddToMap', t => {
   );
   drainTasksForTesting();
 
+  const queued = reducer(
+    nextState,
+    VisStateActions.loadFiles(
+      [{type: 'text/csv', name: 'extra.csv'}],
+      VisStateActions.stageLoadedFiles,
+      {
+        deferAddToMap: true
+      }
+    )
+  );
+  t.deepEqual(
+    queued.fileLoading.filesToLoad.map(file => file.name),
+    ['extra.csv'],
+    'a second drop waits behind the file already parsing'
+  );
+  t.equal(
+    queued.fileLoading.fileCache,
+    nextState.fileLoading.fileCache,
+    'should keep the in-progress cache'
+  );
+  t.ok(queued.fileLoadingProgress['test-file.csv'], 'should keep progress for the first file');
+  t.ok(queued.fileLoadingProgress['extra.csv'], 'should show progress for the queued file');
+
   const cleared = reducer(nextState, VisStateActions.clearStagedLoadedFiles());
   t.equal(cleared.fileLoading, false, 'cancel should stop the in-progress load');
   t.equal(cleared.stagedToAdd, null, 'cancel should drop staged files');
