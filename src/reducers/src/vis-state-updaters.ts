@@ -308,7 +308,7 @@ export const defaultInteractionConfig: InteractionConfig = {
     enabled: false,
     config: {
       // size is in km
-      size: 0.5
+      size: 2.5
     }
   },
   coordinate: {
