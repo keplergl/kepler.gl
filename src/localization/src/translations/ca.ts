@@ -16,6 +16,7 @@ export default {
     stroke: 'traç',
     density: 'densitat',
     height: 'alçada',
+    elevationOffset: "desplaçament d'elevació",
     sum: 'suma',
     pointCount: 'Recompte de Punts'
   },
@@ -169,6 +170,10 @@ export default {
     sizeScale: 'Mida escala',
     worldUnitSize: 'Mida de la unitat mundial',
     elevationScale: 'Escala elevació',
+    elevationOffset: "Desplaçament d'elevació",
+    elevationOffsetDescription:
+      "Aixeca els polígons extrudits del terra (mateixes unitats que l'alçada)",
+    elevationOffsetRange: "Rang de desplaçament d'elevació",
     enableElevationZoomFactor: 'Utilitzeu el factor de zoom d’elevació',
     enableElevationZoomFactorDescription:
       "'Ajusteu l'alçada / elevació en funció del factor de zoom actual",
@@ -190,6 +195,8 @@ export default {
     heightMultiplier: "Multiplicador d'alçada",
     fixedHeight: 'Alçada fixa',
     fixedHeightDescription: "Utilitzeu l'alçada sense modificacions",
+    fixedElevation: 'Elevació fixa',
+    fixedElevationDescription: "Utilitzeu el desplaçament d'elevació sense modificacions",
     allowHover: "Mostra informació d'eina",
     allowHoverDescription:
       "Mostra o oculta la informació d'eina en passar el cursor per sobre de les característiques de la capa",
@@ -396,7 +403,8 @@ export default {
     editFilterJson: 'Edita JSON del filtre',
     editEffectJson: "Edita JSON de l'efecte",
     editViewportJson: 'Edita JSON de la vista',
-    editAnimationJson: "Edita JSON de l'animació"
+    editAnimationJson: "Edita JSON de l'animació",
+    editChartJson: 'Edita JSON del gràfic'
   },
   toolbar: {
     exportImage: 'Exporta imatge',
@@ -638,7 +646,13 @@ export default {
     tooltip: 'Suggeriment',
     brush: 'Pinzell',
     coordinate: 'Coordenades',
-    geocoder: 'Geocodificador'
+    geocoder: 'Geocodificador',
+    legend: 'Llegenda',
+    legendHint: 'Tria quines capes apareixen a la llegenda. Les capes segueixen al mapa.',
+    legendEmpty: 'Afegeix una capa per triar què apareix a la llegenda.',
+    legendHiddenByGroup: 'Oculta perquè un grup està exclòs de la llegenda',
+    legendHideInvisible: 'Amaga les capes ocultes a la llegenda',
+    legendAllLayers: 'Totes les capes'
   },
   layerBlending: {
     title: 'Combinació de capes',

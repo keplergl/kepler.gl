@@ -178,8 +178,63 @@ export function exportToJsonString(data) {
   }
 }
 
-export function getMapJSON(state, options = getApplicationConfig().defaultExportJsonSettings) {
-  const {hasData} = options;
+/** Dataset metadata fields that hold a private layer API key. */
+const LAYER_API_KEY_METADATA_FIELDS = ['tile3dAccessToken'];
+
+/**
+ * Remove access tokens stored on layer datasets. The tileset URL and the rest
+ * of the metadata stay so the map can be reopened and a new key entered.
+ */
+export function omitLayerApiKeys<T>(mapToSave: T): T {
+  const saved = mapToSave as {datasets?: Array<{data?: {metadata?: Record<string, unknown>}}>};
+  if (!saved || !Array.isArray(saved.datasets)) {
+    return mapToSave;
+  }
+
+  let changed = false;
+  const datasets = saved.datasets.map(dataset => {
+    const metadata = dataset?.data?.metadata;
+    if (!metadata || typeof metadata !== 'object') {
+      return dataset;
+    }
+    const nextMetadata = {...metadata};
+    let metadataChanged = false;
+    for (const field of LAYER_API_KEY_METADATA_FIELDS) {
+      if (field in nextMetadata) {
+        delete nextMetadata[field];
+        metadataChanged = true;
+      }
+    }
+    if (!metadataChanged) {
+      return dataset;
+    }
+    changed = true;
+    return {
+      ...dataset,
+      data: {
+        ...dataset.data,
+        metadata: nextMetadata
+      }
+    };
+  });
+
+  if (!changed) {
+    return mapToSave;
+  }
+  return {...saved, datasets} as T;
+}
+
+type MapJsonOptions = {
+  hasData?: boolean;
+  /** When false, access tokens stored on layer datasets are removed. */
+  includeLayerApiKeys?: boolean;
+};
+
+export function getMapJSON(
+  state,
+  options: MapJsonOptions = getApplicationConfig().defaultExportJsonSettings
+) {
+  const {hasData, includeLayerApiKeys} = options;
   const schema = state.visState.schema;
 
   if (!hasData) {
@@ -191,6 +246,9 @@ export function getMapJSON(state, options = getApplicationConfig().defaultExport
   const title = get(mapToSave, ['info', 'title']);
   if (!title || !title.length) {
     mapToSave = set(['info', 'title'], `keplergl_${generateHashId(6)}`, mapToSave);
+  }
+  if (includeLayerApiKeys === false) {
+    mapToSave = omitLayerApiKeys(mapToSave);
   }
   return mapToSave;
 }
@@ -208,10 +266,10 @@ export function exportJson(state, options: any = {}) {
 }
 
 export function exportHtml(state, options) {
-  const {userMapboxToken, exportMapboxAccessToken, mode} = options;
+  const {userMapboxToken, exportMapboxAccessToken, mode, includeLayerApiKeys} = options;
 
   const data = {
-    ...getMapJSON(state),
+    ...getMapJSON(state, {hasData: true, includeLayerApiKeys}),
     mapboxApiAccessToken:
       (userMapboxToken || '') !== '' ? userMapboxToken : exportMapboxAccessToken,
     mode

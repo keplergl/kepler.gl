@@ -546,6 +546,22 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
         {tooltip: parsedConfig.visState.interactionConfig.tooltip},
         'Should save interactionConfig to interactionToBeMerged'
       );
+    } else if (key === 'interactionConfig') {
+      t.deepEqual(
+        mergedState.interactionConfig,
+        {
+          ...oldVisState.interactionConfig,
+          brush: {
+            ...oldVisState.interactionConfig.brush,
+            enabled: false,
+            config: {
+              ...oldVisState.interactionConfig.brush.config,
+              size: 0.5
+            }
+          }
+        },
+        'Should merge brush from saved map into interactionConfig'
+      );
     } else {
       t.deepEqual(mergedState[key], oldVisState[key], `Should keep ${key} the same`);
     }

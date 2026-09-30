@@ -200,7 +200,7 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
     };
 
     _nextFrameByDomain() {
-      const {domain, value, speed = 1, baseSpeed = 600, animationWindow} = this.props;
+      const {domain, value, speed = 1, baseSpeed = 600, animationWindow, steps} = this.props;
       if (!domain) {
         return;
       }
@@ -213,9 +213,23 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
         let value1: number;
         const windowSize = value[1] - value[0];
         if (animationWindow === ANIMATION_WINDOW.incremental) {
-          const lastFrame = value[1] + delta > domain[1];
+          // grow the window to the end of the last bin, not just domain[1]: the
+          // domain ends on the last timestamp, so a window ending there would
+          // select the last scene for a single frame. steps are the bin
+          // thresholds with the last one popped, so the last bin ends one bin
+          // width past the last step.
+          let endOfSweep = domain[1];
+          if (Array.isArray(steps) && steps.length > 1) {
+            const endOfLastBin =
+              steps[steps.length - 1] + (steps[steps.length - 1] - steps[steps.length - 2]);
+            if (Number.isFinite(endOfLastBin) && endOfLastBin > endOfSweep) {
+              endOfSweep = endOfLastBin;
+            }
+          }
           value0 = value[0];
-          value1 = lastFrame ? value[0] + 1 : value[1] + delta;
+          // clamp the last step instead of discarding it, and loop back to the
+          // anchor only after the final frame was emitted
+          value1 = value[1] >= endOfSweep ? value[0] + 1 : Math.min(value[1] + delta, endOfSweep);
         } else {
           const lastFrame = value[0] + delta > domain[1];
           const startValue = domain[0] - windowSize;

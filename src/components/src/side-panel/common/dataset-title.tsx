@@ -7,8 +7,8 @@ import {useIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import {Table} from '@kepler.gl/layers';
-import {CenterFlexbox, Tooltip} from '../../common/styled-components';
-import {ArrowRight, Clock, Trash, WarningSign} from '../../common/icons';
+import {Tooltip} from '../../common/styled-components';
+import {Clock, WarningSign} from '../../common/icons';
 import {DatasetType} from '@kepler.gl/constants';
 import DatasetTagFactory from './dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
@@ -16,16 +16,26 @@ import {Portaled} from '../..';
 import {rgbToHex} from '@kepler.gl/utils';
 import {openDeleteModal, VisStateActions, ActionHandler} from '@kepler.gl/actions';
 import {RGBColor} from '@kepler.gl/types';
-import {StyledDatasetTitleProps, RemoveDatasetProps, ShowDataTableProps} from './types';
+import {StyledDatasetTitleProps, ShowDataTableProps} from './types';
+import DatasetOpsMenu from '../dataset-ops/dataset-ops-menu';
 
 const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
   color: ${props => props.theme.textColor};
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 
-  .source-data-arrow {
-    height: 16px;
+  .source-data-tag {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
   }
+
+  .dataset-action {
+    color: ${props => props.theme.panelHeaderIcon};
+  }
+
   &:hover {
     cursor: ${props => (props.$clickable ? 'pointer' : 'auto')};
 
@@ -34,20 +44,37 @@ const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
     }
 
     .dataset-action {
-      color: ${props => props.theme.textColor};
       opacity: 1;
     }
 
     .dataset-action:hover {
-      color: ${props => props.theme.textColorHl};
+      color: ${props => props.theme.panelHeaderIconHover};
     }
   }
 `;
 
-const DataTagAction = styled.div`
-  margin-left: 12px;
+const DatasetTitleHeader = styled.div<{$clickable?: boolean}>`
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  cursor: ${props => (props.$clickable ? 'pointer' : 'auto')};
+`;
+
+const DatasetAction = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  position: relative;
+`;
+
+const DataTagAction = styled.div<{$alwaysVisible?: boolean}>`
+  margin-left: 8px;
+  width: 16px;
   height: 16px;
-  opacity: 0;
+  flex-shrink: 0;
+  opacity: ${props => (props.$alwaysVisible ? 1 : 0)};
 `;
 
 const DataTagActionButton = styled.button`
@@ -98,10 +125,18 @@ export type DatasetTitleProps = {
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset?: ActionHandler<typeof openDeleteModal>;
   onToggleRefreshSettings?: () => void;
+  addGroupBy?: ActionHandler<typeof VisStateActions.addGroupBy>;
+  addJoin?: ActionHandler<typeof VisStateActions.addJoin>;
+  addSpatialJoin?: ActionHandler<typeof VisStateActions.addSpatialJoin>;
 };
 
 const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
-  <DataTagAction className="dataset-action show-data-table" data-tip data-for={`data-table-${id}`}>
+  <DataTagAction
+    $alwaysVisible
+    className="dataset-action show-data-table"
+    data-tip
+    data-for={`data-table-${id}`}
+  >
     <Table
       height="16px"
       onClick={e => {
@@ -141,27 +176,6 @@ const RefreshDatasetSettings = ({id, onToggle}: {id: string; onToggle?: () => vo
   );
 };
 
-const RemoveDataset = ({datasetKey, removeDataset}: RemoveDatasetProps) => (
-  <DataTagAction
-    className="dataset-action remove-dataset"
-    data-tip
-    data-for={`delete-${datasetKey}`}
-  >
-    <Trash
-      height="16px"
-      onClick={e => {
-        e.stopPropagation();
-        removeDataset?.(datasetKey);
-      }}
-    />
-    <Tooltip id={`delete-${datasetKey}`} effect="solid" type="error">
-      <span>
-        <FormattedMessage id={'datasetTitle.removeDataset'} />
-      </span>
-    </Tooltip>
-  </DataTagAction>
-);
-
 const RefreshErrorIcon = ({id, message}: {id: string; message: string}) => (
   <StyledRefreshError
     className="dataset-refresh-error"
@@ -182,6 +196,11 @@ const RefreshErrorIcon = ({id, message}: {id: string; message: string}) => (
   </StyledRefreshError>
 );
 
+const DatasetTitleRoot = styled.div`
+  min-width: 0;
+  overflow: hidden;
+`;
+
 DatasetTitleFactory.deps = [DatasetTagFactory];
 
 export default function DatasetTitleFactory(
@@ -194,14 +213,21 @@ export default function DatasetTitleFactory(
     removeDataset,
     dataset,
     updateTableColor,
-    onToggleRefreshSettings
+    onToggleRefreshSettings,
+    addGroupBy,
+    addJoin,
+    addSpatialJoin
   }) => {
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
     const root = useRef(null);
     const datasetId = dataset.id;
-    const _handleClick = useCallback(() => {
-      setDisplayColorPicker(!displayColorPicker);
-    }, [setDisplayColorPicker, displayColorPicker]);
+    const _handleClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setDisplayColorPicker(!displayColorPicker);
+      },
+      [setDisplayColorPicker, displayColorPicker]
+    );
 
     const _handleClosePicker = useCallback(() => {
       setDisplayColorPicker(false);
@@ -230,42 +256,49 @@ export default function DatasetTitleFactory(
     const refreshError = dataset.metadata?.refreshError;
 
     return (
-      <div className="custom-palette-panel" ref={root}>
+      <DatasetTitleRoot className="custom-palette-panel" ref={root}>
         <StyledDatasetTitle
           className="source-data-title"
           $clickable={Boolean(showDatasetTable || onTitleClick)}
         >
-          <DatasetTag
-            dataset={dataset}
-            onClick={_onClickTitle}
-            updateTableColor={updateTableColor}
-            onClickSquare={_handleClick}
-          />
+          <DatasetTitleHeader $clickable={Boolean(showDatasetTable || onTitleClick)}>
+            <DatasetTag
+              dataset={dataset}
+              onClick={_onClickTitle}
+              updateTableColor={updateTableColor}
+              onClickSquare={_handleClick}
+            />
+            {refreshError ? <RefreshErrorIcon id={datasetId} message={refreshError} /> : null}
+          </DatasetTitleHeader>
           <Portaled
             isOpened={displayColorPicker !== false}
             left={110}
             top={-50}
             onClose={_handleClosePicker}
           >
-            <CustomPicker color={rgbToHex(dataset.color)} onChange={_handleCustomPicker} />
+            <div onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
+              <CustomPicker color={rgbToHex(dataset.color)} onChange={_handleCustomPicker} />
+            </div>
           </Portaled>
-          {showDatasetTable ? (
-            <CenterFlexbox className="source-data-arrow">
-              <ArrowRight height="12px" />
-            </CenterFlexbox>
-          ) : null}
-          {refreshError ? <RefreshErrorIcon id={datasetId} message={refreshError} /> : null}
-          {showDatasetTable && !dataset.disableDataOperation ? (
-            <ShowDataTable id={datasetId} showDatasetTable={showDatasetTable} />
-          ) : null}
-          {onToggleRefreshSettings && isRemote ? (
-            <RefreshDatasetSettings id={datasetId} onToggle={onToggleRefreshSettings} />
-          ) : null}
-          {showDeleteDataset ? (
-            <RemoveDataset datasetKey={datasetId} removeDataset={removeDataset} />
-          ) : null}
+          <DatasetAction>
+            {showDatasetTable && !dataset.disableDataOperation ? (
+              <ShowDataTable id={datasetId} showDatasetTable={showDatasetTable} />
+            ) : null}
+            <DatasetOpsMenu
+              datasetId={datasetId}
+              dataset={dataset}
+              addGroupBy={addGroupBy}
+              addJoin={addJoin}
+              addSpatialJoin={addSpatialJoin}
+              showDeleteDataset={showDeleteDataset}
+              removeDataset={removeDataset}
+            />
+            {onToggleRefreshSettings && isRemote ? (
+              <RefreshDatasetSettings id={datasetId} onToggle={onToggleRefreshSettings} />
+            ) : null}
+          </DatasetAction>
         </StyledDatasetTitle>
-      </div>
+      </DatasetTitleRoot>
     );
   };
 

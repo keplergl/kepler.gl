@@ -4,7 +4,9 @@
 import React from 'react';
 import styled from 'styled-components';
 import {media} from '@kepler.gl/styles';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {StyledExportSection, StyledModalContent} from '../../common/styled-components';
+import Checkbox from '../../common/checkbox';
 
 export const StyledExportMapModalContent = styled(StyledModalContent)`
   padding-top: 12px;
@@ -51,4 +53,36 @@ export const ExportMapLink = ({children, ...props}) => (
   <StyledExportLink target="_blank" rel="noopener noreferrer" {...props}>
     {children}
   </StyledExportLink>
+);
+
+type IncludeLayerApiKeysToggleProps = {
+  id: string;
+  checked: boolean;
+  onChange: (includeLayerApiKeys: boolean) => void;
+};
+
+export const IncludeLayerApiKeysToggle = ({
+  id,
+  checked,
+  onChange
+}: IncludeLayerApiKeysToggleProps) => (
+  <StyledExportMapSection>
+    <div className="description">
+      <div className="title">
+        <FormattedMessage id="modal.exportMap.includeApiKeys" />
+      </div>
+      <div className="subtitle">
+        <FormattedMessage id="modal.exportMap.includeApiKeysSubtitle" />
+      </div>
+    </div>
+    <div className="selection">
+      <Checkbox
+        id={id}
+        type="checkbox"
+        checked={checked}
+        label={<FormattedMessage id="modal.exportMap.includeApiKeys" />}
+        onChange={event => onChange(event.target.checked)}
+      />
+    </div>
+  </StyledExportMapSection>
 );

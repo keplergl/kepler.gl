@@ -37,13 +37,15 @@ import ScenegraphModelSelectorFactory, {
 
 import RasterTileLayerConfiguratorFactory from './raster-tile-layer-configurator';
 import VectorTileLayerConfiguratorFactory from './vector-tile-layer-configurator';
+import LayerApiKeyInput from './layer-api-key-input';
 
-import {ActionHandler, toggleModal} from '@kepler.gl/actions';
+import {ActionHandler, toggleModal, updateDatasetProps} from '@kepler.gl/actions';
 import {
   AGGREGATION_TYPE_OPTIONS,
   LAYER_TYPES,
   CUSTOM_SCENEGRAPH_MODEL_ID,
-  BitmapDatasetMetadata
+  BitmapDatasetMetadata,
+  Tile3DDatasetMetadata
 } from '@kepler.gl/constants';
 import {
   AggregationLayer,
@@ -83,6 +85,7 @@ type LayerConfiguratorProps = {
   ) => void;
   updateLayerColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
   updateLayerTextLabel: (idx: number | 'all', prop: string, value: any) => void;
+  updateDatasetProps?: ActionHandler<typeof updateDatasetProps>;
   disableTypeSelect?: boolean;
 };
 
@@ -1198,6 +1201,9 @@ export default function LayerConfiguratorFactory(
         meta: {featureTypes = {}},
         config: {visConfig}
       } = layer;
+      const elevationOffsetActive = Boolean(
+        layer.config.elevationOffsetField || visConfig.elevationOffset > 0
+      );
 
       return (
         <StyledLayerVisualConfigurator>
@@ -1230,6 +1236,7 @@ export default function LayerConfiguratorFactory(
             {...visConfiguratorProps}
             label="layer.strokeColor"
             collapsible
+            disabled={Boolean(featureTypes.polygon && elevationOffsetActive)}
           >
             <ChannelByValueSelector
               channel={layer.visualChannels.strokeColor}
@@ -1258,6 +1265,7 @@ export default function LayerConfiguratorFactory(
             {...(featureTypes.polygon ? layer.visConfigSettings.stroked : {})}
             label="layer.strokeWidth"
             collapsible
+            disabled={Boolean(featureTypes.polygon && elevationOffsetActive)}
           >
             {layer.config.sizeField ? (
               <VisConfigSlider
@@ -1303,6 +1311,30 @@ export default function LayerConfiguratorFactory(
                   {...visConfiguratorProps}
                 />
                 <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.wireframe} />
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          ) : null}
+
+          {/* Elevation Offset */}
+          {featureTypes.polygon ? (
+            <LayerConfigGroup
+              label={'layerVisConfigs.elevationOffset'}
+              description={'layerVisConfigs.elevationOffsetDescription'}
+              collapsible
+              disabled={!visConfig.filled}
+            >
+              {!layer.config.elevationOffsetField ? (
+                <VisConfigSlider
+                  {...layer.visConfigSettings.elevationOffset}
+                  {...visConfiguratorProps}
+                  label={false}
+                />
+              ) : null}
+              <ConfigGroupCollapsibleContent>
+                <ChannelByValueSelector
+                  channel={layer.visualChannels.elevationOffset}
+                  {...layerChannelConfigProps}
+                />
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}
@@ -1623,9 +1655,26 @@ export default function LayerConfiguratorFactory(
       );
     }
 
-    _renderTile3dLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
+    _renderTile3dLayerConfig({layer, dataset, visConfiguratorProps, layerConfiguratorProps}) {
+      const metadata = (dataset?.metadata || {}) as Tile3DDatasetMetadata;
+      const {updateDatasetProps: onUpdateDatasetProps} = this.props;
       return (
         <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label={'layer.apiKey'}>
+            <LayerApiKeyInput
+              accessToken={metadata.tile3dAccessToken}
+              loadError={
+                (layer as {tilesetLoadError?: 'token' | 'generic' | null}).tilesetLoadError
+              }
+              onCommit={token => {
+                const dataId = layer.config.dataId;
+                if (!dataId || !onUpdateDatasetProps) {
+                  return;
+                }
+                onUpdateDatasetProps(dataId, {metadata: {tile3dAccessToken: token}});
+              }}
+            />
+          </LayerConfigGroup>
           <LayerConfigGroup label={'layer.appearance'}>
             <LayerColorSelector {...layerConfiguratorProps} />
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />

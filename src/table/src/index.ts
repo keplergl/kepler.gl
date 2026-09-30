@@ -27,3 +27,4 @@ export * from './tileset/wms-utils';
 export * from './tileset/tileset-utils';
 export * from './tileset/vector-tile-utils';
 export * from './tileset/raster-tile-utils';
+export * from './dataset-ops';

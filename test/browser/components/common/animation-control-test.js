@@ -8,9 +8,11 @@ import moment from 'moment';
 import {setLayerAnimationTimeConfig} from '@kepler.gl/actions';
 import {getTimelineFromAnimationConfig} from '@kepler.gl/utils';
 
+import {ANIMATION_WINDOW} from '@kepler.gl/constants';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {
   AnimationControlFactory,
+  AnimationControllerFactory,
   PlaybackControlsFactory,
   FloatingTimeDisplayFactory,
   appInjector,
@@ -193,6 +195,56 @@ test('Components -> AnimationControl -> time display -> custom timezone and time
     timeDisplay.find('.animation-control__time-display__top').length,
     0,
     'should render 0 bottom row'
+  );
+
+  t.end();
+});
+
+test('Components -> AnimationController -> incremental window sweeps to the end of the data', t => {
+  const AnimationController = AnimationControllerFactory();
+  // domain runs from the first timestamp to the last one; the histogram bins
+  // extend past it, so steps (bin thresholds with the last one popped) end at
+  // 900 and the last bin covers [900, 1000]
+  const domain = [0, 950];
+  const steps = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900];
+  // delta = (domain[1] - domain[0]) / baseSpeed * speed = 100 per frame
+  const baseSpeed = 9.5;
+
+  const nextFrame = (value, stepsProp = steps) =>
+    new AnimationController({
+      animationWindow: ANIMATION_WINDOW.incremental,
+      domain,
+      value,
+      steps: stepsProp,
+      speed: 1,
+      baseSpeed,
+      setTimelineValue: () => {}
+    })._nextFrameByDomain();
+
+  t.deepEqual(
+    nextFrame([0, 900]),
+    [0, 1000],
+    'should grow the window past the last timestamp to the end of the last bin'
+  );
+  t.deepEqual(
+    nextFrame([0, 920]),
+    [0, 1000],
+    'should clamp the final step at the end of the last bin instead of discarding it'
+  );
+  t.deepEqual(
+    nextFrame([0, 1000]),
+    [0, 1],
+    'should loop back to the anchor only after the final frame was emitted'
+  );
+  t.deepEqual(
+    nextFrame([0, 900], null),
+    [0, 950],
+    'should clamp to the domain end when there are no bins to go by'
+  );
+  t.deepEqual(
+    nextFrame([0, 950], null),
+    [0, 1],
+    'should loop back to the anchor at the domain end when there are no bins'
   );
 
   t.end();

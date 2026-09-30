@@ -16,6 +16,7 @@ export default {
     stroke: '线条粗细',
     density: '密度',
     height: '高度',
+    elevationOffset: '海拔偏移',
     sum: '总和',
     pointCount: '点数'
   },
@@ -167,6 +168,9 @@ export default {
     sizeScale: '大小比例',
     worldUnitSize: '世界单位大小',
     elevationScale: '海拔比例',
+    elevationOffset: '海拔偏移',
+    elevationOffsetDescription: '将挤出的多边形抬离地面（单位与高度相同）',
+    elevationOffsetRange: '海拔偏移范围',
     enableElevationZoomFactor: '使用高程缩放系数',
     enableElevationZoomFactorDescription: '根据当前缩放系数调整海拔',
     enableHeightZoomFactor: '使用高度缩放因子',
@@ -187,6 +191,8 @@ export default {
     heightMultiplier: '高度倍增器',
     fixedHeight: '固定高度',
     fixedHeightDescription: '使用未修改的高度',
+    fixedElevation: '固定海拔',
+    fixedElevationDescription: '使用未修改的海拔偏移',
     allowHover: '显示工具提示',
     allowHoverDescription: '悬停在图层要素上时显示或隐藏工具提示',
     flow: {
@@ -381,7 +387,8 @@ export default {
     editFilterJson: '编辑筛选器 JSON',
     editEffectJson: '编辑效果 JSON',
     editViewportJson: '编辑视口 JSON',
-    editAnimationJson: '编辑动画 JSON'
+    editAnimationJson: '编辑动画 JSON',
+    editChartJson: '编辑图表 JSON'
   },
   toolbar: {
     exportImage: '导出图片',
@@ -619,7 +626,13 @@ export default {
     tooltip: '工具提示',
     brush: '刷',
     coordinate: '坐标',
-    geocoder: '地理编码器'
+    geocoder: '地理编码器',
+    legend: '图例',
+    legendHint: '选择哪些图层显示在图例中。图层仍会留在地图上。',
+    legendEmpty: '添加图层后即可选择图例中显示的内容。',
+    legendHiddenByGroup: '因图层组已从图例中排除而隐藏',
+    legendHideInvisible: '在图例中隐藏已隐藏的图层',
+    legendAllLayers: '所有图层'
   },
   layerBlending: {
     title: '图层混合',

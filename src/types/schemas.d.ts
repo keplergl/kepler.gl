@@ -45,6 +45,10 @@ export type SavedInteractionConfig = {
   coordinate: {
     enabled: boolean;
   };
+  legend?: {
+    enabled: boolean;
+    hideInvisibleLayers?: boolean;
+  };
 };
 
 export type SavedScale = string;
@@ -67,6 +71,7 @@ export type SavedLayer = {
     isVisible: boolean;
     visConfig: Record<string, any>;
     hidden: boolean;
+    isIncludedInLegend?: boolean;
     textLabel: Merge<LayerTextLabel, {field: {name: string; type: string} | null}>;
   };
   visualChannels: SavedVisualChannels;
@@ -113,6 +118,8 @@ export type SavedVisState = {
   animationConfig: SavedAnimationConfig;
   editor?: SavedEditor;
   layerOrder?: any[];
+  groupBys?: any[];
+  joins?: any[];
 };
 
 // Min saved config can be passed to addDataToMap
@@ -140,6 +147,8 @@ export type ParsedVisState = {
   splitMaps?: SplitMap[];
   animationConfig?: Partial<SavedAnimationConfig>;
   layerOrder?: any[];
+  groupBys?: any[];
+  joins?: any[];
 };
 
 export type ParsedUiState = {

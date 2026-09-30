@@ -6,6 +6,10 @@ export {default as ThreeDBuildingLayer} from './3d-building-layer/3d-building-la
 export {default as DeckGLClusterLayer} from './cluster-layer/cluster-layer';
 
 export {default as EnhancedColumnLayer} from './column-layer/enhanced-column-layer';
+export {
+  default as OffsetSolidPolygonLayer,
+  injectElevationOffsetShader
+} from './solid-polygon-layer/offset-solid-polygon-layer';
 
 export {default as EnhancedGridLayer} from './grid-layer/enhanced-cpu-grid-layer';
 

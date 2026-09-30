@@ -76,6 +76,22 @@ test('extract-dataset-utils -> isExtractableLayer', t => {
     ),
     'vector tile layers are extractable from the loaded tile cache'
   );
+  t.ok(
+    isExtractableLayer(
+      {
+        type: LAYER_TYPES.rasterTile,
+        config: {dataId: 'raster'}
+      },
+      {
+        raster: {
+          type: DatasetType.RASTER_TILE,
+          fields: [],
+          dataContainer: createDataContainer([])
+        }
+      }
+    ),
+    'raster tile layers are extractable from the loaded tile cache'
+  );
   t.end();
 });
 

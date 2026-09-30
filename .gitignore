@@ -57,3 +57,6 @@ lerna-debug.log
 meta.json
 .env
 docker/config.json
+
+# Local Cursor rules (not for upstream)
+.cursor/rules/private*

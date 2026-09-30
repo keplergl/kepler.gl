@@ -38,7 +38,8 @@ import {
   LayerBaseConfig,
   VisualChannelDomain,
   EditorLayerUtils,
-  AggregatedBin
+  AggregatedBin,
+  TILE3D_LOAD_ERROR_MESSAGE
 } from '@kepler.gl/layers';
 import {
   AttributionWithStyle,
@@ -813,6 +814,21 @@ export default function MapContainerFactory(
       }
     };
 
+    _onTilesetLoadError = (idx: number, kind: 'token' | 'generic' | null) => {
+      const layer = this.props.visState.layers[idx];
+      const id = `tile3d-load-${layer?.id ?? idx}`;
+      if (!kind) {
+        this.props.uiStateActions.removeNotification?.(id);
+        return;
+      }
+      this.props.uiStateActions.addNotification(
+        errorNotification({
+          id,
+          message: TILE3D_LOAD_ERROR_MESSAGE[kind]
+        })
+      );
+    };
+
     /* component render functions */
 
     /* eslint-disable complexity */
@@ -1057,7 +1073,8 @@ export default function MapContainerFactory(
           onFilteredItemsChange: this._onLayerFilteredItemsChange,
           onWMSFeatureInfo: this._onWMSFeatureInfo,
           onRedrawNeeded: this._onRedrawNeeded,
-          onFitBounds: this._onFitBounds
+          onFitBounds: this._onFitBounds,
+          onTilesetLoadError: this._onTilesetLoadError
         },
         deckGlProps
       );
@@ -1341,7 +1358,19 @@ export default function MapContainerFactory(
     };
 
     _toggleMapControl = panelId => {
-      const {index, uiStateActions} = this.props;
+      const {index, uiStateActions, mapControls, visState, visStateActions} = this.props;
+
+      // Keep Interactions > Legend enabled in sync with the map-control legend button.
+      if (panelId === 'mapLegend') {
+        const nextActive = !mapControls?.mapLegend?.active;
+        const legend = visState.interactionConfig?.legend;
+        if (legend && Boolean(legend.enabled) !== nextActive) {
+          visStateActions.interactionConfigChange({
+            ...legend,
+            enabled: nextActive
+          });
+        }
+      }
 
       uiStateActions.toggleMapControl(panelId, Number(index));
     };
@@ -1489,6 +1518,7 @@ export default function MapContainerFactory(
               onConvertEditorFeaturesToLayer={visStateActions.convertEditorFeaturesToLayer}
               onLayerVisConfigChange={visStateActions.layerVisConfigChange}
               onToggleLayerVisibility={this._handleToggleLayerVisibility}
+              hideInvisibleLayers={Boolean(interactionConfig.legend?.config?.hideInvisibleLayers)}
               mapHeight={mapState.height}
               setMapControlSettings={uiStateActions.setMapControlSettings}
               activeSidePanel={activeSidePanel}

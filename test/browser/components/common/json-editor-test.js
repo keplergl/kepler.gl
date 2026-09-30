@@ -10,7 +10,9 @@ import {
   JsonEditor,
   isJsonEditorEnabled,
   jsonToEffectProps,
-  jsonToFilterConfig
+  jsonToFilterConfig,
+  chartToJson,
+  parseAndValidateChartConfig
 } from '@kepler.gl/components';
 import {initApplicationConfig} from '@kepler.gl/utils';
 
@@ -127,12 +129,17 @@ test('Components -> JsonEditor -> section flags', t => {
   t.ok(isJsonEditorEnabled('filter'), 'filter JSON editor is enabled by default');
   t.ok(isJsonEditorEnabled('effect'), 'effect JSON editor is enabled by default');
   t.ok(isJsonEditorEnabled('animation'), 'animation JSON editor is enabled by default');
+  t.ok(isJsonEditorEnabled('chart'), 'chart JSON editor is enabled by default');
   t.notOk(isJsonEditorEnabled('viewport'), 'viewport JSON editor is disabled by default');
 
   initApplicationConfig({enableLayerJsonEditor: false, enableViewportJsonEditor: true});
   t.notOk(isJsonEditorEnabled('layer'), 'layer JSON editor can be disabled');
   t.ok(isJsonEditorEnabled('viewport'), 'viewport JSON editor can be enabled');
   t.ok(isJsonEditorEnabled('filter'), 'other section flags stay unchanged');
+  t.ok(isJsonEditorEnabled('chart'), 'chart JSON editor stays enabled when other flags change');
+
+  initApplicationConfig({enableChartJsonEditor: false});
+  t.notOk(isJsonEditorEnabled('chart'), 'chart JSON editor can be disabled');
 
   initApplicationConfig({enableJsonEditors: false});
   t.notOk(isJsonEditorEnabled('viewport'), 'master switch hides enabled sections');
@@ -141,7 +148,8 @@ test('Components -> JsonEditor -> section flags', t => {
   initApplicationConfig({
     enableJsonEditors: true,
     enableLayerJsonEditor: true,
-    enableViewportJsonEditor: false
+    enableViewportJsonEditor: false,
+    enableChartJsonEditor: true
   });
   t.end();
 });
@@ -191,5 +199,98 @@ test('Components -> JsonEditor -> jsonToEffectProps keeps id and type', t => {
   t.equal(next.isEnabled, false, 'should apply other edited fields');
   t.deepEqual(next.parameters, {strength: 0.8}, 'should apply parameters');
   t.notOk('deckEffect' in next, 'should drop runtime deckEffect');
+  t.end();
+});
+
+test('Components -> JsonEditor -> chartToJson collapses UI flags', t => {
+  const json = JSON.parse(
+    chartToJson({
+      id: 'c1',
+      type: 'bigNumber',
+      title: 'Count',
+      dataId: 'd1',
+      applyFilters: true,
+      display: {isConfigActive: true, isJsonEditorActive: true},
+      chartDisplay: {}
+    })
+  );
+
+  t.equal(json.id, 'c1');
+  t.equal(json.type, 'bigNumber');
+  t.equal(json.display.isConfigActive, false, 'should collapse config on serialize');
+  t.equal(json.display.isJsonEditorActive, false, 'should collapse JSON editor on serialize');
+  t.end();
+});
+
+test('Components -> JsonEditor -> parseAndValidateChartConfig keeps id', t => {
+  const chart = {
+    id: 'c1',
+    type: 'bigNumber',
+    title: 'Count',
+    dataId: 'd1',
+    applyFilters: true,
+    display: {isConfigActive: false},
+    chartDisplay: {}
+  };
+  const datasets = {d1: {id: 'd1'}, d2: {id: 'd2'}};
+
+  const next = parseAndValidateChartConfig(
+    JSON.stringify({
+      id: 'c-other',
+      type: 'barChart',
+      title: 'Bars',
+      dataId: 'd2',
+      applyFilters: false
+    }),
+    chart,
+    datasets
+  );
+
+  t.equal(next.id, 'c1', 'should keep chart id');
+  t.equal(next.type, 'barChart', 'should apply edited type');
+  t.equal(next.dataId, 'd2', 'should apply edited dataId');
+  t.equal(next.title, 'Bars');
+  t.equal(next.display.isJsonEditorActive, true, 'should keep JSON editor open after apply');
+  t.end();
+});
+
+test('Components -> JsonEditor -> parseAndValidateChartConfig rejects invalid type and dataset', t => {
+  const chart = {
+    id: 'c1',
+    type: 'bigNumber',
+    title: 'Count',
+    dataId: 'd1',
+    applyFilters: true,
+    display: {},
+    chartDisplay: {}
+  };
+
+  t.throws(
+    () =>
+      parseAndValidateChartConfig(JSON.stringify({type: 'notAChart', dataId: 'd1'}), chart, {
+        d1: {id: 'd1'}
+      }),
+    /Invalid chart type/,
+    'should reject unknown chart types'
+  );
+  t.throws(
+    () =>
+      parseAndValidateChartConfig(JSON.stringify({type: 'bigNumber', dataId: 'missing'}), chart, {
+        d1: {id: 'd1'}
+      }),
+    /Dataset "missing" not found/,
+    'should reject missing datasets'
+  );
+  t.throws(
+    () =>
+      parseAndValidateChartConfig(
+        JSON.stringify({type: 'layerChart', layerId: 'l-missing', dataId: 'd1'}),
+        chart,
+        {d1: {id: 'd1'}},
+        [{id: 'l1'}]
+      ),
+    /Layer "l-missing" not found/,
+    'should reject missing layers'
+  );
   t.end();
 });

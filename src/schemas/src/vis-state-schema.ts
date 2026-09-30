@@ -38,7 +38,7 @@ import {
   Annotation,
   ChartConfig
 } from '@kepler.gl/types';
-import {Datasets} from '@kepler.gl/table';
+import {Datasets, GroupByOp, JoinOp} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Loader} from '@loaders.gl/loader-utils';
 import KeplerGLSchema from './schema-manager';
@@ -75,6 +75,8 @@ export interface VisState {
   filterToBeMerged: any[];
   datasets: Datasets;
   editingDataset: string | undefined;
+  groupBys: GroupByOp[];
+  joins: JoinOp[];
   interactionConfig: InteractionConfig;
   interactionToBeMerged: any;
   layerBlending: string;
@@ -567,6 +569,7 @@ export const layerPropsV1 = {
         key: 'columns'
       }),
       isVisible: null,
+      isIncludedInLegend: null,
       visConfig: new VisConfigSchemaV1({
         version: VERSIONS.v1
       }),
@@ -698,7 +701,7 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV1 = [...interactionPropsV0, 'geocoder', 'coordinate'];
+const interactionPropsV1 = ['tooltip', 'legend', 'brush', 'geocoder', 'coordinate'];
 
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
@@ -864,7 +867,8 @@ export class ChartsSchema extends Schema {
             ...chart,
             display: {
               ...chart.display,
-              isConfigActive: false
+              isConfigActive: false,
+              isJsonEditorActive: false
             }
           }).charts
       )
@@ -1067,7 +1071,9 @@ export const propertiesV1 = {
     },
     key: 'editor'
   }),
-  layerOrder: null
+  layerOrder: null,
+  groupBys: null,
+  joins: null
 };
 
 export class VisStateSchemaV1 extends Schema {

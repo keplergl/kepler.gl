@@ -409,3 +409,89 @@ test('Components -> MapLegend.render -> heatmap weight field', t => {
 
   t.end();
 });
+
+test('Components -> MapLegend.render -> legend inclusion', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  const {layers} = initialState.visState;
+
+  const excluded = Object.assign(Object.create(Object.getPrototypeOf(layers[0])), layers[0], {
+    config: {...layers[0].config, isIncludedInLegend: false}
+  });
+
+  const hiddenLayerWrapper = mountWithTheme(
+    <IntlWrapper>
+      <MapLegend layers={[excluded, layers[1], layers[2]]} />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    hiddenLayerWrapper.find(StyledMapControlLegend).length,
+    2,
+    'should omit a layer excluded from the legend'
+  );
+  const names = hiddenLayerWrapper.find('.legend--layer_name').map(node => node.text());
+  t.equal(names.includes(excluded.config.label), false, 'excluded layer label should not render');
+  t.equal(
+    hiddenLayerWrapper.find('.legend__include-toggle').hostNodes().length,
+    0,
+    'should not render a hide-from-legend icon'
+  );
+
+  const groupOrder = [
+    {
+      id: 'legend-group',
+      label: 'Hidden group',
+      isVisible: true,
+      isIncludedInLegend: false,
+      layerOrder: [layers[1].id]
+    },
+    layers[2].id
+  ];
+  const groupWrapper = mountWithTheme(
+    <IntlWrapper>
+      <MapLegend layers={layers} layerOrder={groupOrder} />
+    </IntlWrapper>
+  );
+  t.equal(
+    groupWrapper.find(StyledMapControlLegend).length,
+    1,
+    'should omit layers inside a group excluded from the legend'
+  );
+  t.equal(
+    groupWrapper.find('.legend--layer_name').at(0).text(),
+    layers[2].config.label,
+    'should keep layers outside the excluded group'
+  );
+
+  const invisible = Object.assign(Object.create(Object.getPrototypeOf(layers[1])), layers[1], {
+    config: {...layers[1].config, isVisible: false}
+  });
+  const withInvisible = mountWithTheme(
+    <IntlWrapper>
+      <MapLegend layers={[invisible, layers[2]]} />
+    </IntlWrapper>
+  );
+  t.equal(
+    withInvisible.find(StyledMapControlLegend).length,
+    2,
+    'should keep invisible layers in the legend by default'
+  );
+
+  const hidingInvisible = mountWithTheme(
+    <IntlWrapper>
+      <MapLegend layers={[invisible, layers[2]]} hideInvisibleLayers />
+    </IntlWrapper>
+  );
+  t.equal(
+    hidingInvisible.find(StyledMapControlLegend).length,
+    1,
+    'should omit invisible layers when hideInvisibleLayers is on'
+  );
+  t.equal(
+    hidingInvisible.find('.legend--layer_name').at(0).text(),
+    layers[2].config.label,
+    'should keep visible layers when hideInvisibleLayers is on'
+  );
+
+  t.end();
+});

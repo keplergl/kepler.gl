@@ -137,6 +137,10 @@ export {default as DatasetInfoFactory} from './side-panel/common/dataset-info';
 export {default as DatasetTagFactory} from './side-panel/common/dataset-tag';
 export {default as DatasetTitleFactory} from './side-panel/common/dataset-title';
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
+export {default as DatasetOpsPanelsFactory} from './side-panel/dataset-ops/dataset-ops-panels';
+export {default as GroupByPanelFactory} from './side-panel/dataset-ops/group-by-panel';
+export {default as JoinPanelFactory} from './side-panel/dataset-ops/join-panel';
+export {default as SpatialJoinPanelFactory} from './side-panel/dataset-ops/spatial-join-panel';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
 
 export {default as FilterManagerFactory} from './side-panel/filter-manager';
@@ -147,6 +151,7 @@ export {default as InteractionManagerFactory} from './side-panel/interaction-man
 export {default as BrushConfigFactory} from './side-panel/interaction-panel/brush-config';
 export {default as TooltipConfigFactory} from './side-panel/interaction-panel/tooltip-config';
 export {default as GeocoderConfigFactory} from './side-panel/interaction-panel/geocoder-config';
+export {default as LegendConfigFactory} from './side-panel/interaction-panel/legend-config';
 
 export {default as DndContextFactory} from './dnd-context';
 export {default as CustomPanelsFactory} from './side-panel/custom-panel';

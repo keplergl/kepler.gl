@@ -16,6 +16,7 @@ export default {
     stroke: '線の太さ',
     density: '密度',
     height: '高さ',
+    elevationOffset: '標高オフセット',
     sum: '合計',
     pointCount: '点の数'
   },
@@ -168,6 +169,9 @@ export default {
     sizeScale: 'サイズのスケール',
     worldUnitSize: 'World Unit Size',
     elevationScale: '標高のスケール',
+    elevationOffset: '標高オフセット',
+    elevationOffsetDescription: '押し出したポリゴンを地面から持ち上げます（高さと同じ単位）',
+    elevationOffsetRange: '標高オフセットの範囲',
     enableElevationZoomFactor: '標高ズーム係数を使用する',
     enableElevationZoomFactorDescription: '現在のズーム率に基づいて高さ/標高を調整します',
     enableHeightZoomFactor: '高さズーム係数を使用する',
@@ -188,6 +192,8 @@ export default {
     heightMultiplier: '高さ乗数',
     fixedHeight: '固定高さ',
     fixedHeightDescription: '高さを変更せずに使用する',
+    fixedElevation: '固定標高',
+    fixedElevationDescription: '標高オフセットを変更せずに使用する',
     allowHover: 'ツールチップを表示',
     allowHoverDescription: 'レイヤー要素にホバーしたときにツールチップを表示または非表示にする',
     flow: {
@@ -392,6 +398,7 @@ export default {
     editEffectJson: 'エフェクトJSONを編集',
     editViewportJson: 'ビューポートJSONを編集',
     editAnimationJson: 'アニメーションJSONを編集',
+    editChartJson: 'チャートJSONを編集',
     timeLayerSync: 'レイヤタイムラインにリンク',
     timeLayerUnsync: 'レイヤタイムラインのリンクを解除'
   },
@@ -635,7 +642,13 @@ export default {
     tooltip: 'ツールチップ',
     brush: 'ブラシ',
     coordinate: '座標',
-    geocoder: 'ジオコーダー'
+    geocoder: 'ジオコーダー',
+    legend: '凡例',
+    legendHint: '凡例に表示するレイヤを選びます。マップ上のレイヤはそのままです。',
+    legendEmpty: 'レイヤを追加すると、凡例に表示する項目を選べます。',
+    legendHiddenByGroup: 'グループが凡例から除外されているため非表示です',
+    legendHideInvisible: '非表示のレイヤを凡例から隠す',
+    legendAllLayers: 'すべてのレイヤ'
   },
   layerBlending: {
     title: 'レイヤのブレンド',

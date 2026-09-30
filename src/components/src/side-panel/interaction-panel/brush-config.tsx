@@ -26,7 +26,7 @@ function BrushConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) 
       <RangeSlider
         range={BRUSH_CONFIG.range}
         value0={0}
-        value1={config.size || 10 / 2}
+        value1={config.size || 2.5}
         step={0.1}
         isRanged={false}
         onChange={value => onChange({...config, size: value[1]})}

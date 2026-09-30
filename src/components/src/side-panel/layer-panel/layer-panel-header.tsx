@@ -131,7 +131,7 @@ const HeaderLabelSection = styled.div`
   color: ${props => props.theme.textColor};
   flex-grow: 1;
   align-items: stretch;
-  // leave space for eye and collapse icon
+  // leave space for eye and collapse icons
   padding-right: 50px;
 `;
 

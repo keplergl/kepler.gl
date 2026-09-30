@@ -6323,6 +6323,71 @@ test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE empty polygon', t => {
   t.end();
 });
 
+test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE raster awaits clip download', t => {
+  drainTasksForTesting();
+  const layer = {
+    id: 'raster-extract',
+    type: LAYER_TYPES.rasterTile,
+    config: {dataId: 'stac-data', label: 'Africa Farms'},
+    extractInsideFeature: () => ({
+      kind: 'geojson',
+      features: [
+        {
+          type: 'Feature',
+          geometry: mockPolygonFeature.geometry,
+          properties: {pixel_count: 1}
+        }
+      ],
+      rowCount: 1
+    }),
+    downloadClip: () => Promise.resolve({png: true, json: true})
+  };
+  const startState = {
+    ...INITIAL_VIS_STATE,
+    layers: [layer],
+    datasets: {
+      'stac-data': {
+        id: 'stac-data',
+        fields: [],
+        dataContainer: createDataContainer([])
+      }
+    },
+    editor: {
+      ...INITIAL_VIS_STATE.editor,
+      selectedFeature: mockPolygonFeature
+    }
+  };
+
+  const pendingState = reducer(
+    startState,
+    VisStateActions.extractDataFromFeature({layerId: layer.id})
+  );
+  const downloadTasks = drainTasksForTesting();
+  t.equal(downloadTasks.length, 1, 'Should wait on downloadClip instead of toasting immediately');
+
+  const successAction = succeedTaskInTest(downloadTasks[0], {png: true, json: true});
+  t.ok(
+    JSON.stringify(successAction).includes('Downloaded raster clip image'),
+    'Should toast success after a PNG is produced'
+  );
+  reducer(pendingState, successAction);
+  drainTasksForTesting();
+
+  const pendingFailState = reducer(
+    startState,
+    VisStateActions.extractDataFromFeature({layerId: layer.id})
+  );
+  const failDownloadTasks = drainTasksForTesting();
+  const failAction = succeedTaskInTest(failDownloadTasks[0], {png: false, json: true});
+  t.ok(
+    JSON.stringify(failAction).includes('Failed to download raster clip image'),
+    'Should toast an error when no PNG is produced'
+  );
+  reducer(pendingFailState, failAction);
+  drainTasksForTesting();
+  t.end();
+});
+
 test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER disabled by config', t => {
   initApplicationConfig({enableDrawOnMapSketches: false});
 

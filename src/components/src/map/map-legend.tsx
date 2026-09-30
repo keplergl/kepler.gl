@@ -15,7 +15,7 @@ import {LayerVisConfig, LayerOrder, MapState, RGBColor} from '@kepler.gl/types';
 import {getDistanceScales} from 'viewport-mercator-project';
 import {ArrowDown, ArrowRight, EyeSeen, EyeUnseen} from '../common/icons';
 import PanelHeaderActionFactory from '../side-panel/panel-header-action';
-import {getFlatLayerOrder} from '@kepler.gl/reducers';
+import {getFlatLayerOrder, isLayerShownInLegend} from '@kepler.gl/reducers';
 
 interface StyledMapControlLegendProps {
   width?: number;
@@ -31,7 +31,9 @@ export const StyledMapControlLegend = styled.div<StyledMapControlLegendProps>`
   border-bottom-style: solid;
   border-bottom-width: ${props => (props.$last ? 0 : '1px')};
   width: ${props => props.width}px;
+  max-width: 100%;
   box-sizing: border-box;
+  overflow-x: hidden;
 
   .legend--layer_name {
     font-size: 12px;
@@ -592,6 +594,7 @@ export type MapLegendProps = {
   isExport?: boolean;
   onLayerVisConfigChange?: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   onToggleLayerVisibility?: (layer: Layer) => void;
+  hideInvisibleLayers?: boolean;
   onMapToggleLayer?: (mapIndex: number, layerId: string) => void;
   isSplit?: boolean;
   splitMaps?: {layers: {[key: string]: boolean}}[];
@@ -678,6 +681,7 @@ function MapLegendFactory(
     isExport,
     onLayerVisConfigChange,
     onToggleLayerVisibility,
+    hideInvisibleLayers,
     onMapToggleLayer,
     isSplit,
     splitMaps,
@@ -691,12 +695,29 @@ function MapLegendFactory(
         }, [])
       : layers;
 
+    const legendLayers = orderedLayers.filter(layer => {
+      if (
+        !layer.isValidToSave() ||
+        layer.config.hidden ||
+        !isLayerShownInLegend(layer, layerOrder)
+      ) {
+        return false;
+      }
+      if (!hideInvisibleLayers) {
+        return true;
+      }
+      if (isSplit && splitMaps && splitMaps.length > 1) {
+        return (
+          layer.config.isVisible &&
+          (Boolean(splitMaps[0]?.layers?.[layer.id]) || Boolean(splitMaps[1]?.layers?.[layer.id]))
+        );
+      }
+      return layer.config.isVisible;
+    });
+
     return (
       <div className="map-legend">
-        {orderedLayers.map((layer, index) => {
-          if (!layer.isValidToSave() || layer.config.hidden) {
-            return null;
-          }
+        {legendLayers.map((layer, index) => {
           const containerW = width || DIMENSIONS.mapControl.width;
 
           const isLayerVisible =
@@ -711,7 +732,7 @@ function MapLegendFactory(
               key={layer.id}
               layer={layer}
               containerW={containerW}
-              isLast={index === orderedLayers.length - 1}
+              isLast={index === legendLayers.length - 1}
               isLayerVisible={isLayerVisible}
               isExport={isExport}
               options={options}
