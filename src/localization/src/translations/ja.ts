@@ -349,8 +349,6 @@ export default {
     dualView: 'デュアル',
     swipeView: 'スワイプ',
     showLegend: '凡例を表示',
-    hideFromLegend: '凡例から非表示',
-    showInLegend: '凡例に表示',
     disable3DMap: '3D地図を無効化',
     DrawOnMap: '地図上に図形を描画',
     copyAllSketches: 'すべてのスケッチを GeoJSON としてクリップボードにコピー',

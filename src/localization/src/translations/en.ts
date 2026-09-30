@@ -531,8 +531,6 @@ export default {
     dualView: 'Dual',
     swipeView: 'Swipe',
     showLegend: 'Show legend',
-    hideFromLegend: 'Hide from legend',
-    showInLegend: 'Show in legend',
     disable3DMap: 'Disable 3D Map',
     globeMap: 'Globe Map',
     disableGlobeMap: 'Disable Globe Map',

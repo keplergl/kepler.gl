@@ -354,8 +354,6 @@ export default {
     dualView: 'Duplo',
     swipeView: 'Comparar',
     showLegend: 'mostrar legenda',
-    hideFromLegend: 'Ocultar da legenda',
-    showInLegend: 'Mostrar na legenda',
     disable3DMap: 'Desabilitar Mapa 3D',
     DrawOnMap: 'Desenhar no mapa',
     copyAllSketches: 'Copiar todos os esboços para a área de transferência como GeoJSON',

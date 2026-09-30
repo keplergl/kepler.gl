@@ -352,8 +352,6 @@ export default {
     dualView: 'Двойная',
     swipeView: 'Сравнение',
     showLegend: 'Показать легенду',
-    hideFromLegend: 'Скрыть из легенды',
-    showInLegend: 'Показать в легенде',
     disable3DMap: 'Отключить 3D Карту',
     DrawOnMap: 'Рисовать на карте',
     copyAllSketches: 'Скопировать все наброски в буфер обмена как GeoJSON',

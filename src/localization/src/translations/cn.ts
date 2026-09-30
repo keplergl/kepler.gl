@@ -338,8 +338,6 @@ export default {
     dualView: '双屏',
     swipeView: '对比',
     showLegend: '显示图例',
-    hideFromLegend: '从图例中隐藏',
-    showInLegend: '在图例中显示',
     disable3DMap: '禁用 3D 地图',
     DrawOnMap: '在地图上绘制',
     copyAllSketches: '将所有草图以 GeoJSON 复制到剪贴板',

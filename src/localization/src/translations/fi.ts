@@ -353,8 +353,6 @@ export default {
     dualView: 'Kaksois',
     swipeView: 'Vertaa',
     showLegend: 'Näytä selite',
-    hideFromLegend: 'Piilota selitteestä',
-    showInLegend: 'Näytä selitteessä',
     disable3DMap: 'Poistu 3D-näkymästä',
     DrawOnMap: 'Piirrä kartalle',
     copyAllSketches: 'Kopioi kaikki luonnokset leikepöydälle GeoJSON-muodossa',
