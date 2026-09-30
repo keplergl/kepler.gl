@@ -226,6 +226,9 @@ export type KeplerApplicationConfig = {
   /** Whether to show column statistics in the data table modal. Enabled by default. */
   enableColumnStats?: boolean;
 
+  /** Group-by, attribute join, and simple spatial join UI on local datasets. Enabled by default. */
+  enableDatasetOps?: boolean;
+
   /**
    * Whether to show the charts map-control panel (big number, bar, line,
    * heatmap, pivot table, tooltip charts, and chart cross-filters).
@@ -264,6 +267,9 @@ export type KeplerApplicationConfig = {
 
   /** Animation / time-filter playback `{ }` JSON editor. Enabled by default. */
   enableAnimationJsonEditor?: boolean;
+
+  /** Charts panel `{ }` JSON editor. Enabled by default. */
+  enableChartJsonEditor?: boolean;
 
   /**
    * Show a format dropdown next to the remote dataset URL field (Auto / CSV / GeoJSON / JSON / Arrow / Parquet).
@@ -432,6 +438,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableColumnStats: true,
 
+  enableDatasetOps: true,
+
   enableChartsPanel: true,
 
   enableJsonEditors: true,
@@ -440,6 +448,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableEffectJsonEditor: true,
   enableViewportJsonEditor: false,
   enableAnimationJsonEditor: true,
+  enableChartJsonEditor: true,
 
   enableRemoteFileFormatSelector: false,
 

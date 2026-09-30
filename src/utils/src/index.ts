@@ -98,7 +98,8 @@ export {
   getExportFileNameBase,
   getMapJSON,
   getScaleFromImageSize,
-  isMSEdge
+  isMSEdge,
+  omitLayerApiKeys
 } from './export-utils';
 export {getFormatValue, getDefaultTimeFormat} from './format';
 export {getLayerBlendingParameters, patchDeckRendererForPostProcessing} from './gl-utils';
@@ -169,8 +170,10 @@ export type {EditorFeatureCollection} from './editor-feature-utils';
 export {
   extractRowsInsideFeature,
   extractVectorTileFeaturesInsideFeature,
+  extractRasterInsideFeature,
   isExtractableDataset,
   isExtractableLayer,
+  isRasterTileExtractLayer,
   isVectorTileExtractLayer
 } from './extract-dataset-utils';
 export type {

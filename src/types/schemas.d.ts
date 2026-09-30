@@ -118,6 +118,8 @@ export type SavedVisState = {
   animationConfig: SavedAnimationConfig;
   editor?: SavedEditor;
   layerOrder?: any[];
+  groupBys?: any[];
+  joins?: any[];
 };
 
 // Min saved config can be passed to addDataToMap
@@ -145,6 +147,8 @@ export type ParsedVisState = {
   splitMaps?: SplitMap[];
   animationConfig?: Partial<SavedAnimationConfig>;
   layerOrder?: any[];
+  groupBys?: any[];
+  joins?: any[];
 };
 
 export type ParsedUiState = {

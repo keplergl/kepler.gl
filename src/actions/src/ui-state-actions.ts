@@ -472,6 +472,26 @@ export const setExportMapFileName: (
     (payload: SetExportMapFileNameUpdaterAction['payload']) => ({payload})
   );
 
+/** SET_EXPORT_INCLUDE_LAYER_API_KEYS */
+export type SetExportIncludeLayerApiKeysUpdaterAction = {
+  payload: boolean;
+};
+/**
+ * Whether exported HTML and JSON maps keep access tokens stored on layers.
+ * @memberof uiStateActions
+ * @param includeLayerApiKeys - include layer API keys in the export
+ * @public
+ */
+export const setExportIncludeLayerApiKeys: (
+  includeLayerApiKeys: SetExportIncludeLayerApiKeysUpdaterAction['payload']
+) => Merge<
+  SetExportIncludeLayerApiKeysUpdaterAction,
+  {type: typeof ActionTypes.SET_EXPORT_INCLUDE_LAYER_API_KEYS}
+> = createAction(
+  ActionTypes.SET_EXPORT_INCLUDE_LAYER_API_KEYS,
+  (payload: SetExportIncludeLayerApiKeysUpdaterAction['payload']) => ({payload})
+);
+
 /** SET_LOCALE */
 export type SetLocaleUpdaterAction = {
   payload: {locale: string};

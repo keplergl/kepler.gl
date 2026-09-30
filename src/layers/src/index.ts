@@ -17,6 +17,7 @@ import {default as HexagonLayer} from './hexagon-layer/hexagon-layer';
 import {default as GeojsonLayer} from './geojson-layer/geojson-layer';
 export {
   defaultElevation,
+  defaultElevationOffset,
   defaultLineWidth,
   defaultRadius,
   COLUMN_MODE_TABLE
@@ -67,20 +68,41 @@ export {
 } from './raster-tile/raster-tile-layer';
 
 import {default as Tile3DLayer} from './tile3d-layer/tile3d-layer';
-export {default as Tile3DLayer} from './tile3d-layer/tile3d-layer';
+export {default as Tile3DLayer, TILE3D_LOAD_ERROR_MESSAGE} from './tile3d-layer/tile3d-layer';
 export {default as Tile3DLayerIcon} from './tile3d-layer/tile3d-layer-icon';
 
 import {default as BitmapOverlayLayer} from './bitmap-layer/bitmap-layer';
 export {default as BitmapOverlayLayer} from './bitmap-layer/bitmap-layer';
 export {default as BitmapLayerIcon} from './bitmap-layer/bitmap-layer-icon';
 export {
+  BitmapBoundsEditMode,
+  BITMAP_MOVE_HANDLE_TYPE
+} from './bitmap-layer/bitmap-bounds-edit-mode';
+export {
   CATEGORICAL_COLORMAP_ID,
   DATA_SOURCE_COLOR_DEFAULTS,
   RASTER_COLOR_RESET_PARAMS,
   PRESET_OPTIONS
 } from './raster-tile/config';
-export {RasterLayerResources} from './raster-tile/url';
 export {getCategoricalColormapDataUrl} from './raster-tile/image';
+export {
+  computeDerivedValue,
+  computeRasterZonalStats,
+  findBestTileAtLngLat,
+  formatRasterIdentifyRows,
+  formatRasterValue,
+  latToMercatorY,
+  lngLatToTileUV,
+  lngToMercatorX,
+  mercatorPixelSizeForBbox,
+  parseTitilerPointResponse,
+  rasterZonalStatsToSidecar,
+  sampleRasterTileAtLngLat,
+  tilePixelToLngLat,
+  zonalStatsToProperties
+} from './raster-tile/raster-tile-identify';
+export {RasterLayerResources, getTitilerBboxUrl, getTitilerPointUrl} from './raster-tile/url';
+export {polygonToBboxRectangle, isDownloadableImageBlob} from './raster-tile/raster-tile-extract';
 export * from './raster-tile/types';
 export * from './raster-tile/raster-tile-utils';
 

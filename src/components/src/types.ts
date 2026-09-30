@@ -12,7 +12,7 @@ import {
   MapStateActions,
   UIStateActions
 } from '@kepler.gl/actions';
-import {Datasets} from '@kepler.gl/table';
+import {Datasets, GroupByOp, JoinOp} from '@kepler.gl/table';
 
 export type BaseComponentProps = PropsWithChildren<HTMLAttributes<unknown>>;
 
@@ -38,6 +38,8 @@ export type SidePanelProps = {
   mapInfo: {title?: string; description?: string};
   width: number;
   datasets: Datasets;
+  groupBys?: GroupByOp[];
+  joins?: JoinOp[];
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;

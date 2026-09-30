@@ -216,6 +216,51 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
   );
 };
 
+const FeatureInfoRows: React.FC<{
+  rows: Array<{name: string; value: string}>;
+  primaryRows?: Array<{name: string; value: string}> | null;
+  compareType?: CompareType;
+  isComparing: boolean;
+}> = ({rows, primaryRows, compareType, isComparing}) => {
+  const primaryByName = useMemo(() => {
+    const map = new Map<string, string>();
+    (primaryRows || []).forEach(row => {
+      map.set(row.name, row.value);
+    });
+    return map;
+  }, [primaryRows]);
+
+  return (
+    <tbody>
+      {rows.map(({name, value}, i) => {
+        let deltaValue: string | null = null;
+        if (isComparing) {
+          const primaryValue = primaryByName.get(name);
+          const numericValue = Number(value);
+          const numericPrimary = primaryValue === undefined ? NaN : Number(primaryValue);
+          if (Number.isFinite(numericValue) && Number.isFinite(numericPrimary)) {
+            deltaValue = getTooltipDisplayDeltaValue({
+              field: {type: 'real', name} as Field,
+              value: numericValue,
+              primaryValue: numericPrimary,
+              compareType
+            });
+          }
+        }
+        return (
+          <Row
+            key={`${name}-${i}`}
+            name={name}
+            value={value}
+            deltaValue={deltaValue}
+            isComparing={isComparing}
+          />
+        );
+      })}
+    </tbody>
+  );
+};
+
 const CellInfo = ({
   fieldsToShow,
   data,
@@ -347,6 +392,7 @@ const LayerHoverInfoFactory = () => {
     const hasFieldsToShow =
       (data.fieldValues && Object.keys(data.fieldValues).length > 0) ||
       (data.wmsFeatureData && data.wmsFeatureData.length > 0) ||
+      (data.rasterFeatureData && data.rasterFeatureData.length > 0) ||
       (props.fieldsToShow && props.fieldsToShow.length > 0);
 
     return (
@@ -357,16 +403,24 @@ const LayerHoverInfoFactory = () => {
         </StyledLayerName>
         {hasFieldsToShow && <StyledDivider />}
         <StyledTable className={props.primaryData ? 'comparing' : undefined}>
-          {data.wmsFeatureData ? (
-            <tbody>
-              {data.wmsFeatureData.map(({name, value}, i) => (
-                <Row key={i} name={name} value={value} />
-              ))}
-            </tbody>
+          {data.wmsFeatureData || data.rasterFeatureData ? (
+            <FeatureInfoRows
+              rows={data.wmsFeatureData || data.rasterFeatureData}
+              primaryRows={
+                props.primaryData?.wmsFeatureData || props.primaryData?.rasterFeatureData
+              }
+              compareType={props.compareType}
+              isComparing={Boolean(props.primaryData)}
+            />
           ) : data.fieldValues ? (
             <tbody>
               {data.fieldValues.map(({labelMessage, value}, i) => (
-                <Row key={i} name={intl.formatMessage({id: labelMessage})} value={value} />
+                <Row
+                  key={i}
+                  name={intl.formatMessage({id: labelMessage})}
+                  value={value}
+                  isComparing={Boolean(props.primaryData)}
+                />
               ))}
             </tbody>
           ) : props.layer.isAggregated ? (

@@ -13,7 +13,14 @@ import {
 import KeplerGlSchema, {CURRENT_VERSION, KeplerGLSchemaClass} from '@kepler.gl/schemas';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
-import {AnimationConfig, Effect, Filter, MapState, ParsedLayer} from '@kepler.gl/types';
+import {
+  AnimationConfig,
+  ChartConfig,
+  Effect,
+  Filter,
+  MapState,
+  ParsedLayer
+} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 export type JsonEditorStatus = {
@@ -21,7 +28,7 @@ export type JsonEditorStatus = {
   message?: string;
 };
 
-export type JsonEditorSection = 'layer' | 'filter' | 'effect' | 'viewport' | 'animation';
+export type JsonEditorSection = 'layer' | 'filter' | 'effect' | 'viewport' | 'animation' | 'chart';
 
 const JSON_EDITOR_FLAGS: Record<
   JsonEditorSection,
@@ -30,13 +37,25 @@ const JSON_EDITOR_FLAGS: Record<
   | 'enableEffectJsonEditor'
   | 'enableViewportJsonEditor'
   | 'enableAnimationJsonEditor'
+  | 'enableChartJsonEditor'
 > = {
   layer: 'enableLayerJsonEditor',
   filter: 'enableFilterJsonEditor',
   effect: 'enableEffectJsonEditor',
   viewport: 'enableViewportJsonEditor',
-  animation: 'enableAnimationJsonEditor'
+  animation: 'enableAnimationJsonEditor',
+  chart: 'enableChartJsonEditor'
 };
+
+const CHART_JSON_TYPES = new Set([
+  'bigNumber',
+  'barChart',
+  'horizontalBar',
+  'lineChart',
+  'heatmapChart',
+  'pivotTable',
+  'layerChart'
+]);
 
 export function isJsonEditorEnabled(section: JsonEditorSection): boolean {
   const config = getApplicationConfig();
@@ -199,4 +218,54 @@ export function animationConfigToJson(
 
 export function jsonToAnimationConfig(text: string): AnimationConfig | Filter {
   return parseJsonObject(text) as unknown as AnimationConfig | Filter;
+}
+
+export function chartToJson(chart: ChartConfig, schema?: KeplerGLSchemaClass): string {
+  if (schema) {
+    const saved = schema.getConfigToSave({
+      visState: {charts: [chart]}
+    });
+    return stringifyJson(saved?.config?.visState?.charts?.[0] ?? {});
+  }
+  return stringifyJson({
+    ...chart,
+    display: {
+      ...chart.display,
+      isConfigActive: false,
+      isJsonEditorActive: false
+    }
+  });
+}
+
+export function parseAndValidateChartConfig(
+  text: string,
+  chart: ChartConfig,
+  datasets: Datasets,
+  layers: {id: string}[] = []
+): ChartConfig {
+  const parsed = parseJsonObject(text);
+  const type = parsed.type;
+  if (typeof type !== 'string' || !CHART_JSON_TYPES.has(type)) {
+    throw new Error(`Invalid chart type "${type ?? ''}"`);
+  }
+  const dataId = (parsed.dataId ?? chart.dataId) as string | null | undefined;
+  if (dataId && !datasets[dataId]) {
+    throw new Error(`Dataset "${dataId}" not found`);
+  }
+  if (type === 'layerChart') {
+    const layerId = parsed.layerId;
+    if (typeof layerId !== 'string' || !layers.some(layer => layer.id === layerId)) {
+      throw new Error(`Layer "${typeof layerId === 'string' ? layerId : ''}" not found`);
+    }
+  }
+  return {
+    ...parsed,
+    id: chart.id,
+    display: {
+      ...(parsed.display && typeof parsed.display === 'object' && !Array.isArray(parsed.display)
+        ? parsed.display
+        : {}),
+      isJsonEditorActive: true
+    }
+  } as ChartConfig;
 }

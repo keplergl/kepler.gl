@@ -191,6 +191,51 @@ export function getTitilerPathMapping(
 }
 
 /**
+ * Titiler /point endpoint for a lon/lat sample of the COG or mosaic.
+ */
+export function getTitilerPointUrl(options: {
+  stac: GetTileDataProps['stac'];
+  useSTACSearching: boolean;
+  lon: number;
+  lat: number;
+}): {url: string; rasterServerUrl: string} {
+  const {stac, useSTACSearching, lon, lat} = options;
+  if (!stac.rasterTileServerUrls?.length) {
+    throw new Error('No raster tile servers');
+  }
+  const pathStem = getTitilerPathMapping(stac, useSTACSearching);
+  const domain = chooseDomain(stac.rasterTileServerUrls, 0, 0);
+  return {
+    url: `${domain}/${pathStem}/point/${lon},${lat}`,
+    rasterServerUrl: domain
+  };
+}
+
+/**
+ * Titiler /bbox crop of a COG or mosaic as an image.
+ */
+export function getTitilerBboxUrl(options: {
+  stac: GetTileDataProps['stac'];
+  useSTACSearching: boolean;
+  bbox: [number, number, number, number];
+  width: number;
+  height: number;
+  format?: string;
+}): {url: string; rasterServerUrl: string} {
+  const {stac, useSTACSearching, bbox, width, height, format = 'png'} = options;
+  if (!stac.rasterTileServerUrls?.length) {
+    throw new Error('No raster tile servers');
+  }
+  const pathStem = getTitilerPathMapping(stac, useSTACSearching);
+  const domain = chooseDomain(stac.rasterTileServerUrls, 0, 0);
+  const [minx, miny, maxx, maxy] = bbox;
+  return {
+    url: `${domain}/${pathStem}/bbox/${minx},${miny},${maxx},${maxy}/${width}x${height}.${format}`,
+    rasterServerUrl: domain
+  };
+}
+
+/**
  * Choose from available domains to load images from
  *
  * @param x  x tile index

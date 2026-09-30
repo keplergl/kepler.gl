@@ -86,3 +86,5 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [Export Video](./k-save-and-export.md#export-video)
 
 #### [FAQ](./i-FAQ.md)
+
+#### [Dataset operations](./dataset-operations.md)
