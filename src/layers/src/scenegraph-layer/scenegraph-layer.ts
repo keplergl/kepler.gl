@@ -198,7 +198,8 @@ export const scenegraphVisConfigs: {
   colorRange: 'colorRange',
   sizeScale: {
     ...LAYER_VIS_CONFIGS.sizeScale,
-    range: [0, 100]
+    range: [0, 100],
+    step: 0.01
   },
   angleX: {
     ...LAYER_VIS_CONFIGS.angle,
