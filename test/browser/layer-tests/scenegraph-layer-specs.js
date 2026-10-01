@@ -318,6 +318,47 @@ test('#ScenegraphLayer -> renderLayer', t => {
   t.end();
 });
 
+test('#ScenegraphLayer -> geojson centroid', t => {
+  const layer = new ScenegraphLayer({
+    id: 'scenegraph-geojson',
+    dataId: 'geo',
+    columnMode: 'geojson',
+    columns: {
+      geojson: {value: 'geom', fieldIdx: 0}
+    }
+  });
+  const rows = [
+    [{type: 'Point', coordinates: [-122.4, 37.8]}],
+    [
+      {
+        type: 'LineString',
+        coordinates: [
+          [0, 0],
+          [2, 2]
+        ]
+      }
+    ],
+    [null]
+  ];
+  const dataset = {
+    dataContainer: {
+      numRows: () => rows.length,
+      valueAt: (index, fieldIdx) => rows[index][fieldIdx]
+    },
+    fields: [{name: 'geom', fieldIdx: 0, type: 'geojson'}],
+    filteredIndex: [0, 1, 2]
+  };
+
+  layer.updateLayerMeta(dataset);
+  const data = layer.calculateDataAttribute(dataset, () => null);
+
+  t.equal(layer.config.columnMode, 'geojson', 'geojson column mode is selected');
+  t.equal(data.length, 2, 'skips features without geometry');
+  t.deepEqual(data[0].position, [-122.4, 37.8, 0], 'point features keep their coordinate');
+  t.deepEqual(data[1].position, [1, 1, 0], 'lines and polygons use the vertex centroid');
+  t.end();
+});
+
 test('#ScenegraphLayer -> GCS model URL', t => {
   t.equal(
     toCorsSafeGcsUrl('https://storage.googleapis.com/kepler-examples/duck.glb'),

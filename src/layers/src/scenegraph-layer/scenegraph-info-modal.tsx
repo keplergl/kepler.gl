@@ -58,7 +58,8 @@ const ScenegraphInfoModalFactory = () => {
       <div className="scenegraph-info-modal__description">
         <span>
           In your csv you can specify points with optional altitude. A model is placed at each
-          point. Pick one from the gallery, or provide a URL to a{' '}
+          point. A GeoJSON geometry column places one model at each feature centroid. Pick one from
+          the gallery, or provide a URL to a{' '}
         </span>
         <code>glTF (GLB or Embedded)</code>
         <span> file.</span>
