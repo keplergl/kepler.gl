@@ -3,12 +3,11 @@
 
 /* eslint-disable complexity */
 import {FormattedMessage} from '@kepler.gl/localization';
-import React, {Component, Fragment, useCallback, useRef, useState} from 'react';
+import React, {Component, useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
 
 import ItemSelector from '../../common/item-selector/item-selector';
 import {
-  Input,
   InputLight,
   PanelLabel,
   PanelLabelWrapper,
@@ -32,6 +31,7 @@ import TextLabelPanelFactory from './text-label-panel';
 import VisConfigSliderFactory from './vis-config-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
 import ScenegraphModelSelectorFactory, {
+  SCENEGRAPH_3D_MODEL_OPTIONS,
   ScenegraphCustomModelUrlInput
 } from './scenegraph-model-selector';
 
@@ -1081,11 +1081,6 @@ export default function LayerConfiguratorFactory(
                 <ConfigGroupCollapsibleContent>
                   {layer.config.visConfig.scenegraph === CUSTOM_SCENEGRAPH_MODEL_ID ? (
                     <SidePanelSection>
-                      <PanelLabelWrapper>
-                        <PanelLabel>
-                          <FormattedMessage id="layer.3DModelURL" />
-                        </PanelLabel>
-                      </PanelLabelWrapper>
                       <ScenegraphCustomModelUrlInput
                         customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
                         onChange={url =>
@@ -1386,20 +1381,38 @@ export default function LayerConfiguratorFactory(
 
     _render3DLayerConfig({layer, visConfiguratorProps}) {
       return (
-        <Fragment>
+        <StyledLayerVisualConfigurator>
           <LayerConfigGroup label={'layer.3DModel'} collapsible>
-            <Input
-              type="file"
-              accept=".glb,.gltf"
-              onChange={e => {
-                if (e.target.files && e.target.files[0]) {
-                  const url = URL.createObjectURL(e.target.files[0]);
-                  visConfiguratorProps.onChange({scenegraph: url});
-                }
-              }}
+            <ScenegraphModelSelector
+              options={SCENEGRAPH_3D_MODEL_OPTIONS}
+              selected={layer.config.visConfig.scenegraph}
+              onSelect={(scenegraph: {id: string}) =>
+                visConfiguratorProps.onChange({scenegraph: scenegraph.id})
+              }
             />
-          </LayerConfigGroup>
-          <LayerConfigGroup label={'layer.3DModelOptions'} collapsible>
+            {layer.config.visConfig.scenegraph === CUSTOM_SCENEGRAPH_MODEL_ID ? (
+              <SidePanelSection>
+                <ScenegraphCustomModelUrlInput
+                  customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
+                  onChange={url =>
+                    visConfiguratorProps.onChange({
+                      scenegraphCustomModelUrl: url
+                    })
+                  }
+                />
+              </SidePanelSection>
+            ) : null}
+            <VisConfigSwitch
+              {...layer.visConfigSettings.scenegraphColorEnabled}
+              {...visConfiguratorProps}
+            />
+            {layer.config.visConfig.scenegraphColorEnabled ? (
+              <LayerColorSelector
+                {...visConfiguratorProps}
+                selectedColor={layer.config.visConfig.scenegraphColor}
+                property="scenegraphColor"
+              />
+            ) : null}
             <VisConfigSlider
               {...layer.visConfigSettings.sizeScale}
               {...visConfiguratorProps}
@@ -1421,7 +1434,7 @@ export default function LayerConfiguratorFactory(
               disabled={false}
             />
           </LayerConfigGroup>
-        </Fragment>
+        </StyledLayerVisualConfigurator>
       );
     }
 

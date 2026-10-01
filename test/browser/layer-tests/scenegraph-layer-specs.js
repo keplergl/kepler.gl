@@ -18,7 +18,8 @@ import {
   pointLayerMeta,
   preparedFilterDomain0
 } from 'test/helpers/layer-utils';
-import {KeplerGlLayers} from '@kepler.gl/layers';
+import {DEFAULT_SCENEGRAPH_MODEL, CUSTOM_SCENEGRAPH_MODEL_ID} from '@kepler.gl/constants';
+import {KeplerGlLayers, toCorsSafeGcsUrl} from '@kepler.gl/layers';
 const {ScenegraphLayer} = KeplerGlLayers;
 const columns = {lat: 'lat', lng: 'lng'};
 
@@ -37,6 +38,17 @@ test('#ScenegraphLayer -> constructor', t => {
           t.ok(layer.isAggregated === false, 'ScenegraphLayer is not aggregated');
           t.ok(layer.config.label === 'test 3d layer', 'label should be correct');
           t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
+          t.equal(
+            layer.config.visConfig.scenegraph,
+            DEFAULT_SCENEGRAPH_MODEL.id,
+            'should default to the gallery duck'
+          );
+          t.equal(
+            layer.config.visConfig.angleZ,
+            0,
+            'angle Z default lets the duck model supply yaw'
+          );
+          t.equal(layer.config.visConfig.scenegraphColorEnabled, false, 'tint starts off');
           t.deepEqual(
             layer.getLegendVisualChannels(),
             {},
@@ -160,15 +172,142 @@ test('#ScenegraphLayer -> renderLayer', t => {
       assert: (deckLayers, layer) => {
         t.equal(deckLayers.length, 1, 'Should create 1 deck.gl layer');
         const {props} = deckLayers[0];
+        const {sizeScale, angleX, angleY, angleZ} = layer.config.visConfig;
 
+        t.equal(
+          layer.getScenegraph().url,
+          DEFAULT_SCENEGRAPH_MODEL.url,
+          'should load the duck model'
+        );
         const expectedProps = {
           opacity: layer.config.visConfig.opacity,
-          sizeScale: layer.config.visConfig.sizeScale,
-          filterRange: preparedDataset.gpuFilter.filterRange
+          sizeScale: sizeScale * DEFAULT_SCENEGRAPH_MODEL.scale,
+          filterRange: preparedDataset.gpuFilter.filterRange,
+          getOrientation: [
+            angleX + DEFAULT_SCENEGRAPH_MODEL.angles[0],
+            angleY + DEFAULT_SCENEGRAPH_MODEL.angles[1],
+            angleZ + DEFAULT_SCENEGRAPH_MODEL.angles[2]
+          ],
+          getColor: [255, 255, 255],
+          _lighting: 'pbr'
         };
         Object.keys(expectedProps).forEach(key => {
-          t.equal(props[key], expectedProps[key], `should have correct props.${key}`);
+          t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
+      }
+    },
+    {
+      name: 'Scenegraph gallery model',
+      layer: {
+        type: '3D',
+        id: 'test_layer_airplane',
+        config: {
+          dataId,
+          label: 'gps 3d',
+          columns,
+          visConfig: {
+            scenegraph: 'airplane'
+          }
+        }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      assert: (deckLayers, layer) => {
+        const model = layer.getScenegraph();
+        t.equal(deckLayers.length, 1, 'should render a gallery model');
+        t.equal(model.id, 'airplane');
+        t.ok(model.url.endsWith('/Plane.glb'), 'should load the airplane model');
+        t.equal(
+          deckLayers[0].props.sizeScale,
+          layer.config.visConfig.sizeScale * model.scale,
+          'gallery models use a scale of 1'
+        );
+      }
+    },
+    {
+      name: 'Scenegraph custom url and tint',
+      layer: {
+        type: '3D',
+        id: 'test_layer_custom',
+        config: {
+          dataId,
+          label: 'gps 3d',
+          columns,
+          visConfig: {
+            scenegraph: CUSTOM_SCENEGRAPH_MODEL_ID,
+            scenegraphCustomModelUrl: 'https://example.com/model.glb',
+            scenegraphColorEnabled: true,
+            scenegraphColor: [10, 20, 30]
+          }
+        }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      assert: (deckLayers, layer) => {
+        t.equal(layer.getScenegraph().url, 'https://example.com/model.glb');
+        t.deepEqual(deckLayers[0].props.getColor, [10, 20, 30], 'should tint the model');
+      }
+    },
+    {
+      name: 'Scenegraph custom url missing',
+      layer: {
+        type: '3D',
+        id: 'test_layer_custom_empty',
+        config: {
+          dataId,
+          label: 'gps 3d',
+          columns,
+          visConfig: {
+            scenegraph: CUSTOM_SCENEGRAPH_MODEL_ID,
+            scenegraphCustomModelUrl: ''
+          }
+        }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      assert: deckLayers => {
+        t.equal(deckLayers.length, 0, 'should not render until a custom URL is set');
+      }
+    },
+    {
+      name: 'Scenegraph legacy file url',
+      layer: {
+        type: '3D',
+        id: 'test_layer_legacy',
+        config: {
+          dataId,
+          label: 'gps 3d',
+          columns,
+          visConfig: {
+            scenegraph: 'blob:http://localhost/model.glb',
+            angleZ: 90,
+            sizeScale: 10
+          }
+        }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      assert: (deckLayers, layer) => {
+        const {props} = deckLayers[0];
+        t.equal(layer.getScenegraph().url, 'blob:http://localhost/model.glb');
+        t.equal(props.sizeScale, 10, 'legacy urls keep the saved size');
+        t.deepEqual(props.getOrientation, [0, 0, 90], 'legacy urls do not add model angles');
       }
     }
   ];
@@ -176,5 +315,24 @@ test('#ScenegraphLayer -> renderLayer', t => {
   testRenderLayerCases(t, ScenegraphLayer, TEST_CASES);
 
   stubedFetch.restore();
+  t.end();
+});
+
+test('#ScenegraphLayer -> GCS model URL', t => {
+  t.equal(
+    toCorsSafeGcsUrl('https://storage.googleapis.com/kepler-examples/duck.glb'),
+    'https://storage.googleapis.com/storage/v1/b/kepler-examples/o/duck.glb?alt=media',
+    'rewrites public GCS object URLs to the CORS-enabled download API'
+  );
+  t.equal(
+    toCorsSafeGcsUrl('https://studio-public-data.foursquare.com/statics/keplergl/Duck.glb'),
+    'https://studio-public-data.foursquare.com/statics/keplergl/Duck.glb',
+    'leaves non-GCS URLs unchanged'
+  );
+  t.equal(
+    toCorsSafeGcsUrl('blob:http://localhost/model.glb'),
+    'blob:http://localhost/model.glb',
+    'leaves local file URLs unchanged'
+  );
   t.end();
 });

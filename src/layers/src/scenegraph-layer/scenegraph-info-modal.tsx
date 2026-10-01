@@ -57,20 +57,21 @@ const ScenegraphInfoModalFactory = () => {
     <div className="scenegraph-info-modal">
       <div className="scenegraph-info-modal__description">
         <span>
-          In your csv you can specify points with optional altitude. The models will show at each
-          point you specify. You can use a sample model or upload one in{' '}
+          In your csv you can specify points with optional altitude. A model is placed at each
+          point. Pick one from the gallery, or provide a URL to a{' '}
         </span>
         <code>glTF (GLB or Embedded)</code>
-        <span> format.</span>
+        <span> file.</span>
       </div>
       <div className="scenegraph-info-modal__example">
         <StyledTitle>Example:</StyledTitle>
         <ExampleTable />
       </div>
       <div className="scenegraph-info-modal__icons">
-        <StyledTitle>Sample Models</StyledTitle>
-        <div>Duck</div>
-        <div>Use your own model</div>
+        <StyledTitle>Models</StyledTitle>
+        <div>Airplane, car, ship, and the rest of the gallery</div>
+        <div>Ducky</div>
+        <div>Custom model URL</div>
       </div>
     </div>
   );
