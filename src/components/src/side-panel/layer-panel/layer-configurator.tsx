@@ -7,6 +7,7 @@ import React, {Component, Fragment, useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
 
 import ItemSelector from '../../common/item-selector/item-selector';
+import InfoHelperFactory from '../../common/info-helper';
 import {
   Input,
   InputLight,
@@ -423,7 +424,8 @@ LayerConfiguratorFactory.deps = [
   AggrScaleSelectorFactory,
   VectorTileLayerConfiguratorFactory,
   RasterTileLayerConfiguratorFactory,
-  ScenegraphModelSelectorFactory
+  ScenegraphModelSelectorFactory,
+  InfoHelperFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -441,7 +443,8 @@ export default function LayerConfiguratorFactory(
   AggrScaleSelector: ReturnType<typeof AggrScaleSelectorFactory>,
   VectorTileLayerConfigurator: ReturnType<typeof VectorTileLayerConfiguratorFactory>,
   RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>,
-  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>
+  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>,
+  InfoHelper: ReturnType<typeof InfoHelperFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
@@ -1085,6 +1088,11 @@ export default function LayerConfiguratorFactory(
                         <PanelLabel>
                           <FormattedMessage id="layer.3DModelURL" />
                         </PanelLabel>
+                        <InfoHelper
+                          id="info-scenegraphCustomModelUrl"
+                          description="layer.3DModelURLDescription"
+                          property="scenegraphCustomModelUrl"
+                        />
                       </PanelLabelWrapper>
                       <ScenegraphCustomModelUrlInput
                         customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
