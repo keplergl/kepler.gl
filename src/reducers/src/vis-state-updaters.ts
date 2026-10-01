@@ -187,7 +187,7 @@ import {
   setFilterGpuMode,
   sortDatasetByColumn
 } from '@kepler.gl/table';
-import {findFieldsToShow} from './interaction-utils';
+import {findFieldsToShow, removeLayerFromZoomOpacity} from './interaction-utils';
 import {
   calculateLayerData,
   findDefaultLayer,
@@ -324,6 +324,14 @@ export const defaultInteractionConfig: InteractionConfig = {
     label: 'interactions.coordinate',
     enabled: false,
     position: null
+  },
+  zoomOpacity: {
+    id: 'zoomOpacity',
+    label: 'interactions.fadeOnZoom',
+    enabled: false,
+    config: {
+      controllers: []
+    }
   }
 };
 
@@ -2049,6 +2057,9 @@ export function removeLayerUpdater<T extends VisState>(
 
   const {layers, layerData, layerOrder, clicked, hoverInfo} = state;
   const layerToRemove = layers[idx];
+  const interactionConfig = state.interactionConfig
+    ? removeLayerFromZoomOpacity(state.interactionConfig, layerToRemove.id)
+    : state.interactionConfig;
   const newState = {
     ...state,
     layers: filterOutById(layerToRemove.id)(layers),
@@ -2056,7 +2067,10 @@ export function removeLayerUpdater<T extends VisState>(
     layerOrder: removeElementFromLayerOrder(layerOrder, layerToRemove.id),
     clicked: layerToRemove.isLayerHovered(clicked) ? undefined : clicked,
     hoverInfo: layerToRemove.isLayerHovered(hoverInfo) ? undefined : hoverInfo,
-    splitMaps: removeLayerFromSplitMaps(state.splitMaps, layerToRemove)
+    splitMaps: removeLayerFromSplitMaps(state.splitMaps, layerToRemove),
+    // Only replace interactionConfig when a controller actually listed this layer.
+    // Partial test states omit it, and adding the key would change that shape.
+    ...(interactionConfig !== state.interactionConfig ? {interactionConfig} : {})
     // TODO: update filters, create helper to remove layer form filter (remove layerid and dataid) if mapped
   };
 

@@ -23,3 +23,4 @@ import './chart-updater-test';
 // test layer groups
 import './layer-group-test';
 import './layer-group-updaters-test';
+import './zoom-opacity-test';
