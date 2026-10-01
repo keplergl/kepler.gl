@@ -227,6 +227,10 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     legend: {
       enabled: false,
       hideInvisibleLayers: false
+    },
+    zoomOpacity: {
+      enabled: false,
+      controllers: []
     }
   };
 
@@ -289,6 +293,10 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
     legend: {
       enabled: false,
       hideInvisibleLayers: false
+    },
+    zoomOpacity: {
+      enabled: false,
+      controllers: []
     }
   };
 
@@ -594,5 +602,27 @@ test('#visStateSchema -> v1 -> save load hideInvisibleLayers', t => {
 
   const loaded = SchemaManager.parseSavedConfig(savedState).visState.interactionConfig;
   t.equal(loaded.legend.hideInvisibleLayers, true, 'should load hideInvisibleLayers');
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load zoomOpacity controllers', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  const layerId = initialState.visState.layers[0].id;
+  const controllers = [
+    {
+      id: 'c1',
+      layerIds: [layerId],
+      stops: {appear: 2, full: 4, fade: 9, gone: 14}
+    }
+  ];
+  initialState.visState.interactionConfig.zoomOpacity.enabled = true;
+  initialState.visState.interactionConfig.zoomOpacity.config.controllers = controllers;
+
+  const savedState = SchemaManager.getConfigToSave(initialState);
+  const savedZoom = savedState.config.visState.interactionConfig.zoomOpacity;
+  t.deepEqual(savedZoom, {enabled: true, controllers}, 'should persist fade-on-zoom controllers');
+
+  const loaded = SchemaManager.parseSavedConfig(savedState).visState.interactionConfig.zoomOpacity;
+  t.deepEqual(loaded, {enabled: true, controllers}, 'should load fade-on-zoom controllers');
   t.end();
 });

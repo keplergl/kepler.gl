@@ -152,6 +152,7 @@ export {default as BrushConfigFactory} from './side-panel/interaction-panel/brus
 export {default as TooltipConfigFactory} from './side-panel/interaction-panel/tooltip-config';
 export {default as GeocoderConfigFactory} from './side-panel/interaction-panel/geocoder-config';
 export {default as LegendConfigFactory} from './side-panel/interaction-panel/legend-config';
+export {default as ZoomOpacityConfigFactory} from './side-panel/interaction-panel/zoom-opacity-config';
 
 export {default as DndContextFactory} from './dnd-context';
 export {default as CustomPanelsFactory} from './side-panel/custom-panel';
