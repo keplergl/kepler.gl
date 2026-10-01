@@ -118,7 +118,7 @@ function findMinFromSorted(list: number[]) {
 
 function findMaxFromSorted(list: number[] = []) {
   let i = list.length - 1;
-  while (i > 0) {
+  while (i >= 0) {
     if (notNullorUndefined(list[i]) && Number.isFinite(list[i])) {
       return list[i];
     }

@@ -89,6 +89,9 @@ export type TripLayerVisConfig = {
   invertRoll: boolean;
   invertPitch: boolean;
   invertYaw: boolean;
+  fixedRoll: boolean;
+  fixedPitch: boolean;
+  fixedYaw: boolean;
   scenegraphEnabled: boolean;
   scenegraph: string;
   scenegraphColor: RGBColor;
@@ -172,6 +175,7 @@ export const tripVisConfigs: {
   sizeScale: {
     ...LAYER_VIS_CONFIGS.sizeScale,
     label: 'layerVisConfigs.adjustSize',
+    description: 'layerVisConfigs.adjustSizeDescription',
     defaultValue: 1,
     isRanged: false,
     range: [-10, 10],
@@ -824,6 +828,8 @@ export default class TripLayer extends Layer {
       layers.push(
         new DeckScenegraphLayer({
           ...baseLayerProps,
+          // gpu data filtering is not supported at the moment in scenegraphLayer https://github.com/visgl/deck.gl/issues/8099
+          extensions: [],
           id: `${layerProps.id}-scenegraph`,
           ...data,
           opacity: 1.0,
@@ -1129,11 +1135,15 @@ function toQuaternion(roll: number, pitch: number, yaw: number): Quaternion {
 
 function getYawFromSpeedVector(prevPoint: number[], nextPoint: number[]) {
   if (!prevPoint || !nextPoint) return 0;
-  const p1 = lngLatToWorld(prevPoint);
-  const p2 = lngLatToWorld(nextPoint);
-  const dx = p2[0] - p1[0];
-  const dy = p2[1] - p1[1];
-  return radiansToDegrees(Math.atan2(dy, dx));
+  try {
+    const p1 = lngLatToWorld(prevPoint);
+    const p2 = lngLatToWorld(nextPoint);
+    const dx = p2[0] - p1[0];
+    const dy = p2[1] - p1[1];
+    return radiansToDegrees(Math.atan2(dy, dx));
+  } catch {
+    return 0;
+  }
 }
 
 function radiansToDegrees(x: number) {
