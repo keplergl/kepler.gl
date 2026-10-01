@@ -181,7 +181,8 @@ export {formatCircleRadiusLabel, formatLineLengthLabel} from './editor-layer/edi
 
 export {
   default as ScenegraphLayer,
-  scenegraphVisConfigs
+  scenegraphVisConfigs,
+  toCorsSafeGcsUrl
 } from './scenegraph-layer/scenegraph-layer';
 export {default as ScenegraphLayerIcon} from './scenegraph-layer/scenegraph-layer-icon';
 

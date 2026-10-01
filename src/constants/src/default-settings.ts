@@ -1918,17 +1918,22 @@ export const getLoaderOptions = () => {
 };
 
 export const CUSTOM_SCENEGRAPH_MODEL_ID = 'custom';
+export const DEFAULT_SCENEGRAPH_MODEL_ID = 'default-model';
 const MODELS_BASE_URL =
   'https://studio-public-data.foursquare.com/statics/keplergl/3d-models.2022-06-13';
 
-export const TRIP_LAYER_SCENEGRAPH_MODELS: {
+export type ScenegraphModel = {
   id: string;
   label: string;
   icon: any;
   url: string | null;
+  /** [roll, pitch, yaw] added to the layer angle sliders */
   angles: [number, number, number];
   scale: number;
-}[] = [
+};
+
+/** Gallery shared by the trip layer and the point 3D layer. */
+const SCENEGRAPH_GALLERY_MODELS: ScenegraphModel[] = [
   {
     id: 'airplane',
     label: 'Airplane',
@@ -2016,13 +2021,36 @@ export const TRIP_LAYER_SCENEGRAPH_MODELS: {
     url: `${MODELS_BASE_URL}/Cargoship.glb`,
     angles: [0, 0, 0],
     scale: 1.0
-  },
-  {
-    id: CUSTOM_SCENEGRAPH_MODEL_ID,
-    label: 'Custom',
-    icon: null,
-    url: null,
-    angles: [0, 0, 0],
-    scale: 1.0
   }
+];
+
+const CUSTOM_SCENEGRAPH_MODEL: ScenegraphModel = {
+  id: CUSTOM_SCENEGRAPH_MODEL_ID,
+  label: 'Custom',
+  icon: null,
+  url: null,
+  angles: [0, 0, 0],
+  scale: 1.0
+};
+
+/** Duck used by the point 3D layer. Yaw lives on the model so angle Z can default to 0. */
+export const DEFAULT_SCENEGRAPH_MODEL: ScenegraphModel = {
+  id: DEFAULT_SCENEGRAPH_MODEL_ID,
+  label: 'Ducky',
+  icon: null,
+  url: `${MODELS_BASE_URL}/Duck-Kepler-3D-Layer.glb`,
+  angles: [0, 0, 90],
+  scale: 150
+};
+
+export const TRIP_LAYER_SCENEGRAPH_MODELS: ScenegraphModel[] = [
+  ...SCENEGRAPH_GALLERY_MODELS,
+  CUSTOM_SCENEGRAPH_MODEL
+];
+
+/** Same gallery as trips, plus Ducky and a custom URL. */
+export const SCENEGRAPH_LAYER_MODELS: ScenegraphModel[] = [
+  ...SCENEGRAPH_GALLERY_MODELS,
+  DEFAULT_SCENEGRAPH_MODEL,
+  CUSTOM_SCENEGRAPH_MODEL
 ];
