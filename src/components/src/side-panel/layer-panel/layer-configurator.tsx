@@ -7,12 +7,7 @@ import React, {Component, useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
 
 import ItemSelector from '../../common/item-selector/item-selector';
-import {
-  InputLight,
-  PanelLabel,
-  PanelLabelWrapper,
-  SidePanelSection
-} from '../../common/styled-components';
+import {InputLight, PanelLabel, SidePanelSection} from '../../common/styled-components';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
 import AggrScaleSelectorFactory from './aggr-scale-selector';
