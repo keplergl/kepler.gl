@@ -31,8 +31,7 @@ import TextLabelPanelFactory from './text-label-panel';
 import VisConfigSliderFactory from './vis-config-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
 import ScenegraphModelSelectorFactory, {
-  SCENEGRAPH_3D_MODEL_OPTIONS,
-  ScenegraphCustomModelUrlInput
+  SCENEGRAPH_3D_MODEL_OPTIONS
 } from './scenegraph-model-selector';
 
 import RasterTileLayerConfiguratorFactory from './raster-tile-layer-configurator';
@@ -43,7 +42,6 @@ import {ActionHandler, toggleModal, updateDatasetProps} from '@kepler.gl/actions
 import {
   AGGREGATION_TYPE_OPTIONS,
   LAYER_TYPES,
-  CUSTOM_SCENEGRAPH_MODEL_ID,
   BitmapDatasetMetadata,
   Tile3DDatasetMetadata
 } from '@kepler.gl/constants';
@@ -1071,26 +1069,13 @@ export default function LayerConfiguratorFactory(
           >
             <ScenegraphModelSelector
               selected={layer.config.visConfig.scenegraph}
+              customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
               disabled={!layer.config.visConfig.scenegraphEnabled}
-              onSelect={(scenegraph: {id: string}) =>
-                visConfiguratorProps.onChange({scenegraph: scenegraph.id})
-              }
+              onChange={visConfiguratorProps.onChange}
             />
             {layer.config.visConfig.scenegraphEnabled ? (
               <>
                 <ConfigGroupCollapsibleContent>
-                  {layer.config.visConfig.scenegraph === CUSTOM_SCENEGRAPH_MODEL_ID ? (
-                    <SidePanelSection>
-                      <ScenegraphCustomModelUrlInput
-                        customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
-                        onChange={url =>
-                          visConfiguratorProps.onChange({
-                            scenegraphCustomModelUrl: url
-                          })
-                        }
-                      />
-                    </SidePanelSection>
-                  ) : null}
                   <VisConfigSwitch
                     {...layer.visConfigSettings.scenegraphColorEnabled}
                     {...visConfiguratorProps}
@@ -1386,22 +1371,9 @@ export default function LayerConfiguratorFactory(
             <ScenegraphModelSelector
               options={SCENEGRAPH_3D_MODEL_OPTIONS}
               selected={layer.config.visConfig.scenegraph}
-              onSelect={(scenegraph: {id: string}) =>
-                visConfiguratorProps.onChange({scenegraph: scenegraph.id})
-              }
+              customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
+              onChange={visConfiguratorProps.onChange}
             />
-            {layer.config.visConfig.scenegraph === CUSTOM_SCENEGRAPH_MODEL_ID ? (
-              <SidePanelSection>
-                <ScenegraphCustomModelUrlInput
-                  customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
-                  onChange={url =>
-                    visConfiguratorProps.onChange({
-                      scenegraphCustomModelUrl: url
-                    })
-                  }
-                />
-              </SidePanelSection>
-            ) : null}
             <VisConfigSwitch
               {...layer.visConfigSettings.scenegraphColorEnabled}
               {...visConfiguratorProps}

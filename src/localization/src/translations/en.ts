@@ -112,6 +112,7 @@ export default {
     '3DModel': '3D Model',
     '3DModelURL': 'Custom 3D Model URL',
     '3DModelURLDescription': 'URL of a .glb or .glTF file with the 3D model.',
+    '3DModelSourceModel': 'Model',
     '3DModelSourceUrl': 'URL',
     '3DModelSourceFile': 'Local file',
     '3DModelFile': 'Choose file',
