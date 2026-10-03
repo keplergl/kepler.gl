@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {IntlShape} from 'react-intl';
 import JSONPretty from 'react-json-pretty';
 import {AutoSizer} from 'react-virtualized';
@@ -100,6 +100,15 @@ type LoadTilesetTabProps = {
   isAddingDatasets: boolean;
   onTilesetAdded: (tilesetInfo: any, metadata?: any) => void;
   intl: IntlShape;
+  /** The parent modal owns Cancel / Add Data, so this tab only reports readiness. */
+  confirmInParent?: boolean;
+  onTilesetDraftChange?: (draft: {
+    canAdd: boolean;
+    loading?: boolean;
+    error?: string | null;
+    dataset?: any;
+    metadata?: any;
+  }) => void;
 };
 
 const TILE_TYPES = [
@@ -140,7 +149,12 @@ function isReady(response) {
 }
 
 function LoadTilesetTabFactory() {
-  const LoadTilesetTab: React.FC<LoadTilesetTabProps> = ({onTilesetAdded, isAddingDatasets}) => {
+  const LoadTilesetTab: React.FC<LoadTilesetTabProps> = ({
+    onTilesetAdded,
+    isAddingDatasets,
+    confirmInParent = false,
+    onTilesetDraftChange
+  }) => {
     const [typeIndex, setTypeIndex] = useState<number>(0);
     const [response, setResponse] = useState<MetaResponse>({});
 
@@ -155,6 +169,16 @@ function LoadTilesetTabFactory() {
         onTilesetAdded(dataset, metadata);
       }
     }, [onTilesetAdded, response]);
+
+    useEffect(() => {
+      onTilesetDraftChange?.({
+        canAdd: isReady(response),
+        loading: Boolean(response.loading),
+        error: error ? getError(error) : null,
+        dataset: response.dataset,
+        metadata: response.metadata
+      });
+    }, [error, onTilesetDraftChange, response]);
 
     // temp patch to hide raster tile layer while in development
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
@@ -215,13 +239,15 @@ function LoadTilesetTabFactory() {
             ) : null}
           </MetaContainer>
         </Container>
-        <LoadDataFooter
-          disabled={Boolean(error) || !isReady(response)}
-          isLoading={loading || isAddingDatasets}
-          onConfirm={createTileDataset}
-          confirmText="tilesetSetup.addTilesetText"
-          errorText={error && getError(error)}
-        />
+        {confirmInParent ? null : (
+          <LoadDataFooter
+            disabled={Boolean(error) || !isReady(response)}
+            isLoading={loading || isAddingDatasets}
+            onConfirm={createTileDataset}
+            confirmText="tilesetSetup.addTilesetText"
+            errorText={error && getError(error)}
+          />
+        )}
       </LoadTilesetTabContainer>
     );
   };

@@ -3,14 +3,23 @@
 
 import {parseUri} from '@kepler.gl/common-utils';
 import {
+  DATASET_FORMATS,
+  DatasetType,
   MIME_TO_REMOTE_FILE_EXTENSION,
   REMOTE_FILE_EXTENSIONS,
   REMOTE_FILE_MIME_TYPES,
   RemoteFileFormat
 } from '@kepler.gl/constants';
 import {ProcessorResult} from '@kepler.gl/types';
+import {generateHashIdFromString} from '@kepler.gl/utils';
 
-import {processFileData, ProcessFileDataContent, readFileInBatches} from './file-handler';
+import {
+  getPersistedRemoteFormat,
+  processFileData,
+  ProcessFileDataContent,
+  readFileInBatches
+} from './file-handler';
+import {FileCacheItem} from './types';
 
 export type KeplerRemoteFile = File & {
   keplerSourceUrl?: string;
@@ -181,6 +190,34 @@ export async function fetchRemoteFile(
     etag: responseEtag,
     lastModified: responseLastModified,
     size: file.size
+  };
+}
+
+/**
+ * A remote URL to hold until Add Data. Rows stay empty so adding it runs the
+ * externally hosted download instead of parsing a file in the modal.
+ */
+export function remoteDatasetFromUrl(url: string, format?: string | null): FileCacheItem {
+  if (!isRemoteDatasetUrl(url)) {
+    throw new Error('Remote dataset URL must use http or https');
+  }
+  const label = getFileNameForRemoteUrl(url, format);
+  const sourceFormat = getPersistedRemoteFormat(
+    format && format !== 'auto' ? format : undefined,
+    label
+  );
+  return {
+    data: {fields: [], rows: []},
+    info: {
+      id: generateHashIdFromString(url),
+      label,
+      format: DATASET_FORMATS.row,
+      type: DatasetType.EXTERNALLY_HOSTED
+    },
+    metadata: {
+      source: url,
+      ...(sourceFormat ? {sourceFormat} : {})
+    }
   };
 }
 

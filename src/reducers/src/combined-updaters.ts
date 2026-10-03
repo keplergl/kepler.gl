@@ -32,6 +32,7 @@ import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
 import {
   loadFilesSuccessUpdaterAction,
+  StageLoadedFilesUpdaterAction,
   MapStyleChangeUpdaterAction,
   LayerTypeChangeUpdaterAction,
   ToggleSplitMapUpdaterAction,
@@ -46,7 +47,8 @@ import {
   BASE_MAP_COLOR_MODES,
   OVERLAY_BLENDINGS,
   NO_MAP_ID,
-  MapSplitMode
+  MapSplitMode,
+  ADD_DATA_ID
 } from '@kepler.gl/constants';
 import {getBasemapColorsForStyle, DEFAULT_BASEMAP_COLOR} from '@kepler.gl/deckgl-layers';
 
@@ -236,12 +238,13 @@ export const loadFilesSuccessUpdater = (
   action: loadFilesSuccessUpdaterAction
 ): KeplerGlState => {
   // still more to load
-  const payloads = filesToDataPayload(action.result);
+  const payloads = filesToDataPayload(action.result, action.options);
   const nextState = compose_([
     pick_('visState')(
       merge_({
         fileLoading: false,
-        fileLoadingProgress: {}
+        fileLoadingProgress: {},
+        stagedToAdd: null
       })
     )
   ])(state);
@@ -250,6 +253,72 @@ export const loadFilesSuccessUpdater = (
     nextState
   );
   return stateWithData as KeplerGlState;
+};
+
+function keptLoadErrors(progress: Record<string, {error?: unknown}> = {}) {
+  return Object.fromEntries(Object.entries(progress).filter(([, value]) => value?.error));
+}
+
+/**
+ * Finish a deferred file load: keep the parsed cache, clear the loading flag,
+ * and leave the Add Data modal open until the user confirms.
+ * @memberof combinedUpdaters
+ * @public
+ */
+export const stageLoadedFilesUpdater = (
+  state: KeplerGlState,
+  action: StageLoadedFilesUpdaterAction
+): KeplerGlState => {
+  const modalOpen = state.uiState.currentModal === ADD_DATA_ID;
+  const result = action.result || [];
+  const previous =
+    modalOpen && Array.isArray(state.visState.stagedToAdd) ? state.visState.stagedToAdd : [];
+  const stagedToAdd = [...previous, ...result];
+
+  return compose_<KeplerGlState>([
+    pick_('visState')(
+      merge_({
+        fileLoading: false,
+        fileLoadingProgress: modalOpen ? keptLoadErrors(state.visState.fileLoadingProgress) : {},
+        stagedToAdd: modalOpen && stagedToAdd.length ? stagedToAdd : null
+      })
+    ),
+    pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null)))
+  ])(state);
+};
+
+function stagedItemKey(item): string {
+  return item?.metadata?.source || item?.info?.id || '';
+}
+
+/**
+ * Add datasets to the Add Data list without interrupting a file that is still parsing.
+ * @memberof combinedUpdaters
+ * @public
+ */
+export const appendStagedLoadedFilesUpdater = (
+  state: KeplerGlState,
+  action: StageLoadedFilesUpdaterAction
+): KeplerGlState => {
+  if (state.uiState.currentModal !== ADD_DATA_ID) {
+    return state;
+  }
+  const previous = Array.isArray(state.visState.stagedToAdd) ? state.visState.stagedToAdd : [];
+  const seen = new Set(previous.map(stagedItemKey).filter(Boolean));
+  const next = (action.result || []).filter(item => {
+    const key = stagedItemKey(item);
+    if (!key || seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+  if (!next.length) {
+    return state;
+  }
+  return compose_<KeplerGlState>([
+    pick_('visState')(merge_({stagedToAdd: [...previous, ...next]}))
+  ])(state);
 };
 
 export const addDataToMapComposed = addDataToMapUpdater;
