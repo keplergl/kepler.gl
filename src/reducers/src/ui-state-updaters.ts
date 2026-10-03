@@ -269,6 +269,8 @@ export const DEFAULT_EXPORT_VIDEO: ExportVideo = {
  * @property activeSidePanel Default: `'layer'`
  * @property currentModal Default: `'addData'`
  * @property datasetKeyToRemove Default: `null`
+ * @property datasetToReplaceId Default: `null`
+ * @property deleteOriginalDataset Default: `true`
  * @property visibleDropdown Default: `null`
  * @property exportImage Default: [`DEFAULT_EXPORT_IMAGE`](#default_export_image)
  * @property exportData Default: [`DEFAULT_EXPORT_DATA`](#default_export_data)
@@ -287,6 +289,8 @@ export const INITIAL_UI_STATE: UiState = {
   activeSidePanel: DEFAULT_ACTIVE_SIDE_PANEL,
   currentModal: DEFAULT_MODAL,
   datasetKeyToRemove: null,
+  datasetToReplaceId: null,
+  deleteOriginalDataset: true,
   visibleDropdown: null,
   // export image modal ui
   exportImage: DEFAULT_EXPORT_IMAGE,
@@ -376,7 +380,9 @@ export const toggleModalUpdater = (
   {payload: id}: UIStateActions.ToggleModalUpdaterAction
 ): UiState => ({
   ...state,
-  currentModal: id
+  currentModal: id,
+  // A plain add-data open, or closing any modal, leaves replace mode.
+  datasetToReplaceId: null
 });
 
 /**
@@ -546,6 +552,42 @@ export const openDeleteModalUpdater = (
   ...state,
   currentModal: DELETE_DATA_ID,
   datasetKeyToRemove
+});
+
+/**
+ * Open the add-data modal so the next upload replaces one dataset.
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload dataset id
+ * @returns nextState
+ * @public
+ */
+export const openReplaceDatasetModalUpdater = (
+  state: UiState,
+  {payload: datasetToReplaceId}: UIStateActions.OpenReplaceDatasetModalUpdaterAction
+): UiState => ({
+  ...state,
+  currentModal: ADD_DATA_ID,
+  datasetToReplaceId,
+  deleteOriginalDataset: true
+});
+
+/**
+ * Toggle whether a dataset replace removes the original table.
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload `true` to drop the original dataset
+ * @returns nextState
+ * @public
+ */
+export const setDeleteOriginalDatasetUpdater = (
+  state: UiState,
+  {payload: deleteOriginalDataset}: UIStateActions.SetDeleteOriginalDatasetUpdaterAction
+): UiState => ({
+  ...state,
+  deleteOriginalDataset
 });
 
 /**

@@ -201,6 +201,12 @@ export type ReplaceDataToMapOptions = {
   padding?: AddDataToMapOptions['padding'];
   keepExistingConfig?: boolean;
   autoCreateLayers?: boolean;
+  /**
+   * Remove the dataset being replaced from the map.
+   * Layers and filters are remapped onto the new dataset either way.
+   * Defaults to `true`.
+   */
+  deleteOriginalDataset?: boolean;
 };
 export type ReplaceDataInMapPayload = {
   datasetToReplaceId: string;

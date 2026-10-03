@@ -367,7 +367,8 @@ export default function ModalContainerFactory(
             }
             break; // in case we add a new case after this one
           }
-          case ADD_DATA_ID:
+          case ADD_DATA_ID: {
+            const replaceDatasetId = uiState.datasetToReplaceId;
             template = (
               <LoadDataModal
                 {...providerState}
@@ -381,15 +382,24 @@ export default function ModalContainerFactory(
                 fileFormatNames={getFileFormatNames(this.props.visState)}
                 fileExtensions={getFileExtensions(this.props.visState)}
                 displayedFileExtensions={getDisplayedFileExtensions(this.props.visState)}
+                replaceDatasetId={replaceDatasetId}
+                replaceDatasetLabel={
+                  replaceDatasetId ? datasets?.[replaceDatasetId]?.label : undefined
+                }
+                deleteOriginalDataset={uiState.deleteOriginalDataset}
+                onToggleDeleteOriginalDataset={() =>
+                  uiStateActions.setDeleteOriginalDataset(!uiState.deleteOriginalDataset)
+                }
               />
             );
             modalProps = {
-              title: 'modal.title.addDataToMap',
+              title: replaceDatasetId ? 'modal.title.replaceDataset' : 'modal.title.addDataToMap',
               cssStyle: LoadDataModalStyle,
               footer: false,
               onConfirm: this._closeModal
             };
             break;
+          }
           case EXPORT_IMAGE_ID:
             template = (
               <ExportImageModal

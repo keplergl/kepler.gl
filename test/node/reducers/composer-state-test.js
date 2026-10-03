@@ -1178,3 +1178,105 @@ test('#composerStateReducer - replaceDataInMapUpdater: syncedTimeFilter & no mat
   t.deepEqual(nextState.visState.splitMapsToBeMerged, [], 'should reset splitMapsToBeMerged');
   t.end();
 });
+
+test('#composerStateReducer - replaceDataInMapUpdater keeps the original dataset when asked', t => {
+  const dataIdToReplace = 'dataset_to_replace';
+  const datasets = {
+    data: processCsvData(testCsvData),
+    info: {
+      id: sampleConfig.dataId
+    }
+  };
+  const datasetToUse = {
+    data: processCsvData(dataWithNulls),
+    info: {
+      id: dataIdToReplace,
+      label: 'Replaced'
+    }
+  };
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      config: sampleConfig.config
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse,
+      options: {deleteOriginalDataset: false}
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.ok(nextState.visState.datasets[sampleConfig.dataId], 'should keep the original dataset');
+  t.ok(nextState.visState.datasets[dataIdToReplace], 'should add the replacement dataset');
+  t.ok(
+    nextState.visState.layers.every(layer => layer.config.dataId === dataIdToReplace),
+    'should remap layers onto the replacement'
+  );
+  t.ok(
+    nextState.visState.filters.every(filter => filter.dataId.includes(dataIdToReplace)),
+    'should remap filters onto the replacement'
+  );
+
+  t.end();
+});
+
+test('#composerStateReducer - loadFilesSuccessUpdater replaces the dataset selected in the menu', t => {
+  const datasets = {
+    data: processCsvData(testCsvData),
+    info: {
+      id: sampleConfig.dataId
+    }
+  };
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      config: sampleConfig.config
+    }
+  });
+  oldState = {
+    ...oldState,
+    visState: applyExistingDatasetTasks(visStateReducer, oldState.visState),
+    uiState: {
+      ...oldState.uiState,
+      datasetToReplaceId: sampleConfig.dataId,
+      deleteOriginalDataset: true,
+      currentModal: 'addData'
+    }
+  };
+
+  let nextState = combinedUpdaters.loadFilesSuccessUpdater(oldState, {
+    result: [
+      {
+        data: processCsvData(dataWithNulls),
+        info: {id: 'uploaded-replacement', label: 'Uploaded', format: 'csv'}
+      }
+    ]
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.notOk(nextState.visState.datasets[sampleConfig.dataId], 'should drop the original dataset');
+  t.ok(nextState.visState.datasets['uploaded-replacement'], 'should add the uploaded dataset');
+  t.equal(nextState.uiState.datasetToReplaceId, null, 'should clear replace mode');
+  t.equal(nextState.uiState.currentModal, null, 'should close the modal');
+  t.ok(
+    nextState.visState.layers.every(layer => layer.config.dataId === 'uploaded-replacement'),
+    'should remap layers onto the upload'
+  );
+
+  t.end();
+});

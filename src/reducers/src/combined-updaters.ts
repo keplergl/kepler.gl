@@ -27,7 +27,7 @@ import {
 } from './map-style-updaters';
 import {filesToDataPayload} from '@kepler.gl/processors';
 import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-helpers';
-import {MapState, UiState, AddDataToMapPayload, ParsedConfig} from '@kepler.gl/types';
+import {MapState, UiState, AddDataToMapPayload, ParsedConfig, ProtoDataset} from '@kepler.gl/types';
 import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
 import {
@@ -231,6 +231,39 @@ export const addDataToMapUpdater = (
   ])(state);
 };
 
+/**
+ * The dataset-menu Replace action uploads one table in place of another.
+ * A kepler.gl map json is not a table replacement, so it is added as usual.
+ * Extra tables in the same drop are added after the replacement.
+ */
+function splitReplacementUpload(payloads: AddDataToMapPayload[]): {
+  datasetToUse: ProtoDataset | null;
+  remainder: AddDataToMapPayload[];
+} {
+  const [first, ...rest] = payloads;
+  if (!first || first.config) {
+    return {datasetToUse: null, remainder: payloads};
+  }
+  const datasets = (Array.isArray(first.datasets) ? first.datasets : [first.datasets]).filter(
+    Boolean
+  );
+  const [datasetToUse, ...more] = datasets;
+  return {
+    datasetToUse: datasetToUse ?? null,
+    remainder: [
+      ...(more.length
+        ? [
+            {
+              datasets: more,
+              options: {keepExistingConfig: true, centerMap: false, autoCreateLayers: true}
+            }
+          ]
+        : []),
+      ...rest
+    ]
+  };
+}
+
 export const loadFilesSuccessUpdater = (
   state: KeplerGlState,
   action: loadFilesSuccessUpdaterAction
@@ -245,6 +278,30 @@ export const loadFilesSuccessUpdater = (
       })
     )
   ])(state);
+
+  const datasetToReplaceId = state.uiState.datasetToReplaceId;
+  if (datasetToReplaceId) {
+    const {datasetToUse, remainder} = splitReplacementUpload(payloads);
+    if (datasetToUse?.info?.id) {
+      const replaced = replaceDataInMapUpdater(nextState, {
+        payload: {
+          datasetToReplaceId,
+          datasetToUse,
+          options: {deleteOriginalDataset: state.uiState.deleteOriginalDataset !== false}
+        }
+      });
+      // Missing dataset, or a replacement that did not apply: add the files normally.
+      if (replaced !== nextState) {
+        if (!remainder.length) {
+          return replaced;
+        }
+        return compose_(remainder.map(p => apply_(addDataToMapUpdater, payload_(p))))(
+          replaced
+        ) as KeplerGlState;
+      }
+    }
+  }
+
   // make multiple add data to map calls
   const stateWithData = compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(
     nextState
@@ -562,7 +619,8 @@ export const replaceDataInMapUpdater = (
   {payload}: {payload: ReplaceDataInMapPayload}
 ): KeplerGlState => {
   const {datasetToReplaceId, datasetToUse, options = {}} = payload;
-  const addDataToMapOptions = {...defaultReplaceDataToMapOptions, ...options};
+  const {deleteOriginalDataset = true, ...replaceOptions} = options;
+  const addDataToMapOptions = {...defaultReplaceDataToMapOptions, ...replaceOptions};
 
   // check if dataset is there
   if (!state.visState.datasets[datasetToReplaceId]) {
@@ -576,7 +634,9 @@ export const replaceDataInMapUpdater = (
   // remove dataset and put dependencies in toBeMerged
   const preparedState = {
     ...state,
-    visState: prepareStateForDatasetReplace(state.visState, datasetToReplaceId, dataIdToUse)
+    visState: prepareStateForDatasetReplace(state.visState, datasetToReplaceId, dataIdToUse, {
+      deleteOriginalDataset
+    })
   };
 
   const nextState = addDataToMapUpdater(

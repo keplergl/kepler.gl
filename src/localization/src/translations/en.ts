@@ -417,6 +417,7 @@ export default {
     refreshCustom: 'Custom'
   },
   datasetOps: {
+    replace: 'Replace',
     groupBy: 'Group By',
     groupByHelp:
       'Create groups to combine data based on a selected field. Result will be added as a new dataset.',
@@ -661,6 +662,7 @@ export default {
     title: {
       deleteDataset: 'Delete Dataset',
       addDataToMap: 'Add Data To Map',
+      replaceDataset: 'Replace Dataset',
       exportImage: 'Export Image',
       exportData: 'Export Data',
       exportMap: 'Export Map',
@@ -719,6 +721,11 @@ export default {
     },
     deleteData: {
       warning: 'you are going to delete this dataset. It will affect {length} layers'
+    },
+    replaceDataset: {
+      removeOriginal: 'Remove {datasetName}',
+      removeOriginalHint:
+        'Layers and filters move to the new dataset. The original dataset is removed from the map.'
     },
     addStyle: {
       publishTitle:

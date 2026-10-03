@@ -583,6 +583,10 @@ export type UiState = {
   activeSidePanel: string | null;
   currentModal: string | null;
   datasetKeyToRemove: string | null;
+  /** Dataset id selected by the dataset-menu Replace action. */
+  datasetToReplaceId: string | null;
+  /** When replacing, drop the original dataset after layers and filters are remapped. */
+  deleteOriginalDataset: boolean;
   visibleDropdown: string | null;
   // export image modal ui
   exportImage: ExportImage;

@@ -196,6 +196,49 @@ export const openDeleteModal: (
     (datasetId: OpenDeleteModalUpdaterAction['payload']) => ({payload: datasetId})
   );
 
+/** OPEN_REPLACE_DATASET_MODAL */
+export type OpenReplaceDatasetModalUpdaterAction = {
+  payload: string;
+};
+/**
+ * Open the add-data modal in replace mode for one dataset.
+ * Uploading a file remaps that dataset's layers and filters onto the new table.
+ * @memberof uiStateActions
+ * @param datasetId - id of the dataset to replace
+ * @public
+ */
+export const openReplaceDatasetModal: (
+  datasetId: OpenReplaceDatasetModalUpdaterAction['payload']
+) => Merge<
+  OpenReplaceDatasetModalUpdaterAction,
+  {type: typeof ActionTypes.OPEN_REPLACE_DATASET_MODAL}
+> = createAction(
+  ActionTypes.OPEN_REPLACE_DATASET_MODAL,
+  (datasetId: OpenReplaceDatasetModalUpdaterAction['payload']) => ({payload: datasetId})
+);
+
+/** SET_DELETE_ORIGINAL_DATASET */
+export type SetDeleteOriginalDatasetUpdaterAction = {
+  payload: boolean;
+};
+/**
+ * While replacing a dataset, choose whether the original table is removed.
+ * @memberof uiStateActions
+ * @param deleteOriginalDataset - `true` to drop the original dataset
+ * @public
+ */
+export const setDeleteOriginalDataset: (
+  deleteOriginalDataset: SetDeleteOriginalDatasetUpdaterAction['payload']
+) => Merge<
+  SetDeleteOriginalDatasetUpdaterAction,
+  {type: typeof ActionTypes.SET_DELETE_ORIGINAL_DATASET}
+> = createAction(
+  ActionTypes.SET_DELETE_ORIGINAL_DATASET,
+  (deleteOriginalDataset: SetDeleteOriginalDatasetUpdaterAction['payload']) => ({
+    payload: deleteOriginalDataset
+  })
+);
+
 /** ADD_NOTIFICATION */
 export type AddNotificationUpdaterAction = {
   payload: object;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import styled from 'styled-components';
 import get from 'es-toolkit/compat/get';
 import {IntlShape, useIntl} from 'react-intl';
@@ -13,7 +13,10 @@ import ModalTabsFactory from './modal-tabs';
 import LoadingDialog from './loading-dialog';
 
 import {LOADING_METHODS} from '@kepler.gl/constants';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {FileLoading, FileLoadingProgress, LoadFiles} from '@kepler.gl/types';
+
+import Checkbox from '../common/checkbox';
 
 const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
@@ -22,6 +25,21 @@ const StyledLoadDataModal = styled.div.attrs({
   min-height: 360px;
   display: flex;
   flex-direction: column;
+`;
+
+const ReplaceDatasetOption = styled.div.attrs({
+  className: 'load-data-modal__replace-option'
+})`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+
+  .replace-dataset-hint {
+    color: ${props => props.theme.subtextColor};
+    font-size: 11px;
+    line-height: 14px;
+  }
 `;
 
 const noop = () => {
@@ -59,6 +77,12 @@ type LoadDataModalProps = {
 
   loadFiles: LoadFiles;
   fileLoadingProgress: FileLoadingProgress;
+
+  /** When set, the next upload replaces this dataset instead of adding one. */
+  replaceDatasetId?: string | null;
+  replaceDatasetLabel?: string;
+  deleteOriginalDataset?: boolean;
+  onToggleDeleteOriginalDataset?: () => void;
 };
 
 LoadDataModalFactory.deps = [
@@ -100,6 +124,10 @@ export function LoadDataModalFactory(
     fileLoading = false,
     loadingMethods = defaultLoadingMethods,
     isCloudMapLoading,
+    replaceDatasetId,
+    replaceDatasetLabel,
+    deleteOriginalDataset = true,
+    onToggleDeleteOriginalDataset,
     ...restProps
   }) => {
     const intl = useIntl();
@@ -110,22 +138,49 @@ export function LoadDataModalFactory(
       fileLoading,
       isCloudMapLoading
     };
-    // const {loadingMethods, isCloudMapLoading} = props;
-    const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
+    // Replacing a table is a file upload. Tileset and saved-map tabs stay on Add Data.
+    const availableMethods = useMemo(
+      () =>
+        replaceDatasetId
+          ? loadingMethods.filter(method => method.id === LOADING_METHODS.upload)
+          : loadingMethods,
+      [loadingMethods, replaceDatasetId]
+    );
+    const [currentMethod, toggleMethod] = useState(getDefaultMethod(availableMethods));
+    const selectedMethod = availableMethods.some(method => method.id === currentMethod?.id)
+      ? currentMethod
+      : getDefaultMethod(availableMethods);
 
-    const ElementType = currentMethod?.elementType;
+    const ElementType = selectedMethod?.elementType;
+    const datasetName = replaceDatasetLabel || replaceDatasetId;
 
     return (
       <StyledLoadDataModal>
         <ModalTabs
-          currentMethod={currentMethod?.id}
-          loadingMethods={loadingMethods}
+          currentMethod={selectedMethod?.id}
+          loadingMethods={availableMethods}
           toggleMethod={toggleMethod}
         />
+        {replaceDatasetId && onToggleDeleteOriginalDataset ? (
+          <ReplaceDatasetOption>
+            <Checkbox
+              id="delete-original-dataset"
+              checked={deleteOriginalDataset}
+              label={intl.formatMessage(
+                {id: 'modal.replaceDataset.removeOriginal'},
+                {datasetName: datasetName ?? ''}
+              )}
+              onChange={onToggleDeleteOriginalDataset}
+            />
+            <div className="replace-dataset-hint">
+              <FormattedMessage id="modal.replaceDataset.removeOriginalHint" />
+            </div>
+          </ReplaceDatasetOption>
+        ) : null}
         {isCloudMapLoading ? (
           <LoadingDialog size={64} />
         ) : (
-          ElementType && <ElementType key={currentMethod?.id} intl={intl} {...currentModalProps} />
+          ElementType && <ElementType key={selectedMethod?.id} intl={intl} {...currentModalProps} />
         )}
       </StyledLoadDataModal>
     );
