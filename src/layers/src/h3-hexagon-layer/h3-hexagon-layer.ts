@@ -58,6 +58,7 @@ export type HexagonIdLayerVisConfigSettings = {
   coverageRange: VisConfigRange;
   elevationScale: VisConfigNumber;
   enableElevationZoomFactor: VisConfigBoolean;
+  fixedHeight: VisConfigBoolean;
   filled: VisConfigBoolean;
   outline: VisConfigBoolean;
   thickness: VisConfigNumber;
@@ -73,6 +74,7 @@ export type HexagonIdLayerVisConfig = {
   coverageRange: [number, number];
   elevationScale: number;
   enableElevationZoomFactor: boolean;
+  fixedHeight: boolean;
   filled: boolean;
   outline: boolean;
   thickness: number;
@@ -222,6 +224,7 @@ export default class HexagonIdLayer extends Layer {
       size: {
         ...visualChannels.size,
         property: 'height',
+        fixed: 'fixedHeight',
         accessor: 'getElevation',
         nullValue: 0,
         condition: config => config.visConfig.enable3d,
