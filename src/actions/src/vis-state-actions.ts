@@ -7,6 +7,7 @@ import {FileCacheItem} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {GroupByOp, JoinOp, KeplerTable} from '@kepler.gl/table';
 import {
+  AddDataToMapOptions,
   AddDataToMapPayload,
   ViewportPadding,
   ValueOf,
@@ -1831,25 +1832,36 @@ export function setMapInfo(
   };
 }
 
+export type LoadFilesOptions = AddDataToMapOptions & {
+  /** Parse the files, then wait for an explicit add instead of calling `addDataToMap`. */
+  deferAddToMap?: boolean;
+};
+
 export type LoadFilesUpdaterAction = {
   files: File[];
-  onFinish?(result: any): any;
+  onFinish?(result: any, options?: LoadFilesOptions): any;
+  /** Forwarded to `addDataToMap` when loading finishes. Omitted options keep their defaults. */
+  options?: LoadFilesOptions;
 };
 /**
  * Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
  * @memberof visStateActions
  * @param files array of fileblob
+ * @param onFinish called with the processed file cache. Defaults to `loadFilesSuccess`
+ * @param options forwarded to `addDataToMap`. `autoCreateLayers` defaults to true when omitted
  * @returns action
  * @public
  */
 export function loadFiles(
   files: File[],
-  onFinish?: (result: any) => any
+  onFinish?: (result: any, options?: LoadFilesOptions) => any,
+  options?: LoadFilesOptions
 ): Merge<LoadFilesUpdaterAction, {type: typeof ActionTypes.LOAD_FILES}> {
   return {
     type: ActionTypes.LOAD_FILES,
     files,
-    onFinish
+    onFinish,
+    ...(options ? {options} : {})
   };
 }
 
@@ -1859,27 +1871,86 @@ export function loadFiles(
  * @returns action
  * @public
  */
-export function loadNextFile(): {type: typeof ActionTypes.LOAD_NEXT_FILE} {
+export function loadNextFile(loadId?: number): {
+  type: typeof ActionTypes.LOAD_NEXT_FILE;
+  loadId?: number;
+} {
   return {
-    type: ActionTypes.LOAD_NEXT_FILE
+    type: ActionTypes.LOAD_NEXT_FILE,
+    ...(loadId == null ? {} : {loadId})
   };
 }
 
 export type loadFilesSuccessUpdaterAction = {
   result: FileCacheItem[];
+  options?: AddDataToMapOptions;
+  /** Set when a file-load pause finishes, so a canceled load can be ignored. */
+  loadId?: number;
 };
 /**
  * called when all files are processed and loaded
  * @memberof visStateActions
  * @param result
+ * @param options forwarded to `addDataToMap`
  * @returns action
  */
 export function loadFilesSuccess(
-  result: FileCacheItem[]
+  result: FileCacheItem[],
+  options?: AddDataToMapOptions
 ): Merge<loadFilesSuccessUpdaterAction, {type: typeof ActionTypes.LOAD_FILES_SUCCESS}> {
   return {
     type: ActionTypes.LOAD_FILES_SUCCESS,
+    result,
+    ...(options ? {options} : {})
+  };
+}
+
+export type StageLoadedFilesUpdaterAction = {
+  result: FileCacheItem[];
+  /** Set when a file-load pause finishes, so a canceled load can be ignored. */
+  loadId?: number;
+};
+/**
+ * Store processed files without adding them to the map or closing the modal.
+ * @memberof visStateActions
+ * @param result processed file cache
+ * @returns action
+ * @public
+ */
+export function stageLoadedFiles(
+  result: FileCacheItem[]
+): Merge<StageLoadedFilesUpdaterAction, {type: typeof ActionTypes.STAGE_LOADED_FILES}> {
+  return {
+    type: ActionTypes.STAGE_LOADED_FILES,
     result
+  };
+}
+
+/**
+ * Add already-parsed or remote datasets to the Add Data list without starting a file load.
+ * @memberof visStateActions
+ * @param result datasets to keep until Add Data
+ * @returns action
+ * @public
+ */
+export function appendStagedLoadedFiles(
+  result: FileCacheItem[]
+): Merge<StageLoadedFilesUpdaterAction, {type: typeof ActionTypes.APPEND_STAGED_LOADED_FILES}> {
+  return {
+    type: ActionTypes.APPEND_STAGED_LOADED_FILES,
+    result
+  };
+}
+
+/**
+ * Drop files staged for the Add Data button and stop an in-progress modal load.
+ * @memberof visStateActions
+ * @returns action
+ * @public
+ */
+export function clearStagedLoadedFiles(): {type: typeof ActionTypes.CLEAR_STAGED_LOADED_FILES} {
+  return {
+    type: ActionTypes.CLEAR_STAGED_LOADED_FILES
   };
 }
 
@@ -2182,6 +2253,8 @@ export type NextFileBatchUpdaterAction = {
     progress?: any;
     accumulated?: any;
     onFinish: (result: any) => any;
+    /** Carried across batches so progressive loads keep the original add-data options. */
+    options?: LoadFilesOptions;
   };
 };
 /**

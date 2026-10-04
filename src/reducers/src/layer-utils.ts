@@ -37,6 +37,7 @@ import KeplerTable from '@kepler.gl/table';
 import {VisState} from '@kepler.gl/schemas';
 import {isFunction, getMapLayersFromSplitMaps, DataRow, isPlainObject} from '@kepler.gl/utils';
 import {arrayMove, generateHashId} from '@kepler.gl/common-utils';
+import {getLayerZoomOpacityFactor} from './interaction-utils';
 
 import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
 
@@ -280,6 +281,58 @@ export function getLayerHoverProp({
   return null;
 }
 
+const ZOOM_OPACITY_PROP_KEYS = ['opacity', 'lineOpacity', 'strokeOpacity'];
+
+/** Stroke and outline props replace the parent opacity, so they need the same factor. */
+function scaleZoomOpacitySubLayerProps(
+  subLayerProps: Record<string, any> | undefined,
+  factor: number
+): Record<string, any> | undefined {
+  if (!subLayerProps) {
+    return undefined;
+  }
+  let changed = false;
+  const next: Record<string, any> = {};
+  for (const id of Object.keys(subLayerProps)) {
+    const sublayer = subLayerProps[id];
+    if (!sublayer || typeof sublayer !== 'object') {
+      next[id] = sublayer;
+      continue;
+    }
+    const scaled = {...sublayer};
+    let sublayerChanged = false;
+    for (const key of ZOOM_OPACITY_PROP_KEYS) {
+      if (typeof sublayer[key] === 'number') {
+        scaled[key] = sublayer[key] * factor;
+        sublayerChanged = true;
+      }
+    }
+    next[id] = sublayerChanged ? scaled : sublayer;
+    if (sublayerChanged) {
+      changed = true;
+    }
+  }
+  return changed ? next : undefined;
+}
+
+function applyZoomOpacityToDeckLayer(deckLayer: any, factor: number): any {
+  if (Array.isArray(deckLayer)) {
+    return deckLayer.map(layer => applyZoomOpacityToDeckLayer(layer, factor));
+  }
+  if (!deckLayer || factor === 1 || typeof deckLayer.clone !== 'function') {
+    return deckLayer;
+  }
+  const baseOpacity = deckLayer.props?.opacity;
+  const opacity = (typeof baseOpacity === 'number' ? baseOpacity : 1) * factor;
+  const subLayerProps = scaleZoomOpacitySubLayerProps(deckLayer.props?._subLayerProps, factor);
+  return deckLayer.clone({
+    opacity,
+    // Fully faded layers are not pickable.
+    visible: deckLayer.props?.visible !== false && factor > 0,
+    ...(subLayerProps ? {_subLayerProps: subLayerProps} : {})
+  });
+}
+
 export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: any}) {
   const {
     datasets,
@@ -301,7 +354,7 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
   // instead of leaking undefined into deck.gl's visible prop
   const visible = !mapLayers || Boolean(mapLayers[layer.id]);
   // Layer is Layer class
-  return layer.renderLayer({
+  const rendered = layer.renderLayer({
     data,
     gpuFilter,
     idx: layerIndex,
@@ -314,6 +367,8 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     dataset,
     experimentalContext
   });
+  const factor = getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig);
+  return applyZoomOpacityToDeckLayer(rendered, factor);
 }
 
 export function isLayerRenderable(layer: Layer, layerData) {

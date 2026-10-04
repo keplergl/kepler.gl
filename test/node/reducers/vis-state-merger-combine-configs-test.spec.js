@@ -225,6 +225,54 @@ const TEST_CASES = [
     expected: {currentTime: 100, speed: 1, timeFormat: 'L LTS', timezone: 'America/Guayaquil'}
   },
   {
+    testMessage:
+      'interactionConfig zoomOpacity concatenates controllers and drops duplicate layer ids',
+    propName: 'interactionConfig',
+    configsToMerge: [
+      {
+        zoomOpacity: {
+          enabled: false,
+          controllers: [
+            {
+              id: 'c1',
+              layerIds: ['l1', 'l2'],
+              stops: {appear: 1, full: 3, fade: 8, gone: 12}
+            }
+          ]
+        }
+      },
+      {
+        zoomOpacity: {
+          enabled: true,
+          controllers: [
+            {
+              id: 'c2',
+              layerIds: ['l2', 'l3'],
+              stops: {appear: 4, full: 6, fade: 10, gone: 14}
+            }
+          ]
+        }
+      }
+    ],
+    expected: {
+      zoomOpacity: {
+        enabled: true,
+        controllers: [
+          {
+            id: 'c1',
+            layerIds: ['l1', 'l2'],
+            stops: {appear: 1, full: 3, fade: 8, gone: 12}
+          },
+          {
+            id: 'c2',
+            layerIds: ['l3'],
+            stops: {appear: 4, full: 6, fade: 10, gone: 14}
+          }
+        ]
+      }
+    }
+  },
+  {
     testMessage: 'editor',
     propName: 'editor',
     configsToMerge: [

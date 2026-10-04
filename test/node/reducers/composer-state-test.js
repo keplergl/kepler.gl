@@ -6,7 +6,7 @@
 import {drainTasksForTesting, succeedTaskWithValues} from '@kepler.gl/tasks';
 import test from 'tape';
 
-import {registerEntry} from '@kepler.gl/actions';
+import {appendStagedLoadedFiles, registerEntry, stageLoadedFiles} from '@kepler.gl/actions';
 import {processCsvData} from '@kepler.gl/processors';
 import keplerGlReducer, {
   addDataToMapUpdater,
@@ -1176,5 +1176,108 @@ test('#composerStateReducer - replaceDataInMapUpdater: syncedTimeFilter & no mat
 
   t.deepEqual(nextState.visState.interactionToBeMerged, {}, 'should reset interactionToBeMerged');
   t.deepEqual(nextState.visState.splitMapsToBeMerged, [], 'should reset splitMapsToBeMerged');
+  t.end();
+});
+
+test('#composerStateReducer -> stageLoadedFilesUpdater keeps the modal open', t => {
+  const base = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const result = [{info: {label: 'points.csv', format: 'csv'}, data: []}];
+  const loadingState = {
+    ...base,
+    uiState: {
+      ...base.uiState,
+      currentModal: 'addData',
+      loadFiles: {fileLoading: true}
+    },
+    visState: {
+      ...base.visState,
+      fileLoading: {filesToLoad: [], fileCache: [], onFinish: () => null},
+      fileLoadingProgress: {
+        a: {percent: 1, message: 'Done', fileName: 'points.csv', error: null}
+      }
+    }
+  };
+
+  const staged = combinedUpdaters.stageLoadedFilesUpdater(loadingState, stageLoadedFiles(result));
+  t.equal(staged.uiState.currentModal, 'addData', 'should leave the Add Data modal open');
+  t.equal(staged.uiState.loadFiles.fileLoading, false, 'should clear the loading flag');
+  t.equal(staged.visState.fileLoading, false, 'should finish the visState load');
+  t.equal(staged.visState.stagedToAdd[0].info.label, 'points.csv', 'should keep the parsed file');
+  t.equal(staged.visState.datasets, base.visState.datasets, 'should not add datasets yet');
+
+  const closed = {
+    ...loadingState,
+    uiState: {...loadingState.uiState, currentModal: null}
+  };
+  const dropped = combinedUpdaters.stageLoadedFilesUpdater(closed, stageLoadedFiles(result));
+  t.equal(
+    dropped.visState.stagedToAdd,
+    null,
+    'should discard files when the modal is already closed'
+  );
+
+  const withPrevious = {
+    ...loadingState,
+    visState: {
+      ...loadingState.visState,
+      stagedToAdd: [{info: {label: 'points.csv', format: 'csv'}, data: []}]
+    }
+  };
+  const appended = combinedUpdaters.stageLoadedFilesUpdater(
+    withPrevious,
+    stageLoadedFiles([{info: {label: 'cities.csv', format: 'csv'}, data: []}])
+  );
+  t.deepEqual(
+    appended.visState.stagedToAdd.map(item => item.info.label),
+    ['points.csv', 'cities.csv'],
+    'should append a later file instead of replacing the staged list'
+  );
+
+  const replacedLoad = {
+    ...loadingState,
+    visState: {
+      ...loadingState.visState,
+      fileLoading: {...loadingState.visState.fileLoading, loadId: 2},
+      stagedToAdd: null
+    }
+  };
+  const staleFinish = combinedUpdaters.stageLoadedFilesUpdater(replacedLoad, {
+    ...stageLoadedFiles(result),
+    loadId: 1
+  });
+  t.equal(staleFinish, replacedLoad, 'a finish from a canceled load does not replace the new one');
+
+  const canceledLoad = {
+    ...loadingState,
+    visState: {...loadingState.visState, fileLoading: false, stagedToAdd: null}
+  };
+  const afterCancel = combinedUpdaters.stageLoadedFilesUpdater(canceledLoad, {
+    ...stageLoadedFiles(result),
+    loadId: 1
+  });
+  t.equal(afterCancel.visState.fileLoading, false, 'a canceled load stays stopped');
+  t.equal(afterCancel.visState.stagedToAdd, null, 'a canceled load is not restored');
+
+  const remote = {
+    data: {fields: [], rows: []},
+    info: {id: 'remote-1', label: 'quakes.csv', format: 'row', type: 'externally-hosted'},
+    metadata: {source: 'https://example.com/quakes.csv', sourceFormat: 'csv'}
+  };
+  const withRemote = combinedUpdaters.appendStagedLoadedFilesUpdater(
+    appended,
+    appendStagedLoadedFiles([remote])
+  );
+  t.deepEqual(
+    withRemote.visState.stagedToAdd.map(item => item.info.label),
+    ['points.csv', 'cities.csv', 'quakes.csv'],
+    'should add a remote url without replacing staged files'
+  );
+  t.equal(withRemote.visState.fileLoading, false, 'should not start a file load for a remote url');
+  const duplicate = combinedUpdaters.appendStagedLoadedFilesUpdater(
+    withRemote,
+    appendStagedLoadedFiles([remote])
+  );
+  t.equal(duplicate, withRemote, 'should ignore a url that is already staged');
+
   t.end();
 });

@@ -4,6 +4,7 @@
 import pick from 'es-toolkit/compat/pick';
 import {VERSIONS} from './versions';
 import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {migrateLegacyScenegraphVisConfig} from '@kepler.gl/layers';
 import {
   colorRangeBackwardCompatibility,
   isFilterValidToSave,
@@ -54,6 +55,7 @@ export type modifiedType = {
   strokeColorRange?: any;
   filled?: boolean;
   stroked?: boolean;
+  scenegraph?: string;
 };
 
 export interface VisState {
@@ -92,6 +94,8 @@ export interface VisState {
   splitMapsToBeMerged: SplitMap[];
   fileLoading: FileLoading | false;
   fileLoadingProgress: FileLoadingProgress;
+  /** Parsed files held until the Add Data button commits them. */
+  stagedToAdd: any[] | null;
   loadingIndicatorValue: number;
   /** Per-dataset download progress (0–100) while hydrating remote files. */
   loadingProgress: Record<string, number>;
@@ -523,6 +527,13 @@ const visConfigModificationV1 = {
     }
 
     return modified;
+  },
+  '3D': visConfig => {
+    const migrated = migrateLegacyScenegraphVisConfig(visConfig);
+    if (!migrated || migrated.scenegraph === visConfig?.scenegraph) {
+      return {};
+    }
+    return {scenegraph: migrated.scenegraph};
   }
 };
 
@@ -699,7 +710,7 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV1 = ['tooltip', 'legend', 'brush', 'geocoder', 'coordinate'];
+const interactionPropsV1 = ['tooltip', 'legend', 'brush', 'geocoder', 'coordinate', 'zoomOpacity'];
 
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
@@ -712,16 +723,19 @@ export class InteractionSchemaV1 extends Schema {
     // save config even if disabled,
     return Array.isArray(this.properties)
       ? {
-          [this.key]: this.properties.reduce(
-            (accu, key) => ({
+          [this.key]: this.properties.reduce((accu, key) => {
+            const interaction = interactionConfig[key];
+            if (!interaction) {
+              return accu;
+            }
+            return {
               ...accu,
               [key]: {
-                ...interactionConfig[key].config,
-                enabled: interactionConfig[key].enabled
+                ...interaction.config,
+                enabled: interaction.enabled
               }
-            }),
-            {}
-          )
+            };
+          }, {})
         }
       : {};
   }

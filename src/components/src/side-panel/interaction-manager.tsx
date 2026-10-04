@@ -4,17 +4,32 @@
 import React from 'react';
 import {useIntl} from 'react-intl';
 
-import {InteractionConfig, LayerOrder} from '@kepler.gl/types';
+import {InteractionConfig, LayerOrder, MapState} from '@kepler.gl/types';
 import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
 
 import InteractionPanelFactory from './interaction-panel/interaction-panel';
 import LegendConfigFactory from './interaction-panel/legend-config';
+import ZoomOpacityConfigFactory from './interaction-panel/zoom-opacity-config';
 import PanelTitleFactory from './panel-title';
 import {PanelHeaderActionIcon} from './panel-header-action';
 
 import {PanelMeta} from './common/types';
+
+/** Right-hand map when split viewports are independent; otherwise the shared map zoom. */
+function fadeOnZoomMarkerZoom(mapState?: MapState): number | undefined {
+  const rightZoom = mapState?.splitMapViewports?.[1]?.zoom;
+  if (
+    mapState?.isSplit &&
+    !mapState.isViewportSynced &&
+    mapState.splitMapViewports.length > 1 &&
+    Number.isFinite(rightZoom)
+  ) {
+    return rightZoom;
+  }
+  return mapState?.zoom;
+}
 
 type InteractionManagerProps = {
   interactionConfig: InteractionConfig;
@@ -25,6 +40,7 @@ type InteractionManagerProps = {
   layers?: readonly Layer[];
   layerOrder?: LayerOrder;
   mapLegendActive?: boolean;
+  mapState?: MapState;
   actionIcons?: {
     settings?: PanelHeaderActionIcon;
   };
@@ -33,12 +49,18 @@ type InteractionManagerProps = {
   };
 };
 
-InteractionManagerFactory.deps = [InteractionPanelFactory, PanelTitleFactory, LegendConfigFactory];
+InteractionManagerFactory.deps = [
+  InteractionPanelFactory,
+  PanelTitleFactory,
+  LegendConfigFactory,
+  ZoomOpacityConfigFactory
+];
 
 function InteractionManagerFactory(
   InteractionPanel: ReturnType<typeof InteractionPanelFactory>,
   PanelTitle: ReturnType<typeof PanelTitleFactory>,
-  LegendConfig: ReturnType<typeof LegendConfigFactory>
+  LegendConfig: ReturnType<typeof LegendConfigFactory>,
+  ZoomOpacityConfig: ReturnType<typeof ZoomOpacityConfigFactory>
 ) {
   const InteractionManager: React.FC<InteractionManagerProps> = ({
     interactionConfig,
@@ -49,6 +71,7 @@ function InteractionManagerFactory(
     layers,
     layerOrder,
     mapLegendActive,
+    mapState,
     actionIcons,
     interactionConfigIcons
   }) => {
@@ -61,9 +84,9 @@ function InteractionManagerFactory(
           className="interaction-manager-title"
           title={intl.formatMessage({id: panelMetadata.label})}
         />
-        {Object.keys(interactionConfig).map(key =>
-          key === 'legend' ? (
-            layers ? (
+        {Object.keys(interactionConfig).map(key => {
+          if (key === 'legend') {
+            return layers ? (
               <LegendConfig
                 key={key}
                 layers={layers}
@@ -74,8 +97,21 @@ function InteractionManagerFactory(
                 mapLegendActive={mapLegendActive}
                 actionIcons={actionIcons}
               />
-            ) : null
-          ) : (
+            ) : null;
+          }
+          if (key === 'zoomOpacity') {
+            return layers ? (
+              <ZoomOpacityConfig
+                key={key}
+                layers={layers}
+                zoomOpacityConfig={interactionConfig.zoomOpacity}
+                zoom={fadeOnZoomMarkerZoom(mapState)}
+                visStateActions={visStateActions}
+                actionIcons={actionIcons}
+              />
+            ) : null;
+          }
+          return (
             <InteractionPanel
               key={key}
               datasets={datasets}
@@ -85,8 +121,8 @@ function InteractionManagerFactory(
               actionIcons={actionIcons}
               interactionConfigIcons={interactionConfigIcons}
             />
-          )
-        )}
+          );
+        })}
       </div>
     );
   };
