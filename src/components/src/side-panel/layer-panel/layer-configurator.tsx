@@ -3,18 +3,11 @@
 
 /* eslint-disable complexity */
 import {FormattedMessage} from '@kepler.gl/localization';
-import React, {Component, Fragment, useCallback, useRef, useState} from 'react';
+import React, {Component, useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
 
 import ItemSelector from '../../common/item-selector/item-selector';
-import InfoHelperFactory from '../../common/info-helper';
-import {
-  Input,
-  InputLight,
-  PanelLabel,
-  PanelLabelWrapper,
-  SidePanelSection
-} from '../../common/styled-components';
+import {InputLight, PanelLabel, SidePanelSection} from '../../common/styled-components';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
 import AggrScaleSelectorFactory from './aggr-scale-selector';
@@ -33,7 +26,7 @@ import TextLabelPanelFactory from './text-label-panel';
 import VisConfigSliderFactory from './vis-config-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
 import ScenegraphModelSelectorFactory, {
-  ScenegraphCustomModelUrlInput
+  SCENEGRAPH_3D_MODEL_OPTIONS
 } from './scenegraph-model-selector';
 
 import RasterTileLayerConfiguratorFactory from './raster-tile-layer-configurator';
@@ -44,7 +37,6 @@ import {ActionHandler, toggleModal, updateDatasetProps} from '@kepler.gl/actions
 import {
   AGGREGATION_TYPE_OPTIONS,
   LAYER_TYPES,
-  CUSTOM_SCENEGRAPH_MODEL_ID,
   BitmapDatasetMetadata,
   Tile3DDatasetMetadata
 } from '@kepler.gl/constants';
@@ -424,8 +416,7 @@ LayerConfiguratorFactory.deps = [
   AggrScaleSelectorFactory,
   VectorTileLayerConfiguratorFactory,
   RasterTileLayerConfiguratorFactory,
-  ScenegraphModelSelectorFactory,
-  InfoHelperFactory
+  ScenegraphModelSelectorFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -443,8 +434,7 @@ export default function LayerConfiguratorFactory(
   AggrScaleSelector: ReturnType<typeof AggrScaleSelectorFactory>,
   VectorTileLayerConfigurator: ReturnType<typeof VectorTileLayerConfiguratorFactory>,
   RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>,
-  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>,
-  InfoHelper: ReturnType<typeof InfoHelperFactory>
+  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
@@ -1075,36 +1065,13 @@ export default function LayerConfiguratorFactory(
           >
             <ScenegraphModelSelector
               selected={layer.config.visConfig.scenegraph}
+              customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
               disabled={!layer.config.visConfig.scenegraphEnabled}
-              onSelect={(scenegraph: {id: string}) =>
-                visConfiguratorProps.onChange({scenegraph: scenegraph.id})
-              }
+              onChange={visConfiguratorProps.onChange}
             />
             {layer.config.visConfig.scenegraphEnabled ? (
               <>
                 <ConfigGroupCollapsibleContent>
-                  {layer.config.visConfig.scenegraph === CUSTOM_SCENEGRAPH_MODEL_ID ? (
-                    <SidePanelSection>
-                      <PanelLabelWrapper>
-                        <PanelLabel>
-                          <FormattedMessage id="layer.3DModelURL" />
-                        </PanelLabel>
-                        <InfoHelper
-                          id={`${layer.id}-scenegraphCustomModelUrl`}
-                          description="layer.3DModelURLDescription"
-                          property="scenegraphCustomModelUrl"
-                        />
-                      </PanelLabelWrapper>
-                      <ScenegraphCustomModelUrlInput
-                        customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
-                        onChange={url =>
-                          visConfiguratorProps.onChange({
-                            scenegraphCustomModelUrl: url
-                          })
-                        }
-                      />
-                    </SidePanelSection>
-                  ) : null}
                   <VisConfigSwitch
                     {...layer.visConfigSettings.scenegraphColorEnabled}
                     {...visConfiguratorProps}
@@ -1395,20 +1362,25 @@ export default function LayerConfiguratorFactory(
 
     _render3DLayerConfig({layer, visConfiguratorProps}) {
       return (
-        <Fragment>
+        <StyledLayerVisualConfigurator>
           <LayerConfigGroup label={'layer.3DModel'} collapsible>
-            <Input
-              type="file"
-              accept=".glb,.gltf"
-              onChange={e => {
-                if (e.target.files && e.target.files[0]) {
-                  const url = URL.createObjectURL(e.target.files[0]);
-                  visConfiguratorProps.onChange({scenegraph: url});
-                }
-              }}
+            <ScenegraphModelSelector
+              options={SCENEGRAPH_3D_MODEL_OPTIONS}
+              selected={layer.config.visConfig.scenegraph}
+              customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
+              onChange={visConfiguratorProps.onChange}
             />
-          </LayerConfigGroup>
-          <LayerConfigGroup label={'layer.3DModelOptions'} collapsible>
+            <VisConfigSwitch
+              {...layer.visConfigSettings.scenegraphColorEnabled}
+              {...visConfiguratorProps}
+            />
+            {layer.config.visConfig.scenegraphColorEnabled ? (
+              <LayerColorSelector
+                {...visConfiguratorProps}
+                selectedColor={layer.config.visConfig.scenegraphColor}
+                property="scenegraphColor"
+              />
+            ) : null}
             <VisConfigSlider
               {...layer.visConfigSettings.sizeScale}
               {...visConfiguratorProps}
@@ -1430,7 +1402,7 @@ export default function LayerConfiguratorFactory(
               disabled={false}
             />
           </LayerConfigGroup>
-        </Fragment>
+        </StyledLayerVisualConfigurator>
       );
     }
 

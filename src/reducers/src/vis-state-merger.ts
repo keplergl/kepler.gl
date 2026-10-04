@@ -16,7 +16,7 @@ import {
   isPlainObject
 } from '@kepler.gl/utils';
 
-import {Layer} from '@kepler.gl/layers';
+import {Layer, migrateLegacyScenegraphVisConfig} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
@@ -1289,9 +1289,13 @@ export function validateLayerWithData(
       : newLayer.config.textLabel;
 
   // copy visConfig over to emptyLayer to make sure it has all the props
+  const savedVisConfig =
+    savedLayer.type === '3D'
+      ? migrateLegacyScenegraphVisConfig(savedLayer.config.visConfig)
+      : savedLayer.config.visConfig;
   const copiedVisConfig = newLayer.copyLayerConfig(
     newLayer.config.visConfig,
-    savedLayer.config.visConfig || {},
+    savedVisConfig || {},
     {
       shallowCopy: ['colorRange', 'strokeColorRange']
     }
