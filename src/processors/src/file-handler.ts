@@ -12,7 +12,12 @@ import {
 } from '@kepler.gl/utils';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {DATASET_FORMATS, DatasetType, REMOTE_FILE_EXTENSIONS} from '@kepler.gl/constants';
-import {AddDataToMapPayload, LoadedMap, ProcessorResult} from '@kepler.gl/types';
+import {
+  AddDataToMapOptions,
+  AddDataToMapPayload,
+  LoadedMap,
+  ProcessorResult
+} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import type {Feature, FeatureCollection} from 'geojson';
 
@@ -261,7 +266,10 @@ export async function* makeProgressIterator(
 }
 
 // eslint-disable-next-line complexity
-function getPersistedRemoteFormat(keplerFormat?: string, fileName?: string): string | undefined {
+export function getPersistedRemoteFormat(
+  keplerFormat?: string,
+  fileName?: string
+): string | undefined {
   if (
     keplerFormat &&
     keplerFormat !== 'auto' &&
@@ -527,7 +535,10 @@ export async function processFileData({
   }
 }
 
-export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayload[] {
+export function filesToDataPayload(
+  fileCache: FileCacheItem[],
+  options?: AddDataToMapOptions
+): AddDataToMapPayload[] {
   // seperate out files which could be a single datasets. or a keplergl map json
   const collection = fileCache.reduce<{
     datasets: FileCacheItem[];
@@ -540,7 +551,8 @@ export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayl
         accu.keplerMaps.push({
           ...data,
           options: {
-            centerMap: !(data.config && data.config.mapState)
+            centerMap: !(data.config && data.config.mapState),
+            ...(options || {})
           }
         });
       } else if (DATASET_FORMATS[info?.format]) {
@@ -562,5 +574,8 @@ export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayl
 
   // add kepler map first with config
   // add datasets later in one add data call
-  return collection.keplerMaps.concat({datasets: collection.datasets});
+  return collection.keplerMaps.concat({
+    datasets: collection.datasets,
+    ...(options && collection.datasets.length ? {options} : {})
+  });
 }
