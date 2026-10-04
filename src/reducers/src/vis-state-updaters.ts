@@ -4443,12 +4443,22 @@ export function closeSpecificMapAtIndex<S extends VisState>(
  * @memberof visStateUpdaters
  * @public
  */
+let nextFileLoadId = 1;
+
+function createFileLoadId(): number {
+  const loadId = nextFileLoadId;
+  nextFileLoadId += 1;
+  return loadId;
+}
+
 function finishFileLoad(
   onFinish: (payload: any, options?: VisStateActions.LoadFilesOptions) => any,
   fileCache: any[],
-  options?: VisStateActions.LoadFilesOptions
+  options: VisStateActions.LoadFilesOptions | undefined,
+  loadId: number
 ) {
-  return options ? onFinish(fileCache, options) : onFinish(fileCache);
+  const action = options ? onFinish(fileCache, options) : onFinish(fileCache);
+  return {...action, loadId};
 }
 
 export const loadFilesUpdater = (
@@ -4489,6 +4499,7 @@ export const loadFilesUpdater = (
   );
 
   const fileLoading = {
+    loadId: createFileLoadId(),
     fileCache: [],
     filesToLoad,
     companionFiles,
@@ -4553,7 +4564,7 @@ export function loadFileStepSuccessUpdater(
     return state;
   }
   const {fileName, fileCache} = action;
-  const {filesToLoad, onFinish, options} = state.fileLoading;
+  const loadId = state.fileLoading.loadId;
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
     fileName,
     progress: {percent: 1, message: 'Done'}
@@ -4562,11 +4573,11 @@ export function loadFileStepSuccessUpdater(
   // save processed file to fileCache
   const stateWithCache = pick_('fileLoading')(merge_({fileCache}))(stateWithProgress);
 
+  // Decide after the pause, and only for this load. A drop during these
+  // 200ms joins the queue; cancel or a newer load makes this continuation stale.
   return withTask(
     stateWithCache,
-    DELAY_TASK(200).map(
-      filesToLoad.length ? loadNextFile : () => finishFileLoad(onFinish, fileCache, options)
-    )
+    DELAY_TASK(200).map(() => loadNextFile(loadId))
   );
 }
 
@@ -4577,11 +4588,18 @@ export function loadFileStepSuccessUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export function loadNextFileUpdater(state: VisState): VisState {
-  if (!state.fileLoading) {
+export function loadNextFileUpdater(state: VisState, action?: {loadId?: number}): VisState {
+  const loadId = action?.loadId;
+  if (!state.fileLoading || (loadId != null && state.fileLoading.loadId !== loadId)) {
     return state;
   }
-  const {filesToLoad, options} = state.fileLoading;
+  const {filesToLoad, onFinish, fileCache, options, loadId: currentLoadId} = state.fileLoading;
+  if (!filesToLoad.length) {
+    return withTask(
+      state,
+      ACTION_TASK().map(() => finishFileLoad(onFinish, fileCache, options, currentLoadId))
+    );
+  }
   const [file, ...remainingFilesToLoad] = filesToLoad;
 
   // save filesToLoad to state
@@ -4751,19 +4769,17 @@ export const loadFilesErrUpdater = (
   if (!state.fileLoading) {
     return state;
   }
-  const {filesToLoad, onFinish, fileCache, options} = state.fileLoading;
+  const loadId = state.fileLoading.loadId;
 
   const nextState = updateFileLoadingProgressUpdater(state, {
     fileName,
     progress: {error}
   });
 
-  // kick off next file or finish
+  // Same pause as a successful file. Re-check this load's queue when it ends.
   return withTask(
     nextState,
-    DELAY_TASK(200).map(
-      filesToLoad.length ? loadNextFile : () => finishFileLoad(onFinish, fileCache, options)
-    )
+    DELAY_TASK(200).map(() => loadNextFile(loadId))
   );
 };
 

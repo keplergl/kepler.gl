@@ -237,6 +237,9 @@ export const loadFilesSuccessUpdater = (
   state: KeplerGlState,
   action: loadFilesSuccessUpdaterAction
 ): KeplerGlState => {
+  if (isStaleFileLoadFinish(state.visState.fileLoading, action.loadId)) {
+    return state;
+  }
   // still more to load
   const payloads = filesToDataPayload(action.result, action.options);
   const nextState = compose_([
@@ -259,6 +262,14 @@ function keptLoadErrors(progress: Record<string, {error?: unknown}> = {}) {
   return Object.fromEntries(Object.entries(progress).filter(([, value]) => value?.error));
 }
 
+/** A finish from the 200ms pause is stale once that load was canceled or replaced. */
+function isStaleFileLoadFinish(fileLoading: {loadId?: number} | false, loadId?: number): boolean {
+  if (loadId == null) {
+    return false;
+  }
+  return !fileLoading || fileLoading.loadId !== loadId;
+}
+
 /**
  * Finish a deferred file load: keep the parsed cache, clear the loading flag,
  * and leave the Add Data modal open until the user confirms.
@@ -269,6 +280,9 @@ export const stageLoadedFilesUpdater = (
   state: KeplerGlState,
   action: StageLoadedFilesUpdaterAction
 ): KeplerGlState => {
+  if (isStaleFileLoadFinish(state.visState.fileLoading, action.loadId)) {
+    return state;
+  }
   const modalOpen = state.uiState.currentModal === ADD_DATA_ID;
   const result = action.result || [];
   const previous =

@@ -10,12 +10,13 @@ import {
   LoadDataModalFactory,
   ModalTabItem,
   LoadStorageMapFactory,
-  FileUpload,
+  FileUploadFactory,
   appInjector
 } from '@kepler.gl/components';
 
 const LoadDataModal = appInjector.get(LoadDataModalFactory);
 const LoadStorageMap = appInjector.get(LoadStorageMapFactory);
+const FileUpload = appInjector.get(FileUploadFactory);
 
 test('Components -> LoadDataModal.mount', t => {
   // mount
@@ -100,7 +101,9 @@ test('Components -> LoadDataModal -> auto create layers', t => {
   t.equal(checkbox().props().checked, false, 'should uncheck auto create layers');
 
   const files = [{name: 'points.csv'}];
-  wrapper.find(FileUpload).first().props().onFileUpload(files);
+  const uploader = wrapper.find(FileUpload);
+  t.ok(uploader.length > 0, 'should find the file uploader rendered by the modal');
+  uploader.first().props().onFileUpload(files);
   t.deepEqual(onFileUpload.args[0][0], files, 'should upload the selected files');
   t.equal(onFileUpload.args[0][1], undefined, 'parsing waits to apply autoCreateLayers');
 

@@ -1868,15 +1868,21 @@ export function loadFiles(
  * @returns action
  * @public
  */
-export function loadNextFile(): {type: typeof ActionTypes.LOAD_NEXT_FILE} {
+export function loadNextFile(loadId?: number): {
+  type: typeof ActionTypes.LOAD_NEXT_FILE;
+  loadId?: number;
+} {
   return {
-    type: ActionTypes.LOAD_NEXT_FILE
+    type: ActionTypes.LOAD_NEXT_FILE,
+    ...(loadId == null ? {} : {loadId})
   };
 }
 
 export type loadFilesSuccessUpdaterAction = {
   result: FileCacheItem[];
   options?: AddDataToMapOptions;
+  /** Set when a file-load pause finishes, so a canceled load can be ignored. */
+  loadId?: number;
 };
 /**
  * called when all files are processed and loaded
@@ -1898,6 +1904,8 @@ export function loadFilesSuccess(
 
 export type StageLoadedFilesUpdaterAction = {
   result: FileCacheItem[];
+  /** Set when a file-load pause finishes, so a canceled load can be ignored. */
+  loadId?: number;
 };
 /**
  * Store processed files without adding them to the map or closing the modal.

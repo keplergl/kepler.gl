@@ -6769,7 +6769,12 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     'test-file-2.csv': {percent: 0, message: '', fileName: 'test-file-2.csv', error: null}
   };
 
-  t.deepEqual(nextState.fileLoading, expectedFileLoading, 'should save fileLoading in state');
+  t.deepEqual(
+    nextState.fileLoading,
+    {...expectedFileLoading, loadId: nextState.fileLoading.loadId},
+    'should save fileLoading in state'
+  );
+  t.equal(typeof nextState.fileLoading.loadId, 'number', 'should assign a load session');
   t.deepEqual(
     nextState.fileLoadingProgress,
     expectedFileLoadingProgress,
@@ -6845,6 +6850,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.deepEqual(
     nextState3Err.fileLoading,
     {
+      loadId: nextState.fileLoading.loadId,
       fileCache: [],
       filesToLoad: [],
       companionFiles: mockFiles,
@@ -6930,6 +6936,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.deepEqual(
     resultState5.fileLoading,
     {
+      loadId: nextState.fileLoading.loadId,
       fileCache: fileProcessResult,
       filesToLoad: [{type: 'text/csv', name: 'test-file-2.csv'}],
       companionFiles: mockFiles,
@@ -6969,6 +6976,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.deepEqual(
     resultState6.fileLoading,
     {
+      loadId: nextState.fileLoading.loadId,
       fileCache: fileProcessResult,
       filesToLoad: [],
       companionFiles: mockFiles,
@@ -7012,6 +7020,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.deepEqual(
     resultState10.fileLoading,
     {
+      loadId: nextState.fileLoading.loadId,
       fileCache: file2ProcessResult,
       filesToLoad: [],
       companionFiles: mockFiles,
@@ -7024,7 +7033,11 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.equal(task10.type, 'DELAY_TASK', 'should return an DELAY_TASK for onFinish');
 
   // calling delayed task succeed to trigger load next file
-  const _resultState11 = reducer(resultState10, succeedTaskInTest(task10));
+  const resultState11 = reducer(resultState10, succeedTaskInTest(task10));
+  const [task11, ...more11] = drainTasksForTesting();
+  t.equal(more11.length, 0, 'should create 1 task');
+  t.equal(task11.type, 'ACTION_TASK', 'an empty queue finishes the load');
+  reducer(resultState11, succeedTaskInTest(task11));
 
   t.ok(loadFilesSuccessSpy.calledOnce);
   const expectedArgs = [
@@ -7130,6 +7143,54 @@ test('#visStateReducer -> LOAD_FILES deferAddToMap', t => {
   );
   t.ok(queued.fileLoadingProgress['test-file.csv'], 'should keep progress for the first file');
   t.ok(queued.fileLoadingProgress['extra.csv'], 'should show progress for the queued file');
+
+  const readyToFinish = {
+    ...nextState,
+    fileLoading: {
+      ...nextState.fileLoading,
+      filesToLoad: [],
+      fileCache: [{info: {label: 'test-file.csv'}}]
+    }
+  };
+  const droppedDuringPause = reducer(
+    readyToFinish,
+    VisStateActions.loadFiles(
+      [{type: 'text/csv', name: 'late.csv'}],
+      VisStateActions.stageLoadedFiles,
+      {deferAddToMap: true}
+    )
+  );
+  const continued = reducer(droppedDuringPause, VisStateActions.loadNextFile());
+  t.equal(
+    continued.fileLoadingProgress['late.csv'].message,
+    'loading...',
+    'a file dropped during the finish pause starts parsing'
+  );
+  t.equal(
+    continued.fileLoading.fileCache,
+    readyToFinish.fileLoading.fileCache,
+    'should keep the parsed files while the queued file loads'
+  );
+
+  const canceled = reducer(readyToFinish, VisStateActions.clearStagedLoadedFiles());
+  drainTasksForTesting();
+  const ignored = reducer(canceled, VisStateActions.loadNextFile(readyToFinish.fileLoading.loadId));
+  t.equal(ignored.fileLoading, false, 'a canceled load is not resumed');
+  t.equal(ignored.stagedToAdd, null, 'cancel stays discarded');
+  t.equal(drainTasksForTesting().length, 0, 'a canceled pause does not stage files');
+
+  const restarted = reducer(
+    canceled,
+    VisStateActions.loadFiles(
+      [{type: 'text/csv', name: 'fresh.csv'}],
+      VisStateActions.stageLoadedFiles,
+      {deferAddToMap: true}
+    )
+  );
+  drainTasksForTesting();
+  const stale = reducer(restarted, VisStateActions.loadNextFile(readyToFinish.fileLoading.loadId));
+  t.equal(stale.fileLoading, restarted.fileLoading, 'a stale pause does not replace the new load');
+  t.equal(drainTasksForTesting().length, 0, 'a stale pause does not stage or parse');
 
   const cleared = reducer(nextState, VisStateActions.clearStagedLoadedFiles());
   t.equal(cleared.fileLoading, false, 'cancel should stop the in-progress load');

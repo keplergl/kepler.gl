@@ -1233,6 +1233,31 @@ test('#composerStateReducer -> stageLoadedFilesUpdater keeps the modal open', t 
     'should append a later file instead of replacing the staged list'
   );
 
+  const replacedLoad = {
+    ...loadingState,
+    visState: {
+      ...loadingState.visState,
+      fileLoading: {...loadingState.visState.fileLoading, loadId: 2},
+      stagedToAdd: null
+    }
+  };
+  const staleFinish = combinedUpdaters.stageLoadedFilesUpdater(replacedLoad, {
+    ...stageLoadedFiles(result),
+    loadId: 1
+  });
+  t.equal(staleFinish, replacedLoad, 'a finish from a canceled load does not replace the new one');
+
+  const canceledLoad = {
+    ...loadingState,
+    visState: {...loadingState.visState, fileLoading: false, stagedToAdd: null}
+  };
+  const afterCancel = combinedUpdaters.stageLoadedFilesUpdater(canceledLoad, {
+    ...stageLoadedFiles(result),
+    loadId: 1
+  });
+  t.equal(afterCancel.visState.fileLoading, false, 'a canceled load stays stopped');
+  t.equal(afterCancel.visState.stagedToAdd, null, 'a canceled load is not restored');
+
   const remote = {
     data: {fields: [], rows: []},
     info: {id: 'remote-1', label: 'quakes.csv', format: 'row', type: 'externally-hosted'},

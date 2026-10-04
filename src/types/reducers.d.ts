@@ -430,6 +430,8 @@ export type FileLoadingOptions = {
 };
 
 export type FileLoading = {
+  /** Identifies this load so a delayed finish from an older one can be ignored. */
+  loadId: number;
   filesToLoad: FileList | File[];
   companionFiles?: File[];
   onFinish: (payload: any, options?: FileLoadingOptions) => any;
