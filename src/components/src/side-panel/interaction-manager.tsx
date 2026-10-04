@@ -17,6 +17,20 @@ import {PanelHeaderActionIcon} from './panel-header-action';
 
 import {PanelMeta} from './common/types';
 
+/** Right-hand map when split viewports are independent; otherwise the shared map zoom. */
+function fadeOnZoomMarkerZoom(mapState?: MapState): number | undefined {
+  const rightZoom = mapState?.splitMapViewports?.[1]?.zoom;
+  if (
+    mapState?.isSplit &&
+    !mapState.isViewportSynced &&
+    mapState.splitMapViewports.length > 1 &&
+    Number.isFinite(rightZoom)
+  ) {
+    return rightZoom;
+  }
+  return mapState?.zoom;
+}
+
 type InteractionManagerProps = {
   interactionConfig: InteractionConfig;
   datasets: Datasets;
@@ -91,7 +105,7 @@ function InteractionManagerFactory(
                 key={key}
                 layers={layers}
                 zoomOpacityConfig={interactionConfig.zoomOpacity}
-                zoom={mapState?.zoom}
+                zoom={fadeOnZoomMarkerZoom(mapState)}
                 visStateActions={visStateActions}
                 actionIcons={actionIcons}
               />
