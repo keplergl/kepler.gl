@@ -1090,7 +1090,7 @@ export default function LayerConfiguratorFactory(
                           <FormattedMessage id="layer.3DModelURL" />
                         </PanelLabel>
                         <InfoHelper
-                          id="info-scenegraphCustomModelUrl"
+                          id={`${layer.id}-scenegraphCustomModelUrl`}
                           description="layer.3DModelURLDescription"
                           property="scenegraphCustomModelUrl"
                         />

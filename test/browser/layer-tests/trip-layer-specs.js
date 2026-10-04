@@ -492,5 +492,10 @@ test('#TripLayer -> getAnimationDomainFromTimestamps includes single-timestamp t
     [1000, 3000],
     'a one-point trip should contribute both min and max to the animation domain'
   );
+  t.deepEqual(
+    getAnimationDomainFromTimestamps([[1000, 2000], null, [3000]]),
+    [1000, 3000],
+    'a trip without geometry should be skipped'
+  );
   t.end();
 });

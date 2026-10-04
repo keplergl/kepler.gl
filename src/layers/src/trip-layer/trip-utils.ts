@@ -116,7 +116,11 @@ function findMinFromSorted(list: number[]) {
   return list?.find(d => notNullorUndefined(d) && Number.isFinite(d)) || null;
 }
 
-function findMaxFromSorted(list: number[] = []) {
+function findMaxFromSorted(list: number[] | null = []) {
+  // Default [] only applies for undefined. Invalid trips are passed as null.
+  if (!list) {
+    return null;
+  }
   let i = list.length - 1;
   while (i >= 0) {
     if (notNullorUndefined(list[i]) && Number.isFinite(list[i])) {
