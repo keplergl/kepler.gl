@@ -267,15 +267,34 @@ function LineChartFactory() {
       return yScale.ticks(3);
     }, [yScale]);
 
-    const linePaths = useMemo(() => {
-      if (!xScale || !yScale || !series?.lines) return [];
-      return series.lines.map(lineData => {
-        const points = lineData
-          .filter(p => p.x != null && p.y != null)
-          .map(p => `${xScale(new Date(p.x))},${yScale(p.y)}`);
-        return points.length > 1 ? `M${points.join('L')}` : '';
+    const lineMarks = useMemo(() => {
+      const paths: {key: number; d: string; color: string}[] = [];
+      const dots: {key: number; x: number; y: number; color: string}[] = [];
+      if (!xScale || !yScale || !series?.lines) {
+        return {paths, dots};
+      }
+      series.lines.forEach((lineData, index) => {
+        const points = lineData.filter(point => point.x != null && point.y != null);
+        const markColor = series.colors?.[index] || lineColor;
+        if (points.length > 1) {
+          paths.push({
+            key: index,
+            d: `M${points
+              .map(point => `${xScale(new Date(point.x))},${yScale(point.y)}`)
+              .join('L')}`,
+            color: markColor
+          });
+        } else if (points.length === 1) {
+          dots.push({
+            key: index,
+            x: xScale(new Date(points[0].x)),
+            y: yScale(points[0].y),
+            color: markColor
+          });
+        }
       });
-    }, [xScale, yScale, series]);
+      return {paths, dots};
+    }, [xScale, yScale, series, lineColor]);
 
     const bisectX = useMemo(() => bisector<LineSeriesPoint, number>(d => d.x).left, []);
 
@@ -388,14 +407,17 @@ function LineChartFactory() {
                 y2={yScale!(tick)}
               />
             ))}
-            {linePaths.map((d, i) => (
+            {lineMarks.paths.map(mark => (
               <path
-                key={i}
-                d={d}
+                key={mark.key}
+                d={mark.d}
                 fill="none"
-                stroke={series?.colors?.[i] || lineColor}
+                stroke={mark.color}
                 strokeWidth={series?.colors ? 1.5 : 1}
               />
+            ))}
+            {lineMarks.dots.map(mark => (
+              <circle key={`dot-${mark.key}`} cx={mark.x} cy={mark.y} r={3} fill={mark.color} />
             ))}
             {xScale &&
               yScale &&

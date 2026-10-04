@@ -549,15 +549,9 @@ export function getPctChange(y: unknown, y0: unknown): number | null {
 export const PLOT_GROUP_OTHERS_NAME = 'Others';
 export const PLOT_NUM_GROUPS_ALL = 'ALL' as const;
 export const DEFAULT_PLOT_NUM_GROUPS = 10;
-export const PLOT_NUM_GROUPS_OPTIONS: Array<number | typeof PLOT_NUM_GROUPS_ALL> = [
-  1,
-  3,
-  5,
-  7,
-  10,
-  20,
-  PLOT_NUM_GROUPS_ALL
-];
+/** Qualitative palettes stop at 20. All uses this cap instead of one series per value. */
+export const MAX_PLOT_NUM_GROUPS = 20;
+export const PLOT_NUM_GROUPS_OPTIONS = [1, 3, 5, 7, 10, MAX_PLOT_NUM_GROUPS];
 
 const DEFAULT_PLOT_GROUP_PALETTE = 'Uber Viz Qualitative';
 const FALLBACK_SERIES_COLORS = ['#12939A', '#DDB27C', '#88572C', '#FF991F', '#F15C17', '#223F9A'];
@@ -566,9 +560,9 @@ export function plotGroupColorSteps(
   numGroups: number | typeof PLOT_NUM_GROUPS_ALL | undefined
 ): number {
   if (numGroups === PLOT_NUM_GROUPS_ALL || typeof numGroups !== 'number' || numGroups < 1) {
-    return 20;
+    return MAX_PLOT_NUM_GROUPS;
   }
-  return Math.max(2, Math.min(numGroups, 20));
+  return Math.max(2, Math.min(numGroups, MAX_PLOT_NUM_GROUPS));
 }
 
 export function defaultPlotGroupColorRange(
@@ -675,29 +669,64 @@ function toGroupKey(value: unknown): string | null {
   return String(value);
 }
 
-function seriesColor(colorRange: ColorRange | undefined, key: string, index: number): string {
+function mappedSeriesColor(colorRange: ColorRange | undefined, key: string): string | null {
   const colorMap = colorRange?.colorMap;
-  if (Array.isArray(colorMap)) {
-    for (const entry of colorMap) {
-      const domain = entry?.[0];
-      const color = entry?.[1];
-      if (!color) {
-        continue;
-      }
-      if (Array.isArray(domain)) {
-        if (domain.map(item => String(item)).includes(key)) {
-          return color;
-        }
-      } else if (domain !== null && domain !== undefined && String(domain) === key) {
+  if (!Array.isArray(colorMap)) {
+    return null;
+  }
+  for (const entry of colorMap) {
+    const domain = entry?.[0];
+    const color = entry?.[1];
+    if (!color) {
+      continue;
+    }
+    if (Array.isArray(domain)) {
+      if (domain.map(item => String(item)).includes(key)) {
         return color;
       }
+    } else if (domain !== null && domain !== undefined && String(domain) === key) {
+      return color;
     }
+  }
+  return null;
+}
+
+function seriesColor(colorRange: ColorRange | undefined, key: string, index: number): string {
+  const mapped = mappedSeriesColor(colorRange, key);
+  if (mapped) {
+    return mapped;
   }
   const colors = colorRange?.colors;
   if (colors?.length) {
     return colors[index % colors.length];
   }
   return FALLBACK_SERIES_COLORS[index % FALLBACK_SERIES_COLORS.length];
+}
+
+const OTHERS_SERIES_COLOR = '#A0A7B4';
+
+function defaultQualitativeColors(): string[] {
+  const palette = KEPLER_COLOR_PALETTES.find(item => item.name === DEFAULT_PLOT_GROUP_PALETTE);
+  if (palette?.type === 'qualitative') {
+    return palette.colors(palette.maxStep);
+  }
+  return FALLBACK_SERIES_COLORS;
+}
+
+/** Others must not wrap onto a color already used by a kept group. */
+function othersSeriesColor(colorRange: ColorRange | undefined, used: string[]): string {
+  const mapped = mappedSeriesColor(colorRange, PLOT_GROUP_OTHERS_NAME);
+  if (mapped) {
+    return mapped;
+  }
+  const usedSet = new Set(used.map(color => color.toLowerCase()));
+  const candidates = [
+    ...(colorRange?.colors ?? []),
+    ...defaultQualitativeColors(),
+    ...FALLBACK_SERIES_COLORS,
+    OTHERS_SERIES_COLOR
+  ];
+  return candidates.find(color => !usedSet.has(color.toLowerCase())) ?? OTHERS_SERIES_COLOR;
 }
 
 function groupValueAccessor(dataset, fieldName: string): ((index: number) => unknown) | null {
@@ -710,12 +739,12 @@ function groupValueAccessor(dataset, fieldName: string): ((index: number) => unk
 
 function groupLimit(numGroups: number | typeof PLOT_NUM_GROUPS_ALL): number {
   if (numGroups === PLOT_NUM_GROUPS_ALL) {
-    return Number.POSITIVE_INFINITY;
+    return MAX_PLOT_NUM_GROUPS;
   }
   if (typeof numGroups !== 'number' || !(numGroups > 0)) {
     return DEFAULT_PLOT_NUM_GROUPS;
   }
-  return numGroups;
+  return Math.min(numGroups, MAX_PLOT_NUM_GROUPS);
 }
 
 /**
@@ -775,7 +804,10 @@ function buildGroupedLineSeries({
     groups.push({
       name: PLOT_GROUP_OTHERS_NAME,
       keys: new Set(rest),
-      color: seriesColor(colorRange, PLOT_GROUP_OTHERS_NAME, keep.length)
+      color: othersSeriesColor(
+        colorRange,
+        groups.map(group => group.color)
+      )
     });
   }
 

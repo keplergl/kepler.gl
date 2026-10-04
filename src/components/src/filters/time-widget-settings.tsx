@@ -27,6 +27,8 @@ import {
   getDefaultTimeFormat,
   PLOT_NUM_GROUPS_ALL,
   PLOT_NUM_GROUPS_OPTIONS,
+  DEFAULT_PLOT_NUM_GROUPS,
+  MAX_PLOT_NUM_GROUPS,
   updateColorRangeByMatchingPalette,
   updateCustomColorRangeByColorUI
 } from '@kepler.gl/utils';
@@ -244,7 +246,11 @@ function colorRangeFromColorUI(
     Boolean(next.colorRangeConfig) &&
     Object.prototype.hasOwnProperty.call(next.colorRangeConfig, 'reversed');
   if (isCustomReversed) {
-    return updateCustomColorRangeByColorUI(currentRange, colorRangeConfig);
+    // The helper reverses colors in place. Copy them so filter state stays unchanged.
+    return updateCustomColorRangeByColorUI(
+      {...currentRange, colors: [...(currentRange.colors || [])]},
+      colorRangeConfig
+    );
   }
   const updated = updateColorRangeByMatchingPalette(currentRange, colorRangeConfig);
   if (updated !== currentRange) {
@@ -468,9 +474,7 @@ function TimeWidgetSettingsFactory(
       [setFilterPlot, groupBy?.colorUI, groupBy?.colorRange]
     );
 
-    const displayNumGroups = useCallback((opt: number | typeof PLOT_NUM_GROUPS_ALL) => {
-      return opt === PLOT_NUM_GROUPS_ALL ? 'All' : String(opt);
-    }, []);
+    const displayNumGroups = useCallback((opt: number) => String(opt), []);
 
     const displayUnitOption = useCallback((opt: any) => {
       if (typeof opt === 'string') {
@@ -620,7 +624,11 @@ function TimeWidgetSettingsFactory(
                   </FieldLabel>
                   <SelectorWrapper>
                     <ItemSelector
-                      selectedItems={groupBy?.numGroups ?? PLOT_NUM_GROUPS_OPTIONS[4]}
+                      selectedItems={
+                        groupBy?.numGroups === PLOT_NUM_GROUPS_ALL
+                          ? MAX_PLOT_NUM_GROUPS
+                          : groupBy?.numGroups ?? DEFAULT_PLOT_NUM_GROUPS
+                      }
                       options={PLOT_NUM_GROUPS_OPTIONS}
                       multiSelect={false}
                       searchable={false}

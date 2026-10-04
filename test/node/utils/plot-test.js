@@ -11,7 +11,9 @@ import {
   getLineChart,
   mergePlotGroupBy,
   lineChartSeriesLegend,
-  PLOT_GROUP_OTHERS_NAME
+  PLOT_GROUP_OTHERS_NAME,
+  PLOT_NUM_GROUPS_ALL,
+  MAX_PLOT_NUM_GROUPS
 } from '@kepler.gl/utils';
 
 const values1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
@@ -411,6 +413,44 @@ test('Utils -> getLineChart groupBy splits series and folds the rest into Others
     'should drop groups past numGroups when groupOthers is off'
   );
 
+  const collided = getLineChart(
+    datasets,
+    groupedFilter({
+      fieldName: 'g',
+      numGroups: 2,
+      groupOthers: true,
+      colorRange: {colors: ['#111111', '#222222']}
+    })
+  );
+  const collidedColors = seriesSummary(collided).colors;
+  t.deepEqual(
+    collidedColors.slice(0, 2),
+    ['#111111', '#222222'],
+    'should keep the colors of the groups that fit'
+  );
+  t.ok(
+    !collidedColors.slice(0, 2).includes(collidedColors[2]),
+    'should give Others a color that is not already used'
+  );
+
+  const mapped = getLineChart(
+    datasets,
+    groupedFilter({
+      fieldName: 'g',
+      numGroups: 2,
+      groupOthers: true,
+      colorRange: {
+        colors: ['#111111', '#222222'],
+        colorMap: [[PLOT_GROUP_OTHERS_NAME, '#abcdef']]
+      }
+    })
+  );
+  t.equal(
+    seriesSummary(mapped).colors[2],
+    '#abcdef',
+    'should keep an explicit Others color from the color map'
+  );
+
   const cached = getLineChart(datasets, {...filter, lineChart: grouped});
   t.equal(cached, grouped, 'should reuse the line chart when groupBy and bins are unchanged');
 
@@ -423,6 +463,51 @@ test('Utils -> getLineChart groupBy splits series and folds the rest into Others
     }
   });
   t.deepEqual(seriesSummary(narrowed).names, ['a'], 'should recompute when numGroups changes');
+
+  t.end();
+});
+
+test('Utils -> getLineChart groupBy caps All at the palette size', t => {
+  const rowCount = MAX_PLOT_NUM_GROUPS + 5;
+  const rows = Array.from({length: rowCount}, (_, index) => ({v: 1, g: `g${index}`}));
+  const datasets = {
+    ds: {
+      fields: [
+        {name: 'v', type: 'integer', valueAccessor: ({index}) => rows[index].v},
+        {name: 'g', type: 'string', valueAccessor: ({index}) => rows[index].g}
+      ]
+    }
+  };
+  const filter = {
+    dataId: ['ds'],
+    yAxis: {name: 'v', type: 'integer'},
+    plotType: {
+      aggregation: 'sum',
+      interval: '1-day',
+      type: 'lineChart',
+      groupBy: {
+        fieldName: 'g',
+        numGroups: PLOT_NUM_GROUPS_ALL,
+        groupOthers: true,
+        colorRange: {colors: ['#111111']}
+      }
+    },
+    timeBins: {
+      ds: {
+        '1-day': [{count: rowCount, indexes: rows.map((_, index) => index), x0: 0, x1: 1}]
+      }
+    }
+  };
+
+  const chart = getLineChart(datasets, filter);
+  const names = seriesSummary(chart).names;
+  t.equal(names.length, MAX_PLOT_NUM_GROUPS + 1, 'should keep the cap plus Others');
+  t.equal(names[names.length - 1], PLOT_GROUP_OTHERS_NAME, 'should fold the rest into Others');
+  t.deepEqual(
+    names.slice(0, MAX_PLOT_NUM_GROUPS),
+    rows.slice(0, MAX_PLOT_NUM_GROUPS).map(row => row.g),
+    'should keep the first groups in first-seen order'
+  );
 
   t.end();
 });
