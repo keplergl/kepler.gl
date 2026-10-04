@@ -151,3 +151,61 @@ test('Components -> LoadDataModal -> auto create layers', t => {
 
   t.end();
 });
+
+test('Components -> LoadDataModal -> one unchecked dataset stays out', t => {
+  const onConfirmAddData = sinon.spy();
+  const points = {info: {label: 'points.csv'}};
+  const remote = {
+    info: {label: 'quakes.csv', format: 'row'},
+    metadata: {source: 'https://example.com/quakes.csv'}
+  };
+  const loading = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal
+        onConfirmAddData={onConfirmAddData}
+        fileLoading={true}
+        stagedToAdd={[points, remote]}
+      />
+    </IntlWrapper>
+  );
+  t.equal(
+    loading.find('.add-data-bar button').at(1).props().disabled,
+    true,
+    'Add Data waits until parsing finishes'
+  );
+
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal onConfirmAddData={onConfirmAddData} stagedToAdd={[points, remote]} />
+    </IntlWrapper>
+  );
+  const checks = () => wrapper.find('.upload-file-list').find('Checkbox');
+  t.equal(checks().length, 2, 'local and remote datasets can each be included');
+  t.equal(
+    wrapper.find('.add-data-bar button').at(1).props().disabled,
+    false,
+    'Add Data is enabled when a dataset is checked'
+  );
+
+  checks().at(1).simulate('change');
+  wrapper.find('.add-data-bar button').at(1).simulate('click');
+  t.deepEqual(
+    onConfirmAddData.args[0][0],
+    {autoCreateLayers: true, datasets: [points]},
+    'Add Data commits only the checked dataset'
+  );
+
+  const tabs = wrapper.find('.load-data-modal__tab__item');
+  let clickedStorage = false;
+  for (let i = 0; i < tabs.length; i++) {
+    if (tabs.at(i).text() === 'Load from Storage') {
+      tabs.at(i).simulate('click');
+      clickedStorage = true;
+      break;
+    }
+  }
+  t.equal(clickedStorage, true, 'should find the storage tab');
+  t.equal(wrapper.find('.add-data-bar').length, 0, 'storage keeps its own load action');
+
+  t.end();
+});
