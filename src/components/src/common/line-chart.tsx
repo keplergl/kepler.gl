@@ -417,7 +417,7 @@ function LineChartFactory() {
               />
             ))}
             {lineMarks.dots.map(mark => (
-              <circle key={`dot-${mark.key}`} cx={mark.x} cy={mark.y} r={3} fill={mark.color} />
+              <circle key={`dot-${mark.key}`} cx={mark.x} cy={mark.y} r={1.5} fill={mark.color} />
             ))}
             {xScale &&
               yScale &&
