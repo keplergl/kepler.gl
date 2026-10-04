@@ -12,8 +12,10 @@ import {messages} from '@kepler.gl/localization';
 
 import {formatMapCoordinate} from './coordinate-info';
 import MapCoordinateMenu, {
+  annotationContextMenuItems,
   contextMenuTargetIsFeatureUi,
   coordinateMenuFromClick,
+  coordinateMenuHiddenByTooltip,
   isFeatureActionPanelOpen,
   isRightDrag
 } from './map-coordinate-menu';
@@ -54,7 +56,12 @@ describe('coordinateMenuFromClick', () => {
       expect(point).toEqual([20, 20]);
       return [-122.4, 37.7];
     });
-    expect(menu).toEqual({x: 20, y: 20, text: '37.700000, -122.400000'});
+    expect(menu).toEqual({
+      x: 20,
+      y: 20,
+      text: '37.700000, -122.400000',
+      coordinate: [-122.4, 37.7]
+    });
   });
 
   test('ignores clicks outside the container and failed projections', () => {
@@ -108,6 +115,38 @@ describe('isFeatureActionPanelOpen', () => {
   });
 });
 
+describe('coordinateMenuHiddenByTooltip', () => {
+  test('hides the menu when a tooltip can describe the feature under the cursor', () => {
+    expect(coordinateMenuHiddenByTooltip(true, 'point-layer')).toBe(true);
+  });
+
+  test('keeps the menu when tooltips are off or the cursor is on empty map', () => {
+    expect(coordinateMenuHiddenByTooltip(false, 'point-layer')).toBe(false);
+    expect(coordinateMenuHiddenByTooltip(true, null)).toBe(false);
+  });
+});
+
+describe('annotationContextMenuItems', () => {
+  test('offers add on an editable map and hide once annotations exist', () => {
+    expect(
+      annotationContextMenuItems({annotationsEnabled: true, readOnly: false, annotationCount: 0})
+    ).toEqual({showAddAnnotation: true, showAnnotationToggle: false});
+    expect(
+      annotationContextMenuItems({annotationsEnabled: true, readOnly: false, annotationCount: 2})
+    ).toEqual({showAddAnnotation: true, showAnnotationToggle: true});
+  });
+
+  test('hides add on a read-only map and both actions when annotations are off', () => {
+    expect(
+      annotationContextMenuItems({annotationsEnabled: true, readOnly: true, annotationCount: 1})
+    ).toEqual({showAddAnnotation: false, showAnnotationToggle: true});
+    expect(annotationContextMenuItems({annotationsEnabled: false, annotationCount: 3})).toEqual({
+      showAddAnnotation: false,
+      showAnnotationToggle: false
+    });
+  });
+});
+
 describe('contextMenuTargetIsFeatureUi', () => {
   test('matches the feature panel and polygon-filter badge', () => {
     document.body.innerHTML =
@@ -142,6 +181,64 @@ describe('MapCoordinateMenu', () => {
     });
     expect(onClose).toHaveBeenCalledTimes(1);
     jest.useRealTimers();
+  });
+
+  test('adds an annotation and hides annotations from the same menu', () => {
+    const onClose = jest.fn();
+    const onAddAnnotation = jest.fn();
+    const onToggleAnnotations = jest.fn();
+    render(
+      <ThemeProvider theme={theme}>
+        <IntlProvider locale="en" messages={messages.en}>
+          <MapCoordinateMenu
+            x={20}
+            y={30}
+            text="37.774929, -122.419418"
+            onClose={onClose}
+            showAddAnnotation={true}
+            showAnnotationToggle={true}
+            annotationsVisible={true}
+            onAddAnnotation={onAddAnnotation}
+            onToggleAnnotations={onToggleAnnotations}
+          />
+        </IntlProvider>
+      </ThemeProvider>
+    );
+
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Add Annotation'}));
+    expect(onAddAnnotation).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Hide Annotations'}));
+    expect(onToggleAnnotations).toHaveBeenCalledTimes(1);
+  });
+
+  test('disables add while annotations are hidden and offers show', () => {
+    const onAddAnnotation = jest.fn();
+    render(
+      <ThemeProvider theme={theme}>
+        <IntlProvider locale="en" messages={messages.en}>
+          <MapCoordinateMenu
+            x={20}
+            y={30}
+            text={null}
+            showCopy={false}
+            onClose={jest.fn()}
+            showAddAnnotation={true}
+            addAnnotationDisabled={true}
+            showAnnotationToggle={true}
+            annotationsVisible={false}
+            onAddAnnotation={onAddAnnotation}
+          />
+        </IntlProvider>
+      </ThemeProvider>
+    );
+
+    const add = screen.getByRole('menuitem', {name: 'Add Annotation'});
+    expect(add).toHaveProperty('disabled', true);
+    fireEvent.click(add);
+    expect(onAddAnnotation).not.toHaveBeenCalled();
+    expect(screen.getByRole('menuitem', {name: 'Show Annotations'})).toBeTruthy();
+    expect(screen.queryByRole('menuitem', {name: 'Copy coordinates'})).toBeNull();
   });
 
   test('leaves the menu open when the clipboard write fails', () => {

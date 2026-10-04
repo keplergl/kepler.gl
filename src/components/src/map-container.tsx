@@ -19,8 +19,10 @@ import MapPopoverFactory from './map/map-popover';
 import MapControlFactory from './map/map-control';
 import MapScaleFactory from './map/map-scale';
 import MapCoordinateMenu, {
+  annotationContextMenuItems,
   coordinateMenuFromClick,
   contextMenuTargetIsFeatureUi,
+  coordinateMenuHiddenByTooltip,
   isFeatureActionPanelOpen,
   isRightDrag,
   CoordinateMenuState
@@ -345,10 +347,7 @@ export default function MapContainerFactory(
     }
 
     componentDidUpdate(prevProps) {
-      if (
-        this.state.coordinateMenu &&
-        isFeatureActionPanelOpen(this.props.visState.editor, this.props.index)
-      ) {
+      if (this.state.coordinateMenu && this._coordinateMenuSuppressed()) {
         this.setState({coordinateMenu: null});
       }
       if (prevProps.mapStyle.styleType !== this.props.mapStyle.styleType) {
@@ -532,9 +531,66 @@ export default function MapContainerFactory(
     }
 
     /**
-     * Browser context menu stays suppressed. When the coordinate interaction is
-     * on, a click (not a right-drag) opens a menu that copies "lat, lng".
-     * Right-clicks on a polygon or polygon filter keep the Filter layers panel.
+     * Copy coordinates stays hidden when this right-click belongs to a tooltip
+     * or to the polygon / filter action panel.
+     */
+    _coordinateMenuSuppressed(clientX?: number, clientY?: number): boolean {
+      const {visState, index} = this.props;
+      return (
+        isFeatureActionPanelOpen(visState.editor, index) ||
+        coordinateMenuHiddenByTooltip(
+          Boolean(visState.interactionConfig.tooltip?.enabled),
+          visState.hoverInfo?.layer?.id
+        ) ||
+        (clientX !== undefined &&
+          clientY !== undefined &&
+          this._rightClickHitsEditorFeature(clientX, clientY))
+      );
+    }
+
+    _annotationMenuItems() {
+      const {readOnly, visState} = this.props;
+      return annotationContextMenuItems({
+        annotationsEnabled: Boolean(getApplicationConfig().enableAnnotations),
+        readOnly,
+        annotationCount: visState.annotations?.length ?? 0
+      });
+    }
+
+    _annotationsVisible(): boolean {
+      return this.props.visState.interactionConfig.annotation?.enabled !== false;
+    }
+
+    _onAddAnnotation = () => {
+      const menu = this.state.coordinateMenu;
+      if (!menu || !this._annotationsVisible()) {
+        return;
+      }
+      const {index, mapControls, uiStateActions, visStateActions} = this.props;
+      if (!mapControls?.annotation?.active) {
+        uiStateActions.toggleMapControl('annotation', Number(index ?? 0));
+      }
+      visStateActions.addAnnotation({
+        anchorPoint: menu.coordinate,
+        mapIndex: index ?? 0
+      });
+      this._closeCoordinateMenu();
+    };
+
+    _onToggleAnnotations = () => {
+      const current = this.props.visState.interactionConfig.annotation;
+      this.props.visStateActions.interactionConfigChange({
+        id: 'annotation',
+        label: current?.label ?? 'interactions.annotation',
+        enabled: !this._annotationsVisible()
+      });
+      this._closeCoordinateMenu();
+    };
+
+    /**
+     * Browser context menu stays suppressed. A click (not a right-drag) can
+     * copy "lat, lng", add an annotation, or hide and show annotations.
+     * A feature with tooltips enabled pins the tooltip instead of opening the menu.
      */
     _onMapContextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
       event.preventDefault();
@@ -544,15 +600,20 @@ export default function MapContainerFactory(
       if (
         isRightDrag(start, event.clientX, event.clientY) ||
         contextMenuTargetIsFeatureUi(event.target) ||
-        isFeatureActionPanelOpen(this.props.visState.editor, this.props.index) ||
-        this._rightClickHitsEditorFeature(event.clientX, event.clientY)
+        this._coordinateMenuSuppressed(event.clientX, event.clientY)
       ) {
         this._closeCoordinateMenu();
         return;
       }
 
       const {isExport, visState, mapState, index} = this.props;
-      if (isExport || !visState.interactionConfig.coordinate.enabled) {
+      const annotationItems = this._annotationMenuItems();
+      if (
+        isExport ||
+        (!visState.interactionConfig.coordinate.enabled &&
+          !annotationItems.showAddAnnotation &&
+          !annotationItems.showAnnotationToggle)
+      ) {
         this._closeCoordinateMenu();
         return;
       }
@@ -1659,18 +1720,20 @@ export default function MapContainerFactory(
               onSelect={visStateActions.setSelectedFeature}
             />
           ) : null}
-          <AnnotationOverlay
-            annotations={visState.annotations}
-            selectedAnnotationId={visState.selectedAnnotationId}
-            isEditingAnnotationText={visState.isEditingAnnotationText}
-            isAnnotationMode={Boolean(mapControls?.annotation?.active)}
-            mapIndex={index || 0}
-            viewport={this._getAnnotationViewport(mapState, internalViewState)}
-            isGlobeEnabled={Boolean(mapState.globe?.enabled)}
-            pickWorldPosition={this._pickAnnotationWorldPosition}
-            updateAnnotation={visStateActions.updateAnnotation}
-            setSelectedAnnotation={visStateActions.setSelectedAnnotation}
-          />
+          {visState.interactionConfig.annotation?.enabled !== false ? (
+            <AnnotationOverlay
+              annotations={visState.annotations}
+              selectedAnnotationId={visState.selectedAnnotationId}
+              isEditingAnnotationText={visState.isEditingAnnotationText}
+              isAnnotationMode={Boolean(mapControls?.annotation?.active)}
+              mapIndex={index || 0}
+              viewport={this._getAnnotationViewport(mapState, internalViewState)}
+              isGlobeEnabled={Boolean(mapState.globe?.enabled)}
+              pickWorldPosition={this._pickAnnotationWorldPosition}
+              updateAnnotation={visStateActions.updateAnnotation}
+              setSelectedAnnotation={visStateActions.setSelectedAnnotation}
+            />
+          ) : null}
           {this.props.children}
           {mapStyle.topMapStyle && !mapState.globe?.enabled ? (
             <ResolvedMapComponent
@@ -1779,12 +1842,25 @@ export default function MapContainerFactory(
           {mapContent}
           {this.state.coordinateMenu &&
           !this.props.isExport &&
-          visState.interactionConfig.coordinate.enabled &&
-          !isFeatureActionPanelOpen(visState.editor, this.props.index) ? (
+          !isFeatureActionPanelOpen(visState.editor, this.props.index) &&
+          !coordinateMenuHiddenByTooltip(
+            Boolean(visState.interactionConfig.tooltip?.enabled),
+            visState.hoverInfo?.layer?.id
+          ) ? (
             <MapCoordinateMenu
               x={this.state.coordinateMenu.x}
               y={this.state.coordinateMenu.y}
-              text={this.state.coordinateMenu.text}
+              text={
+                visState.interactionConfig.coordinate.enabled
+                  ? this.state.coordinateMenu.text
+                  : null
+              }
+              showCopy={visState.interactionConfig.coordinate.enabled}
+              {...this._annotationMenuItems()}
+              addAnnotationDisabled={!this._annotationsVisible()}
+              annotationsVisible={this._annotationsVisible()}
+              onAddAnnotation={this._onAddAnnotation}
+              onToggleAnnotations={this._onToggleAnnotations}
               onClose={this._closeCoordinateMenu}
             />
           ) : null}

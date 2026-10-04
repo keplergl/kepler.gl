@@ -324,6 +324,11 @@ export const defaultInteractionConfig: InteractionConfig = {
     label: 'interactions.coordinate',
     enabled: false,
     position: null
+  },
+  annotation: {
+    id: 'annotation',
+    label: 'interactions.annotation',
+    enabled: true
   }
 };
 

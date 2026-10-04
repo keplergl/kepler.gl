@@ -699,7 +699,7 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV1 = ['tooltip', 'legend', 'brush', 'geocoder', 'coordinate'];
+const interactionPropsV1 = ['tooltip', 'legend', 'brush', 'geocoder', 'coordinate', 'annotation'];
 
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
@@ -712,16 +712,21 @@ export class InteractionSchemaV1 extends Schema {
     // save config even if disabled,
     return Array.isArray(this.properties)
       ? {
-          [this.key]: this.properties.reduce(
-            (accu, key) => ({
+          [this.key]: this.properties.reduce((accu, key) => {
+            const interaction = interactionConfig[key as keyof InteractionConfig];
+            // Older saved states have no annotation interaction.
+            if (!interaction) {
+              return accu;
+            }
+            const config = 'config' in interaction ? interaction.config : undefined;
+            return {
               ...accu,
               [key]: {
-                ...interactionConfig[key].config,
-                enabled: interactionConfig[key].enabled
+                ...(config || {}),
+                enabled: interaction.enabled
               }
-            }),
-            {}
-          )
+            };
+          }, {})
         }
       : {};
   }

@@ -49,6 +49,7 @@ export function onClick(
   }
 ): boolean {
   const drawingActive = isDrawingActive(editorMenuActive, editor.mode);
+  const rightClick = Boolean(event?.rightButton || event?.srcEvent?.button === 2);
 
   if (info?.layer?.id === EDITOR_LAYER_ID && info?.object) {
     const isEditHandle = Boolean(
@@ -61,7 +62,7 @@ export function onClick(
       }
     } else {
       let clickContext;
-      if (event.rightButton && Array.isArray(event.srcEvent?.point)) {
+      if (rightClick && Array.isArray(event.srcEvent?.point)) {
         const {point} = event.srcEvent;
         clickContext = {
           mapIndex,
@@ -87,7 +88,7 @@ export function onClick(
     onLayerClick(null, event);
   } else {
     if (editor.selectedFeature) {
-      if (event.rightButton) {
+      if (rightClick) {
         return true;
       }
 

@@ -45,6 +45,9 @@ export type SavedInteractionConfig = {
   coordinate: {
     enabled: boolean;
   };
+  annotation?: {
+    enabled: boolean;
+  };
   legend?: {
     enabled: boolean;
     hideInvisibleLayers?: boolean;

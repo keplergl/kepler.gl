@@ -7,7 +7,7 @@ import copy from 'copy-to-clipboard';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import {formatMapCoordinate} from './coordinate-info';
-import {Checkmark, Copy} from '../common/icons';
+import {AnnotationText, Checkmark, Copy, EyeSeen, EyeUnseen} from '../common/icons';
 
 const RIGHT_DRAG_THRESHOLD_PX = 3;
 const MENU_OPEN_OFFSET_PX = 4;
@@ -16,7 +16,28 @@ export type CoordinateMenuState = {
   x: number;
   y: number;
   text: string;
+  /** `[lng, lat]` at the click, used to place a new annotation. */
+  coordinate: [number, number];
 };
+
+/** Which annotation actions belong on this right-click. */
+export function annotationContextMenuItems({
+  annotationsEnabled,
+  readOnly = false,
+  annotationCount
+}: {
+  annotationsEnabled: boolean;
+  readOnly?: boolean;
+  annotationCount: number;
+}): {showAddAnnotation: boolean; showAnnotationToggle: boolean} {
+  if (!annotationsEnabled) {
+    return {showAddAnnotation: false, showAnnotationToggle: false};
+  }
+  return {
+    showAddAnnotation: !readOnly,
+    showAnnotationToggle: annotationCount > 0
+  };
+}
 
 type Bounds = {
   left: number;
@@ -43,6 +64,17 @@ export function isFeatureActionPanelOpen(
   return Boolean(
     editor?.selectedFeature && context?.rightClick && (context.mapIndex ?? 0) === (mapIndex ?? 0)
   );
+}
+
+/**
+ * Hide the coordinate menu while a tooltip can describe the feature under the
+ * cursor. The right-click pins that tooltip instead.
+ */
+export function coordinateMenuHiddenByTooltip(
+  tooltipEnabled: boolean,
+  hoverLayerId?: string | null
+): boolean {
+  return Boolean(tooltipEnabled && hoverLayerId);
 }
 
 /** Right-click landed on the feature action panel or a polygon-filter badge. */
@@ -100,10 +132,10 @@ export function coordinateMenuFromClick(
   }
 
   const text = formatMapCoordinate(lngLat);
-  if (!text) {
+  if (!text || !lngLat || lngLat.length < 2) {
     return null;
   }
-  return {x, y, text};
+  return {x, y, text, coordinate: [lngLat[0], lngLat[1]]};
 }
 
 const StyledMenu = styled.div`
@@ -139,17 +171,43 @@ const StyledMenu = styled.div`
       background-color: ${props => props.theme.dropdownListHighlightBg};
       color: ${props => props.theme.textColorHl};
     }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background-color: ${props => props.theme.dropdownListBgd};
+      color: ${props => props.theme.textColor};
+    }
   }
 `;
 
 export type MapCoordinateMenuProps = {
   x: number;
   y: number;
-  text: string;
+  text: string | null;
   onClose: () => void;
+  showCopy?: boolean;
+  showAddAnnotation?: boolean;
+  addAnnotationDisabled?: boolean;
+  showAnnotationToggle?: boolean;
+  annotationsVisible?: boolean;
+  onAddAnnotation?: () => void;
+  onToggleAnnotations?: () => void;
 };
 
-const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({x, y, text, onClose}) => {
+const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({
+  x,
+  y,
+  text,
+  onClose,
+  showCopy = true,
+  showAddAnnotation = false,
+  addAnnotationDisabled = false,
+  showAnnotationToggle = false,
+  annotationsVisible = true,
+  onAddAnnotation,
+  onToggleAnnotations
+}) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const [shift, setShift] = useState({x: MENU_OPEN_OFFSET_PX, y: MENU_OPEN_OFFSET_PX});
   const [interactive, setInteractive] = useState(false);
@@ -169,7 +227,17 @@ const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({x, y, text, onClos
       next.y = -node.offsetHeight - MENU_OPEN_OFFSET_PX;
     }
     setShift(next);
-  }, [x, y, text, copied]);
+  }, [
+    x,
+    y,
+    text,
+    copied,
+    showCopy,
+    showAddAnnotation,
+    showAnnotationToggle,
+    addAnnotationDisabled,
+    annotationsVisible
+  ]);
 
   useEffect(() => {
     setInteractive(false);
@@ -208,7 +276,7 @@ const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({x, y, text, onClos
   }, [copied, onClose]);
 
   const onCopy = () => {
-    if (copied) {
+    if (copied || !text) {
       return;
     }
     if (copy(text)) {
@@ -232,14 +300,49 @@ const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({x, y, text, onClos
         event.stopPropagation();
       }}
     >
-      <button type="button" role="menuitem" onClick={onCopy}>
-        {copied ? <Checkmark height="14px" /> : <Copy height="14px" />}
-        {copied ? (
-          <FormattedMessage id="interactions.coordinateCopied" />
-        ) : (
-          <FormattedMessage id="interactions.copyCoordinate" />
-        )}
-      </button>
+      {showAddAnnotation ? (
+        <button
+          type="button"
+          role="menuitem"
+          disabled={addAnnotationDisabled}
+          onClick={() => {
+            if (!addAnnotationDisabled) {
+              onAddAnnotation?.();
+            }
+          }}
+        >
+          <AnnotationText height="14px" aria-hidden={true} />
+          <FormattedMessage id="interactions.addAnnotation" />
+        </button>
+      ) : null}
+      {showAnnotationToggle ? (
+        <button type="button" role="menuitem" onClick={() => onToggleAnnotations?.()}>
+          {annotationsVisible ? (
+            <EyeUnseen height="14px" aria-hidden={true} />
+          ) : (
+            <EyeSeen height="14px" aria-hidden={true} />
+          )}
+          <FormattedMessage
+            id={
+              annotationsVisible ? 'interactions.hideAnnotations' : 'interactions.showAnnotations'
+            }
+          />
+        </button>
+      ) : null}
+      {showCopy && text ? (
+        <button type="button" role="menuitem" onClick={onCopy}>
+          {copied ? (
+            <Checkmark height="14px" aria-hidden={true} />
+          ) : (
+            <Copy height="14px" aria-hidden={true} />
+          )}
+          {copied ? (
+            <FormattedMessage id="interactions.coordinateCopied" />
+          ) : (
+            <FormattedMessage id="interactions.copyCoordinate" />
+          )}
+        </button>
+      ) : null}
     </StyledMenu>
   );
 };
