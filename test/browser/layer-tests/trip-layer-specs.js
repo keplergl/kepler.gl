@@ -8,6 +8,7 @@ import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {
   tripDefaultLineWidth as defaultLineWidth,
   parseTripGeoJsonTimestamp,
+  getAnimationDomainFromTimestamps,
   KeplerGlLayers
 } from '@kepler.gl/layers';
 
@@ -482,5 +483,19 @@ test('#TripLayer -> parseTripGeoJsonTimestamp', t => {
   const result = parseTripGeoJsonTimestamp(dataToFeature1);
 
   t.deepEqual(result.animationDomain, [1565577261, 1565578836], 'should filter out illugal value');
+  t.end();
+});
+
+test('#TripLayer -> getAnimationDomainFromTimestamps includes single-timestamp trips', t => {
+  t.deepEqual(
+    getAnimationDomainFromTimestamps([[1000], [2000, 3000]]),
+    [1000, 3000],
+    'a one-point trip should contribute both min and max to the animation domain'
+  );
+  t.deepEqual(
+    getAnimationDomainFromTimestamps([[1000, 2000], null, [3000]]),
+    [1000, 3000],
+    'a trip without geometry should be skipped'
+  );
   t.end();
 });
