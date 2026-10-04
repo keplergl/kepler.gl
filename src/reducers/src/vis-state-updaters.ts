@@ -423,6 +423,7 @@ export const INITIAL_VIS_STATE: VisState = {
 
   fileLoading: false,
   fileLoadingProgress: {},
+  stagedToAdd: null,
   // for loading datasets
   loadingIndicatorValue: 0,
   loadingProgress: {},
@@ -3786,18 +3787,20 @@ export const updateVisDataUpdater = (
     return updatedState;
   }
 
-  const createDatasetTasks: TaskDescriptor[] = [];
+  const readyTasks: TaskDescriptor[] = [];
+  const remoteTasks: TaskDescriptor[] = [];
   const notificationTasks: TaskDescriptor[] = [];
   const hydrateProgress: Record<string, number> = {};
 
   datasets.forEach(({info = {}, ...rest}, datasetIndex) => {
     const proto = {info, ...rest};
-    if (needsExternallyHostedHydrate(proto)) {
+    const remote = needsExternallyHostedHydrate(proto);
+    if (remote) {
       hydrateProgress[getDatasetProgressId(proto, datasetIndex)] = 0;
     }
     const task = createNewDataEntryTask(proto, state.datasets);
     if (task) {
-      createDatasetTasks.push(task);
+      (remote ? remoteTasks : readyTasks).push(task);
     } else {
       notificationTasks.push(
         ACTION_TASK_ADD_NOTIFICATION().map(() =>
@@ -3812,15 +3815,22 @@ export const updateVisDataUpdater = (
     }
   });
 
+  // Parsed datasets are committed on their own. A remote download in the same
+  // add must not hold them until the URL finishes.
   const progressIds = Object.keys(hydrateProgress);
-  const datasetsAllSettledTask = createDatasetTasks.length
-    ? Task.allSettled(createDatasetTasks).map(results =>
-        createNewDatasetSuccess({results, addToMapOptions: options, progressIds})
-      )
-    : null;
+  const batches: Array<{tasks: TaskDescriptor[]; progressIds: string[]}> = [];
+  if (readyTasks.length) {
+    batches.push({tasks: readyTasks, progressIds: []});
+  }
+  if (remoteTasks.length) {
+    batches.push({tasks: remoteTasks, progressIds});
+  }
 
-  if (datasetsAllSettledTask) {
-    updatedState = setLoadingIndicatorUpdater(updatedState, payload_({change: 1, type: ''}));
+  if (batches.length) {
+    updatedState = setLoadingIndicatorUpdater(
+      updatedState,
+      payload_({change: batches.length, type: ''})
+    );
     if (progressIds.length) {
       updatedState = {
         ...updatedState,
@@ -3833,7 +3843,15 @@ export const updateVisDataUpdater = (
   }
 
   return withTask(updatedState, [
-    ...(datasetsAllSettledTask ? [datasetsAllSettledTask] : []),
+    ...batches.map(batch =>
+      Task.allSettled(batch.tasks).map(results =>
+        createNewDatasetSuccess({
+          results,
+          addToMapOptions: options,
+          progressIds: batch.progressIds
+        })
+      )
+    ),
     ...notificationTasks
   ]);
 };
@@ -4425,37 +4443,113 @@ export function closeSpecificMapAtIndex<S extends VisState>(
  * @memberof visStateUpdaters
  * @public
  */
+let nextFileLoadId = 1;
+
+function createFileLoadId(): number {
+  const loadId = nextFileLoadId;
+  nextFileLoadId += 1;
+  return loadId;
+}
+
+function finishFileLoad(
+  onFinish: (payload: any, options?: VisStateActions.LoadFilesOptions) => any,
+  fileCache: any[],
+  options: VisStateActions.LoadFilesOptions | undefined,
+  loadId: number
+) {
+  const action = options ? onFinish(fileCache, options) : onFinish(fileCache);
+  return {...action, loadId};
+}
+
 export const loadFilesUpdater = (
   state: VisState,
   action: VisStateActions.LoadFilesUpdaterAction
 ): VisState => {
-  const {files, onFinish = loadFilesSuccess} = action;
+  const {files, onFinish = loadFilesSuccess, options} = action;
   if (!files.length) {
     return state;
   }
 
   const companionFiles = Array.from(files);
   const filesToLoad = getFilesToParse(companionFiles);
+
+  // Another drop while a deferred parse is running must join that load.
+  // Replacing `fileLoading` makes the in-flight file finish against the new
+  // cache and drop the files that were already being parsed.
+  if (state.fileLoading && state.fileLoading.options?.deferAddToMap && options?.deferAddToMap) {
+    return appendDeferredFileLoad(state, {filesToLoad, companionFiles});
+  }
+
   if (!filesToLoad.length) {
     return state;
   }
 
+  // A deferred load is another batch for the same Add Data click. Keep files
+  // already staged, and keep their error cards, instead of starting over.
+  const previousErrors =
+    options?.deferAddToMap && state.fileLoadingProgress
+      ? Object.fromEntries(
+          Object.entries(state.fileLoadingProgress).filter(([, value]) => value?.error)
+        )
+      : {};
+
   const fileLoadingProgress = filesToLoad.reduce(
     (accu, f, i) => merge_(initialFileLoadingProgress(f, i))(accu),
-    {}
+    previousErrors
   );
 
   const fileLoading = {
+    loadId: createFileLoadId(),
     fileCache: [],
     filesToLoad,
     companionFiles,
-    onFinish
+    onFinish,
+    ...(options ? {options} : {})
   };
 
-  const nextState = merge_({fileLoadingProgress, fileLoading})(state);
+  const nextState = merge_({
+    fileLoadingProgress,
+    fileLoading,
+    ...(options?.deferAddToMap ? {} : {stagedToAdd: null})
+  })(state);
 
   return loadNextFileUpdater(nextState);
 };
+
+/**
+ * Add a drop to the deferred load that is already parsing.
+ * The current file keeps its cache; the new files run after it.
+ */
+function appendDeferredFileLoad(
+  state: VisState,
+  {
+    filesToLoad,
+    companionFiles
+  }: {
+    filesToLoad: File[];
+    companionFiles: File[];
+  }
+): VisState {
+  const loading = state.fileLoading;
+  if (!loading || (!filesToLoad.length && !companionFiles.length)) {
+    return state;
+  }
+
+  const fileLoadingProgress = filesToLoad.reduce(
+    (accu, file, index) => merge_(initialFileLoadingProgress(file, index))(accu),
+    state.fileLoadingProgress
+  );
+
+  return {
+    ...state,
+    fileLoadingProgress,
+    fileLoading: {
+      ...loading,
+      filesToLoad: [...Array.from(loading.filesToLoad), ...filesToLoad],
+      companionFiles: [...(loading.companionFiles || []), ...companionFiles]
+    }
+  };
+}
 
 /**
  * Sucessfully loaded one file, move on to the next one
@@ -4470,7 +4564,7 @@ export function loadFileStepSuccessUpdater(
     return state;
   }
   const {fileName, fileCache} = action;
-  const {filesToLoad, onFinish} = state.fileLoading;
+  const loadId = state.fileLoading.loadId;
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
     fileName,
     progress: {percent: 1, message: 'Done'}
@@ -4479,9 +4573,11 @@ export function loadFileStepSuccessUpdater(
   // save processed file to fileCache
   const stateWithCache = pick_('fileLoading')(merge_({fileCache}))(stateWithProgress);
 
+  // Decide after the pause, and only for this load. A drop during these
+  // 200ms joins the queue; cancel or a newer load makes this continuation stale.
   return withTask(
     stateWithCache,
-    DELAY_TASK(200).map(filesToLoad.length ? loadNextFile : () => onFinish(fileCache))
+    DELAY_TASK(200).map(() => loadNextFile(loadId))
   );
 }
 
@@ -4492,11 +4588,18 @@ export function loadFileStepSuccessUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export function loadNextFileUpdater(state: VisState): VisState {
-  if (!state.fileLoading) {
+export function loadNextFileUpdater(state: VisState, action?: {loadId?: number}): VisState {
+  const loadId = action?.loadId;
+  if (!state.fileLoading || (loadId != null && state.fileLoading.loadId !== loadId)) {
     return state;
   }
-  const {filesToLoad} = state.fileLoading;
+  const {filesToLoad, onFinish, fileCache, options, loadId: currentLoadId} = state.fileLoading;
+  if (!filesToLoad.length) {
+    return withTask(
+      state,
+      ACTION_TASK().map(() => finishFileLoad(onFinish, fileCache, options, currentLoadId))
+    );
+  }
   const [file, ...remainingFilesToLoad] = filesToLoad;
 
   // save filesToLoad to state
@@ -4515,7 +4618,8 @@ export function loadNextFileUpdater(state: VisState): VisState {
       nextState.fileLoading && nextState.fileLoading.fileCache,
       loaders,
       loadOptions,
-      nextState.fileLoading ? nextState.fileLoading.companionFiles : undefined
+      nextState.fileLoading ? nextState.fileLoading.companionFiles : undefined,
+      options
     )
   );
 }
@@ -4525,7 +4629,8 @@ export function makeLoadFileTask(
   fileCache,
   loaders: Loader[] = [],
   loadOptions = {},
-  companionFiles?: File[]
+  companionFiles?: File[],
+  addDataOptions?: VisStateActions.LoadFilesOptions
 ) {
   return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions, companionFiles}).bimap(
     // prettier ignore
@@ -4538,7 +4643,8 @@ export function makeLoadFileTask(
           processFileContent({
             content: result,
             fileCache
-          })
+          }),
+        ...(addDataOptions ? {options: addDataOptions} : {})
       }),
 
     // error
@@ -4592,7 +4698,7 @@ export function parseProgress(prevProgress = {}, progress) {
 export const nextFileBatchUpdater = (
   state: VisState,
   {
-    payload: {gen, fileName, progress, accumulated, onFinish}
+    payload: {gen, fileName, progress, accumulated, onFinish, options}
   }: VisStateActions.NextFileBatchUpdaterAction
 ): VisState => {
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
@@ -4600,8 +4706,11 @@ export const nextFileBatchUpdater = (
     progress: parseProgress(state.fileLoadingProgress[fileName], progress)
   });
 
+  const deferAddToMap = Boolean(options?.deferAddToMap);
+
   return withTask(stateWithProgress, [
     ...(getApplicationConfig().useArrowProgressiveLoading &&
+    !deferAddToMap &&
     fileName.endsWith('arrow') &&
     accumulated?.data?.length > 0
       ? [
@@ -4611,7 +4720,7 @@ export const nextFileBatchUpdater = (
             content: {...accumulated, skipArrowCompact: true},
             fileCache: []
           }).bimap(
-            result => loadFilesSuccess(result),
+            result => (options ? loadFilesSuccess(result, options) : loadFilesSuccess(result)),
             err => loadFilesErr(fileName, err)
           )
         ]
@@ -4625,7 +4734,8 @@ export const nextFileBatchUpdater = (
               fileName,
               progress: value.progress,
               accumulated: value,
-              onFinish
+              onFinish,
+              ...(options ? {options} : {})
             });
       },
       err => loadFilesErr(fileName, err)
@@ -4638,6 +4748,18 @@ export const nextFileBatchUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
+/**
+ * Drop files waiting on the Add Data button and abort an in-progress modal load.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const clearStagedLoadedFilesUpdater = (state: VisState): VisState => ({
+  ...state,
+  fileLoading: false,
+  fileLoadingProgress: {},
+  stagedToAdd: null
+});
+
 export const loadFilesErrUpdater = (
   state: VisState,
   {error, fileName}: VisStateActions.LoadFilesErrUpdaterAction
@@ -4647,17 +4769,17 @@ export const loadFilesErrUpdater = (
   if (!state.fileLoading) {
     return state;
   }
-  const {filesToLoad, onFinish, fileCache} = state.fileLoading;
+  const loadId = state.fileLoading.loadId;
 
   const nextState = updateFileLoadingProgressUpdater(state, {
     fileName,
     progress: {error}
   });
 
-  // kick off next file or finish
+  // Same pause as a successful file. Re-check this load's queue when it ends.
   return withTask(
     nextState,
-    DELAY_TASK(200).map(filesToLoad.length ? loadNextFile : () => onFinish(fileCache))
+    DELAY_TASK(200).map(() => loadNextFile(loadId))
   );
 };
 

@@ -808,7 +808,11 @@ export default {
     loadData: {
       upload: 'Load Files',
       tileset: 'Tileset',
-      storage: 'Load from Storage'
+      storage: 'Load from Storage',
+      autoCreateLayers: 'Auto create layers',
+      autoCreateLayersInfo:
+        'kepler.gl will auto detect layers if the column names in your file follow certain naming conventions.',
+      readyToAdd: 'Ready to add'
     },
     tripInfo: {
       title: 'Create trips from GeoJson',
@@ -1034,8 +1038,17 @@ ${'```'}
     fileNotSupported: 'File {errorFiles} is not supported.',
     or: 'or',
     dropMessage: 'Drag & Drop Your File(s) Here, {browse}, or',
+    toAdd: 'To add to map',
+    includeDataset: 'Include {name}',
+    readyToAdd: '{size} - Ready to add file to map',
+    readyToAddNoSize: 'Ready to add file to map',
+    loadingProgress: 'Loading ({loaded} / {total})',
+    loading: 'Loading...',
+    unableToLoad: 'Unable to load file',
+    unsupported: 'Unsupported file type or format',
     urlPlaceholder: 'Enter your dataset URL',
     fetch: 'Fetch',
+    addUrl: 'Add',
     format: 'Format',
     formatAuto: 'Auto',
     cors: 'The URL must allow [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
