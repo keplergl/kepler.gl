@@ -225,6 +225,7 @@ import {
   mergeTimeDomains,
   adjustValueToAnimationWindow,
   updateTimeFilterPlotType,
+  mergePlotGroupBy,
   getDefaultTimeFormat,
   LayerToFilterTimeInterval,
   TIME_INTERVALS_ORDERED,
@@ -1663,7 +1664,14 @@ export const setFilterPlotUpdater = (
 
   for (const prop in newProp) {
     if (prop === 'plotType') {
-      newFilter = pick_('plotType')(merge_(newProp.plotType))(newFilter);
+      let plotTypeUpdate = newProp.plotType;
+      if (plotTypeUpdate && Object.prototype.hasOwnProperty.call(plotTypeUpdate, 'groupBy')) {
+        plotTypeUpdate = {
+          ...plotTypeUpdate,
+          groupBy: mergePlotGroupBy(newFilter.plotType?.groupBy, plotTypeUpdate.groupBy)
+        };
+      }
+      newFilter = pick_('plotType')(merge_(plotTypeUpdate))(newFilter);
     } else if (prop === 'yAxis') {
       const chartType = newProp.yAxis ? PLOT_TYPES.lineChart : PLOT_TYPES.histogram;
 

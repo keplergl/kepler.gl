@@ -57,7 +57,15 @@ export {
   histogramFromTimeIntervals,
   mergePolygonLayerIndexes,
   runGpuFilterForPlot,
-  updateTimeFilterPlotType
+  updateTimeFilterPlotType,
+  getLineChart,
+  mergePlotGroupBy,
+  lineChartSeriesLegend,
+  defaultPlotGroupColorRange,
+  PLOT_GROUP_OTHERS_NAME,
+  PLOT_NUM_GROUPS_ALL,
+  PLOT_NUM_GROUPS_OPTIONS,
+  DEFAULT_PLOT_NUM_GROUPS
 } from './plot';
 // eslint-disable-next-line prettier/prettier
 export * from './data-utils';

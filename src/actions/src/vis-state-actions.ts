@@ -1780,7 +1780,10 @@ export function toggleLayerForMap(
 
 type FilterPlotNewProp = {
   yAxis?: null | Record<string, any>;
-  plotType?: {type: string};
+  plotType?: {
+    type?: string;
+    [key: string]: any;
+  };
 };
 export type SetFilterPlotUpdaterAction = {
   idx: number;

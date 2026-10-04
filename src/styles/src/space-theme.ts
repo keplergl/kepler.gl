@@ -175,6 +175,7 @@ export const themeSpace = {
   sliderBarBgd: COLOR.AZURE900,
   sliderBarHoverColor: COLOR.AZURE100,
   rangeBrushBgd: COLOR.AZURE700,
+  rangePlotBgd: COLOR.AZURE950,
   histogramFillInRange: COLOR.BLUE,
   histogramFillOutRange: COLOR.AZURE600,
   histogramOverlayColor: COLOR.AZURE600,
