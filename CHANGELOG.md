@@ -17,6 +17,34 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.3.0-alpha.15] - Sep 28 2026
 
+- 363e7542 feat(timeline): group line chart series by a field (#3781)
+- 747ca0de feat(interactions): fade layer opacity by zoom (#3780)
+- 7441968c feat(3d): add model gallery, custom models, and GeoJSON input (#3779)
+- 445f7f8a chore(deps): bump jupyterlab from 4.5.10 to 4.5.11 in /bindings/python (#3785)
+- 74648f38 chore(deps): bump tornado from 6.5.8 to 6.5.9 in /bindings/python (#3784)
+- d22dd528 fix(trip-layer): scenegraph filters, one-point animation domain, and UI docs (#3778)
+- 524eee78 chore(examples): upgrade DuckDB vite example to latest (#3777)
+- 14482223 fix(h3): fix fixed height option (#3776)
+- 5eeca8f8 feat: confirm datasets in the Add Data dialog before adding them (#3770)
+- e55768c7 chore(deps): bump soupsieve from 2.8.4 to 2.9 in /bindings/python (#3738)
+- 37d2d846 chore(deps-dev): bump webpack-dev-middleware in /website (#3772)
+- 6ea906ea feat: Interactions Legend section and include-in-legend toggles (#3768)
+- 761e2c3f chore(deps): bump undici from 8.10.0 to 8.11.2 in /examples/node-app (#3769)
+- c8d5d5b8 chore(deps): bump undici in /examples/replace-component (#3771)
+- f5413af4 fix: let the incremental animation window reach the last of the data (#3773)
+- 47f13f1e fix(website): fix scrolling (#3774)
+- ba7c67db feat(raster-tile-layer): picking info (#3767)
+- 58d2a5de feat: json editor for charts (#3763)
+- de195bf5 feat: resize the map legend from the top handle (#3762)
+- f6d2c3ab fix: labels background depth test fix (#3761)
+- 83e63b8a feat: improve 3D tiles API token lifecycle (#3759)
+- e13d11ee fix: keep the video export camera on the same center as the main map (#3758)
+- 4c27c0ba feat: Add GeoJSON elevation offset for floating 3D polygons (#3757)
+- 019a8b34 feat: add a center handle to move bitmap layer bounds (#3756)
+- 39540fd0 feat: dataset operations as an optional base for frequent geometry ops (#3746)
+
+## [3.3.0-alpha.15] - Sep 28 2026
+
 - ac36f69f feat: progress bar when loading remote datasets from a saved map (#3764)
 - d49a5200 fix: titiler.xyz CORS cache breaking COG tiles on demo and HTML export (#3765)
 - af5ded87 feat: add space theme and configurable theme cycle (#3755)
