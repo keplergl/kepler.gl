@@ -626,6 +626,8 @@ export default {
     tooltip: '工具提示',
     brush: '刷',
     coordinate: '坐标',
+    copyCoordinate: '复制坐标',
+    coordinateCopied: '已复制',
     geocoder: '地理编码器',
     legend: '图例',
     legendHint: '选择哪些图层显示在图例中。图层仍会留在地图上。',

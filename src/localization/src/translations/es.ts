@@ -647,6 +647,8 @@ export default {
     tooltip: 'Sugerencias',
     brush: 'Pincel',
     coordinate: 'Coordenadas',
+    copyCoordinate: 'Copiar coordenadas',
+    coordinateCopied: 'Copiado',
     geocoder: 'Geocodificador',
     legend: 'Leyenda',
     legendHint: 'Elige qué capas aparecen en la leyenda. Las capas siguen en el mapa.',

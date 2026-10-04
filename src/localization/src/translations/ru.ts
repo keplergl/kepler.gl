@@ -648,6 +648,8 @@ export default {
     tooltip: 'Подсказка',
     brush: 'Кисть',
     coordinate: 'Координаты',
+    copyCoordinate: 'Копировать координаты',
+    coordinateCopied: 'Скопировано',
     geocoder: 'Геокодер',
     legend: 'Легенда',
     legendHint: 'Выберите, какие слои видны в легенде. На карте слои остаются.',

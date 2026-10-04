@@ -644,6 +644,8 @@ export default {
     tooltip: 'Vihje',
     brush: 'Harja',
     coordinate: 'Koordinaatit',
+    copyCoordinate: 'Kopioi koordinaatit',
+    coordinateCopied: 'Kopioitu',
     geocoder: 'Geocoder',
     legend: 'Selite',
     legendHint: 'Valitse, mitkä tasot näkyvät selitteessä. Tasot pysyvät kartalla.',

@@ -642,6 +642,8 @@ export default {
     tooltip: 'ツールチップ',
     brush: 'ブラシ',
     coordinate: '座標',
+    copyCoordinate: '座標をコピー',
+    coordinateCopied: 'コピーしました',
     geocoder: 'ジオコーダー',
     legend: '凡例',
     legendHint: '凡例に表示するレイヤを選びます。マップ上のレイヤはそのままです。',

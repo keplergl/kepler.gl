@@ -18,6 +18,13 @@ import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actio
 import MapPopoverFactory from './map/map-popover';
 import MapControlFactory from './map/map-control';
 import MapScaleFactory from './map/map-scale';
+import MapCoordinateMenu, {
+  coordinateMenuFromClick,
+  contextMenuTargetIsFeatureUi,
+  isFeatureActionPanelOpen,
+  isRightDrag,
+  CoordinateMenuState
+} from './map/map-coordinate-menu';
 import {StyledMapContainer} from './common/styled-components';
 import {
   Attribution,
@@ -75,6 +82,8 @@ import {
 import {
   FILTER_TYPES,
   GEOCODER_LAYER_ID,
+  EDITOR_LAYER_ID,
+  EDITOR_LAYER_PICKING_RADIUS,
   THROTTLE_NOTIFICATION_TIME,
   DEFAULT_PICKING_RADIUS,
   NO_MAP_ID,
@@ -309,8 +318,12 @@ export default function MapContainerFactory(
       showBaseMapLibLogo: false,
       // attribution strings collected from the resolved map sources (e.g. CARTO,
       // OpenFreeMap).  Populated after TileJSON resolves.
-      basemapAttributions: [] as string[]
+      basemapAttributions: [] as string[],
+      coordinateMenu: null as CoordinateMenuState | null
     };
+
+    // Right-button press origin, used to ignore rotate/pitch drags.
+    _rightPress: {x: number; y: number} | null = null;
 
     componentDidMount() {
       if (!this._ref.current) {
@@ -332,6 +345,12 @@ export default function MapContainerFactory(
     }
 
     componentDidUpdate(prevProps) {
+      if (
+        this.state.coordinateMenu &&
+        isFeatureActionPanelOpen(this.props.visState.editor, this.props.index)
+      ) {
+        this.setState({coordinateMenu: null});
+      }
       if (prevProps.mapStyle.styleType !== this.props.mapStyle.styleType) {
         this._removeBasemapAttributionListeners();
         if (this.props.mapStyle.styleType === NO_MAP_ID) {
@@ -474,6 +493,88 @@ export default function MapContainerFactory(
     /* component private functions */
     _onCloseMapPopover = () => {
       this.props.visStateActions.onLayerClick(null);
+    };
+
+    _closeCoordinateMenu = () => {
+      if (this.state.coordinateMenu) {
+        this.setState({coordinateMenu: null});
+      }
+    };
+
+    _onMapPointerDownCapture = (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.button === 2) {
+        this._rightPress = {x: event.clientX, y: event.clientY};
+      }
+    };
+
+    /**
+     * A polygon or polygon filter under the cursor owns this right-click.
+     * Its action panel (Filter layers) is anchored at the same pixel.
+     */
+    _rightClickHitsEditorFeature(clientX: number, clientY: number): boolean {
+      const deck = this._deck;
+      const canvas = deck?.canvas || deck?.getCanvas?.();
+      const rect = canvas?.getBoundingClientRect?.();
+      if (!deck?.pickMultipleObjects || !rect) {
+        return false;
+      }
+      try {
+        const picks = deck.pickMultipleObjects({
+          x: clientX - rect.left,
+          y: clientY - rect.top,
+          radius: EDITOR_LAYER_PICKING_RADIUS,
+          layerIds: [EDITOR_LAYER_ID]
+        });
+        return Array.isArray(picks) && picks.some(pick => pick?.object);
+      } catch {
+        return false;
+      }
+    }
+
+    /**
+     * Browser context menu stays suppressed. When the coordinate interaction is
+     * on, a click (not a right-drag) opens a menu that copies "lat, lng".
+     * Right-clicks on a polygon or polygon filter keep the Filter layers panel.
+     */
+    _onMapContextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+
+      const start = this._rightPress;
+      this._rightPress = null;
+      if (
+        isRightDrag(start, event.clientX, event.clientY) ||
+        contextMenuTargetIsFeatureUi(event.target) ||
+        isFeatureActionPanelOpen(this.props.visState.editor, this.props.index) ||
+        this._rightClickHitsEditorFeature(event.clientX, event.clientY)
+      ) {
+        this._closeCoordinateMenu();
+        return;
+      }
+
+      const {isExport, visState, mapState, index} = this.props;
+      if (isExport || !visState.interactionConfig.coordinate.enabled) {
+        this._closeCoordinateMenu();
+        return;
+      }
+
+      const bounds = this._ref.current?.getBoundingClientRect();
+      if (!bounds) {
+        this._closeCoordinateMenu();
+        return;
+      }
+
+      const internalViewState = this.context?.getInternalViewState(index);
+      const viewport = getViewportFromMapState({
+        ...mapState,
+        ...internalViewState
+      }) as {
+        unproject: (xyz: number[], opts?: {targetZ?: number}) => number[];
+      };
+
+      const coordinateMenu = coordinateMenuFromClick(event.clientX, event.clientY, bounds, point =>
+        viewport.unproject(point, {targetZ: 0})
+      );
+      this.setState({coordinateMenu});
     };
 
     _onLayerHover = (_idx: number, info: PickingInfo<any> | null) => {
@@ -1670,11 +1771,23 @@ export default function MapContainerFactory(
         <StyledMap
           ref={this._ref}
           style={this.styleSelector(this.props)}
-          onContextMenu={event => event.preventDefault()}
+          onPointerDownCapture={this._onMapPointerDownCapture}
+          onContextMenu={this._onMapContextMenu}
           $mixBlendMode={visState.overlayBlending}
           $mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
         >
           {mapContent}
+          {this.state.coordinateMenu &&
+          !this.props.isExport &&
+          visState.interactionConfig.coordinate.enabled &&
+          !isFeatureActionPanelOpen(visState.editor, this.props.index) ? (
+            <MapCoordinateMenu
+              x={this.state.coordinateMenu.x}
+              y={this.state.coordinateMenu.y}
+              text={this.state.coordinateMenu.text}
+              onClose={this._closeCoordinateMenu}
+            />
+          ) : null}
         </StyledMap>
       );
     }

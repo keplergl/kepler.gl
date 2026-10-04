@@ -928,6 +928,8 @@ ${'```'}
     tooltip: 'Tooltip',
     brush: 'Brush',
     coordinate: 'Coordinates',
+    copyCoordinate: 'Copy coordinates',
+    coordinateCopied: 'Copied',
     geocoder: 'Geocoder',
     legend: 'Legend',
     legendHint: 'Choose which layers appear in the map legend. Layers stay on the map.',

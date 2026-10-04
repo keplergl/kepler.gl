@@ -647,6 +647,8 @@ export default {
     tooltip: 'Dica de contexto',
     brush: 'Pincel',
     coordinate: 'Coordenadas',
+    copyCoordinate: 'Copiar coordenadas',
+    coordinateCopied: 'Copiado',
     geocoder: 'Geocoder',
     legend: 'Legenda',
     legendHint: 'Escolha quais camadas aparecem na legenda. As camadas continuam no mapa.',

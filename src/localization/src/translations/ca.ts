@@ -646,6 +646,8 @@ export default {
     tooltip: 'Suggeriment',
     brush: 'Pinzell',
     coordinate: 'Coordenades',
+    copyCoordinate: 'Copia les coordenades',
+    coordinateCopied: 'Copiat',
     geocoder: 'Geocodificador',
     legend: 'Llegenda',
     legendHint: 'Tria quines capes apareixen a la llegenda. Les capes segueixen al mapa.',
