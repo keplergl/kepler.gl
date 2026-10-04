@@ -197,6 +197,7 @@ function ScenegraphModelSelectorFactory(
               displayOption={getDisplayOption}
               DropDownLineItemRenderComponent={LayerTypeListItem}
               DropDownRenderComponent={LayerTypeDropdownList}
+              DropDownWrapperComponent={ModelMenuFrame}
             />
           </ModelDropdown>
           <Checkbox
@@ -290,6 +291,12 @@ const ModelDropdown = styled.div<{$active?: boolean}>`
   .item-selector .item-selector__dropdown {
     padding: 4px 10px 4px 10px;
   }
+`;
+
+const ModelMenuFrame = styled.div<{width?: number}>`
+  border: 0;
+  z-index: ${props => props.theme.dropdownWrapperZ};
+  width: ${props => (props.width || 0) + 10}px;
 `;
 
 const SourceControl = styled.div`

@@ -12,6 +12,7 @@ import {
   CUSTOM_SCENEGRAPH_MODEL_ID,
   DEFAULT_SCENEGRAPH_MODEL,
   DEFAULT_SCENEGRAPH_MODEL_ID,
+  LEGACY_DEFAULT_SCENEGRAPH_URL,
   GEOARROW_METADATA_KEY,
   GEOJSON_FIELDS,
   LAYER_VIS_CONFIGS,
@@ -111,6 +112,7 @@ const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
 /**
  * Public GCS object URLs do not send Access-Control-Allow-Origin.
  * The JSON API download of the same object does, and echoes the page origin.
+ * Signed URLs keep their query string; rewriting them drops the signature.
  */
 export function toCorsSafeGcsUrl(url: string): string {
   let parsed: URL;
@@ -119,7 +121,7 @@ export function toCorsSafeGcsUrl(url: string): string {
   } catch {
     return url;
   }
-  if (parsed.protocol !== 'https:') {
+  if (parsed.protocol !== 'https:' || parsed.search) {
     return url;
   }
 
@@ -198,7 +200,7 @@ export const scenegraphVisConfigs: {
   colorRange: 'colorRange',
   sizeScale: {
     ...LAYER_VIS_CONFIGS.sizeScale,
-    range: [0, 100],
+    range: [0, 10000],
     step: 0.01
   },
   angleX: {
@@ -236,6 +238,28 @@ const DEFAULT_ANIMATIONS = {
 
 function isScenegraphAssetUrl(value: unknown): value is string {
   return typeof value === 'string' && value.includes('/');
+}
+
+/**
+ * Saved 3D layers stored `scenegraph: null` and rendered the Khronos duck at
+ * `sizeScale` with yaw taken only from angle Z (default 90). Leaving null lets
+ * the new Ducky default add another 90° and multiply size by the model scale.
+ */
+export function migrateLegacyScenegraphVisConfig<T extends {scenegraph?: string | null}>(
+  visConfig: T | null | undefined
+): T | null | undefined {
+  if (!visConfig || visConfig.scenegraph != null) {
+    return visConfig;
+  }
+  const hasScenegraphKey = Object.prototype.hasOwnProperty.call(visConfig, 'scenegraph');
+  const looksLikeLegacyScenegraph =
+    hasScenegraphKey ||
+    Object.prototype.hasOwnProperty.call(visConfig, 'angleZ') ||
+    Object.prototype.hasOwnProperty.call(visConfig, 'angleX');
+  if (!looksLikeLegacyScenegraph) {
+    return visConfig;
+  }
+  return {...visConfig, scenegraph: LEGACY_DEFAULT_SCENEGRAPH_URL};
 }
 
 export default class ScenegraphLayer extends Layer {

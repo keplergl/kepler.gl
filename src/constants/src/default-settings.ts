@@ -1919,6 +1919,8 @@ export const getLoaderOptions = () => {
 
 export const CUSTOM_SCENEGRAPH_MODEL_ID = 'custom';
 export const DEFAULT_SCENEGRAPH_MODEL_ID = 'default-model';
+export const LEGACY_DEFAULT_SCENEGRAPH_URL =
+  'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb';
 const MODELS_BASE_URL =
   'https://studio-public-data.foursquare.com/statics/keplergl/3d-models.2022-06-13';
 

@@ -18,8 +18,13 @@ import {
   pointLayerMeta,
   preparedFilterDomain0
 } from 'test/helpers/layer-utils';
-import {DEFAULT_SCENEGRAPH_MODEL, CUSTOM_SCENEGRAPH_MODEL_ID} from '@kepler.gl/constants';
+import {
+  DEFAULT_SCENEGRAPH_MODEL,
+  CUSTOM_SCENEGRAPH_MODEL_ID,
+  LEGACY_DEFAULT_SCENEGRAPH_URL
+} from '@kepler.gl/constants';
 import {KeplerGlLayers, toCorsSafeGcsUrl} from '@kepler.gl/layers';
+import SchemaManager, {CURRENT_VERSION} from '@kepler.gl/schemas';
 const {ScenegraphLayer} = KeplerGlLayers;
 const columns = {lat: 'lat', lng: 'lng'};
 
@@ -309,6 +314,43 @@ test('#ScenegraphLayer -> renderLayer', t => {
         t.equal(props.sizeScale, 10, 'legacy urls keep the saved size');
         t.deepEqual(props.getOrientation, [0, 0, 90], 'legacy urls do not add model angles');
       }
+    },
+    {
+      name: 'Scenegraph legacy default duck',
+      layer: {
+        type: '3D',
+        id: 'test_layer_legacy_default',
+        config: {
+          dataId,
+          label: 'gps 3d',
+          columns,
+          visConfig: {
+            scenegraph: null,
+            angleZ: 90,
+            sizeScale: 10
+          }
+        }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      assert: (deckLayers, layer) => {
+        const {props} = deckLayers[0];
+        t.equal(
+          layer.config.visConfig.scenegraph,
+          LEGACY_DEFAULT_SCENEGRAPH_URL,
+          'null scenegraph keeps the pre-gallery duck'
+        );
+        t.equal(props.sizeScale, 10, 'legacy default duck keeps the saved size');
+        t.deepEqual(
+          props.getOrientation,
+          [0, 0, 90],
+          'legacy default duck does not add the gallery model yaw'
+        );
+      }
     }
   ];
 
@@ -365,6 +407,16 @@ test('#ScenegraphLayer -> GCS model URL', t => {
     'https://storage.googleapis.com/storage/v1/b/kepler-examples/o/duck.glb?alt=media',
     'rewrites public GCS object URLs to the CORS-enabled download API'
   );
+  const signed =
+    'https://storage.googleapis.com/kepler-examples/duck.glb?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Signature=abc';
+  t.equal(toCorsSafeGcsUrl(signed), signed, 'leaves signed GCS URLs unchanged');
+  const signedVirtualHost =
+    'https://kepler-examples.storage.googleapis.com/duck.glb?GoogleAccessId=test&Expires=1&Signature=abc';
+  t.equal(
+    toCorsSafeGcsUrl(signedVirtualHost),
+    signedVirtualHost,
+    'leaves virtual-hosted signed GCS URLs unchanged'
+  );
   t.equal(
     toCorsSafeGcsUrl('https://studio-public-data.foursquare.com/statics/keplergl/Duck.glb'),
     'https://studio-public-data.foursquare.com/statics/keplergl/Duck.glb',
@@ -375,5 +427,47 @@ test('#ScenegraphLayer -> GCS model URL', t => {
     'blob:http://localhost/model.glb',
     'leaves local file URLs unchanged'
   );
+  t.end();
+});
+
+test('#ScenegraphLayer -> saved map without a model', t => {
+  const saved = {
+    version: CURRENT_VERSION,
+    config: {
+      visState: {
+        layers: [
+          {
+            id: 'legacy-3d',
+            type: '3D',
+            config: {
+              dataId: 'd',
+              label: 'old duck',
+              visConfig: {scenegraph: null, angleZ: 90, sizeScale: 10}
+            }
+          },
+          {
+            id: 'trip-0',
+            type: 'trip',
+            config: {
+              dataId: 'd',
+              label: 'trip',
+              visConfig: {scenegraph: null, scenegraphEnabled: false}
+            }
+          }
+        ]
+      }
+    }
+  };
+  const layers = SchemaManager.parseSavedConfig(saved).visState.layers;
+  const duck = layers.find(layer => layer.type === '3D');
+  const trip = layers.find(layer => layer.type === 'trip');
+
+  t.equal(
+    duck.config.visConfig.scenegraph,
+    LEGACY_DEFAULT_SCENEGRAPH_URL,
+    'saved 3D layers with a null model keep the pre-gallery duck'
+  );
+  t.equal(duck.config.visConfig.angleZ, 90, 'saved angle Z is preserved');
+  t.equal(trip.config.visConfig.scenegraph, null, 'trip layers keep an empty model');
   t.end();
 });
