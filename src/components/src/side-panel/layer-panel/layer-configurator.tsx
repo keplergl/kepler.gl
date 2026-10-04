@@ -891,6 +891,7 @@ export default function LayerConfiguratorFactory(
                 {...layer.visConfigSettings.sizeRange}
                 {...visConfiguratorProps}
                 label="layerVisConfigs.heightRange"
+                disabled={layer.config.visConfig.fixedHeight}
               />
               <VisConfigSwitch {...layer.visConfigSettings.fixedHeight} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>

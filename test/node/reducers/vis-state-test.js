@@ -26,7 +26,7 @@ import {
   calculateLayerData
 } from '@kepler.gl/reducers';
 
-import {processCsvData, processGeojson} from '@kepler.gl/processors';
+import {processCsvData, processGeojson, remoteDatasetFromUrl} from '@kepler.gl/processors';
 import {Layer, KeplerGlLayers, COLUMN_MODE_TABLE} from '@kepler.gl/layers';
 import {maybeToDate} from '@kepler.gl/table';
 import {
@@ -6769,7 +6769,12 @@ test('#visStateReducer -> LOAD_FILES', async t => {
     'test-file-2.csv': {percent: 0, message: '', fileName: 'test-file-2.csv', error: null}
   };
 
-  t.deepEqual(nextState.fileLoading, expectedFileLoading, 'should save fileLoading in state');
+  t.deepEqual(
+    nextState.fileLoading,
+    {...expectedFileLoading, loadId: nextState.fileLoading.loadId},
+    'should save fileLoading in state'
+  );
+  t.equal(typeof nextState.fileLoading.loadId, 'number', 'should assign a load session');
   t.deepEqual(
     nextState.fileLoadingProgress,
     expectedFileLoadingProgress,
@@ -6845,6 +6850,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.deepEqual(
     nextState3Err.fileLoading,
     {
+      loadId: nextState.fileLoading.loadId,
       fileCache: [],
       filesToLoad: [],
       companionFiles: mockFiles,
@@ -6930,6 +6936,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.deepEqual(
     resultState5.fileLoading,
     {
+      loadId: nextState.fileLoading.loadId,
       fileCache: fileProcessResult,
       filesToLoad: [{type: 'text/csv', name: 'test-file-2.csv'}],
       companionFiles: mockFiles,
@@ -6969,6 +6976,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.deepEqual(
     resultState6.fileLoading,
     {
+      loadId: nextState.fileLoading.loadId,
       fileCache: fileProcessResult,
       filesToLoad: [],
       companionFiles: mockFiles,
@@ -7012,6 +7020,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.deepEqual(
     resultState10.fileLoading,
     {
+      loadId: nextState.fileLoading.loadId,
       fileCache: file2ProcessResult,
       filesToLoad: [],
       companionFiles: mockFiles,
@@ -7024,7 +7033,11 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.equal(task10.type, 'DELAY_TASK', 'should return an DELAY_TASK for onFinish');
 
   // calling delayed task succeed to trigger load next file
-  const _resultState11 = reducer(resultState10, succeedTaskInTest(task10));
+  const resultState11 = reducer(resultState10, succeedTaskInTest(task10));
+  const [task11, ...more11] = drainTasksForTesting();
+  t.equal(more11.length, 0, 'should create 1 task');
+  t.equal(task11.type, 'ACTION_TASK', 'an empty queue finishes the load');
+  reducer(resultState11, succeedTaskInTest(task11));
 
   t.ok(loadFilesSuccessSpy.calledOnce);
   const expectedArgs = [
@@ -7036,6 +7049,207 @@ test('#visStateReducer -> LOAD_FILES', async t => {
 
   loadFileErrSpy.restore();
   t.end();
+});
+
+test('#visStateReducer -> LOAD_FILES autoCreateLayers option', t => {
+  drainTasksForTesting();
+
+  const initialState = CloneDeep(InitialState).visState;
+  const mockFiles = [{type: 'text/csv', name: 'test-file.csv'}];
+  const nextState = reducer(
+    initialState,
+    VisStateActions.loadFiles(mockFiles, undefined, {autoCreateLayers: false})
+  );
+
+  t.equal(
+    nextState.fileLoading.options.autoCreateLayers,
+    false,
+    'should keep autoCreateLayers on the in-progress file load'
+  );
+
+  drainTasksForTesting();
+  t.end();
+});
+
+test('#visStateReducer -> LOAD_FILES deferAddToMap', t => {
+  drainTasksForTesting();
+
+  const initialState = CloneDeep(InitialState).visState;
+  const mockFiles = [{type: 'text/csv', name: 'test-file.csv'}];
+  const nextState = reducer(
+    initialState,
+    VisStateActions.loadFiles(mockFiles, VisStateActions.stageLoadedFiles, {deferAddToMap: true})
+  );
+
+  t.equal(
+    nextState.fileLoading.onFinish,
+    VisStateActions.stageLoadedFiles,
+    'should stage instead of adding'
+  );
+  t.equal(
+    nextState.fileLoading.options.deferAddToMap,
+    true,
+    'should keep deferAddToMap on the load'
+  );
+
+  const alreadyStaged = [{info: {label: 'points.csv'}}];
+  const withStaged = {...initialState, stagedToAdd: alreadyStaged};
+  const deferred = reducer(
+    withStaged,
+    VisStateActions.loadFiles(mockFiles, VisStateActions.stageLoadedFiles, {deferAddToMap: true})
+  );
+  t.equal(deferred.stagedToAdd, alreadyStaged, 'should keep files already staged for Add Data');
+
+  const replaced = reducer(withStaged, VisStateActions.loadFiles(mockFiles));
+  t.equal(replaced.stagedToAdd, null, 'should clear staged files when adding them immediately');
+
+  drainTasksForTesting();
+  const remote = remoteDatasetFromUrl('https://example.com/quakes.csv');
+  const hydrating = reducer(
+    CloneDeep(InitialState).visState,
+    VisStateActions.updateVisData([remote])
+  );
+  t.equal(
+    hydrating.loadingProgress[remote.info.id],
+    0,
+    'adding a staged remote url should start the remote download'
+  );
+  t.equal(
+    hydrating.datasets[remote.info.id],
+    undefined,
+    'should not insert rows before the download'
+  );
+  drainTasksForTesting();
+
+  const queued = reducer(
+    nextState,
+    VisStateActions.loadFiles(
+      [{type: 'text/csv', name: 'extra.csv'}],
+      VisStateActions.stageLoadedFiles,
+      {
+        deferAddToMap: true
+      }
+    )
+  );
+  t.deepEqual(
+    queued.fileLoading.filesToLoad.map(file => file.name),
+    ['extra.csv'],
+    'a second drop waits behind the file already parsing'
+  );
+  t.equal(
+    queued.fileLoading.fileCache,
+    nextState.fileLoading.fileCache,
+    'should keep the in-progress cache'
+  );
+  t.ok(queued.fileLoadingProgress['test-file.csv'], 'should keep progress for the first file');
+  t.ok(queued.fileLoadingProgress['extra.csv'], 'should show progress for the queued file');
+
+  const readyToFinish = {
+    ...nextState,
+    fileLoading: {
+      ...nextState.fileLoading,
+      filesToLoad: [],
+      fileCache: [{info: {label: 'test-file.csv'}}]
+    }
+  };
+  const droppedDuringPause = reducer(
+    readyToFinish,
+    VisStateActions.loadFiles(
+      [{type: 'text/csv', name: 'late.csv'}],
+      VisStateActions.stageLoadedFiles,
+      {deferAddToMap: true}
+    )
+  );
+  const continued = reducer(droppedDuringPause, VisStateActions.loadNextFile());
+  t.equal(
+    continued.fileLoadingProgress['late.csv'].message,
+    'loading...',
+    'a file dropped during the finish pause starts parsing'
+  );
+  t.equal(
+    continued.fileLoading.fileCache,
+    readyToFinish.fileLoading.fileCache,
+    'should keep the parsed files while the queued file loads'
+  );
+
+  const canceled = reducer(readyToFinish, VisStateActions.clearStagedLoadedFiles());
+  drainTasksForTesting();
+  const ignored = reducer(canceled, VisStateActions.loadNextFile(readyToFinish.fileLoading.loadId));
+  t.equal(ignored.fileLoading, false, 'a canceled load is not resumed');
+  t.equal(ignored.stagedToAdd, null, 'cancel stays discarded');
+  t.equal(drainTasksForTesting().length, 0, 'a canceled pause does not stage files');
+
+  const restarted = reducer(
+    canceled,
+    VisStateActions.loadFiles(
+      [{type: 'text/csv', name: 'fresh.csv'}],
+      VisStateActions.stageLoadedFiles,
+      {deferAddToMap: true}
+    )
+  );
+  drainTasksForTesting();
+  const stale = reducer(restarted, VisStateActions.loadNextFile(readyToFinish.fileLoading.loadId));
+  t.equal(stale.fileLoading, restarted.fileLoading, 'a stale pause does not replace the new load');
+  t.equal(drainTasksForTesting().length, 0, 'a stale pause does not stage or parse');
+
+  const cleared = reducer(nextState, VisStateActions.clearStagedLoadedFiles());
+  t.equal(cleared.fileLoading, false, 'cancel should stop the in-progress load');
+  t.equal(cleared.stagedToAdd, null, 'cancel should drop staged files');
+
+  drainTasksForTesting();
+  t.end();
+});
+
+test('#visStateReducer -> local dataset is not blocked by a remote download', t => {
+  drainTasksForTesting();
+  const local = {
+    info: {id: 'local-points', label: 'points.csv'},
+    data: processCsvData('lat,lng\n1,2')
+  };
+  const remote = remoteDatasetFromUrl('https://example.com/slow.csv');
+  const nextState = reducer(
+    CloneDeep(InitialState).visState,
+    VisStateActions.updateVisData([local, remote])
+  );
+  const tasks = drainTasksForTesting();
+  const ready = tasks.find(
+    task => task.label.includes('CREATE_TABLE_TASK') && !task.label.includes('HYDRATE')
+  );
+  const remoteTask = tasks.find(task =>
+    task.label.includes('HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK')
+  );
+
+  t.ok(ready, 'should commit the parsed dataset on its own');
+  t.ok(remoteTask, 'should download the remote dataset separately');
+  t.equal(
+    nextState.datasets['local-points'],
+    undefined,
+    'parsed rows are inserted by the ready task'
+  );
+  t.equal(nextState.loadingProgress[remote.info.id], 0, 'remote download stays in progress');
+
+  ready.run(
+    (effect, resolve, reject, ctx) => effect(resolve, reject, ctx),
+    action => {
+      const added = reducer(nextState, action);
+      t.equal(
+        added.datasets['local-points'].id,
+        'local-points',
+        'local dataset is added before the remote download'
+      );
+      t.equal(added.datasets[remote.info.id], undefined, 'remote dataset is still absent');
+      t.equal(
+        added.loadingIndicatorValue > 0,
+        true,
+        'loading indicator stays up for the remote download'
+      );
+      t.end();
+    },
+    err => {
+      t.error(err);
+      t.end();
+    }
+  );
 });
 
 test('#visStateReducer -> setLayerAnimationTimeConfig', t => {

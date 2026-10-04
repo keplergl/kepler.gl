@@ -120,7 +120,6 @@ class LoadRemoteMap extends Component {
             <FormattedMessage id={'loadRemoteMap.examples'} />
             <ul>
               <li>https://your.map.url/map.json</li>
-              <li>http://your.map.url/data.csv</li>
             </ul>
           </StyledInputLabel>
           <StyledInputLabel>
