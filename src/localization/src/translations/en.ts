@@ -403,7 +403,13 @@ export default {
     timeIntervalEndFieldHint:
       'Optional. Features stay visible while the playback window overlaps this time span.',
     timezone: 'Time Zone',
-    selectTimezone: 'Select display timezone'
+    selectTimezone: 'Select display timezone',
+    groupBy: 'Group By',
+    groupByField: 'Group by field',
+    maxGroups: 'Max number of groups',
+    groupOthers: 'Group others',
+    seriesColors: 'Colors',
+    allGroups: 'All'
   },
   datasetTitle: {
     showDataTable: 'Show data table',

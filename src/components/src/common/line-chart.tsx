@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo, useRef} from 'react';
+import React, {useCallback, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {scaleTime, scaleLinear} from 'd3-scale';
 import {bisector} from 'd3-array';
 import {LineChart} from '@kepler.gl/types';
@@ -11,10 +11,15 @@ import {datetimeFormatter} from '@kepler.gl/utils';
 export interface LineSeriesPoint {
   x: number;
   y: number;
+  color?: string;
+  name?: string;
+  points?: LineSeriesPoint[];
 }
 
 const LineChartWrapper = styled.div`
   position: relative;
+  border-radius: 2px;
+  background: ${props => props.theme.rangePlotBgd};
 
   .line-chart__grid-line {
     stroke: ${props => props.theme.histogramFillOutRange};
@@ -32,24 +37,88 @@ const StyledHint = styled.div`
   border-radius: 2px;
   color: ${props => props.theme.textColorLT};
   font-size: 9px;
-  margin: 4px;
   padding: 3px 6px;
   pointer-events: none;
   user-select: none;
-  position: absolute;
   white-space: nowrap;
+
+  .hint--series {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .hint--swatch {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex: none;
+  }
 `;
+
+const HINT_GAP = 6;
+
+/** Keep the hover hint off the time axis. A tall hint grows upward. */
+function placeLineChartHint(
+  pointX: number,
+  pointY: number,
+  hintWidth: number,
+  hintHeight: number,
+  plotWidth: number,
+  plotHeight: number
+): {left: number; top: number} {
+  let left = pointX + HINT_GAP;
+  if (hintWidth && left + hintWidth > plotWidth) {
+    left = pointX - hintWidth - HINT_GAP;
+  }
+  if (left < 0) {
+    left = 0;
+  }
+
+  const above = pointY - hintHeight - HINT_GAP;
+  const below = pointY + HINT_GAP;
+  const fitsAbove = above >= 0;
+  const fitsBelow = hintHeight > 0 && below + hintHeight <= plotHeight;
+  let top = above;
+  if (!fitsAbove && fitsBelow) {
+    top = below;
+  } else if (!fitsAbove && !fitsBelow && hintHeight > 0 && hintHeight <= plotHeight) {
+    top = Math.max(0, plotHeight - hintHeight);
+  }
+  return {left, top};
+}
 
 interface HintContentProps {
   x: number;
   y: number;
+  name?: string;
+  points?: LineSeriesPoint[];
   format: (ts: number) => string;
 }
 
-const HintContent = ({x, y, format}: HintContentProps) => (
+const HintContent = ({x, y, name, points, format}: HintContentProps) => (
   <StyledHint>
-    <div className="hint--x">{format(x)}</div>
-    <div className="row">{y}</div>
+    {points && points.length > 1 ? (
+      <>
+        <div className="hint--x">{format(x)}</div>
+        {points.map((point, index) => (
+          <div className="hint--series" key={`${point.name ?? 'series'}-${index}`}>
+            <span
+              className="hint--swatch"
+              style={{backgroundColor: point.color || 'transparent'}}
+            />
+            {point.name ? <span className="hint--name">{point.name}</span> : null}
+            <span className="row">{point.y}</span>
+          </div>
+        ))}
+      </>
+    ) : (
+      <>
+        {name ? <div className="hint--name">{name}</div> : null}
+        <div className="hint--x">{format(x)}</div>
+        <div className="row">{y}</div>
+      </>
+    )}
   </StyledHint>
 );
 
@@ -57,6 +126,8 @@ export interface HoverDP {
   x: number;
   y: number;
   color?: string | number;
+  name?: string;
+  points?: LineSeriesPoint[];
   opacity?: string | number;
   stroke?: string | number;
   fill?: string | number;
@@ -104,9 +175,13 @@ function LineChartFactory() {
     theme
   }: LineChartProps) => {
     const svgRef = useRef<SVGSVGElement>(null);
+    const hintRef = useRef<HTMLDivElement>(null);
+    const clipIdRef = useRef(`line-chart-clip-${Math.random().toString(36).slice(2)}`);
+    const clipId = clipIdRef.current;
+    const [hintSize, setHintSize] = useState({width: 0, height: 0});
     const {yDomain, xDomain} = lineChart || {};
-    // @ts-expect-error seems lineChart.series has ambiguous types. Requires refactoring.
-    const series: {lines: any[]; markers: any[]} = lineChart?.series;
+    const series =
+      lineChart?.series && !Array.isArray(lineChart.series) ? lineChart.series : undefined;
 
     const lineColor = color || (theme && theme.activeColor) || '#3A414C';
 
@@ -174,13 +249,6 @@ function LineChartFactory() {
       [timezone, timeFormat]
     );
 
-    const isHoveredDPVisible = hoveredDP
-      ? !yAxisAutoRange ||
-        !paddedYDomain ||
-        paddedYDomain.length < 2 ||
-        (hoveredDP.y >= paddedYDomain[0] && hoveredDP.y <= paddedYDomain[1])
-      : false;
-
     const clampedHoveredDP = useMemo(() => {
       if (!hoveredDP || !paddedYDomain || paddedYDomain.length < 2) return hoveredDP;
       return {
@@ -199,15 +267,34 @@ function LineChartFactory() {
       return yScale.ticks(3);
     }, [yScale]);
 
-    const linePaths = useMemo(() => {
-      if (!xScale || !yScale || !series?.lines) return [];
-      return series.lines.map(lineData => {
-        const points = lineData
-          .filter(p => p.x != null && p.y != null)
-          .map(p => `${xScale(new Date(p.x))},${yScale(p.y)}`);
-        return points.length > 1 ? `M${points.join('L')}` : '';
+    const lineMarks = useMemo(() => {
+      const paths: {key: number; d: string; color: string}[] = [];
+      const dots: {key: number; x: number; y: number; color: string}[] = [];
+      if (!xScale || !yScale || !series?.lines) {
+        return {paths, dots};
+      }
+      series.lines.forEach((lineData, index) => {
+        const points = lineData.filter(point => point.x != null && point.y != null);
+        const markColor = series.colors?.[index] || lineColor;
+        if (points.length > 1) {
+          paths.push({
+            key: index,
+            d: `M${points
+              .map(point => `${xScale(new Date(point.x))},${yScale(point.y)}`)
+              .join('L')}`,
+            color: markColor
+          });
+        } else if (points.length === 1) {
+          dots.push({
+            key: index,
+            x: xScale(new Date(points[0].x)),
+            y: yScale(points[0].y),
+            color: markColor
+          });
+        }
       });
-    }, [xScale, yScale, series]);
+      return {paths, dots};
+    }, [xScale, yScale, series, lineColor]);
 
     const bisectX = useMemo(() => bisector<LineSeriesPoint, number>(d => d.x).left, []);
 
@@ -215,23 +302,43 @@ function LineChartFactory() {
       (mouseX: number) => {
         if (!xScale || !series?.lines) return null;
         const xValue = xScale.invert(mouseX).getTime();
-        let nearest: LineSeriesPoint | null = null;
+        let bestX: number | null = null;
         let minDist = Infinity;
-        for (const line of series.lines) {
-          if (line.length === 0) continue;
+        series.lines.forEach(line => {
+          if (line.length === 0) return;
           const idx = bisectX(line, xValue);
-          // Check the two candidates around the bisection point
           for (const i of [idx - 1, idx]) {
-            if (i >= 0 && i < line.length) {
-              const dist = Math.abs(line[i].x - xValue);
-              if (dist < minDist) {
-                minDist = dist;
-                nearest = line[i];
-              }
+            const point = line[i];
+            if (!point || point.y == null) continue;
+            const dist = Math.abs(point.x - xValue);
+            if (dist < minDist) {
+              minDist = dist;
+              bestX = point.x;
             }
           }
-        }
-        return nearest;
+        });
+        if (bestX == null) return null;
+
+        const points: LineSeriesPoint[] = [];
+        series.lines.forEach((line, lineIndex) => {
+          if (line.length === 0) return;
+          const idx = bisectX(line, bestX as number);
+          for (const i of [idx - 1, idx, idx + 1]) {
+            const point = line[i];
+            if (point && point.x === bestX && point.y != null) {
+              points.push({
+                x: point.x,
+                y: point.y,
+                color: series.colors?.[lineIndex],
+                name: series.names?.[lineIndex]
+              });
+              break;
+            }
+          }
+        });
+        if (!points.length) return null;
+        const anchor = points.reduce((best, point) => (point.y > best.y ? point : best), points[0]);
+        return points.length > 1 ? {...anchor, points} : anchor;
       },
       [xScale, series, bisectX]
     );
@@ -255,11 +362,24 @@ function LineChartFactory() {
 
     const hintPosition = useMemo(() => {
       if (!clampedHoveredDP || !xScale || !yScale) return null;
-      return {
-        left: xScale(new Date(clampedHoveredDP.x)),
-        top: yScale(clampedHoveredDP.y)
-      };
-    }, [clampedHoveredDP, xScale, yScale]);
+      return placeLineChartHint(
+        xScale(new Date(clampedHoveredDP.x)),
+        yScale(clampedHoveredDP.y),
+        hintSize.width,
+        hintSize.height,
+        width,
+        height
+      );
+    }, [clampedHoveredDP, xScale, yScale, hintSize, width, height]);
+
+    useLayoutEffect(() => {
+      const node = hintRef.current;
+      if (!node) {
+        return;
+      }
+      const next = {width: node.offsetWidth, height: node.offsetHeight};
+      setHintSize(prev => (prev.width === next.width && prev.height === next.height ? prev : next));
+    }, [clampedHoveredDP, hintFormatter]);
 
     return (
       <LineChartWrapper style={{marginTop: `${margin.top}px`}}>
@@ -271,27 +391,49 @@ function LineChartFactory() {
           onMouseLeave={handleMouseLeave}
           style={{overflow: 'visible'}}
         >
-          {gridLines.map((tick, i) => (
-            <line
-              key={i}
-              className="line-chart__grid-line"
-              x1={0}
-              x2={width}
-              y1={yScale!(tick)}
-              y2={yScale!(tick)}
-            />
-          ))}
-          {linePaths.map((d, i) => (
-            <path key={i} d={d} fill="none" stroke={lineColor} strokeWidth={1} />
-          ))}
-          {isHoveredDPVisible && hoveredDP && xScale && yScale && (
-            <circle
-              cx={xScale(new Date(hoveredDP.x))}
-              cy={yScale(hoveredDP.y)}
-              r={4}
-              fill={lineColor}
-            />
-          )}
+          <defs>
+            <clipPath id={clipId}>
+              <rect x="0" y="0" width={width} height={height} />
+            </clipPath>
+          </defs>
+          <g clipPath={`url(#${clipId})`}>
+            {gridLines.map((tick, i) => (
+              <line
+                key={i}
+                className="line-chart__grid-line"
+                x1={0}
+                x2={width}
+                y1={yScale!(tick)}
+                y2={yScale!(tick)}
+              />
+            ))}
+            {lineMarks.paths.map(mark => (
+              <path
+                key={mark.key}
+                d={mark.d}
+                fill="none"
+                stroke={mark.color}
+                strokeWidth={series?.colors ? 1.5 : 1}
+              />
+            ))}
+            {lineMarks.dots.map(mark => (
+              <circle key={`dot-${mark.key}`} cx={mark.x} cy={mark.y} r={1.5} fill={mark.color} />
+            ))}
+            {xScale &&
+              yScale &&
+              (hoveredDP?.points?.length ? hoveredDP.points : hoveredDP ? [hoveredDP] : []).map(
+                (point, index) =>
+                  point.y == null ? null : (
+                    <circle
+                      key={`${point.name ?? 'series'}-${index}`}
+                      cx={xScale(new Date(point.x))}
+                      cy={yScale(point.y)}
+                      r={4}
+                      fill={String(point.color || lineColor)}
+                    />
+                  )
+              )}
+          </g>
           {isEnlarged &&
             yAxisTicks.map((tick, i) => (
               <text
@@ -308,7 +450,17 @@ function LineChartFactory() {
           {brushComponent}
         </svg>
         {clampedHoveredDP && enableChartHover && !brushing && hintPosition ? (
-          <div style={{position: 'absolute', left: hintPosition.left, top: hintPosition.top}}>
+          <div
+            ref={hintRef}
+            style={{
+              position: 'absolute',
+              left: hintPosition.left,
+              top: hintPosition.top,
+              zIndex: 2,
+              pointerEvents: 'none',
+              visibility: hintSize.height ? 'visible' : 'hidden'
+            }}
+          >
             <HintContent {...hoveredDP!} format={hintFormatter} />
           </div>
         ) : null}
