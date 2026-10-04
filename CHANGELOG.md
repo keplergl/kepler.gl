@@ -15,7 +15,7 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.3.0-alpha.15] - Sep 28 2026
+## [3.3.0-alpha.16] - Sep 28 2026
 
 - 363e7542 feat(timeline): group line chart series by a field (#3781)
 - 747ca0de feat(interactions): fade layer opacity by zoom (#3780)
