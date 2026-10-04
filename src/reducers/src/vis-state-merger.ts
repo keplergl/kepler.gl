@@ -51,6 +51,7 @@ import {
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
 import {getLayerOrderFromLayers} from './layer-utils';
+import {combineZoomOpacityControllers} from './interaction-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
@@ -485,7 +486,11 @@ export function mergeInteractions<S extends VisState>(
       }
 
       const currentConfig =
-        key === 'tooltip' || key === 'brush' || key === 'geocoder' || key === 'legend'
+        key === 'tooltip' ||
+        key === 'brush' ||
+        key === 'geocoder' ||
+        key === 'legend' ||
+        key === 'zoomOpacity'
           ? state.interactionConfig[key].config
           : null;
 
@@ -551,6 +556,13 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
       combined.legend = withLegend.legend;
     }
   }
+  // Same for fade-on-zoom: an older config in front must not drop controllers from a later one.
+  if (!combined.zoomOpacity) {
+    const withZoomOpacity = configs.find(c => c.zoomOpacity);
+    if (withZoomOpacity?.zoomOpacity) {
+      combined.zoomOpacity = withZoomOpacity.zoomOpacity;
+    }
+  }
   // handle each property key of an `InteractionConfig`, e.g. tooltip, geocoder, brush, coordinate
   // by combining values for each among all passed in configs
 
@@ -609,6 +621,10 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
 
     if (key === 'legend') {
       combined[key].hideInvisibleLayers = toBeCombinedProps.some(p => p?.hideInvisibleLayers);
+    }
+
+    if (key === 'zoomOpacity' && combined.zoomOpacity) {
+      combined.zoomOpacity.controllers = combineZoomOpacityControllers(toBeCombinedProps);
     }
   }
 

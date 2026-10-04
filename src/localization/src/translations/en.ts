@@ -942,7 +942,16 @@ ${'```'}
     legendEmpty: 'Add a layer to choose what appears in the legend.',
     legendHiddenByGroup: 'Hidden because a group is excluded from the legend',
     legendHideInvisible: 'Hide hidden layers in legend',
-    legendAllLayers: 'All Layers'
+    legendAllLayers: 'All Layers',
+    fadeOnZoom: 'Fade on zoom',
+    fadeOnZoomHint: 'Fade layers as the map zooms. Configure a zoom range to show layers.',
+    fadeOnZoomAdd: 'Add controller',
+    fadeOnZoomLayers: 'Layers',
+    fadeOnZoomAppear: 'Appear',
+    fadeOnZoomFullStart: 'Full start',
+    fadeOnZoomFullEnd: 'Full end',
+    fadeOnZoomDisappear: 'Disappear',
+    fadeOnZoomDelete: 'Remove controller'
   },
   layerBlending: {
     title: 'Layer Blending',

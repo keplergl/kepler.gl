@@ -411,12 +411,36 @@ export type LegendInfo = BaseInteraction & {
     hideInvisibleLayers: boolean;
   };
 };
+/** Zoom stops for a fade envelope. Opacity is 0 outside [appear, gone]. */
+export type ZoomOpacityStops = {
+  /** Zoom where opacity leaves 0. */
+  appear: number;
+  /** Zoom where opacity reaches the layer's full opacity. */
+  full: number;
+  /** Zoom where opacity starts falling. */
+  fade: number;
+  /** Zoom where opacity returns to 0. */
+  gone: number;
+};
+/** Layers that share one zoom envelope. */
+export type ZoomOpacityController = {
+  id: string;
+  layerIds: string[];
+  stops: ZoomOpacityStops;
+};
+export type ZoomOpacityInteraction = BaseInteraction & {
+  id: 'zoomOpacity';
+  config: {
+    controllers: ZoomOpacityController[];
+  };
+};
 export type InteractionConfig = {
   tooltip: TooltipInfo;
   legend: LegendInfo;
   geocoder: Geocoder;
   brush: Brush;
   coordinate: Coordinate;
+  zoomOpacity: ZoomOpacityInteraction;
 };
 export type MapInfo = {
   title: string;
