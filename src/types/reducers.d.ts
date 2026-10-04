@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Field, Millisecond} from './types';
+import {ColorMap, ColorRange, ColorUI} from './layers';
 import {MapSplitMode, MapViewMode} from '@kepler.gl/constants';
 type MapViewState = {
   latitude: number;
@@ -125,8 +126,33 @@ export interface LineDatum {
   pct: number | null;
 }
 
+export type LineChartSeries = {
+  lines: LineDatum[][];
+  markers: LineDatum[];
+  /** Stroke color for each line segment. Segments from one group share a color. */
+  colors?: string[];
+  /** Series name for each line segment. */
+  names?: string[];
+};
+
+export type LineChartGroupBy = {
+  fieldName: string;
+  numGroups: number | 'ALL';
+  groupOthers: boolean;
+  colors: string[] | null;
+  colorMap?: ColorMap | null;
+};
+
+export type PlotGroupBy = {
+  fieldName?: string;
+  numGroups: number | 'ALL';
+  groupOthers: boolean;
+  colorRange?: ColorRange;
+  colorUI?: ColorUI;
+};
+
 export type LineChart = {
-  series: {x: number; y: number}[];
+  series: {x: number; y: number}[] | LineChartSeries;
   yDomain: number[] | undefined[];
   xDomain: number[];
 
@@ -135,6 +161,8 @@ export type LineChart = {
   interval: string;
   yAxis: string;
   bins?: Bins;
+  /** Cache key for timeline series grouping. Null when the plot is a single series. */
+  groupBy?: LineChartGroupBy | null;
 };
 
 type FilterViewType = 'side' | 'enlarged' | 'minified';
@@ -269,6 +297,9 @@ export interface PlotType {
   aggregation: ValueOf<AggregationTypes>;
   defaultTimeFormat: string;
   colorsByDataId?: {[dataId: string]: string};
+  /** Categorical series split for the timeline line chart. */
+  groupBy?: PlotGroupBy | null;
+  yAxisAutoRange?: boolean;
 }
 
 export type Feature = {

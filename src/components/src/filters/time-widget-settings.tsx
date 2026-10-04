@@ -10,6 +10,8 @@ import {ArrowRight} from '../common/icons';
 import {
   TIME_AGGREGATION,
   AGGREGATION_TYPES,
+  ALL_FIELD_TYPES,
+  DEFAULT_COLOR_UI,
   durationMillisecond,
   durationSecond,
   durationMinute,
@@ -19,12 +21,19 @@ import {
   durationMonth,
   durationYear
 } from '@kepler.gl/constants';
-import {TimeRangeFilter, Field} from '@kepler.gl/types';
+import {TimeRangeFilter, Field, ColorRange, ColorUI, NestedPartial} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
-import {getDefaultTimeFormat} from '@kepler.gl/utils';
+import {
+  getDefaultTimeFormat,
+  PLOT_NUM_GROUPS_ALL,
+  PLOT_NUM_GROUPS_OPTIONS,
+  updateColorRangeByMatchingPalette,
+  updateCustomColorRangeByColorUI
+} from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import TimezoneSelector from './timezone-selector';
+import ColorSelectorFactory, {ColorSet} from '../side-panel/layer-panel/color-selector';
 
 const MAX_BINS = 2048;
 
@@ -189,6 +198,74 @@ const DisabledBlock = styled.div<DisabledOverlayProps>`
   pointer-events: ${props => (props.$disabled ? 'none' : 'auto')};
 `;
 
+const ColorSelectorWrap = styled.div`
+  position: relative;
+  width: 180px;
+
+  .color-selector__dropdown {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 4px);
+    z-index: 10;
+    width: 292px;
+    max-height: 360px;
+  }
+`;
+
+const GROUP_BY_FIELD_TYPES = new Set<string>([
+  ALL_FIELD_TYPES.string,
+  ALL_FIELD_TYPES.boolean,
+  ALL_FIELD_TYPES.integer,
+  ALL_FIELD_TYPES.real,
+  ALL_FIELD_TYPES.date
+]);
+
+const COLOR_RANGE_UI_KEYS = ['reversed', 'steps', 'colorBlindSafe', 'type'] as const;
+
+function shouldUpdateGroupColorRange(next: NestedPartial<ColorUI>, current: ColorUI): boolean {
+  const config = next.colorRangeConfig;
+  if (!config) {
+    return false;
+  }
+  return COLOR_RANGE_UI_KEYS.some(
+    key =>
+      Object.prototype.hasOwnProperty.call(config, key) &&
+      config[key] !== current.colorRangeConfig?.[key]
+  );
+}
+
+function colorRangeFromColorUI(
+  currentRange: ColorRange,
+  colorRangeConfig: ColorUI['colorRangeConfig'],
+  next: NestedPartial<ColorUI>
+): ColorRange {
+  const isCustomReversed =
+    currentRange.category === 'Custom' &&
+    Boolean(next.colorRangeConfig) &&
+    Object.prototype.hasOwnProperty.call(next.colorRangeConfig, 'reversed');
+  if (isCustomReversed) {
+    return updateCustomColorRangeByColorUI(currentRange, colorRangeConfig);
+  }
+  const updated = updateColorRangeByMatchingPalette(currentRange, colorRangeConfig);
+  if (updated !== currentRange) {
+    return updated;
+  }
+  const baseColors = currentRange.colors?.length ? currentRange.colors : [];
+  if (!baseColors.length) {
+    return currentRange;
+  }
+  const steps = Math.max(2, colorRangeConfig.steps || baseColors.length);
+  const colors = Array.from({length: steps}, (_, i) => baseColors[i % baseColors.length]);
+  if (colorRangeConfig.reversed) {
+    colors.reverse();
+  }
+  return {
+    ...currentRange,
+    colors,
+    reversed: Boolean(colorRangeConfig.reversed)
+  };
+}
+
 export type TimeWidgetSettingsProps = {
   filter: TimeRangeFilter;
   datasets: Datasets;
@@ -205,9 +282,12 @@ function parseInterval(intervalId: string | undefined): {step: number; unit: str
   return {step: 1, unit: 'day'};
 }
 
-TimeWidgetSettingsFactory.deps = [FieldSelectorFactory];
+TimeWidgetSettingsFactory.deps = [FieldSelectorFactory, ColorSelectorFactory];
 
-function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelectorFactory>) {
+function TimeWidgetSettingsFactory(
+  FieldSelector: ReturnType<typeof FieldSelectorFactory>,
+  ColorSelector: ReturnType<typeof ColorSelectorFactory>
+) {
   const TimeWidgetSettings: React.FC<TimeWidgetSettingsProps> = ({
     filter,
     datasets,
@@ -262,6 +342,16 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
         ),
       [datasets, filter.dataId]
     );
+
+    const groupByFields = useMemo(
+      () =>
+        ((datasets[filter.dataId[0]] || {}).fields || []).filter((f: Field) =>
+          GROUP_BY_FIELD_TYPES.has(f.type)
+        ),
+      [datasets, filter.dataId]
+    );
+
+    const groupBy = filter.plotType?.groupBy;
 
     const applyInterval = useCallback(
       (step: number, unit: string) => {
@@ -324,6 +414,63 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
       () => setFilterPlot({plotType: {yAxisAutoRange: !filter.plotType?.yAxisAutoRange}}),
       [setFilterPlot, filter.plotType?.yAxisAutoRange]
     );
+
+    const _setGroupByField = useCallback(
+      field =>
+        setFilterPlot({
+          plotType: {groupBy: field ? {fieldName: field.name} : null}
+        }),
+      [setFilterPlot]
+    );
+
+    const _setNumGroups = useCallback(
+      value => {
+        if (value === null || value === undefined) {
+          return;
+        }
+        setFilterPlot({plotType: {groupBy: {numGroups: value}}});
+      },
+      [setFilterPlot]
+    );
+
+    const _toggleGroupOthers = useCallback(
+      () => setFilterPlot({plotType: {groupBy: {groupOthers: !groupBy?.groupOthers}}}),
+      [setFilterPlot, groupBy?.groupOthers]
+    );
+
+    const _setGroupColor = useCallback(
+      colorRange => setFilterPlot({plotType: {groupBy: {colorRange}}}),
+      [setFilterPlot]
+    );
+
+    const _setGroupColorUI = useCallback(
+      (next: NestedPartial<ColorUI>) => {
+        const current = (groupBy?.colorUI || DEFAULT_COLOR_UI) as ColorUI;
+        const merged = {
+          ...current,
+          ...next,
+          colorRangeConfig: {
+            ...current.colorRangeConfig,
+            ...(next.colorRangeConfig || {})
+          }
+        } as ColorUI;
+        const currentRange = groupBy?.colorRange;
+        const colorRange =
+          currentRange && shouldUpdateGroupColorRange(next, current)
+            ? colorRangeFromColorUI(currentRange, merged.colorRangeConfig, next)
+            : undefined;
+        setFilterPlot({
+          plotType: {
+            groupBy: colorRange ? {colorUI: merged, colorRange} : {colorUI: merged}
+          }
+        });
+      },
+      [setFilterPlot, groupBy?.colorUI, groupBy?.colorRange]
+    );
+
+    const displayNumGroups = useCallback((opt: number | typeof PLOT_NUM_GROUPS_ALL) => {
+      return opt === PLOT_NUM_GROUPS_ALL ? 'All' : String(opt);
+    }, []);
 
     const displayUnitOption = useCallback((opt: any) => {
       if (typeof opt === 'string') {
@@ -443,6 +590,88 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
             </DisabledBlock>
           </AxisRow>
         </AxisSection>
+        {filter.yAxis ? (
+          <AxisSection className="time-widget__group-by">
+            <AxisHeader>
+              <ArrowRight height="10px" />
+              <FormattedMessage id="filterManager.groupBy" />
+            </AxisHeader>
+            <AxisRow>
+              <FieldBlock>
+                <FieldLabel>
+                  <FormattedMessage id="filterManager.groupByField" />
+                </FieldLabel>
+                <FieldSelectorWrapper>
+                  <FieldSelector
+                    fields={groupByFields}
+                    placement="top"
+                    id="time-widget-group-by-field"
+                    value={groupBy?.fieldName || null}
+                    onSelect={_setGroupByField}
+                    erasable
+                    showToken={false}
+                  />
+                </FieldSelectorWrapper>
+              </FieldBlock>
+              <DisabledBlock $disabled={!groupBy?.fieldName}>
+                <FieldBlock>
+                  <FieldLabel>
+                    <FormattedMessage id="filterManager.maxGroups" />
+                  </FieldLabel>
+                  <SelectorWrapper>
+                    <ItemSelector
+                      selectedItems={groupBy?.numGroups ?? PLOT_NUM_GROUPS_OPTIONS[4]}
+                      options={PLOT_NUM_GROUPS_OPTIONS}
+                      multiSelect={false}
+                      searchable={false}
+                      onChange={_setNumGroups}
+                      displayOption={displayNumGroups}
+                      getOptionValue={opt => opt}
+                      placement="top"
+                      disabled={!groupBy?.fieldName}
+                    />
+                  </SelectorWrapper>
+                </FieldBlock>
+              </DisabledBlock>
+              <DisabledBlock $disabled={!groupBy?.fieldName}>
+                <FieldBlock>
+                  <FieldLabel>
+                    <FormattedMessage id="filterManager.groupOthers" />
+                  </FieldLabel>
+                  <SwitchBlock>
+                    <Switch
+                      checked={Boolean(groupBy?.groupOthers)}
+                      id={`${filter.id}-group-others`}
+                      onChange={_toggleGroupOthers}
+                      disabled={!groupBy?.fieldName}
+                      secondary
+                    />
+                  </SwitchBlock>
+                </FieldBlock>
+              </DisabledBlock>
+              {groupBy?.fieldName && groupBy.colorRange ? (
+                <FieldBlock>
+                  <FieldLabel>
+                    <FormattedMessage id="filterManager.seriesColors" />
+                  </FieldLabel>
+                  <ColorSelectorWrap>
+                    <ColorSelector
+                      colorSets={[
+                        {
+                          selectedColor: groupBy.colorRange,
+                          isRange: true,
+                          setColor: colorRange => _setGroupColor(colorRange as ColorRange)
+                        } as ColorSet
+                      ]}
+                      colorUI={groupBy.colorUI || DEFAULT_COLOR_UI}
+                      setColorUI={_setGroupColorUI}
+                    />
+                  </ColorSelectorWrap>
+                </FieldBlock>
+              ) : null}
+            </AxisRow>
+          </AxisSection>
+        ) : null}
       </SettingsPanel>
     );
   };

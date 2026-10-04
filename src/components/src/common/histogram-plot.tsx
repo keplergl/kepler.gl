@@ -25,6 +25,8 @@ const histogramStyle = {
 
 const HistogramWrapper = styled.svg`
   overflow: visible;
+  border-radius: 2px;
+  background: ${props => props.theme.rangePlotBgd};
 `;
 
 const HistogramMaskRect = styled.rect`
