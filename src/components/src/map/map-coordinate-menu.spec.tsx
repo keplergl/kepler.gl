@@ -14,6 +14,7 @@ import {formatMapCoordinate} from './coordinate-info';
 import MapCoordinateMenu, {
   annotationContextMenuItems,
   contextMenuTargetIsFeatureUi,
+  contextMenuTargetIsMapOverlay,
   coordinateMenuFromClick,
   coordinateMenuHiddenByTooltip,
   isFeatureActionPanelOpen,
@@ -144,6 +145,38 @@ describe('annotationContextMenuItems', () => {
       showAddAnnotation: false,
       showAnnotationToggle: false
     });
+  });
+
+  test('keeps show available while annotations are hidden, even with none left', () => {
+    expect(
+      annotationContextMenuItems({
+        annotationsEnabled: true,
+        annotationCount: 0,
+        annotationsVisible: false
+      })
+    ).toEqual({showAddAnnotation: true, showAnnotationToggle: true});
+    expect(
+      annotationContextMenuItems({
+        annotationsEnabled: false,
+        annotationCount: 0,
+        annotationsVisible: false
+      })
+    ).toEqual({showAddAnnotation: false, showAnnotationToggle: false});
+  });
+});
+
+describe('contextMenuTargetIsMapOverlay', () => {
+  test('matches map controls, scale, and attribution but not the map surface', () => {
+    document.body.innerHTML =
+      '<div class="map-control"><button id="zoom">Zoom in</button></div>' +
+      '<div class="map-scale" id="scale">1 km</div>' +
+      '<div class="maplibre-attribution-container"><a id="attrib">© kepler.gl</a></div>' +
+      '<div id="map"></div>';
+    expect(contextMenuTargetIsMapOverlay(document.getElementById('zoom'))).toBe(true);
+    expect(contextMenuTargetIsMapOverlay(document.getElementById('scale'))).toBe(true);
+    expect(contextMenuTargetIsMapOverlay(document.getElementById('attrib'))).toBe(true);
+    expect(contextMenuTargetIsMapOverlay(document.getElementById('map'))).toBe(false);
+    expect(contextMenuTargetIsMapOverlay(null)).toBe(false);
   });
 });
 

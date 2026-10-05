@@ -21,7 +21,7 @@ import MapScaleFactory from './map/map-scale';
 import MapCoordinateMenu, {
   annotationContextMenuItems,
   coordinateMenuFromClick,
-  contextMenuTargetIsFeatureUi,
+  contextMenuTargetIsMapOverlay,
   coordinateMenuHiddenByTooltip,
   isFeatureActionPanelOpen,
   isRightDrag,
@@ -553,7 +553,8 @@ export default function MapContainerFactory(
       return annotationContextMenuItems({
         annotationsEnabled: Boolean(getApplicationConfig().enableAnnotations),
         readOnly,
-        annotationCount: visState.annotations?.length ?? 0
+        annotationCount: visState.annotations?.length ?? 0,
+        annotationsVisible: this._annotationsVisible()
       });
     }
 
@@ -599,7 +600,7 @@ export default function MapContainerFactory(
       this._rightPress = null;
       if (
         isRightDrag(start, event.clientX, event.clientY) ||
-        contextMenuTargetIsFeatureUi(event.target) ||
+        contextMenuTargetIsMapOverlay(event.target) ||
         this._coordinateMenuSuppressed(event.clientX, event.clientY)
       ) {
         this._closeCoordinateMenu();

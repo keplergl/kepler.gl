@@ -24,18 +24,21 @@ export type CoordinateMenuState = {
 export function annotationContextMenuItems({
   annotationsEnabled,
   readOnly = false,
-  annotationCount
+  annotationCount,
+  annotationsVisible = true
 }: {
   annotationsEnabled: boolean;
   readOnly?: boolean;
   annotationCount: number;
+  /** False while annotations are hidden. Show stays available even if none remain. */
+  annotationsVisible?: boolean;
 }): {showAddAnnotation: boolean; showAnnotationToggle: boolean} {
   if (!annotationsEnabled) {
     return {showAddAnnotation: false, showAnnotationToggle: false};
   }
   return {
     showAddAnnotation: !readOnly,
-    showAnnotationToggle: annotationCount > 0
+    showAnnotationToggle: annotationCount > 0 || !annotationsVisible
   };
 }
 
@@ -82,6 +85,31 @@ export function contextMenuTargetIsFeatureUi(target: EventTarget | null): boolea
   return target instanceof Element
     ? Boolean(target.closest('.feature-action-panel, .editor-filter-badges'))
     : false;
+}
+
+/**
+ * Map chrome drawn on top of the basemap. A right-click here belongs to that
+ * control, not to the map point underneath it.
+ */
+const MAP_OVERLAY_SELECTOR = [
+  '.feature-action-panel',
+  '.editor-filter-badges',
+  '.map-control',
+  '.map-control-panel',
+  '.map-navigation-control',
+  '.map-scale',
+  '.map-popover',
+  '.annotation-manager',
+  '.effect-manager',
+  '.chart-manager',
+  '.maplibre-attribution-container',
+  '.mapbox-attribution-container',
+  '.maplibregl-ctrl',
+  '.mapboxgl-ctrl'
+].join(', ');
+
+export function contextMenuTargetIsMapOverlay(target: EventTarget | null): boolean {
+  return target instanceof Element ? Boolean(target.closest(MAP_OVERLAY_SELECTOR)) : false;
 }
 
 /**
