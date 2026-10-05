@@ -329,7 +329,7 @@ export const defaultInteractionConfig: InteractionConfig = {
   annotation: {
     id: 'annotation',
     label: 'interactions.annotation',
-    enabled: true
+    enabled: false
   },
   zoomOpacity: {
     id: 'zoomOpacity',

@@ -474,7 +474,6 @@ export type InteractionConfig = {
   geocoder: Geocoder;
   brush: Brush;
   coordinate: Coordinate;
-  /** When enabled is false, annotations stay in state but are not drawn. */
   annotation: AnnotationInteraction;
   zoomOpacity: ZoomOpacityInteraction;
 };
