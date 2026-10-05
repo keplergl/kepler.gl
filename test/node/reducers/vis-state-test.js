@@ -4281,13 +4281,12 @@ test('#visStateReducer -> MOUSE_MOVE', t => {
     'should set mousePos'
   );
 
-  // disable tooltip
-  const tooltipConfig = {
-    ...defaultInteractionConfig.tooltip,
-    enabled: false
-  };
-
-  const nextState1 = reducer(nextState, VisStateActions.interactionConfigChange(tooltipConfig));
+  // Tooltip and annotation both start enabled. Turn them off so nothing still tracks the cursor.
+  const nextState1 = [defaultInteractionConfig.tooltip, defaultInteractionConfig.annotation].reduce(
+    (state, interaction) =>
+      reducer(state, VisStateActions.interactionConfigChange({...interaction, enabled: false})),
+    nextState
+  );
 
   const nextState2 = reducer(
     nextState1,
