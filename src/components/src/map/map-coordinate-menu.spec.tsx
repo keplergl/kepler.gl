@@ -131,37 +131,45 @@ describe('annotationContextMenuItems', () => {
   test('offers add on an editable map and hide once annotations exist', () => {
     expect(
       annotationContextMenuItems({annotationsEnabled: true, readOnly: false, annotationCount: 0})
-    ).toEqual({showAddAnnotation: true, showAnnotationToggle: false});
+    ).toEqual({showAddAnnotation: true, showAnnotationToggle: false, annotationsVisible: false});
     expect(
       annotationContextMenuItems({annotationsEnabled: true, readOnly: false, annotationCount: 2})
-    ).toEqual({showAddAnnotation: true, showAnnotationToggle: true});
+    ).toEqual({showAddAnnotation: true, showAnnotationToggle: true, annotationsVisible: true});
   });
 
   test('hides add on a read-only map and both actions when annotations are off', () => {
     expect(
       annotationContextMenuItems({annotationsEnabled: true, readOnly: true, annotationCount: 1})
-    ).toEqual({showAddAnnotation: false, showAnnotationToggle: true});
+    ).toEqual({showAddAnnotation: false, showAnnotationToggle: true, annotationsVisible: true});
     expect(annotationContextMenuItems({annotationsEnabled: false, annotationCount: 3})).toEqual({
       showAddAnnotation: false,
-      showAnnotationToggle: false
+      showAnnotationToggle: false,
+      annotationsVisible: true
     });
   });
 
-  test('keeps show available while annotations are hidden, even with none left', () => {
+  test('offers show when every annotation is hidden and hide while any remain visible', () => {
+    expect(
+      annotationContextMenuItems({
+        annotationsEnabled: true,
+        annotationCount: 2,
+        hiddenAnnotationCount: 2
+      })
+    ).toEqual({showAddAnnotation: true, showAnnotationToggle: true, annotationsVisible: false});
+    expect(
+      annotationContextMenuItems({
+        annotationsEnabled: true,
+        annotationCount: 2,
+        hiddenAnnotationCount: 1
+      })
+    ).toEqual({showAddAnnotation: true, showAnnotationToggle: true, annotationsVisible: true});
     expect(
       annotationContextMenuItems({
         annotationsEnabled: true,
         annotationCount: 0,
-        annotationsVisible: false
+        hiddenAnnotationCount: 0
       })
-    ).toEqual({showAddAnnotation: true, showAnnotationToggle: true});
-    expect(
-      annotationContextMenuItems({
-        annotationsEnabled: false,
-        annotationCount: 0,
-        annotationsVisible: false
-      })
-    ).toEqual({showAddAnnotation: false, showAnnotationToggle: false});
+    ).toEqual({showAddAnnotation: true, showAnnotationToggle: false, annotationsVisible: false});
   });
 });
 
@@ -245,7 +253,7 @@ describe('MapCoordinateMenu', () => {
     expect(onToggleAnnotations).toHaveBeenCalledTimes(1);
   });
 
-  test('disables add while annotations are hidden and offers show', () => {
+  test('keeps add available while annotations are hidden and offers show', () => {
     const onAddAnnotation = jest.fn();
     render(
       <ThemeProvider theme={theme}>
@@ -257,7 +265,6 @@ describe('MapCoordinateMenu', () => {
             showCopy={false}
             onClose={jest.fn()}
             showAddAnnotation={true}
-            addAnnotationDisabled={true}
             showAnnotationToggle={true}
             annotationsVisible={false}
             onAddAnnotation={onAddAnnotation}
@@ -267,9 +274,9 @@ describe('MapCoordinateMenu', () => {
     );
 
     const add = screen.getByRole('menuitem', {name: 'Add Annotation'});
-    expect(add).toHaveProperty('disabled', true);
+    expect(add).toHaveProperty('disabled', false);
     fireEvent.click(add);
-    expect(onAddAnnotation).not.toHaveBeenCalled();
+    expect(onAddAnnotation).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('menuitem', {name: 'Show Annotations'})).toBeTruthy();
     expect(screen.queryByRole('menuitem', {name: 'Copy coordinates'})).toBeNull();
   });

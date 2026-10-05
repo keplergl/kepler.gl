@@ -25,20 +25,23 @@ export function annotationContextMenuItems({
   annotationsEnabled,
   readOnly = false,
   annotationCount,
-  annotationsVisible = true
+  hiddenAnnotationCount = 0
 }: {
   annotationsEnabled: boolean;
   readOnly?: boolean;
   annotationCount: number;
-  /** False while annotations are hidden. Show stays available even if none remain. */
-  annotationsVisible?: boolean;
-}): {showAddAnnotation: boolean; showAnnotationToggle: boolean} {
+  /** Annotations with their own visibility turned off. */
+  hiddenAnnotationCount?: number;
+}): {showAddAnnotation: boolean; showAnnotationToggle: boolean; annotationsVisible: boolean} {
   if (!annotationsEnabled) {
-    return {showAddAnnotation: false, showAnnotationToggle: false};
+    return {showAddAnnotation: false, showAnnotationToggle: false, annotationsVisible: true};
   }
+  // Hide while any annotation is on the map. Show when every one is hidden.
+  const annotationsVisible = annotationCount > 0 && hiddenAnnotationCount < annotationCount;
   return {
     showAddAnnotation: !readOnly,
-    showAnnotationToggle: annotationCount > 0 || !annotationsVisible
+    showAnnotationToggle: annotationCount > 0,
+    annotationsVisible
   };
 }
 
@@ -199,13 +202,6 @@ const StyledMenu = styled.div`
       background-color: ${props => props.theme.dropdownListHighlightBg};
       color: ${props => props.theme.textColorHl};
     }
-
-    &:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      background-color: ${props => props.theme.dropdownListBgd};
-      color: ${props => props.theme.textColor};
-    }
   }
 `;
 
@@ -216,7 +212,6 @@ export type MapCoordinateMenuProps = {
   onClose: () => void;
   showCopy?: boolean;
   showAddAnnotation?: boolean;
-  addAnnotationDisabled?: boolean;
   showAnnotationToggle?: boolean;
   annotationsVisible?: boolean;
   onAddAnnotation?: () => void;
@@ -230,7 +225,6 @@ const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({
   onClose,
   showCopy = true,
   showAddAnnotation = false,
-  addAnnotationDisabled = false,
   showAnnotationToggle = false,
   annotationsVisible = true,
   onAddAnnotation,
@@ -255,17 +249,7 @@ const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({
       next.y = -node.offsetHeight - MENU_OPEN_OFFSET_PX;
     }
     setShift(next);
-  }, [
-    x,
-    y,
-    text,
-    copied,
-    showCopy,
-    showAddAnnotation,
-    showAnnotationToggle,
-    addAnnotationDisabled,
-    annotationsVisible
-  ]);
+  }, [x, y, text, copied, showCopy, showAddAnnotation, showAnnotationToggle, annotationsVisible]);
 
   useEffect(() => {
     setInteractive(false);
@@ -329,16 +313,7 @@ const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({
       }}
     >
       {showAddAnnotation ? (
-        <button
-          type="button"
-          role="menuitem"
-          disabled={addAnnotationDisabled}
-          onClick={() => {
-            if (!addAnnotationDisabled) {
-              onAddAnnotation?.();
-            }
-          }}
-        >
+        <button type="button" role="menuitem" onClick={() => onAddAnnotation?.()}>
           <AnnotationText height="14px" aria-hidden={true} />
           <FormattedMessage id="interactions.addAnnotation" />
         </button>

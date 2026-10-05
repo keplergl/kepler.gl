@@ -550,23 +550,32 @@ export default function MapContainerFactory(
 
     _annotationMenuItems() {
       const {readOnly, visState} = this.props;
+      const annotations = visState.annotations ?? [];
       return annotationContextMenuItems({
         annotationsEnabled: Boolean(getApplicationConfig().enableAnnotations),
         readOnly,
-        annotationCount: visState.annotations?.length ?? 0,
-        annotationsVisible: this._annotationsVisible()
+        annotationCount: annotations.length,
+        hiddenAnnotationCount: annotations.filter(annotation => !annotation.isVisible).length
       });
     }
 
-    _annotationsVisible(): boolean {
-      return this.props.visState.interactionConfig.annotation?.enabled !== false;
+    /** Hide and show write each annotation, the same flag the panel eye uses. */
+    _setEachAnnotationVisible(isVisible: boolean) {
+      const {visState, visStateActions} = this.props;
+      for (const annotation of visState.annotations ?? []) {
+        if (annotation.isVisible !== isVisible) {
+          visStateActions.updateAnnotation(annotation.id, {isVisible});
+        }
+      }
     }
 
     _onAddAnnotation = () => {
       const menu = this.state.coordinateMenu;
-      if (!menu || !this._annotationsVisible()) {
+      if (!menu) {
         return;
       }
+      // A new annotation belongs with the rest of the set, so bring hidden ones back.
+      this._setEachAnnotationVisible(true);
       const {index, mapControls, uiStateActions, visStateActions} = this.props;
       if (!mapControls?.annotation?.active) {
         uiStateActions.toggleMapControl('annotation', Number(index ?? 0));
@@ -579,12 +588,7 @@ export default function MapContainerFactory(
     };
 
     _onToggleAnnotations = () => {
-      const current = this.props.visState.interactionConfig.annotation;
-      this.props.visStateActions.interactionConfigChange({
-        id: 'annotation',
-        label: current?.label ?? 'interactions.annotation',
-        enabled: !this._annotationsVisible()
-      });
+      this._setEachAnnotationVisible(!this._annotationMenuItems().annotationsVisible);
       this._closeCoordinateMenu();
     };
 
@@ -1721,20 +1725,18 @@ export default function MapContainerFactory(
               onSelect={visStateActions.setSelectedFeature}
             />
           ) : null}
-          {visState.interactionConfig.annotation?.enabled !== false ? (
-            <AnnotationOverlay
-              annotations={visState.annotations}
-              selectedAnnotationId={visState.selectedAnnotationId}
-              isEditingAnnotationText={visState.isEditingAnnotationText}
-              isAnnotationMode={Boolean(mapControls?.annotation?.active)}
-              mapIndex={index || 0}
-              viewport={this._getAnnotationViewport(mapState, internalViewState)}
-              isGlobeEnabled={Boolean(mapState.globe?.enabled)}
-              pickWorldPosition={this._pickAnnotationWorldPosition}
-              updateAnnotation={visStateActions.updateAnnotation}
-              setSelectedAnnotation={visStateActions.setSelectedAnnotation}
-            />
-          ) : null}
+          <AnnotationOverlay
+            annotations={visState.annotations}
+            selectedAnnotationId={visState.selectedAnnotationId}
+            isEditingAnnotationText={visState.isEditingAnnotationText}
+            isAnnotationMode={Boolean(mapControls?.annotation?.active)}
+            mapIndex={index || 0}
+            viewport={this._getAnnotationViewport(mapState, internalViewState)}
+            isGlobeEnabled={Boolean(mapState.globe?.enabled)}
+            pickWorldPosition={this._pickAnnotationWorldPosition}
+            updateAnnotation={visStateActions.updateAnnotation}
+            setSelectedAnnotation={visStateActions.setSelectedAnnotation}
+          />
           {this.props.children}
           {mapStyle.topMapStyle && !mapState.globe?.enabled ? (
             <ResolvedMapComponent
@@ -1858,8 +1860,6 @@ export default function MapContainerFactory(
               }
               showCopy={visState.interactionConfig.coordinate.enabled}
               {...this._annotationMenuItems()}
-              addAnnotationDisabled={!this._annotationsVisible()}
-              annotationsVisible={this._annotationsVisible()}
               onAddAnnotation={this._onAddAnnotation}
               onToggleAnnotations={this._onToggleAnnotations}
               onClose={this._closeCoordinateMenu}
