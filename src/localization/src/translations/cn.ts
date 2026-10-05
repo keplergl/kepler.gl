@@ -360,6 +360,7 @@ export default {
     '3DMap': '3D 地图',
     animationByWindow: '移动时间窗口',
     animationByIncremental: '增量时间窗口',
+    animationByInterval: '按间隔步进',
     speed: '速度',
     play: '播放',
     pause: '暂停',

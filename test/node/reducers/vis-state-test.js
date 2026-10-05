@@ -33,6 +33,7 @@ import {
   createDataContainer,
   applyFilterFieldName,
   getAnimatableVisibleLayers,
+  getBinThresholds,
   getDefaultFilter,
   histogramFromDomain,
   LayerTimeInterval,
@@ -3008,6 +3009,42 @@ test('#visStateReducer -> SET_FILTER_ANIMATION_WINDOW', t => {
   );
 
   t.equal(nextState.filters[0].animationWindow, 'incremental', 'should update ANIMATIONWINDOW');
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER_ANIMATION_WINDOW interval snaps to one histogram bin', t => {
+  const initialState = CloneDeep(StateWFilters.visState);
+  const filter = initialState.filters[0];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.setFilterAnimationWindow({
+      id: filter.id,
+      animationWindow: ANIMATION_WINDOW.interval
+    })
+  );
+
+  const updated = nextState.filters[0];
+  t.equal(updated.animationWindow, ANIMATION_WINDOW.interval, 'should set interval window');
+  t.ok(updated.plotType.interval, 'should keep a histogram interval');
+
+  const thresholds = getBinThresholds(updated.plotType.interval, updated.domain);
+  t.ok(thresholds.includes(updated.value[0]), 'bin start should be a histogram threshold');
+  const idx = thresholds.indexOf(updated.value[0]);
+  t.ok(idx > -1 && idx < thresholds.length - 1, 'should land on a bin, not the domain end');
+  t.equal(updated.value[1], thresholds[idx + 1], 'bin end should be the next histogram threshold');
+
+  const backToFree = reducer(
+    nextState,
+    VisStateActions.setFilterAnimationWindow({
+      id: filter.id,
+      animationWindow: ANIMATION_WINDOW.free
+    })
+  );
+  const freed = backToFree.filters[0];
+  t.equal(freed.animationWindow, ANIMATION_WINDOW.free, 'should leave interval mode');
+  t.ok(freed.value[1] > freed.value[0], 'should widen back to a range of at least one bin');
 
   t.end();
 });

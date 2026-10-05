@@ -374,6 +374,7 @@ export default {
     '3DMap': '3D-näkymä',
     animationByWindow: 'Liukuva aikaikkuna',
     animationByIncremental: 'Kasvava aikaikkuna',
+    animationByInterval: 'Askel intervallin mukaan',
     speed: 'nopeus',
     play: 'toista',
     pause: 'tauko',

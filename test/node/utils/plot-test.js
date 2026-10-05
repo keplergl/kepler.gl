@@ -6,6 +6,7 @@ import {
   histogramFromThreshold,
   histogramFromValues,
   histogramFromTimeIntervals,
+  intervalBinFromMarks,
   mergePolygonLayerIndexes,
   runGpuFilterForPlot,
   getLineChart,
@@ -531,6 +532,39 @@ test('Utils -> mergePlotGroupBy fills defaults and clears', t => {
   t.equal(updated.colorRange, created.colorRange, 'should keep the existing series colors');
 
   t.equal(mergePlotGroupBy(updated, null), null, 'should clear groupBy');
+
+  t.end();
+});
+
+test('Utils -> intervalBinFromMarks snaps a brush position to one histogram bin', t => {
+  const marks = [0, 100, 200, 300];
+
+  t.deepEqual(intervalBinFromMarks(marks, 0), [0, 99], 'should select the first bin');
+  t.deepEqual(
+    intervalBinFromMarks(marks, 100),
+    [100, 199],
+    'should select the bin that starts on the mark'
+  );
+  t.deepEqual(
+    intervalBinFromMarks(marks, 149),
+    [100, 199],
+    'should snap toward the nearer bin start'
+  );
+  t.deepEqual(
+    intervalBinFromMarks(marks, 150),
+    [200, 299],
+    'should snap to the next bin at the midpoint'
+  );
+  t.deepEqual(
+    intervalBinFromMarks(marks, 300),
+    [300, 300],
+    'should keep the domain end as a point, not a new bin'
+  );
+  t.deepEqual(
+    intervalBinFromMarks([], 10),
+    [10, 10],
+    'should leave the value unchanged without marks'
+  );
 
   t.end();
 });

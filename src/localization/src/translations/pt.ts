@@ -376,6 +376,7 @@ export default {
     '3DMap': ' Mapa 3D',
     animationByWindow: 'Janela de tempo móvel',
     animationByIncremental: 'Janela de tempo incremental',
+    animationByInterval: 'Passo por intervalo',
     speed: 'velocidade',
     play: 'reproduzir',
     pause: 'pausar',
