@@ -86,6 +86,8 @@ type LoadingIndicatorProps = {
   percent?: number;
   /** Number of remote files currently being fetched from a saved config. */
   remoteDatasetCount?: number;
+  /** Remote files whose download finished and that are now being parsed. */
+  processingDatasetCount?: number;
 };
 
 /** Extra adjustment for the loading indicator when side panel is visible */
@@ -116,6 +118,7 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
   hasMapScale,
   percent,
   remoteDatasetCount = 0,
+  processingDatasetCount = 0,
   theme
 }) => {
   const left =
@@ -127,12 +130,21 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
   const numRasterTilesInProgress = getNumRasterTilesBeingLoaded();
   const numVectorTilesInProgress = getNumVectorTilesBeingLoaded();
 
-  const remoteMessage =
-    remoteDatasetCount > 0
-      ? remoteDatasetCount === 1
-        ? 'Remote dataset is being loaded'
-        : `${remoteDatasetCount} remote datasets are being loaded`
-      : '';
+  const downloadingCount = Math.max(remoteDatasetCount - processingDatasetCount, 0);
+  const remoteMessage = [
+    downloadingCount === 1
+      ? 'Remote dataset is being loaded'
+      : downloadingCount > 1
+      ? `${downloadingCount} remote datasets are being loaded`
+      : '',
+    processingDatasetCount === 1
+      ? 'Processing remote dataset'
+      : processingDatasetCount > 1
+      ? `Processing ${processingDatasetCount} remote datasets`
+      : ''
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   let tileMessage = '';
   if (numRasterTilesInProgress > 0 && numVectorTilesInProgress > 0) {
@@ -150,7 +162,8 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps & {theme: any}> = ({
 
   const extraMessage = [remoteMessage, tileMessage].filter(Boolean).join('\n');
 
-  const hasProgress = typeof percent === 'number' && percent > 0;
+  const processingOnly = processingDatasetCount > 0 && downloadingCount === 0;
+  const hasProgress = !processingOnly && typeof percent === 'number' && percent > 0;
 
   // Preserve the last message / percent during fade-out
   const lastMessageRef = useRef(extraMessage);

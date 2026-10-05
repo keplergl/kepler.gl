@@ -436,6 +436,7 @@ export const INITIAL_VIS_STATE: VisState = {
   // for loading datasets
   loadingIndicatorValue: 0,
   loadingProgress: {},
+  loadingProcessing: {},
 
   loaders: [],
   loadOptions: {},
@@ -3349,7 +3350,11 @@ function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets) {
   return HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK({
     arg: dataset,
     onProgress: progress =>
-      setLoadingProgress(progressId, Math.round((progress?.percent ?? 0) * 100))
+      setLoadingProgress(
+        progressId,
+        Math.round((progress?.percent ?? 0) * 100),
+        progress?.phase === 'processing' ? 'processing' : undefined
+      )
   }).chain(hydrated => {
     const task = createNewDataEntry(hydrated, datasets);
     return (
@@ -3361,20 +3366,23 @@ function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets) {
 
 function clearLoadingProgress(state: VisState, ids?: string[]): VisState {
   const current = state.loadingProgress || {};
-  if (!Object.keys(current).length) {
+  const processing = state.loadingProcessing || {};
+  if (!Object.keys(current).length && !Object.keys(processing).length) {
     return state;
   }
   if ((state.loadingIndicatorValue || 0) <= 0) {
-    return {...state, loadingProgress: {}};
+    return {...state, loadingProgress: {}, loadingProcessing: {}};
   }
   if (!ids?.length) {
     return state;
   }
   const next = {...current};
+  const nextProcessing = {...processing};
   ids.forEach(id => {
     delete next[id];
+    delete nextProcessing[id];
   });
-  return {...state, loadingProgress: next};
+  return {...state, loadingProgress: next, loadingProcessing: nextProcessing};
 }
 
 function patchDatasetMetadata(dataset: Datasets[string], patch: Record<string, unknown>) {
@@ -6099,8 +6107,10 @@ export const setLoadingIndicatorUpdater = (
   return {
     ...state,
     loadingIndicatorValue: nextValue,
-    ...(nextValue === 0 && Object.keys(state.loadingProgress || {}).length
-      ? {loadingProgress: {}}
+    ...(nextValue === 0 &&
+    (Object.keys(state.loadingProgress || {}).length ||
+      Object.keys(state.loadingProcessing || {}).length)
+      ? {loadingProgress: {}, loadingProcessing: {}}
       : {})
   };
 };
@@ -6112,7 +6122,7 @@ export const setLoadingIndicatorUpdater = (
  */
 export function setLoadingProgressUpdater(
   state: VisState,
-  {id, percent}: VisStateActions.SetLoadingProgressUpdaterAction
+  {id, percent, phase}: VisStateActions.SetLoadingProgressUpdaterAction
 ): VisState {
   if ((state.loadingIndicatorValue || 0) <= 0) {
     return state;
@@ -6120,7 +6130,11 @@ export function setLoadingProgressUpdater(
   const nextPercent = Number.isFinite(percent)
     ? Math.max(0, Math.min(100, Math.round(percent)))
     : 0;
-  if (state.loadingProgress?.[id] === nextPercent) {
+  const processing = phase === 'processing';
+  if (
+    state.loadingProgress?.[id] === nextPercent &&
+    Boolean(state.loadingProcessing?.[id]) === processing
+  ) {
     return state;
   }
   return {
@@ -6128,7 +6142,15 @@ export function setLoadingProgressUpdater(
     loadingProgress: {
       ...state.loadingProgress,
       [id]: nextPercent
-    }
+    },
+    ...(processing
+      ? {
+          loadingProcessing: {
+            ...state.loadingProcessing,
+            [id]: true
+          }
+        }
+      : {})
   };
 }
 

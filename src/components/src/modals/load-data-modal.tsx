@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useState} from 'react';
-import styled from 'styled-components';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import styled, {keyframes} from 'styled-components';
 import get from 'es-toolkit/compat/get';
 import {IntlShape, useIntl} from 'react-intl';
 
@@ -80,6 +80,53 @@ const AddDataActions = styled.div`
   gap: 12px;
   margin-left: auto;
   flex-shrink: 0;
+`;
+
+const Dimmed = styled.div<{$dimmed?: boolean}>`
+  opacity: ${props => (props.$dimmed ? 0.4 : 1)};
+  pointer-events: ${props => (props.$dimmed ? 'none' : 'auto')};
+`;
+
+const ModalMain = styled(Dimmed)`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+`;
+
+const spin = keyframes`
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const ProcessingSpinner = styled.span.attrs({
+  className: 'add-data-bar__spinner',
+  'aria-hidden': true
+})`
+  display: block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid ${props => props.theme.borderColorLT};
+  border-top-color: ${props => props.theme.primaryBtnBgd};
+  will-change: transform;
+  animation: ${spin} 0.7s linear infinite;
+`;
+
+const ProcessingStatus = styled.div.attrs({
+  className: 'add-data-bar__processing',
+  role: 'status'
+})`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
 `;
 
 const noop = () => {
@@ -200,6 +247,14 @@ export function LoadDataModalFactory(
   }) => {
     const intl = useIntl();
     const [autoCreateLayers, setAutoCreateLayers] = useState(true);
+    const [preparingLayers, setPreparingLayers] = useState(false);
+    const prepareFrames = useRef<number[]>([]);
+    useEffect(() => {
+      const frames = prepareFrames.current;
+      return () => {
+        frames.forEach(id => window.cancelAnimationFrame(id));
+      };
+    }, []);
     const [deselectedDatasets, setDeselectedDatasets] = useState<Record<string, boolean>>({});
     const onToggleDataset = useCallback((key: string) => {
       setDeselectedDatasets(prev => ({...prev, [key]: !prev[key]}));
@@ -239,22 +294,38 @@ export function LoadDataModalFactory(
       ? Boolean(tilesetDraft?.canAdd) && !tilesetDraft?.loading
       : Boolean(datasetsToAdd.length) && !fileLoading;
     const onAddData = useCallback(() => {
-      if (isTileset) {
-        if (tilesetDraft?.canAdd && tilesetDraft.dataset) {
-          handleTilesetAdded(tilesetDraft.dataset, tilesetDraft.metadata);
-        }
+      if (!canAdd || preparingLayers) {
         return;
       }
-      if (datasetsToAdd.length && !fileLoading) {
+      const commit = () => {
+        if (isTileset) {
+          if (tilesetDraft?.canAdd && tilesetDraft.dataset) {
+            handleTilesetAdded(tilesetDraft.dataset, tilesetDraft.metadata);
+          }
+          return;
+        }
         onConfirmAddData({autoCreateLayers, datasets: datasetsToAdd});
+      };
+      // Layer creation blocks the main thread. Paint this status first so the
+      // spinner can keep moving on the compositor during that work.
+      if (autoCreateLayers) {
+        setPreparingLayers(true);
+        const first = window.requestAnimationFrame(() => {
+          const second = window.requestAnimationFrame(commit);
+          prepareFrames.current.push(second);
+        });
+        prepareFrames.current.push(first);
+        return;
       }
+      commit();
     }, [
       autoCreateLayers,
+      canAdd,
       datasetsToAdd,
-      fileLoading,
       handleTilesetAdded,
       isTileset,
       onConfirmAddData,
+      preparingLayers,
       tilesetDraft
     ]);
     const uploadError = !fileLoading && isUpload ? progressErrors(fileLoadingProgress)[0] : '';
@@ -274,34 +345,49 @@ export function LoadDataModalFactory(
 
     return (
       <StyledLoadDataModal $withFooter={showAddBar}>
-        <ModalTabs
-          currentMethod={currentMethod?.id}
-          loadingMethods={loadingMethods}
-          toggleMethod={selectMethod}
-        />
-        {isCloudMapLoading ? (
-          <LoadingDialog size={64} />
-        ) : (
-          ElementType && <ElementType key={currentMethod?.id} intl={intl} {...currentModalProps} />
-        )}
+        <ModalMain $dimmed={preparingLayers}>
+          <ModalTabs
+            currentMethod={currentMethod?.id}
+            loadingMethods={loadingMethods}
+            toggleMethod={selectMethod}
+          />
+          {isCloudMapLoading ? (
+            <LoadingDialog size={64} />
+          ) : (
+            ElementType && (
+              <ElementType key={currentMethod?.id} intl={intl} {...currentModalProps} />
+            )
+          )}
+        </ModalMain>
         {showAddBar ? (
           <AddDataBar>
-            <AutoCreateLayersCheckbox
-              checked={autoCreateLayers}
-              onToggle={onToggleAutoCreateLayers}
-            />
+            <Dimmed $dimmed={preparingLayers}>
+              <AutoCreateLayersCheckbox
+                checked={autoCreateLayers}
+                disabled={preparingLayers}
+                onToggle={onToggleAutoCreateLayers}
+              />
+            </Dimmed>
             <StagedLabel />
             {uploadError || tilesetError ? (
               <FooterError>{uploadError || tilesetError}</FooterError>
             ) : null}
-            <AddDataActions>
-              <Button type="button" link onClick={onClose}>
-                {intl.formatMessage({id: 'modal.button.defaultCancel'})}
-              </Button>
-              <Button type="button" cta disabled={!canAdd} onClick={onAddData}>
-                {intl.formatMessage({id: 'layerManager.addData'})}
-              </Button>
-            </AddDataActions>
+            {preparingLayers ? (
+              <ProcessingStatus
+                aria-label={intl.formatMessage({id: 'modal.loadData.processingLayers'})}
+              >
+                <ProcessingSpinner />
+              </ProcessingStatus>
+            ) : (
+              <AddDataActions>
+                <Button type="button" link onClick={onClose}>
+                  {intl.formatMessage({id: 'modal.button.defaultCancel'})}
+                </Button>
+                <Button type="button" cta disabled={!canAdd} onClick={onAddData}>
+                  {intl.formatMessage({id: 'layerManager.addData'})}
+                </Button>
+              </AddDataActions>
+            )}
           </AddDataBar>
         ) : null}
       </StyledLoadDataModal>

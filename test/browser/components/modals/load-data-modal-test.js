@@ -151,3 +151,34 @@ test('Components -> LoadDataModal -> auto create layers', t => {
 
   t.end();
 });
+
+test('Components -> LoadDataModal -> processing layers', t => {
+  const onConfirmAddData = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal
+        onConfirmAddData={onConfirmAddData}
+        stagedToAdd={[{info: {label: 'points.csv'}}]}
+      />
+    </IntlWrapper>
+  );
+
+  wrapper.find('.add-data-bar button').at(1).simulate('click');
+
+  t.equal(onConfirmAddData.called, false, 'layer prep waits until the processing state can paint');
+  const processing = wrapper.find('.add-data-bar__processing').hostNodes();
+  t.equal(processing.length, 1, 'should replace the footer actions');
+  t.equal(processing.text(), '', 'should show only the spinner');
+  t.equal(
+    processing.find('.add-data-bar__spinner').hostNodes().length,
+    1,
+    'should show a spinner in place of the footer actions'
+  );
+  t.equal(
+    wrapper.find('.add-data-bar button').hostNodes().length,
+    0,
+    'should hide Cancel and Add Data while layers are prepared'
+  );
+
+  t.end();
+});

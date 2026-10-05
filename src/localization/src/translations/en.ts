@@ -818,6 +818,7 @@ export default {
       autoCreateLayers: 'Auto create layers',
       autoCreateLayersInfo:
         'kepler.gl will auto detect layers if the column names in your file follow certain naming conventions.',
+      processingLayers: 'Processing data for layers',
       readyToAdd: 'Ready to add'
     },
     tripInfo: {

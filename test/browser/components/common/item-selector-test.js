@@ -54,6 +54,35 @@ test('Components -> ItemSelector.render', t => {
   t.end();
 });
 
+test('Components -> ItemSelector.deferOnChange', t => {
+  const onChange = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <ItemSelector
+        selectedItems="normal"
+        options={['additive', 'normal', 'subtractive']}
+        multiSelect={false}
+        searchable={false}
+        deferOnChange
+        onChange={onChange}
+      />
+    </IntlWrapper>
+  );
+
+  wrapper.find('.item-selector__dropdown').at(0).simulate('click');
+  wrapper.find(DropdownList).at(0).find('.list__item').at(0).simulate('click');
+
+  t.equal(onChange.called, false, 'should wait to apply the selection until the list can paint');
+  t.equal(wrapper.find(Typeahead).length, 1, 'should keep the list open');
+  t.equal(
+    wrapper.find('.item-selector__prepare-spinner').hostNodes().length,
+    1,
+    'should show a spinner over the open list'
+  );
+
+  t.end();
+});
+
 test('Components -> ItemSelector.render over 100 options', t => {
   let wrapper;
   const onChange = sinon.spy();
