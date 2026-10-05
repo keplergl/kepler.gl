@@ -34,6 +34,10 @@ test('Components -> LoadDataModal.mount', t => {
     STYLED_COMPONENTS_DUPLICATED_ENTRIES,
     'should render FileUpload'
   );
+  t.ok(
+    wrapper.find('.file-upload__message').first().text().includes('saved map'),
+    'Add Data mentions a saved map Json'
+  );
   t.equal(
     wrapper.find('.load-data-modal__tab').length,
     STYLED_COMPONENTS_DUPLICATED_ENTRIES,
@@ -148,6 +152,52 @@ test('Components -> LoadDataModal -> auto create layers', t => {
   const tilesetButtons = wrapper.find('.add-data-bar button');
   t.equal(tilesetButtons.at(1).props().disabled, true, 'Add Data waits until the tileset is ready');
   t.equal(onTilesetAdded.called, false, 'opening the tileset tab does not add data');
+
+  t.end();
+});
+
+test('Components -> LoadDataModal -> replace dataset', t => {
+  const onConfirmAddData = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal
+        replaceDatasetId="cities"
+        replaceDatasetLabel="Cities"
+        onConfirmAddData={onConfirmAddData}
+        stagedToAdd={[{info: {id: 'next', label: 'next.csv'}}]}
+      />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    wrapper.find('.remove-original-dataset').length > 0,
+    true,
+    'should offer to remove the original'
+  );
+  t.equal(wrapper.find('.auto-create-layers').length, 0, 'replace does not auto-create layers');
+  t.equal(wrapper.find(ModalTabItem).length, 1, 'replace keeps only the upload tab');
+  t.equal(
+    wrapper.find('.file-upload__message').first().text().includes('saved map'),
+    false,
+    'replace asks for a dataset file'
+  );
+  t.equal(
+    wrapper.find('.add-data-bar').find('Checkbox').first().props().checked,
+    true,
+    'removing the original dataset is checked by default'
+  );
+
+  wrapper.find('.add-data-bar').find('Checkbox').first().simulate('change');
+  wrapper.find('.add-data-bar button').at(1).simulate('click');
+  t.deepEqual(
+    onConfirmAddData.args[0][0],
+    {
+      autoCreateLayers: false,
+      deleteOriginalDataset: false,
+      datasets: [{info: {id: 'next', label: 'next.csv'}}]
+    },
+    'Replace commits the staged dataset and the remove choice'
+  );
 
   t.end();
 });

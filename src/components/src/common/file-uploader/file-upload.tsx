@@ -218,6 +218,8 @@ type FileUploadProps = {
   /** Keys of datasets the user unchecked. Omitted keys stay selected. */
   deselectedDatasets?: Record<string, boolean>;
   onToggleDataset?: (key: string) => void;
+  /** Dataset replace does not accept a saved map. */
+  replaceDataset?: boolean;
 } & WrappedComponentProps;
 
 type FileUploadState = {
@@ -435,7 +437,9 @@ function FileUploadFactory() {
         : fileExtensions;
       const showFormatSelector = getApplicationConfig().enableRemoteFileFormatSelector;
       const fileUploadInfoText = `${intl.formatMessage({
-        id: 'fileUploader.configUploadMessage'
+        id: this.props.replaceDataset
+          ? 'fileUploader.replaceUploadMessage'
+          : 'fileUploader.configUploadMessage'
       })}(${GUIDES_FILE_FORMAT_DOC}).`;
       const progress = fileLoadingProgress || {};
       const uploadItems: UploadFileListItem[] = [];

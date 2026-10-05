@@ -27,11 +27,12 @@ import {
 } from './map-style-updaters';
 import {filesToDataPayload} from '@kepler.gl/processors';
 import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-helpers';
-import {MapState, UiState, AddDataToMapPayload, ParsedConfig} from '@kepler.gl/types';
+import {MapState, UiState, AddDataToMapPayload, ParsedConfig, ProtoDataset} from '@kepler.gl/types';
 import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
 import {
   loadFilesSuccessUpdaterAction,
+  ConfirmReplaceDatasetUpdaterAction,
   StageLoadedFilesUpdaterAction,
   MapStyleChangeUpdaterAction,
   LayerTypeChangeUpdaterAction,
@@ -333,6 +334,92 @@ export const appendStagedLoadedFilesUpdater = (
   return compose_<KeplerGlState>([
     pick_('visState')(merge_({stagedToAdd: [...previous, ...next]}))
   ])(state);
+};
+
+/**
+ * The first plain dataset in a confirmed upload replaces the selected table.
+ * A kepler.gl map json is added as a map. Further tables are added after the replacement.
+ */
+function splitReplacementUpload(payloads: AddDataToMapPayload[]): {
+  datasetToUse: ProtoDataset | null;
+  remainder: AddDataToMapPayload[];
+} {
+  const datasets: ProtoDataset[] = [];
+  const maps: AddDataToMapPayload[] = [];
+  payloads.forEach(payload => {
+    if (payload.config) {
+      maps.push(payload);
+      return;
+    }
+    const list = (Array.isArray(payload.datasets) ? payload.datasets : [payload.datasets]).filter(
+      (dataset): dataset is ProtoDataset => Boolean(dataset)
+    );
+    datasets.push(...list);
+  });
+  const [datasetToUse, ...more] = datasets;
+  return {
+    datasetToUse: datasetToUse ?? null,
+    remainder: [
+      ...maps,
+      ...(more.length
+        ? [
+            {
+              datasets: more,
+              options: {keepExistingConfig: true, centerMap: false, autoCreateLayers: false}
+            }
+          ]
+        : [])
+    ]
+  };
+}
+
+/**
+ * Turn a confirmed Add Data selection into a dataset replacement.
+ * Layers and filters move onto the new table. The original table is dropped unless asked to stay.
+ * @memberof combinedUpdaters
+ * @public
+ */
+export const confirmReplaceDatasetUpdater = (
+  state: KeplerGlState,
+  action: ConfirmReplaceDatasetUpdaterAction
+): KeplerGlState => {
+  const payloads = filesToDataPayload(action.result, {
+    keepExistingConfig: true,
+    centerMap: true,
+    autoCreateLayers: false
+  });
+  const cleared = compose_([
+    pick_('visState')(
+      merge_({
+        fileLoading: false,
+        fileLoadingProgress: {},
+        stagedToAdd: null
+      })
+    )
+  ])(state);
+
+  const {datasetToUse, remainder} = splitReplacementUpload(payloads);
+  if (datasetToUse?.info?.id && action.datasetToReplaceId) {
+    const replaced = replaceDataInMapUpdater(cleared, {
+      payload: {
+        datasetToReplaceId: action.datasetToReplaceId,
+        datasetToUse,
+        options: {deleteOriginalDataset: action.deleteOriginalDataset !== false}
+      }
+    });
+    if (replaced !== cleared) {
+      if (!remainder.length) {
+        return replaced;
+      }
+      return compose_(remainder.map(p => apply_(addDataToMapUpdater, payload_(p))))(
+        replaced
+      ) as KeplerGlState;
+    }
+  }
+
+  return compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(
+    cleared
+  ) as KeplerGlState;
 };
 
 export const addDataToMapComposed = addDataToMapUpdater;
@@ -645,7 +732,8 @@ export const replaceDataInMapUpdater = (
   {payload}: {payload: ReplaceDataInMapPayload}
 ): KeplerGlState => {
   const {datasetToReplaceId, datasetToUse, options = {}} = payload;
-  const addDataToMapOptions = {...defaultReplaceDataToMapOptions, ...options};
+  const {deleteOriginalDataset = true, ...replaceOptions} = options;
+  const addDataToMapOptions = {...defaultReplaceDataToMapOptions, ...replaceOptions};
 
   // check if dataset is there
   if (!state.visState.datasets[datasetToReplaceId]) {
@@ -659,7 +747,9 @@ export const replaceDataInMapUpdater = (
   // remove dataset and put dependencies in toBeMerged
   const preparedState = {
     ...state,
-    visState: prepareStateForDatasetReplace(state.visState, datasetToReplaceId, dataIdToUse)
+    visState: prepareStateForDatasetReplace(state.visState, datasetToReplaceId, dataIdToUse, {
+      deleteOriginalDataset
+    })
   };
 
   const nextState = addDataToMapUpdater(

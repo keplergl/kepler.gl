@@ -1905,6 +1905,33 @@ export function loadFilesSuccess(
   };
 }
 
+export type ConfirmReplaceDatasetUpdaterAction = {
+  result: FileCacheItem[];
+  datasetToReplaceId: string;
+  deleteOriginalDataset?: boolean;
+};
+/**
+ * Confirm a staged upload as a replacement for one dataset.
+ * The first dataset remaps that dataset's layers and filters. Further datasets are added.
+ * @memberof visStateActions
+ * @param payload.result staged file cache the user left checked
+ * @param payload.datasetToReplaceId dataset the menu action selected
+ * @param payload.deleteOriginalDataset drop the original table. Defaults to true
+ * @public
+ */
+export function confirmReplaceDataset(payload: {
+  result: FileCacheItem[];
+  datasetToReplaceId: string;
+  deleteOriginalDataset?: boolean;
+}): Merge<ConfirmReplaceDatasetUpdaterAction, {type: typeof ActionTypes.CONFIRM_REPLACE_DATASET}> {
+  return {
+    type: ActionTypes.CONFIRM_REPLACE_DATASET,
+    result: payload.result,
+    datasetToReplaceId: payload.datasetToReplaceId,
+    deleteOriginalDataset: payload.deleteOriginalDataset
+  };
+}
+
 export type StageLoadedFilesUpdaterAction = {
   result: FileCacheItem[];
   /** Set when a file-load pause finishes, so a canceled load can be ignored. */

@@ -648,6 +648,8 @@ export type UiState = {
   activeSidePanel: string | null;
   currentModal: string | null;
   datasetKeyToRemove: string | null;
+  /** Dataset selected by the dataset-menu Replace action. Cleared when the modal closes. */
+  datasetToReplaceId: string | null;
   visibleDropdown: string | null;
   // export image modal ui
   exportImage: ExportImage;
