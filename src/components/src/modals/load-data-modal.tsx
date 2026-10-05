@@ -1,27 +1,85 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import styled from 'styled-components';
 import get from 'es-toolkit/compat/get';
 import {IntlShape, useIntl} from 'react-intl';
 
+import {Button} from '../common';
 import FileUploadFactory from '../common/file-uploader/file-upload';
+import {selectedStagedDatasets} from '../common/file-uploader/upload-file-list';
 import LoadStorageMapFactory from './load-storage-map';
 import LoadTilesetFactory from './tilesets-modals/load-tileset';
 import ModalTabsFactory from './modal-tabs';
 import LoadingDialog from './loading-dialog';
+import AutoCreateLayersCheckbox from './auto-create-layers-checkbox';
 
 import {LOADING_METHODS} from '@kepler.gl/constants';
+import {media} from '@kepler.gl/styles';
 import {FileLoading, FileLoadingProgress, LoadFiles} from '@kepler.gl/types';
 
 const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
-})`
-  padding: ${props => props.theme.modalPadding};
+})<{$withFooter?: boolean}>`
+  padding: 10px 0 ${props => (props.$withFooter ? 0 : '50px')};
   min-height: 360px;
   display: flex;
   flex-direction: column;
+
+  ${props =>
+    props.$withFooter
+      ? ''
+      : media.portable`
+          padding-bottom: 34px;
+        `}
+`;
+
+const AddDataBar = styled.div.attrs({
+  className: 'add-data-bar'
+})`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-sizing: border-box;
+  /* Pull the rule out to the dialog edges. Side padding matches the modal. */
+  margin: 16px -72px 0;
+  padding: 16px 72px;
+  border-top: 1px solid #d8d8d8;
+
+  ${media.portable`
+    margin-left: -36px;
+    margin-right: -36px;
+    padding-left: 36px;
+    padding-right: 36px;
+  `}
+`;
+
+const StagedLabel = styled.div`
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: ${props => props.theme.subtextColorLT};
+  font-size: 12px;
+`;
+
+const FooterError = styled.div`
+  color: ${props => props.theme.negativeBtnColor};
+  font-size: 12px;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const AddDataActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+  flex-shrink: 0;
 `;
 
 const noop = () => {
@@ -36,13 +94,46 @@ export interface LoadingMethod {
   tabElementType?: React.ComponentType<{onClick: React.MouseEventHandler; intl: IntlShape}>;
 }
 
+export type LoadDataOptions = {
+  autoCreateLayers?: boolean;
+  /** Staged datasets the user left checked. */
+  datasets?: Array<{info?: {label?: string}; metadata?: {source?: string}}>;
+};
+
+type TilesetDraft = {
+  canAdd: boolean;
+  loading?: boolean;
+  error?: string | null;
+  dataset?: {name: string; type: string; metadata: Record<string, any>};
+  metadata?: Record<string, any>;
+};
+
+function progressErrors(progress: FileLoadingProgress = {}): string[] {
+  return Object.values(progress)
+    .map(item => {
+      const error = item?.error;
+      if (!error) {
+        return '';
+      }
+      return typeof error === 'string' ? error : error.message || '';
+    })
+    .filter(Boolean);
+}
+
 type LoadDataModalProps = {
   // call backs
   onFileUpload: (files: File[]) => void;
+  onAddRemoteDataset?: (remote: {url: string; format?: string}) => void;
+  onConfirmAddData?: (options: LoadDataOptions) => void;
+  stagedToAdd?: Array<{
+    info?: {id?: string; label?: string};
+    metadata?: {source?: string};
+  }> | null;
   onLoadCloudMap: (provider: any, vis: any) => void;
   onTilesetAdded: (
     tileset: {name: string; type: string; metadata: Record<string, any>},
-    processedMetadata?: Record<string, any>
+    processedMetadata?: Record<string, any>,
+    options?: LoadDataOptions
   ) => void;
   fileLoading: FileLoading | false;
   loadingMethods?: LoadingMethod[];
@@ -96,37 +187,123 @@ export function LoadDataModalFactory(
     defaultLoadingMethods: LoadDataModalProps['loadingMethods'];
   } = ({
     onFileUpload = noop,
+    onAddRemoteDataset = noop,
     onTilesetAdded = noop,
+    onConfirmAddData = noop,
+    onClose = noop,
     fileLoading = false,
+    fileLoadingProgress = {},
+    stagedToAdd = null,
     loadingMethods = defaultLoadingMethods,
     isCloudMapLoading,
     ...restProps
   }) => {
     const intl = useIntl();
+    const [autoCreateLayers, setAutoCreateLayers] = useState(true);
+    const [deselectedDatasets, setDeselectedDatasets] = useState<Record<string, boolean>>({});
+    const onToggleDataset = useCallback((key: string) => {
+      setDeselectedDatasets(prev => ({...prev, [key]: !prev[key]}));
+    }, []);
+    const [tilesetDraft, setTilesetDraft] = useState<TilesetDraft | null>(null);
+    const onToggleAutoCreateLayers = useCallback(() => {
+      setAutoCreateLayers(value => !value);
+    }, []);
+    const handleFileUpload = useCallback(
+      (files: File[]) => {
+        onFileUpload(files);
+      },
+      [onFileUpload]
+    );
+    const handleTilesetAdded = useCallback(
+      (
+        tileset: {name: string; type: string; metadata: Record<string, any>},
+        processedMetadata?: Record<string, any>
+      ) => {
+        onTilesetAdded(tileset, processedMetadata, {autoCreateLayers});
+      },
+      [onTilesetAdded, autoCreateLayers]
+    );
+    const onTilesetDraftChange = useCallback((draft: TilesetDraft) => {
+      setTilesetDraft(draft);
+    }, []);
+    const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
+    const selectMethod = useCallback((method: LoadingMethod) => {
+      setTilesetDraft(null);
+      toggleMethod(method);
+    }, []);
+    const isUpload = currentMethod?.id === LOADING_METHODS.upload;
+    const isTileset = currentMethod?.id === LOADING_METHODS.tileset;
+    const showAddBar = isUpload || isTileset;
+    const datasetsToAdd = selectedStagedDatasets(stagedToAdd, deselectedDatasets);
+    const canAdd = isTileset
+      ? Boolean(tilesetDraft?.canAdd) && !tilesetDraft?.loading
+      : Boolean(datasetsToAdd.length) && !fileLoading;
+    const onAddData = useCallback(() => {
+      if (isTileset) {
+        if (tilesetDraft?.canAdd && tilesetDraft.dataset) {
+          handleTilesetAdded(tilesetDraft.dataset, tilesetDraft.metadata);
+        }
+        return;
+      }
+      if (datasetsToAdd.length && !fileLoading) {
+        onConfirmAddData({autoCreateLayers, datasets: datasetsToAdd});
+      }
+    }, [
+      autoCreateLayers,
+      datasetsToAdd,
+      fileLoading,
+      handleTilesetAdded,
+      isTileset,
+      onConfirmAddData,
+      tilesetDraft
+    ]);
+    const uploadError = !fileLoading && isUpload ? progressErrors(fileLoadingProgress)[0] : '';
+    const tilesetError = isTileset ? tilesetDraft?.error : '';
+
     const currentModalProps = {
       ...restProps,
-      onFileUpload,
-      onTilesetAdded,
+      onFileUpload: handleFileUpload,
+      onTilesetAdded: handleTilesetAdded,
       fileLoading,
-      isCloudMapLoading
+      fileLoadingProgress,
+      isCloudMapLoading,
+      ...(isUpload ? {stagedToAdd, onAddRemoteDataset, deselectedDatasets, onToggleDataset} : {}),
+      ...(isTileset ? {confirmInParent: true, onTilesetDraftChange} : {})
     };
-    // const {loadingMethods, isCloudMapLoading} = props;
-    const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
-
     const ElementType = currentMethod?.elementType;
 
     return (
-      <StyledLoadDataModal>
+      <StyledLoadDataModal $withFooter={showAddBar}>
         <ModalTabs
           currentMethod={currentMethod?.id}
           loadingMethods={loadingMethods}
-          toggleMethod={toggleMethod}
+          toggleMethod={selectMethod}
         />
         {isCloudMapLoading ? (
           <LoadingDialog size={64} />
         ) : (
           ElementType && <ElementType key={currentMethod?.id} intl={intl} {...currentModalProps} />
         )}
+        {showAddBar ? (
+          <AddDataBar>
+            <AutoCreateLayersCheckbox
+              checked={autoCreateLayers}
+              onToggle={onToggleAutoCreateLayers}
+            />
+            <StagedLabel />
+            {uploadError || tilesetError ? (
+              <FooterError>{uploadError || tilesetError}</FooterError>
+            ) : null}
+            <AddDataActions>
+              <Button type="button" link onClick={onClose}>
+                {intl.formatMessage({id: 'modal.button.defaultCancel'})}
+              </Button>
+              <Button type="button" cta disabled={!canAdd} onClick={onAddData}>
+                {intl.formatMessage({id: 'layerManager.addData'})}
+              </Button>
+            </AddDataActions>
+          </AddDataBar>
+        ) : null}
       </StyledLoadDataModal>
     );
   };

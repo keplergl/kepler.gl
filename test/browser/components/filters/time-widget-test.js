@@ -616,3 +616,59 @@ test('Components -> TimeWidget.mount -> keyboard panning calls setFilterAnimatio
   clientSizeStub.restore();
   t.end();
 });
+
+test('Components -> TimeWidget.mount -> group by field', t => {
+  const setFilterPlot = sinon.spy();
+  const filter = {
+    ...defaultProps.filter,
+    yAxis: {name: 'uid', type: 'integer'},
+    plotType: {
+      ...(defaultProps.filter.plotType || {}),
+      type: 'lineChart',
+      aggregation: 'average'
+    }
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget {...defaultProps} filter={filter} setFilterPlot={setFilterPlot} />
+      </IntlWrapper>,
+      {attachTo: document.body}
+    );
+  }, 'mount TimeWidget should not fail');
+
+  wrapper.find(Icons.Gear).at(0).simulate('click');
+  wrapper.update();
+
+  t.ok(wrapper.find('.time-widget__group-by').length > 0, 'should render group by settings');
+
+  const selectors = wrapper.find(FieldSelector);
+  let groupBySelector = null;
+  for (let i = 0; i < selectors.length; i++) {
+    if (selectors.at(i).props().id === 'time-widget-group-by-field') {
+      groupBySelector = selectors.at(i);
+    }
+  }
+  t.ok(groupBySelector, 'should render a group by field selector');
+
+  const field = groupBySelector.props().fields[0];
+  t.ok(field && field.name, 'group by fields include dataset columns');
+  groupBySelector.props().onSelect(field);
+  t.equal(
+    setFilterPlot.lastCall.args[1].plotType.groupBy.fieldName,
+    field.name,
+    'should set the group by field'
+  );
+
+  groupBySelector.props().onSelect(null);
+  t.equal(
+    setFilterPlot.lastCall.args[1].plotType.groupBy,
+    null,
+    'should clear group by when the field is removed'
+  );
+
+  wrapper.detach();
+  t.end();
+});

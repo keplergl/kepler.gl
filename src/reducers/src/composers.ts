@@ -14,6 +14,8 @@ const actionHandler = {
   [ActionTypes.SET_MAP_VIEW_MODE]: combinedUpdaters.combinedSetMapViewModeUpdater,
   [ActionTypes.LAYER_TYPE_CHANGE]: combinedUpdaters.combinedLayerTypeChangeUpdater,
   [ActionTypes.LOAD_FILES_SUCCESS]: combinedUpdaters.loadFilesSuccessUpdater,
+  [ActionTypes.STAGE_LOADED_FILES]: combinedUpdaters.stageLoadedFilesUpdater,
+  [ActionTypes.APPEND_STAGED_LOADED_FILES]: combinedUpdaters.appendStagedLoadedFilesUpdater,
   [ActionTypes.TOGGLE_SPLIT_MAP]: combinedUpdaters.toggleSplitMapUpdater,
   [ActionTypes.SET_MAP_SPLIT_MODE]: combinedUpdaters.setMapSplitModeUpdater,
   [ActionTypes.REPLACE_DATA_IN_MAP]: combinedUpdaters.replaceDataInMapUpdater

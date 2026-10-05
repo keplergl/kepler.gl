@@ -5,8 +5,13 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components';
 import throttle from 'es-toolkit/compat/throttle';
 import {DEFAULT_TIME_FORMAT, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {clamp, datetimeFormatter} from '@kepler.gl/utils';
-import {BottomWidgetInner, Button, PanelLabel} from '../common/styled-components';
+import {clamp, datetimeFormatter, lineChartSeriesLegend} from '@kepler.gl/utils';
+import {
+  BottomWidgetInner,
+  Button,
+  PanelLabel,
+  shouldForwardProp
+} from '../common/styled-components';
 import TimeRangeSliderFactory from '../common/time-range-slider';
 import FloatingTimeDisplayFactory from '../common/animation-control/floating-time-display';
 import {timeRangeSliderFieldsSelector} from './time-range-filter';
@@ -30,6 +35,30 @@ const TimelineSection = styled.div`
 
 const TimelineContainer = styled.div`
   touch-action: none;
+`;
+
+const SeriesLegend = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: -8px;
+`;
+
+const SeriesLegendItem = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: ${props => props.theme.textColor};
+  font-size: 10px;
+  line-height: 14px;
+`;
+
+const SeriesSwatch = styled.span.withConfig({shouldForwardProp})<{$color: string}>`
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: ${props => props.$color};
+  flex: 0 0 auto;
 `;
 
 const TimelineStatusBar = styled.div`
@@ -388,6 +417,11 @@ function TimeWidgetFactory(
       setTimelineDomain(null);
     }, []);
 
+    const seriesLegend = useMemo(
+      () => (isMinified ? [] : lineChartSeriesLegend(filter.lineChart)),
+      [filter.lineChart, isMinified]
+    );
+
     return (
       <TimeBottomWidgetInner className="bottom-widget--inner">
         <TimeWidgetTop
@@ -407,6 +441,16 @@ function TimeWidgetFactory(
           />
         ) : null}
         <TimelineSection>
+          {seriesLegend.length > 1 ? (
+            <SeriesLegend className="time-widget__series-legend">
+              {seriesLegend.map(item => (
+                <SeriesLegendItem key={item.name}>
+                  <SeriesSwatch $color={item.color} />
+                  {item.name}
+                </SeriesLegendItem>
+              ))}
+            </SeriesLegend>
+          ) : null}
           {timelineZoomed && timelineRangeLabel ? (
             <TimelineStatusBar>
               <PanelLabel>Showing</PanelLabel>

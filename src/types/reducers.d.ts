@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Field, Millisecond} from './types';
+import {ColorMap, ColorRange, ColorUI} from './layers';
 import {MapSplitMode, MapViewMode} from '@kepler.gl/constants';
 type MapViewState = {
   latitude: number;
@@ -125,8 +126,33 @@ export interface LineDatum {
   pct: number | null;
 }
 
+export type LineChartSeries = {
+  lines: LineDatum[][];
+  markers: LineDatum[];
+  /** Stroke color for each line segment. Segments from one group share a color. */
+  colors?: string[];
+  /** Series name for each line segment. */
+  names?: string[];
+};
+
+export type LineChartGroupBy = {
+  fieldName: string;
+  numGroups: number | 'ALL';
+  groupOthers: boolean;
+  colors: string[] | null;
+  colorMap?: ColorMap | null;
+};
+
+export type PlotGroupBy = {
+  fieldName?: string;
+  numGroups: number | 'ALL';
+  groupOthers: boolean;
+  colorRange?: ColorRange;
+  colorUI?: ColorUI;
+};
+
 export type LineChart = {
-  series: {x: number; y: number}[];
+  series: {x: number; y: number}[] | LineChartSeries;
   yDomain: number[] | undefined[];
   xDomain: number[];
 
@@ -135,6 +161,8 @@ export type LineChart = {
   interval: string;
   yAxis: string;
   bins?: Bins;
+  /** Cache key for timeline series grouping. Null when the plot is a single series. */
+  groupBy?: LineChartGroupBy | null;
 };
 
 type FilterViewType = 'side' | 'enlarged' | 'minified';
@@ -269,6 +297,9 @@ export interface PlotType {
   aggregation: ValueOf<AggregationTypes>;
   defaultTimeFormat: string;
   colorsByDataId?: {[dataId: string]: string};
+  /** Categorical series split for the timeline line chart. */
+  groupBy?: PlotGroupBy | null;
+  yAxisAutoRange?: boolean;
 }
 
 export type Feature = {
@@ -414,6 +445,29 @@ export type LegendInfo = BaseInteraction & {
     hideInvisibleLayers: boolean;
   };
 };
+/** Zoom stops for a fade envelope. Opacity is 0 outside [appear, gone]. */
+export type ZoomOpacityStops = {
+  /** Zoom where opacity leaves 0. */
+  appear: number;
+  /** Zoom where opacity reaches the layer's full opacity. */
+  full: number;
+  /** Zoom where opacity starts falling. */
+  fade: number;
+  /** Zoom where opacity returns to 0. */
+  gone: number;
+};
+/** Layers that share one zoom envelope. */
+export type ZoomOpacityController = {
+  id: string;
+  layerIds: string[];
+  stops: ZoomOpacityStops;
+};
+export type ZoomOpacityInteraction = BaseInteraction & {
+  id: 'zoomOpacity';
+  config: {
+    controllers: ZoomOpacityController[];
+  };
+};
 export type InteractionConfig = {
   tooltip: TooltipInfo;
   legend: LegendInfo;
@@ -422,16 +476,27 @@ export type InteractionConfig = {
   coordinate: Coordinate;
   /** When enabled is false, annotations stay in state but are not drawn. */
   annotation: AnnotationInteraction;
+  zoomOpacity: ZoomOpacityInteraction;
 };
 export type MapInfo = {
   title: string;
   description: string;
 };
+/** Options captured when a file load starts and forwarded to `addDataToMap`. */
+export type FileLoadingOptions = {
+  autoCreateLayers?: boolean;
+  /** Parse the files, then wait for an explicit add instead of calling `addDataToMap`. */
+  deferAddToMap?: boolean;
+};
+
 export type FileLoading = {
+  /** Identifies this load so a delayed finish from an older one can be ignored. */
+  loadId: number;
   filesToLoad: FileList | File[];
   companionFiles?: File[];
-  onFinish: (payload: any) => any;
+  onFinish: (payload: any, options?: FileLoadingOptions) => any;
   fileCache: any[];
+  options?: FileLoadingOptions;
 };
 export type FileLoadingProgress = {
   [key: string]: {

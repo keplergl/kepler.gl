@@ -112,6 +112,10 @@ export default {
     '3DModel': '3D Model',
     '3DModelURL': 'Custom 3D Model URL',
     '3DModelURLDescription': 'URL of a .glb or .glTF file with the 3D model.',
+    '3DModelSourceModel': 'Model',
+    '3DModelSourceUrl': 'URL',
+    '3DModelSourceFile': 'Local file',
+    '3DModelFile': 'Choose file',
     '3DModelOptions': '3D Model Options',
     service: 'Service',
     layer: 'Layer',
@@ -399,7 +403,13 @@ export default {
     timeIntervalEndFieldHint:
       'Optional. Features stay visible while the playback window overlaps this time span.',
     timezone: 'Time Zone',
-    selectTimezone: 'Select display timezone'
+    selectTimezone: 'Select display timezone',
+    groupBy: 'Group By',
+    groupByField: 'Group by field',
+    maxGroups: 'Max number of groups',
+    groupOthers: 'Group others',
+    seriesColors: 'Colors',
+    allGroups: 'All'
   },
   datasetTitle: {
     showDataTable: 'Show data table',
@@ -804,7 +814,11 @@ export default {
     loadData: {
       upload: 'Load Files',
       tileset: 'Tileset',
-      storage: 'Load from Storage'
+      storage: 'Load from Storage',
+      autoCreateLayers: 'Auto create layers',
+      autoCreateLayersInfo:
+        'kepler.gl will auto detect layers if the column names in your file follow certain naming conventions.',
+      readyToAdd: 'Ready to add'
     },
     tripInfo: {
       title: 'Create trips from GeoJson',
@@ -940,7 +954,16 @@ ${'```'}
     legendEmpty: 'Add a layer to choose what appears in the legend.',
     legendHiddenByGroup: 'Hidden because a group is excluded from the legend',
     legendHideInvisible: 'Hide hidden layers in legend',
-    legendAllLayers: 'All Layers'
+    legendAllLayers: 'All Layers',
+    fadeOnZoom: 'Fade on zoom',
+    fadeOnZoomHint: 'Fade layers as the map zooms. Configure a zoom range to show layers.',
+    fadeOnZoomAdd: 'Add controller',
+    fadeOnZoomLayers: 'Layers',
+    fadeOnZoomAppear: 'Appear',
+    fadeOnZoomFullStart: 'Full start',
+    fadeOnZoomFullEnd: 'Full end',
+    fadeOnZoomDisappear: 'Disappear',
+    fadeOnZoomDelete: 'Remove controller'
   },
   layerBlending: {
     title: 'Layer Blending',
@@ -1036,8 +1059,17 @@ ${'```'}
     fileNotSupported: 'File {errorFiles} is not supported.',
     or: 'or',
     dropMessage: 'Drag & Drop Your File(s) Here, {browse}, or',
+    toAdd: 'To add to map',
+    includeDataset: 'Include {name}',
+    readyToAdd: '{size} - Ready to add file to map',
+    readyToAddNoSize: 'Ready to add file to map',
+    loadingProgress: 'Loading ({loaded} / {total})',
+    loading: 'Loading...',
+    unableToLoad: 'Unable to load file',
+    unsupported: 'Unsupported file type or format',
     urlPlaceholder: 'Enter your dataset URL',
     fetch: 'Fetch',
+    addUrl: 'Add',
     format: 'Format',
     formatAuto: 'Auto',
     cors: 'The URL must allow [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'

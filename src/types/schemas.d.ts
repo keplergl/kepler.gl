@@ -52,6 +52,9 @@ export type SavedInteractionConfig = {
     enabled: boolean;
     hideInvisibleLayers?: boolean;
   };
+  zoomOpacity?: InteractionConfig['zoomOpacity']['config'] & {
+    enabled: boolean;
+  };
 };
 
 export type SavedScale = string;

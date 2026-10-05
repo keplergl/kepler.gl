@@ -12,11 +12,16 @@ import {
   TimeRangeFilter,
   RangeFilter,
   PlotType,
+  PlotGroupBy,
   Filter,
   LineChart,
+  LineChartGroupBy,
+  LineChartSeries,
   Field,
   ValueOf,
-  LineDatum
+  LineDatum,
+  ColorRange,
+  ColorUI
 } from '@kepler.gl/types';
 import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
 import {
@@ -26,7 +31,11 @@ import {
   TIME_AGGREGATION,
   AGGREGATION_TYPES,
   PLOT_TYPES,
-  AggregationTypes
+  AggregationTypes,
+  KEPLER_COLOR_PALETTES,
+  colorPaletteToColorRange,
+  DEFAULT_COLOR_UI,
+  DEFAULT_CUSTOM_PALETTE
 } from '@kepler.gl/constants';
 
 import {isNumber, roundValToStep} from './data-utils';
@@ -518,7 +527,7 @@ export const getAggregationOptiosnBasedOnField = field => {
 
 function getDelta(
   bins: LineDatum[],
-  y: number,
+  y: unknown,
   _interval: PlotType['interval']
 ): Partial<LineDatum> & {delta: 'last'; pct: number | null} {
   // if (WOW[interval]) return getWow(bins, y, interval);
@@ -537,6 +546,332 @@ export function getPctChange(y: unknown, y0: unknown): number | null {
   return null;
 }
 
+export const PLOT_GROUP_OTHERS_NAME = 'Others';
+export const PLOT_NUM_GROUPS_ALL = 'ALL' as const;
+export const DEFAULT_PLOT_NUM_GROUPS = 10;
+/** Qualitative palettes stop at 20. All uses this cap instead of one series per value. */
+export const MAX_PLOT_NUM_GROUPS = 20;
+export const PLOT_NUM_GROUPS_OPTIONS = [1, 3, 5, 7, 10, MAX_PLOT_NUM_GROUPS];
+
+const DEFAULT_PLOT_GROUP_PALETTE = 'Uber Viz Qualitative';
+const FALLBACK_SERIES_COLORS = ['#12939A', '#DDB27C', '#88572C', '#FF991F', '#F15C17', '#223F9A'];
+
+export function plotGroupColorSteps(
+  numGroups: number | typeof PLOT_NUM_GROUPS_ALL | undefined
+): number {
+  if (numGroups === PLOT_NUM_GROUPS_ALL || typeof numGroups !== 'number' || numGroups < 1) {
+    return MAX_PLOT_NUM_GROUPS;
+  }
+  return Math.max(2, Math.min(numGroups, MAX_PLOT_NUM_GROUPS));
+}
+
+export function defaultPlotGroupColorRange(
+  numGroups?: number | typeof PLOT_NUM_GROUPS_ALL
+): ColorRange {
+  const steps = plotGroupColorSteps(numGroups);
+  const palette = KEPLER_COLOR_PALETTES.find(item => item.name === DEFAULT_PLOT_GROUP_PALETTE);
+  if (!palette) {
+    return {
+      name: DEFAULT_PLOT_GROUP_PALETTE,
+      type: 'qualitative',
+      category: 'Uber',
+      colors: FALLBACK_SERIES_COLORS
+    };
+  }
+  return colorPaletteToColorRange(palette, {reversed: false, steps});
+}
+
+function defaultPlotGroupColorUI(
+  numGroups: number | typeof PLOT_NUM_GROUPS_ALL,
+  colorRange: ColorRange
+): ColorUI {
+  return {
+    ...DEFAULT_COLOR_UI,
+    colorRangeConfig: {
+      ...DEFAULT_COLOR_UI.colorRangeConfig,
+      type: 'qualitative',
+      steps: plotGroupColorSteps(numGroups)
+    },
+    customPalette: {
+      ...DEFAULT_CUSTOM_PALETTE,
+      colors: colorRange.colors || []
+    }
+  };
+}
+
+function mergeGroupColorUI(
+  prev: ColorUI | undefined,
+  next: Partial<ColorUI> | null | undefined,
+  numGroups: number | typeof PLOT_NUM_GROUPS_ALL,
+  colorRange: ColorRange
+): ColorUI {
+  const base = prev ?? defaultPlotGroupColorUI(numGroups, colorRange);
+  if (!next) {
+    return base;
+  }
+  return {
+    ...base,
+    ...next,
+    colorRangeConfig: {
+      ...base.colorRangeConfig,
+      ...(next.colorRangeConfig || {})
+    },
+    customPalette: next.customPalette
+      ? {...base.customPalette, ...next.customPalette}
+      : base.customPalette
+  };
+}
+
+/**
+ * Merge a partial timeline group-by onto the previous one.
+ * `null` clears grouping. Missing fields keep the previous value, then defaults.
+ */
+export function mergePlotGroupBy(
+  prev: PlotGroupBy | null | undefined,
+  next: Partial<PlotGroupBy> | null | undefined
+): PlotGroupBy | null {
+  if (next === null) {
+    return null;
+  }
+  if (!next && !prev) {
+    return null;
+  }
+  const source = next || {};
+  const numGroups = source.numGroups ?? prev?.numGroups ?? DEFAULT_PLOT_NUM_GROUPS;
+  const colorRange = source.colorRange ?? prev?.colorRange ?? defaultPlotGroupColorRange(numGroups);
+  return {
+    fieldName: source.fieldName !== undefined ? source.fieldName : prev?.fieldName,
+    numGroups,
+    groupOthers: Boolean(source.groupOthers !== undefined ? source.groupOthers : prev?.groupOthers),
+    colorRange,
+    colorUI: mergeGroupColorUI(prev?.colorUI, source.colorUI, numGroups, colorRange)
+  };
+}
+
+function groupByCacheValue(plotType: Filter['plotType']): LineChartGroupBy | null {
+  const groupBy = plotType?.groupBy as PlotGroupBy | null | undefined;
+  if (!groupBy?.fieldName) {
+    return null;
+  }
+  return {
+    fieldName: groupBy.fieldName,
+    numGroups: groupBy.numGroups ?? DEFAULT_PLOT_NUM_GROUPS,
+    groupOthers: Boolean(groupBy.groupOthers),
+    colors: groupBy.colorRange?.colors ?? null,
+    colorMap: groupBy.colorRange?.colorMap ?? null
+  };
+}
+
+function toGroupKey(value: unknown): string | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+  return String(value);
+}
+
+function mappedSeriesColor(colorRange: ColorRange | undefined, key: string): string | null {
+  const colorMap = colorRange?.colorMap;
+  if (!Array.isArray(colorMap)) {
+    return null;
+  }
+  for (const entry of colorMap) {
+    const domain = entry?.[0];
+    const color = entry?.[1];
+    if (!color) {
+      continue;
+    }
+    if (Array.isArray(domain)) {
+      if (domain.map(item => String(item)).includes(key)) {
+        return color;
+      }
+    } else if (domain !== null && domain !== undefined && String(domain) === key) {
+      return color;
+    }
+  }
+  return null;
+}
+
+function seriesColor(colorRange: ColorRange | undefined, key: string, index: number): string {
+  const mapped = mappedSeriesColor(colorRange, key);
+  if (mapped) {
+    return mapped;
+  }
+  const colors = colorRange?.colors;
+  if (colors?.length) {
+    return colors[index % colors.length];
+  }
+  return FALLBACK_SERIES_COLORS[index % FALLBACK_SERIES_COLORS.length];
+}
+
+const OTHERS_SERIES_COLOR = '#A0A7B4';
+
+function defaultQualitativeColors(): string[] {
+  const palette = KEPLER_COLOR_PALETTES.find(item => item.name === DEFAULT_PLOT_GROUP_PALETTE);
+  if (palette?.type === 'qualitative') {
+    return palette.colors(palette.maxStep);
+  }
+  return FALLBACK_SERIES_COLORS;
+}
+
+/** Others must not wrap onto a color already used by a kept group. */
+function othersSeriesColor(colorRange: ColorRange | undefined, used: string[]): string {
+  const mapped = mappedSeriesColor(colorRange, PLOT_GROUP_OTHERS_NAME);
+  if (mapped) {
+    return mapped;
+  }
+  const usedSet = new Set(used.map(color => color.toLowerCase()));
+  const candidates = [
+    ...(colorRange?.colors ?? []),
+    ...defaultQualitativeColors(),
+    ...FALLBACK_SERIES_COLORS,
+    OTHERS_SERIES_COLOR
+  ];
+  return candidates.find(color => !usedSet.has(color.toLowerCase())) ?? OTHERS_SERIES_COLOR;
+}
+
+function groupValueAccessor(dataset, fieldName: string): ((index: number) => unknown) | null {
+  const field = dataset?.fields?.find(item => item.name === fieldName);
+  if (!field?.valueAccessor) {
+    return null;
+  }
+  return index => field.valueAccessor({index});
+}
+
+function groupLimit(numGroups: number | typeof PLOT_NUM_GROUPS_ALL): number {
+  if (numGroups === PLOT_NUM_GROUPS_ALL) {
+    return MAX_PLOT_NUM_GROUPS;
+  }
+  if (typeof numGroups !== 'number' || !(numGroups > 0)) {
+    return DEFAULT_PLOT_NUM_GROUPS;
+  }
+  return Math.min(numGroups, MAX_PLOT_NUM_GROUPS);
+}
+
+/**
+ * Split time bins into one line per group-by value.
+ * Groups keep first-seen order, then the list is capped at numGroups.
+ * Remaining values fold into an Others series when groupOthers is set.
+ */
+function buildGroupedLineSeries({
+  bins,
+  dataset,
+  plotType,
+  getYValue,
+  interval
+}: {
+  bins: Bin[];
+  dataset: Datasets[string];
+  plotType: Filter['plotType'];
+  getYValue: (bin: Bin) => number;
+  interval: PlotType['interval'];
+}): {series: LineChartSeries; points: LineDatum[]} | null {
+  const cache = groupByCacheValue(plotType);
+  if (!cache) {
+    return null;
+  }
+  const getGroup = groupValueAccessor(dataset, cache.fieldName);
+  if (!getGroup) {
+    return null;
+  }
+
+  const order: string[] = [];
+  const seen = new Set<string>();
+  for (const bin of bins) {
+    for (const idx of bin.indexes || []) {
+      const key = toGroupKey(getGroup(idx));
+      if (key === null || seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      order.push(key);
+    }
+  }
+  if (!order.length) {
+    return null;
+  }
+
+  const limit = groupLimit(cache.numGroups);
+  const keep = order.slice(0, limit);
+  const rest = order.slice(keep.length);
+  const includeOthers = Boolean(cache.groupOthers) && rest.length > 0;
+  const colorRange = (plotType?.groupBy as PlotGroupBy | undefined)?.colorRange;
+  const groups = keep.map((key, index) => ({
+    name: key,
+    keys: new Set([key]),
+    color: seriesColor(colorRange, key, index)
+  }));
+  if (includeOthers) {
+    groups.push({
+      name: PLOT_GROUP_OTHERS_NAME,
+      keys: new Set(rest),
+      color: othersSeriesColor(
+        colorRange,
+        groups.map(group => group.color)
+      )
+    });
+  }
+
+  const keyToGroup = new Map<string, number>();
+  groups.forEach((group, index) => {
+    group.keys.forEach(key => keyToGroup.set(key, index));
+  });
+
+  const lines: LineDatum[][] = [];
+  const colors: string[] = [];
+  const names: string[] = [];
+  const points: LineDatum[] = [];
+
+  groups.forEach((group, groupIndex) => {
+    const seriesPoints: LineDatum[] = [];
+    bins.forEach(bin => {
+      const indexes: number[] = [];
+      for (const idx of bin.indexes || []) {
+        const key = toGroupKey(getGroup(idx));
+        if (key !== null && keyToGroup.get(key) === groupIndex) {
+          indexes.push(idx);
+        }
+      }
+      const y = indexes.length ? getYValue({...bin, indexes, count: indexes.length}) : undefined;
+      const delta = getDelta(seriesPoints, y, interval);
+      const point = {
+        x: bin.x0,
+        y,
+        ...delta
+      } as LineDatum;
+      seriesPoints.push(point);
+      points.push(point);
+    });
+
+    const split = splitSeries(seriesPoints);
+    split.lines.forEach(line => {
+      lines.push(line);
+      colors.push(group.color);
+      names.push(group.name);
+    });
+  });
+
+  return {
+    series: {lines, markers: [], colors, names},
+    points
+  };
+}
+
+export function lineChartSeriesLegend(
+  lineChart?: LineChart | null
+): {name: string; color: string}[] {
+  const series = lineChart?.series;
+  if (!series || Array.isArray(series) || !series.names || !series.colors) {
+    return [];
+  }
+  const seen = new Map<string, string>();
+  series.names.forEach((name, index) => {
+    if (name && !seen.has(name)) {
+      seen.set(name, series.colors?.[index] || FALLBACK_SERIES_COLORS[0]);
+    }
+  });
+  return Array.from(seen, ([name, color]) => ({name, color}));
+}
+
 /**
  *
  * @param datasets
@@ -547,12 +882,14 @@ export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
   const {aggregation, interval} = plotType;
   const seriesDataId = dataId[0];
   const bins = (filter as TimeRangeFilter).timeBins?.[seriesDataId]?.[interval];
+  const groupBy = groupByCacheValue(plotType);
 
   if (
     lineChart &&
     lineChart.aggregation === aggregation &&
     lineChart.interval === interval &&
     lineChart.yAxis === yAxis?.name &&
+    isEqual(lineChart.groupBy ?? null, groupBy) &&
     // we need to make sure we validate bins because of cross filter data changes
     isEqual(bins, lineChart?.bins)
   ) {
@@ -562,24 +899,30 @@ export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
 
   const dataset = datasets[seriesDataId];
   const getYValue = getValueAggrFunc(yAxis, aggregation, dataset);
+  const grouped =
+    groupBy && bins?.length
+      ? buildGroupedLineSeries({bins, dataset, plotType, getYValue, interval})
+      : null;
 
   const init: LineDatum[] = [];
-  const series = (bins || []).reduce((accu, bin) => {
-    const y = getYValue(bin);
-    const delta = getDelta(accu, y, interval);
-    accu.push({
-      x: bin.x0,
-      y,
-      ...delta
-    });
-    return accu;
-  }, init);
+  const series = grouped
+    ? grouped.points
+    : (bins || []).reduce((accu, bin) => {
+        const y = getYValue(bin);
+        const delta = getDelta(accu, y, interval);
+        accu.push({
+          x: bin.x0,
+          y,
+          ...delta
+        });
+        return accu;
+      }, init);
 
   const yDomain = extent<{y: any}>(series, d => d.y);
   const xDomain = bins ? [bins[0].x0, bins[bins.length - 1].x1] : [];
 
   // treat missing data as another series
-  const split = splitSeries(series);
+  const split = grouped ? grouped.series : splitSeries(series);
   const aggrName = AGGREGATION_NAME[aggregation];
 
   return {
@@ -599,7 +942,8 @@ export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
       value: aggregate(series, AGGREGATION_TYPES.average, d => d.y)
     },
     // @ts-expect-error bins is Bins[], not a Bins map. Refactor to use correct types.
-    bins
+    bins,
+    ...(groupBy ? {groupBy} : {})
   };
 }
 
