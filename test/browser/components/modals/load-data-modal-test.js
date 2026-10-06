@@ -167,21 +167,45 @@ test('Components -> LoadDataModal -> processing layers', t => {
     </IntlWrapper>
   );
 
-  wrapper.find('.add-data-bar button').at(1).simulate('click');
+  const frames = [];
+  const prevFrame = window.requestAnimationFrame;
+  window.requestAnimationFrame = cb => {
+    frames.push(cb);
+    return frames.length;
+  };
+  try {
+    wrapper.find('.add-data-bar button').at(1).simulate('click');
 
-  t.equal(onConfirmAddData.called, false, 'layer prep waits until the processing state can paint');
-  const processing = wrapper.find('.add-data-bar__processing').hostNodes();
-  t.equal(processing.length, 1, 'should replace the footer actions');
-  t.equal(processing.text(), '', 'should show only the spinner');
-  t.equal(
-    processing.find('.add-data-bar__spinner').hostNodes().length,
-    1,
-    'should show a spinner in place of the footer actions'
-  );
-  t.equal(
-    wrapper.find('.add-data-bar button').hostNodes().length,
-    0,
-    'should hide Cancel and Add Data while layers are prepared'
+    t.equal(
+      onConfirmAddData.called,
+      false,
+      'layer prep waits until the processing state can paint'
+    );
+    const processing = wrapper.find('.add-data-bar__processing').hostNodes();
+    t.equal(processing.length, 1, 'should replace the footer actions');
+    t.equal(processing.text(), '', 'should show only the spinner');
+    t.equal(
+      processing.find('.add-data-bar__spinner').hostNodes().length,
+      1,
+      'should show a spinner in place of the footer actions'
+    );
+    t.equal(
+      wrapper.find('.add-data-bar button').hostNodes().length,
+      0,
+      'should hide Cancel and Add Data while layers are prepared'
+    );
+
+    while (frames.length) {
+      frames.shift()();
+    }
+  } finally {
+    window.requestAnimationFrame = prevFrame;
+  }
+
+  t.deepEqual(
+    onConfirmAddData.args[0][0],
+    {autoCreateLayers: true, datasets: [{info: {label: 'points.csv'}}]},
+    'Add Data commits the staged dataset after the processing state can paint'
   );
 
   t.end();

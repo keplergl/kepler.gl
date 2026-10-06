@@ -69,15 +69,40 @@ test('Components -> ItemSelector.deferOnChange', t => {
     </IntlWrapper>
   );
 
-  wrapper.find('.item-selector__dropdown').at(0).simulate('click');
-  wrapper.find(DropdownList).at(0).find('.list__item').at(0).simulate('click');
+  const frames = [];
+  const prevFrame = window.requestAnimationFrame;
+  window.requestAnimationFrame = cb => {
+    frames.push(cb);
+    return frames.length;
+  };
+  try {
+    wrapper.find('.item-selector__dropdown').at(0).simulate('click');
+    wrapper.find(DropdownList).at(0).find('.list__item').at(0).simulate('click');
 
-  t.equal(onChange.called, false, 'should wait to apply the selection until the list can paint');
-  t.equal(wrapper.find(Typeahead).length, 1, 'should keep the list open');
+    t.equal(onChange.called, false, 'should wait to apply the selection until the list can paint');
+    t.equal(wrapper.find(Typeahead).length, 1, 'should keep the list open');
+    t.equal(
+      wrapper.find('.item-selector__prepare-spinner').hostNodes().length,
+      1,
+      'should show a spinner over the open list'
+    );
+
+    act(() => {
+      while (frames.length) {
+        frames.shift()();
+      }
+    });
+  } finally {
+    window.requestAnimationFrame = prevFrame;
+  }
+  wrapper.update();
+
+  t.deepEqual(onChange.args[0], ['additive'], 'should apply the selected value');
+  t.equal(wrapper.find(Typeahead).length, 0, 'should close the list');
   t.equal(
     wrapper.find('.item-selector__prepare-spinner').hostNodes().length,
-    1,
-    'should show a spinner over the open list'
+    0,
+    'should remove the spinner'
   );
 
   t.end();

@@ -246,14 +246,42 @@ export async function fetchRemoteFileAsKeplerFile(
   return result.file;
 }
 
+/** Two frames are enough for the processing indicator to paint. */
+const PAINT_WAIT_MS = 100;
+
 function waitForNextPaint(): Promise<void> {
-  if (typeof requestAnimationFrame !== 'function') {
+  // Hidden tabs suspend requestAnimationFrame. A download that finishes in the
+  // background would otherwise wait until the user comes back, and there is
+  // nothing to paint there.
+  if (
+    typeof requestAnimationFrame !== 'function' ||
+    (typeof document !== 'undefined' && document.hidden)
+  ) {
     return Promise.resolve();
   }
   return new Promise(resolve => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => resolve());
-    });
+    let settled = false;
+    const frames: number[] = [];
+    const finish = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      if (typeof cancelAnimationFrame === 'function') {
+        frames.forEach(id => cancelAnimationFrame(id));
+      }
+      resolve();
+    };
+    // The tab can be hidden after this wait starts. Don't sit on frames that will never run.
+    const timer = setTimeout(finish, PAINT_WAIT_MS);
+    frames.push(
+      requestAnimationFrame(() => {
+        if (!settled) {
+          frames.push(requestAnimationFrame(finish));
+        }
+      })
+    );
   });
 }
 
