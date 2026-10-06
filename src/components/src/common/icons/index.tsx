@@ -53,6 +53,7 @@ export {default as Histogram} from './histogram';
 export {default as HorizontalResizeHandle} from './horizontal-resize-handle';
 export {default as IconWrapper} from './base';
 export {default as Info} from './info';
+export {default as Interval} from './interval';
 export {default as Join} from './join';
 export {default as Layers} from './layers';
 export {default as LeftArrow} from './left-arrow';

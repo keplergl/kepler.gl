@@ -4,8 +4,14 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components';
 import throttle from 'es-toolkit/compat/throttle';
-import {DEFAULT_TIME_FORMAT, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {clamp, datetimeFormatter, lineChartSeriesLegend} from '@kepler.gl/utils';
+import {ANIMATION_WINDOW, DEFAULT_TIME_FORMAT, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {
+  clamp,
+  datetimeFormatter,
+  getBinThresholds,
+  intervalBinFromMarks,
+  lineChartSeriesLegend
+} from '@kepler.gl/utils';
 import {
   BottomWidgetInner,
   Button,
@@ -214,7 +220,8 @@ function TimeWidgetFactory(
 
     const handleWindowZoom = useCallback(
       (factor: number, center: number) => {
-        if (!fullDomain) {
+        // Interval mode keeps the selection on one histogram bin.
+        if (!fullDomain || filter.animationWindow === ANIMATION_WINDOW.interval) {
           return;
         }
         const domainRange: [number, number] = timelineDomain ?? fullDomain;
@@ -240,7 +247,15 @@ function TimeWidgetFactory(
           setFilterAnimationTime(index, 'value', [clampedStart, clampedEnd]);
         }
       },
-      [filterEnd, filterStart, fullDomain, index, setFilterAnimationTime, timelineDomain]
+      [
+        filter.animationWindow,
+        filterEnd,
+        filterStart,
+        fullDomain,
+        index,
+        setFilterAnimationTime,
+        timelineDomain
+      ]
     );
 
     const handleTimelineZoom = useCallback(
@@ -279,6 +294,11 @@ function TimeWidgetFactory(
         const nextRange: [number, number] = clampRange([nextStart, nextEnd], fullDomain);
         setTimelineDomain(prev => (rangesEqual(prev, nextRange) ? prev : nextRange));
 
+        // Pinch-zoom only changes the visible domain. The selected bin stays put.
+        if (filter.animationWindow === ANIMATION_WINDOW.interval) {
+          return;
+        }
+
         let windowStart = filterStart;
         let windowEnd = filterEnd;
         const rangeWidth = nextRange[1] - nextRange[0];
@@ -295,7 +315,15 @@ function TimeWidgetFactory(
           setFilterAnimationTime(index, 'value', [windowStart, windowEnd]);
         }
       },
-      [filterEnd, filterStart, fullDomain, index, setFilterAnimationTime, timelineDomain]
+      [
+        filter.animationWindow,
+        filterEnd,
+        filterStart,
+        fullDomain,
+        index,
+        setFilterAnimationTime,
+        timelineDomain
+      ]
     );
 
     const throttledWindowZoom = useMemo(
@@ -382,11 +410,28 @@ function TimeWidgetFactory(
         if (!domainRange) {
           return;
         }
+        event.preventDefault();
+        if (
+          filter.animationWindow === ANIMATION_WINDOW.interval &&
+          filter.plotType?.interval &&
+          fullDomain
+        ) {
+          const marks = getBinThresholds(filter.plotType.interval, fullDomain);
+          const currentIdx = marks.indexOf(intervalBinFromMarks(marks, filterStart)[0]);
+          const nextIdx = event.key === 'ArrowRight' ? currentIdx + 1 : currentIdx - 1;
+          if (nextIdx < 0 || nextIdx >= marks.length - 1) {
+            return;
+          }
+          const nextBin = intervalBinFromMarks(marks, marks[nextIdx]);
+          if (nextBin[0] !== filterStart || nextBin[1] !== filterEnd) {
+            setFilterAnimationTime(index, 'value', nextBin);
+          }
+          return;
+        }
         const windowWidth = filterEnd - filterStart;
         if (!(windowWidth > 0)) {
           return;
         }
-        event.preventDefault();
         let nextStart: number;
         let nextEnd: number;
         if (event.key === 'ArrowRight') {
@@ -404,6 +449,8 @@ function TimeWidgetFactory(
       window.addEventListener('keydown', handler);
       return () => window.removeEventListener('keydown', handler);
     }, [
+      filter.animationWindow,
+      filter.plotType?.interval,
       filterEnd,
       filterStart,
       fullDomain,

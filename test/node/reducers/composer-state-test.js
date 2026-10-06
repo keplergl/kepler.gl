@@ -9,6 +9,7 @@ import test from 'tape';
 import {
   appendStagedLoadedFiles,
   confirmReplaceDataset,
+  loadFilesSuccess,
   registerEntry,
   stageLoadedFiles
 } from '@kepler.gl/actions';
@@ -1283,6 +1284,36 @@ test('#composerStateReducer -> stageLoadedFilesUpdater keeps the modal open', t 
     appendStagedLoadedFiles([remote])
   );
   t.equal(duplicate, withRemote, 'should ignore a url that is already staged');
+
+  const closedModal = {
+    ...withRemote,
+    uiState: {...withRemote.uiState, currentModal: null}
+  };
+  const afterClose = combinedUpdaters.appendStagedLoadedFilesUpdater(
+    closedModal,
+    appendStagedLoadedFiles([
+      {
+        ...remote,
+        info: {...remote.info, id: 'remote-2', label: 'cities.csv'},
+        metadata: {source: 'https://example.com/cities.csv'}
+      }
+    ])
+  );
+  t.equal(afterClose, closedModal, 'a remote url is not staged after the modal closes');
+
+  const activeLoad = {
+    ...loadingState,
+    visState: {
+      ...loadingState.visState,
+      fileLoading: {...loadingState.visState.fileLoading, loadId: 2},
+      stagedToAdd: [{info: {label: 'fresh.csv'}}]
+    }
+  };
+  const staleAdd = combinedUpdaters.loadFilesSuccessUpdater(activeLoad, {
+    ...loadFilesSuccess([{info: {label: 'old.csv', format: 'csv'}, data: {fields: [], rows: []}}]),
+    loadId: 1
+  });
+  t.equal(staleAdd, activeLoad, 'a stale add does not replace the current load');
 
   t.end();
 });

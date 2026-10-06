@@ -228,6 +228,9 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
       enabled: false,
       hideInvisibleLayers: false
     },
+    annotation: {
+      enabled: false
+    },
     zoomOpacity: {
       enabled: false,
       controllers: []
@@ -293,6 +296,9 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
     legend: {
       enabled: false,
       hideInvisibleLayers: false
+    },
+    annotation: {
+      enabled: false
     },
     zoomOpacity: {
       enabled: false,

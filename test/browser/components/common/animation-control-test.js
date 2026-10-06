@@ -249,3 +249,35 @@ test('Components -> AnimationController -> incremental window sweeps to the end 
 
   t.end();
 });
+
+test('Components -> PlaybackControls -> offers Step by Interval', t => {
+  const setFilterAnimationWindow = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <PlaybackControls
+        isAnimatable
+        speed={1}
+        animationWindow={ANIMATION_WINDOW.free}
+        setFilterAnimationWindow={setFilterAnimationWindow}
+        startAnimation={() => {}}
+        pauseAnimation={() => {}}
+        resetAnimation={() => {}}
+      />
+    </IntlWrapper>
+  );
+
+  t.equal(wrapper.find('.animation-window-control').length, 0, 'menu starts closed');
+  wrapper.find('button[data-for="animate-window"]').simulate('click');
+  wrapper.update();
+
+  const intervalButton = wrapper.find('button[data-for="interval-tooltip"]');
+  t.equal(intervalButton.length, 1, 'should offer Step by Interval');
+  intervalButton.simulate('click');
+  t.equal(
+    setFilterAnimationWindow.args[0][0],
+    ANIMATION_WINDOW.interval,
+    'should select the interval window'
+  );
+
+  t.end();
+});
