@@ -333,6 +333,7 @@ test('#loader-registry -> acceptedFileFormats defaults to all formats', t => {
       'GPX',
       'TCX',
       'Shapefile',
+      'Zip',
       'Excel',
       'FlatGeobuf'
     ],

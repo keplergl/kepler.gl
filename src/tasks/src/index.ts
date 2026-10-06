@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import Task, {taskCreator} from '@kepler.gl/tasks-core';
-import {readFileInBatches, processFileData} from '@kepler.gl/processors';
+import {readFileInBatches, processFileData, expandZipArchive} from '@kepler.gl/processors';
 
 export {
   Task,
@@ -25,9 +25,22 @@ export {
 export type {TaskDescriptor} from '@kepler.gl/tasks-core';
 
 export const LOAD_FILE_TASK = Task.fromPromise(
-  ({file, fileCache, loaders, loadOptions, companionFiles}) =>
-    readFileInBatches({file, fileCache, loaders, loadOptions, companionFiles}),
+  ({file, fileCache, loaders, loadOptions, companionFiles, fileName}) =>
+    readFileInBatches({
+      file,
+      fileCache,
+      loaders,
+      loadOptions,
+      companionFiles,
+      ...(fileName ? {fileName} : {})
+    }),
   'LOAD_FILE_TASK'
+);
+
+/** Unpack a zip before the load queue decides how many datasets it contains. */
+export const EXPAND_ZIP_TASK = Task.fromPromise(
+  (file: File) => expandZipArchive(file),
+  'EXPAND_ZIP_TASK'
 );
 
 export const PROCESS_FILE_DATA = Task.fromPromise(processFileData, 'PROCESS_FILE_CONTENT');

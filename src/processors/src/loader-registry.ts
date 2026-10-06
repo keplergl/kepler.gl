@@ -129,6 +129,23 @@ const DEFAULT_LOADER_ENTRIES: KeplerLoaderEntry[] = [
 
 export const KEPLER_LOADER_ENTRIES = DEFAULT_LOADER_ENTRIES;
 
+const LOADABLE_DATASET_EXTENSIONS = new Set(
+  DEFAULT_LOADER_ENTRIES.flatMap(entry => entry.extensions)
+);
+
+/**
+ * True when `extension` is a dataset kepler.gl can parse (not a shapefile
+ * sidecar, and not `.zip`, which is an archive rather than a dataset).
+ * `acceptedFileFormats` still applies.
+ */
+export function isLoadableDatasetExtension(extension: string): boolean {
+  const ext = extension.trim().toLowerCase();
+  if (!LOADABLE_DATASET_EXTENSIONS.has(ext)) {
+    return false;
+  }
+  return isKeplerFileFormatAccepted(ext);
+}
+
 /** Maps user-facing format ids and extensions to a loader-registry id. */
 const TOKEN_TO_LOADER_ID: Record<string, string> = {
   csv: 'csv',

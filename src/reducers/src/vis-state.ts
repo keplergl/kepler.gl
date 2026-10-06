@@ -58,6 +58,8 @@ const actionHandler = {
 
   [ActionTypes.LOAD_NEXT_FILE]: visStateUpdaters.loadNextFileUpdater,
 
+  [ActionTypes.EXPAND_ZIP_ARCHIVE_SUCCESS]: visStateUpdaters.expandZipArchiveSuccessUpdater,
+
   [ActionTypes.LOAD_FILE_STEP_SUCCESS]: visStateUpdaters.loadFileStepSuccessUpdater,
 
   [ActionTypes.MAP_CLICK]: visStateUpdaters.mapClickUpdater,

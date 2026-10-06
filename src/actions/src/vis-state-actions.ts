@@ -3,7 +3,7 @@
 
 // vis-state-reducer
 import {default as ActionTypes} from './action-types';
-import {FileCacheItem} from '@kepler.gl/processors';
+import {FileCacheItem, ZipArchiveExpansion} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {GroupByOp, JoinOp, KeplerTable} from '@kepler.gl/table';
 import {
@@ -1878,6 +1878,25 @@ export function loadNextFile(loadId?: number): {
   return {
     type: ActionTypes.LOAD_NEXT_FILE,
     ...(loadId == null ? {} : {loadId})
+  };
+}
+
+export type ExpandZipArchiveSuccessAction = {
+  loadId: number;
+  archiveName: string;
+  expansion: ZipArchiveExpansion;
+};
+/**
+ * A zip in the load queue has been unpacked. The updater either parses a
+ * single shapefile archive or enqueues one dataset per supported member.
+ * @memberof visStateActions
+ */
+export function expandZipArchiveSuccess(
+  payload: ExpandZipArchiveSuccessAction
+): Merge<ExpandZipArchiveSuccessAction, {type: typeof ActionTypes.EXPAND_ZIP_ARCHIVE_SUCCESS}> {
+  return {
+    type: ActionTypes.EXPAND_ZIP_ARCHIVE_SUCCESS,
+    ...payload
   };
 }
 
