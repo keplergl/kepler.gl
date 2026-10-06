@@ -258,7 +258,7 @@ function getVerticalBarLabelLayout(bins: ChartBin[]): {
   const maxLen = Math.max(1, ...bins.map(bin => displayBinKey(String(bin.key)).length));
   const slotWidth = VERTICAL_BAR_PLOT_WIDTH / Math.max(1, bins.length);
   const labelWidth = maxLen * LABEL_CHAR_WIDTH;
-  // Keep short labels horizontal (Studio-like); rotate when they won't fit in their slot.
+  // Keep short labels horizontal; rotate when they won't fit in their slot.
   const rotated = labelWidth > slotWidth * 0.9 || maxLen > 8;
   if (!rotated) {
     return {rotated: false, labelBand: 5, padRight: 0, gap: 6};
