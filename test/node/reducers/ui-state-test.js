@@ -8,6 +8,7 @@ import {
   toggleModal,
   toggleSidePanelCloseButton,
   openDeleteModal,
+  openReplaceDatasetModal,
   setExportImageSetting,
   setExportVideoSetting,
   toggleMapControl,
@@ -135,6 +136,22 @@ test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
   };
 
   t.deepEqual(newReducer, expectedState, 'should open delete data modal and save key to remove');
+
+  t.end();
+});
+
+test('#uiStateReducer -> OPEN_REPLACE_DATASET_MODAL', t => {
+  const opened = reducer(INITIAL_UI_STATE, openReplaceDatasetModal('chai'));
+
+  t.equal(opened.currentModal, 'addData', 'should open the add data modal');
+  t.equal(opened.datasetToReplaceId, 'chai', 'should remember which dataset to replace');
+
+  const closed = reducer(opened, toggleModal(null));
+  t.equal(closed.currentModal, null, 'should close the modal');
+  t.equal(closed.datasetToReplaceId, null, 'should leave replace mode when the modal closes');
+
+  const addData = reducer(opened, toggleModal('addData'));
+  t.equal(addData.datasetToReplaceId, null, 'Add Data should not stay in replace mode');
 
   t.end();
 });

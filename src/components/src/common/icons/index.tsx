@@ -70,6 +70,7 @@ export {default as Pin} from './pin';
 export {default as PointerClick} from './pointer-click';
 export {default as Play} from './play';
 export {default as Reduce} from './reduce';
+export {default as Replace} from './replace';
 export {default as Reset} from './reset';
 export {default as Save} from './save';
 export {default as Save2} from './save2';

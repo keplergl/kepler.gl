@@ -137,6 +137,7 @@ import {
   apply_,
   compose_,
   filterOutById,
+  if_,
   merge_,
   payload_,
   pick_,
@@ -6301,28 +6302,36 @@ function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged
 function replaceDatasetAndDeps<T extends VisState>(
   state: T,
   dataId: string,
-  dataIdToUse: string
+  dataIdToUse: string,
+  options: {deleteOriginalDataset?: boolean} = {}
 ): T {
+  // The same id means the new table occupies the old slot, so the previous rows have to go.
+  const deleteOriginalDataset = options.deleteOriginalDataset !== false || dataId === dataIdToUse;
   return compose_<T>([
     apply_(replaceDatasetDepsInState, {dataId, dataIdToUse}),
-    apply_(removeDatasetUpdater, {dataId})
+    if_(deleteOriginalDataset, apply_(removeDatasetUpdater, {dataId}))
   ])(state);
 }
 
 export function prepareStateForDatasetReplace<T extends VisState>(
   state: T,
   dataId: string,
-  dataIdToUse: string
+  dataIdToUse: string,
+  options: {deleteOriginalDataset?: boolean} = {}
 ): T {
   const serializedState = serializeVisState(state, state.schema);
-  const nextState = replaceDatasetAndDeps(state, dataId, dataIdToUse);
+  const deleteOriginalDataset = options.deleteOriginalDataset !== false || dataId === dataIdToUse;
+  const nextState = replaceDatasetAndDeps(state, dataId, dataIdToUse, {deleteOriginalDataset});
   // make a copy of layerOrder, because layer id will be removed from it by calling removeLayerUpdater
   const preserveLayerOrder = [...state.layerOrder];
 
-  // preserve dataset order
-  nextState.preserveDatasetOrder = Object.keys(state.datasets).map(d =>
-    d === dataId ? dataIdToUse : d
-  );
+  // When the original table stays, the replacement takes its place and the original follows it.
+  nextState.preserveDatasetOrder = Object.keys(state.datasets).flatMap(d => {
+    if (d !== dataId) {
+      return [d];
+    }
+    return deleteOriginalDataset ? [dataIdToUse] : [dataIdToUse, d];
+  });
 
   // preserveLayerOrder
   if (nextState.layerToBeMerged?.length) {

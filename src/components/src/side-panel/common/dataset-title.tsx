@@ -14,7 +14,12 @@ import DatasetTagFactory from './dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
 import {Portaled} from '../..';
 import {rgbToHex} from '@kepler.gl/utils';
-import {openDeleteModal, VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {
+  openDeleteModal,
+  openReplaceDatasetModal,
+  VisStateActions,
+  ActionHandler
+} from '@kepler.gl/actions';
 import {RGBColor} from '@kepler.gl/types';
 import {StyledDatasetTitleProps, ShowDataTableProps} from './types';
 import DatasetOpsMenu from '../dataset-ops/dataset-ops-menu';
@@ -114,6 +119,7 @@ type MiniDataset = {
   type?: string;
   metadata?: {
     refreshError?: string;
+    derivedDataset?: unknown;
   };
 };
 
@@ -128,6 +134,7 @@ export type DatasetTitleProps = {
   addGroupBy?: ActionHandler<typeof VisStateActions.addGroupBy>;
   addJoin?: ActionHandler<typeof VisStateActions.addJoin>;
   addSpatialJoin?: ActionHandler<typeof VisStateActions.addSpatialJoin>;
+  replaceDataset?: ActionHandler<typeof openReplaceDatasetModal>;
 };
 
 const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
@@ -216,7 +223,8 @@ export default function DatasetTitleFactory(
     onToggleRefreshSettings,
     addGroupBy,
     addJoin,
-    addSpatialJoin
+    addSpatialJoin,
+    replaceDataset
   }) => {
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
     const root = useRef(null);
@@ -290,6 +298,7 @@ export default function DatasetTitleFactory(
               addGroupBy={addGroupBy}
               addJoin={addJoin}
               addSpatialJoin={addSpatialJoin}
+              replaceDataset={replaceDataset}
               showDeleteDataset={showDeleteDataset}
               removeDataset={removeDataset}
             />

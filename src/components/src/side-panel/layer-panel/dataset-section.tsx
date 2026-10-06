@@ -8,7 +8,13 @@ import {Add} from '../../common/icons';
 import {Button} from '../../common/styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
-import {UIStateActions, VisStateActions, ActionHandler, ActionHandlers} from '@kepler.gl/actions';
+import {
+  UIStateActions,
+  VisStateActions,
+  ActionHandler,
+  ActionHandlers,
+  openReplaceDatasetModal
+} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 
 type AddDataButtonProps = {
@@ -23,6 +29,7 @@ type DatasetSectionProps = {
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
+  replaceDataset?: ActionHandler<typeof openReplaceDatasetModal>;
   showAddDataModal: () => void;
   refreshDataset?: ActionHandler<typeof VisStateActions.refreshDataset>;
   updateDatasetProps?: ActionHandler<typeof VisStateActions.updateDatasetProps>;
@@ -75,6 +82,7 @@ function DatasetSectionFactory(
       updateTableColor,
       showDeleteDataset,
       removeDataset,
+      replaceDataset,
       showDatasetList,
       showAddDataModal,
       refreshDataset,
@@ -95,6 +103,7 @@ function DatasetSectionFactory(
             showDatasetTable={showDatasetTable}
             updateTableColor={updateTableColor}
             removeDataset={removeDataset}
+            replaceDataset={replaceDataset}
             showDeleteDataset={showDeleteDataset}
             refreshDataset={refreshDataset}
             updateDatasetProps={updateDatasetProps}
