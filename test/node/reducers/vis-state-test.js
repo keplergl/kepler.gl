@@ -7252,6 +7252,72 @@ test('#visStateReducer -> local dataset is not blocked by a remote download', t 
   );
 });
 
+test('#visStateReducer -> deferred empty queue stages the parsed files', t => {
+  drainTasksForTesting();
+  const onFinish = sinon.spy(VisStateActions.stageLoadedFiles);
+  const initialState = CloneDeep(InitialState).visState;
+  const loading = reducer(
+    initialState,
+    VisStateActions.loadFiles([{type: 'text/csv', name: 'points.csv'}], onFinish, {
+      deferAddToMap: true
+    })
+  );
+  drainTasksForTesting();
+  const cache = [{info: {label: 'points.csv', format: 'csv'}, data: []}];
+  const ready = {
+    ...loading,
+    fileLoading: {
+      ...loading.fileLoading,
+      filesToLoad: [],
+      fileCache: cache
+    }
+  };
+  reducer(ready, VisStateActions.loadNextFile());
+  const [task, ...rest] = drainTasksForTesting();
+  t.equal(rest.length, 0, 'should create 1 task');
+  t.equal(task.type, 'ACTION_TASK', 'an empty deferred queue finishes the load');
+  const action = succeedTaskInTest(task);
+  t.equal(onFinish.calledOnce, true, 'should stage the parsed files');
+  t.deepEqual(onFinish.lastCall.args[0], cache, 'should stage the parsed cache');
+  t.deepEqual(
+    onFinish.lastCall.args[1],
+    {deferAddToMap: true},
+    'should keep the deferred load options'
+  );
+  t.equal(action.loadId, ready.fileLoading.loadId, 'the finish belongs to this load');
+  t.end();
+});
+
+test('#visStateReducer -> deferred arrow batches are not added early', t => {
+  drainTasksForTesting();
+  const batch = {
+    gen: {next: () => Promise.resolve({done: true, value: null})},
+    fileName: 'data.arrow',
+    progress: {percent: 0.4},
+    accumulated: {data: [{value: 1}], fileName: 'data.arrow'},
+    onFinish: VisStateActions.stageLoadedFiles
+  };
+  reducer(
+    CloneDeep(InitialState).visState,
+    VisStateActions.nextFileBatch({...batch, options: {deferAddToMap: true}})
+  );
+  const deferredTasks = drainTasksForTesting();
+  t.equal(
+    deferredTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
+    false,
+    'a deferred arrow file waits until parsing finishes'
+  );
+
+  reducer(CloneDeep(InitialState).visState, VisStateActions.nextFileBatch(batch));
+  const immediateTasks = drainTasksForTesting();
+  t.equal(
+    immediateTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
+    true,
+    'an arrow file still adds each batch when it is not deferred'
+  );
+  t.end();
+});
+
 test('#visStateReducer -> setLayerAnimationTimeConfig', t => {
   // change Trip layer isVisible
   const nextState = reducer(
