@@ -13,7 +13,8 @@ import {
   calculateExportImageSize,
   omitLayerApiKeys,
   getExportFileName,
-  getExportFileNameBase
+  getExportFileNameBase,
+  exportMapToHTML
 } from '@kepler.gl/utils';
 import {EXPORT_IMG_RATIOS, RESOLUTIONS} from '@kepler.gl/constants';
 
@@ -26,6 +27,24 @@ test('exportUtils -> ExportJson', t => {
   t.doesNotThrow(() => {
     JSON.parse(body);
   }, 'Should not throw when trying to parse body');
+
+  t.end();
+});
+
+test('exportUtils -> ExportHtml includes map info', t => {
+  const html = exportMapToHTML({
+    datasets: [],
+    config: {version: 'v1', config: {}},
+    info: {title: 'Harbor', description: 'Ferry routes'},
+    mode: 'READ'
+  });
+
+  t.ok(html.includes('"title":"Harbor"'), 'exported html should restore the map title');
+  t.ok(
+    html.includes('"description":"Ferry routes"'),
+    'exported html should restore the map description'
+  );
+  t.ok(html.includes('info,'), 'exported html should pass info to addDataToMap');
 
   t.end();
 });

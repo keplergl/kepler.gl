@@ -171,7 +171,42 @@ export default function ModalContainerFactory(
       }
     };
 
+    _mapInfoDraft: {title: string; description: string} | null = null;
+
+    _onMapInfoDraft = (info: {title: string; description: string}) => {
+      this._mapInfoDraft = info;
+    };
+
+    _propsWithMapInfoDraft = () => {
+      const draft = this._mapInfoDraft;
+      if (!draft) {
+        return this.props;
+      }
+      return {
+        ...this.props,
+        visState: {
+          ...this.props.visState,
+          mapInfo: {
+            ...this.props.visState.mapInfo,
+            title: draft.title,
+            description: draft.description
+          }
+        }
+      };
+    };
+
+    _commitMapInfoDraft = () => {
+      if (!this._mapInfoDraft) {
+        return;
+      }
+      this.props.visStateActions.setMapInfo({
+        title: this._mapInfoDraft.title,
+        description: this._mapInfoDraft.description
+      });
+    };
+
     _closeModal = () => {
+      this._mapInfoDraft = null;
       if (this.props.uiState.currentModal === ADD_DATA_ID) {
         this.props.visStateActions.clearStagedLoadedFiles();
       }
@@ -274,18 +309,23 @@ export default function ModalContainerFactory(
     };
 
     _onExportMap = () => {
-      const {uiState} = this.props;
+      const {uiState} = this._propsWithMapInfoDraft();
       const {format, includeLayerApiKeys, fileName} = uiState.exportMap;
-      (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(this.props, {
-        ...(uiState.exportMap[format] || {}),
-        includeLayerApiKeys,
-        fileName
-      });
+      (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(
+        this._propsWithMapInfoDraft(),
+        {
+          ...(uiState.exportMap[format] || {}),
+          includeLayerApiKeys,
+          fileName
+        }
+      );
+      this._commitMapInfoDraft();
       this._closeModal();
     };
 
     _exportFileToCloud = ({provider, isPublic, overwrite, closeModal}) => {
-      const toSave = exportMap(this.props);
+      const toSave = exportMap(this._propsWithMapInfoDraft());
+      this._commitMapInfoDraft();
 
       this.props.providerActions.exportFileToCloud({
         mapData: toSave,
@@ -293,7 +333,8 @@ export default function ModalContainerFactory(
         options: {
           isPublic,
           overwrite,
-          mapIdToOverwrite: this.props.providerState.savedMapId
+          mapIdToOverwrite: this.props.providerState.savedMapId,
+          fileName: this.props.uiState.exportMap.fileName
         },
         closeModal,
         onSuccess: this.props.onExportToCloudSuccess,
@@ -500,11 +541,13 @@ export default function ModalContainerFactory(
               <ExportMapModal
                 config={keplerGlConfig}
                 options={uiState.exportMap}
+                mapInfo={visState.mapInfo}
                 onChangeExportMapFormat={uiStateActions.setExportMapFormat}
                 onEditUserMapboxAccessToken={uiStateActions.setUserMapboxAccessToken}
                 onChangeExportMapHTMLMode={uiStateActions.setExportHTMLMapMode}
                 onChangeExportIncludeLayerApiKeys={uiStateActions.setExportIncludeLayerApiKeys}
                 onChangeExportMapFileName={uiStateActions.setExportMapFileName}
+                onMapInfoDraft={this._onMapInfoDraft}
               />
             );
             modalProps = {
@@ -575,6 +618,9 @@ export default function ModalContainerFactory(
                 {...providerState}
                 exportImage={uiState.exportImage}
                 mapInfo={visState.mapInfo}
+                fileName={uiState.exportMap.fileName}
+                onChangeFileName={uiStateActions.setExportMapFileName}
+                onMapInfoDraft={this._onMapInfoDraft}
                 onSetMapInfo={visStateActions.setMapInfo}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}

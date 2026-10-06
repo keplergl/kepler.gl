@@ -86,7 +86,7 @@ describe('SaveMapModal', () => {
     const {getByText} = renderWithTheme(<SaveMapModal {...UNDEFINED_MAP_TITLE_PROPS} />);
     const confirmButton = getByText('modal.button.save');
     expect(confirmButton).toBeInTheDocument();
-    expect(confirmButton).toBeDisabled();
+    expect(confirmButton).toBeEnabled();
   });
 
   test('renders SaveMapModal component with provider correctly set and map title set', () => {
@@ -149,18 +149,24 @@ describe('SaveMapModal', () => {
       setProvider: jest.fn(),
       cloudProviders: []
     }));
-    const {getByTestId, getByPlaceholderText} = renderWithTheme(
+    const {getByTestId, getByLabelText, getByText} = renderWithTheme(
       <SaveMapModal {...UNDEFINED_MAP_TITLE_PROPS} />
     );
 
     const mapInfoPanel = getByTestId(dataTestIds.providerMapInfoPanel);
     expect(mapInfoPanel).toBeInTheDocument();
 
-    const titleInput = getByPlaceholderText('Type map title');
+    const titleInput = getByLabelText('Name');
     expect(titleInput).toBeInTheDocument();
 
     fireEvent.change(titleInput, {target: {value: 'first kepler map'}});
-    expect(DEFAULT_PROS.onSetMapInfo).toHaveBeenCalledWith({title: 'first kepler map'});
+    expect(DEFAULT_PROS.onSetMapInfo).not.toHaveBeenCalled();
+
+    fireEvent.click(getByText('modal.button.save'));
+    expect(DEFAULT_PROS.onSetMapInfo).toHaveBeenCalledWith({
+      title: 'first kepler map',
+      description: ''
+    });
   });
 
   test('call onUpdateImageSetting', () => {

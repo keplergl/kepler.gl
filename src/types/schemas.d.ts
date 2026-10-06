@@ -174,6 +174,10 @@ export type ParsedUiState = {
     chart?: {
       active?: boolean;
     };
+    mapInfo?: {
+      active?: boolean;
+      show?: boolean;
+    };
   };
   locale?: string;
   theme?: string;
@@ -294,4 +298,11 @@ export type SavedMap = {
   };
 };
 
-export type LoadedMap = {datasets?: ParsedDataset[] | null; config?: ParsedConfig | null};
+export type LoadedMap = {
+  datasets?: ParsedDataset[] | null;
+  config?: ParsedConfig | null;
+  info?: {
+    title?: string;
+    description?: string;
+  };
+};

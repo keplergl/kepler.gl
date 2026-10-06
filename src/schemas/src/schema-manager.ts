@@ -12,7 +12,7 @@ import {visStateSchema} from './vis-state-schema';
 import uiStateSchema from './ui-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
-import {isPlainObject} from '@kepler.gl/utils';
+import {isPlainObject, optionalMapInfo} from '@kepler.gl/utils';
 
 import {MapInfo, SavedVisState, SavedMapStyle, ParsedConfig, BaseMapStyle} from '@kepler.gl/types';
 
@@ -183,7 +183,7 @@ export class KeplerGLSchema {
   }
 
   getMapInfo(state: any): MapInfo {
-    return state.visState.mapInfo;
+    return optionalMapInfo(state.visState?.mapInfo) || {};
   }
   /**
    *  Load saved map, argument can be (datasets, config) or ({datasets, config})

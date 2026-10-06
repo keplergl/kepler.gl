@@ -191,9 +191,10 @@ export default class DropboxProvider extends Provider {
     const {isPublic} = options;
     const {map, thumbnail} = mapData;
 
-    // generate file name if is not provided
-    const name = map.info && map.info.title;
-    const fileName = `${name}.json`;
+    // File name is the download name. The map title stays in info.title.
+    const name =
+      (options.fileName && String(options.fileName).trim()) || (map.info && map.info.title);
+    const fileName = `${String(name).replace(/\.json$/i, '')}.json`;
     const fileContent = map;
     // FileWriteMode: Selects what to do if the file already exists.
     // Always overwrite if sharing

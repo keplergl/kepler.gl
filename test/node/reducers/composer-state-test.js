@@ -269,6 +269,89 @@ test('#composerStateReducer - addDataToMapUpdater: mapLegend', t => {
   t.end();
 });
 
+test('#composerStateReducer - addDataToMapUpdater: mapInfo', t => {
+  const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+
+  t.equal(state.uiState.mapControls.mapInfo.active, true, 'map info panel starts open');
+  t.equal(state.visState.mapInfo.title, undefined, 'map title starts unset');
+  t.equal(state.visState.mapInfo.description, undefined, 'map description starts unset');
+
+  const withInfo = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      info: {title: 'Harbor', description: 'Ferry routes'}
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(withInfo.visState.mapInfo.title, 'Harbor', 'loaded map title is restored');
+  t.equal(
+    withInfo.visState.mapInfo.description,
+    'Ferry routes',
+    'loaded map description is restored'
+  );
+  t.equal(withInfo.uiState.mapControls.mapInfo.active, true, 'panel stays open when title loads');
+
+  const collapsed = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      info: {title: 'Harbor', description: ''},
+      config: {
+        uiState: {
+          mapControls: {
+            mapInfo: {active: false}
+          }
+        }
+      }
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(collapsed.visState.mapInfo.title, 'Harbor', 'collapsed map still restores its title');
+  t.equal(collapsed.visState.mapInfo.description, undefined, 'a blank description stays unset');
+  t.equal(
+    collapsed.uiState.mapControls.mapInfo.active,
+    false,
+    'saved collapsed map info panel stays closed'
+  );
+
+  const hidden = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      info: {title: 'Harbor', description: 'Ferry routes'},
+      config: {
+        uiState: {
+          mapControls: {
+            mapInfo: {show: false, active: true}
+          }
+        }
+      }
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(hidden.visState.mapInfo.title, 'Harbor', 'a hidden map still restores its title');
+  t.equal(
+    hidden.uiState.mapControls.mapInfo.show,
+    false,
+    'saved hidden map info stays off the map'
+  );
+
+  t.end();
+});
+
 test('#composerStateReducer - addDataToMapUpdater: locale', t => {
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
 

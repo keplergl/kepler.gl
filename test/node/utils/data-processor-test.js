@@ -30,6 +30,7 @@ import {
   parseCsvRowsByFieldType,
   processCsvData,
   processGeojson,
+  processKeplerglJSON,
   processRowObject,
   detectDelimiter
 } from '@kepler.gl/processors';
@@ -1053,5 +1054,28 @@ test('Processor -> analyzerTypeToFieldType', t => {
     spy.restore();
   });
 
+  t.end();
+});
+
+test('Processor -> processKeplerglJSON keeps display info', t => {
+  const parsed = processKeplerglJSON({
+    datasets: [],
+    config: {
+      version: 'v1',
+      config: {}
+    },
+    info: {
+      app: 'kepler.gl',
+      created_at: 'today',
+      title: 'Harbor',
+      description: 'Ferry routes',
+      source: 'kepler.gl'
+    }
+  });
+
+  t.equal(parsed.info.title, 'Harbor', 'should keep the map title');
+  t.equal(parsed.info.description, 'Ferry routes', 'should keep the map description');
+  t.equal(parsed.info.app, undefined, 'should not copy export metadata onto map info');
+  t.equal(parsed.info.source, undefined, 'should not copy the export source onto map info');
   t.end();
 });

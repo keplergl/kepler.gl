@@ -4,13 +4,14 @@
 import React from 'react';
 import {useIntl} from 'react-intl';
 
-import {InteractionConfig, LayerOrder, MapState} from '@kepler.gl/types';
+import {InteractionConfig, LayerOrder, MapInfo, MapState} from '@kepler.gl/types';
 import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
 
 import InteractionPanelFactory from './interaction-panel/interaction-panel';
 import LegendConfigFactory from './interaction-panel/legend-config';
+import MapInfoConfigFactory from './interaction-panel/map-info-config';
 import ZoomOpacityConfigFactory from './interaction-panel/zoom-opacity-config';
 import PanelTitleFactory from './panel-title';
 import {PanelHeaderActionIcon} from './panel-header-action';
@@ -40,6 +41,9 @@ type InteractionManagerProps = {
   layers?: readonly Layer[];
   layerOrder?: LayerOrder;
   mapLegendActive?: boolean;
+  mapInfo?: Partial<MapInfo>;
+  mapInfoShow?: boolean;
+  mapInfoActive?: boolean;
   mapState?: MapState;
   actionIcons?: {
     settings?: PanelHeaderActionIcon;
@@ -53,14 +57,16 @@ InteractionManagerFactory.deps = [
   InteractionPanelFactory,
   PanelTitleFactory,
   LegendConfigFactory,
-  ZoomOpacityConfigFactory
+  ZoomOpacityConfigFactory,
+  MapInfoConfigFactory
 ];
 
 function InteractionManagerFactory(
   InteractionPanel: ReturnType<typeof InteractionPanelFactory>,
   PanelTitle: ReturnType<typeof PanelTitleFactory>,
   LegendConfig: ReturnType<typeof LegendConfigFactory>,
-  ZoomOpacityConfig: ReturnType<typeof ZoomOpacityConfigFactory>
+  ZoomOpacityConfig: ReturnType<typeof ZoomOpacityConfigFactory>,
+  MapInfoConfig: ReturnType<typeof MapInfoConfigFactory>
 ) {
   const InteractionManager: React.FC<InteractionManagerProps> = ({
     interactionConfig,
@@ -71,12 +77,26 @@ function InteractionManagerFactory(
     layers,
     layerOrder,
     mapLegendActive,
+    mapInfo,
+    mapInfoShow,
+    mapInfoActive,
     mapState,
     actionIcons,
     interactionConfigIcons
   }) => {
     const {interactionConfigChange: onConfigChange, setColumnDisplayFormat} = visStateActions;
     const intl = useIntl();
+    const mapInfoPanel = (
+      <MapInfoConfig
+        key="mapInfo"
+        mapInfo={mapInfo}
+        mapInfoShow={mapInfoShow}
+        mapInfoActive={mapInfoActive}
+        visStateActions={visStateActions}
+        uiStateActions={uiStateActions}
+        actionIcons={actionIcons}
+      />
+    );
 
     return (
       <div className="interaction-manager">
@@ -114,7 +134,7 @@ function InteractionManagerFactory(
               />
             ) : null;
           }
-          return (
+          const panel = (
             <InteractionPanel
               key={key}
               datasets={datasets}
@@ -125,7 +145,17 @@ function InteractionManagerFactory(
               interactionConfigIcons={interactionConfigIcons}
             />
           );
+          if (key !== 'geocoder') {
+            return panel;
+          }
+          return (
+            <React.Fragment key="geocoder-and-map-info">
+              {panel}
+              {mapInfoPanel}
+            </React.Fragment>
+          );
         })}
+        {interactionConfig.geocoder ? null : mapInfoPanel}
       </div>
     );
   };

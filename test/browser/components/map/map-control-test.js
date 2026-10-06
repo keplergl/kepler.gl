@@ -80,7 +80,7 @@ test('MapControlFactory - display all options', t => {
       </MapViewStateContextProvider>
     </IntlWrapper>
   );
-  t.equal($.find('.map-control-action').length, 9, 'Should show 9 action panels');
+  t.equal($.find('.map-control-action').length, 10, 'Should show 10 action panels');
   t.equal(
     $.find('.toggle-chart-panel').length,
     0,
@@ -429,6 +429,93 @@ test('MapControlFactory - show panels', t => {
       'should render correct locale'
     );
   });
+
+  t.end();
+});
+
+test('MapControlFactory - map info panel', t => {
+  const onToggleMapControl = sinon.spy();
+  const base = {
+    datasets: {},
+    layers: [],
+    locale: 'en',
+    layersToRender: {},
+    dragRotate: true,
+    mapIndex: 0,
+    onToggleSplitMap: () => {},
+    onTogglePerspective: () => {},
+    onToggleMapControl,
+    onSetEditorMode: () => {},
+    onToggleEditorVisibility: () => {},
+    onSetLocale: () => {}
+  };
+
+  const mountControl = extra =>
+    mountWithTheme(
+      <IntlWrapper>
+        <MapViewStateContextProvider mapState={{latitude: 0, longitude: 0, zoom: 1}}>
+          <MapControl {...base} {...extra} />
+        </MapViewStateContextProvider>
+      </IntlWrapper>
+    );
+
+  const empty = mountControl({
+    mapControls: {mapInfo: {show: true, active: true}},
+    mapInfo: {title: '', description: ''}
+  });
+  t.equal(
+    empty.find('.map-info-panel').length,
+    0,
+    'hides the panel when title and description are empty'
+  );
+  t.equal(empty.find('.map-info').length, 0, 'hides the map info button when empty');
+  t.equal(empty.find('textarea').length, 0, 'does not edit map info on the map');
+
+  const shown = mountControl({
+    mapControls: {mapInfo: {show: true, active: true}},
+    mapInfo: {title: 'Harbor', description: 'See [routes](https://example.com)'}
+  });
+  t.ok(
+    shown.find('[data-testid="map-info-panel"]').hostNodes().length > 0,
+    'shows the panel when a title is set'
+  );
+  t.ok(shown.text().includes('Harbor'), 'renders the map title');
+  t.ok(shown.text().includes('routes'), 'renders the description');
+  t.equal(
+    shown.find('a[href="https://example.com"]').hostNodes().length,
+    1,
+    'renders description links'
+  );
+  t.equal(shown.find('textarea').length, 0, 'imported map info is display only');
+
+  shown.find('button[aria-label="Minimize map info"]').hostNodes().simulate('click');
+  t.equal(onToggleMapControl.callCount, 1, 'closing the panel toggles map info');
+  t.equal(onToggleMapControl.firstCall.args[0], 'mapInfo');
+
+  const collapsed = mountControl({
+    mapControls: {mapInfo: {show: true, active: false}},
+    mapInfo: {title: 'Harbor', description: 'Ferry routes'}
+  });
+  const descriptionOnly = mountControl({
+    mapControls: {mapInfo: {show: true, active: true}},
+    mapInfo: {description: 'Ferry routes'}
+  });
+  t.equal(
+    descriptionOnly.find('.map-info-title').length,
+    0,
+    'a description without a name does not reserve a title row'
+  );
+  t.ok(
+    descriptionOnly.find('.map-info-description--only').hostNodes().length > 0,
+    'a description without a name starts at the top of the card'
+  );
+  t.ok(descriptionOnly.text().includes('Ferry routes'), 'renders a description without a name');
+
+  t.equal(collapsed.find('.map-info-panel').length, 0, 'a collapsed panel hides the card');
+  t.ok(
+    collapsed.find('.map-info').hostNodes().length > 0,
+    'a collapsed panel shows the docs button'
+  );
 
   t.end();
 });
