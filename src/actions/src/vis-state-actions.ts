@@ -173,22 +173,30 @@ export function layerSetIsValid(
 export type LayerTypeChangeUpdaterAction = {
   oldLayer: Layer;
   newType: string;
+  /**
+   * Fit the map when this is the layer type dropdown assigning a type to an
+   * empty layer. Omitted for programmatic calls and saved-config applies.
+   */
+  fitBounds?: boolean;
 };
 /**
  * Update layer type. Previews layer config will be copied if applicable.
  * @param oldLayer - layer to be updated
  * @param newType - new type
+ * @param options.fitBounds fit the map when the layer type dropdown gives an empty layer its first type
  * @returns action
  * @public
  */
 export function layerTypeChange(
   oldLayer: Layer,
-  newType: string
+  newType: string,
+  options?: {fitBounds?: boolean}
 ): Merge<LayerTypeChangeUpdaterAction, {type: typeof ActionTypes.LAYER_TYPE_CHANGE}> {
   return {
     type: ActionTypes.LAYER_TYPE_CHANGE,
     oldLayer,
-    newType
+    newType,
+    ...(options?.fitBounds ? {fitBounds: true} : {})
   };
 }
 export type LayerVisualChannelConfigChangeUpdaterAction = {
