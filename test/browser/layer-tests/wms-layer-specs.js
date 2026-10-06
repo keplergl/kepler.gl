@@ -113,6 +113,7 @@ test('#WMSLayer -> constructor', t => {
           t.ok(layer.config.visConfig, 'should have visConfig');
           t.equal(layer.config.visConfig.opacity, 0.8, 'should have default opacity');
           t.equal(layer.config.visConfig.transparent, true, 'should be transparent by default');
+          t.equal(layer.config.visConfig.allowHover, false, 'should disable hover by default');
           t.equal(layer.config.visConfig.wmsLayer, null, 'should have null wmsLayer initially');
           t.ok(typeof layer.layerIcon === 'function', 'should have layerIcon');
           t.deepEqual(
@@ -235,13 +236,25 @@ test('WMSLayer -> basic layer functionality', t => {
 });
 
 test('WMSLayer -> hover functionality', t => {
-  const layer = createWMSLayer();
-
-  // Test hasHoveredObject
   const mockObjectInfo = {
     picked: true,
     layer: {props: {id: 'test-wms-layer'}}
   };
+
+  const disabledLayer = createWMSLayer();
+  t.equal(disabledLayer.config.visConfig.allowHover, false, 'hover is disabled by default');
+  t.equal(
+    disabledLayer.hasHoveredObject(mockObjectInfo),
+    null,
+    'should not hover when allowHover is off'
+  );
+  t.equal(
+    disabledLayer.getHoverData(null, null, [], null, {index: 0, x: 100, y: 200}),
+    null,
+    'should not return hover data when allowHover is off'
+  );
+
+  const layer = createWMSLayer({visConfig: {allowHover: true}});
 
   const hoveredObject = layer.hasHoveredObject(mockObjectInfo);
   t.ok(hoveredObject, 'should return hovered object when layer is picked');
@@ -297,18 +310,27 @@ test('#WMSLayer -> renderLayer variations', t => {
 
   const deckLayer = deckLayers[0];
   t.equal(deckLayer.id, 'test-wms-layer-WMSLayer', 'should have correct layer id');
-  t.equal(deckLayer.props.pickable, true, 'should be pickable when tooltips enabled and queryable');
+  t.equal(deckLayer.props.pickable, false, 'should not be pickable when hover is disabled');
+  t.equal(deckLayer.props.onClick, null, 'should not query feature info when hover is disabled');
   t.equal(deckLayer.props.serviceType, 'wms', 'should have correct service type');
   t.deepEqual(deckLayer.props.layers, ['test_layer'], 'should have correct layers');
   t.equal(deckLayer.props.opacity, 0.8, 'should have correct opacity');
-  t.ok(typeof deckLayer.props.onClick === 'function', 'should have onClick handler');
+
+  const hoverLayer = createWMSLayer({visConfig: {allowHover: true}});
+  const hoverDeckLayers = hoverLayer.renderLayer(MOCK_RENDER_OPTS);
+  t.equal(
+    hoverDeckLayers[0].props.pickable,
+    true,
+    'should be pickable when allowHover, tooltips, and queryable are enabled'
+  );
+  t.ok(typeof hoverDeckLayers[0].props.onClick === 'function', 'should have onClick handler');
 
   // Test with tooltips disabled
   const tooltipsDisabledOpts = {
     ...MOCK_RENDER_OPTS,
     interactionConfig: {tooltip: {enabled: false}}
   };
-  const nonPickableLayers = baseLayer.renderLayer(tooltipsDisabledOpts);
+  const nonPickableLayers = hoverLayer.renderLayer(tooltipsDisabledOpts);
   t.equal(
     nonPickableLayers[0].props.pickable,
     false,
@@ -317,7 +339,7 @@ test('#WMSLayer -> renderLayer variations', t => {
 
   // Test with non-queryable layer
   const nonQueryableLayer = createWMSLayer({
-    visConfig: {wmsLayer: {...MOCK_WMS_LAYER_CONFIG, queryable: false}}
+    visConfig: {allowHover: true, wmsLayer: {...MOCK_WMS_LAYER_CONFIG, queryable: false}}
   });
   const nonQueryableLayers = nonQueryableLayer.renderLayer(MOCK_RENDER_OPTS);
   t.equal(
@@ -452,7 +474,7 @@ test('#WMSLayer -> edge cases and error handling', t => {
   }, 'should not throw error when formatting with missing dataset');
 
   // Test layer visibility
-  const invisibleLayer = createWMSLayer({isVisible: false});
+  const invisibleLayer = createWMSLayer({isVisible: false, visConfig: {allowHover: true}});
   t.equal(invisibleLayer.config.isVisible, false, 'should respect initial visibility setting');
 
   // Test hasHoveredObject when layer is not visible
