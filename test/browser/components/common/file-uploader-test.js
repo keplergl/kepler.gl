@@ -22,6 +22,12 @@ test('Components -> FileUploader.render', t => {
 
   t.equal(wrapper.find(FileDrop).length, 1, 'should render FileUploader');
   t.equal(wrapper.find(UploadButton).length, 1, 'should render UploadButton');
+  t.ok(wrapper.text().includes('client-side application'), 'should render the privacy disclaimer');
+  t.equal(
+    wrapper.find('.file-uploader__chrome-message').length,
+    0,
+    'should not render a large-file footer'
+  );
 
   t.end();
 });
@@ -398,5 +404,111 @@ test('Components -> FileUpload remote URL format selector flag', t => {
   );
 
   initApplicationConfig({enableRemoteFileFormatSelector: false});
+  t.end();
+});
+
+test('Components -> FileUpload large dataset tag', t => {
+  const stagedToAdd = [
+    {
+      info: {label: 'small.csv', format: 'csv'},
+      data: {rows: new Array(10)}
+    },
+    {
+      info: {label: 'rows.csv', format: 'csv'},
+      data: {rows: new Array(1000000)}
+    },
+    {
+      info: {label: 'arrow.csv', format: 'arrow'},
+      data: {rows: [], cols: [{length: 1000000}]}
+    }
+  ];
+  const mountUploader = () =>
+    mountWithTheme(
+      <IntlWrapper>
+        <FileUpload onFileUpload={() => {}} fileExtensions={['csv']} stagedToAdd={stagedToAdd} />
+      </IntlWrapper>
+    );
+  const tagFor = (wrapper, name) => {
+    const cards = wrapper.find('.file-upload-progress__message').hostNodes();
+    let count = 0;
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards.at(i);
+      if (card.text().includes(name)) {
+        count += card.find('.upload-file-list__large-dataset').hostNodes().length;
+      }
+    }
+    return count;
+  };
+
+  initApplicationConfig({largeDatasetWarningRows: false, largeDatasetWarningBytes: false});
+  let wrapper = mountUploader();
+  t.equal(tagFor(wrapper, 'rows.csv'), 0, 'a large dataset has no warning when the flag is false');
+
+  initApplicationConfig({largeDatasetWarningRows: 1000000, largeDatasetWarningBytes: false});
+  wrapper = mountUploader();
+  t.equal(tagFor(wrapper, 'small.csv'), 0, 'a dataset under the row count has no warning tag');
+  t.equal(tagFor(wrapper, 'rows.csv'), 1, 'a dataset at the row count shows a warning tag');
+  t.equal(tagFor(wrapper, 'arrow.csv'), 1, 'an Arrow table at the row count shows a warning tag');
+  const tag = wrapper.find('.upload-file-list__large-dataset').hostNodes().at(0);
+  t.equal(tag.text(), 'Large', 'the tag labels the dataset as large');
+  t.ok(
+    tag.prop('aria-label').includes('run out of memory'),
+    'the tag exposes the memory and performance warning'
+  );
+
+  wrapper
+    .find('.file-uploader__file-drop')
+    .at(0)
+    .simulate('drop', {
+      stopPropagation: () => {},
+      dataTransfer: {
+        types: ['Files'],
+        files: [{type: 'text/csv', name: 'heavy.csv', size: 50 * 1024 * 1024}]
+      }
+    });
+  wrapper.update();
+  t.equal(
+    tagFor(wrapper, 'heavy.csv'),
+    0,
+    'file size alone does not show a warning when that flag is off'
+  );
+
+  initApplicationConfig({
+    largeDatasetWarningRows: false,
+    largeDatasetWarningBytes: 50 * 1024 * 1024
+  });
+  wrapper = mountUploader();
+  t.equal(
+    tagFor(wrapper, 'rows.csv'),
+    0,
+    'row warnings stay off when only the file size flag is set'
+  );
+  wrapper
+    .find('.file-uploader__file-drop')
+    .at(0)
+    .simulate('drop', {
+      stopPropagation: () => {},
+      dataTransfer: {
+        types: ['Files'],
+        files: [{type: 'text/csv', name: 'heavy.csv', size: 50 * 1024 * 1024}]
+      }
+    });
+  wrapper.update();
+  t.equal(tagFor(wrapper, 'heavy.csv'), 1, 'a file at the byte count shows a warning tag');
+
+  wrapper
+    .find('.file-uploader__file-drop')
+    .at(0)
+    .simulate('drop', {
+      stopPropagation: () => {},
+      dataTransfer: {
+        types: ['Files'],
+        files: [{type: 'text/csv', name: 'tiny.csv', size: 100}]
+      }
+    });
+  wrapper.update();
+  t.equal(tagFor(wrapper, 'tiny.csv'), 0, 'a file under the byte count has no warning tag');
+
+  initApplicationConfig({largeDatasetWarningRows: false, largeDatasetWarningBytes: false});
   t.end();
 });

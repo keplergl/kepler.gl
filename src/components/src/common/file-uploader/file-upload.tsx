@@ -7,7 +7,11 @@ import {injectIntl, WrappedComponentProps} from 'react-intl';
 import UploadButton from './upload-button';
 import {DragNDrop, FileType} from '../icons';
 import FileDrop from './file-drop';
-import UploadFileList, {UploadFileListItem} from './upload-file-list';
+import UploadFileList, {
+  countDatasetRows,
+  isLargeDatasetUpload,
+  UploadFileListItem
+} from './upload-file-list';
 import {FileLoading, FileLoadingProgress} from '@kepler.gl/types';
 
 import {GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
@@ -212,6 +216,7 @@ type FileUploadProps = {
   stagedToAdd?: Array<{
     info?: {label?: string; format?: string};
     metadata?: {source?: string};
+    data?: unknown;
   }> | null;
   /** Stage a remote URL without downloading it. Add Data runs the remote load. */
   onAddRemoteDataset?: (remote: {url: string; format?: string}) => void;
@@ -245,6 +250,13 @@ function formatFileSize(size?: number): string {
     return `${(bytes / 1024).toFixed(1)} KB`;
   }
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function rowsForLocalFile(staged: FileUploadProps['stagedToAdd'], fileName: string): number | null {
+  const match = (staged || []).find(
+    item => item?.info?.label === fileName && !item?.metadata?.source
+  );
+  return match ? countDatasetRows(match.data) : null;
 }
 
 function extensionOf(name: string): string {
@@ -463,7 +475,8 @@ function FileUploadFactory() {
               ext: extensionOf(name) || 'url',
               status: source || intl.formatMessage({id: 'fileUploader.readyToAddNoSize'}),
               percent: 1,
-              isSuccess: true
+              isSuccess: true,
+              isLarge: isLargeDatasetUpload({rows: countDatasetRows(item.data)})
             },
             key,
             true
@@ -487,7 +500,13 @@ function FileUploadFactory() {
             {
               name: file.name,
               ext: extensionOf(file.name),
-              ...status
+              ...status,
+              isLarge:
+                !status.isError &&
+                isLargeDatasetUpload({
+                  rows: rowsForLocalFile(stagedToAdd, file.name),
+                  bytes: file.size
+                })
             },
             file.name,
             !status.isError

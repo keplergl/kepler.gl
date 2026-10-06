@@ -1072,6 +1072,9 @@ ${'```'}
     dropMessage: 'Drag & Drop Your File(s) Here, {browse}, or',
     toAdd: 'To add to map',
     includeDataset: 'Include {name}',
+    largeDataset: 'Large',
+    largeDatasetWarning:
+      'This dataset is large. It can run out of memory, layer creation can take a long time, and rendering can be laggy.',
     readyToAdd: '{size} - Ready to add file to map',
     readyToAddNoSize: 'Ready to add file to map',
     loadingProgress: 'Loading ({loaded} / {total})',
