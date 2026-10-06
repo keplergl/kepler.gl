@@ -439,12 +439,6 @@ export function validBin(b) {
 }
 
 /**
- * Use in slider, given a number and an array of numbers, return the nears number from the array.
- * Takes a value, timesteps and return the actual step.
- * @param value
- * @param marks
- */
-/**
  * Turn a histogram brush or slider position into one bin.
  * Interval playback steps by bin, and the filter comparison is inclusive, so
  * the window is [binStart, nextBinStart - 1]. The last threshold is the end
@@ -454,15 +448,17 @@ export function intervalBinFromMarks(marks: number[], value: number): [number, n
   if (!marks.length || !Number.isFinite(value)) {
     return [value, value];
   }
-  let idx = bisectCenter(marks, value);
-  if (idx >= marks.length) {
-    idx = marks.length - 1;
+  if (marks.length === 1) {
+    return [marks[0], marks[0]];
   }
+  let idx = bisectCenter(marks, value);
   if (idx < 0) {
     idx = 0;
   }
-  if (idx >= marks.length - 1) {
-    return [marks[idx], marks[idx]];
+  // The last mark closes the final bin. Keep a drag there on that bin.
+  const lastBin = marks.length - 2;
+  if (idx > lastBin) {
+    idx = lastBin;
   }
   return [marks[idx], marks[idx + 1] - 1];
 }
@@ -1026,7 +1022,10 @@ export function adjustValueToAnimationWindow<S extends MinVisStateForAnimationWi
   if (animationWindow === ANIMATION_WINDOW.interval) {
     val0 = snapToMarks(value1, thresholds);
     idx = thresholds.indexOf(val0);
-    val1 = idx > -1 ? datasetBins[idx].x1 : NaN;
+    // x1 is the next bin's start. The filter keeps rows where value <= end,
+    // so stop one millisecond early and leave that boundary to the next bin.
+    const binEnd = idx > -1 ? datasetBins[idx].x1 : NaN;
+    val1 = Number.isFinite(binEnd) && binEnd > val0 ? binEnd - 1 : binEnd;
   } else {
     // fit current value to window
     val0 = snapToMarks(value0, thresholds);

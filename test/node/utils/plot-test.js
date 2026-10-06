@@ -556,10 +556,16 @@ test('Utils -> intervalBinFromMarks snaps a brush position to one histogram bin'
     'should snap to the next bin at the midpoint'
   );
   t.deepEqual(
-    intervalBinFromMarks(marks, 300),
-    [300, 300],
-    'should keep the domain end as a point, not a new bin'
+    intervalBinFromMarks(marks, 250),
+    [200, 299],
+    'should keep the right half of the last bin on that bin'
   );
+  t.deepEqual(
+    intervalBinFromMarks(marks, 300),
+    [200, 299],
+    'should keep the final mark on the last bin'
+  );
+  t.deepEqual(intervalBinFromMarks([10], 10), [10, 10], 'should keep a single mark as a point');
   t.deepEqual(
     intervalBinFromMarks([], 10),
     [10, 10],

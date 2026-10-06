@@ -3033,7 +3033,11 @@ test('#visStateReducer -> SET_FILTER_ANIMATION_WINDOW interval snaps to one hist
   t.ok(thresholds.includes(updated.value[0]), 'bin start should be a histogram threshold');
   const idx = thresholds.indexOf(updated.value[0]);
   t.ok(idx > -1 && idx < thresholds.length - 1, 'should land on a bin, not the domain end');
-  t.equal(updated.value[1], thresholds[idx + 1], 'bin end should be the next histogram threshold');
+  t.equal(
+    updated.value[1],
+    thresholds[idx + 1] - 1,
+    'bin end should stop before the next histogram threshold'
+  );
 
   const backToFree = reducer(
     nextState,
