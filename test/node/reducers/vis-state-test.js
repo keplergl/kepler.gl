@@ -8829,6 +8829,13 @@ test('VisStateUpdater -> hydrate remote dataset loading progress', t => {
   const progressed = reducer(loadingState, VisStateActions.setLoadingProgress('remote-1', 42));
   t.equal(progressed.loadingProgress['remote-1'], 42, 'should store download percent');
 
+  const processing = reducer(
+    progressed,
+    VisStateActions.setLoadingProgress('remote-1', 100, 'processing')
+  );
+  t.equal(processing.loadingProcessing['remote-1'], true, 'should mark the dataset as processing');
+  t.equal(processing.loadingIndicatorValue, 1, 'should keep the indicator up while processing');
+
   const same = reducer(progressed, VisStateActions.setLoadingProgress('remote-1', 42));
   t.equal(same, progressed, 'should skip redundant progress updates');
 
@@ -8838,9 +8845,10 @@ test('VisStateUpdater -> hydrate remote dataset loading progress', t => {
   const [task] = drainTasksForTesting();
   t.ok(task, 'should schedule a hydrate/create task');
 
-  const cleared = reducer(progressed, VisStateActions.setLoadingIndicator({change: -1}));
+  const cleared = reducer(processing, VisStateActions.setLoadingIndicator({change: -1}));
   t.equal(cleared.loadingIndicatorValue, 0, 'should hide the loading indicator');
   t.deepEqual(cleared.loadingProgress, {}, 'should clear hydrate progress');
+  t.deepEqual(cleared.loadingProcessing, {}, 'should clear the processing flag');
 
   t.end();
 });

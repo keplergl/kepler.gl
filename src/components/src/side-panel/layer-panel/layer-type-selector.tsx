@@ -69,6 +69,7 @@ function LayerTypeSelectorFactory(
             multiSelect={false}
             disabled={disabled}
             placeholder="placeholder.selectType"
+            deferOnChange
             onChange={onSelect}
             getOptionValue={getOptionValue}
             filterOption="label"

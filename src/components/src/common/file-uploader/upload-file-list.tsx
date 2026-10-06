@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {FC} from 'react';
-import styled from 'styled-components';
+import styled, {keyframes} from 'styled-components';
 
 import {media} from '@kepler.gl/styles';
 import Checkbox from '../checkbox';
@@ -99,7 +99,8 @@ const CardBody = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px 8px 8px;
+  /* Icon is 36px. A centered 16px control then sits 18px from the top and bottom. */
+  padding: 8px 18px 8px 8px;
 `;
 
 const IconWrap = styled.div`
@@ -122,11 +123,33 @@ const CardName = styled.div`
 
 const CardCheck = styled.div`
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: ${props => props.theme.checkboxWidth}px;
+  height: ${props => props.theme.checkboxHeight}px;
 
-  .kg-checkbox,
+  .kg-checkbox {
+    margin: 0;
+    min-height: 0;
+    width: ${props => props.theme.checkboxWidth}px;
+    height: ${props => props.theme.checkboxHeight}px;
+  }
+
   .kg-checkbox__label {
-    margin-left: 0;
-    margin-bottom: 0;
+    display: block;
+    box-sizing: border-box;
+    width: ${props => props.theme.checkboxWidth}px;
+    height: ${props => props.theme.checkboxHeight}px;
+    margin: 0;
+    padding: 0 0 0 ${props => props.theme.checkboxWidth}px;
+    line-height: ${props => props.theme.checkboxHeight}px;
+  }
+
+  .kg-checkbox__label::before {
+    box-sizing: border-box;
+    width: ${props => props.theme.checkboxWidth}px;
+    height: ${props => props.theme.checkboxHeight}px;
   }
 `;
 
@@ -155,6 +178,29 @@ const CardStatus = styled.div<{$isError?: boolean}>`
   color: ${props => (props.$isError ? props.theme.errorColor : props.theme.subtextColorLT)};
 `;
 
+// Transform-only so the compositor can keep it moving while parsing blocks the main thread.
+const spin = keyframes`
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const StatusSpinner = styled.span.attrs({
+  className: 'upload-file-list__spinner',
+  'aria-hidden': true
+})`
+  display: block;
+  flex-shrink: 0;
+  width: ${props => props.theme.checkboxWidth}px;
+  height: ${props => props.theme.checkboxHeight}px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid ${props => props.theme.borderColorLT};
+  border-top-color: ${props => props.theme.primaryBtnBgd};
+  will-change: transform;
+  animation: ${spin} 0.7s linear infinite;
+`;
+
 const UploadFileList: FC<UploadFileListProps> = ({title, items}) => {
   if (!items.length) {
     return null;
@@ -178,7 +224,11 @@ const UploadFileList: FC<UploadFileListProps> = ({title, items}) => {
                 {item.status}
               </CardStatus>
             </CardText>
-            {item.selectable ? (
+            {!item.isSuccess && !item.isError ? (
+              <CardCheck>
+                <StatusSpinner />
+              </CardCheck>
+            ) : item.selectable ? (
               <CardCheck title={item.selectionLabel} onClick={event => event.stopPropagation()}>
                 <Checkbox
                   id={`upload-file-${index}`}

@@ -99,6 +99,8 @@ export interface VisState {
   loadingIndicatorValue: number;
   /** Per-dataset download progress (0–100) while hydrating remote files. */
   loadingProgress: Record<string, number>;
+  /** Remote datasets whose download finished and whose parse is still running. */
+  loadingProcessing?: Record<string, boolean>;
   loaders: Loader[];
   loadOptions: object;
   initialState?: Partial<VisState>;

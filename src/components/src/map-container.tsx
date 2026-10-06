@@ -1776,8 +1776,15 @@ export default function MapContainerFactory(
               sidePanelWidth={sidePanelWidth}
               hasAttributionLogos={attributionLogos.length > 0}
               hasMapScale={getApplicationConfig().enableMapScale}
-              percent={aggregateLoadingPercent(visState.loadingProgress)}
+              percent={aggregateLoadingPercent(
+                Object.fromEntries(
+                  Object.entries(visState.loadingProgress || {}).filter(
+                    ([id]) => !visState.loadingProcessing?.[id]
+                  )
+                )
+              )}
               remoteDatasetCount={Object.keys(visState.loadingProgress || {}).length}
+              processingDatasetCount={Object.keys(visState.loadingProcessing || {}).length}
             />
           ) : null}
           {this.props.primary ? (

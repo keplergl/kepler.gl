@@ -2648,6 +2648,8 @@ export const setLoadingIndicator = createAction<SetLoadingIndicatorPayload>(
 export type SetLoadingProgressUpdaterAction = {
   id: string;
   percent: number;
+  /** Download is finished and the file is being parsed into a dataset. */
+  phase?: 'processing';
 };
 
 /**
@@ -2658,12 +2660,14 @@ export type SetLoadingProgressUpdaterAction = {
  */
 export function setLoadingProgress(
   id: string,
-  percent: number
+  percent: number,
+  phase?: 'processing'
 ): Merge<SetLoadingProgressUpdaterAction, {type: typeof ActionTypes.SET_LOADING_PROGRESS}> {
   return {
     type: ActionTypes.SET_LOADING_PROGRESS,
     id,
-    percent
+    percent,
+    ...(phase ? {phase} : {})
   };
 }
 

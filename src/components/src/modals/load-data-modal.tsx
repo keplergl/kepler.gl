@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useState} from 'react';
-import styled from 'styled-components';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import styled, {keyframes} from 'styled-components';
 import get from 'es-toolkit/compat/get';
 import {IntlShape, useIntl} from 'react-intl';
 
@@ -83,6 +83,53 @@ const AddDataActions = styled.div`
   gap: 12px;
   margin-left: auto;
   flex-shrink: 0;
+`;
+
+const Dimmed = styled.div<{$dimmed?: boolean}>`
+  opacity: ${props => (props.$dimmed ? 0.4 : 1)};
+  pointer-events: ${props => (props.$dimmed ? 'none' : 'auto')};
+`;
+
+const ModalMain = styled(Dimmed)`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+`;
+
+const spin = keyframes`
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const ProcessingSpinner = styled.span.attrs({
+  className: 'add-data-bar__spinner',
+  'aria-hidden': true
+})`
+  display: block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid ${props => props.theme.borderColorLT};
+  border-top-color: ${props => props.theme.primaryBtnBgd};
+  will-change: transform;
+  animation: ${spin} 0.7s linear infinite;
+`;
+
+const ProcessingStatus = styled.div.attrs({
+  className: 'add-data-bar__processing',
+  role: 'status'
+})`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
 `;
 
 const noop = () => {
@@ -250,6 +297,14 @@ export function LoadDataModalFactory(
       ? loadingMethods.filter(method => method.id === LOADING_METHODS.upload)
       : loadingMethods;
     const [autoCreateLayers, setAutoCreateLayers] = useState(true);
+    const [preparingLayers, setPreparingLayers] = useState(false);
+    const prepareFrames = useRef<number[]>([]);
+    useEffect(() => {
+      const frames = prepareFrames.current;
+      return () => {
+        frames.forEach(id => window.cancelAnimationFrame(id));
+      };
+    }, []);
     const [deleteOriginalDataset, setDeleteOriginalDataset] = useState(true);
     const [deselectedDatasets, setDeselectedDatasets] = useState<Record<string, boolean>>({});
     const onToggleDataset = useCallback((key: string) => {
@@ -290,28 +345,45 @@ export function LoadDataModalFactory(
       ? Boolean(tilesetDraft?.canAdd) && !tilesetDraft?.loading
       : Boolean(datasetsToAdd.length) && !fileLoading;
     const onAddData = useCallback(() => {
-      if (isTileset) {
-        if (tilesetDraft?.canAdd && tilesetDraft.dataset) {
-          handleTilesetAdded(tilesetDraft.dataset, tilesetDraft.metadata);
-        }
+      if (!canAdd || preparingLayers) {
         return;
       }
-      if (datasetsToAdd.length && !fileLoading) {
+      const commit = () => {
+        if (isTileset) {
+          if (tilesetDraft?.canAdd && tilesetDraft.dataset) {
+            handleTilesetAdded(tilesetDraft.dataset, tilesetDraft.metadata);
+          }
+          return;
+        }
         onConfirmAddData(
           isReplace
             ? {autoCreateLayers: false, datasets: datasetsToAdd, deleteOriginalDataset}
             : {autoCreateLayers, datasets: datasetsToAdd}
         );
+      };
+      // Layer creation blocks the main thread. Paint this status first so the
+      // spinner can keep moving on the compositor during that work.
+      // Replace never creates layers, so it commits immediately.
+      if (autoCreateLayers && !isReplace) {
+        setPreparingLayers(true);
+        const first = window.requestAnimationFrame(() => {
+          const second = window.requestAnimationFrame(commit);
+          prepareFrames.current.push(second);
+        });
+        prepareFrames.current.push(first);
+        return;
       }
+      commit();
     }, [
       autoCreateLayers,
+      canAdd,
       datasetsToAdd,
       deleteOriginalDataset,
-      fileLoading,
       handleTilesetAdded,
       isReplace,
       isTileset,
       onConfirmAddData,
+      preparingLayers,
       tilesetDraft
     ]);
     const uploadError = !fileLoading && isUpload ? progressErrors(fileLoadingProgress)[0] : '';
@@ -339,66 +411,83 @@ export function LoadDataModalFactory(
 
     return (
       <StyledLoadDataModal $withFooter={showAddBar}>
-        <ModalTabs
-          currentMethod={currentMethod?.id}
-          loadingMethods={availableMethods}
-          toggleMethod={selectMethod}
-        />
-        {isCloudMapLoading ? (
-          <LoadingDialog size={64} />
-        ) : (
-          ElementType && <ElementType key={currentMethod?.id} intl={intl} {...currentModalProps} />
-        )}
+        <ModalMain $dimmed={preparingLayers}>
+          <ModalTabs
+            currentMethod={currentMethod?.id}
+            loadingMethods={availableMethods}
+            toggleMethod={selectMethod}
+          />
+          {isCloudMapLoading ? (
+            <LoadingDialog size={64} />
+          ) : (
+            ElementType && (
+              <ElementType key={currentMethod?.id} intl={intl} {...currentModalProps} />
+            )
+          )}
+        </ModalMain>
         {showAddBar ? (
           <AddDataBar>
-            {isReplace ? (
-              <RemoveOriginalRow>
-                <Checkbox
-                  id="delete-original-dataset"
-                  type="checkbox"
-                  label={intl.formatMessage(
-                    {id: 'modal.replaceDataset.removeOriginal'},
-                    {datasetName: replaceDatasetLabel || replaceDatasetId || ''}
-                  )}
-                  checked={deleteOriginalDataset}
-                  onChange={() => setDeleteOriginalDataset(value => !value)}
-                />
-                <TippyTooltip
-                  placement="top"
-                  isLightTheme
-                  render={() => (
-                    <div>{intl.formatMessage({id: 'modal.replaceDataset.removeOriginalHint'})}</div>
-                  )}
-                >
-                  <InfoButton
-                    aria-label={intl.formatMessage({
-                      id: 'modal.replaceDataset.removeOriginalHint'
-                    })}
+            <Dimmed $dimmed={preparingLayers}>
+              {isReplace ? (
+                <RemoveOriginalRow>
+                  <Checkbox
+                    id="delete-original-dataset"
+                    type="checkbox"
+                    label={intl.formatMessage(
+                      {id: 'modal.replaceDataset.removeOriginal'},
+                      {datasetName: replaceDatasetLabel || replaceDatasetId || ''}
+                    )}
+                    checked={deleteOriginalDataset}
+                    onChange={() => setDeleteOriginalDataset(value => !value)}
+                  />
+                  <TippyTooltip
+                    placement="top"
+                    isLightTheme
+                    render={() => (
+                      <div>
+                        {intl.formatMessage({id: 'modal.replaceDataset.removeOriginalHint'})}
+                      </div>
+                    )}
                   >
-                    <Docs height="16px" />
-                  </InfoButton>
-                </TippyTooltip>
-              </RemoveOriginalRow>
-            ) : (
-              <AutoCreateLayersCheckbox
-                checked={autoCreateLayers}
-                onToggle={onToggleAutoCreateLayers}
-              />
-            )}
+                    <InfoButton
+                      aria-label={intl.formatMessage({
+                        id: 'modal.replaceDataset.removeOriginalHint'
+                      })}
+                    >
+                      <Docs height="16px" />
+                    </InfoButton>
+                  </TippyTooltip>
+                </RemoveOriginalRow>
+              ) : (
+                <AutoCreateLayersCheckbox
+                  checked={autoCreateLayers}
+                  disabled={preparingLayers}
+                  onToggle={onToggleAutoCreateLayers}
+                />
+              )}
+            </Dimmed>
             <StagedLabel />
             {uploadError || tilesetError ? (
               <FooterError>{uploadError || tilesetError}</FooterError>
             ) : null}
-            <AddDataActions>
-              <Button type="button" link onClick={onClose}>
-                {intl.formatMessage({id: 'modal.button.defaultCancel'})}
-              </Button>
-              <Button type="button" cta disabled={!canAdd} onClick={onAddData}>
-                {intl.formatMessage({
-                  id: isReplace ? 'modal.button.replace' : 'layerManager.addData'
-                })}
-              </Button>
-            </AddDataActions>
+            {preparingLayers ? (
+              <ProcessingStatus
+                aria-label={intl.formatMessage({id: 'modal.loadData.processingLayers'})}
+              >
+                <ProcessingSpinner />
+              </ProcessingStatus>
+            ) : (
+              <AddDataActions>
+                <Button type="button" link onClick={onClose}>
+                  {intl.formatMessage({id: 'modal.button.defaultCancel'})}
+                </Button>
+                <Button type="button" cta disabled={!canAdd} onClick={onAddData}>
+                  {intl.formatMessage({
+                    id: isReplace ? 'modal.button.replace' : 'layerManager.addData'
+                  })}
+                </Button>
+              </AddDataActions>
+            )}
           </AddDataBar>
         ) : null}
       </StyledLoadDataModal>

@@ -156,6 +156,61 @@ test('Components -> LoadDataModal -> auto create layers', t => {
   t.end();
 });
 
+test('Components -> LoadDataModal -> processing layers', t => {
+  const onConfirmAddData = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal
+        onConfirmAddData={onConfirmAddData}
+        stagedToAdd={[{info: {label: 'points.csv'}}]}
+      />
+    </IntlWrapper>
+  );
+
+  const frames = [];
+  const prevFrame = window.requestAnimationFrame;
+  window.requestAnimationFrame = cb => {
+    frames.push(cb);
+    return frames.length;
+  };
+  try {
+    wrapper.find('.add-data-bar button').at(1).simulate('click');
+
+    t.equal(
+      onConfirmAddData.called,
+      false,
+      'layer prep waits until the processing state can paint'
+    );
+    const processing = wrapper.find('.add-data-bar__processing').hostNodes();
+    t.equal(processing.length, 1, 'should replace the footer actions');
+    t.equal(processing.text(), '', 'should show only the spinner');
+    t.equal(
+      processing.find('.add-data-bar__spinner').hostNodes().length,
+      1,
+      'should show a spinner in place of the footer actions'
+    );
+    t.equal(
+      wrapper.find('.add-data-bar button').hostNodes().length,
+      0,
+      'should hide Cancel and Add Data while layers are prepared'
+    );
+
+    while (frames.length) {
+      frames.shift()();
+    }
+  } finally {
+    window.requestAnimationFrame = prevFrame;
+  }
+
+  t.deepEqual(
+    onConfirmAddData.args[0][0],
+    {autoCreateLayers: true, datasets: [{info: {label: 'points.csv'}}]},
+    'Add Data commits the staged dataset after the processing state can paint'
+  );
+
+  t.end();
+});
+
 test('Components -> LoadDataModal -> replace dataset', t => {
   const onConfirmAddData = sinon.spy();
   const wrapper = mountWithTheme(
@@ -238,7 +293,20 @@ test('Components -> LoadDataModal -> one unchecked dataset stays out', t => {
   );
 
   checks().at(1).simulate('change');
-  wrapper.find('.add-data-bar button').at(1).simulate('click');
+  const frames = [];
+  const prevFrame = window.requestAnimationFrame;
+  window.requestAnimationFrame = cb => {
+    frames.push(cb);
+    return frames.length;
+  };
+  try {
+    wrapper.find('.add-data-bar button').at(1).simulate('click');
+    while (frames.length) {
+      frames.shift()();
+    }
+  } finally {
+    window.requestAnimationFrame = prevFrame;
+  }
   t.deepEqual(
     onConfirmAddData.args[0][0],
     {autoCreateLayers: true, datasets: [points]},

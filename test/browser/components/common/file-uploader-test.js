@@ -102,6 +102,15 @@ test('Components -> FileUpload.onDrop -> render loading msg', t => {
   const uploadMsg = wrapper.find('.file-upload-progress__message').at(0).html();
   t.comment(uploadMsg);
   t.ok(uploadMsg.includes('tst-file.csv'), 'should render upload file msg');
+  t.ok(
+    uploadMsg.includes('upload-file-list__spinner'),
+    'should show a spinner in place of the checkbox while the file is still loading'
+  );
+  t.equal(
+    wrapper.find('.upload-file-list').find('Checkbox').length,
+    0,
+    'should hide the include checkbox until parsing finishes'
+  );
   t.equal(
     wrapper.find('.upload-file-list').hostNodes().length,
     1,
