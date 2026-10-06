@@ -376,6 +376,7 @@ export default {
     '3DMap': 'Mapa 3D',
     animationByWindow: 'Finestra Temporal Mòbil',
     animationByIncremental: 'Finestra Temporal Incremental',
+    animationByInterval: 'Pas per interval',
     speed: 'velocitat',
     play: 'iniciar',
     pause: 'pausar',

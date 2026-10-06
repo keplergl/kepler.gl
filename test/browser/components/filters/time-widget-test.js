@@ -8,7 +8,7 @@ import sinon from 'sinon';
 import moment from 'moment';
 
 import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
-import {setFilterAnimationTimeConfig} from '@kepler.gl/actions';
+import {setFilterAnimationTimeConfig, setFilterAnimationWindow} from '@kepler.gl/actions';
 import {visStateReducer as reducer, DEFAULT_ANIMATION_CONFIG} from '@kepler.gl/reducers';
 
 import {
@@ -246,8 +246,8 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   );
   t.equal(
     wrapper.find('.animation-window-control').at(0).find(IconButton).length,
-    1,
-    'should render 1 animate window options'
+    2,
+    'should render incremental and interval window options'
   );
 
   // select an animation option
@@ -668,6 +668,47 @@ test('Components -> TimeWidget.mount -> group by field', t => {
     null,
     'should clear group by when the field is removed'
   );
+
+  wrapper.detach();
+  t.end();
+});
+
+test('Components -> TimeWidget -> interval window locks the histogram brush to one bin', t => {
+  const filterId = StateWFilters.visState.filters[0].id;
+  const visState = reducer(
+    StateWFilters.visState,
+    setFilterAnimationWindow({id: filterId, animationWindow: 'interval'})
+  );
+  const setFilterAnimationTime = sinon.spy();
+  let wrapper;
+
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget
+          {...defaultProps}
+          datasets={visState.datasets}
+          filter={visState.filters[0]}
+          setFilterAnimationTime={setFilterAnimationTime}
+        />
+      </IntlWrapper>
+    );
+  }, 'TimeWidget should render in interval mode');
+
+  const slider = wrapper.find(RangeSlider);
+  t.equal(slider.length, 1, 'should render the histogram slider');
+  t.equal(slider.first().props().isRanged, false, 'brush should select one bin, not a free range');
+
+  const marks = slider.first().props().marks;
+  t.ok(Array.isArray(marks) && marks.length > 1, 'brush should snap to histogram bin edges');
+
+  slider.first().props().onChange([marks[0], marks[0]]);
+  t.deepEqual(
+    setFilterAnimationTime.lastCall.args[2],
+    [marks[0], marks[1] - 1],
+    'should set the filter to that bin'
+  );
+  t.equal(wrapper.find(Icons.Interval).length, 1, 'playback bar shows Step by Interval');
 
   wrapper.detach();
   t.end();

@@ -369,6 +369,7 @@ export default {
     '3DMap': '3D地図',
     animationByWindow: '時間枠を移動',
     animationByIncremental: '時間枠を増加',
+    animationByInterval: '間隔ごとに進む',
     speed: '速度',
     play: '再生',
     pause: '一時停止',

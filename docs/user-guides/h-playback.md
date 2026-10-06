@@ -21,6 +21,7 @@ Use the animation window control on the playback bar to choose how the time rang
 
 - **Moving Time Window** (default): a fixed-length window slides forward. Features appear while their time falls inside the window, then disappear when the window moves past them.
 - **Incremental Time Window**: the window start stays fixed and only the end advances. Features accumulate once their timestamp is reached and stay visible until the animation loops or resets (then the window shrinks again and accumulation starts over). Use this when you have a single timestamp field and want cumulative playback (similar to “accumulate” in other GIS tools).
+- **Step by Interval**: the window is one histogram bin wide and jumps to the next bin on each frame. Dragging the histogram selects a single bin; the brush stays locked to that bin while this mode is on. Wheel-resizing the time window is turned off so the selection cannot stretch across bins.
 
 ## Start and end time (duration)
 

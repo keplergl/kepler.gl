@@ -567,6 +567,7 @@ export default {
     '3DMap': '3D Map',
     animationByWindow: 'Moving Time Window',
     animationByIncremental: 'Incremental Time Window',
+    animationByInterval: 'Step by Interval',
     speed: 'Speed',
     play: 'Play',
     pause: 'Pause',

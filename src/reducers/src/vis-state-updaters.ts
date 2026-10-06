@@ -1353,17 +1353,26 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
     return state;
   }
 
-  const newFilter = {
-    ...filter,
-    animationWindow
-  };
+  const previousWindow = (filter as TimeRangeFilter).animationWindow;
+  let nextFilter = {...filter, animationWindow} as Filter;
+
+  // Entering or leaving interval playback snaps the window onto histogram bins.
+  if (
+    filter.type === FILTER_TYPES.timeRange &&
+    (previousWindow === ANIMATION_WINDOW.interval || animationWindow === ANIMATION_WINDOW.interval)
+  ) {
+    const adjusted = adjustValueToAnimationWindow(state, nextFilter as TimeRangeFilter);
+    if (Array.isArray(adjusted.value) && adjusted.value.every(v => Number.isFinite(v))) {
+      nextFilter = adjusted;
+    }
+  }
 
   const newState = {
     ...state,
-    filters: swap_<Filter>(newFilter)(state.filters)
+    filters: swap_<Filter>(nextFilter)(state.filters)
   };
 
-  const newSyncTimelineMode = getSyncAnimationMode(newFilter as TimeRangeFilter);
+  const newSyncTimelineMode = getSyncAnimationMode(nextFilter as TimeRangeFilter);
 
   return setTimeFilterTimelineModeUpdater(newState, {id, mode: newSyncTimelineMode});
 }

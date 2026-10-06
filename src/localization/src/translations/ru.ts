@@ -372,6 +372,7 @@ export default {
     '3DMap': '3D Карта',
     animationByWindow: 'Перемещение временного окна',
     animationByIncremental: 'Дополнительное временное окно',
+    animationByInterval: 'Шаг по интервалу',
     speed: 'скорость',
     play: 'проиграть',
     pause: 'пауза',
