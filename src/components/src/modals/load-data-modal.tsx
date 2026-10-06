@@ -27,6 +27,7 @@ const StyledLoadDataModal = styled.div.attrs({
 })<{$withFooter?: boolean}>`
   padding: 10px 0 ${props => (props.$withFooter ? 0 : '50px')};
   min-height: 360px;
+  max-height: calc(100vh - 180px);
   display: flex;
   flex-direction: column;
 
@@ -42,6 +43,8 @@ const AddDataBar = styled.div.attrs({
   className: 'add-data-bar'
 })`
   display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
   align-items: center;
   gap: 16px;
   box-sizing: border-box;
@@ -69,12 +72,10 @@ const StagedLabel = styled.div`
 `;
 
 const FooterError = styled.div`
-  color: ${props => props.theme.negativeBtnColor};
+  flex: 1 0 100%;
+  color: ${props => props.theme.errorColor};
   font-size: 12px;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
 `;
 
 const AddDataActions = styled.div`
@@ -95,6 +96,7 @@ const ModalMain = styled(Dimmed)`
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
 `;
 
 const spin = keyframes`
@@ -388,6 +390,7 @@ export function LoadDataModalFactory(
     ]);
     const uploadError = !fileLoading && isUpload ? progressErrors(fileLoadingProgress)[0] : '';
     const tilesetError = isTileset ? tilesetDraft?.error : '';
+    const footerError = uploadError || tilesetError || '';
 
     const currentModalProps = {
       ...restProps,
@@ -467,9 +470,6 @@ export function LoadDataModalFactory(
               )}
             </Dimmed>
             <StagedLabel />
-            {uploadError || tilesetError ? (
-              <FooterError>{uploadError || tilesetError}</FooterError>
-            ) : null}
             {preparingLayers ? (
               <ProcessingStatus
                 aria-label={intl.formatMessage({id: 'modal.loadData.processingLayers'})}
@@ -488,6 +488,7 @@ export function LoadDataModalFactory(
                 </Button>
               </AddDataActions>
             )}
+            {footerError ? <FooterError role="alert">{footerError}</FooterError> : null}
           </AddDataBar>
         ) : null}
       </StyledLoadDataModal>
