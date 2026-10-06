@@ -534,6 +534,7 @@ export default {
     zoomToLayer: 'Zoom to layer',
     resetAfterError: 'Try to enable the layer after an error',
     layerSettings: 'Layer settings',
+    moreOptions: 'More options',
     interactionSettings: 'Interaction settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',
