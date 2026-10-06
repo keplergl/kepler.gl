@@ -33,6 +33,7 @@ import {
   createDataContainer,
   applyFilterFieldName,
   getAnimatableVisibleLayers,
+  getBinThresholds,
   getDefaultFilter,
   histogramFromDomain,
   LayerTimeInterval,
@@ -3008,6 +3009,46 @@ test('#visStateReducer -> SET_FILTER_ANIMATION_WINDOW', t => {
   );
 
   t.equal(nextState.filters[0].animationWindow, 'incremental', 'should update ANIMATIONWINDOW');
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER_ANIMATION_WINDOW interval snaps to one histogram bin', t => {
+  const initialState = CloneDeep(StateWFilters.visState);
+  const filter = initialState.filters[0];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.setFilterAnimationWindow({
+      id: filter.id,
+      animationWindow: ANIMATION_WINDOW.interval
+    })
+  );
+
+  const updated = nextState.filters[0];
+  t.equal(updated.animationWindow, ANIMATION_WINDOW.interval, 'should set interval window');
+  t.ok(updated.plotType.interval, 'should keep a histogram interval');
+
+  const thresholds = getBinThresholds(updated.plotType.interval, updated.domain);
+  t.ok(thresholds.includes(updated.value[0]), 'bin start should be a histogram threshold');
+  const idx = thresholds.indexOf(updated.value[0]);
+  t.ok(idx > -1 && idx < thresholds.length - 1, 'should land on a bin, not the domain end');
+  t.equal(
+    updated.value[1],
+    thresholds[idx + 1] - 1,
+    'bin end should stop before the next histogram threshold'
+  );
+
+  const backToFree = reducer(
+    nextState,
+    VisStateActions.setFilterAnimationWindow({
+      id: filter.id,
+      animationWindow: ANIMATION_WINDOW.free
+    })
+  );
+  const freed = backToFree.filters[0];
+  t.equal(freed.animationWindow, ANIMATION_WINDOW.free, 'should leave interval mode');
+  t.ok(freed.value[1] > freed.value[0], 'should widen back to a range of at least one bin');
 
   t.end();
 });
@@ -7250,6 +7291,72 @@ test('#visStateReducer -> local dataset is not blocked by a remote download', t 
       t.end();
     }
   );
+});
+
+test('#visStateReducer -> deferred empty queue stages the parsed files', t => {
+  drainTasksForTesting();
+  const onFinish = sinon.spy(VisStateActions.stageLoadedFiles);
+  const initialState = CloneDeep(InitialState).visState;
+  const loading = reducer(
+    initialState,
+    VisStateActions.loadFiles([{type: 'text/csv', name: 'points.csv'}], onFinish, {
+      deferAddToMap: true
+    })
+  );
+  drainTasksForTesting();
+  const cache = [{info: {label: 'points.csv', format: 'csv'}, data: []}];
+  const ready = {
+    ...loading,
+    fileLoading: {
+      ...loading.fileLoading,
+      filesToLoad: [],
+      fileCache: cache
+    }
+  };
+  reducer(ready, VisStateActions.loadNextFile());
+  const [task, ...rest] = drainTasksForTesting();
+  t.equal(rest.length, 0, 'should create 1 task');
+  t.equal(task.type, 'ACTION_TASK', 'an empty deferred queue finishes the load');
+  const action = succeedTaskInTest(task);
+  t.equal(onFinish.calledOnce, true, 'should stage the parsed files');
+  t.deepEqual(onFinish.lastCall.args[0], cache, 'should stage the parsed cache');
+  t.deepEqual(
+    onFinish.lastCall.args[1],
+    {deferAddToMap: true},
+    'should keep the deferred load options'
+  );
+  t.equal(action.loadId, ready.fileLoading.loadId, 'the finish belongs to this load');
+  t.end();
+});
+
+test('#visStateReducer -> deferred arrow batches are not added early', t => {
+  drainTasksForTesting();
+  const batch = {
+    gen: {next: () => Promise.resolve({done: true, value: null})},
+    fileName: 'data.arrow',
+    progress: {percent: 0.4},
+    accumulated: {data: [{value: 1}], fileName: 'data.arrow'},
+    onFinish: VisStateActions.stageLoadedFiles
+  };
+  reducer(
+    CloneDeep(InitialState).visState,
+    VisStateActions.nextFileBatch({...batch, options: {deferAddToMap: true}})
+  );
+  const deferredTasks = drainTasksForTesting();
+  t.equal(
+    deferredTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
+    false,
+    'a deferred arrow file waits until parsing finishes'
+  );
+
+  reducer(CloneDeep(InitialState).visState, VisStateActions.nextFileBatch(batch));
+  const immediateTasks = drainTasksForTesting();
+  t.equal(
+    immediateTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
+    true,
+    'an arrow file still adds each batch when it is not deferred'
+  );
+  t.end();
 });
 
 test('#visStateReducer -> setLayerAnimationTimeConfig', t => {

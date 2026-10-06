@@ -138,6 +138,7 @@ function FilterManagerFactory(
     showDatasetTable,
     updateTableColor,
     removeDataset,
+    replaceDataset,
     showDeleteDataset
   }) => {
     const datasetCatalog = useMemo(() => {
@@ -151,6 +152,7 @@ function FilterManagerFactory(
           showDatasetTable={showDatasetTable}
           updateTableColor={updateTableColor}
           removeDataset={removeDataset}
+          replaceDataset={replaceDataset}
           showDeleteDataset={showDeleteDataset}
           refreshDataset={visStateActions.refreshDataset}
           updateDatasetProps={visStateActions.updateDatasetProps}
@@ -230,6 +232,7 @@ function FilterManagerFactory(
       showDatasetTable,
       updateTableColor,
       removeDataset,
+      replaceDataset: uiStateActions.openReplaceDatasetModal,
       showDeleteDataset: true,
       refreshDataset: visStateActions.refreshDataset,
       updateDatasetProps: visStateActions.updateDatasetProps,

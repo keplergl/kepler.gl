@@ -427,6 +427,7 @@ export default {
     refreshCustom: 'Custom'
   },
   datasetOps: {
+    replace: 'Replace',
     groupBy: 'Group By',
     groupByHelp:
       'Create groups to combine data based on a selected field. Result will be added as a new dataset.',
@@ -567,6 +568,7 @@ export default {
     '3DMap': '3D Map',
     animationByWindow: 'Moving Time Window',
     animationByIncremental: 'Incremental Time Window',
+    animationByInterval: 'Step by Interval',
     speed: 'Speed',
     play: 'Play',
     pause: 'Pause',
@@ -671,6 +673,7 @@ export default {
     title: {
       deleteDataset: 'Delete Dataset',
       addDataToMap: 'Add Data To Map',
+      replaceDataset: 'Replace Dataset',
       exportImage: 'Export Image',
       exportData: 'Export Data',
       exportMap: 'Export Map',
@@ -686,7 +689,8 @@ export default {
       addStyle: 'Add Style',
       save: 'Save',
       defaultCancel: 'Cancel',
-      defaultConfirm: 'Confirm'
+      defaultConfirm: 'Confirm',
+      replace: 'Replace'
     },
     exportFileName: {
       title: 'File name',
@@ -810,6 +814,11 @@ export default {
     },
     loadingDialog: {
       loading: 'Loading...'
+    },
+    replaceDataset: {
+      removeOriginal: 'Remove {datasetName}',
+      removeOriginalHint:
+        'Layers and filters move to the new dataset. The original dataset is removed from the map.'
     },
     loadData: {
       upload: 'Load Files',
@@ -943,6 +952,12 @@ ${'```'}
     tooltip: 'Tooltip',
     brush: 'Brush',
     coordinate: 'Coordinates',
+    annotation: 'Annotations',
+    addAnnotation: 'Add Annotation',
+    showAnnotations: 'Show Annotations',
+    hideAnnotations: 'Hide Annotations',
+    copyCoordinate: 'Copy coordinates',
+    coordinateCopied: 'Copied',
     geocoder: 'Geocoder',
     legend: 'Legend',
     legendHint: 'Choose which layers appear in the map legend. Layers stay on the map.',
@@ -1048,6 +1063,7 @@ ${'```'}
       'No information or map data is sent to any server.',
     configUploadMessage:
       'Upload a supported file or saved map **Json**. Read more about [**supported file formats**]',
+    replaceUploadMessage: 'Upload a supported file. Read more about [**supported file formats**]',
     browseFiles: 'browse your files',
     uploading: 'Uploading',
     downloading: 'Downloading',

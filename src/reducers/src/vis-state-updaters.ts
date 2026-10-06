@@ -137,6 +137,7 @@ import {
   apply_,
   compose_,
   filterOutById,
+  if_,
   merge_,
   payload_,
   pick_,
@@ -325,6 +326,11 @@ export const defaultInteractionConfig: InteractionConfig = {
     label: 'interactions.coordinate',
     enabled: false,
     position: null
+  },
+  annotation: {
+    id: 'annotation',
+    label: 'interactions.annotation',
+    enabled: false
   },
   zoomOpacity: {
     id: 'zoomOpacity',
@@ -1349,17 +1355,26 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
     return state;
   }
 
-  const newFilter = {
-    ...filter,
-    animationWindow
-  };
+  const previousWindow = (filter as TimeRangeFilter).animationWindow;
+  let nextFilter = {...filter, animationWindow} as Filter;
+
+  // Entering or leaving interval playback snaps the window onto histogram bins.
+  if (
+    filter.type === FILTER_TYPES.timeRange &&
+    (previousWindow === ANIMATION_WINDOW.interval || animationWindow === ANIMATION_WINDOW.interval)
+  ) {
+    const adjusted = adjustValueToAnimationWindow(state, nextFilter as TimeRangeFilter);
+    if (Array.isArray(adjusted.value) && adjusted.value.every(v => Number.isFinite(v))) {
+      nextFilter = adjusted;
+    }
+  }
 
   const newState = {
     ...state,
-    filters: swap_<Filter>(newFilter)(state.filters)
+    filters: swap_<Filter>(nextFilter)(state.filters)
   };
 
-  const newSyncTimelineMode = getSyncAnimationMode(newFilter as TimeRangeFilter);
+  const newSyncTimelineMode = getSyncAnimationMode(nextFilter as TimeRangeFilter);
 
   return setTimeFilterTimelineModeUpdater(newState, {id, mode: newSyncTimelineMode});
 }
@@ -6309,28 +6324,36 @@ function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged
 function replaceDatasetAndDeps<T extends VisState>(
   state: T,
   dataId: string,
-  dataIdToUse: string
+  dataIdToUse: string,
+  options: {deleteOriginalDataset?: boolean} = {}
 ): T {
+  // The same id means the new table occupies the old slot, so the previous rows have to go.
+  const deleteOriginalDataset = options.deleteOriginalDataset !== false || dataId === dataIdToUse;
   return compose_<T>([
     apply_(replaceDatasetDepsInState, {dataId, dataIdToUse}),
-    apply_(removeDatasetUpdater, {dataId})
+    if_(deleteOriginalDataset, apply_(removeDatasetUpdater, {dataId}))
   ])(state);
 }
 
 export function prepareStateForDatasetReplace<T extends VisState>(
   state: T,
   dataId: string,
-  dataIdToUse: string
+  dataIdToUse: string,
+  options: {deleteOriginalDataset?: boolean} = {}
 ): T {
   const serializedState = serializeVisState(state, state.schema);
-  const nextState = replaceDatasetAndDeps(state, dataId, dataIdToUse);
+  const deleteOriginalDataset = options.deleteOriginalDataset !== false || dataId === dataIdToUse;
+  const nextState = replaceDatasetAndDeps(state, dataId, dataIdToUse, {deleteOriginalDataset});
   // make a copy of layerOrder, because layer id will be removed from it by calling removeLayerUpdater
   const preserveLayerOrder = [...state.layerOrder];
 
-  // preserve dataset order
-  nextState.preserveDatasetOrder = Object.keys(state.datasets).map(d =>
-    d === dataId ? dataIdToUse : d
-  );
+  // When the original table stays, the replacement takes its place and the original follows it.
+  nextState.preserveDatasetOrder = Object.keys(state.datasets).flatMap(d => {
+    if (d !== dataId) {
+      return [d];
+    }
+    return deleteOriginalDataset ? [dataIdToUse] : [dataIdToUse, d];
+  });
 
   // preserveLayerOrder
   if (nextState.layerToBeMerged?.length) {

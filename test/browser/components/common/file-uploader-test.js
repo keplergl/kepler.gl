@@ -214,6 +214,19 @@ test('Components -> FileUpload remote URL is staged without downloading', t => {
     'should clear the url field after adding it'
   );
 
+  wrapper
+    .find('.file-uploader__remote-url input')
+    .hostNodes()
+    .first()
+    .simulate('change', {target: {value: 'not-a-url'}});
+  wrapper.find('.file-uploader__remote-add').hostNodes().first().simulate('click');
+  t.equal(onAddRemoteDataset.callCount, 1, 'an invalid url is not staged');
+  t.equal(
+    wrapper.find(FileUpload).children().first().state().remoteUrl,
+    'not-a-url',
+    'an invalid url stays in the field'
+  );
+
   t.end();
 });
 

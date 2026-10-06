@@ -6,7 +6,13 @@
 import {drainTasksForTesting, succeedTaskWithValues} from '@kepler.gl/tasks';
 import test from 'tape';
 
-import {appendStagedLoadedFiles, registerEntry, stageLoadedFiles} from '@kepler.gl/actions';
+import {
+  appendStagedLoadedFiles,
+  confirmReplaceDataset,
+  loadFilesSuccess,
+  registerEntry,
+  stageLoadedFiles
+} from '@kepler.gl/actions';
 import {processCsvData} from '@kepler.gl/processors';
 import keplerGlReducer, {
   addDataToMapUpdater,
@@ -1278,6 +1284,148 @@ test('#composerStateReducer -> stageLoadedFilesUpdater keeps the modal open', t 
     appendStagedLoadedFiles([remote])
   );
   t.equal(duplicate, withRemote, 'should ignore a url that is already staged');
+
+  const closedModal = {
+    ...withRemote,
+    uiState: {...withRemote.uiState, currentModal: null}
+  };
+  const afterClose = combinedUpdaters.appendStagedLoadedFilesUpdater(
+    closedModal,
+    appendStagedLoadedFiles([
+      {
+        ...remote,
+        info: {...remote.info, id: 'remote-2', label: 'cities.csv'},
+        metadata: {source: 'https://example.com/cities.csv'}
+      }
+    ])
+  );
+  t.equal(afterClose, closedModal, 'a remote url is not staged after the modal closes');
+
+  const activeLoad = {
+    ...loadingState,
+    visState: {
+      ...loadingState.visState,
+      fileLoading: {...loadingState.visState.fileLoading, loadId: 2},
+      stagedToAdd: [{info: {label: 'fresh.csv'}}]
+    }
+  };
+  const staleAdd = combinedUpdaters.loadFilesSuccessUpdater(activeLoad, {
+    ...loadFilesSuccess([{info: {label: 'old.csv', format: 'csv'}, data: {fields: [], rows: []}}]),
+    loadId: 1
+  });
+  t.equal(staleAdd, activeLoad, 'a stale add does not replace the current load');
+
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater keeps the original dataset when asked', t => {
+  const dataIdToReplace = 'dataset_to_replace';
+  const datasets = {
+    data: processCsvData(testCsvData),
+    info: {
+      id: sampleConfig.dataId
+    }
+  };
+  const datasetToUse = {
+    data: processCsvData(dataWithNulls),
+    info: {
+      id: dataIdToReplace,
+      label: 'Replaced'
+    }
+  };
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      config: sampleConfig.config
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse,
+      options: {deleteOriginalDataset: false}
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.ok(nextState.visState.datasets[sampleConfig.dataId], 'should keep the original dataset');
+  t.ok(nextState.visState.datasets[dataIdToReplace], 'should add the replacement dataset');
+  t.ok(
+    nextState.visState.layers.every(layer => layer.config.dataId === dataIdToReplace),
+    'should remap layers onto the replacement'
+  );
+  t.ok(
+    nextState.visState.filters.every(filter => filter.dataId.includes(dataIdToReplace)),
+    'should remap filters onto the replacement'
+  );
+
+  t.end();
+});
+
+test('#composerStateReducer - confirmReplaceDatasetUpdater replaces the confirmed upload', t => {
+  const datasets = {
+    data: processCsvData(testCsvData),
+    info: {
+      id: sampleConfig.dataId
+    }
+  };
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      config: sampleConfig.config
+    }
+  });
+  oldState = {
+    ...oldState,
+    visState: applyExistingDatasetTasks(visStateReducer, {
+      ...oldState.visState,
+      stagedToAdd: [
+        {info: {id: 'pending', label: 'pending', format: 'csv'}, data: {fields: [], rows: []}}
+      ]
+    }),
+    uiState: {
+      ...oldState.uiState,
+      datasetToReplaceId: sampleConfig.dataId,
+      currentModal: 'addData'
+    }
+  };
+
+  let nextState = combinedUpdaters.confirmReplaceDatasetUpdater(
+    oldState,
+    confirmReplaceDataset({
+      datasetToReplaceId: sampleConfig.dataId,
+      deleteOriginalDataset: true,
+      result: [
+        {
+          data: processCsvData(dataWithNulls),
+          info: {id: 'uploaded-replacement', label: 'Uploaded', format: 'csv'}
+        }
+      ]
+    })
+  );
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.notOk(nextState.visState.datasets[sampleConfig.dataId], 'should drop the original dataset');
+  t.ok(nextState.visState.datasets['uploaded-replacement'], 'should add the uploaded dataset');
+  t.equal(nextState.visState.stagedToAdd, null, 'should clear the staged upload');
+  t.equal(nextState.uiState.datasetToReplaceId, null, 'should clear replace mode');
+  t.equal(nextState.uiState.currentModal, null, 'should close the modal');
+  t.ok(
+    nextState.visState.layers.every(layer => layer.config.dataId === 'uploaded-replacement'),
+    'should remap layers onto the upload'
+  );
 
   t.end();
 });

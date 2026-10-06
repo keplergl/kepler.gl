@@ -18,6 +18,15 @@ import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actio
 import MapPopoverFactory from './map/map-popover';
 import MapControlFactory from './map/map-control';
 import MapScaleFactory from './map/map-scale';
+import MapCoordinateMenu, {
+  annotationContextMenuItems,
+  coordinateMenuFromClick,
+  contextMenuTargetIsMapOverlay,
+  coordinateMenuHiddenByTooltip,
+  isFeatureActionPanelOpen,
+  isRightDrag,
+  CoordinateMenuState
+} from './map/map-coordinate-menu';
 import {StyledMapContainer} from './common/styled-components';
 import {
   Attribution,
@@ -75,6 +84,8 @@ import {
 import {
   FILTER_TYPES,
   GEOCODER_LAYER_ID,
+  EDITOR_LAYER_ID,
+  EDITOR_LAYER_PICKING_RADIUS,
   THROTTLE_NOTIFICATION_TIME,
   DEFAULT_PICKING_RADIUS,
   NO_MAP_ID,
@@ -309,8 +320,12 @@ export default function MapContainerFactory(
       showBaseMapLibLogo: false,
       // attribution strings collected from the resolved map sources (e.g. CARTO,
       // OpenFreeMap).  Populated after TileJSON resolves.
-      basemapAttributions: [] as string[]
+      basemapAttributions: [] as string[],
+      coordinateMenu: null as CoordinateMenuState | null
     };
+
+    // Right-button press origin, used to ignore rotate/pitch drags.
+    _rightPress: {x: number; y: number} | null = null;
 
     componentDidMount() {
       if (!this._ref.current) {
@@ -332,6 +347,9 @@ export default function MapContainerFactory(
     }
 
     componentDidUpdate(prevProps) {
+      if (this.state.coordinateMenu && this._coordinateMenuSuppressed()) {
+        this.setState({coordinateMenu: null});
+      }
       if (prevProps.mapStyle.styleType !== this.props.mapStyle.styleType) {
         this._removeBasemapAttributionListeners();
         if (this.props.mapStyle.styleType === NO_MAP_ID) {
@@ -474,6 +492,155 @@ export default function MapContainerFactory(
     /* component private functions */
     _onCloseMapPopover = () => {
       this.props.visStateActions.onLayerClick(null);
+    };
+
+    _closeCoordinateMenu = () => {
+      if (this.state.coordinateMenu) {
+        this.setState({coordinateMenu: null});
+      }
+    };
+
+    _onMapPointerDownCapture = (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.button === 2) {
+        this._rightPress = {x: event.clientX, y: event.clientY};
+      }
+    };
+
+    /**
+     * A polygon or polygon filter under the cursor owns this right-click.
+     * Its action panel (Filter layers) is anchored at the same pixel.
+     */
+    _rightClickHitsEditorFeature(clientX: number, clientY: number): boolean {
+      const deck = this._deck;
+      const canvas = deck?.canvas || deck?.getCanvas?.();
+      const rect = canvas?.getBoundingClientRect?.();
+      if (!deck?.pickMultipleObjects || !rect) {
+        return false;
+      }
+      try {
+        const picks = deck.pickMultipleObjects({
+          x: clientX - rect.left,
+          y: clientY - rect.top,
+          radius: EDITOR_LAYER_PICKING_RADIUS,
+          layerIds: [EDITOR_LAYER_ID]
+        });
+        return Array.isArray(picks) && picks.some(pick => pick?.object);
+      } catch {
+        return false;
+      }
+    }
+
+    /**
+     * Copy coordinates stays hidden when this right-click belongs to a tooltip
+     * or to the polygon / filter action panel.
+     */
+    _coordinateMenuSuppressed(clientX?: number, clientY?: number): boolean {
+      const {visState, index} = this.props;
+      return (
+        isFeatureActionPanelOpen(visState.editor, index) ||
+        coordinateMenuHiddenByTooltip(
+          Boolean(visState.interactionConfig.tooltip?.enabled),
+          visState.hoverInfo?.layer?.id
+        ) ||
+        (clientX !== undefined &&
+          clientY !== undefined &&
+          this._rightClickHitsEditorFeature(clientX, clientY))
+      );
+    }
+
+    _annotationMenuItems() {
+      const {readOnly, visState} = this.props;
+      const annotations = visState.annotations ?? [];
+      return annotationContextMenuItems({
+        annotationsEnabled: Boolean(getApplicationConfig().enableAnnotations),
+        readOnly,
+        annotationCount: annotations.length,
+        hiddenAnnotationCount: annotations.filter(annotation => !annotation.isVisible).length
+      });
+    }
+
+    /** Hide and show write each annotation, the same flag the panel eye uses. */
+    _setEachAnnotationVisible(isVisible: boolean) {
+      const {visState, visStateActions} = this.props;
+      for (const annotation of visState.annotations ?? []) {
+        if (annotation.isVisible !== isVisible) {
+          visStateActions.updateAnnotation(annotation.id, {isVisible});
+        }
+      }
+    }
+
+    _onAddAnnotation = () => {
+      const menu = this.state.coordinateMenu;
+      if (!menu) {
+        return;
+      }
+      // A new annotation belongs with the rest of the set, so bring hidden ones back.
+      this._setEachAnnotationVisible(true);
+      const {index, mapControls, uiStateActions, visStateActions} = this.props;
+      if (!mapControls?.annotation?.active) {
+        uiStateActions.toggleMapControl('annotation', Number(index ?? 0));
+      }
+      visStateActions.addAnnotation({
+        anchorPoint: menu.coordinate,
+        mapIndex: index ?? 0
+      });
+      this._closeCoordinateMenu();
+    };
+
+    _onToggleAnnotations = () => {
+      this._setEachAnnotationVisible(!this._annotationMenuItems().annotationsVisible);
+      this._closeCoordinateMenu();
+    };
+
+    /**
+     * Browser context menu stays suppressed. A click (not a right-drag) can
+     * copy "lat, lng", add an annotation, or hide and show annotations.
+     * A feature with tooltips enabled pins the tooltip instead of opening the menu.
+     */
+    _onMapContextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+
+      const start = this._rightPress;
+      this._rightPress = null;
+      if (
+        isRightDrag(start, event.clientX, event.clientY) ||
+        contextMenuTargetIsMapOverlay(event.target) ||
+        this._coordinateMenuSuppressed(event.clientX, event.clientY)
+      ) {
+        this._closeCoordinateMenu();
+        return;
+      }
+
+      const {isExport, visState, mapState, index} = this.props;
+      const annotationItems = this._annotationMenuItems();
+      if (
+        isExport ||
+        (!visState.interactionConfig.coordinate.enabled &&
+          !annotationItems.showAddAnnotation &&
+          !annotationItems.showAnnotationToggle)
+      ) {
+        this._closeCoordinateMenu();
+        return;
+      }
+
+      const bounds = this._ref.current?.getBoundingClientRect();
+      if (!bounds) {
+        this._closeCoordinateMenu();
+        return;
+      }
+
+      const internalViewState = this.context?.getInternalViewState(index);
+      const viewport = getViewportFromMapState({
+        ...mapState,
+        ...internalViewState
+      }) as {
+        unproject: (xyz: number[], opts?: {targetZ?: number}) => number[];
+      };
+
+      const coordinateMenu = coordinateMenuFromClick(event.clientX, event.clientY, bounds, point =>
+        viewport.unproject(point, {targetZ: 0})
+      );
+      this.setState({coordinateMenu});
     };
 
     _onLayerHover = (_idx: number, info: PickingInfo<any> | null) => {
@@ -1677,11 +1844,34 @@ export default function MapContainerFactory(
         <StyledMap
           ref={this._ref}
           style={this.styleSelector(this.props)}
-          onContextMenu={event => event.preventDefault()}
+          onPointerDownCapture={this._onMapPointerDownCapture}
+          onContextMenu={this._onMapContextMenu}
           $mixBlendMode={visState.overlayBlending}
           $mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
         >
           {mapContent}
+          {this.state.coordinateMenu &&
+          !this.props.isExport &&
+          !isFeatureActionPanelOpen(visState.editor, this.props.index) &&
+          !coordinateMenuHiddenByTooltip(
+            Boolean(visState.interactionConfig.tooltip?.enabled),
+            visState.hoverInfo?.layer?.id
+          ) ? (
+            <MapCoordinateMenu
+              x={this.state.coordinateMenu.x}
+              y={this.state.coordinateMenu.y}
+              text={
+                visState.interactionConfig.coordinate.enabled
+                  ? this.state.coordinateMenu.text
+                  : null
+              }
+              showCopy={visState.interactionConfig.coordinate.enabled}
+              {...this._annotationMenuItems()}
+              onAddAnnotation={this._onAddAnnotation}
+              onToggleAnnotations={this._onToggleAnnotations}
+              onClose={this._closeCoordinateMenu}
+            />
+          ) : null}
         </StyledMap>
       );
     }

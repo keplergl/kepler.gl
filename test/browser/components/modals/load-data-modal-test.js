@@ -34,6 +34,10 @@ test('Components -> LoadDataModal.mount', t => {
     STYLED_COMPONENTS_DUPLICATED_ENTRIES,
     'should render FileUpload'
   );
+  t.ok(
+    wrapper.find('.file-upload__message').first().text().includes('saved map'),
+    'Add Data mentions a saved map Json'
+  );
   t.equal(
     wrapper.find('.load-data-modal__tab').length,
     STYLED_COMPONENTS_DUPLICATED_ENTRIES,
@@ -179,6 +183,123 @@ test('Components -> LoadDataModal -> processing layers', t => {
     0,
     'should hide Cancel and Add Data while layers are prepared'
   );
+
+  t.end();
+});
+
+test('Components -> LoadDataModal -> replace dataset', t => {
+  const onConfirmAddData = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal
+        replaceDatasetId="cities"
+        replaceDatasetLabel="Cities"
+        onConfirmAddData={onConfirmAddData}
+        stagedToAdd={[{info: {id: 'next', label: 'next.csv'}}]}
+      />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    wrapper.find('.remove-original-dataset').length > 0,
+    true,
+    'should offer to remove the original'
+  );
+  t.equal(wrapper.find('.auto-create-layers').length, 0, 'replace does not auto-create layers');
+  t.equal(wrapper.find(ModalTabItem).length, 1, 'replace keeps only the upload tab');
+  t.equal(
+    wrapper.find('.file-upload__message').first().text().includes('saved map'),
+    false,
+    'replace asks for a dataset file'
+  );
+  t.equal(
+    wrapper.find('.add-data-bar').find('Checkbox').first().props().checked,
+    true,
+    'removing the original dataset is checked by default'
+  );
+
+  wrapper.find('.add-data-bar').find('Checkbox').first().simulate('change');
+  wrapper.find('.add-data-bar button').at(1).simulate('click');
+  t.deepEqual(
+    onConfirmAddData.args[0][0],
+    {
+      autoCreateLayers: false,
+      deleteOriginalDataset: false,
+      datasets: [{info: {id: 'next', label: 'next.csv'}}]
+    },
+    'Replace commits the staged dataset and the remove choice'
+  );
+
+  t.end();
+});
+
+test('Components -> LoadDataModal -> one unchecked dataset stays out', t => {
+  const onConfirmAddData = sinon.spy();
+  const points = {info: {label: 'points.csv'}};
+  const remote = {
+    info: {label: 'quakes.csv', format: 'row'},
+    metadata: {source: 'https://example.com/quakes.csv'}
+  };
+  const loading = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal
+        onConfirmAddData={onConfirmAddData}
+        fileLoading={true}
+        stagedToAdd={[points, remote]}
+      />
+    </IntlWrapper>
+  );
+  t.equal(
+    loading.find('.add-data-bar button').at(1).props().disabled,
+    true,
+    'Add Data waits until parsing finishes'
+  );
+
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal onConfirmAddData={onConfirmAddData} stagedToAdd={[points, remote]} />
+    </IntlWrapper>
+  );
+  const checks = () => wrapper.find('.upload-file-list').find('Checkbox');
+  t.equal(checks().length, 2, 'local and remote datasets can each be included');
+  t.equal(
+    wrapper.find('.add-data-bar button').at(1).props().disabled,
+    false,
+    'Add Data is enabled when a dataset is checked'
+  );
+
+  checks().at(1).simulate('change');
+  const frames = [];
+  const prevFrame = window.requestAnimationFrame;
+  window.requestAnimationFrame = cb => {
+    frames.push(cb);
+    return frames.length;
+  };
+  try {
+    wrapper.find('.add-data-bar button').at(1).simulate('click');
+    while (frames.length) {
+      frames.shift()();
+    }
+  } finally {
+    window.requestAnimationFrame = prevFrame;
+  }
+  t.deepEqual(
+    onConfirmAddData.args[0][0],
+    {autoCreateLayers: true, datasets: [points]},
+    'Add Data commits only the checked dataset'
+  );
+
+  const tabs = wrapper.find('.load-data-modal__tab__item');
+  let clickedStorage = false;
+  for (let i = 0; i < tabs.length; i++) {
+    if (tabs.at(i).text() === 'Load from Storage') {
+      tabs.at(i).simulate('click');
+      clickedStorage = true;
+      break;
+    }
+  }
+  t.equal(clickedStorage, true, 'should find the storage tab');
+  t.equal(wrapper.find('.add-data-bar').length, 0, 'storage keeps its own load action');
 
   t.end();
 });

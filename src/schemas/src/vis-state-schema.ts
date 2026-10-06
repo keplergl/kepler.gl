@@ -712,7 +712,15 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV1 = ['tooltip', 'legend', 'brush', 'geocoder', 'coordinate', 'zoomOpacity'];
+const interactionPropsV1 = [
+  'tooltip',
+  'legend',
+  'brush',
+  'geocoder',
+  'coordinate',
+  'annotation',
+  'zoomOpacity'
+];
 
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
@@ -726,14 +734,16 @@ export class InteractionSchemaV1 extends Schema {
     return Array.isArray(this.properties)
       ? {
           [this.key]: this.properties.reduce((accu, key) => {
-            const interaction = interactionConfig[key];
+            const interaction = interactionConfig[key as keyof InteractionConfig];
+            // Older saved states may not have annotation or zoomOpacity.
             if (!interaction) {
               return accu;
             }
+            const config = 'config' in interaction ? interaction.config : undefined;
             return {
               ...accu,
               [key]: {
-                ...interaction.config,
+                ...(config || {}),
                 enabled: interaction.enabled
               }
             };

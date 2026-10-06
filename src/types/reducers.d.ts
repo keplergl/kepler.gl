@@ -436,6 +436,9 @@ export type Coordinate = BaseInteraction & {
   id: 'coordinate';
   position: number[] | null;
 };
+export type AnnotationInteraction = BaseInteraction & {
+  id: 'annotation';
+};
 export type LegendInfo = BaseInteraction & {
   id: 'legend';
   config: {
@@ -471,6 +474,7 @@ export type InteractionConfig = {
   geocoder: Geocoder;
   brush: Brush;
   coordinate: Coordinate;
+  annotation: AnnotationInteraction;
   zoomOpacity: ZoomOpacityInteraction;
 };
 export type MapInfo = {
@@ -648,6 +652,8 @@ export type UiState = {
   activeSidePanel: string | null;
   currentModal: string | null;
   datasetKeyToRemove: string | null;
+  /** Dataset selected by the dataset-menu Replace action. Cleared when the modal closes. */
+  datasetToReplaceId: string | null;
   visibleDropdown: string | null;
   // export image modal ui
   exportImage: ExportImage;

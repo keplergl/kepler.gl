@@ -7,6 +7,9 @@ import get from 'es-toolkit/compat/get';
 import {IntlShape, useIntl} from 'react-intl';
 
 import {Button} from '../common';
+import Checkbox from '../common/checkbox';
+import {Docs} from '../common/icons';
+import TippyTooltip from '../common/tippy-tooltip';
 import FileUploadFactory from '../common/file-uploader/file-upload';
 import {selectedStagedDatasets} from '../common/file-uploader/upload-file-list';
 import LoadStorageMapFactory from './load-storage-map';
@@ -145,7 +148,44 @@ export type LoadDataOptions = {
   autoCreateLayers?: boolean;
   /** Staged datasets the user left checked. */
   datasets?: Array<{info?: {label?: string}; metadata?: {source?: string}}>;
+  /** When replacing, drop the original dataset after layers and filters are remapped. */
+  deleteOriginalDataset?: boolean;
 };
+
+const RemoveOriginalRow = styled.div.attrs({
+  className: 'remove-original-dataset'
+})`
+  display: flex;
+  align-items: center;
+  min-width: 0;
+
+  .kg-checkbox {
+    margin-left: 0;
+    min-width: 0;
+  }
+
+  .kg-checkbox__label {
+    margin-bottom: 0;
+    margin-left: 0;
+    color: ${props => props.theme.textColorLT};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+
+const InfoButton = styled.span`
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  color: ${props => props.theme.subtextColorLT};
+  cursor: help;
+  flex-shrink: 0;
+
+  &:hover {
+    color: ${props => props.theme.textColorLT};
+  }
+`;
 
 type TilesetDraft = {
   canAdd: boolean;
@@ -197,6 +237,10 @@ type LoadDataModalProps = {
 
   loadFiles: LoadFiles;
   fileLoadingProgress: FileLoadingProgress;
+
+  /** When set, confirming the staged upload replaces this dataset. */
+  replaceDatasetId?: string | null;
+  replaceDatasetLabel?: string;
 };
 
 LoadDataModalFactory.deps = [
@@ -243,9 +287,15 @@ export function LoadDataModalFactory(
     stagedToAdd = null,
     loadingMethods = defaultLoadingMethods,
     isCloudMapLoading,
+    replaceDatasetId,
+    replaceDatasetLabel,
     ...restProps
   }) => {
     const intl = useIntl();
+    const isReplace = Boolean(replaceDatasetId);
+    const availableMethods = isReplace
+      ? loadingMethods.filter(method => method.id === LOADING_METHODS.upload)
+      : loadingMethods;
     const [autoCreateLayers, setAutoCreateLayers] = useState(true);
     const [preparingLayers, setPreparingLayers] = useState(false);
     const prepareFrames = useRef<number[]>([]);
@@ -255,6 +305,7 @@ export function LoadDataModalFactory(
         frames.forEach(id => window.cancelAnimationFrame(id));
       };
     }, []);
+    const [deleteOriginalDataset, setDeleteOriginalDataset] = useState(true);
     const [deselectedDatasets, setDeselectedDatasets] = useState<Record<string, boolean>>({});
     const onToggleDataset = useCallback((key: string) => {
       setDeselectedDatasets(prev => ({...prev, [key]: !prev[key]}));
@@ -281,7 +332,7 @@ export function LoadDataModalFactory(
     const onTilesetDraftChange = useCallback((draft: TilesetDraft) => {
       setTilesetDraft(draft);
     }, []);
-    const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
+    const [currentMethod, toggleMethod] = useState(getDefaultMethod(availableMethods));
     const selectMethod = useCallback((method: LoadingMethod) => {
       setTilesetDraft(null);
       toggleMethod(method);
@@ -304,11 +355,16 @@ export function LoadDataModalFactory(
           }
           return;
         }
-        onConfirmAddData({autoCreateLayers, datasets: datasetsToAdd});
+        onConfirmAddData(
+          isReplace
+            ? {autoCreateLayers: false, datasets: datasetsToAdd, deleteOriginalDataset}
+            : {autoCreateLayers, datasets: datasetsToAdd}
+        );
       };
       // Layer creation blocks the main thread. Paint this status first so the
       // spinner can keep moving on the compositor during that work.
-      if (autoCreateLayers) {
+      // Replace never creates layers, so it commits immediately.
+      if (autoCreateLayers && !isReplace) {
         setPreparingLayers(true);
         const first = window.requestAnimationFrame(() => {
           const second = window.requestAnimationFrame(commit);
@@ -322,7 +378,9 @@ export function LoadDataModalFactory(
       autoCreateLayers,
       canAdd,
       datasetsToAdd,
+      deleteOriginalDataset,
       handleTilesetAdded,
+      isReplace,
       isTileset,
       onConfirmAddData,
       preparingLayers,
@@ -338,7 +396,15 @@ export function LoadDataModalFactory(
       fileLoading,
       fileLoadingProgress,
       isCloudMapLoading,
-      ...(isUpload ? {stagedToAdd, onAddRemoteDataset, deselectedDatasets, onToggleDataset} : {}),
+      ...(isUpload
+        ? {
+            stagedToAdd,
+            onAddRemoteDataset,
+            deselectedDatasets,
+            onToggleDataset,
+            replaceDataset: isReplace
+          }
+        : {}),
       ...(isTileset ? {confirmInParent: true, onTilesetDraftChange} : {})
     };
     const ElementType = currentMethod?.elementType;
@@ -348,7 +414,7 @@ export function LoadDataModalFactory(
         <ModalMain $dimmed={preparingLayers}>
           <ModalTabs
             currentMethod={currentMethod?.id}
-            loadingMethods={loadingMethods}
+            loadingMethods={availableMethods}
             toggleMethod={selectMethod}
           />
           {isCloudMapLoading ? (
@@ -362,11 +428,43 @@ export function LoadDataModalFactory(
         {showAddBar ? (
           <AddDataBar>
             <Dimmed $dimmed={preparingLayers}>
-              <AutoCreateLayersCheckbox
-                checked={autoCreateLayers}
-                disabled={preparingLayers}
-                onToggle={onToggleAutoCreateLayers}
-              />
+              {isReplace ? (
+                <RemoveOriginalRow>
+                  <Checkbox
+                    id="delete-original-dataset"
+                    type="checkbox"
+                    label={intl.formatMessage(
+                      {id: 'modal.replaceDataset.removeOriginal'},
+                      {datasetName: replaceDatasetLabel || replaceDatasetId || ''}
+                    )}
+                    checked={deleteOriginalDataset}
+                    onChange={() => setDeleteOriginalDataset(value => !value)}
+                  />
+                  <TippyTooltip
+                    placement="top"
+                    isLightTheme
+                    render={() => (
+                      <div>
+                        {intl.formatMessage({id: 'modal.replaceDataset.removeOriginalHint'})}
+                      </div>
+                    )}
+                  >
+                    <InfoButton
+                      aria-label={intl.formatMessage({
+                        id: 'modal.replaceDataset.removeOriginalHint'
+                      })}
+                    >
+                      <Docs height="16px" />
+                    </InfoButton>
+                  </TippyTooltip>
+                </RemoveOriginalRow>
+              ) : (
+                <AutoCreateLayersCheckbox
+                  checked={autoCreateLayers}
+                  disabled={preparingLayers}
+                  onToggle={onToggleAutoCreateLayers}
+                />
+              )}
             </Dimmed>
             <StagedLabel />
             {uploadError || tilesetError ? (
@@ -384,7 +482,9 @@ export function LoadDataModalFactory(
                   {intl.formatMessage({id: 'modal.button.defaultCancel'})}
                 </Button>
                 <Button type="button" cta disabled={!canAdd} onClick={onAddData}>
-                  {intl.formatMessage({id: 'layerManager.addData'})}
+                  {intl.formatMessage({
+                    id: isReplace ? 'modal.button.replace' : 'layerManager.addData'
+                  })}
                 </Button>
               </AddDataActions>
             )}
