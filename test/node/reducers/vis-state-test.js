@@ -37,6 +37,7 @@ import {
   getDefaultFilter,
   histogramFromDomain,
   LayerTimeInterval,
+  getApplicationConfig,
   initApplicationConfig
 } from '@kepler.gl/utils';
 import {
@@ -446,6 +447,87 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', async t => {
 
   t.ok(!nextState.clicked, 'should reset clicked');
   t.ok(!nextState.hoverInfo, 'should reset hoverInfo');
+
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_TYPE_CHANGE fit bounds on manual layer', async t => {
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'puppy', label: 'puppy'},
+    data: {
+      rows: mockData.data,
+      fields: mockData.fields
+    }
+  });
+
+  const makeEmptyLayerState = () => {
+    const layer = new Layer({id: 'manual-layer', dataId: 'puppy', isVisible: true});
+    return {
+      state: {
+        ...INITIAL_VIS_STATE,
+        datasets,
+        layers: [layer],
+        layerData: [{}],
+        layerOrder: [layer.id]
+      },
+      layer
+    };
+  };
+
+  drainTasksForTesting();
+  const previousFitBounds = getApplicationConfig().enableFitBoundsOnManualLayer;
+
+  try {
+    initApplicationConfig({enableFitBoundsOnManualLayer: false});
+    const disabled = makeEmptyLayerState();
+    reducer(
+      disabled.state,
+      VisStateActions.layerTypeChange(disabled.layer, 'point', {fitBounds: true})
+    );
+    t.equal(
+      drainTasksForTesting().length,
+      0,
+      'should not fit bounds when enableFitBoundsOnManualLayer is off'
+    );
+
+    initApplicationConfig({enableFitBoundsOnManualLayer: true});
+    const programmatic = makeEmptyLayerState();
+    reducer(programmatic.state, VisStateActions.layerTypeChange(programmatic.layer, 'point'));
+    t.equal(
+      drainTasksForTesting().length,
+      0,
+      'should not fit bounds for a programmatic layerTypeChange'
+    );
+
+    const enabled = makeEmptyLayerState();
+    const nextState = reducer(
+      enabled.state,
+      VisStateActions.layerTypeChange(enabled.layer, 'point', {fitBounds: true})
+    );
+    const [fitTask, ...extra] = drainTasksForTesting();
+    t.equal(extra.length, 0, 'should schedule one fit-bounds task');
+    t.equal(fitTask.label, 'ACTION_TASK_FIT_BOUNDS', 'should schedule ACTION_TASK_FIT_BOUNDS');
+
+    const fitAction = succeedTaskInTest(fitTask, null);
+    t.equal(fitAction.type, '@@kepler.gl/FIT_BOUNDS', 'task should dispatch FIT_BOUNDS');
+    t.deepEqual(
+      fitAction.payload,
+      nextState.layers[0].meta.bounds,
+      'should fit to the new layer bounds'
+    );
+    t.ok(nextState.layers[0].meta.bounds, 'new layer should have bounds');
+
+    const typedLayer = nextState.layers[0];
+    reducer(nextState, VisStateActions.layerTypeChange(typedLayer, 'hexagon', {fitBounds: true}));
+    t.equal(
+      drainTasksForTesting().length,
+      0,
+      'should not fit bounds when changing the type of an existing layer'
+    );
+  } finally {
+    initApplicationConfig({enableFitBoundsOnManualLayer: previousFitBounds});
+    drainTasksForTesting();
+  }
 
   t.end();
 });

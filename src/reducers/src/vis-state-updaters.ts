@@ -1048,6 +1048,36 @@ export function setInitialLayerConfig(layer, datasets, layerClasses): Layer {
     : newLayer;
 }
 /**
+ * Fit the map when the layer type dropdown gives an empty layer its first
+ * type and that layer already points at a dataset. Later type changes,
+ * programmatic `layerTypeChange`, and saved-config applies leave the camera
+ * alone. Gated by `enableFitBoundsOnManualLayer`.
+ */
+function maybeFitManualLayerBounds(
+  state: VisState,
+  oldLayer: Layer,
+  layer: Layer,
+  fitBounds?: boolean
+): VisState {
+  if (
+    !fitBounds ||
+    oldLayer.type ||
+    !layer.config.dataId ||
+    !getApplicationConfig().enableFitBoundsOnManualLayer
+  ) {
+    return state;
+  }
+  const bounds = findMapBounds([layer]);
+  if (!bounds) {
+    return state;
+  }
+  return withTask(
+    state,
+    ACTION_TASK_FIT_BOUNDS().map(() => fitMapBounds(bounds))
+  );
+}
+
+/**
  * Update layer type. Previews layer config will be copied if applicable.
  * @memberof visStateUpdaters
  * @public
@@ -1136,7 +1166,7 @@ export function layerTypeChangeUpdater(
     layerOrder: replaceLayerEntryInLayerOrder(newState.layerOrder, oldLayer.id, newLayer.id)
   };
 
-  return newState;
+  return maybeFitManualLayerBounds(newState, oldLayer, layer, action.fitBounds);
 }
 
 /**

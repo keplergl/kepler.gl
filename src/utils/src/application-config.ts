@@ -206,6 +206,20 @@ export type KeplerApplicationConfig = {
   /** Whether to show the map scale bar at the bottom-left of the map. Enabled by default. */
   enableMapScale?: boolean;
 
+  /**
+   * Fit the map to a dataset when the layer type dropdown gives a manually
+   * added layer its first type. The layer already has a dataset (chosen from
+   * Add Layer). Programmatic `layerTypeChange`, saved configs, and later type
+   * changes do not move the map.
+   * Enabled by default. Disable with {@link initApplicationConfig}.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({enableFitBoundsOnManualLayer: false});
+   * ```
+   */
+  enableFitBoundsOnManualLayer?: boolean;
+
   /** Whether to enable the swipe compare mode in split map view. Enabled by default. */
   enableSwipeMode?: boolean;
 
@@ -452,6 +466,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableMapNavigationControl: true,
 
   enableMapScale: true,
+
+  enableFitBoundsOnManualLayer: true,
 
   enableSwipeMode: true,
 
