@@ -3,7 +3,7 @@
 
 // vis-state-reducer
 import {default as ActionTypes} from './action-types';
-import {FileCacheItem} from '@kepler.gl/processors';
+import {FileCacheItem, ZipArchiveExpansion} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {GroupByOp, JoinOp, KeplerTable} from '@kepler.gl/table';
 import {
@@ -1881,6 +1881,25 @@ export function loadNextFile(loadId?: number): {
   };
 }
 
+export type ExpandZipArchiveSuccessAction = {
+  loadId: number;
+  archiveName: string;
+  expansion: ZipArchiveExpansion;
+};
+/**
+ * A zip in the load queue has been unpacked. The updater either parses a
+ * single shapefile archive or enqueues one dataset per supported member.
+ * @memberof visStateActions
+ */
+export function expandZipArchiveSuccess(
+  payload: ExpandZipArchiveSuccessAction
+): Merge<ExpandZipArchiveSuccessAction, {type: typeof ActionTypes.EXPAND_ZIP_ARCHIVE_SUCCESS}> {
+  return {
+    type: ActionTypes.EXPAND_ZIP_ARCHIVE_SUCCESS,
+    ...payload
+  };
+}
+
 export type loadFilesSuccessUpdaterAction = {
   result: FileCacheItem[];
   options?: AddDataToMapOptions;
@@ -2008,6 +2027,8 @@ export function loadFileStepSuccess({
 export type LoadFilesErrUpdaterAction = {
   fileName: string;
   error: any;
+  /** Set when the failure belongs to one load, so a newer load can ignore it. */
+  loadId?: number;
 };
 /**
  * Trigger loading file error
@@ -2019,12 +2040,14 @@ export type LoadFilesErrUpdaterAction = {
 
 export function loadFilesErr(
   fileName: string,
-  error: any
+  error: any,
+  loadId?: number
 ): Merge<LoadFilesErrUpdaterAction, {type: typeof ActionTypes.LOAD_FILES_ERR}> {
   return {
     type: ActionTypes.LOAD_FILES_ERR,
     fileName,
-    error
+    error,
+    ...(loadId == null ? {} : {loadId})
   };
 }
 

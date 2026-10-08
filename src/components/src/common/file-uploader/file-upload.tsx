@@ -264,9 +264,41 @@ function extensionOf(name: string): string {
   return part && part !== name ? part : '';
 }
 
+/**
+ * A zip is only a dataset when parsing keeps its name (a single shapefile).
+ * Once it has expanded into other files, drop the archive row so those files
+ * are the only lines under "To add to map".
+ */
+function archiveExpandedAway(
+  fileName: string,
+  progress: FileLoadingProgress,
+  stagedToAdd: Array<{info?: {label?: string}; metadata?: {source?: string}}> | null | undefined,
+  fileLoading: unknown,
+  droppedNames: Set<string>
+): boolean {
+  if (extensionOf(fileName).toLowerCase() !== 'zip') {
+    return false;
+  }
+  if (progress[fileName]?.error) {
+    return false;
+  }
+  const keptAsDataset = (stagedToAdd || []).some(
+    item => !item?.metadata?.source && item?.info?.label === fileName
+  );
+  if (keptAsDataset || (fileLoading && progress[fileName])) {
+    return false;
+  }
+  const unpackedName = (name?: string) => Boolean(name && !droppedNames.has(name));
+  const unpackedFile = (stagedToAdd || []).some(
+    item => !item?.metadata?.source && unpackedName(item?.info?.label)
+  );
+  const unpackedProgress = Object.keys(progress).some(unpackedName);
+  return unpackedFile || unpackedProgress;
+}
+
 function fileListStatus(
   intl,
-  file: File,
+  file: {size?: number},
   progress: FileLoadingProgress[string] | undefined,
   loading: boolean
 ): Pick<UploadFileListItem, 'status' | 'percent' | 'isError' | 'isSuccess'> {
@@ -484,7 +516,10 @@ function FileUploadFactory() {
         );
       });
       files.forEach(file => {
-        if (seen.has(file.name)) {
+        if (
+          seen.has(file.name) ||
+          archiveExpandedAway(file.name, progress, stagedToAdd, fileLoading, localNames)
+        ) {
           return;
         }
         seen.add(file.name);
@@ -510,6 +545,26 @@ function FileUploadFactory() {
             },
             file.name,
             !status.isError
+          )
+        );
+      });
+      // Files unpacked from a zip are not in the drop list. Show their progress
+      // until they are staged under their own names.
+      Object.values(progress).forEach(item => {
+        if (!item?.fileName || seen.has(item.fileName)) {
+          return;
+        }
+        seen.add(item.fileName);
+        const status = fileListStatus(intl, {}, item, Boolean(fileLoading));
+        uploadItems.push(
+          selectionFor(
+            {
+              name: item.fileName,
+              ext: extensionOf(item.fileName),
+              ...status
+            },
+            item.fileName,
+            Boolean(status.isSuccess) && !status.isError
           )
         );
       });
