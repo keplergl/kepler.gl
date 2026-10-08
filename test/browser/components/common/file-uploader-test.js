@@ -175,6 +175,94 @@ test('Components -> FileUpload.onDrop keeps earlier files', t => {
   t.end();
 });
 
+test('Components -> FileUpload zip expands to the files inside it', t => {
+  const zip = [{type: 'application/zip', name: 'bundle.zip', size: 40}];
+  const onFileUpload = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FileUpload onFileUpload={onFileUpload} fileExtensions={['csv', 'zip', 'json']} />
+    </IntlWrapper>
+  );
+  wrapper
+    .find('.file-uploader__file-drop')
+    .at(0)
+    .simulate('drop', {
+      stopPropagation: () => {},
+      dataTransfer: {types: ['Files'], files: zip}
+    });
+
+  wrapper.setProps({
+    children: (
+      <IntlWrapper>
+        <FileUpload
+          onFileUpload={onFileUpload}
+          fileExtensions={['csv', 'zip', 'json']}
+          fileLoading={false}
+          fileLoadingProgress={{}}
+          stagedToAdd={[{info: {label: 'places.csv', format: 'row'}}]}
+        />
+      </IntlWrapper>
+    )
+  });
+
+  const keptFiles = wrapper.find(FileUpload).children().first().state().files;
+  t.deepEqual(
+    keptFiles.map(file => file.name),
+    ['bundle.zip'],
+    'the dropped zip stays in the uploader state'
+  );
+  const listText = wrapper.find('.upload-file-list').text();
+  t.ok(listText.includes('places.csv'), 'should list the csv that was inside the zip');
+  t.notOk(listText.includes('bundle.zip'), 'should not list the zip once it has been expanded');
+  t.equal(
+    wrapper.find('.upload-file-list').find('Checkbox').length,
+    1,
+    'only the unpacked dataset can be added'
+  );
+
+  t.end();
+});
+
+test('Components -> FileUpload shapefile zip stays one row', t => {
+  const zip = [{type: 'application/zip', name: 'places.zip', size: 40}];
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FileUpload onFileUpload={() => {}} fileExtensions={['zip', 'shp']} />
+    </IntlWrapper>
+  );
+  wrapper
+    .find('.file-uploader__file-drop')
+    .at(0)
+    .simulate('drop', {
+      stopPropagation: () => {},
+      dataTransfer: {types: ['Files'], files: zip}
+    });
+
+  wrapper.setProps({
+    children: (
+      <IntlWrapper>
+        <FileUpload
+          onFileUpload={() => {}}
+          fileExtensions={['zip', 'shp']}
+          fileLoading={false}
+          fileLoadingProgress={{}}
+          stagedToAdd={[{info: {label: 'places.zip', format: 'geojson'}}]}
+        />
+      </IntlWrapper>
+    )
+  });
+
+  const listText = wrapper.find('.upload-file-list').text();
+  t.ok(listText.includes('places.zip'), 'a single shapefile zip keeps the archive name');
+  t.equal(
+    wrapper.find('.upload-file-list').find('Checkbox').length,
+    1,
+    'the archive is one dataset'
+  );
+
+  t.end();
+});
+
 test('Components -> FileUpload remote URL is staged without downloading', t => {
   const onFileUpload = sinon.spy();
   const onAddRemoteDataset = sinon.spy();

@@ -377,6 +377,8 @@ export async function readFileInBatches({
   fileName?: string;
 }): Promise<AsyncGenerator> {
   const displayFileName = fileName || file.name;
+  // Local drops expand mixed zips in the load queue before this runs. A `.zip`
+  // that still arrives here is a shapefile archive (remote URL, or a direct call).
   if (isZipFileName(file.name) && isKeplerFileFormatAccepted('shp')) {
     const unzipped = await unzipShapefileArchive(file);
     const shapefile = unzipped.find(entry => getDroppedFileExtension(entry.name) === 'shp');
