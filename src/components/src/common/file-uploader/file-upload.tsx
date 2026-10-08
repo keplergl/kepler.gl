@@ -276,7 +276,7 @@ function archiveExpandedAway(
   if (keptAsDataset || (fileLoading && progress[fileName])) {
     return false;
   }
-  const unpackedName = (name?: string) => Boolean(name) && !droppedNames.has(name);
+  const unpackedName = (name?: string) => Boolean(name && !droppedNames.has(name));
   const unpackedFile = (stagedToAdd || []).some(
     item => !item?.metadata?.source && unpackedName(item?.info?.label)
   );
