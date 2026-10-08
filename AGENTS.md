@@ -18,7 +18,7 @@ If verification fails:
 - Investigate the failure.
 - Fix failures caused by the change.
 - Rerun verification.
-- Continue until it passes.
+- Continue until it passes, or Stop in case of a loop.
 
 If a failure appears unrelated or pre-existing:
 
@@ -74,14 +74,17 @@ When behavior is visible in the UI:
 
 ## Pull requests
 
-PR descriptions must contain:
+PR descriptions must SHORT and contain:
 
 - What changed
 - Why
 - Important implementation details
-- Tests added or changed
-- Verification commands and results
-- Screenshots for visual changes
 - Remaining uncertainties or decisions
+- a checkboxes with what to change
+
+Optional contents:
+
+- Screenshots for visual changes 
+
 
 Do not hide uncertainty. If product or architectural judgment is required, explicitly mark it for human review.
