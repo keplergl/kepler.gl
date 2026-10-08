@@ -300,6 +300,7 @@ export function LayerPanelHeaderActionSectionFactory(
           labelId: 'tooltip.removeLayer',
           Icon: actionIcons.remove,
           iconHeight: '16px',
+          destructive: true,
           onClick: selectAction(onRemoveLayer)
         }
       : null;

@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import styled from 'styled-components';
+import styled, {css} from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import {BaseProps} from './icons';
@@ -38,7 +38,18 @@ export const ContextMenu = styled.div`
   overflow: hidden;
 `;
 
-const ContextMenuItem = styled.button<{$active?: boolean}>`
+const ContextMenuItemIcon = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  flex-shrink: 0;
+  color: ${props => props.theme.subtextColor};
+`;
+
+const ContextMenuItem = styled.button<{$active?: boolean; $destructive?: boolean}>`
   display: flex;
   align-items: center;
   width: 100%;
@@ -55,6 +66,16 @@ const ContextMenuItem = styled.button<{$active?: boolean}>`
 
   &:hover {
     background: ${props => props.theme.dropdownListHighlightBg};
+    ${props =>
+      props.$destructive
+        ? css`
+            color: ${props.theme.errorColor};
+
+            ${ContextMenuItemIcon} {
+              color: ${props.theme.errorColor};
+            }
+          `
+        : ''}
   }
 
   &:disabled {
@@ -62,17 +83,6 @@ const ContextMenuItem = styled.button<{$active?: boolean}>`
     cursor: default;
     pointer-events: none;
   }
-`;
-
-const ContextMenuItemIcon = styled.span`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  margin-right: 6px;
-  flex-shrink: 0;
-  color: ${props => props.theme.subtextColor};
 `;
 
 export const ContextMenuSeparator = styled.div`
@@ -87,6 +97,7 @@ export type ContextMenuAction = {
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   active?: boolean;
+  destructive?: boolean;
 };
 
 export function ContextMenuActionButton({action}: {action: ContextMenuAction}) {
@@ -96,6 +107,7 @@ export function ContextMenuActionButton({action}: {action: ContextMenuAction}) {
       type="button"
       disabled={action.disabled}
       $active={action.active}
+      $destructive={action.destructive}
       onClick={event => {
         event.stopPropagation();
         action.onClick(event);
