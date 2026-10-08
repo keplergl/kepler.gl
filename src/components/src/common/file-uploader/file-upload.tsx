@@ -215,7 +215,7 @@ type FileUploadProps = {
   /** Parsed files held until Add Data, used if this uploader remounts. */
   stagedToAdd?: Array<{
     info?: {label?: string; format?: string};
-    metadata?: {source?: string};
+    metadata?: {source?: string; size?: number};
     data?: unknown;
   }> | null;
   /** Stage a remote URL without downloading it. Add Data runs the remote load. */
@@ -250,6 +250,10 @@ function formatFileSize(size?: number): string {
     return `${(bytes / 1024).toFixed(1)} KB`;
   }
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function stagedByteSize(metadata?: {size?: number}): number | null {
+  return typeof metadata?.size === 'number' ? metadata.size : null;
 }
 
 function rowsForLocalFile(staged: FileUploadProps['stagedToAdd'], fileName: string): number | null {
@@ -508,7 +512,10 @@ function FileUploadFactory() {
               status: source || intl.formatMessage({id: 'fileUploader.readyToAddNoSize'}),
               percent: 1,
               isSuccess: true,
-              isLarge: isLargeDatasetUpload({rows: countDatasetRows(item.data)})
+              isLarge: isLargeDatasetUpload({
+                rows: countDatasetRows(item.data),
+                bytes: stagedByteSize(item.metadata)
+              })
             },
             key,
             true

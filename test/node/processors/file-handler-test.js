@@ -257,6 +257,15 @@ test('#file-handler -> processFileData one-shot load does not enable polling', a
   });
   t.equal(local[0].info.type, undefined, 'local files are not marked externally-hosted');
   t.equal(local[0].metadata, undefined, 'local files get no remote refresh metadata');
+  const sized = await processFileData({
+    content: {fileName: 'local.csv', data: rows, fileSize: 50 * 1024 * 1024},
+    fileCache: []
+  });
+  t.equal(
+    sized[0].metadata.size,
+    50 * 1024 * 1024,
+    'local files keep their byte size for a later warning'
+  );
 
   const remote = await processFileData({
     content: {
