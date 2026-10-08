@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useState} from 'react';
-import styled from 'styled-components';
 import {useIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -14,83 +13,15 @@ import {
   openReplaceDatasetModal
 } from '@kepler.gl/actions';
 
-import {BaseProps, Grouping, Join, Overflow, Replace, SpatialJoin, Trash} from '../../common/icons';
+import {Grouping, Join, Overflow, Replace, SpatialJoin, Trash} from '../../common/icons';
 import {Tooltip} from '../../common/styled-components';
 import Portaled from '../../common/portaled';
-
-const MenuToggle = styled.div`
-  margin-left: 8px;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  color: ${props => props.theme.panelHeaderIcon};
-  cursor: pointer;
-
-  &:hover {
-    color: ${props => props.theme.panelHeaderIconHover};
-  }
-`;
-
-const PortalAnchor = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 0;
-  height: 16px;
-  pointer-events: none;
-`;
-
-const Menu = styled.div`
-  min-width: 160px;
-  width: max-content;
-  background: ${props => props.theme.dropdownListBgd};
-  box-shadow: ${props => props.theme.tooltipBoxShadow};
-  border-radius: 4px;
-  overflow: hidden;
-`;
-
-const MenuItem = styled.button`
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 32px;
-  padding: 0 8px;
-  border: 0;
-  background: transparent;
-  color: ${props => props.theme.textColor};
-  text-align: left;
-  cursor: pointer;
-  font-size: 12px;
-  line-height: 18px;
-  white-space: nowrap;
-
-  &:hover {
-    background: ${props => props.theme.dropdownListHighlightBg};
-  }
-`;
-
-const MenuItemIcon = styled.span`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  margin-right: 6px;
-  flex-shrink: 0;
-  color: ${props => props.theme.subtextColor};
-`;
-
-const MenuSeparator = styled.div`
-  border-top: 1px solid ${props => props.theme.dropdownListHighlightBg};
-`;
-
-type MenuAction = {
-  className: string;
-  labelId: string;
-  Icon: React.ComponentType<Partial<BaseProps>>;
-  iconHeight: string;
-  onClick: () => void;
-};
+import {
+  ContextMenuAction,
+  ContextMenuAnchor,
+  ContextMenuList,
+  ContextMenuToggle
+} from '../../common/context-menu';
 
 export type DatasetOpsMenuProps = {
   datasetId: string;
@@ -144,7 +75,7 @@ export function DatasetOpsMenu({
     const removeTooltipId = `remove-dataset-${datasetId}`;
     const removeLabel = intl.formatMessage({id: 'datasetTitle.removeDataset'});
     return (
-      <MenuToggle
+      <ContextMenuToggle
         className="dataset-action dataset-ops-menu__remove"
         data-tip
         data-for={removeTooltipId}
@@ -161,11 +92,11 @@ export function DatasetOpsMenu({
             <FormattedMessage id="datasetTitle.removeDataset" />
           </span>
         </Tooltip>
-      </MenuToggle>
+      </ContextMenuToggle>
     );
   }
 
-  const opItems: MenuAction[] = [];
+  const opItems: ContextMenuAction[] = [];
   if (showReplace && replaceDataset) {
     opItems.push({
       className: 'dataset-ops-menu__replace',
@@ -205,7 +136,7 @@ export function DatasetOpsMenu({
 
   return (
     <>
-      <MenuToggle
+      <ContextMenuToggle
         className="dataset-action dataset-ops-menu dataset-ops-menu__toggle"
         data-tip
         data-for={tooltipId}
@@ -222,42 +153,28 @@ export function DatasetOpsMenu({
             <FormattedMessage id="datasetTitle.moreSettings" />
           </span>
         </Tooltip>
-      </MenuToggle>
+      </ContextMenuToggle>
       <Portaled
-        component={PortalAnchor}
+        component={ContextMenuAnchor}
         isOpened={open}
         left={0}
         top={0}
         onClose={() => setOpen(false)}
       >
-        <Menu>
-          {opItems.map(item => (
-            <MenuItem
-              key={item.className}
-              className={item.className}
-              type="button"
-              onClick={item.onClick}
-            >
-              <MenuItemIcon>
-                <item.Icon height={item.iconHeight} />
-              </MenuItemIcon>
-              <FormattedMessage id={item.labelId} />
-            </MenuItem>
-          ))}
-          {opItems.length > 0 && showRemove ? <MenuSeparator /> : null}
-          {showRemove ? (
-            <MenuItem
-              className="dataset-ops-menu__remove"
-              type="button"
-              onClick={() => onSelect(removeDataset)}
-            >
-              <MenuItemIcon>
-                <Trash height="16px" />
-              </MenuItemIcon>
-              <FormattedMessage id="datasetTitle.removeDataset" />
-            </MenuItem>
-          ) : null}
-        </Menu>
+        <ContextMenuList
+          items={opItems}
+          footer={
+            showRemove
+              ? {
+                  className: 'dataset-ops-menu__remove',
+                  labelId: 'datasetTitle.removeDataset',
+                  Icon: Trash,
+                  iconHeight: '16px',
+                  onClick: () => onSelect(removeDataset)
+                }
+              : null
+          }
+        />
       </Portaled>
     </>
   );
