@@ -829,7 +829,9 @@ export default {
       autoCreateLayersInfo:
         'kepler.gl will auto detect layers if the column names in your file follow certain naming conventions.',
       processingLayers: 'Processing data for layers',
-      readyToAdd: 'Ready to add'
+      readyToAdd: 'Ready to add',
+      copyError: 'Copy error',
+      copied: 'Copied'
     },
     tripInfo: {
       title: 'Create trips from GeoJson',
