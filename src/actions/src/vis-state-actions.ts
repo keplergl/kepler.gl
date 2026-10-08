@@ -2027,6 +2027,8 @@ export function loadFileStepSuccess({
 export type LoadFilesErrUpdaterAction = {
   fileName: string;
   error: any;
+  /** Set when the failure belongs to one load, so a newer load can ignore it. */
+  loadId?: number;
 };
 /**
  * Trigger loading file error
@@ -2038,12 +2040,14 @@ export type LoadFilesErrUpdaterAction = {
 
 export function loadFilesErr(
   fileName: string,
-  error: any
+  error: any,
+  loadId?: number
 ): Merge<LoadFilesErrUpdaterAction, {type: typeof ActionTypes.LOAD_FILES_ERR}> {
   return {
     type: ActionTypes.LOAD_FILES_ERR,
     fileName,
-    error
+    error,
+    ...(loadId == null ? {} : {loadId})
   };
 }
 

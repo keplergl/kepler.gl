@@ -39,7 +39,7 @@ export const LOAD_FILE_TASK = Task.fromPromise(
 
 /** Unpack a zip before the load queue decides how many datasets it contains. */
 export const EXPAND_ZIP_TASK = Task.fromPromise(
-  (file: File) => expandZipArchive(file),
+  ({file, extensions}: {file: File; extensions?: string[]}) => expandZipArchive(file, extensions),
   'EXPAND_ZIP_TASK'
 );
 

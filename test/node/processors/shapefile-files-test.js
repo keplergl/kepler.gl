@@ -325,6 +325,28 @@ test('#shapefile-files -> expandZipArchive rejects a zip with nothing supported'
   t.end();
 });
 
+test('#shapefile-files -> expandZipArchive keeps custom loader extensions', async t => {
+  initApplicationConfig({acceptedFileFormats: ['csv']});
+  try {
+    const zip = createStoredZip([
+      {name: 'track.gpx', data: Buffer.from('<gpx></gpx>')},
+      {name: 'notes.custom', data: Buffer.from('x')}
+    ]);
+    const expansion = await expandZipArchive(new File([zip], 'bundle.zip'), ['custom']);
+    t.equal(expansion.kind, 'datasets');
+    if (expansion.kind === 'datasets') {
+      t.deepEqual(
+        expansion.datasets.map(file => file.name),
+        ['notes.custom'],
+        'custom extensions stay even when that built-in format is not allowed'
+      );
+    }
+  } finally {
+    initApplicationConfig({acceptedFileFormats: null});
+  }
+  t.end();
+});
+
 test('#shapefile-files -> expandZipArchive honors accepted file formats', async t => {
   initApplicationConfig({acceptedFileFormats: ['csv']});
   try {

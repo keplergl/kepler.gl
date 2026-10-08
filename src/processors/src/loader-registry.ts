@@ -216,7 +216,13 @@ export function isKeplerFileFormatAccepted(token: string): boolean {
   if (!allowed) {
     return true;
   }
-  const id = TOKEN_TO_LOADER_ID[token.trim().toLowerCase()];
+  const normalized = token.trim().toLowerCase();
+  // A zip is an archive of whatever formats are allowed, not a shapefile alias.
+  // Keep it droppable when any dataset format is accepted.
+  if (normalized === 'zip') {
+    return allowed.size > 0;
+  }
+  const id = TOKEN_TO_LOADER_ID[normalized];
   return Boolean(id && allowed.has(id));
 }
 

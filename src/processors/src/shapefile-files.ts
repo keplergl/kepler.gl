@@ -124,7 +124,15 @@ export type ZipArchiveExpansion =
  * becomes one file per supported member. Sidecars are returned as companions
  * and are not datasets. Nested folders and unsupported files are skipped.
  */
-export async function expandZipArchive(zipFile: File): Promise<ZipArchiveExpansion> {
+export async function expandZipArchive(
+  zipFile: File,
+  extraExtensions: string[] = []
+): Promise<ZipArchiveExpansion> {
+  const extra = new Set(
+    extraExtensions
+      .map(extension => extension.replace(/^\./, '').trim().toLowerCase())
+      .filter(extension => extension && extension !== 'zip')
+  );
   const entries = await listTopLevelZipFiles(zipFile);
   const companions: File[] = [];
   const datasets: File[] = [];
@@ -134,7 +142,8 @@ export async function expandZipArchive(zipFile: File): Promise<ZipArchiveExpansi
       companions.push(file);
       continue;
     }
-    if (isLoadableDatasetExtension(getDroppedFileExtension(file.name))) {
+    const ext = getDroppedFileExtension(file.name);
+    if (isLoadableDatasetExtension(ext) || extra.has(ext)) {
       datasets.push(file);
     }
   }

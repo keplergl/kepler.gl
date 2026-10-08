@@ -4667,14 +4667,14 @@ export function loadNextFileUpdater(state: VisState, action?: {loadId?: number})
   if (isZipFileName(file.name)) {
     return withTask(
       stateWithProgress,
-      EXPAND_ZIP_TASK(file).bimap(
+      EXPAND_ZIP_TASK({file, extensions: datasetExtensionsFromLoaders(loaders)}).bimap(
         expansion =>
           expandZipArchiveSuccess({
             loadId: currentLoadId,
             archiveName: file.name,
             expansion
           }),
-        err => loadFilesErr(file.name, err)
+        err => loadFilesErr(file.name, err, currentLoadId)
       )
     );
   }
@@ -4689,6 +4689,24 @@ export function loadNextFileUpdater(state: VisState, action?: {loadId?: number})
       options
     )
   );
+}
+
+function datasetExtensionsFromLoaders(
+  loaders: Array<{extensions?: readonly string[]}> = []
+): string[] {
+  const extensions: string[] = [];
+  const seen = new Set<string>();
+  for (const loader of loaders) {
+    for (const extension of loader?.extensions || []) {
+      const ext = String(extension).replace(/^\./, '').trim().toLowerCase();
+      if (!ext || ext === 'zip' || seen.has(ext)) {
+        continue;
+      }
+      seen.add(ext);
+      extensions.push(ext);
+    }
+  }
+  return extensions;
 }
 
 function companionFilesForArchive(expansion: ZipArchiveExpansion, existing?: File[]): File[] {
@@ -4908,13 +4926,13 @@ export const clearStagedLoadedFilesUpdater = (state: VisState): VisState => ({
 
 export const loadFilesErrUpdater = (
   state: VisState,
-  {error, fileName}: VisStateActions.LoadFilesErrUpdaterAction
+  {error, fileName, loadId: errorLoadId}: VisStateActions.LoadFilesErrUpdaterAction
 ): VisState => {
-  // update ui with error message
-  Console.warn(error);
-  if (!state.fileLoading) {
+  if (!state.fileLoading || (errorLoadId != null && state.fileLoading.loadId !== errorLoadId)) {
     return state;
   }
+  // update ui with error message
+  Console.warn(error);
   const loadId = state.fileLoading.loadId;
 
   const nextState = updateFileLoadingProgressUpdater(state, {

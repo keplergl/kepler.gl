@@ -7102,7 +7102,8 @@ test('#visStateReducer -> LOAD_FILES expands a mixed zip into datasets', t => {
   const [expandTask] = drainTasksForTesting();
 
   t.equal(expandTask.type, 'EXPAND_ZIP_TASK', 'a zip is unpacked before it is parsed');
-  t.equal(expandTask.payload, zipFile, 'the expand task receives the zip');
+  t.equal(expandTask.payload.file, zipFile, 'the expand task receives the zip');
+  t.deepEqual(expandTask.payload.extensions, [], 'built-in formats need no extra extensions');
   t.deepEqual(
     nextState.fileLoading.filesToLoad.map(file => file.name),
     ['extra.csv'],
@@ -7174,6 +7175,40 @@ test('#visStateReducer -> LOAD_FILES keeps a single shapefile zip name', t => {
   t.equal(expanded.fileLoading.filesToLoad.length, 0);
   t.equal(expanded.fileLoadingProgress['places.zip'].message, 'loading...');
   t.equal(expanded.fileLoadingProgress['places.shp'], undefined);
+  t.end();
+});
+
+test('#visStateReducer -> LOAD_FILES passes custom loader extensions into a zip', t => {
+  drainTasksForTesting();
+
+  const initialState = {
+    ...CloneDeep(InitialState).visState,
+    loaders: [{extensions: ['.custom']}]
+  };
+  const zipFile = {type: 'application/zip', name: 'bundle.zip'};
+  reducer(initialState, VisStateActions.loadFiles([zipFile]));
+  const [expandTask] = drainTasksForTesting();
+
+  t.deepEqual(
+    expandTask.payload,
+    {file: zipFile, extensions: ['custom']},
+    'custom loader extensions are unpacked with the zip'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> LOAD_FILES ignores a stale zip error', t => {
+  drainTasksForTesting();
+
+  const initialState = CloneDeep(InitialState).visState;
+  const first = reducer(initialState, VisStateActions.loadFiles([{name: 'first.zip'}]));
+  const [expandTask] = drainTasksForTesting();
+  const second = reducer(first, VisStateActions.loadFiles([{name: 'second.csv'}]));
+  drainTasksForTesting();
+
+  const errored = reducer(second, errorTaskInTest(expandTask, new Error('bad zip')));
+  t.equal(errored, second, 'a zip error from the previous load does not touch the new one');
+  t.equal(drainTasksForTesting().length, 0, 'the stale error does not advance the new queue');
   t.end();
 });
 

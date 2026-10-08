@@ -351,6 +351,7 @@ test('#loader-registry -> acceptedFileFormats restricts loaders and UI lists', a
     t.notOk(isKeplerFileFormatAccepted('kml'), 'kml is rejected');
     t.notOk(isKeplerFileFormatAccepted('parquet'), 'parquet is rejected');
     t.notOk(isKeplerFileFormatAccepted('shp'), 'shp is rejected');
+    t.ok(isKeplerFileFormatAccepted('zip'), 'a zip of the allowed formats stays accepted');
     t.notOk(isKeplerFileFormatAccepted('xlsx'), 'xlsx is rejected');
 
     const ids = getAcceptedKeplerLoaderEntries().map(entry => entry.id);
@@ -365,12 +366,12 @@ test('#loader-registry -> acceptedFileFormats restricts loaders and UI lists', a
 
     t.deepEqual(
       getFileExtensions({loaders: []}),
-      ['csv', 'tsv', 'dsv', 'json', 'geojson'],
+      ['csv', 'tsv', 'dsv', 'json', 'geojson', 'zip'],
       'file picker extensions follow the allowlist'
     );
     t.deepEqual(
       getFileFormatNames({loaders: []}),
-      ['CSV', 'Json', 'GeoJSON'],
+      ['CSV', 'Json', 'GeoJSON', 'Zip'],
       'file picker labels follow the allowlist'
     );
     t.deepEqual(
