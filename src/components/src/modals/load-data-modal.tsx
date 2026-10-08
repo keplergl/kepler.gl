@@ -3,12 +3,13 @@
 
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import styled, {keyframes} from 'styled-components';
+import copy from 'copy-to-clipboard';
 import get from 'es-toolkit/compat/get';
 import {IntlShape, useIntl} from 'react-intl';
 
 import {Button} from '../common';
 import Checkbox from '../common/checkbox';
-import {Docs} from '../common/icons';
+import {Checkmark, Copy, Docs} from '../common/icons';
 import TippyTooltip from '../common/tippy-tooltip';
 import FileUploadFactory from '../common/file-uploader/file-upload';
 import {selectedStagedDatasets} from '../common/file-uploader/upload-file-list';
@@ -27,6 +28,7 @@ const StyledLoadDataModal = styled.div.attrs({
 })<{$withFooter?: boolean}>`
   padding: 10px 0 ${props => (props.$withFooter ? 0 : '50px')};
   min-height: 360px;
+  max-height: calc(100vh - 180px);
   display: flex;
   flex-direction: column;
 
@@ -42,6 +44,8 @@ const AddDataBar = styled.div.attrs({
   className: 'add-data-bar'
 })`
   display: flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
   align-items: center;
   gap: 16px;
   box-sizing: border-box;
@@ -68,14 +72,81 @@ const StagedLabel = styled.div`
   font-size: 12px;
 `;
 
-const FooterError = styled.div`
-  color: ${props => props.theme.negativeBtnColor};
-  font-size: 12px;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+const FooterErrorRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  color: ${props => props.theme.errorColor};
 `;
+
+const FooterErrorText = styled.div`
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+`;
+
+const CopyErrorButton = styled.button`
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.7;
+  }
+`;
+
+function FooterErrorMessage({message}: {message: string}) {
+  const intl = useIntl();
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setCopied(false);
+  }, [message]);
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = window.setTimeout(() => setCopied(false), 1500);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+
+  const onCopy = useCallback(() => {
+    copy(message);
+    setCopied(true);
+  }, [message]);
+
+  const copyLabel = intl.formatMessage({
+    id: copied ? 'modal.loadData.copied' : 'modal.loadData.copyError',
+    defaultMessage: copied ? 'Copied' : 'Copy error'
+  });
+
+  return (
+    <FooterErrorRow>
+      <FooterErrorText role="alert">{message}</FooterErrorText>
+      <TippyTooltip placement="top" isLightTheme render={() => <div>{copyLabel}</div>}>
+        <CopyErrorButton type="button" aria-label={copyLabel} onClick={onCopy}>
+          {copied ? <Checkmark height="14px" /> : <Copy height="14px" />}
+        </CopyErrorButton>
+      </TippyTooltip>
+    </FooterErrorRow>
+  );
+}
 
 const AddDataActions = styled.div`
   display: flex;
@@ -95,6 +166,7 @@ const ModalMain = styled(Dimmed)`
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
 `;
 
 const spin = keyframes`
@@ -388,6 +460,7 @@ export function LoadDataModalFactory(
     ]);
     const uploadError = !fileLoading && isUpload ? progressErrors(fileLoadingProgress)[0] : '';
     const tilesetError = isTileset ? tilesetDraft?.error : '';
+    const footerError = uploadError || tilesetError || '';
 
     const currentModalProps = {
       ...restProps,
@@ -466,10 +539,7 @@ export function LoadDataModalFactory(
                 />
               )}
             </Dimmed>
-            <StagedLabel />
-            {uploadError || tilesetError ? (
-              <FooterError>{uploadError || tilesetError}</FooterError>
-            ) : null}
+            {footerError ? <FooterErrorMessage message={footerError} /> : <StagedLabel />}
             {preparingLayers ? (
               <ProcessingStatus
                 aria-label={intl.formatMessage({id: 'modal.loadData.processingLayers'})}

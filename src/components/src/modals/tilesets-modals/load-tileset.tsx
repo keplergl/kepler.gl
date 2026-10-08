@@ -16,6 +16,7 @@ import {
 } from '@kepler.gl/layers';
 import {getError, getApplicationConfig} from '@kepler.gl/utils';
 
+import LoadingSpinner from '../../common/loading-spinner';
 import {MetaResponse} from './common';
 import LoadDataFooter from './load-data-footer';
 import TilesetIcon from './tileset-icon';
@@ -50,6 +51,17 @@ const MetaContainer = styled.div`
   display: flex;
   max-height: 400px;
   background-color: ${({theme}) => theme.editorBackground};
+`;
+
+const MetaLoading = styled.div.attrs({
+  role: 'status'
+})`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  flex: 1;
+  min-height: 160px;
 `;
 
 const BitmapPreviewContainer = styled.div`
@@ -224,7 +236,11 @@ function LoadTilesetTabFactory() {
             </div>
           </div>
           <MetaContainer>
-            {data && 'imagePreviewUrl' in data ? (
+            {loading ? (
+              <MetaLoading>
+                <LoadingSpinner />
+              </MetaLoading>
+            ) : data && 'imagePreviewUrl' in data ? (
               <BitmapPreviewContainer>
                 <img src={(data as any).imagePreviewUrl} alt="Bitmap preview" />
               </BitmapPreviewContainer>
