@@ -477,20 +477,20 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE fit bounds on manual layer', async t
   drainTasksForTesting();
   const previousFitBounds = getApplicationConfig().enableFitBoundsOnManualLayer;
 
-  initApplicationConfig({enableFitBoundsOnManualLayer: false});
-  const disabled = makeEmptyLayerState();
-  reducer(
-    disabled.state,
-    VisStateActions.layerTypeChange(disabled.layer, 'point', {fitBounds: true})
-  );
-  t.equal(
-    drainTasksForTesting().length,
-    0,
-    'should not fit bounds when enableFitBoundsOnManualLayer is off'
-  );
-
-  initApplicationConfig({enableFitBoundsOnManualLayer: true});
   try {
+    initApplicationConfig({enableFitBoundsOnManualLayer: false});
+    const disabled = makeEmptyLayerState();
+    reducer(
+      disabled.state,
+      VisStateActions.layerTypeChange(disabled.layer, 'point', {fitBounds: true})
+    );
+    t.equal(
+      drainTasksForTesting().length,
+      0,
+      'should not fit bounds when enableFitBoundsOnManualLayer is off'
+    );
+
+    initApplicationConfig({enableFitBoundsOnManualLayer: true});
     const programmatic = makeEmptyLayerState();
     reducer(programmatic.state, VisStateActions.layerTypeChange(programmatic.layer, 'point'));
     t.equal(
