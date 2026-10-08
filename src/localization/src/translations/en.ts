@@ -534,6 +534,7 @@ export default {
     zoomToLayer: 'Zoom to layer',
     resetAfterError: 'Try to enable the layer after an error',
     layerSettings: 'Layer settings',
+    moreOptions: 'More options',
     interactionSettings: 'Interaction settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',
@@ -1072,6 +1073,9 @@ ${'```'}
     dropMessage: 'Drag & Drop Your File(s) Here, {browse}, or',
     toAdd: 'To add to map',
     includeDataset: 'Include {name}',
+    largeDataset: 'Large',
+    largeDatasetWarning:
+      'This dataset is large. It can run out of memory, layer creation can take a long time, and rendering can be laggy.',
     readyToAdd: '{size} - Ready to add file to map',
     readyToAddNoSize: 'Ready to add file to map',
     loadingProgress: 'Loading ({loaded} / {total})',

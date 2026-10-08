@@ -206,6 +206,20 @@ export type KeplerApplicationConfig = {
   /** Whether to show the map scale bar at the bottom-left of the map. Enabled by default. */
   enableMapScale?: boolean;
 
+  /**
+   * Fit the map to a dataset when the layer type dropdown gives a manually
+   * added layer its first type. The layer already has a dataset (chosen from
+   * Add Layer). Programmatic `layerTypeChange`, saved configs, and later type
+   * changes do not move the map.
+   * Enabled by default. Disable with {@link initApplicationConfig}.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({enableFitBoundsOnManualLayer: false});
+   * ```
+   */
+  enableFitBoundsOnManualLayer?: boolean;
+
   /** Whether to enable the swipe compare mode in split map view. Enabled by default. */
   enableSwipeMode?: boolean;
 
@@ -276,6 +290,31 @@ export type KeplerApplicationConfig = {
    * Useful for extensionless URLs such as Azure SAS blobs. Disabled by default.
    */
   enableRemoteFileFormatSelector?: boolean;
+
+  /**
+   * Warn in the Add Data list when a dataset has at least this many rows.
+   * `false` shows no warning. The warning waits until the row count is known.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({largeDatasetWarningRows: 1_000_000});
+   * initApplicationConfig({largeDatasetWarningRows: false});
+   * ```
+   */
+  largeDatasetWarningRows?: false | number;
+
+  /**
+   * Warn in the Add Data list when a file is at least this many bytes.
+   * `false` shows no file-size warning. Either this or {@link largeDatasetWarningRows}
+   * can show the same tag.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({largeDatasetWarningBytes: 50 * 1024 * 1024});
+   * initApplicationConfig({largeDatasetWarningBytes: false});
+   * ```
+   */
+  largeDatasetWarningBytes?: false | number;
 
   /**
    * File formats Kepler may load from drag-and-drop, the file picker, and remote URLs.
@@ -428,6 +467,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableMapScale: true,
 
+  enableFitBoundsOnManualLayer: true,
+
   enableSwipeMode: true,
 
   enableGlobeView: true,
@@ -451,6 +492,10 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableChartJsonEditor: true,
 
   enableRemoteFileFormatSelector: false,
+
+  largeDatasetWarningRows: 500_000,
+
+  largeDatasetWarningBytes: 1024 * 1024 * 1024,
 
   acceptedFileFormats: null,
 

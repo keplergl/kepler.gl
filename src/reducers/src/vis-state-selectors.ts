@@ -34,9 +34,10 @@ const DEFAULT_FILE_EXTENSIONS = [
   'xlsb',
   'fgb'
 ];
-// One chip per format family. Aliases (tsv, jsonl, ndgeojson, zip, shapefile,
+// One chip per format family. Aliases (tsv, jsonl, ndgeojson, shapefile,
 // excel, flatgeobuf, sidecars, …) stay accepted via DEFAULT_FILE_EXTENSIONS
-// and listed in DISPLAY_FILE_FORMATS, but are not shown as extra icons.
+// and are not shown as extra icons. Zip is its own format name: an archive
+// can hold any of these datasets, not only a shapefile.
 const DISPLAY_FILE_EXTENSIONS = [
   'csv',
   'json',
@@ -59,6 +60,7 @@ const DISPLAY_FILE_FORMATS = [
   'GPX',
   'TCX',
   'Shapefile',
+  'Zip',
   'Excel',
   'FlatGeobuf'
 ];

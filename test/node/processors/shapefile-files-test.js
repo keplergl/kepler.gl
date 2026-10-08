@@ -4,6 +4,7 @@
 import test from 'tape';
 import {crc32} from 'zlib';
 import {
+  expandZipArchive,
   getFilesToParse,
   getDroppedFileExtension,
   isShapefileSidecarFileName,
@@ -11,6 +12,7 @@ import {
   readFileInBatches,
   unzipShapefileArchive
 } from '@kepler.gl/processors';
+import {initApplicationConfig} from '@kepler.gl/utils';
 
 function createPointShapefileBuffers({x = -122.4, y = 37.8, name = 'alpha'} = {}) {
   const shp = new ArrayBuffer(128);
@@ -213,5 +215,158 @@ test('#shapefile-files -> shapefile zip unpacks before parse', async t => {
   t.equal(processed[0].info.format, 'geojson', 'shapefile zip should process as geojson');
   t.equal(processed[0].info.label, 'places.zip', 'the dataset label should stay the zip name');
   t.equal(processed[0].data.rows.length, 1, 'should keep the unzipped shapefile feature');
+  t.end();
+});
+
+test('#shapefile-files -> expandZipArchive keeps a single shapefile archive', async t => {
+  const {shp, shx, dbf} = createPointShapefileBuffers();
+  const zip = createStoredZip([
+    {name: 'places.shp', data: Buffer.from(shp)},
+    {name: 'places.shx', data: Buffer.from(shx)},
+    {name: 'places.dbf', data: Buffer.from(dbf)},
+    {name: 'readme.txt', data: Buffer.from('notes')},
+    {name: 'nested/ignore.shp', data: Buffer.from(shp)}
+  ]);
+  const expansion = await expandZipArchive(new File([zip], 'places.zip'));
+
+  t.equal(expansion.kind, 'shapefile', 'one shapefile plus sidecars stays one archive');
+  if (expansion.kind !== 'shapefile') {
+    t.end();
+    return;
+  }
+  t.equal(expansion.shapefile.name, 'places.shp');
+  t.deepEqual(
+    expansion.companions.map(file => file.name).sort(),
+    ['places.dbf', 'places.shx'],
+    'readme and nested files are not companions'
+  );
+  t.end();
+});
+
+test('#shapefile-files -> expandZipArchive splits mixed files into datasets', async t => {
+  const csv = 'name,lat,lng\nalpha,37.8,-122.4\n';
+  const zip = createStoredZip([
+    {name: 'places.csv', data: Buffer.from(csv)},
+    {
+      name: 'neighborhoods.geojson',
+      data: Buffer.from('{"type":"FeatureCollection","features":[]}')
+    },
+    {name: 'nested/ignore.csv', data: Buffer.from('a\n1\n')},
+    {name: 'readme.txt', data: Buffer.from('hi')},
+    {name: 'inner.zip', data: Buffer.from('not-a-zip')}
+  ]);
+  const expansion = await expandZipArchive(new File([zip], 'bundle.zip'));
+
+  t.equal(expansion.kind, 'datasets');
+  if (expansion.kind !== 'datasets') {
+    t.end();
+    return;
+  }
+  t.deepEqual(
+    expansion.datasets.map(file => file.name),
+    ['places.csv', 'neighborhoods.geojson'],
+    'each supported top-level file becomes a dataset'
+  );
+  t.deepEqual(expansion.companions, [], 'a csv zip has no shapefile sidecars');
+
+  const batch = await readLastBatch(expansion.datasets[0]);
+  const processed = await processFileData({content: batch, fileCache: []});
+  t.equal(processed[0].info.label, 'places.csv', 'the dataset label is the file inside the zip');
+  t.equal(processed[0].data.rows.length, 1, 'should parse the unzipped csv');
+  t.end();
+});
+
+test('#shapefile-files -> expandZipArchive loads every shapefile in the zip', async t => {
+  const alpha = createPointShapefileBuffers({name: 'alpha'});
+  const beta = createPointShapefileBuffers({name: 'beta', x: -122.5, y: 37.9});
+  const zip = createStoredZip([
+    {name: 'alpha.shp', data: Buffer.from(alpha.shp)},
+    {name: 'alpha.shx', data: Buffer.from(alpha.shx)},
+    {name: 'alpha.dbf', data: Buffer.from(alpha.dbf)},
+    {name: 'beta.shp', data: Buffer.from(beta.shp)},
+    {name: 'beta.shx', data: Buffer.from(beta.shx)},
+    {name: 'beta.dbf', data: Buffer.from(beta.dbf)}
+  ]);
+  const expansion = await expandZipArchive(new File([zip], 'places.zip'));
+
+  t.equal(expansion.kind, 'datasets', 'several shapefiles are separate datasets');
+  if (expansion.kind !== 'datasets') {
+    t.end();
+    return;
+  }
+  t.deepEqual(
+    expansion.datasets.map(file => file.name),
+    ['alpha.shp', 'beta.shp']
+  );
+  const companions = [...expansion.datasets, ...expansion.companions];
+  const names = [];
+  for (const file of expansion.datasets) {
+    const batch = await readLastBatch(file, companions);
+    const processed = await processFileData({content: batch, fileCache: []});
+    const nameField = processed[0].data.fields.findIndex(field => field.name === 'NAME');
+    names.push(String(processed[0].data.rows[0][nameField]).trim());
+    t.equal(processed[0].info.label, file.name, 'each shapefile keeps its own name');
+  }
+  t.deepEqual(names, ['alpha', 'beta'], 'each shapefile reads its own DBF');
+  t.end();
+});
+
+test('#shapefile-files -> expandZipArchive rejects a zip with nothing supported', async t => {
+  const zip = createStoredZip([
+    {name: 'readme.txt', data: Buffer.from('hi')},
+    {name: 'nested/places.csv', data: Buffer.from('a\n1\n')}
+  ]);
+  try {
+    await expandZipArchive(new File([zip], 'notes.zip'));
+    t.fail('should reject a zip with no supported dataset');
+  } catch (error) {
+    t.equal(error.message, 'Zip archive does not contain a supported dataset');
+  }
+  t.end();
+});
+
+test('#shapefile-files -> expandZipArchive keeps custom loader extensions', async t => {
+  initApplicationConfig({acceptedFileFormats: ['csv']});
+  try {
+    const zip = createStoredZip([
+      {name: 'track.gpx', data: Buffer.from('<gpx></gpx>')},
+      {name: 'notes.custom', data: Buffer.from('x')}
+    ]);
+    const expansion = await expandZipArchive(new File([zip], 'bundle.zip'), ['custom']);
+    t.equal(expansion.kind, 'datasets');
+    if (expansion.kind === 'datasets') {
+      t.deepEqual(
+        expansion.datasets.map(file => file.name),
+        ['notes.custom'],
+        'custom extensions stay even when that built-in format is not allowed'
+      );
+    }
+  } finally {
+    initApplicationConfig({acceptedFileFormats: null});
+  }
+  t.end();
+});
+
+test('#shapefile-files -> expandZipArchive honors accepted file formats', async t => {
+  initApplicationConfig({acceptedFileFormats: ['csv']});
+  try {
+    const {shp} = createPointShapefileBuffers();
+    const zip = createStoredZip([
+      {name: 'places.csv', data: Buffer.from('name\nalpha\n')},
+      {name: 'places.geojson', data: Buffer.from('{"type":"FeatureCollection","features":[]}')},
+      {name: 'places.shp', data: Buffer.from(shp)}
+    ]);
+    const expansion = await expandZipArchive(new File([zip], 'bundle.zip'));
+    t.equal(expansion.kind, 'datasets');
+    if (expansion.kind === 'datasets') {
+      t.deepEqual(
+        expansion.datasets.map(file => file.name),
+        ['places.csv'],
+        'formats outside the allowlist stay in the zip'
+      );
+    }
+  } finally {
+    initApplicationConfig({acceptedFileFormats: null});
+  }
   t.end();
 });
