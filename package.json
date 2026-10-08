@@ -59,6 +59,8 @@
     "test-jest": "jest",
     "test-tape": "yarn test-node && yarn test-browser",
     "test": "yarn test-jest && yarn test-tape",
+    "agent:check": "node ./scripts/assert-node-engine.js && yarn typescript && yarn test-jest --watchAll=false",
+    "agent:verify": "node ./scripts/assert-node-engine.js && yarn check-circular-deps && yarn agent:check && yarn test-fast && yarn test:sqlrooms",
     "cover": "yarn cover-tape && yarn cover-jest && yarn cover-merge && yarn cover-report",
     "cover-tape": "nyc --reporter=json --report-dir=tape-coverage --reporter=lcov yarn test-tape",
     "cover-jest": "jest --coverage --reporter=lcov --watchAll=false",

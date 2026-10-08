@@ -1,0 +1,27 @@
+---
+description: Run the canonical agent check and verify commands
+alwaysApply: true
+---
+
+# Agent verification
+
+Run these from the repository root. They need Node >= 20 (Volta pin 20.19.3, same as Node.js CI).
+
+- While iterating on code, run `yarn agent:check`.
+- Before creating or updating a pull request, run `yarn agent:verify` and leave it green.
+
+`agent:check` is `tsc --noEmit` plus the Jest suite (`--watchAll=false` so it exits in a terminal).
+
+`agent:verify` is the blocking Node.js CI gates that can pass on a clean tree:
+
+- `yarn check-circular-deps`
+- `yarn typescript`
+- Jest (`yarn test-jest --watchAll=false`)
+- Tape (`yarn test-fast`: node tests and jsdom browser tests, about 17k assertions)
+- `yarn test:sqlrooms`
+
+Node.js CI runs those Jest and Tape tests as `xvfb-run yarn cover`. Coverage collection is what makes that step about five minutes. There is no coverage threshold, so `agent:verify` runs the same tests without coverage.
+
+`test-fast` is the full Tape suite without the tap-spec printer. It is the slow half of the local suite (about a minute), so it belongs in `agent:verify`, not the inner loop.
+
+Leave `yarn lint` and `yarn lint:check` out of these commands. CI's lint step is `eslint --fix` because check-only mode fails on existing Prettier issues. `yarn lint` rewrites those existing issues into the working tree.
