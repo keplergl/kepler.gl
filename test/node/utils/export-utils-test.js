@@ -49,6 +49,23 @@ test('exportUtils -> ExportHtml includes map info', t => {
   t.end();
 });
 
+test('exportUtils -> ExportHtml escapes script terminators in map info', t => {
+  const html = exportMapToHTML({
+    datasets: [],
+    config: {version: 'v1', config: {}},
+    info: {title: '</script><script>window.pwned=1;</script>'},
+    mode: 'READ'
+  });
+
+  t.notOk(
+    html.includes('<script>window.pwned'),
+    'a map title should not be able to close the inline script'
+  );
+  t.ok(html.includes('\\u003c/script>'), 'should escape `<` in the serialized map info');
+
+  t.end();
+});
+
 test('exportUtils -> getScaleFromImageSize', t => {
   t.equal(
     getScaleFromImageSize(800, 600, 1400, 990),

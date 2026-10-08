@@ -4,6 +4,7 @@
 import React, {ComponentType, useCallback, useState} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
+import {useIntl} from 'react-intl';
 
 import {MAP_INFO_CHARACTER} from '@kepler.gl/constants';
 import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
@@ -106,6 +107,7 @@ function MapInfoConfigFactory(
     actionIcons: customActionIcons
   }) => {
     const actionIcons = {...defaultActionIcons, ...customActionIcons};
+    const intl = useIntl();
     const [isConfigActive, setIsConfigActive] = useState(false);
     const title = mapInfo?.title ?? '';
     const description = mapInfo?.description ?? '';
@@ -118,7 +120,7 @@ function MapInfoConfigFactory(
       const next = !mapInfoShow;
       uiStateActions?.setMapControlVisibility('mapInfo', next);
       if (next && !mapInfoActive) {
-        uiStateActions?.toggleMapControl('mapInfo');
+        uiStateActions?.toggleMapControl('mapInfo', 0);
       }
     }, [mapInfoActive, mapInfoShow, uiStateActions]);
 
@@ -171,7 +173,13 @@ function MapInfoConfigFactory(
               onClick={togglePanelActive}
               IconComponent={actionIcons.settings}
             />
-            <Switch checked={mapInfoShow} id="map-info-toggle" onChange={onToggleShow} secondary />
+            <Switch
+              checked={mapInfoShow}
+              id="map-info-toggle"
+              onChange={onToggleShow}
+              secondary
+              aria-label={intl.formatMessage({id: 'interactions.mapInfo'})}
+            />
           </HeaderActions>
         </StyledPanelHeader>
         {isConfigActive ? (

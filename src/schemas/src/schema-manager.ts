@@ -85,12 +85,16 @@ export type SavedMap = {
   info: {
     app: string;
     created_at: string;
-    title: string;
-    description: string;
+    title?: string;
+    description?: string;
   };
 };
 
-export type LoadedMap = {datasets?: ParsedDataset[] | null; config?: ParsedConfig | null};
+export type LoadedMap = {
+  datasets?: ParsedDataset[] | null;
+  config?: ParsedConfig | null;
+  info?: {title?: string; description?: string};
+};
 
 export const reducerSchema: {
   [key: string]:

@@ -108,9 +108,9 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
   return (
     <div className="selection map-info-panel" data-testid={dataTestIds.providerMapInfoPanel}>
       <StyledModalSection className="save-map-modal-file-name">
-        <div className="modal-section-title">
+        <label className="modal-section-title" htmlFor="save-map-file-name">
           <FormattedMessage id="modal.exportFileName.title" />
-        </div>
+        </label>
         <div>
           <InputLight
             id="save-map-file-name"
@@ -122,7 +122,9 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
         </div>
       </StyledModalSection>
       <StyledModalSection className="save-map-modal-name">
-        <div className="modal-section-title">Name</div>
+        <label className="modal-section-title" htmlFor="map-title">
+          Name
+        </label>
         <div>
           <InputLight
             id="map-title"
@@ -130,12 +132,13 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
             value={title}
             maxLength={characterLimits?.title || MAP_INFO_CHARACTER.title}
             onChange={e => onChangeInput('title', e)}
-            aria-label="Name"
           />
         </div>
       </StyledModalSection>
       <StyledModalSection className="save-map-modal-description">
-        <div className="modal-section-title">Description</div>
+        <label className="modal-section-title" htmlFor="map-description">
+          Description
+        </label>
         <div>
           <InputLight
             id="map-description"
@@ -143,7 +146,6 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
             value={description}
             maxLength={characterLimits?.description || MAP_INFO_CHARACTER.description}
             onChange={e => onChangeInput('description', e)}
-            aria-label="Description"
           />
         </div>
       </StyledModalSection>

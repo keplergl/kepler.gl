@@ -1079,3 +1079,29 @@ test('Processor -> processKeplerglJSON keeps display info', t => {
   t.equal(parsed.info.source, undefined, 'should not copy the export source onto map info');
   t.end();
 });
+
+test('Processor -> processKeplerglJSON replaces display info', t => {
+  const titleOnly = processKeplerglJSON({
+    datasets: [],
+    config: {version: 'v1', config: {}},
+    info: {app: 'kepler.gl', created_at: 'today', title: 'Harbor'}
+  });
+
+  t.ok(
+    'description' in titleOnly.info,
+    'should always return description so it clears the previous map'
+  );
+  t.equal(titleOnly.info.description, undefined, 'should not keep a missing description');
+
+  const noInfo = processKeplerglJSON({
+    datasets: [],
+    config: {version: 'v1', config: {}}
+  });
+
+  t.deepEqual(
+    noInfo.info,
+    {title: undefined, description: undefined},
+    'a saved map without display info should clear both values'
+  );
+  t.end();
+});

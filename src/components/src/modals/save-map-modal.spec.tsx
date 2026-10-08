@@ -158,6 +158,11 @@ describe('SaveMapModal', () => {
 
     const titleInput = getByLabelText('Name');
     expect(titleInput).toBeInTheDocument();
+    // rendered without an IntlProvider, so the label shows the message id
+    expect(getByLabelText('modal.exportFileName.title')).toHaveAttribute(
+      'id',
+      'save-map-file-name'
+    );
 
     fireEvent.change(titleInput, {target: {value: 'first kepler map'}});
     expect(DEFAULT_PROS.onSetMapInfo).not.toHaveBeenCalled();

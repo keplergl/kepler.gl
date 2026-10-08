@@ -293,8 +293,8 @@ export type SavedMap = {
   info: {
     app: string;
     created_at: string;
-    title: string;
-    description: string;
+    title?: string;
+    description?: string;
   };
 };
 

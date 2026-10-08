@@ -407,20 +407,24 @@ export function processGeojson(rawData: unknown): ProcessorResult {
  *
  * dispatch(addDataToMap(processKeplerglJSON(keplerGlJson)));
  */
-function savedMapDisplayInfo(info: unknown): {title?: string; description?: string} | undefined {
-  if (!info || typeof info !== 'object') {
-    return undefined;
-  }
-  return optionalMapInfo(info as {title?: unknown; description?: unknown});
+function savedMapDisplayInfo(info: unknown): {title?: string; description?: string} {
+  const saved =
+    info && typeof info === 'object'
+      ? optionalMapInfo(info as {title?: unknown; description?: unknown})
+      : undefined;
+  // Both keys are always present: setMapInfo merges, so omitting one would keep
+  // the previously loaded map's value instead of clearing it.
+  return {title: saved?.title, description: saved?.description};
 }
 
 export function processKeplerglJSON(rawData: SavedMap, schema = KeplerGlSchema): LoadedMap | null {
   if (!rawData) {
     return null;
   }
-  const loaded = schema.load(rawData.datasets, rawData.config);
-  const info = savedMapDisplayInfo(rawData.info);
-  return info ? {...loaded, info} : loaded;
+  return {
+    ...schema.load(rawData.datasets, rawData.config),
+    info: savedMapDisplayInfo(rawData.info)
+  };
 }
 
 /**

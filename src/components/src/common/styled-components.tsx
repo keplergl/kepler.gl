@@ -498,6 +498,7 @@ export const StyledModalSection = styled.div.attrs(({className}) => ({
   margin-bottom: 32px;
 
   .modal-section-title {
+    display: block;
     font-weight: 500;
   }
   .modal-section-subtitle {

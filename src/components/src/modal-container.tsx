@@ -638,7 +638,7 @@ export default function ModalContainerFactory(
             template = (
               <OverWriteMapModal
                 {...providerState}
-                title={get(visState, ['mapInfo', 'title'])}
+                title={get(visState, ['mapInfo', 'title']) ?? ''}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
                 onConfirm={this._onOverwriteMap}

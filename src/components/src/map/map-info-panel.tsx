@@ -42,6 +42,7 @@ const InfoPanel = styled.div`
     color: ${props => props.theme.textColor};
     font-size: 11px;
     margin-top: 12px;
+    word-break: break-word;
 
     &.map-info-description--only {
       margin-top: 0;
@@ -103,6 +104,12 @@ const MapInfoLink: React.FC<MapInfoLinkProps> = ({href = '', children}) => {
   }
   return <LinkRenderer href={href}>{children}</LinkRenderer>;
 };
+
+/**
+ * Images are not rendered: a description loaded from an untrusted map file would
+ * otherwise fetch an arbitrary url as soon as the card opens.
+ */
+const MapInfoImage: React.FC<{alt?: string}> = ({alt}) => (alt ? <span>{alt}</span> : null);
 
 export type MapInfoPanelProps = {
   mapControls: MapControls;
@@ -200,6 +207,9 @@ function MapInfoPanelFactory(MapControlTooltip: React.FC<MapControlTooltipProps>
                   overrides: {
                     a: {
                       component: MapInfoLink
+                    },
+                    img: {
+                      component: MapInfoImage
                     }
                   }
                 }}

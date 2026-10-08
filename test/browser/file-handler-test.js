@@ -668,8 +668,8 @@ test('#file-handler -> readFileInBatches.keplerMap -> processFileData', async t 
 
   t.deepEqual(
     Object.keys(processed[0].data),
-    ['datasets', 'config'],
-    'processFileData of keplergl json should have datasets and config'
+    ['datasets', 'config', 'info'],
+    'processFileData of keplergl json should have datasets, config and map info'
   );
   t.deepEqual(
     Object.keys(processed[0].data.datasets[0].data),

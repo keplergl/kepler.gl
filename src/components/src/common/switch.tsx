@@ -16,6 +16,8 @@ interface SwitchProps {
   value?: string;
   secondary?: boolean;
   disabled?: boolean;
+  /** Names the control when `label` is empty or not rendered next to it. */
+  'aria-label'?: string;
 }
 
 const Switch = (props: SwitchProps) => {

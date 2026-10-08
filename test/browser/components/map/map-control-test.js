@@ -488,6 +488,13 @@ test('MapControlFactory - map info panel', t => {
   );
   t.equal(shown.find('textarea').length, 0, 'imported map info is display only');
 
+  const withImage = mountControl({
+    mapControls: {mapInfo: {show: true, active: true}},
+    mapInfo: {description: '![pixel](https://tracker.example/pixel.png)'}
+  });
+  t.equal(withImage.find('img').length, 0, 'an imported description does not fetch images');
+  t.ok(withImage.text().includes('pixel'), 'keeps the image alt text as plain text');
+
   shown.find('button[aria-label="Minimize map info"]').hostNodes().simulate('click');
   t.equal(onToggleMapControl.callCount, 1, 'closing the panel toggles map info');
   t.equal(onToggleMapControl.firstCall.args[0], 'mapInfo');

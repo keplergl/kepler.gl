@@ -1147,6 +1147,7 @@ export const receiveMapConfigUpdater = (
         ...newState.mapControls,
         mapInfo: {
           show: true,
+          active: true,
           ...currentMapInfo,
           ...(typeof savedMapInfoShow === 'boolean' ? {show: savedMapInfoShow} : {}),
           ...(typeof savedMapInfoActive === 'boolean' ? {active: savedMapInfoActive} : {}),
