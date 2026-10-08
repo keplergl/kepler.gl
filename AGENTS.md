@@ -16,9 +16,10 @@ Never claim a task is complete if `yarn agent:verify` fails.
 If verification fails:
 
 - Investigate the failure.
-- Fix failures caused by the change.
+- Make the smallest change that addresses that failure.
 - Rerun verification.
-- Continue until it passes.
+
+Stop editing when the same failure repeats, or the next edit would reach files the failure does not point at, replace a working approach, or clean up unrelated code. Report the failure and what you changed.
 
 If a failure appears unrelated or pre-existing:
 
@@ -33,7 +34,7 @@ Before changing code:
 2. Read nearby tests.
 3. Search for similar patterns elsewhere in kepler.gl.
 4. Prefer existing abstractions over introducing new ones.
-5. Avoid unrelated refactoring.
+5. Avoid unrelated refactoring. Do not rename public symbols, reformat unrelated files, or upgrade dependencies unless the task requires it.
 
 ## Testing
 
@@ -44,6 +45,8 @@ Before handing work to a human, always run:
 ```bash
 yarn agent:verify
 ```
+
+Report each command as `PASS`, `FAILED`, or `NOT RUN`. Do not report a command you did not run.
 
 `agent:verify` is the blocking Node.js CI gates that pass on a clean tree:
 
@@ -72,16 +75,26 @@ When behavior is visible in the UI:
 3. Check the browser console for errors.
 4. Capture screenshots showing the result where useful.
 
+## Decisions
+
+Proceed on local choices: naming, test layout, an existing pattern, an obvious type fix.
+
+Ask first for a public API change, saved-config compatibility, product behavior, or a new architectural abstraction.
+
 ## Pull requests
 
-PR descriptions must contain:
+PR descriptions must be short and contain:
 
 - What changed
 - Why
 - Important implementation details
-- Tests added or changed
-- Verification commands and results
-- Screenshots for visual changes
+- Verification results (`PASS`, `FAILED`, or `NOT RUN`)
 - Remaining uncertainties or decisions
+- A checklist of what to review
+
+Optional contents:
+
+- Screenshots for visual changes 
+
 
 Do not hide uncertainty. If product or architectural judgment is required, explicitly mark it for human review.
