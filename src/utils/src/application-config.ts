@@ -292,6 +292,31 @@ export type KeplerApplicationConfig = {
   enableRemoteFileFormatSelector?: boolean;
 
   /**
+   * Warn in the Add Data list when a dataset has at least this many rows.
+   * `false` shows no warning. The warning waits until the row count is known.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({largeDatasetWarningRows: 1_000_000});
+   * initApplicationConfig({largeDatasetWarningRows: false});
+   * ```
+   */
+  largeDatasetWarningRows?: false | number;
+
+  /**
+   * Warn in the Add Data list when a file is at least this many bytes.
+   * `false` shows no file-size warning. Either this or {@link largeDatasetWarningRows}
+   * can show the same tag.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({largeDatasetWarningBytes: 50 * 1024 * 1024});
+   * initApplicationConfig({largeDatasetWarningBytes: false});
+   * ```
+   */
+  largeDatasetWarningBytes?: false | number;
+
+  /**
    * File formats Kepler may load from drag-and-drop, the file picker, and remote URLs.
    * Values are format ids or extensions (`csv`, `geojson`, `kml`, `shp`, `xlsx`, `fgb`, …).
    * When omitted or `null`, every built-in format is accepted.
@@ -467,6 +492,10 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableChartJsonEditor: true,
 
   enableRemoteFileFormatSelector: false,
+
+  largeDatasetWarningRows: 500_000,
+
+  largeDatasetWarningBytes: 1024 * 1024 * 1024,
 
   acceptedFileFormats: null,
 

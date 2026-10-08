@@ -2,11 +2,88 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {FC} from 'react';
+import {useIntl} from 'react-intl';
 import styled, {keyframes} from 'styled-components';
 
 import {media} from '@kepler.gl/styles';
+import {getApplicationConfig} from '@kepler.gl/utils';
 import Checkbox from '../checkbox';
-import {FileType} from '../icons';
+import {FileType, WarningSign} from '../icons';
+import TippyTooltip from '../tippy-tooltip';
+
+function rowCountOf(record: Record<string, unknown>): number | null {
+  const arrowTable = record.arrowTable as {numRows?: number} | undefined;
+  if (typeof arrowTable?.numRows === 'number') {
+    return arrowTable.numRows;
+  }
+  if (Array.isArray(record.cols) && record.cols.length) {
+    const length = (record.cols[0] as {length?: number} | undefined)?.length;
+    if (typeof length === 'number' && length > 0) {
+      return length;
+    }
+  }
+  if (Array.isArray(record.rows)) {
+    return record.rows.length;
+  }
+  if (Array.isArray(record.allData)) {
+    return record.allData.length;
+  }
+  return null;
+}
+
+/** Row count for a parsed file, including Arrow columns and saved maps. */
+export function countDatasetRows(data: unknown, depth = 0): number | null {
+  if (!data || typeof data !== 'object' || depth > 4) {
+    return null;
+  }
+  const record = data as Record<string, unknown>;
+  const direct = rowCountOf(record);
+  if (direct != null) {
+    return direct;
+  }
+  if (record.data && record.data !== data) {
+    const nested = countDatasetRows(record.data, depth + 1);
+    if (nested != null) {
+      return nested;
+    }
+  }
+  if (Array.isArray(record.datasets)) {
+    let total = 0;
+    let known = false;
+    for (const dataset of record.datasets) {
+      const count = countDatasetRows(dataset, depth + 1);
+      if (count != null) {
+        known = true;
+        total += count;
+      }
+    }
+    return known ? total : null;
+  }
+  return null;
+}
+
+/** True when the row count or the file size reaches its configured warning cutoff. */
+export function isLargeDatasetUpload({
+  rows,
+  bytes
+}: {
+  rows?: number | null;
+  bytes?: number | null;
+} = {}): boolean {
+  const {largeDatasetWarningRows, largeDatasetWarningBytes} = getApplicationConfig();
+  if (
+    largeDatasetWarningRows !== false &&
+    typeof rows === 'number' &&
+    rows >= largeDatasetWarningRows
+  ) {
+    return true;
+  }
+  return (
+    largeDatasetWarningBytes !== false &&
+    typeof bytes === 'number' &&
+    bytes >= largeDatasetWarningBytes
+  );
+}
 
 export type StagedDatasetRef = {
   info?: {id?: string; label?: string};
@@ -36,6 +113,7 @@ export type UploadFileListItem = {
   percent: number;
   isError?: boolean;
   isSuccess?: boolean;
+  isLarge?: boolean;
   selectable?: boolean;
   selected?: boolean;
   selectionLabel?: string;
@@ -113,12 +191,50 @@ const CardText = styled.div`
   flex: 1;
 `;
 
+const CardNameRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+`;
+
 const CardName = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12px;
   font-weight: 500;
+`;
+
+const LargeDatasetTooltip = styled.div`
+  max-width: 240px;
+  white-space: normal;
+  line-height: 1.4;
+`;
+
+const LargeDatasetTag = styled.button.attrs({
+  type: 'button',
+  className: 'upload-file-list__large-dataset'
+})`
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+  margin: 0;
+  padding: 0 5px 0 3px;
+  border: 0;
+  border-radius: 2px;
+  background: #fff4e5;
+  color: #9a5b00;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  cursor: help;
+
+  svg {
+    display: block;
+  }
 `;
 
 const CardCheck = styled.div`
@@ -202,6 +318,10 @@ const StatusSpinner = styled.span.attrs({
 `;
 
 const UploadFileList: FC<UploadFileListProps> = ({title, items}) => {
+  const intl = useIntl();
+  const largeDatasetLabel = intl.formatMessage({id: 'fileUploader.largeDataset'});
+  const largeDatasetWarning = intl.formatMessage({id: 'fileUploader.largeDatasetWarning'});
+
   if (!items.length) {
     return null;
   }
@@ -219,7 +339,24 @@ const UploadFileList: FC<UploadFileListProps> = ({title, items}) => {
               <FileType ext={item.ext} height="36px" fontSize="8px" />
             </IconWrap>
             <CardText>
-              <CardName title={item.name}>{item.name}</CardName>
+              <CardNameRow>
+                <CardName title={item.name}>{item.name}</CardName>
+                {item.isLarge ? (
+                  <TippyTooltip
+                    placement="top"
+                    isLightTheme
+                    render={() => <LargeDatasetTooltip>{largeDatasetWarning}</LargeDatasetTooltip>}
+                  >
+                    <LargeDatasetTag
+                      aria-label={largeDatasetWarning}
+                      onClick={event => event.stopPropagation()}
+                    >
+                      <WarningSign height="12px" />
+                      {largeDatasetLabel}
+                    </LargeDatasetTag>
+                  </TippyTooltip>
+                ) : null}
+              </CardNameRow>
               <CardStatus $isError={item.isError} title={item.status}>
                 {item.status}
               </CardStatus>

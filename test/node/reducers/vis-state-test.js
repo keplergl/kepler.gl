@@ -7174,6 +7174,126 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.end();
 });
 
+test('#visStateReducer -> LOAD_FILES expands a mixed zip into datasets', t => {
+  drainTasksForTesting();
+
+  const initialState = CloneDeep(InitialState).visState;
+  const zipFile = {type: 'application/zip', name: 'bundle.zip'};
+  const extraFile = {type: 'text/csv', name: 'extra.csv'};
+  const nextState = reducer(initialState, VisStateActions.loadFiles([zipFile, extraFile]));
+  const [expandTask] = drainTasksForTesting();
+
+  t.equal(expandTask.type, 'EXPAND_ZIP_TASK', 'a zip is unpacked before it is parsed');
+  t.equal(expandTask.payload.file, zipFile, 'the expand task receives the zip');
+  t.deepEqual(expandTask.payload.extensions, [], 'built-in formats need no extra extensions');
+  t.deepEqual(
+    nextState.fileLoading.filesToLoad.map(file => file.name),
+    ['extra.csv'],
+    'the zip leaves the queue while it is unpacked'
+  );
+
+  const places = {type: 'text/csv', name: 'places.csv'};
+  const neighborhoods = {type: 'application/geo+json', name: 'neighborhoods.geojson'};
+  const expanded = reducer(
+    nextState,
+    succeedTaskInTest(expandTask, {
+      kind: 'datasets',
+      datasets: [places, neighborhoods],
+      companions: []
+    })
+  );
+  const [loadTask] = drainTasksForTesting();
+
+  t.equal(loadTask.type, 'LOAD_FILE_TASK', 'the first unzipped dataset starts loading');
+  t.equal(loadTask.payload.file, places);
+  t.equal(loadTask.payload.fileName, undefined, 'mixed members keep their own file names');
+  t.deepEqual(
+    expanded.fileLoading.filesToLoad.map(file => file.name),
+    ['neighborhoods.geojson', 'extra.csv'],
+    'remaining members stay queued after the file that was dropped beside the zip'
+  );
+  t.equal(
+    expanded.fileLoadingProgress['bundle.zip'],
+    undefined,
+    'the zip progress row is replaced'
+  );
+  t.equal(expanded.fileLoadingProgress['places.csv'].message, 'loading...');
+  t.ok(expanded.fileLoadingProgress['neighborhoods.geojson']);
+  t.ok(expanded.fileLoadingProgress['extra.csv']);
+  t.end();
+});
+
+test('#visStateReducer -> LOAD_FILES keeps a single shapefile zip name', t => {
+  drainTasksForTesting();
+
+  const initialState = CloneDeep(InitialState).visState;
+  const zipFile = {type: 'application/zip', name: 'places.zip'};
+  const nextState = reducer(initialState, VisStateActions.loadFiles([zipFile]));
+  const [expandTask] = drainTasksForTesting();
+  const shapefile = {name: 'places.shp'};
+  const dbf = {name: 'places.dbf'};
+  const expanded = reducer(
+    nextState,
+    succeedTaskInTest(expandTask, {
+      kind: 'shapefile',
+      shapefile,
+      companions: [dbf]
+    })
+  );
+  const [loadTask] = drainTasksForTesting();
+
+  t.equal(loadTask.type, 'LOAD_FILE_TASK');
+  t.equal(loadTask.payload.file, shapefile, 'the shapefile inside the zip is parsed');
+  t.equal(
+    loadTask.payload.fileName,
+    'places.zip',
+    'progress and the dataset label stay the zip name'
+  );
+  t.deepEqual(
+    loadTask.payload.companionFiles.map(file => file.name),
+    ['places.shp', 'places.dbf', 'places.zip'],
+    'sidecars are available while the shapefile parses'
+  );
+  t.equal(expanded.fileLoading.filesToLoad.length, 0);
+  t.equal(expanded.fileLoadingProgress['places.zip'].message, 'loading...');
+  t.equal(expanded.fileLoadingProgress['places.shp'], undefined);
+  t.end();
+});
+
+test('#visStateReducer -> LOAD_FILES passes custom loader extensions into a zip', t => {
+  drainTasksForTesting();
+
+  const initialState = {
+    ...CloneDeep(InitialState).visState,
+    loaders: [{extensions: ['.custom']}]
+  };
+  const zipFile = {type: 'application/zip', name: 'bundle.zip'};
+  reducer(initialState, VisStateActions.loadFiles([zipFile]));
+  const [expandTask] = drainTasksForTesting();
+
+  t.deepEqual(
+    expandTask.payload,
+    {file: zipFile, extensions: ['custom']},
+    'custom loader extensions are unpacked with the zip'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> LOAD_FILES ignores a stale zip error', t => {
+  drainTasksForTesting();
+
+  const initialState = CloneDeep(InitialState).visState;
+  const first = reducer(initialState, VisStateActions.loadFiles([{name: 'first.zip'}]));
+  const [expandTask] = drainTasksForTesting();
+  const second = reducer(first, VisStateActions.loadFiles([{name: 'second.csv'}]));
+  drainTasksForTesting();
+
+  const errored = reducer(second, errorTaskInTest(expandTask, new Error('bad zip')));
+  t.equal(errored, second, 'a zip error from the previous load does not touch the new one');
+  t.equal(drainTasksForTesting().length, 0, 'the stale error does not advance the new queue');
+  t.end();
+});
+
 test('#visStateReducer -> LOAD_FILES autoCreateLayers option', t => {
   drainTasksForTesting();
 

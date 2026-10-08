@@ -18,6 +18,7 @@ import type {TaskDescriptor} from '@kepler.gl/tasks';
 import {
   DELAY_TASK,
   ACTION_TASK,
+  EXPAND_ZIP_TASK,
   LOAD_FILE_TASK,
   PROCESS_FILE_DATA,
   UNWRAP_TASK
@@ -40,6 +41,7 @@ import {
   loadFilesErr,
   loadFilesSuccess,
   loadNextFile,
+  expandZipArchiveSuccess,
   nextFileBatch,
   setFilter,
   processFileContent,
@@ -157,7 +159,13 @@ import {
 } from './vis-state-merger';
 
 import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
-import {getFilesToParse, loadExternallyHostedDataset, processGeojson} from '@kepler.gl/processors';
+import {
+  getFilesToParse,
+  isZipFileName,
+  loadExternallyHostedDataset,
+  processGeojson,
+  ZipArchiveExpansion
+} from '@kepler.gl/processors';
 
 import {
   Filter,
@@ -4686,6 +4694,20 @@ export function loadNextFileUpdater(state: VisState, action?: {loadId?: number})
   });
 
   const {loaders, loadOptions} = state;
+  if (isZipFileName(file.name)) {
+    return withTask(
+      stateWithProgress,
+      EXPAND_ZIP_TASK({file, extensions: datasetExtensionsFromLoaders(loaders)}).bimap(
+        expansion =>
+          expandZipArchiveSuccess({
+            loadId: currentLoadId,
+            archiveName: file.name,
+            expansion
+          }),
+        err => loadFilesErr(file.name, err, currentLoadId)
+      )
+    );
+  }
   return withTask(
     stateWithProgress,
     makeLoadFileTask(
@@ -4699,21 +4721,118 @@ export function loadNextFileUpdater(state: VisState, action?: {loadId?: number})
   );
 }
 
+function datasetExtensionsFromLoaders(
+  loaders: Array<{extensions?: readonly string[]}> = []
+): string[] {
+  const extensions: string[] = [];
+  const seen = new Set<string>();
+  for (const loader of loaders) {
+    for (const extension of loader?.extensions || []) {
+      const ext = String(extension).replace(/^\./, '').trim().toLowerCase();
+      if (!ext || ext === 'zip' || seen.has(ext)) {
+        continue;
+      }
+      seen.add(ext);
+      extensions.push(ext);
+    }
+  }
+  return extensions;
+}
+
+function companionFilesForArchive(expansion: ZipArchiveExpansion, existing?: File[]): File[] {
+  const extracted =
+    expansion.kind === 'shapefile'
+      ? [expansion.shapefile, ...expansion.companions]
+      : [...expansion.datasets, ...expansion.companions];
+  return [...extracted, ...(existing || [])];
+}
+
+function withoutFileLoadingProgressEntry(
+  progress: VisState['fileLoadingProgress'],
+  fileName: string
+): VisState['fileLoadingProgress'] {
+  if (!progress || !Object.prototype.hasOwnProperty.call(progress, fileName)) {
+    return progress;
+  }
+  const next = {...progress};
+  delete next[fileName];
+  return next;
+}
+
+/**
+ * Apply an unpacked zip. One shapefile keeps the archive name. Any other
+ * mix is queued as one dataset per supported member.
+ */
+export function expandZipArchiveSuccessUpdater(
+  state: VisState,
+  action: VisStateActions.ExpandZipArchiveSuccessAction
+): VisState {
+  const loading = state.fileLoading;
+  if (!loading || loading.loadId !== action.loadId) {
+    return state;
+  }
+  const {archiveName, expansion} = action;
+  const companionFiles = companionFilesForArchive(expansion, loading.companionFiles);
+
+  if (expansion.kind === 'shapefile') {
+    const nextState = pick_('fileLoading')(merge_({companionFiles}))(state);
+    const {loaders, loadOptions} = state;
+    return withTask(
+      nextState,
+      makeLoadFileTask(
+        expansion.shapefile,
+        nextState.fileLoading && nextState.fileLoading.fileCache,
+        loaders,
+        loadOptions,
+        companionFiles,
+        loading.options,
+        archiveName
+      )
+    );
+  }
+
+  const datasets = expansion.datasets;
+  const filesToLoad = [...datasets, ...Array.from(loading.filesToLoad)];
+  const fileLoadingProgress = datasets.reduce(
+    (accu, file, index) => merge_(initialFileLoadingProgress(file, index))(accu),
+    withoutFileLoadingProgressEntry(state.fileLoadingProgress, archiveName)
+  );
+  const nextState = {
+    ...state,
+    fileLoadingProgress,
+    fileLoading: {
+      ...loading,
+      filesToLoad,
+      companionFiles
+    }
+  };
+  return loadNextFileUpdater(nextState, {loadId: action.loadId});
+}
+
 export function makeLoadFileTask(
   file,
   fileCache,
   loaders: Loader[] = [],
   loadOptions = {},
   companionFiles?: File[],
-  addDataOptions?: VisStateActions.LoadFilesOptions
+  addDataOptions?: VisStateActions.LoadFilesOptions,
+  fileName?: string
 ) {
-  return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions, companionFiles}).bimap(
+  const displayName = fileName || file.name;
+  return LOAD_FILE_TASK({
+    file,
+    fileCache,
+    loaders,
+    loadOptions,
+    companionFiles,
+    ...(fileName ? {fileName} : {})
+  }).bimap(
     // prettier ignore
     // success
     gen =>
       nextFileBatch({
         gen,
-        fileName: file.name,
+        fileName: displayName,
         onFinish: result =>
           processFileContent({
             content: result,
@@ -4723,7 +4842,7 @@ export function makeLoadFileTask(
       }),
 
     // error
-    err => loadFilesErr(file.name, err)
+    err => loadFilesErr(displayName, err)
   );
 }
 
@@ -4837,13 +4956,13 @@ export const clearStagedLoadedFilesUpdater = (state: VisState): VisState => ({
 
 export const loadFilesErrUpdater = (
   state: VisState,
-  {error, fileName}: VisStateActions.LoadFilesErrUpdaterAction
+  {error, fileName, loadId: errorLoadId}: VisStateActions.LoadFilesErrUpdaterAction
 ): VisState => {
-  // update ui with error message
-  Console.warn(error);
-  if (!state.fileLoading) {
+  if (!state.fileLoading || (errorLoadId != null && state.fileLoading.loadId !== errorLoadId)) {
     return state;
   }
+  // update ui with error message
+  Console.warn(error);
   const loadId = state.fileLoading.loadId;
 
   const nextState = updateFileLoadingProgressUpdater(state, {
