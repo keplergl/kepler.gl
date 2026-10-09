@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {EXPORT_HTML_MAP_MODES, KEPLER_GL_VERSION} from '@kepler.gl/constants';
+import {optionalMapInfo} from './map-info-utils';
 
 // React (and react-dom) no longer publish UMD builds starting with v19, so the
 // exported map loads React and the other UMD peer dependencies as ES modules
@@ -19,11 +20,24 @@ const STYLED_COMPONENTS_VERSION = '6.1.19';
 const ES_MODULE_SHIMS_VERSION = '2.8.1';
 
 /**
+ * Serialize a value for interpolation into an inline `<script>`. A literal `</script>`
+ * anywhere in the data would close the script element early, and U+2028/U+2029 are
+ * line terminators in JavaScript but legal inside a JSON string.
+ */
+function toScriptJSON(value: unknown): string {
+  return JSON.stringify(value ?? null)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
+/**
  * This method is used to create an html file which will inlcude kepler and map data
  * @param {Object} options Object that collects all necessary data to  create the html file
  * @param {string} options.mapboxApiAccessToken Mapbox token used to fetch mapbox tiles
  * @param {Array<Object>} options.datasets Data to include in the map
  * @param {Object} options.config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
+ * @param {Object} [options.info] map title and description
  * @param {string} version which version of Kepler.gl to load.
  */
 export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
@@ -470,6 +484,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           (function customize(keplerGl, store) {
             const datasets = ${JSON.stringify(options.datasets)};
             const config = ${JSON.stringify(options.config)};
+            const info = ${toScriptJSON(optionalMapInfo(options.info) ?? null)};
 
             const loadedData = keplerGl.KeplerGlSchema.load(
               datasets,
@@ -486,6 +501,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                 keplerGl.addDataToMap({
                   datasets: loadedData.datasets,
                   config: loadedData.config,
+                  info,
                   options: {
                     centerMap: false,
                   },

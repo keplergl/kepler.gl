@@ -251,6 +251,12 @@ export type KeplerApplicationConfig = {
   enableChartsPanel?: boolean;
 
   /**
+   * Whether to show the Map info section in Interactions and the on-map
+   * name and description card. Enabled by default.
+   */
+  enableMapInfo?: boolean;
+
+  /**
    * Master switch for power-user JSON editors. When false, every section editor is hidden.
    * Defaults to true; each section also has its own flag.
    *
@@ -482,6 +488,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableDatasetOps: true,
 
   enableChartsPanel: true,
+
+  enableMapInfo: true,
 
   enableJsonEditors: true,
   enableLayerJsonEditor: true,

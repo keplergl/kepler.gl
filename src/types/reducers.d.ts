@@ -478,8 +478,8 @@ export type InteractionConfig = {
   zoomOpacity: ZoomOpacityInteraction;
 };
 export type MapInfo = {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
 };
 /** Options captured when a file load starts and forwarded to `addDataToMap`. */
 export type FileLoadingOptions = {
@@ -623,6 +623,7 @@ export type MapControls = {
   annotation?: MapControlItem;
   chart?: MapControlItem;
   viewportJson?: MapControlItem;
+  mapInfo?: MapControlItem;
   sqlPanel?: MapControlItem;
   aiAssistant?: MapControlItem;
   [key: string]: MapControlItem | MapControlMapLegend | undefined;

@@ -1693,6 +1693,7 @@ export default function MapContainerFactory(
               onToggleLayerForMap={visStateActions.toggleLayerForMap}
               charts={this.props.visState.charts}
               visStateActions={visStateActions}
+              mapInfo={visState.mapInfo}
             />
           )}
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}

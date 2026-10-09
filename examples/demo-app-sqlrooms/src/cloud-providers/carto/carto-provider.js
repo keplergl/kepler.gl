@@ -84,8 +84,8 @@ export default class CartoProvider extends Provider {
 
       const cs = await this._carto.getCustomStorage();
 
-      const {title, description} = info;
-      const name = title;
+      const {title, description} = info || {};
+      const name = (options.fileName && String(options.fileName).trim()) || title || 'Untitled Map';
 
       const thumbnailBase64 =
         mapData && thumbnail ? await this._blobToBase64(mapData.thumbnail) : null;

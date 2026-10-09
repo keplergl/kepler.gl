@@ -12,7 +12,7 @@ import {visStateSchema} from './vis-state-schema';
 import uiStateSchema from './ui-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
-import {isPlainObject} from '@kepler.gl/utils';
+import {isPlainObject, optionalMapInfo} from '@kepler.gl/utils';
 
 import {MapInfo, SavedVisState, SavedMapStyle, ParsedConfig, BaseMapStyle} from '@kepler.gl/types';
 
@@ -85,12 +85,16 @@ export type SavedMap = {
   info: {
     app: string;
     created_at: string;
-    title: string;
-    description: string;
+    title?: string;
+    description?: string;
   };
 };
 
-export type LoadedMap = {datasets?: ParsedDataset[] | null; config?: ParsedConfig | null};
+export type LoadedMap = {
+  datasets?: ParsedDataset[] | null;
+  config?: ParsedConfig | null;
+  info?: {title?: string; description?: string};
+};
 
 export const reducerSchema: {
   [key: string]:
@@ -183,7 +187,7 @@ export class KeplerGLSchema {
   }
 
   getMapInfo(state: any): MapInfo {
-    return state.visState.mapInfo;
+    return optionalMapInfo(state.visState?.mapInfo) || {};
   }
   /**
    *  Load saved map, argument can be (datasets, config) or ({datasets, config})

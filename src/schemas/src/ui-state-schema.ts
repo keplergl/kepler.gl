@@ -29,6 +29,14 @@ export const propertiesV1 = {
           active: null
         },
         key: 'chart'
+      }),
+      mapInfo: new Schema({
+        version: VERSIONS.v1,
+        properties: {
+          active: null,
+          show: null
+        },
+        key: 'mapInfo'
       })
     },
     key: 'mapControls'

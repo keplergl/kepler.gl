@@ -22,7 +22,8 @@ import {
   arrowDataTypeToFieldType,
   compactArrowTable,
   hasOwnProperty,
-  isPlainObject
+  isPlainObject,
+  optionalMapInfo
 } from '@kepler.gl/utils';
 import {
   analyzerTypeToFieldType,
@@ -406,8 +407,24 @@ export function processGeojson(rawData: unknown): ProcessorResult {
  *
  * dispatch(addDataToMap(processKeplerglJSON(keplerGlJson)));
  */
+function savedMapDisplayInfo(info: unknown): {title?: string; description?: string} {
+  const saved =
+    info && typeof info === 'object'
+      ? optionalMapInfo(info as {title?: unknown; description?: unknown})
+      : undefined;
+  // Both keys are always present: setMapInfo merges, so omitting one would keep
+  // the previously loaded map's value instead of clearing it.
+  return {title: saved?.title, description: saved?.description};
+}
+
 export function processKeplerglJSON(rawData: SavedMap, schema = KeplerGlSchema): LoadedMap | null {
-  return rawData ? schema.load(rawData.datasets, rawData.config) : null;
+  if (!rawData) {
+    return null;
+  }
+  return {
+    ...schema.load(rawData.datasets, rawData.config),
+    info: savedMapDisplayInfo(rawData.info)
+  };
 }
 
 /**
