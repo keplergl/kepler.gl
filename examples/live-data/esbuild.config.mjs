@@ -9,7 +9,7 @@ import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
 
-import KeplerPackage from '../../package.json' assert {type: 'json'};
+import KeplerPackage from '../../package.json' with {type: 'json'};
 import {startLiveDataServer} from './server.mjs';
 
 const args = process.argv;
