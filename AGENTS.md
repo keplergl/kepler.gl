@@ -8,7 +8,7 @@ For a localized change (a bug fix, a default, a guard, copy, types, or a single 
 
 1. Read the code you will edit and the nearest test.
 2. Make the change.
-3. Run the one targeted test that covers it while iterating.
+3. Add or update the test for the new behavior, and run that one test while iterating.
 4. Run `yarn agent:verify` once at the end, then stop.
 
 Do not search the whole repo, read unrelated packages, re-run a check that already passed, or run `yarn agent:verify` after every edit.
@@ -16,7 +16,7 @@ Do not search the whole repo, read unrelated packages, re-run a check that alrea
 ## Definition of done
 
 1. The requested behavior is implemented.
-2. A nearby test covers the change. Skip a new test for copy, types, and one-line guards when nothing nearby tests that behavior.
+2. A test covers the new behavior and fails without the change.
 3. `yarn agent:verify` passed on the final state.
 4. No unrelated files changed, and existing conventions followed.
 
@@ -28,9 +28,19 @@ If a check fails, make the smallest change that addresses it and rerun that same
 
 Read the implementation you will edit and its nearest test first. Look for a pattern elsewhere only when the local code does not show how this repo does it. Prefer existing abstractions, and avoid unrelated refactoring: no renaming public symbols, reformatting unrelated files, or upgrading dependencies unless the task requires it.
 
-For a bug fix, add a regression test when a test file already covers that area.
-
 ## Testing
+
+Every behavior change ships with a test. Write it by default. The only exemptions are changes with no observable behavior (types, comments, copy, build config), and a change you believe is untestable: say so in the PR instead of staying silent.
+
+- Extend the nearest existing test file before adding a new one.
+- For a bug fix, write the regression test first and confirm it fails without the fix.
+- Cover the case the task describes, not just the happy path: the empty, missing, or invalid input that motivated the change.
+- Assert on behavior, not implementation details. Do not weaken an assertion to make a test pass.
+
+Where tests go:
+
+- Jest: `*.spec.ts(x)` beside the source in `src/`. Auto-discovered. Use Testing Library for React components; Enzyme is banned by lint.
+- Tape: `*-test.js` under `test/node/` or `test/browser/`. A new file must be imported in the nearest `index.js`, or it silently never runs and the suite still reports green.
 
 Run from the repo root on Node >= 20 (Volta pin 20.19.3, same as Node.js CI).
 
@@ -60,6 +70,7 @@ Keep PR descriptions short:
 
 - What changed and why
 - Important implementation details
+- Tests added, or why the change is not testable
 - Verification results (`PASS`, `FAILED`, or `NOT RUN`)
 - Remaining uncertainties or decisions
 - A checklist of what to review
