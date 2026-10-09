@@ -295,11 +295,6 @@ test('Components -> InteractionManager map info section', t => {
     'map info switch starts on'
   );
   t.equal(
-    wrapper.find('input#map-info-toggle').at(0).prop('aria-label'),
-    'Map info',
-    'map info switch has an accessible name'
-  );
-  t.equal(
     wrapper.find('.interaction-map-info__content').hostNodes().length,
     0,
     'name and description stay collapsed until opened'

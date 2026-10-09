@@ -64,8 +64,6 @@ interface CheckboxProps {
   switch?: boolean;
   activeColor?: string;
   secondary?: boolean;
-  /** Names the control when `label` is empty or not rendered next to it. */
-  'aria-label'?: string;
   onBlur?: FocusEventHandler<HTMLInputElement>;
   onChange?: ChangeEventHandler<HTMLInputElement>;
   onFocus?: FocusEventHandler<HTMLInputElement>;
@@ -81,7 +79,6 @@ const Checkbox: FC<CheckboxProps> = ({
   checked = false,
   disabled = false,
   secondary,
-  'aria-label': ariaLabel,
   onBlur = noop,
   onChange = noop,
   onFocus = noop
@@ -108,7 +105,6 @@ const Checkbox: FC<CheckboxProps> = ({
     onChange,
     value,
     secondary,
-    'aria-label': ariaLabel,
     type: 'checkbox' as const,
     onFocus: handleFocus,
     onBlur: handleBlur
