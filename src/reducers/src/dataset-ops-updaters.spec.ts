@@ -379,4 +379,49 @@ describe('suitability vis-state', () => {
       | undefined;
     expect(derivedMeta?.derivedDataset?.type).toBe('suitability');
   });
+
+  test('loading a saved map does not restyle suitability layers', () => {
+    let state = reduceVisState(siteState(), VisStateActions.addSuitability('sites'));
+    const op = state.suitabilities[0];
+    state = reduceVisState(
+      state,
+      VisStateActions.setSuitabilityConfig(op.id, {weights: {access: 1, cost: 1}})
+    );
+    state = reduceVisState(state, VisStateActions.runSuitability(op.id));
+    state = flushCreateTableTasks(state);
+
+    const layer = state.layers.find(item => item.config.dataId === op.resultId);
+    expect(layer?.config.colorScale).toBe('jenks');
+
+    state = reduceVisState(
+      state,
+      VisStateActions.layerVisualChannelConfigChange(
+        layer!,
+        {colorScale: 'quantile'} as never,
+        'color'
+      )
+    );
+    expect(state.layers.find(item => item.config.dataId === op.resultId)?.config.colorScale).toBe(
+      'quantile'
+    );
+
+    const saved = SchemaManager.save({
+      visState: state,
+      mapState: {},
+      mapStyle: {},
+      uiState: {}
+    });
+    const loaded = SchemaManager.load(saved);
+    expect(loaded.datasets).toBeTruthy();
+
+    let reloaded = reduceVisState(
+      INITIAL_VIS_STATE,
+      VisStateActions.updateVisData(loaded.datasets || [], {}, loaded.config ?? undefined)
+    );
+    reloaded = flushCreateTableTasks(reloaded);
+
+    const reloadedLayer = reloaded.layers.find(item => item.config.dataId === op.resultId);
+    expect(reloadedLayer?.config.colorField?.name).toBe('score');
+    expect(reloadedLayer?.config.colorScale).toBe('quantile');
+  });
 });

@@ -3987,13 +3987,10 @@ export const createNewDatasetSuccessUpdater = (
     layerMergers
   };
 
-  const updatedState = styleSuitabilityResults(
-    applyMergersUpdater(mergedState, {
-      mergers: datasetMergers,
-      postMergerPayload
-    }),
-    newDataIds
-  );
+  const updatedState = applyMergersUpdater(mergedState, {
+    mergers: datasetMergers,
+    postMergerPayload
+  });
 
   return withTask(
     clearLoadingProgress(
@@ -4088,6 +4085,9 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
     const result = addDefaultLayers(mergedState, newDataEntries);
     mergedState = result.state;
     newLayers = result.newLayers;
+    // Suitability coloring belongs only on freshly auto-created layers. Saved maps
+    // already restored layer color from config, so they must not be restyled here.
+    mergedState = styleSuitabilityResults(mergedState, newDataIds);
   }
 
   if (mergedState.splitMaps.length) {
@@ -6742,12 +6742,9 @@ export function runSuitabilityUpdater(
   action: VisStateActions.RunSuitabilityUpdaterAction
 ): VisState {
   const {state: nextState, proto} = executeSuitability(state, action);
-  if (!proto) {
-    return nextState;
-  }
-  const withDataset = applyDerivedProtoDataset(nextState, proto);
-  // Re-running an existing result updates its dataset in place, so its layers can be styled now.
-  return proto.info.id ? colorLayersByScore(withDataset, proto.info.id) : withDataset;
+  // Score coloring is applied after addDefaultLayers, not here: layers do not exist
+  // until the create-table task finishes, and saved/re-run layers must keep their config.
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
 }
 
 export {
