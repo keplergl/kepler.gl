@@ -13,7 +13,15 @@ import {
   openReplaceDatasetModal
 } from '@kepler.gl/actions';
 
-import {Grouping, Join, Overflow, Replace, SpatialJoin, Trash} from '../../common/icons';
+import {
+  Grouping,
+  Join,
+  Overflow,
+  Replace,
+  SpatialJoin,
+  Suitability,
+  Trash
+} from '../../common/icons';
 import {Tooltip} from '../../common/styled-components';
 import Portaled from '../../common/portaled';
 import {
@@ -33,6 +41,7 @@ export type DatasetOpsMenuProps = {
   addGroupBy?: ActionHandler<typeof VisStateActions.addGroupBy>;
   addJoin?: ActionHandler<typeof VisStateActions.addJoin>;
   addSpatialJoin?: ActionHandler<typeof VisStateActions.addSpatialJoin>;
+  addSuitability?: ActionHandler<typeof VisStateActions.addSuitability>;
   replaceDataset?: ActionHandler<typeof openReplaceDatasetModal>;
   showDeleteDataset?: boolean;
   removeDataset?: ActionHandler<typeof openDeleteModal>;
@@ -44,6 +53,7 @@ export function DatasetOpsMenu({
   addGroupBy,
   addJoin,
   addSpatialJoin,
+  addSuitability,
   replaceDataset,
   showDeleteDataset,
   removeDataset
@@ -54,7 +64,8 @@ export function DatasetOpsMenu({
   const tabular = isTabularDatasetForOps(dataset);
   const showReplace =
     opsEnabled && Boolean(replaceDataset) && tabular && !dataset.metadata?.derivedDataset;
-  const showOps = opsEnabled && tabular && Boolean(addGroupBy || addJoin || addSpatialJoin);
+  const showOps =
+    opsEnabled && tabular && Boolean(addGroupBy || addJoin || addSpatialJoin || addSuitability);
   const showRemove = Boolean(showDeleteDataset && removeDataset);
   const tooltipId = `dataset-ops-${datasetId}`;
   const tooltipLabel = intl.formatMessage({id: 'datasetTitle.moreSettings'});
@@ -131,6 +142,15 @@ export function DatasetOpsMenu({
       Icon: SpatialJoin,
       iconHeight: '14px',
       onClick: () => onSelect(addSpatialJoin)
+    });
+  }
+  if (showOps && addSuitability) {
+    opItems.push({
+      className: 'dataset-ops-menu__suitability',
+      labelId: 'datasetOps.suitability',
+      Icon: Suitability,
+      iconHeight: '14px',
+      onClick: () => onSelect(addSuitability)
     });
   }
 

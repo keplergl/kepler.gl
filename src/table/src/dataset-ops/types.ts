@@ -19,7 +19,7 @@ export const DATASET_OPS_AGGREGATIONS = {
 export type DatasetOpAggregation =
   (typeof DATASET_OPS_AGGREGATIONS)[keyof typeof DATASET_OPS_AGGREGATIONS];
 
-export type DerivedDatasetType = 'groupBy' | 'join' | 'spatialJoin';
+export type DerivedDatasetType = 'groupBy' | 'join' | 'spatialJoin' | 'suitability';
 
 export type DerivedDatasetMetadata = {
   type: DerivedDatasetType;
@@ -133,6 +133,64 @@ export type JoinOp = {
   error?: string | null;
 };
 
+export const WEIGHT_STANDARDIZATIONS = {
+  raw: 'raw',
+  normalize: 'normalize'
+} as const;
+
+export type WeightStandardization =
+  (typeof WEIGHT_STANDARDIZATIONS)[keyof typeof WEIGHT_STANDARDIZATIONS];
+
+export const WEIGHT_STANDARDIZATION_OPTIONS: {id: WeightStandardization; labelId: string}[] = [
+  {id: 'normalize', labelId: 'datasetOps.weightStandardizationOption.normalize'},
+  {id: 'raw', labelId: 'datasetOps.weightStandardizationOption.raw'}
+];
+
+export const DATA_STANDARDIZATIONS = {
+  raw: 'raw',
+  range: 'range',
+  zScore: 'zScore'
+} as const;
+
+export type DataStandardization =
+  (typeof DATA_STANDARDIZATIONS)[keyof typeof DATA_STANDARDIZATIONS];
+
+export const DATA_STANDARDIZATION_OPTIONS: {id: DataStandardization; labelId: string}[] = [
+  {id: 'range', labelId: 'datasetOps.dataStandardizationOption.range'},
+  {id: 'zScore', labelId: 'datasetOps.dataStandardizationOption.zScore'},
+  {id: 'raw', labelId: 'datasetOps.dataStandardizationOption.raw'}
+];
+
+export const DEFAULT_SUITABILITY_SCORE_FIELD = 'score';
+export const DEFAULT_SUITABILITY_WEIGHT = 1;
+export const SUITABILITY_WEIGHT_RANGE: [number, number] = [0, 1];
+
+export type SuitabilityDatasetConfig = {
+  /** Weight per source field name. Fields absent from this map are not scored. */
+  weights: Record<string, number>;
+  weightStandardization?: WeightStandardization;
+  dataStandardization?: DataStandardization;
+  outputFieldName?: string;
+  columns?: string[];
+  label?: string;
+  resultId?: string;
+  operationId?: string;
+};
+
+export type SuitabilityOp = {
+  id: string;
+  dataId: string;
+  weights: Record<string, number>;
+  weightStandardization: WeightStandardization;
+  dataStandardization: DataStandardization;
+  outputFieldName: string;
+  columns?: string[];
+  resultId: string;
+  resultLabel: string;
+  isConfigActive: boolean;
+  error?: string | null;
+};
+
 export type DatasetOpsEngine = {
   groupByDataset: (dataset: DatasetOpsTable, config: GroupByDatasetConfig) => ProtoDataset;
   joinDatasets: (
@@ -145,4 +203,5 @@ export type DatasetOpsEngine = {
     right: DatasetOpsTable,
     config: SpatialJoinDatasetConfig
   ) => ProtoDataset;
+  suitabilityDataset: (dataset: DatasetOpsTable, config: SuitabilityDatasetConfig) => ProtoDataset;
 };

@@ -137,7 +137,8 @@ export default function SidePanelFactory(
       version,
       width,
       groupBys,
-      joins
+      joins,
+      suitabilities
     } = props;
     const {openDeleteModal, toggleModal, toggleSidePanel} = uiStateActions;
     const {activeSidePanel} = uiState;
@@ -188,7 +189,7 @@ export default function SidePanelFactory(
       any
     >;
     const PanelComponent = currentPanel?.component;
-    const datasetOpOpen = hasActiveDatasetOp(groupBys, joins);
+    const datasetOpOpen = hasActiveDatasetOp(groupBys, joins, suitabilities);
 
     return (
       <Sidebar
@@ -230,6 +231,7 @@ export default function SidePanelFactory(
                 datasets={datasets}
                 groupBys={groupBys}
                 joins={joins}
+                suitabilities={suitabilities}
                 visStateActions={visStateActions}
               />
             ) : (

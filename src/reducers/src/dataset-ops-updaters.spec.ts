@@ -258,3 +258,125 @@ describe('dataset ops vis-state', () => {
     expect(saved.config.config.visState.groupBys?.[0].fieldName).toBe('region');
   });
 });
+
+describe('suitability vis-state', () => {
+  beforeEach(() => {
+    drainTasksForTesting();
+  });
+
+  function siteState(): VisState {
+    const sites = makeTable(
+      'sites',
+      [
+        {name: 'name', type: ALL_FIELD_TYPES.string},
+        {name: 'lat', type: ALL_FIELD_TYPES.real},
+        {name: 'lng', type: ALL_FIELD_TYPES.real},
+        {name: 'access', type: ALL_FIELD_TYPES.integer},
+        {name: 'cost', type: ALL_FIELD_TYPES.integer}
+      ],
+      [
+        ['a', 0, 0, 0, 100],
+        ['b', 1, 1, 5, 200],
+        ['c', 2, 2, 10, 300]
+      ]
+    );
+    return {...INITIAL_VIS_STATE, datasets: {sites}};
+  }
+
+  test('addSuitability seeds numeric weights and a short random result name', () => {
+    const state = reduceVisState(siteState(), VisStateActions.addSuitability('sites'));
+
+    expect(state.suitabilities).toHaveLength(1);
+    const op = state.suitabilities[0];
+    expect(op.weights).toEqual({lat: 1, lng: 1, access: 1, cost: 1});
+    expect(op.weightStandardization).toBe('normalize');
+    expect(op.dataStandardization).toBe('range');
+    expect(op.outputFieldName).toBe('score');
+    expect(op.resultLabel).toMatch(/^suitability-\d{2}$/);
+  });
+
+  test('opening a suitability op closes an open group by', () => {
+    let state = reduceVisState(siteState(), VisStateActions.addGroupBy('sites'));
+    expect(state.groupBys[0].isConfigActive).toBe(true);
+
+    state = reduceVisState(state, VisStateActions.addSuitability('sites'));
+    expect(state.groupBys[0].isConfigActive).toBe(false);
+    expect(state.suitabilities[0].isConfigActive).toBe(true);
+
+    state = reduceVisState(state, VisStateActions.addGroupBy('sites'));
+    expect(state.suitabilities[0].isConfigActive).toBe(false);
+  });
+
+  test('runSuitability adds a scored dataset and colors the new layer by the score', () => {
+    let state = reduceVisState(siteState(), VisStateActions.addSuitability('sites'));
+    const op = state.suitabilities[0];
+
+    state = reduceVisState(
+      state,
+      VisStateActions.setSuitabilityConfig(op.id, {weights: {access: 1, cost: 1}})
+    );
+    state = reduceVisState(state, VisStateActions.runSuitability(op.id));
+    state = flushCreateTableTasks(state);
+
+    const result = state.datasets[op.resultId];
+    expect(result).toBeTruthy();
+    expect(result.metadata.derivedDataset).toEqual({
+      type: 'suitability',
+      sourceDataIds: ['sites'],
+      operationId: op.id
+    });
+    expect(result.fields.map(field => field.name)).toContain('score');
+    expect(state.suitabilities[0].isConfigActive).toBe(false);
+
+    const layer = state.layers.find(item => item.config.dataId === op.resultId);
+    expect(layer).toBeTruthy();
+    expect(layer?.config.colorField?.name).toBe('score');
+    expect(layer?.config.colorScale).toBe('jenks');
+  });
+
+  test('running without a weighted field surfaces an error instead of a dataset', () => {
+    let state = reduceVisState(siteState(), VisStateActions.addSuitability('sites'));
+    const op = state.suitabilities[0];
+
+    state = reduceVisState(state, VisStateActions.setSuitabilityConfig(op.id, {weights: {}}));
+    state = reduceVisState(state, VisStateActions.runSuitability(op.id));
+
+    expect(state.suitabilities[0].error).toBe('Select at least one field to score');
+    expect(state.suitabilities[0].isConfigActive).toBe(true);
+    expect(state.datasets[op.resultId]).toBeUndefined();
+  });
+
+  test('deleting the source dataset drops the op but keeps the scored snapshot', () => {
+    let state = reduceVisState(siteState(), VisStateActions.addSuitability('sites'));
+    const op = state.suitabilities[0];
+    state = reduceVisState(state, VisStateActions.runSuitability(op.id));
+    state = flushCreateTableTasks(state);
+
+    expect(state.datasets[op.resultId]).toBeTruthy();
+    state = reduceVisState(state, VisStateActions.removeDataset('sites'));
+    expect(state.datasets.sites).toBeUndefined();
+    expect(state.datasets[op.resultId]).toBeTruthy();
+    expect(state.suitabilities).toHaveLength(0);
+  });
+
+  test('the op config stays out of saved maps while the derived dataset persists', () => {
+    let state = reduceVisState(siteState(), VisStateActions.addSuitability('sites'));
+    const op = state.suitabilities[0];
+    state = reduceVisState(state, VisStateActions.runSuitability(op.id));
+    state = flushCreateTableTasks(state);
+
+    const saved = SchemaManager.save({
+      visState: state,
+      mapState: {},
+      mapStyle: {},
+      uiState: {}
+    });
+
+    expect(saved.config.config.visState).not.toHaveProperty('suitabilities');
+    const derived = saved.datasets.find(dataset => dataset.data.id === op.resultId);
+    const derivedMeta = derived?.data.metadata as
+      | {derivedDataset?: {type?: string} | null}
+      | undefined;
+    expect(derivedMeta?.derivedDataset?.type).toBe('suitability');
+  });
+});

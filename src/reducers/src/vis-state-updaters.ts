@@ -218,14 +218,17 @@ import {
   addGroupByUpdater,
   addJoinUpdater,
   addSpatialJoinUpdater,
+  addSuitabilityUpdater,
   executeGroupBy,
   executeJoin,
   executeSpatialJoin,
+  executeSuitability,
   removeDatasetOpUpdater,
   removeOpsForDatasets,
   setGroupByConfigUpdater,
   setJoinConfigUpdater,
-  setSpatialJoinConfigUpdater
+  setSpatialJoinConfigUpdater,
+  setSuitabilityConfigUpdater
 } from './dataset-ops-updaters';
 import {
   fixEffectOrder,
@@ -398,6 +401,7 @@ export const INITIAL_VIS_STATE: VisState = {
   editingDataset: undefined,
   groupBys: [],
   joins: [],
+  suitabilities: [],
 
   // effects
   effects: [],
@@ -3983,10 +3987,13 @@ export const createNewDatasetSuccessUpdater = (
     layerMergers
   };
 
-  const updatedState = applyMergersUpdater(mergedState, {
-    mergers: datasetMergers,
-    postMergerPayload
-  });
+  const updatedState = styleSuitabilityResults(
+    applyMergersUpdater(mergedState, {
+      mergers: datasetMergers,
+      postMergerPayload
+    }),
+    newDataIds
+  );
 
   return withTask(
     clearLoadingProgress(
@@ -6692,12 +6699,65 @@ export function runSpatialJoinUpdater(
   return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
 }
 
+/**
+ * Color a suitability result's layers by the score, so it reads as a suitability map rather
+ * than a plain copy of the source dataset. The score is always the last field of the result.
+ */
+function colorLayersByScore(state: VisState, resultId: string): VisState {
+  const dataset = state.datasets[resultId];
+  const scoreField = dataset?.fields[dataset.fields.length - 1];
+  if (!scoreField) {
+    return state;
+  }
+  const layerIds = state.layers
+    .filter(layer => layer.config.dataId === resultId && layer.visualChannels.color)
+    .map(layer => layer.id);
+
+  return layerIds.reduce((accu, layerId) => {
+    const oldLayer = accu.layers.find(layer => layer.id === layerId);
+    if (!oldLayer) {
+      return accu;
+    }
+    return layerVisualChannelChangeUpdater(accu, {
+      oldLayer,
+      newConfig: {colorField: scoreField, colorScale: SCALE_TYPES.jenks},
+      channel: 'color'
+    });
+  }, state);
+}
+
+/**
+ * Layers for a brand new derived dataset only exist once its create-table task resolves, so
+ * suitability styling has to run again after the mergers rather than at the time of the run.
+ */
+function styleSuitabilityResults(state: VisState, dataIds: string[]): VisState {
+  return dataIds.reduce((accu, dataId) => {
+    const derived = accu.datasets[dataId]?.metadata?.derivedDataset as {type?: string} | undefined;
+    return derived?.type === 'suitability' ? colorLayersByScore(accu, dataId) : accu;
+  }, state);
+}
+
+export function runSuitabilityUpdater(
+  state: VisState,
+  action: VisStateActions.RunSuitabilityUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeSuitability(state, action);
+  if (!proto) {
+    return nextState;
+  }
+  const withDataset = applyDerivedProtoDataset(nextState, proto);
+  // Re-running an existing result updates its dataset in place, so its layers can be styled now.
+  return proto.info.id ? colorLayersByScore(withDataset, proto.info.id) : withDataset;
+}
+
 export {
   addGroupByUpdater,
   addJoinUpdater,
   addSpatialJoinUpdater,
+  addSuitabilityUpdater,
   removeDatasetOpUpdater,
   setGroupByConfigUpdater,
   setJoinConfigUpdater,
-  setSpatialJoinConfigUpdater
+  setSpatialJoinConfigUpdater,
+  setSuitabilityConfigUpdater
 };

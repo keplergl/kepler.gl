@@ -81,6 +81,7 @@ export {default as Settings} from './settings';
 export {default as Search} from './search';
 export {default as SpatialJoin} from './spatial-join';
 export {default as Split} from './split';
+export {default as Suitability} from './suitability';
 export {default as Trash} from './trash';
 export {default as Overflow} from './overflow';
 export {default as VertDots} from './vert-dots';

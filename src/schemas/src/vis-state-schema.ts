@@ -39,7 +39,7 @@ import {
   Annotation,
   ChartConfig
 } from '@kepler.gl/types';
-import {Datasets, GroupByOp, JoinOp} from '@kepler.gl/table';
+import {Datasets, GroupByOp, JoinOp, SuitabilityOp} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Loader} from '@loaders.gl/loader-utils';
 import KeplerGLSchema from './schema-manager';
@@ -79,6 +79,7 @@ export interface VisState {
   editingDataset: string | undefined;
   groupBys: GroupByOp[];
   joins: JoinOp[];
+  suitabilities: SuitabilityOp[];
   interactionConfig: InteractionConfig;
   interactionToBeMerged: any;
   layerBlending: string;
@@ -1098,6 +1099,8 @@ export const propertiesV1 = {
   layerOrder: null,
   groupBys: null,
   joins: null
+  // suitabilities is intentionally absent: the op config is ephemeral and only the
+  // derived dataset is persisted. A `null` entry here would write it to saved maps.
 };
 
 export class VisStateSchemaV1 extends Schema {

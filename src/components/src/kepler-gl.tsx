@@ -240,6 +240,7 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
   overlayBlending: props.visState.overlayBlending,
   groupBys: props.visState.groupBys,
   joins: props.visState.joins,
+  suitabilities: props.visState.suitabilities,
 
   width: props.sidePanelWidth ?? DEFAULT_KEPLER_GL_PROPS.sidePanelWidth,
   availableProviders,

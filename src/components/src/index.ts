@@ -141,6 +141,7 @@ export {default as DatasetOpsPanelsFactory} from './side-panel/dataset-ops/datas
 export {default as GroupByPanelFactory} from './side-panel/dataset-ops/group-by-panel';
 export {default as JoinPanelFactory} from './side-panel/dataset-ops/join-panel';
 export {default as SpatialJoinPanelFactory} from './side-panel/dataset-ops/spatial-join-panel';
+export {default as SuitabilityPanelFactory} from './side-panel/dataset-ops/suitability-panel';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
 
 export {default as FilterManagerFactory} from './side-panel/filter-manager';

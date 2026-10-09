@@ -10,6 +10,7 @@ import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import {DatasetOpsMenu} from './dataset-ops-menu';
 import GroupByPanelFactory from './group-by-panel';
 import DatasetOpPanel, {CollapsibleSection, fieldNameFromSelector} from './dataset-op-panel';
+import SuitabilityPanelFactory from './suitability-panel';
 
 function MockFieldSelector({
   fields,
@@ -33,6 +34,23 @@ function MockFieldSelector({
         </option>
       ))}
     </select>
+  );
+}
+
+function MockRangeSlider({
+  value1,
+  onChange
+}: {
+  value1: number;
+  onChange: (value: [number, number]) => void;
+}) {
+  return (
+    <input
+      type="number"
+      className="mock-range-slider"
+      value={value1}
+      onChange={event => onChange([0, Number(event.target.value)])}
+    />
   );
 }
 
@@ -108,6 +126,21 @@ describe('DatasetOpsMenu', () => {
     fireEvent.click(toggle);
     fireEvent.click(document.querySelector('.dataset-ops-menu__group-by') as HTMLButtonElement);
     expect(addGroupBy).toHaveBeenCalledWith('cities');
+  });
+
+  test('offers suitability analysis for local datasets', () => {
+    const addSuitability = jest.fn();
+    const {container} = renderWithTheme(
+      <DatasetOpsMenu
+        datasetId="cities"
+        dataset={{type: 'local'}}
+        addSuitability={addSuitability}
+      />
+    );
+
+    fireEvent.click(container.querySelector('.dataset-ops-menu__toggle') as HTMLElement);
+    fireEvent.click(document.querySelector('.dataset-ops-menu__suitability') as HTMLButtonElement);
+    expect(addSuitability).toHaveBeenCalledWith('cities');
   });
 
   test('moves remove dataset into the more settings menu', () => {
@@ -381,5 +414,130 @@ describe('DatasetOpPanel layout', () => {
     expect(back).toBeTruthy();
     fireEvent.click(back);
     expect(onClose).toHaveBeenCalled();
+  });
+});
+
+describe('SuitabilityPanel', () => {
+  const SuitabilityPanel = SuitabilityPanelFactory(MockRangeSlider as any);
+
+  const datasets = {
+    sites: {
+      id: 'sites',
+      label: 'sites',
+      fields: [
+        {name: 'name', displayName: 'name', type: 'string'},
+        {name: 'access', displayName: 'access', type: 'integer'},
+        {name: 'cost', displayName: 'cost', type: 'real'}
+      ] as Field[]
+    }
+  } as unknown as Datasets;
+
+  const op = (overrides = {}) => ({
+    id: 'op-1',
+    dataId: 'sites',
+    weights: {access: 1, cost: 1},
+    weightStandardization: 'normalize' as const,
+    dataStandardization: 'range' as const,
+    outputFieldName: 'score',
+    resultId: 'out',
+    resultLabel: 'sites suitability',
+    isConfigActive: true,
+    ...overrides
+  });
+
+  test('lists only numeric fields as weights and toggles them off', () => {
+    const setSuitabilityConfig = jest.fn();
+    const {container} = renderWithTheme(
+      <SuitabilityPanel
+        op={op()}
+        datasets={datasets}
+        setSuitabilityConfig={setSuitabilityConfig}
+        runSuitability={jest.fn()}
+        removeDatasetOp={jest.fn()}
+      />
+    );
+
+    const list = container.querySelector('.dataset-ops-column-list') as HTMLElement;
+    expect(list.textContent).toContain('access');
+    expect(list.textContent).toContain('cost');
+    expect(list.textContent).not.toContain('name');
+
+    fireEvent.click(list.querySelectorAll('input[type="checkbox"]')[0]);
+    expect(setSuitabilityConfig).toHaveBeenCalledWith('op-1', {weights: {cost: 1}});
+  });
+
+  test('cannot run without a weighted field', () => {
+    const runButtonFor = (weights: Record<string, number>) => {
+      const {container} = renderWithTheme(
+        <SuitabilityPanel
+          op={op({weights})}
+          datasets={datasets}
+          setSuitabilityConfig={jest.fn()}
+          runSuitability={jest.fn()}
+          removeDatasetOp={jest.fn()}
+        />
+      );
+      return container.querySelector('.dataset-ops-panel__run') as HTMLButtonElement;
+    };
+
+    expect(runButtonFor({}).disabled).toBe(true);
+    expect(runButtonFor({access: 1}).disabled).toBe(false);
+  });
+
+  test('select all restores a default weight for every numeric field', () => {
+    const setSuitabilityConfig = jest.fn();
+    const {container} = renderWithTheme(
+      <SuitabilityPanel
+        op={op({weights: {access: 0.5}})}
+        datasets={datasets}
+        setSuitabilityConfig={setSuitabilityConfig}
+        runSuitability={jest.fn()}
+        removeDatasetOp={jest.fn()}
+      />
+    );
+
+    fireEvent.click(container.querySelector('.dataset-ops-suitability__select-all') as HTMLElement);
+    expect(setSuitabilityConfig).toHaveBeenCalledWith('op-1', {weights: {access: 1, cost: 1}});
+  });
+
+  test('moving a slider updates only that field weight', () => {
+    const setSuitabilityConfig = jest.fn();
+    const {container} = renderWithTheme(
+      <SuitabilityPanel
+        op={op()}
+        datasets={datasets}
+        setSuitabilityConfig={setSuitabilityConfig}
+        runSuitability={jest.fn()}
+        removeDatasetOp={jest.fn()}
+      />
+    );
+
+    fireEvent.change(container.querySelectorAll('.mock-range-slider')[1], {
+      target: {value: '0.25'}
+    });
+    expect(setSuitabilityConfig).toHaveBeenCalledWith('op-1', {
+      weights: {access: 1, cost: 0.25}
+    });
+  });
+
+  test('the column picker includes every source column, not just numeric ones', () => {
+    const setSuitabilityConfig = jest.fn();
+    const {container} = renderWithTheme(
+      <SuitabilityPanel
+        op={op()}
+        datasets={datasets}
+        setSuitabilityConfig={setSuitabilityConfig}
+        runSuitability={jest.fn()}
+        removeDatasetOp={jest.fn()}
+      />
+    );
+
+    fireEvent.click(container.querySelector('.dataset-ops-collapsible__header') as HTMLElement);
+    const lists = container.querySelectorAll('.dataset-ops-column-list');
+    const picker = lists[lists.length - 1] as HTMLElement;
+    expect(picker.children.length).toBe(3);
+
+    fireEvent.click(picker.querySelectorAll('input[type="checkbox"]')[0]);
+    expect(setSuitabilityConfig).toHaveBeenCalledWith('op-1', {columns: ['access', 'cost']});
   });
 });
