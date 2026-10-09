@@ -61,7 +61,7 @@ Distance joins and geometry merge are not included. For SQL predicates, use the 
 
 ## Suitability analysis
 
-Rank every row by a weighted combination of numeric columns. The result is a new table with a `score` column (source columns are kept unless you uncheck them). When the result has geometry, the new layer is colored by that score using Jenks natural breaks.
+Rank every row by a weighted combination of numeric columns. The result is a new table with a `score` column (source columns are kept unless you uncheck them). When the result has geometry, a layer is created the same way as for other dataset operations, and the default color field prefers `score`.
 
 The panel is arranged like this:
 

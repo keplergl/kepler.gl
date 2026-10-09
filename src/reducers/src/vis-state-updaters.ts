@@ -4085,9 +4085,6 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
     const result = addDefaultLayers(mergedState, newDataEntries);
     mergedState = result.state;
     newLayers = result.newLayers;
-    // Suitability coloring belongs only on freshly auto-created layers. Saved maps
-    // already restored layer color from config, so they must not be restyled here.
-    mergedState = styleSuitabilityResults(mergedState, newDataIds);
   }
 
   if (mergedState.splitMaps.length) {
@@ -6699,51 +6696,11 @@ export function runSpatialJoinUpdater(
   return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
 }
 
-/**
- * Color a suitability result's layers by the score, so it reads as a suitability map rather
- * than a plain copy of the source dataset. The score is always the last field of the result.
- */
-function colorLayersByScore(state: VisState, resultId: string): VisState {
-  const dataset = state.datasets[resultId];
-  const scoreField = dataset?.fields[dataset.fields.length - 1];
-  if (!scoreField) {
-    return state;
-  }
-  const layerIds = state.layers
-    .filter(layer => layer.config.dataId === resultId && layer.visualChannels.color)
-    .map(layer => layer.id);
-
-  return layerIds.reduce((accu, layerId) => {
-    const oldLayer = accu.layers.find(layer => layer.id === layerId);
-    if (!oldLayer) {
-      return accu;
-    }
-    return layerVisualChannelChangeUpdater(accu, {
-      oldLayer,
-      newConfig: {colorField: scoreField, colorScale: SCALE_TYPES.jenks},
-      channel: 'color'
-    });
-  }, state);
-}
-
-/**
- * Layers for a brand new derived dataset only exist once its create-table task resolves, so
- * suitability styling has to run again after the mergers rather than at the time of the run.
- */
-function styleSuitabilityResults(state: VisState, dataIds: string[]): VisState {
-  return dataIds.reduce((accu, dataId) => {
-    const derived = accu.datasets[dataId]?.metadata?.derivedDataset as {type?: string} | undefined;
-    return derived?.type === 'suitability' ? colorLayersByScore(accu, dataId) : accu;
-  }, state);
-}
-
 export function runSuitabilityUpdater(
   state: VisState,
   action: VisStateActions.RunSuitabilityUpdaterAction
 ): VisState {
   const {state: nextState, proto} = executeSuitability(state, action);
-  // Score coloring is applied after addDefaultLayers, not here: layers do not exist
-  // until the create-table task finishes, and saved/re-run layers must keep their config.
   return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
 }
 

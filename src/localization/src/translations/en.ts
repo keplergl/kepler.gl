@@ -510,7 +510,7 @@ export default {
     },
     suitability: 'Suitability Analysis',
     suitabilityHelp:
-      'Rank rows by a weighted combination of numeric columns. The result is added as a new dataset with a score column, and the new layer is colored by that score.',
+      'Rank rows by a weighted combination of numeric columns. The result is added as a new dataset with a score column. The new layer is colored by that column when possible.',
     suitabilityWeights: 'Fields & Weights',
     suitabilityWeightsHelp:
       'Pick the numeric columns that contribute to the score and how much each one matters. A row scores blank when any selected column is missing a value.',
