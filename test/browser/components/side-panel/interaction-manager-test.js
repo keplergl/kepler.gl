@@ -309,9 +309,14 @@ test('Components -> InteractionManager map info section', t => {
   );
   t.equal(wrapper.find('input#interaction-map-name').at(0).prop('value'), '', 'name starts unset');
   t.equal(
-    wrapper.find('input#interaction-map-description').at(0).prop('value'),
+    wrapper.find('textarea#interaction-map-description').at(0).prop('value'),
     '',
     'description starts unset'
+  );
+  t.equal(
+    wrapper.find('textarea#interaction-map-description').at(0).prop('rows'),
+    2,
+    'description is a two-line text area'
   );
 
   wrapper

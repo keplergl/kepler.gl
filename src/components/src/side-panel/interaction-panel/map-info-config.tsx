@@ -22,7 +22,8 @@ import {
   PanelHeaderTitle,
   PanelLabel,
   PanelLabelWrapper,
-  StyledPanelHeader
+  StyledPanelHeader,
+  TextArea
 } from '../../common/styled-components';
 
 const StyledMapInfoPanel = styled.div`
@@ -71,6 +72,20 @@ const DescriptionLabel = styled(PanelLabelWrapper)`
 const MapInfoInput = styled(Input)`
   && {
     height: 28px;
+  }
+`;
+
+const MapInfoTextArea = styled(TextArea)`
+  && {
+    height: 41px;
+    min-height: 41px;
+    resize: none;
+    display: block;
+    white-space: pre-wrap;
+    overflow: auto;
+    text-overflow: unset;
+    line-height: 1.4;
+    cursor: text;
   }
 `;
 
@@ -130,7 +145,7 @@ function MapInfoConfigFactory(
     );
 
     const onDescriptionChange = useCallback(
-      (event: React.ChangeEvent<HTMLInputElement>) => {
+      (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         visStateActions.setMapInfo({description: event.target.value});
       },
       [visStateActions]
@@ -202,9 +217,9 @@ function MapInfoConfigFactory(
                   width={220}
                 />
               </DescriptionLabel>
-              <MapInfoInput
+              <MapInfoTextArea
                 id="interaction-map-description"
-                type="text"
+                rows={2}
                 value={description}
                 maxLength={MAP_INFO_CHARACTER.description}
                 onChange={onDescriptionChange}
