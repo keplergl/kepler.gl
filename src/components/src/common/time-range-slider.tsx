@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo} from 'react';
 import throttle from 'es-toolkit/compat/throttle';
 import styled, {IStyledComponent} from 'styled-components';
 
@@ -11,6 +11,8 @@ import PlaybackControlsFactory from './animation-control/playback-controls';
 import TimeRangeSliderTimeTitleFactory from './time-range-slider-time-title';
 import {LineChart, Timeline, AnimationConfig, TimeBins, Filter} from '@kepler.gl/types';
 import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
+import {ANIMATION_WINDOW} from '@kepler.gl/constants';
+import {getBinThresholds, intervalBinFromMarks} from '@kepler.gl/utils';
 import AnimationControlFactory from './animation-control/animation-control';
 import {BaseComponentProps} from '../types';
 
@@ -50,6 +52,7 @@ type TimeRangeSliderProps = {
 
 export type StyledSliderContainerProps = BaseComponentProps & {
   $isEnlarged?: boolean;
+  $interval?: boolean;
 };
 
 const StyledSliderContainer: IStyledComponent<
@@ -69,6 +72,15 @@ const StyledSliderContainer: IStyledComponent<
   .playback-controls {
     margin-left: 22px;
   }
+
+  ${props =>
+    props.$interval
+      ? `
+    .kg-range-slider__bar {
+      background-color: transparent;
+    }
+  `
+      : ''}
 `;
 
 const ANIMATION_CONTROL_STYLE = {flex: 1, padding: 0, marginTop: 0};
@@ -125,7 +137,40 @@ export default function TimeRangeSliderFactory(
       filter
     } = props;
 
-    const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
+    const binMarks = useMemo(() => {
+      if (animationWindow !== ANIMATION_WINDOW.interval || !plotType?.interval || !domain) {
+        return null;
+      }
+      const thresholds = getBinThresholds(plotType.interval, domain);
+      return thresholds.length > 1 ? thresholds : null;
+    }, [animationWindow, domain, plotType?.interval]);
+
+    const byInterval = Boolean(binMarks);
+    const sliderRange = useMemo(() => {
+      if (!domain) {
+        return domain;
+      }
+      if (binMarks) {
+        return [domain[0], Math.max(binMarks[binMarks.length - 1], domain[1])] as [number, number];
+      }
+      return domain;
+    }, [binMarks, domain]);
+
+    const onSliderChange = useCallback(
+      (val: number[]) => {
+        if (byInterval && binMarks) {
+          // A point brush reports the same mark twice. The single handle reports
+          // [domain start, handle], so the moving edge picks the bin.
+          const anchor = val[0] === val[1] ? val[0] : val[1];
+          onChange(intervalBinFromMarks(binMarks, anchor));
+          return;
+        }
+        onChange(val);
+      },
+      [binMarks, byInterval, onChange]
+    );
+
+    const throttledOnchange = useMemo(() => throttle(onSliderChange, 20), [onSliderChange]);
     useEffect(() => () => throttledOnchange.cancel(), [throttledOnchange]);
 
     const binsForInterval = useMemo(
@@ -153,13 +198,18 @@ export default function TimeRangeSliderFactory(
             />
           </div>
         ) : null}
-        <StyledSliderContainer className="time-range-slider__container" $isEnlarged={isEnlarged}>
+        <StyledSliderContainer
+          className="time-range-slider__container"
+          $isEnlarged={isEnlarged}
+          $interval={byInterval}
+        >
           {!isMinified ? (
             <div className="timeline-container" style={style}>
               <RangeSlider
-                range={domain}
-                value0={value[0]}
-                value1={value[1]}
+                range={byInterval ? sliderRange : domain}
+                value0={byInterval && sliderRange ? sliderRange[0] : value[0]}
+                value1={byInterval ? value[0] : value[1]}
+                plotValue={byInterval ? value : undefined}
                 bins={binsForInterval}
                 lineChart={lineChart}
                 invertTrendColor={invertTrendColor}
@@ -167,6 +217,9 @@ export default function TimeRangeSliderFactory(
                 isEnlarged={isEnlarged}
                 showInput={false}
                 step={step}
+                isRanged={!byInterval}
+                marks={byInterval ? binMarks || undefined : undefined}
+                animationWindow={animationWindow}
                 onChange={throttledOnchange}
                 xAxis={TimeSliderMarker}
                 timezone={timezone}

@@ -85,6 +85,9 @@ function InteractionManagerFactory(
           title={intl.formatMessage({id: panelMetadata.label})}
         />
         {Object.keys(interactionConfig).map(key => {
+          if (key === 'annotation') {
+            return null;
+          }
           if (key === 'legend') {
             return layers ? (
               <LegendConfig

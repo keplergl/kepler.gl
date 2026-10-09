@@ -196,6 +196,27 @@ export const openDeleteModal: (
     (datasetId: OpenDeleteModalUpdaterAction['payload']) => ({payload: datasetId})
   );
 
+/** OPEN_REPLACE_DATASET_MODAL */
+export type OpenReplaceDatasetModalUpdaterAction = {
+  payload: string;
+};
+/**
+ * Open the add-data modal so the next confirmed upload replaces one dataset.
+ * Layers and filters are remapped onto the new table.
+ * @memberof uiStateActions
+ * @param datasetId - id of the dataset to replace
+ * @public
+ */
+export const openReplaceDatasetModal: (
+  datasetId: OpenReplaceDatasetModalUpdaterAction['payload']
+) => Merge<
+  OpenReplaceDatasetModalUpdaterAction,
+  {type: typeof ActionTypes.OPEN_REPLACE_DATASET_MODAL}
+> = createAction(
+  ActionTypes.OPEN_REPLACE_DATASET_MODAL,
+  (datasetId: OpenReplaceDatasetModalUpdaterAction['payload']) => ({payload: datasetId})
+);
+
 /** ADD_NOTIFICATION */
 export type AddNotificationUpdaterAction = {
   payload: object;

@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {bisectLeft, bisectRight, extent, histogram as d3Histogram, ticks} from 'd3-array';
+import {
+  bisectCenter,
+  bisectLeft,
+  bisectRight,
+  extent,
+  histogram as d3Histogram,
+  ticks
+} from 'd3-array';
 import isEqual from 'es-toolkit/compat/isEqual';
 import {getFilterMappedValue, getInitialInterval, intervalToFunction} from './time';
 import moment from 'moment';
@@ -324,14 +331,14 @@ export function binByTime(indexes, dataset, interval, filter) {
 export function getBinThresholds(interval: string, domain: number[]): number[] {
   const timeInterval = intervalToFunction(interval);
   const [t0, t1] = domain;
-  const floor = timeInterval.floor(t0).getTime();
-  const ceiling = timeInterval.ceil(t1).getTime();
 
   if (!timeInterval) {
     // if time interval is not defined
     // this should not happen
     return [t0, t0 + durationDay];
   }
+  const floor = timeInterval.floor(t0).getTime();
+  const ceiling = timeInterval.ceil(t1).getTime();
   const binThresholds = timeInterval.range(floor, ceiling + 1).map(t => moment.utc(t).valueOf());
   const lastStep = binThresholds[binThresholds.length - 1];
   if (lastStep === t1) {
@@ -432,11 +439,30 @@ export function validBin(b) {
 }
 
 /**
- * Use in slider, given a number and an array of numbers, return the nears number from the array.
- * Takes a value, timesteps and return the actual step.
- * @param value
- * @param marks
+ * Turn a histogram brush or slider position into one bin.
+ * Interval playback steps by bin, and the filter comparison is inclusive, so
+ * the window is [binStart, nextBinStart - 1]. The last threshold is the end
+ * of the domain, not the start of another bin.
  */
+export function intervalBinFromMarks(marks: number[], value: number): [number, number] {
+  if (!marks.length || !Number.isFinite(value)) {
+    return [value, value];
+  }
+  if (marks.length === 1) {
+    return [marks[0], marks[0]];
+  }
+  let idx = bisectCenter(marks, value);
+  if (idx < 0) {
+    idx = 0;
+  }
+  // The last mark closes the final bin. Keep a drag there on that bin.
+  const lastBin = marks.length - 2;
+  if (idx > lastBin) {
+    idx = lastBin;
+  }
+  return [marks[idx], marks[idx + 1] - 1];
+}
+
 export function snapToMarks(value: number, marks: number[]): number {
   // always use bin x0
   if (!marks.length) {
@@ -996,7 +1022,10 @@ export function adjustValueToAnimationWindow<S extends MinVisStateForAnimationWi
   if (animationWindow === ANIMATION_WINDOW.interval) {
     val0 = snapToMarks(value1, thresholds);
     idx = thresholds.indexOf(val0);
-    val1 = idx > -1 ? datasetBins[idx].x1 : NaN;
+    // x1 is the next bin's start. The filter keeps rows where value <= end,
+    // so stop one millisecond early and leave that boundary to the next bin.
+    const binEnd = idx > -1 ? datasetBins[idx].x1 : NaN;
+    val1 = Number.isFinite(binEnd) && binEnd > val0 ? binEnd - 1 : binEnd;
   } else {
     // fit current value to window
     val0 = snapToMarks(value0, thresholds);

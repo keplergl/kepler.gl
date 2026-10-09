@@ -200,10 +200,24 @@ export default function ModalContainerFactory(
 
     _onConfirmAddData = ({
       autoCreateLayers,
-      datasets
-    }: {autoCreateLayers?: boolean; datasets?: any[]} = {}) => {
+      datasets,
+      deleteOriginalDataset
+    }: {
+      autoCreateLayers?: boolean;
+      datasets?: any[];
+      deleteOriginalDataset?: boolean;
+    } = {}) => {
       const staged = datasets || this.props.visState.stagedToAdd;
       if (!staged?.length) {
+        return;
+      }
+      const datasetToReplaceId = this.props.uiState.datasetToReplaceId;
+      if (datasetToReplaceId) {
+        this.props.visStateActions.confirmReplaceDataset({
+          result: staged,
+          datasetToReplaceId,
+          deleteOriginalDataset: deleteOriginalDataset !== false
+        });
         return;
       }
       this.props.visStateActions.loadFilesSuccess(staged, {
@@ -396,7 +410,8 @@ export default function ModalContainerFactory(
             }
             break; // in case we add a new case after this one
           }
-          case ADD_DATA_ID:
+          case ADD_DATA_ID: {
+            const replaceDatasetId = uiState.datasetToReplaceId;
             template = (
               <LoadDataModal
                 {...providerState}
@@ -413,15 +428,20 @@ export default function ModalContainerFactory(
                 fileFormatNames={getFileFormatNames(this.props.visState)}
                 fileExtensions={getFileExtensions(this.props.visState)}
                 displayedFileExtensions={getDisplayedFileExtensions(this.props.visState)}
+                replaceDatasetId={replaceDatasetId}
+                replaceDatasetLabel={
+                  replaceDatasetId ? datasets?.[replaceDatasetId]?.label : undefined
+                }
               />
             );
             modalProps = {
-              title: 'modal.title.addDataToMap',
+              title: replaceDatasetId ? 'modal.title.replaceDataset' : 'modal.title.addDataToMap',
               cssStyle: LoadDataModalStyle,
               footer: false,
               onConfirm: this._closeModal
             };
             break;
+          }
           case EXPORT_IMAGE_ID:
             template = (
               <ExportImageModal

@@ -3,7 +3,7 @@
 
 // vis-state-reducer
 import {default as ActionTypes} from './action-types';
-import {FileCacheItem} from '@kepler.gl/processors';
+import {FileCacheItem, ZipArchiveExpansion} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {GroupByOp, JoinOp, KeplerTable} from '@kepler.gl/table';
 import {
@@ -173,22 +173,30 @@ export function layerSetIsValid(
 export type LayerTypeChangeUpdaterAction = {
   oldLayer: Layer;
   newType: string;
+  /**
+   * Fit the map when this is the layer type dropdown assigning a type to an
+   * empty layer. Omitted for programmatic calls and saved-config applies.
+   */
+  fitBounds?: boolean;
 };
 /**
  * Update layer type. Previews layer config will be copied if applicable.
  * @param oldLayer - layer to be updated
  * @param newType - new type
+ * @param options.fitBounds fit the map when the layer type dropdown gives an empty layer its first type
  * @returns action
  * @public
  */
 export function layerTypeChange(
   oldLayer: Layer,
-  newType: string
+  newType: string,
+  options?: {fitBounds?: boolean}
 ): Merge<LayerTypeChangeUpdaterAction, {type: typeof ActionTypes.LAYER_TYPE_CHANGE}> {
   return {
     type: ActionTypes.LAYER_TYPE_CHANGE,
     oldLayer,
-    newType
+    newType,
+    ...(options?.fitBounds ? {fitBounds: true} : {})
   };
 }
 export type LayerVisualChannelConfigChangeUpdaterAction = {
@@ -1881,6 +1889,25 @@ export function loadNextFile(loadId?: number): {
   };
 }
 
+export type ExpandZipArchiveSuccessAction = {
+  loadId: number;
+  archiveName: string;
+  expansion: ZipArchiveExpansion;
+};
+/**
+ * A zip in the load queue has been unpacked. The updater either parses a
+ * single shapefile archive or enqueues one dataset per supported member.
+ * @memberof visStateActions
+ */
+export function expandZipArchiveSuccess(
+  payload: ExpandZipArchiveSuccessAction
+): Merge<ExpandZipArchiveSuccessAction, {type: typeof ActionTypes.EXPAND_ZIP_ARCHIVE_SUCCESS}> {
+  return {
+    type: ActionTypes.EXPAND_ZIP_ARCHIVE_SUCCESS,
+    ...payload
+  };
+}
+
 export type loadFilesSuccessUpdaterAction = {
   result: FileCacheItem[];
   options?: AddDataToMapOptions;
@@ -1902,6 +1929,33 @@ export function loadFilesSuccess(
     type: ActionTypes.LOAD_FILES_SUCCESS,
     result,
     ...(options ? {options} : {})
+  };
+}
+
+export type ConfirmReplaceDatasetUpdaterAction = {
+  result: FileCacheItem[];
+  datasetToReplaceId: string;
+  deleteOriginalDataset?: boolean;
+};
+/**
+ * Confirm a staged upload as a replacement for one dataset.
+ * The first dataset remaps that dataset's layers and filters. Further datasets are added.
+ * @memberof visStateActions
+ * @param payload.result staged file cache the user left checked
+ * @param payload.datasetToReplaceId dataset the menu action selected
+ * @param payload.deleteOriginalDataset drop the original table. Defaults to true
+ * @public
+ */
+export function confirmReplaceDataset(payload: {
+  result: FileCacheItem[];
+  datasetToReplaceId: string;
+  deleteOriginalDataset?: boolean;
+}): Merge<ConfirmReplaceDatasetUpdaterAction, {type: typeof ActionTypes.CONFIRM_REPLACE_DATASET}> {
+  return {
+    type: ActionTypes.CONFIRM_REPLACE_DATASET,
+    result: payload.result,
+    datasetToReplaceId: payload.datasetToReplaceId,
+    deleteOriginalDataset: payload.deleteOriginalDataset
   };
 }
 
@@ -1981,6 +2035,8 @@ export function loadFileStepSuccess({
 export type LoadFilesErrUpdaterAction = {
   fileName: string;
   error: any;
+  /** Set when the failure belongs to one load, so a newer load can ignore it. */
+  loadId?: number;
 };
 /**
  * Trigger loading file error
@@ -1992,12 +2048,14 @@ export type LoadFilesErrUpdaterAction = {
 
 export function loadFilesErr(
   fileName: string,
-  error: any
+  error: any,
+  loadId?: number
 ): Merge<LoadFilesErrUpdaterAction, {type: typeof ActionTypes.LOAD_FILES_ERR}> {
   return {
     type: ActionTypes.LOAD_FILES_ERR,
     fileName,
-    error
+    error,
+    ...(loadId == null ? {} : {loadId})
   };
 }
 
@@ -2621,6 +2679,8 @@ export const setLoadingIndicator = createAction<SetLoadingIndicatorPayload>(
 export type SetLoadingProgressUpdaterAction = {
   id: string;
   percent: number;
+  /** Download is finished and the file is being parsed into a dataset. */
+  phase?: 'processing';
 };
 
 /**
@@ -2631,12 +2691,14 @@ export type SetLoadingProgressUpdaterAction = {
  */
 export function setLoadingProgress(
   id: string,
-  percent: number
+  percent: number,
+  phase?: 'processing'
 ): Merge<SetLoadingProgressUpdaterAction, {type: typeof ActionTypes.SET_LOADING_PROGRESS}> {
   return {
     type: ActionTypes.SET_LOADING_PROGRESS,
     id,
-    percent
+    percent,
+    ...(phase ? {phase} : {})
   };
 }
 

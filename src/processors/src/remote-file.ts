@@ -29,9 +29,17 @@ export type KeplerRemoteFile = File & {
   keplerLastModified?: string;
 };
 
+export type RemoteLoadProgress = {
+  loaded: number;
+  total?: number;
+  percent: number;
+  /** Set once the bytes are in memory and parsing is about to block the main thread. */
+  phase?: 'processing';
+};
+
 export type FetchRemoteFileOptions = {
   format?: string | null;
-  onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void;
+  onProgress?: (progress: RemoteLoadProgress) => void;
   etag?: string;
   lastModified?: string;
   /** Bypass the HTTP cache. Used for poll/reload, not the first remote URL load. */
@@ -229,7 +237,7 @@ export function remoteDatasetFromUrl(url: string, format?: string | null): FileC
 export async function fetchRemoteFileAsKeplerFile(
   url: string,
   format?: string | null,
-  onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void
+  onProgress?: (progress: RemoteLoadProgress) => void
 ): Promise<KeplerRemoteFile> {
   const result = await fetchRemoteFile(url, {format, onProgress});
   if (!result.file) {
@@ -238,9 +246,48 @@ export async function fetchRemoteFileAsKeplerFile(
   return result.file;
 }
 
+/** Two frames are enough for the processing indicator to paint. */
+const PAINT_WAIT_MS = 100;
+
+function waitForNextPaint(): Promise<void> {
+  // Hidden tabs suspend requestAnimationFrame. A download that finishes in the
+  // background would otherwise wait until the user comes back, and there is
+  // nothing to paint there.
+  if (
+    typeof requestAnimationFrame !== 'function' ||
+    (typeof document !== 'undefined' && document.hidden)
+  ) {
+    return Promise.resolve();
+  }
+  return new Promise(resolve => {
+    let settled = false;
+    const frames: number[] = [];
+    const finish = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      if (typeof cancelAnimationFrame === 'function') {
+        frames.forEach(id => cancelAnimationFrame(id));
+      }
+      resolve();
+    };
+    // The tab can be hidden after this wait starts. Don't sit on frames that will never run.
+    const timer = setTimeout(finish, PAINT_WAIT_MS);
+    frames.push(
+      requestAnimationFrame(() => {
+        if (!settled) {
+          frames.push(requestAnimationFrame(finish));
+        }
+      })
+    );
+  });
+}
+
 async function readResponseBlob(
   response: Response,
-  onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void
+  onProgress?: (progress: RemoteLoadProgress) => void
 ): Promise<Blob> {
   const contentLength = Number(response.headers.get('content-length'));
   const total = Number.isFinite(contentLength) && contentLength > 0 ? contentLength : undefined;
@@ -315,7 +362,7 @@ export async function loadExternallyHostedDataset(metadata: {
   etag?: string;
   lastModified?: string;
   bypassCache?: boolean;
-  onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void;
+  onProgress?: (progress: RemoteLoadProgress) => void;
 }): Promise<LoadExternallyHostedDatasetResult> {
   const {source, format, etag, lastModified, size, bypassCache, onProgress} = metadata;
   const fetched = await fetchRemoteFile(source, {
@@ -334,6 +381,15 @@ export async function loadExternallyHostedDataset(metadata: {
       size
     };
   }
+
+  onProgress?.({
+    loaded: fetched.size ?? fetched.file.size,
+    ...(typeof fetched.size === 'number' ? {total: fetched.size} : {}),
+    percent: 1,
+    phase: 'processing'
+  });
+  // Let the loading indicator paint a processing state before parse blocks the tab.
+  await waitForNextPaint();
 
   const batches = await readFileInBatches({
     file: fetched.file,

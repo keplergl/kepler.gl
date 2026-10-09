@@ -138,8 +138,9 @@ describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
     expect(screen.getAllByTestId(dataTestIds.layerPanel)).toHaveLength(
       defaultProps.layers.length - 1
     );
-    expect(screen.getByTestId(dataTestIds.removeLayerAction)).toBeInTheDocument();
-    const removeLayerButton = screen.getByTestId(dataTestIds.removeLayerAction);
+    fireEvent.click(screen.getByTestId('layer-options-toggle'));
+    const removeLayerButton = document.querySelector('.layer__remove-layer');
+    expect(removeLayerButton).not.toBeNull();
     fireEvent.click(removeLayerButton);
 
     expect(removeLayer).toHaveBeenCalled();

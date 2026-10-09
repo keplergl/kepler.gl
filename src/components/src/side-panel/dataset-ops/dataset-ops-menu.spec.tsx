@@ -45,6 +45,49 @@ describe('DatasetOpsMenu', () => {
     initApplicationConfig({enableDatasetOps: true});
   });
 
+  test('replaces a dataset from the menu', () => {
+    const replaceDataset = jest.fn();
+    const {container} = renderWithTheme(
+      <DatasetOpsMenu
+        datasetId="cities"
+        dataset={{type: 'local'}}
+        addGroupBy={jest.fn()}
+        addJoin={jest.fn()}
+        addSpatialJoin={jest.fn()}
+        replaceDataset={replaceDataset}
+      />
+    );
+
+    fireEvent.click(container.querySelector('.dataset-ops-menu__toggle') as HTMLElement);
+    fireEvent.click(document.querySelector('.dataset-ops-menu__replace') as HTMLButtonElement);
+    expect(replaceDataset).toHaveBeenCalledWith('cities');
+  });
+
+  test('hides replace for derived datasets and vector tiles', () => {
+    const {container: derived} = renderWithTheme(
+      <DatasetOpsMenu
+        datasetId="grouped"
+        dataset={{type: 'local', metadata: {derivedDataset: {type: 'groupBy'}}}}
+        addGroupBy={jest.fn()}
+        replaceDataset={jest.fn()}
+      />
+    );
+    fireEvent.click(derived.querySelector('.dataset-ops-menu__toggle') as HTMLElement);
+    expect(document.querySelector('.dataset-ops-menu__replace')).toBeNull();
+
+    const {container: tiles} = renderWithTheme(
+      <DatasetOpsMenu
+        datasetId="tiles"
+        dataset={{type: 'vector-tile'}}
+        replaceDataset={jest.fn()}
+        showDeleteDataset
+        removeDataset={jest.fn()}
+      />
+    );
+    fireEvent.click(tiles.querySelector('.dataset-ops-menu__toggle') as HTMLElement);
+    expect(document.querySelector('.dataset-ops-menu__replace')).toBeNull();
+  });
+
   test('shows group-by and join actions for local datasets', () => {
     const addGroupBy = jest.fn();
     const {container} = renderWithTheme(

@@ -427,6 +427,7 @@ export default {
     refreshCustom: 'Custom'
   },
   datasetOps: {
+    replace: 'Replace',
     groupBy: 'Group By',
     groupByHelp:
       'Create groups to combine data based on a selected field. Result will be added as a new dataset.',
@@ -533,6 +534,7 @@ export default {
     zoomToLayer: 'Zoom to layer',
     resetAfterError: 'Try to enable the layer after an error',
     layerSettings: 'Layer settings',
+    moreOptions: 'More options',
     interactionSettings: 'Interaction settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',
@@ -567,6 +569,7 @@ export default {
     '3DMap': '3D Map',
     animationByWindow: 'Moving Time Window',
     animationByIncremental: 'Incremental Time Window',
+    animationByInterval: 'Step by Interval',
     speed: 'Speed',
     play: 'Play',
     pause: 'Pause',
@@ -671,6 +674,7 @@ export default {
     title: {
       deleteDataset: 'Delete Dataset',
       addDataToMap: 'Add Data To Map',
+      replaceDataset: 'Replace Dataset',
       exportImage: 'Export Image',
       exportData: 'Export Data',
       exportMap: 'Export Map',
@@ -686,7 +690,8 @@ export default {
       addStyle: 'Add Style',
       save: 'Save',
       defaultCancel: 'Cancel',
-      defaultConfirm: 'Confirm'
+      defaultConfirm: 'Confirm',
+      replace: 'Replace'
     },
     exportFileName: {
       title: 'File name',
@@ -811,6 +816,11 @@ export default {
     loadingDialog: {
       loading: 'Loading...'
     },
+    replaceDataset: {
+      removeOriginal: 'Remove {datasetName}',
+      removeOriginalHint:
+        'Layers and filters move to the new dataset. The original dataset is removed from the map.'
+    },
     loadData: {
       upload: 'Load Files',
       tileset: 'Tileset',
@@ -818,7 +828,10 @@ export default {
       autoCreateLayers: 'Auto create layers',
       autoCreateLayersInfo:
         'kepler.gl will auto detect layers if the column names in your file follow certain naming conventions.',
-      readyToAdd: 'Ready to add'
+      processingLayers: 'Processing data for layers',
+      readyToAdd: 'Ready to add',
+      copyError: 'Copy error',
+      copied: 'Copied'
     },
     tripInfo: {
       title: 'Create trips from GeoJson',
@@ -942,6 +955,12 @@ ${'```'}
     tooltip: 'Tooltip',
     brush: 'Brush',
     coordinate: 'Coordinates',
+    annotation: 'Annotations',
+    addAnnotation: 'Add Annotation',
+    showAnnotations: 'Show Annotations',
+    hideAnnotations: 'Hide Annotations',
+    copyCoordinate: 'Copy coordinates',
+    coordinateCopied: 'Copied',
     geocoder: 'Geocoder',
     legend: 'Legend',
     legendHint: 'Choose which layers appear in the map legend. Layers stay on the map.',
@@ -1047,6 +1066,7 @@ ${'```'}
       'No information or map data is sent to any server.',
     configUploadMessage:
       'Upload a supported file or saved map **Json**. Read more about [**supported file formats**]',
+    replaceUploadMessage: 'Upload a supported file. Read more about [**supported file formats**]',
     browseFiles: 'browse your files',
     uploading: 'Uploading',
     downloading: 'Downloading',
@@ -1055,6 +1075,9 @@ ${'```'}
     dropMessage: 'Drag & Drop Your File(s) Here, {browse}, or',
     toAdd: 'To add to map',
     includeDataset: 'Include {name}',
+    largeDataset: 'Large',
+    largeDatasetWarning:
+      'This dataset is large. It can run out of memory, layer creation can take a long time, and rendering can be laggy.',
     readyToAdd: '{size} - Ready to add file to map',
     readyToAddNoSize: 'Ready to add file to map',
     loadingProgress: 'Loading ({loaded} / {total})',

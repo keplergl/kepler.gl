@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useState} from 'react';
-import styled from 'styled-components';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import styled, {keyframes} from 'styled-components';
+import copy from 'copy-to-clipboard';
 import get from 'es-toolkit/compat/get';
 import {IntlShape, useIntl} from 'react-intl';
 
 import {Button} from '../common';
+import Checkbox from '../common/checkbox';
+import {Checkmark, Copy, Docs} from '../common/icons';
+import TippyTooltip from '../common/tippy-tooltip';
 import FileUploadFactory from '../common/file-uploader/file-upload';
 import {selectedStagedDatasets} from '../common/file-uploader/upload-file-list';
 import LoadStorageMapFactory from './load-storage-map';
@@ -24,6 +28,7 @@ const StyledLoadDataModal = styled.div.attrs({
 })<{$withFooter?: boolean}>`
   padding: 10px 0 ${props => (props.$withFooter ? 0 : '50px')};
   min-height: 360px;
+  max-height: calc(100vh - 180px);
   display: flex;
   flex-direction: column;
 
@@ -39,6 +44,8 @@ const AddDataBar = styled.div.attrs({
   className: 'add-data-bar'
 })`
   display: flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
   align-items: center;
   gap: 16px;
   box-sizing: border-box;
@@ -65,14 +72,81 @@ const StagedLabel = styled.div`
   font-size: 12px;
 `;
 
-const FooterError = styled.div`
-  color: ${props => props.theme.negativeBtnColor};
-  font-size: 12px;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+const FooterErrorRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  color: ${props => props.theme.errorColor};
 `;
+
+const FooterErrorText = styled.div`
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+`;
+
+const CopyErrorButton = styled.button`
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.7;
+  }
+`;
+
+function FooterErrorMessage({message}: {message: string}) {
+  const intl = useIntl();
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setCopied(false);
+  }, [message]);
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = window.setTimeout(() => setCopied(false), 1500);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+
+  const onCopy = useCallback(() => {
+    copy(message);
+    setCopied(true);
+  }, [message]);
+
+  const copyLabel = intl.formatMessage({
+    id: copied ? 'modal.loadData.copied' : 'modal.loadData.copyError',
+    defaultMessage: copied ? 'Copied' : 'Copy error'
+  });
+
+  return (
+    <FooterErrorRow>
+      <FooterErrorText role="alert">{message}</FooterErrorText>
+      <TippyTooltip placement="top" isLightTheme render={() => <div>{copyLabel}</div>}>
+        <CopyErrorButton type="button" aria-label={copyLabel} onClick={onCopy}>
+          {copied ? <Checkmark height="14px" /> : <Copy height="14px" />}
+        </CopyErrorButton>
+      </TippyTooltip>
+    </FooterErrorRow>
+  );
+}
 
 const AddDataActions = styled.div`
   display: flex;
@@ -80,6 +154,54 @@ const AddDataActions = styled.div`
   gap: 12px;
   margin-left: auto;
   flex-shrink: 0;
+`;
+
+const Dimmed = styled.div<{$dimmed?: boolean}>`
+  opacity: ${props => (props.$dimmed ? 0.4 : 1)};
+  pointer-events: ${props => (props.$dimmed ? 'none' : 'auto')};
+`;
+
+const ModalMain = styled(Dimmed)`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+`;
+
+const spin = keyframes`
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const ProcessingSpinner = styled.span.attrs({
+  className: 'add-data-bar__spinner',
+  'aria-hidden': true
+})`
+  display: block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid ${props => props.theme.borderColorLT};
+  border-top-color: ${props => props.theme.primaryBtnBgd};
+  will-change: transform;
+  animation: ${spin} 0.7s linear infinite;
+`;
+
+const ProcessingStatus = styled.div.attrs({
+  className: 'add-data-bar__processing',
+  role: 'status'
+})`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
 `;
 
 const noop = () => {
@@ -98,7 +220,44 @@ export type LoadDataOptions = {
   autoCreateLayers?: boolean;
   /** Staged datasets the user left checked. */
   datasets?: Array<{info?: {label?: string}; metadata?: {source?: string}}>;
+  /** When replacing, drop the original dataset after layers and filters are remapped. */
+  deleteOriginalDataset?: boolean;
 };
+
+const RemoveOriginalRow = styled.div.attrs({
+  className: 'remove-original-dataset'
+})`
+  display: flex;
+  align-items: center;
+  min-width: 0;
+
+  .kg-checkbox {
+    margin-left: 0;
+    min-width: 0;
+  }
+
+  .kg-checkbox__label {
+    margin-bottom: 0;
+    margin-left: 0;
+    color: ${props => props.theme.textColorLT};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+
+const InfoButton = styled.span`
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  color: ${props => props.theme.subtextColorLT};
+  cursor: help;
+  flex-shrink: 0;
+
+  &:hover {
+    color: ${props => props.theme.textColorLT};
+  }
+`;
 
 type TilesetDraft = {
   canAdd: boolean;
@@ -150,6 +309,10 @@ type LoadDataModalProps = {
 
   loadFiles: LoadFiles;
   fileLoadingProgress: FileLoadingProgress;
+
+  /** When set, confirming the staged upload replaces this dataset. */
+  replaceDatasetId?: string | null;
+  replaceDatasetLabel?: string;
 };
 
 LoadDataModalFactory.deps = [
@@ -196,10 +359,25 @@ export function LoadDataModalFactory(
     stagedToAdd = null,
     loadingMethods = defaultLoadingMethods,
     isCloudMapLoading,
+    replaceDatasetId,
+    replaceDatasetLabel,
     ...restProps
   }) => {
     const intl = useIntl();
+    const isReplace = Boolean(replaceDatasetId);
+    const availableMethods = isReplace
+      ? loadingMethods.filter(method => method.id === LOADING_METHODS.upload)
+      : loadingMethods;
     const [autoCreateLayers, setAutoCreateLayers] = useState(true);
+    const [preparingLayers, setPreparingLayers] = useState(false);
+    const prepareFrames = useRef<number[]>([]);
+    useEffect(() => {
+      const frames = prepareFrames.current;
+      return () => {
+        frames.forEach(id => window.cancelAnimationFrame(id));
+      };
+    }, []);
+    const [deleteOriginalDataset, setDeleteOriginalDataset] = useState(true);
     const [deselectedDatasets, setDeselectedDatasets] = useState<Record<string, boolean>>({});
     const onToggleDataset = useCallback((key: string) => {
       setDeselectedDatasets(prev => ({...prev, [key]: !prev[key]}));
@@ -226,7 +404,7 @@ export function LoadDataModalFactory(
     const onTilesetDraftChange = useCallback((draft: TilesetDraft) => {
       setTilesetDraft(draft);
     }, []);
-    const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
+    const [currentMethod, toggleMethod] = useState(getDefaultMethod(availableMethods));
     const selectMethod = useCallback((method: LoadingMethod) => {
       setTilesetDraft(null);
       toggleMethod(method);
@@ -239,26 +417,50 @@ export function LoadDataModalFactory(
       ? Boolean(tilesetDraft?.canAdd) && !tilesetDraft?.loading
       : Boolean(datasetsToAdd.length) && !fileLoading;
     const onAddData = useCallback(() => {
-      if (isTileset) {
-        if (tilesetDraft?.canAdd && tilesetDraft.dataset) {
-          handleTilesetAdded(tilesetDraft.dataset, tilesetDraft.metadata);
-        }
+      if (!canAdd || preparingLayers) {
         return;
       }
-      if (datasetsToAdd.length && !fileLoading) {
-        onConfirmAddData({autoCreateLayers, datasets: datasetsToAdd});
+      const commit = () => {
+        if (isTileset) {
+          if (tilesetDraft?.canAdd && tilesetDraft.dataset) {
+            handleTilesetAdded(tilesetDraft.dataset, tilesetDraft.metadata);
+          }
+          return;
+        }
+        onConfirmAddData(
+          isReplace
+            ? {autoCreateLayers: false, datasets: datasetsToAdd, deleteOriginalDataset}
+            : {autoCreateLayers, datasets: datasetsToAdd}
+        );
+      };
+      // Layer creation blocks the main thread. Paint this status first so the
+      // spinner can keep moving on the compositor during that work.
+      // Replace never creates layers, so it commits immediately.
+      if (autoCreateLayers && !isReplace) {
+        setPreparingLayers(true);
+        const first = window.requestAnimationFrame(() => {
+          const second = window.requestAnimationFrame(commit);
+          prepareFrames.current.push(second);
+        });
+        prepareFrames.current.push(first);
+        return;
       }
+      commit();
     }, [
       autoCreateLayers,
+      canAdd,
       datasetsToAdd,
-      fileLoading,
+      deleteOriginalDataset,
       handleTilesetAdded,
+      isReplace,
       isTileset,
       onConfirmAddData,
+      preparingLayers,
       tilesetDraft
     ]);
     const uploadError = !fileLoading && isUpload ? progressErrors(fileLoadingProgress)[0] : '';
     const tilesetError = isTileset ? tilesetDraft?.error : '';
+    const footerError = uploadError || tilesetError || '';
 
     const currentModalProps = {
       ...restProps,
@@ -267,41 +469,95 @@ export function LoadDataModalFactory(
       fileLoading,
       fileLoadingProgress,
       isCloudMapLoading,
-      ...(isUpload ? {stagedToAdd, onAddRemoteDataset, deselectedDatasets, onToggleDataset} : {}),
+      ...(isUpload
+        ? {
+            stagedToAdd,
+            onAddRemoteDataset,
+            deselectedDatasets,
+            onToggleDataset,
+            replaceDataset: isReplace
+          }
+        : {}),
       ...(isTileset ? {confirmInParent: true, onTilesetDraftChange} : {})
     };
     const ElementType = currentMethod?.elementType;
 
     return (
       <StyledLoadDataModal $withFooter={showAddBar}>
-        <ModalTabs
-          currentMethod={currentMethod?.id}
-          loadingMethods={loadingMethods}
-          toggleMethod={selectMethod}
-        />
-        {isCloudMapLoading ? (
-          <LoadingDialog size={64} />
-        ) : (
-          ElementType && <ElementType key={currentMethod?.id} intl={intl} {...currentModalProps} />
-        )}
+        <ModalMain $dimmed={preparingLayers}>
+          <ModalTabs
+            currentMethod={currentMethod?.id}
+            loadingMethods={availableMethods}
+            toggleMethod={selectMethod}
+          />
+          {isCloudMapLoading ? (
+            <LoadingDialog size={64} />
+          ) : (
+            ElementType && (
+              <ElementType key={currentMethod?.id} intl={intl} {...currentModalProps} />
+            )
+          )}
+        </ModalMain>
         {showAddBar ? (
           <AddDataBar>
-            <AutoCreateLayersCheckbox
-              checked={autoCreateLayers}
-              onToggle={onToggleAutoCreateLayers}
-            />
-            <StagedLabel />
-            {uploadError || tilesetError ? (
-              <FooterError>{uploadError || tilesetError}</FooterError>
-            ) : null}
-            <AddDataActions>
-              <Button type="button" link onClick={onClose}>
-                {intl.formatMessage({id: 'modal.button.defaultCancel'})}
-              </Button>
-              <Button type="button" cta disabled={!canAdd} onClick={onAddData}>
-                {intl.formatMessage({id: 'layerManager.addData'})}
-              </Button>
-            </AddDataActions>
+            <Dimmed $dimmed={preparingLayers}>
+              {isReplace ? (
+                <RemoveOriginalRow>
+                  <Checkbox
+                    id="delete-original-dataset"
+                    type="checkbox"
+                    label={intl.formatMessage(
+                      {id: 'modal.replaceDataset.removeOriginal'},
+                      {datasetName: replaceDatasetLabel || replaceDatasetId || ''}
+                    )}
+                    checked={deleteOriginalDataset}
+                    onChange={() => setDeleteOriginalDataset(value => !value)}
+                  />
+                  <TippyTooltip
+                    placement="top"
+                    isLightTheme
+                    render={() => (
+                      <div>
+                        {intl.formatMessage({id: 'modal.replaceDataset.removeOriginalHint'})}
+                      </div>
+                    )}
+                  >
+                    <InfoButton
+                      aria-label={intl.formatMessage({
+                        id: 'modal.replaceDataset.removeOriginalHint'
+                      })}
+                    >
+                      <Docs height="16px" />
+                    </InfoButton>
+                  </TippyTooltip>
+                </RemoveOriginalRow>
+              ) : (
+                <AutoCreateLayersCheckbox
+                  checked={autoCreateLayers}
+                  disabled={preparingLayers}
+                  onToggle={onToggleAutoCreateLayers}
+                />
+              )}
+            </Dimmed>
+            {footerError ? <FooterErrorMessage message={footerError} /> : <StagedLabel />}
+            {preparingLayers ? (
+              <ProcessingStatus
+                aria-label={intl.formatMessage({id: 'modal.loadData.processingLayers'})}
+              >
+                <ProcessingSpinner />
+              </ProcessingStatus>
+            ) : (
+              <AddDataActions>
+                <Button type="button" link onClick={onClose}>
+                  {intl.formatMessage({id: 'modal.button.defaultCancel'})}
+                </Button>
+                <Button type="button" cta disabled={!canAdd} onClick={onAddData}>
+                  {intl.formatMessage({
+                    id: isReplace ? 'modal.button.replace' : 'layerManager.addData'
+                  })}
+                </Button>
+              </AddDataActions>
+            )}
           </AddDataBar>
         ) : null}
       </StyledLoadDataModal>

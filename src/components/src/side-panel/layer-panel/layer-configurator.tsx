@@ -1742,6 +1742,13 @@ export default function LayerConfiguratorFactory(
               property="transparent"
             />
           </LayerConfigGroup>
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            label={'layer.interaction'}
+            collapsible={false}
+          >
+            <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.allowHover} />
+          </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );
     }

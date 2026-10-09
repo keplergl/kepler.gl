@@ -49,6 +49,7 @@ test('#file-handler -> readFileInBatches.csv -> processFileData', async t => {
       bytesUsed: 0,
       progress: {rowCount: 0, rowCountInBatch: 0, percent: 0},
       fileName: 'text-data.csv',
+      fileSize: csvFile.size,
       shape: 'metadata'
     },
     done: false
@@ -80,6 +81,7 @@ test('#file-handler -> readFileInBatches.csv -> processFileData', async t => {
       cursor: 0,
       data: csvWithNull,
       fileName: 'text-data.csv',
+      fileSize: csvFile.size,
       headers: [
         'gps_data.utc_timestamp',
         'gps_data.lat',
@@ -169,6 +171,7 @@ test('#file-handler -> readFileInBatches.GeoJSON FeatureCollection -> processFil
       bytesUsed: 0,
       progress: {rowCount: 0, rowCountInBatch: 0, percent: 0},
       fileName: 'text-data-1.geojson',
+      fileSize: geojsonFile.size,
       shape: 'metadata'
     },
     done: false
@@ -203,7 +206,8 @@ test('#file-handler -> readFileInBatches.GeoJSON FeatureCollection -> processFil
       bytesUsed: 0,
       jsonpath: '$.features',
       progress: {rowCount: 0, rowCountInBatch: 0, percent: 0},
-      fileName: 'text-data-1.geojson'
+      fileName: 'text-data-1.geojson',
+      fileSize: geojsonFile.size
     },
     done: false
   };
@@ -306,6 +310,7 @@ test('#file-handler -> readFileInBatches.GeoJSON Single Feature -> processFileDa
       bytesUsed: 0,
       progress: {rowCount: 0, rowCountInBatch: 0, percent: 0},
       fileName: 'text-data-1.geojson',
+      fileSize: geojsonFile.size,
       shape: 'metadata'
     },
     done: false
@@ -416,6 +421,7 @@ test('#file-handler -> readFileInBatches.row -> processFileData', async t => {
       bytesUsed: 0,
       progress: {rowCount: 0, rowCountInBatch: 0, percent: 0},
       fileName,
+      fileSize: rowFile.size,
       shape: 'metadata'
     },
     done: false
@@ -550,6 +556,7 @@ test('#file-handler -> readFileInBatches.keplerMap -> processFileData', async t 
       bytesUsed: 0,
       progress: {rowCount: 0, rowCountInBatch: 0, percent: 0},
       fileName,
+      fileSize: keplerGlMap.size,
       shape: 'metadata'
     },
     done: false

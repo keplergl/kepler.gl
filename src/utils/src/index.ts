@@ -50,6 +50,7 @@ export type {
 export {
   adjustValueToAnimationWindow,
   getBinThresholds,
+  intervalBinFromMarks,
   histogramFromThreshold,
   histogramFromValues,
   histogramFromDomain,

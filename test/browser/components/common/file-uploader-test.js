@@ -22,6 +22,12 @@ test('Components -> FileUploader.render', t => {
 
   t.equal(wrapper.find(FileDrop).length, 1, 'should render FileUploader');
   t.equal(wrapper.find(UploadButton).length, 1, 'should render UploadButton');
+  t.ok(wrapper.text().includes('client-side application'), 'should render the privacy disclaimer');
+  t.equal(
+    wrapper.find('.file-uploader__chrome-message').length,
+    0,
+    'should not render a large-file footer'
+  );
 
   t.end();
 });
@@ -102,6 +108,15 @@ test('Components -> FileUpload.onDrop -> render loading msg', t => {
   const uploadMsg = wrapper.find('.file-upload-progress__message').at(0).html();
   t.comment(uploadMsg);
   t.ok(uploadMsg.includes('tst-file.csv'), 'should render upload file msg');
+  t.ok(
+    uploadMsg.includes('upload-file-list__spinner'),
+    'should show a spinner in place of the checkbox while the file is still loading'
+  );
+  t.equal(
+    wrapper.find('.upload-file-list').find('Checkbox').length,
+    0,
+    'should hide the include checkbox until parsing finishes'
+  );
   t.equal(
     wrapper.find('.upload-file-list').hostNodes().length,
     1,
@@ -166,6 +181,94 @@ test('Components -> FileUpload.onDrop keeps earlier files', t => {
   t.end();
 });
 
+test('Components -> FileUpload zip expands to the files inside it', t => {
+  const zip = [{type: 'application/zip', name: 'bundle.zip', size: 40}];
+  const onFileUpload = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FileUpload onFileUpload={onFileUpload} fileExtensions={['csv', 'zip', 'json']} />
+    </IntlWrapper>
+  );
+  wrapper
+    .find('.file-uploader__file-drop')
+    .at(0)
+    .simulate('drop', {
+      stopPropagation: () => {},
+      dataTransfer: {types: ['Files'], files: zip}
+    });
+
+  wrapper.setProps({
+    children: (
+      <IntlWrapper>
+        <FileUpload
+          onFileUpload={onFileUpload}
+          fileExtensions={['csv', 'zip', 'json']}
+          fileLoading={false}
+          fileLoadingProgress={{}}
+          stagedToAdd={[{info: {label: 'places.csv', format: 'row'}}]}
+        />
+      </IntlWrapper>
+    )
+  });
+
+  const keptFiles = wrapper.find(FileUpload).children().first().state().files;
+  t.deepEqual(
+    keptFiles.map(file => file.name),
+    ['bundle.zip'],
+    'the dropped zip stays in the uploader state'
+  );
+  const listText = wrapper.find('.upload-file-list').text();
+  t.ok(listText.includes('places.csv'), 'should list the csv that was inside the zip');
+  t.notOk(listText.includes('bundle.zip'), 'should not list the zip once it has been expanded');
+  t.equal(
+    wrapper.find('.upload-file-list').find('Checkbox').length,
+    1,
+    'only the unpacked dataset can be added'
+  );
+
+  t.end();
+});
+
+test('Components -> FileUpload shapefile zip stays one row', t => {
+  const zip = [{type: 'application/zip', name: 'places.zip', size: 40}];
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FileUpload onFileUpload={() => {}} fileExtensions={['zip', 'shp']} />
+    </IntlWrapper>
+  );
+  wrapper
+    .find('.file-uploader__file-drop')
+    .at(0)
+    .simulate('drop', {
+      stopPropagation: () => {},
+      dataTransfer: {types: ['Files'], files: zip}
+    });
+
+  wrapper.setProps({
+    children: (
+      <IntlWrapper>
+        <FileUpload
+          onFileUpload={() => {}}
+          fileExtensions={['zip', 'shp']}
+          fileLoading={false}
+          fileLoadingProgress={{}}
+          stagedToAdd={[{info: {label: 'places.zip', format: 'geojson'}}]}
+        />
+      </IntlWrapper>
+    )
+  });
+
+  const listText = wrapper.find('.upload-file-list').text();
+  t.ok(listText.includes('places.zip'), 'a single shapefile zip keeps the archive name');
+  t.equal(
+    wrapper.find('.upload-file-list').find('Checkbox').length,
+    1,
+    'the archive is one dataset'
+  );
+
+  t.end();
+});
+
 test('Components -> FileUpload remote URL is staged without downloading', t => {
   const onFileUpload = sinon.spy();
   const onAddRemoteDataset = sinon.spy();
@@ -203,6 +306,19 @@ test('Components -> FileUpload remote URL is staged without downloading', t => {
     wrapper.find(FileUpload).children().first().state().remoteUrl,
     '',
     'should clear the url field after adding it'
+  );
+
+  wrapper
+    .find('.file-uploader__remote-url input')
+    .hostNodes()
+    .first()
+    .simulate('change', {target: {value: 'not-a-url'}});
+  wrapper.find('.file-uploader__remote-add').hostNodes().first().simulate('click');
+  t.equal(onAddRemoteDataset.callCount, 1, 'an invalid url is not staged');
+  t.equal(
+    wrapper.find(FileUpload).children().first().state().remoteUrl,
+    'not-a-url',
+    'an invalid url stays in the field'
   );
 
   t.end();
@@ -376,5 +492,142 @@ test('Components -> FileUpload remote URL format selector flag', t => {
   );
 
   initApplicationConfig({enableRemoteFileFormatSelector: false});
+  t.end();
+});
+
+test('Components -> FileUpload large dataset tag', t => {
+  const defaultWarningConfig = {
+    largeDatasetWarningRows: 500_000,
+    largeDatasetWarningBytes: 1024 * 1024 * 1024
+  };
+  const stagedToAdd = [
+    {
+      info: {label: 'small.csv', format: 'csv'},
+      data: {rows: new Array(10)}
+    },
+    {
+      info: {label: 'rows.csv', format: 'csv'},
+      data: {rows: new Array(1000000)}
+    },
+    {
+      info: {label: 'arrow.csv', format: 'arrow'},
+      data: {rows: [], cols: [{length: 1000000}]}
+    }
+  ];
+  const mountUploader = () =>
+    mountWithTheme(
+      <IntlWrapper>
+        <FileUpload onFileUpload={() => {}} fileExtensions={['csv']} stagedToAdd={stagedToAdd} />
+      </IntlWrapper>
+    );
+  const tagFor = (wrapper, name) => {
+    const cards = wrapper.find('.file-upload-progress__message').hostNodes();
+    let count = 0;
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards.at(i);
+      if (card.text().includes(name)) {
+        count += card.find('.upload-file-list__large-dataset').hostNodes().length;
+      }
+    }
+    return count;
+  };
+
+  try {
+    initApplicationConfig({largeDatasetWarningRows: false, largeDatasetWarningBytes: false});
+    let wrapper = mountUploader();
+    t.equal(
+      tagFor(wrapper, 'rows.csv'),
+      0,
+      'a large dataset has no warning when the flag is false'
+    );
+
+    initApplicationConfig({largeDatasetWarningRows: 1000000, largeDatasetWarningBytes: false});
+    wrapper = mountUploader();
+    t.equal(tagFor(wrapper, 'small.csv'), 0, 'a dataset under the row count has no warning tag');
+    t.equal(tagFor(wrapper, 'rows.csv'), 1, 'a dataset at the row count shows a warning tag');
+    t.equal(tagFor(wrapper, 'arrow.csv'), 1, 'an Arrow table at the row count shows a warning tag');
+    const tag = wrapper.find('.upload-file-list__large-dataset').hostNodes().at(0);
+    t.equal(tag.text(), 'Large', 'the tag labels the dataset as large');
+    t.ok(
+      tag.prop('aria-label').includes('run out of memory'),
+      'the tag exposes the memory and performance warning'
+    );
+
+    wrapper
+      .find('.file-uploader__file-drop')
+      .at(0)
+      .simulate('drop', {
+        stopPropagation: () => {},
+        dataTransfer: {
+          types: ['Files'],
+          files: [{type: 'text/csv', name: 'heavy.csv', size: 50 * 1024 * 1024}]
+        }
+      });
+    wrapper.update();
+    t.equal(
+      tagFor(wrapper, 'heavy.csv'),
+      0,
+      'file size alone does not show a warning when that flag is off'
+    );
+
+    initApplicationConfig({
+      largeDatasetWarningRows: false,
+      largeDatasetWarningBytes: 50 * 1024 * 1024
+    });
+    wrapper = mountUploader();
+    t.equal(
+      tagFor(wrapper, 'rows.csv'),
+      0,
+      'row warnings stay off when only the file size flag is set'
+    );
+    wrapper
+      .find('.file-uploader__file-drop')
+      .at(0)
+      .simulate('drop', {
+        stopPropagation: () => {},
+        dataTransfer: {
+          types: ['Files'],
+          files: [{type: 'text/csv', name: 'heavy.csv', size: 50 * 1024 * 1024}]
+        }
+      });
+    wrapper.update();
+    t.equal(tagFor(wrapper, 'heavy.csv'), 1, 'a file at the byte count shows a warning tag');
+
+    wrapper
+      .find('.file-uploader__file-drop')
+      .at(0)
+      .simulate('drop', {
+        stopPropagation: () => {},
+        dataTransfer: {
+          types: ['Files'],
+          files: [{type: 'text/csv', name: 'tiny.csv', size: 100}]
+        }
+      });
+    wrapper.update();
+    t.equal(tagFor(wrapper, 'tiny.csv'), 0, 'a file under the byte count has no warning tag');
+
+    const remounted = mountWithTheme(
+      <IntlWrapper>
+        <FileUpload
+          onFileUpload={() => {}}
+          fileExtensions={['csv']}
+          stagedToAdd={[
+            {
+              info: {label: 'heavy.csv', format: 'csv'},
+              data: {rows: new Array(10)},
+              metadata: {size: 50 * 1024 * 1024}
+            }
+          ]}
+        />
+      </IntlWrapper>
+    );
+    t.equal(
+      tagFor(remounted, 'heavy.csv'),
+      1,
+      'a remounted file keeps the warning from its saved byte size'
+    );
+  } finally {
+    initApplicationConfig(defaultWarningConfig);
+  }
   t.end();
 });

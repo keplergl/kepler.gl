@@ -18,6 +18,7 @@ import type {TaskDescriptor} from '@kepler.gl/tasks';
 import {
   DELAY_TASK,
   ACTION_TASK,
+  EXPAND_ZIP_TASK,
   LOAD_FILE_TASK,
   PROCESS_FILE_DATA,
   UNWRAP_TASK
@@ -40,6 +41,7 @@ import {
   loadFilesErr,
   loadFilesSuccess,
   loadNextFile,
+  expandZipArchiveSuccess,
   nextFileBatch,
   setFilter,
   processFileContent,
@@ -137,6 +139,7 @@ import {
   apply_,
   compose_,
   filterOutById,
+  if_,
   merge_,
   payload_,
   pick_,
@@ -156,7 +159,13 @@ import {
 } from './vis-state-merger';
 
 import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
-import {getFilesToParse, loadExternallyHostedDataset, processGeojson} from '@kepler.gl/processors';
+import {
+  getFilesToParse,
+  isZipFileName,
+  loadExternallyHostedDataset,
+  processGeojson,
+  ZipArchiveExpansion
+} from '@kepler.gl/processors';
 
 import {
   Filter,
@@ -326,6 +335,11 @@ export const defaultInteractionConfig: InteractionConfig = {
     enabled: false,
     position: null
   },
+  annotation: {
+    id: 'annotation',
+    label: 'interactions.annotation',
+    enabled: false
+  },
   zoomOpacity: {
     id: 'zoomOpacity',
     label: 'interactions.fadeOnZoom',
@@ -436,6 +450,7 @@ export const INITIAL_VIS_STATE: VisState = {
   // for loading datasets
   loadingIndicatorValue: 0,
   loadingProgress: {},
+  loadingProcessing: {},
 
   loaders: [],
   loadOptions: {},
@@ -1033,6 +1048,36 @@ export function setInitialLayerConfig(layer, datasets, layerClasses): Layer {
     : newLayer;
 }
 /**
+ * Fit the map when the layer type dropdown gives an empty layer its first
+ * type and that layer already points at a dataset. Later type changes,
+ * programmatic `layerTypeChange`, and saved-config applies leave the camera
+ * alone. Gated by `enableFitBoundsOnManualLayer`.
+ */
+function maybeFitManualLayerBounds(
+  state: VisState,
+  oldLayer: Layer,
+  layer: Layer,
+  fitBounds?: boolean
+): VisState {
+  if (
+    !fitBounds ||
+    oldLayer.type ||
+    !layer.config.dataId ||
+    !getApplicationConfig().enableFitBoundsOnManualLayer
+  ) {
+    return state;
+  }
+  const bounds = findMapBounds([layer]);
+  if (!bounds) {
+    return state;
+  }
+  return withTask(
+    state,
+    ACTION_TASK_FIT_BOUNDS().map(() => fitMapBounds(bounds))
+  );
+}
+
+/**
  * Update layer type. Previews layer config will be copied if applicable.
  * @memberof visStateUpdaters
  * @public
@@ -1121,7 +1166,7 @@ export function layerTypeChangeUpdater(
     layerOrder: replaceLayerEntryInLayerOrder(newState.layerOrder, oldLayer.id, newLayer.id)
   };
 
-  return newState;
+  return maybeFitManualLayerBounds(newState, oldLayer, layer, action.fitBounds);
 }
 
 /**
@@ -1348,17 +1393,26 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
     return state;
   }
 
-  const newFilter = {
-    ...filter,
-    animationWindow
-  };
+  const previousWindow = (filter as TimeRangeFilter).animationWindow;
+  let nextFilter = {...filter, animationWindow} as Filter;
+
+  // Entering or leaving interval playback snaps the window onto histogram bins.
+  if (
+    filter.type === FILTER_TYPES.timeRange &&
+    (previousWindow === ANIMATION_WINDOW.interval || animationWindow === ANIMATION_WINDOW.interval)
+  ) {
+    const adjusted = adjustValueToAnimationWindow(state, nextFilter as TimeRangeFilter);
+    if (Array.isArray(adjusted.value) && adjusted.value.every(v => Number.isFinite(v))) {
+      nextFilter = adjusted;
+    }
+  }
 
   const newState = {
     ...state,
-    filters: swap_<Filter>(newFilter)(state.filters)
+    filters: swap_<Filter>(nextFilter)(state.filters)
   };
 
-  const newSyncTimelineMode = getSyncAnimationMode(newFilter as TimeRangeFilter);
+  const newSyncTimelineMode = getSyncAnimationMode(nextFilter as TimeRangeFilter);
 
   return setTimeFilterTimelineModeUpdater(newState, {id, mode: newSyncTimelineMode});
 }
@@ -3349,7 +3403,11 @@ function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets) {
   return HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK({
     arg: dataset,
     onProgress: progress =>
-      setLoadingProgress(progressId, Math.round((progress?.percent ?? 0) * 100))
+      setLoadingProgress(
+        progressId,
+        Math.round((progress?.percent ?? 0) * 100),
+        progress?.phase === 'processing' ? 'processing' : undefined
+      )
   }).chain(hydrated => {
     const task = createNewDataEntry(hydrated, datasets);
     return (
@@ -3361,20 +3419,23 @@ function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets) {
 
 function clearLoadingProgress(state: VisState, ids?: string[]): VisState {
   const current = state.loadingProgress || {};
-  if (!Object.keys(current).length) {
+  const processing = state.loadingProcessing || {};
+  if (!Object.keys(current).length && !Object.keys(processing).length) {
     return state;
   }
   if ((state.loadingIndicatorValue || 0) <= 0) {
-    return {...state, loadingProgress: {}};
+    return {...state, loadingProgress: {}, loadingProcessing: {}};
   }
   if (!ids?.length) {
     return state;
   }
   const next = {...current};
+  const nextProcessing = {...processing};
   ids.forEach(id => {
     delete next[id];
+    delete nextProcessing[id];
   });
-  return {...state, loadingProgress: next};
+  return {...state, loadingProgress: next, loadingProcessing: nextProcessing};
 }
 
 function patchDatasetMetadata(dataset: Datasets[string], patch: Record<string, unknown>) {
@@ -4633,6 +4694,20 @@ export function loadNextFileUpdater(state: VisState, action?: {loadId?: number})
   });
 
   const {loaders, loadOptions} = state;
+  if (isZipFileName(file.name)) {
+    return withTask(
+      stateWithProgress,
+      EXPAND_ZIP_TASK({file, extensions: datasetExtensionsFromLoaders(loaders)}).bimap(
+        expansion =>
+          expandZipArchiveSuccess({
+            loadId: currentLoadId,
+            archiveName: file.name,
+            expansion
+          }),
+        err => loadFilesErr(file.name, err, currentLoadId)
+      )
+    );
+  }
   return withTask(
     stateWithProgress,
     makeLoadFileTask(
@@ -4646,21 +4721,118 @@ export function loadNextFileUpdater(state: VisState, action?: {loadId?: number})
   );
 }
 
+function datasetExtensionsFromLoaders(
+  loaders: Array<{extensions?: readonly string[]}> = []
+): string[] {
+  const extensions: string[] = [];
+  const seen = new Set<string>();
+  for (const loader of loaders) {
+    for (const extension of loader?.extensions || []) {
+      const ext = String(extension).replace(/^\./, '').trim().toLowerCase();
+      if (!ext || ext === 'zip' || seen.has(ext)) {
+        continue;
+      }
+      seen.add(ext);
+      extensions.push(ext);
+    }
+  }
+  return extensions;
+}
+
+function companionFilesForArchive(expansion: ZipArchiveExpansion, existing?: File[]): File[] {
+  const extracted =
+    expansion.kind === 'shapefile'
+      ? [expansion.shapefile, ...expansion.companions]
+      : [...expansion.datasets, ...expansion.companions];
+  return [...extracted, ...(existing || [])];
+}
+
+function withoutFileLoadingProgressEntry(
+  progress: VisState['fileLoadingProgress'],
+  fileName: string
+): VisState['fileLoadingProgress'] {
+  if (!progress || !Object.prototype.hasOwnProperty.call(progress, fileName)) {
+    return progress;
+  }
+  const next = {...progress};
+  delete next[fileName];
+  return next;
+}
+
+/**
+ * Apply an unpacked zip. One shapefile keeps the archive name. Any other
+ * mix is queued as one dataset per supported member.
+ */
+export function expandZipArchiveSuccessUpdater(
+  state: VisState,
+  action: VisStateActions.ExpandZipArchiveSuccessAction
+): VisState {
+  const loading = state.fileLoading;
+  if (!loading || loading.loadId !== action.loadId) {
+    return state;
+  }
+  const {archiveName, expansion} = action;
+  const companionFiles = companionFilesForArchive(expansion, loading.companionFiles);
+
+  if (expansion.kind === 'shapefile') {
+    const nextState = pick_('fileLoading')(merge_({companionFiles}))(state);
+    const {loaders, loadOptions} = state;
+    return withTask(
+      nextState,
+      makeLoadFileTask(
+        expansion.shapefile,
+        nextState.fileLoading && nextState.fileLoading.fileCache,
+        loaders,
+        loadOptions,
+        companionFiles,
+        loading.options,
+        archiveName
+      )
+    );
+  }
+
+  const datasets = expansion.datasets;
+  const filesToLoad = [...datasets, ...Array.from(loading.filesToLoad)];
+  const fileLoadingProgress = datasets.reduce(
+    (accu, file, index) => merge_(initialFileLoadingProgress(file, index))(accu),
+    withoutFileLoadingProgressEntry(state.fileLoadingProgress, archiveName)
+  );
+  const nextState = {
+    ...state,
+    fileLoadingProgress,
+    fileLoading: {
+      ...loading,
+      filesToLoad,
+      companionFiles
+    }
+  };
+  return loadNextFileUpdater(nextState, {loadId: action.loadId});
+}
+
 export function makeLoadFileTask(
   file,
   fileCache,
   loaders: Loader[] = [],
   loadOptions = {},
   companionFiles?: File[],
-  addDataOptions?: VisStateActions.LoadFilesOptions
+  addDataOptions?: VisStateActions.LoadFilesOptions,
+  fileName?: string
 ) {
-  return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions, companionFiles}).bimap(
+  const displayName = fileName || file.name;
+  return LOAD_FILE_TASK({
+    file,
+    fileCache,
+    loaders,
+    loadOptions,
+    companionFiles,
+    ...(fileName ? {fileName} : {})
+  }).bimap(
     // prettier ignore
     // success
     gen =>
       nextFileBatch({
         gen,
-        fileName: file.name,
+        fileName: displayName,
         onFinish: result =>
           processFileContent({
             content: result,
@@ -4670,7 +4842,7 @@ export function makeLoadFileTask(
       }),
 
     // error
-    err => loadFilesErr(file.name, err)
+    err => loadFilesErr(displayName, err)
   );
 }
 
@@ -4784,13 +4956,13 @@ export const clearStagedLoadedFilesUpdater = (state: VisState): VisState => ({
 
 export const loadFilesErrUpdater = (
   state: VisState,
-  {error, fileName}: VisStateActions.LoadFilesErrUpdaterAction
+  {error, fileName, loadId: errorLoadId}: VisStateActions.LoadFilesErrUpdaterAction
 ): VisState => {
-  // update ui with error message
-  Console.warn(error);
-  if (!state.fileLoading) {
+  if (!state.fileLoading || (errorLoadId != null && state.fileLoading.loadId !== errorLoadId)) {
     return state;
   }
+  // update ui with error message
+  Console.warn(error);
   const loadId = state.fileLoading.loadId;
 
   const nextState = updateFileLoadingProgressUpdater(state, {
@@ -6099,8 +6271,10 @@ export const setLoadingIndicatorUpdater = (
   return {
     ...state,
     loadingIndicatorValue: nextValue,
-    ...(nextValue === 0 && Object.keys(state.loadingProgress || {}).length
-      ? {loadingProgress: {}}
+    ...(nextValue === 0 &&
+    (Object.keys(state.loadingProgress || {}).length ||
+      Object.keys(state.loadingProcessing || {}).length)
+      ? {loadingProgress: {}, loadingProcessing: {}}
       : {})
   };
 };
@@ -6112,7 +6286,7 @@ export const setLoadingIndicatorUpdater = (
  */
 export function setLoadingProgressUpdater(
   state: VisState,
-  {id, percent}: VisStateActions.SetLoadingProgressUpdaterAction
+  {id, percent, phase}: VisStateActions.SetLoadingProgressUpdaterAction
 ): VisState {
   if ((state.loadingIndicatorValue || 0) <= 0) {
     return state;
@@ -6120,7 +6294,11 @@ export function setLoadingProgressUpdater(
   const nextPercent = Number.isFinite(percent)
     ? Math.max(0, Math.min(100, Math.round(percent)))
     : 0;
-  if (state.loadingProgress?.[id] === nextPercent) {
+  const processing = phase === 'processing';
+  if (
+    state.loadingProgress?.[id] === nextPercent &&
+    Boolean(state.loadingProcessing?.[id]) === processing
+  ) {
     return state;
   }
   return {
@@ -6128,7 +6306,15 @@ export function setLoadingProgressUpdater(
     loadingProgress: {
       ...state.loadingProgress,
       [id]: nextPercent
-    }
+    },
+    ...(processing
+      ? {
+          loadingProcessing: {
+            ...state.loadingProcessing,
+            [id]: true
+          }
+        }
+      : {})
   };
 }
 
@@ -6287,28 +6473,36 @@ function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged
 function replaceDatasetAndDeps<T extends VisState>(
   state: T,
   dataId: string,
-  dataIdToUse: string
+  dataIdToUse: string,
+  options: {deleteOriginalDataset?: boolean} = {}
 ): T {
+  // The same id means the new table occupies the old slot, so the previous rows have to go.
+  const deleteOriginalDataset = options.deleteOriginalDataset !== false || dataId === dataIdToUse;
   return compose_<T>([
     apply_(replaceDatasetDepsInState, {dataId, dataIdToUse}),
-    apply_(removeDatasetUpdater, {dataId})
+    if_(deleteOriginalDataset, apply_(removeDatasetUpdater, {dataId}))
   ])(state);
 }
 
 export function prepareStateForDatasetReplace<T extends VisState>(
   state: T,
   dataId: string,
-  dataIdToUse: string
+  dataIdToUse: string,
+  options: {deleteOriginalDataset?: boolean} = {}
 ): T {
   const serializedState = serializeVisState(state, state.schema);
-  const nextState = replaceDatasetAndDeps(state, dataId, dataIdToUse);
+  const deleteOriginalDataset = options.deleteOriginalDataset !== false || dataId === dataIdToUse;
+  const nextState = replaceDatasetAndDeps(state, dataId, dataIdToUse, {deleteOriginalDataset});
   // make a copy of layerOrder, because layer id will be removed from it by calling removeLayerUpdater
   const preserveLayerOrder = [...state.layerOrder];
 
-  // preserve dataset order
-  nextState.preserveDatasetOrder = Object.keys(state.datasets).map(d =>
-    d === dataId ? dataIdToUse : d
-  );
+  // When the original table stays, the replacement takes its place and the original follows it.
+  nextState.preserveDatasetOrder = Object.keys(state.datasets).flatMap(d => {
+    if (d !== dataId) {
+      return [d];
+    }
+    return deleteOriginalDataset ? [dataIdToUse] : [dataIdToUse, d];
+  });
 
   // preserveLayerOrder
   if (nextState.layerToBeMerged?.length) {

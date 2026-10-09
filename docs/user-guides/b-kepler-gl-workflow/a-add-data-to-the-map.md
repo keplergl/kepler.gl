@@ -11,7 +11,7 @@
 
 |   |   |
 |---|---|
-| **Local files**  | <span style="font-weight:normal">Upload CSV, GeoJSON, GeoJSONL, KML, GPX, TCX, Shapefile, Excel, FlatGeobuf, Arrow, or Parquet files. Files are parsed in your browser, so available memory limits how large a file you can load. For data that does not fit in memory, use a tileset instead.<span>  |
+| **Local files**  | <span style="font-weight:normal">Upload CSV, GeoJSON, GeoJSONL, KML, GPX, TCX, Shapefile, Excel, FlatGeobuf, Arrow, or Parquet files, or a zip of those files. Files are parsed in your browser, so available memory limits how large a file you can load. For data that does not fit in memory, use a tileset instead.<span>  |
 | **From URL**  | Directly load data or map json by pasting a remote URL. Supported extensions include `csv`, `geojson`, `json`, `geojsonl`, `kml`, `gpx`, `tcx`, `shp`, `xlsx`, `fgb`, `arrow`, and `parquet`. Make sure the url contains the file extension. CORS policy must be defined on your custom url domain. |
 | **Sample data**  | Load one of kepler.gl’s sample datasets. The sample map data and config are directly loaded from  [kepler.gl-data github][kepler.gl-data-github] repo  |
 
@@ -29,6 +29,7 @@ Geometry coordinates should be presented with a geographic coordinate reference 
  - [GPX](#gpx)
  - [TCX](#tcx)
  - [Shapefile](#shapefile)
+ - [Zip](#zip)
  - [Excel](#excel)
  - [FlatGeobuf](#flatgeobuf)
  - [GeoArrow](#geoarrow)
@@ -225,7 +226,13 @@ kepler.gl accepts Garmin `.tcx` activity files. Track points are converted to Ge
 
 ### Shapefile
 
-kepler.gl accepts ESRI Shapefiles. Drop a `.shp` together with its sidecars (`.dbf`, `.shx`, and optionally `.prj` / `.cpg`), or a `.zip` that contains those files at the top level. Features are converted to GeoJSON and visualized with a **Polygon** layer. If a `.prj` file is present, geometries are reprojected to WGS84. Nested folders inside the zip are ignored.
+kepler.gl accepts ESRI Shapefiles. Drop a `.shp` together with its sidecars (`.dbf`, `.shx`, and optionally `.prj` / `.cpg`), or a `.zip` that contains one shapefile and those sidecars at the top level. A zip of a single shapefile loads as one dataset named after the zip. Features are converted to GeoJSON and visualized with a **Polygon** layer. If a `.prj` file is present, geometries are reprojected to WGS84. Nested folders inside the zip are ignored.
+
+### Zip
+
+A `.zip` can hold more than one dataset. Each supported file at the top level becomes its own dataset, named with the file name inside the archive. CSV, GeoJSON, GeoJSONL, KML, GPX, TCX, Excel, FlatGeobuf, Arrow, Parquet, and Shapefile are recognized. Shapefile sidecars stay with the `.shp` they belong to, and a zip of several shapefiles loads each one. Nested folders are ignored. Files kepler.gl cannot load are skipped. A zip with nothing supported reports an error.
+
+A zip that contains a single shapefile and its sidecars stays one dataset named after the zip.
 
 ### Excel
 

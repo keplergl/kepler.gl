@@ -1521,7 +1521,6 @@ export const dataTestIds: Record<string, string> = {
   sortableLayerItem: 'sortable-layer-item',
   staticLayerItem: 'static-layer-item',
   layerTitleEditor: 'layer__title__editor',
-  removeLayerAction: 'remove-layer-action',
   layerPanel: 'layer-panel',
   sortableEffectItem: 'sortable-effect-item',
   staticEffectItem: 'static-effect-item',
