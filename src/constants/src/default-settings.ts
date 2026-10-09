@@ -538,11 +538,24 @@ export const TABLE_OPTION = keyMirror({
   PIN: null,
   UNPIN: null,
   COPY: null,
-  FORMAT_COLUMN: null
+  FORMAT_COLUMN: null,
+  RENAME: null,
+  DELETE: null,
+  CREATE_FILTER: null
 });
 
 export type TableOption = {
-  value: 'SORT_ASC' | 'SORT_DES' | 'UNSORT' | 'PIN' | 'UNPIN' | 'COPY' | 'FORMAT_COLUMN';
+  value:
+    | 'SORT_ASC'
+    | 'SORT_DES'
+    | 'UNSORT'
+    | 'PIN'
+    | 'UNPIN'
+    | 'COPY'
+    | 'FORMAT_COLUMN'
+    | 'RENAME'
+    | 'DELETE'
+    | 'CREATE_FILTER';
   display: string;
   icon: string;
   condition?: (props: any) => boolean;
@@ -584,6 +597,24 @@ export const TABLE_OPTION_LIST: TableOption[] = [
     display: 'Format Column',
     icon: 'Hash',
     condition: props => props.setDisplayFormat
+  },
+  {
+    value: TABLE_OPTION.RENAME,
+    display: 'Rename',
+    icon: 'Edit',
+    condition: props => props.renameTableColumn
+  },
+  {
+    value: TABLE_OPTION.CREATE_FILTER,
+    display: 'Create Filter',
+    icon: 'FilterFunnel',
+    condition: props => props.createFilterFromColumn
+  },
+  {
+    value: TABLE_OPTION.DELETE,
+    display: 'Delete Column',
+    icon: 'Trash',
+    condition: props => props.deleteTableColumn && Object.keys(props.colMeta || {}).length > 1
   }
 ];
 

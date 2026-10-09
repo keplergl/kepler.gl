@@ -1512,6 +1512,55 @@ export function updateDataset(
   };
 }
 
+export type RenameTableColumnUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  newName: string;
+};
+/**
+ * Rename a dataset column. The new name becomes the field identity stored in
+ * layers, filters, charts, dataset operations, and saved maps.
+ * @param dataId - dataset id
+ * @param fieldName - current column name
+ * @param newName - next column name
+ * @returns action
+ * @public
+ */
+export function renameTableColumn(
+  dataId: string,
+  fieldName: string,
+  newName: string
+): Merge<RenameTableColumnUpdaterAction, {type: typeof ActionTypes.RENAME_TABLE_COLUMN}> {
+  return {
+    type: ActionTypes.RENAME_TABLE_COLUMN,
+    dataId,
+    fieldName,
+    newName
+  };
+}
+
+export type DeleteTableColumnUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+};
+/**
+ * Delete a dataset column and drop references that required it.
+ * @param dataId - dataset id
+ * @param fieldName - column name
+ * @returns action
+ * @public
+ */
+export function deleteTableColumn(
+  dataId: string,
+  fieldName: string
+): Merge<DeleteTableColumnUpdaterAction, {type: typeof ActionTypes.DELETE_TABLE_COLUMN}> {
+  return {
+    type: ActionTypes.DELETE_TABLE_COLUMN,
+    dataId,
+    fieldName
+  };
+}
+
 export type ToggleFilterAnimationUpdaterAction = {
   idx: number;
 };

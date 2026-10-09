@@ -5,6 +5,7 @@ export * from './types';
 export * from './aggregations';
 export * from './geometry';
 export * from './table-helpers';
+export * from './column-edit';
 export * from './group-by';
 export * from './join';
 export * from './spatial-join';

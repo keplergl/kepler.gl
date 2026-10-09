@@ -7,7 +7,7 @@ import DatasetLabel from '../common/dataset-label';
 import DataTableFactory from '../common/data-table';
 import {renderedSize} from '../common/data-table/cell-size';
 import CanvasHack from '../common/data-table/canvas';
-import KeplerTable, {Datasets} from '@kepler.gl/table';
+import KeplerTable, {Datasets, isTabularDatasetForOps} from '@kepler.gl/table';
 import {UIStateActions} from '@kepler.gl/actions';
 import {UiState} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -126,6 +126,9 @@ interface DataTableModalProps {
   sortTableColumn: (id: string, column: string, mode?: string) => void;
   pinTableColumn: (id: string, column: string) => void;
   copyTableColumn: (id: string, column: string) => void;
+  renameTableColumn?: (id: string, column: string, newName: string) => void;
+  deleteTableColumn?: (id: string, column: string) => void;
+  createFilterFromColumn?: (id: string, column: string) => void;
   datasets: Datasets;
   showDatasetTable: (id: string) => void;
   showTab?: boolean;
@@ -151,6 +154,9 @@ function DataTableModalFactory(
     sortTableColumn,
     pinTableColumn,
     copyTableColumn: copyTableColumnProp,
+    renameTableColumn,
+    deleteTableColumn,
+    createFilterFromColumn,
     datasets,
     showDatasetTable,
     showTab = true,
@@ -271,6 +277,29 @@ function DataTableModalFactory(
       [setColumnDisplayFormatProp, dataId]
     );
 
+    const handleRenameTableColumn = useCallback(
+      (column: string, newName: string) => {
+        renameTableColumn?.(dataId, column, newName);
+      },
+      [renameTableColumn, dataId]
+    );
+
+    const handleDeleteTableColumn = useCallback(
+      (column: string) => {
+        deleteTableColumn?.(dataId, column);
+      },
+      [deleteTableColumn, dataId]
+    );
+
+    const handleCreateFilterFromColumn = useCallback(
+      (column: string) => {
+        createFilterFromColumn?.(dataId, column);
+        uiStateActions.toggleSidePanel('filter');
+        uiStateActions.toggleModal(null);
+      },
+      [createFilterFromColumn, dataId, uiStateActions]
+    );
+
     const onOpenConfig = useCallback(() => {
       setShowConfig(true);
     }, []);
@@ -284,6 +313,7 @@ function DataTableModalFactory(
     }
 
     const activeDataset = datasets[dataId];
+    const canEditColumns = isTabularDatasetForOps(activeDataset);
 
     return (
       <StyledModal className="dataset-modal" id="dataset-modal">
@@ -322,6 +352,15 @@ function DataTableModalFactory(
               pinTableColumn={handlePinTableColumn}
               sortTableColumn={handleSortTableColumn}
               setColumnDisplayFormat={handleSetColumnDisplayFormat}
+              renameTableColumn={
+                canEditColumns && renameTableColumn ? handleRenameTableColumn : undefined
+              }
+              deleteTableColumn={
+                canEditColumns && deleteTableColumn ? handleDeleteTableColumn : undefined
+              }
+              createFilterFromColumn={
+                canEditColumns && createFilterFromColumn ? handleCreateFilterFromColumn : undefined
+              }
               hasStats={enableColumnStats}
               loadColumnStats={enableColumnStats ? loadColumnStats : undefined}
             />

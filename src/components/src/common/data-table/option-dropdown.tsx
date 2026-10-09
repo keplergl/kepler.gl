@@ -14,7 +14,17 @@ import {
 } from '@kepler.gl/constants';
 import {getFieldFormatLabels} from '@kepler.gl/utils';
 import {ColMeta} from '@kepler.gl/types';
-import {ArrowDown, ArrowUp, Clipboard, Pin, Cancel, Hash} from '../icons';
+import {
+  ArrowDown,
+  ArrowUp,
+  Clipboard,
+  Pin,
+  Cancel,
+  Hash,
+  Edit,
+  Trash,
+  FilterFunnel
+} from '../icons';
 
 const ListItem = ({value}) => (
   <div>
@@ -28,6 +38,8 @@ const StyledOptionsDropdown = styled.div`
   .list-selector {
     border-top: 0;
     width: max-content;
+    max-height: 320px;
+    overflow-y: auto;
     padding: 8px 0;
   }
 
@@ -49,6 +61,33 @@ const StyledOptionsDropdown = styled.div`
       margin-left: 2px;
       margin-right: 6px;
     }
+  }
+`;
+
+const StyledDeleteConfirm = styled.div`
+  min-width: 180px;
+  padding: 12px;
+  background: ${props => props.theme.dropdownListBgdLT};
+  color: ${props => props.theme.textColorLT};
+  font-size: 12px;
+
+  .column-delete-confirm__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  button {
+    border: 0;
+    border-radius: 2px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .column-delete-confirm__delete {
+    background: ${props => props.theme.negativeBtnBgd || '#b00'};
+    color: ${props => props.theme.negativeBtnColor || '#fff'};
   }
 `;
 
@@ -124,6 +163,10 @@ export interface OptionDropdownProps {
   sortMode?: string;
   isSorted?: string;
   isPinned?: boolean;
+  renameTableColumn?: (column: string, newName: string) => void;
+  deleteTableColumn?: (column: string) => void;
+  createFilterFromColumn?: (column: string) => void;
+  onStartRename?: () => void;
 }
 
 const OptionDropdown = (props: OptionDropdownProps) => {
@@ -135,9 +178,13 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     sortTableColumn,
     pinTableColumn,
     copyTableColumn,
-    setDisplayFormat
+    setDisplayFormat,
+    deleteTableColumn,
+    createFilterFromColumn,
+    onStartRename
   } = props;
   const [showFormatter, setShowFormatter] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const onOptionSelected: (v: TableOption) => void = useCallback(
     ({value}) => {
       switch (value) {
@@ -162,13 +209,30 @@ const OptionDropdown = (props: OptionDropdownProps) => {
         case TABLE_OPTION.FORMAT_COLUMN:
           setShowFormatter(true);
           return;
+        case TABLE_OPTION.RENAME:
+          onStartRename?.();
+          break;
+        case TABLE_OPTION.CREATE_FILTER:
+          createFilterFromColumn?.(column);
+          break;
+        case TABLE_OPTION.DELETE:
+          setConfirmDelete(true);
+          return;
         default:
           break;
       }
 
       toggleMoreOptions(column);
     },
-    [column, sortTableColumn, pinTableColumn, copyTableColumn, toggleMoreOptions]
+    [
+      column,
+      sortTableColumn,
+      pinTableColumn,
+      copyTableColumn,
+      toggleMoreOptions,
+      onStartRename,
+      createFilterFromColumn
+    ]
   );
 
   const TABLE_OPTION_LIST_ICONS = {
@@ -177,7 +241,10 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     ArrowUp,
     Clipboard,
     Cancel,
-    Hash
+    Hash,
+    Edit,
+    Trash,
+    FilterFunnel
   };
 
   const formatLabels = getFieldFormatLabels(colMeta[column].type);
@@ -199,13 +266,34 @@ const OptionDropdown = (props: OptionDropdownProps) => {
   return (
     <Portaled right={120} top={20} isOpened={isOpened} onClose={onClose}>
       <StyledOptionsDropdown className="more-options">
-        <DropdownList
-          displayOption={d => (d as TableOption).display}
-          options={options}
-          customListItemComponent={ListItem}
-          onOptionSelected={onOptionSelected}
-          light
-        />
+        {confirmDelete ? (
+          <StyledDeleteConfirm className="column-delete-confirm">
+            <div>Delete this column?</div>
+            <div className="column-delete-confirm__actions">
+              <button
+                type="button"
+                className="column-delete-confirm__delete"
+                onClick={() => {
+                  deleteTableColumn?.(column);
+                  toggleMoreOptions(column);
+                }}
+              >
+                Delete
+              </button>
+              <button type="button" onClick={() => setConfirmDelete(false)}>
+                Cancel
+              </button>
+            </div>
+          </StyledDeleteConfirm>
+        ) : (
+          <DropdownList
+            displayOption={d => (d as TableOption).display}
+            options={options}
+            customListItemComponent={ListItem}
+            onOptionSelected={onOptionSelected}
+            light
+          />
+        )}
         <FormatterDropdown
           left={120}
           top={-10}
