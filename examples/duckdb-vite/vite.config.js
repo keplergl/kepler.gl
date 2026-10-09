@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
+
 var __spreadArray =
   (this && this.__spreadArray) ||
   function (to, from, pack) {
