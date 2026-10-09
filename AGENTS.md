@@ -1,23 +1,42 @@
 # kepler.gl Agent Instructions
 
+## Effort
+
+Match investigation, tests, and browser work to the size of the change. A small fix stays small. Extra passes, repo-wide searches, and screenshot comparisons spend credits without making the change more correct.
+
+For a localized change (a bug fix, a default, a guard, copy, types, or a single component):
+
+1. Read the code you will edit and the nearest test.
+2. Make the change.
+3. Run the one targeted test that covers it while iterating. Use `yarn agent:check` when types or more than one Jest suite are involved.
+4. Run `yarn agent:verify` once at the end, then stop.
+
+Do not, for that kind of change:
+
+- Start the demo app, drive the browser, or take screenshots.
+- Compare screenshots, capture a before/after pair, or repeat a browser pass to re-check pixels.
+- Search the whole repo or read unrelated packages.
+- Run `yarn agent:verify` after every small edit. It is the full Node CI suite. Run it once at the end, and again only after a major iteration.
+
+Never claim a task is complete if that final `yarn agent:verify` fails.
+
 ## Definition of done
 
-A coding task is not complete until:
+A coding task is complete when:
 
 1. The requested behavior is implemented.
-2. Appropriate tests have been added or updated.
-3. `yarn agent:verify` passes.
+2. A nearby test covers the change, or a regression test was added for a bug fix that already has a test file in that area. Skip a new test for copy, types, and one-line guards when nothing nearby tests that behavior.
+3. `yarn agent:verify` has been run once at the end and passes. During iteration, the targeted check from [Effort](#effort) is enough.
 4. No unrelated files have been changed.
 5. Existing architecture and conventions are followed.
-6. For UI changes, the affected behavior has been exercised in the demo app.
 
-Never claim a task is complete if `yarn agent:verify` fails.
+Never claim a command passed if it failed. Report each command you actually ran as `PASS`, `FAILED`, or `NOT RUN`.
 
 If verification fails:
 
 - Investigate the failure.
 - Make the smallest change that addresses that failure.
-- Rerun verification.
+- Rerun that same check once.
 
 Stop editing when the same failure repeats, or the next edit would reach files the failure does not point at, replace a working approach, or clean up unrelated code. Report the failure and what you changed.
 
@@ -30,23 +49,17 @@ If a failure appears unrelated or pre-existing:
 
 Before changing code:
 
-1. Read the relevant implementation.
-2. Read nearby tests.
-3. Search for similar patterns elsewhere in kepler.gl.
+1. Read the implementation you will edit.
+2. Read the nearest test.
+3. Look for a similar pattern only when the local code does not show how this repo does it.
 4. Prefer existing abstractions over introducing new ones.
 5. Avoid unrelated refactoring. Do not rename public symbols, reformat unrelated files, or upgrade dependencies unless the task requires it.
 
 ## Testing
 
-During implementation, run targeted tests for fast feedback. `yarn agent:check` is the fast loop: Node >= 20, `tsc --noEmit`, and the Jest suite (`--watchAll=false` so it exits in a terminal).
+During implementation, run the targeted test for the file you changed. `yarn agent:check` is the broader fast loop: Node >= 20, `tsc --noEmit`, and the Jest suite (`--watchAll=false` so it exits in a terminal). Use it when the edit can affect types or several suites. Prefer the single test over `agent:check` when the change is local.
 
-Before handing work to a human, always run:
-
-```bash
-yarn agent:verify
-```
-
-Report each command as `PASS`, `FAILED`, or `NOT RUN`. Do not report a command you did not run.
+Before handing work to a human, run `yarn agent:verify` once. Run it again only after a major iteration, not after every small edit.
 
 `agent:verify` is the blocking Node.js CI gates that pass on a clean tree:
 
@@ -64,16 +77,19 @@ Node.js CI runs those Jest and Tape tests as `xvfb-run yarn cover`. Coverage col
 
 Leave `yarn lint` and `yarn lint:check` out of these commands. CI's lint step is `eslint --fix` because check-only mode fails on existing Prettier issues. `yarn lint` rewrites those existing issues into the working tree.
 
-For bug fixes, add a regression test whenever practical.
+For a bug fix, add a regression test when a test file already covers that area.
 
 ## UI changes
 
-When behavior is visible in the UI:
+Use the demo app only when the change is interactive behavior that a unit test cannot show: a new flow, a layout the user asked to see, or a bug that only appears in the running app.
 
-1. Start the demo application.
-2. Exercise the changed workflow.
-3. Check the browser console for errors.
-4. Capture screenshots showing the result where useful.
+Then do one pass:
+
+1. Start the demo if it is not already running.
+2. Exercise the changed workflow once.
+3. Check the browser console for errors caused by the change.
+
+Stop after that pass. Do not take screenshots unless the user asked for one, or the change is visual and you cannot judge it from the test or from that single pass. One screenshot of the result is enough. Do not compare it with another screenshot, and do not walk unrelated pages.
 
 ## Decisions
 
@@ -94,7 +110,7 @@ PR descriptions must be short and contain:
 
 Optional contents:
 
-- Screenshots for visual changes 
+- One screenshot when the change is visual and a reviewer needs to see it. Do not attach comparison sets.
 
 
 Do not hide uncertainty. If product or architectural judgment is required, explicitly mark it for human review.
