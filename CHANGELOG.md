@@ -15,8 +15,20 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.3.0-alpha.16] - Sep 28 2026
+## [3.3.0-alpha.16] - Oct 9 2026
 
+- 8bbd3487 (HEAD -> igr/3.3.0-alpha.16, origin/igr/3.3.0-alpha.16) Merge branch 'master' into igr/3.3.0-alpha.16
+- 87fa5fd9 (origin/master, origin/HEAD, master) fix: replace the broken FSQ Places example and show tileset errors (#3796)
+- 2b031d56 feat(layers): fit map when the layer type dropdown sets the first type (#3795)
+- 8d72219c feat: warn on large datasets in Add Data (#3794)
+- 7f30a3fa feat(ui): show layer actions in a context menu (#3793)
+- 5c8f90d4 feat(dataset): load mixed zip files as separate datasets (#3792)
+- e5913951 fix(wms): disable hover by default (#3791)
+- 7f26460a fix: show feedback while large dataset processing blocks the UI (#3790)
+- 7f3f1254 feat: repalce dataset context option (#3789)
+- f7c6a37f feat: add Step by Interval to the playback bar (#3788)
+- bee730e9 chore: more tests for Add Data modal (#3783)
+- 5b118cd5 feat: copy coordinates and annotation actions in the map context menu (#3782)
 - 363e7542 feat(timeline): group line chart series by a field (#3781)
 - 747ca0de feat(interactions): fade layer opacity by zoom (#3780)
 - 7441968c feat(3d): add model gallery, custom models, and GeoJSON input (#3779)
