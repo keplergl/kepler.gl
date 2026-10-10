@@ -130,6 +130,8 @@ export default {
       '3D tiles failed to load. The access token may be missing, invalid, or expired. Enter a new access token below.',
     tile3dLoadError: '3D tiles failed to load. Check the tileset URL and try again.',
     bounds: 'Bounds',
+    variable: 'Variable',
+    dimensions: 'Dimensions',
     imageSource: 'Image Source',
     alignment: 'Alignment',
     uniqueIdField: 'Unique ID Field',
@@ -159,7 +161,8 @@ export default {
       rastertile: 'raster tile',
       wms: 'WMS',
       tile3d: '3D tile',
-      bitmap: 'bitmap'
+      bitmap: 'bitmap',
+      zarr: 'Zarr'
     },
     wms: {
       hover: 'Value:'
@@ -196,6 +199,9 @@ export default {
     coverage: 'Coverage',
     outline: 'Outline',
     colorRange: 'Color range',
+    zarrRescale: 'Value range',
+    zarrVariable: 'Variable',
+    zarrDimensionIndexes: 'Dimensions',
     stroke: 'Stroke',
     strokeColor: 'Stroke Color',
     strokeColorRange: 'Stroke Color range',
@@ -537,6 +543,7 @@ export default {
     wmsTile: 'WMS tile',
     tile3d: '3D tile',
     bitmap: 'Bitmap image',
+    zarr: 'Zarr',
     remoteFile: '{rowCount} rows (remote)',
     refreshInterval: 'Refresh',
     refreshCustomSeconds: 'Seconds',

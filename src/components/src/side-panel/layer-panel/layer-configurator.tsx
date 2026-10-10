@@ -401,6 +401,19 @@ export const getLayerChannelConfigProps = (props: LayerConfiguratorProps) => ({
   setColorUI: props.updateLayerColorUI
 });
 
+/**
+ * Label a Zarr dimension index with its coordinate value when the store exposes
+ * one, falling back to the bare index. Long floats are trimmed so a pressure
+ * level reads as `850` rather than `850.0000000001`.
+ */
+function formatZarrDimensionValue(dim: {size: number; values?: number[]}, index: number): string {
+  const value = dim.values?.[index];
+  if (value === undefined || !Number.isFinite(value)) {
+    return String(index);
+  }
+  return Number.isInteger(value) ? String(value) : String(Number(value.toPrecision(6)));
+}
+
 LayerConfiguratorFactory.deps = [
   SourceDataSelectorFactory,
   VisConfigSliderFactory,
@@ -1749,6 +1762,83 @@ export default function LayerConfiguratorFactory(
           >
             <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.allowHover} />
           </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
+    _renderZarrLayerConfig({layer, dataset, visConfiguratorProps}) {
+      const {visConfig} = layer.config;
+      const metadata = dataset?.metadata ?? {};
+      const variables = metadata.variables ?? [];
+      const selectedPath = visConfig.zarrVariable ?? metadata.variable;
+      const activeVariable = variables.find(v => v.path === selectedPath) ?? variables[0] ?? null;
+      // Time is driven by the playback bar, so only the remaining dimensions
+      // need a manual index picker.
+      const pinnableDims = (activeVariable?.nonSpatialDims ?? []).filter(
+        dim => dim.name !== activeVariable?.timeDimension?.name
+      );
+      const dimensionIndexes = visConfig.dimensionIndexes ?? {};
+
+      return (
+        <StyledLayerVisualConfigurator>
+          {variables.length > 1 ? (
+            <LayerConfigGroup label={'layer.variable'}>
+              <ItemSelector
+                className="zarr-variable-selector"
+                selectedItems={activeVariable}
+                options={variables}
+                displayOption="displayName"
+                getOptionValue="path"
+                multiSelect={false}
+                searchable={variables.length > 10}
+                onChange={value => {
+                  if (typeof value !== 'string') {
+                    return;
+                  }
+                  visConfiguratorProps.onChange({zarrVariable: value});
+                }}
+              />
+            </LayerConfigGroup>
+          ) : null}
+          <LayerConfigGroup label={'layer.color'} collapsible>
+            <LayerColorRangeSelector {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider {...layer.visConfigSettings.rescale} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layer.appearance'}>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          {pinnableDims.length ? (
+            <LayerConfigGroup label={'layer.dimensions'} collapsible>
+              {pinnableDims.map(dim => {
+                const options = Array.from({length: dim.size}, (_, index) => ({
+                  index,
+                  label: formatZarrDimensionValue(dim, index)
+                }));
+                const selectedIndex = Math.min(dimensionIndexes[dim.name] ?? 0, dim.size - 1);
+                return (
+                  <div key={dim.name}>
+                    <PanelLabel>{dim.name}</PanelLabel>
+                    <ItemSelector
+                      className="zarr-dimension-selector"
+                      selectedItems={options[selectedIndex] ?? null}
+                      options={options}
+                      displayOption="label"
+                      getOptionValue="index"
+                      multiSelect={false}
+                      searchable={dim.size > 10}
+                      onChange={index =>
+                        visConfiguratorProps.onChange({
+                          dimensionIndexes: {...dimensionIndexes, [dim.name]: index}
+                        })
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </LayerConfigGroup>
+          ) : null}
         </StyledLayerVisualConfigurator>
       );
     }

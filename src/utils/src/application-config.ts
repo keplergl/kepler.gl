@@ -162,6 +162,10 @@ export type KeplerApplicationConfig = {
   // WMS layer is under development and not ready for production use. Disabled by default.
   enableWMSLayer?: boolean;
 
+  // Zarr layer config -- Experimental
+  // Zarr layer is under development and not ready for production use. Disabled by default.
+  enableZarrLayer?: boolean;
+
   // Flow layer config
   enableFlowLayer?: boolean;
 
@@ -441,6 +445,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   // WMS layer config
   enableWMSLayer: true,
+
+  // Zarr layer config -- experimental, opt in via initApplicationConfig
+  enableZarrLayer: true,
 
   // Flow layer config
   enableFlowLayer: true,

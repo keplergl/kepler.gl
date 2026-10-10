@@ -78,6 +78,20 @@ export {
   BitmapBoundsEditMode,
   BITMAP_MOVE_HANDLE_TYPE
 } from './bitmap-layer/bitmap-bounds-edit-mode';
+
+import {default as ZarrLayer} from './zarr-layer/zarr-layer';
+export {
+  default as ZarrLayer,
+  findNearestTimeIndex,
+  getZarrSelection,
+  getZarrMaxZoom,
+  getZarrSublayerId,
+  getZarrTileByteLength,
+  zarrVisConfigs
+} from './zarr-layer/zarr-layer';
+export {default as ZarrLayerIcon} from './zarr-layer/zarr-layer-icon';
+export {applyZarrColormap, estimateZarrDataRange} from './zarr-layer/zarr-colormap';
+export type {ZarrColormapOptions, ZarrTileImage} from './zarr-layer/zarr-colormap';
 export {
   CATEGORICAL_COLORMAP_ID,
   DATA_SOURCE_COLOR_DEFAULTS,
@@ -143,7 +157,8 @@ export const KeplerGlLayers = {
   RasterTileLayer,
   WMSLayer,
   Tile3DLayer,
-  BitmapOverlayLayer
+  BitmapOverlayLayer,
+  ZarrLayer
 };
 
 export type LayerClassesType = typeof LayerClasses;
@@ -169,7 +184,8 @@ export const LayerClasses = {
   [LAYER_TYPES['rasterTile']]: RasterTileLayer,
   [LAYER_TYPES.wms]: WMSLayer,
   [LAYER_TYPES.tile3d]: Tile3DLayer,
-  [LAYER_TYPES.bitmap]: BitmapOverlayLayer
+  [LAYER_TYPES.bitmap]: BitmapOverlayLayer,
+  [LAYER_TYPES.zarr]: ZarrLayer
 };
 
 export * from './mapbox-utils';

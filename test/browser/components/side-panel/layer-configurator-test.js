@@ -20,6 +20,7 @@ import {
   getLayerFields,
   getLayerDataset
 } from '@kepler.gl/components';
+import {LayerClasses} from '@kepler.gl/layers';
 
 import {StateWFiles, StateWTripGeojson, testCsvDataId} from 'test/helpers/mock-state';
 import {
@@ -420,6 +421,128 @@ test('Components -> LayerConfigurator -> getLayerDataset', t => {
 
   const expectedDS = datasets.trip_data;
   t.deepEqual(ds, expectedDS, 'should get 1 dataset for the input layer');
+
+  t.end();
+});
+
+const ZARR_DATASET = {
+  id: 'zarr_data',
+  type: 'zarr',
+  label: 'Zarr Dataset',
+  color: [143, 47, 191],
+  fields: [],
+  metadata: {
+    url: 'https://example.com/store.zarr',
+    variable: 'FUTUR/qtot',
+    crs: {code: 'EPSG:4326'},
+    axes: ['lat', 'lon'],
+    xAxisIndex: 1,
+    yAxisIndex: 0,
+    levels: [{path: '.', shape: [360, 720], chunks: [360, 720]}],
+    // Same array name under two scenario groups, so the picker has to show the
+    // qualified display name to tell them apart.
+    variables: [
+      {
+        path: 'FUTUR/qtot',
+        name: 'qtot',
+        displayName: 'FUTUR/qtot',
+        shape: [3, 360, 720],
+        chunks: [1, 360, 720],
+        dtype: 'float32',
+        nonSpatialDims: [{name: 'season', size: 3, values: [0.5, 1.5, 2.5]}]
+      },
+      {
+        path: 'HISTO/qtot',
+        name: 'qtot',
+        displayName: 'HISTO/qtot',
+        shape: [3, 360, 720],
+        chunks: [1, 360, 720],
+        dtype: 'float32',
+        nonSpatialDims: [{name: 'season', size: 3, values: [0.5, 1.5, 2.5]}]
+      }
+    ],
+    nonSpatialDims: [{name: 'season', size: 3, values: [0.5, 1.5, 2.5]}]
+  }
+};
+
+function mountZarrConfigurator(layer, updateLayerVisConfigSpy) {
+  return mountWithTheme(
+    <IntlWrapper>
+      <LayerConfigurator
+        {...defaultProps}
+        layer={layer}
+        datasets={{zarr_data: ZARR_DATASET}}
+        updateLayerVisConfig={updateLayerVisConfigSpy}
+      />
+    </IntlWrapper>
+  );
+}
+
+test('Components -> LayerConfigurator -> zarr variable selector shows the active variable', t => {
+  const ZarrLayer = LayerClasses.zarr;
+  const layer = new ZarrLayer({id: 'zarr-layer', dataId: 'zarr_data'});
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountZarrConfigurator(layer, () => {});
+  }, 'should render the zarr layer config');
+
+  // Regression: selectedItems used to be the variable path string, which the
+  // display accessor could not read, so the dropdown rendered no selection.
+  const value = wrapper
+    .find('.zarr-variable-selector')
+    .find('.item-selector__dropdown__value')
+    .at(0);
+  t.equal(
+    value.text(),
+    'FUTUR/qtot',
+    'should display the dataset variable as the current selection'
+  );
+
+  t.end();
+});
+
+test('Components -> LayerConfigurator -> zarr dimension selector shows the pinned index', t => {
+  const ZarrLayer = LayerClasses.zarr;
+  const layer = new ZarrLayer({id: 'zarr-layer', dataId: 'zarr_data'});
+  layer.updateLayerVisConfig({dimensionIndexes: {season: 2}});
+
+  const wrapper = mountZarrConfigurator(layer, () => {});
+  const value = wrapper
+    .find('.zarr-dimension-selector')
+    .find('.item-selector__dropdown__value')
+    .at(0);
+
+  // Labeled by coordinate value rather than raw index.
+  t.equal(value.text(), '2.5', 'should display the pinned coordinate value');
+
+  t.end();
+});
+
+test('Components -> LayerConfigurator -> zarr variable selector emits the variable path', t => {
+  const ZarrLayer = LayerClasses.zarr;
+  const layer = new ZarrLayer({id: 'zarr-layer', dataId: 'zarr_data'});
+  const updateLayerVisConfig = sinon.spy();
+
+  const wrapper = mountZarrConfigurator(layer, updateLayerVisConfig);
+
+  const variableSelector = () => wrapper.find('.zarr-variable-selector').at(0);
+
+  clickItemSelector(variableSelector());
+  wrapper.update();
+  t.deepEqual(
+    getItemSelectorListText(variableSelector(), 1),
+    'HISTO/qtot',
+    'should list variables by their qualified display name'
+  );
+  clickItemSelectList(variableSelector(), 1);
+
+  t.ok(updateLayerVisConfig.calledOnce, 'should call updateLayerVisConfig once');
+  t.deepEqual(
+    updateLayerVisConfig.firstCall.args[0],
+    {zarrVariable: 'HISTO/qtot'},
+    'should emit the selected variable path'
+  );
 
   t.end();
 });

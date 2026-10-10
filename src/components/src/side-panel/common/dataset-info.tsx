@@ -229,6 +229,8 @@ export default function DatasetInfoFactory() {
               ? 'datasetInfo.tile3d'
               : dataset.type === DatasetType.BITMAP
               ? 'datasetInfo.bitmap'
+              : dataset.type === DatasetType.ZARR
+              ? 'datasetInfo.zarr'
               : isRemote
               ? 'datasetInfo.remoteFile'
               : 'datasetInfo.rowCount'
