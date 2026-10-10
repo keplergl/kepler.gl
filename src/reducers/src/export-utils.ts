@@ -5,6 +5,7 @@ import {Blob} from 'global/window';
 import {csvFormatRows} from 'd3-dsv';
 
 import {EXPORT_DATA_TYPE} from '@kepler.gl/constants';
+import {encodeDatasetExport, sanitizeExportName} from '@kepler.gl/processors';
 import {Field} from '@kepler.gl/types';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
 
@@ -21,7 +22,7 @@ interface StateType {
   appName?: string;
 }
 
-export function exportData(state: StateType, options) {
+export async function exportData(state: StateType, options): Promise<void> {
   const {visState, appName} = state;
   const {datasets} = visState;
   const {selectedDataset, dataType, filtered} = options;
@@ -35,26 +36,48 @@ export function exportData(state: StateType, options) {
     return;
   }
 
-  selectedDatasets.forEach(selectedData => {
-    const {dataContainer, fields, label, filteredIdxCPU = []} = selectedData as KeplerTable;
-    const toExport = filtered
-      ? createIndexedDataContainer(dataContainer, filteredIdxCPU)
-      : dataContainer;
+  const errors: unknown[] = [];
+  for (const selectedData of selectedDatasets) {
+    try {
+      const {
+        dataContainer,
+        fields,
+        label,
+        filteredIdxCPU = [],
+        hiddenColumns,
+        fieldPairs
+      } = selectedData as KeplerTable;
+      const toExport = filtered
+        ? createIndexedDataContainer(dataContainer, filteredIdxCPU)
+        : dataContainer;
+      const layerName = sanitizeExportName(label);
 
-    // start to export data according to selected data type
-    switch (dataType) {
-      case EXPORT_DATA_TYPE.CSV: {
-        const csv = formatCsv(toExport, fields);
-
-        const fileBlob = new Blob([csv], {type: 'text/csv'});
-        downloadFile(fileBlob, `${filename}_${label}.csv`);
-        break;
+      if (dataType === EXPORT_DATA_TYPE.CSV) {
+        const csv = formatCsv(toExport, fields, hiddenColumns);
+        downloadFile(new Blob([csv], {type: 'text/csv'}), `${filename}_${layerName}.csv`);
+        continue;
       }
-      // TODO: support more file types.
-      default:
-        break;
+
+      const file = await encodeDatasetExport({
+        data: toExport,
+        fields,
+        fieldPairs,
+        hiddenColumns,
+        dataType,
+        layerName
+      });
+      downloadFile(
+        new Blob([file.data], {type: file.mimeType}),
+        `${filename}_${layerName}.${file.extension}`
+      );
+    } catch (error) {
+      errors.push(error);
     }
-  });
+  }
+
+  if (errors.length) {
+    throw errors[0];
+  }
 }
 
 /**
@@ -63,13 +86,29 @@ export function exportData(state: StateType, options) {
  * @param fields `dataset.fields`
  * @returns csv string
  */
-export function formatCsv(data: DataContainerInterface, fields: Field[]): string {
-  const columns = fields.map(f => f.displayName || f.name);
+export function formatCsv(
+  data: DataContainerInterface,
+  fields: Field[],
+  hiddenColumns: string[] = []
+): string {
+  const hidden = new Set(hiddenColumns);
+  const included = fields
+    .map((field, index) => ({field, index}))
+    .filter(({field}) => !hidden.has(field.name));
+  const columns = included.map(({field}) => field.displayName || field.name);
   const formattedData = [columns];
 
   // parse geojson object as string
   for (const row of data.rows(true)) {
-    formattedData.push(row.map((d, i) => parseFieldValue(d, fields[i].type, fields[i])));
+    formattedData.push(
+      included.map(({field, index}) =>
+        parseFieldValue(
+          typeof row.valueAt === 'function' ? row.valueAt(index) : row[index],
+          field.type,
+          field
+        )
+      )
+    );
   }
 
   return csvFormatRows(formattedData);

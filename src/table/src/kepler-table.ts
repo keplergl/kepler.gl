@@ -231,6 +231,8 @@ class KeplerTable<F extends Field = Field> {
   sortOrder?: number[] | null;
 
   pinnedColumns?: string[];
+  /** Attribute-table columns omitted from data export. */
+  hiddenColumns?: string[];
   supportedFilterTypes?: string[] | null;
   disableDataOperation?: boolean;
 
@@ -1011,6 +1013,30 @@ export function pinTableColumns(dataset: KeplerTable<Field>, column: string): Ke
 
   // @ts-ignore
   return copyTableAndUpdate(dataset, {pinnedColumns});
+}
+
+export function toggleHiddenTableColumn(
+  dataset: KeplerTable<Field>,
+  column: string
+): KeplerTable<Field> {
+  const field = dataset.fields.find(item => item.name === column);
+  if (!field) {
+    return dataset;
+  }
+
+  const hidden = dataset.hiddenColumns || [];
+  const hiddenColumns = hidden.includes(field.name)
+    ? hidden.filter(name => name !== field.name)
+    : hidden.concat(field.name);
+
+  return copyTableAndUpdate(dataset, {hiddenColumns});
+}
+
+export function showAllTableColumns(dataset: KeplerTable<Field>): KeplerTable<Field> {
+  if (!dataset.hiddenColumns?.length) {
+    return dataset;
+  }
+  return copyTableAndUpdate(dataset, {hiddenColumns: []});
 }
 
 export function copyTable(original: KeplerTable<Field>): KeplerTable<Field> {

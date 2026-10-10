@@ -304,8 +304,11 @@ export default function ModalContainerFactory(
     };
 
     _onExportData = () => {
-      exportData(this.props, this.props.uiState.exportData);
-      this._closeModal();
+      exportData(this.props, this.props.uiState.exportData)
+        .then(() => this._closeModal())
+        .catch(error => {
+          console.error(error);
+        });
     };
 
     _onExportMap = () => {
@@ -412,6 +415,8 @@ export default function ModalContainerFactory(
                 showDatasetTable={visStateActions.showDatasetTable}
                 sortTableColumn={visStateActions.sortTableColumn}
                 pinTableColumn={visStateActions.pinTableColumn}
+                toggleTableColumnHidden={visStateActions.toggleTableColumnHidden}
+                showAllTableColumns={visStateActions.showAllTableColumns}
                 copyTableColumn={visStateActions.copyTableColumn}
                 setColumnDisplayFormat={visStateActions.setColumnDisplayFormat}
                 loadColumnStats={visStateActions.loadColumnStats}

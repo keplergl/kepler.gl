@@ -4345,8 +4345,11 @@ __metadata:
     "@loaders.gl/zip": "npm:^4.4.1"
     "@mapbox/geojson-normalize": "npm:0.0.1"
     "@turf/helpers": "npm:^7.2.0"
+    "@types/sql.js": "npm:^1"
     apache-arrow: "npm:>=15.0.0"
     d3-dsv: "npm:^2.0.0"
+    parquet-wasm: "npm:0.6.1"
+    sql.js: "npm:1.13.0"
     type-analyzer: "npm:0.4.0"
   languageName: unknown
   linkType: soft
@@ -10302,6 +10305,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/emscripten@npm:*":
+  version: 1.41.6
+  resolution: "@types/emscripten@npm:1.41.6"
+  checksum: 10c0/b51a730b6cb2848ac5e3f0536707bf656b6887be21f20e96b01e74a59ed52319dd0942f49b1072b1ca6d38df19e2d633f540df54d6ba1f7216be14af7373a41f
+  languageName: node
+  linkType: hard
+
 "@types/estree-jsx@npm:^1.0.0":
   version: 1.0.5
   resolution: "@types/estree-jsx@npm:1.0.5"
@@ -10910,6 +10920,16 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10c0/b20b7820ee813f22de4f2ce98bdd12c68c930e016a8912b1ed967595ac0d8a4cbbff44f4d486dd97f77f5927e7b5725bdac7472c9ec5b27f53a5a13179f0612f
+  languageName: node
+  linkType: hard
+
+"@types/sql.js@npm:^1":
+  version: 1.4.11
+  resolution: "@types/sql.js@npm:1.4.11"
+  dependencies:
+    "@types/emscripten": "npm:*"
+    "@types/node": "npm:*"
+  checksum: 10c0/eefb0408235cb645879103414b8ef0f13c2e7f2eac69c2a6c2838b72ec0be49985d6c6711b95bc8d79c208c7c5db95a51576a6ce7bfb49dd9edcc17721ffb40f
   languageName: node
   linkType: hard
 
@@ -26267,7 +26287,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"parquet-wasm@npm:^0.6.1":
+"parquet-wasm@npm:0.6.1, parquet-wasm@npm:^0.6.1":
   version: 0.6.1
   resolution: "parquet-wasm@npm:0.6.1"
   checksum: 10c0/dcade4b006ff86edca711dacf3c71997b4a86985384fc183119f73d5dae1d0c94d3e7fa5b48845845df5db97d3eb445d6c137f3459a5d9a66a3b9b3bc0474497
@@ -30457,6 +30477,13 @@ __metadata:
   version: 1.0.3
   resolution: "sprintf-js@npm:1.0.3"
   checksum: 10c0/ecadcfe4c771890140da5023d43e190b7566d9cf8b2d238600f31bec0fc653f328da4450eb04bd59a431771a8e9cc0e118f0aa3974b683a4981b4e07abc2a5bb
+  languageName: node
+  linkType: hard
+
+"sql.js@npm:1.13.0":
+  version: 1.13.0
+  resolution: "sql.js@npm:1.13.0"
+  checksum: 10c0/ecad62bf74082bf296a42db9bf001a79cd1b2fc954dbaddb97d689f7382c573ec827a692bd4490322fac47358d74c026258042466e258b34ea7c07b35d4a2e8e
   languageName: node
   linkType: hard
 

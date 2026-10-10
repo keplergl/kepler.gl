@@ -66,8 +66,19 @@ export const DatasetModalTab: IStyledComponent<
   }
 `;
 
+const HiddenColumnsBar = styled.button`
+  margin-right: 12px;
+  border: 0;
+  background: transparent;
+  color: ${props => props.theme.subtextColor};
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+`;
+
 const StyledConfigureButton = styled.div`
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   position: absolute;
   top: 24px;
@@ -125,6 +136,8 @@ interface DataTableModalProps {
   dataId?: string;
   sortTableColumn: (id: string, column: string, mode?: string) => void;
   pinTableColumn: (id: string, column: string) => void;
+  toggleTableColumnHidden?: (id: string, column: string) => void;
+  showAllTableColumns?: (id: string) => void;
   copyTableColumn: (id: string, column: string) => void;
   datasets: Datasets;
   showDatasetTable: (id: string) => void;
@@ -150,13 +163,13 @@ function DataTableModalFactory(
     dataId = '',
     sortTableColumn,
     pinTableColumn,
+    toggleTableColumnHidden,
+    showAllTableColumns,
     copyTableColumn: copyTableColumnProp,
     datasets,
     showDatasetTable,
     showTab = true,
     setColumnDisplayFormat: setColumnDisplayFormatProp,
-    uiStateActions,
-    uiState,
     loadColumnStats
   }) => {
     const [showConfig, setShowConfig] = useState(false);
@@ -169,7 +182,14 @@ function DataTableModalFactory(
       [datasets, dataId]
     );
 
-    const columns = useMemo(() => fields?.map(f => f.name) || [], [fields]);
+    const hiddenColumns = useMemo(
+      () => datasets?.[dataId]?.hiddenColumns ?? [],
+      [datasets, dataId]
+    );
+    const columns = useMemo(() => {
+      const hidden = new Set(hiddenColumns);
+      return (fields?.map(field => field.name) || []).filter(name => !hidden.has(name));
+    }, [fields, hiddenColumns]);
 
     const colMeta = useMemo(
       () =>
@@ -257,6 +277,17 @@ function DataTableModalFactory(
       [pinTableColumn, dataId]
     );
 
+    const handleHideTableColumn = useCallback(
+      (column: string) => {
+        toggleTableColumnHidden?.(dataId, column);
+      },
+      [toggleTableColumnHidden, dataId]
+    );
+
+    const handleShowAllColumns = useCallback(() => {
+      showAllTableColumns?.(dataId);
+    }, [showAllTableColumns, dataId]);
+
     const handleSortTableColumn = useCallback(
       (column: string, mode?: string) => {
         sortTableColumn(dataId, column, mode);
@@ -297,6 +328,11 @@ function DataTableModalFactory(
             />
           ) : null}
           <StyledConfigureButton className="display-config-button">
+            {hiddenColumns.length ? (
+              <HiddenColumnsBar type="button" onClick={handleShowAllColumns}>
+                {`Show ${hiddenColumns.length} hidden`}
+              </HiddenColumnsBar>
+            ) : null}
             <Gear onClick={onOpenConfig} />
             <Portaled right={240} top={20} isOpened={showConfig} onClose={onCloseConfig}>
               <DataTableConfig
@@ -315,11 +351,14 @@ function DataTableModalFactory(
               colMeta={colMeta}
               cellSizeCache={cellSizeCache}
               dataContainer={activeDataset.dataContainer}
-              pinnedColumns={activeDataset.pinnedColumns}
+              pinnedColumns={(activeDataset.pinnedColumns || []).filter(
+                column => !hiddenColumns.includes(column)
+              )}
               sortOrder={activeDataset.sortOrder}
               sortColumn={activeDataset.sortColumn || DEFAULT_SORT_COLUMN}
               copyTableColumn={handleCopyTableColumn}
               pinTableColumn={handlePinTableColumn}
+              hideTableColumn={toggleTableColumnHidden ? handleHideTableColumn : undefined}
               sortTableColumn={handleSortTableColumn}
               setColumnDisplayFormat={handleSetColumnDisplayFormat}
               hasStats={enableColumnStats}

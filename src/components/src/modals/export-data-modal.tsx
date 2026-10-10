@@ -9,12 +9,10 @@ import {DatasetType, EXPORT_DATA_TYPE_OPTIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Datasets} from '@kepler.gl/table';
 
-import {FileType} from '../common/icons';
 import {
   StyledExportSection,
   StyledFilteredOption,
   StyledModalContent,
-  StyledType,
   CheckMark
 } from '../common/styled-components';
 import {StyledWarning} from './export-map-modal/components';
@@ -64,7 +62,7 @@ export interface ExportDataModalProps {
   onChangeExportDataType: (type: string) => void;
   onChangeExportFiltered: (isFiltered: boolean) => void;
   intl: IntlShape;
-  supportedDataTypes: {
+  supportedDataTypes?: {
     id: string;
     label: string;
     available: boolean;
@@ -93,6 +91,10 @@ const ExportDataModalFactory = () => {
     const onSelectDataset: React.ChangeEventHandler<HTMLSelectElement> = ({target: {value}}) => {
       applyCPUFilter(value);
       onChangeExportSelectedDataset(value);
+    };
+
+    const onSelectDataType: React.ChangeEventHandler<HTMLSelectElement> = ({target: {value}}) => {
+      onChangeExportDataType(value);
     };
 
     const exportAllDatasets = selectedDataset ? !datasets[selectedDataset] : true;
@@ -141,16 +143,13 @@ const ExportDataModalFactory = () => {
               </div>
             </div>
             <div className="selection">
-              {supportedDataTypes.map(op => (
-                <StyledType
-                  key={op.id}
-                  selected={dataType === op.id}
-                  onClick={() => op.available && onChangeExportDataType(op.id)}
-                >
-                  <FileType ext={op.label} height="80px" fontSize="11px" />
-                  {dataType === op.id && <CheckMark />}
-                </StyledType>
-              ))}
+              <select className="data-type-select" value={dataType} onChange={onSelectDataType}>
+                {supportedDataTypes.map(op => (
+                  <option key={op.id} value={op.id} disabled={!op.available}>
+                    {op.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </CompactExportSection>
           <CompactExportSection>

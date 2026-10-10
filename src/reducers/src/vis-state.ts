@@ -174,6 +174,10 @@ const actionHandler = {
 
   [ActionTypes.PIN_TABLE_COLUMN]: visStateUpdaters.pinTableColumnUpdater,
 
+  [ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN]: visStateUpdaters.toggleTableColumnHiddenUpdater,
+
+  [ActionTypes.SHOW_ALL_TABLE_COLUMNS]: visStateUpdaters.showAllTableColumnsUpdater,
+
   [ActionTypes.COPY_TABLE_COLUMN]: visStateUpdaters.copyTableColumnUpdater,
 
   [ActionTypes.SET_COLUMN_DISPLAY_FORMAT]: visStateUpdaters.setColumnDisplayFormatUpdater,
