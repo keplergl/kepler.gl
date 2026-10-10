@@ -184,7 +184,7 @@ describe('DatasetOpsMenu', () => {
     expect(removeDataset).toHaveBeenCalledWith('tiles');
   });
 
-  test('hides menu for vector tiles and when ops are disabled', () => {
+  test('hides menu when a dataset has no actions', () => {
     const {container: tiles} = renderWithTheme(
       <DatasetOpsMenu
         datasetId="tiles"
@@ -207,9 +207,12 @@ describe('DatasetOpsMenu', () => {
       />
     );
     expect(disabled.querySelector('.dataset-ops-menu__toggle')).toBeNull();
+  });
 
+  test('keeps remove inside the overflow menu when dataset ops are disabled', () => {
+    initApplicationConfig({enableDatasetOps: false});
     const removeDataset = jest.fn();
-    const {container: deleteOnly} = renderWithTheme(
+    const {container} = renderWithTheme(
       <DatasetOpsMenu
         datasetId="cities"
         dataset={{type: 'local'}}
@@ -220,10 +223,50 @@ describe('DatasetOpsMenu', () => {
         removeDataset={removeDataset}
       />
     );
-    expect(deleteOnly.querySelector('.dataset-ops-menu__toggle')).toBeNull();
+
+    expect(container.querySelector('.dataset-ops-menu__remove')).toBeNull();
+    fireEvent.click(container.querySelector('.dataset-ops-menu__toggle') as HTMLElement);
     expect(document.querySelector('.dataset-ops-menu__group-by')).toBeNull();
-    fireEvent.click(deleteOnly.querySelector('.dataset-ops-menu__remove') as HTMLElement);
+    fireEvent.click(document.querySelector('.dataset-ops-menu__remove') as HTMLButtonElement);
     expect(removeDataset).toHaveBeenCalledWith('cities');
+  });
+
+  test('opens refresh settings from the menu for remote datasets', () => {
+    const onToggleRefreshSettings = jest.fn();
+    const {container} = renderWithTheme(
+      <DatasetOpsMenu
+        datasetId="live"
+        dataset={{type: 'externally-hosted'}}
+        onToggleRefreshSettings={onToggleRefreshSettings}
+        refreshSettingsOpen
+        showDeleteDataset
+        removeDataset={jest.fn()}
+      />
+    );
+
+    fireEvent.click(container.querySelector('.dataset-ops-menu__toggle') as HTMLElement);
+    const refresh = document.querySelector(
+      '.dataset-ops-menu__refresh-settings'
+    ) as HTMLButtonElement;
+    expect(refresh).toBeTruthy();
+    expect(document.querySelector('.dataset-ops-menu__replace')).toBeNull();
+    fireEvent.click(refresh);
+    expect(onToggleRefreshSettings).toHaveBeenCalled();
+  });
+
+  test('hides refresh settings for local datasets', () => {
+    const {container} = renderWithTheme(
+      <DatasetOpsMenu
+        datasetId="cities"
+        dataset={{type: 'local'}}
+        addGroupBy={jest.fn()}
+        onToggleRefreshSettings={jest.fn()}
+      />
+    );
+
+    fireEvent.click(container.querySelector('.dataset-ops-menu__toggle') as HTMLElement);
+    expect(document.querySelector('.dataset-ops-menu__refresh-settings')).toBeNull();
+    expect(document.querySelector('.dataset-ops-menu__group-by')).toBeTruthy();
   });
 });
 
