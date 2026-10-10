@@ -193,6 +193,8 @@ import {
   copyTableAndUpdate,
   createNewDataEntry,
   pinTableColumns,
+  showAllTableColumns,
+  toggleHiddenTableColumn,
   setFilterGpuMode,
   sortDatasetByColumn
 } from '@kepler.gl/table';
@@ -5570,6 +5572,36 @@ export function pinTableColumnUpdater(
   const newDataset = pinTableColumns(dataset, column);
 
   return set(['datasets', dataId], newDataset, state);
+}
+
+/**
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function toggleTableColumnHiddenUpdater(
+  state: VisState,
+  {dataId, column}: VisStateActions.ToggleTableColumnHiddenUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+  return set(['datasets', dataId], toggleHiddenTableColumn(dataset, column), state);
+}
+
+/**
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function showAllTableColumnsUpdater(
+  state: VisState,
+  {dataId}: VisStateActions.ShowAllTableColumnsUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+  return set(['datasets', dataId], showAllTableColumns(dataset), state);
 }
 
 /**

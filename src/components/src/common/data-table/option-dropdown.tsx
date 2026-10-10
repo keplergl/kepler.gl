@@ -14,7 +14,7 @@ import {
 } from '@kepler.gl/constants';
 import {getFieldFormatLabels} from '@kepler.gl/utils';
 import {ColMeta} from '@kepler.gl/types';
-import {ArrowDown, ArrowUp, Clipboard, Pin, Cancel, Hash} from '../icons';
+import {ArrowDown, ArrowUp, Clipboard, Pin, Cancel, Hash, EyeUnseen} from '../icons';
 
 const ListItem = ({value}) => (
   <div>
@@ -54,10 +54,10 @@ const StyledOptionsDropdown = styled.div`
 
 const StyledPopover = styled.div`
   width: 184px;
-  height: 160px;
+  height: 200px;
   z-index: 101;
   .list-selector {
-    max-height: 160px;
+    max-height: 200px;
   }
   .hover:after {
     content: '\\2713';
@@ -119,6 +119,7 @@ export interface OptionDropdownProps {
   toggleMoreOptions: (column: string) => void;
   sortTableColumn?: (sort: string) => void;
   pinTableColumn: () => void;
+  hideTableColumn?: () => void;
   copyTableColumn: () => void;
   setDisplayFormat?: (displayFormat: any) => void;
   sortMode?: string;
@@ -134,6 +135,7 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     toggleMoreOptions,
     sortTableColumn,
     pinTableColumn,
+    hideTableColumn,
     copyTableColumn,
     setDisplayFormat
   } = props;
@@ -159,6 +161,9 @@ const OptionDropdown = (props: OptionDropdownProps) => {
         case TABLE_OPTION.COPY:
           copyTableColumn();
           break;
+        case TABLE_OPTION.HIDE:
+          hideTableColumn?.();
+          break;
         case TABLE_OPTION.FORMAT_COLUMN:
           setShowFormatter(true);
           return;
@@ -168,7 +173,7 @@ const OptionDropdown = (props: OptionDropdownProps) => {
 
       toggleMoreOptions(column);
     },
-    [column, sortTableColumn, pinTableColumn, copyTableColumn, toggleMoreOptions]
+    [column, sortTableColumn, pinTableColumn, hideTableColumn, copyTableColumn, toggleMoreOptions]
   );
 
   const TABLE_OPTION_LIST_ICONS = {
@@ -177,7 +182,8 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     ArrowUp,
     Clipboard,
     Cancel,
-    Hash
+    Hash,
+    EyeUnseen
   };
 
   const formatLabels = getFieldFormatLabels(colMeta[column].type);

@@ -1251,6 +1251,49 @@ export function pinTableColumn(
   };
 }
 
+export type ToggleTableColumnHiddenUpdaterAction = {
+  dataId: string;
+  column: string;
+};
+/**
+ * Hide or show a dataset column in the attribute table and in data export.
+ * @param dataId
+ * @param column
+ * @returns action
+ * @public
+ */
+export function toggleTableColumnHidden(
+  dataId: string,
+  column: string
+): Merge<
+  ToggleTableColumnHiddenUpdaterAction,
+  {type: typeof ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN}
+> {
+  return {
+    type: ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN,
+    dataId,
+    column
+  };
+}
+
+export type ShowAllTableColumnsUpdaterAction = {
+  dataId: string;
+};
+/**
+ * Show every attribute-table column that was hidden.
+ * @param dataId
+ * @returns action
+ * @public
+ */
+export function showAllTableColumns(
+  dataId: string
+): Merge<ShowAllTableColumnsUpdaterAction, {type: typeof ActionTypes.SHOW_ALL_TABLE_COLUMNS}> {
+  return {
+    type: ActionTypes.SHOW_ALL_TABLE_COLUMNS,
+    dataId
+  };
+}
+
 export type CopyTableColumnUpdaterAction = {
   dataId: string;
   column: string;

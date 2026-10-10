@@ -188,6 +188,7 @@ function HeaderCellFactory(
       sortColumn,
       sortTableColumn,
       pinTableColumn,
+      hideTableColumn,
       copyTableColumn,
       setColumnDisplayFormat,
       hasStats,
@@ -236,6 +237,9 @@ function HeaderCellFactory(
     const onPin = useCallback(() => {
       if (!isGhost) pinTableColumn(column);
     }, [pinTableColumn, isGhost, column]);
+    const onHide = useCallback(() => {
+      if (!isGhost) hideTableColumn?.(column);
+    }, [hideTableColumn, isGhost, column]);
     const onCopy = useCallback(() => {
       if (!isGhost) copyTableColumn(column);
     }, [copyTableColumn, isGhost, column]);
@@ -301,6 +305,7 @@ function HeaderCellFactory(
             toggleMoreOptions={toggleMoreOptions}
             sortTableColumn={sortTableColumn ? mode => sortTableColumn(column, mode) : undefined}
             pinTableColumn={onPin}
+            hideTableColumn={hideTableColumn ? onHide : undefined}
             copyTableColumn={onCopy}
             setDisplayFormat={setColumnDisplayFormat ? onSetDisplayFormat : undefined}
           />

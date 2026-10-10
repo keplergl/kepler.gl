@@ -53,6 +53,8 @@
     "@turf/helpers": "^7.2.0",
     "apache-arrow": ">=15.0.0",
     "d3-dsv": "^2.0.0",
+    "parquet-wasm": "0.6.1",
+    "sql.js": "1.13.0",
     "type-analyzer": "0.4.0"
   },
   "nyc": {
@@ -81,5 +83,8 @@
       "require": "./dist/cjs/index.js",
       "default": "./dist/cjs/index.js"
     }
+  },
+  "devDependencies": {
+    "@types/sql.js": "^1"
   }
 }
