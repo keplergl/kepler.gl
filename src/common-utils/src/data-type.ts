@@ -11,6 +11,30 @@ import {h3IsValid} from './h3-utils';
 
 const H3_ANALYZER_TYPE = 'H3';
 
+// A plain decimal number, optionally in scientific notation: 12, -0.5, .5, 1.5e+10, 2E-4
+const DECIMAL_NUMBER_REGEX = /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
+const INTEGER_REGEX = /^[+-]?\d+$/;
+
+/**
+ * type-analyzer reports NUMBER for values that pass `!isNaN` but are neither INT nor FLOAT,
+ * which is mostly scientific notation such as `1.5e+10`. Such a value is safe to read as a
+ * real number unless it is a non decimal literal (`0x1A`, also hex hashes and addresses) or an
+ * integer beyond the safe range (64-bit ids), which parseFloat would misread or round.
+ */
+function isRealNumberSample(value: unknown): boolean {
+  if (!notNullorUndefined(value) || value === '') {
+    return true;
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value);
+  }
+  if (typeof value !== 'string' || !DECIMAL_NUMBER_REGEX.test(value)) {
+    return false;
+  }
+  const number = Number(value);
+  return Number.isFinite(number) && (!INTEGER_REGEX.test(value) || Number.isSafeInteger(number));
+}
+
 /**
  * type-analyzer uses `isNaN(value)`, which throws on BigInt
  * ("Cannot convert a BigInt value to a number"). Arrow/Parquet Int64
@@ -291,6 +315,14 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     // quick check if string is hex wkb
     if (type === AnalyzerDATA_TYPES.STRING) {
       type = data.some(d => isHexWkb(d[name])) ? AnalyzerDATA_TYPES.GEOMETRY : type;
+    }
+
+    // read numbers in scientific notation as real numbers instead of strings
+    if (
+      type === AnalyzerDATA_TYPES.NUMBER &&
+      analyzerData.every(row => isRealNumberSample(row[field]))
+    ) {
+      type = AnalyzerDATA_TYPES.FLOAT;
     }
 
     return {

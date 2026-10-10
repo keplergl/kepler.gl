@@ -160,6 +160,30 @@ test('Processor -> getFieldsFromData BigInt columns', t => {
   t.end();
 });
 
+test('Processor -> getFieldsFromData scientific notation', t => {
+  const data = [
+    {sci: '2.3e+10', small: '1.5E-05', id: '12345678901234567890', hex: '0x1A'},
+    {sci: '1.1e+09', small: null, id: '12345678901234567891', hex: '0xFF'},
+    {sci: '4E+07', small: '3e2', id: '12345678901234567892', hex: '0x10'}
+  ];
+  const fields = getFieldsFromData(data, ['sci', 'small', 'id', 'hex']);
+
+  t.equal(fields[0].type, ALL_FIELD_TYPES.real, 'scientific notation should be real');
+  t.equal(
+    fields[0].analyzerType,
+    DATA_TYPES.FLOAT,
+    'scientific notation should be analyzed as float'
+  );
+  t.equal(fields[1].type, ALL_FIELD_TYPES.real, 'scientific notation with nulls should be real');
+  t.equal(
+    fields[2].type,
+    ALL_FIELD_TYPES.string,
+    'integers beyond the safe range should stay string to keep every digit'
+  );
+  t.equal(fields[3].type, ALL_FIELD_TYPES.string, 'hex literals should stay string');
+  t.end();
+});
+
 test('Processor -> processCsvData', t => {
   t.throws(() => processCsvData(''), 'should throw if csv is empty');
 
@@ -366,6 +390,19 @@ test('Processor -> processCsvData -> semicolon-separated with numeric data', t =
   t.equal(result.rows[0][1], 13.405, 'should parse lng as number');
   t.equal(result.rows[0][2], 1000.5, 'should parse value as number');
 
+  t.end();
+});
+
+test('Processor -> processCsvData -> scientific notation', t => {
+  const data = 'lat,lng,value\n37.1,-122.1,2.3e+10\n37.2,-122.2,1.1E+09\n37.3,-122.3,4E+07';
+  const {fields, rows} = processCsvData(data);
+
+  t.equal(fields[2].type, ALL_FIELD_TYPES.real, 'should type scientific notation as real');
+  t.deepEqual(
+    rows.map(r => r[2]),
+    [2.3e10, 1.1e9, 4e7],
+    'should parse scientific notation as numbers'
+  );
   t.end();
 });
 
