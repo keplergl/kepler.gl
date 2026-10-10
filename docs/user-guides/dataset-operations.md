@@ -7,6 +7,7 @@ Open the **⋯** menu on a local dataset in the Layers catalog to:
 - **Group by** one column and aggregate the rest
 - **Join** two tables on a shared key (left, inner, or full)
 - **Spatial join** a **target dataset** to a **join dataset** with a spatial join operation (intersects, equals, crosses, overlaps, within, touches)
+- **Suitability analysis** rank rows by a weighted combination of numeric columns
 
 Operations run entirely in the browser. They are available for local (and remote file) tables, and are hidden for vector tiles, raster tiles, WMS, and 3D tiles.
 
@@ -57,6 +58,35 @@ Choose a **Join Operation**:
 | Touches | Geometries share a boundary but not their interiors |
 
 Distance joins and geometry merge are not included. For SQL predicates, use the [SQL/DuckDB Data Explorer](./sql-data-explorer.md).
+
+## Suitability analysis
+
+Rank every row by a weighted combination of numeric columns. The result is a new table with a `score` column (source columns are kept unless you uncheck them). When the result has geometry, a layer is created the same way as for other dataset operations, and the default color field prefers `score`.
+
+The panel is arranged like this:
+
+1. **Fields & Weights** — numeric columns that contribute to the score, each with a 0–1 weight
+2. **Scoring Options** — how weights and values are standardized, the score column name, and which source columns to keep
+3. **Result name**
+
+A row scores blank when any selected column is missing a value, so partial rows do not look like low scores.
+
+**Weight standardization**
+
+| Option | Effect |
+| --- | --- |
+| Normalize | Divide each weight by the sum of selected weights so they add to 1 |
+| Raw | Use the slider values as-is |
+
+**Data standardization** (applied to each selected column before weighting)
+
+| Option | Effect |
+| --- | --- |
+| Range | Map values onto 0–1: `(value − min) / (max − min)` |
+| Z-score | `(value − mean) / standard deviation` |
+| Raw | Leave the column unchanged |
+
+If a column has no range or no deviation, it is left unchanged. The score is then the weighted sum of those standardized values.
 
 ## Saving maps
 

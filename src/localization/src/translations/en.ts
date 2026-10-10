@@ -507,6 +507,27 @@ export default {
       median: 'Median',
       countUnique: 'Unique',
       merge: 'Merge'
+    },
+    suitability: 'Suitability Analysis',
+    suitabilityHelp:
+      'Rank rows by a weighted combination of numeric columns. The result is added as a new dataset with a score column. The new layer is colored by that column when possible.',
+    suitabilityWeights: 'Fields & Weights',
+    suitabilityWeightsHelp:
+      'Pick the numeric columns that contribute to the score and how much each one matters. A row scores blank when any selected column is missing a value.',
+    suitabilityStandardization: 'Scoring Options',
+    suitabilityStandardizationHelp:
+      'Standardization puts columns measured on different scales onto a comparable footing before they are combined.',
+    weightStandardization: 'Weight standardization',
+    dataStandardization: 'Data standardization',
+    scoreColumn: 'Score column',
+    weightStandardizationOption: {
+      raw: 'Raw',
+      normalize: 'Normalize'
+    },
+    dataStandardizationOption: {
+      raw: 'Raw',
+      range: 'Range',
+      zScore: 'Z-score'
     }
   },
   datasetInfo: {

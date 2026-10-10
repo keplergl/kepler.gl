@@ -110,6 +110,7 @@ function DatasetSectionFactory(
             addGroupBy={visStateActions?.addGroupBy}
             addJoin={visStateActions?.addJoin}
             addSpatialJoin={visStateActions?.addSpatialJoin}
+            addSuitability={visStateActions?.addSuitability}
           />
         )}
       </StyledDatasetSection>

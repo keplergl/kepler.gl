@@ -43,6 +43,11 @@ const DEFAULT_FIELD_TEST_CASES = [
     name: 'included real, with inclusion ordering',
     csv: 'zipcode mean,a metric,b,c\n0.5,0.1,0,0.5\n0.5,0.1,1,0.5',
     expected: 'a metric'
+  },
+  {
+    name: 'prefers score over other reals',
+    csv: 'depth,magnitude,score\n1.0,2.0,0.5\n3.0,4.0,0.8',
+    expected: 'score'
   }
 ];
 

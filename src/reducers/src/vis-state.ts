@@ -239,6 +239,9 @@ const actionHandler = {
   [ActionTypes.ADD_SPATIAL_JOIN]: visStateUpdaters.addSpatialJoinUpdater,
   [ActionTypes.SET_SPATIAL_JOIN_CONFIG]: visStateUpdaters.setSpatialJoinConfigUpdater,
   [ActionTypes.RUN_SPATIAL_JOIN]: visStateUpdaters.runSpatialJoinUpdater,
+  [ActionTypes.ADD_SUITABILITY]: visStateUpdaters.addSuitabilityUpdater,
+  [ActionTypes.SET_SUITABILITY_CONFIG]: visStateUpdaters.setSuitabilityConfigUpdater,
+  [ActionTypes.RUN_SUITABILITY]: visStateUpdaters.runSuitabilityUpdater,
   [ActionTypes.REMOVE_DATASET_OP]: visStateUpdaters.removeDatasetOpUpdater
 };
 

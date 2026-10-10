@@ -5,7 +5,7 @@
 import {default as ActionTypes} from './action-types';
 import {FileCacheItem, ZipArchiveExpansion} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {GroupByOp, JoinOp, KeplerTable} from '@kepler.gl/table';
+import {GroupByOp, JoinOp, KeplerTable, SuitabilityOp} from '@kepler.gl/table';
 import {
   AddDataToMapOptions,
   AddDataToMapPayload,
@@ -2640,6 +2640,48 @@ export function runSpatialJoin(
 ): Merge<RunSpatialJoinUpdaterAction, {type: typeof ActionTypes.RUN_SPATIAL_JOIN}> {
   return {
     type: ActionTypes.RUN_SPATIAL_JOIN,
+    id
+  };
+}
+
+export type AddSuitabilityUpdaterAction = {
+  dataId: string;
+};
+
+export function addSuitability(
+  dataId: string
+): Merge<AddSuitabilityUpdaterAction, {type: typeof ActionTypes.ADD_SUITABILITY}> {
+  return {
+    type: ActionTypes.ADD_SUITABILITY,
+    dataId
+  };
+}
+
+export type SetSuitabilityConfigUpdaterAction = {
+  id: string;
+  config: Partial<SuitabilityOp>;
+};
+
+export function setSuitabilityConfig(
+  id: string,
+  config: Partial<SuitabilityOp>
+): Merge<SetSuitabilityConfigUpdaterAction, {type: typeof ActionTypes.SET_SUITABILITY_CONFIG}> {
+  return {
+    type: ActionTypes.SET_SUITABILITY_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunSuitabilityUpdaterAction = {
+  id: string;
+};
+
+export function runSuitability(
+  id: string
+): Merge<RunSuitabilityUpdaterAction, {type: typeof ActionTypes.RUN_SUITABILITY}> {
+  return {
+    type: ActionTypes.RUN_SUITABILITY,
     id
   };
 }

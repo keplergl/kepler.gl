@@ -13,7 +13,10 @@ import {
   isDatasetOpsAggregationField,
   isTabularDatasetForOps,
   joinDatasets,
-  spatialJoinDatasets
+  spatialJoinDatasets,
+  defaultSuitabilityWeights,
+  isSuitabilityWeightField,
+  suitabilityDataset
 } from './dataset-ops';
 
 function makeTable({
@@ -456,5 +459,153 @@ describe('dataset-ops engine', () => {
     expect(
       defaultAggregationsForFields([{name: 'geom', type: ALL_FIELD_TYPES.geojson} as any])
     ).toEqual({geom: 'merge'});
+  });
+});
+
+describe('suitability engine', () => {
+  const sites = () =>
+    makeTable({
+      id: 'sites',
+      fields: [
+        {name: 'name', type: ALL_FIELD_TYPES.string},
+        {name: 'access', type: ALL_FIELD_TYPES.integer},
+        {name: 'cost', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        ['a', 0, 100],
+        ['b', 5, 200],
+        ['c', 10, 300]
+      ]
+    });
+
+  test('scores rows as a normalized weighted sum of range-standardized columns', () => {
+    const result = suitabilityDataset(sites(), {
+      weights: {access: 1, cost: 1},
+      resultId: 'sites-score',
+      operationId: 'su-1'
+    });
+
+    expect(result.info.id).toBe('sites-score');
+    expect(result.metadata.derivedDataset).toEqual({
+      type: 'suitability',
+      sourceDataIds: ['sites'],
+      operationId: 'su-1'
+    });
+    // source columns are kept, score is appended last as a real column
+    expect(result.data.fields.map(field => field.name)).toEqual([
+      'name',
+      'access',
+      'cost',
+      'score'
+    ]);
+    expect(result.data.fields[3].type).toBe(ALL_FIELD_TYPES.real);
+    // both columns span their full range, so normalized weights put scores on 0..1
+    expect(result.data.rows.map(row => row[3])).toEqual([0, 0.5, 1]);
+  });
+
+  test('raw weights skip normalization', () => {
+    const result = suitabilityDataset(sites(), {
+      weights: {access: 1, cost: 1},
+      weightStandardization: 'raw'
+    });
+
+    expect(result.data.rows.map(row => row[3])).toEqual([0, 1, 2]);
+  });
+
+  test('z-score standardization divides by the standard deviation', () => {
+    const result = suitabilityDataset(sites(), {
+      weights: {access: 1},
+      weightStandardization: 'raw',
+      dataStandardization: 'zScore'
+    });
+
+    const deviation = Math.sqrt(((0 - 5) ** 2 + (5 - 5) ** 2 + (10 - 5) ** 2) / 3);
+    expect(result.data.rows.map(row => row[3])).toEqual([-5 / deviation, 0, 5 / deviation]);
+  });
+
+  test('raw data standardization leaves values untouched', () => {
+    const result = suitabilityDataset(sites(), {
+      weights: {access: 2},
+      weightStandardization: 'raw',
+      dataStandardization: 'raw'
+    });
+
+    expect(result.data.rows.map(row => row[3])).toEqual([0, 10, 20]);
+  });
+
+  test('a constant column falls back to its raw values', () => {
+    const dataset = makeTable({
+      id: 'flat',
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[3], [3]]
+    });
+
+    const result = suitabilityDataset(dataset, {
+      weights: {value: 1},
+      weightStandardization: 'raw'
+    });
+
+    expect(result.data.rows.map(row => row[1])).toEqual([3, 3]);
+  });
+
+  test('rows missing a weighted value score null', () => {
+    const dataset = makeTable({
+      id: 'gaps',
+      fields: [
+        {name: 'a', type: ALL_FIELD_TYPES.integer},
+        {name: 'b', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [0, 1],
+        [null, 2],
+        [10, 3]
+      ]
+    });
+
+    const result = suitabilityDataset(dataset, {weights: {a: 1, b: 1}});
+    expect(result.data.rows[1][2]).toBeNull();
+    expect(result.data.rows[0][2]).not.toBeNull();
+  });
+
+  test('columns restricts the copied source columns and renames a clashing score column', () => {
+    const dataset = makeTable({
+      id: 'clash',
+      fields: [
+        {name: 'name', type: ALL_FIELD_TYPES.string},
+        {name: 'score', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        ['a', 1],
+        ['b', 2]
+      ]
+    });
+
+    const result = suitabilityDataset(dataset, {
+      weights: {score: 1},
+      columns: ['score']
+    });
+
+    expect(result.data.fields.map(field => field.name)).toEqual(['score', 'score_1']);
+    expect(result.data.rows[0]).toEqual([1, 0]);
+  });
+
+  test('rejects empty, unknown, and non-numeric weight fields', () => {
+    expect(() => suitabilityDataset(sites(), {weights: {}})).toThrow(
+      'Select at least one field to score'
+    );
+    expect(() => suitabilityDataset(sites(), {weights: {nope: 1}})).toThrow(
+      'Suitability field "nope" was not found'
+    );
+    expect(() => suitabilityDataset(sites(), {weights: {name: 1}})).toThrow(
+      'Suitability field "name" is not numeric'
+    );
+  });
+
+  test('only numeric fields can be weighted', () => {
+    expect(isSuitabilityWeightField({type: ALL_FIELD_TYPES.real})).toBe(true);
+    expect(isSuitabilityWeightField({type: ALL_FIELD_TYPES.integer})).toBe(true);
+    expect(isSuitabilityWeightField({type: ALL_FIELD_TYPES.boolean})).toBe(false);
+    expect(isSuitabilityWeightField({type: ALL_FIELD_TYPES.string})).toBe(false);
+    expect(defaultSuitabilityWeights(sites().fields)).toEqual({access: 1, cost: 1});
   });
 });

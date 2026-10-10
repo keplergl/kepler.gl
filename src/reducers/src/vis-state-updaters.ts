@@ -218,14 +218,17 @@ import {
   addGroupByUpdater,
   addJoinUpdater,
   addSpatialJoinUpdater,
+  addSuitabilityUpdater,
   executeGroupBy,
   executeJoin,
   executeSpatialJoin,
+  executeSuitability,
   removeDatasetOpUpdater,
   removeOpsForDatasets,
   setGroupByConfigUpdater,
   setJoinConfigUpdater,
-  setSpatialJoinConfigUpdater
+  setSpatialJoinConfigUpdater,
+  setSuitabilityConfigUpdater
 } from './dataset-ops-updaters';
 import {
   fixEffectOrder,
@@ -399,6 +402,7 @@ export const INITIAL_VIS_STATE: VisState = {
   editingDataset: undefined,
   groupBys: [],
   joins: [],
+  suitabilities: [],
 
   // effects
   effects: [],
@@ -6696,12 +6700,22 @@ export function runSpatialJoinUpdater(
   return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
 }
 
+export function runSuitabilityUpdater(
+  state: VisState,
+  action: VisStateActions.RunSuitabilityUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeSuitability(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
 export {
   addGroupByUpdater,
   addJoinUpdater,
   addSpatialJoinUpdater,
+  addSuitabilityUpdater,
   removeDatasetOpUpdater,
   setGroupByConfigUpdater,
   setJoinConfigUpdater,
-  setSpatialJoinConfigUpdater
+  setSpatialJoinConfigUpdater,
+  setSuitabilityConfigUpdater
 };

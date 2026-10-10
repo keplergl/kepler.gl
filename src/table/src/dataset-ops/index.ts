@@ -8,15 +8,18 @@ export * from './table-helpers';
 export * from './group-by';
 export * from './join';
 export * from './spatial-join';
+export * from './suitability';
 export {makeResultProtoDataset} from './proto-dataset';
 
 import {groupByDataset} from './group-by';
 import {joinDatasets} from './join';
 import {spatialJoinDatasets} from './spatial-join';
+import {suitabilityDataset} from './suitability';
 import {DatasetOpsEngine} from './types';
 
 export const inMemoryDatasetOpsEngine: DatasetOpsEngine = {
   groupByDataset,
   joinDatasets,
-  spatialJoinDatasets
+  spatialJoinDatasets,
+  suitabilityDataset
 };
