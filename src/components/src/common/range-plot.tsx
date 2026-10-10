@@ -168,6 +168,7 @@ export default function RangePlotFactory(
         colorsByGroup={groupColors}
         range={range}
         {...commonProps}
+        recessed
       />
     );
   };
