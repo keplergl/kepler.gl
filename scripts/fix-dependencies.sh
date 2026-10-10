@@ -18,6 +18,26 @@ pkg.main = './index.cjs';
 fs.writeFileSync(p, JSON.stringify(pkg, null, 2));
 "
 
+# zarrita's exports map only declares `types` and `import`, so require() from our
+# CommonJS build fails with ERR_PACKAGE_PATH_NOT_EXPORTED. Add a `default`
+# condition pointing at the same ESM entry: node >= 20.19 loads it through
+# require(esm), and bundlers keep picking `import`.
+node -e "
+const fs = require('fs');
+for (const p of ['node_modules/zarrita/package.json', 'node_modules/@zarrita/storage/package.json']) {
+  if (!fs.existsSync(p)) continue;
+  const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
+  let changed = false;
+  for (const entry of Object.values(pkg.exports ?? {})) {
+    if (entry && typeof entry === 'object' && entry.import && !entry.default && !entry.require) {
+      entry.default = entry.import;
+      changed = true;
+    }
+  }
+  if (changed) fs.writeFileSync(p, JSON.stringify(pkg, null, 2));
+}
+"
+
 # Patch for an issue with react-virtualized output having an invalid import
 # https://github.com/bvaughn/react-virtualized/issues/1212
 if [[ -f "node_modules/react-virtualized/dist/es/WindowScroller/utils/onScroll.js" ]]; then

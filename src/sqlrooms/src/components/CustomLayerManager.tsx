@@ -201,6 +201,7 @@ export const CustomLayerManager: React.FC<CustomLayerManagerProps> = ({
 
   const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
   const enableWMSLayer = getApplicationConfig().enableWMSLayer;
+  const enableZarrLayer = getApplicationConfig().enableZarrLayer;
 
   const filteredLayerClasses = useMemo(() => {
     let filteredClasses = keplerState?.visState.layerClasses || {};
@@ -212,8 +213,12 @@ export const CustomLayerManager: React.FC<CustomLayerManagerProps> = ({
       const {wms: _wms, ...rest} = filteredClasses;
       filteredClasses = rest as LayerClassesType;
     }
+    if (!enableZarrLayer && 'zarr' in filteredClasses) {
+      const {zarr: _zarr, ...rest} = filteredClasses;
+      filteredClasses = rest as LayerClassesType;
+    }
     return filteredClasses as LayerClassesType;
-  }, [enableRasterTileLayer, enableWMSLayer, keplerState?.visState.layerClasses]);
+  }, [enableRasterTileLayer, enableWMSLayer, enableZarrLayer, keplerState?.visState.layerClasses]);
 
   if (!keplerState || !keplerActions) {
     return null;

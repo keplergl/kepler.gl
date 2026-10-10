@@ -2534,6 +2534,92 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@developmentseed/affine@npm:^0.7.0":
+  version: 0.7.0
+  resolution: "@developmentseed/affine@npm:0.7.0"
+  checksum: 10c0/69117f72443462c23dd83f80d12e872d4647646b308fda519a52e25958a373d9fae11f853b8d31c364de34fe3f99c6f1b5ac511a28db3ae5f528819b1b842b03
+  languageName: node
+  linkType: hard
+
+"@developmentseed/deck.gl-raster@npm:^0.7.0":
+  version: 0.7.0
+  resolution: "@developmentseed/deck.gl-raster@npm:0.7.0"
+  dependencies:
+    "@developmentseed/affine": "npm:^0.7.0"
+    "@developmentseed/proj": "npm:^0.7.0"
+    "@developmentseed/raster-reproject": "npm:^0.7.0"
+    "@math.gl/core": "npm:^4.1.0"
+    "@math.gl/culling": "npm:^4.1.0"
+    "@math.gl/web-mercator": "npm:^4.1.0"
+  peerDependencies:
+    "@deck.gl/core": ^9.3.0
+    "@deck.gl/geo-layers": ^9.3.0
+    "@deck.gl/layers": ^9.3.0
+    "@deck.gl/mesh-layers": ^9.3.0
+    "@developmentseed/morecantile": ^0.7.0
+    "@luma.gl/core": ^9.3.2
+    "@luma.gl/shadertools": ^9.3.2
+  checksum: 10c0/3812135c53044a6f783d715c0a43a38511903002ed09a4ee9084a9bd3bb27da85015a9b06374278008e03558cdf7a56ef47efe4d1cb77312f112f3ebf8a8786a
+  languageName: node
+  linkType: hard
+
+"@developmentseed/deck.gl-zarr@npm:0.7.0":
+  version: 0.7.0
+  resolution: "@developmentseed/deck.gl-zarr@npm:0.7.0"
+  dependencies:
+    "@developmentseed/affine": "npm:^0.7.0"
+    "@developmentseed/deck.gl-raster": "npm:^0.7.0"
+    "@developmentseed/geozarr": "npm:^0.7.0"
+    "@developmentseed/proj": "npm:^0.7.0"
+    "@developmentseed/raster-reproject": "npm:^0.7.0"
+    proj4: "npm:^2.20.8"
+    wkt-parser: "npm:^1.5.5"
+    zarrita: "npm:^0.7.3"
+  peerDependencies:
+    "@deck.gl/core": ^9.3.0
+    "@deck.gl/geo-layers": ^9.3.0
+    "@deck.gl/layers": ^9.3.0
+    "@luma.gl/core": ^9.3.2
+  checksum: 10c0/05fd41ca6ac27b67bb89d9a7fe6987278d0d27b352761c7f98ebe4f3244b25750441ea70668700b1c9a5fa3ecb5cd3ee45e574db1f9b4551d62ce43bedfedda3
+  languageName: node
+  linkType: hard
+
+"@developmentseed/geozarr@npm:0.7.0, @developmentseed/geozarr@npm:^0.7.0":
+  version: 0.7.0
+  resolution: "@developmentseed/geozarr@npm:0.7.0"
+  dependencies:
+    "@developmentseed/affine": "npm:^0.7.0"
+    zarrita: "npm:^0.7.3"
+    zod: "npm:^4.4.3"
+  checksum: 10c0/436496b5529935f1e1c68f673f42bcb2c4ffddea7876ceda167dbc6d435a53f003255f8a1dd3f4b2dc47c9e28c79e3e6e14b7296181fc0f438552f739e5dbe9f
+  languageName: node
+  linkType: hard
+
+"@developmentseed/morecantile@npm:0.7.0":
+  version: 0.7.0
+  resolution: "@developmentseed/morecantile@npm:0.7.0"
+  dependencies:
+    "@developmentseed/affine": "npm:^0.7.0"
+  checksum: 10c0/9e5f0c2a9a7effa5a66bf0d9e82641ebc75433e02e3d170a2da021fcf48c030ef59b0d82d3ae1232521c8295d0baf806176ee7e69124dbf9e0e0b01713ff9123
+  languageName: node
+  linkType: hard
+
+"@developmentseed/proj@npm:^0.7.0":
+  version: 0.7.0
+  resolution: "@developmentseed/proj@npm:0.7.0"
+  dependencies:
+    wkt-parser: "npm:1.5.5"
+  checksum: 10c0/721857ce8b4acdbee864a80391f8337c03bfd333250fe2ee53c073adea70cc351ec3a410bfe76465b3bec01d99e823593e5cb7b31d67b3d49e09ae7c513d2189
+  languageName: node
+  linkType: hard
+
+"@developmentseed/raster-reproject@npm:^0.7.0":
+  version: 0.7.0
+  resolution: "@developmentseed/raster-reproject@npm:0.7.0"
+  checksum: 10c0/5bd3062f9e69d525a30374844917b2ad2e28ace3c1b33c3acc28bb4032cce6acab052b371f199009ab72448a2cc0fb527165879e318f2873621e982b1e6b3781
+  languageName: node
+  linkType: hard
+
 "@discoveryjs/json-ext@npm:0.5.7, @discoveryjs/json-ext@npm:^0.5.0":
   version: 0.5.7
   resolution: "@discoveryjs/json-ext@npm:0.5.7"
@@ -4250,6 +4336,9 @@ __metadata:
     "@deck.gl/geo-layers": "npm:^9.3.1"
     "@deck.gl/layers": "npm:^9.3.1"
     "@deck.gl/mesh-layers": "npm:^9.3.1"
+    "@developmentseed/deck.gl-zarr": "npm:0.7.0"
+    "@developmentseed/geozarr": "npm:0.7.0"
+    "@developmentseed/morecantile": "npm:0.7.0"
     "@flowmap.gl/data": "npm:^9.2.0"
     "@flowmap.gl/layers": "npm:^9.2.0"
     "@kepler.gl/common-utils": "npm:3.3.0-alpha.16"
@@ -4305,6 +4394,7 @@ __metadata:
     styled-components: "npm:6.4.3"
     type-analyzer: "npm:0.4.0"
     viewport-mercator-project: "npm:^6.0.0"
+    zarrita: "npm:^0.7.3"
   languageName: unknown
   linkType: soft
 
@@ -4470,6 +4560,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/table@workspace:src/table"
   dependencies:
+    "@developmentseed/geozarr": "npm:0.7.0"
     "@kepler.gl/common-utils": "npm:3.3.0-alpha.16"
     "@kepler.gl/constants": "npm:3.3.0-alpha.16"
     "@kepler.gl/tasks-core": "npm:3.3.0-alpha.16"
@@ -4488,6 +4579,7 @@ __metadata:
     global: "npm:^4.3.0"
     moment: "npm:^2.10.6"
     type-analyzer: "npm:0.4.0"
+    zarrita: "npm:^0.7.3"
   languageName: unknown
   linkType: soft
 
@@ -11608,6 +11700,16 @@ __metadata:
     js-yaml: "npm:^3.10.0"
     tslib: "npm:^2.4.0"
   checksum: 10c0/a0c340e13129643162423d7e666061c0b39b143bfad3fc5a74c7d92a30fd740f6665d41cd4e61832c20375889d793eea1d1d103cacb39ed68f7acd168add8c53
+  languageName: node
+  linkType: hard
+
+"@zarrita/storage@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "@zarrita/storage@npm:0.2.0"
+  dependencies:
+    reference-spec-reader: "npm:^0.2.0"
+    unzipit: "npm:2.0.0"
+  checksum: 10c0/9f433cb8ab404741f05c842b57e03710cc8add4f58826a001099a7b0eff7f2bb3fd3a87c9c038655d479abc9a50368eaf0685898433e313c9cf587b6d51b03a8
   languageName: node
   linkType: hard
 
@@ -25444,6 +25546,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"numcodecs@npm:^0.3.2":
+  version: 0.3.2
+  resolution: "numcodecs@npm:0.3.2"
+  dependencies:
+    fflate: "npm:^0.8.0"
+  checksum: 10c0/38e6e60ee063f63f6530f78f9dd4c1b4e347989b29950ddcf3307e43579ad1bc1ba17a6faf0e5cb9786517ac1489c02ee86a77ca8c19fbd70d0d20a23e7d6a81
+  languageName: node
+  linkType: hard
+
 "nwsapi@npm:^2.2.12, nwsapi@npm:^2.2.2":
   version: 2.2.12
   resolution: "nwsapi@npm:2.2.12"
@@ -27314,6 +27425,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"proj4@npm:^2.20.8":
+  version: 2.22.0
+  resolution: "proj4@npm:2.22.0"
+  dependencies:
+    mgrs: "npm:1.0.0"
+    wkt-parser: "npm:^1.5.5"
+  peerDependencies:
+    geotiff: "*"
+  peerDependenciesMeta:
+    geotiff:
+      optional: true
+  checksum: 10c0/11452d48cda44ff6011e7af9879b4881d7010c7be763785c319819362bb13ffed986174f72cf540c8e3854691f573fcb7fe95d8a5cec3dddd2091f6f92e307a9
+  languageName: node
+  linkType: hard
+
 "proj4@npm:^2.9.2":
   version: 2.12.1
   resolution: "proj4@npm:2.12.1"
@@ -28583,6 +28709,13 @@ __metadata:
   version: 5.0.1
   resolution: "redux@npm:5.0.1"
   checksum: 10c0/b10c28357194f38e7d53b760ed5e64faa317cc63de1fb95bc5d9e127fab956392344368c357b8e7a9bedb0c35b111e7efa522210cfdc3b3c75e5074718e9069c
+  languageName: node
+  linkType: hard
+
+"reference-spec-reader@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "reference-spec-reader@npm:0.2.0"
+  checksum: 10c0/8d966a0124978edf910aae10fcc56c13c2b66393ce0217819296ff1ff1b626754698c6edc4b2bfe6171acfac827979eb8ef7a884f521794798304be4a523ccd0
   languageName: node
   linkType: hard
 
@@ -32790,6 +32923,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"unzipit@npm:2.0.0":
+  version: 2.0.0
+  resolution: "unzipit@npm:2.0.0"
+  checksum: 10c0/7ee6af8bf1b8a978c08cebbe65d7e0dfab8a0889d20ef89c1b2219389cad255074611f895242f34087cb0cf428719dd8251734d0e8fa4033c618c9ff21d67445
+  languageName: node
+  linkType: hard
+
 "upath@npm:2.0.1":
   version: 2.0.1
   resolution: "upath@npm:2.0.1"
@@ -33914,7 +34054,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"wkt-parser@npm:^1.2.4":
+"wkt-parser@npm:1.5.5":
+  version: 1.5.5
+  resolution: "wkt-parser@npm:1.5.5"
+  checksum: 10c0/4ed71c407a7f13b2ea49441f3e9607eb421fac513c384b71a52a33abbeafeeb67ab32ffce327894a2b276fadaa352f204c21d0a02e34183644fe41d3282fd735
+  languageName: node
+  linkType: hard
+
+"wkt-parser@npm:^1.2.4, wkt-parser@npm:^1.5.5":
   version: 1.5.6
   resolution: "wkt-parser@npm:1.5.6"
   checksum: 10c0/67f938ffb6a1721dbc733823677327ff858a0a1f2f0d224e2ecbdf9e879f27764434dd6e44c89a2e94e3d37cc6e5f9874f878e4a1b1e2fd29a1279be38c322ca
@@ -34378,6 +34525,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"zarrita@npm:^0.7.3":
+  version: 0.7.5
+  resolution: "zarrita@npm:0.7.5"
+  dependencies:
+    "@zarrita/storage": "npm:^0.2.0"
+    numcodecs: "npm:^0.3.2"
+  checksum: 10c0/b2579c24869cc792ab49e77027d867bdde59c245b29c5182b86fc1b738ecccbcf8ec983bdf47f7d77d38d434d71197ea9ddf314ad290aa732d968a61119bb9dd
+  languageName: node
+  linkType: hard
+
 "zod@npm:^3.24.1":
   version: 3.25.76
   resolution: "zod@npm:3.25.76"
@@ -34396,6 +34553,13 @@ __metadata:
   version: 4.6.2
   resolution: "zod@npm:4.6.2"
   checksum: 10c0/0d0dc2dc37c62e8777bb2d691e7fb8a0c80cc57e343df69fa62a57f26e0ac20107b14afda34f3bed98b27e5378eee2bbc7c5d23c203c3602690148a014dec7cd
+  languageName: node
+  linkType: hard
+
+"zod@npm:^4.4.3":
+  version: 4.6.5
+  resolution: "zod@npm:4.6.5"
+  checksum: 10c0/32eb6c5e98becbe045675b2141c3611451c16ba567f9779231d79af41c4d651ca1c22f154aef7e6c6e77b929f23e43f1154ca05b82e119e922353725d6776af5
   languageName: node
   linkType: hard
 

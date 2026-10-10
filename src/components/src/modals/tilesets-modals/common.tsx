@@ -3,6 +3,7 @@
 
 import type {WMSCapabilities} from '@loaders.gl/wms';
 
+import type {ZarrDatasetMetadata} from '@kepler.gl/constants';
 import type {VectorTileMetadata} from '@kepler.gl/table';
 import type {StacTypes} from '@kepler.gl/types';
 
@@ -17,6 +18,7 @@ export type MetaResponse = {
     | VectorTileMetadata
     | StacTypes.CompleteSTACObject
     | WMSCapabilities
+    | ZarrDatasetMetadata
     | Record<string, unknown>
     | null;
   dataset?: DatasetCreationAttributes | null;

@@ -26,6 +26,10 @@ export type LayerBaseConfig = {
   animation: {
     enabled: boolean;
     domain?: [number, number] | null;
+    /** Discrete instants the layer can render, for layers without continuous time. */
+    timeSteps?: number[] | null;
+    startTime?: number | null;
+    duration?: number | null;
   };
 
   // for aggregate layer, aggregatedBins is returned for custom color scale
@@ -318,6 +322,15 @@ export type VisConfigColorRange = VisConfig & {
   defaultValue: ColorRange;
 };
 
+/**
+ * A plain JSON value whose keys are not known until runtime. The layer renders
+ * its own UI for it; the value is saved and restored with the rest of visConfig.
+ */
+export type VisConfigObject = VisConfig & {
+  type: 'object';
+  defaultValue: Record<string, any>;
+};
+
 export type LayerVisConfigTypes =
   | VisConfigBoolean
   | VisConfigNumber
@@ -326,6 +339,7 @@ export type LayerVisConfigTypes =
   | VisConfigColorSelect
   | VisConfigInput
   | VisConfigSelect
+  | VisConfigObject
   | VisConfigObjectSelection;
 
 export type LayerVisConfigSettings = {

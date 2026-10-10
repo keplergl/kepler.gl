@@ -17,7 +17,8 @@ const NON_EXTRACTABLE_DATASET_TYPES = new Set<string>([
   DatasetType.RASTER_TILE,
   DatasetType.WMS_TILE,
   DatasetType.TILE_3D,
-  DatasetType.BITMAP
+  DatasetType.BITMAP,
+  DatasetType.ZARR
 ]);
 
 const VECTOR_TILE_ID_FIELDS = [
