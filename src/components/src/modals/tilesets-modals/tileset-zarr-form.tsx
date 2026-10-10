@@ -127,6 +127,9 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
       setMetadata(null);
       setVariable(undefined);
       setError(null);
+      // A request may still be in flight, and its `finally` skips the reset
+      // once cancelled, so clear the spinner here instead.
+      setLoading(false);
       return;
     }
 

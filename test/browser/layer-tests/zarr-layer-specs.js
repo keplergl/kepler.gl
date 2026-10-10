@@ -7,7 +7,8 @@ import {
   findNearestTimeIndex,
   getZarrMaxZoom,
   getZarrSelection,
-  getZarrSublayerId
+  getZarrSublayerId,
+  getZarrTileByteLength
 } from '@kepler.gl/layers';
 import {DatasetType} from '@kepler.gl/constants';
 
@@ -217,6 +218,33 @@ test('#ZarrLayer -> findNearestTimeIndex', t => {
   t.equal(findNearestTimeIndex(steps, T0 - 10 * DAY), 0, 'should clamp below the domain');
   t.equal(findNearestTimeIndex(steps, T0 + 99 * DAY), 2, 'should clamp above the domain');
   t.equal(findNearestTimeIndex([], T0), 0, 'should fall back to index 0 without steps');
+
+  t.end();
+});
+
+test('#ZarrLayer -> getZarrTileByteLength', t => {
+  // deck caps its tile cache by reported bytes, so a fixed four bytes per pixel
+  // would halve a float64 tile and quadruple an int8 one.
+  t.equal(
+    getZarrTileByteLength(new Float64Array(16), 4, 4),
+    128,
+    'should report the full size of a 64-bit tile'
+  );
+  t.equal(
+    getZarrTileByteLength(new Int8Array(16), 4, 4),
+    16,
+    'should report the smaller size of an 8-bit tile'
+  );
+  t.equal(
+    getZarrTileByteLength(new BigInt64Array(16), 4, 4),
+    128,
+    'should report the full size of a BigInt tile'
+  );
+  t.equal(
+    getZarrTileByteLength([1, 2, 3, 4], 2, 2),
+    16,
+    'should fall back to four bytes per pixel for a plain array'
+  );
 
   t.end();
 });

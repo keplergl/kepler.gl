@@ -70,6 +70,20 @@ type ZarrTileData = {
 };
 
 /**
+ * Bytes a decoded tile occupies, which is what deck's tile cache holds its
+ * memory budget against. Zarr dtypes run from one byte per sample to eight, so
+ * only the typed array's own size is accurate.
+ */
+export function getZarrTileByteLength(
+  values: ArrayLike<number | bigint>,
+  width: number,
+  height: number
+): number {
+  const {byteLength} = values as {byteLength?: number};
+  return typeof byteLength === 'number' ? byteLength : width * height * 4;
+}
+
+/**
  * Registered default for `rescale`, which stands for "no range chosen yet"
  * rather than a deliberate 0-1 ramp. Almost no store holds 0-1 values, so a
  * range read off the data is allowed to replace it.
@@ -624,7 +638,7 @@ export default class ZarrLayer extends Layer {
     if (!this._sampledRange && needsSampling) {
       this._sampledRange = estimateZarrDataRange(values, nodataValue);
     }
-    return {width, height, values, byteLength: width * height * 4};
+    return {width, height, values, byteLength: getZarrTileByteLength(values, width, height)};
   };
 
   private _renderTile = (tile: ZarrTileData) => {

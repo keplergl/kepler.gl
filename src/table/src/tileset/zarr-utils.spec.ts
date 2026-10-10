@@ -17,6 +17,7 @@ import {
   parseOmeMultiscaleLevels,
   getZarrDimensionNames,
   getZarrTimeDomain,
+  axisSpacingFromValues,
   getZarrVariable,
   parseCfTimeUnits,
   parseGdalGeoTransform,
@@ -213,6 +214,30 @@ describe('affineFromCellCenters', () => {
     expect(affineFromCellCenters({first: 0.5, step: 1}, {first: 0.5, step: 1})).toEqual([
       1, 0, 0, 0, 1, 0
     ]);
+  });
+});
+
+describe('axisSpacingFromValues', () => {
+  it('derives the step from an evenly spaced axis', () => {
+    expect(axisSpacingFromValues([10, 20, 30, 40])).toEqual({first: 10, step: 10});
+    expect(axisSpacingFromValues([50, 40, 30])).toEqual({first: 50, step: -10});
+  });
+
+  it('tolerates the drift float32 coordinates accumulate', () => {
+    expect(axisSpacingFromValues([0, 1, 2.1, 2.9, 4.05])).toEqual({first: 0, step: 1});
+  });
+
+  it('rejects an axis that drifts in the middle but lands on the expected end', () => {
+    // A check that only compared the last value would accept this and derive an
+    // affine that places the interior cells wrong.
+    expect(axisSpacingFromValues([0, 1, 3, 3])).toBeNull();
+    expect(axisSpacingFromValues([0, 10, 90, 30, 40])).toBeNull();
+  });
+
+  it('rejects an axis it cannot describe with one step', () => {
+    expect(axisSpacingFromValues([5])).toBeNull();
+    expect(axisSpacingFromValues([5, 5, 5])).toBeNull();
+    expect(axisSpacingFromValues([0, 1, NaN, 3])).toBeNull();
   });
 });
 

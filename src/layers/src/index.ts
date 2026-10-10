@@ -86,6 +86,7 @@ export {
   getZarrSelection,
   getZarrMaxZoom,
   getZarrSublayerId,
+  getZarrTileByteLength,
   zarrVisConfigs
 } from './zarr-layer/zarr-layer';
 export {default as ZarrLayerIcon} from './zarr-layer/zarr-layer-icon';

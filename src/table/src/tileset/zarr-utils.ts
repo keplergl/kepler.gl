@@ -549,6 +549,33 @@ export function affineFromCellCenters(x: AxisSpacing, y: AxisSpacing): number[] 
   return [x.step, 0, x.first - x.step / 2, 0, y.step, y.first - y.step / 2];
 }
 
+/**
+ * Derive a constant step from a cell-center coordinate array, rejecting any grid
+ * the affine would misrepresent. Every coordinate is checked rather than just
+ * the last, because an axis that drifts in the middle yet lands on the expected
+ * endpoint would otherwise yield a silently wrong georeference.
+ */
+export function axisSpacingFromValues(raw: ArrayLike<number | bigint>): AxisSpacing | null {
+  if (raw.length < 2) {
+    return null;
+  }
+  const first = Number(raw[0]);
+  const step = Number(raw[1]) - first;
+  if (!Number.isFinite(first) || !Number.isFinite(step) || step === 0) {
+    return null;
+  }
+  // The tolerance is generous because float32 coordinates accumulate error
+  // across a long axis.
+  const tolerance = Math.abs(step) * 0.5;
+  for (let i = 2; i < raw.length; i++) {
+    const value = Number(raw[i]);
+    if (!Number.isFinite(value) || Math.abs(value - (first + step * i)) > tolerance) {
+      return null;
+    }
+  }
+  return {first, step};
+}
+
 async function readAxisSpacing(
   arr: zarr.Array<zarr.DataType, zarr.Readable>
 ): Promise<AxisSpacing | null> {
@@ -556,20 +583,7 @@ async function readAxisSpacing(
     return null;
   }
   const chunk = await zarr.get(arr, null);
-  const raw = chunk.data as ArrayLike<number | bigint>;
-  const first = Number(raw[0]);
-  const step = Number(raw[1]) - first;
-  if (!Number.isFinite(first) || !Number.isFinite(step) || step === 0) {
-    return null;
-  }
-  // Reject a grid the affine would misrepresent. The tolerance is generous
-  // because float32 coordinates accumulate error across a long axis.
-  const last = Number(raw[raw.length - 1]);
-  const expected = first + step * (raw.length - 1);
-  if (!Number.isFinite(last) || Math.abs(last - expected) > Math.abs(step) * 0.5) {
-    return null;
-  }
-  return {first, step};
+  return axisSpacingFromValues(chunk.data as ArrayLike<number | bigint>);
 }
 
 /**
