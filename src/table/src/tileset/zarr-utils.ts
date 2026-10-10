@@ -910,8 +910,7 @@ async function buildVariableInfo(
     dataRange: readDataRange(arrayAttrs) ?? readDataRange(geoAttrs),
     nodataValue:
       readNumber(arrayAttrs, ['_FillValue', 'missing_value', 'nodata']) ??
-      (typeof fillValue === 'number' && Number.isFinite(fillValue) ? fillValue : undefined),
-    unit: readString(arrayAttrs, ['units', 'unit'])
+      (typeof fillValue === 'number' && Number.isFinite(fillValue) ? fillValue : undefined)
   };
 }
 

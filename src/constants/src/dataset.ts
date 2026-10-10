@@ -300,7 +300,6 @@ export type ZarrVariableInfo = {
   dataRange?: [number, number];
   /** Fill value advertised by the array attrs or zarr metadata. */
   nodataValue?: number;
-  unit?: string;
 };
 
 export type ZarrDatasetMetadata = {
