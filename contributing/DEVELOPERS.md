@@ -23,9 +23,9 @@ Before you can build Kepler.gl, you must install and configure the following dep
 
 - [Git](http://git-scm.com/): The [Github Guide to Installing Git][git-setup] is a good source of information.
 
-- [Node.js ^20.x](http://nodejs.org): We use Node to generate the documentation, run a
+- [Node.js 24.21.0](http://nodejs.org) (see `.nvmrc`): We use Node to generate the documentation, run a
   development web server, run tests, and generate distributable files. Depending on your system,
-  you can install Node either from source or as a pre-packaged bundle.
+  you can install Node either from source or as a pre-packaged bundle. Published packages accept Node >= 20.
 
   We recommend using [nvm](https://github.com/creationix/nvm) (or
   [nvm-windows](https://github.com/coreybutler/nvm-windows))
@@ -131,7 +131,7 @@ Yarn may report that the `gl` package (a dev dependency used for headless WebGL 
 
 **What to do**
 
-- **Prefer the Node version pinned for this repo** (see `.nvmrc`, currently 20.19.3). After `nvm install` and `nvm use` (or Volta, as above), run `yarn install` / `yarn bootstrap` again. A matching prebuild is often available, so the native compile step never runs.
+- **Use the Node version pinned for this repo** (see `.nvmrc`, currently 24.21.0). After `nvm install` and `nvm use` (or Volta, as above), run `yarn install` / `yarn bootstrap` again. `gl@9.0.0-rc.10` has no Node 24 prebuild, so this pin compiles `gl` from source.
 
 - **If you must use a newer Node** and the install compiles from source, ensure `python` is on your `PATH` and points to Python 3, for example on macOS:
 

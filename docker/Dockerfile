@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -34,7 +34,7 @@ RUN --mount=type=cache,id=kepler-yarn,target=/yarn-cache \
 # Build without secrets — tokens are injected at runtime via /config.json or KEPLER_* env
 RUN yarn build
 
-FROM node:20-alpine AS runtime
+FROM node:24-alpine AS runtime
 
 WORKDIR /app
 

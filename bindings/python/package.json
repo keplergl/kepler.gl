@@ -29,6 +29,7 @@
     "apache-arrow": "^21.0.0",
     "assert": "^2.1.0",
     "events": "^3.3.0",
+    "mapbox-gl": "1.13.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.1.0",

@@ -42,7 +42,7 @@ Where tests go:
 - Jest: `*.spec.ts(x)` beside the source in `src/`. Auto-discovered. Use Testing Library for React components; Enzyme is banned by lint.
 - Tape: `*-test.js` under `test/node/` or `test/browser/`. A new file must be imported in the nearest `index.js`, or it silently never runs and the suite still reports green.
 
-Run from the repo root on Node >= 20 (Volta pin 20.19.3, same as Node.js CI).
+Run from the repo root on Node >= 20 (Volta pin 24.21.0, same as Node.js CI).
 
 - Targeted test: the default loop while iterating.
 - `yarn agent:check`: `tsc --noEmit` plus Jest (`--watchAll=false`). Use it when the edit can affect types or several suites.
