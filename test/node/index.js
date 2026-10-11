@@ -18,3 +18,6 @@ import './docker';
 
 // demo site shell
 import './website';
+
+// transitive dependency security pins
+import './dependency-pins-test';
