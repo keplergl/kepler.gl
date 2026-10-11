@@ -7,7 +7,6 @@ import thunk from 'redux-thunk';
 
 import appReducer from './app';
 import demoReducer from '../../../examples/demo-app/src/reducers';
-import analyticsMiddleware from './analytics';
 
 const initialState = {};
 const reducers = {
@@ -17,7 +16,7 @@ const reducers = {
 
 const combinedReducers = combineReducers(reducers);
 
-export const middlewares = [taskMiddleware, thunk, analyticsMiddleware];
+export const middlewares = [taskMiddleware, thunk];
 
 export const enhancers = [applyMiddleware(...middlewares)];
 
