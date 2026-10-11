@@ -7,18 +7,28 @@ import {Field} from '@kepler.gl/types';
 import {DatasetOpsTable} from './types';
 
 const TABULAR_TYPES = new Set<string>([DatasetType.LOCAL, DatasetType.EXTERNALLY_HOSTED, '']);
+// Remote tables are reloaded from their source URL, so a rename or delete would
+// not survive refresh or the next map load.
+const SCHEMA_MUTABLE_TYPES = new Set<string>([DatasetType.LOCAL, '']);
 
-export function isTabularDatasetForOps(
-  dataset?: {
-    type?: string;
-    disableDataOperation?: boolean;
-  } | null
-): boolean {
+type DatasetOpTarget = {
+  type?: string;
+  disableDataOperation?: boolean;
+} | null;
+
+export function isTabularDatasetForOps(dataset?: DatasetOpTarget): boolean {
   if (!dataset || dataset.disableDataOperation) {
     return false;
   }
   const type = dataset.type ?? '';
   return TABULAR_TYPES.has(type);
+}
+
+export function canMutateDatasetSchema(dataset?: DatasetOpTarget): boolean {
+  if (!isTabularDatasetForOps(dataset)) {
+    return false;
+  }
+  return SCHEMA_MUTABLE_TYPES.has(dataset?.type ?? '');
 }
 
 export function findFieldByName(
