@@ -339,6 +339,7 @@ export type LayerVisConfigSettings = {
   radiusRange: VisConfigRange;
   clusterRadius: VisConfigNumber;
   clusterRadiusRange: VisConfigRange;
+  minClusterSize: VisConfigNumber;
   opacity: VisConfigNumber;
   coverage: VisConfigNumber;
   outline: VisConfigBoolean;

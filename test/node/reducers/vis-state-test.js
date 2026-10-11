@@ -27,7 +27,12 @@ import {
 } from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson, remoteDatasetFromUrl} from '@kepler.gl/processors';
-import {Layer, KeplerGlLayers, COLUMN_MODE_TABLE} from '@kepler.gl/layers';
+import {
+  Layer,
+  KeplerGlLayers,
+  COLUMN_MODE_TABLE,
+  createPointCountLabelField
+} from '@kepler.gl/layers';
 import {maybeToDate} from '@kepler.gl/table';
 import {
   createDataContainer,
@@ -1280,6 +1285,59 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
     true,
     'should enable collision filtering on all text labels'
   );
+
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE -> cluster point count is added once', t => {
+  const initialState = StateWFiles.visState;
+  const pointLayer = initialState.layers.find(l => l.type === 'point');
+  const resetState = reducer(
+    initialState,
+    VisStateActions.layerConfigChange(pointLayer, {
+      textLabel: [{...DEFAULT_TEXT_LABEL}]
+    })
+  );
+  const resetPoint = resetState.layers.find(l => l.id === pointLayer.id);
+  const clusterState = reducer(resetState, VisStateActions.layerTypeChange(resetPoint, 'cluster'));
+  const clusterLayer = clusterState.layers.find(l => l.type === 'cluster');
+
+  t.equal(clusterLayer.config.textLabel.length, 1, 'type change keeps one label slot');
+  t.equal(clusterLayer.config.textLabel[0].field, null, 'copied point label has no field');
+
+  const pointCountField = createPointCountLabelField();
+  const selectedState = reducer(
+    clusterState,
+    VisStateActions.layerTextLabelChange(clusterLayer, 'all', 'fields', [pointCountField])
+  );
+  const selectedLayer = selectedState.layers.find(l => l.type === 'cluster');
+  const selected = selectedLayer.config.textLabel;
+
+  t.equal(selected.length, 1, 'picking Point Count adds one label');
+  t.equal(selected[0].field.name, 'pointCount');
+  t.equal(selected[0].field.fieldIdx, -1);
+  t.equal(selected[0].anchor, 'middle');
+  t.equal(selected[0].alignment, 'center');
+  t.equal(selected[0].collisionEnabled, true);
+  t.equal(selected[0].outlineWidth, 1);
+
+  const again = reducer(
+    selectedState,
+    VisStateActions.layerTextLabelChange(selectedLayer, 'all', 'fields', [pointCountField])
+  );
+  t.equal(
+    again.layers.find(l => l.type === 'cluster').config.textLabel.length,
+    1,
+    'picking Point Count again keeps one label'
+  );
+
+  const added = reducer(
+    selectedState,
+    VisStateActions.layerTextLabelChange(selectedLayer, selected.length)
+  );
+  const addedLabels = added.layers.find(l => l.type === 'cluster').config.textLabel;
+  t.equal(addedLabels.length, 2, 'add more label appends a slot');
+  t.equal(addedLabels[1].field, null, 'the extra slot does not clone Point Count');
 
   t.end();
 });

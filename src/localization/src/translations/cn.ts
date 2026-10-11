@@ -149,6 +149,8 @@ export default {
     radiusRange: '半径范围',
     clusterRadius: '聚类半径',
     radiusRangePixels: '半径范围[像素]',
+    minClusterSize: '每个聚类的最少点数',
+    minClusterSizeDescription: '隐藏点数少于该值的聚类，例如设为 2 可移除单点聚类',
     billboard: '公告板模式',
     billboardDescription: '将几何体朝向相机',
     fadeTrail: '渐隐轨迹',

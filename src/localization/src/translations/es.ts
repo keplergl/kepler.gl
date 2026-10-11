@@ -151,6 +151,9 @@ export default {
     radiusRange: 'Rango de radio',
     clusterRadius: 'Radio del cluster en píxeles',
     radiusRangePixels: 'Rango del radio en píxeles',
+    minClusterSize: 'Mínimo de puntos por clúster',
+    minClusterSizeDescription:
+      'Oculta los clústeres con menos puntos que este valor, p. ej. 2 elimina los de un solo punto',
     billboard: 'Modo cartelera',
     billboardDescription: 'Oriente la geometría hacia la cámara',
     fadeTrail: 'Sendero de desvanecimiento',

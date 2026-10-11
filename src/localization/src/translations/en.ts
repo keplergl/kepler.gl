@@ -180,6 +180,9 @@ export default {
     radiusRange: 'Radius Range',
     clusterRadius: 'Cluster Radius in Pixels',
     radiusRangePixels: 'Radius Range in pixels',
+    minClusterSize: 'Min Points per Cluster',
+    minClusterSizeDescription:
+      'Hide clusters that contain fewer points than this, e.g. 2 removes single-point clusters',
     billboard: 'Billboard',
     billboardDescription: 'Orient geometry towards the camera',
     fadeTrail: 'Fade trail',

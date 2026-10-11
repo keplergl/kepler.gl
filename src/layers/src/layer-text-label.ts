@@ -198,3 +198,21 @@ export const getArrowTextVector = (
 
   return new arrow.Vector(input);
 };
+
+/**
+ * deck.gl layer id for one text label. A repeated field name gets the label
+ * index so CollisionTextLayer's -background and -characters sublayers stay unique.
+ */
+export function textLabelDeckLayerId(
+  layerId: string,
+  textLabel: {field?: {name?: string} | null}[],
+  index: number,
+  collisionEnabled: boolean
+): string {
+  const fieldName = textLabel[index]?.field?.name;
+  const duplicateFieldName =
+    Boolean(fieldName) && textLabel.filter(label => label.field?.name === fieldName).length > 1;
+  return `${layerId}-label-${fieldName}${duplicateFieldName ? `-${index}` : ''}${
+    collisionEnabled ? '-collision' : ''
+  }`;
+}

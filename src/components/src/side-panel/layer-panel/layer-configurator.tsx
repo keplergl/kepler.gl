@@ -45,7 +45,8 @@ import {
   Layer,
   LayerBaseConfig,
   VisualChannel,
-  COLUMN_MODE_GEOJSON
+  COLUMN_MODE_GEOJSON,
+  createPointCountLabelField
 } from '@kepler.gl/layers';
 
 import {matchDatasetType, Datasets} from '@kepler.gl/table';
@@ -598,8 +599,19 @@ export default function LayerConfiguratorFactory(
             <VisConfigSlider {...layer.visConfigSettings.clusterRadius} {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider {...layer.visConfigSettings.radiusRange} {...visConfiguratorProps} />
+              <VisConfigSlider
+                {...layer.visConfigSettings.minClusterSize}
+                {...visConfiguratorProps}
+              />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
+
+          <TextLabelPanel
+            id={layer.id}
+            fields={[createPointCountLabelField()]}
+            updateLayerTextLabel={this.props.updateLayerTextLabel}
+            textLabel={layer.config.textLabel}
+          />
         </StyledLayerVisualConfigurator>
       );
     }
@@ -767,6 +779,13 @@ export default function LayerConfiguratorFactory(
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}
+
+          <TextLabelPanel
+            id={layer.id}
+            fields={[createPointCountLabelField()]}
+            updateLayerTextLabel={this.props.updateLayerTextLabel}
+            textLabel={layer.config.textLabel}
+          />
         </StyledLayerVisualConfigurator>
       );
     }

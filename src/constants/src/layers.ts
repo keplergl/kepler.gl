@@ -211,6 +211,18 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     property: 'radiusRange',
     allowCustomValue: true
   },
+  minClusterSize: {
+    type: 'number',
+    label: 'layerVisConfigs.minClusterSize',
+    description: 'layerVisConfigs.minClusterSizeDescription',
+    defaultValue: 1,
+    isRanged: false,
+    range: [1, 100],
+    step: 1,
+    group: PROPERTY_GROUPS.radius,
+    property: 'minClusterSize',
+    allowCustomValue: false
+  },
   opacity: {
     type: 'number',
     defaultValue: DEFAULT_LAYER_OPACITY,
