@@ -110,11 +110,13 @@ const Checkbox: FC<CheckboxProps> = ({
     onBlur: handleBlur
   };
 
+  // The input is nested in its label rather than referenced with `htmlFor`: ids only have to be
+  // unique per page, and two kepler.gl instances showing the same layer render the same ids, so
+  // `htmlFor` would make this label toggle whichever input with that id comes first.
   const labelProps = {
     checked,
     disabled,
-    secondary,
-    htmlFor: id
+    secondary
   };
 
   const LabelElement =
@@ -130,8 +132,8 @@ const Checkbox: FC<CheckboxProps> = ({
       className={classnames('kg-checkbox', className)}
       disabled={disabled}
     >
-      <HiddenInput {...inputProps} />
       <LabelElement className="kg-checkbox__label" {...labelProps}>
+        <HiddenInput {...inputProps} />
         {label}
       </LabelElement>
     </StyledCheckbox>

@@ -75,10 +75,8 @@ const StyledRadio = styled(Checkbox)`
   }
   .kg-checkbox__label:before {
     background: transparent;
-    border-color: ${props => props.theme.effectPanelTextSecondary2};
-  }
-  input:checked + .kg-checkbox__label:before {
-    border-color: ${props => props.theme.activeColor};
+    border-color: ${props =>
+      props.checked ? props.theme.activeColor : props.theme.effectPanelTextSecondary2};
   }
   .kg-checkbox__label:after {
     background-color: ${props => props.theme.activeColor};

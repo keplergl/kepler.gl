@@ -10,3 +10,4 @@ import './histogram-plot-test';
 import './animation-control-test';
 import './column-stats-chart-test';
 import './json-editor-test';
+import './checkbox-test';
