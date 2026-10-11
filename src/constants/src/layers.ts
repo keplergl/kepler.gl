@@ -173,6 +173,14 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     group: PROPERTY_GROUPS.height,
     property: 'fixedHeight'
   },
+  invertHeight: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.invertHeight',
+    description: 'layerVisConfigs.invertHeightDescription',
+    group: PROPERTY_GROUPS.height,
+    property: 'invertHeight'
+  },
   fixedElevation: {
     defaultValue: true,
     type: 'boolean',
