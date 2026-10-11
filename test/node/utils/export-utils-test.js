@@ -45,6 +45,11 @@ test('exportUtils -> ExportHtml includes map info', t => {
     'exported html should restore the map description'
   );
   t.ok(html.includes('info,'), 'exported html should pass info to addDataToMap');
+  t.notOk(html.includes('google-analytics.com'), 'exported html should not load Google Analytics');
+  t.notOk(
+    html.includes('UA-64694404'),
+    'exported html should not contain a Universal Analytics id'
+  );
 
   t.end();
 });
