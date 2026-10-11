@@ -190,12 +190,16 @@ import {
   KeplerTable,
   FilterProps,
   assignGpuChannel,
+  buildDeleteColumnData,
+  buildRenameColumnData,
+  canMutateDatasetSchema,
   copyTableAndUpdate,
   createNewDataEntry,
   pinTableColumns,
   setFilterGpuMode,
   sortDatasetByColumn
 } from '@kepler.gl/table';
+import {remapChartsForDataset} from './column-edit-reconcile';
 import {findFieldsToShow, removeLayerFromZoomOpacity} from './interaction-utils';
 import {
   calculateLayerData,
@@ -4478,7 +4482,8 @@ export function updateDatasetUpdater(
     datasets: newDatasets,
     filters: newFilters,
     layers: newLayers,
-    interactionConfig
+    interactionConfig,
+    charts: remapChartsForDataset(state.charts, dataId, renames, newFieldsByName)
   };
 
   // 6. drop layers that lost their required columns
@@ -4488,6 +4493,54 @@ export function updateDatasetUpdater(
   nextState = updateAllLayerDomainData(nextState, dataId);
 
   return nextState;
+}
+
+/**
+ * Rename a column's stored identity (`field.name`) and every layer, filter,
+ * tooltip, and chart reference that used the old name.
+ */
+export function renameTableColumnUpdater(
+  state: VisState,
+  action: VisStateActions.RenameTableColumnUpdaterAction
+): VisState {
+  const {dataId, fieldName, newName} = action;
+  const dataset = state.datasets[dataId];
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
+    return state;
+  }
+  const payload = buildRenameColumnData(dataset, fieldName, newName);
+  if (!payload) {
+    return state;
+  }
+  return updateDatasetUpdater(state, {
+    dataId,
+    data: payload.data,
+    renames: payload.renames
+  });
+}
+
+/**
+ * Drop a column and the layers, filters, and other references that required it.
+ * The last remaining column is kept.
+ */
+export function deleteTableColumnUpdater(
+  state: VisState,
+  action: VisStateActions.DeleteTableColumnUpdaterAction
+): VisState {
+  const {dataId, fieldName} = action;
+  const dataset = state.datasets[dataId];
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
+    return state;
+  }
+  const payload = buildDeleteColumnData(dataset, fieldName);
+  if (!payload) {
+    return state;
+  }
+  return updateDatasetUpdater(state, {
+    dataId,
+    data: payload.data,
+    renames: payload.renames
+  });
 }
 
 /**
