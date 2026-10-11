@@ -260,6 +260,7 @@ const OptionDropdown = (props: OptionDropdownProps) => {
 
   const onClose = useCallback(() => {
     setShowFormatter(false);
+    setConfirmDelete(false);
     toggleMoreOptions(column);
   }, [column, toggleMoreOptions]);
 

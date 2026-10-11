@@ -30,7 +30,8 @@ export function schemaField(field: Field, name: string): ProtoDataset['data']['f
     ...rest,
     name,
     id: name,
-    displayName: name
+    // A rename replaces the visible label. Other columns keep theirs.
+    displayName: name === field.name ? field.displayName || name : name
   };
 }
 

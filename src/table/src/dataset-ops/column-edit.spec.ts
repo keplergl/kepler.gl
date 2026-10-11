@@ -13,7 +13,7 @@ function makeTable() {
   table.updateSchema({
     fields: [
       {name: 'region', type: ALL_FIELD_TYPES.string, displayName: 'Region'},
-      {name: 'pop', type: ALL_FIELD_TYPES.integer}
+      {name: 'pop', type: ALL_FIELD_TYPES.integer, displayName: 'Population'}
     ],
     rows: [
       ['west', 10],
@@ -29,6 +29,7 @@ describe('column edit payloads', () => {
     expect(payload?.renames).toEqual({region: 'area'});
     expect(payload?.data.fields.map(field => field.name)).toEqual(['area', 'pop']);
     expect(payload?.data.fields[0].displayName).toBe('area');
+    expect(payload?.data.fields[1].displayName).toBe('Population');
     expect(payload?.data.rows).toEqual([
       ['west', 10],
       ['east', 40]
@@ -67,6 +68,7 @@ describe('column edit payloads', () => {
   test('delete drops the column and refuses the last field', () => {
     const payload = buildDeleteColumnData(makeTable(), 'pop');
     expect(payload?.data.fields.map(field => field.name)).toEqual(['region']);
+    expect(payload?.data.fields[0].displayName).toBe('Region');
     expect(payload?.data.rows).toEqual([['west'], ['east']]);
     expect(payload?.renames).toEqual({});
 

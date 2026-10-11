@@ -7,7 +7,11 @@ import DatasetLabel from '../common/dataset-label';
 import DataTableFactory from '../common/data-table';
 import {renderedSize} from '../common/data-table/cell-size';
 import CanvasHack from '../common/data-table/canvas';
-import KeplerTable, {Datasets, isTabularDatasetForOps} from '@kepler.gl/table';
+import KeplerTable, {
+  Datasets,
+  canMutateDatasetSchema,
+  isTabularDatasetForOps
+} from '@kepler.gl/table';
 import {UIStateActions} from '@kepler.gl/actions';
 import {UiState} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -313,7 +317,8 @@ function DataTableModalFactory(
     }
 
     const activeDataset = datasets[dataId];
-    const canEditColumns = isTabularDatasetForOps(activeDataset);
+    const canMutateColumns = canMutateDatasetSchema(activeDataset);
+    const canCreateFilter = isTabularDatasetForOps(activeDataset);
 
     return (
       <StyledModal className="dataset-modal" id="dataset-modal">
@@ -353,13 +358,13 @@ function DataTableModalFactory(
               sortTableColumn={handleSortTableColumn}
               setColumnDisplayFormat={handleSetColumnDisplayFormat}
               renameTableColumn={
-                canEditColumns && renameTableColumn ? handleRenameTableColumn : undefined
+                canMutateColumns && renameTableColumn ? handleRenameTableColumn : undefined
               }
               deleteTableColumn={
-                canEditColumns && deleteTableColumn ? handleDeleteTableColumn : undefined
+                canMutateColumns && deleteTableColumn ? handleDeleteTableColumn : undefined
               }
               createFilterFromColumn={
-                canEditColumns && createFilterFromColumn ? handleCreateFilterFromColumn : undefined
+                canCreateFilter && createFilterFromColumn ? handleCreateFilterFromColumn : undefined
               }
               hasStats={enableColumnStats}
               loadColumnStats={enableColumnStats ? loadColumnStats : undefined}

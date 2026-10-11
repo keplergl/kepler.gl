@@ -192,9 +192,9 @@ import {
   assignGpuChannel,
   buildDeleteColumnData,
   buildRenameColumnData,
+  canMutateDatasetSchema,
   copyTableAndUpdate,
   createNewDataEntry,
-  isTabularDatasetForOps,
   pinTableColumns,
   setFilterGpuMode,
   sortDatasetByColumn
@@ -4518,7 +4518,7 @@ export function renameTableColumnUpdater(
 ): VisState {
   const {dataId, fieldName, newName} = action;
   const dataset = state.datasets[dataId];
-  if (!dataset || !isTabularDatasetForOps(dataset)) {
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
     return state;
   }
   const payload = buildRenameColumnData(dataset, fieldName, newName);
@@ -4542,7 +4542,7 @@ export function deleteTableColumnUpdater(
 ): VisState {
   const {dataId, fieldName} = action;
   const dataset = state.datasets[dataId];
-  if (!dataset || !isTabularDatasetForOps(dataset)) {
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
     return state;
   }
   const payload = buildDeleteColumnData(dataset, fieldName);

@@ -218,4 +218,25 @@ describe('column edits', () => {
     expect(unchanged).toBe(tiled);
     expect(reduceVisState(tiled, VisStateActions.deleteTableColumn('tiles', 'pop'))).toBe(tiled);
   });
+
+  test('externally hosted datasets ignore rename and delete', () => {
+    const remote = new KeplerTable({
+      info: {id: 'remote', label: 'remote', type: 'externally-hosted'},
+      color: [0, 0, 0]
+    });
+    remote.updateSchema({
+      fields: [
+        {name: 'region', type: ALL_FIELD_TYPES.string, displayName: 'Region'},
+        {name: 'pop', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [['west', 1]]
+    });
+    const state: VisState = {...INITIAL_VIS_STATE, datasets: {remote}};
+
+    expect(
+      reduceVisState(state, VisStateActions.renameTableColumn('remote', 'region', 'area'))
+    ).toBe(state);
+    expect(reduceVisState(state, VisStateActions.deleteTableColumn('remote', 'pop'))).toBe(state);
+    expect(state.datasets.remote.fields[0].displayName).toBe('Region');
+  });
 });
