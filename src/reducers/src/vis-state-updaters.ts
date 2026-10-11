@@ -226,14 +226,17 @@ import {
   addGroupByUpdater,
   addJoinUpdater,
   addSpatialJoinUpdater,
+  addSuitabilityUpdater,
   executeGroupBy,
   executeJoin,
   executeSpatialJoin,
+  executeSuitability,
   removeDatasetOpUpdater,
   removeOpsForDatasets,
   setGroupByConfigUpdater,
   setJoinConfigUpdater,
-  setSpatialJoinConfigUpdater
+  setSpatialJoinConfigUpdater,
+  setSuitabilityConfigUpdater
 } from './dataset-ops-updaters';
 import {
   fixEffectOrder,
@@ -249,7 +252,8 @@ import {
   mergeFilterDomain,
   initCustomPaletteByCustomScale,
   collectColumnValues,
-  getColumnStatistics
+  getColumnStatistics,
+  optionalMapText
 } from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
 import {PayloadAction} from '@reduxjs/toolkit';
@@ -387,8 +391,8 @@ export const DEFAULT_EDITOR: Editor = {
 export const INITIAL_VIS_STATE: VisState = {
   // map info
   mapInfo: {
-    title: '',
-    description: ''
+    title: undefined,
+    description: undefined
   },
   // layers
   layers: [],
@@ -406,6 +410,7 @@ export const INITIAL_VIS_STATE: VisState = {
   editingDataset: undefined,
   groupBys: [],
   joins: [],
+  suitabilities: [],
 
   // effects
   effects: [],
@@ -5066,13 +5071,16 @@ export const applyCPUFilterUpdater = (
 export const setMapInfoUpdater = (
   state: VisState,
   action: VisStateActions.SetMapInfoUpdaterAction
-): VisState => ({
-  ...state,
-  mapInfo: {
-    ...state.mapInfo,
-    ...action.info
-  }
-});
+): VisState => {
+  const next = {...state.mapInfo, ...action.info};
+  return {
+    ...state,
+    mapInfo: {
+      title: optionalMapText(next.title),
+      description: optionalMapText(next.description)
+    }
+  };
+};
 /**
  * Helper function to update All layer domain and layer data of state
  */
@@ -6758,12 +6766,22 @@ export function runSpatialJoinUpdater(
   return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
 }
 
+export function runSuitabilityUpdater(
+  state: VisState,
+  action: VisStateActions.RunSuitabilityUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeSuitability(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
 export {
   addGroupByUpdater,
   addJoinUpdater,
   addSpatialJoinUpdater,
+  addSuitabilityUpdater,
   removeDatasetOpUpdater,
   setGroupByConfigUpdater,
   setJoinConfigUpdater,
-  setSpatialJoinConfigUpdater
+  setSpatialJoinConfigUpdater,
+  setSuitabilityConfigUpdater
 };

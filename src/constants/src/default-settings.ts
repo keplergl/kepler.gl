@@ -1367,7 +1367,7 @@ export const MAP_THUMBNAIL_DIMENSION = {
 
 export const MAP_INFO_CHARACTER = {
   title: 100,
-  description: 100
+  description: 1024
 };
 
 // Load data
@@ -1399,7 +1399,8 @@ export const MAP_CONTROLS = keyMirror({
   effect: null,
   annotation: null,
   chart: null,
-  viewportJson: null
+  viewportJson: null,
+  mapInfo: null
 });
 
 export enum MapViewMode {

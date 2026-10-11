@@ -159,6 +159,7 @@ function FilterManagerFactory(
           addGroupBy={visStateActions.addGroupBy}
           addJoin={visStateActions.addJoin}
           addSpatialJoin={visStateActions.addSpatialJoin}
+          addSuitability={visStateActions.addSuitability}
         />
         <FilterList
           filtersByIndex={filtersByIndex}

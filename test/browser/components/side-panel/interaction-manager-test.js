@@ -7,6 +7,7 @@ import sinon from 'sinon';
 
 import {InteractionManagerFactory, appInjector} from '@kepler.gl/components';
 import {defaultInteractionConfig} from '@kepler.gl/reducers';
+import {initApplicationConfig} from '@kepler.gl/utils';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 const InteractionManager = appInjector.get(InteractionManagerFactory);
@@ -258,5 +259,110 @@ test('Components -> InteractionManager legend settings expand independently', t 
   );
   t.ok(wrapper.text().includes('Quakes'), 'lists layers while the feature is disabled');
 
+  t.end();
+});
+
+test('Components -> InteractionManager map info section', t => {
+  const setMapInfo = sinon.spy();
+  const setMapControlVisibility = sinon.spy();
+  const toggleMapControl = sinon.spy();
+
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <InteractionManager
+        interactionConfig={defaultInteractionConfig}
+        datasets={{}}
+        panelMetadata={panelMetadata}
+        mapInfo={{title: undefined, description: undefined}}
+        mapInfoShow={true}
+        mapInfoActive={true}
+        uiStateActions={{setMapControlVisibility, toggleMapControl}}
+        visStateActions={{
+          interactionConfigChange: () => {},
+          setColumnDisplayFormat: () => {},
+          setMapInfo,
+          layerConfigChange: () => {},
+          updateLayerGroup: () => {}
+        }}
+      />
+    </IntlWrapper>
+  );
+
+  t.ok(wrapper.find('.interaction-map-info').hostNodes().length >= 1, 'renders map info section');
+  t.equal(
+    wrapper.find('input#map-info-toggle').at(0).prop('checked'),
+    true,
+    'map info switch starts on'
+  );
+  t.equal(
+    wrapper.find('.interaction-map-info__content').hostNodes().length,
+    0,
+    'name and description stay collapsed until opened'
+  );
+
+  wrapper.find('.interaction-map-info__header').hostNodes().at(0).simulate('click');
+  wrapper.update();
+
+  t.ok(
+    wrapper.find('.interaction-map-info__content').hostNodes().length >= 1,
+    'opening settings shows name and description'
+  );
+  t.equal(wrapper.find('input#interaction-map-name').at(0).prop('value'), '', 'name starts unset');
+  t.equal(
+    wrapper.find('textarea#interaction-map-description').at(0).prop('value'),
+    '',
+    'description starts unset'
+  );
+  t.equal(
+    wrapper.find('textarea#interaction-map-description').at(0).prop('rows'),
+    2,
+    'description is a two-line text area'
+  );
+
+  wrapper
+    .find('input#interaction-map-name')
+    .at(0)
+    .simulate('change', {target: {value: 'Harbor'}});
+  t.deepEqual(setMapInfo.args[0][0], {title: 'Harbor'}, 'editing the name updates map info');
+
+  wrapper.find('input#map-info-toggle').at(0).simulate('change');
+  t.deepEqual(
+    setMapControlVisibility.args[0],
+    ['mapInfo', false],
+    'turning the switch off hides the on-map card'
+  );
+  t.equal(toggleMapControl.callCount, 0, 'hiding the card does not collapse it');
+
+  t.end();
+});
+
+test('Components -> InteractionManager map info section can be disabled', t => {
+  initApplicationConfig({enableMapInfo: false});
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <InteractionManager
+        interactionConfig={defaultInteractionConfig}
+        datasets={{}}
+        panelMetadata={panelMetadata}
+        mapInfo={{title: 'Harbor', description: 'Ferry routes'}}
+        mapInfoShow={true}
+        visStateActions={{
+          interactionConfigChange: () => {},
+          setColumnDisplayFormat: () => {},
+          setMapInfo: () => {},
+          layerConfigChange: () => {},
+          updateLayerGroup: () => {}
+        }}
+      />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    wrapper.find('.interaction-map-info').hostNodes().length,
+    0,
+    'hides the map info section when enableMapInfo is false'
+  );
+
+  initApplicationConfig({enableMapInfo: true});
   t.end();
 });

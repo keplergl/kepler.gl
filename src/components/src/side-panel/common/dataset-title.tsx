@@ -134,6 +134,7 @@ export type DatasetTitleProps = {
   addGroupBy?: ActionHandler<typeof VisStateActions.addGroupBy>;
   addJoin?: ActionHandler<typeof VisStateActions.addJoin>;
   addSpatialJoin?: ActionHandler<typeof VisStateActions.addSpatialJoin>;
+  addSuitability?: ActionHandler<typeof VisStateActions.addSuitability>;
   replaceDataset?: ActionHandler<typeof openReplaceDatasetModal>;
 };
 
@@ -224,6 +225,7 @@ export default function DatasetTitleFactory(
     addGroupBy,
     addJoin,
     addSpatialJoin,
+    addSuitability,
     replaceDataset
   }) => {
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
@@ -298,6 +300,7 @@ export default function DatasetTitleFactory(
               addGroupBy={addGroupBy}
               addJoin={addJoin}
               addSpatialJoin={addSpatialJoin}
+              addSuitability={addSuitability}
               replaceDataset={replaceDataset}
               showDeleteDataset={showDeleteDataset}
               removeDataset={removeDataset}

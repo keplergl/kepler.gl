@@ -252,7 +252,8 @@ export default class GoogleDriveProvider extends Provider {
     const {map, thumbnail} = mapData;
     const title = (map.info && map.info.title) || 'Untitled Map';
     const description = (map.info && map.info.description) || '';
-    const fileName = `${title}.json`;
+    const fileBase = (options.fileName && String(options.fileName).trim()) || title;
+    const fileName = `${fileBase.replace(/\.json$/i, '')}.json`;
     const folderId = await this._ensureAppFolder(token);
 
     const existing = await this._findFileByName(token, folderId, fileName);
@@ -275,7 +276,7 @@ export default class GoogleDriveProvider extends Provider {
     }
 
     if (thumbnail) {
-      const pngName = `${title}.png`;
+      const pngName = `${fileBase.replace(/\.json$/i, '')}.png`;
       const existingPng = await this._findFileByName(token, folderId, pngName);
       if (existingPng) {
         await this._updateBinaryFile(token, existingPng.id, thumbnail, MIME_PNG);

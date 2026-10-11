@@ -113,20 +113,26 @@ const DEFAULT_MAP_LEGEND_CONTROL = {
  * @property mapLocale Default: `{show: true, active: false}`
  * @property mapTheme Default: `{show: true, active: false}`
  * @property viewportJson Default: `{show: true, active: false}`
+ * @property mapInfo Default: `{show: true, active: true}`. `show` hides the on-map name and description.
  * @public
  */
-export const DEFAULT_MAP_CONTROLS: MapControls = (
-  Object.keys(MAP_CONTROLS) as Array<keyof typeof MAP_CONTROLS>
-).reduce(
-  (final, current) => ({
-    ...final,
-    [current]:
-      current === MAP_CONTROLS.mapLegend
-        ? DEFAULT_MAP_LEGEND_CONTROL
-        : DEFAULT_MAP_CONTROLS_FEATURES
-  }),
-  {} as MapControls
-);
+export const DEFAULT_MAP_CONTROLS: MapControls = {
+  ...(Object.keys(MAP_CONTROLS) as Array<keyof typeof MAP_CONTROLS>).reduce(
+    (final, current) => ({
+      ...final,
+      [current]:
+        current === MAP_CONTROLS.mapLegend
+          ? DEFAULT_MAP_LEGEND_CONTROL
+          : DEFAULT_MAP_CONTROLS_FEATURES
+    }),
+    {} as MapControls
+  ),
+  // Open by default so a saved title shows on load. An empty map still hides the card.
+  mapInfo: {
+    ...DEFAULT_MAP_CONTROLS_FEATURES,
+    active: true
+  }
+};
 
 /**
  * Default image export config
@@ -1123,6 +1129,28 @@ export const receiveMapConfigUpdater = (
           show: true,
           ...currentChart,
           active: true,
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+
+  // Honor an explicit collapsed or hidden state. A missing key keeps the default (shown, open).
+  const savedMapInfo = uiState.mapControls?.mapInfo;
+  const savedMapInfoActive = savedMapInfo?.active;
+  const savedMapInfoShow = savedMapInfo?.show;
+  if (typeof savedMapInfoActive === 'boolean' || typeof savedMapInfoShow === 'boolean') {
+    const currentMapInfo = newState.mapControls.mapInfo;
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        mapInfo: {
+          show: true,
+          active: true,
+          ...currentMapInfo,
+          ...(typeof savedMapInfoShow === 'boolean' ? {show: savedMapInfoShow} : {}),
+          ...(typeof savedMapInfoActive === 'boolean' ? {active: savedMapInfoActive} : {}),
           activeMapIndex: 0
         }
       }

@@ -507,6 +507,27 @@ export default {
       median: 'Median',
       countUnique: 'Unique',
       merge: 'Merge'
+    },
+    suitability: 'Suitability Analysis',
+    suitabilityHelp:
+      'Rank rows by a weighted combination of numeric columns. The result is added as a new dataset with a score column. The new layer is colored by that column when possible.',
+    suitabilityWeights: 'Fields & Weights',
+    suitabilityWeightsHelp:
+      'Pick the numeric columns that contribute to the score and how much each one matters. A row scores blank when any selected column is missing a value.',
+    suitabilityStandardization: 'Scoring Options',
+    suitabilityStandardizationHelp:
+      'Standardization puts columns measured on different scales onto a comparable footing before they are combined.',
+    weightStandardization: 'Weight standardization',
+    dataStandardization: 'Data standardization',
+    scoreColumn: 'Score column',
+    weightStandardizationOption: {
+      raw: 'Raw',
+      normalize: 'Normalize'
+    },
+    dataStandardizationOption: {
+      raw: 'Raw',
+      range: 'Range',
+      zScore: 'Z-score'
     }
   },
   datasetInfo: {
@@ -543,6 +564,8 @@ export default {
     dualView: 'Dual',
     swipeView: 'Swipe',
     showLegend: 'Show legend',
+    showMapInfo: 'Show map info',
+    hideMapInfo: 'Minimize map info',
     disable3DMap: 'Disable 3D Map',
     globeMap: 'Globe Map',
     disableGlobeMap: 'Disable Globe Map',
@@ -781,6 +804,8 @@ export default {
     exportMap: {
       formatTitle: 'Map format',
       formatSubtitle: 'Choose the format to export your map to',
+      nameTitle: 'Name',
+      descriptionTitle: 'Description',
       includeApiKeys: 'Include layer API keys',
       includeApiKeysSubtitle:
         'When unchecked, access tokens stored on layers are removed from the exported file.',
@@ -962,6 +987,11 @@ ${'```'}
     copyCoordinate: 'Copy coordinates',
     coordinateCopied: 'Copied',
     geocoder: 'Geocoder',
+    mapInfo: 'Map info',
+    mapInfoHint: 'Name and description are shown in a card on the right side of the map.',
+    mapInfoName: 'Name',
+    mapInfoDescription: 'Description',
+    mapInfoDescriptionHelp: 'Add a link with [label](https://example.com).',
     legend: 'Legend',
     legendHint: 'Choose which layers appear in the map legend. Layers stay on the map.',
     legendEmpty: 'Add a layer to choose what appears in the legend.',

@@ -4,13 +4,17 @@
 import {generateHashId} from '@kepler.gl/common-utils';
 import {
   defaultAggregationsForFields,
+  defaultSuitabilityWeights,
   groupByDataset,
   isTabularDatasetForOps,
   joinDatasets,
   spatialJoinDatasets,
   suggestSpatialGeo,
+  suitabilityDataset,
+  DEFAULT_SUITABILITY_SCORE_FIELD,
   GroupByOp,
-  JoinOp
+  JoinOp,
+  SuitabilityOp
 } from '@kepler.gl/table';
 import {ProtoDataset} from '@kepler.gl/types';
 import {VisStateActions} from '@kepler.gl/actions';
@@ -41,6 +45,10 @@ function defaultSpatialJoinLabel(resultId: string): string {
   return `spatial-join-${resultId}`;
 }
 
+function defaultSuitabilityLabel(): string {
+  return `suitability-${randomTwoDigitSuffix()}`;
+}
+
 export function addGroupByUpdater(
   state: VisState,
   action: VisStateActions.AddGroupByUpdaterAction
@@ -64,7 +72,8 @@ export function addGroupByUpdater(
   return {
     ...state,
     groupBys: [...deactivateOps(state.groupBys), op],
-    joins: deactivateOps(state.joins)
+    joins: deactivateOps(state.joins),
+    suitabilities: deactivateOps(state.suitabilities)
   };
 }
 
@@ -154,7 +163,8 @@ export function addJoinUpdater(
   return {
     ...state,
     joins: [...deactivateOps(state.joins), op],
-    groupBys: deactivateOps(state.groupBys)
+    groupBys: deactivateOps(state.groupBys),
+    suitabilities: deactivateOps(state.suitabilities)
   };
 }
 
@@ -276,6 +286,91 @@ export function executeSpatialJoin(
   }
 }
 
+export function addSuitabilityUpdater(
+  state: VisState,
+  action: VisStateActions.AddSuitabilityUpdaterAction
+): VisState {
+  const dataset = state.datasets[action.dataId];
+  if (!isTabularDatasetForOps(dataset)) {
+    return state;
+  }
+  const op: SuitabilityOp = {
+    id: generateHashId(6),
+    dataId: action.dataId,
+    weights: defaultSuitabilityWeights(dataset.fields),
+    weightStandardization: 'normalize',
+    dataStandardization: 'range',
+    outputFieldName: DEFAULT_SUITABILITY_SCORE_FIELD,
+    resultId: generateHashId(6),
+    resultLabel: defaultSuitabilityLabel(),
+    isConfigActive: true,
+    error: null
+  };
+  return {
+    ...state,
+    suitabilities: [...deactivateOps(state.suitabilities), op],
+    groupBys: deactivateOps(state.groupBys),
+    joins: deactivateOps(state.joins)
+  };
+}
+
+export function setSuitabilityConfigUpdater(
+  state: VisState,
+  action: VisStateActions.SetSuitabilityConfigUpdaterAction
+): VisState {
+  return {
+    ...state,
+    suitabilities: state.suitabilities.map(op =>
+      op.id === action.id ? {...op, ...action.config, error: action.config.error ?? null} : op
+    )
+  };
+}
+
+export function executeSuitability(
+  state: VisState,
+  action: VisStateActions.RunSuitabilityUpdaterAction
+): DerivedDatasetOpResult {
+  const op = state.suitabilities.find(item => item.id === action.id);
+  const dataset = op ? state.datasets[op.dataId] : undefined;
+  if (!op || !dataset || !Object.keys(op.weights).length) {
+    return {
+      state: setSuitabilityConfigUpdater(state, {
+        id: action.id,
+        config: {error: 'Select at least one field to score'}
+      })
+    };
+  }
+
+  try {
+    const proto = suitabilityDataset(dataset, {
+      weights: op.weights,
+      weightStandardization: op.weightStandardization,
+      dataStandardization: op.dataStandardization,
+      outputFieldName: op.outputFieldName,
+      columns: op.columns,
+      label: op.resultLabel,
+      resultId: op.resultId,
+      operationId: op.id
+    });
+    return {
+      state: {
+        ...state,
+        suitabilities: state.suitabilities.map(item =>
+          item.id === op.id ? {...item, isConfigActive: false, error: null} : item
+        )
+      },
+      proto
+    };
+  } catch (error) {
+    return {
+      state: setSuitabilityConfigUpdater(state, {
+        id: action.id,
+        config: {error: error instanceof Error ? error.message : String(error)}
+      })
+    };
+  }
+}
+
 export function removeDatasetOpUpdater(
   state: VisState,
   action: VisStateActions.RemoveDatasetOpUpdaterAction
@@ -283,7 +378,8 @@ export function removeDatasetOpUpdater(
   return {
     ...state,
     groupBys: state.groupBys.filter(op => op.id !== action.id),
-    joins: state.joins.filter(op => op.id !== action.id)
+    joins: state.joins.filter(op => op.id !== action.id),
+    suitabilities: state.suitabilities.filter(op => op.id !== action.id)
   };
 }
 
@@ -297,6 +393,7 @@ export function removeOpsForDatasets(state: VisState, dataIds: string[]): VisSta
         !ids.has(op.leftDataId) &&
         !(op.rightDataId && ids.has(op.rightDataId)) &&
         !ids.has(op.resultId)
-    )
+    ),
+    suitabilities: state.suitabilities.filter(op => !ids.has(op.dataId) && !ids.has(op.resultId))
   };
 }
