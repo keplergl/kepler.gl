@@ -4,6 +4,7 @@
 import React, {useCallback, useState} from 'react';
 import {useIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {DatasetType} from '@kepler.gl/constants';
 import {getApplicationConfig} from '@kepler.gl/utils';
 import {isTabularDatasetForOps} from '@kepler.gl/table';
 import {
@@ -14,6 +15,7 @@ import {
 } from '@kepler.gl/actions';
 
 import {
+  Clock,
   Grouping,
   Join,
   Overflow,
@@ -45,6 +47,8 @@ export type DatasetOpsMenuProps = {
   replaceDataset?: ActionHandler<typeof openReplaceDatasetModal>;
   showDeleteDataset?: boolean;
   removeDataset?: ActionHandler<typeof openDeleteModal>;
+  onToggleRefreshSettings?: () => void;
+  refreshSettingsOpen?: boolean;
 };
 
 export function DatasetOpsMenu({
@@ -56,7 +60,9 @@ export function DatasetOpsMenu({
   addSuitability,
   replaceDataset,
   showDeleteDataset,
-  removeDataset
+  removeDataset,
+  onToggleRefreshSettings,
+  refreshSettingsOpen
 }: DatasetOpsMenuProps) {
   const intl = useIntl();
   const [open, setOpen] = useState(false);
@@ -67,6 +73,8 @@ export function DatasetOpsMenu({
   const showOps =
     opsEnabled && tabular && Boolean(addGroupBy || addJoin || addSpatialJoin || addSuitability);
   const showRemove = Boolean(showDeleteDataset && removeDataset);
+  const showRefresh =
+    dataset.type === DatasetType.EXTERNALLY_HOSTED && Boolean(onToggleRefreshSettings);
   const tooltipId = `dataset-ops-${datasetId}`;
   const tooltipLabel = intl.formatMessage({id: 'datasetTitle.moreSettings'});
 
@@ -78,36 +86,24 @@ export function DatasetOpsMenu({
     [datasetId]
   );
 
-  if (!showOps && !showReplace && !showRemove) {
+  if (!showOps && !showReplace && !showRemove && !showRefresh) {
     return null;
   }
 
-  if (!opsEnabled && showRemove) {
-    const removeTooltipId = `remove-dataset-${datasetId}`;
-    const removeLabel = intl.formatMessage({id: 'datasetTitle.removeDataset'});
-    return (
-      <ContextMenuToggle
-        className="dataset-action dataset-ops-menu__remove"
-        data-tip
-        data-for={removeTooltipId}
-        role="button"
-        aria-label={removeLabel}
-        onClick={e => {
-          e.stopPropagation();
-          removeDataset?.(datasetId);
-        }}
-      >
-        <Trash height="16px" />
-        <Tooltip id={removeTooltipId} effect="solid">
-          <span>
-            <FormattedMessage id="datasetTitle.removeDataset" />
-          </span>
-        </Tooltip>
-      </ContextMenuToggle>
-    );
-  }
-
   const opItems: ContextMenuAction[] = [];
+  if (showRefresh && onToggleRefreshSettings) {
+    opItems.push({
+      className: 'dataset-ops-menu__refresh-settings',
+      labelId: 'datasetTitle.refreshSettings',
+      Icon: Clock,
+      iconHeight: '16px',
+      active: refreshSettingsOpen,
+      onClick: () => {
+        onToggleRefreshSettings();
+        setOpen(false);
+      }
+    });
+  }
   if (showReplace && replaceDataset) {
     opItems.push({
       className: 'dataset-ops-menu__replace',
