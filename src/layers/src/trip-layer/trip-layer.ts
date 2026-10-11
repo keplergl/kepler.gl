@@ -163,7 +163,9 @@ export const tripVisConfigs: {
     label: 'Stroke Width',
     isRanged: false,
     range: [0, 100],
-    step: 0.1,
+    step: 0.01,
+    focusRange: [0, 1],
+    focusWeight: 0.2,
     group: 'stroke',
     property: 'thickness'
   },

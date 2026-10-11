@@ -2,6 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import GeoJsonLayer, {getTextLabelPosition} from './geojson-layer';
+import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
+import {valueToPosition} from '@kepler.gl/utils';
 
 describe('GeoJsonLayer default deck parameters', () => {
   const gpuFilter = null as any;
@@ -30,6 +32,28 @@ describe('GeoJsonLayer default deck parameters', () => {
     expect(propsFor(layer, {dragRotate: false})).toMatchObject({
       depthTest: true,
       depthMask: true
+    });
+  });
+
+  test('stroke width gives 0–1 the first 20% of the slider at 0.01 steps', () => {
+    const thickness = LAYER_VIS_CONFIGS.thickness;
+    const scale = {focusRange: [0, 1] as [number, number], focusWeight: 0.2};
+    expect(thickness.step).toBe(0.01);
+    expect(thickness.range).toEqual([0, 100]);
+    expect(thickness.focusRange).toEqual(scale.focusRange);
+    expect(thickness.focusWeight).toBe(scale.focusWeight);
+
+    const [min, max] = thickness.range;
+    expect(valueToPosition(0, min, max, scale)).toBe(0);
+    expect(valueToPosition(1, min, max, scale)).toBeCloseTo(0.2);
+    expect(valueToPosition(0.5, min, max, scale)).toBeCloseTo(0.1);
+
+    const layer = new GeoJsonLayer({id: 'geojson_stroke'});
+    expect(layer.visConfigSettings.thickness).toMatchObject({
+      step: 0.01,
+      focusRange: [0, 1],
+      focusWeight: 0.2,
+      defaultValue: 0.5
     });
   });
 

@@ -98,9 +98,7 @@ export const geojsonVisConfigs: {
   },
   thickness: {
     ...LAYER_VIS_CONFIGS.thickness,
-    defaultValue: 0.5,
-    focusRange: [0, 1],
-    focusWeight: 0.3
+    defaultValue: 0.5
   },
   strokeColor: 'strokeColor',
   colorRange: 'colorRange',
