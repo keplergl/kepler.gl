@@ -199,11 +199,7 @@ import {
   setFilterGpuMode,
   sortDatasetByColumn
 } from '@kepler.gl/table';
-import {
-  remapChartsForDataset,
-  remapGroupBysForDataset,
-  remapJoinsForDataset
-} from './column-edit-reconcile';
+import {remapChartsForDataset} from './column-edit-reconcile';
 import {findFieldsToShow, removeLayerFromZoomOpacity} from './interaction-utils';
 import {
   calculateLayerData,
@@ -4386,7 +4382,6 @@ export function updateDatasetUpdater(
     .filter(name => newTable.getColumnFieldIdx(name) > -1);
 
   const newFieldsByName = new Set(newTable.fields.map(f => f.name));
-  const oldFieldNames = new Set(existing.fields.map(f => f.name));
   const newDatasets = {...state.datasets, [dataId]: newTable};
 
   // 2. reconcile filters
@@ -4488,15 +4483,7 @@ export function updateDatasetUpdater(
     filters: newFilters,
     layers: newLayers,
     interactionConfig,
-    charts: remapChartsForDataset(state.charts, dataId, renames, newFieldsByName),
-    groupBys: remapGroupBysForDataset(
-      state.groupBys,
-      dataId,
-      renames,
-      newFieldsByName,
-      oldFieldNames
-    ),
-    joins: remapJoinsForDataset(state.joins, dataId, renames, newFieldsByName, oldFieldNames)
+    charts: remapChartsForDataset(state.charts, dataId, renames, newFieldsByName)
   };
 
   // 6. drop layers that lost their required columns
@@ -4510,7 +4497,7 @@ export function updateDatasetUpdater(
 
 /**
  * Rename a column's stored identity (`field.name`) and every layer, filter,
- * tooltip, chart, and dataset-op reference that used the old name.
+ * tooltip, and chart reference that used the old name.
  */
 export function renameTableColumnUpdater(
   state: VisState,

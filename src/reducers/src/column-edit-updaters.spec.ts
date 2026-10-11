@@ -69,22 +69,6 @@ function withCities(): VisState {
     state,
     VisStateActions.createOrUpdateFilter(undefined, 'cities', 'region')
   );
-  state = reduceVisState(state, VisStateActions.addGroupBy('cities'));
-  state = reduceVisState(
-    state,
-    VisStateActions.setGroupByConfig(state.groupBys[0].id, {
-      fieldName: 'region',
-      aggregations: {pop: 'sum'}
-    })
-  );
-  state = reduceVisState(state, VisStateActions.addJoin('cities'));
-  state = reduceVisState(
-    state,
-    VisStateActions.setJoinConfig(state.joins[0].id, {
-      leftField: 'region',
-      leftColumns: ['region', 'pop']
-    })
-  );
   state = reduceVisState(
     state,
     VisStateActions.addChart({
@@ -134,10 +118,6 @@ describe('column edits', () => {
     expect(layer.config.colorField?.name).toBe('area');
     expect(layer.config.textLabel[0].field?.name).toBe('area');
     expect(state.filters[0].name).toEqual(['area']);
-    expect(state.groupBys[0].fieldName).toBe('area');
-    expect(state.groupBys[0].aggregations).toEqual({pop: 'sum'});
-    expect(state.joins[0].leftField).toBe('area');
-    expect(state.joins[0].leftColumns).toEqual(['area', 'pop']);
     expect(state.charts[0].xAxis?.field?.name).toBe('area');
     expect(state.charts[0].yAxis?.field?.name).toBe('pop');
     expect(state.charts[0].crossFilter?.fieldNames).toEqual({xAxis: 'area'});
@@ -158,8 +138,6 @@ describe('column edits', () => {
     expect(savedVisState.layers?.[0].config.textLabel?.[0].field?.name).toBe('area');
     expect(JSON.stringify(savedVisState.filters)).toContain('area');
     expect(JSON.stringify(savedVisState.filters)).not.toContain('region');
-    expect(savedVisState.groupBys?.[0].fieldName).toBe('area');
-    expect(savedVisState.joins?.[0].leftField).toBe('area');
     expect(savedVisState.charts?.[0].xAxis?.field?.name).toBe('area');
   });
 
@@ -170,9 +148,7 @@ describe('column edits', () => {
     expect(state.datasets.cities.fields.map(field => field.name)).toEqual(['lat', 'lng', 'region']);
     expect(state.layers).toHaveLength(1);
     expect(state.filters).toHaveLength(1);
-    expect(state.groupBys[0].aggregations).toEqual({});
     expect(state.charts[0].yAxis?.field).toBeNull();
-    expect(state.joins[0].leftColumns).toEqual(['region']);
 
     state = reduceVisState(state, VisStateActions.deleteTableColumn('cities', 'lat'));
     expect(state.layers).toHaveLength(0);
