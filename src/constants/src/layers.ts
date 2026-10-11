@@ -100,7 +100,10 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     label: 'layerVisConfigs.strokeWidth',
     isRanged: false,
     range: [0, 100],
-    step: 0.1,
+    step: 0.01,
+    // 0–1 is the useful range for thin strokes; give it the first 20% of the track.
+    focusRange: [0, 1],
+    focusWeight: 0.2,
     group: PROPERTY_GROUPS.stroke,
     property: 'thickness',
     allowCustomValue: true
