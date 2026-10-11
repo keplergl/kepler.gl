@@ -280,7 +280,8 @@ export function histogramFromDomain(
 export function getTimeBins(
   filter: TimeRangeFilter,
   datasets: Datasets,
-  interval: PlotType['interval']
+  interval: PlotType['interval'],
+  plotBaseIndexByDataId?: Record<string, number[]>
 ): TimeBins {
   let bins = filter.timeBins || {};
 
@@ -292,7 +293,12 @@ export function getTimeBins(
     const dataset = datasets[dataId];
 
     // do not apply current filter
-    const indexes = runGpuFilterForPlot(dataset, filter);
+    const indexes = runGpuFilterForPlot(
+      dataset,
+      filter,
+      undefined,
+      plotBaseIndexByDataId?.[dataId]
+    );
 
     bins = {
       ...bins,
@@ -359,7 +365,8 @@ export function getBinThresholds(interval: string, domain: number[]): number[] {
 export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
   dataset: K,
   filter?: Filter,
-  skipFieldNames?: string[]
+  skipFieldNames?: string[],
+  baseIndex?: number[]
 ): number[] {
   const skipIndexes = getSkipIndexes(dataset, filter, skipFieldNames);
 
@@ -368,8 +375,14 @@ export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
     filteredIndex,
     filteredIndexByLayer
   } = dataset;
-  // Polygon filters are per-layer; plots use the union of targeted layer indices
-  const plotFilteredIndex = mergePolygonLayerIndexes(filteredIndex, filteredIndexByLayer);
+  // An explicit base index already drops this CPU filter. Polygon indexes were
+  // built from that filtered set, so merging them would hide the selection the
+  // histogram is meant to show.
+  const sourceIndex = baseIndex ?? filteredIndex;
+  const plotFilteredIndex = mergePolygonLayerIndexes(
+    sourceIndex,
+    baseIndex ? {} : filteredIndexByLayer
+  );
   const getFilterValue = filterValueAccessor(dataset.dataContainer)();
 
   const allChannels = Object.keys(filterValueUpdateTriggers)
@@ -1003,7 +1016,8 @@ type MinVisStateForAnimationWindow = {
 
 export function adjustValueToAnimationWindow<S extends MinVisStateForAnimationWindow>(
   state: S,
-  filter: TimeRangeFilter
+  filter: TimeRangeFilter,
+  plotBaseIndexByDataId?: Record<string, number[]>
 ) {
   const {
     plotType,
@@ -1012,7 +1026,7 @@ export function adjustValueToAnimationWindow<S extends MinVisStateForAnimationWi
   } = filter;
 
   const interval = plotType.interval || getInitialInterval(filter, state.datasets);
-  const bins = getTimeBins(filter, state.datasets, interval);
+  const bins = getTimeBins(filter, state.datasets, interval, plotBaseIndexByDataId);
   const datasetBins = bins && Object.keys(bins).length && Object.values(bins)[0][interval];
   const thresholds = (datasetBins || []).map(b => b.x0);
 
@@ -1084,7 +1098,8 @@ export function updateTimeFilterPlotType(
   filter: TimeRangeFilter,
   plotType: TimeRangeFilter['plotType'],
   datasets: Datasets,
-  _dataId?: string
+  _dataId?: string,
+  plotBaseIndexByDataId?: Record<string, number[]>
 ): TimeRangeFilter {
   let nextFilter = filter;
   let nextPlotType = plotType;
@@ -1103,7 +1118,7 @@ export function updateTimeFilterPlotType(
     plotType: nextPlotType
   };
 
-  const bins = getTimeBins(nextFilter, datasets, nextPlotType.interval);
+  const bins = getTimeBins(nextFilter, datasets, nextPlotType.interval, plotBaseIndexByDataId);
 
   nextFilter = {
     ...nextFilter,
@@ -1123,7 +1138,12 @@ export function updateTimeFilterPlotType(
   return nextFilter;
 }
 
-export function getRangeFilterBins(filter, datasets, numBins) {
+export function getRangeFilterBins(
+  filter,
+  datasets,
+  numBins,
+  plotBaseIndexByDataId?: Record<string, number[]>
+) {
   const {domain} = filter;
   if (!filter.dataId) return null;
 
@@ -1138,7 +1158,12 @@ export function getRangeFilterBins(filter, datasets, numBins) {
       const dataset = datasets[dataId];
       const field = dataset?.getColumnField(fieldName);
       if (dataset && field) {
-        const indexes = runGpuFilterForPlot(dataset, filter);
+        const indexes = runGpuFilterForPlot(
+          dataset,
+          filter,
+          undefined,
+          plotBaseIndexByDataId?.[dataId]
+        );
         const valueAccessor = index => field.valueAccessor({index});
         acc[dataId] = histogramFromDomain(domain, indexes, numBins, valueAccessor);
       }
@@ -1151,7 +1176,8 @@ export function updateRangeFilterPlotType(
   filter: RangeFilter,
   plotType: RangeFilter['plotType'],
   datasets: Datasets,
-  _dataId?: string
+  _dataId?: string,
+  plotBaseIndexByDataId?: Record<string, number[]>
 ): RangeFilter {
   const nextFilter = {
     ...filter,
@@ -1172,7 +1198,7 @@ export function updateRangeFilterPlotType(
   return {
     ...filter,
     plotType,
-    bins: getRangeFilterBins(nextFilter, datasets, BINS)
+    bins: getRangeFilterBins(nextFilter, datasets, BINS, plotBaseIndexByDataId)
   };
 }
 

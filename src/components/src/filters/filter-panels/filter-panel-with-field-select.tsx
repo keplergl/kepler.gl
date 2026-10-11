@@ -10,6 +10,7 @@ import FieldSelectorFactory from '../../common/field-selector';
 import {getSupportedFilterFields} from './new-filter-panel';
 import {FilterPanelWithFieldSelectComponent} from './types';
 import {KeplerTable} from '@kepler.gl/table';
+import FilterInvertToggle from '../filter-invert-toggle';
 
 FieldPanelWithFieldSelectFactory.deps = [
   FilterPanelHeaderFactory,
@@ -85,6 +86,7 @@ function FieldPanelWithFieldSelectFactory(
                 onSelect={onSourceDataSelector}
               />
             )}
+            <FilterInvertToggle filter={filter} idx={idx} setFilter={setFilter} />
             {children}
           </StyledFilterContent>
         </>

@@ -27,6 +27,8 @@ export type SavedFilter = {
   layerId: Filter['layerId'];
   syncedWithLayerTimeline: Filter['syncedWithLayerTimeline'];
   syncTimelineMode: Filter['syncTimelineMode'];
+  /** Hide rows that match the filter instead of keeping them. */
+  inverted?: boolean;
 };
 export type MinSavedFilter = RequireFrom<SavedFilter, 'dataId' | 'id' | 'name' | 'type' | 'value'>;
 export type ParsedFilter = SavedFilter | MinSavedFilter;

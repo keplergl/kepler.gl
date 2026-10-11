@@ -2628,6 +2628,39 @@ test('#visStateReducer -> SET_FILTER.name', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_FILTER.inverted', t => {
+  const oldState = CloneDeep(StateWFilters.visState);
+  const dataId = testGeoJsonDataId;
+  const allCount = oldState.datasets[dataId].dataContainer.numRows();
+  const keptIn = oldState.datasets[dataId].filteredIndex.length;
+
+  t.ok(keptIn > 0 && keptIn < allCount, 'fixture keeps a subset of rows');
+
+  let next = reducer(oldState, VisStateActions.setFilter(1, 'inverted', true));
+  let filter = next.filters[1];
+  t.equal(filter.inverted, true, 'stores filter out');
+  t.equal(filter.type, 'multiSelect', 'category filter stays a multi select');
+  t.equal(
+    next.datasets[dataId].filteredIndex.length + keptIn,
+    allCount,
+    'filter out keeps the rows filter in would hide'
+  );
+
+  next = reducer(next, VisStateActions.setFilter(1, 'name', 'ZIP_CODE', 0));
+  filter = next.filters[1];
+  t.equal(filter.type, 'range', 'numeric field becomes a range filter');
+  t.equal(filter.inverted, true, 'filter out survives a field change');
+  t.equal(filter.gpu, false, 'an inverted range filter does not use the GPU');
+
+  next = reducer(next, VisStateActions.setFilter(1, 'inverted', false));
+  filter = next.filters[1];
+  t.equal(filter.inverted, false, 'filter in is the default again');
+  t.equal(filter.gpu, true, 'range filters return to the GPU');
+  t.deepEqual(filter.gpuChannel, [0], 'a GPU channel is assigned again');
+
+  t.end();
+});
+
 test('#visStateReducer -> SET_FILTER.dataId', t => {
   const oldState = CloneDeep(StateWFilters.visState);
   const oldFilter = {...oldState.filters[1]};

@@ -22,7 +22,9 @@ import {
   createDataContainer,
   isTimeIntervalFilter,
   timeWindowOverlapsInterval,
-  applyTimeFilterEndFieldName
+  applyTimeFilterEndFieldName,
+  disableGpuIfInverted,
+  getPlotBaseIndexByDataId
 } from '@kepler.gl/utils';
 
 import {FILTER_TYPES} from '@kepler.gl/constants';
@@ -1057,6 +1059,142 @@ test('filterUtils -> applyTimeFilterEndFieldName', t => {
   const {filter: cleared} = applyTimeFilterEndFieldName(withEnd, {ds: dataset}, 'ds', null, 0);
   t.notOk(cleared.endName, 'clearing end field should remove endName');
   t.deepEqual(cleared.domain, [0, 10], 'domain should shrink back to the start field');
+
+  t.end();
+});
+
+test('filterUtils -> getFilterFunction inverted', t => {
+  const field = {valueAccessor: d => d.value};
+  const range = {type: FILTER_TYPES.range, value: [2, 4], enabled: true};
+  const keep = getFilterFunction(field, 'ds', range, [], null);
+  const drop = getFilterFunction(field, 'ds', {...range, inverted: true}, [], null);
+
+  t.equal(keep({value: 3}), true, 'keeps values inside the range');
+  t.equal(keep({value: 5}), false, 'drops values outside the range');
+  t.equal(drop({value: 3}), false, 'filter out hides values inside the range');
+  t.equal(drop({value: 5}), true, 'filter out keeps values outside the range');
+
+  const disabled = getFilterFunction(
+    field,
+    'ds',
+    {...range, inverted: true, enabled: false},
+    [],
+    null
+  );
+  t.equal(disabled({value: 5}), true, 'a disabled filter still keeps every row');
+
+  const multi = {type: FILTER_TYPES.multiSelect, value: ['a'], enabled: true};
+  const exclude = getFilterFunction(field, 'ds', {...multi, inverted: true}, [], null);
+  t.equal(exclude({value: 'a'}), false, 'filter out hides a selected category');
+  t.equal(exclude({value: 'b'}), true, 'filter out keeps an unselected category');
+
+  const timeField = {
+    valueAccessor: () => null,
+    format: '',
+    filterProps: {mappedValue: [0, 10, 20]}
+  };
+  const time = {
+    type: FILTER_TYPES.timeRange,
+    dataId: ['ds'],
+    value: [12, 18],
+    enabled: true,
+    inverted: true,
+    endName: ['end'],
+    endMappedValue: [[15, 15, 40]]
+  };
+  const timeOut = getFilterFunction(timeField, 'ds', time, [], null);
+  t.equal(timeOut({index: 1}), false, 'filter out hides an interval that overlaps the window');
+  t.equal(timeOut({index: 2}), true, 'filter out keeps an interval outside the window');
+
+  t.end();
+});
+
+test('filterUtils -> disableGpuIfInverted', t => {
+  const inverted = disableGpuIfInverted({
+    inverted: true,
+    gpu: true,
+    gpuChannel: [0],
+    gpuEndChannel: [1],
+    type: FILTER_TYPES.range
+  });
+  t.equal(inverted.gpu, false, 'inverted range filters leave the GPU');
+  t.equal(inverted.gpuChannel, undefined, 'should release the GPU channel');
+  t.equal(inverted.gpuEndChannel, undefined, 'should release the end channel');
+
+  const kept = disableGpuIfInverted({inverted: false, gpu: true, gpuChannel: [0]});
+  t.equal(kept.gpu, true, 'filter in still uses the GPU');
+  t.deepEqual(kept.gpuChannel, [0], 'filter in keeps its channel');
+
+  t.end();
+});
+
+test('filterUtils -> getPlotBaseIndexByDataId excludes the plotted filter', t => {
+  const values = [1, 5, 9];
+  const dataContainer = createDataContainer(values.map(v => [v]));
+  const field = {valueAccessor: d => dataContainer.valueAt(d.index, 0)};
+  const inverted = {
+    id: 'self',
+    type: FILTER_TYPES.range,
+    dataId: ['ds'],
+    fieldIdx: [0],
+    value: [4, 6],
+    inverted: true,
+    enabled: true
+  };
+  const other = {
+    id: 'other',
+    type: FILTER_TYPES.range,
+    dataId: ['ds'],
+    fieldIdx: [0],
+    value: [0, 8],
+    enabled: true
+  };
+  const dataset = {
+    id: 'ds',
+    fields: [field],
+    dataContainer,
+    allIndexes: [0, 1, 2],
+    filterRecord: {
+      cpu: [inverted, other],
+      gpu: [],
+      dynamicDomain: [],
+      fixedDomain: []
+    }
+  };
+
+  t.deepEqual(
+    getPlotBaseIndexByDataId({ds: dataset}, inverted).ds,
+    [0, 1],
+    'histogram index keeps the other filter and ignores the inverted filter itself'
+  );
+  t.equal(
+    getPlotBaseIndexByDataId({ds: dataset}, {id: 'gpu-only', dataId: ['ds']}),
+    undefined,
+    'GPU filters are already absent from the CPU index'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> diffFilters notices inverted', t => {
+  const filterRecord = {
+    dynamicDomain: [],
+    fixedDomain: [],
+    cpu: [{id: 'aa', name: 'col', value: ['a'], inverted: true}],
+    gpu: []
+  };
+  const oldFilterRecord = {
+    dynamicDomain: [],
+    fixedDomain: [],
+    cpu: [{id: 'aa', name: 'col', value: ['a'], inverted: false}],
+    gpu: []
+  };
+
+  t.deepEqual(
+    diffFilters(filterRecord, oldFilterRecord).cpu,
+    {aa: 'inverted_changed'},
+    'toggling filter out should recompute CPU filters'
+  );
 
   t.end();
 });

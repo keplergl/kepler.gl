@@ -69,6 +69,9 @@ import {
   combineSplitMapsByIndex,
   computeSplitMapLayers,
   adjustValueToFilterDomain,
+  disableGpuIfInverted,
+  filterTypeUsesGpu,
+  getPlotBaseIndexByDataId,
   errorNotification,
   successNotification,
   editorFeaturesToFeatureCollection,
@@ -1406,7 +1409,11 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
     filter.type === FILTER_TYPES.timeRange &&
     (previousWindow === ANIMATION_WINDOW.interval || animationWindow === ANIMATION_WINDOW.interval)
   ) {
-    const adjusted = adjustValueToAnimationWindow(state, nextFilter as TimeRangeFilter);
+    const adjusted = adjustValueToAnimationWindow(
+      state,
+      nextFilter as TimeRangeFilter,
+      getPlotBaseIndexByDataId(state.datasets, nextFilter)
+    );
     if (Array.isArray(adjusted.value) && adjusted.value.every(v => Number.isFinite(v))) {
       nextFilter = adjusted;
     }
@@ -1661,6 +1668,24 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
         filter = removeFilterPlot(filter, datasetId);
         datasetIdsToFilter = updatedFilter.dataId;
       }
+      break;
+    }
+
+    case 'inverted': {
+      filter = {
+        ...filter,
+        inverted: Boolean(value)
+      };
+      if (filter.inverted) {
+        // GPU range tests can only keep values inside the window.
+        filter = disableGpuIfInverted(filter);
+      } else if (filterTypeUsesGpu(filter.type)) {
+        filter = assignGpuChannel(
+          setFilterGpuMode({...filter, gpu: true}, state.filters),
+          state.filters
+        );
+      }
+      datasetIdsToFilter = [...filter.dataId];
       break;
     }
 
@@ -6380,8 +6405,15 @@ function adjustTimeFilterInterval(state, filter) {
   // adjust filter
   const timeFormat = getDefaultTimeFormat(interval);
   const updatedPlotType = {...filter.plotType, interval, timeFormat};
-  const newFilter = updateTimeFilterPlotType(filter, updatedPlotType, state.datasets);
-  return adjustValueToAnimationWindow(state, newFilter);
+  const plotBaseIndexByDataId = getPlotBaseIndexByDataId(state.datasets, filter);
+  const newFilter = updateTimeFilterPlotType(
+    filter,
+    updatedPlotType,
+    state.datasets,
+    undefined,
+    plotBaseIndexByDataId
+  );
+  return adjustValueToAnimationWindow(state, newFilter, plotBaseIndexByDataId);
 }
 
 // Find dataId from a saved visState property:

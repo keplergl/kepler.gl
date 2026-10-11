@@ -174,9 +174,10 @@ function computePolygonFilteredIndexByLayer(
     }
 
     // Build polygon filter functors for this layer
-    const filterFunctors = applicableFilters.map(filter =>
-      getPolygonFilterFunctor(layer, filter, dataContainer)
-    );
+    const filterFunctors = applicableFilters.map(filter => {
+      const matches = getPolygonFilterFunctor(layer, filter, dataContainer);
+      return filter.inverted ? (data: {index: number}) => !matches(data) : matches;
+    });
 
     // Filter the base filtered index: a row passes if it passes ALL polygon filters
     // (each polygon filter already uses this layer's position accessor)
