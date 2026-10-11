@@ -18,7 +18,7 @@ const globeModeUniforms = {
   }
 };
 
-const iconFragmentShader = /* glsl */ `\
+export const iconFragmentShader = /* glsl */ `\
 #version 300 es
 #define SHADER_NAME scatterplot-icon-layer-fragment-shader
 precision highp float;

@@ -3,6 +3,8 @@
 
 import {LineLayer, LineLayerProps} from '@deck.gl/layers';
 import type {Color, AttributeManager} from '@deck.gl/core';
+import {console as Console} from 'global/window';
+
 import {editShader} from '../';
 
 type RGBAColor = Color;
@@ -40,21 +42,25 @@ function addInstanceColorShader(vs) {
   );
 }
 
-function addElevationScale(vs) {
-  return editShader(
-    vs,
-    'line elevation scale vs - multiply by elevation scale',
-    `geometry.worldPosition = instanceSourcePositions;
-geometry.worldPositionAlt = instanceTargetPositions;
-vec3 source_world = instanceSourcePositions;
-vec3 target_world = instanceTargetPositions;`,
-    `vec3 source_world = instanceSourcePositions;
+// deck.gl's published shader is flat; the TypeScript source the demo bundles is indented
+// and has a blank line between the two assignments. Match either form.
+const LINE_ELEVATION_ANCHOR =
+  /geometry\.worldPosition = instanceSourcePositions;\s*geometry\.worldPositionAlt = instanceTargetPositions;\s*vec3 source_world = instanceSourcePositions;\s*vec3 target_world = instanceTargetPositions;/;
+
+const LINE_ELEVATION_REPLACEMENT = `vec3 source_world = instanceSourcePositions;
 vec3 target_world = instanceTargetPositions;
 source_world.z *= elevationScaleProps.elevationScale;
 target_world.z *= elevationScaleProps.elevationScale;
 geometry.worldPosition = source_world;
-geometry.worldPositionAlt = target_world;`
-  );
+geometry.worldPositionAlt = target_world;`;
+
+export function injectLineElevationScale(vs: string): string {
+  if (!LINE_ELEVATION_ANCHOR.test(vs)) {
+    Console.error('Cannot edit line elevation scale vs - multiply by elevation scale layer shader');
+    return vs;
+  }
+
+  return vs.replace(LINE_ELEVATION_ANCHOR, LINE_ELEVATION_REPLACEMENT);
 }
 
 export default class EnhancedLineLayer extends LineLayer<
@@ -65,7 +71,7 @@ export default class EnhancedLineLayer extends LineLayer<
     const shaders = super.getShaders();
 
     let vs = addInstanceColorShader(shaders.vs);
-    vs = addElevationScale(vs);
+    vs = injectLineElevationScale(vs);
 
     return {
       ...shaders,

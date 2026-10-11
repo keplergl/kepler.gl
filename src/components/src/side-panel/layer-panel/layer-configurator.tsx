@@ -60,6 +60,12 @@ const FLOW_RENDERING_MODE_LABELS: Record<string, string> = {
   'animated-straight': 'Animated'
 };
 
+const TARGET_ARROW_SHAPE_LABELS: Record<string, string> = {
+  triangle: 'Triangle',
+  chevron: 'Chevron',
+  stealth: 'Stealth'
+};
+
 type LayerConfiguratorProps = {
   layer: Layer;
   datasets: Datasets;
@@ -938,6 +944,19 @@ export default function LayerConfiguratorFactory(
       layerConfiguratorProps,
       layerChannelConfigProps
     }) {
+      const arrowShapeSetting = layer.visConfigSettings.targetArrowShape as
+        | {options?: string[]}
+        | undefined;
+      const arrowShapeOptions = (
+        arrowShapeSetting?.options || ['chevron', 'triangle', 'stealth']
+      ).map(id => ({
+        id,
+        label: TARGET_ARROW_SHAPE_LABELS[id] || id
+      }));
+      const selectedArrowShape =
+        arrowShapeOptions.find(({id}) => id === layer.config.visConfig.targetArrowShape) ||
+        arrowShapeOptions[0];
+
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
@@ -983,6 +1002,32 @@ export default function LayerConfiguratorFactory(
                 {...layerChannelConfigProps}
               />
             </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            label="layerVisConfigs.targetArrow"
+            description="layerVisConfigs.targetArrowDescription"
+            property="targetArrowEnabled"
+          >
+            <SidePanelSection>
+              <PanelLabel>
+                <FormattedMessage id="layerVisConfigs.targetArrowShape" />
+              </PanelLabel>
+              <ItemSelector
+                selectedItems={selectedArrowShape}
+                options={arrowShapeOptions}
+                displayOption="label"
+                getOptionValue="id"
+                multiSelect={false}
+                searchable={false}
+                onChange={value => visConfiguratorProps.onChange({targetArrowShape: value})}
+              />
+            </SidePanelSection>
+            <VisConfigSlider
+              {...layer.visConfigSettings.targetArrowSize}
+              {...visConfiguratorProps}
+            />
           </LayerConfigGroup>
 
           {/* elevation scale */}

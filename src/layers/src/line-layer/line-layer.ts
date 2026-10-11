@@ -17,12 +17,15 @@ import {
   ColorRange,
   Merge,
   RGBColor,
+  VisConfigBoolean,
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
   VisConfigRange,
+  VisConfigSelection,
   LayerColumn
 } from '@kepler.gl/types';
+import {createTargetArrowLayers} from '../arc-layer/target-arrow';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {DataContainerInterface, maybeHexToGeo} from '@kepler.gl/utils';
 
@@ -33,6 +36,9 @@ export type LineLayerVisConfigSettings = {
   sizeRange: VisConfigRange;
   targetColor: VisConfigColorSelect;
   elevationScale: VisConfigNumber;
+  targetArrowEnabled: VisConfigBoolean;
+  targetArrowShape: VisConfigSelection;
+  targetArrowSize: VisConfigNumber;
 };
 
 export type LineLayerColumnsConfig = {
@@ -62,6 +68,9 @@ export type LineLayerVisConfig = {
   targetColor: RGBColor;
   thickness: number;
   elevationScale: number;
+  targetArrowEnabled: boolean;
+  targetArrowShape: string;
+  targetArrowSize: number;
 };
 
 export type LineLayerConfig = Merge<
@@ -286,6 +295,21 @@ export default class LineLayer extends ArcLayer {
 
     const globeMode = mapState?.globe?.enabled;
     const blendingParameters = mapState?.layerParameters ?? {};
+    const arrowLayers = createTargetArrowLayers({
+      layer: this,
+      formattedData: data,
+      defaultLayerProps,
+      mapState,
+      interactionConfig,
+      // On a globe the line is a flat great-circle arc. On a map it is a straight
+      // segment, so the head follows the projected endpoints rather than a paraboloid.
+      greatCircle: Boolean(globeMode),
+      height: 0,
+      elevationScale: globeMode ? 1 : this.config.visConfig.elevationScale,
+      getColor: data.getTargetColor,
+      hoveredObject,
+      highlightColor: this.config.highlightColor
+    });
 
     if (globeMode) {
       const id = `${defaultLayerProps.id}-globe`;
@@ -307,11 +331,9 @@ export default class LineLayer extends ArcLayer {
           // depth disk occludes segments on the far side of the globe).
           getHeight: 0,
           parameters: {cull: false, ...blendingParameters},
-          // A Kepler line has a single color channel; an ArcLayer interpolates
-          // between source and target colors, so feed the same color to both
-          // ends (otherwise the target end falls back to deck.gl's default).
+          // The target end, including the arrowhead, uses the target color.
           getSourceColor: data.getColor,
-          getTargetColor: data.getColor,
+          getTargetColor: data.getTargetColor,
           widthUnits: 'pixels' as const
         }),
         ...(hoveredObject
@@ -329,7 +351,8 @@ export default class LineLayer extends ArcLayer {
                 widthUnits: 'pixels' as const
               })
             ]
-          : [])
+          : []),
+        ...arrowLayers
       ];
     }
 
@@ -383,7 +406,8 @@ export default class LineLayer extends ArcLayer {
               getWidth: data.getWidth
             })
           ]
-        : [])
+        : []),
+      ...arrowLayers
     ];
   }
 
