@@ -200,7 +200,7 @@
     "eslint-plugin-prettier": "4.2.1",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^4.6.2",
-    "gl": "^8.0.2",
+    "gl": "9.0.0-rc.10",
     "global": "^4.4.0",
     "husky": "^9.1.7",
     "istanbul-merge": "^2.0.0",
@@ -359,7 +359,7 @@
     "node": ">=20"
   },
   "volta": {
-    "node": "20.19.3",
+    "node": "24.21.0",
     "yarn": "4.4.0"
   },
   "packageManager": "yarn@4.4.0"
