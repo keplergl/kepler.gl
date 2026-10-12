@@ -133,7 +133,13 @@ Yarn may report that the `gl` package (a dev dependency used for headless WebGL 
 
 - **Use the Node version pinned for this repo** (see `.nvmrc`, currently 24.21.0). After `nvm install` and `nvm use` (or Volta, as above), run `yarn install` / `yarn bootstrap` again. `gl@9.0.0-rc.10` has no Node 24 prebuild, so this pin compiles `gl` from source.
 
-- **If you must use a newer Node** and the install compiles from source, ensure `python` is on your `PATH` and points to Python 3, for example on macOS:
+- **Install the native build dependencies.** On macOS, install Python 3 and the Xcode Command Line Tools. On Ubuntu/Debian, install Python 3 and the OpenGL/X11 toolchain:
+
+  ```bash
+  sudo apt-get install -y build-essential libxi-dev libglu1-mesa-dev libglew-dev pkg-config python3 python-is-python3
+  ```
+
+- **Ensure `python` is on your `PATH` and points to Python 3.** The pinned Node version compiles `gl` from source, so this also applies when using Node 24.21.0. For example, on macOS:
 
   ```bash
   sudo mkdir -p /usr/local/bin
