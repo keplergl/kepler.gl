@@ -418,6 +418,11 @@ export default function ModalContainerFactory(
                 toggleTableColumnHidden={visStateActions.toggleTableColumnHidden}
                 showAllTableColumns={visStateActions.showAllTableColumns}
                 copyTableColumn={visStateActions.copyTableColumn}
+                renameTableColumn={visStateActions.renameTableColumn}
+                deleteTableColumn={visStateActions.deleteTableColumn}
+                createFilterFromColumn={(id, column) =>
+                  visStateActions.createOrUpdateFilter(undefined, id, column)
+                }
                 setColumnDisplayFormat={visStateActions.setColumnDisplayFormat}
                 loadColumnStats={visStateActions.loadColumnStats}
                 uiStateActions={uiStateActions}

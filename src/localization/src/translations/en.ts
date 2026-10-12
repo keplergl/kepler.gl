@@ -230,6 +230,8 @@ export default {
     heightMultiplier: 'Height Multiplier',
     fixedHeight: 'Fixed height',
     fixedHeightDescription: 'Use height without modifications',
+    invertHeight: 'Invert height',
+    invertHeightDescription: 'Map the lowest values to the greatest height',
     fixedElevation: 'Fixed elevation',
     fixedElevationDescription: 'Use elevation offset without modifications',
     allowHover: 'Allow hover',

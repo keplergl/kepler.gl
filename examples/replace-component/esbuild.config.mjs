@@ -10,7 +10,7 @@ import process from 'node:process';
 import {spawn} from 'node:child_process';
 import {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import KeplerPackage from '../../package.json' assert {type: 'json'};
+import KeplerPackage from '../../package.json' with {type: 'json'};
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

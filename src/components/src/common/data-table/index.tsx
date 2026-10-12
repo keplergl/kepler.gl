@@ -457,6 +457,9 @@ export interface DataTableProps {
   hideTableColumn?: (column: string) => void;
   setColumnDisplayFormat?: (formats: {[key: string]: string}) => void;
   copyTableColumn: (column: string) => void;
+  renameTableColumn?: (column: string, newName: string) => void;
+  deleteTableColumn?: (column: string) => void;
+  createFilterFromColumn?: (column: string) => void;
   sortOrder?: number[] | null;
   showStats?: boolean;
   hasCustomScrollBarStyle?: boolean;
