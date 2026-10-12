@@ -336,7 +336,13 @@ export function DatasetOpPanel({
         <Button secondary small type="button" onClick={onClose}>
           <FormattedMessage id="datasetOps.cancel" />
         </Button>
-        <Button small type="button" disabled={!canRun} onClick={onRun}>
+        <Button
+          className="dataset-ops-panel__run"
+          small
+          type="button"
+          disabled={!canRun}
+          onClick={onRun}
+        >
           <FormattedMessage id="datasetOps.run" />
         </Button>
       </Actions>

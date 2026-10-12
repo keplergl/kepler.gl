@@ -5,7 +5,7 @@
 import {default as ActionTypes} from './action-types';
 import {FileCacheItem, ZipArchiveExpansion} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {GroupByOp, JoinOp, KeplerTable} from '@kepler.gl/table';
+import {GroupByOp, JoinOp, KeplerTable, SuitabilityOp} from '@kepler.gl/table';
 import {
   AddDataToMapOptions,
   AddDataToMapPayload,
@@ -1512,6 +1512,55 @@ export function updateDataset(
   };
 }
 
+export type RenameTableColumnUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  newName: string;
+};
+/**
+ * Rename a dataset column. The new name becomes the field identity stored in
+ * layers, filters, charts, dataset operations, and saved maps.
+ * @param dataId - dataset id
+ * @param fieldName - current column name
+ * @param newName - next column name
+ * @returns action
+ * @public
+ */
+export function renameTableColumn(
+  dataId: string,
+  fieldName: string,
+  newName: string
+): Merge<RenameTableColumnUpdaterAction, {type: typeof ActionTypes.RENAME_TABLE_COLUMN}> {
+  return {
+    type: ActionTypes.RENAME_TABLE_COLUMN,
+    dataId,
+    fieldName,
+    newName
+  };
+}
+
+export type DeleteTableColumnUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+};
+/**
+ * Delete a dataset column and drop references that required it.
+ * @param dataId - dataset id
+ * @param fieldName - column name
+ * @returns action
+ * @public
+ */
+export function deleteTableColumn(
+  dataId: string,
+  fieldName: string
+): Merge<DeleteTableColumnUpdaterAction, {type: typeof ActionTypes.DELETE_TABLE_COLUMN}> {
+  return {
+    type: ActionTypes.DELETE_TABLE_COLUMN,
+    dataId,
+    fieldName
+  };
+}
+
 export type ToggleFilterAnimationUpdaterAction = {
   idx: number;
 };
@@ -2640,6 +2689,48 @@ export function runSpatialJoin(
 ): Merge<RunSpatialJoinUpdaterAction, {type: typeof ActionTypes.RUN_SPATIAL_JOIN}> {
   return {
     type: ActionTypes.RUN_SPATIAL_JOIN,
+    id
+  };
+}
+
+export type AddSuitabilityUpdaterAction = {
+  dataId: string;
+};
+
+export function addSuitability(
+  dataId: string
+): Merge<AddSuitabilityUpdaterAction, {type: typeof ActionTypes.ADD_SUITABILITY}> {
+  return {
+    type: ActionTypes.ADD_SUITABILITY,
+    dataId
+  };
+}
+
+export type SetSuitabilityConfigUpdaterAction = {
+  id: string;
+  config: Partial<SuitabilityOp>;
+};
+
+export function setSuitabilityConfig(
+  id: string,
+  config: Partial<SuitabilityOp>
+): Merge<SetSuitabilityConfigUpdaterAction, {type: typeof ActionTypes.SET_SUITABILITY_CONFIG}> {
+  return {
+    type: ActionTypes.SET_SUITABILITY_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunSuitabilityUpdaterAction = {
+  id: string;
+};
+
+export function runSuitability(
+  id: string
+): Merge<RunSuitabilityUpdaterAction, {type: typeof ActionTypes.RUN_SUITABILITY}> {
+  return {
+    type: ActionTypes.RUN_SUITABILITY,
     id
   };
 }

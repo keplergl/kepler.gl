@@ -88,6 +88,7 @@ export const geojsonVisConfigs: {
   enable3d: 'enable3d';
   wireframe: 'wireframe';
   fixedHeight: 'fixedHeight';
+  invertHeight: 'invertHeight';
   fixedElevation: 'fixedElevation';
   allowHover: 'allowHover';
 } = {
@@ -98,9 +99,7 @@ export const geojsonVisConfigs: {
   },
   thickness: {
     ...LAYER_VIS_CONFIGS.thickness,
-    defaultValue: 0.5,
-    focusRange: [0, 1],
-    focusWeight: 0.3
+    defaultValue: 0.5
   },
   strokeColor: 'strokeColor',
   colorRange: 'colorRange',
@@ -124,6 +123,7 @@ export const geojsonVisConfigs: {
   enable3d: 'enable3d',
   wireframe: 'wireframe',
   fixedHeight: 'fixedHeight',
+  invertHeight: 'invertHeight',
   fixedElevation: 'fixedElevation',
   allowHover: 'allowHover'
 };
@@ -144,6 +144,7 @@ export type GeoJsonVisConfigSettings = {
   elevationOffset: VisConfigNumber;
   elevationOffsetRange: VisConfigRange;
   fixedHeight: VisConfigBoolean;
+  invertHeight: VisConfigBoolean;
   fixedElevation: VisConfigBoolean;
   stroked: VisConfigBoolean;
   filled: VisConfigBoolean;
@@ -176,6 +177,7 @@ export type GeoJsonLayerVisConfig = {
   enable3d: boolean;
   wireframe: boolean;
   fixedHeight: boolean;
+  invertHeight: boolean;
   fixedElevation: boolean;
   allowHover: boolean;
 };
@@ -429,6 +431,7 @@ export default class GeoJsonLayer extends Layer {
         range: 'heightRange',
         key: 'height',
         fixed: 'fixedHeight',
+        invert: 'invertHeight',
         channelScaleType: CHANNEL_SCALES.size,
         accessor: 'getElevation',
         condition: config => config.visConfig.enable3d,
