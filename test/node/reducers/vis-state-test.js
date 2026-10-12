@@ -1284,6 +1284,42 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_COLUMN_DISPLAY_FORMAT updates text labels', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const field = initialState.datasets[testCsvDataId].fields.find(
+    ({name}) => name === 'gps_data.utc_timestamp'
+  );
+  const layer = initialState.layers[0].updateLayerConfig({
+    textLabel: [{...DEFAULT_TEXT_LABEL, field}]
+  });
+  const {layerData: oldLayerData} = calculateLayerData(layer, initialState);
+  const stateWithTextLabel = {
+    ...initialState,
+    layers: [layer, ...initialState.layers.slice(1)],
+    layerData: [oldLayerData, ...initialState.layerData.slice(1)]
+  };
+
+  const nextState = reducer(
+    stateWithTextLabel,
+    VisStateActions.setColumnDisplayFormat(testCsvDataId, {
+      'gps_data.utc_timestamp': 'YYYY'
+    })
+  );
+  const updatedLayer = nextState.layers[0];
+
+  t.equal(
+    updatedLayer.config.textLabel[0].field.displayFormat,
+    'YYYY',
+    'should update the display format stored in the text label field'
+  );
+  t.equal(
+    nextState.layerData[0].textLabels[0].getText({index: 0}),
+    '2016',
+    'should immediately rebuild cached text labels with the updated display format'
+  );
+  t.end();
+});
+
 test('#visStateReducer -> REORDER_LAYER', t => {
   const newReducer = reducer(
     {layers: [], layerOrder: [0, 1, 2]},

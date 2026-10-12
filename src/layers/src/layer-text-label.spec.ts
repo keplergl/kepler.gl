@@ -2,7 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import KeplerTable from '@kepler.gl/table';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
+import PointLayer from './point-layer/point-layer';
 import {formatTextLabelData, getSingleTextLabelValue} from './layer-text-label';
 
 async function makeTable() {
@@ -11,7 +12,8 @@ async function makeTable() {
     data: {
       rows: [
         [37.77, -122.42, '2021-01-01 03:12:00', 3.5],
-        [37.78, -122.41, null, 1.25]
+        [37.78, -122.41, null, 1.25],
+        [37.79, -122.4, '1970-01-01 00:00:00', 2.5]
       ],
       fields: [
         {name: 'latitude', type: ALL_FIELD_TYPES.real},
@@ -28,7 +30,7 @@ function getTextLabels(table: KeplerTable, field) {
   return formatTextLabelData({
     textLabel: [{field}],
     oldLayerData: null,
-    data: [{index: 0}, {index: 1}],
+    data: [{index: 0}, {index: 1}, {index: 2}],
     dataContainer: table.dataContainer
   });
 }
@@ -42,6 +44,7 @@ describe('formatTextLabelData', () => {
 
     expect(getText({index: 0})).toBe('01/01/2021 3:12:00 AM');
     expect(getText({index: 1})).toBe('');
+    expect(getText({index: 2})).toBe('01/01/1970 12:00:00 AM');
   });
 
   test('uses the display format of a timestamp field', async () => {
@@ -69,5 +72,37 @@ describe('getSingleTextLabelValue', () => {
     const row = table.dataContainer.rowAsArray(0);
 
     expect(getSingleTextLabelValue({field, format: ''}, row)).toBe('01/01/2021 3:12:00 AM');
+  });
+});
+
+describe('renderTextLabelLayer', () => {
+  test('includes the display format in the deck.gl text update trigger', async () => {
+    const table = await makeTable();
+    const field = {...findField(table, 'time')!, displayFormat: 'YYYY'};
+    const layer = new PointLayer({id: 'point', dataId: 'data'});
+    layer.updateLayerConfig({
+      textLabel: [{...DEFAULT_TEXT_LABEL, field}]
+    });
+
+    const [textLayer] = layer.renderTextLabelLayer(
+      {
+        getPixelOffset: () => [0, 0],
+        updateTriggers: {},
+        sharedProps: {}
+      },
+      {
+        data: {
+          data: [],
+          textLabels: [{getText: () => '', characterSet: []}]
+        },
+        mapState: {},
+        visible: true
+      }
+    );
+
+    expect(textLayer.props.updateTriggers.getText).toEqual({
+      field: 'time',
+      displayFormat: 'YYYY'
+    });
   });
 });

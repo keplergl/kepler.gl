@@ -1405,7 +1405,9 @@ class Layer implements KeplerLayer {
       ...(this.config.textLabel || []).reduce(
         (accu, tl, i) => ({
           ...accu,
-          [`getLabelCharacterSet-${i}`]: tl.field ? tl.field.name : null
+          [`getLabelCharacterSet-${i}`]: tl.field
+            ? {name: tl.field.name, displayFormat: tl.field.displayFormat}
+            : null
         }),
         {}
       )
@@ -1803,6 +1805,7 @@ class Layer implements KeplerLayer {
               ...updateTriggers,
               getText: {
                 field: textLabel[i].field?.name,
+                displayFormat: textLabel[i].field?.displayFormat,
                 ...(updateTriggers.getText || {})
               },
               getPixelOffset: {
