@@ -178,6 +178,7 @@ function DataTableModalFactory(
     createFilterFromColumn,
     datasets,
     showDatasetTable,
+    uiStateActions,
     showTab = true,
     setColumnDisplayFormat: setColumnDisplayFormatProp,
     loadColumnStats

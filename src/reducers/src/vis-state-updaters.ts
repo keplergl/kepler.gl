@@ -4379,11 +4379,14 @@ export function updateDatasetUpdater(
   newTable.filterRecordCPU = undefined;
   newTable.sortColumn = undefined;
   newTable.sortOrder = null;
+  const newFieldsByName = new Set(newTable.fields.map(f => f.name));
   newTable.pinnedColumns = (existing.pinnedColumns || [])
     .map(name => renames[name] ?? name)
-    .filter(name => newTable.getColumnFieldIdx(name) > -1);
+    .filter(name => newFieldsByName.has(name));
+  newTable.hiddenColumns = (existing.hiddenColumns || [])
+    .map(name => renames[name] ?? name)
+    .filter(name => newFieldsByName.has(name));
 
-  const newFieldsByName = new Set(newTable.fields.map(f => f.name));
   const newDatasets = {...state.datasets, [dataId]: newTable};
 
   // 2. reconcile filters

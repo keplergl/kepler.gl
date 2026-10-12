@@ -145,6 +145,30 @@ describe('dataset export', () => {
     expect(schema.fields.find(field => field.name === 'name')?.type).toBe('utf8');
   });
 
+  test.each(['gpkg_contents', 'gpkg_geometry_columns', 'sqlite_sequence'])(
+    'sanitizes the reserved GeoPackage layer name %s',
+    async layerName => {
+      const geopackage = await encodeDatasetExport({
+        data: container(),
+        fields,
+        fieldPairs,
+        dataType: EXPORT_DATA_TYPE.GEOPACKAGE,
+        layerName
+      });
+      const SQL = await loadSqlJs();
+      const db = new SQL.Database(new Uint8Array(geopackage.data as Uint8Array));
+      try {
+        const contents = db.exec('SELECT table_name FROM gpkg_contents');
+        const exportedTable = String(contents[0].values[0][0]);
+        expect(exportedTable).not.toBe(layerName);
+        expect(exportedTable).not.toMatch(/^sqlite_/i);
+        expect(db.exec(`SELECT COUNT(*) FROM "${exportedTable}"`)[0].values[0][0]).toBe(2);
+      } finally {
+        db.close();
+      }
+    }
+  );
+
   test('uses a geojson column as feature geometry and drops it from properties', async () => {
     const polygon = {
       type: 'Polygon',

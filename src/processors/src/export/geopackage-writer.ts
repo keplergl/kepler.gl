@@ -27,6 +27,12 @@ const GPKG_USER_VERSION = 10300;
 const SRS_ID = 4326;
 const GEOMETRY_COLUMN = 'geom';
 const FID_COLUMN = 'fid';
+const GPKG_METADATA_TABLES = new Set([
+  'gpkg_spatial_ref_sys',
+  'gpkg_contents',
+  'gpkg_geometry_columns',
+  'gpkg_ogr_contents'
+]);
 
 const WGS84_DEFINITION =
   'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,' +
@@ -112,6 +118,11 @@ function sanitizeColumnName(name: string, taken: Set<string>): string {
   }
   taken.add(candidate.toLowerCase());
   return candidate;
+}
+
+function sanitizeTableName(name: string): string {
+  const candidate = sanitizeColumnName(name, new Set(GPKG_METADATA_TABLES));
+  return /^sqlite_/i.test(candidate) ? `layer_${candidate}` : candidate;
 }
 
 /** Infer a SQLite column type from a property's values across all features. */
@@ -258,7 +269,7 @@ export function writeGeoPackageSync(
     throw new Error('The layer has no features to export.');
   }
 
-  const tableName = sanitizeColumnName(layerName, new Set());
+  const tableName = sanitizeTableName(layerName);
 
   // Collect the union of property keys (features may carry different keys).
   const propertyKeys: string[] = [];

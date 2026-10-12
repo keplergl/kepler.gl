@@ -125,6 +125,35 @@ export type ModalContainerProps = {
   onExportToCloudError?: OnErrorCallBack;
 };
 
+type ExportDataModalActions = {
+  exportData: () => Promise<void>;
+  getCurrentModal: () => UiState['currentModal'];
+  closeModal: () => void;
+  addNotification: ModalContainerProps['uiStateActions']['addNotification'];
+};
+
+export async function exportDataFromModal({
+  exportData: runExport,
+  getCurrentModal,
+  closeModal,
+  addNotification
+}: ExportDataModalActions): Promise<void> {
+  try {
+    await runExport();
+    if (getCurrentModal() === EXPORT_DATA_ID) {
+      closeModal();
+    }
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    addNotification({
+      id: 'EXPORT_DATA_ERROR_ID',
+      type: 'error',
+      topic: 'global',
+      message: `Failed to export data: ${detail}`
+    });
+  }
+}
+
 ModalContainerFactory.deps = [
   DeleteDatasetModalFactory,
   OverWriteMapModalFactory,
@@ -304,11 +333,12 @@ export default function ModalContainerFactory(
     };
 
     _onExportData = () => {
-      exportData(this.props, this.props.uiState.exportData)
-        .then(() => this._closeModal())
-        .catch(error => {
-          console.error(error);
-        });
+      return exportDataFromModal({
+        exportData: () => exportData(this.props, this.props.uiState.exportData),
+        getCurrentModal: () => this.props.uiState.currentModal,
+        closeModal: this._closeModal,
+        addNotification: this.props.uiStateActions.addNotification
+      });
     };
 
     _onExportMap = () => {

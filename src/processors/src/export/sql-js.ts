@@ -20,7 +20,9 @@ type InitSqlJs = (config?: {locateFile?: (file: string) => string}) => Promise<S
 export function loadSqlJs(): Promise<SqlJsStatic> {
   if (!sqlPromise) {
     const pending = (
-      process.env.NODE_ENV === 'test' ? loadSqlJsFromPackage() : loadSqlJsFromCdn()
+      process.env.NODE_ENV === 'test' || typeof document === 'undefined'
+        ? loadSqlJsFromPackage()
+        : loadSqlJsFromCdn()
     ).catch(error => {
       sqlPromise = null;
       throw error;
