@@ -5685,6 +5685,10 @@ export function setColumnDisplayFormatUpdater(
   newState = {
     ...newState,
     layers: newState.layers.map((layer, layerIndex) => {
+      if (layer.config.dataId !== dataId) {
+        return layer;
+      }
+
       const colorField = layer.config?.colorField;
       const updatedColorField =
         colorField?.name && colorField.name in formats
