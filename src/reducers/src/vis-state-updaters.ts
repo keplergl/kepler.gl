@@ -5679,21 +5679,59 @@ export function setColumnDisplayFormatUpdater(
 
   const newDataset = copyTableAndUpdate(dataset, {fields: newFields as Field[]});
   let newState = pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+  const textLabelLayerIndexes: number[] = [];
 
-  // update colorField displayFormat
+  // Layer configs retain their own field objects, so keep those copies in sync
+  // with the display format stored on the dataset field.
   newState = {
     ...newState,
-    layers: newState.layers.map(layer =>
-      layer.config?.colorField?.name && layer.config.colorField.name in formats
+    layers: newState.layers.map((layer, layerIndex) => {
+      // Column names are not unique across datasets. Only update layers that
+      // belong to the dataset targeted by this action.
+      if (layer.config.dataId !== dataId) {
+        return layer;
+      }
+
+      const colorField = layer.config?.colorField;
+      const updatedColorField =
+        colorField?.name && colorField.name in formats
+          ? {...colorField, displayFormat: formats[colorField.name]}
+          : null;
+      // Text labels also keep field copies instead of reading dataset.fields at render time.
+      const textLabel = layer.config.textLabel.map(label => {
+        const {field} = label;
+        return field?.name && field.name in formats
+          ? {...label, field: {...field, displayFormat: formats[field.name]}}
+          : label;
+      });
+      const updateTextLabel = textLabel.some(
+        (label, index) => label !== layer.config.textLabel[index]
+      );
+      if (updateTextLabel) {
+        textLabelLayerIndexes.push(layerIndex);
+      }
+
+      return updatedColorField || updateTextLabel
         ? layer.updateLayerConfig({
-            colorField: {
-              ...layer.config.colorField,
-              displayFormat: formats[layer.config.colorField.name]
-            }
+            ...(updatedColorField ? {colorField: updatedColorField} : {}),
+            ...(updateTextLabel ? {textLabel} : {})
           })
-        : layer
-    )
+        : layer;
+    })
   };
+
+  if (textLabelLayerIndexes.length) {
+    // Label accessors and character sets are cached in layerData. Rebuild them
+    // immediately so the new format appears without removing and re-adding the label field.
+    const layers = newState.layers.slice();
+    const layerData = newState.layerData.slice();
+    textLabelLayerIndexes.forEach(layerIndex => {
+      const result = calculateLayerData(layers[layerIndex], newState, layerData[layerIndex]);
+      layers[layerIndex] = result.layer;
+      layerData[layerIndex] = result.layerData;
+    });
+    newState = {...newState, layers, layerData};
+  }
 
   return newState;
 }

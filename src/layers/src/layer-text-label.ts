@@ -10,6 +10,7 @@ import {
   getFormatter
 } from '@kepler.gl/utils';
 import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
+import {ALL_FIELD_TYPES, TOOLTIP_FORMATS, TOOLTIP_KEY} from '@kepler.gl/constants';
 import uniq from 'es-toolkit/compat/uniq';
 import {max} from 'd3-array';
 
@@ -45,15 +46,31 @@ export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const textLabelAccessor = textLabel => dc => d => {
-  const val = textLabel.field.valueAccessor(d);
+  const {field} = textLabel;
+  if (field.type === ALL_FIELD_TYPES.timestamp) {
+    return getSingleTextLabelValue(textLabel, d);
+  }
+  const val = field.valueAccessor(d);
   return notNullorUndefined(val) ? String(val) : '';
+};
+
+/**
+ * Timestamp value accessors return unix milliseconds, so a timestamp label without a
+ * display format falls back to the date time format tooltips use for timestamps by default.
+ */
+const getTextLabelFormat = (field: any, format?: string): string | undefined => {
+  const labelFormat = field.displayFormat ?? format;
+  if (!labelFormat && field.type === ALL_FIELD_TYPES.timestamp) {
+    return TOOLTIP_FORMATS.DATE_TIME_L_LTS[TOOLTIP_KEY];
+  }
+  return labelFormat;
 };
 
 export const getSingleTextLabelValue = (
   {field, format}: {field: any; format?: string},
   datum: {index: number} | any[] | null
 ): string => {
-  const fmt = getFormatter(field.displayFormat ?? format, field);
+  const fmt = getFormatter(getTextLabelFormat(field, format), field);
   const val = datum ? field.valueAccessor(datum, true) : null;
   return (notNullorUndefined(val) ? fmt(val) : null) ?? '';
 };

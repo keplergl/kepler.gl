@@ -28,7 +28,7 @@ import {
 
 import {processCsvData, processGeojson, remoteDatasetFromUrl} from '@kepler.gl/processors';
 import {Layer, KeplerGlLayers, COLUMN_MODE_TABLE} from '@kepler.gl/layers';
-import {maybeToDate} from '@kepler.gl/table';
+import {copyTableAndUpdate, maybeToDate} from '@kepler.gl/table';
 import {
   createDataContainer,
   applyFilterFieldName,
@@ -1281,6 +1281,79 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
     'should enable collision filtering on all text labels'
   );
 
+  t.end();
+});
+
+test('#visStateReducer -> SET_COLUMN_DISPLAY_FORMAT updates text labels', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const otherDataId = 'other-data';
+  const otherDataset = copyTableAndUpdate(initialState.datasets[testCsvDataId], {
+    id: otherDataId
+  });
+  const layerIndex = initialState.layers.findIndex(layer => layer.config.dataId === testCsvDataId);
+  const field = initialState.datasets[testCsvDataId].fields.find(
+    ({name}) => name === 'gps_data.utc_timestamp'
+  );
+  const otherField = otherDataset.fields.find(({name}) => name === 'gps_data.utc_timestamp');
+  const layer = CloneDeep(initialState.layers[layerIndex]).updateLayerConfig({
+    textLabel: [{...DEFAULT_TEXT_LABEL, field}]
+  });
+  const otherLayer = CloneDeep(initialState.layers[layerIndex]).updateLayerConfig({
+    dataId: otherDataId,
+    textLabel: [{...DEFAULT_TEXT_LABEL, field: otherField}]
+  });
+  otherLayer.id = `${otherLayer.id}-other`;
+  const stateWithOtherDataset = {
+    ...initialState,
+    datasets: {...initialState.datasets, [otherDataId]: otherDataset}
+  };
+  const {layerData: oldLayerData} = calculateLayerData(layer, stateWithOtherDataset);
+  const {layerData: otherLayerData} = calculateLayerData(otherLayer, stateWithOtherDataset);
+  const layers = stateWithOtherDataset.layers.slice();
+  const layerData = stateWithOtherDataset.layerData.slice();
+  layers[layerIndex] = layer;
+  layerData[layerIndex] = oldLayerData;
+  const otherLayerIndex = layers.push(otherLayer) - 1;
+  layerData.push(otherLayerData);
+  const stateWithTextLabel = {
+    ...stateWithOtherDataset,
+    layers,
+    layerData
+  };
+
+  const nextState = reducer(
+    stateWithTextLabel,
+    VisStateActions.setColumnDisplayFormat(testCsvDataId, {
+      'gps_data.utc_timestamp': 'YYYY'
+    })
+  );
+  const updatedLayer = nextState.layers[layerIndex];
+
+  t.equal(
+    updatedLayer.config.textLabel[0].field.displayFormat,
+    'YYYY',
+    'should update the display format stored in the text label field'
+  );
+  t.equal(
+    nextState.layerData[layerIndex].textLabels[0].getText({index: 0}),
+    '2016',
+    'should immediately rebuild cached text labels with the updated display format'
+  );
+  t.equal(
+    nextState.layers[otherLayerIndex],
+    otherLayer,
+    'should not update a layer belonging to another dataset with the same field name'
+  );
+  t.equal(
+    nextState.layers[otherLayerIndex].config.textLabel[0].field.displayFormat,
+    undefined,
+    'should leave the other dataset label format unchanged'
+  );
+  t.equal(
+    nextState.layerData[otherLayerIndex],
+    otherLayerData,
+    'should not rebuild layer data belonging to another dataset'
+  );
   t.end();
 });
 
