@@ -462,11 +462,12 @@ function DataTableModalFactory(
     }, []);
 
     const onSelectFilteredData = useCallback(() => {
-      if (dataId) {
-        requestFilteredData(dataId);
+      if (!dataId || !applyCPUFilter) {
+        return;
       }
+      requestFilteredData(dataId);
       setShowFiltered(true);
-    }, [dataId, requestFilteredData]);
+    }, [applyCPUFilter, dataId, requestFilteredData]);
 
     const onShowDatasetTable = useCallback(
       (id: string) => {
@@ -655,15 +656,17 @@ function DataTableModalFactory(
             >
               <FormattedMessage id="modal.dataTable.allData" />
             </DataViewButton>
-            <DataViewButton
-              className="data-view-filtered"
-              selected={showFiltered}
-              onClick={onSelectFilteredData}
-              role="button"
-              aria-pressed={showFiltered}
-            >
-              <FormattedMessage id="modal.dataTable.filteredData" />
-            </DataViewButton>
+            {applyCPUFilter ? (
+              <DataViewButton
+                className="data-view-filtered"
+                selected={showFiltered}
+                onClick={onSelectFilteredData}
+                role="button"
+                aria-pressed={showFiltered}
+              >
+                <FormattedMessage id="modal.dataTable.filteredData" />
+              </DataViewButton>
+            ) : null}
             <DataViewRowCount>
               {rowCount === undefined ? (
                 '-'

@@ -75,6 +75,13 @@ function renderModal(type: string, hiddenColumns: string[] = []) {
 }
 
 describe('data table column edits', () => {
+  test('does not offer filtered data when CPU filtering is unavailable', () => {
+    const {container} = renderModal('local');
+
+    expect(container.querySelector('.data-view-filtered')).toBeNull();
+    expect(container.querySelector('.data-view-all')?.getAttribute('aria-pressed')).toBe('true');
+  });
+
   test('create filter opens the filter panel and closes the table', () => {
     const {createFilterFromColumn, toggleSidePanel, toggleModal} = renderModal('local');
 
