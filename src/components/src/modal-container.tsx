@@ -455,6 +455,7 @@ export default function ModalContainerFactory(
                 }
                 setColumnDisplayFormat={visStateActions.setColumnDisplayFormat}
                 loadColumnStats={visStateActions.loadColumnStats}
+                applyCPUFilter={visStateActions.applyCPUFilter}
                 uiStateActions={uiStateActions}
                 uiState={uiState}
               />

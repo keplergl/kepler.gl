@@ -760,6 +760,12 @@ export default {
       rowCount: '{rowCount} Rows',
       tiledDatasetWarning: "* Export Data for Tiled datasets isn't supported"
     },
+    dataTable: {
+      show: 'Show',
+      allData: 'All Data',
+      filteredData: 'Filtered Data',
+      rowCount: '{rowCount, plural, one {# row} other {# rows}}'
+    },
     deleteData: {
       warning: 'you are going to delete this dataset. It will affect {length} layers'
     },

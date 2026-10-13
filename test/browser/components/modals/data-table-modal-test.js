@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {useState} from 'react';
 import {act} from 'react-dom/test-utils';
 import test from 'tape-catch';
 import global from 'global';
@@ -38,6 +38,10 @@ const {VertThreeDots} = Icons;
 const DataTableModal = appInjector.get(DataTableModalFactory);
 const DataTable = appInjector.get(DataTableFactory);
 const FieldToken = appInjector.get(FieldTokenFactory);
+
+function mountDataTableModal(node) {
+  return mountWithTheme(<IntlWrapper>{node}</IntlWrapper>);
+}
 
 const expectedCellSizeCache = {
   'gps_data.utc_timestamp': {row: 145, header: 150},
@@ -198,7 +202,7 @@ test('Components -> DataTableModal.render: csv 1', t => {
     mountWithTheme(<DataTableModal />);
   }, 'Show not fail without data');
 
-  const wrapper = mountWithTheme(
+  const wrapper = mountDataTableModal(
     <DataTableModal datasets={StateWFiles.visState.datasets} dataId={testCsvDataId} />
   );
 
@@ -275,7 +279,7 @@ test('Components -> DataTableModal.render: csv 1', t => {
 test('Components -> DataTableModal.render: disableColumnStats', t => {
   initApplicationConfig({enableColumnStats: false});
   try {
-    const wrapper = mountWithTheme(
+    const wrapper = mountDataTableModal(
       <DataTableModal datasets={StateWFiles.visState.datasets} dataId={testCsvDataId} />
     );
     const props = wrapper.find(DataTable).at(0).props();
@@ -289,7 +293,7 @@ test('Components -> DataTableModal.render: disableColumnStats', t => {
 test('Components -> DataTableModal -> click tab', t => {
   const showDatasetTable = sinon.spy();
 
-  const wrapper = mountWithTheme(
+  const wrapper = mountDataTableModal(
     <DataTableModal
       datasets={StateWFiles.visState.datasets}
       dataId={testCsvDataId}
@@ -325,8 +329,428 @@ test('Components -> DataTableModal -> click tab', t => {
   t.end();
 });
 
+test('Components -> DataTableModal -> toggle filtered data', t => {
+  const fields = [{name: 'name', type: 'string', displayName: 'name', fieldIdx: 0}];
+  const rows = [['a'], ['b'], ['c'], ['d']];
+  const dataContainer = createDataContainer(rows, {fields});
+  const otherContainer = createDataContainer([['x'], ['y']], {fields});
+  const sortOrder = [3, 1, 0, 2];
+
+  const smoothie = {
+    id: 'smoothie',
+    label: 'smoothie',
+    color: [113, 113, 113],
+    dataContainer,
+    fields,
+    allIndexes: [0, 1, 2, 3],
+    sortOrder
+  };
+  const other = {
+    id: 'other',
+    label: 'other',
+    color: [10, 10, 10],
+    dataContainer: otherContainer,
+    fields,
+    allIndexes: [0, 1],
+    sortOrder: null
+  };
+
+  const applyCalls = [];
+
+  const FilteredHarness = () => {
+    const [datasets, setDatasets] = useState({smoothie, other});
+    const [dataId, setDataId] = useState('smoothie');
+    const applyCPUFilter = id => {
+      applyCalls.push(id);
+      setDatasets(current => ({
+        ...current,
+        [id]: {
+          ...current[id],
+          filteredIdxCPU:
+            id === 'smoothie' ? (current[id].filterRecord?.version === 2 ? [2] : [0, 1]) : [0]
+        }
+      }));
+    };
+
+    return (
+      <div>
+        <button
+          className="change-filter"
+          onClick={() =>
+            setDatasets(current => ({
+              ...current,
+              smoothie: {...current.smoothie, filterRecord: {version: 2}}
+            }))
+          }
+        />
+        <DataTableModal
+          datasets={datasets}
+          dataId={dataId}
+          showDatasetTable={setDataId}
+          applyCPUFilter={applyCPUFilter}
+        />
+      </div>
+    );
+  };
+
+  const wrapper = mountDataTableModal(<FilteredHarness />);
+
+  t.deepEqual(applyCalls, [], 'should not filter until filtered data is selected');
+  t.equal(
+    wrapper.find('.data-view-label').first().text(),
+    'Show',
+    'should label the data view control'
+  );
+  t.equal(wrapper.find('.data-view-all').first().text(), 'All Data', 'should offer all data');
+  t.equal(
+    wrapper.find('.data-view-filtered').first().text(),
+    'Filtered Data',
+    'should offer filtered data'
+  );
+  t.equal(
+    wrapper.find('.data-view-all').first().prop('selected'),
+    true,
+    'all data starts selected'
+  );
+  t.equal(wrapper.find('.data-view-row-count').first().text(), '4 rows', 'shows every row');
+  t.equal(
+    wrapper.find(DataTable).first().prop('dataContainer'),
+    dataContainer,
+    'table reads the full dataset'
+  );
+  t.deepEqual(wrapper.find(DataTable).first().prop('sortOrder'), sortOrder, 'keeps the table sort');
+
+  wrapper.find('.data-view-filtered').first().simulate('click');
+
+  t.deepEqual(applyCalls, ['smoothie'], 'requests a CPU filter for the active dataset');
+  t.equal(
+    wrapper.find('.data-view-filtered').first().prop('selected'),
+    true,
+    'filtered data is selected'
+  );
+  t.equal(
+    wrapper.find('.data-view-row-count').first().text(),
+    '2 rows',
+    'shows the filtered row count'
+  );
+
+  const filteredContainer = wrapper.find(DataTable).first().prop('dataContainer');
+  t.equal(filteredContainer.numRows(), 2, 'table has one row per filtered index');
+  t.equal(filteredContainer.valueAt(0, 0), 'b', 'first filtered row follows the active sort');
+  t.equal(filteredContainer.valueAt(1, 0), 'a', 'second filtered row follows the active sort');
+  t.equal(
+    wrapper.find(DataTable).first().prop('sortOrder'),
+    null,
+    'filtered rows are ordered by the indexed container'
+  );
+
+  wrapper.find('.change-filter').simulate('click');
+  t.deepEqual(applyCalls, ['smoothie', 'smoothie'], 'refreshes the CPU filter when filters change');
+  t.equal(
+    wrapper.find(DataTable).first().prop('dataContainer').valueAt(0, 0),
+    'c',
+    'shows rows from the updated filter'
+  );
+
+  wrapper.find('.data-view-all').first().simulate('click');
+  t.deepEqual(applyCalls, ['smoothie', 'smoothie'], 'all data does not request another filter');
+  t.equal(
+    wrapper.find('.data-view-row-count').first().text(),
+    '4 rows',
+    'restores the full row count'
+  );
+  t.equal(
+    wrapper.find(DataTable).first().prop('dataContainer'),
+    dataContainer,
+    'restores the full dataset'
+  );
+
+  wrapper.find('.data-view-filtered').first().simulate('click');
+  wrapper.find(DatasetModalTab).at(1).simulate('click');
+
+  t.deepEqual(
+    applyCalls,
+    ['smoothie', 'smoothie', 'smoothie', 'other'],
+    'filters the dataset opened from the tabs'
+  );
+  t.equal(
+    wrapper.find('.data-view-row-count').first().text(),
+    '1 row',
+    'counts the newly filtered dataset'
+  );
+  t.equal(
+    wrapper.find(DataTable).first().prop('dataContainer').valueAt(0, 0),
+    'x',
+    'shows the filtered row from the selected dataset'
+  );
+
+  t.end();
+});
+
+test('Components -> DataTableModal -> filter when the active dataset changes', t => {
+  const fields = [{name: 'name', type: 'string', displayName: 'name', fieldIdx: 0}];
+  const smoothieContainer = createDataContainer([['a'], ['b'], ['c']], {fields});
+  const otherContainer = createDataContainer([['x'], ['y']], {fields});
+  const applyCalls = [];
+
+  const ExternalSwitchHarness = () => {
+    const [dataId, setDataId] = useState('smoothie');
+    const [datasets, setDatasets] = useState({
+      smoothie: {
+        id: 'smoothie',
+        label: 'smoothie',
+        color: [113, 113, 113],
+        dataContainer: smoothieContainer,
+        fields
+      },
+      other: {
+        id: 'other',
+        label: 'other',
+        color: [10, 10, 10],
+        dataContainer: otherContainer,
+        fields
+      }
+    });
+
+    return (
+      <div>
+        <button className="switch-dataset" onClick={() => setDataId('other')} />
+        <DataTableModal
+          datasets={datasets}
+          dataId={dataId}
+          showDatasetTable={() => {}}
+          applyCPUFilter={id => {
+            applyCalls.push(id);
+            setDatasets(current => ({
+              ...current,
+              [id]: {
+                ...current[id],
+                filteredIdxCPU: [1]
+              }
+            }));
+          }}
+        />
+      </div>
+    );
+  };
+
+  const wrapper = mountDataTableModal(<ExternalSwitchHarness />);
+  wrapper.find('.data-view-filtered').first().simulate('click');
+  wrapper.find('.switch-dataset').simulate('click');
+
+  t.deepEqual(
+    applyCalls,
+    ['smoothie', 'other'],
+    'applies the CPU filter when the active dataset changes'
+  );
+  t.equal(wrapper.find('.data-view-row-count').first().text(), '1 row', 'counts the new dataset');
+  t.equal(
+    wrapper.find(DataTable).first().prop('dataContainer').valueAt(0, 0),
+    'y',
+    'shows the filtered row from the newly active dataset'
+  );
+
+  t.end();
+});
+
+test('Components -> DataTableModal -> filtered column stats', async t => {
+  const allValueStats = {
+    type: 'numeric',
+    mean: 100,
+    std: 0,
+    percentNulls: 0,
+    bins: [],
+    quantiles: []
+  };
+  const allScoreStats = {
+    type: 'numeric',
+    mean: 999,
+    std: 0,
+    percentNulls: 0,
+    bins: [],
+    quantiles: []
+  };
+  const fields = [
+    {
+      name: 'value',
+      displayName: 'value',
+      type: 'integer',
+      fieldIdx: 0,
+      filterProps: {columnStats: allValueStats}
+    },
+    {
+      name: 'score',
+      displayName: 'score',
+      type: 'integer',
+      fieldIdx: 1,
+      filterProps: {columnStats: allScoreStats, mappedValue: [2, 4, 9]}
+    }
+  ];
+  const dataContainer = createDataContainer(
+    [
+      [1, 2],
+      [null, 4],
+      [100, 9]
+    ],
+    {fields}
+  );
+  const loadColumnStats = sinon.spy();
+  const filteredIndexes = [0, 1];
+
+  const StatsHarness = () => {
+    const [datasets, setDatasets] = useState({
+      smoothie: {
+        id: 'smoothie',
+        label: 'smoothie',
+        color: [1, 1, 1],
+        dataContainer,
+        fields
+      }
+    });
+
+    return (
+      <DataTableModal
+        datasets={datasets}
+        dataId="smoothie"
+        applyCPUFilter={() => {
+          setDatasets(current => ({
+            smoothie: {...current.smoothie, filteredIdxCPU: filteredIndexes}
+          }));
+        }}
+        loadColumnStats={loadColumnStats}
+      />
+    );
+  };
+
+  const wrapper = mountDataTableModal(<StatsHarness />);
+  const allMeta = wrapper.find(DataTable).first().prop('colMeta');
+  t.equal(allMeta.value.columnStats, allValueStats, 'all data keeps the stored column stats');
+  t.equal(allMeta.score.columnStats, allScoreStats, 'all data keeps mapped column stats');
+
+  wrapper.find('.data-view-filtered').first().simulate('click');
+  const pendingMeta = wrapper.find(DataTable).first().prop('colMeta');
+  t.equal(pendingMeta.value.columnStats, undefined, 'filtered view drops all-data column stats');
+  t.equal(pendingMeta.value.isLoadingStats, false, 'filtered stats load when the header asks');
+
+  await act(async () => {
+    wrapper.find(DataTable).first().prop('loadColumnStats')('smoothie', ['value', 'score']);
+    await new Promise(resolve => setTimeout(resolve, 0));
+  });
+  wrapper.update();
+
+  const filteredMeta = wrapper.find(DataTable).first().prop('colMeta');
+  t.equal(filteredMeta.value.columnStats.mean, 1, 'numeric stats use filtered rows');
+  t.equal(
+    filteredMeta.value.columnStats.percentNulls,
+    0.5,
+    'nulls are counted in the filtered rows'
+  );
+  t.equal(filteredMeta.score.columnStats.mean, 3, 'stats use mapped values for filtered rows');
+  t.equal(filteredMeta.value.isLoadingStats, false, 'filtered stats finish loading');
+  t.equal(loadColumnStats.called, false, 'filtered stats do not replace the stored all-data stats');
+  t.equal(fields[0].filterProps.columnStats, allValueStats, 'stored value stats stay on the field');
+  t.equal(fields[1].filterProps.columnStats, allScoreStats, 'stored score stats stay on the field');
+
+  wrapper.find('.data-view-all').first().simulate('click');
+  const restoredMeta = wrapper.find(DataTable).first().prop('colMeta');
+  t.equal(restoredMeta.value.columnStats, allValueStats, 'all data shows the stored stats again');
+  t.equal(
+    restoredMeta.score.columnStats,
+    allScoreStats,
+    'all data shows the stored mapped stats again'
+  );
+
+  wrapper.find(DataTable).first().prop('loadColumnStats')('smoothie', 'value');
+  t.ok(
+    loadColumnStats.calledWith('smoothie', 'value'),
+    'all data still loads stats through the dataset action'
+  );
+
+  t.end();
+});
+
+test('Components -> DataTableModal -> filtered data before indexes are ready', t => {
+  const fields = [{name: 'name', type: 'string', displayName: 'name', fieldIdx: 0}];
+  const dataContainer = createDataContainer([['a'], ['b']], {fields});
+  const applyCPUFilter = sinon.spy();
+
+  const wrapper = mountDataTableModal(
+    <DataTableModal
+      datasets={{
+        smoothie: {
+          id: 'smoothie',
+          label: 'smoothie',
+          color: [1, 1, 1],
+          dataContainer,
+          fields
+        }
+      }}
+      dataId="smoothie"
+      applyCPUFilter={applyCPUFilter}
+    />
+  );
+
+  wrapper.find('.data-view-filtered').first().simulate('click');
+
+  t.ok(applyCPUFilter.calledOnce, 'requests a CPU filter');
+  t.ok(applyCPUFilter.calledWith('smoothie'), 'filters the active dataset');
+  t.equal(
+    wrapper.find('.data-view-row-count').first().text(),
+    '-',
+    'row count waits until filtered indexes exist'
+  );
+  t.equal(
+    wrapper.find(DataTable).first().prop('dataContainer').numRows(),
+    0,
+    'does not list unfiltered rows while the filter is pending'
+  );
+
+  t.end();
+});
+
+test('Components -> DataTableModal -> filtered data with no matching rows', t => {
+  const fields = [{name: 'name', type: 'string', displayName: 'name', fieldIdx: 0}];
+  const dataContainer = createDataContainer([['a'], ['b']], {fields});
+
+  const EmptyFilterHarness = () => {
+    const [datasets, setDatasets] = useState({
+      smoothie: {
+        id: 'smoothie',
+        label: 'smoothie',
+        color: [1, 1, 1],
+        dataContainer,
+        fields
+      }
+    });
+
+    return (
+      <DataTableModal
+        datasets={datasets}
+        dataId="smoothie"
+        applyCPUFilter={() => {
+          setDatasets(current => ({
+            smoothie: {...current.smoothie, filteredIdxCPU: []}
+          }));
+        }}
+      />
+    );
+  };
+
+  const wrapper = mountDataTableModal(<EmptyFilterHarness />);
+  wrapper.find('.data-view-filtered').first().simulate('click');
+
+  t.equal(wrapper.find('.data-view-row-count').first().text(), '0 rows', 'shows a zero row count');
+  t.equal(
+    wrapper.find(DataTable).first().prop('dataContainer').numRows(),
+    0,
+    'table is empty when every row is filtered out'
+  );
+
+  t.end();
+});
+
 test('Components -> DataTableModal -> render DataTable: csv 1', t => {
-  const wrapper = mountWithTheme(
+  const wrapper = mountDataTableModal(
     <DataTableModal datasets={StateWFiles.visState.datasets} dataId={testCsvDataId} />
   );
   t.equal(wrapper.find(DataTable).length, 1, 'should render 1 DataTable');
@@ -461,7 +885,7 @@ test('Components -> DataTableModal -> render DataTable: sort, pin and display fo
     VisStateActions.pinTableColumn(testCsvDataId, 'has_result')
   );
 
-  const wrapper = mountWithTheme(
+  const wrapper = mountDataTableModal(
     <DataTableModal datasets={nextState2.datasets} dataId={testCsvDataId} />
   );
 
@@ -539,7 +963,7 @@ test('Components -> DatableModal -> sort/pin/copy and display format should be c
   const setColumnDisplayFormat = sinon.spy();
   const column = 'gps_data.lat';
 
-  const wrapper = mountWithTheme(
+  const wrapper = mountDataTableModal(
     <DataTableModal
       datasets={initialState.datasets}
       dataId={testCsvDataId}
@@ -602,7 +1026,7 @@ test('Components -> cellSize -> renderedSize', t => {
     ];
     const dataContainer = createDataContainer(texts, {fields});
 
-    const wrapper = mountWithTheme(
+    const wrapper = mountDataTableModal(
       <DataTableModal
         datasets={{
           smoothie: {
@@ -647,7 +1071,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
   const fieldsWithDisplayFormat = geoStyleFields;
   fieldsWithDisplayFormat[5].displayFormat = TOOLTIP_FORMATS.DECIMAL_SCIENTIFIC_FIXED_2.format;
 
-  const wrapper = mountWithTheme(
+  const wrapper = mountDataTableModal(
     <DataTableModal
       datasets={{
         smoothie: {
