@@ -366,18 +366,30 @@ test('Components -> DataTableModal -> toggle filtered data', t => {
         ...current,
         [id]: {
           ...current[id],
-          filteredIdxCPU: id === 'smoothie' ? [0, 1] : [0]
+          filteredIdxCPU:
+            id === 'smoothie' ? (current[id].filterRecord?.version === 2 ? [2] : [0, 1]) : [0]
         }
       }));
     };
 
     return (
-      <DataTableModal
-        datasets={datasets}
-        dataId={dataId}
-        showDatasetTable={setDataId}
-        applyCPUFilter={applyCPUFilter}
-      />
+      <div>
+        <button
+          className="change-filter"
+          onClick={() =>
+            setDatasets(current => ({
+              ...current,
+              smoothie: {...current.smoothie, filterRecord: {version: 2}}
+            }))
+          }
+        />
+        <DataTableModal
+          datasets={datasets}
+          dataId={dataId}
+          showDatasetTable={setDataId}
+          applyCPUFilter={applyCPUFilter}
+        />
+      </div>
     );
   };
 
@@ -432,8 +444,16 @@ test('Components -> DataTableModal -> toggle filtered data', t => {
     'filtered rows are ordered by the indexed container'
   );
 
+  wrapper.find('.change-filter').simulate('click');
+  t.deepEqual(applyCalls, ['smoothie', 'smoothie'], 'refreshes the CPU filter when filters change');
+  t.equal(
+    wrapper.find(DataTable).first().prop('dataContainer').valueAt(0, 0),
+    'c',
+    'shows rows from the updated filter'
+  );
+
   wrapper.find('.data-view-all').first().simulate('click');
-  t.deepEqual(applyCalls, ['smoothie'], 'all data does not request another filter');
+  t.deepEqual(applyCalls, ['smoothie', 'smoothie'], 'all data does not request another filter');
   t.equal(
     wrapper.find('.data-view-row-count').first().text(),
     '4 rows',
@@ -450,7 +470,7 @@ test('Components -> DataTableModal -> toggle filtered data', t => {
 
   t.deepEqual(
     applyCalls,
-    ['smoothie', 'smoothie', 'other'],
+    ['smoothie', 'smoothie', 'smoothie', 'other'],
     'filters the dataset opened from the tabs'
   );
   t.equal(

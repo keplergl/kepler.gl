@@ -298,8 +298,14 @@ function DataTableModalFactory(
     const [showConfig, setShowConfig] = useState(false);
     const [showFiltered, setShowFiltered] = useState(false);
     const datasetCellSizeCache = useRef<Record<string, any>>({});
-    // Dataset id whose CPU filter was requested for the current filtered view.
-    const lastFilteredId = useRef<string | null>(null);
+    // Dataset revision covered by the latest CPU filter request.
+    const lastFilteredDataset = useRef<{
+      id: string;
+      filterRecord: unknown;
+      dataRevision: number | undefined;
+      dataContainer: DataContainerInterface | undefined;
+      fields: unknown;
+    } | null>(null);
 
     const enableColumnStats = getApplicationConfig().enableColumnStats;
 
@@ -451,10 +457,17 @@ function DataTableModalFactory(
         if (!id || !applyCPUFilter) {
           return;
         }
-        lastFilteredId.current = id;
+        const dataset = datasets?.[id];
+        lastFilteredDataset.current = {
+          id,
+          filterRecord: dataset?.filterRecord,
+          dataRevision: dataset?.dataRevision,
+          dataContainer: dataset?.dataContainer,
+          fields: dataset?.fields
+        };
         applyCPUFilter(id);
       },
-      [applyCPUFilter]
+      [applyCPUFilter, datasets]
     );
 
     const onSelectAllData = useCallback(() => {
@@ -481,18 +494,28 @@ function DataTableModalFactory(
       [requestFilteredData, showDatasetTable, showFiltered]
     );
 
-    // Cover dataId changes that do not go through the dataset tabs.
-    useEffect(() => {
-      if (!showFiltered || !dataId || lastFilteredId.current === dataId) {
-        return;
-      }
-      requestFilteredData(dataId);
-    }, [dataId, requestFilteredData, showFiltered]);
-
     const activeDataset = datasets && dataId ? datasets[dataId] : undefined;
     const sourceContainer = activeDataset?.dataContainer;
     const filteredIdxCPU = activeDataset?.filteredIdxCPU;
     const sortOrder = activeDataset?.sortOrder;
+
+    // Refresh filtered indexes when the active dataset, its filters, or its data changes.
+    useEffect(() => {
+      if (!showFiltered || !dataId || !activeDataset) {
+        return;
+      }
+      const lastDataset = lastFilteredDataset.current;
+      if (
+        lastDataset?.id === dataId &&
+        lastDataset.filterRecord === activeDataset.filterRecord &&
+        lastDataset.dataRevision === activeDataset.dataRevision &&
+        lastDataset.dataContainer === sourceContainer &&
+        lastDataset.fields === activeDataset.fields
+      ) {
+        return;
+      }
+      requestFilteredData(dataId);
+    }, [activeDataset, dataId, requestFilteredData, showFiltered, sourceContainer]);
 
     const displayData = useMemo(
       () =>
