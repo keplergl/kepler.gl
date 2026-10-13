@@ -1130,7 +1130,10 @@ mergedLayer1.config = {
       category: 'Uber',
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
-    sizeRange: [0, 10]
+    sizeRange: [0, 10],
+    targetArrowEnabled: false,
+    targetArrowShape: 'chevron',
+    targetArrowSize: 16
   }
 };
 

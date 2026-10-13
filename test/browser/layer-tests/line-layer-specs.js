@@ -16,6 +16,7 @@ import {
 
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
+import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {copyTable, copyTableAndUpdate} from '@kepler.gl/table';
 
 const {LineLayer} = KeplerGlLayers;
@@ -41,6 +42,12 @@ test('#LineLayer -> constructor', t => {
           t.ok(layer.isAggregated === false, 'LineLayer is not aggregated');
           t.ok(layer.config.label === 'test line layer', 'label should be correct');
           t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
+          t.equal(layer.config.visConfig.targetArrowEnabled, false, 'target arrow is off');
+          t.equal(
+            layer.visConfigSettings.targetArrowSize.allowCustomValue,
+            false,
+            'arrow size has no custom input'
+          );
         }
       }
     ]
@@ -354,6 +361,186 @@ test('#LineLayer -> renderLayer', t => {
         t.equal(props.brushingRadius, 2500, 'should supply brushingRadius');
         t.equal(props.brushingEnabled, true, 'should have brushingEnabled: true');
         t.equal(props.brushingTarget, 'source_target', 'brushingTarget: should be source');
+      }
+    },
+    {
+      name: 'Line render layer.3 target arrow',
+      layer: {
+        config: {
+          dataId,
+          label: 'trip lines',
+          columns,
+          color: [10, 10, 10],
+          visConfig: {
+            targetArrowEnabled: true,
+            targetArrowShape: 'triangle',
+            targetArrowSize: 20,
+            targetColor: [200, 30, 30]
+          }
+        },
+        type: 'line',
+        id: 'test_layer_0'
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      assert: deckLayers => {
+        t.equal(deckLayers.length, 2, 'Should create the line and an arrow head');
+        const arrowLayer = deckLayers[deckLayers.length - 1];
+        t.equal(arrowLayer.id, 'test_layer_0-arrow-head-triangle', 'arrow layer id');
+        t.equal(arrowLayer.props.pickable, false, 'arrow head does not take the line hover');
+        const radius =
+          typeof arrowLayer.props.getRadius === 'function'
+            ? arrowLayer.props.getRadius(arrowLayer.props.data[0])
+            : arrowLayer.props.getRadius;
+        t.equal(radius, 20, 'arrow size is the vis config value in pixels');
+        t.equal(arrowLayer.props.iconGeometry.length, 9, 'triangle is one triangle');
+        t.ok(
+          Number.isFinite(arrowLayer.props.getAngle(arrowLayer.props.data[0])),
+          'arrow angle is finite'
+        );
+        const fill =
+          typeof arrowLayer.props.getFillColor === 'function'
+            ? arrowLayer.props.getFillColor(arrowLayer.props.data[0])
+            : arrowLayer.props.getFillColor;
+        t.deepEqual(fill, [200, 30, 30], 'arrow uses the target color');
+      }
+    },
+    {
+      name: 'Line render layer.4 target arrow hover',
+      layer: {
+        config: {
+          dataId,
+          label: 'trip lines',
+          columns,
+          color: [10, 10, 10],
+          visConfig: {
+            targetArrowEnabled: true,
+            targetArrowShape: 'triangle',
+            targetArrowSize: 20
+          }
+        },
+        type: 'line',
+        id: 'test_layer_0'
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      renderArgs: {
+        objectHovered: {
+          picked: true,
+          object: {
+            index: 0,
+            sourcePosition: [-122.4, 37.8, 0],
+            targetPosition: [-122.3, 37.9, 0]
+          },
+          layer: {props: {id: 'test_layer_0'}}
+        }
+      },
+      assert: deckLayers => {
+        t.equal(deckLayers.length, 4, 'Should add a highlight stroke and a highlight arrow');
+        const arrowLayer = deckLayers[deckLayers.length - 1];
+        t.equal(arrowLayer.id, 'test_layer_0-arrow-head-triangle-hovered', 'highlight arrow id');
+        t.equal(arrowLayer.props.data.length, 1, 'highlight arrow is only the hovered stroke');
+        const color =
+          typeof arrowLayer.props.getFillColor === 'function'
+            ? arrowLayer.props.getFillColor(arrowLayer.props.data[0])
+            : arrowLayer.props.getFillColor;
+        t.deepEqual(color, [252, 242, 26, 255], 'highlight arrow uses the layer highlight color');
+      }
+    },
+    {
+      name: 'Line render layer.5 target arrow hover on globe',
+      layer: {
+        config: {
+          dataId,
+          label: 'trip lines',
+          columns,
+          color: [10, 10, 10],
+          visConfig: {
+            targetArrowEnabled: true,
+            targetArrowShape: 'triangle',
+            targetArrowSize: 20
+          }
+        },
+        type: 'line',
+        id: 'test_layer_0'
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      renderArgs: {
+        mapState: {...INITIAL_MAP_STATE, globe: {enabled: true}},
+        objectHovered: {
+          picked: true,
+          object: {
+            index: 0,
+            sourcePosition: [-122.4, 37.8, 0],
+            targetPosition: [-122.3, 37.9, 0]
+          },
+          layer: {props: {id: 'test_layer_0-globe'}}
+        }
+      },
+      assert: deckLayers => {
+        t.equal(deckLayers.length, 4, 'Should add globe highlight stroke and arrow');
+        t.equal(deckLayers[1].id, 'test_layer_0-globe-hovered', 'globe highlight stroke id');
+        t.equal(
+          deckLayers[3].id,
+          'test_layer_0-arrow-head-triangle-hovered',
+          'globe highlight arrow id'
+        );
+      }
+    },
+    {
+      name: 'Line render layer.6 preserves globe behavior with target arrow disabled',
+      layer: {
+        config: {
+          dataId,
+          label: 'trip lines',
+          columns,
+          color: [10, 10, 10],
+          visConfig: {
+            targetArrowEnabled: false,
+            targetColor: [200, 30, 30]
+          }
+        },
+        type: 'line',
+        id: 'test_layer_0'
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      renderArgs: {
+        mapState: {...INITIAL_MAP_STATE, globe: {enabled: true}},
+        objectHovered: {
+          picked: true,
+          object: {
+            index: 0,
+            sourcePosition: [-122.4, 37.8, 0],
+            targetPosition: [-122.3, 37.9, 0]
+          },
+          layer: {props: {id: 'test_layer_0-globe'}}
+        }
+      },
+      assert: deckLayers => {
+        t.equal(deckLayers.length, 1, 'Should keep the original globe stroke only');
+        t.deepEqual(
+          deckLayers[0].props.getTargetColor,
+          [10, 10, 10],
+          'disabled arrow keeps the original solid line color'
+        );
       }
     }
   ];
