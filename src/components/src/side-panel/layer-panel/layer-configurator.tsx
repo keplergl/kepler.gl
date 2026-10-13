@@ -1305,6 +1305,10 @@ export default function LayerConfiguratorFactory(
                   {...layer.visConfigSettings.fixedHeight}
                   {...visConfiguratorProps}
                 />
+                <VisConfigSwitch
+                  {...layer.visConfigSettings.invertHeight}
+                  {...visConfiguratorProps}
+                />
                 <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.wireframe} />
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>

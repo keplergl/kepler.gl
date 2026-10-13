@@ -11,6 +11,7 @@ import {
   defaultAggregationsForFields,
   groupByDataset,
   isDatasetOpsAggregationField,
+  canMutateDatasetSchema,
   isTabularDatasetForOps,
   joinDatasets,
   spatialJoinDatasets,
@@ -433,8 +434,15 @@ describe('dataset-ops engine', () => {
   test('isTabularDatasetForOps skips tiles and disabled datasets', () => {
     expect(isTabularDatasetForOps({type: 'local'})).toBe(true);
     expect(isTabularDatasetForOps({type: ''})).toBe(true);
+    expect(isTabularDatasetForOps({type: 'externally-hosted'})).toBe(true);
     expect(isTabularDatasetForOps({type: 'vector-tile'})).toBe(false);
     expect(isTabularDatasetForOps({type: 'local', disableDataOperation: true})).toBe(false);
+
+    expect(canMutateDatasetSchema({type: 'local'})).toBe(true);
+    expect(canMutateDatasetSchema({type: ''})).toBe(true);
+    expect(canMutateDatasetSchema({type: 'externally-hosted'})).toBe(false);
+    expect(canMutateDatasetSchema({type: 'vector-tile'})).toBe(false);
+    expect(canMutateDatasetSchema({type: 'local', disableDataOperation: true})).toBe(false);
   });
 
   test('aggregation options depend on field type', () => {

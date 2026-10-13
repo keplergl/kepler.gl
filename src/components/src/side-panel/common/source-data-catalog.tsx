@@ -101,6 +101,7 @@ function SourceDataCatalogFactory(
                 addSpatialJoin={addSpatialJoin}
                 addSuitability={addSuitability}
                 replaceDataset={replaceDataset}
+                refreshSettingsOpen={showRefreshSettings}
                 onToggleRefreshSettings={
                   (refreshDataset || updateDatasetProps) &&
                   dataset.type === DatasetType.EXTERNALLY_HOSTED

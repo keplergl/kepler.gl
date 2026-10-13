@@ -77,10 +77,11 @@ describe('dataset ops vis-state', () => {
         aggregations: {pop: 'sum'}
       })
     );
+    const resultId = state.groupBys[0].resultId;
     state = reduceVisState(state, VisStateActions.runGroupBy(opId));
     state = flushCreateTableTasks(state);
 
-    const resultId = state.groupBys[0].resultId;
+    expect(state.groupBys).toHaveLength(0);
     expect(state.datasets[resultId]).toBeTruthy();
     expect(state.datasets[resultId].metadata.derivedDataset).toEqual({
       type: 'groupBy',
@@ -115,6 +116,7 @@ describe('dataset ops vis-state', () => {
     state = reduceVisState(state, VisStateActions.runGroupBy(op.id));
     state = flushCreateTableTasks(state);
 
+    expect(state.groupBys).toHaveLength(0);
     expect(Object.keys(state.datasets)).toHaveLength(2);
     state = reduceVisState(state, VisStateActions.removeDataset('cities'));
     expect(state.datasets.cities).toBeUndefined();
@@ -211,6 +213,7 @@ describe('dataset ops vis-state', () => {
     state = reduceVisState(state, VisStateActions.runSpatialJoin(op.id));
     state = flushCreateTableTasks(state);
 
+    expect(state.joins).toHaveLength(0);
     expect(state.datasets[op.resultId]).toBeTruthy();
     state = reduceVisState(state, VisStateActions.removeDataset('pts'));
     expect(state.datasets.pts).toBeUndefined();
@@ -219,7 +222,7 @@ describe('dataset ops vis-state', () => {
     expect(state.joins).toHaveLength(0);
   });
 
-  test('save/load roundtrip keeps derivedDataset metadata and drafts', () => {
+  test('save/load roundtrip keeps the derived dataset and drops the finished group by', () => {
     const cities = makeTable(
       'cities',
       [
@@ -255,7 +258,7 @@ describe('dataset ops vis-state', () => {
       | {derivedDataset?: {type?: string} | null}
       | undefined;
     expect(derivedMeta?.derivedDataset?.type).toBe('groupBy');
-    expect(saved.config.config.visState.groupBys?.[0].fieldName).toBe('region');
+    expect(saved.config.config.visState.groupBys ?? []).toHaveLength(0);
   });
 });
 
