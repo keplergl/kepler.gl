@@ -229,23 +229,30 @@ test('Components -> DataTableModal.render: csv 1', t => {
   const expectedColMeta = {
     'gps_data.utc_timestamp': {
       name: 'gps_data.utc_timestamp',
+      colIdx: 0,
       type: 'timestamp',
       format: 'YYYY-M-D H:m:s'
     },
-    'gps_data.lat': {name: 'gps_data.lat', type: 'real'},
-    'gps_data.lng': {name: 'gps_data.lng', type: 'real'},
-    'gps_data.types': {name: 'gps_data.types', type: 'string'},
-    epoch: {name: 'epoch', type: 'timestamp', format: 'X'},
-    has_result: {name: 'has_result', type: 'boolean'},
-    uid: {name: 'uid', type: 'integer'},
-    time: {name: 'time', type: 'timestamp', format: 'YYYY-M-DTHH:mm:ss.SSSS'},
-    begintrip_ts_utc: {name: 'begintrip_ts_utc', type: 'timestamp', format: 'YYYY-M-D HH:mm:ssZZ'},
-    begintrip_ts_local: {
-      name: 'begintrip_ts_local',
+    'gps_data.lat': {name: 'gps_data.lat', colIdx: 1, type: 'real'},
+    'gps_data.lng': {name: 'gps_data.lng', colIdx: 2, type: 'real'},
+    'gps_data.types': {name: 'gps_data.types', colIdx: 3, type: 'string'},
+    epoch: {name: 'epoch', colIdx: 4, type: 'timestamp', format: 'X'},
+    has_result: {name: 'has_result', colIdx: 5, type: 'boolean'},
+    uid: {name: 'uid', colIdx: 6, type: 'integer'},
+    time: {name: 'time', colIdx: 7, type: 'timestamp', format: 'YYYY-M-DTHH:mm:ss.SSSS'},
+    begintrip_ts_utc: {
+      name: 'begintrip_ts_utc',
+      colIdx: 8,
       type: 'timestamp',
       format: 'YYYY-M-D HH:mm:ssZZ'
     },
-    date: {name: 'date', type: 'date', format: 'YYYY-M-D'}
+    begintrip_ts_local: {
+      name: 'begintrip_ts_local',
+      colIdx: 9,
+      type: 'timestamp',
+      format: 'YYYY-M-D HH:mm:ssZZ'
+    },
+    date: {name: 'date', colIdx: 10, type: 'date', format: 'YYYY-M-D'}
   };
 
   t.deepEqual(props.columns, expectedColumns, 'DataTable should have the correct props.columns');

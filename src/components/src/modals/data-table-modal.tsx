@@ -7,7 +7,11 @@ import DatasetLabel from '../common/dataset-label';
 import DataTableFactory from '../common/data-table';
 import {renderedSize} from '../common/data-table/cell-size';
 import CanvasHack from '../common/data-table/canvas';
-import KeplerTable, {Datasets} from '@kepler.gl/table';
+import KeplerTable, {
+  Datasets,
+  canMutateDatasetSchema,
+  isTabularDatasetForOps
+} from '@kepler.gl/table';
 import {UIStateActions} from '@kepler.gl/actions';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {UiState} from '@kepler.gl/types';
@@ -75,8 +79,19 @@ export const DatasetModalTab: IStyledComponent<
   }
 `;
 
+const HiddenColumnsBar = styled.button`
+  margin-right: 12px;
+  border: 0;
+  background: transparent;
+  color: ${props => props.theme.subtextColor};
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+`;
+
 const StyledConfigureButton = styled.div`
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   position: absolute;
   top: 24px;
@@ -235,7 +250,12 @@ interface DataTableModalProps {
   dataId?: string;
   sortTableColumn: (id: string, column: string, mode?: string) => void;
   pinTableColumn: (id: string, column: string) => void;
+  toggleTableColumnHidden?: (id: string, column: string) => void;
+  showAllTableColumns?: (id: string) => void;
   copyTableColumn: (id: string, column: string) => void;
+  renameTableColumn?: (id: string, column: string, newName: string) => void;
+  deleteTableColumn?: (id: string, column: string) => void;
+  createFilterFromColumn?: (id: string, column: string) => void;
   datasets: Datasets;
   showDatasetTable: (id: string) => void;
   showTab?: boolean;
@@ -261,14 +281,18 @@ function DataTableModalFactory(
     dataId = '',
     sortTableColumn,
     pinTableColumn,
+    toggleTableColumnHidden,
+    showAllTableColumns,
     copyTableColumn: copyTableColumnProp,
+    renameTableColumn,
+    deleteTableColumn,
+    createFilterFromColumn,
     datasets,
     showDatasetTable,
+    uiStateActions,
     showTab = true,
     applyCPUFilter,
     setColumnDisplayFormat: setColumnDisplayFormatProp,
-    uiStateActions,
-    uiState,
     loadColumnStats
   }) => {
     const [showConfig, setShowConfig] = useState(false);
@@ -284,7 +308,15 @@ function DataTableModalFactory(
       [datasets, dataId]
     );
 
-    const columns = useMemo(() => fields?.map(f => f.name) || [], [fields]);
+    const hiddenColumns = useMemo(
+      () => datasets?.[dataId]?.hiddenColumns ?? [],
+      [datasets, dataId]
+    );
+    const columns = useMemo(() => {
+      const hidden = new Set(hiddenColumns);
+      return (fields?.map(field => field.name) || []).filter(name => !hidden.has(name));
+    }, [fields, hiddenColumns]);
+
     const [filteredColumnStats, setFilteredColumnStats] = useState<FilteredColumnStatsState>(
       EMPTY_FILTERED_COLUMN_STATS
     );
@@ -358,6 +390,17 @@ function DataTableModalFactory(
       [pinTableColumn, dataId]
     );
 
+    const handleHideTableColumn = useCallback(
+      (column: string) => {
+        toggleTableColumnHidden?.(dataId, column);
+      },
+      [toggleTableColumnHidden, dataId]
+    );
+
+    const handleShowAllColumns = useCallback(() => {
+      showAllTableColumns?.(dataId);
+    }, [showAllTableColumns, dataId]);
+
     const handleSortTableColumn = useCallback(
       (column: string, mode?: string) => {
         sortTableColumn(dataId, column, mode);
@@ -370,6 +413,29 @@ function DataTableModalFactory(
         if (dataId) setColumnDisplayFormatProp(dataId, formats);
       },
       [setColumnDisplayFormatProp, dataId]
+    );
+
+    const handleRenameTableColumn = useCallback(
+      (column: string, newName: string) => {
+        renameTableColumn?.(dataId, column, newName);
+      },
+      [renameTableColumn, dataId]
+    );
+
+    const handleDeleteTableColumn = useCallback(
+      (column: string) => {
+        deleteTableColumn?.(dataId, column);
+      },
+      [deleteTableColumn, dataId]
+    );
+
+    const handleCreateFilterFromColumn = useCallback(
+      (column: string) => {
+        createFilterFromColumn?.(dataId, column);
+        uiStateActions.toggleSidePanel('filter');
+        uiStateActions.toggleModal(null);
+      },
+      [createFilterFromColumn, dataId, uiStateActions]
     );
 
     const onOpenConfig = useCallback(() => {
@@ -521,7 +587,11 @@ function DataTableModalFactory(
     const colMeta = useMemo(
       () =>
         fields?.reduce(
-          (acc, {name, displayName, type, filterProps, format, displayFormat, isLoadingStats}) => {
+          (
+            acc,
+            {name, displayName, type, filterProps, format, displayFormat, isLoadingStats},
+            colIdx
+          ) => {
             const waitingForFilter = showFiltered && !Array.isArray(filteredIdxCPU);
             const stats = showFiltered ? visibleFilteredStats[name] : filterProps?.columnStats;
             const loading = showFiltered
@@ -532,6 +602,7 @@ function DataTableModalFactory(
               ...acc,
               [name]: {
                 name: displayName || name,
+                colIdx,
                 type,
                 ...(format ? {format} : {}),
                 ...(displayFormat ? {displayFormat} : {}),
@@ -557,6 +628,8 @@ function DataTableModalFactory(
     if (!datasets || !dataId || !activeDataset || !displayData) {
       return null;
     }
+    const canMutateColumns = canMutateDatasetSchema(activeDataset);
+    const canCreateFilter = isTabularDatasetForOps(activeDataset);
 
     return (
       <StyledModal className="dataset-modal" id="dataset-modal">
@@ -600,6 +673,11 @@ function DataTableModalFactory(
             </DataViewRowCount>
           </DataViewBar>
           <StyledConfigureButton className="display-config-button">
+            {hiddenColumns.length ? (
+              <HiddenColumnsBar type="button" onClick={handleShowAllColumns}>
+                {`Show ${hiddenColumns.length} hidden`}
+              </HiddenColumnsBar>
+            ) : null}
             <Gear onClick={onOpenConfig} />
             <Portaled right={240} top={20} isOpened={showConfig} onClose={onCloseConfig}>
               <DataTableConfig
@@ -618,13 +696,25 @@ function DataTableModalFactory(
               colMeta={colMeta}
               cellSizeCache={cellSizeCache}
               dataContainer={displayData.dataContainer}
-              pinnedColumns={activeDataset.pinnedColumns}
+              pinnedColumns={(activeDataset.pinnedColumns || []).filter(
+                column => !hiddenColumns.includes(column)
+              )}
               sortOrder={displayData.sortOrder}
               sortColumn={activeDataset.sortColumn || DEFAULT_SORT_COLUMN}
               copyTableColumn={handleCopyTableColumn}
               pinTableColumn={handlePinTableColumn}
+              hideTableColumn={toggleTableColumnHidden ? handleHideTableColumn : undefined}
               sortTableColumn={handleSortTableColumn}
               setColumnDisplayFormat={handleSetColumnDisplayFormat}
+              renameTableColumn={
+                canMutateColumns && renameTableColumn ? handleRenameTableColumn : undefined
+              }
+              deleteTableColumn={
+                canMutateColumns && deleteTableColumn ? handleDeleteTableColumn : undefined
+              }
+              createFilterFromColumn={
+                canCreateFilter && createFilterFromColumn ? handleCreateFilterFromColumn : undefined
+              }
               hasStats={enableColumnStats}
               loadColumnStats={enableColumnStats ? handleLoadColumnStats : undefined}
             />

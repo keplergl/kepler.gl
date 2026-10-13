@@ -145,6 +145,10 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_DATASET]: visStateUpdaters.updateDatasetUpdater,
 
+  [ActionTypes.RENAME_TABLE_COLUMN]: visStateUpdaters.renameTableColumnUpdater,
+
+  [ActionTypes.DELETE_TABLE_COLUMN]: visStateUpdaters.deleteTableColumnUpdater,
+
   [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
 
   [ActionTypes.SET_EDITOR_FEATURE_PROPERTIES]: visStateUpdaters.setEditorFeaturePropertiesUpdater,
@@ -173,6 +177,10 @@ const actionHandler = {
   [ActionTypes.SORT_TABLE_COLUMN]: visStateUpdaters.sortTableColumnUpdater,
 
   [ActionTypes.PIN_TABLE_COLUMN]: visStateUpdaters.pinTableColumnUpdater,
+
+  [ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN]: visStateUpdaters.toggleTableColumnHiddenUpdater,
+
+  [ActionTypes.SHOW_ALL_TABLE_COLUMNS]: visStateUpdaters.showAllTableColumnsUpdater,
 
   [ActionTypes.COPY_TABLE_COLUMN]: visStateUpdaters.copyTableColumnUpdater,
 

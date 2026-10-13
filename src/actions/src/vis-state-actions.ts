@@ -1251,6 +1251,49 @@ export function pinTableColumn(
   };
 }
 
+export type ToggleTableColumnHiddenUpdaterAction = {
+  dataId: string;
+  column: string;
+};
+/**
+ * Hide or show a dataset column in the attribute table and in data export.
+ * @param dataId
+ * @param column
+ * @returns action
+ * @public
+ */
+export function toggleTableColumnHidden(
+  dataId: string,
+  column: string
+): Merge<
+  ToggleTableColumnHiddenUpdaterAction,
+  {type: typeof ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN}
+> {
+  return {
+    type: ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN,
+    dataId,
+    column
+  };
+}
+
+export type ShowAllTableColumnsUpdaterAction = {
+  dataId: string;
+};
+/**
+ * Show every attribute-table column that was hidden.
+ * @param dataId
+ * @returns action
+ * @public
+ */
+export function showAllTableColumns(
+  dataId: string
+): Merge<ShowAllTableColumnsUpdaterAction, {type: typeof ActionTypes.SHOW_ALL_TABLE_COLUMNS}> {
+  return {
+    type: ActionTypes.SHOW_ALL_TABLE_COLUMNS,
+    dataId
+  };
+}
+
 export type CopyTableColumnUpdaterAction = {
   dataId: string;
   column: string;
@@ -1509,6 +1552,55 @@ export function updateDataset(
     dataId,
     data,
     renames
+  };
+}
+
+export type RenameTableColumnUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  newName: string;
+};
+/**
+ * Rename a dataset column. The new name becomes the field identity stored in
+ * layers, filters, charts, dataset operations, and saved maps.
+ * @param dataId - dataset id
+ * @param fieldName - current column name
+ * @param newName - next column name
+ * @returns action
+ * @public
+ */
+export function renameTableColumn(
+  dataId: string,
+  fieldName: string,
+  newName: string
+): Merge<RenameTableColumnUpdaterAction, {type: typeof ActionTypes.RENAME_TABLE_COLUMN}> {
+  return {
+    type: ActionTypes.RENAME_TABLE_COLUMN,
+    dataId,
+    fieldName,
+    newName
+  };
+}
+
+export type DeleteTableColumnUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+};
+/**
+ * Delete a dataset column and drop references that required it.
+ * @param dataId - dataset id
+ * @param fieldName - column name
+ * @returns action
+ * @public
+ */
+export function deleteTableColumn(
+  dataId: string,
+  fieldName: string
+): Merge<DeleteTableColumnUpdaterAction, {type: typeof ActionTypes.DELETE_TABLE_COLUMN}> {
+  return {
+    type: ActionTypes.DELETE_TABLE_COLUMN,
+    dataId,
+    fieldName
   };
 }
 

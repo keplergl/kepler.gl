@@ -134,7 +134,13 @@ import {
   getDatasetRefreshIntervalMs,
   getRemoteSourceFormat
 } from '@kepler.gl/constants';
-import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
+import {
+  AGGREGATION_COUNT_LAYER_TYPES,
+  isPointCountLabel,
+  LAYER_ID_LENGTH,
+  Layer,
+  LayerClasses
+} from '@kepler.gl/layers';
 import {
   apply_,
   compose_,
@@ -190,12 +196,18 @@ import {
   KeplerTable,
   FilterProps,
   assignGpuChannel,
+  buildDeleteColumnData,
+  buildRenameColumnData,
+  canMutateDatasetSchema,
   copyTableAndUpdate,
   createNewDataEntry,
   pinTableColumns,
+  showAllTableColumns,
+  toggleHiddenTableColumn,
   setFilterGpuMode,
   sortDatasetByColumn
 } from '@kepler.gl/table';
+import {remapChartsForDataset} from './column-edit-reconcile';
 import {findFieldsToShow, removeLayerFromZoomOpacity} from './interaction-utils';
 import {
   calculateLayerData,
@@ -555,7 +567,8 @@ export function applyLayerConfigUpdater(
   const {oldLayerId, newLayerConfig, layerIndex} = action;
   // Saved configs have a visualChannels sibling; parsed/editor JSON folds those
   // fields into config. Re-parsing the latter drops colorField and resets the scale.
-  const newParsedLayer = isSavedLayerConfigV1(newLayerConfig)
+  const savedLayerConfig = isSavedLayerConfigV1(newLayerConfig);
+  const newParsedLayer = savedLayerConfig
     ? parseLayerConfig(state.schema, newLayerConfig)
     : newLayerConfig;
   const oldLayer = state.layers.find(l => l.id === oldLayerId);
@@ -571,7 +584,9 @@ export function applyLayerConfigUpdater(
     return state;
   }
   // Make sure the layer is valid and convert it to Layer
-  const newLayer = validateLayerWithData(dataset, newParsedLayer, state.layerClasses);
+  const newLayer = validateLayerWithData(dataset, newParsedLayer, state.layerClasses, {
+    keepUnlabeledAggregationTextLabel: savedLayerConfig
+  });
   if (!newLayer) {
     return state;
   }
@@ -848,12 +863,21 @@ function addOrRemoveTextLabels(newFields, textLabel, defaultTextLabel = DEFAULT_
 
   const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => d);
 
-  const addFields = newFields.filter(f => !currentFields.includes(f.name));
+  const addFields = newFields.filter(
+    (field, index) =>
+      field &&
+      field.name &&
+      !currentFields.includes(field.name) &&
+      newFields.findIndex(other => other && other.name === field.name) === index
+  );
   const deleteFields = currentFields.filter(f => !newFields.find(fd => fd.name === f));
 
   // delete
   newTextLabel = newTextLabel.filter(tl => tl.field && !deleteFields.includes(tl.field.name));
-  newTextLabel = !newTextLabel.length ? [defaultTextLabel] : newTextLabel;
+  // Aggregation defaults already name Point Count. Using that object as the
+  // empty placeholder, then appending the field just picked, inserts the same
+  // label twice. deck.gl then rejects the duplicate collision layer ids.
+  newTextLabel = !newTextLabel.length ? [{...defaultTextLabel, field: null}] : newTextLabel;
 
   // add
   newTextLabel = [
@@ -912,6 +936,9 @@ export function layerTextLabelChangeUpdater(
       ...textLabel,
       {
         ...defaultTextLabel,
+        // The slot is empty until a field is picked. Aggregation defaults already
+        // carry Point Count, and copying that field would add a second label.
+        field: null,
         collisionEnabled: Boolean(textLabel[0]?.collisionEnabled)
       }
     ];
@@ -1128,6 +1155,14 @@ export function layerTypeChangeUpdater(
       state.datasets,
       defaultLayerProps
     );
+    if (!AGGREGATION_COUNT_LAYER_TYPES.has(newType)) {
+      const textLabel = newLayer.config.textLabel.filter(label => !isPointCountLabel(label));
+      if (textLabel.length !== newLayer.config.textLabel.length) {
+        newLayer.updateLayerConfig({
+          textLabel: textLabel.length ? textLabel : [{...DEFAULT_TEXT_LABEL}]
+        });
+      }
+    }
     newLayer.updateLayerDomain(state.datasets);
   }
 
@@ -4373,11 +4408,14 @@ export function updateDatasetUpdater(
   newTable.filterRecordCPU = undefined;
   newTable.sortColumn = undefined;
   newTable.sortOrder = null;
+  const newFieldsByName = new Set(newTable.fields.map(f => f.name));
   newTable.pinnedColumns = (existing.pinnedColumns || [])
     .map(name => renames[name] ?? name)
-    .filter(name => newTable.getColumnFieldIdx(name) > -1);
+    .filter(name => newFieldsByName.has(name));
+  newTable.hiddenColumns = (existing.hiddenColumns || [])
+    .map(name => renames[name] ?? name)
+    .filter(name => newFieldsByName.has(name));
 
-  const newFieldsByName = new Set(newTable.fields.map(f => f.name));
   const newDatasets = {...state.datasets, [dataId]: newTable};
 
   // 2. reconcile filters
@@ -4478,7 +4516,8 @@ export function updateDatasetUpdater(
     datasets: newDatasets,
     filters: newFilters,
     layers: newLayers,
-    interactionConfig
+    interactionConfig,
+    charts: remapChartsForDataset(state.charts, dataId, renames, newFieldsByName)
   };
 
   // 6. drop layers that lost their required columns
@@ -4488,6 +4527,54 @@ export function updateDatasetUpdater(
   nextState = updateAllLayerDomainData(nextState, dataId);
 
   return nextState;
+}
+
+/**
+ * Rename a column's stored identity (`field.name`) and every layer, filter,
+ * tooltip, and chart reference that used the old name.
+ */
+export function renameTableColumnUpdater(
+  state: VisState,
+  action: VisStateActions.RenameTableColumnUpdaterAction
+): VisState {
+  const {dataId, fieldName, newName} = action;
+  const dataset = state.datasets[dataId];
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
+    return state;
+  }
+  const payload = buildRenameColumnData(dataset, fieldName, newName);
+  if (!payload) {
+    return state;
+  }
+  return updateDatasetUpdater(state, {
+    dataId,
+    data: payload.data,
+    renames: payload.renames
+  });
+}
+
+/**
+ * Drop a column and the layers, filters, and other references that required it.
+ * The last remaining column is kept.
+ */
+export function deleteTableColumnUpdater(
+  state: VisState,
+  action: VisStateActions.DeleteTableColumnUpdaterAction
+): VisState {
+  const {dataId, fieldName} = action;
+  const dataset = state.datasets[dataId];
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
+    return state;
+  }
+  const payload = buildDeleteColumnData(dataset, fieldName);
+  if (!payload) {
+    return state;
+  }
+  return updateDatasetUpdater(state, {
+    dataId,
+    data: payload.data,
+    renames: payload.renames
+  });
 }
 
 /**
@@ -5573,6 +5660,36 @@ export function pinTableColumnUpdater(
 }
 
 /**
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function toggleTableColumnHiddenUpdater(
+  state: VisState,
+  {dataId, column}: VisStateActions.ToggleTableColumnHiddenUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+  return set(['datasets', dataId], toggleHiddenTableColumn(dataset, column), state);
+}
+
+/**
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function showAllTableColumnsUpdater(
+  state: VisState,
+  {dataId}: VisStateActions.ShowAllTableColumnsUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+  return set(['datasets', dataId], showAllTableColumns(dataset), state);
+}
+
+/**
  * Copy column content as strings
  * @memberof visStateUpdaters
  * @public
@@ -5626,21 +5743,59 @@ export function setColumnDisplayFormatUpdater(
 
   const newDataset = copyTableAndUpdate(dataset, {fields: newFields as Field[]});
   let newState = pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+  const textLabelLayerIndexes: number[] = [];
 
-  // update colorField displayFormat
+  // Layer configs retain their own field objects, so keep those copies in sync
+  // with the display format stored on the dataset field.
   newState = {
     ...newState,
-    layers: newState.layers.map(layer =>
-      layer.config?.colorField?.name && layer.config.colorField.name in formats
+    layers: newState.layers.map((layer, layerIndex) => {
+      // Column names are not unique across datasets. Only update layers that
+      // belong to the dataset targeted by this action.
+      if (layer.config.dataId !== dataId) {
+        return layer;
+      }
+
+      const colorField = layer.config?.colorField;
+      const updatedColorField =
+        colorField?.name && colorField.name in formats
+          ? {...colorField, displayFormat: formats[colorField.name]}
+          : null;
+      // Text labels also keep field copies instead of reading dataset.fields at render time.
+      const textLabel = layer.config.textLabel.map(label => {
+        const {field} = label;
+        return field?.name && field.name in formats
+          ? {...label, field: {...field, displayFormat: formats[field.name]}}
+          : label;
+      });
+      const updateTextLabel = textLabel.some(
+        (label, index) => label !== layer.config.textLabel[index]
+      );
+      if (updateTextLabel) {
+        textLabelLayerIndexes.push(layerIndex);
+      }
+
+      return updatedColorField || updateTextLabel
         ? layer.updateLayerConfig({
-            colorField: {
-              ...layer.config.colorField,
-              displayFormat: formats[layer.config.colorField.name]
-            }
+            ...(updatedColorField ? {colorField: updatedColorField} : {}),
+            ...(updateTextLabel ? {textLabel} : {})
           })
-        : layer
-    )
+        : layer;
+    })
   };
+
+  if (textLabelLayerIndexes.length) {
+    // Label accessors and character sets are cached in layerData. Rebuild them
+    // immediately so the new format appears without removing and re-adding the label field.
+    const layers = newState.layers.slice();
+    const layerData = newState.layerData.slice();
+    textLabelLayerIndexes.forEach(layerIndex => {
+      const result = calculateLayerData(layers[layerIndex], newState, layerData[layerIndex]);
+      layers[layerIndex] = result.layer;
+      layerData[layerIndex] = result.layerData;
+    });
+    newState = {...newState, layers, layerData};
+  }
 
   return newState;
 }

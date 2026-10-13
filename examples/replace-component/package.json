@@ -30,7 +30,7 @@
     "node": ">=20"
   },
   "volta": {
-    "node": "20.19.3",
+    "node": "24.21.0",
     "yarn": "4.4.0"
   },
   "packageManager": "yarn@4.4.0"

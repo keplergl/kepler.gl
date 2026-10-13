@@ -101,6 +101,7 @@ export default class GridLayer extends AggregationLayer {
     const {data, objectHovered, mapState} = opts;
 
     const defaultAggregationLayerProps = this.getDefaultAggregationLayerProp(opts);
+    const countLabelProps = this.getCountLabelProps(opts);
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
     const cellSize = visConfig.worldUnitSize * 1000;
@@ -115,7 +116,8 @@ export default class GridLayer extends AggregationLayer {
         ...defaultAggregationLayerProps,
         ...data,
         wrapLongitude: false,
-        cellSize
+        cellSize,
+        ...countLabelProps
       }),
 
       // render an outline of each cell if not extruded

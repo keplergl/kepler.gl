@@ -37,7 +37,11 @@ interface GridPickingObject {
 export default class ScaleEnhancedGridLayer extends GridLayer<any> {
   static defaultProps = {
     ...GridLayer.defaultProps,
-    gpuAggregation: false
+    gpuAggregation: false,
+    // Supplied by kepler's AggregationLayer when a point-count label is on.
+    // compare: false so a new callback identity does not re-aggregate.
+    renderCountLabels: {type: 'function', value: null, compare: false, optional: true},
+    countLabelConfig: {type: 'object', value: null, compare: true, optional: true}
   };
 
   // HACK: deck.gl 9's _onAggregationUpdate is private and its onSetColorDomain
