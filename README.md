@@ -60,12 +60,20 @@ When **using kepler.gl as a dependency** in your own app, use Node 20 or a newer
 Kepler.gl consists of different modules. Each module can be added to the project like this:
 
 ```sh
-npm install --save @kepler.gl/components
+npm install --save @kepler.gl/components maplibre-gl
 // or
-yarn add @kepler.gl/components
+yarn add @kepler.gl/components maplibre-gl
 ```
 
-kepler.gl is built upon [mapbox][mapbox]. You will need a [Mapbox Access Token][mapbox-token] to use it.
+The default basemaps use MapLibre. Load its stylesheet once in your application entry point:
+
+```js
+import 'maplibre-gl/dist/maplibre-gl.css';
+```
+
+If your application only uses Mapbox-hosted styles, install `mapbox-gl` and load
+`mapbox-gl/dist/mapbox-gl.css` instead. Applications that allow both MapLibre and
+Mapbox styles should load both stylesheets.
 
 If you don't use a module bundler, it's also fine. Kepler.gl npm package includes precompiled production UMD builds in the [umd folder](https://unpkg.com/kepler.gl/umd).
 You can add the script tag to your html file as it follows (latest version of Kepler.gl):

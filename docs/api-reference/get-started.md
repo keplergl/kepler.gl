@@ -5,8 +5,17 @@
 Use <b>Node v20</b> and above, older node versions have not been tested
 
 ```sh
-npm install --save kepler.gl @kepler.gl/components @kepler.gl/reducers
+npm install --save kepler.gl @kepler.gl/components @kepler.gl/reducers maplibre-gl
 ```
+
+The default basemaps use MapLibre, so load its stylesheet once in your application entry point:
+
+```js
+import 'maplibre-gl/dist/maplibre-gl.css';
+```
+
+Mapbox-only applications should load `mapbox-gl/dist/mapbox-gl.css` instead.
+Applications that allow both MapLibre and Mapbox styles should load both stylesheets.
 
 ### Get Mapbox Token
 
@@ -30,6 +39,7 @@ import { connect, Provider } from "react-redux";
 
 import keplerGlReducer, { enhanceReduxMiddleware } from "@kepler.gl/reducers";
 import KeplerGl from "@kepler.gl/components";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 import AutoSizer from "react-virtualized/dist/commonjs/AutoSizer";
 

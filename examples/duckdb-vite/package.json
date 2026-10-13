@@ -15,6 +15,7 @@
     "@kepler.gl/styles": "^3.3.0-alpha.15",
     "@kepler.gl/types": "^3.3.0-alpha.15",
     "@kepler.gl/utils": "^3.3.0-alpha.15",
+    "maplibre-gl": "^4.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.1.0",

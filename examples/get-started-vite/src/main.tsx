@@ -5,6 +5,7 @@ import React, {useState, useEffect} from 'react';
 import ReactDOM from 'react-dom/client';
 import {Provider, useDispatch} from 'react-redux';
 import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 import KeplerGl from '@kepler.gl/components';
 import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
