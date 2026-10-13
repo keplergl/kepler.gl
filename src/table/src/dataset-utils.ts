@@ -13,7 +13,8 @@ import {
   PMTilesType,
   RemoteTileFormat,
   VectorTileDatasetMetadata,
-  WMSDatasetMetadata
+  WMSDatasetMetadata,
+  ZarrDatasetMetadata
 } from '@kepler.gl/constants';
 import {withPublicTitilerCorsCacheKey} from '@kepler.gl/common-utils';
 import {
@@ -36,6 +37,7 @@ import {
   VectorTileMetadata
 } from './tileset/vector-tile-utils';
 import {buildWmsGetCapabilitiesUrl, wmsCapabilitiesToDatasetMetadata} from './tileset/wms-utils';
+import {clearZarrStoreCache, getZarrMetadata} from './tileset/zarr-utils';
 
 // apply a color for each dataset
 // to use as label colors
@@ -166,6 +168,8 @@ async function refreshRemoteData(datasetInfo: CreateTableProps): Promise<object 
       return await refreshRasterTileMetadata(datasetInfo);
     case DatasetType.WMS_TILE:
       return await refreshWMSMetadata(datasetInfo);
+    case DatasetType.ZARR:
+      return await refreshZarrMetadata(datasetInfo);
     case DatasetType.TILE_3D:
       return null;
     case DatasetType.BITMAP:
@@ -265,6 +269,28 @@ async function refreshWMSMetadata(datasetInfo: CreateTableProps): Promise<any | 
   try {
     const data = await getWMSCapabilities(tilesetDataUrl);
     return wmsCapabilitiesToDatasetMetadata(data, tilesetDataUrl);
+  } catch (err) {
+    // ignore for now, and use old metadata
+  }
+  return null;
+}
+
+async function refreshZarrMetadata(datasetInfo: CreateTableProps): Promise<any | null> {
+  const {url, variable, variables} = (datasetInfo.opts.metadata as ZarrDatasetMetadata) || {};
+
+  if (typeof url !== 'string') {
+    return null;
+  }
+
+  // Metadata built by the Add Data form is already complete; only re-read the
+  // store when a saved map config carries just the URL.
+  if (Array.isArray(variables) && variables.length > 0) {
+    return null;
+  }
+
+  try {
+    clearZarrStoreCache(url);
+    return await getZarrMetadata(url, {variable});
   } catch (err) {
     // ignore for now, and use old metadata
   }

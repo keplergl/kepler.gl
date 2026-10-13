@@ -12,7 +12,8 @@ import {
   RasterTileIcon,
   WMSLayerIcon,
   Tile3DLayerIcon,
-  BitmapLayerIcon
+  BitmapLayerIcon,
+  ZarrLayerIcon
 } from '@kepler.gl/layers';
 import {getError, getApplicationConfig} from '@kepler.gl/utils';
 
@@ -26,6 +27,7 @@ import TilesetRasterForm from './tileset-raster-form';
 import TilesetWMSForm from './tileset-wms-form';
 import TilesetTile3DForm from './tileset-tile3d-form';
 import TilesetBitmapForm from './tileset-bitmap-form';
+import TilesetZarrForm from './tileset-zarr-form';
 
 const WIDTH_ICON = '70px';
 
@@ -153,6 +155,12 @@ const TILE_TYPES = [
     label: 'Bitmap',
     Icon: BitmapLayerIcon,
     Component: TilesetBitmapForm
+  },
+  {
+    id: 'zarr',
+    label: 'Zarr',
+    Icon: ZarrLayerIcon,
+    Component: TilesetZarrForm
   }
 ];
 
@@ -196,6 +204,7 @@ function LoadTilesetTabFactory() {
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
     const enableWMSLayer = getApplicationConfig().enableWMSLayer;
     const enableBitmapLayer = getApplicationConfig().enableBitmapLayer;
+    const enableZarrLayer = getApplicationConfig().enableZarrLayer;
 
     // Filter tile types based on application config
     const tileTypes = useMemo(() => {
@@ -209,10 +218,13 @@ function LoadTilesetTabFactory() {
         if (tileType.id === 'bitmap') {
           return enableBitmapLayer;
         }
+        if (tileType.id === 'zarr') {
+          return enableZarrLayer;
+        }
         return true; // Include all other types by default
       });
       return types;
-    }, [enableRasterTileLayer, enableWMSLayer, enableBitmapLayer]);
+    }, [enableRasterTileLayer, enableWMSLayer, enableBitmapLayer, enableZarrLayer]);
 
     const CurrentForm = tileTypes[typeIndex].Component;
 

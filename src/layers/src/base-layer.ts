@@ -61,6 +61,7 @@ import {
   Filter,
   GetVisChannelScaleReturnType,
   LayerVisConfigSettings,
+  LayerVisConfigTypes,
   MapState,
   AnimationConfig,
   KeplerLayer,
@@ -73,7 +74,6 @@ import {
   FieldPair,
   NestedPartial,
   RGBColor,
-  ValueOf,
   VisualChannel,
   VisualChannels,
   VisualChannelDomain,
@@ -249,7 +249,7 @@ class Layer implements KeplerLayer {
   id: string;
   meta: Record<string, any>;
   visConfigSettings: {
-    [key: string]: ValueOf<LayerVisConfigSettings>;
+    [key: string]: LayerVisConfigTypes;
   };
   config: LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig>;
   // TODO: define _oldDataUpdateTriggers
@@ -723,7 +723,7 @@ class Layer implements KeplerLayer {
    */
   assignConfigToLayer(
     configToCopy: LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig>,
-    visConfigSettings: {[key: string]: ValueOf<LayerVisConfigSettings>},
+    visConfigSettings: {[key: string]: LayerVisConfigTypes},
     datasets?: Datasets,
     defaultLayerProps?: FindDefaultLayerPropsReturnValue | null
   ) {
@@ -840,7 +840,7 @@ class Layer implements KeplerLayer {
   }
 
   registerVisConfig(layerVisConfigs: {
-    [key: string]: keyof LayerVisConfigSettings | ValueOf<LayerVisConfigSettings>;
+    [key: string]: keyof LayerVisConfigSettings | LayerVisConfigTypes;
   }) {
     Object.keys(layerVisConfigs).forEach(item => {
       const configItem = layerVisConfigs[item];

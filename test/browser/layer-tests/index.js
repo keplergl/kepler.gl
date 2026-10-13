@@ -21,6 +21,7 @@ import './a5-layer-specs';
 import './geohash-layer-specs';
 import './flow-field-layer-specs';
 import './wms-layer-specs';
+import './zarr-layer-specs';
 import './vector-tile-layer-specs';
 import './flow-layer-specs';
 import './aggregation-layer-geojson-specs';

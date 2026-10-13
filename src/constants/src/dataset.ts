@@ -8,7 +8,8 @@ export enum DatasetType {
   RASTER_TILE = 'raster-tile',
   WMS_TILE = 'wms-tile',
   TILE_3D = 'tile-3d',
-  BITMAP = 'bitmap'
+  BITMAP = 'bitmap',
+  ZARR = 'zarr'
 }
 
 export const REMOTE_FILE_FORMATS = [
@@ -249,6 +250,82 @@ export type WMSDatasetMetadata = {
   tilesetMetadataUrl: string;
   version: string;
   layers: WMSServiceLayer[];
+  label?: string;
+  attribution?: string;
+};
+
+/** A non-spatial dimension of a Zarr variable, e.g. `time`, `band`, `depth`. */
+export type ZarrDimensionInfo = {
+  name: string;
+  size: number;
+  /**
+   * Coordinate values for the dimension, when the store exposes a matching
+   * coordinate array. Time coordinates are decoded to epoch milliseconds.
+   */
+  values?: number[];
+};
+
+export type ZarrVariableInfo = {
+  /** Path of the variable within the Zarr group. Empty for a root-level array. */
+  path: string;
+  /**
+   * Node to open for rendering, when it differs from `path`. A pyramid keeps
+   * its levels under a shared parent, so the renderer is handed that parent
+   * while each variable keeps its own identity.
+   */
+  nodePath?: string;
+  /** Name of the array itself, i.e. the last path segment. */
+  name: string;
+  /**
+   * Label to show in variable pickers. Equal to `name`, qualified with enough
+   * leading path segments to stay unique when sibling groups hold arrays of the
+   * same name, e.g. `FUTUR/evap_total` and `HISTO/evap_total`.
+   */
+  displayName: string;
+  /**
+   * GeoZarr-convention attributes describing the spatial grid. Taken from the
+   * store when it declares them, otherwise derived from CF/GDAL metadata.
+   */
+  geoAttrs?: Record<string, unknown>;
+  /** Shape of the finest resolution level. */
+  shape: number[];
+  /** Chunk shape of the finest resolution level. */
+  chunks: number[];
+  dtype: string;
+  /** Non-spatial dimensions, in array order. */
+  nonSpatialDims: ZarrDimensionInfo[];
+  /** The non-spatial dimension recognized as time, when present. */
+  timeDimension?: ZarrDimensionInfo;
+  /** Value range advertised by the array attrs, used as the default rescale. */
+  dataRange?: [number, number];
+  /** Fill value advertised by the array attrs or zarr metadata. */
+  nodataValue?: number;
+};
+
+export type ZarrDatasetMetadata = {
+  /** Root URL of the Zarr store. */
+  url: string;
+  /** Path of the selected variable within the store. */
+  variable?: string;
+  crs?: {code?: string; wkt2?: string};
+  /** Axis names of the selected variable, e.g. `['time', 'y', 'x']`. */
+  axes: string[];
+  xAxisIndex: number;
+  yAxisIndex: number;
+  /** Resolution levels, finest first. */
+  levels: {path: string; shape: number[]; chunks: number[]}[];
+  /**
+   * Set when every level is reprojected to EPSG:3857 and spans the whole world,
+   * which is what `ndpyramid`'s `pyramid_reproject` writes. The level to draw
+   * then follows the map zoom rather than the data's own resolution.
+   */
+  webMercatorPyramid?: boolean;
+  /** Every renderable variable in the store, for the variable picker. */
+  variables: ZarrVariableInfo[];
+  nonSpatialDims: ZarrDimensionInfo[];
+  timeDimension?: ZarrDimensionInfo;
+  dataRange?: [number, number];
+  nodataValue?: number;
   label?: string;
   attribution?: string;
 };

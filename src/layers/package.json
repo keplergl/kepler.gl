@@ -35,6 +35,9 @@
     "@deck.gl/geo-layers": "^9.3.1",
     "@deck.gl/layers": "^9.3.1",
     "@deck.gl/mesh-layers": "^9.3.1",
+    "@developmentseed/deck.gl-zarr": "0.7.0",
+    "@developmentseed/geozarr": "0.7.0",
+    "@developmentseed/morecantile": "0.7.0",
     "@flowmap.gl/data": "^9.2.0",
     "@flowmap.gl/layers": "^9.2.0",
     "@kepler.gl/common-utils": "3.3.0-alpha.16",
@@ -89,7 +92,8 @@
     "s2-geometry": "^1.2.10",
     "styled-components": "6.4.3",
     "type-analyzer": "0.4.0",
-    "viewport-mercator-project": "^6.0.0"
+    "viewport-mercator-project": "^6.0.0",
+    "zarrita": "^0.7.3"
   },
   "nyc": {
     "sourceMap": false,

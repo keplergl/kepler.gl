@@ -28,6 +28,7 @@
     "dist"
   ],
   "dependencies": {
+    "@developmentseed/geozarr": "0.7.0",
     "@kepler.gl/common-utils": "3.3.0-alpha.16",
     "@kepler.gl/constants": "3.3.0-alpha.16",
     "@kepler.gl/tasks-core": "3.3.0-alpha.16",
@@ -45,7 +46,8 @@
     "es-toolkit": "^1.39.10",
     "global": "^4.3.0",
     "moment": "^2.10.6",
-    "type-analyzer": "0.4.0"
+    "type-analyzer": "0.4.0",
+    "zarrita": "^0.7.3"
   },
   "nyc": {
     "sourceMap": false,
