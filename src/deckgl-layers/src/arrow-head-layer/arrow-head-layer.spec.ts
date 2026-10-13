@@ -38,7 +38,10 @@ function assemble(inject: Record<string, string>) {
     fs,
     inject,
     modules: [],
-    hookFunctions: ['vs:DECKGL_FILTER_SIZE(inout vec3 size, VertexGeometry geometry)']
+    hookFunctions: [
+      'vs:DECKGL_FILTER_SIZE(inout vec3 size, VertexGeometry geometry)',
+      'vs:DECKGL_FILTER_GL_POSITION(inout vec4 position, VertexGeometry geometry)'
+    ]
   }).vs;
 }
 
@@ -65,5 +68,22 @@ describe('arrow head shader', () => {
 
     expect(filterAt).toBeGreaterThan(-1);
     expect(rotateAt).toBeGreaterThan(filterAt);
+  });
+
+  test('supplies source and target positions before brushing filters the arrow', () => {
+    const assembled = assemble(
+      withArrowHeadVertexInject({
+        'vs:DECKGL_FILTER_GL_POSITION':
+          'bool visible = brushing_arePointsInRange(geometry.worldPosition.xy, geometry.worldPositionAlt.xy);'
+      })
+    );
+
+    const sourceAt = assembled.indexOf('geometry.worldPosition = instanceSourcePositions');
+    const targetAt = assembled.indexOf('geometry.worldPositionAlt = instanceTargetPositions');
+    const brushAt = assembled.indexOf('brushing_arePointsInRange');
+
+    expect(sourceAt).toBeGreaterThan(-1);
+    expect(targetAt).toBeGreaterThan(sourceAt);
+    expect(brushAt).toBeGreaterThan(targetAt);
   });
 });

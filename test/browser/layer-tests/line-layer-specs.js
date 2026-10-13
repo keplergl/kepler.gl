@@ -16,6 +16,7 @@ import {
 
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
+import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {copyTable, copyTableAndUpdate} from '@kepler.gl/table';
 
 const {LineLayer} = KeplerGlLayers;
@@ -452,6 +453,51 @@ test('#LineLayer -> renderLayer', t => {
             ? arrowLayer.props.getFillColor(arrowLayer.props.data[0])
             : arrowLayer.props.getFillColor;
         t.deepEqual(color, [252, 242, 26, 255], 'highlight arrow uses the layer highlight color');
+      }
+    },
+    {
+      name: 'Line render layer.5 target arrow hover on globe',
+      layer: {
+        config: {
+          dataId,
+          label: 'trip lines',
+          columns,
+          color: [10, 10, 10],
+          visConfig: {
+            targetArrowEnabled: true,
+            targetArrowShape: 'triangle',
+            targetArrowSize: 20
+          }
+        },
+        type: 'line',
+        id: 'test_layer_0'
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      renderArgs: {
+        mapState: {...INITIAL_MAP_STATE, globe: {enabled: true}},
+        objectHovered: {
+          picked: true,
+          object: {
+            index: 0,
+            sourcePosition: [-122.4, 37.8, 0],
+            targetPosition: [-122.3, 37.9, 0]
+          },
+          layer: {props: {id: 'test_layer_0-globe'}}
+        }
+      },
+      assert: deckLayers => {
+        t.equal(deckLayers.length, 4, 'Should add globe highlight stroke and arrow');
+        t.equal(deckLayers[1].id, 'test_layer_0-globe-hovered', 'globe highlight stroke id');
+        t.equal(
+          deckLayers[3].id,
+          'test_layer_0-arrow-head-triangle-hovered',
+          'globe highlight arrow id'
+        );
       }
     }
   ];

@@ -9,6 +9,8 @@ import ScatterplotIconLayer, {iconFragmentShader} from '../svg-icon-layer/scatte
 
 type ArrowHeadLayerProps = ScatterplotIconLayerProps & {
   getAngle?: ScatterplotLayerProps['getRadius'];
+  getSourcePosition?: ScatterplotLayerProps<any>['getPosition'];
+  getTargetPosition?: ScatterplotLayerProps<any>['getPosition'];
   getFilterValue?: (d: any) => number[];
   filterRange?: unknown;
   brushingEnabled?: boolean;
@@ -49,10 +51,18 @@ type ShaderInject = Record<string, string>;
 export function withArrowHeadVertexInject(inject: ShaderInject = {}): ShaderInject {
   const decl = inject['vs:#decl'] || '';
   const filterSize = inject['vs:DECKGL_FILTER_SIZE'] || '';
+  const filterPosition = inject['vs:DECKGL_FILTER_GL_POSITION'] || '';
 
   return {
     ...inject,
-    'vs:#decl': `${decl}in float instanceAngles;\n`,
+    'vs:#decl': `${decl}in float instanceAngles;
+in vec3 instanceSourcePositions;
+in vec3 instanceTargetPositions;\n`,
+    'vs:DECKGL_FILTER_GL_POSITION': `
+      geometry.worldPosition = instanceSourcePositions;
+      geometry.worldPositionAlt = instanceTargetPositions;
+      ${filterPosition}
+    `,
     'vs:DECKGL_FILTER_SIZE': `${filterSize}
       float arrowAngle = radians(instanceAngles);
       float arrowCos = cos(arrowAngle);
@@ -82,6 +92,20 @@ export default class ArrowHeadLayer extends ScatterplotIconLayer {
         transition: true,
         accessor: 'getAngle',
         defaultValue: 0
+      },
+      instanceSourcePositions: {
+        size: 3,
+        type: 'float64',
+        fp64: this.use64bitPositions(),
+        transition: true,
+        accessor: 'getSourcePosition'
+      },
+      instanceTargetPositions: {
+        size: 3,
+        type: 'float64',
+        fp64: this.use64bitPositions(),
+        transition: true,
+        accessor: 'getTargetPosition'
       }
     });
     super.initializeState();

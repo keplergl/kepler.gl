@@ -241,6 +241,13 @@ export default class LineLayer extends ArcLayer {
     };
   }
 
+  isLayerHovered(objectInfo): boolean {
+    return (
+      super.isLayerHovered(objectInfo) ||
+      Boolean(objectInfo?.picked && objectInfo?.layer?.props?.id === `${this.id}-globe`)
+    );
+  }
+
   static findDefaultLayerProps({fieldPairs = []}: KeplerTable): {
     props: {color?: RGBColor; columns: LineLayerColumnsConfig; label: string}[];
   } {

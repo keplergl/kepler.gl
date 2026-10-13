@@ -90,7 +90,7 @@ export type TargetArrowOptions = {
 
 const recordCache = new WeakMap<
   object,
-  {source: unknown; filtered: unknown; records: StrokeRecord[]}
+  {source: unknown; target: unknown; filtered: unknown; records: StrokeRecord[]}
 >();
 
 function glslMod(x: number, y: number): number {
@@ -320,7 +320,12 @@ function strokeRecords(layer: ArrowHost, formattedData: {data?: unknown}): Strok
   }
   const filtered = layer.filteredIndexTrigger;
   const cached = recordCache.get(layer);
-  if (cached && cached.source === source && cached.filtered === filtered) {
+  if (
+    cached &&
+    cached.source === source &&
+    cached.target === target &&
+    cached.filtered === filtered
+  ) {
     return cached.records;
   }
 
@@ -337,7 +342,7 @@ function strokeRecords(layer: ArrowHost, formattedData: {data?: unknown}): Strok
     }
     records.push({index, sourcePosition, targetPosition});
   }
-  recordCache.set(layer, {source, filtered, records});
+  recordCache.set(layer, {source, target, filtered, records});
   return records;
 }
 
@@ -457,10 +462,10 @@ export function createTargetArrowLayer({
     hidden: defaultLayerProps.hidden,
     opacity: highlight ? 1 : visConfig.opacity,
     parameters: {
-      ...(mapState.layerParameters || {}),
-      depthTest: Boolean(mapState.globe?.enabled),
+      depthTest: true,
       depthMask: false,
-      cull: false
+      cull: false,
+      ...(mapState.layerParameters || {})
     },
     billboard: true,
     stroked: false,
@@ -474,6 +479,16 @@ export function createTargetArrowLayer({
       d.targetPosition[0],
       d.targetPosition[1],
       (d.targetPosition[2] || 0) * scale
+    ],
+    getSourcePosition: (d: StrokeRecord): LngLatZ => [
+      d.sourcePosition[0],
+      d.sourcePosition[1],
+      d.sourcePosition[2] || 0
+    ],
+    getTargetPosition: (d: StrokeRecord): LngLatZ => [
+      d.targetPosition[0],
+      d.targetPosition[1],
+      d.targetPosition[2] || 0
     ],
     getRadius: size,
     getAngle: (d: any) =>
@@ -493,8 +508,7 @@ export function createTargetArrowLayer({
           getFilterValue: formattedData.getFilterValue,
           brushingEnabled: Boolean(brush?.enabled),
           brushingRadius: (brush?.config?.size || 0) * 1000,
-          brushingTarget: 'custom',
-          getBrushingTarget: (d: StrokeRecord) => [d.targetPosition[0], d.targetPosition[1]]
+          brushingTarget: 'source_target'
         }),
     updateTriggers: {
       getAngle: [
@@ -512,7 +526,9 @@ export function createTargetArrowLayer({
       getFillColor: color,
       getRadius: size,
       getFilterValue: formattedData.getFilterValue,
-      getPosition: scale
+      getPosition: scale,
+      getSourcePosition: scale,
+      getTargetPosition: scale
     }
   });
 }
