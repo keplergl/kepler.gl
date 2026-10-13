@@ -134,7 +134,13 @@ import {
   getDatasetRefreshIntervalMs,
   getRemoteSourceFormat
 } from '@kepler.gl/constants';
-import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
+import {
+  AGGREGATION_COUNT_LAYER_TYPES,
+  isPointCountLabel,
+  LAYER_ID_LENGTH,
+  Layer,
+  LayerClasses
+} from '@kepler.gl/layers';
 import {
   apply_,
   compose_,
@@ -561,7 +567,8 @@ export function applyLayerConfigUpdater(
   const {oldLayerId, newLayerConfig, layerIndex} = action;
   // Saved configs have a visualChannels sibling; parsed/editor JSON folds those
   // fields into config. Re-parsing the latter drops colorField and resets the scale.
-  const newParsedLayer = isSavedLayerConfigV1(newLayerConfig)
+  const savedLayerConfig = isSavedLayerConfigV1(newLayerConfig);
+  const newParsedLayer = savedLayerConfig
     ? parseLayerConfig(state.schema, newLayerConfig)
     : newLayerConfig;
   const oldLayer = state.layers.find(l => l.id === oldLayerId);
@@ -577,7 +584,9 @@ export function applyLayerConfigUpdater(
     return state;
   }
   // Make sure the layer is valid and convert it to Layer
-  const newLayer = validateLayerWithData(dataset, newParsedLayer, state.layerClasses);
+  const newLayer = validateLayerWithData(dataset, newParsedLayer, state.layerClasses, {
+    keepUnlabeledAggregationTextLabel: savedLayerConfig
+  });
   if (!newLayer) {
     return state;
   }
@@ -854,12 +863,21 @@ function addOrRemoveTextLabels(newFields, textLabel, defaultTextLabel = DEFAULT_
 
   const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => d);
 
-  const addFields = newFields.filter(f => !currentFields.includes(f.name));
+  const addFields = newFields.filter(
+    (field, index) =>
+      field &&
+      field.name &&
+      !currentFields.includes(field.name) &&
+      newFields.findIndex(other => other && other.name === field.name) === index
+  );
   const deleteFields = currentFields.filter(f => !newFields.find(fd => fd.name === f));
 
   // delete
   newTextLabel = newTextLabel.filter(tl => tl.field && !deleteFields.includes(tl.field.name));
-  newTextLabel = !newTextLabel.length ? [defaultTextLabel] : newTextLabel;
+  // Aggregation defaults already name Point Count. Using that object as the
+  // empty placeholder, then appending the field just picked, inserts the same
+  // label twice. deck.gl then rejects the duplicate collision layer ids.
+  newTextLabel = !newTextLabel.length ? [{...defaultTextLabel, field: null}] : newTextLabel;
 
   // add
   newTextLabel = [
@@ -918,6 +936,9 @@ export function layerTextLabelChangeUpdater(
       ...textLabel,
       {
         ...defaultTextLabel,
+        // The slot is empty until a field is picked. Aggregation defaults already
+        // carry Point Count, and copying that field would add a second label.
+        field: null,
         collisionEnabled: Boolean(textLabel[0]?.collisionEnabled)
       }
     ];
@@ -1134,6 +1155,14 @@ export function layerTypeChangeUpdater(
       state.datasets,
       defaultLayerProps
     );
+    if (!AGGREGATION_COUNT_LAYER_TYPES.has(newType)) {
+      const textLabel = newLayer.config.textLabel.filter(label => !isPointCountLabel(label));
+      if (textLabel.length !== newLayer.config.textLabel.length) {
+        newLayer.updateLayerConfig({
+          textLabel: textLabel.length ? textLabel : [{...DEFAULT_TEXT_LABEL}]
+        });
+      }
+    }
     newLayer.updateLayerDomain(state.datasets);
   }
 

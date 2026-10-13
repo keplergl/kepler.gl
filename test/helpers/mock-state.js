@@ -794,6 +794,17 @@ function mockStateWithLayerStyling() {
   return prepareState;
 }
 
+// Schema stores the label field as {name, type}. New hexagon layers label point counts.
+const SAVED_AGGREGATION_COUNT_TEXT_LABEL = {
+  ...DEFAULT_TEXT_LABEL,
+  field: {name: 'pointCount', type: 'integer'},
+  anchor: 'middle',
+  alignment: 'center',
+  collisionEnabled: true,
+  outlineWidth: 1,
+  outlineColor: [0, 0, 0, 255]
+};
+
 // saved hexagon layer
 export const expectedSavedLayer0 = {
   id: 'hexagon-2',
@@ -826,7 +837,7 @@ export const expectedSavedLayer0 = {
       sizeAggregation: 'count',
       enable3d: false
     },
-    textLabel: [DEFAULT_TEXT_LABEL]
+    textLabel: [SAVED_AGGREGATION_COUNT_TEXT_LABEL]
   },
   visualChannels: {
     colorField: null,
@@ -872,7 +883,7 @@ export const expectedLoadedLayer0 = {
     colorScale: 'quantile',
     sizeField: null,
     sizeScale: 'linear',
-    textLabel: [DEFAULT_TEXT_LABEL]
+    textLabel: [SAVED_AGGREGATION_COUNT_TEXT_LABEL]
   }
 };
 

@@ -17,6 +17,7 @@ import React from 'react';
 import * as arrow from 'apache-arrow';
 import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
+import {textLabelDeckLayerId} from './layer-text-label';
 import {getSatisfiedColumnMode, FindDefaultLayerPropsReturnValue} from './layer-utils';
 
 import {
@@ -1733,9 +1734,11 @@ class Layer implements KeplerLayer {
         // previous TextLayer. Matching would keep a stale collisionPriorities
         // attribute after the extension is removed, and skip initializeState
         // (no collision_texture) when it is added.
-        const labelId = `${this.id}-label-${textLabel[i].field?.name}${
-          collisionEnabled ? '-collision' : ''
-        }`;
+        // Two labels of the same field (Point Count is the only aggregation
+        // choice) must not share an id. CollisionTextLayer appends
+        // -background and -characters, and deck.gl drops the pair when those
+        // sublayer ids collide.
+        const labelId = textLabelDeckLayerId(this.id, textLabel, i, collisionEnabled);
         // Glyphs inherit these from the TextLayer. The background sublayer's
         // `_subLayerProps.background.parameters` replaces that object, so the
         // same depth settings have to be repeated there. Otherwise the box
