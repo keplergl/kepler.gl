@@ -95,6 +95,7 @@ function withCities(): VisState {
 describe('column edits', () => {
   test('rename changes the field identity stored in layers, filters, and saved maps', () => {
     let state = withCities();
+    state.datasets.cities.hiddenColumns = ['region', 'pop'];
     expect(state.layers).toHaveLength(1);
     expect(state.filters[0].name).toEqual(['region']);
 
@@ -122,6 +123,7 @@ describe('column edits', () => {
     expect(state.charts[0].yAxis?.field?.name).toBe('pop');
     expect(state.charts[0].crossFilter?.fieldNames).toEqual({xAxis: 'area'});
     expect(state.interactionConfig.tooltip.config.fieldsToShow.cities[0].name).toBe('area');
+    expect(state.datasets.cities.hiddenColumns).toEqual(['area', 'pop']);
 
     const saved = SchemaManager.save({
       visState: state,
@@ -143,12 +145,14 @@ describe('column edits', () => {
 
   test('delete drops references and refuses the last column', () => {
     let state = withCities();
+    state.datasets.cities.hiddenColumns = ['region', 'pop'];
     state = reduceVisState(state, VisStateActions.deleteTableColumn('cities', 'pop'));
 
     expect(state.datasets.cities.fields.map(field => field.name)).toEqual(['lat', 'lng', 'region']);
     expect(state.layers).toHaveLength(1);
     expect(state.filters).toHaveLength(1);
     expect(state.charts[0].yAxis?.field).toBeNull();
+    expect(state.datasets.cities.hiddenColumns).toEqual(['region']);
 
     state = reduceVisState(state, VisStateActions.deleteTableColumn('cities', 'lat'));
     expect(state.layers).toHaveLength(0);

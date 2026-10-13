@@ -6906,6 +6906,47 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
   t.end();
 });
 
+test('#visStateReducer -> TOGGLE_TABLE_COLUMN_HIDDEN and SHOW_ALL_TABLE_COLUMNS', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+
+  const hiddenState = reducer(
+    initialState,
+    VisStateActions.toggleTableColumnHidden(testCsvDataId, 'gps_data.lat')
+  );
+  assertDatasetIsTable(t, hiddenState.datasets[testCsvDataId]);
+  t.deepEqual(
+    hiddenState.datasets[testCsvDataId].hiddenColumns,
+    ['gps_data.lat'],
+    'should hide a table column through the reducer'
+  );
+
+  const shownState = reducer(
+    hiddenState,
+    VisStateActions.toggleTableColumnHidden(testCsvDataId, 'gps_data.lat')
+  );
+  t.deepEqual(shownState.datasets[testCsvDataId].hiddenColumns, [], 'should show a hidden column');
+
+  const allShownState = reducer(hiddenState, VisStateActions.showAllTableColumns(testCsvDataId));
+  t.deepEqual(allShownState.datasets[testCsvDataId].hiddenColumns, [], 'should show all columns');
+
+  const unknownColumnState = reducer(
+    initialState,
+    VisStateActions.toggleTableColumnHidden(testCsvDataId, 'missing')
+  );
+  t.equal(
+    unknownColumnState.datasets[testCsvDataId].hiddenColumns,
+    undefined,
+    'should ignore an unknown column'
+  );
+  t.equal(
+    reducer(initialState, VisStateActions.toggleTableColumnHidden('missing', 'gps_data.lat')),
+    initialState,
+    'should ignore an unknown dataset'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> LOAD_FILES', async t => {
   drainTasksForTesting();
 

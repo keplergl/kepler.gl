@@ -539,6 +539,7 @@ export const TABLE_OPTION = keyMirror({
   UNPIN: null,
   COPY: null,
   FORMAT_COLUMN: null,
+  HIDE: null,
   RENAME: null,
   DELETE: null,
   CREATE_FILTER: null
@@ -553,6 +554,7 @@ export type TableOption = {
     | 'UNPIN'
     | 'COPY'
     | 'FORMAT_COLUMN'
+    | 'HIDE'
     | 'RENAME'
     | 'DELETE'
     | 'CREATE_FILTER';
@@ -592,6 +594,12 @@ export const TABLE_OPTION_LIST: TableOption[] = [
     condition: props => props.isPinned
   },
   {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: 'Clipboard'},
+  {
+    value: TABLE_OPTION.HIDE,
+    display: 'Hide Column',
+    icon: 'EyeUnseen',
+    condition: props => props.hideTableColumn
+  },
   {
     value: TABLE_OPTION.FORMAT_COLUMN,
     display: 'Format Column',
@@ -1194,39 +1202,51 @@ export const EXPORT_IMG_RESOLUTION_OPTIONS: ReadonlyArray<ImageResolutionOption>
 ];
 
 export const EXPORT_DATA_TYPE = keyMirror({
-  CSV: null
-  // SHAPEFILE: null,
-  // JSON: null,
-  // GEOJSON: null,
-  // TOPOJSON: null
+  CSV: null,
+  GEOJSON: null,
+  GEOPARQUET: null,
+  SHAPEFILE: null,
+  GEOPACKAGE: null,
+  KML: null,
+  KMZ: null
 });
 
 export const EXPORT_DATA_TYPE_OPTIONS = [
   {
     id: EXPORT_DATA_TYPE.CSV,
-    label: EXPORT_DATA_TYPE.CSV.toLowerCase(),
+    label: 'csv',
+    available: true
+  },
+  {
+    id: EXPORT_DATA_TYPE.GEOJSON,
+    label: 'geojson',
+    available: true
+  },
+  {
+    id: EXPORT_DATA_TYPE.GEOPARQUET,
+    label: 'parquet',
+    available: true
+  },
+  {
+    id: EXPORT_DATA_TYPE.SHAPEFILE,
+    label: 'shp',
+    available: true
+  },
+  {
+    id: EXPORT_DATA_TYPE.GEOPACKAGE,
+    label: 'gpkg',
+    available: true
+  },
+  {
+    id: EXPORT_DATA_TYPE.KML,
+    label: 'kml',
+    available: true
+  },
+  {
+    id: EXPORT_DATA_TYPE.KMZ,
+    label: 'kmz',
     available: true
   }
-  // {
-  //   id: EXPORT_DATA_TYPE.SHAPEFILE,
-  //   label: 'shapefile',
-  //   available: false
-  // },
-  // {
-  //   id: EXPORT_DATA_TYPE.JSON,
-  //   label: 'json',
-  //   available: false
-  // },
-  // {
-  //   id: EXPORT_DATA_TYPE.GEOJSON,
-  //   label: 'geojson',
-  //   available: false
-  // },
-  // {
-  //   id: EXPORT_DATA_TYPE.TOPOJSON,
-  //   label: 'topojson',
-  //   available: false
-  // }
 ];
 
 // Export map types

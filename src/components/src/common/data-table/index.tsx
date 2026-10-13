@@ -259,14 +259,14 @@ interface GetRowCellProps {
 /*
  * This is an accessor method used to generalize getting a cell from a data row
  */
-const defaultGetRowCell = (
+export const defaultGetRowCell = (
   {dataContainer, columns, column, colMeta, rowIndex, sortOrder}: GetRowCellProps,
   formatter
 ) => {
   const rowIdx = sortOrder && sortOrder.length ? get(sortOrder, rowIndex) : rowIndex;
-  const {type} = colMeta[column];
+  const {type, colIdx} = colMeta[column];
 
-  const value = dataContainer?.valueAt(rowIdx, columns.indexOf(column));
+  const value = dataContainer?.valueAt(rowIdx, colIdx ?? columns.indexOf(column));
   if (value === null || value === undefined || value === '') {
     return '';
   }
@@ -454,6 +454,7 @@ export interface DataTableProps {
   sortColumn: SortColumn;
   sortTableColumn: (column: string, mode?: string) => void;
   pinTableColumn: (column: string) => void;
+  hideTableColumn?: (column: string) => void;
   setColumnDisplayFormat?: (formats: {[key: string]: string}) => void;
   copyTableColumn: (column: string) => void;
   renameTableColumn?: (column: string, newName: string) => void;
