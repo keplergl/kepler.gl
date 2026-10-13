@@ -173,6 +173,14 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     group: PROPERTY_GROUPS.height,
     property: 'fixedHeight'
   },
+  invertHeight: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.invertHeight',
+    description: 'layerVisConfigs.invertHeightDescription',
+    group: PROPERTY_GROUPS.height,
+    property: 'invertHeight'
+  },
   fixedElevation: {
     defaultValue: true,
     type: 'boolean',
@@ -213,6 +221,18 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     group: PROPERTY_GROUPS.radius,
     property: 'radiusRange',
     allowCustomValue: true
+  },
+  minClusterSize: {
+    type: 'number',
+    label: 'layerVisConfigs.minClusterSize',
+    description: 'layerVisConfigs.minClusterSizeDescription',
+    defaultValue: 1,
+    isRanged: false,
+    range: [1, 100],
+    step: 1,
+    group: PROPERTY_GROUPS.radius,
+    property: 'minClusterSize',
+    allowCustomValue: false
   },
   opacity: {
     type: 'number',

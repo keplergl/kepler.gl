@@ -238,8 +238,8 @@ test('#ClusterLayer -> renderLayer', t => {
       assert: (deckLayers, layer) => {
         t.deepEqual(
           deckLayers.map(l => l.id),
-          ['test_layer_1', 'test_layer_1-cluster'],
-          'Should create 2 deck.gl layers'
+          ['test_layer_1', 'test_layer_1-cluster', 'test_layer_1-label-pointCount-collision'],
+          'Should create the cluster layer, bubbles, and count labels'
         );
         const [clusterLayer, scatterplotLayer] = deckLayers;
         const {props} = clusterLayer;
@@ -308,6 +308,29 @@ test('#ClusterLayer -> renderLayer', t => {
           'should pass correct data to cluster layer'
         );
 
+        const labelLayer = deckLayers.find(l => l.id === 'test_layer_1-label-pointCount-collision');
+        t.equal(
+          labelLayer.constructor.layerName,
+          'CollisionTextLayer',
+          'count labels use collision'
+        );
+        t.equal(labelLayer.props.collisionEnabled, true, 'collision is on by default');
+        t.equal(labelLayer.props.getTextAnchor, 'middle', 'count is centered on the bubble');
+        t.equal(labelLayer.props.getAlignmentBaseline, 'center', 'count is centered on the bubble');
+        t.equal(
+          labelLayer.props.parameters.depthTest,
+          false,
+          'labels draw on top of geometry, like geojson text'
+        );
+        t.deepEqual(
+          labelLayer.props.data.map(d => ({
+            position: labelLayer.props.getPosition(d),
+            text: labelLayer.props.getText(d)
+          })),
+          expectedScatterplotData.map(d => ({position: d.position, text: '1'})),
+          'each bubble is labeled with its point count'
+        );
+
         const expectedColorDomain = {
           domain: [1, 1, 1],
           aggregatedBins: {
@@ -345,5 +368,132 @@ test('#ClusterLayer -> renderLayer', t => {
   ];
 
   testRenderLayerCases(t, ClusterLayer, TEST_CASES);
+  t.end();
+});
+
+test('#ClusterLayer -> minClusterSize hides small clusters', t => {
+  // zoom 8 merges rows 4 and 5 into one cluster and leaves row 7 on its own
+  const renderArgs = {
+    mapState: {...INITIAL_MAP_STATE, zoom: 8},
+    layerCallbacks: {onSetLayerDomain: () => {}}
+  };
+  const datasets = {
+    [dataId]: {
+      ...preparedDataset,
+      filteredIndex: [0, 1, 2, 4, 5, 7]
+    }
+  };
+  const clusterConfig = minClusterSize => ({
+    type: 'cluster',
+    id: `test_cutoff_${minClusterSize}`,
+    config: {
+      dataId,
+      label: 'cluster cutoff',
+      columns,
+      color: [1, 2, 3],
+      visConfig: {
+        minClusterSize,
+        colorRange: {
+          colors: ['#080808', '#090909', '#070707']
+        }
+      }
+    }
+  });
+  const clusterCounts = deckLayers => {
+    const scatterplot = deckLayers.find(l => l.id.endsWith('-cluster'));
+    return scatterplot.props.data.map(d => d.points.length);
+  };
+
+  testRenderLayerCases(t, ClusterLayer, [
+    {
+      name: 'cluster without a cutoff',
+      layer: clusterConfig(1),
+      datasets,
+      renderArgs,
+      assert: deckLayers => {
+        t.deepEqual(
+          clusterCounts(deckLayers).sort(),
+          [1, 2],
+          'the default keeps the single point cluster'
+        );
+      }
+    },
+    {
+      name: 'cluster with a cutoff of 2',
+      layer: clusterConfig(2),
+      datasets,
+      renderArgs,
+      assert: deckLayers => {
+        const clusterLayer = deckLayers[0];
+        t.equal(clusterLayer.props.minPointCount, 2, 'should pass the cutoff to the deck layer');
+
+        const scatterplot = deckLayers.find(l => l.id.endsWith('-cluster'));
+        t.deepEqual(
+          scatterplot.props.data.map(d => ({count: d.points.length, index: d.index})),
+          [{count: 2, index: 0}],
+          'should drop the single point cluster and reindex the rest'
+        );
+
+        const labelLayer = deckLayers.find(l => l.id.includes('-label-'));
+        t.deepEqual(
+          labelLayer.props.data.map(labelLayer.props.getText),
+          ['2'],
+          'only the remaining cluster is labeled'
+        );
+      }
+    },
+    {
+      name: 'cluster with a cutoff above every cluster',
+      layer: clusterConfig(10),
+      datasets,
+      renderArgs,
+      assert: deckLayers => {
+        t.deepEqual(clusterCounts(deckLayers), [], 'should render nothing instead of failing');
+      }
+    }
+  ]);
+  t.end();
+});
+
+test('#ClusterLayer -> count labels follow the text label field', t => {
+  testRenderLayerCases(t, ClusterLayer, [
+    {
+      name: 'cluster without a count label',
+      layer: {
+        type: 'cluster',
+        id: 'test_layer_nolabel',
+        config: {
+          dataId,
+          label: 'no labels',
+          columns,
+          color: [1, 2, 3],
+          textLabel: [
+            {
+              field: null,
+              collisionEnabled: true
+            }
+          ],
+          visConfig: {
+            colorRange: {
+              colors: ['#080808', '#090909', '#070707']
+            }
+          }
+        }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex: [0, 1, 2, 4, 5, 7]
+        }
+      },
+      assert: deckLayers => {
+        t.deepEqual(
+          deckLayers.map(l => l.id),
+          ['test_layer_nolabel', 'test_layer_nolabel-cluster'],
+          'clearing the label field removes the count text'
+        );
+      }
+    }
+  ]);
   t.end();
 });

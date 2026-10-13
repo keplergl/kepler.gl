@@ -3,6 +3,7 @@
 
 import type {AggregatedBin, ColorMap} from '@kepler.gl/types';
 import {naturalBreaks} from '@kepler.gl/utils';
+import {appendAggregationCountLabels} from './aggregation-count-labels';
 
 type JenksColorMapCache = {
   source: Float32Array;
@@ -218,5 +219,6 @@ export function enrichedRenderLayers(layer: any, ParentClass: any): any {
       classifyBinsByCustomBreaks(colors, aggregator.binCount, cache.colorMap, rawColorBinValues);
     }
   }
-  return (ParentClass.prototype as any).renderLayers.call(layer);
+  const rendered = (ParentClass.prototype as any).renderLayers.call(layer);
+  return appendAggregationCountLabels(layer, ParentClass.layerName, rendered);
 }

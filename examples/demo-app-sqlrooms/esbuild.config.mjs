@@ -11,7 +11,7 @@ import {execSync, spawn} from 'node:child_process';
 import {join} from 'node:path';
 import {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import KeplerPackage from '../../package.json' assert {type: 'json'};
+import KeplerPackage from '../../package.json' with {type: 'json'};
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

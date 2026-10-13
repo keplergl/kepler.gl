@@ -146,6 +146,66 @@ describe('GeoJsonLayer default deck parameters', () => {
   });
 });
 
+describe('GeoJsonLayer invert height', () => {
+  const heightField = {
+    name: 'height',
+    type: 'real',
+    valueAccessor: d => d.height
+  };
+
+  const layerWithHeight = () => {
+    const layer = new GeoJsonLayer({id: 'geojson_invert_height'});
+    layer.config.heightField = heightField as any;
+    layer.config.heightDomain = [10, 40];
+    layer.config.heightScale = 'linear';
+    layer.config.visConfig.heightRange = [0, 500];
+    return layer;
+  };
+
+  const elevations = (layer: GeoJsonLayer) => {
+    const getElevation = layer.getAttributeAccessors({
+      dataAccessor: () => d => d,
+      dataContainer: {} as any
+    }).getElevation;
+    return [10, 25, 40, null].map(height => getElevation({height}));
+  };
+
+  test('defaults to off and sits on the height channel next to fixed height', () => {
+    const layer = new GeoJsonLayer({id: 'geojson_invert_height'});
+
+    expect(layer.config.visConfig.invertHeight).toBe(false);
+    expect(layer.visConfigSettings.invertHeight).toMatchObject({
+      defaultValue: false,
+      property: 'invertHeight',
+      group: 'height'
+    });
+    expect(layer.visualChannels.height.invert).toBe('invertHeight');
+    expect(layer.visualChannels.height.fixed).toBe('fixedHeight');
+    expect(layer.getVisualChannelUpdateTriggers().getElevation.invertHeight).toBe(false);
+
+    layer.config.visConfig.invertHeight = true;
+    expect(layer.getVisualChannelUpdateTriggers().getElevation.invertHeight).toBe(true);
+  });
+
+  test('swaps low and high polygons with fixed height off and on', () => {
+    const scaled = layerWithHeight();
+    expect(elevations(scaled)).toEqual([0, 250, 500, 0]);
+
+    scaled.config.visConfig.invertHeight = true;
+    expect(elevations(scaled)).toEqual([500, 250, 0, 0]);
+    expect(scaled.config.visConfig.heightRange).toEqual([0, 500]);
+
+    const fixed = layerWithHeight();
+    fixed.config.visConfig.fixedHeight = true;
+    expect(elevations(fixed)).toEqual([10, 25, 40, 0]);
+
+    fixed.config.visConfig.invertHeight = true;
+    expect(elevations(fixed)).toEqual([40, 25, 10, 0]);
+    expect(fixed.config.heightDomain).toEqual([10, 40]);
+    expect(fixed.config.visConfig.heightRange).toEqual([0, 500]);
+  });
+});
+
 describe('GeoJsonLayer hover overlay cache', () => {
   const polygonFeature = {
     type: 'Feature' as const,
