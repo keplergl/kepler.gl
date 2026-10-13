@@ -30,10 +30,10 @@ export type AggregationCountLabel = {
   count: number;
 };
 
-export function createPointCountLabelField(): Field {
+export function createPointCountLabelField(displayName = 'Point Count'): Field {
   return {
     name: POINT_COUNT_FIELD_NAME,
-    displayName: 'Point Count',
+    displayName,
     type: 'integer',
     fieldIdx: -1,
     format: '',

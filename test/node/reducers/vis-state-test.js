@@ -1339,6 +1339,18 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE -> cluster point count is adde
   t.equal(addedLabels.length, 2, 'add more label appends a slot');
   t.equal(addedLabels[1].field, null, 'the extra slot does not clone Point Count');
 
+  const pointState = reducer(
+    selectedState,
+    VisStateActions.layerTypeChange(selectedLayer, 'point')
+  );
+  const convertedPointLayer = pointState.layers.find(l => l.type === 'point');
+  t.equal(convertedPointLayer.config.textLabel.length, 1, 'type change keeps one label slot');
+  t.equal(
+    convertedPointLayer.config.textLabel[0].field,
+    null,
+    'type change clears the synthetic Point Count field'
+  );
+
   t.end();
 });
 

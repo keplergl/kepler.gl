@@ -4,6 +4,7 @@
 /* eslint-disable complexity */
 import {FormattedMessage} from '@kepler.gl/localization';
 import React, {Component, useCallback, useRef, useState} from 'react';
+import {useIntl} from 'react-intl';
 import styled from 'styled-components';
 
 import ItemSelector from '../../common/item-selector/item-selector';
@@ -437,6 +438,18 @@ export default function LayerConfiguratorFactory(
   RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>,
   ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
+  const AggregationTextLabelPanel: React.FC<
+    Omit<React.ComponentProps<typeof TextLabelPanel>, 'fields'>
+  > = props => {
+    const intl = useIntl();
+    return (
+      <TextLabelPanel
+        {...props}
+        fields={[createPointCountLabelField(intl.formatMessage({id: 'property.pointCount'}))]}
+      />
+    );
+  };
+
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
       return this._renderScatterplotLayerConfig(props, true);
@@ -606,9 +619,8 @@ export default function LayerConfiguratorFactory(
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
 
-          <TextLabelPanel
+          <AggregationTextLabelPanel
             id={layer.id}
-            fields={[createPointCountLabelField()]}
             updateLayerTextLabel={this.props.updateLayerTextLabel}
             textLabel={layer.config.textLabel}
           />
@@ -780,9 +792,8 @@ export default function LayerConfiguratorFactory(
             </LayerConfigGroup>
           ) : null}
 
-          <TextLabelPanel
+          <AggregationTextLabelPanel
             id={layer.id}
-            fields={[createPointCountLabelField()]}
             updateLayerTextLabel={this.props.updateLayerTextLabel}
             textLabel={layer.config.textLabel}
           />

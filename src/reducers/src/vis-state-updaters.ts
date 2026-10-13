@@ -134,7 +134,13 @@ import {
   getDatasetRefreshIntervalMs,
   getRemoteSourceFormat
 } from '@kepler.gl/constants';
-import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
+import {
+  AGGREGATION_COUNT_LAYER_TYPES,
+  isPointCountLabel,
+  LAYER_ID_LENGTH,
+  Layer,
+  LayerClasses
+} from '@kepler.gl/layers';
 import {
   apply_,
   compose_,
@@ -1149,6 +1155,14 @@ export function layerTypeChangeUpdater(
       state.datasets,
       defaultLayerProps
     );
+    if (!AGGREGATION_COUNT_LAYER_TYPES.has(newType)) {
+      const textLabel = newLayer.config.textLabel.filter(label => !isPointCountLabel(label));
+      if (textLabel.length !== newLayer.config.textLabel.length) {
+        newLayer.updateLayerConfig({
+          textLabel: textLabel.length ? textLabel : [{...DEFAULT_TEXT_LABEL}]
+        });
+      }
+    }
     newLayer.updateLayerDomain(state.datasets);
   }
 
