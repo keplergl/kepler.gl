@@ -26,6 +26,10 @@
     "esbuild-plugin-replace": "^1.4.0",
     "typescript": "^5.0.0"
   },
+  "resolutions": {
+    "fflate@npm:0.7.4": "0.7.5",
+    "source-map-js": "1.2.2"
+  },
   "engines": {
     "node": ">=20"
   },
