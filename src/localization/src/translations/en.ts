@@ -407,6 +407,9 @@ export default {
     timeIntervalEndField: 'End time',
     timeIntervalEndFieldHint:
       'Optional. Features stay visible while the playback window overlaps this time span.',
+    filterOut: 'Filter out',
+    filterOutHelp: 'Filter out help',
+    filterOutHint: 'Hide rows that match this filter and keep the rest.',
     timezone: 'Time Zone',
     selectTimezone: 'Select display timezone',
     groupBy: 'Group By',

@@ -69,6 +69,9 @@ import {
   combineSplitMapsByIndex,
   computeSplitMapLayers,
   adjustValueToFilterDomain,
+  disableGpuIfInverted,
+  filterTypeUsesGpu,
+  getPlotBaseIndexByDataId,
   errorNotification,
   successNotification,
   editorFeaturesToFeatureCollection,
@@ -1441,7 +1444,11 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
     filter.type === FILTER_TYPES.timeRange &&
     (previousWindow === ANIMATION_WINDOW.interval || animationWindow === ANIMATION_WINDOW.interval)
   ) {
-    const adjusted = adjustValueToAnimationWindow(state, nextFilter as TimeRangeFilter);
+    const adjusted = adjustValueToAnimationWindow(
+      state,
+      nextFilter as TimeRangeFilter,
+      getPlotBaseIndexByDataId(state.datasets, nextFilter, state.layers)
+    );
     if (Array.isArray(adjusted.value) && adjusted.value.every(v => Number.isFinite(v))) {
       nextFilter = adjusted;
     }
@@ -1558,7 +1565,12 @@ export function setFilterUpdater<S extends VisState>(
   newState = set(['datasets'], filteredDatasets, newState);
 
   // need to update filterPlot after filter Dataset for plot to update on filtered result
-  const filterWithPLot = updateFilterPlot(newState.datasets, newState.filters[idx]);
+  const filterWithPLot = updateFilterPlot(
+    newState.datasets,
+    newState.filters[idx],
+    undefined,
+    newState.layers
+  );
 
   newState = set(['filters', idx], filterWithPLot, newState);
 
@@ -1699,6 +1711,27 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
       break;
     }
 
+    case 'inverted': {
+      const supportsInversion = filter.dataId.every(
+        datasetId => !state.datasets[datasetId]?.disableDataOperation
+      );
+      filter = {
+        ...filter,
+        inverted: supportsInversion && Boolean(value)
+      };
+      if (filter.inverted) {
+        // GPU range tests can only keep values inside the window.
+        filter = disableGpuIfInverted(filter);
+      } else if (filterTypeUsesGpu(filter.type)) {
+        filter = assignGpuChannel(
+          setFilterGpuMode({...filter, gpu: true}, state.filters),
+          state.filters
+        );
+      }
+      datasetIdsToFilter = [...filter.dataId];
+      break;
+    }
+
     case FILTER_UPDATER_PROPS.layerId: {
       // We need to update only datasetId/s if we have added/removed layers
       // - check for layerId changes (XOR works because of string values)
@@ -1782,7 +1815,7 @@ export const setFilterPlotUpdater = (
     }
   }
 
-  newFilter = updateFilterPlot(state.datasets, newFilter);
+  newFilter = updateFilterPlot(state.datasets, newFilter, undefined, state.layers);
 
   return {
     ...state,
@@ -6535,8 +6568,15 @@ function adjustTimeFilterInterval(state, filter) {
   // adjust filter
   const timeFormat = getDefaultTimeFormat(interval);
   const updatedPlotType = {...filter.plotType, interval, timeFormat};
-  const newFilter = updateTimeFilterPlotType(filter, updatedPlotType, state.datasets);
-  return adjustValueToAnimationWindow(state, newFilter);
+  const plotBaseIndexByDataId = getPlotBaseIndexByDataId(state.datasets, filter, state.layers);
+  const newFilter = updateTimeFilterPlotType(
+    filter,
+    updatedPlotType,
+    state.datasets,
+    undefined,
+    plotBaseIndexByDataId
+  );
+  return adjustValueToAnimationWindow(state, newFilter, plotBaseIndexByDataId);
 }
 
 // Find dataId from a saved visState property:

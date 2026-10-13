@@ -2771,6 +2771,45 @@ test('#visStateReducer -> SET_FILTER.name', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_FILTER.inverted', t => {
+  const oldState = CloneDeep(StateWFilters.visState);
+  const dataId = testGeoJsonDataId;
+  const allCount = oldState.datasets[dataId].dataContainer.numRows();
+  const keptIn = oldState.datasets[dataId].filteredIndex.length;
+
+  t.ok(keptIn > 0 && keptIn < allCount, 'fixture keeps a subset of rows');
+
+  let next = reducer(oldState, VisStateActions.setFilter(1, 'inverted', true));
+  let filter = next.filters[1];
+  t.equal(filter.inverted, true, 'stores filter out');
+  t.equal(filter.type, 'multiSelect', 'category filter stays a multi select');
+  t.equal(
+    next.datasets[dataId].filteredIndex.length + keptIn,
+    allCount,
+    'filter out keeps the rows filter in would hide'
+  );
+
+  next = reducer(next, VisStateActions.setFilter(1, 'name', 'ZIP_CODE', 0));
+  filter = next.filters[1];
+  t.equal(filter.type, 'range', 'numeric field becomes a range filter');
+  t.equal(filter.inverted, true, 'filter out survives a field change');
+  t.equal(filter.gpu, false, 'an inverted range filter does not use the GPU');
+
+  next = reducer(next, VisStateActions.setFilter(1, 'inverted', false));
+  filter = next.filters[1];
+  t.equal(filter.inverted, false, 'filter in is the default again');
+  t.equal(filter.gpu, true, 'range filters return to the GPU');
+  t.deepEqual(filter.gpuChannel, [0], 'a GPU channel is assigned again');
+
+  next.datasets[dataId].disableDataOperation = true;
+  next = reducer(next, VisStateActions.setFilter(1, 'inverted', true));
+  filter = next.filters[1];
+  t.equal(filter.inverted, false, 'GPU-only datasets reject unsupported filter out');
+  t.equal(filter.gpu, true, 'GPU-only datasets keep their working GPU filter');
+
+  t.end();
+});
+
 test('#visStateReducer -> SET_FILTER.dataId', t => {
   const oldState = CloneDeep(StateWFilters.visState);
   const oldFilter = {...oldState.filters[1]};
@@ -6119,6 +6158,46 @@ test('#visStateReducer -> POLYGON: intersecting polygons AND on the same layer',
     layerDataIndexes(state, startLayer),
     [0, 1],
     'start layer data should match the remaining polygon'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: inverted polygon AND another polygon on the same layer', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([mockStartRegionPolygon, mockEastOverlapPolygon])
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockStartRegionPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon));
+  state = reducer(state, VisStateActions.setFilter(0, 'inverted', true));
+
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [2, 3],
+    'inverted polygon should keep points outside its region'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [2, 3],
+    'layer data should use the inverted polygon complement'
+  );
+
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEastOverlapPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockEastOverlapPolygon));
+
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [2],
+    'inverted polygon should be ANDed with another polygon on the same layer'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [2],
+    'layer data should match the combined polygon filters'
   );
 
   t.end();

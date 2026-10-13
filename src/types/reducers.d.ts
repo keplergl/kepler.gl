@@ -171,6 +171,11 @@ export type FilterBase<L extends LineChart> = {
   dataId: string[];
   id: string;
   enabled: boolean;
+  /**
+   * When true, rows that match the filter are hidden and the rest are kept.
+   * Undefined is treated as false so older saved maps stay unchanged.
+   */
+  inverted?: boolean;
 
   // time range filter specific
   fixedDomain: boolean;
