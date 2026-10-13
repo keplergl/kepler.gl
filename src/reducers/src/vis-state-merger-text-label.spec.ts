@@ -2,13 +2,16 @@
 // Copyright contributors to the kepler.gl project
 
 import {DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
-import {defaultAggregationCountLabel} from '@kepler.gl/layers';
+import {KeplerGlLayers} from '@kepler.gl/layers';
 
 import {fallbackTextLabelForLoadedLayer, validateSavedTextLabel} from './vis-state-merger';
 
+const aggregationTextLabelDefaults = () =>
+  new KeplerGlLayers.HexagonLayer({id: 'hexagon'}).config.textLabel;
+
 describe('validateSavedTextLabel point count', () => {
   test('restores the synthetic field and keeps collision disabled', () => {
-    const defaults = [defaultAggregationCountLabel()];
+    const defaults = aggregationTextLabelDefaults();
     const saved = [
       {
         ...defaults[0],
@@ -46,7 +49,7 @@ describe('validateSavedTextLabel point count', () => {
   });
 
   test('omitted textLabel on a hexagon stays unlabeled', () => {
-    const labels = fallbackTextLabelForLoadedLayer('hexagon', [defaultAggregationCountLabel()]);
+    const labels = fallbackTextLabelForLoadedLayer('hexagon', aggregationTextLabelDefaults());
 
     expect(labels).toHaveLength(1);
     expect(labels[0].field).toBeNull();

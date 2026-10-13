@@ -207,8 +207,6 @@ export {getFilterDataFunc} from './aggregation-layer';
 export {
   AGGREGATION_COUNT_LAYER_TYPES,
   createPointCountLabelField,
-  defaultAggregationCountLabel,
-  formatPointCount,
   isPointCountLabel,
   POINT_COUNT_FIELD_NAME
 } from './aggregation-count-label';
