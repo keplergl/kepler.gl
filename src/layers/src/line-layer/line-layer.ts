@@ -244,7 +244,11 @@ export default class LineLayer extends ArcLayer {
   isLayerHovered(objectInfo): boolean {
     return (
       super.isLayerHovered(objectInfo) ||
-      Boolean(objectInfo?.picked && objectInfo?.layer?.props?.id === `${this.id}-globe`)
+      Boolean(
+        this.config.visConfig.targetArrowEnabled &&
+          objectInfo?.picked &&
+          objectInfo?.layer?.props?.id === `${this.id}-globe`
+      )
     );
   }
 
@@ -340,7 +344,9 @@ export default class LineLayer extends ArcLayer {
           parameters: {cull: false, ...blendingParameters},
           // The target end, including the arrowhead, uses the target color.
           getSourceColor: data.getColor,
-          getTargetColor: data.getTargetColor,
+          getTargetColor: this.config.visConfig.targetArrowEnabled
+            ? data.getTargetColor
+            : data.getColor,
           widthUnits: 'pixels' as const
         }),
         ...(hoveredObject

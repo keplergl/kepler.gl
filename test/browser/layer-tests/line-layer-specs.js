@@ -499,6 +499,49 @@ test('#LineLayer -> renderLayer', t => {
           'globe highlight arrow id'
         );
       }
+    },
+    {
+      name: 'Line render layer.6 preserves globe behavior with target arrow disabled',
+      layer: {
+        config: {
+          dataId,
+          label: 'trip lines',
+          columns,
+          color: [10, 10, 10],
+          visConfig: {
+            targetArrowEnabled: false,
+            targetColor: [200, 30, 30]
+          }
+        },
+        type: 'line',
+        id: 'test_layer_0'
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      renderArgs: {
+        mapState: {...INITIAL_MAP_STATE, globe: {enabled: true}},
+        objectHovered: {
+          picked: true,
+          object: {
+            index: 0,
+            sourcePosition: [-122.4, 37.8, 0],
+            targetPosition: [-122.3, 37.9, 0]
+          },
+          layer: {props: {id: 'test_layer_0-globe'}}
+        }
+      },
+      assert: deckLayers => {
+        t.equal(deckLayers.length, 1, 'Should keep the original globe stroke only');
+        t.deepEqual(
+          deckLayers[0].props.getTargetColor,
+          [10, 10, 10],
+          'disabled arrow keeps the original solid line color'
+        );
+      }
     }
   ];
 
