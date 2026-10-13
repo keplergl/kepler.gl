@@ -17,9 +17,20 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 Mapbox-only applications should load `mapbox-gl/dist/mapbox-gl.css` instead.
 Applications that allow both MapLibre and Mapbox styles should load both stylesheets.
 
-### Get Mapbox Token
+For a Mapbox-only application, replace `maplibre-gl` in the installation command:
 
-Kepler.gl is built on top of [Mapbox GL](https://www.mapbox.com). A mapbox account and an access token are needed to use kepler.gl in your app. Get a [Mapbox Access Token](https://www.mapbox.com/help/define-access-token/) at mapbox.com.
+```sh
+npm install --save kepler.gl @kepler.gl/components @kepler.gl/reducers mapbox-gl
+```
+
+```js
+import 'mapbox-gl/dist/mapbox-gl.css';
+```
+
+### Get a Mapbox Token (Mapbox styles only)
+
+The default MapLibre-backed basemaps do not require a Mapbox token. If your application uses
+Mapbox-hosted styles, create a Mapbox account and get a [Mapbox Access Token](https://www.mapbox.com/help/define-access-token/).
 
 ### Basic Usage
 
