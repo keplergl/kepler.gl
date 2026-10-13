@@ -27,8 +27,13 @@ import {
 } from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson, remoteDatasetFromUrl} from '@kepler.gl/processors';
-import {Layer, KeplerGlLayers, COLUMN_MODE_TABLE} from '@kepler.gl/layers';
-import {maybeToDate} from '@kepler.gl/table';
+import {
+  Layer,
+  KeplerGlLayers,
+  COLUMN_MODE_TABLE,
+  createPointCountLabelField
+} from '@kepler.gl/layers';
+import {copyTableAndUpdate, maybeToDate} from '@kepler.gl/table';
 import {
   createDataContainer,
   applyFilterFieldName,
@@ -1281,6 +1286,144 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
     'should enable collision filtering on all text labels'
   );
 
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE -> cluster point count is added once', t => {
+  const initialState = StateWFiles.visState;
+  const pointLayer = initialState.layers.find(l => l.type === 'point');
+  const resetState = reducer(
+    initialState,
+    VisStateActions.layerConfigChange(pointLayer, {
+      textLabel: [{...DEFAULT_TEXT_LABEL}]
+    })
+  );
+  const resetPoint = resetState.layers.find(l => l.id === pointLayer.id);
+  const clusterState = reducer(resetState, VisStateActions.layerTypeChange(resetPoint, 'cluster'));
+  const clusterLayer = clusterState.layers.find(l => l.type === 'cluster');
+
+  t.equal(clusterLayer.config.textLabel.length, 1, 'type change keeps one label slot');
+  t.equal(clusterLayer.config.textLabel[0].field, null, 'copied point label has no field');
+
+  const pointCountField = createPointCountLabelField();
+  const selectedState = reducer(
+    clusterState,
+    VisStateActions.layerTextLabelChange(clusterLayer, 'all', 'fields', [pointCountField])
+  );
+  const selectedLayer = selectedState.layers.find(l => l.type === 'cluster');
+  const selected = selectedLayer.config.textLabel;
+
+  t.equal(selected.length, 1, 'picking Point Count adds one label');
+  t.equal(selected[0].field.name, 'pointCount');
+  t.equal(selected[0].field.fieldIdx, -1);
+  t.equal(selected[0].anchor, 'middle');
+  t.equal(selected[0].alignment, 'center');
+  t.equal(selected[0].collisionEnabled, true);
+  t.equal(selected[0].outlineWidth, 1);
+
+  const again = reducer(
+    selectedState,
+    VisStateActions.layerTextLabelChange(selectedLayer, 'all', 'fields', [pointCountField])
+  );
+  t.equal(
+    again.layers.find(l => l.type === 'cluster').config.textLabel.length,
+    1,
+    'picking Point Count again keeps one label'
+  );
+
+  const added = reducer(
+    selectedState,
+    VisStateActions.layerTextLabelChange(selectedLayer, selected.length)
+  );
+  const addedLabels = added.layers.find(l => l.type === 'cluster').config.textLabel;
+  t.equal(addedLabels.length, 2, 'add more label appends a slot');
+  t.equal(addedLabels[1].field, null, 'the extra slot does not clone Point Count');
+
+  const pointState = reducer(
+    selectedState,
+    VisStateActions.layerTypeChange(selectedLayer, 'point')
+  );
+  const convertedPointLayer = pointState.layers.find(l => l.type === 'point');
+  t.equal(convertedPointLayer.config.textLabel.length, 1, 'type change keeps one label slot');
+  t.equal(
+    convertedPointLayer.config.textLabel[0].field,
+    null,
+    'type change clears the synthetic Point Count field'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_COLUMN_DISPLAY_FORMAT updates text labels', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const otherDataId = 'other-data';
+  const otherDataset = copyTableAndUpdate(initialState.datasets[testCsvDataId], {
+    id: otherDataId
+  });
+  const layerIndex = initialState.layers.findIndex(layer => layer.config.dataId === testCsvDataId);
+  const field = initialState.datasets[testCsvDataId].fields.find(
+    ({name}) => name === 'gps_data.utc_timestamp'
+  );
+  const otherField = otherDataset.fields.find(({name}) => name === 'gps_data.utc_timestamp');
+  const layer = CloneDeep(initialState.layers[layerIndex]).updateLayerConfig({
+    textLabel: [{...DEFAULT_TEXT_LABEL, field}]
+  });
+  const otherLayer = CloneDeep(initialState.layers[layerIndex]).updateLayerConfig({
+    dataId: otherDataId,
+    textLabel: [{...DEFAULT_TEXT_LABEL, field: otherField}]
+  });
+  otherLayer.id = `${otherLayer.id}-other`;
+  const stateWithOtherDataset = {
+    ...initialState,
+    datasets: {...initialState.datasets, [otherDataId]: otherDataset}
+  };
+  const {layerData: oldLayerData} = calculateLayerData(layer, stateWithOtherDataset);
+  const {layerData: otherLayerData} = calculateLayerData(otherLayer, stateWithOtherDataset);
+  const layers = stateWithOtherDataset.layers.slice();
+  const layerData = stateWithOtherDataset.layerData.slice();
+  layers[layerIndex] = layer;
+  layerData[layerIndex] = oldLayerData;
+  const otherLayerIndex = layers.push(otherLayer) - 1;
+  layerData.push(otherLayerData);
+  const stateWithTextLabel = {
+    ...stateWithOtherDataset,
+    layers,
+    layerData
+  };
+
+  const nextState = reducer(
+    stateWithTextLabel,
+    VisStateActions.setColumnDisplayFormat(testCsvDataId, {
+      'gps_data.utc_timestamp': 'YYYY'
+    })
+  );
+  const updatedLayer = nextState.layers[layerIndex];
+
+  t.equal(
+    updatedLayer.config.textLabel[0].field.displayFormat,
+    'YYYY',
+    'should update the display format stored in the text label field'
+  );
+  t.equal(
+    nextState.layerData[layerIndex].textLabels[0].getText({index: 0}),
+    '2016',
+    'should immediately rebuild cached text labels with the updated display format'
+  );
+  t.equal(
+    nextState.layers[otherLayerIndex],
+    otherLayer,
+    'should not update a layer belonging to another dataset with the same field name'
+  );
+  t.equal(
+    nextState.layers[otherLayerIndex].config.textLabel[0].field.displayFormat,
+    undefined,
+    'should leave the other dataset label format unchanged'
+  );
+  t.equal(
+    nextState.layerData[otherLayerIndex],
+    otherLayerData,
+    'should not rebuild layer data belonging to another dataset'
+  );
   t.end();
 });
 
@@ -2624,6 +2767,45 @@ test('#visStateReducer -> SET_FILTER.name', t => {
   };
 
   cmpFilters(t, [expectedFilter0, expectedFilter1], updated.filters);
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.inverted', t => {
+  const oldState = CloneDeep(StateWFilters.visState);
+  const dataId = testGeoJsonDataId;
+  const allCount = oldState.datasets[dataId].dataContainer.numRows();
+  const keptIn = oldState.datasets[dataId].filteredIndex.length;
+
+  t.ok(keptIn > 0 && keptIn < allCount, 'fixture keeps a subset of rows');
+
+  let next = reducer(oldState, VisStateActions.setFilter(1, 'inverted', true));
+  let filter = next.filters[1];
+  t.equal(filter.inverted, true, 'stores filter out');
+  t.equal(filter.type, 'multiSelect', 'category filter stays a multi select');
+  t.equal(
+    next.datasets[dataId].filteredIndex.length + keptIn,
+    allCount,
+    'filter out keeps the rows filter in would hide'
+  );
+
+  next = reducer(next, VisStateActions.setFilter(1, 'name', 'ZIP_CODE', 0));
+  filter = next.filters[1];
+  t.equal(filter.type, 'range', 'numeric field becomes a range filter');
+  t.equal(filter.inverted, true, 'filter out survives a field change');
+  t.equal(filter.gpu, false, 'an inverted range filter does not use the GPU');
+
+  next = reducer(next, VisStateActions.setFilter(1, 'inverted', false));
+  filter = next.filters[1];
+  t.equal(filter.inverted, false, 'filter in is the default again');
+  t.equal(filter.gpu, true, 'range filters return to the GPU');
+  t.deepEqual(filter.gpuChannel, [0], 'a GPU channel is assigned again');
+
+  next.datasets[dataId].disableDataOperation = true;
+  next = reducer(next, VisStateActions.setFilter(1, 'inverted', true));
+  filter = next.filters[1];
+  t.equal(filter.inverted, false, 'GPU-only datasets reject unsupported filter out');
+  t.equal(filter.gpu, true, 'GPU-only datasets keep their working GPU filter');
 
   t.end();
 });
@@ -5981,6 +6163,46 @@ test('#visStateReducer -> POLYGON: intersecting polygons AND on the same layer',
   t.end();
 });
 
+test('#visStateReducer -> POLYGON: inverted polygon AND another polygon on the same layer', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([mockStartRegionPolygon, mockEastOverlapPolygon])
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockStartRegionPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon));
+  state = reducer(state, VisStateActions.setFilter(0, 'inverted', true));
+
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [2, 3],
+    'inverted polygon should keep points outside its region'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [2, 3],
+    'layer data should use the inverted polygon complement'
+  );
+
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEastOverlapPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockEastOverlapPolygon));
+
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [2],
+    'inverted polygon should be ANDed with another polygon on the same layer'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [2],
+    'layer data should match the combined polygon filters'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> POLYGON: disjoint polygons AND on the same layer', t => {
   let state = loadDualLonLatPolygonState();
   const startLayer = pointLayerByLat(state, 'start_point_lat');
@@ -6828,6 +7050,47 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
     nextState2.datasets[testCsvDataId].pinnedColumns,
     [],
     'should remove from pinned columns'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> TOGGLE_TABLE_COLUMN_HIDDEN and SHOW_ALL_TABLE_COLUMNS', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+
+  const hiddenState = reducer(
+    initialState,
+    VisStateActions.toggleTableColumnHidden(testCsvDataId, 'gps_data.lat')
+  );
+  assertDatasetIsTable(t, hiddenState.datasets[testCsvDataId]);
+  t.deepEqual(
+    hiddenState.datasets[testCsvDataId].hiddenColumns,
+    ['gps_data.lat'],
+    'should hide a table column through the reducer'
+  );
+
+  const shownState = reducer(
+    hiddenState,
+    VisStateActions.toggleTableColumnHidden(testCsvDataId, 'gps_data.lat')
+  );
+  t.deepEqual(shownState.datasets[testCsvDataId].hiddenColumns, [], 'should show a hidden column');
+
+  const allShownState = reducer(hiddenState, VisStateActions.showAllTableColumns(testCsvDataId));
+  t.deepEqual(allShownState.datasets[testCsvDataId].hiddenColumns, [], 'should show all columns');
+
+  const unknownColumnState = reducer(
+    initialState,
+    VisStateActions.toggleTableColumnHidden(testCsvDataId, 'missing')
+  );
+  t.equal(
+    unknownColumnState.datasets[testCsvDataId].hiddenColumns,
+    undefined,
+    'should ignore an unknown column'
+  );
+  t.equal(
+    reducer(initialState, VisStateActions.toggleTableColumnHidden('missing', 'gps_data.lat')),
+    initialState,
+    'should ignore an unknown dataset'
   );
 
   t.end();

@@ -152,6 +152,9 @@ export default {
     radiusRange: 'Диапазон радиуса',
     clusterRadius: 'Радиус кластера в пикселях',
     radiusRangePixels: 'Диапазон радиуса в пикселях',
+    minClusterSize: 'Мин. точек в кластере',
+    minClusterSizeDescription:
+      'Скрывать кластеры, в которых меньше точек, например 2 убирает кластеры из одной точки',
     billboard: 'Режим билборда',
     billboardDescription: 'Ориентировать геометрию на камеру',
     fadeTrail: 'Затухающий след',

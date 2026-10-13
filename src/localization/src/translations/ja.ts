@@ -151,6 +151,9 @@ export default {
     radiusRange: '半径の範囲',
     clusterRadius: 'クラスターの範囲[ピクセル]',
     radiusRangePixels: '半径の範囲[ピクセル]',
+    minClusterSize: 'クラスターあたりの最小ポイント数',
+    minClusterSizeDescription:
+      'これより少ないポイント数のクラスターを非表示にします。例: 2 で単一ポイントのクラスターを除外',
     billboard: 'ビルボードモード',
     billboardDescription: 'ジオメトリをカメラに向けます',
     fadeTrail: 'フェージングパス',

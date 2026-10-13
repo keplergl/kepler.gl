@@ -22,6 +22,7 @@ export type ClusterLayerVisConfigSettings = {
   clusterRadius: VisConfigNumber;
   colorRange: VisConfigColorRange;
   radiusRange: VisConfigRange;
+  minClusterSize: VisConfigNumber;
   colorAggregation: VisConfigSelection;
 };
 
@@ -30,6 +31,7 @@ export type ClusterLayerVisConfig = {
   clusterRadius: number;
   colorRange: ColorRange;
   radiusRange: [number, number];
+  minClusterSize: number;
   colorAggregation: AggregationTypes;
 };
 
@@ -40,12 +42,14 @@ export const clusterVisConfigs: {
   clusterRadius: 'clusterRadius';
   colorRange: 'colorRange';
   radiusRange: 'clusterRadiusRange';
+  minClusterSize: 'minClusterSize';
   colorAggregation: 'colorAggregation';
 } = {
   opacity: 'opacity',
   clusterRadius: 'clusterRadius',
   colorRange: 'colorRange',
   radiusRange: 'clusterRadiusRange',
+  minClusterSize: 'minClusterSize',
   colorAggregation: 'colorAggregation'
 };
 
@@ -103,6 +107,7 @@ export default class ClusterLayer extends AggregationLayer {
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const countLabelProps = this.getCountLabelProps(opts);
 
     const {_filterData: filterData, ...clusterData} = data;
     const hoveredObject = this.hasHoveredObject(objectHovered);
@@ -117,6 +122,7 @@ export default class ClusterLayer extends AggregationLayer {
         radiusScale: 1,
         radiusRange: visConfig.radiusRange,
         clusterRadius: visConfig.clusterRadius,
+        minPointCount: visConfig.minClusterSize,
 
         // color
         colorRange: this.getColorRange(visConfig.colorRange),
@@ -132,7 +138,8 @@ export default class ClusterLayer extends AggregationLayer {
         updateTriggers,
 
         // call back from layer after calculate clusters
-        onSetColorDomain: layerCallbacks.onSetLayerDomain
+        onSetColorDomain: layerCallbacks.onSetLayerDomain,
+        ...countLabelProps
       }),
       // hover layer
       ...(hoveredObject

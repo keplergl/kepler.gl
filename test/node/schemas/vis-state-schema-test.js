@@ -88,6 +88,7 @@ test('#visStateSchema -> v1 -> load layers', t => {
 
 test('#visStateSchema -> v1 -> save load filters', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  initialState.visState.filters[0].inverted = true;
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
@@ -103,6 +104,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
       dataId: [testCsvDataId],
       id: 'hjpn8frza',
       enabled: true,
+      inverted: true,
       name: ['time'],
       type: 'timeRange',
       value: [1474606800000, 1474617600000],

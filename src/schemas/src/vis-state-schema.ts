@@ -1022,6 +1022,7 @@ export const filterPropsV1 = {
   syncTimelineMode: null,
 
   enabled: null,
+  inverted: null,
 
   invertTrendColor: null,
   timezone: null,

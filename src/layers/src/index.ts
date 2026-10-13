@@ -204,6 +204,12 @@ export const EditorLayerUtils = {
 };
 
 export {getFilterDataFunc} from './aggregation-layer';
+export {
+  AGGREGATION_COUNT_LAYER_TYPES,
+  createPointCountLabelField,
+  isPointCountLabel,
+  POINT_COUNT_FIELD_NAME
+} from './aggregation-count-label';
 
 export * from './layer-update';
 export * from './layer-utils';

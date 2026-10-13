@@ -44,6 +44,14 @@ test('#ArcLayer -> constructor', t => {
           t.ok(layer.isAggregated === false, 'ArcLayer is not aggregated');
           t.ok(layer.config.label === 'test arc layer', 'label should be correct');
           t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
+          t.equal(layer.config.visConfig.targetArrowEnabled, false, 'target arrow is off');
+          t.equal(layer.config.visConfig.targetArrowShape, 'chevron', 'default arrow shape');
+          t.equal(layer.config.visConfig.targetArrowSize, 16, 'default arrow size');
+          t.equal(
+            layer.visConfigSettings.targetArrowSize.allowCustomValue,
+            false,
+            'arrow size has no custom input'
+          );
         }
       }
     ]
@@ -457,6 +465,98 @@ test('#ArcLayer -> renderLayer', t => {
         Object.keys(expectedProps).forEach(key => {
           t.equal(props[key], expectedProps[key], `should have correct props.${key}`);
         });
+      }
+    },
+    {
+      name: 'Arc render layer.3 target arrow',
+      layer: {
+        config: {
+          dataId,
+          label: 'trip arcs',
+          columns,
+          color: [10, 10, 10],
+          visConfig: {
+            targetArrowEnabled: true,
+            targetArrowShape: 'chevron',
+            targetArrowSize: 24,
+            targetColor: [200, 30, 30]
+          }
+        },
+        type: 'arc',
+        id: 'test_layer_0'
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      assert: deckLayers => {
+        t.equal(deckLayers.length, 2, 'Should create the arc and an arrow head');
+        const arrowLayer = deckLayers[deckLayers.length - 1];
+        t.equal(arrowLayer.id, 'test_layer_0-arrow-head-chevron', 'arrow layer id');
+        t.equal(arrowLayer.props.pickable, false, 'arrow head does not take the line hover');
+        const radius =
+          typeof arrowLayer.props.getRadius === 'function'
+            ? arrowLayer.props.getRadius(arrowLayer.props.data[0])
+            : arrowLayer.props.getRadius;
+        t.equal(radius, 24, 'arrow size is the vis config value in pixels');
+        t.equal(arrowLayer.props.iconGeometry.length, 18, 'chevron is two triangles');
+        const angle = arrowLayer.props.getAngle(arrowLayer.props.data[0]);
+        t.equal(typeof angle, 'number', 'arrow angle is computed');
+        t.ok(Number.isFinite(angle), 'arrow angle is finite');
+        const fill =
+          typeof arrowLayer.props.getFillColor === 'function'
+            ? arrowLayer.props.getFillColor(arrowLayer.props.data[0])
+            : arrowLayer.props.getFillColor;
+        t.deepEqual(fill, [200, 30, 30], 'arrow uses the target color');
+      }
+    },
+    {
+      name: 'Arc render layer.4 target arrow hover',
+      layer: {
+        config: {
+          dataId,
+          label: 'trip arcs',
+          columns,
+          color: [10, 10, 10],
+          visConfig: {
+            targetArrowEnabled: true,
+            targetArrowShape: 'triangle',
+            targetArrowSize: 24
+          }
+        },
+        type: 'arc',
+        id: 'test_layer_0'
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      renderArgs: {
+        objectHovered: {
+          picked: true,
+          object: {
+            index: 0,
+            sourcePosition: [-122.4, 37.8, 0],
+            targetPosition: [-122.3, 37.9, 0]
+          },
+          layer: {props: {id: 'test_layer_0'}}
+        }
+      },
+      assert: deckLayers => {
+        t.equal(deckLayers.length, 4, 'Should add a highlight stroke and a highlight arrow');
+        const arrowLayer = deckLayers[deckLayers.length - 1];
+        t.equal(arrowLayer.id, 'test_layer_0-arrow-head-triangle-hovered', 'highlight arrow id');
+        t.equal(arrowLayer.props.data.length, 1, 'highlight arrow is only the hovered stroke');
+        t.equal(arrowLayer.props.opacity, 1, 'highlight arrow is fully opaque');
+        const color =
+          typeof arrowLayer.props.getFillColor === 'function'
+            ? arrowLayer.props.getFillColor(arrowLayer.props.data[0])
+            : arrowLayer.props.getFillColor;
+        t.deepEqual(color, [252, 242, 26, 255], 'highlight arrow uses the layer highlight color');
       }
     }
   ];

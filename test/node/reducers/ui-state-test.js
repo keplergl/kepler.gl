@@ -260,13 +260,13 @@ test('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', t => {
 });
 
 test('#uiStateReducer -> SET_EXPORT_DATA_TYPE', t => {
-  const newReducer = reducer(INITIAL_UI_STATE, setExportDataType(EXPORT_DATA_TYPE.JSON));
+  const newReducer = reducer(INITIAL_UI_STATE, setExportDataType(EXPORT_DATA_TYPE.GEOJSON));
 
   const expectedState = {
     ...INITIAL_UI_STATE,
     exportData: {
       ...INITIAL_UI_STATE.exportData,
-      dataType: EXPORT_DATA_TYPE.JSON
+      dataType: EXPORT_DATA_TYPE.GEOJSON
     }
   };
 

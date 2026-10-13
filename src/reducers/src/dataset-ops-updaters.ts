@@ -115,9 +115,7 @@ export function executeGroupBy(
     return {
       state: {
         ...state,
-        groupBys: state.groupBys.map(item =>
-          item.id === op.id ? {...item, isConfigActive: false, error: null} : item
-        )
+        groupBys: state.groupBys.filter(item => item.id !== op.id)
       },
       proto
     };
@@ -210,9 +208,7 @@ export function executeJoin(
     return {
       state: {
         ...state,
-        joins: state.joins.map(item =>
-          item.id === op.id ? {...item, isConfigActive: false, error: null} : item
-        )
+        joins: state.joins.filter(item => item.id !== op.id)
       },
       proto
     };
@@ -270,9 +266,7 @@ export function executeSpatialJoin(
     return {
       state: {
         ...state,
-        joins: state.joins.map(item =>
-          item.id === op.id ? {...item, isConfigActive: false, error: null} : item
-        )
+        joins: state.joins.filter(item => item.id !== op.id)
       },
       proto
     };

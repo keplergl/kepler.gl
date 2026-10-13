@@ -47,6 +47,7 @@ const InputWrapper = styled.div`
   display: flex;
   line-height: 12px;
   margin-bottom: 12px;
+  width: 100%;
 `;
 
 const LabelRow = styled.div`
@@ -66,8 +67,7 @@ const CustomInputLabel = styled.label`
   padding-right: 15px;
 
   &:last-child {
-    position: absolute;
-    right: 0;
+    margin-left: auto;
     padding: 0;
   }
 `;
