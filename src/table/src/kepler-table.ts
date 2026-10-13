@@ -9,8 +9,7 @@ import {
   SORT_ORDER,
   ALL_FIELD_TYPES,
   ALTITUDE_FIELDS,
-  SCALE_TYPES,
-  FILTER_TYPES
+  SCALE_TYPES
 } from '@kepler.gl/constants';
 import {
   RGBColor,
@@ -41,8 +40,7 @@ import {
   getFilterFunction,
   getFilterProps,
   getFilterRecord,
-  getPolygonFilterFunctor,
-  isValidFilterValue,
+  computePolygonFilteredIndexByLayer,
   mergePolygonLayerIndexes,
   getNumericFieldDomain,
   getTimestampFieldDomain,
@@ -134,66 +132,6 @@ export function maybeToDate(
 ) {
   const value = readFieldValue(fieldIdx, dc, d);
   return isTime ? timeToUnixMilli(value, format) : value;
-}
-
-/**
- * Compute per-layer filtered indices for polygon filters.
- * Polygon filters are layer-specific: they should only affect the layers listed in filter.layerId.
- * For each layer on this dataset, compute a filtered index that applies only the polygon filters
- * targeting that specific layer. Multiple polygon filters targeting the same layer are ANDed.
- */
-function computePolygonFilteredIndexByLayer(
-  filters: Filter[],
-  layers: Layer[],
-  dataId: string,
-  dataContainer: DataContainerInterface,
-  baseFilteredIndex: number[]
-): Record<string, number[]> {
-  const polygonFilters = filters.filter(
-    f =>
-      f.type === FILTER_TYPES.polygon &&
-      f.dataId.includes(dataId) &&
-      f.enabled !== false &&
-      isValidFilterValue(f.type, f.value)
-  );
-
-  if (!polygonFilters.length) {
-    return {};
-  }
-
-  const layersOnDataset = layers.filter(l => l.config?.dataId === dataId);
-  const result: Record<string, number[]> = {};
-
-  for (const layer of layersOnDataset) {
-    // For each polygon filter, check if this layer is targeted
-    const applicableFilters = polygonFilters.filter(f => f.layerId && f.layerId.includes(layer.id));
-
-    if (!applicableFilters.length) {
-      // This layer is not targeted by any polygon filter - use base index
-      continue;
-    }
-
-    // Build polygon filter functors for this layer
-    const filterFunctors = applicableFilters.map(filter => {
-      const matches = getPolygonFilterFunctor(layer, filter, dataContainer);
-      return filter.inverted ? (data: {index: number}) => !matches(data) : matches;
-    });
-
-    // Filter the base filtered index: a row passes if it passes ALL polygon filters
-    // (each polygon filter already uses this layer's position accessor)
-    const layerFilteredIndex: number[] = [];
-    const filterContext = {index: -1};
-    for (let i = 0; i < baseFilteredIndex.length; i++) {
-      filterContext.index = baseFilteredIndex[i];
-      if (filterFunctors.every(fn => fn(filterContext))) {
-        layerFilteredIndex.push(baseFilteredIndex[i]);
-      }
-    }
-
-    result[layer.id] = layerFilteredIndex;
-  }
-
-  return result;
 }
 
 class KeplerTable<F extends Field = Field> {
@@ -715,19 +653,6 @@ class KeplerTable<F extends Field = Field> {
     );
 
     return this;
-  }
-
-  /** Apply active polygon filters to an arbitrary CPU-filtered base index. */
-  getPolygonFilteredIndex(baseIndex: number[], layers: Layer[]): number[] {
-    const filteredIndexByLayer = computePolygonFilteredIndexByLayer(
-      this.filterRecord?.fixedDomain || [],
-      layers,
-      this.id,
-      this.dataContainer,
-      baseIndex
-    );
-
-    return mergePolygonLayerIndexes(baseIndex, filteredIndexByLayer);
   }
 
   /**

@@ -23,6 +23,7 @@ import {
   isTimeIntervalFilter,
   timeWindowOverlapsInterval,
   applyTimeFilterEndFieldName,
+  validateFilterWithData,
   disableGpuIfInverted,
   getPlotBaseIndexByDataId
 } from '@kepler.gl/utils';
@@ -1073,6 +1074,10 @@ test('filterUtils -> getFilterFunction inverted', t => {
   t.equal(keep({value: 5}), false, 'drops values outside the range');
   t.equal(drop({value: 3}), false, 'filter out hides values inside the range');
   t.equal(drop({value: 5}), true, 'filter out keeps values outside the range');
+  t.equal(keep({value: null}), false, 'a null is not coerced to zero by a range filter');
+  t.equal(drop({value: null}), true, 'filter out keeps a null that does not match the range');
+  t.equal(keep({value: ''}), false, 'an empty value is not coerced to zero by a range filter');
+  t.equal(drop({value: ''}), true, 'filter out keeps an empty value that does not match the range');
 
   const disabled = getFilterFunction(
     field,
@@ -1125,6 +1130,35 @@ test('filterUtils -> disableGpuIfInverted', t => {
   t.equal(kept.gpu, true, 'filter in still uses the GPU');
   t.deepEqual(kept.gpuChannel, [0], 'filter in keeps its channel');
 
+  t.end();
+});
+
+test('filterUtils -> validateFilterWithData rejects unsupported inversion', t => {
+  const dataset = new KeplerTable({
+    info: {id: 'remote'},
+    color: [0, 0, 0],
+    disableDataOperation: true
+  });
+  dataset.updateSchema({
+    fields: [{name: 'value', type: 'real', analyzerType: 'FLOAT'}],
+    rows: []
+  });
+
+  const {filter} = validateFilterWithData(
+    {remote: dataset},
+    'remote',
+    {
+      ...getDefaultFilter({dataId: ['remote']}),
+      name: ['value'],
+      type: FILTER_TYPES.range,
+      value: [0, 10],
+      inverted: true
+    },
+    []
+  );
+
+  t.equal(filter.inverted, false, 'saved filter out is cleared for a GPU-only dataset');
+  t.equal(filter.gpu, true, 'the validated range filter remains on the GPU');
   t.end();
 });
 
@@ -1234,11 +1268,19 @@ test('filterUtils -> getPlotBaseIndexByDataId retains polygon filters', t => {
   };
 
   dataset.filterTable([inverted, other, polygon], [layer]);
+  const customTable = {
+    id: dataset.id,
+    fields: dataset.fields,
+    dataContainer: dataset.dataContainer,
+    allIndexes: dataset.allIndexes,
+    filteredIndex: dataset.filteredIndex,
+    filterRecord: dataset.filterRecord
+  };
 
   t.deepEqual(
-    getPlotBaseIndexByDataId({ds: dataset}, inverted, [layer]).ds,
+    getPlotBaseIndexByDataId({ds: customTable}, inverted, [layer]).ds,
     [0],
-    'histogram base omits itself while keeping CPU and polygon filters'
+    'custom-table histogram base omits itself while keeping CPU and polygon filters'
   );
 
   t.end();

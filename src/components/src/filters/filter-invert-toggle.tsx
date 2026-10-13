@@ -41,9 +41,15 @@ type FilterInvertToggleProps = {
   filter: Filter;
   idx: number;
   setFilter: (idx: number, prop: string, value: boolean) => void;
+  isSupported?: boolean;
 };
 
-const FilterInvertToggle: React.FC<FilterInvertToggleProps> = ({filter, idx, setFilter}) => {
+const FilterInvertToggle: React.FC<FilterInvertToggleProps> = ({
+  filter,
+  idx,
+  setFilter,
+  isSupported = true
+}) => {
   const intl = useIntl();
   const onChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,7 +58,7 @@ const FilterInvertToggle: React.FC<FilterInvertToggleProps> = ({filter, idx, set
     [idx, setFilter]
   );
 
-  if (!filter.type) {
+  if (!filter.type || !isSupported) {
     return null;
   }
 
@@ -72,8 +78,8 @@ const FilterInvertToggle: React.FC<FilterInvertToggleProps> = ({filter, idx, set
         data-tip
         data-for={tooltipId}
         aria-label={intl.formatMessage({
-          id: 'filterManager.filterOutHint',
-          defaultMessage: 'Hide rows that match this filter and keep the rest.'
+          id: 'filterManager.filterOutHelp',
+          defaultMessage: 'Filter out help'
         })}
         aria-describedby={tooltipId}
       >

@@ -86,7 +86,12 @@ function FieldPanelWithFieldSelectFactory(
                 onSelect={onSourceDataSelector}
               />
             )}
-            <FilterInvertToggle filter={filter} idx={idx} setFilter={setFilter} />
+            <FilterInvertToggle
+              filter={filter}
+              idx={idx}
+              setFilter={setFilter}
+              isSupported={!dataset.disableDataOperation}
+            />
             {children}
           </StyledFilterContent>
         </>

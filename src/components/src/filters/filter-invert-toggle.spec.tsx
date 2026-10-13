@@ -21,7 +21,7 @@ describe('FilterInvertToggle', () => {
 
     expect(screen.getByRole('checkbox', {name: 'filterManager.filterOut'})).toBeInTheDocument();
     const helpButton = screen.getByRole('button', {
-      name: 'Hide rows that match this filter and keep the rest.'
+      name: 'Filter out help'
     });
     expect(helpButton).toHaveAttribute('aria-describedby', 'filter-out-hint-rate');
     act(() => helpButton.focus());
@@ -52,6 +52,20 @@ describe('FilterInvertToggle', () => {
     const setFilter = jest.fn();
     const {container} = renderWithTheme(
       <FilterInvertToggle filter={{id: 'new', type: null} as any} idx={0} setFilter={setFilter} />
+    );
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  test('stays hidden when the dataset cannot run CPU filters', () => {
+    const setFilter = jest.fn();
+    const {container} = renderWithTheme(
+      <FilterInvertToggle
+        filter={filter as any}
+        idx={0}
+        setFilter={setFilter}
+        isSupported={false}
+      />
     );
 
     expect(container).toBeEmptyDOMElement();

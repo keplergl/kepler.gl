@@ -1712,9 +1712,12 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
     }
 
     case 'inverted': {
+      const supportsInversion = filter.dataId.every(
+        datasetId => !state.datasets[datasetId]?.disableDataOperation
+      );
       filter = {
         ...filter,
-        inverted: Boolean(value)
+        inverted: supportsInversion && Boolean(value)
       };
       if (filter.inverted) {
         // GPU range tests can only keep values inside the window.

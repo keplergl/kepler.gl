@@ -51,7 +51,12 @@ function PolygonFilterPanelFactory(
             />
           </FilterPanelHeader>
           <StyledFilterContent className="filter-panel__content">
-            <FilterInvertToggle filter={filter} idx={idx} setFilter={setFilter} />
+            <FilterInvertToggle
+              filter={filter}
+              idx={idx}
+              setFilter={setFilter}
+              isSupported={filterDatasets.every(dataset => !dataset?.disableDataOperation)}
+            />
             <div className="filter-panel__filter">
               <PolygonFilter filter={filter} layers={layers} setLayers={onSetLayers} />
             </div>

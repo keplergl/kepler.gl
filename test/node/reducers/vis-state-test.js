@@ -2801,6 +2801,12 @@ test('#visStateReducer -> SET_FILTER.inverted', t => {
   t.equal(filter.gpu, true, 'range filters return to the GPU');
   t.deepEqual(filter.gpuChannel, [0], 'a GPU channel is assigned again');
 
+  next.datasets[dataId].disableDataOperation = true;
+  next = reducer(next, VisStateActions.setFilter(1, 'inverted', true));
+  filter = next.filters[1];
+  t.equal(filter.inverted, false, 'GPU-only datasets reject unsupported filter out');
+  t.equal(filter.gpu, true, 'GPU-only datasets keep their working GPU filter');
+
   t.end();
 });
 

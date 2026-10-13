@@ -121,6 +121,9 @@ function TimeRangeFilterPanelFactory(
         () => filter.type && !isEnlarged,
         [filter.type, isEnlarged]
       );
+      const isInversionSupported = filter.dataId.every(
+        dataId => !datasets[dataId]?.disableDataOperation
+      );
 
       const timeline = getTimelineFromFilter(filter);
 
@@ -189,7 +192,12 @@ function TimeRangeFilterPanelFactory(
                 />
               </SidePanelSection>
             ) : null}
-            <FilterInvertToggle filter={filter} idx={idx} setFilter={setFilter} />
+            <FilterInvertToggle
+              filter={filter}
+              idx={idx}
+              setFilter={setFilter}
+              isSupported={isInversionSupported}
+            />
             {isHistogramVisible && (
               <div className="filter-panel__filter">
                 <TimeRangeFilter

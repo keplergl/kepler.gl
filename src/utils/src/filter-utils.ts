@@ -45,7 +45,11 @@ import {generateHashId, toArray, notNullorUndefined, getCentroid} from '@kepler.
 import {DataContainerInterface} from './data-container-interface';
 import {set} from './utils';
 import {timeToUnixMilli, unique} from './data-utils';
-import {updateTimeFilterPlotType, updateRangeFilterPlotType} from './plot';
+import {
+  mergePolygonLayerIndexes,
+  updateTimeFilterPlotType,
+  updateRangeFilterPlotType
+} from './plot';
 import {KeplerTableModel} from './types';
 
 export const durationSecond = 1000;
@@ -392,9 +396,23 @@ export function validateFilterWithData<K extends KeplerTableModel<K, L>, L>(
   filter: ParsedFilter,
   layers: L[]
 ): {filter: Filter; dataset: K} {
-  return filter.type && Object.prototype.hasOwnProperty.call(filterValidators, filter.type)
-    ? filterValidators[filter.type](datasets[datasetId], filter, layers)
-    : validateFilter(datasets, datasetId, filter);
+  const validated =
+    filter.type && Object.prototype.hasOwnProperty.call(filterValidators, filter.type)
+      ? filterValidators[filter.type](datasets[datasetId], filter, layers)
+      : validateFilter(datasets, datasetId, filter);
+
+  if (validated.filter?.inverted && validated.dataset.disableDataOperation) {
+    return {
+      ...validated,
+      filter: {
+        ...validated.filter,
+        inverted: false,
+        ...(filterTypeUsesGpu(validated.filter.type) ? {gpu: true} : {})
+      }
+    };
+  }
+
+  return validated;
 }
 
 /**
@@ -592,6 +610,54 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
 };
 
 /**
+ * Compute the polygon-filtered indexes for each layer on a dataset. Keeping this
+ * independent of KeplerTable lets filter plots work with custom table classes.
+ */
+export function computePolygonFilteredIndexByLayer(
+  filters: Filter[],
+  layers: any[],
+  dataId: string,
+  dataContainer: DataContainerInterface,
+  baseFilteredIndex: number[]
+): Record<string, number[]> {
+  const polygonFilters = filters.filter(
+    filter =>
+      filter.type === FILTER_TYPES.polygon &&
+      filter.dataId.includes(dataId) &&
+      filter.enabled !== false &&
+      isValidFilterValue(filter.type, filter.value)
+  );
+
+  if (!polygonFilters.length) {
+    return {};
+  }
+
+  const result: Record<string, number[]> = {};
+  for (const layer of layers.filter(candidate => candidate.config?.dataId === dataId)) {
+    const applicableFilters = polygonFilters.filter(
+      filter => filter.layerId && filter.layerId.includes(layer.id)
+    );
+
+    if (!applicableFilters.length) {
+      continue;
+    }
+
+    const filterFunctors = applicableFilters.map(filter => {
+      const matches = getPolygonFilterFunctor(layer, filter, dataContainer);
+      return filter.inverted ? (data: {index: number}) => !matches(data) : matches;
+    });
+    const filterContext = {index: -1};
+
+    result[layer.id] = baseFilteredIndex.filter(index => {
+      filterContext.index = index;
+      return filterFunctors.every(fn => fn(filterContext));
+    });
+  }
+
+  return result;
+}
+
+/**
  * Check if a GeoJSON feature filter can be applied to a layer
  */
 export function canApplyFeatureFilter(feature: Feature | null): boolean {
@@ -766,7 +832,14 @@ export function getPlotBaseIndexByDataId(
     const dataset = datasets[dataId];
     const base = dataset ? plotBaseIndexExcludingFilter(dataset, filter) : undefined;
     if (base) {
-      result[dataId] = dataset.getPolygonFilteredIndex?.(base, layers) ?? base;
+      const filteredIndexByLayer = computePolygonFilteredIndexByLayer(
+        dataset.filterRecord?.fixedDomain || [],
+        layers,
+        dataset.id,
+        dataset.dataContainer,
+        base
+      );
+      result[dataId] = mergePolygonLayerIndexes(base, filteredIndexByLayer);
     }
   });
 
@@ -1030,10 +1103,16 @@ export function isInRange(val: any, domain: number[]): boolean {
   }
 
   if (Array.isArray(val)) {
-    return domain[0] <= val[0] && val[1] <= domain[1];
+    return (
+      val.length >= 2 &&
+      Number.isFinite(val[0]) &&
+      Number.isFinite(val[1]) &&
+      domain[0] <= val[0] &&
+      val[1] <= domain[1]
+    );
   }
 
-  return val >= domain[0] && val <= domain[1];
+  return Number.isFinite(val) && val >= domain[0] && val <= domain[1];
 }
 
 /**
