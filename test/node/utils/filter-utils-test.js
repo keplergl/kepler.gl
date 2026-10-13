@@ -4,7 +4,7 @@
 import test from 'tape';
 import moment from 'moment';
 
-import {getDatasetFieldIndexForFilter} from '@kepler.gl/table';
+import {getDatasetFieldIndexForFilter, KeplerTable} from '@kepler.gl/table';
 
 import {
   isValidFilterValue,
@@ -1171,6 +1171,74 @@ test('filterUtils -> getPlotBaseIndexByDataId excludes the plotted filter', t =>
     getPlotBaseIndexByDataId({ds: dataset}, {id: 'gpu-only', dataId: ['ds']}),
     undefined,
     'GPU filters are already absent from the CPU index'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> getPlotBaseIndexByDataId retains polygon filters', t => {
+  const dataset = new KeplerTable({info: {id: 'ds'}, color: [0, 0, 0]});
+  dataset.updateSchema({
+    fields: [
+      {name: 'value', type: 'real', analyzerType: 'FLOAT'},
+      {name: 'lat', type: 'real', analyzerType: 'FLOAT'},
+      {name: 'lng', type: 'real', analyzerType: 'FLOAT'}
+    ],
+    rows: [
+      [1, 12.25, 30.5],
+      [5, 12.25, 35.5],
+      [9, 14.25, 30.5]
+    ]
+  });
+
+  const layer = {
+    id: 'layer',
+    type: 'point',
+    config: {dataId: 'ds'},
+    getPositionAccessor:
+      dataContainer =>
+      ({index}) =>
+        [dataContainer.valueAt(index, 2), dataContainer.valueAt(index, 1)]
+  };
+  const inverted = {
+    id: 'self',
+    type: FILTER_TYPES.range,
+    dataId: ['ds'],
+    fieldIdx: [0],
+    name: ['value'],
+    value: [4, 6],
+    inverted: true,
+    enabled: true,
+    gpu: false
+  };
+  const other = {
+    id: 'other',
+    type: FILTER_TYPES.range,
+    dataId: ['ds'],
+    fieldIdx: [0],
+    name: ['value'],
+    value: [0, 8],
+    enabled: true,
+    gpu: false
+  };
+  const polygon = {
+    id: 'polygon',
+    type: FILTER_TYPES.polygon,
+    dataId: ['ds'],
+    fieldIdx: [],
+    layerId: ['layer'],
+    value: mockPolygonFeature,
+    enabled: true,
+    fixedDomain: true,
+    gpu: false
+  };
+
+  dataset.filterTable([inverted, other, polygon], [layer]);
+
+  t.deepEqual(
+    getPlotBaseIndexByDataId({ds: dataset}, inverted, [layer]).ds,
+    [0],
+    'histogram base omits itself while keeping CPU and polygon filters'
   );
 
   t.end();

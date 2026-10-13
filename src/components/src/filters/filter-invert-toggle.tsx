@@ -3,6 +3,7 @@
 
 import React, {useCallback} from 'react';
 import styled from 'styled-components';
+import {useIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Filter} from '@kepler.gl/types';
 
@@ -16,14 +17,18 @@ const FilterOutRow = styled.div`
   margin-bottom: 4px;
 `;
 
-const FilterOutHelp = styled.div`
+const FilterOutHelp = styled.button.attrs({type: 'button'})`
   display: flex;
   align-items: center;
   margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: ${props => props.theme.labelColor};
   cursor: help;
 
-  &:hover {
+  &:hover,
+  &:focus {
     color: ${props => props.theme.textColorHl};
   }
 `;
@@ -39,6 +44,7 @@ type FilterInvertToggleProps = {
 };
 
 const FilterInvertToggle: React.FC<FilterInvertToggleProps> = ({filter, idx, setFilter}) => {
+  const intl = useIntl();
   const onChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setFilter(idx, 'inverted', event.target.checked);
@@ -61,7 +67,16 @@ const FilterInvertToggle: React.FC<FilterInvertToggleProps> = ({filter, idx, set
         label={<FormattedMessage id="filterManager.filterOut" />}
         onChange={onChange}
       />
-      <FilterOutHelp data-testid="filter-out-help" data-tip data-for={tooltipId}>
+      <FilterOutHelp
+        data-testid="filter-out-help"
+        data-tip
+        data-for={tooltipId}
+        aria-label={intl.formatMessage({
+          id: 'filterManager.filterOutHint',
+          defaultMessage: 'Hide rows that match this filter and keep the rest.'
+        })}
+        aria-describedby={tooltipId}
+      >
         <Help height="14px" />
         <Tooltip id={tooltipId} effect="solid" place="top">
           <FilterOutHelpContent>

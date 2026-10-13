@@ -717,6 +717,19 @@ class KeplerTable<F extends Field = Field> {
     return this;
   }
 
+  /** Apply active polygon filters to an arbitrary CPU-filtered base index. */
+  getPolygonFilteredIndex(baseIndex: number[], layers: Layer[]): number[] {
+    const filteredIndexByLayer = computePolygonFilteredIndexByLayer(
+      this.filterRecord?.fixedDomain || [],
+      layers,
+      this.id,
+      this.dataContainer,
+      baseIndex
+    );
+
+    return mergePolygonLayerIndexes(baseIndex, filteredIndexByLayer);
+  }
+
   /**
    * Apply filters to a dataset all on CPU, assign to `filteredIdxCPU`, `filterRecordCPU`
    * @param filters

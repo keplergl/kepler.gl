@@ -1447,7 +1447,7 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
     const adjusted = adjustValueToAnimationWindow(
       state,
       nextFilter as TimeRangeFilter,
-      getPlotBaseIndexByDataId(state.datasets, nextFilter)
+      getPlotBaseIndexByDataId(state.datasets, nextFilter, state.layers)
     );
     if (Array.isArray(adjusted.value) && adjusted.value.every(v => Number.isFinite(v))) {
       nextFilter = adjusted;
@@ -1565,7 +1565,12 @@ export function setFilterUpdater<S extends VisState>(
   newState = set(['datasets'], filteredDatasets, newState);
 
   // need to update filterPlot after filter Dataset for plot to update on filtered result
-  const filterWithPLot = updateFilterPlot(newState.datasets, newState.filters[idx]);
+  const filterWithPLot = updateFilterPlot(
+    newState.datasets,
+    newState.filters[idx],
+    undefined,
+    newState.layers
+  );
 
   newState = set(['filters', idx], filterWithPLot, newState);
 
@@ -1807,7 +1812,7 @@ export const setFilterPlotUpdater = (
     }
   }
 
-  newFilter = updateFilterPlot(state.datasets, newFilter);
+  newFilter = updateFilterPlot(state.datasets, newFilter, undefined, state.layers);
 
   return {
     ...state,
@@ -6560,7 +6565,7 @@ function adjustTimeFilterInterval(state, filter) {
   // adjust filter
   const timeFormat = getDefaultTimeFormat(interval);
   const updatedPlotType = {...filter.plotType, interval, timeFormat};
-  const plotBaseIndexByDataId = getPlotBaseIndexByDataId(state.datasets, filter);
+  const plotBaseIndexByDataId = getPlotBaseIndexByDataId(state.datasets, filter, state.layers);
   const newFilter = updateTimeFilterPlotType(
     filter,
     updatedPlotType,

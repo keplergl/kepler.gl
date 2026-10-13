@@ -754,7 +754,8 @@ export function filterDataByFilterTypes(
  */
 export function getPlotBaseIndexByDataId(
   datasets: {[id: string]: any},
-  filter: Filter
+  filter: Filter,
+  layers: any[] = []
 ): Record<string, number[]> | undefined {
   if (!filter?.id) {
     return undefined;
@@ -765,7 +766,7 @@ export function getPlotBaseIndexByDataId(
     const dataset = datasets[dataId];
     const base = dataset ? plotBaseIndexExcludingFilter(dataset, filter) : undefined;
     if (base) {
-      result[dataId] = base;
+      result[dataId] = dataset.getPolygonFilteredIndex?.(base, layers) ?? base;
     }
   });
 
@@ -1139,13 +1140,14 @@ export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
 export function updateFilterPlot<K extends KeplerTableModel<K, any>>(
   datasets: {[id: string]: K},
   filter: Filter,
-  dataId: string | undefined = undefined
+  dataId: string | undefined = undefined,
+  layers: any[] = []
 ) {
   if (dataId) {
     filter = removeFilterPlot(filter, dataId);
   }
 
-  const plotBaseIndexByDataId = getPlotBaseIndexByDataId(datasets, filter);
+  const plotBaseIndexByDataId = getPlotBaseIndexByDataId(datasets, filter, layers);
 
   if (filter.type === FILTER_TYPES.timeRange) {
     return updateTimeFilterPlotType(
@@ -1624,7 +1626,7 @@ export function validateFiltersUpdateDatasets<
           domain
         });
 
-        validated.push(updateFilterPlot(datasets, validatedFilter));
+        validated.push(updateFilterPlot(datasets, validatedFilter, undefined, layers));
         updatedDatasets = {
           ...updatedDatasets,
           ...augmentedDatasets

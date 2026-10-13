@@ -6157,6 +6157,46 @@ test('#visStateReducer -> POLYGON: intersecting polygons AND on the same layer',
   t.end();
 });
 
+test('#visStateReducer -> POLYGON: inverted polygon AND another polygon on the same layer', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([mockStartRegionPolygon, mockEastOverlapPolygon])
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockStartRegionPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon));
+  state = reducer(state, VisStateActions.setFilter(0, 'inverted', true));
+
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [2, 3],
+    'inverted polygon should keep points outside its region'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [2, 3],
+    'layer data should use the inverted polygon complement'
+  );
+
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEastOverlapPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockEastOverlapPolygon));
+
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [2],
+    'inverted polygon should be ANDed with another polygon on the same layer'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [2],
+    'layer data should match the combined polygon filters'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> POLYGON: disjoint polygons AND on the same layer', t => {
   let state = loadDualLonLatPolygonState();
   const startLayer = pointLayerByLat(state, 'start_point_lat');

@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent, screen} from '@testing-library/react';
+import {act, fireEvent, screen} from '@testing-library/react';
 
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
@@ -20,7 +20,12 @@ describe('FilterInvertToggle', () => {
     renderWithTheme(<FilterInvertToggle filter={filter as any} idx={1} setFilter={setFilter} />);
 
     expect(screen.getByRole('checkbox', {name: 'filterManager.filterOut'})).toBeInTheDocument();
-    expect(screen.getByTestId('filter-out-help')).toBeInTheDocument();
+    const helpButton = screen.getByRole('button', {
+      name: 'Hide rows that match this filter and keep the rest.'
+    });
+    expect(helpButton).toHaveAttribute('aria-describedby', 'filter-out-hint-rate');
+    act(() => helpButton.focus());
+    expect(helpButton).toHaveFocus();
     expect(document.getElementById('filter-out-hint-rate')).toHaveTextContent(
       'filterManager.filterOutHint'
     );

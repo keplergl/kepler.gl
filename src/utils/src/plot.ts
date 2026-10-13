@@ -361,6 +361,7 @@ export function getBinThresholds(interval: string, domain: number[]): number[] {
  * @param dataset
  * @param filter Histogram filter whose dataId-paired column should be skipped
  * @param skipFieldNames Extra GPU field names to skip (charts cross-filter). Histogram callers omit this.
+ * @param baseIndex CPU base that excludes the plotted filter and already includes polygon filters.
  */
 export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
   dataset: K,
@@ -375,14 +376,10 @@ export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
     filteredIndex,
     filteredIndexByLayer
   } = dataset;
-  // An explicit base index already drops this CPU filter. Polygon indexes were
-  // built from that filtered set, so merging them would hide the selection the
-  // histogram is meant to show.
-  const sourceIndex = baseIndex ?? filteredIndex;
-  const plotFilteredIndex = mergePolygonLayerIndexes(
-    sourceIndex,
-    baseIndex ? {} : filteredIndexByLayer
-  );
+  // Cached polygon indexes were built after the current CPU filter. When that
+  // filter is omitted, use the polygon-filtered base reconstructed by the caller.
+  const plotFilteredIndex =
+    baseIndex ?? mergePolygonLayerIndexes(filteredIndex, filteredIndexByLayer);
   const getFilterValue = filterValueAccessor(dataset.dataContainer)();
 
   const allChannels = Object.keys(filterValueUpdateTriggers)

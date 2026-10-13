@@ -101,7 +101,7 @@ test('Utils -> runGpuFilterForPlot applies polygon layer indexes', t => {
   t.deepEqual(
     runGpuFilterForPlot(dataset, undefined, undefined, [1, 3]),
     [1, 3],
-    'should plot from an explicit base index instead of polygon indexes'
+    'should plot from an explicit polygon-filtered base instead of stale polygon indexes'
   );
 
   t.end();

@@ -26,4 +26,5 @@ export interface KeplerTableModel<K, L, F extends Field = any> {
   };
   filteredIndex: number[];
   filteredIndexByLayer?: Record<string, number[]>;
+  getPolygonFilteredIndex?(baseIndex: number[], layers: L[]): number[];
 }
