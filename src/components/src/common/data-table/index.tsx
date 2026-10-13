@@ -259,14 +259,14 @@ interface GetRowCellProps {
 /*
  * This is an accessor method used to generalize getting a cell from a data row
  */
-const defaultGetRowCell = (
+export const defaultGetRowCell = (
   {dataContainer, columns, column, colMeta, rowIndex, sortOrder}: GetRowCellProps,
   formatter
 ) => {
   const rowIdx = sortOrder && sortOrder.length ? get(sortOrder, rowIndex) : rowIndex;
-  const {type} = colMeta[column];
+  const {type, colIdx} = colMeta[column];
 
-  const value = dataContainer?.valueAt(rowIdx, columns.indexOf(column));
+  const value = dataContainer?.valueAt(rowIdx, colIdx ?? columns.indexOf(column));
   if (value === null || value === undefined || value === '') {
     return '';
   }

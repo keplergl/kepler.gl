@@ -7,6 +7,7 @@ import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
 
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
+import {defaultGetRowCell} from '../common/data-table';
 import DataTableModalFactory from './data-table-modal';
 
 jest.mock('../common/data-table/cell-size', () => ({
@@ -30,7 +31,7 @@ function StubDataTable(props: {
 
 const DataTableModal = DataTableModalFactory(StubDataTable as never, (() => null) as never);
 
-function makeDataset(type: string) {
+function makeDataset(type: string, hiddenColumns: string[] = []) {
   const table = new KeplerTable({
     info: {id: 'cities', label: 'cities', type},
     color: [0, 0, 0]
@@ -38,14 +39,16 @@ function makeDataset(type: string) {
   table.updateSchema({
     fields: [
       {name: 'region', type: ALL_FIELD_TYPES.string},
+      {name: 'secret', type: ALL_FIELD_TYPES.string},
       {name: 'pop', type: ALL_FIELD_TYPES.integer}
     ],
-    rows: [['west', 1]]
+    rows: [['west', 'hidden-value', 1]]
   });
+  table.hiddenColumns = hiddenColumns;
   return table;
 }
 
-function renderModal(type: string) {
+function renderModal(type: string, hiddenColumns: string[] = []) {
   const createFilterFromColumn = jest.fn();
   const renameTableColumn = jest.fn();
   const deleteTableColumn = jest.fn();
@@ -54,7 +57,7 @@ function renderModal(type: string) {
   const view = renderWithTheme(
     <DataTableModal
       dataId="cities"
-      datasets={{cities: makeDataset(type)}}
+      datasets={{cities: makeDataset(type, hiddenColumns)}}
       showTab={false}
       sortTableColumn={jest.fn()}
       pinTableColumn={jest.fn()}
@@ -90,5 +93,28 @@ describe('data table column edits', () => {
     expect(tableProps.current?.createFilterFromColumn).toEqual(expect.any(Function));
     expect(tableProps.current?.renameTableColumn).toBeUndefined();
     expect(tableProps.current?.deleteTableColumn).toBeUndefined();
+  });
+
+  test('keeps original field indexes when a middle column is hidden', () => {
+    renderModal('local', ['secret']);
+
+    const props = tableProps.current as {
+      columns: string[];
+      colMeta: Record<string, {colIdx: number; type: string}>;
+      dataContainer: {valueAt: (row: number, column: number) => unknown};
+    };
+    expect(props.columns).toEqual(['region', 'pop']);
+    expect(props.colMeta.pop.colIdx).toBe(2);
+    expect(
+      defaultGetRowCell(
+        {
+          ...props,
+          column: 'pop',
+          rowIndex: 0,
+          sortOrder: null
+        } as never,
+        null
+      )
+    ).toBe('1');
   });
 });

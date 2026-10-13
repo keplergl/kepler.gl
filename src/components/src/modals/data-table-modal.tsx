@@ -205,10 +205,15 @@ function DataTableModalFactory(
     const colMeta = useMemo(
       () =>
         fields?.reduce(
-          (acc, {name, displayName, type, filterProps, format, displayFormat, isLoadingStats}) => ({
+          (
+            acc,
+            {name, displayName, type, filterProps, format, displayFormat, isLoadingStats},
+            colIdx
+          ) => ({
             ...acc,
             [name]: {
               name: displayName || name,
+              colIdx,
               type,
               ...(format ? {format} : {}),
               ...(displayFormat ? {displayFormat} : {}),

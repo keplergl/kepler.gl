@@ -10,9 +10,9 @@ import type {Feature, FeatureCollection, Geometry, Position} from 'geojson';
  *
  * DuckDB-WASM and Pyodide's bundled GDAL cannot write GDAL vector formats in the
  * browser, so the binary parts are assembled directly. The dataset is WGS84
- * (EPSG:4326). All geometries must share one shape family (point/line/polygon);
- * features whose geometry is null or of a different family are written as the
- * Shapefile "Null" shape so the record count still lines up with the .dbf.
+ * (EPSG:4326). All non-null geometries must share one shape family
+ * (point/line/polygon). Null geometries are written as the Shapefile "Null"
+ * shape so the record count still lines up with the .dbf.
  */
 
 export interface ShapefileParts {
@@ -59,7 +59,12 @@ function fileShapeType(features: Feature[]): {type: number; family: Family} {
   for (const feature of features) {
     if (!feature.geometry) continue;
     const geomFamily = familyOf(feature.geometry);
-    if (!geomFamily) continue;
+    if (!geomFamily) {
+      throw new Error(`Shapefile export does not support ${feature.geometry.type} geometries.`);
+    }
+    if (family !== null && family !== geomFamily) {
+      throw new Error('Shapefile export requires all geometries to have the same shape family.');
+    }
     if (family === null) family = geomFamily;
     if (feature.geometry.type === 'MultiPoint') hasMultiPoint = true;
   }

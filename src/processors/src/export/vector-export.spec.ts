@@ -118,6 +118,35 @@ describe('dataset export', () => {
     expect(parquetBytes.includes(Buffer.from('hidden-value'))).toBe(false);
   });
 
+  test('rejects mixed geometry families when exporting a shapefile', async () => {
+    const geometryFields = [
+      {name: '_geojson', type: ALL_FIELD_TYPES.geojson},
+      {name: 'label', type: ALL_FIELD_TYPES.string}
+    ] as Field[];
+    const geometryRows = [
+      [{type: 'Point', coordinates: [0, 0]}, 'point'],
+      [
+        {
+          type: 'LineString',
+          coordinates: [
+            [0, 0],
+            [1, 1]
+          ]
+        },
+        'line'
+      ]
+    ];
+
+    await expect(
+      encodeDatasetExport({
+        data: createDataContainer(geometryRows),
+        fields: geometryFields,
+        dataType: EXPORT_DATA_TYPE.SHAPEFILE,
+        layerName: 'mixed'
+      })
+    ).rejects.toThrow('Shapefile export requires all geometries to have the same shape family.');
+  });
+
   test('writes geoparquet string columns the importer can read', async () => {
     const geoparquet = await encodeDatasetExport({
       data: container(),
