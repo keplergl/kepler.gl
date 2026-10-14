@@ -212,6 +212,22 @@ test('dataUtils -> getFormatter', t => {
       assert: [0, '12/31/1969 4:00 PM']
     },
     {
+      input: ['L LT', undefined, 'America/Los_Angeles'],
+      assert: [null, '']
+    },
+    {
+      input: ['L LT', undefined, 'America/Los_Angeles'],
+      assert: [undefined, '']
+    },
+    {
+      input: ['L LT', undefined, 'America/Los_Angeles'],
+      assert: ['', '']
+    },
+    {
+      input: ['L LT', undefined, 'America/Los_Angeles'],
+      assert: [NaN, '']
+    },
+    {
       input: [
         'YYYY-MM-DD HH:mm',
         {

@@ -597,9 +597,12 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
         toBeCombinedProps.map(p => p.compareType)
       );
 
-      combined[key].timezone = getValueWithHighestOccurrence(
-        toBeCombinedProps.map(p => p?.timezone)
-      );
+      const hasTimezone = toBeCombinedProps.some(p => p?.timezone !== undefined);
+      if (hasTimezone) {
+        combined[key].timezone = getValueWithHighestOccurrence(
+          toBeCombinedProps.map(p => p?.timezone)
+        );
+      }
 
       // combine fieldsToShow among all dataset ids
       combined[key].fieldsToShow = toBeCombinedProps
