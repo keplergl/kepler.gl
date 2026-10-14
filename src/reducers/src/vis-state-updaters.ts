@@ -1555,8 +1555,9 @@ export function setFilterUpdater<S extends VisState>(
   newState = set(['filters', idx], newFilter, newState);
 
   // filter data
+  const affectedDatasetIds = uniq(datasetIdsToFilter);
   const filteredDatasets = applyFiltersToDatasets(
-    uniq(datasetIdsToFilter),
+    affectedDatasetIds,
     newState.datasets,
     newState.filters,
     newState.layers
@@ -1564,15 +1565,27 @@ export function setFilterUpdater<S extends VisState>(
 
   newState = set(['datasets'], filteredDatasets, newState);
 
-  // need to update filterPlot after filter Dataset for plot to update on filtered result
-  const filterWithPLot = updateFilterPlot(
-    newState.datasets,
-    newState.filters[idx],
-    undefined,
-    newState.layers
-  );
+  // Update plots after filtering so they use the latest filtered indexes.
+  // Other time filters need their cached bins invalidated for shared datasets.
+  const filtersWithUpdatedPlots = newState.filters.map((filter, filterIndex) => {
+    if (filterIndex === idx) {
+      return updateFilterPlot(newState.datasets, filter, undefined, newState.layers);
+    }
 
-  newState = set(['filters', idx], filterWithPLot, newState);
+    if (filter.type !== FILTER_TYPES.timeRange) {
+      return filter;
+    }
+
+    const sharedDatasetIds = filter.dataId.filter(dataId => affectedDatasetIds.includes(dataId));
+    if (!sharedDatasetIds.length) {
+      return filter;
+    }
+
+    const invalidatedFilter = sharedDatasetIds.reduce(removeFilterPlot, filter);
+    return updateFilterPlot(newState.datasets, invalidatedFilter, undefined, newState.layers);
+  });
+
+  newState = set(['filters'], filtersWithUpdatedPlots, newState);
 
   // dataId is an array
   // pass only the dataset we need to update

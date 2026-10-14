@@ -3981,6 +3981,63 @@ test('#visStateReducer -> SET_FILTER_PLOT.yAxis', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_FILTER refreshes other time filter plots', t => {
+  const {fields, rows} = processCsvData(`event_time,selection_time,value
+2020-01-01 00:00:00,2020-01-01 00:00:00,10
+2020-01-01 01:00:00,2020-01-01 01:00:00,20
+2020-01-01 02:00:00,2020-01-01 02:00:00,30
+2020-01-01 03:00:00,2020-01-01 03:00:00,40`);
+  const payload = [
+    {
+      info: {id: 'shared', label: 'shared'},
+      data: {fields, rows}
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
+  state = reducer(state, VisStateActions.addFilter('shared'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'event_time'));
+  state = reducer(state, VisStateActions.addFilter('shared'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'selection_time'));
+
+  const yAxis = state.datasets.shared.fields.find(field => field.name === 'value');
+  state = reducer(state, VisStateActions.setFilterPlot(0, {yAxis}));
+
+  t.deepEqual(state.filters[0].lineChart.yDomain, [10, 40], 'plot starts with all rows');
+
+  const nextState = reducer(
+    state,
+    VisStateActions.setFilter(1, 'value', [1577836800000, 1577840400000])
+  );
+
+  t.deepEqual(
+    nextState.filters[0].lineChart.yDomain,
+    [10, 20],
+    'other time filter plot uses the newly filtered rows'
+  );
+  t.equal(
+    nextState.filters[0].lineChart.allTime.value,
+    15,
+    'other time filter plot rebuilds its aggregate'
+  );
+
+  const emptyState = reducer(
+    nextState,
+    VisStateActions.setFilter(1, 'value', [1577837700000, 1577839500000])
+  );
+  t.deepEqual(
+    emptyState.filters[0].lineChart.xDomain,
+    [],
+    'other time filter plot handles an empty filtered result'
+  );
+  t.end();
+});
+
 test('#visStateReducer -> TOGGLE_FILTER_ANIMATION', t => {
   const initialState = CloneDeep(StateWFilters.visState);
 

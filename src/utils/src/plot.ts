@@ -955,7 +955,7 @@ export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
       }, init);
 
   const yDomain = extent<{y: any}>(series, d => d.y);
-  const xDomain = bins ? [bins[0].x0, bins[bins.length - 1].x1] : [];
+  const xDomain = bins?.length ? [bins[0].x0, bins[bins.length - 1].x1] : [];
 
   // treat missing data as another series
   const split = grouped ? grouped.series : splitSeries(series);
