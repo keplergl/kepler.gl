@@ -29,6 +29,7 @@ import {
 } from '@kepler.gl/utils';
 
 import {
+  fieldTypeToColumnType,
   processCsvRowObject,
   processGeojson,
   processKeplerglJSONforDuckDb,
@@ -123,8 +124,17 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       await db.registerFileText(this.id, JSON.stringify(rowsForDb));
 
       const columns = fields.reduce((acc, field, index) => {
-        // @ts-expect-error TODO extend fields to contain duckDBColumnType
-        return `${acc}${index > 0 ? ',' : ''} '${field.name}': '${field.duckDBColumnType}'`;
+        const duckDBColumnType =
+          (field as typeof field & {duckDBColumnType?: string}).duckDBColumnType ??
+          fieldTypeToColumnType(field.type);
+
+        if (!duckDBColumnType) {
+          throw new Error(
+            `Unsupported field type "${field.type}" for DuckDB column "${field.name}"`
+          );
+        }
+
+        return `${acc}${index > 0 ? ',' : ''} '${field.name}': '${duckDBColumnType}'`;
       }, '');
 
       const createTableSql = `
