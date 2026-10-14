@@ -544,6 +544,8 @@ export declare type ExportImage = {
   legend: boolean;
   /** When true, include the charts panel in the exported image. */
   charts: boolean;
+  /** When true, omit the basemap and preserve transparent pixels in the exported image. */
+  transparentBackground?: boolean;
   mapH: number;
   mapW: number;
   imageSize: {

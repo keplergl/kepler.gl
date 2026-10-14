@@ -744,6 +744,8 @@ export default {
       resolutionDescription: 'High resolution is better for prints.',
       resolutionPlaceholder: 'Select resolution...',
       optionsTitle: 'Options',
+      transparentBackground: 'Transparent background',
+      transparentBackgroundHelp: 'Hide basemap',
       mapLegendTitle: 'Map Legend',
       mapLegendAdd: 'Add legend on map',
       chartsTitle: 'Charts',

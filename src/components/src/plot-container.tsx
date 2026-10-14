@@ -17,7 +17,7 @@ import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
 import {MapViewStateContextProvider} from './map-view-state-context';
 
-import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
+import {EMPTY_MAPBOX_STYLE, GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {Effect, SplitMap, ExportImage} from '@kepler.gl/types';
 import {
   ActionHandler,
@@ -116,6 +116,7 @@ interface PlotContainerProps {
   resolution?: string;
   legend?: boolean;
   charts?: boolean;
+  transparentBackground?: boolean;
   center?: boolean;
   imageSize: ExportImage['imageSize'];
   escapeXhtmlForWebpack?: boolean;
@@ -147,6 +148,7 @@ export default function PlotContainerFactory(
     resolution,
     legend = false,
     charts = false,
+    transparentBackground = false,
     center,
     imageSize,
     escapeXhtmlForWebpack,
@@ -207,12 +209,21 @@ export default function PlotContainerFactory(
     // Memoize the map style
     const scaledMapStyle = useMemo(() => {
       const mapStyle = mapFields.mapStyle;
+
+      if (transparentBackground) {
+        return {
+          ...mapStyle,
+          bottomMapStyle: EMPTY_MAPBOX_STYLE,
+          topMapStyle: undefined
+        };
+      }
+
       return {
         ...mapStyle,
         bottomMapStyle: scaleMapStyleByResolution(mapStyle.bottomMapStyle, scale),
         topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, scale)
       };
-    }, [mapFields.mapStyle, scale]);
+    }, [mapFields.mapStyle, scale, transparentBackground]);
 
     // Memoize the retrieveNewScreenshot callback
     const debouncedScreenshot = useMemo(
@@ -223,7 +234,8 @@ export default function PlotContainerFactory(
               filter: DOM_FILTER_FUNC,
               width: imageSize.imageW,
               height: imageSize.imageH,
-              escapeXhtmlForWebpack
+              escapeXhtmlForWebpack,
+              ...(transparentBackground ? {style: {backgroundColor: 'transparent'}} : {})
             })
               .then(setExportImageDataUri)
               .catch(err => {
@@ -238,6 +250,7 @@ export default function PlotContainerFactory(
         imageSize.imageW,
         imageSize.imageH,
         escapeXhtmlForWebpack,
+        transparentBackground,
         setExportImageDataUri,
         setExportImageError,
         enableErrorNotification,
@@ -306,12 +319,21 @@ export default function PlotContainerFactory(
         ratio !== undefined ||
         resolution !== undefined ||
         legend !== undefined ||
-        charts !== undefined
+        charts !== undefined ||
+        transparentBackground !== undefined
       ) {
         setExportImageSetting({processing: true});
         tryScreenshot();
       }
-    }, [ratio, resolution, legend, charts, setExportImageSetting, tryScreenshot]);
+    }, [
+      ratio,
+      resolution,
+      legend,
+      charts,
+      transparentBackground,
+      setExportImageSetting,
+      tryScreenshot
+    ]);
 
     // Memoize size calculations
     const {size, width, height} = useMemo(() => {
@@ -366,6 +388,7 @@ export default function PlotContainerFactory(
         ...mapFields,
         mapStyle: scaledMapStyle,
         mapState: newMapState,
+        transparentBackground,
         mapControls: {
           mapLegend: {
             show: Boolean(legend),
@@ -403,6 +426,7 @@ export default function PlotContainerFactory(
         newMapState,
         legend,
         charts,
+        transparentBackground,
         onMapRender,
         deckRenderCallbacks,
         plotEffects,
