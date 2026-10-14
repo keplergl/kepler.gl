@@ -20,6 +20,7 @@ const TEST_CASES = [
             ],
             'trip-dataset': [{name: 'vendor', format: null}]
           },
+          timezone: 'America/Guayaquil',
           compareMode: true,
           compareType: 'absolute'
         },
@@ -33,6 +34,7 @@ const TEST_CASES = [
           fieldsToShow: {
             'trip-dataset': [{name: 'customer', format: null}]
           },
+          timezone: 'UTC',
           compareMode: true,
           compareType: 'relative'
         },
@@ -44,6 +46,7 @@ const TEST_CASES = [
         tooltip: {
           enabled: true,
           fieldsToShow: {},
+          timezone: 'America/Guayaquil',
           compareMode: true,
           compareType: 'relative'
         },
@@ -66,6 +69,7 @@ const TEST_CASES = [
             {name: 'customer', format: null}
           ]
         },
+        timezone: 'America/Guayaquil',
         compareMode: true,
         compareType: 'relative'
       },
@@ -144,6 +148,7 @@ const TEST_CASES = [
             {name: 'customer', format: null}
           ]
         },
+        timezone: null,
         compareMode: true,
         compareType: 'relative'
       },
@@ -172,6 +177,7 @@ const TEST_CASES = [
       tooltip: {
         enabled: true,
         fieldsToShow: {},
+        timezone: null,
         compareMode: false,
         compareType: 'absolute'
       },

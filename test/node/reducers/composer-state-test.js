@@ -472,6 +472,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
       tooltip: {
         ...oldInteractionConfig.tooltip,
         config: {
+          timezone: null,
           compareMode: false,
           compareType: 'absolute',
           fieldsToShow: {
