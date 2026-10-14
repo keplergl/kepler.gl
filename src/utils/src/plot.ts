@@ -422,10 +422,27 @@ function getSkipIndexes(dataset, filter, skipFieldNames?: string[]) {
     return [];
   }
   const valueIndex = filter.dataId.findIndex(id => id === dataset.id);
+  // Channels identify the plotted GPU filter precisely when another filter uses the same field.
+  if (filter.gpu && valueIndex >= 0) {
+    const assignedChannels = [
+      filter.gpuChannel?.[valueIndex],
+      filter.gpuEndChannel?.[valueIndex]
+    ].filter(Number.isFinite) as number[];
+
+    if (assignedChannels.length) {
+      return assignedChannels;
+    }
+  }
+  // CPU filters are already omitted from baseIndex, so every GPU channel remains applicable.
+  if (filter.gpu === false && valueIndex >= 0) {
+    return [];
+  }
+
   const filterColumn = filter.name[valueIndex];
+  const filterEndColumn = filter.endName?.[valueIndex];
 
   return gpuFilters.reduce((accu, item, idx) => {
-    if (item && filterColumn === item.name) {
+    if (item && (filterColumn === item.name || filterEndColumn === item.name)) {
       accu.push(idx);
     }
     return accu;
