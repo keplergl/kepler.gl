@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {EXPORT_HTML_MAP_MODES, KEPLER_GL_VERSION} from '@kepler.gl/constants';
+import {optionalMapInfo} from './map-info-utils';
 
 // React (and react-dom) no longer publish UMD builds starting with v19, so the
 // exported map loads React and the other UMD peer dependencies as ES modules
@@ -19,11 +20,24 @@ const STYLED_COMPONENTS_VERSION = '6.1.19';
 const ES_MODULE_SHIMS_VERSION = '2.8.1';
 
 /**
+ * Serialize a value for interpolation into an inline `<script>`. A literal `</script>`
+ * anywhere in the data would close the script element early, and U+2028/U+2029 are
+ * line terminators in JavaScript but legal inside a JSON string.
+ */
+function toScriptJSON(value: unknown): string {
+  return JSON.stringify(value ?? null)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
+/**
  * This method is used to create an html file which will inlcude kepler and map data
  * @param {Object} options Object that collects all necessary data to  create the html file
  * @param {string} options.mapboxApiAccessToken Mapbox token used to fetch mapbox tiles
  * @param {Array<Object>} options.datasets Data to include in the map
  * @param {Object} options.config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
+ * @param {Object} [options.info] map title and description
  * @param {string} version which version of Kepler.gl to load.
  */
 export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
@@ -231,26 +245,6 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
            **/
           window.MAPBOX_TOKEN = '${options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN'}';
           window.WARNING_MESSAGE = 'No Mapbox token provided. Mapbox basemaps will not be available. To enable them, edit this file and set MAPBOX_TOKEN to your Mapbox access key.';
-        </script>
-
-        <!-- GA: Delete this as you wish, However to pat ourselves on the back, we only track anonymous pageview to understand how many people are using kepler.gl. -->
-        <script>
-          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-          })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-          ga('create', 'UA-64694404-19', {
-            'storage': 'none',
-            'clientId': (function(){try{return localStorage.getItem('ga:clientId')}catch(e){return null}})()
-          });
-          ga(function(tracker) {
-              try{localStorage.setItem('ga:clientId', tracker.get('clientId'));}catch(e){}
-          });
-          ga('set', 'checkProtocolTask', null); // Disable file protocol checking.
-          ga('set', 'checkStorageTask', null); // Disable cookie storage checking.
-          ga('set', 'historyImportTask', null); // Disable history checking (requires reading from cookies).
-          ga('set', 'page', 'keplergl-html');
-          ga('send', 'pageview');
         </script>
       </head>
       <body>
@@ -470,6 +464,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           (function customize(keplerGl, store) {
             const datasets = ${JSON.stringify(options.datasets)};
             const config = ${JSON.stringify(options.config)};
+            const info = ${toScriptJSON(optionalMapInfo(options.info) ?? null)};
 
             const loadedData = keplerGl.KeplerGlSchema.load(
               datasets,
@@ -486,6 +481,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                 keplerGl.addDataToMap({
                   datasets: loadedData.datasets,
                   config: loadedData.config,
+                  info,
                   options: {
                     centerMap: false,
                   },

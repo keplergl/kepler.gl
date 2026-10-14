@@ -3,17 +3,20 @@
 
 import React from 'react';
 import test from 'tape';
+import sinon from 'sinon';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../../helpers/utils';
 import {
   LoadDataModalFactory,
   ModalTabItem,
   LoadStorageMapFactory,
+  FileUploadFactory,
   appInjector
 } from '@kepler.gl/components';
 
 const LoadDataModal = appInjector.get(LoadDataModalFactory);
 const LoadStorageMap = appInjector.get(LoadStorageMapFactory);
+const FileUpload = appInjector.get(FileUploadFactory);
 
 test('Components -> LoadDataModal.mount', t => {
   // mount
@@ -30,6 +33,10 @@ test('Components -> LoadDataModal.mount', t => {
     wrapper.find('.file-uploader').length,
     STYLED_COMPONENTS_DUPLICATED_ENTRIES,
     'should render FileUpload'
+  );
+  t.ok(
+    wrapper.find('.file-upload__message').first().text().includes('saved map'),
+    'Add Data mentions a saved map Json'
   );
   t.equal(
     wrapper.find('.load-data-modal__tab').length,
@@ -66,5 +73,284 @@ test('Components -> LoadDataModal -> custom loading method', t => {
   t.equal(wrapper.find(ModalTabItem).length, 1, 'should render 1 ModalTabItem');
   t.equal(wrapper.find(MockComp).length, 1, 'should render MockComp by default');
   t.equal(wrapper.find(MockTabComp).length, 1, 'should render MockTabComp');
+  t.end();
+});
+
+test('Components -> LoadDataModal -> DuckDB demo sample shortcut', t => {
+  const Upload = () => <div className="duckdb-demo-upload" />;
+  const Sample = ({enableLoadDataModal}) => (
+    <button className="duckdb-demo-add-data" onClick={enableLoadDataModal}>
+      Add data
+    </button>
+  );
+  const Placeholder = () => <div />;
+  const loadingMethods = [
+    {id: 'upload', label: 'modal.loadData.upload', elementType: Upload},
+    {id: 'tileset', label: 'modal.loadData.tileset', elementType: Placeholder},
+    {id: 'remote', label: 'modal.loadData.upload', elementType: Placeholder},
+    {id: 'storage', label: 'modal.loadData.storage', elementType: Placeholder},
+    {id: 'sample', label: 'modal.loadData.upload', elementType: Sample}
+  ];
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal loadingMethods={loadingMethods} />
+    </IntlWrapper>
+  );
+
+  t.equal(wrapper.find(Sample).length, 1, 'should show the sample gallery by default');
+  wrapper.find('.duckdb-demo-add-data').first().simulate('click');
+  t.equal(wrapper.find(Upload).length, 1, 'sample gallery shortcut should open file upload');
+  t.end();
+});
+
+test('Components -> LoadDataModal -> auto create layers', t => {
+  const onFileUpload = sinon.spy();
+  const onTilesetAdded = sinon.spy();
+  const onConfirmAddData = sinon.spy();
+  const onClose = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal
+        onFileUpload={onFileUpload}
+        onTilesetAdded={onTilesetAdded}
+        onConfirmAddData={onConfirmAddData}
+        onClose={onClose}
+        stagedToAdd={[{info: {label: 'points.csv'}}]}
+      />
+    </IntlWrapper>
+  );
+
+  const checkbox = () => wrapper.find('.add-data-bar').find('Checkbox').first();
+  t.equal(checkbox().props().checked, true, 'auto create layers is checked by default');
+  t.equal(
+    wrapper.find('.file-uploader .auto-create-layers').length,
+    0,
+    'checkbox sits in the footer'
+  );
+
+  checkbox().simulate('change');
+  t.equal(checkbox().props().checked, false, 'should uncheck auto create layers');
+
+  const files = [{name: 'points.csv'}];
+  const uploader = wrapper.find(FileUpload);
+  t.ok(uploader.length > 0, 'should find the file uploader rendered by the modal');
+  uploader.first().props().onFileUpload(files);
+  t.deepEqual(onFileUpload.args[0][0], files, 'should upload the selected files');
+  t.equal(onFileUpload.args[0][1], undefined, 'parsing waits to apply autoCreateLayers');
+
+  const buttons = wrapper.find('.add-data-bar button');
+  buttons.at(0).simulate('click');
+  t.equal(onClose.calledOnce, true, 'cancel closes the modal');
+
+  buttons.at(1).simulate('click');
+  t.deepEqual(
+    onConfirmAddData.args[0][0],
+    {autoCreateLayers: false, datasets: [{info: {label: 'points.csv'}}]},
+    'Add Data commits the current autoCreateLayers choice'
+  );
+
+  const fileCheckbox = wrapper.find('.upload-file-list').find('Checkbox').first();
+  t.equal(fileCheckbox.props().checked, true, 'staged datasets start selected');
+  fileCheckbox.simulate('change');
+  t.equal(
+    wrapper.find('.add-data-bar button').at(1).props().disabled,
+    true,
+    'Add Data waits until a dataset is checked'
+  );
+  wrapper.find('.add-data-bar button').at(1).simulate('click');
+  t.equal(onConfirmAddData.callCount, 1, 'an unchecked dataset is not added');
+
+  const tabs = wrapper.find('.load-data-modal__tab__item');
+  let clickedTileset = false;
+  for (let i = 0; i < tabs.length; i++) {
+    if (tabs.at(i).text() === 'Tileset') {
+      tabs.at(i).simulate('click');
+      clickedTileset = true;
+      break;
+    }
+  }
+  t.equal(clickedTileset, true, 'should find the tileset tab');
+  t.equal(
+    wrapper.find('.add-data-bar').find('Checkbox').first().props().checked,
+    false,
+    'tileset tab keeps the unchecked choice'
+  );
+  t.equal(wrapper.find('.load-data-footer').length, 0, 'tileset confirm uses the shared footer');
+  const tilesetButtons = wrapper.find('.add-data-bar button');
+  t.equal(tilesetButtons.at(1).props().disabled, true, 'Add Data waits until the tileset is ready');
+  t.equal(onTilesetAdded.called, false, 'opening the tileset tab does not add data');
+
+  t.end();
+});
+
+test('Components -> LoadDataModal -> processing layers', t => {
+  const onConfirmAddData = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal
+        onConfirmAddData={onConfirmAddData}
+        stagedToAdd={[{info: {label: 'points.csv'}}]}
+      />
+    </IntlWrapper>
+  );
+
+  const frames = [];
+  const prevFrame = window.requestAnimationFrame;
+  window.requestAnimationFrame = cb => {
+    frames.push(cb);
+    return frames.length;
+  };
+  try {
+    wrapper.find('.add-data-bar button').at(1).simulate('click');
+
+    t.equal(
+      onConfirmAddData.called,
+      false,
+      'layer prep waits until the processing state can paint'
+    );
+    const processing = wrapper.find('.add-data-bar__processing').hostNodes();
+    t.equal(processing.length, 1, 'should replace the footer actions');
+    t.equal(processing.text(), '', 'should show only the spinner');
+    t.equal(
+      processing.find('.add-data-bar__spinner').hostNodes().length,
+      1,
+      'should show a spinner in place of the footer actions'
+    );
+    t.equal(
+      wrapper.find('.add-data-bar button').hostNodes().length,
+      0,
+      'should hide Cancel and Add Data while layers are prepared'
+    );
+
+    while (frames.length) {
+      frames.shift()();
+    }
+  } finally {
+    window.requestAnimationFrame = prevFrame;
+  }
+
+  t.deepEqual(
+    onConfirmAddData.args[0][0],
+    {autoCreateLayers: true, datasets: [{info: {label: 'points.csv'}}]},
+    'Add Data commits the staged dataset after the processing state can paint'
+  );
+
+  t.end();
+});
+
+test('Components -> LoadDataModal -> replace dataset', t => {
+  const onConfirmAddData = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal
+        replaceDatasetId="cities"
+        replaceDatasetLabel="Cities"
+        onConfirmAddData={onConfirmAddData}
+        stagedToAdd={[{info: {id: 'next', label: 'next.csv'}}]}
+      />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    wrapper.find('.remove-original-dataset').length > 0,
+    true,
+    'should offer to remove the original'
+  );
+  t.equal(wrapper.find('.auto-create-layers').length, 0, 'replace does not auto-create layers');
+  t.equal(wrapper.find(ModalTabItem).length, 1, 'replace keeps only the upload tab');
+  t.equal(
+    wrapper.find('.file-upload__message').first().text().includes('saved map'),
+    false,
+    'replace asks for a dataset file'
+  );
+  t.equal(
+    wrapper.find('.add-data-bar').find('Checkbox').first().props().checked,
+    true,
+    'removing the original dataset is checked by default'
+  );
+
+  wrapper.find('.add-data-bar').find('Checkbox').first().simulate('change');
+  wrapper.find('.add-data-bar button').at(1).simulate('click');
+  t.deepEqual(
+    onConfirmAddData.args[0][0],
+    {
+      autoCreateLayers: false,
+      deleteOriginalDataset: false,
+      datasets: [{info: {id: 'next', label: 'next.csv'}}]
+    },
+    'Replace commits the staged dataset and the remove choice'
+  );
+
+  t.end();
+});
+
+test('Components -> LoadDataModal -> one unchecked dataset stays out', t => {
+  const onConfirmAddData = sinon.spy();
+  const points = {info: {label: 'points.csv'}};
+  const remote = {
+    info: {label: 'quakes.csv', format: 'row'},
+    metadata: {source: 'https://example.com/quakes.csv'}
+  };
+  const loading = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal
+        onConfirmAddData={onConfirmAddData}
+        fileLoading={true}
+        stagedToAdd={[points, remote]}
+      />
+    </IntlWrapper>
+  );
+  t.equal(
+    loading.find('.add-data-bar button').at(1).props().disabled,
+    true,
+    'Add Data waits until parsing finishes'
+  );
+
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal onConfirmAddData={onConfirmAddData} stagedToAdd={[points, remote]} />
+    </IntlWrapper>
+  );
+  const checks = () => wrapper.find('.upload-file-list').find('Checkbox');
+  t.equal(checks().length, 2, 'local and remote datasets can each be included');
+  t.equal(
+    wrapper.find('.add-data-bar button').at(1).props().disabled,
+    false,
+    'Add Data is enabled when a dataset is checked'
+  );
+
+  checks().at(1).simulate('change');
+  const frames = [];
+  const prevFrame = window.requestAnimationFrame;
+  window.requestAnimationFrame = cb => {
+    frames.push(cb);
+    return frames.length;
+  };
+  try {
+    wrapper.find('.add-data-bar button').at(1).simulate('click');
+    while (frames.length) {
+      frames.shift()();
+    }
+  } finally {
+    window.requestAnimationFrame = prevFrame;
+  }
+  t.deepEqual(
+    onConfirmAddData.args[0][0],
+    {autoCreateLayers: true, datasets: [points]},
+    'Add Data commits only the checked dataset'
+  );
+
+  const tabs = wrapper.find('.load-data-modal__tab__item');
+  let clickedStorage = false;
+  for (let i = 0; i < tabs.length; i++) {
+    if (tabs.at(i).text() === 'Load from Storage') {
+      tabs.at(i).simulate('click');
+      clickedStorage = true;
+      break;
+    }
+  }
+  t.equal(clickedStorage, true, 'should find the storage tab');
+  t.equal(wrapper.find('.add-data-bar').length, 0, 'storage keeps its own load action');
+
   t.end();
 });

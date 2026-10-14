@@ -112,6 +112,10 @@ export default {
     '3DModel': '3D Model',
     '3DModelURL': 'Custom 3D Model URL',
     '3DModelURLDescription': 'URL of a .glb or .glTF file with the 3D model.',
+    '3DModelSourceModel': 'Model',
+    '3DModelSourceUrl': 'URL',
+    '3DModelSourceFile': 'Local file',
+    '3DModelFile': 'Choose file',
     '3DModelOptions': '3D Model Options',
     service: 'Service',
     layer: 'Layer',
@@ -176,6 +180,9 @@ export default {
     radiusRange: 'Radius Range',
     clusterRadius: 'Cluster Radius in Pixels',
     radiusRangePixels: 'Radius Range in pixels',
+    minClusterSize: 'Min Points per Cluster',
+    minClusterSizeDescription:
+      'Hide clusters that contain fewer points than this, e.g. 2 removes single-point clusters',
     billboard: 'Billboard',
     billboardDescription: 'Orient geometry towards the camera',
     fadeTrail: 'Fade trail',
@@ -196,6 +203,10 @@ export default {
     strokeColor: 'Stroke Color',
     strokeColorRange: 'Stroke Color range',
     targetColor: 'Target Color',
+    targetArrow: 'Target Arrow',
+    targetArrowDescription: 'Draw an arrowhead at the end of each arc or line',
+    targetArrowShape: 'Arrow Shape',
+    targetArrowSize: 'Arrow Size',
     colorAggregation: 'Color Aggregation',
     heightAggregation: 'Height Aggregation',
     weightAggregation: 'Weight Aggregation',
@@ -226,6 +237,8 @@ export default {
     heightMultiplier: 'Height Multiplier',
     fixedHeight: 'Fixed height',
     fixedHeightDescription: 'Use height without modifications',
+    invertHeight: 'Invert height',
+    invertHeightDescription: 'Map the lowest values to the greatest height',
     fixedElevation: 'Fixed elevation',
     fixedElevationDescription: 'Use elevation offset without modifications',
     allowHover: 'Allow hover',
@@ -398,8 +411,17 @@ export default {
     timeIntervalEndField: 'End time',
     timeIntervalEndFieldHint:
       'Optional. Features stay visible while the playback window overlaps this time span.',
+    filterOut: 'Filter out',
+    filterOutHelp: 'Filter out help',
+    filterOutHint: 'Hide rows that match this filter and keep the rest.',
     timezone: 'Time Zone',
-    selectTimezone: 'Select display timezone'
+    selectTimezone: 'Select display timezone',
+    groupBy: 'Group By',
+    groupByField: 'Group by field',
+    maxGroups: 'Max number of groups',
+    groupOthers: 'Group others',
+    seriesColors: 'Colors',
+    allGroups: 'All'
   },
   datasetTitle: {
     showDataTable: 'Show data table',
@@ -417,6 +439,7 @@ export default {
     refreshCustom: 'Custom'
   },
   datasetOps: {
+    replace: 'Replace',
     groupBy: 'Group By',
     groupByHelp:
       'Create groups to combine data based on a selected field. Result will be added as a new dataset.',
@@ -496,6 +519,27 @@ export default {
       median: 'Median',
       countUnique: 'Unique',
       merge: 'Merge'
+    },
+    suitability: 'Suitability Analysis',
+    suitabilityHelp:
+      'Rank rows by a weighted combination of numeric columns. The result is added as a new dataset with a score column. The new layer is colored by that column when possible.',
+    suitabilityWeights: 'Fields & Weights',
+    suitabilityWeightsHelp:
+      'Pick the numeric columns that contribute to the score and how much each one matters. A row scores blank when any selected column is missing a value.',
+    suitabilityStandardization: 'Scoring Options',
+    suitabilityStandardizationHelp:
+      'Standardization puts columns measured on different scales onto a comparable footing before they are combined.',
+    weightStandardization: 'Weight standardization',
+    dataStandardization: 'Data standardization',
+    scoreColumn: 'Score column',
+    weightStandardizationOption: {
+      raw: 'Raw',
+      normalize: 'Normalize'
+    },
+    dataStandardizationOption: {
+      raw: 'Raw',
+      range: 'Range',
+      zScore: 'Z-score'
     }
   },
   datasetInfo: {
@@ -523,6 +567,7 @@ export default {
     zoomToLayer: 'Zoom to layer',
     resetAfterError: 'Try to enable the layer after an error',
     layerSettings: 'Layer settings',
+    moreOptions: 'More options',
     interactionSettings: 'Interaction settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',
@@ -531,6 +576,8 @@ export default {
     dualView: 'Dual',
     swipeView: 'Swipe',
     showLegend: 'Show legend',
+    showMapInfo: 'Show map info',
+    hideMapInfo: 'Minimize map info',
     disable3DMap: 'Disable 3D Map',
     globeMap: 'Globe Map',
     disableGlobeMap: 'Disable Globe Map',
@@ -557,6 +604,7 @@ export default {
     '3DMap': '3D Map',
     animationByWindow: 'Moving Time Window',
     animationByIncremental: 'Incremental Time Window',
+    animationByInterval: 'Step by Interval',
     speed: 'Speed',
     play: 'Play',
     pause: 'Pause',
@@ -661,6 +709,7 @@ export default {
     title: {
       deleteDataset: 'Delete Dataset',
       addDataToMap: 'Add Data To Map',
+      replaceDataset: 'Replace Dataset',
       exportImage: 'Export Image',
       exportData: 'Export Data',
       exportMap: 'Export Map',
@@ -676,7 +725,8 @@ export default {
       addStyle: 'Add Style',
       save: 'Save',
       defaultCancel: 'Cancel',
-      defaultConfirm: 'Confirm'
+      defaultConfirm: 'Confirm',
+      replace: 'Replace'
     },
     exportFileName: {
       title: 'File name',
@@ -716,6 +766,12 @@ export default {
       fileCount: '{fileCount} Files',
       rowCount: '{rowCount} Rows',
       tiledDatasetWarning: "* Export Data for Tiled datasets isn't supported"
+    },
+    dataTable: {
+      show: 'Show',
+      allData: 'All Data',
+      filteredData: 'Filtered Data',
+      rowCount: '{rowCount, plural, one {# row} other {# rows}}'
     },
     deleteData: {
       warning: 'you are going to delete this dataset. It will affect {length} layers'
@@ -766,6 +822,8 @@ export default {
     exportMap: {
       formatTitle: 'Map format',
       formatSubtitle: 'Choose the format to export your map to',
+      nameTitle: 'Name',
+      descriptionTitle: 'Description',
       includeApiKeys: 'Include layer API keys',
       includeApiKeysSubtitle:
         'When unchecked, access tokens stored on layers are removed from the exported file.',
@@ -801,10 +859,22 @@ export default {
     loadingDialog: {
       loading: 'Loading...'
     },
+    replaceDataset: {
+      removeOriginal: 'Remove {datasetName}',
+      removeOriginalHint:
+        'Layers and filters move to the new dataset. The original dataset is removed from the map.'
+    },
     loadData: {
       upload: 'Load Files',
       tileset: 'Tileset',
-      storage: 'Load from Storage'
+      storage: 'Load from Storage',
+      autoCreateLayers: 'Auto create layers',
+      autoCreateLayersInfo:
+        'kepler.gl will auto detect layers if the column names in your file follow certain naming conventions.',
+      processingLayers: 'Processing data for layers',
+      readyToAdd: 'Ready to add',
+      copyError: 'Copy error',
+      copied: 'Copied'
     },
     tripInfo: {
       title: 'Create trips from GeoJson',
@@ -928,13 +998,33 @@ ${'```'}
     tooltip: 'Tooltip',
     brush: 'Brush',
     coordinate: 'Coordinates',
+    annotation: 'Annotations',
+    addAnnotation: 'Add Annotation',
+    showAnnotations: 'Show Annotations',
+    hideAnnotations: 'Hide Annotations',
+    copyCoordinate: 'Copy coordinates',
+    coordinateCopied: 'Copied',
     geocoder: 'Geocoder',
+    mapInfo: 'Map info',
+    mapInfoHint: 'Name and description are shown in a card on the right side of the map.',
+    mapInfoName: 'Name',
+    mapInfoDescription: 'Description',
+    mapInfoDescriptionHelp: 'Add a link with [label](https://example.com).',
     legend: 'Legend',
     legendHint: 'Choose which layers appear in the map legend. Layers stay on the map.',
     legendEmpty: 'Add a layer to choose what appears in the legend.',
     legendHiddenByGroup: 'Hidden because a group is excluded from the legend',
     legendHideInvisible: 'Hide hidden layers in legend',
-    legendAllLayers: 'All Layers'
+    legendAllLayers: 'All Layers',
+    fadeOnZoom: 'Fade on zoom',
+    fadeOnZoomHint: 'Fade layers as the map zooms. Configure a zoom range to show layers.',
+    fadeOnZoomAdd: 'Add controller',
+    fadeOnZoomLayers: 'Layers',
+    fadeOnZoomAppear: 'Appear',
+    fadeOnZoomFullStart: 'Full start',
+    fadeOnZoomFullEnd: 'Full end',
+    fadeOnZoomDisappear: 'Disappear',
+    fadeOnZoomDelete: 'Remove controller'
   },
   layerBlending: {
     title: 'Layer Blending',
@@ -1024,14 +1114,27 @@ ${'```'}
       'No information or map data is sent to any server.',
     configUploadMessage:
       'Upload a supported file or saved map **Json**. Read more about [**supported file formats**]',
+    replaceUploadMessage: 'Upload a supported file. Read more about [**supported file formats**]',
     browseFiles: 'browse your files',
     uploading: 'Uploading',
     downloading: 'Downloading',
     fileNotSupported: 'File {errorFiles} is not supported.',
     or: 'or',
     dropMessage: 'Drag & Drop Your File(s) Here, {browse}, or',
+    toAdd: 'To add to map',
+    includeDataset: 'Include {name}',
+    largeDataset: 'Large',
+    largeDatasetWarning:
+      'This dataset is large. It can run out of memory, layer creation can take a long time, and rendering can be laggy.',
+    readyToAdd: '{size} - Ready to add file to map',
+    readyToAddNoSize: 'Ready to add file to map',
+    loadingProgress: 'Loading ({loaded} / {total})',
+    loading: 'Loading...',
+    unableToLoad: 'Unable to load file',
+    unsupported: 'Unsupported file type or format',
     urlPlaceholder: 'Enter your dataset URL',
     fetch: 'Fetch',
+    addUrl: 'Add',
     format: 'Format',
     formatAuto: 'Auto',
     cors: 'The URL must allow [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'

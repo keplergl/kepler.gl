@@ -7,6 +7,7 @@ import {
   makeProgressIterator,
   filesToDataPayload,
   processFileData,
+  remoteDatasetFromUrl,
   processArrowBatches,
   getGeoJsonFromLoaderResult,
   readBatch
@@ -167,6 +168,55 @@ test('#file-handler -> filesToDataPayload', t => {
   t.end();
 });
 
+test('#file-handler -> filesToDataPayload autoCreateLayers', t => {
+  const fileCache = [
+    {
+      data: {
+        fields: parsedFields,
+        rows: parsedRows
+      },
+      info: {label: 'rows-data.json', format: 'row'}
+    },
+    {
+      data: {
+        datasets: [],
+        config: keplerglMap.config
+      },
+      info: {label: 'keplergl-map.json', format: 'keplergl'}
+    }
+  ];
+
+  const result = filesToDataPayload(fileCache, {autoCreateLayers: false});
+
+  t.deepEqual(
+    result[0].options,
+    {centerMap: true, autoCreateLayers: false},
+    'should keep kepler map centerMap and forward autoCreateLayers'
+  );
+  t.deepEqual(
+    result[1].options,
+    {autoCreateLayers: false},
+    'should forward autoCreateLayers for dataset files'
+  );
+
+  t.end();
+});
+
+test('#file-handler -> remoteDatasetFromUrl waits for the remote download', t => {
+  const dataset = remoteDatasetFromUrl('https://example.com/quakes.csv?sv=1', 'csv');
+  t.equal(dataset.info.type, 'externally-hosted', 'should be a remote dataset');
+  t.equal(dataset.info.label, 'quakes.csv', 'should name the card from the url');
+  t.deepEqual(dataset.data, {fields: [], rows: []}, 'should not include downloaded rows');
+  t.equal(dataset.metadata.source, 'https://example.com/quakes.csv?sv=1');
+  t.equal(dataset.metadata.sourceFormat, 'csv', 'should keep the selected format');
+
+  const payload = filesToDataPayload([dataset]);
+  t.equal(payload[0].datasets[0].info.type, 'externally-hosted', 'Add Data keeps the remote type');
+  t.deepEqual(payload[0].datasets[0].data, {fields: [], rows: []}, 'Add Data still has no rows');
+
+  t.end();
+});
+
 test('#file-handler -> filesToDataPayload remote metadata', t => {
   const fileCache = [
     {
@@ -207,6 +257,15 @@ test('#file-handler -> processFileData one-shot load does not enable polling', a
   });
   t.equal(local[0].info.type, undefined, 'local files are not marked externally-hosted');
   t.equal(local[0].metadata, undefined, 'local files get no remote refresh metadata');
+  const sized = await processFileData({
+    content: {fileName: 'local.csv', data: rows, fileSize: 50 * 1024 * 1024},
+    fileCache: []
+  });
+  t.equal(
+    sized[0].metadata.size,
+    50 * 1024 * 1024,
+    'local files keep their byte size for a later warning'
+  );
 
   const remote = await processFileData({
     content: {

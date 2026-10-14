@@ -12,7 +12,12 @@ import {
 } from '@kepler.gl/utils';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {DATASET_FORMATS, DatasetType, REMOTE_FILE_EXTENSIONS} from '@kepler.gl/constants';
-import {AddDataToMapPayload, LoadedMap, ProcessorResult} from '@kepler.gl/types';
+import {
+  AddDataToMapOptions,
+  AddDataToMapPayload,
+  LoadedMap,
+  ProcessorResult
+} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import type {Feature, FeatureCollection} from 'geojson';
 
@@ -91,6 +96,8 @@ export type ProcessFileDataContent = {
   etag?: string;
   /** HTTP Last-Modified from the remote fetch, used for the next conditional refresh. */
   lastModified?: string;
+  /** Original file size in bytes, kept so a remounted uploader can still warn. */
+  fileSize?: number;
   /**
    * When true, skip Arrow record-batch compaction. Set on intermediate
    * progressive Arrow loads so each batch does not copy the growing table.
@@ -261,7 +268,10 @@ export async function* makeProgressIterator(
 }
 
 // eslint-disable-next-line complexity
-function getPersistedRemoteFormat(keplerFormat?: string, fileName?: string): string | undefined {
+export function getPersistedRemoteFormat(
+  keplerFormat?: string,
+  fileName?: string
+): string | undefined {
   if (
     keplerFormat &&
     keplerFormat !== 'auto' &&
@@ -297,7 +307,8 @@ export async function* readBatch(
   keplerFormat?: string,
   refreshIntervalMs?: number,
   etag?: string,
-  lastModified?: string
+  lastModified?: string,
+  fileSize?: number
 ): AsyncGenerator {
   let result: any = null;
   const batches = <any>[];
@@ -340,6 +351,7 @@ export async function* readBatch(
           }
         : {}),
       fileName,
+      ...(typeof fileSize === 'number' ? {fileSize} : {}),
       // if dataset is CSV, data is set to the raw batches
       data: result ? result : batches,
       ...(sourceUrl ? {sourceUrl} : {}),
@@ -369,6 +381,8 @@ export async function readFileInBatches({
   fileName?: string;
 }): Promise<AsyncGenerator> {
   const displayFileName = fileName || file.name;
+  // Local drops expand mixed zips in the load queue before this runs. A `.zip`
+  // that still arrives here is a shapefile archive (remote URL, or a direct call).
   if (isZipFileName(file.name) && isKeplerFileFormatAccepted('shp')) {
     const unzipped = await unzipShapefileArchive(file);
     const shapefile = unzipped.find(entry => getDroppedFileExtension(entry.name) === 'shp');
@@ -427,7 +441,8 @@ export async function readFileInBatches({
     keplerFormat,
     refreshIntervalMs,
     etag,
-    lastModified
+    lastModified,
+    file.size
   );
 }
 
@@ -494,6 +509,24 @@ export async function processFileData({
 
     const sourceUrl = content.sourceUrl;
     const remoteFormat = getPersistedRemoteFormat(content.keplerFormat, content.fileName);
+    const fileSize = typeof content.fileSize === 'number' ? content.fileSize : undefined;
+    const metadata = {
+      ...(sourceUrl
+        ? {
+            source: sourceUrl,
+            ...(remoteFormat ? {sourceFormat: remoteFormat} : {}),
+            ...(typeof content.refreshIntervalMs === 'number' && content.refreshIntervalMs > 0
+              ? {refreshIntervalMs: content.refreshIntervalMs}
+              : {}),
+            ...(typeof content.etag === 'string' && content.etag ? {etag: content.etag} : {}),
+            ...(typeof content.lastModified === 'string' && content.lastModified
+              ? {lastModified: content.lastModified}
+              : {}),
+            lastFetchedAt: Date.now()
+          }
+        : {}),
+      ...(fileSize != null ? {size: fileSize} : {})
+    };
     return [
       ...fileCache,
       {
@@ -504,22 +537,7 @@ export async function processFileData({
           format,
           ...(sourceUrl ? {type: DatasetType.EXTERNALLY_HOSTED} : {})
         },
-        ...(sourceUrl
-          ? {
-              metadata: {
-                source: sourceUrl,
-                ...(remoteFormat ? {sourceFormat: remoteFormat} : {}),
-                ...(typeof content.refreshIntervalMs === 'number' && content.refreshIntervalMs > 0
-                  ? {refreshIntervalMs: content.refreshIntervalMs}
-                  : {}),
-                ...(typeof content.etag === 'string' && content.etag ? {etag: content.etag} : {}),
-                ...(typeof content.lastModified === 'string' && content.lastModified
-                  ? {lastModified: content.lastModified}
-                  : {}),
-                lastFetchedAt: Date.now()
-              }
-            }
-          : {})
+        ...(sourceUrl || fileSize != null ? {metadata} : {})
       }
     ];
   } else {
@@ -527,7 +545,10 @@ export async function processFileData({
   }
 }
 
-export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayload[] {
+export function filesToDataPayload(
+  fileCache: FileCacheItem[],
+  options?: AddDataToMapOptions
+): AddDataToMapPayload[] {
   // seperate out files which could be a single datasets. or a keplergl map json
   const collection = fileCache.reduce<{
     datasets: FileCacheItem[];
@@ -540,7 +561,8 @@ export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayl
         accu.keplerMaps.push({
           ...data,
           options: {
-            centerMap: !(data.config && data.config.mapState)
+            centerMap: !(data.config && data.config.mapState),
+            ...(options || {})
           }
         });
       } else if (DATASET_FORMATS[info?.format]) {
@@ -562,5 +584,8 @@ export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayl
 
   // add kepler map first with config
   // add datasets later in one add data call
-  return collection.keplerMaps.concat({datasets: collection.datasets});
+  return collection.keplerMaps.concat({
+    datasets: collection.datasets,
+    ...(options && collection.datasets.length ? {options} : {})
+  });
 }

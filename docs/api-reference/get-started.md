@@ -5,12 +5,32 @@
 Use <b>Node v20</b> and above, older node versions have not been tested
 
 ```sh
-npm install --save kepler.gl @kepler.gl/components @kepler.gl/reducers
+npm install --save kepler.gl @kepler.gl/components @kepler.gl/reducers maplibre-gl
 ```
 
-### Get Mapbox Token
+The default basemaps use MapLibre, so load its stylesheet once in your application entry point:
 
-Kepler.gl is built on top of [Mapbox GL](https://www.mapbox.com). A mapbox account and an access token are needed to use kepler.gl in your app. Get a [Mapbox Access Token](https://www.mapbox.com/help/define-access-token/) at mapbox.com.
+```js
+import 'maplibre-gl/dist/maplibre-gl.css';
+```
+
+Mapbox-only applications should load `mapbox-gl/dist/mapbox-gl.css` instead.
+Applications that allow both MapLibre and Mapbox styles should load both stylesheets.
+
+For a Mapbox-only application, replace `maplibre-gl` in the installation command:
+
+```sh
+npm install --save kepler.gl @kepler.gl/components @kepler.gl/reducers mapbox-gl
+```
+
+```js
+import 'mapbox-gl/dist/mapbox-gl.css';
+```
+
+### Get a Mapbox Token (Mapbox styles only)
+
+The default MapLibre-backed basemaps do not require a Mapbox token. If your application uses
+Mapbox-hosted styles, create a Mapbox account and get a [Mapbox Access Token](https://www.mapbox.com/help/define-access-token/).
 
 ### Basic Usage
 
@@ -30,6 +50,7 @@ import { connect, Provider } from "react-redux";
 
 import keplerGlReducer, { enhanceReduxMiddleware } from "@kepler.gl/reducers";
 import KeplerGl from "@kepler.gl/components";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 import AutoSizer from "react-virtualized/dist/commonjs/AutoSizer";
 

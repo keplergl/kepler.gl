@@ -104,6 +104,7 @@ const EXCLUDED_DEFAULT_FIELDS = [
  * most preferred.
  */
 const METRIC_DEFAULT_FIELDS = [
+  'score',
   'metric',
   'value',
   'sum',

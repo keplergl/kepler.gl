@@ -4,7 +4,12 @@
 import React, {useCallback, useState} from 'react';
 import styled from 'styled-components';
 
-import {openDeleteModal, VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {
+  openDeleteModal,
+  openReplaceDatasetModal,
+  VisStateActions,
+  ActionHandler
+} from '@kepler.gl/actions';
 import {DatasetType} from '@kepler.gl/constants';
 import {DataContainerInterface} from '@kepler.gl/utils';
 import {RGBColor} from '@kepler.gl/types';
@@ -26,6 +31,8 @@ type MiniDataset = {
   metadata?: Record<string, any>;
 };
 
+type ReplaceDatasetHandler = ActionHandler<typeof openReplaceDatasetModal>;
+
 type MiniDatasets = {
   [key: string]: MiniDataset;
 };
@@ -42,6 +49,8 @@ export type SourceDataCatalogProps = {
   addGroupBy?: ActionHandler<typeof VisStateActions.addGroupBy>;
   addJoin?: ActionHandler<typeof VisStateActions.addJoin>;
   addSpatialJoin?: ActionHandler<typeof VisStateActions.addSpatialJoin>;
+  addSuitability?: ActionHandler<typeof VisStateActions.addSuitability>;
+  replaceDataset?: ReplaceDatasetHandler;
 };
 
 SourceDataCatalogFactory.deps = [DatasetTitleFactory, DatasetInfoFactory];
@@ -61,7 +70,9 @@ function SourceDataCatalogFactory(
     updateDatasetProps,
     addGroupBy,
     addJoin,
-    addSpatialJoin
+    addSpatialJoin,
+    addSuitability,
+    replaceDataset
   }: SourceDataCatalogProps) => {
     const [openRefreshSettingsId, setOpenRefreshSettingsId] = useState<string | null>(null);
 
@@ -88,6 +99,9 @@ function SourceDataCatalogFactory(
                 addGroupBy={addGroupBy}
                 addJoin={addJoin}
                 addSpatialJoin={addSpatialJoin}
+                addSuitability={addSuitability}
+                replaceDataset={replaceDataset}
+                refreshSettingsOpen={showRefreshSettings}
                 onToggleRefreshSettings={
                   (refreshDataset || updateDatasetProps) &&
                   dataset.type === DatasetType.EXTERNALLY_HOSTED

@@ -4,6 +4,7 @@
 import pick from 'es-toolkit/compat/pick';
 import {VERSIONS} from './versions';
 import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {migrateLegacyScenegraphVisConfig} from '@kepler.gl/layers';
 import {
   colorRangeBackwardCompatibility,
   isFilterValidToSave,
@@ -38,7 +39,7 @@ import {
   Annotation,
   ChartConfig
 } from '@kepler.gl/types';
-import {Datasets, GroupByOp, JoinOp} from '@kepler.gl/table';
+import {Datasets, GroupByOp, JoinOp, SuitabilityOp} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Loader} from '@loaders.gl/loader-utils';
 import KeplerGLSchema from './schema-manager';
@@ -54,6 +55,7 @@ export type modifiedType = {
   strokeColorRange?: any;
   filled?: boolean;
   stroked?: boolean;
+  scenegraph?: string;
 };
 
 export interface VisState {
@@ -77,6 +79,7 @@ export interface VisState {
   editingDataset: string | undefined;
   groupBys: GroupByOp[];
   joins: JoinOp[];
+  suitabilities: SuitabilityOp[];
   interactionConfig: InteractionConfig;
   interactionToBeMerged: any;
   layerBlending: string;
@@ -92,9 +95,13 @@ export interface VisState {
   splitMapsToBeMerged: SplitMap[];
   fileLoading: FileLoading | false;
   fileLoadingProgress: FileLoadingProgress;
+  /** Parsed files held until the Add Data button commits them. */
+  stagedToAdd: any[] | null;
   loadingIndicatorValue: number;
   /** Per-dataset download progress (0–100) while hydrating remote files. */
   loadingProgress: Record<string, number>;
+  /** Remote datasets whose download finished and whose parse is still running. */
+  loadingProcessing?: Record<string, boolean>;
   loaders: Loader[];
   loadOptions: object;
   initialState?: Partial<VisState>;
@@ -523,6 +530,13 @@ const visConfigModificationV1 = {
     }
 
     return modified;
+  },
+  '3D': visConfig => {
+    const migrated = migrateLegacyScenegraphVisConfig(visConfig);
+    if (!migrated || migrated.scenegraph === visConfig?.scenegraph) {
+      return {};
+    }
+    return {scenegraph: migrated.scenegraph};
   }
 };
 
@@ -699,7 +713,15 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV1 = ['tooltip', 'legend', 'brush', 'geocoder', 'coordinate'];
+const interactionPropsV1 = [
+  'tooltip',
+  'legend',
+  'brush',
+  'geocoder',
+  'coordinate',
+  'annotation',
+  'zoomOpacity'
+];
 
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
@@ -712,16 +734,21 @@ export class InteractionSchemaV1 extends Schema {
     // save config even if disabled,
     return Array.isArray(this.properties)
       ? {
-          [this.key]: this.properties.reduce(
-            (accu, key) => ({
+          [this.key]: this.properties.reduce((accu, key) => {
+            const interaction = interactionConfig[key as keyof InteractionConfig];
+            // Older saved states may not have annotation or zoomOpacity.
+            if (!interaction) {
+              return accu;
+            }
+            const config = 'config' in interaction ? interaction.config : undefined;
+            return {
               ...accu,
               [key]: {
-                ...interactionConfig[key].config,
-                enabled: interactionConfig[key].enabled
+                ...(config || {}),
+                enabled: interaction.enabled
               }
-            }),
-            {}
-          )
+            };
+          }, {})
         }
       : {};
   }
@@ -995,6 +1022,7 @@ export const filterPropsV1 = {
   syncTimelineMode: null,
 
   enabled: null,
+  inverted: null,
 
   invertTrendColor: null,
   timezone: null,
@@ -1072,6 +1100,8 @@ export const propertiesV1 = {
   layerOrder: null,
   groupBys: null,
   joins: null
+  // suitabilities is intentionally absent: the op config is ephemeral and only the
+  // derived dataset is persisted. A `null` entry here would write it to saved maps.
 };
 
 export class VisStateSchemaV1 extends Schema {

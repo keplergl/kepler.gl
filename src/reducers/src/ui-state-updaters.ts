@@ -113,20 +113,26 @@ const DEFAULT_MAP_LEGEND_CONTROL = {
  * @property mapLocale Default: `{show: true, active: false}`
  * @property mapTheme Default: `{show: true, active: false}`
  * @property viewportJson Default: `{show: true, active: false}`
+ * @property mapInfo Default: `{show: true, active: true}`. `show` hides the on-map name and description.
  * @public
  */
-export const DEFAULT_MAP_CONTROLS: MapControls = (
-  Object.keys(MAP_CONTROLS) as Array<keyof typeof MAP_CONTROLS>
-).reduce(
-  (final, current) => ({
-    ...final,
-    [current]:
-      current === MAP_CONTROLS.mapLegend
-        ? DEFAULT_MAP_LEGEND_CONTROL
-        : DEFAULT_MAP_CONTROLS_FEATURES
-  }),
-  {} as MapControls
-);
+export const DEFAULT_MAP_CONTROLS: MapControls = {
+  ...(Object.keys(MAP_CONTROLS) as Array<keyof typeof MAP_CONTROLS>).reduce(
+    (final, current) => ({
+      ...final,
+      [current]:
+        current === MAP_CONTROLS.mapLegend
+          ? DEFAULT_MAP_LEGEND_CONTROL
+          : DEFAULT_MAP_CONTROLS_FEATURES
+    }),
+    {} as MapControls
+  ),
+  // Open by default so a saved title shows on load. An empty map still hides the card.
+  mapInfo: {
+    ...DEFAULT_MAP_CONTROLS_FEATURES,
+    active: true
+  }
+};
 
 /**
  * Default image export config
@@ -269,6 +275,7 @@ export const DEFAULT_EXPORT_VIDEO: ExportVideo = {
  * @property activeSidePanel Default: `'layer'`
  * @property currentModal Default: `'addData'`
  * @property datasetKeyToRemove Default: `null`
+ * @property datasetToReplaceId Default: `null`
  * @property visibleDropdown Default: `null`
  * @property exportImage Default: [`DEFAULT_EXPORT_IMAGE`](#default_export_image)
  * @property exportData Default: [`DEFAULT_EXPORT_DATA`](#default_export_data)
@@ -287,6 +294,7 @@ export const INITIAL_UI_STATE: UiState = {
   activeSidePanel: DEFAULT_ACTIVE_SIDE_PANEL,
   currentModal: DEFAULT_MODAL,
   datasetKeyToRemove: null,
+  datasetToReplaceId: null,
   visibleDropdown: null,
   // export image modal ui
   exportImage: DEFAULT_EXPORT_IMAGE,
@@ -376,7 +384,10 @@ export const toggleModalUpdater = (
   {payload: id}: UIStateActions.ToggleModalUpdaterAction
 ): UiState => ({
   ...state,
-  currentModal: id
+  currentModal: id,
+  // Add Data and every other modal open leave replace mode.
+  // Replace mode is entered only through openReplaceDatasetModal.
+  datasetToReplaceId: null
 });
 
 /**
@@ -546,6 +557,24 @@ export const openDeleteModalUpdater = (
   ...state,
   currentModal: DELETE_DATA_ID,
   datasetKeyToRemove
+});
+
+/**
+ * Open the add-data modal so the next confirmed upload replaces one dataset.
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload dataset id
+ * @returns nextState
+ * @public
+ */
+export const openReplaceDatasetModalUpdater = (
+  state: UiState,
+  {payload: datasetToReplaceId}: UIStateActions.OpenReplaceDatasetModalUpdaterAction
+): UiState => ({
+  ...state,
+  currentModal: ADD_DATA_ID,
+  datasetToReplaceId
 });
 
 /**
@@ -1100,6 +1129,28 @@ export const receiveMapConfigUpdater = (
           show: true,
           ...currentChart,
           active: true,
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+
+  // Honor an explicit collapsed or hidden state. A missing key keeps the default (shown, open).
+  const savedMapInfo = uiState.mapControls?.mapInfo;
+  const savedMapInfoActive = savedMapInfo?.active;
+  const savedMapInfoShow = savedMapInfo?.show;
+  if (typeof savedMapInfoActive === 'boolean' || typeof savedMapInfoShow === 'boolean') {
+    const currentMapInfo = newState.mapControls.mapInfo;
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        mapInfo: {
+          show: true,
+          active: true,
+          ...currentMapInfo,
+          ...(typeof savedMapInfoShow === 'boolean' ? {show: savedMapInfoShow} : {}),
+          ...(typeof savedMapInfoActive === 'boolean' ? {active: savedMapInfoActive} : {}),
           activeMapIndex: 0
         }
       }

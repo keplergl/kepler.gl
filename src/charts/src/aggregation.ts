@@ -789,7 +789,7 @@ export function buildHeatmapCells({
   if (!xAxis?.field?.name || !yAxis?.field?.name) {
     return [];
   }
-  // Cap both axes at 10×10 (Studio-style labeled table).
+  // Cap both axes at 10×10 for a labeled table.
   const limit = Math.min(
     Math.max(1, numGroups > 0 ? numGroups : DEFAULT_NUM_GROUPS),
     DEFAULT_NUM_GROUPS

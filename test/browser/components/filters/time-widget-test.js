@@ -8,7 +8,7 @@ import sinon from 'sinon';
 import moment from 'moment';
 
 import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
-import {setFilterAnimationTimeConfig} from '@kepler.gl/actions';
+import {setFilterAnimationTimeConfig, setFilterAnimationWindow} from '@kepler.gl/actions';
 import {visStateReducer as reducer, DEFAULT_ANIMATION_CONFIG} from '@kepler.gl/reducers';
 
 import {
@@ -246,8 +246,8 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   );
   t.equal(
     wrapper.find('.animation-window-control').at(0).find(IconButton).length,
-    1,
-    'should render 1 animate window options'
+    2,
+    'should render incremental and interval window options'
   );
 
   // select an animation option
@@ -614,5 +614,102 @@ test('Components -> TimeWidget.mount -> keyboard panning calls setFilterAnimatio
 
   wrapper.detach();
   clientSizeStub.restore();
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> group by field', t => {
+  const setFilterPlot = sinon.spy();
+  const filter = {
+    ...defaultProps.filter,
+    yAxis: {name: 'uid', type: 'integer'},
+    plotType: {
+      ...(defaultProps.filter.plotType || {}),
+      type: 'lineChart',
+      aggregation: 'average'
+    }
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget {...defaultProps} filter={filter} setFilterPlot={setFilterPlot} />
+      </IntlWrapper>,
+      {attachTo: document.body}
+    );
+  }, 'mount TimeWidget should not fail');
+
+  wrapper.find(Icons.Gear).at(0).simulate('click');
+  wrapper.update();
+
+  t.ok(wrapper.find('.time-widget__group-by').length > 0, 'should render group by settings');
+
+  const selectors = wrapper.find(FieldSelector);
+  let groupBySelector = null;
+  for (let i = 0; i < selectors.length; i++) {
+    if (selectors.at(i).props().id === 'time-widget-group-by-field') {
+      groupBySelector = selectors.at(i);
+    }
+  }
+  t.ok(groupBySelector, 'should render a group by field selector');
+
+  const field = groupBySelector.props().fields[0];
+  t.ok(field && field.name, 'group by fields include dataset columns');
+  groupBySelector.props().onSelect(field);
+  t.equal(
+    setFilterPlot.lastCall.args[1].plotType.groupBy.fieldName,
+    field.name,
+    'should set the group by field'
+  );
+
+  groupBySelector.props().onSelect(null);
+  t.equal(
+    setFilterPlot.lastCall.args[1].plotType.groupBy,
+    null,
+    'should clear group by when the field is removed'
+  );
+
+  wrapper.detach();
+  t.end();
+});
+
+test('Components -> TimeWidget -> interval window locks the histogram brush to one bin', t => {
+  const filterId = StateWFilters.visState.filters[0].id;
+  const visState = reducer(
+    StateWFilters.visState,
+    setFilterAnimationWindow({id: filterId, animationWindow: 'interval'})
+  );
+  const setFilterAnimationTime = sinon.spy();
+  let wrapper;
+
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget
+          {...defaultProps}
+          datasets={visState.datasets}
+          filter={visState.filters[0]}
+          setFilterAnimationTime={setFilterAnimationTime}
+        />
+      </IntlWrapper>
+    );
+  }, 'TimeWidget should render in interval mode');
+
+  const slider = wrapper.find(RangeSlider);
+  t.equal(slider.length, 1, 'should render the histogram slider');
+  t.equal(slider.first().props().isRanged, false, 'brush should select one bin, not a free range');
+
+  const marks = slider.first().props().marks;
+  t.ok(Array.isArray(marks) && marks.length > 1, 'brush should snap to histogram bin edges');
+
+  slider.first().props().onChange([marks[0], marks[0]]);
+  t.deepEqual(
+    setFilterAnimationTime.lastCall.args[2],
+    [marks[0], marks[1] - 1],
+    'should set the filter to that bin'
+  );
+  t.equal(wrapper.find(Icons.Interval).length, 1, 'playback bar shows Step by Interval');
+
+  wrapper.detach();
   t.end();
 });

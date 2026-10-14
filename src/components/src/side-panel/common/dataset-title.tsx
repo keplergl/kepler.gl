@@ -3,18 +3,21 @@
 
 import React, {useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
-import {useIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import {Table} from '@kepler.gl/layers';
 import {Tooltip} from '../../common/styled-components';
-import {Clock, WarningSign} from '../../common/icons';
-import {DatasetType} from '@kepler.gl/constants';
+import {WarningSign} from '../../common/icons';
 import DatasetTagFactory from './dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
 import {Portaled} from '../..';
 import {rgbToHex} from '@kepler.gl/utils';
-import {openDeleteModal, VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {
+  openDeleteModal,
+  openReplaceDatasetModal,
+  VisStateActions,
+  ActionHandler
+} from '@kepler.gl/actions';
 import {RGBColor} from '@kepler.gl/types';
 import {StyledDatasetTitleProps, ShowDataTableProps} from './types';
 import DatasetOpsMenu from '../dataset-ops/dataset-ops-menu';
@@ -77,27 +80,6 @@ const DataTagAction = styled.div<{$alwaysVisible?: boolean}>`
   opacity: ${props => (props.$alwaysVisible ? 1 : 0)};
 `;
 
-const DataTagActionButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 12px;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  opacity: 0;
-
-  &:focus-visible {
-    opacity: 1;
-    outline: 1px solid ${props => props.theme.textColorHl};
-    outline-offset: 1px;
-  }
-`;
-
 const StyledRefreshError = styled.div`
   display: inline-flex;
   align-items: center;
@@ -114,6 +96,7 @@ type MiniDataset = {
   type?: string;
   metadata?: {
     refreshError?: string;
+    derivedDataset?: unknown;
   };
 };
 
@@ -125,9 +108,12 @@ export type DatasetTitleProps = {
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset?: ActionHandler<typeof openDeleteModal>;
   onToggleRefreshSettings?: () => void;
+  refreshSettingsOpen?: boolean;
   addGroupBy?: ActionHandler<typeof VisStateActions.addGroupBy>;
   addJoin?: ActionHandler<typeof VisStateActions.addJoin>;
   addSpatialJoin?: ActionHandler<typeof VisStateActions.addSpatialJoin>;
+  addSuitability?: ActionHandler<typeof VisStateActions.addSuitability>;
+  replaceDataset?: ActionHandler<typeof openReplaceDatasetModal>;
 };
 
 const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
@@ -151,30 +137,6 @@ const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
     </Tooltip>
   </DataTagAction>
 );
-
-const RefreshDatasetSettings = ({id, onToggle}: {id: string; onToggle?: () => void}) => {
-  const intl = useIntl();
-  return (
-    <DataTagActionButton
-      type="button"
-      className="dataset-action refresh-dataset-settings"
-      data-tip
-      data-for={`refresh-settings-${id}`}
-      aria-label={intl.formatMessage({id: 'datasetTitle.refreshSettings'})}
-      onClick={e => {
-        e.stopPropagation();
-        onToggle?.();
-      }}
-    >
-      <Clock height="16px" />
-      <Tooltip id={`refresh-settings-${id}`} effect="solid">
-        <span>
-          <FormattedMessage id={'datasetTitle.refreshSettings'} />
-        </span>
-      </Tooltip>
-    </DataTagActionButton>
-  );
-};
 
 const RefreshErrorIcon = ({id, message}: {id: string; message: string}) => (
   <StyledRefreshError
@@ -214,9 +176,12 @@ export default function DatasetTitleFactory(
     dataset,
     updateTableColor,
     onToggleRefreshSettings,
+    refreshSettingsOpen,
     addGroupBy,
     addJoin,
-    addSpatialJoin
+    addSpatialJoin,
+    addSuitability,
+    replaceDataset
   }) => {
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
     const root = useRef(null);
@@ -252,7 +217,6 @@ export default function DatasetTitleFactory(
       [onTitleClick, showDatasetTable, datasetId, dataset.disableDataOperation]
     );
 
-    const isRemote = dataset.type === DatasetType.EXTERNALLY_HOSTED;
     const refreshError = dataset.metadata?.refreshError;
 
     return (
@@ -290,12 +254,13 @@ export default function DatasetTitleFactory(
               addGroupBy={addGroupBy}
               addJoin={addJoin}
               addSpatialJoin={addSpatialJoin}
+              addSuitability={addSuitability}
+              replaceDataset={replaceDataset}
               showDeleteDataset={showDeleteDataset}
               removeDataset={removeDataset}
+              onToggleRefreshSettings={onToggleRefreshSettings}
+              refreshSettingsOpen={refreshSettingsOpen}
             />
-            {onToggleRefreshSettings && isRemote ? (
-              <RefreshDatasetSettings id={datasetId} onToggle={onToggleRefreshSettings} />
-            ) : null}
           </DatasetAction>
         </StyledDatasetTitle>
       </DatasetTitleRoot>

@@ -19,6 +19,7 @@ import {
   LayerVisConfig,
   LayerOrder,
   MapControls,
+  MapInfo,
   MapState,
   ChartConfig
 } from '@kepler.gl/types';
@@ -28,6 +29,7 @@ import {getApplicationConfig} from '@kepler.gl/utils';
 import {MapViewMode} from '@kepler.gl/constants';
 
 import AnnotationControlFactory from './annotations/annotation-control';
+import MapInfoPanelFactory from './map-info-panel';
 import ViewportJsonEditorControlFactory from './viewport-json-editor';
 
 interface StyledMapControlProps {
@@ -107,6 +109,7 @@ export type MapControlProps = {
   onToggleLayerForMap?: (mapIndex: number, layerId: string) => void;
   charts?: ChartConfig[];
   visStateActions?: typeof VisStateActions;
+  mapInfo?: Partial<MapInfo>;
 };
 
 MapControlFactory.deps = [
@@ -118,7 +121,8 @@ MapControlFactory.deps = [
   ThemeToggleButtonFactory,
   AnnotationControlFactory,
   MapNavigationControlFactory,
-  ViewportJsonEditorControlFactory
+  ViewportJsonEditorControlFactory,
+  MapInfoPanelFactory
 ];
 
 function MapControlFactory(
@@ -130,9 +134,11 @@ function MapControlFactory(
   ThemeToggleButton: ReturnType<typeof ThemeToggleButtonFactory>,
   AnnotationControl: ReturnType<typeof AnnotationControlFactory>,
   MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>,
-  ViewportJsonEditorControl: ReturnType<typeof ViewportJsonEditorControlFactory>
+  ViewportJsonEditorControl: ReturnType<typeof ViewportJsonEditorControlFactory>,
+  MapInfoPanel: ReturnType<typeof MapInfoPanelFactory>
 ) {
   const DEFAULT_ACTIONS = [
+    MapInfoPanel,
     SplitMapButton,
     Toggle3dButton,
     MapDrawPanel,

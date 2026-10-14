@@ -3,6 +3,8 @@
 
 import {_BrowserFileSystem, parse} from '@loaders.gl/core';
 
+import {isLoadableDatasetExtension} from './loader-registry';
+
 export const SHAPEFILE_SIDECAR_EXTENSIONS = ['dbf', 'shx', 'prj', 'cpg'] as const;
 export const SHAPEFILE_SOURCE_EXTENSIONS = ['shp', 'zip'] as const;
 
@@ -62,29 +64,96 @@ function fileNameFromArchivePath(path: string): string {
 }
 
 /**
- * Unpack a zip that contains a shapefile. Only top-level .shp plus sidecars
- * are returned; nested folders are ignored.
+ * Top-level members of a zip. Nested folders are ignored. Directory entries
+ * are skipped.
  */
-export async function unzipShapefileArchive(zipFile: File): Promise<File[]> {
+async function listTopLevelZipFiles(zipFile: File): Promise<File[]> {
   const {ZipLoader} = await import('@loaders.gl/zip');
   const zipData = await zipFile.arrayBuffer();
   const archive = (await parse(zipData, ZipLoader, {worker: false})) as Record<string, ArrayBuffer>;
   const files: File[] = [];
 
   for (const [path, buffer] of Object.entries(archive || {})) {
-    if (path.includes('/')) {
+    if (!path || path.endsWith('/') || path.includes('/')) {
       continue;
     }
     const name = fileNameFromArchivePath(path);
-    const ext = getDroppedFileExtension(name);
-    if (ext === 'shp' || (SHAPEFILE_SIDECAR_EXTENSIONS as readonly string[]).includes(ext)) {
-      files.push(new File([buffer], name));
+    if (!name) {
+      continue;
     }
+    files.push(new File([buffer], name));
   }
+
+  return files;
+}
+
+/**
+ * Unpack a zip that contains a shapefile. Only top-level .shp plus sidecars
+ * are returned; nested folders are ignored.
+ */
+export async function unzipShapefileArchive(zipFile: File): Promise<File[]> {
+  const files = (await listTopLevelZipFiles(zipFile)).filter(file => {
+    const ext = getDroppedFileExtension(file.name);
+    return ext === 'shp' || (SHAPEFILE_SIDECAR_EXTENSIONS as readonly string[]).includes(ext);
+  });
 
   if (!files.some(file => getDroppedFileExtension(file.name) === 'shp')) {
     throw new Error('Zip archive does not contain a shapefile (.shp)');
   }
 
   return files;
+}
+
+export type ZipArchiveExpansion =
+  | {
+      /** One shapefile and no other datasets. The load keeps the zip's name. */
+      kind: 'shapefile';
+      shapefile: File;
+      companions: File[];
+    }
+  | {
+      /** One dataset per supported top-level file, named from that file. */
+      kind: 'datasets';
+      datasets: File[];
+      companions: File[];
+    };
+
+/**
+ * Split a zip into datasets. A single shapefile plus sidecars stays one
+ * shapefile archive. Any other mix (CSV, GeoJSON, several shapefiles, …)
+ * becomes one file per supported member. Sidecars are returned as companions
+ * and are not datasets. Nested folders and unsupported files are skipped.
+ */
+export async function expandZipArchive(
+  zipFile: File,
+  extraExtensions: string[] = []
+): Promise<ZipArchiveExpansion> {
+  const extra = new Set(
+    extraExtensions
+      .map(extension => extension.replace(/^\./, '').trim().toLowerCase())
+      .filter(extension => extension && extension !== 'zip')
+  );
+  const entries = await listTopLevelZipFiles(zipFile);
+  const companions: File[] = [];
+  const datasets: File[] = [];
+
+  for (const file of entries) {
+    if (isShapefileSidecarFileName(file.name)) {
+      companions.push(file);
+      continue;
+    }
+    const ext = getDroppedFileExtension(file.name);
+    if (isLoadableDatasetExtension(ext) || extra.has(ext)) {
+      datasets.push(file);
+    }
+  }
+
+  const shapefiles = datasets.filter(file => getDroppedFileExtension(file.name) === 'shp');
+  if (shapefiles.length === 1 && datasets.length === 1) {
+    return {kind: 'shapefile', shapefile: shapefiles[0], companions};
+  }
+  if (!datasets.length) {
+    throw new Error('Zip archive does not contain a supported dataset');
+  }
+  return {kind: 'datasets', datasets, companions};
 }

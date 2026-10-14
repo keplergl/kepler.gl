@@ -22,8 +22,11 @@ import {
   WarningSign,
   Reset,
   ZoomIn,
-  CodeAlt
+  CodeAlt,
+  Overflow
 } from '../../common/icons';
+import Portaled from '../../common/portaled';
+import {ContextMenuAction, ContextMenuList} from '../../common/context-menu';
 
 import {InlineInput, StyledPanelHeader} from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -80,6 +83,7 @@ export type LayerPanelHeaderProps = {
     duplicate: ComponentType<Partial<BaseProps>>;
     crosshairs: ComponentType<Partial<BaseProps>>;
     json?: ComponentType<Partial<BaseProps>>;
+    more?: ComponentType<Partial<BaseProps>>;
   };
   listeners?: React.ElementType;
 };
@@ -101,10 +105,6 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
   position: relative;
   align-items: stretch;
 
-  .layer__remove-layer {
-    opacity: 0;
-  }
-
   .layer__drag-handle__placeholder {
     height: 20px;
     padding: 10px;
@@ -119,10 +119,6 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
     .layer__drag-handle {
       opacity: 1;
     }
-
-    .layer__remove-layer {
-      opacity: 1;
-    }
   }
 `;
 
@@ -131,8 +127,8 @@ const HeaderLabelSection = styled.div`
   color: ${props => props.theme.textColor};
   flex-grow: 1;
   align-items: stretch;
-  // leave space for eye and collapse icons
-  padding-right: 50px;
+  // leave space for options, eye, and collapse icons
+  padding-right: 74px;
 `;
 
 const HeaderActionSection = styled.div.withConfig({shouldForwardProp})<HeaderActionSectionProps>`
@@ -142,34 +138,6 @@ const HeaderActionSection = styled.div.withConfig({shouldForwardProp})<HeaderAct
   align-items: stretch;
   right: 10px;
   pointer-events: ${props => (props.isEditingLabel ? 'none' : 'all')};
-  &:hover {
-    .layer-panel__header__actions__hidden {
-      opacity: 1;
-      background-color: ${props => props.theme.panelBackgroundHover};
-    }
-  }
-`;
-
-type StyledPanelHeaderHiddenActionsProps = {
-  isConfigActive: LayerPanelHeaderProps['isConfigActive'];
-};
-
-// Hiden actions only show up on hover
-const StyledPanelHeaderHiddenActions = styled.div.withConfig({shouldForwardProp}).attrs({
-  className: 'layer-panel__header__actions__hidden'
-})<StyledPanelHeaderHiddenActionsProps>`
-  opacity: 0;
-  display: flex;
-  align-items: center;
-  background-color: ${props =>
-    props.isConfigActive ? props.theme.panelBackgroundHover : props.theme.panelBackground};
-  transition:
-    opacity 0.4s ease,
-    background-color 0.4s ease;
-
-  &:hover {
-    opacity: 1;
-  }
 `;
 
 const StyledDragHandle = styled.div`
@@ -291,48 +259,71 @@ export function LayerPanelHeaderActionSectionFactory(
       isEditingLabel,
       actionIcons: customActionIcons
     } = props;
+    const [isOptionsOpen, setIsOptionsOpen] = useState(false);
     // Merge custom actionIcons with defaults to avoid breaking changes
     const actionIcons = {...defaultActionIcons, ...customActionIcons};
+    const selectAction =
+      (handler?: MouseEventHandler) => (event: MouseEvent<HTMLButtonElement>) => {
+        handler?.(event);
+        setIsOptionsOpen(false);
+      };
+    const optionItems: ContextMenuAction[] = [
+      {
+        className: 'layer__zoom-to-layer',
+        labelId: 'tooltip.zoomToLayer',
+        Icon: actionIcons.crosshairs,
+        iconHeight: '14px',
+        onClick: selectAction(onZoomToLayer)
+      },
+      {
+        className: 'layer__duplicate',
+        labelId: 'tooltip.duplicateLayer',
+        Icon: actionIcons.duplicate,
+        iconHeight: '14px',
+        disabled: !allowDuplicate,
+        onClick: selectAction(onDuplicateLayer)
+      }
+    ];
+    if (showJsonEditor && onToggleJsonEditor) {
+      optionItems.push({
+        className: 'layer__json-editor',
+        labelId: 'tooltip.editLayerJson',
+        Icon: actionIcons.json || CodeAlt,
+        iconHeight: '14px',
+        active: Boolean(isJsonEditorActive),
+        onClick: selectAction(onToggleJsonEditor)
+      });
+    }
+    const removeAction: ContextMenuAction | null = showRemoveLayer
+      ? {
+          className: 'layer__remove-layer',
+          labelId: 'tooltip.removeLayer',
+          Icon: actionIcons.remove,
+          iconHeight: '16px',
+          destructive: true,
+          onClick: selectAction(onRemoveLayer)
+        }
+      : null;
     return (
       <HeaderActionSection className="layer-panel__header__actions" isEditingLabel={isEditingLabel}>
-        <StyledPanelHeaderHiddenActions isConfigActive={isConfigActive}>
-          {showRemoveLayer ? (
-            <PanelHeaderAction
-              className="layer__remove-layer"
-              testId="remove-layer-action"
-              id={layerId}
-              tooltip={'tooltip.removeLayer'}
-              onClick={onRemoveLayer}
-              tooltipType="error"
-              IconComponent={actionIcons.remove}
-            />
-          ) : null}
-          <PanelHeaderAction
-            className="layer__duplicate"
-            id={layerId}
-            tooltip={'tooltip.duplicateLayer'}
-            onClick={onDuplicateLayer}
-            IconComponent={actionIcons.duplicate}
-            disabled={!allowDuplicate}
+        <PanelHeaderAction
+          className="layer__options-toggle"
+          testId="layer-options-toggle"
+          id={layerId}
+          tooltip="tooltip.moreOptions"
+          onClick={event => {
+            event.stopPropagation();
+            setIsOptionsOpen(open => !open);
+          }}
+          IconComponent={actionIcons.more || Overflow}
+        />
+        <Portaled isOpened={isOptionsOpen} left={0} top={0} onClose={() => setIsOptionsOpen(false)}>
+          <ContextMenuList
+            className="layer-options-menu"
+            items={optionItems}
+            footer={removeAction}
           />
-          <PanelHeaderAction
-            className="layer__zoom-to-layer"
-            id={layerId}
-            tooltip={'tooltip.zoomToLayer'}
-            onClick={onZoomToLayer}
-            IconComponent={actionIcons.crosshairs}
-          />
-          {showJsonEditor && onToggleJsonEditor ? (
-            <PanelHeaderAction
-              className="layer__json-editor"
-              id={layerId}
-              tooltip={'tooltip.editLayerJson'}
-              onClick={onToggleJsonEditor}
-              IconComponent={actionIcons.json || CodeAlt}
-              active={isJsonEditorActive}
-            />
-          ) : null}
-        </StyledPanelHeaderHiddenActions>
+        </Portaled>
         {isValid ? (
           <PanelHeaderAction
             className="layer__visibility-toggle"
@@ -405,7 +396,8 @@ const defaultActionIcons = {
   duplicate: props => <Copy {...props} height="14px" />,
   resetIsValid: Reset,
   crosshairs: props => <ZoomIn {...props} height="14px" />,
-  json: props => <CodeAlt {...props} height="14px" />
+  json: props => <CodeAlt {...props} height="14px" />,
+  more: props => <Overflow {...props} height="16px" />
 };
 
 LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, LayerPanelHeaderActionSectionFactory];

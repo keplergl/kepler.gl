@@ -119,12 +119,14 @@ function DatasetLayerSectionFactory(
           showDatasetTable={showDatasetTable}
           updateTableColor={updateTableColor}
           removeDataset={removeDataset}
+          replaceDataset={uiStateActions.openReplaceDatasetModal}
           showDeleteDataset={showDeleteDataset}
           refreshDataset={visStateActions.refreshDataset}
           updateDatasetProps={visStateActions.updateDatasetProps}
           addGroupBy={visStateActions.addGroupBy}
           addJoin={visStateActions.addJoin}
           addSpatialJoin={visStateActions.addSpatialJoin}
+          addSuitability={visStateActions.addSuitability}
         />
         <LayerList
           datasets={datasets}

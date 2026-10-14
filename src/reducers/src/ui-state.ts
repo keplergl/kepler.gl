@@ -17,6 +17,7 @@ const actionHandler = {
   [ActionTypes.HIDE_EXPORT_DROPDOWN]: uiStateUpdaters.hideExportDropdownUpdater,
   [ActionTypes.TOGGLE_SIDE_PANEL_CLOSE_BUTTON]: uiStateUpdaters.toggleSidePanelCloseButtonUpdater,
   [ActionTypes.OPEN_DELETE_MODAL]: uiStateUpdaters.openDeleteModalUpdater,
+  [ActionTypes.OPEN_REPLACE_DATASET_MODAL]: uiStateUpdaters.openReplaceDatasetModalUpdater,
   [ActionTypes.TOGGLE_MAP_CONTROL]: uiStateUpdaters.toggleMapControlUpdater,
   [ActionTypes.SET_MAP_CONTROL_VISIBILITY]: uiStateUpdaters.setMapControlVisibilityUpdater,
   [ActionTypes.SET_MAP_CONTROL_SETTINGS]: uiStateUpdaters.setMapControlSettingsUpdater,

@@ -18,7 +18,7 @@ export const ChartConfigSection = styled.div`
 `;
 
 /**
- * Compact label | control rows, matching Studio chart settings density.
+ * Compact label | control rows for chart settings.
  */
 export const ChartConfigSectionWrapper = styled.div`
   display: grid;

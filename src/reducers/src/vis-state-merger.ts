@@ -16,11 +16,18 @@ import {
   isPlainObject
 } from '@kepler.gl/utils';
 
-import {Layer} from '@kepler.gl/layers';
+import {
+  AGGREGATION_COUNT_LAYER_TYPES,
+  Layer,
+  createPointCountLabelField,
+  migrateLegacyScenegraphVisConfig,
+  POINT_COUNT_FIELD_NAME
+} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
   AGGREGATION_TYPES,
+  DEFAULT_TEXT_LABEL,
   LAYER_BLENDINGS,
   OVERLAY_BLENDINGS,
   isAnnotationKind,
@@ -51,6 +58,7 @@ import {
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
 import {getLayerOrderFromLayers} from './layer-utils';
+import {combineZoomOpacityControllers} from './interaction-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
@@ -185,7 +193,8 @@ function insertItemBasedOnPreservedOrder(
 
 export function createLayerFromConfig(state: VisState, layerConfig: any): Layer | null {
   // check if the layer config is parsed
-  const parsedLayerConfig = isSavedLayerConfigV1(layerConfig)
+  const savedLayerConfig = isSavedLayerConfigV1(layerConfig);
+  const parsedLayerConfig = savedLayerConfig
     ? parseLayerConfig(state.schema, layerConfig)
     : layerConfig;
 
@@ -197,7 +206,7 @@ export function createLayerFromConfig(state: VisState, layerConfig: any): Layer 
     state.datasets,
     state.layerClasses,
     [parsedLayerConfig],
-    {allowEmptyColumn: true}
+    {allowEmptyColumn: true, keepUnlabeledAggregationTextLabel: savedLayerConfig}
   );
 
   if (failed?.length || !validated.length) {
@@ -291,7 +300,8 @@ export function mergeLayers<S extends VisState>(
   const {validated: mergedLayer, failed} = validateLayersByDatasets(
     state.datasets,
     state.layerClasses,
-    toMerge
+    toMerge,
+    {keepUnlabeledAggregationTextLabel: true}
   );
   unmerged.push(...failed);
   // put new layers in front of current layers
@@ -485,7 +495,11 @@ export function mergeInteractions<S extends VisState>(
       }
 
       const currentConfig =
-        key === 'tooltip' || key === 'brush' || key === 'geocoder' || key === 'legend'
+        key === 'tooltip' ||
+        key === 'brush' ||
+        key === 'geocoder' ||
+        key === 'legend' ||
+        key === 'zoomOpacity'
           ? state.interactionConfig[key].config
           : null;
 
@@ -551,6 +565,13 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
       combined.legend = withLegend.legend;
     }
   }
+  // Same for fade-on-zoom: an older config in front must not drop controllers from a later one.
+  if (!combined.zoomOpacity) {
+    const withZoomOpacity = configs.find(c => c.zoomOpacity);
+    if (withZoomOpacity?.zoomOpacity) {
+      combined.zoomOpacity = withZoomOpacity.zoomOpacity;
+    }
+  }
   // handle each property key of an `InteractionConfig`, e.g. tooltip, geocoder, brush, coordinate
   // by combining values for each among all passed in configs
 
@@ -609,6 +630,10 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
 
     if (key === 'legend') {
       combined[key].hideInvisibleLayers = toBeCombinedProps.some(p => p?.hideInvisibleLayers);
+    }
+
+    if (key === 'zoomOpacity' && combined.zoomOpacity) {
+      combined.zoomOpacity.controllers = combineZoomOpacityControllers(toBeCombinedProps);
     }
   }
 
@@ -1056,19 +1081,29 @@ export function validateColumn(
  */
 export function validateSavedTextLabel(
   fields,
-  [layerTextLabel],
+  layerTextLabels: any[],
   savedTextLabel,
-  options: {throwOnError?: boolean} = {}
-) {
+  options: {throwOnError?: boolean; layerType?: string | null} = {}
+): any[] {
+  const layerTextLabel = layerTextLabels[0];
   const savedTextLabels = Array.isArray(savedTextLabel) ? savedTextLabel : [savedTextLabel];
+  const countLabelLayer = Boolean(
+    options.layerType && AGGREGATION_COUNT_LAYER_TYPES.has(options.layerType)
+  );
 
   // validate field
   return savedTextLabels.map(textLabel => {
-    const field = textLabel.field
-      ? fields.find(fd =>
-          Object.keys(textLabel.field).every(key => textLabel.field[key] === fd[key])
-        )
-      : null;
+    let field = null;
+    if (textLabel.field) {
+      // Cluster, hexbin, and grid persist a synthetic point-count field that
+      // is not one of the dataset columns.
+      field =
+        countLabelLayer && textLabel.field.name === POINT_COUNT_FIELD_NAME
+          ? createPointCountLabelField()
+          : fields.find(fd =>
+              Object.keys(textLabel.field).every(key => textLabel.field[key] === fd[key])
+            );
+    }
 
     if (field === undefined && options.throwOnError) {
       throw new Error(`Layer has invalid text label field: ${JSON.stringify(textLabel.field)}`);
@@ -1077,11 +1112,28 @@ export function validateSavedTextLabel(
     return Object.keys(layerTextLabel).reduce(
       (accu, key) => ({
         ...accu,
-        [key]: key === 'field' ? field : textLabel[key] || layerTextLabel[key]
+        // Keep explicit false / 0. `||` would replace a saved collisionEnabled
+        // of false with the aggregation default of true.
+        [key]: key === 'field' ? field : textLabel[key] ?? layerTextLabel[key]
       }),
       {}
     );
   });
+}
+
+/**
+ * Maps saved before count labels omit `textLabel`. Those cluster, hexbin, and
+ * grid layers stay unlabeled. New layers still get the point-count default
+ * from `getDefaultLayerConfig`.
+ */
+export function fallbackTextLabelForLoadedLayer(
+  layerType: string | null | undefined,
+  newLayerTextLabel: any[]
+): any[] {
+  if (layerType && AGGREGATION_COUNT_LAYER_TYPES.has(layerType)) {
+    return [{...DEFAULT_TEXT_LABEL}];
+  }
+  return newLayerTextLabel;
 }
 
 /**
@@ -1147,6 +1199,9 @@ export function validateSavedVisualChannels(
 type ValidateLayerOption = {
   allowEmptyColumn?: boolean;
   throwOnError?: boolean;
+  // Saved maps that omit textLabel predate count labels and stay unlabeled.
+  // A new layer config omits it too, and should keep the layer default.
+  keepUnlabeledAggregationTextLabel?: boolean;
 };
 
 export function validateLayersByDatasets(
@@ -1280,18 +1335,22 @@ export function validateLayerWithData(
 
   const textLabel =
     savedLayer.config.textLabel && newLayer.config.textLabel
-      ? validateSavedTextLabel(
-          fields,
-          newLayer.config.textLabel,
-          savedLayer.config.textLabel,
-          options
-        )
+      ? validateSavedTextLabel(fields, newLayer.config.textLabel, savedLayer.config.textLabel, {
+          ...options,
+          layerType: savedLayer.type
+        })
+      : options.keepUnlabeledAggregationTextLabel
+      ? fallbackTextLabelForLoadedLayer(savedLayer.type, newLayer.config.textLabel)
       : newLayer.config.textLabel;
 
   // copy visConfig over to emptyLayer to make sure it has all the props
+  const savedVisConfig =
+    savedLayer.type === '3D'
+      ? migrateLegacyScenegraphVisConfig(savedLayer.config.visConfig)
+      : savedLayer.config.visConfig;
   const copiedVisConfig = newLayer.copyLayerConfig(
     newLayer.config.visConfig,
-    savedLayer.config.visConfig || {},
+    savedVisConfig || {},
     {
       shallowCopy: ['colorRange', 'strokeColorRange']
     }

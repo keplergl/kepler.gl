@@ -15,6 +15,46 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.16] - Oct 9 2026
+
+- 8bbd3487 (HEAD -> igr/3.3.0-alpha.16, origin/igr/3.3.0-alpha.16) Merge branch 'master' into igr/3.3.0-alpha.16
+- 87fa5fd9 (origin/master, origin/HEAD, master) fix: replace the broken FSQ Places example and show tileset errors (#3796)
+- 2b031d56 feat(layers): fit map when the layer type dropdown sets the first type (#3795)
+- 8d72219c feat: warn on large datasets in Add Data (#3794)
+- 7f30a3fa feat(ui): show layer actions in a context menu (#3793)
+- 5c8f90d4 feat(dataset): load mixed zip files as separate datasets (#3792)
+- e5913951 fix(wms): disable hover by default (#3791)
+- 7f26460a fix: show feedback while large dataset processing blocks the UI (#3790)
+- 7f3f1254 feat: repalce dataset context option (#3789)
+- f7c6a37f feat: add Step by Interval to the playback bar (#3788)
+- bee730e9 chore: more tests for Add Data modal (#3783)
+- 5b118cd5 feat: copy coordinates and annotation actions in the map context menu (#3782)
+- 363e7542 feat(timeline): group line chart series by a field (#3781)
+- 747ca0de feat(interactions): fade layer opacity by zoom (#3780)
+- 7441968c feat(3d): add model gallery, custom models, and GeoJSON input (#3779)
+- 445f7f8a chore(deps): bump jupyterlab from 4.5.10 to 4.5.11 in /bindings/python (#3785)
+- 74648f38 chore(deps): bump tornado from 6.5.8 to 6.5.9 in /bindings/python (#3784)
+- d22dd528 fix(trip-layer): scenegraph filters, one-point animation domain, and UI docs (#3778)
+- 524eee78 chore(examples): upgrade DuckDB vite example to latest (#3777)
+- 14482223 fix(h3): fix fixed height option (#3776)
+- 5eeca8f8 feat: confirm datasets in the Add Data dialog before adding them (#3770)
+- e55768c7 chore(deps): bump soupsieve from 2.8.4 to 2.9 in /bindings/python (#3738)
+- 37d2d846 chore(deps-dev): bump webpack-dev-middleware in /website (#3772)
+- 6ea906ea feat: Interactions Legend section and include-in-legend toggles (#3768)
+- 761e2c3f chore(deps): bump undici from 8.10.0 to 8.11.2 in /examples/node-app (#3769)
+- c8d5d5b8 chore(deps): bump undici in /examples/replace-component (#3771)
+- f5413af4 fix: let the incremental animation window reach the last of the data (#3773)
+- 47f13f1e fix(website): fix scrolling (#3774)
+- ba7c67db feat(raster-tile-layer): picking info (#3767)
+- 58d2a5de feat: json editor for charts (#3763)
+- de195bf5 feat: resize the map legend from the top handle (#3762)
+- f6d2c3ab fix: labels background depth test fix (#3761)
+- 83e63b8a feat: improve 3D tiles API token lifecycle (#3759)
+- e13d11ee fix: keep the video export camera on the same center as the main map (#3758)
+- 4c27c0ba feat: Add GeoJSON elevation offset for floating 3D polygons (#3757)
+- 019a8b34 feat: add a center handle to move bitmap layer bounds (#3756)
+- 39540fd0 feat: dataset operations as an optional base for frequent geometry ops (#3746)
+
 ## [3.3.0-alpha.15] - Sep 28 2026
 
 - ac36f69f feat: progress bar when loading remote datasets from a saved map (#3764)

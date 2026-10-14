@@ -357,6 +357,8 @@ export const mapControlTop = 52;
 
 // Plot
 export const rangeBrushBgd = '#3A414C';
+// Recessed plot surface. Kept darker than the widget so the range brush wash stays visible.
+export const rangePlotBgd = '#242730';
 export const histogramFillInRange = activeColor;
 export const histogramFillOutRange = sliderBarColor;
 export const histogramOverlayColor = '#999999';
@@ -1479,6 +1481,7 @@ export const theme = {
 
   // Plot
   rangeBrushBgd,
+  rangePlotBgd,
   histogramFillInRange,
   histogramFillOutRange,
   histogramOverlayColor,
@@ -1676,6 +1679,7 @@ export const themeLT = {
   linkBtnActColor: textColorLT,
 
   rangeBrushBgd: '#D3D8E0',
+  rangePlotBgd: '#FFFFFF',
   histogramFillInRange: activeColorLT,
   histogramFillOutRange: '#A0A7B4',
   axisFontColor: textColorLT
@@ -1750,6 +1754,7 @@ export const themeBS = {
   histogramFillInRange: '#000000',
   histogramFillOutRange: '#E2E2E2',
   rangeBrushBgd: '#E2E2E2',
+  rangePlotBgd: '#FFFFFF',
   sliderBarBgd: '#E2E2E2',
   sliderHandleColor: '#FFFFFF',
   sliderInactiveBorderColor: '#FFFFFF',

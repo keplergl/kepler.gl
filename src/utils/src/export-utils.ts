@@ -2,8 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
-import get from 'es-toolkit/compat/get';
-
 import {
   EXPORT_IMG_RESOLUTION_OPTIONS,
   EXPORT_IMG_RATIO_OPTIONS,
@@ -13,9 +11,7 @@ import {
   type ExportResolutionOption
 } from '@kepler.gl/constants';
 import {ExportImage} from '@kepler.gl/types';
-import {generateHashId} from '@kepler.gl/common-utils';
 import domtoimage from './dom-to-image';
-import {set} from './utils';
 import {exportMapToHTML} from './export-map-html';
 import {getApplicationConfig} from './application-config';
 
@@ -242,11 +238,6 @@ export function getMapJSON(
   }
 
   let mapToSave = schema.save(state);
-  // add file name if title is not provided
-  const title = get(mapToSave, ['info', 'title']);
-  if (!title || !title.length) {
-    mapToSave = set(['info', 'title'], `keplergl_${generateHashId(6)}`, mapToSave);
-  }
   if (includeLayerApiKeys === false) {
     mapToSave = omitLayerApiKeys(mapToSave);
   }

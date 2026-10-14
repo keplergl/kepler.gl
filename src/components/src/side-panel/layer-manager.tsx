@@ -258,6 +258,7 @@ function LayerManagerFactory(
           showDatasetTable={showDatasetTable}
           updateTableColor={updateTableColor}
           removeDataset={removeDataset}
+          replaceDataset={uiStateActions.openReplaceDatasetModal}
           showDeleteDataset={showDeleteDataset}
           showDatasetList={!isSortByDatasetMode}
           showAddDataModal={showAddDataModal}

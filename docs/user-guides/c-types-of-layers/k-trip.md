@@ -6,10 +6,11 @@ Trip layer can display animated path.
 
 ### How to use trip layer to animate path
 
-**Data format**
-Currently trip layer supports a special `geoJSON` format where the coordinate `linestring` has a 4th element denoting timestamp.
+The trip layer supports two column modes: **GeoJSON** and **Table columns** (CSV and other tabular files).
 
-In order to animate the path, the `geoJSON` data needs to contain `LineString` in its features' geometry, and the coordinates in the `LineString` need to have 4 elements in the format of `[longitude, latitude, altitude, timestamp]`, with the last element being a timestamp. Valid timestamp formats include unix in seconds such as `1564184363` or in milliseconds such as `1564184363000`.
+#### GeoJSON
+
+The GeoJSON data needs to contain `LineString` in its features' geometry, and the coordinates in the `LineString` need to have 4 elements in the format of `[longitude, latitude, altitude, timestamp]`, with the last element being a timestamp. Valid timestamp formats include unix in seconds such as `1564184363` or in milliseconds such as `1564184363000`.
 
 **Sample data**
 
@@ -35,7 +36,29 @@ In order to animate the path, the `geoJSON` data needs to contain `LineString` i
 }
 ```
 
-**Note** Support for more data formats such as csv will be added in future releases.
+#### Table columns
+
+Trips can also be created from a list of points (for example a CSV), grouped by a unique trip id, sorted by timestamp, and joined from latitude and longitude.
+
+| Column    | Required | Description                          |
+| --------- | -------- | ------------------------------------ |
+| id        | Yes      | Unique id that groups points into a trip |
+| lat       | Yes      | Latitude of each point               |
+| lng       | Yes      | Longitude of each point              |
+| timestamp | Yes      | Timestamp of each point              |
+| altitude  | No       | Altitude of each point               |
+
+**Sample CSV**
+
+```csv
+id,latitude,longitude,timestamp
+A,40.81773,-74.20986,1564184363
+A,40.81765,-74.20987,1564184396
+A,40.81746,-74.20998,1564184409
+B,40.64375,-74.33242,1565578213
+B,40.64353,-74.20987,1565578217
+B,40.64222,-74.33001,1565578243
+```
 
 **Layer attributes**
 

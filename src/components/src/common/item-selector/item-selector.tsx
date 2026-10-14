@@ -4,7 +4,7 @@
 import React, {Component, createRef, ComponentType, MouseEventHandler, RefObject} from 'react';
 import classnames from 'classnames';
 import uniqBy from 'es-toolkit/compat/uniqBy';
-import styled, {IStyledComponent} from 'styled-components';
+import styled, {IStyledComponent, keyframes} from 'styled-components';
 
 import Accessor from './accessor';
 import ChickletedInput from './chickleted-input';
@@ -33,6 +33,51 @@ const DropdownWrapper: IStyledComponent<'web', DropdownWrapperProps> = styled.di
   width: ${props => props.width}px;
 `;
 
+const DropdownFrame = styled.div<{$preparing?: boolean}>`
+  position: relative;
+
+  ${props =>
+    props.$preparing
+      ? `
+    .typeahead {
+      pointer-events: none;
+    }
+  `
+      : ''}
+`;
+
+const PrepareOverlay = styled.div.attrs({
+  className: 'item-selector__prepare'
+})`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+`;
+
+const prepareSpin = keyframes`
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const PrepareSpinner = styled.span.attrs({
+  className: 'item-selector__prepare-spinner',
+  'aria-hidden': true
+})`
+  display: block;
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid ${props => props.theme.subtextColor};
+  border-top-color: ${props => props.theme.activeColor};
+  will-change: transform;
+  animation: ${prepareSpin} 0.7s linear infinite;
+`;
+
 export type ItemSelectorProps<Option> = {
   selectedItems?: ReadonlyArray<Option> | string | number | boolean | object | null;
   options: ReadonlyArray<Option>;
@@ -55,6 +100,11 @@ export type ItemSelectorProps<Option> = {
   onBlur?: () => void;
   placeholder?: string;
   closeOnSelect?: boolean;
+  /**
+   * Paint a spinner over the open list before `onChange`. Used when the
+   * change parses a large dataset and would freeze the open selector.
+   */
+  deferOnChange?: boolean;
   typeaheadPlaceholder?: string;
   DropDownWrapperComponent?: ComponentType<any> | null;
   DropdownHeaderComponent?: ComponentType<any> | null;
@@ -67,7 +117,10 @@ export type ItemSelectorProps<Option> = {
   showDropdownOnMount?: boolean;
 };
 
-class ItemSelectorUnmemoized extends Component<ItemSelectorProps<any>> {
+class ItemSelectorUnmemoized extends Component<
+  ItemSelectorProps<any>,
+  {showTypeahead: boolean; dimensions?: any; preparing: boolean}
+> {
   static defaultProps = {
     multiSelect: true,
     placeholder: 'placeholder.enterValue',
@@ -82,10 +135,15 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps<any>> {
 
   state = {
     showTypeahead: false,
+    preparing: false,
     dimensions: {
       width: 200
     }
   };
+
+  _unmounted = false;
+  _preparingSelection = false;
+  _prepareFrames: number[] = [];
 
   componentDidMount() {
     if (this.props.showDropdownOnMount) {
@@ -98,6 +156,8 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps<any>> {
   }
 
   componentWillUnmount() {
+    this._unmounted = true;
+    this._prepareFrames.forEach(id => window.cancelAnimationFrame(id));
     if (this.root.current instanceof HTMLElement) {
       unobserveDimensions(this.root.current);
     }
@@ -106,6 +166,9 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps<any>> {
   root: RefObject<HTMLDivElement | null> = createRef();
 
   handleClickOutside = () => {
+    if (this._preparingSelection) {
+      return;
+    }
     this._hideTypeahead();
   };
 
@@ -151,23 +214,45 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps<any>> {
   };
 
   _selectItem = item => {
+    if (this._preparingSelection) {
+      return;
+    }
     const getValue = Accessor.generateOptionToStringFor(
       this.props.getOptionValue || this.props.displayOption
     );
 
     const previousSelected = toArray(this.props.selectedItems);
+    const nextValue = this.props.multiSelect
+      ? uniqBy(previousSelected.concat(toArray(item)), getValue)
+      : getValue(item);
 
-    if (this.props.multiSelect) {
-      const items = uniqBy(previousSelected.concat(toArray(item)), getValue);
-      this.props.onChange(items);
-    } else {
-      this.props.onChange(getValue(item));
+    const apply = () => {
+      this.props.onChange(nextValue);
+      if (this._unmounted) {
+        return;
+      }
+      this._preparingSelection = false;
+      if (this.props.closeOnSelect) {
+        this.setState({showTypeahead: false, preparing: false});
+        this._onBlur();
+      } else {
+        this.setState({preparing: false});
+      }
+    };
+
+    if (this.props.deferOnChange) {
+      // Keep the open list on screen, faded, until the dataset parse starts.
+      this._preparingSelection = true;
+      this.setState({preparing: true});
+      const first = window.requestAnimationFrame(() => {
+        const second = window.requestAnimationFrame(apply);
+        this._prepareFrames.push(second);
+      });
+      this._prepareFrames.push(first);
+      return;
     }
 
-    if (this.props.closeOnSelect) {
-      this.setState({showTypeahead: false});
-      this._onBlur();
-    }
+    apply();
   };
 
   _onErase: MouseEventHandler = e => {
@@ -194,35 +279,44 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps<any>> {
     const DropDownWrapperComponent = this.props
       .DropDownWrapperComponent as React.ComponentType<any>;
 
+    const {preparing} = this.state;
+
     return (
       <Portaled left={0} top={0} isOpened={this.state.showTypeahead} onClose={this._hideTypeahead}>
         <DropDownWrapperComponent placement={placement} width={dimensions?.width}>
-          <Typeahead
-            customClasses={{
-              results: 'list-selector',
-              input: 'typeahead__input',
-              listItem: 'list__item',
-              listAnchor: 'list__item__anchor'
-            }}
-            options={this.props.options}
-            filterOption={this.props.filterOption}
-            fixedOptions={this.props.fixedOptions}
-            placeholder={
-              this.props.typeaheadPlaceholder || intl
-                ? intl.formatMessage({id: 'placeholder.search'})
-                : 'Search'
-            }
-            onOptionSelected={this._selectItem}
-            customListComponent={this.props.DropDownRenderComponent}
-            customListHeaderComponent={this.props.DropdownHeaderComponent}
-            customListItemComponent={this.props.DropDownLineItemRenderComponent}
-            displayOption={Accessor.generateOptionToStringFor(this.props.displayOption)}
-            searchable={this.props.searchable}
-            searchOptions={this.props.searchOptions}
-            showOptionsWhenEmpty
-            selectedItems={toArray(this.props.selectedItems)}
-            light={this.props.inputTheme === 'light'}
-          />
+          <DropdownFrame $preparing={preparing}>
+            <Typeahead
+              customClasses={{
+                results: 'list-selector',
+                input: 'typeahead__input',
+                listItem: 'list__item',
+                listAnchor: 'list__item__anchor'
+              }}
+              options={this.props.options}
+              filterOption={this.props.filterOption}
+              fixedOptions={this.props.fixedOptions}
+              placeholder={
+                this.props.typeaheadPlaceholder || intl
+                  ? intl.formatMessage({id: 'placeholder.search'})
+                  : 'Search'
+              }
+              onOptionSelected={this._selectItem}
+              customListComponent={this.props.DropDownRenderComponent}
+              customListHeaderComponent={this.props.DropdownHeaderComponent}
+              customListItemComponent={this.props.DropDownLineItemRenderComponent}
+              displayOption={Accessor.generateOptionToStringFor(this.props.displayOption)}
+              searchable={this.props.searchable}
+              searchOptions={this.props.searchOptions}
+              showOptionsWhenEmpty
+              selectedItems={toArray(this.props.selectedItems)}
+              light={this.props.inputTheme === 'light'}
+            />
+            {preparing ? (
+              <PrepareOverlay>
+                <PrepareSpinner />
+              </PrepareOverlay>
+            ) : null}
+          </DropdownFrame>
         </DropDownWrapperComponent>
       </Portaled>
     );

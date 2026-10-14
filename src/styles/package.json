@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/styles",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.3.0-alpha.15",
+  "version": "3.3.0-alpha.16",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/cjs/index.js",
@@ -28,7 +28,7 @@
     "dist"
   ],
   "dependencies": {
-    "@kepler.gl/constants": "3.3.0-alpha.15",
+    "@kepler.gl/constants": "3.3.0-alpha.16",
     "@types/styled-components": "^5.1.32",
     "styled-components": "6.4.3"
   },
@@ -46,7 +46,7 @@
     "node": ">=20"
   },
   "volta": {
-    "node": "20.19.3",
+    "node": "24.21.0",
     "yarn": "4.4.0"
   },
   "packageManager": "yarn@4.4.0",

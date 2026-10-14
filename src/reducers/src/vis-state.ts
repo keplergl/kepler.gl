@@ -54,7 +54,11 @@ const actionHandler = {
 
   [ActionTypes.LOAD_FILES_ERR]: visStateUpdaters.loadFilesErrUpdater,
 
+  [ActionTypes.CLEAR_STAGED_LOADED_FILES]: visStateUpdaters.clearStagedLoadedFilesUpdater,
+
   [ActionTypes.LOAD_NEXT_FILE]: visStateUpdaters.loadNextFileUpdater,
+
+  [ActionTypes.EXPAND_ZIP_ARCHIVE_SUCCESS]: visStateUpdaters.expandZipArchiveSuccessUpdater,
 
   [ActionTypes.LOAD_FILE_STEP_SUCCESS]: visStateUpdaters.loadFileStepSuccessUpdater,
 
@@ -141,6 +145,10 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_DATASET]: visStateUpdaters.updateDatasetUpdater,
 
+  [ActionTypes.RENAME_TABLE_COLUMN]: visStateUpdaters.renameTableColumnUpdater,
+
+  [ActionTypes.DELETE_TABLE_COLUMN]: visStateUpdaters.deleteTableColumnUpdater,
+
   [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
 
   [ActionTypes.SET_EDITOR_FEATURE_PROPERTIES]: visStateUpdaters.setEditorFeaturePropertiesUpdater,
@@ -169,6 +177,10 @@ const actionHandler = {
   [ActionTypes.SORT_TABLE_COLUMN]: visStateUpdaters.sortTableColumnUpdater,
 
   [ActionTypes.PIN_TABLE_COLUMN]: visStateUpdaters.pinTableColumnUpdater,
+
+  [ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN]: visStateUpdaters.toggleTableColumnHiddenUpdater,
+
+  [ActionTypes.SHOW_ALL_TABLE_COLUMNS]: visStateUpdaters.showAllTableColumnsUpdater,
 
   [ActionTypes.COPY_TABLE_COLUMN]: visStateUpdaters.copyTableColumnUpdater,
 
@@ -235,6 +247,9 @@ const actionHandler = {
   [ActionTypes.ADD_SPATIAL_JOIN]: visStateUpdaters.addSpatialJoinUpdater,
   [ActionTypes.SET_SPATIAL_JOIN_CONFIG]: visStateUpdaters.setSpatialJoinConfigUpdater,
   [ActionTypes.RUN_SPATIAL_JOIN]: visStateUpdaters.runSpatialJoinUpdater,
+  [ActionTypes.ADD_SUITABILITY]: visStateUpdaters.addSuitabilityUpdater,
+  [ActionTypes.SET_SUITABILITY_CONFIG]: visStateUpdaters.setSuitabilityConfigUpdater,
+  [ActionTypes.RUN_SUITABILITY]: visStateUpdaters.runSuitabilityUpdater,
   [ActionTypes.REMOVE_DATASET_OP]: visStateUpdaters.removeDatasetOpUpdater
 };
 

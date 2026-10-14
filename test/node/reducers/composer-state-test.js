@@ -6,7 +6,13 @@
 import {drainTasksForTesting, succeedTaskWithValues} from '@kepler.gl/tasks';
 import test from 'tape';
 
-import {registerEntry} from '@kepler.gl/actions';
+import {
+  appendStagedLoadedFiles,
+  confirmReplaceDataset,
+  loadFilesSuccess,
+  registerEntry,
+  stageLoadedFiles
+} from '@kepler.gl/actions';
 import {processCsvData} from '@kepler.gl/processors';
 import keplerGlReducer, {
   addDataToMapUpdater,
@@ -258,6 +264,89 @@ test('#composerStateReducer - addDataToMapUpdater: mapLegend', t => {
     newState.uiState.mapControls.mapLegend.settings.contentHeight,
     150,
     'mapLegend settings contentHeight should be set from config'
+  );
+
+  t.end();
+});
+
+test('#composerStateReducer - addDataToMapUpdater: mapInfo', t => {
+  const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+
+  t.equal(state.uiState.mapControls.mapInfo.active, true, 'map info panel starts open');
+  t.equal(state.visState.mapInfo.title, undefined, 'map title starts unset');
+  t.equal(state.visState.mapInfo.description, undefined, 'map description starts unset');
+
+  const withInfo = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      info: {title: 'Harbor', description: 'Ferry routes'}
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(withInfo.visState.mapInfo.title, 'Harbor', 'loaded map title is restored');
+  t.equal(
+    withInfo.visState.mapInfo.description,
+    'Ferry routes',
+    'loaded map description is restored'
+  );
+  t.equal(withInfo.uiState.mapControls.mapInfo.active, true, 'panel stays open when title loads');
+
+  const collapsed = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      info: {title: 'Harbor', description: ''},
+      config: {
+        uiState: {
+          mapControls: {
+            mapInfo: {active: false}
+          }
+        }
+      }
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(collapsed.visState.mapInfo.title, 'Harbor', 'collapsed map still restores its title');
+  t.equal(collapsed.visState.mapInfo.description, undefined, 'a blank description stays unset');
+  t.equal(
+    collapsed.uiState.mapControls.mapInfo.active,
+    false,
+    'saved collapsed map info panel stays closed'
+  );
+
+  const hidden = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      info: {title: 'Harbor', description: 'Ferry routes'},
+      config: {
+        uiState: {
+          mapControls: {
+            mapInfo: {show: false, active: true}
+          }
+        }
+      }
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(hidden.visState.mapInfo.title, 'Harbor', 'a hidden map still restores its title');
+  t.equal(
+    hidden.uiState.mapControls.mapInfo.show,
+    false,
+    'saved hidden map info stays off the map'
   );
 
   t.end();
@@ -1176,5 +1265,250 @@ test('#composerStateReducer - replaceDataInMapUpdater: syncedTimeFilter & no mat
 
   t.deepEqual(nextState.visState.interactionToBeMerged, {}, 'should reset interactionToBeMerged');
   t.deepEqual(nextState.visState.splitMapsToBeMerged, [], 'should reset splitMapsToBeMerged');
+  t.end();
+});
+
+test('#composerStateReducer -> stageLoadedFilesUpdater keeps the modal open', t => {
+  const base = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const result = [{info: {label: 'points.csv', format: 'csv'}, data: []}];
+  const loadingState = {
+    ...base,
+    uiState: {
+      ...base.uiState,
+      currentModal: 'addData',
+      loadFiles: {fileLoading: true}
+    },
+    visState: {
+      ...base.visState,
+      fileLoading: {filesToLoad: [], fileCache: [], onFinish: () => null},
+      fileLoadingProgress: {
+        a: {percent: 1, message: 'Done', fileName: 'points.csv', error: null}
+      }
+    }
+  };
+
+  const staged = combinedUpdaters.stageLoadedFilesUpdater(loadingState, stageLoadedFiles(result));
+  t.equal(staged.uiState.currentModal, 'addData', 'should leave the Add Data modal open');
+  t.equal(staged.uiState.loadFiles.fileLoading, false, 'should clear the loading flag');
+  t.equal(staged.visState.fileLoading, false, 'should finish the visState load');
+  t.equal(staged.visState.stagedToAdd[0].info.label, 'points.csv', 'should keep the parsed file');
+  t.equal(staged.visState.datasets, base.visState.datasets, 'should not add datasets yet');
+
+  const closed = {
+    ...loadingState,
+    uiState: {...loadingState.uiState, currentModal: null}
+  };
+  const dropped = combinedUpdaters.stageLoadedFilesUpdater(closed, stageLoadedFiles(result));
+  t.equal(
+    dropped.visState.stagedToAdd,
+    null,
+    'should discard files when the modal is already closed'
+  );
+
+  const withPrevious = {
+    ...loadingState,
+    visState: {
+      ...loadingState.visState,
+      stagedToAdd: [{info: {label: 'points.csv', format: 'csv'}, data: []}]
+    }
+  };
+  const appended = combinedUpdaters.stageLoadedFilesUpdater(
+    withPrevious,
+    stageLoadedFiles([{info: {label: 'cities.csv', format: 'csv'}, data: []}])
+  );
+  t.deepEqual(
+    appended.visState.stagedToAdd.map(item => item.info.label),
+    ['points.csv', 'cities.csv'],
+    'should append a later file instead of replacing the staged list'
+  );
+
+  const replacedLoad = {
+    ...loadingState,
+    visState: {
+      ...loadingState.visState,
+      fileLoading: {...loadingState.visState.fileLoading, loadId: 2},
+      stagedToAdd: null
+    }
+  };
+  const staleFinish = combinedUpdaters.stageLoadedFilesUpdater(replacedLoad, {
+    ...stageLoadedFiles(result),
+    loadId: 1
+  });
+  t.equal(staleFinish, replacedLoad, 'a finish from a canceled load does not replace the new one');
+
+  const canceledLoad = {
+    ...loadingState,
+    visState: {...loadingState.visState, fileLoading: false, stagedToAdd: null}
+  };
+  const afterCancel = combinedUpdaters.stageLoadedFilesUpdater(canceledLoad, {
+    ...stageLoadedFiles(result),
+    loadId: 1
+  });
+  t.equal(afterCancel.visState.fileLoading, false, 'a canceled load stays stopped');
+  t.equal(afterCancel.visState.stagedToAdd, null, 'a canceled load is not restored');
+
+  const remote = {
+    data: {fields: [], rows: []},
+    info: {id: 'remote-1', label: 'quakes.csv', format: 'row', type: 'externally-hosted'},
+    metadata: {source: 'https://example.com/quakes.csv', sourceFormat: 'csv'}
+  };
+  const withRemote = combinedUpdaters.appendStagedLoadedFilesUpdater(
+    appended,
+    appendStagedLoadedFiles([remote])
+  );
+  t.deepEqual(
+    withRemote.visState.stagedToAdd.map(item => item.info.label),
+    ['points.csv', 'cities.csv', 'quakes.csv'],
+    'should add a remote url without replacing staged files'
+  );
+  t.equal(withRemote.visState.fileLoading, false, 'should not start a file load for a remote url');
+  const duplicate = combinedUpdaters.appendStagedLoadedFilesUpdater(
+    withRemote,
+    appendStagedLoadedFiles([remote])
+  );
+  t.equal(duplicate, withRemote, 'should ignore a url that is already staged');
+
+  const closedModal = {
+    ...withRemote,
+    uiState: {...withRemote.uiState, currentModal: null}
+  };
+  const afterClose = combinedUpdaters.appendStagedLoadedFilesUpdater(
+    closedModal,
+    appendStagedLoadedFiles([
+      {
+        ...remote,
+        info: {...remote.info, id: 'remote-2', label: 'cities.csv'},
+        metadata: {source: 'https://example.com/cities.csv'}
+      }
+    ])
+  );
+  t.equal(afterClose, closedModal, 'a remote url is not staged after the modal closes');
+
+  const activeLoad = {
+    ...loadingState,
+    visState: {
+      ...loadingState.visState,
+      fileLoading: {...loadingState.visState.fileLoading, loadId: 2},
+      stagedToAdd: [{info: {label: 'fresh.csv'}}]
+    }
+  };
+  const staleAdd = combinedUpdaters.loadFilesSuccessUpdater(activeLoad, {
+    ...loadFilesSuccess([{info: {label: 'old.csv', format: 'csv'}, data: {fields: [], rows: []}}]),
+    loadId: 1
+  });
+  t.equal(staleAdd, activeLoad, 'a stale add does not replace the current load');
+
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater keeps the original dataset when asked', t => {
+  const dataIdToReplace = 'dataset_to_replace';
+  const datasets = {
+    data: processCsvData(testCsvData),
+    info: {
+      id: sampleConfig.dataId
+    }
+  };
+  const datasetToUse = {
+    data: processCsvData(dataWithNulls),
+    info: {
+      id: dataIdToReplace,
+      label: 'Replaced'
+    }
+  };
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      config: sampleConfig.config
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse,
+      options: {deleteOriginalDataset: false}
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.ok(nextState.visState.datasets[sampleConfig.dataId], 'should keep the original dataset');
+  t.ok(nextState.visState.datasets[dataIdToReplace], 'should add the replacement dataset');
+  t.ok(
+    nextState.visState.layers.every(layer => layer.config.dataId === dataIdToReplace),
+    'should remap layers onto the replacement'
+  );
+  t.ok(
+    nextState.visState.filters.every(filter => filter.dataId.includes(dataIdToReplace)),
+    'should remap filters onto the replacement'
+  );
+
+  t.end();
+});
+
+test('#composerStateReducer - confirmReplaceDatasetUpdater replaces the confirmed upload', t => {
+  const datasets = {
+    data: processCsvData(testCsvData),
+    info: {
+      id: sampleConfig.dataId
+    }
+  };
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      config: sampleConfig.config
+    }
+  });
+  oldState = {
+    ...oldState,
+    visState: applyExistingDatasetTasks(visStateReducer, {
+      ...oldState.visState,
+      stagedToAdd: [
+        {info: {id: 'pending', label: 'pending', format: 'csv'}, data: {fields: [], rows: []}}
+      ]
+    }),
+    uiState: {
+      ...oldState.uiState,
+      datasetToReplaceId: sampleConfig.dataId,
+      currentModal: 'addData'
+    }
+  };
+
+  let nextState = combinedUpdaters.confirmReplaceDatasetUpdater(
+    oldState,
+    confirmReplaceDataset({
+      datasetToReplaceId: sampleConfig.dataId,
+      deleteOriginalDataset: true,
+      result: [
+        {
+          data: processCsvData(dataWithNulls),
+          info: {id: 'uploaded-replacement', label: 'Uploaded', format: 'csv'}
+        }
+      ]
+    })
+  );
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.notOk(nextState.visState.datasets[sampleConfig.dataId], 'should drop the original dataset');
+  t.ok(nextState.visState.datasets['uploaded-replacement'], 'should add the uploaded dataset');
+  t.equal(nextState.visState.stagedToAdd, null, 'should clear the staged upload');
+  t.equal(nextState.uiState.datasetToReplaceId, null, 'should clear replace mode');
+  t.equal(nextState.uiState.currentModal, null, 'should close the modal');
+  t.ok(
+    nextState.visState.layers.every(layer => layer.config.dataId === 'uploaded-replacement'),
+    'should remap layers onto the upload'
+  );
+
   t.end();
 });

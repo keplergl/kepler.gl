@@ -15,3 +15,9 @@ import './processors';
 
 // docker runtime config (entrypoint merge script)
 import './docker';
+
+// demo site shell
+import './website';
+
+// transitive dependency security pins
+import './dependency-pins-test';

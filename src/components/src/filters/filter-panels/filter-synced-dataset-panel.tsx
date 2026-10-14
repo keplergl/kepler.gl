@@ -23,6 +23,8 @@ const TrashIcon = styled(Trash)`
 `;
 
 const SyncedDatasetsArea = styled.div`
+  margin-bottom: 12px;
+
   .side-panel-section {
     margin-bottom: 0;
   }

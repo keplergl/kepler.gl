@@ -32,12 +32,21 @@ export type WMSTile = {
 
 export const wmsTileVisConfigs = {
   opacity: 'opacity' as const,
-  transparent: 'transparent' as const
+  transparent: 'transparent' as const,
+  allowHover: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.allowHover',
+    description: 'layerVisConfigs.allowHoverDescription',
+    group: '',
+    property: 'allowHover'
+  } as VisConfigBoolean
 };
 
 export type WMSLayerVisConfig = {
   opacity: number;
   transparent?: boolean;
+  allowHover: boolean;
   wmsLayer: {
     name: string;
     title: string;
@@ -55,6 +64,7 @@ export type WMSLayerConfig = LayerBaseConfig & {
 export type WMSLayerVisConfigSettings = AbstractTileLayerVisConfigSettings & {
   opacity: VisConfigNumber;
   transparent: VisConfigBoolean;
+  allowHover: VisConfigBoolean;
   wmsLayer: VisConfigSelection;
 };
 
@@ -244,6 +254,9 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
   }
 
   hasHoveredObject(objectInfo: any) {
+    if (!this.config.visConfig.allowHover) {
+      return null;
+    }
     // For WMS layers, we consider it hovered if the layer is picked
     // The actual feature info will be retrieved via getHoverData
     if (this.isLayerHovered(objectInfo)) {
@@ -262,6 +275,9 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     animationConfig: AnimationConfig,
     hoverInfo: {index: number; x?: number; y?: number}
   ) {
+    if (!this.config.visConfig.allowHover) {
+      return null;
+    }
     // Check if this is a WMS feature info object from clicked state
     if (object?.wmsFeatureInfo) {
       if (Array.isArray(object.wmsFeatureInfo)) {
@@ -303,7 +319,9 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     }
     const {name: wmsLayerName, queryable} = wmsLayer;
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
-    const pickable = interactionConfig?.tooltip?.enabled && queryable;
+    const pickable = Boolean(
+      interactionConfig?.tooltip?.enabled && queryable && visConfig.allowHover
+    );
 
     // Append `-globe` to the id in globe mode so switching view modes remounts the
     // deck layer. deck.gl's BitmapLayer only re-tessellates its mesh when `bounds`

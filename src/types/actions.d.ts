@@ -14,6 +14,8 @@ export type ExportFileOptions = {
   isPublic?: boolean;
   overwrite?: boolean;
   mapIdToOverwrite?: string | null;
+  /** Download name, without extension. Separate from the map title. */
+  fileName?: string;
 };
 export type OnErrorCallBack = (error: Error) => any;
 export type OnSuccessCallBack = (p: {

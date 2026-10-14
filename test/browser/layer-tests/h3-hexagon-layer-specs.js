@@ -211,6 +211,42 @@ test('#H3Layer -> formatLayerData', t => {
           'getFilterValue should return [value, 0, 0, 0]'
         );
       }
+    },
+    {
+      name: 'H3 layer format data. with sizeField and fixedHeight',
+      layer: {
+        config: {
+          dataId,
+          label: 'h3.3',
+          columns,
+          color: [10, 10, 10],
+          sizeField: {
+            type: 'real',
+            name: 'trip_distance'
+          },
+          visConfig: {
+            enable3d: true,
+            fixedHeight: true
+          }
+        },
+        type: 'hexagonId',
+        id: 'test_layer_3'
+      },
+      datasets: {
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+      },
+      assert: result => {
+        const {layerData} = result;
+
+        // getElevation with fixedHeight uses column values directly (identity scale)
+        // domain: [1.59, 11]
+        // value [1.59, 2.37]
+        t.deepEqual(
+          layerData.data.map(layerData.getElevation),
+          [1.59, 2.37],
+          'getElevation should use column values when fixedHeight is enabled'
+        );
+      }
     }
   ];
 

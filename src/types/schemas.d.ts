@@ -27,6 +27,8 @@ export type SavedFilter = {
   layerId: Filter['layerId'];
   syncedWithLayerTimeline: Filter['syncedWithLayerTimeline'];
   syncTimelineMode: Filter['syncTimelineMode'];
+  /** Hide rows that match the filter instead of keeping them. */
+  inverted?: boolean;
 };
 export type MinSavedFilter = RequireFrom<SavedFilter, 'dataId' | 'id' | 'name' | 'type' | 'value'>;
 export type ParsedFilter = SavedFilter | MinSavedFilter;
@@ -45,9 +47,15 @@ export type SavedInteractionConfig = {
   coordinate: {
     enabled: boolean;
   };
+  annotation?: {
+    enabled: boolean;
+  };
   legend?: {
     enabled: boolean;
     hideInvisibleLayers?: boolean;
+  };
+  zoomOpacity?: InteractionConfig['zoomOpacity']['config'] & {
+    enabled: boolean;
   };
 };
 
@@ -168,6 +176,10 @@ export type ParsedUiState = {
     chart?: {
       active?: boolean;
     };
+    mapInfo?: {
+      active?: boolean;
+      show?: boolean;
+    };
   };
   locale?: string;
   theme?: string;
@@ -283,9 +295,16 @@ export type SavedMap = {
   info: {
     app: string;
     created_at: string;
-    title: string;
-    description: string;
+    title?: string;
+    description?: string;
   };
 };
 
-export type LoadedMap = {datasets?: ParsedDataset[] | null; config?: ParsedConfig | null};
+export type LoadedMap = {
+  datasets?: ParsedDataset[] | null;
+  config?: ParsedConfig | null;
+  info?: {
+    title?: string;
+    description?: string;
+  };
+};

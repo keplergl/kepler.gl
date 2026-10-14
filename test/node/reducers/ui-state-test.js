@@ -8,6 +8,7 @@ import {
   toggleModal,
   toggleSidePanelCloseButton,
   openDeleteModal,
+  openReplaceDatasetModal,
   setExportImageSetting,
   setExportVideoSetting,
   toggleMapControl,
@@ -139,6 +140,22 @@ test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
   t.end();
 });
 
+test('#uiStateReducer -> OPEN_REPLACE_DATASET_MODAL', t => {
+  const opened = reducer(INITIAL_UI_STATE, openReplaceDatasetModal('chai'));
+
+  t.equal(opened.currentModal, 'addData', 'should open the add data modal');
+  t.equal(opened.datasetToReplaceId, 'chai', 'should remember which dataset to replace');
+
+  const closed = reducer(opened, toggleModal(null));
+  t.equal(closed.currentModal, null, 'should close the modal');
+  t.equal(closed.datasetToReplaceId, null, 'should leave replace mode when the modal closes');
+
+  const addData = reducer(opened, toggleModal('addData'));
+  t.equal(addData.datasetToReplaceId, null, 'Add Data should not stay in replace mode');
+
+  t.end();
+});
+
 test('#uiStateReducer -> SET_EXPORT_IMAGE_SETTING', t => {
   const newReducer = reducer(
     INITIAL_UI_STATE,
@@ -243,13 +260,13 @@ test('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', t => {
 });
 
 test('#uiStateReducer -> SET_EXPORT_DATA_TYPE', t => {
-  const newReducer = reducer(INITIAL_UI_STATE, setExportDataType(EXPORT_DATA_TYPE.JSON));
+  const newReducer = reducer(INITIAL_UI_STATE, setExportDataType(EXPORT_DATA_TYPE.GEOJSON));
 
   const expectedState = {
     ...INITIAL_UI_STATE,
     exportData: {
       ...INITIAL_UI_STATE.exportData,
-      dataType: EXPORT_DATA_TYPE.JSON
+      dataType: EXPORT_DATA_TYPE.GEOJSON
     }
   };
 

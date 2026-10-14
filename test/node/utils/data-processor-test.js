@@ -30,6 +30,7 @@ import {
   parseCsvRowsByFieldType,
   processCsvData,
   processGeojson,
+  processKeplerglJSON,
   processRowObject,
   detectDelimiter
 } from '@kepler.gl/processors';
@@ -156,6 +157,30 @@ test('Processor -> getFieldsFromData BigInt columns', t => {
     ALL_FIELD_TYPES.integer,
     'int64 counts within safe range should stay integer'
   );
+  t.end();
+});
+
+test('Processor -> getFieldsFromData scientific notation', t => {
+  const data = [
+    {sci: '2.3e+10', small: '1.5E-05', id: '12345678901234567890', hex: '0x1A'},
+    {sci: '1.1e+09', small: null, id: '12345678901234567891', hex: '0xFF'},
+    {sci: '4E+07', small: '3e2', id: '12345678901234567892', hex: '0x10'}
+  ];
+  const fields = getFieldsFromData(data, ['sci', 'small', 'id', 'hex']);
+
+  t.equal(fields[0].type, ALL_FIELD_TYPES.real, 'scientific notation should be real');
+  t.equal(
+    fields[0].analyzerType,
+    DATA_TYPES.FLOAT,
+    'scientific notation should be analyzed as float'
+  );
+  t.equal(fields[1].type, ALL_FIELD_TYPES.real, 'scientific notation with nulls should be real');
+  t.equal(
+    fields[2].type,
+    ALL_FIELD_TYPES.string,
+    'integers beyond the safe range should stay string to keep every digit'
+  );
+  t.equal(fields[3].type, ALL_FIELD_TYPES.string, 'hex literals should stay string');
   t.end();
 });
 
@@ -364,6 +389,20 @@ test('Processor -> processCsvData -> semicolon-separated with numeric data', t =
   t.equal(result.rows[0][0], 52.52, 'should parse lat as number');
   t.equal(result.rows[0][1], 13.405, 'should parse lng as number');
   t.equal(result.rows[0][2], 1000.5, 'should parse value as number');
+
+  t.end();
+});
+
+test('Processor -> processCsvData -> scientific notation', t => {
+  const data = 'lat,lng,value\n37.1,-122.1,2.3e+10\n37.2,-122.2,1.1E+09\n37.3,-122.3,4E+07';
+  const {fields, rows} = processCsvData(data);
+
+  t.equal(fields[2].type, ALL_FIELD_TYPES.real, 'should type scientific notation as real');
+  t.deepEqual(
+    rows.map(r => r[2]),
+    [2.3e10, 1.1e9, 4e7],
+    'should parse scientific notation as numbers'
+  );
 
   t.end();
 });
@@ -1053,5 +1092,54 @@ test('Processor -> analyzerTypeToFieldType', t => {
     spy.restore();
   });
 
+  t.end();
+});
+
+test('Processor -> processKeplerglJSON keeps display info', t => {
+  const parsed = processKeplerglJSON({
+    datasets: [],
+    config: {
+      version: 'v1',
+      config: {}
+    },
+    info: {
+      app: 'kepler.gl',
+      created_at: 'today',
+      title: 'Harbor',
+      description: 'Ferry routes',
+      source: 'kepler.gl'
+    }
+  });
+
+  t.equal(parsed.info.title, 'Harbor', 'should keep the map title');
+  t.equal(parsed.info.description, 'Ferry routes', 'should keep the map description');
+  t.equal(parsed.info.app, undefined, 'should not copy export metadata onto map info');
+  t.equal(parsed.info.source, undefined, 'should not copy the export source onto map info');
+  t.end();
+});
+
+test('Processor -> processKeplerglJSON replaces display info', t => {
+  const titleOnly = processKeplerglJSON({
+    datasets: [],
+    config: {version: 'v1', config: {}},
+    info: {app: 'kepler.gl', created_at: 'today', title: 'Harbor'}
+  });
+
+  t.ok(
+    'description' in titleOnly.info,
+    'should always return description so it clears the previous map'
+  );
+  t.equal(titleOnly.info.description, undefined, 'should not keep a missing description');
+
+  const noInfo = processKeplerglJSON({
+    datasets: [],
+    config: {version: 'v1', config: {}}
+  });
+
+  t.deepEqual(
+    noInfo.info,
+    {title: undefined, description: undefined},
+    'a saved map without display info should clear both values'
+  );
   t.end();
 });

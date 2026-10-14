@@ -27,11 +27,13 @@ import {
 } from './map-style-updaters';
 import {filesToDataPayload} from '@kepler.gl/processors';
 import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-helpers';
-import {MapState, UiState, AddDataToMapPayload, ParsedConfig} from '@kepler.gl/types';
+import {MapState, UiState, AddDataToMapPayload, ParsedConfig, ProtoDataset} from '@kepler.gl/types';
 import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
 import {
   loadFilesSuccessUpdaterAction,
+  ConfirmReplaceDatasetUpdaterAction,
+  StageLoadedFilesUpdaterAction,
   MapStyleChangeUpdaterAction,
   LayerTypeChangeUpdaterAction,
   ToggleSplitMapUpdaterAction,
@@ -46,7 +48,8 @@ import {
   BASE_MAP_COLOR_MODES,
   OVERLAY_BLENDINGS,
   NO_MAP_ID,
-  MapSplitMode
+  MapSplitMode,
+  ADD_DATA_ID
 } from '@kepler.gl/constants';
 import {getBasemapColorsForStyle, DEFAULT_BASEMAP_COLOR} from '@kepler.gl/deckgl-layers';
 
@@ -235,13 +238,17 @@ export const loadFilesSuccessUpdater = (
   state: KeplerGlState,
   action: loadFilesSuccessUpdaterAction
 ): KeplerGlState => {
+  if (isStaleFileLoadFinish(state.visState.fileLoading, action.loadId)) {
+    return state;
+  }
   // still more to load
-  const payloads = filesToDataPayload(action.result);
+  const payloads = filesToDataPayload(action.result, action.options);
   const nextState = compose_([
     pick_('visState')(
       merge_({
         fileLoading: false,
-        fileLoadingProgress: {}
+        fileLoadingProgress: {},
+        stagedToAdd: null
       })
     )
   ])(state);
@@ -250,6 +257,169 @@ export const loadFilesSuccessUpdater = (
     nextState
   );
   return stateWithData as KeplerGlState;
+};
+
+function keptLoadErrors(progress: Record<string, {error?: unknown}> = {}) {
+  return Object.fromEntries(Object.entries(progress).filter(([, value]) => value?.error));
+}
+
+/** A finish from the 200ms pause is stale once that load was canceled or replaced. */
+function isStaleFileLoadFinish(fileLoading: {loadId?: number} | false, loadId?: number): boolean {
+  if (loadId == null) {
+    return false;
+  }
+  return !fileLoading || fileLoading.loadId !== loadId;
+}
+
+/**
+ * Finish a deferred file load: keep the parsed cache, clear the loading flag,
+ * and leave the Add Data modal open until the user confirms.
+ * @memberof combinedUpdaters
+ * @public
+ */
+export const stageLoadedFilesUpdater = (
+  state: KeplerGlState,
+  action: StageLoadedFilesUpdaterAction
+): KeplerGlState => {
+  if (isStaleFileLoadFinish(state.visState.fileLoading, action.loadId)) {
+    return state;
+  }
+  const modalOpen = state.uiState.currentModal === ADD_DATA_ID;
+  const result = action.result || [];
+  const previous =
+    modalOpen && Array.isArray(state.visState.stagedToAdd) ? state.visState.stagedToAdd : [];
+  const stagedToAdd = [...previous, ...result];
+
+  return compose_<KeplerGlState>([
+    pick_('visState')(
+      merge_({
+        fileLoading: false,
+        fileLoadingProgress: modalOpen ? keptLoadErrors(state.visState.fileLoadingProgress) : {},
+        stagedToAdd: modalOpen && stagedToAdd.length ? stagedToAdd : null
+      })
+    ),
+    pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null)))
+  ])(state);
+};
+
+function stagedItemKey(item): string {
+  return item?.metadata?.source || item?.info?.id || '';
+}
+
+/**
+ * Add datasets to the Add Data list without interrupting a file that is still parsing.
+ * @memberof combinedUpdaters
+ * @public
+ */
+export const appendStagedLoadedFilesUpdater = (
+  state: KeplerGlState,
+  action: StageLoadedFilesUpdaterAction
+): KeplerGlState => {
+  if (state.uiState.currentModal !== ADD_DATA_ID) {
+    return state;
+  }
+  const previous = Array.isArray(state.visState.stagedToAdd) ? state.visState.stagedToAdd : [];
+  const seen = new Set(previous.map(stagedItemKey).filter(Boolean));
+  const next = (action.result || []).filter(item => {
+    const key = stagedItemKey(item);
+    if (!key || seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+  if (!next.length) {
+    return state;
+  }
+  return compose_<KeplerGlState>([
+    pick_('visState')(merge_({stagedToAdd: [...previous, ...next]}))
+  ])(state);
+};
+
+/**
+ * The first plain dataset in a confirmed upload replaces the selected table.
+ * A kepler.gl map json is added as a map. Further tables are added after the replacement.
+ */
+function splitReplacementUpload(payloads: AddDataToMapPayload[]): {
+  datasetToUse: ProtoDataset | null;
+  remainder: AddDataToMapPayload[];
+} {
+  const datasets: ProtoDataset[] = [];
+  const maps: AddDataToMapPayload[] = [];
+  payloads.forEach(payload => {
+    if (payload.config) {
+      maps.push(payload);
+      return;
+    }
+    const list = (Array.isArray(payload.datasets) ? payload.datasets : [payload.datasets]).filter(
+      (dataset): dataset is ProtoDataset => Boolean(dataset)
+    );
+    datasets.push(...list);
+  });
+  const [datasetToUse, ...more] = datasets;
+  return {
+    datasetToUse: datasetToUse ?? null,
+    remainder: [
+      ...maps,
+      ...(more.length
+        ? [
+            {
+              datasets: more,
+              options: {keepExistingConfig: true, centerMap: false, autoCreateLayers: false}
+            }
+          ]
+        : [])
+    ]
+  };
+}
+
+/**
+ * Turn a confirmed Add Data selection into a dataset replacement.
+ * Layers and filters move onto the new table. The original table is dropped unless asked to stay.
+ * @memberof combinedUpdaters
+ * @public
+ */
+export const confirmReplaceDatasetUpdater = (
+  state: KeplerGlState,
+  action: ConfirmReplaceDatasetUpdaterAction
+): KeplerGlState => {
+  const payloads = filesToDataPayload(action.result, {
+    keepExistingConfig: true,
+    centerMap: true,
+    autoCreateLayers: false
+  });
+  const cleared = compose_([
+    pick_('visState')(
+      merge_({
+        fileLoading: false,
+        fileLoadingProgress: {},
+        stagedToAdd: null
+      })
+    )
+  ])(state);
+
+  const {datasetToUse, remainder} = splitReplacementUpload(payloads);
+  if (datasetToUse?.info?.id && action.datasetToReplaceId) {
+    const replaced = replaceDataInMapUpdater(cleared, {
+      payload: {
+        datasetToReplaceId: action.datasetToReplaceId,
+        datasetToUse,
+        options: {deleteOriginalDataset: action.deleteOriginalDataset !== false}
+      }
+    });
+    if (replaced !== cleared) {
+      if (!remainder.length) {
+        return replaced;
+      }
+      return compose_(remainder.map(p => apply_(addDataToMapUpdater, payload_(p))))(
+        replaced
+      ) as KeplerGlState;
+    }
+  }
+
+  return compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(
+    cleared
+  ) as KeplerGlState;
 };
 
 export const addDataToMapComposed = addDataToMapUpdater;
@@ -562,7 +732,8 @@ export const replaceDataInMapUpdater = (
   {payload}: {payload: ReplaceDataInMapPayload}
 ): KeplerGlState => {
   const {datasetToReplaceId, datasetToUse, options = {}} = payload;
-  const addDataToMapOptions = {...defaultReplaceDataToMapOptions, ...options};
+  const {deleteOriginalDataset = true, ...replaceOptions} = options;
+  const addDataToMapOptions = {...defaultReplaceDataToMapOptions, ...replaceOptions};
 
   // check if dataset is there
   if (!state.visState.datasets[datasetToReplaceId]) {
@@ -576,7 +747,9 @@ export const replaceDataInMapUpdater = (
   // remove dataset and put dependencies in toBeMerged
   const preparedState = {
     ...state,
-    visState: prepareStateForDatasetReplace(state.visState, datasetToReplaceId, dataIdToUse)
+    visState: prepareStateForDatasetReplace(state.visState, datasetToReplaceId, dataIdToUse, {
+      deleteOriginalDataset
+    })
   };
 
   const nextState = addDataToMapUpdater(

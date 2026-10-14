@@ -538,11 +538,26 @@ export const TABLE_OPTION = keyMirror({
   PIN: null,
   UNPIN: null,
   COPY: null,
-  FORMAT_COLUMN: null
+  FORMAT_COLUMN: null,
+  HIDE: null,
+  RENAME: null,
+  DELETE: null,
+  CREATE_FILTER: null
 });
 
 export type TableOption = {
-  value: 'SORT_ASC' | 'SORT_DES' | 'UNSORT' | 'PIN' | 'UNPIN' | 'COPY' | 'FORMAT_COLUMN';
+  value:
+    | 'SORT_ASC'
+    | 'SORT_DES'
+    | 'UNSORT'
+    | 'PIN'
+    | 'UNPIN'
+    | 'COPY'
+    | 'FORMAT_COLUMN'
+    | 'HIDE'
+    | 'RENAME'
+    | 'DELETE'
+    | 'CREATE_FILTER';
   display: string;
   icon: string;
   condition?: (props: any) => boolean;
@@ -580,10 +595,34 @@ export const TABLE_OPTION_LIST: TableOption[] = [
   },
   {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: 'Clipboard'},
   {
+    value: TABLE_OPTION.HIDE,
+    display: 'Hide Column',
+    icon: 'EyeUnseen',
+    condition: props => props.hideTableColumn
+  },
+  {
     value: TABLE_OPTION.FORMAT_COLUMN,
     display: 'Format Column',
     icon: 'Hash',
     condition: props => props.setDisplayFormat
+  },
+  {
+    value: TABLE_OPTION.RENAME,
+    display: 'Rename',
+    icon: 'Edit',
+    condition: props => props.renameTableColumn
+  },
+  {
+    value: TABLE_OPTION.CREATE_FILTER,
+    display: 'Create Filter',
+    icon: 'FilterFunnel',
+    condition: props => props.createFilterFromColumn
+  },
+  {
+    value: TABLE_OPTION.DELETE,
+    display: 'Delete Column',
+    icon: 'Trash',
+    condition: props => props.deleteTableColumn && Object.keys(props.colMeta || {}).length > 1
   }
 ];
 
@@ -1163,39 +1202,51 @@ export const EXPORT_IMG_RESOLUTION_OPTIONS: ReadonlyArray<ImageResolutionOption>
 ];
 
 export const EXPORT_DATA_TYPE = keyMirror({
-  CSV: null
-  // SHAPEFILE: null,
-  // JSON: null,
-  // GEOJSON: null,
-  // TOPOJSON: null
+  CSV: null,
+  GEOJSON: null,
+  GEOPARQUET: null,
+  SHAPEFILE: null,
+  GEOPACKAGE: null,
+  KML: null,
+  KMZ: null
 });
 
 export const EXPORT_DATA_TYPE_OPTIONS = [
   {
     id: EXPORT_DATA_TYPE.CSV,
-    label: EXPORT_DATA_TYPE.CSV.toLowerCase(),
+    label: 'csv',
+    available: true
+  },
+  {
+    id: EXPORT_DATA_TYPE.GEOJSON,
+    label: 'geojson',
+    available: true
+  },
+  {
+    id: EXPORT_DATA_TYPE.GEOPARQUET,
+    label: 'parquet',
+    available: true
+  },
+  {
+    id: EXPORT_DATA_TYPE.SHAPEFILE,
+    label: 'shp',
+    available: true
+  },
+  {
+    id: EXPORT_DATA_TYPE.GEOPACKAGE,
+    label: 'gpkg',
+    available: true
+  },
+  {
+    id: EXPORT_DATA_TYPE.KML,
+    label: 'kml',
+    available: true
+  },
+  {
+    id: EXPORT_DATA_TYPE.KMZ,
+    label: 'kmz',
     available: true
   }
-  // {
-  //   id: EXPORT_DATA_TYPE.SHAPEFILE,
-  //   label: 'shapefile',
-  //   available: false
-  // },
-  // {
-  //   id: EXPORT_DATA_TYPE.JSON,
-  //   label: 'json',
-  //   available: false
-  // },
-  // {
-  //   id: EXPORT_DATA_TYPE.GEOJSON,
-  //   label: 'geojson',
-  //   available: false
-  // },
-  // {
-  //   id: EXPORT_DATA_TYPE.TOPOJSON,
-  //   label: 'topojson',
-  //   available: false
-  // }
 ];
 
 // Export map types
@@ -1336,7 +1387,7 @@ export const MAP_THUMBNAIL_DIMENSION = {
 
 export const MAP_INFO_CHARACTER = {
   title: 100,
-  description: 100
+  description: 1024
 };
 
 // Load data
@@ -1368,7 +1419,8 @@ export const MAP_CONTROLS = keyMirror({
   effect: null,
   annotation: null,
   chart: null,
-  viewportJson: null
+  viewportJson: null,
+  mapInfo: null
 });
 
 export enum MapViewMode {
@@ -1521,7 +1573,6 @@ export const dataTestIds: Record<string, string> = {
   sortableLayerItem: 'sortable-layer-item',
   staticLayerItem: 'static-layer-item',
   layerTitleEditor: 'layer__title__editor',
-  removeLayerAction: 'remove-layer-action',
   layerPanel: 'layer-panel',
   sortableEffectItem: 'sortable-effect-item',
   staticEffectItem: 'static-effect-item',
@@ -1918,17 +1969,24 @@ export const getLoaderOptions = () => {
 };
 
 export const CUSTOM_SCENEGRAPH_MODEL_ID = 'custom';
+export const DEFAULT_SCENEGRAPH_MODEL_ID = 'default-model';
+export const LEGACY_DEFAULT_SCENEGRAPH_URL =
+  'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb';
 const MODELS_BASE_URL =
   'https://studio-public-data.foursquare.com/statics/keplergl/3d-models.2022-06-13';
 
-export const TRIP_LAYER_SCENEGRAPH_MODELS: {
+export type ScenegraphModel = {
   id: string;
   label: string;
   icon: any;
   url: string | null;
+  /** [roll, pitch, yaw] added to the layer angle sliders */
   angles: [number, number, number];
   scale: number;
-}[] = [
+};
+
+/** Gallery shared by the trip layer and the point 3D layer. */
+const SCENEGRAPH_GALLERY_MODELS: ScenegraphModel[] = [
   {
     id: 'airplane',
     label: 'Airplane',
@@ -2016,13 +2074,36 @@ export const TRIP_LAYER_SCENEGRAPH_MODELS: {
     url: `${MODELS_BASE_URL}/Cargoship.glb`,
     angles: [0, 0, 0],
     scale: 1.0
-  },
-  {
-    id: CUSTOM_SCENEGRAPH_MODEL_ID,
-    label: 'Custom',
-    icon: null,
-    url: null,
-    angles: [0, 0, 0],
-    scale: 1.0
   }
+];
+
+const CUSTOM_SCENEGRAPH_MODEL: ScenegraphModel = {
+  id: CUSTOM_SCENEGRAPH_MODEL_ID,
+  label: 'Custom',
+  icon: null,
+  url: null,
+  angles: [0, 0, 0],
+  scale: 1.0
+};
+
+/** Duck used by the point 3D layer. Yaw lives on the model so angle Z can default to 0. */
+export const DEFAULT_SCENEGRAPH_MODEL: ScenegraphModel = {
+  id: DEFAULT_SCENEGRAPH_MODEL_ID,
+  label: 'Ducky',
+  icon: null,
+  url: `${MODELS_BASE_URL}/Duck-Kepler-3D-Layer.glb`,
+  angles: [0, 0, 90],
+  scale: 150
+};
+
+export const TRIP_LAYER_SCENEGRAPH_MODELS: ScenegraphModel[] = [
+  ...SCENEGRAPH_GALLERY_MODELS,
+  CUSTOM_SCENEGRAPH_MODEL
+];
+
+/** Same gallery as trips, plus Ducky and a custom URL. */
+export const SCENEGRAPH_LAYER_MODELS: ScenegraphModel[] = [
+  ...SCENEGRAPH_GALLERY_MODELS,
+  DEFAULT_SCENEGRAPH_MODEL,
+  CUSTOM_SCENEGRAPH_MODEL
 ];

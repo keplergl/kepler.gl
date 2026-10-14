@@ -23,8 +23,10 @@ const histogramStyle = {
   unHighlightedW: 0.7
 };
 
-const HistogramWrapper = styled.svg`
+const HistogramWrapper = styled.svg<{$recessed?: boolean}>`
   overflow: visible;
+  border-radius: 2px;
+  background: ${props => (props.$recessed ? props.theme.rangePlotBgd : 'transparent')};
 `;
 
 const HistogramMaskRect = styled.rect`
@@ -91,6 +93,8 @@ export interface HistogramPlotProps {
   countProp?: string;
   range?: number[];
   breakLines?: number[];
+  /** Dark plot surface for the range brush. Column histograms leave this off. */
+  recessed?: boolean;
 }
 
 function HistogramPlotFactory() {
@@ -107,7 +111,8 @@ function HistogramPlotFactory() {
     range,
     value,
     brushComponent,
-    breakLines
+    breakLines,
+    recessed
   }: HistogramPlotProps) => {
     const groupKeys = useMemo(
       () =>
@@ -181,6 +186,7 @@ function HistogramPlotFactory() {
         <HistogramWrapper
           width={width}
           height={height}
+          $recessed={recessed}
           style={{margin: `${margin.top}px ${margin.right}px ${margin.bottom}px ${margin.left}px`}}
         >
           <defs>
@@ -280,6 +286,7 @@ function HistogramPlotFactory() {
       <HistogramWrapper
         width={width}
         height={height}
+        $recessed={recessed}
         style={{margin: `${margin.top}px ${margin.right}px ${margin.bottom}px ${margin.left}px`}}
       >
         <defs>

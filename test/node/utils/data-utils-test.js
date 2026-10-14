@@ -185,6 +185,10 @@ test('dataUtils -> getFormatter', t => {
     },
     {
       input: ['L LT'],
+      assert: [0, '01/01/1970 12:00 AM']
+    },
+    {
+      input: ['L LT'],
       assert: [null, '']
     },
     {

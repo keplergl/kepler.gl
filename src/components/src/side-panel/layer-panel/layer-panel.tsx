@@ -83,7 +83,9 @@ function LayerPanelFactory(
     };
 
     updateLayerType = (newType: string) => {
-      this.props.layerTypeChange(this.props.layer, newType);
+      // Only the layer type dropdown sets fitBounds. Programmatic
+      // layerTypeChange and applyLayerConfig leave the camera alone.
+      this.props.layerTypeChange(this.props.layer, newType, {fitBounds: true});
     };
 
     updateLayerVisConfig = (newVisConfig: Partial<LayerVisConfig>) => {

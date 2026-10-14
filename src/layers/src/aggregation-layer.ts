@@ -22,6 +22,13 @@ import {
   GEOARROW_METADATA_KEY,
   SCALE_TYPES
 } from '@kepler.gl/constants';
+import {
+  AggregationCountLabel,
+  defaultAggregationCountLabel,
+  formatPointCount,
+  isPointCountLabel,
+  POINT_COUNT_CHARACTER_SET
+} from './aggregation-count-label';
 import {ColorRange, Field, LayerColumn, Merge} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 import {DATA_TYPES} from 'type-analyzer';
@@ -241,8 +248,65 @@ export default class AggregationLayer extends Layer {
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
     return {
       ...super.getDefaultLayerConfig(props),
-      columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE
+      columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
+      // Show the point count on each shape. Collision is on so dense grids
+      // hide overlapping numbers. Clearing the label field turns this off.
+      textLabel: [defaultAggregationCountLabel()]
     };
+  }
+
+  getCountLabelProps(opts) {
+    const hasCountLabel = (this.config.textLabel || []).some(textLabel =>
+      isPointCountLabel(textLabel)
+    );
+    if (!hasCountLabel) {
+      return {};
+    }
+    return {
+      renderCountLabels: (data: AggregationCountLabel[]) => this.renderCountLabelLayers(data, opts),
+      // Compared by the deck layer so font, color, and collision changes redraw.
+      countLabelConfig: this.config.textLabel
+    };
+  }
+
+  /**
+   * Draw point-count labels the way extruded GeoJSON does: at the shape's base,
+   * not at the top of the column. renderTextLabelLayer disables the depth test
+   * in flat mode, so the glyphs paint on top of extruded hexes and grids.
+   */
+  renderCountLabelLayers(labelData: AggregationCountLabel[], opts) {
+    const textLabels = (this.config.textLabel || []).map(textLabel =>
+      isPointCountLabel(textLabel)
+        ? {
+            getText: (d: AggregationCountLabel) => formatPointCount(d.count),
+            characterSet: POINT_COUNT_CHARACTER_SET
+          }
+        : {getText: null, characterSet: []}
+    );
+    if (!textLabels.some(textLabel => textLabel.getText)) {
+      return [];
+    }
+
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    return this.renderTextLabelLayer(
+      {
+        getPosition: (d: AggregationCountLabel) => d.position,
+        getPixelOffset: (textLabel: {offset?: [number, number]}) => textLabel.offset || [0, 0],
+        updateTriggers: {},
+        sharedProps: {
+          visible: defaultLayerProps.visible,
+          pickable: false,
+          wrapLongitude: false
+        }
+      },
+      {
+        ...opts,
+        data: {
+          data: labelData,
+          textLabels
+        }
+      }
+    );
   }
 
   getDataUpdateTriggers(dataset: KeplerTable): any {

@@ -4,7 +4,7 @@
 import test from 'tape';
 import moment from 'moment';
 
-import {getDatasetFieldIndexForFilter} from '@kepler.gl/table';
+import {getDatasetFieldIndexForFilter, KeplerTable} from '@kepler.gl/table';
 
 import {
   isValidFilterValue,
@@ -22,7 +22,10 @@ import {
   createDataContainer,
   isTimeIntervalFilter,
   timeWindowOverlapsInterval,
-  applyTimeFilterEndFieldName
+  applyTimeFilterEndFieldName,
+  validateFilterWithData,
+  disableGpuIfInverted,
+  getPlotBaseIndexByDataId
 } from '@kepler.gl/utils';
 
 import {FILTER_TYPES} from '@kepler.gl/constants';
@@ -1057,6 +1060,251 @@ test('filterUtils -> applyTimeFilterEndFieldName', t => {
   const {filter: cleared} = applyTimeFilterEndFieldName(withEnd, {ds: dataset}, 'ds', null, 0);
   t.notOk(cleared.endName, 'clearing end field should remove endName');
   t.deepEqual(cleared.domain, [0, 10], 'domain should shrink back to the start field');
+
+  t.end();
+});
+
+test('filterUtils -> getFilterFunction inverted', t => {
+  const field = {valueAccessor: d => d.value};
+  const range = {type: FILTER_TYPES.range, value: [2, 4], enabled: true};
+  const keep = getFilterFunction(field, 'ds', range, [], null);
+  const drop = getFilterFunction(field, 'ds', {...range, inverted: true}, [], null);
+
+  t.equal(keep({value: 3}), true, 'keeps values inside the range');
+  t.equal(keep({value: 5}), false, 'drops values outside the range');
+  t.equal(drop({value: 3}), false, 'filter out hides values inside the range');
+  t.equal(drop({value: 5}), true, 'filter out keeps values outside the range');
+  t.equal(keep({value: null}), false, 'a null is not coerced to zero by a range filter');
+  t.equal(drop({value: null}), true, 'filter out keeps a null that does not match the range');
+  t.equal(keep({value: ''}), false, 'an empty value is not coerced to zero by a range filter');
+  t.equal(drop({value: ''}), true, 'filter out keeps an empty value that does not match the range');
+
+  const disabled = getFilterFunction(
+    field,
+    'ds',
+    {...range, inverted: true, enabled: false},
+    [],
+    null
+  );
+  t.equal(disabled({value: 5}), true, 'a disabled filter still keeps every row');
+
+  const multi = {type: FILTER_TYPES.multiSelect, value: ['a'], enabled: true};
+  const exclude = getFilterFunction(field, 'ds', {...multi, inverted: true}, [], null);
+  t.equal(exclude({value: 'a'}), false, 'filter out hides a selected category');
+  t.equal(exclude({value: 'b'}), true, 'filter out keeps an unselected category');
+
+  const timeField = {
+    valueAccessor: () => null,
+    format: '',
+    filterProps: {mappedValue: [0, 10, 20]}
+  };
+  const time = {
+    type: FILTER_TYPES.timeRange,
+    dataId: ['ds'],
+    value: [12, 18],
+    enabled: true,
+    inverted: true,
+    endName: ['end'],
+    endMappedValue: [[15, 15, 40]]
+  };
+  const timeOut = getFilterFunction(timeField, 'ds', time, [], null);
+  t.equal(timeOut({index: 1}), false, 'filter out hides an interval that overlaps the window');
+  t.equal(timeOut({index: 2}), true, 'filter out keeps an interval outside the window');
+
+  t.end();
+});
+
+test('filterUtils -> disableGpuIfInverted', t => {
+  const inverted = disableGpuIfInverted({
+    inverted: true,
+    gpu: true,
+    gpuChannel: [0],
+    gpuEndChannel: [1],
+    type: FILTER_TYPES.range
+  });
+  t.equal(inverted.gpu, false, 'inverted range filters leave the GPU');
+  t.equal(inverted.gpuChannel, undefined, 'should release the GPU channel');
+  t.equal(inverted.gpuEndChannel, undefined, 'should release the end channel');
+
+  const kept = disableGpuIfInverted({inverted: false, gpu: true, gpuChannel: [0]});
+  t.equal(kept.gpu, true, 'filter in still uses the GPU');
+  t.deepEqual(kept.gpuChannel, [0], 'filter in keeps its channel');
+
+  t.end();
+});
+
+test('filterUtils -> validateFilterWithData rejects unsupported inversion', t => {
+  const dataset = new KeplerTable({
+    info: {id: 'remote'},
+    color: [0, 0, 0],
+    disableDataOperation: true
+  });
+  dataset.updateSchema({
+    fields: [{name: 'value', type: 'real', analyzerType: 'FLOAT'}],
+    rows: []
+  });
+
+  const {filter} = validateFilterWithData(
+    {remote: dataset},
+    'remote',
+    {
+      ...getDefaultFilter({dataId: ['remote']}),
+      name: ['value'],
+      type: FILTER_TYPES.range,
+      value: [0, 10],
+      inverted: true
+    },
+    []
+  );
+
+  t.equal(filter.inverted, false, 'saved filter out is cleared for a GPU-only dataset');
+  t.equal(filter.gpu, true, 'the validated range filter remains on the GPU');
+  t.end();
+});
+
+test('filterUtils -> getPlotBaseIndexByDataId excludes the plotted filter', t => {
+  const values = [1, 5, 9];
+  const dataContainer = createDataContainer(values.map(v => [v]));
+  const field = {valueAccessor: d => dataContainer.valueAt(d.index, 0)};
+  const inverted = {
+    id: 'self',
+    type: FILTER_TYPES.range,
+    dataId: ['ds'],
+    fieldIdx: [0],
+    value: [4, 6],
+    inverted: true,
+    enabled: true
+  };
+  const other = {
+    id: 'other',
+    type: FILTER_TYPES.range,
+    dataId: ['ds'],
+    fieldIdx: [0],
+    value: [0, 8],
+    enabled: true
+  };
+  const dataset = {
+    id: 'ds',
+    fields: [field],
+    dataContainer,
+    allIndexes: [0, 1, 2],
+    filterRecord: {
+      cpu: [inverted, other],
+      gpu: [],
+      dynamicDomain: [],
+      fixedDomain: []
+    }
+  };
+
+  t.deepEqual(
+    getPlotBaseIndexByDataId({ds: dataset}, inverted).ds,
+    [0, 1],
+    'histogram index keeps the other filter and ignores the inverted filter itself'
+  );
+  t.equal(
+    getPlotBaseIndexByDataId({ds: dataset}, {id: 'gpu-only', dataId: ['ds']}),
+    undefined,
+    'GPU filters are already absent from the CPU index'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> getPlotBaseIndexByDataId retains polygon filters', t => {
+  const dataset = new KeplerTable({info: {id: 'ds'}, color: [0, 0, 0]});
+  dataset.updateSchema({
+    fields: [
+      {name: 'value', type: 'real', analyzerType: 'FLOAT'},
+      {name: 'lat', type: 'real', analyzerType: 'FLOAT'},
+      {name: 'lng', type: 'real', analyzerType: 'FLOAT'}
+    ],
+    rows: [
+      [1, 12.25, 30.5],
+      [5, 12.25, 35.5],
+      [9, 14.25, 30.5]
+    ]
+  });
+
+  const layer = {
+    id: 'layer',
+    type: 'point',
+    config: {dataId: 'ds'},
+    getPositionAccessor:
+      dataContainer =>
+      ({index}) =>
+        [dataContainer.valueAt(index, 2), dataContainer.valueAt(index, 1)]
+  };
+  const inverted = {
+    id: 'self',
+    type: FILTER_TYPES.range,
+    dataId: ['ds'],
+    fieldIdx: [0],
+    name: ['value'],
+    value: [4, 6],
+    inverted: true,
+    enabled: true,
+    gpu: false
+  };
+  const other = {
+    id: 'other',
+    type: FILTER_TYPES.range,
+    dataId: ['ds'],
+    fieldIdx: [0],
+    name: ['value'],
+    value: [0, 8],
+    enabled: true,
+    gpu: false
+  };
+  const polygon = {
+    id: 'polygon',
+    type: FILTER_TYPES.polygon,
+    dataId: ['ds'],
+    fieldIdx: [],
+    layerId: ['layer'],
+    value: mockPolygonFeature,
+    enabled: true,
+    fixedDomain: true,
+    gpu: false
+  };
+
+  dataset.filterTable([inverted, other, polygon], [layer]);
+  const customTable = {
+    id: dataset.id,
+    fields: dataset.fields,
+    dataContainer: dataset.dataContainer,
+    allIndexes: dataset.allIndexes,
+    filteredIndex: dataset.filteredIndex,
+    filterRecord: dataset.filterRecord
+  };
+
+  t.deepEqual(
+    getPlotBaseIndexByDataId({ds: customTable}, inverted, [layer]).ds,
+    [0],
+    'custom-table histogram base omits itself while keeping CPU and polygon filters'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> diffFilters notices inverted', t => {
+  const filterRecord = {
+    dynamicDomain: [],
+    fixedDomain: [],
+    cpu: [{id: 'aa', name: 'col', value: ['a'], inverted: true}],
+    gpu: []
+  };
+  const oldFilterRecord = {
+    dynamicDomain: [],
+    fixedDomain: [],
+    cpu: [{id: 'aa', name: 'col', value: ['a'], inverted: false}],
+    gpu: []
+  };
+
+  t.deepEqual(
+    diffFilters(filterRecord, oldFilterRecord).cpu,
+    {aa: 'inverted_changed'},
+    'toggling filter out should recompute CPU filters'
+  );
 
   t.end();
 });

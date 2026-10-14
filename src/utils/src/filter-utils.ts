@@ -45,7 +45,11 @@ import {generateHashId, toArray, notNullorUndefined, getCentroid} from '@kepler.
 import {DataContainerInterface} from './data-container-interface';
 import {set} from './utils';
 import {timeToUnixMilli, unique} from './data-utils';
-import {updateTimeFilterPlotType, updateRangeFilterPlotType} from './plot';
+import {
+  mergePolygonLayerIndexes,
+  updateTimeFilterPlotType,
+  updateRangeFilterPlotType
+} from './plot';
 import {KeplerTableModel} from './types';
 
 export const durationSecond = 1000;
@@ -66,7 +70,13 @@ export type FilterResult = {
 export type FilterChanged = {
   // eslint-disable-next-line no-unused-vars
   [key in keyof FilterRecord]: {
-    [key: string]: 'added' | 'deleted' | 'name_changed' | 'value_changed' | 'dataId_changed';
+    [key: string]:
+      | 'added'
+      | 'deleted'
+      | 'name_changed'
+      | 'value_changed'
+      | 'dataId_changed'
+      | 'inverted_changed';
   } | null;
 };
 
@@ -386,9 +396,23 @@ export function validateFilterWithData<K extends KeplerTableModel<K, L>, L>(
   filter: ParsedFilter,
   layers: L[]
 ): {filter: Filter; dataset: K} {
-  return filter.type && Object.prototype.hasOwnProperty.call(filterValidators, filter.type)
-    ? filterValidators[filter.type](datasets[datasetId], filter, layers)
-    : validateFilter(datasets, datasetId, filter);
+  const validated =
+    filter.type && Object.prototype.hasOwnProperty.call(filterValidators, filter.type)
+      ? filterValidators[filter.type](datasets[datasetId], filter, layers)
+      : validateFilter(datasets, datasetId, filter);
+
+  if (validated.filter?.inverted && validated.dataset.disableDataOperation) {
+    return {
+      ...validated,
+      filter: {
+        ...validated.filter,
+        inverted: false,
+        ...(filterTypeUsesGpu(validated.filter.type) ? {gpu: true} : {})
+      }
+    };
+  }
+
+  return validated;
 }
 
 /**
@@ -586,6 +610,54 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
 };
 
 /**
+ * Compute the polygon-filtered indexes for each layer on a dataset. Keeping this
+ * independent of KeplerTable lets filter plots work with custom table classes.
+ */
+export function computePolygonFilteredIndexByLayer(
+  filters: Filter[],
+  layers: any[],
+  dataId: string,
+  dataContainer: DataContainerInterface,
+  baseFilteredIndex: number[]
+): Record<string, number[]> {
+  const polygonFilters = filters.filter(
+    filter =>
+      filter.type === FILTER_TYPES.polygon &&
+      filter.dataId.includes(dataId) &&
+      filter.enabled !== false &&
+      isValidFilterValue(filter.type, filter.value)
+  );
+
+  if (!polygonFilters.length) {
+    return {};
+  }
+
+  const result: Record<string, number[]> = {};
+  for (const layer of layers.filter(candidate => candidate.config?.dataId === dataId)) {
+    const applicableFilters = polygonFilters.filter(
+      filter => filter.layerId && filter.layerId.includes(layer.id)
+    );
+
+    if (!applicableFilters.length) {
+      continue;
+    }
+
+    const filterFunctors = applicableFilters.map(filter => {
+      const matches = getPolygonFilterFunctor(layer, filter, dataContainer);
+      return filter.inverted ? (data: {index: number}) => !matches(data) : matches;
+    });
+    const filterContext = {index: -1};
+
+    result[layer.id] = baseFilteredIndex.filter(index => {
+      filterContext.index = index;
+      return filterFunctors.every(fn => fn(filterContext));
+    });
+  }
+
+  return result;
+}
+
+/**
  * Check if a GeoJSON feature filter can be applied to a layer
  */
 export function canApplyFeatureFilter(feature: Feature | null): boolean {
@@ -623,6 +695,22 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
     return defaultFunc;
   }
 
+  const matches = getFilterPredicate(field, dataId, filter, layers, dataContainer, valueAccessor);
+  if (!matches) {
+    return defaultFunc;
+  }
+  // Filter out: hide rows the predicate would have kept.
+  return filter.inverted ? data => !matches(data) : matches;
+}
+
+function getFilterPredicate<L extends {config: {dataId: string | null}; id: string}>(
+  field: Field | null,
+  dataId: string,
+  filter: Filter,
+  layers: L[],
+  dataContainer: DataContainerInterface,
+  valueAccessor: (data: {index: number}) => any
+): filterFunction | null {
   switch (filter.type) {
     case FILTER_TYPES.range:
       return data => isInRange(valueAccessor(data), filter.value);
@@ -632,7 +720,7 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
       return data => valueAccessor(data) === filter.value;
     case FILTER_TYPES.timeRange: {
       if (!field) {
-        return defaultFunc;
+        return null;
       }
       const mappedValue = get(field, ['filterProps', 'mappedValue']);
       const accessor = Array.isArray(mappedValue)
@@ -650,7 +738,7 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
     }
     case FILTER_TYPES.polygon: {
       if (!layers || !layers.length || !filter.layerId) {
-        return defaultFunc;
+        return null;
       }
       const layerFilterFunctions = filter.layerId
         .map(id => layers.find(l => l.id === id))
@@ -660,8 +748,24 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
       return data => layerFilterFunctions.every(filterFunc => filterFunc(data));
     }
     default:
-      return defaultFunc;
+      return null;
   }
+}
+
+/**
+ * Range and time filters normally run on the GPU, which can only keep values
+ * inside a range. An inverted filter has to run on the CPU instead.
+ */
+export function filterTypeUsesGpu(type: Filter['type']): boolean {
+  return type === FILTER_TYPES.range || type === FILTER_TYPES.timeRange;
+}
+
+export function disableGpuIfInverted<T extends Filter>(filter: T): T {
+  if (!filter?.inverted || (!filter.gpu && !filter.gpuChannel && !filter.gpuEndChannel)) {
+    return filter;
+  }
+  const {gpuChannel: _gpuChannel, gpuEndChannel: _gpuEndChannel, ...rest} = filter;
+  return {...rest, gpu: false} as T;
 }
 
 export function updateFilterDataId(dataId: string | string[]): FilterBase<LineChart> {
@@ -707,6 +811,64 @@ export function filterDataByFilterTypes(
     ...(dynamicDomainFilters ? {filteredIndexForDomain} : {}),
     ...(cpuFilters ? {filteredIndex} : {})
   };
+}
+
+/**
+ * Histogram bins must not include the filter being plotted. GPU filters are
+ * already absent from filteredIndex. An inverted filter is on the CPU, so
+ * rebuild the index from the other CPU filters.
+ */
+export function getPlotBaseIndexByDataId(
+  datasets: {[id: string]: any},
+  filter: Filter,
+  layers: any[] = []
+): Record<string, number[]> | undefined {
+  if (!filter?.id) {
+    return undefined;
+  }
+
+  const result: Record<string, number[]> = {};
+  toArray(filter.dataId).forEach(dataId => {
+    const dataset = datasets[dataId];
+    const base = dataset ? plotBaseIndexExcludingFilter(dataset, filter) : undefined;
+    if (base) {
+      const filteredIndexByLayer = computePolygonFilteredIndexByLayer(
+        dataset.filterRecord?.fixedDomain || [],
+        layers,
+        dataset.id,
+        dataset.dataContainer,
+        base
+      );
+      result[dataId] = mergePolygonLayerIndexes(base, filteredIndexByLayer);
+    }
+  });
+
+  return Object.keys(result).length ? result : undefined;
+}
+
+function plotBaseIndexExcludingFilter(dataset: any, filter: Filter): number[] | undefined {
+  const cpuFilters = dataset.filterRecord?.cpu;
+  if (!cpuFilters?.some(f => f.id === filter.id)) {
+    return undefined;
+  }
+
+  const others = cpuFilters.filter(f => f.id !== filter.id);
+  if (!others.length) {
+    return dataset.allIndexes || dataset.filteredIndex || [];
+  }
+
+  const filterFuncs = others.reduce((acc: {[id: string]: filterFunction}, f) => {
+    const datasetIndex = toArray(f.dataId).indexOf(dataset.id);
+    const fieldIdx = toArray(f.fieldIdx)[datasetIndex];
+    const field = notNullorUndefined(fieldIdx) ? dataset.fields[fieldIdx] : null;
+    acc[f.id] = getFilterFunction(field, dataset.id, f, [], dataset.dataContainer);
+    return acc;
+  }, {});
+
+  return filterDataByFilterTypes(
+    {dynamicDomainFilters: null, cpuFilters: others, filterFuncs},
+    dataset.dataContainer
+  ).filteredIndex;
 }
 
 /**
@@ -764,7 +926,7 @@ export function diffFilters(
         filterChanged = set([record, filter.id], 'added', filterChanged);
       } else {
         // check  what has changed
-        ['name', 'endName', 'value', 'dataId'].forEach(prop => {
+        ['name', 'endName', 'value', 'dataId', 'inverted'].forEach(prop => {
           if (filter[prop] !== oldFilter[prop]) {
             filterChanged = set([record, filter.id], `${prop}_changed`, filterChanged);
           }
@@ -941,10 +1103,16 @@ export function isInRange(val: any, domain: number[]): boolean {
   }
 
   if (Array.isArray(val)) {
-    return domain[0] <= val[0] && val[1] <= domain[1];
+    return (
+      val.length >= 2 &&
+      Number.isFinite(val[0]) &&
+      Number.isFinite(val[1]) &&
+      domain[0] <= val[0] &&
+      val[1] <= domain[1]
+    );
   }
 
-  return val >= domain[0] && val <= domain[1];
+  return Number.isFinite(val) && val >= domain[0] && val <= domain[1];
 }
 
 /**
@@ -1051,16 +1219,31 @@ export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
 export function updateFilterPlot<K extends KeplerTableModel<K, any>>(
   datasets: {[id: string]: K},
   filter: Filter,
-  dataId: string | undefined = undefined
+  dataId: string | undefined = undefined,
+  layers: any[] = []
 ) {
   if (dataId) {
     filter = removeFilterPlot(filter, dataId);
   }
 
+  const plotBaseIndexByDataId = getPlotBaseIndexByDataId(datasets, filter, layers);
+
   if (filter.type === FILTER_TYPES.timeRange) {
-    return updateTimeFilterPlotType(filter as TimeRangeFilter, filter.plotType, datasets);
+    return updateTimeFilterPlotType(
+      filter as TimeRangeFilter,
+      filter.plotType,
+      datasets,
+      dataId,
+      plotBaseIndexByDataId
+    );
   } else if (filter.type === FILTER_TYPES.range) {
-    return updateRangeFilterPlotType(filter as RangeFilter, filter.plotType, datasets);
+    return updateRangeFilterPlotType(
+      filter as RangeFilter,
+      filter.plotType,
+      datasets,
+      dataId,
+      plotBaseIndexByDataId
+    );
   }
   return filter;
 }
@@ -1183,7 +1366,7 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
   }
 
   return {
-    filter: newFilter,
+    filter: disableGpuIfInverted(newFilter),
     dataset
   };
 }
@@ -1522,7 +1705,7 @@ export function validateFiltersUpdateDatasets<
           domain
         });
 
-        validated.push(updateFilterPlot(datasets, validatedFilter));
+        validated.push(updateFilterPlot(datasets, validatedFilter, undefined, layers));
         updatedDatasets = {
           ...updatedDatasets,
           ...augmentedDatasets

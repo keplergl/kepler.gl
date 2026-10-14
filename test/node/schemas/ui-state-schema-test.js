@@ -23,8 +23,8 @@ test('#uiStateSchema -> v1 -> save load uiState', t => {
   t.equal(uiToSave.theme, 'dark', 'default theme should be dark');
   t.deepEqual(
     uiToSave.mapControls,
-    {mapLegend: {active: false}, chart: {active: false}},
-    'default mapLegend and chart should be inactive with no settings'
+    {mapLegend: {active: false}, chart: {active: false}, mapInfo: {active: true, show: true}},
+    'default mapLegend and chart should be inactive and map info open'
   );
 
   t.deepEqual(uiLoaded, uiToSave, 'loaded uiState should match saved uiState');
