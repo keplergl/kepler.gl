@@ -4,6 +4,7 @@
 import * as arrow from 'apache-arrow';
 
 import {
+  ALL_FIELD_TYPES,
   DatasetType,
   DATASET_FORMATS,
   GEOARROW_EXTENSIONS,
@@ -25,7 +26,8 @@ import {
   DatabaseConnection,
   compactArrowTable,
   isArrowTable,
-  isArrowVector
+  isArrowVector,
+  timeToUnixMilli
 } from '@kepler.gl/utils';
 
 import {
@@ -111,15 +113,25 @@ export class KeplerGlDuckDbTable extends KeplerTable {
 
       // DATASET_FORMATS.keplergl loads data as any[][] instead of [{}]
       // TODO potential memory usage explosion: original data, new object and then DuckDb table
-      const rowsForDb = Array.isArray(rows[0])
-        ? rows.map(row => {
-            const newRow = {};
-            row.forEach((value, index) => {
-              newRow[fields[index].name] = value;
-            });
-            return newRow;
-          })
-        : rows;
+      const rowsForDb = rows.map(row => {
+        const isArrayRow = Array.isArray(row);
+        const newRow: Record<string, unknown> = isArrayRow ? {} : {...row};
+
+        fields.forEach((field, index) => {
+          const value = isArrayRow ? row[index] : row[field.name];
+          const timestamp =
+            field.type === ALL_FIELD_TYPES.timestamp && value !== null && value !== undefined
+              ? timeToUnixMilli(value as string | number | Date, field.format || '')
+              : null;
+
+          newRow[field.name] =
+            timestamp !== null && Number.isFinite(timestamp)
+              ? new Date(timestamp).toISOString()
+              : value;
+        });
+
+        return newRow;
+      });
 
       await db.registerFileText(this.id, JSON.stringify(rowsForDb));
 

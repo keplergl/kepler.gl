@@ -28,9 +28,10 @@ test('KeplerGlDuckDbTable -> importRowData maps ordinary Kepler field types', as
     fields: [
       {name: 'id', type: 'integer'},
       {name: 'label', type: 'string'},
+      {name: 'pickup_time', type: 'timestamp', format: 'YYYY-M-D H:m:s'},
       {name: 'metadata', type: 'string', duckDBColumnType: 'JSON'}
     ],
-    rows: [[1, 'one', {source: 'sample'}]]
+    rows: [[1, 'one', '2015-01-15 19:05:40 +00:00', {source: 'sample'}]]
   };
 
   await importRowData(data, {db, c});
@@ -39,12 +40,20 @@ test('KeplerGlDuckDbTable -> importRowData maps ordinary Kepler field types', as
     registeredFile,
     {
       name: 'sample-data',
-      contents: JSON.stringify([{id: 1, label: 'one', metadata: {source: 'sample'}}])
+      contents: JSON.stringify([
+        {
+          id: 1,
+          label: 'one',
+          pickup_time: '2015-01-15T19:05:40.000Z',
+          metadata: {source: 'sample'}
+        }
+      ])
     },
-    'registers row arrays as objects'
+    'registers row arrays as objects with normalized timestamps'
   );
   t.ok(query.includes("'id': 'INTEGER'"), 'maps integer fields to DuckDB INTEGER');
   t.ok(query.includes("'label': 'VARCHAR'"), 'maps string fields to DuckDB VARCHAR');
+  t.ok(query.includes("'pickup_time': 'TIMESTAMP'"), 'maps timestamp fields to TIMESTAMP');
   t.ok(query.includes("'metadata': 'JSON'"), 'preserves an explicit DuckDB column type');
   t.notOk(query.includes('undefined'), 'does not interpolate an undefined column type');
   t.end();
