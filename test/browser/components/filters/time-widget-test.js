@@ -25,6 +25,7 @@ import {
   IconButton,
   SliderHandle,
   Typeahead,
+  ItemSelector,
   TimezoneSelector,
   appInjector
 } from '@kepler.gl/components';
@@ -153,6 +154,93 @@ test('Components -> TimeWidget.mount -> timezone selector', t => {
     wrapper.find(TimezoneSelector).at(0).props().timezone,
     'America/New_York',
     'should show the filter timezone'
+  );
+
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> time format selector', t => {
+  const setFilterAnimationTimeConfig = sinon.spy();
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget {...defaultProps} setFilterAnimationTimeConfig={setFilterAnimationTimeConfig} />
+      </IntlWrapper>
+    );
+  }, 'TimeWidget should not fail without props');
+
+  wrapper.find(Icons.Gear).at(0).simulate('click');
+  wrapper.update();
+
+  t.equal(
+    wrapper.find('[data-testid="time-widget-time-format"]').hostNodes().length,
+    1,
+    'should render time format selector'
+  );
+
+  const getTimeFormatSelector = () => {
+    const selectors = wrapper.find(ItemSelector);
+    for (let i = 0; i < selectors.length; i++) {
+      if (selectors.at(i).props().className === 'time-format-selector') {
+        return selectors.at(i);
+      }
+    }
+    return null;
+  };
+
+  t.ok(getTimeFormatSelector(), 'should expose the time format options');
+
+  t.equal(
+    getTimeFormatSelector().props().selectedItems,
+    '12-hour',
+    'should default to 12-hour format'
+  );
+  t.equal(
+    wrapper.find('[data-testid="time-widget-time-format"]').hostNodes().text(),
+    '12-hour',
+    'should render the selected 12-hour option'
+  );
+
+  getTimeFormatSelector().props().onChange('24-hour');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.args[0],
+    [0, {timeFormat: 'L HH:mm:ss'}],
+    'should call setFilterAnimationTimeConfig with 24-hour format'
+  );
+
+  wrapper.setProps({
+    children: (
+      <TimeWidget
+        {...defaultProps}
+        filter={{...defaultProps.filter, timeFormat: 'L HH:mm:ss'}}
+        setFilterAnimationTimeConfig={setFilterAnimationTimeConfig}
+      />
+    )
+  });
+  wrapper.update();
+
+  t.equal(
+    getTimeFormatSelector().props().selectedItems,
+    '24-hour',
+    'should show the filter time format'
+  );
+  t.equal(
+    wrapper.find('[data-testid="time-widget-time-format"]').hostNodes().text(),
+    '24-hour',
+    'should render the selected 24-hour option'
+  );
+  t.equal(
+    wrapper
+      .find(FloatingTimeDisplay)
+      .find('.animation-control__time-display__bottom')
+      .at(0)
+      .find('.time-value')
+      .at(0)
+      .text(),
+    '09/23/2016 05:00:00',
+    'should render time without an AM/PM suffix'
   );
 
   t.end();

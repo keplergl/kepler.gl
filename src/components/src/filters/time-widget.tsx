@@ -155,6 +155,11 @@ function TimeWidgetFactory(
       [index, setFilterAnimationTimeConfig]
     );
 
+    const _onTimeFormatChange = useCallback(
+      (timeFormat: string) => setFilterAnimationTimeConfig(index, {timeFormat}),
+      [index, setFilterAnimationTimeConfig]
+    );
+
     const _onToggleSettings = useCallback(() => {
       setShowSettings(prev => !prev);
     }, []);
@@ -485,6 +490,7 @@ function TimeWidgetFactory(
             datasets={datasets}
             setFilterPlot={_setFilterPlot}
             onTimezoneChange={_onTimezoneChange}
+            onTimeFormatChange={_onTimeFormatChange}
           />
         ) : null}
         <TimelineSection>

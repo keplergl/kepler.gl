@@ -50,6 +50,11 @@ const INTERVAL_UNITS = [
   {id: 'year', label: 'Year', duration: durationYear}
 ];
 
+const TIME_FORMAT_OPTIONS = [
+  {id: '12-hour', label: '12-hour', timeFormat: 'L h:mm:ss A'},
+  {id: '24-hour', label: '24-hour', timeFormat: 'L HH:mm:ss'}
+];
+
 const SettingsPanel = styled.div`
   display: flex;
   flex-direction: column;
@@ -277,6 +282,7 @@ export type TimeWidgetSettingsProps = {
   datasets: Datasets;
   setFilterPlot: (newProp: any, valueIndex?: number) => void;
   onTimezoneChange: (timezone: string) => void;
+  onTimeFormatChange: (timeFormat: string) => void;
 };
 
 function parseInterval(intervalId: string | undefined): {step: number; unit: string} {
@@ -298,7 +304,8 @@ function TimeWidgetSettingsFactory(
     filter,
     datasets,
     setFilterPlot,
-    onTimezoneChange
+    onTimezoneChange,
+    onTimeFormatChange
   }) => {
     const {plotType} = filter;
     const currentInterval = plotType?.interval;
@@ -493,6 +500,29 @@ function TimeWidgetSettingsFactory(
       [aggregationOptions]
     );
 
+    const selectedTimeFormat = useMemo(
+      () => (filter.timeFormat?.match(/H{1,2}|k{1,2}/) ? '24-hour' : '12-hour'),
+      [filter.timeFormat]
+    );
+
+    const displayTimeFormatOption = useCallback(
+      (opt: (typeof TIME_FORMAT_OPTIONS)[number] | string) =>
+        typeof opt === 'string'
+          ? TIME_FORMAT_OPTIONS.find(option => option.id === opt)?.label || opt
+          : opt.label,
+      []
+    );
+
+    const handleTimeFormatChange = useCallback(
+      value => {
+        const option = TIME_FORMAT_OPTIONS.find(opt => opt.id === value);
+        if (option) {
+          onTimeFormatChange(option.timeFormat);
+        }
+      },
+      [onTimeFormatChange]
+    );
+
     return (
       <SettingsPanel className="time-widget--settings">
         <AxisSection>
@@ -538,6 +568,24 @@ function TimeWidgetSettingsFactory(
                 <FormattedMessage id="filterManager.timezone" />
               </FieldLabel>
               <TimezoneSelector timezone={filter.timezone} onChange={onTimezoneChange} />
+            </FieldBlock>
+            <FieldBlock>
+              <FieldLabel>
+                <FormattedMessage id="filterManager.timeFormat" />
+              </FieldLabel>
+              <SelectorWrapper data-testid="time-widget-time-format">
+                <ItemSelector
+                  className="time-format-selector"
+                  selectedItems={selectedTimeFormat}
+                  options={TIME_FORMAT_OPTIONS}
+                  multiSelect={false}
+                  onChange={handleTimeFormatChange}
+                  getOptionValue={o => o.id}
+                  displayOption={displayTimeFormatOption}
+                  placement="top"
+                  searchable={false}
+                />
+              </SelectorWrapper>
             </FieldBlock>
           </AxisRow>
           {intervalTooSmall ? <ErrorMessage>Interval is too small</ErrorMessage> : null}
