@@ -119,6 +119,11 @@ export type KeplerApplicationConfig = {
   defaultExportJsonSettings?: {
     hasData?: boolean;
   };
+  /**
+   * Whether to show editable application name and website controls for exported maps.
+   * Disabled by default.
+   */
+  enableCustomExportBranding?: boolean;
   baseMapLibraryConfig?: Record<BaseMapLibraryType, BaseMapLibraryConfig>;
   plugins?: any[];
   // KeplerTable alternative
@@ -398,6 +403,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   defaultExportJsonSettings: {
     hasData: true
   },
+  enableCustomExportBranding: false,
 
   baseMapLibraryConfig: {
     maplibre: {

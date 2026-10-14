@@ -282,6 +282,7 @@ export const bottomWidgetSelector = (props: KeplerGLProps, theme) => ({
 
 export const modalContainerSelector = (props: KeplerGLProps, rootNode) => ({
   appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
+  appWebsite: props.appWebsite,
   mapStyle: props.mapStyle,
   visState: props.visState,
   mapState: props.mapState,

@@ -68,6 +68,7 @@ export function applyDemoApplicationDefaults() {
   initApplicationConfig({
     enableA5Layer: true,
     enableGeohashLayer: true,
+    enableCustomExportBranding: true,
     customIcons: [
       {
         id: 'custom-star',

@@ -16,6 +16,7 @@ import {
   setExportSelectedDataset,
   setExportDataType,
   setExportFiltered,
+  setExportMapBranding,
   setExportMapFileName,
   startExportingImage,
   addNotification,
@@ -287,6 +288,36 @@ test('#uiStateReducer -> SET_EXPORT_MAP_FILE_NAME', t => {
   };
 
   t.deepEqual(newReducer, expectedState, 'should set the export map file name');
+
+  t.end();
+});
+
+test('#uiStateReducer -> SET_EXPORT_MAP_BRANDING', t => {
+  const withAppName = reducer(INITIAL_UI_STATE, setExportMapBranding({appName: 'Atlas Lab'}));
+
+  t.deepEqual(
+    withAppName.exportMap,
+    {
+      ...INITIAL_UI_STATE.exportMap,
+      appName: 'Atlas Lab'
+    },
+    'should set the application name and preserve existing export fields'
+  );
+
+  const withWebsite = reducer(
+    withAppName,
+    setExportMapBranding({appWebsite: 'https://atlas.example.com'})
+  );
+
+  t.deepEqual(
+    withWebsite.exportMap,
+    {
+      ...INITIAL_UI_STATE.exportMap,
+      appName: 'Atlas Lab',
+      appWebsite: 'https://atlas.example.com'
+    },
+    'should merge a partial website update without replacing the application name'
+  );
 
   t.end();
 });

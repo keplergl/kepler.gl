@@ -20,13 +20,26 @@ import {EXPORT_IMG_RATIOS, RESOLUTIONS} from '@kepler.gl/constants';
 
 test('exportUtils -> ExportJson', t => {
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
-  const body = exportToJsonString(getMapJSON(state));
+  const map = getMapJSON(state, {
+    hasData: true,
+    appName: '</script> Atlas',
+    appWebsite: 'https://atlas.example.com/?next="map"'
+  });
+  const body = exportToJsonString(map);
   getScaleFromImageSize;
   t.equal(typeof body, 'string', 'Should validate the type of body to be a string');
 
   t.doesNotThrow(() => {
     JSON.parse(body);
   }, 'Should not throw when trying to parse body');
+  t.equal(map.info.app, 'kepler.gl', 'should preserve the JSON format discriminator');
+  t.equal(map.info.appName, '</script> Atlas', 'should preserve the application name');
+  t.equal(
+    map.info.appWebsite,
+    'https://atlas.example.com/?next="map"',
+    'should preserve the application website'
+  );
+  t.deepEqual(JSON.parse(body).info, map.info, 'should safely serialize branding as JSON metadata');
 
   t.end();
 });
@@ -67,6 +80,110 @@ test('exportUtils -> ExportHtml escapes script terminators in map info', t => {
     'a map title should not be able to close the inline script'
   );
   t.ok(html.includes('\\u003c/script>'), 'should escape `<` in the serialized map info');
+
+  t.end();
+});
+
+test('exportUtils -> ExportHtml preserves custom branding', t => {
+  const branding = {
+    appName: 'Atlas Lab',
+    appWebsite: 'https://atlas.example.com/maps'
+  };
+  const html = exportMapToHTML({
+    datasets: [],
+    config: {version: 'v1', config: {}},
+    mode: 'READ',
+    ...branding
+  });
+  const brandingMatch = html.match(/const branding = (.+);/);
+
+  t.ok(brandingMatch, 'exported html should define branding settings');
+  t.deepEqual(
+    JSON.parse(brandingMatch[1]),
+    branding,
+    'exported html should serialize the custom branding'
+  );
+  t.ok(
+    html.includes('<title>Atlas Lab embedded map</title>'),
+    'exported html should use the app name in the document title'
+  );
+  t.ok(
+    html.includes('href: branding.appWebsite'),
+    'the read-only logo should link to the app website'
+  );
+  t.ok(
+    html.includes('react.createElement("span", null, branding.appName)'),
+    'the read-only logo should render the app name'
+  );
+  t.ok(html.includes('BrandLogo(),'), 'a read-only export should render the branding badge');
+  t.ok(
+    html.includes('appName: branding.appName') && html.includes('appWebsite: branding.appWebsite'),
+    'the embedded component should receive the branding props'
+  );
+
+  t.end();
+});
+
+test('exportUtils -> ExportHtml uses default branding', t => {
+  const html = exportMapToHTML({
+    datasets: [],
+    config: {version: 'v1', config: {}},
+    mode: 'READ'
+  });
+  const brandingMatch = html.match(/const branding = (.+);/);
+
+  t.ok(brandingMatch, 'exported html should define default branding settings');
+  t.deepEqual(
+    JSON.parse(brandingMatch[1]),
+    {appName: 'kepler.gl', appWebsite: 'http://kepler.gl/'},
+    'exported html should retain the Kepler defaults'
+  );
+  t.ok(
+    html.includes('<title>kepler.gl embedded map</title>'),
+    'the default document title should use the canonical app name'
+  );
+
+  t.end();
+});
+
+test('exportUtils -> ExportHtml safely serializes branding', t => {
+  const appName = '</title><script>window.brandPwned=1;</script> & Map';
+  const appWebsite =
+    'https://example.com/?next=</script><script>window.websitePwned=1;</script>\u2028\u2029';
+  const html = exportMapToHTML({
+    datasets: [],
+    config: {version: 'v1', config: {}},
+    mode: 'READ',
+    appName,
+    appWebsite
+  });
+  const brandingMatch = html.match(/const branding = (.+);/);
+
+  t.notOk(
+    html.includes('<script>window.brandPwned'),
+    'the app name should not be able to close the title element'
+  );
+  t.notOk(
+    html.includes('<script>window.websitePwned'),
+    'the app website should not be able to close the inline script'
+  );
+  t.ok(
+    html.includes(
+      '<title>&lt;/title&gt;&lt;script&gt;window.brandPwned=1;&lt;/script&gt; &amp; Map embedded map</title>'
+    ),
+    'the app name should be escaped for the document title'
+  );
+  t.ok(html.includes('\\u003c/script>'), 'branding should escape `<` in inline scripts');
+  t.ok(html.includes('\\u2028\\u2029'), 'branding should escape JavaScript line terminators');
+  t.notOk(
+    brandingMatch[1].includes('<'),
+    'serialized branding should not contain literal opening angle brackets'
+  );
+  t.deepEqual(
+    JSON.parse(brandingMatch[1]),
+    {appName, appWebsite},
+    'escaped branding should retain its original values at runtime'
+  );
 
   t.end();
 });

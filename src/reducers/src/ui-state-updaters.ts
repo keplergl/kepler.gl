@@ -863,6 +863,24 @@ export const setExportMapHTMLModeUpdater = (
 });
 
 /**
+ * Set application branding overrides for exported maps.
+ * @param state - `uiState`
+ * @param action
+ * @param action.payload application name and/or website overrides
+ * @return nextState
+ */
+export const setExportMapBrandingUpdater = (
+  state: UiState,
+  {payload}: UIStateActions.SetExportMapBrandingUpdaterAction
+): UiState => ({
+  ...state,
+  exportMap: {
+    ...state.exportMap,
+    ...payload
+  }
+});
+
+/**
  * Whether to keep layer access tokens in exported HTML and JSON maps.
  * @param state - `uiState`
  * @param action

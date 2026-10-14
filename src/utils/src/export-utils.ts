@@ -7,6 +7,8 @@ import {
   EXPORT_IMG_RATIO_OPTIONS,
   EXPORT_IMG_RATIOS,
   FourByThreeRatioOption,
+  KEPLER_GL_NAME,
+  KEPLER_GL_WEBSITE,
   OneXResolutionOption,
   type ExportResolutionOption
 } from '@kepler.gl/constants';
@@ -224,6 +226,10 @@ type MapJsonOptions = {
   hasData?: boolean;
   /** When false, access tokens stored on layer datasets are removed. */
   includeLayerApiKeys?: boolean;
+  /** Optional application name to preserve in exported JSON metadata. */
+  appName?: string;
+  /** Optional application website to preserve in exported JSON metadata. */
+  appWebsite?: string;
 };
 
 export function getMapJSON(
@@ -241,11 +247,23 @@ export function getMapJSON(
   if (includeLayerApiKeys === false) {
     mapToSave = omitLayerApiKeys(mapToSave);
   }
+  if (options.appName !== undefined || options.appWebsite !== undefined) {
+    mapToSave = {
+      ...mapToSave,
+      info: {
+        ...mapToSave.info,
+        ...(options.appName !== undefined ? {appName: options.appName} : {}),
+        ...(options.appWebsite !== undefined ? {appWebsite: options.appWebsite} : {})
+      }
+    };
+  }
   return mapToSave;
 }
 
 export function exportJson(state, options: any = {}) {
-  const map = getMapJSON(state, options);
+  const appName = options.appName || state.appName || KEPLER_GL_NAME;
+  const appWebsite = options.appWebsite ?? state.appWebsite ?? KEPLER_GL_WEBSITE;
+  const map = getMapJSON(state, {...options, appName, appWebsite});
   map.info.source = 'kepler.gl';
   const fileBlob = new Blob([exportToJsonString(map)], {type: 'application/json'});
   const fileName = getExportFileName(
@@ -257,13 +275,18 @@ export function exportJson(state, options: any = {}) {
 }
 
 export function exportHtml(state, options) {
-  const {userMapboxToken, exportMapboxAccessToken, mode, includeLayerApiKeys} = options;
+  const {userMapboxToken, exportMapboxAccessToken, mode, includeLayerApiKeys, appName, appWebsite} =
+    options;
+  const exportAppName = appName || state.appName || KEPLER_GL_NAME;
+  const exportAppWebsite = appWebsite ?? state.appWebsite ?? KEPLER_GL_WEBSITE;
 
   const data = {
     ...getMapJSON(state, {hasData: true, includeLayerApiKeys}),
     mapboxApiAccessToken:
       (userMapboxToken || '') !== '' ? userMapboxToken : exportMapboxAccessToken,
-    mode
+    mode,
+    appName: exportAppName,
+    appWebsite: exportAppWebsite
   };
 
   const fileBlob = new Blob([exportMapToHTML(data)], {type: 'text/html'});
