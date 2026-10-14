@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-plugin-marketplace.json",
+  "name": "kepler-gl",
+  "description": "Marketplace for the kepler.gl agent skill — create interactive map visualizations and standalone HTML exports with the keplergl Python package.",
+  "owner": {
+    "name": "kepler.gl"
+  },
+  "version": "0.0.1",
+  "plugins": [
+    {
+      "name": "kepler-gl",
+      "description": "Create interactive map visualizations and export to standalone HTML using the keplergl Python package.",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/keplergl/kepler.gl",
+        "path": "bindings/python/skill-plugin",
+        "ref": "master"
+      },
+      "version": "0.0.1"
+    }
+  ]
+}
