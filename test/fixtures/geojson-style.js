@@ -115,8 +115,8 @@ export const processedFields = [
     displayName: 'radius',
     format: '',
     fieldIdx: 2,
-    type: 'integer',
-    analyzerType: 'INT',
+    type: 'real',
+    analyzerType: 'FLOAT',
     valueAccessor: values => values[2]
   },
   {

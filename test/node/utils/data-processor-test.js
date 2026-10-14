@@ -184,6 +184,27 @@ test('Processor -> getFieldsFromData scientific notation', t => {
   t.end();
 });
 
+test('Processor -> processCsvData preserves numeric-looking strings', t => {
+  const {fields, rows} = processCsvData(
+    'zeroPadded,mixedInteger,mixedReal,numeric\n06,Monika,Monika,0\n07,1234,12.34,1.5'
+  );
+
+  t.deepEqual(
+    fields.map(field => field.type),
+    [ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.real],
+    'should preserve strings while keeping consistently numeric values numeric'
+  );
+  t.deepEqual(
+    rows,
+    [
+      ['06', 'Monika', 'Monika', 0],
+      ['07', '1234', '12.34', 1.5]
+    ],
+    'should preserve zero padding and nonnumeric strings'
+  );
+  t.end();
+});
+
 test('Processor -> processCsvData', t => {
   t.throws(() => processCsvData(''), 'should throw if csv is empty');
 
