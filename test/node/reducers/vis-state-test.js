@@ -3981,7 +3981,7 @@ test('#visStateReducer -> SET_FILTER_PLOT.yAxis', t => {
   t.end();
 });
 
-test('#visStateReducer -> SET_FILTER refreshes other time filter plots', t => {
+test('#visStateReducer -> filter changes refresh other time filter plots', t => {
   const {fields, rows} = processCsvData(`event_time,selection_time,value
 2020-01-01 00:00:00,2020-01-01 00:00:00,10
 2020-01-01 01:00:00,2020-01-01 01:00:00,20
@@ -4024,6 +4024,18 @@ test('#visStateReducer -> SET_FILTER refreshes other time filter plots', t => {
     nextState.filters[0].lineChart.allTime.value,
     15,
     'other time filter plot rebuilds its aggregate'
+  );
+
+  const restoredState = reducer(nextState, VisStateActions.removeFilter(1));
+  t.deepEqual(
+    restoredState.filters[0].lineChart.yDomain,
+    [10, 40],
+    'time filter plot refreshes after removing the other filter'
+  );
+  t.equal(
+    restoredState.filters[0].lineChart.allTime.value,
+    25,
+    'time filter plot restores its aggregate after removing the other filter'
   );
 
   const emptyState = reducer(
