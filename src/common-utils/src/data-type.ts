@@ -15,6 +15,15 @@ const H3_ANALYZER_TYPE = 'H3';
 const DECIMAL_NUMBER_REGEX = /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
 const INTEGER_REGEX = /^[+-]?\d+$/;
 
+function isZeroPaddedIntegerSample(value: unknown): boolean {
+  if (typeof value !== 'string' || !INTEGER_REGEX.test(value)) {
+    return false;
+  }
+
+  const digits = value.replace(/^[+-]/, '');
+  return digits.length > 1 && digits.startsWith('0');
+}
+
 /**
  * type-analyzer reports NUMBER for values that pass `!isNaN` but match neither its INT nor
  * its FLOAT regex, which in practice is mostly scientific notation such as `1.5e+10`. Such a
@@ -34,7 +43,9 @@ function isRealNumberSample(value: unknown): boolean {
   }
   const asNumber = Number(value);
   return (
-    Number.isFinite(asNumber) && (!INTEGER_REGEX.test(value) || Number.isSafeInteger(asNumber))
+    Number.isFinite(asNumber) &&
+    !isZeroPaddedIntegerSample(value) &&
+    (!INTEGER_REGEX.test(value) || Number.isSafeInteger(asNumber))
   );
 }
 
@@ -49,17 +60,7 @@ function isIntegerSample(value: unknown): boolean {
     return false;
   }
 
-  const digits = value.replace(/^[+-]/, '');
-  return (digits === '0' || !digits.startsWith('0')) && Number.isSafeInteger(Number(value));
-}
-
-function isZeroPaddedIntegerSample(value: unknown): boolean {
-  if (typeof value !== 'string' || !INTEGER_REGEX.test(value)) {
-    return false;
-  }
-
-  const digits = value.replace(/^[+-]/, '');
-  return digits.length > 1 && digits.startsWith('0');
+  return !isZeroPaddedIntegerSample(value) && Number.isSafeInteger(Number(value));
 }
 
 /**
