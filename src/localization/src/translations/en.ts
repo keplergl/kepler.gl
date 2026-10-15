@@ -599,7 +599,7 @@ export default {
     removeBaseMapStyle: 'Remove base map style',
     delete: 'Delete',
     timePlayback: 'Time Playback',
-    timeFilterSync: 'Sync with a column from another dataset',
+    timeFilterSync: 'Add synced filter',
     cloudStorage: 'Cloud Storage',
     '3DMap': '3D Map',
     animationByWindow: 'Moving Time Window',

@@ -21,9 +21,9 @@ const StyledSyncTimeHeader = styled.div`
 TimeSyncedFieldSelectorFactory.deps = [FieldTokenFactory];
 
 function TimeSyncedFieldSelectorFactory(FieldToken) {
-  const TimeSyncedFieldSelector = () => (
+  const TimeSyncedFieldSelector = ({type = ALL_FIELD_TYPES.timestamp}: {type?: string}) => (
     <StyledSyncTimeHeader>
-      <FieldToken type={ALL_FIELD_TYPES.timestamp} />
+      <FieldToken type={type} />
       <span>Synced</span>
     </StyledSyncTimeHeader>
   );
