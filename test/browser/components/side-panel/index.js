@@ -4,6 +4,7 @@
 import './channel-by-value-selctor-test';
 import './color-selector-test';
 import './filter-manager-test';
+import './interaction-manager-test';
 import './layer-configurator-test';
 import './layer-manager-test';
 import './layer-panel-header-test';

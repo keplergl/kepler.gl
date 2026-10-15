@@ -461,7 +461,7 @@ export type ZoomOpacityStops = {
   /** Zoom where opacity returns to 0. */
   gone: number;
 };
-/** Layers that share one zoom envelope. */
+/** Layers and reserved map targets that share one zoom envelope. */
 export type ZoomOpacityController = {
   id: string;
   layerIds: string[];

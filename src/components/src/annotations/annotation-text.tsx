@@ -77,6 +77,7 @@ const StyledToolbarWrapper = styled.div`
 
 export type AnnotationTextProps = {
   annotation: Annotation;
+  opacity?: number;
   viewport: MapViewport;
   isEditing: boolean;
   isSelected: boolean;
@@ -88,6 +89,7 @@ export type AnnotationTextProps = {
 
 const AnnotationText: FC<AnnotationTextProps> = ({
   annotation,
+  opacity = 1,
   viewport,
   isEditing,
   isSelected,
@@ -127,7 +129,14 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       $isEditingText={isEditingText}
       $isSelected={isSelected}
       $textVerticalAlign={textVerticalAlign}
-      style={style}
+      data-annotation-id={annotation.id}
+      data-annotation-part="text"
+      style={{
+        ...style,
+        opacity,
+        visibility: opacity === 0 ? 'hidden' : undefined,
+        pointerEvents: opacity === 0 ? 'none' : undefined
+      }}
       {...(isEditing
         ? {
             ...attributes,

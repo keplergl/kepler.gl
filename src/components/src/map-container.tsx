@@ -116,7 +116,9 @@ import {
   MapStyle,
   areAnyDeckLayersLoading,
   computeDeckLayers,
+  getZoomOpacityAnnotationTargetId,
   getLayerHoverProp,
+  getLayerZoomOpacityFactor,
   LayerHoverProp,
   prepareLayersForDeck,
   prepareLayersToRender,
@@ -1590,6 +1592,7 @@ export default function MapContainerFactory(
       const useMapboxAdapter = ResolvedMapComponent === MapboxLegacyMap;
 
       const internalViewState = this.context?.getInternalViewState(index);
+      const annotationZoom = internalViewState?.zoom ?? mapState.zoom;
       const configMaxPitch = mapState.maxPitch ?? getApplicationConfig().maxPitch;
       const effectiveMaxPitch = useMapboxAdapter
         ? Math.min(configMaxPitch, MAPBOX_MAX_PITCH)
@@ -1728,6 +1731,13 @@ export default function MapContainerFactory(
           ) : null}
           <AnnotationOverlay
             annotations={visState.annotations}
+            getAnnotationOpacity={annotationId =>
+              getLayerZoomOpacityFactor(
+                getZoomOpacityAnnotationTargetId(annotationId),
+                annotationZoom,
+                interactionConfig
+              )
+            }
             selectedAnnotationId={visState.selectedAnnotationId}
             isEditingAnnotationText={visState.isEditingAnnotationText}
             isAnnotationMode={Boolean(mapControls?.annotation?.active)}

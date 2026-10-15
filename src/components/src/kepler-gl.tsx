@@ -232,6 +232,7 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
   datasets: filteredDatasets,
   filters: props.visState.filters,
   layers: props.visState.layers,
+  annotations: props.visState.annotations,
   layerOrder: props.visState.layerOrder,
   layerClasses: props.visState.layerClasses,
   interactionConfig: props.visState.interactionConfig,

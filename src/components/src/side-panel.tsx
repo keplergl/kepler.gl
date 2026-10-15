@@ -118,6 +118,7 @@ export default function SidePanelFactory(
       datasets,
       filters,
       layers,
+      annotations = [],
       layerBlending,
       overlayBlending,
       layerClasses,
@@ -241,6 +242,7 @@ export default function SidePanelFactory(
                     datasets={datasets}
                     filters={filters}
                     layers={layers}
+                    annotations={annotations}
                     layerClasses={layerClasses}
                     layerOrder={layerOrder}
                     layerBlending={layerBlending}

@@ -163,6 +163,13 @@ export function getTooltipDisplayValue({
 
 export const ZOOM_OPACITY_RANGE: [number, number] = [0, 24];
 
+const ZOOM_OPACITY_ANNOTATION_PREFIX = '__kepler_annotation__:';
+
+/** Reserved fade-on-zoom target id for one map annotation. */
+export function getZoomOpacityAnnotationTargetId(annotationId: string): string {
+  return `${ZOOM_OPACITY_ANNOTATION_PREFIX}${annotationId}`;
+}
+
 export const DEFAULT_ZOOM_OPACITY_STOPS: ZoomOpacityStops = {
   appear: 1,
   full: 3,
