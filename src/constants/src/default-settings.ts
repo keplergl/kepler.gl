@@ -541,6 +541,7 @@ export const TABLE_OPTION = keyMirror({
   FORMAT_COLUMN: null,
   HIDE: null,
   RENAME: null,
+  CHANGE_TYPE: null,
   DELETE: null,
   CREATE_FILTER: null
 });
@@ -556,6 +557,7 @@ export type TableOption = {
     | 'FORMAT_COLUMN'
     | 'HIDE'
     | 'RENAME'
+    | 'CHANGE_TYPE'
     | 'DELETE'
     | 'CREATE_FILTER';
   display: string;
@@ -611,6 +613,12 @@ export const TABLE_OPTION_LIST: TableOption[] = [
     display: 'Rename',
     icon: 'Edit',
     condition: props => props.renameTableColumn
+  },
+  {
+    value: TABLE_OPTION.CHANGE_TYPE,
+    display: 'Change Data Type',
+    icon: 'Edit',
+    condition: props => props.changeTableColumnType
   },
   {
     value: TABLE_OPTION.CREATE_FILTER,

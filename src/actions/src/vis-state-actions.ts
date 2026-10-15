@@ -1582,6 +1582,33 @@ export function renameTableColumn(
   };
 }
 
+export type ChangeTableColumnTypeUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  newType: string;
+};
+/**
+ * Convert every value in a dataset column and update its field type atomically.
+ * Invalid values leave the dataset unchanged and produce an error notification.
+ * @param dataId - dataset id
+ * @param fieldName - column name
+ * @param newType - target kepler.gl field type
+ * @returns action
+ * @public
+ */
+export function changeTableColumnType(
+  dataId: string,
+  fieldName: string,
+  newType: string
+): Merge<ChangeTableColumnTypeUpdaterAction, {type: typeof ActionTypes.CHANGE_TABLE_COLUMN_TYPE}> {
+  return {
+    type: ActionTypes.CHANGE_TABLE_COLUMN_TYPE,
+    dataId,
+    fieldName,
+    newType
+  };
+}
+
 export type DeleteTableColumnUpdaterAction = {
   dataId: string;
   fieldName: string;

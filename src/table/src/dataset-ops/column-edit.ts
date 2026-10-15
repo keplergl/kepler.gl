@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {Analyzer, DATA_TYPES as AnalyzerDataTypes} from 'type-analyzer';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {Field, ProtoDataset} from '@kepler.gl/types';
-import {DataContainerInterface} from '@kepler.gl/utils';
+import {createArrowVector, DataContainerInterface} from '@kepler.gl/utils';
 
 export type ColumnEditDataset = {
   fields: Field[];
@@ -13,6 +15,279 @@ export type ColumnEditPayload = {
   data: ProtoDataset['data'];
   renames: Record<string, string>;
 };
+
+export const EDITABLE_FIELD_TYPES = [
+  ALL_FIELD_TYPES.integer,
+  ALL_FIELD_TYPES.real,
+  ALL_FIELD_TYPES.string,
+  ALL_FIELD_TYPES.timestamp
+] as const;
+
+export type EditableFieldType = (typeof EDITABLE_FIELD_TYPES)[number];
+
+const EDITABLE_TARGET_TYPES: Record<EditableFieldType, readonly EditableFieldType[]> = {
+  [ALL_FIELD_TYPES.integer]: [ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.timestamp],
+  [ALL_FIELD_TYPES.real]: [ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.timestamp],
+  [ALL_FIELD_TYPES.string]: [
+    ALL_FIELD_TYPES.integer,
+    ALL_FIELD_TYPES.real,
+    ALL_FIELD_TYPES.timestamp
+  ],
+  [ALL_FIELD_TYPES.timestamp]: [ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.string]
+};
+
+function isEditableFieldType(type: string): type is EditableFieldType {
+  return (EDITABLE_FIELD_TYPES as readonly string[]).includes(type);
+}
+
+export type ColumnTypeConversionError = {
+  rowIndex: number;
+  value: unknown;
+  reason: string;
+};
+
+export type ChangeColumnTypeResult =
+  | {payload: ColumnEditPayload; error?: never}
+  | {payload?: never; error: ColumnTypeConversionError};
+
+function columnValuePreview(value: unknown): string {
+  let preview: string;
+  try {
+    preview = typeof value === 'string' ? value : JSON.stringify(value);
+  } catch {
+    preview = String(value);
+  }
+  if (preview === undefined) {
+    preview = String(value);
+  }
+  return preview.length > 80 ? `${preview.slice(0, 77)}...` : preview;
+}
+
+export function formatColumnTypeConversionError(error: ColumnTypeConversionError): string {
+  return `row ${error.rowIndex + 1} value “${columnValuePreview(error.value)}” ${error.reason}`;
+}
+
+const DECIMAL_NUMBER = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i;
+const INTEGER = /^[+-]?\d+$/;
+const MIN_ABSOLUTE_EPOCH = 100_000_000;
+const MILLISECOND_EPOCH_THRESHOLD = 100_000_000_000;
+const MAX_ABSOLUTE_EPOCH_MILLISECONDS = 9_999_999_999_999;
+
+const ANALYZER_TYPE_BY_FIELD_TYPE: Record<string, string> = {
+  [ALL_FIELD_TYPES.integer]: AnalyzerDataTypes.INT,
+  [ALL_FIELD_TYPES.real]: AnalyzerDataTypes.FLOAT,
+  [ALL_FIELD_TYPES.string]: AnalyzerDataTypes.STRING,
+  [ALL_FIELD_TYPES.timestamp]: AnalyzerDataTypes.DATETIME
+};
+
+function analyzerMetadata(value: unknown): {type: string; format: string} | null {
+  const metadata = Analyzer.computeColMeta([{value}])?.[0];
+  return metadata ? {type: metadata.type, format: metadata.format || ''} : null;
+}
+
+type ColumnConversionState = {
+  analyzerType: string;
+  format: string;
+};
+
+type ColumnConversionResult =
+  | {values: unknown[]; analyzerType: string; format: string; error?: never}
+  | {values?: never; analyzerType?: never; format?: never; error: ColumnTypeConversionError};
+
+function conversionState(type: EditableFieldType): ColumnConversionState {
+  return {
+    analyzerType: type === ALL_FIELD_TYPES.timestamp ? '' : ANALYZER_TYPE_BY_FIELD_TYPE[type],
+    format: ''
+  };
+}
+
+function numericValue(value: unknown, integerOnly: boolean): number {
+  if (typeof value === 'number') {
+    return value;
+  }
+  if (typeof value === 'bigint') {
+    return Number(value);
+  }
+  if (typeof value !== 'string') {
+    return Number.NaN;
+  }
+  const trimmed = value.trim();
+  if (!(integerOnly ? INTEGER : DECIMAL_NUMBER).test(trimmed)) {
+    return Number.NaN;
+  }
+  return Number(trimmed);
+}
+
+function losesIntegerPrecision(value: unknown, parsed: number): boolean {
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+    return false;
+  }
+  if (typeof value === 'bigint') {
+    return BigInt(parsed) !== value;
+  }
+  if (typeof value === 'string' && INTEGER.test(value.trim())) {
+    return BigInt(parsed) !== BigInt(value.trim());
+  }
+  return false;
+}
+
+function convertColumnValue(
+  value: unknown,
+  type: EditableFieldType,
+  rowIndex: number,
+  state: ColumnConversionState,
+  output?: unknown[]
+): ColumnTypeConversionError | null {
+  if (value === null || value === undefined) {
+    output?.push(null);
+    return null;
+  }
+
+  switch (type) {
+    case ALL_FIELD_TYPES.string: {
+      try {
+        const serialized =
+          value instanceof Date
+            ? value.toISOString()
+            : typeof value === 'object'
+            ? JSON.stringify(value)
+            : String(value);
+        output?.push(serialized ?? String(value));
+        return null;
+      } catch {
+        return {rowIndex, value, reason: 'cannot be serialized as a string'};
+      }
+    }
+    case ALL_FIELD_TYPES.integer: {
+      const parsed = numericValue(value, true);
+      if (!Number.isSafeInteger(parsed)) {
+        return {rowIndex, value, reason: 'is not a safe integer'};
+      }
+      output?.push(parsed);
+      return null;
+    }
+    case ALL_FIELD_TYPES.real: {
+      const parsed = numericValue(value, false);
+      if (!Number.isFinite(parsed)) {
+        return {rowIndex, value, reason: 'is not a finite number'};
+      }
+      if (losesIntegerPrecision(value, parsed)) {
+        return {rowIndex, value, reason: 'loses integer precision as a real number'};
+      }
+      output?.push(parsed);
+      return null;
+    }
+    case ALL_FIELD_TYPES.timestamp: {
+      const source = value instanceof Date ? value.toISOString() : value;
+      const isNumeric =
+        typeof source === 'number' ||
+        typeof source === 'bigint' ||
+        (typeof source === 'string' && DECIMAL_NUMBER.test(source.trim()));
+      if (isNumeric) {
+        const parsed = numericValue(source, false);
+        const rounded = Math.round(parsed);
+        const numericFormat = Math.abs(parsed) >= MILLISECOND_EPOCH_THRESHOLD ? 'X' : 'x';
+        const milliseconds = numericFormat === 'x' ? rounded * 1000 : rounded;
+        if (
+          !Number.isSafeInteger(rounded) ||
+          Math.abs(rounded) < MIN_ABSOLUTE_EPOCH ||
+          Math.abs(milliseconds) > MAX_ABSOLUTE_EPOCH_MILLISECONDS
+        ) {
+          return {rowIndex, value, reason: 'is not a plausible epoch timestamp'};
+        }
+        if (state.format && state.format !== numericFormat) {
+          return {rowIndex, value, reason: 'uses a different timestamp format'};
+        }
+        state.analyzerType = AnalyzerDataTypes.TIME;
+        state.format = numericFormat;
+        output?.push(rounded);
+        return null;
+      }
+
+      if (typeof source !== 'string') {
+        return {rowIndex, value, reason: 'is not a timestamp'};
+      }
+      const metadata = analyzerMetadata(source);
+      if (
+        !metadata ||
+        ![AnalyzerDataTypes.TIME, AnalyzerDataTypes.DATETIME].includes(metadata.type)
+      ) {
+        return {rowIndex, value, reason: 'is not a valid timestamp'};
+      }
+      if (
+        (state.format && state.format !== metadata.format) ||
+        (state.analyzerType && state.analyzerType !== metadata.type)
+      ) {
+        return {rowIndex, value, reason: 'uses a different timestamp format'};
+      }
+      state.analyzerType = metadata.type;
+      state.format = metadata.format;
+      output?.push(source);
+      return null;
+    }
+    default:
+      return {rowIndex, value, reason: `cannot be converted to ${type}`};
+  }
+}
+
+function convertColumn(
+  dataContainer: DataContainerInterface,
+  fieldIndex: number,
+  type: EditableFieldType
+): ColumnConversionResult {
+  const state = conversionState(type);
+  const values: unknown[] = [];
+  const rowCount = dataContainer.numRows();
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+    const error = convertColumnValue(
+      dataContainer.valueAt(rowIndex, fieldIndex),
+      type,
+      rowIndex,
+      state,
+      values
+    );
+    if (error) {
+      return {error};
+    }
+  }
+  return {
+    values,
+    analyzerType: state.analyzerType || ANALYZER_TYPE_BY_FIELD_TYPE[type],
+    format: state.format
+  };
+}
+
+/** Validate every candidate in one pass without allocating converted columns. */
+export function getCompatibleColumnTypes(
+  dataContainer: DataContainerInterface,
+  fieldIndex: number,
+  currentType: string
+): EditableFieldType[] {
+  if (
+    fieldIndex < 0 ||
+    fieldIndex >= dataContainer.numColumns() ||
+    !isEditableFieldType(currentType)
+  ) {
+    return [];
+  }
+
+  const candidates = new Map<EditableFieldType, ColumnConversionState>();
+  for (const type of EDITABLE_TARGET_TYPES[currentType]) {
+    candidates.set(type, conversionState(type));
+  }
+
+  const rowCount = dataContainer.numRows();
+  for (let rowIndex = 0; rowIndex < rowCount && candidates.size; rowIndex++) {
+    const value = dataContainer.valueAt(rowIndex, fieldIndex);
+    for (const [type, state] of candidates) {
+      if (convertColumnValue(value, type, rowIndex, state)) {
+        candidates.delete(type);
+      }
+    }
+  }
+
+  return EDITABLE_FIELD_TYPES.filter(type => type === currentType || candidates.has(type));
+}
 
 /**
  * Field descriptor for `updateDataset`, with accessors and per-column stats
@@ -106,4 +381,67 @@ export function buildDeleteColumnData(
     data: projectDatasetColumns(dataset, columns),
     renames: {}
   };
+}
+
+/**
+ * Convert an entire column before returning an update payload. A failed value
+ * returns its row and leaves the source dataset untouched.
+ */
+export function buildChangeColumnTypeData(
+  dataset: ColumnEditDataset,
+  fieldName: string,
+  newType: string
+): ChangeColumnTypeResult | null {
+  if (!isEditableFieldType(newType)) {
+    return null;
+  }
+  const fieldIndex = dataset.fields.findIndex(field => field.name === fieldName);
+  const currentType = dataset.fields[fieldIndex]?.type;
+  if (
+    fieldIndex < 0 ||
+    !isEditableFieldType(currentType) ||
+    !EDITABLE_TARGET_TYPES[currentType].includes(newType)
+  ) {
+    return null;
+  }
+
+  const result = convertColumn(dataset.dataContainer, fieldIndex, newType as EditableFieldType);
+  if (result.error) {
+    return {error: result.error};
+  }
+
+  const fields = dataset.fields.map((field, index) => {
+    if (index !== fieldIndex) {
+      return schemaField(field, field.name);
+    }
+    const {
+      displayFormat: _displayFormat,
+      indexBy: _indexBy,
+      ...fieldWithoutTypeSpecificMetadata
+    } = field;
+    return {
+      ...schemaField(fieldWithoutTypeSpecificMetadata, field.name),
+      type: newType,
+      analyzerType: result.analyzerType,
+      format: result.format
+    };
+  });
+
+  if (typeof dataset.dataContainer.getColumn === 'function') {
+    const cols = dataset.fields.map((_, index) => dataset.dataContainer.getColumn?.(index));
+    if (cols.every(Boolean)) {
+      cols[fieldIndex] = createArrowVector(result.values);
+      return {payload: {data: {fields, rows: [], cols}, renames: {}}};
+    }
+  }
+
+  const rowCount = dataset.dataContainer.numRows();
+  const rows: unknown[][] = new Array(rowCount);
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+    const row = Array.from(dataset.dataContainer.rowAsArray(rowIndex));
+    row[fieldIndex] = result.values[rowIndex];
+    rows[rowIndex] = row;
+  }
+
+  return {payload: {data: {fields, rows}, renames: {}}};
 }

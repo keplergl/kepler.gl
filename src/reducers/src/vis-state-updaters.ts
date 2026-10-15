@@ -103,6 +103,7 @@ import {
 import {generateHashId, toArray, arrayMove} from '@kepler.gl/common-utils';
 // Mergers
 import {
+  ALL_FIELD_TYPES,
   ANIMATION_WINDOW,
   BASE_SPEED,
   COMPARE_TYPES,
@@ -198,6 +199,8 @@ import {
   Datasets,
   KeplerTable,
   FilterProps,
+  buildChangeColumnTypeData,
+  formatColumnTypeConversionError,
   assignGpuChannel,
   buildDeleteColumnData,
   buildRenameColumnData,
@@ -4373,13 +4376,18 @@ function reconcileLayerWithNewSchema(
     }
   });
 
-  // follow renamed text-label fields
+  // follow renamed or re-typed text-label fields
   if (layer.config.textLabel?.length) {
-    const textLabel = layer.config.textLabel.map(tl =>
-      tl.field && renames[tl.field.name]
-        ? {...tl, field: {...tl.field, name: renames[tl.field.name]}}
-        : tl
-    );
+    const textLabel = layer.config.textLabel.map(tl => {
+      if (!tl.field) {
+        return tl;
+      }
+      const name = renames[tl.field.name] ?? tl.field.name;
+      const field = newTable.fields.find(candidate => candidate.name === name);
+      return field && (field.name !== tl.field.name || field.type !== tl.field.type)
+        ? {...tl, field}
+        : tl;
+    });
     if (textLabel.some((tl, i) => tl !== layer.config.textLabel[i])) {
       configPatch.textLabel = textLabel;
     }
@@ -4402,6 +4410,8 @@ function reconcileLayerWithNewSchema(
 
   return validated && validated.hasAllColumns() ? validated : null;
 }
+
+const FILTER_PLOT_Y_AXIS_TYPES = new Set<string>([ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real]);
 
 /**
  * Update an existing dataset's schema (columns/fields) in place and reconcile
@@ -4441,7 +4451,7 @@ export function updateDatasetUpdater(
   newTable.filterRecordCPU = undefined;
   newTable.sortColumn = undefined;
   newTable.sortOrder = null;
-  const newFieldsByName = new Set(newTable.fields.map(f => f.name));
+  const newFieldsByName = new Map(newTable.fields.map(field => [field.name, field]));
   newTable.pinnedColumns = (existing.pinnedColumns || [])
     .map(name => renames[name] ?? name)
     .filter(name => newFieldsByName.has(name));
@@ -4471,29 +4481,45 @@ export function updateDatasetUpdater(
       }
 
       // column present (possibly renamed): re-resolve name/fieldIdx/domain
-      const {filter: updated} = applyFilterFieldName(filter, newDatasets, dataId, newName, vi, {
+      let {filter: updated} = applyFilterFieldName(filter, newDatasets, dataId, newName, vi, {
         mergeDomain: vi > 0
       });
       if (!updated) {
         return null;
       }
 
-      // brush filters carry a second y-axis field; follow a rename there too
-      const yAxis =
-        updated.yAxis?.name &&
-        (renames[updated.yAxis.name]
-          ? {...updated.yAxis, name: renames[updated.yAxis.name]}
-          : newFieldsByName.has(updated.yAxis.name)
-          ? updated.yAxis
-          : null);
+      const oldEndName = toArray((filter as TimeRangeFilter).endName)[vi];
+      if (updated.type === FILTER_TYPES.timeRange && oldEndName) {
+        const endName = renames[oldEndName] ?? oldEndName;
+        const appliedEnd = applyTimeFilterEndFieldName(updated, newDatasets, dataId, endName, vi);
+        if (appliedEnd.filter) {
+          updated = appliedEnd.filter;
+        } else {
+          updated =
+            applyTimeFilterEndFieldName(updated, newDatasets, dataId, null, vi).filter ?? updated;
+        }
+      }
 
-      return {
+      // Time plots only accept numeric y-axis fields. Re-resolve the complete
+      // field so type and fieldIdx also follow a schema change.
+      let yAxis = updated.yAxis;
+      if (updated.yAxis?.name) {
+        const yAxisName = renames[updated.yAxis.name] ?? updated.yAxis.name;
+        const yAxisField = newFieldsByName.get(yAxisName);
+        yAxis = yAxisField && FILTER_PLOT_Y_AXIS_TYPES.has(yAxisField.type) ? yAxisField : null;
+      }
+
+      const nextFilter = {
         ...updated,
         yAxis,
+        ...(updated.yAxis && !yAxis
+          ? {plotType: {...updated.plotType, type: PLOT_TYPES.histogram}}
+          : {}),
         // clamp the user's previous selection into the new domain instead of
         // resetting it to the full range
         value: adjustValueToFilterDomain(filter.value, updated)
       };
+      return updateFilterPlot(newDatasets, nextFilter, undefined, state.layers);
     })
     .filter(Boolean) as Filter[];
 
@@ -4583,6 +4609,45 @@ export function renameTableColumnUpdater(
     dataId,
     data: payload.data,
     renames: payload.renames
+  });
+}
+
+/**
+ * Convert a complete column before committing its new type. A failed value
+ * leaves the table and every reference unchanged.
+ */
+export function changeTableColumnTypeUpdater(
+  state: VisState,
+  action: VisStateActions.ChangeTableColumnTypeUpdaterAction
+): VisState {
+  const {dataId, fieldName, newType} = action;
+  const dataset = state.datasets[dataId];
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
+    return state;
+  }
+  const result = buildChangeColumnTypeData(dataset, fieldName, newType);
+  if (!result) {
+    return state;
+  }
+  if (result.error) {
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            id: `column-type-${dataId}-${fieldName}`,
+            message: `Cannot change “${fieldName}” to ${newType}: ${formatColumnTypeConversionError(
+              result.error
+            )}. No values were changed.`
+          })
+        )
+      )
+    );
+  }
+  return updateDatasetUpdater(state, {
+    dataId,
+    data: result.payload.data,
+    renames: result.payload.renames
   });
 }
 

@@ -197,6 +197,8 @@ function HeaderCellFactory(
     const {columnIndex, key, style} = cellInfo;
     const {
       colMeta,
+      dataContainer,
+      typeChangeDataContainer,
       sortColumn,
       sortTableColumn,
       pinTableColumn,
@@ -207,6 +209,7 @@ function HeaderCellFactory(
       dataId,
       loadColumnStats,
       renameTableColumn,
+      changeTableColumnType,
       deleteTableColumn,
       createFilterFromColumn
     } = props;
@@ -383,6 +386,9 @@ function HeaderCellFactory(
             copyTableColumn={onCopy}
             setDisplayFormat={setColumnDisplayFormat ? onSetDisplayFormat : undefined}
             renameTableColumn={renameTableColumn}
+            changeTableColumnType={changeTableColumnType}
+            typeChangeDataContainer={typeChangeDataContainer ?? dataContainer}
+            columnIndex={colMeta[column]?.colIdx ?? columns.indexOf(column)}
             deleteTableColumn={deleteTableColumn}
             createFilterFromColumn={createFilterFromColumn}
             onStartRename={startRename}

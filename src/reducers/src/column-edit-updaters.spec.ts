@@ -5,6 +5,7 @@ import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
 import {KeplerTable} from '@kepler.gl/table';
 import SchemaManager, {VisState} from '@kepler.gl/schemas';
+import {drainTasksForTesting, succeedTaskInTest} from '@kepler.gl/tasks';
 
 import visStateReducer from './vis-state';
 import {INITIAL_VIS_STATE} from './vis-state-updaters';
@@ -93,6 +94,10 @@ function withCities(): VisState {
 }
 
 describe('column edits', () => {
+  beforeEach(() => {
+    drainTasksForTesting();
+  });
+
   test('rename changes the field identity stored in layers, filters, and saved maps', () => {
     let state = withCities();
     state.datasets.cities.hiddenColumns = ['region', 'pop'];
@@ -171,6 +176,138 @@ describe('column edits', () => {
     expect(kept.datasets.only.fields.map(field => field.name)).toEqual(['region']);
   });
 
+  test('type change converts values and reconciles incompatible references', () => {
+    let state = withCities();
+    state = reduceVisState(
+      state,
+      VisStateActions.addLayer({
+        id: 'cities-heatmap',
+        type: 'heatmap',
+        config: {
+          dataId: 'cities',
+          label: 'cities heatmap',
+          color: [255, 0, 0],
+          columns: {lat: 'lat', lng: 'lng'},
+          weightField: {name: 'pop', type: 'integer'},
+          textLabel: [{field: {name: 'pop', type: 'integer'}}]
+        }
+      })
+    );
+    state = reduceVisState(
+      state,
+      VisStateActions.changeTableColumnType('cities', 'pop', ALL_FIELD_TYPES.string)
+    );
+
+    const pop = state.datasets.cities.fields.find(field => field.name === 'pop');
+    expect(pop).toMatchObject({type: ALL_FIELD_TYPES.string, analyzerType: 'STRING', format: ''});
+    expect(state.datasets.cities.dataContainer.rowAsArray(0)[3]).toBe('10');
+    expect(state.layers).toHaveLength(2);
+    expect(
+      (state.layers.find(layer => layer.id === 'cities-heatmap')?.config as {weightField?: unknown})
+        .weightField
+    ).toBeNull();
+    expect(
+      state.layers.find(layer => layer.id === 'cities-heatmap')?.config.textLabel[0].field
+    ).toMatchObject({name: 'pop', type: 'string'});
+    expect(state.charts[0].yAxis?.field).toEqual({name: 'pop', type: 'string'});
+  });
+
+  test('type change clears an interval end field that is no longer a timestamp', () => {
+    const events = new KeplerTable({
+      info: {id: 'events', label: 'events', type: 'local'},
+      color: [0, 0, 0]
+    });
+    events.updateSchema({
+      fields: [
+        {name: 'start', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'},
+        {name: 'end', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'},
+        {name: 'value', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [1_700_000_000, 1_700_000_010, 10],
+        [1_700_000_020, 1_700_000_030, 20]
+      ]
+    });
+    let state: VisState = {...INITIAL_VIS_STATE, datasets: {events}};
+    state = reduceVisState(
+      state,
+      VisStateActions.addChart({
+        id: 'events-chart',
+        title: 'Events',
+        type: 'barChart',
+        dataId: 'events',
+        applyFilters: true,
+        display: {},
+        chartDisplay: {},
+        xAxis: {
+          field: {name: 'end', type: 'timestamp'},
+          aggregation: 'timeBin',
+          interval: 'day',
+          title: 'end'
+        },
+        yAxis: {field: {name: 'value', type: 'integer'}, aggregation: 'sum', title: 'value'}
+      })
+    );
+    state = reduceVisState(
+      state,
+      VisStateActions.createOrUpdateFilter(undefined, 'events', 'start')
+    );
+    state = reduceVisState(state, VisStateActions.setFilter(0, 'endName', 'end', 0));
+    state = reduceVisState(
+      state,
+      VisStateActions.setFilterPlot(0, {yAxis: state.datasets.events.fields[2]})
+    );
+    expect(state.filters[0].endName).toEqual(['end']);
+    expect(state.filters[0].yAxis?.name).toBe('value');
+
+    state = reduceVisState(
+      state,
+      VisStateActions.changeTableColumnType('events', 'value', ALL_FIELD_TYPES.string)
+    );
+    expect(state.filters[0].yAxis).toBeNull();
+    expect(state.filters[0].plotType.type).toBe('histogram');
+    expect(state.filters[0].endName).toEqual(['end']);
+    expect(state.charts[0].yAxis).toMatchObject({
+      field: {name: 'value', type: 'string'},
+      aggregation: 'sum'
+    });
+
+    state = reduceVisState(
+      state,
+      VisStateActions.changeTableColumnType('events', 'end', ALL_FIELD_TYPES.string)
+    );
+    expect(state.filters[0].type).toBe('timeRange');
+    expect(state.filters[0].endName).toBeUndefined();
+    expect(state.filters[0].endFieldIdx).toBeUndefined();
+    expect(state.charts[0].xAxis).toMatchObject({
+      field: {name: 'end', type: 'string'},
+      aggregation: 'uniqueBin'
+    });
+    expect(state.charts[0].xAxis?.interval).toBeUndefined();
+  });
+
+  test('invalid type change is atomic and schedules a precise error', () => {
+    const state = withCities();
+    const next = reduceVisState(
+      state,
+      VisStateActions.changeTableColumnType('cities', 'region', ALL_FIELD_TYPES.integer)
+    );
+
+    expect(next.datasets.cities).toBe(state.datasets.cities);
+    expect(next.datasets.cities.fields.find(field => field.name === 'region')?.type).toBe(
+      ALL_FIELD_TYPES.string
+    );
+    expect(next.datasets.cities.dataContainer.rowAsArray(0)[2]).toBe('west');
+
+    const tasks = drainTasksForTesting();
+    expect(tasks).toHaveLength(1);
+    const notification = succeedTaskInTest(tasks[0], undefined);
+    expect(notification.payload.message).toContain(
+      'Cannot change “region” to integer: row 1 value “west” is not a safe integer'
+    );
+    expect(notification.payload.message).toContain('No values were changed.');
+  });
+
   test('duplicate rename and non-tabular datasets are ignored', () => {
     const state = withCities();
     const duplicate = reduceVisState(
@@ -197,6 +334,12 @@ describe('column edits', () => {
     );
     expect(unchanged).toBe(tiled);
     expect(reduceVisState(tiled, VisStateActions.deleteTableColumn('tiles', 'pop'))).toBe(tiled);
+    expect(
+      reduceVisState(
+        tiled,
+        VisStateActions.changeTableColumnType('tiles', 'pop', ALL_FIELD_TYPES.string)
+      )
+    ).toBe(tiled);
   });
 
   test('externally hosted datasets ignore rename and delete', () => {
@@ -217,6 +360,12 @@ describe('column edits', () => {
       reduceVisState(state, VisStateActions.renameTableColumn('remote', 'region', 'area'))
     ).toBe(state);
     expect(reduceVisState(state, VisStateActions.deleteTableColumn('remote', 'pop'))).toBe(state);
+    expect(
+      reduceVisState(
+        state,
+        VisStateActions.changeTableColumnType('remote', 'pop', ALL_FIELD_TYPES.string)
+      )
+    ).toBe(state);
     expect(state.datasets.remote.fields[0].displayName).toBe('Region');
   });
 });
