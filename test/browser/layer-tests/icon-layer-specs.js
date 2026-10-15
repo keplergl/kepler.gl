@@ -9,7 +9,11 @@ import sinonStubPromise from 'sinon-stub-promise';
 import {getDistanceScales} from 'viewport-mercator-project';
 import {copyTableAndUpdate} from '@kepler.gl/table';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
+import {
+  DEFAULT_TEXT_LABEL,
+  GEOCODER_LAYER_ID,
+  PROJECTED_PIXEL_SIZE_MULTIPLIER
+} from '@kepler.gl/constants';
 
 sinonStubPromise(sinon);
 
@@ -74,6 +78,15 @@ test('#IconLayer -> constructor', t => {
   };
 
   testCreateCases(t, IconLayer, TEST_CASES.CREATE);
+  t.end();
+});
+
+test('#IconLayer -> geocoder uses bundled place icon', t => {
+  const layer = new IconLayer({id: GEOCODER_LAYER_ID, dataId: ''});
+
+  t.ok(layer.iconGeometry.place?.length, 'should initialize place geometry synchronously');
+  t.equal(layer.iconGeometryVersion, 1, 'should render the bundled geometry immediately');
+
   t.end();
 });
 

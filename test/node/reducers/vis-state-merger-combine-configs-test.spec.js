@@ -23,7 +23,7 @@ const TEST_CASES = [
           compareMode: true,
           compareType: 'absolute'
         },
-        geocoder: {enabled: true},
+        geocoder: {enabled: true, color: [255, 0, 0]},
         brush: {enabled: true, size: 0.5},
         coordinate: {enabled: false}
       },
@@ -36,7 +36,7 @@ const TEST_CASES = [
           compareMode: true,
           compareType: 'relative'
         },
-        geocoder: {enabled: true},
+        geocoder: {enabled: true, color: [0, 128, 255]},
         brush: {enabled: true, size: 2},
         coordinate: {enabled: false}
       },
@@ -69,7 +69,7 @@ const TEST_CASES = [
         compareMode: true,
         compareType: 'relative'
       },
-      geocoder: {enabled: true, limitSearch: false},
+      geocoder: {enabled: true, limitSearch: false, color: [255, 0, 0]},
       brush: {enabled: true, size: 3},
       coordinate: {enabled: false}
     }

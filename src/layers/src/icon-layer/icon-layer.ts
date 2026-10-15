@@ -15,6 +15,7 @@ import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {getApplicationConfig, DataContainerInterface} from '@kepler.gl/utils';
 import type {SvgIcon} from '@kepler.gl/utils';
+import GEOCODER_PLACE_ICON from './geocoder-icon';
 import {
   ColorRange,
   VisConfigBoolean,
@@ -173,6 +174,11 @@ export default class IconLayer extends Layer {
     this._layerInfoModal = IconInfoModalFactory(props.svgIcons);
     this.iconGeometry = props.iconGeometry || null;
     this.iconGeometryVersion = 0;
+
+    if (props.id === GEOCODER_LAYER_ID) {
+      this.setSvgIcons([GEOCODER_PLACE_ICON]);
+      return;
+    }
 
     if (isTest()) {
       return;

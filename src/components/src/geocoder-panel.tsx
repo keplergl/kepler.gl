@@ -19,6 +19,7 @@ import {
   LayerOrder,
   MapState,
   ProtoDataset,
+  RGBColor,
   UiState,
   Viewport
 } from '@kepler.gl/types';
@@ -37,32 +38,32 @@ type MapViewState = {
 
 import {BaseComponentProps} from './types';
 
-const ICON_LAYER = {
-  id: GEOCODER_LAYER_ID,
-  type: 'icon',
-  config: {
-    label: 'Geocoder Layer',
-    color: GEOCODER_ICON_COLOR,
-    dataId: GEOCODER_DATASET_NAME,
-    columns: {
-      lat: 'lt',
-      lng: 'ln',
-      icon: 'icon',
-      label: 'text'
-    },
-    isVisible: true,
-    hidden: true,
-    visConfig: {
-      radius: GEOCODER_ICON_SIZE
+function generateConfig(color: RGBColor) {
+  const iconLayer = {
+    id: GEOCODER_LAYER_ID,
+    type: 'icon',
+    config: {
+      label: 'Geocoder Layer',
+      color,
+      dataId: GEOCODER_DATASET_NAME,
+      columns: {
+        lat: 'lt',
+        lng: 'ln',
+        icon: 'icon',
+        label: 'text'
+      },
+      isVisible: true,
+      hidden: true,
+      visConfig: {
+        radius: GEOCODER_ICON_SIZE
+      }
     }
-  }
-};
+  };
 
-function generateConfig() {
   return {
     visState: {
-      layers: [ICON_LAYER],
-      layerOrder: [ICON_LAYER.id]
+      layers: [iconLayer],
+      layerOrder: [iconLayer.id]
     }
   };
 }
@@ -146,6 +147,7 @@ interface GeocoderPanelProps {
   updateMap: ActionHandler<typeof updateMap>;
   layerOrder: LayerOrder;
   limitSearch?: boolean;
+  color?: RGBColor;
 
   transitionDuration?: MapViewState['transitionDuration'];
   width?: number;
@@ -163,6 +165,7 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
     removeDataset,
     updateMap,
     limitSearch = false,
+    color = GEOCODER_ICON_COLOR,
     transitionDuration = 3000,
     width,
     className,
@@ -184,7 +187,7 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
         const updateVisDataPayload = getUpdateVisDataPayload(lat, lon, text);
         if (updateVisDataPayload) {
           removeGeocoderDataset();
-          updateVisData(...updateVisDataPayload, generateConfig());
+          updateVisData(...updateVisDataPayload, generateConfig(color));
         }
 
         const bounds = bbox || [
@@ -218,7 +221,7 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
           index
         );
       },
-      [index, mapState, removeGeocoderDataset, transitionDuration, updateMap, updateVisData]
+      [color, index, mapState, removeGeocoderDataset, transitionDuration, updateMap, updateVisData]
     );
 
     return (

@@ -1146,7 +1146,8 @@ ${'```'}
   },
   geocoder: {
     title: 'Enter an address or coordinates, ex 37.79,-122.40',
-    limitSearch: 'Limit Search to Viewport'
+    limitSearch: 'Limit Search to Viewport',
+    pinColor: 'Pin Color'
   },
   fieldSelector: {
     clearAll: 'Clear All',
