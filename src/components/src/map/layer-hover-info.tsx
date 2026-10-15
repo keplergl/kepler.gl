@@ -342,6 +342,10 @@ const CellInfo = ({
 
   const colorMeasure = layer.getVisualChannelDescription('color').measure;
   const sizeMeasure = layer.getVisualChannelDescription('size').measure;
+  const isSizeMeasureDuplicate =
+    colorField?.name === sizeField?.name &&
+    colorMeasure === sizeMeasure &&
+    colorValue === elevationValue;
   return (
     <tbody>
       <Row
@@ -359,7 +363,7 @@ const CellInfo = ({
           isComparing={isComparing}
         />
       ) : null}
-      {sizeField && layer.visualChannels.size && sizeMeasure ? (
+      {sizeField && layer.visualChannels.size && sizeMeasure && !isSizeMeasureDuplicate ? (
         <Row
           name={sizeMeasure}
           key="size"
