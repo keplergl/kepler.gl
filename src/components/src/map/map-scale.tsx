@@ -5,7 +5,7 @@ import distance from '@turf/distance';
 import {range} from 'd3-array';
 import React, {FC, useCallback, useContext, useState} from 'react';
 import styled from 'styled-components';
-import {WebMercatorViewport} from 'viewport-mercator-project';
+import {WebMercatorViewport} from '@math.gl/web-mercator';
 
 import {MapViewStateContext, MapViewStateContextType} from '../map-view-state-context';
 import {getViewportFromMapState, getApplicationConfig} from '@kepler.gl/utils';
