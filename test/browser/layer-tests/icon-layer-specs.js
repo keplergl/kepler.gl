@@ -4,11 +4,13 @@
 import test from 'tape';
 import React from 'react';
 import {mount} from 'enzyme';
+import Window from 'global/window';
 import sinon from 'sinon';
 import sinonStubPromise from 'sinon-stub-promise';
 import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {copyTableAndUpdate} from '@kepler.gl/table';
 import {KeplerGlLayers} from '@kepler.gl/layers';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import {
   DEFAULT_TEXT_LABEL,
   GEOCODER_LAYER_ID,
@@ -55,6 +57,33 @@ const mockSvgIcons = [
   }
 ];
 
+const fallbackPlaceIcon = {
+  id: 'place',
+  mesh: {
+    positions: [
+      [1, 1, 0],
+      [2, 1, 0],
+      [1, 2, 0]
+    ],
+    cells: [[0, 1, 2]]
+  }
+};
+
+const customPlaceIcon = {
+  id: 'place',
+  mesh: {
+    positions: [
+      [10, 10, 0],
+      [20, 10, 0],
+      [10, 20, 0]
+    ],
+    cells: [[0, 1, 2]]
+  }
+};
+
+const fallbackPlaceGeometry = [1, -1, 0, 2, -1, 0, 1, -2, 0];
+const customPlaceGeometry = [10, -10, 0, 20, -10, 0, 10, -20, 0];
+
 test('#IconLayer -> constructor', t => {
   const TEST_CASES = {
     CREATE: [
@@ -86,6 +115,96 @@ test('#IconLayer -> geocoder uses bundled place icon', t => {
 
   t.ok(layer.iconGeometry.place?.length, 'should initialize place geometry synchronously');
   t.equal(layer.iconGeometryVersion, 1, 'should render the bundled geometry immediately');
+
+  t.end();
+});
+
+test('#IconLayer -> geocoder constructor icons override bundled place icon', t => {
+  const layer = new IconLayer({
+    id: GEOCODER_LAYER_ID,
+    dataId: '',
+    svgIcons: [customPlaceIcon]
+  });
+
+  t.deepEqual(
+    layer.iconGeometry.place,
+    customPlaceGeometry,
+    'should use constructor geometry for the place icon'
+  );
+
+  t.end();
+});
+
+test('#IconLayer -> geocoder remote icons override fallback', async t => {
+  const previousConfig = getApplicationConfig();
+  const previousCustomIconUrl = previousConfig.customIconUrl;
+  const previousCustomIcons = previousConfig.customIcons;
+  const customIconUrl = 'https://example.com/custom-icons.json';
+  const fetchStub = sinon.stub(Window, 'fetch').callsFake(url =>
+    Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({svgIcons: url === customIconUrl ? [customPlaceIcon] : []})
+    })
+  );
+
+  try {
+    initApplicationConfig({customIconUrl, customIcons: []});
+    const layer = new IconLayer({id: GEOCODER_LAYER_ID, dataId: ''});
+
+    await layer.getSvgIcons([fallbackPlaceIcon]);
+
+    t.deepEqual(
+      layer.iconGeometry.place,
+      customPlaceGeometry,
+      'should replace fallback geometry with the remote place icon'
+    );
+    t.ok(fetchStub.calledWith(customIconUrl), 'should load the configured remote icons');
+  } finally {
+    fetchStub.restore();
+    initApplicationConfig({
+      customIconUrl: previousCustomIconUrl,
+      customIcons: previousCustomIcons
+    });
+  }
+
+  t.end();
+});
+
+test('#IconLayer -> geocoder keeps fallback when remote icons fail', async t => {
+  const previousConfig = getApplicationConfig();
+  const previousCustomIconUrl = previousConfig.customIconUrl;
+  const previousCustomIcons = previousConfig.customIcons;
+  const customIconUrl = 'https://example.com/unavailable-icons.json';
+  const fetchStub = sinon
+    .stub(Window, 'fetch')
+    .callsFake(url =>
+      Promise.resolve(
+        url === customIconUrl
+          ? {ok: false, status: 500}
+          : {ok: true, json: () => Promise.resolve({svgIcons: []})}
+      )
+    );
+  const consoleErrorStub = sinon.stub(console, 'error');
+
+  try {
+    initApplicationConfig({customIconUrl, customIcons: []});
+    const layer = new IconLayer({id: GEOCODER_LAYER_ID, dataId: ''});
+
+    await layer.getSvgIcons([fallbackPlaceIcon]);
+
+    t.deepEqual(
+      layer.iconGeometry.place,
+      fallbackPlaceGeometry,
+      'should preserve fallback geometry after a remote load failure'
+    );
+  } finally {
+    consoleErrorStub.restore();
+    fetchStub.restore();
+    initApplicationConfig({
+      customIconUrl: previousCustomIconUrl,
+      customIcons: previousCustomIcons
+    });
+  }
 
   t.end();
 });

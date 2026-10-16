@@ -175,9 +175,14 @@ export default class IconLayer extends Layer {
     this.iconGeometry = props.iconGeometry || null;
     this.iconGeometryVersion = 0;
 
-    if (props.id === GEOCODER_LAYER_ID) {
-      this.setSvgIcons([GEOCODER_PLACE_ICON]);
-      return;
+    const fallbackIcons = props.id === GEOCODER_LAYER_ID ? [GEOCODER_PLACE_ICON] : [];
+    if (fallbackIcons.length) {
+      this.setSvgIcons(
+        props.svgIcons ? this.mergeIcons(fallbackIcons, props.svgIcons) : fallbackIcons
+      );
+      if (props.svgIcons) {
+        return;
+      }
     }
 
     if (isTest()) {
@@ -188,7 +193,7 @@ export default class IconLayer extends Layer {
       this.setSvgIcons(props.svgIcons);
     } else {
       // prepare layer info modal and fetch remote svg icons
-      this.getSvgIcons();
+      this.getSvgIcons(fallbackIcons);
     }
   }
 
@@ -248,7 +253,7 @@ export default class IconLayer extends Layer {
     return Math.pow(2, 14 - zoom + zoomOffset);
   }
 
-  getSvgIcons() {
+  getSvgIcons(fallbackIcons: SvgIcon[] = []) {
     const fetchConfig = {
       method: 'GET',
       mode: 'cors',
@@ -292,13 +297,14 @@ export default class IconLayer extends Layer {
             })
         : Promise.resolve([] as SvgIcon[]);
 
-    Promise.all([cdnPromise, customUrlPromise])
+    return Promise.all([cdnPromise, customUrlPromise])
       .then(([cdnIcons, remoteCustomIcons]) => {
-        const mergedCdnAndRemote = this.mergeIcons(cdnIcons, remoteCustomIcons);
+        const iconsWithFallback = this.mergeIcons(fallbackIcons, cdnIcons);
+        const mergedCdnAndRemote = this.mergeIcons(iconsWithFallback, remoteCustomIcons);
         this.setSvgIcons(mergedCdnAndRemote);
       })
       .catch(() => {
-        this.setSvgIcons([]);
+        this.setSvgIcons(fallbackIcons);
       });
   }
 
