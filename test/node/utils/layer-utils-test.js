@@ -882,7 +882,21 @@ test('layerUtils -> findDefaultLayer: TripLayer.1 -> ts as string', async t => {
 });
 
 test('layerUtils -> getLayerHoverProp', t => {
-  const visState = cloneDeep(StateWFiles).visState;
+  const initialVisState = cloneDeep(StateWFiles).visState;
+  const tooltip = initialVisState.interactionConfig.tooltip;
+  const visState = {
+    ...initialVisState,
+    interactionConfig: {
+      ...initialVisState.interactionConfig,
+      tooltip: {
+        ...tooltip,
+        config: {
+          ...tooltip.config,
+          timezone: 'America/Los_Angeles'
+        }
+      }
+    }
+  };
   const layer = visState.layers[0];
   const layerData = visState.layerData[0];
   const layersToRender = {
@@ -919,7 +933,8 @@ test('layerUtils -> getLayerHoverProp', t => {
     fields: expectedDataset.fields,
     fieldsToShow: visState.interactionConfig.tooltip.config.fieldsToShow[layer.config.dataId],
     layer,
-    currentTime: visState.animationConfig.currentTime
+    currentTime: visState.animationConfig.currentTime,
+    timezone: 'America/Los_Angeles'
   };
 
   t.deepEqual(getLayerHoverProp(args), expected, 'should get correct layerHoverProp');

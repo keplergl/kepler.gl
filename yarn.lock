@@ -2015,7 +2015,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.26.10, @babel/runtime@npm:^7.7.2, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.8.7, @babel/runtime@npm:^7.9.2":
+"@babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.26.10, @babel/runtime@npm:^7.7.2, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.8.7, @babel/runtime@npm:^7.9.2":
   version: 7.29.7
   resolution: "@babel/runtime@npm:7.29.7"
   checksum: 10c0/ca11572f7146b21e0bde6a9ed4bb6a89eafbee5f0944c7eb54d0d8a2dac962c33638a1d611e14faa71dfbb92b4b5f9236232208568a6b7d5c6f3f39ddb91771e
@@ -4109,7 +4109,6 @@ __metadata:
     reselect: "npm:^5.0.0"
     styled-components: "npm:6.4.3"
     suncalc: "npm:^1.9.0"
-    viewport-mercator-project: "npm:^6.0.0"
   languageName: unknown
   linkType: soft
 
@@ -4206,7 +4205,6 @@ __metadata:
     global: "npm:^4.3.0"
     pbf: "npm:^3.1.0"
     supercluster: "npm:^7.1.0"
-    viewport-mercator-project: "npm:^6.0.0"
   languageName: unknown
   linkType: soft
 
@@ -4313,7 +4311,6 @@ __metadata:
     s2-geometry: "npm:^1.2.10"
     styled-components: "npm:6.4.3"
     type-analyzer: "npm:0.4.0"
-    viewport-mercator-project: "npm:^6.0.0"
   languageName: unknown
   linkType: soft
 
@@ -4543,6 +4540,7 @@ __metadata:
     "@luma.gl/constants": "npm:^9.3.2"
     "@luma.gl/core": "npm:^9.3.2"
     "@mapbox/geo-viewport": "npm:^0.4.1"
+    "@math.gl/web-mercator": "npm:^4.1.0"
     "@turf/boolean-intersects": "npm:^7.2.0"
     "@turf/boolean-within": "npm:^7.2.0"
     "@turf/helpers": "npm:^7.2.0"
@@ -4568,7 +4566,6 @@ __metadata:
     resize-observer-polyfill: "npm:^1.5.1"
     suncalc: "npm:^1.9.0"
     type-analyzer: "npm:0.4.0"
-    viewport-mercator-project: "npm:^6.0.0"
   languageName: unknown
   linkType: soft
 
@@ -33370,16 +33367,6 @@ __metadata:
     "@types/unist": "npm:^3.0.0"
     vfile-message: "npm:^4.0.0"
   checksum: 10c0/e5d9eb4810623f23758cfc2205323e33552fb5972e5c2e6587babe08fe4d24859866277404fb9e2a20afb71013860d96ec806cb257536ae463c87d70022ab9ef
-  languageName: node
-  linkType: hard
-
-"viewport-mercator-project@npm:^6.0.0":
-  version: 6.2.3
-  resolution: "viewport-mercator-project@npm:6.2.3"
-  dependencies:
-    "@babel/runtime": "npm:^7.0.0"
-    gl-matrix: "npm:^3.0.0"
-  checksum: 10c0/787b02f89d60c4e71fd1faa9391853502339cc65159b7b3a70c4ee79f232187daad24e0e3694dded836cee9a69a19138981735361c50ac4172c15e4100c1891a
   languageName: node
   linkType: hard
 

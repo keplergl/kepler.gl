@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Field, Millisecond} from './types';
+import {Field, Millisecond, RGBColor} from './types';
 import {ColorMap, ColorRange, ColorUI} from './layers';
 import {MapSplitMode, MapViewMode} from '@kepler.gl/constants';
 type MapViewState = {
@@ -420,6 +420,7 @@ export type TooltipInfo = BaseInteraction & {
     fieldsToShow: {
       [key: string]: TooltipField[];
     };
+    timezone?: string | null;
     compareMode: boolean;
     compareType: CompareType;
   };
@@ -429,6 +430,7 @@ export type Geocoder = BaseInteraction & {
   position: number[] | null;
   config: {
     limitSearch: boolean;
+    color: RGBColor;
   };
 };
 export type Brush = BaseInteraction & {
@@ -544,6 +546,8 @@ export declare type ExportImage = {
   legend: boolean;
   /** When true, include the charts panel in the exported image. */
   charts: boolean;
+  /** When true, omit the basemap and preserve transparent pixels in the exported image. */
+  transparentBackground?: boolean;
   mapH: number;
   mapW: number;
   imageSize: {
@@ -582,6 +586,10 @@ export type ExportMap = {
   fileName: string;
   /** When false, dataset access tokens are omitted from exported HTML and JSON. */
   includeLayerApiKeys: boolean;
+  /** Optional application name override for exported HTML and JSON. */
+  appName?: string;
+  /** Optional application website override for exported HTML and JSON. */
+  appWebsite?: string;
 };
 
 export type ExportVideo = {

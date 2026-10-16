@@ -40,6 +40,7 @@ export type SavedInteractionConfig = {
   geocoder: {
     enabled: boolean;
     limitSearch?: boolean;
+    color?: RGBColor;
   };
   brush: InteractionConfig['brush']['config'] & {
     enabled: boolean;
@@ -297,6 +298,9 @@ export type SavedMap = {
     created_at: string;
     title?: string;
     description?: string;
+    source?: string;
+    appName?: string;
+    appWebsite?: string;
   };
 };
 

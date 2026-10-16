@@ -1518,6 +1518,7 @@ export const mergedInteractions = {
     ...defaultInteractionConfig.tooltip,
     enabled: true,
     config: {
+      timezone: null,
       compareMode: false,
       compareType: 'absolute',
       fieldsToShow: {

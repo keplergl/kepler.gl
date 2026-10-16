@@ -166,6 +166,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
   const expectedSaved = {
     tooltip: {
       enabled: true,
+      timezone: null,
       compareMode: false,
       compareType: 'absolute',
       fieldsToShow: {
@@ -224,7 +225,8 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     },
     geocoder: {
       enabled: false,
-      limitSearch: false
+      limitSearch: false,
+      color: [255, 0, 0]
     },
     legend: {
       enabled: false,
@@ -246,7 +248,24 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
 });
 
 test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
-  const initialState = cloneDeep(StateWTooltipFormat);
+  const baseState = cloneDeep(StateWTooltipFormat);
+  const tooltip = baseState.visState.interactionConfig.tooltip;
+  const initialState = {
+    ...baseState,
+    visState: {
+      ...baseState.visState,
+      interactionConfig: {
+        ...baseState.visState.interactionConfig,
+        tooltip: {
+          ...tooltip,
+          config: {
+            ...tooltip.config,
+            timezone: 'America/Guayaquil'
+          }
+        }
+      }
+    }
+  };
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
@@ -256,6 +275,7 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
   const expectedSaved = {
     tooltip: {
       enabled: true,
+      timezone: 'America/Guayaquil',
       compareMode: true,
       compareType: 'relative',
       fieldsToShow: {
@@ -293,7 +313,8 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
     },
     geocoder: {
       enabled: false,
-      limitSearch: false
+      limitSearch: false,
+      color: [255, 0, 0]
     },
     legend: {
       enabled: false,
