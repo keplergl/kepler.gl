@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
-import {getDistanceScales} from 'viewport-mercator-project';
+import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {
   DataContainerInterface,
   ArrowDataContainer,
@@ -19,6 +19,8 @@ export const defaultPadding = 20;
 export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
   return textLabel => {
     const distanceScale = getDistanceScales(mapState);
+    const scale = mapState.scale ?? zoomToScale(mapState.zoom);
+    const pixelsPerMeter = distanceScale.unitsPerMeter[0] * scale;
     const xMult = textLabel.anchor === 'middle' ? 0 : textLabel.anchor === 'start' ? 1 : -1;
     const yMult = textLabel.alignment === 'center' ? 0 : textLabel.alignment === 'bottom' ? 1 : -1;
 
@@ -29,7 +31,7 @@ export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
         ? textLabel.size
         : textLabel.size;
 
-    const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
+    const pixelRadius = radiusScale * pixelsPerMeter;
     const padding = defaultPadding;
 
     return typeof getRadius === 'function'

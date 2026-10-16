@@ -363,7 +363,8 @@ function FileUploadFactory() {
 
     _isValidFileType = filename => {
       const {fileExtensions = []} = this.props;
-      const fileExt = fileExtensions.find(ext => filename.endsWith(ext));
+      const normalizedFilename = filename.toLowerCase();
+      const fileExt = fileExtensions.find(ext => normalizedFilename.endsWith(ext.toLowerCase()));
 
       return Boolean(fileExt);
     };
