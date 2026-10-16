@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, ANIMATION_WINDOW, PLOT_TYPES, SORT_ORDER} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
 import {KeplerTable} from '@kepler.gl/table';
 import SchemaManager, {VisState} from '@kepler.gl/schemas';
@@ -211,6 +211,94 @@ describe('column edits', () => {
       state.layers.find(layer => layer.id === 'cities-heatmap')?.config.textLabel[0].field
     ).toMatchObject({name: 'pop', type: 'string'});
     expect(state.charts[0].yAxis?.field).toEqual({name: 'pop', type: 'string'});
+  });
+
+  test('type change preserves an existing sort on another column', () => {
+    let state = withCities();
+    state = reduceVisState(
+      state,
+      VisStateActions.sortTableColumn('cities', 'region', SORT_ORDER.ASCENDING)
+    );
+    expect(state.datasets.cities.sortColumn).toEqual({region: SORT_ORDER.ASCENDING});
+    expect(state.datasets.cities.sortOrder).toEqual([1, 0]);
+
+    state = reduceVisState(
+      state,
+      VisStateActions.changeTableColumnType('cities', 'pop', ALL_FIELD_TYPES.string)
+    );
+
+    expect(state.datasets.cities.sortColumn).toEqual({region: SORT_ORDER.ASCENDING});
+    expect(state.datasets.cities.sortOrder).toEqual([1, 0]);
+  });
+
+  test('type change clears timeline state when a time filter becomes non-time', () => {
+    const events = new KeplerTable({
+      info: {id: 'events', label: 'events', type: 'local'},
+      color: [0, 0, 0]
+    });
+    events.updateSchema({
+      fields: [
+        {name: 'start', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'DATETIME'},
+        {name: 'amount', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        ['2024-01-01T00:00:00Z', 10],
+        ['2024-01-02T00:00:00Z', 20]
+      ]
+    });
+    let state: VisState = {...INITIAL_VIS_STATE, datasets: {events}};
+    state = reduceVisState(
+      state,
+      VisStateActions.createOrUpdateFilter(undefined, 'events', 'start')
+    );
+    state = {
+      ...state,
+      filters: [
+        {
+          ...(state.filters[0] as TimeRangeFilter),
+          syncedWithLayerTimeline: true,
+          syncTimelineMode: 1 as const,
+          isAnimating: true,
+          animationWindow: ANIMATION_WINDOW.interval,
+          timeBins: {events: {day: []}},
+          lineChart: {
+            series: [],
+            yDomain: [0, 1],
+            xDomain: [0, 1],
+            aggregation: 'sum',
+            interval: 'day',
+            yAxis: 'amount'
+          },
+          timezone: 'UTC',
+          invertTrendColor: true,
+          showTimeDisplay: true,
+          yAxis: state.datasets.events.fields[1],
+          plotType: {type: PLOT_TYPES.lineChart, interval: 'day', aggregation: 'sum'}
+        }
+      ]
+    };
+
+    state = reduceVisState(
+      state,
+      VisStateActions.changeTableColumnType('events', 'start', ALL_FIELD_TYPES.string)
+    );
+
+    const filter = state.filters[0];
+    expect(filter.type).toBe('multiSelect');
+    expect(filter).not.toHaveProperty('syncedWithLayerTimeline');
+    expect(filter).not.toHaveProperty('syncTimelineMode');
+    expect(filter).not.toHaveProperty('timeBins');
+    expect(filter).not.toHaveProperty('lineChart');
+    expect(filter).not.toHaveProperty('timezone');
+    expect(filter).not.toHaveProperty('invertTrendColor');
+    expect(filter).not.toHaveProperty('showTimeDisplay');
+    expect(filter).toMatchObject({
+      fixedDomain: false,
+      isAnimating: false,
+      animationWindow: ANIMATION_WINDOW.free,
+      yAxis: null,
+      plotType: {type: PLOT_TYPES.histogram}
+    });
   });
 
   test('type change detaches an incompatible synced filter member and refilters its dataset', () => {

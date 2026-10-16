@@ -4450,6 +4450,37 @@ function reconcileLayerWithNewSchema(
 
 const FILTER_PLOT_Y_AXIS_TYPES = new Set<string>([ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real]);
 
+type TimelineFilterState = Filter & {
+  syncedWithLayerTimeline?: boolean;
+  syncTimelineMode?: number;
+  timeBins?: unknown;
+  timezone?: string | null;
+  invertTrendColor?: boolean;
+  showTimeDisplay?: boolean;
+};
+
+function clearTimelineFilterState(filter: Filter): Filter {
+  const {
+    syncedWithLayerTimeline: _syncedWithLayerTimeline,
+    syncTimelineMode: _syncTimelineMode,
+    timeBins: _timeBins,
+    lineChart: _lineChart,
+    timezone: _timezone,
+    invertTrendColor: _invertTrendColor,
+    showTimeDisplay: _showTimeDisplay,
+    ...rest
+  } = filter as TimelineFilterState;
+
+  return {
+    ...rest,
+    fixedDomain: false,
+    isAnimating: false,
+    animationWindow: ANIMATION_WINDOW.free,
+    yAxis: null,
+    plotType: {type: PLOT_TYPES.histogram}
+  } as Filter;
+}
+
 /**
  * Update an existing dataset's schema (columns/fields) in place and reconcile
  * everything that referenced the old columns: filters, layers, tooltip fields,
@@ -4480,6 +4511,7 @@ export function updateDatasetUpdater(
 
   // 1. rebuild the table schema in place (same id/label/color/metadata)
   const newTable = copyTableAndUpdate(existing, {});
+  const [sortedColumn, sortMode] = Object.entries(existing.sortColumn || {})[0] || [];
   newTable.updateSchema(data);
 
   // The data container is rebuilt unsorted and unfiltered; reset the table's
@@ -4495,6 +4527,10 @@ export function updateDatasetUpdater(
   newTable.hiddenColumns = (existing.hiddenColumns || [])
     .map(name => renames[name] ?? name)
     .filter(name => newFieldsByName.has(name));
+  const nextSortedColumn = sortedColumn ? renames[sortedColumn] ?? sortedColumn : null;
+  if (nextSortedColumn && sortMode && newFieldsByName.has(nextSortedColumn)) {
+    sortDatasetByColumn(newTable, nextSortedColumn, sortMode);
+  }
 
   const newDatasets = {...state.datasets, [dataId]: newTable};
   const datasetIdsToRefilter = new Set<string>([dataId]);
@@ -4531,6 +4567,8 @@ export function updateDatasetUpdater(
       if (!updated) {
         return null;
       }
+      const leavingTimeFilter =
+        filter.type === FILTER_TYPES.timeRange && updated.type !== FILTER_TYPES.timeRange;
 
       const oldEndName = toArray((filter as TimeRangeFilter).endName)[vi];
       if (updated.type === FILTER_TYPES.timeRange && oldEndName) {
@@ -4553,7 +4591,7 @@ export function updateDatasetUpdater(
         yAxis = yAxisField && FILTER_PLOT_Y_AXIS_TYPES.has(yAxisField.type) ? yAxisField : null;
       }
 
-      const nextFilter = {
+      let nextFilter = {
         ...updated,
         yAxis,
         ...(updated.yAxis && !yAxis
@@ -4563,6 +4601,9 @@ export function updateDatasetUpdater(
         // resetting it to the full range
         value: adjustValueToFilterDomain(filter.value, updated)
       };
+      if (leavingTimeFilter) {
+        nextFilter = clearTimelineFilterState(nextFilter);
+      }
       return updateFilterPlot(newDatasets, nextFilter, dataId, state.layers);
     })
     .filter(Boolean) as Filter[];
