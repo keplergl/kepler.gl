@@ -6,7 +6,7 @@ import React from 'react';
 import {mount} from 'enzyme';
 import sinon from 'sinon';
 import sinonStubPromise from 'sinon-stub-promise';
-import {getDistanceScales} from 'viewport-mercator-project';
+import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {copyTableAndUpdate} from '@kepler.gl/table';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {
@@ -454,7 +454,8 @@ test('#IconLayer -> renderLayer', t => {
 
         const distanceScale = getDistanceScales(INITIAL_MAP_STATE);
         const radiusScale = layer.getRadiusScaleByZoom(INITIAL_MAP_STATE);
-        const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
+        const pixelRadius =
+          radiusScale * distanceScale.unitsPerMeter[0] * zoomToScale(INITIAL_MAP_STATE.zoom);
 
         const padding = 20;
 

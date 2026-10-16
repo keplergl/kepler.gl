@@ -87,6 +87,9 @@ export type SavedMap = {
     created_at: string;
     title?: string;
     description?: string;
+    source?: string;
+    appName?: string;
+    appWebsite?: string;
   };
 };
 

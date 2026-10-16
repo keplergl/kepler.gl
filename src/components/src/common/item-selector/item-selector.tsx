@@ -100,6 +100,8 @@ export type ItemSelectorProps<Option> = {
   onBlur?: () => void;
   placeholder?: string;
   closeOnSelect?: boolean;
+  /** Remove a selected option when it is chosen again. */
+  toggleSelectedOptions?: boolean;
   /**
    * Paint a spinner over the open list before `onChange`. Used when the
    * change parses a large dataset and would freeze the open selector.
@@ -125,6 +127,7 @@ class ItemSelectorUnmemoized extends Component<
     multiSelect: true,
     placeholder: 'placeholder.enterValue',
     closeOnSelect: true,
+    toggleSelectedOptions: false,
     searchable: true,
     DropDownRenderComponent: DropdownList,
     DropDownLineItemRenderComponent: ListItem,
@@ -222,9 +225,16 @@ class ItemSelectorUnmemoized extends Component<
     );
 
     const previousSelected = toArray(this.props.selectedItems);
+    const itemValue = item == null ? item : getValue(item);
+    const selectedIndex =
+      item != null && this.props.toggleSelectedOptions
+        ? previousSelected.findIndex(selectedItem => getValue(selectedItem) === itemValue)
+        : -1;
     const nextValue = this.props.multiSelect
-      ? uniqBy(previousSelected.concat(toArray(item)), getValue)
-      : getValue(item);
+      ? selectedIndex >= 0
+        ? previousSelected.filter((_, index) => index !== selectedIndex)
+        : uniqBy(previousSelected.concat(toArray(item)), getValue)
+      : itemValue;
 
     const apply = () => {
       this.props.onChange(nextValue);

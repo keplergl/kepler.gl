@@ -875,6 +875,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
       ...defaultInteractionConfig.tooltip,
       enabled: true,
       config: {
+        timezone: null,
         compareMode: false,
         compareType: 'absolute',
         fieldsToShow: {
@@ -1016,6 +1017,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
             ...defaultInteractionConfig.tooltip,
             enabled: false,
             config: {
+              timezone: null,
               fieldsToShow: {},
               compareMode: false,
               compareType: 'absolute'
@@ -1046,6 +1048,55 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
   // test parsed interactions
   t.deepEqual(stateWData.interactionConfig, MergedInteractionV1, 'should merge interactionConfig');
   t.deepEqual(stateWData.interactionToBeMerged, {}, 'should clear interaction');
+
+  t.end();
+});
+
+test('VisStateMerger -> mergeInteractions -> tooltip timezone', t => {
+  const initialVisState = cloneDeep(InitialState.visState);
+  const tooltip = initialVisState.interactionConfig.tooltip;
+  const oldVisState = {
+    ...initialVisState,
+    interactionConfig: {
+      ...initialVisState.interactionConfig,
+      tooltip: {
+        ...tooltip,
+        config: {
+          ...tooltip.config,
+          timezone: 'America/New_York'
+        }
+      }
+    }
+  };
+
+  const mergedWithTimezone = mergeInteractions(oldVisState, {
+    tooltip: {
+      enabled: true,
+      fieldsToShow: {},
+      timezone: 'America/Guayaquil',
+      compareMode: false,
+      compareType: 'absolute'
+    }
+  });
+  t.equal(
+    mergedWithTimezone.interactionConfig.tooltip.config.timezone,
+    'America/Guayaquil',
+    'should hydrate a saved tooltip timezone'
+  );
+
+  const mergedWithoutTimezone = mergeInteractions(oldVisState, {
+    tooltip: {
+      enabled: true,
+      fieldsToShow: {},
+      compareMode: false,
+      compareType: 'absolute'
+    }
+  });
+  t.equal(
+    mergedWithoutTimezone.interactionConfig.tooltip.config.timezone,
+    'America/New_York',
+    'should preserve the current tooltip timezone when an older config omits it'
+  );
 
   t.end();
 });
@@ -1100,6 +1151,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
             ...defaultInteractionConfig.tooltip,
             enabled: false,
             config: {
+              timezone: null,
               compareMode: false,
               compareType: 'absolute',
               fieldsToShow: {
@@ -1184,6 +1236,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
       ...defaultInteractionConfig.tooltip,
       enabled: false,
       config: {
+        timezone: null,
         compareMode: false,
         compareType: 'absolute',
         fieldsToShow: {
@@ -1326,6 +1379,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
       ...defaultInteractionConfig.tooltip,
       enabled: false,
       config: {
+        timezone: null,
         compareMode: false,
         compareType: 'absolute',
         fieldsToShow: {

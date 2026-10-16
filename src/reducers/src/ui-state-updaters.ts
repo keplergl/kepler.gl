@@ -142,6 +142,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = {
  * @property resolution Default: `'ONE_X'`,
  * @property legend Default: `false`,
  * @property charts Default: `false`,
+ * @property transparentBackground Default: `false`,
  * @property mapH Default: 0,
  * @property mapW Default: 0,
  * @property imageSize Default: {zoomOffset: 0, scale: 1, imageW: 0, imageH: 0},
@@ -158,6 +159,7 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   resolution: RESOLUTIONS.ONE_X,
   legend: false,
   charts: false,
+  transparentBackground: false,
   mapH: 0,
   mapW: 0,
   imageSize: {
@@ -859,6 +861,24 @@ export const setExportMapHTMLModeUpdater = (
       ...state.exportMap[EXPORT_MAP_FORMATS.HTML],
       mode
     }
+  }
+});
+
+/**
+ * Set application branding overrides for exported maps.
+ * @param state - `uiState`
+ * @param action
+ * @param action.payload application name and/or website overrides
+ * @return nextState
+ */
+export const setExportMapBrandingUpdater = (
+  state: UiState,
+  {payload}: UIStateActions.SetExportMapBrandingUpdaterAction
+): UiState => ({
+  ...state,
+  exportMap: {
+    ...state.exportMap,
+    ...payload
   }
 });
 

@@ -185,8 +185,9 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
 
   _onClick(result, event) {
     event.preventDefault();
-    // only work when left is clicked
-    if ((event.type === 'mousedown' && event.button === LEFT_BUTTON) || event.type === 'click') {
+    const isPrimaryMouseDown = event.type === 'mousedown' && event.button === LEFT_BUTTON;
+    const isClickOnlyActivation = event.type === 'click' && !event.detail;
+    if (isPrimaryMouseDown || isClickOnlyActivation) {
       this.props.onOptionSelected?.(result, event);
     }
   }
@@ -207,8 +208,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
 
     const valueOffset = Array.isArray(fixedOptions) ? fixedOptions.length : 0;
 
-    // For some reason onClick is not fired when clicked on an option
-    // onMouseDown is used here as a workaround of #205 and other
+    // onMouseDown works around #205; onClick handles non-pointer activation.
     return (
       <DropdownListWrapper
         className={classNames(classList.list, this.props.customClasses?.results)}

@@ -261,7 +261,7 @@ export type SetExportImageSettingUpdaterAction = {
   payload: Partial<ExportImage>;
 };
 /**
- * Set `exportImage` settings: ratio, resolution, legend, charts
+ * Set `exportImage` settings: ratio, resolution, legend, charts, transparent background
  * @memberof uiStateActions
  * @param newSetting - {ratio: '1x'}
  * @public
@@ -285,6 +285,7 @@ export const startExportingImage: (options?: {
   ratio?: string;
   resolution?: string;
   legend?: string;
+  transparentBackground?: boolean;
   center?: boolean;
 }) => Merge<SetExportImageSettingUpdaterAction, {type: typeof ActionTypes.START_EXPORTING_IMAGE}> =
   createAction(ActionTypes.START_EXPORTING_IMAGE, (payload: any) => ({payload}));
@@ -473,6 +474,26 @@ export const setExportHTMLMapMode: (
   createAction(
     ActionTypes.SET_EXPORT_MAP_HTML_MODE,
     (payload: SetExportHTMLMapModeUpdaterAction['payload']) => ({payload})
+  );
+
+/** SET_EXPORT_MAP_BRANDING */
+export type SetExportMapBrandingUpdaterAction = {
+  payload: {
+    appName?: string;
+    appWebsite?: string;
+  };
+};
+/**
+ * Set application branding overrides for exported maps
+ * @memberOf uiStateActions
+ * @param payload - application name and/or website overrides
+ */
+export const setExportMapBranding: (
+  payload: SetExportMapBrandingUpdaterAction['payload']
+) => Merge<SetExportMapBrandingUpdaterAction, {type: typeof ActionTypes.SET_EXPORT_MAP_BRANDING}> =
+  createAction(
+    ActionTypes.SET_EXPORT_MAP_BRANDING,
+    (payload: SetExportMapBrandingUpdaterAction['payload']) => ({payload})
   );
 
 /** SET_EXPORT_MAP_FILE_NAME */

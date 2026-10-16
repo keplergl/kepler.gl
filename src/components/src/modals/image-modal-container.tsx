@@ -42,7 +42,8 @@ const ImageModalContainer: React.FC<ImageModalContainerProps> = ({
           mapH: get(provider, ['thumbnail', 'height']) || MAP_THUMBNAIL_DIMENSION.height,
           ratio: EXPORT_IMG_RATIOS.CUSTOM,
           legend: false,
-          charts: false
+          charts: false,
+          transparentBackground: false
         });
       }
     } else {
@@ -51,7 +52,8 @@ const ImageModalContainer: React.FC<ImageModalContainerProps> = ({
         mapH: MAP_THUMBNAIL_DIMENSION.height,
         ratio: EXPORT_IMG_RATIOS.CUSTOM,
         legend: false,
-        charts: false
+        charts: false,
+        transparentBackground: false
       });
     }
   }, [provider, onUpdateImageSetting]);

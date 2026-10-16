@@ -49,21 +49,18 @@ test('Utils -> mergePolygonLayerIndexes', t => {
   t.end();
 });
 
-function mockGpuPlotDataset(rows) {
+function mockGpuPlotDataset(rows, fieldNames = ['colA', 'colB']) {
   return {
     id: 'dsA',
     filteredIndex: rows.map((_, i) => i),
     filteredIndexByLayer: {},
     dataContainer: {},
     gpuFilter: {
-      filterRange: [
-        [0, 10],
-        [0, 10]
-      ],
-      filterValueUpdateTriggers: {
-        gpu0: {name: 'colA'},
-        gpu1: {name: 'colB'}
-      },
+      filterRange: fieldNames.map(() => [0, 10]),
+      filterValueUpdateTriggers: fieldNames.reduce(
+        (triggers, name, index) => ({...triggers, [`gpu${index}`]: {name}}),
+        {}
+      ),
       filterValueAccessor:
         () =>
         () =>
@@ -107,6 +104,45 @@ test('Utils -> runGpuFilterForPlot applies polygon layer indexes', t => {
   t.end();
 });
 
+test('Utils -> runGpuFilterForPlot skips the plotted filter GPU channels', t => {
+  // Channels 0 and 1 belong to the plotted interval filter. Channel 2 belongs
+  // to a sibling filter that deliberately uses the same start field name.
+  const dataset = mockGpuPlotDataset(
+    [
+      [5, 5, 5],
+      [5, 100, 5],
+      [100, 5, 100],
+      [100, 100, 5]
+    ],
+    ['start', 'end', 'start']
+  );
+
+  t.deepEqual(
+    runGpuFilterForPlot(dataset, {
+      gpu: true,
+      dataId: ['dsA'],
+      name: ['start'],
+      endName: ['end'],
+      gpuChannel: [0],
+      gpuEndChannel: [1]
+    }),
+    [0, 1, 3],
+    'should skip both own interval channels and still apply a same-field sibling channel'
+  );
+
+  t.deepEqual(
+    runGpuFilterForPlot(mockGpuPlotDataset([[5], [100]], ['start']), {
+      gpu: false,
+      dataId: ['dsA'],
+      name: ['start']
+    }),
+    [0],
+    'should apply a same-field GPU sibling when the plotted filter runs on the CPU'
+  );
+
+  t.end();
+});
+
 test('Utils -> runGpuFilterForPlot skips only this dataset column on multi-dataset filters', t => {
   // GPU channel 0 = colA, channel 1 = colB. Range [0, 10] on both.
   // Row 0: both in range. Row 1: colB out. Row 2: colA out. Row 3: both out.
@@ -116,6 +152,17 @@ test('Utils -> runGpuFilterForPlot skips only this dataset column on multi-datas
     [100, 5],
     [100, 100]
   ]);
+
+  t.deepEqual(
+    runGpuFilterForPlot(dataset, {
+      gpu: true,
+      dataId: ['dsB', 'dsA'],
+      name: ['colB', 'colA'],
+      gpuChannel: [3, 0]
+    }),
+    [0, 2],
+    'should use the channel paired with the current dataset in a multi-dataset filter'
+  );
 
   t.deepEqual(
     runGpuFilterForPlot(dataset, {
