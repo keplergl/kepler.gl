@@ -4481,6 +4481,39 @@ function clearTimelineFilterState(filter: Filter): Filter {
   } as Filter;
 }
 
+function reconcileTimelinePlotAfterPrimaryRemoval(
+  filter: Filter,
+  datasets: VisState['datasets'],
+  layers: VisState['layers']
+): Filter {
+  if (filter.type !== FILTER_TYPES.timeRange) {
+    return filter;
+  }
+
+  const primaryDataset = datasets[filter.dataId[0]];
+  const yAxis = filter.yAxis?.name
+    ? primaryDataset?.fields.find(
+        field => field.name === filter.yAxis?.name && FILTER_PLOT_Y_AXIS_TYPES.has(field.type)
+      ) ?? null
+    : null;
+  const groupByFieldName = filter.plotType?.groupBy?.fieldName;
+  const hasGroupByField = groupByFieldName
+    ? primaryDataset?.fields.some(field => field.name === groupByFieldName)
+    : true;
+  const plotType = {
+    ...filter.plotType,
+    ...(filter.yAxis && !yAxis ? {type: PLOT_TYPES.histogram} : {}),
+    ...(!hasGroupByField ? {groupBy: null} : {})
+  };
+
+  return updateFilterPlot(
+    datasets,
+    {...filter, yAxis, plotType, lineChart: undefined},
+    undefined,
+    layers
+  );
+}
+
 /**
  * Update an existing dataset's schema (columns/fields) in place and reconcile
  * everything that referenced the old columns: filters, layers, tooltip fields,
@@ -4513,6 +4546,7 @@ export function updateDatasetUpdater(
   const newTable = copyTableAndUpdate(existing, {});
   const [sortedColumn, sortMode] = Object.entries(existing.sortColumn || {})[0] || [];
   newTable.updateSchema(data);
+  newTable.dataRevision = existing.dataRevision + 1;
 
   // The data container is rebuilt unsorted and unfiltered; reset the table's
   // view state that indexes into the old container.
@@ -4543,21 +4577,35 @@ export function updateDatasetUpdater(
         return filter;
       }
 
+      // Polygon filters target layers rather than dataset fields, so a column
+      // type change should not reconcile them against the field list.
+      if (filter.type === FILTER_TYPES.polygon) {
+        return filter;
+      }
+
       const oldName = filter.name[vi];
       const newName = renames[oldName] ?? oldName;
       const fieldIdx = newTable.getColumnFieldIdx(newName);
 
       if (fieldIdx === -1) {
         // column is gone: drop a single-dataset filter, splice it out of a synced one
-        return filter.dataId.length === 1
-          ? null
-          : _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
+        if (filter.dataId.length === 1) {
+          return null;
+        }
+        filter.dataId.forEach(id => datasetIdsToRefilter.add(id));
+        const detachedFilter = _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
+        return vi === 0
+          ? reconcileTimelinePlotAfterPrimaryRemoval(detachedFilter, newDatasets, state.layers)
+          : detachedFilter;
       }
 
       const nextFilterType = newTable.getColumnFilterProps(newName)?.type;
       if (filter.dataId.length > 1 && nextFilterType && nextFilterType !== filter.type) {
         filter.dataId.forEach(id => datasetIdsToRefilter.add(id));
-        return _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
+        const detachedFilter = _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
+        return vi === 0
+          ? reconcileTimelinePlotAfterPrimaryRemoval(detachedFilter, newDatasets, state.layers)
+          : detachedFilter;
       }
 
       // column present (possibly renamed): re-resolve name/fieldIdx/domain
@@ -4603,25 +4651,16 @@ export function updateDatasetUpdater(
       };
       if (leavingTimeFilter) {
         nextFilter = clearTimelineFilterState(nextFilter);
+      } else if (vi === 0 && nextFilter.type === FILTER_TYPES.timeRange) {
+        // Timeline bins can remain identical while y-axis or group-by values
+        // change, so do not reuse the old series cache after a data rebuild.
+        nextFilter = {...nextFilter, lineChart: undefined};
       }
       return updateFilterPlot(newDatasets, nextFilter, dataId, state.layers);
     })
     .filter(Boolean) as Filter[];
 
-  // reassign GPU channels now that the filter list is settled
-  newFilters = newFilters.map(filter =>
-    filter.gpu ? assignGpuChannel(setFilterGpuMode(filter, newFilters), newFilters) : filter
-  );
-
-  // 3. rebuild the table's filter state (gpuFilter / filterRecord / filteredIndex)
-  const filteredDatasets = applyFiltersToDatasets(
-    Array.from(datasetIdsToRefilter),
-    newDatasets,
-    newFilters,
-    state.layers
-  );
-
-  // 4. reconcile layers
+  // 3. reconcile layers
   const layersToRemove: string[] = [];
   const newLayers = state.layers.map(layer => {
     if (layer.config.dataId !== dataId) {
@@ -4634,6 +4673,38 @@ export function updateDatasetUpdater(
     layersToRemove.push(layer.id);
     return layer; // placeholder, dropped via removeLayerUpdater below
   });
+
+  // Polygon filters reference layers, not fields. Preserve them for schema
+  // edits that keep their target layers, but remove invalid targets before
+  // rebuilding filter records when a required layer column was deleted.
+  const removedLayerIds = new Set(layersToRemove);
+  if (removedLayerIds.size) {
+    newFilters = newFilters.flatMap(filter => {
+      if (
+        filter.type !== FILTER_TYPES.polygon ||
+        !filter.layerId?.some(id => removedLayerIds.has(id))
+      ) {
+        return [filter];
+      }
+      filter.dataId.forEach(id => datasetIdsToRefilter.add(id));
+      const layerId = filter.layerId.filter(id => !removedLayerIds.has(id));
+      return layerId.length ? [{...filter, layerId}] : [];
+    });
+  }
+
+  // Reassign GPU channels now that the filter list is settled.
+  newFilters = newFilters.map(filter =>
+    filter.gpu ? assignGpuChannel(setFilterGpuMode(filter, newFilters), newFilters) : filter
+  );
+
+  // 4. rebuild the table's filter state using only layers that will survive
+  const survivingLayers = newLayers.filter(layer => !removedLayerIds.has(layer.id));
+  const filteredDatasets = applyFiltersToDatasets(
+    Array.from(datasetIdsToRefilter),
+    newDatasets,
+    newFilters,
+    survivingLayers
+  );
 
   // 5. reconcile tooltip fieldsToShow
   let interactionConfig = state.interactionConfig;
@@ -4667,6 +4738,10 @@ export function updateDatasetUpdater(
 
   // 6. drop layers that lost their required columns
   nextState = layersToRemove.reduce((accu, id) => removeLayerUpdater(accu, {id}), nextState);
+
+  // Filtering and polygon-layer removal can change the rows behind timeline
+  // plots, so rebuild their cached bins/series from the reconciled state.
+  nextState = updateFilterPlotsAfterFiltering(nextState, Array.from(datasetIdsToRefilter));
 
   // 7. recompute layer domains + data for the updated dataset
   nextState = updateAllLayerDomainData(nextState, dataId);
@@ -6044,8 +6119,16 @@ export function loadColumnStatsUpdater(
 
   const tasks = fieldsToLoad.map(f =>
     LOAD_COLUMN_STATS_TASK({dataset: newDataset, field: f}).bimap(
-      ({result, filterProps}) => loadColumnStatsSuccess(newDataset.id, f.name, result, filterProps),
-      (error: Error) => loadColumnStatsError(newDataset.id, f.name, error)
+      ({result, filterProps}) =>
+        loadColumnStatsSuccess(newDataset.id, f.name, result, filterProps, {
+          dataRevision: newDataset.dataRevision,
+          fieldType: f.type
+        }),
+      (error: Error) =>
+        loadColumnStatsError(newDataset.id, f.name, error, {
+          dataRevision: newDataset.dataRevision,
+          fieldType: f.type
+        })
     )
   );
   const nextState = pick_('datasets')(merge_({[dataId]: newDataset}))(state);
@@ -6060,11 +6143,23 @@ export function loadColumnStatsUpdater(
  */
 export function loadColumnStatsSuccessUpdater(
   state: VisState,
-  {result, filterProps, dataId, fieldName}: VisStateActions.LoadColumnStatsSuccessUpdaterAction
+  {
+    result,
+    filterProps,
+    dataId,
+    fieldName,
+    dataRevision,
+    fieldType
+  }: VisStateActions.LoadColumnStatsSuccessUpdaterAction
 ): VisState {
   const dataset = state.datasets[dataId];
   const field = (dataset?.fields || []).find(f => f.name === fieldName);
-  if (!dataset || !field) {
+  if (
+    !dataset ||
+    !field ||
+    (dataRevision !== undefined && dataset.dataRevision !== dataRevision) ||
+    (fieldType !== undefined && field.type !== fieldType)
+  ) {
     return state;
   }
 
@@ -6086,14 +6181,25 @@ export function loadColumnStatsSuccessUpdater(
  */
 export function loadColumnStatsErrorUpdater(
   state: VisState,
-  {error, dataId, fieldName}: VisStateActions.LoadColumnStatsErrorUpdaterAction
+  {
+    error,
+    dataId,
+    fieldName,
+    dataRevision,
+    fieldType
+  }: VisStateActions.LoadColumnStatsErrorUpdaterAction
 ): VisState {
-  Console.error(error);
   const dataset = state.datasets[dataId];
   const field = (dataset?.fields || []).find(f => f.name === fieldName);
-  if (!dataset || !field) {
+  if (
+    !dataset ||
+    !field ||
+    (dataRevision !== undefined && dataset.dataRevision !== dataRevision) ||
+    (fieldType !== undefined && field.type !== fieldType)
+  ) {
     return state;
   }
+  Console.error(error);
   const newFields = dataset.fields.map(f =>
     f.name === fieldName ? {...f, isLoadingStats: false} : f
   );

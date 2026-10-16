@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ALL_FIELD_TYPES, ANIMATION_WINDOW, PLOT_TYPES, SORT_ORDER} from '@kepler.gl/constants';
+import {
+  ALL_FIELD_TYPES,
+  ANIMATION_WINDOW,
+  FILTER_TYPES,
+  PLOT_TYPES,
+  SORT_ORDER
+} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
 import {KeplerTable} from '@kepler.gl/table';
 import SchemaManager, {VisState} from '@kepler.gl/schemas';
 import {drainTasksForTesting, succeedTaskInTest} from '@kepler.gl/tasks';
-import type {TimeRangeFilter} from '@kepler.gl/types';
+import type {PolygonFilter, TimeRangeFilter} from '@kepler.gl/types';
 
 import visStateReducer from './vis-state';
 import {INITIAL_VIS_STATE} from './vis-state-updaters';
@@ -213,6 +219,62 @@ describe('column edits', () => {
     expect(state.charts[0].yAxis?.field).toEqual({name: 'pop', type: 'string'});
   });
 
+  test('type change preserves polygon filters targeting the dataset', () => {
+    let state = withCities();
+    const polygonFilter: PolygonFilter = {
+      id: 'polygon-filter',
+      dataId: ['cities'],
+      enabled: true,
+      fixedDomain: true,
+      view: 'side',
+      isAnimating: false,
+      speed: 1,
+      name: [],
+      type: FILTER_TYPES.polygon,
+      fieldIdx: [],
+      domain: null,
+      value: {
+        type: 'Feature',
+        id: 'polygon-selection',
+        properties: {filterId: 'polygon-filter'},
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-123, 37],
+              [-122, 37],
+              [-122, 38],
+              [-123, 37]
+            ]
+          ]
+        }
+      },
+      plotType: {type: PLOT_TYPES.histogram},
+      yAxis: null,
+      layerId: ['cities-layer'],
+      gpu: false
+    };
+
+    state = {...state, filters: [...state.filters, polygonFilter]};
+    state = reduceVisState(
+      state,
+      VisStateActions.changeTableColumnType('cities', 'pop', ALL_FIELD_TYPES.string)
+    );
+
+    expect(state.filters.find(filter => filter.id === polygonFilter.id)).toBe(polygonFilter);
+
+    state = reduceVisState(state, VisStateActions.deleteTableColumn('cities', 'lat'));
+
+    expect(state.layers).toHaveLength(0);
+    expect(state.filters.find(filter => filter.id === polygonFilter.id)).toBeUndefined();
+    expect(state.datasets.cities.filterRecord?.gpu).not.toContainEqual(
+      expect.objectContaining({id: polygonFilter.id})
+    );
+    expect(state.datasets.cities.filterRecord?.cpu).not.toContainEqual(
+      expect.objectContaining({id: polygonFilter.id})
+    );
+  });
+
   test('type change preserves an existing sort on another column', () => {
     let state = withCities();
     state = reduceVisState(
@@ -391,6 +453,100 @@ describe('column edits', () => {
     expect(state.filters[0].plotType.type).toBe('lineChart');
   });
 
+  test('detaching a synced primary dataset rebuilds the plot for the new primary', () => {
+    const primary = new KeplerTable({
+      info: {id: 'primary', label: 'primary', type: 'local'},
+      color: [0, 0, 0]
+    });
+    primary.updateSchema({
+      fields: [
+        {name: 'start', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'},
+        {name: 'amount', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [1_700_000_000, 10],
+        [1_700_000_020, 20]
+      ]
+    });
+    const secondary = new KeplerTable({
+      info: {id: 'secondary', label: 'secondary', type: 'local'},
+      color: [0, 0, 0]
+    });
+    secondary.updateSchema({
+      fields: [{name: 'start', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'}],
+      rows: [[1_700_000_040], [1_700_000_060]]
+    });
+    let state: VisState = {...INITIAL_VIS_STATE, datasets: {primary, secondary}};
+    state = reduceVisState(
+      state,
+      VisStateActions.createOrUpdateFilter(undefined, 'primary', 'start')
+    );
+    state = reduceVisState(
+      state,
+      VisStateActions.setFilter(0, ['dataId', 'name'], ['secondary', 'start'], 1)
+    );
+    state = reduceVisState(
+      state,
+      VisStateActions.setFilterPlot(0, {yAxis: state.datasets.primary.fields[1]})
+    );
+    expect(state.filters[0].lineChart).toBeDefined();
+
+    state = reduceVisState(
+      state,
+      VisStateActions.changeTableColumnType('primary', 'start', ALL_FIELD_TYPES.string)
+    );
+
+    expect(state.filters[0].dataId).toEqual(['secondary']);
+    expect(state.filters[0].name).toEqual(['start']);
+    expect(state.filters[0].type).toBe('timeRange');
+    expect(state.filters[0].yAxis).toBeNull();
+    expect(state.filters[0].plotType.type).toBe('histogram');
+    expect(state.filters[0].lineChart).toBeUndefined();
+  });
+
+  test('type change rebuilds grouped timeline series when group values collapse', () => {
+    const events = new KeplerTable({
+      info: {id: 'events', label: 'events', type: 'local'},
+      color: [0, 0, 0]
+    });
+    events.updateSchema({
+      fields: [
+        {name: 'start', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'},
+        {name: 'group', type: ALL_FIELD_TYPES.string},
+        {name: 'amount', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [1_700_000_000, '01', 10],
+        [1_700_000_020, '1', 20]
+      ]
+    });
+    let state: VisState = {...INITIAL_VIS_STATE, datasets: {events}};
+    state = reduceVisState(
+      state,
+      VisStateActions.createOrUpdateFilter(undefined, 'events', 'start')
+    );
+    state = reduceVisState(
+      state,
+      VisStateActions.setFilterPlot(0, {yAxis: state.datasets.events.fields[2]})
+    );
+    state = reduceVisState(
+      state,
+      VisStateActions.setFilterPlot(0, {
+        plotType: {groupBy: {fieldName: 'group', numGroups: 'ALL', groupOthers: false}}
+      })
+    );
+    const namesBefore = (state.filters[0].lineChart?.series as {names?: string[]}).names;
+    expect(new Set(namesBefore)).toEqual(new Set(['01', '1']));
+
+    state = reduceVisState(
+      state,
+      VisStateActions.changeTableColumnType('events', 'group', ALL_FIELD_TYPES.integer)
+    );
+
+    const namesAfter = (state.filters[0].lineChart?.series as {names?: string[]}).names;
+    expect(new Set(namesAfter)).toEqual(new Set(['1']));
+  });
+
   test('type change clears an interval end field that is no longer a timestamp', () => {
     const events = new KeplerTable({
       info: {id: 'events', label: 'events', type: 'local'},
@@ -492,6 +648,39 @@ describe('column edits', () => {
       'Cannot change “region” to integer: row 1 value “west” is not a safe integer'
     );
     expect(notification.payload.message).toContain('No values were changed.');
+  });
+
+  test('late column statistics cannot overwrite a changed column', () => {
+    let state = withCities();
+    state = reduceVisState(state, VisStateActions.loadColumnStats('cities', 'pop'));
+    const requestRevision = state.datasets.cities.dataRevision;
+    const [task] = drainTasksForTesting();
+    const result = {type: 'numeric', mean: 25};
+    const staleSuccess = succeedTaskInTest(task, {
+      result,
+      filterProps: {type: FILTER_TYPES.range}
+    });
+    expect(staleSuccess).toMatchObject({
+      dataRevision: requestRevision,
+      fieldType: ALL_FIELD_TYPES.integer
+    });
+
+    state = reduceVisState(
+      state,
+      VisStateActions.changeTableColumnType('cities', 'pop', ALL_FIELD_TYPES.string)
+    );
+    expect(state.datasets.cities.dataRevision).toBe(requestRevision + 1);
+    const changedState = state;
+
+    state = reduceVisState(state, staleSuccess);
+
+    expect(state).toBe(changedState);
+    const changedField = state.datasets.cities.fields.find(field => field.name === 'pop');
+    expect(changedField).toMatchObject({type: ALL_FIELD_TYPES.string});
+    expect(changedField).not.toHaveProperty('isLoadingStats');
+    expect(
+      state.datasets.cities.fields.find(field => field.name === 'pop')?.filterProps?.columnStats
+    ).not.toBe(result);
   });
 
   test('duplicate rename and non-tabular datasets are ignored', () => {
