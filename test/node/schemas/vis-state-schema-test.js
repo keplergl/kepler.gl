@@ -225,7 +225,8 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     },
     geocoder: {
       enabled: false,
-      limitSearch: false
+      limitSearch: false,
+      color: [255, 0, 0]
     },
     legend: {
       enabled: false,
@@ -312,7 +313,8 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
     },
     geocoder: {
       enabled: false,
-      limitSearch: false
+      limitSearch: false,
+      color: [255, 0, 0]
     },
     legend: {
       enabled: false,

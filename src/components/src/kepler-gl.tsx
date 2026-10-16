@@ -46,6 +46,7 @@ import {
   THEME,
   DEFAULT_MAPBOX_API_URL,
   GEOCODER_DATASET_NAME,
+  GEOCODER_ICON_COLOR,
   MISSING_MAPBOX_TOKEN
 } from '@kepler.gl/constants';
 
@@ -321,7 +322,8 @@ export const geoCoderPanelSelector = (
   removeDataset: props.visStateActions.removeDataset,
   updateMap: props.mapStateActions.updateMap,
   appWidth: dimensions.width,
-  limitSearch: props.visState.interactionConfig.geocoder.config?.limitSearch ?? false
+  limitSearch: props.visState.interactionConfig.geocoder.config?.limitSearch ?? false,
+  color: props.visState.interactionConfig.geocoder.config?.color ?? GEOCODER_ICON_COLOR
 });
 
 /**

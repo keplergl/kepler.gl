@@ -135,7 +135,10 @@ import {
   AnnotationKind,
   DatasetType,
   getDatasetRefreshIntervalMs,
-  getRemoteSourceFormat
+  getRemoteSourceFormat,
+  GEOCODER_DATASET_NAME,
+  GEOCODER_ICON_COLOR,
+  GEOCODER_LAYER_ID
 } from '@kepler.gl/constants';
 import {
   AGGREGATION_COUNT_LAYER_TYPES,
@@ -337,7 +340,8 @@ export const defaultInteractionConfig: InteractionConfig = {
     enabled: false,
     position: null,
     config: {
-      limitSearch: false
+      limitSearch: false,
+      color: GEOCODER_ICON_COLOR
     }
   },
   brush: {
@@ -3315,7 +3319,17 @@ export function interactionConfigChangeUpdater(
   };
 
   if (config.id === 'geocoder' && !config.enabled) {
-    return removeDatasetUpdater(newState, {dataId: 'geocoder_dataset'});
+    return removeDatasetUpdater(newState, {dataId: GEOCODER_DATASET_NAME});
+  }
+
+  if (config.id === 'geocoder') {
+    const geocoderLayer = newState.layers.find(layer => layer.id === GEOCODER_LAYER_ID);
+    if (geocoderLayer) {
+      return layerConfigChangeUpdater(newState, {
+        oldLayer: geocoderLayer,
+        newConfig: {color: config.config.color ?? GEOCODER_ICON_COLOR}
+      });
+    }
   }
 
   return newState;

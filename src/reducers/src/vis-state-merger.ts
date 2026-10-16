@@ -637,6 +637,10 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
 
     if (key === 'geocoder') {
       combined[key].limitSearch = toBeCombinedProps.some(p => p?.limitSearch);
+      const color = toBeCombinedProps.find(p => p?.color)?.color;
+      if (color) {
+        combined[key].color = color;
+      }
     }
 
     if (key === 'legend') {

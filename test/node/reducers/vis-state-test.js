@@ -59,11 +59,14 @@ import {
   INTERVAL,
   LAYER_TYPES,
   SYNC_TIMELINE_MODES,
+  GEOCODER_DATASET_NAME,
+  GEOCODER_ICON_COLOR,
+  GEOCODER_LAYER_ID,
   KEPLER_COLOR_PALETTES,
   colorPaletteToColorRange
 } from '@kepler.gl/constants';
 
-const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
+const {ArcLayer, PointLayer, GeojsonLayer, IconLayer, LineLayer, TripLayer} = KeplerGlLayers;
 
 // fixtures
 import testData, {
@@ -4683,6 +4686,34 @@ test('#visStateReducer -> INTERACTION_CONFIG_CHANGE', t => {
 
   t.deepEqual(nextState.interactionConfig, expectedConfig, 'should disable tooltip');
 
+  t.end();
+});
+
+test('#visStateReducer -> INTERACTION_CONFIG_CHANGE updates geocoder pin color', t => {
+  const geocoderLayer = new IconLayer({
+    id: GEOCODER_LAYER_ID,
+    dataId: GEOCODER_DATASET_NAME,
+    color: GEOCODER_ICON_COLOR
+  });
+  const initialState = {
+    ...INITIAL_VIS_STATE,
+    layers: [geocoderLayer],
+    layerData: [{}]
+  };
+  const color = [0, 128, 255];
+  const geocoderConfig = {
+    ...defaultInteractionConfig.geocoder,
+    enabled: true,
+    config: {
+      ...defaultInteractionConfig.geocoder.config,
+      color
+    }
+  };
+
+  const nextState = reducer(initialState, VisStateActions.interactionConfigChange(geocoderConfig));
+
+  t.deepEqual(nextState.interactionConfig.geocoder.config.color, color, 'should store pin color');
+  t.deepEqual(nextState.layers[0].config.color, color, 'should update an existing geocoder pin');
   t.end();
 });
 

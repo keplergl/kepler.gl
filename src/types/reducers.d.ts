@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Field, Millisecond} from './types';
+import {Field, Millisecond, RGBColor} from './types';
 import {ColorMap, ColorRange, ColorUI} from './layers';
 import {MapSplitMode, MapViewMode} from '@kepler.gl/constants';
 type MapViewState = {
@@ -430,6 +430,7 @@ export type Geocoder = BaseInteraction & {
   position: number[] | null;
   config: {
     limitSearch: boolean;
+    color: RGBColor;
   };
 };
 export type Brush = BaseInteraction & {
