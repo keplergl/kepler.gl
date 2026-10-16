@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {screen} from '@testing-library/react';
+import {fireEvent, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {IntlProvider} from 'react-intl';
 
@@ -31,15 +31,16 @@ beforeAll(() => {
 });
 
 describe('ItemSelector', () => {
-  test('ignores Enter when no object option is highlighted', async () => {
+  test('preserves object selections when Enter has no highlighted option', async () => {
     const onChange = jest.fn();
     const user = userEvent.setup();
+    const selectedItem = {id: 'beta', label: 'Beta'};
 
     renderWithTheme(
       <IntlProvider locale="en" messages={messages.en}>
         <ItemSelector
-          options={[{id: 'alpha', label: 'Alpha'}]}
-          selectedItems={[]}
+          options={[{id: 'alpha', label: 'Alpha'}, selectedItem]}
+          selectedItems={[selectedItem]}
           onChange={onChange}
           getOptionValue={option => option.id}
           displayOption={option => option.label}
@@ -47,9 +48,10 @@ describe('ItemSelector', () => {
       </IntlProvider>
     );
 
-    await user.click(screen.getByText('Enter a value'));
-    await user.type(screen.getByPlaceholderText('Search'), '{Enter}');
+    await user.click(screen.getByText('Beta'));
+    fireEvent.keyDown(screen.getByPlaceholderText('Search'), {key: 'Enter', keyCode: 13});
 
-    expect(onChange).not.toHaveBeenCalled();
+    expect(onChange).toHaveBeenCalledWith([selectedItem]);
+    expect(screen.queryByPlaceholderText('Search')).not.toBeInTheDocument();
   });
 });

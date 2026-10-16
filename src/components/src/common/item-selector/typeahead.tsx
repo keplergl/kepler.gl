@@ -143,7 +143,6 @@ interface TypeaheadProps {
   onOptionSelected?: (option: any, event: any) => any;
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
-  onTab?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   onKeyPress?: KeyboardEventHandler<HTMLDivElement>;
   onKeyUp?: KeyboardEventHandler<HTMLDivElement>;
   onFocus?: (event: React.FocusEvent<HTMLDivElement>) => void;
@@ -450,12 +449,6 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
   };
 
   _onKeyDown: React.KeyboardEventHandler<HTMLDivElement> = event => {
-    if ((event.key === 'Tab' || event.keyCode === KeyEvent.DOM_VK_TAB) && this.props.onTab) {
-      this.props.onTab(event);
-      event.stopPropagation();
-      return;
-    }
-
     // If there are no visible elements, don't perform selector navigation.
     // Just pass this up to the upstream onKeydown handler.
     // Also skip if the user is pressing the shift key, since none of our handlers are looking for shift
