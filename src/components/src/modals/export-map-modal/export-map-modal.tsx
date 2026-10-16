@@ -271,7 +271,7 @@ function ExportMapModalFactory(
                     <MapInfoInput
                       id="export-map-app-name"
                       type="text"
-                      value={options.appName || appName || KEPLER_GL_NAME}
+                      value={options.appName ?? appName ?? KEPLER_GL_NAME}
                       aria-label={intl.formatMessage({id: 'modal.exportMap.appNameTitle'})}
                       onChange={event => onChangeExportMapBranding({appName: event.target.value})}
                     />

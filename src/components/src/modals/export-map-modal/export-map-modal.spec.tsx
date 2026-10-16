@@ -128,12 +128,8 @@ describe('ExportMapModal', () => {
 
   test('uses a compact mode dropdown and exposes inherited branding when enabled', () => {
     initApplicationConfig({enableCustomExportBranding: true});
-    const options = {
-      ...INITIAL_UI_STATE.exportMap,
-      appName: ''
-    };
     const {container, getByLabelText, getByRole, queryByLabelText, queryByRole, queryByText} =
-      renderModal({options});
+      renderModal();
 
     const formatGroup = getByRole('group', {name: 'Map format'});
     const htmlFormat = within(formatGroup).getByRole('button', {name: 'html'});
@@ -237,6 +233,40 @@ describe('ExportMapModal', () => {
     expect(defaultProps.onChangeExportMapBranding).toHaveBeenCalledWith({
       appWebsite: 'https://atlas.test'
     });
+  });
+
+  test('keeps an empty application name while clearing and retyping', () => {
+    initApplicationConfig({enableCustomExportBranding: true});
+
+    function ControlledExportMapModal() {
+      const [options, setOptions] = React.useState(INITIAL_UI_STATE.exportMap);
+
+      return (
+        <ExportMapModal
+          {...defaultProps}
+          options={options}
+          onChangeExportMapBranding={branding =>
+            setOptions(currentOptions => ({...currentOptions, ...branding}))
+          }
+        />
+      );
+    }
+
+    const {getByLabelText, getByRole} = renderWithTheme(
+      <IntlProvider locale="en" messages={messages.en}>
+        <ControlledExportMapModal />
+      </IntlProvider>
+    );
+
+    fireEvent.click(getByRole('button', {name: 'Map details'}));
+    const appNameInput = getByLabelText('Application name');
+    expect(appNameInput).toHaveValue('Acme Maps');
+
+    fireEvent.change(appNameInput, {target: {value: ''}});
+    expect(appNameInput).toHaveValue('');
+
+    fireEvent.change(appNameInput, {target: {value: 'Atlas'}});
+    expect(appNameInput).toHaveValue('Atlas');
   });
 
   test('shows the security notice when a custom Mapbox token is embedded', () => {
