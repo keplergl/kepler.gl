@@ -585,6 +585,10 @@ export type ExportMap = {
   fileName: string;
   /** When false, dataset access tokens are omitted from exported HTML and JSON. */
   includeLayerApiKeys: boolean;
+  /** Optional application name override for exported HTML and JSON. */
+  appName?: string;
+  /** Optional application website override for exported HTML and JSON. */
+  appWebsite?: string;
 };
 
 export type ExportVideo = {

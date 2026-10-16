@@ -476,6 +476,26 @@ export const setExportHTMLMapMode: (
     (payload: SetExportHTMLMapModeUpdaterAction['payload']) => ({payload})
   );
 
+/** SET_EXPORT_MAP_BRANDING */
+export type SetExportMapBrandingUpdaterAction = {
+  payload: {
+    appName?: string;
+    appWebsite?: string;
+  };
+};
+/**
+ * Set application branding overrides for exported maps
+ * @memberOf uiStateActions
+ * @param payload - application name and/or website overrides
+ */
+export const setExportMapBranding: (
+  payload: SetExportMapBrandingUpdaterAction['payload']
+) => Merge<SetExportMapBrandingUpdaterAction, {type: typeof ActionTypes.SET_EXPORT_MAP_BRANDING}> =
+  createAction(
+    ActionTypes.SET_EXPORT_MAP_BRANDING,
+    (payload: SetExportMapBrandingUpdaterAction['payload']) => ({payload})
+  );
+
 /** SET_EXPORT_MAP_FILE_NAME */
 export type SetExportMapFileNameUpdaterAction = {
   payload: string;
