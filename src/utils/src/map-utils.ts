@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import WebMercatorViewport from 'viewport-mercator-project';
+import {WebMercatorViewport} from '@math.gl/web-mercator';
 // @ts-ignore GlobeViewport is an experimental, underscore-prefixed deck.gl export whose named type binding isn't reliably resolvable through the package barrel under this project's module resolution. Access it off the namespace with a loose type.
 import {_GlobeViewport as GlobeViewport} from '@deck.gl/core';
 

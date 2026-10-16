@@ -11,7 +11,6 @@ import CPUAggregator, {
   DimensionType,
   getDimensionScale
 } from '../layer-utils/cpu-aggregator';
-import {getDistanceScales} from 'viewport-mercator-project';
 import {max} from 'd3-array';
 
 import {SCALE_TYPES, DEFAULT_COLOR_RANGE, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
@@ -213,8 +212,8 @@ export default class ClusterLayer extends CompositeLayer {
       this.props
     );
     if (obj?.object) {
-      const distanceScale = getDistanceScales(this.context.viewport);
-      const metersPerPixel = distanceScale.metersPerPixel[0];
+      const distanceScale = this.context.viewport.getDistanceScales();
+      const metersPerPixel = distanceScale.metersPerUnit[0] / this.context.viewport.scale;
       obj.object.scaledRadiusValue = obj.object.scaledRadiusValue * metersPerPixel;
     }
 
@@ -245,8 +244,8 @@ export default class ClusterLayer extends CompositeLayer {
     const updateTriggers = this._getSublayerUpdateTriggers();
     const accessors = this._getSubLayerAccessors();
 
-    const distanceScale = getDistanceScales(this.context.viewport);
-    const metersPerPixel = distanceScale.metersPerPixel[0];
+    const distanceScale = this.context.viewport.getDistanceScales();
+    const metersPerPixel = distanceScale.metersPerUnit[0] / this.context.viewport.scale;
 
     const clusters = cpuAggregator.state.layerData.data;
     // return props to the sublayer constructor
