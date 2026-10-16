@@ -416,6 +416,7 @@ export default {
     filterOutHint: 'Hide rows that match this filter and keep the rest.',
     timezone: 'Time Zone',
     selectTimezone: 'Select display timezone',
+    timeFormat: 'Time Format',
     groupBy: 'Group By',
     groupByField: 'Group by field',
     maxGroups: 'Max number of groups',
