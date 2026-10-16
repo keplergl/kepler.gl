@@ -299,6 +299,40 @@ test('Map Popover - aggregation tooltip deduplicates identical visual channel ro
   t.end();
 });
 
+test('Map Popover - aggregation tooltip retains rows with different comparison deltas', t => {
+  const field = {name: 'fare', type: 'real'};
+  const layer = {
+    isAggregated: true,
+    visualChannels: {color: {}, size: {}},
+    config: {
+      label: 'Hexbin',
+      colorField: field,
+      sizeField: field
+    },
+    getVisualChannelDescription: () => ({measure: 'Average of fare'})
+  };
+  const aggregationHoverProp = {
+    data: {points: [], colorValue: 42, elevationValue: 42},
+    fields: [field],
+    fieldsToShow: [{name: field.name}],
+    layer,
+    primaryData: {points: [], colorValue: 10, elevationValue: 20},
+    compareType: COMPARE_TYPES.ABSOLUTE
+  };
+
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LayerHoverInfo {...aggregationHoverProp} />
+    </IntlWrapper>
+  );
+  const rows = wrapper.find('.layer-hover-info__row');
+
+  t.equal(rows.length, 3, 'should render both aggregation rows');
+  t.equal(rows.at(1).find('.row__delta-value').text(), '+32');
+  t.equal(rows.at(2).find('.row__delta-value').text(), '+22');
+  t.end();
+});
+
 test('Map Popover - aggregation tooltip retains rows with different aggregations', t => {
   const field = {name: 'fare', type: 'real'};
   const layer = {

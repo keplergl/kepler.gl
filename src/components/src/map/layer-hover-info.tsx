@@ -359,7 +359,8 @@ const CellInfo = ({
   const isSizeMeasureDuplicate =
     colorField?.name === sizeField?.name &&
     colorMeasure === sizeMeasure &&
-    colorValue === elevationValue;
+    colorValue === elevationValue &&
+    colorDelta === elevationDelta;
   return (
     <tbody>
       <Row
