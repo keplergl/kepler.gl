@@ -247,8 +247,24 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
 });
 
 test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
-  const initialState = cloneDeep(StateWTooltipFormat);
-  initialState.visState.interactionConfig.tooltip.config.timezone = 'America/Guayaquil';
+  const baseState = cloneDeep(StateWTooltipFormat);
+  const tooltip = baseState.visState.interactionConfig.tooltip;
+  const initialState = {
+    ...baseState,
+    visState: {
+      ...baseState.visState,
+      interactionConfig: {
+        ...baseState.visState.interactionConfig,
+        tooltip: {
+          ...tooltip,
+          config: {
+            ...tooltip.config,
+            timezone: 'America/Guayaquil'
+          }
+        }
+      }
+    }
+  };
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state

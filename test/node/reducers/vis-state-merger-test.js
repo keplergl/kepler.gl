@@ -1053,8 +1053,21 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
 });
 
 test('VisStateMerger -> mergeInteractions -> tooltip timezone', t => {
-  const oldVisState = cloneDeep(InitialState.visState);
-  oldVisState.interactionConfig.tooltip.config.timezone = 'America/New_York';
+  const initialVisState = cloneDeep(InitialState.visState);
+  const tooltip = initialVisState.interactionConfig.tooltip;
+  const oldVisState = {
+    ...initialVisState,
+    interactionConfig: {
+      ...initialVisState.interactionConfig,
+      tooltip: {
+        ...tooltip,
+        config: {
+          ...tooltip.config,
+          timezone: 'America/New_York'
+        }
+      }
+    }
+  };
 
   const mergedWithTimezone = mergeInteractions(oldVisState, {
     tooltip: {
