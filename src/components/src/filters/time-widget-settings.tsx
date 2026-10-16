@@ -52,39 +52,22 @@ const INTERVAL_UNITS = [
   {id: 'year', label: 'Year', duration: durationYear}
 ];
 
-const TIME_FORMAT_OPTIONS = [
-  {id: '12-hour', label: '12-hour'},
-  {id: '24-hour', label: '24-hour'}
-] as const;
+const TIME_FORMAT_OPTIONS = ['12-hour', '24-hour'] as const;
 
-type HourCycle = (typeof TIME_FORMAT_OPTIONS)[number]['id'];
+type HourCycle = (typeof TIME_FORMAT_OPTIONS)[number];
 
-const LOCALIZED_FORMAT_TOKENS = /(\[[^[]*\])|(\\)?(LTS|LT|LL?L?L?|l{1,4})/g;
 const FORMAT_TOKENS =
-  /(\[[^[]*\])|(\\)?([Hh]mm(ss)?|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|Qo?|N{1,5}|YYYYYY|YYYYY|YYYY|YY|y{2,4}|yo?|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|kk?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)/g;
-
-function expandLocalizedTimeFormat(format: string): string {
-  let expanded = format;
-  for (let i = 0; i < 5; i++) {
-    const next = expanded.replace(
-      LOCALIZED_FORMAT_TOKENS,
-      (match, literal, escaped, token: string) => {
-        if (literal || escaped || (token !== 'LT' && token !== 'LTS')) {
-          return match;
-        }
-        return moment.localeData().longDateFormat(token as 'LT' | 'LTS') || match;
-      }
-    );
-    if (next === expanded) {
-      break;
-    }
-    expanded = next;
-  }
-  return expanded;
-}
+  /(\[[^[]*\])|(\\.)|(LTS|LT|[Hh]mm(ss)?|[Hh]{1,2}|k{1,2}|mm?|ss?|S{1,9}|[Aa]|.)/g;
 
 function tokenizeTimeFormat(format: string): string[] {
-  return expandLocalizedTimeFormat(format).match(FORMAT_TOKENS) || [];
+  const tokens = format.match(FORMAT_TOKENS) || [];
+  return tokens.flatMap(token => {
+    if (token !== 'LT' && token !== 'LTS') {
+      return token;
+    }
+    const localizedFormat = moment.localeData().longDateFormat(token);
+    return localizedFormat?.match(FORMAT_TOKENS) || token;
+  });
 }
 
 function getHourTokenCycle(token: string): HourCycle | null {
@@ -613,29 +596,12 @@ function TimeWidgetSettingsFactory(
     const effectiveTimeFormat =
       (typeof filter.timeFormat === 'string' ? filter.timeFormat : filter.defaultTimeFormat) ||
       DEFAULT_TIME_FORMAT;
-    const selectedTimeFormat = useMemo(() => {
-      const hourCycle = getHourCycle(effectiveTimeFormat);
-      return hourCycle || getLocaleHourCycle();
-    }, [effectiveTimeFormat]);
-
-    const displayTimeFormatOption = useCallback(
-      (option: (typeof TIME_FORMAT_OPTIONS)[number] | HourCycle) =>
-        typeof option === 'string'
-          ? TIME_FORMAT_OPTIONS.find(item => item.id === option)?.label || option
-          : option.label,
-      []
-    );
+    const selectedTimeFormat = getHourCycle(effectiveTimeFormat) || getLocaleHourCycle();
 
     const handleTimeFormatChange = useCallback(
-      (value: ReadonlyArray<unknown> | string | number | boolean | object | null) => {
-        const hourCycle =
-          typeof value === 'string'
-            ? value
-            : value && typeof value === 'object' && !Array.isArray(value) && 'id' in value
-            ? value.id
-            : null;
-        if (hourCycle === '12-hour' || hourCycle === '24-hour') {
-          onTimeFormatChange(updateHourCycle(effectiveTimeFormat, hourCycle));
+      (value: unknown) => {
+        if (value === '12-hour' || value === '24-hour') {
+          onTimeFormatChange(updateHourCycle(effectiveTimeFormat, value));
         }
       },
       [effectiveTimeFormat, onTimeFormatChange]
@@ -692,7 +658,6 @@ function TimeWidgetSettingsFactory(
                 <FormattedMessage id="filterManager.timeFormat" />
               </FieldLabel>
               <SelectorWrapper
-                className="time-format-selector"
                 data-testid="time-widget-time-format"
                 aria-labelledby="time-widget-time-format-label"
               >
@@ -702,10 +667,7 @@ function TimeWidgetSettingsFactory(
                   options={TIME_FORMAT_OPTIONS}
                   multiSelect={false}
                   searchable={false}
-                  closeOnSelect={true}
                   placement="top"
-                  getOptionValue={option => option.id}
-                  displayOption={displayTimeFormatOption}
                   onChange={handleTimeFormatChange}
                 />
               </SelectorWrapper>
