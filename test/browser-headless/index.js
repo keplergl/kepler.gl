@@ -3,3 +3,4 @@
 
 // test components
 import './component/map-container-test';
+import './component/transparent-export-test';

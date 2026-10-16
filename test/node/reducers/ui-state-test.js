@@ -10,6 +10,7 @@ import {
   openDeleteModal,
   openReplaceDatasetModal,
   setExportImageSetting,
+  cleanupExportImage,
   setExportVideoSetting,
   toggleMapControl,
   setMapControlVisibility,
@@ -171,6 +172,28 @@ test('#uiStateReducer -> SET_EXPORT_IMAGE_SETTING', t => {
   };
 
   t.deepEqual(newReducer, expectedState, 'should set the resolution to TWO_X');
+
+  t.end();
+});
+
+test('#uiStateReducer -> transparent export image background', t => {
+  const newReducer = reducer(
+    INITIAL_UI_STATE,
+    setExportImageSetting({transparentBackground: true})
+  );
+
+  t.equal(
+    newReducer.exportImage.transparentBackground,
+    true,
+    'should enable the transparent background option'
+  );
+
+  const cleanedReducer = reducer(newReducer, cleanupExportImage());
+  t.equal(
+    cleanedReducer.exportImage.transparentBackground,
+    true,
+    'should preserve the transparent background option during cleanup'
+  );
 
   t.end();
 });

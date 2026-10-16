@@ -3,7 +3,7 @@
 
 import geoViewport from '@mapbox/geo-viewport';
 
-import WebMercatorViewport from 'viewport-mercator-project';
+import {WebMercatorViewport} from '@math.gl/web-mercator';
 import Console from 'global/console';
 
 import type {ViewportPadding} from '@kepler.gl/types';

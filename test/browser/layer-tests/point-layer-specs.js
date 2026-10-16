@@ -3,7 +3,7 @@
 
 import test from 'tape';
 import moment from 'moment';
-import {getDistanceScales} from 'viewport-mercator-project';
+import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {scaleQuantize} from 'd3-scale';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 
@@ -664,7 +664,8 @@ test('#PointLayer -> renderLayer', t => {
 
         const distanceScale = getDistanceScales(INITIAL_MAP_STATE);
         const radiusScale = layer.getRadiusScaleByZoom(INITIAL_MAP_STATE);
-        const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
+        const pixelRadius =
+          radiusScale * distanceScale.unitsPerMeter[0] * zoomToScale(INITIAL_MAP_STATE.zoom);
 
         const padding = 20;
 
@@ -859,7 +860,8 @@ test('#PointLayer -> renderLayer', t => {
 
         const distanceScale = getDistanceScales(INITIAL_MAP_STATE);
         const radiusScale = layer.getRadiusScaleByZoom(INITIAL_MAP_STATE);
-        const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
+        const pixelRadius =
+          radiusScale * distanceScale.unitsPerMeter[0] * zoomToScale(INITIAL_MAP_STATE.zoom);
 
         const padding = 20;
 

@@ -24,6 +24,7 @@ import type {ExportResolutionOption} from '@kepler.gl/constants';
 import type {ExportImage} from '@kepler.gl/types';
 import {StyledModalContent, SelectionButton, CheckMark} from '../common/styled-components';
 import Switch from '../common/switch';
+import TippyTooltip from '../common/tippy-tooltip';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -57,6 +58,21 @@ const ImageOptionList = styled.div`
 
     .kg-checkbox__label {
       margin-bottom: 0;
+    }
+  }
+
+  .transparent-background-option {
+    display: flex;
+    align-items: center;
+  }
+
+  .transparent-background-help {
+    margin-left: 4px;
+    color: ${props => props.theme.subtextColorLT};
+    cursor: help;
+
+    &:hover {
+      color: ${props => props.theme.textColorLT};
     }
   }
 
@@ -161,8 +177,11 @@ const ExportImageModalFactory = () => {
     cleanupExportImage,
     intl
   }) => {
-    const {legend, charts, ratio, resolution, fileName} = exportImage;
+    const {legend, charts, transparentBackground, ratio, resolution, fileName} = exportImage;
     const chartsEnabled = Boolean(getApplicationConfig().enableChartsPanel);
+    const transparentBackgroundHelp = intl.formatMessage({
+      id: 'modal.exportImage.transparentBackgroundHelp'
+    });
 
     // Filter resolutions based on selected ratio
     const filteredResolutions = useMemo(() => {
@@ -301,6 +320,30 @@ const ExportImageModalFactory = () => {
               <FormattedMessage id={'modal.exportImage.optionsTitle'} />
             </div>
             <div className="option-list">
+              <div className="transparent-background-option">
+                <Switch
+                  type="checkbox"
+                  id="export-transparent-background"
+                  checked={Boolean(transparentBackground)}
+                  label={intl.formatMessage({id: 'modal.exportImage.transparentBackground'})}
+                  onChange={() =>
+                    onUpdateImageSetting({transparentBackground: !transparentBackground})
+                  }
+                />
+                <TippyTooltip
+                  placement="top"
+                  isLightTheme
+                  render={() => <div>{transparentBackgroundHelp}</div>}
+                >
+                  <span
+                    className="transparent-background-help"
+                    tabIndex={0}
+                    aria-label={transparentBackgroundHelp}
+                  >
+                    (?)
+                  </span>
+                </TippyTooltip>
+              </div>
               <Switch
                 type="checkbox"
                 id="add-map-legend"
