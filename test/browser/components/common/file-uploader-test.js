@@ -97,6 +97,35 @@ test('Components -> FileUpload.onDrop accepts uppercase file extensions', t => {
   t.end();
 });
 
+test('Components -> FileUpload.onDrop rejects whitespace-only file extensions', t => {
+  const mockFiles = [{type: 'text/plain', name: 'notes.txt'}];
+  const onFileUpload = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FileUpload onFileUpload={onFileUpload} fileExtensions={[' ', 'geojson']} />
+    </IntlWrapper>
+  );
+
+  wrapper
+    .find('.file-uploader__file-drop')
+    .at(0)
+    .simulate('drop', {
+      stopPropagation: () => {},
+      dataTransfer: {
+        types: ['Files'],
+        files: mockFiles
+      }
+    });
+
+  t.notOk(onFileUpload.called, 'unsupported extension should not be uploaded');
+  t.deepEqual(
+    wrapper.find(FileUpload).children().first().state().errorFiles,
+    ['notes.txt'],
+    'unsupported extension should be marked unsupported'
+  );
+  t.end();
+});
+
 test('Components -> FileUpload.onDrop -> render loading msg', t => {
   const mockFiles = [{type: 'text/csv', name: 'tst-file.csv'}];
   const onFileUpload = sinon.spy(arg => {
