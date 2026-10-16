@@ -111,6 +111,23 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     try {
       const {fields, rows} = data;
 
+      const columnTypes = fields.map(field => {
+        const explicitDuckDBColumnType = (field as typeof field & {duckDBColumnType?: string})
+          .duckDBColumnType;
+        const duckDBColumnType = explicitDuckDBColumnType ?? fieldTypeToColumnType(field.type);
+
+        if (!duckDBColumnType) {
+          throw new Error(
+            `Unsupported field type "${field.type}" for DuckDB column "${field.name}"`
+          );
+        }
+
+        return {
+          duckDBColumnType,
+          normalizeTimestamp: explicitDuckDBColumnType === undefined
+        };
+      });
+
       // DATASET_FORMATS.keplergl loads data as any[][] instead of [{}]
       // TODO potential memory usage explosion: original data, new object and then DuckDb table
       const rowsForDb = rows.map(row => {
@@ -120,7 +137,10 @@ export class KeplerGlDuckDbTable extends KeplerTable {
         fields.forEach((field, index) => {
           const value = isArrayRow ? row[index] : row[field.name];
           const timestamp =
-            field.type === ALL_FIELD_TYPES.timestamp && value !== null && value !== undefined
+            columnTypes[index].normalizeTimestamp &&
+            field.type === ALL_FIELD_TYPES.timestamp &&
+            value !== null &&
+            value !== undefined
               ? timeToUnixMilli(value as string | number | Date, field.format || '')
               : null;
 
@@ -136,16 +156,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
       await db.registerFileText(this.id, JSON.stringify(rowsForDb));
 
       const columns = fields.reduce((acc, field, index) => {
-        const duckDBColumnType =
-          (field as typeof field & {duckDBColumnType?: string}).duckDBColumnType ??
-          fieldTypeToColumnType(field.type);
-
-        if (!duckDBColumnType) {
-          throw new Error(
-            `Unsupported field type "${field.type}" for DuckDB column "${field.name}"`
-          );
-        }
-
+        const {duckDBColumnType} = columnTypes[index];
         return `${acc}${index > 0 ? ',' : ''} '${field.name}': '${duckDBColumnType}'`;
       }, '');
 
