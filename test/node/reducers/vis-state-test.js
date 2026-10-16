@@ -4190,6 +4190,7 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
         label: 'interactions.tooltip',
         enabled: true,
         config: {
+          timezone: null,
           compareMode: false,
           compareType: 'absolute',
           fieldsToShow: {
@@ -4446,6 +4447,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
         label: 'interactions.tooltip',
         enabled: true,
         config: {
+          timezone: null,
           compareMode: false,
           compareType: 'absolute',
           fieldsToShow: {

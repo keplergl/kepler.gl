@@ -420,6 +420,7 @@ export type TooltipInfo = BaseInteraction & {
     fieldsToShow: {
       [key: string]: TooltipField[];
     };
+    timezone?: string | null;
     compareMode: boolean;
     compareType: CompareType;
   };

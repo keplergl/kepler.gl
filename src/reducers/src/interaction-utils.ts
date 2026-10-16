@@ -144,20 +144,22 @@ export function getTooltipDisplayDeltaValue({
 export function getTooltipDisplayValue({
   item,
   field,
-  value
+  value,
+  timezone
 }: {
   item: TooltipField | undefined;
   field: Field;
   value: any;
+  timezone?: string | null;
 }): string {
   if (!notNullorUndefined(value)) {
     return '';
   }
 
   return item?.format
-    ? getFormatter(item?.format, field)(value)
+    ? getFormatter(item?.format, field, timezone)(value)
     : field.displayFormat
-    ? getFormatter(field.displayFormat, field)(value)
+    ? getFormatter(field.displayFormat, field, timezone)(value)
     : parseFieldValue(value, field.type);
 }
 

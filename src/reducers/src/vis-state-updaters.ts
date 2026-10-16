@@ -318,6 +318,7 @@ export const defaultInteractionConfig: InteractionConfig = {
     enabled: true,
     config: {
       fieldsToShow: {},
+      timezone: null,
       compareMode: false,
       compareType: COMPARE_TYPES.ABSOLUTE
     }
