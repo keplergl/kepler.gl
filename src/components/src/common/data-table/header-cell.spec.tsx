@@ -207,12 +207,49 @@ describe('column header menu', () => {
     expect(changeTableColumnType).toHaveBeenCalledWith('region', 'integer');
   });
 
-  test('hides type changes when no alternative type accepts the complete column', () => {
+  test('checks complete-column compatibility only after type change is selected', () => {
     const {container} = renderWithTheme(
       <ColumnHeader changeTableColumnType={jest.fn()} typeChangeValues={['ML', 'MW']} />
     );
 
     openMenu(container);
+    fireEvent.click(screen.getByText('Change Data Type'));
+
+    expect(screen.queryByText('Integer')).toBeNull();
+    expect(screen.queryByText('Real')).toBeNull();
+    expect(screen.queryByText('Timestamp')).toBeNull();
+    expect(screen.getByText('String')).toBeTruthy();
+  });
+
+  test('does not scan compatibility when opening the existing column menu', () => {
+    const readValue = jest.fn(() => '10');
+    const values: unknown[] = [];
+    values.length = 1;
+    Object.defineProperty(values, 0, {get: readValue});
+    const {container} = renderWithTheme(
+      <ColumnHeader changeTableColumnType={jest.fn()} typeChangeValues={values} />
+    );
+
+    openMenu(container);
+    expect(readValue).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText('Change Data Type'));
+    expect(readValue).toHaveBeenCalled();
+  });
+
+  test('does not scan compatibility when type changes are unavailable', () => {
+    const values: unknown[] = [];
+    values.length = 1;
+    Object.defineProperty(values, 0, {
+      get: () => {
+        throw new Error('compatibility scan should not run');
+      }
+    });
+    const {container} = renderWithTheme(<ColumnHeader typeChangeValues={values} />);
+
+    openMenu(container);
+
+    expect(screen.getByText('Copy Column')).toBeTruthy();
     expect(screen.queryByText('Change Data Type')).toBeNull();
   });
 

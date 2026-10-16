@@ -6,6 +6,7 @@ import {VisStateActions} from '@kepler.gl/actions';
 import {KeplerTable} from '@kepler.gl/table';
 import SchemaManager, {VisState} from '@kepler.gl/schemas';
 import {drainTasksForTesting, succeedTaskInTest} from '@kepler.gl/tasks';
+import type {TimeRangeFilter} from '@kepler.gl/types';
 
 import visStateReducer from './vis-state';
 import {INITIAL_VIS_STATE} from './vis-state-updaters';
@@ -212,6 +213,96 @@ describe('column edits', () => {
     expect(state.charts[0].yAxis?.field).toEqual({name: 'pop', type: 'string'});
   });
 
+  test('type change detaches an incompatible synced filter member and refilters its dataset', () => {
+    const primary = new KeplerTable({
+      info: {id: 'primary', label: 'primary', type: 'local'},
+      color: [0, 0, 0]
+    });
+    primary.updateSchema({
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[1], [2]]
+    });
+    const secondary = new KeplerTable({
+      info: {id: 'secondary', label: 'secondary', type: 'local'},
+      color: [0, 0, 0]
+    });
+    secondary.updateSchema({
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[1], [3]]
+    });
+
+    let state: VisState = {...INITIAL_VIS_STATE, datasets: {primary, secondary}};
+    state = reduceVisState(
+      state,
+      VisStateActions.createOrUpdateFilter(undefined, 'primary', 'value')
+    );
+    state = reduceVisState(
+      state,
+      VisStateActions.setFilter(0, ['dataId', 'name'], ['secondary', 'value'], 1)
+    );
+    expect(state.filters[0].dataId).toEqual(['primary', 'secondary']);
+    expect(state.datasets.secondary.filterRecord?.gpu).toHaveLength(1);
+
+    state = reduceVisState(
+      state,
+      VisStateActions.changeTableColumnType('secondary', 'value', ALL_FIELD_TYPES.string)
+    );
+
+    expect(state.filters[0].dataId).toEqual(['primary']);
+    expect(state.filters[0].name).toEqual(['value']);
+    expect(state.filters[0].type).toBe('range');
+    expect(state.datasets.secondary.filterRecord).toMatchObject({
+      dynamicDomain: [],
+      fixedDomain: [],
+      cpu: [],
+      gpu: []
+    });
+  });
+
+  test('changing a synced secondary dataset does not reconcile the primary plot axis', () => {
+    const makeEvents = (id: string) => {
+      const table = new KeplerTable({
+        info: {id, label: id, type: 'local'},
+        color: [0, 0, 0]
+      });
+      table.updateSchema({
+        fields: [
+          {name: 'start', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'},
+          {name: 'amount', type: ALL_FIELD_TYPES.integer}
+        ],
+        rows: [
+          [1_700_000_000, 10],
+          [1_700_000_020, 20]
+        ]
+      });
+      return table;
+    };
+    const primary = makeEvents('primary');
+    const secondary = makeEvents('secondary');
+    let state: VisState = {...INITIAL_VIS_STATE, datasets: {primary, secondary}};
+    state = reduceVisState(
+      state,
+      VisStateActions.createOrUpdateFilter(undefined, 'primary', 'start')
+    );
+    state = reduceVisState(
+      state,
+      VisStateActions.setFilter(0, ['dataId', 'name'], ['secondary', 'start'], 1)
+    );
+    state = reduceVisState(
+      state,
+      VisStateActions.setFilterPlot(0, {yAxis: state.datasets.primary.fields[1]})
+    );
+
+    state = reduceVisState(
+      state,
+      VisStateActions.changeTableColumnType('secondary', 'amount', ALL_FIELD_TYPES.string)
+    );
+
+    expect(state.filters[0].dataId).toEqual(['primary', 'secondary']);
+    expect(state.filters[0].yAxis).toMatchObject({name: 'amount', type: 'integer'});
+    expect(state.filters[0].plotType.type).toBe('lineChart');
+  });
+
   test('type change clears an interval end field that is no longer a timestamp', () => {
     const events = new KeplerTable({
       info: {id: 'events', label: 'events', type: 'local'},
@@ -224,8 +315,8 @@ describe('column edits', () => {
         {name: 'value', type: ALL_FIELD_TYPES.integer}
       ],
       rows: [
-        [1_700_000_000, 1_700_000_010, 10],
-        [1_700_000_020, 1_700_000_030, 20]
+        [1_700_000_000, 1_700_086_400, 10],
+        [1_700_000_020, 1_700_172_800, 20]
       ]
     });
     let state: VisState = {...INITIAL_VIS_STATE, datasets: {events}};
@@ -271,6 +362,10 @@ describe('column edits', () => {
       field: {name: 'value', type: 'string'},
       aggregation: 'sum'
     });
+    let timeFilter = state.filters[0] as TimeRangeFilter;
+    const interval = timeFilter.plotType.interval;
+    const intervalBins = timeFilter.timeBins?.events?.[interval];
+    expect(intervalBins?.reduce((sum, bin) => sum + bin.count, 0)).toBeGreaterThan(2);
 
     state = reduceVisState(
       state,
@@ -279,6 +374,9 @@ describe('column edits', () => {
     expect(state.filters[0].type).toBe('timeRange');
     expect(state.filters[0].endName).toBeUndefined();
     expect(state.filters[0].endFieldIdx).toBeUndefined();
+    timeFilter = state.filters[0] as TimeRangeFilter;
+    const bins = timeFilter.timeBins?.events?.[interval];
+    expect(bins?.reduce((sum, bin) => sum + bin.count, 0)).toBe(2);
     expect(state.charts[0].xAxis).toMatchObject({
       field: {name: 'end', type: 'string'},
       aggregation: 'uniqueBin'

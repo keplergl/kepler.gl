@@ -4497,6 +4497,7 @@ export function updateDatasetUpdater(
     .filter(name => newFieldsByName.has(name));
 
   const newDatasets = {...state.datasets, [dataId]: newTable};
+  const datasetIdsToRefilter = new Set<string>([dataId]);
 
   // 2. reconcile filters
   let newFilters = state.filters
@@ -4515,6 +4516,12 @@ export function updateDatasetUpdater(
         return filter.dataId.length === 1
           ? null
           : _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
+      }
+
+      const nextFilterType = newTable.getColumnFilterProps(newName)?.type;
+      if (filter.dataId.length > 1 && nextFilterType && nextFilterType !== filter.type) {
+        filter.dataId.forEach(id => datasetIdsToRefilter.add(id));
+        return _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
       }
 
       // column present (possibly renamed): re-resolve name/fieldIdx/domain
@@ -4540,7 +4547,7 @@ export function updateDatasetUpdater(
       // Time plots only accept numeric y-axis fields. Re-resolve the complete
       // field so type and fieldIdx also follow a schema change.
       let yAxis = updated.yAxis;
-      if (updated.yAxis?.name) {
+      if (vi === 0 && updated.yAxis?.name) {
         const yAxisName = renames[updated.yAxis.name] ?? updated.yAxis.name;
         const yAxisField = newFieldsByName.get(yAxisName);
         yAxis = yAxisField && FILTER_PLOT_Y_AXIS_TYPES.has(yAxisField.type) ? yAxisField : null;
@@ -4556,7 +4563,7 @@ export function updateDatasetUpdater(
         // resetting it to the full range
         value: adjustValueToFilterDomain(filter.value, updated)
       };
-      return updateFilterPlot(newDatasets, nextFilter, undefined, state.layers);
+      return updateFilterPlot(newDatasets, nextFilter, dataId, state.layers);
     })
     .filter(Boolean) as Filter[];
 
@@ -4566,10 +4573,11 @@ export function updateDatasetUpdater(
   );
 
   // 3. rebuild the table's filter state (gpuFilter / filterRecord / filteredIndex)
-  newTable.filterTable(
+  const filteredDatasets = applyFiltersToDatasets(
+    Array.from(datasetIdsToRefilter),
+    newDatasets,
     newFilters,
-    state.layers.filter(l => l.config.dataId === dataId),
-    {}
+    state.layers
   );
 
   // 4. reconcile layers
@@ -4609,7 +4617,7 @@ export function updateDatasetUpdater(
 
   let nextState = {
     ...state,
-    datasets: newDatasets,
+    datasets: filteredDatasets,
     filters: newFilters,
     layers: newLayers,
     interactionConfig,

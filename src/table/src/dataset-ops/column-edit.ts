@@ -118,6 +118,39 @@ function numericValue(value: unknown, integerOnly: boolean): number {
   return Number(trimmed);
 }
 
+function exactIntegerFromDecimal(value: string): bigint | null {
+  const trimmed = value.trim().toLowerCase();
+  if (!DECIMAL_NUMBER.test(trimmed)) {
+    return null;
+  }
+
+  const unsigned = trimmed.replace(/^[+-]/, '');
+  const [mantissa, exponentString] = unsigned.split('e');
+  const [whole, fraction = ''] = mantissa.split('.');
+  const digits = `${whole || '0'}${fraction}`;
+  if (BigInt(digits) === 0n) {
+    return 0n;
+  }
+  const exponent = exponentString ? Number(exponentString) : 0;
+  if (!Number.isSafeInteger(exponent)) {
+    return null;
+  }
+
+  const decimalPlaces = fraction.length - exponent;
+  let integerDigits: string;
+  if (decimalPlaces <= 0) {
+    integerDigits = `${digits}${'0'.repeat(-decimalPlaces)}`;
+  } else {
+    const fractionalTail = digits.slice(-decimalPlaces);
+    if (decimalPlaces >= digits.length || /[1-9]/.test(fractionalTail)) {
+      return null;
+    }
+    integerDigits = digits.slice(0, -decimalPlaces);
+  }
+  const integer = BigInt(integerDigits);
+  return trimmed.startsWith('-') ? -integer : integer;
+}
+
 function losesIntegerPrecision(value: unknown, parsed: number): boolean {
   if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
     return false;
@@ -125,8 +158,9 @@ function losesIntegerPrecision(value: unknown, parsed: number): boolean {
   if (typeof value === 'bigint') {
     return BigInt(parsed) !== value;
   }
-  if (typeof value === 'string' && INTEGER.test(value.trim())) {
-    return BigInt(parsed) !== BigInt(value.trim());
+  if (typeof value === 'string') {
+    const exactInteger = exactIntegerFromDecimal(value);
+    return exactInteger !== null && BigInt(parsed) !== exactInteger;
   }
   return false;
 }
@@ -185,12 +219,11 @@ function convertColumnValue(
         (typeof source === 'string' && DECIMAL_NUMBER.test(source.trim()));
       if (isNumeric) {
         const parsed = numericValue(source, false);
-        const rounded = Math.round(parsed);
         const numericFormat = Math.abs(parsed) >= MILLISECOND_EPOCH_THRESHOLD ? 'X' : 'x';
-        const milliseconds = numericFormat === 'x' ? rounded * 1000 : rounded;
+        const milliseconds = numericFormat === 'x' ? parsed * 1000 : parsed;
         if (
-          !Number.isSafeInteger(rounded) ||
-          Math.abs(rounded) < MIN_ABSOLUTE_EPOCH ||
+          !Number.isFinite(parsed) ||
+          Math.abs(parsed) < MIN_ABSOLUTE_EPOCH ||
           Math.abs(milliseconds) > MAX_ABSOLUTE_EPOCH_MILLISECONDS
         ) {
           return {rowIndex, value, reason: 'is not a plausible epoch timestamp'};
@@ -200,7 +233,7 @@ function convertColumnValue(
         }
         state.analyzerType = AnalyzerDataTypes.TIME;
         state.format = numericFormat;
-        output?.push(rounded);
+        output?.push(parsed);
         return null;
       }
 

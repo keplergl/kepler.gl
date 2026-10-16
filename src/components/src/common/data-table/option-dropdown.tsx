@@ -239,14 +239,14 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     if (!COLUMN_TYPE_OPTIONS.some(option => option.type === currentType)) {
       return [];
     }
-    if (!isOpened || !typeChangeDataContainer) {
+    if (!showTypeSelector || !changeTableColumnType || !typeChangeDataContainer) {
       return COLUMN_TYPE_OPTIONS;
     }
     const compatibleTypes = new Set(
       getCompatibleColumnTypes(typeChangeDataContainer, columnIndex, currentType)
     );
     return COLUMN_TYPE_OPTIONS.filter(option => compatibleTypes.has(option.type));
-  }, [columnIndex, currentType, isOpened, typeChangeDataContainer]);
+  }, [changeTableColumnType, columnIndex, currentType, showTypeSelector, typeChangeDataContainer]);
   const hasCompatibleAlternative = columnTypeOptions.some(option => option.type !== currentType);
   const onOptionSelected: (v: TableOption) => void = useCallback(
     ({value}) => {

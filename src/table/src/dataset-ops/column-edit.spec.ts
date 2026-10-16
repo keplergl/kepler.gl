@@ -165,7 +165,7 @@ describe('column edit payloads', () => {
     expect(buildChangeColumnTypeData(table, 'when', ALL_FIELD_TYPES.array)).toBeNull();
   });
 
-  test('timestamp conversion accepts plausible epochs, rounds real epochs, and rejects measurements', () => {
+  test('timestamp conversion accepts plausible epochs without rounding and rejects measurements', () => {
     const epochs = new KeplerTable({
       info: {id: 'epochs', label: 'epochs', type: 'local'},
       color: [0, 0, 0]
@@ -186,8 +186,8 @@ describe('column edit payloads', () => {
       fields: [{name: 'value', type: ALL_FIELD_TYPES.real}],
       rows: [[1_700_000_000.4], [1_700_000_001.6]]
     });
-    const rounded = buildChangeColumnTypeData(realEpochs, 'value', ALL_FIELD_TYPES.timestamp);
-    expect(rounded?.payload?.data.rows).toEqual([[1_700_000_000], [1_700_000_002]]);
+    const converted = buildChangeColumnTypeData(realEpochs, 'value', ALL_FIELD_TYPES.timestamp);
+    expect(converted?.payload?.data.rows).toEqual([[1_700_000_000.4], [1_700_000_001.6]]);
     expect(getCompatibleColumnTypes(realEpochs.dataContainer, 0, ALL_FIELD_TYPES.real)).toContain(
       ALL_FIELD_TYPES.timestamp
     );
@@ -205,7 +205,7 @@ describe('column edit payloads', () => {
       'value',
       ALL_FIELD_TYPES.timestamp
     );
-    expect(parsedStrings?.payload?.data.rows).toEqual([[1_700_000_000], [1_700_000_002]]);
+    expect(parsedStrings?.payload?.data.rows).toEqual([[1_700_000_000.4], [1_700_000_001.6]]);
     expect(parsedStrings?.payload?.data.fields[0]).toMatchObject({
       type: ALL_FIELD_TYPES.timestamp,
       analyzerType: 'TIME',
@@ -263,25 +263,32 @@ describe('column edit payloads', () => {
   });
 
   test('real conversion does not silently round large integer strings', () => {
-    const table = new KeplerTable({
-      info: {id: 'large-integers', label: 'large integers', type: 'local'},
-      color: [0, 0, 0]
-    });
-    table.updateSchema({
-      fields: [{name: 'value', type: ALL_FIELD_TYPES.string}],
-      rows: [['9007199254740993']]
-    });
+    for (const value of [
+      '9007199254740993',
+      '9007199254740993.0',
+      '9007199254740993e0',
+      '9.007199254740993e15'
+    ]) {
+      const table = new KeplerTable({
+        info: {id: 'large-integers', label: 'large integers', type: 'local'},
+        color: [0, 0, 0]
+      });
+      table.updateSchema({
+        fields: [{name: 'value', type: ALL_FIELD_TYPES.string}],
+        rows: [[value]]
+      });
 
-    expect(buildChangeColumnTypeData(table, 'value', ALL_FIELD_TYPES.real)).toEqual({
-      error: {
-        rowIndex: 0,
-        value: '9007199254740993',
-        reason: 'loses integer precision as a real number'
-      }
-    });
-    expect(getCompatibleColumnTypes(table.dataContainer, 0, ALL_FIELD_TYPES.string)).toEqual([
-      ALL_FIELD_TYPES.string
-    ]);
+      expect(buildChangeColumnTypeData(table, 'value', ALL_FIELD_TYPES.real)).toEqual({
+        error: {
+          rowIndex: 0,
+          value,
+          reason: 'loses integer precision as a real number'
+        }
+      });
+      expect(getCompatibleColumnTypes(table.dataContainer, 0, ALL_FIELD_TYPES.string)).toEqual([
+        ALL_FIELD_TYPES.string
+      ]);
+    }
   });
 
   test('type change preserves untouched Arrow vectors', () => {
