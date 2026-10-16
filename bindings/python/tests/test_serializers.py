@@ -489,15 +489,54 @@ class TestEdgeCases:
     def test_serialize_dataframe_with_nan(self):
         """NaN values in a DataFrame should not raise during serialization,
         and the row containing NaN should be preserved (not dropped)."""
-        import math
         df = pd.DataFrame({'a': [1.0, float('nan'), 3.0]})
         result = serialize_dataset(df, "nan_test")
         assert result["format"] == "df"
         rows = result["data"]["data"]
         assert len(rows) == 3
         assert rows[0][0] == pytest.approx(1.0)
-        assert math.isnan(rows[1][0])
+        assert rows[1][0] is None
         assert rows[2][0] == pytest.approx(3.0)
+
+    def test_serialize_dataframe_datetime_without_offset(self):
+        """Naive datetimes must be sent as plain ISO strings, since an offset
+        added by the kernel's time zone would shift them in the map."""
+        import json
+        df = pd.DataFrame({
+            't': pd.to_datetime(['2024-01-01 00:00:00.000', '2024-06-01 12:30:00.500']),
+            'v': [1, 2],
+        })
+        result = serialize_dataset(df, "dt_test")
+        rows = result["data"]["data"]
+        assert rows[0] == ['2024-01-01T00:00:00.000000', 1]
+        assert rows[1] == ['2024-06-01T12:30:00.500000', 2]
+        json.dumps(result, allow_nan=False)
+
+    def test_serialize_dataframe_datetime_only(self):
+        """A DataFrame with only datetime columns should be sent as ISO strings."""
+        df = pd.DataFrame({'t': pd.to_datetime(['2024-01-01 00:00:00'])})
+        rows = serialize_dataset(df, "dt_only")["data"]["data"]
+        assert rows == [['2024-01-01T00:00:00.000000']]
+
+    def test_serialize_dataframe_datetime_with_nat(self):
+        """NaT should be sent as null instead of failing in JSON serialization."""
+        import json
+        df = pd.DataFrame({
+            't': pd.to_datetime(['2024-01-01 00:00:00', None]),
+            'v': [1.0, float('nan')],
+        })
+        result = serialize_dataset(df, "nat_test")
+        rows = result["data"]["data"]
+        assert rows == [['2024-01-01T00:00:00.000000', 1.0], [None, None]]
+        json.dumps(result, allow_nan=False)
+
+    def test_serialize_dataframe_datetime_with_timezone(self):
+        """Timezone-aware datetimes keep their UTC offset."""
+        df = pd.DataFrame({
+            't': pd.to_datetime(['2024-01-01 00:00:00']).tz_localize('Asia/Taipei'),
+        })
+        rows = serialize_dataset(df, "tz_test")["data"]["data"]
+        assert rows == [['2024-01-01T00:00:00.000000+0800']]
 
     def test_serialize_dataframe_arrow_with_nan(self):
         """Arrow serialization of a DataFrame containing NaN should not raise,
