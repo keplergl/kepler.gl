@@ -97,12 +97,17 @@ const ExportVideoModalStyle = css`
   max-width: 960px;
 `;
 
+export const ExportMapModalStyle = css`
+  max-width: 728px;
+`;
+
 const DefaultStyle = css`
   max-width: 960px;
 `;
 
 export type ModalContainerProps = {
   appName: string;
+  appWebsite?: string;
   rootNode: React.ReactInstance | null | undefined;
   containerW: number;
   containerH: number;
@@ -343,13 +348,15 @@ export default function ModalContainerFactory(
 
     _onExportMap = () => {
       const {uiState} = this._propsWithMapInfoDraft();
-      const {format, includeLayerApiKeys, fileName} = uiState.exportMap;
+      const {format, includeLayerApiKeys, fileName, appName, appWebsite} = uiState.exportMap;
       (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(
         this._propsWithMapInfoDraft(),
         {
           ...(uiState.exportMap[format] || {}),
           includeLayerApiKeys,
-          fileName
+          fileName,
+          appName,
+          appWebsite
         }
       );
       this._commitMapInfoDraft();
@@ -581,12 +588,15 @@ export default function ModalContainerFactory(
             });
             template = (
               <ExportMapModal
+                appName={this.props.appName}
+                appWebsite={this.props.appWebsite}
                 config={keplerGlConfig}
                 options={uiState.exportMap}
                 mapInfo={visState.mapInfo}
                 onChangeExportMapFormat={uiStateActions.setExportMapFormat}
                 onEditUserMapboxAccessToken={uiStateActions.setUserMapboxAccessToken}
                 onChangeExportMapHTMLMode={uiStateActions.setExportHTMLMapMode}
+                onChangeExportMapBranding={uiStateActions.setExportMapBranding}
                 onChangeExportIncludeLayerApiKeys={uiStateActions.setExportIncludeLayerApiKeys}
                 onChangeExportMapFileName={uiStateActions.setExportMapFileName}
                 onMapInfoDraft={this._onMapInfoDraft}
@@ -594,7 +604,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.exportMap',
-              cssStyle: '',
+              cssStyle: ExportMapModalStyle,
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportMap,

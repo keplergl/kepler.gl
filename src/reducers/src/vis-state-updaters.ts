@@ -136,7 +136,10 @@ import {
   AnnotationKind,
   DatasetType,
   getDatasetRefreshIntervalMs,
-  getRemoteSourceFormat
+  getRemoteSourceFormat,
+  GEOCODER_DATASET_NAME,
+  GEOCODER_ICON_COLOR,
+  GEOCODER_LAYER_ID
 } from '@kepler.gl/constants';
 import {
   AGGREGATION_COUNT_LAYER_TYPES,
@@ -321,6 +324,7 @@ export const defaultInteractionConfig: InteractionConfig = {
     enabled: true,
     config: {
       fieldsToShow: {},
+      timezone: null,
       compareMode: false,
       compareType: COMPARE_TYPES.ABSOLUTE
     }
@@ -339,7 +343,8 @@ export const defaultInteractionConfig: InteractionConfig = {
     enabled: false,
     position: null,
     config: {
-      limitSearch: false
+      limitSearch: false,
+      color: GEOCODER_ICON_COLOR
     }
   },
   brush: {
@@ -1498,6 +1503,32 @@ export function applyFilterConfigUpdater(
   );
 }
 
+function updateFilterPlotsAfterFiltering<S extends VisState>(
+  state: S,
+  affectedDatasetIds: string[],
+  updatedFilterIndex?: number
+): S {
+  const filters = state.filters.map((filter, filterIndex) => {
+    if (filterIndex === updatedFilterIndex) {
+      return updateFilterPlot(state.datasets, filter, undefined, state.layers);
+    }
+
+    if (filter.type !== FILTER_TYPES.timeRange) {
+      return filter;
+    }
+
+    const sharedDatasetIds = filter.dataId.filter(dataId => affectedDatasetIds.includes(dataId));
+    if (!sharedDatasetIds.length) {
+      return filter;
+    }
+
+    const invalidatedFilter = sharedDatasetIds.reduce(removeFilterPlot, filter);
+    return updateFilterPlot(state.datasets, invalidatedFilter, undefined, state.layers);
+  });
+
+  return set(['filters'], filters, state);
+}
+
 /**
  * Update filter property
  * @memberof visStateUpdaters
@@ -1558,8 +1589,9 @@ export function setFilterUpdater<S extends VisState>(
   newState = set(['filters', idx], newFilter, newState);
 
   // filter data
+  const affectedDatasetIds = uniq(datasetIdsToFilter);
   const filteredDatasets = applyFiltersToDatasets(
-    uniq(datasetIdsToFilter),
+    affectedDatasetIds,
     newState.datasets,
     newState.filters,
     newState.layers
@@ -1567,15 +1599,9 @@ export function setFilterUpdater<S extends VisState>(
 
   newState = set(['datasets'], filteredDatasets, newState);
 
-  // need to update filterPlot after filter Dataset for plot to update on filtered result
-  const filterWithPLot = updateFilterPlot(
-    newState.datasets,
-    newState.filters[idx],
-    undefined,
-    newState.layers
-  );
-
-  newState = set(['filters', idx], filterWithPLot, newState);
+  // Update plots after filtering so they use the latest filtered indexes.
+  // Other time filters need their cached bins invalidated for shared datasets.
+  newState = updateFilterPlotsAfterFiltering(newState, affectedDatasetIds, idx);
 
   // dataId is an array
   // pass only the dataset we need to update
@@ -2119,6 +2145,7 @@ export const removeFilterUpdater = (
 
   let newState = set(['filters'], newFilters, state);
   newState = set(['datasets'], filteredDatasets, newState);
+  newState = updateFilterPlotsAfterFiltering(newState, dataId);
   newState = set(['editor'], newEditor, newState);
 
   return updateAllLayerDomainData(newState, dataId, undefined);
@@ -3295,7 +3322,17 @@ export function interactionConfigChangeUpdater(
   };
 
   if (config.id === 'geocoder' && !config.enabled) {
-    return removeDatasetUpdater(newState, {dataId: 'geocoder_dataset'});
+    return removeDatasetUpdater(newState, {dataId: GEOCODER_DATASET_NAME});
+  }
+
+  if (config.id === 'geocoder') {
+    const geocoderLayer = newState.layers.find(layer => layer.id === GEOCODER_LAYER_ID);
+    if (geocoderLayer) {
+      return layerConfigChangeUpdater(newState, {
+        oldLayer: geocoderLayer,
+        newConfig: {color: config.config.color ?? GEOCODER_ICON_COLOR}
+      });
+    }
   }
 
   return newState;

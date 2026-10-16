@@ -3,7 +3,7 @@
 
 import Protobuf from 'pbf';
 import {VectorTile} from '@mapbox/vector-tile';
-import {worldToLngLat} from 'viewport-mercator-project';
+import {worldToLngLat} from '@math.gl/web-mercator';
 import {
   Coordinates,
   FlatFigure,
@@ -72,7 +72,10 @@ function project(x: number, y: number, scale: number, line: FlatFigure, extent: 
   for (let ii = 0; ii < line.length; ii++) {
     const p = line[ii];
     // LNGLAT
-    line[ii] = worldToLngLat([x + p[0] / sizeToPixel, y + p[1] / sizeToPixel], scale);
+    line[ii] = worldToLngLat([
+      (x + p[0] / sizeToPixel) / scale,
+      TILE_SIZE - (y + p[1] / sizeToPixel) / scale
+    ]);
   }
 }
 
