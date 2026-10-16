@@ -11,13 +11,43 @@ import {
 import {VisStateActions} from '@kepler.gl/actions';
 import {KeplerTable} from '@kepler.gl/table';
 import SchemaManager, {VisState} from '@kepler.gl/schemas';
-import {drainTasksForTesting, succeedTaskInTest} from '@kepler.gl/tasks';
-import type {PolygonFilter, TimeRangeFilter} from '@kepler.gl/types';
+import {drainTasksForTesting, errorTaskInTest, succeedTaskInTest} from '@kepler.gl/tasks';
+import type {PolygonFilter, RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
 
 import visStateReducer from './vis-state';
 import {INITIAL_VIS_STATE} from './vis-state-updaters';
 
 const reduceVisState = visStateReducer as (state: VisState, action: unknown) => VisState;
+
+function makeTable(id: string, data: Parameters<KeplerTable['updateSchema']>[0]) {
+  const table = new KeplerTable({
+    info: {id, label: id, type: 'local'},
+    color: [0, 0, 0]
+  });
+  return table.updateSchema(data);
+}
+
+function withTables(...tables: KeplerTable[]): VisState {
+  return {
+    ...INITIAL_VIS_STATE,
+    datasets: Object.fromEntries(tables.map(table => [table.id, table]))
+  };
+}
+
+function withFilter(state: VisState, dataId: string, column: string): VisState {
+  return reduceVisState(state, VisStateActions.createOrUpdateFilter(undefined, dataId, column));
+}
+
+function withSyncedFilter(primary: KeplerTable, secondary: KeplerTable, column: string): VisState {
+  return reduceVisState(
+    withFilter(withTables(primary, secondary), primary.id, column),
+    VisStateActions.setFilter(0, ['dataId', 'name'], [secondary.id, column], 1)
+  );
+}
+
+function changeType(state: VisState, dataId: string, column: string, type: string): VisState {
+  return reduceVisState(state, VisStateActions.changeTableColumnType(dataId, column, type));
+}
 
 function makeCities() {
   const table = new KeplerTable({
@@ -183,6 +213,38 @@ describe('column edits', () => {
     expect(kept.datasets.only.fields.map(field => field.name)).toEqual(['region']);
   });
 
+  test('deleting an unrelated column preserves an inverted numeric histogram', () => {
+    const table = makeTable('data', {
+      fields: [
+        {name: 'unused', type: ALL_FIELD_TYPES.string},
+        {name: 'value', type: ALL_FIELD_TYPES.integer},
+        {name: 'category', type: ALL_FIELD_TYPES.string}
+      ],
+      rows: [
+        ['x', 1, 'A'],
+        ['x', 2, 'B'],
+        ['x', 3, 'A']
+      ]
+    });
+    let state = withFilter(withTables(table), 'data', 'category');
+    state = reduceVisState(state, VisStateActions.setFilter(0, 'value', ['A']));
+    state = withFilter(state, 'data', 'value');
+    state = reduceVisState(state, VisStateActions.setFilter(1, 'value', [2, 2]));
+    state = reduceVisState(state, VisStateActions.setFilter(1, 'inverted', true));
+    const histogramCount = () =>
+      (state.filters[1] as RangeFilter).bins?.data?.reduce((sum, bin) => sum + bin.count, 0);
+    expect(histogramCount()).toBe(2);
+
+    state = reduceVisState(state, VisStateActions.deleteTableColumn('data', 'unused'));
+
+    expect(histogramCount()).toBe(2);
+    expect(state.datasets.data.filteredIndex).toEqual([0, 2]);
+    expect(state.datasets.data.fields.map(field => field.type)).toEqual([
+      ALL_FIELD_TYPES.integer,
+      ALL_FIELD_TYPES.string
+    ]);
+  });
+
   test('type change converts values and reconciles incompatible references', () => {
     let state = withCities();
     state = reduceVisState(
@@ -200,10 +262,7 @@ describe('column edits', () => {
         }
       })
     );
-    state = reduceVisState(
-      state,
-      VisStateActions.changeTableColumnType('cities', 'pop', ALL_FIELD_TYPES.string)
-    );
+    state = changeType(state, 'cities', 'pop', ALL_FIELD_TYPES.string);
 
     const pop = state.datasets.cities.fields.find(field => field.name === 'pop');
     expect(pop).toMatchObject({type: ALL_FIELD_TYPES.string, analyzerType: 'STRING', format: ''});
@@ -256,10 +315,7 @@ describe('column edits', () => {
     };
 
     state = {...state, filters: [...state.filters, polygonFilter]};
-    state = reduceVisState(
-      state,
-      VisStateActions.changeTableColumnType('cities', 'pop', ALL_FIELD_TYPES.string)
-    );
+    state = changeType(state, 'cities', 'pop', ALL_FIELD_TYPES.string);
 
     expect(state.filters.find(filter => filter.id === polygonFilter.id)).toBe(polygonFilter);
 
@@ -284,21 +340,14 @@ describe('column edits', () => {
     expect(state.datasets.cities.sortColumn).toEqual({region: SORT_ORDER.ASCENDING});
     expect(state.datasets.cities.sortOrder).toEqual([1, 0]);
 
-    state = reduceVisState(
-      state,
-      VisStateActions.changeTableColumnType('cities', 'pop', ALL_FIELD_TYPES.string)
-    );
+    state = changeType(state, 'cities', 'pop', ALL_FIELD_TYPES.string);
 
     expect(state.datasets.cities.sortColumn).toEqual({region: SORT_ORDER.ASCENDING});
     expect(state.datasets.cities.sortOrder).toEqual([1, 0]);
   });
 
   test('type change clears timeline state when a time filter becomes non-time', () => {
-    const events = new KeplerTable({
-      info: {id: 'events', label: 'events', type: 'local'},
-      color: [0, 0, 0]
-    });
-    events.updateSchema({
+    const events = makeTable('events', {
       fields: [
         {name: 'start', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'DATETIME'},
         {name: 'amount', type: ALL_FIELD_TYPES.integer}
@@ -308,11 +357,7 @@ describe('column edits', () => {
         ['2024-01-02T00:00:00Z', 20]
       ]
     });
-    let state: VisState = {...INITIAL_VIS_STATE, datasets: {events}};
-    state = reduceVisState(
-      state,
-      VisStateActions.createOrUpdateFilter(undefined, 'events', 'start')
-    );
+    let state = withFilter(withTables(events), 'events', 'start');
     state = {
       ...state,
       filters: [
@@ -340,10 +385,7 @@ describe('column edits', () => {
       ]
     };
 
-    state = reduceVisState(
-      state,
-      VisStateActions.changeTableColumnType('events', 'start', ALL_FIELD_TYPES.string)
-    );
+    state = changeType(state, 'events', 'start', ALL_FIELD_TYPES.string);
 
     const filter = state.filters[0];
     expect(filter.type).toBe('multiSelect');
@@ -364,39 +406,20 @@ describe('column edits', () => {
   });
 
   test('type change detaches an incompatible synced filter member and refilters its dataset', () => {
-    const primary = new KeplerTable({
-      info: {id: 'primary', label: 'primary', type: 'local'},
-      color: [0, 0, 0]
-    });
-    primary.updateSchema({
+    const primary = makeTable('primary', {
       fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
       rows: [[1], [2]]
     });
-    const secondary = new KeplerTable({
-      info: {id: 'secondary', label: 'secondary', type: 'local'},
-      color: [0, 0, 0]
-    });
-    secondary.updateSchema({
+    const secondary = makeTable('secondary', {
       fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
       rows: [[1], [3]]
     });
 
-    let state: VisState = {...INITIAL_VIS_STATE, datasets: {primary, secondary}};
-    state = reduceVisState(
-      state,
-      VisStateActions.createOrUpdateFilter(undefined, 'primary', 'value')
-    );
-    state = reduceVisState(
-      state,
-      VisStateActions.setFilter(0, ['dataId', 'name'], ['secondary', 'value'], 1)
-    );
+    let state = withSyncedFilter(primary, secondary, 'value');
     expect(state.filters[0].dataId).toEqual(['primary', 'secondary']);
     expect(state.datasets.secondary.filterRecord?.gpu).toHaveLength(1);
 
-    state = reduceVisState(
-      state,
-      VisStateActions.changeTableColumnType('secondary', 'value', ALL_FIELD_TYPES.string)
-    );
+    state = changeType(state, 'secondary', 'value', ALL_FIELD_TYPES.string);
 
     expect(state.filters[0].dataId).toEqual(['primary']);
     expect(state.filters[0].name).toEqual(['value']);
@@ -410,12 +433,8 @@ describe('column edits', () => {
   });
 
   test('changing a synced secondary dataset does not reconcile the primary plot axis', () => {
-    const makeEvents = (id: string) => {
-      const table = new KeplerTable({
-        info: {id, label: id, type: 'local'},
-        color: [0, 0, 0]
-      });
-      table.updateSchema({
+    const makeEvents = (id: string) =>
+      makeTable(id, {
         fields: [
           {name: 'start', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'},
           {name: 'amount', type: ALL_FIELD_TYPES.integer}
@@ -425,28 +444,15 @@ describe('column edits', () => {
           [1_700_000_020, 20]
         ]
       });
-      return table;
-    };
     const primary = makeEvents('primary');
     const secondary = makeEvents('secondary');
-    let state: VisState = {...INITIAL_VIS_STATE, datasets: {primary, secondary}};
-    state = reduceVisState(
-      state,
-      VisStateActions.createOrUpdateFilter(undefined, 'primary', 'start')
-    );
-    state = reduceVisState(
-      state,
-      VisStateActions.setFilter(0, ['dataId', 'name'], ['secondary', 'start'], 1)
-    );
+    let state = withSyncedFilter(primary, secondary, 'start');
     state = reduceVisState(
       state,
       VisStateActions.setFilterPlot(0, {yAxis: state.datasets.primary.fields[1]})
     );
 
-    state = reduceVisState(
-      state,
-      VisStateActions.changeTableColumnType('secondary', 'amount', ALL_FIELD_TYPES.string)
-    );
+    state = changeType(state, 'secondary', 'amount', ALL_FIELD_TYPES.string);
 
     expect(state.filters[0].dataId).toEqual(['primary', 'secondary']);
     expect(state.filters[0].yAxis).toMatchObject({name: 'amount', type: 'integer'});
@@ -454,11 +460,7 @@ describe('column edits', () => {
   });
 
   test('detaching a synced primary dataset rebuilds the plot for the new primary', () => {
-    const primary = new KeplerTable({
-      info: {id: 'primary', label: 'primary', type: 'local'},
-      color: [0, 0, 0]
-    });
-    primary.updateSchema({
+    const primary = makeTable('primary', {
       fields: [
         {name: 'start', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'},
         {name: 'amount', type: ALL_FIELD_TYPES.integer}
@@ -468,33 +470,18 @@ describe('column edits', () => {
         [1_700_000_020, 20]
       ]
     });
-    const secondary = new KeplerTable({
-      info: {id: 'secondary', label: 'secondary', type: 'local'},
-      color: [0, 0, 0]
-    });
-    secondary.updateSchema({
+    const secondary = makeTable('secondary', {
       fields: [{name: 'start', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'}],
       rows: [[1_700_000_040], [1_700_000_060]]
     });
-    let state: VisState = {...INITIAL_VIS_STATE, datasets: {primary, secondary}};
-    state = reduceVisState(
-      state,
-      VisStateActions.createOrUpdateFilter(undefined, 'primary', 'start')
-    );
-    state = reduceVisState(
-      state,
-      VisStateActions.setFilter(0, ['dataId', 'name'], ['secondary', 'start'], 1)
-    );
+    let state = withSyncedFilter(primary, secondary, 'start');
     state = reduceVisState(
       state,
       VisStateActions.setFilterPlot(0, {yAxis: state.datasets.primary.fields[1]})
     );
     expect(state.filters[0].lineChart).toBeDefined();
 
-    state = reduceVisState(
-      state,
-      VisStateActions.changeTableColumnType('primary', 'start', ALL_FIELD_TYPES.string)
-    );
+    state = changeType(state, 'primary', 'start', ALL_FIELD_TYPES.string);
 
     expect(state.filters[0].dataId).toEqual(['secondary']);
     expect(state.filters[0].name).toEqual(['start']);
@@ -504,12 +491,8 @@ describe('column edits', () => {
     expect(state.filters[0].lineChart).toBeUndefined();
   });
 
-  test('type change rebuilds grouped timeline series when group values collapse', () => {
-    const events = new KeplerTable({
-      info: {id: 'events', label: 'events', type: 'local'},
-      color: [0, 0, 0]
-    });
-    events.updateSchema({
+  test('grouped timeline series survive a rename and rebuild when group values collapse', () => {
+    const events = makeTable('events', {
       fields: [
         {name: 'start', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'},
         {name: 'group', type: ALL_FIELD_TYPES.string},
@@ -520,11 +503,7 @@ describe('column edits', () => {
         [1_700_000_020, '1', 20]
       ]
     });
-    let state: VisState = {...INITIAL_VIS_STATE, datasets: {events}};
-    state = reduceVisState(
-      state,
-      VisStateActions.createOrUpdateFilter(undefined, 'events', 'start')
-    );
+    let state = withFilter(withTables(events), 'events', 'start');
     state = reduceVisState(
       state,
       VisStateActions.setFilterPlot(0, {yAxis: state.datasets.events.fields[2]})
@@ -535,24 +514,22 @@ describe('column edits', () => {
         plotType: {groupBy: {fieldName: 'group', numGroups: 'ALL', groupOthers: false}}
       })
     );
-    const namesBefore = (state.filters[0].lineChart?.series as {names?: string[]}).names;
-    expect(new Set(namesBefore)).toEqual(new Set(['01', '1']));
+    const seriesBefore = state.filters[0].lineChart?.series as {names?: string[]};
+    expect(new Set(seriesBefore.names)).toEqual(new Set(['01', '1']));
 
-    state = reduceVisState(
-      state,
-      VisStateActions.changeTableColumnType('events', 'group', ALL_FIELD_TYPES.integer)
-    );
+    state = reduceVisState(state, VisStateActions.renameTableColumn('events', 'group', 'category'));
+    expect(state.filters[0].lineChart?.series).toEqual(seriesBefore);
+    expect(state.filters[0].plotType.groupBy.fieldName).toBe('category');
+    expect(state.datasets.events.fields[1].type).toBe(ALL_FIELD_TYPES.string);
+
+    state = changeType(state, 'events', 'category', ALL_FIELD_TYPES.integer);
 
     const namesAfter = (state.filters[0].lineChart?.series as {names?: string[]}).names;
     expect(new Set(namesAfter)).toEqual(new Set(['1']));
   });
 
   test('type change clears an interval end field that is no longer a timestamp', () => {
-    const events = new KeplerTable({
-      info: {id: 'events', label: 'events', type: 'local'},
-      color: [0, 0, 0]
-    });
-    events.updateSchema({
+    const events = makeTable('events', {
       fields: [
         {name: 'start', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'},
         {name: 'end', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'},
@@ -563,7 +540,7 @@ describe('column edits', () => {
         [1_700_000_020, 1_700_172_800, 20]
       ]
     });
-    let state: VisState = {...INITIAL_VIS_STATE, datasets: {events}};
+    let state = withTables(events);
     state = reduceVisState(
       state,
       VisStateActions.addChart({
@@ -583,10 +560,7 @@ describe('column edits', () => {
         yAxis: {field: {name: 'value', type: 'integer'}, aggregation: 'sum', title: 'value'}
       })
     );
-    state = reduceVisState(
-      state,
-      VisStateActions.createOrUpdateFilter(undefined, 'events', 'start')
-    );
+    state = withFilter(state, 'events', 'start');
     state = reduceVisState(state, VisStateActions.setFilter(0, 'endName', 'end', 0));
     state = reduceVisState(
       state,
@@ -595,10 +569,7 @@ describe('column edits', () => {
     expect(state.filters[0].endName).toEqual(['end']);
     expect(state.filters[0].yAxis?.name).toBe('value');
 
-    state = reduceVisState(
-      state,
-      VisStateActions.changeTableColumnType('events', 'value', ALL_FIELD_TYPES.string)
-    );
+    state = changeType(state, 'events', 'value', ALL_FIELD_TYPES.string);
     expect(state.filters[0].yAxis).toBeNull();
     expect(state.filters[0].plotType.type).toBe('histogram');
     expect(state.filters[0].endName).toEqual(['end']);
@@ -611,10 +582,7 @@ describe('column edits', () => {
     const intervalBins = timeFilter.timeBins?.events?.[interval];
     expect(intervalBins?.reduce((sum, bin) => sum + bin.count, 0)).toBeGreaterThan(2);
 
-    state = reduceVisState(
-      state,
-      VisStateActions.changeTableColumnType('events', 'end', ALL_FIELD_TYPES.string)
-    );
+    state = changeType(state, 'events', 'end', ALL_FIELD_TYPES.string);
     expect(state.filters[0].type).toBe('timeRange');
     expect(state.filters[0].endName).toBeUndefined();
     expect(state.filters[0].endFieldIdx).toBeUndefined();
@@ -630,10 +598,7 @@ describe('column edits', () => {
 
   test('invalid type change is atomic and schedules a precise error', () => {
     const state = withCities();
-    const next = reduceVisState(
-      state,
-      VisStateActions.changeTableColumnType('cities', 'region', ALL_FIELD_TYPES.integer)
-    );
+    const next = changeType(state, 'cities', 'region', ALL_FIELD_TYPES.integer);
 
     expect(next.datasets.cities).toBe(state.datasets.cities);
     expect(next.datasets.cities.fields.find(field => field.name === 'region')?.type).toBe(
@@ -661,14 +626,10 @@ describe('column edits', () => {
       filterProps: {type: FILTER_TYPES.range}
     });
     expect(staleSuccess).toMatchObject({
-      dataRevision: requestRevision,
       fieldType: ALL_FIELD_TYPES.integer
     });
 
-    state = reduceVisState(
-      state,
-      VisStateActions.changeTableColumnType('cities', 'pop', ALL_FIELD_TYPES.string)
-    );
+    state = changeType(state, 'cities', 'pop', ALL_FIELD_TYPES.string);
     expect(state.datasets.cities.dataRevision).toBe(requestRevision + 1);
     const changedState = state;
 
@@ -681,6 +642,43 @@ describe('column edits', () => {
     expect(
       state.datasets.cities.fields.find(field => field.name === 'pop')?.filterProps?.columnStats
     ).not.toBe(result);
+  });
+
+  test.each(['refresh', 'append'])('pending statistics complete after a normal %s', update => {
+    let state = withCities();
+    const types = state.datasets.cities.fields.map(field => field.type);
+    state = reduceVisState(state, VisStateActions.loadColumnStats('cities', 'pop'));
+    const [task] = drainTasksForTesting();
+    state = reduceVisState(state, VisStateActions.pinTableColumn('cities', 'region'));
+    const row = [41, -75, 'north', 50];
+    state = reduceVisState(
+      state,
+      update === 'refresh'
+        ? VisStateActions.refreshDatasetSuccess('cities', {
+            notModified: false,
+            data: {fields: state.datasets.cities.fields, rows: [row]}
+          })
+        : VisStateActions.addToDataset('cities', [row])
+    );
+
+    const result = {type: 'numeric', mean: 25};
+    const successState = reduceVisState(
+      state,
+      succeedTaskInTest(task, {result, filterProps: {type: FILTER_TYPES.range}})
+    );
+    const logError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const errorState = reduceVisState(state, errorTaskInTest(task, new Error('stats failed')));
+    logError.mockRestore();
+
+    expect(state.datasets.cities.fields.map(field => field.type)).toEqual(types);
+    expect(successState.datasets.cities.fields[3]).toMatchObject({
+      isLoadingStats: false,
+      filterProps: {columnStats: result}
+    });
+    expect(errorState.datasets.cities.fields[3].isLoadingStats).toBe(false);
+    expect(state.datasets.cities.dataContainer.rowAsArray(update === 'refresh' ? 0 : 2)).toEqual(
+      row
+    );
   });
 
   test('duplicate rename and non-tabular datasets are ignored', () => {
@@ -709,12 +707,7 @@ describe('column edits', () => {
     );
     expect(unchanged).toBe(tiled);
     expect(reduceVisState(tiled, VisStateActions.deleteTableColumn('tiles', 'pop'))).toBe(tiled);
-    expect(
-      reduceVisState(
-        tiled,
-        VisStateActions.changeTableColumnType('tiles', 'pop', ALL_FIELD_TYPES.string)
-      )
-    ).toBe(tiled);
+    expect(changeType(tiled, 'tiles', 'pop', ALL_FIELD_TYPES.string)).toBe(tiled);
   });
 
   test('externally hosted datasets ignore rename and delete', () => {
@@ -735,12 +728,7 @@ describe('column edits', () => {
       reduceVisState(state, VisStateActions.renameTableColumn('remote', 'region', 'area'))
     ).toBe(state);
     expect(reduceVisState(state, VisStateActions.deleteTableColumn('remote', 'pop'))).toBe(state);
-    expect(
-      reduceVisState(
-        state,
-        VisStateActions.changeTableColumnType('remote', 'pop', ALL_FIELD_TYPES.string)
-      )
-    ).toBe(state);
+    expect(changeType(state, 'remote', 'pop', ALL_FIELD_TYPES.string)).toBe(state);
     expect(state.datasets.remote.fields[0].displayName).toBe('Region');
   });
 });

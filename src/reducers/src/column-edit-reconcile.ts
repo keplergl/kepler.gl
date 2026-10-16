@@ -47,19 +47,14 @@ function followAxis<T extends NamedAxis>(
   }
   const field = alive.get(name);
   const typeChanged = field?.type !== axis.field.type;
+  if (name === axis.field.name && !typeChanged) {
+    return axis;
+  }
   const aggregation =
     typeChanged && axis.aggregation && BIN_AGGREGATIONS.has(axis.aggregation)
       ? binAggregationForType(field?.type || '')
       : axis.aggregation;
   const clearInterval = typeChanged && aggregation !== 'timeBin' && axis.interval !== undefined;
-  if (
-    name === axis.field.name &&
-    field?.type === axis.field.type &&
-    aggregation === axis.aggregation &&
-    !clearInterval
-  ) {
-    return axis;
-  }
   return {
     ...axis,
     field: {...axis.field, name, type: field?.type},

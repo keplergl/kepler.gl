@@ -4415,19 +4415,12 @@ function reconcileLayerWithNewSchema(
 
   // follow renamed or re-typed text-label fields
   if (layer.config.textLabel?.length) {
-    const textLabel = layer.config.textLabel.map(tl => {
-      if (!tl.field) {
-        return tl;
-      }
-      const name = renames[tl.field.name] ?? tl.field.name;
-      const field = newTable.fields.find(candidate => candidate.name === name);
-      return field && (field.name !== tl.field.name || field.type !== tl.field.type)
-        ? {...tl, field}
-        : tl;
+    configPatch.textLabel = layer.config.textLabel.map(tl => {
+      const name = tl.field?.name;
+      const field =
+        name && newTable.fields.find(candidate => candidate.name === (renames[name] ?? name));
+      return field && (field.name !== name || field.type !== tl.field?.type) ? {...tl, field} : tl;
     });
-    if (textLabel.some((tl, i) => tl !== layer.config.textLabel[i])) {
-      configPatch.textLabel = textLabel;
-    }
   }
 
   // shallow-copy the layer so we never mutate redux state; the copy keeps the
@@ -4450,15 +4443,6 @@ function reconcileLayerWithNewSchema(
 
 const FILTER_PLOT_Y_AXIS_TYPES = new Set<string>([ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real]);
 
-type TimelineFilterState = Filter & {
-  syncedWithLayerTimeline?: boolean;
-  syncTimelineMode?: number;
-  timeBins?: unknown;
-  timezone?: string | null;
-  invertTrendColor?: boolean;
-  showTimeDisplay?: boolean;
-};
-
 function clearTimelineFilterState(filter: Filter): Filter {
   const {
     syncedWithLayerTimeline: _syncedWithLayerTimeline,
@@ -4469,7 +4453,7 @@ function clearTimelineFilterState(filter: Filter): Filter {
     invertTrendColor: _invertTrendColor,
     showTimeDisplay: _showTimeDisplay,
     ...rest
-  } = filter as TimelineFilterState;
+  } = filter as TimeRangeFilter;
 
   return {
     ...rest,
@@ -4483,8 +4467,7 @@ function clearTimelineFilterState(filter: Filter): Filter {
 
 function reconcileTimelinePlotAfterPrimaryRemoval(
   filter: Filter,
-  datasets: VisState['datasets'],
-  layers: VisState['layers']
+  datasets: VisState['datasets']
 ): Filter {
   if (filter.type !== FILTER_TYPES.timeRange) {
     return filter;
@@ -4506,12 +4489,7 @@ function reconcileTimelinePlotAfterPrimaryRemoval(
     ...(!hasGroupByField ? {groupBy: null} : {})
   };
 
-  return updateFilterPlot(
-    datasets,
-    {...filter, yAxis, plotType, lineChart: undefined},
-    undefined,
-    layers
-  );
+  return {...filter, yAxis, plotType, lineChart: undefined};
 }
 
 /**
@@ -4586,25 +4564,20 @@ export function updateDatasetUpdater(
       const oldName = filter.name[vi];
       const newName = renames[oldName] ?? oldName;
       const fieldIdx = newTable.getColumnFieldIdx(newName);
+      const nextFilterType = fieldIdx === -1 ? null : newTable.getColumnFilterProps(newName)?.type;
 
-      if (fieldIdx === -1) {
-        // column is gone: drop a single-dataset filter, splice it out of a synced one
+      if (
+        fieldIdx === -1 ||
+        (filter.dataId.length > 1 && nextFilterType && nextFilterType !== filter.type)
+      ) {
+        // Drop a missing field or detach an incompatible synced member.
         if (filter.dataId.length === 1) {
           return null;
         }
         filter.dataId.forEach(id => datasetIdsToRefilter.add(id));
         const detachedFilter = _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
         return vi === 0
-          ? reconcileTimelinePlotAfterPrimaryRemoval(detachedFilter, newDatasets, state.layers)
-          : detachedFilter;
-      }
-
-      const nextFilterType = newTable.getColumnFilterProps(newName)?.type;
-      if (filter.dataId.length > 1 && nextFilterType && nextFilterType !== filter.type) {
-        filter.dataId.forEach(id => datasetIdsToRefilter.add(id));
-        const detachedFilter = _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
-        return vi === 0
-          ? reconcileTimelinePlotAfterPrimaryRemoval(detachedFilter, newDatasets, state.layers)
+          ? reconcileTimelinePlotAfterPrimaryRemoval(detachedFilter, newDatasets)
           : detachedFilter;
       }
 
@@ -4621,13 +4594,10 @@ export function updateDatasetUpdater(
       const oldEndName = toArray((filter as TimeRangeFilter).endName)[vi];
       if (updated.type === FILTER_TYPES.timeRange && oldEndName) {
         const endName = renames[oldEndName] ?? oldEndName;
-        const appliedEnd = applyTimeFilterEndFieldName(updated, newDatasets, dataId, endName, vi);
-        if (appliedEnd.filter) {
-          updated = appliedEnd.filter;
-        } else {
-          updated =
-            applyTimeFilterEndFieldName(updated, newDatasets, dataId, null, vi).filter ?? updated;
-        }
+        updated =
+          applyTimeFilterEndFieldName(updated, newDatasets, dataId, endName, vi).filter ??
+          applyTimeFilterEndFieldName(updated, newDatasets, dataId, null, vi).filter ??
+          updated;
       }
 
       // Time plots only accept numeric y-axis fields. Re-resolve the complete
@@ -4652,11 +4622,21 @@ export function updateDatasetUpdater(
       if (leavingTimeFilter) {
         nextFilter = clearTimelineFilterState(nextFilter);
       } else if (vi === 0 && nextFilter.type === FILTER_TYPES.timeRange) {
+        const groupBy = nextFilter.plotType.groupBy;
+        if (groupBy && renames[groupBy.fieldName]) {
+          nextFilter.plotType = {
+            ...nextFilter.plotType,
+            groupBy: {...groupBy, fieldName: renames[groupBy.fieldName]}
+          };
+        }
         // Timeline bins can remain identical while y-axis or group-by values
         // change, so do not reuse the old series cache after a data rebuild.
         nextFilter = {...nextFilter, lineChart: undefined};
       }
-      return updateFilterPlot(newDatasets, nextFilter, dataId, state.layers);
+      // Keep existing plots; time plots are rebuilt after filtering below.
+      return filter.type === nextFilter.type || nextFilter.type === FILTER_TYPES.timeRange
+        ? nextFilter
+        : updateFilterPlot(newDatasets, nextFilter, dataId, state.layers);
     })
     .filter(Boolean) as Filter[];
 
@@ -6121,12 +6101,10 @@ export function loadColumnStatsUpdater(
     LOAD_COLUMN_STATS_TASK({dataset: newDataset, field: f}).bimap(
       ({result, filterProps}) =>
         loadColumnStatsSuccess(newDataset.id, f.name, result, filterProps, {
-          dataRevision: newDataset.dataRevision,
           fieldType: f.type
         }),
       (error: Error) =>
         loadColumnStatsError(newDataset.id, f.name, error, {
-          dataRevision: newDataset.dataRevision,
           fieldType: f.type
         })
     )
@@ -6148,18 +6126,12 @@ export function loadColumnStatsSuccessUpdater(
     filterProps,
     dataId,
     fieldName,
-    dataRevision,
     fieldType
   }: VisStateActions.LoadColumnStatsSuccessUpdaterAction
 ): VisState {
   const dataset = state.datasets[dataId];
   const field = (dataset?.fields || []).find(f => f.name === fieldName);
-  if (
-    !dataset ||
-    !field ||
-    (dataRevision !== undefined && dataset.dataRevision !== dataRevision) ||
-    (fieldType !== undefined && field.type !== fieldType)
-  ) {
+  if (!dataset || !field || (fieldType !== undefined && field.type !== fieldType)) {
     return state;
   }
 
@@ -6181,22 +6153,11 @@ export function loadColumnStatsSuccessUpdater(
  */
 export function loadColumnStatsErrorUpdater(
   state: VisState,
-  {
-    error,
-    dataId,
-    fieldName,
-    dataRevision,
-    fieldType
-  }: VisStateActions.LoadColumnStatsErrorUpdaterAction
+  {error, dataId, fieldName, fieldType}: VisStateActions.LoadColumnStatsErrorUpdaterAction
 ): VisState {
   const dataset = state.datasets[dataId];
   const field = (dataset?.fields || []).find(f => f.name === fieldName);
-  if (
-    !dataset ||
-    !field ||
-    (dataRevision !== undefined && dataset.dataRevision !== dataRevision) ||
-    (fieldType !== undefined && field.type !== fieldType)
-  ) {
+  if (!dataset || !field || (fieldType !== undefined && field.type !== fieldType)) {
     return state;
   }
   Console.error(error);

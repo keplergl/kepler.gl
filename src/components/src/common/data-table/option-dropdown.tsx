@@ -185,34 +185,6 @@ const COLUMN_TYPE_OPTIONS = [
 
 type ColumnTypeOption = (typeof COLUMN_TYPE_OPTIONS)[number];
 
-type ColumnTypeDropdownProps = {
-  isOpened: boolean;
-  currentType: string;
-  options: ColumnTypeOption[];
-  onSelect: (type: string) => void;
-  onClose: () => void;
-};
-
-const ColumnTypeDropdown: React.FC<ColumnTypeDropdownProps> = ({
-  isOpened,
-  currentType,
-  options,
-  onSelect,
-  onClose
-}) => (
-  <Portaled left={120} top={-10} isOpened={isOpened} onClose={onClose}>
-    <StyledPopover className="column-type-popover">
-      <DropdownList
-        options={options}
-        selectionIndex={options.findIndex(option => option.type === currentType)}
-        displayOption={option => (option as ColumnTypeOption).display}
-        onOptionSelected={option => onSelect((option as ColumnTypeOption).type)}
-        light
-      />
-    </StyledPopover>
-  </Portaled>
-);
-
 const OptionDropdown = (props: OptionDropdownProps) => {
   const {
     isOpened,
@@ -377,18 +349,26 @@ const OptionDropdown = (props: OptionDropdownProps) => {
           setDisplayFormat={setDisplayFormat}
           onClose={onClose}
         />
-        <ColumnTypeDropdown
+        <Portaled
+          left={120}
+          top={-10}
           isOpened={Boolean(isOpened && showTypeSelector)}
-          currentType={colMeta[column]?.type}
-          options={columnTypeOptions}
-          onSelect={type => {
-            if (type !== colMeta[column]?.type) {
-              changeTableColumnType?.(column, type);
-            }
-            onClose();
-          }}
           onClose={onClose}
-        />
+        >
+          <StyledPopover className="column-type-popover">
+            <DropdownList
+              options={columnTypeOptions}
+              selectionIndex={columnTypeOptions.findIndex(option => option.type === currentType)}
+              displayOption={option => (option as ColumnTypeOption).display}
+              onOptionSelected={option => {
+                const {type} = option as ColumnTypeOption;
+                if (type !== currentType) changeTableColumnType?.(column, type);
+                onClose();
+              }}
+              light
+            />
+          </StyledPopover>
+        </Portaled>
       </StyledOptionsDropdown>
     </Portaled>
   );

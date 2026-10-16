@@ -207,111 +207,53 @@ describe('column header menu', () => {
     expect(changeTableColumnType).toHaveBeenCalledWith('region', 'integer');
   });
 
-  test('checks complete-column compatibility only after type change is selected', () => {
-    const {container} = renderWithTheme(
-      <ColumnHeader changeTableColumnType={jest.fn()} typeChangeValues={['ML', 'MW']} />
-    );
+  test.each([false, true])(
+    'does not scan the existing menu (type changes enabled: %s)',
+    enabled => {
+      const readValue = jest.fn(() => '10');
+      const values = [null];
+      Object.defineProperty(values, 0, {get: readValue});
+      const {container} = renderWithTheme(
+        <ColumnHeader
+          changeTableColumnType={enabled ? jest.fn() : undefined}
+          typeChangeValues={values}
+        />
+      );
 
-    openMenu(container);
-    fireEvent.click(screen.getByText('Change Data Type'));
-
-    expect(screen.queryByText('Integer')).toBeNull();
-    expect(screen.queryByText('Real')).toBeNull();
-    expect(screen.queryByText('Timestamp')).toBeNull();
-    expect(screen.getByText('String')).toBeTruthy();
-  });
-
-  test('does not scan compatibility when opening the existing column menu', () => {
-    const readValue = jest.fn(() => '10');
-    const values: unknown[] = [];
-    values.length = 1;
-    Object.defineProperty(values, 0, {get: readValue});
-    const {container} = renderWithTheme(
-      <ColumnHeader changeTableColumnType={jest.fn()} typeChangeValues={values} />
-    );
-
-    openMenu(container);
-    expect(readValue).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByText('Change Data Type'));
-    expect(readValue).toHaveBeenCalled();
-  });
-
-  test('does not scan compatibility when type changes are unavailable', () => {
-    const values: unknown[] = [];
-    values.length = 1;
-    Object.defineProperty(values, 0, {
-      get: () => {
-        throw new Error('compatibility scan should not run');
+      openMenu(container);
+      expect(readValue).not.toHaveBeenCalled();
+      expect(screen.getByText('Copy Column')).toBeTruthy();
+      if (enabled) {
+        fireEvent.click(screen.getByText('Change Data Type'));
+        expect(readValue).toHaveBeenCalled();
+      } else {
+        expect(screen.queryByText('Change Data Type')).toBeNull();
       }
-    });
-    const {container} = renderWithTheme(<ColumnHeader typeChangeValues={values} />);
+    }
+  );
 
-    openMenu(container);
-
-    expect(screen.getByText('Copy Column')).toBeTruthy();
-    expect(screen.queryByText('Change Data Type')).toBeNull();
-  });
-
-  test('omits incompatible target types', () => {
+  test.each([
+    {type: 'string', values: ['ML', 'MW'], omitted: ['Integer', 'Real', 'Timestamp']},
+    {type: 'real', values: [3.1, 4], omitted: ['Integer', 'Timestamp']},
+    {type: 'real', values: [1_700_000_000.4, 1_700_000_001.6], omitted: ['Integer']},
+    {type: 'integer', values: [1, 2], omitted: ['Real', 'Timestamp']}
+  ])('offers compatible types for $type values $values', ({type, values, omitted}) => {
     const changeTableColumnType = jest.fn();
-    const metadata = {
-      ...colMeta,
-      region: {...colMeta.region, type: 'real'}
-    };
     const {container} = renderWithTheme(
       <ColumnHeader
         changeTableColumnType={changeTableColumnType}
-        metadata={metadata}
-        typeChangeValues={[3.1, 4]}
+        metadata={{...colMeta, region: {...colMeta.region, type}}}
+        typeChangeValues={values}
       />
     );
 
     openMenu(container);
     fireEvent.click(screen.getByText('Change Data Type'));
-
-    expect(screen.queryByText('Integer')).toBeNull();
-    expect(screen.queryByText('Timestamp')).toBeNull();
-
+    omitted.forEach(label => expect(screen.queryByText(label)).toBeNull());
+    if (!omitted.includes('Timestamp')) expect(screen.getByText('Timestamp')).toBeTruthy();
     fireEvent.click(screen.getByText('String'));
-    expect(changeTableColumnType).toHaveBeenCalledWith('region', 'string');
-  });
-
-  test('offers timestamp for plausible real epoch values', () => {
-    const metadata = {
-      ...colMeta,
-      region: {...colMeta.region, type: 'real'}
-    };
-    const {container} = renderWithTheme(
-      <ColumnHeader
-        changeTableColumnType={jest.fn()}
-        metadata={metadata}
-        typeChangeValues={[1_700_000_000.4, 1_700_000_001.6]}
-      />
-    );
-
-    openMenu(container);
-    fireEvent.click(screen.getByText('Change Data Type'));
-    expect(screen.getByText('Timestamp')).toBeTruthy();
-  });
-
-  test('omits integer-to-real because both types have the same behavior', () => {
-    const metadata = {
-      ...colMeta,
-      region: {...colMeta.region, type: 'integer'}
-    };
-    const {container} = renderWithTheme(
-      <ColumnHeader
-        changeTableColumnType={jest.fn()}
-        metadata={metadata}
-        typeChangeValues={[1, 2]}
-      />
-    );
-
-    openMenu(container);
-    fireEvent.click(screen.getByText('Change Data Type'));
-    expect(screen.queryByText('Real')).toBeNull();
-    expect(screen.getByText('String')).toBeTruthy();
+    if (type === 'string') expect(changeTableColumnType).not.toHaveBeenCalled();
+    else expect(changeTableColumnType).toHaveBeenCalledWith('region', 'string');
   });
 
   test('hides type changes for field types outside the initial scope', () => {

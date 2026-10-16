@@ -30,6 +30,22 @@ function makeTable() {
   return table;
 }
 
+function makeColumnTable(
+  values: unknown[],
+  type: string = ALL_FIELD_TYPES.string,
+  analyzerType?: string
+) {
+  const table = new KeplerTable({
+    info: {id: 'typed', label: 'typed', type: 'local'},
+    color: [0, 0, 0]
+  });
+  table.updateSchema({
+    fields: [{name: 'value', type, analyzerType}],
+    rows: values.map(value => [value])
+  });
+  return table;
+}
+
 describe('column edit payloads', () => {
   test('rename keeps values and records the old name', () => {
     const payload = buildRenameColumnData(makeTable(), 'region', 'area');
@@ -91,20 +107,7 @@ describe('column edit payloads', () => {
   });
 
   test('type change converts every value and updates field metadata', () => {
-    const table = new KeplerTable({
-      info: {id: 'typed', label: 'typed', type: 'local'},
-      color: [0, 0, 0]
-    });
-    table.updateSchema({
-      fields: [
-        {
-          name: 'value',
-          type: ALL_FIELD_TYPES.string,
-          analyzerType: 'STRING'
-        }
-      ],
-      rows: [['10'], ['-2'], [null]]
-    });
+    const table = makeColumnTable(['10', '-2', null], ALL_FIELD_TYPES.string, 'STRING');
     table.fields[0].displayFormat = '.2f';
 
     const result = buildChangeColumnTypeData(table, 'value', ALL_FIELD_TYPES.integer);
@@ -121,14 +124,7 @@ describe('column edit payloads', () => {
   });
 
   test('type change reports the first invalid row without mutating the table', () => {
-    const table = new KeplerTable({
-      info: {id: 'typed', label: 'typed', type: 'local'},
-      color: [0, 0, 0]
-    });
-    table.updateSchema({
-      fields: [{name: 'value', type: ALL_FIELD_TYPES.string, analyzerType: 'STRING'}],
-      rows: [['10'], ['not-a-number'], ['30']]
-    });
+    const table = makeColumnTable(['10', 'not-a-number', '30'], ALL_FIELD_TYPES.string, 'STRING');
 
     const result = buildChangeColumnTypeData(table, 'value', ALL_FIELD_TYPES.integer);
     expect(result).toEqual({
@@ -145,81 +141,47 @@ describe('column edit payloads', () => {
   });
 
   test('type change parses timestamps and rejects types outside the initial scope', () => {
-    const table = new KeplerTable({
-      info: {id: 'typed', label: 'typed', type: 'local'},
-      color: [0, 0, 0]
-    });
-    table.updateSchema({
-      fields: [{name: 'when', type: ALL_FIELD_TYPES.string, analyzerType: 'STRING'}],
-      rows: [['2024-01-01T12:30:00Z'], ['2025-02-02T01:02:03Z']]
-    });
+    const table = makeColumnTable(
+      ['2024-01-01T12:30:00Z', '2025-02-02T01:02:03Z'],
+      ALL_FIELD_TYPES.string,
+      'STRING'
+    );
 
-    const timestamp = buildChangeColumnTypeData(table, 'when', ALL_FIELD_TYPES.timestamp);
+    const timestamp = buildChangeColumnTypeData(table, 'value', ALL_FIELD_TYPES.timestamp);
     expect(timestamp?.payload?.data.fields[0]).toMatchObject({
       type: ALL_FIELD_TYPES.timestamp,
       analyzerType: 'DATETIME',
       format: 'YYYY-M-DTH:m:s'
     });
 
-    expect(buildChangeColumnTypeData(table, 'when', ALL_FIELD_TYPES.boolean)).toBeNull();
-    expect(buildChangeColumnTypeData(table, 'when', ALL_FIELD_TYPES.array)).toBeNull();
+    expect(buildChangeColumnTypeData(table, 'value', ALL_FIELD_TYPES.boolean)).toBeNull();
+    expect(buildChangeColumnTypeData(table, 'value', ALL_FIELD_TYPES.array)).toBeNull();
   });
 
-  test('timestamp conversion accepts plausible epochs without rounding and rejects measurements', () => {
-    const epochs = new KeplerTable({
-      info: {id: 'epochs', label: 'epochs', type: 'local'},
-      color: [0, 0, 0]
-    });
-    epochs.updateSchema({
-      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
-      rows: [[1_700_000_000], [1_700_000_001]]
-    });
-    expect(
-      buildChangeColumnTypeData(epochs, 'value', ALL_FIELD_TYPES.timestamp)?.payload?.data.fields[0]
-    ).toMatchObject({type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'});
-
-    const realEpochs = new KeplerTable({
-      info: {id: 'real-epochs', label: 'real epochs', type: 'local'},
-      color: [0, 0, 0]
-    });
-    realEpochs.updateSchema({
-      fields: [{name: 'value', type: ALL_FIELD_TYPES.real}],
-      rows: [[1_700_000_000.4], [1_700_000_001.6]]
-    });
-    const converted = buildChangeColumnTypeData(realEpochs, 'value', ALL_FIELD_TYPES.timestamp);
-    expect(converted?.payload?.data.rows).toEqual([[1_700_000_000.4], [1_700_000_001.6]]);
-    expect(getCompatibleColumnTypes(realEpochs.dataContainer, 0, ALL_FIELD_TYPES.real)).toContain(
-      ALL_FIELD_TYPES.timestamp
+  test.each([
+    {type: ALL_FIELD_TYPES.integer, values: [1_700_000_000, 1_700_000_001]},
+    {type: ALL_FIELD_TYPES.real, values: [1_700_000_000.4, 1_700_000_001.6]},
+    {type: ALL_FIELD_TYPES.string, values: ['1700000000.4', '1700000001.6']}
+  ])('timestamp conversion preserves plausible $type epochs without rounding', ({type, values}) => {
+    const table = makeColumnTable(values, type);
+    const converted = buildChangeColumnTypeData(table, 'value', ALL_FIELD_TYPES.timestamp);
+    expect(converted?.payload?.data.rows).toEqual(
+      type === ALL_FIELD_TYPES.integer
+        ? [[1_700_000_000], [1_700_000_001]]
+        : [[1_700_000_000.4], [1_700_000_001.6]]
     );
-
-    const stringEpochs = new KeplerTable({
-      info: {id: 'string-epochs', label: 'string epochs', type: 'local'},
-      color: [0, 0, 0]
-    });
-    stringEpochs.updateSchema({
-      fields: [{name: 'value', type: ALL_FIELD_TYPES.string}],
-      rows: [['1700000000.4'], ['1700000001.6']]
-    });
-    const parsedStrings = buildChangeColumnTypeData(
-      stringEpochs,
-      'value',
-      ALL_FIELD_TYPES.timestamp
-    );
-    expect(parsedStrings?.payload?.data.rows).toEqual([[1_700_000_000.4], [1_700_000_001.6]]);
-    expect(parsedStrings?.payload?.data.fields[0]).toMatchObject({
+    expect(converted?.payload?.data.fields[0]).toMatchObject({
       type: ALL_FIELD_TYPES.timestamp,
       analyzerType: 'TIME',
       format: 'x'
     });
+    expect(getCompatibleColumnTypes(table.dataContainer, 0, type)).toContain(
+      ALL_FIELD_TYPES.timestamp
+    );
+  });
 
-    const measurements = new KeplerTable({
-      info: {id: 'measurements', label: 'measurements', type: 'local'},
-      color: [0, 0, 0]
-    });
-    measurements.updateSchema({
-      fields: [{name: 'value', type: ALL_FIELD_TYPES.real}],
-      rows: [[3.1], [4]]
-    });
+  test('timestamp conversion rejects measurements', () => {
+    const measurements = makeColumnTable([3.1, 4], ALL_FIELD_TYPES.real);
     expect(buildChangeColumnTypeData(measurements, 'value', ALL_FIELD_TYPES.timestamp)).toEqual({
       error: {
         rowIndex: 0,
@@ -234,14 +196,7 @@ describe('column edit payloads', () => {
   });
 
   test('type changes omit numeric conversions that do not change column behavior', () => {
-    const integers = new KeplerTable({
-      info: {id: 'integers', label: 'integers', type: 'local'},
-      color: [0, 0, 0]
-    });
-    integers.updateSchema({
-      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
-      rows: [[1_700_000_000], [1_700_000_001]]
-    });
+    const integers = makeColumnTable([1_700_000_000, 1_700_000_001], ALL_FIELD_TYPES.integer);
     expect(getCompatibleColumnTypes(integers.dataContainer, 0, ALL_FIELD_TYPES.integer)).toEqual([
       ALL_FIELD_TYPES.integer,
       ALL_FIELD_TYPES.string,
@@ -251,11 +206,11 @@ describe('column edit payloads', () => {
 
     const timestamp = buildChangeColumnTypeData(integers, 'value', ALL_FIELD_TYPES.timestamp);
     expect(timestamp?.payload).toBeTruthy();
-    const timestamps = new KeplerTable({
-      info: {id: 'timestamps', label: 'timestamps', type: 'local'},
-      color: [0, 0, 0]
-    });
-    timestamps.updateSchema(timestamp!.payload!.data);
+    if (!timestamp?.payload) {
+      throw new Error('Expected timestamp conversion to succeed');
+    }
+    const timestamps = makeColumnTable([]);
+    timestamps.updateSchema(timestamp.payload.data);
     expect(
       getCompatibleColumnTypes(timestamps.dataContainer, 0, ALL_FIELD_TYPES.timestamp)
     ).toEqual([ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.timestamp]);
@@ -269,14 +224,7 @@ describe('column edit payloads', () => {
       '9007199254740993e0',
       '9.007199254740993e15'
     ]) {
-      const table = new KeplerTable({
-        info: {id: 'large-integers', label: 'large integers', type: 'local'},
-        color: [0, 0, 0]
-      });
-      table.updateSchema({
-        fields: [{name: 'value', type: ALL_FIELD_TYPES.string}],
-        rows: [[value]]
-      });
+      const table = makeColumnTable([value]);
 
       expect(buildChangeColumnTypeData(table, 'value', ALL_FIELD_TYPES.real)).toEqual({
         error: {

@@ -90,10 +90,6 @@ type ColumnConversionState = {
   format: string;
 };
 
-type ColumnConversionResult =
-  | {values: unknown[]; analyzerType: string; format: string; error?: never}
-  | {values?: never; analyzerType?: never; format?: never; error: ColumnTypeConversionError};
-
 function conversionState(type: EditableFieldType): ColumnConversionState {
   return {
     analyzerType: type === ALL_FIELD_TYPES.timestamp ? '' : ANALYZER_TYPE_BY_FIELD_TYPE[type],
@@ -192,20 +188,18 @@ function convertColumnValue(
         return {rowIndex, value, reason: 'cannot be serialized as a string'};
       }
     }
-    case ALL_FIELD_TYPES.integer: {
-      const parsed = numericValue(value, true);
-      if (!Number.isSafeInteger(parsed)) {
-        return {rowIndex, value, reason: 'is not a safe integer'};
-      }
-      output?.push(parsed);
-      return null;
-    }
+    case ALL_FIELD_TYPES.integer:
     case ALL_FIELD_TYPES.real: {
-      const parsed = numericValue(value, false);
-      if (!Number.isFinite(parsed)) {
-        return {rowIndex, value, reason: 'is not a finite number'};
+      const integerOnly = type === ALL_FIELD_TYPES.integer;
+      const parsed = numericValue(value, integerOnly);
+      if (integerOnly ? !Number.isSafeInteger(parsed) : !Number.isFinite(parsed)) {
+        return {
+          rowIndex,
+          value,
+          reason: integerOnly ? 'is not a safe integer' : 'is not a finite number'
+        };
       }
-      if (losesIntegerPrecision(value, parsed)) {
+      if (!integerOnly && losesIntegerPrecision(value, parsed)) {
         return {rowIndex, value, reason: 'loses integer precision as a real number'};
       }
       output?.push(parsed);
@@ -261,33 +255,6 @@ function convertColumnValue(
     default:
       return {rowIndex, value, reason: `cannot be converted to ${type}`};
   }
-}
-
-function convertColumn(
-  dataContainer: DataContainerInterface,
-  fieldIndex: number,
-  type: EditableFieldType
-): ColumnConversionResult {
-  const state = conversionState(type);
-  const values: unknown[] = [];
-  const rowCount = dataContainer.numRows();
-  for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-    const error = convertColumnValue(
-      dataContainer.valueAt(rowIndex, fieldIndex),
-      type,
-      rowIndex,
-      state,
-      values
-    );
-    if (error) {
-      return {error};
-    }
-  }
-  return {
-    values,
-    analyzerType: state.analyzerType || ANALYZER_TYPE_BY_FIELD_TYPE[type],
-    format: state.format
-  };
 }
 
 /** Validate every candidate in one pass without allocating converted columns. */
@@ -438,9 +405,20 @@ export function buildChangeColumnTypeData(
     return null;
   }
 
-  const result = convertColumn(dataset.dataContainer, fieldIndex, newType as EditableFieldType);
-  if (result.error) {
-    return {error: result.error};
+  const state = conversionState(newType);
+  const values: unknown[] = [];
+  const rowCount = dataset.dataContainer.numRows();
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+    const error = convertColumnValue(
+      dataset.dataContainer.valueAt(rowIndex, fieldIndex),
+      newType,
+      rowIndex,
+      state,
+      values
+    );
+    if (error) {
+      return {error};
+    }
   }
 
   const fields = dataset.fields.map((field, index) => {
@@ -455,24 +433,23 @@ export function buildChangeColumnTypeData(
     return {
       ...schemaField(fieldWithoutTypeSpecificMetadata, field.name),
       type: newType,
-      analyzerType: result.analyzerType,
-      format: result.format
+      analyzerType: state.analyzerType || ANALYZER_TYPE_BY_FIELD_TYPE[newType],
+      format: state.format
     };
   });
 
   if (typeof dataset.dataContainer.getColumn === 'function') {
     const cols = dataset.fields.map((_, index) => dataset.dataContainer.getColumn?.(index));
     if (cols.every(Boolean)) {
-      cols[fieldIndex] = createArrowVector(result.values);
+      cols[fieldIndex] = createArrowVector(values);
       return {payload: {data: {fields, rows: [], cols}, renames: {}}};
     }
   }
 
-  const rowCount = dataset.dataContainer.numRows();
   const rows: unknown[][] = new Array(rowCount);
   for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
     const row = Array.from(dataset.dataContainer.rowAsArray(rowIndex));
-    row[fieldIndex] = result.values[rowIndex];
+    row[fieldIndex] = values[rowIndex];
     rows[rowIndex] = row;
   }
 

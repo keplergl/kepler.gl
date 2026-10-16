@@ -1372,7 +1372,6 @@ export type LoadColumnStatsSuccessUpdaterAction = {
   fieldName: string;
   result: any;
   filterProps?: any;
-  dataRevision?: number;
   fieldType?: string;
 };
 
@@ -1386,7 +1385,7 @@ export function loadColumnStatsSuccess(
   fieldName: string,
   result: any,
   filterProps?: any,
-  request?: {dataRevision: number; fieldType: string}
+  request?: {fieldType: string}
 ): Merge<
   LoadColumnStatsSuccessUpdaterAction,
   {type: typeof ActionTypes.LOAD_COLUMN_STATS_SUCCESS}
@@ -1405,7 +1404,6 @@ export type LoadColumnStatsErrorUpdaterAction = {
   dataId: string;
   fieldName: string;
   error: Error;
-  dataRevision?: number;
   fieldType?: string;
 };
 
@@ -1418,7 +1416,7 @@ export function loadColumnStatsError(
   dataId: string,
   fieldName: string,
   error: Error,
-  request?: {dataRevision: number; fieldType: string}
+  request?: {fieldType: string}
 ): Merge<LoadColumnStatsErrorUpdaterAction, {type: typeof ActionTypes.LOAD_COLUMN_STATS_ERROR}> {
   return {
     type: ActionTypes.LOAD_COLUMN_STATS_ERROR,
