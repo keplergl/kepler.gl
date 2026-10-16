@@ -420,6 +420,7 @@ export type TooltipInfo = BaseInteraction & {
     fieldsToShow: {
       [key: string]: TooltipField[];
     };
+    timezone?: string | null;
     compareMode: boolean;
     compareType: CompareType;
   };
@@ -544,6 +545,8 @@ export declare type ExportImage = {
   legend: boolean;
   /** When true, include the charts panel in the exported image. */
   charts: boolean;
+  /** When true, omit the basemap and preserve transparent pixels in the exported image. */
+  transparentBackground?: boolean;
   mapH: number;
   mapW: number;
   imageSize: {
@@ -582,6 +585,10 @@ export type ExportMap = {
   fileName: string;
   /** When false, dataset access tokens are omitted from exported HTML and JSON. */
   includeLayerApiKeys: boolean;
+  /** Optional application name override for exported HTML and JSON. */
+  appName?: string;
+  /** Optional application website override for exported HTML and JSON. */
+  appWebsite?: string;
 };
 
 export type ExportVideo = {

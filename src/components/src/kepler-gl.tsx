@@ -254,6 +254,7 @@ export const plotContainerSelector = (props: KeplerGLProps) => ({
   resolution: props.uiState.exportImage.resolution,
   legend: props.uiState.exportImage.legend,
   charts: props.uiState.exportImage.charts,
+  transparentBackground: props.uiState.exportImage.transparentBackground,
   center: props.uiState.exportImage.center,
   imageSize: props.uiState.exportImage.imageSize,
   escapeXhtmlForWebpack: props.uiState.exportImage.escapeXhtmlForWebpack,
@@ -282,6 +283,7 @@ export const bottomWidgetSelector = (props: KeplerGLProps, theme) => ({
 
 export const modalContainerSelector = (props: KeplerGLProps, rootNode) => ({
   appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
+  appWebsite: props.appWebsite,
   mapStyle: props.mapStyle,
   visState: props.visState,
   mapState: props.mapState,

@@ -13,7 +13,13 @@ export default function MultiSelectFilterFactory() {
       <PanelLabel htmlFor={`filter-${filter.id}`}>
         <FormattedMessage id={'misc.valuesIn'} />
       </PanelLabel>
-      <ItemSelector options={filter.domain} selectedItems={filter.value} onChange={setFilter} />
+      <ItemSelector
+        options={filter.domain}
+        selectedItems={filter.value}
+        onChange={setFilter}
+        closeOnSelect={false}
+        toggleSelectedOptions
+      />
     </div>
   );
   return MultiSelectFilter;
