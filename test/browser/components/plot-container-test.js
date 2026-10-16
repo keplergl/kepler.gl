@@ -5,11 +5,13 @@ import React from 'react';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 import test from 'tape';
+import sinon from 'sinon';
 import {appInjector, PlotContainerFactory, plotContainerSelector} from '@kepler.gl/components';
 import {EMPTY_MAPBOX_STYLE, NO_MAP_ID} from '@kepler.gl/constants';
 import {mockKeplerProps} from '../../helpers/mock-state';
 import {Provider} from 'react-redux';
 import configureStore from 'redux-mock-store';
+import domtoimage from '../../../src/utils/src/dom-to-image';
 
 const PlotContainer = appInjector.get(PlotContainerFactory);
 const initialProps = plotContainerSelector(mockKeplerProps);
@@ -153,8 +155,7 @@ test('PlotContainer -> transparent background', t => {
   );
   const normalMap = normalWrapper.find('MapContainer').instance();
 
-  t.equal(normalMap.props.mapStyle.bottomMapStyle, bottomMapStyle, 'should keep the bottom style');
-  t.equal(normalMap.props.mapStyle.topMapStyle, topMapStyle, 'should keep the top style');
+  t.deepEqual(normalMap.props.mapStyle, mapFields.mapStyle, 'should keep the map style');
   t.equal(
     normalMap.styleSelector(normalMap.props).backgroundColor,
     '#0C2238',
@@ -206,6 +207,72 @@ test('PlotContainer -> transparent background', t => {
 
   normalWrapper.unmount();
   transparentWrapper.unmount();
+  t.end();
+});
+
+test('PlotContainer -> waits for the replacement style before capturing', t => {
+  const clock = sinon.useFakeTimers();
+  const toPng = sinon.stub(domtoimage, 'toPng').returns(new Promise(() => undefined));
+  let mapProps;
+  const TestMapContainer = props => {
+    mapProps = props;
+    return <div />;
+  };
+  const TestMapsLayout = ({children}) => <>{children}</>;
+  const TestPlotContainer = PlotContainerFactory(TestMapContainer, TestMapsLayout);
+  const imageSize = {
+    scale: 1,
+    imageW: 800,
+    imageH: 600
+  };
+  const mapFields = {
+    ...initialProps.mapFields,
+    mapStyle: {
+      ...initialProps.mapFields.mapStyle,
+      bottomMapStyle: {
+        version: 8,
+        sources: {},
+        layers: [{id: 'background', type: 'background', paint: {'background-color': '#ffffff'}}]
+      }
+    }
+  };
+  const renderPlot = transparentBackground => (
+    <TestPlotContainer
+      {...initialProps}
+      imageSize={imageSize}
+      mapFields={mapFields}
+      transparentBackground={transparentBackground}
+      setExportImageSetting={() => {}}
+      setExportImageDataUri={() => {}}
+      setExportImageError={() => {}}
+      addNotification={() => {}}
+    />
+  );
+  let wrapper;
+
+  try {
+    wrapper = mountWithTheme(renderPlot(false));
+    mapProps.deckRenderCallbacks.onDeckAfterRender({layers: []});
+    mapProps.onMapRender({isStyleLoaded: () => true});
+    clock.tick(1000);
+    t.equal(toPng.callCount, 1, 'should capture after the initial map is ready');
+
+    toPng.resetHistory();
+    wrapper.setProps({children: renderPlot(true)});
+    wrapper.update();
+    clock.tick(1000);
+    t.equal(toPng.callCount, 0, 'should not capture using readiness from the previous style');
+
+    mapProps.deckRenderCallbacks.onDeckAfterRender({layers: []});
+    mapProps.onMapRender({isStyleLoaded: () => true});
+    clock.tick(1000);
+    t.equal(toPng.callCount, 1, 'should capture after the replacement style is ready');
+  } finally {
+    wrapper?.unmount();
+    toPng.restore();
+    clock.restore();
+  }
+
   t.end();
 });
 

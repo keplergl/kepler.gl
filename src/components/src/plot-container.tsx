@@ -177,6 +177,11 @@ export default function PlotContainerFactory(
     const deckLayersLoadingRef = useRef(true);
     const mapStyleLoadedRef = useRef(false);
     const screenshotTakenRef = useRef(false);
+    const captureGenerationRef = useRef(0);
+    const renderedMapStylesRef = useRef<{
+      bottomMapStyle: unknown;
+      topMapStyle: unknown;
+    } | null>(null);
 
     // Memoize the scale calculation
     const scale = useMemo(() => {
@@ -225,10 +230,38 @@ export default function PlotContainerFactory(
       };
     }, [mapFields.mapStyle, scale, transparentBackground]);
 
+    const isGlobeMode = Boolean(mapState.globe?.enabled);
+    const effectiveBottomMapStyle = isGlobeMode
+      ? EMPTY_MAPBOX_STYLE
+      : scaledMapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE;
+    const effectiveTopMapStyle = isGlobeMode ? undefined : scaledMapStyle.topMapStyle;
+
+    useEffect(() => {
+      const previousMapStyles = renderedMapStylesRef.current;
+      const mapStyleChanged =
+        !previousMapStyles ||
+        previousMapStyles.bottomMapStyle !== effectiveBottomMapStyle ||
+        previousMapStyles.topMapStyle !== effectiveTopMapStyle;
+
+      captureGenerationRef.current += 1;
+      screenshotTakenRef.current = false;
+      deckLayersLoadingRef.current = true;
+      if (mapStyleChanged) {
+        mapStyleLoadedRef.current = false;
+      }
+      renderedMapStylesRef.current = {
+        bottomMapStyle: effectiveBottomMapStyle,
+        topMapStyle: effectiveTopMapStyle
+      };
+    }, [effectiveBottomMapStyle, effectiveTopMapStyle, transparentBackground]);
+
     // Memoize the retrieveNewScreenshot callback
     const debouncedScreenshot = useMemo(
       () =>
-        debounce(() => {
+        debounce((captureGeneration: number) => {
+          if (captureGeneration !== captureGenerationRef.current) {
+            return;
+          }
           if (plottingAreaRef.current) {
             convertToPng(plottingAreaRef.current, {
               filter: DOM_FILTER_FUNC,
@@ -237,11 +270,17 @@ export default function PlotContainerFactory(
               escapeXhtmlForWebpack,
               ...(transparentBackground ? {style: {backgroundColor: 'transparent'}} : {})
             })
-              .then(setExportImageDataUri)
+              .then(dataUri => {
+                if (captureGeneration === captureGenerationRef.current) {
+                  setExportImageDataUri(dataUri);
+                }
+              })
               .catch(err => {
-                setExportImageError(err);
-                if (enableErrorNotification) {
-                  addNotification(exportImageError({err}));
+                if (captureGeneration === captureGenerationRef.current) {
+                  setExportImageError(err);
+                  if (enableErrorNotification) {
+                    addNotification(exportImageError({err}));
+                  }
                 }
               });
           }
@@ -258,7 +297,12 @@ export default function PlotContainerFactory(
       ]
     );
 
-    const retrieveNewScreenshot = useCallback(debouncedScreenshot, [debouncedScreenshot]);
+    useEffect(() => () => debouncedScreenshot.cancel(), [debouncedScreenshot]);
+
+    const retrieveNewScreenshot = useCallback(
+      () => debouncedScreenshot(captureGenerationRef.current),
+      [debouncedScreenshot]
+    );
 
     const tryScreenshot = useCallback(() => {
       if (mapStyleLoadedRef.current && !deckLayersLoadingRef.current) {
@@ -281,7 +325,10 @@ export default function PlotContainerFactory(
     // Memoize the onMapRender callback
     const debouncedMapRender = useMemo(
       () =>
-        debounce(map => {
+        debounce((map, captureGeneration: number) => {
+          if (captureGeneration !== captureGenerationRef.current) {
+            return;
+          }
           if (map.isStyleLoaded()) {
             mapStyleLoadedRef.current = true;
             tryScreenshot();
@@ -290,7 +337,12 @@ export default function PlotContainerFactory(
       [tryScreenshot]
     );
 
-    const onMapRender = useCallback(debouncedMapRender, [debouncedMapRender]);
+    useEffect(() => () => debouncedMapRender.cancel(), [debouncedMapRender]);
+
+    const onMapRender = useCallback(
+      map => debouncedMapRender(map, captureGenerationRef.current),
+      [debouncedMapRender]
+    );
 
     const deckRenderCallbacks = useMemo(
       () => ({
