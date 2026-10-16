@@ -87,13 +87,21 @@ function tokenizeTimeFormat(format: string): string[] {
   return expandLocalizedTimeFormat(format).match(FORMAT_TOKENS) || [];
 }
 
+function getHourTokenCycle(token: string): HourCycle | null {
+  if (/^(H{1,2}|k{1,2}|Hmm(ss)?)$/.test(token)) {
+    return '24-hour';
+  }
+  if (/^(h{1,2}|hmm(ss)?)$/.test(token)) {
+    return '12-hour';
+  }
+  return null;
+}
+
 function getHourCycle(format: string): HourCycle | null {
   for (const token of tokenizeTimeFormat(format)) {
-    if (/^(H{1,2}|k{1,2})$/.test(token)) {
-      return '24-hour';
-    }
-    if (/^h{1,2}$/.test(token)) {
-      return '12-hour';
+    const hourCycle = getHourTokenCycle(token);
+    if (hourCycle) {
+      return hourCycle;
     }
   }
   return null;
@@ -109,16 +117,13 @@ function updateHourCycle(format: string, hourCycle: HourCycle): string {
   const meridiemIndexes: number[] = [];
 
   tokens.forEach((token, index) => {
-    if (/^[Hh]{1,2}$/.test(token) || /^k{1,2}$/.test(token)) {
+    if (getHourTokenCycle(token)) {
       hourIndexes.push(index);
-      tokens[index] =
-        hourCycle === '24-hour'
-          ? token.length === 2
-            ? 'HH'
-            : 'H'
-          : token.length === 2
-          ? 'hh'
-          : 'h';
+      if (/^[Hh]mm(ss)?$/.test(token)) {
+        tokens[index] = `${hourCycle === '24-hour' ? 'H' : 'h'}${token.slice(1)}`;
+      } else {
+        tokens[index] = hourCycle === '24-hour' ? 'HH' : token.length === 2 ? 'hh' : 'h';
+      }
     } else if (/^[Aa]$/.test(token)) {
       meridiemIndexes.push(index);
     }
@@ -141,7 +146,7 @@ function updateHourCycle(format: string, hourCycle: HourCycle): string {
 
   if (!meridiemIndexes.length) {
     const localeTokens = tokenizeTimeFormat(moment.localeData().longDateFormat('LT'));
-    const localeHourIndex = localeTokens.findIndex(token => /^[Hh]{1,2}$/.test(token));
+    const localeHourIndex = localeTokens.findIndex(token => Boolean(getHourTokenCycle(token)));
     const localeMeridiemIndex = localeTokens.findIndex(token => /^[Aa]$/.test(token));
     const meridiemToken = localeMeridiemIndex >= 0 ? localeTokens[localeMeridiemIndex] : 'A';
 

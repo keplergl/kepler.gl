@@ -215,7 +215,7 @@ test('Components -> TimeWidget.mount -> time format selector', t => {
 
   t.deepEqual(
     setFilterAnimationTimeConfig.args[0],
-    [0, {timeFormat: 'L H:mm:ss'}],
+    [0, {timeFormat: 'L HH:mm:ss'}],
     'should call setFilterAnimationTimeConfig with 24-hour format'
   );
 
@@ -272,8 +272,21 @@ test('Components -> TimeWidget.mount -> time format selector', t => {
 
   t.deepEqual(
     setFilterAnimationTimeConfig.lastCall.args,
-    [0, {timeFormat: 'L H:mm:ss.SSS'}],
+    [0, {timeFormat: 'L HH:mm:ss.SSS'}],
     'should preserve millisecond precision when changing the hour cycle'
+  );
+
+  wrapper.unmount();
+  wrapper = mountTimeWidget({
+    ...defaultProps.filter,
+    timeFormat: 'L hmmss A'
+  });
+  getTimeFormatSelector().prop('onChange')('24-hour');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.lastCall.args,
+    [0, {timeFormat: 'L Hmmss'}],
+    'should convert a compact time without appending a second time format'
   );
 
   wrapper.unmount();
