@@ -22,6 +22,7 @@ import AutoCreateLayersCheckbox from './auto-create-layers-checkbox';
 import {LOADING_METHODS} from '@kepler.gl/constants';
 import {media} from '@kepler.gl/styles';
 import {FileLoading, FileLoadingProgress, LoadFiles} from '@kepler.gl/types';
+import {isTest} from '@kepler.gl/utils';
 
 const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
@@ -208,12 +209,18 @@ const noop = () => {
   return;
 };
 const getDefaultMethod = <T,>(methods: T[] = []) =>
-  Array.isArray(methods) ? get(methods, [0]) : null;
+  // Try sample data modal by default for DuckDB preview
+  // Note: In tests only 3 loading methods are available
+  Array.isArray(methods) ? get(methods, [isTest() && methods.length > 4 ? 4 : 0]) : null;
 export interface LoadingMethod {
   id: string;
   label: string;
   elementType: React.ComponentType<any>;
-  tabElementType?: React.ComponentType<{onClick: React.MouseEventHandler; intl: IntlShape}>;
+  tabElementType?: React.ComponentType<{
+    onClick: React.MouseEventHandler;
+    intl: IntlShape;
+    className?: string;
+  }>;
 }
 
 export type LoadDataOptions = {
@@ -362,7 +369,7 @@ export function LoadDataModalFactory(
     replaceDatasetId,
     replaceDatasetLabel,
     ...restProps
-  }) => {
+  }: LoadDataModalProps) => {
     const intl = useIntl();
     const isReplace = Boolean(replaceDatasetId);
     const availableMethods = isReplace
@@ -409,6 +416,12 @@ export function LoadDataModalFactory(
       setTilesetDraft(null);
       toggleMethod(method);
     }, []);
+    const loadDataMethod = availableMethods.find(method => method.id === LOADING_METHODS.upload);
+    const enableLoadDataModal = useCallback(() => {
+      if (loadDataMethod) {
+        selectMethod(loadDataMethod);
+      }
+    }, [loadDataMethod, selectMethod]);
     const isUpload = currentMethod?.id === LOADING_METHODS.upload;
     const isTileset = currentMethod?.id === LOADING_METHODS.tileset;
     const showAddBar = isUpload || isTileset;
@@ -469,6 +482,7 @@ export function LoadDataModalFactory(
       fileLoading,
       fileLoadingProgress,
       isCloudMapLoading,
+      enableLoadDataModal,
       ...(isUpload
         ? {
             stagedToAdd,

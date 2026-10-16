@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {initApplicationConfig} from '@kepler.gl/utils';
+import {keplerGlDuckDBPlugin, KeplerGlDuckDbTable, DuckDBWasmAdapter} from '@kepler.gl/duckdb';
 
 import {CLOUD_PROVIDERS_CONFIGURATION, setMapConfigUrl} from '../constants/default-settings';
 import {getRuntimeConfigHref} from './get-runtime-config-href';
@@ -48,24 +49,35 @@ const CREDENTIAL_TO_CLOUD_KEY = {
   GoogleDriveClientId: 'GOOGLE_DRIVE_CLIENT_ID'
 };
 
+// One adapter for the process. applyDemoApplicationDefaults() runs on import
+// and again before the /config.json overlay; a new adapter each call would
+// boot DuckDB twice.
+const duckdbDatabase = new DuckDBWasmAdapter({
+  config: {
+    query: {
+      castBigIntToDouble: true
+    }
+  }
+});
+
 /**
  * Built-in demo-app applicationConfig defaults (previously set in reducers/index.js).
  * Applied on first import so kepler.gl.com (website store/app) keeps the same
  * icons/flags, and again from {@link loadAndApplyRuntimeConfig} before any
  * runtime config overlay so Docker/source builds can still override them.
  *
- * To enable DuckDB in a source build, also register the plugin here (or via a custom
- * bootstrap), e.g.:
- *   initApplicationConfig({
- *     plugins: [keplerGlDuckdbPlugin],
- *     table: KeplerGlDuckDbTable,
- *     database: new DuckDBWasmAdapter(...),
- *     useArrowProgressiveLoading: false
- *   });
- * Plugins cannot be loaded from JSON alone — they must be bundled.
+ * DuckDB is on by default for this demo. Plugins cannot be loaded from JSON
+ * alone — they must be bundled. A /config.json `applicationConfig` can still
+ * replace these fields after defaults are applied.
  */
 export function applyDemoApplicationDefaults() {
   initApplicationConfig({
+    plugins: [keplerGlDuckDBPlugin],
+    table: KeplerGlDuckDbTable,
+    database: duckdbDatabase,
+    // progressive loading is sync, doesn't wait properly for a dataset to be created in DuckDB
+    useArrowProgressiveLoading: false,
+    showReleaseBanner: false,
     enableA5Layer: true,
     enableGeohashLayer: true,
     customIcons: [

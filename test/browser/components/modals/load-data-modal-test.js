@@ -76,6 +76,33 @@ test('Components -> LoadDataModal -> custom loading method', t => {
   t.end();
 });
 
+test('Components -> LoadDataModal -> DuckDB demo sample shortcut', t => {
+  const Upload = () => <div className="duckdb-demo-upload" />;
+  const Sample = ({enableLoadDataModal}) => (
+    <button className="duckdb-demo-add-data" onClick={enableLoadDataModal}>
+      Add data
+    </button>
+  );
+  const Placeholder = () => <div />;
+  const loadingMethods = [
+    {id: 'upload', label: 'modal.loadData.upload', elementType: Upload},
+    {id: 'tileset', label: 'modal.loadData.tileset', elementType: Placeholder},
+    {id: 'remote', label: 'modal.loadData.upload', elementType: Placeholder},
+    {id: 'storage', label: 'modal.loadData.storage', elementType: Placeholder},
+    {id: 'sample', label: 'modal.loadData.upload', elementType: Sample}
+  ];
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LoadDataModal loadingMethods={loadingMethods} />
+    </IntlWrapper>
+  );
+
+  t.equal(wrapper.find(Sample).length, 1, 'should show the sample gallery by default');
+  wrapper.find('.duckdb-demo-add-data').first().simulate('click');
+  t.equal(wrapper.find(Upload).length, 1, 'sample gallery shortcut should open file upload');
+  t.end();
+});
+
 test('Components -> LoadDataModal -> auto create layers', t => {
   const onFileUpload = sinon.spy();
   const onTilesetAdded = sinon.spy();

@@ -12,11 +12,9 @@ import KeplerGlSchema from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
-// DuckDB / applicationConfig defaults: see utils/runtime-config.js (applied on
-// import, and overlaid from /config.json in demo-app main.js). To enable DuckDB
-// locally, call initApplicationConfig from runtime-config or pass
-// applicationConfig via /config.json — plugins still need a source build that
-// bundles them.
+// DuckDB plugin, icons, and other applicationConfig defaults live in
+// utils/runtime-config.js (applied on import, then overlaid from /config.json
+// in demo-app main.js).
 
 import {
   INIT,
