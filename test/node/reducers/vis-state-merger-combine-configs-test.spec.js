@@ -20,6 +20,7 @@ const TEST_CASES = [
             ],
             'trip-dataset': [{name: 'vendor', format: null}]
           },
+          timezone: 'America/Guayaquil',
           compareMode: true,
           compareType: 'absolute'
         },
@@ -33,6 +34,7 @@ const TEST_CASES = [
           fieldsToShow: {
             'trip-dataset': [{name: 'customer', format: null}]
           },
+          timezone: 'UTC',
           compareMode: true,
           compareType: 'relative'
         },
@@ -44,11 +46,24 @@ const TEST_CASES = [
         tooltip: {
           enabled: true,
           fieldsToShow: {},
+          timezone: 'America/Guayaquil',
           compareMode: true,
           compareType: 'relative'
         },
         geocoder: {enabled: false},
         brush: {enabled: true, size: 3},
+        coordinate: {enabled: false}
+      },
+      {
+        tooltip: {
+          enabled: false,
+          fieldsToShow: {},
+          timezone: null,
+          compareMode: false,
+          compareType: 'relative'
+        },
+        geocoder: {enabled: false},
+        brush: {enabled: false, size: 1},
         coordinate: {enabled: false}
       }
     ],
@@ -66,6 +81,7 @@ const TEST_CASES = [
             {name: 'customer', format: null}
           ]
         },
+        timezone: 'America/Guayaquil',
         compareMode: true,
         compareType: 'relative'
       },
@@ -150,6 +166,38 @@ const TEST_CASES = [
       geocoder: {enabled: true, limitSearch: false},
       brush: {enabled: true, size: 3},
       coordinate: {enabled: false}
+    }
+  },
+  {
+    testMessage: 'interactionConfig (with an explicitly null tooltip timezone)',
+    propName: 'interactionConfig',
+    configsToMerge: [
+      {
+        tooltip: {
+          enabled: true,
+          fieldsToShow: {},
+          timezone: null,
+          compareMode: false,
+          compareType: 'absolute'
+        }
+      },
+      {
+        tooltip: {
+          enabled: false,
+          fieldsToShow: {},
+          compareMode: false,
+          compareType: 'absolute'
+        }
+      }
+    ],
+    expected: {
+      tooltip: {
+        enabled: true,
+        fieldsToShow: {},
+        timezone: null,
+        compareMode: false,
+        compareType: 'absolute'
+      }
     }
   },
   {

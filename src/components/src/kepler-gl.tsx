@@ -254,6 +254,7 @@ export const plotContainerSelector = (props: KeplerGLProps) => ({
   resolution: props.uiState.exportImage.resolution,
   legend: props.uiState.exportImage.legend,
   charts: props.uiState.exportImage.charts,
+  transparentBackground: props.uiState.exportImage.transparentBackground,
   center: props.uiState.exportImage.center,
   imageSize: props.uiState.exportImage.imageSize,
   escapeXhtmlForWebpack: props.uiState.exportImage.escapeXhtmlForWebpack,

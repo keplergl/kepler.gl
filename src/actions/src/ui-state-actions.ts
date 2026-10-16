@@ -261,7 +261,7 @@ export type SetExportImageSettingUpdaterAction = {
   payload: Partial<ExportImage>;
 };
 /**
- * Set `exportImage` settings: ratio, resolution, legend, charts
+ * Set `exportImage` settings: ratio, resolution, legend, charts, transparent background
  * @memberof uiStateActions
  * @param newSetting - {ratio: '1x'}
  * @public
@@ -285,6 +285,7 @@ export const startExportingImage: (options?: {
   ratio?: string;
   resolution?: string;
   legend?: string;
+  transparentBackground?: boolean;
   center?: boolean;
 }) => Merge<SetExportImageSettingUpdaterAction, {type: typeof ActionTypes.START_EXPORTING_IMAGE}> =
   createAction(ActionTypes.START_EXPORTING_IMAGE, (payload: any) => ({payload}));

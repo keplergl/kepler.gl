@@ -142,6 +142,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = {
  * @property resolution Default: `'ONE_X'`,
  * @property legend Default: `false`,
  * @property charts Default: `false`,
+ * @property transparentBackground Default: `false`,
  * @property mapH Default: 0,
  * @property mapW Default: 0,
  * @property imageSize Default: {zoomOffset: 0, scale: 1, imageW: 0, imageH: 0},
@@ -158,6 +159,7 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   resolution: RESOLUTIONS.ONE_X,
   legend: false,
   charts: false,
+  transparentBackground: false,
   mapH: 0,
   mapW: 0,
   imageSize: {

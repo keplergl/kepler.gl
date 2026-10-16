@@ -3,6 +3,7 @@
 
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import styled from 'styled-components';
+import moment from 'moment';
 import ItemSelector from '../common/item-selector/item-selector';
 import FieldSelectorFactory from '../common/field-selector';
 import Switch from '../common/switch';
@@ -12,6 +13,7 @@ import {
   AGGREGATION_TYPES,
   ALL_FIELD_TYPES,
   DEFAULT_COLOR_UI,
+  DEFAULT_TIME_FORMAT,
   durationMillisecond,
   durationSecond,
   durationMinute,
@@ -49,6 +51,102 @@ const INTERVAL_UNITS = [
   {id: 'month', label: 'Month', duration: durationMonth},
   {id: 'year', label: 'Year', duration: durationYear}
 ];
+
+const TIME_FORMAT_OPTIONS = ['12-hour', '24-hour'] as const;
+
+type HourCycle = (typeof TIME_FORMAT_OPTIONS)[number];
+
+const FORMAT_TOKENS =
+  /(\[[^[]*\])|(\\.)|(LTS|LT|[Hh]mm(ss)?|[Hh]{1,2}|k{1,2}|mm?|ss?|S{1,9}|[Aa]|.)/g;
+
+function tokenizeTimeFormat(format: string): string[] {
+  const tokens = format.match(FORMAT_TOKENS) || [];
+  return tokens.flatMap(token => {
+    if (token !== 'LT' && token !== 'LTS') {
+      return token;
+    }
+    const localizedFormat = moment.localeData().longDateFormat(token);
+    return localizedFormat?.match(FORMAT_TOKENS) || token;
+  });
+}
+
+function getHourTokenCycle(token: string): HourCycle | null {
+  if (/^(H{1,2}|k{1,2}|Hmm(ss)?)$/.test(token)) {
+    return '24-hour';
+  }
+  if (/^(h{1,2}|hmm(ss)?)$/.test(token)) {
+    return '12-hour';
+  }
+  return null;
+}
+
+function getHourCycle(format: string): HourCycle | null {
+  for (const token of tokenizeTimeFormat(format)) {
+    const hourCycle = getHourTokenCycle(token);
+    if (hourCycle) {
+      return hourCycle;
+    }
+  }
+  return null;
+}
+
+function getLocaleHourCycle(): HourCycle {
+  return getHourCycle(moment.localeData().longDateFormat('LT')) || '24-hour';
+}
+
+function updateHourCycle(format: string, hourCycle: HourCycle): string {
+  const tokens = tokenizeTimeFormat(format);
+  const hourIndexes: number[] = [];
+  const meridiemIndexes: number[] = [];
+
+  tokens.forEach((token, index) => {
+    if (getHourTokenCycle(token)) {
+      hourIndexes.push(index);
+      if (/^[Hh]mm(ss)?$/.test(token)) {
+        tokens[index] = `${hourCycle === '24-hour' ? 'H' : 'h'}${token.slice(1)}`;
+      } else {
+        tokens[index] = hourCycle === '24-hour' ? 'HH' : token.length === 2 ? 'hh' : 'h';
+      }
+    } else if (/^[Aa]$/.test(token)) {
+      meridiemIndexes.push(index);
+    }
+  });
+
+  if (!hourIndexes.length) {
+    return `${format} ${hourCycle === '24-hour' ? 'HH:mm' : 'hh:mm A'}`;
+  }
+
+  if (hourCycle === '24-hour') {
+    meridiemIndexes.forEach(index => {
+      tokens[index] = '';
+      const adjacentIndex = index < hourIndexes[0] ? index + 1 : index - 1;
+      if (/^\s$/.test(tokens[adjacentIndex] || '')) {
+        tokens[adjacentIndex] = '';
+      }
+    });
+    return tokens.join('');
+  }
+
+  if (!meridiemIndexes.length) {
+    const localeTokens = tokenizeTimeFormat(moment.localeData().longDateFormat('LT'));
+    const localeHourIndex = localeTokens.findIndex(token => Boolean(getHourTokenCycle(token)));
+    const localeMeridiemIndex = localeTokens.findIndex(token => /^[Aa]$/.test(token));
+    const meridiemToken = localeMeridiemIndex >= 0 ? localeTokens[localeMeridiemIndex] : 'A';
+
+    if (localeMeridiemIndex >= 0 && localeMeridiemIndex < localeHourIndex) {
+      tokens.splice(hourIndexes[0], 0, meridiemToken, ' ');
+    } else {
+      const lastTimeTokenIndex = tokens.reduce(
+        (lastIndex, token, index) =>
+          index >= hourIndexes[0] && /^(m{1,2}|s{1,2}|S{1,9})$/.test(token) ? index : lastIndex,
+        hourIndexes[hourIndexes.length - 1]
+      );
+      tokens.splice(lastTimeTokenIndex + 1, 0, ' ', meridiemToken);
+    }
+  }
+
+  return tokens.join('');
+}
 
 const SettingsPanel = styled.div`
   display: flex;
@@ -277,6 +375,7 @@ export type TimeWidgetSettingsProps = {
   datasets: Datasets;
   setFilterPlot: (newProp: any, valueIndex?: number) => void;
   onTimezoneChange: (timezone: string) => void;
+  onTimeFormatChange: (timeFormat: string) => void;
 };
 
 function parseInterval(intervalId: string | undefined): {step: number; unit: string} {
@@ -298,7 +397,8 @@ function TimeWidgetSettingsFactory(
     filter,
     datasets,
     setFilterPlot,
-    onTimezoneChange
+    onTimezoneChange,
+    onTimeFormatChange
   }) => {
     const {plotType} = filter;
     const currentInterval = plotType?.interval;
@@ -493,6 +593,20 @@ function TimeWidgetSettingsFactory(
       [aggregationOptions]
     );
 
+    const effectiveTimeFormat =
+      (typeof filter.timeFormat === 'string' ? filter.timeFormat : filter.defaultTimeFormat) ||
+      DEFAULT_TIME_FORMAT;
+    const selectedTimeFormat = getHourCycle(effectiveTimeFormat) || getLocaleHourCycle();
+
+    const handleTimeFormatChange = useCallback(
+      (value: unknown) => {
+        if (value === '12-hour' || value === '24-hour') {
+          onTimeFormatChange(updateHourCycle(effectiveTimeFormat, value));
+        }
+      },
+      [effectiveTimeFormat, onTimeFormatChange]
+    );
+
     return (
       <SettingsPanel className="time-widget--settings">
         <AxisSection>
@@ -538,6 +652,25 @@ function TimeWidgetSettingsFactory(
                 <FormattedMessage id="filterManager.timezone" />
               </FieldLabel>
               <TimezoneSelector timezone={filter.timezone} onChange={onTimezoneChange} />
+            </FieldBlock>
+            <FieldBlock>
+              <FieldLabel id="time-widget-time-format-label">
+                <FormattedMessage id="filterManager.timeFormat" />
+              </FieldLabel>
+              <SelectorWrapper
+                data-testid="time-widget-time-format"
+                aria-labelledby="time-widget-time-format-label"
+              >
+                <ItemSelector
+                  size="small"
+                  selectedItems={selectedTimeFormat}
+                  options={TIME_FORMAT_OPTIONS}
+                  multiSelect={false}
+                  searchable={false}
+                  placement="top"
+                  onChange={handleTimeFormatChange}
+                />
+              </SelectorWrapper>
             </FieldBlock>
           </AxisRow>
           {intervalTooSmall ? <ErrorMessage>Interval is too small</ErrorMessage> : null}
