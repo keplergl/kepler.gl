@@ -3,6 +3,7 @@
 
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import styled from 'styled-components';
+import moment from 'moment';
 import ItemSelector from '../common/item-selector/item-selector';
 import FieldSelectorFactory from '../common/field-selector';
 import Switch from '../common/switch';
@@ -12,6 +13,7 @@ import {
   AGGREGATION_TYPES,
   ALL_FIELD_TYPES,
   DEFAULT_COLOR_UI,
+  DEFAULT_TIME_FORMAT,
   durationMillisecond,
   durationSecond,
   durationMinute,
@@ -51,9 +53,112 @@ const INTERVAL_UNITS = [
 ];
 
 const TIME_FORMAT_OPTIONS = [
-  {id: '12-hour', label: '12-hour', timeFormat: 'L h:mm:ss A'},
-  {id: '24-hour', label: '24-hour', timeFormat: 'L HH:mm:ss'}
-];
+  {id: '12-hour', label: '12-hour'},
+  {id: '24-hour', label: '24-hour'}
+] as const;
+
+type HourCycle = (typeof TIME_FORMAT_OPTIONS)[number]['id'];
+
+const LOCALIZED_FORMAT_TOKENS = /(\[[^[]*\])|(\\)?(LTS|LT|LL?L?L?|l{1,4})/g;
+const FORMAT_TOKENS =
+  /(\[[^[]*\])|(\\)?([Hh]mm(ss)?|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|Qo?|N{1,5}|YYYYYY|YYYYY|YYYY|YY|y{2,4}|yo?|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|kk?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)/g;
+
+function expandLocalizedTimeFormat(format: string): string {
+  let expanded = format;
+  for (let i = 0; i < 5; i++) {
+    const next = expanded.replace(
+      LOCALIZED_FORMAT_TOKENS,
+      (match, literal, escaped, token: string) => {
+        if (literal || escaped || (token !== 'LT' && token !== 'LTS')) {
+          return match;
+        }
+        return moment.localeData().longDateFormat(token as 'LT' | 'LTS') || match;
+      }
+    );
+    if (next === expanded) {
+      break;
+    }
+    expanded = next;
+  }
+  return expanded;
+}
+
+function tokenizeTimeFormat(format: string): string[] {
+  return expandLocalizedTimeFormat(format).match(FORMAT_TOKENS) || [];
+}
+
+function getHourCycle(format: string): HourCycle | null {
+  for (const token of tokenizeTimeFormat(format)) {
+    if (/^(H{1,2}|k{1,2})$/.test(token)) {
+      return '24-hour';
+    }
+    if (/^h{1,2}$/.test(token)) {
+      return '12-hour';
+    }
+  }
+  return null;
+}
+
+function getLocaleHourCycle(): HourCycle {
+  return getHourCycle(moment.localeData().longDateFormat('LT')) || '24-hour';
+}
+
+function updateHourCycle(format: string, hourCycle: HourCycle): string {
+  const tokens = tokenizeTimeFormat(format);
+  const hourIndexes: number[] = [];
+  const meridiemIndexes: number[] = [];
+
+  tokens.forEach((token, index) => {
+    if (/^[Hh]{1,2}$/.test(token) || /^k{1,2}$/.test(token)) {
+      hourIndexes.push(index);
+      tokens[index] =
+        hourCycle === '24-hour'
+          ? token.length === 2
+            ? 'HH'
+            : 'H'
+          : token.length === 2
+          ? 'hh'
+          : 'h';
+    } else if (/^[Aa]$/.test(token)) {
+      meridiemIndexes.push(index);
+    }
+  });
+
+  if (!hourIndexes.length) {
+    return `${format} ${hourCycle === '24-hour' ? 'HH:mm' : 'hh:mm A'}`;
+  }
+
+  if (hourCycle === '24-hour') {
+    meridiemIndexes.forEach(index => {
+      tokens[index] = '';
+      const adjacentIndex = index < hourIndexes[0] ? index + 1 : index - 1;
+      if (/^\s$/.test(tokens[adjacentIndex] || '')) {
+        tokens[adjacentIndex] = '';
+      }
+    });
+    return tokens.join('');
+  }
+
+  if (!meridiemIndexes.length) {
+    const localeTokens = tokenizeTimeFormat(moment.localeData().longDateFormat('LT'));
+    const localeHourIndex = localeTokens.findIndex(token => /^[Hh]{1,2}$/.test(token));
+    const localeMeridiemIndex = localeTokens.findIndex(token => /^[Aa]$/.test(token));
+    const meridiemToken = localeMeridiemIndex >= 0 ? localeTokens[localeMeridiemIndex] : 'A';
+
+    if (localeMeridiemIndex >= 0 && localeMeridiemIndex < localeHourIndex) {
+      tokens.splice(hourIndexes[0], 0, meridiemToken, ' ');
+    } else {
+      const lastTimeTokenIndex = tokens.reduce(
+        (lastIndex, token, index) =>
+          index >= hourIndexes[0] && /^(m{1,2}|s{1,2}|S{1,9})$/.test(token) ? index : lastIndex,
+        hourIndexes[hourIndexes.length - 1]
+      );
+      tokens.splice(lastTimeTokenIndex + 1, 0, ' ', meridiemToken);
+    }
+  }
+
+  return tokens.join('');
+}
 
 const SettingsPanel = styled.div`
   display: flex;
@@ -500,27 +605,35 @@ function TimeWidgetSettingsFactory(
       [aggregationOptions]
     );
 
-    const selectedTimeFormat = useMemo(
-      () => (filter.timeFormat?.match(/H{1,2}|k{1,2}/) ? '24-hour' : '12-hour'),
-      [filter.timeFormat]
-    );
+    const effectiveTimeFormat =
+      (typeof filter.timeFormat === 'string' ? filter.timeFormat : filter.defaultTimeFormat) ||
+      DEFAULT_TIME_FORMAT;
+    const selectedTimeFormat = useMemo(() => {
+      const hourCycle = getHourCycle(effectiveTimeFormat);
+      return hourCycle || getLocaleHourCycle();
+    }, [effectiveTimeFormat]);
 
     const displayTimeFormatOption = useCallback(
-      (opt: (typeof TIME_FORMAT_OPTIONS)[number] | string) =>
-        typeof opt === 'string'
-          ? TIME_FORMAT_OPTIONS.find(option => option.id === opt)?.label || opt
-          : opt.label,
+      (option: (typeof TIME_FORMAT_OPTIONS)[number] | HourCycle) =>
+        typeof option === 'string'
+          ? TIME_FORMAT_OPTIONS.find(item => item.id === option)?.label || option
+          : option.label,
       []
     );
 
     const handleTimeFormatChange = useCallback(
-      value => {
-        const option = TIME_FORMAT_OPTIONS.find(opt => opt.id === value);
-        if (option) {
-          onTimeFormatChange(option.timeFormat);
+      (value: ReadonlyArray<unknown> | string | number | boolean | object | null) => {
+        const hourCycle =
+          typeof value === 'string'
+            ? value
+            : value && typeof value === 'object' && !Array.isArray(value) && 'id' in value
+            ? value.id
+            : null;
+        if (hourCycle === '12-hour' || hourCycle === '24-hour') {
+          onTimeFormatChange(updateHourCycle(effectiveTimeFormat, hourCycle));
         }
       },
-      [onTimeFormatChange]
+      [effectiveTimeFormat, onTimeFormatChange]
     );
 
     return (
@@ -570,20 +683,25 @@ function TimeWidgetSettingsFactory(
               <TimezoneSelector timezone={filter.timezone} onChange={onTimezoneChange} />
             </FieldBlock>
             <FieldBlock>
-              <FieldLabel>
+              <FieldLabel id="time-widget-time-format-label">
                 <FormattedMessage id="filterManager.timeFormat" />
               </FieldLabel>
-              <SelectorWrapper data-testid="time-widget-time-format">
+              <SelectorWrapper
+                className="time-format-selector"
+                data-testid="time-widget-time-format"
+                aria-labelledby="time-widget-time-format-label"
+              >
                 <ItemSelector
-                  className="time-format-selector"
+                  size="small"
                   selectedItems={selectedTimeFormat}
                   options={TIME_FORMAT_OPTIONS}
                   multiSelect={false}
-                  onChange={handleTimeFormatChange}
-                  getOptionValue={o => o.id}
-                  displayOption={displayTimeFormatOption}
-                  placement="top"
                   searchable={false}
+                  closeOnSelect={true}
+                  placement="top"
+                  getOptionValue={option => option.id}
+                  displayOption={displayTimeFormatOption}
+                  onChange={handleTimeFormatChange}
                 />
               </SelectorWrapper>
             </FieldBlock>
