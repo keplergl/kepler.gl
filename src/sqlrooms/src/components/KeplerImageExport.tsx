@@ -13,10 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
   Label,
-  Switch,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
+  Switch
 } from '@sqlrooms/ui';
 import {
   Resolution1024x768Option,
@@ -61,8 +58,7 @@ export const KeplerImageExport: React.FC<KeplerImageExportProps> = ({
   fileName,
   onExportStart
 }) => {
-  const {legend, charts, transparentBackground, resolution, processing, imageDataUri} =
-    exportImageSettings;
+  const {legend, charts, resolution, processing, imageDataUri} = exportImageSettings;
 
   useEffect(() => {
     // hardcode default resolution only when incoming resolution is not a supported custom option
@@ -123,27 +119,6 @@ export const KeplerImageExport: React.FC<KeplerImageExportProps> = ({
             ))}
           </SelectContent>
         </Select>
-
-        <Label className="flex items-center gap-1 font-normal">
-          Transparent background
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="cursor-help" tabIndex={0} aria-label="Hide basemap">
-                (?)
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>Hide basemap</TooltipContent>
-          </Tooltip>
-        </Label>
-        <Switch
-          checked={Boolean(transparentBackground)}
-          onCheckedChange={checked =>
-            setExportImageSetting({
-              transparentBackground: checked === true
-            })
-          }
-          disabled={processing}
-        />
 
         <Label className="font-normal">Show legend</Label>
         <Switch
