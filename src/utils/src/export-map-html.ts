@@ -46,6 +46,32 @@ function escapeHTML(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
+/** Resolve user-entered branding links to an absolute HTTP(S) URL. */
+function normalizeAppWebsite(value: unknown): string {
+  if (typeof value !== 'string' || !value.trim()) {
+    return KEPLER_GL_WEBSITE;
+  }
+
+  const trimmedValue = value.trim();
+  const hasScheme = /^[a-z][a-z\d+.-]*:/i.test(trimmedValue);
+  if (hasScheme && !/^https?:/i.test(trimmedValue)) {
+    return KEPLER_GL_WEBSITE;
+  }
+
+  const absoluteValue = /^https?:/i.test(trimmedValue)
+    ? trimmedValue
+    : trimmedValue.startsWith('//')
+    ? `https:${trimmedValue}`
+    : `https://${trimmedValue}`;
+
+  try {
+    const url = new URL(absoluteValue);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : KEPLER_GL_WEBSITE;
+  } catch {
+    return KEPLER_GL_WEBSITE;
+  }
+}
+
 /**
  * This method is used to create an html file which will inlcude kepler and map data
  * @param {Object} options Object that collects all necessary data to  create the html file
@@ -60,8 +86,7 @@ function escapeHTML(value: string): string {
 export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
   const appName =
     typeof options.appName === 'string' && options.appName ? options.appName : KEPLER_GL_NAME;
-  const appWebsite =
-    typeof options.appWebsite === 'string' ? options.appWebsite : KEPLER_GL_WEBSITE;
+  const appWebsite = normalizeAppWebsite(options.appWebsite);
   const branding = {appName, appWebsite};
 
   return `

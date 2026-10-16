@@ -53,7 +53,7 @@
     "defaultExportJsonSettings": {
       "hasData": true
     },
-    "enableCustomExportBranding": false,
+    "enableCustomExportBranding": true,
 
     "cdnUrl": "https://studio-public-data.foursquare.com/statics/keplergl",
 

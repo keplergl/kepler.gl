@@ -274,6 +274,14 @@ export function exportJson(state, options: any = {}) {
   downloadFile(fileBlob, fileName);
 }
 
+/** Prefer a non-empty user token, otherwise use the configured export token. */
+export function resolveMapboxTokenForExport(
+  userMapboxToken: string | null | undefined,
+  exportMapboxAccessToken: string | null | undefined
+): string | undefined {
+  return userMapboxToken?.trim() || exportMapboxAccessToken?.trim() || undefined;
+}
+
 export function exportHtml(state, options) {
   const {userMapboxToken, exportMapboxAccessToken, mode, includeLayerApiKeys, appName, appWebsite} =
     options;
@@ -282,8 +290,7 @@ export function exportHtml(state, options) {
 
   const data = {
     ...getMapJSON(state, {hasData: true, includeLayerApiKeys}),
-    mapboxApiAccessToken:
-      (userMapboxToken || '') !== '' ? userMapboxToken : exportMapboxAccessToken,
+    mapboxApiAccessToken: resolveMapboxTokenForExport(userMapboxToken, exportMapboxAccessToken),
     mode,
     appName: exportAppName,
     appWebsite: exportAppWebsite

@@ -16,6 +16,7 @@ import {
   getExportFileNameBase,
   exportMapToHTML
 } from '@kepler.gl/utils';
+import {resolveMapboxTokenForExport} from '../../../src/utils/src/export-utils';
 import {EXPORT_IMG_RATIOS, RESOLUTIONS} from '@kepler.gl/constants';
 
 test('exportUtils -> ExportJson', t => {
@@ -124,6 +125,42 @@ test('exportUtils -> ExportHtml preserves custom branding', t => {
   t.end();
 });
 
+test('exportUtils -> ExportHtml normalizes branding websites', t => {
+  const getBranding = appWebsite => {
+    const html = exportMapToHTML({
+      datasets: [],
+      config: {version: 'v1', config: {}},
+      mode: 'READ',
+      appWebsite
+    });
+    const brandingMatch = html.match(/const branding = (.+);/);
+    return JSON.parse(brandingMatch[1]);
+  };
+
+  t.equal(
+    getBranding('  example.com/maps  ').appWebsite,
+    'https://example.com/maps',
+    'scheme-less websites should become absolute HTTPS URLs'
+  );
+  t.equal(
+    getBranding('javascript:alert(1)').appWebsite,
+    'http://kepler.gl/',
+    'unsupported URL schemes should use the Kepler website'
+  );
+  t.equal(
+    getBranding('   ').appWebsite,
+    'http://kepler.gl/',
+    'empty websites should use the Kepler website'
+  );
+  t.equal(
+    getBranding('not a website').appWebsite,
+    'http://kepler.gl/',
+    'invalid websites should use the Kepler website'
+  );
+
+  t.end();
+});
+
 test('exportUtils -> ExportHtml uses default branding', t => {
   const html = exportMapToHTML({
     datasets: [],
@@ -147,7 +184,7 @@ test('exportUtils -> ExportHtml uses default branding', t => {
 });
 
 test('exportUtils -> ExportHtml safely serializes branding', t => {
-  const appName = '</title><script>window.brandPwned=1;</script> & Map';
+  const appName = '</title><script>window.brandPwned=1;</script> & Map\u2028\u2029';
   const appWebsite =
     'https://example.com/?next=</script><script>window.websitePwned=1;</script>\u2028\u2029';
   const html = exportMapToHTML({
@@ -169,7 +206,7 @@ test('exportUtils -> ExportHtml safely serializes branding', t => {
   );
   t.ok(
     html.includes(
-      '<title>&lt;/title&gt;&lt;script&gt;window.brandPwned=1;&lt;/script&gt; &amp; Map embedded map</title>'
+      '<title>&lt;/title&gt;&lt;script&gt;window.brandPwned=1;&lt;/script&gt; &amp; Map\u2028\u2029 embedded map</title>'
     ),
     'the app name should be escaped for the document title'
   );
@@ -181,8 +218,37 @@ test('exportUtils -> ExportHtml safely serializes branding', t => {
   );
   t.deepEqual(
     JSON.parse(brandingMatch[1]),
-    {appName, appWebsite},
-    'escaped branding should retain its original values at runtime'
+    {
+      appName,
+      appWebsite:
+        'https://example.com/?next=%3C/script%3E%3Cscript%3Ewindow.websitePwned=1;%3C/script%3E'
+    },
+    'escaped branding should retain its normalized values at runtime'
+  );
+
+  t.end();
+});
+
+test('exportUtils -> resolveMapboxTokenForExport', t => {
+  t.equal(
+    resolveMapboxTokenForExport('   ', 'shared-token'),
+    'shared-token',
+    'whitespace-only user tokens should use the configured export token'
+  );
+  t.equal(
+    resolveMapboxTokenForExport('  user-token  ', 'shared-token'),
+    'user-token',
+    'user tokens should be trimmed before export'
+  );
+  t.equal(
+    resolveMapboxTokenForExport('', undefined),
+    undefined,
+    'missing user and export tokens should remain missing'
+  );
+  t.equal(
+    resolveMapboxTokenForExport('', '   '),
+    undefined,
+    'whitespace-only configured export tokens should remain missing'
   );
 
   t.end();
