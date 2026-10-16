@@ -63,6 +63,15 @@ const prepareSpin = keyframes`
   }
 `;
 
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled]):not([type="hidden"])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"]):not([disabled])'
+].join(',');
+
 const PrepareSpinner = styled.span.attrs({
   className: 'item-selector__prepare-spinner',
   'aria-hidden': true
@@ -184,6 +193,28 @@ class ItemSelectorUnmemoized extends Component<
     this._onBlur();
   };
 
+  _onTab = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const root = this.root.current;
+    let nextElement: HTMLElement | undefined;
+
+    if (root) {
+      const direction = event.shiftKey
+        ? Node.DOCUMENT_POSITION_PRECEDING
+        : Node.DOCUMENT_POSITION_FOLLOWING;
+      const candidates = Array.from(
+        document.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+      ).filter(
+        element =>
+          !event.currentTarget.contains(element) &&
+          Boolean(root.compareDocumentPosition(element) & direction)
+      );
+      nextElement = event.shiftKey ? candidates[candidates.length - 1] : candidates[0];
+    }
+
+    this._hideTypeahead();
+    window.requestAnimationFrame(() => nextElement?.focus());
+  };
+
   _onBlur = () => {
     // note: chickleted input is not a real form element so we call onBlur()
     // when we feel the events are appropriate
@@ -217,7 +248,7 @@ class ItemSelectorUnmemoized extends Component<
   };
 
   _selectItem = item => {
-    if (this._preparingSelection) {
+    if (this._preparingSelection || item == null) {
       return;
     }
     const getValue = Accessor.generateOptionToStringFor(
@@ -319,6 +350,7 @@ class ItemSelectorUnmemoized extends Component<
               showOptionsWhenEmpty
               selectedItems={toArray(this.props.selectedItems)}
               light={this.props.inputTheme === 'light'}
+              onTab={this.props.closeOnSelect ? undefined : this._onTab}
             />
             {preparing ? (
               <PrepareOverlay>
