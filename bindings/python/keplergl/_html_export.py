@@ -12,7 +12,7 @@ from typing import Optional
 import pandas as pd
 import geopandas as gpd
 
-DEFAULT_KEPLER_GL_CDN_VERSION = "3.3.0-alpha.4"
+DEFAULT_KEPLER_GL_CDN_VERSION = "3.3.0-alpha.8"
 
 REACT_VERSION = "19.1.0"
 REACT_DOM_VERSION = "19.1.0"
