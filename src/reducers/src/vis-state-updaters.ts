@@ -1700,7 +1700,7 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
         datasetId,
         value,
         valueIndex,
-        {mergeDomain: valueIndex > 0}
+        {mergeDomain: filter.dataId.length > 1}
       );
       if (updatedFilter) {
         filter = updatedFilter;

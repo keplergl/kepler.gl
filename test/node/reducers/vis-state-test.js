@@ -2774,6 +2774,42 @@ test('#visStateReducer -> SET_FILTER.name', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_FILTER.name merges synced domains when changing first field', async t => {
+  const firstDataset = await createNewDataEntryMock({
+    info: {id: 'first', label: 'first'},
+    data: {
+      fields: [
+        {name: 'initial', type: ALL_FIELD_TYPES.integer},
+        {name: 'replacement', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [0, 0],
+        [10, 20]
+      ]
+    }
+  });
+  const secondDataset = await createNewDataEntryMock({
+    info: {id: 'second', label: 'second'},
+    data: {
+      fields: [{name: 'amount', type: ALL_FIELD_TYPES.real}],
+      rows: [[100], [100.5]]
+    }
+  });
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {...firstDataset, ...secondDataset}
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'initial'));
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'amount'], 1));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'replacement', 0));
+
+  t.deepEqual(state.filters[0].domain, [0, 100.5], 'keeps both synced datasets in the domain');
+  t.equal(state.filters[0].step, 0.0001, 'keeps the finest synced dataset step');
+  t.end();
+});
+
 test('#visStateReducer -> SET_FILTER.inverted', t => {
   const oldState = CloneDeep(StateWFilters.visState);
   const dataId = testGeoJsonDataId;
