@@ -187,7 +187,7 @@ test('Components -> InteractionManager legend section', t => {
 
   t.ok(wrapper.find('.interaction-legend').hostNodes().length >= 1, 'renders legend section');
   t.equal(
-    wrapper.find('input[id^="legend-toggle-"]').at(0).prop('checked'),
+    wrapper.find('input#legend-toggle').at(0).prop('checked'),
     true,
     'legend header switch is on when enabled'
   );
@@ -210,14 +210,22 @@ test('Components -> InteractionManager legend section', t => {
   t.ok(text.includes('Cities'), 'lists an included layer');
 
   act(() => {
-    wrapper.find('label[for^="legend-include-layer-1-"]').at(0).getDOMNode().click();
+    wrapper
+      .find('[data-testid="interaction-legend-row-layer-1"] label.kg-checkbox__label')
+      .at(0)
+      .getDOMNode()
+      .click();
   });
   t.equal(layerConfigChange.callCount, 1, 'toggling a layer updates layer config');
   t.equal(layerConfigChange.args[0][0].id, 'layer-1');
   t.deepEqual(layerConfigChange.args[0][1], {isIncludedInLegend: true});
 
   act(() => {
-    wrapper.find('label[for^="legend-include-group-1-"]').at(0).getDOMNode().click();
+    wrapper
+      .find('[data-testid="interaction-legend-row-group-1"] label.kg-checkbox__label')
+      .at(0)
+      .getDOMNode()
+      .click();
   });
   t.equal(updateLayerGroup.callCount, 1, 'toggling a group updates the group');
   t.deepEqual(updateLayerGroup.args[0][0], {
@@ -226,17 +234,25 @@ test('Components -> InteractionManager legend section', t => {
   });
 
   act(() => {
-    wrapper.find('label[for^="legend-include-layer-2-"]').at(0).getDOMNode().click();
+    wrapper
+      .find('[data-testid="interaction-legend-row-layer-2"] label.kg-checkbox__label')
+      .at(0)
+      .getDOMNode()
+      .click();
   });
   t.deepEqual(layerConfigChange.args[1][1], {isIncludedInLegend: false});
 
   t.equal(
-    wrapper.find('input[id^="legend-hide-invisible-"]').at(0).prop('checked'),
+    wrapper.find('input#legend-hide-invisible').at(0).prop('checked'),
     false,
     'hide hidden layers starts off'
   );
   act(() => {
-    wrapper.find('label[for^="legend-hide-invisible-"]').at(0).getDOMNode().click();
+    wrapper
+      .find('.interaction-legend__hide-invisible label.kg-checkbox__label')
+      .at(0)
+      .getDOMNode()
+      .click();
   });
   t.equal(
     interactionConfigChange.callCount,
@@ -246,7 +262,7 @@ test('Components -> InteractionManager legend section', t => {
   t.equal(interactionConfigChange.args[0][0].id, 'legend');
   t.deepEqual(interactionConfigChange.args[0][0].config, {hideInvisibleLayers: true});
 
-  wrapper.find('input[id^="legend-toggle-"]').at(0).simulate('change');
+  wrapper.find('input#legend-toggle').at(0).simulate('change');
   t.equal(
     interactionConfigChange.callCount,
     2,
@@ -285,7 +301,7 @@ test('Components -> InteractionManager legend section default off', t => {
   );
 
   t.equal(
-    wrapper.find('input[id^="legend-toggle-"]').at(0).prop('checked'),
+    wrapper.find('input#legend-toggle').at(0).prop('checked'),
     false,
     'legend header switch starts off by default'
   );
@@ -327,7 +343,7 @@ test('Components -> InteractionManager legend switch syncs map control', t => {
     </IntlWrapper>
   );
 
-  wrapper.find('input[id^="legend-toggle-"]').at(0).simulate('change');
+  wrapper.find('input#legend-toggle').at(0).simulate('change');
   t.equal(interactionConfigChange.args[0][0].enabled, true);
   t.equal(toggleMapControl.callCount, 1, 'enabling Interactions legend opens the map legend');
   t.deepEqual(toggleMapControl.args[0], ['mapLegend', 0]);
@@ -366,7 +382,7 @@ test('Components -> InteractionManager legend settings expand independently', t 
   );
 
   t.equal(
-    wrapper.find('input[id^="legend-toggle-"]').at(0).prop('checked'),
+    wrapper.find('input#legend-toggle').at(0).prop('checked'),
     false,
     'legend header switch is off'
   );
@@ -415,7 +431,7 @@ test('Components -> InteractionManager map info section', t => {
 
   t.ok(wrapper.find('.interaction-map-info').hostNodes().length >= 1, 'renders map info section');
   t.equal(
-    wrapper.find('input[id^="map-info-toggle-"]').at(0).prop('checked'),
+    wrapper.find('input#map-info-toggle').at(0).prop('checked'),
     true,
     'map info switch starts on'
   );
@@ -450,7 +466,7 @@ test('Components -> InteractionManager map info section', t => {
     .simulate('change', {target: {value: 'Harbor'}});
   t.deepEqual(setMapInfo.args[0][0], {title: 'Harbor'}, 'editing the name updates map info');
 
-  wrapper.find('input[id^="map-info-toggle-"]').at(0).simulate('change');
+  wrapper.find('input#map-info-toggle').at(0).simulate('change');
   t.deepEqual(
     setMapControlVisibility.args[0],
     ['mapInfo', false],

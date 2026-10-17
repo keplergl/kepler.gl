@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {ComponentType, useCallback, useId, useState} from 'react';
+import React, {ComponentType, useCallback, useState} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {useIntl} from 'react-intl';
@@ -68,14 +68,44 @@ const LegendRow = styled.div.withConfig({shouldForwardProp})<{$depth: number; $d
   opacity: ${props => (props.$dimmed ? 0.45 : 1)};
 `;
 
-const LegendLabel = styled.label.withConfig({shouldForwardProp})<{$group?: boolean}>`
+const LegendLabel = styled.span.withConfig({shouldForwardProp})<{$group?: boolean}>`
   color: ${props => props.theme.textColor};
-  cursor: pointer;
+  display: block;
   font-size: 12px;
   font-weight: ${props => (props.$group ? 500 : 400)};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+`;
+
+const RightAlignedSwitch = styled(Switch)`
+  margin-left: 0;
+  width: 100%;
+
+  .kg-checkbox__label {
+    box-sizing: border-box;
+    color: inherit;
+    display: block;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    width: 100%;
+    padding-left: 0;
+    padding-right: ${props => props.theme.switchWidth + 8}px;
+  }
+
+  .kg-checkbox__label:before {
+    right: 0;
+    left: auto;
+  }
+
+  .kg-checkbox__label:after {
+    right: ${props =>
+      props.checked
+        ? props.theme.switchWidth / 2 - props.theme.switchBtnWidth
+        : props.theme.switchWidth - (props.theme.switchHeight + props.theme.switchBtnWidth) / 2}px;
+    left: auto;
+  }
 `;
 
 const LegendOptionRow = styled.div`
@@ -135,7 +165,6 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
   onToggleGroup
 }) => {
   const intl = useIntl();
-  const inputIdPrefix = useId();
   const hiddenByGroupTitle = intl.formatMessage({id: 'interactions.legendHiddenByGroup'});
 
   return (
@@ -144,7 +173,6 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
         const [type, value] = entry;
         if (type === 'layerGroup') {
           const group = value as LayerOrderGroup;
-          const inputId = `legend-include-${group.id}-${inputIdPrefix}`;
           const included = group.isIncludedInLegend !== false;
           const dimmed = isHiddenByGroup(layerOrder, group.id);
           return (
@@ -156,13 +184,10 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
                 title={dimmed ? hiddenByGroupTitle : undefined}
                 data-testid={`interaction-legend-row-${group.id}`}
               >
-                <LegendLabel $group htmlFor={inputId}>
-                  {group.label}
-                </LegendLabel>
-                <Switch
+                <RightAlignedSwitch
                   checked={included}
                   id={`legend-include-${group.id}`}
-                  inputId={inputId}
+                  label={<LegendLabel $group>{group.label}</LegendLabel>}
                   secondary
                   onChange={() => onToggleGroup(group)}
                 />
@@ -180,7 +205,6 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
         }
 
         const layer = value as Layer;
-        const inputId = `legend-include-${layer.id}-${inputIdPrefix}`;
         const included = layer.config.isIncludedInLegend !== false;
         const dimmed = isHiddenByGroup(layerOrder, layer.id);
         return (
@@ -192,11 +216,10 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
             title={dimmed ? hiddenByGroupTitle : undefined}
             data-testid={`interaction-legend-row-${layer.id}`}
           >
-            <LegendLabel htmlFor={inputId}>{layer.config.label || layer.id}</LegendLabel>
-            <Switch
+            <RightAlignedSwitch
               checked={included}
               id={`legend-include-${layer.id}`}
-              inputId={inputId}
+              label={<LegendLabel>{layer.config.label || layer.id}</LegendLabel>}
               secondary
               onChange={() => onToggleLayer(layer)}
             />
@@ -225,7 +248,6 @@ function LegendConfigFactory(
     mapLegendActive,
     actionIcons: customActionIcons
   }) => {
-    const hideInvisibleInputId = `legend-hide-invisible-${useId()}`;
     const actionIcons = {...defaultActionIcons, ...customActionIcons};
     const [isConfigActive, setIsConfigActive] = useState(false);
     const legendInteraction = legendConfig ?? DEFAULT_LEGEND_CONFIG;
@@ -321,13 +343,10 @@ function LegendConfigFactory(
               <FormattedMessage id="interactions.legendHint" />
             </LegendHint>
             <LegendOptionRow className="interaction-legend__hide-invisible">
-              <label htmlFor={hideInvisibleInputId}>
-                <FormattedMessage id="interactions.legendHideInvisible" />
-              </label>
-              <Switch
+              <RightAlignedSwitch
                 checked={hideInvisibleLayers}
                 id="legend-hide-invisible"
-                inputId={hideInvisibleInputId}
+                label={<FormattedMessage id="interactions.legendHideInvisible" />}
                 secondary
                 onChange={onToggleHideInvisible}
               />

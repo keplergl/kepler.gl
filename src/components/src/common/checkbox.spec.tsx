@@ -22,10 +22,12 @@ describe('Checkbox', () => {
     const inputs = container.querySelectorAll('input');
     const labels = container.querySelectorAll('label');
 
-    expect(inputs[0].id).not.toBe(inputs[1].id);
-    expect(labels[0]).toHaveAttribute('for', inputs[0].id);
-    expect(labels[1]).toHaveAttribute('for', inputs[1].id);
-    expect(labels[1]).not.toContainElement(inputs[1]);
+    expect(inputs[0]).toHaveAttribute('id', 'layer-visible');
+    expect(inputs[1]).toHaveAttribute('id', 'layer-visible');
+    expect(labels[0]).not.toHaveAttribute('for');
+    expect(labels[1]).not.toHaveAttribute('for');
+    expect(labels[0]).toContainElement(inputs[0]);
+    expect(labels[1]).toContainElement(inputs[1]);
 
     fireEvent.click(screen.getByText('Second layer'));
 
@@ -33,23 +35,16 @@ describe('Checkbox', () => {
     expect(onChangeFirst).not.toHaveBeenCalled();
   });
 
-  test('supports a unique input id shared with an external label', () => {
+  test('keeps the caller-provided id for external labels', () => {
     const onChange = jest.fn();
     const {container} = renderWithTheme(
       <>
-        <label htmlFor="legend-layer-visible-instance-1">Layer visibility</label>
-        <Checkbox
-          id="legend-layer-visible"
-          inputId="legend-layer-visible-instance-1"
-          onChange={onChange}
-        />
+        <label htmlFor="legend-layer-visible">Layer visibility</label>
+        <Checkbox id="legend-layer-visible" onChange={onChange} />
       </>
     );
 
-    expect(container.querySelector('input')).toHaveAttribute(
-      'id',
-      'legend-layer-visible-instance-1'
-    );
+    expect(container.querySelector('input')).toHaveAttribute('id', 'legend-layer-visible');
 
     fireEvent.click(screen.getByText('Layer visibility'));
 

@@ -2,14 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import classnames from 'classnames';
-import React, {
-  ChangeEventHandler,
-  FC,
-  FocusEventHandler,
-  ReactNode,
-  useCallback,
-  useId
-} from 'react';
+import React, {ChangeEventHandler, FC, FocusEventHandler, ReactNode, useCallback} from 'react';
 import styled from 'styled-components';
 import {shouldForwardProp} from './styled-components';
 
@@ -35,7 +28,17 @@ const StyledRadioInput = styled.label.withConfig({shouldForwardProp})<StyledSwit
 
 const HiddenInput = styled.input.withConfig({shouldForwardProp})`
   position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
   opacity: 0;
+  pointer-events: none;
 `;
 
 interface StyledCheckboxProps {
@@ -59,7 +62,6 @@ const StyledCheckbox = styled.div.withConfig({shouldForwardProp})<StyledCheckbox
 
 interface CheckboxProps {
   id: string;
-  inputId?: string;
   type?: string;
   label?: ReactNode;
   name?: string;
@@ -79,7 +81,6 @@ interface CheckboxProps {
 
 const Checkbox: FC<CheckboxProps> = ({
   id,
-  inputId: providedInputId,
   type,
   label = '',
   name,
@@ -92,9 +93,6 @@ const Checkbox: FC<CheckboxProps> = ({
   onChange = noop,
   onFocus = noop
 }) => {
-  const generatedId = useId();
-  const inputId = providedInputId || `${id}-${generatedId}`;
-
   const handleFocus: FocusEventHandler<HTMLInputElement> = useCallback(
     args => {
       onFocus(args);
@@ -112,7 +110,7 @@ const Checkbox: FC<CheckboxProps> = ({
   const inputProps = {
     checked,
     disabled,
-    id: inputId,
+    id,
     name,
     onChange,
     value,
@@ -125,8 +123,7 @@ const Checkbox: FC<CheckboxProps> = ({
   const labelProps = {
     checked,
     disabled,
-    secondary,
-    htmlFor: inputId
+    secondary
   };
 
   const LabelElement =
@@ -142,8 +139,8 @@ const Checkbox: FC<CheckboxProps> = ({
       className={classnames('kg-checkbox', className)}
       disabled={disabled}
     >
-      <HiddenInput {...inputProps} />
       <LabelElement className="kg-checkbox__label" {...labelProps}>
+        <HiddenInput {...inputProps} />
         {label}
       </LabelElement>
     </StyledCheckbox>

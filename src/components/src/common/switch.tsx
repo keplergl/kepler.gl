@@ -8,7 +8,6 @@ interface SwitchProps {
   checked?: boolean;
   type?: string;
   id: string;
-  inputId?: string;
   label?: ReactNode;
   error?: string;
   onBlur?: FocusEventHandler<HTMLInputElement>;
