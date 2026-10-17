@@ -59,6 +59,7 @@ const StyledCheckbox = styled.div.withConfig({shouldForwardProp})<StyledCheckbox
 
 interface CheckboxProps {
   id: string;
+  inputId?: string;
   type?: string;
   label?: ReactNode;
   name?: string;
@@ -78,6 +79,7 @@ interface CheckboxProps {
 
 const Checkbox: FC<CheckboxProps> = ({
   id,
+  inputId: providedInputId,
   type,
   label = '',
   name,
@@ -90,7 +92,8 @@ const Checkbox: FC<CheckboxProps> = ({
   onChange = noop,
   onFocus = noop
 }) => {
-  const inputId = `${id}-${useId()}`;
+  const generatedId = useId();
+  const inputId = providedInputId || `${id}-${generatedId}`;
 
   const handleFocus: FocusEventHandler<HTMLInputElement> = useCallback(
     args => {

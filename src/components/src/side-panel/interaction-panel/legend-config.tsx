@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {ComponentType, useCallback, useState} from 'react';
+import React, {ComponentType, useCallback, useId, useState} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {useIntl} from 'react-intl';
@@ -135,6 +135,7 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
   onToggleGroup
 }) => {
   const intl = useIntl();
+  const inputIdPrefix = useId();
   const hiddenByGroupTitle = intl.formatMessage({id: 'interactions.legendHiddenByGroup'});
 
   return (
@@ -143,6 +144,7 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
         const [type, value] = entry;
         if (type === 'layerGroup') {
           const group = value as LayerOrderGroup;
+          const inputId = `legend-include-${group.id}-${inputIdPrefix}`;
           const included = group.isIncludedInLegend !== false;
           const dimmed = isHiddenByGroup(layerOrder, group.id);
           return (
@@ -154,12 +156,13 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
                 title={dimmed ? hiddenByGroupTitle : undefined}
                 data-testid={`interaction-legend-row-${group.id}`}
               >
-                <LegendLabel $group htmlFor={`legend-include-${group.id}`}>
+                <LegendLabel $group htmlFor={inputId}>
                   {group.label}
                 </LegendLabel>
                 <Switch
                   checked={included}
                   id={`legend-include-${group.id}`}
+                  inputId={inputId}
                   secondary
                   onChange={() => onToggleGroup(group)}
                 />
@@ -177,6 +180,7 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
         }
 
         const layer = value as Layer;
+        const inputId = `legend-include-${layer.id}-${inputIdPrefix}`;
         const included = layer.config.isIncludedInLegend !== false;
         const dimmed = isHiddenByGroup(layerOrder, layer.id);
         return (
@@ -188,12 +192,11 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
             title={dimmed ? hiddenByGroupTitle : undefined}
             data-testid={`interaction-legend-row-${layer.id}`}
           >
-            <LegendLabel htmlFor={`legend-include-${layer.id}`}>
-              {layer.config.label || layer.id}
-            </LegendLabel>
+            <LegendLabel htmlFor={inputId}>{layer.config.label || layer.id}</LegendLabel>
             <Switch
               checked={included}
               id={`legend-include-${layer.id}`}
+              inputId={inputId}
               secondary
               onChange={() => onToggleLayer(layer)}
             />
@@ -222,6 +225,7 @@ function LegendConfigFactory(
     mapLegendActive,
     actionIcons: customActionIcons
   }) => {
+    const hideInvisibleInputId = `legend-hide-invisible-${useId()}`;
     const actionIcons = {...defaultActionIcons, ...customActionIcons};
     const [isConfigActive, setIsConfigActive] = useState(false);
     const legendInteraction = legendConfig ?? DEFAULT_LEGEND_CONFIG;
@@ -317,12 +321,13 @@ function LegendConfigFactory(
               <FormattedMessage id="interactions.legendHint" />
             </LegendHint>
             <LegendOptionRow className="interaction-legend__hide-invisible">
-              <label htmlFor="legend-hide-invisible">
+              <label htmlFor={hideInvisibleInputId}>
                 <FormattedMessage id="interactions.legendHideInvisible" />
               </label>
               <Switch
                 checked={hideInvisibleLayers}
                 id="legend-hide-invisible"
+                inputId={hideInvisibleInputId}
                 secondary
                 onChange={onToggleHideInvisible}
               />

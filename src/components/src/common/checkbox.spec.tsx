@@ -32,4 +32,27 @@ describe('Checkbox', () => {
     expect(onChangeSecond).toHaveBeenCalledTimes(1);
     expect(onChangeFirst).not.toHaveBeenCalled();
   });
+
+  test('supports a unique input id shared with an external label', () => {
+    const onChange = jest.fn();
+    const {container} = renderWithTheme(
+      <>
+        <label htmlFor="legend-layer-visible-instance-1">Layer visibility</label>
+        <Checkbox
+          id="legend-layer-visible"
+          inputId="legend-layer-visible-instance-1"
+          onChange={onChange}
+        />
+      </>
+    );
+
+    expect(container.querySelector('input')).toHaveAttribute(
+      'id',
+      'legend-layer-visible-instance-1'
+    );
+
+    fireEvent.click(screen.getByText('Layer visibility'));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
 });
