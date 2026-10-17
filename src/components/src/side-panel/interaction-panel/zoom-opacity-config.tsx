@@ -183,7 +183,7 @@ const DEFAULT_ZOOM_OPACITY_CONFIG: InteractionConfig['zoomOpacity'] = {
 
 type ZoomOpacityConfigProps = {
   layers: readonly Layer[];
-  annotations: readonly Annotation[];
+  annotations?: readonly Annotation[];
   zoom?: number;
   zoomOpacityConfig?: InteractionConfig['zoomOpacity'];
   visStateActions: typeof VisStateActions;
@@ -203,7 +203,7 @@ function ZoomOpacityConfigFactory(
 ): ComponentType<ZoomOpacityConfigProps> {
   const ZoomOpacityConfig: React.FC<ZoomOpacityConfigProps> = ({
     layers,
-    annotations,
+    annotations = [],
     zoom,
     zoomOpacityConfig,
     visStateActions,
