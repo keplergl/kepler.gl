@@ -69,6 +69,7 @@ import {
   combineSplitMapsByIndex,
   computeSplitMapLayers,
   adjustValueToFilterDomain,
+  areFilterFieldTypesCompatible,
   disableGpuIfInverted,
   filterTypeUsesGpu,
   getPlotBaseIndexByDataId,
@@ -1619,14 +1620,73 @@ export function setFilterUpdater<S extends VisState>(
   return newState;
 }
 
-function _updateFilterDataIdAtValueIndex(filter, valueIndex, value, datasets) {
+function _updateFilterDataIdAtValueIndex(filter, valueIndex, value, datasets, filters) {
   const currentDataId = filter.dataId[valueIndex];
   if (currentDataId && value && filter.dataId.length > 1) {
+    const fieldName = filter.name[valueIndex];
+    const endFieldName = toArray(filter.endName)[valueIndex];
+    const previousValue = filter.value;
     const nextDataIds = filter.dataId.slice();
     nextDataIds[valueIndex] = value;
 
     let nextFilter = removeFilterPlot(filter, currentDataId);
     nextFilter = set(['dataId'], nextDataIds, nextFilter);
+
+    for (const prop of ['gpuChannel', 'gpuEndChannel']) {
+      if (Array.isArray(nextFilter[prop])) {
+        const nextChannels = nextFilter[prop].slice();
+        nextChannels[valueIndex] = undefined;
+        nextFilter = set([prop], nextChannels, nextFilter);
+      }
+    }
+
+    const dataset = datasets[value];
+    const field = dataset?.fields.find(candidate => candidate.name === fieldName);
+    const canRebindField =
+      field &&
+      (!filter.fieldType || areFilterFieldTypesCompatible(filter.fieldType, field.type));
+    const {filter: reboundFilter} = canRebindField
+      ? applyFilterFieldName(nextFilter, datasets, value, fieldName, valueIndex, {
+          mergeDomain: true
+        })
+      : {filter: null};
+
+    if (reboundFilter) {
+      nextFilter = reboundFilter;
+    } else {
+      const nextNames = nextFilter.name.slice();
+      const nextFieldIdx = nextFilter.fieldIdx.slice();
+      nextNames[valueIndex] = '';
+      nextFieldIdx[valueIndex] = -1;
+      nextFilter = {
+        ...nextFilter,
+        name: nextNames,
+        fieldIdx: nextFieldIdx,
+        gpu: false
+      };
+    }
+
+    if (endFieldName && nextFilter.type === FILTER_TYPES.timeRange) {
+      const {filter: reboundEndFilter} = applyTimeFilterEndFieldName(
+        nextFilter,
+        datasets,
+        value,
+        endFieldName,
+        valueIndex
+      );
+      if (reboundEndFilter) {
+        nextFilter = reboundEndFilter;
+      } else {
+        const {filter: clearedEndFilter} = applyTimeFilterEndFieldName(
+          nextFilter,
+          datasets,
+          value,
+          null,
+          valueIndex
+        );
+        nextFilter = clearedEndFilter || nextFilter;
+      }
+    }
 
     const domainSteps = mergeFilterDomain(nextFilter, datasets);
     nextFilter = {
@@ -1634,9 +1694,13 @@ function _updateFilterDataIdAtValueIndex(filter, valueIndex, value, datasets) {
       ...(domainSteps ? {domain: domainSteps.domain, step: domainSteps.step} : {})
     };
 
+    if (nextFilter.gpu) {
+      nextFilter = assignGpuChannel(setFilterGpuMode(nextFilter, filters), filters);
+    }
+
     return {
       ...nextFilter,
-      value: adjustValueToFilterDomain(nextFilter.value, nextFilter)
+      value: adjustValueToFilterDomain(previousValue, nextFilter)
     };
   }
 
@@ -1709,7 +1773,13 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
     // 2. Add a new dataset id
     case FILTER_UPDATER_PROPS.dataId: {
       const oldDataId = [...filter.dataId];
-      filter = _updateFilterDataIdAtValueIndex(filter, valueIndex, value, state.datasets);
+      filter = _updateFilterDataIdAtValueIndex(
+        filter,
+        valueIndex,
+        value,
+        state.datasets,
+        state.filters
+      );
       datasetIdsToFilter = uniq([...oldDataId, ...filter.dataId]);
       break;
     }

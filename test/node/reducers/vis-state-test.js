@@ -58,6 +58,7 @@ import {
   BINS,
   INTERVAL,
   LAYER_TYPES,
+  MAX_GPU_FILTERS,
   SYNC_TIMELINE_MODES,
   GEOCODER_DATASET_NAME,
   GEOCODER_ICON_COLOR,
@@ -2893,8 +2894,14 @@ test('#visStateReducer -> SET_FILTER.dataId replaces synced datasets in place', 
   const replacementDataset = await createNewDataEntryMock({
     info: {id: 'replacement', label: 'replacement'},
     data: {
-      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
-      rows: [[40], [50]]
+      fields: [
+        {name: 'other', type: ALL_FIELD_TYPES.integer},
+        {name: 'value', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [400, 40],
+        [500, 50]
+      ]
     }
   });
   let state = {
@@ -2905,24 +2912,196 @@ test('#visStateReducer -> SET_FILTER.dataId replaces synced datasets in place', 
   state = reducer(state, VisStateActions.addFilter('first'));
   state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
   state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'value'], 1));
+  state = reducer(state, VisStateActions.addFilter('replacement'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'other'));
 
-  const replaceFirst = reducer(state, VisStateActions.setFilter(0, 'dataId', 'replacement', 0))
-    .filters[0];
+  const replaceFirstState = reducer(
+    state,
+    VisStateActions.setFilter(0, 'dataId', 'replacement', 0)
+  );
+  const replaceFirst = replaceFirstState.filters[0];
   t.deepEqual(replaceFirst.dataId, ['replacement', 'second'], 'replaces the first dataset');
   t.deepEqual(replaceFirst.name, ['value', 'value'], 'keeps field names aligned');
-  t.deepEqual(replaceFirst.fieldIdx, [0, 0], 'keeps field indexes aligned');
+  t.deepEqual(replaceFirst.fieldIdx, [1, 0], 'rebinds the first field index by name');
+  t.deepEqual(replaceFirst.gpuChannel, [1, 0], 'reallocates the replaced GPU channel');
+  t.equal(
+    replaceFirstState.datasets.replacement.gpuFilter.filterValueUpdateTriggers.gpuFilter_0.name,
+    'other',
+    'keeps the existing replacement-dataset GPU filter'
+  );
+  t.equal(
+    replaceFirstState.datasets.replacement.gpuFilter.filterValueUpdateTriggers.gpuFilter_1.name,
+    'value',
+    'adds the rebound filter on a free GPU channel'
+  );
   t.deepEqual(
     replaceFirst.domain,
     [20, 50],
     'rebuilds the domain after replacing the first dataset'
   );
 
-  const replaceSecond = reducer(state, VisStateActions.setFilter(0, 'dataId', 'replacement', 1))
-    .filters[0];
+  const replaceSecond = reducer(
+    state,
+    VisStateActions.setFilter(0, 'dataId', 'replacement', 1)
+  ).filters[0];
   t.deepEqual(replaceSecond.dataId, ['first', 'replacement'], 'replaces a later dataset');
   t.deepEqual(replaceSecond.name, ['value', 'value'], 'keeps later field names aligned');
-  t.deepEqual(replaceSecond.fieldIdx, [0, 0], 'keeps later field indexes aligned');
+  t.deepEqual(replaceSecond.fieldIdx, [0, 1], 'rebinds a later field index by name');
+  t.deepEqual(replaceSecond.gpuChannel, [0, 1], 'reallocates a later GPU channel');
   t.deepEqual(replaceSecond.domain, [0, 50], 'rebuilds the domain after replacing a later dataset');
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.dataId rebinds interval fields on replacement', async t => {
+  const makeDataset = async (id, csv) => {
+    const {fields, rows} = processCsvData(csv);
+    return createNewDataEntryMock({info: {id, label: id}, data: {fields, rows}});
+  };
+  const firstDataset = await makeDataset(
+    'first',
+    'start,end\n2020-01-01 00:00:00,2020-01-01 00:30:00\n2020-01-01 01:00:00,2020-01-01 01:30:00'
+  );
+  const secondDataset = await makeDataset(
+    'second',
+    'start,end\n2020-01-02 00:00:00,2020-01-02 00:30:00\n2020-01-02 01:00:00,2020-01-02 01:30:00'
+  );
+  const replacementDataset = await makeDataset(
+    'replacement',
+    'other,end,start\n1,2020-01-03 00:30:00,2020-01-03 00:00:00\n2,2020-01-03 01:30:00,2020-01-03 01:00:00'
+  );
+  const missingEndDataset = await makeDataset(
+    'missing-end',
+    'other,start\n1,2020-01-04 00:00:00\n2,2020-01-04 01:00:00'
+  );
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {
+      ...firstDataset,
+      ...secondDataset,
+      ...replacementDataset,
+      ...missingEndDataset
+    }
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'start'));
+  state = reducer(state, VisStateActions.setFilter(0, 'endName', 'end'));
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'start'], 1));
+  state = reducer(state, VisStateActions.setFilter(0, 'endName', 'end', 1));
+  state = reducer(state, VisStateActions.addFilter('replacement'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'other'));
+
+  const replaced = reducer(
+    state,
+    VisStateActions.setFilter(0, 'dataId', 'replacement', 1)
+  ).filters[0];
+  const replacementEndProps = replacementDataset.replacement.getColumnFilterProps('end');
+  t.deepEqual(replaced.fieldIdx, [0, 2], 'rebinds the interval start field index');
+  t.deepEqual(replaced.endFieldIdx, [1, 1], 'rebinds the interval end field index');
+  t.deepEqual(
+    replaced.endMappedValue[1],
+    replacementEndProps.mappedValue,
+    'rebuilds the replacement interval end values'
+  );
+  t.deepEqual(replaced.gpuChannel, [0, 1], 'allocates a free replacement start channel');
+  t.deepEqual(replaced.gpuEndChannel, [1, 2], 'allocates a free replacement end channel');
+
+  const missingEnd = reducer(
+    state,
+    VisStateActions.setFilter(0, 'dataId', 'missing-end', 1)
+  ).filters[0];
+  t.equal(missingEnd.name[1], 'start', 'keeps an available start selection');
+  t.equal(missingEnd.endName[1], null, 'clears a missing end selection');
+  t.equal(missingEnd.endFieldIdx[1], null, 'clears a missing end field index');
+  t.equal(missingEnd.endMappedValue[1], null, 'clears missing interval values');
+  t.equal(missingEnd.gpuEndChannel[1], undefined, 'clears the missing end GPU channel');
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.dataId leaves missing replacement fields empty', async t => {
+  const firstDataset = await createNewDataEntryMock({
+    info: {id: 'first', label: 'first'},
+    data: {
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[0], [10]]
+    }
+  });
+  const secondDataset = await createNewDataEntryMock({
+    info: {id: 'second', label: 'second'},
+    data: {
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[20], [30]]
+    }
+  });
+  const replacementDataset = await createNewDataEntryMock({
+    info: {id: 'replacement', label: 'replacement'},
+    data: {
+      fields: [{name: 'other', type: ALL_FIELD_TYPES.integer}],
+      rows: [[100], [200]]
+    }
+  });
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {...firstDataset, ...secondDataset, ...replacementDataset}
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'value'], 1));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [5, 15]));
+  state = reducer(state, VisStateActions.setFilter(0, 'dataId', 'replacement', 1));
+
+  t.deepEqual(state.filters[0].name, ['value', ''], 'leaves the unavailable field unselected');
+  t.deepEqual(state.filters[0].fieldIdx, [0, -1], 'clears the unavailable field index');
+  t.equal(state.filters[0].gpu, false, 'uses CPU filtering while a selection is missing');
+  t.equal(state.filters[0].gpuChannel[1], undefined, 'clears the replaced GPU channel');
+  t.equal(
+    state.datasets.replacement.filteredIndex.length,
+    2,
+    'does not apply the synced filter until a replacement field is selected'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.dataId falls back to CPU when GPU channels are exhausted', async t => {
+  const createDataset = (id, rows) =>
+    createNewDataEntryMock({
+      info: {id, label: id},
+      data: {fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}], rows}
+    });
+  const firstDataset = await createDataset('first', [[0], [10]]);
+  const secondDataset = await createDataset('second', [[20], [30]]);
+  const replacementDataset = await createDataset('replacement', [[0], [10], [20]]);
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {...firstDataset, ...secondDataset, ...replacementDataset}
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'value'], 1));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [5, 15]));
+  for (let i = 0; i < MAX_GPU_FILTERS; i++) {
+    state = reducer(state, VisStateActions.addFilter('replacement'));
+    state = reducer(state, VisStateActions.setFilter(i + 1, 'name', 'value'));
+  }
+
+  state = reducer(state, VisStateActions.setFilter(0, 'dataId', 'replacement', 1));
+
+  t.equal(state.filters[0].gpu, false, 'falls back to CPU filtering');
+  t.equal(state.filters[0].gpuChannel[1], undefined, 'does not retain a conflicting channel');
+  t.ok(
+    state.datasets.replacement.filterRecord.cpu.some(filter => filter.id === state.filters[0].id),
+    'records the replaced filter as a CPU filter'
+  );
+  t.equal(
+    state.datasets.replacement.filteredIndex.length,
+    1,
+    'applies the replacement filter on CPU'
+  );
 
   t.end();
 });

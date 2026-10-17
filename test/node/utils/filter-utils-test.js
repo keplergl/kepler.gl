@@ -20,6 +20,7 @@ import {
   scaleSourceDomainToDestination,
   mergeFilterWithTimeline,
   createDataContainer,
+  shouldApplyFilter,
   isTimeIntervalFilter,
   timeWindowOverlapsInterval,
   applyTimeFilterEndFieldName,
@@ -34,6 +35,20 @@ import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
 
 /* eslint-disable max-statements */
+test('filterUtils -> shouldApplyFilter skips an unselected synced field', t => {
+  const filter = {
+    ...getDefaultFilter({dataId: ['first', 'second']}),
+    type: FILTER_TYPES.range,
+    name: ['value', ''],
+    value: [0, 1]
+  };
+
+  t.equal(shouldApplyFilter(filter, 'first'), true, 'applies the selected dataset field');
+  t.equal(shouldApplyFilter(filter, 'second'), false, 'skips the empty dataset field');
+  t.equal(shouldApplyFilter(filter, 'missing'), false, 'skips an unrelated dataset');
+  t.end();
+});
+
 test('filterUtils -> adjustValueToFilterDomain', t => {
   // TODO: needs id
   const rangeFilter = getDefaultFilter();
