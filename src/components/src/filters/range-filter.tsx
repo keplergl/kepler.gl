@@ -18,11 +18,13 @@ export default function RangeFilterFactory(RangeSlider: ReturnType<typeof RangeS
           value1={filter.value[1]}
           step={filter.step}
           bins={filter.bins}
+          lineChart={filter.lineChart}
           isEnlarged={filter.view === FILTER_VIEW_TYPES.enlarged}
           onChange={setFilter}
           setFilterPlot={setFilterPlot}
           inputTheme="secondary"
           plotType={filter.plotType}
+          isTime={false}
         />
       </div>
     );

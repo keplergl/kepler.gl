@@ -15,6 +15,7 @@ import {
   NewFilterPanelFactory,
   appInjector,
   AddFilterButtonFactory,
+  RangeSliderFactory,
   Icons
 } from '@kepler.gl/components';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
@@ -32,6 +33,7 @@ const NewFilterPanel = appInjector.get(NewFilterPanelFactory);
 const FilterPanelHeader = appInjector.get(FilterPanelHeaderFactory);
 const FieldSelector = appInjector.get(FieldSelectorFactory);
 const AddFilterButton = appInjector.get(AddFilterButtonFactory);
+const RangeSlider = appInjector.get(RangeSliderFactory);
 
 // mock state
 import {StateWFilters, InitialState, applyActions, csvInfo} from 'test/helpers/mock-state';
@@ -152,10 +154,15 @@ test('Components -> FilterManager.mount -> order by dataset view', t => {
 });
 
 test('Components -> FilterManager.mount -> numeric filter exposes timeline action', t => {
-  const numericState = keplerGlReducer(
+  let numericState = keplerGlReducer(
     cloneDeep(StateWFilters),
     VisStateActions.setFilter(0, 'name', 'gps_data.lat')
   );
+  const numericFilter = numericState.visState.filters[0];
+  const yAxis = numericState.visState.datasets[numericFilter.dataId[0]].fields.find(
+    field => field.name === 'gps_data.lng'
+  );
+  numericState = keplerGlReducer(numericState, VisStateActions.setFilterPlot(0, {yAxis}));
   const setFilterView = sinon.spy();
   const wrapper = mountWithTheme(
     <IntlWrapper>
@@ -173,6 +180,17 @@ test('Components -> FilterManager.mount -> numeric filter exposes timeline actio
     wrapper.find(Icons.Clock).length,
     1,
     'should render the playback action for numeric data'
+  );
+  const numericRangeSlider = wrapper.find('.range-filter-panel').find(RangeSlider).at(0);
+  t.equal(
+    numericRangeSlider.props().lineChart,
+    numericState.visState.filters[0].lineChart,
+    'should render the numeric Y-axis chart after playback is closed'
+  );
+  t.equal(
+    numericRangeSlider.props().isTime,
+    false,
+    'should keep numeric side-panel chart labels out of datetime mode'
   );
   wrapper.find(Icons.Clock).at(0).simulate('click');
   t.deepEqual(

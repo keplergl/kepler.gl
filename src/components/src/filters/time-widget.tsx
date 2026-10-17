@@ -600,6 +600,7 @@ function TimeWidgetFactory(
               animationConfig={animationConfig}
               isMinified={isMinified}
               timeline={filterTimeline}
+              formatValue={isTimeFilter ? undefined : formatNumeric}
             />
           </TimelineContainer>
         </TimelineSection>

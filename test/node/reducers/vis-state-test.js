@@ -3682,7 +3682,96 @@ test('#visStateReducer -> numeric filter timeline uses numeric bins and no time-
   t.end();
 });
 
-test('#visStateReducer -> reopening a numeric timeline refreshes hidden plot data', t => {
+test('#visStateReducer -> numeric interval playback refilters exact bins', t => {
+  const {fields, rows} = processCsvData(`x
+-1.5
+-1
+-0.75
+0
+0.25
+0.5
+1`);
+  const payload = [
+    {
+      info: {id: 'numeric-interval', label: 'numeric interval'},
+      data: {fields, rows}
+    }
+  ];
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
+  state = reducer(state, VisStateActions.addFilter('numeric-interval'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'x'));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [-1.5, -1]));
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 1.5}}));
+  state = reducer(
+    state,
+    VisStateActions.setFilterAnimationWindow({
+      id: state.filters[0].id,
+      animationWindow: ANIMATION_WINDOW.interval
+    })
+  );
+
+  let filter = state.filters[0];
+  let dataset = state.datasets['numeric-interval'];
+  let marks = getFilterBinThresholds(filter);
+  t.deepEqual(
+    filter.value,
+    intervalBinFromMarks(marks, marks[0], 0),
+    'entering interval mode snaps the paused selection to one numeric bin'
+  );
+  t.ok(
+    dataset.filterRecord.cpu.some(candidate => candidate.id === filter.id),
+    'numeric interval membership uses the exact CPU filtering path'
+  );
+  t.notOk(
+    dataset.filterRecord.gpu.some(candidate => candidate.id === filter.id),
+    'numeric interval membership does not use inclusive Float32 GPU bounds'
+  );
+  t.deepEqual(
+    dataset.filteredIndex,
+    [0, 1, 2],
+    'the first bin excludes the exact boundary assigned to the next bin'
+  );
+
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.5}}));
+  filter = state.filters[0];
+  dataset = state.datasets['numeric-interval'];
+  marks = getFilterBinThresholds(filter);
+  const selectedMark = marks.indexOf(filter.value[0]);
+  t.ok(selectedMark >= 0 && selectedMark < marks.length - 1, 'uses a new histogram mark');
+  t.deepEqual(
+    filter.value,
+    intervalBinFromMarks(marks, filter.value[0], 0),
+    'changing the numeric bin size resnaps a paused interval to one new bin'
+  );
+  t.deepEqual(
+    dataset.filteredIndex,
+    [3, 4],
+    'changing the numeric bin size immediately reapplies the resnapped selection'
+  );
+
+  state = reducer(
+    state,
+    VisStateActions.setFilterAnimationWindow({
+      id: filter.id,
+      animationWindow: ANIMATION_WINDOW.free
+    })
+  );
+  filter = state.filters[0];
+  dataset = state.datasets['numeric-interval'];
+  t.ok(
+    dataset.filterRecord.gpu.some(candidate => candidate.id === filter.id),
+    'leaving interval playback restores ordinary numeric GPU filtering'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> visible numeric side charts refresh after sibling filters', t => {
   const {fields, rows} = processCsvData(`x,category,value
 0,A,10
 0.05,A,20
@@ -3704,6 +3793,17 @@ test('#visStateReducer -> reopening a numeric timeline refreshes hidden plot dat
   state = reducer(state, VisStateActions.addFilter('numeric-shared'));
   state = reducer(state, VisStateActions.setFilter(0, 'name', 'x'));
   state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.05}}));
+  state = reducer(state, VisStateActions.addFilter('numeric-shared'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'category'));
+  const cachedHistogram = state.filters[0];
+  state = reducer(state, VisStateActions.setFilter(1, 'value', ['A']));
+  t.equal(
+    state.filters[0],
+    cachedHistogram,
+    'an unconfigured numeric side histogram stays cached after sibling filtering'
+  );
+  state = reducer(state, VisStateActions.removeFilter(1));
+
   const yAxis = state.datasets['numeric-shared'].fields.find(field => field.name === 'value');
   state = reducer(state, VisStateActions.setFilterPlot(0, {yAxis}));
   state = reducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.enlarged));
@@ -3717,25 +3817,30 @@ test('#visStateReducer -> reopening a numeric timeline refreshes hidden plot dat
 
   t.deepEqual(
     state.filters[0].lineChart.yDomain,
-    [10, 40],
-    'closed numeric plot remains cached until it is needed again'
-  );
-
-  state = reducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.enlarged));
-  t.deepEqual(
-    state.filters[0].lineChart.yDomain,
     [10, 20],
-    'reopened plot rebuilds the Y domain from the current sibling filter'
+    'visible side chart rebuilds its Y domain after sibling filtering'
   );
   t.equal(
     state.filters[0].lineChart.allTime.value,
     15,
-    'reopened plot rebuilds the Y aggregate from the current sibling filter'
+    'visible side chart rebuilds its Y aggregate after sibling filtering'
   );
   t.deepEqual(
     state.filters[0].bins['numeric-shared'].map(bin => bin.count),
     [1, 1, 0],
-    'reopened histogram rebuilds bin counts from the current sibling filter'
+    'visible side chart rebuilds bin counts after sibling filtering'
+  );
+
+  state = reducer(state, VisStateActions.removeFilter(1));
+  t.deepEqual(
+    state.filters[0].lineChart.yDomain,
+    [10, 40],
+    'removing the sibling filter restores the visible side chart Y domain'
+  );
+  t.equal(
+    state.filters[0].lineChart.allTime.value,
+    25,
+    'removing the sibling filter restores the visible side chart aggregate'
   );
 
   t.end();

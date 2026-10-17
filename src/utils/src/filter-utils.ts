@@ -151,6 +151,17 @@ export function isTimeIntervalFilter(filter: Filter, datasetIdx = 0): boolean {
   );
 }
 
+/**
+ * Numeric interval playback uses half-open histogram bins. GPU range filters
+ * are inclusive and use Float32 precision, so exact bin membership must use
+ * the CPU path while this mode is active.
+ */
+export function isNumericIntervalFilter(filter: Filter): boolean {
+  return (
+    filter?.type === FILTER_TYPES.range && filter.animationWindow === ANIMATION_WINDOW.interval
+  );
+}
+
 function isFullTimeDomainValue(filter: TimeRangeFilter): boolean {
   return (
     Array.isArray(filter.value) &&
@@ -921,7 +932,10 @@ export function getFilterRecord(
         : filterRecord.dynamicDomain
       ).push(f);
 
-      (f.gpu && !opt.cpuOnly ? filterRecord.gpu : filterRecord.cpu).push(f);
+      (f.gpu && !opt.cpuOnly && !isNumericIntervalFilter(f)
+        ? filterRecord.gpu
+        : filterRecord.cpu
+      ).push(f);
     }
   });
 

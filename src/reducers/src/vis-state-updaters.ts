@@ -1468,6 +1468,18 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
     }
   }
 
+  if (filter.type === FILTER_TYPES.range) {
+    const filterIndex = state.filters.indexOf(filter);
+    return setFilterUpdater(
+      state,
+      setFilter(
+        filterIndex,
+        ['animationWindow', 'value'],
+        [animationWindow, nextFilter.value]
+      )
+    );
+  }
+
   const newState = {
     ...state,
     filters: swap_<Filter>(nextFilter)(state.filters)
@@ -1522,10 +1534,10 @@ function updateFilterPlotsAfterFiltering<S extends VisState>(
       return updateFilterPlot(state.datasets, filter, undefined, state.layers);
     }
 
-    if (
-      filter.type !== FILTER_TYPES.timeRange &&
-      !(filter.type === FILTER_TYPES.range && !isSideFilter(filter))
-    ) {
+    const shouldRefreshNumericPlot =
+      filter.type === FILTER_TYPES.range &&
+      (!isSideFilter(filter) || filter.plotType?.type === PLOT_TYPES.lineChart);
+    if (filter.type !== FILTER_TYPES.timeRange && !shouldRefreshNumericPlot) {
       return filter;
     }
 
@@ -1945,19 +1957,36 @@ export const setFilterPlotUpdater = (
     }
   }
 
-  if (
+  const numericIntervalChanged =
     newFilter.type === FILTER_TYPES.range &&
-    newFilter.plotType?.numericInterval !== previousNumericInterval
-  ) {
+    newFilter.plotType?.numericInterval !== previousNumericInterval;
+  if (numericIntervalChanged) {
     newFilter = {...(newFilter as RangeFilter), bins: undefined, lineChart: undefined};
   }
 
   newFilter = updateFilterPlot(state.datasets, newFilter, undefined, state.layers);
 
-  return {
+  const newState = {
     ...state,
     filters: state.filters.map((f, i) => (i === idx ? newFilter : f))
   };
+
+  if (
+    numericIntervalChanged &&
+    newFilter.type === FILTER_TYPES.range &&
+    newFilter.animationWindow === ANIMATION_WINDOW.interval
+  ) {
+    const adjusted = adjustValueToAnimationWindow(
+      newState,
+      newFilter as RangeFilter,
+      getPlotBaseIndexByDataId(newState.datasets, newFilter, newState.layers)
+    );
+    if (Array.isArray(adjusted.value) && adjusted.value.every(Number.isFinite)) {
+      return setFilterUpdater(newState, {idx, prop: 'value', value: adjusted.value});
+    }
+  }
+
+  return newState;
 };
 
 /**

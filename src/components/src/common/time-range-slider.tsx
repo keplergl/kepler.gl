@@ -50,6 +50,7 @@ type TimeRangeSliderProps = {
   animationConfig?: AnimationConfig;
   filter?: Filter;
   isTime?: boolean;
+  formatValue?: (value: number) => string;
 };
 
 export type StyledSliderContainerProps = BaseComponentProps & {
@@ -138,7 +139,8 @@ export default function TimeRangeSliderFactory(
       setFilterPlot,
       timeline,
       filter,
-      isTime = true
+      isTime = true,
+      formatValue
     } = props;
 
     const binMarks = useMemo(() => {
@@ -248,6 +250,7 @@ export default function TimeRangeSliderFactory(
               showTimeDisplay={false}
               timeline={timeline}
               filter={filter}
+              formatTimelineValue={formatValue}
             />
           )}
           {isEnlarged && !isMinified ? (

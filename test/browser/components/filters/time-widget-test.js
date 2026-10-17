@@ -34,6 +34,7 @@ import {
   TimezoneSelector,
   appInjector
 } from '@kepler.gl/components';
+import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 
 moment.locale('en');
 
@@ -796,6 +797,34 @@ test('Components -> TimeWidget.mount -> fractional numeric timeline zoom and res
 
   wrapper.detach();
   rectStub.restore();
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> minimized numeric timeline formats numeric bounds', t => {
+  const numericState = reducer(StateWFilters.visState, setFilter(0, 'name', 'gps_data.lat'));
+  const numericFilter = {
+    ...numericState.filters[0],
+    domain: [0.02, 0.08],
+    value: [0.02, 0.08],
+    view: FILTER_VIEW_TYPES.minified
+  };
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <TimeWidget {...defaultProps} filter={numericFilter} />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    wrapper.find('.animation-control__time-domain.domain-start').find('span').text(),
+    '0.02',
+    'compact numeric timeline formats its domain start as a number'
+  );
+  t.equal(
+    wrapper.find('.animation-control__time-domain.domain-end').find('span').text(),
+    '0.08',
+    'compact numeric timeline formats its domain end as a number'
+  );
+
   t.end();
 });
 
