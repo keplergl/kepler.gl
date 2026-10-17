@@ -2875,6 +2875,58 @@ test('#visStateReducer -> SET_FILTER.dataId', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_FILTER.dataId replaces synced datasets in place', async t => {
+  const firstDataset = await createNewDataEntryMock({
+    info: {id: 'first', label: 'first'},
+    data: {
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[0], [10]]
+    }
+  });
+  const secondDataset = await createNewDataEntryMock({
+    info: {id: 'second', label: 'second'},
+    data: {
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[20], [30]]
+    }
+  });
+  const replacementDataset = await createNewDataEntryMock({
+    info: {id: 'replacement', label: 'replacement'},
+    data: {
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[40], [50]]
+    }
+  });
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {...firstDataset, ...secondDataset, ...replacementDataset}
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'value'], 1));
+
+  const replaceFirst = reducer(state, VisStateActions.setFilter(0, 'dataId', 'replacement', 0))
+    .filters[0];
+  t.deepEqual(replaceFirst.dataId, ['replacement', 'second'], 'replaces the first dataset');
+  t.deepEqual(replaceFirst.name, ['value', 'value'], 'keeps field names aligned');
+  t.deepEqual(replaceFirst.fieldIdx, [0, 0], 'keeps field indexes aligned');
+  t.deepEqual(
+    replaceFirst.domain,
+    [20, 50],
+    'rebuilds the domain after replacing the first dataset'
+  );
+
+  const replaceSecond = reducer(state, VisStateActions.setFilter(0, 'dataId', 'replacement', 1))
+    .filters[0];
+  t.deepEqual(replaceSecond.dataId, ['first', 'replacement'], 'replaces a later dataset');
+  t.deepEqual(replaceSecond.name, ['value', 'value'], 'keeps later field names aligned');
+  t.deepEqual(replaceSecond.fieldIdx, [0, 0], 'keeps later field indexes aligned');
+  t.deepEqual(replaceSecond.domain, [0, 50], 'rebuilds the domain after replacing a later dataset');
+
+  t.end();
+});
+
 test('#visStateReducer -> SET_FILTER synced', t => {
   const initialState = StateWSyncedTimeFilter.visState;
   const oldFilter = {...initialState.filters[0]};

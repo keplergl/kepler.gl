@@ -1620,8 +1620,28 @@ export function setFilterUpdater<S extends VisState>(
 }
 
 function _updateFilterDataIdAtValueIndex(filter, valueIndex, value, datasets) {
+  const currentDataId = filter.dataId[valueIndex];
+  if (currentDataId && value && filter.dataId.length > 1) {
+    const nextDataIds = filter.dataId.slice();
+    nextDataIds[valueIndex] = value;
+
+    let nextFilter = removeFilterPlot(filter, currentDataId);
+    nextFilter = set(['dataId'], nextDataIds, nextFilter);
+
+    const domainSteps = mergeFilterDomain(nextFilter, datasets);
+    nextFilter = {
+      ...nextFilter,
+      ...(domainSteps ? {domain: domainSteps.domain, step: domainSteps.step} : {})
+    };
+
+    return {
+      ...nextFilter,
+      value: adjustValueToFilterDomain(nextFilter.value, nextFilter)
+    };
+  }
+
   let newFilter = filter;
-  if (filter.dataId[valueIndex]) {
+  if (currentDataId) {
     // if dataId already exist
     newFilter = _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets);
   }
