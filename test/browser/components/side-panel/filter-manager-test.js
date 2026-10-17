@@ -4,6 +4,7 @@
 import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {
   FilterManagerFactory,
   SourceDataCatalogFactory,
@@ -13,13 +14,15 @@ import {
   FilterPanelHeaderFactory,
   NewFilterPanelFactory,
   appInjector,
-  AddFilterButtonFactory
+  AddFilterButtonFactory,
+  RangeSliderFactory,
+  Icons
 } from '@kepler.gl/components';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {assertDatasetIsTable} from '../../../helpers/comparison-utils';
 
 // components
@@ -30,6 +33,7 @@ const NewFilterPanel = appInjector.get(NewFilterPanelFactory);
 const FilterPanelHeader = appInjector.get(FilterPanelHeaderFactory);
 const FieldSelector = appInjector.get(FieldSelectorFactory);
 const AddFilterButton = appInjector.get(AddFilterButtonFactory);
+const RangeSlider = appInjector.get(RangeSliderFactory);
 
 // mock state
 import {StateWFilters, InitialState, applyActions, csvInfo} from 'test/helpers/mock-state';
@@ -145,6 +149,55 @@ test('Components -> FilterManager.mount -> order by dataset view', t => {
   }, 'FilterManager should not fail w/ props');
 
   t.equal(wrapper.find('DatasetFilterSection').length, 2, 'should render 2 DatasetFilterSection');
+
+  t.end();
+});
+
+test('Components -> FilterManager.mount -> numeric filter exposes timeline action', t => {
+  let numericState = keplerGlReducer(
+    cloneDeep(StateWFilters),
+    VisStateActions.setFilter(0, 'name', 'gps_data.lat')
+  );
+  const numericFilter = numericState.visState.filters[0];
+  const yAxis = numericState.visState.datasets[numericFilter.dataId[0]].fields.find(
+    field => field.name === 'gps_data.lng'
+  );
+  numericState = keplerGlReducer(numericState, VisStateActions.setFilterPlot(0, {yAxis}));
+  const setFilterView = sinon.spy();
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <FilterManager
+        {...filterManagerProps}
+        filters={numericState.visState.filters}
+        datasets={numericState.visState.datasets}
+        layers={numericState.visState.layers}
+        visStateActions={{...VisStateActions, setFilterView}}
+      />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    wrapper.find(Icons.Clock).length,
+    1,
+    'should render the playback action for numeric data'
+  );
+  const numericRangeSlider = wrapper.find('.range-filter-panel').find(RangeSlider).at(0);
+  t.equal(
+    numericRangeSlider.props().lineChart,
+    numericState.visState.filters[0].lineChart,
+    'should render the numeric Y-axis chart after playback is closed'
+  );
+  t.equal(
+    numericRangeSlider.props().isTime,
+    false,
+    'should keep numeric side-panel chart labels out of datetime mode'
+  );
+  wrapper.find(Icons.Clock).at(0).simulate('click');
+  t.deepEqual(
+    setFilterView.firstCall.args,
+    [0, FILTER_VIEW_TYPES.enlarged],
+    'should enable the numeric bottom widget through the existing view action'
+  );
 
   t.end();
 });

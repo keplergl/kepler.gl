@@ -4,10 +4,10 @@
 import React, {forwardRef, useMemo, useCallback} from 'react';
 import styled, {withTheme, IStyledComponent} from 'styled-components';
 
-import {FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
+import {FILTER_TYPES, FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
 import {hasPortableWidth, isSideFilter, mergeFilterWithTimeline} from '@kepler.gl/utils';
 import {media, breakPointValues} from '@kepler.gl/styles';
-import {TimeRangeFilter} from '@kepler.gl/types';
+import {Filter, RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
 
 import TimeWidgetFactory from './filters/time-widget';
 import {bottomWidgetSelector} from './kepler-gl';
@@ -17,6 +17,10 @@ import AnimationControlFactory from './common/animation-control/animation-contro
 import {BaseComponentProps} from './types';
 
 const maxWidth = 1080;
+
+function isChartFilter(filter?: Filter): filter is RangeFilter | TimeRangeFilter {
+  return filter?.type === FILTER_TYPES.timeRange || filter?.type === FILTER_TYPES.range;
+}
 
 export type BottomWidgetContainerProps = BaseComponentProps & {
   $hasPadding?: boolean;
@@ -133,17 +137,18 @@ export default function BottomWidgetFactory(
     // if filter is not animating, pass in enlarged filter here because
     // animation controller needs to call reset on it
     const filter = useMemo(
-      () => (animatedFilter as TimeRangeFilter) || filters[enlargedFilterIdx],
+      () => animatedFilter || filters[enlargedFilterIdx],
       [animatedFilter, filters, enlargedFilterIdx]
     );
+    const chartFilter = isChartFilter(filter) ? filter : null;
 
     // we merge filter and timeline if filter is synced
     const {filter: enhancedFilter, animationConfig: enhancedAnimationConfig} = useMemo(
       () =>
-        filter?.syncedWithLayerTimeline
-          ? mergeFilterWithTimeline(filter, animationConfig)
-          : {filter, animationConfig},
-      [filter, animationConfig]
+        chartFilter?.type === FILTER_TYPES.timeRange && chartFilter.syncedWithLayerTimeline
+          ? mergeFilterWithTimeline(chartFilter as TimeRangeFilter, animationConfig)
+          : {filter: chartFilter, animationConfig},
+      [chartFilter, animationConfig]
     );
 
     const exportAnimation = useCallback(() => toggleModal(EXPORT_VIDEO_ID), [toggleModal]);
@@ -204,7 +209,7 @@ export default function BottomWidgetFactory(
                 <TimeWidget
                   // TimeWidget uses React.memo, here we pass width
                   // even though it doesnt use it, to force rerender
-                  filter={enhancedFilter as TimeRangeFilter}
+                  filter={enhancedFilter}
                   index={enlargedFilterIdx}
                   datasets={datasets}
                   layers={layers}

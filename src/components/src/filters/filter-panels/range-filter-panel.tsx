@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import RangeFilterFactory from '../range-filter';
-import {RangeFilter} from '@kepler.gl/types';
 import FieldPanelWithFieldSelectFactory from './filter-panel-with-field-select';
-import {FilterPanelComponent} from './types';
+import {RangeFilterPanelComponent} from './types';
+import {Clock} from '../../common/icons';
+import {isSideFilter} from '@kepler.gl/utils';
 
 RangeFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, RangeFilterFactory];
 
@@ -13,12 +14,34 @@ function RangeFilterPanelFactory(
   FieldPanelWithFieldSelect: ReturnType<typeof FieldPanelWithFieldSelectFactory>,
   RangeFilterComponent: ReturnType<typeof RangeFilterFactory>
 ) {
-  const RangeFilterPanel: FilterPanelComponent<RangeFilter> = React.memo(
-    ({idx, datasets, allAvailableFields, filter, removeFilter, setFilter, setFilterPlot}) => {
+  const RangeFilterPanel: RangeFilterPanelComponent = React.memo(
+    ({
+      idx,
+      datasets,
+      allAvailableFields,
+      filter,
+      removeFilter,
+      enlargeFilter,
+      setFilter,
+      setFilterPlot
+    }) => {
       const onSetFilter = useCallback(value => setFilter(idx, 'value', value), [idx, setFilter]);
       const onSetFilterPlot = useCallback(
         (newProp, valueIndex) => setFilterPlot(idx, newProp, valueIndex),
         [idx, setFilterPlot]
+      );
+      const isEnlarged = !isSideFilter(filter);
+      const panelActions = useMemo(
+        () => [
+          {
+            id: filter.id,
+            onClick: enlargeFilter,
+            tooltip: 'tooltip.timePlayback',
+            iconComponent: Clock,
+            active: isEnlarged
+          }
+        ],
+        [enlargeFilter, filter.id, isEnlarged]
       );
 
       return (
@@ -30,6 +53,7 @@ function RangeFilterPanelFactory(
             idx={idx}
             removeFilter={removeFilter}
             setFilter={setFilter}
+            panelActions={panelActions}
           >
             {filter.type && (
               <div className="filter-panel__filter">

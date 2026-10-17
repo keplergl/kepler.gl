@@ -158,9 +158,9 @@ export type LineChart = {
 
   // Is this a valid part of LineChart?
   aggregation: string;
-  interval: string;
+  interval: string | number | null;
   yAxis: string;
-  bins?: Bins;
+  bins?: Bins | Bin[];
   /** Cache key for timeline series grouping. Null when the plot is a single series. */
   groupBy?: LineChartGroupBy | null;
 };
@@ -181,6 +181,7 @@ export type FilterBase<L extends LineChart> = {
   fixedDomain: boolean;
   view: FilterViewType;
   isAnimating: boolean;
+  animationWindow?: string;
   speed: number;
   showTimeDisplay?: boolean;
 
@@ -298,6 +299,7 @@ export interface TimeBins {
 
 export interface PlotType {
   interval: ValueOf<Interval>;
+  numericInterval?: number;
   type: ValueOf<PlotTypes>;
   aggregation: ValueOf<AggregationTypes>;
   defaultTimeFormat: string;
@@ -379,16 +381,9 @@ export type AnimationConfig = {
   hideControl?: boolean;
 };
 
-export type FilterAnimationConfig = Pick<
-  TimeRangeFilter,
-  | 'dataId'
-  | 'value'
-  | 'animationWindow'
-  | 'speed'
-  | 'syncedWithLayerTimeline'
-  | 'syncTimelineMode'
-  | 'timezone'
->;
+export type FilterAnimationConfig = Pick<Filter, 'dataId' | 'value' | 'speed'> &
+  Required<Pick<Filter, 'animationWindow'>> &
+  Partial<Pick<TimeRangeFilter, 'syncedWithLayerTimeline' | 'syncTimelineMode' | 'timezone'>>;
 
 export type Timeline = {
   domain: [number, number] | null;

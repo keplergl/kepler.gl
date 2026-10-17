@@ -7,6 +7,9 @@ import {Clock, Close, ArrowDown, ArrowUp, Gear} from '../common/icons';
 import {SelectTextBold, IconRoundSmall, CenterFlexbox} from '../common/styled-components';
 import {TimeWidgetTopProps, TopSectionWrapperProps} from './types';
 import {TIME_AGGREGATION, AGGREGATION_TYPES} from '@kepler.gl/constants';
+import {FILTER_TYPES} from '@kepler.gl/constants';
+import {formatNumber, getNumericPlotInterval} from '@kepler.gl/utils';
+import {RangeFilter} from '@kepler.gl/types';
 
 const TOP_SECTION_HEIGHT = '36px';
 
@@ -58,6 +61,18 @@ function TimeWidgetTopFactory() {
     onToggleSettings
   }) => {
     const chartTitle = useMemo(() => {
+      if (filter.type === FILTER_TYPES.range) {
+        const rangeFilter = filter as RangeFilter;
+        const xAxisName = Array.isArray(rangeFilter.name) ? rangeFilter.name[0] : rangeFilter.name;
+        const binWidth = getNumericPlotInterval(rangeFilter);
+        const binLabel = binWidth ? ` (${formatNumber(binWidth, rangeFilter.fieldType)} bins)` : '';
+        if (!rangeFilter.yAxis) {
+          return `Count of Rows by ${xAxisName}${binLabel}`;
+        }
+        const aggregation = rangeFilter.plotType?.aggregation || AGGREGATION_TYPES.average;
+        const aggLabel = TIME_AGGREGATION.find(a => a.id === aggregation)?.label || aggregation;
+        return `${aggLabel} ${rangeFilter.yAxis.name} by ${xAxisName}${binLabel}`;
+      }
       const interval = filter.plotType?.interval;
       let intervalLabel = 'Time';
       if (interval) {
@@ -72,7 +87,7 @@ function TimeWidgetTopFactory() {
       const aggregation = filter.plotType?.aggregation || AGGREGATION_TYPES.average;
       const aggLabel = TIME_AGGREGATION.find(a => a.id === aggregation)?.label || aggregation;
       return `${aggLabel} ${filter.yAxis.name} per ${intervalLabel}`;
-    }, [filter.yAxis, filter.plotType?.aggregation, filter.plotType?.interval]);
+    }, [filter]);
 
     return (
       <TopSectionWrapper>
