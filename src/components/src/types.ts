@@ -4,7 +4,14 @@
 import React, {HTMLAttributes, PropsWithChildren} from 'react';
 import {MapStyle} from '@kepler.gl/reducers';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {Filter, InteractionConfig, MapState, UiState, LayerOrder} from '@kepler.gl/types';
+import {
+  Annotation,
+  Filter,
+  InteractionConfig,
+  MapState,
+  UiState,
+  LayerOrder
+} from '@kepler.gl/types';
 
 import {
   MapStyleActions,
@@ -31,6 +38,7 @@ export type SidePanelProps = {
   layerBlending: string;
   overlayBlending?: string;
   layers: Layer[];
+  annotations?: Annotation[];
   layerClasses: LayerClassesType;
   layerOrder: LayerOrder;
   mapStyle: MapStyle;

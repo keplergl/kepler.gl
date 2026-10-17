@@ -2,7 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {visStateReducer as reducer, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
+import {
+  getZoomOpacityAnnotationTargetId,
+  visStateReducer as reducer,
+  INITIAL_VIS_STATE
+} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 import {AnnotationKind} from '@kepler.gl/constants';
 
@@ -108,11 +112,35 @@ test('#visStateReducer -> ADD_ANNOTATION derives placement from angle', t => {
 test('#visStateReducer -> REMOVE_ANNOTATION', t => {
   let state = reducer(initialState, VisStateActions.addAnnotation({anchorPoint: [0, 0]}));
   const id = state.annotations[0].id;
+  state = {
+    ...state,
+    interactionConfig: {
+      ...state.interactionConfig,
+      zoomOpacity: {
+        ...state.interactionConfig.zoomOpacity,
+        enabled: true,
+        config: {
+          controllers: [
+            {
+              id: 'controller-1',
+              layerIds: [getZoomOpacityAnnotationTargetId(id)],
+              stops: {appear: 1, full: 3, fade: 8, gone: 12}
+            }
+          ]
+        }
+      }
+    }
+  };
 
   state = reducer(state, VisStateActions.removeAnnotation(id));
 
   t.equal(state.annotations.length, 0, 'should remove annotation');
   t.equal(state.selectedAnnotationId, null, 'should deselect removed annotation');
+  t.deepEqual(
+    state.interactionConfig.zoomOpacity.config.controllers[0].layerIds,
+    [],
+    'should remove the annotation from fade-on-zoom controllers'
+  );
 
   t.end();
 });

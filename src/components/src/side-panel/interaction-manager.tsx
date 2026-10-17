@@ -4,7 +4,7 @@
 import React from 'react';
 import {useIntl} from 'react-intl';
 
-import {InteractionConfig, LayerOrder, MapInfo, MapState} from '@kepler.gl/types';
+import {Annotation, InteractionConfig, LayerOrder, MapInfo, MapState} from '@kepler.gl/types';
 import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
@@ -39,6 +39,7 @@ type InteractionManagerProps = {
   uiStateActions?: typeof UIStateActions;
   panelMetadata: PanelMeta;
   layers?: readonly Layer[];
+  annotations?: readonly Annotation[];
   layerOrder?: LayerOrder;
   mapLegendActive?: boolean;
   mapInfo?: Partial<MapInfo>;
@@ -75,6 +76,7 @@ function InteractionManagerFactory(
     uiStateActions,
     panelMetadata,
     layers,
+    annotations = [],
     layerOrder,
     mapLegendActive,
     mapInfo,
@@ -127,6 +129,7 @@ function InteractionManagerFactory(
               <ZoomOpacityConfig
                 key={key}
                 layers={layers}
+                annotations={annotations}
                 zoomOpacityConfig={interactionConfig.zoomOpacity}
                 zoom={fadeOnZoomMarkerZoom(mapState)}
                 visStateActions={visStateActions}

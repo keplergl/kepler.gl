@@ -217,7 +217,11 @@ import {
   sortDatasetByColumn
 } from '@kepler.gl/table';
 import {remapChartsForDataset} from './column-edit-reconcile';
-import {findFieldsToShow, removeLayerFromZoomOpacity} from './interaction-utils';
+import {
+  findFieldsToShow,
+  getZoomOpacityAnnotationTargetId,
+  removeLayerFromZoomOpacity
+} from './interaction-utils';
 import {
   calculateLayerData,
   findDefaultLayer,
@@ -2997,6 +3001,10 @@ export const removeAnnotationUpdater = (
   return {
     ...state,
     annotations: state.annotations.filter(a => a.id !== id),
+    interactionConfig: removeLayerFromZoomOpacity(
+      state.interactionConfig,
+      getZoomOpacityAnnotationTargetId(id)
+    ),
     selectedAnnotationId: state.selectedAnnotationId === id ? null : state.selectedAnnotationId,
     isEditingAnnotationText:
       state.selectedAnnotationId === id ? false : state.isEditingAnnotationText

@@ -1035,9 +1035,10 @@ ${'```'}
     legendHideInvisible: 'Hide hidden layers in legend',
     legendAllLayers: 'All Layers',
     fadeOnZoom: 'Fade on zoom',
-    fadeOnZoomHint: 'Fade layers as the map zooms. Configure a zoom range to show layers.',
+    fadeOnZoomHint:
+      'Fade layers and annotations as the map zooms. Configure a zoom range to show them.',
     fadeOnZoomAdd: 'Add controller',
-    fadeOnZoomLayers: 'Layers',
+    fadeOnZoomLayers: 'Layers and annotations',
     fadeOnZoomAppear: 'Appear',
     fadeOnZoomFullStart: 'Full start',
     fadeOnZoomFullEnd: 'Full end',

@@ -10,13 +10,24 @@ import {VisStateActions} from '@kepler.gl/actions';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer} from '@kepler.gl/layers';
-import {DEFAULT_ZOOM_OPACITY_STOPS, setZoomOpacityStop} from '@kepler.gl/reducers';
-import {InteractionConfig, ZoomOpacityController, ZoomOpacityStops} from '@kepler.gl/types';
+import {
+  DEFAULT_ZOOM_OPACITY_STOPS,
+  getZoomOpacityAnnotationTargetId,
+  setZoomOpacityStop
+} from '@kepler.gl/reducers';
+import {
+  Annotation,
+  InteractionConfig,
+  ZoomOpacityController,
+  ZoomOpacityStops
+} from '@kepler.gl/types';
 
 import ZoomOpacitySlider from './zoom-opacity-slider';
 
 import ItemSelector from '../../common/item-selector/item-selector';
-import {Delete, Settings, ZoomIn} from '../../common/icons';
+import {ChickletButton, ChickletTag} from '../../common/item-selector/chickleted-input';
+import {ListItemProps} from '../../common/item-selector/dropdown-list';
+import {AnnotationText, Delete, Settings, ZoomIn} from '../../common/icons';
 import PanelHeaderActionFactory, {PanelHeaderActionIcon} from '../panel-header-action';
 import Switch from '../../common/switch';
 import {
@@ -81,6 +92,88 @@ const RemoveButton = styled(Button)`
 
 const EMPTY_CONTROLLERS: ZoomOpacityController[] = [];
 
+type ZoomOpacityTarget = Layer | {id: string; label: string; annotationId: string};
+
+const TargetLabel = styled.span`
+  align-items: center;
+  display: flex;
+  min-width: 0;
+  width: 100%;
+`;
+
+const AnnotationIcon = styled(AnnotationText)`
+  flex: 0 0 auto;
+  margin-right: 6px;
+`;
+
+const TargetName = styled.span`
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const TargetListItemAnchor = styled.span`
+  align-items: center;
+  display: flex;
+  min-width: 0;
+  white-space: nowrap;
+`;
+
+const TargetChickletTag = styled(ChickletTag)`
+  display: flex;
+  min-width: 0;
+  white-space: nowrap;
+
+  &:hover {
+    overflow: hidden;
+  }
+`;
+
+const getTargetLabel = (target: ZoomOpacityTarget): string =>
+  'label' in target ? target.label : target.config?.label || target.id;
+
+const ZoomOpacityTargetLabel = ({target}: {target: ZoomOpacityTarget}) => (
+  <TargetLabel title={getTargetLabel(target)}>
+    {'annotationId' in target ? (
+      <AnnotationIcon
+        className="zoom-opacity-target__annotation-icon"
+        height="14px"
+        aria-hidden="true"
+      />
+    ) : null}
+    <TargetName className="zoom-opacity-target__name">{getTargetLabel(target)}</TargetName>
+  </TargetLabel>
+);
+
+const ZoomOpacityTargetListItem = ({value, disabled}: ListItemProps<ZoomOpacityTarget>) => (
+  <TargetListItemAnchor className={classnames('list__item__anchor', {disabled})}>
+    <ZoomOpacityTargetLabel target={value} />
+  </TargetListItemAnchor>
+);
+
+type ZoomOpacityTargetChickletProps = {
+  item: ZoomOpacityTarget;
+  remove?: React.MouseEventHandler<SVGSVGElement>;
+  inputTheme?: string;
+  disabled?: boolean;
+};
+
+const ZoomOpacityTargetChicklet = ({
+  item,
+  remove,
+  inputTheme,
+  disabled
+}: ZoomOpacityTargetChickletProps) => (
+  <ChickletButton $inputTheme={inputTheme}>
+    <TargetChickletTag>
+      <ZoomOpacityTargetLabel target={item} />
+    </TargetChickletTag>
+    <Delete height="16px" onClick={disabled ? undefined : remove} />
+  </ChickletButton>
+);
+
 const DEFAULT_ZOOM_OPACITY_CONFIG: InteractionConfig['zoomOpacity'] = {
   id: 'zoomOpacity',
   label: 'interactions.fadeOnZoom',
@@ -90,6 +183,7 @@ const DEFAULT_ZOOM_OPACITY_CONFIG: InteractionConfig['zoomOpacity'] = {
 
 type ZoomOpacityConfigProps = {
   layers: readonly Layer[];
+  annotations?: readonly Annotation[];
   zoom?: number;
   zoomOpacityConfig?: InteractionConfig['zoomOpacity'];
   visStateActions: typeof VisStateActions;
@@ -109,6 +203,7 @@ function ZoomOpacityConfigFactory(
 ): ComponentType<ZoomOpacityConfigProps> {
   const ZoomOpacityConfig: React.FC<ZoomOpacityConfigProps> = ({
     layers,
+    annotations = [],
     zoom,
     zoomOpacityConfig,
     visStateActions,
@@ -170,9 +265,9 @@ function ZoomOpacityConfigFactory(
       [controllers, updateControllers]
     );
 
-    const onLayersChange = useCallback(
-      (controllerId: string, selected: readonly Layer[] | null) => {
-        const layerIds = (selected || []).map(layer => layer.id);
+    const onTargetsChange = useCallback(
+      (controllerId: string, selected: readonly ZoomOpacityTarget[] | null) => {
+        const layerIds = (selected || []).map(target => target.id);
         updateControllers(
           controllers.map(controller =>
             controller.id === controllerId ? {...controller, layerIds} : controller
@@ -180,6 +275,23 @@ function ZoomOpacityConfigFactory(
         );
       },
       [controllers, updateControllers]
+    );
+
+    const annotationTargets = useMemo<ZoomOpacityTarget[]>(
+      () =>
+        annotations.map((annotation, index) => {
+          const label = annotation.label?.trim() || `${index + 1}`;
+          return {
+            id: getZoomOpacityAnnotationTargetId(annotation.id),
+            annotationId: annotation.id,
+            label
+          };
+        }),
+      [annotations]
+    );
+    const targets = useMemo<ZoomOpacityTarget[]>(
+      () => [...layers, ...annotationTargets],
+      [annotationTargets, layers]
     );
 
     const onStopChange = useCallback(
@@ -267,8 +379,8 @@ function ZoomOpacityConfigFactory(
             </Button>
             {controllers.map(controller => {
               const taken = assignedElsewhere.get(controller.id) || new Set<string>();
-              const options = layers.filter(layer => !taken.has(layer.id));
-              const selected = layers.filter(layer => controller.layerIds.includes(layer.id));
+              const options = targets.filter(target => !taken.has(target.id));
+              const selected = targets.filter(target => controller.layerIds.includes(target.id));
               return (
                 <ControllerCard
                   key={controller.id}
@@ -295,12 +407,14 @@ function ZoomOpacityConfigFactory(
                       options={options}
                       selectedItems={selected}
                       onChange={items =>
-                        onLayersChange(controller.id, (items as Layer[] | null) || [])
+                        onTargetsChange(controller.id, (items as ZoomOpacityTarget[] | null) || [])
                       }
                       searchable={true}
                       multiSelect={true}
-                      getOptionValue={(layer: Layer) => layer.id}
-                      displayOption={(layer: Layer) => layer.config?.label || layer.id}
+                      getOptionValue={(target: ZoomOpacityTarget) => target.id}
+                      displayOption={getTargetLabel}
+                      DropDownLineItemRenderComponent={ZoomOpacityTargetListItem}
+                      CustomChickletComponent={ZoomOpacityTargetChicklet}
                       placeholder="placeholder.selectLayer"
                       inputTheme="secondary"
                     />
