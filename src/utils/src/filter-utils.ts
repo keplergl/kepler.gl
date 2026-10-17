@@ -250,7 +250,10 @@ export function getDefaultFilter({
  */
 export function shouldApplyFilter(filter: Filter, datasetId: string): boolean {
   const dataIds = toArray(filter.dataId);
-  return dataIds.includes(datasetId) && filter.value !== null;
+  const datasetIndex = dataIds.indexOf(datasetId);
+  const hasSelectedField =
+    filter.type === FILTER_TYPES.polygon || Boolean(toArray(filter.name)[datasetIndex]);
+  return datasetIndex >= 0 && hasSelectedField && filter.value !== null;
 }
 
 /**
@@ -1502,8 +1505,11 @@ export function mergeFilterDomain(
   }
   filter.dataId.forEach((filterDataId, idx) => {
     const dataset = datasets[filterDataId];
-    const filterProps = dataset.getColumnFilterProps(filter.name[idx]);
-    domainSteps = mergeFilterDomainStep(domainSteps ?? ({} as Filter), filterProps);
+    const fieldName = filter.name[idx];
+    if (fieldName) {
+      const filterProps = dataset.getColumnFilterProps(fieldName);
+      domainSteps = mergeFilterDomainStep(domainSteps ?? ({} as Filter), filterProps);
+    }
     const endName = toArray((filter as TimeRangeFilter).endName)[idx];
     if (endName) {
       const endProps = dataset.getColumnFilterProps(endName);
