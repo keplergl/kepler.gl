@@ -15,10 +15,48 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.17] - Oct 17 2026
+
+- 5db79a29 feat(annotations): support individual fade on zoom (#3836)
+- 2654322c feat(filters): support multiple datasets per filter (#3835)
+- 0ba38a30 feat(data): allow changing column data types (#3834)
+- 31da085e fix(tooltip): deduplicate aggregation rows (#3833)
+- 6a0fd5fd feat(geocoder): make pin color configurable (#3832)
+- 6a83a393 feat(export-map): preserve custom branding and streamline the export UI (#3830)
+- 3e2aba12 feat: add timezone selection for tooltip dates (#3829)
+- 2b7ed1b1 fix: keep multi-select filter dropdown open (#3828)
+- a4d2b0ff feat(image-export): add transparent background exports (#3827)
+- 5dfe59db feat(filters): add 12/24-hour time format selector (#3826)
+- a1370361 fix(filters): refresh time plots after shared filters change (#3825)
+- 8d37071f fix(file-upload): accept uppercase file extensions (#3824)
+- 647f2217 fix(duckdb): infer missing row data column types (#3822)
+- 72da639e chore: complete migration to @math.gl/web-mercator (#3821)
+- 805034ac chore: patch release 3.3.0-alpha.17
+- fecbd4ae chore: policy url update (#3823)
+- c211c822 fix(examples): load required MapLibre CSS (#3820)
+- 101be5fd chore: bump packages with security vulnerabilities (#3819)
+- cfb531d5 feat(layers): add target arrows to Arc and Line layers (#3818)
+- 6a512201 feat(filters): add a filter out option (#3817)
+- dfb3bcfd feat(data-table): show filtered rows and column stats (#3815)
+- 21341841 feat(layers): point count labels and min cluster size for aggregation layers (#3814)
+- ebcf4e86 feat(export-data): add GeoJSON, GeoParquet, Shapefile, GeoPackage, KML, and KMZ (#3811)
+- 0348c577 chore: pin Node 24.21.0 and upgrade gl (#3803)
+- c9f6ecb7 fix(layers): show timestamp text labels as a readable date time (#3810)
+- 228bfacc feat(layers): geojson layer inveert height optional (#3816)
+- a79923dc fix(type-analyzer): Scientific-notation columns now load as real instead of text (#3809)
+- df483b7f fix(ui): move refresh settings to dataset context menu (#3808)
+- ece93742 feat: rename, delete, and filter a column from the data table (#3801)
+- 7f029414 chore: update ai instructions (#3802)
+- de50c0ed fix(data-table): fix black histogram background (#3807)
+- 841cbda2 chore: remove deprecated analytics (#3813)
+- 974f4273 fix(layers): stroke width slider sensitivity (#3812)
+- f999fa69 feat(dataset-ops): suitability analysis (#3799)
+- a2fdfba4 feat: optional map name and description (#3797)
+- 0a2a57fc chore: scale agent work to the size of the change (#3800)
+
 ## [3.3.0-alpha.16] - Oct 9 2026
 
-- 8bbd3487 (HEAD -> igr/3.3.0-alpha.16, origin/igr/3.3.0-alpha.16) Merge branch 'master' into igr/3.3.0-alpha.16
-- 87fa5fd9 (origin/master, origin/HEAD, master) fix: replace the broken FSQ Places example and show tileset errors (#3796)
+- 87fa5fd9 fix: replace the broken FSQ Places example and show tileset errors (#3796)
 - 2b031d56 feat(layers): fit map when the layer type dropdown sets the first type (#3795)
 - 8d72219c feat: warn on large datasets in Add Data (#3794)
 - 7f30a3fa feat(ui): show layer actions in a context menu (#3793)
