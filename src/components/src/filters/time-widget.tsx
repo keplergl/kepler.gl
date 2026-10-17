@@ -611,6 +611,9 @@ function TimeWidgetFactory(
             timeFormat={timeFilter?.timeFormat}
             timezone={timeFilter?.timezone}
             formatValue={isTimeFilter ? undefined : formatNumeric}
+            displayLabel={
+              isTimeFilter ? undefined : Array.isArray(filter.name) ? filter.name[0] : filter.name
+            }
           />
         ) : null}
       </TimeBottomWidgetInner>

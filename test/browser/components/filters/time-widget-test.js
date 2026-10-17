@@ -748,6 +748,20 @@ test('Components -> TimeWidget.mount -> fractional numeric timeline zoom and res
     </IntlWrapper>,
     {attachTo: document.body}
   );
+  const timeDisplay = wrapper.find(FloatingTimeDisplay);
+  t.equal(
+    timeDisplay.find('.animation-control__time-display__top').text(),
+    'gps_data.lat',
+    'numeric range badge should identify its column'
+  );
+  t.deepEqual(
+    timeDisplay
+      .find('.animation-control__time-display__bottom')
+      .find('.time-value')
+      .map(n => n.text()),
+    ['0.02', '0.08'],
+    'numeric range badge should keep the selected values below the column name'
+  );
   const container = wrapper
     .find('[data-testid="time-widget-timeline-container"]')
     .hostNodes()

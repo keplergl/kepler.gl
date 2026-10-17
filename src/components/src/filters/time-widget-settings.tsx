@@ -61,6 +61,7 @@ const INTERVAL_UNITS = [
 ];
 
 const TIME_FORMAT_OPTIONS = ['12-hour', '24-hour'] as const;
+const SELECTOR_WIDTH = '120px';
 
 type HourCycle = (typeof TIME_FORMAT_OPTIONS)[number];
 
@@ -210,7 +211,7 @@ const FieldValue = styled.span`
 `;
 
 const SelectorWrapper = styled.div`
-  width: 120px;
+  width: ${SELECTOR_WIDTH};
 
   .item-selector__dropdown {
     background: ${props => props.theme.secondaryInputBgd};
@@ -235,10 +236,11 @@ const FieldSelectorWrapper = styled.div`
 
 type StepInputProps = {
   $hasError?: boolean;
+  $fullWidth?: boolean;
 };
 
 const StepInput = styled.input<StepInputProps>`
-  width: 48px;
+  width: ${props => (props.$fullWidth ? SELECTOR_WIDTH : '48px')};
   height: 28px;
   padding: 2px 8px;
   font-size: 11px;
@@ -656,6 +658,7 @@ function TimeWidgetSettingsFactory(
                   onBlur={onStepBlur}
                   onKeyDown={onStepKeyDown}
                   $hasError={intervalTooSmall}
+                  $fullWidth={!isTimeFilter}
                 />
                 {isTimeFilter ? (
                   <UnitSelectorWrapper $hasError={intervalTooSmall}>
@@ -730,7 +733,7 @@ function TimeWidgetSettingsFactory(
             <DisabledBlock $disabled={!filter.yAxis}>
               <FieldBlock>
                 <FieldLabel>Aggregation</FieldLabel>
-                <SelectorWrapper>
+                <SelectorWrapper data-testid="time-widget-aggregation">
                   <ItemSelector
                     selectedItems={currentAggregation}
                     options={aggregationOptions}

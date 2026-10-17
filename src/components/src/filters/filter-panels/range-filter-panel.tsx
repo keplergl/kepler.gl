@@ -55,7 +55,7 @@ function RangeFilterPanelFactory(
             setFilter={setFilter}
             panelActions={panelActions}
           >
-            {filter.type && (
+            {filter.type && !isEnlarged && (
               <div className="filter-panel__filter">
                 <RangeFilterComponent
                   filter={filter}

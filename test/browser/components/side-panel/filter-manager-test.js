@@ -192,11 +192,37 @@ test('Components -> FilterManager.mount -> numeric filter exposes timeline actio
     false,
     'should keep numeric side-panel chart labels out of datetime mode'
   );
+  t.equal(
+    wrapper.find('.range-filter-panel').find('.filter-panel__filter').length,
+    1,
+    'should render the numeric histogram while it is a side filter'
+  );
   wrapper.find(Icons.Clock).at(0).simulate('click');
   t.deepEqual(
     setFilterView.firstCall.args,
     [0, FILTER_VIEW_TYPES.enlarged],
     'should enable the numeric bottom widget through the existing view action'
+  );
+
+  const enlargedNumericState = keplerGlReducer(
+    numericState,
+    VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.enlarged)
+  );
+  const enlargedWrapper = mountWithTheme(
+    <IntlWrapper>
+      <FilterManager
+        {...filterManagerProps}
+        filters={enlargedNumericState.visState.filters}
+        datasets={enlargedNumericState.visState.datasets}
+        layers={enlargedNumericState.visState.layers}
+      />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    enlargedWrapper.find('.range-filter-panel').find('.filter-panel__filter').length,
+    0,
+    'should hide the numeric histogram while it is rendered in the bottom widget'
   );
 
   t.end();

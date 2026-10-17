@@ -108,6 +108,7 @@ interface FloatingTimeDisplayProps {
   timeFormat?: string | null;
   timezone?: string | null;
   formatValue?: (value: number) => string;
+  displayLabel?: string | null;
 }
 
 export default function FloatingTimeDisplayFactory() {
@@ -116,7 +117,8 @@ export default function FloatingTimeDisplayFactory() {
     defaultTimeFormat,
     timeFormat,
     timezone,
-    formatValue
+    formatValue,
+    displayLabel
   }: FloatingTimeDisplayProps) => {
     const {displayDate, displayTime} = useMemo(() => {
       const groupTime = Array.isArray(currentTime) ? currentTime : [currentTime];
@@ -155,7 +157,11 @@ export default function FloatingTimeDisplayFactory() {
 
     const twoGroups = displayDate.length === 2 && displayTime.length === 2;
     const bottomRow = displayTime.length ? displayTime : displayDate.length ? displayDate : null;
-    const topRow = displayDate.length && displayTime.length ? displayDate : null;
+    const topRow = displayLabel
+      ? [displayLabel]
+      : displayDate.length && displayTime.length
+      ? displayDate
+      : null;
 
     return (
       <StyledTimeDisplayWrapper>

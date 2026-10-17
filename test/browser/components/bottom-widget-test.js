@@ -110,6 +110,15 @@ test('Components -> BottomWidget.mount -> datetime and opt-in numeric filters', 
     '0.002',
     'should infer the regular bin size instead of a tiny padded edge bin'
   );
+  t.equal(
+    window.getComputedStyle(
+      wrapper.find('[data-testid="numeric-bin-size"]').hostNodes().getDOMNode()
+    ).width,
+    window.getComputedStyle(
+      wrapper.find('[data-testid="time-widget-aggregation"]').hostNodes().getDOMNode()
+    ).width,
+    'should match the aggregation control width'
+  );
   t.equal(wrapper.find(TimezoneSelector).length, 0, 'should hide the timezone control');
   t.equal(
     wrapper.find('[data-testid="time-widget-time-format"]').hostNodes().length,
