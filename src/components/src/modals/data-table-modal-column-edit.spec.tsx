@@ -19,13 +19,22 @@ const tableProps: {current: Record<string, unknown> | null} = {current: null};
 function StubDataTable(props: {
   createFilterFromColumn?: (column: string) => void;
   renameTableColumn?: (column: string, newName: string) => void;
+  changeTableColumnType?: (column: string, newType: string) => void;
   deleteTableColumn?: (column: string) => void;
 }) {
   tableProps.current = props;
   return (
-    <button type="button" onClick={() => props.createFilterFromColumn?.('region')}>
-      create-filter
-    </button>
+    <>
+      <button type="button" onClick={() => props.createFilterFromColumn?.('region')}>
+        create-filter
+      </button>
+      <button
+        type="button"
+        onClick={() => props.changeTableColumnType?.('region', ALL_FIELD_TYPES.integer)}
+      >
+        change-type
+      </button>
+    </>
   );
 }
 
@@ -51,6 +60,7 @@ function makeDataset(type: string, hiddenColumns: string[] = []) {
 function renderModal(type: string, hiddenColumns: string[] = []) {
   const createFilterFromColumn = jest.fn();
   const renameTableColumn = jest.fn();
+  const changeTableColumnType = jest.fn();
   const deleteTableColumn = jest.fn();
   const toggleSidePanel = jest.fn();
   const toggleModal = jest.fn();
@@ -63,6 +73,7 @@ function renderModal(type: string, hiddenColumns: string[] = []) {
       pinTableColumn={jest.fn()}
       copyTableColumn={jest.fn()}
       renameTableColumn={renameTableColumn}
+      changeTableColumnType={changeTableColumnType}
       deleteTableColumn={deleteTableColumn}
       createFilterFromColumn={createFilterFromColumn}
       showDatasetTable={jest.fn()}
@@ -71,7 +82,13 @@ function renderModal(type: string, hiddenColumns: string[] = []) {
       uiState={{} as never}
     />
   );
-  return {...view, createFilterFromColumn, toggleSidePanel, toggleModal};
+  return {
+    ...view,
+    createFilterFromColumn,
+    changeTableColumnType,
+    toggleSidePanel,
+    toggleModal
+  };
 }
 
 describe('data table column edits', () => {
@@ -83,22 +100,28 @@ describe('data table column edits', () => {
   });
 
   test('create filter opens the filter panel and closes the table', () => {
-    const {createFilterFromColumn, toggleSidePanel, toggleModal} = renderModal('local');
+    const {createFilterFromColumn, changeTableColumnType, toggleSidePanel, toggleModal} =
+      renderModal('local');
 
     expect(tableProps.current?.renameTableColumn).toEqual(expect.any(Function));
+    expect(tableProps.current?.changeTableColumnType).toEqual(expect.any(Function));
     expect(tableProps.current?.deleteTableColumn).toEqual(expect.any(Function));
 
     fireEvent.click(screen.getByRole('button', {name: 'create-filter'}));
     expect(createFilterFromColumn).toHaveBeenCalledWith('cities', 'region');
     expect(toggleSidePanel).toHaveBeenCalledWith('filter');
     expect(toggleModal).toHaveBeenCalledWith(null);
+
+    fireEvent.click(screen.getByRole('button', {name: 'change-type'}));
+    expect(changeTableColumnType).toHaveBeenCalledWith('cities', 'region', 'integer');
   });
 
-  test('externally hosted datasets can create a filter but not rename or delete', () => {
+  test('externally hosted datasets cannot rename, re-type, or delete columns', () => {
     renderModal('externally-hosted');
 
     expect(tableProps.current?.createFilterFromColumn).toEqual(expect.any(Function));
     expect(tableProps.current?.renameTableColumn).toBeUndefined();
+    expect(tableProps.current?.changeTableColumnType).toBeUndefined();
     expect(tableProps.current?.deleteTableColumn).toBeUndefined();
   });
 

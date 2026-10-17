@@ -62,6 +62,11 @@ export function isArrowVector(data: any): data is arrow.Vector {
   );
 }
 
+/** Build an Arrow vector while letting Arrow infer the physical type from converted values. */
+export function createArrowVector(values: unknown[]): arrow.Vector {
+  return arrow.vectorFromArray(values as any[]);
+}
+
 /**
  * Check if data is an Arrow FixedSizeList DataType.
  * Uses duck-typing instead of `instanceof` to handle DuckDB's bundled Arrow version.

@@ -449,6 +449,8 @@ export interface DataTableProps {
   fixedWidth?: number | null;
   theme?: any;
   dataContainer: DataContainerInterface | null;
+  /** Unfiltered source data used to validate whole-column type changes. */
+  typeChangeDataContainer?: DataContainerInterface | null;
   fixedHeight?: number | null;
   colMeta: ColMeta;
   sortColumn: SortColumn;
@@ -458,6 +460,7 @@ export interface DataTableProps {
   setColumnDisplayFormat?: (formats: {[key: string]: string}) => void;
   copyTableColumn: (column: string) => void;
   renameTableColumn?: (column: string, newName: string) => void;
+  changeTableColumnType?: (column: string, newType: string) => void;
   deleteTableColumn?: (column: string) => void;
   createFilterFromColumn?: (column: string) => void;
   sortOrder?: number[] | null;

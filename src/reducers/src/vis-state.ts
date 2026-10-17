@@ -147,6 +147,8 @@ const actionHandler = {
 
   [ActionTypes.RENAME_TABLE_COLUMN]: visStateUpdaters.renameTableColumnUpdater,
 
+  [ActionTypes.CHANGE_TABLE_COLUMN_TYPE]: visStateUpdaters.changeTableColumnTypeUpdater,
+
   [ActionTypes.DELETE_TABLE_COLUMN]: visStateUpdaters.deleteTableColumnUpdater,
 
   [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
