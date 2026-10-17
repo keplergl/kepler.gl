@@ -32,7 +32,30 @@ const DEFAULT_PROPS = {
   cleanupExportImage: jest.fn()
 };
 
+const mockShareableProvider = () => {
+  const mapProvider = {
+    name: 'test provider',
+    icon: jest.fn(),
+    getManagementUrl: jest.fn().mockImplementation(() => 'provider.url'),
+    listMaps: jest.fn().mockResolvedValue([]),
+    hasSharingUrl: jest.fn().mockImplementation(() => true)
+  };
+  useCloudListProvider.mockImplementation(() => ({
+    provider: mapProvider,
+    setProvider: jest.fn(),
+    cloudProviders: []
+  }));
+};
+
 describe('ShareMapModal', () => {
+  beforeEach(() => {
+    useCloudListProvider.mockImplementation(() => ({
+      provider: null,
+      setProvider: jest.fn(),
+      cloudProviders: []
+    }));
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -134,6 +157,7 @@ describe('ShareMapModal', () => {
   });
 
   it('displays share URL when provided', () => {
+    mockShareableProvider();
     const shareUrl = 'http://example.com';
     const {getByText} = renderWithTheme(
       <ShareMapUrlModal {...DEFAULT_PROPS} successInfo={{shareUrl}} />
@@ -142,9 +166,10 @@ describe('ShareMapModal', () => {
   });
 
   it('renders errors', () => {
+    mockShareableProvider();
     const {getByText} = renderWithTheme(
-      <ShareMapUrlModal {...DEFAULT_PROPS} providerError={new Error('timeout')} />
+      <ShareMapUrlModal {...DEFAULT_PROPS} providerError="timeout" />
     );
-    expect(getByText('modal.statusPanel.error')).toBeInTheDocument();
+    expect(getByText('timeout')).toBeInTheDocument();
   });
 });
