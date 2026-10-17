@@ -20,8 +20,8 @@ export const parsedFields = [
     displayName: 'bathrooms',
     format: '',
     fieldIdx: 1,
-    type: 'integer',
-    analyzerType: 'INT',
+    type: 'string',
+    analyzerType: 'STRING',
     valueAccessor: values => values[1]
   },
   {
@@ -40,8 +40,8 @@ export const parsedFields = [
     displayName: 'roll_landbaseyear',
     format: '',
     fieldIdx: 3,
-    type: 'integer',
-    analyzerType: 'INT',
+    type: 'string',
+    analyzerType: 'STRING',
     valueAccessor: values => values[3]
   },
   {
@@ -209,9 +209,9 @@ export const parsedFields = [
 export const parsedRows = [
   [
     null,
-    NaN,
+    'N/A',
     null,
-    NaN,
+    'N/',
     37827477,
     37827477,
     -118.40032195,
@@ -231,9 +231,9 @@ export const parsedRows = [
   ],
   [
     99,
-    99,
+    '99',
     2006,
-    2007,
+    '2007',
     37085763,
     37097927,
     -118.40032195,
@@ -253,9 +253,9 @@ export const parsedRows = [
   ],
   [
     99,
-    99,
+    '99',
     2006,
-    2007,
+    '2007',
     35463324,
     35463324,
     -118.40032195,
@@ -275,9 +275,9 @@ export const parsedRows = [
   ],
   [
     99,
-    99,
+    '99',
     2006,
-    2007,
+    '2007',
     36172590,
     36172590,
     -118.40032195,
@@ -297,9 +297,9 @@ export const parsedRows = [
   ],
   [
     99,
-    99,
+    '99',
     2006,
-    2007,
+    '2007',
     38758435,
     38775032,
     -118.40032195,
@@ -319,9 +319,9 @@ export const parsedRows = [
   ],
   [
     99,
-    99,
+    '99',
     2006,
-    2007,
+    '2007',
     36086860,
     36092822,
     -118.40032195,
@@ -341,9 +341,9 @@ export const parsedRows = [
   ],
   [
     99,
-    99,
+    '99',
     2006,
-    2007,
+    '2007',
     37999212,
     38012236,
     -118.40032195,
@@ -363,9 +363,9 @@ export const parsedRows = [
   ],
   [
     99,
-    99,
+    '99',
     2006,
-    2007,
+    '2007',
     36358593,
     36370757,
     -118.40032195,

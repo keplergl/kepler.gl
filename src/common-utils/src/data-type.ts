@@ -15,6 +15,15 @@ const H3_ANALYZER_TYPE = 'H3';
 const DECIMAL_NUMBER_REGEX = /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
 const INTEGER_REGEX = /^[+-]?\d+$/;
 
+function isZeroPaddedIntegerSample(value: unknown): boolean {
+  if (typeof value !== 'string' || !INTEGER_REGEX.test(value)) {
+    return false;
+  }
+
+  const digits = value.replace(/^[+-]/, '');
+  return digits.length > 1 && digits.startsWith('0');
+}
+
 /**
  * type-analyzer reports NUMBER for values that pass `!isNaN` but match neither its INT nor
  * its FLOAT regex, which in practice is mostly scientific notation such as `1.5e+10`. Such a
@@ -23,7 +32,7 @@ const INTEGER_REGEX = /^[+-]?\d+$/;
  * parseFloat would misread or round.
  */
 function isRealNumberSample(value: unknown): boolean {
-  if (!notNullorUndefined(value) || value === '') {
+  if (!notNullorUndefined(value) || value === '' || Number.isNaN(value)) {
     return true;
   }
   if (typeof value === 'number') {
@@ -34,8 +43,24 @@ function isRealNumberSample(value: unknown): boolean {
   }
   const asNumber = Number(value);
   return (
-    Number.isFinite(asNumber) && (!INTEGER_REGEX.test(value) || Number.isSafeInteger(asNumber))
+    Number.isFinite(asNumber) &&
+    !isZeroPaddedIntegerSample(value) &&
+    (!INTEGER_REGEX.test(value) || Number.isSafeInteger(asNumber))
   );
+}
+
+function isIntegerSample(value: unknown): boolean {
+  if (!notNullorUndefined(value) || value === '' || Number.isNaN(value)) {
+    return true;
+  }
+  if (typeof value === 'number') {
+    return Number.isSafeInteger(value);
+  }
+  if (typeof value !== 'string' || !INTEGER_REGEX.test(value)) {
+    return false;
+  }
+
+  return !isZeroPaddedIntegerSample(value) && Number.isSafeInteger(Number(value));
 }
 
 /**
@@ -300,6 +325,18 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     // since dropping the column in the RowData could be expensive
     let type = fieldMeta?.type || 'STRING';
     const format = fieldMeta?.format || '';
+
+    // type-analyzer tolerates invalid samples when inferring numeric columns. Verify every
+    // sample so mixed strings are not parsed as NaN and zero-padded identifiers keep their zeros.
+    const samples = analyzerData.map(row => row[field]);
+    if (type === AnalyzerDATA_TYPES.INT && !samples.every(isIntegerSample)) {
+      type =
+        !samples.some(isZeroPaddedIntegerSample) && samples.every(isRealNumberSample)
+          ? AnalyzerDATA_TYPES.FLOAT
+          : AnalyzerDATA_TYPES.STRING;
+    } else if (type === AnalyzerDATA_TYPES.FLOAT && !samples.every(isRealNumberSample)) {
+      type = AnalyzerDATA_TYPES.STRING;
+    }
 
     // quick check if first valid string in column is H3
     if (type === AnalyzerDATA_TYPES.STRING) {

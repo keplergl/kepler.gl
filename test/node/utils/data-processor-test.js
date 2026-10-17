@@ -184,6 +184,50 @@ test('Processor -> getFieldsFromData scientific notation', t => {
   t.end();
 });
 
+test('Processor -> processCsvData preserves numeric-looking strings', t => {
+  const {fields, rows} = processCsvData(
+    'zeroPadded,mixedInteger,mixedReal,numeric\n06,Monika,Monika,0\n07,1234,12.34,1.5'
+  );
+
+  t.deepEqual(
+    fields.map(field => field.type),
+    [ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.real],
+    'should preserve strings while keeping consistently numeric values numeric'
+  );
+  t.deepEqual(
+    rows,
+    [
+      ['06', 'Monika', 'Monika', 0],
+      ['07', '1234', '12.34', 1.5]
+    ],
+    'should preserve zero padding and nonnumeric strings'
+  );
+  t.end();
+});
+
+test('Processor -> processCsvData preserves zero padding across numeric analyzer types', t => {
+  const {fields, rows} = processCsvData(
+    'floatCandidate,numberCandidate\n1.1,1e1\n2.2,2e2\n3.3,3e3\n06,06'
+  );
+
+  t.deepEqual(
+    fields.map(field => field.type),
+    [ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.string],
+    'should preserve zero padding when type-analyzer initially selects float or number'
+  );
+  t.deepEqual(
+    rows,
+    [
+      ['1.1', '1e1'],
+      ['2.2', '2e2'],
+      ['3.3', '3e3'],
+      ['06', '06']
+    ],
+    'should not parse any values in columns containing a zero-padded integer'
+  );
+  t.end();
+});
+
 test('Processor -> processCsvData', t => {
   t.throws(() => processCsvData(''), 'should throw if csv is empty');
 
