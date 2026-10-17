@@ -154,6 +154,7 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
       transform={`translate(${x},${y})`}
       style={{
         opacity,
+        display: opacity === 0 ? 'none' : undefined,
         visibility: opacity === 0 ? 'hidden' : undefined,
         pointerEvents: opacity === 0 ? 'none' : undefined
       }}
