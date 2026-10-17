@@ -143,8 +143,8 @@ describe('ShareMapModal', () => {
 
   it('renders errors', () => {
     const {getByText} = renderWithTheme(
-      <ShareMapUrlModal {...DEFAULT_PROPS} providerError={new Error('timeout')} />
+      <ShareMapUrlModal {...DEFAULT_PROPS} providerError="timeout" />
     );
-    expect(getByText('modal.statusPanel.error')).toBeInTheDocument();
+    expect(getByText('timeout')).toBeInTheDocument();
   });
 });
