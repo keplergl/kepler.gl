@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
+
 // Adapted from GeoLibre (https://github.com/opengeos/GeoLibre), MIT License.
 
 import {convertGeometryToWKB} from '@loaders.gl/gis';

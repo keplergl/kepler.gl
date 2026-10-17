@@ -3,7 +3,6 @@
 
 import {convertArrowToSchema} from '@loaders.gl/schema-utils';
 import {ALL_FIELD_TYPES, EXPORT_DATA_TYPE} from '@kepler.gl/constants';
-import {formatCsv} from '@kepler.gl/reducers';
 import {Field} from '@kepler.gl/types';
 import {createDataContainer} from '@kepler.gl/utils';
 import {tableFromIPC} from 'apache-arrow';
@@ -56,11 +55,6 @@ describe('dataset export', () => {
       lng: -122.4
     });
     expect(collection.features[0].properties).not.toHaveProperty('secret');
-
-    const csv = formatCsv(container(), fields, ['secret']);
-    expect(csv).toContain('Harbor');
-    expect(csv).not.toContain('hidden-value');
-    expect(csv).not.toContain('secret');
   });
 
   test('writes geojson, kml, kmz, shapefile, geopackage, and geoparquet', async () => {

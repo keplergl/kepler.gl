@@ -1070,6 +1070,16 @@ test('Processor -> formatCsv', t => {
 
     t.deepEqual(formatCsv(dataContainer, fields), expected, msg);
   });
+
+  const {fields, rows} = processCsvData(
+    `name,secret\n` + `Harbor,hidden-value\n` + `Pier,also-hidden`
+  );
+  const dataContainer = createDataContainer(rows, {fields});
+  t.deepEqual(
+    formatCsv(dataContainer, fields, ['secret']),
+    `name\nHarbor\nPier`,
+    'should omit hidden columns'
+  );
   t.end();
 });
 
