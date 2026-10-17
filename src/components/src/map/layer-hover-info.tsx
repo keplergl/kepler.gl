@@ -162,6 +162,7 @@ export type EntryInfoRowProps = {
   primaryData?: LayerHoverProp['primaryData'];
   compareType?: CompareType;
   currentTime?: VisState['animationConfig']['currentTime'];
+  timezone?: LayerHoverProp['timezone'];
   item: TooltipField;
 };
 
@@ -172,7 +173,8 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
   data,
   primaryData,
   compareType,
-  currentTime
+  currentTime,
+  timezone
 }) => {
   const fieldIdx = fields.findIndex(f => f.name === item.name);
   if (fieldIdx < 0) {
@@ -204,7 +206,7 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
     }
   }
 
-  const displayValue = getTooltipDisplayValue({item, field, value});
+  const displayValue = getTooltipDisplayValue({item, field, value, timezone});
 
   return (
     <Row
@@ -266,13 +268,15 @@ const CellInfo = ({
   data,
   layer,
   primaryData,
-  compareType
+  compareType,
+  timezone
 }: {
   data: AggregationLayerHoverData;
   fieldsToShow: TooltipField[];
   layer: Layer;
   primaryData?: AggregationLayerHoverData | null;
   compareType?: CompareType;
+  timezone?: LayerHoverProp['timezone'];
 }) => {
   const {colorField, sizeField} = layer.config as any;
   const isComparing = Boolean(primaryData);
@@ -280,18 +284,28 @@ const CellInfo = ({
   const colorValue = useMemo(() => {
     if (colorField && layer.visualChannels.color) {
       const item = fieldsToShow.find(field => field.name === colorField.name);
-      return getTooltipDisplayValue({item, field: colorField, value: data.colorValue});
+      return getTooltipDisplayValue({
+        item,
+        field: colorField,
+        value: data.colorValue,
+        timezone
+      });
     }
     return null;
-  }, [fieldsToShow, colorField, layer, data.colorValue]);
+  }, [fieldsToShow, colorField, layer, data.colorValue, timezone]);
 
   const elevationValue = useMemo(() => {
     if (sizeField && layer.visualChannels.size) {
       const item = fieldsToShow.find(field => field.name === sizeField.name);
-      return getTooltipDisplayValue({item, field: sizeField, value: data.elevationValue});
+      return getTooltipDisplayValue({
+        item,
+        field: sizeField,
+        value: data.elevationValue,
+        timezone
+      });
     }
     return null;
-  }, [fieldsToShow, sizeField, layer, data.elevationValue]);
+  }, [fieldsToShow, sizeField, layer, data.elevationValue, timezone]);
 
   const colorDelta = useMemo(() => {
     if (!primaryData || !colorField || !('colorValue' in primaryData)) return null;
@@ -342,6 +356,11 @@ const CellInfo = ({
 
   const colorMeasure = layer.getVisualChannelDescription('color').measure;
   const sizeMeasure = layer.getVisualChannelDescription('size').measure;
+  const isSizeMeasureDuplicate =
+    colorField?.name === sizeField?.name &&
+    colorMeasure === sizeMeasure &&
+    colorValue === elevationValue &&
+    colorDelta === elevationDelta;
   return (
     <tbody>
       <Row
@@ -359,7 +378,7 @@ const CellInfo = ({
           isComparing={isComparing}
         />
       ) : null}
-      {sizeField && layer.visualChannels.size && sizeMeasure ? (
+      {sizeField && layer.visualChannels.size && sizeMeasure && !isSizeMeasureDuplicate ? (
         <Row
           name={sizeMeasure}
           key="size"

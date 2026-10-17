@@ -7,7 +7,8 @@ import {useIntl} from 'react-intl';
 
 import {FormattedMessage} from '@kepler.gl/localization';
 
-import {InputLight, StyledExportSection} from '../common/styled-components';
+import {Help} from '../common/icons';
+import {InputLight, StyledExportSection, Tooltip} from '../common/styled-components';
 
 const FileNameSection = styled(StyledExportSection)<{$compact?: boolean}>`
   ${props => (props.$compact ? 'margin: 8px 0 12px;' : '')}
@@ -15,7 +16,34 @@ const FileNameSection = styled(StyledExportSection)<{$compact?: boolean}>`
 
 const StyledFileNameInput = styled(InputLight)`
   width: 100%;
-  max-width: 320px;
+  max-width: 380px;
+`;
+
+const FileNameTitle = styled.div`
+  align-items: center;
+  display: flex;
+`;
+
+const FileNameHelp = styled.button.attrs({type: 'button'})`
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: ${props => props.theme.labelColor};
+  cursor: help;
+  display: inline-flex;
+  margin-left: 6px;
+  padding: 0;
+
+  &:hover,
+  &:focus {
+    color: ${props => props.theme.textColorHl};
+  }
+`;
+
+const FileNameHelpContent = styled.div`
+  max-width: 220px;
+  text-align: left;
+  white-space: normal;
 `;
 
 export type ExportFileNameSectionProps = {
@@ -32,15 +60,26 @@ const ExportFileNameSection: React.FC<ExportFileNameSectionProps> = ({
   compact
 }) => {
   const intl = useIntl();
+  const helpId = `${inputId}-extension-help`;
   return (
     <FileNameSection $compact={compact}>
-      <div className="description">
-        <div className="title">
+      <div className={compact ? 'description description--centered' : 'description'}>
+        <FileNameTitle className="title">
           <FormattedMessage id="modal.exportFileName.title" />
-        </div>
-        <div className="subtitle">
-          <FormattedMessage id="modal.exportFileName.subtitle" />
-        </div>
+          <FileNameHelp
+            aria-describedby={helpId}
+            aria-label={intl.formatMessage({id: 'modal.exportFileName.subtitle'})}
+            data-for={helpId}
+            data-tip
+          >
+            <Help aria-hidden height="12px" />
+            <Tooltip id={helpId} effect="solid" place="top">
+              <FileNameHelpContent>
+                <FormattedMessage id="modal.exportFileName.subtitle" />
+              </FileNameHelpContent>
+            </Tooltip>
+          </FileNameHelp>
+        </FileNameTitle>
       </div>
       <div className="selection">
         <StyledFileNameInput

@@ -99,6 +99,7 @@ import {
 import {
   getGlobeBaseLayers,
   getGlobeTopLayers,
+  getGlobeDepthDiskLayer,
   getGlobeClearColor,
   getGlobeBasemapAttributions,
   resolveGlobeBasemapProvider,
@@ -240,6 +241,8 @@ export interface MapContainerProps {
   primary?: boolean; // primary one will be reporting its size to appState
   readOnly?: boolean;
   isExport?: boolean;
+  /** Omit basemap/CSS fills while preserving transparent export pixels. */
+  transparentBackground?: boolean;
   // onMapStyleLoaded?: (map: maplibregl.Map | ReturnType<MapRef['getMap']> | null) => void;
   onMapStyleLoaded?: (map: GetMapRef | null) => void;
   onMapRender?: (map: GetMapRef | null) => void;
@@ -460,19 +463,30 @@ export default function MapContainerFactory(
     globeModeSelector = props => Boolean(props.mapState?.globe?.enabled);
     globeBackgroundColorSelector = props => props.mapState?.globe?.config?.backgroundColor;
     globeStarsSelector = props => Boolean(props.mapState?.globe?.config?.stars);
+    transparentBackgroundSelector = props => Boolean(props.transparentBackground);
     styleSelector = createSelector(
       this.mapStyleTypeSelector,
       this.mapStyleBackgroundColorSelector,
       this.globeModeSelector,
       this.globeBackgroundColorSelector,
       this.globeStarsSelector,
-      (styleType, backgroundColor, isGlobeMode, globeBackgroundColor, globeStars) => ({
+      this.transparentBackgroundSelector,
+      (
+        styleType,
+        backgroundColor,
+        isGlobeMode,
+        globeBackgroundColor,
+        globeStars,
+        transparentBackground
+      ) => ({
         ...MAP_STYLE.container,
-        ...(styleType === NO_MAP_ID ? {backgroundColor: rgbToHex(backgroundColor)} : {}),
+        ...(!transparentBackground && styleType === NO_MAP_ID
+          ? {backgroundColor: rgbToHex(backgroundColor)}
+          : {}),
         // In globe mode the deck.gl canvas is transparent (the globe View uses
         // `clearColor: false` to avoid corrupting the picking buffer), so the
         // background around the globe is painted here on the container instead.
-        ...(isGlobeMode
+        ...(!transparentBackground && isGlobeMode
           ? {
               // Fall back to the default globe background when none is configured.
               backgroundColor: rgbToHex(
@@ -1259,21 +1273,25 @@ export default function MapContainerFactory(
       // In globe mode, prepend globe base layers and append top layers
       const globeBaseLayers =
         isGlobeMode && mapState.globe
-          ? getGlobeBaseLayers({
-              mapboxApiAccessToken: mapboxApiAccessToken || '',
-              globe: mapState.globe,
-              mapStyleType: mapStyle?.styleType,
-              basemapProvider: globeBasemapProvider,
-              // Use the live (internal) latitude so the tile LOD compensation
-              // stays in sync with the deck viewport during a drag; mapState
-              // latitude lags behind while rotating.
-              latitude: internalMapState.latitude,
-              zoom: internalMapState.zoom
-            })
+          ? this.props.transparentBackground
+            ? [getGlobeDepthDiskLayer({fillColor: [0, 0, 0, 0] as any})]
+            : getGlobeBaseLayers({
+                mapboxApiAccessToken: mapboxApiAccessToken || '',
+                globe: mapState.globe,
+                mapStyleType: mapStyle?.styleType,
+                basemapProvider: globeBasemapProvider,
+                // Use the live (internal) latitude so the tile LOD compensation
+                // stays in sync with the deck viewport during a drag; mapState
+                // latitude lags behind while rotating.
+                latitude: internalMapState.latitude,
+                zoom: internalMapState.zoom
+              })
           : [];
       const globeTopLayers =
         isGlobeMode && mapState.globe
-          ? getGlobeTopLayers({globe: mapState.globe, zoom: internalMapState.zoom})
+          ? this.props.transparentBackground
+            ? []
+            : getGlobeTopLayers({globe: mapState.globe, zoom: internalMapState.zoom})
           : [];
       const finalDeckGlLayers = isGlobeMode
         ? [...globeBaseLayers, ...deckGlLayers, ...globeTopLayers]

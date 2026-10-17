@@ -12,7 +12,7 @@ import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer, LayerBaseConfig, VisualChannel, VisualChannelDescription} from '@kepler.gl/layers';
 import {LayerVisConfig, LayerOrder, MapState, RGBColor} from '@kepler.gl/types';
-import {getDistanceScales} from 'viewport-mercator-project';
+import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {ArrowDown, ArrowRight, EyeSeen, EyeUnseen} from '../common/icons';
 import PanelHeaderActionFactory from '../side-panel/panel-header-action';
 import {getFlatLayerOrder, isLayerShownInLegend} from '@kepler.gl/reducers';
@@ -311,10 +311,12 @@ export function LayerColorLegendFactory(
 
 function getLayerRadiusScaleMetersToPixelsMultiplier(layer, mapState) {
   // @ts-ignore this actually exist
-  const {metersPerPixel} = getDistanceScales(mapState);
+  const {metersPerUnit} = getDistanceScales(mapState);
+  const scale = mapState.scale ?? zoomToScale(mapState.zoom);
+  const metersPerPixel = metersPerUnit[0] / scale;
   // if no field size is defined we need to pass fixed radius = false
   const fixedRadius = layer.config.visConfig.fixedRadius && Boolean(layer.config.sizeField);
-  return layer.getRadiusScaleByZoom(mapState, fixedRadius) / metersPerPixel[0];
+  return layer.getRadiusScaleByZoom(mapState, fixedRadius) / metersPerPixel;
 }
 
 export type MapLegendIcons = {

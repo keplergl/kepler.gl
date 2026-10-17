@@ -251,5 +251,16 @@ test('interactionUtil -> getTooltipDisplayValue', t => {
       tc.message
     );
   });
+
+  t.equal(
+    getTooltipDisplayValue({
+      item: {name: 'timestamp', format: 'YYYY-MM-DD HH:mm'},
+      field: {name: 'timestamp', type: 'timestamp'},
+      value: 0,
+      timezone: 'America/Los_Angeles'
+    }),
+    '1969-12-31 16:00',
+    'should format tooltip dates in the configured timezone'
+  );
   t.end();
 });

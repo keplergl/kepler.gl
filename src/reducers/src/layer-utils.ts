@@ -66,6 +66,7 @@ export type LayerHoverProp = {
   primaryData?: DataRow | AggregationLayerHoverData | any[] | null;
   compareType?: CompareType;
   currentTime?: VisState['animationConfig']['currentTime'];
+  timezone?: string | null;
 };
 
 /**
@@ -273,7 +274,8 @@ export function getLayerHoverProp({
         fields,
         fieldsToShow,
         layer,
-        currentTime: animationConfig.currentTime
+        currentTime: animationConfig.currentTime,
+        timezone: interactionConfig.tooltip.config.timezone
       };
     }
   }

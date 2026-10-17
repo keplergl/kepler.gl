@@ -46,6 +46,7 @@ import {
   THEME,
   DEFAULT_MAPBOX_API_URL,
   GEOCODER_DATASET_NAME,
+  GEOCODER_ICON_COLOR,
   MISSING_MAPBOX_TOKEN
 } from '@kepler.gl/constants';
 
@@ -255,6 +256,7 @@ export const plotContainerSelector = (props: KeplerGLProps) => ({
   resolution: props.uiState.exportImage.resolution,
   legend: props.uiState.exportImage.legend,
   charts: props.uiState.exportImage.charts,
+  transparentBackground: props.uiState.exportImage.transparentBackground,
   center: props.uiState.exportImage.center,
   imageSize: props.uiState.exportImage.imageSize,
   escapeXhtmlForWebpack: props.uiState.exportImage.escapeXhtmlForWebpack,
@@ -283,6 +285,7 @@ export const bottomWidgetSelector = (props: KeplerGLProps, theme) => ({
 
 export const modalContainerSelector = (props: KeplerGLProps, rootNode) => ({
   appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
+  appWebsite: props.appWebsite,
   mapStyle: props.mapStyle,
   visState: props.visState,
   mapState: props.mapState,
@@ -320,7 +323,8 @@ export const geoCoderPanelSelector = (
   removeDataset: props.visStateActions.removeDataset,
   updateMap: props.mapStateActions.updateMap,
   appWidth: dimensions.width,
-  limitSearch: props.visState.interactionConfig.geocoder.config?.limitSearch ?? false
+  limitSearch: props.visState.interactionConfig.geocoder.config?.limitSearch ?? false,
+  color: props.visState.interactionConfig.geocoder.config?.color ?? GEOCODER_ICON_COLOR
 });
 
 /**

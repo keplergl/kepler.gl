@@ -1372,6 +1372,7 @@ export type LoadColumnStatsSuccessUpdaterAction = {
   fieldName: string;
   result: any;
   filterProps?: any;
+  fieldType?: string;
 };
 
 /**
@@ -1383,7 +1384,8 @@ export function loadColumnStatsSuccess(
   dataId: string,
   fieldName: string,
   result: any,
-  filterProps?: any
+  filterProps?: any,
+  request?: {fieldType: string}
 ): Merge<
   LoadColumnStatsSuccessUpdaterAction,
   {type: typeof ActionTypes.LOAD_COLUMN_STATS_SUCCESS}
@@ -1393,7 +1395,8 @@ export function loadColumnStatsSuccess(
     dataId,
     fieldName,
     result,
-    filterProps
+    filterProps,
+    ...request
   };
 }
 
@@ -1401,6 +1404,7 @@ export type LoadColumnStatsErrorUpdaterAction = {
   dataId: string;
   fieldName: string;
   error: Error;
+  fieldType?: string;
 };
 
 /**
@@ -1411,13 +1415,15 @@ export type LoadColumnStatsErrorUpdaterAction = {
 export function loadColumnStatsError(
   dataId: string,
   fieldName: string,
-  error: Error
+  error: Error,
+  request?: {fieldType: string}
 ): Merge<LoadColumnStatsErrorUpdaterAction, {type: typeof ActionTypes.LOAD_COLUMN_STATS_ERROR}> {
   return {
     type: ActionTypes.LOAD_COLUMN_STATS_ERROR,
     dataId,
     fieldName,
-    error
+    error,
+    ...request
   };
 }
 
@@ -1579,6 +1585,33 @@ export function renameTableColumn(
     dataId,
     fieldName,
     newName
+  };
+}
+
+export type ChangeTableColumnTypeUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  newType: string;
+};
+/**
+ * Convert every value in a dataset column and update its field type atomically.
+ * Invalid values leave the dataset unchanged and produce an error notification.
+ * @param dataId - dataset id
+ * @param fieldName - column name
+ * @param newType - target kepler.gl field type
+ * @returns action
+ * @public
+ */
+export function changeTableColumnType(
+  dataId: string,
+  fieldName: string,
+  newType: string
+): Merge<ChangeTableColumnTypeUpdaterAction, {type: typeof ActionTypes.CHANGE_TABLE_COLUMN_TYPE}> {
+  return {
+    type: ActionTypes.CHANGE_TABLE_COLUMN_TYPE,
+    dataId,
+    fieldName,
+    newType
   };
 }
 

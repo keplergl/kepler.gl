@@ -508,6 +508,25 @@ export function getFilterProps(
   }
 }
 
+/**
+ * Returns whether two field types can share the same filter value and domain.
+ */
+export function areFilterFieldTypesCompatible(
+  fieldType?: string | null,
+  candidateFieldType?: string | null
+): boolean {
+  if (!fieldType || !candidateFieldType) {
+    return false;
+  }
+
+  if (fieldType === candidateFieldType) {
+    return true;
+  }
+
+  const numericFieldTypes: string[] = [ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real];
+  return numericFieldTypes.includes(fieldType) && numericFieldTypes.includes(candidateFieldType);
+}
+
 function hasFiniteLngLat(pos: unknown): pos is number[] {
   if (pos == null || !(Array.isArray(pos) || ArrayBuffer.isView(pos))) {
     return false;
@@ -1318,6 +1337,7 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
   let newFilter = {
     ...filter,
     ...filterProps,
+    ...(filterDatasetIndex > 0 && filter.fieldType ? {fieldType: filter.fieldType} : {}),
     name: Object.assign([...toArray(filter.name)], {[filterDatasetIndex]: fieldName}),
     fieldIdx: Object.assign([...toArray(filter.fieldIdx)], {
       [filterDatasetIndex]: fieldIndex
@@ -1509,7 +1529,10 @@ export function mergeFilterDomainStep(
     return filter;
   }
 
-  if ((filter.fieldType && filter.fieldType !== filterProps.fieldType) || !filterProps.domain) {
+  if (
+    (filter.fieldType && !areFilterFieldTypesCompatible(filter.fieldType, filterProps.fieldType)) ||
+    !filterProps.domain
+  ) {
     return filter;
   }
 
@@ -1520,6 +1543,7 @@ export function mergeFilterDomainStep(
   const newFilter = {
     ...filter,
     ...filterProps,
+    ...(filter.fieldType ? {fieldType: filter.fieldType} : {}),
     // use min max as default domain
     domain: [sortedDomain[0], sortedDomain[sortedDomain.length - 1]]
   };
@@ -1545,7 +1569,13 @@ export function mergeFilterDomainStep(
       };
     }
     case ALL_FIELD_TYPES.real:
-    case ALL_FIELD_TYPES.integer:
+    case ALL_FIELD_TYPES.integer: {
+      const steps = [
+        'step' in filter ? filter.step : undefined,
+        'step' in filterProps ? filterProps.step : undefined
+      ].filter((step): step is number => typeof step === 'number');
+      return steps.length ? {...newFilter, step: Math.min(...steps)} : newFilter;
+    }
     default:
       return newFilter;
   }

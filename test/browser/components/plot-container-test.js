@@ -5,10 +5,13 @@ import React from 'react';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 import test from 'tape';
+import sinon from 'sinon';
 import {appInjector, PlotContainerFactory, plotContainerSelector} from '@kepler.gl/components';
+import {EMPTY_MAPBOX_STYLE, NO_MAP_ID} from '@kepler.gl/constants';
 import {mockKeplerProps} from '../../helpers/mock-state';
 import {Provider} from 'react-redux';
 import configureStore from 'redux-mock-store';
+import domtoimage from '../../../src/utils/src/dom-to-image';
 
 const PlotContainer = appInjector.get(PlotContainerFactory);
 const initialProps = plotContainerSelector(mockKeplerProps);
@@ -91,5 +94,234 @@ test('PlotContainer -> mount -> imageSize', t => {
     'should set longitude when center: true'
   );
   t.equal(map.props.mapState.zoom, 1.8721094288367688, 'should set zoom when center: true');
+  t.end();
+});
+
+test('PlotContainer -> transparent background', t => {
+  const imageSize = {
+    scale: 1,
+    imageW: 800,
+    imageH: 600
+  };
+  const bottomMapStyle = {
+    version: 8,
+    sources: {},
+    layers: [{id: 'background', type: 'background', paint: {'background-color': '#ffffff'}}]
+  };
+  const topMapStyle = {version: 8, sources: {}, layers: []};
+  const mapFields = {
+    ...initialProps.mapFields,
+    mapStyle: {
+      ...initialProps.mapFields.mapStyle,
+      styleType: NO_MAP_ID,
+      backgroundColor: [12, 34, 56],
+      bottomMapStyle,
+      topMapStyle
+    }
+  };
+  const store = mockStore(initialState);
+
+  const selectorProps = plotContainerSelector({
+    ...mockKeplerProps,
+    uiState: {
+      ...mockKeplerProps.uiState,
+      exportImage: {
+        ...mockKeplerProps.uiState.exportImage,
+        transparentBackground: true
+      }
+    }
+  });
+  t.equal(
+    selectorProps.transparentBackground,
+    true,
+    'selector should forward transparentBackground'
+  );
+
+  const normalWrapper = mountWithTheme(
+    <Provider store={store}>
+      <IntlWrapper>
+        <PlotContainer
+          {...initialProps}
+          imageSize={imageSize}
+          mapFields={mapFields}
+          transparentBackground={false}
+          setExportImageSetting={() => {}}
+          setExportImageDataUri={() => {}}
+          setExportImageError={() => {}}
+          addNotification={() => {}}
+        />
+      </IntlWrapper>
+    </Provider>
+  );
+  const normalMap = normalWrapper.find('MapContainer').instance();
+
+  t.deepEqual(normalMap.props.mapStyle, mapFields.mapStyle, 'should keep the map style');
+  t.equal(
+    normalMap.styleSelector(normalMap.props).backgroundColor,
+    '#0C2238',
+    'should keep the no-basemap background color'
+  );
+
+  const transparentWrapper = mountWithTheme(
+    <Provider store={store}>
+      <IntlWrapper>
+        <PlotContainer
+          {...initialProps}
+          imageSize={imageSize}
+          mapFields={mapFields}
+          transparentBackground={true}
+          setExportImageSetting={() => {}}
+          setExportImageDataUri={() => {}}
+          setExportImageError={() => {}}
+          addNotification={() => {}}
+        />
+      </IntlWrapper>
+    </Provider>
+  );
+  const transparentMap = transparentWrapper.find('MapContainer').instance();
+  const transparentStyle = transparentMap.styleSelector(transparentMap.props);
+
+  t.equal(
+    transparentMap.props.transparentBackground,
+    true,
+    'should pass transparentBackground to MapContainer'
+  );
+  t.deepEqual(
+    transparentMap.props.mapStyle.bottomMapStyle,
+    EMPTY_MAPBOX_STYLE,
+    'should replace the bottom basemap with an empty style'
+  );
+  t.equal(
+    transparentMap.props.mapStyle.topMapStyle,
+    undefined,
+    'should omit the top basemap style'
+  );
+  t.notOk(
+    Object.prototype.hasOwnProperty.call(transparentStyle, 'backgroundColor'),
+    'should omit the map container background color'
+  );
+  t.notOk(
+    Object.prototype.hasOwnProperty.call(transparentStyle, 'backgroundImage'),
+    'should omit the map container background image'
+  );
+
+  normalWrapper.unmount();
+  transparentWrapper.unmount();
+  t.end();
+});
+
+test('PlotContainer -> waits for the replacement style before capturing', t => {
+  const clock = sinon.useFakeTimers();
+  const toPng = sinon.stub(domtoimage, 'toPng').returns(new Promise(() => undefined));
+  let mapProps;
+  const TestMapContainer = props => {
+    mapProps = props;
+    return <div />;
+  };
+  const TestMapsLayout = ({children}) => <>{children}</>;
+  const TestPlotContainer = PlotContainerFactory(TestMapContainer, TestMapsLayout);
+  const imageSize = {
+    scale: 1,
+    imageW: 800,
+    imageH: 600
+  };
+  const mapFields = {
+    ...initialProps.mapFields,
+    mapStyle: {
+      ...initialProps.mapFields.mapStyle,
+      bottomMapStyle: {
+        version: 8,
+        sources: {},
+        layers: [{id: 'background', type: 'background', paint: {'background-color': '#ffffff'}}]
+      }
+    }
+  };
+  const renderPlot = transparentBackground => (
+    <TestPlotContainer
+      {...initialProps}
+      imageSize={imageSize}
+      mapFields={mapFields}
+      transparentBackground={transparentBackground}
+      setExportImageSetting={() => {}}
+      setExportImageDataUri={() => {}}
+      setExportImageError={() => {}}
+      addNotification={() => {}}
+    />
+  );
+  let wrapper;
+
+  try {
+    wrapper = mountWithTheme(renderPlot(false));
+    mapProps.deckRenderCallbacks.onDeckAfterRender({layers: []});
+    mapProps.onMapRender({isStyleLoaded: () => true});
+    clock.tick(1000);
+    t.equal(toPng.callCount, 1, 'should capture after the initial map is ready');
+
+    toPng.resetHistory();
+    wrapper.setProps({children: renderPlot(true)});
+    wrapper.update();
+    clock.tick(1000);
+    t.equal(toPng.callCount, 0, 'should not capture using readiness from the previous style');
+
+    mapProps.deckRenderCallbacks.onDeckAfterRender({layers: []});
+    mapProps.onMapRender({isStyleLoaded: () => true});
+    clock.tick(1000);
+    t.equal(toPng.callCount, 1, 'should capture after the replacement style is ready');
+  } finally {
+    wrapper?.unmount();
+    toPng.restore();
+    clock.restore();
+  }
+
+  t.end();
+});
+
+test('PlotContainer -> transparent globe keeps only the depth occluder', t => {
+  const imageSize = {
+    scale: 1,
+    imageW: 800,
+    imageH: 600
+  };
+  const mapFields = {
+    ...initialProps.mapFields,
+    mapState: {
+      ...initialProps.mapFields.mapState,
+      globe: {
+        ...initialProps.mapFields.mapState.globe,
+        enabled: true
+      }
+    }
+  };
+  const store = mockStore(initialState);
+  const wrapper = mountWithTheme(
+    <Provider store={store}>
+      <IntlWrapper>
+        <PlotContainer
+          {...initialProps}
+          imageSize={imageSize}
+          mapFields={mapFields}
+          transparentBackground={true}
+          setExportImageSetting={() => {}}
+          setExportImageDataUri={() => {}}
+          setExportImageError={() => {}}
+          addNotification={() => {}}
+        />
+      </IntlWrapper>
+    </Provider>
+  );
+  const map = wrapper.find('MapContainer').instance();
+  const layersForDeck = map.layersForDeckSelector(map.props);
+  const deckWrapper = map._renderDeckOverlay(layersForDeck, {primaryMap: true});
+  const globeSystemLayerIds = deckWrapper.props.children.props.layers
+    .map(layer => layer.id)
+    .filter(id => id.startsWith('globe-'));
+
+  t.deepEqual(
+    globeSystemLayerIds,
+    ['globe-depth-disk-layer'],
+    'should omit visible globe basemap layers but retain the depth occluder'
+  );
+
+  wrapper.unmount();
   t.end();
 });

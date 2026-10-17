@@ -6,6 +6,7 @@ import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import moment from 'moment';
+import 'moment/locale/en-gb';
 
 import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
 import {setFilterAnimationTimeConfig, setFilterAnimationWindow} from '@kepler.gl/actions';
@@ -25,9 +26,12 @@ import {
   IconButton,
   SliderHandle,
   Typeahead,
+  ItemSelector,
   TimezoneSelector,
   appInjector
 } from '@kepler.gl/components';
+
+moment.locale('en');
 
 const TimeWidget = appInjector.get(TimeWidgetFactory);
 const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);
@@ -155,6 +159,174 @@ test('Components -> TimeWidget.mount -> timezone selector', t => {
     'should show the filter timezone'
   );
 
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> time format selector', t => {
+  const setFilterAnimationTimeConfig = sinon.spy();
+  const mountTimeWidget = filter => {
+    const mounted = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget
+          {...defaultProps}
+          filter={filter}
+          setFilterAnimationTimeConfig={setFilterAnimationTimeConfig}
+        />
+      </IntlWrapper>
+    );
+    mounted.find(Icons.Gear).at(0).simulate('click');
+    mounted.update();
+    return mounted;
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountTimeWidget(defaultProps.filter);
+  }, 'TimeWidget should not fail without props');
+
+  t.equal(
+    wrapper.find('[data-testid="time-widget-time-format"]').hostNodes().length,
+    1,
+    'should render time format selector'
+  );
+
+  const getTimeFormatSelector = () =>
+    wrapper.find('[data-testid="time-widget-time-format"]').find(ItemSelector).at(0);
+
+  t.equal(getTimeFormatSelector().length, 1, 'should expose the time format options');
+  t.equal(
+    wrapper.find('[data-testid="time-widget-time-format"]').hostNodes().prop('aria-labelledby'),
+    'time-widget-time-format-label',
+    'should associate the selector with its label'
+  );
+  t.equal(
+    getTimeFormatSelector().prop('searchable'),
+    false,
+    'should use a non-searchable kepler item selector'
+  );
+
+  t.equal(
+    getTimeFormatSelector().prop('selectedItems'),
+    '12-hour',
+    'should default to 12-hour format'
+  );
+
+  getTimeFormatSelector().prop('onChange')('24-hour');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.args[0],
+    [0, {timeFormat: 'L HH:mm:ss'}],
+    'should call setFilterAnimationTimeConfig with 24-hour format'
+  );
+
+  wrapper.unmount();
+  wrapper = mountTimeWidget({...defaultProps.filter, timeFormat: 'L HH:mm:ss'});
+
+  t.equal(
+    getTimeFormatSelector().prop('selectedItems'),
+    '24-hour',
+    'should show the filter time format'
+  );
+  t.equal(
+    wrapper
+      .find(FloatingTimeDisplay)
+      .find('.animation-control__time-display__bottom')
+      .at(0)
+      .find('.time-value')
+      .at(0)
+      .text(),
+    '09/23/2016 05:00:00',
+    'should render time without an AM/PM suffix'
+  );
+
+  getTimeFormatSelector().prop('onChange')('12-hour');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.lastCall.args,
+    [0, {timeFormat: 'L hh:mm:ss A'}],
+    'should call setFilterAnimationTimeConfig with 12-hour format'
+  );
+
+  wrapper.unmount();
+  wrapper = mountTimeWidget({...defaultProps.filter, timeFormat: 'L hh:mm:ss A'});
+
+  t.equal(
+    wrapper
+      .find(FloatingTimeDisplay)
+      .find('.animation-control__time-display__bottom')
+      .at(0)
+      .find('.time-value')
+      .at(0)
+      .text(),
+    '09/23/2016 05:00:00 AM',
+    'should render time with an AM/PM suffix'
+  );
+
+  wrapper.unmount();
+  wrapper = mountTimeWidget({
+    ...defaultProps.filter,
+    timeFormat: null,
+    defaultTimeFormat: 'L LTS.SSS'
+  });
+  getTimeFormatSelector().prop('onChange')('24-hour');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.lastCall.args,
+    [0, {timeFormat: 'L HH:mm:ss.SSS'}],
+    'should preserve millisecond precision when changing the hour cycle'
+  );
+
+  wrapper.unmount();
+  wrapper = mountTimeWidget({
+    ...defaultProps.filter,
+    timeFormat: 'L hmmss A'
+  });
+  getTimeFormatSelector().prop('onChange')('24-hour');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.lastCall.args,
+    [0, {timeFormat: 'L Hmmss'}],
+    'should convert a compact time without appending a second time format'
+  );
+
+  wrapper.unmount();
+  const previousLocale = moment.locale();
+  moment.locale('en-gb');
+  wrapper = mountTimeWidget({
+    ...defaultProps.filter,
+    timeFormat: null,
+    defaultTimeFormat: 'L LT'
+  });
+
+  t.equal(
+    getTimeFormatSelector().prop('selectedItems'),
+    '24-hour',
+    'should derive the hour cycle from a localized default format'
+  );
+  wrapper.unmount();
+  moment.locale(previousLocale);
+
+  wrapper = mountTimeWidget({
+    ...defaultProps.filter,
+    timeFormat: null,
+    defaultTimeFormat: 'L'
+  });
+
+  t.equal(
+    getTimeFormatSelector().prop('disabled'),
+    undefined,
+    'should keep hour-cycle selection enabled when the effective format has no hour'
+  );
+
+  getTimeFormatSelector().prop('onChange')('24-hour');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.lastCall.args,
+    [0, {timeFormat: 'L HH:mm'}],
+    'should add a zero-padded 24-hour time to a date-only format'
+  );
+
+  wrapper.unmount();
   t.end();
 });
 

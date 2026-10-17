@@ -37,27 +37,41 @@ const HeaderCell = HeaderCellFactory(
 
 const columns = ['region', 'pop'];
 const colMeta = {
-  region: {name: 'region', type: 'string'},
-  pop: {name: 'pop', type: 'integer'}
+  region: {name: 'region', type: 'string', colIdx: 0},
+  pop: {name: 'pop', type: 'integer', colIdx: 1}
 };
 
 function ColumnHeader({
   renameTableColumn,
+  changeTableColumnType,
   deleteTableColumn,
-  createFilterFromColumn
+  createFilterFromColumn,
+  metadata = colMeta,
+  typeChangeValues
 }: {
   renameTableColumn?: (column: string, newName: string) => void;
+  changeTableColumnType?: (column: string, newType: string) => void;
   deleteTableColumn?: (column: string) => void;
   createFilterFromColumn?: (column: string) => void;
+  metadata?: typeof colMeta;
+  typeChangeValues?: unknown[];
 }) {
   const [moreOptionsColumn, setMoreOptionsColumn] = useState<string | null>(null);
   const props = {
-    colMeta,
+    colMeta: metadata,
+    typeChangeDataContainer: typeChangeValues
+      ? {
+          numRows: () => typeChangeValues.length,
+          numColumns: () => 1,
+          valueAt: (rowIndex: number) => typeChangeValues[rowIndex]
+        }
+      : undefined,
     sortColumn: {},
     pinTableColumn: jest.fn(),
     copyTableColumn: jest.fn(),
     sortTableColumn: jest.fn(),
     renameTableColumn,
+    changeTableColumnType,
     deleteTableColumn,
     createFilterFromColumn
   } as unknown as HeaderCellProps['props'];
@@ -177,5 +191,85 @@ describe('column header menu', () => {
     openMenu(container);
     fireEvent.click(screen.getByText('Create Filter'));
     expect(createFilterFromColumn).toHaveBeenCalledWith('region');
+  });
+
+  test('changes the column data type from the column menu', () => {
+    const changeTableColumnType = jest.fn();
+    const {container} = renderWithTheme(
+      <ColumnHeader changeTableColumnType={changeTableColumnType} renameTableColumn={jest.fn()} />
+    );
+
+    openMenu(container);
+    fireEvent.click(screen.getByText('Change Data Type'));
+    expect(screen.queryByText('Boolean')).toBeNull();
+    expect(screen.queryByText('GeoJSON')).toBeNull();
+    fireEvent.click(screen.getByText('Integer'));
+    expect(changeTableColumnType).toHaveBeenCalledWith('region', 'integer');
+  });
+
+  test.each([false, true])(
+    'does not scan the existing menu (type changes enabled: %s)',
+    enabled => {
+      const readValue = jest.fn(() => '10');
+      const values = [null];
+      Object.defineProperty(values, 0, {get: readValue});
+      const {container} = renderWithTheme(
+        <ColumnHeader
+          changeTableColumnType={enabled ? jest.fn() : undefined}
+          typeChangeValues={values}
+        />
+      );
+
+      openMenu(container);
+      expect(readValue).not.toHaveBeenCalled();
+      expect(screen.getByText('Copy Column')).toBeTruthy();
+      if (enabled) {
+        fireEvent.click(screen.getByText('Change Data Type'));
+        expect(readValue).toHaveBeenCalled();
+      } else {
+        expect(screen.queryByText('Change Data Type')).toBeNull();
+      }
+    }
+  );
+
+  test.each([
+    {type: 'string', values: ['ML', 'MW'], omitted: ['Integer', 'Real', 'Timestamp']},
+    {type: 'real', values: [3.1, 4], omitted: ['Integer', 'Timestamp']},
+    {type: 'real', values: [1_700_000_000.4, 1_700_000_001.6], omitted: ['Integer']},
+    {type: 'integer', values: [1, 2], omitted: ['Real', 'Timestamp']}
+  ])('offers compatible types for $type values $values', ({type, values, omitted}) => {
+    const changeTableColumnType = jest.fn();
+    const {container} = renderWithTheme(
+      <ColumnHeader
+        changeTableColumnType={changeTableColumnType}
+        metadata={{...colMeta, region: {...colMeta.region, type}}}
+        typeChangeValues={values}
+      />
+    );
+
+    openMenu(container);
+    fireEvent.click(screen.getByText('Change Data Type'));
+    omitted.forEach(label => expect(screen.queryByText(label)).toBeNull());
+    if (!omitted.includes('Timestamp')) expect(screen.getByText('Timestamp')).toBeTruthy();
+    fireEvent.click(screen.getByText('String'));
+    if (type === 'string') expect(changeTableColumnType).not.toHaveBeenCalled();
+    else expect(changeTableColumnType).toHaveBeenCalledWith('region', 'string');
+  });
+
+  test('hides type changes for field types outside the initial scope', () => {
+    const metadata = {
+      ...colMeta,
+      region: {...colMeta.region, type: 'boolean'}
+    };
+    const {container} = renderWithTheme(
+      <ColumnHeader
+        changeTableColumnType={jest.fn()}
+        metadata={metadata}
+        typeChangeValues={[true, false]}
+      />
+    );
+
+    openMenu(container);
+    expect(screen.queryByText('Change Data Type')).toBeNull();
   });
 });
