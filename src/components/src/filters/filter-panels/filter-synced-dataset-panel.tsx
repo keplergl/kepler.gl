@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
+import {useIntl} from 'react-intl';
 import styled, {withTheme} from 'styled-components';
 
 import {FormattedMessage} from '@kepler.gl/localization';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {getAnimatableVisibleLayers} from '@kepler.gl/utils';
+import {FILTER_TYPES} from '@kepler.gl/constants';
+import {areFilterFieldTypesCompatible, getAnimatableVisibleLayers} from '@kepler.gl/utils';
 
 import {Button} from '../../common/styled-components';
 import {Add, Trash} from '../../common/icons';
 import TippyTooltip from '../../common/tippy-tooltip';
-import FilterPanelHeaderFactory from '../../side-panel/filter-panel/filter-panel-header';
+import PanelHeaderActionFactory from '../../side-panel/panel-header-action';
 import SourceSelectorFactory from '../../side-panel/common/source-selector';
 import SourceDataSelectorFactory from '../../side-panel/common/source-data-selector';
 import LayerTypeListItemFactory from '../../side-panel/layer-panel/layer-type-list-item';
@@ -46,24 +47,91 @@ const StyledButton = styled(Button)`
   padding: 2px;
 `;
 
-function getDatasetsWithTimeField(datasets) {
+const StyledIconButton = styled.button`
+  appearance: none;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: ${props => props.theme.panelHeaderIcon};
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  width: 16px;
+  height: ${props => props.theme.inputBoxHeight};
+  margin: 0 0 0 4px;
+  padding: 0;
+  flex: 0 0 auto;
+
+  &:hover,
+  &:focus {
+    color: ${props => props.theme.panelHeaderIconHover};
+  }
+
+  svg {
+    margin-right: 0;
+  }
+`;
+
+const StyledSourceDataRow = styled.div`
+  display: flex;
+  align-items: flex-end;
+
+  .data-source-selector {
+    flex: 1;
+    min-width: 0;
+  }
+`;
+
+function getFilterFieldType(datasets, filter) {
+  const firstDataset = datasets[filter.dataId[0]];
+  const firstField = firstDataset?.fields.find(field => field.name === filter.name[0]);
+
+  return firstField?.type || filter.fieldType;
+}
+
+function getFieldsByType(dataset, fieldType) {
+  if (!dataset || !fieldType) {
+    return [];
+  }
+
+  return dataset.fields.filter(
+    field =>
+      areFilterFieldTypesCompatible(fieldType, field.type) &&
+      (!dataset.supportedFilterTypes || dataset.supportedFilterTypes.includes(field.type))
+  );
+}
+
+function getDatasetsWithFieldType(datasets, fieldType) {
   const rv = {};
   for (const id of Object.keys(datasets)) {
-    // TODO: change to
-    if (datasets[id].fields.some(f => f.type === ALL_FIELD_TYPES.timestamp)) {
+    if (getFieldsByType(datasets[id], fieldType).length) {
       rv[id] = datasets[id];
     }
   }
   return rv;
 }
 
-function getTimeFields(dataset) {
-  return dataset.fields.filter(f => f.type === ALL_FIELD_TYPES.timestamp);
+function getSelectableDatasets(datasets, compatibleDatasets, filterDataIds, currentDataId) {
+  const selectableDatasets = {};
+  for (const id of Object.keys(compatibleDatasets)) {
+    if (id === currentDataId || !filterDataIds.includes(id)) {
+      selectableDatasets[id] = compatibleDatasets[id];
+    }
+  }
+
+  // Keep malformed or legacy selections visible so users can repair them.
+  if (datasets[currentDataId] && !selectableDatasets[currentDataId]) {
+    selectableDatasets[currentDataId] = datasets[currentDataId];
+  }
+
+  return selectableDatasets;
 }
 
-function DatasetItemFactory(SourceSelector, FilterPanelHeader) {
-  const StyledFilterPanelHeader = styled(FilterPanelHeader)`
+export function DatasetItemFactory(SourceSelector, PanelHeaderAction) {
+  const StyledDatasetItemHeader = styled.div`
     display: flex;
+    width: 100%;
+    min-width: 0;
     border: none;
     height: unset;
     padding: 2px 0;
@@ -73,6 +141,8 @@ function DatasetItemFactory(SourceSelector, FilterPanelHeader) {
 
   const StyledSourceSelector = styled(SourceSelector)`
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
     -webkit-border-radius: 8px;
     -moz-border-radius: 8px;
     border-radius: 8px;
@@ -83,42 +153,45 @@ function DatasetItemFactory(SourceSelector, FilterPanelHeader) {
   const DatasetItem = ({
     dataId,
     datasets,
-    supportedFields,
-    idx,
+    fields,
     filter,
     index,
     onRemoveSyncedFilter,
     filterDatasetsNum,
-    datasetsWithTimeNum,
+    compatibleDatasetsNum,
     onSelectSyncedDataset,
-    onFieldSelector
+    onFieldSelector,
+    addButton
   }) => (
     <div>
       <StyledSeparator />
-      <StyledFilterPanelHeader
-        datasets={[datasets[dataId]]}
-        allAvailableFields={supportedFields}
-        idx={idx}
-        filter={filter}
-        removeFilter={() => onRemoveSyncedFilter(index)}
-      >
+      <StyledDatasetItemHeader>
         <StyledSourceSelector
           datasets={datasets}
-          disabled={filterDatasetsNum >= datasetsWithTimeNum}
+          disabled={filterDatasetsNum >= compatibleDatasetsNum}
           dataId={dataId}
           onSelectDataset={datasetId => onSelectSyncedDataset(datasetId, index)}
-          fields={getTimeFields(datasets[dataId])}
+          fields={fields}
           fieldValue={filter.name[index]}
           onFieldSelector={field => onFieldSelector(field, index)}
         />
-      </StyledFilterPanelHeader>
+        {addButton}
+        <PanelHeaderAction
+          id={`${filter.id}-${dataId}`}
+          tooltip="tooltip.delete"
+          tooltipType="error"
+          hoverColor="errorColor"
+          onClick={() => onRemoveSyncedFilter(index)}
+          IconComponent={Trash}
+        />
+      </StyledDatasetItemHeader>
     </div>
   );
 
   return DatasetItem;
 }
 
-DatasetItemFactory.deps = [SourceSelectorFactory, FilterPanelHeaderFactory];
+DatasetItemFactory.deps = [SourceSelectorFactory, PanelHeaderActionFactory];
 
 const StyledLayerTimeline = styled.div`
   display: flex;
@@ -155,26 +228,27 @@ function LayerTimelineFactory(LayerTypeListItem) {
 
 LayerTimelineFactory.deps = [LayerTypeListItemFactory];
 
-function SyncedDatasetButtonFactory() {
-  const SyncedDatasetButton = ({onAddSyncedFilter}) => (
-    <div>
-      <StyledSeparator />
-      <TippyTooltip
-        delay={[500, 0]}
-        placement="top"
-        render={() => (
-          <div>
-            <FormattedMessage id={'tooltip.timeFilterSync'} />
-          </div>
-        )}
-      >
-        <StyledButton className="add-sync-dataset" secondary={true} onClick={onAddSyncedFilter}>
-          <Add height="12px" />
-          <FormattedMessage id={'filterManager.timeFilterSync'} />
-        </StyledButton>
+export function SyncedDatasetButtonFactory() {
+  const SyncedDatasetButton = ({onAddSyncedFilter}) => {
+    const intl = useIntl();
+    const label = intl.formatMessage({
+      id: 'tooltip.timeFilterSync',
+      defaultMessage: 'Add synced filter'
+    });
+
+    return (
+      <TippyTooltip delay={[500, 0]} placement="top" render={() => <div>{label}</div>}>
+        <StyledIconButton
+          aria-label={label}
+          className="add-sync-dataset"
+          type="button"
+          onClick={onAddSyncedFilter}
+        >
+          <Add height="16px" />
+        </StyledIconButton>
       </TippyTooltip>
-    </div>
-  );
+    );
+  };
 
   return SyncedDatasetButton;
 }
@@ -203,6 +277,18 @@ function SyncLayerTimelineButtonFactory() {
   return SyncLayerTimelineButton;
 }
 
+type FilterSyncedDatasetPanelProps = {
+  datasets: Record<string, any>;
+  layers?: ReadonlyArray<any>;
+  filter: any;
+  setFilter: (...args: any[]) => void;
+  idx: number;
+  onFieldSelector: (...args: any[]) => void;
+  onSourceDataSelector: (...args: any[]) => void;
+  syncTimeFilterWithLayerTimeline?: (idx: number, enable: boolean) => void;
+  showSourceDataSelector?: boolean;
+};
+
 function FilterSyncedDatasetPanelFactory(
   DatasetItem,
   LayerTimeline,
@@ -212,20 +298,25 @@ function FilterSyncedDatasetPanelFactory(
 ) {
   const FilterSyncedDatasetPanel = ({
     datasets,
-    layers,
+    layers = [],
     filter,
     setFilter,
     idx,
-    supportedFields,
     onFieldSelector,
     onSourceDataSelector,
-    syncTimeFilterWithLayerTimeline
-  }) => {
-    const datasetsWithTime = useMemo(() => getDatasetsWithTimeField(datasets), [datasets]);
+    syncTimeFilterWithLayerTimeline,
+    showSourceDataSelector = true
+  }: FilterSyncedDatasetPanelProps) => {
+    const [pendingDataId, setPendingDataId] = useState<string | null>(null);
+    const fieldType = useMemo(() => getFilterFieldType(datasets, filter), [datasets, filter]);
+    const compatibleDatasets = useMemo(
+      () => getDatasetsWithFieldType(datasets, fieldType),
+      [datasets, fieldType]
+    );
     const filterDatasetsNum = useMemo(() => filter.dataId.length, [filter.dataId]);
-    const datasetsWithTimeNum = useMemo(
-      () => Object.keys(datasetsWithTime).length,
-      [datasetsWithTime]
+    const compatibleDatasetsNum = useMemo(
+      () => Object.keys(compatibleDatasets).length,
+      [compatibleDatasets]
     );
 
     const onRemoveSyncedFilter = useCallback(
@@ -243,27 +334,58 @@ function FilterSyncedDatasetPanelFactory(
     );
 
     const onAddSyncedFilter = useCallback(() => {
-      const nextId = Object.keys(datasetsWithTime).find(id => !filter.dataId.includes(id));
+      const nextId = Object.keys(compatibleDatasets).find(id => !filter.dataId.includes(id));
       if (!nextId) return;
-      const timeFieldNames = getTimeFields(datasets[nextId])?.map(f => f.name);
-      if (!timeFieldNames || timeFieldNames.length < 1) return;
-      const nextName = timeFieldNames.includes(filter.name[0]) ? filter.name[0] : timeFieldNames[0];
-      setFilter(idx, ['dataId', 'name'], [nextId, nextName], filter.dataId.length);
-    }, [setFilter, idx, datasetsWithTime, datasets, filter.dataId, filter.name]);
+      const fieldNames = getFieldsByType(datasets[nextId], fieldType).map(field => field.name);
+      if (!fieldNames.length) return;
+      const matchingName = fieldNames.find(fieldName => fieldName === filter.name[0]);
+      if (matchingName || fieldNames.length === 1) {
+        setFilter(
+          idx,
+          ['dataId', 'name'],
+          [nextId, matchingName || fieldNames[0]],
+          filter.dataId.length
+        );
+      } else {
+        setPendingDataId(nextId);
+      }
+    }, [setFilter, idx, compatibleDatasets, datasets, fieldType, filter.dataId, filter.name]);
+
+    const onSelectPendingDataset = useCallback(datasetId => setPendingDataId(datasetId), []);
+
+    const onSelectPendingField = useCallback(
+      field => {
+        if (!pendingDataId) return;
+        setFilter(idx, ['dataId', 'name'], [pendingDataId, field.name], filter.dataId.length);
+        setPendingDataId(null);
+      },
+      [filter.dataId.length, idx, pendingDataId, setFilter]
+    );
+
+    const onCancelPendingDataset = useCallback(() => setPendingDataId(null), []);
 
     const onSyncLayerTimeline = useCallback(
-      () => syncTimeFilterWithLayerTimeline(idx, true),
+      () => syncTimeFilterWithLayerTimeline?.(idx, true),
       [syncTimeFilterWithLayerTimeline, idx]
     );
 
     const onRemoveSyncWithLayerTimeline = useCallback(
-      () => syncTimeFilterWithLayerTimeline(idx, false),
+      () => syncTimeFilterWithLayerTimeline?.(idx, false),
       [syncTimeFilterWithLayerTimeline, idx]
     );
 
-    const animatableLayers = useMemo(() => getAnimatableVisibleLayers(layers), [layers]);
+    const isTimeRange = filter.type === FILTER_TYPES.timeRange;
+    const animatableLayers = useMemo(
+      () => (isTimeRange ? getAnimatableVisibleLayers([...layers]) : []),
+      [isTimeRange, layers]
+    );
 
-    const isLinkedWithLayerTimeline = useMemo(() => filter.syncedWithLayerTimeline, [filter]);
+    const isLinkedWithLayerTimeline = isTimeRange && filter.syncedWithLayerTimeline;
+    const activePendingDataId =
+      pendingDataId && compatibleDatasets[pendingDataId] && !filter.dataId.includes(pendingDataId)
+        ? pendingDataId
+        : null;
+    const canAddSyncedDataset = !activePendingDataId && filterDatasetsNum < compatibleDatasetsNum;
 
     return (
       <SyncedDatasetsArea>
@@ -271,49 +393,79 @@ function FilterSyncedDatasetPanelFactory(
           <>
             <StyledContentTitle>Datasets</StyledContentTitle>
             {filter.dataId.map((dataId, index) => {
+              const selectableDatasets = getSelectableDatasets(
+                datasets,
+                compatibleDatasets,
+                filter.dataId,
+                dataId
+              );
               return (
                 <DatasetItem
-                  key={dataId}
+                  key={`${dataId}-${index}`}
                   dataId={dataId}
                   index={index}
-                  datasets={datasets}
-                  supportedFields={supportedFields}
+                  datasets={selectableDatasets}
+                  fields={getFieldsByType(datasets[dataId], fieldType)}
                   idx={idx}
                   filter={filter}
                   onRemoveSyncedFilter={onRemoveSyncedFilter}
                   filterDatasetsNum={filterDatasetsNum}
-                  datasetsWithTimeNum={datasetsWithTimeNum}
+                  compatibleDatasetsNum={compatibleDatasetsNum}
                   onSelectSyncedDataset={onSelectSyncedDataset}
                   onFieldSelector={onFieldSelector}
+                  addButton={
+                    canAddSyncedDataset && index === filter.dataId.length - 1 ? (
+                      <SyncedDatasetButton onAddSyncedFilter={onAddSyncedFilter} />
+                    ) : null
+                  }
                 />
               );
             })}
           </>
-        ) : (
-          <>
+        ) : showSourceDataSelector ? (
+          <StyledSourceDataRow>
             <SourceDataSelector
               inputTheme="secondary"
               datasets={datasets}
               dataId={Array.isArray(filter.dataId) ? filter.dataId[0] : filter.dataId}
               onSelect={onSourceDataSelector}
             />
-          </>
-        )}
-        {/** sync with animatable layers */}
-        {isLinkedWithLayerTimeline ? (
-          <>
-            <StyledSeparator />
-            <LayerTimeline layers={animatableLayers} onDelete={onRemoveSyncWithLayerTimeline} />
-          </>
-        ) : (
-          <>
-            {animatableLayers.length ? (
-              <SyncLayerTimelineButton onSyncLayerTimeline={onSyncLayerTimeline} />
+            {canAddSyncedDataset ? (
+              <SyncedDatasetButton onAddSyncedFilter={onAddSyncedFilter} />
             ) : null}
-          </>
-        )}
-        {filterDatasetsNum < datasetsWithTimeNum ? (
-          <SyncedDatasetButton onAddSyncedFilter={onAddSyncedFilter} />
+          </StyledSourceDataRow>
+        ) : null}
+        {activePendingDataId ? (
+          <DatasetItem
+            key={`pending-${activePendingDataId}`}
+            dataId={activePendingDataId}
+            index={filter.dataId.length}
+            datasets={getSelectableDatasets(
+              datasets,
+              compatibleDatasets,
+              filter.dataId,
+              activePendingDataId
+            )}
+            fields={getFieldsByType(datasets[activePendingDataId], fieldType)}
+            idx={idx}
+            filter={filter}
+            onRemoveSyncedFilter={onCancelPendingDataset}
+            filterDatasetsNum={filterDatasetsNum}
+            compatibleDatasetsNum={compatibleDatasetsNum}
+            onSelectSyncedDataset={onSelectPendingDataset}
+            onFieldSelector={onSelectPendingField}
+          />
+        ) : null}
+        {/** sync time filters with animatable layers */}
+        {isTimeRange && syncTimeFilterWithLayerTimeline ? (
+          isLinkedWithLayerTimeline ? (
+            <>
+              <StyledSeparator />
+              <LayerTimeline layers={animatableLayers} onDelete={onRemoveSyncWithLayerTimeline} />
+            </>
+          ) : animatableLayers.length ? (
+            <SyncLayerTimelineButton onSyncLayerTimeline={onSyncLayerTimeline} />
+          ) : null
         ) : null}
       </SyncedDatasetsArea>
     );

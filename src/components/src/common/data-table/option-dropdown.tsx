@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import Portaled from '../portaled';
 import DropdownList from '../item-selector/dropdown-list';
 import {
+  ALL_FIELD_TYPES,
   SORT_ORDER,
   TABLE_OPTION,
   TABLE_OPTION_LIST,
   TooltipFormat,
   TableOption
 } from '@kepler.gl/constants';
-import {getFieldFormatLabels} from '@kepler.gl/utils';
+import {DataContainerInterface, getFieldFormatLabels} from '@kepler.gl/utils';
 import {ColMeta} from '@kepler.gl/types';
+import {getCompatibleColumnTypes} from '@kepler.gl/table';
 import {
   ArrowDown,
   ArrowUp,
@@ -166,10 +168,22 @@ export interface OptionDropdownProps {
   isSorted?: string;
   isPinned?: boolean;
   renameTableColumn?: (column: string, newName: string) => void;
+  changeTableColumnType?: (column: string, newType: string) => void;
+  typeChangeDataContainer?: DataContainerInterface | null;
+  columnIndex?: number;
   deleteTableColumn?: (column: string) => void;
   createFilterFromColumn?: (column: string) => void;
   onStartRename?: () => void;
 }
+
+const COLUMN_TYPE_OPTIONS = [
+  {type: ALL_FIELD_TYPES.integer, display: 'Integer'},
+  {type: ALL_FIELD_TYPES.real, display: 'Real'},
+  {type: ALL_FIELD_TYPES.string, display: 'String'},
+  {type: ALL_FIELD_TYPES.timestamp, display: 'Timestamp'}
+];
+
+type ColumnTypeOption = (typeof COLUMN_TYPE_OPTIONS)[number];
 
 const OptionDropdown = (props: OptionDropdownProps) => {
   const {
@@ -182,12 +196,30 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     hideTableColumn,
     copyTableColumn,
     setDisplayFormat,
+    changeTableColumnType,
+    typeChangeDataContainer,
+    columnIndex = -1,
     deleteTableColumn,
     createFilterFromColumn,
     onStartRename
   } = props;
   const [showFormatter, setShowFormatter] = useState(false);
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const currentType = colMeta[column]?.type;
+  const columnTypeOptions = useMemo<ColumnTypeOption[]>(() => {
+    if (!COLUMN_TYPE_OPTIONS.some(option => option.type === currentType)) {
+      return [];
+    }
+    if (!showTypeSelector || !changeTableColumnType || !typeChangeDataContainer) {
+      return COLUMN_TYPE_OPTIONS;
+    }
+    const compatibleTypes = new Set(
+      getCompatibleColumnTypes(typeChangeDataContainer, columnIndex, currentType)
+    );
+    return COLUMN_TYPE_OPTIONS.filter(option => compatibleTypes.has(option.type));
+  }, [changeTableColumnType, columnIndex, currentType, showTypeSelector, typeChangeDataContainer]);
+  const hasCompatibleAlternative = columnTypeOptions.some(option => option.type !== currentType);
   const onOptionSelected: (v: TableOption) => void = useCallback(
     ({value}) => {
       switch (value) {
@@ -218,6 +250,9 @@ const OptionDropdown = (props: OptionDropdownProps) => {
         case TABLE_OPTION.RENAME:
           onStartRename?.();
           break;
+        case TABLE_OPTION.CHANGE_TYPE:
+          setShowTypeSelector(true);
+          return;
         case TABLE_OPTION.CREATE_FILTER:
           createFilterFromColumn?.(column);
           break;
@@ -260,7 +295,8 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     // cant use conditions because it creates a circular dependency
     // TODO: move condition clause out of default-settings TABLE_OPTION_LIST
     const validToFormat = op.value !== TABLE_OPTION.FORMAT_COLUMN || formatLabels.length;
-    return (!op.condition || op.condition(props)) && validToFormat;
+    const validToChangeType = op.value !== TABLE_OPTION.CHANGE_TYPE || hasCompatibleAlternative;
+    return (!op.condition || op.condition(props)) && validToFormat && validToChangeType;
   }).map(op => ({
     ...op,
     icon: TABLE_OPTION_LIST_ICONS[op.icon]
@@ -268,6 +304,7 @@ const OptionDropdown = (props: OptionDropdownProps) => {
 
   const onClose = useCallback(() => {
     setShowFormatter(false);
+    setShowTypeSelector(false);
     setConfirmDelete(false);
     toggleMoreOptions(column);
   }, [column, toggleMoreOptions]);
@@ -312,6 +349,26 @@ const OptionDropdown = (props: OptionDropdownProps) => {
           setDisplayFormat={setDisplayFormat}
           onClose={onClose}
         />
+        <Portaled
+          left={120}
+          top={-10}
+          isOpened={Boolean(isOpened && showTypeSelector)}
+          onClose={onClose}
+        >
+          <StyledPopover className="column-type-popover">
+            <DropdownList
+              options={columnTypeOptions}
+              selectionIndex={columnTypeOptions.findIndex(option => option.type === currentType)}
+              displayOption={option => (option as ColumnTypeOption).display}
+              onOptionSelected={option => {
+                const {type} = option as ColumnTypeOption;
+                if (type !== currentType) changeTableColumnType?.(column, type);
+                onClose();
+              }}
+              light
+            />
+          </StyledPopover>
+        </Portaled>
       </StyledOptionsDropdown>
     </Portaled>
   );

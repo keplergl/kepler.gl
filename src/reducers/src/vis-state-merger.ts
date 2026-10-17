@@ -508,9 +508,10 @@ export function mergeInteractions<S extends VisState>(
       let configToMerge = configSaved;
 
       if (key === 'tooltip') {
+        const savedTooltipConfig = configSaved as SavedInteractionConfig['tooltip'];
         const {mergedTooltip, unmergedTooltip} = mergeInteractionTooltipConfig(
           state,
-          configSaved as SavedInteractionConfig['tooltip']
+          savedTooltipConfig
         );
 
         // merge new dataset tooltips with original dataset tooltips
@@ -518,7 +519,10 @@ export function mergeInteractions<S extends VisState>(
           fieldsToShow: {
             ...(currentConfig as TooltipInfo['config']).fieldsToShow,
             ...mergedTooltip
-          }
+          },
+          ...(savedTooltipConfig.timezone !== undefined
+            ? {timezone: savedTooltipConfig.timezone}
+            : {})
         };
 
         if (Object.keys(unmergedTooltip).length) {
@@ -593,6 +597,13 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
         toBeCombinedProps.map(p => p.compareType)
       );
 
+      const hasTimezone = toBeCombinedProps.some(p => p?.timezone !== undefined);
+      if (hasTimezone) {
+        combined[key].timezone = getValueWithHighestOccurrence(
+          toBeCombinedProps.map(p => p?.timezone)
+        );
+      }
+
       // combine fieldsToShow among all dataset ids
       combined[key].fieldsToShow = toBeCombinedProps
         .map(p => p.fieldsToShow)
@@ -626,6 +637,10 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
 
     if (key === 'geocoder') {
       combined[key].limitSearch = toBeCombinedProps.some(p => p?.limitSearch);
+      const color = toBeCombinedProps.find(p => p?.color)?.color;
+      if (color) {
+        combined[key].color = color;
+      }
     }
 
     if (key === 'legend') {

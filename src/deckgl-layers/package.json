@@ -54,8 +54,7 @@
     "es-toolkit": "^1.39.10",
     "global": "^4.3.0",
     "pbf": "^3.1.0",
-    "supercluster": "^7.1.0",
-    "viewport-mercator-project": "^6.0.0"
+    "supercluster": "^7.1.0"
   },
   "nyc": {
     "sourceMap": false,

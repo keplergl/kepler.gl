@@ -6,11 +6,16 @@ import test from 'tape';
 import sinon from 'sinon';
 
 import {InteractionManagerFactory, appInjector} from '@kepler.gl/components';
-import {defaultInteractionConfig} from '@kepler.gl/reducers';
+import {defaultInteractionConfig, getZoomOpacityAnnotationTargetId} from '@kepler.gl/reducers';
 import {initApplicationConfig} from '@kepler.gl/utils';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 const InteractionManager = appInjector.get(InteractionManagerFactory);
+
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  disconnect() {}
+};
 
 const panelMetadata = {id: 'interaction', label: 'sidebar.panels.interaction'};
 
@@ -18,6 +23,108 @@ function expandLegend(wrapper) {
   wrapper.find('.interaction-legend__header').hostNodes().at(0).simulate('click');
   wrapper.update();
 }
+
+function expandZoomOpacity(wrapper) {
+  wrapper.find('.interaction-zoom-opacity__header').hostNodes().at(0).simulate('click');
+  wrapper.update();
+}
+
+test('Components -> InteractionManager fade on zoom includes individual annotations', t => {
+  const interactionConfigChange = sinon.spy();
+  const layer = {id: 'layer-1', config: {label: 'Quakes'}};
+  const annotations = [
+    {id: 'annotation-1', label: 'First annotation with a name long enough to be clipped'},
+    {id: 'annotation-2', label: 'Second note'}
+  ];
+  const firstTargetId = getZoomOpacityAnnotationTargetId(annotations[0].id);
+  const secondTargetId = getZoomOpacityAnnotationTargetId(annotations[1].id);
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <InteractionManager
+        interactionConfig={{
+          zoomOpacity: {
+            id: 'zoomOpacity',
+            label: 'interactions.fadeOnZoom',
+            enabled: true,
+            config: {
+              controllers: [
+                {
+                  id: 'controller-1',
+                  layerIds: [firstTargetId],
+                  stops: {appear: 1, full: 3, fade: 8, gone: 12}
+                }
+              ]
+            }
+          }
+        }}
+        datasets={{}}
+        panelMetadata={panelMetadata}
+        layers={[layer]}
+        annotations={annotations}
+        mapState={{zoom: 4}}
+        visStateActions={{
+          interactionConfigChange,
+          setColumnDisplayFormat: () => {}
+        }}
+      />
+    </IntlWrapper>
+  );
+
+  expandZoomOpacity(wrapper);
+
+  const itemSelectors = wrapper.find('ItemSelector');
+  let selector = itemSelectors.at(0);
+  for (let index = 0; index < itemSelectors.length; index++) {
+    const candidate = itemSelectors.at(index);
+    if (Array.isArray(candidate.prop('options'))) {
+      selector = candidate;
+      break;
+    }
+  }
+  const options = selector.prop('options');
+  const firstAnnotation = options.find(option => option.id === firstTargetId);
+  const secondAnnotation = options.find(option => option.id === secondTargetId);
+  t.ok(firstAnnotation, 'lists the first annotation with the layer targets');
+  t.ok(secondAnnotation, 'lists the second annotation with the layer targets');
+  t.equal(
+    firstAnnotation.label,
+    annotations[0].label,
+    'keeps the first annotation name available for search'
+  );
+  t.equal(secondAnnotation.label, 'Second note', 'uses the second annotation name');
+  t.ok(
+    wrapper.find('svg.zoom-opacity-target__annotation-icon').hostNodes().exists(),
+    'distinguishes the selected annotation with the annotation SVG icon'
+  );
+  t.equal(
+    wrapper.find('.zoom-opacity-target__name').text(),
+    annotations[0].label,
+    'renders the selected annotation name in the clipped label'
+  );
+
+  const TargetListItem = selector.prop('DropDownLineItemRenderComponent');
+  const annotationRow = mountWithTheme(
+    <TargetListItem
+      value={firstAnnotation}
+      displayOption={option => option.label}
+      disabled={false}
+      light={false}
+    />
+  );
+  const annotationRowStyle = window.getComputedStyle(
+    annotationRow.find('.list__item__anchor').hostNodes().getDOMNode()
+  );
+  t.equal(annotationRowStyle.display, 'flex', 'keeps the annotation option on one row');
+  t.equal(annotationRowStyle.whiteSpace, 'nowrap', 'prevents the annotation row from wrapping');
+
+  selector.prop('onChange')([layer, firstAnnotation, secondAnnotation]);
+  t.deepEqual(
+    interactionConfigChange.args[0][0].config.controllers[0].layerIds,
+    ['layer-1', firstTargetId, secondTargetId],
+    'stores individual annotations alongside selected layer ids'
+  );
+  t.end();
+});
 
 test('Components -> InteractionManager legend section', t => {
   const layerConfigChange = sinon.spy();

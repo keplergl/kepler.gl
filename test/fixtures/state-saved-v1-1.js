@@ -2807,6 +2807,7 @@ export const mergedInteraction = {
     ...defaultInteractionConfig.tooltip,
     enabled: false,
     config: {
+      timezone: null,
       compareMode: false,
       compareType: 'absolute',
       fieldsToShow: {

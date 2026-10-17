@@ -16,6 +16,7 @@ import DatasetTagFactory from '../common/dataset-tag';
 import TooltipChickletFactory from './tooltip-config/tooltip-chicklet';
 import Switch from '../../common/switch';
 import ItemSelector from '../../common/item-selector/item-selector';
+import TimezoneSelector from '../../filters/timezone-selector';
 import {COMPARE_TYPES, GEOCODER_DATASET_NAME} from '@kepler.gl/constants';
 import FieldSelectorFactory from '../../common/field-selector';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
@@ -58,6 +59,7 @@ type TooltipConfigProps = {
     };
     compareMode: boolean;
     compareType: string | null;
+    timezone?: string | null;
   };
   onChange: (config: {
     fieldsToShow: {
@@ -65,6 +67,7 @@ type TooltipConfigProps = {
     };
     compareMode: boolean;
     compareType: string | null;
+    timezone?: string | null;
   }) => void;
   datasets: Datasets;
   intl: IntlShape;
@@ -78,6 +81,7 @@ type DatasetTooltipConfigProps = {
     };
     compareMode: boolean;
     compareType: string | null;
+    timezone?: string | null;
   };
   onChange: (config: {
     fieldsToShow: {
@@ -85,6 +89,7 @@ type DatasetTooltipConfigProps = {
     };
     compareMode: boolean;
     compareType: string | null;
+    timezone?: string | null;
   }) => void;
   dataset: KeplerTable;
   onDisplayFormatChange: (dataId, column, displayFormat) => void;
@@ -199,6 +204,15 @@ function TooltipConfigFactory(
       [config, onChange]
     );
 
+    const handleTimezoneChange = useCallback(
+      (timezone: string) =>
+        onChange({
+          ...config,
+          timezone
+        }),
+      [config, onChange]
+    );
+
     return (
       <TooltipConfigWrapper>
         {Object.keys(config.fieldsToShow).map(dataId =>
@@ -212,6 +226,12 @@ function TooltipConfigFactory(
             />
           )
         )}
+        <SidePanelSection>
+          <PanelLabel>
+            <FormattedMessage id="filterManager.timezone" />
+          </PanelLabel>
+          <TimezoneSelector timezone={config.timezone} onChange={handleTimezoneChange} />
+        </SidePanelSection>
         <CompareSwitchWrapper>
           <FormattedMessage id="compare.modeLabel" />
           <Switch

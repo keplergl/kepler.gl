@@ -10,12 +10,14 @@ import {
   openDeleteModal,
   openReplaceDatasetModal,
   setExportImageSetting,
+  cleanupExportImage,
   setExportVideoSetting,
   toggleMapControl,
   setMapControlVisibility,
   setExportSelectedDataset,
   setExportDataType,
   setExportFiltered,
+  setExportMapBranding,
   setExportMapFileName,
   startExportingImage,
   addNotification,
@@ -175,6 +177,28 @@ test('#uiStateReducer -> SET_EXPORT_IMAGE_SETTING', t => {
   t.end();
 });
 
+test('#uiStateReducer -> transparent export image background', t => {
+  const newReducer = reducer(
+    INITIAL_UI_STATE,
+    setExportImageSetting({transparentBackground: true})
+  );
+
+  t.equal(
+    newReducer.exportImage.transparentBackground,
+    true,
+    'should enable the transparent background option'
+  );
+
+  const cleanedReducer = reducer(newReducer, cleanupExportImage());
+  t.equal(
+    cleanedReducer.exportImage.transparentBackground,
+    true,
+    'should preserve the transparent background option during cleanup'
+  );
+
+  t.end();
+});
+
 test('#uiStateReducer -> START_EXPORTING_IMAGE', t => {
   const newReducer = reducer(INITIAL_UI_STATE, startExportingImage());
 
@@ -287,6 +311,36 @@ test('#uiStateReducer -> SET_EXPORT_MAP_FILE_NAME', t => {
   };
 
   t.deepEqual(newReducer, expectedState, 'should set the export map file name');
+
+  t.end();
+});
+
+test('#uiStateReducer -> SET_EXPORT_MAP_BRANDING', t => {
+  const withAppName = reducer(INITIAL_UI_STATE, setExportMapBranding({appName: 'Atlas Lab'}));
+
+  t.deepEqual(
+    withAppName.exportMap,
+    {
+      ...INITIAL_UI_STATE.exportMap,
+      appName: 'Atlas Lab'
+    },
+    'should set the application name and preserve existing export fields'
+  );
+
+  const withWebsite = reducer(
+    withAppName,
+    setExportMapBranding({appWebsite: 'https://atlas.example.com'})
+  );
+
+  t.deepEqual(
+    withWebsite.exportMap,
+    {
+      ...INITIAL_UI_STATE.exportMap,
+      appName: 'Atlas Lab',
+      appWebsite: 'https://atlas.example.com'
+    },
+    'should merge a partial website update without replacing the application name'
+  );
 
   t.end();
 });

@@ -144,24 +144,33 @@ export function getTooltipDisplayDeltaValue({
 export function getTooltipDisplayValue({
   item,
   field,
-  value
+  value,
+  timezone
 }: {
   item: TooltipField | undefined;
   field: Field;
   value: any;
+  timezone?: string | null;
 }): string {
   if (!notNullorUndefined(value)) {
     return '';
   }
 
   return item?.format
-    ? getFormatter(item?.format, field)(value)
+    ? getFormatter(item?.format, field, timezone)(value)
     : field.displayFormat
-    ? getFormatter(field.displayFormat, field)(value)
+    ? getFormatter(field.displayFormat, field, timezone)(value)
     : parseFieldValue(value, field.type);
 }
 
 export const ZOOM_OPACITY_RANGE: [number, number] = [0, 24];
+
+const ZOOM_OPACITY_ANNOTATION_PREFIX = '__kepler_annotation__:';
+
+/** Reserved fade-on-zoom target id for one map annotation. */
+export function getZoomOpacityAnnotationTargetId(annotationId: string): string {
+  return `${ZOOM_OPACITY_ANNOTATION_PREFIX}${annotationId}`;
+}
 
 export const DEFAULT_ZOOM_OPACITY_STOPS: ZoomOpacityStops = {
   appear: 1,

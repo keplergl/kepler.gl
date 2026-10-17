@@ -416,6 +416,7 @@ export default {
     filterOutHint: 'Hide rows that match this filter and keep the rest.',
     timezone: 'Time Zone',
     selectTimezone: 'Select display timezone',
+    timeFormat: 'Time Format',
     groupBy: 'Group By',
     groupByField: 'Group by field',
     maxGroups: 'Max number of groups',
@@ -599,7 +600,7 @@ export default {
     removeBaseMapStyle: 'Remove base map style',
     delete: 'Delete',
     timePlayback: 'Time Playback',
-    timeFilterSync: 'Sync with a column from another dataset',
+    timeFilterSync: 'Add synced filter',
     cloudStorage: 'Cloud Storage',
     '3DMap': '3D Map',
     animationByWindow: 'Moving Time Window',
@@ -744,6 +745,8 @@ export default {
       resolutionDescription: 'High resolution is better for prints.',
       resolutionPlaceholder: 'Select resolution...',
       optionsTitle: 'Options',
+      transparentBackground: 'Transparent background',
+      transparentBackgroundHelp: 'Hide basemap',
       mapLegendTitle: 'Map Legend',
       mapLegendAdd: 'Add legend on map',
       chartsTitle: 'Charts',
@@ -821,10 +824,18 @@ export default {
     },
     exportMap: {
       formatTitle: 'Map format',
-      formatSubtitle: 'Choose the format to export your map to',
+      formatSubtitle: 'Choose an export format',
+      formatHelpLabel: 'About HTML and JSON formats',
+      formatHtmlHelp: 'A standalone interactive map you can open in a browser.',
+      formatJsonHelp: 'Map data and configuration you can reopen in kepler.gl.',
+      mapDetailsTitle: 'Map details',
       nameTitle: 'Name',
       descriptionTitle: 'Description',
+      appNameTitle: 'Application name',
+      appWebsiteTitle: 'Website',
+      includeApiKeysTitle: 'Layer API keys',
       includeApiKeys: 'Include layer API keys',
+      includeApiKeysHelpLabel: 'About layer API keys',
       includeApiKeysSubtitle:
         'When unchecked, access tokens stored on layers are removed from the exported file.',
       html: {
@@ -836,14 +847,21 @@ export default {
           '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ',
         tokenSecurityWarning:
           '* Warning: your Mapbox token will be embedded in the exported HTML file. Anyone with access to this file can see and use your token. Use a scoped token with URL restrictions when possible. ',
+        tokenSharedNotice:
+          'If this map uses Mapbox and you do not provide your own token, it may stop displaying when the shared token changes.',
+        tokenEmbeddedNotice:
+          'Your Mapbox token will be visible to anyone with the exported HTML. Use a scoped token with URL restrictions.',
         tokenDisclaimer: 'You can change the Mapbox token later using the following instructions: ',
-        tokenUpdate: 'How to update an existing map token.',
-        modeTitle: 'Map Mode',
-        modeSubtitle1: 'Select the app mode. More ',
-        modeSubtitle2: 'info',
+        tokenUpdate: 'Learn how to update the token.',
+        modeTitle: 'Map mode',
+        modeSubtitle1: 'Choose what viewers can do.',
+        modeSubtitle2: 'Learn more',
+        modeHelpLabel: 'About map modes',
+        modeReadHelp: 'Hides editing controls; viewers can still explore the map.',
+        modeEditHelp: 'Shows editing controls so viewers can change the map.',
         modeDescription: 'Allow users to {mode} the map',
-        read: 'read',
-        edit: 'edit'
+        read: 'View only',
+        edit: 'View and edit'
       },
       json: {
         configTitle: 'Map Config',
@@ -1017,9 +1035,10 @@ ${'```'}
     legendHideInvisible: 'Hide hidden layers in legend',
     legendAllLayers: 'All Layers',
     fadeOnZoom: 'Fade on zoom',
-    fadeOnZoomHint: 'Fade layers as the map zooms. Configure a zoom range to show layers.',
+    fadeOnZoomHint:
+      'Fade layers and annotations as the map zooms. Configure a zoom range to show them.',
     fadeOnZoomAdd: 'Add controller',
-    fadeOnZoomLayers: 'Layers',
+    fadeOnZoomLayers: 'Layers and annotations',
     fadeOnZoomAppear: 'Appear',
     fadeOnZoomFullStart: 'Full start',
     fadeOnZoomFullEnd: 'Full end',
@@ -1146,7 +1165,8 @@ ${'```'}
   },
   geocoder: {
     title: 'Enter an address or coordinates, ex 37.79,-122.40',
-    limitSearch: 'Limit Search to Viewport'
+    limitSearch: 'Limit Search to Viewport',
+    pinColor: 'Pin Color'
   },
   fieldSelector: {
     clearAll: 'Clear All',

@@ -167,7 +167,6 @@ function TimeRangeFilterPanelFactory(
               onFieldSelector={onFieldSelector}
               onSourceDataSelector={onSourceDataSelector}
               setFilter={setFilter}
-              supportedFields={supportedFields}
               syncTimeFilterWithLayerTimeline={syncTimeFilterWithLayerTimeline}
             />
             {!isSynced && endTimeFields.length ? (

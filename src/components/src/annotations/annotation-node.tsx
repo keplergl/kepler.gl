@@ -49,12 +49,19 @@ const ResizeHandle: FC<{id: string; x: number; y: number}> = ({id, x, y}) => {
 
 export type AnnotationNodeProps = {
   annotation: Annotation;
+  opacity?: number;
   viewport: MapViewport;
   isEditing: boolean;
   isSelected: boolean;
 };
 
-const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditing, isSelected}) => {
+const AnnotationNode: FC<AnnotationNodeProps> = ({
+  annotation,
+  opacity = 1,
+  viewport,
+  isEditing,
+  isSelected
+}) => {
   const {lineColor, lineWidth} = annotation;
   const marker = makeMarker(annotation, viewport);
   const {kind, x, y, tx, ty} = marker;
@@ -140,7 +147,21 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditin
       );
   }
 
-  return <g transform={`translate(${x},${y})`}>{body}</g>;
+  return (
+    <g
+      data-annotation-id={annotation.id}
+      data-annotation-part="shape"
+      transform={`translate(${x},${y})`}
+      style={{
+        opacity,
+        display: opacity === 0 ? 'none' : undefined,
+        visibility: opacity === 0 ? 'hidden' : undefined,
+        pointerEvents: opacity === 0 ? 'none' : undefined
+      }}
+    >
+      {body}
+    </g>
+  );
 };
 
 export default AnnotationNode;

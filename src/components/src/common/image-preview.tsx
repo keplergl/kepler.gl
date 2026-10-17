@@ -32,6 +32,16 @@ const StyledImagePreview = styled.div.attrs({
     overflow: hidden;
   }
 
+  .preview-image--transparent {
+    background-color: #fff;
+    background-image: linear-gradient(45deg, #d2d2d2 25%, transparent 25%),
+      linear-gradient(-45deg, #d2d2d2 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #d2d2d2 75%),
+      linear-gradient(-45deg, transparent 75%, #d2d2d2 75%);
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    background-size: 16px 16px;
+  }
+
   .preview-image-container {
     position: relative;
     width: 100%;
@@ -88,6 +98,7 @@ const ImagePreview = ({exportImage, showDimension = false}: ImagePreviewProps) =
     error,
     imageDataUri,
     processing,
+    transparentBackground,
     imageSize: {imageW = 0, imageH = 0} = {}
   } = exportImage || {};
 
@@ -101,7 +112,7 @@ const ImagePreview = ({exportImage, showDimension = false}: ImagePreviewProps) =
           {imageW} pixel x {imageH} pixel
         </div>
       ) : null}
-      <div className="preview-image">
+      <div className={`preview-image${transparentBackground ? ' preview-image--transparent' : ''}`}>
         <div className="preview-image-container">
           {processing ? (
             <div className="preview-image-spinner">

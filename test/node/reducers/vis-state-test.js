@@ -59,11 +59,14 @@ import {
   INTERVAL,
   LAYER_TYPES,
   SYNC_TIMELINE_MODES,
+  GEOCODER_DATASET_NAME,
+  GEOCODER_ICON_COLOR,
+  GEOCODER_LAYER_ID,
   KEPLER_COLOR_PALETTES,
   colorPaletteToColorRange
 } from '@kepler.gl/constants';
 
-const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
+const {ArcLayer, PointLayer, GeojsonLayer, IconLayer, LineLayer, TripLayer} = KeplerGlLayers;
 
 // fixtures
 import testData, {
@@ -2771,6 +2774,42 @@ test('#visStateReducer -> SET_FILTER.name', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_FILTER.name merges synced domains when changing first field', async t => {
+  const firstDataset = await createNewDataEntryMock({
+    info: {id: 'first', label: 'first'},
+    data: {
+      fields: [
+        {name: 'initial', type: ALL_FIELD_TYPES.integer},
+        {name: 'replacement', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [0, 0],
+        [10, 20]
+      ]
+    }
+  });
+  const secondDataset = await createNewDataEntryMock({
+    info: {id: 'second', label: 'second'},
+    data: {
+      fields: [{name: 'amount', type: ALL_FIELD_TYPES.real}],
+      rows: [[100], [100.5]]
+    }
+  });
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {...firstDataset, ...secondDataset}
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'initial'));
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'amount'], 1));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'replacement', 0));
+
+  t.deepEqual(state.filters[0].domain, [0, 100.5], 'keeps both synced datasets in the domain');
+  t.equal(state.filters[0].step, 0.0001, 'keeps the finest synced dataset step');
+  t.end();
+});
+
 test('#visStateReducer -> SET_FILTER.inverted', t => {
   const oldState = CloneDeep(StateWFilters.visState);
   const dataId = testGeoJsonDataId;
@@ -3981,6 +4020,151 @@ test('#visStateReducer -> SET_FILTER_PLOT.yAxis', t => {
   t.end();
 });
 
+test('#visStateReducer -> filter changes refresh other time filter plots', t => {
+  const {fields, rows} = processCsvData(`event_time,category,value
+2020-01-01 00:00:00,A,10
+2020-01-01 01:00:00,A,20
+2020-01-01 02:00:00,B,30
+2020-01-01 03:00:00,B,40`);
+  const payload = [
+    {
+      info: {id: 'shared', label: 'shared'},
+      data: {fields, rows}
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
+  state = reducer(state, VisStateActions.addFilter('shared'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'event_time'));
+  state = reducer(state, VisStateActions.addFilter('shared'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'event_time'));
+
+  const yAxis = state.datasets.shared.fields.find(field => field.name === 'value');
+  state = reducer(state, VisStateActions.setFilterPlot(0, {yAxis}));
+
+  t.deepEqual(state.filters[0].lineChart.yDomain, [10, 40], 'plot starts with all rows');
+
+  const nextState = reducer(
+    state,
+    VisStateActions.setFilter(1, 'value', [1577836800000, 1577840400000])
+  );
+
+  t.deepEqual(
+    nextState.filters[0].lineChart.yDomain,
+    [10, 20],
+    'other time filter plot uses the newly filtered rows'
+  );
+  t.equal(
+    nextState.filters[0].lineChart.allTime.value,
+    15,
+    'other time filter plot rebuilds its aggregate'
+  );
+
+  const restoredState = reducer(nextState, VisStateActions.removeFilter(1));
+  t.deepEqual(
+    restoredState.filters[0].lineChart.yDomain,
+    [10, 40],
+    'time filter plot refreshes after removing the other filter'
+  );
+  t.equal(
+    restoredState.filters[0].lineChart.allTime.value,
+    25,
+    'time filter plot restores its aggregate after removing the other filter'
+  );
+
+  const emptyState = reducer(
+    nextState,
+    VisStateActions.setFilter(1, 'value', [1577837700000, 1577839500000])
+  );
+  t.deepEqual(
+    emptyState.filters[0].lineChart.xDomain,
+    [],
+    'other time filter plot handles an empty filtered result'
+  );
+
+  let categoryState = reducer(restoredState, VisStateActions.addFilter('shared'));
+  categoryState = reducer(categoryState, VisStateActions.setFilter(1, 'name', 'category'));
+  categoryState = reducer(categoryState, VisStateActions.setFilter(1, 'value', ['A']));
+  t.deepEqual(
+    categoryState.filters[0].lineChart.yDomain,
+    [10, 20],
+    'time filter plot refreshes after a CPU category filter changes'
+  );
+
+  const categoryRestoredState = reducer(categoryState, VisStateActions.removeFilter(1));
+  t.deepEqual(
+    categoryRestoredState.filters[0].lineChart.yDomain,
+    [10, 40],
+    'time filter plot refreshes after removing a CPU category filter'
+  );
+
+  let invertedState = reducer(
+    categoryRestoredState,
+    VisStateActions.setFilter(0, 'inverted', true)
+  );
+  invertedState = reducer(invertedState, VisStateActions.addFilter('shared'));
+  invertedState = reducer(invertedState, VisStateActions.setFilter(1, 'name', 'event_time'));
+  invertedState = reducer(
+    invertedState,
+    VisStateActions.setFilter(1, 'value', [1577836800000, 1577840400000])
+  );
+  t.deepEqual(
+    invertedState.filters[0].lineChart.yDomain,
+    [10, 20],
+    'inverted CPU time plot still applies a same-field GPU sibling filter'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> sibling changes keep interval time plots self-excluded', t => {
+  const {fields, rows} = processCsvData(`start_time,end_time,category,value
+2020-01-01 00:00:00,2020-01-01 00:30:00,A,10
+2020-01-01 01:00:00,2020-01-01 01:30:00,A,20
+2020-01-01 02:00:00,2020-01-01 02:30:00,B,30
+2020-01-01 03:00:00,2020-01-01 03:30:00,B,40`);
+  const payload = [
+    {
+      info: {id: 'intervals', label: 'intervals'},
+      data: {fields, rows}
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
+  state = reducer(state, VisStateActions.addFilter('intervals'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'start_time'));
+  state = reducer(state, VisStateActions.setFilter(0, 'endName', 'end_time'));
+
+  const yAxis = state.datasets.intervals.fields.find(field => field.name === 'value');
+  state = reducer(state, VisStateActions.setFilterPlot(0, {yAxis}));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [1577844000000, 1577849400000]));
+  t.deepEqual(
+    state.filters[0].lineChart.yDomain,
+    [10, 40],
+    'interval plot excludes both of its own filter channels'
+  );
+
+  state = reducer(state, VisStateActions.addFilter('intervals'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'category'));
+  state = reducer(state, VisStateActions.setFilter(1, 'value', ['A']));
+  t.deepEqual(
+    state.filters[0].lineChart.yDomain,
+    [10, 20],
+    'refresh applies the sibling filter without applying the interval filter itself'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> TOGGLE_FILTER_ANIMATION', t => {
   const initialState = CloneDeep(StateWFilters.visState);
 
@@ -4045,6 +4229,7 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
         label: 'interactions.tooltip',
         enabled: true,
         config: {
+          timezone: null,
           compareMode: false,
           compareType: 'absolute',
           fieldsToShow: {
@@ -4301,6 +4486,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
         label: 'interactions.tooltip',
         enabled: true,
         config: {
+          timezone: null,
           compareMode: false,
           compareType: 'absolute',
           fieldsToShow: {
@@ -4536,6 +4722,34 @@ test('#visStateReducer -> INTERACTION_CONFIG_CHANGE', t => {
 
   t.deepEqual(nextState.interactionConfig, expectedConfig, 'should disable tooltip');
 
+  t.end();
+});
+
+test('#visStateReducer -> INTERACTION_CONFIG_CHANGE updates geocoder pin color', t => {
+  const geocoderLayer = new IconLayer({
+    id: GEOCODER_LAYER_ID,
+    dataId: GEOCODER_DATASET_NAME,
+    color: GEOCODER_ICON_COLOR
+  });
+  const initialState = {
+    ...INITIAL_VIS_STATE,
+    layers: [geocoderLayer],
+    layerData: [{}]
+  };
+  const color = [0, 128, 255];
+  const geocoderConfig = {
+    ...defaultInteractionConfig.geocoder,
+    enabled: true,
+    config: {
+      ...defaultInteractionConfig.geocoder.config,
+      color
+    }
+  };
+
+  const nextState = reducer(initialState, VisStateActions.interactionConfigChange(geocoderConfig));
+
+  t.deepEqual(nextState.interactionConfig.geocoder.config.color, color, 'should store pin color');
+  t.deepEqual(nextState.layers[0].config.color, color, 'should update an existing geocoder pin');
   t.end();
 });
 

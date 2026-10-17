@@ -25,10 +25,12 @@ import {
   applyTimeFilterEndFieldName,
   validateFilterWithData,
   disableGpuIfInverted,
-  getPlotBaseIndexByDataId
+  getPlotBaseIndexByDataId,
+  areFilterFieldTypesCompatible,
+  mergeFilterDomainStep
 } from '@kepler.gl/utils';
 
-import {FILTER_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
 
 /* eslint-disable max-statements */
@@ -132,6 +134,39 @@ test('filterUtils -> adjustValueToFilterDomain', t => {
     'should return true if nothing matched to select filter'
   );
 
+  t.end();
+});
+
+test('filterUtils -> compatible numeric filter field types', t => {
+  t.ok(
+    areFilterFieldTypesCompatible(ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real),
+    'integer filters accept real fields'
+  );
+  t.ok(
+    areFilterFieldTypesCompatible(ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer),
+    'real filters accept integer fields'
+  );
+  t.notOk(
+    areFilterFieldTypesCompatible(ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.string),
+    'numeric filters reject string fields'
+  );
+
+  const merged = mergeFilterDomainStep(
+    {
+      fieldType: ALL_FIELD_TYPES.real,
+      domain: [0.25, 1.5],
+      step: 0.25
+    },
+    {
+      fieldType: ALL_FIELD_TYPES.integer,
+      domain: [-1, 3],
+      step: 1
+    }
+  );
+
+  t.deepEqual(merged.domain, [-1, 3], 'merges integer and real domains');
+  t.equal(merged.fieldType, ALL_FIELD_TYPES.real, 'keeps the first field type');
+  t.equal(merged.step, 0.25, 'keeps the finest numeric step');
   t.end();
 });
 

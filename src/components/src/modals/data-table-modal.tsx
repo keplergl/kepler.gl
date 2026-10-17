@@ -254,6 +254,7 @@ interface DataTableModalProps {
   showAllTableColumns?: (id: string) => void;
   copyTableColumn: (id: string, column: string) => void;
   renameTableColumn?: (id: string, column: string, newName: string) => void;
+  changeTableColumnType?: (id: string, column: string, newType: string) => void;
   deleteTableColumn?: (id: string, column: string) => void;
   createFilterFromColumn?: (id: string, column: string) => void;
   datasets: Datasets;
@@ -285,6 +286,7 @@ function DataTableModalFactory(
     showAllTableColumns,
     copyTableColumn: copyTableColumnProp,
     renameTableColumn,
+    changeTableColumnType,
     deleteTableColumn,
     createFilterFromColumn,
     datasets,
@@ -433,6 +435,13 @@ function DataTableModalFactory(
         deleteTableColumn?.(dataId, column);
       },
       [deleteTableColumn, dataId]
+    );
+
+    const handleChangeTableColumnType = useCallback(
+      (column: string, newType: string) => {
+        changeTableColumnType?.(dataId, column, newType);
+      },
+      [changeTableColumnType, dataId]
     );
 
     const handleCreateFilterFromColumn = useCallback(
@@ -722,6 +731,7 @@ function DataTableModalFactory(
               colMeta={colMeta}
               cellSizeCache={cellSizeCache}
               dataContainer={displayData.dataContainer}
+              typeChangeDataContainer={activeDataset.dataContainer}
               pinnedColumns={(activeDataset.pinnedColumns || []).filter(
                 column => !hiddenColumns.includes(column)
               )}
@@ -734,6 +744,9 @@ function DataTableModalFactory(
               setColumnDisplayFormat={handleSetColumnDisplayFormat}
               renameTableColumn={
                 canMutateColumns && renameTableColumn ? handleRenameTableColumn : undefined
+              }
+              changeTableColumnType={
+                canMutateColumns && changeTableColumnType ? handleChangeTableColumnType : undefined
               }
               deleteTableColumn={
                 canMutateColumns && deleteTableColumn ? handleDeleteTableColumn : undefined

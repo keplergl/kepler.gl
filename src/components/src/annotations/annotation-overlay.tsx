@@ -52,6 +52,7 @@ const AnnotationTextContainer = styled.div`
 
 export type AnnotationOverlayProps = {
   annotations: Annotation[];
+  getAnnotationOpacity?: (annotationId: string) => number;
   selectedAnnotationId: string | null;
   isEditingAnnotationText: boolean;
   isAnnotationMode: boolean;
@@ -65,6 +66,7 @@ export type AnnotationOverlayProps = {
 
 const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
   annotations,
+  getAnnotationOpacity = () => 1,
   selectedAnnotationId,
   isEditingAnnotationText,
   isAnnotationMode,
@@ -194,6 +196,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
             <AnnotationNode
               key={annotation.id}
               annotation={annotation}
+              opacity={getAnnotationOpacity(annotation.id)}
               viewport={viewport}
               isEditing={isAnnotationMode}
               isSelected={annotation.id === selectedAnnotationId}
@@ -205,6 +208,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
             <AnnotationText
               key={annotation.id}
               annotation={annotation}
+              opacity={getAnnotationOpacity(annotation.id)}
               viewport={viewport}
               isEditing={isAnnotationMode}
               isSelected={annotation.id === selectedAnnotationId}
