@@ -94,7 +94,11 @@ def serialize_dataframe(df: pd.DataFrame, name: str, use_arrow: bool = False) ->
     # in the map, so send datetime columns as ISO strings instead
     for c, dtype in enumerate(df.dtypes):
         if pd.api.types.is_datetime64_any_dtype(dtype):
-            times = df.iloc[:, c].dt.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+            # Series.dt.strftime fails on Arrow-backed timestamps, so format each value
+            times = [
+                None if pd.isna(t) else t.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+                for t in df.iloc[:, c]
+            ]
             for row, time in zip(rows, times):
                 row[c] = time
     # NaN and NaT are not valid JSON, so send them as null

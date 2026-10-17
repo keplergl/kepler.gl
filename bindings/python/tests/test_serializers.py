@@ -538,6 +538,24 @@ class TestEdgeCases:
         rows = serialize_dataset(df, "tz_test")["data"]["data"]
         assert rows == [['2024-01-01T00:00:00.000000+0800']]
 
+    @pytest.mark.parametrize("tz, offset", [(None, ""), ("Asia/Taipei", "+0800")])
+    def test_serialize_dataframe_datetime_arrow_dtype(self, tz, offset):
+        """Arrow-backed timestamp columns are formatted like numpy ones, with
+        NaT sent as null."""
+        import json
+        pa = pytest.importorskip("pyarrow")
+        t = pd.to_datetime(['2024-01-01 00:00:00.000', '2024-06-01 12:30:00.500', None])
+        if tz:
+            t = t.tz_localize(tz)
+        df = pd.DataFrame({'t': pd.Series(t).astype(pd.ArrowDtype(pa.timestamp('us', tz=tz)))})
+        result = serialize_dataset(df, "arrow_dt_test")
+        assert result["data"]["data"] == [
+            ['2024-01-01T00:00:00.000000' + offset],
+            ['2024-06-01T12:30:00.500000' + offset],
+            [None],
+        ]
+        json.dumps(result, allow_nan=False)
+
     def test_serialize_dataframe_arrow_with_nan(self):
         """Arrow serialization of a DataFrame containing NaN should not raise,
         and NaN should round-trip as null in Arrow."""
