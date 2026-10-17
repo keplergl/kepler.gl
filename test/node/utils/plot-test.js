@@ -6,7 +6,12 @@ import {
   histogramFromThreshold,
   histogramFromValues,
   histogramFromTimeIntervals,
+  getNumericBinThresholds,
+  getNumericPlotInterval,
+  getNumericRangeMinimum,
   intervalBinFromMarks,
+  nextDown,
+  nextUp,
   mergePolygonLayerIndexes,
   runGpuFilterForPlot,
   getLineChart,
@@ -18,6 +23,90 @@ import {
 } from '@kepler.gl/utils';
 
 const values1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+
+test('Utils -> getNumericBinThresholds uses numeric units', t => {
+  t.deepEqual(
+    getNumericBinThresholds([-1.5, 1], 0.5),
+    [-1.5, -1, -0.5, 0, 0.5, 1],
+    'should preserve negative and fractional numeric boundaries'
+  );
+  t.deepEqual(
+    getNumericBinThresholds([7, 8], 0.25),
+    [7, 7.25, 7.5, 7.75, 8],
+    'should bin the padded domain of a constant numeric field'
+  );
+  t.deepEqual(
+    getNumericBinThresholds([-0.2, -0.19], 0.01),
+    [-0.2, -0.19],
+    'should not duplicate a decimal domain end because of floating-point division'
+  );
+  const maximumBins = getNumericBinThresholds([-4.42, 16.060000000000002], 0.01);
+  t.equal(maximumBins.length, 2049, 'should keep exactly 2048 bins at the safety cap');
+  t.equal(maximumBins[0], -4.42, 'should preserve the capped domain start');
+  t.equal(
+    maximumBins[maximumBins.length - 1],
+    16.060000000000002,
+    'should preserve the capped domain end'
+  );
+  t.ok(
+    maximumBins.every((boundary, index) => index === 0 || boundary > maximumBins[index - 1]),
+    'should generate only strictly increasing numeric boundaries'
+  );
+  const fallback = getNumericBinThresholds([0, 1], -1);
+  t.ok(fallback.length > 2 && fallback.length < 100, 'should safely replace an invalid bin size');
+  t.equal(fallback[0], 0, 'should keep the numeric domain start');
+  t.equal(fallback[fallback.length - 1], 1, 'should keep the numeric domain end');
+  t.end();
+});
+
+test('Utils -> getNumericPlotInterval ignores padded edge bins', t => {
+  const filter = {
+    domain: [-0.20000000000000004, -0.18999],
+    step: 0.00001,
+    plotType: {},
+    bins: {
+      dataset: [
+        {x0: -0.20000000000000004, x1: -0.2},
+        {x0: -0.2, x1: -0.1995},
+        {x0: -0.1995, x1: -0.199}
+      ]
+    }
+  };
+
+  t.equal(
+    getNumericPlotInterval(filter),
+    0.0005,
+    'should use the median positive width instead of a floating-point edge sliver'
+  );
+  t.equal(
+    getNumericPlotInterval({...filter, plotType: {numericInterval: 0.0025}}),
+    0.0025,
+    'should preserve an explicit numeric interval'
+  );
+  t.end();
+});
+
+test('Utils -> numeric range precision follows representable domain spacing', t => {
+  const domains = [
+    [0, 1e-20],
+    [1e12, 1e12 + 0.001],
+    [0, 0.1]
+  ];
+
+  for (const domain of domains) {
+    const [start, end] = domain;
+    const span = end - start;
+    const minimum = getNumericRangeMinimum(domain);
+    t.ok(minimum > 0, `${domain} should have a positive representable minimum`);
+    t.ok(minimum <= span, `${domain} minimum should not exceed its span`);
+    t.ok(start + minimum > start, `${domain} minimum should advance the lower endpoint`);
+    t.ok(end - minimum < end, `${domain} minimum should retreat the upper endpoint`);
+  }
+
+  t.equal(nextDown(nextUp(1e12)), 1e12, 'adjacent numeric values should round-trip');
+  t.equal(nextDown(0), -Number.MIN_VALUE, 'zero should have a negative predecessor');
+  t.end();
+});
 
 test('Utils -> mergePolygonLayerIndexes', t => {
   const baseIndex = [0, 1, 2, 3];
@@ -417,6 +506,54 @@ function seriesSummary(lineChart) {
   };
 }
 
+test('Utils -> getLineChart aggregates numeric range bins on a numeric X axis', t => {
+  const rows = [
+    {x: -1.25, y: 2},
+    {x: -0.75, y: 3},
+    {x: -0.25, y: null},
+    {x: 0.25, y: 5}
+  ];
+  const bins = [
+    {count: 1, indexes: [0], x0: -1.5, x1: -1},
+    {count: 1, indexes: [1], x0: -1, x1: -0.5},
+    {count: 1, indexes: [2], x0: -0.5, x1: 0},
+    {count: 1, indexes: [3], x0: 0, x1: 0.5}
+  ];
+  const chart = getLineChart(
+    {
+      ds: {
+        fields: [
+          {name: 'x', type: 'real', valueAccessor: ({index}) => rows[index].x},
+          {name: 'y', type: 'real', valueAccessor: ({index}) => rows[index].y}
+        ]
+      }
+    },
+    {
+      type: 'range',
+      dataId: ['ds'],
+      yAxis: {name: 'y', type: 'real'},
+      plotType: {type: 'lineChart', aggregation: 'sum', numericInterval: 0.5},
+      bins: {ds: bins}
+    }
+  );
+
+  t.deepEqual(chart.xDomain, [-1.5, 0.5], 'should keep numeric X-domain values');
+  t.equal(chart.interval, 0.5, 'should cache the numeric bin size without calendar conversion');
+  t.deepEqual(
+    chart.series.lines.map(line => line.map(point => [point.x, point.y])),
+    [
+      [
+        [-1.5, 2],
+        [-1, 3],
+        [-0.5, 0],
+        [0, 5]
+      ]
+    ],
+    'should aggregate each numeric bin and tolerate missing Y values'
+  );
+  t.end();
+});
+
 test('Utils -> getLineChart groupBy splits series and folds the rest into Others', t => {
   const datasets = {ds: groupedDataset()};
   const colors = ['#111111', '#222222', '#333333'];
@@ -624,6 +761,59 @@ test('Utils -> intervalBinFromMarks snaps a brush position to one histogram bin'
     [10, 10],
     'should leave the value unchanged without marks'
   );
+  t.deepEqual(
+    intervalBinFromMarks([-1.5, -1, -0.5], -1.3, 0),
+    [-1.5, nextDown(-1)],
+    'should end a numeric bin at the representable value before its next boundary'
+  );
+  t.deepEqual(
+    intervalBinFromMarks([0, 0.05, 0.1], 0, 0),
+    [0, nextDown(0.05)],
+    'should exclude the next fractional bin boundary without subtracting a nominal step'
+  );
+  t.deepEqual(
+    intervalBinFromMarks([0, 0.05, 0.1], 0.1, 0),
+    [0.05, 0.1],
+    'should include the numeric domain maximum in the final interval'
+  );
+
+  t.end();
+});
+
+test('Utils -> numeric interval selection matches histogram row membership', t => {
+  const values = [0, 0.05, 0.075, 0.1];
+  const rowIds = values.map((_, index) => index);
+  const thresholds = getNumericBinThresholds([0, 0.1], 0.05);
+  const bins = histogramFromThreshold(thresholds, rowIds, index => values[index], false);
+  const marks = [...bins.map(bin => bin.x0), bins[bins.length - 1].x1];
+  const dataset = {
+    dataContainer: {},
+    filteredIndex: rowIds,
+    filteredIndexByLayer: {},
+    gpuFilter: {
+      filterValueUpdateTriggers: {gpuFilter_0: {name: 'x'}},
+      filterRange: [[0, 0]],
+      filterValueAccessor:
+        () =>
+        () =>
+        ({index}) =>
+          [values[index]]
+    }
+  };
+
+  t.deepEqual(
+    bins.map(bin => bin.count),
+    [1, 2, 1],
+    'fixture should exercise two half-open boundaries and the final maximum bin'
+  );
+  bins.forEach((bin, index) => {
+    dataset.gpuFilter.filterRange = [intervalBinFromMarks(marks, bin.x0, 0)];
+    t.deepEqual(
+      runGpuFilterForPlot(dataset),
+      [...bin.indexes],
+      `interval ${index} should select exactly the row IDs assigned to its histogram bin`
+    );
+  });
 
   t.end();
 });

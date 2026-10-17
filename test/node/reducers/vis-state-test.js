@@ -39,6 +39,8 @@ import {
   applyFilterFieldName,
   getAnimatableVisibleLayers,
   getBinThresholds,
+  getFilterBinThresholds,
+  intervalBinFromMarks,
   getDefaultFilter,
   histogramFromDomain,
   LayerTimeInterval,
@@ -2940,10 +2942,8 @@ test('#visStateReducer -> SET_FILTER.dataId replaces synced datasets in place', 
     'rebuilds the domain after replacing the first dataset'
   );
 
-  const replaceSecond = reducer(
-    state,
-    VisStateActions.setFilter(0, 'dataId', 'replacement', 1)
-  ).filters[0];
+  const replaceSecond = reducer(state, VisStateActions.setFilter(0, 'dataId', 'replacement', 1))
+    .filters[0];
   t.deepEqual(replaceSecond.dataId, ['first', 'replacement'], 'replaces a later dataset');
   t.deepEqual(replaceSecond.name, ['value', 'value'], 'keeps later field names aligned');
   t.deepEqual(replaceSecond.fieldIdx, [0, 1], 'rebinds a later field index by name');
@@ -2992,10 +2992,8 @@ test('#visStateReducer -> SET_FILTER.dataId rebinds interval fields on replaceme
   state = reducer(state, VisStateActions.addFilter('replacement'));
   state = reducer(state, VisStateActions.setFilter(1, 'name', 'other'));
 
-  const replaced = reducer(
-    state,
-    VisStateActions.setFilter(0, 'dataId', 'replacement', 1)
-  ).filters[0];
+  const replaced = reducer(state, VisStateActions.setFilter(0, 'dataId', 'replacement', 1))
+    .filters[0];
   const replacementEndProps = replacementDataset.replacement.getColumnFilterProps('end');
   t.deepEqual(replaced.fieldIdx, [0, 2], 'rebinds the interval start field index');
   t.deepEqual(replaced.endFieldIdx, [1, 1], 'rebinds the interval end field index');
@@ -3007,10 +3005,8 @@ test('#visStateReducer -> SET_FILTER.dataId rebinds interval fields on replaceme
   t.deepEqual(replaced.gpuChannel, [0, 1], 'allocates a free replacement start channel');
   t.deepEqual(replaced.gpuEndChannel, [1, 2], 'allocates a free replacement end channel');
 
-  const missingEnd = reducer(
-    state,
-    VisStateActions.setFilter(0, 'dataId', 'missing-end', 1)
-  ).filters[0];
+  const missingEnd = reducer(state, VisStateActions.setFilter(0, 'dataId', 'missing-end', 1))
+    .filters[0];
   t.equal(missingEnd.name[1], 'start', 'keeps an available start selection');
   t.equal(missingEnd.endName[1], null, 'clears a missing end selection');
   t.equal(missingEnd.endFieldIdx[1], null, 'clears a missing end field index');
@@ -3583,6 +3579,164 @@ test('#visStateReducer -> SET_FILTER_ANIMATION_WINDOW interval snaps to one hist
   const freed = backToFree.filters[0];
   t.equal(freed.animationWindow, ANIMATION_WINDOW.free, 'should leave interval mode');
   t.ok(freed.value[1] > freed.value[0], 'should widen back to a range of at least one bin');
+
+  t.end();
+});
+
+test('#visStateReducer -> sparse datetime interval uses the cached bin end', t => {
+  const initialState = CloneDeep(StateWFilters.visState);
+  const filter = initialState.filters[0];
+  const dataId = filter.dataId[0];
+  const interval = '1-minute';
+  filter.domain = [0, 180000];
+  filter.value = [0, 0];
+  filter.animationWindow = ANIMATION_WINDOW.free;
+  filter.plotType = {...filter.plotType, interval};
+  filter.timeBins = {
+    [dataId]: {
+      [interval]: [
+        {count: 1, indexes: [0], x0: 0, x1: 60000},
+        {count: 1, indexes: [1], x0: 120000, x1: 180000}
+      ]
+    }
+  };
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.setFilterAnimationWindow({
+      id: filter.id,
+      animationWindow: ANIMATION_WINDOW.interval
+    })
+  );
+
+  t.deepEqual(
+    nextState.filters[0].value,
+    [0, 59999],
+    'should stop at the selected cached calendar bin instead of the next non-empty bin'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> numeric filter timeline uses numeric bins and no time-only state', t => {
+  let state = CloneDeep(StateWFilters.visState);
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'gps_data.lat'));
+
+  t.equal(state.filters[0].type, 'range', 'should switch the selected X field to a range filter');
+  t.equal(
+    state.filters[0].view,
+    FILTER_VIEW_TYPES.side,
+    'should keep the numeric timeline disabled by default'
+  );
+
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.01}}));
+  state = reducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.enlarged));
+  state = reducer(
+    state,
+    VisStateActions.setFilterAnimationWindow({
+      id: state.filters[0].id,
+      animationWindow: ANIMATION_WINDOW.interval
+    })
+  );
+
+  const filter = state.filters[0];
+  const marks = getFilterBinThresholds(filter);
+  const markIndex = marks.indexOf(filter.value[0]);
+  t.ok(markIndex >= 0 && markIndex < marks.length - 1, 'should snap to a numeric histogram bin');
+  t.equal(
+    filter.value[1],
+    intervalBinFromMarks(marks, filter.value[0], 0)[1],
+    'should match the selected histogram bin without sharing its next boundary'
+  );
+  t.equal(filter.plotType.numericInterval, 0.01, 'should persist the numeric bin size');
+  t.notOk(filter.timeBins, 'should not create calendar time bins');
+  t.notOk(filter.timezone, 'should not add a timezone');
+  t.notOk(
+    Object.prototype.hasOwnProperty.call(filter, 'syncTimelineMode'),
+    'should not apply time timeline synchronization state'
+  );
+
+  const yAxis = state.datasets[filter.dataId[0]].fields.find(
+    field => field.name === 'gps_data.lng'
+  );
+  state = reducer(state, VisStateActions.setFilterPlot(0, {yAxis}));
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {aggregation: 'sum'}}));
+  t.equal(state.filters[0].plotType.type, 'lineChart', 'should enable the Y-axis line chart');
+  t.ok(state.filters[0].lineChart?.series, 'should aggregate the selected Y field by numeric bins');
+
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'time'));
+  t.equal(state.filters[0].type, 'timeRange', 'should switch back to datetime behavior');
+  t.notOk(
+    state.filters[0].plotType.numericInterval,
+    'should not apply the numeric bin size to datetime'
+  );
+  t.ok(state.filters[0].plotType.interval, 'should restore a calendar interval for datetime');
+  state = reducer(
+    state,
+    VisStateActions.setFilterAnimationTimeConfig(0, {timezone: 'America/New_York'})
+  );
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'gps_data.lat'));
+  t.equal(state.filters[0].type, 'range', 'should switch back to numeric behavior');
+  t.notOk(state.filters[0].timezone, 'should clear timezone state from a numeric filter');
+  t.notOk(state.filters[0].plotType.interval, 'should clear calendar binning from numeric mode');
+
+  t.end();
+});
+
+test('#visStateReducer -> reopening a numeric timeline refreshes hidden plot data', t => {
+  const {fields, rows} = processCsvData(`x,category,value
+0,A,10
+0.05,A,20
+0.075,B,30
+0.1,B,40`);
+  const payload = [
+    {
+      info: {id: 'numeric-shared', label: 'numeric shared'},
+      data: {fields, rows}
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
+  state = reducer(state, VisStateActions.addFilter('numeric-shared'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'x'));
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.05}}));
+  const yAxis = state.datasets['numeric-shared'].fields.find(field => field.name === 'value');
+  state = reducer(state, VisStateActions.setFilterPlot(0, {yAxis}));
+  state = reducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.enlarged));
+
+  t.deepEqual(state.filters[0].lineChart.yDomain, [10, 40], 'open plot starts with all rows');
+
+  state = reducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.side));
+  state = reducer(state, VisStateActions.addFilter('numeric-shared'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'category'));
+  state = reducer(state, VisStateActions.setFilter(1, 'value', ['A']));
+
+  t.deepEqual(
+    state.filters[0].lineChart.yDomain,
+    [10, 40],
+    'closed numeric plot remains cached until it is needed again'
+  );
+
+  state = reducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.enlarged));
+  t.deepEqual(
+    state.filters[0].lineChart.yDomain,
+    [10, 20],
+    'reopened plot rebuilds the Y domain from the current sibling filter'
+  );
+  t.equal(
+    state.filters[0].lineChart.allTime.value,
+    15,
+    'reopened plot rebuilds the Y aggregate from the current sibling filter'
+  );
+  t.deepEqual(
+    state.filters[0].bins['numeric-shared'].map(bin => bin.count),
+    [1, 1, 0],
+    'reopened histogram rebuilds bin counts from the current sibling filter'
+  );
 
   t.end();
 });

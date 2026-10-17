@@ -50,6 +50,12 @@ export type {
 export {
   adjustValueToAnimationWindow,
   getBinThresholds,
+  getNumericBinThresholds,
+  getNumericPlotInterval,
+  getNumericRangeMinimum,
+  nextDown,
+  nextUp,
+  getFilterBinThresholds,
   intervalBinFromMarks,
   histogramFromThreshold,
   histogramFromValues,

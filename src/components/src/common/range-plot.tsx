@@ -36,6 +36,7 @@ interface RangePlotProps {
   timeFormat?: string;
   timezone?: string | null;
   playbackControlWidth?: number;
+  isTime?: boolean;
 
   animationWindow?: string;
   filter?: Filter;

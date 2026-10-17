@@ -1349,6 +1349,38 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
     ...(filter.plotType ? {plotType: filter.plotType} : {})
   };
 
+  if (filter.type === FILTER_TYPES.timeRange && newFilter.type === FILTER_TYPES.range) {
+    const {
+      timeBins: _timeBins,
+      timezone: _timezone,
+      timeFormat: _timeFormat,
+      defaultTimeFormat: _defaultTimeFormat,
+      syncedWithLayerTimeline: _syncedWithLayerTimeline,
+      syncTimelineMode: _syncTimelineMode,
+      ...numericFilter
+    } = newFilter as TimeRangeFilter;
+    const {
+      interval: _interval,
+      defaultTimeFormat: _plotTimeFormat,
+      ...numericPlotType
+    } = numericFilter.plotType || {};
+    newFilter = {
+      ...numericFilter,
+      isAnimating: false,
+      animationWindow: ANIMATION_WINDOW.free,
+      plotType: numericPlotType,
+      lineChart: undefined
+    };
+  } else if (filter.type === FILTER_TYPES.range && newFilter.type === FILTER_TYPES.timeRange) {
+    const {numericInterval: _numericInterval, ...timePlotType} = newFilter.plotType || {};
+    newFilter = {
+      ...newFilter,
+      bins: undefined,
+      plotType: timePlotType,
+      lineChart: undefined
+    };
+  }
+
   if (newFilter.type !== FILTER_TYPES.timeRange) {
     newFilter = omitTimeIntervalFields(newFilter);
   } else if (toArray(newFilter.endName)[filterDatasetIndex] === fieldName) {

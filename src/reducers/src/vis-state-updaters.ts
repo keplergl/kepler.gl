@@ -190,6 +190,7 @@ import {
   Editor,
   Field,
   LayerVisConfig,
+  RangeFilter,
   TimeRangeFilter,
   Annotation,
   AnnotationPropsPartial,
@@ -1454,12 +1455,12 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
 
   // Entering or leaving interval playback snaps the window onto histogram bins.
   if (
-    filter.type === FILTER_TYPES.timeRange &&
+    (filter.type === FILTER_TYPES.timeRange || filter.type === FILTER_TYPES.range) &&
     (previousWindow === ANIMATION_WINDOW.interval || animationWindow === ANIMATION_WINDOW.interval)
   ) {
     const adjusted = adjustValueToAnimationWindow(
       state,
-      nextFilter as TimeRangeFilter,
+      nextFilter as TimeRangeFilter | RangeFilter,
       getPlotBaseIndexByDataId(state.datasets, nextFilter, state.layers)
     );
     if (Array.isArray(adjusted.value) && adjusted.value.every(v => Number.isFinite(v))) {
@@ -1472,8 +1473,11 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
     filters: swap_<Filter>(nextFilter)(state.filters)
   };
 
-  const newSyncTimelineMode = getSyncAnimationMode(nextFilter as TimeRangeFilter);
+  if (filter.type !== FILTER_TYPES.timeRange) {
+    return newState;
+  }
 
+  const newSyncTimelineMode = getSyncAnimationMode(nextFilter as TimeRangeFilter);
   return setTimeFilterTimelineModeUpdater(newState, {id, mode: newSyncTimelineMode});
 }
 
@@ -1518,7 +1522,10 @@ function updateFilterPlotsAfterFiltering<S extends VisState>(
       return updateFilterPlot(state.datasets, filter, undefined, state.layers);
     }
 
-    if (filter.type !== FILTER_TYPES.timeRange) {
+    if (
+      filter.type !== FILTER_TYPES.timeRange &&
+      !(filter.type === FILTER_TYPES.range && !isSideFilter(filter))
+    ) {
       return filter;
     }
 
@@ -1643,8 +1650,7 @@ function _updateFilterDataIdAtValueIndex(filter, valueIndex, value, datasets, fi
     const dataset = datasets[value];
     const field = dataset?.fields.find(candidate => candidate.name === fieldName);
     const canRebindField =
-      field &&
-      (!filter.fieldType || areFilterFieldTypesCompatible(filter.fieldType, field.type));
+      field && (!filter.fieldType || areFilterFieldTypesCompatible(filter.fieldType, field.type));
     const {filter: reboundFilter} = canRebindField
       ? applyFilterFieldName(nextFilter, datasets, value, fieldName, valueIndex, {
           mergeDomain: true
@@ -1920,6 +1926,7 @@ export const setFilterPlotUpdater = (
     return state;
   }
   let newFilter = state.filters[idx];
+  const previousNumericInterval = newFilter.plotType?.numericInterval;
 
   for (const prop in newProp) {
     if (prop === 'plotType') {
@@ -1936,6 +1943,13 @@ export const setFilterPlotUpdater = (
 
       newFilter = pick_('plotType')(merge_({type: chartType}))(merge_(newProp)(newFilter));
     }
+  }
+
+  if (
+    newFilter.type === FILTER_TYPES.range &&
+    newFilter.plotType?.numericInterval !== previousNumericInterval
+  ) {
+    newFilter = {...(newFilter as RangeFilter), bins: undefined, lineChart: undefined};
   }
 
   newFilter = updateFilterPlot(state.datasets, newFilter, undefined, state.layers);
@@ -2165,21 +2179,29 @@ export const setFilterViewUpdater = (
 ) => {
   const {view, idx} = action;
   const shouldResetOtherFiltersView = view === FILTER_VIEW_TYPES.enlarged;
+  const filters = state.filters.map((f, i) =>
+    i === idx
+      ? {
+          ...f,
+          view
+        }
+      : shouldResetOtherFiltersView
+      ? {
+          ...f,
+          view: FILTER_VIEW_TYPES.side
+        }
+      : f
+  );
+
+  const openedFilter = filters[idx];
+  if (view === FILTER_VIEW_TYPES.enlarged && openedFilter?.type === FILTER_TYPES.range) {
+    const invalidatedFilter = toArray(openedFilter.dataId).reduce(removeFilterPlot, openedFilter);
+    filters[idx] = updateFilterPlot(state.datasets, invalidatedFilter, undefined, state.layers);
+  }
+
   return {
     ...state,
-    filters: state.filters.map((f, i) =>
-      i === idx
-        ? {
-            ...f,
-            view
-          }
-        : shouldResetOtherFiltersView
-        ? {
-            ...f,
-            view: FILTER_VIEW_TYPES.side
-          }
-        : f
-    )
+    filters
   };
 };
 

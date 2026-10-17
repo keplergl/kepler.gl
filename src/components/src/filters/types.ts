@@ -79,7 +79,7 @@ export type TimeWidgetTopProps = {
 export type TimeWidgetProps = {
   layers: Layer[];
   datasets: Datasets;
-  filter: TimeRangeFilter;
+  filter: TimeRangeFilter | RangeFilter;
   index: number;
   readOnly: boolean;
   showTimeDisplay: boolean;

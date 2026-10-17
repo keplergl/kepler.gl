@@ -16,12 +16,13 @@ export function rangesEqual(
 
 export function clampRange(
   [start, end]: [number, number],
-  [min, max]: [number, number]
+  [min, max]: [number, number],
+  minimumWidth = 1
 ): [number, number] {
   const clampedStart = clamp([min, max], start);
   let clampedEnd = clamp([min, max], end);
   if (clampedEnd <= clampedStart) {
-    clampedEnd = Math.min(max, clampedStart + 1);
+    clampedEnd = Math.min(max, clampedStart + minimumWidth);
   }
   return [clampedStart, clampedEnd];
 }
@@ -29,13 +30,14 @@ export function clampRange(
 export function clampWindowToDomain(
   windowStart: number,
   windowEnd: number,
-  domainRange: [number, number]
+  domainRange: [number, number],
+  minimumWidth = 1
 ): [number, number] {
   const [domainStart, domainEnd] = domainRange;
   let nextStart = clamp(domainRange, windowStart);
   let nextEnd = clamp(domainRange, windowEnd);
   if (nextEnd <= nextStart) {
-    const width = Math.max(windowEnd - windowStart, 1);
+    const width = Math.max(windowEnd - windowStart, minimumWidth);
     const maxStart = Math.max(domainStart, domainEnd - width);
     nextStart = clamp([domainStart, maxStart], windowStart);
     nextEnd = nextStart + width;
@@ -45,7 +47,7 @@ export function clampWindowToDomain(
     }
   }
   if (nextEnd <= nextStart) {
-    nextEnd = Math.min(domainEnd, nextStart + 1);
+    nextEnd = Math.min(domainEnd, nextStart + minimumWidth);
   }
   return [nextStart, nextEnd];
 }
