@@ -2,7 +2,14 @@
 // Copyright contributors to the kepler.gl project
 
 import classnames from 'classnames';
-import React, {ChangeEventHandler, FC, FocusEventHandler, ReactNode, useCallback} from 'react';
+import React, {
+  ChangeEventHandler,
+  FC,
+  FocusEventHandler,
+  ReactNode,
+  useCallback,
+  useId
+} from 'react';
 import styled from 'styled-components';
 import {shouldForwardProp} from './styled-components';
 
@@ -83,6 +90,8 @@ const Checkbox: FC<CheckboxProps> = ({
   onChange = noop,
   onFocus = noop
 }) => {
+  const inputId = `${id}-${useId()}`;
+
   const handleFocus: FocusEventHandler<HTMLInputElement> = useCallback(
     args => {
       onFocus(args);
@@ -100,7 +109,7 @@ const Checkbox: FC<CheckboxProps> = ({
   const inputProps = {
     checked,
     disabled,
-    id,
+    id: inputId,
     name,
     onChange,
     value,
@@ -114,7 +123,7 @@ const Checkbox: FC<CheckboxProps> = ({
     checked,
     disabled,
     secondary,
-    htmlFor: id
+    htmlFor: inputId
   };
 
   const LabelElement =

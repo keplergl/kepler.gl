@@ -94,7 +94,9 @@ test('Components -> ExportImageModal.mount', t => {
 
   t.ok(onUpdateImageSetting.calledWith({resolution: 'TWO_X'}), 'should call update resolution');
 
-  const transparentBackgroundInput = wrapper.find('input#export-transparent-background').at(0);
+  const transparentBackgroundInput = wrapper
+    .find('input[id^="export-transparent-background-"]')
+    .at(0);
   t.equal(
     transparentBackgroundInput.prop('checked'),
     false,
