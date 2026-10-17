@@ -15,7 +15,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "rm -fr dist && babel src --out-dir dist/cjs --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts' && BABEL_ENV=esm babel src --out-dir dist/esm --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build": "rm -fr dist && babel src --out-dir dist/cjs --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts' && BABEL_ENV=esm babel src --out-dir dist/esm --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts' && echo '{\"type\":\"module\"}' > dist/esm/package.json",
     "build:types": "tsc --project ./tsconfig.production.json",
     "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
     "stab": "mkdir -p dist/cjs/config dist/esm/config && echo \"'use strict'; Object.assign(module.exports, require('../../src'));\" > dist/cjs/index.js && echo \"export * from '../../src';\" > dist/esm/index.js && echo \"'use strict'; Object.assign(module.exports, require('../../../src/config'));\" > dist/cjs/config/index.js && echo \"export * from '../../../src/config';\" > dist/esm/config/index.js",

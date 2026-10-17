@@ -2,9 +2,22 @@
 // Copyright contributors to the kepler.gl project
 
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const {test} = require('node:test');
 const {execFileSync} = require('node:child_process');
 const {KeplerSliceConfig, migrateKeplerTabsToArtifacts} = require('@kepler.gl/sqlrooms/config');
+
+test('build marks the ESM subtree without changing the CommonJS package scope', () => {
+  const packageRoot = path.resolve(__dirname, '..');
+  const packageJson = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
+  const esmPackageJson = JSON.parse(
+    fs.readFileSync(path.join(packageRoot, 'dist/esm/package.json'), 'utf8')
+  );
+
+  assert.equal(packageJson.type, undefined);
+  assert.deepEqual(esmPackageJson, {type: 'module'});
+});
 
 test('config entry loads without the map or room runtime in CommonJS and ESM', () => {
   execFileSync(
