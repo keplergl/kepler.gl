@@ -456,23 +456,21 @@ export default function MapContainerFactory(
         generateMapboxLayerMethod(layer, layerData, layerOrder, layersToRender)
     );
 
-    // merge in a background-color style if the basemap choice is NO_MAP_ID
-    // used by <StyledMap> inline style prop
-    mapStyleTypeSelector = props => props.mapStyle.styleType;
+    // Paint the configured flat-map background behind the renderer surfaces.
+    // Mapbox and MapLibre clear their WebGL canvases to transparent, so this is
+    // the color exposed beyond the projected map when a pitched view zooms out.
     mapStyleBackgroundColorSelector = props => props.mapStyle.backgroundColor;
     globeModeSelector = props => Boolean(props.mapState?.globe?.enabled);
     globeBackgroundColorSelector = props => props.mapState?.globe?.config?.backgroundColor;
     globeStarsSelector = props => Boolean(props.mapState?.globe?.config?.stars);
     transparentBackgroundSelector = props => Boolean(props.transparentBackground);
     styleSelector = createSelector(
-      this.mapStyleTypeSelector,
       this.mapStyleBackgroundColorSelector,
       this.globeModeSelector,
       this.globeBackgroundColorSelector,
       this.globeStarsSelector,
       this.transparentBackgroundSelector,
       (
-        styleType,
         backgroundColor,
         isGlobeMode,
         globeBackgroundColor,
@@ -480,7 +478,7 @@ export default function MapContainerFactory(
         transparentBackground
       ) => ({
         ...MAP_STYLE.container,
-        ...(!transparentBackground && styleType === NO_MAP_ID
+        ...(!transparentBackground && !isGlobeMode
           ? {backgroundColor: rgbToHex(backgroundColor)}
           : {}),
         // In globe mode the deck.gl canvas is transparent (the globe View uses
