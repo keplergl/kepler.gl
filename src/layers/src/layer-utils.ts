@@ -177,16 +177,33 @@ function getBinaryGeometriesFromWKBArrow(
 }
 
 export function getGeojsonLayerMetaFromArrow({
+  dataContainer,
   geoColumn,
   geoField,
+  columnIndex,
   chunkIndex
 }: {
   dataContainer: DataContainerInterface;
   geoColumn: arrow.Vector;
   geoField: ProtoDatasetField;
+  columnIndex: number;
   chunkIndex?: number;
 }): GeojsonLayerMetaProps {
   const encoding = geoField?.metadata?.get(GEOARROW_METADATA_KEY);
+  const cached =
+    dataContainer instanceof ArrowDataContainer
+      ? dataContainer.getGeoArrowBinaryData(columnIndex, chunkIndex)
+      : undefined;
+  if (cached) {
+    return {
+      dataToFeature: cached.binaryGeometries,
+      featureTypes: cached.featureTypes,
+      bounds: cached.bounds,
+      fixedRadius: false,
+      centroids: cached.meanCenters
+    };
+  }
+
   const options: BinaryGeometriesFromArrowOptions = {
     ...(chunkIndex !== undefined && chunkIndex >= 0
       ? {

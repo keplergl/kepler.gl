@@ -3,7 +3,7 @@
 
 /* eslint-disable max-statements */
 
-import {drainTasksForTesting, succeedTaskWithValues} from '@kepler.gl/tasks';
+import {drainTasksForTesting, succeedTaskInTest, succeedTaskWithValues} from '@kepler.gl/tasks';
 import test from 'tape';
 
 import {
@@ -25,6 +25,7 @@ import keplerGlReducer, {
 } from '@kepler.gl/reducers';
 import {MapSplitMode} from '@kepler.gl/constants';
 import KeplerGlSchema from '@kepler.gl/schemas';
+import {KeplerTable} from '@kepler.gl/table';
 import {getTimeBins} from '@kepler.gl/utils';
 
 import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
@@ -1399,6 +1400,53 @@ test('#composerStateReducer -> stageLoadedFilesUpdater keeps the modal open', t 
   });
   t.equal(staleAdd, activeLoad, 'a stale add does not replace the current load');
 
+  t.end();
+});
+
+test('#composerStateReducer -> progressive Arrow confirmation queues the next snapshot', t => {
+  const base = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const first = {
+    info: {id: 'progressive-arrow', label: 'progressive.arrow', format: 'arrow'},
+    data: {...mockRawData, rows: mockRawData.rows.slice(0, 1)}
+  };
+  const final = {
+    ...first,
+    data: {...mockRawData, rows: mockRawData.rows.slice(0, 2)}
+  };
+  const staged = {
+    ...final,
+    progressiveData: [first.data, final.data]
+  };
+  const afterFirstDispatch = combinedUpdaters.loadFilesSuccessUpdater(
+    base,
+    loadFilesSuccess([staged], {autoCreateLayers: false, centerMap: true})
+  );
+
+  const afterFirstCommit = applyExistingDatasetTasks(visStateReducer, afterFirstDispatch.visState);
+  const continuation = drainTasksForTesting().find(task => task.label === 'DELAY_TASK');
+  const nextAction = succeedTaskInTest(continuation, undefined);
+  const afterFinalDispatch = combinedUpdaters.loadFilesSuccessUpdater(
+    {...afterFirstDispatch, visState: afterFirstCommit},
+    nextAction
+  );
+  const [updateTask] = drainTasksForTesting();
+  const finalTable = new KeplerTable({info: final.info});
+  finalTable.importData({data: final.data});
+  const afterFinalCommit = visStateReducer(
+    afterFinalDispatch.visState,
+    succeedTaskWithValues(updateTask, [finalTable])
+  );
+
+  t.equal(afterFirstCommit.datasets['progressive-arrow'].length, 1, 'commits the first snapshot');
+  t.equal(nextAction.result[0].data.rows.length, 2, 'queues the next cumulative snapshot');
+  t.deepEqual(
+    nextAction.progressiveSteps,
+    [],
+    'marks the final step without queueing another snapshot'
+  );
+  t.equal(nextAction.options.centerMap, false, 'does not center subsequent snapshots');
+  t.equal(afterFinalCommit.datasets['progressive-arrow'].length, 2, 'commits the final snapshot');
+  t.equal(drainTasksForTesting().length, 0, 'does not leave another continuation queued');
   t.end();
 });
 

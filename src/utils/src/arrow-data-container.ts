@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {ProtoDatasetField} from '@kepler.gl/types';
+import {GeoArrowBinaryData, ProtoDatasetField} from '@kepler.gl/types';
 import * as arrow from 'apache-arrow';
 import {console as globalConsole} from 'global/window';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
@@ -15,6 +15,11 @@ type ArrowDataContainerInput = {
   cols: arrow.Vector[];
   fields?: ProtoDatasetField[];
   arrowTable?: arrow.Table;
+  geoArrowBinaryData?: GeoArrowBinaryData;
+};
+
+type ArrowDataContainerUpdateOptions = {
+  geoArrowBinaryData?: GeoArrowBinaryData;
 };
 
 /**
@@ -323,6 +328,7 @@ export class ArrowDataContainer implements DataContainerInterface {
   _numRows: number;
   _fields: ProtoDatasetField[];
   _numChunks: number;
+  _geoArrowBinaryData: GeoArrowBinaryData;
   // cache column data to make valueAt() faster
   // _colData: any[][];
 
@@ -343,6 +349,7 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._numColumns = this._cols.length;
     this._numRows = this._cols[0]?.length ?? 0;
     this._numChunks = this._cols[0]?.data?.length ?? 0;
+    this._geoArrowBinaryData = data.geoArrowBinaryData || {};
     const table = compactArrowTable(data.arrowTable || this._createTable());
     this._arrowTable = table;
     if (table.numCols > 0) {
@@ -377,10 +384,14 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._numChunks = this._cols[0]?.data?.length ?? 0;
   }
 
-  update(updateData: arrow.Vector<any>[] | arrow.Table) {
+  update(
+    updateData: arrow.Vector<any>[] | arrow.Table,
+    options: ArrowDataContainerUpdateOptions = {}
+  ) {
     // Incremental Arrow loads append batches here. Compacting on every update
     // would copy the growing table (Builder over every cell). Skip collapse;
     // processArrowBatches compact once when the file is fully loaded.
+    const previousNumChunks = this._numChunks;
     const isArrow = isArrowTable(updateData);
     if (isArrow) {
       this._assignTable(updateData);
@@ -397,12 +408,72 @@ export class ArrowDataContainer implements DataContainerInterface {
       }
     }
 
+    // Progressive snapshots add one record batch at a time, so keep already
+    // parsed chunks and merge the new worker result. A compaction/replacement
+    // resets chunk numbering and must replace the cache instead.
+    if (this._numChunks > previousNumChunks) {
+      Object.entries(options.geoArrowBinaryData || {}).forEach(([columnIndex, chunks]) => {
+        this._geoArrowBinaryData[Number(columnIndex)] = {
+          ...this._geoArrowBinaryData[Number(columnIndex)],
+          ...chunks
+        };
+      });
+    } else {
+      this._geoArrowBinaryData = options.geoArrowBinaryData || {};
+    }
+
     // cache column data to make valueAt() faster
     // this._colData = this._cols.map(c => c.toArray());
   }
 
   numChunks(): number {
     return this._numChunks;
+  }
+
+  getGeoArrowBinaryData(columnIndex: number, chunkIndex?: number) {
+    const columnData = this._geoArrowBinaryData[columnIndex];
+    if (!columnData) {
+      return undefined;
+    }
+    if (chunkIndex !== undefined) {
+      return columnData[chunkIndex];
+    }
+
+    const chunks = Object.entries(columnData)
+      .map(([index, data]) => ({index: Number(index), data}))
+      .sort((a, b) => a.index - b.index);
+    if (chunks.length !== this._numChunks) {
+      return undefined;
+    }
+
+    const featureTypes = {point: false, line: false, polygon: false};
+    const bounds: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
+    const binaryGeometries: any[] = [];
+    const meanCenters: Array<number[] | null> = [];
+    let hasMeanCenters = true;
+
+    chunks.forEach(({data}) => {
+      data.binaryGeometries.forEach(geometry => binaryGeometries.push(geometry));
+      featureTypes.point ||= data.featureTypes.point;
+      featureTypes.line ||= data.featureTypes.line;
+      featureTypes.polygon ||= data.featureTypes.polygon;
+      bounds[0] = Math.min(bounds[0], data.bounds[0]);
+      bounds[1] = Math.min(bounds[1], data.bounds[1]);
+      bounds[2] = Math.max(bounds[2], data.bounds[2]);
+      bounds[3] = Math.max(bounds[3], data.bounds[3]);
+      if (data.meanCenters) {
+        data.meanCenters.forEach(center => meanCenters.push(center));
+      } else {
+        hasMeanCenters = false;
+      }
+    });
+
+    return {
+      binaryGeometries,
+      featureTypes,
+      bounds,
+      ...(hasMeanCenters ? {meanCenters} : {})
+    };
   }
 
   numRows(): number {

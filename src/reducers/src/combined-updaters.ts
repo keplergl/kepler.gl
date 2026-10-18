@@ -25,7 +25,8 @@ import {
   mapStyleChangeUpdater,
   receiveMapConfigUpdater as styleMapConfigUpdater
 } from './map-style-updaters';
-import {filesToDataPayload} from '@kepler.gl/processors';
+import {fileCacheToProgressiveSteps, filesToDataPayload} from '@kepler.gl/processors';
+import type {FileCacheItem} from '@kepler.gl/processors';
 import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-helpers';
 import {MapState, UiState, AddDataToMapPayload, ParsedConfig, ProtoDataset} from '@kepler.gl/types';
 import {MapStyle} from './map-style-updaters';
@@ -34,6 +35,7 @@ import {
   loadFilesSuccessUpdaterAction,
   ConfirmReplaceDatasetUpdaterAction,
   StageLoadedFilesUpdaterAction,
+  loadFilesSuccess,
   MapStyleChangeUpdaterAction,
   LayerTypeChangeUpdaterAction,
   ToggleSplitMapUpdaterAction,
@@ -59,6 +61,14 @@ export type KeplerGlState = {
   mapStyle: MapStyle;
   uiState: UiState;
   providerState: ProviderState;
+};
+
+type ProgressiveLoadFilesSuccessAction = loadFilesSuccessUpdaterAction & {
+  progressiveSteps?: FileCacheItem[][];
+};
+
+type ProgressiveLoadContinuation = ReturnType<typeof loadFilesSuccess> & {
+  progressiveSteps: FileCacheItem[][];
 };
 
 // compose action to apply result multiple reducers, with the output of one
@@ -147,7 +157,7 @@ export const defaultAddDataToMapOptions = {
  */
 export const addDataToMapUpdater = (
   state: KeplerGlState,
-  {payload}: {payload: AddDataToMapPayload}
+  {payload, onFinish}: {payload: AddDataToMapPayload; onFinish?: ProgressiveLoadContinuation}
 ): KeplerGlState => {
   const {datasets, config, info} = payload;
 
@@ -168,7 +178,8 @@ export const addDataToMapUpdater = (
         apply_<VisState, any>(visStateUpdateVisDataUpdater, {
           datasets,
           options,
-          config
+          config,
+          onFinish
         })
       )
     ])(state);
@@ -198,7 +209,8 @@ export const addDataToMapUpdater = (
       apply_<VisState, any>(visStateUpdateVisDataUpdater, {
         datasets,
         options,
-        config: parsedConfig
+        config: parsedConfig,
+        onFinish
       })
     ),
 
@@ -236,13 +248,25 @@ export const addDataToMapUpdater = (
 
 export const loadFilesSuccessUpdater = (
   state: KeplerGlState,
-  action: loadFilesSuccessUpdaterAction
+  action: ProgressiveLoadFilesSuccessAction
 ): KeplerGlState => {
   if (isStaleFileLoadFinish(state.visState.fileLoading, action.loadId)) {
     return state;
   }
-  // still more to load
-  const payloads = filesToDataPayload(action.result, action.options);
+  const progressiveSteps = Object.prototype.hasOwnProperty.call(action, 'progressiveSteps')
+    ? [action.result, ...(action.progressiveSteps || [])]
+    : fileCacheToProgressiveSteps(action.result);
+  const [currentStep = action.result, ...remainingSteps] = progressiveSteps;
+  const payloads = filesToDataPayload(currentStep, action.options);
+  // The first progressive snapshot may fit the map to the newly created layer.
+  // Later snapshots only replace that layer's data and must not keep moving the viewport.
+  const continuationOptions = {...action.options, centerMap: false};
+  const onFinish: ProgressiveLoadContinuation | undefined = remainingSteps.length
+    ? {
+        ...loadFilesSuccess(remainingSteps[0], continuationOptions),
+        progressiveSteps: remainingSteps.slice(1)
+      }
+    : undefined;
   const nextState = compose_([
     pick_('visState')(
       merge_({
@@ -253,9 +277,14 @@ export const loadFilesSuccessUpdater = (
     )
   ])(state);
   // make multiple add data to map calls
-  const stateWithData = compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(
-    nextState
-  );
+  const stateWithData = compose_(
+    payloads.map((p, index) =>
+      apply_(addDataToMapUpdater, {
+        ...payload_(p),
+        ...(onFinish && index === payloads.length - 1 ? {onFinish} : {})
+      })
+    )
+  )(nextState);
   return stateWithData as KeplerGlState;
 };
 

@@ -3,6 +3,13 @@
 
 import {parseInBatches} from '@loaders.gl/core';
 import {Loader} from '@loaders.gl/loader-utils';
+import * as arrow from 'apache-arrow';
+import {
+  hardClone,
+  parseGeoArrowOnWorker,
+  ParseGeoArrowInput,
+  ParseGeoArrowResult
+} from '@loaders.gl/arrow';
 import {
   isPlainObject,
   generateHashIdFromString,
@@ -11,10 +18,17 @@ import {
   isArrowTable
 } from '@kepler.gl/utils';
 import {generateHashId} from '@kepler.gl/common-utils';
-import {DATASET_FORMATS, DatasetType, REMOTE_FILE_EXTENSIONS} from '@kepler.gl/constants';
+import {
+  DATASET_FORMATS,
+  DatasetType,
+  GEOARROW_EXTENSIONS,
+  GEOARROW_METADATA_KEY,
+  REMOTE_FILE_EXTENSIONS
+} from '@kepler.gl/constants';
 import {
   AddDataToMapOptions,
   AddDataToMapPayload,
+  GeoArrowBinaryData,
   LoadedMap,
   ProcessorResult
 } from '@kepler.gl/types';
@@ -75,6 +89,15 @@ const GIS_TABLE_LOADER_OPTIONS = {
   shape: 'geojson-table'
 };
 
+const WORKER_GEOARROW_ENCODINGS = new Set<string>([
+  GEOARROW_EXTENSIONS.POINT,
+  GEOARROW_EXTENSIONS.LINESTRING,
+  GEOARROW_EXTENSIONS.POLYGON,
+  GEOARROW_EXTENSIONS.MULTIPOINT,
+  GEOARROW_EXTENSIONS.MULTILINESTRING,
+  GEOARROW_EXTENSIONS.MULTIPOLYGON
+]);
+
 const EXCEL_LOADER_OPTIONS = {
   shape: 'object-row-table'
 };
@@ -103,9 +126,199 @@ export type ProcessFileDataContent = {
    * progressive Arrow loads so each batch does not copy the growing table.
    */
   skipArrowCompact?: boolean;
+  /** Build cumulative Arrow snapshots that can be replayed after Add Data confirmation. */
+  prepareProgressiveReplay?: boolean;
 };
 
 export {isArrowTable};
+
+type ParseGeoArrowWorker = (data: ParseGeoArrowInput) => Promise<ParseGeoArrowResult>;
+
+function combineGeoArrowWorkerChunks(parsed: GeoArrowBinaryData): GeoArrowBinaryData | undefined {
+  const combined: GeoArrowBinaryData = {};
+
+  Object.entries(parsed).forEach(([columnIndex, chunks]) => {
+    const ordered = Object.entries(chunks)
+      .map(([chunkIndex, data]) => ({chunkIndex: Number(chunkIndex), data}))
+      .sort((a, b) => a.chunkIndex - b.chunkIndex);
+    if (!ordered.length) {
+      return;
+    }
+
+    const featureTypes = {point: false, line: false, polygon: false};
+    const bounds: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
+    const binaryGeometries: any[] = [];
+    const meanCenters: Array<number[] | null> = [];
+    let hasMeanCenters = true;
+
+    ordered.forEach(({data}) => {
+      data.binaryGeometries.forEach(geometry => binaryGeometries.push(geometry));
+      featureTypes.point ||= data.featureTypes.point;
+      featureTypes.line ||= data.featureTypes.line;
+      featureTypes.polygon ||= data.featureTypes.polygon;
+      bounds[0] = Math.min(bounds[0], data.bounds[0]);
+      bounds[1] = Math.min(bounds[1], data.bounds[1]);
+      bounds[2] = Math.max(bounds[2], data.bounds[2]);
+      bounds[3] = Math.max(bounds[3], data.bounds[3]);
+      if (data.meanCenters) {
+        data.meanCenters.forEach(center => meanCenters.push(center));
+      } else {
+        hasMeanCenters = false;
+      }
+    });
+
+    combined[Number(columnIndex)] = {
+      0: {
+        binaryGeometries,
+        featureTypes,
+        bounds,
+        ...(hasMeanCenters ? {meanCenters} : {})
+      }
+    };
+  });
+
+  return Object.keys(combined).length ? combined : undefined;
+}
+
+function geoArrowWorkerChunksThrough(
+  parsed: GeoArrowBinaryData | undefined,
+  lastChunkIndex: number
+): GeoArrowBinaryData | undefined {
+  if (!parsed) {
+    return undefined;
+  }
+
+  const selected: GeoArrowBinaryData = {};
+  Object.entries(parsed).forEach(([columnIndex, chunks]) => {
+    const selectedChunks = Object.fromEntries(
+      Object.entries(chunks).filter(([chunkIndex]) => Number(chunkIndex) <= lastChunkIndex)
+    );
+    if (Object.keys(selectedChunks).length) {
+      selected[Number(columnIndex)] = selectedChunks;
+    }
+  });
+  return Object.keys(selected).length ? selected : undefined;
+}
+
+function createProgressiveArrowData(
+  source: NonNullable<ProcessorResult>,
+  finalData: NonNullable<ProcessorResult>,
+  geoArrowBinaryData?: GeoArrowBinaryData
+): Array<NonNullable<ProcessorResult>> | undefined {
+  const chunks = source.cols?.[0]?.data;
+  if (!Array.isArray(chunks) || chunks.length < 2 || !source.cols) {
+    return undefined;
+  }
+
+  const {geoArrowBinaryData: _sourceCache, ...sourceWithoutCache} = source;
+  const snapshots: Array<NonNullable<ProcessorResult>> = [];
+  let rowCount = 0;
+  // The final snapshot uses the normally processed (and usually compacted)
+  // table. Intermediate snapshots retain record-batch boundaries.
+  for (let chunkIndex = 0; chunkIndex < chunks.length - 1; chunkIndex++) {
+    rowCount += chunks[chunkIndex].length;
+    const cols = source.cols.map(column => column.slice(0, rowCount));
+    const snapshotCache = geoArrowWorkerChunksThrough(geoArrowBinaryData, chunkIndex);
+    snapshots.push({
+      ...sourceWithoutCache,
+      cols,
+      ...(snapshotCache ? {geoArrowBinaryData: snapshotCache} : {})
+    });
+  }
+  snapshots.push(finalData);
+  return snapshots;
+}
+
+/**
+ * Convert native GeoArrow chunks to deck.gl binary features without blocking
+ * the main thread. WKB/WKT remain on the synchronous fallback because the
+ * loaders.gl triangulation worker only supports native GeoArrow encodings.
+ */
+export async function parseGeoArrowBatchesOnWorkers(
+  data: NonNullable<ProcessorResult>,
+  options: {
+    latestOnly?: boolean;
+    parseOnWorker?: ParseGeoArrowWorker;
+    /** Merge per-batch worker output when the final Arrow table was compacted to one chunk. */
+    targetChunkCount?: number;
+  } = {}
+): Promise<GeoArrowBinaryData | undefined> {
+  const parseOnWorker = options.parseOnWorker || parseGeoArrowOnWorker;
+  if (!options.parseOnWorker && typeof globalThis.Worker === 'undefined') {
+    return undefined;
+  }
+
+  const jobs: Array<Promise<{columnIndex: number; result: ParseGeoArrowResult}>> = [];
+  data.fields.forEach((field, columnIndex) => {
+    const encoding = field.metadata?.get?.(GEOARROW_METADATA_KEY);
+    const geoColumn = data.cols?.[columnIndex];
+    if (!WORKER_GEOARROW_ENCODINGS.has(encoding) || !geoColumn?.data?.length) {
+      return;
+    }
+
+    const chunkIndexes = options.latestOnly
+      ? [geoColumn.data.length - 1]
+      : geoColumn.data.map((_, index) => index);
+    chunkIndexes.forEach(chunkIndex => {
+      const geometryChunk = geoColumn.data[chunkIndex];
+      const chunkCopy = hardClone(geometryChunk, true);
+      const chunkOffset = geoColumn.data
+        .slice(0, chunkIndex)
+        .reduce((offset, chunk) => offset + chunk.length, 0);
+      const chunkType = chunkCopy.type as typeof chunkCopy.type & {listSize?: number};
+      const transferableType = {
+        ...chunkType,
+        typeId: chunkType.typeId,
+        ...(chunkType.listSize !== undefined ? {listSize: chunkType.listSize} : {})
+      } as ParseGeoArrowInput['chunkData']['type'];
+      const sourceData: ParseGeoArrowInput = {
+        operation: 'parse-geoarrow',
+        chunkData: {
+          type: transferableType,
+          offset: chunkCopy.offset,
+          length: chunkCopy.length,
+          nullCount: chunkCopy.nullCount,
+          buffers: chunkCopy.buffers,
+          children: chunkCopy.children,
+          dictionary: chunkCopy.dictionary
+        },
+        chunkIndex,
+        chunkOffset,
+        geometryEncoding: encoding,
+        calculateMeanCenters: true,
+        triangle: true
+      };
+      jobs.push(parseOnWorker(sourceData).then(result => ({columnIndex, result})));
+    });
+  });
+
+  if (!jobs.length) {
+    return undefined;
+  }
+
+  const parsed: GeoArrowBinaryData = {};
+  const results = await Promise.allSettled(jobs);
+  results.forEach(result => {
+    if (result.status !== 'fulfilled') {
+      return;
+    }
+    const {columnIndex, result: workerResult} = result.value;
+    const binaryData = workerResult.binaryDataFromGeoArrow;
+    if (!binaryData) {
+      return;
+    }
+    parsed[columnIndex] = parsed[columnIndex] || {};
+    parsed[columnIndex][workerResult.chunkIndex] = binaryData;
+  });
+
+  if (!Object.keys(parsed).length) {
+    return undefined;
+  }
+
+  return options.targetChunkCount === 1 && !options.latestOnly
+    ? combineGeoArrowWorkerChunks(parsed)
+    : parsed;
+}
 
 /**
  * check if data is an ArrowData object, which is an array of RecordBatch
@@ -507,6 +720,41 @@ export async function processFileData({
       throw new Error(`Can not process uploaded file, ${getError(error as Error)}`);
     }
 
+    let progressiveData: Array<NonNullable<ProcessorResult>> | undefined;
+    if (format === DATASET_FORMATS.arrow && result?.cols) {
+      const latestOnly = Boolean(content.skipArrowCompact);
+      const targetChunkCount = result.cols[0]?.data?.length ?? 0;
+      let workerSource = result;
+
+      // Final file processing compacts Arrow batches to keep the number of deck.gl
+      // sublayers low. Schedule worker jobs from the original batches first so
+      // geometry conversion and triangulation can still run in parallel, then
+      // combine their output to match the single compacted table chunk.
+      if (!latestOnly && Array.isArray(data) && data.length > targetChunkCount) {
+        const sourceTable = new arrow.Table(data as arrow.RecordBatch[]);
+        const cols = [...Array(sourceTable.numCols).keys()].map(i => sourceTable.getChildAt(i));
+        workerSource = {...result, cols};
+      }
+
+      const workerGeoArrowBinaryData = await parseGeoArrowBatchesOnWorkers(workerSource, {
+        latestOnly
+      });
+      const geoArrowBinaryData =
+        targetChunkCount === 1 && !latestOnly && workerGeoArrowBinaryData
+          ? combineGeoArrowWorkerChunks(workerGeoArrowBinaryData)
+          : workerGeoArrowBinaryData;
+      if (geoArrowBinaryData) {
+        result = {...result, geoArrowBinaryData};
+      }
+      if (content.prepareProgressiveReplay && !latestOnly) {
+        progressiveData = createProgressiveArrowData(
+          workerSource,
+          result,
+          workerGeoArrowBinaryData
+        );
+      }
+    }
+
     const sourceUrl = content.sourceUrl;
     const remoteFormat = getPersistedRemoteFormat(content.keplerFormat, content.fileName);
     const fileSize = typeof content.fileSize === 'number' ? content.fileSize : undefined;
@@ -531,6 +779,7 @@ export async function processFileData({
       ...fileCache,
       {
         data: result,
+        ...(progressiveData ? {progressiveData} : {}),
         info: {
           id,
           label: content.fileName,
@@ -543,6 +792,25 @@ export async function processFileData({
   } else {
     throw new Error('Can not process uploaded file, unknown file format');
   }
+}
+
+/**
+ * Expand staged files into cumulative payloads for one redraw per Arrow batch.
+ * Non-progressive files are present only in the first payload.
+ */
+export function fileCacheToProgressiveSteps(fileCache: FileCacheItem[]): FileCacheItem[][] {
+  const numberOfSteps = Math.max(1, ...fileCache.map(file => file.progressiveData?.length || 1));
+
+  return Array.from({length: numberOfSteps}, (_, stepIndex) =>
+    fileCache.flatMap(file => {
+      const {progressiveData, ...fileWithoutProgressiveData} = file;
+      if (!progressiveData) {
+        return stepIndex === 0 ? [fileWithoutProgressiveData] : [];
+      }
+      const data = progressiveData[stepIndex];
+      return data ? [{...fileWithoutProgressiveData, data}] : [];
+    })
+  ).filter(step => step.length);
 }
 
 export function filesToDataPayload(

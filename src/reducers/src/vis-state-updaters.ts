@@ -178,6 +178,7 @@ import {
   isZipFileName,
   loadExternallyHostedDataset,
   processGeojson,
+  type FileCacheItem,
   ZipArchiveExpansion
 } from '@kepler.gl/processors';
 
@@ -4111,6 +4112,18 @@ export function refreshDatasetErrorUpdater(
  * @memberof visStateUpdaters
  * @public
  */
+type ProgressiveLoadContinuation = ReturnType<typeof loadFilesSuccess> & {
+  progressiveSteps: FileCacheItem[][];
+};
+
+type ProgressiveUpdateVisDataUpdaterAction = VisStateActions.UpdateVisDataUpdaterAction & {
+  onFinish?: ProgressiveLoadContinuation;
+};
+
+type ProgressiveCreateNewDatasetSuccessPayload = CreateNewDatasetSuccessPayload & {
+  onFinish?: ProgressiveLoadContinuation;
+};
+
 // eslint-disable-next-line complexity
 export const updateVisDataUpdater = (
   state: VisState,
@@ -4188,14 +4201,17 @@ export const updateVisDataUpdater = (
   }
 
   return withTask(updatedState, [
-    ...batches.map(batch =>
-      Task.allSettled(batch.tasks).map(results =>
-        createNewDatasetSuccess({
+    ...batches.map((batch, batchIndex) =>
+      Task.allSettled(batch.tasks).map(results => {
+        const onFinish = (action as ProgressiveUpdateVisDataUpdaterAction).onFinish;
+        const payload: ProgressiveCreateNewDatasetSuccessPayload = {
           results,
           addToMapOptions: options,
-          progressIds: batch.progressIds
-        })
-      )
+          progressIds: batch.progressIds,
+          ...(onFinish && batchIndex === batches.length - 1 ? {onFinish} : {})
+        };
+        return createNewDatasetSuccess(payload);
+      })
     ),
     ...notificationTasks
   ]);
@@ -4205,7 +4221,8 @@ export const createNewDatasetSuccessUpdater = (
   state: VisState,
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
-  const {results, addToMapOptions, progressIds} = action.payload;
+  const {results, addToMapOptions, progressIds, onFinish} =
+    action.payload as ProgressiveCreateNewDatasetSuccessPayload;
   const notificationTasks: TaskDescriptor[] = [];
 
   const newDataEntries = results.reduce((accu, result, idx) => {
@@ -4255,7 +4272,12 @@ export const createNewDatasetSuccessUpdater = (
       setLoadingIndicatorUpdater(updatedState, payload_({change: -1})),
       progressIds
     ),
-    notificationTasks
+    [
+      ...notificationTasks,
+      // Match the original Arrow batching cadence: cross an event-loop turn so
+      // React/deck.gl can paint this snapshot before the next table update.
+      ...(onFinish ? [DELAY_TASK(10).map(() => onFinish)] : [])
+    ]
   );
 };
 
@@ -5315,7 +5337,12 @@ export function makeLoadFileTask(
         fileName: displayName,
         onFinish: result =>
           processFileContent({
-            content: result,
+            content: {
+              ...result,
+              ...(addDataOptions?.deferAddToMap && getApplicationConfig().useArrowProgressiveLoading
+                ? {prepareProgressiveReplay: true}
+                : {})
+            },
             fileCache
           }),
         ...(addDataOptions ? {options: addDataOptions} : {})
