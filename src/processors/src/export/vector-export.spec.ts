@@ -116,7 +116,7 @@ describe('dataset export', () => {
   test.each([
     {
       dimension: '2D',
-      altitudes: [null, null],
+      altitudes: [null, ''],
       expectedZ: 0,
       expectedCoordinates: [
         [-122.4, 37.8],
