@@ -372,24 +372,57 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           /** END STORE **/
 
           /** COMPONENTS **/
-          /** Custom map control factory to add Effects button + panel **/
+          /** Custom map control factory to restore export editing and chart display. **/
           var CustomMapControlFactory = (function createCustomMapControl(react, keplerGl) {
             var EffectControlFactory = keplerGl.EffectControlFactory;
             var EffectManagerFactory = keplerGl.EffectManagerFactory;
+            var AnnotationControlFactory = keplerGl.AnnotationControlFactory;
+            var AnnotationManagerFactory = keplerGl.AnnotationManagerFactory;
+            var ChartControlFactory = keplerGl.ChartControlFactory;
+            var ChartManagerFactory = keplerGl.ChartManagerFactory;
             var MapControlFactory = keplerGl.MapControlFactory;
 
-            if (!EffectControlFactory || !EffectManagerFactory || !MapControlFactory) {
-              console.warn('kepler.gl: Effect factories not available, skipping effect control injection');
+            if (
+              !EffectControlFactory ||
+              !EffectManagerFactory ||
+              !AnnotationControlFactory ||
+              !AnnotationManagerFactory ||
+              !ChartControlFactory ||
+              !ChartManagerFactory ||
+              !MapControlFactory
+            ) {
+              console.warn('kepler.gl: Export control factories not available, skipping control injection');
               return null;
             }
 
-            function EffectMapControlFactory(EffectControl, EffectManager) {
-              var args = Array.prototype.slice.call(arguments, 2);
+            function ExportMapControlFactory(
+              EffectControl,
+              EffectManager,
+              AnnotationControl,
+              AnnotationManager,
+              ChartControl,
+              ChartManager
+            ) {
+              var args = Array.prototype.slice.call(arguments, 6);
               var MapControl = MapControlFactory.apply(null, args);
-              var actionComponents = (MapControl.defaultActionComponents || []).concat([EffectControl]);
+              var defaultActionComponents = MapControl.defaultActionComponents || [];
 
-              var EffectMapControl = function EffectMapControl(props) {
-                var showEffects = Boolean(props.mapControls && props.mapControls.effect && props.mapControls.effect.active);
+              var ExportMapControl = function ExportMapControl(props) {
+                var readOnly = Boolean(props.readOnly);
+                var mapControls = props.mapControls || {};
+                var charts = props.charts || [];
+                var actionComponents = defaultActionComponents.filter(function(ActionComponent) {
+                  return !readOnly || ActionComponent !== AnnotationControl;
+                });
+                if (!readOnly) {
+                  actionComponents = actionComponents.concat([ChartControl, EffectControl]);
+                }
+                var showEffects = !readOnly && Boolean(mapControls.effect && mapControls.effect.active);
+                var showAnnotations = !readOnly && Boolean(mapControls.annotation && mapControls.annotation.active);
+                var showChartPanel = !readOnly && Boolean(mapControls.chart && mapControls.chart.active);
+                var hasPinnedCharts = charts.some(function(chart) { return chart.pinned !== false; });
+                var showCharts = readOnly ? charts.length > 0 : showChartPanel || hasPinnedCharts;
+                var rightPanelVisible = showEffects || showAnnotations || showCharts;
                 return react.createElement(
                   'div',
                   {style: {
@@ -406,7 +439,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                     {style: {position: 'relative', pointerEvents: 'all'}},
                     react.createElement(MapControl, Object.assign({}, props, {top: 0, actionComponents: actionComponents}))
                   ),
-                  showEffects
+                  rightPanelVisible
                     ? react.createElement('div', {
                         style: {
                           maxHeight: '100%',
@@ -416,16 +449,30 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                           pointerEvents: 'all',
                           marginTop: '10px'
                         }
-                      }, react.createElement(EffectManager, null))
+                      },
+                      showAnnotations ? react.createElement(AnnotationManager, null) : null,
+                      showCharts ? react.createElement(ChartManager, {
+                        panelActive: showChartPanel,
+                        isExport: readOnly
+                      }) : null,
+                      showEffects ? react.createElement(EffectManager, null) : null
+                      )
                     : null
                 );
               };
 
-              return EffectMapControl;
+              return ExportMapControl;
             }
-            EffectMapControlFactory.deps = [EffectControlFactory, EffectManagerFactory].concat(MapControlFactory.deps);
+            ExportMapControlFactory.deps = [
+              EffectControlFactory,
+              EffectManagerFactory,
+              AnnotationControlFactory,
+              AnnotationManagerFactory,
+              ChartControlFactory,
+              ChartManagerFactory
+            ].concat(MapControlFactory.deps);
 
-            return [MapControlFactory, EffectMapControlFactory];
+            return [MapControlFactory, ExportMapControlFactory];
           }(React, KeplerGl));
 
           var KeplerGlComponent = CustomMapControlFactory

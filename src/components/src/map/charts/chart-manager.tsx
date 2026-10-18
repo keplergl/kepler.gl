@@ -34,7 +34,7 @@ export type ChartManagerState = {
   };
   /** When false, only pinned charts are shown (panel control is inactive). */
   panelActive?: boolean;
-  /** Image export: show all charts without edit chrome. */
+  /** Immutable export: show all charts without edit or pin chrome. */
   isExport?: boolean;
   children?: React.ReactNode;
 };
@@ -194,6 +194,7 @@ export default function ChartManagerFactory(
               layers={layers}
               visStateActions={visStateActions as typeof VisStateActions}
               readOnly={!panelActive || isExport}
+              hidePinAction={isExport}
             />
           </StyledChartPanelContent>
         </StyledChartPanel>
