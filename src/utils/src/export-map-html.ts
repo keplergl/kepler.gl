@@ -23,6 +23,7 @@ const STYLED_COMPONENTS_VERSION = '6.1.19';
 // es-module-shims lets the exported map keep working as a standalone file://
 // document (native ES modules/import maps are blocked under the file:// origin).
 const ES_MODULE_SHIMS_VERSION = '2.8.1';
+const DEFAULT_APP_NAME_COLOR = '#1FBAD6';
 
 /** Escape serialized JSON for interpolation into an inline `<script>`. */
 function escapeScriptJSON(serialized: string): string {
@@ -58,15 +59,15 @@ function escapeHTML(value: string): string {
 }
 
 /** Resolve user-entered branding links to an absolute HTTP(S) URL. */
-function normalizeAppWebsite(value: unknown): string {
+function normalizeHTTPURL(value: unknown, fallback: string | null): string | null {
   if (typeof value !== 'string' || !value.trim()) {
-    return KEPLER_GL_WEBSITE;
+    return fallback;
   }
 
   const trimmedValue = value.trim();
   const hasScheme = /^[a-z][a-z\d+.-]*:/i.test(trimmedValue);
   if (hasScheme && !/^https?:/i.test(trimmedValue)) {
-    return KEPLER_GL_WEBSITE;
+    return fallback;
   }
 
   const absoluteValue = /^https?:/i.test(trimmedValue)
@@ -77,10 +78,24 @@ function normalizeAppWebsite(value: unknown): string {
 
   try {
     const url = new URL(absoluteValue);
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : KEPLER_GL_WEBSITE;
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : fallback;
   } catch {
-    return KEPLER_GL_WEBSITE;
+    return fallback;
   }
+}
+
+function normalizeAppWebsite(value: unknown): string {
+  return normalizeHTTPURL(value, KEPLER_GL_WEBSITE) || KEPLER_GL_WEBSITE;
+}
+
+function normalizeAppIcon(value: unknown): string | null {
+  return normalizeHTTPURL(value, null);
+}
+
+function normalizeAppNameColor(value: unknown): string {
+  return typeof value === 'string' && /^#[\da-f]{6}$/i.test(value)
+    ? value
+    : DEFAULT_APP_NAME_COLOR;
 }
 
 /**
@@ -92,13 +107,17 @@ function normalizeAppWebsite(value: unknown): string {
  * @param {Object} [options.info] map title and description
  * @param {string} [options.appName] application name used by the exported map
  * @param {string} [options.appWebsite] application website linked by the exported map
+ * @param {string} [options.appIcon] application icon URL used by the exported map
+ * @param {string} [options.appNameColor] application name color used by the exported map
  * @param {string} version which version of Kepler.gl to load.
  */
 export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
   const appName =
     typeof options.appName === 'string' && options.appName ? options.appName : KEPLER_GL_NAME;
   const appWebsite = normalizeAppWebsite(options.appWebsite);
-  const branding = {appName, appWebsite};
+  const appIcon = normalizeAppIcon(options.appIcon);
+  const appNameColor = normalizeAppNameColor(options.appNameColor);
+  const branding = {appName, appWebsite, appIcon, appNameColor};
   const mapboxApiAccessToken = options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN';
   const keplerStyleUrl = `https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.css`;
   const keplerScriptUrl = `https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.js`;
@@ -372,6 +391,76 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           /** END STORE **/
 
           /** COMPONENTS **/
+          var BrandLogo = (function createBrandLogo(react, branding) {
+            return function BrandLogo(props) {
+              var fixed = Boolean(props && props.fixed);
+              var icon = branding.appIcon
+                ? react.createElement("img", {
+                    src: branding.appIcon,
+                    alt: "",
+                    "aria-hidden": true,
+                    style: {width: "22px", height: "15px", objectFit: "contain"}
+                  })
+                : react.createElement(
+                    "svg",
+                    {width: "22px", height: "15px", viewBox: "0 0 22 15", "aria-hidden": true},
+                    react.createElement(
+                      "g",
+                      {transform: "translate(11, -3) rotate(45.000000)"},
+                      react.createElement("rect", {fill: "#535C6C", x: "0", y: "5", width: "10", height: "10"}),
+                      react.createElement("rect", {fill: "#1FBAD6", x: "5", y: "0", width: "10", height: "10"})
+                    )
+                  );
+
+              return react.createElement(
+                "div",
+                {
+                  className: fixed ? "logo-container" : "side-panel-logo",
+                  style: fixed
+                    ? {position: "fixed", zIndex: 10000, padding: "4px", display: "flex", alignItems: "center"}
+                    : {display: "flex", alignItems: "flex-start"}
+                },
+                react.createElement(
+                  "div",
+                  {style: {marginTop: fixed ? 0 : "3px"}},
+                  icon
+                ),
+                react.createElement(
+                  "div",
+                  {className: "logo__title", style: {marginLeft: "6px"}},
+                  react.createElement(
+                    "a",
+                    {
+                      className: "kepler_gl__logo logo__link",
+                      href: branding.appWebsite,
+                      target: "_blank",
+                      rel: "noopener noreferrer",
+                      style: {
+                        color: branding.appNameColor,
+                        fontFamily: "ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        letterSpacing: "1.17px",
+                        textDecoration: "none"
+                      }
+                    },
+                    react.createElement("span", {style: {color: branding.appNameColor}}, branding.appName)
+                  ),
+                  !fixed && props && props.version
+                    ? react.createElement(
+                        "div",
+                        {
+                          className: "logo__version",
+                          style: {fontSize: "10px", color: "#a0a7b4", letterSpacing: "0.83px", lineHeight: "14px"}
+                        },
+                        props.version
+                      )
+                    : null
+                )
+              );
+            };
+          }(React, branding));
+
           /** Custom map control factory to restore export editing and chart display. **/
           var CustomMapControlFactory = (function createCustomMapControl(react, keplerGl) {
             var EffectControlFactory = keplerGl.EffectControlFactory;
@@ -475,49 +564,32 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
             return [MapControlFactory, ExportMapControlFactory];
           }(React, KeplerGl));
 
-          var KeplerGlComponent = CustomMapControlFactory
-            ? KeplerGl.injectComponents([CustomMapControlFactory])
-            : KeplerGl.KeplerGl;
+          var CustomPanelHeaderFactory = (function createCustomPanelHeader(react, keplerGl, BrandLogo) {
+            var PanelHeaderFactory = keplerGl.PanelHeaderFactory;
+            if (!PanelHeaderFactory) {
+              console.warn('kepler.gl: Panel header factory not available, skipping branding injection');
+              return null;
+            }
 
-          var KeplerElement = (function makeKeplerElement(react, keplerGl, mapboxToken, branding) {
-            var BrandLogo = function BrandLogo() {
-              return react.createElement(
-                "div",
-                { className: "logo-container", style: {position: 'fixed', zIndex: 10000, padding: '4px'} },
-                  react.createElement(
-                    "a",
-                    {
-                      className: "kepler_gl__logo",
-                      href: branding.appWebsite,
-                      target: "_blank",
-                      rel: "noopener noreferrer",
-                      style: {
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        color: '#1FBAD6',
-                        fontFamily: "ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif",
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        letterSpacing: '1.17px',
-                        textDecoration: 'none'
-                      }
-                    },
-                    react.createElement(
-                      "svg",
-                      {width: "22px", height: "15px", viewBox: "0 0 22 15", "aria-hidden": true},
-                      react.createElement(
-                        "g",
-                        {transform: "translate(11, -3) rotate(45.000000)"},
-                        react.createElement("rect", {fill: "#535C6C", x: "0", y: "5", width: "10", height: "10"}),
-                        react.createElement("rect", {fill: "#1FBAD6", x: "5", y: "0", width: "10", height: "10"})
-                      )
-                    ),
-                    react.createElement("span", null, branding.appName)
-                  )
+            function ExportPanelHeaderFactory() {
+              var PanelHeader = PanelHeaderFactory.apply(null, arguments);
+              return function ExportPanelHeader(props) {
+                return react.createElement(
+                  PanelHeader,
+                  Object.assign({}, props, {logoComponent: BrandLogo})
                 );
               };
+            }
+            ExportPanelHeaderFactory.deps = PanelHeaderFactory.deps;
+            return [PanelHeaderFactory, ExportPanelHeaderFactory];
+          }(React, KeplerGl, BrandLogo));
 
+          var CustomFactories = [CustomMapControlFactory, CustomPanelHeaderFactory].filter(Boolean);
+          var KeplerGlComponent = CustomFactories.length
+            ? KeplerGl.injectComponents(CustomFactories)
+            : KeplerGl.KeplerGl;
+
+          var KeplerElement = (function makeKeplerElement(react, keplerGl, mapboxToken, branding, BrandLogo) {
             return function App() {
               var rootElm = react.useRef(null);
               var _useState = react.useState({
@@ -543,7 +615,11 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               return react.createElement(
                 'div',
                 {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
-                ${options.mode === EXPORT_HTML_MAP_MODES.READ ? 'BrandLogo(),' : ''}
+                ${
+                  options.mode === EXPORT_HTML_MAP_MODES.READ
+                    ? "react.createElement(BrandLogo, {fixed: true}),"
+                    : ''
+                }
                 react.createElement(KeplerGlComponent, {
                   mapboxApiAccessToken: mapboxToken,
                   id: "map",
@@ -554,7 +630,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                 })
               )
             }
-          }(React, KeplerGl, MAPBOX_TOKEN, branding));
+          }(React, KeplerGl, MAPBOX_TOKEN, branding, BrandLogo));
 
           const app = (function createReactReduxProvider(react, reactRedux, KeplerElement) {
             return react.createElement(

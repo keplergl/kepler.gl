@@ -37,7 +37,11 @@ describe('exportJson', () => {
       value: saveBlob
     });
 
-    exportJson(state, {hasData: false});
+    exportJson(state, {
+      hasData: false,
+      appIcon: 'https://example.test/icon.svg',
+      appNameColor: '#123456'
+    });
 
     expect(await readJsonBlob(saveBlob.mock.calls[0][0])).toEqual(configOnlyMap);
 
@@ -49,6 +53,24 @@ describe('exportJson', () => {
         ...dataInclusiveMap.info,
         appName: 'kepler.gl',
         appWebsite: 'http://kepler.gl/',
+        source: 'kepler.gl'
+      }
+    });
+
+    exportJson(state, {
+      hasData: true,
+      appIcon: 'https://example.test/icon.svg',
+      appNameColor: '#123456'
+    });
+
+    expect(await readJsonBlob(saveBlob.mock.calls[2][0])).toEqual({
+      ...dataInclusiveMap,
+      info: {
+        ...dataInclusiveMap.info,
+        appName: 'kepler.gl',
+        appWebsite: 'http://kepler.gl/',
+        appIcon: 'https://example.test/icon.svg',
+        appNameColor: '#123456',
         source: 'kepler.gl'
       }
     });

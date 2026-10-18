@@ -116,7 +116,9 @@ describe('ExportMapModal', () => {
     expect(getByLabelText('Description')).toHaveValue('A city map');
     expect(getByRole('region', {name: 'Map details'})).toBeInTheDocument();
     expect(queryByLabelText('Application name')).toBeNull();
+    expect(queryByLabelText('Application name color')).toBeNull();
     expect(queryByLabelText('Website')).toBeNull();
+    expect(queryByLabelText('Icon URL')).toBeNull();
 
     fireEvent.change(getByLabelText('Name'), {target: {value: 'Updated map'}});
     expect(defaultProps.onMapInfoDraft).toHaveBeenCalledWith({
@@ -216,13 +218,17 @@ describe('ExportMapModal', () => {
     expect(queryByRole('button', {name: 'Branding'})).toBeNull();
     expect(detailsButton).toHaveAttribute('aria-expanded', 'false');
     expect(queryByLabelText('Application name')).toBeNull();
+    expect(queryByLabelText('Application name color')).toBeNull();
     expect(queryByLabelText('Website')).toBeNull();
+    expect(queryByLabelText('Icon URL')).toBeNull();
 
     fireEvent.click(detailsButton);
     expect(detailsButton).toHaveAttribute('aria-expanded', 'true');
     expect(getByLabelText('Application name')).toHaveValue('Acme Maps');
+    expect(getByLabelText('Application name color')).toHaveValue('#1fbad6');
     expect(getByLabelText('Website')).toHaveValue('https://maps.acme.test');
-    ['Name', 'Description', 'Application name', 'Website'].forEach(label =>
+    expect(getByLabelText('Icon URL')).toHaveValue('');
+    ['Name', 'Description', 'Application name', 'Application name color', 'Website', 'Icon URL'].forEach(label =>
       expectCenteredRowLabel(getByLabelText(label))
     );
 
@@ -232,6 +238,20 @@ describe('ExportMapModal', () => {
     fireEvent.change(getByLabelText('Website'), {target: {value: 'https://atlas.test'}});
     expect(defaultProps.onChangeExportMapBranding).toHaveBeenCalledWith({
       appWebsite: 'https://atlas.test'
+    });
+
+    fireEvent.change(getByLabelText('Icon URL'), {
+      target: {value: 'https://atlas.test/icon.svg'}
+    });
+    expect(defaultProps.onChangeExportMapBranding).toHaveBeenCalledWith({
+      appIcon: 'https://atlas.test/icon.svg'
+    });
+
+    fireEvent.change(getByLabelText('Application name color'), {
+      target: {value: '#123456'}
+    });
+    expect(defaultProps.onChangeExportMapBranding).toHaveBeenCalledWith({
+      appNameColor: '#123456'
     });
   });
 
@@ -292,7 +312,9 @@ describe('ExportMapModal', () => {
       ...INITIAL_UI_STATE.exportMap,
       format: EXPORT_MAP_FORMATS.JSON,
       appName: 'Atlas JSON',
-      appWebsite: 'https://json.atlas.test'
+      appWebsite: 'https://json.atlas.test',
+      appIcon: 'https://json.atlas.test/icon.svg',
+      appNameColor: '#654321'
     };
     const {container, getByLabelText, getByRole, getByText, queryByText} = renderModal({options});
     const inactivePanel = container.querySelector('[inert]') as HTMLElement;
@@ -324,7 +346,9 @@ describe('ExportMapModal', () => {
 
     fireEvent.click(getByRole('button', {name: 'Map details'}));
     expect(getByLabelText('Application name')).toHaveValue('Atlas JSON');
+    expect(getByLabelText('Application name color')).toHaveValue('#654321');
     expect(getByLabelText('Website')).toHaveValue('https://json.atlas.test');
+    expect(getByLabelText('Icon URL')).toHaveValue('https://json.atlas.test/icon.svg');
 
     fireEvent.change(getByLabelText('Application name'), {target: {value: 'Updated Atlas'}});
     expect(defaultProps.onChangeExportMapBranding).toHaveBeenCalledWith({

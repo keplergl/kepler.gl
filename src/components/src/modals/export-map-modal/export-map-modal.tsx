@@ -43,6 +43,8 @@ interface ExportMapModalOptions {
   fileName?: string;
   appName?: string;
   appWebsite?: string;
+  appIcon?: string;
+  appNameColor?: string;
   [key: string]: any;
 }
 
@@ -67,6 +69,14 @@ const MapInfoInput = styled(InputLight)`
   width: 100%;
   max-width: 380px;
 `;
+
+const DEFAULT_APP_NAME_COLOR = '#1FBAD6';
+
+function getAppNameColorInputValue(value: unknown): string {
+  return typeof value === 'string' && /^#[\da-f]{6}$/i.test(value)
+    ? value
+    : DEFAULT_APP_NAME_COLOR;
+}
 
 const style = {width: '100%'};
 
@@ -280,6 +290,24 @@ function ExportMapModalFactory(
                 <StyledExportMapSection>
                   <div className="description description--centered">
                     <div className="title">
+                      <FormattedMessage id="modal.exportMap.appNameColorTitle" />
+                    </div>
+                  </div>
+                  <div className="selection">
+                    <MapInfoInput
+                      id="export-map-app-name-color"
+                      type="color"
+                      value={getAppNameColorInputValue(options.appNameColor)}
+                      aria-label={intl.formatMessage({id: 'modal.exportMap.appNameColorTitle'})}
+                      onChange={event =>
+                        onChangeExportMapBranding({appNameColor: event.target.value})
+                      }
+                    />
+                  </div>
+                </StyledExportMapSection>
+                <StyledExportMapSection>
+                  <div className="description description--centered">
+                    <div className="title">
                       <FormattedMessage id="modal.exportMap.appWebsiteTitle" />
                     </div>
                   </div>
@@ -292,6 +320,22 @@ function ExportMapModalFactory(
                       onChange={event =>
                         onChangeExportMapBranding({appWebsite: event.target.value})
                       }
+                    />
+                  </div>
+                </StyledExportMapSection>
+                <StyledExportMapSection>
+                  <div className="description description--centered">
+                    <div className="title">
+                      <FormattedMessage id="modal.exportMap.appIconTitle" />
+                    </div>
+                  </div>
+                  <div className="selection">
+                    <MapInfoInput
+                      id="export-map-app-icon"
+                      type="url"
+                      value={options.appIcon ?? ''}
+                      aria-label={intl.formatMessage({id: 'modal.exportMap.appIconTitle'})}
+                      onChange={event => onChangeExportMapBranding({appIcon: event.target.value})}
                     />
                   </div>
                 </StyledExportMapSection>

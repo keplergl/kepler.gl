@@ -24,7 +24,9 @@ test('exportUtils -> ExportJson', t => {
   const map = getMapJSON(state, {
     hasData: true,
     appName: '</script> Atlas',
-    appWebsite: 'https://atlas.example.com/?next="map"'
+    appWebsite: 'https://atlas.example.com/?next="map"',
+    appIcon: 'https://atlas.example.com/icon.svg',
+    appNameColor: '#123456'
   });
   const body = exportToJsonString(map);
   getScaleFromImageSize;
@@ -40,6 +42,12 @@ test('exportUtils -> ExportJson', t => {
     'https://atlas.example.com/?next="map"',
     'should preserve the application website'
   );
+  t.equal(
+    map.info.appIcon,
+    'https://atlas.example.com/icon.svg',
+    'should preserve the application icon'
+  );
+  t.equal(map.info.appNameColor, '#123456', 'should preserve the application name color');
   t.deepEqual(JSON.parse(body).info, map.info, 'should safely serialize branding as JSON metadata');
 
   t.end();
@@ -227,7 +235,9 @@ test('exportUtils -> ExportHtml preserves nullish dataset and config values', t 
 test('exportUtils -> ExportHtml preserves custom branding', t => {
   const branding = {
     appName: 'Atlas Lab',
-    appWebsite: 'https://atlas.example.com/maps'
+    appWebsite: 'https://atlas.example.com/maps',
+    appIcon: 'https://atlas.example.com/icon.svg',
+    appNameColor: '#123456'
   };
   const html = exportMapToHTML({
     datasets: [],
@@ -252,10 +262,26 @@ test('exportUtils -> ExportHtml preserves custom branding', t => {
     'the read-only logo should link to the app website'
   );
   t.ok(
-    html.includes('react.createElement("span", null, branding.appName)'),
-    'the read-only logo should render the app name'
+    html.includes('react.createElement("span", {style: {color: branding.appNameColor}}, branding.appName)'),
+    'the exported logo should render the app name using its selected color'
   );
-  t.ok(html.includes('BrandLogo(),'), 'a read-only export should render the branding badge');
+  t.ok(
+    html.includes('react.createElement(BrandLogo, {fixed: true})'),
+    'a read-only export should render the branding badge'
+  );
+  t.ok(
+    html.includes('src: branding.appIcon'),
+    'the exported logo should render the normalized custom icon'
+  );
+  t.ok(
+    html.includes('Object.assign({}, props, {logoComponent: BrandLogo})'),
+    'editable exports should inject the same branding badge into the side panel'
+  );
+  t.ok(
+    html.includes('!fixed && props && props.version') &&
+      html.includes('className: "logo__version"'),
+    'editable exports should preserve the side-panel version label'
+  );
   t.ok(
     html.includes('appName: branding.appName') && html.includes('appWebsite: branding.appWebsite'),
     'the embedded component should receive the branding props'
@@ -311,7 +337,12 @@ test('exportUtils -> ExportHtml uses default branding', t => {
   t.ok(brandingMatch, 'exported html should define default branding settings');
   t.deepEqual(
     JSON.parse(brandingMatch[1]),
-    {appName: 'kepler.gl', appWebsite: 'http://kepler.gl/'},
+    {
+      appName: 'kepler.gl',
+      appWebsite: 'http://kepler.gl/',
+      appIcon: null,
+      appNameColor: '#1FBAD6'
+    },
     'exported html should retain the Kepler defaults'
   );
   t.ok(
@@ -326,12 +357,16 @@ test('exportUtils -> ExportHtml safely serializes branding', t => {
   const appName = '</title><script>window.brandPwned=1;</script> & Map\u2028\u2029';
   const appWebsite =
     'https://example.com/?next=</script><script>window.websitePwned=1;</script>\u2028\u2029';
+  const appIcon =
+    'https://example.com/icon.svg?next=</script><script>window.iconPwned=1;</script>\u2028\u2029';
   const html = exportMapToHTML({
     datasets: [],
     config: {version: 'v1', config: {}},
     mode: 'READ',
     appName,
-    appWebsite
+    appWebsite,
+    appIcon,
+    appNameColor: '</script><script>window.colorPwned=1</script>'
   });
   const brandingMatch = html.match(/const branding = (.+);/);
 
@@ -342,6 +377,14 @@ test('exportUtils -> ExportHtml safely serializes branding', t => {
   t.notOk(
     html.includes('<script>window.websitePwned'),
     'the app website should not be able to close the inline script'
+  );
+  t.notOk(
+    html.includes('<script>window.iconPwned'),
+    'the app icon should not be able to close the inline script'
+  );
+  t.notOk(
+    html.includes('<script>window.colorPwned'),
+    'an invalid app name color should not be serialized'
   );
   t.ok(
     html.includes(
@@ -360,7 +403,10 @@ test('exportUtils -> ExportHtml safely serializes branding', t => {
     {
       appName,
       appWebsite:
-        'https://example.com/?next=%3C/script%3E%3Cscript%3Ewindow.websitePwned=1;%3C/script%3E'
+        'https://example.com/?next=%3C/script%3E%3Cscript%3Ewindow.websitePwned=1;%3C/script%3E',
+      appIcon:
+        'https://example.com/icon.svg?next=%3C/script%3E%3Cscript%3Ewindow.iconPwned=1;%3C/script%3E',
+      appNameColor: '#1FBAD6'
     },
     'escaped branding should retain its normalized values at runtime'
   );
