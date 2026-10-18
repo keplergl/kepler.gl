@@ -356,6 +356,33 @@ export function getBinThresholds(interval: string, domain: number[]): number[] {
   return binThresholds;
 }
 
+const MAX_NUMERIC_BINS = 2048;
+
+function getNumericBinCount(domain: number[], interval: number): number {
+  const [start, end] = domain;
+  const rawCount = (end - start) / interval;
+  const roundedCount = Math.round(rawCount);
+  return Math.abs(rawCount - roundedCount) <= Number.EPSILON * Math.max(1, Math.abs(rawCount)) * 16
+    ? roundedCount
+    : Math.ceil(rawCount);
+}
+
+function normalizeNumericInterval(domain: number[], interval?: number): number | undefined {
+  if (!Number.isFinite(interval) || !(Number(interval) > 0)) {
+    return undefined;
+  }
+  if (
+    Array.isArray(domain) &&
+    domain.length >= 2 &&
+    domain.every(Number.isFinite) &&
+    domain[1] > domain[0] &&
+    getNumericBinCount(domain, Number(interval)) > MAX_NUMERIC_BINS
+  ) {
+    return undefined;
+  }
+  return Number(interval);
+}
+
 /**
  * Build histogram thresholds in the numeric field's own units.
  * Unlike time intervals, numeric intervals are anchored to the filter domain
@@ -381,13 +408,8 @@ export function getNumericBinThresholds(
   }
 
   const width = Number(interval);
-  const rawCount = (end - start) / width;
-  const roundedCount = Math.round(rawCount);
-  const count =
-    Math.abs(rawCount - roundedCount) <= Number.EPSILON * Math.max(1, Math.abs(rawCount)) * 16
-      ? roundedCount
-      : Math.ceil(rawCount);
-  if (count > 2048) {
+  const count = getNumericBinCount(domain, width);
+  if (count > MAX_NUMERIC_BINS) {
     return getNumericBinThresholds(domain, undefined, numBins);
   }
 
@@ -1373,11 +1395,6 @@ export function updateRangeFilterPlotType(
   _dataId?: string,
   plotBaseIndexByDataId?: Record<string, number[]>
 ): RangeFilter {
-  const nextFilter = {
-    ...filter,
-    plotType
-  };
-
   // if (dataId) {
   //   // clear bins
   //   nextFilter = {
@@ -1389,7 +1406,15 @@ export function updateRangeFilterPlotType(
   //   };
   // }
 
+  const configuredNumericInterval = plotType?.numericInterval;
+  const numericInterval = normalizeNumericInterval(filter.domain, configuredNumericInterval);
+  const shouldUseAutomaticBins =
+    configuredNumericInterval !== undefined && numericInterval === undefined;
   let nextPlotType = plotType;
+  if (shouldUseAutomaticBins) {
+    const {numericInterval: _numericInterval, ...automaticPlotType} = nextPlotType || {};
+    nextPlotType = automaticPlotType;
+  }
   if (filter.dataId.length > 1) {
     nextPlotType = {
       ...nextPlotType,
@@ -1397,15 +1422,15 @@ export function updateRangeFilterPlotType(
     };
   }
 
-  let updatedFilter = {
+  const nextFilter = {
     ...filter,
-    plotType: nextPlotType,
-    bins: getRangeFilterBins(
-      {...nextFilter, plotType: nextPlotType},
-      datasets,
-      BINS,
-      plotBaseIndexByDataId
-    )
+    ...(shouldUseAutomaticBins ? {bins: undefined, lineChart: undefined} : {}),
+    plotType: nextPlotType
+  };
+
+  let updatedFilter = {
+    ...nextFilter,
+    bins: getRangeFilterBins(nextFilter, datasets, BINS, plotBaseIndexByDataId)
   };
   if (nextPlotType.type === PLOT_TYPES.lineChart) {
     updatedFilter = {...updatedFilter, lineChart: getLineChart(datasets, updatedFilter)};

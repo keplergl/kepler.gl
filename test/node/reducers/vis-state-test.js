@@ -40,6 +40,7 @@ import {
   getAnimatableVisibleLayers,
   getBinThresholds,
   getFilterBinThresholds,
+  getNumericPlotInterval,
   intervalBinFromMarks,
   getDefaultFilter,
   histogramFromDomain,
@@ -3630,6 +3631,13 @@ test('#visStateReducer -> numeric filter timeline uses numeric bins and no time-
 
   state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.01}}));
   state = reducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.enlarged));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'gps_data.lng'));
+  t.equal(
+    state.filters[0].view,
+    FILTER_VIEW_TYPES.enlarged,
+    'should keep an opted-in numeric timeline open when changing numeric fields'
+  );
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'gps_data.lat'));
   state = reducer(
     state,
     VisStateActions.setFilterAnimationWindow({
@@ -3678,6 +3686,45 @@ test('#visStateReducer -> numeric filter timeline uses numeric bins and no time-
   t.equal(state.filters[0].type, 'range', 'should switch back to numeric behavior');
   t.notOk(state.filters[0].timezone, 'should clear timezone state from a numeric filter');
   t.notOk(state.filters[0].plotType.interval, 'should clear calendar binning from numeric mode');
+
+  t.end();
+});
+
+test('#visStateReducer -> oversized numeric intervals use coherent automatic bins', t => {
+  const {fields, rows} = processCsvData(`x
+0
+100`);
+  const payload = [
+    {
+      info: {id: 'numeric-bin-limit', label: 'numeric bin limit'},
+      data: {fields, rows}
+    }
+  ];
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
+  state = reducer(state, VisStateActions.addFilter('numeric-bin-limit'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'x'));
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 10}}));
+  t.equal(state.filters[0].plotType.numericInterval, 10, 'should keep a valid numeric interval');
+
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.01}}));
+
+  const filter = state.filters[0];
+  const effectiveInterval = getNumericPlotInterval(filter);
+  t.notOk(
+    Object.prototype.hasOwnProperty.call(filter.plotType, 'numericInterval'),
+    'should discard an interval that exceeds the numeric bin limit'
+  );
+  t.ok(effectiveInterval > 0.01, 'should report the effective automatic bin width');
+  t.equal(
+    effectiveInterval,
+    filter.bins['numeric-bin-limit'][0].x1 - filter.bins['numeric-bin-limit'][0].x0,
+    'the displayed interval should match the bins used by the filter plot'
+  );
 
   t.end();
 });

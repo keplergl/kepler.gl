@@ -1363,6 +1363,10 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
     ...(filter.plotType ? {plotType: filter.plotType} : {})
   };
 
+  if (filter.type === FILTER_TYPES.range && newFilter.type === FILTER_TYPES.range) {
+    newFilter = {...newFilter, view: filter.view};
+  }
+
   if (filter.type === FILTER_TYPES.timeRange && newFilter.type === FILTER_TYPES.range) {
     const {
       timeBins: _timeBins,
