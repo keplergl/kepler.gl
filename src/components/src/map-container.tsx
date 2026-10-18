@@ -1843,7 +1843,7 @@ export default function MapContainerFactory(
           {!isExport && getApplicationConfig().enableMapScale ? (
             <StyledMapScaleContainer
               $left={
-                primary && activeSidePanel
+                primary && activeSidePanel && !this.props.readOnly
                   ? (sidePanelWidth || 0) + (theme?.sidePanel?.margin?.left ?? 9)
                   : theme?.sidePanel?.margin?.left ?? 9
               }
