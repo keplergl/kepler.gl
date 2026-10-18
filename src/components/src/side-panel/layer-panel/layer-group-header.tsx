@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useState, useEffect, useRef} from 'react';
+import {useDispatch} from 'react-redux';
 import styled from 'styled-components';
 
 import {ActionHandler, VisStateActions} from '@kepler.gl/actions';
@@ -149,6 +150,7 @@ function LayerGroupHeaderFactory(
     className
   }) => {
     const {id, label} = layerGroup;
+    const dispatch = useDispatch();
     const [showConfirmation, setShowConfirmation] = useState(false);
     const confirmRef = useRef<HTMLDivElement>(null);
 
@@ -165,16 +167,38 @@ function LayerGroupHeaderFactory(
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [showConfirmation]);
 
+    const updateGroup: ActionHandler<typeof VisStateActions.updateLayerGroup> = useCallback(
+      payload => {
+        if (updateLayerGroup) {
+          updateLayerGroup(payload);
+        } else {
+          dispatch(VisStateActions.updateLayerGroup(payload));
+        }
+      },
+      [dispatch, updateLayerGroup]
+    );
+
+    const removeGroup: ActionHandler<typeof VisStateActions.removeLayerGroup> = useCallback(
+      payload => {
+        if (removeLayerGroup) {
+          removeLayerGroup(payload);
+        } else {
+          dispatch(VisStateActions.removeLayerGroup(payload));
+        }
+      },
+      [dispatch, removeLayerGroup]
+    );
+
     const onUpdateLabel = useCallback(
       event => {
-        updateLayerGroup?.({id, options: {label: event.target.value}});
+        updateGroup({id, options: {label: event.target.value}});
       },
-      [id, updateLayerGroup]
+      [id, updateGroup]
     );
 
     const onToggleVisibility = useCallback(() => {
-      updateLayerGroup?.({id, options: {isVisible: !layerGroup.isVisible}});
-    }, [id, layerGroup.isVisible, updateLayerGroup]);
+      updateGroup({id, options: {isVisible: !layerGroup.isVisible}});
+    }, [id, layerGroup.isVisible, updateGroup]);
 
     const onDelete = useCallback(
       (e: React.MouseEvent) => {
@@ -182,19 +206,19 @@ function LayerGroupHeaderFactory(
         if (layerCount > 0) {
           setShowConfirmation(true);
         } else {
-          removeLayerGroup?.({id});
+          removeGroup({id});
         }
       },
-      [id, layerCount, removeLayerGroup]
+      [id, layerCount, removeGroup]
     );
 
     const onConfirmDelete = useCallback(
       (e: React.MouseEvent) => {
         e.stopPropagation();
-        removeLayerGroup?.({id});
+        removeGroup({id});
         setShowConfirmation(false);
       },
-      [id, removeLayerGroup]
+      [id, removeGroup]
     );
 
     const VisibilityIcon = layerGroup.isVisible ? EyeSeen : EyeUnseen;
