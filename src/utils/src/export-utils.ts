@@ -264,7 +264,9 @@ export function exportJson(state, options: any = {}) {
   const appName = options.appName || state.appName || KEPLER_GL_NAME;
   const appWebsite = options.appWebsite ?? state.appWebsite ?? KEPLER_GL_WEBSITE;
   const map = getMapJSON(state, {...options, appName, appWebsite});
-  map.info.source = 'kepler.gl';
+  if (map.info) {
+    map.info.source = 'kepler.gl';
+  }
   const fileBlob = new Blob([exportToJsonString(map)], {type: 'application/json'});
   const fileName = getExportFileName(
     options.fileName,
