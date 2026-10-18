@@ -184,6 +184,21 @@ test('Processor -> getFieldsFromData scientific notation', t => {
   t.end();
 });
 
+test('Processor -> getFieldsFromData keeps legacy numeric detection by default', t => {
+  const data = [
+    {zeroPadded: '06', mixed: 'Monika'},
+    {zeroPadded: '07', mixed: '1234'}
+  ];
+  const fields = getFieldsFromData(data, ['zeroPadded', 'mixed']);
+
+  t.deepEqual(
+    fields.map(field => field.type),
+    [ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.integer],
+    'existing callers should retain legacy inference unless they opt into strict detection'
+  );
+  t.end();
+});
+
 test('Processor -> processCsvData preserves numeric-looking strings', t => {
   const {fields, rows} = processCsvData(
     'zeroPadded,mixedInteger,mixedReal,numeric\n06,Monika,Monika,0\n07,1234,12.34,1.5'

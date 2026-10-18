@@ -186,7 +186,7 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
   // No need to run type detection on every data point
   // here we get a list of none null values to run analyze on
   const sample = getSampleForTypeAnalyze({fields: headerRow, rows});
-  const fields = getFieldsFromData(sample, headerRow);
+  const fields = getFieldsFromData(sample, headerRow, {strictNumericTypeDetection: true});
   const parsedRows = parseRowsByFields(rows, fields);
 
   return {fields, rows: parsedRows};

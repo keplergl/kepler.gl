@@ -32,7 +32,7 @@ function isZeroPaddedIntegerSample(value: unknown): boolean {
  * parseFloat would misread or round.
  */
 function isRealNumberSample(value: unknown): boolean {
-  if (!notNullorUndefined(value) || value === '' || Number.isNaN(value)) {
+  if (!notNullorUndefined(value) || value === '') {
     return true;
   }
   if (typeof value === 'number') {
@@ -43,10 +43,12 @@ function isRealNumberSample(value: unknown): boolean {
   }
   const asNumber = Number(value);
   return (
-    Number.isFinite(asNumber) &&
-    !isZeroPaddedIntegerSample(value) &&
-    (!INTEGER_REGEX.test(value) || Number.isSafeInteger(asNumber))
+    Number.isFinite(asNumber) && (!INTEGER_REGEX.test(value) || Number.isSafeInteger(asNumber))
   );
+}
+
+function isStrictRealNumberSample(value: unknown): boolean {
+  return Number.isNaN(value) || (!isZeroPaddedIntegerSample(value) && isRealNumberSample(value));
 }
 
 function isIntegerSample(value: unknown): boolean {
@@ -260,6 +262,7 @@ export function analyzerTypeToFieldType(aType: string): string {
  *
  * @param data array of row object
  * @param fieldOrder array of field names as string
+ * @param strictNumericTypeDetection validate every numeric sample and preserve numeric-looking strings
  * @returns formatted fields
  * @public
  * @example
@@ -295,7 +298,15 @@ export function analyzerTypeToFieldType(aType: string): string {
  * // {name: 'zeroOnes', format: '', fieldIdx: 7, type: 'integer'}];
  *
  */
-export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] {
+export function getFieldsFromData(
+  data: RowData,
+  fieldOrder: string[],
+  {
+    strictNumericTypeDetection = false
+  }: {
+    strictNumericTypeDetection?: boolean;
+  } = {}
+): Field[] {
   // add a check for epoch timestamp
   const analyzerData = data.map(row => {
     const next: Record<string, unknown> = {};
@@ -326,16 +337,17 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     let type = fieldMeta?.type || 'STRING';
     const format = fieldMeta?.format || '';
 
-    // type-analyzer tolerates invalid samples when inferring numeric columns. Verify every
-    // sample so mixed strings are not parsed as NaN and zero-padded identifiers keep their zeros.
-    const samples = analyzerData.map(row => row[field]);
-    if (type === AnalyzerDATA_TYPES.INT && !samples.every(isIntegerSample)) {
-      type =
-        !samples.some(isZeroPaddedIntegerSample) && samples.every(isRealNumberSample)
+    if (strictNumericTypeDetection) {
+      // type-analyzer tolerates invalid samples when inferring numeric columns. Verify every
+      // sample so mixed strings are not parsed as NaN and zero-padded identifiers keep their zeros.
+      const samples = analyzerData.map(row => row[field]);
+      if (type === AnalyzerDATA_TYPES.INT && !samples.every(isIntegerSample)) {
+        type = samples.every(isStrictRealNumberSample)
           ? AnalyzerDATA_TYPES.FLOAT
           : AnalyzerDATA_TYPES.STRING;
-    } else if (type === AnalyzerDATA_TYPES.FLOAT && !samples.every(isRealNumberSample)) {
-      type = AnalyzerDATA_TYPES.STRING;
+      } else if (type === AnalyzerDATA_TYPES.FLOAT && !samples.every(isStrictRealNumberSample)) {
+        type = AnalyzerDATA_TYPES.STRING;
+      }
     }
 
     // quick check if first valid string in column is H3
@@ -360,7 +372,11 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     // read a column of numbers in scientific notation as real numbers instead of strings
     if (
       type === AnalyzerDATA_TYPES.NUMBER &&
-      analyzerData.every(row => isRealNumberSample(row[field]))
+      analyzerData.every(row =>
+        strictNumericTypeDetection
+          ? isStrictRealNumberSample(row[field])
+          : isRealNumberSample(row[field])
+      )
     ) {
       type = AnalyzerDATA_TYPES.FLOAT;
     }

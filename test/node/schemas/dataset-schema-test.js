@@ -4,7 +4,7 @@
 import test from 'tape';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import SchemaManager, {datasetSchema, VERSIONS} from '@kepler.gl/schemas';
-import {DatasetType} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, DatasetType} from '@kepler.gl/constants';
 
 // fixtures
 import {
@@ -56,6 +56,36 @@ test('#DatasetSchema -> SchemaManager.parseSavedData', t => {
   t.end();
 });
 /* eslint-enable max-statements */
+
+test('#DatasetSchema -> SchemaManager.parseSavedData preserves legacy numeric detection', t => {
+  const [parsedDataset] = SchemaManager.parseSavedData([
+    {
+      version: 'v0',
+      data: {
+        id: 'legacy-types',
+        label: 'Legacy types',
+        allData: [
+          ['06', 'Monika'],
+          ['07', '1234']
+        ],
+        fields: [
+          {name: 'zeroPadded', type: 'integer'},
+          {name: 'mixed', type: 'integer'}
+        ]
+      }
+    }
+  ]);
+
+  t.deepEqual(
+    parsedDataset.data.fields.map(({type, analyzerType}) => ({type, analyzerType})),
+    [
+      {type: ALL_FIELD_TYPES.integer, analyzerType: 'INT'},
+      {type: ALL_FIELD_TYPES.integer, analyzerType: 'INT'}
+    ],
+    'saved datasets should retain legacy-inferred numeric field types'
+  );
+  t.end();
+});
 
 test('#DatasetSchema -> SchemaManager.parseSavedData.v1', t => {
   const dataSaved = cloneDeep(savedStateV1).datasets;
