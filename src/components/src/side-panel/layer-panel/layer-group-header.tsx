@@ -2,10 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useState, useEffect, useRef} from 'react';
-import {useDispatch} from 'react-redux';
 import styled from 'styled-components';
 
-import {updateLayerGroup, removeLayerGroup} from '@kepler.gl/actions';
+import {ActionHandler, VisStateActions} from '@kepler.gl/actions';
 import {LayerOrderGroup} from '@kepler.gl/types';
 import {getFlatLayerOrder} from '@kepler.gl/reducers';
 
@@ -129,6 +128,8 @@ export type LayerGroupHeaderProps = {
   layerGroup: LayerOrderGroup;
   isLayerGroupContentOpen?: boolean;
   onToggleLayerGroupContent?: () => void;
+  updateLayerGroup?: ActionHandler<typeof VisStateActions.updateLayerGroup>;
+  removeLayerGroup?: ActionHandler<typeof VisStateActions.removeLayerGroup>;
   listeners?: any;
   className?: string;
 };
@@ -142,11 +143,12 @@ function LayerGroupHeaderFactory(
     layerGroup,
     onToggleLayerGroupContent,
     isLayerGroupContentOpen,
+    updateLayerGroup,
+    removeLayerGroup,
     listeners,
     className
   }) => {
     const {id, label} = layerGroup;
-    const dispatch = useDispatch();
     const [showConfirmation, setShowConfirmation] = useState(false);
     const confirmRef = useRef<HTMLDivElement>(null);
 
@@ -165,14 +167,14 @@ function LayerGroupHeaderFactory(
 
     const onUpdateLabel = useCallback(
       event => {
-        dispatch(updateLayerGroup({id, options: {label: event.target.value}}));
+        updateLayerGroup?.({id, options: {label: event.target.value}});
       },
-      [dispatch, id]
+      [id, updateLayerGroup]
     );
 
     const onToggleVisibility = useCallback(() => {
-      dispatch(updateLayerGroup({id, options: {isVisible: !layerGroup.isVisible}}));
-    }, [dispatch, id, layerGroup.isVisible]);
+      updateLayerGroup?.({id, options: {isVisible: !layerGroup.isVisible}});
+    }, [id, layerGroup.isVisible, updateLayerGroup]);
 
     const onDelete = useCallback(
       (e: React.MouseEvent) => {
@@ -180,19 +182,19 @@ function LayerGroupHeaderFactory(
         if (layerCount > 0) {
           setShowConfirmation(true);
         } else {
-          dispatch(removeLayerGroup({id}));
+          removeLayerGroup?.({id});
         }
       },
-      [dispatch, id, layerCount]
+      [id, layerCount, removeLayerGroup]
     );
 
     const onConfirmDelete = useCallback(
       (e: React.MouseEvent) => {
         e.stopPropagation();
-        dispatch(removeLayerGroup({id}));
+        removeLayerGroup?.({id});
         setShowConfirmation(false);
       },
-      [dispatch, id]
+      [id, removeLayerGroup]
     );
 
     const VisibilityIcon = layerGroup.isVisible ? EyeSeen : EyeUnseen;

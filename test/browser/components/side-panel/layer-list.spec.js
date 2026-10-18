@@ -3,6 +3,8 @@
 
 import React from 'react';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
+import {bindActionCreators, createStore} from 'redux';
+import {Provider} from 'react-redux';
 
 import {fireEvent, screen} from '@testing-library/react';
 import {dataTestIds} from '@kepler.gl/constants';
@@ -12,10 +14,15 @@ import {
   UIStateActions,
   MapStateActions,
   addDataToMap,
+  forwardTo,
   keplerGlInit
 } from '@kepler.gl/actions';
 import {processCsvData} from '@kepler.gl/processors';
-import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
+import {
+  getLayerGroupFromLayerOrder,
+  keplerGlReducer as rootReducer,
+  keplerGlReducerCore as keplerGlReducer
+} from '@kepler.gl/reducers';
 
 import {renderWithTheme} from '../../../helpers/component-jest-utils';
 import testLayerData from '../../../fixtures/test-layer-data';
@@ -77,6 +84,32 @@ function mockStateWithMultipleH3Layers() {
 const LayerList = appInjector.get(LayerListFactory);
 
 const StateWMultiH3Layers = mockStateWithMultipleH3Layers();
+
+function createInstanceState(instanceId) {
+  const state = mockStateWithMultipleH3Layers();
+  const [sharedGroupLayer, instanceGroupLayer] = state.visState.layers;
+
+  sharedGroupLayer.config.isVisible = true;
+  instanceGroupLayer.config.isVisible = true;
+  state.visState.layerOrder = [
+    {
+      id: 'shared-group',
+      label: `${instanceId} shared group`,
+      isVisible: true,
+      isIncludedInLegend: true,
+      layerOrder: [sharedGroupLayer.id]
+    },
+    {
+      id: `${instanceId}-only-group`,
+      label: `${instanceId} only group`,
+      isVisible: true,
+      isIncludedInLegend: true,
+      layerOrder: [instanceGroupLayer.id]
+    }
+  ];
+
+  return state;
+}
 
 const defaultProps = {
   datasets: StateWMultiH3Layers.visState.datasets,
@@ -144,5 +177,63 @@ describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
     fireEvent.click(removeLayerButton);
 
     expect(removeLayer).toHaveBeenCalled();
+  });
+
+  it('keeps grouped-layer visibility isolated between map instances', () => {
+    const firstMapId = 'first-map';
+    const secondMapId = 'second-map';
+    const store = createStore(rootReducer, {
+      [firstMapId]: createInstanceState(firstMapId),
+      [secondMapId]: createInstanceState(secondMapId)
+    });
+    const firstMapVisState = store.getState()[firstMapId].visState;
+    const firstMapActions = bindActionCreators(
+      VisStateActions,
+      forwardTo(firstMapId, store.dispatch)
+    );
+
+    const {container} = renderWithTheme(
+      <Provider store={store}>
+        <LayerList
+          {...defaultProps}
+          datasets={firstMapVisState.datasets}
+          layerClasses={firstMapVisState.layerClasses}
+          layerOrder={firstMapVisState.layerOrder}
+          layers={firstMapVisState.layers}
+          visStateActions={firstMapActions}
+          isSortable={false}
+        />
+      </Provider>
+    );
+
+    fireEvent.click(container.querySelectorAll('.layer-group__visibility-toggle svg')[0]);
+
+    const firstMapState = store.getState()[firstMapId].visState;
+    const secondMapState = store.getState()[secondMapId].visState;
+    const firstMapSharedGroup = getLayerGroupFromLayerOrder(
+      firstMapState.layerOrder,
+      'shared-group'
+    );
+    const secondMapSharedGroup = getLayerGroupFromLayerOrder(
+      secondMapState.layerOrder,
+      'shared-group'
+    );
+    const firstMapOnlyGroup = getLayerGroupFromLayerOrder(
+      firstMapState.layerOrder,
+      `${firstMapId}-only-group`
+    );
+    const secondMapOnlyGroup = getLayerGroupFromLayerOrder(
+      secondMapState.layerOrder,
+      `${secondMapId}-only-group`
+    );
+
+    expect(firstMapSharedGroup.isVisible).toBe(false);
+    expect(firstMapState.layers[0].config.isVisible).toBe(false);
+    expect(firstMapOnlyGroup.isVisible).toBe(true);
+    expect(firstMapState.layers[1].config.isVisible).toBe(true);
+    expect(secondMapSharedGroup.isVisible).toBe(true);
+    expect(secondMapState.layers[0].config.isVisible).toBe(true);
+    expect(secondMapOnlyGroup.isVisible).toBe(true);
+    expect(secondMapState.layers[1].config.isVisible).toBe(true);
   });
 });
