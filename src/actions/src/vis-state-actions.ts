@@ -2427,6 +2427,7 @@ type FileContent = {
   fileName: string;
   header: string[];
   data: any;
+  prepareProgressiveReplay?: boolean;
 };
 export type NextFileBatchUpdaterAction = {
   payload: {

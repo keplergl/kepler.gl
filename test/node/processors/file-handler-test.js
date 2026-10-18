@@ -6,13 +6,19 @@ import {
   isKeplerGlMap,
   makeProgressIterator,
   filesToDataPayload,
+  fileCacheToProgressiveSteps,
   processFileData,
+  parseGeoArrowBatchesOnWorkers,
   remoteDatasetFromUrl,
   processArrowBatches,
   getGeoJsonFromLoaderResult,
   readBatch
 } from '@kepler.gl/processors';
-import {getDatasetRefreshIntervalMs} from '@kepler.gl/constants';
+import {
+  GEOARROW_EXTENSIONS,
+  GEOARROW_METADATA_KEY,
+  getDatasetRefreshIntervalMs
+} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
 import {convertArrowToSchema} from '@loaders.gl/schema-utils';
 import {parsedFields, parsedRows} from 'test/fixtures/row-object';
@@ -455,6 +461,135 @@ test('#file-handler -> processArrowBatches skip compact for incremental loads', 
   t.end();
 });
 
+test('#file-handler -> parseGeoArrowBatchesOnWorkers parses the latest chunk', async t => {
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
+  const batchA = new arrow.Table({
+    geometry: arrow.vectorFromArray([[-122.4, 37.8]], pointType)
+  });
+  const batchB = new arrow.Table({
+    geometry: arrow.vectorFromArray(
+      [
+        [-122.5, 37.9],
+        [-122.6, 38]
+      ],
+      pointType
+    )
+  });
+  batchA.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+  batchB.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+  const combined = batchA.concat(batchB);
+  const processed = processArrowBatches(combined.batches, {compact: false});
+  const calls = [];
+  const binaryDataFromGeoArrow = {
+    binaryGeometries: [{shape: 'binary-feature-collection'}],
+    bounds: [-122.6, 37.9, -122.5, 38],
+    featureTypes: {point: true, line: false, polygon: false},
+    meanCenters: [
+      [-122.5, 37.9],
+      [-122.6, 38]
+    ]
+  };
+
+  const parsed = await parseGeoArrowBatchesOnWorkers(processed, {
+    latestOnly: true,
+    parseOnWorker: async input => {
+      calls.push(input);
+      return {chunkIndex: input.chunkIndex, binaryDataFromGeoArrow};
+    }
+  });
+
+  t.equal(calls.length, 1, 'should schedule one worker for the newest chunk');
+  t.equal(calls[0].chunkIndex, 1, 'should parse the second record batch');
+  t.equal(calls[0].chunkOffset, 1, 'should offset global feature ids by earlier row counts');
+  t.equal(
+    calls[0].geometryEncoding,
+    GEOARROW_EXTENSIONS.POINT,
+    'should preserve the native GeoArrow encoding'
+  );
+  t.equal(parsed[0][1], binaryDataFromGeoArrow, 'should cache worker output by column and chunk');
+  t.end();
+});
+
+test('#file-handler -> parseGeoArrowBatchesOnWorkers combines compacted worker chunks', async t => {
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
+  const batchA = new arrow.Table({
+    geometry: arrow.vectorFromArray([[-122.4, 37.8]], pointType)
+  });
+  const batchB = new arrow.Table({
+    geometry: arrow.vectorFromArray([[-122.5, 37.9]], pointType)
+  });
+  batchA.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+  batchB.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+  const processed = processArrowBatches(batchA.concat(batchB).batches, {compact: false});
+  const calls = [];
+
+  const parsed = await parseGeoArrowBatchesOnWorkers(processed, {
+    targetChunkCount: 1,
+    parseOnWorker: async input => {
+      calls.push(input);
+      const x = input.chunkIndex === 0 ? -122.4 : -122.5;
+      const y = input.chunkIndex === 0 ? 37.8 : 37.9;
+      return {
+        chunkIndex: input.chunkIndex,
+        binaryDataFromGeoArrow: {
+          binaryGeometries: [{chunkIndex: input.chunkIndex}],
+          bounds: [x, y, x, y],
+          featureTypes: {point: true, line: false, polygon: false},
+          meanCenters: [[x, y]]
+        }
+      };
+    }
+  });
+
+  t.equal(calls.length, 2, 'should schedule one worker job per original record batch');
+  t.deepEqual(Object.keys(parsed[0]), ['0'], 'should expose one cache chunk after compaction');
+  t.deepEqual(
+    parsed[0][0].binaryGeometries,
+    [{chunkIndex: 0}, {chunkIndex: 1}],
+    'should retain worker geometry in record-batch order'
+  );
+  t.deepEqual(parsed[0][0].bounds, [-122.5, 37.8, -122.4, 37.9], 'should merge bounds');
+  t.deepEqual(
+    parsed[0][0].meanCenters,
+    [
+      [-122.4, 37.8],
+      [-122.5, 37.9]
+    ],
+    'should merge mean centers'
+  );
+  t.end();
+});
+
+test('#file-handler -> compacted worker cache handles large centroid arrays', async t => {
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
+  const table = new arrow.Table({
+    geometry: arrow.vectorFromArray([[-122.4, 37.8]], pointType)
+  });
+  table.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+  const processed = processArrowBatches(table.batches, {compact: false});
+  const largeMeanCenters = Array.from({length: 150000}, () => [-122.4, 37.8]);
+
+  const parsed = await parseGeoArrowBatchesOnWorkers(processed, {
+    targetChunkCount: 1,
+    parseOnWorker: async input => ({
+      chunkIndex: input.chunkIndex,
+      binaryDataFromGeoArrow: {
+        binaryGeometries: [],
+        bounds: [-122.4, 37.8, -122.4, 37.8],
+        featureTypes: {point: true, line: false, polygon: false},
+        meanCenters: largeMeanCenters
+      }
+    })
+  });
+
+  t.equal(
+    parsed[0][0].meanCenters.length,
+    largeMeanCenters.length,
+    'should combine every centroid without spreading them into function arguments'
+  );
+  t.end();
+});
+
 test('#file-handler -> processArrowBatches Int64/Uint64 columns', async t => {
   const table = arrow.tableFromArrays({
     hexId: new BigUint64Array([610625465232654335n, 610625465081659391n]),
@@ -671,7 +806,8 @@ test('#file-handler -> rows with type Feature but no geometry stay tables', asyn
 test('#file-handler -> processFileData skipArrowCompact', async t => {
   const batchA = arrow.tableFromJSON([{lng: -122.4, lat: 37.8}]);
   const batchB = arrow.tableFromJSON([{lng: -122.5, lat: 37.9}]);
-  const combined = batchA.concat(batchB);
+  const batchC = arrow.tableFromJSON([{lng: -122.6, lat: 38.0}]);
+  const combined = batchA.concat(batchB).concat(batchC);
 
   const incremental = await processFileData({
     content: {
@@ -699,6 +835,36 @@ test('#file-handler -> processFileData skipArrowCompact', async t => {
     1,
     'final processFileData should compact Arrow batches'
   );
+
+  const staged = await processFileData({
+    content: {
+      fileName: 'points.arrow',
+      data: combined.batches,
+      prepareProgressiveReplay: true
+    },
+    fileCache: []
+  });
+  t.equal(staged[0].progressiveData.length, 3, 'should keep one replay snapshot per batch');
+  t.deepEqual(
+    staged[0].progressiveData.map(data => data.cols[0].length),
+    [1, 2, 3],
+    'replay snapshots should grow by one batch at a time'
+  );
+  t.deepEqual(
+    staged[0].progressiveData.map(data => data.cols[0].data.length),
+    [1, 2, 1],
+    'only the completed replay snapshot should be compacted'
+  );
+
+  const csv = {
+    data: {fields: [], rows: [[1]]},
+    info: {id: 'csv', label: 'points.csv', format: 'csv'}
+  };
+  const steps = fileCacheToProgressiveSteps([staged[0], csv]);
+  t.equal(steps.length, 3, 'should create one confirmed Add Data update per Arrow batch');
+  t.equal(steps[0].length, 2, 'non-progressive files should be included in the first update');
+  t.equal(steps[1].length, 1, 'later updates should contain only the Arrow dataset');
+  t.notOk(steps[0][0].progressiveData, 'internal replay data should not enter map state');
 
   t.end();
 });

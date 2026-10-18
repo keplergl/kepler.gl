@@ -248,7 +248,7 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
     return null;
   }
 
-  const {fields, rows, cols} = data;
+  const {fields, rows, cols, geoArrowBinaryData} = data;
 
   // check if all fields has name, format and type
   const allValid = fields.every((f, i) => {
@@ -294,7 +294,12 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
   });
 
   if (allValid) {
-    return {rows, fields, cols};
+    return {
+      rows,
+      fields,
+      cols,
+      ...(geoArrowBinaryData ? {geoArrowBinaryData} : {})
+    };
   }
 
   // if any field has missing type, recalculate it for everyone
@@ -317,7 +322,12 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
     analyzerType: meta[i].analyzerType
   }));
 
-  return {fields: updatedFields, rows, ...(cols ? {cols} : {})};
+  return {
+    fields: updatedFields,
+    rows,
+    ...(cols ? {cols} : {}),
+    ...(geoArrowBinaryData ? {geoArrowBinaryData} : {})
+  };
 }
 
 function findNonEmptyRowsAtField(rows: unknown[][], fieldIdx: number, total: number): any[] {

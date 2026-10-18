@@ -8547,6 +8547,7 @@ test('#visStateReducer -> deferred empty queue stages the parsed files', t => {
 
 test('#visStateReducer -> deferred arrow batches are not added early', t => {
   drainTasksForTesting();
+  const previousProgressiveLoading = getApplicationConfig().useArrowProgressiveLoading;
   const batch = {
     gen: {next: () => Promise.resolve({done: true, value: null})},
     fileName: 'data.arrow',
@@ -8554,24 +8555,38 @@ test('#visStateReducer -> deferred arrow batches are not added early', t => {
     accumulated: {data: [{value: 1}], fileName: 'data.arrow'},
     onFinish: VisStateActions.stageLoadedFiles
   };
-  reducer(
-    CloneDeep(InitialState).visState,
-    VisStateActions.nextFileBatch({...batch, options: {deferAddToMap: true}})
-  );
-  const deferredTasks = drainTasksForTesting();
-  t.equal(
-    deferredTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
-    false,
-    'a deferred arrow file waits until parsing finishes'
-  );
+  try {
+    reducer(
+      CloneDeep(InitialState).visState,
+      VisStateActions.nextFileBatch({...batch, options: {deferAddToMap: true}})
+    );
+    const deferredTasks = drainTasksForTesting();
+    t.equal(
+      deferredTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
+      false,
+      'a deferred arrow file waits until parsing finishes'
+    );
 
-  reducer(CloneDeep(InitialState).visState, VisStateActions.nextFileBatch(batch));
-  const immediateTasks = drainTasksForTesting();
-  t.equal(
-    immediateTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
-    true,
-    'an arrow file still adds each batch when it is not deferred'
-  );
+    initApplicationConfig({useArrowProgressiveLoading: false});
+    reducer(CloneDeep(InitialState).visState, VisStateActions.nextFileBatch(batch));
+    const disabledTasks = drainTasksForTesting();
+    t.equal(
+      disabledTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
+      false,
+      'an arrow file waits until parsing finishes when progressive loading is disabled'
+    );
+
+    initApplicationConfig({useArrowProgressiveLoading: true});
+    reducer(CloneDeep(InitialState).visState, VisStateActions.nextFileBatch(batch));
+    const immediateTasks = drainTasksForTesting();
+    t.equal(
+      immediateTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
+      true,
+      'an arrow file still adds each batch when it is not deferred'
+    );
+  } finally {
+    initApplicationConfig({useArrowProgressiveLoading: previousProgressiveLoading});
+  }
   t.end();
 });
 

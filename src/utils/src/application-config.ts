@@ -430,7 +430,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   table: null,
   database: null,
 
-  useArrowProgressiveLoading: true,
+  useArrowProgressiveLoading: false,
   showReleaseBanner: true,
   useOnFilteredItemsChange: false,
 

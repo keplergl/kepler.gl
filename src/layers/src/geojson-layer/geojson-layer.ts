@@ -740,6 +740,7 @@ export default class GeoJsonLayer extends Layer {
             dataContainer,
             geoColumn,
             geoField,
+            columnIndex: this.config.columns.geojson.fieldIdx,
             ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
           });
         if (isIncrementalLoad) {
