@@ -299,6 +299,7 @@ export function schemaField(field: Field, name: string): ProtoDataset['data']['f
     fieldIdx: _fieldIdx,
     filterProps: _filterProps,
     isLoadingStats: _isLoadingStats,
+    columnStatsRequestId: _columnStatsRequestId,
     ...rest
   } = field;
   return {

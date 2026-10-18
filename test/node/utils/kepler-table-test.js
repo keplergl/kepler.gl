@@ -468,6 +468,11 @@ test('KeplerTable -> update with arrow cols keeps gpu filter state', async t => 
 
   const gpuFilter = table.gpuFilter;
   table.filterRecord = {name: 'keep-me'};
+  table.fields[0] = {
+    ...table.fields[0],
+    filterProps: {type: FILTER_TYPES.range, columnStats: {type: 'numeric', mean: 1.5}}
+  };
+  table.fields[1] = {...table.fields[1], isLoadingStats: true};
 
   const next = arrow.tableFromArrays({
     lat: [1, 2, 3],
@@ -487,6 +492,14 @@ test('KeplerTable -> update with arrow cols keeps gpu filter state', async t => 
   t.equal(table.gpuFilter, gpuFilter, 'arrow incremental update should keep gpuFilter');
   t.equal(table.filterRecord?.name, 'keep-me', 'arrow incremental update should keep filterRecord');
   t.equal(table.dataRevision, 1, 'arrow incremental update should bump dataRevision');
+  t.notOk(
+    table.fields[0].filterProps?.columnStats,
+    'arrow incremental update should invalidate cached column statistics'
+  );
+  t.notOk(
+    table.fields[1].isLoadingStats,
+    'arrow incremental update should clear obsolete statistics loading state'
+  );
   t.end();
 });
 

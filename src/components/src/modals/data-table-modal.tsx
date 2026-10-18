@@ -14,7 +14,7 @@ import KeplerTable, {
 } from '@kepler.gl/table';
 import {UIStateActions} from '@kepler.gl/actions';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {UiState} from '@kepler.gl/types';
+import {Field, UiState} from '@kepler.gl/types';
 import {
   collectColumnValues,
   ColumnStats,
@@ -154,22 +154,14 @@ function filteredDisplayIndexes(
 }
 
 function filteredColumnValues(
-  field: {fieldIdx?: number; filterProps?: object | null},
+  field: Field,
   dataContainer: DataContainerInterface,
   filteredIdxCPU: number[]
 ): unknown[] {
-  const mappedValue =
-    field.filterProps &&
-    'mappedValue' in field.filterProps &&
-    Array.isArray(field.filterProps.mappedValue)
-      ? field.filterProps.mappedValue
-      : undefined;
-  if (mappedValue && mappedValue.length === dataContainer.numRows()) {
-    return filteredIdxCPU.map(index => mappedValue[index]);
-  }
   return collectColumnValues(
     createIndexedDataContainer(dataContainer, filteredIdxCPU),
-    field.fieldIdx ?? 0
+    field.fieldIdx,
+    field.valueAccessor
   );
 }
 

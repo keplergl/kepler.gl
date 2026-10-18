@@ -157,6 +157,7 @@ export type Field = {
   metadata?: Record<string, any>;
   displayFormat?: string;
   isLoadingStats?: boolean;
+  columnStatsRequestId?: string;
   indexBy?: IndexBy;
 };
 

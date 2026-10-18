@@ -114,6 +114,25 @@ function warnRowEditsUnavailable(method: string): void {
   Console.warn(`KeplerTable.${method}: ${ROW_EDIT_NOT_IMPLEMENTED}`);
 }
 
+type FieldWithColumnStatistics = {
+  isLoadingStats?: boolean;
+  columnStatsRequestId?: string;
+  filterProps?: FilterProps | null;
+};
+
+function clearColumnStatistics<F>(field: F & FieldWithColumnStatistics): F {
+  const {
+    isLoadingStats: _isLoadingStats,
+    columnStatsRequestId: _columnStatsRequestId,
+    ...fieldWithoutRequest
+  } = field;
+  if (!fieldWithoutRequest.filterProps) {
+    return fieldWithoutRequest as F;
+  }
+  const {columnStats: _columnStats, ...filterProps} = fieldWithoutRequest.filterProps;
+  return {...fieldWithoutRequest, filterProps} as F;
+}
+
 function readFieldValue(
   fieldIdx: number,
   dc: DataContainerInterface,
@@ -260,15 +279,18 @@ class KeplerTable<F extends Field = Field> {
       inputDataFormat
     });
 
-    const fields: Field[] = data.fields.map((f, i) => ({
-      ...f,
-      fieldIdx: i,
-      id: f.name,
-      displayName: f.displayName || f.name,
-      analyzerType: f.analyzerType || ALL_FIELD_TYPES.string,
-      format: f.format || '',
-      valueAccessor: getFieldValueAccessor(f, i, dataContainer)
-    }));
+    const fields: Field[] = data.fields.map((f, i) => {
+      const field = clearColumnStatistics(f);
+      return {
+        ...field,
+        fieldIdx: i,
+        id: field.name,
+        displayName: field.displayName || field.name,
+        analyzerType: field.analyzerType || ALL_FIELD_TYPES.string,
+        format: field.format || '',
+        valueAccessor: getFieldValueAccessor(field, i, dataContainer)
+      };
+    });
 
     const allIndexes = dataContainer.getPlainIndex();
     this.dataContainer = dataContainer;
@@ -312,14 +334,19 @@ class KeplerTable<F extends Field = Field> {
       });
     }
 
-    if (isRowSnapshot) {
-      this.fields = this.fields.map((f, i) => {
-        const {filterProps: _filterProps, ...rest} = f;
+    this.fields = this.fields.map((f, i) => {
+      const field = clearColumnStatistics(f);
+      if (isRowSnapshot) {
+        const {filterProps: _filterProps, ...rest} = field;
         return {
           ...rest,
           valueAccessor: getFieldValueAccessor(f, i, this.dataContainer)
         };
-      }) as F[];
+      }
+      return field;
+    }) as F[];
+
+    if (isRowSnapshot) {
       this.filterRecord = undefined;
       this.filterRecordCPU = undefined;
       this.changedFilters = undefined;
@@ -480,7 +507,12 @@ class KeplerTable<F extends Field = Field> {
     // Drop cached per-row props (mappedValue is indexed by row). Same as a
     // snapshot update(); getColumnFilterProps rebuilds after indexes are current.
     this.fields = this.fields.map(f => {
-      const {filterProps: _filterProps, ...rest} = f;
+      const {
+        filterProps: _filterProps,
+        isLoadingStats: _isLoadingStats,
+        columnStatsRequestId: _columnStatsRequestId,
+        ...rest
+      } = f;
       return rest;
     }) as F[];
 

@@ -13,11 +13,22 @@ import {KeplerTable} from '@kepler.gl/table';
 import SchemaManager, {VisState} from '@kepler.gl/schemas';
 import {drainTasksForTesting, errorTaskInTest, succeedTaskInTest} from '@kepler.gl/tasks';
 import type {PolygonFilter, RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
+import {tableFromArrays} from 'apache-arrow';
 
 import visStateReducer from './vis-state';
 import {INITIAL_VIS_STATE} from './vis-state-updaters';
 
 const reduceVisState = visStateReducer as (state: VisState, action: unknown) => VisState;
+
+function runTask(task: ReturnType<typeof drainTasksForTesting>[number]): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    task.run(
+      (effect, resolveEffect, rejectEffect) => effect(resolveEffect, rejectEffect),
+      resolve,
+      reject
+    );
+  });
+}
 
 function makeTable(id: string, data: Parameters<KeplerTable['updateSchema']>[0]) {
   const table = new KeplerTable({
@@ -67,6 +78,26 @@ function makeCities() {
     ]
   });
   return table;
+}
+
+function makeArrowCities() {
+  const arrowTable = tableFromArrays({
+    lat: [37.7, 40.7],
+    lng: [-122.4, -74.0],
+    region: ['west', 'east'],
+    pop: [10, 40]
+  });
+  return makeTable('cities', {
+    fields: [
+      {name: 'lat', type: ALL_FIELD_TYPES.real},
+      {name: 'lng', type: ALL_FIELD_TYPES.real},
+      {name: 'region', type: ALL_FIELD_TYPES.string},
+      {name: 'pop', type: ALL_FIELD_TYPES.integer}
+    ],
+    rows: [],
+    cols: [0, 1, 2, 3].map(index => arrowTable.getChildAt(index)),
+    arrowTable
+  });
 }
 
 function withCities(): VisState {
@@ -644,12 +675,33 @@ describe('column edits', () => {
     ).not.toBe(result);
   });
 
-  test.each(['refresh', 'append'])('pending statistics complete after a normal %s', update => {
+  test('pending statistics complete after a same-revision table update', () => {
+    let state = withCities();
+    state = reduceVisState(state, VisStateActions.loadColumnStats('cities', 'pop'));
+    const requestRevision = state.datasets.cities.dataRevision;
+    const [task] = drainTasksForTesting();
+
+    state = reduceVisState(state, VisStateActions.pinTableColumn('cities', 'region'));
+    expect(state.datasets.cities.dataRevision).toBe(requestRevision);
+
+    const result = {type: 'numeric', mean: 25};
+    state = reduceVisState(
+      state,
+      succeedTaskInTest(task, {result, filterProps: {type: FILTER_TYPES.range}})
+    );
+
+    expect(state.datasets.cities.fields[3]).toMatchObject({
+      isLoadingStats: false,
+      filterProps: {columnStats: result}
+    });
+  });
+
+  test.each(['refresh', 'append'])('pending statistics are ignored after a row %s', update => {
     let state = withCities();
     const types = state.datasets.cities.fields.map(field => field.type);
     state = reduceVisState(state, VisStateActions.loadColumnStats('cities', 'pop'));
+    const requestRevision = state.datasets.cities.dataRevision;
     const [task] = drainTasksForTesting();
-    state = reduceVisState(state, VisStateActions.pinTableColumn('cities', 'region'));
     const row = [41, -75, 'north', 50];
     state = reduceVisState(
       state,
@@ -660,6 +712,8 @@ describe('column edits', () => {
           })
         : VisStateActions.addToDataset('cities', [row])
     );
+    expect(state.datasets.cities.dataRevision).toBe(requestRevision + 1);
+    expect(state.datasets.cities.fields[3].isLoadingStats).toBeUndefined();
 
     const result = {type: 'numeric', mean: 25};
     const successState = reduceVisState(
@@ -668,17 +722,237 @@ describe('column edits', () => {
     );
     const logError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const errorState = reduceVisState(state, errorTaskInTest(task, new Error('stats failed')));
-    logError.mockRestore();
 
     expect(state.datasets.cities.fields.map(field => field.type)).toEqual(types);
-    expect(successState.datasets.cities.fields[3]).toMatchObject({
-      isLoadingStats: false,
-      filterProps: {columnStats: result}
-    });
-    expect(errorState.datasets.cities.fields[3].isLoadingStats).toBe(false);
+    expect(successState).toBe(state);
+    expect(errorState).toBe(state);
+    expect(logError).not.toHaveBeenCalled();
+    logError.mockRestore();
     expect(state.datasets.cities.dataContainer.rowAsArray(update === 'refresh' ? 0 : 2)).toEqual(
       row
     );
+  });
+
+  test.each(['pending', 'cached'])(
+    'schema and row updates using current fields invalidate %s statistics',
+    status => {
+      let state = withCities();
+      state = reduceVisState(state, VisStateActions.loadColumnStats('cities', 'pop'));
+      const [task] = drainTasksForTesting();
+
+      if (status === 'cached') {
+        state = reduceVisState(
+          state,
+          succeedTaskInTest(task, {
+            result: {type: 'numeric', mean: 25},
+            filterProps: {type: FILTER_TYPES.range}
+          })
+        );
+      }
+
+      const requestRevision = state.datasets.cities.dataRevision;
+      const currentFields = state.datasets.cities.fields;
+      state = reduceVisState(
+        state,
+        VisStateActions.updateDataset('cities', {
+          fields: currentFields,
+          rows: [[41, -75, 'north', 999]]
+        })
+      );
+
+      expect(state.datasets.cities.dataRevision).toBe(requestRevision + 1);
+      expect(state.datasets.cities.dataContainer.rowAsArray(0)).toEqual([
+        41,
+        -75,
+        'north',
+        999
+      ]);
+      expect(state.datasets.cities.fields[3]).toMatchObject({
+        name: 'pop',
+        displayName: 'pop',
+        type: ALL_FIELD_TYPES.integer
+      });
+      expect(state.datasets.cities.fields[3]).not.toHaveProperty('isLoadingStats');
+      expect(state.datasets.cities.fields[3]).not.toHaveProperty('columnStatsRequestId');
+      expect(state.datasets.cities.fields[3].filterProps?.columnStats).toBeUndefined();
+
+      if (status === 'pending') {
+        const updatedState = state;
+        state = reduceVisState(
+          state,
+          succeedTaskInTest(task, {
+            result: {type: 'numeric', mean: 25},
+            filterProps: {type: FILTER_TYPES.range}
+          })
+        );
+        expect(state).toBe(updatedState);
+      } else {
+        expect(state.datasets.cities.fields[3].filterProps).toMatchObject({
+          type: FILTER_TYPES.range
+        });
+      }
+    }
+  );
+
+  test.each(['rows', 'cols'])(
+    'statistics use current timestamp values after a same-length %s schema update',
+    async inputForm => {
+      const oldValues = [
+        '2024-01-01T00:00:00Z',
+        '2024-01-03T00:00:00Z',
+        '2024-01-05T00:00:00Z'
+      ];
+      const nextValues = [
+        '2030-01-01T00:00:00Z',
+        '2030-01-03T00:00:00Z',
+        '2030-01-05T00:00:00Z'
+      ];
+      const table = makeTable('events', {
+        fields: [{name: 'ts', type: ALL_FIELD_TYPES.timestamp}],
+        rows: oldValues.map(value => [value])
+      });
+      table.getColumnFilterProps('ts');
+      const staleMappedValue = table.fields[0].filterProps?.mappedValue;
+      expect(staleMappedValue).toEqual([1704067200000, 1704240000000, 1704412800000]);
+      let state = withTables(table);
+      const currentFields = state.datasets.events.fields;
+
+      if (inputForm === 'rows') {
+        state = reduceVisState(
+          state,
+          VisStateActions.updateDataset('events', {
+            fields: currentFields,
+            rows: nextValues.map(value => [value])
+          })
+        );
+      } else {
+        const arrowTable = tableFromArrays({ts: nextValues});
+        state = reduceVisState(
+          state,
+          VisStateActions.updateDataset('events', {
+            fields: currentFields,
+            rows: [],
+            cols: [arrowTable.getChildAt(0)],
+            arrowTable
+          })
+        );
+      }
+
+      state = reduceVisState(state, VisStateActions.loadColumnStats('events', 'ts'));
+      const [task] = drainTasksForTesting();
+      state = reduceVisState(state, await runTask(task));
+
+      expect(state.datasets.events.fields[0].filterProps?.columnStats).toMatchObject({
+        type: 'time',
+        min: 1893456000000,
+        max: 1893801600000,
+        percentNulls: 0
+      });
+    }
+  );
+
+  test('Arrow row updates invalidate cached and pending statistics', async () => {
+    let state = withTables(makeArrowCities());
+    const cachedResult = {type: 'numeric', mean: 25};
+    state = reduceVisState(state, VisStateActions.loadColumnStats('cities', 'pop'));
+    let [task] = drainTasksForTesting();
+    state = reduceVisState(
+      state,
+      succeedTaskInTest(task, {
+        result: cachedResult,
+        filterProps: {type: FILTER_TYPES.range}
+      })
+    );
+    expect(state.datasets.cities.fields[3].filterProps?.columnStats).toBe(cachedResult);
+
+    state = reduceVisState(state, VisStateActions.loadColumnStats('cities', 'pop'));
+    [task] = drainTasksForTesting();
+    const requestRevision = state.datasets.cities.dataRevision;
+    const next = tableFromArrays({
+      lat: [37.7, 40.7, 41],
+      lng: [-122.4, -74.0, -75],
+      region: ['west', 'east', 'north'],
+      pop: [10, 40, 50]
+    });
+    await state.datasets.cities.update({
+      fields: [],
+      rows: [],
+      cols: [0, 1, 2, 3].map(index => next.getChildAt(index)),
+      arrowTable: next
+    });
+
+    expect(state.datasets.cities.dataRevision).toBe(requestRevision + 1);
+    expect(state.datasets.cities.fields[3].filterProps?.columnStats).toBeUndefined();
+    expect(state.datasets.cities.fields[3].isLoadingStats).toBeUndefined();
+
+    const staleResult = {type: 'numeric', mean: 999};
+    const completed = reduceVisState(
+      state,
+      succeedTaskInTest(task, {
+        result: staleResult,
+        filterProps: {type: FILTER_TYPES.range}
+      })
+    );
+    expect(completed).toBe(state);
+    expect(completed.datasets.cities.fields[3].filterProps?.columnStats).toBeUndefined();
+  });
+
+  test('old statistics cannot affect a recreated dataset or its newer request', () => {
+    let state = withCities();
+    state = reduceVisState(state, VisStateActions.loadColumnStats('cities', 'pop'));
+    const [oldTask] = drainTasksForTesting();
+
+    state = reduceVisState(state, VisStateActions.removeDataset('cities'));
+    state = reduceVisState(
+      state,
+      VisStateActions.createNewDatasetSuccess({
+        results: [{status: 'fulfilled', value: makeCities()}],
+        addToMapOptions: {autoCreateLayers: false},
+        progressIds: []
+      })
+    );
+    drainTasksForTesting();
+    state = reduceVisState(state, VisStateActions.loadColumnStats('cities', 'pop'));
+    const [newTask] = drainTasksForTesting();
+    const replacementLoadingState = state;
+
+    const oldResult = {type: 'numeric', mean: 25};
+    const oldSuccessState = reduceVisState(
+      replacementLoadingState,
+      succeedTaskInTest(oldTask, {
+        result: oldResult,
+        filterProps: {type: FILTER_TYPES.range}
+      })
+    );
+    const logError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const oldErrorState = reduceVisState(
+      replacementLoadingState,
+      errorTaskInTest(oldTask, new Error('old stats failed'))
+    );
+
+    expect(oldSuccessState).toBe(replacementLoadingState);
+    expect(oldErrorState).toBe(replacementLoadingState);
+    expect(logError).not.toHaveBeenCalled();
+    logError.mockRestore();
+    expect(replacementLoadingState.datasets.cities.fields[3]).toMatchObject({
+      isLoadingStats: true
+    });
+    expect(
+      replacementLoadingState.datasets.cities.fields[3].filterProps?.columnStats
+    ).toBeUndefined();
+
+    const newResult = {type: 'numeric', mean: 50};
+    const completed = reduceVisState(
+      replacementLoadingState,
+      succeedTaskInTest(newTask, {
+        result: newResult,
+        filterProps: {type: FILTER_TYPES.range}
+      })
+    );
+    expect(completed.datasets.cities.fields[3]).toMatchObject({
+      isLoadingStats: false,
+      filterProps: {columnStats: newResult}
+    });
   });
 
   test('duplicate rename and non-tabular datasets are ignored', () => {

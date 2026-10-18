@@ -4,7 +4,32 @@
 import test from 'tape';
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {ColumnStatsType, computeColumnStats, getColumnStatistics} from '@kepler.gl/utils';
+import {
+  collectColumnValues,
+  ColumnStatsType,
+  computeColumnStats,
+  createDataContainer,
+  createIndexedDataContainer,
+  getColumnStatistics
+} from '@kepler.gl/utils';
+
+test('columnStatistics -> collect current accessor values from indexed rows', t => {
+  const values = [
+    '2030-01-01T00:00:00Z',
+    '2030-01-03T00:00:00Z',
+    '2030-01-05T00:00:00Z'
+  ];
+  const dataContainer = createDataContainer(values.map(value => [value]));
+  const indexed = createIndexedDataContainer(dataContainer, [2, 0]);
+  const valueAccessor = ({index}) => Date.parse(dataContainer.valueAt(index, 0));
+
+  t.deepEqual(
+    collectColumnValues(indexed, 0, valueAccessor),
+    [1893801600000, 1893456000000],
+    'accessor should use the selected parent-row indexes'
+  );
+  t.end();
+});
 
 test('columnStatistics -> numeric', t => {
   const stats = computeColumnStats([1, 2, 3, 4, null], ALL_FIELD_TYPES.integer);

@@ -120,8 +120,12 @@ function getTimeStats(values: readonly unknown[]): TimeColumnStats {
 
 export function collectColumnValues(
   dataContainer: DataContainerInterface,
-  fieldIdx: number
+  fieldIdx: number,
+  valueAccessor?: ({index}: {index: number}) => unknown
 ): unknown[] {
+  if (valueAccessor) {
+    return dataContainer.mapIndex(valueAccessor);
+  }
   const n = dataContainer.numRows();
   const values = new Array(n);
   for (let i = 0; i < n; i++) {
