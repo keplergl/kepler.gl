@@ -3,11 +3,11 @@
 
 import React, {useRef, useEffect, useMemo} from 'react';
 import moment from 'moment-timezone';
-import {NumberValue, scaleUtc} from 'd3-scale';
+import {NumberValue, scaleLinear, scaleUtc} from 'd3-scale';
 import {select} from 'd3-selection';
 import {axisBottom} from 'd3-axis';
 import styled from 'styled-components';
-import {datetimeFormatter} from '@kepler.gl/utils';
+import {datetimeFormatter, formatNumber} from '@kepler.gl/utils';
 
 const MIN_TICK_WIDTH_LARGE = 80;
 const MIN_TICK_WIDTH_SMALL = 50;
@@ -97,18 +97,25 @@ export function getXAxis(
   domain: Date[] | NumberValue[],
   width: number,
   isEnlarged: boolean,
-  timezone: string
+  timezone: string,
+  isTime = true
 ) {
   if (!Array.isArray(domain) || !domain.every(Number.isFinite)) {
     return null;
   }
-  const scale = scaleUtc().domain(domain).range([0, width]);
+  const scale = isTime
+    ? scaleUtc().domain(domain).range([0, width])
+    : scaleLinear().domain(domain.map(Number)).range([0, width]);
   if (!scale) {
     return null;
   }
 
   const ticks = Math.floor(width / (isEnlarged ? MIN_TICK_WIDTH_LARGE : MIN_TICK_WIDTH_SMALL));
-  const tickFormat = timezone ? getTickFormat(timezone) : null;
+  const tickFormat = isTime
+    ? timezone
+      ? getTickFormat(timezone)
+      : null
+    : (value: NumberValue) => formatNumber(Number(value));
   const xAxis = axisBottom(scale).ticks(ticks).tickSize(4).tickPadding(4);
   if (tickFormat) {
     xAxis.tickFormat(tickFormat);
@@ -131,6 +138,7 @@ interface TimeSliderMarkerProps {
   isEnlarged?: boolean;
   height?: number;
   timezone: string;
+  isTime?: boolean;
 }
 
 function TimeSliderMarkerFactory() {
@@ -139,12 +147,13 @@ function TimeSliderMarkerFactory() {
     domain,
     isEnlarged = true,
     height = HEIGHT,
-    timezone
+    timezone,
+    isTime = true
   }: TimeSliderMarkerProps) => {
     const xAxisRef = useRef(null);
     const xAxis = useMemo(
-      () => getXAxis(domain, width, isEnlarged, timezone),
-      [domain, width, isEnlarged, timezone]
+      () => getXAxis(domain, width, isEnlarged, timezone, isTime),
+      [domain, width, isEnlarged, timezone, isTime]
     );
     useEffect(() => {
       updateAxis(xAxisRef, xAxis);

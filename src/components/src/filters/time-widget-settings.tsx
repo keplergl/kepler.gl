@@ -23,10 +23,18 @@ import {
   durationMonth,
   durationYear
 } from '@kepler.gl/constants';
-import {TimeRangeFilter, Field, ColorRange, ColorUI, NestedPartial} from '@kepler.gl/types';
+import {
+  TimeRangeFilter,
+  RangeFilter,
+  Field,
+  ColorRange,
+  ColorUI,
+  NestedPartial
+} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {
   getDefaultTimeFormat,
+  getNumericPlotInterval,
   PLOT_NUM_GROUPS_ALL,
   PLOT_NUM_GROUPS_OPTIONS,
   DEFAULT_PLOT_NUM_GROUPS,
@@ -53,6 +61,7 @@ const INTERVAL_UNITS = [
 ];
 
 const TIME_FORMAT_OPTIONS = ['12-hour', '24-hour'] as const;
+const SELECTOR_WIDTH = '120px';
 
 type HourCycle = (typeof TIME_FORMAT_OPTIONS)[number];
 
@@ -202,7 +211,7 @@ const FieldValue = styled.span`
 `;
 
 const SelectorWrapper = styled.div`
-  width: 120px;
+  width: ${SELECTOR_WIDTH};
 
   .item-selector__dropdown {
     background: ${props => props.theme.secondaryInputBgd};
@@ -227,10 +236,11 @@ const FieldSelectorWrapper = styled.div`
 
 type StepInputProps = {
   $hasError?: boolean;
+  $fullWidth?: boolean;
 };
 
 const StepInput = styled.input<StepInputProps>`
-  width: 48px;
+  width: ${props => (props.$fullWidth ? SELECTOR_WIDTH : '48px')};
   height: 28px;
   padding: 2px 8px;
   font-size: 11px;
@@ -371,7 +381,7 @@ function colorRangeFromColorUI(
 }
 
 export type TimeWidgetSettingsProps = {
-  filter: TimeRangeFilter;
+  filter: TimeRangeFilter | RangeFilter;
   datasets: Datasets;
   setFilterPlot: (newProp: any, valueIndex?: number) => void;
   onTimezoneChange: (timezone: string) => void;
@@ -400,39 +410,47 @@ function TimeWidgetSettingsFactory(
     onTimezoneChange,
     onTimeFormatChange
   }) => {
+    const isTimeFilter = filter.type === 'timeRange';
     const {plotType} = filter;
-    const currentInterval = plotType?.interval;
+    const currentInterval = isTimeFilter ? plotType?.interval : undefined;
     const currentAggregation = plotType?.aggregation || AGGREGATION_TYPES.average;
 
     const {step: parsedStep, unit: parsedUnit} = useMemo(
       () => parseInterval(currentInterval),
       [currentInterval]
     );
+    const intervalStep = useMemo(
+      () => (isTimeFilter ? parsedStep : getNumericPlotInterval(filter)),
+      [filter, isTimeFilter, parsedStep]
+    );
 
-    const [stepValue, setStepValue] = useState<string>(String(parsedStep));
+    const [stepValue, setStepValue] = useState<string>(String(intervalStep));
     const [unitValue, setUnitValue] = useState<string>(parsedUnit);
 
     useEffect(() => {
-      setStepValue(String(parsedStep));
-    }, [parsedStep]);
+      setStepValue(String(intervalStep));
+    }, [intervalStep]);
 
     useEffect(() => {
       setUnitValue(parsedUnit);
     }, [parsedUnit]);
 
     const effectiveStep = useMemo(() => {
-      const num = parseInt(stepValue, 10);
-      return num > 0 ? num : parsedStep;
-    }, [stepValue, parsedStep]);
+      const num = isTimeFilter ? parseInt(stepValue, 10) : Number(stepValue);
+      return num > 0 ? num : intervalStep;
+    }, [intervalStep, isTimeFilter, stepValue]);
 
     const isIntervalTooSmall = useCallback(
       (step: number, unit: string) => {
         const timeSpan = filter.domain ? filter.domain[1] - filter.domain[0] : 0;
+        if (!isTimeFilter) {
+          return timeSpan / step > MAX_BINS;
+        }
         const unitDuration = INTERVAL_UNITS.find(u => u.id === unit)?.duration || durationDay;
         const count = timeSpan / (step * unitDuration);
         return count > MAX_BINS;
       },
-      [filter.domain]
+      [filter.domain, isTimeFilter]
     );
 
     const intervalTooSmall = useMemo(() => {
@@ -464,11 +482,15 @@ function TimeWidgetSettingsFactory(
         if (isIntervalTooSmall(step, unit)) {
           return;
         }
-        const intervalId = `${step}-${unit}`;
-        const defaultTimeFormat = getDefaultTimeFormat(intervalId);
-        setFilterPlot({plotType: {interval: intervalId, defaultTimeFormat}});
+        if (isTimeFilter) {
+          const intervalId = `${step}-${unit}`;
+          const defaultTimeFormat = getDefaultTimeFormat(intervalId);
+          setFilterPlot({plotType: {interval: intervalId, defaultTimeFormat}});
+        } else {
+          setFilterPlot({plotType: {numericInterval: step}});
+        }
       },
-      [setFilterPlot, isIntervalTooSmall]
+      [setFilterPlot, isIntervalTooSmall, isTimeFilter]
     );
 
     const onStepChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -477,13 +499,13 @@ function TimeWidgetSettingsFactory(
     }, []);
 
     const onStepBlur = useCallback(() => {
-      const num = parseInt(stepValue, 10);
+      const num = isTimeFilter ? parseInt(stepValue, 10) : Number(stepValue);
       if (num > 0) {
         applyInterval(num, unitValue);
       } else {
-        setStepValue(String(parsedStep));
+        setStepValue(String(intervalStep));
       }
-    }, [stepValue, unitValue, parsedStep, applyInterval]);
+    }, [stepValue, unitValue, intervalStep, applyInterval, isTimeFilter]);
 
     const onStepKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
@@ -593,9 +615,11 @@ function TimeWidgetSettingsFactory(
       [aggregationOptions]
     );
 
+    const timeFilter = isTimeFilter ? filter : null;
     const effectiveTimeFormat =
-      (typeof filter.timeFormat === 'string' ? filter.timeFormat : filter.defaultTimeFormat) ||
-      DEFAULT_TIME_FORMAT;
+      (typeof timeFilter?.timeFormat === 'string'
+        ? timeFilter.timeFormat
+        : timeFilter?.defaultTimeFormat) || DEFAULT_TIME_FORMAT;
     const selectedTimeFormat = getHourCycle(effectiveTimeFormat) || getLocaleHourCycle();
 
     const handleTimeFormatChange = useCallback(
@@ -622,58 +646,69 @@ function TimeWidgetSettingsFactory(
               </FieldValue>
             </FieldBlock>
             <FieldBlock>
-              <FieldLabel>Interval</FieldLabel>
+              <FieldLabel>{isTimeFilter ? 'Interval' : 'Bin size'}</FieldLabel>
               <IntervalGroup>
                 <StepInput
                   type="number"
-                  min={1}
+                  data-testid={isTimeFilter ? undefined : 'numeric-bin-size'}
+                  min={isTimeFilter ? 1 : filter.step}
+                  step={isTimeFilter ? 1 : 'any'}
                   value={stepValue}
                   onChange={onStepChange}
                   onBlur={onStepBlur}
                   onKeyDown={onStepKeyDown}
                   $hasError={intervalTooSmall}
+                  $fullWidth={!isTimeFilter}
                 />
-                <UnitSelectorWrapper $hasError={intervalTooSmall}>
-                  <ItemSelector
-                    selectedItems={unitValue}
-                    options={INTERVAL_UNITS}
-                    multiSelect={false}
-                    onChange={onUnitChange}
-                    getOptionValue={o => o.id}
-                    displayOption={displayUnitOption}
-                    placement="top"
-                    searchable={false}
-                  />
-                </UnitSelectorWrapper>
+                {isTimeFilter ? (
+                  <UnitSelectorWrapper $hasError={intervalTooSmall}>
+                    <ItemSelector
+                      selectedItems={unitValue}
+                      options={INTERVAL_UNITS}
+                      multiSelect={false}
+                      onChange={onUnitChange}
+                      getOptionValue={o => o.id}
+                      displayOption={displayUnitOption}
+                      placement="top"
+                      searchable={false}
+                    />
+                  </UnitSelectorWrapper>
+                ) : null}
               </IntervalGroup>
             </FieldBlock>
-            <FieldBlock>
-              <FieldLabel>
-                <FormattedMessage id="filterManager.timezone" />
-              </FieldLabel>
-              <TimezoneSelector timezone={filter.timezone} onChange={onTimezoneChange} />
-            </FieldBlock>
-            <FieldBlock>
-              <FieldLabel id="time-widget-time-format-label">
-                <FormattedMessage id="filterManager.timeFormat" />
-              </FieldLabel>
-              <SelectorWrapper
-                data-testid="time-widget-time-format"
-                aria-labelledby="time-widget-time-format-label"
-              >
-                <ItemSelector
-                  size="small"
-                  selectedItems={selectedTimeFormat}
-                  options={TIME_FORMAT_OPTIONS}
-                  multiSelect={false}
-                  searchable={false}
-                  placement="top"
-                  onChange={handleTimeFormatChange}
-                />
-              </SelectorWrapper>
-            </FieldBlock>
+            {isTimeFilter ? (
+              <>
+                <FieldBlock>
+                  <FieldLabel>
+                    <FormattedMessage id="filterManager.timezone" />
+                  </FieldLabel>
+                  <TimezoneSelector timezone={filter.timezone} onChange={onTimezoneChange} />
+                </FieldBlock>
+                <FieldBlock>
+                  <FieldLabel id="time-widget-time-format-label">
+                    <FormattedMessage id="filterManager.timeFormat" />
+                  </FieldLabel>
+                  <SelectorWrapper
+                    data-testid="time-widget-time-format"
+                    aria-labelledby="time-widget-time-format-label"
+                  >
+                    <ItemSelector
+                      size="small"
+                      selectedItems={selectedTimeFormat}
+                      options={TIME_FORMAT_OPTIONS}
+                      multiSelect={false}
+                      searchable={false}
+                      placement="top"
+                      onChange={handleTimeFormatChange}
+                    />
+                  </SelectorWrapper>
+                </FieldBlock>
+              </>
+            ) : null}
           </AxisRow>
-          {intervalTooSmall ? <ErrorMessage>Interval is too small</ErrorMessage> : null}
+          {intervalTooSmall ? (
+            <ErrorMessage>{isTimeFilter ? 'Interval' : 'Bin size'} is too small</ErrorMessage>
+          ) : null}
         </AxisSection>
         <AxisSection>
           <AxisHeader>
@@ -698,7 +733,7 @@ function TimeWidgetSettingsFactory(
             <DisabledBlock $disabled={!filter.yAxis}>
               <FieldBlock>
                 <FieldLabel>Aggregation</FieldLabel>
-                <SelectorWrapper>
+                <SelectorWrapper data-testid="time-widget-aggregation">
                   <ItemSelector
                     selectedItems={currentAggregation}
                     options={aggregationOptions}

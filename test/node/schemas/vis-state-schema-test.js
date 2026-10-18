@@ -28,6 +28,7 @@ import {
 } from 'test/helpers/mock-state';
 import {keplerGlReducerCore as keplerGlReducer, validateLayerWithData} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
+import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 
 const expectedVisStateEntries = [
   'filters',
@@ -139,6 +140,29 @@ test('#visStateSchema -> v1 -> save load filters', t => {
   cmpFilters(t, expectedSavedFilters, filtersToSave);
   cmpFilters(t, expectedSavedFilters, loadedFilters);
 
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> persists opt-in numeric timeline configuration', t => {
+  let state = keplerGlReducer(
+    cloneDeep(StateWFilesFiltersLayerColor),
+    VisStateActions.setFilter(0, 'name', 'gps_data.lat')
+  );
+  state = keplerGlReducer(
+    state,
+    VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.01}})
+  );
+  state = keplerGlReducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.enlarged));
+
+  const savedState = SchemaManager.getConfigToSave(state);
+  const savedFilter = savedState.config.visState.filters[0];
+  const loadedFilter = SchemaManager.parseSavedConfig(savedState).visState.filters[0];
+
+  t.equal(savedFilter.view, FILTER_VIEW_TYPES.enlarged, 'should save numeric timeline enablement');
+  t.equal(savedFilter.plotType.numericInterval, 0.01, 'should save the numeric bin size');
+  t.equal(loadedFilter.view, FILTER_VIEW_TYPES.enlarged, 'should restore numeric enablement');
+  t.equal(loadedFilter.plotType.numericInterval, 0.01, 'should restore numeric binning');
+  t.notOk(loadedFilter.timezone, 'should not load time-only configuration');
   t.end();
 });
 

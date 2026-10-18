@@ -2,14 +2,18 @@
 // Copyright contributors to the kepler.gl project
 
 /* eslint-disable max-statements */
-import React from 'react';
+import React, {act} from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import moment from 'moment';
 import 'moment/locale/en-gb';
 
 import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
-import {setFilterAnimationTimeConfig, setFilterAnimationWindow} from '@kepler.gl/actions';
+import {
+  setFilter,
+  setFilterAnimationTimeConfig,
+  setFilterAnimationWindow
+} from '@kepler.gl/actions';
 import {visStateReducer as reducer, DEFAULT_ANIMATION_CONFIG} from '@kepler.gl/reducers';
 
 import {
@@ -30,6 +34,7 @@ import {
   TimezoneSelector,
   appInjector
 } from '@kepler.gl/components';
+import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 
 moment.locale('en');
 
@@ -710,6 +715,130 @@ test('Components -> TimeWidget.mount -> timeline zoom reset button', t => {
 
   wrapper.detach();
   clientSizeStub.restore();
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> fractional numeric timeline zoom and reset', t => {
+  const setFilterAnimationTime = sinon.spy();
+  const numericState = reducer(StateWFilters.visState, setFilter(0, 'name', 'gps_data.lat'));
+  const numericFilter = {
+    ...numericState.filters[0],
+    domain: [0, 0.1],
+    value: [0.02, 0.08]
+  };
+  const rectStub = sinon.stub(HTMLElement.prototype, 'getBoundingClientRect').returns({
+    left: 0,
+    right: 500,
+    top: 0,
+    bottom: 100,
+    width: 500,
+    height: 100,
+    x: 0,
+    y: 0,
+    toJSON: () => ({})
+  });
+
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <TimeWidget
+        {...defaultProps}
+        filter={numericFilter}
+        setFilterAnimationTime={setFilterAnimationTime}
+      />
+    </IntlWrapper>,
+    {attachTo: document.body}
+  );
+  const timeDisplay = wrapper.find(FloatingTimeDisplay);
+  t.equal(
+    timeDisplay.find('.animation-control__time-display__top').text(),
+    'gps_data.lat',
+    'numeric range badge should identify its column'
+  );
+  t.deepEqual(
+    timeDisplay
+      .find('.animation-control__time-display__bottom')
+      .find('.time-value')
+      .map(n => n.text()),
+    ['0.02', '0.08'],
+    'numeric range badge should keep the selected values below the column name'
+  );
+  const container = wrapper
+    .find('[data-testid="time-widget-timeline-container"]')
+    .hostNodes()
+    .getDOMNode();
+
+  act(() => {
+    container.dispatchEvent(
+      new window.WheelEvent('wheel', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 250,
+        ctrlKey: true,
+        deltaY: -100
+      })
+    );
+  });
+  wrapper.update();
+  t.equal(
+    wrapper.find('[data-testid="time-widget-timeline-reset"]').hostNodes().length,
+    1,
+    'fractional numeric timeline can zoom below a one-unit domain'
+  );
+
+  act(() => {
+    wrapper.find('[data-testid="time-widget-timeline-reset"]').hostNodes().simulate('click');
+  });
+  wrapper.update();
+  t.equal(
+    wrapper.find('[data-testid="time-widget-timeline-reset"]').hostNodes().length,
+    0,
+    'reset restores the full fractional numeric domain'
+  );
+
+  act(() => {
+    container.dispatchEvent(
+      new window.WheelEvent('wheel', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 250,
+        deltaY: -100
+      })
+    );
+  });
+  const selectedRange = setFilterAnimationTime.lastCall.args[2];
+  t.ok(selectedRange[1] - selectedRange[0] < 0.06, 'fractional selection can zoom in');
+  t.ok(selectedRange[1] > selectedRange[0], 'fractional selection keeps a positive width');
+
+  wrapper.detach();
+  rectStub.restore();
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> minimized numeric timeline formats numeric bounds', t => {
+  const numericState = reducer(StateWFilters.visState, setFilter(0, 'name', 'gps_data.lat'));
+  const numericFilter = {
+    ...numericState.filters[0],
+    domain: [0.02, 0.08],
+    value: [0.02, 0.08],
+    view: FILTER_VIEW_TYPES.minified
+  };
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <TimeWidget {...defaultProps} filter={numericFilter} />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    wrapper.find('.animation-control__time-domain.domain-start').find('span').text(),
+    '0.02',
+    'compact numeric timeline formats its domain start as a number'
+  );
+  t.equal(
+    wrapper.find('.animation-control__time-domain.domain-end').find('span').text(),
+    '0.08',
+    'compact numeric timeline formats its domain end as a number'
+  );
+
   t.end();
 });
 

@@ -4,7 +4,12 @@
 import moment from 'moment';
 import {MAX_GPU_FILTERS, FILTER_TYPES} from '@kepler.gl/constants';
 import {Field, Filter, TimeRangeFilter} from '@kepler.gl/types';
-import {set, DataContainerInterface, isTimeIntervalFilter} from '@kepler.gl/utils';
+import {
+  set,
+  DataContainerInterface,
+  isNumericIntervalFilter,
+  isTimeIntervalFilter
+} from '@kepler.gl/utils';
 import {toArray, notNullorUndefined} from '@kepler.gl/common-utils';
 
 import {GpuFilter} from './kepler-table';
@@ -303,6 +308,7 @@ function findFilterOnGpuChannel(
   return filters.find(
     f =>
       f.gpu &&
+      !isNumericIntervalFilter(f) &&
       f.dataId.includes(dataId) &&
       f.gpuChannel &&
       f.gpuChannel[f.dataId.indexOf(dataId)] === channel
@@ -317,6 +323,7 @@ function findFilterOnGpuEndChannel(
   return filters.find(
     f =>
       f.gpu &&
+      !isNumericIntervalFilter(f) &&
       f.dataId.includes(dataId) &&
       f.gpuEndChannel &&
       f.gpuEndChannel[f.dataId.indexOf(dataId)] === channel

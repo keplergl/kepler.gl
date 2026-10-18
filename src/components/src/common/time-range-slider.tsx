@@ -9,10 +9,10 @@ import RangeSliderFactory from './range-slider';
 import TimeSliderMarkerFactory from './time-slider-marker';
 import PlaybackControlsFactory from './animation-control/playback-controls';
 import TimeRangeSliderTimeTitleFactory from './time-range-slider-time-title';
-import {LineChart, Timeline, AnimationConfig, TimeBins, Filter} from '@kepler.gl/types';
+import {LineChart, Timeline, AnimationConfig, TimeBins, Filter, Bins} from '@kepler.gl/types';
 import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
-import {getBinThresholds, intervalBinFromMarks} from '@kepler.gl/utils';
+import {intervalBinFromMarks} from '@kepler.gl/utils';
 import AnimationControlFactory from './animation-control/animation-control';
 import {BaseComponentProps} from '../types';
 
@@ -29,6 +29,7 @@ type TimeRangeSliderProps = {
   timeFormat: string;
   timezone?: string | null;
   timeBins?: TimeBins;
+  bins?: Bins;
   plotType?: {
     [key: string]: any;
   };
@@ -36,7 +37,7 @@ type TimeRangeSliderProps = {
   step: number;
   isAnimatable?: boolean;
   speed: number;
-  animationWindow: string;
+  animationWindow?: string;
   resetAnimation?: () => void;
   toggleAnimation: () => void;
   exportAnimation?: () => void;
@@ -48,6 +49,8 @@ type TimeRangeSliderProps = {
   invertTrendColor?: boolean;
   animationConfig?: AnimationConfig;
   filter?: Filter;
+  isTime?: boolean;
+  formatValue?: (value: number) => string;
 };
 
 export type StyledSliderContainerProps = BaseComponentProps & {
@@ -120,13 +123,14 @@ export default function TimeRangeSliderFactory(
       timeFormat,
       timezone,
       timeBins,
+      bins,
       plotType,
       lineChart,
       invertTrendColor,
       step,
       isAnimatable,
       speed,
-      animationWindow,
+      animationWindow = ANIMATION_WINDOW.free,
       updateAnimationSpeed,
       setFilterAnimationWindow,
       toggleAnimation,
@@ -134,16 +138,18 @@ export default function TimeRangeSliderFactory(
       onChange,
       setFilterPlot,
       timeline,
-      filter
+      filter,
+      isTime = true,
+      formatValue
     } = props;
 
     const binMarks = useMemo(() => {
-      if (animationWindow !== ANIMATION_WINDOW.interval || !plotType?.interval || !domain) {
+      if (animationWindow !== ANIMATION_WINDOW.interval || !domain) {
         return null;
       }
-      const thresholds = getBinThresholds(plotType.interval, domain);
+      const thresholds = timeline?.marks || [];
       return thresholds.length > 1 ? thresholds : null;
-    }, [animationWindow, domain, plotType?.interval]);
+    }, [animationWindow, domain, timeline?.marks]);
 
     const byInterval = Boolean(binMarks);
     const sliderRange = useMemo(() => {
@@ -162,20 +168,20 @@ export default function TimeRangeSliderFactory(
           // A point brush reports the same mark twice. The single handle reports
           // [domain start, handle], so the moving edge picks the bin.
           const anchor = val[0] === val[1] ? val[0] : val[1];
-          onChange(intervalBinFromMarks(binMarks, anchor));
+          onChange(intervalBinFromMarks(binMarks, anchor, isTime ? 1 : 0));
           return;
         }
         onChange(val);
       },
-      [binMarks, byInterval, onChange]
+      [binMarks, byInterval, isTime, onChange]
     );
 
     const throttledOnchange = useMemo(() => throttle(onSliderChange, 20), [onSliderChange]);
     useEffect(() => () => throttledOnchange.cancel(), [throttledOnchange]);
 
     const binsForInterval = useMemo(
-      () => getTimeBinsForInterval(timeBins, plotType?.interval),
-      [timeBins, plotType?.interval]
+      () => (isTime ? getTimeBinsForInterval(timeBins, plotType?.interval) : bins || {}),
+      [bins, isTime, plotType?.interval, timeBins]
     );
     const width = animationControlWidth + (exportAnimation ? animationControlExportWidth : 0);
 
@@ -195,6 +201,8 @@ export default function TimeRangeSliderFactory(
               timezone={timezone}
               value={value}
               isEnlarged={isEnlarged}
+              isTime={isTime}
+              fieldType={filter?.fieldType}
             />
           </div>
         ) : null}
@@ -222,6 +230,7 @@ export default function TimeRangeSliderFactory(
                 animationWindow={animationWindow}
                 onChange={throttledOnchange}
                 xAxis={TimeSliderMarker}
+                isTime={isTime}
                 timezone={timezone}
                 timeFormat={timeFormat}
                 setFilterPlot={setFilterPlot}
@@ -241,6 +250,7 @@ export default function TimeRangeSliderFactory(
               showTimeDisplay={false}
               timeline={timeline}
               filter={filter}
+              formatTimelineValue={formatValue}
             />
           )}
           {isEnlarged && !isMinified ? (

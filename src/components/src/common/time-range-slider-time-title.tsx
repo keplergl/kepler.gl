@@ -4,7 +4,7 @@
 import React from 'react';
 import styled, {IStyledComponent} from 'styled-components';
 import {Minus} from './icons';
-import {datetimeFormatter} from '@kepler.gl/utils';
+import {datetimeFormatter, formatNumber} from '@kepler.gl/utils';
 import {BaseComponentProps} from '../types';
 
 export type TimeValueWrapperProps = BaseComponentProps & {
@@ -53,20 +53,34 @@ interface TimeTitleProps {
   isEnlarged?: boolean;
   timezone?: string | null;
   timeFormat: string;
+  isTime?: boolean;
+  fieldType?: string;
 }
 
 function TimeRangeSliderTimeTitleFactory() {
-  const TimeTitle = ({value, isEnlarged, timezone, timeFormat}: TimeTitleProps) => (
-    <TimeValueWrapper $isEnlarged={isEnlarged} className="time-range-slider__time-title">
-      <TimeValue key={0} value={datetimeFormatter(timezone)(timeFormat)(value[0])} />
-      {isEnlarged ? (
-        <div className="horizontal-bar">
-          <Minus height="12px" />
-        </div>
-      ) : null}
-      <TimeValue key={1} value={datetimeFormatter(timezone)(timeFormat)(value[1])} />
-    </TimeValueWrapper>
-  );
+  const TimeTitle = ({
+    value,
+    isEnlarged,
+    timezone,
+    timeFormat,
+    isTime = true,
+    fieldType
+  }: TimeTitleProps) => {
+    const formatValue = isTime
+      ? datetimeFormatter(timezone)(timeFormat)
+      : (numericValue: number) => formatNumber(numericValue, fieldType);
+    return (
+      <TimeValueWrapper $isEnlarged={isEnlarged} className="time-range-slider__time-title">
+        <TimeValue key={0} value={formatValue(value[0])} />
+        {isEnlarged ? (
+          <div className="horizontal-bar">
+            <Minus height="12px" />
+          </div>
+        ) : null}
+        <TimeValue key={1} value={formatValue(value[1])} />
+      </TimeValueWrapper>
+    );
+  };
 
   return TimeTitle;
 }

@@ -83,6 +83,7 @@ export type AnimationControlProps = {
   showControls?: boolean;
   className?: string;
   style?: object;
+  formatTimelineValue?: (value: number) => string;
 };
 
 AnimationControlFactory.deps = [
@@ -115,7 +116,8 @@ function AnimationControlFactory(
     timeline,
     showTimeline = true,
     showControls = true,
-    showTimeDisplay = true
+    showTimeDisplay = true,
+    formatTimelineValue
   }) => {
     if (!timeline) {
       return null;
@@ -134,6 +136,7 @@ function AnimationControlFactory(
               style={TIMELINE_PLAYBACK_STYLE}
               timeline={timeline}
               setTimelineValue={setTimelineValue}
+              formatValue={formatTimelineValue}
             />
           ) : null}
           {showControls ? (
