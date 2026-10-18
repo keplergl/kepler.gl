@@ -28,7 +28,17 @@ const StyledRadioInput = styled.label.withConfig({shouldForwardProp})<StyledSwit
 
 const HiddenInput = styled.input.withConfig({shouldForwardProp})`
   position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
   opacity: 0;
+  pointer-events: none;
 `;
 
 interface StyledCheckboxProps {
@@ -113,8 +123,7 @@ const Checkbox: FC<CheckboxProps> = ({
   const labelProps = {
     checked,
     disabled,
-    secondary,
-    htmlFor: id
+    secondary
   };
 
   const LabelElement =
@@ -130,8 +139,8 @@ const Checkbox: FC<CheckboxProps> = ({
       className={classnames('kg-checkbox', className)}
       disabled={disabled}
     >
-      <HiddenInput {...inputProps} />
       <LabelElement className="kg-checkbox__label" {...labelProps}>
+        <HiddenInput {...inputProps} />
         {label}
       </LabelElement>
     </StyledCheckbox>

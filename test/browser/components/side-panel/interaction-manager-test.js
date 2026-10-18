@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {act} from 'react';
 import test from 'tape';
 import sinon from 'sinon';
+import {mount} from 'enzyme';
+import {ThemeProvider} from 'styled-components';
 
 import {InteractionManagerFactory, appInjector} from '@kepler.gl/components';
 import {defaultInteractionConfig, getZoomOpacityAnnotationTargetId} from '@kepler.gl/reducers';
+import {theme} from '@kepler.gl/styles';
 import {initApplicationConfig} from '@kepler.gl/utils';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
@@ -150,31 +153,36 @@ test('Components -> InteractionManager legend section', t => {
     'layer-2'
   ];
 
-  const wrapper = mountWithTheme(
-    <IntlWrapper>
-      <InteractionManager
-        interactionConfig={{
-          legend: {
-            id: 'legend',
-            label: 'interactions.legend',
-            enabled: true,
-            config: {hideInvisibleLayers: false}
-          }
-        }}
-        datasets={{}}
-        panelMetadata={panelMetadata}
-        layers={[excludedLayer, includedLayer]}
-        layerOrder={layerOrder}
-        mapLegendActive={true}
-        uiStateActions={{toggleMapControl}}
-        visStateActions={{
-          interactionConfigChange,
-          setColumnDisplayFormat: () => {},
-          layerConfigChange,
-          updateLayerGroup
-        }}
-      />
-    </IntlWrapper>
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const wrapper = mount(
+    <ThemeProvider theme={theme}>
+      <IntlWrapper>
+        <InteractionManager
+          interactionConfig={{
+            legend: {
+              id: 'legend',
+              label: 'interactions.legend',
+              enabled: true,
+              config: {hideInvisibleLayers: false}
+            }
+          }}
+          datasets={{}}
+          panelMetadata={panelMetadata}
+          layers={[excludedLayer, includedLayer]}
+          layerOrder={layerOrder}
+          mapLegendActive={true}
+          uiStateActions={{toggleMapControl}}
+          visStateActions={{
+            interactionConfigChange,
+            setColumnDisplayFormat: () => {},
+            layerConfigChange,
+            updateLayerGroup
+          }}
+        />
+      </IntlWrapper>
+    </ThemeProvider>,
+    {attachTo: container}
   );
 
   t.ok(wrapper.find('.interaction-legend').hostNodes().length >= 1, 'renders legend section');
@@ -201,19 +209,37 @@ test('Components -> InteractionManager legend section', t => {
   t.ok(text.includes('New group'), 'lists an excluded group so it can be restored');
   t.ok(text.includes('Cities'), 'lists an included layer');
 
-  wrapper.find('input#legend-include-layer-1').at(0).simulate('change');
+  act(() => {
+    wrapper
+      .find('[data-testid="interaction-legend-row-layer-1"] label.kg-checkbox__label')
+      .at(0)
+      .getDOMNode()
+      .click();
+  });
   t.equal(layerConfigChange.callCount, 1, 'toggling a layer updates layer config');
   t.equal(layerConfigChange.args[0][0].id, 'layer-1');
   t.deepEqual(layerConfigChange.args[0][1], {isIncludedInLegend: true});
 
-  wrapper.find('input#legend-include-group-1').at(0).simulate('change');
+  act(() => {
+    wrapper
+      .find('[data-testid="interaction-legend-row-group-1"] label.kg-checkbox__label')
+      .at(0)
+      .getDOMNode()
+      .click();
+  });
   t.equal(updateLayerGroup.callCount, 1, 'toggling a group updates the group');
   t.deepEqual(updateLayerGroup.args[0][0], {
     id: 'group-1',
     options: {isIncludedInLegend: true}
   });
 
-  wrapper.find('input#legend-include-layer-2').at(0).simulate('change');
+  act(() => {
+    wrapper
+      .find('[data-testid="interaction-legend-row-layer-2"] label.kg-checkbox__label')
+      .at(0)
+      .getDOMNode()
+      .click();
+  });
   t.deepEqual(layerConfigChange.args[1][1], {isIncludedInLegend: false});
 
   t.equal(
@@ -221,7 +247,13 @@ test('Components -> InteractionManager legend section', t => {
     false,
     'hide hidden layers starts off'
   );
-  wrapper.find('input#legend-hide-invisible').at(0).simulate('change');
+  act(() => {
+    wrapper
+      .find('.interaction-legend__hide-invisible label.kg-checkbox__label')
+      .at(0)
+      .getDOMNode()
+      .click();
+  });
   t.equal(
     interactionConfigChange.callCount,
     1,
@@ -245,6 +277,8 @@ test('Components -> InteractionManager legend section', t => {
     'disabling the feature keeps the settings section open'
   );
 
+  act(() => wrapper.unmount());
+  container.remove();
   t.end();
 });
 
