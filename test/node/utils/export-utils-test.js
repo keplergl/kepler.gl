@@ -146,6 +146,32 @@ test('exportUtils -> ExportHtml safely serializes inline data', t => {
   t.end();
 });
 
+test('exportUtils -> ExportHtml preserves nullish dataset and config values', t => {
+  const undefinedHtml = exportMapToHTML({
+    datasets: undefined,
+    config: undefined,
+    mode: 'READ'
+  });
+  const nullHtml = exportMapToHTML({
+    datasets: null,
+    config: null,
+    mode: 'READ'
+  });
+
+  t.ok(
+    undefinedHtml.includes('const datasets = undefined;'),
+    'missing datasets should remain undefined at runtime'
+  );
+  t.ok(
+    undefinedHtml.includes('const config = undefined;'),
+    'missing config should remain undefined at runtime'
+  );
+  t.ok(nullHtml.includes('const datasets = null;'), 'null datasets should remain null at runtime');
+  t.ok(nullHtml.includes('const config = null;'), 'null config should remain null at runtime');
+
+  t.end();
+});
+
 test('exportUtils -> ExportHtml preserves custom branding', t => {
   const branding = {
     appName: 'Atlas Lab',

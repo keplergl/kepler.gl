@@ -24,16 +24,27 @@ const STYLED_COMPONENTS_VERSION = '6.1.19';
 // document (native ES modules/import maps are blocked under the file:// origin).
 const ES_MODULE_SHIMS_VERSION = '2.8.1';
 
+/** Escape serialized JSON for interpolation into an inline `<script>`. */
+function escapeScriptJSON(serialized: string): string {
+  return serialized
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
 /**
  * Serialize a value for interpolation into an inline `<script>`. A literal `</script>`
  * anywhere in the data would close the script element early, and U+2028/U+2029 are
  * line terminators in JavaScript but legal inside a JSON string.
  */
 function toScriptJSON(value: unknown): string {
-  return JSON.stringify(value ?? null)
-    .replace(/</g, '\\u003c')
-    .replace(/\u2028/g, '\\u2028')
-    .replace(/\u2029/g, '\\u2029');
+  return escapeScriptJSON(JSON.stringify(value ?? null));
+}
+
+/** Preserve the legacy `undefined` runtime value for optional public arguments. */
+function toScriptJSONOrUndefined(value: unknown): string {
+  const serialized = JSON.stringify(value);
+  return serialized === undefined ? 'undefined' : escapeScriptJSON(serialized);
 }
 
 /** Escape text interpolated directly into HTML markup. */
@@ -520,8 +531,8 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
            * to add new data and customize behavior
            */
           (function customize(keplerGl, store) {
-            const datasets = ${toScriptJSON(options.datasets)};
-            const config = ${toScriptJSON(options.config)};
+            const datasets = ${toScriptJSONOrUndefined(options.datasets)};
+            const config = ${toScriptJSONOrUndefined(options.config)};
             const info = ${toScriptJSON(optionalMapInfo(options.info) ?? null)};
 
             const loadedData = keplerGl.KeplerGlSchema.load(
