@@ -144,8 +144,8 @@ describe('dataset export', () => {
     ).rejects.toThrow('Shapefile export requires all geometries to have the same shape family.');
   });
 
-  test('writes finite DBF numbers as fixed decimal text without corrupting nulls', () => {
-    const values = [1e-7, -1e-7, 12.5, null];
+  test('rounds noisy and tiny DBF numbers at the maximum supported precision', () => {
+    const values = [0.1 + 0.2, 1e-7, -1e-7, 1e-16, -1e-16, null];
     const collection: FeatureCollection = {
       type: 'FeatureCollection',
       features: values.map((value, index) => ({
@@ -167,24 +167,87 @@ describe('dataset export', () => {
       return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
     });
 
-    expect({fieldLength, decimalCount}).toEqual({fieldLength: 10, decimalCount: 7});
-    expect(cells).toEqual(['0.0000001', '-0.0000001', '12.5000000', '']);
+    expect({fieldLength, decimalCount}).toEqual({fieldLength: 18, decimalCount: 15});
+    expect(cells).toEqual([
+      '0.300000000000000',
+      '0.000000100000000',
+      '-0.000000100000000',
+      '0.000000000000000',
+      '0.000000000000000',
+      ''
+    ]);
     expect(cells.filter(Boolean).every(cell => /^-?\d+(?:\.\d+)?$/.test(cell))).toBe(true);
 
     const parsed = DBFLoader.parseSync?.(dbf.buffer as ArrayBuffer, {
       dbf: {shape: 'rows'}
     }) as Array<{value: number | null}>;
-    expect(parsed.map(row => row.value)).toEqual(values);
+    expect(parsed.map(row => row.value)).toEqual([0.3, 1e-7, -1e-7, 0, 0, null]);
+  });
+
+  test('uses the highest common precision that fits mixed magnitudes after rounding', () => {
+    const values = [-1234567890123456, 999.9999, -12.3456, null];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: values.map((value, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, index]},
+        properties: {value}
+      }))
+    };
+
+    const {dbf} = writeShapefile(collection);
+    const view = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+    const headerLength = view.getUint16(8, true);
+    const recordLength = view.getUint16(10, true);
+    const fieldLength = dbf[32 + 16];
+    const decimalCount = dbf[32 + 17];
+    const decoder = new TextDecoder();
+    const cells = values.map((_, index) => {
+      const start = headerLength + index * recordLength + 1;
+      return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
+    });
+
+    expect({fieldLength, decimalCount}).toEqual({fieldLength: 19, decimalCount: 1});
+    expect(cells).toEqual(['-1234567890123456.0', '1000.0', '-12.3', '']);
+
+    const parsed = DBFLoader.parseSync?.(dbf.buffer as ArrayBuffer, {
+      dbf: {shape: 'rows'}
+    }) as Array<{value: number | null}>;
+    expect(parsed.map(row => row.value)).toEqual([-1234567890123456, 1000, -12.3, null]);
+  });
+
+  test('keeps large positive and negative integers in numeric fields', () => {
+    const values = [1e18, -1e17, null];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: values.map((value, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, index]},
+        properties: {value}
+      }))
+    };
+
+    const {dbf} = writeShapefile(collection);
+    const view = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+    const headerLength = view.getUint16(8, true);
+    const recordLength = view.getUint16(10, true);
+    const fieldLength = dbf[32 + 16];
+    const decimalCount = dbf[32 + 17];
+    const decoder = new TextDecoder();
+    const cells = values.map((_, index) => {
+      const start = headerLength + index * recordLength + 1;
+      return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
+    });
+
+    expect({fieldLength, decimalCount}).toEqual({fieldLength: 19, decimalCount: 0});
+    expect(cells).toEqual(['1000000000000000000', '-100000000000000000', '']);
   });
 
   test.each([
-    [1e21, 'requires 22 bytes; dBASE III numeric fields support at most 19.'],
-    [1e-16, 'requires 16 decimal places; dBASE III numeric fields support at most 15.'],
-    [
-      0.30000000000000004,
-      'requires 17 decimal places; dBASE III numeric fields support at most 15.'
-    ]
-  ])('rejects the DBF number %s rather than truncating or rounding it', (value, message) => {
+    [1e19, 20],
+    [-1e18, 20],
+    [1e21, 22]
+  ])('rejects the DBF number %s when its rounded integer needs %i bytes', (value, width) => {
     const collection: FeatureCollection = {
       type: 'FeatureCollection',
       features: [
@@ -196,7 +259,10 @@ describe('dataset export', () => {
       ]
     };
 
-    expect(() => writeShapefile(collection)).toThrow(`DBF numeric field "value" ${message}`);
+    expect(() => writeShapefile(collection)).toThrow(
+      `DBF numeric field "value" requires ${width} bytes at zero decimal places; ` +
+        'dBASE III numeric fields support at most 19.'
+    );
   });
 
   test('keeps mixed finite and non-finite values in a DBF text field', () => {

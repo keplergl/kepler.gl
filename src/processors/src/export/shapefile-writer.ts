@@ -332,11 +332,15 @@ function decimalPlaces(text: string): number {
 }
 
 function formatDbfNumber(value: number, decimals: number): string {
-  const text = decimalText(value);
-  const currentDecimals = decimalPlaces(text);
-  if (currentDecimals === decimals) return text;
-  const decimalPoint = currentDecimals === 0 ? '.' : '';
-  return `${text}${decimalPoint}${'0'.repeat(decimals - currentDecimals)}`;
+  // Number#toFixed provides the rounding policy and fixed notation below 1e21.
+  // Larger values cannot fit a dBASE III numeric field even at zero decimals,
+  // but expanding them here lets field planning report their actual width.
+  const text =
+    Math.abs(value) < 1e21
+      ? value.toFixed(decimals)
+      : `${decimalText(value)}${decimals > 0 ? `.${'0'.repeat(decimals)}` : ''}`;
+  // Do not spend a sign byte on a value that rounded to zero.
+  return /^-0(?:\.0+)?$/.test(text) ? text.slice(1) : text;
 }
 
 function planField(key: string, name: string, values: unknown[]): DbfField {
@@ -363,31 +367,35 @@ function planField(key: string, name: string, values: unknown[]): DbfField {
   }
 
   if (sawNumber && !sawNonNumber) {
-    let decimals = 0;
+    let requestedDecimals = 0;
     for (const value of values) {
       if (typeof value === 'number' && Number.isFinite(value)) {
-        decimals = Math.max(decimals, decimalPlaces(decimalText(value)));
+        requestedDecimals = Math.max(requestedDecimals, decimalPlaces(decimalText(value)));
       }
     }
-    if (decimals > DBF_NUMERIC_MAX_DECIMALS) {
-      throw new Error(
-        `DBF numeric field "${key}" requires ${decimals} decimal places; ` +
-          `dBASE III numeric fields support at most ${DBF_NUMERIC_MAX_DECIMALS}.`
-      );
+
+    // Use the highest common precision that fits every rounded value. Measuring
+    // the formatted values on each pass accounts for signs and rounding carry.
+    for (
+      let decimals = Math.min(requestedDecimals, DBF_NUMERIC_MAX_DECIMALS);
+      decimals >= 0;
+      decimals -= 1
+    ) {
+      let length = 1;
+      for (const value of values) {
+        if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+        length = Math.max(length, formatDbfNumber(value, decimals).length);
+      }
+      if (length <= DBF_NUMERIC_MAX_WIDTH) {
+        return {key, name, type: 'N', length, decimals};
+      }
+      if (decimals === 0) {
+        throw new Error(
+          `DBF numeric field "${key}" requires ${length} bytes at zero decimal places; ` +
+            `dBASE III numeric fields support at most ${DBF_NUMERIC_MAX_WIDTH}.`
+        );
+      }
     }
-    let length = 1;
-    for (const value of values) {
-      if (typeof value !== 'number' || !Number.isFinite(value)) continue;
-      const text = formatDbfNumber(value, decimals);
-      length = Math.max(length, text.length);
-    }
-    if (length > DBF_NUMERIC_MAX_WIDTH) {
-      throw new Error(
-        `DBF numeric field "${key}" requires ${length} bytes; ` +
-          `dBASE III numeric fields support at most ${DBF_NUMERIC_MAX_WIDTH}.`
-      );
-    }
-    return {key, name, type: 'N', length, decimals};
   }
 
   // Fall back to text for everything else (strings, mixed types, objects).
