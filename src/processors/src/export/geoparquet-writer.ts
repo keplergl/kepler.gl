@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import type {Field} from '@kepler.gl/types';
+import type {DataContainerInterface} from '@kepler.gl/utils';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
 import * as arrow from 'apache-arrow';
 import type {FeatureCollection, Geometry} from 'geojson';
@@ -57,7 +60,41 @@ function wkbBytes(geometry: Geometry | null): Uint8Array | null {
   return new Uint8Array(convertGeometryToWKB(geometry));
 }
 
-function propertyVector(values: (string | number | boolean | null)[]): arrow.Vector {
+const MIN_INT64 = -(1n << 63n);
+const MAX_INT64 = (1n << 63n) - 1n;
+
+function int64Vector(values: unknown[]): arrow.Vector | null {
+  const integers: (bigint | null)[] = [];
+  for (const value of values) {
+    if (value == null) {
+      integers.push(null);
+      continue;
+    }
+    const integer =
+      typeof value === 'bigint'
+        ? value
+        : typeof value === 'number' && Number.isSafeInteger(value)
+          ? BigInt(value)
+          : null;
+    if (integer === null || integer < MIN_INT64 || integer > MAX_INT64) {
+      return null;
+    }
+    integers.push(integer);
+  }
+  return arrow.vectorFromArray(integers, new arrow.Int64());
+}
+
+function propertyVector(
+  values: (string | number | boolean | null)[],
+  fieldType?: string,
+  rawValues: unknown[] = values
+): arrow.Vector {
+  if (fieldType === ALL_FIELD_TYPES.integer) {
+    const integers = int64Vector(rawValues);
+    if (integers) {
+      return integers;
+    }
+  }
   // tableFromArrays stores JS strings as Dictionary<Int32, Utf8>. Parquet import
   // rejects that type with "arrow type not supported: Dictionary".
   let kind: 'bool' | 'float' | 'string' = 'string';
@@ -123,8 +160,13 @@ function propertyName(name: string, taken: Set<string>): string {
 /**
  * Write a GeoJSON FeatureCollection as GeoParquet 1.1 (WKB geometry, WGS84).
  */
-export async function writeGeoParquet(geojson: FeatureCollection): Promise<Uint8Array> {
+export async function writeGeoParquet(
+  geojson: FeatureCollection,
+  fields: Field[] = [],
+  data?: DataContainerInterface
+): Promise<Uint8Array> {
   const features = geojson.features ?? [];
+  const fieldsByName = new Map(fields.map((field, index) => [field.name, {field, index}]));
   const taken = new Set<string>(['geometry']);
   const propertyKeys: {source: string; name: string}[] = [];
   const seen = new Set<string>();
@@ -144,9 +186,13 @@ export async function writeGeoParquet(geojson: FeatureCollection): Promise<Uint8
     )
   };
   for (const key of propertyKeys) {
-    columns[key.name] = propertyVector(
-      features.map(feature => parquetValue(feature.properties?.[key.source]))
-    );
+    const values = features.map(feature => parquetValue(feature.properties?.[key.source]));
+    const sourceField = fieldsByName.get(key.source);
+    const rawValues =
+      sourceField && data
+        ? features.map((_, rowIndex) => data.valueAt(rowIndex, sourceField.index))
+        : values;
+    columns[key.name] = propertyVector(values, sourceField?.field.type, rawValues);
   }
 
   const table = new arrow.Table(columns);

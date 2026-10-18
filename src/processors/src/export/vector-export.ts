@@ -98,7 +98,7 @@ export async function encodeDatasetExport(options: {
       };
     case EXPORT_DATA_TYPE.GEOPARQUET:
       return {
-        data: await writeGeoParquet(geojson),
+        data: await writeGeoParquet(geojson, options.fields, options.data),
         extension: 'parquet',
         mimeType: 'application/vnd.apache.parquet'
       };
