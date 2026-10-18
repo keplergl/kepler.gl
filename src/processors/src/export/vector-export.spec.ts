@@ -2,12 +2,15 @@
 // Copyright contributors to the kepler.gl project
 
 import {convertArrowToSchema} from '@loaders.gl/schema-utils';
+import {DBFLoader} from '@loaders.gl/shapefile';
 import {ALL_FIELD_TYPES, EXPORT_DATA_TYPE} from '@kepler.gl/constants';
 import {Field} from '@kepler.gl/types';
 import {createDataContainer} from '@kepler.gl/utils';
 import {tableFromIPC} from 'apache-arrow';
+import type {FeatureCollection} from 'geojson';
 
 import {datasetToFeatureCollection, encodeDatasetExport} from './vector-export';
+import {writeShapefile} from './shapefile-writer';
 import {loadSqlJs} from './sql-js';
 
 const fields = [
@@ -139,6 +142,87 @@ describe('dataset export', () => {
         layerName: 'mixed'
       })
     ).rejects.toThrow('Shapefile export requires all geometries to have the same shape family.');
+  });
+
+  test('writes finite DBF numbers as fixed decimal text without corrupting nulls', () => {
+    const values = [1e-7, -1e-7, 12.5, null];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: values.map((value, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, index]},
+        properties: {value}
+      }))
+    };
+
+    const {dbf} = writeShapefile(collection);
+    const view = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+    const headerLength = view.getUint16(8, true);
+    const recordLength = view.getUint16(10, true);
+    const fieldLength = dbf[32 + 16];
+    const decimalCount = dbf[32 + 17];
+    const decoder = new TextDecoder();
+    const cells = values.map((_, index) => {
+      const start = headerLength + index * recordLength + 1;
+      return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
+    });
+
+    expect({fieldLength, decimalCount}).toEqual({fieldLength: 10, decimalCount: 7});
+    expect(cells).toEqual(['0.0000001', '-0.0000001', '12.5000000', '']);
+    expect(cells.filter(Boolean).every(cell => /^-?\d+(?:\.\d+)?$/.test(cell))).toBe(true);
+
+    const parsed = DBFLoader.parseSync?.(dbf.buffer as ArrayBuffer, {
+      dbf: {shape: 'rows'}
+    }) as Array<{value: number | null}>;
+    expect(parsed.map(row => row.value)).toEqual(values);
+  });
+
+  test.each([
+    [1e21, 'requires 22 bytes; dBASE III numeric fields support at most 19.'],
+    [1e-16, 'requires 16 decimal places; dBASE III numeric fields support at most 15.'],
+    [
+      0.30000000000000004,
+      'requires 17 decimal places; dBASE III numeric fields support at most 15.'
+    ]
+  ])('rejects the DBF number %s rather than truncating or rounding it', (value, message) => {
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {type: 'Point', coordinates: [0, 0]},
+          properties: {value}
+        }
+      ]
+    };
+
+    expect(() => writeShapefile(collection)).toThrow(`DBF numeric field "value" ${message}`);
+  });
+
+  test('keeps mixed finite and non-finite values in a DBF text field', () => {
+    const values = [1, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, null];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: values.map((value, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, index]},
+        properties: {value}
+      }))
+    };
+
+    const {dbf} = writeShapefile(collection);
+    const view = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+    const headerLength = view.getUint16(8, true);
+    const recordLength = view.getUint16(10, true);
+    const fieldLength = dbf[32 + 16];
+    const decoder = new TextDecoder();
+    const cells = values.map((_, index) => {
+      const start = headerLength + index * recordLength + 1;
+      return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
+    });
+
+    expect(String.fromCharCode(dbf[32 + 11])).toBe('C');
+    expect(cells).toEqual(['1', 'NaN', 'Infinity', '-Infinity', '']);
   });
 
   test('writes geoparquet string columns the importer can read', async () => {
