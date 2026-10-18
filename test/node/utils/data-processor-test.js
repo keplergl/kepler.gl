@@ -1077,6 +1077,27 @@ test('Processor -> processRowObject', t => {
   t.end();
 });
 
+test('Processor -> processRowObject keeps legacy numeric detection', t => {
+  const {fields, rows} = processRowObject([
+    {zeroPadded: '06', mixed: 'Monika'},
+    {zeroPadded: '07', mixed: '1234'}
+  ]);
+
+  t.deepEqual(
+    fields.map(field => field.type),
+    [ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.integer],
+    'row-object callers should retain legacy numeric inference'
+  );
+  t.deepEqual(
+    rows.map(row => row[0]),
+    [6, 7],
+    'row-object callers should retain legacy integer parsing'
+  );
+  t.ok(Number.isNaN(rows[0][1]), 'row-object callers should retain legacy mixed-value parsing');
+  t.equal(rows[1][1], 1234, 'numeric values in a mixed row-object column should stay numeric');
+  t.end();
+});
+
 test('Processor -> formatCsv', t => {
   const geojsonFc = {
     type: 'FeatureCollection',
