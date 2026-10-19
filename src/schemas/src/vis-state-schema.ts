@@ -973,7 +973,10 @@ const annotationPropsV1 = {
   textVerticalPosition: null,
   armLength: null,
   angle: null,
-  radiusInMeters: null
+  radiusInMeters: null,
+  endPoint: null,
+  showCustomText: null,
+  showDistance: null
 };
 
 export class AnnotationsSchema extends Schema {

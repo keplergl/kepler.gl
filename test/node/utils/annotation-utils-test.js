@@ -6,12 +6,15 @@ import {AnnotationKind} from '@kepler.gl/constants';
 import {
   makeMarker,
   movePoint,
+  moveRulerEndpoint,
   moveText,
   resizeCircle,
   isLeftOriented,
   isBelowOriented,
   getTextPlacement,
   getAnnotationTextBoxStyle,
+  getRulerDistanceLabel,
+  isAnnotationVisibleOnGlobe,
   isPointVisibleOnGlobe,
   normalizeAnchorPoint
 } from '@kepler.gl/components';
@@ -73,6 +76,24 @@ const makeCircleAnnotation = (overrides = {}) => ({
   armLength: 50,
   angle: 0,
   radiusInMeters: 1000,
+  ...overrides
+});
+
+const makeRulerAnnotation = (overrides = {}) => ({
+  id: 'test-ruler',
+  kind: AnnotationKind.RULER,
+  isVisible: true,
+  autoSize: true,
+  autoSizeY: true,
+  anchorPoint: [0, 0],
+  endPoint: [1, 0],
+  label: 'Ruler',
+  lineColor: '#FFFFFF',
+  lineWidth: 2,
+  textWidth: 100,
+  textHeight: 30,
+  showCustomText: true,
+  showDistance: true,
   ...overrides
 });
 
@@ -216,6 +237,69 @@ test('#makeMarker -> POINT annotation', t => {
   t.end();
 });
 
+test('#makeMarker -> RULER uses projected 3D endpoints and their screen midpoint', t => {
+  const marker = makeMarker(
+    makeRulerAnnotation({anchorPoint: [0, 0, 10], endPoint: [2, 0, 30]}),
+    mockViewport
+  );
+
+  t.equal(marker.kind, AnnotationKind.RULER, 'should return RULER kind');
+  t.equal(marker.x, 500, 'start x should be projected');
+  t.equal(marker.y, 290, 'start altitude should affect projected y');
+  t.equal(marker.ex, 20, 'end x should be relative to the start');
+  t.equal(marker.ey, -20, 'different endpoint altitude should affect the line');
+  t.equal(marker.mx, 10, 'midpoint x should bisect the projected line');
+  t.equal(marker.my, -10, 'midpoint y should bisect the projected line');
+
+  t.end();
+});
+
+test('#makeMarker -> RULER crosses the dateline through the closest world copy', t => {
+  const wrappingViewport = {
+    ...mockViewport,
+    project: ([lng, lat]) => [lng, lat]
+  };
+  const marker = makeMarker(
+    makeRulerAnnotation({anchorPoint: [179, 0], endPoint: [-179, 0]}),
+    wrappingViewport
+  );
+
+  t.equal(marker.ex, 2, 'dateline ruler should span two degrees, not 358');
+  t.equal(marker.mx, 1, 'text midpoint should stay halfway along the short segment');
+
+  t.end();
+});
+
+test('#makeMarker -> RULER follows a start more than one wrapped world away', t => {
+  const wrappingViewport = {
+    ...mockViewport,
+    project: ([lng, lat]) => [lng, lat]
+  };
+  const marker = makeMarker(
+    makeRulerAnnotation({anchorPoint: [541, 0], endPoint: [-178, 0]}),
+    wrappingViewport
+  );
+
+  t.equal(marker.ex, 1, 'end should use the +720 degree world copy nearest the start');
+  t.equal(marker.mx, 0.5, 'midpoint should remain on that short rendered segment');
+
+  t.end();
+});
+
+test('#getAnnotationTextBoxStyle -> RULER centers text on the projected midpoint', t => {
+  const style = getAnnotationTextBoxStyle(
+    makeRulerAnnotation({anchorPoint: [0, 0, 10], endPoint: [2, 0, 30]}),
+    mockViewport
+  );
+
+  t.equal(style.left, 510, 'midpoint x should account for both endpoints');
+  t.equal(style.top, 280, 'midpoint y should account for both endpoint altitudes');
+  t.equal(style.transform, 'translate(-50%, -50%)', 'text should be centered on midpoint');
+  t.notOk(style.borderTop, 'ruler text should not draw an annotation leader border');
+
+  t.end();
+});
+
 test('#makeMarker -> TEXT annotation', t => {
   const annotation = makeTextAnnotation({anchorPoint: [5, 10]});
   const marker = makeMarker(annotation, mockViewport);
@@ -292,6 +376,89 @@ test('#movePoint -> falls back to ground plane when pick returns no altitude', t
   t.equal(changes.anchorPoint[0], 1, 'longitude should use viewport unproject');
   t.equal(changes.anchorPoint[1], 0.5, 'latitude should use viewport unproject');
 
+  t.end();
+});
+
+test('#moveRulerEndpoint -> moves endpoints independently using 3D surface picks', t => {
+  const ruler = makeRulerAnnotation({anchorPoint: [0, 0, 5], endPoint: [1, 1, 10]});
+  const movedStart = moveRulerEndpoint(
+    ruler,
+    'start',
+    {x: 5, y: 5},
+    mockViewport,
+    () => [2, 3, 40]
+  );
+  const movedEnd = moveRulerEndpoint(
+    ruler,
+    'end',
+    {x: 5, y: 5},
+    mockViewport,
+    () => [4, 5, 80]
+  );
+
+  t.deepEqual(movedStart.anchorPoint, [2, 3, 40], 'start should snap to its picked surface');
+  t.notOk('endPoint' in movedStart, 'moving start should not change end');
+  t.deepEqual(movedEnd.endPoint, [4, 5, 80], 'end should snap to its picked surface');
+  t.notOk('anchorPoint' in movedEnd, 'moving end should not change start');
+
+  t.end();
+});
+
+test('#moveRulerEndpoint -> falls back to elevation 0 for either endpoint', t => {
+  const ruler = makeRulerAnnotation({anchorPoint: [0, 0, 5], endPoint: [1, 1, 10]});
+  const changes = moveRulerEndpoint(ruler, 'end', {x: 10, y: -5}, mockViewport, () => null);
+
+  t.equal(changes.endPoint.length, 2, 'ground fallback should omit altitude');
+  t.deepEqual(changes.endPoint, [2, 2.5], 'fallback should use viewport ground unprojection');
+
+  t.end();
+});
+
+test('#moveRulerEndpoint -> drags from the rendered world copy across the dateline', t => {
+  const wrappingViewport = {
+    ...mockViewport,
+    project: ([lng, lat]) => [lng, lat],
+    unproject: ([x, y]) => [x, y]
+  };
+  const ruler = makeRulerAnnotation({anchorPoint: [179, 0], endPoint: [-179, 0]});
+  let pickedScreen;
+  const changes = moveRulerEndpoint(
+    ruler,
+    'end',
+    {x: 1, y: 0},
+    wrappingViewport,
+    screen => {
+      pickedScreen = screen;
+      return null;
+    }
+  );
+
+  t.deepEqual(pickedScreen, [182, 0], 'surface pick should start at the visible +181 handle');
+  t.deepEqual(changes.endPoint, [-178, 0], 'stored longitude should remain normalized');
+
+  t.end();
+});
+
+test('#moveRulerEndpoint -> keeps the start on its visible world copy across the dateline', t => {
+  const wrappingViewport = {
+    ...mockViewport,
+    project: ([lng, lat]) => [lng, lat],
+    unproject: ([x, y]) => [x, y]
+  };
+  const ruler = makeRulerAnnotation({anchorPoint: [179, 0], endPoint: [-179, 0]});
+  const changes = moveRulerEndpoint(ruler, 'start', {x: 2, y: 0}, wrappingViewport, () => null);
+
+  t.deepEqual(changes.anchorPoint, [181, 0], 'start should remain on the adjacent +181 world copy');
+
+  t.end();
+});
+
+test('#getRulerDistanceLabel -> follows geodesic kilometer measurement convention', t => {
+  t.equal(
+    getRulerDistanceLabel(makeRulerAnnotation({anchorPoint: [0, 0, 10], endPoint: [1, 0, 80]})),
+    'Length: 111.20 km',
+    'distance should use ground geodesic length and existing two-decimal format'
+  );
   t.end();
 });
 
@@ -480,6 +647,32 @@ test('#isPointVisibleOnGlobe -> non-finite projection is treated as not visible'
     isPointVisibleOnGlobe([10, 10], nanUnprojectViewport),
     false,
     'non-finite unproject result is not visible'
+  );
+
+  t.end();
+});
+
+test('#isAnnotationVisibleOnGlobe -> RULER requires both endpoints on the visible hemisphere', t => {
+  const viewport = {
+    project: ([lng, lat]) => [lng, lat],
+    unproject: ([x, y]) => (x > 90 ? [0, 0] : [x, y])
+  };
+
+  t.equal(
+    isAnnotationVisibleOnGlobe(
+      makeRulerAnnotation({anchorPoint: [10, 0], endPoint: [120, 0]}),
+      viewport
+    ),
+    false,
+    'ruler should hide rather than render through the globe when one endpoint is occluded'
+  );
+  t.equal(
+    isAnnotationVisibleOnGlobe(
+      makeRulerAnnotation({anchorPoint: [10, 0], endPoint: [20, 0]}),
+      viewport
+    ),
+    true,
+    'ruler should show when both endpoints are visible'
   );
 
   t.end();

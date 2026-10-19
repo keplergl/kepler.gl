@@ -30,6 +30,7 @@ import {
   DEFAULT_TEXT_LABEL,
   LAYER_BLENDINGS,
   OVERLAY_BLENDINGS,
+  AnnotationKind,
   isAnnotationKind,
   INITIAL_ANNOTATION_LINE_COLOR,
   INITIAL_ANNOTATION_LINE_WIDTH
@@ -863,7 +864,11 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
         isAnnotationKind(a.kind) &&
         Array.isArray(a.anchorPoint) &&
         (a.anchorPoint.length === 2 || a.anchorPoint.length === 3) &&
-        a.anchorPoint.every(value => Number.isFinite(value))
+        a.anchorPoint.every(value => Number.isFinite(value)) &&
+        (a.kind !== AnnotationKind.RULER ||
+          (Array.isArray(a.endPoint) &&
+            (a.endPoint.length === 2 || a.endPoint.length === 3) &&
+            a.endPoint.every(value => Number.isFinite(value))))
     )
     .map(a => ({
       isVisible: true,
@@ -874,7 +879,13 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
       lineWidth: INITIAL_ANNOTATION_LINE_WIDTH,
       textWidth: 0,
       textHeight: 0,
-      ...a
+      ...a,
+      ...(a.kind === AnnotationKind.RULER
+        ? {
+            showCustomText: a.showCustomText ?? true,
+            showDistance: a.showDistance ?? true
+          }
+        : {})
     }));
   if (!validAnnotations.length) {
     return state;

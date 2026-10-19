@@ -31,6 +31,7 @@ import {MapState} from '@kepler.gl/types';
 import {withState} from '../injector';
 import {Add, ArrowDown, ArrowDownSmall, Copy, EyeSeen, EyeUnseen, Trash} from '../common/icons';
 import {StyledPanelHeader, Tooltip, Button} from '../common/styled-components';
+import Checkbox from '../common/checkbox';
 import Portaled from '../common/portaled';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
 import {hexToRgb, rgbToHex} from '@kepler.gl/utils';
@@ -403,6 +404,13 @@ export default function AnnotationManagerFactory(): React.FC<any> {
       [visStateActions]
     );
 
+    const handleToggleRulerText = useCallback(
+      (id: string, property: 'showCustomText' | 'showDistance', checked: boolean) => {
+        visStateActions.updateAnnotation(id, {[property]: checked});
+      },
+      [visStateActions]
+    );
+
     const handleChangeTextPlacement = useCallback(
       (
         annotation: Annotation,
@@ -597,50 +605,104 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           onSetColor={rgb => handleChangeLineColor(annotation.id, rgb)}
                         />
                       </StyledConfigRow>
-                      <StyledConfigRow>
-                        <StyledConfigLabel>
-                          {intl.formatMessage({
-                            id: 'annotationManager.textSide',
-                            defaultMessage: 'Text Side'
-                          })}
-                        </StyledConfigLabel>
-                        <StyledSelect
-                          value={textPlacement.side}
-                          onChange={e =>
-                            handleChangeTextPlacement(annotation, {
-                              textSide: e.target.value as AnnotationTextSide
-                            })
-                          }
-                        >
-                          {ANNOTATION_TEXT_SIDES.map(s => (
-                            <option key={s.id} value={s.id}>
-                              {s.label}
-                            </option>
-                          ))}
-                        </StyledSelect>
-                      </StyledConfigRow>
-                      <StyledConfigRow>
-                        <StyledConfigLabel>
-                          {intl.formatMessage({
-                            id: 'annotationManager.textPlacement',
-                            defaultMessage: 'Placement'
-                          })}
-                        </StyledConfigLabel>
-                        <StyledSelect
-                          value={textPlacement.vertical}
-                          onChange={e =>
-                            handleChangeTextPlacement(annotation, {
-                              textVerticalPosition: e.target.value as AnnotationTextVerticalPosition
-                            })
-                          }
-                        >
-                          {ANNOTATION_TEXT_VERTICAL_POSITIONS.map(p => (
-                            <option key={p.id} value={p.id}>
-                              {p.label}
-                            </option>
-                          ))}
-                        </StyledSelect>
-                      </StyledConfigRow>
+                      {annotation.kind === AnnotationKind.RULER ? (
+                        <>
+                          <StyledConfigRow>
+                            <StyledConfigLabel
+                              as="label"
+                              htmlFor={`annotation-${annotation.id}-show-custom-text`}
+                            >
+                              {intl.formatMessage({
+                                id: 'annotationManager.customText',
+                                defaultMessage: 'Custom Text'
+                              })}
+                            </StyledConfigLabel>
+                            <Checkbox
+                              id={`annotation-${annotation.id}-show-custom-text`}
+                              type="checkbox"
+                              checked={annotation.showCustomText}
+                              onChange={event =>
+                                handleToggleRulerText(
+                                  annotation.id,
+                                  'showCustomText',
+                                  event.target.checked
+                                )
+                              }
+                            />
+                          </StyledConfigRow>
+                          <StyledConfigRow>
+                            <StyledConfigLabel
+                              as="label"
+                              htmlFor={`annotation-${annotation.id}-show-distance`}
+                            >
+                              {intl.formatMessage({
+                                id: 'annotationManager.distance',
+                                defaultMessage: 'Distance'
+                              })}
+                            </StyledConfigLabel>
+                            <Checkbox
+                              id={`annotation-${annotation.id}-show-distance`}
+                              type="checkbox"
+                              checked={annotation.showDistance}
+                              onChange={event =>
+                                handleToggleRulerText(
+                                  annotation.id,
+                                  'showDistance',
+                                  event.target.checked
+                                )
+                              }
+                            />
+                          </StyledConfigRow>
+                        </>
+                      ) : (
+                        <>
+                          <StyledConfigRow>
+                            <StyledConfigLabel>
+                              {intl.formatMessage({
+                                id: 'annotationManager.textSide',
+                                defaultMessage: 'Text Side'
+                              })}
+                            </StyledConfigLabel>
+                            <StyledSelect
+                              value={textPlacement.side}
+                              onChange={e =>
+                                handleChangeTextPlacement(annotation, {
+                                  textSide: e.target.value as AnnotationTextSide
+                                })
+                              }
+                            >
+                              {ANNOTATION_TEXT_SIDES.map(s => (
+                                <option key={s.id} value={s.id}>
+                                  {s.label}
+                                </option>
+                              ))}
+                            </StyledSelect>
+                          </StyledConfigRow>
+                          <StyledConfigRow>
+                            <StyledConfigLabel>
+                              {intl.formatMessage({
+                                id: 'annotationManager.textPlacement',
+                                defaultMessage: 'Placement'
+                              })}
+                            </StyledConfigLabel>
+                            <StyledSelect
+                              value={textPlacement.vertical}
+                              onChange={e =>
+                                handleChangeTextPlacement(annotation, {
+                                  textVerticalPosition: e.target
+                                    .value as AnnotationTextVerticalPosition
+                                })
+                              }
+                            >
+                              {ANNOTATION_TEXT_VERTICAL_POSITIONS.map(p => (
+                                <option key={p.id} value={p.id}>
+                                  {p.label}
+                                </option>
+                              ))}
+                            </StyledSelect>
+                          </StyledConfigRow>
+                        </>
+                      )}
                     </StyledConfigSection>
                   ) : null}
                 </StyledAnnotationItemWrapper>

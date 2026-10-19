@@ -3,9 +3,14 @@
 
 import React, {FC} from 'react';
 import {useDraggable} from '@dnd-kit/core';
-import {Annotation, AnnotationWithArm} from '@kepler.gl/types';
+import {Annotation, AnnotationWithArm, RulerAnnotation} from '@kepler.gl/types';
 import {AnnotationKind} from '@kepler.gl/constants';
-import {makeMarker, MapViewport, CircleAnnotationMarker} from './annotation-utils';
+import {
+  makeMarker,
+  MapViewport,
+  CircleAnnotationMarker,
+  RulerAnnotationMarker
+} from './annotation-utils';
 
 const HANDLE_RADIUS = 6;
 
@@ -53,6 +58,63 @@ export type AnnotationNodeProps = {
   viewport: MapViewport;
   isEditing: boolean;
   isSelected: boolean;
+};
+
+export type RulerEndpointHandlesProps = {
+  annotation: RulerAnnotation;
+  opacity?: number;
+  viewport: MapViewport;
+  isEditing: boolean;
+  isSelected: boolean;
+};
+
+/**
+ * Ruler handles render in a dedicated SVG above midpoint text so even a short
+ * ruler remains draggable when its label overlaps an endpoint.
+ */
+export const RulerEndpointHandles: FC<RulerEndpointHandlesProps> = ({
+  annotation,
+  opacity = 1,
+  viewport,
+  isEditing,
+  isSelected
+}) => {
+  if (!isEditing) return null;
+  const marker = makeMarker(annotation, viewport) as RulerAnnotationMarker;
+  return (
+    <g
+      data-annotation-id={annotation.id}
+      data-annotation-part="handles"
+      transform={`translate(${marker.x},${marker.y})`}
+      style={{
+        opacity,
+        display: opacity === 0 ? 'none' : undefined,
+        visibility: opacity === 0 ? 'hidden' : undefined,
+        pointerEvents: opacity === 0 ? 'none' : undefined
+      }}
+    >
+      <MoveHandle id={`${annotation.id}:MOVE_RULER_START`} x={0} y={0} />
+      <MoveHandle id={`${annotation.id}:MOVE_RULER_END`} x={marker.ex} y={marker.ey} />
+      {isSelected ? (
+        <>
+          <circle
+            r={HANDLE_RADIUS + 2}
+            fill="none"
+            stroke="rgba(64,169,255,0.6)"
+            strokeWidth={2}
+          />
+          <circle
+            cx={marker.ex}
+            cy={marker.ey}
+            r={HANDLE_RADIUS + 2}
+            fill="none"
+            stroke="rgba(64,169,255,0.6)"
+            strokeWidth={2}
+          />
+        </>
+      ) : null}
+    </g>
+  );
 };
 
 const AnnotationNode: FC<AnnotationNodeProps> = ({
@@ -138,6 +200,19 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
         </>
       );
       break;
+    case AnnotationKind.RULER: {
+      const rulerMarker = marker as RulerAnnotationMarker;
+      body = (
+        <path
+          d={`M0,0 L${rulerMarker.ex},${rulerMarker.ey}`}
+          stroke={lineColor}
+          fill="none"
+          strokeWidth={lineWidth}
+          strokeLinecap="round"
+        />
+      );
+      break;
+    }
     default:
       body = (
         <>

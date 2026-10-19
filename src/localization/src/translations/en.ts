@@ -356,6 +356,8 @@ export default {
     type: 'Type',
     lineWidth: 'Line Width',
     color: 'Color',
+    customText: 'Custom Text',
+    distance: 'Distance',
     textSide: 'Text Side',
     textPlacement: 'Placement'
   },
