@@ -67,6 +67,17 @@ test('#visState camera bookmarks -> replace, merge, validate and reset', t => {
   t.deepEqual(replaced.cameraBookmarks, [second], 'normal load replaces bookmarks');
   const reset = visStateReducer(base, receiveMapConfig({visState: {}}));
   t.deepEqual(reset.cameraBookmarks, [], 'normal legacy load clears previous bookmarks');
+  const seeded = {...base, initialState: {cameraBookmarks: [first]}};
+  t.deepEqual(
+    visStateReducer(seeded, receiveMapConfig({visState: {cameraBookmarks: [second]}})).cameraBookmarks,
+    [second],
+    'normal load replaces host-provided initial bookmarks'
+  );
+  t.deepEqual(
+    visStateReducer(seeded, receiveMapConfig({visState: {}})).cameraBookmarks,
+    [],
+    'normal legacy load clears host-provided initial bookmarks'
+  );
   t.deepEqual(
     visStateReducer(base, setCameraBookmarks([])).cameraBookmarks,
     [],

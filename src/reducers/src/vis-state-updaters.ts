@@ -3408,7 +3408,9 @@ export const receiveMapConfigUpdater = (
   const {keepExistingConfig} = options;
 
   // reset config if keepExistingConfig is falsy
-  let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
+  let mergedState = !keepExistingConfig
+    ? {...resetMapConfigUpdater(state), cameraBookmarks: []}
+    : state;
   for (const merger of state.mergers) {
     if (isValidMerger(merger) && hasPropsToMerge(config.visState, merger.prop)) {
       mergedState = merger.merge(
