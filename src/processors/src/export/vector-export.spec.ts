@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {convertWKBToGeometry} from '@loaders.gl/gis';
 import {convertArrowToSchema} from '@loaders.gl/schema-utils';
 import {ALL_FIELD_TYPES, EXPORT_DATA_TYPE} from '@kepler.gl/constants';
 import {Field} from '@kepler.gl/types';
@@ -111,6 +112,76 @@ describe('dataset export', () => {
     expect(parquetBytes.includes(Buffer.from('"encoding":"WKB"'))).toBe(true);
     expect(parquetBytes.includes(Buffer.from('hidden-value'))).toBe(false);
   });
+
+  test.each([
+    {
+      dimension: '2D',
+      altitudes: [null, ''],
+      expectedZ: 0,
+      expectedCoordinates: [
+        [-122.4, 37.8],
+        [-122.41, 37.81]
+      ]
+    },
+    {
+      dimension: '3D',
+      altitudes: [12, 24],
+      expectedZ: 1,
+      expectedCoordinates: [
+        [-122.4, 37.8, 12],
+        [-122.41, 37.81, 24]
+      ]
+    },
+    {
+      dimension: 'mixed 2D and 3D',
+      altitudes: [12, null],
+      expectedZ: 2,
+      expectedCoordinates: [
+        [-122.4, 37.8, 12],
+        [-122.41, 37.81]
+      ]
+    }
+  ])(
+    'writes $dimension GeoPackage points with matching Z metadata',
+    async ({altitudes, expectedZ, expectedCoordinates}) => {
+      const altitudeFields = [
+        ...fields,
+        {name: 'altitude', type: ALL_FIELD_TYPES.real}
+      ] as Field[];
+      const altitudeFieldPairs = [
+        {
+          defaultName: 'point',
+          pair: {
+            lat: {fieldIdx: 2, value: 'lat'},
+            lng: {fieldIdx: 3, value: 'lng'},
+            altitude: {fieldIdx: 4, value: 'altitude'}
+          },
+          suffix: ['lat', 'lng', 'altitude']
+        }
+      ];
+      const altitudeRows = rows.map((row, index) => [...row, altitudes[index]]);
+      const geopackage = await encodeDatasetExport({
+        data: createDataContainer(altitudeRows),
+        fields: altitudeFields,
+        fieldPairs: altitudeFieldPairs,
+        dataType: EXPORT_DATA_TYPE.GEOPACKAGE,
+        layerName: 'places'
+      });
+      const SQL = await loadSqlJs();
+      const db = new SQL.Database(new Uint8Array(geopackage.data as Uint8Array));
+      try {
+        const z = db.exec('SELECT z FROM gpkg_geometry_columns')[0].values[0][0];
+        const coordinates = db.exec('SELECT geom FROM places ORDER BY fid')[0].values.map(row => {
+          const blob = row[0] as Uint8Array;
+          const geometry = convertWKBToGeometry(blob.slice(8).buffer);
+          return geometry.type === 'Point' ? geometry.coordinates : null;
+        });
+        expect({z, coordinates}).toEqual({z: expectedZ, coordinates: expectedCoordinates});
+      } finally {
+        db.close();
+      }
+    }
+  );
 
   test('rejects mixed geometry families when exporting a shapefile', async () => {
     const geometryFields = [
