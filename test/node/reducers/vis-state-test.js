@@ -9964,6 +9964,92 @@ test('VisStateUpdater -> refreshDataset rebuilds point layer positions', async t
   t.end();
 });
 
+test('VisStateUpdater -> refreshDataset rebuilds GeoJSON geometry with the same row count', async t => {
+  drainTasksForTesting();
+  const pointData = coordinates =>
+    processGeojson({
+      type: 'FeatureCollection',
+      features: [{type: 'Feature', properties: {}, geometry: {type: 'Point', coordinates}}]
+    });
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'remote-geojson', type: DatasetType.EXTERNALLY_HOSTED, label: 'live.geojson'},
+    data: pointData([1, 2]),
+    metadata: {source: 'https://example.com/live.geojson', sourceFormat: 'geojson'}
+  });
+  const {props} = GeojsonLayer.findDefaultLayerProps(datasets['remote-geojson']);
+  const geojsonLayer = new GeojsonLayer({
+    id: 'live-geojson',
+    dataId: 'remote-geojson',
+    ...props[0]
+  });
+  geojsonLayer.setInitialLayerConfig(datasets['remote-geojson']);
+  geojsonLayer.updateLayerVisConfig({opacity: 0.37, radius: 13});
+  const {layerData, layer} = calculateLayerData(
+    geojsonLayer,
+    {...INITIAL_VIS_STATE, datasets, layers: [geojsonLayer], layerData: [{}]},
+    undefined
+  );
+  const state = {...INITIAL_VIS_STATE, datasets, layers: [layer], layerData: [layerData]};
+  const style = {...layer.config.visConfig};
+  t.deepEqual(layerData.data[0].geometry.coordinates, [1, 2], 'starts at the old point');
+
+  const loading = reducer(state, VisStateActions.refreshDataset('remote-geojson'));
+  const progressed = reducer(loading, VisStateActions.refreshDatasetProgress('remote-geojson', 50));
+  const [task] = drainTasksForTesting();
+  t.equal(task.type, 'REFRESH_EXTERNALLY_HOSTED_DATASET_TASK', 'uses the remote refresh task');
+  const refreshed = reducer(
+    progressed,
+    succeedTaskInTest(task, {data: pointData([30, 40]), notModified: false})
+  );
+  const dataset = refreshed.datasets['remote-geojson'];
+  const refreshedLayer = refreshed.layers[0];
+  const refreshedData = refreshed.layerData[0];
+  t.equal(dataset.dataContainer.numRows(), 1, 'keeps the same row count');
+  t.deepEqual(
+    dataset.dataContainer.valueAt(0, refreshedLayer.config.columns.geojson.fieldIdx).geometry
+      .coordinates,
+    [30, 40],
+    'stores the refreshed point'
+  );
+  t.deepEqual(refreshedData.data[0].geometry.coordinates, [30, 40], 'renders the refreshed point');
+  t.deepEqual(refreshedLayer.centroids, [[30, 40]], 'rebuilds centroids for spatial filtering');
+  t.deepEqual(refreshedLayer.meta.bounds, [30, 40, 30, 40], 'rebuilds layer bounds');
+  t.deepEqual(refreshedData.getPosition({index: 0}), [30, 40], 'moves the text label position');
+  t.deepEqual(refreshedLayer.config.visConfig, style, 'preserves user styling');
+  const polygon = {
+    type: 'Feature',
+    id: 'refresh-polygon',
+    properties: {renderType: 'Polygon', isClosed: true, isVisible: true},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [29, 39],
+          [31, 39],
+          [31, 41],
+          [29, 41],
+          [29, 39]
+        ]
+      ]
+    }
+  };
+  let filtered = reducer(refreshed, VisStateActions.setPolygonFilterLayer(refreshedLayer, polygon));
+  t.equal(filtered.layerData[0].data.length, 1, 'starts inside an active polygon filter');
+  for (const [coordinates, visibleCount] of [
+    [[70, 80], 0],
+    [[30, 40], 1]
+  ]) {
+    const filteringRefresh = reducer(filtered, VisStateActions.refreshDataset('remote-geojson'));
+    const [filteringTask] = drainTasksForTesting();
+    filtered = reducer(
+      filteringRefresh,
+      succeedTaskInTest(filteringTask, {data: pointData(coordinates), notModified: false})
+    );
+    t.equal(filtered.layerData[0].data.length, visibleCount, 'filters using refreshed centroids');
+  }
+  t.end();
+});
+
 test('VisStateUpdater -> refreshDataset rebinds or drops layers when field names change', async t => {
   drainTasksForTesting();
   const initialData = processCsvData('lat,lng\n37.77,-122.42');
