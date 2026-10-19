@@ -60,19 +60,7 @@ function emptyBoundingBox(): BoundingBox {
   return {minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity};
 }
 
-function extendBoundingBox(box: BoundingBox, geometry: Geometry): void {
-  const visit = (position: Position) => {
-    const x = Number(position[0]);
-    const y = Number(position[1]);
-    if (Number.isFinite(x)) {
-      box.minX = Math.min(box.minX, x);
-      box.maxX = Math.max(box.maxX, x);
-    }
-    if (Number.isFinite(y)) {
-      box.minY = Math.min(box.minY, y);
-      box.maxY = Math.max(box.maxY, y);
-    }
-  };
+function visitPositions(geometry: Geometry, visit: (position: Position) => void): void {
   const walk = (geom: Geometry) => {
     switch (geom.type) {
       case 'Point':
@@ -97,6 +85,31 @@ function extendBoundingBox(box: BoundingBox, geometry: Geometry): void {
     }
   };
   walk(geometry);
+}
+
+function geometryHasZ(geometry: Geometry): boolean {
+  let hasPosition = false;
+  let hasZ = true;
+  visitPositions(geometry, position => {
+    hasPosition = true;
+    hasZ = hasZ && position.length >= 3;
+  });
+  return hasPosition && hasZ;
+}
+
+function extendBoundingBox(box: BoundingBox, geometry: Geometry): void {
+  visitPositions(geometry, position => {
+    const x = Number(position[0]);
+    const y = Number(position[1]);
+    if (Number.isFinite(x)) {
+      box.minX = Math.min(box.minX, x);
+      box.maxX = Math.max(box.maxX, x);
+    }
+    if (Number.isFinite(y)) {
+      box.minY = Math.min(box.minY, y);
+      box.maxY = Math.max(box.maxY, y);
+    }
+  });
 }
 
 function quoteIdentifier(value: string): string {
@@ -164,7 +177,7 @@ function coerceValue(value: unknown, type: ColumnType): number | string | null {
  */
 function geoPackageBlob(geometry: Geometry | null): Uint8Array | null {
   if (!geometry) return null;
-  const wkb = new Uint8Array(convertGeometryToWKB(geometry));
+  const wkb = new Uint8Array(convertGeometryToWKB(geometry, {hasZ: geometryHasZ(geometry)}));
   const header = new Uint8Array(8);
   const view = new DataView(header.buffer);
   header[0] = 0x47; // 'G'
@@ -293,9 +306,11 @@ export function writeGeoPackageSync(
 
   const box: BoundingBox = emptyBoundingBox();
   const geometryTypes = new Set<string>();
+  const geometryZ = new Set<boolean>();
   for (const feature of features) {
     if (feature.geometry) {
       geometryTypes.add(feature.geometry.type);
+      geometryZ.add(geometryHasZ(feature.geometry));
       extendBoundingBox(box, feature.geometry);
     }
   }
@@ -355,11 +370,13 @@ export function writeGeoPackageSync(
       contents.free();
     }
 
-    db.run(`INSERT INTO gpkg_geometry_columns VALUES (?, ?, ?, ?, 0, 0);`, [
+    const z = geometryZ.has(true) ? (geometryZ.has(false) ? 2 : 1) : 0;
+    db.run(`INSERT INTO gpkg_geometry_columns VALUES (?, ?, ?, ?, ?, 0);`, [
       tableName,
       GEOMETRY_COLUMN,
       geometryTypeName(geometryTypes),
-      SRS_ID
+      SRS_ID,
+      z
     ]);
     db.run(`INSERT INTO gpkg_ogr_contents (table_name, feature_count) VALUES (?, ?);`, [
       tableName,
