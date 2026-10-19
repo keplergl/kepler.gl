@@ -3,7 +3,7 @@
 
 import React, {useState} from 'react';
 import {fireEvent, screen} from '@testing-library/react';
-import {MapStateActions, VisStateActions} from '@kepler.gl/actions';
+import {MapStateActions, VisStateActions, UIStateActions} from '@kepler.gl/actions';
 import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {CameraBookmark} from '@kepler.gl/types';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
@@ -20,11 +20,22 @@ function setup(
 ) {
   const updateMap = jest.fn();
   const commit = jest.fn();
+  const toggle = jest.fn();
   function Harness() {
     const [items, setItems] = useState(bookmarks);
+    const [enabled, setEnabled] = useState(true);
     return (
       <CameraBookmarks
         bookmarks={items}
+        enabled={enabled}
+        uiStateActions={{
+          ...UIStateActions,
+          setMapControlVisibility: (id, show) => {
+            toggle(id, show);
+            setEnabled(show);
+            return UIStateActions.setMapControlVisibility(id, show);
+          }
+        }}
         mapState={mapState}
         mapStateActions={{...MapStateActions, updateMap}}
         visStateActions={{
@@ -51,7 +62,7 @@ function setup(
     </IntlWrapper>
   );
   fireEvent.click(screen.getByRole('button', {name: 'Bookmarks'}));
-  return {commit, updateMap};
+  return {commit, updateMap, toggle};
 }
 
 test('captures, renames and deletes a bookmark without datasets', () => {
@@ -108,4 +119,67 @@ test('captures and updates the live camera when Redux has not caught up', () => 
   expect(commit.mock.lastCall[0][0].camera).toEqual(liveCamera);
   fireEvent.click(screen.getByRole('button', {name: 'Bookmark current view'}));
   expect(commit.mock.lastCall[0][1].camera).toEqual(liveCamera);
+});
+
+test('enabling is independent of collapse and preserves saved bookmarks', () => {
+  const {commit, toggle, updateMap} = setup(initial);
+  const header = screen.getByRole('button', {name: 'Bookmarks'});
+  expect(header).toHaveAttribute('aria-expanded', 'true');
+  fireEvent.click(screen.getByRole('checkbox', {name: 'Enable bookmarks'}));
+  expect(toggle).toHaveBeenLastCalledWith('cameraBookmarks', false);
+  expect(header).toHaveAttribute('aria-expanded', 'true');
+  expect(screen.getByRole('button', {name: 'Go to'})).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', {name: 'Go to'}));
+  expect(updateMap).not.toHaveBeenCalled();
+  expect(commit).not.toHaveBeenCalled();
+  fireEvent.click(header);
+  fireEvent.click(screen.getByRole('checkbox', {name: 'Enable bookmarks'}));
+  expect(header).toHaveAttribute('aria-expanded', 'false');
+  expect(screen.getByRole('checkbox', {name: 'Enable bookmarks'})).toBeChecked();
+  fireEvent.click(header);
+  expect(screen.getByRole('textbox', {name: 'Bookmark name 1'})).toHaveValue('Home');
+});
+
+test('icon actions retain accessible names, tooltips, focus and fixed row space', () => {
+  setup(initial);
+  for (const name of ['Go to', 'Update view', 'Up', 'Down', 'Delete']) {
+    const button = screen.getByRole('button', {name});
+    expect(button).toHaveAttribute('title', name);
+    expect(button).toHaveTextContent('');
+    expect(button.querySelector('svg')).not.toBeNull();
+  }
+  const goTo = screen.getByRole('button', {name: 'Go to'});
+  goTo.focus();
+  expect(goTo).toHaveFocus();
+  expect(goTo.closest('.bookmark-actions')).toBeInTheDocument();
+});
+
+test('multiple maps have independent switch and content identifiers', () => {
+  const toggles = [jest.fn(), jest.fn()];
+  renderWithTheme(
+    <IntlWrapper>
+      {toggles.map((toggle, index) => (
+        <CameraBookmarks
+          key={index}
+          bookmarks={initial}
+          mapState={INITIAL_MAP_STATE}
+          visStateActions={VisStateActions}
+          uiStateActions={{...UIStateActions, setMapControlVisibility: toggle}}
+        />
+      ))}
+    </IntlWrapper>
+  );
+  const switches = screen.getAllByRole('checkbox', {name: 'Enable bookmarks'});
+  expect(switches[0].id).not.toBe(switches[1].id);
+  fireEvent.click(switches[1].closest('label')!);
+  expect(toggles[0]).not.toHaveBeenCalled();
+  expect(toggles[1]).toHaveBeenCalledWith('cameraBookmarks', false);
+  const headers = screen.getAllByRole('button', {name: 'Bookmarks'});
+  headers.forEach(header => fireEvent.click(header));
+  expect(headers[0].getAttribute('aria-controls')).not.toBe(
+    headers[1].getAttribute('aria-controls')
+  );
+  headers.forEach(header =>
+    expect(document.getElementById(header.getAttribute('aria-controls')!)).toBeInTheDocument()
+  );
 });

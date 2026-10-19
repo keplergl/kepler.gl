@@ -1,27 +1,32 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useContext, useState} from 'react';
+import React, {useContext, useId, useState} from 'react';
 import styled from 'styled-components';
 import {useIntl} from 'react-intl';
 import {CameraBookmark, MapState} from '@kepler.gl/types';
-import {MapStateActions, VisStateActions} from '@kepler.gl/actions';
+import {MapStateActions, VisStateActions, UIStateActions} from '@kepler.gl/actions';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {getCameraSnapshot} from '@kepler.gl/utils';
-import {Button, Input, PanelContent, PanelHeaderTitle} from '../../common/styled-components';
+import {Button, Input, PanelContent} from '../../common/styled-components';
+import {LocationMarker, Replace, ArrowUp, ArrowDown, Delete, MapPin} from '../../common/icons';
+import CameraPanelHeader, {CameraPanel} from './camera-panel-header';
 import {cameraTransition} from '../../camera-navigation';
 import {MapViewStateContext} from '../../map-view-state-context';
 
-const Header = styled.button`
-  background: ${props => props.theme.panelBackground};
-  border: 0;
-  padding: 12px;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-`;
 const BookmarkRow = styled.div`
   margin-top: 12px;
+  @media (hover: hover) and (pointer: fine) {
+    .bookmark-actions {
+      opacity: 0;
+      pointer-events: none;
+    }
+    &:hover .bookmark-actions,
+    &:focus-within .bookmark-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
   input {
     width: 100%;
     margin-bottom: 6px;
@@ -29,12 +34,26 @@ const BookmarkRow = styled.div`
 `;
 const Actions = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  height: 28px;
   gap: 4px;
+`;
+
+const ActionButton = styled(Button)`
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  svg {
+    margin: 0;
+  }
+  &:focus-visible {
+    outline: 2px solid ${props => props.theme.activeColor};
+  }
 `;
 
 export type CameraBookmarksProps = {
   bookmarks?: CameraBookmark[];
+  enabled?: boolean;
+  uiStateActions?: typeof UIStateActions;
   mapState?: MapState;
   mapStateActions?: typeof MapStateActions;
   visStateActions: typeof VisStateActions;
@@ -42,10 +61,13 @@ export type CameraBookmarksProps = {
 
 export default function CameraBookmarks({
   bookmarks = [],
+  enabled = true,
+  uiStateActions,
   mapState,
   mapStateActions,
   visStateActions
 }: CameraBookmarksProps) {
+  const panelId = `camera-bookmarks-${useId()}`;
   const [open, setOpen] = useState(false);
   const intl = useIntl();
   const message = (key: string, fallback: string) =>
@@ -61,12 +83,23 @@ export default function CameraBookmarks({
   };
 
   return (
-    <section className="interaction-camera-bookmarks">
-      <Header type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
-        <PanelHeaderTitle>{message('bookmarks', 'Bookmarks')}</PanelHeaderTitle>
-      </Header>
+    <CameraPanel className="interaction-panel interaction-camera-bookmarks">
+      <CameraPanelHeader
+        id={panelId}
+        title={message('bookmarks', 'Bookmarks')}
+        enableLabel={message('enableBookmarks', 'Enable bookmarks')}
+        Icon={MapPin}
+        open={open}
+        enabled={enabled}
+        onToggleOpen={() => setOpen(!open)}
+        onToggleEnabled={
+          uiStateActions
+            ? () => uiStateActions.setMapControlVisibility('cameraBookmarks', !enabled)
+            : undefined
+        }
+      />
       {open && (
-        <PanelContent>
+        <PanelContent id={`${panelId}-content`}>
           {!supported ? (
             <p>{message('singleMap', 'Use a single 2D or 3D map to edit camera views.')}</p>
           ) : (
@@ -104,17 +137,21 @@ export default function CameraBookmarks({
                       )
                     }
                   />
-                  <Actions>
-                    <Button
+                  <Actions className="bookmark-actions">
+                    <ActionButton
+                      aria-label={message('goTo', 'Go to')}
+                      title={message('goTo', 'Go to')}
                       type="button"
                       secondary
                       small
-                      disabled={!mapStateActions}
+                      disabled={!enabled || !mapStateActions}
                       onClick={() => mapStateActions?.updateMap(cameraTransition(bookmark.camera))}
                     >
-                      {message('goTo', 'Go to')}
-                    </Button>
-                    <Button
+                      <LocationMarker height="16px" aria-hidden="true" />
+                    </ActionButton>
+                    <ActionButton
+                      aria-label={message('updateView', 'Update view')}
+                      title={message('updateView', 'Update view')}
                       type="button"
                       secondary
                       small
@@ -129,34 +166,40 @@ export default function CameraBookmarks({
                           );
                       }}
                     >
-                      {message('updateView', 'Update view')}
-                    </Button>
-                    <Button
+                      <Replace height="16px" aria-hidden="true" />
+                    </ActionButton>
+                    <ActionButton
+                      aria-label={message('up', 'Up')}
+                      title={message('up', 'Up')}
                       type="button"
                       secondary
                       small
                       disabled={index === 0}
                       onClick={() => move(index, -1)}
                     >
-                      {message('up', 'Up')}
-                    </Button>
-                    <Button
+                      <ArrowUp height="16px" aria-hidden="true" />
+                    </ActionButton>
+                    <ActionButton
+                      aria-label={message('down', 'Down')}
+                      title={message('down', 'Down')}
                       type="button"
                       secondary
                       small
                       disabled={index === bookmarks.length - 1}
                       onClick={() => move(index, 1)}
                     >
-                      {message('down', 'Down')}
-                    </Button>
-                    <Button
+                      <ArrowDown height="16px" aria-hidden="true" />
+                    </ActionButton>
+                    <ActionButton
+                      aria-label={message('delete', 'Delete')}
+                      title={message('delete', 'Delete')}
                       type="button"
                       secondary
                       small
                       onClick={() => commit(bookmarks.filter(item => item.id !== bookmark.id))}
                     >
-                      {message('delete', 'Delete')}
-                    </Button>
+                      <Delete height="16px" aria-hidden="true" />
+                    </ActionButton>
                   </Actions>
                 </BookmarkRow>
               ))}
@@ -164,6 +207,6 @@ export default function CameraBookmarks({
           )}
         </PanelContent>
       )}
-    </section>
+    </CameraPanel>
   );
 }

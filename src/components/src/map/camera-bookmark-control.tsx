@@ -1,59 +1,158 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {useContext, useState} from 'react';
+import {createPortal} from 'react-dom';
 import styled from 'styled-components';
 import {useIntl} from 'react-intl';
-import {CameraBookmark, MapState} from '@kepler.gl/types';
-import {MapStateActions} from '@kepler.gl/actions';
-import {MapControlButton} from '../common/styled-components';
+import copy from 'copy-to-clipboard';
+import {CameraBookmark, MapControls, MapState} from '@kepler.gl/types';
+import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
+import {breakPointValues} from '@kepler.gl/styles';
+import {hasPortableWidth} from '@kepler.gl/utils';
+import {Button} from '../common/styled-components';
+import {LocationMarker, Copy} from '../common/icons';
+import {RootContext} from '../context';
 import {cameraTransition} from '../camera-navigation';
+import {DraggableLegend} from './map-legend-panel';
+import MapControlPanelFactory from './map-control-panel';
+import {formatMapCoordinate} from './coordinate-info';
 
-const Controls = styled.nav`
+const MapControlPanel = MapControlPanelFactory();
+const Rows = styled.nav`
+  padding: 8px;
+`;
+const Row = styled.div`
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  max-width: 180px;
-  max-height: 140px;
-  overflow-y: auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-bottom: 4px;
+`;
+const NavigateButton = styled(Button)`
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-start;
+  gap: 8px;
+  svg {
+    flex: 0 0 auto;
+  }
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+const CopyButton = styled(Button)`
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  svg {
+    margin: 0;
+  }
+`;
+const Status = styled.div`
+  color: ${props => props.theme.textColor};
+  font-size: 11px;
 `;
 
 export default function CameraBookmarkControl({
   bookmarks = [],
   mapState,
   mapStateActions,
+  mapControls,
+  setMapControlSettings,
+  activeSidePanel,
   isExport
 }: {
   bookmarks?: CameraBookmark[];
   mapState?: MapState;
   mapStateActions?: typeof MapStateActions;
+  mapControls?: MapControls;
+  setMapControlSettings?: typeof UIStateActions.setMapControlSettings;
+  activeSidePanel?: string | null;
   isExport?: boolean;
 }) {
   const intl = useIntl();
+  const root = useContext(RootContext);
+  const [status, setStatus] = useState('');
+  const message = (key: string, fallback: string) =>
+    intl.formatMessage({id: `camera.${key}`, defaultMessage: fallback});
   if (
     !bookmarks.length ||
     !mapState ||
     !mapStateActions ||
     isExport ||
     mapState.isSplit ||
-    mapState.globe?.enabled
+    mapState.globe?.enabled ||
+    mapControls?.cameraBookmarks?.show === false
   )
     return null;
-  return (
-    <Controls
-      aria-label={intl.formatMessage({id: 'camera.bookmarks', defaultMessage: 'Bookmarks'})}
+
+  const title = message('bookmarks', 'Bookmarks');
+  const panel = (
+    <MapControlPanel header="camera.bookmarks" disableClose className="camera-bookmark-panel">
+      <Rows aria-label={title}>
+        {bookmarks.map((bookmark, index) => {
+          const name = bookmark.name || `${message('bookmark', 'Bookmark')} ${index + 1}`;
+          const coordinates = formatMapCoordinate([
+            bookmark.camera.longitude,
+            bookmark.camera.latitude
+          ]);
+          const copyLabel = `${message('copyCoordinates', 'Copy coordinates')}: ${name}`;
+          return (
+            <Row key={bookmark.id}>
+              <NavigateButton
+                type="button"
+                secondary
+                small
+                title={name}
+                onClick={() => mapStateActions.updateMap(cameraTransition(bookmark.camera))}
+              >
+                <LocationMarker height="16px" aria-hidden="true" />
+                <span>{name}</span>
+              </NavigateButton>
+              <CopyButton
+                type="button"
+                secondary
+                small
+                aria-label={copyLabel}
+                title={copyLabel}
+                disabled={!coordinates}
+                onClick={() => {
+                  const copied = coordinates && copy(coordinates);
+                  setStatus(
+                    copied
+                      ? message('copiedCoordinates', 'Coordinates copied')
+                      : message('copyFailed', 'Could not copy coordinates')
+                  );
+                }}
+              >
+                <Copy height="16px" aria-hidden="true" />
+              </CopyButton>
+            </Row>
+          );
+        })}
+        <Status role="status" aria-live="polite">
+          {status}
+        </Status>
+      </Rows>
+    </MapControlPanel>
+  );
+
+  if (!setMapControlSettings || hasPortableWidth(breakPointValues)) return panel;
+  return createPortal(
+    <DraggableLegend
+      controlId="cameraBookmarks"
+      label={title}
+      isSidePanelShown={Boolean(activeSidePanel)}
+      mapControls={mapControls || {}}
+      setMapControlSettings={setMapControlSettings}
+      mapState={mapState}
     >
-      {bookmarks.map((bookmark, index) => (
-        <MapControlButton
-          key={bookmark.id}
-          type="button"
-          title={bookmark.name}
-          aria-label={bookmark.name || `${index + 1}`}
-          onClick={() => mapStateActions.updateMap(cameraTransition(bookmark.camera))}
-        >
-          {index + 1}
-        </MapControlButton>
-      ))}
-    </Controls>
+      {panel}
+    </DraggableLegend>,
+    root?.current ?? document.body
   );
 }

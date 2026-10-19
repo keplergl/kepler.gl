@@ -514,3 +514,21 @@ test('#uiStateReducer -> SET_EXPORT_VIDEO_SETTING', t => {
 
   t.end();
 });
+
+test('#uiStateReducer -> bookmark visibility preserves navigation layout settings', t => {
+  const state = reducer(INITIAL_UI_STATE, setMapControlVisibility('cameraBookmarks', false));
+  t.equal(state.mapControls.cameraBookmarks.show, false, 'hides bookmark navigation');
+  t.deepEqual(
+    state.mapControls.cameraBookmarks.settings,
+    INITIAL_UI_STATE.mapControls.cameraBookmarks.settings,
+    'keeps drag/resize settings'
+  );
+  t.deepEqual(
+    state.mapControls.mapLegend,
+    INITIAL_UI_STATE.mapControls.mapLegend,
+    'does not alter the layer legend'
+  );
+  const shown = reducer(state, setMapControlVisibility('cameraBookmarks', true));
+  t.equal(shown.mapControls.cameraBookmarks.show, true, 'can show it again');
+  t.end();
+});

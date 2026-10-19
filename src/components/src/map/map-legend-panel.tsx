@@ -65,6 +65,7 @@ const StyledDraggableLegendContent = styled.div<{
     background-color: transparent;
   }
   &:hover,
+  &:focus-within,
   &.is-dragging {
     .legend-top-handles,
     .legend-move-handle,
@@ -76,6 +77,14 @@ const StyledDraggableLegendContent = styled.div<{
       pointer-events: auto;
     }
     border-color: ${props => props.theme.activeColor};
+  }
+  @media (hover: none), (pointer: coarse) {
+    .legend-top-handles,
+    .legend-move-handle,
+    .legend-resize-handle {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
   .map-control__panel-content {
     max-height: ${props =>
@@ -178,10 +187,11 @@ type DraggableLegendContentProps = {
   maxContentHeight?: number;
   positionStyles: Record<string, unknown>;
   children: React.ReactNode;
+  label: string;
 };
 
 const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, ref) => {
-  const {positionStyles, children, contentHeight, maxContentHeight} = props;
+  const {positionStyles, children, contentHeight, maxContentHeight, label} = props;
   const draggableMove = useDraggable({id: DRAG_MOVE_ID});
   const draggableResize = useDraggable({id: DRAG_RESIZE_ID});
   const draggableResizeTop = useDraggable({id: DRAG_RESIZE_TOP_ID});
@@ -195,14 +205,13 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
       style={{...positionStyles, transform: CSS.Translate.toString(draggableMove.transform)}}
       $contentHeight={contentHeight}
       $maxContentHeight={maxContentHeight}
-      {...draggableMove.attributes}
     >
       {children}
       {isDragging ? <div className="legend-input-block" /> : null}
       <StyledTopHandles className="legend-top-handles">
         <StyledTopResizeHandle
           className="legend-resize-handle legend-resize-handle--top"
-          aria-label="Resize legend"
+          aria-label={`Resize ${label}`}
           ref={draggableResizeTop.setNodeRef}
           {...draggableResizeTop.attributes}
           {...draggableResizeTop.listeners}
@@ -211,7 +220,8 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
         </StyledTopResizeHandle>
         <StyledMoveHandle
           className="legend-move-handle"
-          aria-label="Move legend"
+          aria-label={`Move ${label}`}
+          {...draggableMove.attributes}
           {...draggableMove.listeners}
         >
           <DraggableDots height="16px" />
@@ -219,7 +229,7 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
       </StyledTopHandles>
       <StyledResizeHandle
         className="legend-resize-handle"
-        aria-label="Resize legend"
+        aria-label={`Resize ${label}`}
         ref={draggableResize.setNodeRef}
         {...draggableResize.attributes}
         {...draggableResize.listeners}
@@ -235,23 +245,27 @@ type DraggableLegendProps = PropsWithChildren<{
   mapControls: MapControls;
   setMapControlSettings: typeof setMapControlSettings;
   mapState?: MapState;
+  controlId?: string;
+  label?: string;
 }>;
 
-const DraggableLegend = withTheme(
+export const DraggableLegend = withTheme(
   ({
     isSidePanelShown,
     children,
     mapControls,
     setMapControlSettings,
     mapState,
+    controlId = 'mapLegend',
+    label = 'legend',
     theme
   }: DraggableLegendProps & {theme: any}) => {
-    const settings = mapControls?.mapLegend?.settings;
+    const settings = (mapControls?.[controlId] as MapControlMapLegend)?.settings;
 
     const legendContentRef = useRef<HTMLElement>(null);
     const onChangeSettings = useCallback(
-      newSettings => setMapControlSettings('mapLegend', newSettings),
-      [setMapControlSettings]
+      newSettings => setMapControlSettings(controlId, newSettings),
+      [setMapControlSettings, controlId]
     );
     const {positionStyles, updatePosition, startResize, resize, contentHeight, maxContentHeight} =
       useLegendPosition({
@@ -301,6 +315,7 @@ const DraggableLegend = withTheme(
       >
         <DraggableLegendContent
           ref={legendContentRef}
+          label={label}
           positionStyles={positionStyles}
           contentHeight={contentHeight}
           maxContentHeight={maxContentHeight}

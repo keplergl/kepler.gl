@@ -55,6 +55,7 @@ type InteractionManagerProps = {
   mapInfoActive?: boolean;
   mapState?: MapState;
   cameraBookmarks?: CameraBookmark[];
+  cameraBookmarksEnabled?: boolean;
   mapStateActions?: typeof MapStateActions;
   actionIcons?: {
     settings?: PanelHeaderActionIcon;
@@ -94,6 +95,7 @@ function InteractionManagerFactory(
     mapInfoActive,
     mapState,
     cameraBookmarks,
+    cameraBookmarksEnabled,
     mapStateActions,
     actionIcons,
     interactionConfigIcons
@@ -173,6 +175,8 @@ function InteractionManagerFactory(
         {interactionConfig.geocoder ? null : mapInfoPanel}
         <CameraBookmarks
           bookmarks={cameraBookmarks}
+          enabled={cameraBookmarksEnabled}
+          uiStateActions={uiStateActions}
           mapState={mapState}
           mapStateActions={mapStateActions}
           visStateActions={visStateActions}

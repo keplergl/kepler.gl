@@ -1046,6 +1046,10 @@ ${'```'}
     fadeOnZoomDelete: 'Remove controller'
   },
   camera: {
+    enableBookmarks: 'Enable bookmarks',
+    copyCoordinates: 'Copy coordinates',
+    copiedCoordinates: 'Coordinates copied',
+    copyFailed: 'Could not copy coordinates',
     bookmarks: 'Bookmarks',
     bookmark: 'Bookmark',
     bookmarkName: 'Bookmark name',

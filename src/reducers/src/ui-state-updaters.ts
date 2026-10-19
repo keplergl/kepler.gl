@@ -127,6 +127,12 @@ export const DEFAULT_MAP_CONTROLS: MapControls = {
     }),
     {} as MapControls
   ),
+  // Camera controls are UI preferences; saved camera snapshots remain independent.
+  cameraBookmarks: {
+    ...DEFAULT_MAP_CONTROLS_FEATURES,
+    active: true,
+    settings: {position: {x: 60, y: 20, anchorX: 'right', anchorY: 'top'}, contentHeight: -1}
+  },
   // Open by default so a saved title shows on load. An empty map still hides the card.
   mapInfo: {
     ...DEFAULT_MAP_CONTROLS_FEATURES,
