@@ -58,7 +58,7 @@ import {
   LayerColumn
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
-import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
+import {DataContainerInterface, ArrowDataContainer, findDefaultColorField} from '@kepler.gl/utils';
 import {FilterArrowExtension, OffsetSolidPolygonLayer} from '@kepler.gl/deckgl-layers';
 import GeojsonInfoModalFactory from './geojson-info-modal';
 
@@ -790,6 +790,29 @@ export default class GeoJsonLayer extends Layer {
     this.updateLayerMeta(dataset);
 
     const {featureTypes} = this.meta;
+    const defaultColorField = findDefaultColorField(dataset);
+    const colorChannel =
+      featureTypes?.polygon || featureTypes?.point
+        ? 'color'
+        : featureTypes?.line
+        ? 'strokeColor'
+        : null;
+    const embeddedColorField =
+      colorChannel === 'color' ? 'fillColor' : colorChannel === 'strokeColor' ? 'lineColor' : null;
+    const hasEmbeddedColor = Boolean(
+      embeddedColorField &&
+        this.dataToFeature.some(
+          feature => feature && 'properties' in feature && feature.properties?.[embeddedColorField]
+        )
+    );
+
+    if (defaultColorField && colorChannel && !hasEmbeddedColor) {
+      this.updateLayerConfig({
+        [this.visualChannels[colorChannel].field]: defaultColorField
+      });
+      this.updateLayerVisualChannel(dataset, colorChannel);
+    }
+
     // default settings is stroke: true, filled: false
     if (featureTypes && featureTypes.polygon) {
       // set both fill and stroke to true

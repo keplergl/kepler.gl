@@ -2,8 +2,183 @@
 // Copyright contributors to the kepler.gl project
 
 import GeoJsonLayer, {getTextLabelPosition} from './geojson-layer';
-import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {valueToPosition} from '@kepler.gl/utils';
+import {processGeojson} from '@kepler.gl/processors';
+import {KeplerTable} from '@kepler.gl/table';
+
+const point = (x: number) => ({type: 'Point', coordinates: [x, x]});
+const line = (x: number) => ({
+  type: 'LineString',
+  coordinates: [
+    [x, x],
+    [x + 0.25, x + 0.25]
+  ]
+});
+const polygon = (x: number) => ({
+  type: 'Polygon',
+  coordinates: [
+    [
+      [x, x],
+      [x + 0.25, x],
+      [x + 0.25, x + 0.25],
+      [x, x]
+    ]
+  ]
+});
+
+async function initializeGeoJsonLayer(
+  features: Array<{geometry: Record<string, unknown>; properties: Record<string, unknown>}>
+) {
+  const dataset = new KeplerTable({
+    info: {id: 'geojson-default-color'},
+    color: [0, 0, 0]
+  });
+  const data = processGeojson({
+    type: 'FeatureCollection',
+    features: features.map(feature => ({type: 'Feature', ...feature}))
+  } as any);
+  if (!data) {
+    throw new Error('Expected processed GeoJSON data');
+  }
+  await dataset.importData({data});
+
+  const {props} = GeoJsonLayer.findDefaultLayerProps(dataset);
+  if (!props.length) {
+    throw new Error('Expected GeoJSON layer props');
+  }
+  const layer = new GeoJsonLayer({...props[0], dataId: dataset.id});
+  layer.setInitialLayerConfig(dataset);
+  return {dataset, layer};
+}
+
+async function initializeGeoJsonColumnLayer(
+  features: Array<{geometry: Record<string, unknown>; properties: Record<string, unknown>}>
+) {
+  const dataset = new KeplerTable({
+    info: {id: 'geojson-column-default-color'},
+    color: [0, 0, 0]
+  });
+  await dataset.importData({
+    data: {
+      fields: [
+        {name: 'geometry', type: ALL_FIELD_TYPES.geojson, analyzerType: 'GEOMETRY'},
+        {name: 'score', type: ALL_FIELD_TYPES.real}
+      ],
+      rows: features.map((feature, index) => [{type: 'Feature', ...feature}, index + 0.25])
+    } as any
+  });
+
+  const {props} = GeoJsonLayer.findDefaultLayerProps(dataset);
+  if (!props.length) {
+    throw new Error('Expected GeoJSON column layer props');
+  }
+  const layer = new GeoJsonLayer({...props[0], dataId: dataset.id});
+  layer.setInitialLayerConfig(dataset);
+  return {dataset, layer};
+}
+
+describe('GeoJsonLayer default color field', () => {
+  test('keeps string and integer-only polygon data uniformly colored', async () => {
+    const {layer} = await initializeGeoJsonLayer([
+      {geometry: polygon(0), properties: {category: 'a', count: 1}},
+      {geometry: polygon(1), properties: {category: 'b', count: 2}}
+    ]);
+
+    expect(layer.config.colorField).toBeNull();
+    expect(layer.config.strokeColorField).toBeNull();
+  });
+
+  test.each([
+    ['point', point],
+    ['polygon', polygon]
+  ])('selects an eligible real field for %s fill color', async (_name, geometry) => {
+    const {layer} = await initializeGeoJsonLayer([
+      {geometry: geometry(0), properties: {score: 0.25}},
+      {geometry: geometry(1), properties: {score: 0.75}}
+    ]);
+
+    expect(layer.config.colorField?.name).toBe('score');
+    expect(layer.config.colorDomain).toEqual([0.25, 0.75]);
+    expect(layer.config.strokeColorField).toBeNull();
+  });
+
+  test('uses stroke color for line-only data', async () => {
+    const {layer} = await initializeGeoJsonLayer([
+      {geometry: line(0), properties: {score: 0.25}},
+      {geometry: line(1), properties: {score: 0.75}}
+    ]);
+
+    expect(layer.config.colorField).toBeNull();
+    expect(layer.config.strokeColorField?.name).toBe('score');
+    expect(layer.config.strokeColorDomain).toEqual([0.25, 0.75]);
+    expect(layer.config.visConfig.filled).toBe(false);
+    expect(layer.config.visConfig.stroked).toBe(true);
+  });
+
+  test('uses fill color for mixed polygon and line data without changing outlines', async () => {
+    const {layer} = await initializeGeoJsonLayer([
+      {geometry: polygon(0), properties: {score: 0.25}},
+      {geometry: line(1), properties: {score: 0.75}}
+    ]);
+
+    expect(layer.config.colorField?.name).toBe('score');
+    expect(layer.config.strokeColorField).toBeNull();
+  });
+
+  test('preserves embedded fill and line colors', async () => {
+    const {layer: pointLayer} = await initializeGeoJsonLayer([
+      {geometry: point(0), properties: {score: 0.25, fillColor: [1, 2, 3]}},
+      {geometry: point(1), properties: {score: 0.75, fillColor: [4, 5, 6]}}
+    ]);
+    const {layer: lineLayer} = await initializeGeoJsonLayer([
+      {geometry: line(0), properties: {score: 0.25, lineColor: [1, 2, 3]}},
+      {geometry: line(1), properties: {score: 0.75, lineColor: [4, 5, 6]}}
+    ]);
+
+    expect(pointLayer.config.colorField).toBeNull();
+    expect(lineLayer.config.strokeColorField).toBeNull();
+  });
+
+  test('preserves embedded colors stored only inside a GeoJSON column', async () => {
+    const {dataset, layer} = await initializeGeoJsonColumnLayer([
+      {geometry: point(0), properties: {fillColor: [1, 2, 3]}},
+      {geometry: point(1), properties: {fillColor: [4, 5, 6]}}
+    ]);
+
+    expect(dataset.fields.map(field => field.name)).toEqual(['geometry', 'score']);
+    expect(layer.config.colorField).toBeNull();
+  });
+
+  test('selects a real stroke field for manually initialized table mode data', async () => {
+    const dataset = new KeplerTable({
+      info: {id: 'geojson-table-default-color'},
+      color: [0, 0, 0]
+    });
+    await dataset.importData({
+      data: {
+        fields: [
+          {name: 'id', type: ALL_FIELD_TYPES.string},
+          {name: 'latitude', type: ALL_FIELD_TYPES.real},
+          {name: 'longitude', type: ALL_FIELD_TYPES.real},
+          {name: 'timestamp', type: ALL_FIELD_TYPES.timestamp},
+          {name: 'score', type: ALL_FIELD_TYPES.real},
+          {name: 'lineColor', type: ALL_FIELD_TYPES.string}
+        ],
+        rows: [
+          ['trip', 0, 0, '2024-01-01 00:00:00', 0.25, '#ff0000'],
+          ['trip', 1, 1, '2024-01-01 00:00:01', 0.75, '#00ff00']
+        ]
+      } as any
+    });
+
+    const layer = new GeoJsonLayer({id: 'geojson-table', dataId: dataset.id});
+    layer.setInitialLayerConfig(dataset);
+
+    expect(layer.config.columnMode).toBe('table');
+    expect(layer.config.strokeColorField?.name).toBe('score');
+  });
+});
 
 describe('GeoJsonLayer default deck parameters', () => {
   const gpuFilter = null as any;
