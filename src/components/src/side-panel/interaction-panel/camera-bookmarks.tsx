@@ -7,7 +7,8 @@ import {useIntl} from 'react-intl';
 import {CameraBookmark, MapState} from '@kepler.gl/types';
 import {MapStateActions, VisStateActions, UIStateActions} from '@kepler.gl/actions';
 import {generateHashId} from '@kepler.gl/common-utils';
-import {getCameraSnapshot} from '@kepler.gl/utils';
+import {getCameraSnapshot, hexToRgb} from '@kepler.gl/utils';
+import {DataVizColors} from '@kepler.gl/constants';
 import {Button, InlineInput, PanelContent, StyledPanelHeader} from '../../common/styled-components';
 import {
   DndContext,
@@ -29,20 +30,20 @@ import {CSS} from '@dnd-kit/utilities';
 import {DND_MODIFIERS} from '../../common/dnd-layer-items';
 import {DragHandle} from '../layer-panel/layer-panel-header';
 import PanelHeaderActionFactory from '../panel-header-action';
-import {
-  LocationMarker,
-  Replace,
-  ArrowUp,
-  ArrowDown,
-  Delete,
-  MapPin,
-  VertDots
-} from '../../common/icons';
+import {LocationMarker, Replace, Delete, MapPin, VertDots} from '../../common/icons';
 import CameraPanelHeader, {CameraPanel, CameraIconButton} from './camera-panel-header';
 import {cameraTransition} from '../../camera-navigation';
 import {MapViewStateContext} from '../../map-view-state-context';
+import {Hint} from './zoom-opacity-config';
 
 const PanelHeaderAction = PanelHeaderActionFactory();
+const bookmarkColors = Object.values(DataVizColors).map(hexToRgb);
+
+// Derive a display-only color from the stable ID; never add it to saved bookmark data.
+function bookmarkColor(id: string) {
+  const hash = Array.from(id).reduce((value, char) => (value * 31 + char.charCodeAt(0)) >>> 0, 0);
+  return bookmarkColors[hash % bookmarkColors.length];
+}
 const BookmarkList = styled.div`
   display: flex;
   flex-direction: column;
@@ -151,20 +152,6 @@ function SortableBookmark({
       onClick: () => onUpdate(bookmark)
     },
     {
-      key: 'up',
-      label: message('up', 'Up'),
-      Icon: ArrowUp,
-      disabled: index === 0,
-      onClick: () => onChange(arrayMove(bookmarks, index, index - 1))
-    },
-    {
-      key: 'down',
-      label: message('down', 'Down'),
-      Icon: ArrowDown,
-      disabled: index === bookmarks.length - 1,
-      onClick: () => onChange(arrayMove(bookmarks, index, index + 1))
-    },
-    {
       key: 'delete',
       label: message('delete', 'Delete'),
       Icon: Delete,
@@ -176,6 +163,7 @@ function SortableBookmark({
       ref={setNodeRef}
       className="bookmark-row"
       data-bookmark-id={bookmark.id}
+      labelRCGColorValues={bookmarkColor(bookmark.id)}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
@@ -283,6 +271,9 @@ export default function CameraBookmarks({
             <p>{message('singleMap', 'Use a single 2D or 3D map to edit camera views.')}</p>
           ) : (
             <>
+              <Hint>
+                {message('bookmarksHint', 'Save the current map view and return to it later.')}
+              </Hint>
               <Button
                 type="button"
                 secondary

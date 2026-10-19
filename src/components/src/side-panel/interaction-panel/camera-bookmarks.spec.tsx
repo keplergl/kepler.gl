@@ -68,7 +68,7 @@ function setup(
 test('captures, renames and deletes a bookmark without datasets', () => {
   const {commit} = setup();
   fireEvent.click(screen.getByRole('button', {name: 'Bookmark current view'}));
-  expect(commit.mock.lastCall[0][0].camera).toEqual(camera);
+  expect(commit.mock.lastCall[0][0]).toEqual({id: expect.any(String), name: 'Bookmark 1', camera});
   fireEvent.change(screen.getByRole('textbox', {name: 'Bookmark name 1'}), {
     target: {value: 'My view'}
   });
@@ -94,14 +94,11 @@ test('updates the saved view and navigates with bearing and pitch', () => {
   );
 });
 
-test('reorders bookmarks and disables moves past the ends', () => {
-  const {commit} = setup([...initial, {id: 'second', name: 'Work', camera}]);
-  expect(screen.getAllByRole('button', {name: 'Up'})[0]).toBeDisabled();
-  expect(screen.getAllByRole('button', {name: 'Down'})[1]).toBeDisabled();
-  fireEvent.click(screen.getAllByRole('button', {name: 'Down'})[0]);
-  expect(commit.mock.lastCall[0].map(item => item.id)).toEqual(['second', 'first']);
-  fireEvent.click(screen.getAllByRole('button', {name: 'Up'})[1]);
-  expect(commit.mock.lastCall[0].map(item => item.id)).toEqual(['first', 'second']);
+test('introduces bookmarks before capture with the existing hint styling', () => {
+  setup();
+  const hint = screen.getByText('Save the current map view and return to it later.');
+  expect(hint.nextElementSibling).toBe(screen.getByRole('button', {name: 'Bookmark current view'}));
+  expect(hint).toHaveStyle({fontSize: '11px', lineHeight: '1.4', marginBottom: '12px'});
 });
 
 test('keeps unsupported split-map editing unavailable', () => {
@@ -142,7 +139,9 @@ test('enabling is independent of collapse and preserves saved bookmarks', () => 
 
 test('icon actions retain accessible names, tooltips, focus and fixed row space', () => {
   setup(initial);
-  for (const name of ['Go to', 'Update view', 'Up', 'Down', 'Delete']) {
+  expect(screen.queryByRole('button', {name: 'Up'})).toBeNull();
+  expect(screen.queryByRole('button', {name: 'Down'})).toBeNull();
+  for (const name of ['Go to', 'Update view', 'Delete']) {
     const button = screen.getByRole('button', {name});
     expect(button).toHaveAttribute('title', name);
     expect(button.querySelector('.panel--header__action__component')).not.toBeNull();
@@ -246,6 +245,8 @@ test('uses the existing Settings action and keeps header controls independent', 
 test('keyboard drag reorders stable bookmark IDs and Escape cancels without saving', async () => {
   measureRows();
   const {commit} = setup(pair);
+  const colors = pair.map(item => bookmarkRowColor(item.name));
+  expect(colors[0]).not.toBe(colors[1]);
   const handle = screen.getByRole('button', {name: 'Reorder bookmark: Home'});
   handle.focus();
   fireEvent.keyDown(handle, {key: ' ', code: 'Space'});
@@ -255,6 +256,7 @@ test('keyboard drag reorders stable bookmark IDs and Escape cancels without savi
   await waitFor(() => expect(commit).toHaveBeenCalledWith([pair[1], pair[0]]));
   expect(screen.getByRole('textbox', {name: 'Bookmark name 1'})).toHaveValue('Work');
   expect(handle).toHaveFocus();
+  expect(pair.map(item => bookmarkRowColor(item.name))).toEqual(colors);
   commit.mockClear();
   fireEvent.keyDown(handle, {key: ' ', code: 'Space'});
   await waitFor(() => expect(handle).toHaveAttribute('aria-pressed', 'true'));
@@ -310,4 +312,37 @@ test('editing names and using action icons never activates dragging', () => {
     'aria-pressed'
   );
   expect(screen.getByRole('textbox', {name: 'Bookmark name 1'})).toHaveValue('Renamed');
+});
+
+function bookmarkRowColor(name: string) {
+  const row = screen
+    .getByRole('button', {name: `Reorder bookmark: ${name}`})
+    .closest('.bookmark-row');
+  // JSDOM cannot compute the existing layer header's multiline rgb() border shorthand.
+  // Inspect the emitted CSS rule to verify the same visible 3px color marker instead.
+  const border = Array.from(document.styleSheets)
+    .flatMap(sheet => Array.from(sheet.cssRules))
+    .filter((rule): rule is CSSStyleRule => rule.type === CSSRule.STYLE_RULE)
+    .filter(rule => row?.matches(rule.selectorText))
+    .map(rule => rule.style.getPropertyValue('border-left'))
+    .find(Boolean);
+  expect(border).toMatch(/^3px solid rgb\(\s*\d+,\s*\d+,\s*\d+\s*\)$/);
+  return border?.replace(/\s+/g, ' ');
+}
+
+test('bookmark colors survive edits and panel reopening without entering saved data', () => {
+  const {commit} = setup(pair);
+  const colors = pair.map(item => bookmarkRowColor(item.name));
+  fireEvent.change(screen.getByRole('textbox', {name: 'Bookmark name 1'}), {
+    target: {value: 'Renamed'}
+  });
+  expect(commit).toHaveBeenLastCalledWith([{...pair[0], name: 'Renamed'}, pair[1]]);
+  expect(bookmarkRowColor('Renamed')).toBe(colors[0]);
+  fireEvent.click(screen.getAllByRole('button', {name: 'Delete'})[1]);
+  expect(commit).toHaveBeenLastCalledWith([{...pair[0], name: 'Renamed'}]);
+  expect(bookmarkRowColor('Renamed')).toBe(colors[0]);
+  const header = screen.getByRole('button', {name: 'Bookmarks'});
+  fireEvent.click(header);
+  fireEvent.click(header);
+  expect(bookmarkRowColor('Renamed')).toBe(colors[0]);
 });

@@ -58,7 +58,7 @@ const HeaderActions = styled.div`
   }
 `;
 
-const Hint = styled.div`
+export const Hint = styled.div`
   color: ${props => props.theme.subtextColor};
   font-size: 11px;
   line-height: 1.4;

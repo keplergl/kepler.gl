@@ -1055,6 +1055,7 @@ ${'```'}
     bookmarkName: 'Bookmark name',
     reorderBookmark: 'Reorder bookmark',
     captureBookmark: 'Bookmark current view',
+    bookmarksHint: 'Save the current map view and return to it later.',
     singleMap: 'Use a single 2D or 3D map to edit camera views.',
     goTo: 'Go to',
     updateView: 'Update view',
