@@ -267,6 +267,10 @@ interface DbfField {
 }
 
 const TEXT_ENCODER = new TextEncoder();
+// This writer emits a dBASE III table (version 0x03), whose numeric fields
+// support at most 19 total bytes and 15 digits after the decimal point.
+const DBF_NUMERIC_MAX_WIDTH = 19;
+const DBF_NUMERIC_MAX_DECIMALS = 15;
 
 /** Encode `text` to UTF-8, truncated to at most `maxBytes` without splitting a
  * multi-byte code point (so non-ASCII attribute values stay valid). */
@@ -303,12 +307,40 @@ function dbfFieldName(key: string, taken: Set<string>): string {
   throw new Error(`Cannot generate a unique DBF field name for "${key}" (>999 collisions).`);
 }
 
-function decimalPlaces(value: number): number {
-  if (Number.isInteger(value)) return 0;
+/** DBF numeric fields only allow digits, a sign, and a decimal point. */
+function decimalText(value: number): string {
   const text = String(value);
+  const match = /^(-?)(\d+)(?:\.(\d+))?e([+-]?\d+)$/i.exec(text);
+  if (!match) return text;
+
+  const [, sign, integer, fraction = '', rawExponent] = match;
+  const digits = `${integer}${fraction}`;
+  const decimalIndex = integer.length + Number(rawExponent);
+  if (decimalIndex <= 0) {
+    return `${sign}0.${'0'.repeat(-decimalIndex)}${digits}`;
+  }
+  if (decimalIndex >= digits.length) {
+    return `${sign}${digits}${'0'.repeat(decimalIndex - digits.length)}`;
+  }
+  return `${sign}${digits.slice(0, decimalIndex)}.${digits.slice(decimalIndex)}`;
+}
+
+function decimalPlaces(text: string): number {
   const dot = text.indexOf('.');
   if (dot < 0) return 0;
-  return Math.min(15, text.length - dot - 1);
+  return text.length - dot - 1;
+}
+
+function formatDbfNumber(value: number, decimals: number): string {
+  // Number#toFixed provides the rounding policy and fixed notation below 1e21.
+  // Larger values cannot fit a dBASE III numeric field even at zero decimals,
+  // but expanding them here lets field planning report their actual width.
+  const text =
+    Math.abs(value) < 1e21
+      ? value.toFixed(decimals)
+      : `${decimalText(value)}${decimals > 0 ? `.${'0'.repeat(decimals)}` : ''}`;
+  // Do not spend a sign byte on a value that rounded to zero.
+  return /^-0(?:\.0+)?$/.test(text) ? text.slice(1) : text;
 }
 
 function planField(key: string, name: string, values: unknown[]): DbfField {
@@ -335,19 +367,35 @@ function planField(key: string, name: string, values: unknown[]): DbfField {
   }
 
   if (sawNumber && !sawNonNumber) {
-    let decimals = 0;
+    let requestedDecimals = 0;
     for (const value of values) {
       if (typeof value === 'number' && Number.isFinite(value)) {
-        decimals = Math.max(decimals, decimalPlaces(value));
+        requestedDecimals = Math.max(requestedDecimals, decimalPlaces(decimalText(value)));
       }
     }
-    let length = 1;
-    for (const value of values) {
-      if (typeof value !== 'number' || !Number.isFinite(value)) continue;
-      const text = decimals > 0 ? value.toFixed(decimals) : String(value);
-      length = Math.max(length, text.length);
+
+    // Use the highest common precision that fits every rounded value. Measuring
+    // the formatted values on each pass accounts for signs and rounding carry.
+    for (
+      let decimals = Math.min(requestedDecimals, DBF_NUMERIC_MAX_DECIMALS);
+      decimals >= 0;
+      decimals -= 1
+    ) {
+      let length = 1;
+      for (const value of values) {
+        if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+        length = Math.max(length, formatDbfNumber(value, decimals).length);
+      }
+      if (length <= DBF_NUMERIC_MAX_WIDTH) {
+        return {key, name, type: 'N', length, decimals};
+      }
+      if (decimals === 0) {
+        throw new Error(
+          `DBF numeric field "${key}" requires ${length} bytes at zero decimal places; ` +
+            `dBASE III numeric fields support at most ${DBF_NUMERIC_MAX_WIDTH}.`
+        );
+      }
     }
-    return {key, name, type: 'N', length: Math.min(length, 33), decimals};
   }
 
   // Fall back to text for everything else (strings, mixed types, objects).
@@ -371,8 +419,10 @@ function encodeDbfValue(value: unknown, field: DbfField): Uint8Array {
 
   if (field.type === 'N') {
     if (typeof value !== 'number' || !Number.isFinite(value)) return cell;
-    let text = field.decimals > 0 ? value.toFixed(field.decimals) : String(value);
-    if (text.length > field.length) text = text.slice(0, field.length);
+    const text = formatDbfNumber(value, field.decimals);
+    if (text.length > field.length) {
+      throw new Error(`DBF numeric value for "${field.key}" exceeds its planned field width.`);
+    }
     // Numbers are right-justified in DBF.
     const bytes = TEXT_ENCODER.encode(text);
     cell.set(bytes, field.length - bytes.length);

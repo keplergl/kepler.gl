@@ -3,12 +3,15 @@
 
 import {convertWKBToGeometry} from '@loaders.gl/gis';
 import {convertArrowToSchema} from '@loaders.gl/schema-utils';
+import {DBFLoader} from '@loaders.gl/shapefile';
 import {ALL_FIELD_TYPES, EXPORT_DATA_TYPE} from '@kepler.gl/constants';
 import {Field} from '@kepler.gl/types';
 import {createDataContainer} from '@kepler.gl/utils';
 import {tableFromIPC} from 'apache-arrow';
+import type {FeatureCollection} from 'geojson';
 
 import {datasetToFeatureCollection, encodeDatasetExport} from './vector-export';
+import {writeShapefile} from './shapefile-writer';
 import {loadSqlJs} from './sql-js';
 
 const fields = [
@@ -210,6 +213,153 @@ describe('dataset export', () => {
         layerName: 'mixed'
       })
     ).rejects.toThrow('Shapefile export requires all geometries to have the same shape family.');
+  });
+
+  test('rounds noisy and tiny DBF numbers at the maximum supported precision', () => {
+    const values = [0.1 + 0.2, 1e-7, -1e-7, 1e-16, -1e-16, null];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: values.map((value, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, index]},
+        properties: {value}
+      }))
+    };
+
+    const {dbf} = writeShapefile(collection);
+    const view = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+    const headerLength = view.getUint16(8, true);
+    const recordLength = view.getUint16(10, true);
+    const fieldLength = dbf[32 + 16];
+    const decimalCount = dbf[32 + 17];
+    const decoder = new TextDecoder();
+    const cells = values.map((_, index) => {
+      const start = headerLength + index * recordLength + 1;
+      return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
+    });
+
+    expect({fieldLength, decimalCount}).toEqual({fieldLength: 18, decimalCount: 15});
+    expect(cells).toEqual([
+      '0.300000000000000',
+      '0.000000100000000',
+      '-0.000000100000000',
+      '0.000000000000000',
+      '0.000000000000000',
+      ''
+    ]);
+    expect(cells.filter(Boolean).every(cell => /^-?\d+(?:\.\d+)?$/.test(cell))).toBe(true);
+
+    const parsed = DBFLoader.parseSync?.(dbf.buffer as ArrayBuffer, {
+      dbf: {shape: 'rows'}
+    }) as Array<{value: number | null}>;
+    expect(parsed.map(row => row.value)).toEqual([0.3, 1e-7, -1e-7, 0, 0, null]);
+  });
+
+  test('uses the highest common precision that fits mixed magnitudes after rounding', () => {
+    const values = [-1234567890123456, 999.9999, -12.3456, null];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: values.map((value, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, index]},
+        properties: {value}
+      }))
+    };
+
+    const {dbf} = writeShapefile(collection);
+    const view = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+    const headerLength = view.getUint16(8, true);
+    const recordLength = view.getUint16(10, true);
+    const fieldLength = dbf[32 + 16];
+    const decimalCount = dbf[32 + 17];
+    const decoder = new TextDecoder();
+    const cells = values.map((_, index) => {
+      const start = headerLength + index * recordLength + 1;
+      return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
+    });
+
+    expect({fieldLength, decimalCount}).toEqual({fieldLength: 19, decimalCount: 1});
+    expect(cells).toEqual(['-1234567890123456.0', '1000.0', '-12.3', '']);
+
+    const parsed = DBFLoader.parseSync?.(dbf.buffer as ArrayBuffer, {
+      dbf: {shape: 'rows'}
+    }) as Array<{value: number | null}>;
+    expect(parsed.map(row => row.value)).toEqual([-1234567890123456, 1000, -12.3, null]);
+  });
+
+  test('keeps large positive and negative integers in numeric fields', () => {
+    const values = [1e18, -1e17, null];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: values.map((value, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, index]},
+        properties: {value}
+      }))
+    };
+
+    const {dbf} = writeShapefile(collection);
+    const view = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+    const headerLength = view.getUint16(8, true);
+    const recordLength = view.getUint16(10, true);
+    const fieldLength = dbf[32 + 16];
+    const decimalCount = dbf[32 + 17];
+    const decoder = new TextDecoder();
+    const cells = values.map((_, index) => {
+      const start = headerLength + index * recordLength + 1;
+      return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
+    });
+
+    expect({fieldLength, decimalCount}).toEqual({fieldLength: 19, decimalCount: 0});
+    expect(cells).toEqual(['1000000000000000000', '-100000000000000000', '']);
+  });
+
+  test.each([
+    [1e19, 20],
+    [-1e18, 20],
+    [1e21, 22]
+  ])('rejects the DBF number %s when its rounded integer needs %i bytes', (value, width) => {
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {type: 'Point', coordinates: [0, 0]},
+          properties: {value}
+        }
+      ]
+    };
+
+    expect(() => writeShapefile(collection)).toThrow(
+      `DBF numeric field "value" requires ${width} bytes at zero decimal places; ` +
+        'dBASE III numeric fields support at most 19.'
+    );
+  });
+
+  test('keeps mixed finite and non-finite values in a DBF text field', () => {
+    const values = [1, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, null];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: values.map((value, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, index]},
+        properties: {value}
+      }))
+    };
+
+    const {dbf} = writeShapefile(collection);
+    const view = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+    const headerLength = view.getUint16(8, true);
+    const recordLength = view.getUint16(10, true);
+    const fieldLength = dbf[32 + 16];
+    const decoder = new TextDecoder();
+    const cells = values.map((_, index) => {
+      const start = headerLength + index * recordLength + 1;
+      return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
+    });
+
+    expect(String.fromCharCode(dbf[32 + 11])).toBe('C');
+    expect(cells).toEqual(['1', 'NaN', 'Infinity', '-Infinity', '']);
   });
 
   test('writes geoparquet string columns the importer can read', async () => {
