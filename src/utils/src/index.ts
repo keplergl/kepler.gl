@@ -3,6 +3,7 @@
 
 // UTILS
 export {getCameraSnapshot, normalizeCameraBookmarks} from './camera-utils';
+export {normalizeCameraTour, getCameraTourDuration, evaluateCameraTour} from './camera-tour';
 
 export {
   colorMaybeToRGB,

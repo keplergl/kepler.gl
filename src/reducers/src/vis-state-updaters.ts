@@ -61,6 +61,7 @@ import {
 import {
   FILTER_UPDATER_PROPS,
   normalizeCameraBookmarks,
+  normalizeCameraTour,
   addNewLayersToSplitMap,
   snapToMarks,
   applyFilterFieldName,
@@ -447,6 +448,7 @@ export const INITIAL_VIS_STATE: VisState = {
 
   // camera bookmarks
   cameraBookmarks: [],
+  cameraTour: null,
 
   // annotations
   annotations: [],
@@ -3414,6 +3416,11 @@ export const setCameraBookmarksUpdater = (
   action: ReturnType<typeof VisStateActions.setCameraBookmarks>
 ): VisState => ({...state, cameraBookmarks: normalizeCameraBookmarks(action.payload)});
 
+export const setCameraTourUpdater = (
+  state: VisState,
+  action: ReturnType<typeof VisStateActions.setCameraTour>
+): VisState => ({...state, cameraTour: normalizeCameraTour(action.payload)});
+
 /**
  * Propagate `visState` reducer with a new configuration. Current config will be override.
  * @memberof visStateUpdaters
@@ -3436,7 +3443,7 @@ export const receiveMapConfigUpdater = (
 
   // reset config if keepExistingConfig is falsy
   let mergedState = !keepExistingConfig
-    ? {...resetMapConfigUpdater(state), cameraBookmarks: []}
+    ? {...resetMapConfigUpdater(state), cameraBookmarks: [], cameraTour: null}
     : state;
   for (const merger of state.mergers) {
     if (isValidMerger(merger) && hasPropsToMerge(config.visState, merger.prop)) {

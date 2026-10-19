@@ -15,3 +15,14 @@ export type CameraBookmark = {
   name: string;
   camera: CameraSnapshot;
 };
+
+/** Stops own their camera snapshots; there is no live bookmark reference. */
+export type CameraTourStop = CameraBookmark & {
+  holdDurationMs: number;
+  /** Travel to the next stop; ignored for the final stop. */
+  travelDurationMs: number;
+};
+
+export type CameraTour = {
+  stops: CameraTourStop[];
+};

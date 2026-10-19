@@ -84,6 +84,39 @@ test('#visStateSchema -> camera bookmarks are optional and persist only authored
   t.end();
 });
 
+test('#visStateSchema -> camera tour is optional and excludes transient state', t => {
+  const state = cloneDeep(StateWFilesFiltersLayerColor);
+  t.notOk(
+    'cameraTour' in SchemaManager.getConfigToSave(state).config.visState,
+    'omits unused tours'
+  );
+  const stop = {
+    id: 'first',
+    name: 'First',
+    camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45},
+    holdDurationMs: 2000,
+    travelDurationMs: 3000
+  };
+  state.visState.cameraTour = {stops: [{...stop, selected: true}], elapsedMs: 1000, playing: true};
+  const saved = SchemaManager.getConfigToSave(state);
+  t.deepEqual(
+    saved.config.visState.cameraTour,
+    {stops: [stop]},
+    'saves authored stops and timing only'
+  );
+  t.deepEqual(
+    SchemaManager.parseSavedConfig(saved).visState.cameraTour,
+    {stops: [stop]},
+    'round trips the tour'
+  );
+  state.visState.cameraTour = {stops: []};
+  t.notOk(
+    'cameraTour' in SchemaManager.getConfigToSave(state).config.visState,
+    'omits an empty tour'
+  );
+  t.end();
+});
+
 test('#visStateSchema -> v1 -> save layers', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
 

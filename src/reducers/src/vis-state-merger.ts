@@ -8,6 +8,7 @@ import deepmerge from 'deepmerge';
 import {
   arrayInsert,
   normalizeCameraBookmarks,
+  normalizeCameraTour,
   combineSplitMapsByIndex,
   getInitialMapLayersForSplitMap,
   applyFiltersToDatasets,
@@ -1491,6 +1492,11 @@ function getValueWithHighestOccurrence<T>(arr: T[]): T | null {
 }
 
 export const VIS_STATE_MERGERS: VisStateMergers<any> = [
+  {
+    prop: 'cameraTour',
+    merge: (state, tour) =>
+      state.cameraTour ? state : {...state, cameraTour: normalizeCameraTour(tour)}
+  },
   {
     prop: 'cameraBookmarks',
     merge: (state, bookmarks) => ({

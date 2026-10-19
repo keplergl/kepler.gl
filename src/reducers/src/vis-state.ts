@@ -11,6 +11,7 @@ import * as visStateUpdaters from './vis-state-updaters';
  */
 const actionHandler = {
   [ActionTypes.SET_CAMERA_BOOKMARKS]: visStateUpdaters.setCameraBookmarksUpdater,
+  [ActionTypes.SET_CAMERA_TOUR]: visStateUpdaters.setCameraTourUpdater,
   [ActionTypes.ADD_FILTER]: visStateUpdaters.addFilterUpdater,
 
   [ActionTypes.CREATE_OR_UPDATE_FILTER]: visStateUpdaters.createOrUpdateFilterUpdater,

@@ -7,7 +7,7 @@ import {Filter, InteractionConfig, AnimationConfig, SplitMap, Feature} from './r
 
 import {LayerTextLabel} from './layers';
 import {ChartConfig} from './charts';
-import {CameraBookmark} from './camera';
+import {CameraBookmark, CameraTour} from './camera';
 
 export type SavedFilter = {
   dataId: Filter['dataId'];
@@ -117,6 +117,7 @@ export type SavedEditor = {
 };
 
 export type SavedVisState = {
+  cameraTour?: CameraTour;
   cameraBookmarks?: CameraBookmark[];
   filters: SavedFilter[];
   layers: SavedLayer[];
@@ -135,6 +136,7 @@ export type SavedVisState = {
 
 // Min saved config can be passed to addDataToMap
 export type MinSavedVisStateV1 = {
+  cameraTour?: CameraTour;
   cameraBookmarks?: CameraBookmark[];
   filters?: MinSavedFilter[];
   layers?: MinSavedLayer[];
@@ -149,6 +151,7 @@ export type MinSavedVisStateV1 = {
 };
 
 export type ParsedVisState = {
+  cameraTour?: CameraTour | null;
   cameraBookmarks?: CameraBookmark[];
   layers?: ParsedLayer[];
   effects?: ParsedEffect[];
