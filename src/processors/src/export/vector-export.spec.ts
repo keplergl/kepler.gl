@@ -168,6 +168,62 @@ describe('dataset export', () => {
     expect(schema.fields.find(field => field.name === 'name')?.type).toBe('utf8');
   });
 
+  test('writes typed integer fields without reclassifying integer-valued real fields', async () => {
+    const typedFields = [
+      {name: 'count', type: ALL_FIELD_TYPES.integer},
+      {name: 'measurement', type: ALL_FIELD_TYPES.real},
+      {name: 'unsafe_count', type: ALL_FIELD_TYPES.integer},
+      {name: 'out_of_range_count', type: ALL_FIELD_TYPES.integer},
+      {name: 'lat', type: ALL_FIELD_TYPES.real},
+      {name: 'lng', type: ALL_FIELD_TYPES.real}
+    ] as Field[];
+    const typedRows = [
+      [1, 1, Number.MAX_SAFE_INTEGER + 1, 9223372036854775808n, 37.8, -122.4],
+      [null, 2, null, null, 37.81, -122.41],
+      [2147483648, 3, null, null, 37.82, -122.42],
+      [Number.MAX_SAFE_INTEGER, 4, null, null, 37.83, -122.43]
+    ];
+    const geoparquet = await encodeDatasetExport({
+      data: createDataContainer(typedRows),
+      fields: typedFields,
+      fieldPairs: [
+        {
+          defaultName: 'point',
+          pair: {
+            lat: {fieldIdx: 4, value: 'lat'},
+            lng: {fieldIdx: 5, value: 'lng'}
+          },
+          suffix: ['lat', 'lng']
+        }
+      ],
+      dataType: EXPORT_DATA_TYPE.GEOPARQUET,
+      layerName: 'typed-numbers'
+    });
+    const specifier = 'parquet-wasm/node';
+    const imported = (await import(specifier)) as {
+      readParquet?: (bytes: Uint8Array) => {intoIPCStream(): Uint8Array};
+      default?: {readParquet: (bytes: Uint8Array) => {intoIPCStream(): Uint8Array}};
+    };
+    const api = imported.readParquet ? imported : imported.default;
+    if (!api?.readParquet) {
+      throw new Error('parquet-wasm failed to load');
+    }
+    const wasmTable = api.readParquet(new Uint8Array(geoparquet.data as Uint8Array));
+    const arrowTable = tableFromIPC(wasmTable.intoIPCStream());
+
+    const count = arrowTable.getChild('count');
+    expect(String(count?.type)).toBe('Int64');
+    expect(Array.from({length: count?.length ?? 0}, (_, index) => count?.get(index))).toEqual([
+      1n,
+      null,
+      2147483648n,
+      BigInt(Number.MAX_SAFE_INTEGER)
+    ]);
+    expect(String(arrowTable.getChild('measurement')?.type)).toBe('Float64');
+    expect(String(arrowTable.getChild('unsafe_count')?.type)).toBe('Float64');
+    expect(String(arrowTable.getChild('out_of_range_count')?.type)).toBe('Utf8');
+  });
+
   test.each(['gpkg_contents', 'gpkg_geometry_columns', 'sqlite_sequence'])(
     'sanitizes the reserved GeoPackage layer name %s',
     async layerName => {
