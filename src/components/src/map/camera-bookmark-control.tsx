@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useContext, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import styled from 'styled-components';
 import {useIntl} from 'react-intl';
@@ -77,6 +77,11 @@ export default function CameraBookmarkControl({
   const intl = useIntl();
   const root = useContext(RootContext);
   const [status, setStatus] = useState('');
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    // Resolve after refs attach so an initial render stays inside its own map root.
+    setPortalContainer(root?.current ?? document.body);
+  }, [root]);
   const message = (key: string, fallback: string) =>
     intl.formatMessage({id: `camera.${key}`, defaultMessage: fallback});
   if (
@@ -153,6 +158,6 @@ export default function CameraBookmarkControl({
     >
       {panel}
     </DraggableLegend>,
-    root?.current ?? document.body
+    portalContainer ?? root?.current ?? document.body
   );
 }

@@ -152,3 +152,30 @@ test('keyboard resize updates only the bookmark panel settings', async () => {
   unmount();
   root.remove();
 });
+
+test('mounts the floating panel inside its map root after the initial ref attaches', () => {
+  function Harness() {
+    const root = React.useRef<HTMLDivElement>(null);
+    return (
+      <RootContext.Provider value={root}>
+        <div ref={root} data-testid="map-root">
+          <CameraBookmarkControl
+            bookmarks={bookmarks}
+            mapState={INITIAL_MAP_STATE}
+            mapStateActions={MapStateActions}
+            mapControls={INITIAL_UI_STATE.mapControls}
+            setMapControlSettings={jest.fn()}
+          />
+        </div>
+      </RootContext.Provider>
+    );
+  }
+  renderWithTheme(
+    <IntlWrapper>
+      <Harness />
+    </IntlWrapper>
+  );
+  expect(screen.getByTestId('map-root')).toContainElement(
+    screen.getByRole('button', {name: 'Home'})
+  );
+});
