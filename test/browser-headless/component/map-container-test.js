@@ -159,6 +159,33 @@ test('MapContainerFactory - selected basemap background color', t => {
   t.end();
 });
 
+test('MapContainerFactory - missing background color', t => {
+  const store = mockStore(initialState);
+  const mapStyle = {...initialProps.mapStyle, styleType: 'dark-matter'};
+  delete mapStyle.backgroundColor;
+  const props = {...initialProps, mapStyle};
+
+  const {container, unmount} = renderWithTheme(
+    <Provider store={store}>
+      <IntlWrapper>
+        <MapViewStateContextProvider mapState={props.mapState}>
+          <MapContainer {...props} />
+        </MapViewStateContextProvider>
+      </IntlWrapper>
+    </Provider>
+  );
+
+  t.ok(container.firstElementChild, 'should mount when the background color is missing');
+  t.equal(
+    container.firstElementChild.style.backgroundColor,
+    '',
+    'should leave the container background unset when no color is configured'
+  );
+
+  unmount();
+  t.end();
+});
+
 test('MapContainerFactory - _renderDeckOverlay', t => {
   const props = {
     ...initialProps,

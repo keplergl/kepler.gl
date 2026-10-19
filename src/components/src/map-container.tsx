@@ -478,7 +478,7 @@ export default function MapContainerFactory(
         transparentBackground
       ) => ({
         ...MAP_STYLE.container,
-        ...(!transparentBackground && !isGlobeMode
+        ...(!transparentBackground && !isGlobeMode && backgroundColor
           ? {backgroundColor: rgbToHex(backgroundColor)}
           : {}),
         // In globe mode the deck.gl canvas is transparent (the globe View uses
