@@ -41,7 +41,10 @@ function setup(
   renderWithTheme(
     <IntlWrapper>
       <MapViewStateContext.Provider
-        value={{getInternalViewState: () => liveCamera || mapState, setInternalViewState: () => {}}}
+        value={{
+          getInternalViewState: () => liveCamera || mapState,
+          setInternalViewState: jest.fn()
+        }}
       >
         <Harness />
       </MapViewStateContext.Provider>
