@@ -68,6 +68,58 @@ test('exportUtils -> ExportHtml includes map info', t => {
   t.end();
 });
 
+test('exportUtils -> ExportHtml mounts editable and view-only export controls', t => {
+  const editHtml = exportMapToHTML({
+    datasets: [],
+    config: {version: 'v1', config: {}},
+    mode: 'EDIT'
+  });
+  const readHtml = exportMapToHTML({
+    datasets: [],
+    config: {version: 'v1', config: {}},
+    mode: 'READ'
+  });
+
+  for (const factory of [
+    'EffectManagerFactory',
+    'AnnotationManagerFactory',
+    'ChartControlFactory',
+    'ChartManagerFactory'
+  ]) {
+    t.ok(editHtml.includes(`keplerGl.${factory}`), `editable exports should load ${factory}`);
+  }
+  t.ok(
+    editHtml.includes('actionComponents = actionComponents.concat([ChartControl, EffectControl])'),
+    'editable exports should add chart and effect controls'
+  );
+  t.ok(
+    editHtml.includes('showAnnotations ? react.createElement(AnnotationManager, null) : null'),
+    'editable exports should mount the annotation manager'
+  );
+  t.ok(
+    editHtml.includes('showCharts ? react.createElement(ChartManager'),
+    'editable exports should mount the chart manager'
+  );
+  t.ok(
+    readHtml.includes('var readOnly = Boolean(props.readOnly)') &&
+      readHtml.includes('return !readOnly || ActionComponent !== AnnotationControl'),
+    'read-only exports should remove the stock annotation editing control'
+  );
+  t.ok(
+    readHtml.includes('var showEffects = !readOnly') &&
+      readHtml.includes('var showAnnotations = !readOnly') &&
+      readHtml.includes('if (!readOnly) {'),
+    'read-only exports should suppress effect, annotation, and chart editing controls'
+  );
+  t.ok(
+    readHtml.includes('var showCharts = readOnly ? charts.length > 0') &&
+      readHtml.includes('isExport: readOnly'),
+    'read-only exports should retain immutable chart rendering'
+  );
+
+  t.end();
+});
+
 test('exportUtils -> ExportHtml escapes script terminators in map info', t => {
   const html = exportMapToHTML({
     datasets: [],

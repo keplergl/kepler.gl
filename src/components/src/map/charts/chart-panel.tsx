@@ -469,6 +469,8 @@ export type ChartPanelProps = {
   visStateActions?: typeof VisStateActions;
   /** When true, hide edit chrome and only render chart views (pinned overlay). */
   readOnly?: boolean;
+  /** Hide the pinned-overlay action when the chart view is fully immutable. */
+  hidePinAction?: boolean;
 };
 
 ChartPanelContentFactory.deps = [
@@ -489,7 +491,8 @@ export function ChartPanelContentFactory(
     datasets,
     layers,
     visStateActions,
-    readOnly = false
+    readOnly = false,
+    hidePinAction = false
   }) => {
     const [colorUIByChart, setColorUIByChart] = useState<Record<string, ColorUI>>({});
 
@@ -650,8 +653,12 @@ export function ChartPanelContentFactory(
               ? String(chart.crossFilter.value.x)
               : undefined;
           return (
-            <ChartCard key={chart.id} className="chart-card" $showPinOnHover={readOnly}>
-              {readOnly ? (
+            <ChartCard
+              key={chart.id}
+              className="chart-card"
+              $showPinOnHover={readOnly && !hidePinAction}
+            >
+              {readOnly && !hidePinAction ? (
                 <>
                   <ChartHeaderAction
                     className="chart-card__pin-action"
