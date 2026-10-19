@@ -26,6 +26,7 @@ import {toggleMapControl} from '@kepler.gl/actions';
 import {keplerGlReducerCore} from '@kepler.gl/reducers';
 
 import {IntlWrapper, mountWithTheme} from '../../../helpers/component-utils';
+import {renderWithTheme as renderWithThemeRTL} from '../../../helpers/rtl-utils';
 import {
   mockKeplerProps,
   mockKeplerPropsWithState,
@@ -240,6 +241,40 @@ test('MapControlFactory - display options', t => {
 
   t.equal(wrapper.find(MapControlButton).length, 0, 'Should show 0 MapControlButton');
 
+  t.end();
+});
+
+test('MapContainerFactory - map scale ignores hidden read-only side panel', t => {
+  const getScaleLeft = readOnly => {
+    const props = {
+      ...initialProps,
+      activeSidePanel: 'layer',
+      sidePanelWidth: 300,
+      readOnly,
+      mapStyle: {
+        bottomMapStyle: {layers: [], name: 'foo'},
+        visibleLayerGroups: {}
+      },
+      mapboxApiAccessToken: 'pyx-11'
+    };
+    const store = mockStore({uiState: StateWSplitMaps.uiState});
+    const {container, unmount} = renderWithThemeRTL(
+      <Provider store={store}>
+        <IntlWrapper>
+          <MapViewStateContextProvider mapState={props.mapState}>
+            <MapContainer {...props} />
+          </MapViewStateContextProvider>
+        </IntlWrapper>
+      </Provider>
+    );
+    const scale = container.querySelector('.map-scale');
+    const left = window.getComputedStyle(scale.parentElement).left;
+    unmount();
+    return left;
+  };
+
+  t.equal(getScaleLeft(true), '12px', 'read-only scale uses the map margin');
+  t.equal(getScaleLeft(false), '312px', 'editable scale retains the panel offset');
   t.end();
 });
 
