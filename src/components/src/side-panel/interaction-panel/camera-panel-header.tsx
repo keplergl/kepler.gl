@@ -3,39 +3,41 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {ArrowDown, ArrowUp} from '../../common/icons';
+import {Settings} from '../../common/icons';
 import Switch from '../../common/switch';
+import PanelHeaderActionFactory from '../panel-header-action';
+import {HeaderActions} from './map-info-config';
 import {
   PanelHeaderContent,
   PanelHeaderTitle,
   StyledPanelHeader
 } from '../../common/styled-components';
 
+const PanelHeaderAction = PanelHeaderActionFactory();
+
 export const CameraPanel = styled.section`
   padding-bottom: 6px;
 `;
 
-const ExpandButton = styled.button`
+// Keep the existing panel action's layout and colors, with a keyboard-operable target.
+export const CameraIconButton = styled.button`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex: 1;
-  height: 100%;
-  min-width: 0;
-  padding: 0 16px 0 0;
+  justify-content: center;
+  padding: 0;
   border: 0;
   background: transparent;
-  color: ${props => props.theme.textColor};
+  color: inherit;
   cursor: pointer;
   &:focus-visible {
     outline: 2px solid ${props => props.theme.activeColor};
   }
+  &:disabled {
+    cursor: default;
+  }
 `;
 
-const Toggle = styled.div`
-  .kg-checkbox {
-    margin: 0;
-  }
+const AccessibleHeaderActions = styled(HeaderActions)`
   .camera-toggle-label {
     position: absolute;
     width: 1px;
@@ -43,7 +45,7 @@ const Toggle = styled.div`
     overflow: hidden;
     clip-path: inset(50%);
   }
-  &:focus-within {
+  .kg-checkbox:focus-within {
     outline: 2px solid ${props => props.theme.activeColor};
   }
 `;
@@ -67,24 +69,33 @@ export default function CameraPanelHeader({
   onToggleEnabled?: () => void;
   Icon: React.ElementType;
 }) {
-  const Chevron = open ? ArrowUp : ArrowDown;
   return (
-    <StyledPanelHeader className={open ? 'is-open' : undefined}>
-      <ExpandButton
-        type="button"
-        aria-expanded={open}
-        aria-controls={`${id}-content`}
-        onClick={onToggleOpen}
-      >
-        <PanelHeaderContent as="span">
-          <span className="icon">
-            <Icon height="16px" aria-hidden="true" />
-          </span>
+    <StyledPanelHeader className={open ? 'is-open' : undefined} onClick={onToggleOpen}>
+      <PanelHeaderContent>
+        <div className="icon">
+          <Icon height="16px" aria-hidden="true" />
+        </div>
+        <div>
           <PanelHeaderTitle>{title}</PanelHeaderTitle>
-        </PanelHeaderContent>
-        <Chevron height="12px" aria-hidden="true" />
-      </ExpandButton>
-      <Toggle>
+        </div>
+      </PanelHeaderContent>
+      <AccessibleHeaderActions onClick={event => event.stopPropagation()}>
+        <CameraIconButton
+          type="button"
+          aria-label={title}
+          aria-expanded={open}
+          aria-controls={`${id}-content`}
+          onClick={onToggleOpen}
+        >
+          <PanelHeaderAction
+            id={`${id}-config`}
+            className={open ? 'is-open' : undefined}
+            tooltip="tooltip.interactionSettings"
+            active={open}
+            flush
+            IconComponent={Settings}
+          />
+        </CameraIconButton>
         <Switch
           id={`${id}-toggle`}
           secondary
@@ -93,7 +104,7 @@ export default function CameraPanelHeader({
           label={<span className="camera-toggle-label">{enableLabel}</span>}
           onChange={onToggleEnabled}
         />
-      </Toggle>
+      </AccessibleHeaderActions>
     </StyledPanelHeader>
   );
 }

@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useState} from 'react';
-import {fireEvent, screen} from '@testing-library/react';
+import {fireEvent, screen, waitFor} from '@testing-library/react';
 import {MapStateActions, VisStateActions, UIStateActions} from '@kepler.gl/actions';
 import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {CameraBookmark} from '@kepler.gl/types';
@@ -145,7 +145,8 @@ test('icon actions retain accessible names, tooltips, focus and fixed row space'
   for (const name of ['Go to', 'Update view', 'Up', 'Down', 'Delete']) {
     const button = screen.getByRole('button', {name});
     expect(button).toHaveAttribute('title', name);
-    expect(button).toHaveTextContent('');
+    expect(button.querySelector('.panel--header__action__component')).not.toBeNull();
+    expect(button.querySelector('.__react_component_tooltip')).toHaveTextContent(name);
     expect(button.querySelector('svg')).not.toBeNull();
   }
   const goTo = screen.getByRole('button', {name: 'Go to'});
@@ -182,4 +183,131 @@ test('multiple maps have independent switch and content identifiers', () => {
   headers.forEach(header =>
     expect(document.getElementById(header.getAttribute('aria-controls')!)).toBeInTheDocument()
   );
+});
+
+const pointerEventDescriptor = Object.getOwnPropertyDescriptor(window, 'PointerEvent');
+beforeAll(() => {
+  class TestPointerEvent extends MouseEvent {
+    pointerId = 1;
+    isPrimary = true;
+    pointerType = 'mouse';
+  }
+  Object.defineProperty(window, 'PointerEvent', {configurable: true, value: TestPointerEvent});
+});
+afterAll(() => {
+  if (pointerEventDescriptor) Object.defineProperty(window, 'PointerEvent', pointerEventDescriptor);
+  else Reflect.deleteProperty(window, 'PointerEvent');
+});
+afterEach(() => jest.restoreAllMocks());
+
+function measureRows() {
+  const original = HTMLElement.prototype.getBoundingClientRect;
+  jest
+    .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    .mockImplementation(function (this: HTMLElement) {
+      if (!this.classList.contains('bookmark-row')) return original.call(this);
+      const rows = Array.from(this.parentElement?.querySelectorAll('.bookmark-row') || []);
+      const top = rows.indexOf(this) * 42;
+      return {
+        x: 0,
+        y: top,
+        top,
+        left: 0,
+        right: 280,
+        bottom: top + 36,
+        width: 280,
+        height: 36,
+        toJSON: () => ({})
+      };
+    });
+}
+
+const pair = [...initial, {id: 'second', name: 'Work', camera: {...camera, longitude: 40}}];
+
+test('uses the existing Settings action and keeps header controls independent', () => {
+  const {toggle} = setup(initial);
+  const expand = screen.getByRole('button', {name: 'Bookmarks'});
+  expect(expand.querySelector('.panel--header__action .data-ex-icons-settings')).not.toBeNull();
+  expect(expand.querySelector('.data-ex-icons-arrow_up, .data-ex-icons-arrow_down')).toBeNull();
+  expand.focus();
+  expect(expand).toHaveFocus();
+  fireEvent.click(expand);
+  expect(expand).toHaveAttribute('aria-expanded', 'false');
+  fireEvent.click(screen.getByText('Bookmarks', {selector: '.side-panel-panel__header__title'}));
+  expect(expand).toHaveAttribute('aria-expanded', 'true');
+  expect(toggle).not.toHaveBeenCalled();
+  expect(
+    screen.getByRole('textbox', {name: 'Bookmark name 1'}).closest('.bookmark-row')
+  ).toHaveStyle({
+    height: '36px'
+  });
+});
+
+test('keyboard drag reorders stable bookmark IDs and Escape cancels without saving', async () => {
+  measureRows();
+  const {commit} = setup(pair);
+  const handle = screen.getByRole('button', {name: 'Reorder bookmark: Home'});
+  handle.focus();
+  fireEvent.keyDown(handle, {key: ' ', code: 'Space'});
+  await waitFor(() => expect(handle).toHaveAttribute('aria-pressed', 'true'));
+  fireEvent.keyDown(document, {key: 'ArrowDown', code: 'ArrowDown'});
+  fireEvent.keyDown(document, {key: ' ', code: 'Space'});
+  await waitFor(() => expect(commit).toHaveBeenCalledWith([pair[1], pair[0]]));
+  expect(screen.getByRole('textbox', {name: 'Bookmark name 1'})).toHaveValue('Work');
+  expect(handle).toHaveFocus();
+  commit.mockClear();
+  fireEvent.keyDown(handle, {key: ' ', code: 'Space'});
+  await waitFor(() => expect(handle).toHaveAttribute('aria-pressed', 'true'));
+  fireEvent.keyDown(document, {key: 'ArrowUp', code: 'ArrowUp'});
+  fireEvent.keyDown(document, {key: 'Escape', code: 'Escape'});
+  expect(commit).not.toHaveBeenCalled();
+  expect(screen.getByRole('textbox', {name: 'Bookmark name 1'})).toHaveValue('Work');
+});
+
+test('pointer dragging from the handle reorders and an outside drop leaves the order unchanged', async () => {
+  measureRows();
+  const {commit, updateMap} = setup(pair);
+  const handle = screen.getByRole('button', {name: 'Reorder bookmark: Home'});
+  fireEvent.pointerDown(handle, {button: 0, clientX: 10, clientY: 18});
+  fireEvent.pointerMove(document, {clientX: 10, clientY: 24});
+  await waitFor(() => expect(handle).toHaveAttribute('aria-pressed', 'true'));
+  fireEvent.pointerMove(document, {clientX: 10, clientY: 60});
+  fireEvent.pointerUp(document, {clientX: 10, clientY: 60});
+  await waitFor(() => expect(commit).toHaveBeenCalledWith([pair[1], pair[0]]));
+  commit.mockClear();
+  fireEvent.pointerDown(handle, {button: 0, clientX: 10, clientY: 60});
+  fireEvent.pointerMove(document, {clientX: 10, clientY: 66});
+  await waitFor(() => expect(handle).toHaveAttribute('aria-pressed', 'true'));
+  fireEvent.pointerMove(document, {clientX: 500, clientY: 500});
+  fireEvent.pointerUp(document, {clientX: 500, clientY: 500});
+  expect(commit).not.toHaveBeenCalled();
+  expect(screen.getByRole('textbox', {name: 'Bookmark name 1'})).toHaveValue('Work');
+  // Dnd-kit briefly suppresses the click after a drag; actions work once it releases capture.
+  await waitFor(() => {
+    fireEvent.click(screen.getAllByRole('button', {name: 'Go to'})[0]);
+    expect(updateMap).toHaveBeenCalledTimes(1);
+  });
+});
+
+test('editing names and using action icons never activates dragging', () => {
+  measureRows();
+  const {commit, updateMap} = setup(pair);
+  const name = screen.getByRole('textbox', {name: 'Bookmark name 1'});
+  fireEvent.pointerDown(name, {button: 0, clientX: 50, clientY: 18});
+  fireEvent.pointerMove(document, {clientX: 50, clientY: 60});
+  fireEvent.pointerUp(document);
+  fireEvent.change(name, {target: {value: 'Renamed'}});
+  expect(commit).toHaveBeenLastCalledWith([{...pair[0], name: 'Renamed'}, pair[1]]);
+  commit.mockClear();
+  const navigate = screen.getAllByRole('button', {name: 'Go to'})[0];
+  fireEvent.pointerDown(navigate, {button: 0, clientX: 180, clientY: 18});
+  fireEvent.pointerMove(document, {clientX: 180, clientY: 60});
+  fireEvent.pointerUp(document);
+  fireEvent.click(navigate);
+  expect(updateMap).toHaveBeenCalledTimes(1);
+  expect(commit).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', {name: 'Reorder bookmark: Renamed'})).not.toHaveAttribute(
+    'aria-pressed'
+  );
+  expect(screen.getByRole('textbox', {name: 'Bookmark name 1'})).toHaveValue('Renamed');
 });

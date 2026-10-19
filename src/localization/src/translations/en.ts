@@ -1053,6 +1053,7 @@ ${'```'}
     bookmarks: 'Bookmarks',
     bookmark: 'Bookmark',
     bookmarkName: 'Bookmark name',
+    reorderBookmark: 'Reorder bookmark',
     captureBookmark: 'Bookmark current view',
     singleMap: 'Use a single 2D or 3D map to edit camera views.',
     goTo: 'Go to',

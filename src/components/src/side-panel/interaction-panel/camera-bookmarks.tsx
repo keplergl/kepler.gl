@@ -8,14 +8,67 @@ import {CameraBookmark, MapState} from '@kepler.gl/types';
 import {MapStateActions, VisStateActions, UIStateActions} from '@kepler.gl/actions';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {getCameraSnapshot} from '@kepler.gl/utils';
-import {Button, Input, PanelContent} from '../../common/styled-components';
-import {LocationMarker, Replace, ArrowUp, ArrowDown, Delete, MapPin} from '../../common/icons';
-import CameraPanelHeader, {CameraPanel} from './camera-panel-header';
+import {Button, InlineInput, PanelContent, StyledPanelHeader} from '../../common/styled-components';
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  closestCenter,
+  pointerWithin,
+  useSensor,
+  useSensors
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable';
+import {CSS} from '@dnd-kit/utilities';
+import {DND_MODIFIERS} from '../../common/dnd-layer-items';
+import {DragHandle} from '../layer-panel/layer-panel-header';
+import PanelHeaderActionFactory from '../panel-header-action';
+import {
+  LocationMarker,
+  Replace,
+  ArrowUp,
+  ArrowDown,
+  Delete,
+  MapPin,
+  VertDots
+} from '../../common/icons';
+import CameraPanelHeader, {CameraPanel, CameraIconButton} from './camera-panel-header';
 import {cameraTransition} from '../../camera-navigation';
 import {MapViewStateContext} from '../../map-view-state-context';
 
-const BookmarkRow = styled.div`
-  margin-top: 12px;
+const PanelHeaderAction = PanelHeaderActionFactory();
+const BookmarkList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+`;
+const BookmarkRow = styled(StyledPanelHeader)`
+  height: 36px;
+  position: relative;
+  padding: 0 8px 0 4px;
+  gap: 4px;
+  &:hover {
+    background-color: ${props => props.theme.panelBackgroundHover};
+  }
+  .bookmark__drag-handle {
+    flex: 0 0 20px;
+    touch-action: none;
+    opacity: 1;
+    cursor: grab;
+    &:focus-visible {
+      outline: 2px solid ${props => props.theme.activeColor};
+    }
+    &[aria-pressed='true'] {
+      cursor: grabbing;
+    }
+  }
   @media (hover: hover) and (pointer: fine) {
     .bookmark-actions {
       opacity: 0;
@@ -28,27 +81,154 @@ const BookmarkRow = styled.div`
     }
   }
   input {
-    width: 100%;
-    margin-bottom: 6px;
+    flex: 1;
+    min-width: 0;
+    width: 0;
+    margin: 0;
   }
 `;
 const Actions = styled.div`
   display: flex;
-  height: 28px;
-  gap: 4px;
+  flex: 0 0 auto;
+  align-items: center;
+  height: 24px;
+  gap: 2px;
+`;
+const ActionButton = styled(CameraIconButton)`
+  width: 20px;
+  height: 24px;
 `;
 
-const ActionButton = styled(Button)`
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  svg {
-    margin: 0;
-  }
-  &:focus-visible {
-    outline: 2px solid ${props => props.theme.activeColor};
-  }
-`;
+function SortableBookmark({
+  bookmark,
+  index,
+  bookmarks,
+  panelId,
+  enabled,
+  canNavigate,
+  canCapture,
+  onNavigate,
+  onUpdate,
+  onChange
+}: {
+  bookmark: CameraBookmark;
+  index: number;
+  bookmarks: CameraBookmark[];
+  panelId: string;
+  enabled: boolean;
+  canNavigate: boolean;
+  canCapture: boolean;
+  onNavigate: (bookmark: CameraBookmark) => void;
+  onUpdate: (bookmark: CameraBookmark) => void;
+  onChange: (bookmarks: CameraBookmark[]) => void;
+}) {
+  const intl = useIntl();
+  const message = (key: string, fallback: string) =>
+    intl.formatMessage({id: `camera.${key}`, defaultMessage: fallback});
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({id: bookmark.id});
+  const reorderLabel = `${message('reorderBookmark', 'Reorder bookmark')}: ${bookmark.name}`;
+  const actions = [
+    {
+      key: 'goTo',
+      label: message('goTo', 'Go to'),
+      Icon: LocationMarker,
+      disabled: !enabled || !canNavigate,
+      onClick: () => onNavigate(bookmark)
+    },
+    {
+      key: 'updateView',
+      label: message('updateView', 'Update view'),
+      Icon: Replace,
+      disabled: !canCapture,
+      onClick: () => onUpdate(bookmark)
+    },
+    {
+      key: 'up',
+      label: message('up', 'Up'),
+      Icon: ArrowUp,
+      disabled: index === 0,
+      onClick: () => onChange(arrayMove(bookmarks, index, index - 1))
+    },
+    {
+      key: 'down',
+      label: message('down', 'Down'),
+      Icon: ArrowDown,
+      disabled: index === bookmarks.length - 1,
+      onClick: () => onChange(arrayMove(bookmarks, index, index + 1))
+    },
+    {
+      key: 'delete',
+      label: message('delete', 'Delete'),
+      Icon: Delete,
+      onClick: () => onChange(bookmarks.filter(item => item.id !== bookmark.id))
+    }
+  ];
+  return (
+    <BookmarkRow
+      ref={setNodeRef}
+      className="bookmark-row"
+      data-bookmark-id={bookmark.id}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 1 : undefined
+      }}
+    >
+      <DragHandle
+        className="bookmark__drag-handle"
+        listeners={{
+          ...attributes,
+          ...listeners,
+          ref: setActivatorNodeRef,
+          'aria-label': reorderLabel,
+          title: reorderLabel
+        }}
+      >
+        <VertDots height="20px" aria-hidden="true" />
+      </DragHandle>
+      <InlineInput
+        aria-label={`${message('bookmarkName', 'Bookmark name')} ${index + 1}`}
+        value={bookmark.name}
+        onChange={event =>
+          onChange(
+            bookmarks.map(item =>
+              item.id === bookmark.id ? {...item, name: event.target.value} : item
+            )
+          )
+        }
+      />
+      <Actions className="bookmark-actions">
+        {actions.map(({key, label, Icon, disabled, onClick}) => (
+          <ActionButton
+            key={key}
+            aria-label={label}
+            title={label}
+            type="button"
+            disabled={disabled}
+            onClick={onClick}
+          >
+            <PanelHeaderAction
+              id={`${panelId}-${bookmark.id}-${key}`}
+              tooltip={`camera.${key}`}
+              flush
+              disabled={disabled}
+              IconComponent={Icon}
+            />
+          </ActionButton>
+        ))}
+      </Actions>
+    </BookmarkRow>
+  );
+}
 
 export type CameraBookmarksProps = {
   bookmarks?: CameraBookmark[];
@@ -76,11 +256,10 @@ export default function CameraBookmarks({
   const {getInternalViewState} = useContext(MapViewStateContext);
   const readCamera = () => getCameraSnapshot(getInternalViewState()) || getCameraSnapshot(mapState);
   const commit = visStateActions.setCameraBookmarks;
-  const move = (index: number, offset: number) => {
-    const next = [...bookmarks];
-    [next[index], next[index + offset]] = [next[index + offset], next[index]];
-    commit(next);
-  };
+  const sensors = useSensors(
+    useSensor(PointerSensor, {activationConstraint: {distance: 4}}),
+    useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates})
+  );
 
   return (
     <CameraPanel className="interaction-panel interaction-camera-bookmarks">
@@ -124,85 +303,53 @@ export default function CameraBookmarks({
               >
                 {message('captureBookmark', 'Bookmark current view')}
               </Button>
-              {bookmarks.map((bookmark, index) => (
-                <BookmarkRow key={bookmark.id}>
-                  <Input
-                    aria-label={`${message('bookmarkName', 'Bookmark name')} ${index + 1}`}
-                    value={bookmark.name}
-                    onChange={event =>
-                      commit(
-                        bookmarks.map(item =>
-                          item.id === bookmark.id ? {...item, name: event.target.value} : item
-                        )
-                      )
-                    }
-                  />
-                  <Actions className="bookmark-actions">
-                    <ActionButton
-                      aria-label={message('goTo', 'Go to')}
-                      title={message('goTo', 'Go to')}
-                      type="button"
-                      secondary
-                      small
-                      disabled={!enabled || !mapStateActions}
-                      onClick={() => mapStateActions?.updateMap(cameraTransition(bookmark.camera))}
-                    >
-                      <LocationMarker height="16px" aria-hidden="true" />
-                    </ActionButton>
-                    <ActionButton
-                      aria-label={message('updateView', 'Update view')}
-                      title={message('updateView', 'Update view')}
-                      type="button"
-                      secondary
-                      small
-                      disabled={!readCamera()}
-                      onClick={() => {
-                        const camera = readCamera();
-                        if (camera)
-                          commit(
-                            bookmarks.map(item =>
-                              item.id === bookmark.id ? {...item, camera} : item
-                            )
-                          );
-                      }}
-                    >
-                      <Replace height="16px" aria-hidden="true" />
-                    </ActionButton>
-                    <ActionButton
-                      aria-label={message('up', 'Up')}
-                      title={message('up', 'Up')}
-                      type="button"
-                      secondary
-                      small
-                      disabled={index === 0}
-                      onClick={() => move(index, -1)}
-                    >
-                      <ArrowUp height="16px" aria-hidden="true" />
-                    </ActionButton>
-                    <ActionButton
-                      aria-label={message('down', 'Down')}
-                      title={message('down', 'Down')}
-                      type="button"
-                      secondary
-                      small
-                      disabled={index === bookmarks.length - 1}
-                      onClick={() => move(index, 1)}
-                    >
-                      <ArrowDown height="16px" aria-hidden="true" />
-                    </ActionButton>
-                    <ActionButton
-                      aria-label={message('delete', 'Delete')}
-                      title={message('delete', 'Delete')}
-                      type="button"
-                      secondary
-                      small
-                      onClick={() => commit(bookmarks.filter(item => item.id !== bookmark.id))}
-                    >
-                      <Delete height="16px" aria-hidden="true" />
-                    </ActionButton>
-                  </Actions>
-                </BookmarkRow>
-              ))}
+              <DndContext
+                id={panelId}
+                sensors={sensors}
+                modifiers={DND_MODIFIERS}
+                collisionDetection={args =>
+                  args.pointerCoordinates ? pointerWithin(args) : closestCenter(args)
+                }
+                onDragEnd={({active, over}) => {
+                  if (!over || active.id === over.id) return;
+                  const from = bookmarks.findIndex(item => item.id === active.id);
+                  const to = bookmarks.findIndex(item => item.id === over.id);
+                  if (from >= 0 && to >= 0) commit(arrayMove(bookmarks, from, to));
+                }}
+              >
+                <SortableContext
+                  items={bookmarks.map(bookmark => bookmark.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <BookmarkList>
+                    {bookmarks.map((bookmark, index) => (
+                      <SortableBookmark
+                        key={bookmark.id}
+                        bookmark={bookmark}
+                        index={index}
+                        bookmarks={bookmarks}
+                        panelId={panelId}
+                        enabled={enabled}
+                        canNavigate={Boolean(mapStateActions)}
+                        canCapture={Boolean(readCamera())}
+                        onChange={commit}
+                        onNavigate={item =>
+                          mapStateActions?.updateMap(cameraTransition(item.camera))
+                        }
+                        onUpdate={item => {
+                          const camera = readCamera();
+                          if (camera)
+                            commit(
+                              bookmarks.map(saved =>
+                                saved.id === item.id ? {...saved, camera} : saved
+                              )
+                            );
+                        }}
+                      />
+                    ))}
+                  </BookmarkList>
+                </SortableContext>
+              </DndContext>
             </>
           )}
         </PanelContent>
