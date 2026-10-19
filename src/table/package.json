@@ -40,6 +40,7 @@
     "@turf/boolean-intersects": "^7.2.0",
     "@turf/boolean-overlap": "^7.2.0",
     "@turf/boolean-touches": "^7.2.0",
+    "@turf/difference": "^7.2.0",
     "@types/d3-array": "^2.8.0",
     "d3-array": "^2.8.0",
     "es-toolkit": "^1.39.10",
