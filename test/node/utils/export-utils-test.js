@@ -85,6 +85,93 @@ test('exportUtils -> ExportHtml escapes script terminators in map info', t => {
   t.end();
 });
 
+test('exportUtils -> ExportHtml safely serializes inline data', t => {
+  const datasetValue = '</script><div data-kepler-export-test="dataset"></div>\u2028\u2029';
+  const configValue = '</script><div data-kepler-export-test="config"></div>\u2028\u2029';
+  const savedStyleType =
+    '</script><div data-kepler-export-test="style-type"></div>\u2028\u2029';
+  const mapboxApiAccessToken =
+    '\'</script><div data-kepler-export-test="mapbox-token"></div>\u2028\u2029';
+  const version = 'test"></script><div data-kepler-export-test="version"></div>';
+  const datasets = [{data: {label: datasetValue}}];
+  const config = {
+    version: 'v1',
+    config: {
+      mapStyle: {styleType: savedStyleType},
+      metadata: configValue
+    }
+  };
+  const html = exportMapToHTML(
+    {
+      datasets,
+      config,
+      mapboxApiAccessToken,
+      mode: 'READ'
+    },
+    version
+  );
+
+  const parseAssignment = pattern => {
+    const match = html.match(pattern);
+    t.ok(match, `exported html should include ${pattern}`);
+    if (!match) {
+      return undefined;
+    }
+    try {
+      return JSON.parse(match[1]);
+    } catch {
+      return undefined;
+    }
+  };
+
+  t.notOk(
+    html.includes('</script><div data-kepler-export-test='),
+    'inline values should not be able to close a script element or inject markup'
+  );
+  t.deepEqual(parseAssignment(/const datasets = (.+);/), datasets, 'datasets should round-trip');
+  t.deepEqual(parseAssignment(/const config = (.+);/), config, 'config should round-trip');
+  t.equal(
+    parseAssignment(/const savedStyleType = (.+);/),
+    savedStyleType,
+    'saved style type should round-trip'
+  );
+  t.equal(
+    parseAssignment(/window\.MAPBOX_TOKEN = (.+);/),
+    mapboxApiAccessToken,
+    'Mapbox token should round-trip'
+  );
+  t.ok(html.includes('\\u003c/script>'), 'inline JSON should escape opening angle brackets');
+  t.ok(html.includes('\\u2028\\u2029'), 'inline JSON should escape JavaScript line terminators');
+
+  t.end();
+});
+
+test('exportUtils -> ExportHtml preserves nullish dataset and config values', t => {
+  const undefinedHtml = exportMapToHTML({
+    datasets: undefined,
+    config: undefined,
+    mode: 'READ'
+  });
+  const nullHtml = exportMapToHTML({
+    datasets: null,
+    config: null,
+    mode: 'READ'
+  });
+
+  t.ok(
+    undefinedHtml.includes('const datasets = undefined;'),
+    'missing datasets should remain undefined at runtime'
+  );
+  t.ok(
+    undefinedHtml.includes('const config = undefined;'),
+    'missing config should remain undefined at runtime'
+  );
+  t.ok(nullHtml.includes('const datasets = null;'), 'null datasets should remain null at runtime');
+  t.ok(nullHtml.includes('const config = null;'), 'null config should remain null at runtime');
+
+  t.end();
+});
+
 test('exportUtils -> ExportHtml preserves custom branding', t => {
   const branding = {
     appName: 'Atlas Lab',

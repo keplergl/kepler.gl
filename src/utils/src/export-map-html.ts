@@ -24,16 +24,27 @@ const STYLED_COMPONENTS_VERSION = '6.1.19';
 // document (native ES modules/import maps are blocked under the file:// origin).
 const ES_MODULE_SHIMS_VERSION = '2.8.1';
 
+/** Escape serialized JSON for interpolation into an inline `<script>`. */
+function escapeScriptJSON(serialized: string): string {
+  return serialized
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
 /**
  * Serialize a value for interpolation into an inline `<script>`. A literal `</script>`
  * anywhere in the data would close the script element early, and U+2028/U+2029 are
  * line terminators in JavaScript but legal inside a JSON string.
  */
 function toScriptJSON(value: unknown): string {
-  return JSON.stringify(value ?? null)
-    .replace(/</g, '\\u003c')
-    .replace(/\u2028/g, '\\u2028')
-    .replace(/\u2029/g, '\\u2029');
+  return escapeScriptJSON(JSON.stringify(value ?? null));
+}
+
+/** Preserve the legacy `undefined` runtime value for optional public arguments. */
+function toScriptJSONOrUndefined(value: unknown): string {
+  const serialized = JSON.stringify(value);
+  return serialized === undefined ? 'undefined' : escapeScriptJSON(serialized);
 }
 
 /** Escape text interpolated directly into HTML markup. */
@@ -88,6 +99,9 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
     typeof options.appName === 'string' && options.appName ? options.appName : KEPLER_GL_NAME;
   const appWebsite = normalizeAppWebsite(options.appWebsite);
   const branding = {appName, appWebsite};
+  const mapboxApiAccessToken = options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN';
+  const keplerStyleUrl = `https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.css`;
+  const keplerScriptUrl = `https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.js`;
 
   return `
     <!DOCTYPE html>
@@ -100,7 +114,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
 
         <!--Kepler css-->
-        <link href="https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.css" rel="stylesheet">
+        <link href="${escapeHTML(keplerStyleUrl)}" rel="stylesheet">
 
         <!--MapBox css-->
         <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet">
@@ -229,7 +243,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
 
           // Load the kepler.gl UMD bundle after the globals are in place, then run
           // the app bootstrap scripts (marked as type="text/kepler-bootstrap").
-          loadScript('https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.js')
+          loadScript(${toScriptJSON(keplerScriptUrl)})
             .then(function() {
               var bootstraps = document.querySelectorAll('script[type="text/kepler-bootstrap"]');
               bootstraps.forEach(function(node) {
@@ -291,7 +305,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           /**
            * Provide your MapBox Token
            **/
-          window.MAPBOX_TOKEN = '${options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN'}';
+          window.MAPBOX_TOKEN = ${toScriptJSON(mapboxApiAccessToken)};
           window.WARNING_MESSAGE = 'No Mapbox token provided. Mapbox basemaps will not be available. To enable them, edit this file and set MAPBOX_TOKEN to your Mapbox access key.';
         </script>
       </head>
@@ -321,7 +335,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           // Pre-seed styleType so the correct basemap fetch starts on the very
           // first render, avoiding a flash of the default dark basemap.
           // options.config has the versioned envelope shape: { version, config: { mapStyle, ... } }
-          const savedStyleType = ${JSON.stringify(
+          const savedStyleType = ${toScriptJSON(
             options.config?.config?.mapStyle?.styleType ?? null
           )};
 
@@ -517,8 +531,8 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
            * to add new data and customize behavior
            */
           (function customize(keplerGl, store) {
-            const datasets = ${JSON.stringify(options.datasets)};
-            const config = ${JSON.stringify(options.config)};
+            const datasets = ${toScriptJSONOrUndefined(options.datasets)};
+            const config = ${toScriptJSONOrUndefined(options.config)};
             const info = ${toScriptJSON(optionalMapInfo(options.info) ?? null)};
 
             const loadedData = keplerGl.KeplerGlSchema.load(
