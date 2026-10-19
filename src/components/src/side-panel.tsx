@@ -119,6 +119,7 @@ export default function SidePanelFactory(
       filters,
       layers,
       annotations = [],
+      cameraBookmarks,
       layerBlending,
       overlayBlending,
       layerClasses,
@@ -243,6 +244,7 @@ export default function SidePanelFactory(
                     filters={filters}
                     layers={layers}
                     annotations={annotations}
+                    cameraBookmarks={cameraBookmarks}
                     layerClasses={layerClasses}
                     layerOrder={layerOrder}
                     layerBlending={layerBlending}

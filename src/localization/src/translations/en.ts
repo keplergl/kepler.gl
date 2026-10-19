@@ -1045,6 +1045,18 @@ ${'```'}
     fadeOnZoomDisappear: 'Disappear',
     fadeOnZoomDelete: 'Remove controller'
   },
+  camera: {
+    bookmarks: 'Bookmarks',
+    bookmark: 'Bookmark',
+    bookmarkName: 'Bookmark name',
+    captureBookmark: 'Bookmark current view',
+    singleMap: 'Use a single 2D or 3D map to edit camera views.',
+    goTo: 'Go to',
+    updateView: 'Update view',
+    up: 'Up',
+    down: 'Down',
+    delete: 'Delete'
+  },
   layerBlending: {
     title: 'Layer Blending',
     additive: 'additive',

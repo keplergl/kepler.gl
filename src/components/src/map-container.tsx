@@ -1669,6 +1669,7 @@ export default function MapContainerFactory(
           {showMapControl && (
             <MapControl
               mapState={mapState}
+              cameraBookmarks={visState.cameraBookmarks}
               mapStateActions={mapStateActions}
               datasets={datasets}
               availableLocales={LOCALE_CODES_ARRAY}

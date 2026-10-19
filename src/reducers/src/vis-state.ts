@@ -10,6 +10,7 @@ import * as visStateUpdaters from './vis-state-updaters';
  * It is used to generate documentation
  */
 const actionHandler = {
+  [ActionTypes.SET_CAMERA_BOOKMARKS]: visStateUpdaters.setCameraBookmarksUpdater,
   [ActionTypes.ADD_FILTER]: visStateUpdaters.addFilterUpdater,
 
   [ActionTypes.CREATE_OR_UPDATE_FILTER]: visStateUpdaters.createOrUpdateFilterUpdater,

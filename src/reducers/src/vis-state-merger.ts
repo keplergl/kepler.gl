@@ -7,6 +7,7 @@ import flattenDeep from 'es-toolkit/compat/flattenDeep';
 import deepmerge from 'deepmerge';
 import {
   arrayInsert,
+  normalizeCameraBookmarks,
   combineSplitMapsByIndex,
   getInitialMapLayersForSplitMap,
   applyFiltersToDatasets,
@@ -1479,6 +1480,16 @@ function getValueWithHighestOccurrence<T>(arr: T[]): T | null {
 }
 
 export const VIS_STATE_MERGERS: VisStateMergers<any> = [
+  {
+    prop: 'cameraBookmarks',
+    merge: (state, bookmarks) => ({
+      ...state,
+      cameraBookmarks: normalizeCameraBookmarks([
+        ...(state.cameraBookmarks || []),
+        ...normalizeCameraBookmarks(bookmarks)
+      ])
+    })
+  },
   {
     merge: mergeLayers,
     prop: 'layers',

@@ -7,6 +7,7 @@ import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {migrateLegacyScenegraphVisConfig} from '@kepler.gl/layers';
 import {
   colorRangeBackwardCompatibility,
+  normalizeCameraBookmarks,
   isFilterValidToSave,
   findById,
   isPlainObject
@@ -16,6 +17,7 @@ import Schema from './schema';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {
   AddDataToMapOptions,
+  CameraBookmark,
   AnimationConfig,
   Editor,
   FileLoading,
@@ -59,6 +61,7 @@ export type modifiedType = {
 };
 
 export interface VisState {
+  cameraBookmarks: CameraBookmark[];
   mapInfo: MapInfo;
   layers: Layer[];
   layerData: any[];
@@ -1048,7 +1051,21 @@ export const propertiesV0 = {
   overlayBlending: null
 };
 
+class CameraBookmarksSchema extends Schema {
+  key = 'cameraBookmarks';
+
+  save(value: unknown) {
+    const bookmarks = normalizeCameraBookmarks(value);
+    return bookmarks.length ? {[this.key]: bookmarks} : {};
+  }
+
+  load(value: unknown) {
+    return {[this.key]: normalizeCameraBookmarks(value)};
+  }
+}
+
 export const propertiesV1 = {
+  cameraBookmarks: new CameraBookmarksSchema(),
   filters: new FilterSchemaV0({
     version: VERSIONS.v1,
     properties: filterPropsV1

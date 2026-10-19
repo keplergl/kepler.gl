@@ -60,6 +60,7 @@ import {
 // Utils
 import {
   FILTER_UPDATER_PROPS,
+  normalizeCameraBookmarks,
   addNewLayersToSplitMap,
   snapToMarks,
   applyFilterFieldName,
@@ -441,6 +442,9 @@ export const INITIAL_VIS_STATE: VisState = {
   // charts (enabled by default; gated by enableChartsPanel)
   charts: [],
   chartsToBeMerged: [],
+
+  // camera bookmarks
+  cameraBookmarks: [],
 
   // annotations
   annotations: [],
@@ -3377,6 +3381,11 @@ export const resetMapConfigUpdater = (state: VisState): VisState => ({
   ...state.initialState,
   initialState: state.initialState
 });
+
+export const setCameraBookmarksUpdater = (
+  state: VisState,
+  action: ReturnType<typeof VisStateActions.setCameraBookmarks>
+): VisState => ({...state, cameraBookmarks: normalizeCameraBookmarks(action.payload)});
 
 /**
  * Propagate `visState` reducer with a new configuration. Current config will be override.
