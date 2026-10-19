@@ -5,7 +5,7 @@ import React, {useCallback, useState, useEffect, useRef} from 'react';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components';
 
-import {updateLayerGroup, removeLayerGroup} from '@kepler.gl/actions';
+import {ActionHandler, VisStateActions} from '@kepler.gl/actions';
 import {LayerOrderGroup} from '@kepler.gl/types';
 import {getFlatLayerOrder} from '@kepler.gl/reducers';
 
@@ -129,6 +129,8 @@ export type LayerGroupHeaderProps = {
   layerGroup: LayerOrderGroup;
   isLayerGroupContentOpen?: boolean;
   onToggleLayerGroupContent?: () => void;
+  updateLayerGroup?: ActionHandler<typeof VisStateActions.updateLayerGroup>;
+  removeLayerGroup?: ActionHandler<typeof VisStateActions.removeLayerGroup>;
   listeners?: any;
   className?: string;
 };
@@ -142,6 +144,8 @@ function LayerGroupHeaderFactory(
     layerGroup,
     onToggleLayerGroupContent,
     isLayerGroupContentOpen,
+    updateLayerGroup,
+    removeLayerGroup,
     listeners,
     className
   }) => {
@@ -163,16 +167,38 @@ function LayerGroupHeaderFactory(
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [showConfirmation]);
 
+    const updateGroup: ActionHandler<typeof VisStateActions.updateLayerGroup> = useCallback(
+      payload => {
+        if (updateLayerGroup) {
+          updateLayerGroup(payload);
+        } else {
+          dispatch(VisStateActions.updateLayerGroup(payload));
+        }
+      },
+      [dispatch, updateLayerGroup]
+    );
+
+    const removeGroup: ActionHandler<typeof VisStateActions.removeLayerGroup> = useCallback(
+      payload => {
+        if (removeLayerGroup) {
+          removeLayerGroup(payload);
+        } else {
+          dispatch(VisStateActions.removeLayerGroup(payload));
+        }
+      },
+      [dispatch, removeLayerGroup]
+    );
+
     const onUpdateLabel = useCallback(
       event => {
-        dispatch(updateLayerGroup({id, options: {label: event.target.value}}));
+        updateGroup({id, options: {label: event.target.value}});
       },
-      [dispatch, id]
+      [id, updateGroup]
     );
 
     const onToggleVisibility = useCallback(() => {
-      dispatch(updateLayerGroup({id, options: {isVisible: !layerGroup.isVisible}}));
-    }, [dispatch, id, layerGroup.isVisible]);
+      updateGroup({id, options: {isVisible: !layerGroup.isVisible}});
+    }, [id, layerGroup.isVisible, updateGroup]);
 
     const onDelete = useCallback(
       (e: React.MouseEvent) => {
@@ -180,19 +206,19 @@ function LayerGroupHeaderFactory(
         if (layerCount > 0) {
           setShowConfirmation(true);
         } else {
-          dispatch(removeLayerGroup({id}));
+          removeGroup({id});
         }
       },
-      [dispatch, id, layerCount]
+      [id, layerCount, removeGroup]
     );
 
     const onConfirmDelete = useCallback(
       (e: React.MouseEvent) => {
         e.stopPropagation();
-        dispatch(removeLayerGroup({id}));
+        removeGroup({id});
         setShowConfirmation(false);
       },
-      [dispatch, id]
+      [id, removeGroup]
     );
 
     const VisibilityIcon = layerGroup.isVisible ? EyeSeen : EyeUnseen;

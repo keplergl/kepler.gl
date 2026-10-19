@@ -200,7 +200,11 @@ function DndContextFactory(
           ) : null}
           {activeElementType === 'layerGroup' && activeElementObject ? (
             <DragItem>
-              <LayerGroupHeader layerGroup={activeElementObject as LayerOrderGroup} />
+              <LayerGroupHeader
+                layerGroup={activeElementObject as LayerOrderGroup}
+                updateLayerGroup={nop}
+                removeLayerGroup={nop}
+              />
             </DragItem>
           ) : null}
         </DragOverlay>
