@@ -121,6 +121,43 @@ const defaultProps = {
   mapStateActions: MapStateActions
 };
 
+const firstMapId = 'first-map';
+const secondMapId = 'second-map';
+
+function renderLayerListForInstances({emptySharedGroup = false} = {}) {
+  const firstMap = createInstanceState(firstMapId);
+  if (emptySharedGroup) {
+    firstMap.visState.layerOrder[0].layerOrder = [];
+    firstMap.visState.layerOrder.push(firstMap.visState.layers[0].id);
+  }
+  const store = createStore(rootReducer, {
+    [firstMapId]: firstMap,
+    [secondMapId]: createInstanceState(secondMapId)
+  });
+  const firstMapVisState = store.getState()[firstMapId].visState;
+  const secondMapVisState = store.getState()[secondMapId].visState;
+  const firstMapActions = bindActionCreators(
+    VisStateActions,
+    forwardTo(firstMapId, store.dispatch)
+  );
+
+  const {container} = renderWithTheme(
+    <Provider store={store}>
+      <LayerList
+        {...defaultProps}
+        datasets={firstMapVisState.datasets}
+        layerClasses={firstMapVisState.layerClasses}
+        layerOrder={firstMapVisState.layerOrder}
+        layers={firstMapVisState.layers}
+        visStateActions={firstMapActions}
+        isSortable={false}
+      />
+    </Provider>
+  );
+
+  return {container, store, firstMapVisState, secondMapVisState};
+}
+
 // jest.mock('@kepler.gl/actions');
 
 describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
@@ -180,31 +217,7 @@ describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
   });
 
   it('keeps grouped-layer visibility isolated between map instances', () => {
-    const firstMapId = 'first-map';
-    const secondMapId = 'second-map';
-    const store = createStore(rootReducer, {
-      [firstMapId]: createInstanceState(firstMapId),
-      [secondMapId]: createInstanceState(secondMapId)
-    });
-    const firstMapVisState = store.getState()[firstMapId].visState;
-    const firstMapActions = bindActionCreators(
-      VisStateActions,
-      forwardTo(firstMapId, store.dispatch)
-    );
-
-    const {container} = renderWithTheme(
-      <Provider store={store}>
-        <LayerList
-          {...defaultProps}
-          datasets={firstMapVisState.datasets}
-          layerClasses={firstMapVisState.layerClasses}
-          layerOrder={firstMapVisState.layerOrder}
-          layers={firstMapVisState.layers}
-          visStateActions={firstMapActions}
-          isSortable={false}
-        />
-      </Provider>
-    );
+    const {container, store} = renderLayerListForInstances();
 
     fireEvent.click(container.querySelectorAll('.layer-group__visibility-toggle svg')[0]);
 
@@ -235,5 +248,61 @@ describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
     expect(secondMapState.layers[0].config.isVisible).toBe(true);
     expect(secondMapOnlyGroup.isVisible).toBe(true);
     expect(secondMapState.layers[1].config.isVisible).toBe(true);
+  });
+
+  it('keeps group renaming isolated between map instances', () => {
+    const {store, firstMapVisState, secondMapVisState} = renderLayerListForInstances();
+
+    fireEvent.change(screen.getByDisplayValue(`${firstMapId} shared group`), {
+      target: {value: 'Renamed group'}
+    });
+
+    const firstMapState = store.getState()[firstMapId].visState;
+    const secondMapState = store.getState()[secondMapId].visState;
+
+    expect(getLayerGroupFromLayerOrder(firstMapState.layerOrder, 'shared-group').label).toBe(
+      'Renamed group'
+    );
+    expect(firstMapState.layerOrder[1]).toEqual(firstMapVisState.layerOrder[1]);
+    expect(firstMapState.layers).toEqual(firstMapVisState.layers);
+    expect(getLayerGroupFromLayerOrder(secondMapState.layerOrder, 'shared-group').label).toBe(
+      `${secondMapId} shared group`
+    );
+    expect(secondMapState).toEqual(secondMapVisState);
+  });
+
+  it('keeps confirmed group and child-layer deletion isolated between map instances', () => {
+    const {container, store, firstMapVisState, secondMapVisState} =
+      renderLayerListForInstances();
+
+    fireEvent.click(container.querySelector('.layer-group__delete svg'));
+
+    expect(screen.getByText('Remove group with layers?')).toBeInTheDocument();
+    expect(store.getState()[firstMapId].visState).toEqual(firstMapVisState);
+    expect(store.getState()[secondMapId].visState).toEqual(secondMapVisState);
+
+    fireEvent.click(screen.getByRole('button', {name: 'Remove'}));
+
+    const firstMapState = store.getState()[firstMapId].visState;
+
+    expect(firstMapState.layerOrder).toEqual([firstMapVisState.layerOrder[1]]);
+    expect(firstMapState.layers.map(layer => layer.id)).toEqual([firstMapVisState.layers[1].id]);
+    expect(store.getState()[secondMapId].visState).toEqual(secondMapVisState);
+    expect(screen.queryByText('Remove group with layers?')).not.toBeInTheDocument();
+  });
+
+  it('keeps immediate empty-group deletion isolated between map instances', () => {
+    const {container, store, firstMapVisState, secondMapVisState} =
+      renderLayerListForInstances({emptySharedGroup: true});
+
+    fireEvent.click(container.querySelector('.layer-group__delete svg'));
+
+    const firstMapState = store.getState()[firstMapId].visState;
+
+    expect(screen.queryByText('Remove group with layers?')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Remove'})).not.toBeInTheDocument();
+    expect(firstMapState.layerOrder).toEqual(firstMapVisState.layerOrder.slice(1));
+    expect(firstMapState.layers).toEqual(firstMapVisState.layers);
+    expect(store.getState()[secondMapId].visState).toEqual(secondMapVisState);
   });
 });
