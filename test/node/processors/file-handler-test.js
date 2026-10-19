@@ -2,6 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import sinon from 'sinon';
+import {WorkerFarm} from '@loaders.gl/worker-utils';
+import {convertGeoArrowToBinaryFeatureCollection} from '@loaders.gl/gis';
+import {KeplerTable} from '@kepler.gl/table';
+import GeoJsonLayer from '../../../src/layers/src/geojson-layer/geojson-layer';
 import {
   isKeplerGlMap,
   makeProgressIterator,
@@ -587,6 +592,306 @@ test('#file-handler -> compacted worker cache handles large centroid arrays', as
     largeMeanCenters.length,
     'should combine every centroid without spreading them into function arguments'
   );
+  t.end();
+});
+
+function geoArrowPointBatches(pointBatches = [[[-122.4, 37.8]], [[-122.5, 37.9]]]) {
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
+  let rowIndex = 0;
+  return pointBatches.map(points => {
+    const geometry = arrow.makeData({
+      type: pointType,
+      length: points.length,
+      child: arrow.makeData({type: new arrow.Float64(), data: Float64Array.from(points.flat())})
+    });
+    const row = arrow.makeData({
+      type: new arrow.Int32(),
+      data: Int32Array.from(points.map(() => rowIndex++))
+    });
+    const schema = new arrow.Schema([
+      new arrow.Field('geometry', pointType),
+      new arrow.Field('row', row.type)
+    ]);
+    schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+    return new arrow.RecordBatch(
+      schema,
+      arrow.makeData({
+        type: new arrow.Struct(schema.fields),
+        length: points.length,
+        children: [geometry, row]
+      })
+    );
+  });
+}
+
+// Replace only worker transport; successful jobs use the same converter as the
+// loaders.gl worker. File processing, table import and layer cache reads stay real.
+async function withGeoArrowWorker(parse, run) {
+  const originalWorker = globalThis.Worker;
+  globalThis.Worker = class {};
+  const stub = sinon.stub(WorkerFarm, 'getWorkerFarm').callsFake(() => ({
+    getWorkerPool: () => ({
+      startJob: async () => {
+        let resolve;
+        let reject;
+        const result = new Promise((yes, no) => {
+          resolve = yes;
+          reject = no;
+        });
+        return {
+          result,
+          postMessage: (_type, {input}) => {
+            Promise.resolve()
+              .then(() => parse(input))
+              .then(value => resolve({result: value}), reject);
+          }
+        };
+      }
+    })
+  }));
+  try {
+    await run();
+  } finally {
+    stub.restore();
+    if (originalWorker === undefined) {
+      delete globalThis.Worker;
+    } else {
+      globalThis.Worker = originalWorker;
+    }
+  }
+}
+
+function parseGeoArrowWorkerInput(input) {
+  const {chunkData, chunkIndex, chunkOffset, geometryEncoding} = input;
+  const vector = arrow.makeVector(
+    new arrow.Data(
+      chunkData.type,
+      chunkData.offset,
+      chunkData.length,
+      chunkData.nullCount,
+      chunkData.buffers,
+      chunkData.children,
+      chunkData.dictionary
+    )
+  );
+  return {
+    chunkIndex,
+    binaryDataFromGeoArrow: convertGeoArrowToBinaryFeatureCollection(vector, geometryEncoding, {
+      chunkIndex: 0,
+      chunkOffset,
+      calculateMeanCenters: true,
+      triangle: true
+    })
+  };
+}
+
+async function layerFromFile(file) {
+  const dataset = new KeplerTable({info: file.info, color: [0, 0, 0]});
+  await dataset.importData({data: file.data});
+  const layer = new GeoJsonLayer({dataId: dataset.id});
+  layer.config.columns.geojson = {value: 'geometry', fieldIdx: 0};
+  layer.updateLayerMeta(dataset);
+  return {dataset, layer};
+}
+
+async function assertCompleteGeoArrowLayer(
+  t,
+  file,
+  points = [
+    [-122.4, 37.8],
+    [-122.5, 37.9]
+  ]
+) {
+  const {dataset, layer} = await layerFromFile(file);
+  t.equal(dataset.dataContainer.numRows(), points.length, 'table keeps every row');
+  t.deepEqual(layer.centroids, points, 'centroids retain row order');
+  t.deepEqual(
+    layer.meta.bounds,
+    [
+      Math.min(...points.map(point => point[0])),
+      Math.min(...points.map(point => point[1])),
+      Math.max(...points.map(point => point[0])),
+      Math.max(...points.map(point => point[1]))
+    ],
+    'bounds include every batch'
+  );
+  const featureIds = layer.dataToFeature.flatMap(data =>
+    Array.from(data.points.globalFeatureIds.value)
+  );
+  t.deepEqual(
+    featureIds,
+    points.map((_, index) => index),
+    'geometry retains every feature row id'
+  );
+  t.deepEqual(
+    featureIds.map(index => dataset.dataContainer.valueAt(index, 1)),
+    featureIds,
+    'geometry maps to the matching attribute row'
+  );
+  return {dataset, layer};
+}
+
+for (const failure of ['first', 'last', 'all', 'missing']) {
+  test(`#file-handler -> ${failure} worker failure preserves the complete compacted layer`, async t => {
+    await withGeoArrowWorker(
+      input => {
+        if (failure === 'missing' && input.chunkIndex === 1) {
+          return {chunkIndex: input.chunkIndex, binaryDataFromGeoArrow: null};
+        }
+        if (failure === 'all' || input.chunkIndex === (failure === 'first' ? 0 : 1)) {
+          throw new Error('worker failed');
+        }
+        return parseGeoArrowWorkerInput(input);
+      },
+      async () => {
+        const [file] = await processFileData({
+          content: {
+            fileName: 'points.arrow',
+            data: geoArrowPointBatches(),
+            prepareProgressiveReplay: true
+          },
+          fileCache: []
+        });
+        const {dataset} = await assertCompleteGeoArrowLayer(t, file);
+        t.equal(dataset.dataContainer.numChunks(), 1, 'final table is compacted');
+        await assertCompleteGeoArrowLayer(t, {...file, data: file.progressiveData[0]}, [
+          [-122.4, 37.8]
+        ]);
+      }
+    );
+    t.end();
+  });
+}
+
+function deferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((yes, no) => {
+    resolve = yes;
+    reject = no;
+  });
+  return {promise, resolve, reject};
+}
+
+test('#file-handler -> out-of-order workers retain the successful fast path', async t => {
+  const jobs = [deferred(), deferred()];
+  const started = deferred();
+  const outputs = [];
+  await withGeoArrowWorker(
+    input => {
+      outputs[input.chunkIndex] = parseGeoArrowWorkerInput(input);
+      if (outputs.filter(Boolean).length === 2) started.resolve();
+      return jobs[input.chunkIndex].promise;
+    },
+    async () => {
+      const pending = processFileData({
+        content: {fileName: 'points.arrow', data: geoArrowPointBatches()},
+        fileCache: []
+      });
+      await started.promise;
+      jobs[1].resolve(outputs[1]);
+      jobs[0].resolve(outputs[0]);
+      const [file] = await pending;
+      const {layer} = await assertCompleteGeoArrowLayer(t, file);
+      t.equal(
+        layer.dataToFeature[0],
+        outputs[0].binaryDataFromGeoArrow.binaryGeometries[0],
+        'first batch reuses the worker geometry'
+      );
+      t.equal(
+        layer.dataToFeature[1],
+        outputs[1].binaryDataFromGeoArrow.binaryGeometries[0],
+        'second batch reuses the worker geometry'
+      );
+    }
+  );
+  t.end();
+});
+
+for (const failEmpty of [false, true]) {
+  test(`#file-handler -> ${failEmpty ? 'failed' : 'successful'} empty worker batch`, async t => {
+    const outputs = [];
+    await withGeoArrowWorker(
+      input => {
+        if (failEmpty && input.chunkData.length === 0) throw new Error('empty worker failed');
+        const result = parseGeoArrowWorkerInput(input);
+        outputs[input.chunkIndex] = result;
+        return result;
+      },
+      async () => {
+        const [file] = await processFileData({
+          content: {
+            fileName: 'points.arrow',
+            data: geoArrowPointBatches([[[-122.4, 37.8]], [], [[-122.5, 37.9]]])
+          },
+          fileCache: []
+        });
+        const {layer} = await assertCompleteGeoArrowLayer(t, file);
+        t.equal(
+          layer.dataToFeature[0] === outputs[0].binaryDataFromGeoArrow.binaryGeometries[0],
+          !failEmpty,
+          'only a failed empty batch triggers complete fallback'
+        );
+      }
+    );
+    t.end();
+  });
+}
+
+test('#file-handler -> failed latest worker batch preserves incremental row ids', async t => {
+  await withGeoArrowWorker(
+    () => Promise.reject(new Error('worker failed')),
+    async () => {
+      const [file] = await processFileData({
+        content: {fileName: 'points.arrow', data: geoArrowPointBatches(), skipArrowCompact: true},
+        fileCache: []
+      });
+      const latest = file.data.geoArrowBinaryData[0][1];
+      t.deepEqual(latest.meanCenters, [[-122.5, 37.9]], 'latest batch has its centroid');
+      t.deepEqual(
+        Array.from(latest.binaryGeometries[0].points.globalFeatureIds.value),
+        [1],
+        'fallback keeps the original global row offset'
+      );
+    }
+  );
+  t.end();
+});
+
+test('#file-handler -> geometry errors still reject after worker fallback', async t => {
+  const malformed = arrow.tableFromArrays({geometry: new Int32Array([1])});
+  malformed.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+  await withGeoArrowWorker(
+    () => Promise.reject(new Error('worker failed')),
+    async () => {
+      try {
+        await processFileData({
+          content: {fileName: 'invalid.arrow', data: malformed.batches},
+          fileCache: []
+        });
+        t.fail('invalid geometry must reject instead of returning a partial cache');
+      } catch (error) {
+        t.ok(error instanceof Error, 'synchronous geometry parse errors propagate');
+      }
+    }
+  );
+  t.end();
+});
+
+test('#file-handler -> decode errors after a valid batch still reject', async t => {
+  const error = new Error('Arrow decode failed');
+  async function* batches() {
+    yield {data: geoArrowPointBatches()};
+    throw error;
+  }
+  const iterator = readBatch(batches(), 'broken.arrow');
+  await iterator.next();
+  try {
+    await iterator.next();
+    t.fail('a decode error must not turn into a completed partial file');
+  } catch (caught) {
+    t.equal(caught, error, 'the original decode error propagates');
+  }
   t.end();
 });
 
