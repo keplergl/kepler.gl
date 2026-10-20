@@ -288,6 +288,47 @@ test('#visStateReducer -> UPDATE_ANNOTATION text placement snaps arm angle', t =
   t.end();
 });
 
+test('#visStateReducer -> kind changes preserve rich text, including conversions to rulers', t => {
+  const editorState = {
+    root: {
+      children: [
+        {
+          children: [{type: 'text', version: 1, text: 'Formatted label', format: 1}],
+          type: 'paragraph',
+          version: 1,
+          direction: null,
+          format: '',
+          indent: 0
+        }
+      ],
+      type: 'root',
+      version: 1,
+      direction: null,
+      format: '',
+      indent: 0
+    }
+  };
+  let state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({id: 'formatted', label: 'Formatted label'})
+  );
+  state = reducer(state, VisStateActions.updateAnnotation('formatted', {editorState}));
+
+  for (const kind of [
+    AnnotationKind.RULER,
+    AnnotationKind.POINT,
+    AnnotationKind.ARROW,
+    AnnotationKind.CIRCLE,
+    AnnotationKind.TEXT
+  ]) {
+    state = reducer(state, VisStateActions.updateAnnotation('formatted', {kind}));
+    t.deepEqual(state.annotations[0].editorState, editorState, `${kind} keeps rich-text formatting`);
+    t.equal(state.annotations[0].label, 'Formatted label', `${kind} keeps the plain text label`);
+  }
+
+  t.end();
+});
+
 test('#visStateReducer -> UPDATE_ANNOTATION with invalid id', t => {
   let state = reducer(initialState, VisStateActions.addAnnotation({anchorPoint: [0, 0]}));
 

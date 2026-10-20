@@ -121,12 +121,37 @@ describe('AnnotationManager selectors', () => {
       </IntlWrapper>
     );
     const selector = container.querySelector('.item-selector');
-    const colorButton = screen.getByRole('button');
+    const colorButton = screen.getByRole('button', {name: ''});
 
     expect(selector).toHaveStyle({width: '100px'});
     expect(colorButton.parentElement).toHaveStyle({width: '100px'});
     expect(colorButton).toHaveStyle({width: '100%', boxSizing: 'border-box'});
   });
+
+  test.each(['Point', '2px', 'Right', 'Above'])(
+    'keeps %s unchanged when Enter is pressed without choosing an option', current => {
+      const state = makeState(true, true);
+      Object.assign(state.visState.annotations[0], {
+        kind: AnnotationKind.POINT,
+        armLength: 50,
+        angle: -45
+      });
+      const store = mockStore(state);
+      renderWithTheme(
+        <IntlWrapper>
+          <Provider store={store}>
+            <AnnotationManager />
+          </Provider>
+        </IntlWrapper>
+      );
+
+      fireEvent.click(screen.getByText(current));
+      fireEvent.keyDown(document.activeElement!, {key: 'Enter', keyCode: 13});
+
+      expect(store.getActions()).toEqual([]);
+      expect(screen.getByText(current)).toBeInTheDocument();
+    }
+  );
 
   test.each([
     {current: 'Point', next: 'Circle', changes: {kind: AnnotationKind.CIRCLE}},

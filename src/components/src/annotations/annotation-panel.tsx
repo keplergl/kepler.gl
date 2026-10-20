@@ -564,9 +564,10 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           getOptionValue="id"
                           multiSelect={false}
                           searchable={false}
-                          onChange={kind =>
-                            handleChangeKind(annotation.id, kind as AnnotationKind)
-                          }
+                          onChange={kind => {
+                            if (kind == null) return;
+                            handleChangeKind(annotation.id, kind as AnnotationKind);
+                          }}
                         />
                       </StyledConfigRow>
                       <StyledConfigRow>
@@ -583,7 +584,10 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           getOptionValue={width => width}
                           multiSelect={false}
                           searchable={false}
-                          onChange={width => handleChangeLineWidth(annotation.id, Number(width))}
+                          onChange={width => {
+                            if (width == null) return;
+                            handleChangeLineWidth(annotation.id, Number(width));
+                          }}
                         />
                       </StyledConfigRow>
                       <StyledConfigRow>
@@ -663,11 +667,12 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                               getOptionValue="id"
                               multiSelect={false}
                               searchable={false}
-                              onChange={side =>
+                              onChange={side => {
+                                if (side == null) return;
                                 handleChangeTextPlacement(annotation, {
                                   textSide: side as AnnotationTextSide
-                                })
-                              }
+                                });
+                              }}
                             />
                           </StyledConfigRow>
                           <StyledConfigRow>
@@ -686,11 +691,12 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                               getOptionValue="id"
                               multiSelect={false}
                               searchable={false}
-                              onChange={position =>
+                              onChange={position => {
+                                if (position == null) return;
                                 handleChangeTextPlacement(annotation, {
                                   textVerticalPosition: position as AnnotationTextVerticalPosition
-                                })
-                              }
+                                });
+                              }}
                             />
                           </StyledConfigRow>
                         </>

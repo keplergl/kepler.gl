@@ -5,7 +5,7 @@ import React from 'react';
 import {fireEvent} from '@testing-library/react';
 
 import {AnnotationKind} from '@kepler.gl/constants';
-import {RulerAnnotation} from '@kepler.gl/types';
+import {Annotation, RulerAnnotation} from '@kepler.gl/types';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import AnnotationOverlay from './annotation-overlay';
@@ -45,7 +45,83 @@ function dispatchPointer(target: Node, type: string, x: number, y: number) {
   fireEvent(target, event);
 }
 
+const makeLegacyAnnotation = (kind: AnnotationKind): Annotation =>
+  ({...ruler, id: 'legacy-1', kind, armLength: 20, angle: 0, radiusInMeters: 1000} as Annotation);
+
 describe('AnnotationOverlay ruler interactions', () => {
+  test.each([
+    AnnotationKind.TEXT,
+    AnnotationKind.POINT,
+    AnnotationKind.ARROW,
+    AnnotationKind.CIRCLE
+  ])('preserves anchor and label dragging for %s annotations', kind => {
+    const updateAnnotation = jest.fn();
+    const {container} = renderWithTheme(
+      <AnnotationOverlay
+        annotations={[makeLegacyAnnotation(kind)]}
+        selectedAnnotationId="legacy-1"
+        isEditingAnnotationText={false}
+        isAnnotationMode={true}
+        mapIndex={0}
+        viewport={viewport}
+        updateAnnotation={updateAnnotation}
+        setSelectedAnnotation={jest.fn()}
+      />
+    );
+    const anchor = container.querySelector('[data-annotation-part="shape"] [role="button"]')!;
+    const text = container.querySelector('[data-annotation-part="text"]')!;
+
+    for (const handle of [anchor, text]) {
+      updateAnnotation.mockClear();
+      dispatchPointer(handle, 'pointerdown', 500, 300);
+      dispatchPointer(document, 'pointermove', 504, 300);
+      dispatchPointer(document, 'pointermove', 520, 290);
+      dispatchPointer(document, 'pointerup', 520, 290);
+
+      expect(updateAnnotation).toHaveBeenCalled();
+      const [id, changes] = updateAnnotation.mock.calls[updateAnnotation.mock.calls.length - 1];
+      expect(id).toBe('legacy-1');
+      if (handle === anchor || kind === AnnotationKind.TEXT) {
+        expect(changes).toEqual({anchorPoint: [2, 1]});
+      } else {
+        expect(changes).not.toHaveProperty('anchorPoint');
+        expect(changes.angle).toBeLessThan(0);
+        expect(changes.armLength).toBeGreaterThan(20);
+        expect(changes.textSide).toBe('right');
+        expect(changes.textVerticalPosition).toBe('above');
+      }
+    }
+  });
+
+  test('renders legacy annotations and rulers without editing controls in view mode', () => {
+    const updateAnnotation = jest.fn();
+    const setSelectedAnnotation = jest.fn();
+    const {container} = renderWithTheme(
+      <AnnotationOverlay
+        annotations={[makeLegacyAnnotation(AnnotationKind.POINT), ruler]}
+        selectedAnnotationId={ruler.id}
+        isEditingAnnotationText={true}
+        isAnnotationMode={false}
+        mapIndex={0}
+        viewport={viewport}
+        updateAnnotation={updateAnnotation}
+        setSelectedAnnotation={setSelectedAnnotation}
+      />
+    );
+
+    expect(container.querySelectorAll('[data-annotation-part="shape"]')).toHaveLength(2);
+    expect(container.querySelectorAll('[data-annotation-part="text"]')).toHaveLength(2);
+    expect(container.querySelector('[data-annotation-part="distance"]')).toHaveTextContent(
+      'Length: 1.11 km'
+    );
+    expect(container.querySelector('[role="button"], [contenteditable="true"]')).toBeNull();
+    for (const text of container.querySelectorAll('[data-annotation-part="text"]')) {
+      fireEvent.click(text);
+    }
+    expect(updateAnnotation).not.toHaveBeenCalled();
+    expect(setSelectedAnnotation).not.toHaveBeenCalled();
+  });
+
   test('renders endpoint handles above midpoint text so short rulers remain draggable', () => {
     const {container} = renderWithTheme(
       <AnnotationOverlay

@@ -3072,6 +3072,7 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
     autoSizeY: config?.autoSizeY ?? true,
     anchorPoint: config?.anchorPoint ?? ([0, 0] as [number, number]),
     label: config?.label ?? 'New Annotation',
+    ...(config?.editorState ? {editorState: config.editorState} : {}),
     lineColor: config?.lineColor ?? INITIAL_ANNOTATION_LINE_COLOR,
     lineWidth: config?.lineWidth ?? INITIAL_ANNOTATION_LINE_WIDTH,
     textWidth: config?.textWidth ?? INITIAL_ANNOTATION_TEXT_WIDTH,
