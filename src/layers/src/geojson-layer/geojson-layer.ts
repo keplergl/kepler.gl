@@ -7,7 +7,6 @@ import {booleanWithin} from '@turf/boolean-within';
 import {Feature, Polygon} from 'geojson';
 import uniq from 'es-toolkit/compat/uniq';
 import {DATA_TYPES} from 'type-analyzer';
-import {extent} from 'd3-array';
 import Layer, {
   colorMaker,
   defaultGetFieldValue,
@@ -30,7 +29,8 @@ import {
   COLUMN_MODE_GEOJSON,
   applyFiltersToTableColumns,
   fieldIsGeoArrow,
-  featureToHoverOutline
+  featureToHoverOutline,
+  applyDefaultGeojsonColorField
 } from './geojson-utils';
 import {
   getGeojsonLayerMetaFromArrow,
@@ -59,7 +59,7 @@ import {
   LayerColumn
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
-import {DataContainerInterface, ArrowDataContainer, findDefaultColorField} from '@kepler.gl/utils';
+import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import {FilterArrowExtension, OffsetSolidPolygonLayer} from '@kepler.gl/deckgl-layers';
 import GeojsonInfoModalFactory from './geojson-info-modal';
 
@@ -290,9 +290,6 @@ export function getTextLabelPosition(
 
 // don't use strokes by default for datasets with large number of polygons
 const DEFAULT_POLYGON_STROKE_LIMIT = 100000;
-
-// Bound the extra column scans used to reject constant default color fields.
-const DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT = 1_000_000;
 
 export const COLUMN_MODE_TABLE = 'table';
 const SUPPORTED_COLUMN_MODES = [
@@ -792,47 +789,9 @@ export default class GeoJsonLayer extends Layer {
     }
 
     this.updateLayerMeta(dataset);
+    applyDefaultGeojsonColorField(this, dataset);
 
     const {featureTypes} = this.meta;
-    const colorChannel =
-      featureTypes?.polygon || featureTypes?.point
-        ? 'color'
-        : featureTypes?.line
-        ? 'strokeColor'
-        : null;
-    const embeddedColorField =
-      colorChannel === 'color' ? 'fillColor' : colorChannel === 'strokeColor' ? 'lineColor' : null;
-    const hasEmbeddedColor = Boolean(
-      embeddedColorField &&
-        this.dataToFeature.some(
-          feature => feature && 'properties' in feature && feature.properties?.[embeddedColorField]
-        )
-    );
-
-    if (colorChannel && !hasEmbeddedColor) {
-      let fields = dataset.fields;
-      let defaultColorField = findDefaultColorField(dataset);
-      const maxFieldChecks = Math.floor(
-        DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT / dataContainer.numRows()
-      );
-      let fieldsChecked = 0;
-      while (defaultColorField && fieldsChecked < maxFieldChecks) {
-        fieldsChecked++;
-        const {valueAccessor} = defaultColorField;
-        const [min, max] = extent(dataset.filteredIndexForDomain, index => valueAccessor({index}));
-        if (min !== max) {
-          this.updateLayerConfig({
-            [this.visualChannels[colorChannel].field]: defaultColorField
-          });
-          this.updateLayerVisualChannel(dataset, colorChannel);
-          break;
-        }
-
-        fields = fields.filter(field => field !== defaultColorField);
-        defaultColorField = findDefaultColorField({fields, fieldPairs: dataset.fieldPairs});
-      }
-    }
-
     // default settings is stroke: true, filled: false
     if (featureTypes && featureTypes.polygon) {
       // set both fill and stroke to true

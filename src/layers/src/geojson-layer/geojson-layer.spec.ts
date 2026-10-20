@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import GeoJsonLayer, {getTextLabelPosition} from './geojson-layer';
+import GeoJsonLayer, {GeoJsonLayerConfig, getTextLabelPosition} from './geojson-layer';
 import {ALL_FIELD_TYPES, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {valueToPosition} from '@kepler.gl/utils';
 import {processGeojson} from '@kepler.gl/processors';
@@ -193,6 +193,50 @@ describe('GeoJsonLayer default color field', () => {
       expect(layer.config.strokeColorField).toBeNull();
     }
   );
+
+  describe.each([
+    ['point', point],
+    ['polygon', polygon],
+    ['line', line]
+  ] as const)('%s initialization after automatic color failure', (name, geometry) => {
+    test.each(['field values', 'color domain'])(
+      'continues with uniform color when reading %s throws',
+      async failure => {
+        const {dataset, layer} = await initializeGeoJsonLayer([
+          {geometry: geometry(0), properties: {score: 0.25}},
+          {geometry: geometry(1), properties: {score: 0.75}}
+        ]);
+        layer.updateLayerConfig<GeoJsonLayerConfig>({
+          colorField: null,
+          strokeColorField: null,
+          colorDomain: [0, 1],
+          strokeColorDomain: [0, 1]
+        });
+        layer.updateLayerVisConfig({filled: false, stroked: false});
+
+        if (failure === 'field values') {
+          const field = dataset.fields.find(candidate => candidate.name === 'score')!;
+          jest.spyOn(field, 'valueAccessor').mockImplementation(() => {
+            throw new Error('Cannot read field values');
+          });
+        } else {
+          jest.spyOn(dataset, 'getColumnLayerDomain').mockImplementation(() => {
+            throw new Error('Cannot calculate color domain');
+          });
+        }
+
+        expect(() => layer.setInitialLayerConfig(dataset)).not.toThrow();
+        expect(layer.config.colorField).toBeNull();
+        expect(layer.config.strokeColorField).toBeNull();
+        expect(layer.config.colorDomain).toEqual([0, 1]);
+        expect(layer.config.strokeColorDomain).toEqual([0, 1]);
+        expect(layer.config.visConfig).toMatchObject({
+          filled: name !== 'line',
+          stroked: name !== 'point'
+        });
+      }
+    );
+  });
 
   test('uses stroke color for line-only data', async () => {
     const {layer} = await initializeGeoJsonLayer([
