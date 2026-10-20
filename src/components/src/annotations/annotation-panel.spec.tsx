@@ -4,11 +4,11 @@
 import React from 'react';
 import {Provider} from 'react-redux';
 import configureStore from 'redux-mock-store';
-import {fireEvent} from '@testing-library/react';
+import {fireEvent, screen} from '@testing-library/react';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
-import {renderWithTheme} from 'test/helpers/component-jest-utils';
+import {IntlWrapper, renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import AnnotationManagerFactory from './annotation-panel';
 
@@ -49,9 +49,11 @@ describe('AnnotationManager ruler settings', () => {
   ])('renders independent custom text and distance values (%s, %s)', (customText, distance) => {
     const store = mockStore(makeState(customText, distance));
     const {container} = renderWithTheme(
-      <Provider store={store}>
-        <AnnotationManager />
-      </Provider>
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
     );
 
     expect(container.querySelector('#annotation-ruler-1-show-custom-text')).toHaveProperty(
@@ -67,9 +69,11 @@ describe('AnnotationManager ruler settings', () => {
   test('dispatches each ruler checkbox independently', () => {
     const store = mockStore(makeState(true, true));
     const {container} = renderWithTheme(
-      <Provider store={store}>
-        <AnnotationManager />
-      </Provider>
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
     );
 
     fireEvent.click(container.querySelector('#annotation-ruler-1-show-custom-text')!);
@@ -79,5 +83,73 @@ describe('AnnotationManager ruler settings', () => {
       VisStateActions.updateAnnotation('ruler-1', {showCustomText: false}),
       VisStateActions.updateAnnotation('ruler-1', {showDistance: false})
     ]);
+  });
+});
+
+describe('AnnotationManager selectors', () => {
+  const originalIntersectionObserver = window.IntersectionObserver;
+
+  beforeAll(() => {
+    window.IntersectionObserver = class {
+      observe() {
+        return undefined;
+      }
+      unobserve() {
+        return undefined;
+      }
+      disconnect() {
+        return undefined;
+      }
+    } as unknown as typeof IntersectionObserver;
+  });
+
+  afterAll(() => {
+    window.IntersectionObserver = originalIntersectionObserver;
+  });
+
+  test.each([
+    {current: 'Point', next: 'Circle', changes: {kind: AnnotationKind.CIRCLE}},
+    {current: '2px', next: '4px', changes: {lineWidth: 4}},
+    {
+      current: 'Right',
+      next: 'Left',
+      changes: {textSide: 'left', textVerticalPosition: 'above', angle: -135}
+    },
+    {
+      current: 'Above',
+      next: 'Below',
+      changes: {textSide: 'right', textVerticalPosition: 'below', angle: 45}
+    }
+  ] as const)('changes $current to $next through a kepler.gl selector', ({current, next, changes}) => {
+    const state = makeState(true, true);
+    const store = mockStore({
+      ...state,
+      visState: {
+        ...state.visState,
+        annotations: [
+          {
+            ...state.visState.annotations[0],
+            kind: AnnotationKind.POINT,
+            armLength: 50,
+            angle: -45
+          }
+        ]
+      }
+    });
+    const {container} = renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
+    );
+
+    expect(container.querySelector('select')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText(current));
+    expect(screen.queryByPlaceholderText('Search')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText(next));
+
+    expect(store.getActions()).toEqual([VisStateActions.updateAnnotation('ruler-1', changes)]);
+    expect(screen.queryByText(next)).not.toBeInTheDocument();
   });
 });

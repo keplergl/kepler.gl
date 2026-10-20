@@ -32,6 +32,7 @@ import {withState} from '../injector';
 import {Add, ArrowDown, ArrowDownSmall, Copy, EyeSeen, EyeUnseen, Trash} from '../common/icons';
 import {StyledPanelHeader, Tooltip, Button} from '../common/styled-components';
 import Checkbox from '../common/checkbox';
+import ItemSelector from '../common/item-selector/item-selector';
 import Portaled from '../common/portaled';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
 import {hexToRgb, rgbToHex} from '@kepler.gl/utils';
@@ -238,14 +239,7 @@ const StyledConfigLabel = styled.div`
   text-transform: capitalize;
 `;
 
-const StyledSelect = styled.select`
-  background: ${props => props.theme.inputBgd};
-  color: ${props => props.theme.inputColor};
-  border: 1px solid ${props => props.theme.inputBorderColor || 'transparent'};
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
-  cursor: pointer;
+const StyledSelect = styled(ItemSelector)`
   width: 100px;
 `;
 
@@ -561,17 +555,16 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           })}
                         </StyledConfigLabel>
                         <StyledSelect
-                          value={annotation.kind}
-                          onChange={e =>
-                            handleChangeKind(annotation.id, e.target.value as AnnotationKind)
+                          selectedItems={ANNOTATION_KINDS.find(k => k.id === annotation.kind)}
+                          options={ANNOTATION_KINDS}
+                          displayOption="label"
+                          getOptionValue="id"
+                          multiSelect={false}
+                          searchable={false}
+                          onChange={kind =>
+                            handleChangeKind(annotation.id, kind as AnnotationKind)
                           }
-                        >
-                          {ANNOTATION_KINDS.map(k => (
-                            <option key={k.id} value={k.id}>
-                              {k.label}
-                            </option>
-                          ))}
-                        </StyledSelect>
+                        />
                       </StyledConfigRow>
                       <StyledConfigRow>
                         <StyledConfigLabel>
@@ -581,17 +574,14 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           })}
                         </StyledConfigLabel>
                         <StyledSelect
-                          value={annotation.lineWidth}
-                          onChange={e =>
-                            handleChangeLineWidth(annotation.id, Number(e.target.value))
-                          }
-                        >
-                          {ANNOTATION_LINE_WIDTH_OPTIONS.map(w => (
-                            <option key={w} value={w}>
-                              {w}px
-                            </option>
-                          ))}
-                        </StyledSelect>
+                          selectedItems={annotation.lineWidth}
+                          options={ANNOTATION_LINE_WIDTH_OPTIONS}
+                          displayOption={width => `${width}px`}
+                          getOptionValue={width => width}
+                          multiSelect={false}
+                          searchable={false}
+                          onChange={width => handleChangeLineWidth(annotation.id, Number(width))}
+                        />
                       </StyledConfigRow>
                       <StyledConfigRow>
                         <StyledConfigLabel>
@@ -664,19 +654,20 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                               })}
                             </StyledConfigLabel>
                             <StyledSelect
-                              value={textPlacement.side}
-                              onChange={e =>
+                              selectedItems={ANNOTATION_TEXT_SIDES.find(
+                                s => s.id === textPlacement.side
+                              )}
+                              options={ANNOTATION_TEXT_SIDES}
+                              displayOption="label"
+                              getOptionValue="id"
+                              multiSelect={false}
+                              searchable={false}
+                              onChange={side =>
                                 handleChangeTextPlacement(annotation, {
-                                  textSide: e.target.value as AnnotationTextSide
+                                  textSide: side as AnnotationTextSide
                                 })
                               }
-                            >
-                              {ANNOTATION_TEXT_SIDES.map(s => (
-                                <option key={s.id} value={s.id}>
-                                  {s.label}
-                                </option>
-                              ))}
-                            </StyledSelect>
+                            />
                           </StyledConfigRow>
                           <StyledConfigRow>
                             <StyledConfigLabel>
@@ -686,20 +677,20 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                               })}
                             </StyledConfigLabel>
                             <StyledSelect
-                              value={textPlacement.vertical}
-                              onChange={e =>
+                              selectedItems={ANNOTATION_TEXT_VERTICAL_POSITIONS.find(
+                                p => p.id === textPlacement.vertical
+                              )}
+                              options={ANNOTATION_TEXT_VERTICAL_POSITIONS}
+                              displayOption="label"
+                              getOptionValue="id"
+                              multiSelect={false}
+                              searchable={false}
+                              onChange={position =>
                                 handleChangeTextPlacement(annotation, {
-                                  textVerticalPosition: e.target
-                                    .value as AnnotationTextVerticalPosition
+                                  textVerticalPosition: position as AnnotationTextVerticalPosition
                                 })
                               }
-                            >
-                              {ANNOTATION_TEXT_VERTICAL_POSITIONS.map(p => (
-                                <option key={p.id} value={p.id}>
-                                  {p.label}
-                                </option>
-                              ))}
-                            </StyledSelect>
+                            />
                           </StyledConfigRow>
                         </>
                       )}
