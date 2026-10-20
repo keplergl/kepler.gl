@@ -31,7 +31,7 @@ import {MapState} from '@kepler.gl/types';
 import {withState} from '../injector';
 import {Add, ArrowDown, ArrowDownSmall, Copy, EyeSeen, EyeUnseen, Trash} from '../common/icons';
 import {StyledPanelHeader, Tooltip, Button} from '../common/styled-components';
-import Checkbox from '../common/checkbox';
+import Switch from '../common/switch';
 import ItemSelector from '../common/item-selector/item-selector';
 import Portaled from '../common/portaled';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
@@ -607,9 +607,8 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                                 defaultMessage: 'Custom Text'
                               })}
                             </StyledConfigLabel>
-                            <Checkbox
+                            <Switch
                               id={`annotation-${annotation.id}-show-custom-text`}
-                              type="checkbox"
                               checked={annotation.showCustomText}
                               onChange={event =>
                                 handleToggleRulerText(
@@ -630,9 +629,8 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                                 defaultMessage: 'Distance'
                               })}
                             </StyledConfigLabel>
-                            <Checkbox
+                            <Switch
                               id={`annotation-${annotation.id}-show-distance`}
-                              type="checkbox"
                               checked={annotation.showDistance}
                               onChange={event =>
                                 handleToggleRulerText(

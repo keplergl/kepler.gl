@@ -8,6 +8,7 @@ import {fireEvent, screen} from '@testing-library/react';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
+import {theme} from '@kepler.gl/styles';
 import {IntlWrapper, renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import AnnotationManagerFactory from './annotation-panel';
@@ -46,9 +47,9 @@ describe('AnnotationManager ruler settings', () => {
     [true, false],
     [false, true],
     [false, false]
-  ])('renders independent custom text and distance values (%s, %s)', (customText, distance) => {
+  ])('renders independent custom text and distance switches (%s, %s)', (customText, distance) => {
     const store = mockStore(makeState(customText, distance));
-    const {container} = renderWithTheme(
+    renderWithTheme(
       <IntlWrapper>
         <Provider store={store}>
           <AnnotationManager />
@@ -56,19 +57,22 @@ describe('AnnotationManager ruler settings', () => {
       </IntlWrapper>
     );
 
-    expect(container.querySelector('#annotation-ruler-1-show-custom-text')).toHaveProperty(
-      'checked',
-      customText
-    );
-    expect(container.querySelector('#annotation-ruler-1-show-distance')).toHaveProperty(
-      'checked',
-      distance
-    );
+    const customTextSwitch = screen.getByRole('checkbox', {name: 'Custom Text'});
+    const distanceSwitch = screen.getByRole('checkbox', {name: 'Distance'});
+
+    expect(customTextSwitch).toHaveProperty('checked', customText);
+    expect(distanceSwitch).toHaveProperty('checked', distance);
+    for (const input of [customTextSwitch, distanceSwitch]) {
+      expect(input.closest('label')).toHaveStyle({
+        lineHeight: `${theme.switchHeight}px`,
+        paddingLeft: `${theme.switchWidth}px`
+      });
+    }
   });
 
-  test('dispatches each ruler checkbox independently', () => {
-    const store = mockStore(makeState(true, true));
-    const {container} = renderWithTheme(
+  test.each([true, false])('toggles each ruler switch independently from %s', checked => {
+    const store = mockStore(makeState(checked, checked));
+    renderWithTheme(
       <IntlWrapper>
         <Provider store={store}>
           <AnnotationManager />
@@ -76,12 +80,12 @@ describe('AnnotationManager ruler settings', () => {
       </IntlWrapper>
     );
 
-    fireEvent.click(container.querySelector('#annotation-ruler-1-show-custom-text')!);
-    fireEvent.click(container.querySelector('#annotation-ruler-1-show-distance')!);
+    fireEvent.click(screen.getByText('Custom Text'));
+    fireEvent.click(screen.getByText('Distance'));
 
     expect(store.getActions()).toEqual([
-      VisStateActions.updateAnnotation('ruler-1', {showCustomText: false}),
-      VisStateActions.updateAnnotation('ruler-1', {showDistance: false})
+      VisStateActions.updateAnnotation('ruler-1', {showCustomText: !checked}),
+      VisStateActions.updateAnnotation('ruler-1', {showDistance: !checked})
     ]);
   });
 });
