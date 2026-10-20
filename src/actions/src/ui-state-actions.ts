@@ -481,12 +481,14 @@ export type SetExportMapBrandingUpdaterAction = {
   payload: {
     appName?: string;
     appWebsite?: string;
+    appIcon?: string;
+    appNameColor?: string;
   };
 };
 /**
  * Set application branding overrides for exported maps
  * @memberOf uiStateActions
- * @param payload - application name and/or website overrides
+ * @param payload - application name, website, icon, and/or name color overrides
  */
 export const setExportMapBranding: (
   payload: SetExportMapBrandingUpdaterAction['payload']

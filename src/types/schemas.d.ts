@@ -301,6 +301,8 @@ export type SavedMap = {
     source?: string;
     appName?: string;
     appWebsite?: string;
+    appIcon?: string;
+    appNameColor?: string;
   };
 };
 

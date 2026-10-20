@@ -10,11 +10,20 @@ import {getTileData} from './3d-building-utils';
 import {ThreeDBuildingLayerProps, TileDataItem, TileLoadProps} from './types';
 
 export default class ThreeDBuildingLayer extends CompositeLayer<ThreeDBuildingLayerProps> {
+  static layerName = 'ThreeDBuildingLayer';
+
   // this layer add its subLayers to the redux store, and push sample data
 
   renderSubLayers(props: SolidPolygonLayerProps<any>) {
+    const data = props.data as TileDataItem[] | null;
+
+    if (!data?.some(feature => feature.coordinates.some(ring => ring.length))) {
+      return null;
+    }
+
     return new SolidPolygonLayer<TileDataItem>({
       ...props,
+      data,
       parameters: BLEND_PARAMS_ALPHA,
       extruded: true,
       opacity: 1,

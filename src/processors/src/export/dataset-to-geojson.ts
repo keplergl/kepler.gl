@@ -99,8 +99,10 @@ function pointGeometry(
     return null;
   }
   const altitudeIndex = pair.pair.altitude?.fieldIdx;
+  const altitudeValue =
+    altitudeIndex === undefined ? undefined : data.valueAt(rowIndex, altitudeIndex);
   const altitude =
-    altitudeIndex === undefined ? undefined : Number(data.valueAt(rowIndex, altitudeIndex));
+    altitudeValue == null || altitudeValue === '' ? undefined : Number(altitudeValue);
   const coordinates: Position =
     altitude !== undefined && Number.isFinite(altitude) ? [lng, lat, altitude] : [lng, lat];
   return {type: 'Point', coordinates};
