@@ -3979,6 +3979,22 @@ export function refreshDatasetSuccessUpdater(
 }
 
 function reapplyFiltersAndLayerData(state: VisState, dataId: string): VisState {
+  // Polygon filters read cached geometry. Refresh it before filtering so a
+  // moved feature is tested at its new position, including same-length updates.
+  const needsGeometry = state.layers.some(
+    layer =>
+      layer.config.dataId === dataId &&
+      polygonFilterDependsOnLayerMeta(layer) &&
+      state.filters.some(
+        filter =>
+          filter.type === FILTER_TYPES.polygon &&
+          filter.enabled !== false &&
+          filter.layerId?.includes(layer.id)
+      )
+  );
+  if (needsGeometry) {
+    state = updateAllLayerDomainData(state, [dataId], undefined);
+  }
   const filteredDatasets = applyFiltersToDatasets(
     [dataId],
     state.datasets,

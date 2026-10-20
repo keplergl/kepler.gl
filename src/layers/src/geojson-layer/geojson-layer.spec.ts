@@ -4,8 +4,11 @@
 import GeoJsonLayer, {GeoJsonLayerConfig, getTextLabelPosition} from './geojson-layer';
 import {ALL_FIELD_TYPES, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {valueToPosition} from '@kepler.gl/utils';
+import {KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
+import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
+import * as arrow from 'apache-arrow';
+import {Response} from 'node-fetch';
 import {processGeojson} from '@kepler.gl/processors';
-import {KeplerTable} from '@kepler.gl/table';
 
 const point = (x: number) => ({type: 'Point', coordinates: [x, x]});
 const line = (x: number) => ({
@@ -623,5 +626,249 @@ describe('GeoJsonLayer hover overlay cache', () => {
     layer._getHoverOverlayData(hovered(0));
 
     expect(layer._getHoverOverlayData(hovered(0, {picked: false}))).toBeNull();
+  });
+});
+
+describe('GeoJsonLayer source revisions', () => {
+  const originalResponse = globalThis.Response;
+  beforeAll(() => {
+    globalThis.Response = Response as any;
+  });
+  afterAll(() => {
+    globalThis.Response = originalResponse;
+  });
+  const point = (coordinates: number[]) => ({type: 'Point', coordinates});
+  const feature = (coordinates: number[]) => ({
+    type: 'Feature',
+    geometry: point(coordinates),
+    properties: {}
+  });
+  const wkbPoint = ([x, y]: number[]) => {
+    const bytes = new Uint8Array(21);
+    const view = new DataView(bytes.buffer);
+    view.setUint8(0, 1);
+    view.setUint32(1, 1, true);
+    view.setFloat64(5, x, true);
+    view.setFloat64(13, y, true);
+    return bytes;
+  };
+  const layerFor = (dataset: KeplerTable) => {
+    const layer = new GeoJsonLayer({
+      id: 'refresh_geometry',
+      dataId: dataset.id,
+      columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+    });
+    layer.setInitialLayerConfig(dataset);
+    return layer;
+  };
+  const rowTable = (value: unknown) =>
+    new KeplerTable({info: {id: 'refresh'}, color: [1, 2, 3]}).updateSchema({
+      fields: [{name: 'geometry', type: 'geojson'}],
+      rows: [[value]]
+    });
+
+  test.each([
+    ['Feature', feature],
+    ['Geometry', point],
+    ['GeoJSON string', coordinates => JSON.stringify(feature(coordinates))],
+    ['WKT', ([x, y]) => `POINT (${x} ${y})`],
+    ['WKB hex', coordinates => Buffer.from(wkbPoint(coordinates)).toString('hex')]
+  ] as const)('rebuilds same-length %s rows in place', async (_name, encode) => {
+    const dataset = rowTable(encode([1, 2]));
+    const container = dataset.dataContainer;
+    const layer = layerFor(dataset);
+    const initialData = layer.formatLayerData({refresh: dataset}, {}) as any;
+    const hovered = object => ({picked: true, index: 0, object, layer: {props: {id: layer.id}}});
+    const retainedHover = hovered(initialData.data[0]);
+    const initialOverlay = layer._getHoverOverlayData(retainedHover);
+
+    await dataset.update({fields: dataset.fields, rows: [[encode([30, 40])]]});
+    const data = layer.formatLayerData({refresh: dataset}, initialData) as any;
+
+    expect(dataset.dataContainer).toBe(container);
+    expect(data.data[0].geometry.coordinates).toEqual([30, 40]);
+    expect(layer.centroids).toEqual([[30, 40]]);
+    expect(layer.meta).toMatchObject({bounds: [30, 40, 30, 40]});
+    expect(data.getPosition({index: 0})).toEqual([30, 40]);
+    const overlay = layer._getHoverOverlayData(retainedHover);
+    expect(overlay).not.toBe(initialOverlay);
+    expect(overlay?.[0].geometry).toEqual(point([30, 40]));
+    expect(layer._getHoverOverlayData(hovered(data.data[0]))).toBe(overlay);
+  });
+
+  test.each([{rows: []}, {rows: [[null]]}, {rows: [['invalid geometry']]}])(
+    'clears old geometry and centroids for empty or invalid rows (%j)',
+    async ({rows}) => {
+      const dataset = rowTable(feature([1, 2]));
+      const layer = layerFor(dataset);
+      const initialData = layer.formatLayerData({refresh: dataset}, {});
+      await dataset.update({fields: dataset.fields, rows});
+      const data = layer.formatLayerData({refresh: dataset}, initialData) as any;
+      expect(data.data).toEqual([]);
+      expect(layer.centroids).toEqual([]);
+      expect(layer.meta).not.toMatchObject({bounds: [1, 2, 1, 2]});
+    }
+  );
+
+  test('reuses geometry for styling, filters and metadata-only table copies', () => {
+    const dataset = rowTable(feature([1, 2]));
+    const layer = layerFor(dataset);
+    const geometry = layer.dataToFeature;
+    const centroids = layer.centroids;
+    layer.updateLayerVisConfig({opacity: 0.3});
+    const filtered = copyTableAndUpdate(dataset, {filteredIndex: []});
+    layer.updateLayerMeta(filtered);
+    expect(layer.calculateDataAttribute(filtered)).toEqual([]);
+    layer.updateLayerMeta(copyTableAndUpdate(dataset, {metadata: {refreshProgress: 50}}));
+    expect(layer.dataToFeature).toBe(geometry);
+    expect(layer.centroids).toBe(centroids);
+  });
+
+  test('rebuilds when a new container has the same revision', () => {
+    const original = rowTable(feature([1, 2]));
+    const layer = layerFor(original);
+    const replacement = rowTable(feature([30, 40]));
+    expect(replacement.dataRevision).toBe(original.dataRevision);
+    layer.updateLayerMeta(replacement);
+    expect(layer.centroids).toEqual([[30, 40]]);
+    expect(layer.meta).toMatchObject({bounds: [30, 40, 30, 40]});
+  });
+
+  test('keeps filtered table-column line segments out of the hover overlay', () => {
+    const dataset = new KeplerTable({info: {id: 'refresh'}, color: [1, 2, 3]}).updateSchema({
+      fields: [
+        {name: 'id', type: 'integer'},
+        {name: 'lat', type: 'real'},
+        {name: 'lng', type: 'real'}
+      ],
+      rows: [
+        [1, 1, 2],
+        [1, 3, 4],
+        [1, 5, 6]
+      ]
+    });
+    const layer = new GeoJsonLayer({
+      id: 'table-hover',
+      dataId: dataset.id,
+      columnMode: 'table',
+      columns: {
+        geojson: {value: null, fieldIdx: -1},
+        id: {value: 'id', fieldIdx: 0},
+        lat: {value: 'lat', fieldIdx: 1},
+        lng: {value: 'lng', fieldIdx: 2},
+        sortBy: {value: null, fieldIdx: -1, optional: true}
+      }
+    });
+    dataset.filteredIndex = [0, 2];
+    const data = layer.formatLayerData({refresh: dataset}, {}) as any;
+    const rendered = data.data[0];
+    expect(rendered.geometry.coordinates.map(coordinate => coordinate.slice(0, 2))).toEqual([
+      [2, 1],
+      [6, 5]
+    ]);
+    const overlay = layer._getHoverOverlayData({
+      picked: true,
+      index: 0,
+      object: rendered,
+      layer: {props: {id: layer.id}}
+    });
+    expect(overlay?.[0].geometry).toEqual(rendered.geometry);
+  });
+
+  // Exact-sized buffers match decoded Arrow data. Builder padding otherwise
+  // introduces extra zero coordinates in the loaders.gl native point parser.
+  const pointVector = (coordinates: number[][]) =>
+    arrow.makeVector(
+      arrow.makeData({
+        type: new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false)),
+        length: coordinates.length,
+        child: arrow.makeData({
+          type: new arrow.Float64(),
+          data: Float64Array.from(coordinates.flat())
+        })
+      })
+    );
+  const arrowTable = (column: arrow.Vector, encoding: string) =>
+    new KeplerTable({info: {id: 'refresh'}, color: [1, 2, 3]}).updateSchema({
+      fields: [
+        {
+          name: 'geometry',
+          type: 'geoarrow',
+          metadata: new Map([[GEOARROW_METADATA_KEY, encoding]])
+        }
+      ],
+      cols: [column],
+      rows: []
+    });
+
+  test.each([
+    [GEOARROW_EXTENSIONS.POINT, pointVector],
+    [
+      GEOARROW_EXTENSIONS.WKB,
+      (coordinates: number[][]) =>
+        arrow.vectorFromArray(coordinates.map(wkbPoint), new arrow.Binary())
+    ]
+  ] as const)(
+    'rebuilds same-length %s columns and reuses unchanged data',
+    async (encoding, vector) => {
+      const dataset = arrowTable(vector([[1, 2]]), encoding);
+      const layer = layerFor(dataset);
+      const initialData = layer.formatLayerData({refresh: dataset}, {});
+      await dataset.update({fields: dataset.fields, cols: [vector([[30, 40]])], rows: []});
+      const data = layer.formatLayerData({refresh: dataset}, initialData) as any;
+      expect(Array.from(data.data[0].points.positions.value).slice(0, 2)).toEqual([30, 40]);
+      expect(layer.centroids).toEqual([[30, 40]]);
+      expect(layer.meta).toMatchObject({bounds: [30, 40, 30, 40]});
+      layer.updateLayerMeta(dataset);
+      expect(layer.dataToFeature).toBe(data.data);
+    }
+  );
+
+  test('retains parsed Arrow chunks only for real appends, and rebuilds after compaction', async () => {
+    const first = pointVector([[1, 2]]);
+    const second = pointVector([[3, 4]]);
+    const dataset = arrowTable(first, GEOARROW_EXTENSIONS.POINT);
+    const layer = layerFor(dataset);
+    const parsedFirst = layer.dataToFeature[0];
+    await dataset.update({fields: dataset.fields, cols: [first.concat(second)], rows: []});
+    layer.updateLayerMeta(dataset);
+    expect(layer.dataToFeature).toHaveLength(2);
+    expect(layer.dataToFeature[0]).toBe(parsedFirst);
+    expect(layer.centroids).toEqual([
+      [1, 2],
+      [3, 4]
+    ]);
+
+    // A larger replacement is not an append just because it adds one chunk.
+    const replacement = pointVector([[30, 40]])
+      .concat(pointVector([[50, 60]]))
+      .concat(pointVector([[70, 80]]));
+    await dataset.update({fields: dataset.fields, cols: [replacement], rows: []});
+    layer.updateLayerMeta(dataset);
+    expect(layer.centroids).toEqual([
+      [30, 40],
+      [50, 60],
+      [70, 80]
+    ]);
+
+    await dataset.update({
+      fields: dataset.fields,
+      cols: [
+        pointVector([
+          [30, 40],
+          [50, 60],
+          [70, 80]
+        ])
+      ],
+      rows: []
+    });
+    layer.updateLayerMeta(dataset);
+    expect(layer.dataToFeature).toHaveLength(1);
+    expect(layer.centroids).toEqual([
+      [30, 40],
+      [50, 60],
+      [70, 80]
+    ]);
+    expect(layer.meta).toMatchObject({bounds: [30, 40, 70, 80]});
   });
 });

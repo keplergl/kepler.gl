@@ -318,6 +318,9 @@ export default class GeoJsonLayer extends Layer {
   filteredIndex: Uint8ClampedArray | null = null;
   filteredIndexTrigger: number[] | null = null;
   centroids: Array<number[] | null> = [];
+  private _geometryDataRevision: number | undefined;
+  private _geometryColumnIndex: number | undefined;
+  private _geometryArrowChunks: arrow.Data[] = [];
   // Stable hover overlay data so deck.gl does not re-parse the feature every redraw.
   _hoverOverlayIndex: number | null = null;
   _hoverOverlayData: Feature[] | null = null;
@@ -695,16 +698,40 @@ export default class GeoJsonLayer extends Layer {
   }
 
   updateLayerMeta(dataset: KeplerTable) {
-    const {dataContainer} = dataset;
-
-    this.dataContainer = dataContainer;
+    const {dataContainer, dataRevision} = dataset;
+    const columnIndex = this.config.columns.geojson.fieldIdx;
 
     this.geoArrowMode = fieldIsGeoArrow(
       geoFieldAccessor(this.config.columns)(dataset.dataContainer)
     );
+    const geoColumn =
+      this.geoArrowMode && dataContainer instanceof ArrowDataContainer
+        ? geoColumnAccessor(this.config.columns)(dataContainer)
+        : null;
+    const sameSource =
+      this.dataContainer === dataContainer && this._geometryColumnIndex === columnIndex;
+    const sourceChanged = !sameSource || this._geometryDataRevision !== dataRevision;
+    // A revision also advances during progressive Arrow loads. Retain parsed
+    // chunks only when the new column actually appends to the same chunks.
+    const appendedArrowChunk =
+      sameSource &&
+      this._geometryArrowChunks.length > 0 &&
+      geoColumn?.data.length === this._geometryArrowChunks.length + 1 &&
+      this._geometryArrowChunks.every((chunk, i) => chunk === geoColumn.data[i]);
+    if (sourceChanged) {
+      if (!appendedArrowChunk) {
+        this.dataToFeature = [];
+        this.centroids = [];
+      }
+      this._hoverOverlayIndex = null;
+      this._hoverOverlayData = null;
+    }
+    this.dataContainer = dataContainer;
+    this._geometryDataRevision = dataRevision;
+    this._geometryColumnIndex = columnIndex;
+    this._geometryArrowChunks = geoColumn?.data.slice() || [];
 
     if (this.geoArrowMode && dataContainer instanceof ArrowDataContainer) {
-      const geoColumn = geoColumnAccessor(this.config.columns)(dataContainer);
       const geoField = geoFieldAccessor(this.config.columns)(dataContainer);
 
       // update the latest batch/chunk of geoarrow data when loading data incrementally
@@ -849,7 +876,12 @@ export default class GeoJsonLayer extends Layer {
       return this._hoverOverlayData;
     }
 
-    const hoveredObject = this.hasHoveredObject(objectInfo);
+    // Redux may retain a pick from before a refresh. Resolve its row against
+    // the current geometry instead of caching the old feature again.
+    const hoveredObject =
+      !this.geoArrowMode && this.config.columnMode === COLUMN_MODE_GEOJSON && this.dataContainer
+        ? this.dataToFeature[objectInfo.object?.properties?.index ?? index]
+        : this.hasHoveredObject(objectInfo);
     if (!hoveredObject) {
       this._hoverOverlayIndex = null;
       this._hoverOverlayData = null;
@@ -857,7 +889,7 @@ export default class GeoJsonLayer extends Layer {
     }
 
     this._hoverOverlayIndex = index;
-    this._hoverOverlayData = [featureToHoverOutline(hoveredObject)];
+    this._hoverOverlayData = [featureToHoverOutline(hoveredObject as Feature)];
     return this._hoverOverlayData;
   }
 
