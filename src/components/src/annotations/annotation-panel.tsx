@@ -246,8 +246,11 @@ const StyledSelect = styled(ItemSelector)`
 const StyledColorButtonWrapper = styled.div`
   width: 100px;
   .button {
+    width: 100%;
+    box-sizing: border-box;
     color: ${props => props.theme.effectPanelTextSecondary2};
     display: flex;
+    justify-content: space-between;
     gap: 5px;
     border: none;
     transition: background 0.2s;

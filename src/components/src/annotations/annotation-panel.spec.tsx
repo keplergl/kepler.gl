@@ -111,6 +111,23 @@ describe('AnnotationManager selectors', () => {
     window.IntersectionObserver = originalIntersectionObserver;
   });
 
+  test('fills the selector width with the color picker button', () => {
+    const store = mockStore(makeState(true, true));
+    const {container} = renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
+    );
+    const selector = container.querySelector('.item-selector');
+    const colorButton = screen.getByRole('button');
+
+    expect(selector).toHaveStyle({width: '100px'});
+    expect(colorButton.parentElement).toHaveStyle({width: '100px'});
+    expect(colorButton).toHaveStyle({width: '100%', boxSizing: 'border-box'});
+  });
+
   test.each([
     {current: 'Point', next: 'Circle', changes: {kind: AnnotationKind.CIRCLE}},
     {current: '2px', next: '4px', changes: {lineWidth: 4}},
