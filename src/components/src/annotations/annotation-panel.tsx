@@ -287,19 +287,19 @@ const StyledAnnotationTypeButton = styled(Button)<{$active: boolean}>`
   box-sizing: border-box;
   padding: 0;
   background-color: ${props => props.theme.inputBgd};
-  color: ${props => (props.$active ? props.theme.selectionBtnActColor : props.theme.inputColor)};
+  color: ${props => (props.$active ? props.theme.switchTrackBgdActive : props.theme.inputColor)};
   border: 1px solid
-    ${props => (props.$active ? props.theme.selectionBtnBorderActColor : 'transparent')};
+    ${props => (props.$active ? props.theme.switchTrackBgdActive : 'transparent')};
 
   &:hover,
   &:focus,
   &:active {
     background-color: ${props => props.theme.inputBgdHover};
-    color: ${props => (props.$active ? props.theme.selectionBtnActColor : props.theme.inputColor)};
+    color: ${props => (props.$active ? props.theme.switchTrackBgdActive : props.theme.inputColor)};
   }
 
   &:focus-visible {
-    outline: 2px solid ${props => props.theme.selectionBtnBorderActColor};
+    outline: 2px solid ${props => props.theme.switchTrackBgdActive};
     outline-offset: -2px;
   }
 
@@ -322,13 +322,15 @@ const StyledLineWidthSlider = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100px;
+  flex: 1;
+  min-width: 0;
+  margin-left: 16px;
   height: ${props => props.theme.inputBoxHeight};
   padding-left: 6px;
   box-sizing: border-box;
 
   &:focus-visible {
-    outline: 2px solid ${props => props.theme.selectionBtnBorderActColor};
+    outline: 2px solid ${props => props.theme.switchTrackBgdActive};
     outline-offset: 2px;
   }
 

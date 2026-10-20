@@ -127,8 +127,8 @@ describe('AnnotationManager type icons', () => {
         within(group).getByRole('button', {name: label})
       ]);
       expect(within(group).getByRole('button', {name: label})).toHaveStyle({
-        color: theme.selectionBtnActColor,
-        borderColor: theme.selectionBtnBorderActColor
+        color: theme.switchTrackBgdActive,
+        borderColor: theme.switchTrackBgdActive
       });
       for (const button of buttons) {
         expect(button).toHaveStyle({flex: '1', height: '100%', padding: '0'});
@@ -191,7 +191,7 @@ describe('AnnotationManager line width slider', () => {
     expect(slider).toHaveAttribute('aria-valuenow', String(width));
     expect(slider).toHaveAttribute('aria-valuetext', `${width}px`);
     expect(within(slider).getByText(`${width}px`)).toBeInTheDocument();
-    expect(slider).toHaveStyle({width: '100px'});
+    expect(slider).toHaveStyle({flex: '1', minWidth: '0', marginLeft: '16px'});
   });
 
   test.each([
