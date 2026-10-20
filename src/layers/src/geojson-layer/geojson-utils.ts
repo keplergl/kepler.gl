@@ -5,26 +5,30 @@ import {Buffer} from 'buffer';
 import {Feature, Position, BBox} from 'geojson';
 import normalize from '@mapbox/geojson-normalize';
 import {bbox} from '@turf/bbox';
-import {ascending} from 'd3-array';
+import {ascending, extent} from 'd3-array';
 import {center} from '@turf/center';
 import {AllGeoJSON} from '@turf/helpers';
 import {parseSync} from '@loaders.gl/core';
 import {WKTLoader} from '@loaders.gl/wkt';
 import {convertWKBToGeometry, convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
 import {BinaryFeatureCollection} from '@loaders.gl/schema';
-import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
+import {DataContainerInterface, findDefaultColorField, getSampleData} from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {LayerColumns, ProtoDatasetField} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 
 import {GeojsonLayerMetaProps, assignPointPairToLayerColumn} from '../layer-utils';
 import {LayerBaseConfig} from '../base-layer';
+import type GeoJsonLayer from './geojson-layer';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = (Feature | BinaryFeatureCollection | null)[];
 export type GeojsonPointDataMaps = (number[] | number[][] | null)[];
 
 export const COLUMN_MODE_GEOJSON = 'geojson';
+
+// Bound the extra column scans used to reject constant default color fields.
+const DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT = 1_000_000;
 
 /* eslint-disable */
 // TODO: Re-enable eslint when we upgrade to handle enums and type maps
@@ -51,6 +55,59 @@ type FeatureTypeMap = {
  */
 export function fieldIsGeoArrow(geoField?: ProtoDatasetField | null): boolean {
   return Boolean(geoField?.metadata?.get('ARROW:extension:name'));
+}
+
+/** Apply automatic color settings without preventing normal layer initialization. */
+export function applyDefaultGeojsonColorField(layer: GeoJsonLayer, dataset: KeplerTable): void {
+  const previousConfig = layer.config;
+  try {
+    const {featureTypes} = layer.meta;
+    const colorChannel =
+      featureTypes?.polygon || featureTypes?.point
+        ? 'color'
+        : featureTypes?.line
+        ? 'strokeColor'
+        : null;
+    const embeddedColorField =
+      colorChannel === 'color' ? 'fillColor' : colorChannel === 'strokeColor' ? 'lineColor' : null;
+    const hasEmbeddedColor = Boolean(
+      embeddedColorField &&
+        layer.dataToFeature.some(
+          feature => feature && 'properties' in feature && feature.properties?.[embeddedColorField]
+        )
+    );
+    if (!colorChannel || hasEmbeddedColor) {
+      return;
+    }
+
+    const rowCount = dataset.dataContainer.numRows();
+    if (!rowCount) {
+      return;
+    }
+
+    let fields = dataset.fields;
+    let defaultColorField = findDefaultColorField(dataset);
+    const maxFieldChecks = Math.floor(DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT / rowCount);
+    let fieldsChecked = 0;
+    while (defaultColorField && fieldsChecked < maxFieldChecks) {
+      fieldsChecked++;
+      const {valueAccessor} = defaultColorField;
+      const [min, max] = extent(dataset.filteredIndexForDomain, index => valueAccessor({index}));
+      if (min !== max) {
+        layer.updateLayerConfig({
+          [layer.visualChannels[colorChannel].field]: defaultColorField
+        });
+        layer.updateLayerVisualChannel(dataset, colorChannel);
+        return;
+      }
+
+      fields = fields.filter(field => field !== defaultColorField);
+      defaultColorField = findDefaultColorField({fields, fieldPairs: dataset.fieldPairs});
+    }
+  } catch {
+    // Automatic coloring is optional; discard partially applied settings on failure.
+    layer.config = previousConfig;
+  }
 }
 
 function toArrayBuffer(
