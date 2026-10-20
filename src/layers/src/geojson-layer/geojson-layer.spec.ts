@@ -103,6 +103,64 @@ describe('GeoJsonLayer default color field', () => {
     expect(layer.config.strokeColorField).toBeNull();
   });
 
+  test.each([
+    ['point', point, 'colorField', 'colorDomain'],
+    ['polygon', polygon, 'colorField', 'colorDomain'],
+    ['line', line, 'strokeColorField', 'strokeColorDomain']
+  ] as const)(
+    'skips constant real fields and selects the next preferred field for %s color',
+    async (_name, geometry, field, domain) => {
+      const {layer} = await initializeGeoJsonLayer([
+        {
+          geometry: geometry(0),
+          properties: {score: 0.5, metric: 1.25, depth: 2.25, value: 0.25}
+        },
+        {
+          geometry: geometry(1),
+          properties: {score: 0.5, metric: 1.25, depth: 3.75, value: 0.75}
+        }
+      ]);
+
+      expect(layer.config[field]?.name).toBe('value');
+      expect(layer.config[domain]).toEqual([0.25, 0.75]);
+    }
+  );
+
+  test.each([
+    ['point', point],
+    ['polygon', polygon],
+    ['line', line]
+  ] as const)(
+    'keeps %s color uniform when all eligible real fields are constant',
+    async (_name, geometry) => {
+      const {layer} = await initializeGeoJsonLayer([
+        {geometry: geometry(0), properties: {score: 0.5, metric: 1.25, count: 1}},
+        {geometry: geometry(1), properties: {score: 0.5, metric: 1.25, count: 2}}
+      ]);
+
+      expect(layer.config.colorField).toBeNull();
+      expect(layer.config.strokeColorField).toBeNull();
+    }
+  );
+
+  test('ignores missing values when skipping a constant real field', async () => {
+    const {layer} = await initializeGeoJsonLayer([
+      {geometry: polygon(0), properties: {score: 0.5, value: 0.25}},
+      {geometry: polygon(1), properties: {score: null, value: 0.75}},
+      {geometry: polygon(2), properties: {score: 0.5, value: 1.25}}
+    ]);
+
+    expect(layer.config.colorField?.name).toBe('value');
+    expect(layer.config.colorDomain).toEqual([0.25, 0.75, 1.25]);
+  });
+
+  test('keeps a single-feature dataset uniformly colored', async () => {
+    const {layer} = await initializeGeoJsonLayer([{geometry: polygon(0), properties: {score: 0.5}}]);
+
+    expect(layer.config.colorField).toBeNull();
+    expect(layer.config.strokeColorField).toBeNull();
+  });
+
   test('uses stroke color for line-only data', async () => {
     const {layer} = await initializeGeoJsonLayer([
       {geometry: line(0), properties: {score: 0.25}},

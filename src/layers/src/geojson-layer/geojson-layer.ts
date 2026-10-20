@@ -7,6 +7,7 @@ import {booleanWithin} from '@turf/boolean-within';
 import {Feature, Polygon} from 'geojson';
 import uniq from 'es-toolkit/compat/uniq';
 import {DATA_TYPES} from 'type-analyzer';
+import {extent} from 'd3-array';
 import Layer, {
   colorMaker,
   defaultGetFieldValue,
@@ -790,7 +791,6 @@ export default class GeoJsonLayer extends Layer {
     this.updateLayerMeta(dataset);
 
     const {featureTypes} = this.meta;
-    const defaultColorField = findDefaultColorField(dataset);
     const colorChannel =
       featureTypes?.polygon || featureTypes?.point
         ? 'color'
@@ -806,11 +806,23 @@ export default class GeoJsonLayer extends Layer {
         )
     );
 
-    if (defaultColorField && colorChannel && !hasEmbeddedColor) {
-      this.updateLayerConfig({
-        [this.visualChannels[colorChannel].field]: defaultColorField
-      });
-      this.updateLayerVisualChannel(dataset, colorChannel);
+    if (colorChannel && !hasEmbeddedColor) {
+      let fields = dataset.fields;
+      let defaultColorField = findDefaultColorField(dataset);
+      while (defaultColorField) {
+        const {valueAccessor} = defaultColorField;
+        const [min, max] = extent(dataset.filteredIndexForDomain, index => valueAccessor({index}));
+        if (min !== max) {
+          this.updateLayerConfig({
+            [this.visualChannels[colorChannel].field]: defaultColorField
+          });
+          this.updateLayerVisualChannel(dataset, colorChannel);
+          break;
+        }
+
+        fields = fields.filter(field => field !== defaultColorField);
+        defaultColorField = findDefaultColorField({fields, fieldPairs: dataset.fieldPairs});
+      }
     }
 
     // default settings is stroke: true, filled: false
