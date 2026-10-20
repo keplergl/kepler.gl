@@ -8,7 +8,8 @@ import {KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
 import {Response} from 'node-fetch';
-import {processGeojson} from '@kepler.gl/processors';
+import {processGeojson, processRowObject} from '@kepler.gl/processors';
+import {convertGeometryToWKB} from '@loaders.gl/gis';
 
 const point = (x: number) => ({type: 'Point', coordinates: [x, x]});
 const line = (x: number) => ({
@@ -871,4 +872,84 @@ describe('GeoJsonLayer source revisions', () => {
     ]);
     expect(layer.meta).toMatchObject({bounds: [30, 40, 70, 80]});
   });
+});
+
+describe('GeoJsonLayer inferred geometry fields', () => {
+  const originalResponse = globalThis.Response;
+  beforeAll(() => { globalThis.Response = Response as any; });
+  afterAll(() => { globalThis.Response = originalResponse; });
+  const point = {type: 'Point' as const, coordinates: [10, 10]};
+  const line = {
+    type: 'LineString' as const,
+    coordinates: [
+      [10, 10],
+      [10.25, 10.25]
+    ]
+  };
+  const polygon = {
+    type: 'Polygon' as const,
+    coordinates: [
+      [
+        [10, 10],
+        [10.25, 10],
+        [10.25, 10.25],
+        [10, 10]
+      ]
+    ]
+  };
+  const collection = {type: 'GeometryCollection' as const, geometries: [point, line]};
+  const cases = [
+    {name: 'GeoJSON Point string', value: JSON.stringify(point)},
+    {name: 'GeometryCollection object', value: collection},
+    {
+      name: 'GeometryCollection WKT',
+      value: 'GEOMETRYCOLLECTION (POINT (10 10), LINESTRING (10 10, 10.25 10.25))'
+    },
+    ...[
+      point,
+      line,
+      polygon,
+      {type: 'MultiPoint' as const, coordinates: [point.coordinates]},
+      {type: 'MultiLineString' as const, coordinates: [line.coordinates]},
+      {type: 'MultiPolygon' as const, coordinates: [polygon.coordinates]}
+    ].map(geometry => ({
+      name: `${geometry.type} numeric WKB`,
+      value: Buffer.from(convertGeometryToWKB(geometry)).toString('hex')
+    }))
+  ];
+
+  test.each(cases)(
+    'imports $name from a custom column and keeps styling/filter cache reuse',
+    async ({value}) => {
+      const data = processRowObject([
+        {shape: value, score: 0.25},
+        {shape: value, score: 0.75}
+      ])!;
+      const dataset = new KeplerTable({info: {id: 'inferred'}, color: [0, 0, 0]});
+      await dataset.importData({data});
+      const {props} = GeoJsonLayer.findDefaultLayerProps(dataset);
+      expect(props).toHaveLength(1);
+      const layer = new GeoJsonLayer({...props[0], id: 'inferred-layer', dataId: dataset.id});
+      layer.setInitialLayerConfig(dataset);
+      const initial = layer.formatLayerData({inferred: dataset}, {}) as any;
+      expect(initial.data.map(feature => feature.properties.index)).toEqual([0, 1]);
+      expect(layer.centroids).toHaveLength(2);
+      expect(layer.centroids.flat().every(Number.isFinite)).toBe(true);
+      expect(
+        layer._getHoverOverlayData({
+          picked: true,
+          index: 1,
+          object: initial.data[1],
+          layer: {props: {id: layer.id}}
+        })
+      ).not.toBeNull();
+      const geometry = layer.dataToFeature;
+      layer.updateLayerVisConfig({opacity: 0.37});
+      const filtered = copyTableAndUpdate(dataset, {filteredIndex: [1]});
+      const updated = layer.formatLayerData({inferred: filtered}, initial) as any;
+      expect(updated.data.map(feature => feature.properties.index)).toEqual([1]);
+      expect(layer.dataToFeature).toBe(geometry);
+      expect(layer.config.visConfig.opacity).toBe(0.37);
+    }
+  );
 });

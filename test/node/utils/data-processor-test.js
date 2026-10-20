@@ -6,6 +6,7 @@ import sinon from 'sinon';
 import {console as Console} from 'global/window';
 import {DATA_TYPES} from 'type-analyzer';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
+import {convertGeometryToWKB} from '@loaders.gl/gis';
 
 import testData, {
   dataWithNulls,
@@ -181,6 +182,72 @@ test('Processor -> getFieldsFromData scientific notation', t => {
     'integers beyond the safe range should stay string to keep every digit'
   );
   t.equal(fields[3].type, ALL_FIELD_TYPES.string, 'hex literals should stay string');
+  t.end();
+});
+
+test('Processor -> geometry autodetection in custom columns', t => {
+  const point = {type: 'Point', coordinates: [10, 10]};
+  const line = {
+    type: 'LineString',
+    coordinates: [
+      [10, 10],
+      [10.25, 10.25]
+    ]
+  };
+  const polygon = {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [10, 10],
+        [10.25, 10],
+        [10.25, 10.25],
+        [10, 10]
+      ]
+    ]
+  };
+  const collection = {type: 'GeometryCollection', geometries: [point, line]};
+  const geometries = [
+    point,
+    line,
+    polygon,
+    {type: 'MultiPoint', coordinates: [point.coordinates]},
+    {type: 'MultiLineString', coordinates: [line.coordinates]},
+    {type: 'MultiPolygon', coordinates: [polygon.coordinates]},
+    collection
+  ];
+  const values = [
+    JSON.stringify(point),
+    collection,
+    'GEOMETRYCOLLECTION (POINT (10 10), LINESTRING (10 10, 10.25 10.25))',
+    JSON.stringify(collection),
+    JSON.stringify({type: 'Feature', geometry: point, properties: {}}),
+    ...geometries.map(geometry => Buffer.from(convertGeometryToWKB(geometry)).toString('hex'))
+  ];
+
+  values.forEach(value => {
+    const data = processRowObject([{shape: null}, {shape: value}]);
+    t.equal(data.fields[0].type, ALL_FIELD_TYPES.geojson, `detects ${JSON.stringify(value)}`);
+    t.deepEqual(data.rows, [[null], [value]], 'preserves values for the geometry parser');
+  });
+
+  for (const values of [
+    [null, null],
+    ['', null],
+    ['ordinary text', 'more text'],
+    ['0101000000', '0101000000'], // A WKB header without a point payload.
+    ['010000000000000000000000000000000000000000', null],
+    ['12345678901234567890', '12345678901234567891'],
+    ['{"type":"invoice","coordinates":[1,2]}', null],
+    ['{"type":"Point","coordinates":"invalid"}', null],
+    ['{"type":"Point","coordinates":[10,10]}', 'ordinary text'],
+    [{type: 'GeometryCollection', geometries: [{type: 'invalid'}]}, null]
+  ]) {
+    t.notEqual(
+      processRowObject(values.map(shape => ({shape}))).fields[0].type,
+      ALL_FIELD_TYPES.geojson,
+      `does not infer geometry from ${JSON.stringify(values)}`
+    );
+  }
   t.end();
 });
 

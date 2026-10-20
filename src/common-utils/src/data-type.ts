@@ -53,6 +53,84 @@ function toTypeAnalyzerValue(value: unknown): unknown {
   return value;
 }
 
+function isGeoJsonGeometry(value: unknown, depth = 0): boolean {
+  if (!value || typeof value !== 'object' || depth > 32) return false;
+  const geometry = value as Record<string, unknown>;
+  if (geometry.type === 'Feature') return isGeoJsonGeometry(geometry.geometry, depth + 1);
+  if (geometry.type === 'GeometryCollection') {
+    return (
+      Array.isArray(geometry.geometries) &&
+      geometry.geometries.every(child => isGeoJsonGeometry(child, depth + 1))
+    );
+  }
+  return (
+    ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'].includes(
+      geometry.type as string
+    ) && Array.isArray(geometry.coordinates)
+  );
+}
+
+function isAdditionalGeometry(value: unknown): boolean {
+  if (typeof value !== 'string') return isGeoJsonGeometry(value);
+  if (/^GEOMETRYCOLLECTION\s*(?:ZM|Z|M)?\s*(?:\(|EMPTY\b)/i.test(value)) return true;
+  if (!value.startsWith('{')) return false;
+  try {
+    return isGeoJsonGeometry(JSON.parse(value));
+  } catch {
+    return false;
+  }
+}
+
+/** Validate numeric-looking WKB before overriding NUMBER (e.g. account IDs). */
+function isCompleteWkb(value: unknown): boolean {
+  if (typeof value !== 'string' || !isHexWkb(value)) return false;
+  const length = value.length / 2;
+  const uint32 = (offset: number, littleEndian: boolean): number => {
+    if (offset + 4 > length) throw new Error('Truncated WKB');
+    let number = 0;
+    for (let i = 0; i < 4; i++) {
+      const byte = parseInt(value.slice((offset + i) * 2, (offset + i + 1) * 2), 16);
+      number += byte * 256 ** (littleEndian ? i : 3 - i);
+    }
+    return number;
+  };
+  const endOfGeometry = (offset: number, depth: number): number => {
+    if (depth > 32 || offset + 5 > length) throw new Error('Invalid WKB');
+    const order = value.slice(offset * 2, offset * 2 + 2);
+    if (order !== '00' && order !== '01') throw new Error('Invalid WKB byte order');
+    const littleEndian = order === '01';
+    const rawType = uint32(offset + 1, littleEndian);
+    const type = rawType & 0x1fffffff;
+    const dimensions =
+      2 +
+      Number(Boolean(rawType & 0x80000000) || [1, 3].includes(Math.floor(type / 1000))) +
+      Number(Boolean(rawType & 0x40000000) || [2, 3].includes(Math.floor(type / 1000)));
+    const baseType = type % 1000;
+    if (baseType < 1 || baseType > 7 || type >= 4000) throw new Error('Invalid WKB type');
+    let cursor = offset + 5 + (rawType & 0x20000000 ? 4 : 0);
+    if (baseType === 1) return cursor + dimensions * 8;
+    const count = uint32(cursor, littleEndian);
+    cursor += 4;
+    if (baseType === 2) return cursor + count * dimensions * 8;
+    if (count > (length - cursor) / (baseType === 3 ? 4 : 5)) throw new Error('Truncated WKB');
+    for (let i = 0; i < count; i++) {
+      if (baseType === 3) {
+        const points = uint32(cursor, littleEndian);
+        cursor += 4 + points * dimensions * 8;
+      } else {
+        cursor = endOfGeometry(cursor, depth + 1);
+      }
+      if (cursor > length) throw new Error('Truncated WKB');
+    }
+    return cursor;
+  };
+  try {
+    return endOfGeometry(0, 0) === length;
+  } catch {
+    return false;
+  }
+}
+
 export const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.DATE,
   AnalyzerDATA_TYPES.TIME,
@@ -318,6 +396,27 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     // quick check if string is hex wkb
     if (type === AnalyzerDATA_TYPES.STRING) {
       type = data.some(d => isHexWkb(d[name])) ? AnalyzerDATA_TYPES.GEOMETRY : type;
+    }
+
+    // The analyzer treats numeric-only WKB as NUMBER and GeoJSON strings as
+    // OBJECT. Only override these fallback types when every present sample
+    // describes geometry; unrelated objects, text and identifiers stay intact.
+    if (
+      [AnalyzerDATA_TYPES.STRING, AnalyzerDATA_TYPES.NUMBER, AnalyzerDATA_TYPES.OBJECT].includes(
+        type
+      )
+    ) {
+      const samples = analyzerData.map(row => row[field]).filter(notNullorUndefined);
+      if (
+        samples.length &&
+        samples.every(
+          value =>
+            isAdditionalGeometry(value) ||
+            (type === AnalyzerDATA_TYPES.NUMBER && isCompleteWkb(value))
+        )
+      ) {
+        type = AnalyzerDATA_TYPES.GEOMETRY;
+      }
     }
 
     // read a column of numbers in scientific notation as real numbers instead of strings
