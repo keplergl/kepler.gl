@@ -270,14 +270,19 @@ const StyledConfigRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 9px;
+  min-height: ${props => props.theme.inputBoxHeightSmall};
+  margin-bottom: 8px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const StyledAnnotationTypeGroup = styled(ButtonGroup)`
   width: 100%;
   height: ${props => props.theme.inputBoxHeight};
   align-items: stretch;
-  margin-bottom: 9px;
+  margin-bottom: 8px;
 `;
 
 const StyledAnnotationTypeButton = styled(Button)<{$active: boolean}>`
@@ -314,8 +319,12 @@ const StyledConfigLabel = styled.div`
   text-transform: capitalize;
 `;
 
-const StyledSelect = styled(ItemSelector)`
+const StyledSelect = styled(ItemSelector).attrs({size: 'small'})`
   width: 100px;
+
+  .item-selector__dropdown {
+    box-sizing: border-box;
+  }
 `;
 
 const StyledLineWidthSlider = styled.div`
@@ -325,7 +334,7 @@ const StyledLineWidthSlider = styled.div`
   flex: 1;
   min-width: 0;
   margin-left: 16px;
-  height: ${props => props.theme.inputBoxHeight};
+  height: ${props => props.theme.inputBoxHeightSmall};
   padding-left: 6px;
   box-sizing: border-box;
 
@@ -346,6 +355,7 @@ const StyledColorButtonWrapper = styled.div`
   width: 100px;
   .button {
     width: 100%;
+    height: ${props => props.theme.inputBoxHeightSmall};
     box-sizing: border-box;
     color: ${props => props.theme.effectPanelTextSecondary2};
     display: flex;
@@ -354,7 +364,7 @@ const StyledColorButtonWrapper = styled.div`
     border: none;
     transition: background 0.2s;
     background-color: ${props => props.theme.inputBgd};
-    padding: 8px 5px 8px 10px;
+    padding: 4px 5px 4px 10px;
     &:active {
       color: ${props => props.theme.effectPanelTextMain};
       background-color: ${props => props.theme.inputBgdHover};

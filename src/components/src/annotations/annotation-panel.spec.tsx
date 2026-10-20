@@ -191,7 +191,12 @@ describe('AnnotationManager line width slider', () => {
     expect(slider).toHaveAttribute('aria-valuenow', String(width));
     expect(slider).toHaveAttribute('aria-valuetext', `${width}px`);
     expect(within(slider).getByText(`${width}px`)).toBeInTheDocument();
-    expect(slider).toHaveStyle({flex: '1', minWidth: '0', marginLeft: '16px'});
+    expect(slider).toHaveStyle({
+      flex: '1',
+      minWidth: '0',
+      marginLeft: '16px',
+      height: theme.inputBoxHeightSmall
+    });
   });
 
   test.each([
@@ -263,7 +268,35 @@ describe('AnnotationManager selectors', () => {
     window.IntersectionObserver = originalIntersectionObserver;
   });
 
-  test('fills the selector width with the color picker button', () => {
+  test.each([AnnotationKind.RULER, AnnotationKind.POINT])(
+    'uses consistent row height and spacing for %s options',
+    kind => {
+      const state = makeState(true, true);
+      Object.assign(state.visState.annotations[0], {kind, armLength: 50, angle: -45});
+      const store = mockStore(state);
+      renderWithTheme(
+        <IntlWrapper>
+          <Provider store={store}>
+            <AnnotationManager />
+          </Provider>
+        </IntlWrapper>
+      );
+
+      const labels =
+        kind === AnnotationKind.RULER
+          ? ['Line Width', 'Color', 'Custom Text', 'Distance']
+          : ['Line Width', 'Color', 'Text Side', 'Placement'];
+      labels.forEach((label, index) => {
+        expect(screen.getByText(label).parentElement).toHaveStyle({
+          minHeight: theme.inputBoxHeightSmall,
+          alignItems: 'center',
+          marginBottom: index === labels.length - 1 ? '0' : '8px'
+        });
+      });
+    }
+  );
+
+  test('keeps color picker and selectors compact with matching widths', () => {
     const state = makeState(true, true);
     Object.assign(state.visState.annotations[0], {
       kind: AnnotationKind.POINT,
@@ -282,8 +315,16 @@ describe('AnnotationManager selectors', () => {
     const colorButton = screen.getByRole('button', {name: ''});
 
     expect(selector).toHaveStyle({width: '100px'});
+    for (const dropdown of container.querySelectorAll('.item-selector__dropdown')) {
+      expect(dropdown).toHaveStyle({height: theme.inputBoxHeightSmall, boxSizing: 'border-box'});
+    }
     expect(colorButton.parentElement).toHaveStyle({width: '100px'});
-    expect(colorButton).toHaveStyle({width: '100%', boxSizing: 'border-box'});
+    expect(colorButton).toHaveStyle({
+      width: '100%',
+      height: theme.inputBoxHeightSmall,
+      padding: '4px 5px 4px 10px',
+      boxSizing: 'border-box'
+    });
   });
 
   test.each(['Right', 'Above'])(
