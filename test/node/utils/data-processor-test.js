@@ -216,11 +216,29 @@ test('Processor -> geometry autodetection in custom columns', t => {
     collection
   ];
   const values = [
-    JSON.stringify(point),
+    ...geometries.map(geometry => JSON.stringify(geometry)),
     collection,
     'GEOMETRYCOLLECTION (POINT (10 10), LINESTRING (10 10, 10.25 10.25))',
-    JSON.stringify(collection),
+    'GEOMETRYCOLLECTION (GEOMETRYCOLLECTION (POINT (10 10)))',
+    'GEOMETRYCOLLECTION EMPTY',
+    'geometrycollection z (point z (10 10 5))',
+    'GEOMETRYCOLLECTION M (POINT M (10 10 5))',
+    'GEOMETRYCOLLECTION ZM (POINT ZM (10 10 5 7))',
+    'GEOMETRYCOLLECTION (MULTIPOINT ((10 10), (20 20)))',
+    'GEOMETRYCOLLECTION (MULTIPOINT (10 10, 20 20))',
+    'GEOMETRYCOLLECTION (MULTILINESTRING ((10 10, 20 20), (30 30, 40 40)))',
+    'GEOMETRYCOLLECTION (POLYGON ((0 0, 1 0, 1 1, 0 0)))',
+    'GEOMETRYCOLLECTION (MULTIPOLYGON (((0 0, 1 0, 1 1, 0 0))))',
     JSON.stringify({type: 'Feature', geometry: point, properties: {}}),
+    JSON.stringify({
+      type: 'Feature',
+      geometry: {type: 'Point', coordinates: [10, 10, 5]},
+      properties: {}
+    }),
+    JSON.stringify({
+      type: 'GeometryCollection',
+      geometries: [collection, {type: 'GeometryCollection', geometries: []}]
+    }),
     ...geometries.map(geometry => Buffer.from(convertGeometryToWKB(geometry)).toString('hex'))
   ];
 
@@ -247,6 +265,132 @@ test('Processor -> geometry autodetection in custom columns', t => {
       ALL_FIELD_TYPES.geojson,
       `does not infer geometry from ${JSON.stringify(values)}`
     );
+  }
+  t.end();
+});
+
+test('Processor -> geometry autodetection rejects malformed GeoJSON coordinates', t => {
+  const invalid = [
+    {type: 'Point', coordinates: ['x', 'y']},
+    {type: 'Point', coordinates: [null, null]},
+    {type: 'Point', coordinates: [10]},
+    {type: 'Point', coordinates: [[10, 10]]},
+    {type: 'Point', coordinates: [10, 10, '5']},
+    {type: 'MultiPoint', coordinates: [10, 10]},
+    {type: 'LineString', coordinates: [[10, 10]]},
+    {
+      type: 'LineString',
+      coordinates: [
+        [10, 10],
+        [null, 20]
+      ]
+    },
+    {
+      type: 'MultiLineString',
+      coordinates: [
+        [10, 10],
+        [20, 20]
+      ]
+    },
+    {type: 'Polygon', coordinates: [1, 2]},
+    {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [1, 0],
+          [0, 0]
+        ]
+      ]
+    },
+    {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [1, 0],
+          [1, 1],
+          [0, 1]
+        ]
+      ]
+    },
+    {
+      type: 'MultiPolygon',
+      coordinates: [
+        [
+          [0, 0],
+          [1, 0],
+          [1, 1],
+          [0, 0]
+        ]
+      ]
+    }
+  ];
+  const valid = JSON.stringify({type: 'Point', coordinates: [10, 10]});
+  for (const geometry of invalid) {
+    for (const value of [
+      geometry,
+      {type: 'Feature', geometry, properties: {}},
+      {type: 'GeometryCollection', geometries: [geometry]}
+    ].map(value => JSON.stringify(value))) {
+      for (const samples of [
+        [value, null],
+        [valid, value]
+      ]) {
+        const data = processRowObject(samples.map(shape => ({shape})));
+        t.equal(
+          data.fields[0].type,
+          ALL_FIELD_TYPES.object,
+          `keeps malformed geometry as an object: ${value}`
+        );
+      }
+    }
+  }
+  const nonFinite = {
+    type: 'GeometryCollection',
+    geometries: [{type: 'Point', coordinates: [Infinity, NaN]}]
+  };
+  t.equal(
+    processRowObject([{shape: nonFinite}]).fields[0].type,
+    ALL_FIELD_TYPES.object,
+    'rejects non-finite coordinates in collection objects'
+  );
+  t.end();
+});
+
+test('Processor -> geometry autodetection rejects incomplete or invalid collection WKT', t => {
+  const valid = 'GEOMETRYCOLLECTION (POINT (10 10))';
+  for (const value of [
+    'GEOMETRYCOLLECTION (',
+    'GEOMETRYCOLLECTION (ordinary text)',
+    'GEOMETRYCOLLECTION EMPTY trailing text',
+    `${valid} trailing text`,
+    'GEOMETRYCOLLECTION (POINT (10 10)',
+    'GEOMETRYCOLLECTION (POINT (10 10)))',
+    'GEOMETRYCOLLECTION (POINT (10 10),)',
+    'GEOMETRYCOLLECTION (POINT (10 10) POINT (20 20))',
+    'GEOMETRYCOLLECTION (POINT (x y))',
+    'GEOMETRYCOLLECTION (POINT (1-2))',
+    'GEOMETRYCOLLECTION (POINT (1e999 10))',
+    'GEOMETRYCOLLECTION (POINT (10 10, 20 20))',
+    'GEOMETRYCOLLECTION (LINESTRING (10 10))',
+    'GEOMETRYCOLLECTION (POLYGON ((0 0, 1 0, 1 1, 0 1)))',
+    'GEOMETRYCOLLECTION Z (POINT (10 10))',
+    'GEOMETRYCOLLECTION (GEOMETRYCOLLECTION (ordinary text))',
+    `${'GEOMETRYCOLLECTION ('.repeat(34)}POINT (10 10)${')'.repeat(34)}`
+  ]) {
+    for (const samples of [
+      [null, value],
+      [valid, value]
+    ]) {
+      const data = processRowObject(samples.map(shape => ({shape})));
+      t.equal(data.fields[0].type, ALL_FIELD_TYPES.string, `keeps invalid WKT as text: ${value}`);
+      t.deepEqual(
+        data.rows,
+        samples.map(value => [value]),
+        'preserves the original text'
+      );
+    }
   }
   t.end();
 });

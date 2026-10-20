@@ -63,16 +63,115 @@ function isGeoJsonGeometry(value: unknown, depth = 0): boolean {
       geometry.geometries.every(child => isGeoJsonGeometry(child, depth + 1))
     );
   }
-  return (
-    ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'].includes(
-      geometry.type as string
-    ) && Array.isArray(geometry.coordinates)
-  );
+  const position = (coordinates: unknown): coordinates is number[] =>
+    Array.isArray(coordinates) &&
+    coordinates.length >= 2 &&
+    coordinates.every(coordinate => typeof coordinate === 'number' && Number.isFinite(coordinate));
+  const positions = (coordinates: unknown, minimum: number): coordinates is number[][] =>
+    Array.isArray(coordinates) &&
+    (coordinates.length === 0 || coordinates.length >= minimum) &&
+    coordinates.every(position);
+  const ring = (coordinates: unknown): boolean =>
+    positions(coordinates, 4) &&
+    (coordinates.length === 0 ||
+      (coordinates[0].length === coordinates[coordinates.length - 1].length &&
+        coordinates[0].every(
+          (coordinate, index) => coordinate === coordinates[coordinates.length - 1][index]
+        )));
+  const polygon = (coordinates: unknown): boolean =>
+    Array.isArray(coordinates) && coordinates.every(ring);
+  switch (geometry.type) {
+    case 'Point':
+      return position(geometry.coordinates);
+    case 'MultiPoint':
+      return positions(geometry.coordinates, 1);
+    case 'LineString':
+      return positions(geometry.coordinates, 2);
+    case 'MultiLineString':
+      return (
+        Array.isArray(geometry.coordinates) &&
+        geometry.coordinates.every(line => positions(line, 2))
+      );
+    case 'Polygon':
+      return polygon(geometry.coordinates);
+    case 'MultiPolygon':
+      return Array.isArray(geometry.coordinates) && geometry.coordinates.every(polygon);
+    default:
+      return false;
+  }
+}
+
+/** Validate the complete WKT collection before changing a text column's type. */
+function isWktGeometryCollection(value: string): boolean {
+  let cursor = 0;
+  const consume = (pattern: RegExp): string | undefined => {
+    const match = pattern.exec(value.slice(cursor));
+    if (!match) return undefined;
+    cursor += match[0].length;
+    return match[0].trim();
+  };
+  const number = DECIMAL_NUMBER_REGEX.source.slice(1, -1);
+  const positionPattern = new RegExp(`^\\s*${number}(?:\\s+${number})+`, 'i');
+  const group = (read: () => unknown): unknown[] | null => {
+    if (!consume(/^\s*\(/)) return null;
+    const items: unknown[] = [];
+    do {
+      const item = read();
+      if (item == null) return null;
+      items.push(item);
+    } while (consume(/^\s*,/));
+    return consume(/^\s*\)/) ? items : null;
+  };
+  const readGeometry = (depth: number, inheritedDimensions?: number): unknown => {
+    if (depth > 32) return null;
+    const type = consume(
+      /^\s*(GEOMETRYCOLLECTION|MULTIPOLYGON|MULTILINESTRING|MULTIPOINT|POLYGON|LINESTRING|POINT)\b/i
+    )?.toUpperCase();
+    if (!type) return null;
+    const dimension = consume(/^\s+(ZM|Z|M)\b/i)?.toUpperCase();
+    const dimensions = dimension ? (dimension === 'ZM' ? 4 : 3) : inheritedDimensions;
+    if (consume(/^\s*EMPTY\b/i)) return {};
+    if (type === 'GEOMETRYCOLLECTION') {
+      return group(() => readGeometry(depth + 1, dimensions));
+    }
+    const readCoordinates = (level: number): unknown => {
+      if (level > 3) return null;
+      if (/^\s*\(/.test(value.slice(cursor))) return group(() => readCoordinates(level + 1));
+      const match = consume(positionPattern);
+      if (!match) return null;
+      const coordinates = match.split(/\s+/).map(Number);
+      return coordinates.every(Number.isFinite) &&
+        (!dimensions || coordinates.length === dimensions)
+        ? coordinates
+        : null;
+    };
+    let coordinates = group(() => readCoordinates(0));
+    if (!coordinates) return null;
+    if (type === 'POINT') {
+      if (coordinates.length !== 1) return null;
+      coordinates = coordinates[0] as unknown[];
+    } else if (
+      type === 'MULTIPOINT' &&
+      coordinates.every(point => Array.isArray(point) && point.length === 1)
+    ) {
+      coordinates = coordinates.map(point => (point as unknown[])[0]);
+    }
+    const types = {
+      POINT: 'Point',
+      MULTIPOINT: 'MultiPoint',
+      LINESTRING: 'LineString',
+      MULTILINESTRING: 'MultiLineString',
+      POLYGON: 'Polygon',
+      MULTIPOLYGON: 'MultiPolygon'
+    };
+    return isGeoJsonGeometry({type: types[type], coordinates}) ? {} : null;
+  };
+  return readGeometry(0) != null && value.slice(cursor).trim() === '';
 }
 
 function isAdditionalGeometry(value: unknown): boolean {
   if (typeof value !== 'string') return isGeoJsonGeometry(value);
-  if (/^GEOMETRYCOLLECTION\s*(?:ZM|Z|M)?\s*(?:\(|EMPTY\b)/i.test(value)) return true;
+  if (/^GEOMETRYCOLLECTION\b/i.test(value)) return isWktGeometryCollection(value);
   if (!value.startsWith('{')) return false;
   try {
     return isGeoJsonGeometry(JSON.parse(value));
