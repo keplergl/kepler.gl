@@ -1230,7 +1230,8 @@ export default function MapContainerFactory(
           mapboxApiAccessToken,
           mapboxApiUrl,
           layersForDeck,
-          isAnnotationMode: Boolean(mapControls?.annotation?.active),
+          isAnnotationMode:
+            Boolean(mapControls?.annotation?.active) && !Boolean(this.props.readOnly),
           editorInfo: primaryMap
             ? {
                 editor,
@@ -1756,7 +1757,9 @@ export default function MapContainerFactory(
             }
             selectedAnnotationId={visState.selectedAnnotationId}
             isEditingAnnotationText={visState.isEditingAnnotationText}
-            isAnnotationMode={Boolean(mapControls?.annotation?.active)}
+            isAnnotationMode={
+              Boolean(mapControls?.annotation?.active) && !Boolean(this.props.readOnly)
+            }
             mapIndex={index || 0}
             viewport={this._getAnnotationViewport(mapState, internalViewState)}
             isGlobeEnabled={Boolean(mapState.globe?.enabled)}

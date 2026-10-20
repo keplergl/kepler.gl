@@ -25,7 +25,10 @@ const annotationPropsV1 = {
   textVerticalPosition: null,
   armLength: null,
   angle: null,
-  radiusInMeters: null
+  radiusInMeters: null,
+  endPoint: null,
+  showCustomText: null,
+  showDistance: null
 };
 
 const schema = new AnnotationsSchema({
@@ -102,6 +105,27 @@ const makeTextAnnotation = (overrides = {}) => ({
   ...overrides
 });
 
+const makeRulerAnnotation = (overrides = {}) => ({
+  id: 'ann-ruler-1',
+  kind: AnnotationKind.RULER,
+  isVisible: true,
+  autoSize: true,
+  autoSizeY: true,
+  anchorPoint: [-122.4, 37.8, 20],
+  endPoint: [-122.39, 37.81, 80],
+  label: 'Measured span',
+  editorState: null,
+  mapIndex: 0,
+  lineColor: '#FFFFFF',
+  lineWidth: 2,
+  textWidth: 120,
+  textHeight: 40,
+  textVerticalAlign: 'middle',
+  showCustomText: false,
+  showDistance: true,
+  ...overrides
+});
+
 test('#AnnotationsSchema -> save', t => {
   const annotations = [makePointAnnotation(), makeCircleAnnotation()];
 
@@ -164,12 +188,17 @@ test('#AnnotationsSchema -> load', t => {
 });
 
 test('#AnnotationsSchema -> save/load round-trip', t => {
-  const original = [makePointAnnotation(), makeCircleAnnotation(), makeTextAnnotation()];
+  const original = [
+    makePointAnnotation(),
+    makeCircleAnnotation(),
+    makeTextAnnotation(),
+    makeRulerAnnotation()
+  ];
 
   const saved = schema.save(original);
   const loaded = schema.load(saved.annotations);
 
-  t.equal(loaded.annotations.length, 3, 'should round-trip 3 annotations');
+  t.equal(loaded.annotations.length, 4, 'should round-trip 4 annotations');
 
   // Check point
   t.equal(loaded.annotations[0].id, 'ann-point-1', 'point id round-trips');
@@ -203,6 +232,16 @@ test('#AnnotationsSchema -> save/load round-trip', t => {
   t.equal(loaded.annotations[2].id, 'ann-text-1', 'text id round-trips');
   t.equal(loaded.annotations[2].kind, AnnotationKind.TEXT, 'text kind round-trips');
   t.equal(loaded.annotations[2].textVerticalAlign, 'middle', 'text textVerticalAlign round-trips');
+
+  // Check ruler
+  t.equal(loaded.annotations[3].kind, AnnotationKind.RULER, 'ruler kind round-trips');
+  t.deepEqual(
+    loaded.annotations[3].endPoint,
+    [-122.39, 37.81, 80],
+    'ruler 3D endPoint round-trips'
+  );
+  t.equal(loaded.annotations[3].showCustomText, false, 'custom text checkbox round-trips');
+  t.equal(loaded.annotations[3].showDistance, true, 'distance checkbox round-trips');
 
   t.end();
 });

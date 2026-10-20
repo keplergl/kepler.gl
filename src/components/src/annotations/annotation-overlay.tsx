@@ -12,15 +12,17 @@ import {
   useSensor,
   useSensors
 } from '@dnd-kit/core';
-import {Annotation} from '@kepler.gl/types';
+import {Annotation, RulerAnnotation} from '@kepler.gl/types';
+import {AnnotationKind} from '@kepler.gl/constants';
 import {ActionHandler, updateAnnotation, setSelectedAnnotation} from '@kepler.gl/actions';
-import AnnotationNode from './annotation-node';
+import AnnotationNode, {RulerEndpointHandles} from './annotation-node';
 import AnnotationText from './annotation-text';
 import {
   MapViewport,
   PickWorldPosition,
-  isPointVisibleOnGlobe,
+  isAnnotationVisibleOnGlobe,
   movePoint,
+  moveRulerEndpoint,
   moveText,
   resizeCircle
 } from './annotation-utils';
@@ -85,7 +87,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
             (ann.mapIndex ?? 0) === mapIndex &&
             ann.isVisible &&
             // Hide annotations on the far side of the globe (occluded by the planet)
-            (!isGlobeEnabled || isPointVisibleOnGlobe(ann.anchorPoint, viewport))
+            (!isGlobeEnabled || isAnnotationVisibleOnGlobe(ann, viewport))
         )
         .reverse(),
     [annotations, mapIndex, isGlobeEnabled, viewport]
@@ -144,6 +146,24 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
         case 'MOVE_POINT':
           changes = movePoint(draggedAnn, ev.delta, viewport, pickWorldPosition);
           break;
+        case 'MOVE_RULER_START':
+          changes = moveRulerEndpoint(
+            draggedAnn,
+            'start',
+            ev.delta,
+            viewport,
+            pickWorldPosition
+          );
+          break;
+        case 'MOVE_RULER_END':
+          changes = moveRulerEndpoint(
+            draggedAnn,
+            'end',
+            ev.delta,
+            viewport,
+            pickWorldPosition
+          );
+          break;
         case 'MOVE_TEXT':
           changes = moveText(draggedAnn, ev.delta, viewport, pickWorldPosition);
           break;
@@ -190,6 +210,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
         onDragStart={handleDragStart}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
+        onDragCancel={handleDragEnd}
       >
         <AnnotationSvgContainer width={width} height={height}>
           {annotationsToRender.map(annotation => (
@@ -221,6 +242,23 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
             />
           ))}
         </AnnotationTextContainer>
+        <AnnotationSvgContainer width={width} height={height}>
+          {annotationsToRender
+            .filter(
+              (annotation): annotation is RulerAnnotation =>
+                annotation.kind === AnnotationKind.RULER
+            )
+            .map(annotation => (
+              <RulerEndpointHandles
+                key={annotation.id}
+                annotation={annotation}
+                opacity={getAnnotationOpacity(annotation.id)}
+                viewport={viewport}
+                isEditing={isAnnotationMode}
+                isSelected={annotation.id === selectedAnnotationId}
+              />
+            ))}
+        </AnnotationSvgContainer>
       </DndContext>
     </AnnotationOverlayContainer>
   );

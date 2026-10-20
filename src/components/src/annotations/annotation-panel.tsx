@@ -29,13 +29,55 @@ import {VisState} from '@kepler.gl/schemas';
 import {MapState} from '@kepler.gl/types';
 
 import {withState} from '../injector';
-import {Add, ArrowDown, ArrowDownSmall, Copy, EyeSeen, EyeUnseen, Trash} from '../common/icons';
-import {StyledPanelHeader, Tooltip, Button} from '../common/styled-components';
+import {
+  Add,
+  AnnotationText,
+  ArrowDown,
+  ArrowDownSmall,
+  Base,
+  BaseProps,
+  Circle,
+  Copy,
+  DrawPoint,
+  EyeSeen,
+  EyeUnseen,
+  Trash
+} from '../common/icons';
+import {StyledPanelHeader, Tooltip, Button, ButtonGroup} from '../common/styled-components';
+import Switch from '../common/switch';
+import ItemSelector from '../common/item-selector/item-selector';
+import Slider from '../common/slider/slider';
 import Portaled from '../common/portaled';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
 import {hexToRgb, rgbToHex} from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {angleForTextPlacement, getTextPlacement} from './annotation-utils';
+
+const AnnotationArrowIcon = (props: Partial<BaseProps>) => (
+  <Base viewBox="0 0 24 24" {...props}>
+    <path d="M5 19 19 5M7 5h12v12" fill="none" stroke="currentColor" strokeWidth="2" />
+  </Base>
+);
+
+const AnnotationRulerIcon = (props: Partial<BaseProps>) => (
+  <Base viewBox="0 0 24 24" {...props}>
+    <g fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="2" y="7" width="20" height="10" rx="1" />
+      <path d="M6 7v5m4-5v3m4-3v5m4-5v3" />
+    </g>
+  </Base>
+);
+
+const ANNOTATION_ICONS = {
+  [AnnotationKind.TEXT]: AnnotationText,
+  [AnnotationKind.POINT]: DrawPoint,
+  [AnnotationKind.ARROW]: AnnotationArrowIcon,
+  [AnnotationKind.CIRCLE]: Circle,
+  [AnnotationKind.RULER]: AnnotationRulerIcon
+};
+
+const MIN_LINE_WIDTH = Math.min(...ANNOTATION_LINE_WIDTH_OPTIONS);
+const MAX_LINE_WIDTH = Math.max(...ANNOTATION_LINE_WIDTH_OPTIONS);
 
 // Styled components
 
@@ -228,7 +270,47 @@ const StyledConfigRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 9px;
+  min-height: ${props => props.theme.inputBoxHeightSmall};
+  margin-bottom: 8px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const StyledAnnotationTypeGroup = styled(ButtonGroup)`
+  width: 100%;
+  height: ${props => props.theme.inputBoxHeight};
+  align-items: stretch;
+  margin-bottom: 8px;
+`;
+
+const StyledAnnotationTypeButton = styled(Button)<{$active: boolean}>`
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  background-color: ${props => props.theme.inputBgd};
+  color: ${props => (props.$active ? props.theme.switchTrackBgdActive : props.theme.inputColor)};
+  border: 1px solid
+    ${props => (props.$active ? props.theme.switchTrackBgdActive : 'transparent')};
+
+  &:hover,
+  &:focus,
+  &:active {
+    background-color: ${props => props.theme.inputBgdHover};
+    color: ${props => (props.$active ? props.theme.switchTrackBgdActive : props.theme.inputColor)};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${props => props.theme.switchTrackBgdActive};
+    outline-offset: -2px;
+  }
+
+  svg {
+    margin-right: 0;
+  }
 `;
 
 const StyledConfigLabel = styled.div`
@@ -237,27 +319,59 @@ const StyledConfigLabel = styled.div`
   text-transform: capitalize;
 `;
 
-const StyledSelect = styled.select`
-  background: ${props => props.theme.inputBgd};
-  color: ${props => props.theme.inputColor};
-  border: 1px solid ${props => props.theme.inputBorderColor || 'transparent'};
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
-  cursor: pointer;
+const StyledSelect = styled(ItemSelector).attrs({size: 'small'})`
   width: 100px;
+
+  .item-selector__dropdown {
+    box-sizing: border-box;
+  }
+`;
+
+const StyledRulerSwitch = styled(Switch)`
+  .kg-checkbox__label {
+    /* The track starts in the label margin; align its right edge with the row. */
+    padding-left: ${props => props.theme.switchWidth - props.theme.switchLabelMargin}px;
+  }
+`;
+
+const StyledLineWidthSlider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  margin-left: 36px;
+  height: ${props => props.theme.inputBoxHeightSmall};
+  padding-left: 6px;
+  box-sizing: border-box;
+
+  &:focus-visible {
+    outline: 2px solid ${props => props.theme.switchTrackBgdActive};
+    outline-offset: 2px;
+  }
+
+  span.annotation-line-width-value {
+    min-width: 28px;
+    text-align: right;
+    color: ${props => props.theme.effectPanelTextSecondary2};
+    font-size: ${props => props.theme.inputFontSize};
+  }
 `;
 
 const StyledColorButtonWrapper = styled.div`
   width: 100px;
   .button {
+    width: 100%;
+    height: ${props => props.theme.inputBoxHeightSmall};
+    box-sizing: border-box;
     color: ${props => props.theme.effectPanelTextSecondary2};
     display: flex;
+    justify-content: space-between;
     gap: 5px;
     border: none;
     transition: background 0.2s;
     background-color: ${props => props.theme.inputBgd};
-    padding: 8px 5px 8px 10px;
+    padding: 4px 5px 4px 10px;
     &:active {
       color: ${props => props.theme.effectPanelTextMain};
       background-color: ${props => props.theme.inputBgdHover};
@@ -395,10 +509,39 @@ export default function AnnotationManagerFactory(): React.FC<any> {
       [visStateActions]
     );
 
+    const handleLineWidthKeyDown = useCallback(
+      (event: React.KeyboardEvent, annotation: Annotation) => {
+        const widths: Record<string, number> = {
+          ArrowLeft: annotation.lineWidth - 1,
+          ArrowDown: annotation.lineWidth - 1,
+          ArrowRight: annotation.lineWidth + 1,
+          ArrowUp: annotation.lineWidth + 1,
+          Home: MIN_LINE_WIDTH,
+          End: MAX_LINE_WIDTH
+        };
+        const width = widths[event.key];
+        if (!Number.isFinite(width)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const lineWidth = Math.min(MAX_LINE_WIDTH, Math.max(MIN_LINE_WIDTH, Math.round(width)));
+        if (lineWidth !== annotation.lineWidth) {
+          handleChangeLineWidth(annotation.id, lineWidth);
+        }
+      },
+      [handleChangeLineWidth]
+    );
+
     const handleChangeLineColor = useCallback(
       (id: string, rgb: [number, number, number]) => {
         const lineColor = rgbToHex(rgb);
         visStateActions.updateAnnotation(id, {lineColor});
+      },
+      [visStateActions]
+    );
+
+    const handleToggleRulerText = useCallback(
+      (id: string, property: 'showCustomText' | 'showDistance', checked: boolean) => {
+        visStateActions.updateAnnotation(id, {[property]: checked});
       },
       [visStateActions]
     );
@@ -545,26 +688,30 @@ export default function AnnotationManagerFactory(): React.FC<any> {
 
                   {isSelected ? (
                     <StyledConfigSection>
-                      <StyledConfigRow>
-                        <StyledConfigLabel>
-                          {intl.formatMessage({
-                            id: 'annotationManager.type',
-                            defaultMessage: 'Type'
-                          })}
-                        </StyledConfigLabel>
-                        <StyledSelect
-                          value={annotation.kind}
-                          onChange={e =>
-                            handleChangeKind(annotation.id, e.target.value as AnnotationKind)
-                          }
-                        >
-                          {ANNOTATION_KINDS.map(k => (
-                            <option key={k.id} value={k.id}>
-                              {k.label}
-                            </option>
-                          ))}
-                        </StyledSelect>
-                      </StyledConfigRow>
+                      <StyledAnnotationTypeGroup
+                        role="group"
+                        aria-label={intl.formatMessage({
+                          id: 'annotationManager.type',
+                          defaultMessage: 'Type'
+                        })}
+                      >
+                        {ANNOTATION_KINDS.map(({id, label}) => {
+                          const Icon = ANNOTATION_ICONS[id];
+                          return (
+                            <StyledAnnotationTypeButton
+                              key={id}
+                              type="button"
+                              title={label}
+                              aria-label={label}
+                              aria-pressed={annotation.kind === id}
+                              $active={annotation.kind === id}
+                              onClick={() => handleChangeKind(annotation.id, id)}
+                            >
+                              <Icon height="20px" aria-hidden="true" focusable="false" />
+                            </StyledAnnotationTypeButton>
+                          );
+                        })}
+                      </StyledAnnotationTypeGroup>
                       <StyledConfigRow>
                         <StyledConfigLabel>
                           {intl.formatMessage({
@@ -572,18 +719,32 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                             defaultMessage: 'Line Width'
                           })}
                         </StyledConfigLabel>
-                        <StyledSelect
-                          value={annotation.lineWidth}
-                          onChange={e =>
-                            handleChangeLineWidth(annotation.id, Number(e.target.value))
-                          }
+                        <StyledLineWidthSlider
+                          role="slider"
+                          tabIndex={0}
+                          aria-label={intl.formatMessage({
+                            id: 'annotationManager.lineWidth',
+                            defaultMessage: 'Line Width'
+                          })}
+                          aria-valuemin={MIN_LINE_WIDTH}
+                          aria-valuemax={MAX_LINE_WIDTH}
+                          aria-valuenow={annotation.lineWidth}
+                          aria-valuetext={`${annotation.lineWidth}px`}
+                          onKeyDown={event => handleLineWidthKeyDown(event, annotation)}
                         >
-                          {ANNOTATION_LINE_WIDTH_OPTIONS.map(w => (
-                            <option key={w} value={w}>
-                              {w}px
-                            </option>
-                          ))}
-                        </StyledSelect>
+                          <Slider
+                            minValue={MIN_LINE_WIDTH}
+                            maxValue={MAX_LINE_WIDTH}
+                            value0={MIN_LINE_WIDTH}
+                            value1={annotation.lineWidth}
+                            step={1}
+                            isRanged={false}
+                            onSlider1Change={width => handleChangeLineWidth(annotation.id, width)}
+                          />
+                          <span className="annotation-line-width-value">
+                            {annotation.lineWidth}px
+                          </span>
+                        </StyledLineWidthSlider>
                       </StyledConfigRow>
                       <StyledConfigRow>
                         <StyledConfigLabel>
@@ -597,50 +758,105 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           onSetColor={rgb => handleChangeLineColor(annotation.id, rgb)}
                         />
                       </StyledConfigRow>
-                      <StyledConfigRow>
-                        <StyledConfigLabel>
-                          {intl.formatMessage({
-                            id: 'annotationManager.textSide',
-                            defaultMessage: 'Text Side'
-                          })}
-                        </StyledConfigLabel>
-                        <StyledSelect
-                          value={textPlacement.side}
-                          onChange={e =>
-                            handleChangeTextPlacement(annotation, {
-                              textSide: e.target.value as AnnotationTextSide
-                            })
-                          }
-                        >
-                          {ANNOTATION_TEXT_SIDES.map(s => (
-                            <option key={s.id} value={s.id}>
-                              {s.label}
-                            </option>
-                          ))}
-                        </StyledSelect>
-                      </StyledConfigRow>
-                      <StyledConfigRow>
-                        <StyledConfigLabel>
-                          {intl.formatMessage({
-                            id: 'annotationManager.textPlacement',
-                            defaultMessage: 'Placement'
-                          })}
-                        </StyledConfigLabel>
-                        <StyledSelect
-                          value={textPlacement.vertical}
-                          onChange={e =>
-                            handleChangeTextPlacement(annotation, {
-                              textVerticalPosition: e.target.value as AnnotationTextVerticalPosition
-                            })
-                          }
-                        >
-                          {ANNOTATION_TEXT_VERTICAL_POSITIONS.map(p => (
-                            <option key={p.id} value={p.id}>
-                              {p.label}
-                            </option>
-                          ))}
-                        </StyledSelect>
-                      </StyledConfigRow>
+                      {annotation.kind === AnnotationKind.RULER ? (
+                        <>
+                          <StyledConfigRow>
+                            <StyledConfigLabel
+                              as="label"
+                              htmlFor={`annotation-${annotation.id}-show-custom-text`}
+                            >
+                              {intl.formatMessage({
+                                id: 'annotationManager.customText',
+                                defaultMessage: 'Custom Text'
+                              })}
+                            </StyledConfigLabel>
+                            <StyledRulerSwitch
+                              id={`annotation-${annotation.id}-show-custom-text`}
+                              checked={annotation.showCustomText}
+                              onChange={event =>
+                                handleToggleRulerText(
+                                  annotation.id,
+                                  'showCustomText',
+                                  event.target.checked
+                                )
+                              }
+                            />
+                          </StyledConfigRow>
+                          <StyledConfigRow>
+                            <StyledConfigLabel
+                              as="label"
+                              htmlFor={`annotation-${annotation.id}-show-distance`}
+                            >
+                              {intl.formatMessage({
+                                id: 'annotationManager.distance',
+                                defaultMessage: 'Distance'
+                              })}
+                            </StyledConfigLabel>
+                            <StyledRulerSwitch
+                              id={`annotation-${annotation.id}-show-distance`}
+                              checked={annotation.showDistance}
+                              onChange={event =>
+                                handleToggleRulerText(
+                                  annotation.id,
+                                  'showDistance',
+                                  event.target.checked
+                                )
+                              }
+                            />
+                          </StyledConfigRow>
+                        </>
+                      ) : (
+                        <>
+                          <StyledConfigRow>
+                            <StyledConfigLabel>
+                              {intl.formatMessage({
+                                id: 'annotationManager.textSide',
+                                defaultMessage: 'Text Side'
+                              })}
+                            </StyledConfigLabel>
+                            <StyledSelect
+                              selectedItems={ANNOTATION_TEXT_SIDES.find(
+                                s => s.id === textPlacement.side
+                              )}
+                              options={ANNOTATION_TEXT_SIDES}
+                              displayOption="label"
+                              getOptionValue="id"
+                              multiSelect={false}
+                              searchable={false}
+                              onChange={side => {
+                                if (side == null) return;
+                                handleChangeTextPlacement(annotation, {
+                                  textSide: side as AnnotationTextSide
+                                });
+                              }}
+                            />
+                          </StyledConfigRow>
+                          <StyledConfigRow>
+                            <StyledConfigLabel>
+                              {intl.formatMessage({
+                                id: 'annotationManager.textPlacement',
+                                defaultMessage: 'Placement'
+                              })}
+                            </StyledConfigLabel>
+                            <StyledSelect
+                              selectedItems={ANNOTATION_TEXT_VERTICAL_POSITIONS.find(
+                                p => p.id === textPlacement.vertical
+                              )}
+                              options={ANNOTATION_TEXT_VERTICAL_POSITIONS}
+                              displayOption="label"
+                              getOptionValue="id"
+                              multiSelect={false}
+                              searchable={false}
+                              onChange={position => {
+                                if (position == null) return;
+                                handleChangeTextPlacement(annotation, {
+                                  textVerticalPosition: position as AnnotationTextVerticalPosition
+                                });
+                              }}
+                            />
+                          </StyledConfigRow>
+                        </>
+                      )}
                     </StyledConfigSection>
                   ) : null}
                 </StyledAnnotationItemWrapper>

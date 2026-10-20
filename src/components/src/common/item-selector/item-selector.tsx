@@ -243,7 +243,9 @@ class ItemSelectorUnmemoized extends Component<
       }
       this._preparingSelection = false;
       if (this.props.closeOnSelect) {
-        this.setState({showTypeahead: false, preparing: false});
+        this.setState({showTypeahead: false, preparing: false}, () => {
+          if (!this.props.multiSelect) this.root.current?.focus();
+        });
         this._onBlur();
       } else {
         this.setState({preparing: false});
@@ -270,7 +272,7 @@ class ItemSelectorUnmemoized extends Component<
     this.props.onChange(null);
   };
 
-  _showTypeahead: MouseEventHandler = e => {
+  _showTypeahead = (e: React.SyntheticEvent<unknown>) => {
     e.stopPropagation();
     if (!this.props.disabled) {
       if (this.props.onOpen) {
@@ -279,6 +281,22 @@ class ItemSelectorUnmemoized extends Component<
       this.setState({
         showTypeahead: true
       });
+    }
+  };
+
+  _handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (this.props.multiSelect || this.props.disabled) return;
+    if (event.key === 'Escape' && this.state.showTypeahead) {
+      event.preventDefault();
+      event.stopPropagation();
+      this._hideTypeahead();
+      this.root.current?.focus();
+    } else if (
+      event.target === event.currentTarget &&
+      ['Enter', ' ', 'ArrowDown'].includes(event.key)
+    ) {
+      event.preventDefault();
+      this._showTypeahead(event);
     }
   };
 
@@ -351,7 +369,15 @@ class ItemSelectorUnmemoized extends Component<
     const intl = this.props.intl;
 
     return (
-      <div className={classnames('item-selector', this.props.className)} ref={this.root}>
+      <div
+        className={classnames('item-selector', this.props.className)}
+        ref={this.root}
+        role={this.props.multiSelect ? undefined : 'button'}
+        tabIndex={!this.props.multiSelect && !disabled ? 0 : undefined}
+        aria-expanded={this.props.multiSelect ? undefined : this.state.showTypeahead}
+        aria-disabled={this.props.multiSelect ? undefined : Boolean(disabled)}
+        onKeyDown={this._handleKeyDown}
+      >
         <div style={{position: 'relative'}}>
           {/* this part is used to display the label */}
           {this.props.multiSelect ? (

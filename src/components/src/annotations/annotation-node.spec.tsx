@@ -8,7 +8,7 @@ import {render} from '@testing-library/react';
 import {AnnotationKind} from '@kepler.gl/constants';
 import {Annotation} from '@kepler.gl/types';
 
-import AnnotationNode from './annotation-node';
+import AnnotationNode, {RulerEndpointHandles} from './annotation-node';
 import {MapViewport} from './annotation-utils';
 
 const annotation: Annotation = {
@@ -35,6 +35,23 @@ const viewport: MapViewport = {
   width: 800,
   height: 600,
   zoom: 4
+};
+
+const rulerAnnotation: Annotation = {
+  id: 'ruler-1',
+  kind: AnnotationKind.RULER,
+  isVisible: true,
+  autoSize: true,
+  autoSizeY: true,
+  anchorPoint: [0, 0, 10],
+  endPoint: [2, 0, 30],
+  label: 'Measured span',
+  lineColor: '#ffffff',
+  lineWidth: 2,
+  textWidth: 120,
+  textHeight: 40,
+  showCustomText: true,
+  showDistance: true
 };
 
 describe('AnnotationNode', () => {
@@ -71,5 +88,55 @@ describe('AnnotationNode', () => {
     );
 
     expect(shape.style.display).toBe('');
+  });
+
+  test('renders a ruler line and only exposes both endpoint handles while editing', () => {
+    const projectingViewport: MapViewport = {
+      ...viewport,
+      project: ([lng, _lat, altitude = 0]) => [100 + lng * 10, 200 - altitude]
+    };
+    const {container, rerender} = render(
+      <svg>
+        <DndContext>
+          <AnnotationNode
+            annotation={rulerAnnotation}
+            viewport={projectingViewport}
+            isEditing={true}
+            isSelected={true}
+          />
+          <RulerEndpointHandles
+            annotation={rulerAnnotation}
+            viewport={projectingViewport}
+            isEditing={true}
+            isSelected={true}
+          />
+        </DndContext>
+      </svg>
+    );
+
+    expect(container.querySelector('path')).toHaveAttribute('d', 'M0,0 L20,-20');
+    expect(container.querySelectorAll('circle')).toHaveLength(4);
+
+    rerender(
+      <svg>
+        <DndContext>
+          <AnnotationNode
+            annotation={rulerAnnotation}
+            viewport={projectingViewport}
+            isEditing={false}
+            isSelected={false}
+          />
+          <RulerEndpointHandles
+            annotation={rulerAnnotation}
+            viewport={projectingViewport}
+            isEditing={false}
+            isSelected={false}
+          />
+        </DndContext>
+      </svg>
+    );
+
+    expect(container.querySelector('path')).toBeInTheDocument();
+    expect(container.querySelectorAll('circle')).toHaveLength(0);
   });
 });

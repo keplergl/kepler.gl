@@ -51,6 +51,11 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Draw on Map](./draw-on-map.md)
 
+#### [Annotations and Rulers](./annotations.md)
+* [Create a ruler](./annotations.md#create-a-ruler)
+* [Edit ruler labels](./annotations.md#edit-ruler-labels)
+* [3D placement and distance](./annotations.md#3d-placement-and-distance)
+
 #### [Map styles](./f-map-styles.md#map-styles)
 * [Base map styles](./f-map-styles.md#base-map-styles)
 * [Map layers](./f-map-styles.md#toggle-map-layers)

@@ -76,6 +76,37 @@ test('exportUtils -> ExportHtml includes map info', t => {
   t.end();
 });
 
+test('exportUtils -> ExportHtml preserves ruler annotation geometry and text settings', t => {
+  const html = exportMapToHTML({
+    datasets: [],
+    config: {
+      version: 'v1',
+      config: {
+        visState: {
+          annotations: [
+            {
+              id: 'ruler-1',
+              kind: 'RULER',
+              anchorPoint: [0, 0, 10],
+              endPoint: [1, 1, 80],
+              showCustomText: false,
+              showDistance: true
+            }
+          ]
+        }
+      }
+    },
+    mode: 'READ'
+  });
+
+  t.ok(html.includes('"kind":"RULER"'), 'HTML should embed the ruler variant');
+  t.ok(html.includes('"endPoint":[1,1,80]'), 'HTML should embed its 3D endpoint');
+  t.ok(html.includes('"showCustomText":false'), 'HTML should embed custom-text visibility');
+  t.ok(html.includes('"showDistance":true'), 'HTML should embed distance visibility');
+
+  t.end();
+});
+
 test('exportUtils -> ExportHtml mounts editable and view-only export controls', t => {
   const editHtml = exportMapToHTML({
     datasets: [],
