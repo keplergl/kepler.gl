@@ -84,6 +84,64 @@ async function initializeGeoJsonColumnLayer(
   return {dataset, layer};
 }
 
+describe('GeoJsonLayer default layer discovery', () => {
+  const createDataset = async (geometryCount: number) => {
+    const dataset = new KeplerTable({
+      info: {id: 'geojson-default-layers'},
+      color: [0, 0, 0]
+    });
+    await dataset.importData({
+      data: {
+        fields: [
+          {name: 'id', type: ALL_FIELD_TYPES.string},
+          ...Array.from({length: geometryCount}, (_, index) => ({
+            name: `geometry_${index}`,
+            type: ALL_FIELD_TYPES.geojson,
+            analyzerType: 'GEOMETRY'
+          }))
+        ],
+        rows: [
+          [
+            'feature',
+            ...Array.from({length: geometryCount}, (_, index) => ({
+              type: 'Feature',
+              geometry: polygon(index),
+              properties: {}
+            }))
+          ]
+        ]
+      } as any
+    });
+    return dataset;
+  };
+
+  test.each([0, 1, 2, 4])(
+    'creates at most two defaults for %i geometry columns in field order',
+    async geometryCount => {
+      const dataset = await createDataset(geometryCount);
+      const {props} = GeoJsonLayer.findDefaultLayerProps(dataset);
+
+      expect(props.map(prop => prop.columns.geojson.value)).toEqual(
+        Array.from({length: Math.min(geometryCount, 2)}, (_, index) => `geometry_${index}`)
+      );
+    }
+  );
+
+  test('allows a layer to use a geometry column beyond the automatic defaults', async () => {
+    const dataset = await createDataset(4);
+    const layer = new GeoJsonLayer({
+      dataId: dataset.id,
+      columns: {geojson: {value: 'geometry_3', fieldIdx: 4}}
+    });
+
+    layer.setInitialLayerConfig(dataset);
+
+    expect(layer.config.columns.geojson.value).toBe('geometry_3');
+    expect(layer.config.columns.geojson.fieldIdx).toBe(4);
+    expect(layer.dataToFeature).toEqual([expect.objectContaining({geometry: polygon(3)})]);
+  });
+});
+
 describe('GeoJsonLayer default color field', () => {
   test('keeps string and integer-only polygon data uniformly colored', async () => {
     const {layer} = await initializeGeoJsonLayer([
