@@ -291,6 +291,9 @@ export function getTextLabelPosition(
 // don't use strokes by default for datasets with large number of polygons
 const DEFAULT_POLYGON_STROKE_LIMIT = 100000;
 
+// Bound the extra column scans used to reject constant default color fields.
+const DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT = 1_000_000;
+
 export const COLUMN_MODE_TABLE = 'table';
 const SUPPORTED_COLUMN_MODES = [
   {
@@ -809,7 +812,12 @@ export default class GeoJsonLayer extends Layer {
     if (colorChannel && !hasEmbeddedColor) {
       let fields = dataset.fields;
       let defaultColorField = findDefaultColorField(dataset);
-      while (defaultColorField) {
+      const maxFieldChecks = Math.floor(
+        DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT / dataContainer.numRows()
+      );
+      let fieldsChecked = 0;
+      while (defaultColorField && fieldsChecked < maxFieldChecks) {
+        fieldsChecked++;
         const {valueAccessor} = defaultColorField;
         const [min, max] = extent(dataset.filteredIndexForDomain, index => valueAccessor({index}));
         if (min !== max) {

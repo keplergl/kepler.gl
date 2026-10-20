@@ -28,7 +28,8 @@ const polygon = (x: number) => ({
 });
 
 async function initializeGeoJsonLayer(
-  features: Array<{geometry: Record<string, unknown>; properties: Record<string, unknown>}>
+  features: Array<{geometry: Record<string, unknown>; properties: Record<string, unknown>}>,
+  rowCount?: number
 ) {
   const dataset = new KeplerTable({
     info: {id: 'geojson-default-color'},
@@ -48,6 +49,11 @@ async function initializeGeoJsonLayer(
     throw new Error('Expected GeoJSON layer props');
   }
   const layer = new GeoJsonLayer({...props[0], dataId: dataset.id});
+  if (rowCount !== undefined) {
+    // Cache geometry metadata before simulating a large dataset's row count.
+    layer.updateLayerMeta(dataset);
+    jest.spyOn(dataset.dataContainer, 'numRows').mockReturnValue(rowCount);
+  }
   layer.setInitialLayerConfig(dataset);
   return {dataset, layer};
 }
@@ -160,6 +166,33 @@ describe('GeoJsonLayer default color field', () => {
     expect(layer.config.colorField).toBeNull();
     expect(layer.config.strokeColorField).toBeNull();
   });
+
+  test.each([
+    {rowCount: 20_000, varyingColumn: 9, expected: 'score_9'},
+    {rowCount: 300_000, varyingColumn: 2, expected: 'score_2'},
+    {rowCount: 300_000, varyingColumn: 3, expected: null},
+    {rowCount: 250_000, varyingColumn: 3, expected: 'score_3'},
+    {rowCount: 250_001, varyingColumn: 3, expected: null},
+    {rowCount: 1_000_000, varyingColumn: 0, expected: 'score_0'},
+    {rowCount: 1_000_001, varyingColumn: 0, expected: null}
+  ])(
+    'limits candidate checks for $rowCount rows with varying column $varyingColumn',
+    async ({rowCount, varyingColumn, expected}) => {
+      const properties = Object.fromEntries(
+        Array.from({length: 10}, (_, index) => [`score_${index}`, 0.5])
+      );
+      const {layer} = await initializeGeoJsonLayer(
+        [
+          {geometry: point(0), properties: {...properties, [`score_${varyingColumn}`]: 0.25}},
+          {geometry: point(1), properties: {...properties, [`score_${varyingColumn}`]: 0.75}}
+        ],
+        rowCount
+      );
+
+      expect(layer.config.colorField?.name ?? null).toBe(expected);
+      expect(layer.config.strokeColorField).toBeNull();
+    }
+  );
 
   test('uses stroke color for line-only data', async () => {
     const {layer} = await initializeGeoJsonLayer([
