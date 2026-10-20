@@ -70,12 +70,74 @@ const MapInfoInput = styled(InputLight)`
   max-width: 380px;
 `;
 
+const ApplicationNameInputs = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 380px;
+
+  ${MapInfoInput} {
+    flex: 1;
+    min-width: 0;
+  }
+`;
+
+const ApplicationColorInput = styled(InputLight)`
+  flex: 0 0 36px;
+  width: 36px;
+  padding: 2px;
+  cursor: pointer;
+`;
+
+const BrandingPreview = styled.div`
+  display: flex;
+  align-items: center;
+  max-width: 380px;
+
+  img {
+    object-fit: contain;
+  }
+
+  a {
+    margin-left: 6px;
+    font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1.17px;
+    text-decoration: none;
+  }
+`;
+
 const DEFAULT_APP_NAME_COLOR = '#1FBAD6';
 
 function getAppNameColorInputValue(value: unknown): string {
   return typeof value === 'string' && /^#[\da-f]{6}$/i.test(value)
     ? value
     : DEFAULT_APP_NAME_COLOR;
+}
+
+function getBrandingURL(value: unknown, fallback: string | null): string | null {
+  if (typeof value !== 'string' || !value.trim()) {
+    return fallback;
+  }
+
+  const trimmedValue = value.trim();
+  if (/^[a-z][a-z\d+.-]*:/i.test(trimmedValue) && !/^https?:/i.test(trimmedValue)) {
+    return fallback;
+  }
+
+  const absoluteValue = /^https?:/i.test(trimmedValue)
+    ? trimmedValue
+    : trimmedValue.startsWith('//')
+    ? `https:${trimmedValue}`
+    : `https://${trimmedValue}`;
+
+  try {
+    const url = new URL(absoluteValue);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 const style = {width: '100%'};
@@ -151,6 +213,11 @@ function ExportMapModalFactory(
     const [draftDescription, setDraftDescription] = useState(mapInfo?.description ?? '');
     const htmlOptions = options[EXPORT_MAP_FORMATS.HTML] || {};
     const showCustomExportBranding = getApplicationConfig().enableCustomExportBranding;
+    const previewName = options.appName || appName || KEPLER_GL_NAME;
+    const previewWebsite =
+      getBrandingURL(options.appWebsite ?? appWebsite, KEPLER_GL_WEBSITE) || KEPLER_GL_WEBSITE;
+    const previewIcon = getBrandingURL(options.appIcon, null);
+    const previewColor = getAppNameColorInputValue(options.appNameColor);
     return (
       <StyledExportMapModalContent className="export-map-modal">
         <div style={style}>
@@ -278,31 +345,25 @@ function ExportMapModalFactory(
                     </div>
                   </div>
                   <div className="selection">
-                    <MapInfoInput
-                      id="export-map-app-name"
-                      type="text"
-                      value={options.appName ?? appName ?? KEPLER_GL_NAME}
-                      aria-label={intl.formatMessage({id: 'modal.exportMap.appNameTitle'})}
-                      onChange={event => onChangeExportMapBranding({appName: event.target.value})}
-                    />
-                  </div>
-                </StyledExportMapSection>
-                <StyledExportMapSection>
-                  <div className="description description--centered">
-                    <div className="title">
-                      <FormattedMessage id="modal.exportMap.appNameColorTitle" />
-                    </div>
-                  </div>
-                  <div className="selection">
-                    <MapInfoInput
-                      id="export-map-app-name-color"
-                      type="color"
-                      value={getAppNameColorInputValue(options.appNameColor)}
-                      aria-label={intl.formatMessage({id: 'modal.exportMap.appNameColorTitle'})}
-                      onChange={event =>
-                        onChangeExportMapBranding({appNameColor: event.target.value})
-                      }
-                    />
+                    <ApplicationNameInputs>
+                      <MapInfoInput
+                        id="export-map-app-name"
+                        type="text"
+                        value={options.appName ?? appName ?? KEPLER_GL_NAME}
+                        aria-label={intl.formatMessage({id: 'modal.exportMap.appNameTitle'})}
+                        onChange={event => onChangeExportMapBranding({appName: event.target.value})}
+                      />
+                      <ApplicationColorInput
+                        id="export-map-app-name-color"
+                        type="color"
+                        value={previewColor}
+                        aria-label={intl.formatMessage({id: 'modal.exportMap.appNameColorTitle'})}
+                        title={intl.formatMessage({id: 'modal.exportMap.appNameColorTitle'})}
+                        onChange={event =>
+                          onChangeExportMapBranding({appNameColor: event.target.value})
+                        }
+                      />
+                    </ApplicationNameInputs>
                   </div>
                 </StyledExportMapSection>
                 <StyledExportMapSection>
@@ -325,9 +386,15 @@ function ExportMapModalFactory(
                 </StyledExportMapSection>
                 <StyledExportMapSection>
                   <div className="description description--centered">
-                    <div className="title">
+                    <ExportMapSectionTitle>
                       <FormattedMessage id="modal.exportMap.appIconTitle" />
-                    </div>
+                      <ExportMapHelp
+                        id="export-map-app-icon-help"
+                        label={intl.formatMessage({id: 'modal.exportMap.appIconHelpLabel'})}
+                      >
+                        <FormattedMessage id="modal.exportMap.appIconHelp" />
+                      </ExportMapHelp>
+                    </ExportMapSectionTitle>
                   </div>
                   <div className="selection">
                     <MapInfoInput
@@ -335,8 +402,44 @@ function ExportMapModalFactory(
                       type="url"
                       value={options.appIcon ?? ''}
                       aria-label={intl.formatMessage({id: 'modal.exportMap.appIconTitle'})}
+                      aria-describedby="export-map-app-icon-help"
                       onChange={event => onChangeExportMapBranding({appIcon: event.target.value})}
                     />
+                  </div>
+                </StyledExportMapSection>
+                <StyledExportMapSection>
+                  <div className="description description--centered">
+                    <div className="title">
+                      <FormattedMessage id="modal.exportMap.brandingPreviewTitle" />
+                    </div>
+                  </div>
+                  <div className="selection">
+                    <BrandingPreview
+                      role="group"
+                      aria-label={intl.formatMessage({id: 'modal.exportMap.brandingPreviewTitle'})}
+                    >
+                      <div>
+                        {previewIcon ? (
+                          <img src={previewIcon} alt="" aria-hidden width="22" height="15" />
+                        ) : (
+                          <svg width="22" height="15" viewBox="0 0 22 15" aria-hidden>
+                            <g transform="translate(11, -3) rotate(45.000000)">
+                              <rect fill="#535C6C" x="0" y="5" width="10" height="10" />
+                              <rect fill="#1FBAD6" x="5" y="0" width="10" height="10" />
+                            </g>
+                          </svg>
+                        )}
+                      </div>
+                      <a
+                        href={previewWebsite}
+                        title={previewWebsite}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{color: previewColor}}
+                      >
+                        <span style={{color: previewColor}}>{previewName}</span>
+                      </a>
+                    </BrandingPreview>
                   </div>
                 </StyledExportMapSection>
               </>

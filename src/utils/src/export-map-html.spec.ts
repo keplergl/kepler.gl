@@ -2,6 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import {EXPORT_HTML_MAP_MODES} from '@kepler.gl/constants';
+import {registerEntry} from '@kepler.gl/actions';
+import keplerGlReducer, {INITIAL_UI_STATE} from '@kepler.gl/reducers';
+import {combineReducers} from 'redux';
 
 import {exportMapToHTML} from './export-map-html';
 
@@ -54,6 +57,33 @@ describe('exportMapToHTML branding', () => {
     expect(
       getBranding({appIcon: 'javascript:alert(1)', appNameColor: 'red'}).branding
     ).toMatchObject({appIcon: null, appNameColor: '#1FBAD6'});
+  });
+
+  test('preserves branding and default export options when an editable map is exported again', () => {
+    const {branding, html} = getBranding({
+      mode: EXPORT_HTML_MAP_MODES.EDIT,
+      appName: 'Atlas',
+      appWebsite: 'atlas.test/maps',
+      appIcon: 'atlas.test/icon.svg',
+      appNameColor: '#123456'
+    });
+    const reducerMatch = html.match(/const reducers = ([\s\S]*?);\s+const middleWares/);
+    if (!reducerMatch) {
+      throw new Error('Exported HTML did not initialize its reducers');
+    }
+    const reducerScript = reducerMatch[1];
+    const reducer = new Function(
+      'Redux',
+      'KeplerGl',
+      'savedStyleType',
+      'branding',
+      `return ${reducerScript}`
+    )({combineReducers}, {keplerGlReducer, INITIAL_UI_STATE}, null, branding);
+    const state = reducer(undefined, registerEntry({id: 'map'}));
+    const exportOptions = state.keplerGl.map.uiState.exportMap;
+
+    expect(exportOptions).toEqual({...INITIAL_UI_STATE.exportMap, ...branding});
+    expect(getBranding(exportOptions).branding).toEqual(branding);
   });
 
   test('keeps icon branding script-safe', () => {

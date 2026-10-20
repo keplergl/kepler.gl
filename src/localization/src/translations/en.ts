@@ -835,6 +835,10 @@ export default {
       appNameColorTitle: 'Application name color',
       appWebsiteTitle: 'Website',
       appIconTitle: 'Icon URL',
+      appIconHelpLabel: 'Icon requirements',
+      appIconHelp:
+        'Use a direct, publicly accessible HTTP(S) URL to an image, such as SVG or PNG. Icons fit within 22 × 15 px and keep their proportions. A transparent background is recommended. Leave blank for the default kepler.gl icon.',
+      brandingPreviewTitle: 'Preview',
       includeApiKeysTitle: 'Layer API keys',
       includeApiKeys: 'Include layer API keys',
       includeApiKeysHelpLabel: 'About layer API keys',

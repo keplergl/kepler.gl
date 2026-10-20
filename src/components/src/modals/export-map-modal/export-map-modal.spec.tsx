@@ -7,7 +7,7 @@ import {fireEvent, within} from '@testing-library/react';
 import {EXPORT_HTML_MAP_DOC, EXPORT_HTML_MAP_MODES, EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import {messages} from '@kepler.gl/localization';
 import {INITIAL_UI_STATE} from '@kepler.gl/reducers';
-import {initApplicationConfig} from '@kepler.gl/utils';
+import {exportMapToHTML, initApplicationConfig} from '@kepler.gl/utils';
 import {IntlProvider} from 'react-intl';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
@@ -119,6 +119,7 @@ describe('ExportMapModal', () => {
     expect(queryByLabelText('Application name color')).toBeNull();
     expect(queryByLabelText('Website')).toBeNull();
     expect(queryByLabelText('Icon URL')).toBeNull();
+    expect(queryByRole('group', {name: 'Preview'})).toBeNull();
 
     fireEvent.change(getByLabelText('Name'), {target: {value: 'Updated map'}});
     expect(defaultProps.onMapInfoDraft).toHaveBeenCalledWith({
@@ -228,9 +229,32 @@ describe('ExportMapModal', () => {
     expect(getByLabelText('Application name color')).toHaveValue('#1fbad6');
     expect(getByLabelText('Website')).toHaveValue('https://maps.acme.test');
     expect(getByLabelText('Icon URL')).toHaveValue('');
-    ['Name', 'Description', 'Application name', 'Application name color', 'Website', 'Icon URL'].forEach(label =>
-      expectCenteredRowLabel(getByLabelText(label))
+    const iconHelp = getByRole('button', {name: 'Icon requirements'});
+    expect(iconHelp.parentElement).toHaveTextContent('Icon URL');
+    expect(iconHelp).toHaveAttribute('aria-describedby', 'export-map-app-icon-help');
+    expect(getByLabelText('Icon URL')).toHaveAttribute(
+      'aria-describedby',
+      'export-map-app-icon-help'
     );
+    const iconRequirements = document.getElementById('export-map-app-icon-help');
+    expect(iconRequirements).toHaveTextContent('direct, publicly accessible HTTP(S) URL');
+    expect(iconRequirements).toHaveTextContent('SVG or PNG');
+    expect(iconRequirements).toHaveTextContent('22 × 15 px and keep their proportions');
+    expect(iconRequirements).toHaveTextContent('transparent background is recommended');
+    expect(iconRequirements).toHaveTextContent('Leave blank for the default kepler.gl icon');
+    [
+      'Name',
+      'Description',
+      'Application name',
+      'Application name color',
+      'Website',
+      'Icon URL'
+    ].forEach(label => expectCenteredRowLabel(getByLabelText(label)));
+    const nameInput = getByLabelText('Application name');
+    const colorInput = getByLabelText('Application name color');
+    expect(nameInput.nextElementSibling).toBe(colorInput);
+    expect(getComputedStyle(nameInput.parentElement as Element).display).toBe('flex');
+    expect(queryByText('Application name color')).toBeNull();
 
     fireEvent.change(getByLabelText('Application name'), {target: {value: 'Atlas'}});
     expect(defaultProps.onChangeExportMapBranding).toHaveBeenCalledWith({appName: 'Atlas'});
@@ -284,9 +308,89 @@ describe('ExportMapModal', () => {
 
     fireEvent.change(appNameInput, {target: {value: ''}});
     expect(appNameInput).toHaveValue('');
+    expect(within(getByRole('group', {name: 'Preview'})).getByRole('link')).toHaveTextContent(
+      'Acme Maps'
+    );
 
     fireEvent.change(appNameInput, {target: {value: 'Atlas'}});
     expect(appNameInput).toHaveValue('Atlas');
+  });
+
+  test('updates the branding preview with the same icon, link, name, and color as exported maps', () => {
+    initApplicationConfig({enableCustomExportBranding: true});
+
+    function ControlledExportMapModal() {
+      const [options, setOptions] = React.useState(INITIAL_UI_STATE.exportMap);
+      return (
+        <ExportMapModal
+          {...defaultProps}
+          options={options}
+          onChangeExportMapBranding={branding => setOptions(current => ({...current, ...branding}))}
+        />
+      );
+    }
+
+    const {getByLabelText, getByRole} = renderWithTheme(
+      <IntlProvider locale="en" messages={messages.en}>
+        <ControlledExportMapModal />
+      </IntlProvider>
+    );
+    fireEvent.click(getByRole('button', {name: 'Map details'}));
+
+    const branding = {
+      appName: 'Atlas',
+      appWebsite: 'atlas.test/maps',
+      appIcon: 'atlas.test/icon.svg',
+      appNameColor: '#123456'
+    };
+    fireEvent.change(getByLabelText('Application name'), {target: {value: branding.appName}});
+    fireEvent.change(getByLabelText('Website'), {target: {value: branding.appWebsite}});
+    fireEvent.change(getByLabelText('Icon URL'), {target: {value: branding.appIcon}});
+    fireEvent.change(getByLabelText('Application name color'), {
+      target: {value: branding.appNameColor}
+    });
+
+    const html = exportMapToHTML(branding);
+    const brandingMatch = html.match(/const branding = (.+);/);
+    if (!brandingMatch) {
+      throw new Error('Exported HTML did not serialize branding');
+    }
+    const exportedBranding = JSON.parse(brandingMatch[1]);
+    const preview = getByRole('group', {name: 'Preview'});
+    const link = within(preview).getByRole('link', {name: exportedBranding.appName});
+    expect(link).toHaveAttribute('href', exportedBranding.appWebsite);
+    expect(link).toHaveAttribute('title', exportedBranding.appWebsite);
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(link).toHaveStyle({color: exportedBranding.appNameColor});
+    expect(preview.querySelector('img')).toHaveAttribute('src', exportedBranding.appIcon);
+    expect(preview.querySelector('img')).toHaveAttribute('width', '22');
+    expect(preview.querySelector('img')).toHaveAttribute('height', '15');
+    expect(
+      getByLabelText('Icon URL').compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
+    fireEvent.change(getByLabelText('Icon URL'), {target: {value: ''}});
+    expect(preview.querySelector('img')).toBeNull();
+    expect(preview.querySelector('svg')).toBeInTheDocument();
+  });
+
+  test('uses exported branding fallbacks in the preview for invalid values', () => {
+    initApplicationConfig({enableCustomExportBranding: true});
+    const options = {
+      ...INITIAL_UI_STATE.exportMap,
+      appName: '',
+      appWebsite: 'javascript:alert(1)',
+      appIcon: 'not an icon URL',
+      appNameColor: 'red'
+    };
+    const {getByRole} = renderModal({options});
+    fireEvent.click(getByRole('button', {name: 'Map details'}));
+    const preview = getByRole('group', {name: 'Preview'});
+    const link = within(preview).getByRole('link', {name: 'Acme Maps'});
+    expect(link).toHaveAttribute('href', 'http://kepler.gl/');
+    expect(link).toHaveStyle({color: '#1FBAD6'});
+    expect(preview.querySelector('img')).toBeNull();
+    expect(preview.querySelector('svg')).toBeInTheDocument();
   });
 
   test('shows the security notice when a custom Mapbox token is embedded', () => {
