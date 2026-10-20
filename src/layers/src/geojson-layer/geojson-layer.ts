@@ -494,7 +494,7 @@ export default class GeoJsonLayer extends Layer {
     }
 
     return {
-      props: foundColumns.map(columns => ({
+      props: foundColumns.slice(0, 2).map(columns => ({
         label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
         columns,
         isVisible: true
