@@ -66,7 +66,7 @@ describe('AnnotationManager ruler settings', () => {
     for (const input of [customTextSwitch, distanceSwitch]) {
       expect(input.closest('label')).toHaveStyle({
         lineHeight: `${theme.switchHeight}px`,
-        paddingLeft: `${theme.switchWidth}px`
+        paddingLeft: `${theme.switchWidth - theme.switchLabelMargin}px`
       });
     }
   });
@@ -194,7 +194,7 @@ describe('AnnotationManager line width slider', () => {
     expect(slider).toHaveStyle({
       flex: '1',
       minWidth: '0',
-      marginLeft: '16px',
+      marginLeft: '36px',
       height: theme.inputBoxHeightSmall
     });
   });

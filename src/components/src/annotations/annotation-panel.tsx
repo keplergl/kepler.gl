@@ -327,13 +327,20 @@ const StyledSelect = styled(ItemSelector).attrs({size: 'small'})`
   }
 `;
 
+const StyledRulerSwitch = styled(Switch)`
+  .kg-checkbox__label {
+    /* The track starts in the label margin; align its right edge with the row. */
+    padding-left: ${props => props.theme.switchWidth - props.theme.switchLabelMargin}px;
+  }
+`;
+
 const StyledLineWidthSlider = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
   flex: 1;
   min-width: 0;
-  margin-left: 16px;
+  margin-left: 36px;
   height: ${props => props.theme.inputBoxHeightSmall};
   padding-left: 6px;
   box-sizing: border-box;
@@ -763,7 +770,7 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                                 defaultMessage: 'Custom Text'
                               })}
                             </StyledConfigLabel>
-                            <Switch
+                            <StyledRulerSwitch
                               id={`annotation-${annotation.id}-show-custom-text`}
                               checked={annotation.showCustomText}
                               onChange={event =>
@@ -785,7 +792,7 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                                 defaultMessage: 'Distance'
                               })}
                             </StyledConfigLabel>
-                            <Switch
+                            <StyledRulerSwitch
                               id={`annotation-${annotation.id}-show-distance`}
                               checked={annotation.showDistance}
                               onChange={event =>
