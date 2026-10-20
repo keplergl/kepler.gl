@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import {WebMercatorViewport} from '@deck.gl/core';
 import {AnnotationKind} from '@kepler.gl/constants';
 import {
   makeMarker,
@@ -282,6 +283,37 @@ test('#makeMarker -> RULER follows a start more than one wrapped world away', t 
 
   t.equal(marker.ex, 1, 'end should use the +720 degree world copy nearest the start');
   t.equal(marker.mx, 0.5, 'midpoint should remain on that short rendered segment');
+
+  t.end();
+});
+
+test('#makeMarker -> RULER keeps the nearest longitude wrap under perspective', t => {
+  const viewport = new WebMercatorViewport({
+    width: 1000,
+    height: 600,
+    longitude: 0,
+    latitude: 0,
+    zoom: 6,
+    pitch: 60,
+    bearing: 90
+  });
+  const ruler = makeRulerAnnotation({anchorPoint: [7.1444, 0], endPoint: [-3.1732, 0]});
+  const start = viewport.project(ruler.anchorPoint);
+  const end = viewport.project(ruler.endPoint);
+  const marker = makeMarker(ruler, viewport);
+  const style = getAnnotationTextBoxStyle(ruler, viewport);
+
+  t.equal(marker.ex, end[0] - start[0], 'end x should use the nearest geographic world copy');
+  t.equal(marker.ey, end[1] - start[1], 'end y should use the nearest geographic world copy');
+  t.equal(style.left, (start[0] + end[0]) / 2, 'label x should bisect the correct endpoints');
+  t.equal(style.top, (start[1] + end[1]) / 2, 'label y should bisect the correct endpoints');
+
+  let pickedScreen;
+  moveRulerEndpoint(ruler, 'end', {x: 3, y: 5}, viewport, screen => {
+    pickedScreen = screen;
+    return null;
+  });
+  t.deepEqual(pickedScreen, [end[0] + 3, end[1] + 5], 'dragging should start at the visible end');
 
   t.end();
 });

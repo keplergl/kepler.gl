@@ -81,6 +81,16 @@ export const RulerEndpointHandles: FC<RulerEndpointHandlesProps> = ({
 }) => {
   if (!isEditing) return null;
   const marker = makeMarker(annotation, viewport) as RulerAnnotationMarker;
+  // Keep both hit targets reachable, including when the endpoints coincide.
+  // Dragging still applies its delta to the geographic endpoint, not this offset.
+  const length = Math.hypot(marker.ex, marker.ey);
+  const offset = Math.max(0, (HANDLE_RADIUS * 2 + 2 - length) / 2);
+  const dx = length > 0 ? marker.ex / length : 1;
+  const dy = length > 0 ? marker.ey / length : 0;
+  const startX = -dx * offset;
+  const startY = -dy * offset;
+  const endX = marker.ex + dx * offset;
+  const endY = marker.ey + dy * offset;
   return (
     <g
       data-annotation-id={annotation.id}
@@ -93,19 +103,30 @@ export const RulerEndpointHandles: FC<RulerEndpointHandlesProps> = ({
         pointerEvents: opacity === 0 ? 'none' : undefined
       }}
     >
-      <MoveHandle id={`${annotation.id}:MOVE_RULER_START`} x={0} y={0} />
-      <MoveHandle id={`${annotation.id}:MOVE_RULER_END`} x={marker.ex} y={marker.ey} />
+      {offset > 0 ? (
+        <path
+          d={`M${startX},${startY} L0,0 M${marker.ex},${marker.ey} L${endX},${endY}`}
+          fill="none"
+          stroke="rgba(255,255,255,0.6)"
+          strokeWidth={1}
+          style={{pointerEvents: 'none'}}
+        />
+      ) : null}
+      <MoveHandle id={`${annotation.id}:MOVE_RULER_START`} x={startX} y={startY} />
+      <MoveHandle id={`${annotation.id}:MOVE_RULER_END`} x={endX} y={endY} />
       {isSelected ? (
         <>
           <circle
+            cx={startX}
+            cy={startY}
             r={HANDLE_RADIUS + 2}
             fill="none"
             stroke="rgba(64,169,255,0.6)"
             strokeWidth={2}
           />
           <circle
-            cx={marker.ex}
-            cy={marker.ey}
+            cx={endX}
+            cy={endY}
             r={HANDLE_RADIUS + 2}
             fill="none"
             stroke="rgba(64,169,255,0.6)"

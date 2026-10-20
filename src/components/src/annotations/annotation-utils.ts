@@ -87,32 +87,22 @@ function calcRadius(viewport: MapViewport, point: LngLatAltitude, radiusInMeters
 }
 
 /**
- * Project the second endpoint onto the closest wrapped world copy. This keeps a
- * ruler that crosses the antimeridian short instead of spanning the whole map.
+ * Choose the geographically closest wrapped world copy before projecting. A
+ * distant copy can appear closer on screen under perspective projection.
  */
 function projectClosestEndpoint(
   viewport: MapViewport,
   startPoint: LngLatAltitude,
   endPoint: LngLatAltitude
 ): [number, number] {
-  const [sx, sy] = viewport.project(startPoint);
   const altitude = endPoint[2];
   const nearestWrap = Math.round((startPoint[0] - endPoint[0]) / 360);
-  const candidates = [nearestWrap - 1, nearestWrap, nearestWrap + 1]
-    .map(wrap =>
-      altitude !== undefined
-        ? [endPoint[0] + wrap * 360, endPoint[1], altitude]
-        : [endPoint[0] + wrap * 360, endPoint[1]]
-    )
-    .map(point => viewport.project(point))
-    .filter(point => Number.isFinite(point[0]) && Number.isFinite(point[1]));
-  const closest = candidates.reduce<number[] | null>((best, point) => {
-    if (!best) return point;
-    const distance = (point[0] - sx) ** 2 + (point[1] - sy) ** 2;
-    const bestDistance = (best[0] - sx) ** 2 + (best[1] - sy) ** 2;
-    return distance < bestDistance ? point : best;
-  }, null);
-  return closest ? [closest[0], closest[1]] : [sx, sy];
+  const wrappedPoint = [endPoint[0] + nearestWrap * 360, endPoint[1]];
+  if (altitude !== undefined) wrappedPoint.push(altitude);
+  const [x, y] = viewport.project(wrappedPoint);
+  if (Number.isFinite(x) && Number.isFinite(y)) return [x, y];
+  const [sx, sy] = viewport.project(startPoint);
+  return [sx, sy];
 }
 
 export function makeMarker(annotation: Annotation, viewport: MapViewport): AnnotationMarker {
