@@ -230,6 +230,10 @@ type MapJsonOptions = {
   appName?: string;
   /** Optional application website to preserve in exported JSON metadata. */
   appWebsite?: string;
+  /** Optional application icon URL to preserve in exported JSON metadata. */
+  appIcon?: string;
+  /** Optional application name color to preserve in exported JSON metadata. */
+  appNameColor?: string;
 };
 
 export function getMapJSON(
@@ -247,13 +251,20 @@ export function getMapJSON(
   if (includeLayerApiKeys === false) {
     mapToSave = omitLayerApiKeys(mapToSave);
   }
-  if (options.appName !== undefined || options.appWebsite !== undefined) {
+  if (
+    options.appName !== undefined ||
+    options.appWebsite !== undefined ||
+    options.appIcon !== undefined ||
+    options.appNameColor !== undefined
+  ) {
     mapToSave = {
       ...mapToSave,
       info: {
         ...mapToSave.info,
         ...(options.appName !== undefined ? {appName: options.appName} : {}),
-        ...(options.appWebsite !== undefined ? {appWebsite: options.appWebsite} : {})
+        ...(options.appWebsite !== undefined ? {appWebsite: options.appWebsite} : {}),
+        ...(options.appIcon !== undefined ? {appIcon: options.appIcon} : {}),
+        ...(options.appNameColor !== undefined ? {appNameColor: options.appNameColor} : {})
       }
     };
   }
@@ -285,8 +296,16 @@ export function resolveMapboxTokenForExport(
 }
 
 export function exportHtml(state, options) {
-  const {userMapboxToken, exportMapboxAccessToken, mode, includeLayerApiKeys, appName, appWebsite} =
-    options;
+  const {
+    userMapboxToken,
+    exportMapboxAccessToken,
+    mode,
+    includeLayerApiKeys,
+    appName,
+    appWebsite,
+    appIcon,
+    appNameColor
+  } = options;
   const exportAppName = appName || state.appName || KEPLER_GL_NAME;
   const exportAppWebsite = appWebsite ?? state.appWebsite ?? KEPLER_GL_WEBSITE;
 
@@ -295,7 +314,9 @@ export function exportHtml(state, options) {
     mapboxApiAccessToken: resolveMapboxTokenForExport(userMapboxToken, exportMapboxAccessToken),
     mode,
     appName: exportAppName,
-    appWebsite: exportAppWebsite
+    appWebsite: exportAppWebsite,
+    appIcon,
+    appNameColor
   };
 
   const fileBlob = new Blob([exportMapToHTML(data)], {type: 'text/html'});
