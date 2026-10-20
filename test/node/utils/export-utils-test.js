@@ -24,7 +24,9 @@ test('exportUtils -> ExportJson', t => {
   const map = getMapJSON(state, {
     hasData: true,
     appName: '</script> Atlas',
-    appWebsite: 'https://atlas.example.com/?next="map"'
+    appWebsite: 'https://atlas.example.com/?next="map"',
+    appIcon: 'https://atlas.example.com/icon.svg',
+    appNameColor: '#123456'
   });
   const body = exportToJsonString(map);
   getScaleFromImageSize;
@@ -40,6 +42,12 @@ test('exportUtils -> ExportJson', t => {
     'https://atlas.example.com/?next="map"',
     'should preserve the application website'
   );
+  t.equal(
+    map.info.appIcon,
+    'https://atlas.example.com/icon.svg',
+    'should preserve the application icon'
+  );
+  t.equal(map.info.appNameColor, '#123456', 'should preserve the application name color');
   t.deepEqual(JSON.parse(body).info, map.info, 'should safely serialize branding as JSON metadata');
 
   t.end();
@@ -68,6 +76,89 @@ test('exportUtils -> ExportHtml includes map info', t => {
   t.end();
 });
 
+test('exportUtils -> ExportHtml preserves ruler annotation geometry and text settings', t => {
+  const html = exportMapToHTML({
+    datasets: [],
+    config: {
+      version: 'v1',
+      config: {
+        visState: {
+          annotations: [
+            {
+              id: 'ruler-1',
+              kind: 'RULER',
+              anchorPoint: [0, 0, 10],
+              endPoint: [1, 1, 80],
+              showCustomText: false,
+              showDistance: true
+            }
+          ]
+        }
+      }
+    },
+    mode: 'READ'
+  });
+
+  t.ok(html.includes('"kind":"RULER"'), 'HTML should embed the ruler variant');
+  t.ok(html.includes('"endPoint":[1,1,80]'), 'HTML should embed its 3D endpoint');
+  t.ok(html.includes('"showCustomText":false'), 'HTML should embed custom-text visibility');
+  t.ok(html.includes('"showDistance":true'), 'HTML should embed distance visibility');
+
+  t.end();
+});
+
+test('exportUtils -> ExportHtml mounts editable and view-only export controls', t => {
+  const editHtml = exportMapToHTML({
+    datasets: [],
+    config: {version: 'v1', config: {}},
+    mode: 'EDIT'
+  });
+  const readHtml = exportMapToHTML({
+    datasets: [],
+    config: {version: 'v1', config: {}},
+    mode: 'READ'
+  });
+
+  for (const factory of [
+    'EffectManagerFactory',
+    'AnnotationManagerFactory',
+    'ChartControlFactory',
+    'ChartManagerFactory'
+  ]) {
+    t.ok(editHtml.includes(`keplerGl.${factory}`), `editable exports should load ${factory}`);
+  }
+  t.ok(
+    editHtml.includes('actionComponents = actionComponents.concat([ChartControl, EffectControl])'),
+    'editable exports should add chart and effect controls'
+  );
+  t.ok(
+    editHtml.includes('showAnnotations ? react.createElement(AnnotationManager, null) : null'),
+    'editable exports should mount the annotation manager'
+  );
+  t.ok(
+    editHtml.includes('showCharts ? react.createElement(ChartManager'),
+    'editable exports should mount the chart manager'
+  );
+  t.ok(
+    readHtml.includes('var readOnly = Boolean(props.readOnly)') &&
+      readHtml.includes('return !readOnly || ActionComponent !== AnnotationControl'),
+    'read-only exports should remove the stock annotation editing control'
+  );
+  t.ok(
+    readHtml.includes('var showEffects = !readOnly') &&
+      readHtml.includes('var showAnnotations = !readOnly') &&
+      readHtml.includes('if (!readOnly) {'),
+    'read-only exports should suppress effect, annotation, and chart editing controls'
+  );
+  t.ok(
+    readHtml.includes('var showCharts = readOnly ? charts.length > 0') &&
+      readHtml.includes('isExport: readOnly'),
+    'read-only exports should retain immutable chart rendering'
+  );
+
+  t.end();
+});
+
 test('exportUtils -> ExportHtml escapes script terminators in map info', t => {
   const html = exportMapToHTML({
     datasets: [],
@@ -85,10 +176,99 @@ test('exportUtils -> ExportHtml escapes script terminators in map info', t => {
   t.end();
 });
 
+test('exportUtils -> ExportHtml safely serializes inline data', t => {
+  const datasetValue = '</script><div data-kepler-export-test="dataset"></div>\u2028\u2029';
+  const configValue = '</script><div data-kepler-export-test="config"></div>\u2028\u2029';
+  const savedStyleType =
+    '</script><div data-kepler-export-test="style-type"></div>\u2028\u2029';
+  const mapboxApiAccessToken =
+    '\'</script><div data-kepler-export-test="mapbox-token"></div>\u2028\u2029';
+  const version = 'test"></script><div data-kepler-export-test="version"></div>';
+  const datasets = [{data: {label: datasetValue}}];
+  const config = {
+    version: 'v1',
+    config: {
+      mapStyle: {styleType: savedStyleType},
+      metadata: configValue
+    }
+  };
+  const html = exportMapToHTML(
+    {
+      datasets,
+      config,
+      mapboxApiAccessToken,
+      mode: 'READ'
+    },
+    version
+  );
+
+  const parseAssignment = pattern => {
+    const match = html.match(pattern);
+    t.ok(match, `exported html should include ${pattern}`);
+    if (!match) {
+      return undefined;
+    }
+    try {
+      return JSON.parse(match[1]);
+    } catch {
+      return undefined;
+    }
+  };
+
+  t.notOk(
+    html.includes('</script><div data-kepler-export-test='),
+    'inline values should not be able to close a script element or inject markup'
+  );
+  t.deepEqual(parseAssignment(/const datasets = (.+);/), datasets, 'datasets should round-trip');
+  t.deepEqual(parseAssignment(/const config = (.+);/), config, 'config should round-trip');
+  t.equal(
+    parseAssignment(/const savedStyleType = (.+);/),
+    savedStyleType,
+    'saved style type should round-trip'
+  );
+  t.equal(
+    parseAssignment(/window\.MAPBOX_TOKEN = (.+);/),
+    mapboxApiAccessToken,
+    'Mapbox token should round-trip'
+  );
+  t.ok(html.includes('\\u003c/script>'), 'inline JSON should escape opening angle brackets');
+  t.ok(html.includes('\\u2028\\u2029'), 'inline JSON should escape JavaScript line terminators');
+
+  t.end();
+});
+
+test('exportUtils -> ExportHtml preserves nullish dataset and config values', t => {
+  const undefinedHtml = exportMapToHTML({
+    datasets: undefined,
+    config: undefined,
+    mode: 'READ'
+  });
+  const nullHtml = exportMapToHTML({
+    datasets: null,
+    config: null,
+    mode: 'READ'
+  });
+
+  t.ok(
+    undefinedHtml.includes('const datasets = undefined;'),
+    'missing datasets should remain undefined at runtime'
+  );
+  t.ok(
+    undefinedHtml.includes('const config = undefined;'),
+    'missing config should remain undefined at runtime'
+  );
+  t.ok(nullHtml.includes('const datasets = null;'), 'null datasets should remain null at runtime');
+  t.ok(nullHtml.includes('const config = null;'), 'null config should remain null at runtime');
+
+  t.end();
+});
+
 test('exportUtils -> ExportHtml preserves custom branding', t => {
   const branding = {
     appName: 'Atlas Lab',
-    appWebsite: 'https://atlas.example.com/maps'
+    appWebsite: 'https://atlas.example.com/maps',
+    appIcon: 'https://atlas.example.com/icon.svg',
+    appNameColor: '#123456'
   };
   const html = exportMapToHTML({
     datasets: [],
@@ -113,10 +293,26 @@ test('exportUtils -> ExportHtml preserves custom branding', t => {
     'the read-only logo should link to the app website'
   );
   t.ok(
-    html.includes('react.createElement("span", null, branding.appName)'),
-    'the read-only logo should render the app name'
+    html.includes('react.createElement("span", {style: {color: branding.appNameColor}}, branding.appName)'),
+    'the exported logo should render the app name using its selected color'
   );
-  t.ok(html.includes('BrandLogo(),'), 'a read-only export should render the branding badge');
+  t.ok(
+    html.includes('react.createElement(BrandLogo, {fixed: true})'),
+    'a read-only export should render the branding badge'
+  );
+  t.ok(
+    html.includes('src: branding.appIcon'),
+    'the exported logo should render the normalized custom icon'
+  );
+  t.ok(
+    html.includes('Object.assign({}, props, {logoComponent: BrandLogo})'),
+    'editable exports should inject the same branding badge into the side panel'
+  );
+  t.ok(
+    html.includes('!fixed && props && props.version') &&
+      html.includes('className: "logo__version"'),
+    'editable exports should preserve the side-panel version label'
+  );
   t.ok(
     html.includes('appName: branding.appName') && html.includes('appWebsite: branding.appWebsite'),
     'the embedded component should receive the branding props'
@@ -172,7 +368,12 @@ test('exportUtils -> ExportHtml uses default branding', t => {
   t.ok(brandingMatch, 'exported html should define default branding settings');
   t.deepEqual(
     JSON.parse(brandingMatch[1]),
-    {appName: 'kepler.gl', appWebsite: 'http://kepler.gl/'},
+    {
+      appName: 'kepler.gl',
+      appWebsite: 'http://kepler.gl/',
+      appIcon: null,
+      appNameColor: '#1FBAD6'
+    },
     'exported html should retain the Kepler defaults'
   );
   t.ok(
@@ -187,12 +388,16 @@ test('exportUtils -> ExportHtml safely serializes branding', t => {
   const appName = '</title><script>window.brandPwned=1;</script> & Map\u2028\u2029';
   const appWebsite =
     'https://example.com/?next=</script><script>window.websitePwned=1;</script>\u2028\u2029';
+  const appIcon =
+    'https://example.com/icon.svg?next=</script><script>window.iconPwned=1;</script>\u2028\u2029';
   const html = exportMapToHTML({
     datasets: [],
     config: {version: 'v1', config: {}},
     mode: 'READ',
     appName,
-    appWebsite
+    appWebsite,
+    appIcon,
+    appNameColor: '</script><script>window.colorPwned=1</script>'
   });
   const brandingMatch = html.match(/const branding = (.+);/);
 
@@ -203,6 +408,14 @@ test('exportUtils -> ExportHtml safely serializes branding', t => {
   t.notOk(
     html.includes('<script>window.websitePwned'),
     'the app website should not be able to close the inline script'
+  );
+  t.notOk(
+    html.includes('<script>window.iconPwned'),
+    'the app icon should not be able to close the inline script'
+  );
+  t.notOk(
+    html.includes('<script>window.colorPwned'),
+    'an invalid app name color should not be serialized'
   );
   t.ok(
     html.includes(
@@ -221,7 +434,10 @@ test('exportUtils -> ExportHtml safely serializes branding', t => {
     {
       appName,
       appWebsite:
-        'https://example.com/?next=%3C/script%3E%3Cscript%3Ewindow.websitePwned=1;%3C/script%3E'
+        'https://example.com/?next=%3C/script%3E%3Cscript%3Ewindow.websitePwned=1;%3C/script%3E',
+      appIcon:
+        'https://example.com/icon.svg?next=%3C/script%3E%3Cscript%3Ewindow.iconPwned=1;%3C/script%3E',
+      appNameColor: '#1FBAD6'
     },
     'escaped branding should retain its normalized values at runtime'
   );

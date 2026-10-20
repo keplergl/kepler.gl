@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/table",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.3.0-alpha.17",
+  "version": "3.3.0-alpha.18",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/cjs/index.js",
@@ -28,11 +28,11 @@
     "dist"
   ],
   "dependencies": {
-    "@kepler.gl/common-utils": "3.3.0-alpha.17",
-    "@kepler.gl/constants": "3.3.0-alpha.17",
-    "@kepler.gl/tasks-core": "3.3.0-alpha.17",
-    "@kepler.gl/types": "3.3.0-alpha.17",
-    "@kepler.gl/utils": "3.3.0-alpha.17",
+    "@kepler.gl/common-utils": "3.3.0-alpha.18",
+    "@kepler.gl/constants": "3.3.0-alpha.18",
+    "@kepler.gl/tasks-core": "3.3.0-alpha.18",
+    "@kepler.gl/types": "3.3.0-alpha.18",
+    "@kepler.gl/utils": "3.3.0-alpha.18",
     "@loaders.gl/mvt": "^4.4.1",
     "@loaders.gl/pmtiles": "^4.4.1",
     "@turf/boolean-crosses": "^7.2.0",
@@ -40,6 +40,7 @@
     "@turf/boolean-intersects": "^7.2.0",
     "@turf/boolean-overlap": "^7.2.0",
     "@turf/boolean-touches": "^7.2.0",
+    "@turf/difference": "^7.2.0",
     "@types/d3-array": "^2.8.0",
     "d3-array": "^2.8.0",
     "es-toolkit": "^1.39.10",

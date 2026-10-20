@@ -18,7 +18,7 @@ import {createNewDataEntryMock} from 'test/helpers/table-utils';
 import tripGeojson, {timeStampDomain, tripBounds} from 'test/fixtures/trip-geojson';
 import {geoJsonWithStyle} from 'test/fixtures/geojson';
 import {KeplerTable, findPointFieldPairs} from '@kepler.gl/table';
-import {ArrowDataContainer, createDataContainer} from '@kepler.gl/utils';
+import {ArrowDataContainer, createDataContainer, findDefaultColorField} from '@kepler.gl/utils';
 import * as arrow from 'apache-arrow';
 
 test('layerUtils -> getGeojsonLayerMetaFromArrow uses worker-prepared data', t => {
@@ -673,11 +673,13 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
+test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', async t => {
   const {fields, rows} = processCsvData(wktCsv);
 
   const dataId = '0dj3h';
   const label = 'some geometry file';
+  const dataset = new KeplerTable({info: {id: dataId, label}});
+  await dataset.importData({data: {fields, rows}});
 
   const expected1 = new GeojsonLayer({
     dataId: '0dj3h',
@@ -707,13 +709,13 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
     stroked: true,
     strokeColor: strokeColor2
   });
+  const defaultColorField = findDefaultColorField(dataset);
+  expected1.updateLayerConfig({colorField: defaultColorField});
+  expected1.updateLayerVisualChannel(dataset, 'color');
+  expected2.updateLayerConfig({colorField: defaultColorField});
+  expected2.updateLayerVisualChannel(dataset, 'color');
 
-  const dataContainer = createDataContainer(rows, {fields});
-
-  const geojsonLayers = findDefaultLayer(
-    {fields, id: dataId, label, fieldPairs: [], dataContainer},
-    LayerClasses
-  );
+  const geojsonLayers = findDefaultLayer(dataset, LayerClasses);
 
   cmpLayers(t, [expected1, expected2], geojsonLayers);
   t.end();

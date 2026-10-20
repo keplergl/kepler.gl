@@ -134,7 +134,11 @@ const config = {
   // and throw `arrow type not supported: tL` in the minified exported HTML.
   // Force a single copy, matching the demo-app / website bundler aliases.
   alias: {
-    'apache-arrow': join(NODE_MODULES_DIR, 'apache-arrow')
+    'apache-arrow': join(NODE_MODULES_DIR, 'apache-arrow'),
+    // The clean source worktree has not built package subpath artifacts yet.
+    // Keep charts optional for @kepler.gl/components consumers while letting
+    // the root UMD bundle explicitly opt into its source entrypoint.
+    '@kepler.gl/components/charts': join(SRC_DIR, 'components/src/charts.ts')
   },
 
   plugins: [

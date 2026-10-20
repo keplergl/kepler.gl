@@ -130,6 +130,7 @@ import {
   INITIAL_ANNOTATION_TEXT_HEIGHT,
   INITIAL_ANNOTATION_LINE_WIDTH,
   INITIAL_ANNOTATION_LINE_COLOR,
+  INITIAL_ANNOTATION_RULER_LENGTH_METERS,
   INITIAL_ANNOTATION_TEXT_SIDE,
   INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION,
   ANNOTATION_ANGLE_BY_PLACEMENT,
@@ -200,6 +201,7 @@ import {
   LayerChartConfig
 } from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
+import {addMetersToLngLat} from '@math.gl/web-mercator';
 
 import {
   Datasets,
@@ -3053,11 +3055,15 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
   const textSide =
     config?.textSide ??
     derivedFromAngle?.side ??
-    (kind === AnnotationKind.TEXT ? undefined : INITIAL_ANNOTATION_TEXT_SIDE);
+    (kind === AnnotationKind.TEXT || kind === AnnotationKind.RULER
+      ? undefined
+      : INITIAL_ANNOTATION_TEXT_SIDE);
   const textVerticalPosition =
     config?.textVerticalPosition ??
     derivedFromAngle?.vertical ??
-    (kind === AnnotationKind.TEXT ? undefined : INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION);
+    (kind === AnnotationKind.TEXT || kind === AnnotationKind.RULER
+      ? undefined
+      : INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION);
   const base = {
     id: config?.id ?? generateHashId(6),
     kind,
@@ -3066,6 +3072,7 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
     autoSizeY: config?.autoSizeY ?? true,
     anchorPoint: config?.anchorPoint ?? ([0, 0] as [number, number]),
     label: config?.label ?? 'New Annotation',
+    ...(config?.editorState ? {editorState: config.editorState} : {}),
     lineColor: config?.lineColor ?? INITIAL_ANNOTATION_LINE_COLOR,
     lineWidth: config?.lineWidth ?? INITIAL_ANNOTATION_LINE_WIDTH,
     textWidth: config?.textWidth ?? INITIAL_ANNOTATION_TEXT_WIDTH,
@@ -3104,6 +3111,26 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
         angle: providedAngle ?? defaultAngle,
         radiusInMeters: (config as any)?.radiusInMeters ?? 1000
       };
+    case AnnotationKind.RULER: {
+      const anchorPoint = base.anchorPoint;
+      const shifted = addMetersToLngLat(anchorPoint, [
+        INITIAL_ANNOTATION_RULER_LENGTH_METERS,
+        0,
+        0
+      ]);
+      const altitude = anchorPoint[2];
+      const defaultEndPoint =
+        altitude !== undefined && Number.isFinite(altitude)
+          ? ([shifted[0], shifted[1], altitude] as [number, number, number])
+          : ([shifted[0], shifted[1]] as [number, number]);
+      return {
+        ...base,
+        kind: AnnotationKind.RULER,
+        endPoint: (config as any)?.endPoint ?? defaultEndPoint,
+        showCustomText: (config as any)?.showCustomText ?? true,
+        showDistance: (config as any)?.showDistance ?? true
+      };
+    }
     case AnnotationKind.TEXT:
     default:
       return {

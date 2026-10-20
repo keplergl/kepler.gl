@@ -394,6 +394,8 @@ A new map split mode (`MapSplitMode.SWIPE_COMPARE`) enables side-by-side compari
 
 A new annotation system allows adding text labels, markers, and shapes directly on the map. New actions: `addAnnotation`, `removeAnnotation`, `updateAnnotation`, `duplicateAnnotation`, `setSelectedAnnotation`.
 
+**Ruler** annotations add independently draggable endpoints and separate **Custom Text** and **Distance** switches. Labels report geodesic ground distance in kilometres; endpoint elevation affects placement. Ruler geometry, rich text, and label settings are preserved in map configurations and HTML exports. See [Annotations and Rulers](./user-guides/annotations.md) for creation and editing instructions.
+
 ### Layer Groups
 
 Layers can now be organized into named groups with shared visibility and legend controls. New actions: `addLayerGroup`, `removeLayerGroup`, `updateLayerGroup`, `addLayerToLayerGroup`, `removeLayerFromLayerGroup`.

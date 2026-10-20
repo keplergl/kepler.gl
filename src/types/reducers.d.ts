@@ -585,6 +585,10 @@ export type ExportMap = {
   appName?: string;
   /** Optional application website override for exported HTML and JSON. */
   appWebsite?: string;
+  /** Optional application icon URL override for exported HTML and JSON. */
+  appIcon?: string;
+  /** Optional application name color override for exported HTML and JSON. */
+  appNameColor?: string;
 };
 
 export type ExportVideo = {

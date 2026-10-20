@@ -3,6 +3,7 @@
 
 import {parseInBatches} from '@loaders.gl/core';
 import {Loader} from '@loaders.gl/loader-utils';
+import {getBinaryGeometriesFromArrow, BinaryDataFromGeoArrow} from '@loaders.gl/gis';
 import * as arrow from 'apache-arrow';
 import {
   hardClone,
@@ -248,7 +249,12 @@ export async function parseGeoArrowBatchesOnWorkers(
     return undefined;
   }
 
-  const jobs: Array<Promise<{columnIndex: number; result: ParseGeoArrowResult}>> = [];
+  const jobs: Array<{
+    columnIndex: number;
+    chunkIndex: number;
+    result: Promise<ParseGeoArrowResult>;
+    fallback: () => BinaryDataFromGeoArrow;
+  }> = [];
   data.fields.forEach((field, columnIndex) => {
     const encoding = field.metadata?.get?.(GEOARROW_METADATA_KEY);
     const geoColumn = data.cols?.[columnIndex];
@@ -288,7 +294,18 @@ export async function parseGeoArrowBatchesOnWorkers(
         calculateMeanCenters: true,
         triangle: true
       };
-      jobs.push(parseOnWorker(sourceData).then(result => ({columnIndex, result})));
+      jobs.push({
+        columnIndex,
+        chunkIndex,
+        result: parseOnWorker(sourceData),
+        fallback: () =>
+          getBinaryGeometriesFromArrow(geoColumn, sourceData.geometryEncoding, {
+            chunkIndex,
+            chunkOffset,
+            calculateMeanCenters: true,
+            triangulate: true
+          })
+      });
     });
   });
 
@@ -297,18 +314,25 @@ export async function parseGeoArrowBatchesOnWorkers(
   }
 
   const parsed: GeoArrowBinaryData = {};
-  const results = await Promise.allSettled(jobs);
-  results.forEach(result => {
-    if (result.status !== 'fulfilled') {
-      return;
-    }
-    const {columnIndex, result: workerResult} = result.value;
-    const binaryData = workerResult.binaryDataFromGeoArrow;
+  const results = await Promise.allSettled(jobs.map(job => job.result));
+  // A partial cache can look complete after compaction merges surviving chunks
+  // into one. Reparse every selected original batch if acceleration failed.
+  // Using the originals also avoids parsing padding in newly compacted buffers.
+  const useFallback = results.some(
+    result => result.status !== 'fulfilled' || !result.value.binaryDataFromGeoArrow
+  );
+  results.forEach((result, index) => {
+    const {columnIndex, chunkIndex, fallback} = jobs[index];
+    const binaryData = useFallback
+      ? fallback()
+      : result.status === 'fulfilled'
+      ? result.value.binaryDataFromGeoArrow
+      : undefined;
     if (!binaryData) {
       return;
     }
     parsed[columnIndex] = parsed[columnIndex] || {};
-    parsed[columnIndex][workerResult.chunkIndex] = binaryData;
+    parsed[columnIndex][chunkIndex] = binaryData;
   });
 
   if (!Object.keys(parsed).length) {

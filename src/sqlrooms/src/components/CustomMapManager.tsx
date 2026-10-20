@@ -15,7 +15,12 @@ import {
   Button,
   Icons
 } from '@kepler.gl/components';
-import {SIDEBAR_PANELS, ADD_MAP_STYLE_ID} from '@kepler.gl/constants';
+import {
+  SIDEBAR_PANELS,
+  ADD_MAP_STYLE_ID,
+  BACKGROUND_LAYER_GROUP,
+  BACKGROUND_LAYER_GROUP_SLUG
+} from '@kepler.gl/constants';
 import {MapStyle} from '@kepler.gl/reducers';
 
 import {getKeplerFactory} from './KeplerInjector';
@@ -190,7 +195,12 @@ export const CustomMapManager: React.FC<CustomMapManagerProps> = ({mapId}) => {
 
   const {mapStyle} = keplerState;
   const currentStyle = mapStyle.mapStyles[mapStyle.styleType] || {};
-  const editableLayers = (currentStyle as any).layerGroups || [];
+  const configuredLayerGroups = (currentStyle as any).layerGroups || [];
+  const editableLayers = keplerState.mapState.globe?.enabled
+    ? configuredLayerGroups.filter(({slug}) => slug !== BACKGROUND_LAYER_GROUP_SLUG)
+    : configuredLayerGroups.some(({slug}) => slug === BACKGROUND_LAYER_GROUP_SLUG)
+      ? configuredLayerGroups
+      : [...configuredLayerGroups, BACKGROUND_LAYER_GROUP];
 
   return (
     <CustomMapManagerContainer>

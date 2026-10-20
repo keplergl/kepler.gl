@@ -5,7 +5,12 @@ import React, {FC, useCallback, useEffect, useMemo} from 'react';
 import styled from 'styled-components';
 import {useDraggable} from '@dnd-kit/core';
 import {Annotation} from '@kepler.gl/types';
-import {getAnnotationTextBoxStyle, MapViewport} from './annotation-utils';
+import {AnnotationKind} from '@kepler.gl/constants';
+import {
+  getAnnotationTextBoxStyle,
+  getRulerDistanceLabel,
+  MapViewport
+} from './annotation-utils';
 import {LexicalRichTextEditor, LexicalToolbar} from './lexical-editor';
 import {SerializedEditorState} from 'lexical';
 
@@ -13,6 +18,7 @@ type StyledAnnotationTextProps = {
   $isEditing?: boolean;
   $isSelected?: boolean;
   $isEditingText?: boolean;
+  $isDraggable?: boolean;
   $textVerticalAlign?: string;
 };
 
@@ -34,7 +40,7 @@ const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
         &:hover {
           border-color: rgba(255,255,255,0.6);
         }
-        cursor: move;
+        cursor: ${props.$isDraggable ? 'move' : 'default'};
         pointer-events: all;
       `
       : `
@@ -75,6 +81,11 @@ const StyledToolbarWrapper = styled.div`
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 `;
 
+const StyledRulerDistance = styled.div`
+  line-height: 1.4;
+  white-space: nowrap;
+`;
+
 export type AnnotationTextProps = {
   annotation: Annotation;
   opacity?: number;
@@ -98,8 +109,14 @@ const AnnotationText: FC<AnnotationTextProps> = ({
   onChangeText,
   onUpdateAnnotation
 }) => {
+  const isRuler = annotation.kind === AnnotationKind.RULER;
+  const showCustomText = !isRuler || annotation.showCustomText;
+  const distanceText =
+    isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
+  const isDraggable = !isRuler;
   const {attributes, listeners, setNodeRef} = useDraggable({
-    id: `${annotation.id}:MOVE_TEXT`
+    id: `${annotation.id}:MOVE_TEXT`,
+    disabled: !isDraggable
   });
 
   const {textWidth, textHeight, textVerticalAlign} = annotation;
@@ -117,10 +134,14 @@ const AnnotationText: FC<AnnotationTextProps> = ({
   );
 
   useEffect(() => {
-    if (!isEditingText || !isSelected || !isEditing) {
+    if (!isEditingText || !isSelected || !isEditing || !showCustomText) {
       window.getSelection()?.removeAllRanges();
     }
-  }, [isEditingText, isSelected, isEditing]);
+  }, [isEditingText, isSelected, isEditing, showCustomText]);
+
+  if (!showCustomText && !distanceText) {
+    return null;
+  }
 
   return (
     <StyledAnnotationText
@@ -128,6 +149,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       $isEditing={isEditing}
       $isEditingText={isEditingText}
       $isSelected={isSelected}
+      $isDraggable={isDraggable}
       $textVerticalAlign={textVerticalAlign}
       data-annotation-id={annotation.id}
       data-annotation-part="text"
@@ -137,7 +159,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
         visibility: opacity === 0 ? 'hidden' : undefined,
         pointerEvents: opacity === 0 ? 'none' : undefined
       }}
-      {...(isEditing
+      {...(isEditing && isDraggable
         ? {
             ...attributes,
             ...listeners,
@@ -168,7 +190,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
         }
         evt.stopPropagation();
         if (!isEditingText) {
-          onSelect(true);
+          onSelect(showCustomText);
         }
       }}
       onDoubleClick={() => {
@@ -177,26 +199,31 @@ const AnnotationText: FC<AnnotationTextProps> = ({
         }
       }}
     >
-      <LexicalRichTextEditor
-        {...(isEditingText && annotation.autoSize ? {} : {width: textWidth || undefined})}
-        {...(isEditingText && annotation.autoSizeY ? {} : {height: textHeight || undefined})}
-        isEditable={isEditing && isEditingText}
-        editorState={annotation.editorState as SerializedEditorState | undefined}
-        initialText={annotation.label}
-        onChange={handleEditorChange}
-      >
-        {isEditing && isSelected ? (
-          <StyledToolbarWrapper>
-            <LexicalToolbar
-              isEditingText={isEditingText}
-              textVerticalAlign={textVerticalAlign}
-              onChangeTextVerticalAlign={value => {
-                onUpdateAnnotation({textVerticalAlign: value});
-              }}
-            />
-          </StyledToolbarWrapper>
-        ) : null}
-      </LexicalRichTextEditor>
+      {showCustomText ? (
+        <LexicalRichTextEditor
+          {...(isEditingText && annotation.autoSize ? {} : {width: textWidth || undefined})}
+          {...(isEditingText && annotation.autoSizeY ? {} : {height: textHeight || undefined})}
+          isEditable={isEditing && isEditingText}
+          editorState={annotation.editorState as SerializedEditorState | undefined}
+          initialText={annotation.label}
+          onChange={handleEditorChange}
+        >
+          {isEditing && isSelected ? (
+            <StyledToolbarWrapper>
+              <LexicalToolbar
+                isEditingText={isEditingText}
+                textVerticalAlign={textVerticalAlign}
+                onChangeTextVerticalAlign={value => {
+                  onUpdateAnnotation({textVerticalAlign: value});
+                }}
+              />
+            </StyledToolbarWrapper>
+          ) : null}
+        </LexicalRichTextEditor>
+      ) : null}
+      {distanceText ? (
+        <StyledRulerDistance data-annotation-part="distance">{distanceText}</StyledRulerDistance>
+      ) : null}
     </StyledAnnotationText>
   );
 };

@@ -31,6 +31,64 @@ beforeAll(() => {
 });
 
 describe('ItemSelector', () => {
+  test('keeps disabled single selectors out of the tab order and blocks keyboard opening', async () => {
+    const user = userEvent.setup();
+    renderWithTheme(
+      <IntlProvider locale="en" messages={messages.en}>
+        <ItemSelector
+          options={['Alpha', 'Beta']}
+          selectedItems="Alpha"
+          onChange={jest.fn()}
+          multiSelect={false}
+          searchable={false}
+          disabled={true}
+        />
+      </IntlProvider>
+    );
+    const selector = screen.getByRole('button', {name: 'Alpha'});
+
+    await user.tab();
+    expect(selector).not.toHaveFocus();
+    fireEvent.keyDown(selector, {key: 'Enter', keyCode: 13});
+    expect(screen.queryByText('Beta')).not.toBeInTheDocument();
+  });
+
+  test('opens a single selector with the keyboard and restores focus after selection or Escape', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    renderWithTheme(
+      <IntlProvider locale="en" messages={messages.en}>
+        <ItemSelector
+          options={['Alpha', 'Beta']}
+          selectedItems="Alpha"
+          onChange={onChange}
+          multiSelect={false}
+          searchable={false}
+        />
+      </IntlProvider>
+    );
+    const selector = screen.getByText('Alpha').closest('.item-selector')!;
+
+    await user.tab();
+    expect(selector).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByText('Beta')).toBeInTheDocument();
+    fireEvent.keyDown(document.activeElement!, {key: 'ArrowDown', keyCode: 40});
+    fireEvent.keyDown(document.activeElement!, {key: 'ArrowDown', keyCode: 40});
+    fireEvent.keyDown(document.activeElement!, {key: 'Enter', keyCode: 13});
+
+    expect(onChange).toHaveBeenCalledWith('Beta');
+    expect(selector).toHaveFocus();
+    expect(screen.queryByText('Beta')).not.toBeInTheDocument();
+
+    await user.keyboard(' ');
+    expect(screen.getByText('Beta')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByText('Beta')).not.toBeInTheDocument();
+    expect(selector).toHaveFocus();
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
   test('preserves object selections when Enter has no highlighted option', async () => {
     const onChange = jest.fn();
     const user = userEvent.setup();

@@ -409,6 +409,7 @@ export {AnnotationText} from './annotations';
 export {
   makeMarker,
   movePoint,
+  moveRulerEndpoint,
   moveText,
   resizeCircle,
   isLeftOriented,
@@ -417,10 +418,18 @@ export {
   angleForTextPlacement,
   textPlacementFromAngle,
   getAnnotationTextBoxStyle,
+  getRulerDistanceLabel,
+  isAnnotationVisibleOnGlobe,
   isPointVisibleOnGlobe,
   normalizeAnchorPoint
 } from './annotations';
-export type {MapViewport, AnnotationMarker, PickWorldPosition, LngLatAltitude} from './annotations';
+export type {
+  MapViewport,
+  AnnotationMarker,
+  RulerAnnotationMarker,
+  PickWorldPosition,
+  LngLatAltitude
+} from './annotations';
 export {default as AnnotationControlFactory} from './map/annotations/annotation-control';
 
 export {default as ColorBreaksPanelFactory} from './side-panel/layer-panel/color-breaks-panel';

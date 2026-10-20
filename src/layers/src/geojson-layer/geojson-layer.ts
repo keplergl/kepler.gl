@@ -29,7 +29,8 @@ import {
   COLUMN_MODE_GEOJSON,
   applyFiltersToTableColumns,
   fieldIsGeoArrow,
-  featureToHoverOutline
+  featureToHoverOutline,
+  applyDefaultGeojsonColorField
 } from './geojson-utils';
 import {
   getGeojsonLayerMetaFromArrow,
@@ -815,6 +816,7 @@ export default class GeoJsonLayer extends Layer {
     }
 
     this.updateLayerMeta(dataset);
+    applyDefaultGeojsonColorField(this, dataset);
 
     const {featureTypes} = this.meta;
     // default settings is stroke: true, filled: false

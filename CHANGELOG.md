@@ -15,6 +15,24 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.18] - Oct 19 2026
+
+- c7a6399f fix(export): restore annotation and chart panels (#3853)
+- 43923ce2 fix(export): align read-only map scale (#3852)
+- 2bb43c63 fix(layer-panel): isolate layer group actions (#3851)
+- 682a3721 fix(processors): write valid shapefile DBF numbers (#3848)
+- fea21640 fix(processors): preserve GeoPackage altitude values (#3847)
+- d65c8276 fix(processors): preserve integer GeoParquet fields (#3846)
+- 5760dda2 fix(export-map): escape inline data (#3845)
+- 1f139a67 fix(export): preserve config-only JSON exports (#3850)
+- 30196cea feat: restore progressive GeoArrow rendering with web workers (#3844)
+- c2ac0bc2 fix(ui): prevent checkbox ID collisions across map instances (#3843)
+- 63dceb65 feat(filters): enable timeline charts for numeric filters (#3842)
+- f1a4b1bf fix(sqlrooms): mark esm output as modules (#3841)
+- c384e288 fix: synced filter dataset replacement state (#3839)
+- c0d21bbb test(components): assert share map error rendering (#3840)
+- 0043b242 fix(python): send DataFrame datetimes without a UTC offset and NaN/NaT as null (#3838)
+
 ## [3.3.0-alpha.17] - Oct 17 2026
 
 - 5db79a29 feat(annotations): support individual fade on zoom (#3836)

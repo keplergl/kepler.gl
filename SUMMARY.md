@@ -34,6 +34,7 @@
     * [Color Palettes](docs/user-guides/l-color-attributes.md)
     * [Filters](docs/user-guides/e-filters.md)
     * [Draw on Map](docs/user-guides/draw-on-map.md)
+    * [Annotations and Rulers](docs/user-guides/annotations.md)
     * [Map Styles](docs/user-guides/f-map-styles.md)
     * [Interactions](docs/user-guides/g-interactions.md)
     * [Map Settings](docs/user-guides/m-map-settings.md)

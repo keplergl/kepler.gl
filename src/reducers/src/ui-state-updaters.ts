@@ -868,7 +868,7 @@ export const setExportMapHTMLModeUpdater = (
  * Set application branding overrides for exported maps.
  * @param state - `uiState`
  * @param action
- * @param action.payload application name and/or website overrides
+ * @param action.payload application name, website, icon, and/or name color overrides
  * @return nextState
  */
 export const setExportMapBrandingUpdater = (

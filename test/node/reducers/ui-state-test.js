@@ -329,7 +329,11 @@ test('#uiStateReducer -> SET_EXPORT_MAP_BRANDING', t => {
 
   const withWebsite = reducer(
     withAppName,
-    setExportMapBranding({appWebsite: 'https://atlas.example.com'})
+    setExportMapBranding({
+      appWebsite: 'https://atlas.example.com',
+      appIcon: 'https://atlas.example.com/icon.svg',
+      appNameColor: '#123456'
+    })
   );
 
   t.deepEqual(
@@ -337,9 +341,11 @@ test('#uiStateReducer -> SET_EXPORT_MAP_BRANDING', t => {
     {
       ...INITIAL_UI_STATE.exportMap,
       appName: 'Atlas Lab',
-      appWebsite: 'https://atlas.example.com'
+      appWebsite: 'https://atlas.example.com',
+      appIcon: 'https://atlas.example.com/icon.svg',
+      appNameColor: '#123456'
     },
-    'should merge a partial website update without replacing the application name'
+    'should merge partial branding updates without replacing the application name'
   );
 
   t.end();

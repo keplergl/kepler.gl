@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {convertWKBToGeometry} from '@loaders.gl/gis';
 import {convertArrowToSchema} from '@loaders.gl/schema-utils';
+import {DBFLoader} from '@loaders.gl/shapefile';
 import {ALL_FIELD_TYPES, EXPORT_DATA_TYPE} from '@kepler.gl/constants';
 import {Field} from '@kepler.gl/types';
 import {createDataContainer} from '@kepler.gl/utils';
 import {tableFromIPC} from 'apache-arrow';
+import type {FeatureCollection} from 'geojson';
 
 import {datasetToFeatureCollection, encodeDatasetExport} from './vector-export';
+import {writeShapefile} from './shapefile-writer';
 import {loadSqlJs} from './sql-js';
 
 const fields = [
@@ -112,6 +116,76 @@ describe('dataset export', () => {
     expect(parquetBytes.includes(Buffer.from('hidden-value'))).toBe(false);
   });
 
+  test.each([
+    {
+      dimension: '2D',
+      altitudes: [null, ''],
+      expectedZ: 0,
+      expectedCoordinates: [
+        [-122.4, 37.8],
+        [-122.41, 37.81]
+      ]
+    },
+    {
+      dimension: '3D',
+      altitudes: [12, 24],
+      expectedZ: 1,
+      expectedCoordinates: [
+        [-122.4, 37.8, 12],
+        [-122.41, 37.81, 24]
+      ]
+    },
+    {
+      dimension: 'mixed 2D and 3D',
+      altitudes: [12, null],
+      expectedZ: 2,
+      expectedCoordinates: [
+        [-122.4, 37.8, 12],
+        [-122.41, 37.81]
+      ]
+    }
+  ])(
+    'writes $dimension GeoPackage points with matching Z metadata',
+    async ({altitudes, expectedZ, expectedCoordinates}) => {
+      const altitudeFields = [
+        ...fields,
+        {name: 'altitude', type: ALL_FIELD_TYPES.real}
+      ] as Field[];
+      const altitudeFieldPairs = [
+        {
+          defaultName: 'point',
+          pair: {
+            lat: {fieldIdx: 2, value: 'lat'},
+            lng: {fieldIdx: 3, value: 'lng'},
+            altitude: {fieldIdx: 4, value: 'altitude'}
+          },
+          suffix: ['lat', 'lng', 'altitude']
+        }
+      ];
+      const altitudeRows = rows.map((row, index) => [...row, altitudes[index]]);
+      const geopackage = await encodeDatasetExport({
+        data: createDataContainer(altitudeRows),
+        fields: altitudeFields,
+        fieldPairs: altitudeFieldPairs,
+        dataType: EXPORT_DATA_TYPE.GEOPACKAGE,
+        layerName: 'places'
+      });
+      const SQL = await loadSqlJs();
+      const db = new SQL.Database(new Uint8Array(geopackage.data as Uint8Array));
+      try {
+        const z = db.exec('SELECT z FROM gpkg_geometry_columns')[0].values[0][0];
+        const coordinates = db.exec('SELECT geom FROM places ORDER BY fid')[0].values.map(row => {
+          const blob = row[0] as Uint8Array;
+          const geometry = convertWKBToGeometry(blob.slice(8).buffer);
+          return geometry.type === 'Point' ? geometry.coordinates : null;
+        });
+        expect({z, coordinates}).toEqual({z: expectedZ, coordinates: expectedCoordinates});
+      } finally {
+        db.close();
+      }
+    }
+  );
+
   test('rejects mixed geometry families when exporting a shapefile', async () => {
     const geometryFields = [
       {name: '_geojson', type: ALL_FIELD_TYPES.geojson},
@@ -141,6 +215,153 @@ describe('dataset export', () => {
     ).rejects.toThrow('Shapefile export requires all geometries to have the same shape family.');
   });
 
+  test('rounds noisy and tiny DBF numbers at the maximum supported precision', () => {
+    const values = [0.1 + 0.2, 1e-7, -1e-7, 1e-16, -1e-16, null];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: values.map((value, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, index]},
+        properties: {value}
+      }))
+    };
+
+    const {dbf} = writeShapefile(collection);
+    const view = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+    const headerLength = view.getUint16(8, true);
+    const recordLength = view.getUint16(10, true);
+    const fieldLength = dbf[32 + 16];
+    const decimalCount = dbf[32 + 17];
+    const decoder = new TextDecoder();
+    const cells = values.map((_, index) => {
+      const start = headerLength + index * recordLength + 1;
+      return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
+    });
+
+    expect({fieldLength, decimalCount}).toEqual({fieldLength: 18, decimalCount: 15});
+    expect(cells).toEqual([
+      '0.300000000000000',
+      '0.000000100000000',
+      '-0.000000100000000',
+      '0.000000000000000',
+      '0.000000000000000',
+      ''
+    ]);
+    expect(cells.filter(Boolean).every(cell => /^-?\d+(?:\.\d+)?$/.test(cell))).toBe(true);
+
+    const parsed = DBFLoader.parseSync?.(dbf.buffer as ArrayBuffer, {
+      dbf: {shape: 'rows'}
+    }) as Array<{value: number | null}>;
+    expect(parsed.map(row => row.value)).toEqual([0.3, 1e-7, -1e-7, 0, 0, null]);
+  });
+
+  test('uses the highest common precision that fits mixed magnitudes after rounding', () => {
+    const values = [-1234567890123456, 999.9999, -12.3456, null];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: values.map((value, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, index]},
+        properties: {value}
+      }))
+    };
+
+    const {dbf} = writeShapefile(collection);
+    const view = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+    const headerLength = view.getUint16(8, true);
+    const recordLength = view.getUint16(10, true);
+    const fieldLength = dbf[32 + 16];
+    const decimalCount = dbf[32 + 17];
+    const decoder = new TextDecoder();
+    const cells = values.map((_, index) => {
+      const start = headerLength + index * recordLength + 1;
+      return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
+    });
+
+    expect({fieldLength, decimalCount}).toEqual({fieldLength: 19, decimalCount: 1});
+    expect(cells).toEqual(['-1234567890123456.0', '1000.0', '-12.3', '']);
+
+    const parsed = DBFLoader.parseSync?.(dbf.buffer as ArrayBuffer, {
+      dbf: {shape: 'rows'}
+    }) as Array<{value: number | null}>;
+    expect(parsed.map(row => row.value)).toEqual([-1234567890123456, 1000, -12.3, null]);
+  });
+
+  test('keeps large positive and negative integers in numeric fields', () => {
+    const values = [1e18, -1e17, null];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: values.map((value, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, index]},
+        properties: {value}
+      }))
+    };
+
+    const {dbf} = writeShapefile(collection);
+    const view = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+    const headerLength = view.getUint16(8, true);
+    const recordLength = view.getUint16(10, true);
+    const fieldLength = dbf[32 + 16];
+    const decimalCount = dbf[32 + 17];
+    const decoder = new TextDecoder();
+    const cells = values.map((_, index) => {
+      const start = headerLength + index * recordLength + 1;
+      return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
+    });
+
+    expect({fieldLength, decimalCount}).toEqual({fieldLength: 19, decimalCount: 0});
+    expect(cells).toEqual(['1000000000000000000', '-100000000000000000', '']);
+  });
+
+  test.each([
+    [1e19, 20],
+    [-1e18, 20],
+    [1e21, 22]
+  ])('rejects the DBF number %s when its rounded integer needs %i bytes', (value, width) => {
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {type: 'Point', coordinates: [0, 0]},
+          properties: {value}
+        }
+      ]
+    };
+
+    expect(() => writeShapefile(collection)).toThrow(
+      `DBF numeric field "value" requires ${width} bytes at zero decimal places; ` +
+        'dBASE III numeric fields support at most 19.'
+    );
+  });
+
+  test('keeps mixed finite and non-finite values in a DBF text field', () => {
+    const values = [1, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, null];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: values.map((value, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, index]},
+        properties: {value}
+      }))
+    };
+
+    const {dbf} = writeShapefile(collection);
+    const view = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+    const headerLength = view.getUint16(8, true);
+    const recordLength = view.getUint16(10, true);
+    const fieldLength = dbf[32 + 16];
+    const decoder = new TextDecoder();
+    const cells = values.map((_, index) => {
+      const start = headerLength + index * recordLength + 1;
+      return decoder.decode(dbf.subarray(start, start + fieldLength)).trim();
+    });
+
+    expect(String.fromCharCode(dbf[32 + 11])).toBe('C');
+    expect(cells).toEqual(['1', 'NaN', 'Infinity', '-Infinity', '']);
+  });
+
   test('writes geoparquet string columns the importer can read', async () => {
     const geoparquet = await encodeDatasetExport({
       data: container(),
@@ -166,6 +387,62 @@ describe('dataset export', () => {
     const schema = convertArrowToSchema(arrowTable.schema);
     expect(schema.fields.find(field => field.name === 'geometry')?.type).toBe('binary');
     expect(schema.fields.find(field => field.name === 'name')?.type).toBe('utf8');
+  });
+
+  test('writes typed integer fields without reclassifying integer-valued real fields', async () => {
+    const typedFields = [
+      {name: 'count', type: ALL_FIELD_TYPES.integer},
+      {name: 'measurement', type: ALL_FIELD_TYPES.real},
+      {name: 'unsafe_count', type: ALL_FIELD_TYPES.integer},
+      {name: 'out_of_range_count', type: ALL_FIELD_TYPES.integer},
+      {name: 'lat', type: ALL_FIELD_TYPES.real},
+      {name: 'lng', type: ALL_FIELD_TYPES.real}
+    ] as Field[];
+    const typedRows = [
+      [1, 1, Number.MAX_SAFE_INTEGER + 1, 9223372036854775808n, 37.8, -122.4],
+      [null, 2, null, null, 37.81, -122.41],
+      [2147483648, 3, null, null, 37.82, -122.42],
+      [Number.MAX_SAFE_INTEGER, 4, null, null, 37.83, -122.43]
+    ];
+    const geoparquet = await encodeDatasetExport({
+      data: createDataContainer(typedRows),
+      fields: typedFields,
+      fieldPairs: [
+        {
+          defaultName: 'point',
+          pair: {
+            lat: {fieldIdx: 4, value: 'lat'},
+            lng: {fieldIdx: 5, value: 'lng'}
+          },
+          suffix: ['lat', 'lng']
+        }
+      ],
+      dataType: EXPORT_DATA_TYPE.GEOPARQUET,
+      layerName: 'typed-numbers'
+    });
+    const specifier = 'parquet-wasm/node';
+    const imported = (await import(specifier)) as {
+      readParquet?: (bytes: Uint8Array) => {intoIPCStream(): Uint8Array};
+      default?: {readParquet: (bytes: Uint8Array) => {intoIPCStream(): Uint8Array}};
+    };
+    const api = imported.readParquet ? imported : imported.default;
+    if (!api?.readParquet) {
+      throw new Error('parquet-wasm failed to load');
+    }
+    const wasmTable = api.readParquet(new Uint8Array(geoparquet.data as Uint8Array));
+    const arrowTable = tableFromIPC(wasmTable.intoIPCStream());
+
+    const count = arrowTable.getChild('count');
+    expect(String(count?.type)).toBe('Int64');
+    expect(Array.from({length: count?.length ?? 0}, (_, index) => count?.get(index))).toEqual([
+      1n,
+      null,
+      2147483648n,
+      BigInt(Number.MAX_SAFE_INTEGER)
+    ]);
+    expect(String(arrowTable.getChild('measurement')?.type)).toBe('Float64');
+    expect(String(arrowTable.getChild('unsafe_count')?.type)).toBe('Float64');
+    expect(String(arrowTable.getChild('out_of_range_count')?.type)).toBe('Utf8');
   });
 
   test.each(['gpkg_contents', 'gpkg_geometry_columns', 'sqlite_sequence'])(
