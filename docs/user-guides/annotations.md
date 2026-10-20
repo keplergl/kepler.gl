@@ -26,7 +26,7 @@ Each annotation's settings start with five type icons: **Text**, **Point**, **Ar
 1. Click **Add** in the Annotations panel. A point annotation appears at the map center.
 2. In the annotation's settings, click the **Ruler** icon, the last of the five type icons. If the settings are collapsed, click its entry in the panel to expand them.
 3. Drag the circular handle at either end of the line to set the measured span. Each handle moves its own endpoint.
-4. Use **Line Width** and **Color** to style the ruler.
+4. Drag the **Line Width** slider to choose a width from 1 to 10 pixels, and use **Color** to style the ruler. You can also focus the slider and use the arrow keys to adjust the width, or **Home** and **End** to select the minimum and maximum.
 
 You can also right-click a map location and choose **Add Annotation**, then click the **Ruler** icon in its settings.
 

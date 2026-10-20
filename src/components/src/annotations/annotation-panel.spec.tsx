@@ -168,6 +168,80 @@ describe('AnnotationManager type icons', () => {
   });
 });
 
+describe('AnnotationManager line width slider', () => {
+  const renderSlider = (lineWidth = 2) => {
+    const state = makeState(true, true);
+    state.visState.annotations[0].lineWidth = lineWidth;
+    const store = mockStore(state);
+    renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
+    );
+    return {store, slider: screen.getByRole('slider', {name: 'Line Width'})};
+  };
+
+  test.each([1, 2, 10])('displays the saved %spx width and slider bounds', width => {
+    const {slider} = renderSlider(width);
+
+    expect(slider).toHaveAttribute('aria-valuemin', '1');
+    expect(slider).toHaveAttribute('aria-valuemax', '10');
+    expect(slider).toHaveAttribute('aria-valuenow', String(width));
+    expect(slider).toHaveAttribute('aria-valuetext', `${width}px`);
+    expect(within(slider).getByText(`${width}px`)).toBeInTheDocument();
+    expect(slider).toHaveStyle({width: '100px'});
+  });
+
+  test.each([
+    {key: 'ArrowLeft', width: 2, next: 1},
+    {key: 'ArrowDown', width: 2, next: 1},
+    {key: 'ArrowRight', width: 2, next: 3},
+    {key: 'ArrowUp', width: 2, next: 3},
+    {key: 'Home', width: 6, next: 1},
+    {key: 'End', width: 6, next: 10},
+    {key: 'ArrowLeft', width: 1, next: 1},
+    {key: 'ArrowRight', width: 10, next: 10}
+  ])('handles $key at $width px without exceeding the bounds', ({key, width, next}) => {
+    const {store, slider} = renderSlider(width);
+    slider.focus();
+    expect(slider).toHaveFocus();
+
+    fireEvent.keyDown(slider, {key});
+
+    expect(store.getActions()).toEqual(
+      next === width ? [] : [VisStateActions.updateAnnotation('ruler-1', {lineWidth: next})]
+    );
+  });
+
+  test('ignores keys unrelated to width adjustment', () => {
+    const {store, slider} = renderSlider();
+    fireEvent.keyDown(slider, {key: 'Enter'});
+    expect(store.getActions()).toEqual([]);
+  });
+
+  test.each([
+    [-10, 1],
+    [30, 4],
+    [45, 6],
+    [120, 10]
+  ])('drags to %s and applies the nearest valid width %s', (clientX, width) => {
+    const {store, slider} = renderSlider();
+    const track = slider.querySelector('.kg-slider')!;
+    Object.defineProperty(track, 'offsetWidth', {configurable: true, value: 90});
+    const handle = slider.querySelectorAll('.kg-range-slider__handle')[1];
+
+    fireEvent.mouseDown(handle);
+    fireEvent.mouseMove(document, {clientX});
+    fireEvent.mouseUp(document);
+
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {lineWidth: width})
+    ]);
+  });
+});
+
 describe('AnnotationManager selectors', () => {
   const originalIntersectionObserver = window.IntersectionObserver;
 
@@ -190,7 +264,13 @@ describe('AnnotationManager selectors', () => {
   });
 
   test('fills the selector width with the color picker button', () => {
-    const store = mockStore(makeState(true, true));
+    const state = makeState(true, true);
+    Object.assign(state.visState.annotations[0], {
+      kind: AnnotationKind.POINT,
+      armLength: 50,
+      angle: -45
+    });
+    const store = mockStore(state);
     const {container} = renderWithTheme(
       <IntlWrapper>
         <Provider store={store}>
@@ -206,7 +286,7 @@ describe('AnnotationManager selectors', () => {
     expect(colorButton).toHaveStyle({width: '100%', boxSizing: 'border-box'});
   });
 
-  test.each(['2px', 'Right', 'Above'])(
+  test.each(['Right', 'Above'])(
     'keeps %s unchanged when Enter is pressed without choosing an option', current => {
       const state = makeState(true, true);
       Object.assign(state.visState.annotations[0], {
@@ -232,7 +312,6 @@ describe('AnnotationManager selectors', () => {
   );
 
   test.each([
-    {current: '2px', next: '4px', changes: {lineWidth: 4}},
     {
       current: 'Right',
       next: 'Left',

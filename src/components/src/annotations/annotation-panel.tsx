@@ -46,6 +46,7 @@ import {
 import {StyledPanelHeader, Tooltip, Button, ButtonGroup} from '../common/styled-components';
 import Switch from '../common/switch';
 import ItemSelector from '../common/item-selector/item-selector';
+import Slider from '../common/slider/slider';
 import Portaled from '../common/portaled';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
 import {hexToRgb, rgbToHex} from '@kepler.gl/utils';
@@ -74,6 +75,9 @@ const ANNOTATION_ICONS = {
   [AnnotationKind.CIRCLE]: Circle,
   [AnnotationKind.RULER]: AnnotationRulerIcon
 };
+
+const MIN_LINE_WIDTH = Math.min(...ANNOTATION_LINE_WIDTH_OPTIONS);
+const MAX_LINE_WIDTH = Math.max(...ANNOTATION_LINE_WIDTH_OPTIONS);
 
 // Styled components
 
@@ -314,6 +318,28 @@ const StyledSelect = styled(ItemSelector)`
   width: 100px;
 `;
 
+const StyledLineWidthSlider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100px;
+  height: ${props => props.theme.inputBoxHeight};
+  padding-left: 6px;
+  box-sizing: border-box;
+
+  &:focus-visible {
+    outline: 2px solid ${props => props.theme.selectionBtnBorderActColor};
+    outline-offset: 2px;
+  }
+
+  span.annotation-line-width-value {
+    min-width: 28px;
+    text-align: right;
+    color: ${props => props.theme.effectPanelTextSecondary2};
+    font-size: ${props => props.theme.inputFontSize};
+  }
+`;
+
 const StyledColorButtonWrapper = styled.div`
   width: 100px;
   .button {
@@ -462,6 +488,28 @@ export default function AnnotationManagerFactory(): React.FC<any> {
         visStateActions.updateAnnotation(id, {lineWidth});
       },
       [visStateActions]
+    );
+
+    const handleLineWidthKeyDown = useCallback(
+      (event: React.KeyboardEvent, annotation: Annotation) => {
+        const widths: Record<string, number> = {
+          ArrowLeft: annotation.lineWidth - 1,
+          ArrowDown: annotation.lineWidth - 1,
+          ArrowRight: annotation.lineWidth + 1,
+          ArrowUp: annotation.lineWidth + 1,
+          Home: MIN_LINE_WIDTH,
+          End: MAX_LINE_WIDTH
+        };
+        const width = widths[event.key];
+        if (!Number.isFinite(width)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const lineWidth = Math.min(MAX_LINE_WIDTH, Math.max(MIN_LINE_WIDTH, Math.round(width)));
+        if (lineWidth !== annotation.lineWidth) {
+          handleChangeLineWidth(annotation.id, lineWidth);
+        }
+      },
+      [handleChangeLineWidth]
     );
 
     const handleChangeLineColor = useCallback(
@@ -652,18 +700,32 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                             defaultMessage: 'Line Width'
                           })}
                         </StyledConfigLabel>
-                        <StyledSelect
-                          selectedItems={annotation.lineWidth}
-                          options={ANNOTATION_LINE_WIDTH_OPTIONS}
-                          displayOption={width => `${width}px`}
-                          getOptionValue={width => width}
-                          multiSelect={false}
-                          searchable={false}
-                          onChange={width => {
-                            if (width == null) return;
-                            handleChangeLineWidth(annotation.id, Number(width));
-                          }}
-                        />
+                        <StyledLineWidthSlider
+                          role="slider"
+                          tabIndex={0}
+                          aria-label={intl.formatMessage({
+                            id: 'annotationManager.lineWidth',
+                            defaultMessage: 'Line Width'
+                          })}
+                          aria-valuemin={MIN_LINE_WIDTH}
+                          aria-valuemax={MAX_LINE_WIDTH}
+                          aria-valuenow={annotation.lineWidth}
+                          aria-valuetext={`${annotation.lineWidth}px`}
+                          onKeyDown={event => handleLineWidthKeyDown(event, annotation)}
+                        >
+                          <Slider
+                            minValue={MIN_LINE_WIDTH}
+                            maxValue={MAX_LINE_WIDTH}
+                            value0={MIN_LINE_WIDTH}
+                            value1={annotation.lineWidth}
+                            step={1}
+                            isRanged={false}
+                            onSlider1Change={width => handleChangeLineWidth(annotation.id, width)}
+                          />
+                          <span className="annotation-line-width-value">
+                            {annotation.lineWidth}px
+                          </span>
+                        </StyledLineWidthSlider>
                       </StyledConfigRow>
                       <StyledConfigRow>
                         <StyledConfigLabel>
