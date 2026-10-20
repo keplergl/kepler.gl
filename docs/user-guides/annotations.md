@@ -19,14 +19,16 @@ Click the **Annotations** button in the map controls. Its tooltip reads **Show a
 
 Keep the panel open to edit annotations. Closing it hides editing handles while leaving visible annotations on the map.
 
+Each annotation's settings start with five type icons: **Text**, **Point**, **Arrow**, **Circle**, and **Ruler**. Click an icon to switch the annotation's type. The active type is highlighted; hover over an icon to see its name.
+
 ## Create a ruler
 
 1. Click **Add** in the Annotations panel. A point annotation appears at the map center.
-2. In the annotation's settings, choose **Ruler** from **Type**. If the settings are collapsed, click its entry in the panel to expand them.
+2. In the annotation's settings, click the **Ruler** icon, the last of the five type icons. If the settings are collapsed, click its entry in the panel to expand them.
 3. Drag the circular handle at either end of the line to set the measured span. Each handle moves its own endpoint.
 4. Use **Line Width** and **Color** to style the ruler.
 
-You can also right-click a map location and choose **Add Annotation**, then change its **Type** to **Ruler**.
+You can also right-click a map location and choose **Add Annotation**, then click the **Ruler** icon in its settings.
 
 Repeat these steps to add more rulers. For very short rulers or coincident endpoints, the handles are spaced apart so you can reach both endpoints.
 

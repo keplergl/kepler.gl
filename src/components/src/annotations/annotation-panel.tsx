@@ -29,8 +29,21 @@ import {VisState} from '@kepler.gl/schemas';
 import {MapState} from '@kepler.gl/types';
 
 import {withState} from '../injector';
-import {Add, ArrowDown, ArrowDownSmall, Copy, EyeSeen, EyeUnseen, Trash} from '../common/icons';
-import {StyledPanelHeader, Tooltip, Button} from '../common/styled-components';
+import {
+  Add,
+  AnnotationText,
+  ArrowDown,
+  ArrowDownSmall,
+  Base,
+  BaseProps,
+  Circle,
+  Copy,
+  DrawPoint,
+  EyeSeen,
+  EyeUnseen,
+  Trash
+} from '../common/icons';
+import {StyledPanelHeader, Tooltip, Button, ButtonGroup} from '../common/styled-components';
 import Switch from '../common/switch';
 import ItemSelector from '../common/item-selector/item-selector';
 import Portaled from '../common/portaled';
@@ -38,6 +51,29 @@ import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
 import {hexToRgb, rgbToHex} from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {angleForTextPlacement, getTextPlacement} from './annotation-utils';
+
+const AnnotationArrowIcon = (props: Partial<BaseProps>) => (
+  <Base viewBox="0 0 24 24" {...props}>
+    <path d="M5 19 19 5M7 5h12v12" fill="none" stroke="currentColor" strokeWidth="2" />
+  </Base>
+);
+
+const AnnotationRulerIcon = (props: Partial<BaseProps>) => (
+  <Base viewBox="0 0 24 24" {...props}>
+    <g fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="2" y="7" width="20" height="10" rx="1" />
+      <path d="M6 7v5m4-5v3m4-3v5m4-5v3" />
+    </g>
+  </Base>
+);
+
+const ANNOTATION_ICONS = {
+  [AnnotationKind.TEXT]: AnnotationText,
+  [AnnotationKind.POINT]: DrawPoint,
+  [AnnotationKind.ARROW]: AnnotationArrowIcon,
+  [AnnotationKind.CIRCLE]: Circle,
+  [AnnotationKind.RULER]: AnnotationRulerIcon
+};
 
 // Styled components
 
@@ -231,6 +267,41 @@ const StyledConfigRow = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 9px;
+`;
+
+const StyledAnnotationTypeGroup = styled(ButtonGroup)`
+  width: 100%;
+  height: ${props => props.theme.inputBoxHeight};
+  align-items: stretch;
+  margin-bottom: 9px;
+`;
+
+const StyledAnnotationTypeButton = styled(Button)<{$active: boolean}>`
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  background-color: ${props => props.theme.inputBgd};
+  color: ${props => (props.$active ? props.theme.selectionBtnActColor : props.theme.inputColor)};
+  border: 1px solid
+    ${props => (props.$active ? props.theme.selectionBtnBorderActColor : 'transparent')};
+
+  &:hover,
+  &:focus,
+  &:active {
+    background-color: ${props => props.theme.inputBgdHover};
+    color: ${props => (props.$active ? props.theme.selectionBtnActColor : props.theme.inputColor)};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${props => props.theme.selectionBtnBorderActColor};
+    outline-offset: -2px;
+  }
+
+  svg {
+    margin-right: 0;
+  }
 `;
 
 const StyledConfigLabel = styled.div`
@@ -550,26 +621,30 @@ export default function AnnotationManagerFactory(): React.FC<any> {
 
                   {isSelected ? (
                     <StyledConfigSection>
-                      <StyledConfigRow>
-                        <StyledConfigLabel>
-                          {intl.formatMessage({
-                            id: 'annotationManager.type',
-                            defaultMessage: 'Type'
-                          })}
-                        </StyledConfigLabel>
-                        <StyledSelect
-                          selectedItems={ANNOTATION_KINDS.find(k => k.id === annotation.kind)}
-                          options={ANNOTATION_KINDS}
-                          displayOption="label"
-                          getOptionValue="id"
-                          multiSelect={false}
-                          searchable={false}
-                          onChange={kind => {
-                            if (kind == null) return;
-                            handleChangeKind(annotation.id, kind as AnnotationKind);
-                          }}
-                        />
-                      </StyledConfigRow>
+                      <StyledAnnotationTypeGroup
+                        role="group"
+                        aria-label={intl.formatMessage({
+                          id: 'annotationManager.type',
+                          defaultMessage: 'Type'
+                        })}
+                      >
+                        {ANNOTATION_KINDS.map(({id, label}) => {
+                          const Icon = ANNOTATION_ICONS[id];
+                          return (
+                            <StyledAnnotationTypeButton
+                              key={id}
+                              type="button"
+                              title={label}
+                              aria-label={label}
+                              aria-pressed={annotation.kind === id}
+                              $active={annotation.kind === id}
+                              onClick={() => handleChangeKind(annotation.id, id)}
+                            >
+                              <Icon height="20px" aria-hidden="true" focusable="false" />
+                            </StyledAnnotationTypeButton>
+                          );
+                        })}
+                      </StyledAnnotationTypeGroup>
                       <StyledConfigRow>
                         <StyledConfigLabel>
                           {intl.formatMessage({

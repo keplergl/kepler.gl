@@ -4,7 +4,8 @@
 import React from 'react';
 import {Provider} from 'react-redux';
 import configureStore from 'redux-mock-store';
-import {fireEvent, screen} from '@testing-library/react';
+import {fireEvent, screen, within} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
@@ -90,6 +91,83 @@ describe('AnnotationManager ruler settings', () => {
   });
 });
 
+describe('AnnotationManager type icons', () => {
+  test.each([
+    [AnnotationKind.TEXT, 'Text', AnnotationKind.POINT, 'Point'],
+    [AnnotationKind.POINT, 'Point', AnnotationKind.ARROW, 'Arrow'],
+    [AnnotationKind.ARROW, 'Arrow', AnnotationKind.CIRCLE, 'Circle'],
+    [AnnotationKind.CIRCLE, 'Circle', AnnotationKind.RULER, 'Ruler'],
+    [AnnotationKind.RULER, 'Ruler', AnnotationKind.TEXT, 'Text']
+  ] as const)(
+    '%s type icon is highlighted and supports switching',
+    (kind, label, nextKind, nextLabel) => {
+      const state = makeState(true, true);
+      Object.assign(state.visState.annotations[0], {kind, armLength: 50, angle: -45});
+      const store = mockStore(state);
+      renderWithTheme(
+        <IntlWrapper>
+          <Provider store={store}>
+            <AnnotationManager />
+          </Provider>
+        </IntlWrapper>
+      );
+
+      const group = screen.getByRole('group', {name: 'Type'});
+      const buttons = within(group).getAllByRole('button');
+      expect(buttons.map(button => button.getAttribute('aria-label'))).toEqual([
+        'Text',
+        'Point',
+        'Arrow',
+        'Circle',
+        'Ruler'
+      ]);
+      expect(screen.queryByText('Type')).not.toBeInTheDocument();
+      expect(group).toHaveStyle({width: '100%', height: theme.inputBoxHeight});
+      expect(within(group).getAllByRole('button', {pressed: true})).toEqual([
+        within(group).getByRole('button', {name: label})
+      ]);
+      expect(within(group).getByRole('button', {name: label})).toHaveStyle({
+        color: theme.selectionBtnActColor,
+        borderColor: theme.selectionBtnBorderActColor
+      });
+      for (const button of buttons) {
+        expect(button).toHaveStyle({flex: '1', height: '100%', padding: '0'});
+        expect(button).toHaveAttribute('type', 'button');
+        expect(button).toHaveAttribute('title', button.getAttribute('aria-label'));
+        expect(button.querySelector('svg')).toBeInTheDocument();
+      }
+
+      fireEvent.click(within(group).getByRole('button', {name: nextLabel}));
+      expect(store.getActions()).toEqual([
+        VisStateActions.updateAnnotation('ruler-1', {kind: nextKind})
+      ]);
+    }
+  );
+
+  test('supports keyboard activation of type icons', async () => {
+    const user = userEvent.setup();
+    const store = mockStore(makeState(true, true));
+    renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
+    );
+
+    screen.getByRole('button', {name: 'Text'}).focus();
+    await user.keyboard('{Enter}');
+    await user.tab();
+    expect(screen.getByRole('button', {name: 'Point'})).toHaveFocus();
+    await user.keyboard(' ');
+
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {kind: AnnotationKind.TEXT}),
+      VisStateActions.updateAnnotation('ruler-1', {kind: AnnotationKind.POINT})
+    ]);
+  });
+});
+
 describe('AnnotationManager selectors', () => {
   const originalIntersectionObserver = window.IntersectionObserver;
 
@@ -128,7 +206,7 @@ describe('AnnotationManager selectors', () => {
     expect(colorButton).toHaveStyle({width: '100%', boxSizing: 'border-box'});
   });
 
-  test.each(['Point', '2px', 'Right', 'Above'])(
+  test.each(['2px', 'Right', 'Above'])(
     'keeps %s unchanged when Enter is pressed without choosing an option', current => {
       const state = makeState(true, true);
       Object.assign(state.visState.annotations[0], {
@@ -154,7 +232,6 @@ describe('AnnotationManager selectors', () => {
   );
 
   test.each([
-    {current: 'Point', next: 'Circle', changes: {kind: AnnotationKind.CIRCLE}},
     {current: '2px', next: '4px', changes: {lineWidth: 4}},
     {
       current: 'Right',
