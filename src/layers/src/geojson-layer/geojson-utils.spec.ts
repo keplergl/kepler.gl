@@ -1,8 +1,260 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Feature} from 'geojson';
-import {featureToHoverOutline} from './geojson-utils';
+import {Feature, Geometry} from 'geojson';
+import {convertGeometryToWKB} from '@loaders.gl/gis';
+import {GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
+import {GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
+import {KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
+import {processFileData} from '@kepler.gl/processors';
+import * as arrow from 'apache-arrow';
+import GeoJsonLayer from './geojson-layer';
+import {
+  featureToHoverOutline,
+  parseGeoJsonRawFeature,
+  getGeojsonFeatureTypes
+} from './geojson-utils';
+
+describe('WKB GeometryCollection', () => {
+  test.each([null, {}, 'invalid'])(
+    'ignores malformed collection members in geometry-type metadata (%j)',
+    geometries => {
+      expect(
+        getGeojsonFeatureTypes([
+          {
+            type: 'Feature',
+            properties: {},
+            geometry: {type: 'GeometryCollection', geometries}
+          } as any
+        ])
+      ).toEqual({});
+    }
+  );
+  const geometry: Geometry = {
+    type: 'GeometryCollection',
+    geometries: [
+      {type: 'Point', coordinates: [1, 2]},
+      {
+        type: 'GeometryCollection',
+        geometries: [
+          {
+            type: 'LineString',
+            coordinates: [
+              [3, 4],
+              [5, 6]
+            ]
+          },
+          {type: 'GeometryCollection', geometries: []}
+        ]
+      }
+    ]
+  };
+  const bytes = () => new Uint8Array(convertGeometryToWKB(geometry));
+
+  test.each(['bytes', 'buffer', 'hex', 'offset view', 'GeoArrow'])(
+    'preserves nested and empty collections from %s',
+    format => {
+      const wkb = bytes();
+      const padded = new Uint8Array(wkb.length + 8);
+      padded.set(wkb, 4);
+      const value =
+        format === 'hex'
+          ? Buffer.from(wkb).toString('hex')
+          : format === 'buffer'
+          ? wkb.buffer
+          : format === 'offset view'
+          ? padded.subarray(4, -4)
+          : wkb;
+      expect(
+        parseGeoJsonRawFeature(value, format === 'GeoArrow' ? GEOARROW_EXTENSIONS.WKB : undefined)
+          ?.geometry
+      ).toEqual(geometry);
+    }
+  );
+
+  test('accepts a big-endian collection header and SRID metadata', () => {
+    const littleEndian = bytes();
+    const bigEndian = littleEndian.slice();
+    const view = new DataView(bigEndian.buffer);
+    view.setUint8(0, 0);
+    view.setUint32(1, 7, false);
+    view.setUint32(5, 2, false);
+    expect(parseGeoJsonRawFeature(bigEndian)?.geometry).toEqual(geometry);
+
+    const ewkb = new Uint8Array(littleEndian.length + 4);
+    ewkb.set(littleEndian.subarray(0, 5));
+    ewkb.set(littleEndian.subarray(5), 9);
+    const ewkbView = new DataView(ewkb.buffer);
+    ewkbView.setUint32(1, 0x20000007, true);
+    ewkbView.setUint32(5, 4326, true);
+    expect(parseGeoJsonRawFeature(ewkb)?.geometry).toEqual(geometry);
+  });
+
+  test('rejects malformed or excessively nested collections without throwing', () => {
+    const wkb = bytes();
+    const badOrder = wkb.slice();
+    badOrder[0] = 2;
+    const badCount = wkb.slice();
+    new DataView(badCount.buffer).setUint32(5, 0xffffffff, true);
+    const extra = new Uint8Array(wkb.length + 1);
+    extra.set(wkb);
+    let deep: Geometry = {type: 'Point', coordinates: [1, 2]};
+    for (let i = 0; i < 40; i++) deep = {type: 'GeometryCollection', geometries: [deep]};
+    for (const value of [
+      new Uint8Array(),
+      wkb.subarray(0, 8),
+      wkb.subarray(0, -1),
+      badOrder,
+      badCount,
+      extra,
+      new Uint8Array(convertGeometryToWKB(deep))
+    ]) {
+      expect(() => parseGeoJsonRawFeature(value)).not.toThrow();
+      expect(parseGeoJsonRawFeature(value)).toBeNull();
+    }
+  });
+
+  test.each(['Arrow hex', 'Arrow WKB', 'GeoParquet'])(
+    'imports collections through %s with row IDs, hover, filters and cache reuse',
+    async format => {
+      const point: Geometry = {type: 'Point', coordinates: [50, 60]};
+      const values = [geometry, point].map(value => new Uint8Array(convertGeometryToWKB(value)));
+      let table = new arrow.Table({
+        _geojson:
+          format === 'Arrow hex'
+            ? arrow.vectorFromArray(
+                values.map(value => Buffer.from(value).toString('hex')),
+                new arrow.Utf8()
+              )
+            : arrow.vectorFromArray(values, new arrow.Binary()),
+        label: arrow.vectorFromArray(['collection', 'point'], new arrow.Utf8())
+      });
+      if (format === 'Arrow WKB')
+        table.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.WKB);
+      if (format === 'GeoParquet') {
+        table.schema.metadata.set(
+          'geo',
+          JSON.stringify({
+            version: '1.1.0',
+            primary_column: '_geojson',
+            columns: {_geojson: {encoding: 'WKB'}}
+          })
+        );
+        const specifier = 'parquet-wasm/node';
+        const imported = await import(specifier);
+        const wasm = imported.readParquet ? imported : imported.default;
+        const properties = new wasm.WriterPropertiesBuilder()
+          .setKeyValueMetadata(table.schema.metadata)
+          .build();
+        const parquet = wasm.writeParquet(
+          wasm.Table.fromIPCStream(arrow.tableToIPC(table, 'stream')),
+          properties
+        );
+        table = arrow.tableFromIPC(wasm.readParquet(parquet).intoIPCStream());
+      } else table = arrow.tableFromIPC(arrow.tableToIPC(table, 'stream'));
+      const [file] = await processFileData({
+        content: {
+          fileName: format === 'GeoParquet' ? 'collections.parquet' : 'collections.arrow',
+          data: table.batches
+        },
+        fileCache: []
+      } as any);
+      const dataset = new KeplerTable({info: file.info, color: [0, 0, 0]});
+      await dataset.importData({data: file.data as any});
+      const {props} = GeoJsonLayer.findDefaultLayerProps(dataset);
+      expect(props).toHaveLength(1);
+      const layer = new GeoJsonLayer({...props[0], id: 'wkb-collection', dataId: dataset.id});
+      layer.setInitialLayerConfig(dataset);
+      const data = layer.formatLayerData({[dataset.id]: dataset}, {}) as any;
+      expect(layer.centroids).toHaveLength(2);
+      expect(layer.meta).toMatchObject({bounds: [1, 2, 50, 60]});
+      expect(layer.meta.featureTypes).toMatchObject({point: true, line: true});
+      if (layer.geoArrowMode) {
+        expect(
+          [
+            ...new Set(
+              data.data.flatMap(batch =>
+                ['points', 'lines', 'polygons'].flatMap(type =>
+                  Array.from(batch[type]?.globalFeatureIds?.value || [])
+                )
+              )
+            )
+          ].sort()
+        ).toEqual([0, 1]);
+      } else expect(data.data.map(feature => feature.properties.index)).toEqual([0, 1]);
+      const hover = {
+        picked: true,
+        index: 0,
+        object: layer.geoArrowMode ? undefined : data.data[0],
+        layer: {props: {id: layer.id}}
+      };
+      expect(layer._getHoverOverlayData(hover)?.[0].geometry).toEqual(geometry);
+      if (layer.geoArrowMode)
+        expect(layer.hasHoveredObject(hover)?.properties).toMatchObject({
+          label: 'collection',
+          index: 0
+        });
+      const parsed = layer.dataToFeature;
+      layer.updateLayerVisConfig({opacity: 0.37});
+      const updated = layer.formatLayerData(
+        {[dataset.id]: copyTableAndUpdate(dataset, {filteredIndex: [1]})},
+        data
+      ) as any;
+      expect(layer.dataToFeature).toBe(parsed);
+      expect(layer.config.visConfig.opacity).toBe(0.37);
+      if (layer.geoArrowMode) {
+        expect(updated.getFiltered({properties: {index: 0}})).toBe(0);
+        expect(updated.getFiltered({properties: {index: 1}})).toBe(1);
+      } else expect(updated.data.map(feature => feature.properties.index)).toEqual([1]);
+    }
+  );
+
+  test('skips invalid and empty WKB rows while preserving later Arrow row IDs', () => {
+    const point: Geometry = {type: 'Point', coordinates: [50, 60]};
+    const values = [
+      bytes(),
+      bytes().subarray(0, 8),
+      new Uint8Array(),
+      new Uint8Array(convertGeometryToWKB({type: 'GeometryCollection', geometries: []})),
+      new Uint8Array(convertGeometryToWKB(point))
+    ];
+    const dataset = new KeplerTable({
+      info: {id: 'invalid-collections'},
+      color: [0, 0, 0]
+    }).updateSchema({
+      fields: [
+        {
+          name: 'geometry',
+          type: 'geoarrow',
+          analyzerType: 'GEOMETRY',
+          metadata: new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.WKB]])
+        }
+      ],
+      cols: [arrow.vectorFromArray(values, new arrow.Binary())],
+      rows: []
+    });
+    const layer = new GeoJsonLayer({
+      id: 'invalid-wkb',
+      dataId: dataset.id,
+      columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+    });
+    expect(() => layer.setInitialLayerConfig(dataset)).not.toThrow();
+    expect(layer.centroids).toEqual([[3, 4], null, null, null, [50, 60]]);
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {}) as any;
+    expect(
+      [
+        ...new Set(
+          data.data.flatMap(batch =>
+            ['points', 'lines'].flatMap(type => Array.from(batch[type].globalFeatureIds.value))
+          )
+        )
+      ].sort()
+    ).toEqual([0, 4]);
+    expect(
+      layer._getHoverOverlayData({picked: true, index: 1, layer: {props: {id: layer.id}}})
+    ).toBeNull();
+  });
+});
 
 describe('featureToHoverOutline', () => {
   test('converts Polygon rings to MultiLineString so hover overlay skips fill tessellation', () => {

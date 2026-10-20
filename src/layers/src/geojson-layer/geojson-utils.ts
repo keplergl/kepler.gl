@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Buffer} from 'buffer';
-import {Feature, Position, BBox} from 'geojson';
+import {Feature, Geometry, Position, BBox} from 'geojson';
 import normalize from '@mapbox/geojson-normalize';
 import {bbox} from '@turf/bbox';
 import {ascending, extent} from 'd3-array';
@@ -128,6 +128,78 @@ function isBinaryGeometry(value: unknown): value is Uint8Array | ArrayBuffer {
   }
   // Uint8Array, Buffer, and other byte views (Arrow Binary .get())
   return ArrayBuffer.isView(value) && (value as Uint8Array).BYTES_PER_ELEMENT === 1;
+}
+
+/** Keep the existing decoder for ordinary WKB; decode collection envelopes here. */
+function parseWkbGeometry(buffer: ArrayBuffer): Geometry | null {
+  try {
+    return convertWKBToGeometry(buffer);
+  } catch {
+    // loaders.gl does not yet decode WKB GeometryCollection (type 7).
+  }
+  const view = new DataView(buffer);
+  const header = (offset: number) => {
+    const order = view.getUint8(offset);
+    if (order !== 0 && order !== 1) throw new Error('Invalid WKB byte order');
+    const littleEndian = order === 1;
+    const rawType = view.getUint32(offset + 1, littleEndian);
+    const type = rawType & 0x1fffffff;
+    const kind = type % 1000;
+    if (kind < 1 || kind > 7 || type >= 4000) throw new Error('Unsupported WKB type');
+    const dimensions =
+      2 +
+      Number(Boolean(rawType & 0x80000000) || [1, 3].includes(Math.floor(type / 1000))) +
+      Number(Boolean(rawType & 0x40000000) || [2, 3].includes(Math.floor(type / 1000)));
+    return {kind, littleEndian, dimensions, start: offset + 5 + (rawType & 0x20000000 ? 4 : 0)};
+  };
+  const endOfGeometry = (offset: number, depth: number): number => {
+    if (depth > 32) throw new Error('WKB nesting limit exceeded');
+    const {kind, start, dimensions, littleEndian} = header(offset);
+    let cursor = start;
+    if (kind === 1) cursor += dimensions * 8;
+    else {
+      const count = view.getUint32(cursor, littleEndian);
+      cursor += 4;
+      if (kind === 2) cursor += count * dimensions * 8;
+      else {
+        if (count > (buffer.byteLength - cursor) / (kind === 3 ? 4 : 5))
+          throw new Error('Truncated WKB');
+        for (let i = 0; i < count; i++) {
+          if (kind === 3) {
+            const points = view.getUint32(cursor, littleEndian);
+            cursor += 4 + points * dimensions * 8;
+          } else cursor = endOfGeometry(cursor, depth + 1);
+        }
+      }
+    }
+    if (cursor > buffer.byteLength) throw new Error('Truncated WKB');
+    return cursor;
+  };
+  const readGeometry = (offset: number, depth: number): {geometry: Geometry; end: number} => {
+    if (depth > 32) throw new Error('WKB nesting limit exceeded');
+    const {kind, start, littleEndian} = header(offset);
+    if (kind !== 7) {
+      const end = endOfGeometry(offset, depth);
+      return {geometry: convertWKBToGeometry(buffer.slice(offset, end)), end};
+    }
+    const count = view.getUint32(start, littleEndian);
+    let cursor = start + 4;
+    if (count > (buffer.byteLength - cursor) / 5) throw new Error('Truncated WKB');
+    const geometries: Geometry[] = [];
+    for (let i = 0; i < count; i++) {
+      const child = readGeometry(cursor, depth + 1);
+      geometries.push(child.geometry);
+      cursor = child.end;
+    }
+    return {geometry: {type: 'GeometryCollection', geometries}, end: cursor};
+  };
+  try {
+    if (header(0).kind !== 7) return null;
+    const {geometry, end} = readGeometry(0, 0);
+    return end === buffer.byteLength ? geometry : null;
+  } catch {
+    return null;
+  }
 }
 
 function isLngLat(pos: unknown): pos is number[] {
@@ -263,8 +335,8 @@ export function parseGeoJsonRawFeature(
   // Support WKB geometry provided as binary (e.g., from Parquet/GeoParquet/DuckDB)
   if (isBinaryGeometry(rawFeature)) {
     try {
-      const parsedGeo = convertWKBToGeometry(toArrayBuffer(rawFeature));
-      return featureFromGeometry(parsedGeo, properties);
+      const parsedGeo = parseWkbGeometry(toArrayBuffer(rawFeature));
+      return parsedGeo ? featureFromGeometry(parsedGeo, properties) : null;
     } catch (e) {
       return null;
     }
@@ -460,7 +532,7 @@ function parseGeometryFromString(geoString: string): Feature | null {
       // try parse as WKB hex string
       try {
         const buffer = Buffer.from(geoString, 'hex');
-        parsedGeo = convertWKBToGeometry(toArrayBuffer(buffer));
+        parsedGeo = parseWkbGeometry(toArrayBuffer(buffer));
       } catch (e) {
         return null;
       }
@@ -492,12 +564,11 @@ export function getGeojsonBounds(features: GeojsonDataMaps = []): BBox | null {
   const maxCount = 10000;
   const samples = features.length > maxCount ? getSampleData(features, maxCount) : features;
 
-  const validSingleGeometry = geom => geom.coordinates && geom.coordinates.length;
-  const validGeometryCollection = geom =>
-    geom.geometries && geom.geometries.length && geom.geometries.every(validSingleGeometry);
-  const nonEmpty = samples.filter(
-    d => d && d.geometry && (validSingleGeometry(d.geometry) || validGeometryCollection(d.geometry))
-  );
+  const validGeometry = geom =>
+    geom?.type === 'GeometryCollection'
+      ? Array.isArray(geom.geometries) && geom.geometries.some(validGeometry)
+      : geom?.coordinates && geom.coordinates.length;
+  const nonEmpty = samples.filter(d => d && d.geometry && validGeometry(d.geometry));
 
   try {
     return bbox({
@@ -530,13 +601,18 @@ export type DeckGlGeoTypes = {
 export function getGeojsonFeatureTypes(allFeatures: GeojsonDataMaps): DeckGlGeoTypes {
   // @ts-expect-error some test cases only have 1 geotype
   const featureTypes: DeckGlGeoTypes = {};
+  const addGeometry = geometry => {
+    if (geometry?.type === 'GeometryCollection') {
+      if (Array.isArray(geometry.geometries)) geometry.geometries.forEach(addGeometry);
+    } else {
+      const geoType = featureToDeckGlGeoType[geometry?.type];
+      if (geoType) featureTypes[geoType] = true;
+    }
+  };
   for (let f = 0; f < allFeatures.length; f++) {
     const feature = allFeatures[f];
     if (feature && 'geometry' in feature) {
-      const geoType = featureToDeckGlGeoType[feature.geometry && feature.geometry.type];
-      if (geoType) {
-        featureTypes[geoType] = true;
-      }
+      addGeometry(feature.geometry);
     }
   }
 
