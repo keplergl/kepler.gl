@@ -45,7 +45,7 @@ const AccessibleHeaderActions = styled(HeaderActions)`
     overflow: hidden;
     clip-path: inset(50%);
   }
-  .kg-checkbox:focus-within {
+  .kg-checkbox:has(:focus-visible) {
     outline: 2px solid ${props => props.theme.activeColor};
   }
 `;

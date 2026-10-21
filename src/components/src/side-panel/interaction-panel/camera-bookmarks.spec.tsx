@@ -278,6 +278,37 @@ function emulatePointerStyles() {
   };
 }
 
+test('shows the toggle outline only for keyboard focus in either enabled state', () => {
+  const {toggle} = setup(initial);
+  const checkbox = screen.getByRole('checkbox', {name: 'Enable bookmarks'}) as HTMLInputElement;
+  const wrapper = checkbox.closest('.kg-checkbox') as HTMLElement;
+  const header = screen.getByRole('button', {name: 'Bookmarks'});
+  for (const enabled of [false, true]) {
+    fireEvent.click(checkbox);
+    checkbox.focus();
+    const restoreStyles = emulatePointerStyles();
+    try {
+      wrapper.setAttribute('data-test-focus-within', '');
+      expect(checkbox.checked).toBe(enabled);
+      expect(toggle).toHaveBeenLastCalledWith('cameraBookmarks', enabled);
+      expect(checkbox).toHaveFocus();
+      expect(wrapper).not.toHaveStyle({outline: `2px solid ${theme.activeColor}`});
+      expect(wrapper).toHaveStyle({marginLeft: '0', marginRight: `-${theme.switchLabelMargin}px`});
+      expect(wrapper.parentElement).toHaveStyle({gap: '24px', marginRight: '-10px'});
+      expect(header).toHaveAttribute('aria-expanded', 'true');
+
+      checkbox.setAttribute('data-test-focus-visible', '');
+      expect(wrapper).toHaveStyle({outline: `2px solid ${theme.activeColor}`});
+      checkbox.removeAttribute('data-test-focus-visible');
+    } finally {
+      restoreStyles();
+    }
+  }
+  fireEvent.click(header);
+  expect(header).toHaveAttribute('aria-expanded', 'false');
+  expect(checkbox).toBeChecked();
+});
+
 test('reveals the light layer-style handle only on header hover or keyboard focus', () => {
   setup(initial);
   const handle = screen.getByRole('button', {name: 'Reorder bookmark: Home'});
