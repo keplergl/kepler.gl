@@ -28,6 +28,17 @@ const Row = styled.div`
   gap: 6px;
   min-width: 0;
   margin-bottom: 4px;
+  @media (hover: hover) and (pointer: fine) {
+    .camera-bookmark-copy {
+      opacity: 0;
+      pointer-events: none;
+    }
+    &:hover .camera-bookmark-copy,
+    &:has(:focus-visible) .camera-bookmark-copy {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
 `;
 const NavigateButton = styled(Button)`
   flex: 1;
@@ -129,6 +140,7 @@ export default function CameraBookmarkControl({
                 <span>{name}</span>
               </NavigateButton>
               <CopyButton
+                className="camera-bookmark-copy"
                 type="button"
                 secondary
                 small

@@ -58,6 +58,101 @@ test('copies the existing latitude/longitude format without a success message or
   expect(updateMap).not.toHaveBeenCalled();
 });
 
+// JSDOM does not evaluate pointer media queries or pointer/focus pseudo-classes reliably.
+// Enable the emitted fine-pointer CSS and model states with equal-specificity attributes.
+function emulatePointerStyles() {
+  const pointerStyles = document.createElement('style');
+  pointerStyles.textContent = Array.from(document.styleSheets)
+    .flatMap(sheet => Array.from(sheet.cssRules))
+    .filter((rule): rule is CSSMediaRule => rule.type === CSSRule.MEDIA_RULE)
+    .filter(
+      rule =>
+        /hover\s*:\s*hover/.test(rule.conditionText) &&
+        /pointer\s*:\s*fine/.test(rule.conditionText)
+    )
+    .flatMap(rule => Array.from(rule.cssRules))
+    .map(rule => rule.cssText)
+    .join('\n');
+  document.head.appendChild(pointerStyles);
+  const stateRules = Array.from(document.styleSheets)
+    .flatMap(sheet => Array.from(sheet.cssRules))
+    .filter((rule): rule is CSSStyleRule => rule.type === CSSRule.STYLE_RULE)
+    .filter(rule => /:hover|:focus-visible|:focus-within/.test(rule.selectorText))
+    .map(rule => ({rule, selector: rule.selectorText}));
+  stateRules.forEach(({rule, selector}) => {
+    rule.selectorText = selector
+      .replace(/:hover/g, '[data-test-hover]')
+      .replace(/:focus-visible/g, '[data-test-focus-visible]')
+      .replace(/:focus-within/g, '[data-test-focus-within]');
+  });
+  return () => {
+    stateRules.forEach(({rule, selector}) => {
+      rule.selectorText = selector;
+    });
+    pointerStyles.remove();
+  };
+}
+
+test('reveals copying only for its hovered or keyboard-focused row without shifting layout', () => {
+  setup({bookmarks: [...bookmarks, {...bookmarks[0], id: 'work', name: 'Work'}]});
+  const homeCopy = screen.getByRole('button', {name: 'Copy coordinates: Home'});
+  const workCopy = screen.getByRole('button', {name: 'Copy coordinates: Work'});
+  const workNavigate = screen.getByRole('button', {name: 'Work'});
+  const homeRow = homeCopy.parentElement as HTMLElement;
+  const panel = homeCopy.closest('.camera-bookmark-panel') as HTMLElement;
+  const restoreStyles = emulatePointerStyles();
+  const expectCopyState = (button: HTMLElement, visible: boolean) =>
+    expect(button).toHaveStyle({
+      opacity: visible ? '1' : '0',
+      pointerEvents: visible ? 'auto' : 'none',
+      flex: '0 0 28px',
+      width: '28px',
+      height: '28px'
+    });
+  try {
+    expectCopyState(homeCopy, false);
+    expectCopyState(workCopy, false);
+    fireEvent.mouseEnter(panel);
+    panel.setAttribute('data-test-hover', '');
+    expectCopyState(homeCopy, false);
+    expectCopyState(workCopy, false);
+
+    fireEvent.mouseEnter(homeRow);
+    homeRow.setAttribute('data-test-hover', '');
+    expectCopyState(homeCopy, true);
+    expectCopyState(workCopy, false);
+    homeCopy.focus(); // Model native pointer focus, which fireEvent.click does not provide.
+    homeRow.setAttribute('data-test-focus-within', '');
+    fireEvent.click(homeCopy);
+    expect(copy).toHaveBeenLastCalledWith('20.987654, 10.123457');
+    fireEvent.mouseLeave(homeRow);
+    homeRow.removeAttribute('data-test-hover');
+    expect(homeCopy).toHaveFocus();
+    expectCopyState(homeCopy, false);
+    expectCopyState(workCopy, false);
+
+    homeCopy.setAttribute('data-test-focus-visible', '');
+    expectCopyState(homeCopy, true);
+    homeCopy.removeAttribute('data-test-focus-visible');
+    workNavigate.focus();
+    workNavigate.setAttribute('data-test-focus-visible', '');
+    expectCopyState(homeCopy, false);
+    expectCopyState(workCopy, true);
+    workCopy.focus();
+    workNavigate.removeAttribute('data-test-focus-visible');
+    workCopy.setAttribute('data-test-focus-visible', '');
+    expect(workCopy).toHaveFocus();
+    expectCopyState(workCopy, true);
+    fireEvent.click(workCopy);
+    expect(copy).toHaveBeenLastCalledWith('20.987654, 10.123457');
+    expect(
+      within(screen.getByRole('navigation', {name: 'Bookmarks'})).getByRole('status')
+    ).toBeEmptyDOMElement();
+  } finally {
+    restoreStyles();
+  }
+});
+
 test('reports clipboard failure and clears it after a successful retry', () => {
   jest.mocked(copy).mockReturnValueOnce(false);
   setup();
