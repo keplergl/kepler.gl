@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useState} from 'react';
-import {fireEvent, screen, waitFor} from '@testing-library/react';
+import {fireEvent, screen, waitFor, within} from '@testing-library/react';
 import {MapStateActions, VisStateActions, UIStateActions} from '@kepler.gl/actions';
 import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {CameraBookmark} from '@kepler.gl/types';
@@ -243,22 +243,46 @@ test('uses the existing Settings action and keeps header controls independent', 
   });
 });
 
-test('reveals the light layer-style handle only on header hover or keyboard focus', () => {
-  setup(initial);
-  const handle = screen.getByRole('button', {name: 'Reorder bookmark: Home'});
-  const row = handle.closest('.bookmark-row') as HTMLElement;
-  // Evaluate emitted hover/focus CSS using equivalent attribute selectors: JSDOM's
-  // native pointer pseudo-class matching is inconsistent. Restore every selector below.
+// JSDOM does not evaluate pointer media queries or pointer/focus pseudo-classes reliably.
+// Enable the emitted fine-pointer rules and model states with equal-specificity attributes.
+function emulatePointerStyles() {
+  const pointerStyles = document.createElement('style');
+  pointerStyles.textContent = Array.from(document.styleSheets)
+    .flatMap(sheet => Array.from(sheet.cssRules))
+    .filter((rule): rule is CSSMediaRule => rule.type === CSSRule.MEDIA_RULE)
+    .filter(
+      rule =>
+        /hover\s*:\s*hover/.test(rule.conditionText) &&
+        /pointer\s*:\s*fine/.test(rule.conditionText)
+    )
+    .flatMap(rule => Array.from(rule.cssRules))
+    .map(rule => rule.cssText)
+    .join('\n');
+  document.head.appendChild(pointerStyles);
   const stateRules = Array.from(document.styleSheets)
     .flatMap(sheet => Array.from(sheet.cssRules))
     .filter((rule): rule is CSSStyleRule => rule.type === CSSRule.STYLE_RULE)
-    .filter(rule => /:hover|:focus-visible/.test(rule.selectorText))
+    .filter(rule => /:hover|:focus-visible|:focus-within/.test(rule.selectorText))
     .map(rule => ({rule, selector: rule.selectorText}));
   stateRules.forEach(({rule, selector}) => {
     rule.selectorText = selector
       .replace(/:hover/g, '[data-test-hover]')
-      .replace(/:focus-visible/g, '[data-test-focus-visible]');
+      .replace(/:focus-visible/g, '[data-test-focus-visible]')
+      .replace(/:focus-within/g, '[data-test-focus-within]');
   });
+  return () => {
+    stateRules.forEach(({rule, selector}) => {
+      rule.selectorText = selector;
+    });
+    pointerStyles.remove();
+  };
+}
+
+test('reveals the light layer-style handle only on header hover or keyboard focus', () => {
+  setup(initial);
+  const handle = screen.getByRole('button', {name: 'Reorder bookmark: Home'});
+  const row = handle.closest('.bookmark-row') as HTMLElement;
+  const restoreStyles = emulatePointerStyles();
   row.setAttribute('data-test-hover', '');
   row.removeAttribute('data-test-hover');
   try {
@@ -278,9 +302,7 @@ test('reveals the light layer-style handle only on header hover or keyboard focu
     expect(handle).toHaveFocus();
     expect(handle).toHaveStyle({opacity: '1'});
   } finally {
-    stateRules.forEach(({rule, selector}) => {
-      rule.selectorText = selector;
-    });
+    restoreStyles();
   }
 });
 
@@ -331,6 +353,51 @@ test('pointer dragging from the handle reorders and an outside drop leaves the o
     fireEvent.click(screen.getAllByRole('button', {name: 'Go to'})[0]);
     expect(updateMap).toHaveBeenCalledTimes(1);
   });
+});
+
+test('hides actions after a pointer reorder and mouse leave while retaining keyboard access', async () => {
+  measureRows();
+  const {commit, updateMap} = setup(pair);
+  const handle = screen.getByRole('button', {name: 'Reorder bookmark: Work'});
+  const row = handle.closest('.bookmark-row') as HTMLElement;
+  const actions = row.querySelector('.bookmark-actions');
+  const restoreStyles = emulatePointerStyles();
+  try {
+    fireEvent.mouseEnter(row);
+    row.setAttribute('data-test-hover', '');
+    fireEvent.pointerDown(handle, {button: 0, clientX: 10, clientY: 60});
+    // fireEvent does not perform the browser's native pointer-focus default action.
+    handle.focus();
+    row.setAttribute('data-test-focus-within', '');
+    fireEvent.pointerMove(document, {clientX: 10, clientY: 54});
+    await waitFor(() => expect(handle).toHaveAttribute('aria-pressed', 'true'));
+    fireEvent.pointerMove(document, {clientX: 10, clientY: 18});
+    fireEvent.pointerUp(document, {clientX: 10, clientY: 18});
+    await waitFor(() => expect(commit).toHaveBeenCalledWith([pair[1], pair[0]]));
+    expect(actions).toHaveStyle({opacity: '1', pointerEvents: 'auto'});
+    fireEvent.mouseLeave(row);
+    row.removeAttribute('data-test-hover');
+    expect(handle).toHaveFocus();
+    expect(handle).toHaveStyle({opacity: '0'});
+    expect(actions).toHaveStyle({opacity: '0', pointerEvents: 'none'});
+
+    handle.setAttribute('data-test-focus-visible', '');
+    expect(handle).toHaveStyle({opacity: '1'});
+    expect(actions).toHaveStyle({opacity: '1', pointerEvents: 'auto'});
+    const goTo = within(row).getByRole('button', {name: 'Go to'});
+    goTo.focus();
+    handle.removeAttribute('data-test-focus-visible');
+    goTo.setAttribute('data-test-focus-visible', '');
+    expect(goTo).toHaveFocus();
+    expect(actions).toHaveStyle({opacity: '1', pointerEvents: 'auto'});
+    // Wait for dnd-kit's post-drag click suppression to release before the next test.
+    await waitFor(() => {
+      fireEvent.click(goTo);
+      expect(updateMap).toHaveBeenCalledTimes(1);
+    });
+  } finally {
+    restoreStyles();
+  }
 });
 
 test('editing names and using action icons never activates dragging', () => {

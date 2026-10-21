@@ -79,7 +79,7 @@ const BookmarkRow = styled(StyledPanelHeader)`
       pointer-events: none;
     }
     &:hover .bookmark-actions,
-    &:focus-within .bookmark-actions {
+    &:has(:focus-visible) .bookmark-actions {
       opacity: 1;
       pointer-events: auto;
     }
