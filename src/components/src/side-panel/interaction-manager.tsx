@@ -7,6 +7,7 @@ import {useIntl} from 'react-intl';
 import {
   Annotation,
   CameraBookmark,
+  CameraTour,
   InteractionConfig,
   LayerOrder,
   MapInfo,
@@ -14,6 +15,7 @@ import {
 } from '@kepler.gl/types';
 import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
 import CameraBookmarks from './interaction-panel/camera-bookmarks';
+import CameraTourConfig from './interaction-panel/camera-tour-config';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
 
@@ -56,6 +58,8 @@ type InteractionManagerProps = {
   mapState?: MapState;
   cameraBookmarks?: CameraBookmark[];
   cameraBookmarksEnabled?: boolean;
+  cameraTour?: CameraTour | null;
+  cameraTourEnabled?: boolean;
   mapStateActions?: typeof MapStateActions;
   actionIcons?: {
     settings?: PanelHeaderActionIcon;
@@ -96,6 +100,8 @@ function InteractionManagerFactory(
     mapState,
     cameraBookmarks,
     cameraBookmarksEnabled,
+    cameraTour,
+    cameraTourEnabled,
     mapStateActions,
     actionIcons,
     interactionConfigIcons
@@ -177,6 +183,15 @@ function InteractionManagerFactory(
           bookmarks={cameraBookmarks}
           enabled={cameraBookmarksEnabled}
           uiStateActions={uiStateActions}
+          mapState={mapState}
+          mapStateActions={mapStateActions}
+          visStateActions={visStateActions}
+        />
+        <CameraTourConfig
+          tour={cameraTour}
+          enabled={cameraTourEnabled}
+          uiStateActions={uiStateActions}
+          bookmarks={cameraBookmarks}
           mapState={mapState}
           mapStateActions={mapStateActions}
           visStateActions={visStateActions}

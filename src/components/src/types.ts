@@ -7,6 +7,7 @@ import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {
   Annotation,
   CameraBookmark,
+  CameraTour,
   Filter,
   InteractionConfig,
   MapState,
@@ -41,6 +42,7 @@ export type SidePanelProps = {
   layers: Layer[];
   annotations?: Annotation[];
   cameraBookmarks?: CameraBookmark[];
+  cameraTour?: CameraTour | null;
   layerClasses: LayerClassesType;
   layerOrder: LayerOrder;
   mapStyle: MapStyle;

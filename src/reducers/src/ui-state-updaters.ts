@@ -128,6 +128,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = {
     {} as MapControls
   ),
   // Camera controls are UI preferences; saved camera snapshots remain independent.
+  cameraTour: {...DEFAULT_MAP_CONTROLS_FEATURES},
   cameraBookmarks: {
     ...DEFAULT_MAP_CONTROLS_FEATURES,
     show: false,
