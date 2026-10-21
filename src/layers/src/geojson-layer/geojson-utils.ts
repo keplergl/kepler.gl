@@ -270,6 +270,22 @@ function featureFromGeometry(parsedGeo: unknown, properties: null): Feature | nu
   return {properties, ...normalized.features[0]};
 }
 
+/** deck.gl accepts one collection level; keep one feature per source row. */
+function flattenGeometryCollection(geometry: Geometry): Geometry {
+  if (geometry?.type !== 'GeometryCollection' || !Array.isArray(geometry.geometries)) {
+    return geometry;
+  }
+  return {
+    ...geometry,
+    geometries: geometry.geometries.flatMap(child => {
+      const flattened = flattenGeometryCollection(child);
+      return flattened?.type === 'GeometryCollection' && Array.isArray(flattened.geometries)
+        ? flattened.geometries
+        : [flattened];
+    })
+  };
+}
+
 /**
  * Convert a hovered feature to outline-only geometry for the hover overlay.
  * The overlay is stroked and not filled, so polygon tessellation (earcut) is wasted
@@ -298,6 +314,9 @@ export function featureToHoverOutline(feature: Feature): Feature {
         coordinates: geometry.coordinates.flat()
       }
     };
+  }
+  if (geometry.type === 'GeometryCollection') {
+    return {...feature, geometry: flattenGeometryCollection(geometry)};
   }
   return feature;
 }
@@ -453,6 +472,7 @@ export function getGeojsonDataMaps(
 
     if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
       const cleaned = Object.assign({}, feature);
+      cleaned.geometry = flattenGeometryCollection(feature.geometry);
       // store index of the data in feature properties
       cleaned.properties = Object.assign({}, feature.properties ?? {}, {index});
 
@@ -566,7 +586,7 @@ export function getGeojsonBounds(features: GeojsonDataMaps = []): BBox | null {
 
   const validGeometry = geom =>
     geom?.type === 'GeometryCollection'
-      ? Array.isArray(geom.geometries) && geom.geometries.some(validGeometry)
+      ? Array.isArray(geom.geometries) && geom.geometries.every(validGeometry)
       : geom?.coordinates && geom.coordinates.length;
   const nonEmpty = samples.filter(d => d && d.geometry && validGeometry(d.geometry));
 

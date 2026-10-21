@@ -3,6 +3,7 @@
 
 import {Feature, Geometry} from 'geojson';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
+import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
 import {GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
@@ -12,8 +13,34 @@ import GeoJsonLayer from './geojson-layer';
 import {
   featureToHoverOutline,
   parseGeoJsonRawFeature,
-  getGeojsonFeatureTypes
+  getGeojsonFeatureTypes,
+  getGeojsonBounds
 } from './geojson-utils';
+
+// Exercise deck.gl's real data conversion without creating a WebGL context.
+function renderGeojsonFeatures(data: Feature[]) {
+  const layer = new DeckGLGeoJsonLayer({data});
+  layer.initializeState();
+  jest.spyOn(layer, 'setState').mockImplementation(update => {
+    Object.assign(layer.state, update);
+  });
+  layer.updateState({
+    props: layer.props,
+    oldProps: layer.props,
+    context: layer.context,
+    changeFlags: {
+      dataChanged: 'initial data',
+      propsChanged: false,
+      updateTriggersChanged: false,
+      extensionsChanged: false,
+      viewportChanged: false,
+      stateChanged: false,
+      propsOrDataChanged: true,
+      somethingChanged: true
+    }
+  });
+  return layer.state.features;
+}
 
 describe('WKB GeometryCollection', () => {
   test.each([null, {}, 'invalid'])(
@@ -181,14 +208,46 @@ describe('WKB GeometryCollection', () => {
             )
           ].sort()
         ).toEqual([0, 1]);
-      } else expect(data.data.map(feature => feature.properties.index)).toEqual([0, 1]);
+      } else {
+        expect(data.data.map(feature => feature.properties.index)).toEqual([0, 1]);
+        const rendered = renderGeojsonFeatures(data.data);
+        expect(rendered.pointFeatures?.map(feature => feature.geometry.coordinates)).toEqual([
+          [1, 2],
+          [50, 60]
+        ]);
+        expect(rendered.lineFeatures?.map(feature => feature.geometry.coordinates)).toEqual([
+          [
+            [3, 4],
+            [5, 6]
+          ]
+        ]);
+      }
       const hover = {
         picked: true,
         index: 0,
         object: layer.geoArrowMode ? undefined : data.data[0],
         layer: {props: {id: layer.id}}
       };
-      expect(layer._getHoverOverlayData(hover)?.[0].geometry).toEqual(geometry);
+      const overlay = layer._getHoverOverlayData(hover);
+      expect(overlay?.[0]).toMatchObject({
+        properties: {index: 0},
+        geometry: {
+          type: 'GeometryCollection',
+          geometries: [
+            {type: 'Point', coordinates: [1, 2]},
+            {
+              type: 'LineString',
+              coordinates: [
+                [3, 4],
+                [5, 6]
+              ]
+            }
+          ]
+        }
+      });
+      const renderedOverlay = renderGeojsonFeatures(overlay!);
+      expect(renderedOverlay.pointFeatures).toHaveLength(1);
+      expect(renderedOverlay.lineFeatures).toHaveLength(1);
       if (layer.geoArrowMode)
         expect(layer.hasHoveredObject(hover)?.properties).toMatchObject({
           label: 'collection',
@@ -253,6 +312,50 @@ describe('WKB GeometryCollection', () => {
     expect(
       layer._getHoverOverlayData({picked: true, index: 1, layer: {props: {id: layer.id}}})
     ).toBeNull();
+  });
+});
+
+describe('getGeojsonBounds', () => {
+  test.each([
+    {type: 'Polygon'},
+    {type: 'GeometryCollection', geometries: null},
+    {type: 'GeometryCollection', geometries: [{type: 'Polygon'}]}
+  ])('preserves valid rows when a collection contains %j', malformed => {
+    const valid: Feature = {
+      type: 'Feature',
+      properties: {},
+      geometry: {type: 'Point', coordinates: [1, 2]}
+    };
+    const invalid = {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'GeometryCollection',
+        geometries: [{type: 'Point', coordinates: [50, 60]}, malformed]
+      }
+    } as Feature;
+    expect(getGeojsonBounds([valid, invalid])).toEqual([1, 2, 1, 2]);
+  });
+
+  test('includes valid nested collections alongside empty collections', () => {
+    expect(
+      getGeojsonBounds([
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'GeometryCollection',
+            geometries: [
+              {type: 'GeometryCollection', geometries: []},
+              {
+                type: 'GeometryCollection',
+                geometries: [{type: 'Point', coordinates: [50, 60]}]
+              }
+            ]
+          }
+        }
+      ])
+    ).toEqual([50, 60, 50, 60]);
   });
 });
 
