@@ -63,6 +63,7 @@ export default function CameraBookmarkControl({
   mapStateActions,
   mapControls,
   setMapControlSettings,
+  setMapControlVisibility,
   activeSidePanel,
   isExport
 }: {
@@ -71,6 +72,7 @@ export default function CameraBookmarkControl({
   mapStateActions?: typeof MapStateActions;
   mapControls?: MapControls;
   setMapControlSettings?: typeof UIStateActions.setMapControlSettings;
+  setMapControlVisibility?: typeof UIStateActions.setMapControlVisibility;
   activeSidePanel?: string | null;
   isExport?: boolean;
 }) {
@@ -97,7 +99,15 @@ export default function CameraBookmarkControl({
 
   const title = message('bookmarks', 'Bookmarks');
   const panel = (
-    <MapControlPanel header="camera.bookmarks" disableClose className="camera-bookmark-panel">
+    <MapControlPanel
+      header="camera.bookmarks"
+      disableClose={!setMapControlVisibility}
+      onClick={event => {
+        event.preventDefault();
+        setMapControlVisibility?.('cameraBookmarks', false);
+      }}
+      className="camera-bookmark-panel"
+    >
       <Rows aria-label={title}>
         {bookmarks.map((bookmark, index) => {
           const name = bookmark.name || `${message('bookmark', 'Bookmark')} ${index + 1}`;
@@ -127,11 +137,7 @@ export default function CameraBookmarkControl({
                 disabled={!coordinates}
                 onClick={() => {
                   const copied = coordinates && copy(coordinates);
-                  setStatus(
-                    copied
-                      ? message('copiedCoordinates', 'Coordinates copied')
-                      : message('copyFailed', 'Could not copy coordinates')
-                  );
+                  setStatus(copied ? '' : message('copyFailed', 'Could not copy coordinates'));
                 }}
               >
                 <Copy height="16px" aria-hidden="true" />

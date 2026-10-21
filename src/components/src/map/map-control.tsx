@@ -97,6 +97,7 @@ export type MapControlProps = {
   cameraBookmarks?: CameraBookmark[];
 
   setMapControlSettings: typeof UIStateActions.setMapControlSettings;
+  setMapControlVisibility?: typeof UIStateActions.setMapControlVisibility;
   activeSidePanel: string | null;
 
   // optional
@@ -184,6 +185,7 @@ function MapControlFactory(
           bookmarks={restProps.cameraBookmarks}
           mapControls={restProps.mapControls}
           setMapControlSettings={restProps.setMapControlSettings}
+          setMapControlVisibility={restProps.setMapControlVisibility}
           activeSidePanel={restProps.activeSidePanel}
           mapState={mapState}
           mapStateActions={mapStateActions}
