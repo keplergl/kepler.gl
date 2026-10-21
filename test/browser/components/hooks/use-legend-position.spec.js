@@ -136,6 +136,55 @@ describe('useLegendPosition', () => {
     }
   });
 
+  describe.each(['top', 'bottom'])('%s-edge minimum', edge => {
+    test.each([
+      ['48px', 48],
+      ['100px', 100],
+      ['auto', 100],
+      ['0px', 100]
+    ])('uses the panel CSS minimum %s with a safe fallback', (minHeight, expected) => {
+      const onChangeSettings = jest.fn();
+      const legendContent = setupResizeFixture({
+        contentHeight: 150,
+        legendRect: {top: 100, left: 20, bottom: 284, right: 210},
+        rootRect: {top: 0, left: 0, bottom: 600, right: 800}
+      });
+      const content = legendContent.querySelector('.map-control__panel-content');
+      content.style.minHeight = minHeight;
+      const {result} = renderHook(() =>
+        useLegendPosition({
+          legendContentRef: {current: legendContent},
+          isSidePanelShown: false,
+          settings: {
+            position: {x: 20, y: 100, anchorX: 'left', anchorY: 'top'},
+            contentHeight: 150
+          },
+          onChangeSettings,
+          theme: THEME
+        })
+      );
+      act(() => {
+        result.current.startResize();
+        result.current.resize(edge === 'top' ? 500 : -500, edge);
+      });
+      expect(onChangeSettings).toHaveBeenLastCalledWith({
+        contentHeight: expected,
+        ...(edge === 'top'
+          ? {position: {x: 20, y: 250 - expected, anchorX: 'left', anchorY: 'top'}}
+          : {})
+      });
+      // A subsequent gesture reads the panel's current layout again.
+      content.style.minHeight = '64px';
+      act(() => {
+        result.current.startResize();
+        result.current.resize(edge === 'top' ? 500 : -500, edge);
+      });
+      expect(onChangeSettings).toHaveBeenLastCalledWith(
+        expect.objectContaining({contentHeight: 64})
+      );
+    });
+  });
+
   test('top-edge resize grows a bottom-anchored legend without moving it', () => {
     const onChangeSettings = jest.fn();
     const legendContent = setupResizeFixture({

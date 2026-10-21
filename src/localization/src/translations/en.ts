@@ -1043,8 +1043,7 @@ ${'```'}
     legendHideInvisible: 'Hide hidden layers in legend',
     legendAllLayers: 'All Layers',
     fadeOnZoom: 'Fade on zoom',
-    fadeOnZoomHint:
-      'Fade layers and annotations as the map zooms. Configure a zoom range to show them.',
+    fadeOnZoomHint: 'Set a zoom range to fade layers and annotations.',
     fadeOnZoomAdd: 'Add controller',
     fadeOnZoomLayers: 'Layers and annotations',
     fadeOnZoomAppear: 'Appear',
@@ -1052,6 +1051,24 @@ ${'```'}
     fadeOnZoomFullEnd: 'Full end',
     fadeOnZoomDisappear: 'Disappear',
     fadeOnZoomDelete: 'Remove controller'
+  },
+  camera: {
+    enableBookmarks: 'Enable bookmarks',
+    copyCoordinates: 'Copy coordinates',
+    copiedCoordinates: 'Coordinates copied',
+    copyFailed: 'Could not copy coordinates',
+    bookmarks: 'Bookmarks',
+    bookmark: 'Bookmark',
+    bookmarkName: 'Bookmark name',
+    reorderBookmark: 'Reorder bookmark',
+    captureBookmark: 'Add Bookmark',
+    bookmarksHint: 'Save views to revisit later.',
+    singleMap: 'Use a single 2D or 3D map to edit camera views.',
+    goTo: 'Go to',
+    updateView: 'Update view',
+    up: 'Up',
+    down: 'Down',
+    delete: 'Delete'
   },
   layerBlending: {
     title: 'Layer Blending',

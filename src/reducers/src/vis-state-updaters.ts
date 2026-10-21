@@ -60,6 +60,7 @@ import {
 // Utils
 import {
   FILTER_UPDATER_PROPS,
+  normalizeCameraBookmarks,
   addNewLayersToSplitMap,
   snapToMarks,
   applyFilterFieldName,
@@ -443,6 +444,9 @@ export const INITIAL_VIS_STATE: VisState = {
   // charts (enabled by default; gated by enableChartsPanel)
   charts: [],
   chartsToBeMerged: [],
+
+  // camera bookmarks
+  cameraBookmarks: [],
 
   // annotations
   annotations: [],
@@ -3405,6 +3409,11 @@ export const resetMapConfigUpdater = (state: VisState): VisState => ({
   initialState: state.initialState
 });
 
+export const setCameraBookmarksUpdater = (
+  state: VisState,
+  action: ReturnType<typeof VisStateActions.setCameraBookmarks>
+): VisState => ({...state, cameraBookmarks: normalizeCameraBookmarks(action.payload)});
+
 /**
  * Propagate `visState` reducer with a new configuration. Current config will be override.
  * @memberof visStateUpdaters
@@ -3426,7 +3435,9 @@ export const receiveMapConfigUpdater = (
   const {keepExistingConfig} = options;
 
   // reset config if keepExistingConfig is falsy
-  let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
+  let mergedState = !keepExistingConfig
+    ? {...resetMapConfigUpdater(state), cameraBookmarks: []}
+    : state;
   for (const merger of state.mergers) {
     if (isValidMerger(merger) && hasPropsToMerge(config.visState, merger.prop)) {
       mergedState = merger.merge(
@@ -7208,7 +7219,8 @@ export function replaceDatasetDepsInState<T extends VisState>(
 
       let replacedState = accuState;
       savedProps.forEach((propValue, i) => {
-        if (propValue == null) {
+        // Camera snapshots never reference datasets, even when a dataset ID is "id".
+        if (propValue == null || props[i] === 'cameraBookmarks') {
           return;
         }
         const mergerOptions = {

@@ -44,6 +44,8 @@ MapsLayoutFactory.deps = [];
 
 interface MapsLayoutProps {
   mapState: MapState;
+  /** Use the surrounding provider when the sidebar shares the live camera. */
+  provideViewState?: boolean;
   className?: string;
   children?: React.ReactNode;
   onSetSwipeComparePercentage?: (payload: {percentage: number}) => void;
@@ -52,6 +54,7 @@ interface MapsLayoutProps {
 export default function MapsLayoutFactory(): React.ComponentType<MapsLayoutProps> {
   const MapsLayout: React.FC<MapsLayoutProps> = ({
     mapState,
+    provideViewState = true,
     className,
     children,
     onSetSwipeComparePercentage
@@ -106,32 +109,36 @@ export default function MapsLayoutFactory(): React.ComponentType<MapsLayoutProps
       overflow: 'hidden' as const
     };
 
+    const maps = isSwipe ? (
+      <>
+        <MapWrapper key={1}>{childrenArray[1]}</MapWrapper>
+        <MapWrapper key={0} style={splitMapStyle}>
+          {childrenArray[0]}
+        </MapWrapper>
+        {containerMounted && containerElementRef.current && (
+          <>
+            {isSwiping && <SwipeInputBlock />}
+            <LayoutSplitter
+              mode={LayoutSplitterMode.VERTICAL}
+              referenceElement={containerElementRef.current}
+              percentageSplit={internalPercentage}
+              onMove={handleMove}
+              onRelease={handleRelease}
+            />
+          </>
+        )}
+      </>
+    ) : (
+      childrenArray
+    );
+
     return (
       <Outer className={className} ref={containerElementRef}>
-        <MapViewStateContextProvider mapState={mapState}>
-          {isSwipe ? (
-            <>
-              <MapWrapper key={1}>{childrenArray[1]}</MapWrapper>
-              <MapWrapper key={0} style={splitMapStyle}>
-                {childrenArray[0]}
-              </MapWrapper>
-              {containerMounted && containerElementRef.current && (
-                <>
-                  {isSwiping && <SwipeInputBlock />}
-                  <LayoutSplitter
-                    mode={LayoutSplitterMode.VERTICAL}
-                    referenceElement={containerElementRef.current}
-                    percentageSplit={internalPercentage}
-                    onMove={handleMove}
-                    onRelease={handleRelease}
-                  />
-                </>
-              )}
-            </>
-          ) : (
-            childrenArray
-          )}
-        </MapViewStateContextProvider>
+        {provideViewState ? (
+          <MapViewStateContextProvider mapState={mapState}>{maps}</MapViewStateContextProvider>
+        ) : (
+          maps
+        )}
       </Outer>
     );
   };

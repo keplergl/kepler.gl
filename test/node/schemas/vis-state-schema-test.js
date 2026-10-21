@@ -46,6 +46,44 @@ const expectedVisStateEntries = [
   'joins'
 ];
 
+test('#visStateSchema -> camera bookmarks are optional and persist only authored fields', t => {
+  const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
+  const bookmarks = [
+    {id: 'second', name: 'Second', camera},
+    {id: 'first', name: 'First', camera: {...camera, zoom: 8}}
+  ];
+  const state = cloneDeep(StateWFilesFiltersLayerColor);
+  const empty = SchemaManager.getConfigToSave(state);
+  t.notOk('cameraBookmarks' in empty.config.visState, 'omits unused bookmarks');
+  t.notOk(
+    'cameraBookmarks' in SchemaManager.parseSavedConfig(empty).visState,
+    'old maps need no bookmarks'
+  );
+  state.visState.cameraBookmarks = bookmarks.map(bookmark => ({
+    ...bookmark,
+    selected: true,
+    camera: {...bookmark.camera, width: 800, transitionDuration: 1000}
+  }));
+  const saved = SchemaManager.getConfigToSave(state);
+  t.deepEqual(
+    saved.config.visState.cameraBookmarks,
+    bookmarks,
+    'saves names/order and only camera values'
+  );
+  t.deepEqual(
+    SchemaManager.parseSavedConfig(saved).visState.cameraBookmarks,
+    bookmarks,
+    'round trips'
+  );
+  saved.config.visState.cameraBookmarks.push(null, {id: 'invalid', camera: {}});
+  t.deepEqual(
+    SchemaManager.parseSavedConfig(saved).visState.cameraBookmarks,
+    bookmarks,
+    'ignores invalid entries'
+  );
+  t.end();
+});
+
 test('#visStateSchema -> v1 -> save layers', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
 

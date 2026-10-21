@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 // UTILS
+export {getCameraSnapshot, normalizeCameraBookmarks} from './camera-utils';
 
 export {
   colorMaybeToRGB,

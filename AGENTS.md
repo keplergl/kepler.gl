@@ -34,6 +34,8 @@ Read the implementation you will edit and its nearest test first. Look for a pat
 
 After the behavior is implemented, add or update a test when that behavior can be observed. Test the behavior the task describes, including the empty, missing, or invalid input that motivated the change. Assert on behavior, not implementation details. Do not weaken an assertion to make a test pass.
 
+Do not add tests that merely freeze incidental UI copy, typography, dimensions, or styling. Tests should protect meaningful behavior, accessibility contracts, state transitions, or actual regressions; meaningful UI and accessibility tests remain appropriate.
+
 Skip the test when nothing observable changed (types, comments, copy, build config) or the change cannot be tested. Say which one in the PR.
 
 - Extend the nearest existing test file before adding a new one.

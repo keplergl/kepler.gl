@@ -6,6 +6,7 @@ import {MapStyle} from '@kepler.gl/reducers';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {
   Annotation,
+  CameraBookmark,
   Filter,
   InteractionConfig,
   MapState,
@@ -39,6 +40,7 @@ export type SidePanelProps = {
   overlayBlending?: string;
   layers: Layer[];
   annotations?: Annotation[];
+  cameraBookmarks?: CameraBookmark[];
   layerClasses: LayerClassesType;
   layerOrder: LayerOrder;
   mapStyle: MapStyle;

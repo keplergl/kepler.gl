@@ -65,6 +65,8 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [Tooltips](./g-interactions.md#tooltips)
 * [Brushing](./g-interactions.md#brushing)
 * [Display Coordinates](./g-interactions.md#display-coordinates)
+* [Bookmarks](./g-interactions.md#bookmarks)
+* [Fade on Zoom](./g-interactions.md#fade-on-zoom)
 
 #### [Map Settings](./m-map-settings.md)
 * [View maps in 3d](./m-map-settings.md#view-maps-in-3d)

@@ -4,6 +4,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import KeplerGlLogo from '../common/logo';
+import CameraBookmarkControl from './camera-bookmark-control';
 
 // factories
 import SplitMapButtonFactory from './split-map-button';
@@ -15,6 +16,7 @@ import ThemeToggleButtonFactory from './theme-toggle-button';
 import MapNavigationControlFactory from './map-navigation-control';
 import {Layer} from '@kepler.gl/layers';
 import {
+  CameraBookmark,
   Editor,
   LayerVisConfig,
   LayerOrder,
@@ -92,8 +94,10 @@ export type MapControlProps = {
   themeName?: string;
   logoComponent?: React.FC | React.ReactNode;
   isExport?: boolean;
+  cameraBookmarks?: CameraBookmark[];
 
   setMapControlSettings: typeof UIStateActions.setMapControlSettings;
+  setMapControlVisibility?: typeof UIStateActions.setMapControlVisibility;
   activeSidePanel: string | null;
 
   // optional
@@ -177,6 +181,16 @@ function MapControlFactory(
     };
     return (
       <StyledMapControl className="map-control" $top={top}>
+        <CameraBookmarkControl
+          bookmarks={restProps.cameraBookmarks}
+          mapControls={restProps.mapControls}
+          setMapControlSettings={restProps.setMapControlSettings}
+          setMapControlVisibility={restProps.setMapControlVisibility}
+          activeSidePanel={restProps.activeSidePanel}
+          mapState={mapState}
+          mapStateActions={mapStateActions}
+          isExport={restProps.isExport}
+        />
         {actionComponents.map((ActionComponent, index) => (
           <ActionComponent key={index} className="map-control-action" {...actionComponentProps} />
         ))}

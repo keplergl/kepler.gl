@@ -32,10 +32,59 @@ import {
   receiveMapConfig,
   addDataToMap,
   registerEntry,
+  setCameraBookmarks,
   setLayerAnimationTimeConfig
 } from '@kepler.gl/actions';
 
 import {createDataContainer, findById} from '@kepler.gl/utils';
+
+test('#visState camera bookmarks -> replace, merge, validate and reset', t => {
+  const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
+  const first = {id: 'first', name: 'First', camera};
+  const second = {id: 'second', name: 'Second', camera};
+  const base = visStateReducer(undefined, setCameraBookmarks([first]));
+  camera.zoom = 99;
+  t.equal(base.cameraBookmarks[0].camera.zoom, 6, 'owns the captured snapshot');
+  const incoming = {
+    visState: {cameraBookmarks: [{...first, name: 'Changed'}, second, second, null]}
+  };
+  const merged = visStateReducer(base, receiveMapConfig(incoming, {keepExistingConfig: true}));
+  t.deepEqual(
+    merged.cameraBookmarks.map(item => item.name),
+    ['First', 'Second'],
+    'keeps existing IDs, appends unique new IDs'
+  );
+  const preserved = visStateReducer(
+    merged,
+    receiveMapConfig({visState: {}}, {keepExistingConfig: true})
+  );
+  t.deepEqual(
+    preserved.cameraBookmarks,
+    merged.cameraBookmarks,
+    'missing additive content preserves bookmarks'
+  );
+  const replaced = visStateReducer(base, receiveMapConfig({visState: {cameraBookmarks: [second]}}));
+  t.deepEqual(replaced.cameraBookmarks, [second], 'normal load replaces bookmarks');
+  const reset = visStateReducer(base, receiveMapConfig({visState: {}}));
+  t.deepEqual(reset.cameraBookmarks, [], 'normal legacy load clears previous bookmarks');
+  const seeded = {...base, initialState: {cameraBookmarks: [first]}};
+  t.deepEqual(
+    visStateReducer(seeded, receiveMapConfig({visState: {cameraBookmarks: [second]}})).cameraBookmarks,
+    [second],
+    'normal load replaces host-provided initial bookmarks'
+  );
+  t.deepEqual(
+    visStateReducer(seeded, receiveMapConfig({visState: {}})).cameraBookmarks,
+    [],
+    'normal legacy load clears host-provided initial bookmarks'
+  );
+  t.deepEqual(
+    visStateReducer(base, setCameraBookmarks([])).cameraBookmarks,
+    [],
+    'supports deleting every bookmark'
+  );
+  t.end();
+});
 
 // fixtures
 import {

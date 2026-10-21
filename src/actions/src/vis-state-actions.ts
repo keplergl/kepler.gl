@@ -31,7 +31,8 @@ import {
   LayerOrder,
   LayerOrderGroup,
   ProtoDataset,
-  ChartConfig
+  ChartConfig,
+  CameraBookmark
 } from '@kepler.gl/types';
 import {createAction} from '@reduxjs/toolkit';
 
@@ -850,6 +851,9 @@ export function removeChart(
     id
   };
 }
+
+/** Replace the ordered collection of saved camera bookmarks. */
+export const setCameraBookmarks = createAction<CameraBookmark[]>(ActionTypes.SET_CAMERA_BOOKMARKS);
 
 // Annotation Actions
 

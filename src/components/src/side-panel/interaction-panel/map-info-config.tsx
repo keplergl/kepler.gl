@@ -30,7 +30,7 @@ const StyledMapInfoPanel = styled.div`
   padding-bottom: 6px;
 `;
 
-const HeaderActions = styled.div`
+export const HeaderActions = styled.div`
   display: flex;
   align-items: center;
   gap: 24px;

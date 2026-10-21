@@ -100,6 +100,7 @@ export default function useLegendPosition({
   const contentHeight = settings?.contentHeight ?? -1;
   const positionStyles = useMemo(() => ({[pos.anchorX]: pos.x, [pos.anchorY]: pos.y}), [pos]);
   const startHeightRef = useRef(0);
+  const minHeightRef = useRef(MIN_CONTENT_HEIGHT);
   const sidePanelWidth = theme.sidePanel?.width || 0;
 
   // Calculate dynamic max content height based on map root dimensions
@@ -123,6 +124,10 @@ export default function useLegendPosition({
     const content = legendContentRef.current?.querySelector('.map-control__panel-content');
     if (content instanceof HTMLElement) {
       startHeightRef.current = content.offsetHeight;
+      // Keep resizing in sync with each panel's rendered minimum.
+      const minHeight = parseFloat(window.getComputedStyle(content).minHeight);
+      minHeightRef.current =
+        Number.isFinite(minHeight) && minHeight > 0 ? minHeight : MIN_CONTENT_HEIGHT;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -150,7 +155,7 @@ export default function useLegendPosition({
       const signedDelta = edge === 'top' ? -deltaY : deltaY;
       const nextHeight = Math.min(
         maxHeight,
-        Math.max(MIN_CONTENT_HEIGHT, startHeightRef.current + signedDelta)
+        Math.max(minHeightRef.current, startHeightRef.current + signedDelta)
       );
       const nextSettings: Partial<MapLegendControlSettings> = {contentHeight: nextHeight};
       // Keep the opposite edge fixed when CSS anchoring would otherwise move it.

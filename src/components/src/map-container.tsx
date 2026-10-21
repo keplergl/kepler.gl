@@ -1668,6 +1668,7 @@ export default function MapContainerFactory(
           {showMapControl && (
             <MapControl
               mapState={mapState}
+              cameraBookmarks={visState.cameraBookmarks}
               mapStateActions={mapStateActions}
               datasets={datasets}
               availableLocales={LOCALE_CODES_ARRAY}
@@ -1708,6 +1709,7 @@ export default function MapContainerFactory(
               hideInvisibleLayers={Boolean(interactionConfig.legend?.config?.hideInvisibleLayers)}
               mapHeight={mapState.height}
               setMapControlSettings={uiStateActions.setMapControlSettings}
+              setMapControlVisibility={uiStateActions.setMapControlVisibility}
               activeSidePanel={activeSidePanel}
               splitMaps={this.props.visState.splitMaps}
               onToggleLayerForMap={visStateActions.toggleLayerForMap}

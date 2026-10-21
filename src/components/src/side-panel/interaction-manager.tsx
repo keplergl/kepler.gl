@@ -4,8 +4,16 @@
 import React from 'react';
 import {useIntl} from 'react-intl';
 
-import {Annotation, InteractionConfig, LayerOrder, MapInfo, MapState} from '@kepler.gl/types';
-import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
+import {
+  Annotation,
+  CameraBookmark,
+  InteractionConfig,
+  LayerOrder,
+  MapInfo,
+  MapState
+} from '@kepler.gl/types';
+import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
+import CameraBookmarks from './interaction-panel/camera-bookmarks';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
 
@@ -46,6 +54,9 @@ type InteractionManagerProps = {
   mapInfoShow?: boolean;
   mapInfoActive?: boolean;
   mapState?: MapState;
+  cameraBookmarks?: CameraBookmark[];
+  cameraBookmarksEnabled?: boolean;
+  mapStateActions?: typeof MapStateActions;
   actionIcons?: {
     settings?: PanelHeaderActionIcon;
   };
@@ -83,6 +94,9 @@ function InteractionManagerFactory(
     mapInfoShow,
     mapInfoActive,
     mapState,
+    cameraBookmarks,
+    cameraBookmarksEnabled,
+    mapStateActions,
     actionIcons,
     interactionConfigIcons
   }) => {
@@ -159,6 +173,14 @@ function InteractionManagerFactory(
           );
         })}
         {interactionConfig.geocoder ? null : mapInfoPanel}
+        <CameraBookmarks
+          bookmarks={cameraBookmarks}
+          enabled={cameraBookmarksEnabled}
+          uiStateActions={uiStateActions}
+          mapState={mapState}
+          mapStateActions={mapStateActions}
+          visStateActions={visStateActions}
+        />
       </div>
     );
   };

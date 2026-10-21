@@ -53,6 +53,7 @@ import {
 import SidePanelFactory from './side-panel';
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
+import {MapViewStateContextProvider} from './map-view-state-context';
 import BottomWidgetFactory from './bottom-widget';
 import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
@@ -234,6 +235,7 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
   filters: props.visState.filters,
   layers: props.visState.layers,
   annotations: props.visState.annotations,
+  cameraBookmarks: props.visState.cameraBookmarks,
   layerOrder: props.visState.layerOrder,
   layerClasses: props.visState.layerClasses,
   interactionConfig: props.visState.interactionConfig,
@@ -728,18 +730,21 @@ function KeplerGlFactory(
                         datasets={visState.datasets}
                         refreshDataset={this.props.visStateActions.refreshDataset}
                       />
-                      <DndContext visState={visState}>
-                        {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                        <MapsLayout
-                          className="maps"
-                          mapState={this.props.mapState}
-                          onSetSwipeComparePercentage={
-                            this.props.mapStateActions.setSwipeComparePercentage
-                          }
-                        >
-                          {mapContainers}
-                        </MapsLayout>
-                      </DndContext>
+                      <MapViewStateContextProvider mapState={this.props.mapState}>
+                        <DndContext visState={visState}>
+                          {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
+                          <MapsLayout
+                            provideViewState={false}
+                            className="maps"
+                            mapState={this.props.mapState}
+                            onSetSwipeComparePercentage={
+                              this.props.mapStateActions.setSwipeComparePercentage
+                            }
+                          >
+                            {mapContainers}
+                          </MapsLayout>
+                        </DndContext>
+                      </MapViewStateContextProvider>
                       {isExportingImage && <PlotContainer {...plotContainerFields} />}
                       {/* 1 geocoder: single mode OR split mode and synced viewports */}
                       {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (
