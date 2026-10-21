@@ -19,10 +19,6 @@ import {
 import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
 import {getBinaryGeometriesFromArrow, BinaryGeometriesFromArrowOptions} from '@loaders.gl/gis';
 import {updateBoundsFromGeoArrowSamples} from '@loaders.gl/geoarrow';
-import {convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
-
-import {parseSync} from '@loaders.gl/core';
-import {WKBLoader} from '@loaders.gl/wkt';
 import {geojsonToBinary} from '@loaders.gl/gis';
 import {
   Geometry,
@@ -34,7 +30,8 @@ import {
 import {
   DeckGlGeoTypes,
   GeojsonDataMaps,
-  getCentroidFromGeometry
+  getCentroidFromGeometry,
+  parseGeoJsonRawFeature
 } from './geojson-layer/geojson-utils';
 
 export type FindDefaultLayerProps = {
@@ -107,27 +104,25 @@ function getBinaryGeometriesFromWKBArrow(
   let bounds: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
 
   const geojsonFeatures: Feature[] = [];
+  const addGeometry = (geometry: Geometry, index: number) => {
+    if (geometry.type === 'GeometryCollection') {
+      geometry.geometries.forEach(child => addGeometry(child, index));
+    } else {
+      geojsonFeatures.push({type: 'Feature', geometry, properties: {index}});
+      featureTypes.polygon ||= geometry.type === 'Polygon' || geometry.type === 'MultiPolygon';
+      featureTypes.point ||= geometry.type === 'Point' || geometry.type === 'MultiPoint';
+      featureTypes.line ||= geometry.type === 'LineString' || geometry.type === 'MultiLineString';
+    }
+  };
   chunks.forEach(chunk => {
     for (let i = 0; i < chunk.length; ++i) {
       // ignore features without any geometry
       if (chunk.valueOffsets[i + 1] - chunk.valueOffsets[i] > 0) {
         const valuesSlice = chunk.values.slice(chunk.valueOffsets[i], chunk.valueOffsets[i + 1]);
 
-        const geometry = parseSync(valuesSlice.buffer, WKBLoader, {
-          wkb: {shape: 'geojson-geometry'}
-        }) as Geometry;
-        const feature: Feature = {
-          type: 'Feature',
-          geometry,
-          properties: {index: featureIndex}
-        };
-        geojsonFeatures.push(feature);
-        centroids.push(getCentroidFromGeometry(geometry));
-
-        const {type} = geometry;
-        featureTypes.polygon = type === 'Polygon' || type === 'MultiPolygon';
-        featureTypes.point = type === 'Point' || type === 'MultiPoint';
-        featureTypes.line = type === 'LineString' || type === 'MultiLineString';
+        const geometry = parseGeoJsonRawFeature(valuesSlice)?.geometry;
+        if (geometry) addGeometry(geometry, featureIndex);
+        centroids.push(geometry ? getCentroidFromGeometry(geometry) : null);
       } else {
         centroids.push(null);
       }
@@ -266,7 +261,7 @@ export function getHoveredObjectFromArrow(
     const field = fieldAccessor(dataContainer);
     const encoding = field?.metadata?.get(GEOARROW_METADATA_KEY);
 
-    const hoveredFeature = convertGeoArrowGeometryToGeoJSON(rawGeometry, encoding);
+    const hoveredFeature = parseGeoJsonRawFeature(rawGeometry, encoding)?.geometry;
 
     const properties = dataContainer.rowAsArray(objectInfo.index).reduce((prev, cur, i) => {
       const fieldName = dataContainer?.getField?.(i).name;
