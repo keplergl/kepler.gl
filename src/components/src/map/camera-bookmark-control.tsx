@@ -10,7 +10,7 @@ import {CameraBookmark, MapControls, MapState} from '@kepler.gl/types';
 import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
 import {breakPointValues} from '@kepler.gl/styles';
 import {hasPortableWidth} from '@kepler.gl/utils';
-import {Button} from '../common/styled-components';
+import {StyledPanelHeader} from '../common/styled-components';
 import {LocationMarker, Copy} from '../common/icons';
 import {RootContext} from '../context';
 import {cameraTransition} from '../camera-navigation';
@@ -22,12 +22,18 @@ const MapControlPanel = MapControlPanelFactory();
 const Rows = styled.nav`
   padding: 8px;
 `;
-const Row = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
+const Row = styled(StyledPanelHeader)`
+  position: relative;
+  width: 100%;
+  height: 28px;
   min-width: 0;
   margin-bottom: 4px;
+  padding: 0;
+  border: 0;
+  color: ${props => props.theme.textColor};
+  &:hover {
+    background-color: ${props => props.theme.panelBackgroundHover};
+  }
   @media (hover: hover) and (pointer: fine) {
     .camera-bookmark-copy {
       opacity: 0;
@@ -40,11 +46,30 @@ const Row = styled.div`
     }
   }
 `;
-const NavigateButton = styled(Button)`
-  flex: 1;
+const NavigateButton = styled.button`
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
   min-width: 0;
   justify-content: flex-start;
   gap: 8px;
+  padding: 0 40px 0 9px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font-family: ${props => props.theme.btnFontFamily};
+  font-size: ${props => props.theme.primaryBtnFontSizeSmall};
+  font-weight: 500;
+  line-height: 14px;
+  text-align: left;
+  cursor: pointer;
+  outline: 0;
+  &:focus-visible {
+    outline: 2px solid ${props => props.theme.activeColor};
+  }
   svg {
     flex: 0 0 auto;
   }
@@ -54,11 +79,22 @@ const NavigateButton = styled(Button)`
     white-space: nowrap;
   }
 `;
-const CopyButton = styled(Button)`
-  flex: 0 0 28px;
+const CopyButton = styled(NavigateButton)`
+  position: absolute;
+  top: 0;
+  right: 4px;
   width: 28px;
   height: 28px;
+  justify-content: center;
   padding: 0;
+  color: ${props => props.theme.panelHeaderIcon};
+  &:hover {
+    color: ${props => props.theme.panelHeaderIconHover};
+  }
+  &:disabled {
+    cursor: default;
+    opacity: 0.3;
+  }
   svg {
     margin: 0;
   }
@@ -131,8 +167,6 @@ export default function CameraBookmarkControl({
             <Row key={bookmark.id}>
               <NavigateButton
                 type="button"
-                secondary
-                small
                 title={name}
                 onClick={() => mapStateActions.updateMap(cameraTransition(bookmark.camera))}
               >
@@ -142,8 +176,6 @@ export default function CameraBookmarkControl({
               <CopyButton
                 className="camera-bookmark-copy"
                 type="button"
-                secondary
-                small
                 aria-label={copyLabel}
                 title={copyLabel}
                 disabled={!coordinates}

@@ -6,6 +6,7 @@ import {fireEvent, screen, within, waitFor} from '@testing-library/react';
 import copy from 'copy-to-clipboard';
 import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
 import {INITIAL_MAP_STATE, INITIAL_UI_STATE, uiStateUpdaters} from '@kepler.gl/reducers';
+import {theme} from '@kepler.gl/styles';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
 import CameraBookmarkControl from './camera-bookmark-control';
 import {RootContext} from '../context';
@@ -58,6 +59,63 @@ test('copies the existing latitude/longitude format without a success message or
   expect(updateMap).not.toHaveBeenCalled();
 });
 
+test('fills the row with a Layer-style bookmark and an independent overlaid copy control', () => {
+  const name = 'A long bookmark name that needs to remain readable in a narrow floating panel';
+  const {updateMap} = setup({bookmarks: [{...bookmarks[0], name}]});
+  const navigate = screen.getByRole('button', {name});
+  const copyButton = screen.getByRole('button', {name: `Copy coordinates: ${name}`});
+  const row = navigate.parentElement as HTMLElement;
+  const restoreStyles = emulatePointerStyles();
+  try {
+    expect(row).toHaveStyle({
+      position: 'relative',
+      width: '100%',
+      backgroundColor: theme.panelBackground,
+      borderRadius: theme.panelHeaderBorderRadius,
+      color: theme.textColor
+    });
+    expect(navigate).toHaveStyle({
+      boxSizing: 'border-box',
+      width: '100%',
+      height: '100%',
+      paddingRight: '40px',
+      background: 'transparent'
+    });
+    expect(navigate).toHaveAttribute('title', name);
+    expect(navigate.querySelector('span')).toHaveStyle({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
+    });
+    expect(copyButton.parentElement).toBe(row);
+    expect(navigate.querySelector('button')).toBeNull();
+    expect(copyButton).toHaveStyle({
+      position: 'absolute',
+      right: '4px',
+      color: theme.panelHeaderIcon
+    });
+
+    row.setAttribute('data-test-hover', '');
+    expect(row).toHaveStyle({backgroundColor: theme.panelBackgroundHover});
+    copyButton.setAttribute('data-test-hover', '');
+    expect(copyButton).toHaveStyle({color: theme.panelHeaderIconHover});
+    fireEvent.click(copyButton);
+    expect(copy).toHaveBeenCalledWith('20.987654, 10.123457');
+    expect(updateMap).not.toHaveBeenCalled();
+
+    navigate.focus();
+    navigate.setAttribute('data-test-focus-visible', '');
+    expect(navigate).toHaveStyle({outline: `2px solid ${theme.activeColor}`});
+    fireEvent.click(navigate);
+    expect(updateMap).toHaveBeenCalledTimes(1);
+    copyButton.focus();
+    copyButton.setAttribute('data-test-focus-visible', '');
+    expect(copyButton).toHaveStyle({outline: `2px solid ${theme.activeColor}`});
+  } finally {
+    restoreStyles();
+  }
+});
+
 // JSDOM does not evaluate pointer media queries or pointer/focus pseudo-classes reliably.
 // Enable the emitted fine-pointer CSS and model states with equal-specificity attributes.
 function emulatePointerStyles() {
@@ -105,7 +163,8 @@ test('reveals copying only for its hovered or keyboard-focused row without shift
     expect(button).toHaveStyle({
       opacity: visible ? '1' : '0',
       pointerEvents: visible ? 'auto' : 'none',
-      flex: '0 0 28px',
+      position: 'absolute',
+      right: '4px',
       width: '28px',
       height: '28px'
     });
