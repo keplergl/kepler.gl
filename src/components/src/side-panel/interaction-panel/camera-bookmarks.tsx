@@ -55,15 +55,18 @@ const BookmarkRow = styled(StyledPanelHeader)`
   position: relative;
   padding: 0 8px 0 4px;
   gap: 4px;
+  color: ${props => props.theme.textColor};
   &:hover {
     background-color: ${props => props.theme.panelBackgroundHover};
+    .bookmark__drag-handle {
+      opacity: 1;
+    }
   }
   .bookmark__drag-handle {
     flex: 0 0 20px;
     touch-action: none;
-    opacity: 1;
-    cursor: grab;
     &:focus-visible {
+      opacity: 1;
       outline: 2px solid ${props => props.theme.activeColor};
     }
     &[aria-pressed='true'] {

@@ -6,6 +6,7 @@ import {fireEvent, screen, waitFor} from '@testing-library/react';
 import {MapStateActions, VisStateActions, UIStateActions} from '@kepler.gl/actions';
 import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {CameraBookmark} from '@kepler.gl/types';
+import {theme} from '@kepler.gl/styles';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
 import CameraBookmarks from './camera-bookmarks';
 import {MapViewStateContext} from '../../map-view-state-context';
@@ -240,6 +241,47 @@ test('uses the existing Settings action and keeps header controls independent', 
   ).toHaveStyle({
     height: '36px'
   });
+});
+
+test('reveals the light layer-style handle only on header hover or keyboard focus', () => {
+  setup(initial);
+  const handle = screen.getByRole('button', {name: 'Reorder bookmark: Home'});
+  const row = handle.closest('.bookmark-row') as HTMLElement;
+  // Evaluate emitted hover/focus CSS using equivalent attribute selectors: JSDOM's
+  // native pointer pseudo-class matching is inconsistent. Restore every selector below.
+  const stateRules = Array.from(document.styleSheets)
+    .flatMap(sheet => Array.from(sheet.cssRules))
+    .filter((rule): rule is CSSStyleRule => rule.type === CSSRule.STYLE_RULE)
+    .filter(rule => /:hover|:focus-visible/.test(rule.selectorText))
+    .map(rule => ({rule, selector: rule.selectorText}));
+  stateRules.forEach(({rule, selector}) => {
+    rule.selectorText = selector
+      .replace(/:hover/g, '[data-test-hover]')
+      .replace(/:focus-visible/g, '[data-test-focus-visible]');
+  });
+  row.setAttribute('data-test-hover', '');
+  row.removeAttribute('data-test-hover');
+  try {
+    expect(handle).toHaveStyle({opacity: '0'});
+    // Like Layer headers, the normal handle color is inherited from its text container.
+    expect(row).toHaveStyle({color: theme.textColor});
+    row.setAttribute('data-test-hover', '');
+    expect(handle).toHaveStyle({opacity: '1'});
+    expect(row).toHaveStyle({color: theme.textColor});
+    handle.setAttribute('data-test-hover', '');
+    expect(handle).toHaveStyle({color: theme.textColorHl, cursor: 'move'});
+    handle.removeAttribute('data-test-hover');
+    row.removeAttribute('data-test-hover');
+    expect(handle).toHaveStyle({opacity: '0'});
+    handle.focus();
+    handle.setAttribute('data-test-focus-visible', '');
+    expect(handle).toHaveFocus();
+    expect(handle).toHaveStyle({opacity: '1'});
+  } finally {
+    stateRules.forEach(({rule, selector}) => {
+      rule.selectorText = selector;
+    });
+  }
 });
 
 test('keyboard drag reorders stable bookmark IDs and Escape cancels without saving', async () => {
