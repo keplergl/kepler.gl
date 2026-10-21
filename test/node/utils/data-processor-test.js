@@ -224,6 +224,8 @@ test('Processor -> geometry autodetection in custom columns', t => {
     'geometrycollection z (point z (10 10 5))',
     'GEOMETRYCOLLECTION M (POINT M (10 10 5))',
     'GEOMETRYCOLLECTION ZM (POINT ZM (10 10 5 7))',
+    'GEOMETRYCOLLECTION (POINT (-1.25e+1\t+2.5E-1), LINESTRING (.5 -0.25, 1.0 2.0))',
+    'GEOMETRYCOLLECTION ZM (POINT (1e1 2e1 3e1 4e1))',
     'GEOMETRYCOLLECTION (MULTIPOINT ((10 10), (20 20)))',
     'GEOMETRYCOLLECTION (MULTIPOINT (10 10, 20 20))',
     'GEOMETRYCOLLECTION (MULTILINESTRING ((10 10, 20 20), (30 30, 40 40)))',
@@ -372,6 +374,7 @@ test('Processor -> geometry autodetection rejects incomplete or invalid collecti
     'GEOMETRYCOLLECTION (POINT (x y))',
     'GEOMETRYCOLLECTION (POINT (1-2))',
     'GEOMETRYCOLLECTION (POINT (1e999 10))',
+    'GEOMETRYCOLLECTION M (POINT (10 10 1e999))',
     'GEOMETRYCOLLECTION (POINT (10 10, 20 20))',
     'GEOMETRYCOLLECTION (LINESTRING (10 10))',
     'GEOMETRYCOLLECTION (POLYGON ((0 0, 1 0, 1 1, 0 1)))',
@@ -391,6 +394,33 @@ test('Processor -> geometry autodetection rejects incomplete or invalid collecti
         'preserves the original text'
       );
     }
+  }
+  t.end();
+});
+
+test('Processor -> geometry autodetection scans complete large WKT collections', t => {
+  const coordinates = Array.from({length: 10000}, (_, index) => `${10 + index / 1000} 10`).join(
+    ', '
+  );
+  const valid = `GEOMETRYCOLLECTION (LINESTRING (${coordinates}), POINT (20 20))`;
+  const data = processRowObject([{shape: valid}, {shape: valid}]);
+  t.equal(
+    data.fields[0].type,
+    ALL_FIELD_TYPES.geojson,
+    'recognizes all members after a large coordinate sequence'
+  );
+  t.deepEqual(data.rows, [[valid], [valid]], 'preserves the full large WKT values');
+  for (const invalid of [
+    valid.slice(0, -1),
+    `${valid} trailing text`,
+    valid.replace('POINT (20 20)', 'POINT (x y)'),
+    valid.replace(', POINT', ' POINT')
+  ]) {
+    t.equal(
+      processRowObject([{shape: valid}, {shape: invalid}]).fields[0].type,
+      ALL_FIELD_TYPES.string,
+      'checks the end of large samples before promoting a mixed column'
+    );
   }
   t.end();
 });

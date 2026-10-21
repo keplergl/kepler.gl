@@ -12,7 +12,7 @@ import {h3IsValid} from './h3-utils';
 const H3_ANALYZER_TYPE = 'H3';
 
 // a plain decimal number, optionally in scientific notation: 12, -0.5, .5, 1.5e+10, 2E-4
-const DECIMAL_NUMBER_REGEX = /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
+const DECIMAL_NUMBER_REGEX = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i;
 const INTEGER_REGEX = /^[+-]?\d+$/;
 
 /**
@@ -108,10 +108,11 @@ function isWktGeometryCollection(value: string): boolean {
     const match = pattern.exec(value.slice(cursor));
     if (!match) return undefined;
     cursor += match[0].length;
-    return match[0].trim();
+    // Captures exclude leading whitespace; punctuation only needs a truthy result.
+    return match[1] ?? match[0];
   };
   const number = DECIMAL_NUMBER_REGEX.source.slice(1, -1);
-  const positionPattern = new RegExp(`^\\s*${number}(?:\\s+${number})+`, 'i');
+  const positionPattern = new RegExp(`^\\s*(${number})\\s+(${number})((?:\\s+${number})*)`, 'i');
   const group = (read: () => unknown): unknown[] | null => {
     if (!consume(/^\s*\(/)) return null;
     const items: unknown[] = [];
@@ -137,9 +138,12 @@ function isWktGeometryCollection(value: string): boolean {
     const readCoordinates = (level: number): unknown => {
       if (level > 3) return null;
       if (/^\s*\(/.test(value.slice(cursor))) return group(() => readCoordinates(level + 1));
-      const match = consume(positionPattern);
+      const match = positionPattern.exec(value.slice(cursor));
       if (!match) return null;
-      const coordinates = match.split(/\s+/).map(Number);
+      cursor += match[0].length;
+      // Capture common XY positions directly, without splitting/trimming each tuple.
+      const coordinates = [+match[1], +match[2]];
+      for (const coordinate of match[3].match(/\S+/g) || []) coordinates.push(+coordinate);
       return coordinates.every(Number.isFinite) &&
         (!dimensions || coordinates.length === dimensions)
         ? coordinates
