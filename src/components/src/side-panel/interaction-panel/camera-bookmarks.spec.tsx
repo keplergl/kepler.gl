@@ -330,9 +330,10 @@ test('multiple maps have independent switch and content identifiers', () => {
   );
   const switches = screen.getAllByRole('checkbox', {name: 'Enable bookmarks'});
   expect(switches[0].id).not.toBe(switches[1].id);
+  switches.forEach(toggle => expect(toggle).not.toBeChecked());
   fireEvent.click(switches[1].closest('label')!);
   expect(toggles[0]).not.toHaveBeenCalled();
-  expect(toggles[1]).toHaveBeenCalledWith('cameraBookmarks', false);
+  expect(toggles[1]).toHaveBeenCalledWith('cameraBookmarks', true);
   const headers = screen.getAllByRole('button', {name: 'Bookmarks'});
   headers.forEach(header => fireEvent.click(header));
   expect(headers[0].getAttribute('aria-controls')).not.toBe(

@@ -256,7 +256,7 @@ export type CameraBookmarksProps = {
 
 export default function CameraBookmarks({
   bookmarks = [],
-  enabled = true,
+  enabled = false,
   uiStateActions,
   mapState,
   mapStateActions,

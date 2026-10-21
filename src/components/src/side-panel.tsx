@@ -263,7 +263,7 @@ export default function SidePanelFactory(
                     visStateActions={visStateActions}
                     mapLegendActive={Boolean(uiState.mapControls?.mapLegend?.active)}
                     mapInfo={mapInfo}
-                    cameraBookmarksEnabled={uiState.mapControls?.cameraBookmarks?.show !== false}
+                    cameraBookmarksEnabled={uiState.mapControls?.cameraBookmarks?.show === true}
                     mapInfoShow={uiState.mapControls?.mapInfo?.show !== false}
                     mapInfoActive={uiState.mapControls?.mapInfo?.active !== false}
                     panelMetadata={currentPanel}

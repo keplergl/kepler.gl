@@ -871,6 +871,85 @@ test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
   t.end();
 });
 
+test('#composerStateReducer - dataset replacement preserves data-independent bookmarks', t => {
+  const bookmarks = [
+    {id: 'first', name: 'Home', camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}},
+    {id: 'second', name: 'Away', camera: {longitude: -20, latitude: 30, zoom: 8, bearing: 0, pitch: 0}}
+  ];
+  for (const [dataId, replacementId] of [
+    ['id', 'id'],
+    ['id', 'replacement'],
+    ['ordinary-dataset', 'id'],
+    ['name', 'name'],
+    ['camera', 'camera'],
+    ['ordinary-dataset', 'ordinary-dataset']
+  ]) {
+    const data = {
+      fields: [{name: 'value', type: 'integer', format: '', analyzerType: 'INT'}],
+      rows: [[1]]
+    };
+    const dataset = new KeplerTable({info: {id: dataId, label: 'Original'}});
+    dataset.importData({data});
+    const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+    const state = {
+      ...initial,
+      visState: {...initial.visState, cameraBookmarks: bookmarks, datasets: {[dataId]: dataset}}
+    };
+    const next = replaceDataInMapUpdater(state, {
+      payload: {
+        datasetToReplaceId: dataId,
+        datasetToUse: {
+          info: {id: replacementId, label: 'Replacement'},
+          data: {...data, rows: [[2], [3]]}
+        },
+        options: {centerMap: false}
+      }
+    });
+    const result = {...next, visState: applyExistingDatasetTasks(visStateReducer, next.visState)};
+    t.equal(
+      result.visState.datasets[replacementId].dataContainer.numRows(),
+      2,
+      `${dataId}: replaces rows`
+    );
+    t.deepEqual(result.visState.cameraBookmarks, bookmarks, `${dataId}: preserves every saved view`);
+    t.deepEqual(
+      KeplerGlSchema.getConfigToSave(result).config.visState.cameraBookmarks,
+      bookmarks,
+      `${dataId}: subsequent saves retain bookmarks`
+    );
+  }
+  t.end();
+});
+
+test('#composerStateReducer - loading saved bookmarks does not opt in or reset UI visibility', t => {
+  const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const bookmarks = [
+    {id: 'home', name: 'Home', camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}}
+  ];
+  const config = KeplerGlSchema.getConfigToSave({
+    ...initial,
+    visState: {...initial.visState, cameraBookmarks: bookmarks}
+  });
+  const {cameraBookmarks, ...legacyControls} = initial.uiState.mapControls;
+  for (const controls of [
+    initial.uiState.mapControls,
+    legacyControls,
+    {...legacyControls, cameraBookmarks: {...cameraBookmarks, show: true}}
+  ]) {
+    const state = {...initial, uiState: {...initial.uiState, mapControls: controls}};
+    const loaded = addDataToMapUpdater(state, {
+      payload: {datasets: [], config, options: {centerMap: false}}
+    });
+    t.deepEqual(loaded.visState.cameraBookmarks, bookmarks, 'restores saved views');
+    t.equal(
+      loaded.uiState.mapControls.cameraBookmarks?.show === true,
+      controls.cameraBookmarks?.show === true,
+      'loading views preserves explicit opt-in and leaves default/missing controls off'
+    );
+  }
+  t.end();
+});
+
 test('#composerStateReducer - replaceDataInMapUpdater: replacing a dataset with no layers before the previous replace merges', t => {
   const noLayersId = 'dataset_without_layers';
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;

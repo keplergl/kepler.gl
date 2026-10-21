@@ -85,7 +85,7 @@ Drag the handle at the left of a bookmark header to reorder it. The handle appea
 
 ### Use the floating panel
 
-Enable the **Bookmarks** switch to show saved bookmarks on the map. The panel appears once there is at least one bookmark and stays usable when the sidebar is closed. Click a bookmark row to visit its view. Its overlaid **Copy coordinates** button appears when that row is hovered or a control in the row has keyboard focus.
+Bookmarks are off by default, including when opening older configurations. Enable the **Bookmarks** switch to show saved bookmarks on the map. The panel appears once there is at least one bookmark and stays usable when the sidebar is closed. Click a bookmark row to visit its view. Its overlaid **Copy coordinates** button appears when that row is hovered or a control in the row has keyboard focus.
 
 Click the floating panel's **×** to hide it and turn off the **Bookmarks** switch. Turn the switch on again to reopen it. Closing or disabling the panel does not delete bookmarks; you can still edit them in the sidebar. Collapsing the sidebar section is independent of this switch.
 
@@ -93,7 +93,7 @@ On desktop, drag the title bar labeled **Bookmarks** to move the panel. Drag eit
 
 ### Saved views and supported modes
 
-Saved map configurations retain bookmark names, order, and camera views when loaded in a version that supports Bookmarks. Configurations without bookmarks still load normally.
+Saved map configurations retain bookmark names, order, and camera views when loaded in a version that supports Bookmarks. Configurations without bookmarks still load normally. The Bookmarks switch is a UI preference, separate from these saved views; loading views does not turn it on automatically or reset an explicitly enabled UI preference.
 
 Bookmark editing and navigation support a single 2D or 3D Mercator map. In globe or split-map mode, the floating panel is hidden and bookmark editing is unavailable. Return to a single Mercator map to use the saved views again.
 

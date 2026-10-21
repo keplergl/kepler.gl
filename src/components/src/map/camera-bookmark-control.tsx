@@ -149,7 +149,7 @@ export default function CameraBookmarkControl({
     isExport ||
     mapState.isSplit ||
     mapState.globe?.enabled ||
-    mapControls?.cameraBookmarks?.show === false
+    mapControls?.cameraBookmarks?.show !== true
   )
     return null;
 

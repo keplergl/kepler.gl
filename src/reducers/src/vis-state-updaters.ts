@@ -7176,7 +7176,8 @@ export function replaceDatasetDepsInState<T extends VisState>(
 
       let replacedState = accuState;
       savedProps.forEach((propValue, i) => {
-        if (propValue == null) {
+        // Camera snapshots never reference datasets, even when a dataset ID is "id".
+        if (propValue == null || props[i] === 'cameraBookmarks') {
           return;
         }
         const mergerOptions = {
