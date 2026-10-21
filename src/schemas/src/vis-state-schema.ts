@@ -8,6 +8,7 @@ import {migrateLegacyScenegraphVisConfig} from '@kepler.gl/layers';
 import {
   colorRangeBackwardCompatibility,
   normalizeCameraBookmarks,
+  normalizeCameraTour,
   isFilterValidToSave,
   findById,
   isPlainObject
@@ -18,6 +19,7 @@ import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {
   AddDataToMapOptions,
   CameraBookmark,
+  CameraTour,
   AnimationConfig,
   Editor,
   FileLoading,
@@ -61,6 +63,7 @@ export type modifiedType = {
 };
 
 export interface VisState {
+  cameraTour: CameraTour | null;
   cameraBookmarks: CameraBookmark[];
   mapInfo: MapInfo;
   layers: Layer[];
@@ -1067,7 +1070,21 @@ class CameraBookmarksSchema extends Schema {
   }
 }
 
+class CameraTourSchema extends Schema {
+  key = 'cameraTour';
+
+  save(value: unknown) {
+    const tour = normalizeCameraTour(value);
+    return tour ? {[this.key]: tour} : {};
+  }
+
+  load(value: unknown) {
+    return {[this.key]: normalizeCameraTour(value)};
+  }
+}
+
 export const propertiesV1 = {
+  cameraTour: new CameraTourSchema(),
   cameraBookmarks: new CameraBookmarksSchema(),
   filters: new FilterSchemaV0({
     version: VERSIONS.v1,
