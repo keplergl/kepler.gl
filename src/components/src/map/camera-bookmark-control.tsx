@@ -18,16 +18,25 @@ import {DraggableLegend} from './map-legend-panel';
 import MapControlPanelFactory from './map-control-panel';
 import {formatMapCoordinate} from './coordinate-info';
 
-const MapControlPanel = MapControlPanelFactory();
+const ROW_HEIGHT = 28;
+const ROW_GAP = 4;
+const ROWS_PADDING = 8;
+const MIN_CONTENT_HEIGHT = ROW_HEIGHT + ROW_GAP + ROWS_PADDING * 2;
+
+const MapControlPanel = styled(MapControlPanelFactory())`
+  .map-control__panel-content {
+    min-height: ${MIN_CONTENT_HEIGHT}px;
+  }
+`;
 const Rows = styled.nav`
-  padding: 8px;
+  padding: ${ROWS_PADDING}px;
 `;
 const Row = styled(StyledPanelHeader)`
   position: relative;
   width: 100%;
-  height: 28px;
+  height: ${ROW_HEIGHT}px;
   min-width: 0;
-  margin-bottom: 4px;
+  margin-bottom: ${ROW_GAP}px;
   padding: 0;
   border: 0;
   color: ${props => props.theme.textColor};
@@ -84,7 +93,7 @@ const CopyButton = styled(NavigateButton)`
   top: 0;
   right: 4px;
   width: 28px;
-  height: 28px;
+  height: ${ROW_HEIGHT}px;
   justify-content: center;
   padding: 0;
   color: ${props => props.theme.panelHeaderIcon};
@@ -184,7 +193,7 @@ export default function CameraBookmarkControl({
                   setStatus(copied ? '' : message('copyFailed', 'Could not copy coordinates'));
                 }}
               >
-                <Copy height="16px" aria-hidden="true" />
+                <Copy height="14px" aria-hidden="true" />
               </CopyButton>
             </Row>
           );

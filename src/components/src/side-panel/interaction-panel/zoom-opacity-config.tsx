@@ -27,7 +27,7 @@ import ZoomOpacitySlider from './zoom-opacity-slider';
 import ItemSelector from '../../common/item-selector/item-selector';
 import {ChickletButton, ChickletTag} from '../../common/item-selector/chickleted-input';
 import {ListItemProps} from '../../common/item-selector/dropdown-list';
-import {AnnotationText, Delete, Settings, ZoomIn} from '../../common/icons';
+import {Add, AnnotationText, Delete, Settings, ZoomIn} from '../../common/icons';
 import PanelHeaderActionFactory, {PanelHeaderActionIcon} from '../panel-header-action';
 import Switch from '../../common/switch';
 import {
@@ -375,6 +375,7 @@ function ZoomOpacityConfigFactory(
               className="interaction-zoom-opacity__add"
               onClick={onAddController}
             >
+              <Add height="12px" aria-hidden="true" />
               <FormattedMessage id="interactions.fadeOnZoomAdd" />
             </Button>
             {controllers.map(controller => {

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback} from 'react';
+import React, {createContext, useCallback, useContext} from 'react';
+import type {useDraggable} from '@dnd-kit/core';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {CenterFlexbox, IconRoundSmall} from '../common/styled-components';
@@ -11,6 +12,14 @@ import {MapState} from '@kepler.gl/types';
 import {ActionHandler, toggleSplitMapViewport} from '@kepler.gl/actions';
 import {MapSplitMode} from '@kepler.gl/constants';
 import classNames from 'classnames';
+
+// Internal wiring for floating panels; ordinary and exported headers stay static.
+export const MapControlPanelDragContext = createContext<
+  | (Pick<ReturnType<typeof useDraggable>, 'attributes' | 'listeners' | 'setActivatorNodeRef'> & {
+      label: string;
+    })
+  | null
+>(null);
 
 const StyledMapControlPanel = styled.div`
   background-color: ${props => props.theme.mapPanelBackgroundColor};
@@ -58,9 +67,33 @@ const StyledMapControlPanelHeader = styled.div.attrs({
   box-sizing: border-box;
   align-items: center;
 
-  button {
+  button:not(.map-control__panel-drag-title) {
     width: 18px;
     height: 18px;
+  }
+`;
+
+const StyledDragTitle = styled.button.attrs({className: 'map-control__panel-drag-title'})`
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  margin: -6px 0 -6px -12px;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+  outline: none;
+  &:focus-visible {
+    outline: 2px solid ${props => props.theme.activeColor};
+    outline-offset: -2px;
   }
 `;
 
@@ -138,6 +171,7 @@ function MapControlPanelFactory() {
       isViewportUnsyncAllowed,
       className = 'map-control-panel'
     }) => {
+      const drag = useContext(MapControlPanelDragContext);
       const {isViewportSynced, isZoomLocked} = mapState || {};
       const onUnlockViewportChange = useCallback(() => {
         onToggleSplitMapViewport?.({isViewportSynced: !isViewportSynced});
@@ -185,6 +219,16 @@ function MapControlPanelFactory() {
             {
               (isExport && logoComponent ? (
                 logoComponent
+              ) : header && drag && !isExport ? (
+                <StyledDragTitle
+                  type="button"
+                  ref={drag.setActivatorNodeRef}
+                  {...drag.attributes}
+                  {...drag.listeners}
+                  aria-label={`Move ${drag.label}`}
+                >
+                  <FormattedMessage id={header} />
+                </StyledDragTitle>
               ) : header ? (
                 <span style={{verticalAlign: 'middle'}}>
                   <FormattedMessage id={header} />

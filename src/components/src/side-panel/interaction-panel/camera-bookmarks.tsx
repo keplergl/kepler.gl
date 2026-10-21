@@ -4,6 +4,7 @@
 import React, {useContext, useId, useState} from 'react';
 import styled from 'styled-components';
 import {useIntl} from 'react-intl';
+import copy from 'copy-to-clipboard';
 import {CameraBookmark, MapState} from '@kepler.gl/types';
 import {MapStateActions, VisStateActions, UIStateActions} from '@kepler.gl/actions';
 import {generateHashId} from '@kepler.gl/common-utils';
@@ -30,11 +31,12 @@ import {CSS} from '@dnd-kit/utilities';
 import {DND_MODIFIERS} from '../../common/dnd-layer-items';
 import {DragHandle} from '../layer-panel/layer-panel-header';
 import PanelHeaderActionFactory from '../panel-header-action';
-import {LocationMarker, Replace, Delete, MapPin, VertDots} from '../../common/icons';
+import {LocationMarker, Replace, Delete, MapPin, VertDots, Copy, Add} from '../../common/icons';
 import CameraPanelHeader, {CameraPanel, CameraIconButton} from './camera-panel-header';
 import {cameraTransition} from '../../camera-navigation';
 import {MapViewStateContext} from '../../map-view-state-context';
 import {Hint} from './zoom-opacity-config';
+import {formatMapCoordinate} from '../../map/coordinate-info';
 
 const PanelHeaderAction = PanelHeaderActionFactory();
 const bookmarkColors = Object.values(DataVizColors).map(hexToRgb);
@@ -102,6 +104,18 @@ const ActionButton = styled(CameraIconButton)`
   width: 20px;
   height: 24px;
 `;
+const AddBookmarkButton = styled(Button)`
+  box-sizing: border-box;
+  max-width: 100%;
+  white-space: normal;
+  svg {
+    flex-shrink: 0;
+  }
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+`;
 
 function SortableBookmark({
   bookmark,
@@ -112,6 +126,7 @@ function SortableBookmark({
   canNavigate,
   canCapture,
   onNavigate,
+  onCopy,
   onUpdate,
   onChange
 }: {
@@ -123,6 +138,7 @@ function SortableBookmark({
   canNavigate: boolean;
   canCapture: boolean;
   onNavigate: (bookmark: CameraBookmark) => void;
+  onCopy: (coordinates: string | null) => void;
   onUpdate: (bookmark: CameraBookmark) => void;
   onChange: (bookmarks: CameraBookmark[]) => void;
 }) {
@@ -139,6 +155,7 @@ function SortableBookmark({
     isDragging
   } = useSortable({id: bookmark.id});
   const reorderLabel = `${message('reorderBookmark', 'Reorder bookmark')}: ${bookmark.name}`;
+  const coordinates = formatMapCoordinate([bookmark.camera.longitude, bookmark.camera.latitude]);
   const actions = [
     {
       key: 'goTo',
@@ -146,6 +163,13 @@ function SortableBookmark({
       Icon: LocationMarker,
       disabled: !enabled || !canNavigate,
       onClick: () => onNavigate(bookmark)
+    },
+    {
+      key: 'copyCoordinates',
+      label: message('copyCoordinates', 'Copy coordinates'),
+      Icon: Copy,
+      disabled: !coordinates,
+      onClick: () => onCopy(coordinates)
     },
     {
       key: 'updateView',
@@ -240,6 +264,7 @@ export default function CameraBookmarks({
 }: CameraBookmarksProps) {
   const panelId = `camera-bookmarks-${useId()}`;
   const [open, setOpen] = useState(false);
+  const [copyStatus, setCopyStatus] = useState('');
   const intl = useIntl();
   const message = (key: string, fallback: string) =>
     intl.formatMessage({id: `camera.${key}`, defaultMessage: fallback});
@@ -274,10 +299,8 @@ export default function CameraBookmarks({
             <p>{message('singleMap', 'Use a single 2D or 3D map to edit camera views.')}</p>
           ) : (
             <>
-              <Hint>
-                {message('bookmarksHint', 'Save the current map view and return to it later.')}
-              </Hint>
-              <Button
+              <Hint>{message('bookmarksHint', 'Save views to revisit later.')}</Hint>
+              <AddBookmarkButton
                 type="button"
                 secondary
                 small
@@ -295,8 +318,9 @@ export default function CameraBookmarks({
                     ]);
                 }}
               >
-                {message('captureBookmark', 'Bookmark current view')}
-              </Button>
+                <Add height="12px" aria-hidden="true" />
+                <span>{message('captureBookmark', 'Add Bookmark')}</span>
+              </AddBookmarkButton>
               <DndContext
                 id={panelId}
                 sensors={sensors}
@@ -330,6 +354,12 @@ export default function CameraBookmarks({
                         onNavigate={item =>
                           mapStateActions?.updateMap(cameraTransition(item.camera))
                         }
+                        onCopy={coordinates => {
+                          const copied = coordinates && copy(coordinates);
+                          setCopyStatus(
+                            copied ? '' : message('copyFailed', 'Could not copy coordinates')
+                          );
+                        }}
                         onUpdate={item => {
                           const camera = readCamera();
                           if (camera)
@@ -344,6 +374,13 @@ export default function CameraBookmarks({
                   </BookmarkList>
                 </SortableContext>
               </DndContext>
+              <div
+                role="status"
+                aria-live="polite"
+                aria-label={message('copyCoordinates', 'Copy coordinates')}
+              >
+                {copyStatus}
+              </div>
             </>
           )}
         </PanelContent>
