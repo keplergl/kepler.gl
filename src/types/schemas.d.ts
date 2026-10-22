@@ -3,7 +3,14 @@
 
 import {RGBColor, Merge, RequireFrom} from './types';
 
-import {Filter, InteractionConfig, AnimationConfig, SplitMap, Feature} from './reducers';
+import {
+  Filter,
+  InteractionConfig,
+  AnimationConfig,
+  SplitMap,
+  Feature,
+  MapLegendControlSettings
+} from './reducers';
 
 import {LayerTextLabel} from './layers';
 import {ChartConfig} from './charts';
@@ -187,6 +194,10 @@ export type ParsedUiState = {
     mapInfo?: {
       active?: boolean;
       show?: boolean;
+    };
+    cameraBookmarks?: {
+      show?: boolean;
+      settings?: Partial<MapLegendControlSettings>;
     };
   };
   locale?: string;

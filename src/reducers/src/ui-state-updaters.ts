@@ -128,6 +128,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = {
     {} as MapControls
   ),
   // Camera controls are UI preferences; saved camera snapshots remain independent.
+  cameraTour: {...DEFAULT_MAP_CONTROLS_FEATURES},
   cameraBookmarks: {
     ...DEFAULT_MAP_CONTROLS_FEATURES,
     show: false,
@@ -506,7 +507,9 @@ export const setMapControlVisibilityUpdater = (
 ): UiState => {
   const mapControl =
     state.mapControls?.[panelId] ??
-    (panelId === 'cameraBookmarks' ? DEFAULT_MAP_CONTROLS.cameraBookmarks : undefined);
+    (panelId === 'cameraBookmarks' || panelId === 'cameraTour'
+      ? DEFAULT_MAP_CONTROLS[panelId]
+      : undefined);
   if (!mapControl) {
     return state;
   }
@@ -537,9 +540,9 @@ export const setMapControlSettingsUpdater = (
   {payload: {panelId, settings}}: UIStateActions.setMapControlSettingsUpdaterAction
 ): UiState => {
   const mapControl = (state.mapControls?.[panelId] ??
-    (panelId === 'cameraBookmarks'
-      ? DEFAULT_MAP_CONTROLS.cameraBookmarks
-      : undefined)) as MapControlMapLegend | undefined;
+    (panelId === 'cameraBookmarks' ? DEFAULT_MAP_CONTROLS.cameraBookmarks : undefined)) as
+    | MapControlMapLegend
+    | undefined;
   if (!mapControl) {
     return state;
   }
@@ -1188,6 +1191,27 @@ export const receiveMapConfigUpdater = (
         }
       }
     };
+  }
+
+  const savedBookmarks = uiState.mapControls?.cameraBookmarks;
+  if (typeof savedBookmarks?.show === 'boolean') {
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        cameraBookmarks: {
+          ...DEFAULT_MAP_CONTROLS.cameraBookmarks!,
+          ...newState.mapControls.cameraBookmarks,
+          show: savedBookmarks.show,
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+  if (savedBookmarks?.settings) {
+    newState = setMapControlSettingsUpdater(newState, {
+      payload: {panelId: 'cameraBookmarks', settings: savedBookmarks.settings}
+    } as UIStateActions.setMapControlSettingsUpdaterAction);
   }
 
   if (uiState.mapControls?.mapLegend?.settings) {
