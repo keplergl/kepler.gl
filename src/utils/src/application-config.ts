@@ -261,6 +261,12 @@ export type KeplerApplicationConfig = {
    */
   enableMapInfo?: boolean;
 
+  /** Whether to show the Bookmarks panel in Interactions. Enabled by default. */
+  enableCameraBookmarks?: boolean;
+
+  /** Whether to show the Camera animation panel in Interactions. Enabled by default. */
+  enableCameraTour?: boolean;
+
   /**
    * Master switch for power-user JSON editors. When false, every section editor is hidden.
    * Defaults to true; each section also has its own flag.
@@ -496,6 +502,10 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableChartsPanel: true,
 
   enableMapInfo: true,
+
+  enableCameraBookmarks: true,
+
+  enableCameraTour: true,
 
   enableJsonEditors: true,
   enableLayerJsonEditor: true,

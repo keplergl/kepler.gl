@@ -6,11 +6,12 @@ import test from 'tape';
 import sinon from 'sinon';
 import {mount} from 'enzyme';
 import {ThemeProvider} from 'styled-components';
+import {render, within} from '@testing-library/react';
 
 import {InteractionManagerFactory, appInjector} from '@kepler.gl/components';
 import {defaultInteractionConfig, getZoomOpacityAnnotationTargetId} from '@kepler.gl/reducers';
 import {theme} from '@kepler.gl/styles';
-import {initApplicationConfig} from '@kepler.gl/utils';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 const InteractionManager = appInjector.get(InteractionManagerFactory);
@@ -21,6 +22,58 @@ global.ResizeObserver = class ResizeObserver {
 };
 
 const panelMetadata = {id: 'interaction', label: 'sidebar.panels.interaction'};
+
+test('Components -> InteractionManager camera panels follow application config independently', t => {
+  const {enableCameraBookmarks, enableCameraTour} = getApplicationConfig();
+  const originalFlags = {enableCameraBookmarks, enableCameraTour};
+  try {
+    for (const flags of [
+      {},
+      {enableCameraBookmarks: false},
+      {enableCameraTour: false},
+      {enableCameraBookmarks: false, enableCameraTour: false},
+      {enableCameraBookmarks: true, enableCameraTour: true}
+    ]) {
+      initApplicationConfig({...originalFlags, ...flags});
+      const rendered = render(
+        <ThemeProvider theme={theme}>
+          <IntlWrapper>
+            <InteractionManager
+              interactionConfig={{}}
+              datasets={{}}
+              panelMetadata={panelMetadata}
+              cameraBookmarksEnabled={true}
+              cameraTourEnabled={true}
+              visStateActions={{
+                interactionConfigChange: () => {},
+                setColumnDisplayFormat: () => {}
+              }}
+            />
+          </IntlWrapper>
+        </ThemeProvider>
+      );
+      try {
+        const panel = within(rendered.container);
+        t.equal(
+          Boolean(panel.queryByRole('button', {name: 'Bookmarks'})),
+          flags.enableCameraBookmarks !== false,
+          `bookmark panel visibility for ${JSON.stringify(flags)}`
+        );
+        t.equal(
+          Boolean(panel.queryByRole('button', {name: 'Camera animation'})),
+          flags.enableCameraTour !== false,
+          `animation panel visibility for ${JSON.stringify(flags)}`
+        );
+      } finally {
+        rendered.unmount();
+        rendered.container.remove();
+      }
+    }
+  } finally {
+    initApplicationConfig(originalFlags);
+  }
+  t.end();
+});
 
 function expandLegend(wrapper) {
   wrapper.find('.interaction-legend__header').hostNodes().at(0).simulate('click');

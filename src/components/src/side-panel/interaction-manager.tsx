@@ -14,6 +14,7 @@ import {
   MapState
 } from '@kepler.gl/types';
 import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
+import {getApplicationConfig} from '@kepler.gl/utils';
 import CameraBookmarks from './interaction-panel/camera-bookmarks';
 import CameraTourConfig from './interaction-panel/camera-tour-config';
 import {Datasets} from '@kepler.gl/table';
@@ -108,6 +109,7 @@ function InteractionManagerFactory(
   }) => {
     const {interactionConfigChange: onConfigChange, setColumnDisplayFormat} = visStateActions;
     const intl = useIntl();
+    const {enableCameraBookmarks, enableCameraTour} = getApplicationConfig();
     const mapInfoPanel = (
       <MapInfoConfig
         key="mapInfo"
@@ -179,23 +181,27 @@ function InteractionManagerFactory(
           );
         })}
         {interactionConfig.geocoder ? null : mapInfoPanel}
-        <CameraBookmarks
-          bookmarks={cameraBookmarks}
-          enabled={cameraBookmarksEnabled}
-          uiStateActions={uiStateActions}
-          mapState={mapState}
-          mapStateActions={mapStateActions}
-          visStateActions={visStateActions}
-        />
-        <CameraTourConfig
-          tour={cameraTour}
-          enabled={cameraTourEnabled}
-          uiStateActions={uiStateActions}
-          bookmarks={cameraBookmarks}
-          mapState={mapState}
-          mapStateActions={mapStateActions}
-          visStateActions={visStateActions}
-        />
+        {enableCameraBookmarks && (
+          <CameraBookmarks
+            bookmarks={cameraBookmarks}
+            enabled={cameraBookmarksEnabled}
+            uiStateActions={uiStateActions}
+            mapState={mapState}
+            mapStateActions={mapStateActions}
+            visStateActions={visStateActions}
+          />
+        )}
+        {enableCameraTour && (
+          <CameraTourConfig
+            tour={cameraTour}
+            enabled={cameraTourEnabled}
+            uiStateActions={uiStateActions}
+            bookmarks={cameraBookmarks}
+            mapState={mapState}
+            mapStateActions={mapStateActions}
+            visStateActions={visStateActions}
+          />
+        )}
       </div>
     );
   };
