@@ -427,6 +427,37 @@ test('marker selection is separate from Go to and the playback position', () => 
   expect(updateMap).toHaveBeenLastCalledWith({...tour.stops[1].camera, transitionDuration: 0});
 });
 
+test.each([0, 1000])(
+  'Go to uses the selected camera at coincident arrivals with a final hold of %i ms',
+  holdDurationMs => {
+    const coincident = {
+      stops: [
+        {...tour.stops[0], holdDurationMs: 0, travelDurationMs: 0},
+        {...tour.stops[1], holdDurationMs}
+      ]
+    };
+    const {updateMap} = setup(coincident);
+    if (holdDurationMs) fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+    const staleCallback = [...callbacks.values()][0];
+    updateMap.mockClear();
+    fireEvent.click(screen.getByRole('button', {name: 'Go to'}));
+    expect(updateMap).toHaveBeenCalledTimes(1);
+    expect(updateMap).toHaveBeenLastCalledWith({...camera, transitionDuration: 0});
+    expect(screen.getByRole('slider')).toHaveValue('0');
+    expect(screen.getByRole('button', {name: 'Play'})).toBeInTheDocument();
+    expect(callbacks.size).toBe(0);
+    if (staleCallback) act(() => staleCallback(500));
+    expect(updateMap).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', {name: 'Stop 2: Work'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Go to'}));
+    expect(updateMap).toHaveBeenLastCalledWith({...tour.stops[1].camera, transitionDuration: 0});
+    fireEvent.click(screen.getByRole('button', {name: 'Stop 1: Home'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Go to'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Restart'}));
+    expect(updateMap).toHaveBeenLastCalledWith({...tour.stops[1].camera, transitionDuration: 0});
+  }
+);
+
 test.each(['pointerDown', 'wheel', 'keyDown'] as const)(
   'manual map %s pauses playback before more frames',
   event => {

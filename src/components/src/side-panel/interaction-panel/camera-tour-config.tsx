@@ -639,7 +639,8 @@ export default function CameraTourConfig({
           label: message('goTo', 'Go to'),
           Icon: LocationMarker,
           disabled: !enabled || !mapStateActions,
-          onClick: () => playback.seek(starts[selectedIndex])
+          // Coincident arrivals share a time, but Go to targets the selected camera.
+          onClick: () => playback.seek(starts[selectedIndex], selected.camera)
         },
         {
           key: 'pickCurrentLocation',

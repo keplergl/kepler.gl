@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
-import {CameraTour} from '@kepler.gl/types';
+import {CameraSnapshot, CameraTour} from '@kepler.gl/types';
 import {MapStateActions} from '@kepler.gl/actions';
 import {evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
 import {RootContext} from '../../context';
@@ -28,8 +28,7 @@ export default function useCameraTourPlayback(
   }, []);
 
   const apply = useCallback(
-    (time: number) => {
-      const camera = evaluateCameraTour(tour, time);
+    (time: number, camera = evaluateCameraTour(tour, time)) => {
       if (camera && updateMap) updateMap({...camera, transitionDuration: 0});
       setElapsed(time);
     },
@@ -37,9 +36,9 @@ export default function useCameraTourPlayback(
   );
 
   const seek = useCallback(
-    (time: number) => {
+    (time: number, camera?: CameraSnapshot) => {
       pause();
-      if (enabled && Number.isFinite(time)) apply(Math.max(0, Math.min(duration, time)));
+      if (enabled && Number.isFinite(time)) apply(Math.max(0, Math.min(duration, time)), camera);
     },
     [pause, enabled, apply, duration]
   );

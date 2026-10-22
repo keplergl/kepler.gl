@@ -557,7 +557,11 @@ test('#uiStateReducer -> bookmarks default off and legacy controls can opt in', 
     );
     for (const config of [{}, {uiState: {}}, {uiState: {mapControls: {}}}]) {
       const loaded = reducer(initial, receiveMapConfig(config));
-      t.equal(loaded.mapControls.cameraBookmarks?.show === true, false, 'legacy load does not opt in');
+      t.equal(
+        loaded.mapControls.cameraBookmarks?.show === true,
+        false,
+        'legacy load does not opt in'
+      );
     }
     const positioned = reducer(
       initial,
@@ -574,7 +578,11 @@ test('#uiStateReducer -> bookmarks default off and legacy controls can opt in', 
       'legacy settings updates work'
     );
     const enabled = reducer(initial, setMapControlVisibility('cameraBookmarks', true));
-    t.equal(enabled.mapControls.cameraBookmarks.show, true, 'legacy control can be enabled directly');
+    t.equal(
+      enabled.mapControls.cameraBookmarks.show,
+      true,
+      'legacy control can be enabled directly'
+    );
     const moved = reducer(enabled, setMapControlSettings('cameraBookmarks', {contentHeight: 90}));
     t.equal(moved.mapControls.cameraBookmarks.show, true, 'settings preserve explicit opt-in');
     const disabled = reducer(moved, setMapControlVisibility('cameraBookmarks', false));
@@ -584,7 +592,11 @@ test('#uiStateReducer -> bookmarks default off and legacy controls can opt in', 
       90,
       'disable keeps layout settings'
     );
-    t.deepEqual(disabled.mapControls.mapLegend, initial.mapControls.mapLegend, 'legend is unchanged');
+    t.deepEqual(
+      disabled.mapControls.mapLegend,
+      initial.mapControls.mapLegend,
+      'legend is unchanged'
+    );
   }
   t.end();
 });
@@ -611,15 +623,24 @@ test('#uiStateReducer -> explicit bookmark opt-in survives initialization and le
 });
 
 test('#uiStateReducer -> camera animation visibility is independent of bookmarks', t => {
-  t.equal(INITIAL_UI_STATE.mapControls.cameraTour.show, true, 'enabled initially');
-  const state = reducer(INITIAL_UI_STATE, setMapControlVisibility('cameraTour', false));
-  t.equal(state.mapControls.cameraTour.show, false, 'disables camera animation');
-  t.deepEqual(
-    state.mapControls.cameraBookmarks,
-    INITIAL_UI_STATE.mapControls.cameraBookmarks,
-    'does not change bookmarks'
-  );
-  const enabled = reducer(state, setMapControlVisibility('cameraTour', true));
-  t.equal(enabled.mapControls.cameraTour.show, true, 'can enable it again');
+  const {cameraTour, ...legacyControls} = INITIAL_UI_STATE.mapControls;
+  t.equal(cameraTour.show, true, 'enabled initially');
+  for (const initial of [
+    INITIAL_UI_STATE,
+    uiStateReducerFactory({mapControls: legacyControls})(undefined, {}),
+    reducer(INITIAL_UI_STATE, keplerGlInit({initialUiState: {mapControls: legacyControls}}))
+  ]) {
+    t.equal(
+      initial.mapControls.cameraTour?.show !== false,
+      true,
+      'missing/default control is enabled'
+    );
+    const state = reducer(initial, setMapControlVisibility('cameraTour', false));
+    const {cameraTour: disabledTour, ...otherControls} = state.mapControls;
+    t.equal(disabledTour.show, false, 'disables camera animation');
+    t.deepEqual(otherControls, legacyControls, 'does not change other controls');
+    const enabled = reducer(state, setMapControlVisibility('cameraTour', true));
+    t.equal(enabled.mapControls.cameraTour.show, true, 'can enable it again');
+  }
   t.end();
 });
