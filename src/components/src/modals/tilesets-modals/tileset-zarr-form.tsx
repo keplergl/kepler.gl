@@ -95,7 +95,11 @@ const ExampleInfoButton = styled.button`
 `;
 
 const ExampleDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   max-width: 280px;
+  white-space: normal;
   overflow-wrap: anywhere;
 `;
 
@@ -108,18 +112,33 @@ const URL_DEBOUNCE_MS = 500;
  */
 const ZARR_EXAMPLES = [
   {
+    // https://source.coop/earthblox/cciwr/README.md
     label: 'CMIP6',
     name: 'CMIP6 Water Resources',
+    description:
+      'Global runoff, groundwater recharge, and evapotranspiration: historical baselines, future projections, and relative changes.',
+    timeline:
+      'Choose season, gcm (climate model), or ghm (hydrological model). FUTUR and RC also offer ssp (emissions scenario) and horizon (30-year periods centered on 2030, 2055, and 2085). Only the selected dimension changes during playback.',
     url: 'https://data.source.coop/earthblox/cciwr/data/cciwr.zarr'
   },
   {
+    // https://dynamical.org/catalog/ecmwf-ifs-ens-forecast-15-day-0-25-degree/
     label: 'ECMWF IFS',
     name: 'ECMWF IFS Ensemble',
+    description:
+      'Global weather forecasts up to 15 days ahead, including temperature, precipitation, wind, and pressure, across 51 ensemble members.',
+    timeline:
+      'Choose Valid time (init_time + lead_time) to play one forecast run with a fixed ensemble member. You can also select init_time (run date), lead_time (forecast step), or ensemble_member individually.',
     url: 'https://data.source.coop/dynamical/ecmwf-ifs-ens-forecast-15-day-0-25-degree/v0.1.0.zarr'
   },
   {
+    // https://dynamical.org/catalog/noaa-hrrr-forecast-48-hour/
     label: 'NOAA HRRR',
     name: 'NOAA HRRR Forecast',
+    description:
+      'Hourly weather forecasts up to 48 hours ahead for the continental US at 3 km resolution, including temperature, rain, snow, wind, and radar reflectivity.',
+    timeline:
+      'Choose Valid time (init_time + lead_time) to play through one forecast run. You can also select init_time (run date) or lead_time (forecast step) individually.',
     url: 'https://data.source.coop/dynamical/noaa-hrrr-forecast-48-hour/v0.1.0.zarr'
   }
 ];
@@ -279,7 +298,10 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
                   render={() => (
                     <ExampleDetails role="tooltip">
                       <strong>{example.name}</strong>
-                      <div>{example.url}</div>
+                      <div>{example.description}</div>
+                      <div>
+                        <strong>Timeline:</strong> {example.timeline}
+                      </div>
                     </ExampleDetails>
                   )}
                 >
