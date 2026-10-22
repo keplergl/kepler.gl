@@ -1191,6 +1191,27 @@ export const receiveMapConfigUpdater = (
     };
   }
 
+  const savedBookmarks = uiState.mapControls?.cameraBookmarks;
+  if (typeof savedBookmarks?.show === 'boolean') {
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        cameraBookmarks: {
+          ...DEFAULT_MAP_CONTROLS.cameraBookmarks!,
+          ...newState.mapControls.cameraBookmarks,
+          show: savedBookmarks.show,
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+  if (savedBookmarks?.settings) {
+    newState = setMapControlSettingsUpdater(newState, {
+      payload: {panelId: 'cameraBookmarks', settings: savedBookmarks.settings}
+    } as UIStateActions.setMapControlSettingsUpdaterAction);
+  }
+
   if (uiState.mapControls?.mapLegend?.settings) {
     newState = setMapControlSettingsUpdater(newState, {
       payload: {panelId: 'mapLegend', settings: uiState.mapControls.mapLegend.settings}

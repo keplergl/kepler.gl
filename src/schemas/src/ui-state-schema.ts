@@ -30,6 +30,21 @@ export const propertiesV1 = {
         },
         key: 'chart'
       }),
+      cameraBookmarks: new Schema({
+        version: VERSIONS.v1,
+        properties: {
+          show: null,
+          settings: new Schema({
+            version: VERSIONS.v1,
+            properties: {
+              position: null,
+              contentHeight: null
+            },
+            key: 'settings'
+          })
+        },
+        key: 'cameraBookmarks'
+      }),
       mapInfo: new Schema({
         version: VERSIONS.v1,
         properties: {

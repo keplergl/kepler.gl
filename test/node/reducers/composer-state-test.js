@@ -11,9 +11,10 @@ import {
   confirmReplaceDataset,
   loadFilesSuccess,
   registerEntry,
-  stageLoadedFiles
+  stageLoadedFiles,
+  wrapTo
 } from '@kepler.gl/actions';
-import {processCsvData} from '@kepler.gl/processors';
+import {processCsvData, processKeplerglJSON} from '@kepler.gl/processors';
 import keplerGlReducer, {
   addDataToMapUpdater,
   replaceDataInMapUpdater,
@@ -26,7 +27,7 @@ import keplerGlReducer, {
 import {MapSplitMode} from '@kepler.gl/constants';
 import KeplerGlSchema from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
-import {getTimeBins} from '@kepler.gl/utils';
+import {getTimeBins, getMapJSON, exportToJsonString} from '@kepler.gl/utils';
 
 import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
 import testHexIdData, {
@@ -921,7 +922,7 @@ test('#composerStateReducer - dataset replacement preserves data-independent boo
   t.end();
 });
 
-test('#composerStateReducer - loading saved bookmarks does not opt in or reset UI visibility', t => {
+test('#composerStateReducer - legacy bookmarks do not opt in or reset an explicit host preference', t => {
   const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
   const bookmarks = [
     {id: 'home', name: 'Home', camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}}
@@ -930,6 +931,7 @@ test('#composerStateReducer - loading saved bookmarks does not opt in or reset U
     ...initial,
     visState: {...initial.visState, cameraBookmarks: bookmarks}
   });
+  delete config.config.uiState.mapControls.cameraBookmarks; // Legacy files have no preference.
   const {cameraBookmarks, ...legacyControls} = initial.uiState.mapControls;
   for (const controls of [
     initial.uiState.mapControls,
@@ -945,6 +947,114 @@ test('#composerStateReducer - loading saved bookmarks does not opt in or reset U
       loaded.uiState.mapControls.cameraBookmarks?.show === true,
       controls.cameraBookmarks?.show === true,
       'loading views preserves explicit opt-in and leaves default/missing controls off'
+    );
+  }
+  t.end();
+});
+
+
+test('#composerStateReducer - project JSON bookmark visibility and layout survive file import', t => {
+  const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const bookmarks = [
+    {
+      id: 'home',
+      name: 'Home',
+      camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}
+    }
+  ];
+  const settings = {
+    position: {x: 42, y: 64, anchorX: 'left', anchorY: 'bottom'},
+    contentHeight: 80
+  };
+  for (const show of [true, false]) {
+    for (const isSplit of [false, true]) {
+      const source = {
+        ...initial,
+        visState: {...initial.visState, cameraBookmarks: bookmarks},
+        mapState: {...initial.mapState, isSplit},
+        uiState: {
+          ...initial.uiState,
+          mapControls: {
+            ...initial.uiState.mapControls,
+            cameraBookmarks: {
+              ...initial.uiState.mapControls.cameraBookmarks,
+              show,
+              settings,
+              activeMapIndex: 1
+            }
+          }
+        }
+      };
+      // This is the same JSON construction and parsing used by project export/import.
+      const json = JSON.parse(exportToJsonString(getMapJSON(source, {hasData: true})));
+      t.deepEqual(
+        json.config.config.uiState.mapControls.cameraBookmarks,
+        {show, settings},
+        'project JSON carries visibility and layout only'
+      );
+      const {cameraBookmarks, ...legacyControls} = initial.uiState.mapControls;
+      for (const controls of [
+        legacyControls,
+        {
+          ...initial.uiState.mapControls,
+          cameraBookmarks: {...cameraBookmarks, show: !show, activeMapIndex: 1}
+        }
+      ]) {
+        const target = {...initial, uiState: {...initial.uiState, mapControls: controls}};
+        const imported = keplerGlReducer(
+          {test: target},
+          wrapTo(
+            'test',
+            loadFilesSuccess(
+              [
+                {
+                  info: {format: 'keplergl', label: 'saved-map.json'},
+                  data: processKeplerglJSON(json)
+                }
+              ],
+              {centerMap: false}
+            )
+          )
+        ).test;
+        t.equal(
+          imported.uiState.mapControls.cameraBookmarks.show,
+          show,
+          'restores explicit visibility over the target preference'
+        );
+        t.deepEqual(
+          imported.uiState.mapControls.cameraBookmarks.settings,
+          settings,
+          'restores floating panel layout'
+        );
+        t.equal(
+          imported.uiState.mapControls.cameraBookmarks.activeMapIndex,
+          0,
+          'does not restore transient split-map index'
+        );
+        t.deepEqual(imported.visState.cameraBookmarks, bookmarks, 'preserves saved camera data');
+        t.equal(imported.mapState.isSplit, isSplit, 'preserves the saved map mode');
+      }
+    }
+  }
+  const legacyJson = JSON.parse(exportToJsonString(getMapJSON(initial, {hasData: true})));
+  delete legacyJson.config.config.uiState.mapControls.cameraBookmarks;
+  for (const withUiState of [true, false]) {
+    const json = JSON.parse(JSON.stringify(legacyJson));
+    if (!withUiState) delete json.config.config.uiState;
+    const imported = keplerGlReducer(
+      {test: initial},
+      wrapTo(
+        'test',
+        loadFilesSuccess(
+          [{info: {format: 'keplergl', label: 'legacy.json'}, data: processKeplerglJSON(json)}],
+          {centerMap: false}
+        )
+      )
+    ).test;
+    t.equal(
+      imported.uiState.mapControls.cameraBookmarks.show,
+      false,
+      'legacy project defaults off'
     );
   }
   t.end();

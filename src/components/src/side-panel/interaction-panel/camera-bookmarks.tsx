@@ -165,18 +165,18 @@ function SortableBookmark({
       onClick: () => onNavigate(bookmark)
     },
     {
-      key: 'copyCoordinates',
-      label: message('copyCoordinates', 'Copy coordinates'),
-      Icon: Copy,
-      disabled: !coordinates,
-      onClick: () => onCopy(coordinates)
-    },
-    {
       key: 'updateView',
       label: message('updateView', 'Update view'),
       Icon: Replace,
       disabled: !canCapture,
       onClick: () => onUpdate(bookmark)
+    },
+    {
+      key: 'copyCoordinates',
+      label: message('copyCoordinates', 'Copy coordinates'),
+      Icon: Copy,
+      disabled: !coordinates,
+      onClick: () => onCopy(coordinates)
     },
     {
       key: 'delete',
