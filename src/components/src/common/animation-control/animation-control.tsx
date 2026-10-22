@@ -84,6 +84,7 @@ export type AnimationControlProps = {
   className?: string;
   style?: object;
   formatTimelineValue?: (value: number) => string;
+  displayLabel?: string;
 };
 
 AnimationControlFactory.deps = [
@@ -117,7 +118,8 @@ function AnimationControlFactory(
     showTimeline = true,
     showControls = true,
     showTimeDisplay = true,
-    formatTimelineValue
+    formatTimelineValue,
+    displayLabel
   }) => {
     if (!timeline) {
       return null;
@@ -162,6 +164,8 @@ function AnimationControlFactory(
             defaultTimeFormat={defaultTimeFormat}
             timeFormat={timeFormat}
             timezone={timezone}
+            formatValue={formatTimelineValue}
+            displayLabel={displayLabel}
           />
         ) : null}
       </AnimationControlContainer>

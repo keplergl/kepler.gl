@@ -39,3 +39,11 @@ export {
   selectZarrVariable
 } from './tileset/zarr-utils';
 export * from './dataset-ops';
+export {
+  getZarrAxis,
+  getZarrAxisDimensions,
+  getZarrForecastAxes,
+  isExplicitZarrAxis,
+  formatZarrCoordinate
+} from './tileset/zarr-axis';
+export type {ZarrAxis, ZarrAxisFrame} from './tileset/zarr-axis';

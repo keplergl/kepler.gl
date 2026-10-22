@@ -538,9 +538,10 @@ test('Components -> LayerConfigurator -> zarr dimension selector shows the pinne
   t.end();
 });
 
-test('Components -> LayerConfigurator -> zarr variable selector emits the variable path', t => {
+test('Components -> LayerConfigurator -> zarr variable selector changes the variable and resets its frame', t => {
   const ZarrLayer = LayerClasses.zarr;
   const layer = new ZarrLayer({id: 'zarr-layer', dataId: 'zarr_data'});
+  layer.updateLayerVisConfig({zarrFrame: 2});
   const updateLayerVisConfig = sinon.spy();
 
   const wrapper = mountZarrConfigurator(layer, updateLayerVisConfig);
@@ -559,8 +560,8 @@ test('Components -> LayerConfigurator -> zarr variable selector emits the variab
   t.ok(updateLayerVisConfig.calledOnce, 'should call updateLayerVisConfig once');
   t.deepEqual(
     updateLayerVisConfig.firstCall.args[0],
-    {zarrVariable: 'HISTO/qtot'},
-    'should emit the selected variable path'
+    {zarrVariable: 'HISTO/qtot', zarrFrame: 0},
+    'should emit the selected variable path and start at its first frame'
   );
 
   t.end();

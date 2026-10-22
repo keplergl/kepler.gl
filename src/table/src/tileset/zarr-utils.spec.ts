@@ -4,6 +4,7 @@
 import type {ZarrDatasetMetadata, ZarrVariableInfo} from '@kepler.gl/constants';
 
 import {parseGeoZarrMetadata} from '@developmentseed/geozarr';
+import {BoolArray, UnicodeStringArray} from 'zarrita';
 
 import {
   affineFromCellCenters,
@@ -11,6 +12,7 @@ import {
   buildMultiscaleAttrs,
   childPrefix,
   decodeCfTime,
+  decodeZarrCoordinate,
   isWebMercatorPyramid,
   multiscaleVariableNames,
   orderLevelsFinestFirst,
@@ -24,9 +26,230 @@ import {
   resolveCoordinatePath,
   selectZarrVariable
 } from './zarr-utils';
+import {getZarrAxis, getZarrForecastAxes, formatZarrCoordinate} from './zarr-axis';
 
 const HOUR = 3_600_000;
 const DAY = 86_400_000;
+
+function axisVariable(nonSpatialDims: ZarrVariableInfo['nonSpatialDims']): ZarrVariableInfo {
+  return {
+    path: 'climate',
+    name: 'climate',
+    displayName: 'climate',
+    dtype: 'float32',
+    shape: [...nonSpatialDims.map(d => d.size), 2, 2],
+    chunks: [1, 2, 2],
+    nonSpatialDims
+  };
+}
+
+describe('Zarr dimension axes', () => {
+  it('decodes Zarr iterable string and boolean coordinates without coercing their labels', () => {
+    const strings = decodeZarrCoordinate(
+      'band',
+      2,
+      new UnicodeStringArray(4, ['tavg', 'prec']),
+      {}
+    );
+    expect(strings.dimension.values).toEqual(['tavg', 'prec']);
+    const booleans = decodeZarrCoordinate('enabled', 2, new BoolArray([true, false]), {});
+    expect(
+      getZarrAxis(axisVariable([booleans.dimension]), {kind: 'dimension', dimension: 'enabled'})
+        .frames
+    ).toEqual([
+      {value: 0, label: 'true', selection: {enabled: 0}},
+      {value: 1, label: 'false', selection: {enabled: 1}}
+    ]);
+    expect(
+      decodeZarrCoordinate('member', 2, [0, 1], {standard_name: 'realization'}).dimension.kind
+    ).toBe('category');
+  });
+
+  it('decodes large CF offsets while preserving exact raw offsets for saved metadata', () => {
+    const offset = 10000000000000000n;
+    const {dimension} = decodeZarrCoordinate('time', 1, [offset], {
+      units: 'microseconds since 1970-01-01'
+    });
+    expect(dimension.kind).toBe('time');
+    expect(dimension.values).toEqual([10000000000000]);
+    expect(dimension.rawValues).toEqual([String(offset)]);
+  });
+  it('preserves CarbonPlan band labels and maps months to their original slices', () => {
+    const band = decodeZarrCoordinate('band', 2, ['tavg', 'prec'], {}).dimension;
+    const month = decodeZarrCoordinate(
+      'month',
+      12,
+      Array.from({length: 12}, (_, i) => i + 1),
+      {}
+    ).dimension;
+    const variable = axisVariable([band, month]);
+    expect(band.kind).toBe('category');
+    expect(formatZarrCoordinate(band, 1)).toBe('prec');
+    expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'month'}).frames[2]).toEqual({
+      value: 3,
+      label: '3',
+      selection: {month: 2}
+    });
+    expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'band'}).frames).toEqual([
+      {value: 0, label: 'tavg', selection: {band: 0}},
+      {value: 1, label: 'prec', selection: {band: 1}}
+    ]);
+  });
+
+  it('keeps CMIP6 seasons, scenarios and models categorical, and horizons numeric', () => {
+    const variable = axisVariable([
+      decodeZarrCoordinate('season', 5, ['yearly', 'DJF', 'MAM', 'JJA', 'SON'], {}).dimension,
+      decodeZarrCoordinate('ssp', 3, ['ssp126', 'ssp370', 'ssp585'], {}).dimension,
+      decodeZarrCoordinate('gcm', 2, ['gfdl-esm4', 'ipsl-cm6a-lr'], {}).dimension,
+      decodeZarrCoordinate('horizon', 3, [2030n, 2055n, 2085n], {}).dimension
+    ]);
+    const seasons = getZarrAxis(variable, {kind: 'dimension', dimension: 'season'});
+    expect(seasons.frames.map(f => f.label)).toEqual(['yearly', 'DJF', 'MAM', 'JJA', 'SON']);
+    expect(seasons.frames[3].selection).toEqual({season: 3});
+    expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'ssp'}).frames[2].label).toBe(
+      'ssp585'
+    );
+    expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'gcm'}).frames[1].label).toBe(
+      'ipsl-cm6a-lr'
+    );
+    expect(
+      getZarrAxis(variable, {kind: 'dimension', dimension: 'horizon'}).frames.map(f => f.value)
+    ).toEqual([2030, 2055, 2085]);
+    expect(getZarrForecastAxes(variable)).toEqual([]);
+  });
+
+  it.each(['ECMWF IFS Ensemble', 'NOAA HRRR Forecast'])(
+    '%s varies forecast lead, not every run/member',
+    name => {
+      const isEcmwf = name.startsWith('ECMWF');
+      const initCount = isEcmwf ? 935 : 12093;
+      const leads = isEcmwf
+        ? [
+            ...Array.from({length: 49}, (_, i) => i * 3),
+            ...Array.from({length: 36}, (_, i) => 150 + i * 6)
+          ]
+        : Array.from({length: 49}, (_, i) => i);
+      const reference = decodeZarrCoordinate(
+        'init_time',
+        initCount,
+        Array.from({length: initCount}, (_, i) => i * 86400),
+        {
+          units: 'seconds since 2024-04-01',
+          calendar: 'proleptic_gregorian',
+          standard_name: 'forecast_reference_time'
+        }
+      ).dimension;
+      const lead = decodeZarrCoordinate(
+        'lead_time',
+        leads.length,
+        leads.map(h => h * 3600),
+        {units: 'seconds', standard_name: 'forecast_period', dtype: 'timedelta64[us]'}
+      ).dimension;
+      const variable = axisVariable([
+        reference,
+        lead,
+        ...(isEcmwf ? [{name: 'ensemble_member', size: 51}] : [])
+      ]);
+      const [config] = getZarrForecastAxes(variable);
+      expect(config).toEqual({kind: 'forecast', referenceTime: 'init_time', leadTime: 'lead_time'});
+      const axis = getZarrAxis(variable, config, {init_time: 1, ensemble_member: 7});
+      expect(axis.frames).toHaveLength(isEcmwf ? 85 : 49);
+      expect(axis.frames[0].label).toBe('2024-04-02T00:00:00.000Z');
+      expect(axis.frames[1].value - axis.frames[0].value).toBe((isEcmwf ? 3 : 1) * HOUR);
+      expect(axis.frames[1].selection).toEqual({init_time: 1, lead_time: 1});
+      expect(reference.rawValues?.[1]).toBe(86400);
+      expect(lead.units).toBe('seconds');
+    }
+  );
+
+  it('combines calendar components, skipping invalid days and retaining source indices', () => {
+    const variable = axisVariable([
+      {name: 'year', size: 2, values: [2025, 2024]},
+      {name: 'month', size: 2, values: [3, 2]},
+      {name: 'day', size: 3, values: [1, 29, 30]}
+    ]);
+    const axis = getZarrAxis(variable, {
+      kind: 'calendar',
+      year: 'year',
+      month: 'month',
+      day: 'day'
+    });
+    expect(axis.frames.find(f => f.label === '2024-02-29')?.selection).toEqual({
+      year: 1,
+      month: 1,
+      day: 1
+    });
+    expect(axis.frames.some(f => f.label === '2025-02-29')).toBe(false);
+    expect(axis.frames.some(f => f.label.endsWith('02-30'))).toBe(false);
+    expect(axis.frames[0].label).toBe('2024-02-01');
+    expect(
+      getZarrAxis(variable, {kind: 'calendar', year: 'year', month: 'month'}).frames
+    ).toHaveLength(4);
+  });
+
+  it('honors model calendars without normalizing their dates to Gregorian dates', () => {
+    const variable = axisVariable([
+      {name: 'year', size: 1, values: [2024]},
+      {name: 'month', size: 1, values: [2]},
+      {name: 'day', size: 3, values: [28, 29, 30]}
+    ]);
+    const config = {kind: 'calendar' as const, year: 'year', month: 'month', day: 'day'};
+    expect(getZarrAxis(variable, {...config, calendar: 'noleap'}).frames.map(f => f.label)).toEqual(
+      ['2024-02-28']
+    );
+    expect(
+      getZarrAxis(variable, {...config, calendar: 'all_leap'}).frames.map(f => f.label)
+    ).toEqual(['2024-02-28', '2024-02-29']);
+    expect(getZarrAxis(variable, {...config, calendar: '360_day'}).frames[2]).toEqual({
+      value: 2,
+      label: '2024-02-30',
+      selection: {year: 0, month: 0, day: 2}
+    });
+    expect(getZarrAxis(variable, {...config, calendar: 'unknown'}).error).toBeTruthy();
+  });
+
+  it('keeps slices distinguishable with duplicate labels and sorts numeric values safely', () => {
+    const variable = axisVariable([{name: 'sample', size: 3, values: [30, 10, 20]}]);
+    expect(
+      getZarrAxis(variable, {kind: 'dimension', dimension: 'sample'}).frames.map(
+        f => f.selection.sample
+      )
+    ).toEqual([1, 2, 0]);
+    variable.nonSpatialDims[0].values = ['A', 'A', 'B'];
+    expect(
+      getZarrAxis(variable, {kind: 'dimension', dimension: 'sample'}).frames.map(f => f.value)
+    ).toEqual([0, 1, 2]);
+    variable.nonSpatialDims[0].values = [2, 2, 3];
+    expect(
+      getZarrAxis(variable, {kind: 'dimension', dimension: 'sample'}).frames.map(
+        f => f.selection.sample
+      )
+    ).toEqual([0, 1, 2]);
+  });
+
+  it('handles missing coordinates and rejects invalid or excessive axis combinations', () => {
+    const variable = axisVariable([
+      {name: 'band', size: 2},
+      {name: 'empty', size: 0},
+      {name: 'year', size: 10000},
+      {name: 'month', size: 12}
+    ]);
+    expect(
+      getZarrAxis(variable, {kind: 'dimension', dimension: 'band'}).frames.map(f => f.label)
+    ).toEqual(['0', '1']);
+    expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'missing'}).error).toBeTruthy();
+    expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'empty'}).frames).toEqual([]);
+    expect(getZarrAxis(variable, {kind: 'calendar', year: 'year', month: 'month'}).error).toMatch(
+      /Too many/
+    );
+    expect(
+      getZarrAxis(variable, {kind: 'calendar', year: 'band', month: 'band'}).error
+    ).toBeTruthy();
+    variable.nonSpatialDims[0].values = [NaN, Infinity];
+    expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'band'}).frames).toEqual([]);
+    expect(getZarrAxis(variable, {kind: 'off'}).frames).toEqual([]);
+  });
+});
 
 describe('parseCfTimeUnits', () => {
   it('parses the fixed-length units', () => {

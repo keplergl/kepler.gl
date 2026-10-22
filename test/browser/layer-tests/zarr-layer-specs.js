@@ -11,6 +11,10 @@ import {
   getZarrTileByteLength
 } from '@kepler.gl/layers';
 import {DatasetType} from '@kepler.gl/constants';
+import {getZarrAxis} from '@kepler.gl/table';
+import SchemaManager from '@kepler.gl/schemas';
+import {InitialState} from 'test/helpers/mock-state';
+import {layerVisConfigChangeUpdater} from '@kepler.gl/reducers';
 
 const {ZarrLayer} = KeplerGlLayers;
 
@@ -334,6 +338,172 @@ test('#ZarrLayer -> renderLayer reloads tiles when a dimension changes', t => {
   // deck.gl caches tile data per layer, so only a new id refetches the chunks.
   t.notEqual(second.id, first.id, 'should render under a new sublayer id');
 
+  t.end();
+});
+
+test('#ZarrLayer -> explicit axes fetch source slices independently of the shared clock', t => {
+  const band = {...BAND_DIMENSION, values: ['tavg', 'prec', 'tavg', 'snow'], kind: 'category'};
+  const variable = {...TEMPERATURE, nonSpatialDims: [TIME_DIMENSION, band]};
+  const layer = new ZarrLayer({
+    dataId: 'zarr-dataset',
+    visConfig: {
+      zarrAxis: {kind: 'dimension', dimension: 'band'},
+      dimensionIndexes: {time: 1}
+    }
+  });
+  layer._nodeKey = `${MOCK_ZARR_DATASET.metadata.url}#temperature`;
+  layer._node = {shape: variable.shape};
+  layer.updateLayerMeta(MOCK_ZARR_DATASET);
+  t.equal(
+    layer.config.animation.enabled,
+    false,
+    'does not contribute categorical positions to the global time domain'
+  );
+  const render = () =>
+    layer.renderLayer({
+      data: {metadata: MOCK_ZARR_DATASET.metadata, variable},
+      animationConfig: {currentTime: T0 + 2 * DAY},
+      mapState: {},
+      idx: 0,
+      gpuFilter: null,
+      layerCallbacks: {},
+      visible: true
+    })[0];
+  const first = render();
+  layer.updateLayerVisConfig({zarrFrame: 2});
+  const next = render();
+  t.deepEqual(
+    next.props.selection,
+    {time: 1, band: 2},
+    'duplicate labels keep their distinct array indices and pinned time'
+  );
+  t.notEqual(next.id, first.id, 'a frame change fetches a different tile slice');
+  t.equal(
+    render().props.selection,
+    next.props.selection,
+    'unchanged frames reuse cached selection'
+  );
+  layer.updateLayerVisConfig({zarrFrame: 100});
+  t.deepEqual(
+    render().props.selection,
+    {time: 1, band: 3},
+    'out of range saved frames clamp safely'
+  );
+  layer.updateLayerVisConfig({zarrFrame: NaN});
+  t.deepEqual(render().props.selection, {time: 1, band: 0}, 'invalid frames use the first slice');
+  t.end();
+});
+
+test('#ZarrLayer -> combined dates select all component indices and retain unrelated pins', t => {
+  const variable = {
+    ...TEMPERATURE,
+    nonSpatialDims: [
+      {name: 'year', size: 2, values: [2023, 2024]},
+      {name: 'month', size: 1, values: [2]},
+      {name: 'day', size: 2, values: [28, 29]},
+      BAND_DIMENSION
+    ],
+    timeDimension: undefined
+  };
+  const axis = getZarrAxis(variable, {kind: 'calendar', year: 'year', month: 'month', day: 'day'});
+  t.deepEqual(
+    getZarrSelection({variable, axis, frameIndex: 2, dimensionIndexes: {band: 3}}),
+    {year: 1, month: 0, day: 1, band: 3},
+    '2024-02-29 maps to a valid source tuple with the pinned band'
+  );
+  t.end();
+});
+
+test('#ZarrLayer -> axis configuration round trips and old maps keep automatic time', t => {
+  const zarrAxis = {
+    kind: 'calendar',
+    year: 'year',
+    month: 'month',
+    day: 'day',
+    calendar: '360_day'
+  };
+  const layer = new ZarrLayer({
+    dataId: 'zarr-dataset',
+    visConfig: {
+      zarrAxis,
+      zarrFrame: 7,
+      dimensionIndexes: {band: 2}
+    }
+  });
+  const state = {
+    ...InitialState,
+    visState: {...InitialState.visState, layers: [layer], layerOrder: [layer.id]}
+  };
+  const saved = SchemaManager.getConfigToSave(state);
+  const parsed = SchemaManager.parseSavedConfig(saved).visState.layers[0];
+  const restored = new ZarrLayer({...parsed.config, id: parsed.id});
+  t.deepEqual(restored.config.visConfig.zarrAxis, zarrAxis, 'saves the calendar mapping');
+  t.equal(restored.config.visConfig.zarrFrame, 7, 'restores the selected frame');
+  t.deepEqual(
+    restored.config.visConfig.dimensionIndexes,
+    {band: 2},
+    'restores other pinned dimensions'
+  );
+  delete parsed.config.visConfig.zarrAxis;
+  delete parsed.config.visConfig.zarrFrame;
+  const legacy = new ZarrLayer({...parsed.config, id: parsed.id});
+  legacy.updateLayerMeta(MOCK_ZARR_DATASET);
+  t.equal(legacy.config.animation.enabled, true, 'old configs still enable the shared timeline');
+  t.deepEqual(
+    legacy.config.animation.timeSteps,
+    TIME_DIMENSION.values,
+    'retains the existing time steps'
+  );
+  t.end();
+});
+
+test('#ZarrLayer -> switching axes reconciles the global animation domain', t => {
+  const layer = new ZarrLayer({dataId: 'zarr-dataset'});
+  const datasets = {'zarr-dataset': MOCK_ZARR_DATASET};
+  const data = layer.formatLayerData(datasets);
+  let state = {
+    ...InitialState.visState,
+    datasets,
+    layers: [layer],
+    layerOrder: [layer.id],
+    layerData: [data],
+    animationConfig: {
+      ...InitialState.visState.animationConfig,
+      domain: [T0, T0 + 2 * DAY],
+      currentTime: T0,
+      timeSteps: TIME_DIMENSION.values
+    }
+  };
+  state = layerVisConfigChangeUpdater(state, {
+    oldLayer: state.layers[0],
+    newVisConfig: {
+      zarrAxis: {kind: 'dimension', dimension: 'band'},
+      zarrFrame: 0
+    }
+  });
+  t.equal(
+    state.animationConfig.domain,
+    null,
+    'removes an explicit dimension from the global clock'
+  );
+  state = layerVisConfigChangeUpdater(state, {
+    oldLayer: state.layers[0],
+    newVisConfig: {zarrAxis: {kind: 'auto'}}
+  });
+  t.deepEqual(
+    state.animationConfig.domain,
+    [T0, T0 + 2 * DAY],
+    'restores automatic time when selected'
+  );
+  state = layerVisConfigChangeUpdater(state, {
+    oldLayer: state.layers[0],
+    newVisConfig: {zarrVariable: 'precipitation'}
+  });
+  t.equal(
+    state.animationConfig.domain,
+    null,
+    'clears the clock when switching to a timeless variable'
+  );
   t.end();
 });
 

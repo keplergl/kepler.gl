@@ -262,8 +262,22 @@ export type ZarrDimensionInfo = {
    * Coordinate values for the dimension, when the store exposes a matching
    * coordinate array. Time coordinates are decoded to epoch milliseconds.
    */
-  values?: number[];
+  values?: (number | string | boolean)[];
+  /** Preserve coordinate semantics instead of guessing from its name or dtype. */
+  kind?: 'time' | 'duration' | 'number' | 'category';
+  units?: string;
+  calendar?: string;
+  standardName?: string;
+  /** Original offsets for decoded CF time coordinates. */
+  rawValues?: (number | string | boolean)[];
 };
+
+/** Empty/missing keeps the original automatic layer time axis. */
+export type ZarrAxisConfig =
+  | {kind?: 'auto' | 'off'}
+  | {kind: 'dimension'; dimension: string}
+  | {kind: 'forecast'; referenceTime: string; leadTime: string}
+  | {kind: 'calendar'; year: string; month: string; day?: string; calendar?: string};
 
 export type ZarrVariableInfo = {
   /** Path of the variable within the Zarr group. Empty for a root-level array. */

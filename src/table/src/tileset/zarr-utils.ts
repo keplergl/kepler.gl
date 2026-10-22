@@ -229,7 +229,9 @@ export function getZarrTimeDomain(
   if (!values || values.length < 2) {
     return null;
   }
-  const timeSteps = [...new Set(values)].filter(Number.isFinite).sort((a, b) => a - b);
+  const timeSteps = [...new Set(values)]
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+    .sort((a, b) => a - b);
   if (timeSteps.length < 2) {
     return null;
   }
@@ -758,6 +760,49 @@ export function buildMultiscaleAttrs(
 
 type CoordinateResult = {dimension: ZarrDimensionInfo; isCfTime: boolean};
 
+/** Decode coordinates without losing categorical labels or duration/calendar metadata. */
+export function decodeZarrCoordinate(
+  name: string,
+  size: number,
+  raw: ArrayLike<unknown> | Iterable<unknown>,
+  attrs: AnyAttrs
+): CoordinateResult {
+  const units = readString(attrs, ['units']);
+  const calendar = readString(attrs, ['calendar']);
+  const standardName = readString(attrs, ['standard_name']);
+  const source = Array.from(raw);
+  const values = source.map(value =>
+    typeof value === 'bigint'
+      ? Number.isSafeInteger(Number(value))
+        ? Number(value)
+        : String(value)
+      : value
+  );
+  const dimension: ZarrDimensionInfo = {name, size, units, calendar, standardName};
+  if (!values.every(v => ['number', 'string', 'boolean'].includes(typeof v))) {
+    return {dimension, isCfTime: false};
+  }
+  const numeric = values.every(v => typeof v === 'number');
+  const decoded = source.every(v => typeof v === 'number' || typeof v === 'bigint')
+    ? decodeCfTime(source as (number | bigint)[], units, calendar)
+    : null;
+  return {
+    dimension: {
+      ...dimension,
+      values: decoded ?? (values as NonNullable<ZarrDimensionInfo['values']>),
+      ...(decoded ? {rawValues: values as NonNullable<ZarrDimensionInfo['values']>} : {}),
+      kind: decoded
+        ? 'time'
+        : !numeric || standardName === 'realization'
+        ? 'category'
+        : standardName === 'forecast_period' || String(attrs.dtype).startsWith('timedelta')
+        ? 'duration'
+        : 'number'
+    },
+    isCfTime: Boolean(decoded)
+  };
+}
+
 /**
  * Coordinate arrays are shared across the variables of a store, and a time axis
  * can run to thousands of values. Read each one once per metadata fetch.
@@ -806,24 +851,7 @@ async function loadCoordinateDimension(
 
   try {
     const chunk = await zarr.get(arr, null);
-    const raw = chunk.data as ArrayLike<number | bigint>;
-    const attrs = getAttrs(arr);
-    const decoded = decodeCfTime(
-      raw,
-      readString(attrs, ['units']),
-      readString(attrs, ['calendar'])
-    );
-    if (decoded) {
-      return {dimension: {...dimension, values: decoded}, isCfTime: true};
-    }
-    const values: number[] = [];
-    for (let i = 0; i < raw.length; i++) {
-      values.push(Number(raw[i]));
-    }
-    return {
-      dimension: {...dimension, values: values.every(Number.isFinite) ? values : undefined},
-      isCfTime: false
-    };
+    return decodeZarrCoordinate(name, size, chunk.data, getAttrs(arr));
   } catch {
     return {dimension, isCfTime: false};
   }
@@ -837,7 +865,13 @@ function isTimeDimension(dimension: ZarrDimensionInfo, decodedFromCf: boolean): 
   if (!dimension.values || dimension.values.length < 2) {
     return false;
   }
-  return decodedFromCf || TIME_DIMENSION_NAMES.has(dimension.name.toLowerCase());
+  // Unsupported calendars/units must not be mistaken for epoch milliseconds.
+  return (
+    decodedFromCf ||
+    (!dimension.units &&
+      dimension.kind !== 'category' &&
+      TIME_DIMENSION_NAMES.has(dimension.name.toLowerCase()))
+  );
 }
 
 async function buildVariableInfo(

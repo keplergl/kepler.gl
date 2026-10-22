@@ -204,6 +204,8 @@ export default {
     colorRange: 'Color range',
     zarrRescale: 'Value range',
     zarrVariable: 'Variable',
+    zarrAxis: 'Timeline axis',
+    zarrFrame: 'Timeline frame',
     zarrDimensionIndexes: 'Dimensions',
     stroke: 'Stroke',
     strokeColor: 'Stroke Color',

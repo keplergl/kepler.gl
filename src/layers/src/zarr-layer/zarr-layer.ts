@@ -9,6 +9,7 @@ import {
   LAYER_TYPES,
   LAYER_VIS_CONFIGS,
   ZarrDatasetMetadata,
+  ZarrAxisConfig,
   ZarrDimensionInfo,
   ZarrVariableInfo
 } from '@kepler.gl/constants';
@@ -16,6 +17,9 @@ import {
   KeplerTable as KeplerDataset,
   Datasets as KeplerDatasets,
   getZarrTimeDomain,
+  getZarrAxis,
+  isExplicitZarrAxis,
+  ZarrAxis,
   getZarrVariable,
   openZarrNode
 } from '@kepler.gl/table';
@@ -40,6 +44,8 @@ export type ZarrLayerVisConfigSettings = {
   rescale: VisConfigRange;
   zarrVariable: VisConfigInput;
   dimensionIndexes: VisConfigObject;
+  zarrAxis: VisConfigObject;
+  zarrFrame: VisConfigNumber;
 };
 
 export type ZarrLayerVisConfig = {
@@ -48,8 +54,10 @@ export type ZarrLayerVisConfig = {
   rescale: [number, number];
   /** Path of the rendered variable. Null falls back to the dataset's default. */
   zarrVariable: string | null;
-  /** Index pinned on each non-spatial, non-time dimension, keyed by name. */
+  /** Indices of non-spatial dimensions not currently driven by an axis. */
   dimensionIndexes: Record<string, number>;
+  zarrAxis: ZarrAxisConfig;
+  zarrFrame: number;
 };
 
 export type ZarrLayerConfig = LayerBaseConfig & {
@@ -101,6 +109,22 @@ function isUsableRange(range?: [number, number] | null): range is [number, numbe
 }
 
 export const zarrVisConfigs = {
+  zarrAxis: {
+    type: 'object',
+    defaultValue: {},
+    group: '',
+    property: 'zarrAxis',
+    label: 'layerVisConfigs.zarrAxis'
+  } as VisConfigObject,
+  zarrFrame: {
+    type: 'number',
+    defaultValue: 0,
+    group: '',
+    property: 'zarrFrame',
+    label: 'layerVisConfigs.zarrFrame',
+    range: [0, 100000],
+    step: 1
+  } as VisConfigNumber,
   opacity: {
     ...LAYER_VIS_CONFIGS.opacity,
     defaultValue: 1,
@@ -167,14 +191,19 @@ export function getZarrMaxZoom(
 }
 
 /** Nearest index in a sorted list of timestamps. */
-export function findNearestTimeIndex(timeSteps: number[], currentTime: number): number {
+export function findNearestTimeIndex(
+  timeSteps: NonNullable<ZarrDimensionInfo['values']>,
+  currentTime: number
+): number {
   if (timeSteps.length === 0) {
     return 0;
   }
   let nearest = 0;
   let smallestDelta = Number.POSITIVE_INFINITY;
   for (let i = 0; i < timeSteps.length; i++) {
-    const delta = Math.abs(timeSteps[i] - currentTime);
+    const value = timeSteps[i];
+    if (typeof value !== 'number') continue;
+    const delta = Math.abs(value - currentTime);
     if (delta < smallestDelta) {
       smallestDelta = delta;
       nearest = i;
@@ -185,24 +214,28 @@ export function findNearestTimeIndex(timeSteps: number[], currentTime: number): 
 
 /**
  * Build the `selection` prop for `ZarrLayer`, which requires exactly one entry
- * per non-spatial dimension. Time is driven by the animation timeline; every
- * other dimension is pinned by the layer config, defaulting to index 0.
+ * per non-spatial dimension. Explicit frames override their component pins;
+ * automatic mode follows the shared time clock. Other pins default to index 0.
  */
 export function getZarrSelection({
   variable,
   dimensionIndexes,
-  currentTime
+  currentTime,
+  axis,
+  frameIndex = 0
 }: {
   variable: ZarrVariableInfo | null;
   dimensionIndexes?: Record<string, number>;
   currentTime?: number | null;
+  axis?: ZarrAxis;
+  frameIndex?: number;
 }): Record<string, number> {
   const selection: Record<string, number> = {};
   if (!variable) {
     return selection;
   }
   for (const dimension of variable.nonSpatialDims) {
-    const isTime = variable.timeDimension?.name === dimension.name;
+    const isTime = !axis && variable.timeDimension?.name === dimension.name;
     if (isTime && Number.isFinite(currentTime)) {
       const timeSteps = dimension.values ?? [];
       selection[dimension.name] = clampIndex(
@@ -213,7 +246,14 @@ export function getZarrSelection({
     }
     selection[dimension.name] = clampIndex(dimensionIndexes?.[dimension.name] ?? 0, dimension);
   }
-  return selection;
+  const frame =
+    axis?.frames[
+      Math.max(
+        0,
+        Math.min(axis.frames.length - 1, Number.isFinite(frameIndex) ? Math.round(frameIndex) : 0)
+      )
+    ];
+  return {...selection, ...frame?.selection};
 }
 
 /**
@@ -275,6 +315,17 @@ export default class ZarrLayer extends Layer {
   /** Last selection object handed to deck, reused while the contents match. */
   private _selection: Record<string, number> = {};
   private _selectionKey = '';
+  private _axisCache?: {variable: ZarrVariableInfo | null; key: string; axis: ZarrAxis};
+
+  private _getAxis(variable: ZarrVariableInfo | null): ZarrAxis | undefined {
+    const {zarrAxis, dimensionIndexes} = this.config.visConfig;
+    if (!isExplicitZarrAxis(zarrAxis)) return undefined;
+    const key = JSON.stringify([zarrAxis, dimensionIndexes]);
+    if (this._axisCache?.variable !== variable || this._axisCache?.key !== key) {
+      this._axisCache = {variable, key, axis: getZarrAxis(variable, zarrAxis, dimensionIndexes)};
+    }
+    return this._axisCache?.axis;
+  }
 
   /**
    * Last selection whose tiles finished loading, and the selection currently on
@@ -374,7 +425,8 @@ export default class ZarrLayer extends Layer {
       getMeta: {
         datasetId: dataset.id,
         metadata: dataset.metadata,
-        zarrVariable: this.config.visConfig?.zarrVariable ?? null
+        zarrVariable: this.config.visConfig?.zarrVariable ?? null,
+        zarrAxis: this.config.visConfig?.zarrAxis
       }
     };
   }
@@ -406,7 +458,9 @@ export default class ZarrLayer extends Layer {
     }
     const metadata = (dataset.metadata || {}) as ZarrDatasetMetadata;
     const variable = this._resolveVariable(metadata);
-    const timeDomain = getZarrTimeDomain(variable?.timeDimension);
+    const timeDomain = isExplicitZarrAxis(this.config.visConfig.zarrAxis)
+      ? null
+      : getZarrTimeDomain(variable?.timeDimension);
 
     this._syncRescaleToVariable(variable, metadata);
 
@@ -537,7 +591,9 @@ export default class ZarrLayer extends Layer {
     const selection = getZarrSelection({
       variable,
       dimensionIndexes: visConfig.dimensionIndexes,
-      currentTime: this.config.animation?.enabled ? animationConfig?.currentTime : null
+      currentTime: this.config.animation?.enabled ? animationConfig?.currentTime : null,
+      axis: this._getAxis(variable),
+      frameIndex: visConfig.zarrFrame
     });
 
     const nodataValue = variable?.nodataValue ?? metadata.nodataValue;

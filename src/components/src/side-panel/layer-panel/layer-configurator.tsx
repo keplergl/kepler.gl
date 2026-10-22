@@ -33,6 +33,7 @@ import ScenegraphModelSelectorFactory, {
 import RasterTileLayerConfiguratorFactory from './raster-tile-layer-configurator';
 import VectorTileLayerConfiguratorFactory from './vector-tile-layer-configurator';
 import LayerApiKeyInput from './layer-api-key-input';
+import ZarrAxisSelector from './zarr-axis-selector';
 
 import {ActionHandler, toggleModal, updateDatasetProps} from '@kepler.gl/actions';
 import {
@@ -50,7 +51,13 @@ import {
   createPointCountLabelField
 } from '@kepler.gl/layers';
 
-import {matchDatasetType, Datasets} from '@kepler.gl/table';
+import {
+  matchDatasetType,
+  Datasets,
+  getZarrAxisDimensions,
+  isExplicitZarrAxis,
+  formatZarrCoordinate
+} from '@kepler.gl/table';
 import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
@@ -408,19 +415,6 @@ export const getLayerChannelConfigProps = (props: LayerConfiguratorProps) => ({
   onChange: props.updateLayerVisualChannelConfig,
   setColorUI: props.updateLayerColorUI
 });
-
-/**
- * Label a Zarr dimension index with its coordinate value when the store exposes
- * one, falling back to the bare index. Long floats are trimmed so a pressure
- * level reads as `850` rather than `850.0000000001`.
- */
-function formatZarrDimensionValue(dim: {size: number; values?: number[]}, index: number): string {
-  const value = dim.values?.[index];
-  if (value === undefined || !Number.isFinite(value)) {
-    return String(index);
-  }
-  return Number.isInteger(value) ? String(value) : String(Number(value.toPrecision(6)));
-}
 
 LayerConfiguratorFactory.deps = [
   SourceDataSelectorFactory,
@@ -1851,10 +1845,11 @@ export default function LayerConfiguratorFactory(
       const variables = metadata.variables ?? [];
       const selectedPath = visConfig.zarrVariable ?? metadata.variable;
       const activeVariable = variables.find(v => v.path === selectedPath) ?? variables[0] ?? null;
-      // Time is driven by the playback bar, so only the remaining dimensions
-      // need a manual index picker.
+      const animatedDimensions = isExplicitZarrAxis(visConfig.zarrAxis)
+        ? getZarrAxisDimensions(visConfig.zarrAxis)
+        : [activeVariable?.timeDimension?.name];
       const pinnableDims = (activeVariable?.nonSpatialDims ?? []).filter(
-        dim => dim.name !== activeVariable?.timeDimension?.name
+        dim => !animatedDimensions.includes(dim.name)
       );
       const dimensionIndexes = visConfig.dimensionIndexes ?? {};
 
@@ -1874,7 +1869,7 @@ export default function LayerConfiguratorFactory(
                   if (typeof value !== 'string') {
                     return;
                   }
-                  visConfiguratorProps.onChange({zarrVariable: value});
+                  visConfiguratorProps.onChange({zarrVariable: value, zarrFrame: 0});
                 }}
               />
             </LayerConfigGroup>
@@ -1888,12 +1883,20 @@ export default function LayerConfiguratorFactory(
           <LayerConfigGroup label={'layer.appearance'}>
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
+          <LayerConfigGroup label={'layerVisConfigs.zarrAxis'}>
+            <ZarrAxisSelector
+              variable={activeVariable}
+              config={visConfig.zarrAxis}
+              pins={dimensionIndexes}
+              onChange={visConfiguratorProps.onChange}
+            />
+          </LayerConfigGroup>
           {pinnableDims.length ? (
             <LayerConfigGroup label={'layer.dimensions'} collapsible>
               {pinnableDims.map(dim => {
                 const options = Array.from({length: dim.size}, (_, index) => ({
                   index,
-                  label: formatZarrDimensionValue(dim, index)
+                  label: formatZarrCoordinate(dim, index)
                 }));
                 const selectedIndex = Math.min(dimensionIndexes[dim.name] ?? 0, dim.size - 1);
                 return (
@@ -1909,7 +1912,8 @@ export default function LayerConfiguratorFactory(
                       searchable={dim.size > 10}
                       onChange={index =>
                         visConfiguratorProps.onChange({
-                          dimensionIndexes: {...dimensionIndexes, [dim.name]: index}
+                          dimensionIndexes: {...dimensionIndexes, [dim.name]: index},
+                          zarrFrame: 0
                         })
                       }
                     />
