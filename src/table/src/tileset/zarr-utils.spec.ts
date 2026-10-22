@@ -162,50 +162,25 @@ describe('Zarr dimension axes', () => {
     }
   );
 
-  it('combines calendar components, skipping invalid days and retaining source indices', () => {
+  it('plays year, month and day as independent numeric axes', () => {
     const variable = axisVariable([
       {name: 'year', size: 2, values: [2025, 2024]},
       {name: 'month', size: 2, values: [3, 2]},
       {name: 'day', size: 3, values: [1, 29, 30]}
     ]);
-    const axis = getZarrAxis(variable, {
-      kind: 'calendar',
-      year: 'year',
-      month: 'month',
-      day: 'day'
-    });
-    expect(axis.frames.find(f => f.label === '2024-02-29')?.selection).toEqual({
-      year: 1,
-      month: 1,
-      day: 1
-    });
-    expect(axis.frames.some(f => f.label === '2025-02-29')).toBe(false);
-    expect(axis.frames.some(f => f.label.endsWith('02-30'))).toBe(false);
-    expect(axis.frames[0].label).toBe('2024-02-01');
-    expect(
-      getZarrAxis(variable, {kind: 'calendar', year: 'year', month: 'month'}).frames
-    ).toHaveLength(4);
-  });
-
-  it('honors model calendars without normalizing their dates to Gregorian dates', () => {
-    const variable = axisVariable([
-      {name: 'year', size: 1, values: [2024]},
-      {name: 'month', size: 1, values: [2]},
-      {name: 'day', size: 3, values: [28, 29, 30]}
+    expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'year'}).frames).toEqual([
+      {value: 2024, label: '2024', selection: {year: 1}},
+      {value: 2025, label: '2025', selection: {year: 0}}
     ]);
-    const config = {kind: 'calendar' as const, year: 'year', month: 'month', day: 'day'};
-    expect(getZarrAxis(variable, {...config, calendar: 'noleap'}).frames.map(f => f.label)).toEqual(
-      ['2024-02-28']
-    );
-    expect(
-      getZarrAxis(variable, {...config, calendar: 'all_leap'}).frames.map(f => f.label)
-    ).toEqual(['2024-02-28', '2024-02-29']);
-    expect(getZarrAxis(variable, {...config, calendar: '360_day'}).frames[2]).toEqual({
-      value: 2,
-      label: '2024-02-30',
-      selection: {year: 0, month: 0, day: 2}
-    });
-    expect(getZarrAxis(variable, {...config, calendar: 'unknown'}).error).toBeTruthy();
+    expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'month'}).frames).toEqual([
+      {value: 2, label: '2', selection: {month: 1}},
+      {value: 3, label: '3', selection: {month: 0}}
+    ]);
+    expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'day'}).frames).toEqual([
+      {value: 1, label: '1', selection: {day: 0}},
+      {value: 29, label: '29', selection: {day: 1}},
+      {value: 30, label: '30', selection: {day: 2}}
+    ]);
   });
 
   it('keeps slices distinguishable with duplicate labels and sorts numeric values safely', () => {
@@ -227,24 +202,22 @@ describe('Zarr dimension axes', () => {
     ).toEqual([0, 1, 2]);
   });
 
-  it('handles missing coordinates and rejects invalid or excessive axis combinations', () => {
+  it('handles missing coordinates and rejects invalid or oversized axes', () => {
     const variable = axisVariable([
       {name: 'band', size: 2},
       {name: 'empty', size: 0},
-      {name: 'year', size: 10000},
-      {name: 'month', size: 12}
+      {name: 'sample', size: 100001},
+      {name: 'invalid', size: -1}
     ]);
     expect(
       getZarrAxis(variable, {kind: 'dimension', dimension: 'band'}).frames.map(f => f.label)
     ).toEqual(['0', '1']);
     expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'missing'}).error).toBeTruthy();
     expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'empty'}).frames).toEqual([]);
-    expect(getZarrAxis(variable, {kind: 'calendar', year: 'year', month: 'month'}).error).toMatch(
-      /Too many/
+    expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'sample'}).error).toMatch(
+      /too many frames/i
     );
-    expect(
-      getZarrAxis(variable, {kind: 'calendar', year: 'band', month: 'band'}).error
-    ).toBeTruthy();
+    expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'invalid'}).error).toBeTruthy();
     variable.nonSpatialDims[0].values = [NaN, Infinity];
     expect(getZarrAxis(variable, {kind: 'dimension', dimension: 'band'}).frames).toEqual([]);
     expect(getZarrAxis(variable, {kind: 'off'}).frames).toEqual([]);

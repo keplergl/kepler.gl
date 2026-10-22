@@ -76,26 +76,23 @@ describe('ZarrAxisSelector', () => {
     }
   });
 
-  it.each([{}, {kind: 'calendar', year: 'year', month: 'month', day: 'day'}])(
-    'omits calendar composition controls and allows choosing a supported axis from %j',
-    config => {
-      const onChange = jest.fn();
-      renderSelector(<ZarrAxisSelector variable={variable} config={config} onChange={onChange} />);
-      for (const name of ['year dimension', 'month dimension', 'day dimension', 'Calendar']) {
-        expect(screen.queryByRole('group', {name})).toBeNull();
-      }
-      expect(onChange).not.toHaveBeenCalled();
-      const trigger = openSelector('Timeline axis');
-      const list = within(document.querySelector('.list-selector'));
-      expect(list.queryByText('Combined calendar date')).toBeNull();
-      fireEvent.click(list.getByText('month'));
-      expect(trigger).toHaveAttribute('aria-expanded', 'false');
-      expect(onChange).toHaveBeenCalledWith({
-        zarrAxis: {kind: 'dimension', dimension: 'month'},
-        zarrFrame: 0
-      });
+  it('omits calendar composition controls and allows choosing an individual dimension', () => {
+    const onChange = jest.fn();
+    renderSelector(<ZarrAxisSelector variable={variable} onChange={onChange} />);
+    for (const name of ['year dimension', 'month dimension', 'day dimension', 'Calendar']) {
+      expect(screen.queryByRole('group', {name})).toBeNull();
     }
-  );
+    expect(onChange).not.toHaveBeenCalled();
+    const trigger = openSelector('Timeline axis');
+    const list = within(document.querySelector('.list-selector'));
+    expect(list.queryByText('Combined calendar date')).toBeNull();
+    fireEvent.click(list.getByText('month'));
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(onChange).toHaveBeenCalledWith({
+      zarrAxis: {kind: 'dimension', dimension: 'month'},
+      zarrFrame: 0
+    });
+  });
 
   it('offers forecast valid time and restores it regardless of saved property order', () => {
     const forecast = {

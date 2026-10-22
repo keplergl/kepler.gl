@@ -29,8 +29,6 @@ export function getZarrAxisDimensions(axis?: ZarrAxisConfig): string[] {
   switch (axis?.kind) {
     case 'dimension':
       return [axis.dimension];
-    case 'calendar':
-      return [axis.year, axis.month, ...(axis.day ? [axis.day] : [])];
     case 'forecast':
       // The forecast run is pinned. Only the lead varies during playback.
       return [axis.leadTime];
@@ -96,22 +94,21 @@ export function getZarrAxis(
   const dimensions = getZarrAxisDimensions(config);
   const empty = (error?: string): ZarrAxis => ({label: '', dimensions, frames: [], error});
   if (!variable || !isExplicitZarrAxis(config) || config?.kind === 'off') return empty();
-  const dims = dimensions.map(name => variable.nonSpatialDims.find(d => d.name === name));
-  if (new Set(dimensions).size !== dimensions.length || dims.some(d => !d)) {
-    return empty('Choose distinct dimensions belonging to this variable.');
+  const source = variable.nonSpatialDims.find(d => d.name === dimensions[0]);
+  if (!source) {
+    return empty('Choose a dimension belonging to this variable.');
   }
-  if (dims.some(d => !Number.isSafeInteger(d!.size) || d!.size < 0)) {
+  if (!Number.isSafeInteger(source.size) || source.size < 0) {
     return empty('The selected axis has an invalid dimension size.');
   }
-  const size = dims.reduce((count, dim) => count * (dim?.size ?? 0), 1);
+  const size = source.size;
   if (!size) return empty('The selected axis has no values.');
-  if (size > MAX_FRAMES) return empty('Too many frames. Choose fewer dimensions for playback.');
+  if (size > MAX_FRAMES) return empty('The selected axis has too many frames for playback.');
 
   let frames: ZarrAxisFrame[] = [];
   let label = dimensions.join(' / ');
   let ordinal = false;
   if (config?.kind === 'dimension') {
-    const source = dims[0]!;
     const dim =
       source.name === variable.timeDimension?.name ? {...source, kind: 'time' as const} : source;
     label = dim.units && dim.kind !== 'time' ? `${dim.name} (${dim.units})` : dim.name;
@@ -129,7 +126,7 @@ export function getZarrAxis(
     }
   } else if (config?.kind === 'forecast') {
     const reference = variable.nonSpatialDims.find(d => d.name === config.referenceTime);
-    const lead = dims[0]!;
+    const lead = source;
     const index = Math.max(
       0,
       Math.min(
@@ -160,75 +157,6 @@ export function getZarrAxis(
         selection: {[reference.name]: index, [lead.name]: i}
       });
     }
-  } else if (config?.kind === 'calendar') {
-    const [year, month, day] = dims as ZarrDimensionInfo[];
-    const calendar = (config.calendar || year.calendar || 'proleptic_gregorian').toLowerCase();
-    const supported = [
-      'standard',
-      'gregorian',
-      'proleptic_gregorian',
-      'noleap',
-      '365_day',
-      'all_leap',
-      '366_day',
-      '360_day'
-    ];
-    if (!supported.includes(calendar)) return empty(`Unsupported calendar: ${calendar}`);
-    if (
-      dims.some(d => !d?.values || d.kind === 'time' || (d.calendar && d.calendar !== calendar))
-    ) {
-      return empty(
-        'Calendar components require numeric coordinate values and a consistent calendar.'
-      );
-    }
-    ordinal = !['standard', 'gregorian', 'proleptic_gregorian'].includes(calendar);
-    label = `${dimensions.join(' / ')} (${calendar})`;
-    for (let yi = 0; yi < year.size; yi++) {
-      for (let mi = 0; mi < month.size; mi++) {
-        for (let di = 0; di < (day?.size ?? 1); di++) {
-          const y = year.values?.[yi];
-          const m = month.values?.[mi];
-          const d = day ? day.values?.[di] : 1;
-          if (
-            typeof y !== 'number' ||
-            typeof m !== 'number' ||
-            typeof d !== 'number' ||
-            ![y, m, d].every(Number.isInteger) ||
-            m < 1 ||
-            m > 12 ||
-            d < 1
-          )
-            continue;
-          // Standard's pre-1582 mixed Julian/Gregorian dates require a calendar library.
-          if ((calendar === 'standard' || calendar === 'gregorian') && y < 1583) {
-            return empty('Use proleptic_gregorian for dates before 1583.');
-          }
-          const leap =
-            ['all_leap', '366_day'].includes(calendar) ||
-            (!['noleap', '365_day', '360_day'].includes(calendar) &&
-              y % 4 === 0 &&
-              (y % 100 !== 0 || y % 400 === 0));
-          const maxDay =
-            calendar === '360_day'
-              ? 30
-              : [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
-          if (d > maxDay) continue;
-          const date = new Date(0);
-          date.setUTCFullYear(y, m - 1, d);
-          const value = ordinal ? y * 372 + (m - 1) * 31 + d : date.getTime();
-          if (!Number.isFinite(value)) continue;
-          frames.push({
-            value,
-            label: `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(
-              d
-            ).padStart(2, '0')}`,
-            selection: {[year.name]: yi, [month.name]: mi, ...(day ? {[day.name]: di} : {})}
-          });
-        }
-      }
-    }
-    // Calendar order must be chronological, including model calendars.
-    frames.sort((a, b) => a.value - b.value);
   }
   if (!ordinal) frames.sort((a, b) => a.value - b.value);
   // Keep every slice even when coordinate labels/values repeat.

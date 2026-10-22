@@ -276,8 +276,7 @@ export type ZarrDimensionInfo = {
 export type ZarrAxisConfig =
   | {kind?: 'auto' | 'off'}
   | {kind: 'dimension'; dimension: string}
-  | {kind: 'forecast'; referenceTime: string; leadTime: string}
-  | {kind: 'calendar'; year: string; month: string; day?: string; calendar?: string};
+  | {kind: 'forecast'; referenceTime: string; leadTime: string};
 
 export type ZarrVariableInfo = {
   /** Path of the variable within the Zarr group. Empty for a root-level array. */

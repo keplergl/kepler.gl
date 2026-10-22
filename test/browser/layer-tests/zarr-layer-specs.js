@@ -394,34 +394,33 @@ test('#ZarrLayer -> explicit axes fetch source slices independently of the share
   t.end();
 });
 
-test('#ZarrLayer -> combined dates select all component indices and retain unrelated pins', t => {
+test('#ZarrLayer -> a month axis retains year, day and band pins', t => {
   const variable = {
     ...TEMPERATURE,
     nonSpatialDims: [
       {name: 'year', size: 2, values: [2023, 2024]},
-      {name: 'month', size: 1, values: [2]},
+      {name: 'month', size: 2, values: [1, 2]},
       {name: 'day', size: 2, values: [28, 29]},
       BAND_DIMENSION
     ],
     timeDimension: undefined
   };
-  const axis = getZarrAxis(variable, {kind: 'calendar', year: 'year', month: 'month', day: 'day'});
+  const axis = getZarrAxis(variable, {kind: 'dimension', dimension: 'month'});
   t.deepEqual(
-    getZarrSelection({variable, axis, frameIndex: 2, dimensionIndexes: {band: 3}}),
-    {year: 1, month: 0, day: 1, band: 3},
-    '2024-02-29 maps to a valid source tuple with the pinned band'
+    getZarrSelection({
+      variable,
+      axis,
+      frameIndex: 1,
+      dimensionIndexes: {year: 1, day: 1, band: 3}
+    }),
+    {year: 1, month: 1, day: 1, band: 3},
+    'only the selected month varies while the other dimensions remain pinned'
   );
   t.end();
 });
 
 test('#ZarrLayer -> axis configuration round trips and old maps keep automatic time', t => {
-  const zarrAxis = {
-    kind: 'calendar',
-    year: 'year',
-    month: 'month',
-    day: 'day',
-    calendar: '360_day'
-  };
+  const zarrAxis = {kind: 'dimension', dimension: 'time'};
   const layer = new ZarrLayer({
     dataId: 'zarr-dataset',
     visConfig: {
@@ -437,7 +436,7 @@ test('#ZarrLayer -> axis configuration round trips and old maps keep automatic t
   const saved = SchemaManager.getConfigToSave(state);
   const parsed = SchemaManager.parseSavedConfig(saved).visState.layers[0];
   const restored = new ZarrLayer({...parsed.config, id: parsed.id});
-  t.deepEqual(restored.config.visConfig.zarrAxis, zarrAxis, 'saves the calendar mapping');
+  t.deepEqual(restored.config.visConfig.zarrAxis, zarrAxis, 'saves the selected dimension axis');
   t.equal(restored.config.visConfig.zarrFrame, 7, 'restores the selected frame');
   t.deepEqual(
     restored.config.visConfig.dimensionIndexes,
