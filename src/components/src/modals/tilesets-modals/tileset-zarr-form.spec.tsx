@@ -30,6 +30,41 @@ describe('TilesetZarrForm', () => {
     getZarrMetadata.mockReset();
   });
 
+  it.each([
+    ['CMIP6 Water Resources', 'https://data.source.coop/earthblox/cciwr/data/cciwr.zarr'],
+    [
+      'ECMWF IFS Ensemble',
+      'https://data.source.coop/dynamical/ecmwf-ifs-ens-forecast-15-day-0-25-degree/v0.1.0.zarr'
+    ],
+    [
+      'NOAA HRRR Forecast',
+      'https://data.source.coop/dynamical/noaa-hrrr-forecast-48-hour/v0.1.0.zarr'
+    ]
+  ])('shows details for %s on focus and loads it only when selected', async (name, url) => {
+    getZarrMetadata.mockReturnValue(new Promise(noop));
+    const {getByRole, getByLabelText} = renderWithTheme(
+      <TilesetZarrForm setResponse={jest.fn()} />
+    );
+
+    fireEvent.focus(getByRole('button', {name: `About ${name}`}));
+    await waitFor(() => {
+      expect(getByRole('tooltip')).toHaveTextContent(name);
+      expect(getByRole('tooltip')).toHaveTextContent(url);
+    });
+    expect(getZarrMetadata).not.toHaveBeenCalled();
+    expect(getByLabelText('Zarr store URL')).toHaveValue('');
+
+    const example = getByRole('button', {name: `Use ${name}`});
+    fireEvent.click(example);
+    expect(getByLabelText('Name')).toHaveValue(name);
+    expect(getByLabelText('Zarr store URL')).toHaveValue(url);
+    expect(example).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(() => expect(getZarrMetadata).toHaveBeenCalledWith(url));
+
+    fireEvent.change(getByLabelText('Zarr store URL'), {target: {value: INVALID_URL}});
+    expect(example).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it('stops loading when the url is edited to an invalid one mid-request', async () => {
     // A request that never settles, standing in for one still in flight.
     getZarrMetadata.mockReturnValue(new Promise(noop));

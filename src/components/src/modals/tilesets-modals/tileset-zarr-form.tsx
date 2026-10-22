@@ -11,6 +11,8 @@ import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
 import {InputLight} from '../../common';
+import {Help} from '../../common/icons';
+import TippyTooltip from '../../common/tippy-tooltip';
 
 const TilesetInputContainer = styled.div`
   display: grid;
@@ -39,30 +41,62 @@ const Tabs = styled.div`
   flex-wrap: wrap;
 `;
 
-const Tab = styled.div<{active: boolean}>`
+const Tab = styled.div<{$active: boolean}>`
   padding: 3px 8px;
   border-radius: 3px;
   cursor: pointer;
   font-size: 11px;
   white-space: nowrap;
-  background: ${props => (props.active ? props.theme.AZURE400 : 'transparent')};
-  color: ${props => (props.active ? props.theme.WHITE : props.theme.AZURE200)};
+  background: ${props => (props.$active ? props.theme.AZURE400 : 'transparent')};
+  color: ${props => (props.$active ? props.theme.WHITE : props.theme.AZURE200)};
   border: 1px solid ${props => props.theme.AZURE400};
 
   &:hover {
-    background: ${props => (props.active ? props.theme.AZURE400 : props.theme.AZURE500)};
+    background: ${props => (props.$active ? props.theme.AZURE400 : props.theme.AZURE500)};
   }
 `;
 
-const ExampleUrl = styled.div`
-  word-break: break-all;
+const ExamplesRow = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 6px 0;
+`;
+
+const ExampleItem = styled(Tab)`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px 0 0;
+  cursor: default;
+`;
+
+const ExampleName = styled.button`
+  padding: 3px 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
   cursor: pointer;
-  color: ${props => props.theme.AZURE200};
-  font-size: 11px;
+`;
+
+const ExampleInfoButton = styled.button`
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: help;
 
   &:hover {
     color: ${props => props.theme.AZURE100};
   }
+`;
+
+const ExampleDetails = styled.div`
+  max-width: 280px;
+  overflow-wrap: anywhere;
 `;
 
 /** Avoid firing a store read on every keystroke of a long object-storage URL. */
@@ -74,14 +108,17 @@ const URL_DEBOUNCE_MS = 500;
  */
 const ZARR_EXAMPLES = [
   {
+    label: 'CMIP6',
     name: 'CMIP6 Water Resources',
     url: 'https://data.source.coop/earthblox/cciwr/data/cciwr.zarr'
   },
   {
+    label: 'ECMWF IFS',
     name: 'ECMWF IFS Ensemble',
     url: 'https://data.source.coop/dynamical/ecmwf-ifs-ens-forecast-15-day-0-25-degree/v0.1.0.zarr'
   },
   {
+    label: 'NOAA HRRR',
     name: 'NOAA HRRR Forecast',
     url: 'https://data.source.coop/dynamical/noaa-hrrr-forecast-48-hour/v0.1.0.zarr'
   }
@@ -99,10 +136,8 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
   const [variable, setVariable] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
-  const [exampleTab, setExampleTab] = useState<number>(0);
 
   const onExampleClick = useCallback((index: number) => {
-    setExampleTab(index);
     setUrl(ZARR_EXAMPLES[index].url);
     setDatasetName(ZARR_EXAMPLES[index].name);
   }, []);
@@ -227,22 +262,34 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
       {getApplicationConfig().showInlineTilesetExamples && (
         <div>
           <TilesetInputDescription>For example, try a public Zarr store:</TilesetInputDescription>
-          <ExampleUrlsContainer>
-            <Tabs>
-              {ZARR_EXAMPLES.map((example, index) => (
-                <Tab
-                  key={example.name}
-                  active={exampleTab === index}
+          <ExamplesRow>
+            {ZARR_EXAMPLES.map((example, index) => (
+              <ExampleItem key={example.name} $active={url === example.url}>
+                <ExampleName
+                  type="button"
+                  aria-label={`Use ${example.name}`}
+                  aria-pressed={url === example.url}
                   onClick={() => onExampleClick(index)}
                 >
-                  {example.name}
-                </Tab>
-              ))}
-            </Tabs>
-            <ExampleUrl onClick={() => onExampleClick(exampleTab)}>
-              {ZARR_EXAMPLES[exampleTab].url}
-            </ExampleUrl>
-          </ExampleUrlsContainer>
+                  {example.label}
+                </ExampleName>
+                <TippyTooltip
+                  placement="top"
+                  isLightTheme
+                  render={() => (
+                    <ExampleDetails role="tooltip">
+                      <strong>{example.name}</strong>
+                      <div>{example.url}</div>
+                    </ExampleDetails>
+                  )}
+                >
+                  <ExampleInfoButton type="button" aria-label={`About ${example.name}`}>
+                    <Help height="14px" />
+                  </ExampleInfoButton>
+                </TippyTooltip>
+              </ExampleItem>
+            ))}
+          </ExamplesRow>
         </div>
       )}
       {variables.length > 1 && (
@@ -252,7 +299,7 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
             {variables.map(zarrVariable => (
               <Tab
                 key={zarrVariable.path}
-                active={zarrVariable.path === variable}
+                $active={zarrVariable.path === variable}
                 onClick={() => setVariable(zarrVariable.path)}
               >
                 {zarrVariable.displayName}
