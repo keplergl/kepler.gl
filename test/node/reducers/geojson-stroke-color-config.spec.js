@@ -40,11 +40,72 @@ describe('geojson strokeColor programmatic config', () => {
   let fields;
   let rows;
   let dataset;
+  let datasetWithRealColor;
 
   beforeAll(async () => {
     ({fields, rows} = processGeojson(cloneDeep(geojsonData)));
     dataset = new KeplerTable({info: {id: 'traffic-data'}});
     await dataset.importData({data: {fields, rows}});
+
+    const geojsonWithRealColor = cloneDeep(geojsonData);
+    geojsonWithRealColor.features.forEach((feature, index) => {
+      feature.properties.score = index + 0.5;
+    });
+    const realColorData = processGeojson(geojsonWithRealColor);
+    datasetWithRealColor = new KeplerTable({info: {id: 'real-color-data'}});
+    await datasetWithRealColor.importData({data: realColorData});
+  });
+
+  test('validateLayerWithData preserves an explicit saved fill field', () => {
+    const savedConfig = {
+      id: 'saved-fill-field',
+      type: 'geojson',
+      config: {
+        dataId: 'real-color-data',
+        label: 'Saved Fill Field',
+        columns: {geojson: '_geojson'},
+        isVisible: true,
+        visConfig: {stroked: true, filled: true}
+      },
+      visualChannels: {
+        colorField: {name: 'score', type: 'real'},
+        colorScale: 'quantile'
+      }
+    };
+
+    const layer = validateLayerWithData(
+      datasetWithRealColor,
+      savedConfig,
+      INITIAL_VIS_STATE.layerClasses
+    );
+    expect(layer.config.colorField?.name).toBe('score');
+    layer.updateLayerDomain({'real-color-data': datasetWithRealColor});
+    expect(layer.config.colorDomain).toEqual([0.5, 1.5, 2.5, 3.5, 4.5]);
+  });
+
+  test('validateLayerWithData preserves an explicit null fill field', () => {
+    const savedConfig = {
+      id: 'saved-null-fill-field',
+      type: 'geojson',
+      config: {
+        dataId: 'real-color-data',
+        label: 'Saved Null Fill Field',
+        columns: {geojson: '_geojson'},
+        isVisible: true,
+        visConfig: {stroked: true, filled: true}
+      },
+      visualChannels: {
+        colorField: null,
+        colorScale: 'quantile'
+      }
+    };
+
+    const layer = validateLayerWithData(
+      datasetWithRealColor,
+      savedConfig,
+      INITIAL_VIS_STATE.layerClasses
+    );
+    expect(layer.config.colorField).toBeNull();
   });
 
   test('validateLayerWithData binds strokeColorField nested inside config', () => {

@@ -85,7 +85,7 @@ function TextLabelPanelFactory(
               </SwitchWrapper>
             </SidePanelSection>
             {textLabel.map((tl, idx) => (
-              <div key={tl.field ? tl.field.name : `null-${idx}`}>
+              <div key={`${tl.field ? tl.field.name : 'null'}-${idx}`}>
                 <PanelLabel>
                   <FormattedMessage id={'panel.text.labelWithId'} values={{labelId: idx + 1}} />
                 </PanelLabel>

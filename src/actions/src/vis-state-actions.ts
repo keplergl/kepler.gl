@@ -5,7 +5,7 @@
 import {default as ActionTypes} from './action-types';
 import {FileCacheItem, ZipArchiveExpansion} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {GroupByOp, JoinOp, KeplerTable} from '@kepler.gl/table';
+import {GroupByOp, JoinOp, KeplerTable, SuitabilityOp} from '@kepler.gl/table';
 import {
   AddDataToMapOptions,
   AddDataToMapPayload,
@@ -31,7 +31,9 @@ import {
   LayerOrder,
   LayerOrderGroup,
   ProtoDataset,
-  ChartConfig
+  ChartConfig,
+  CameraBookmark,
+  CameraTour
 } from '@kepler.gl/types';
 import {createAction} from '@reduxjs/toolkit';
 
@@ -851,6 +853,12 @@ export function removeChart(
   };
 }
 
+/** Replace the ordered collection of saved camera bookmarks. */
+export const setCameraBookmarks = createAction<CameraBookmark[]>(ActionTypes.SET_CAMERA_BOOKMARKS);
+
+/** Replace the single authored camera tour; null removes it. */
+export const setCameraTour = createAction<CameraTour | null>(ActionTypes.SET_CAMERA_TOUR);
+
 // Annotation Actions
 
 export type AddAnnotationUpdaterAction = {
@@ -1251,6 +1259,49 @@ export function pinTableColumn(
   };
 }
 
+export type ToggleTableColumnHiddenUpdaterAction = {
+  dataId: string;
+  column: string;
+};
+/**
+ * Hide or show a dataset column in the attribute table and in data export.
+ * @param dataId
+ * @param column
+ * @returns action
+ * @public
+ */
+export function toggleTableColumnHidden(
+  dataId: string,
+  column: string
+): Merge<
+  ToggleTableColumnHiddenUpdaterAction,
+  {type: typeof ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN}
+> {
+  return {
+    type: ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN,
+    dataId,
+    column
+  };
+}
+
+export type ShowAllTableColumnsUpdaterAction = {
+  dataId: string;
+};
+/**
+ * Show every attribute-table column that was hidden.
+ * @param dataId
+ * @returns action
+ * @public
+ */
+export function showAllTableColumns(
+  dataId: string
+): Merge<ShowAllTableColumnsUpdaterAction, {type: typeof ActionTypes.SHOW_ALL_TABLE_COLUMNS}> {
+  return {
+    type: ActionTypes.SHOW_ALL_TABLE_COLUMNS,
+    dataId
+  };
+}
+
 export type CopyTableColumnUpdaterAction = {
   dataId: string;
   column: string;
@@ -1329,6 +1380,7 @@ export type LoadColumnStatsSuccessUpdaterAction = {
   fieldName: string;
   result: any;
   filterProps?: any;
+  fieldType?: string;
 };
 
 /**
@@ -1340,7 +1392,8 @@ export function loadColumnStatsSuccess(
   dataId: string,
   fieldName: string,
   result: any,
-  filterProps?: any
+  filterProps?: any,
+  request?: {fieldType: string}
 ): Merge<
   LoadColumnStatsSuccessUpdaterAction,
   {type: typeof ActionTypes.LOAD_COLUMN_STATS_SUCCESS}
@@ -1350,7 +1403,8 @@ export function loadColumnStatsSuccess(
     dataId,
     fieldName,
     result,
-    filterProps
+    filterProps,
+    ...request
   };
 }
 
@@ -1358,6 +1412,7 @@ export type LoadColumnStatsErrorUpdaterAction = {
   dataId: string;
   fieldName: string;
   error: Error;
+  fieldType?: string;
 };
 
 /**
@@ -1368,13 +1423,15 @@ export type LoadColumnStatsErrorUpdaterAction = {
 export function loadColumnStatsError(
   dataId: string,
   fieldName: string,
-  error: Error
+  error: Error,
+  request?: {fieldType: string}
 ): Merge<LoadColumnStatsErrorUpdaterAction, {type: typeof ActionTypes.LOAD_COLUMN_STATS_ERROR}> {
   return {
     type: ActionTypes.LOAD_COLUMN_STATS_ERROR,
     dataId,
     fieldName,
-    error
+    error,
+    ...request
   };
 }
 
@@ -1509,6 +1566,82 @@ export function updateDataset(
     dataId,
     data,
     renames
+  };
+}
+
+export type RenameTableColumnUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  newName: string;
+};
+/**
+ * Rename a dataset column. The new name becomes the field identity stored in
+ * layers, filters, charts, dataset operations, and saved maps.
+ * @param dataId - dataset id
+ * @param fieldName - current column name
+ * @param newName - next column name
+ * @returns action
+ * @public
+ */
+export function renameTableColumn(
+  dataId: string,
+  fieldName: string,
+  newName: string
+): Merge<RenameTableColumnUpdaterAction, {type: typeof ActionTypes.RENAME_TABLE_COLUMN}> {
+  return {
+    type: ActionTypes.RENAME_TABLE_COLUMN,
+    dataId,
+    fieldName,
+    newName
+  };
+}
+
+export type ChangeTableColumnTypeUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  newType: string;
+};
+/**
+ * Convert every value in a dataset column and update its field type atomically.
+ * Invalid values leave the dataset unchanged and produce an error notification.
+ * @param dataId - dataset id
+ * @param fieldName - column name
+ * @param newType - target kepler.gl field type
+ * @returns action
+ * @public
+ */
+export function changeTableColumnType(
+  dataId: string,
+  fieldName: string,
+  newType: string
+): Merge<ChangeTableColumnTypeUpdaterAction, {type: typeof ActionTypes.CHANGE_TABLE_COLUMN_TYPE}> {
+  return {
+    type: ActionTypes.CHANGE_TABLE_COLUMN_TYPE,
+    dataId,
+    fieldName,
+    newType
+  };
+}
+
+export type DeleteTableColumnUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+};
+/**
+ * Delete a dataset column and drop references that required it.
+ * @param dataId - dataset id
+ * @param fieldName - column name
+ * @returns action
+ * @public
+ */
+export function deleteTableColumn(
+  dataId: string,
+  fieldName: string
+): Merge<DeleteTableColumnUpdaterAction, {type: typeof ActionTypes.DELETE_TABLE_COLUMN}> {
+  return {
+    type: ActionTypes.DELETE_TABLE_COLUMN,
+    dataId,
+    fieldName
   };
 }
 
@@ -2302,6 +2435,7 @@ type FileContent = {
   fileName: string;
   header: string[];
   data: any;
+  prepareProgressiveReplay?: boolean;
 };
 export type NextFileBatchUpdaterAction = {
   payload: {
@@ -2640,6 +2774,48 @@ export function runSpatialJoin(
 ): Merge<RunSpatialJoinUpdaterAction, {type: typeof ActionTypes.RUN_SPATIAL_JOIN}> {
   return {
     type: ActionTypes.RUN_SPATIAL_JOIN,
+    id
+  };
+}
+
+export type AddSuitabilityUpdaterAction = {
+  dataId: string;
+};
+
+export function addSuitability(
+  dataId: string
+): Merge<AddSuitabilityUpdaterAction, {type: typeof ActionTypes.ADD_SUITABILITY}> {
+  return {
+    type: ActionTypes.ADD_SUITABILITY,
+    dataId
+  };
+}
+
+export type SetSuitabilityConfigUpdaterAction = {
+  id: string;
+  config: Partial<SuitabilityOp>;
+};
+
+export function setSuitabilityConfig(
+  id: string,
+  config: Partial<SuitabilityOp>
+): Merge<SetSuitabilityConfigUpdaterAction, {type: typeof ActionTypes.SET_SUITABILITY_CONFIG}> {
+  return {
+    type: ActionTypes.SET_SUITABILITY_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunSuitabilityUpdaterAction = {
+  id: string;
+};
+
+export function runSuitability(
+  id: string
+): Merge<RunSuitabilityUpdaterAction, {type: typeof ActionTypes.RUN_SUITABILITY}> {
+  return {
+    type: ActionTypes.RUN_SUITABILITY,
     id
   };
 }

@@ -60,6 +60,8 @@ import {
 // Utils
 import {
   FILTER_UPDATER_PROPS,
+  normalizeCameraBookmarks,
+  normalizeCameraTour,
   addNewLayersToSplitMap,
   snapToMarks,
   applyFilterFieldName,
@@ -69,6 +71,10 @@ import {
   combineSplitMapsByIndex,
   computeSplitMapLayers,
   adjustValueToFilterDomain,
+  areFilterFieldTypesCompatible,
+  disableGpuIfInverted,
+  filterTypeUsesGpu,
+  getPlotBaseIndexByDataId,
   errorNotification,
   successNotification,
   editorFeaturesToFeatureCollection,
@@ -100,6 +106,7 @@ import {
 import {generateHashId, toArray, arrayMove} from '@kepler.gl/common-utils';
 // Mergers
 import {
+  ALL_FIELD_TYPES,
   ANIMATION_WINDOW,
   BASE_SPEED,
   COMPARE_TYPES,
@@ -125,6 +132,7 @@ import {
   INITIAL_ANNOTATION_TEXT_HEIGHT,
   INITIAL_ANNOTATION_LINE_WIDTH,
   INITIAL_ANNOTATION_LINE_COLOR,
+  INITIAL_ANNOTATION_RULER_LENGTH_METERS,
   INITIAL_ANNOTATION_TEXT_SIDE,
   INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION,
   ANNOTATION_ANGLE_BY_PLACEMENT,
@@ -132,9 +140,18 @@ import {
   AnnotationKind,
   DatasetType,
   getDatasetRefreshIntervalMs,
-  getRemoteSourceFormat
+  getRemoteSourceFormat,
+  GEOCODER_DATASET_NAME,
+  GEOCODER_ICON_COLOR,
+  GEOCODER_LAYER_ID
 } from '@kepler.gl/constants';
-import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
+import {
+  AGGREGATION_COUNT_LAYER_TYPES,
+  isPointCountLabel,
+  LAYER_ID_LENGTH,
+  Layer,
+  LayerClasses
+} from '@kepler.gl/layers';
 import {
   apply_,
   compose_,
@@ -164,6 +181,7 @@ import {
   isZipFileName,
   loadExternallyHostedDataset,
   processGeojson,
+  type FileCacheItem,
   ZipArchiveExpansion
 } from '@kepler.gl/processors';
 
@@ -176,6 +194,7 @@ import {
   Editor,
   Field,
   LayerVisConfig,
+  RangeFilter,
   TimeRangeFilter,
   Annotation,
   AnnotationPropsPartial,
@@ -184,19 +203,32 @@ import {
   LayerChartConfig
 } from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
+import {addMetersToLngLat} from '@math.gl/web-mercator';
 
 import {
   Datasets,
   KeplerTable,
   FilterProps,
+  buildChangeColumnTypeData,
+  formatColumnTypeConversionError,
   assignGpuChannel,
+  buildDeleteColumnData,
+  buildRenameColumnData,
+  canMutateDatasetSchema,
   copyTableAndUpdate,
   createNewDataEntry,
   pinTableColumns,
+  showAllTableColumns,
+  toggleHiddenTableColumn,
   setFilterGpuMode,
   sortDatasetByColumn
 } from '@kepler.gl/table';
-import {findFieldsToShow, removeLayerFromZoomOpacity} from './interaction-utils';
+import {remapChartsForDataset} from './column-edit-reconcile';
+import {
+  findFieldsToShow,
+  getZoomOpacityAnnotationTargetId,
+  removeLayerFromZoomOpacity
+} from './interaction-utils';
 import {
   calculateLayerData,
   findDefaultLayer,
@@ -218,14 +250,17 @@ import {
   addGroupByUpdater,
   addJoinUpdater,
   addSpatialJoinUpdater,
+  addSuitabilityUpdater,
   executeGroupBy,
   executeJoin,
   executeSpatialJoin,
+  executeSuitability,
   removeDatasetOpUpdater,
   removeOpsForDatasets,
   setGroupByConfigUpdater,
   setJoinConfigUpdater,
-  setSpatialJoinConfigUpdater
+  setSpatialJoinConfigUpdater,
+  setSuitabilityConfigUpdater
 } from './dataset-ops-updaters';
 import {
   fixEffectOrder,
@@ -300,6 +335,7 @@ export const defaultInteractionConfig: InteractionConfig = {
     enabled: true,
     config: {
       fieldsToShow: {},
+      timezone: null,
       compareMode: false,
       compareType: COMPARE_TYPES.ABSOLUTE
     }
@@ -318,7 +354,8 @@ export const defaultInteractionConfig: InteractionConfig = {
     enabled: false,
     position: null,
     config: {
-      limitSearch: false
+      limitSearch: false,
+      color: GEOCODER_ICON_COLOR
     }
   },
   brush: {
@@ -399,6 +436,7 @@ export const INITIAL_VIS_STATE: VisState = {
   editingDataset: undefined,
   groupBys: [],
   joins: [],
+  suitabilities: [],
 
   // effects
   effects: [],
@@ -407,6 +445,10 @@ export const INITIAL_VIS_STATE: VisState = {
   // charts (enabled by default; gated by enableChartsPanel)
   charts: [],
   chartsToBeMerged: [],
+
+  // camera bookmarks
+  cameraBookmarks: [],
+  cameraTour: null,
 
   // annotations
   annotations: [],
@@ -551,7 +593,8 @@ export function applyLayerConfigUpdater(
   const {oldLayerId, newLayerConfig, layerIndex} = action;
   // Saved configs have a visualChannels sibling; parsed/editor JSON folds those
   // fields into config. Re-parsing the latter drops colorField and resets the scale.
-  const newParsedLayer = isSavedLayerConfigV1(newLayerConfig)
+  const savedLayerConfig = isSavedLayerConfigV1(newLayerConfig);
+  const newParsedLayer = savedLayerConfig
     ? parseLayerConfig(state.schema, newLayerConfig)
     : newLayerConfig;
   const oldLayer = state.layers.find(l => l.id === oldLayerId);
@@ -567,7 +610,9 @@ export function applyLayerConfigUpdater(
     return state;
   }
   // Make sure the layer is valid and convert it to Layer
-  const newLayer = validateLayerWithData(dataset, newParsedLayer, state.layerClasses);
+  const newLayer = validateLayerWithData(dataset, newParsedLayer, state.layerClasses, {
+    keepUnlabeledAggregationTextLabel: savedLayerConfig
+  });
   if (!newLayer) {
     return state;
   }
@@ -844,12 +889,21 @@ function addOrRemoveTextLabels(newFields, textLabel, defaultTextLabel = DEFAULT_
 
   const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => d);
 
-  const addFields = newFields.filter(f => !currentFields.includes(f.name));
+  const addFields = newFields.filter(
+    (field, index) =>
+      field &&
+      field.name &&
+      !currentFields.includes(field.name) &&
+      newFields.findIndex(other => other && other.name === field.name) === index
+  );
   const deleteFields = currentFields.filter(f => !newFields.find(fd => fd.name === f));
 
   // delete
   newTextLabel = newTextLabel.filter(tl => tl.field && !deleteFields.includes(tl.field.name));
-  newTextLabel = !newTextLabel.length ? [defaultTextLabel] : newTextLabel;
+  // Aggregation defaults already name Point Count. Using that object as the
+  // empty placeholder, then appending the field just picked, inserts the same
+  // label twice. deck.gl then rejects the duplicate collision layer ids.
+  newTextLabel = !newTextLabel.length ? [{...defaultTextLabel, field: null}] : newTextLabel;
 
   // add
   newTextLabel = [
@@ -908,6 +962,9 @@ export function layerTextLabelChangeUpdater(
       ...textLabel,
       {
         ...defaultTextLabel,
+        // The slot is empty until a field is picked. Aggregation defaults already
+        // carry Point Count, and copying that field would add a second label.
+        field: null,
         collisionEnabled: Boolean(textLabel[0]?.collisionEnabled)
       }
     ];
@@ -1124,6 +1181,14 @@ export function layerTypeChangeUpdater(
       state.datasets,
       defaultLayerProps
     );
+    if (!AGGREGATION_COUNT_LAYER_TYPES.has(newType)) {
+      const textLabel = newLayer.config.textLabel.filter(label => !isPointCountLabel(label));
+      if (textLabel.length !== newLayer.config.textLabel.length) {
+        newLayer.updateLayerConfig({
+          textLabel: textLabel.length ? textLabel : [{...DEFAULT_TEXT_LABEL}]
+        });
+      }
+    }
     newLayer.updateLayerDomain(state.datasets);
   }
 
@@ -1399,13 +1464,25 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
 
   // Entering or leaving interval playback snaps the window onto histogram bins.
   if (
-    filter.type === FILTER_TYPES.timeRange &&
+    (filter.type === FILTER_TYPES.timeRange || filter.type === FILTER_TYPES.range) &&
     (previousWindow === ANIMATION_WINDOW.interval || animationWindow === ANIMATION_WINDOW.interval)
   ) {
-    const adjusted = adjustValueToAnimationWindow(state, nextFilter as TimeRangeFilter);
+    const adjusted = adjustValueToAnimationWindow(
+      state,
+      nextFilter as TimeRangeFilter | RangeFilter,
+      getPlotBaseIndexByDataId(state.datasets, nextFilter, state.layers)
+    );
     if (Array.isArray(adjusted.value) && adjusted.value.every(v => Number.isFinite(v))) {
       nextFilter = adjusted;
     }
+  }
+
+  if (filter.type === FILTER_TYPES.range) {
+    const filterIndex = state.filters.indexOf(filter);
+    return setFilterUpdater(
+      state,
+      setFilter(filterIndex, ['animationWindow', 'value'], [animationWindow, nextFilter.value])
+    );
   }
 
   const newState = {
@@ -1413,8 +1490,11 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
     filters: swap_<Filter>(nextFilter)(state.filters)
   };
 
-  const newSyncTimelineMode = getSyncAnimationMode(nextFilter as TimeRangeFilter);
+  if (filter.type !== FILTER_TYPES.timeRange) {
+    return newState;
+  }
 
+  const newSyncTimelineMode = getSyncAnimationMode(nextFilter as TimeRangeFilter);
   return setTimeFilterTimelineModeUpdater(newState, {id, mode: newSyncTimelineMode});
 }
 
@@ -1447,6 +1527,35 @@ export function applyFilterConfigUpdater(
     state,
     setFilter(filterIndex, Object.keys(changed), Object.values(changed))
   );
+}
+
+function updateFilterPlotsAfterFiltering<S extends VisState>(
+  state: S,
+  affectedDatasetIds: string[],
+  updatedFilterIndex?: number
+): S {
+  const filters = state.filters.map((filter, filterIndex) => {
+    if (filterIndex === updatedFilterIndex) {
+      return updateFilterPlot(state.datasets, filter, undefined, state.layers);
+    }
+
+    const shouldRefreshNumericPlot =
+      filter.type === FILTER_TYPES.range &&
+      (!isSideFilter(filter) || filter.plotType?.type === PLOT_TYPES.lineChart);
+    if (filter.type !== FILTER_TYPES.timeRange && !shouldRefreshNumericPlot) {
+      return filter;
+    }
+
+    const sharedDatasetIds = filter.dataId.filter(dataId => affectedDatasetIds.includes(dataId));
+    if (!sharedDatasetIds.length) {
+      return filter;
+    }
+
+    const invalidatedFilter = sharedDatasetIds.reduce(removeFilterPlot, filter);
+    return updateFilterPlot(state.datasets, invalidatedFilter, undefined, state.layers);
+  });
+
+  return set(['filters'], filters, state);
 }
 
 /**
@@ -1509,8 +1618,9 @@ export function setFilterUpdater<S extends VisState>(
   newState = set(['filters', idx], newFilter, newState);
 
   // filter data
+  const affectedDatasetIds = uniq(datasetIdsToFilter);
   const filteredDatasets = applyFiltersToDatasets(
-    uniq(datasetIdsToFilter),
+    affectedDatasetIds,
     newState.datasets,
     newState.filters,
     newState.layers
@@ -1518,10 +1628,9 @@ export function setFilterUpdater<S extends VisState>(
 
   newState = set(['datasets'], filteredDatasets, newState);
 
-  // need to update filterPlot after filter Dataset for plot to update on filtered result
-  const filterWithPLot = updateFilterPlot(newState.datasets, newState.filters[idx]);
-
-  newState = set(['filters', idx], filterWithPLot, newState);
+  // Update plots after filtering so they use the latest filtered indexes.
+  // Other time filters need their cached bins invalidated for shared datasets.
+  newState = updateFilterPlotsAfterFiltering(newState, affectedDatasetIds, idx);
 
   // dataId is an array
   // pass only the dataset we need to update
@@ -1535,9 +1644,91 @@ export function setFilterUpdater<S extends VisState>(
   return newState;
 }
 
-function _updateFilterDataIdAtValueIndex(filter, valueIndex, value, datasets) {
+function _updateFilterDataIdAtValueIndex(filter, valueIndex, value, datasets, filters) {
+  const currentDataId = filter.dataId[valueIndex];
+  if (currentDataId && value && filter.dataId.length > 1) {
+    const fieldName = filter.name[valueIndex];
+    const endFieldName = toArray(filter.endName)[valueIndex];
+    const previousValue = filter.value;
+    const nextDataIds = filter.dataId.slice();
+    nextDataIds[valueIndex] = value;
+
+    let nextFilter = removeFilterPlot(filter, currentDataId);
+    nextFilter = set(['dataId'], nextDataIds, nextFilter);
+
+    for (const prop of ['gpuChannel', 'gpuEndChannel']) {
+      if (Array.isArray(nextFilter[prop])) {
+        const nextChannels = nextFilter[prop].slice();
+        nextChannels[valueIndex] = undefined;
+        nextFilter = set([prop], nextChannels, nextFilter);
+      }
+    }
+
+    const dataset = datasets[value];
+    const field = dataset?.fields.find(candidate => candidate.name === fieldName);
+    const canRebindField =
+      field && (!filter.fieldType || areFilterFieldTypesCompatible(filter.fieldType, field.type));
+    const {filter: reboundFilter} = canRebindField
+      ? applyFilterFieldName(nextFilter, datasets, value, fieldName, valueIndex, {
+          mergeDomain: true
+        })
+      : {filter: null};
+
+    if (reboundFilter) {
+      nextFilter = reboundFilter;
+    } else {
+      const nextNames = nextFilter.name.slice();
+      const nextFieldIdx = nextFilter.fieldIdx.slice();
+      nextNames[valueIndex] = '';
+      nextFieldIdx[valueIndex] = -1;
+      nextFilter = {
+        ...nextFilter,
+        name: nextNames,
+        fieldIdx: nextFieldIdx,
+        gpu: false
+      };
+    }
+
+    if (endFieldName && nextFilter.type === FILTER_TYPES.timeRange) {
+      const {filter: reboundEndFilter} = applyTimeFilterEndFieldName(
+        nextFilter,
+        datasets,
+        value,
+        endFieldName,
+        valueIndex
+      );
+      if (reboundEndFilter) {
+        nextFilter = reboundEndFilter;
+      } else {
+        const {filter: clearedEndFilter} = applyTimeFilterEndFieldName(
+          nextFilter,
+          datasets,
+          value,
+          null,
+          valueIndex
+        );
+        nextFilter = clearedEndFilter || nextFilter;
+      }
+    }
+
+    const domainSteps = mergeFilterDomain(nextFilter, datasets);
+    nextFilter = {
+      ...nextFilter,
+      ...(domainSteps ? {domain: domainSteps.domain, step: domainSteps.step} : {})
+    };
+
+    if (nextFilter.gpu) {
+      nextFilter = assignGpuChannel(setFilterGpuMode(nextFilter, filters), filters);
+    }
+
+    return {
+      ...nextFilter,
+      value: adjustValueToFilterDomain(previousValue, nextFilter)
+    };
+  }
+
   let newFilter = filter;
-  if (filter.dataId[valueIndex]) {
+  if (currentDataId) {
     // if dataId already exist
     newFilter = _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets);
   }
@@ -1605,7 +1796,13 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
     // 2. Add a new dataset id
     case FILTER_UPDATER_PROPS.dataId: {
       const oldDataId = [...filter.dataId];
-      filter = _updateFilterDataIdAtValueIndex(filter, valueIndex, value, state.datasets);
+      filter = _updateFilterDataIdAtValueIndex(
+        filter,
+        valueIndex,
+        value,
+        state.datasets,
+        state.filters
+      );
       datasetIdsToFilter = uniq([...oldDataId, ...filter.dataId]);
       break;
     }
@@ -1620,7 +1817,7 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
         datasetId,
         value,
         valueIndex,
-        {mergeDomain: valueIndex > 0}
+        {mergeDomain: filter.dataId.length > 1}
       );
       if (updatedFilter) {
         filter = updatedFilter;
@@ -1657,6 +1854,27 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
         filter = removeFilterPlot(filter, datasetId);
         datasetIdsToFilter = updatedFilter.dataId;
       }
+      break;
+    }
+
+    case 'inverted': {
+      const supportsInversion = filter.dataId.every(
+        datasetId => !state.datasets[datasetId]?.disableDataOperation
+      );
+      filter = {
+        ...filter,
+        inverted: supportsInversion && Boolean(value)
+      };
+      if (filter.inverted) {
+        // GPU range tests can only keep values inside the window.
+        filter = disableGpuIfInverted(filter);
+      } else if (filterTypeUsesGpu(filter.type)) {
+        filter = assignGpuChannel(
+          setFilterGpuMode({...filter, gpu: true}, state.filters),
+          state.filters
+        );
+      }
+      datasetIdsToFilter = [...filter.dataId];
       break;
     }
 
@@ -1725,6 +1943,7 @@ export const setFilterPlotUpdater = (
     return state;
   }
   let newFilter = state.filters[idx];
+  const previousNumericInterval = newFilter.plotType?.numericInterval;
 
   for (const prop in newProp) {
     if (prop === 'plotType') {
@@ -1743,12 +1962,36 @@ export const setFilterPlotUpdater = (
     }
   }
 
-  newFilter = updateFilterPlot(state.datasets, newFilter);
+  const numericIntervalChanged =
+    newFilter.type === FILTER_TYPES.range &&
+    newFilter.plotType?.numericInterval !== previousNumericInterval;
+  if (numericIntervalChanged) {
+    newFilter = {...(newFilter as RangeFilter), bins: undefined, lineChart: undefined};
+  }
 
-  return {
+  newFilter = updateFilterPlot(state.datasets, newFilter, undefined, state.layers);
+
+  const newState = {
     ...state,
     filters: state.filters.map((f, i) => (i === idx ? newFilter : f))
   };
+
+  if (
+    numericIntervalChanged &&
+    newFilter.type === FILTER_TYPES.range &&
+    newFilter.animationWindow === ANIMATION_WINDOW.interval
+  ) {
+    const adjusted = adjustValueToAnimationWindow(
+      newState,
+      newFilter as RangeFilter,
+      getPlotBaseIndexByDataId(newState.datasets, newFilter, newState.layers)
+    );
+    if (Array.isArray(adjusted.value) && adjusted.value.every(Number.isFinite)) {
+      return setFilterUpdater(newState, {idx, prop: 'value', value: adjusted.value});
+    }
+  }
+
+  return newState;
 };
 
 /**
@@ -1970,21 +2213,29 @@ export const setFilterViewUpdater = (
 ) => {
   const {view, idx} = action;
   const shouldResetOtherFiltersView = view === FILTER_VIEW_TYPES.enlarged;
+  const filters = state.filters.map((f, i) =>
+    i === idx
+      ? {
+          ...f,
+          view
+        }
+      : shouldResetOtherFiltersView
+      ? {
+          ...f,
+          view: FILTER_VIEW_TYPES.side
+        }
+      : f
+  );
+
+  const openedFilter = filters[idx];
+  if (view === FILTER_VIEW_TYPES.enlarged && openedFilter?.type === FILTER_TYPES.range) {
+    const invalidatedFilter = toArray(openedFilter.dataId).reduce(removeFilterPlot, openedFilter);
+    filters[idx] = updateFilterPlot(state.datasets, invalidatedFilter, undefined, state.layers);
+  }
+
   return {
     ...state,
-    filters: state.filters.map((f, i) =>
-      i === idx
-        ? {
-            ...f,
-            view
-          }
-        : shouldResetOtherFiltersView
-        ? {
-            ...f,
-            view: FILTER_VIEW_TYPES.side
-          }
-        : f
-    )
+    filters
   };
 };
 
@@ -2044,6 +2295,7 @@ export const removeFilterUpdater = (
 
   let newState = set(['filters'], newFilters, state);
   newState = set(['datasets'], filteredDatasets, newState);
+  newState = updateFilterPlotsAfterFiltering(newState, dataId);
   newState = set(['editor'], newEditor, newState);
 
   return updateAllLayerDomainData(newState, dataId, undefined);
@@ -2805,11 +3057,15 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
   const textSide =
     config?.textSide ??
     derivedFromAngle?.side ??
-    (kind === AnnotationKind.TEXT ? undefined : INITIAL_ANNOTATION_TEXT_SIDE);
+    (kind === AnnotationKind.TEXT || kind === AnnotationKind.RULER
+      ? undefined
+      : INITIAL_ANNOTATION_TEXT_SIDE);
   const textVerticalPosition =
     config?.textVerticalPosition ??
     derivedFromAngle?.vertical ??
-    (kind === AnnotationKind.TEXT ? undefined : INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION);
+    (kind === AnnotationKind.TEXT || kind === AnnotationKind.RULER
+      ? undefined
+      : INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION);
   const base = {
     id: config?.id ?? generateHashId(6),
     kind,
@@ -2818,6 +3074,7 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
     autoSizeY: config?.autoSizeY ?? true,
     anchorPoint: config?.anchorPoint ?? ([0, 0] as [number, number]),
     label: config?.label ?? 'New Annotation',
+    ...(config?.editorState ? {editorState: config.editorState} : {}),
     lineColor: config?.lineColor ?? INITIAL_ANNOTATION_LINE_COLOR,
     lineWidth: config?.lineWidth ?? INITIAL_ANNOTATION_LINE_WIDTH,
     textWidth: config?.textWidth ?? INITIAL_ANNOTATION_TEXT_WIDTH,
@@ -2856,6 +3113,26 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
         angle: providedAngle ?? defaultAngle,
         radiusInMeters: (config as any)?.radiusInMeters ?? 1000
       };
+    case AnnotationKind.RULER: {
+      const anchorPoint = base.anchorPoint;
+      const shifted = addMetersToLngLat(anchorPoint, [
+        INITIAL_ANNOTATION_RULER_LENGTH_METERS,
+        0,
+        0
+      ]);
+      const altitude = anchorPoint[2];
+      const defaultEndPoint =
+        altitude !== undefined && Number.isFinite(altitude)
+          ? ([shifted[0], shifted[1], altitude] as [number, number, number])
+          : ([shifted[0], shifted[1]] as [number, number]);
+      return {
+        ...base,
+        kind: AnnotationKind.RULER,
+        endPoint: (config as any)?.endPoint ?? defaultEndPoint,
+        showCustomText: (config as any)?.showCustomText ?? true,
+        showDistance: (config as any)?.showDistance ?? true
+      };
+    }
     case AnnotationKind.TEXT:
     default:
       return {
@@ -2895,6 +3172,10 @@ export const removeAnnotationUpdater = (
   return {
     ...state,
     annotations: state.annotations.filter(a => a.id !== id),
+    interactionConfig: removeLayerFromZoomOpacity(
+      state.interactionConfig,
+      getZoomOpacityAnnotationTargetId(id)
+    ),
     selectedAnnotationId: state.selectedAnnotationId === id ? null : state.selectedAnnotationId,
     isEditingAnnotationText:
       state.selectedAnnotationId === id ? false : state.isEditingAnnotationText
@@ -3126,6 +3407,16 @@ export const resetMapConfigUpdater = (state: VisState): VisState => ({
   initialState: state.initialState
 });
 
+export const setCameraBookmarksUpdater = (
+  state: VisState,
+  action: ReturnType<typeof VisStateActions.setCameraBookmarks>
+): VisState => ({...state, cameraBookmarks: normalizeCameraBookmarks(action.payload)});
+
+export const setCameraTourUpdater = (
+  state: VisState,
+  action: ReturnType<typeof VisStateActions.setCameraTour>
+): VisState => ({...state, cameraTour: normalizeCameraTour(action.payload)});
+
 /**
  * Propagate `visState` reducer with a new configuration. Current config will be override.
  * @memberof visStateUpdaters
@@ -3147,7 +3438,9 @@ export const receiveMapConfigUpdater = (
   const {keepExistingConfig} = options;
 
   // reset config if keepExistingConfig is falsy
-  let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
+  let mergedState = !keepExistingConfig
+    ? {...resetMapConfigUpdater(state), cameraBookmarks: [], cameraTour: null}
+    : state;
   for (const merger of state.mergers) {
     if (isValidMerger(merger) && hasPropsToMerge(config.visState, merger.prop)) {
       mergedState = merger.merge(
@@ -3220,7 +3513,17 @@ export function interactionConfigChangeUpdater(
   };
 
   if (config.id === 'geocoder' && !config.enabled) {
-    return removeDatasetUpdater(newState, {dataId: 'geocoder_dataset'});
+    return removeDatasetUpdater(newState, {dataId: GEOCODER_DATASET_NAME});
+  }
+
+  if (config.id === 'geocoder') {
+    const geocoderLayer = newState.layers.find(layer => layer.id === GEOCODER_LAYER_ID);
+    if (geocoderLayer) {
+      return layerConfigChangeUpdater(newState, {
+        oldLayer: geocoderLayer,
+        newConfig: {color: config.config.color ?? GEOCODER_ICON_COLOR}
+      });
+    }
   }
 
   return newState;
@@ -3690,6 +3993,22 @@ export function refreshDatasetSuccessUpdater(
 }
 
 function reapplyFiltersAndLayerData(state: VisState, dataId: string): VisState {
+  // Polygon filters read cached geometry. Refresh it before filtering so a
+  // moved feature is tested at its new position, including same-length updates.
+  const needsGeometry = state.layers.some(
+    layer =>
+      layer.config.dataId === dataId &&
+      polygonFilterDependsOnLayerMeta(layer) &&
+      state.filters.some(
+        filter =>
+          filter.type === FILTER_TYPES.polygon &&
+          filter.enabled !== false &&
+          filter.layerId?.includes(layer.id)
+      )
+  );
+  if (needsGeometry) {
+    state = updateAllLayerDomainData(state, [dataId], undefined);
+  }
   const filteredDatasets = applyFiltersToDatasets(
     [dataId],
     state.datasets,
@@ -3850,6 +4169,18 @@ export function refreshDatasetErrorUpdater(
  * @memberof visStateUpdaters
  * @public
  */
+type ProgressiveLoadContinuation = ReturnType<typeof loadFilesSuccess> & {
+  progressiveSteps: FileCacheItem[][];
+};
+
+type ProgressiveUpdateVisDataUpdaterAction = VisStateActions.UpdateVisDataUpdaterAction & {
+  onFinish?: ProgressiveLoadContinuation;
+};
+
+type ProgressiveCreateNewDatasetSuccessPayload = CreateNewDatasetSuccessPayload & {
+  onFinish?: ProgressiveLoadContinuation;
+};
+
 // eslint-disable-next-line complexity
 export const updateVisDataUpdater = (
   state: VisState,
@@ -3927,14 +4258,17 @@ export const updateVisDataUpdater = (
   }
 
   return withTask(updatedState, [
-    ...batches.map(batch =>
-      Task.allSettled(batch.tasks).map(results =>
-        createNewDatasetSuccess({
+    ...batches.map((batch, batchIndex) =>
+      Task.allSettled(batch.tasks).map(results => {
+        const onFinish = (action as ProgressiveUpdateVisDataUpdaterAction).onFinish;
+        const payload: ProgressiveCreateNewDatasetSuccessPayload = {
           results,
           addToMapOptions: options,
-          progressIds: batch.progressIds
-        })
-      )
+          progressIds: batch.progressIds,
+          ...(onFinish && batchIndex === batches.length - 1 ? {onFinish} : {})
+        };
+        return createNewDatasetSuccess(payload);
+      })
     ),
     ...notificationTasks
   ]);
@@ -3944,7 +4278,8 @@ export const createNewDatasetSuccessUpdater = (
   state: VisState,
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
-  const {results, addToMapOptions, progressIds} = action.payload;
+  const {results, addToMapOptions, progressIds, onFinish} =
+    action.payload as ProgressiveCreateNewDatasetSuccessPayload;
   const notificationTasks: TaskDescriptor[] = [];
 
   const newDataEntries = results.reduce((accu, result, idx) => {
@@ -3994,7 +4329,12 @@ export const createNewDatasetSuccessUpdater = (
       setLoadingIndicatorUpdater(updatedState, payload_({change: -1})),
       progressIds
     ),
-    notificationTasks
+    [
+      ...notificationTasks,
+      // Match the original Arrow batching cadence: cross an event-loop turn so
+      // React/deck.gl can paint this snapshot before the next table update.
+      ...(onFinish ? [DELAY_TASK(10).map(() => onFinish)] : [])
+    ]
   );
 };
 
@@ -4301,16 +4641,14 @@ function reconcileLayerWithNewSchema(
     }
   });
 
-  // follow renamed text-label fields
+  // follow renamed or re-typed text-label fields
   if (layer.config.textLabel?.length) {
-    const textLabel = layer.config.textLabel.map(tl =>
-      tl.field && renames[tl.field.name]
-        ? {...tl, field: {...tl.field, name: renames[tl.field.name]}}
-        : tl
-    );
-    if (textLabel.some((tl, i) => tl !== layer.config.textLabel[i])) {
-      configPatch.textLabel = textLabel;
-    }
+    configPatch.textLabel = layer.config.textLabel.map(tl => {
+      const name = tl.field?.name;
+      const field =
+        name && newTable.fields.find(candidate => candidate.name === (renames[name] ?? name));
+      return field && (field.name !== name || field.type !== tl.field?.type) ? {...tl, field} : tl;
+    });
   }
 
   // shallow-copy the layer so we never mutate redux state; the copy keeps the
@@ -4329,6 +4667,57 @@ function reconcileLayerWithNewSchema(
   );
 
   return validated && validated.hasAllColumns() ? validated : null;
+}
+
+const FILTER_PLOT_Y_AXIS_TYPES = new Set<string>([ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real]);
+
+function clearTimelineFilterState(filter: Filter): Filter {
+  const {
+    syncedWithLayerTimeline: _syncedWithLayerTimeline,
+    syncTimelineMode: _syncTimelineMode,
+    timeBins: _timeBins,
+    lineChart: _lineChart,
+    timezone: _timezone,
+    invertTrendColor: _invertTrendColor,
+    showTimeDisplay: _showTimeDisplay,
+    ...rest
+  } = filter as TimeRangeFilter;
+
+  return {
+    ...rest,
+    fixedDomain: false,
+    isAnimating: false,
+    animationWindow: ANIMATION_WINDOW.free,
+    yAxis: null,
+    plotType: {type: PLOT_TYPES.histogram}
+  } as Filter;
+}
+
+function reconcileTimelinePlotAfterPrimaryRemoval(
+  filter: Filter,
+  datasets: VisState['datasets']
+): Filter {
+  if (filter.type !== FILTER_TYPES.timeRange) {
+    return filter;
+  }
+
+  const primaryDataset = datasets[filter.dataId[0]];
+  const yAxis = filter.yAxis?.name
+    ? primaryDataset?.fields.find(
+        field => field.name === filter.yAxis?.name && FILTER_PLOT_Y_AXIS_TYPES.has(field.type)
+      ) ?? null
+    : null;
+  const groupByFieldName = filter.plotType?.groupBy?.fieldName;
+  const hasGroupByField = groupByFieldName
+    ? primaryDataset?.fields.some(field => field.name === groupByFieldName)
+    : true;
+  const plotType = {
+    ...filter.plotType,
+    ...(filter.yAxis && !yAxis ? {type: PLOT_TYPES.histogram} : {}),
+    ...(!hasGroupByField ? {groupBy: null} : {})
+  };
+
+  return {...filter, yAxis, plotType, lineChart: undefined};
 }
 
 /**
@@ -4361,7 +4750,9 @@ export function updateDatasetUpdater(
 
   // 1. rebuild the table schema in place (same id/label/color/metadata)
   const newTable = copyTableAndUpdate(existing, {});
+  const [sortedColumn, sortMode] = Object.entries(existing.sortColumn || {})[0] || [];
   newTable.updateSchema(data);
+  newTable.dataRevision = existing.dataRevision + 1;
 
   // The data container is rebuilt unsorted and unfiltered; reset the table's
   // view state that indexes into the old container.
@@ -4369,12 +4760,20 @@ export function updateDatasetUpdater(
   newTable.filterRecordCPU = undefined;
   newTable.sortColumn = undefined;
   newTable.sortOrder = null;
+  const newFieldsByName = new Map(newTable.fields.map(field => [field.name, field]));
   newTable.pinnedColumns = (existing.pinnedColumns || [])
     .map(name => renames[name] ?? name)
-    .filter(name => newTable.getColumnFieldIdx(name) > -1);
+    .filter(name => newFieldsByName.has(name));
+  newTable.hiddenColumns = (existing.hiddenColumns || [])
+    .map(name => renames[name] ?? name)
+    .filter(name => newFieldsByName.has(name));
+  const nextSortedColumn = sortedColumn ? renames[sortedColumn] ?? sortedColumn : null;
+  if (nextSortedColumn && sortMode && newFieldsByName.has(nextSortedColumn)) {
+    sortDatasetByColumn(newTable, nextSortedColumn, sortMode);
+  }
 
-  const newFieldsByName = new Set(newTable.fields.map(f => f.name));
   const newDatasets = {...state.datasets, [dataId]: newTable};
+  const datasetIdsToRefilter = new Set<string>([dataId]);
 
   // 2. reconcile filters
   let newFilters = state.filters
@@ -4384,57 +4783,92 @@ export function updateDatasetUpdater(
         return filter;
       }
 
+      // Polygon filters target layers rather than dataset fields, so a column
+      // type change should not reconcile them against the field list.
+      if (filter.type === FILTER_TYPES.polygon) {
+        return filter;
+      }
+
       const oldName = filter.name[vi];
       const newName = renames[oldName] ?? oldName;
       const fieldIdx = newTable.getColumnFieldIdx(newName);
+      const nextFilterType = fieldIdx === -1 ? null : newTable.getColumnFilterProps(newName)?.type;
 
-      if (fieldIdx === -1) {
-        // column is gone: drop a single-dataset filter, splice it out of a synced one
-        return filter.dataId.length === 1
-          ? null
-          : _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
+      if (
+        fieldIdx === -1 ||
+        (filter.dataId.length > 1 && nextFilterType && nextFilterType !== filter.type)
+      ) {
+        // Drop a missing field or detach an incompatible synced member.
+        if (filter.dataId.length === 1) {
+          return null;
+        }
+        filter.dataId.forEach(id => datasetIdsToRefilter.add(id));
+        const detachedFilter = _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
+        return vi === 0
+          ? reconcileTimelinePlotAfterPrimaryRemoval(detachedFilter, newDatasets)
+          : detachedFilter;
       }
 
       // column present (possibly renamed): re-resolve name/fieldIdx/domain
-      const {filter: updated} = applyFilterFieldName(filter, newDatasets, dataId, newName, vi, {
+      let {filter: updated} = applyFilterFieldName(filter, newDatasets, dataId, newName, vi, {
         mergeDomain: vi > 0
       });
       if (!updated) {
         return null;
       }
+      const leavingTimeFilter =
+        filter.type === FILTER_TYPES.timeRange && updated.type !== FILTER_TYPES.timeRange;
 
-      // brush filters carry a second y-axis field; follow a rename there too
-      const yAxis =
-        updated.yAxis?.name &&
-        (renames[updated.yAxis.name]
-          ? {...updated.yAxis, name: renames[updated.yAxis.name]}
-          : newFieldsByName.has(updated.yAxis.name)
-          ? updated.yAxis
-          : null);
+      const oldEndName = toArray((filter as TimeRangeFilter).endName)[vi];
+      if (updated.type === FILTER_TYPES.timeRange && oldEndName) {
+        const endName = renames[oldEndName] ?? oldEndName;
+        updated =
+          applyTimeFilterEndFieldName(updated, newDatasets, dataId, endName, vi).filter ??
+          applyTimeFilterEndFieldName(updated, newDatasets, dataId, null, vi).filter ??
+          updated;
+      }
 
-      return {
+      // Time plots only accept numeric y-axis fields. Re-resolve the complete
+      // field so type and fieldIdx also follow a schema change.
+      let yAxis = updated.yAxis;
+      if (vi === 0 && updated.yAxis?.name) {
+        const yAxisName = renames[updated.yAxis.name] ?? updated.yAxis.name;
+        const yAxisField = newFieldsByName.get(yAxisName);
+        yAxis = yAxisField && FILTER_PLOT_Y_AXIS_TYPES.has(yAxisField.type) ? yAxisField : null;
+      }
+
+      let nextFilter = {
         ...updated,
         yAxis,
+        ...(updated.yAxis && !yAxis
+          ? {plotType: {...updated.plotType, type: PLOT_TYPES.histogram}}
+          : {}),
         // clamp the user's previous selection into the new domain instead of
         // resetting it to the full range
         value: adjustValueToFilterDomain(filter.value, updated)
       };
+      if (leavingTimeFilter) {
+        nextFilter = clearTimelineFilterState(nextFilter);
+      } else if (vi === 0 && nextFilter.type === FILTER_TYPES.timeRange) {
+        const groupBy = nextFilter.plotType.groupBy;
+        if (groupBy && renames[groupBy.fieldName]) {
+          nextFilter.plotType = {
+            ...nextFilter.plotType,
+            groupBy: {...groupBy, fieldName: renames[groupBy.fieldName]}
+          };
+        }
+        // Timeline bins can remain identical while y-axis or group-by values
+        // change, so do not reuse the old series cache after a data rebuild.
+        nextFilter = {...nextFilter, lineChart: undefined};
+      }
+      // Keep existing plots; time plots are rebuilt after filtering below.
+      return filter.type === nextFilter.type || nextFilter.type === FILTER_TYPES.timeRange
+        ? nextFilter
+        : updateFilterPlot(newDatasets, nextFilter, dataId, state.layers);
     })
     .filter(Boolean) as Filter[];
 
-  // reassign GPU channels now that the filter list is settled
-  newFilters = newFilters.map(filter =>
-    filter.gpu ? assignGpuChannel(setFilterGpuMode(filter, newFilters), newFilters) : filter
-  );
-
-  // 3. rebuild the table's filter state (gpuFilter / filterRecord / filteredIndex)
-  newTable.filterTable(
-    newFilters,
-    state.layers.filter(l => l.config.dataId === dataId),
-    {}
-  );
-
-  // 4. reconcile layers
+  // 3. reconcile layers
   const layersToRemove: string[] = [];
   const newLayers = state.layers.map(layer => {
     if (layer.config.dataId !== dataId) {
@@ -4447,6 +4881,38 @@ export function updateDatasetUpdater(
     layersToRemove.push(layer.id);
     return layer; // placeholder, dropped via removeLayerUpdater below
   });
+
+  // Polygon filters reference layers, not fields. Preserve them for schema
+  // edits that keep their target layers, but remove invalid targets before
+  // rebuilding filter records when a required layer column was deleted.
+  const removedLayerIds = new Set(layersToRemove);
+  if (removedLayerIds.size) {
+    newFilters = newFilters.flatMap(filter => {
+      if (
+        filter.type !== FILTER_TYPES.polygon ||
+        !filter.layerId?.some(id => removedLayerIds.has(id))
+      ) {
+        return [filter];
+      }
+      filter.dataId.forEach(id => datasetIdsToRefilter.add(id));
+      const layerId = filter.layerId.filter(id => !removedLayerIds.has(id));
+      return layerId.length ? [{...filter, layerId}] : [];
+    });
+  }
+
+  // Reassign GPU channels now that the filter list is settled.
+  newFilters = newFilters.map(filter =>
+    filter.gpu ? assignGpuChannel(setFilterGpuMode(filter, newFilters), newFilters) : filter
+  );
+
+  // 4. rebuild the table's filter state using only layers that will survive
+  const survivingLayers = newLayers.filter(layer => !removedLayerIds.has(layer.id));
+  const filteredDatasets = applyFiltersToDatasets(
+    Array.from(datasetIdsToRefilter),
+    newDatasets,
+    newFilters,
+    survivingLayers
+  );
 
   // 5. reconcile tooltip fieldsToShow
   let interactionConfig = state.interactionConfig;
@@ -4471,19 +4937,111 @@ export function updateDatasetUpdater(
 
   let nextState = {
     ...state,
-    datasets: newDatasets,
+    datasets: filteredDatasets,
     filters: newFilters,
     layers: newLayers,
-    interactionConfig
+    interactionConfig,
+    charts: remapChartsForDataset(state.charts, dataId, renames, newFieldsByName)
   };
 
   // 6. drop layers that lost their required columns
   nextState = layersToRemove.reduce((accu, id) => removeLayerUpdater(accu, {id}), nextState);
 
+  // Filtering and polygon-layer removal can change the rows behind timeline
+  // plots, so rebuild their cached bins/series from the reconciled state.
+  nextState = updateFilterPlotsAfterFiltering(nextState, Array.from(datasetIdsToRefilter));
+
   // 7. recompute layer domains + data for the updated dataset
   nextState = updateAllLayerDomainData(nextState, dataId);
 
   return nextState;
+}
+
+/**
+ * Rename a column's stored identity (`field.name`) and every layer, filter,
+ * tooltip, and chart reference that used the old name.
+ */
+export function renameTableColumnUpdater(
+  state: VisState,
+  action: VisStateActions.RenameTableColumnUpdaterAction
+): VisState {
+  const {dataId, fieldName, newName} = action;
+  const dataset = state.datasets[dataId];
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
+    return state;
+  }
+  const payload = buildRenameColumnData(dataset, fieldName, newName);
+  if (!payload) {
+    return state;
+  }
+  return updateDatasetUpdater(state, {
+    dataId,
+    data: payload.data,
+    renames: payload.renames
+  });
+}
+
+/**
+ * Convert a complete column before committing its new type. A failed value
+ * leaves the table and every reference unchanged.
+ */
+export function changeTableColumnTypeUpdater(
+  state: VisState,
+  action: VisStateActions.ChangeTableColumnTypeUpdaterAction
+): VisState {
+  const {dataId, fieldName, newType} = action;
+  const dataset = state.datasets[dataId];
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
+    return state;
+  }
+  const result = buildChangeColumnTypeData(dataset, fieldName, newType);
+  if (!result) {
+    return state;
+  }
+  if (result.error) {
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            id: `column-type-${dataId}-${fieldName}`,
+            message: `Cannot change “${fieldName}” to ${newType}: ${formatColumnTypeConversionError(
+              result.error
+            )}. No values were changed.`
+          })
+        )
+      )
+    );
+  }
+  return updateDatasetUpdater(state, {
+    dataId,
+    data: result.payload.data,
+    renames: result.payload.renames
+  });
+}
+
+/**
+ * Drop a column and the layers, filters, and other references that required it.
+ * The last remaining column is kept.
+ */
+export function deleteTableColumnUpdater(
+  state: VisState,
+  action: VisStateActions.DeleteTableColumnUpdaterAction
+): VisState {
+  const {dataId, fieldName} = action;
+  const dataset = state.datasets[dataId];
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
+    return state;
+  }
+  const payload = buildDeleteColumnData(dataset, fieldName);
+  if (!payload) {
+    return state;
+  }
+  return updateDatasetUpdater(state, {
+    dataId,
+    data: payload.data,
+    renames: payload.renames
+  });
 }
 
 /**
@@ -4836,7 +5394,12 @@ export function makeLoadFileTask(
         fileName: displayName,
         onFinish: result =>
           processFileContent({
-            content: result,
+            content: {
+              ...result,
+              ...(addDataOptions?.deferAddToMap && getApplicationConfig().useArrowProgressiveLoading
+                ? {prepareProgressiveReplay: true}
+                : {})
+            },
             fileCache
           }),
         ...(addDataOptions ? {options: addDataOptions} : {})
@@ -5569,6 +6132,36 @@ export function pinTableColumnUpdater(
 }
 
 /**
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function toggleTableColumnHiddenUpdater(
+  state: VisState,
+  {dataId, column}: VisStateActions.ToggleTableColumnHiddenUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+  return set(['datasets', dataId], toggleHiddenTableColumn(dataset, column), state);
+}
+
+/**
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function showAllTableColumnsUpdater(
+  state: VisState,
+  {dataId}: VisStateActions.ShowAllTableColumnsUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+  return set(['datasets', dataId], showAllTableColumns(dataset), state);
+}
+
+/**
  * Copy column content as strings
  * @memberof visStateUpdaters
  * @public
@@ -5622,21 +6215,59 @@ export function setColumnDisplayFormatUpdater(
 
   const newDataset = copyTableAndUpdate(dataset, {fields: newFields as Field[]});
   let newState = pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+  const textLabelLayerIndexes: number[] = [];
 
-  // update colorField displayFormat
+  // Layer configs retain their own field objects, so keep those copies in sync
+  // with the display format stored on the dataset field.
   newState = {
     ...newState,
-    layers: newState.layers.map(layer =>
-      layer.config?.colorField?.name && layer.config.colorField.name in formats
+    layers: newState.layers.map((layer, layerIndex) => {
+      // Column names are not unique across datasets. Only update layers that
+      // belong to the dataset targeted by this action.
+      if (layer.config.dataId !== dataId) {
+        return layer;
+      }
+
+      const colorField = layer.config?.colorField;
+      const updatedColorField =
+        colorField?.name && colorField.name in formats
+          ? {...colorField, displayFormat: formats[colorField.name]}
+          : null;
+      // Text labels also keep field copies instead of reading dataset.fields at render time.
+      const textLabel = layer.config.textLabel.map(label => {
+        const {field} = label;
+        return field?.name && field.name in formats
+          ? {...label, field: {...field, displayFormat: formats[field.name]}}
+          : label;
+      });
+      const updateTextLabel = textLabel.some(
+        (label, index) => label !== layer.config.textLabel[index]
+      );
+      if (updateTextLabel) {
+        textLabelLayerIndexes.push(layerIndex);
+      }
+
+      return updatedColorField || updateTextLabel
         ? layer.updateLayerConfig({
-            colorField: {
-              ...layer.config.colorField,
-              displayFormat: formats[layer.config.colorField.name]
-            }
+            ...(updatedColorField ? {colorField: updatedColorField} : {}),
+            ...(updateTextLabel ? {textLabel} : {})
           })
-        : layer
-    )
+        : layer;
+    })
   };
+
+  if (textLabelLayerIndexes.length) {
+    // Label accessors and character sets are cached in layerData. Rebuild them
+    // immediately so the new format appears without removing and re-adding the label field.
+    const layers = newState.layers.slice();
+    const layerData = newState.layerData.slice();
+    textLabelLayerIndexes.forEach(layerIndex => {
+      const result = calculateLayerData(layers[layerIndex], newState, layerData[layerIndex]);
+      layers[layerIndex] = result.layer;
+      layerData[layerIndex] = result.layerData;
+    });
+    newState = {...newState, layers, layerData};
+  }
 
   return newState;
 }
@@ -5701,8 +6332,14 @@ export function loadColumnStatsUpdater(
 
   const tasks = fieldsToLoad.map(f =>
     LOAD_COLUMN_STATS_TASK({dataset: newDataset, field: f}).bimap(
-      ({result, filterProps}) => loadColumnStatsSuccess(newDataset.id, f.name, result, filterProps),
-      (error: Error) => loadColumnStatsError(newDataset.id, f.name, error)
+      ({result, filterProps}) =>
+        loadColumnStatsSuccess(newDataset.id, f.name, result, filterProps, {
+          fieldType: f.type
+        }),
+      (error: Error) =>
+        loadColumnStatsError(newDataset.id, f.name, error, {
+          fieldType: f.type
+        })
     )
   );
   const nextState = pick_('datasets')(merge_({[dataId]: newDataset}))(state);
@@ -5717,11 +6354,17 @@ export function loadColumnStatsUpdater(
  */
 export function loadColumnStatsSuccessUpdater(
   state: VisState,
-  {result, filterProps, dataId, fieldName}: VisStateActions.LoadColumnStatsSuccessUpdaterAction
+  {
+    result,
+    filterProps,
+    dataId,
+    fieldName,
+    fieldType
+  }: VisStateActions.LoadColumnStatsSuccessUpdaterAction
 ): VisState {
   const dataset = state.datasets[dataId];
   const field = (dataset?.fields || []).find(f => f.name === fieldName);
-  if (!dataset || !field) {
+  if (!dataset || !field || (fieldType !== undefined && field.type !== fieldType)) {
     return state;
   }
 
@@ -5743,14 +6386,14 @@ export function loadColumnStatsSuccessUpdater(
  */
 export function loadColumnStatsErrorUpdater(
   state: VisState,
-  {error, dataId, fieldName}: VisStateActions.LoadColumnStatsErrorUpdaterAction
+  {error, dataId, fieldName, fieldType}: VisStateActions.LoadColumnStatsErrorUpdaterAction
 ): VisState {
-  Console.error(error);
   const dataset = state.datasets[dataId];
   const field = (dataset?.fields || []).find(f => f.name === fieldName);
-  if (!dataset || !field) {
+  if (!dataset || !field || (fieldType !== undefined && field.type !== fieldType)) {
     return state;
   }
+  Console.error(error);
   const newFields = dataset.fields.map(f =>
     f.name === fieldName ? {...f, isLoadingStats: false} : f
   );
@@ -6376,8 +7019,15 @@ function adjustTimeFilterInterval(state, filter) {
   // adjust filter
   const timeFormat = getDefaultTimeFormat(interval);
   const updatedPlotType = {...filter.plotType, interval, timeFormat};
-  const newFilter = updateTimeFilterPlotType(filter, updatedPlotType, state.datasets);
-  return adjustValueToAnimationWindow(state, newFilter);
+  const plotBaseIndexByDataId = getPlotBaseIndexByDataId(state.datasets, filter, state.layers);
+  const newFilter = updateTimeFilterPlotType(
+    filter,
+    updatedPlotType,
+    state.datasets,
+    undefined,
+    plotBaseIndexByDataId
+  );
+  return adjustValueToAnimationWindow(state, newFilter, plotBaseIndexByDataId);
 }
 
 // Find dataId from a saved visState property:
@@ -6572,7 +7222,8 @@ export function replaceDatasetDepsInState<T extends VisState>(
 
       let replacedState = accuState;
       savedProps.forEach((propValue, i) => {
-        if (propValue == null) {
+        // Camera snapshots never reference datasets, even when a dataset ID is "id".
+        if (propValue == null || props[i] === 'cameraBookmarks') {
           return;
         }
         const mergerOptions = {
@@ -6696,12 +7347,22 @@ export function runSpatialJoinUpdater(
   return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
 }
 
+export function runSuitabilityUpdater(
+  state: VisState,
+  action: VisStateActions.RunSuitabilityUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeSuitability(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
 export {
   addGroupByUpdater,
   addJoinUpdater,
   addSpatialJoinUpdater,
+  addSuitabilityUpdater,
   removeDatasetOpUpdater,
   setGroupByConfigUpdater,
   setJoinConfigUpdater,
-  setSpatialJoinConfigUpdater
+  setSpatialJoinConfigUpdater,
+  setSuitabilityConfigUpdater
 };

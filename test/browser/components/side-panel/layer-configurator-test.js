@@ -12,6 +12,7 @@ import {
   LayerColumnModeConfigFactory,
   LayerColumnConfigFactory,
   LayerConfigGroupFactory,
+  TextLabelPanelFactory,
   FieldSelectorFactory,
   ColumnSelectorFactory,
   appInjector,
@@ -32,6 +33,7 @@ import {
 } from 'test/helpers/component-utils';
 import {act} from 'react-dom/test-utils';
 import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../../helpers/utils';
+import {KeplerGlLayers} from '@kepler.gl/layers';
 
 // components
 const LayerConfigurator = appInjector.get(LayerConfiguratorFactory);
@@ -40,6 +42,7 @@ const LayerColumnConfig = appInjector.get(LayerColumnConfigFactory);
 const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
 const ColumnSelector = appInjector.get(ColumnSelectorFactory);
 const FieldSelector = appInjector.get(FieldSelectorFactory);
+const TextLabelPanel = appInjector.get(TextLabelPanelFactory);
 
 // components
 const openModal = () => {};
@@ -140,6 +143,22 @@ test('Components -> LayerConfigurator.mount -> default prop 1', t => {
     args.layerChannelConfigProps,
     expectedArgs.layerChannelConfigProps,
     'render layer method should receive correct layerChannelConfigProps arg'
+  );
+
+  t.end();
+});
+
+test('Components -> LayerConfigurator localizes the aggregation count label', t => {
+  const layer = new KeplerGlLayers.ClusterLayer({id: 'cluster', dataId: testCsvDataId});
+  const wrapper = mountWithTheme(
+    <IntlWrapper locale="es">
+      <LayerConfigurator {...defaultProps} layer={layer} />
+    </IntlWrapper>
+  );
+
+  t.ok(
+    wrapper.find(TextLabelPanel).text().includes('Recuento de puntos'),
+    'should render the localized Point Count field name'
   );
 
   t.end();

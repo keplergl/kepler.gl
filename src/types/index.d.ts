@@ -11,5 +11,6 @@ export * from './effects';
 export * from './charts';
 export * from './annotations';
 export * from './datasets';
+export * from './camera';
 
 export * as StacTypes from './stac';

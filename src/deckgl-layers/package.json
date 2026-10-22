@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/deckgl-layers",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.3.0-alpha.16",
+  "version": "3.3.0-alpha.18",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/cjs/index.js",
@@ -33,9 +33,9 @@
     "@deck.gl/geo-layers": "^9.3.1",
     "@deck.gl/layers": "^9.3.1",
     "@deck.gl/mesh-layers": "^9.3.1",
-    "@kepler.gl/constants": "3.3.0-alpha.16",
-    "@kepler.gl/types": "3.3.0-alpha.16",
-    "@kepler.gl/utils": "3.3.0-alpha.16",
+    "@kepler.gl/constants": "3.3.0-alpha.18",
+    "@kepler.gl/types": "3.3.0-alpha.18",
+    "@kepler.gl/utils": "3.3.0-alpha.18",
     "@loaders.gl/wms": "4.4.1",
     "@luma.gl/constants": "^9.3.2",
     "@luma.gl/core": "^9.3.2",
@@ -54,8 +54,7 @@
     "es-toolkit": "^1.39.10",
     "global": "^4.3.0",
     "pbf": "^3.1.0",
-    "supercluster": "^7.1.0",
-    "viewport-mercator-project": "^6.0.0"
+    "supercluster": "^7.1.0"
   },
   "nyc": {
     "sourceMap": false,
@@ -71,7 +70,7 @@
     "node": ">=20"
   },
   "volta": {
-    "node": "20.19.3",
+    "node": "24.21.0",
     "yarn": "4.4.0"
   },
   "packageManager": "yarn@4.4.0",

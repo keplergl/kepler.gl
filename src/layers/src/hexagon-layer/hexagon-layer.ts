@@ -109,6 +109,7 @@ export default class HexagonLayer extends AggregationLayer {
     const {data, objectHovered, mapState} = opts;
 
     const defaultAggregationLayerProps = this.getDefaultAggregationLayerProp(opts);
+    const countLabelProps = this.getCountLabelProps(opts);
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
     const radius = visConfig.worldUnitSize * 1000;
@@ -123,7 +124,8 @@ export default class HexagonLayer extends AggregationLayer {
         ...defaultAggregationLayerProps,
         ...data,
         wrapLongitude: false,
-        radius
+        radius,
+        ...countLabelProps
       }),
 
       // render an outline of each hexagon if not extruded

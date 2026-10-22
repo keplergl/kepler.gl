@@ -150,6 +150,9 @@ export default {
     radiusRange: 'Säteen rajat',
     clusterRadius: 'Klusterien säde pikseleinä',
     radiusRangePixels: 'Säteen rajat pikseleinä',
+    minClusterSize: 'Pisteiden vähimmäismäärä klusterissa',
+    minClusterSizeDescription:
+      'Piilota klusterit, joissa on tätä vähemmän pisteitä, esim. 2 poistaa yhden pisteen klusterit',
     billboard: 'Billboard -tila',
     billboardDescription: 'Suuntaa geometria kameraa kohti',
     fadeTrail: 'Häipyvä polku',

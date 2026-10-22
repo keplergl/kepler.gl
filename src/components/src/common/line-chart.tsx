@@ -6,7 +6,7 @@ import {scaleTime, scaleLinear} from 'd3-scale';
 import {bisector} from 'd3-array';
 import {LineChart} from '@kepler.gl/types';
 import styled, {withTheme} from 'styled-components';
-import {datetimeFormatter} from '@kepler.gl/utils';
+import {datetimeFormatter, formatNumber} from '@kepler.gl/utils';
 
 export interface LineSeriesPoint {
   x: number;
@@ -151,6 +151,7 @@ interface LineChartProps {
   timeFormat?: string;
   range?: number[];
   yAxisAutoRange?: boolean;
+  isTime?: boolean;
   theme?: any;
 }
 
@@ -172,6 +173,7 @@ function LineChartFactory() {
     timeFormat,
     range,
     yAxisAutoRange,
+    isTime = true,
     theme
   }: LineChartProps) => {
     const svgRef = useRef<SVGSVGElement>(null);
@@ -234,10 +236,12 @@ function LineChartFactory() {
 
     const xScale = useMemo(() => {
       if (!effectiveXDomain || effectiveXDomain.length < 2) return null;
-      return scaleTime()
-        .domain([new Date(effectiveXDomain[0]), new Date(effectiveXDomain[1])])
-        .range([0, width]);
-    }, [effectiveXDomain, width]);
+      return isTime
+        ? scaleTime()
+            .domain([new Date(effectiveXDomain[0]), new Date(effectiveXDomain[1])])
+            .range([0, width])
+        : scaleLinear().domain(effectiveXDomain).range([0, width]);
+    }, [effectiveXDomain, isTime, width]);
 
     const yScale = useMemo(() => {
       if (!paddedYDomain || paddedYDomain.length < 2) return null;
@@ -245,8 +249,9 @@ function LineChartFactory() {
     }, [paddedYDomain, height]);
 
     const hintFormatter = useMemo(
-      () => datetimeFormatter(timezone)(timeFormat),
-      [timezone, timeFormat]
+      () =>
+        isTime ? datetimeFormatter(timezone)(timeFormat) : (value: number) => formatNumber(value),
+      [isTime, timezone, timeFormat]
     );
 
     const clampedHoveredDP = useMemo(() => {
@@ -280,28 +285,29 @@ function LineChartFactory() {
           paths.push({
             key: index,
             d: `M${points
-              .map(point => `${xScale(new Date(point.x))},${yScale(point.y)}`)
+              .map(point => `${xScale(isTime ? new Date(point.x) : point.x)},${yScale(point.y)}`)
               .join('L')}`,
             color: markColor
           });
         } else if (points.length === 1) {
           dots.push({
             key: index,
-            x: xScale(new Date(points[0].x)),
+            x: xScale(isTime ? new Date(points[0].x) : points[0].x),
             y: yScale(points[0].y),
             color: markColor
           });
         }
       });
       return {paths, dots};
-    }, [xScale, yScale, series, lineColor]);
+    }, [isTime, xScale, yScale, series, lineColor]);
 
     const bisectX = useMemo(() => bisector<LineSeriesPoint, number>(d => d.x).left, []);
 
     const findNearestPoint = useCallback(
       (mouseX: number) => {
         if (!xScale || !series?.lines) return null;
-        const xValue = xScale.invert(mouseX).getTime();
+        const inverted = xScale.invert(mouseX);
+        const xValue = inverted instanceof Date ? inverted.getTime() : inverted;
         let bestX: number | null = null;
         let minDist = Infinity;
         series.lines.forEach(line => {
@@ -363,14 +369,14 @@ function LineChartFactory() {
     const hintPosition = useMemo(() => {
       if (!clampedHoveredDP || !xScale || !yScale) return null;
       return placeLineChartHint(
-        xScale(new Date(clampedHoveredDP.x)),
+        xScale(isTime ? new Date(clampedHoveredDP.x) : clampedHoveredDP.x),
         yScale(clampedHoveredDP.y),
         hintSize.width,
         hintSize.height,
         width,
         height
       );
-    }, [clampedHoveredDP, xScale, yScale, hintSize, width, height]);
+    }, [clampedHoveredDP, xScale, yScale, hintSize, width, height, isTime]);
 
     useLayoutEffect(() => {
       const node = hintRef.current;
@@ -426,7 +432,7 @@ function LineChartFactory() {
                   point.y == null ? null : (
                     <circle
                       key={`${point.name ?? 'series'}-${index}`}
-                      cx={xScale(new Date(point.x))}
+                      cx={xScale(isTime ? new Date(point.x) : point.x)}
                       cy={yScale(point.y)}
                       r={4}
                       fill={String(point.color || lineColor)}

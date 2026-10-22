@@ -279,8 +279,8 @@ test('#GridLayer -> renderLayer', t => {
       assert: (deckLayers, layer) => {
         t.deepEqual(
           deckLayers.map(l => l.id),
-          ['test_layer_1', 'test_layer_1-cells'],
-          'Should create 2 deck.gl layers'
+          ['test_layer_1', 'test_layer_1-cells', 'test_layer_1-label-pointCount-collision'],
+          'Should create the grid layer, cells, and count labels'
         );
         const [cpuGridLayer, gridCellLayer] = deckLayers;
         const {props} = cpuGridLayer;
@@ -466,8 +466,8 @@ test('#GridLayer -> renderLayer', t => {
       assert: deckLayers => {
         t.deepEqual(
           deckLayers.map(l => l.id),
-          ['test_layer_2', 'test_layer_2-cells'],
-          'Should create 2 deck.gl layers'
+          ['test_layer_2', 'test_layer_2-cells', 'test_layer_2-label-pointCount-collision'],
+          'Should create the grid layer, cells, and count labels'
         );
         const [cpuGridLayer, gridCellLayer] = deckLayers;
         const {props} = cpuGridLayer;

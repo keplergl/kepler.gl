@@ -3,10 +3,18 @@
 
 import {RGBColor, Merge, RequireFrom} from './types';
 
-import {Filter, InteractionConfig, AnimationConfig, SplitMap, Feature} from './reducers';
+import {
+  Filter,
+  InteractionConfig,
+  AnimationConfig,
+  SplitMap,
+  Feature,
+  MapLegendControlSettings
+} from './reducers';
 
 import {LayerTextLabel} from './layers';
 import {ChartConfig} from './charts';
+import {CameraBookmark, CameraTour} from './camera';
 
 export type SavedFilter = {
   dataId: Filter['dataId'];
@@ -27,6 +35,8 @@ export type SavedFilter = {
   layerId: Filter['layerId'];
   syncedWithLayerTimeline: Filter['syncedWithLayerTimeline'];
   syncTimelineMode: Filter['syncTimelineMode'];
+  /** Hide rows that match the filter instead of keeping them. */
+  inverted?: boolean;
 };
 export type MinSavedFilter = RequireFrom<SavedFilter, 'dataId' | 'id' | 'name' | 'type' | 'value'>;
 export type ParsedFilter = SavedFilter | MinSavedFilter;
@@ -38,6 +48,7 @@ export type SavedInteractionConfig = {
   geocoder: {
     enabled: boolean;
     limitSearch?: boolean;
+    color?: RGBColor;
   };
   brush: InteractionConfig['brush']['config'] & {
     enabled: boolean;
@@ -113,6 +124,8 @@ export type SavedEditor = {
 };
 
 export type SavedVisState = {
+  cameraTour?: CameraTour;
+  cameraBookmarks?: CameraBookmark[];
   filters: SavedFilter[];
   layers: SavedLayer[];
   effects: SavedEffect[];
@@ -130,6 +143,8 @@ export type SavedVisState = {
 
 // Min saved config can be passed to addDataToMap
 export type MinSavedVisStateV1 = {
+  cameraTour?: CameraTour;
+  cameraBookmarks?: CameraBookmark[];
   filters?: MinSavedFilter[];
   layers?: MinSavedLayer[];
   effects?: SavedEffect[];
@@ -143,6 +158,8 @@ export type MinSavedVisStateV1 = {
 };
 
 export type ParsedVisState = {
+  cameraTour?: CameraTour | null;
+  cameraBookmarks?: CameraBookmark[];
   layers?: ParsedLayer[];
   effects?: ParsedEffect[];
   charts?: ChartConfig[];
@@ -177,6 +194,10 @@ export type ParsedUiState = {
     mapInfo?: {
       active?: boolean;
       show?: boolean;
+    };
+    cameraBookmarks?: {
+      show?: boolean;
+      settings?: Partial<MapLegendControlSettings>;
     };
   };
   locale?: string;
@@ -295,6 +316,11 @@ export type SavedMap = {
     created_at: string;
     title?: string;
     description?: string;
+    source?: string;
+    appName?: string;
+    appWebsite?: string;
+    appIcon?: string;
+    appNameColor?: string;
   };
 };
 

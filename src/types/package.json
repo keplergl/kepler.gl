@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/types",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.3.0-alpha.16",
+  "version": "3.3.0-alpha.18",
   "description": "kepler.gl types used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "types": "index.d.ts",
@@ -35,7 +35,7 @@
     "node": ">=20"
   },
   "volta": {
-    "node": "20.19.3",
+    "node": "24.21.0",
     "yarn": "4.4.0"
   },
   "packageManager": "yarn@4.4.0"

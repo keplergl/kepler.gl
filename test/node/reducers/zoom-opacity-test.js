@@ -8,6 +8,7 @@ import {VisStateActions} from '@kepler.gl/actions';
 import {
   combineZoomOpacityControllers,
   getLayerZoomOpacityFactor,
+  getZoomOpacityAnnotationTargetId,
   INITIAL_VIS_STATE,
   mergeInteractions,
   renderDeckGlLayer,
@@ -74,6 +75,32 @@ test('interactionUtil -> getLayerZoomOpacityFactor', t => {
     getLayerZoomOpacityFactor('a', undefined, interactionConfig),
     1,
     'missing zoom is unchanged'
+  );
+  const firstAnnotationTarget = getZoomOpacityAnnotationTargetId('annotation-1');
+  const secondAnnotationTarget = getZoomOpacityAnnotationTargetId('annotation-2');
+  const annotationConfig = {
+    zoomOpacity: {
+      ...interactionConfig.zoomOpacity,
+      config: {
+        controllers: [
+          {
+            id: 'c1',
+            layerIds: [firstAnnotationTarget],
+            stops: {appear: 2, full: 4, fade: 8, gone: 10}
+          }
+        ]
+      }
+    }
+  };
+  t.equal(
+    getLayerZoomOpacityFactor(firstAnnotationTarget, 3, annotationConfig),
+    0.5,
+    'an assigned annotation target uses the envelope'
+  );
+  t.equal(
+    getLayerZoomOpacityFactor(secondAnnotationTarget, 3, annotationConfig),
+    1,
+    'an unassigned annotation target stays unchanged'
   );
   t.end();
 });

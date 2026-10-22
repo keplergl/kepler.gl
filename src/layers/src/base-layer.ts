@@ -17,6 +17,7 @@ import React from 'react';
 import * as arrow from 'apache-arrow';
 import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
+import {textLabelDeckLayerId} from './layer-text-label';
 import {getSatisfiedColumnMode, FindDefaultLayerPropsReturnValue} from './layer-utils';
 
 import {
@@ -1179,6 +1180,7 @@ class Layer implements KeplerLayer {
       const {
         field,
         fixed,
+        invert,
         scale,
         domain,
         range,
@@ -1194,6 +1196,7 @@ class Layer implements KeplerLayer {
 
         if (shouldGetScale) {
           const isFixed = fixed && this.config.visConfig[fixed];
+          const isInverted = Boolean(invert && this.config.visConfig[invert]);
 
           const scaleFunction =
             channelScaleType === CHANNEL_SCALES.color
@@ -1206,7 +1209,8 @@ class Layer implements KeplerLayer {
                   this.config[scale],
                   this.config[domain],
                   this.config.visConfig[range],
-                  isFixed
+                  isFixed,
+                  isInverted
                 );
 
           const getFieldValue = this.accessVSFieldValue(this.config[field], indexKey);
@@ -1260,8 +1264,22 @@ class Layer implements KeplerLayer {
     scale: string,
     domain: VisualChannelDomain | DomainQuantiles,
     range: any,
-    fixed?: boolean
+    fixed?: boolean,
+    invert?: boolean
   ): GetVisChannelScaleReturnType {
+    // Reverse the scale output so the lowest input maps to the greatest height.
+    // Fixed height uses the domain as that output, which reflects the raw values.
+    const applyInvert = scaleFunction => {
+      if (!invert || typeof scaleFunction?.range !== 'function') {
+        return scaleFunction;
+      }
+      const currentRange = scaleFunction.range();
+      if (Array.isArray(currentRange) && currentRange.length > 1) {
+        scaleFunction.range(currentRange.slice().reverse());
+      }
+      return scaleFunction;
+    };
+
     // if quantile is provided per zoom
     if (isDomainQuantile(domain) && scale === SCALE_TYPES.quantile) {
       const zSteps = domain.z;
@@ -1270,7 +1288,7 @@ class Layer implements KeplerLayer {
         const scaleDomain = getDomainStepsbyZoom(domain.quantiles, zSteps, z);
         const thresholds = getThresholdsFromQuantiles(scaleDomain, range.length);
 
-        return getScaleFunction('threshold', range, thresholds, false);
+        return applyInvert(getScaleFunction('threshold', range, thresholds, false));
       };
 
       getScale.byZoom = true;
@@ -1288,7 +1306,7 @@ class Layer implements KeplerLayer {
       const getScale = function getScaleByZoom(z) {
         const scaleDomain = getDomainStepsbyZoom(domain.stops, zSteps, z);
 
-        return getScaleFunction(scale, range, scaleDomain, fixed);
+        return applyInvert(getScaleFunction(scale, range, scaleDomain, fixed));
       };
 
       getScale.byZoom = true;
@@ -1299,7 +1317,7 @@ class Layer implements KeplerLayer {
       .domain(domain)
       .range(fixed ? domain : range);
     (scaleFunc as {scaleType?: string}).scaleType = fixed ? 'linear' : scale;
-    return scaleFunc;
+    return applyInvert(scaleFunc);
   }
 
   /**
@@ -1388,7 +1406,9 @@ class Layer implements KeplerLayer {
       ...(this.config.textLabel || []).reduce(
         (accu, tl, i) => ({
           ...accu,
-          [`getLabelCharacterSet-${i}`]: tl.field ? tl.field.name : null
+          [`getLabelCharacterSet-${i}`]: tl.field
+            ? {name: tl.field.name, displayFormat: tl.field.displayFormat}
+            : null
         }),
         {}
       )
@@ -1537,7 +1557,7 @@ class Layer implements KeplerLayer {
     const updateTriggers: UpdateTriggers = {};
     Object.values(this.visualChannels).forEach(visualChannel => {
       // field range scale domain
-      const {accessor, field, scale, domain, range, defaultValue, fixed} = visualChannel;
+      const {accessor, field, scale, domain, range, defaultValue, fixed, invert} = visualChannel;
 
       if (accessor) {
         updateTriggers[accessor] = {
@@ -1547,7 +1567,8 @@ class Layer implements KeplerLayer {
           [range]: this.config.visConfig[range],
           defaultValue:
             typeof defaultValue === 'function' ? defaultValue(this.config) : defaultValue,
-          ...(fixed ? {[fixed]: this.config.visConfig[fixed]} : {})
+          ...(fixed ? {[fixed]: this.config.visConfig[fixed]} : {}),
+          ...(invert ? {[invert]: this.config.visConfig[invert]} : {})
         };
       }
     });
@@ -1713,9 +1734,11 @@ class Layer implements KeplerLayer {
         // previous TextLayer. Matching would keep a stale collisionPriorities
         // attribute after the extension is removed, and skip initializeState
         // (no collision_texture) when it is added.
-        const labelId = `${this.id}-label-${textLabel[i].field?.name}${
-          collisionEnabled ? '-collision' : ''
-        }`;
+        // Two labels of the same field (Point Count is the only aggregation
+        // choice) must not share an id. CollisionTextLayer appends
+        // -background and -characters, and deck.gl drops the pair when those
+        // sublayer ids collide.
+        const labelId = textLabelDeckLayerId(this.id, textLabel, i, collisionEnabled);
         // Glyphs inherit these from the TextLayer. The background sublayer's
         // `_subLayerProps.background.parameters` replaces that object, so the
         // same depth settings have to be repeated there. Otherwise the box
@@ -1785,6 +1808,7 @@ class Layer implements KeplerLayer {
               ...updateTriggers,
               getText: {
                 field: textLabel[i].field?.name,
+                displayFormat: textLabel[i].field?.displayFormat,
                 ...(updateTriggers.getText || {})
               },
               getPixelOffset: {

@@ -118,6 +118,9 @@ export default function SidePanelFactory(
       datasets,
       filters,
       layers,
+      annotations = [],
+      cameraBookmarks,
+      cameraTour,
       layerBlending,
       overlayBlending,
       layerClasses,
@@ -137,7 +140,8 @@ export default function SidePanelFactory(
       version,
       width,
       groupBys,
-      joins
+      joins,
+      suitabilities
     } = props;
     const {openDeleteModal, toggleModal, toggleSidePanel} = uiStateActions;
     const {activeSidePanel} = uiState;
@@ -188,7 +192,7 @@ export default function SidePanelFactory(
       any
     >;
     const PanelComponent = currentPanel?.component;
-    const datasetOpOpen = hasActiveDatasetOp(groupBys, joins);
+    const datasetOpOpen = hasActiveDatasetOp(groupBys, joins, suitabilities);
 
     return (
       <Sidebar
@@ -230,6 +234,7 @@ export default function SidePanelFactory(
                 datasets={datasets}
                 groupBys={groupBys}
                 joins={joins}
+                suitabilities={suitabilities}
                 visStateActions={visStateActions}
               />
             ) : (
@@ -239,6 +244,9 @@ export default function SidePanelFactory(
                     datasets={datasets}
                     filters={filters}
                     layers={layers}
+                    annotations={annotations}
+                    cameraBookmarks={cameraBookmarks}
+                    cameraTour={cameraTour}
                     layerClasses={layerClasses}
                     layerOrder={layerOrder}
                     layerBlending={layerBlending}
@@ -257,6 +265,8 @@ export default function SidePanelFactory(
                     visStateActions={visStateActions}
                     mapLegendActive={Boolean(uiState.mapControls?.mapLegend?.active)}
                     mapInfo={mapInfo}
+                    cameraTourEnabled={uiState.mapControls?.cameraTour?.show !== false}
+                    cameraBookmarksEnabled={uiState.mapControls?.cameraBookmarks?.show === true}
                     mapInfoShow={uiState.mapControls?.mapInfo?.show !== false}
                     mapInfoActive={uiState.mapControls?.mapInfo?.active !== false}
                     panelMetadata={currentPanel}

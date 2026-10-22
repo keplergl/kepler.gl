@@ -3,7 +3,7 @@
 
 /* eslint-disable max-statements */
 
-import {drainTasksForTesting, succeedTaskWithValues} from '@kepler.gl/tasks';
+import {drainTasksForTesting, succeedTaskInTest, succeedTaskWithValues} from '@kepler.gl/tasks';
 import test from 'tape';
 
 import {
@@ -11,9 +11,10 @@ import {
   confirmReplaceDataset,
   loadFilesSuccess,
   registerEntry,
-  stageLoadedFiles
+  stageLoadedFiles,
+  wrapTo
 } from '@kepler.gl/actions';
-import {processCsvData} from '@kepler.gl/processors';
+import {processCsvData, processKeplerglJSON} from '@kepler.gl/processors';
 import keplerGlReducer, {
   addDataToMapUpdater,
   replaceDataInMapUpdater,
@@ -25,7 +26,8 @@ import keplerGlReducer, {
 } from '@kepler.gl/reducers';
 import {MapSplitMode} from '@kepler.gl/constants';
 import KeplerGlSchema from '@kepler.gl/schemas';
-import {getTimeBins} from '@kepler.gl/utils';
+import {KeplerTable} from '@kepler.gl/table';
+import {getTimeBins, getMapJSON, exportToJsonString} from '@kepler.gl/utils';
 
 import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
 import testHexIdData, {
@@ -472,6 +474,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
       tooltip: {
         ...oldInteractionConfig.tooltip,
         config: {
+          timezone: null,
           compareMode: false,
           compareType: 'absolute',
           fieldsToShow: {
@@ -866,6 +869,209 @@ test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
     }
   }));
   t.deepEqual(nextSavedConfig.visState.layers, expectedLayers, 'should replace layer dataId');
+  t.end();
+});
+
+test('#composerStateReducer - dataset replacement preserves data-independent bookmarks', t => {
+  const bookmarks = [
+    {
+      id: 'first',
+      name: 'Home',
+      camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}
+    },
+    {
+      id: 'second',
+      name: 'Away',
+      camera: {longitude: -20, latitude: 30, zoom: 8, bearing: 0, pitch: 0}
+    }
+  ];
+  for (const [dataId, replacementId] of [
+    ['id', 'id'],
+    ['id', 'replacement'],
+    ['ordinary-dataset', 'id'],
+    ['name', 'name'],
+    ['camera', 'camera'],
+    ['ordinary-dataset', 'ordinary-dataset']
+  ]) {
+    const data = {
+      fields: [{name: 'value', type: 'integer', format: '', analyzerType: 'INT'}],
+      rows: [[1]]
+    };
+    const dataset = new KeplerTable({info: {id: dataId, label: 'Original'}});
+    dataset.importData({data});
+    const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+    const state = {
+      ...initial,
+      visState: {...initial.visState, cameraBookmarks: bookmarks, datasets: {[dataId]: dataset}}
+    };
+    const next = replaceDataInMapUpdater(state, {
+      payload: {
+        datasetToReplaceId: dataId,
+        datasetToUse: {
+          info: {id: replacementId, label: 'Replacement'},
+          data: {...data, rows: [[2], [3]]}
+        },
+        options: {centerMap: false}
+      }
+    });
+    const result = {...next, visState: applyExistingDatasetTasks(visStateReducer, next.visState)};
+    t.equal(
+      result.visState.datasets[replacementId].dataContainer.numRows(),
+      2,
+      `${dataId}: replaces rows`
+    );
+    t.deepEqual(
+      result.visState.cameraBookmarks,
+      bookmarks,
+      `${dataId}: preserves every saved view`
+    );
+    t.deepEqual(
+      KeplerGlSchema.getConfigToSave(result).config.visState.cameraBookmarks,
+      bookmarks,
+      `${dataId}: subsequent saves retain bookmarks`
+    );
+  }
+  t.end();
+});
+
+test('#composerStateReducer - legacy bookmarks do not opt in or reset an explicit host preference', t => {
+  const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const bookmarks = [
+    {
+      id: 'home',
+      name: 'Home',
+      camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}
+    }
+  ];
+  const config = KeplerGlSchema.getConfigToSave({
+    ...initial,
+    visState: {...initial.visState, cameraBookmarks: bookmarks}
+  });
+  delete config.config.uiState.mapControls.cameraBookmarks; // Legacy files have no preference.
+  const {cameraBookmarks, ...legacyControls} = initial.uiState.mapControls;
+  for (const controls of [
+    initial.uiState.mapControls,
+    legacyControls,
+    {...legacyControls, cameraBookmarks: {...cameraBookmarks, show: true}}
+  ]) {
+    const state = {...initial, uiState: {...initial.uiState, mapControls: controls}};
+    const loaded = addDataToMapUpdater(state, {
+      payload: {datasets: [], config, options: {centerMap: false}}
+    });
+    t.deepEqual(loaded.visState.cameraBookmarks, bookmarks, 'restores saved views');
+    t.equal(
+      loaded.uiState.mapControls.cameraBookmarks?.show === true,
+      controls.cameraBookmarks?.show === true,
+      'loading views preserves explicit opt-in and leaves default/missing controls off'
+    );
+  }
+  t.end();
+});
+
+test('#composerStateReducer - project JSON bookmark visibility and layout survive file import', t => {
+  const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const bookmarks = [
+    {
+      id: 'home',
+      name: 'Home',
+      camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}
+    }
+  ];
+  const settings = {
+    position: {x: 42, y: 64, anchorX: 'left', anchorY: 'bottom'},
+    contentHeight: 80
+  };
+  for (const show of [true, false]) {
+    for (const isSplit of [false, true]) {
+      const source = {
+        ...initial,
+        visState: {...initial.visState, cameraBookmarks: bookmarks},
+        mapState: {...initial.mapState, isSplit},
+        uiState: {
+          ...initial.uiState,
+          mapControls: {
+            ...initial.uiState.mapControls,
+            cameraBookmarks: {
+              ...initial.uiState.mapControls.cameraBookmarks,
+              show,
+              settings,
+              activeMapIndex: 1
+            }
+          }
+        }
+      };
+      // This is the same JSON construction and parsing used by project export/import.
+      const json = JSON.parse(exportToJsonString(getMapJSON(source, {hasData: true})));
+      t.deepEqual(
+        json.config.config.uiState.mapControls.cameraBookmarks,
+        {show, settings},
+        'project JSON carries visibility and layout only'
+      );
+      const {cameraBookmarks, ...legacyControls} = initial.uiState.mapControls;
+      for (const controls of [
+        legacyControls,
+        {
+          ...initial.uiState.mapControls,
+          cameraBookmarks: {...cameraBookmarks, show: !show, activeMapIndex: 1}
+        }
+      ]) {
+        const target = {...initial, uiState: {...initial.uiState, mapControls: controls}};
+        const imported = keplerGlReducer(
+          {test: target},
+          wrapTo(
+            'test',
+            loadFilesSuccess(
+              [
+                {
+                  info: {format: 'keplergl', label: 'saved-map.json'},
+                  data: processKeplerglJSON(json)
+                }
+              ],
+              {centerMap: false}
+            )
+          )
+        ).test;
+        t.equal(
+          imported.uiState.mapControls.cameraBookmarks.show,
+          show,
+          'restores explicit visibility over the target preference'
+        );
+        t.deepEqual(
+          imported.uiState.mapControls.cameraBookmarks.settings,
+          settings,
+          'restores floating panel layout'
+        );
+        t.equal(
+          imported.uiState.mapControls.cameraBookmarks.activeMapIndex,
+          0,
+          'does not restore transient split-map index'
+        );
+        t.deepEqual(imported.visState.cameraBookmarks, bookmarks, 'preserves saved camera data');
+        t.equal(imported.mapState.isSplit, isSplit, 'preserves the saved map mode');
+      }
+    }
+  }
+  const legacyJson = JSON.parse(exportToJsonString(getMapJSON(initial, {hasData: true})));
+  delete legacyJson.config.config.uiState.mapControls.cameraBookmarks;
+  for (const withUiState of [true, false]) {
+    const json = JSON.parse(JSON.stringify(legacyJson));
+    if (!withUiState) delete json.config.config.uiState;
+    const imported = keplerGlReducer(
+      {test: initial},
+      wrapTo(
+        'test',
+        loadFilesSuccess(
+          [{info: {format: 'keplergl', label: 'legacy.json'}, data: processKeplerglJSON(json)}],
+          {centerMap: false}
+        )
+      )
+    ).test;
+    t.equal(
+      imported.uiState.mapControls.cameraBookmarks.show,
+      false,
+      'legacy project defaults off'
+    );
+  }
   t.end();
 });
 
@@ -1398,6 +1604,53 @@ test('#composerStateReducer -> stageLoadedFilesUpdater keeps the modal open', t 
   });
   t.equal(staleAdd, activeLoad, 'a stale add does not replace the current load');
 
+  t.end();
+});
+
+test('#composerStateReducer -> progressive Arrow confirmation queues the next snapshot', t => {
+  const base = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const first = {
+    info: {id: 'progressive-arrow', label: 'progressive.arrow', format: 'arrow'},
+    data: {...mockRawData, rows: mockRawData.rows.slice(0, 1)}
+  };
+  const final = {
+    ...first,
+    data: {...mockRawData, rows: mockRawData.rows.slice(0, 2)}
+  };
+  const staged = {
+    ...final,
+    progressiveData: [first.data, final.data]
+  };
+  const afterFirstDispatch = combinedUpdaters.loadFilesSuccessUpdater(
+    base,
+    loadFilesSuccess([staged], {autoCreateLayers: false, centerMap: true})
+  );
+
+  const afterFirstCommit = applyExistingDatasetTasks(visStateReducer, afterFirstDispatch.visState);
+  const continuation = drainTasksForTesting().find(task => task.label === 'DELAY_TASK');
+  const nextAction = succeedTaskInTest(continuation, undefined);
+  const afterFinalDispatch = combinedUpdaters.loadFilesSuccessUpdater(
+    {...afterFirstDispatch, visState: afterFirstCommit},
+    nextAction
+  );
+  const [updateTask] = drainTasksForTesting();
+  const finalTable = new KeplerTable({info: final.info});
+  finalTable.importData({data: final.data});
+  const afterFinalCommit = visStateReducer(
+    afterFinalDispatch.visState,
+    succeedTaskWithValues(updateTask, [finalTable])
+  );
+
+  t.equal(afterFirstCommit.datasets['progressive-arrow'].length, 1, 'commits the first snapshot');
+  t.equal(nextAction.result[0].data.rows.length, 2, 'queues the next cumulative snapshot');
+  t.deepEqual(
+    nextAction.progressiveSteps,
+    [],
+    'marks the final step without queueing another snapshot'
+  );
+  t.equal(nextAction.options.centerMap, false, 'does not center subsequent snapshots');
+  t.equal(afterFinalCommit.datasets['progressive-arrow'].length, 2, 'commits the final snapshot');
+  t.equal(drainTasksForTesting().length, 0, 'does not leave another continuation queued');
   t.end();
 });
 

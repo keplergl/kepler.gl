@@ -367,7 +367,8 @@ export const parseFieldValue = (value: any, type: string, field?: Field): string
  */
 export function getFormatter(
   format?: string | Record<string, string> | null,
-  field?: Field
+  field?: Field,
+  timezone?: string | null
 ): FieldFormatter {
   if (!format) {
     return defaultFormatter;
@@ -375,9 +376,9 @@ export function getFormatter(
   const tooltipFormat = Object.values(TOOLTIP_FORMATS).find(f => f[TOOLTIP_KEY] === format);
 
   if (tooltipFormat) {
-    return applyDefaultFormat(tooltipFormat as TooltipFormat);
+    return applyDefaultFormat(tooltipFormat as TooltipFormat, timezone);
   } else if (typeof format === 'string' && field) {
-    return applyCustomFormat(format, field);
+    return applyCustomFormat(format, field, timezone);
   }
 
   return defaultFormatter;
@@ -408,7 +409,10 @@ export function applyValueMap(format) {
   return v => format[v];
 }
 
-export function applyDefaultFormat(tooltipFormat: TooltipFormat): (v: any) => string {
+export function applyDefaultFormat(
+  tooltipFormat: TooltipFormat,
+  timezone?: string | null
+): (v: any) => string {
   if (!tooltipFormat || !tooltipFormat.format) {
     return defaultFormatter;
   }
@@ -418,7 +422,7 @@ export function applyDefaultFormat(tooltipFormat: TooltipFormat): (v: any) => st
       return formatNumeric(tooltipFormat.format);
     case TOOLTIP_FORMAT_TYPES.DATE:
     case TOOLTIP_FORMAT_TYPES.DATE_TIME:
-      return datetimeFormatter(null)(tooltipFormat.format);
+      return datetimeFormatter(timezone)(tooltipFormat.format);
     case TOOLTIP_FORMAT_TYPES.PERCENTAGE: {
       const format = formatNumeric(TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format);
       return v => `${format(v)}%`;
@@ -441,14 +445,18 @@ export function getBooleanFormatter(format: string): FieldFormatter {
   }
 }
 // Allow user to specify custom tooltip format via config
-export function applyCustomFormat(format, field: {type?: string}): FieldFormatter {
+export function applyCustomFormat(
+  format,
+  field: {type?: string},
+  timezone?: string | null
+): FieldFormatter {
   switch (field.type) {
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
       return formatNumeric(format);
     case ALL_FIELD_TYPES.date:
     case ALL_FIELD_TYPES.timestamp:
-      return datetimeFormatter(null)(format);
+      return datetimeFormatter(timezone)(format);
     default:
       return v => v;
   }
@@ -543,8 +551,11 @@ export function reverseFormatNumber(str: string): number {
 export function datetimeFormatter(
   timezone?: string | null
 ): (format?: string) => (ts: number) => string {
-  return timezone
-    ? format => ts => moment.utc(ts).tz(timezone).format(format)
-    : // return empty string instead of 'Invalid date' if ts is undefined/null
-      format => ts => ts ? moment.utc(ts).format(format) : '';
+  // return empty string for missing values, while preserving Unix epoch zero
+  return format => ts =>
+    ts || ts === 0
+      ? timezone
+        ? moment.utc(ts).tz(timezone).format(format)
+        : moment.utc(ts).format(format)
+      : '';
 }

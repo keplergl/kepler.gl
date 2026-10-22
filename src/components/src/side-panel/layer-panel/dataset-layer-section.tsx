@@ -132,6 +132,7 @@ function DatasetLayerSectionFactory(
           addGroupBy={visStateActions.addGroupBy}
           addJoin={visStateActions.addJoin}
           addSpatialJoin={visStateActions.addSpatialJoin}
+          addSuitability={visStateActions.addSuitability}
         />
         <LayerList
           datasets={datasets}

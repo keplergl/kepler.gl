@@ -34,14 +34,17 @@ import {
   ColorRange,
   RGBColor,
   Merge,
+  VisConfigBoolean,
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
   VisConfigRange,
+  VisConfigSelection,
   LayerColumn,
   Field,
   AnimationConfig
 } from '@kepler.gl/types';
+import {createTargetArrowLayers, targetArrowVisConfigs} from './target-arrow';
 import {KeplerTable} from '@kepler.gl/table';
 
 export type ArcLayerVisConfigSettings = {
@@ -50,6 +53,9 @@ export type ArcLayerVisConfigSettings = {
   colorRange: VisConfigColorRange;
   sizeRange: VisConfigRange;
   targetColor: VisConfigColorSelect;
+  targetArrowEnabled: VisConfigBoolean;
+  targetArrowShape: VisConfigSelection;
+  targetArrowSize: VisConfigNumber;
 };
 
 export type ArcLayerColumnsConfig = {
@@ -75,6 +81,9 @@ export type ArcLayerVisConfig = {
   sizeRange: [number, number];
   targetColor: RGBColor;
   thickness: number;
+  targetArrowEnabled: boolean;
+  targetArrowShape: string;
+  targetArrowSize: number;
 };
 
 export type ArcLayerVisualChannelConfig = LayerColorConfig & LayerSizeConfig;
@@ -210,7 +219,7 @@ export default class ArcLayer extends Layer {
   constructor(props) {
     super(props);
 
-    this.registerVisConfig(arcVisConfigs);
+    this.registerVisConfig({...arcVisConfigs, ...targetArrowVisConfigs});
     this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
       arcPosAccessor(this.config.columns, this.config.columnMode)(dataContainer);
   }
@@ -540,6 +549,20 @@ export default class ArcLayer extends Layer {
       };
     }
 
+    const arrowLayers = createTargetArrowLayers({
+      layer: this,
+      formattedData: data,
+      defaultLayerProps,
+      mapState,
+      interactionConfig,
+      greatCircle: isGlobeMode,
+      height: 1,
+      elevationScale: 1,
+      getColor: data.getTargetColor,
+      hoveredObject,
+      highlightColor: this.config.highlightColor
+    });
+
     return [
       // @ts-expect-error
       new ArcLayerClass({
@@ -570,7 +593,8 @@ export default class ArcLayer extends Layer {
               getWidth: data.getWidth
             })
           ]
-        : [])
+        : []),
+      ...arrowLayers
     ];
   }
 

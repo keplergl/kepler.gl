@@ -1130,7 +1130,10 @@ mergedLayer1.config = {
       category: 'Uber',
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
-    sizeRange: [0, 10]
+    sizeRange: [0, 10],
+    targetArrowEnabled: false,
+    targetArrowShape: 'chevron',
+    targetArrowSize: 16
   }
 };
 
@@ -1417,6 +1420,7 @@ mergedLayer4.config = {
     heightRange: [0, 500],
     elevationScale: 1,
     fixedHeight: false,
+    invertHeight: false,
     elevationOffset: 0,
     elevationOffsetRange: [0, 500],
     fixedElevation: true,
@@ -1514,6 +1518,7 @@ export const mergedInteractions = {
     ...defaultInteractionConfig.tooltip,
     enabled: true,
     config: {
+      timezone: null,
       compareMode: false,
       compareType: 'absolute',
       fieldsToShow: {

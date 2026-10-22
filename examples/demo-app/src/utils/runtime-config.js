@@ -66,8 +66,6 @@ const CREDENTIAL_TO_CLOUD_KEY = {
  */
 export function applyDemoApplicationDefaults() {
   initApplicationConfig({
-    enableA5Layer: true,
-    enableGeohashLayer: true,
     customIcons: [
       {
         id: 'custom-star',

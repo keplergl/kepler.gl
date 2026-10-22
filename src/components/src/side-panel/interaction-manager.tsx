@@ -4,8 +4,19 @@
 import React from 'react';
 import {useIntl} from 'react-intl';
 
-import {InteractionConfig, LayerOrder, MapInfo, MapState} from '@kepler.gl/types';
-import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
+import {
+  Annotation,
+  CameraBookmark,
+  CameraTour,
+  InteractionConfig,
+  LayerOrder,
+  MapInfo,
+  MapState
+} from '@kepler.gl/types';
+import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
+import {getApplicationConfig} from '@kepler.gl/utils';
+import CameraBookmarks from './interaction-panel/camera-bookmarks';
+import CameraTourConfig from './interaction-panel/camera-tour-config';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
 
@@ -39,12 +50,18 @@ type InteractionManagerProps = {
   uiStateActions?: typeof UIStateActions;
   panelMetadata: PanelMeta;
   layers?: readonly Layer[];
+  annotations?: readonly Annotation[];
   layerOrder?: LayerOrder;
   mapLegendActive?: boolean;
   mapInfo?: Partial<MapInfo>;
   mapInfoShow?: boolean;
   mapInfoActive?: boolean;
   mapState?: MapState;
+  cameraBookmarks?: CameraBookmark[];
+  cameraBookmarksEnabled?: boolean;
+  cameraTour?: CameraTour | null;
+  cameraTourEnabled?: boolean;
+  mapStateActions?: typeof MapStateActions;
   actionIcons?: {
     settings?: PanelHeaderActionIcon;
   };
@@ -75,17 +92,24 @@ function InteractionManagerFactory(
     uiStateActions,
     panelMetadata,
     layers,
+    annotations = [],
     layerOrder,
     mapLegendActive,
     mapInfo,
     mapInfoShow,
     mapInfoActive,
     mapState,
+    cameraBookmarks,
+    cameraBookmarksEnabled,
+    cameraTour,
+    cameraTourEnabled,
+    mapStateActions,
     actionIcons,
     interactionConfigIcons
   }) => {
     const {interactionConfigChange: onConfigChange, setColumnDisplayFormat} = visStateActions;
     const intl = useIntl();
+    const {enableCameraBookmarks, enableCameraTour} = getApplicationConfig();
     const mapInfoPanel = (
       <MapInfoConfig
         key="mapInfo"
@@ -127,6 +151,7 @@ function InteractionManagerFactory(
               <ZoomOpacityConfig
                 key={key}
                 layers={layers}
+                annotations={annotations}
                 zoomOpacityConfig={interactionConfig.zoomOpacity}
                 zoom={fadeOnZoomMarkerZoom(mapState)}
                 visStateActions={visStateActions}
@@ -156,6 +181,27 @@ function InteractionManagerFactory(
           );
         })}
         {interactionConfig.geocoder ? null : mapInfoPanel}
+        {enableCameraBookmarks && (
+          <CameraBookmarks
+            bookmarks={cameraBookmarks}
+            enabled={cameraBookmarksEnabled}
+            uiStateActions={uiStateActions}
+            mapState={mapState}
+            mapStateActions={mapStateActions}
+            visStateActions={visStateActions}
+          />
+        )}
+        {enableCameraTour && (
+          <CameraTourConfig
+            tour={cameraTour}
+            enabled={cameraTourEnabled}
+            uiStateActions={uiStateActions}
+            bookmarks={cameraBookmarks}
+            mapState={mapState}
+            mapStateActions={mapStateActions}
+            visStateActions={visStateActions}
+          />
+        )}
       </div>
     );
   };

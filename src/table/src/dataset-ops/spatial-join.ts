@@ -9,7 +9,8 @@ import {booleanEqual} from '@turf/boolean-equal';
 import {booleanIntersects} from '@turf/boolean-intersects';
 import {booleanOverlap} from '@turf/boolean-overlap';
 import {booleanTouches} from '@turf/boolean-touches';
-import type {Feature} from 'geojson';
+import {difference} from '@turf/difference';
+import type {Feature, MultiPolygon, Polygon} from 'geojson';
 
 import {aggregateValues, resultFieldType} from './aggregations';
 import {
@@ -67,6 +68,38 @@ export function suggestSpatialGeo(fields: Field[]): SpatialGeoSource | null {
   return null;
 }
 
+function hasPolygonCoordinates(feature: Feature): boolean {
+  const geometry = feature.geometry;
+  const polygons =
+    geometry.type === 'MultiPolygon'
+      ? geometry.coordinates
+      : geometry.type === 'Polygon'
+      ? [geometry.coordinates]
+      : [];
+  return (
+    Array.isArray(polygons) &&
+    polygons.length > 0 &&
+    polygons.every(
+      polygon =>
+        Array.isArray(polygon) &&
+        polygon.length > 0 &&
+        polygon.every(
+          ring =>
+            Array.isArray(ring) &&
+            ring.length >= 4 &&
+            ring.every(
+              position =>
+                Array.isArray(position) &&
+                Number.isFinite(position[0]) &&
+                Number.isFinite(position[1])
+            ) &&
+            ring[0][0] === ring[ring.length - 1][0] &&
+            ring[0][1] === ring[ring.length - 1][1]
+        )
+    )
+  );
+}
+
 function readSpatialValue(
   dataset: DatasetOpsTable,
   rowIndex: number,
@@ -100,7 +133,8 @@ function readSpatialValue(
     return null;
   }
   if (isPolygonFeature(feature)) {
-    return {kind: 'polygon', feature};
+    // Turf predicates may return true for malformed coordinates instead of throwing.
+    return hasPolygonCoordinates(feature) ? {kind: 'polygon', feature} : null;
   }
   const lngLat = getLngLat(feature);
   return lngLat ? {kind: 'point', lngLat} : null;
@@ -114,8 +148,22 @@ export function leftContainsRight(left: ParsedSpatialValue, right: ParsedSpatial
     return polygonContainsPoint(left.feature, right.lngLat);
   }
   if (left.kind === 'polygon' && right.kind === 'polygon') {
-    const centroid = getCentroidLngLat(right.feature);
-    return Boolean(centroid && polygonContainsPoint(left.feature, centroid));
+    return turfMatch(
+      (container, target) => {
+        // Test the entire area, including holes and every MultiPolygon component.
+        // Equal polygons and contained polygons sharing an edge are within; a
+        // boundary-only contact is not. Intersects also rejects empty geometries.
+        return (
+          booleanIntersects(container, target) &&
+          difference({
+            type: 'FeatureCollection',
+            features: [target, container] as Feature<Polygon | MultiPolygon>[]
+          }) === null
+        );
+      },
+      left,
+      right
+    );
   }
   if (left.kind === 'polygon' && right.kind === 'h3') {
     const centroid = getCentroid({id: right.index});
@@ -210,6 +258,9 @@ export function geometriesMatchPredicate(
       return turfMatch(booleanTouches, left, right);
     case SPATIAL_JOIN_PREDICATES.intersects:
     default:
+      if (left?.kind === 'polygon' && right?.kind === 'polygon') {
+        return turfMatch(booleanIntersects, left, right);
+      }
       return (
         leftContainsRight(left, right) ||
         leftContainsRight(right, left) ||

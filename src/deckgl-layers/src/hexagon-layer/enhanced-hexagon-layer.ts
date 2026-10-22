@@ -4,6 +4,7 @@
 import {HexagonLayer, HexagonLayerPickingInfo} from '@deck.gl/aggregation-layers';
 import {GetPickingInfoParams, Layer, PickingInfo, Viewport} from '@deck.gl/core';
 import {enrichedAggregationUpdate, enrichedRenderLayers} from '../layer-utils/aggregation-utils';
+import {getHexbinCentroid} from '../layer-utils/aggregation-count-labels';
 import {
   makeGlobeCellLayerClass,
   runBinOptionsWithMercatorViewport
@@ -14,12 +15,6 @@ const HexbinVertices = Array.from({length: 6}, (_, i) => {
   const angle = i * THIRD_PI;
   return [Math.sin(angle), -Math.cos(angle)];
 });
-
-function getHexbinCentroid(id: [number, number], radius: number): [number, number] {
-  const DIST_X = 2 * Math.sin(THIRD_PI);
-  const DIST_Y = 1.5;
-  return [(id[0] + (id[1] & 1) / 2) * radius * DIST_X, id[1] * radius * DIST_Y];
-}
 
 interface HexInternalState {
   radiusCommon?: number;
@@ -48,7 +43,11 @@ interface HexPickingObject {
 export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
   static defaultProps = {
     ...HexagonLayer.defaultProps,
-    gpuAggregation: false
+    gpuAggregation: false,
+    // Supplied by kepler's AggregationLayer when a point-count label is on.
+    // compare: false so a new callback identity does not re-aggregate.
+    renderCountLabels: {type: 'function', value: null, compare: false, optional: true},
+    countLabelConfig: {type: 'object', value: null, compare: true, optional: true}
   };
 
   // HACK: deck.gl 9's _onAggregationUpdate is private and its onSetColorDomain

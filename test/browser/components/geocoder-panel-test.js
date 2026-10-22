@@ -6,12 +6,20 @@ import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {GeocoderPanelFactory, appInjector, testForCoordinates} from '@kepler.gl/components';
+import {
+  ColorSelectorFactory,
+  GeocoderConfigFactory,
+  GeocoderPanelFactory,
+  appInjector,
+  testForCoordinates
+} from '@kepler.gl/components';
 import {cmpDatasetData, cmpObjectKeys} from '../../helpers/comparison-utils';
 
 import {InitialState} from 'test/helpers/mock-state';
 
 const GeocoderPanel = appInjector.get(GeocoderPanelFactory);
+const GeocoderConfig = appInjector.get(GeocoderConfigFactory);
+const ColorSelector = appInjector.get(ColorSelectorFactory);
 const MAPBOX_TOKEN = 'pk.eyJ1Ijoi.d9YD6z';
 
 test('GeocoderPanel - render', t => {
@@ -27,6 +35,7 @@ test('GeocoderPanel - render', t => {
     height: 800
   };
   const layerOrder = ['layer_1', 'layer_2'];
+  const pinColor = [0, 128, 255];
   const mockUiState = InitialState.uiState;
 
   const mockGeoItem = {
@@ -106,7 +115,7 @@ test('GeocoderPanel - render', t => {
             type: 'icon',
             config: {
               label: 'Geocoder Layer',
-              color: [255, 0, 0],
+              color: pinColor,
               dataId: 'geocoder_dataset',
               columns: {
                 lat: 'lt',
@@ -141,6 +150,7 @@ test('GeocoderPanel - render', t => {
           removeDataset={removeDataset}
           updateMap={updateMap}
           layerOrder={layerOrder}
+          color={pinColor}
         />
       </IntlWrapper>
     );
@@ -210,6 +220,33 @@ test('GeocoderPanel - render', t => {
     removeDataset.args[1],
     ['geocoder_dataset'],
     'Should be dispatching removeDataset action on removeMarker'
+  );
+
+  t.end();
+});
+
+test('GeocoderConfig - change pin color', t => {
+  const onChange = sinon.spy();
+  const color = [255, 0, 0];
+  const nextColor = [0, 128, 255];
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <GeocoderConfig config={{limitSearch: false, color}} onChange={onChange} />
+    </IntlWrapper>
+  );
+
+  const colorSelector = wrapper.find(ColorSelector);
+  t.equal(colorSelector.length, 1, 'Should render a pin color selector');
+  t.deepEqual(
+    colorSelector.props().colorSets[0].selectedColor,
+    color,
+    'Should display the configured pin color'
+  );
+
+  colorSelector.props().colorSets[0].setColor(nextColor);
+  t.ok(
+    onChange.calledOnce && onChange.calledWith({limitSearch: false, color: nextColor}),
+    'Should update the geocoder pin color'
   );
 
   t.end();

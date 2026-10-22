@@ -49,6 +49,7 @@ export type SourceDataCatalogProps = {
   addGroupBy?: ActionHandler<typeof VisStateActions.addGroupBy>;
   addJoin?: ActionHandler<typeof VisStateActions.addJoin>;
   addSpatialJoin?: ActionHandler<typeof VisStateActions.addSpatialJoin>;
+  addSuitability?: ActionHandler<typeof VisStateActions.addSuitability>;
   replaceDataset?: ReplaceDatasetHandler;
 };
 
@@ -70,6 +71,7 @@ function SourceDataCatalogFactory(
     addGroupBy,
     addJoin,
     addSpatialJoin,
+    addSuitability,
     replaceDataset
   }: SourceDataCatalogProps) => {
     const [openRefreshSettingsId, setOpenRefreshSettingsId] = useState<string | null>(null);
@@ -97,7 +99,9 @@ function SourceDataCatalogFactory(
                 addGroupBy={addGroupBy}
                 addJoin={addJoin}
                 addSpatialJoin={addSpatialJoin}
+                addSuitability={addSuitability}
                 replaceDataset={replaceDataset}
+                refreshSettingsOpen={showRefreshSettings}
                 onToggleRefreshSettings={
                   (refreshDataset || updateDatasetProps) &&
                   dataset.type === DatasetType.EXTERNALLY_HOSTED

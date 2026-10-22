@@ -151,6 +151,9 @@ export default {
     radiusRange: 'Rang de radi',
     clusterRadius: 'Radi Cluster en Pixels',
     radiusRangePixels: 'Rang del radi en pixels',
+    minClusterSize: 'Mínim de punts per clúster',
+    minClusterSizeDescription:
+      'Amaga els clústers amb menys punts que aquest valor, p. ex. 2 elimina els d’un sol punt',
     billboard: 'Mode de cartellera',
     billboardDescription: 'Orientar la geometria cap a la càmera',
     fadeTrail: 'Rastre de desvaniment',

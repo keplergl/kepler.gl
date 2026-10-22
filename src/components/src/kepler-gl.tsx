@@ -46,12 +46,14 @@ import {
   THEME,
   DEFAULT_MAPBOX_API_URL,
   GEOCODER_DATASET_NAME,
+  GEOCODER_ICON_COLOR,
   MISSING_MAPBOX_TOKEN
 } from '@kepler.gl/constants';
 
 import SidePanelFactory from './side-panel';
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
+import {MapViewStateContextProvider} from './map-view-state-context';
 import BottomWidgetFactory from './bottom-widget';
 import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
@@ -232,6 +234,9 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
   datasets: filteredDatasets,
   filters: props.visState.filters,
   layers: props.visState.layers,
+  annotations: props.visState.annotations,
+  cameraBookmarks: props.visState.cameraBookmarks,
+  cameraTour: props.visState.cameraTour,
   layerOrder: props.visState.layerOrder,
   layerClasses: props.visState.layerClasses,
   interactionConfig: props.visState.interactionConfig,
@@ -240,6 +245,7 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
   overlayBlending: props.visState.overlayBlending,
   groupBys: props.visState.groupBys,
   joins: props.visState.joins,
+  suitabilities: props.visState.suitabilities,
 
   width: props.sidePanelWidth ?? DEFAULT_KEPLER_GL_PROPS.sidePanelWidth,
   availableProviders,
@@ -253,6 +259,7 @@ export const plotContainerSelector = (props: KeplerGLProps) => ({
   resolution: props.uiState.exportImage.resolution,
   legend: props.uiState.exportImage.legend,
   charts: props.uiState.exportImage.charts,
+  transparentBackground: props.uiState.exportImage.transparentBackground,
   center: props.uiState.exportImage.center,
   imageSize: props.uiState.exportImage.imageSize,
   escapeXhtmlForWebpack: props.uiState.exportImage.escapeXhtmlForWebpack,
@@ -281,6 +288,7 @@ export const bottomWidgetSelector = (props: KeplerGLProps, theme) => ({
 
 export const modalContainerSelector = (props: KeplerGLProps, rootNode) => ({
   appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
+  appWebsite: props.appWebsite,
   mapStyle: props.mapStyle,
   visState: props.visState,
   mapState: props.mapState,
@@ -318,7 +326,8 @@ export const geoCoderPanelSelector = (
   removeDataset: props.visStateActions.removeDataset,
   updateMap: props.mapStateActions.updateMap,
   appWidth: dimensions.width,
-  limitSearch: props.visState.interactionConfig.geocoder.config?.limitSearch ?? false
+  limitSearch: props.visState.interactionConfig.geocoder.config?.limitSearch ?? false,
+  color: props.visState.interactionConfig.geocoder.config?.color ?? GEOCODER_ICON_COLOR
 });
 
 /**
@@ -722,18 +731,21 @@ function KeplerGlFactory(
                         datasets={visState.datasets}
                         refreshDataset={this.props.visStateActions.refreshDataset}
                       />
-                      <DndContext visState={visState}>
-                        {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                        <MapsLayout
-                          className="maps"
-                          mapState={this.props.mapState}
-                          onSetSwipeComparePercentage={
-                            this.props.mapStateActions.setSwipeComparePercentage
-                          }
-                        >
-                          {mapContainers}
-                        </MapsLayout>
-                      </DndContext>
+                      <MapViewStateContextProvider mapState={this.props.mapState}>
+                        <DndContext visState={visState}>
+                          {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
+                          <MapsLayout
+                            provideViewState={false}
+                            className="maps"
+                            mapState={this.props.mapState}
+                            onSetSwipeComparePercentage={
+                              this.props.mapStateActions.setSwipeComparePercentage
+                            }
+                          >
+                            {mapContainers}
+                          </MapsLayout>
+                        </DndContext>
+                      </MapViewStateContextProvider>
                       {isExportingImage && <PlotContainer {...plotContainerFields} />}
                       {/* 1 geocoder: single mode OR split mode and synced viewports */}
                       {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (

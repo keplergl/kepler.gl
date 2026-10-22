@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
-import {getDistanceScales} from 'viewport-mercator-project';
+import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {
   DataContainerInterface,
   ArrowDataContainer,
@@ -10,6 +10,7 @@ import {
   getFormatter
 } from '@kepler.gl/utils';
 import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
+import {ALL_FIELD_TYPES, TOOLTIP_FORMATS, TOOLTIP_KEY} from '@kepler.gl/constants';
 import uniq from 'es-toolkit/compat/uniq';
 import {max} from 'd3-array';
 
@@ -18,6 +19,8 @@ export const defaultPadding = 20;
 export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
   return textLabel => {
     const distanceScale = getDistanceScales(mapState);
+    const scale = mapState.scale ?? zoomToScale(mapState.zoom);
+    const pixelsPerMeter = distanceScale.unitsPerMeter[0] * scale;
     const xMult = textLabel.anchor === 'middle' ? 0 : textLabel.anchor === 'start' ? 1 : -1;
     const yMult = textLabel.alignment === 'center' ? 0 : textLabel.alignment === 'bottom' ? 1 : -1;
 
@@ -28,7 +31,7 @@ export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
         ? textLabel.size
         : textLabel.size;
 
-    const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
+    const pixelRadius = radiusScale * pixelsPerMeter;
     const padding = defaultPadding;
 
     return typeof getRadius === 'function'
@@ -45,15 +48,31 @@ export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const textLabelAccessor = textLabel => dc => d => {
-  const val = textLabel.field.valueAccessor(d);
+  const {field} = textLabel;
+  if (field.type === ALL_FIELD_TYPES.timestamp) {
+    return getSingleTextLabelValue(textLabel, d);
+  }
+  const val = field.valueAccessor(d);
   return notNullorUndefined(val) ? String(val) : '';
+};
+
+/**
+ * Timestamp value accessors return unix milliseconds, so a timestamp label without a
+ * display format falls back to the date time format tooltips use for timestamps by default.
+ */
+const getTextLabelFormat = (field: any, format?: string): string | undefined => {
+  const labelFormat = field.displayFormat ?? format;
+  if (!labelFormat && field.type === ALL_FIELD_TYPES.timestamp) {
+    return TOOLTIP_FORMATS.DATE_TIME_L_LTS[TOOLTIP_KEY];
+  }
+  return labelFormat;
 };
 
 export const getSingleTextLabelValue = (
   {field, format}: {field: any; format?: string},
   datum: {index: number} | any[] | null
 ): string => {
-  const fmt = getFormatter(field.displayFormat ?? format, field);
+  const fmt = getFormatter(getTextLabelFormat(field, format), field);
   const val = datum ? field.valueAccessor(datum, true) : null;
   return (notNullorUndefined(val) ? fmt(val) : null) ?? '';
 };
@@ -198,3 +217,21 @@ export const getArrowTextVector = (
 
   return new arrow.Vector(input);
 };
+
+/**
+ * deck.gl layer id for one text label. A repeated field name gets the label
+ * index so CollisionTextLayer's -background and -characters sublayers stay unique.
+ */
+export function textLabelDeckLayerId(
+  layerId: string,
+  textLabel: {field?: {name?: string} | null}[],
+  index: number,
+  collisionEnabled: boolean
+): string {
+  const fieldName = textLabel[index]?.field?.name;
+  const duplicateFieldName =
+    Boolean(fieldName) && textLabel.filter(label => label.field?.name === fieldName).length > 1;
+  return `${layerId}-label-${fieldName}${duplicateFieldName ? `-${index}` : ''}${
+    collisionEnabled ? '-collision' : ''
+  }`;
+}

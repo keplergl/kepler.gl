@@ -151,6 +151,9 @@ export default {
     radiusRange: 'Alcance do Raio',
     clusterRadius: 'Raio do Agrupamento em pixels',
     radiusRangePixels: 'Alcance do Raio em pixels',
+    minClusterSize: 'Mínimo de pontos por cluster',
+    minClusterSizeDescription:
+      'Oculta clusters com menos pontos do que este valor, por exemplo, 2 remove os de um só ponto',
     billboard: 'Câmera de rosto',
     billboardDescription: 'Oriente a geometria em direção à câmera',
     fadeTrail: 'Fade trilha',

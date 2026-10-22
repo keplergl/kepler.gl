@@ -119,6 +119,11 @@ export type KeplerApplicationConfig = {
   defaultExportJsonSettings?: {
     hasData?: boolean;
   };
+  /**
+   * Whether to show editable application name and website controls for exported maps.
+   * Enabled by default.
+   */
+  enableCustomExportBranding?: boolean;
   baseMapLibraryConfig?: Record<BaseMapLibraryType, BaseMapLibraryConfig>;
   plugins?: any[];
   // KeplerTable alternative
@@ -259,6 +264,12 @@ export type KeplerApplicationConfig = {
    * name and description card. Enabled by default.
    */
   enableMapInfo?: boolean;
+
+  /** Whether to show the Bookmarks panel in Interactions. Enabled by default. */
+  enableCameraBookmarks?: boolean;
+
+  /** Whether to show the Camera animation panel in Interactions. Enabled by default. */
+  enableCameraTour?: boolean;
 
   /**
    * Master switch for power-user JSON editors. When false, every section editor is hidden.
@@ -402,6 +413,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   defaultExportJsonSettings: {
     hasData: true
   },
+  enableCustomExportBranding: true,
 
   baseMapLibraryConfig: {
     maplibre: {
@@ -428,7 +440,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   table: null,
   database: null,
 
-  useArrowProgressiveLoading: true,
+  useArrowProgressiveLoading: false,
   showReleaseBanner: true,
   useOnFilteredItemsChange: false,
 
@@ -497,6 +509,10 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableChartsPanel: true,
 
   enableMapInfo: true,
+
+  enableCameraBookmarks: true,
+
+  enableCameraTour: true,
 
   enableJsonEditors: true,
   enableLayerJsonEditor: true,

@@ -222,8 +222,9 @@ function LayerListFactory(
     layers: Layer[];
     panelProps: any;
     layerActions: any;
+    visStateActions: typeof VisStateActions;
     disabled?: boolean;
-  }> = ({layerGroup, layers, panelProps, layerActions, disabled}) => {
+  }> = ({layerGroup, layers, panelProps, layerActions, visStateActions, disabled}) => {
     const {attributes, isDragging, listeners, setNodeRef, transform, transition} = useSortable({
       id: layerGroup.id,
       data: {type: SORTABLE_LAYER_GROUP_TYPE},
@@ -263,6 +264,8 @@ function LayerListFactory(
             layerGroup={layerGroup}
             onToggleLayerGroupContent={onToggle}
             isLayerGroupContentOpen={isSectionOpen}
+            updateLayerGroup={visStateActions.updateLayerGroup}
+            removeLayerGroup={visStateActions.removeLayerGroup}
             listeners={listeners}
           />
         </div>
@@ -406,6 +409,7 @@ function LayerListFactory(
                 layers={layers}
                 panelProps={panelProps}
                 layerActions={layerActions}
+                visStateActions={visStateActions}
                 disabled={!isSortable}
               />
             )

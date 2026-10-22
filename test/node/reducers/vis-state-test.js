@@ -27,13 +27,21 @@ import {
 } from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson, remoteDatasetFromUrl} from '@kepler.gl/processors';
-import {Layer, KeplerGlLayers, COLUMN_MODE_TABLE} from '@kepler.gl/layers';
-import {maybeToDate} from '@kepler.gl/table';
+import {
+  Layer,
+  KeplerGlLayers,
+  COLUMN_MODE_TABLE,
+  createPointCountLabelField
+} from '@kepler.gl/layers';
+import {copyTableAndUpdate, maybeToDate} from '@kepler.gl/table';
 import {
   createDataContainer,
   applyFilterFieldName,
   getAnimatableVisibleLayers,
   getBinThresholds,
+  getFilterBinThresholds,
+  getNumericPlotInterval,
+  intervalBinFromMarks,
   getDefaultFilter,
   histogramFromDomain,
   LayerTimeInterval,
@@ -53,12 +61,16 @@ import {
   BINS,
   INTERVAL,
   LAYER_TYPES,
+  MAX_GPU_FILTERS,
   SYNC_TIMELINE_MODES,
+  GEOCODER_DATASET_NAME,
+  GEOCODER_ICON_COLOR,
+  GEOCODER_LAYER_ID,
   KEPLER_COLOR_PALETTES,
   colorPaletteToColorRange
 } from '@kepler.gl/constants';
 
-const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
+const {ArcLayer, PointLayer, GeojsonLayer, IconLayer, LineLayer, TripLayer} = KeplerGlLayers;
 
 // fixtures
 import testData, {
@@ -1281,6 +1293,144 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
     'should enable collision filtering on all text labels'
   );
 
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE -> cluster point count is added once', t => {
+  const initialState = StateWFiles.visState;
+  const pointLayer = initialState.layers.find(l => l.type === 'point');
+  const resetState = reducer(
+    initialState,
+    VisStateActions.layerConfigChange(pointLayer, {
+      textLabel: [{...DEFAULT_TEXT_LABEL}]
+    })
+  );
+  const resetPoint = resetState.layers.find(l => l.id === pointLayer.id);
+  const clusterState = reducer(resetState, VisStateActions.layerTypeChange(resetPoint, 'cluster'));
+  const clusterLayer = clusterState.layers.find(l => l.type === 'cluster');
+
+  t.equal(clusterLayer.config.textLabel.length, 1, 'type change keeps one label slot');
+  t.equal(clusterLayer.config.textLabel[0].field, null, 'copied point label has no field');
+
+  const pointCountField = createPointCountLabelField();
+  const selectedState = reducer(
+    clusterState,
+    VisStateActions.layerTextLabelChange(clusterLayer, 'all', 'fields', [pointCountField])
+  );
+  const selectedLayer = selectedState.layers.find(l => l.type === 'cluster');
+  const selected = selectedLayer.config.textLabel;
+
+  t.equal(selected.length, 1, 'picking Point Count adds one label');
+  t.equal(selected[0].field.name, 'pointCount');
+  t.equal(selected[0].field.fieldIdx, -1);
+  t.equal(selected[0].anchor, 'middle');
+  t.equal(selected[0].alignment, 'center');
+  t.equal(selected[0].collisionEnabled, true);
+  t.equal(selected[0].outlineWidth, 1);
+
+  const again = reducer(
+    selectedState,
+    VisStateActions.layerTextLabelChange(selectedLayer, 'all', 'fields', [pointCountField])
+  );
+  t.equal(
+    again.layers.find(l => l.type === 'cluster').config.textLabel.length,
+    1,
+    'picking Point Count again keeps one label'
+  );
+
+  const added = reducer(
+    selectedState,
+    VisStateActions.layerTextLabelChange(selectedLayer, selected.length)
+  );
+  const addedLabels = added.layers.find(l => l.type === 'cluster').config.textLabel;
+  t.equal(addedLabels.length, 2, 'add more label appends a slot');
+  t.equal(addedLabels[1].field, null, 'the extra slot does not clone Point Count');
+
+  const pointState = reducer(
+    selectedState,
+    VisStateActions.layerTypeChange(selectedLayer, 'point')
+  );
+  const convertedPointLayer = pointState.layers.find(l => l.type === 'point');
+  t.equal(convertedPointLayer.config.textLabel.length, 1, 'type change keeps one label slot');
+  t.equal(
+    convertedPointLayer.config.textLabel[0].field,
+    null,
+    'type change clears the synthetic Point Count field'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_COLUMN_DISPLAY_FORMAT updates text labels', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const otherDataId = 'other-data';
+  const otherDataset = copyTableAndUpdate(initialState.datasets[testCsvDataId], {
+    id: otherDataId
+  });
+  const layerIndex = initialState.layers.findIndex(layer => layer.config.dataId === testCsvDataId);
+  const field = initialState.datasets[testCsvDataId].fields.find(
+    ({name}) => name === 'gps_data.utc_timestamp'
+  );
+  const otherField = otherDataset.fields.find(({name}) => name === 'gps_data.utc_timestamp');
+  const layer = CloneDeep(initialState.layers[layerIndex]).updateLayerConfig({
+    textLabel: [{...DEFAULT_TEXT_LABEL, field}]
+  });
+  const otherLayer = CloneDeep(initialState.layers[layerIndex]).updateLayerConfig({
+    dataId: otherDataId,
+    textLabel: [{...DEFAULT_TEXT_LABEL, field: otherField}]
+  });
+  otherLayer.id = `${otherLayer.id}-other`;
+  const stateWithOtherDataset = {
+    ...initialState,
+    datasets: {...initialState.datasets, [otherDataId]: otherDataset}
+  };
+  const {layerData: oldLayerData} = calculateLayerData(layer, stateWithOtherDataset);
+  const {layerData: otherLayerData} = calculateLayerData(otherLayer, stateWithOtherDataset);
+  const layers = stateWithOtherDataset.layers.slice();
+  const layerData = stateWithOtherDataset.layerData.slice();
+  layers[layerIndex] = layer;
+  layerData[layerIndex] = oldLayerData;
+  const otherLayerIndex = layers.push(otherLayer) - 1;
+  layerData.push(otherLayerData);
+  const stateWithTextLabel = {
+    ...stateWithOtherDataset,
+    layers,
+    layerData
+  };
+
+  const nextState = reducer(
+    stateWithTextLabel,
+    VisStateActions.setColumnDisplayFormat(testCsvDataId, {
+      'gps_data.utc_timestamp': 'YYYY'
+    })
+  );
+  const updatedLayer = nextState.layers[layerIndex];
+
+  t.equal(
+    updatedLayer.config.textLabel[0].field.displayFormat,
+    'YYYY',
+    'should update the display format stored in the text label field'
+  );
+  t.equal(
+    nextState.layerData[layerIndex].textLabels[0].getText({index: 0}),
+    '2016',
+    'should immediately rebuild cached text labels with the updated display format'
+  );
+  t.equal(
+    nextState.layers[otherLayerIndex],
+    otherLayer,
+    'should not update a layer belonging to another dataset with the same field name'
+  );
+  t.equal(
+    nextState.layers[otherLayerIndex].config.textLabel[0].field.displayFormat,
+    undefined,
+    'should leave the other dataset label format unchanged'
+  );
+  t.equal(
+    nextState.layerData[otherLayerIndex],
+    otherLayerData,
+    'should not rebuild layer data belonging to another dataset'
+  );
   t.end();
 });
 
@@ -2628,6 +2778,81 @@ test('#visStateReducer -> SET_FILTER.name', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_FILTER.name merges synced domains when changing first field', async t => {
+  const firstDataset = await createNewDataEntryMock({
+    info: {id: 'first', label: 'first'},
+    data: {
+      fields: [
+        {name: 'initial', type: ALL_FIELD_TYPES.integer},
+        {name: 'replacement', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [0, 0],
+        [10, 20]
+      ]
+    }
+  });
+  const secondDataset = await createNewDataEntryMock({
+    info: {id: 'second', label: 'second'},
+    data: {
+      fields: [{name: 'amount', type: ALL_FIELD_TYPES.real}],
+      rows: [[100], [100.5]]
+    }
+  });
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {...firstDataset, ...secondDataset}
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'initial'));
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'amount'], 1));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'replacement', 0));
+
+  t.deepEqual(state.filters[0].domain, [0, 100.5], 'keeps both synced datasets in the domain');
+  t.equal(state.filters[0].step, 0.0001, 'keeps the finest synced dataset step');
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.inverted', t => {
+  const oldState = CloneDeep(StateWFilters.visState);
+  const dataId = testGeoJsonDataId;
+  const allCount = oldState.datasets[dataId].dataContainer.numRows();
+  const keptIn = oldState.datasets[dataId].filteredIndex.length;
+
+  t.ok(keptIn > 0 && keptIn < allCount, 'fixture keeps a subset of rows');
+
+  let next = reducer(oldState, VisStateActions.setFilter(1, 'inverted', true));
+  let filter = next.filters[1];
+  t.equal(filter.inverted, true, 'stores filter out');
+  t.equal(filter.type, 'multiSelect', 'category filter stays a multi select');
+  t.equal(
+    next.datasets[dataId].filteredIndex.length + keptIn,
+    allCount,
+    'filter out keeps the rows filter in would hide'
+  );
+
+  next = reducer(next, VisStateActions.setFilter(1, 'name', 'ZIP_CODE', 0));
+  filter = next.filters[1];
+  t.equal(filter.type, 'range', 'numeric field becomes a range filter');
+  t.equal(filter.inverted, true, 'filter out survives a field change');
+  t.equal(filter.gpu, false, 'an inverted range filter does not use the GPU');
+
+  next = reducer(next, VisStateActions.setFilter(1, 'inverted', false));
+  filter = next.filters[1];
+  t.equal(filter.inverted, false, 'filter in is the default again');
+  t.equal(filter.gpu, true, 'range filters return to the GPU');
+  t.deepEqual(filter.gpuChannel, [0], 'a GPU channel is assigned again');
+
+  next.datasets[dataId].disableDataOperation = true;
+  next = reducer(next, VisStateActions.setFilter(1, 'inverted', true));
+  filter = next.filters[1];
+  t.equal(filter.inverted, false, 'GPU-only datasets reject unsupported filter out');
+  t.equal(filter.gpu, true, 'GPU-only datasets keep their working GPU filter');
+
+  t.end();
+});
+
 test('#visStateReducer -> SET_FILTER.dataId', t => {
   const oldState = CloneDeep(StateWFilters.visState);
   const oldFilter = {...oldState.filters[1]};
@@ -2649,6 +2874,230 @@ test('#visStateReducer -> SET_FILTER.dataId', t => {
     newFilter,
     expectedFilter,
     'Should create a new filter using the provided list of dataId'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.dataId replaces synced datasets in place', async t => {
+  const firstDataset = await createNewDataEntryMock({
+    info: {id: 'first', label: 'first'},
+    data: {
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[0], [10]]
+    }
+  });
+  const secondDataset = await createNewDataEntryMock({
+    info: {id: 'second', label: 'second'},
+    data: {
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[20], [30]]
+    }
+  });
+  const replacementDataset = await createNewDataEntryMock({
+    info: {id: 'replacement', label: 'replacement'},
+    data: {
+      fields: [
+        {name: 'other', type: ALL_FIELD_TYPES.integer},
+        {name: 'value', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [400, 40],
+        [500, 50]
+      ]
+    }
+  });
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {...firstDataset, ...secondDataset, ...replacementDataset}
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'value'], 1));
+  state = reducer(state, VisStateActions.addFilter('replacement'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'other'));
+
+  const replaceFirstState = reducer(
+    state,
+    VisStateActions.setFilter(0, 'dataId', 'replacement', 0)
+  );
+  const replaceFirst = replaceFirstState.filters[0];
+  t.deepEqual(replaceFirst.dataId, ['replacement', 'second'], 'replaces the first dataset');
+  t.deepEqual(replaceFirst.name, ['value', 'value'], 'keeps field names aligned');
+  t.deepEqual(replaceFirst.fieldIdx, [1, 0], 'rebinds the first field index by name');
+  t.deepEqual(replaceFirst.gpuChannel, [1, 0], 'reallocates the replaced GPU channel');
+  t.equal(
+    replaceFirstState.datasets.replacement.gpuFilter.filterValueUpdateTriggers.gpuFilter_0.name,
+    'other',
+    'keeps the existing replacement-dataset GPU filter'
+  );
+  t.equal(
+    replaceFirstState.datasets.replacement.gpuFilter.filterValueUpdateTriggers.gpuFilter_1.name,
+    'value',
+    'adds the rebound filter on a free GPU channel'
+  );
+  t.deepEqual(
+    replaceFirst.domain,
+    [20, 50],
+    'rebuilds the domain after replacing the first dataset'
+  );
+
+  const replaceSecond = reducer(state, VisStateActions.setFilter(0, 'dataId', 'replacement', 1))
+    .filters[0];
+  t.deepEqual(replaceSecond.dataId, ['first', 'replacement'], 'replaces a later dataset');
+  t.deepEqual(replaceSecond.name, ['value', 'value'], 'keeps later field names aligned');
+  t.deepEqual(replaceSecond.fieldIdx, [0, 1], 'rebinds a later field index by name');
+  t.deepEqual(replaceSecond.gpuChannel, [0, 1], 'reallocates a later GPU channel');
+  t.deepEqual(replaceSecond.domain, [0, 50], 'rebuilds the domain after replacing a later dataset');
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.dataId rebinds interval fields on replacement', async t => {
+  const makeDataset = async (id, csv) => {
+    const {fields, rows} = processCsvData(csv);
+    return createNewDataEntryMock({info: {id, label: id}, data: {fields, rows}});
+  };
+  const firstDataset = await makeDataset(
+    'first',
+    'start,end\n2020-01-01 00:00:00,2020-01-01 00:30:00\n2020-01-01 01:00:00,2020-01-01 01:30:00'
+  );
+  const secondDataset = await makeDataset(
+    'second',
+    'start,end\n2020-01-02 00:00:00,2020-01-02 00:30:00\n2020-01-02 01:00:00,2020-01-02 01:30:00'
+  );
+  const replacementDataset = await makeDataset(
+    'replacement',
+    'other,end,start\n1,2020-01-03 00:30:00,2020-01-03 00:00:00\n2,2020-01-03 01:30:00,2020-01-03 01:00:00'
+  );
+  const missingEndDataset = await makeDataset(
+    'missing-end',
+    'other,start\n1,2020-01-04 00:00:00\n2,2020-01-04 01:00:00'
+  );
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {
+      ...firstDataset,
+      ...secondDataset,
+      ...replacementDataset,
+      ...missingEndDataset
+    }
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'start'));
+  state = reducer(state, VisStateActions.setFilter(0, 'endName', 'end'));
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'start'], 1));
+  state = reducer(state, VisStateActions.setFilter(0, 'endName', 'end', 1));
+  state = reducer(state, VisStateActions.addFilter('replacement'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'other'));
+
+  const replaced = reducer(state, VisStateActions.setFilter(0, 'dataId', 'replacement', 1))
+    .filters[0];
+  const replacementEndProps = replacementDataset.replacement.getColumnFilterProps('end');
+  t.deepEqual(replaced.fieldIdx, [0, 2], 'rebinds the interval start field index');
+  t.deepEqual(replaced.endFieldIdx, [1, 1], 'rebinds the interval end field index');
+  t.deepEqual(
+    replaced.endMappedValue[1],
+    replacementEndProps.mappedValue,
+    'rebuilds the replacement interval end values'
+  );
+  t.deepEqual(replaced.gpuChannel, [0, 1], 'allocates a free replacement start channel');
+  t.deepEqual(replaced.gpuEndChannel, [1, 2], 'allocates a free replacement end channel');
+
+  const missingEnd = reducer(state, VisStateActions.setFilter(0, 'dataId', 'missing-end', 1))
+    .filters[0];
+  t.equal(missingEnd.name[1], 'start', 'keeps an available start selection');
+  t.equal(missingEnd.endName[1], null, 'clears a missing end selection');
+  t.equal(missingEnd.endFieldIdx[1], null, 'clears a missing end field index');
+  t.equal(missingEnd.endMappedValue[1], null, 'clears missing interval values');
+  t.equal(missingEnd.gpuEndChannel[1], undefined, 'clears the missing end GPU channel');
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.dataId leaves missing replacement fields empty', async t => {
+  const firstDataset = await createNewDataEntryMock({
+    info: {id: 'first', label: 'first'},
+    data: {
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[0], [10]]
+    }
+  });
+  const secondDataset = await createNewDataEntryMock({
+    info: {id: 'second', label: 'second'},
+    data: {
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[20], [30]]
+    }
+  });
+  const replacementDataset = await createNewDataEntryMock({
+    info: {id: 'replacement', label: 'replacement'},
+    data: {
+      fields: [{name: 'other', type: ALL_FIELD_TYPES.integer}],
+      rows: [[100], [200]]
+    }
+  });
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {...firstDataset, ...secondDataset, ...replacementDataset}
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'value'], 1));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [5, 15]));
+  state = reducer(state, VisStateActions.setFilter(0, 'dataId', 'replacement', 1));
+
+  t.deepEqual(state.filters[0].name, ['value', ''], 'leaves the unavailable field unselected');
+  t.deepEqual(state.filters[0].fieldIdx, [0, -1], 'clears the unavailable field index');
+  t.equal(state.filters[0].gpu, false, 'uses CPU filtering while a selection is missing');
+  t.equal(state.filters[0].gpuChannel[1], undefined, 'clears the replaced GPU channel');
+  t.equal(
+    state.datasets.replacement.filteredIndex.length,
+    2,
+    'does not apply the synced filter until a replacement field is selected'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.dataId falls back to CPU when GPU channels are exhausted', async t => {
+  const createDataset = (id, rows) =>
+    createNewDataEntryMock({
+      info: {id, label: id},
+      data: {fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}], rows}
+    });
+  const firstDataset = await createDataset('first', [[0], [10]]);
+  const secondDataset = await createDataset('second', [[20], [30]]);
+  const replacementDataset = await createDataset('replacement', [[0], [10], [20]]);
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {...firstDataset, ...secondDataset, ...replacementDataset}
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'value'], 1));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [5, 15]));
+  for (let i = 0; i < MAX_GPU_FILTERS; i++) {
+    state = reducer(state, VisStateActions.addFilter('replacement'));
+    state = reducer(state, VisStateActions.setFilter(i + 1, 'name', 'value'));
+  }
+
+  state = reducer(state, VisStateActions.setFilter(0, 'dataId', 'replacement', 1));
+
+  t.equal(state.filters[0].gpu, false, 'falls back to CPU filtering');
+  t.equal(state.filters[0].gpuChannel[1], undefined, 'does not retain a conflicting channel');
+  t.ok(
+    state.datasets.replacement.filterRecord.cpu.some(filter => filter.id === state.filters[0].id),
+    'records the replaced filter as a CPU filter'
+  );
+  t.equal(
+    state.datasets.replacement.filteredIndex.length,
+    1,
+    'applies the replacement filter on CPU'
   );
 
   t.end();
@@ -3131,6 +3580,315 @@ test('#visStateReducer -> SET_FILTER_ANIMATION_WINDOW interval snaps to one hist
   const freed = backToFree.filters[0];
   t.equal(freed.animationWindow, ANIMATION_WINDOW.free, 'should leave interval mode');
   t.ok(freed.value[1] > freed.value[0], 'should widen back to a range of at least one bin');
+
+  t.end();
+});
+
+test('#visStateReducer -> sparse datetime interval uses the cached bin end', t => {
+  const initialState = CloneDeep(StateWFilters.visState);
+  const filter = initialState.filters[0];
+  const dataId = filter.dataId[0];
+  const interval = '1-minute';
+  filter.domain = [0, 180000];
+  filter.value = [0, 0];
+  filter.animationWindow = ANIMATION_WINDOW.free;
+  filter.plotType = {...filter.plotType, interval};
+  filter.timeBins = {
+    [dataId]: {
+      [interval]: [
+        {count: 1, indexes: [0], x0: 0, x1: 60000},
+        {count: 1, indexes: [1], x0: 120000, x1: 180000}
+      ]
+    }
+  };
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.setFilterAnimationWindow({
+      id: filter.id,
+      animationWindow: ANIMATION_WINDOW.interval
+    })
+  );
+
+  t.deepEqual(
+    nextState.filters[0].value,
+    [0, 59999],
+    'should stop at the selected cached calendar bin instead of the next non-empty bin'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> numeric filter timeline uses numeric bins and no time-only state', t => {
+  let state = CloneDeep(StateWFilters.visState);
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'gps_data.lat'));
+
+  t.equal(state.filters[0].type, 'range', 'should switch the selected X field to a range filter');
+  t.equal(
+    state.filters[0].view,
+    FILTER_VIEW_TYPES.side,
+    'should keep the numeric timeline disabled by default'
+  );
+
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.01}}));
+  state = reducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.enlarged));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'gps_data.lng'));
+  t.equal(
+    state.filters[0].view,
+    FILTER_VIEW_TYPES.enlarged,
+    'should keep an opted-in numeric timeline open when changing numeric fields'
+  );
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'gps_data.lat'));
+  state = reducer(
+    state,
+    VisStateActions.setFilterAnimationWindow({
+      id: state.filters[0].id,
+      animationWindow: ANIMATION_WINDOW.interval
+    })
+  );
+
+  const filter = state.filters[0];
+  const marks = getFilterBinThresholds(filter);
+  const markIndex = marks.indexOf(filter.value[0]);
+  t.ok(markIndex >= 0 && markIndex < marks.length - 1, 'should snap to a numeric histogram bin');
+  t.equal(
+    filter.value[1],
+    intervalBinFromMarks(marks, filter.value[0], 0)[1],
+    'should match the selected histogram bin without sharing its next boundary'
+  );
+  t.equal(filter.plotType.numericInterval, 0.01, 'should persist the numeric bin size');
+  t.notOk(filter.timeBins, 'should not create calendar time bins');
+  t.notOk(filter.timezone, 'should not add a timezone');
+  t.notOk(
+    Object.prototype.hasOwnProperty.call(filter, 'syncTimelineMode'),
+    'should not apply time timeline synchronization state'
+  );
+
+  const yAxis = state.datasets[filter.dataId[0]].fields.find(
+    field => field.name === 'gps_data.lng'
+  );
+  state = reducer(state, VisStateActions.setFilterPlot(0, {yAxis}));
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {aggregation: 'sum'}}));
+  t.equal(state.filters[0].plotType.type, 'lineChart', 'should enable the Y-axis line chart');
+  t.ok(state.filters[0].lineChart?.series, 'should aggregate the selected Y field by numeric bins');
+
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'time'));
+  t.equal(state.filters[0].type, 'timeRange', 'should switch back to datetime behavior');
+  t.notOk(
+    state.filters[0].plotType.numericInterval,
+    'should not apply the numeric bin size to datetime'
+  );
+  t.ok(state.filters[0].plotType.interval, 'should restore a calendar interval for datetime');
+  state = reducer(
+    state,
+    VisStateActions.setFilterAnimationTimeConfig(0, {timezone: 'America/New_York'})
+  );
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'gps_data.lat'));
+  t.equal(state.filters[0].type, 'range', 'should switch back to numeric behavior');
+  t.notOk(state.filters[0].timezone, 'should clear timezone state from a numeric filter');
+  t.notOk(state.filters[0].plotType.interval, 'should clear calendar binning from numeric mode');
+
+  t.end();
+});
+
+test('#visStateReducer -> oversized numeric intervals use coherent automatic bins', t => {
+  const {fields, rows} = processCsvData(`x
+0
+100`);
+  const payload = [
+    {
+      info: {id: 'numeric-bin-limit', label: 'numeric bin limit'},
+      data: {fields, rows}
+    }
+  ];
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
+  state = reducer(state, VisStateActions.addFilter('numeric-bin-limit'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'x'));
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 10}}));
+  t.equal(state.filters[0].plotType.numericInterval, 10, 'should keep a valid numeric interval');
+
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.01}}));
+
+  const filter = state.filters[0];
+  const effectiveInterval = getNumericPlotInterval(filter);
+  t.notOk(
+    Object.prototype.hasOwnProperty.call(filter.plotType, 'numericInterval'),
+    'should discard an interval that exceeds the numeric bin limit'
+  );
+  t.ok(effectiveInterval > 0.01, 'should report the effective automatic bin width');
+  t.equal(
+    effectiveInterval,
+    filter.bins['numeric-bin-limit'][0].x1 - filter.bins['numeric-bin-limit'][0].x0,
+    'the displayed interval should match the bins used by the filter plot'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> numeric interval playback refilters exact bins', t => {
+  const {fields, rows} = processCsvData(`x
+-1.5
+-1
+-0.75
+0
+0.25
+0.5
+1`);
+  const payload = [
+    {
+      info: {id: 'numeric-interval', label: 'numeric interval'},
+      data: {fields, rows}
+    }
+  ];
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
+  state = reducer(state, VisStateActions.addFilter('numeric-interval'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'x'));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [-1.5, -1]));
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 1.5}}));
+  state = reducer(
+    state,
+    VisStateActions.setFilterAnimationWindow({
+      id: state.filters[0].id,
+      animationWindow: ANIMATION_WINDOW.interval
+    })
+  );
+
+  let filter = state.filters[0];
+  let dataset = state.datasets['numeric-interval'];
+  let marks = getFilterBinThresholds(filter);
+  t.deepEqual(
+    filter.value,
+    intervalBinFromMarks(marks, marks[0], 0),
+    'entering interval mode snaps the paused selection to one numeric bin'
+  );
+  t.ok(
+    dataset.filterRecord.cpu.some(candidate => candidate.id === filter.id),
+    'numeric interval membership uses the exact CPU filtering path'
+  );
+  t.notOk(
+    dataset.filterRecord.gpu.some(candidate => candidate.id === filter.id),
+    'numeric interval membership does not use inclusive Float32 GPU bounds'
+  );
+  t.deepEqual(
+    dataset.filteredIndex,
+    [0, 1, 2],
+    'the first bin excludes the exact boundary assigned to the next bin'
+  );
+
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.5}}));
+  filter = state.filters[0];
+  dataset = state.datasets['numeric-interval'];
+  marks = getFilterBinThresholds(filter);
+  const selectedMark = marks.indexOf(filter.value[0]);
+  t.ok(selectedMark >= 0 && selectedMark < marks.length - 1, 'uses a new histogram mark');
+  t.deepEqual(
+    filter.value,
+    intervalBinFromMarks(marks, filter.value[0], 0),
+    'changing the numeric bin size resnaps a paused interval to one new bin'
+  );
+  t.deepEqual(
+    dataset.filteredIndex,
+    [3, 4],
+    'changing the numeric bin size immediately reapplies the resnapped selection'
+  );
+
+  state = reducer(
+    state,
+    VisStateActions.setFilterAnimationWindow({
+      id: filter.id,
+      animationWindow: ANIMATION_WINDOW.free
+    })
+  );
+  filter = state.filters[0];
+  dataset = state.datasets['numeric-interval'];
+  t.ok(
+    dataset.filterRecord.gpu.some(candidate => candidate.id === filter.id),
+    'leaving interval playback restores ordinary numeric GPU filtering'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> visible numeric side charts refresh after sibling filters', t => {
+  const {fields, rows} = processCsvData(`x,category,value
+0,A,10
+0.05,A,20
+0.075,B,30
+0.1,B,40`);
+  const payload = [
+    {
+      info: {id: 'numeric-shared', label: 'numeric shared'},
+      data: {fields, rows}
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
+  state = reducer(state, VisStateActions.addFilter('numeric-shared'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'x'));
+  state = reducer(state, VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.05}}));
+  state = reducer(state, VisStateActions.addFilter('numeric-shared'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'category'));
+  const cachedHistogram = state.filters[0];
+  state = reducer(state, VisStateActions.setFilter(1, 'value', ['A']));
+  t.equal(
+    state.filters[0],
+    cachedHistogram,
+    'an unconfigured numeric side histogram stays cached after sibling filtering'
+  );
+  state = reducer(state, VisStateActions.removeFilter(1));
+
+  const yAxis = state.datasets['numeric-shared'].fields.find(field => field.name === 'value');
+  state = reducer(state, VisStateActions.setFilterPlot(0, {yAxis}));
+  state = reducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.enlarged));
+
+  t.deepEqual(state.filters[0].lineChart.yDomain, [10, 40], 'open plot starts with all rows');
+
+  state = reducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.side));
+  state = reducer(state, VisStateActions.addFilter('numeric-shared'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'category'));
+  state = reducer(state, VisStateActions.setFilter(1, 'value', ['A']));
+
+  t.deepEqual(
+    state.filters[0].lineChart.yDomain,
+    [10, 20],
+    'visible side chart rebuilds its Y domain after sibling filtering'
+  );
+  t.equal(
+    state.filters[0].lineChart.allTime.value,
+    15,
+    'visible side chart rebuilds its Y aggregate after sibling filtering'
+  );
+  t.deepEqual(
+    state.filters[0].bins['numeric-shared'].map(bin => bin.count),
+    [1, 1, 0],
+    'visible side chart rebuilds bin counts after sibling filtering'
+  );
+
+  state = reducer(state, VisStateActions.removeFilter(1));
+  t.deepEqual(
+    state.filters[0].lineChart.yDomain,
+    [10, 40],
+    'removing the sibling filter restores the visible side chart Y domain'
+  );
+  t.equal(
+    state.filters[0].lineChart.allTime.value,
+    25,
+    'removing the sibling filter restores the visible side chart aggregate'
+  );
 
   t.end();
 });
@@ -3799,6 +4557,151 @@ test('#visStateReducer -> SET_FILTER_PLOT.yAxis', t => {
   t.end();
 });
 
+test('#visStateReducer -> filter changes refresh other time filter plots', t => {
+  const {fields, rows} = processCsvData(`event_time,category,value
+2020-01-01 00:00:00,A,10
+2020-01-01 01:00:00,A,20
+2020-01-01 02:00:00,B,30
+2020-01-01 03:00:00,B,40`);
+  const payload = [
+    {
+      info: {id: 'shared', label: 'shared'},
+      data: {fields, rows}
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
+  state = reducer(state, VisStateActions.addFilter('shared'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'event_time'));
+  state = reducer(state, VisStateActions.addFilter('shared'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'event_time'));
+
+  const yAxis = state.datasets.shared.fields.find(field => field.name === 'value');
+  state = reducer(state, VisStateActions.setFilterPlot(0, {yAxis}));
+
+  t.deepEqual(state.filters[0].lineChart.yDomain, [10, 40], 'plot starts with all rows');
+
+  const nextState = reducer(
+    state,
+    VisStateActions.setFilter(1, 'value', [1577836800000, 1577840400000])
+  );
+
+  t.deepEqual(
+    nextState.filters[0].lineChart.yDomain,
+    [10, 20],
+    'other time filter plot uses the newly filtered rows'
+  );
+  t.equal(
+    nextState.filters[0].lineChart.allTime.value,
+    15,
+    'other time filter plot rebuilds its aggregate'
+  );
+
+  const restoredState = reducer(nextState, VisStateActions.removeFilter(1));
+  t.deepEqual(
+    restoredState.filters[0].lineChart.yDomain,
+    [10, 40],
+    'time filter plot refreshes after removing the other filter'
+  );
+  t.equal(
+    restoredState.filters[0].lineChart.allTime.value,
+    25,
+    'time filter plot restores its aggregate after removing the other filter'
+  );
+
+  const emptyState = reducer(
+    nextState,
+    VisStateActions.setFilter(1, 'value', [1577837700000, 1577839500000])
+  );
+  t.deepEqual(
+    emptyState.filters[0].lineChart.xDomain,
+    [],
+    'other time filter plot handles an empty filtered result'
+  );
+
+  let categoryState = reducer(restoredState, VisStateActions.addFilter('shared'));
+  categoryState = reducer(categoryState, VisStateActions.setFilter(1, 'name', 'category'));
+  categoryState = reducer(categoryState, VisStateActions.setFilter(1, 'value', ['A']));
+  t.deepEqual(
+    categoryState.filters[0].lineChart.yDomain,
+    [10, 20],
+    'time filter plot refreshes after a CPU category filter changes'
+  );
+
+  const categoryRestoredState = reducer(categoryState, VisStateActions.removeFilter(1));
+  t.deepEqual(
+    categoryRestoredState.filters[0].lineChart.yDomain,
+    [10, 40],
+    'time filter plot refreshes after removing a CPU category filter'
+  );
+
+  let invertedState = reducer(
+    categoryRestoredState,
+    VisStateActions.setFilter(0, 'inverted', true)
+  );
+  invertedState = reducer(invertedState, VisStateActions.addFilter('shared'));
+  invertedState = reducer(invertedState, VisStateActions.setFilter(1, 'name', 'event_time'));
+  invertedState = reducer(
+    invertedState,
+    VisStateActions.setFilter(1, 'value', [1577836800000, 1577840400000])
+  );
+  t.deepEqual(
+    invertedState.filters[0].lineChart.yDomain,
+    [10, 20],
+    'inverted CPU time plot still applies a same-field GPU sibling filter'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> sibling changes keep interval time plots self-excluded', t => {
+  const {fields, rows} = processCsvData(`start_time,end_time,category,value
+2020-01-01 00:00:00,2020-01-01 00:30:00,A,10
+2020-01-01 01:00:00,2020-01-01 01:30:00,A,20
+2020-01-01 02:00:00,2020-01-01 02:30:00,B,30
+2020-01-01 03:00:00,2020-01-01 03:30:00,B,40`);
+  const payload = [
+    {
+      info: {id: 'intervals', label: 'intervals'},
+      data: {fields, rows}
+    }
+  ];
+
+  let state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [payload]
+    }
+  ]);
+  state = reducer(state, VisStateActions.addFilter('intervals'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'start_time'));
+  state = reducer(state, VisStateActions.setFilter(0, 'endName', 'end_time'));
+
+  const yAxis = state.datasets.intervals.fields.find(field => field.name === 'value');
+  state = reducer(state, VisStateActions.setFilterPlot(0, {yAxis}));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [1577844000000, 1577849400000]));
+  t.deepEqual(
+    state.filters[0].lineChart.yDomain,
+    [10, 40],
+    'interval plot excludes both of its own filter channels'
+  );
+
+  state = reducer(state, VisStateActions.addFilter('intervals'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'category'));
+  state = reducer(state, VisStateActions.setFilter(1, 'value', ['A']));
+  t.deepEqual(
+    state.filters[0].lineChart.yDomain,
+    [10, 20],
+    'refresh applies the sibling filter without applying the interval filter itself'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> TOGGLE_FILTER_ANIMATION', t => {
   const initialState = CloneDeep(StateWFilters.visState);
 
@@ -3863,6 +4766,7 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
         label: 'interactions.tooltip',
         enabled: true,
         config: {
+          timezone: null,
           compareMode: false,
           compareType: 'absolute',
           fieldsToShow: {
@@ -4119,6 +5023,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
         label: 'interactions.tooltip',
         enabled: true,
         config: {
+          timezone: null,
           compareMode: false,
           compareType: 'absolute',
           fieldsToShow: {
@@ -4354,6 +5259,34 @@ test('#visStateReducer -> INTERACTION_CONFIG_CHANGE', t => {
 
   t.deepEqual(nextState.interactionConfig, expectedConfig, 'should disable tooltip');
 
+  t.end();
+});
+
+test('#visStateReducer -> INTERACTION_CONFIG_CHANGE updates geocoder pin color', t => {
+  const geocoderLayer = new IconLayer({
+    id: GEOCODER_LAYER_ID,
+    dataId: GEOCODER_DATASET_NAME,
+    color: GEOCODER_ICON_COLOR
+  });
+  const initialState = {
+    ...INITIAL_VIS_STATE,
+    layers: [geocoderLayer],
+    layerData: [{}]
+  };
+  const color = [0, 128, 255];
+  const geocoderConfig = {
+    ...defaultInteractionConfig.geocoder,
+    enabled: true,
+    config: {
+      ...defaultInteractionConfig.geocoder.config,
+      color
+    }
+  };
+
+  const nextState = reducer(initialState, VisStateActions.interactionConfigChange(geocoderConfig));
+
+  t.deepEqual(nextState.interactionConfig.geocoder.config.color, color, 'should store pin color');
+  t.deepEqual(nextState.layers[0].config.color, color, 'should update an existing geocoder pin');
   t.end();
 });
 
@@ -5981,6 +6914,46 @@ test('#visStateReducer -> POLYGON: intersecting polygons AND on the same layer',
   t.end();
 });
 
+test('#visStateReducer -> POLYGON: inverted polygon AND another polygon on the same layer', t => {
+  let state = loadDualLonLatPolygonState();
+  const startLayer = pointLayerByLat(state, 'start_point_lat');
+
+  state = reducer(
+    state,
+    VisStateActions.setFeatures([mockStartRegionPolygon, mockEastOverlapPolygon])
+  );
+  state = reducer(state, VisStateActions.setSelectedFeature(mockStartRegionPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockStartRegionPolygon));
+  state = reducer(state, VisStateActions.setFilter(0, 'inverted', true));
+
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [2, 3],
+    'inverted polygon should keep points outside its region'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [2, 3],
+    'layer data should use the inverted polygon complement'
+  );
+
+  state = reducer(state, VisStateActions.setSelectedFeature(mockEastOverlapPolygon));
+  state = reducer(state, VisStateActions.setPolygonFilterLayer(startLayer, mockEastOverlapPolygon));
+
+  t.deepEqual(
+    state.datasets.trips.filteredIndexByLayer[startLayer.id],
+    [2],
+    'inverted polygon should be ANDed with another polygon on the same layer'
+  );
+  t.deepEqual(
+    layerDataIndexes(state, startLayer),
+    [2],
+    'layer data should match the combined polygon filters'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> POLYGON: disjoint polygons AND on the same layer', t => {
   let state = loadDualLonLatPolygonState();
   const startLayer = pointLayerByLat(state, 'start_point_lat');
@@ -6833,6 +7806,47 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
   t.end();
 });
 
+test('#visStateReducer -> TOGGLE_TABLE_COLUMN_HIDDEN and SHOW_ALL_TABLE_COLUMNS', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+
+  const hiddenState = reducer(
+    initialState,
+    VisStateActions.toggleTableColumnHidden(testCsvDataId, 'gps_data.lat')
+  );
+  assertDatasetIsTable(t, hiddenState.datasets[testCsvDataId]);
+  t.deepEqual(
+    hiddenState.datasets[testCsvDataId].hiddenColumns,
+    ['gps_data.lat'],
+    'should hide a table column through the reducer'
+  );
+
+  const shownState = reducer(
+    hiddenState,
+    VisStateActions.toggleTableColumnHidden(testCsvDataId, 'gps_data.lat')
+  );
+  t.deepEqual(shownState.datasets[testCsvDataId].hiddenColumns, [], 'should show a hidden column');
+
+  const allShownState = reducer(hiddenState, VisStateActions.showAllTableColumns(testCsvDataId));
+  t.deepEqual(allShownState.datasets[testCsvDataId].hiddenColumns, [], 'should show all columns');
+
+  const unknownColumnState = reducer(
+    initialState,
+    VisStateActions.toggleTableColumnHidden(testCsvDataId, 'missing')
+  );
+  t.equal(
+    unknownColumnState.datasets[testCsvDataId].hiddenColumns,
+    undefined,
+    'should ignore an unknown column'
+  );
+  t.equal(
+    reducer(initialState, VisStateActions.toggleTableColumnHidden('missing', 'gps_data.lat')),
+    initialState,
+    'should ignore an unknown dataset'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> LOAD_FILES', async t => {
   drainTasksForTesting();
 
@@ -7533,6 +8547,7 @@ test('#visStateReducer -> deferred empty queue stages the parsed files', t => {
 
 test('#visStateReducer -> deferred arrow batches are not added early', t => {
   drainTasksForTesting();
+  const previousProgressiveLoading = getApplicationConfig().useArrowProgressiveLoading;
   const batch = {
     gen: {next: () => Promise.resolve({done: true, value: null})},
     fileName: 'data.arrow',
@@ -7540,24 +8555,38 @@ test('#visStateReducer -> deferred arrow batches are not added early', t => {
     accumulated: {data: [{value: 1}], fileName: 'data.arrow'},
     onFinish: VisStateActions.stageLoadedFiles
   };
-  reducer(
-    CloneDeep(InitialState).visState,
-    VisStateActions.nextFileBatch({...batch, options: {deferAddToMap: true}})
-  );
-  const deferredTasks = drainTasksForTesting();
-  t.equal(
-    deferredTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
-    false,
-    'a deferred arrow file waits until parsing finishes'
-  );
+  try {
+    reducer(
+      CloneDeep(InitialState).visState,
+      VisStateActions.nextFileBatch({...batch, options: {deferAddToMap: true}})
+    );
+    const deferredTasks = drainTasksForTesting();
+    t.equal(
+      deferredTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
+      false,
+      'a deferred arrow file waits until parsing finishes'
+    );
 
-  reducer(CloneDeep(InitialState).visState, VisStateActions.nextFileBatch(batch));
-  const immediateTasks = drainTasksForTesting();
-  t.equal(
-    immediateTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
-    true,
-    'an arrow file still adds each batch when it is not deferred'
-  );
+    initApplicationConfig({useArrowProgressiveLoading: false});
+    reducer(CloneDeep(InitialState).visState, VisStateActions.nextFileBatch(batch));
+    const disabledTasks = drainTasksForTesting();
+    t.equal(
+      disabledTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
+      false,
+      'an arrow file waits until parsing finishes when progressive loading is disabled'
+    );
+
+    initApplicationConfig({useArrowProgressiveLoading: true});
+    reducer(CloneDeep(InitialState).visState, VisStateActions.nextFileBatch(batch));
+    const immediateTasks = drainTasksForTesting();
+    t.equal(
+      immediateTasks.some(task => task.type === 'PROCESS_FILE_CONTENT'),
+      true,
+      'an arrow file still adds each batch when it is not deferred'
+    );
+  } finally {
+    initApplicationConfig({useArrowProgressiveLoading: previousProgressiveLoading});
+  }
   t.end();
 });
 
@@ -8932,6 +9961,92 @@ test('VisStateUpdater -> refreshDataset rebuilds point layer positions', async t
   t.notDeepEqual(nextPos, firstPos, 'should rebuild point positions after refresh');
   t.deepEqual(nextPos.slice(0, 2), [20, 10], 'should use the new lng/lat');
 
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset rebuilds GeoJSON geometry with the same row count', async t => {
+  drainTasksForTesting();
+  const pointData = coordinates =>
+    processGeojson({
+      type: 'FeatureCollection',
+      features: [{type: 'Feature', properties: {}, geometry: {type: 'Point', coordinates}}]
+    });
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'remote-geojson', type: DatasetType.EXTERNALLY_HOSTED, label: 'live.geojson'},
+    data: pointData([1, 2]),
+    metadata: {source: 'https://example.com/live.geojson', sourceFormat: 'geojson'}
+  });
+  const {props} = GeojsonLayer.findDefaultLayerProps(datasets['remote-geojson']);
+  const geojsonLayer = new GeojsonLayer({
+    id: 'live-geojson',
+    dataId: 'remote-geojson',
+    ...props[0]
+  });
+  geojsonLayer.setInitialLayerConfig(datasets['remote-geojson']);
+  geojsonLayer.updateLayerVisConfig({opacity: 0.37, radius: 13});
+  const {layerData, layer} = calculateLayerData(
+    geojsonLayer,
+    {...INITIAL_VIS_STATE, datasets, layers: [geojsonLayer], layerData: [{}]},
+    undefined
+  );
+  const state = {...INITIAL_VIS_STATE, datasets, layers: [layer], layerData: [layerData]};
+  const style = {...layer.config.visConfig};
+  t.deepEqual(layerData.data[0].geometry.coordinates, [1, 2], 'starts at the old point');
+
+  const loading = reducer(state, VisStateActions.refreshDataset('remote-geojson'));
+  const progressed = reducer(loading, VisStateActions.refreshDatasetProgress('remote-geojson', 50));
+  const [task] = drainTasksForTesting();
+  t.equal(task.type, 'REFRESH_EXTERNALLY_HOSTED_DATASET_TASK', 'uses the remote refresh task');
+  const refreshed = reducer(
+    progressed,
+    succeedTaskInTest(task, {data: pointData([30, 40]), notModified: false})
+  );
+  const dataset = refreshed.datasets['remote-geojson'];
+  const refreshedLayer = refreshed.layers[0];
+  const refreshedData = refreshed.layerData[0];
+  t.equal(dataset.dataContainer.numRows(), 1, 'keeps the same row count');
+  t.deepEqual(
+    dataset.dataContainer.valueAt(0, refreshedLayer.config.columns.geojson.fieldIdx).geometry
+      .coordinates,
+    [30, 40],
+    'stores the refreshed point'
+  );
+  t.deepEqual(refreshedData.data[0].geometry.coordinates, [30, 40], 'renders the refreshed point');
+  t.deepEqual(refreshedLayer.centroids, [[30, 40]], 'rebuilds centroids for spatial filtering');
+  t.deepEqual(refreshedLayer.meta.bounds, [30, 40, 30, 40], 'rebuilds layer bounds');
+  t.deepEqual(refreshedData.getPosition({index: 0}), [30, 40], 'moves the text label position');
+  t.deepEqual(refreshedLayer.config.visConfig, style, 'preserves user styling');
+  const polygon = {
+    type: 'Feature',
+    id: 'refresh-polygon',
+    properties: {renderType: 'Polygon', isClosed: true, isVisible: true},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [29, 39],
+          [31, 39],
+          [31, 41],
+          [29, 41],
+          [29, 39]
+        ]
+      ]
+    }
+  };
+  let filtered = reducer(refreshed, VisStateActions.setPolygonFilterLayer(refreshedLayer, polygon));
+  t.equal(filtered.layerData[0].data.length, 1, 'starts inside an active polygon filter');
+  for (const [coordinates, visibleCount] of [
+    [[70, 80], 0],
+    [[30, 40], 1]
+  ]) {
+    const filteringRefresh = reducer(filtered, VisStateActions.refreshDataset('remote-geojson'));
+    const [filteringTask] = drainTasksForTesting();
+    filtered = reducer(
+      filteringRefresh,
+      succeedTaskInTest(filteringTask, {data: pointData(coordinates), notModified: false})
+    );
+    t.equal(filtered.layerData[0].data.length, visibleCount, 'filters using refreshed centroids');
+  }
   t.end();
 });
 

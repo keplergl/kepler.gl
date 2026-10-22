@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {clamp} from '@kepler.gl/utils';
+import {clamp, getNumericRangeMinimum, nextUp} from '@kepler.gl/utils';
 import {
   rangesEqual,
   clampRange,
@@ -18,6 +18,14 @@ test('Timeline Zoom Utils -> rangesEqual', t => {
   t.notOk(rangesEqual(null, null), 'both null should return false');
   t.ok(rangesEqual([1000, 5000], [1000, 5000], 0), 'exact match with eps=0');
   t.notOk(rangesEqual([1000, 5000], [1001, 5000], 0), 'off by 1 with eps=0 should not match');
+  t.notOk(
+    rangesEqual([0, 0.1], [0.02, 0.08], 0),
+    'fractional numeric ranges should use exact equality'
+  );
+  t.notOk(
+    rangesEqual([1e12, 1e12 + 0.001], [nextUp(1e12), 1e12 + 0.001], 0),
+    'a one-representable-step change at a high offset should stay observable'
+  );
   t.end();
 });
 
@@ -78,6 +86,22 @@ test('Timeline Zoom Utils -> clampWindowToDomain', t => {
     'window equal to domain stays unchanged'
   );
 
+  const numericMinimum = getNumericRangeMinimum([0, 0.1]);
+  const [numericStart, numericEnd] = clampWindowToDomain(0.05, 0.05, [0, 0.1], numericMinimum);
+  t.equal(numericStart, 0.05, 'fractional numeric window keeps its start');
+  t.ok(numericEnd > numericStart, 'fractional numeric window gets a representable positive width');
+  t.ok(numericEnd < 0.1, 'fractional numeric window does not expand by one whole unit');
+
+  for (const domain of [
+    [0, 1e-20],
+    [1e12, 1e12 + 0.001]
+  ]) {
+    const minimum = getNumericRangeMinimum(domain);
+    const [start, end] = clampWindowToDomain(domain[0], domain[0], domain, minimum);
+    t.ok(end > start, `${domain} should expand a collapsed window by a representable amount`);
+    t.ok(end <= domain[1], `${domain} should keep the expanded window inside its domain`);
+  }
+
   t.end();
 });
 
@@ -129,6 +153,21 @@ test('Timeline Zoom Utils -> timeline domain zoom logic', t => {
   const nextWidthFull = clamp([minWidth, fullWidth], fullWidth / factorOut);
   t.equal(nextWidthFull, fullWidth, 'cannot zoom out past full domain');
 
+  t.end();
+});
+
+test('Timeline Zoom Utils -> fractional numeric zoom uses domain-relative minimums', t => {
+  const fullDomain = [0, 0.1];
+  const selection = [0.02, 0.08];
+  const domainWidth = fullDomain[1] - fullDomain[0];
+  const selectionWidth = selection[1] - selection[0];
+  const nextSelectionWidth = clamp([domainWidth / 100, domainWidth], selectionWidth / 1.08);
+  const nextTimelineWidth = clamp([domainWidth / 20, domainWidth], domainWidth / 1.02);
+
+  t.ok(nextSelectionWidth < selectionWidth, 'fractional selection can zoom below one unit');
+  t.ok(nextSelectionWidth > 0, 'fractional selection keeps a positive width');
+  t.ok(nextTimelineWidth < domainWidth, 'fractional visible timeline can zoom below one unit');
+  t.ok(nextTimelineWidth >= domainWidth / 20, 'fractional timeline respects its relative floor');
   t.end();
 });
 

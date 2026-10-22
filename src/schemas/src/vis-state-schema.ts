@@ -7,6 +7,8 @@ import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {migrateLegacyScenegraphVisConfig} from '@kepler.gl/layers';
 import {
   colorRangeBackwardCompatibility,
+  normalizeCameraBookmarks,
+  normalizeCameraTour,
   isFilterValidToSave,
   findById,
   isPlainObject
@@ -16,6 +18,8 @@ import Schema from './schema';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {
   AddDataToMapOptions,
+  CameraBookmark,
+  CameraTour,
   AnimationConfig,
   Editor,
   FileLoading,
@@ -39,7 +43,7 @@ import {
   Annotation,
   ChartConfig
 } from '@kepler.gl/types';
-import {Datasets, GroupByOp, JoinOp} from '@kepler.gl/table';
+import {Datasets, GroupByOp, JoinOp, SuitabilityOp} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Loader} from '@loaders.gl/loader-utils';
 import KeplerGLSchema from './schema-manager';
@@ -59,6 +63,8 @@ export type modifiedType = {
 };
 
 export interface VisState {
+  cameraTour: CameraTour | null;
+  cameraBookmarks: CameraBookmark[];
   mapInfo: MapInfo;
   layers: Layer[];
   layerData: any[];
@@ -79,6 +85,7 @@ export interface VisState {
   editingDataset: string | undefined;
   groupBys: GroupByOp[];
   joins: JoinOp[];
+  suitabilities: SuitabilityOp[];
   interactionConfig: InteractionConfig;
   interactionToBeMerged: any;
   layerBlending: string;
@@ -972,7 +979,10 @@ const annotationPropsV1 = {
   textVerticalPosition: null,
   armLength: null,
   angle: null,
-  radiusInMeters: null
+  radiusInMeters: null,
+  endPoint: null,
+  showCustomText: null,
+  showDistance: null
 };
 
 export class AnnotationsSchema extends Schema {
@@ -1021,6 +1031,7 @@ export const filterPropsV1 = {
   syncTimelineMode: null,
 
   enabled: null,
+  inverted: null,
 
   invertTrendColor: null,
   timezone: null,
@@ -1046,7 +1057,35 @@ export const propertiesV0 = {
   overlayBlending: null
 };
 
+class CameraBookmarksSchema extends Schema {
+  key = 'cameraBookmarks';
+
+  save(value: unknown) {
+    const bookmarks = normalizeCameraBookmarks(value);
+    return bookmarks.length ? {[this.key]: bookmarks} : {};
+  }
+
+  load(value: unknown) {
+    return {[this.key]: normalizeCameraBookmarks(value)};
+  }
+}
+
+class CameraTourSchema extends Schema {
+  key = 'cameraTour';
+
+  save(value: unknown) {
+    const tour = normalizeCameraTour(value);
+    return tour ? {[this.key]: tour} : {};
+  }
+
+  load(value: unknown) {
+    return {[this.key]: normalizeCameraTour(value)};
+  }
+}
+
 export const propertiesV1 = {
+  cameraTour: new CameraTourSchema(),
+  cameraBookmarks: new CameraBookmarksSchema(),
   filters: new FilterSchemaV0({
     version: VERSIONS.v1,
     properties: filterPropsV1
@@ -1098,6 +1137,8 @@ export const propertiesV1 = {
   layerOrder: null,
   groupBys: null,
   joins: null
+  // suitabilities is intentionally absent: the op config is ephemeral and only the
+  // derived dataset is persisted. A `null` entry here would write it to saved maps.
 };
 
 export class VisStateSchemaV1 extends Schema {

@@ -5,7 +5,8 @@ export enum AnnotationKind {
   TEXT = 'TEXT',
   ARROW = 'ARROW',
   POINT = 'POINT',
-  CIRCLE = 'CIRCLE'
+  CIRCLE = 'CIRCLE',
+  RULER = 'RULER'
 }
 
 export function isAnnotationKind(kind: string): kind is AnnotationKind {
@@ -25,6 +26,7 @@ export const INITIAL_ANNOTATION_TEXT_WIDTH = 0;
 export const INITIAL_ANNOTATION_TEXT_HEIGHT = 0;
 export const INITIAL_ANNOTATION_LINE_WIDTH = 2;
 export const INITIAL_ANNOTATION_LINE_COLOR = '#FFFFFF';
+export const INITIAL_ANNOTATION_RULER_LENGTH_METERS = 1000;
 
 export type AnnotationTextSide = 'left' | 'right';
 export type AnnotationTextVerticalPosition = 'above' | 'below';
@@ -36,7 +38,8 @@ export const ANNOTATION_KINDS = [
   {id: AnnotationKind.TEXT, label: 'Text'},
   {id: AnnotationKind.POINT, label: 'Point'},
   {id: AnnotationKind.ARROW, label: 'Arrow'},
-  {id: AnnotationKind.CIRCLE, label: 'Circle'}
+  {id: AnnotationKind.CIRCLE, label: 'Circle'},
+  {id: AnnotationKind.RULER, label: 'Ruler'}
 ];
 
 export const ANNOTATION_LINE_WIDTH_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];

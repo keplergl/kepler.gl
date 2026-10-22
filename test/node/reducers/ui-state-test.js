@@ -10,12 +10,16 @@ import {
   openDeleteModal,
   openReplaceDatasetModal,
   setExportImageSetting,
+  cleanupExportImage,
   setExportVideoSetting,
   toggleMapControl,
   setMapControlVisibility,
+  setMapControlSettings,
+  receiveMapConfig,
   setExportSelectedDataset,
   setExportDataType,
   setExportFiltered,
+  setExportMapBranding,
   setExportMapFileName,
   startExportingImage,
   addNotification,
@@ -175,6 +179,28 @@ test('#uiStateReducer -> SET_EXPORT_IMAGE_SETTING', t => {
   t.end();
 });
 
+test('#uiStateReducer -> transparent export image background', t => {
+  const newReducer = reducer(
+    INITIAL_UI_STATE,
+    setExportImageSetting({transparentBackground: true})
+  );
+
+  t.equal(
+    newReducer.exportImage.transparentBackground,
+    true,
+    'should enable the transparent background option'
+  );
+
+  const cleanedReducer = reducer(newReducer, cleanupExportImage());
+  t.equal(
+    cleanedReducer.exportImage.transparentBackground,
+    true,
+    'should preserve the transparent background option during cleanup'
+  );
+
+  t.end();
+});
+
 test('#uiStateReducer -> START_EXPORTING_IMAGE', t => {
   const newReducer = reducer(INITIAL_UI_STATE, startExportingImage());
 
@@ -260,13 +286,13 @@ test('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', t => {
 });
 
 test('#uiStateReducer -> SET_EXPORT_DATA_TYPE', t => {
-  const newReducer = reducer(INITIAL_UI_STATE, setExportDataType(EXPORT_DATA_TYPE.JSON));
+  const newReducer = reducer(INITIAL_UI_STATE, setExportDataType(EXPORT_DATA_TYPE.GEOJSON));
 
   const expectedState = {
     ...INITIAL_UI_STATE,
     exportData: {
       ...INITIAL_UI_STATE.exportData,
-      dataType: EXPORT_DATA_TYPE.JSON
+      dataType: EXPORT_DATA_TYPE.GEOJSON
     }
   };
 
@@ -287,6 +313,42 @@ test('#uiStateReducer -> SET_EXPORT_MAP_FILE_NAME', t => {
   };
 
   t.deepEqual(newReducer, expectedState, 'should set the export map file name');
+
+  t.end();
+});
+
+test('#uiStateReducer -> SET_EXPORT_MAP_BRANDING', t => {
+  const withAppName = reducer(INITIAL_UI_STATE, setExportMapBranding({appName: 'Atlas Lab'}));
+
+  t.deepEqual(
+    withAppName.exportMap,
+    {
+      ...INITIAL_UI_STATE.exportMap,
+      appName: 'Atlas Lab'
+    },
+    'should set the application name and preserve existing export fields'
+  );
+
+  const withWebsite = reducer(
+    withAppName,
+    setExportMapBranding({
+      appWebsite: 'https://atlas.example.com',
+      appIcon: 'https://atlas.example.com/icon.svg',
+      appNameColor: '#123456'
+    })
+  );
+
+  t.deepEqual(
+    withWebsite.exportMap,
+    {
+      ...INITIAL_UI_STATE.exportMap,
+      appName: 'Atlas Lab',
+      appWebsite: 'https://atlas.example.com',
+      appIcon: 'https://atlas.example.com/icon.svg',
+      appNameColor: '#123456'
+    },
+    'should merge partial branding updates without replacing the application name'
+  );
 
   t.end();
 });
@@ -458,5 +520,127 @@ test('#uiStateReducer -> SET_EXPORT_VIDEO_SETTING', t => {
     'should keep existing values when updating with empty object'
   );
 
+  t.end();
+});
+
+test('#uiStateReducer -> bookmark visibility preserves navigation layout settings', t => {
+  const state = reducer(INITIAL_UI_STATE, setMapControlVisibility('cameraBookmarks', false));
+  t.equal(state.mapControls.cameraBookmarks.show, false, 'hides bookmark navigation');
+  t.deepEqual(
+    state.mapControls.cameraBookmarks.settings,
+    INITIAL_UI_STATE.mapControls.cameraBookmarks.settings,
+    'keeps drag/resize settings'
+  );
+  t.deepEqual(
+    state.mapControls.mapLegend,
+    INITIAL_UI_STATE.mapControls.mapLegend,
+    'does not alter the layer legend'
+  );
+  const shown = reducer(state, setMapControlVisibility('cameraBookmarks', true));
+  t.equal(shown.mapControls.cameraBookmarks.show, true, 'can show it again');
+  t.end();
+});
+
+test('#uiStateReducer -> bookmarks default off and legacy controls can opt in', t => {
+  const {cameraBookmarks, ...legacyControls} = INITIAL_UI_STATE.mapControls;
+  t.equal(cameraBookmarks.show, false, 'default bookmark visibility is off');
+  const initialStates = [
+    reducer(undefined, {}),
+    uiStateReducerFactory({mapControls: legacyControls})(undefined, {}),
+    reducer(INITIAL_UI_STATE, keplerGlInit({initialUiState: {mapControls: legacyControls}}))
+  ];
+  for (const initial of initialStates) {
+    t.equal(
+      initial.mapControls.cameraBookmarks?.show === true,
+      false,
+      'missing/default visibility is off'
+    );
+    for (const config of [{}, {uiState: {}}, {uiState: {mapControls: {}}}]) {
+      const loaded = reducer(initial, receiveMapConfig(config));
+      t.equal(
+        loaded.mapControls.cameraBookmarks?.show === true,
+        false,
+        'legacy load does not opt in'
+      );
+    }
+    const positioned = reducer(
+      initial,
+      setMapControlSettings('cameraBookmarks', {contentHeight: 80})
+    );
+    t.equal(
+      positioned.mapControls.cameraBookmarks.show,
+      false,
+      'settings alone do not enable bookmarks'
+    );
+    t.equal(
+      positioned.mapControls.cameraBookmarks.settings.contentHeight,
+      80,
+      'legacy settings updates work'
+    );
+    const enabled = reducer(initial, setMapControlVisibility('cameraBookmarks', true));
+    t.equal(
+      enabled.mapControls.cameraBookmarks.show,
+      true,
+      'legacy control can be enabled directly'
+    );
+    const moved = reducer(enabled, setMapControlSettings('cameraBookmarks', {contentHeight: 90}));
+    t.equal(moved.mapControls.cameraBookmarks.show, true, 'settings preserve explicit opt-in');
+    const disabled = reducer(moved, setMapControlVisibility('cameraBookmarks', false));
+    t.equal(disabled.mapControls.cameraBookmarks.show, false, 'can disable it again');
+    t.equal(
+      disabled.mapControls.cameraBookmarks.settings.contentHeight,
+      90,
+      'disable keeps layout settings'
+    );
+    t.deepEqual(
+      disabled.mapControls.mapLegend,
+      initial.mapControls.mapLegend,
+      'legend is unchanged'
+    );
+  }
+  t.end();
+});
+
+test('#uiStateReducer -> explicit bookmark opt-in survives initialization and legacy loads', t => {
+  const mapControls = {
+    ...INITIAL_UI_STATE.mapControls,
+    cameraBookmarks: {...INITIAL_UI_STATE.mapControls.cameraBookmarks, show: true}
+  };
+  for (const initial of [
+    uiStateReducerFactory({mapControls})(undefined, {}),
+    reducer(INITIAL_UI_STATE, keplerGlInit({initialUiState: {mapControls}}))
+  ]) {
+    t.equal(initial.mapControls.cameraBookmarks.show, true, 'honors explicit enabled state');
+    for (const config of [{}, {uiState: {}}, {uiState: {mapControls: {}}}]) {
+      t.equal(
+        reducer(initial, receiveMapConfig(config)).mapControls.cameraBookmarks.show,
+        true,
+        'missing saved preference does not reset explicit opt-in'
+      );
+    }
+  }
+  t.end();
+});
+
+test('#uiStateReducer -> camera animation visibility is independent of bookmarks', t => {
+  const {cameraTour, ...legacyControls} = INITIAL_UI_STATE.mapControls;
+  t.equal(cameraTour.show, true, 'enabled initially');
+  for (const initial of [
+    INITIAL_UI_STATE,
+    uiStateReducerFactory({mapControls: legacyControls})(undefined, {}),
+    reducer(INITIAL_UI_STATE, keplerGlInit({initialUiState: {mapControls: legacyControls}}))
+  ]) {
+    t.equal(
+      initial.mapControls.cameraTour?.show !== false,
+      true,
+      'missing/default control is enabled'
+    );
+    const state = reducer(initial, setMapControlVisibility('cameraTour', false));
+    const {cameraTour: disabledTour, ...otherControls} = state.mapControls;
+    t.equal(disabledTour.show, false, 'disables camera animation');
+    t.deepEqual(otherControls, legacyControls, 'does not change other controls');
+    const enabled = reducer(state, setMapControlVisibility('cameraTour', true));
+    t.equal(enabled.mapControls.cameraTour.show, true, 'can enable it again');
+  }
   t.end();
 });

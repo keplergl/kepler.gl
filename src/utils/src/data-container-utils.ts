@@ -6,13 +6,14 @@ import {RowDataContainer} from './row-data-container';
 import {IndexedDataContainer} from './indexed-data-container';
 
 import {DataContainerInterface} from './data-container-interface';
-import {ProtoDatasetField} from '@kepler.gl/types';
+import {GeoArrowBinaryData, ProtoDatasetField} from '@kepler.gl/types';
 import * as arrow from 'apache-arrow';
 
 export type DataContainerOptions = {
   inputDataFormat?: string; // one of DataForm
   fields?: ProtoDatasetField[];
   arrowTable?: arrow.Table;
+  geoArrowBinaryData?: GeoArrowBinaryData;
 };
 
 export const DataForm = {
@@ -42,7 +43,8 @@ export function createDataContainer(
     return new ArrowDataContainer({
       cols: data,
       fields: options.fields,
-      arrowTable: options.arrowTable
+      arrowTable: options.arrowTable,
+      geoArrowBinaryData: options.geoArrowBinaryData
     });
   }
 

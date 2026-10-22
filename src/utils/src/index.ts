@@ -2,6 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 // UTILS
+export {getCameraSnapshot, normalizeCameraBookmarks} from './camera-utils';
+export {normalizeCameraTour, getCameraTourDuration, evaluateCameraTour} from './camera-tour';
 
 export {
   colorMaybeToRGB,
@@ -50,6 +52,12 @@ export type {
 export {
   adjustValueToAnimationWindow,
   getBinThresholds,
+  getNumericBinThresholds,
+  getNumericPlotInterval,
+  getNumericRangeMinimum,
+  nextDown,
+  nextUp,
+  getFilterBinThresholds,
   intervalBinFromMarks,
   histogramFromThreshold,
   histogramFromValues,
@@ -158,6 +166,7 @@ export * from './map-utils';
 
 export {
   ArrowDataContainer,
+  createArrowVector,
   compactArrowTable,
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,

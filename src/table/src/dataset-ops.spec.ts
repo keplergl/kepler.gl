@@ -11,9 +11,13 @@ import {
   defaultAggregationsForFields,
   groupByDataset,
   isDatasetOpsAggregationField,
+  canMutateDatasetSchema,
   isTabularDatasetForOps,
   joinDatasets,
-  spatialJoinDatasets
+  spatialJoinDatasets,
+  defaultSuitabilityWeights,
+  isSuitabilityWeightField,
+  suitabilityDataset
 } from './dataset-ops';
 
 function makeTable({
@@ -344,7 +348,7 @@ describe('dataset-ops engine', () => {
     expect(result.data.rows[0][3]).toBe(3);
   });
 
-  test('spatialJoinDatasets joins polygons whose centroid is inside the left polygon', () => {
+  test('spatialJoinDatasets joins polygons contained by the left polygon', () => {
     const left = makeTable({
       id: 'outer',
       fields: [{name: 'geom', type: ALL_FIELD_TYPES.geojson}],
@@ -427,11 +431,264 @@ describe('dataset-ops engine', () => {
     expect(result.data.rows[0][2]).toBe(7);
   });
 
+  test.each(['within', 'intersects'] as const)(
+    'spatialJoinDatasets %s excludes centroid-only polygon matches from aggregates',
+    predicate => {
+      const donut = square(-10, -10, 10, 10);
+      donut.geometry.coordinates.push(square(-8, -8, 8, 8).geometry.coordinates[0]);
+      const left = makeTable({
+        id: 'target',
+        fields: [{name: 'geom', type: ALL_FIELD_TYPES.geojson}],
+        rows: [[predicate === 'within' ? square(-10, -10, 10, 10) : square(-3, -3, 3, 3)]]
+      });
+      const right = makeTable({
+        id: 'join',
+        fields: [
+          {name: 'geom', type: ALL_FIELD_TYPES.geojson},
+          {name: 'value', type: ALL_FIELD_TYPES.integer}
+        ],
+        rows: [[predicate === 'within' ? square(-5, -5, 5, 5) : donut, 99]]
+      });
+
+      const result = spatialJoinDatasets(left, right, {
+        leftGeo: {kind: 'geojson', fieldName: 'geom'},
+        rightGeo: {kind: 'geojson', fieldName: 'geom'},
+        aggregations: {value: DATASET_OPS_AGGREGATIONS.sum},
+        predicate
+      });
+
+      expect(result.data.rows.map(row => row.slice(1))).toEqual([[0, null]]);
+    }
+  );
+
+  describe('spatial join polygon predicates', () => {
+    const outer = square(-10, -10, 10, 10);
+    const donut = square(-10, -10, 10, 10);
+    donut.geometry.coordinates.push(square(-8, -8, 8, 8).geometry.coordinates[0]);
+    const multi = (...polygons: ReturnType<typeof square>[]) => ({
+      type: 'MultiPolygon',
+      coordinates: polygons.map(polygon => polygon.geometry.coordinates)
+    });
+    const islands = multi(square(-10, -10, -5, -5), square(5, 5, 10, 10));
+    const concave = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [6, 0],
+          [6, 6],
+          [4, 6],
+          [4, 2],
+          [2, 2],
+          [2, 6],
+          [0, 6],
+          [0, 0]
+        ]
+      ]
+    };
+
+    test.each([
+      {name: 'equal polygons', target: outer, join: outer, within: true, intersects: true},
+      {
+        name: 'shared contained edge',
+        target: square(-10, -10, 0, 0),
+        join: outer,
+        within: true,
+        intersects: true
+      },
+      {
+        name: 'edge contact',
+        target: square(10, 0, 12, 2),
+        join: outer,
+        within: false,
+        intersects: true
+      },
+      {
+        name: 'vertex contact',
+        target: square(10, 10, 12, 12),
+        join: outer,
+        within: false,
+        intersects: true
+      },
+      {
+        name: 'partial overlap',
+        target: square(5, 5, 15, 15),
+        join: outer,
+        within: false,
+        intersects: true
+      },
+      {
+        name: 'disjoint bounds',
+        target: square(20, 20, 30, 30),
+        join: outer,
+        within: false,
+        intersects: false
+      },
+      {
+        name: 'enclosed hole',
+        target: square(-9, -9, 9, 9),
+        join: donut,
+        within: false,
+        intersects: true
+      },
+      {name: 'equal donuts', target: donut, join: donut, within: true, intersects: true},
+      {name: 'donut in solid polygon', target: donut, join: outer, within: true, intersects: true},
+      {
+        name: 'hole boundary contact',
+        target: square(-8, -2, -6, 2),
+        join: donut,
+        within: false,
+        intersects: true
+      },
+      {
+        name: 'edge crosses concavity',
+        target: square(1, 1, 5, 5),
+        join: concave,
+        within: false,
+        intersects: true
+      },
+      {
+        name: 'contained components',
+        target: multi(square(-9, -9, -6, -6), square(6, 6, 9, 9)),
+        join: islands,
+        within: true,
+        intersects: true
+      },
+      {
+        name: 'one outside component',
+        target: multi(square(-9, -9, -6, -6), square(20, 20, 21, 21)),
+        join: islands,
+        within: false,
+        intersects: true
+      },
+      {
+        name: 'between components',
+        target: square(-1, -1, 1, 1),
+        join: islands,
+        within: false,
+        intersects: false
+      },
+      {name: 'point inside', target: [0, 0], join: outer, within: true, intersects: true},
+      {name: 'point on boundary', target: [10, 0], join: outer, within: false, intersects: true},
+      {name: 'point in hole', target: [0, 0], join: donut, within: false, intersects: false}
+    ])('$name preserves count, sum and average', ({target, join, within, intersects}) => {
+      const left = makeTable({
+        id: 'target',
+        fields: [{name: 'geom', type: ALL_FIELD_TYPES.geojson}],
+        rows: [[target]]
+      });
+      const right = makeTable({
+        id: 'join',
+        fields: [
+          {name: 'geom', type: ALL_FIELD_TYPES.geojson},
+          {name: 'value', type: ALL_FIELD_TYPES.integer},
+          {name: 'score', type: ALL_FIELD_TYPES.integer}
+        ],
+        rows: [
+          [join, 10, 10],
+          [join, 20, 20],
+          [square(60, 60, 70, 70), 999, 999]
+        ]
+      });
+      for (const predicate of ['within', 'intersects'] as const) {
+        const result = spatialJoinDatasets(left, right, {
+          leftGeo: {kind: 'geojson', fieldName: 'geom'},
+          rightGeo: {kind: 'geojson', fieldName: 'geom'},
+          aggregations: {
+            value: DATASET_OPS_AGGREGATIONS.sum,
+            score: DATASET_OPS_AGGREGATIONS.average
+          },
+          predicate
+        });
+        const matches = predicate === 'within' ? within : intersects;
+        expect(result.data.rows[0].slice(1)).toEqual(matches ? [2, 30, 15] : [0, null, null]);
+      }
+    });
+
+    test.each([
+      null,
+      'invalid json',
+      {type: 'Feature', geometry: null, properties: {}},
+      {type: 'Polygon', coordinates: []},
+      {type: 'Polygon', coordinates: [[]]},
+      {type: 'MultiPolygon', coordinates: []},
+      {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [1, 0],
+            [0, 1]
+          ]
+        ]
+      },
+      {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1]
+          ]
+        ]
+      },
+      {type: 'Feature', geometry: {type: 'Polygon', coordinates: null}, properties: {}},
+      {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [NaN, 0],
+            [1, 0],
+            [0, 1],
+            [NaN, 0]
+          ]
+        ]
+      }
+    ])('ignores missing, empty or malformed polygon geometry: %j', invalid => {
+      const left = makeTable({
+        id: 'target',
+        fields: [{name: 'geom', type: ALL_FIELD_TYPES.geojson}],
+        rows: [[invalid], [outer]]
+      });
+      const right = makeTable({
+        id: 'join',
+        fields: [
+          {name: 'geom', type: ALL_FIELD_TYPES.geojson},
+          {name: 'value', type: ALL_FIELD_TYPES.integer}
+        ],
+        rows: [
+          [invalid, 99],
+          [outer, 7]
+        ]
+      });
+      for (const predicate of ['within', 'intersects'] as const) {
+        const result = spatialJoinDatasets(left, right, {
+          leftGeo: {kind: 'geojson', fieldName: 'geom'},
+          rightGeo: {kind: 'geojson', fieldName: 'geom'},
+          aggregations: {value: DATASET_OPS_AGGREGATIONS.sum},
+          predicate
+        });
+        expect(result.data.rows.map(row => row.slice(1))).toEqual([
+          [0, null],
+          [1, 7]
+        ]);
+      }
+    });
+  });
+
   test('isTabularDatasetForOps skips tiles and disabled datasets', () => {
     expect(isTabularDatasetForOps({type: 'local'})).toBe(true);
     expect(isTabularDatasetForOps({type: ''})).toBe(true);
+    expect(isTabularDatasetForOps({type: 'externally-hosted'})).toBe(true);
     expect(isTabularDatasetForOps({type: 'vector-tile'})).toBe(false);
     expect(isTabularDatasetForOps({type: 'local', disableDataOperation: true})).toBe(false);
+
+    expect(canMutateDatasetSchema({type: 'local'})).toBe(true);
+    expect(canMutateDatasetSchema({type: ''})).toBe(true);
+    expect(canMutateDatasetSchema({type: 'externally-hosted'})).toBe(false);
+    expect(canMutateDatasetSchema({type: 'vector-tile'})).toBe(false);
+    expect(canMutateDatasetSchema({type: 'local', disableDataOperation: true})).toBe(false);
   });
 
   test('aggregation options depend on field type', () => {
@@ -456,5 +713,153 @@ describe('dataset-ops engine', () => {
     expect(
       defaultAggregationsForFields([{name: 'geom', type: ALL_FIELD_TYPES.geojson} as any])
     ).toEqual({geom: 'merge'});
+  });
+});
+
+describe('suitability engine', () => {
+  const sites = () =>
+    makeTable({
+      id: 'sites',
+      fields: [
+        {name: 'name', type: ALL_FIELD_TYPES.string},
+        {name: 'access', type: ALL_FIELD_TYPES.integer},
+        {name: 'cost', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        ['a', 0, 100],
+        ['b', 5, 200],
+        ['c', 10, 300]
+      ]
+    });
+
+  test('scores rows as a normalized weighted sum of range-standardized columns', () => {
+    const result = suitabilityDataset(sites(), {
+      weights: {access: 1, cost: 1},
+      resultId: 'sites-score',
+      operationId: 'su-1'
+    });
+
+    expect(result.info.id).toBe('sites-score');
+    expect(result.metadata.derivedDataset).toEqual({
+      type: 'suitability',
+      sourceDataIds: ['sites'],
+      operationId: 'su-1'
+    });
+    // source columns are kept, score is appended last as a real column
+    expect(result.data.fields.map(field => field.name)).toEqual([
+      'name',
+      'access',
+      'cost',
+      'score'
+    ]);
+    expect(result.data.fields[3].type).toBe(ALL_FIELD_TYPES.real);
+    // both columns span their full range, so normalized weights put scores on 0..1
+    expect(result.data.rows.map(row => row[3])).toEqual([0, 0.5, 1]);
+  });
+
+  test('raw weights skip normalization', () => {
+    const result = suitabilityDataset(sites(), {
+      weights: {access: 1, cost: 1},
+      weightStandardization: 'raw'
+    });
+
+    expect(result.data.rows.map(row => row[3])).toEqual([0, 1, 2]);
+  });
+
+  test('z-score standardization divides by the standard deviation', () => {
+    const result = suitabilityDataset(sites(), {
+      weights: {access: 1},
+      weightStandardization: 'raw',
+      dataStandardization: 'zScore'
+    });
+
+    const deviation = Math.sqrt(((0 - 5) ** 2 + (5 - 5) ** 2 + (10 - 5) ** 2) / 3);
+    expect(result.data.rows.map(row => row[3])).toEqual([-5 / deviation, 0, 5 / deviation]);
+  });
+
+  test('raw data standardization leaves values untouched', () => {
+    const result = suitabilityDataset(sites(), {
+      weights: {access: 2},
+      weightStandardization: 'raw',
+      dataStandardization: 'raw'
+    });
+
+    expect(result.data.rows.map(row => row[3])).toEqual([0, 10, 20]);
+  });
+
+  test('a constant column falls back to its raw values', () => {
+    const dataset = makeTable({
+      id: 'flat',
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+      rows: [[3], [3]]
+    });
+
+    const result = suitabilityDataset(dataset, {
+      weights: {value: 1},
+      weightStandardization: 'raw'
+    });
+
+    expect(result.data.rows.map(row => row[1])).toEqual([3, 3]);
+  });
+
+  test('rows missing a weighted value score null', () => {
+    const dataset = makeTable({
+      id: 'gaps',
+      fields: [
+        {name: 'a', type: ALL_FIELD_TYPES.integer},
+        {name: 'b', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [0, 1],
+        [null, 2],
+        [10, 3]
+      ]
+    });
+
+    const result = suitabilityDataset(dataset, {weights: {a: 1, b: 1}});
+    expect(result.data.rows[1][2]).toBeNull();
+    expect(result.data.rows[0][2]).not.toBeNull();
+  });
+
+  test('columns restricts the copied source columns and renames a clashing score column', () => {
+    const dataset = makeTable({
+      id: 'clash',
+      fields: [
+        {name: 'name', type: ALL_FIELD_TYPES.string},
+        {name: 'score', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        ['a', 1],
+        ['b', 2]
+      ]
+    });
+
+    const result = suitabilityDataset(dataset, {
+      weights: {score: 1},
+      columns: ['score']
+    });
+
+    expect(result.data.fields.map(field => field.name)).toEqual(['score', 'score_1']);
+    expect(result.data.rows[0]).toEqual([1, 0]);
+  });
+
+  test('rejects empty, unknown, and non-numeric weight fields', () => {
+    expect(() => suitabilityDataset(sites(), {weights: {}})).toThrow(
+      'Select at least one field to score'
+    );
+    expect(() => suitabilityDataset(sites(), {weights: {nope: 1}})).toThrow(
+      'Suitability field "nope" was not found'
+    );
+    expect(() => suitabilityDataset(sites(), {weights: {name: 1}})).toThrow(
+      'Suitability field "name" is not numeric'
+    );
+  });
+
+  test('only numeric fields can be weighted', () => {
+    expect(isSuitabilityWeightField({type: ALL_FIELD_TYPES.real})).toBe(true);
+    expect(isSuitabilityWeightField({type: ALL_FIELD_TYPES.integer})).toBe(true);
+    expect(isSuitabilityWeightField({type: ALL_FIELD_TYPES.boolean})).toBe(false);
+    expect(isSuitabilityWeightField({type: ALL_FIELD_TYPES.string})).toBe(false);
+    expect(defaultSuitabilityWeights(sites().fields)).toEqual({access: 1, cost: 1});
   });
 });

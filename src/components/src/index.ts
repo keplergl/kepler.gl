@@ -141,6 +141,7 @@ export {default as DatasetOpsPanelsFactory} from './side-panel/dataset-ops/datas
 export {default as GroupByPanelFactory} from './side-panel/dataset-ops/group-by-panel';
 export {default as JoinPanelFactory} from './side-panel/dataset-ops/join-panel';
 export {default as SpatialJoinPanelFactory} from './side-panel/dataset-ops/spatial-join-panel';
+export {default as SuitabilityPanelFactory} from './side-panel/dataset-ops/suitability-panel';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
 
 export {default as FilterManagerFactory} from './side-panel/filter-manager';
@@ -408,6 +409,7 @@ export {AnnotationText} from './annotations';
 export {
   makeMarker,
   movePoint,
+  moveRulerEndpoint,
   moveText,
   resizeCircle,
   isLeftOriented,
@@ -416,10 +418,18 @@ export {
   angleForTextPlacement,
   textPlacementFromAngle,
   getAnnotationTextBoxStyle,
+  getRulerDistanceLabel,
+  isAnnotationVisibleOnGlobe,
   isPointVisibleOnGlobe,
   normalizeAnchorPoint
 } from './annotations';
-export type {MapViewport, AnnotationMarker, PickWorldPosition, LngLatAltitude} from './annotations';
+export type {
+  MapViewport,
+  AnnotationMarker,
+  RulerAnnotationMarker,
+  PickWorldPosition,
+  LngLatAltitude
+} from './annotations';
 export {default as AnnotationControlFactory} from './map/annotations/annotation-control';
 
 export {default as ColorBreaksPanelFactory} from './side-panel/layer-panel/color-breaks-panel';

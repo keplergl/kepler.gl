@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Field, Millisecond} from './types';
+import {Field, Millisecond, RGBColor} from './types';
 import {ColorMap, ColorRange, ColorUI} from './layers';
 import {MapSplitMode, MapViewMode} from '@kepler.gl/constants';
 type MapViewState = {
@@ -158,9 +158,9 @@ export type LineChart = {
 
   // Is this a valid part of LineChart?
   aggregation: string;
-  interval: string;
+  interval: string | number | null;
   yAxis: string;
-  bins?: Bins;
+  bins?: Bins | Bin[];
   /** Cache key for timeline series grouping. Null when the plot is a single series. */
   groupBy?: LineChartGroupBy | null;
 };
@@ -171,11 +171,17 @@ export type FilterBase<L extends LineChart> = {
   dataId: string[];
   id: string;
   enabled: boolean;
+  /**
+   * When true, rows that match the filter are hidden and the rest are kept.
+   * Undefined is treated as false so older saved maps stay unchanged.
+   */
+  inverted?: boolean;
 
   // time range filter specific
   fixedDomain: boolean;
   view: FilterViewType;
   isAnimating: boolean;
+  animationWindow?: string;
   speed: number;
   showTimeDisplay?: boolean;
 
@@ -293,6 +299,7 @@ export interface TimeBins {
 
 export interface PlotType {
   interval: ValueOf<Interval>;
+  numericInterval?: number;
   type: ValueOf<PlotTypes>;
   aggregation: ValueOf<AggregationTypes>;
   defaultTimeFormat: string;
@@ -374,16 +381,9 @@ export type AnimationConfig = {
   hideControl?: boolean;
 };
 
-export type FilterAnimationConfig = Pick<
-  TimeRangeFilter,
-  | 'dataId'
-  | 'value'
-  | 'animationWindow'
-  | 'speed'
-  | 'syncedWithLayerTimeline'
-  | 'syncTimelineMode'
-  | 'timezone'
->;
+export type FilterAnimationConfig = Pick<Filter, 'dataId' | 'value' | 'speed'> &
+  Required<Pick<Filter, 'animationWindow'>> &
+  Partial<Pick<TimeRangeFilter, 'syncedWithLayerTimeline' | 'syncTimelineMode' | 'timezone'>>;
 
 export type Timeline = {
   domain: [number, number] | null;
@@ -415,6 +415,7 @@ export type TooltipInfo = BaseInteraction & {
     fieldsToShow: {
       [key: string]: TooltipField[];
     };
+    timezone?: string | null;
     compareMode: boolean;
     compareType: CompareType;
   };
@@ -424,6 +425,7 @@ export type Geocoder = BaseInteraction & {
   position: number[] | null;
   config: {
     limitSearch: boolean;
+    color: RGBColor;
   };
 };
 export type Brush = BaseInteraction & {
@@ -456,7 +458,7 @@ export type ZoomOpacityStops = {
   /** Zoom where opacity returns to 0. */
   gone: number;
 };
-/** Layers that share one zoom envelope. */
+/** Layers and reserved map targets that share one zoom envelope. */
 export type ZoomOpacityController = {
   id: string;
   layerIds: string[];
@@ -539,6 +541,8 @@ export declare type ExportImage = {
   legend: boolean;
   /** When true, include the charts panel in the exported image. */
   charts: boolean;
+  /** When true, omit the basemap and preserve transparent pixels in the exported image. */
+  transparentBackground?: boolean;
   mapH: number;
   mapW: number;
   imageSize: {
@@ -577,6 +581,14 @@ export type ExportMap = {
   fileName: string;
   /** When false, dataset access tokens are omitted from exported HTML and JSON. */
   includeLayerApiKeys: boolean;
+  /** Optional application name override for exported HTML and JSON. */
+  appName?: string;
+  /** Optional application website override for exported HTML and JSON. */
+  appWebsite?: string;
+  /** Optional application icon URL override for exported HTML and JSON. */
+  appIcon?: string;
+  /** Optional application name color override for exported HTML and JSON. */
+  appNameColor?: string;
 };
 
 export type ExportVideo = {

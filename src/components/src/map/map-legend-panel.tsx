@@ -31,11 +31,11 @@ import {
 import {hasPortableWidth} from '@kepler.gl/utils';
 import {MapLegendControlSettings} from '@kepler.gl/types';
 
-import {Legend, DraggableDots, HorizontalResizeHandle} from '../common/icons';
+import {Legend, HorizontalResizeHandle} from '../common/icons';
 import {MapControlButton} from '../common/styled-components';
 import {RootContext} from '../context';
 import useLegendPosition from '../hooks/use-legend-position';
-import MapControlPanelFactory from './map-control-panel';
+import MapControlPanelFactory, {MapControlPanelDragContext} from './map-control-panel';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapLegendFactory from './map-legend';
 import {restrictToWindowEdges} from '@dnd-kit/modifiers';
@@ -65,17 +65,23 @@ const StyledDraggableLegendContent = styled.div<{
     background-color: transparent;
   }
   &:hover,
+  &:focus-within,
   &.is-dragging {
     .legend-top-handles,
-    .legend-move-handle,
     .legend-resize-handle {
       opacity: 1;
     }
-    .legend-move-handle,
     .legend-resize-handle {
       pointer-events: auto;
     }
     border-color: ${props => props.theme.activeColor};
+  }
+  @media (hover: none), (pointer: coarse) {
+    .legend-top-handles,
+    .legend-resize-handle {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
   .map-control__panel-content {
     max-height: ${props =>
@@ -102,21 +108,9 @@ const StyledTopHandles = styled.div`
   top: 0;
   left: 50%;
   transform: translate(-50%, -50%);
-  height: 16px;
+  height: 12px;
   border-radius: 4px;
   background-color: ${props => props.theme.activeColor};
-`;
-
-const StyledMoveHandle = styled.div`
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 16px;
-  cursor: move;
-  border-left: 1px solid rgba(255, 255, 255, 0.25);
 `;
 
 const StyledTopResizeHandle = styled.div`
@@ -126,28 +120,21 @@ const StyledTopResizeHandle = styled.div`
   align-items: center;
   justify-content: center;
   width: 32px;
-  height: 16px;
+  height: 12px;
   cursor: ns-resize;
   color: #f7f8fa;
 `;
 
-const StyledResizeHandle = styled.div`
-  pointer-events: none;
+const StyledResizeHandle = styled(StyledTopResizeHandle)`
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
   position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #f7f8fa;
   z-index: 2;
   bottom: 0;
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: 48px;
-  height: 16px;
+  transform: translate(-50%, 50%);
   border-radius: 4px;
-  cursor: ns-resize;
+  background-color: ${props => props.theme.activeColor};
 `;
 
 const StyledFixedLegendContent = styled.div<{$contentHeight?: number}>`
@@ -178,10 +165,11 @@ type DraggableLegendContentProps = {
   maxContentHeight?: number;
   positionStyles: Record<string, unknown>;
   children: React.ReactNode;
+  label: string;
 };
 
 const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, ref) => {
-  const {positionStyles, children, contentHeight, maxContentHeight} = props;
+  const {positionStyles, children, contentHeight, maxContentHeight, label} = props;
   const draggableMove = useDraggable({id: DRAG_MOVE_ID});
   const draggableResize = useDraggable({id: DRAG_RESIZE_ID});
   const draggableResizeTop = useDraggable({id: DRAG_RESIZE_TOP_ID});
@@ -195,36 +183,37 @@ const DraggableLegendContent = forwardRef((props: DraggableLegendContentProps, r
       style={{...positionStyles, transform: CSS.Translate.toString(draggableMove.transform)}}
       $contentHeight={contentHeight}
       $maxContentHeight={maxContentHeight}
-      {...draggableMove.attributes}
     >
-      {children}
+      <MapControlPanelDragContext.Provider
+        value={{
+          attributes: draggableMove.attributes,
+          listeners: draggableMove.listeners,
+          setActivatorNodeRef: draggableMove.setActivatorNodeRef,
+          label
+        }}
+      >
+        {children}
+      </MapControlPanelDragContext.Provider>
       {isDragging ? <div className="legend-input-block" /> : null}
       <StyledTopHandles className="legend-top-handles">
         <StyledTopResizeHandle
           className="legend-resize-handle legend-resize-handle--top"
-          aria-label="Resize legend"
+          aria-label={`Resize ${label}`}
           ref={draggableResizeTop.setNodeRef}
           {...draggableResizeTop.attributes}
           {...draggableResizeTop.listeners}
         >
-          <HorizontalResizeHandle height="16px" />
+          <HorizontalResizeHandle height="12px" />
         </StyledTopResizeHandle>
-        <StyledMoveHandle
-          className="legend-move-handle"
-          aria-label="Move legend"
-          {...draggableMove.listeners}
-        >
-          <DraggableDots height="16px" />
-        </StyledMoveHandle>
       </StyledTopHandles>
       <StyledResizeHandle
         className="legend-resize-handle"
-        aria-label="Resize legend"
+        aria-label={`Resize ${label}`}
         ref={draggableResize.setNodeRef}
         {...draggableResize.attributes}
         {...draggableResize.listeners}
       >
-        <HorizontalResizeHandle height="16px" />
+        <HorizontalResizeHandle height="12px" />
       </StyledResizeHandle>
     </StyledDraggableLegendContent>
   );
@@ -235,23 +224,27 @@ type DraggableLegendProps = PropsWithChildren<{
   mapControls: MapControls;
   setMapControlSettings: typeof setMapControlSettings;
   mapState?: MapState;
+  controlId?: string;
+  label?: string;
 }>;
 
-const DraggableLegend = withTheme(
+export const DraggableLegend = withTheme(
   ({
     isSidePanelShown,
     children,
     mapControls,
     setMapControlSettings,
     mapState,
+    controlId = 'mapLegend',
+    label = 'legend',
     theme
   }: DraggableLegendProps & {theme: any}) => {
-    const settings = mapControls?.mapLegend?.settings;
+    const settings = (mapControls?.[controlId] as MapControlMapLegend)?.settings;
 
     const legendContentRef = useRef<HTMLElement>(null);
     const onChangeSettings = useCallback(
-      newSettings => setMapControlSettings('mapLegend', newSettings),
-      [setMapControlSettings]
+      newSettings => setMapControlSettings(controlId, newSettings),
+      [setMapControlSettings, controlId]
     );
     const {positionStyles, updatePosition, startResize, resize, contentHeight, maxContentHeight} =
       useLegendPosition({
@@ -301,6 +294,7 @@ const DraggableLegend = withTheme(
       >
         <DraggableLegendContent
           ref={legendContentRef}
+          label={label}
           positionStyles={positionStyles}
           contentHeight={contentHeight}
           maxContentHeight={maxContentHeight}

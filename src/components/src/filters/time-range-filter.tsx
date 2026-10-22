@@ -4,7 +4,7 @@
 import React from 'react';
 import TimeRangeSliderFactory from '../common/time-range-slider';
 import {DEFAULT_TIME_FORMAT, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {TimeRangeFilter} from '@kepler.gl/types';
+import {RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
 import {TimeRangeFilterProps} from './types';
@@ -12,18 +12,23 @@ import {TimeRangeFilterProps} from './types';
  * TimeRangeFilter -> TimeRangeSlider -> RangeSlider
  */
 export function timeRangeSliderFieldsSelector(
-  filter: TimeRangeFilter,
+  filter: TimeRangeFilter | RangeFilter,
   datasets: Datasets,
   layers: readonly Layer[]
 ) {
-  const hasUserFormat = typeof filter.timeFormat === 'string';
-  const timeFormat =
-    (hasUserFormat ? filter.timeFormat : filter.defaultTimeFormat) || DEFAULT_TIME_FORMAT;
+  const isTime = filter.type === 'timeRange';
+  const timeFilter = isTime ? filter : null;
+  const hasUserFormat = typeof timeFilter?.timeFormat === 'string';
+  const timeFormat = isTime
+    ? (hasUserFormat ? timeFilter?.timeFormat : timeFilter?.defaultTimeFormat) ||
+      DEFAULT_TIME_FORMAT
+    : '';
 
   return {
     id: filter.id,
-    domain: filter.domain,
-    timeBins: filter.timeBins,
+    domain: filter.domain as [number, number],
+    timeBins: timeFilter?.timeBins,
+    bins: !isTime ? filter.bins : undefined,
     value: filter.value,
     plotType: filter.plotType,
     lineChart: filter.lineChart,
@@ -32,8 +37,9 @@ export function timeRangeSliderFieldsSelector(
     speed: filter.speed,
     animationWindow: filter.animationWindow,
     isAnimating: filter.isAnimating,
-    timezone: filter.timezone,
+    timezone: timeFilter?.timezone,
     timeFormat,
+    isTime,
     filter,
     datasets,
     layers,

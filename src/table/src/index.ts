@@ -7,6 +7,8 @@ export {
   findPointFieldPairs,
   copyTableAndUpdate,
   pinTableColumns,
+  showAllTableColumns,
+  toggleHiddenTableColumn,
   sortDatasetByColumn,
   copyTable,
   maybeToDate

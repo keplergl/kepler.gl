@@ -7,6 +7,8 @@ import flattenDeep from 'es-toolkit/compat/flattenDeep';
 import deepmerge from 'deepmerge';
 import {
   arrayInsert,
+  normalizeCameraBookmarks,
+  normalizeCameraTour,
   combineSplitMapsByIndex,
   getInitialMapLayersForSplitMap,
   applyFiltersToDatasets,
@@ -16,13 +18,21 @@ import {
   isPlainObject
 } from '@kepler.gl/utils';
 
-import {Layer, migrateLegacyScenegraphVisConfig} from '@kepler.gl/layers';
+import {
+  AGGREGATION_COUNT_LAYER_TYPES,
+  Layer,
+  createPointCountLabelField,
+  migrateLegacyScenegraphVisConfig,
+  POINT_COUNT_FIELD_NAME
+} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
   AGGREGATION_TYPES,
+  DEFAULT_TEXT_LABEL,
   LAYER_BLENDINGS,
   OVERLAY_BLENDINGS,
+  AnnotationKind,
   isAnnotationKind,
   INITIAL_ANNOTATION_LINE_COLOR,
   INITIAL_ANNOTATION_LINE_WIDTH
@@ -186,7 +196,8 @@ function insertItemBasedOnPreservedOrder(
 
 export function createLayerFromConfig(state: VisState, layerConfig: any): Layer | null {
   // check if the layer config is parsed
-  const parsedLayerConfig = isSavedLayerConfigV1(layerConfig)
+  const savedLayerConfig = isSavedLayerConfigV1(layerConfig);
+  const parsedLayerConfig = savedLayerConfig
     ? parseLayerConfig(state.schema, layerConfig)
     : layerConfig;
 
@@ -198,7 +209,7 @@ export function createLayerFromConfig(state: VisState, layerConfig: any): Layer 
     state.datasets,
     state.layerClasses,
     [parsedLayerConfig],
-    {allowEmptyColumn: true}
+    {allowEmptyColumn: true, keepUnlabeledAggregationTextLabel: savedLayerConfig}
   );
 
   if (failed?.length || !validated.length) {
@@ -292,7 +303,8 @@ export function mergeLayers<S extends VisState>(
   const {validated: mergedLayer, failed} = validateLayersByDatasets(
     state.datasets,
     state.layerClasses,
-    toMerge
+    toMerge,
+    {keepUnlabeledAggregationTextLabel: true}
   );
   unmerged.push(...failed);
   // put new layers in front of current layers
@@ -499,9 +511,10 @@ export function mergeInteractions<S extends VisState>(
       let configToMerge = configSaved;
 
       if (key === 'tooltip') {
+        const savedTooltipConfig = configSaved as SavedInteractionConfig['tooltip'];
         const {mergedTooltip, unmergedTooltip} = mergeInteractionTooltipConfig(
           state,
-          configSaved as SavedInteractionConfig['tooltip']
+          savedTooltipConfig
         );
 
         // merge new dataset tooltips with original dataset tooltips
@@ -509,7 +522,10 @@ export function mergeInteractions<S extends VisState>(
           fieldsToShow: {
             ...(currentConfig as TooltipInfo['config']).fieldsToShow,
             ...mergedTooltip
-          }
+          },
+          ...(savedTooltipConfig.timezone !== undefined
+            ? {timezone: savedTooltipConfig.timezone}
+            : {})
         };
 
         if (Object.keys(unmergedTooltip).length) {
@@ -584,6 +600,13 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
         toBeCombinedProps.map(p => p.compareType)
       );
 
+      const hasTimezone = toBeCombinedProps.some(p => p?.timezone !== undefined);
+      if (hasTimezone) {
+        combined[key].timezone = getValueWithHighestOccurrence(
+          toBeCombinedProps.map(p => p?.timezone)
+        );
+      }
+
       // combine fieldsToShow among all dataset ids
       combined[key].fieldsToShow = toBeCombinedProps
         .map(p => p.fieldsToShow)
@@ -617,6 +640,10 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
 
     if (key === 'geocoder') {
       combined[key].limitSearch = toBeCombinedProps.some(p => p?.limitSearch);
+      const color = toBeCombinedProps.find(p => p?.color)?.color;
+      if (color) {
+        combined[key].color = color;
+      }
     }
 
     if (key === 'legend') {
@@ -839,7 +866,11 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
         isAnnotationKind(a.kind) &&
         Array.isArray(a.anchorPoint) &&
         (a.anchorPoint.length === 2 || a.anchorPoint.length === 3) &&
-        a.anchorPoint.every(value => Number.isFinite(value))
+        a.anchorPoint.every(value => Number.isFinite(value)) &&
+        (a.kind !== AnnotationKind.RULER ||
+          (Array.isArray(a.endPoint) &&
+            (a.endPoint.length === 2 || a.endPoint.length === 3) &&
+            a.endPoint.every(value => Number.isFinite(value))))
     )
     .map(a => ({
       isVisible: true,
@@ -850,7 +881,13 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
       lineWidth: INITIAL_ANNOTATION_LINE_WIDTH,
       textWidth: 0,
       textHeight: 0,
-      ...a
+      ...a,
+      ...(a.kind === AnnotationKind.RULER
+        ? {
+            showCustomText: a.showCustomText ?? true,
+            showDistance: a.showDistance ?? true
+          }
+        : {})
     }));
   if (!validAnnotations.length) {
     return state;
@@ -1072,19 +1109,29 @@ export function validateColumn(
  */
 export function validateSavedTextLabel(
   fields,
-  [layerTextLabel],
+  layerTextLabels: any[],
   savedTextLabel,
-  options: {throwOnError?: boolean} = {}
-) {
+  options: {throwOnError?: boolean; layerType?: string | null} = {}
+): any[] {
+  const layerTextLabel = layerTextLabels[0];
   const savedTextLabels = Array.isArray(savedTextLabel) ? savedTextLabel : [savedTextLabel];
+  const countLabelLayer = Boolean(
+    options.layerType && AGGREGATION_COUNT_LAYER_TYPES.has(options.layerType)
+  );
 
   // validate field
   return savedTextLabels.map(textLabel => {
-    const field = textLabel.field
-      ? fields.find(fd =>
-          Object.keys(textLabel.field).every(key => textLabel.field[key] === fd[key])
-        )
-      : null;
+    let field = null;
+    if (textLabel.field) {
+      // Cluster, hexbin, and grid persist a synthetic point-count field that
+      // is not one of the dataset columns.
+      field =
+        countLabelLayer && textLabel.field.name === POINT_COUNT_FIELD_NAME
+          ? createPointCountLabelField()
+          : fields.find(fd =>
+              Object.keys(textLabel.field).every(key => textLabel.field[key] === fd[key])
+            );
+    }
 
     if (field === undefined && options.throwOnError) {
       throw new Error(`Layer has invalid text label field: ${JSON.stringify(textLabel.field)}`);
@@ -1093,11 +1140,28 @@ export function validateSavedTextLabel(
     return Object.keys(layerTextLabel).reduce(
       (accu, key) => ({
         ...accu,
-        [key]: key === 'field' ? field : textLabel[key] || layerTextLabel[key]
+        // Keep explicit false / 0. `||` would replace a saved collisionEnabled
+        // of false with the aggregation default of true.
+        [key]: key === 'field' ? field : textLabel[key] ?? layerTextLabel[key]
       }),
       {}
     );
   });
+}
+
+/**
+ * Maps saved before count labels omit `textLabel`. Those cluster, hexbin, and
+ * grid layers stay unlabeled. New layers still get the point-count default
+ * from `getDefaultLayerConfig`.
+ */
+export function fallbackTextLabelForLoadedLayer(
+  layerType: string | null | undefined,
+  newLayerTextLabel: any[]
+): any[] {
+  if (layerType && AGGREGATION_COUNT_LAYER_TYPES.has(layerType)) {
+    return [{...DEFAULT_TEXT_LABEL}];
+  }
+  return newLayerTextLabel;
 }
 
 /**
@@ -1163,6 +1227,9 @@ export function validateSavedVisualChannels(
 type ValidateLayerOption = {
   allowEmptyColumn?: boolean;
   throwOnError?: boolean;
+  // Saved maps that omit textLabel predate count labels and stay unlabeled.
+  // A new layer config omits it too, and should keep the layer default.
+  keepUnlabeledAggregationTextLabel?: boolean;
 };
 
 export function validateLayersByDatasets(
@@ -1296,12 +1363,12 @@ export function validateLayerWithData(
 
   const textLabel =
     savedLayer.config.textLabel && newLayer.config.textLabel
-      ? validateSavedTextLabel(
-          fields,
-          newLayer.config.textLabel,
-          savedLayer.config.textLabel,
-          options
-        )
+      ? validateSavedTextLabel(fields, newLayer.config.textLabel, savedLayer.config.textLabel, {
+          ...options,
+          layerType: savedLayer.type
+        })
+      : options.keepUnlabeledAggregationTextLabel
+      ? fallbackTextLabelForLoadedLayer(savedLayer.type, newLayer.config.textLabel)
       : newLayer.config.textLabel;
 
   // copy visConfig over to emptyLayer to make sure it has all the props
@@ -1425,6 +1492,21 @@ function getValueWithHighestOccurrence<T>(arr: T[]): T | null {
 }
 
 export const VIS_STATE_MERGERS: VisStateMergers<any> = [
+  {
+    prop: 'cameraTour',
+    merge: (state, tour) =>
+      state.cameraTour ? state : {...state, cameraTour: normalizeCameraTour(tour)}
+  },
+  {
+    prop: 'cameraBookmarks',
+    merge: (state, bookmarks) => ({
+      ...state,
+      cameraBookmarks: normalizeCameraBookmarks([
+        ...(state.cameraBookmarks || []),
+        ...normalizeCameraBookmarks(bookmarks)
+      ])
+    })
+  },
   {
     merge: mergeLayers,
     prop: 'layers',

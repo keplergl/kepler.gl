@@ -7,6 +7,7 @@ import {Provider, useSelector} from 'react-redux';
 import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
 import styled, {ThemeProvider} from 'styled-components';
 import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 import {injectComponents} from '@kepler.gl/components';
 import {SqlPanel} from '@kepler.gl/duckdb/components';

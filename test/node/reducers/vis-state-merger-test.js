@@ -32,10 +32,110 @@ import {
   receiveMapConfig,
   addDataToMap,
   registerEntry,
+  setCameraBookmarks,
+  setCameraTour,
   setLayerAnimationTimeConfig
 } from '@kepler.gl/actions';
 
 import {createDataContainer, findById} from '@kepler.gl/utils';
+
+test('#visState camera bookmarks -> replace, merge, validate and reset', t => {
+  const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
+  const first = {id: 'first', name: 'First', camera};
+  const second = {id: 'second', name: 'Second', camera};
+  const base = visStateReducer(undefined, setCameraBookmarks([first]));
+  camera.zoom = 99;
+  t.equal(base.cameraBookmarks[0].camera.zoom, 6, 'owns the captured snapshot');
+  const incoming = {
+    visState: {cameraBookmarks: [{...first, name: 'Changed'}, second, second, null]}
+  };
+  const merged = visStateReducer(base, receiveMapConfig(incoming, {keepExistingConfig: true}));
+  t.deepEqual(
+    merged.cameraBookmarks.map(item => item.name),
+    ['First', 'Second'],
+    'keeps existing IDs, appends unique new IDs'
+  );
+  const preserved = visStateReducer(
+    merged,
+    receiveMapConfig({visState: {}}, {keepExistingConfig: true})
+  );
+  t.deepEqual(
+    preserved.cameraBookmarks,
+    merged.cameraBookmarks,
+    'missing additive content preserves bookmarks'
+  );
+  const replaced = visStateReducer(base, receiveMapConfig({visState: {cameraBookmarks: [second]}}));
+  t.deepEqual(replaced.cameraBookmarks, [second], 'normal load replaces bookmarks');
+  const reset = visStateReducer(base, receiveMapConfig({visState: {}}));
+  t.deepEqual(reset.cameraBookmarks, [], 'normal legacy load clears previous bookmarks');
+  const seeded = {...base, initialState: {cameraBookmarks: [first]}};
+  t.deepEqual(
+    visStateReducer(seeded, receiveMapConfig({visState: {cameraBookmarks: [second]}}))
+      .cameraBookmarks,
+    [second],
+    'normal load replaces host-provided initial bookmarks'
+  );
+  t.deepEqual(
+    visStateReducer(seeded, receiveMapConfig({visState: {}})).cameraBookmarks,
+    [],
+    'normal legacy load clears host-provided initial bookmarks'
+  );
+  t.deepEqual(
+    visStateReducer(base, setCameraBookmarks([])).cameraBookmarks,
+    [],
+    'supports deleting every bookmark'
+  );
+  t.end();
+});
+
+test('#visState camera tour -> owned snapshots and single-tour config semantics', t => {
+  const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
+  const bookmark = {id: 'first', name: 'First', camera};
+  const stop = {...bookmark, holdDurationMs: 2000, travelDurationMs: 3000};
+  const tour = {stops: [stop]};
+  const base = visStateReducer(undefined, setCameraTour(tour));
+  camera.zoom = 12;
+  t.equal(base.cameraTour.stops[0].camera.zoom, 6, 'copies the snapshot when authoring');
+  const changed = visStateReducer(base, setCameraBookmarks([bookmark]));
+  const deleted = visStateReducer(changed, setCameraBookmarks([]));
+  t.equal(
+    deleted.cameraTour.stops[0].camera.zoom,
+    6,
+    'bookmark changes and deletion leave the tour alone'
+  );
+  const incoming = {visState: {cameraTour: {stops: [{...stop, id: 'new'}]}}};
+  const kept = visStateReducer(base, receiveMapConfig(incoming, {keepExistingConfig: true}));
+  t.deepEqual(kept.cameraTour, base.cameraTour, 'additive import retains an existing tour');
+  const empty = visStateReducer(base, setCameraTour(null));
+  t.equal(empty.cameraTour, null, 'supports removing the tour');
+  t.deepEqual(
+    visStateReducer(empty, receiveMapConfig(incoming, {keepExistingConfig: true})).cameraTour,
+    incoming.visState.cameraTour,
+    'imports when no tour exists'
+  );
+  t.deepEqual(
+    visStateReducer(base, receiveMapConfig(incoming)).cameraTour,
+    incoming.visState.cameraTour,
+    'normal load replaces'
+  );
+  t.equal(
+    visStateReducer(base, receiveMapConfig({visState: {}})).cameraTour,
+    null,
+    'normal legacy load clears'
+  );
+  const seeded = {...base, initialState: {cameraTour: base.cameraTour}};
+  t.deepEqual(
+    visStateReducer(seeded, receiveMapConfig(incoming)).cameraTour,
+    incoming.visState.cameraTour,
+    'normal load replaces a host-provided initial tour'
+  );
+  t.equal(
+    visStateReducer(seeded, receiveMapConfig({visState: {}})).cameraTour,
+    null,
+    'normal legacy load clears a host-provided initial tour'
+  );
+  t.end();
+});
 
 // fixtures
 import {
@@ -875,6 +975,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
       ...defaultInteractionConfig.tooltip,
       enabled: true,
       config: {
+        timezone: null,
         compareMode: false,
         compareType: 'absolute',
         fieldsToShow: {
@@ -1016,6 +1117,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
             ...defaultInteractionConfig.tooltip,
             enabled: false,
             config: {
+              timezone: null,
               fieldsToShow: {},
               compareMode: false,
               compareType: 'absolute'
@@ -1046,6 +1148,55 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
   // test parsed interactions
   t.deepEqual(stateWData.interactionConfig, MergedInteractionV1, 'should merge interactionConfig');
   t.deepEqual(stateWData.interactionToBeMerged, {}, 'should clear interaction');
+
+  t.end();
+});
+
+test('VisStateMerger -> mergeInteractions -> tooltip timezone', t => {
+  const initialVisState = cloneDeep(InitialState.visState);
+  const tooltip = initialVisState.interactionConfig.tooltip;
+  const oldVisState = {
+    ...initialVisState,
+    interactionConfig: {
+      ...initialVisState.interactionConfig,
+      tooltip: {
+        ...tooltip,
+        config: {
+          ...tooltip.config,
+          timezone: 'America/New_York'
+        }
+      }
+    }
+  };
+
+  const mergedWithTimezone = mergeInteractions(oldVisState, {
+    tooltip: {
+      enabled: true,
+      fieldsToShow: {},
+      timezone: 'America/Guayaquil',
+      compareMode: false,
+      compareType: 'absolute'
+    }
+  });
+  t.equal(
+    mergedWithTimezone.interactionConfig.tooltip.config.timezone,
+    'America/Guayaquil',
+    'should hydrate a saved tooltip timezone'
+  );
+
+  const mergedWithoutTimezone = mergeInteractions(oldVisState, {
+    tooltip: {
+      enabled: true,
+      fieldsToShow: {},
+      compareMode: false,
+      compareType: 'absolute'
+    }
+  });
+  t.equal(
+    mergedWithoutTimezone.interactionConfig.tooltip.config.timezone,
+    'America/New_York',
+    'should preserve the current tooltip timezone when an older config omits it'
+  );
 
   t.end();
 });
@@ -1100,6 +1251,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
             ...defaultInteractionConfig.tooltip,
             enabled: false,
             config: {
+              timezone: null,
               compareMode: false,
               compareType: 'absolute',
               fieldsToShow: {
@@ -1184,6 +1336,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
       ...defaultInteractionConfig.tooltip,
       enabled: false,
       config: {
+        timezone: null,
         compareMode: false,
         compareType: 'absolute',
         fieldsToShow: {
@@ -1326,6 +1479,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
       ...defaultInteractionConfig.tooltip,
       enabled: false,
       config: {
+        timezone: null,
         compareMode: false,
         compareType: 'absolute',
         fieldsToShow: {

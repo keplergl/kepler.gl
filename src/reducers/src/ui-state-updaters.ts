@@ -127,6 +127,14 @@ export const DEFAULT_MAP_CONTROLS: MapControls = {
     }),
     {} as MapControls
   ),
+  // Camera controls are UI preferences; saved camera snapshots remain independent.
+  cameraTour: {...DEFAULT_MAP_CONTROLS_FEATURES},
+  cameraBookmarks: {
+    ...DEFAULT_MAP_CONTROLS_FEATURES,
+    show: false,
+    active: true,
+    settings: {position: {x: 60, y: 20, anchorX: 'right', anchorY: 'top'}, contentHeight: -1}
+  },
   // Open by default so a saved title shows on load. An empty map still hides the card.
   mapInfo: {
     ...DEFAULT_MAP_CONTROLS_FEATURES,
@@ -142,6 +150,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = {
  * @property resolution Default: `'ONE_X'`,
  * @property legend Default: `false`,
  * @property charts Default: `false`,
+ * @property transparentBackground Default: `false`,
  * @property mapH Default: 0,
  * @property mapW Default: 0,
  * @property imageSize Default: {zoomOffset: 0, scale: 1, imageW: 0, imageH: 0},
@@ -158,6 +167,7 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   resolution: RESOLUTIONS.ONE_X,
   legend: false,
   charts: false,
+  transparentBackground: false,
   mapH: 0,
   mapW: 0,
   imageSize: {
@@ -495,7 +505,12 @@ export const setMapControlVisibilityUpdater = (
   state: UiState,
   {payload: {panelId, show}}: UIStateActions.setMapControlVisibilityUpdaterAction
 ): UiState => {
-  if (!state.mapControls?.[panelId]) {
+  const mapControl =
+    state.mapControls?.[panelId] ??
+    (panelId === 'cameraBookmarks' || panelId === 'cameraTour'
+      ? DEFAULT_MAP_CONTROLS[panelId]
+      : undefined);
+  if (!mapControl) {
     return state;
   }
 
@@ -504,7 +519,7 @@ export const setMapControlVisibilityUpdater = (
     mapControls: {
       ...state.mapControls,
       [panelId]: {
-        ...state.mapControls[panelId],
+        ...mapControl,
         show: Boolean(show)
       }
     }
@@ -524,7 +539,10 @@ export const setMapControlSettingsUpdater = (
   state: UiState,
   {payload: {panelId, settings}}: UIStateActions.setMapControlSettingsUpdaterAction
 ): UiState => {
-  const mapControl = state.mapControls?.[panelId] as MapControlMapLegend | undefined;
+  const mapControl = (state.mapControls?.[panelId] ??
+    (panelId === 'cameraBookmarks' ? DEFAULT_MAP_CONTROLS.cameraBookmarks : undefined)) as
+    | MapControlMapLegend
+    | undefined;
   if (!mapControl) {
     return state;
   }
@@ -863,6 +881,24 @@ export const setExportMapHTMLModeUpdater = (
 });
 
 /**
+ * Set application branding overrides for exported maps.
+ * @param state - `uiState`
+ * @param action
+ * @param action.payload application name, website, icon, and/or name color overrides
+ * @return nextState
+ */
+export const setExportMapBrandingUpdater = (
+  state: UiState,
+  {payload}: UIStateActions.SetExportMapBrandingUpdaterAction
+): UiState => ({
+  ...state,
+  exportMap: {
+    ...state.exportMap,
+    ...payload
+  }
+});
+
+/**
  * Whether to keep layer access tokens in exported HTML and JSON maps.
  * @param state - `uiState`
  * @param action
@@ -1155,6 +1191,27 @@ export const receiveMapConfigUpdater = (
         }
       }
     };
+  }
+
+  const savedBookmarks = uiState.mapControls?.cameraBookmarks;
+  if (typeof savedBookmarks?.show === 'boolean') {
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        cameraBookmarks: {
+          ...DEFAULT_MAP_CONTROLS.cameraBookmarks!,
+          ...newState.mapControls.cameraBookmarks,
+          show: savedBookmarks.show,
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+  if (savedBookmarks?.settings) {
+    newState = setMapControlSettingsUpdater(newState, {
+      payload: {panelId: 'cameraBookmarks', settings: savedBookmarks.settings}
+    } as UIStateActions.setMapControlSettingsUpdaterAction);
   }
 
   if (uiState.mapControls?.mapLegend?.settings) {

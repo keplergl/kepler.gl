@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {EXPORT_HTML_MAP_MODES, KEPLER_GL_VERSION} from '@kepler.gl/constants';
+import {
+  EXPORT_HTML_MAP_MODES,
+  KEPLER_GL_NAME,
+  KEPLER_GL_VERSION,
+  KEPLER_GL_WEBSITE
+} from '@kepler.gl/constants';
 import {optionalMapInfo} from './map-info-utils';
 
 // React (and react-dom) no longer publish UMD builds starting with v19, so the
@@ -18,6 +23,15 @@ const STYLED_COMPONENTS_VERSION = '6.1.19';
 // es-module-shims lets the exported map keep working as a standalone file://
 // document (native ES modules/import maps are blocked under the file:// origin).
 const ES_MODULE_SHIMS_VERSION = '2.8.1';
+const DEFAULT_APP_NAME_COLOR = '#1FBAD6';
+
+/** Escape serialized JSON for interpolation into an inline `<script>`. */
+function escapeScriptJSON(serialized: string): string {
+  return serialized
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
 
 /**
  * Serialize a value for interpolation into an inline `<script>`. A literal `</script>`
@@ -25,10 +39,61 @@ const ES_MODULE_SHIMS_VERSION = '2.8.1';
  * line terminators in JavaScript but legal inside a JSON string.
  */
 function toScriptJSON(value: unknown): string {
-  return JSON.stringify(value ?? null)
-    .replace(/</g, '\\u003c')
-    .replace(/\u2028/g, '\\u2028')
-    .replace(/\u2029/g, '\\u2029');
+  return escapeScriptJSON(JSON.stringify(value ?? null));
+}
+
+/** Preserve the legacy `undefined` runtime value for optional public arguments. */
+function toScriptJSONOrUndefined(value: unknown): string {
+  const serialized = JSON.stringify(value);
+  return serialized === undefined ? 'undefined' : escapeScriptJSON(serialized);
+}
+
+/** Escape text interpolated directly into HTML markup. */
+function escapeHTML(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Resolve user-entered branding links to an absolute HTTP(S) URL. */
+function normalizeHTTPURL(value: unknown, fallback: string | null): string | null {
+  if (typeof value !== 'string' || !value.trim()) {
+    return fallback;
+  }
+
+  const trimmedValue = value.trim();
+  const hasScheme = /^[a-z][a-z\d+.-]*:/i.test(trimmedValue);
+  if (hasScheme && !/^https?:/i.test(trimmedValue)) {
+    return fallback;
+  }
+
+  const absoluteValue = /^https?:/i.test(trimmedValue)
+    ? trimmedValue
+    : trimmedValue.startsWith('//')
+    ? `https:${trimmedValue}`
+    : `https://${trimmedValue}`;
+
+  try {
+    const url = new URL(absoluteValue);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeAppWebsite(value: unknown): string {
+  return normalizeHTTPURL(value, KEPLER_GL_WEBSITE) || KEPLER_GL_WEBSITE;
+}
+
+function normalizeAppIcon(value: unknown): string | null {
+  return normalizeHTTPURL(value, null);
+}
+
+function normalizeAppNameColor(value: unknown): string {
+  return typeof value === 'string' && /^#[\da-f]{6}$/i.test(value) ? value : DEFAULT_APP_NAME_COLOR;
 }
 
 /**
@@ -38,21 +103,35 @@ function toScriptJSON(value: unknown): string {
  * @param {Array<Object>} options.datasets Data to include in the map
  * @param {Object} options.config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
  * @param {Object} [options.info] map title and description
+ * @param {string} [options.appName] application name used by the exported map
+ * @param {string} [options.appWebsite] application website linked by the exported map
+ * @param {string} [options.appIcon] application icon URL used by the exported map
+ * @param {string} [options.appNameColor] application name color used by the exported map
  * @param {string} version which version of Kepler.gl to load.
  */
 export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
+  const appName =
+    typeof options.appName === 'string' && options.appName ? options.appName : KEPLER_GL_NAME;
+  const appWebsite = normalizeAppWebsite(options.appWebsite);
+  const appIcon = normalizeAppIcon(options.appIcon);
+  const appNameColor = normalizeAppNameColor(options.appNameColor);
+  const branding = {appName, appWebsite, appIcon, appNameColor};
+  const mapboxApiAccessToken = options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN';
+  const keplerStyleUrl = `https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.css`;
+  const keplerScriptUrl = `https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.js`;
+
   return `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="UTF-8"/>
-        <title>Kepler.gl embedded map</title>
+        <title>${escapeHTML(appName)} embedded map</title>
 
         <!--Uber Font-->
         <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
 
         <!--Kepler css-->
-        <link href="https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.css" rel="stylesheet">
+        <link href="${escapeHTML(keplerStyleUrl)}" rel="stylesheet">
 
         <!--MapBox css-->
         <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet">
@@ -181,7 +260,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
 
           // Load the kepler.gl UMD bundle after the globals are in place, then run
           // the app bootstrap scripts (marked as type="text/kepler-bootstrap").
-          loadScript('https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.js')
+          loadScript(${toScriptJSON(keplerScriptUrl)})
             .then(function() {
               var bootstraps = document.querySelectorAll('script[type="text/kepler-bootstrap"]');
               bootstraps.forEach(function(node) {
@@ -243,28 +322,8 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           /**
            * Provide your MapBox Token
            **/
-          window.MAPBOX_TOKEN = '${options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN'}';
+          window.MAPBOX_TOKEN = ${toScriptJSON(mapboxApiAccessToken)};
           window.WARNING_MESSAGE = 'No Mapbox token provided. Mapbox basemaps will not be available. To enable them, edit this file and set MAPBOX_TOKEN to your Mapbox access key.';
-        </script>
-
-        <!-- GA: Delete this as you wish, However to pat ourselves on the back, we only track anonymous pageview to understand how many people are using kepler.gl. -->
-        <script>
-          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-          })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-          ga('create', 'UA-64694404-19', {
-            'storage': 'none',
-            'clientId': (function(){try{return localStorage.getItem('ga:clientId')}catch(e){return null}})()
-          });
-          ga(function(tracker) {
-              try{localStorage.setItem('ga:clientId', tracker.get('clientId'));}catch(e){}
-          });
-          ga('set', 'checkProtocolTask', null); // Disable file protocol checking.
-          ga('set', 'checkStorageTask', null); // Disable cookie storage checking.
-          ga('set', 'historyImportTask', null); // Disable history checking (requires reading from cookies).
-          ga('set', 'page', 'keplergl-html');
-          ga('send', 'pageview');
         </script>
       </head>
       <body>
@@ -287,11 +346,13 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
             console.warn('[kepler.gl]', WARNING_MESSAGE);
           }
 
+          const branding = ${toScriptJSON(branding)};
+
           /** STORE **/
           // Pre-seed styleType so the correct basemap fetch starts on the very
           // first render, avoiding a flash of the default dark basemap.
           // options.config has the versioned envelope shape: { version, config: { mapStyle, ... } }
-          const savedStyleType = ${JSON.stringify(
+          const savedStyleType = ${toScriptJSON(
             options.config?.config?.mapStyle?.styleType ?? null
           )};
 
@@ -301,7 +362,8 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               keplerGl: keplerGl.keplerGlReducer.initialState({
                 uiState: {
                   readOnly: ${options.mode === EXPORT_HTML_MAP_MODES.READ},
-                  currentModal: null
+                  currentModal: null,
+                  exportMap: Object.assign({}, keplerGl.INITIAL_UI_STATE.exportMap, branding)
                 },
                 ...(styleType ? {mapStyle: {styleType}} : {})
               })
@@ -328,24 +390,127 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           /** END STORE **/
 
           /** COMPONENTS **/
-          /** Custom map control factory to add Effects button + panel **/
+          var BrandLogo = (function createBrandLogo(react, branding) {
+            return function BrandLogo(props) {
+              var fixed = Boolean(props && props.fixed);
+              var icon = branding.appIcon
+                ? react.createElement("img", {
+                    src: branding.appIcon,
+                    alt: "",
+                    "aria-hidden": true,
+                    style: {width: "22px", height: "15px", objectFit: "contain"}
+                  })
+                : react.createElement(
+                    "svg",
+                    {width: "22px", height: "15px", viewBox: "0 0 22 15", "aria-hidden": true},
+                    react.createElement(
+                      "g",
+                      {transform: "translate(11, -3) rotate(45.000000)"},
+                      react.createElement("rect", {fill: "#535C6C", x: "0", y: "5", width: "10", height: "10"}),
+                      react.createElement("rect", {fill: "#1FBAD6", x: "5", y: "0", width: "10", height: "10"})
+                    )
+                  );
+
+              return react.createElement(
+                "div",
+                {
+                  className: fixed ? "logo-container" : "side-panel-logo",
+                  style: fixed
+                    ? {position: "fixed", zIndex: 10000, padding: "4px", display: "flex", alignItems: "center"}
+                    : {display: "flex", alignItems: "flex-start"}
+                },
+                react.createElement(
+                  "div",
+                  {style: {marginTop: fixed ? 0 : "3px"}},
+                  icon
+                ),
+                react.createElement(
+                  "div",
+                  {className: "logo__title", style: {marginLeft: "6px"}},
+                  react.createElement(
+                    "a",
+                    {
+                      className: "kepler_gl__logo logo__link",
+                      href: branding.appWebsite,
+                      target: "_blank",
+                      rel: "noopener noreferrer",
+                      style: {
+                        color: branding.appNameColor,
+                        fontFamily: "ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        letterSpacing: "1.17px",
+                        textDecoration: "none"
+                      }
+                    },
+                    react.createElement("span", {style: {color: branding.appNameColor}}, branding.appName)
+                  ),
+                  !fixed && props && props.version
+                    ? react.createElement(
+                        "div",
+                        {
+                          className: "logo__version",
+                          style: {fontSize: "10px", color: "#a0a7b4", letterSpacing: "0.83px", lineHeight: "14px"}
+                        },
+                        props.version
+                      )
+                    : null
+                )
+              );
+            };
+          }(React, branding));
+
+          /** Custom map control factory to restore export editing and chart display. **/
           var CustomMapControlFactory = (function createCustomMapControl(react, keplerGl) {
             var EffectControlFactory = keplerGl.EffectControlFactory;
             var EffectManagerFactory = keplerGl.EffectManagerFactory;
+            var AnnotationControlFactory = keplerGl.AnnotationControlFactory;
+            var AnnotationManagerFactory = keplerGl.AnnotationManagerFactory;
+            var ChartControlFactory = keplerGl.ChartControlFactory;
+            var ChartManagerFactory = keplerGl.ChartManagerFactory;
             var MapControlFactory = keplerGl.MapControlFactory;
 
-            if (!EffectControlFactory || !EffectManagerFactory || !MapControlFactory) {
-              console.warn('kepler.gl: Effect factories not available, skipping effect control injection');
+            if (
+              !EffectControlFactory ||
+              !EffectManagerFactory ||
+              !AnnotationControlFactory ||
+              !AnnotationManagerFactory ||
+              !ChartControlFactory ||
+              !ChartManagerFactory ||
+              !MapControlFactory
+            ) {
+              console.warn('kepler.gl: Export control factories not available, skipping control injection');
               return null;
             }
 
-            function EffectMapControlFactory(EffectControl, EffectManager) {
-              var args = Array.prototype.slice.call(arguments, 2);
+            function ExportMapControlFactory(
+              EffectControl,
+              EffectManager,
+              AnnotationControl,
+              AnnotationManager,
+              ChartControl,
+              ChartManager
+            ) {
+              var args = Array.prototype.slice.call(arguments, 6);
               var MapControl = MapControlFactory.apply(null, args);
-              var actionComponents = (MapControl.defaultActionComponents || []).concat([EffectControl]);
+              var defaultActionComponents = MapControl.defaultActionComponents || [];
 
-              var EffectMapControl = function EffectMapControl(props) {
-                var showEffects = Boolean(props.mapControls && props.mapControls.effect && props.mapControls.effect.active);
+              var ExportMapControl = function ExportMapControl(props) {
+                var readOnly = Boolean(props.readOnly);
+                var mapControls = props.mapControls || {};
+                var charts = props.charts || [];
+                var actionComponents = defaultActionComponents.filter(function(ActionComponent) {
+                  return !readOnly || ActionComponent !== AnnotationControl;
+                });
+                if (!readOnly) {
+                  actionComponents = actionComponents.concat([ChartControl, EffectControl]);
+                }
+                var showEffects = !readOnly && Boolean(mapControls.effect && mapControls.effect.active);
+                var showAnnotations = !readOnly && Boolean(mapControls.annotation && mapControls.annotation.active);
+                var showChartPanel = !readOnly && Boolean(mapControls.chart && mapControls.chart.active);
+                var hasPinnedCharts = charts.some(function(chart) { return chart.pinned !== false; });
+                var showCharts = readOnly ? charts.length > 0 : showChartPanel || hasPinnedCharts;
+                var rightPanelVisible = showEffects || showAnnotations || showCharts;
                 return react.createElement(
                   'div',
                   {style: {
@@ -362,7 +527,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                     {style: {position: 'relative', pointerEvents: 'all'}},
                     react.createElement(MapControl, Object.assign({}, props, {top: 0, actionComponents: actionComponents}))
                   ),
-                  showEffects
+                  rightPanelVisible
                     ? react.createElement('div', {
                         style: {
                           maxHeight: '100%',
@@ -372,58 +537,58 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                           pointerEvents: 'all',
                           marginTop: '10px'
                         }
-                      }, react.createElement(EffectManager, null))
+                      },
+                      showAnnotations ? react.createElement(AnnotationManager, null) : null,
+                      showCharts ? react.createElement(ChartManager, {
+                        panelActive: showChartPanel,
+                        isExport: readOnly
+                      }) : null,
+                      showEffects ? react.createElement(EffectManager, null) : null
+                      )
                     : null
                 );
               };
 
-              return EffectMapControl;
+              return ExportMapControl;
             }
-            EffectMapControlFactory.deps = [EffectControlFactory, EffectManagerFactory].concat(MapControlFactory.deps);
+            ExportMapControlFactory.deps = [
+              EffectControlFactory,
+              EffectManagerFactory,
+              AnnotationControlFactory,
+              AnnotationManagerFactory,
+              ChartControlFactory,
+              ChartManagerFactory
+            ].concat(MapControlFactory.deps);
 
-            return [MapControlFactory, EffectMapControlFactory];
+            return [MapControlFactory, ExportMapControlFactory];
           }(React, KeplerGl));
 
-          var KeplerGlComponent = CustomMapControlFactory
-            ? KeplerGl.injectComponents([CustomMapControlFactory])
-            : KeplerGl.KeplerGl;
+          var CustomPanelHeaderFactory = (function createCustomPanelHeader(react, keplerGl, BrandLogo) {
+            var PanelHeaderFactory = keplerGl.PanelHeaderFactory;
+            if (!PanelHeaderFactory) {
+              console.warn('kepler.gl: Panel header factory not available, skipping branding injection');
+              return null;
+            }
 
-          var KeplerElement = (function makeKeplerElement(react, keplerGl, mapboxToken) {
-            var LogoSvg = function LogoSvg() {
-              return react.createElement(
-                "div",
-                { className: "logo-container", style: {position: 'fixed', zIndex: 10000, padding: '4px'} },
-                  react.createElement(
-                    "svg",
-                    {
-                      className: "kepler_gl__logo",
-                      width: "107px",
-                      height: "21px",
-                      viewBox: "0 0 124 24"
-                    },
-                    react.createElement(
-                      "g",
-                      { transform: "translate(13.500000, 13.500000) rotate(45.000000) translate(-13.500000, -13.500000) translate(4.000000, 4.000000)" },
-                      react.createElement("rect", { x: "0", y: "6", transform: "matrix(2.535181e-06 1 -1 2.535181e-06 18.1107 6.0369)", fill: "#535C6C", width: "12.1", height: "12.1" }),
-                      react.createElement("rect", { x: "6", y: "0", transform: "matrix(2.535182e-06 1 -1 2.535182e-06 18.1107 -6.0369)", fill:"#1FBAD6", width: "12.1", height: "12.1" })
-                    ),
-                    react.createElement(
-                      "g",
-                      {},
-                      react.createElement("path", { fill:"#1FBAD6", d: "M39,8.7h2.2l-2.8,4.2l2.9,5.1H39l-2.4-4.2h-1.3V18h-2V5l2-0.1v7.3h1.3L39,8.7z" }),
-                      react.createElement("path", { fill:"#1FBAD6", d: "M42.4,13.3c0-1.5,0.4-2.7,1.1-3.5s1.8-1.2,3.1-1.2c1.3,0,2.2,0.4,2.8,1.1c0.6,0.7,0.9,1.8,0.9,3.3 c0,0.4,0,0.8,0,1.1h-5.8c0,1.6,0.8,2.4,2.4,2.4c1,0,2-0.2,2.9-0.6l0.2,1.7c-0.4,0.2-0.9,0.4-1.4,0.5s-1.1,0.2-1.7,0.2 c-1.5,0-2.6-0.4-3.3-1.2C42.8,16.1,42.4,14.9,42.4,13.3z M46.6,10.1c-0.7,0-1.2,0.2-1.5,0.5c-0.4,0.4-0.6,0.9-0.6,1.7h4 c0-0.8-0.2-1.4-0.5-1.7S47.2,10.1,46.6,10.1z" }),
-                      react.createElement("path", { fill:"#1FBAD6", d: "M57.1,18.2c-1,0-1.8-0.3-2.3-0.9l0,0l0,1.3v2.5h-2V8.7h1.5l0.3,0.9h0c0.3-0.3,0.7-0.6,1.2-0.7 c0.4-0.2,0.9-0.3,1.4-0.3c1.2,0,2.1,0.4,2.7,1.1c0.6,0.7,0.9,2,0.9,3.7c0,1.6-0.3,2.8-1,3.7C59.2,17.8,58.3,18.2,57.1,18.2z M56.7,10.3c-0.4,0-0.8,0.1-1.1,0.2c-0.3,0.2-0.6,0.4-0.8,0.7v4.3c0.2,0.3,0.4,0.5,0.7,0.7c0.3,0.2,0.7,0.3,1.1,0.3 c0.7,0,1.2-0.2,1.6-0.7c0.4-0.5,0.5-1.3,0.5-2.5c0-0.8-0.1-1.4-0.2-1.8s-0.4-0.7-0.7-0.9C57.6,10.4,57.2,10.3,56.7,10.3z" }),
-                      react.createElement("path", { fill:"#1FBAD6", d: "M63.2,16V5l2-0.1v10.8c0,0.3,0.1,0.5,0.2,0.6c0.1,0.1,0.3,0.2,0.6,0.2c0.3,0,0.6,0,0.9-0.1V18 c-0.4,0.1-1,0.2-1.6,0.2c-0.8,0-1.3-0.2-1.7-0.5S63.2,16.8,63.2,16z" }),
-                      react.createElement("path", { fill:"#1FBAD6", d: "M68.2,13.3c0-1.5,0.4-2.7,1.1-3.5c0.7-0.8,1.8-1.2,3.1-1.2c1.3,0,2.2,0.4,2.8,1.1c0.6,0.7,0.9,1.8,0.9,3.3 c0,0.4,0,0.8,0,1.1h-5.8c0,1.6,0.8,2.4,2.4,2.4c1,0,2-0.2,2.9-0.6l0.2,1.7c-0.4,0.2-0.9,0.4-1.4,0.5s-1.1,0.2-1.7,0.2 c-1.5,0-2.6-0.4-3.3-1.2C68.6,16.1,68.2,14.9,68.2,13.3z M72.4,10.1c-0.7,0-1.2,0.2-1.5,0.5c-0.4,0.4-0.6,0.9-0.6,1.7h4 c0-0.8-0.2-1.4-0.5-1.7S73,10.1,72.4,10.1z" }),
-                      react.createElement("path", { fill:"#1FBAD6", d: "M80.2,8.7l0.1,1.7h0c0.3-0.6,0.7-1.1,1.1-1.4c0.4-0.3,1-0.5,1.6-0.5c0.4,0,0.7,0,1,0.1l-0.1,2 c-0.3-0.1-0.7-0.2-1-0.2c-0.7,0-1.3,0.3-1.7,0.8c-0.4,0.5-0.7,1.2-0.7,2.1V18h-2V8.7H80.2z" }),
-                      react.createElement("path", { fill:"#1FBAD6", d: "M83.8,17c0-0.8,0.4-1.2,1.2-1.2c0.8,0,1.2,0.4,1.2,1.2c0,0.8-0.4,1.1-1.2,1.1C84.2,18.2,83.8,17.8,83.8,17z" }),
-                      react.createElement("path", { fill:"#1FBAD6", d: "M88.5,18.7c0-0.8,0.4-1.4,1.2-1.8c-0.6-0.3-0.9-0.8-0.9-1.5c0-0.7,0.4-1.2,1.1-1.6c-0.3-0.3-0.6-0.6-0.7-0.9 c-0.2-0.4-0.2-0.8-0.2-1.3c0-1,0.3-1.8,0.9-2.3c0.6-0.5,1.6-0.8,2.8-0.8c0.5,0,1,0,1.4,0.1c0.4,0.1,0.8,0.2,1.1,0.4l2.4-0.2v1.5 h-1.5c0.2,0.4,0.2,0.8,0.2,1.3c0,1-0.3,1.7-0.9,2.2s-1.5,0.8-2.7,0.8c-0.7,0-1.2-0.1-1.6-0.2c-0.1,0.1-0.2,0.2-0.3,0.3 c-0.1,0.1-0.1,0.2-0.1,0.4c0,0.2,0.1,0.3,0.2,0.4c0.1,0.1,0.3,0.2,0.6,0.2l2.7,0.2c1,0.1,1.7,0.3,2.2,0.6c0.5,0.3,0.8,0.9,0.8,1.7 c0,0.6-0.2,1.1-0.5,1.5c-0.4,0.4-0.9,0.8-1.5,1c-0.7,0.2-1.5,0.4-2.4,0.4c-1.3,0-2.3-0.2-3-0.6C88.8,20.1,88.5,19.5,88.5,18.7z M95.1,18.4c0-0.3-0.1-0.5-0.3-0.7s-0.6-0.2-1.1-0.3l-2.7-0.3c-0.2,0.1-0.4,0.3-0.5,0.5c-0.1,0.2-0.2,0.4-0.2,0.6 c0,0.4,0.2,0.8,0.5,1c0.4,0.2,1,0.3,1.8,0.3C94.2,19.5,95.1,19.2,95.1,18.4z M94.3,11.5c0-0.6-0.1-1-0.4-1.2 c-0.3-0.2-0.7-0.3-1.3-0.3c-0.7,0-1.1,0.1-1.4,0.3c-0.3,0.2-0.4,0.6-0.4,1.2s0.1,1,0.4,1.2c0.3,0.2,0.7,0.3,1.4,0.3 c0.6,0,1.1-0.1,1.3-0.4S94.3,12,94.3,11.5z" }),
-                      react.createElement("path", { fill:"#1FBAD6", d: "M99.4,16V5l2-0.1v10.8c0,0.3,0.1,0.5,0.2,0.6c0.1,0.1,0.3,0.2,0.6,0.2c0.3,0,0.6,0,0.9-0.1V18 c-0.4,0.1-1,0.2-1.6,0.2c-0.8,0-1.3-0.2-1.7-0.5S99.4,16.8,99.4,16z" })
-                    )
-                  )
+            function ExportPanelHeaderFactory() {
+              var PanelHeader = PanelHeaderFactory.apply(null, arguments);
+              return function ExportPanelHeader(props) {
+                return react.createElement(
+                  PanelHeader,
+                  Object.assign({}, props, {logoComponent: BrandLogo})
                 );
               };
+            }
+            ExportPanelHeaderFactory.deps = PanelHeaderFactory.deps;
+            return [PanelHeaderFactory, ExportPanelHeaderFactory];
+          }(React, KeplerGl, BrandLogo));
 
+          var CustomFactories = [CustomMapControlFactory, CustomPanelHeaderFactory].filter(Boolean);
+          var KeplerGlComponent = CustomFactories.length
+            ? KeplerGl.injectComponents(CustomFactories)
+            : KeplerGl.KeplerGl;
+
+          var KeplerElement = (function makeKeplerElement(react, keplerGl, mapboxToken, branding, BrandLogo) {
             return function App() {
               var rootElm = react.useRef(null);
               var _useState = react.useState({
@@ -449,16 +614,22 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               return react.createElement(
                 'div',
                 {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
-                ${options.mode === EXPORT_HTML_MAP_MODES.READ ? 'LogoSvg(),' : ''}
+                ${
+                  options.mode === EXPORT_HTML_MAP_MODES.READ
+                    ? 'react.createElement(BrandLogo, {fixed: true}),'
+                    : ''
+                }
                 react.createElement(KeplerGlComponent, {
                   mapboxApiAccessToken: mapboxToken,
                   id: "map",
                   width: windowDimension.width,
-                  height: windowDimension.height
+                  height: windowDimension.height,
+                  appName: branding.appName,
+                  appWebsite: branding.appWebsite
                 })
               )
             }
-          }(React, KeplerGl, MAPBOX_TOKEN));
+          }(React, KeplerGl, MAPBOX_TOKEN, branding, BrandLogo));
 
           const app = (function createReactReduxProvider(react, reactRedux, KeplerElement) {
             return react.createElement(
@@ -482,8 +653,8 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
            * to add new data and customize behavior
            */
           (function customize(keplerGl, store) {
-            const datasets = ${JSON.stringify(options.datasets)};
-            const config = ${JSON.stringify(options.config)};
+            const datasets = ${toScriptJSONOrUndefined(options.datasets)};
+            const config = ${toScriptJSONOrUndefined(options.config)};
             const info = ${toScriptJSON(optionalMapInfo(options.info) ?? null)};
 
             const loadedData = keplerGl.KeplerGlSchema.load(

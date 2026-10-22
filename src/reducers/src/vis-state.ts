@@ -10,6 +10,8 @@ import * as visStateUpdaters from './vis-state-updaters';
  * It is used to generate documentation
  */
 const actionHandler = {
+  [ActionTypes.SET_CAMERA_BOOKMARKS]: visStateUpdaters.setCameraBookmarksUpdater,
+  [ActionTypes.SET_CAMERA_TOUR]: visStateUpdaters.setCameraTourUpdater,
   [ActionTypes.ADD_FILTER]: visStateUpdaters.addFilterUpdater,
 
   [ActionTypes.CREATE_OR_UPDATE_FILTER]: visStateUpdaters.createOrUpdateFilterUpdater,
@@ -145,6 +147,12 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_DATASET]: visStateUpdaters.updateDatasetUpdater,
 
+  [ActionTypes.RENAME_TABLE_COLUMN]: visStateUpdaters.renameTableColumnUpdater,
+
+  [ActionTypes.CHANGE_TABLE_COLUMN_TYPE]: visStateUpdaters.changeTableColumnTypeUpdater,
+
+  [ActionTypes.DELETE_TABLE_COLUMN]: visStateUpdaters.deleteTableColumnUpdater,
+
   [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
 
   [ActionTypes.SET_EDITOR_FEATURE_PROPERTIES]: visStateUpdaters.setEditorFeaturePropertiesUpdater,
@@ -173,6 +181,10 @@ const actionHandler = {
   [ActionTypes.SORT_TABLE_COLUMN]: visStateUpdaters.sortTableColumnUpdater,
 
   [ActionTypes.PIN_TABLE_COLUMN]: visStateUpdaters.pinTableColumnUpdater,
+
+  [ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN]: visStateUpdaters.toggleTableColumnHiddenUpdater,
+
+  [ActionTypes.SHOW_ALL_TABLE_COLUMNS]: visStateUpdaters.showAllTableColumnsUpdater,
 
   [ActionTypes.COPY_TABLE_COLUMN]: visStateUpdaters.copyTableColumnUpdater,
 
@@ -239,6 +251,9 @@ const actionHandler = {
   [ActionTypes.ADD_SPATIAL_JOIN]: visStateUpdaters.addSpatialJoinUpdater,
   [ActionTypes.SET_SPATIAL_JOIN_CONFIG]: visStateUpdaters.setSpatialJoinConfigUpdater,
   [ActionTypes.RUN_SPATIAL_JOIN]: visStateUpdaters.runSpatialJoinUpdater,
+  [ActionTypes.ADD_SUITABILITY]: visStateUpdaters.addSuitabilityUpdater,
+  [ActionTypes.SET_SUITABILITY_CONFIG]: visStateUpdaters.setSuitabilityConfigUpdater,
+  [ActionTypes.RUN_SUITABILITY]: visStateUpdaters.runSuitabilityUpdater,
   [ActionTypes.REMOVE_DATASET_OP]: visStateUpdaters.removeDatasetOpUpdater
 };
 

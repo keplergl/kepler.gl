@@ -134,11 +134,17 @@ Object.keys(global.window).forEach(property => {
   }
 });
 
-global.navigator = {
-  userAgent: 'node.js',
-  platform: 'mac',
-  appName: 'kepler.gl'
-};
+// Node 24 defines global navigator as a getter with no setter. Assignment throws.
+Object.defineProperty(global, 'navigator', {
+  configurable: true,
+  enumerable: true,
+  writable: true,
+  value: {
+    userAgent: 'node.js',
+    platform: 'mac',
+    appName: 'kepler.gl'
+  }
+});
 
 global.IntersectionObserver = class IntersectionObserver {
   constructor() {}

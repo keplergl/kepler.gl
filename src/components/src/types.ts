@@ -4,7 +4,16 @@
 import React, {HTMLAttributes, PropsWithChildren} from 'react';
 import {MapStyle} from '@kepler.gl/reducers';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {Filter, InteractionConfig, MapState, UiState, LayerOrder} from '@kepler.gl/types';
+import {
+  Annotation,
+  CameraBookmark,
+  CameraTour,
+  Filter,
+  InteractionConfig,
+  MapState,
+  UiState,
+  LayerOrder
+} from '@kepler.gl/types';
 
 import {
   MapStyleActions,
@@ -12,7 +21,7 @@ import {
   MapStateActions,
   UIStateActions
 } from '@kepler.gl/actions';
-import {Datasets, GroupByOp, JoinOp} from '@kepler.gl/table';
+import {Datasets, GroupByOp, JoinOp, SuitabilityOp} from '@kepler.gl/table';
 
 export type BaseComponentProps = PropsWithChildren<HTMLAttributes<unknown>>;
 
@@ -31,6 +40,9 @@ export type SidePanelProps = {
   layerBlending: string;
   overlayBlending?: string;
   layers: Layer[];
+  annotations?: Annotation[];
+  cameraBookmarks?: CameraBookmark[];
+  cameraTour?: CameraTour | null;
   layerClasses: LayerClassesType;
   layerOrder: LayerOrder;
   mapStyle: MapStyle;
@@ -39,6 +51,7 @@ export type SidePanelProps = {
   width: number;
   datasets: Datasets;
   groupBys?: GroupByOp[];
+  suitabilities?: SuitabilityOp[];
   joins?: JoinOp[];
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;

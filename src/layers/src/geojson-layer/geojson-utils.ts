@@ -2,29 +2,33 @@
 // Copyright contributors to the kepler.gl project
 
 import {Buffer} from 'buffer';
-import {Feature, Position, BBox} from 'geojson';
+import {Feature, Geometry, Position, BBox} from 'geojson';
 import normalize from '@mapbox/geojson-normalize';
 import {bbox} from '@turf/bbox';
-import {ascending} from 'd3-array';
+import {ascending, extent} from 'd3-array';
 import {center} from '@turf/center';
 import {AllGeoJSON} from '@turf/helpers';
 import {parseSync} from '@loaders.gl/core';
 import {WKTLoader} from '@loaders.gl/wkt';
 import {convertWKBToGeometry, convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
 import {BinaryFeatureCollection} from '@loaders.gl/schema';
-import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
+import {DataContainerInterface, findDefaultColorField, getSampleData} from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {LayerColumns, ProtoDatasetField} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 
 import {GeojsonLayerMetaProps, assignPointPairToLayerColumn} from '../layer-utils';
 import {LayerBaseConfig} from '../base-layer';
+import type GeoJsonLayer from './geojson-layer';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = (Feature | BinaryFeatureCollection | null)[];
 export type GeojsonPointDataMaps = (number[] | number[][] | null)[];
 
 export const COLUMN_MODE_GEOJSON = 'geojson';
+
+// Bound the extra column scans used to reject constant default color fields.
+const DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT = 1_000_000;
 
 /* eslint-disable */
 // TODO: Re-enable eslint when we upgrade to handle enums and type maps
@@ -53,6 +57,59 @@ export function fieldIsGeoArrow(geoField?: ProtoDatasetField | null): boolean {
   return Boolean(geoField?.metadata?.get('ARROW:extension:name'));
 }
 
+/** Apply automatic color settings without preventing normal layer initialization. */
+export function applyDefaultGeojsonColorField(layer: GeoJsonLayer, dataset: KeplerTable): void {
+  const previousConfig = layer.config;
+  try {
+    const {featureTypes} = layer.meta;
+    const colorChannel =
+      featureTypes?.polygon || featureTypes?.point
+        ? 'color'
+        : featureTypes?.line
+        ? 'strokeColor'
+        : null;
+    const embeddedColorField =
+      colorChannel === 'color' ? 'fillColor' : colorChannel === 'strokeColor' ? 'lineColor' : null;
+    const hasEmbeddedColor = Boolean(
+      embeddedColorField &&
+        layer.dataToFeature.some(
+          feature => feature && 'properties' in feature && feature.properties?.[embeddedColorField]
+        )
+    );
+    if (!colorChannel || hasEmbeddedColor) {
+      return;
+    }
+
+    const rowCount = dataset.dataContainer.numRows();
+    if (!rowCount) {
+      return;
+    }
+
+    let fields = dataset.fields;
+    let defaultColorField = findDefaultColorField(dataset);
+    const maxFieldChecks = Math.floor(DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT / rowCount);
+    let fieldsChecked = 0;
+    while (defaultColorField && fieldsChecked < maxFieldChecks) {
+      fieldsChecked++;
+      const {valueAccessor} = defaultColorField;
+      const [min, max] = extent(dataset.filteredIndexForDomain, index => valueAccessor({index}));
+      if (min !== max) {
+        layer.updateLayerConfig({
+          [layer.visualChannels[colorChannel].field]: defaultColorField
+        });
+        layer.updateLayerVisualChannel(dataset, colorChannel);
+        return;
+      }
+
+      fields = fields.filter(field => field !== defaultColorField);
+      defaultColorField = findDefaultColorField({fields, fieldPairs: dataset.fieldPairs});
+    }
+  } catch {
+    // Automatic coloring is optional; discard partially applied settings on failure.
+    layer.config = previousConfig;
+  }
+}
+
 function toArrayBuffer(
   rawFeature: ArrayBuffer | {buffer: ArrayBufferLike; byteOffset: number; byteLength: number}
 ): ArrayBuffer {
@@ -71,6 +128,78 @@ function isBinaryGeometry(value: unknown): value is Uint8Array | ArrayBuffer {
   }
   // Uint8Array, Buffer, and other byte views (Arrow Binary .get())
   return ArrayBuffer.isView(value) && (value as Uint8Array).BYTES_PER_ELEMENT === 1;
+}
+
+/** Keep the existing decoder for ordinary WKB; decode collection envelopes here. */
+function parseWkbGeometry(buffer: ArrayBuffer): Geometry | null {
+  try {
+    return convertWKBToGeometry(buffer);
+  } catch {
+    // loaders.gl does not yet decode WKB GeometryCollection (type 7).
+  }
+  const view = new DataView(buffer);
+  const header = (offset: number) => {
+    const order = view.getUint8(offset);
+    if (order !== 0 && order !== 1) throw new Error('Invalid WKB byte order');
+    const littleEndian = order === 1;
+    const rawType = view.getUint32(offset + 1, littleEndian);
+    const type = rawType & 0x1fffffff;
+    const kind = type % 1000;
+    if (kind < 1 || kind > 7 || type >= 4000) throw new Error('Unsupported WKB type');
+    const dimensions =
+      2 +
+      Number(Boolean(rawType & 0x80000000) || [1, 3].includes(Math.floor(type / 1000))) +
+      Number(Boolean(rawType & 0x40000000) || [2, 3].includes(Math.floor(type / 1000)));
+    return {kind, littleEndian, dimensions, start: offset + 5 + (rawType & 0x20000000 ? 4 : 0)};
+  };
+  const endOfGeometry = (offset: number, depth: number): number => {
+    if (depth > 32) throw new Error('WKB nesting limit exceeded');
+    const {kind, start, dimensions, littleEndian} = header(offset);
+    let cursor = start;
+    if (kind === 1) cursor += dimensions * 8;
+    else {
+      const count = view.getUint32(cursor, littleEndian);
+      cursor += 4;
+      if (kind === 2) cursor += count * dimensions * 8;
+      else {
+        if (count > (buffer.byteLength - cursor) / (kind === 3 ? 4 : 5))
+          throw new Error('Truncated WKB');
+        for (let i = 0; i < count; i++) {
+          if (kind === 3) {
+            const points = view.getUint32(cursor, littleEndian);
+            cursor += 4 + points * dimensions * 8;
+          } else cursor = endOfGeometry(cursor, depth + 1);
+        }
+      }
+    }
+    if (cursor > buffer.byteLength) throw new Error('Truncated WKB');
+    return cursor;
+  };
+  const readGeometry = (offset: number, depth: number): {geometry: Geometry; end: number} => {
+    if (depth > 32) throw new Error('WKB nesting limit exceeded');
+    const {kind, start, littleEndian} = header(offset);
+    if (kind !== 7) {
+      const end = endOfGeometry(offset, depth);
+      return {geometry: convertWKBToGeometry(buffer.slice(offset, end)), end};
+    }
+    const count = view.getUint32(start, littleEndian);
+    let cursor = start + 4;
+    if (count > (buffer.byteLength - cursor) / 5) throw new Error('Truncated WKB');
+    const geometries: Geometry[] = [];
+    for (let i = 0; i < count; i++) {
+      const child = readGeometry(cursor, depth + 1);
+      geometries.push(child.geometry);
+      cursor = child.end;
+    }
+    return {geometry: {type: 'GeometryCollection', geometries}, end: cursor};
+  };
+  try {
+    if (header(0).kind !== 7) return null;
+    const {geometry, end} = readGeometry(0, 0);
+    return end === buffer.byteLength ? geometry : null;
+  } catch {
+    return null;
+  }
 }
 
 function isLngLat(pos: unknown): pos is number[] {
@@ -141,6 +270,22 @@ function featureFromGeometry(parsedGeo: unknown, properties: null): Feature | nu
   return {properties, ...normalized.features[0]};
 }
 
+/** deck.gl accepts one collection level; keep one feature per source row. */
+function flattenGeometryCollection(geometry: Geometry): Geometry {
+  if (geometry?.type !== 'GeometryCollection' || !Array.isArray(geometry.geometries)) {
+    return geometry;
+  }
+  return {
+    ...geometry,
+    geometries: geometry.geometries.flatMap(child => {
+      const flattened = flattenGeometryCollection(child);
+      return flattened?.type === 'GeometryCollection' && Array.isArray(flattened.geometries)
+        ? flattened.geometries
+        : [flattened];
+    })
+  };
+}
+
 /**
  * Convert a hovered feature to outline-only geometry for the hover overlay.
  * The overlay is stroked and not filled, so polygon tessellation (earcut) is wasted
@@ -169,6 +314,9 @@ export function featureToHoverOutline(feature: Feature): Feature {
         coordinates: geometry.coordinates.flat()
       }
     };
+  }
+  if (geometry.type === 'GeometryCollection') {
+    return {...feature, geometry: flattenGeometryCollection(geometry)};
   }
   return feature;
 }
@@ -206,8 +354,8 @@ export function parseGeoJsonRawFeature(
   // Support WKB geometry provided as binary (e.g., from Parquet/GeoParquet/DuckDB)
   if (isBinaryGeometry(rawFeature)) {
     try {
-      const parsedGeo = convertWKBToGeometry(toArrayBuffer(rawFeature));
-      return featureFromGeometry(parsedGeo, properties);
+      const parsedGeo = parseWkbGeometry(toArrayBuffer(rawFeature));
+      return parsedGeo ? featureFromGeometry(parsedGeo, properties) : null;
     } catch (e) {
       return null;
     }
@@ -324,6 +472,7 @@ export function getGeojsonDataMaps(
 
     if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
       const cleaned = Object.assign({}, feature);
+      cleaned.geometry = flattenGeometryCollection(feature.geometry);
       // store index of the data in feature properties
       cleaned.properties = Object.assign({}, feature.properties ?? {}, {index});
 
@@ -403,7 +552,7 @@ function parseGeometryFromString(geoString: string): Feature | null {
       // try parse as WKB hex string
       try {
         const buffer = Buffer.from(geoString, 'hex');
-        parsedGeo = convertWKBToGeometry(toArrayBuffer(buffer));
+        parsedGeo = parseWkbGeometry(toArrayBuffer(buffer));
       } catch (e) {
         return null;
       }
@@ -435,12 +584,11 @@ export function getGeojsonBounds(features: GeojsonDataMaps = []): BBox | null {
   const maxCount = 10000;
   const samples = features.length > maxCount ? getSampleData(features, maxCount) : features;
 
-  const validSingleGeometry = geom => geom.coordinates && geom.coordinates.length;
-  const validGeometryCollection = geom =>
-    geom.geometries && geom.geometries.length && geom.geometries.every(validSingleGeometry);
-  const nonEmpty = samples.filter(
-    d => d && d.geometry && (validSingleGeometry(d.geometry) || validGeometryCollection(d.geometry))
-  );
+  const validGeometry = geom =>
+    geom?.type === 'GeometryCollection'
+      ? Array.isArray(geom.geometries) && geom.geometries.every(validGeometry)
+      : geom?.coordinates && geom.coordinates.length;
+  const nonEmpty = samples.filter(d => d && d.geometry && validGeometry(d.geometry));
 
   try {
     return bbox({
@@ -473,13 +621,18 @@ export type DeckGlGeoTypes = {
 export function getGeojsonFeatureTypes(allFeatures: GeojsonDataMaps): DeckGlGeoTypes {
   // @ts-expect-error some test cases only have 1 geotype
   const featureTypes: DeckGlGeoTypes = {};
+  const addGeometry = geometry => {
+    if (geometry?.type === 'GeometryCollection') {
+      if (Array.isArray(geometry.geometries)) geometry.geometries.forEach(addGeometry);
+    } else {
+      const geoType = featureToDeckGlGeoType[geometry?.type];
+      if (geoType) featureTypes[geoType] = true;
+    }
+  };
   for (let f = 0; f < allFeatures.length; f++) {
     const feature = allFeatures[f];
     if (feature && 'geometry' in feature) {
-      const geoType = featureToDeckGlGeoType[feature.geometry && feature.geometry.type];
-      if (geoType) {
-        featureTypes[geoType] = true;
-      }
+      addGeometry(feature.geometry);
     }
   }
 

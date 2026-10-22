@@ -52,6 +52,21 @@ export type CircleAnnotation = AnnotationWithArm & {
   radiusInMeters: number;
 };
 
-export type Annotation = TextAnnotation | PointAnnotation | ArrowAnnotation | CircleAnnotation;
+export type RulerAnnotation = BaseAnnotation & {
+  kind: AnnotationKind.RULER;
+  /** Second [lng, lat] or [lng, lat, altitudeMeters] endpoint. */
+  endPoint: [number, number] | [number, number, number];
+  /** Whether the user-authored rich text is rendered at the ruler midpoint. */
+  showCustomText: boolean;
+  /** Whether the computed geodesic length is rendered at the ruler midpoint. */
+  showDistance: boolean;
+};
+
+export type Annotation =
+  | TextAnnotation
+  | PointAnnotation
+  | ArrowAnnotation
+  | CircleAnnotation
+  | RulerAnnotation;
 
 export type AnnotationPropsPartial = Partial<Annotation>;

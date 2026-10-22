@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import classnames from 'classnames';
 import geocoderService from '@mapbox/mapbox-sdk/services/geocoding';
 import {injectIntl, IntlShape} from 'react-intl';
-import {WebMercatorViewport} from 'viewport-mercator-project';
+import {WebMercatorViewport} from '@math.gl/web-mercator';
 import {KeyEvent} from '@kepler.gl/constants';
 import {Input} from '../common/styled-components';
 import {Search, Delete} from '../common/icons';
@@ -271,7 +271,11 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
 
   const onItemSelected = useCallback(
     item => {
-      const newViewport = new WebMercatorViewport(viewport);
+      const newViewport = new WebMercatorViewport({
+        ...viewport,
+        width: viewport?.width ?? 1,
+        height: viewport?.height ?? 1
+      });
       const {bbox, center} = item;
 
       const gotoViewport = bbox

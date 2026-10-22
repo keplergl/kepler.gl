@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {GeoArrowBinaryData} from './actions';
+
 export type RGBColor = [number, number, number];
 export type RGBAColor = [number, number, number, number];
 export type HexColor = string; // this is the best typescript can do at the moment
@@ -52,6 +54,8 @@ export type ProcessorResult = {
   rows: any[][];
   cols?: any[];
   metadata?: any;
+  /** GeoArrow chunks already converted to deck.gl binary features on workers. */
+  geoArrowBinaryData?: GeoArrowBinaryData;
   /** Optional schema for arrow tables with metadata preserved. */
   // TODO: Should we use a loaded arrow.Table in cols instead of an array of arrow.Vectors? Why was an array of arrow.Vectors chosen?
   arrowSchema?: any;

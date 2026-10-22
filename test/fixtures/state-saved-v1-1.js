@@ -972,6 +972,7 @@ mergedLayer0.config = {
     heightRange: [0, 500],
     elevationScale: 18,
     fixedHeight: false,
+    invertHeight: false,
     elevationOffset: 0,
     elevationOffsetRange: [0, 500],
     fixedElevation: true,
@@ -2773,6 +2774,7 @@ mergedLayer1.config = {
     heightRange: [0, 500],
     elevationScale: 5,
     fixedHeight: false,
+    invertHeight: false,
     elevationOffset: 0,
     elevationOffsetRange: [0, 500],
     fixedElevation: true,
@@ -2805,6 +2807,7 @@ export const mergedInteraction = {
     ...defaultInteractionConfig.tooltip,
     enabled: false,
     config: {
+      timezone: null,
       compareMode: false,
       compareType: 'absolute',
       fieldsToShow: {

@@ -60,6 +60,11 @@ const TooltipConfigWrapper = styled.div<{isDark: boolean}>`
     overflow-x: hidden !important;
     box-sizing: border-box !important;
   }
+  .timezone-field-selector {
+    width: 100%;
+    padding-top: 32px;
+    box-sizing: border-box;
+  }
   .update-color {
     display: none;
   }
@@ -93,6 +98,7 @@ type CustomTooltipConfigProps = {
     };
     compareMode: boolean;
     compareType: string | null;
+    timezone?: string | null;
   };
   onChange: (config: {
     fieldsToShow: {
@@ -100,6 +106,7 @@ type CustomTooltipConfigProps = {
     };
     compareMode: boolean;
     compareType: string | null;
+    timezone?: string | null;
   }) => void;
   datasets: Datasets;
   onDisplayFormatChange: (dataId: string, column: string, displayFormat: string) => void;

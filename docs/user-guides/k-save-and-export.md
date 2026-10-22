@@ -29,6 +29,8 @@ You can export the current map using two different formats. The __Export Map__ w
 - HTML: create a single html file loads and renders your current map.
 - JSON: create a json file with your current map config and data.
 
+[Annotations and rulers](./annotations.md#save-and-export) are saved with the map configuration, including ruler endpoints, rich text, styling, and label switches. View-only HTML exports display annotations with editing controls hidden.
+
 ### <a href="#export-html-map">Export Map as HTML</a>
 
 ![Export Map as HTML](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-4.png "activate interactions")

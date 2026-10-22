@@ -97,12 +97,17 @@ const ExportVideoModalStyle = css`
   max-width: 960px;
 `;
 
+export const ExportMapModalStyle = css`
+  max-width: 728px;
+`;
+
 const DefaultStyle = css`
   max-width: 960px;
 `;
 
 export type ModalContainerProps = {
   appName: string;
+  appWebsite?: string;
   rootNode: React.ReactInstance | null | undefined;
   containerW: number;
   containerH: number;
@@ -124,6 +129,35 @@ export type ModalContainerProps = {
   onExportToCloudSuccess?: OnSuccessCallBack;
   onExportToCloudError?: OnErrorCallBack;
 };
+
+type ExportDataModalActions = {
+  exportData: () => Promise<void>;
+  getCurrentModal: () => UiState['currentModal'];
+  closeModal: () => void;
+  addNotification: ModalContainerProps['uiStateActions']['addNotification'];
+};
+
+export async function exportDataFromModal({
+  exportData: runExport,
+  getCurrentModal,
+  closeModal,
+  addNotification
+}: ExportDataModalActions): Promise<void> {
+  try {
+    await runExport();
+    if (getCurrentModal() === EXPORT_DATA_ID) {
+      closeModal();
+    }
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    addNotification({
+      id: 'EXPORT_DATA_ERROR_ID',
+      type: 'error',
+      topic: 'global',
+      message: `Failed to export data: ${detail}`
+    });
+  }
+}
 
 ModalContainerFactory.deps = [
   DeleteDatasetModalFactory,
@@ -304,19 +338,28 @@ export default function ModalContainerFactory(
     };
 
     _onExportData = () => {
-      exportData(this.props, this.props.uiState.exportData);
-      this._closeModal();
+      return exportDataFromModal({
+        exportData: () => exportData(this.props, this.props.uiState.exportData),
+        getCurrentModal: () => this.props.uiState.currentModal,
+        closeModal: this._closeModal,
+        addNotification: this.props.uiStateActions.addNotification
+      });
     };
 
     _onExportMap = () => {
       const {uiState} = this._propsWithMapInfoDraft();
-      const {format, includeLayerApiKeys, fileName} = uiState.exportMap;
+      const {format, includeLayerApiKeys, fileName, appName, appWebsite, appIcon, appNameColor} =
+        uiState.exportMap;
       (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(
         this._propsWithMapInfoDraft(),
         {
           ...(uiState.exportMap[format] || {}),
           includeLayerApiKeys,
-          fileName
+          fileName,
+          appName,
+          appWebsite,
+          appIcon,
+          appNameColor
         }
       );
       this._commitMapInfoDraft();
@@ -412,9 +455,18 @@ export default function ModalContainerFactory(
                 showDatasetTable={visStateActions.showDatasetTable}
                 sortTableColumn={visStateActions.sortTableColumn}
                 pinTableColumn={visStateActions.pinTableColumn}
+                toggleTableColumnHidden={visStateActions.toggleTableColumnHidden}
+                showAllTableColumns={visStateActions.showAllTableColumns}
                 copyTableColumn={visStateActions.copyTableColumn}
+                renameTableColumn={visStateActions.renameTableColumn}
+                changeTableColumnType={visStateActions.changeTableColumnType}
+                deleteTableColumn={visStateActions.deleteTableColumn}
+                createFilterFromColumn={(id, column) =>
+                  visStateActions.createOrUpdateFilter(undefined, id, column)
+                }
                 setColumnDisplayFormat={visStateActions.setColumnDisplayFormat}
                 loadColumnStats={visStateActions.loadColumnStats}
+                applyCPUFilter={visStateActions.applyCPUFilter}
                 uiStateActions={uiStateActions}
                 uiState={uiState}
               />
@@ -539,12 +591,15 @@ export default function ModalContainerFactory(
             });
             template = (
               <ExportMapModal
+                appName={this.props.appName}
+                appWebsite={this.props.appWebsite}
                 config={keplerGlConfig}
                 options={uiState.exportMap}
                 mapInfo={visState.mapInfo}
                 onChangeExportMapFormat={uiStateActions.setExportMapFormat}
                 onEditUserMapboxAccessToken={uiStateActions.setUserMapboxAccessToken}
                 onChangeExportMapHTMLMode={uiStateActions.setExportHTMLMapMode}
+                onChangeExportMapBranding={uiStateActions.setExportMapBranding}
                 onChangeExportIncludeLayerApiKeys={uiStateActions.setExportIncludeLayerApiKeys}
                 onChangeExportMapFileName={uiStateActions.setExportMapFileName}
                 onMapInfoDraft={this._onMapInfoDraft}
@@ -552,7 +607,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.exportMap',
-              cssStyle: '',
+              cssStyle: ExportMapModalStyle,
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportMap,

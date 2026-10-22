@@ -353,6 +353,7 @@ export type LayerVisConfigSettings = {
   radiusRange: VisConfigRange;
   clusterRadius: VisConfigNumber;
   clusterRadiusRange: VisConfigRange;
+  minClusterSize: VisConfigNumber;
   opacity: VisConfigNumber;
   coverage: VisConfigNumber;
   outline: VisConfigBoolean;
@@ -385,6 +386,7 @@ export type LayerVisConfigSettings = {
   heatmapRadius: VisConfigNumber;
   darkBaseMapEnabled: VisConfigBoolean;
   fixedHeight: VisConfigBoolean;
+  invertHeight: VisConfigBoolean;
   fixedElevation: VisConfigBoolean;
   allowHover: VisConfigBoolean;
   showNeighborOnHover: VisConfigBoolean;
@@ -532,6 +534,8 @@ export type VisualChannel = {
 
   // TODO: define fixed
   fixed?: any;
+  // visConfig key that reverses this channel's scale output (e.g. invertHeight)
+  invert?: string;
 
   supportedFieldTypes?: Array<SupportedFieldTypes>;
 

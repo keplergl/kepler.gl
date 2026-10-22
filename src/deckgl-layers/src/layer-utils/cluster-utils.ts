@@ -55,25 +55,38 @@ export default class ClusterBuilder {
     bbox,
     clusterRadius,
     geoJSON,
-    zoom
+    zoom,
+    minPointCount = 1
   }: {
     bbox: BBox;
     clusterRadius: number;
     geoJSON;
     zoom: number;
+    /** Drop clusters holding fewer points than this, so sparse noise is not drawn. */
+    minPointCount?: number;
   }): {
     points: any;
     position: Position;
     index: number;
   }[] {
     const clusterer = this.clusterer({clusterRadius, geoJSON});
+    const cutoff = Number.isFinite(minPointCount) ? minPointCount : 1;
 
-    // map clusters to formatted bins to be passed to deck.gl bin-sorter
-    const clusters = clusterer.getClusters(bbox, zoom).map((c, i) => ({
-      points: c.properties.points,
-      position: c.geometry.coordinates,
-      index: i
-    }));
+    // map clusters to formatted bins to be passed to deck.gl bin-sorter.
+    // `index` must stay the position in the returned array: the bin sorter and
+    // picking both look cells up by it.
+    const clusters: {points: any; position: Position; index: number}[] = [];
+    for (const c of clusterer.getClusters(bbox, zoom)) {
+      const points = c.properties.points;
+      if (points.length < cutoff) {
+        continue;
+      }
+      clusters.push({
+        points,
+        position: c.geometry.coordinates,
+        index: clusters.length
+      });
+    }
 
     return clusters;
   }

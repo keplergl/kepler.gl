@@ -29,7 +29,8 @@ import {
   COLUMN_MODE_GEOJSON,
   applyFiltersToTableColumns,
   fieldIsGeoArrow,
-  featureToHoverOutline
+  featureToHoverOutline,
+  applyDefaultGeojsonColorField
 } from './geojson-utils';
 import {
   getGeojsonLayerMetaFromArrow,
@@ -88,6 +89,7 @@ export const geojsonVisConfigs: {
   enable3d: 'enable3d';
   wireframe: 'wireframe';
   fixedHeight: 'fixedHeight';
+  invertHeight: 'invertHeight';
   fixedElevation: 'fixedElevation';
   allowHover: 'allowHover';
 } = {
@@ -98,9 +100,7 @@ export const geojsonVisConfigs: {
   },
   thickness: {
     ...LAYER_VIS_CONFIGS.thickness,
-    defaultValue: 0.5,
-    focusRange: [0, 1],
-    focusWeight: 0.3
+    defaultValue: 0.5
   },
   strokeColor: 'strokeColor',
   colorRange: 'colorRange',
@@ -124,6 +124,7 @@ export const geojsonVisConfigs: {
   enable3d: 'enable3d',
   wireframe: 'wireframe',
   fixedHeight: 'fixedHeight',
+  invertHeight: 'invertHeight',
   fixedElevation: 'fixedElevation',
   allowHover: 'allowHover'
 };
@@ -144,6 +145,7 @@ export type GeoJsonVisConfigSettings = {
   elevationOffset: VisConfigNumber;
   elevationOffsetRange: VisConfigRange;
   fixedHeight: VisConfigBoolean;
+  invertHeight: VisConfigBoolean;
   fixedElevation: VisConfigBoolean;
   stroked: VisConfigBoolean;
   filled: VisConfigBoolean;
@@ -176,6 +178,7 @@ export type GeoJsonLayerVisConfig = {
   enable3d: boolean;
   wireframe: boolean;
   fixedHeight: boolean;
+  invertHeight: boolean;
   fixedElevation: boolean;
   allowHover: boolean;
 };
@@ -315,6 +318,9 @@ export default class GeoJsonLayer extends Layer {
   filteredIndex: Uint8ClampedArray | null = null;
   filteredIndexTrigger: number[] | null = null;
   centroids: Array<number[] | null> = [];
+  private _geometryDataRevision: number | undefined;
+  private _geometryColumnIndex: number | undefined;
+  private _geometryArrowChunks: arrow.Data[] = [];
   // Stable hover overlay data so deck.gl does not re-parse the feature every redraw.
   _hoverOverlayIndex: number | null = null;
   _hoverOverlayData: Feature[] | null = null;
@@ -429,6 +435,7 @@ export default class GeoJsonLayer extends Layer {
         range: 'heightRange',
         key: 'height',
         fixed: 'fixedHeight',
+        invert: 'invertHeight',
         channelScaleType: CHANNEL_SCALES.size,
         accessor: 'getElevation',
         condition: config => config.visConfig.enable3d,
@@ -490,7 +497,7 @@ export default class GeoJsonLayer extends Layer {
     }
 
     return {
-      props: foundColumns.map(columns => ({
+      props: foundColumns.slice(0, 2).map(columns => ({
         label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
         columns,
         isVisible: true
@@ -691,16 +698,40 @@ export default class GeoJsonLayer extends Layer {
   }
 
   updateLayerMeta(dataset: KeplerTable) {
-    const {dataContainer} = dataset;
-
-    this.dataContainer = dataContainer;
+    const {dataContainer, dataRevision} = dataset;
+    const columnIndex = this.config.columns.geojson.fieldIdx;
 
     this.geoArrowMode = fieldIsGeoArrow(
       geoFieldAccessor(this.config.columns)(dataset.dataContainer)
     );
+    const geoColumn =
+      this.geoArrowMode && dataContainer instanceof ArrowDataContainer
+        ? geoColumnAccessor(this.config.columns)(dataContainer)
+        : null;
+    const sameSource =
+      this.dataContainer === dataContainer && this._geometryColumnIndex === columnIndex;
+    const sourceChanged = !sameSource || this._geometryDataRevision !== dataRevision;
+    // A revision also advances during progressive Arrow loads. Retain parsed
+    // chunks only when the new column actually appends to the same chunks.
+    const appendedArrowChunk =
+      sameSource &&
+      this._geometryArrowChunks.length > 0 &&
+      geoColumn?.data.length === this._geometryArrowChunks.length + 1 &&
+      this._geometryArrowChunks.every((chunk, i) => chunk === geoColumn.data[i]);
+    if (sourceChanged) {
+      if (!appendedArrowChunk) {
+        this.dataToFeature = [];
+        this.centroids = [];
+      }
+      this._hoverOverlayIndex = null;
+      this._hoverOverlayData = null;
+    }
+    this.dataContainer = dataContainer;
+    this._geometryDataRevision = dataRevision;
+    this._geometryColumnIndex = columnIndex;
+    this._geometryArrowChunks = geoColumn?.data.slice() || [];
 
     if (this.geoArrowMode && dataContainer instanceof ArrowDataContainer) {
-      const geoColumn = geoColumnAccessor(this.config.columns)(dataContainer);
       const geoField = geoFieldAccessor(this.config.columns)(dataContainer);
 
       // update the latest batch/chunk of geoarrow data when loading data incrementally
@@ -737,6 +768,7 @@ export default class GeoJsonLayer extends Layer {
             dataContainer,
             geoColumn,
             geoField,
+            columnIndex: this.config.columns.geojson.fieldIdx,
             ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
           });
         if (isIncrementalLoad) {
@@ -784,6 +816,7 @@ export default class GeoJsonLayer extends Layer {
     }
 
     this.updateLayerMeta(dataset);
+    applyDefaultGeojsonColorField(this, dataset);
 
     const {featureTypes} = this.meta;
     // default settings is stroke: true, filled: false
@@ -843,7 +876,12 @@ export default class GeoJsonLayer extends Layer {
       return this._hoverOverlayData;
     }
 
-    const hoveredObject = this.hasHoveredObject(objectInfo);
+    // Redux may retain a pick from before a refresh. Resolve its row against
+    // the current geometry instead of caching the old feature again.
+    const hoveredObject =
+      !this.geoArrowMode && this.config.columnMode === COLUMN_MODE_GEOJSON && this.dataContainer
+        ? this.dataToFeature[objectInfo.object?.properties?.index ?? index]
+        : this.hasHoveredObject(objectInfo);
     if (!hoveredObject) {
       this._hoverOverlayIndex = null;
       this._hoverOverlayData = null;
@@ -851,7 +889,7 @@ export default class GeoJsonLayer extends Layer {
     }
 
     this._hoverOverlayIndex = index;
-    this._hoverOverlayData = [featureToHoverOutline(hoveredObject)];
+    this._hoverOverlayData = [featureToHoverOutline(hoveredObject as Feature)];
     return this._hoverOverlayData;
   }
 

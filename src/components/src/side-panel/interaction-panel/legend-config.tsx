@@ -68,14 +68,44 @@ const LegendRow = styled.div.withConfig({shouldForwardProp})<{$depth: number; $d
   opacity: ${props => (props.$dimmed ? 0.45 : 1)};
 `;
 
-const LegendLabel = styled.label.withConfig({shouldForwardProp})<{$group?: boolean}>`
+const LegendLabel = styled.span.withConfig({shouldForwardProp})<{$group?: boolean}>`
   color: ${props => props.theme.textColor};
-  cursor: pointer;
+  display: block;
   font-size: 12px;
   font-weight: ${props => (props.$group ? 500 : 400)};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+`;
+
+const RightAlignedSwitch = styled(Switch)`
+  margin-left: 0;
+  width: 100%;
+
+  .kg-checkbox__label {
+    box-sizing: border-box;
+    color: inherit;
+    display: block;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    width: 100%;
+    padding-left: 0;
+    padding-right: ${props => props.theme.switchWidth + 8}px;
+  }
+
+  .kg-checkbox__label:before {
+    right: 0;
+    left: auto;
+  }
+
+  .kg-checkbox__label:after {
+    right: ${props =>
+      props.checked
+        ? props.theme.switchWidth / 2 - props.theme.switchBtnWidth
+        : props.theme.switchWidth - (props.theme.switchHeight + props.theme.switchBtnWidth) / 2}px;
+    left: auto;
+  }
 `;
 
 const LegendOptionRow = styled.div`
@@ -154,12 +184,10 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
                 title={dimmed ? hiddenByGroupTitle : undefined}
                 data-testid={`interaction-legend-row-${group.id}`}
               >
-                <LegendLabel $group htmlFor={`legend-include-${group.id}`}>
-                  {group.label}
-                </LegendLabel>
-                <Switch
+                <RightAlignedSwitch
                   checked={included}
                   id={`legend-include-${group.id}`}
+                  label={<LegendLabel $group>{group.label}</LegendLabel>}
                   secondary
                   onChange={() => onToggleGroup(group)}
                 />
@@ -188,12 +216,10 @@ const LegendEntries: React.FC<LegendEntriesProps> = ({
             title={dimmed ? hiddenByGroupTitle : undefined}
             data-testid={`interaction-legend-row-${layer.id}`}
           >
-            <LegendLabel htmlFor={`legend-include-${layer.id}`}>
-              {layer.config.label || layer.id}
-            </LegendLabel>
-            <Switch
+            <RightAlignedSwitch
               checked={included}
               id={`legend-include-${layer.id}`}
+              label={<LegendLabel>{layer.config.label || layer.id}</LegendLabel>}
               secondary
               onChange={() => onToggleLayer(layer)}
             />
@@ -317,12 +343,10 @@ function LegendConfigFactory(
               <FormattedMessage id="interactions.legendHint" />
             </LegendHint>
             <LegendOptionRow className="interaction-legend__hide-invisible">
-              <label htmlFor="legend-hide-invisible">
-                <FormattedMessage id="interactions.legendHideInvisible" />
-              </label>
-              <Switch
+              <RightAlignedSwitch
                 checked={hideInvisibleLayers}
                 id="legend-hide-invisible"
+                label={<FormattedMessage id="interactions.legendHideInvisible" />}
                 secondary
                 onChange={onToggleHideInvisible}
               />

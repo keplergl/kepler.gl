@@ -63,6 +63,7 @@ interface TimelineSliderProps {
   height?: number;
   className?: string | null;
   style?: object;
+  formatValue?: (value: number) => string;
 }
 
 function TimelineSliderFactory() {
@@ -74,7 +75,8 @@ function TimelineSliderFactory() {
     showDomainTimes = true,
     height = PROGRESS_BAR_HEIGHT,
     className = null,
-    style
+    style,
+    formatValue
   }) => {
     const onThrottleUpdate = useMemo(() => throttle(setTimelineValue, 20), [setTimelineValue]);
 
@@ -124,12 +126,17 @@ function TimelineSliderFactory() {
         return [null, null];
       }
 
-      const hasUserFormat = typeof timeFormat === 'string';
-      const currentFormat = (hasUserFormat ? timeFormat : defaultTimeFormat) || DEFAULT_TIME_FORMAT;
-      const dateFunc = datetimeFormatter(timezone)(currentFormat);
+      const valueFormatter =
+        formatValue ||
+        (() => {
+          const hasUserFormat = typeof timeFormat === 'string';
+          const currentFormat =
+            (hasUserFormat ? timeFormat : defaultTimeFormat) || DEFAULT_TIME_FORMAT;
+          return datetimeFormatter(timezone)(currentFormat);
+        })();
 
-      return [domain ? dateFunc(domain[0]) : '', domain ? dateFunc(domain[1]) : ''];
-    }, [domain, timezone, timeFormat, defaultTimeFormat, showDomainTimes]);
+      return [domain ? valueFormatter(domain[0]) : '', domain ? valueFormatter(domain[1]) : ''];
+    }, [domain, timezone, timeFormat, defaultTimeFormat, showDomainTimes, formatValue]);
 
     const requiresRangeSlider = isRanged && animationWindow !== ANIMATION_WINDOW.interval;
 

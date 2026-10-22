@@ -28,6 +28,7 @@ import {
 } from 'test/helpers/mock-state';
 import {keplerGlReducerCore as keplerGlReducer, validateLayerWithData} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
+import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 
 const expectedVisStateEntries = [
   'filters',
@@ -44,6 +45,77 @@ const expectedVisStateEntries = [
   'groupBys',
   'joins'
 ];
+
+test('#visStateSchema -> camera bookmarks are optional and persist only authored fields', t => {
+  const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
+  const bookmarks = [
+    {id: 'second', name: 'Second', camera},
+    {id: 'first', name: 'First', camera: {...camera, zoom: 8}}
+  ];
+  const state = cloneDeep(StateWFilesFiltersLayerColor);
+  const empty = SchemaManager.getConfigToSave(state);
+  t.notOk('cameraBookmarks' in empty.config.visState, 'omits unused bookmarks');
+  t.notOk(
+    'cameraBookmarks' in SchemaManager.parseSavedConfig(empty).visState,
+    'old maps need no bookmarks'
+  );
+  state.visState.cameraBookmarks = bookmarks.map(bookmark => ({
+    ...bookmark,
+    selected: true,
+    camera: {...bookmark.camera, width: 800, transitionDuration: 1000}
+  }));
+  const saved = SchemaManager.getConfigToSave(state);
+  t.deepEqual(
+    saved.config.visState.cameraBookmarks,
+    bookmarks,
+    'saves names/order and only camera values'
+  );
+  t.deepEqual(
+    SchemaManager.parseSavedConfig(saved).visState.cameraBookmarks,
+    bookmarks,
+    'round trips'
+  );
+  saved.config.visState.cameraBookmarks.push(null, {id: 'invalid', camera: {}});
+  t.deepEqual(
+    SchemaManager.parseSavedConfig(saved).visState.cameraBookmarks,
+    bookmarks,
+    'ignores invalid entries'
+  );
+  t.end();
+});
+
+test('#visStateSchema -> camera tour is optional and excludes transient state', t => {
+  const state = cloneDeep(StateWFilesFiltersLayerColor);
+  t.notOk(
+    'cameraTour' in SchemaManager.getConfigToSave(state).config.visState,
+    'omits unused tours'
+  );
+  const stop = {
+    id: 'first',
+    name: 'First',
+    camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45},
+    holdDurationMs: 2000,
+    travelDurationMs: 3000
+  };
+  state.visState.cameraTour = {stops: [{...stop, selected: true}], elapsedMs: 1000, playing: true};
+  const saved = SchemaManager.getConfigToSave(state);
+  t.deepEqual(
+    saved.config.visState.cameraTour,
+    {stops: [stop]},
+    'saves authored stops and timing only'
+  );
+  t.deepEqual(
+    SchemaManager.parseSavedConfig(saved).visState.cameraTour,
+    {stops: [stop]},
+    'round trips the tour'
+  );
+  state.visState.cameraTour = {stops: []};
+  t.notOk(
+    'cameraTour' in SchemaManager.getConfigToSave(state).config.visState,
+    'omits an empty tour'
+  );
+  t.end();
+});
 
 test('#visStateSchema -> v1 -> save layers', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
@@ -88,6 +160,7 @@ test('#visStateSchema -> v1 -> load layers', t => {
 
 test('#visStateSchema -> v1 -> save load filters', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  initialState.visState.filters[0].inverted = true;
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
@@ -103,6 +176,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
       dataId: [testCsvDataId],
       id: 'hjpn8frza',
       enabled: true,
+      inverted: true,
       name: ['time'],
       type: 'timeRange',
       value: [1474606800000, 1474617600000],
@@ -140,6 +214,29 @@ test('#visStateSchema -> v1 -> save load filters', t => {
   t.end();
 });
 
+test('#visStateSchema -> v1 -> persists opt-in numeric timeline configuration', t => {
+  let state = keplerGlReducer(
+    cloneDeep(StateWFilesFiltersLayerColor),
+    VisStateActions.setFilter(0, 'name', 'gps_data.lat')
+  );
+  state = keplerGlReducer(
+    state,
+    VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.01}})
+  );
+  state = keplerGlReducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.enlarged));
+
+  const savedState = SchemaManager.getConfigToSave(state);
+  const savedFilter = savedState.config.visState.filters[0];
+  const loadedFilter = SchemaManager.parseSavedConfig(savedState).visState.filters[0];
+
+  t.equal(savedFilter.view, FILTER_VIEW_TYPES.enlarged, 'should save numeric timeline enablement');
+  t.equal(savedFilter.plotType.numericInterval, 0.01, 'should save the numeric bin size');
+  t.equal(loadedFilter.view, FILTER_VIEW_TYPES.enlarged, 'should restore numeric enablement');
+  t.equal(loadedFilter.plotType.numericInterval, 0.01, 'should restore numeric binning');
+  t.notOk(loadedFilter.timezone, 'should not load time-only configuration');
+  t.end();
+});
+
 test('#visStateSchema -> v1 -> save and validate filters', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
 
@@ -164,6 +261,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
   const expectedSaved = {
     tooltip: {
       enabled: true,
+      timezone: null,
       compareMode: false,
       compareType: 'absolute',
       fieldsToShow: {
@@ -222,7 +320,8 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     },
     geocoder: {
       enabled: false,
-      limitSearch: false
+      limitSearch: false,
+      color: [255, 0, 0]
     },
     legend: {
       enabled: false,
@@ -244,7 +343,24 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
 });
 
 test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
-  const initialState = cloneDeep(StateWTooltipFormat);
+  const baseState = cloneDeep(StateWTooltipFormat);
+  const tooltip = baseState.visState.interactionConfig.tooltip;
+  const initialState = {
+    ...baseState,
+    visState: {
+      ...baseState.visState,
+      interactionConfig: {
+        ...baseState.visState.interactionConfig,
+        tooltip: {
+          ...tooltip,
+          config: {
+            ...tooltip.config,
+            timezone: 'America/Guayaquil'
+          }
+        }
+      }
+    }
+  };
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
@@ -254,6 +370,7 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
   const expectedSaved = {
     tooltip: {
       enabled: true,
+      timezone: 'America/Guayaquil',
       compareMode: true,
       compareType: 'relative',
       fieldsToShow: {
@@ -291,7 +408,8 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
     },
     geocoder: {
       enabled: false,
-      limitSearch: false
+      limitSearch: false,
+      color: [255, 0, 0]
     },
     legend: {
       enabled: false,
