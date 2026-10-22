@@ -23,6 +23,28 @@ const {getZarrMetadata} = require('@kepler.gl/table');
 const LoadTilesetTab = LoadTilesetTabFactory();
 
 describe('Zarr metadata preview', () => {
+  beforeEach(() => getZarrMetadata.mockReset());
+
+  it('aborts metadata requests when switching away from the Zarr tab', async () => {
+    getZarrMetadata.mockReturnValue(
+      new Promise(() => {
+        // Keep metadata pending until the user leaves the tab.
+      })
+    );
+    const {getByText, getByRole} = renderWithTheme(
+      <IntlWrapper>
+        <LoadTilesetTab onTilesetAdded={jest.fn()} isAddingDatasets={false} />
+      </IntlWrapper>
+    );
+    fireEvent.click(getByText('Zarr'));
+    fireEvent.click(getByRole('button', {name: 'Use NOAA HRRR Forecast'}));
+    await waitFor(() => expect(getZarrMetadata).toHaveBeenCalled());
+    const {signal} = getZarrMetadata.mock.calls[0][1];
+    expect(signal.aborted).toBe(false);
+    fireEvent.click(getByText('Vector Tile'));
+    expect(signal.aborted).toBe(true);
+  });
+
   it.each([
     ['ECMWF IFS Ensemble', 935, 19],
     ['NOAA HRRR Forecast', 12094, 29]

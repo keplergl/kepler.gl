@@ -105,6 +105,7 @@ const ExampleDetails = styled.div`
 
 /** Avoid firing a store read on every keystroke of a long object-storage URL. */
 const URL_DEBOUNCE_MS = 500;
+const METADATA_TIMEOUT_MS = 30_000;
 
 /**
  * Public Zarr stores on Source Cooperative. Note the `data.` host: `source.coop`
@@ -150,7 +151,6 @@ type ZarrFormProps = {
 const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
   const [datasetName, setDatasetName] = useState<string>('');
   const [url, setUrl] = useState<string>('');
-  const [debouncedUrl, setDebouncedUrl] = useState<string>('');
   const [metadata, setMetadata] = useState<ZarrDatasetMetadata | null>(null);
   const [variable, setVariable] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
@@ -172,52 +172,57 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
   }, []);
 
   useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedUrl(url.trim()), URL_DEBOUNCE_MS);
-    return () => clearTimeout(timeout);
-  }, [url]);
-
-  useEffect(() => {
-    if (!validateUrl(debouncedUrl)) {
-      setMetadata(null);
-      setVariable(undefined);
-      setError(null);
-      // A request may still be in flight, and its `finally` skips the reset
-      // once cancelled, so clear the spinner here instead.
-      setLoading(false);
+    setMetadata(null);
+    setVariable(undefined);
+    setError(null);
+    setLoading(false);
+    if (!validateUrl(url.trim())) {
       return;
     }
 
+    const controller = new AbortController();
     let cancelled = false;
-    setLoading(true);
-    setError(null);
+    let deadline: ReturnType<typeof setTimeout> | undefined;
+    const debounce = setTimeout(() => {
+      setLoading(true);
+      deadline = setTimeout(() => {
+        const timeoutError = new Error(
+          'Zarr metadata loading timed out after 30 seconds. Check the URL or try again.'
+        );
+        cancelled = true;
+        controller.abort(timeoutError);
+        setError(timeoutError);
+        setLoading(false);
+      }, METADATA_TIMEOUT_MS);
 
-    getZarrMetadata(debouncedUrl)
-      .then(zarrMetadata => {
-        if (cancelled) {
-          return;
-        }
-        setMetadata(zarrMetadata);
-        setVariable(zarrMetadata.variable);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) {
-          return;
-        }
-        setMetadata(null);
-        setVariable(undefined);
-        setError(err instanceof Error ? err : new Error('Failed to read Zarr store'));
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
+      getZarrMetadata(url.trim(), {signal: controller.signal})
+        .then(zarrMetadata => {
+          if (cancelled) {
+            return;
+          }
+          setMetadata(zarrMetadata);
+          setVariable(zarrMetadata.variable);
+        })
+        .catch((err: unknown) => {
+          if (!cancelled) {
+            setError(err instanceof Error ? err : new Error('Failed to read Zarr store'));
+          }
+        })
+        .finally(() => {
+          clearTimeout(deadline);
+          if (!cancelled) {
+            setLoading(false);
+          }
+        });
+    }, URL_DEBOUNCE_MS);
 
     return () => {
       cancelled = true;
+      clearTimeout(debounce);
+      clearTimeout(deadline);
+      controller.abort();
     };
-  }, [debouncedUrl]);
+  }, [url]);
 
   const selectedMetadata = useMemo(() => {
     if (!metadata) {

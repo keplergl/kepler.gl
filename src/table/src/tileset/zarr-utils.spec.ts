@@ -5,12 +5,14 @@ import type {ZarrDatasetMetadata, ZarrVariableInfo} from '@kepler.gl/constants';
 
 import {parseGeoZarrMetadata} from '@developmentseed/geozarr';
 import {BoolArray, UnicodeStringArray} from 'zarrita';
+import {Headers, Request, Response} from 'node-fetch';
 
 import {
   affineFromCellCenters,
   assignVariableDisplayNames,
   buildMultiscaleAttrs,
   childPrefix,
+  clearZarrStoreCache,
   decodeCfTime,
   decodeZarrCoordinate,
   isWebMercatorPyramid,
@@ -18,6 +20,8 @@ import {
   orderLevelsFinestFirst,
   parseOmeMultiscaleLevels,
   getZarrDimensionNames,
+  getZarrMetadata,
+  openZarrStore,
   getZarrTimeDomain,
   axisSpacingFromValues,
   getZarrVariable,
@@ -42,6 +46,131 @@ function axisVariable(nonSpatialDims: ZarrVariableInfo['nonSpatialDims']): ZarrV
     nonSpatialDims
   };
 }
+
+describe('Zarr metadata cancellation', () => {
+  const url = 'https://example.com/cancellable.zarr';
+  const originalGlobals = {
+    fetch: globalThis.fetch,
+    Request: globalThis.Request,
+    Headers: globalThis.Headers
+  };
+  const fetchMock = jest.fn();
+  const array = {
+    zarr_format: 2,
+    shape: [2, 2, 2],
+    chunks: [1, 2, 2],
+    dtype: '<f8',
+    compressor: null,
+    fill_value: null,
+    order: 'C',
+    filters: null
+  };
+  const consolidated = {
+    zarr_consolidated_format: 1,
+    metadata: {
+      '.zgroup': {zarr_format: 2},
+      '.zattrs': {},
+      'climate/.zarray': array,
+      'climate/.zattrs': {
+        _ARRAY_DIMENSIONS: ['month', 'lat', 'lon'],
+        'spatial:dimensions': ['lat', 'lon'],
+        'spatial:transform': [1, 0, 0, 0, -1, 2],
+        'spatial:shape': [2, 2],
+        'proj:code': 'EPSG:4326'
+      },
+      'month/.zarray': {...array, shape: [2], chunks: [2]},
+      'month/.zattrs': {_ARRAY_DIMENSIONS: ['month']}
+    }
+  };
+
+  function serve(request: Request) {
+    if (request.url.endsWith('/.zmetadata')) {
+      return new Response(JSON.stringify(consolidated));
+    }
+    if (request.url.endsWith('/month/0')) {
+      return new Response(Buffer.from(new Float64Array([1, 2]).buffer));
+    }
+    return new Response(null, {status: 404});
+  }
+
+  function pendingUntilAbort(signal: AbortSignal) {
+    return new Promise<never>((_, reject) => {
+      if (signal.aborted) {
+        reject(signal.reason);
+      } else {
+        signal.addEventListener('abort', () => reject(signal.reason), {once: true});
+      }
+    });
+  }
+
+  beforeAll(() => Object.assign(globalThis, {Request, Headers, fetch: fetchMock}));
+  afterAll(() => Object.assign(globalThis, originalGlobals));
+  beforeEach(() => {
+    clearZarrStoreCache();
+    fetchMock.mockReset();
+  });
+  afterEach(() => clearZarrStoreCache());
+
+  it('does not start requests for an already-aborted load', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await expect(getZarrMetadata(url, {signal: controller.signal})).rejects.toBe(
+      controller.signal.reason
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['consolidated metadata', '/.zmetadata'],
+    ['coordinate chunks', '/month/0']
+  ])('aborts %s requests without returning partial metadata and permits retry', async (_, path) => {
+    let started: () => void;
+    const requestStarted = new Promise<void>(resolve => {
+      started = resolve;
+    });
+    const controller = new AbortController();
+    fetchMock.mockImplementation((request: Request, options?: RequestInit) => {
+      if (request.url.endsWith(path)) {
+        expect(options?.signal).toBe(controller.signal);
+        started();
+        return pendingUntilAbort(controller.signal);
+      }
+      return Promise.resolve(serve(request));
+    });
+    const pending = getZarrMetadata(url, {signal: controller.signal});
+    const rejected = expect(pending).rejects.toMatchObject({name: 'AbortError'});
+    await requestStarted;
+    const requestCount = fetchMock.mock.calls.length;
+    controller.abort();
+    await rejected;
+    expect(fetchMock).toHaveBeenCalledTimes(requestCount);
+
+    fetchMock.mockImplementation((request: Request) => Promise.resolve(serve(request)));
+    const retry = await getZarrMetadata(url, {signal: new AbortController().signal});
+    expect(retry.variable).toBe('climate');
+    expect(retry.nonSpatialDims[0].values).toEqual([1, 2]);
+  });
+
+  it('does not cancel or poison the shared layer store at the same URL', async () => {
+    const controller = new AbortController();
+    fetchMock.mockImplementation((request: Request, options?: RequestInit) =>
+      options?.signal === controller.signal
+        ? pendingUntilAbort(controller.signal)
+        : Promise.resolve(serve(request))
+    );
+    const preview = getZarrMetadata(url, {signal: controller.signal});
+    const rejected = expect(preview).rejects.toMatchObject({name: 'AbortError'});
+    const layerStore = await openZarrStore(url);
+    controller.abort();
+    await rejected;
+
+    expect(await openZarrStore(url)).toBe(layerStore);
+    const chunk = await layerStore.get('/month/0');
+    expect(chunk).toEqual(new Uint8Array(new Float64Array([1, 2]).buffer));
+    const metadata = await getZarrMetadata(url);
+    expect(metadata.nonSpatialDims[0].values).toEqual([1, 2]);
+  });
+});
 
 describe('Zarr dimension axes', () => {
   it('decodes Zarr iterable string and boolean coordinates without coercing their labels', () => {

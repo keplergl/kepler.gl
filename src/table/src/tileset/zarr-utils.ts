@@ -71,7 +71,7 @@ type AnyAttrs = Record<string, unknown>;
 
 type StoreContents = {path: string; kind: 'array' | 'group'}[];
 
-type ListableStore = zarr.Readable & {contents?: () => StoreContents};
+type ListableStore = zarr.Readable & {contents?: () => StoreContents; signal?: AbortSignal};
 
 /**
  * Node kinds by normalized path, built from the store's consolidated metadata.
@@ -273,12 +273,19 @@ export function selectZarrVariable(
   };
 }
 
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw signal.reason ?? new DOMException('The operation was aborted.', 'AbortError');
+  }
+}
+
 const storeCache = new Map<string, Promise<ListableStore>>();
 
 /**
  * Open a Zarr store, preferring consolidated metadata so variable discovery
  * costs one request instead of one per node. Memoized per URL because the
- * Add Data form, the dataset refresh, and the layer all open the same store.
+ * dataset refresh and the layer open the same store. Cancellable metadata
+ * previews use their own store so aborting a preview cannot affect a layer.
  */
 export function openZarrStore(url: string): Promise<ListableStore> {
   const existing = storeCache.get(url);
@@ -446,6 +453,7 @@ async function openCoordinateArray(
       }
       return arr;
     } catch {
+      throwIfAborted(store.signal);
       // Not every dimension has a coordinate array; try the next candidate.
     }
   }
@@ -497,6 +505,7 @@ async function readGridMapping(
         const node = await zarr.open(new zarr.Location(store, path));
         attrs = getAttrs(node);
       } catch {
+        throwIfAborted(store.signal);
         continue;
       }
       const wkt2 = readString(attrs, ['crs_wkt', 'spatial_ref', 'esri_pe_string']);
@@ -853,6 +862,7 @@ async function loadCoordinateDimension(
     const chunk = await zarr.get(arr, null);
     return decodeZarrCoordinate(name, size, chunk.data, getAttrs(arr));
   } catch {
+    throwIfAborted(store.signal);
     return {dimension, isCfTime: false};
   }
 }
@@ -987,6 +997,7 @@ async function buildPyramidVariables(
       try {
         arr = await zarr.open(new zarr.Location(store, toAbsolutePath(levelPath)), {kind: 'array'});
       } catch {
+        throwIfAborted(store.signal);
         break;
       }
       const dimensionNames = getZarrDimensionNames(arr);
@@ -1108,9 +1119,23 @@ async function listCandidatePaths(store: ListableStore): Promise<string[]> {
  */
 export async function getZarrMetadata(
   url: string,
-  options: {variable?: string} = {}
+  options: {variable?: string; signal?: AbortSignal} = {}
 ): Promise<ZarrDatasetMetadata> {
-  const store = await openZarrStore(url);
+  const {signal} = options;
+  throwIfAborted(signal);
+  // Keep the signal out of the shared cache. All reads, including coordinate
+  // chunks and range requests, go through this request-scoped fetch function.
+  const store: ListableStore = signal
+    ? Object.assign(
+        await zarr.withMaybeConsolidatedMetadata(
+          new zarr.FetchStore(url, {
+            fetch: request => fetch(request, {signal})
+          })
+        ),
+        {signal}
+      )
+    : await openZarrStore(url);
+  throwIfAborted(signal);
   const index = buildStoreIndex(store);
   const paths = await listCandidatePaths(store);
 
@@ -1122,6 +1147,7 @@ export async function getZarrMetadata(
   let webMercatorPyramid = false;
 
   for (const path of paths.slice(0, MAX_VARIABLE_CANDIDATES)) {
+    throwIfAborted(signal);
     if (matchedPrefixes.some(prefix => path.startsWith(prefix))) {
       continue;
     }
@@ -1129,6 +1155,7 @@ export async function getZarrMetadata(
     try {
       node = await zarr.open(new zarr.Location(store, toAbsolutePath(path)));
     } catch {
+      throwIfAborted(signal);
       continue;
     }
 
@@ -1156,6 +1183,7 @@ export async function getZarrMetadata(
           continue;
         }
       } catch (error) {
+        throwIfAborted(signal);
         errors.push(error instanceof Error ? error.message : String(error));
       }
     }
@@ -1191,10 +1219,12 @@ export async function getZarrMetadata(
         matchedPrefixes.push(childPrefix(path));
       }
     } catch (error) {
+      throwIfAborted(signal);
       errors.push(error instanceof Error ? error.message : String(error));
     }
   }
 
+  throwIfAborted(signal);
   if (variables.length === 0) {
     if (errors.length) {
       throw new Error(errors[0]);
