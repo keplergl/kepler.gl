@@ -2,18 +2,10 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useMemo} from 'react';
-import styled from 'styled-components';
 import type {ZarrAxisConfig, ZarrVariableInfo} from '@kepler.gl/constants';
 import {getZarrAxis, getZarrForecastAxes} from '@kepler.gl/table';
-
-const Select = styled.select`
-  width: 100%;
-  margin: 4px 0 8px;
-  padding: 6px;
-  color: ${props => props.theme.textColor};
-  background: ${props => props.theme.inputBgd};
-  border: 1px solid ${props => props.theme.inputBorderColor};
-`;
+import ItemSelector from '../../common/item-selector/item-selector';
+import {PanelLabel, SidePanelSection} from '../../common/styled-components';
 
 export default function ZarrAxisSelector({
   variable,
@@ -41,15 +33,33 @@ export default function ZarrAxisSelector({
         )}`
       : config.kind ?? 'auto';
   const update = (zarrAxis: ZarrAxisConfig) => onChange({zarrAxis, zarrFrame: 0});
+  const axisOptions = [
+    {value: 'auto', label: 'Automatic time'},
+    {value: 'off', label: 'Off'},
+    ...dims.map(d => ({value: `dimension:${d.name}`, label: d.name})),
+    ...forecasts.flatMap((f, index) =>
+      f.kind === 'forecast'
+        ? [{value: `forecast:${index}`, label: `Valid time: ${f.referenceTime} + ${f.leadTime}`}]
+        : []
+    ),
+    {value: 'calendar', label: 'Combined calendar date'}
+  ];
+  const calendars = ['proleptic_gregorian', 'standard', 'noleap', 'all_leap', '360_day'];
   return (
     <div>
-      <label>
-        Timeline axis
-        <Select
-          aria-label="Timeline axis"
-          value={value}
-          onChange={event => {
-            const next = event.target.value;
+      <SidePanelSection role="group" aria-label="Timeline axis">
+        <PanelLabel>Timeline axis</PanelLabel>
+        <ItemSelector
+          options={axisOptions}
+          selectedItems={axisOptions.find(option => option.value === value) ?? null}
+          getOptionValue="value"
+          displayOption="label"
+          filterOption="label"
+          multiSelect={false}
+          searchable={axisOptions.length > 10}
+          showArrow
+          onChange={next => {
+            if (typeof next !== 'string') return;
             if (next.startsWith('dimension:'))
               update({kind: 'dimension', dimension: next.slice(10)});
             else if (next.startsWith('forecast:')) update(forecasts[Number(next.slice(9))]);
@@ -63,62 +73,52 @@ export default function ZarrAxisSelector({
               });
             else update({kind: next as 'auto' | 'off'});
           }}
-        >
-          <option value="auto">Automatic time</option>
-          <option value="off">Off</option>
-          {dims.map(d => (
-            <option key={d.name} value={`dimension:${d.name}`}>
-              {d.name}
-            </option>
-          ))}
-          {forecasts.map(
-            (f, index) =>
-              f.kind === 'forecast' && (
-                <option key={index} value={`forecast:${index}`}>
-                  Valid time: {f.referenceTime} + {f.leadTime}
-                </option>
-              )
-          )}
-          <option value="calendar">Combined calendar date</option>
-        </Select>
-      </label>
+        />
+      </SidePanelSection>
       {config.kind === 'calendar' ? (
         <>
-          {(['year', 'month', 'day'] as const).map(part => (
-            <label key={part}>
-              {part}
-              <Select
-                aria-label={`${part} dimension`}
-                value={config[part] ?? ''}
-                onChange={event => update({...config, [part]: event.target.value || undefined})}
-              >
-                <option value="">
-                  {part === 'day' ? 'Monthly (no day dimension)' : 'Select dimension'}
-                </option>
-                {dims.map(d => (
-                  <option key={d.name} value={d.name}>
-                    {d.name}
-                  </option>
-                ))}
-              </Select>
-            </label>
-          ))}
-          <label>
-            Calendar
-            <Select
-              aria-label="Calendar"
-              value={config.calendar ?? 'proleptic_gregorian'}
-              onChange={event => update({...config, calendar: event.target.value})}
-            >
-              {['proleptic_gregorian', 'standard', 'noleap', 'all_leap', '360_day'].map(
-                calendar => (
-                  <option key={calendar} value={calendar}>
-                    {calendar}
-                  </option>
-                )
-              )}
-            </Select>
-          </label>
+          {(['year', 'month', 'day'] as const).map(part => {
+            const options = [
+              {
+                value: '',
+                label: part === 'day' ? 'Monthly (no day dimension)' : 'Select dimension'
+              },
+              ...dims.map(d => ({value: d.name, label: d.name}))
+            ];
+            return (
+              <SidePanelSection key={part} role="group" aria-label={`${part} dimension`}>
+                <PanelLabel>{part}</PanelLabel>
+                <ItemSelector
+                  options={options}
+                  selectedItems={
+                    options.find(option => option.value === (config[part] ?? '')) ?? null
+                  }
+                  getOptionValue="value"
+                  displayOption="label"
+                  filterOption="label"
+                  multiSelect={false}
+                  searchable={dims.length > 10}
+                  showArrow
+                  onChange={next => {
+                    if (typeof next === 'string') update({...config, [part]: next || undefined});
+                  }}
+                />
+              </SidePanelSection>
+            );
+          })}
+          <SidePanelSection role="group" aria-label="Calendar">
+            <PanelLabel>Calendar</PanelLabel>
+            <ItemSelector
+              options={calendars}
+              selectedItems={config.calendar ?? 'proleptic_gregorian'}
+              multiSelect={false}
+              searchable={false}
+              showArrow
+              onChange={next => {
+                if (typeof next === 'string') update({...config, calendar: next});
+              }}
+            />
+          </SidePanelSection>
         </>
       ) : null}
       {axis.error ? <div role="status">{axis.error}</div> : null}

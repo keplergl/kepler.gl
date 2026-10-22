@@ -3,8 +3,8 @@
 
 // @ts-nocheck
 import React, {useState} from 'react';
-import {fireEvent} from '@testing-library/react';
-import {renderWithTheme} from 'test/helpers/component-jest-utils';
+import {fireEvent, screen, within} from '@testing-library/react';
+import {IntlWrapper, renderWithTheme} from 'test/helpers/component-jest-utils';
 import ZarrAxisSelector from './zarr-axis-selector';
 
 const variable = {
@@ -15,6 +15,35 @@ const variable = {
     {name: 'day', size: 2, values: [28, 29]}
   ]
 };
+
+beforeAll(() => {
+  window.IntersectionObserver = class {
+    observe() {
+      return undefined;
+    }
+    unobserve() {
+      return undefined;
+    }
+    disconnect() {
+      return undefined;
+    }
+  };
+});
+
+const renderSelector = component => renderWithTheme(<IntlWrapper>{component}</IntlWrapper>);
+
+function openSelector(name) {
+  const trigger = within(screen.getByRole('group', {name})).getByRole('button');
+  fireEvent.keyDown(trigger, {key: 'Enter', keyCode: 13});
+  expect(trigger).toHaveAttribute('aria-expanded', 'true');
+  return trigger;
+}
+
+function selectOption(name, label) {
+  const trigger = openSelector(name);
+  fireEvent.click(within(document.querySelector('.list-selector')).getByText(label));
+  expect(trigger).toHaveAttribute('aria-expanded', 'false');
+}
 
 describe('ZarrAxisSelector', () => {
   it('selects categorical/numeric axes, combined dates and automatic/off modes, resetting the frame', () => {
@@ -32,16 +61,16 @@ describe('ZarrAxisSelector', () => {
         />
       );
     }
-    const {getByLabelText, queryByRole} = renderWithTheme(<Editor />);
-    const select = value => fireEvent.change(getByLabelText('Timeline axis'), {target: {value}});
+    const {queryByRole} = renderSelector(<Editor />);
+    const select = label => selectOption('Timeline axis', label);
     for (const dimension of ['band', 'month']) {
-      select(`dimension:${dimension}`);
+      select(dimension);
       expect(onChange).toHaveBeenLastCalledWith({
         zarrAxis: {kind: 'dimension', dimension},
         zarrFrame: 0
       });
     }
-    select('calendar');
+    select('Combined calendar date');
     expect(onChange).toHaveBeenLastCalledWith({
       zarrAxis: {
         kind: 'calendar',
@@ -53,10 +82,28 @@ describe('ZarrAxisSelector', () => {
       zarrFrame: 0
     });
     expect(queryByRole('status')).toBeNull();
-    fireEvent.change(getByLabelText('month dimension'), {target: {value: 'year'}});
+    selectOption('month dimension', 'year');
     expect(queryByRole('status')).not.toBeNull();
+    selectOption('month dimension', 'month');
+    expect(queryByRole('status')).toBeNull();
+    selectOption('year dimension', 'band');
+    expect(onChange).toHaveBeenLastCalledWith({
+      zarrAxis: expect.objectContaining({kind: 'calendar', year: 'band'}),
+      zarrFrame: 0
+    });
+    selectOption('year dimension', 'year');
+    selectOption('day dimension', 'Monthly (no day dimension)');
+    expect(onChange).toHaveBeenLastCalledWith({
+      zarrAxis: expect.objectContaining({kind: 'calendar', day: undefined}),
+      zarrFrame: 0
+    });
+    selectOption('Calendar', '360_day');
+    expect(onChange).toHaveBeenLastCalledWith({
+      zarrAxis: expect.objectContaining({kind: 'calendar', calendar: '360_day'}),
+      zarrFrame: 0
+    });
     for (const kind of ['off', 'auto']) {
-      select(kind);
+      select(kind === 'off' ? 'Off' : 'Automatic time');
       expect(onChange).toHaveBeenLastCalledWith({zarrAxis: {kind}, zarrFrame: 0});
     }
   });
@@ -83,11 +130,34 @@ describe('ZarrAxisSelector', () => {
     };
     const config = {leadTime: 'lead_time', kind: 'forecast', referenceTime: 'init_time'};
     const onChange = jest.fn();
-    const {getByLabelText} = renderWithTheme(
-      <ZarrAxisSelector variable={forecast} config={config} onChange={onChange} />
-    );
-    expect(getByLabelText('Timeline axis')).toHaveValue('forecast:0');
-    fireEvent.change(getByLabelText('Timeline axis'), {target: {value: 'forecast:0'}});
+    renderSelector(<ZarrAxisSelector variable={forecast} config={config} onChange={onChange} />);
+    expect(
+      within(screen.getByRole('group', {name: 'Timeline axis'})).getByRole('button')
+    ).toHaveTextContent('Valid time: init_time + lead_time');
+    selectOption('Timeline axis', 'Valid time: init_time + lead_time');
     expect(onChange).toHaveBeenLastCalledWith({zarrAxis: config, zarrFrame: 0});
+  });
+
+  it('searches long dimension lists using the shared dropdown', () => {
+    const onChange = jest.fn();
+    const manyDimensions = {
+      nonSpatialDims: Array.from({length: 20}, (_, i) => ({name: `dim_${i}`, size: 2}))
+    };
+    const calendar = {kind: 'calendar', year: 'dim_0', month: 'dim_1'};
+    for (const [name, config, expected] of [
+      ['Timeline axis', {}, {kind: 'dimension', dimension: 'dim_19'}],
+      ['year dimension', calendar, {...calendar, year: 'dim_19'}]
+    ]) {
+      const {unmount} = renderSelector(
+        <ZarrAxisSelector variable={manyDimensions} config={config} onChange={onChange} />
+      );
+      openSelector(name);
+      fireEvent.change(screen.getByPlaceholderText('Search'), {target: {value: 'dim_19'}});
+      const list = within(document.querySelector('.list-selector'));
+      expect(list.queryByText('dim_0')).toBeNull();
+      fireEvent.click(list.getByText('dim_19'));
+      expect(onChange).toHaveBeenLastCalledWith({zarrAxis: expected, zarrFrame: 0});
+      unmount();
+    }
   });
 });
