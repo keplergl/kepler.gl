@@ -16,6 +16,7 @@ import {
   ZarrLayerIcon
 } from '@kepler.gl/layers';
 import {getError, getApplicationConfig} from '@kepler.gl/utils';
+import {DatasetType, ZarrDatasetMetadata} from '@kepler.gl/constants';
 
 import LoadingSpinner from '../../common/loading-spinner';
 import {MetaResponse} from './common';
@@ -28,8 +29,10 @@ import TilesetWMSForm from './tileset-wms-form';
 import TilesetTile3DForm from './tileset-tile3d-form';
 import TilesetBitmapForm from './tileset-bitmap-form';
 import TilesetZarrForm from './tileset-zarr-form';
+import {getZarrMetadataPreview} from './zarr-metadata-preview';
 
 const WIDTH_ICON = '70px';
+const MemoizedJSONPretty = React.memo(JSONPretty);
 
 const LoadTilesetTabContainer = styled.div`
   color: ${props => props.theme.AZURE};
@@ -181,7 +184,16 @@ function LoadTilesetTabFactory() {
     const error = response.error;
     const loading = response.loading;
     const data = response.metadata;
-    const jsonDataText = useMemo(() => JSON.stringify(data, null, 2), [data]);
+    const isZarr = response.dataset?.type === DatasetType.ZARR;
+    const jsonDataText = useMemo(
+      () =>
+        JSON.stringify(
+          data && isZarr ? getZarrMetadataPreview(data as ZarrDatasetMetadata) : data,
+          null,
+          2
+        ),
+      [data, isZarr]
+    );
 
     const createTileDataset = useCallback(() => {
       const {dataset, metadata} = response;
@@ -260,7 +272,8 @@ function LoadTilesetTabFactory() {
               <AutoSizer>
                 {({height, width}) => (
                   <MetaInnerContainer height={height} width={width}>
-                    <JSONPretty id="json-pretty" json={jsonDataText} />
+                    {isZarr ? <p>Metadata summary with coordinate samples.</p> : null}
+                    <MemoizedJSONPretty id="json-pretty" json={jsonDataText} />
                   </MetaInnerContainer>
                 )}
               </AutoSizer>
