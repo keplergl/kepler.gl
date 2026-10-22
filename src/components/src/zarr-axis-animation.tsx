@@ -11,7 +11,10 @@ import AnimationControlFactory from './common/animation-control/animation-contro
 const Container = styled.section`
   position: relative;
   margin-top: 52px;
-  background: ${props => props.theme.sidePanelBg};
+
+  .animation-control-container {
+    background: ${props => props.theme.sidePanelBg};
+  }
 `;
 
 export type ZarrAxisAnimationProps = {
