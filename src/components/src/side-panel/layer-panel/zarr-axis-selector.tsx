@@ -48,7 +48,6 @@ export default function ZarrAxisSelector({
   return (
     <div>
       <SidePanelSection role="group" aria-label="Timeline axis">
-        <PanelLabel>Timeline axis</PanelLabel>
         <ItemSelector
           options={axisOptions}
           selectedItems={axisOptions.find(option => option.value === value) ?? null}
