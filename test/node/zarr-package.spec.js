@@ -5,7 +5,7 @@ import {execFileSync} from 'child_process';
 import path from 'path';
 
 // Use plain Node: Jest's ESM aliases and Babel register hide export-map failures.
-test('CommonJS packages load and read Zarr with unpatched ESM dependencies', () => {
+test('CommonJS table and compiled Zarr layer work with unpatched ESM dependencies', () => {
   expect(
     execFileSync(process.execPath, [path.join(__dirname, 'fixtures/zarr-package-consumer.cjs')], {
       env: {...process.env, NODE_ENV: 'production', BABEL_ENV: 'production', NODE_OPTIONS: ''},

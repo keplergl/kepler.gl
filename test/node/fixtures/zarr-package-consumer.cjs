@@ -91,8 +91,15 @@ async function run() {
   assert.throws(() => requireConsumer('@zarrita/storage'), {code: 'ERR_PACKAGE_PATH_NOT_EXPORTED'});
 
   const {getZarrMetadata} = requireConsumer('@kepler.gl/table');
-  const {KeplerGlLayers} = requireConsumer('@kepler.gl/layers');
-  const layer = new KeplerGlLayers.ZarrLayer({dataId: 'climate'});
+  // Test the compiled Zarr layer without importing every other layer. The full
+  // layers entry also imports Flowmap, whose extensionless ESM imports fail in
+  // native Node on master. This is Zarr regression coverage, not a full-package
+  // native Node compatibility check.
+  const layersDirectory = path.dirname(requireConsumer.resolve('@kepler.gl/layers'));
+  const {default: ZarrLayer} = requireConsumer(
+    path.join(layersDirectory, 'zarr-layer/zarr-layer.js')
+  );
+  const layer = new ZarrLayer({dataId: 'climate'});
   assert.deepEqual(layer.renderLayer({data: null}), []);
 
   const array = {
