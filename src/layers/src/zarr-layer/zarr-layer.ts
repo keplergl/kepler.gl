@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ZarrLayer as DeckZarrLayer} from '@developmentseed/deck.gl-zarr';
-import * as zarr from 'zarrita';
+import type * as zarr from 'zarrita';
 
 import {
   DatasetType,
@@ -37,6 +36,8 @@ import Layer from '../base-layer';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import ZarrLayerIcon from './zarr-layer-icon';
 import {applyZarrColormap, estimateZarrDataRange} from './zarr-colormap';
+
+import {loadZarrRuntime, ZarrRuntime} from './zarr-runtime';
 
 export type ZarrLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -294,6 +295,13 @@ export default class ZarrLayer extends Layer {
   private _nodeKey: string | null = null;
   private _node: zarr.Array<zarr.DataType> | zarr.Group<zarr.Readable> | null = null;
   private _nodeError: Error | null = null;
+  private _runtime: ZarrRuntime | null = null;
+
+  private async _loadRuntime(): Promise<ZarrRuntime> {
+    this._runtime = await loadZarrRuntime();
+    return this._runtime;
+  }
+
   /**
    * Rescale fallback derived from the first tile, used when the store does not
    * advertise a value range. Without it the first tiles render as flat color.
@@ -548,8 +556,11 @@ export default class ZarrLayer extends Layer {
     this._loadedKey = null;
     this._loadedSelection = null;
 
-    openZarrNode(metadata.url, variable?.nodePath ?? variable?.path)
-      .then(node => {
+    Promise.all([
+      openZarrNode(metadata.url, variable?.nodePath ?? variable?.path),
+      this._loadRuntime()
+    ])
+      .then(([node]) => {
         if (this._nodeKey !== key) {
           return;
         }
@@ -584,7 +595,7 @@ export default class ZarrLayer extends Layer {
     }
 
     const node = this._getNode(metadata, variable, layerCallbacks?.onRedrawNeeded);
-    if (!node) {
+    if (!node || !this._runtime) {
       return [];
     }
 
@@ -658,6 +669,7 @@ export default class ZarrLayer extends Layer {
     selection: Record<string, number>,
     onViewportLoad?: () => void
   ) {
+    const {DeckZarrLayer} = this._runtime!;
     return new DeckZarrLayer({
       ...common,
       id: getZarrSublayerId(this.id, selection),
@@ -690,7 +702,8 @@ export default class ZarrLayer extends Layer {
     {sliceSpec, width, height}: {sliceSpec: unknown; width: number; height: number}
   ): Promise<ZarrTileData> => {
     const {nodataValue, needsSampling} = this._tileContext;
-    const chunk = await zarr.get(arr, sliceSpec as any);
+    const {get} = await this._loadRuntime();
+    const chunk = await get(arr, sliceSpec as any);
     const values = (chunk as {data: ArrayLike<number | bigint>}).data;
     if (!this._sampledRange && needsSampling) {
       this._sampledRange = estimateZarrDataRange(values, nodataValue);

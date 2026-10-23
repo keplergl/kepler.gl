@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {parseGeoZarrMetadata} from '@developmentseed/geozarr';
-import * as zarr from 'zarrita';
+import type * as zarr from 'zarrita';
 
 import type {ZarrDatasetMetadata, ZarrDimensionInfo, ZarrVariableInfo} from '@kepler.gl/constants';
+
+import {loadZarrRuntime} from './zarr-runtime';
 
 /** Dimension names treated as time when the store does not advertise CF units. */
 const TIME_DIMENSION_NAMES = new Set(['time', 't', 'valid_time', 'datetime', 'date']);
@@ -293,6 +294,7 @@ export function openZarrStore(url: string): Promise<ListableStore> {
     return existing;
   }
   const opening = (async () => {
+    const {zarr} = await loadZarrRuntime();
     const store = new zarr.FetchStore(url);
     return (await zarr.withMaybeConsolidatedMetadata(store)) as ListableStore;
   })().catch((error: unknown) => {
@@ -313,6 +315,7 @@ export async function openZarrNode(
   variablePath?: string
 ): Promise<zarr.Array<zarr.DataType, zarr.Readable> | zarr.Group<zarr.Readable>> {
   const store = await openZarrStore(url);
+  const {zarr} = await loadZarrRuntime();
   return zarr.open(new zarr.Location(store, toAbsolutePath(variablePath ?? '')));
 }
 
@@ -442,6 +445,7 @@ async function openCoordinateArray(
   name: string,
   size?: number
 ): Promise<zarr.Array<zarr.DataType, zarr.Readable> | null> {
+  const {zarr} = await loadZarrRuntime();
   for (const path of new Set(coordinateCandidates(variablePath, name))) {
     if (isKnownMissing(index, path, 'array')) {
       continue;
@@ -490,6 +494,7 @@ async function readGridMapping(
   variablePath: string,
   arrayAttrs: AnyAttrs
 ): Promise<GridMapping | null> {
+  const {zarr} = await loadZarrRuntime();
   const named = readString(arrayAttrs, ['grid_mapping']);
   const names = named ? [named, ...GRID_MAPPING_FALLBACK_NAMES] : GRID_MAPPING_FALLBACK_NAMES;
   const parent = variablePath.split('/').slice(0, -1).join('/');
@@ -593,6 +598,7 @@ async function readAxisSpacing(
   if (arr.shape[0] < 2 || arr.shape[0] > MAX_COORDINATE_LENGTH) {
     return null;
   }
+  const {zarr} = await loadZarrRuntime();
   const chunk = await zarr.get(arr, null);
   return axisSpacingFromValues(chunk.data as ArrayLike<number | bigint>);
 }
@@ -859,6 +865,7 @@ async function loadCoordinateDimension(
   }
 
   try {
+    const {zarr} = await loadZarrRuntime();
     const chunk = await zarr.get(arr, null);
     return decodeZarrCoordinate(name, size, chunk.data, getAttrs(arr));
   } catch {
@@ -892,6 +899,7 @@ async function buildVariableInfo(
   cache: CoordinateCache,
   options: {preopened?: zarr.Array<zarr.DataType, zarr.Readable>; nodePath?: string} = {}
 ): Promise<ZarrVariableInfo | null> {
+  const {zarr, parseGeoZarrMetadata} = await loadZarrRuntime();
   const geo = parseGeoZarrMetadata(geoAttrs);
   const spatialDims = [geo.axes[geo.yAxisIndex], geo.axes[geo.xAxisIndex]];
 
@@ -973,6 +981,7 @@ async function buildPyramidVariables(
   levelPaths: string[],
   cache: CoordinateCache
 ): Promise<ZarrVariableInfo[]> {
+  const {zarr} = await loadZarrRuntime();
   const base = normalizePath(groupPath);
   const resolve = (rest: string) => (base ? `${base}/${rest}` : rest);
   const names = multiscaleVariableNames(index, resolve(levelPaths[0]));
@@ -1122,6 +1131,8 @@ export async function getZarrMetadata(
   options: {variable?: string; signal?: AbortSignal} = {}
 ): Promise<ZarrDatasetMetadata> {
   const {signal} = options;
+  throwIfAborted(signal);
+  const {zarr, parseGeoZarrMetadata} = await loadZarrRuntime();
   throwIfAborted(signal);
   // Keep the signal out of the shared cache. All reads, including coordinate
   // chunks and range requests, go through this request-scoped fetch function.

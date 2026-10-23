@@ -333,10 +333,11 @@ test('#ZarrLayer -> getZarrSublayerId', t => {
   t.end();
 });
 
-test('#ZarrLayer -> renderLayer reloads tiles when a dimension changes', t => {
+test('#ZarrLayer -> renderLayer reloads tiles when a dimension changes', async t => {
   const layer = new ZarrLayer({dataId: 'zarr-dataset'});
   // The store opens asynchronously; stand in for an opened node so renderLayer
   // gets as far as building the deck sublayer.
+  await layer._loadRuntime();
   layer._nodeKey = `${MOCK_ZARR_DATASET.metadata.url}#temperature`;
   layer._node = {shape: [3, 4, 256, 256]};
 
@@ -363,7 +364,7 @@ test('#ZarrLayer -> renderLayer reloads tiles when a dimension changes', t => {
   t.end();
 });
 
-test('#ZarrLayer -> explicit axes fetch source slices independently of the shared clock', t => {
+test('#ZarrLayer -> explicit axes fetch source slices independently of the shared clock', async t => {
   const band = {...BAND_DIMENSION, values: ['tavg', 'prec', 'tavg', 'snow'], kind: 'category'};
   const variable = {...TEMPERATURE, nonSpatialDims: [TIME_DIMENSION, band]};
   const layer = new ZarrLayer({
@@ -373,6 +374,7 @@ test('#ZarrLayer -> explicit axes fetch source slices independently of the share
       dimensionIndexes: {time: 1}
     }
   });
+  await layer._loadRuntime();
   layer._nodeKey = `${MOCK_ZARR_DATASET.metadata.url}#temperature`;
   layer._node = {shape: variable.shape};
   layer.updateLayerMeta(MOCK_ZARR_DATASET);
@@ -581,8 +583,9 @@ test('#ZarrLayer -> getZarrMaxZoom', t => {
   t.end();
 });
 
-test('#ZarrLayer -> renderLayer caps the level only for a web mercator pyramid', t => {
+test('#ZarrLayer -> renderLayer caps the level only for a web mercator pyramid', async t => {
   const layer = new ZarrLayer({dataId: 'zarr-dataset'});
+  await layer._loadRuntime();
   layer._nodeKey = `${MOCK_ZARR_DATASET.metadata.url}#temperature`;
   layer._node = {shape: [3, 4, 256, 256]};
 
@@ -617,8 +620,9 @@ test('#ZarrLayer -> renderLayer caps the level only for a web mercator pyramid',
   t.end();
 });
 
-test('#ZarrLayer -> renderLayer holds the loaded slice while the next one loads', t => {
+test('#ZarrLayer -> renderLayer holds the loaded slice while the next one loads', async t => {
   const layer = new ZarrLayer({dataId: 'zarr-dataset'});
+  await layer._loadRuntime();
   layer._nodeKey = `${MOCK_ZARR_DATASET.metadata.url}#temperature`;
   layer._node = {shape: [3, 4, 256, 256]};
 
@@ -659,7 +663,7 @@ test('#ZarrLayer -> renderLayer holds the loaded slice while the next one loads'
   t.end();
 });
 
-test('#ZarrLayer -> renderLayer forwards the pyramid description to the renderer', t => {
+test('#ZarrLayer -> renderLayer forwards the pyramid description to the renderer', async t => {
   // A pyramid keeps its levels under a shared parent, so a variable's identity
   // is the group plus the array name while the node opened is the group.
   const pyramid = {
@@ -689,6 +693,7 @@ test('#ZarrLayer -> renderLayer forwards the pyramid description to the renderer
   };
 
   const layer = new ZarrLayer({dataId: 'zarr-dataset'});
+  await layer._loadRuntime();
   layer._nodeKey = `${MOCK_ZARR_DATASET.metadata.url}#pyramid/qtot`;
   layer._node = {attrs: {}};
 
@@ -710,8 +715,9 @@ test('#ZarrLayer -> renderLayer forwards the pyramid description to the renderer
   t.end();
 });
 
-test('#ZarrLayer -> renderLayer keeps its deck props stable across redraws', t => {
+test('#ZarrLayer -> renderLayer keeps its deck props stable across redraws', async t => {
   const layer = new ZarrLayer({dataId: 'zarr-dataset'});
+  await layer._loadRuntime();
   layer._nodeKey = `${MOCK_ZARR_DATASET.metadata.url}#temperature`;
   layer._node = {shape: [3, 4, 256, 256]};
 

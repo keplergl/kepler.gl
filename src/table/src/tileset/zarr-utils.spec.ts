@@ -120,6 +120,14 @@ describe('Zarr metadata cancellation', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('does not start requests when cancelled while awaiting the runtime', async () => {
+    const controller = new AbortController();
+    const pending = getZarrMetadata(url, {signal: controller.signal});
+    controller.abort();
+    await expect(pending).rejects.toBe(controller.signal.reason);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['consolidated metadata', '/.zmetadata'],
     ['coordinate chunks', '/month/0']
