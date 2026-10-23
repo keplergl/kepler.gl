@@ -1877,7 +1877,20 @@ export default function LayerConfiguratorFactory(
           <LayerConfigGroup label={'layer.color'} collapsible>
             <LayerColorRangeSelector {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
-              <VisConfigSlider {...layer.visConfigSettings.rescale} {...visConfiguratorProps} />
+              <VisConfigSlider
+                {...layer.visConfigSettings.rescale}
+                {...visConfiguratorProps}
+                layer={{
+                  ...layer,
+                  config: {
+                    ...layer.config,
+                    visConfig: {
+                      ...visConfig,
+                      rescale: visConfig.rescale ?? layer.visConfigSettings.rescale.range
+                    }
+                  }
+                }}
+              />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
           <LayerConfigGroup label={'layer.appearance'}>

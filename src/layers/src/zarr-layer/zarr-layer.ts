@@ -53,7 +53,8 @@ export type ZarrLayerVisConfigSettings = {
 export type ZarrLayerVisConfig = {
   opacity: number;
   colorRange: ColorRange;
-  rescale: [number, number];
+  /** Null means automatic: use advertised statistics or sample the first tile. */
+  rescale: [number, number] | null;
   /** Path of the rendered variable. Null falls back to the dataset's default. */
   zarrVariable: string | null;
   /** Indices of non-spatial dimensions not currently driven by an axis. */
@@ -93,16 +94,8 @@ export function getZarrTileByteLength(
   return typeof byteLength === 'number' ? byteLength : width * height * 4;
 }
 
-/**
- * Registered default for `rescale`, which stands for "no range chosen yet"
- * rather than a deliberate 0-1 ramp. Almost no store holds 0-1 values, so a
- * range read off the data is allowed to replace it.
- */
+/** Slider bounds and rendering fallback until an automatic range is available. */
 export const DEFAULT_RESCALE: [number, number] = [0, 1];
-
-function isSameRange(a?: [number, number] | null, b?: [number, number] | null): boolean {
-  return Boolean(a && b && a[0] === b[0] && a[1] === b[1]);
-}
 
 function isUsableRange(range?: [number, number] | null): range is [number, number] {
   return Boolean(
@@ -316,7 +309,7 @@ export default class ZarrLayer extends Layer {
    */
   private _tileContext: {
     colors: string[];
-    rescale?: [number, number];
+    rescale?: [number, number] | null;
     nodataValue?: number;
     needsSampling: boolean;
   } = {colors: [], needsSampling: false};
@@ -347,6 +340,9 @@ export default class ZarrLayer extends Layer {
   constructor(props: {dataId: string; visConfig?: Record<string, any>} & Record<string, any>) {
     super(props);
     this.registerVisConfig(zarrVisConfigs);
+    // Keep automatic selection distinct from every explicit range, including
+    // [0, 1], in saved configs and duplicated layers.
+    this.config.visConfig.rescale = null;
     // `registerVisConfig` resets every entry to its default, so anything the
     // layer was constructed with — the range from `findDefaultLayerProps`, or a
     // saved map's config — has to be put back afterwards.
@@ -517,7 +513,8 @@ export default class ZarrLayer extends Layer {
     metadata: ZarrDatasetMetadata
   ): void {
     // Dataset-level statistics describe its default variable, not every variable.
-    const dataRange = (variable ? variable.dataRange : metadata.dataRange) ?? null;
+    const advertisedRange = variable ? variable.dataRange : metadata.dataRange;
+    const dataRange = isUsableRange(advertisedRange) ? advertisedRange : null;
     this.visConfigSettings.rescale = {
       ...this.visConfigSettings.rescale,
       range: dataRange ?? DEFAULT_RESCALE,
@@ -525,17 +522,17 @@ export default class ZarrLayer extends Layer {
     };
 
     // `meta.variable` still holds the previous render's variable here.
-    const variableChanged = Boolean(this.meta?.variable) && this.meta.variable !== variable?.path;
+    const variableChanged =
+      this.meta.zarrUrl !== undefined &&
+      (this.meta.zarrUrl !== metadata.url || this.meta.variable !== variable?.path);
     if (variableChanged) {
       this._sampledRange = null;
     }
 
     const current = this.config.visConfig?.rescale;
-    const unset = !isUsableRange(current) || isSameRange(current, DEFAULT_RESCALE);
+    const unset = !isUsableRange(current);
     if (variableChanged || unset) {
-      // A variable that declares no range falls back to the placeholder, which
-      // is what asks the first tile to supply one.
-      this.updateLayerVisConfig({rescale: dataRange ?? DEFAULT_RESCALE});
+      this.updateLayerVisConfig({rescale: dataRange});
     }
   }
 
@@ -558,6 +555,7 @@ export default class ZarrLayer extends Layer {
     this._node = null;
     this._nodeError = null;
     this._sampledRange = null;
+    this._getTileData = this._createTileDataLoader();
     // Another variable's tiles are not a usable backdrop for this one.
     this._loadedKey = null;
     this._loadedSelection = null;
@@ -624,7 +622,7 @@ export default class ZarrLayer extends Layer {
       rescale,
       nodataValue,
       // Nothing has picked a range, so the first tile has to supply one.
-      needsSampling: !isUsableRange(rescale) || isSameRange(rescale, DEFAULT_RESCALE)
+      needsSampling: !isUsableRange(rescale)
     };
 
     this._onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
@@ -704,19 +702,26 @@ export default class ZarrLayer extends Layer {
     return this._selection;
   }
 
-  private _getTileData = async (
-    arr: zarr.Array<zarr.DataType, zarr.Readable>,
-    {sliceSpec, width, height}: {sliceSpec: unknown; width: number; height: number}
-  ): Promise<ZarrTileData> => {
-    const {nodataValue, needsSampling} = this._tileContext;
-    const {get} = await this._loadRuntime();
-    const chunk = await get(arr, sliceSpec as any);
-    const values = (chunk as {data: ArrayLike<number | bigint>}).data;
-    if (!this._sampledRange && needsSampling) {
-      this._sampledRange = estimateZarrDataRange(values, nodataValue);
-    }
-    return {width, height, values, byteLength: getZarrTileByteLength(values, width, height)};
-  };
+  private _createTileDataLoader() {
+    const getTileData = async (
+      arr: zarr.Array<zarr.DataType, zarr.Readable>,
+      {sliceSpec, width, height}: {sliceSpec: unknown; width: number; height: number}
+    ): Promise<ZarrTileData> => {
+      const {nodataValue, needsSampling} = this._tileContext;
+      const {get} = await this._loadRuntime();
+      const chunk = await get(arr, sliceSpec as any);
+      const values = (chunk as {data: ArrayLike<number | bigint>}).data;
+      // A callback belongs to one source opening. Even after switching A -> B
+      // -> A, an older request must not set the current source's color range.
+      if (this._getTileData === getTileData && !this._sampledRange && needsSampling) {
+        this._sampledRange = estimateZarrDataRange(values, nodataValue);
+      }
+      return {width, height, values, byteLength: getZarrTileByteLength(values, width, height)};
+    };
+    return getTileData;
+  }
+
+  private _getTileData = this._createTileDataLoader();
 
   private _renderTile = (tile: ZarrTileData) => {
     if (!tile) {
@@ -733,7 +738,7 @@ export default class ZarrLayer extends Layer {
   };
 
   /** Prefer the chosen rescale, falling back to what the first tile showed. */
-  private _effectiveRescale(rescale?: [number, number]): [number, number] {
+  private _effectiveRescale(rescale?: [number, number] | null): [number, number] {
     if (this._tileContext.needsSampling && this._sampledRange) {
       return this._sampledRange;
     }

@@ -288,13 +288,10 @@ async function refreshZarrMetadata(datasetInfo: CreateTableProps): Promise<any |
     return null;
   }
 
-  try {
-    clearZarrStoreCache(url);
-    return await getZarrMetadata(url, {variable});
-  } catch (err) {
-    // ignore for now, and use old metadata
-  }
-  return null;
+  // URL-only saves have no usable metadata to fall back to. Let failures reach
+  // the dataset-loading task's error handler instead of creating an empty table.
+  clearZarrStoreCache(url);
+  return await getZarrMetadata(url, {variable});
 }
 
 export async function getWMSCapabilities(wsmUrl: string): Promise<WMSCapabilities> {

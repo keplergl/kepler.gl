@@ -6,6 +6,8 @@
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
+import {fireEvent} from '@testing-library/react';
+import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import {
   LayerConfiguratorFactory,
@@ -496,6 +498,41 @@ function mountZarrConfigurator(layer, updateLayerVisConfigSpy) {
     </IntlWrapper>
   );
 }
+
+test('Components -> LayerConfigurator -> automatic Zarr range remains editable', t => {
+  const layer = new LayerClasses.zarr({id: 'zarr-layer', dataId: 'zarr_data'});
+  const updateLayerVisConfigSpy = sinon.spy();
+  const {container, unmount} = renderWithTheme(
+    <IntlWrapper>
+      <LayerConfigurator
+        {...defaultProps}
+        layer={layer}
+        datasets={{zarr_data: ZARR_DATASET}}
+        updateLayerVisConfig={updateLayerVisConfigSpy}
+      />
+    </IntlWrapper>
+  );
+  try {
+    const [minimum, maximum] = container.querySelectorAll('.kg-range-slider__input');
+    t.equal(minimum.value, '0', 'shows the fallback lower bound while automatic');
+    t.equal(maximum.value, '1', 'shows the fallback upper bound while automatic');
+    t.equal(
+      layer.config.visConfig.rescale,
+      null,
+      'displaying fallback bounds does not select them'
+    );
+    fireEvent.change(minimum, {target: {value: '0.25'}});
+    fireEvent.blur(minimum);
+    t.deepEqual(
+      updateLayerVisConfigSpy.lastCall.args[0],
+      {rescale: [0.25, 1]},
+      'editing the slider selects an explicit color range'
+    );
+  } finally {
+    unmount();
+    t.end();
+  }
+});
 
 test('Components -> LayerConfigurator -> zarr variable selector shows the active variable', t => {
   const ZarrLayer = LayerClasses.zarr;

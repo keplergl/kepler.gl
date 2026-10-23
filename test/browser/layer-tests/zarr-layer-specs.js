@@ -159,7 +159,7 @@ test('#ZarrLayer -> updateLayerMeta points the rescale control at the variable',
   layer.updateLayerMeta(MOCK_ZARR_DATASET);
   t.deepEqual(
     layer.config.visConfig.rescale,
-    [0, 1],
+    null,
     'should not keep the previous variable range after a switch'
   );
   t.deepEqual(
@@ -180,6 +180,181 @@ test('#ZarrLayer -> updateLayerMeta points the rescale control at the variable',
   );
 
   t.end();
+});
+
+function renderTileColors(deckLayer, values) {
+  const originalImageData = globalThis.ImageData;
+  // jsdom does not implement ImageData; retain the pixels produced by the real colormap.
+  globalThis.ImageData = class {
+    constructor(data) {
+      this.data = data;
+    }
+  };
+  try {
+    return Array.from(
+      deckLayer.props.renderTile({values, width: values.length, height: 1}).image.data
+    );
+  } finally {
+    globalThis.ImageData = originalImageData;
+  }
+}
+
+test('#ZarrLayer -> advertised and explicit 0-1 ranges are not sampled', async t => {
+  const values = new Float32Array([0.25, 0.75]);
+  const expectedColors = [64, 64, 64, 255, 191, 191, 191, 255];
+  for (const mode of ['advertised', 'saved', 'selected', 'automatic', 'invalid']) {
+    const variable = {
+      ...TEMPERATURE,
+      dataRange: mode === 'advertised' ? [0, 1] : mode === 'saved' ? [250, 320] : undefined
+    };
+    const dataset = {
+      ...MOCK_ZARR_DATASET,
+      metadata: {...MOCK_ZARR_DATASET.metadata, variables: [variable]}
+    };
+    const layer = new ZarrLayer({
+      dataId: dataset.id,
+      visConfig: {
+        colorRange: {colors: ['#000000', '#ffffff']},
+        ...(mode === 'saved' ? {rescale: [0, 1]} : {}),
+        ...(mode === 'invalid' ? {rescale: [NaN, Infinity]} : {})
+      }
+    });
+    layer.updateLayerMeta(dataset);
+    if (mode === 'selected') {
+      layer.updateLayerVisConfig({rescale: [0, 1]});
+      layer.updateLayerMeta(dataset);
+    }
+    const runtime = await layer._loadRuntime();
+    layer._loadRuntime = async () => ({...runtime, get: async () => ({data: values})});
+    layer._nodeKey = `${dataset.metadata.url}#${variable.path}`;
+    layer._node = {};
+    const [deckLayer] = layer.renderLayer({
+      data: {metadata: dataset.metadata, variable},
+      mapState: {},
+      visible: true
+    });
+    const tile = await deckLayer.props.getTileData(layer._node, {
+      sliceSpec: [],
+      width: 2,
+      height: 1
+    });
+    const automatic = mode === 'automatic' || mode === 'invalid';
+    t.deepEqual(
+      renderTileColors(deckLayer, tile.values),
+      automatic ? [0, 0, 0, 255, 255, 255, 255, 255] : expectedColors,
+      `${mode}: uses the configured range or samples only when no usable range exists`
+    );
+    t.deepEqual(
+      layer.config.visConfig.rescale,
+      automatic ? null : [0, 1],
+      `${mode}: keeps range intent`
+    );
+  }
+  t.end();
+});
+
+test('#ZarrLayer -> stale tile requests cannot set another source opening color range', async t => {
+  const originalFetch = globalThis.fetch;
+  const url = 'https://example.com/range-race.zarr';
+  const variables = ['a', 'b'].map(path => ({...PRECIPITATION, path}));
+  const metadata = {...MOCK_ZARR_DATASET.metadata, url, variable: 'a', variables};
+  const dataset = {...MOCK_ZARR_DATASET, metadata};
+  const array = {
+    zarr_format: 2,
+    shape: [1, 2],
+    chunks: [1, 2],
+    dtype: '<f8',
+    compressor: null,
+    fill_value: null,
+    order: 'C',
+    filters: null
+  };
+  globalThis.fetch = async request =>
+    request.url.endsWith('/.zmetadata')
+      ? new Response(
+          JSON.stringify({
+            zarr_consolidated_format: 1,
+            metadata: {
+              '.zgroup': {zarr_format: 2},
+              'a/.zarray': array,
+              'a/.zattrs': {},
+              'b/.zarray': array,
+              'b/.zattrs': {}
+            }
+          })
+        )
+      : new Response(null, {status: 404});
+  try {
+    const layer = new ZarrLayer({
+      dataId: dataset.id,
+      visConfig: {colorRange: {colors: ['#000000', '#ffffff']}}
+    });
+    const runtime = await layer._loadRuntime();
+    const pending = [];
+    layer._loadRuntime = async () => ({
+      ...runtime,
+      get: () => new Promise(resolve => pending.push(resolve))
+    });
+    const render = async path => {
+      layer.updateLayerVisConfig({zarrVariable: path});
+      const data = layer.formatLayerData({[dataset.id]: dataset});
+      const options = {data, mapState: {}, visible: true};
+      await new Promise(resolve => {
+        const layers = layer.renderLayer({
+          ...options,
+          layerCallbacks: {onRedrawNeeded: resolve}
+        });
+        if (layers.length) resolve();
+      });
+      return layer.renderLayer(options)[0];
+    };
+    const load = deckLayer =>
+      deckLayer.props.getTileData(deckLayer.props.node, {
+        sliceSpec: [null, null],
+        width: 2,
+        height: 1
+      });
+    const firstA = await render('a');
+    const staleA = load(firstA);
+    await Promise.resolve();
+    const b = await render('b');
+    pending.shift()({data: new Float64Array([100, 200])});
+    await staleA;
+    const freshB = load(b);
+    await Promise.resolve();
+    pending.shift()({data: new Float64Array([1, 2])});
+    await freshB;
+    t.deepEqual(
+      renderTileColors(b, [1, 2]),
+      [0, 0, 0, 255, 255, 255, 255, 255],
+      'B samples its own tiles after A finishes late'
+    );
+
+    const secondA = await render('a');
+    const staleSecondA = load(secondA);
+    await Promise.resolve();
+    await render('b');
+    const thirdA = await render('a');
+    pending.shift()({data: new Float64Array([100, 200])});
+    await staleSecondA;
+    // An old deck layer may also invoke its callback after the switch.
+    const lateInvocation = load(firstA);
+    await Promise.resolve();
+    pending.shift()({data: new Float64Array([100, 200])});
+    await lateInvocation;
+    const freshA = load(thirdA);
+    await Promise.resolve();
+    pending.shift()({data: new Float64Array([3, 4])});
+    await freshA;
+    t.deepEqual(
+      renderTileColors(thirdA, [3, 4]),
+      [0, 0, 0, 255, 255, 255, 255, 255],
+      'A samples the current opening after A -> B -> A, ignoring old callbacks'
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    t.end();
+  }
 });
 
 test('#ZarrLayer -> updateLayerMeta populates the animation domain', t => {
@@ -492,7 +667,8 @@ test('#ZarrLayer -> save/load and duplication retain axes and pins; old maps kee
     visConfig: {
       zarrAxis,
       zarrFrame: 1,
-      dimensionIndexes: {band: 2}
+      dimensionIndexes: {band: 2},
+      rescale: [0, 1]
     }
   });
   const state = {
@@ -525,6 +701,8 @@ test('#ZarrLayer -> save/load and duplication retain axes and pins; old maps kee
   t.equal(copy.config.visConfig.zarrFrame, 1, 'duplicates the selected frame');
   t.deepEqual(copy.config.visConfig.dimensionIndexes, {band: 2}, 'duplicates pinned dimensions');
   for (const candidate of [restored, copy]) {
+    candidate.updateLayerMeta(MOCK_ZARR_DATASET);
+    t.deepEqual(candidate.config.visConfig.rescale, [0, 1], 'retains an explicit 0-1 color range');
     const {zarrAxis: axisConfig, zarrFrame, dimensionIndexes} = candidate.config.visConfig;
     t.deepEqual(
       getZarrSelection({
@@ -551,6 +729,26 @@ test('#ZarrLayer -> save/load and duplication retain axes and pins; old maps kee
     TIME_DIMENSION.values,
     'retains the existing time steps'
   );
+  layer.updateLayerVisConfig({zarrVariable: 'precipitation', rescale: null});
+  layer.updateLayerMeta(MOCK_ZARR_DATASET);
+  const automaticConfig = SchemaManager.parseSavedConfig(SchemaManager.getConfigToSave(state))
+    .visState.layers[0];
+  const automaticRestored = validateLayerWithData(
+    MOCK_ZARR_DATASET,
+    automaticConfig,
+    InitialState.visState.layerClasses
+  );
+  const automaticCopy = duplicateLayerUpdater(state.visState, {id: layer.id}).layers.find(
+    candidate => candidate.id !== layer.id
+  );
+  for (const candidate of [automaticRestored, automaticCopy]) {
+    candidate.updateLayerMeta(MOCK_ZARR_DATASET);
+    t.equal(
+      candidate.config.visConfig.rescale,
+      null,
+      'retains automatic sampling on save/load and duplication'
+    );
+  }
   t.end();
 });
 
@@ -627,6 +825,27 @@ test('#ZarrLayer -> URL-only saved maps refetch metadata and restore variable an
       'stores the default source separately from the layer selection'
     );
     const loaded = SchemaManager.load(JSON.parse(JSON.stringify(saved)));
+    const workingFetch = globalThis.fetch;
+    for (const failure of ['network', 'missing store']) {
+      globalThis.fetch = async () => {
+        if (failure === 'network') throw new Error('Store unavailable');
+        return new Response(null, {status: 404});
+      };
+      const failedTask = createNewDataEntry(loaded.datasets[0]);
+      try {
+        await new Promise((resolve, reject) => {
+          failedTask.run(
+            (effect, onSuccess, onError) => effect(onSuccess, onError),
+            resolve,
+            reject
+          );
+        });
+        t.fail(`${failure}: must not restore an empty dataset`);
+      } catch (error) {
+        t.ok(error instanceof Error, `${failure}: reaches the dataset task error handler`);
+      }
+    }
+    globalThis.fetch = workingFetch;
     const task = createNewDataEntry(loaded.datasets[0]);
     const restoredDataset = await new Promise((resolve, reject) => {
       task.run((effect, onSuccess, onError) => effect(onSuccess, onError), resolve, reject);
