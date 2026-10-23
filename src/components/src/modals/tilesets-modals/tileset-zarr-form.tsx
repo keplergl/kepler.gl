@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
 
 import {validateUrl} from '@kepler.gl/common-utils';
 import {DatasetType, ZarrDatasetMetadata} from '@kepler.gl/constants';
-import {getZarrMetadata, selectZarrVariable} from '@kepler.gl/table';
+import {getZarrMetadata} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
@@ -25,20 +25,6 @@ const TilesetInputDescription = styled.div`
   text-align: center;
   color: ${props => props.theme.AZURE200};
   font-size: 11px;
-`;
-
-const ExampleUrlsContainer = styled.div`
-  text-align: left;
-  color: ${props => props.theme.AZURE200};
-  font-size: 11px;
-`;
-
-const Tabs = styled.div`
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
 `;
 
 const Tab = styled.div<{$active: boolean}>`
@@ -152,7 +138,6 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
   const [datasetName, setDatasetName] = useState<string>('');
   const [url, setUrl] = useState<string>('');
   const [metadata, setMetadata] = useState<ZarrDatasetMetadata | null>(null);
-  const [variable, setVariable] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -181,7 +166,6 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
 
   useEffect(() => {
     setMetadata(null);
-    setVariable(undefined);
     setError(null);
     setLoading(false);
     if (!validateUrl(url.trim())) {
@@ -209,7 +193,6 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
             return;
           }
           setMetadata(zarrMetadata);
-          setVariable(zarrMetadata.variable);
         })
         .catch((err: unknown) => {
           if (!cancelled) {
@@ -232,41 +215,32 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
     };
   }, [url, retryCount]);
 
-  const selectedMetadata = useMemo(() => {
-    if (!metadata) {
-      return null;
-    }
-    return variable ? selectZarrVariable(metadata, variable) : metadata;
-  }, [metadata, variable]);
-
   useEffect(() => {
-    if (!selectedMetadata || !datasetName) {
+    if (!metadata || !datasetName) {
       setResponse({metadata: null, dataset: null, loading, error});
       return;
     }
     setResponse({
-      metadata: selectedMetadata,
+      metadata,
       dataset: {
         name: datasetName,
         type: DatasetType.ZARR,
-        metadata: selectedMetadata
+        metadata
       },
       loading,
       error
     });
-  }, [setResponse, datasetName, selectedMetadata, loading, error]);
+  }, [setResponse, datasetName, metadata, loading, error]);
 
-  // Default the dataset name to the selected variable so the Add button is
+  // Default the dataset name to the default variable so the Add button is
   // reachable without extra typing.
   useEffect(() => {
-    if (!datasetName && selectedMetadata?.variable) {
-      setDatasetName(selectedMetadata.variable);
+    if (!datasetName && metadata?.variable) {
+      setDatasetName(metadata.variable);
     }
     // Only react to the variable, not to the user editing the name.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMetadata?.variable]);
-
-  const variables = metadata?.variables ?? [];
+  }, [metadata?.variable]);
 
   return (
     <TilesetInputContainer>
@@ -326,32 +300,6 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
             ))}
           </ExamplesRow>
         </div>
-      )}
-      {variables.length > 1 && (
-        <div>
-          <label htmlFor="zarr-variable">Variable</label>
-          <Tabs id="zarr-variable">
-            {variables.map(zarrVariable => (
-              <Tab
-                key={zarrVariable.path}
-                $active={zarrVariable.path === variable}
-                onClick={() => setVariable(zarrVariable.path)}
-              >
-                {zarrVariable.displayName}
-              </Tab>
-            ))}
-          </Tabs>
-        </div>
-      )}
-      {selectedMetadata && (
-        <ExampleUrlsContainer>
-          {selectedMetadata.levels.length} resolution level
-          {selectedMetadata.levels.length === 1 ? '' : 's'}
-          {selectedMetadata.crs?.code ? ` · ${selectedMetadata.crs.code}` : ''}
-          {selectedMetadata.timeDimension
-            ? ` · ${selectedMetadata.timeDimension.size} time steps`
-            : ''}
-        </ExampleUrlsContainer>
       )}
     </TilesetInputContainer>
   );

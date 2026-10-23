@@ -31,7 +31,7 @@ import TilesetBitmapForm from './tileset-bitmap-form';
 import TilesetZarrForm from './tileset-zarr-form';
 import {getZarrMetadataPreview} from './zarr-metadata-preview';
 
-const WIDTH_ICON = '70px';
+const WIDTH_ICON = '60px';
 const MemoizedJSONPretty = React.memo(JSONPretty);
 
 const LoadTilesetTabContainer = styled.div`
@@ -47,9 +47,14 @@ const Container = styled.div`
 
 const TilesetTypeContainer = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, ${WIDTH_ICON});
-  column-gap: 10px;
+  grid-template-columns: repeat(6, minmax(0, ${WIDTH_ICON}));
+  gap: 6px;
   margin-bottom: 20px;
+
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
 `;
 
 const MetaContainer = styled.div`

@@ -9,8 +9,7 @@ import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import TilesetZarrForm from './tileset-zarr-form';
 
 jest.mock('@kepler.gl/table', () => ({
-  getZarrMetadata: jest.fn(),
-  selectZarrVariable: jest.fn(metadata => metadata)
+  getZarrMetadata: jest.fn()
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -28,6 +27,44 @@ function noop() {
 describe('TilesetZarrForm', () => {
   beforeEach(() => {
     getZarrMetadata.mockReset();
+  });
+
+  it('keeps the default and all variables for layer configuration without showing variable controls or the spatial summary', async () => {
+    const variables = [
+      {path: 'FUTUR/qtot', displayName: 'Future runoff', nonSpatialDims: []},
+      {path: 'HISTO/qtot', displayName: 'Historical runoff', nonSpatialDims: []}
+    ];
+    const metadata = {
+      url: VALID_URL,
+      variable: variables[1].path,
+      variables,
+      nonSpatialDims: [],
+      levels: [{path: '.', shape: [2, 2], chunks: [2, 2]}],
+      crs: {code: 'EPSG:4326'}
+    };
+    getZarrMetadata.mockResolvedValue(metadata);
+    const setResponse = jest.fn();
+    const {container, getByLabelText, queryByText} = renderWithTheme(
+      <TilesetZarrForm setResponse={setResponse} />
+    );
+
+    fireEvent.change(getByLabelText('Zarr store URL'), {target: {value: VALID_URL}});
+    await waitFor(() => {
+      expect(lastResponse(setResponse).dataset).not.toBeNull();
+      expect(lastResponse(setResponse).loading).toBe(false);
+    });
+
+    const response = lastResponse(setResponse);
+    expect(response.metadata).toBe(metadata);
+    expect(response.dataset.metadata).toBe(metadata);
+    expect(response.dataset.metadata.variable).toBe(variables[1].path);
+    expect(response.dataset.metadata.variables).toBe(variables);
+    expect(getByLabelText('Name')).toHaveValue(variables[1].path);
+    expect(queryByText('Variable')).not.toBeInTheDocument();
+    for (const variable of variables) {
+      expect(queryByText(variable.displayName)).not.toBeInTheDocument();
+    }
+    expect(container).not.toHaveTextContent(/resolution level|EPSG:4326/);
   });
 
   it.each([
