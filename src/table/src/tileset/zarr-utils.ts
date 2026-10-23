@@ -293,6 +293,135 @@ function throwIfAborted(signal?: AbortSignal): void {
 
 const storeCache = new Map<string, Promise<ListableStore>>();
 
+export type ZarrMetadataProgress = {
+  phase: 'connecting' | 'downloading' | 'processing';
+  loadedBytes: number;
+  /** Total for completed and active downloads, when every active size is known. */
+  totalBytes?: number;
+};
+
+function createMetadataFetch(
+  signal: AbortSignal | undefined,
+  onProgress: (progress: ZarrMetadataProgress) => void
+): typeof fetch {
+  let loadedBytes = 0;
+  let lastUpdate = 0;
+  let waitingForHeaders = 0;
+  const active = new Set<{loaded: number; total?: number}>();
+  const report = (force = false) => {
+    if (signal?.aborted || (!force && Date.now() - lastUpdate < 200)) return;
+    lastUpdate = Date.now();
+    const downloads = [...active];
+    const totalBytes =
+      !waitingForHeaders &&
+      downloads.length &&
+      downloads.every(download => download.total !== undefined)
+        ? loadedBytes +
+          downloads.reduce((sum, download) => sum + (download.total ?? 0) - download.loaded, 0)
+        : undefined;
+    onProgress({
+      phase: downloads.length ? 'downloading' : waitingForHeaders ? 'connecting' : 'processing',
+      loadedBytes,
+      totalBytes
+    });
+  };
+
+  return async (request, init) => {
+    throwIfAborted(signal);
+    waitingForHeaders++;
+    report(true);
+    let response: Response;
+    try {
+      response = await fetch(request, {...init, signal});
+    } catch (error) {
+      waitingForHeaders--;
+      report(true);
+      throw error;
+    }
+    waitingForHeaders--;
+    throwIfAborted(signal);
+    if (!response.ok || !response.body) {
+      report(true);
+      return response;
+    }
+
+    // Fetch streams contain decoded bytes. An encoded Content-Length cannot
+    // be compared to them, and some servers do not expose a length at all.
+    const length = Number(response.headers.get('content-length'));
+    const encoding = response.headers.get('content-encoding');
+    const download = {
+      loaded: 0,
+      total:
+        (!encoding || encoding === 'identity') && Number.isFinite(length) && length > 0
+          ? length
+          : undefined
+    };
+    active.add(download);
+    report(true);
+    const reader = response.body.getReader();
+    const abort = () => {
+      void reader.cancel(signal?.reason).catch(() => undefined);
+    };
+    signal?.addEventListener('abort', abort, {once: true});
+    const finish = () => {
+      active.delete(download);
+      signal?.removeEventListener('abort', abort);
+    };
+    const body = new ReadableStream<Uint8Array>({
+      async pull(controller) {
+        try {
+          throwIfAborted(signal);
+          const {done, value} = await reader.read();
+          throwIfAborted(signal);
+          if (done) {
+            finish();
+            reader.releaseLock();
+            report(true);
+            controller.close();
+            return;
+          }
+          download.loaded += value.byteLength;
+          loadedBytes += value.byteLength;
+          // A proxy may hide Content-Encoding while exposing the encoded size.
+          if (download.total !== undefined && download.loaded > download.total) {
+            download.total = undefined;
+          }
+          report();
+          controller.enqueue(value);
+        } catch (error) {
+          finish();
+          await reader.cancel(error).catch(() => undefined);
+          controller.error(error);
+        }
+      },
+      cancel(reason) {
+        finish();
+        return reader.cancel(reason);
+      }
+    });
+    return new Response(body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers
+    });
+  };
+}
+
+async function withDetectedZarrMetadata(store: zarr.FetchStore): Promise<ListableStore> {
+  const {zarr} = await loadZarrRuntime();
+  for (const format of ['v2', 'v3'] as const) {
+    const consolidated = await zarr.withMaybeConsolidatedMetadata(store, {format});
+    if (consolidated === store) continue;
+    if (format === 'v3') {
+      // Open the cached root with the known format. Otherwise Zarrita initially
+      // probes .zattrs/.zarray/.zgroup, which can each take seconds to return 404.
+      await zarr.open.v3(consolidated, {kind: 'group'});
+    }
+    return consolidated as ListableStore;
+  }
+  return store;
+}
+
 /**
  * Open a Zarr store, preferring consolidated metadata so variable discovery
  * costs one request instead of one per node. Memoized per URL because the
@@ -307,7 +436,7 @@ export function openZarrStore(url: string): Promise<ListableStore> {
   const opening = (async () => {
     const {zarr} = await loadZarrRuntime();
     const store = new zarr.FetchStore(url);
-    return (await zarr.withMaybeConsolidatedMetadata(store)) as ListableStore;
+    return withDetectedZarrMetadata(store);
   })().catch((error: unknown) => {
     storeCache.delete(url);
     throw error;
@@ -550,7 +679,8 @@ async function deriveAffineFromCoordinates(
   yName: string,
   xName: string,
   height: number,
-  width: number
+  width: number,
+  cache: CoordinateCache
 ): Promise<number[] | null> {
   const [yArr, xArr] = await Promise.all([
     openCoordinateArray(store, index, variablePath, yName, height),
@@ -559,7 +689,10 @@ async function deriveAffineFromCoordinates(
   if (!yArr || !xArr) {
     return null;
   }
-  const [yStats, xStats] = await Promise.all([readAxisSpacing(yArr), readAxisSpacing(xArr)]);
+  const [yStats, xStats] = await Promise.all([
+    readAxisSpacing(yArr, cache),
+    readAxisSpacing(xArr, cache)
+  ]);
   if (!yStats || !xStats) {
     return null;
   }
@@ -604,14 +737,22 @@ export function axisSpacingFromValues(raw: ArrayLike<number | bigint>): AxisSpac
 }
 
 async function readAxisSpacing(
-  arr: zarr.Array<zarr.DataType, zarr.Readable>
+  arr: zarr.Array<zarr.DataType, zarr.Readable>,
+  cache: CoordinateCache
 ): Promise<AxisSpacing | null> {
   if (arr.shape[0] < 2 || arr.shape[0] > MAX_COORDINATE_LENGTH) {
     return null;
   }
-  const {zarr} = await loadZarrRuntime();
-  const chunk = await zarr.get(arr, null);
-  return axisSpacingFromValues(chunk.data as ArrayLike<number | bigint>);
+  let pending = cache.spatialAxes.get(arr.path);
+  if (!pending) {
+    pending = (async () => {
+      const {zarr} = await loadZarrRuntime();
+      const chunk = await zarr.get(arr, null);
+      return axisSpacingFromValues(chunk.data as ArrayLike<number | bigint>);
+    })();
+    cache.spatialAxes.set(arr.path, pending);
+  }
+  return pending;
 }
 
 /**
@@ -627,7 +768,8 @@ async function deriveGeoZarrAttrs(
   index: StoreIndex,
   variablePath: string,
   arr: zarr.Array<zarr.DataType, zarr.Readable>,
-  dimensionNames: string[]
+  dimensionNames: string[],
+  cache: CoordinateCache
 ): Promise<AnyAttrs | null> {
   if (dimensionNames.length < 2) {
     return null;
@@ -646,7 +788,16 @@ async function deriveGeoZarrAttrs(
 
   const transform =
     gridMapping?.transform ??
-    (await deriveAffineFromCoordinates(store, index, variablePath, yName, xName, height, width));
+    (await deriveAffineFromCoordinates(
+      store,
+      index,
+      variablePath,
+      yName,
+      xName,
+      height,
+      width,
+      cache
+    ));
   if (!transform) {
     return null;
   }
@@ -833,7 +984,10 @@ export function decodeZarrCoordinate(
  * Coordinate arrays are shared across the variables of a store, and a time axis
  * can run to thousands of values. Read each one once per metadata fetch.
  */
-type CoordinateCache = Map<string, Promise<CoordinateResult>>;
+type CoordinateCache = {
+  dimensions: Map<string, Promise<CoordinateResult>>;
+  spatialAxes: Map<string, Promise<AxisSpacing | null>>;
+};
 
 function readCoordinateDimension(
   store: ListableStore,
@@ -849,12 +1003,12 @@ function readCoordinateDimension(
     return Promise.resolve({dimension: {name, size}, isCfTime: false});
   }
   const key = `${resolved ?? variablePath}|${name}|${size}`;
-  const cached = cache.get(key);
+  const cached = cache.dimensions.get(key);
   if (cached) {
     return cached;
   }
   const pending = loadCoordinateDimension(store, index, variablePath, name, size);
-  cache.set(key, pending);
+  cache.dimensions.set(key, pending);
   return pending;
 }
 
@@ -1039,7 +1193,7 @@ async function buildPyramidVariables(
       }
       const dimensionNames = getZarrDimensionNames(arr);
       const attrs = dimensionNames
-        ? await deriveGeoZarrAttrs(store, index, levelPath, arr, dimensionNames)
+        ? await deriveGeoZarrAttrs(store, index, levelPath, arr, dimensionNames, cache)
         : null;
       if (!attrs) {
         break;
@@ -1156,30 +1310,38 @@ async function listCandidatePaths(store: ListableStore): Promise<string[]> {
  */
 export async function getZarrMetadata(
   url: string,
-  options: {variable?: string; signal?: AbortSignal} = {}
+  options: {
+    variable?: string;
+    signal?: AbortSignal;
+    onProgress?: (progress: ZarrMetadataProgress) => void;
+  } = {}
 ): Promise<ZarrDatasetMetadata> {
-  const {signal} = options;
+  const {signal, onProgress} = options;
   throwIfAborted(signal);
+  onProgress?.({phase: 'connecting', loadedBytes: 0});
   const {zarr, parseGeoZarrMetadata} = await loadZarrRuntime();
   throwIfAborted(signal);
   // Keep the signal out of the shared cache. All reads, including coordinate
   // chunks and range requests, go through this request-scoped fetch function.
-  const store: ListableStore = signal
-    ? Object.assign(
-        await zarr.withMaybeConsolidatedMetadata(
-          new zarr.FetchStore(url, {
-            fetch: request => fetch(request, {signal})
-          })
-        ),
-        {signal}
-      )
-    : await openZarrStore(url);
+  const store: ListableStore =
+    signal || onProgress
+      ? Object.assign(
+          await withDetectedZarrMetadata(
+            new zarr.FetchStore(url, {
+              fetch: onProgress
+                ? createMetadataFetch(signal, onProgress)
+                : request => fetch(request, {signal})
+            })
+          ),
+          {signal}
+        )
+      : await openZarrStore(url);
   throwIfAborted(signal);
   const index = buildStoreIndex(store);
   const paths = await listCandidatePaths(store);
 
   const variables: ZarrVariableInfo[] = [];
-  const coordinateCache: CoordinateCache = new Map();
+  const coordinateCache: CoordinateCache = {dimensions: new Map(), spatialAxes: new Map()};
   const matchedPrefixes: string[] = [];
   const errors: string[] = [];
 
@@ -1190,7 +1352,9 @@ export async function getZarrMetadata(
     }
     let node: Awaited<ReturnType<typeof zarr.open>>;
     try {
-      node = await zarr.open(new zarr.Location(store, toAbsolutePath(path)));
+      node = await zarr.open(new zarr.Location(store, toAbsolutePath(path)), {
+        kind: index?.get(normalizePath(path))
+      });
     } catch {
       throwIfAborted(signal);
       continue;
@@ -1234,7 +1398,7 @@ export async function getZarrMetadata(
         const arr = node as zarr.Array<zarr.DataType, zarr.Readable>;
         const dimensionNames = getZarrDimensionNames(arr);
         geoAttrs = dimensionNames
-          ? await deriveGeoZarrAttrs(store, index, path, arr, dimensionNames)
+          ? await deriveGeoZarrAttrs(store, index, path, arr, dimensionNames, coordinateCache)
           : null;
         preopened = arr;
       }

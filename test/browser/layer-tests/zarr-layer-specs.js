@@ -253,6 +253,62 @@ test('#ZarrLayer -> advertised and explicit 0-1 ranges are not sampled', async t
   t.end();
 });
 
+test('#ZarrLayer -> recolors cached tiles when a later tile supplies the automatic range', async t => {
+  const variable = {...TEMPERATURE, dataRange: undefined};
+  const dataset = {
+    ...MOCK_ZARR_DATASET,
+    metadata: {...MOCK_ZARR_DATASET.metadata, variables: [variable]}
+  };
+  const layer = new ZarrLayer({
+    dataId: dataset.id,
+    visConfig: {colorRange: {colors: ['#000000', '#ffffff']}}
+  });
+  layer.updateLayerMeta(dataset);
+  const runtime = await layer._loadRuntime();
+  const chunks = [new Float32Array([-10, -10]), new Float32Array([-20, 0])];
+  layer._loadRuntime = async () => ({...runtime, get: async () => ({data: chunks.shift()})});
+  layer._nodeKey = `${dataset.metadata.url}#${variable.path}`;
+  layer._node = {};
+  let redraws = 0;
+  const render = () =>
+    layer.renderLayer({
+      data: {metadata: dataset.metadata, variable},
+      mapState: {},
+      visible: true,
+      layerCallbacks: {onRedrawNeeded: () => redraws++}
+    })[0];
+  const initial = render();
+  const load = () => initial.props.getTileData(layer._node, {sliceSpec: [], width: 2, height: 1});
+  const first = await load();
+  t.deepEqual(
+    renderTileColors(initial, first.values),
+    [0, 0, 0, 255, 0, 0, 0, 255],
+    'a constant first tile uses the provisional range'
+  );
+  t.equal(redraws, 0, 'a constant tile cannot supply an automatic range');
+  await load();
+  t.equal(redraws, 1, 'the first usable range requests a redraw of already loaded tiles');
+  const updated = render();
+  t.notDeepEqual(
+    updated.props.updateTriggers.renderTile,
+    initial.props.updateTriggers.renderTile,
+    'the sampled range invalidates cached tile colors'
+  );
+  t.deepEqual(
+    renderTileColors(updated, first.values),
+    [128, 128, 128, 255, 128, 128, 128, 255],
+    'the cached first tile now uses the same range as its neighbors'
+  );
+  t.equal(updated.id, initial.id, 'keeps the decoded tile cache');
+  t.equal(updated.props.getTileData, initial.props.getTileData, 'does not refetch the tiles');
+  t.deepEqual(
+    render().props.updateTriggers.renderTile,
+    updated.props.updateTriggers.renderTile,
+    'subsequent renders keep the color cache stable'
+  );
+  t.end();
+});
+
 test('#ZarrLayer -> stale tile requests cannot set another source opening color range', async t => {
   const originalFetch = globalThis.fetch;
   const url = 'https://example.com/range-race.zarr';

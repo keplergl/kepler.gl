@@ -38,6 +38,7 @@ export {
   openZarrNode,
   selectZarrVariable
 } from './tileset/zarr-utils';
+export type {ZarrMetadataProgress} from './tileset/zarr-utils';
 export * from './dataset-ops';
 export {
   getZarrAxis,

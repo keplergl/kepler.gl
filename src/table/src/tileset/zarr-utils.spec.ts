@@ -1,13 +1,16 @@
-// SPDX-License-Identifier: MIT
-// Copyright contributors to the kepler.gl project
+/**
+ * SPDX-License-Identifier: MIT
+ * Copyright contributors to the kepler.gl project
+ * @jest-environment node
+ */
 
 import type {ZarrDatasetMetadata, ZarrVariableInfo} from '@kepler.gl/constants';
 
 import {parseGeoZarrMetadata} from '@developmentseed/geozarr';
 import {BoolArray, UnicodeStringArray} from 'zarrita';
-import {Headers, Request, Response} from 'node-fetch';
 
 import {
+  ZarrMetadataProgress,
   affineFromCellCenters,
   assignVariableDisplayNames,
   buildMultiscaleAttrs,
@@ -110,6 +113,191 @@ describe('Zarr metadata', () => {
     fetchMock.mockReset();
   });
   afterEach(() => clearZarrStoreCache());
+
+  it.each(['known', 'unknown', 'encoded'])(
+    'reports streamed metadata and coordinate bytes with %s response size',
+    async size => {
+      const bytes = new TextEncoder().encode(JSON.stringify(consolidated));
+      const headers: Record<string, string> = {};
+      if (size === 'known') headers['content-length'] = String(bytes.length);
+      if (size === 'encoded') {
+        headers['content-length'] = '500';
+        headers['content-encoding'] = 'gzip';
+      }
+      let bodyController: ReadableStreamDefaultController<Uint8Array> | undefined;
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          bodyController = controller;
+        }
+      });
+      fetchMock.mockImplementation((request: Request) =>
+        Promise.resolve(
+          request.url.endsWith('/.zmetadata') ? new Response(body, {headers}) : serve(request)
+        )
+      );
+      let started: () => void;
+      const downloading = new Promise<void>(resolve => {
+        started = resolve;
+      });
+      let received: () => void;
+      const firstChunk = new Promise<void>(resolve => {
+        received = resolve;
+      });
+      const updates: ZarrMetadataProgress[] = [];
+      let now = 1000;
+      const clock = jest.spyOn(Date, 'now').mockImplementation(() => now);
+      try {
+        const pending = getZarrMetadata(url, {
+          onProgress: progress => {
+            updates.push(progress);
+            if (progress.phase === 'downloading') started();
+            if (progress.loadedBytes === 100) received();
+          }
+        });
+        await downloading;
+        if (!bodyController) throw new Error('Response body controller was not initialized');
+        now += 250;
+        bodyController.enqueue(bytes.subarray(0, 100));
+        await firstChunk;
+        expect(updates[updates.length - 1]).toEqual({
+          phase: 'downloading',
+          loadedBytes: 100,
+          totalBytes: size === 'known' ? bytes.length : undefined
+        });
+
+        now += 250;
+        bodyController.enqueue(bytes.subarray(100));
+        bodyController.close();
+        const metadata = await pending;
+        expect(metadata.variable).toBe('climate');
+        expect(metadata.nonSpatialDims[0].values).toEqual([1, 2]);
+        expect(updates[0]).toEqual({phase: 'connecting', loadedBytes: 0});
+        expect(updates[updates.length - 1]).toMatchObject({
+          phase: 'processing',
+          loadedBytes: bytes.length + new Float64Array([1, 2]).byteLength
+        });
+      } finally {
+        clock.mockRestore();
+      }
+    }
+  );
+
+  it('cancels a stalled response body and stops reporting progress after abort', async () => {
+    const cancel = jest.fn();
+    const body = new ReadableStream<Uint8Array>({cancel});
+    fetchMock.mockResolvedValue(new Response(body));
+    let started: () => void;
+    const downloading = new Promise<void>(resolve => {
+      started = resolve;
+    });
+    const onProgress = jest.fn((progress: ZarrMetadataProgress) => {
+      if (progress.phase === 'downloading') started();
+    });
+    const controller = new AbortController();
+    const pending = getZarrMetadata(url, {signal: controller.signal, onProgress});
+    const rejected = expect(pending).rejects.toMatchObject({name: 'AbortError'});
+    await downloading;
+    const count = onProgress.mock.calls.length;
+    controller.abort();
+    await rejected;
+    expect(cancel).toHaveBeenCalled();
+    expect(onProgress).toHaveBeenCalledTimes(count);
+  });
+
+  it.each(['v2', 'v3'])(
+    'loads %s CF variables without redundant format probes or shared coordinate downloads',
+    async format => {
+      const dimensions = ['month', 'lat', 'lon'];
+      const arrays = {
+        climate: {shape: [2, 2, 2], dimensions},
+        rain: {shape: [2, 2, 2], dimensions},
+        lat: {shape: [2], dimensions: ['lat']},
+        lon: {shape: [2], dimensions: ['lon']},
+        month: {shape: [2], dimensions: ['month']}
+      };
+      const v2Metadata: Record<string, unknown> = {'.zgroup': {zarr_format: 2}, '.zattrs': {}};
+      const v3Metadata: Record<string, unknown> = {};
+      for (const [name, entry] of Object.entries(arrays)) {
+        v2Metadata[`${name}/.zarray`] = {...array, shape: entry.shape, chunks: entry.shape};
+        v2Metadata[`${name}/.zattrs`] = {_ARRAY_DIMENSIONS: entry.dimensions};
+        v3Metadata[name] = {
+          zarr_format: 3,
+          node_type: 'array',
+          shape: entry.shape,
+          data_type: 'float64',
+          dimension_names: entry.dimensions,
+          chunk_grid: {name: 'regular', configuration: {chunk_shape: entry.shape}},
+          chunk_key_encoding: {name: 'default', configuration: {separator: '/'}},
+          codecs: [{name: 'bytes', configuration: {endian: 'little'}}],
+          fill_value: 0,
+          attributes: {}
+        };
+      }
+      fetchMock.mockImplementation(async (request: Request) => {
+        const key = request.url.slice(url.length);
+        if (key === '/.zmetadata') {
+          return format === 'v2'
+            ? Response.json({zarr_consolidated_format: 1, metadata: v2Metadata})
+            : new Response(null, {status: 404});
+        }
+        if (format === 'v3' && key === '/zarr.json') {
+          return Response.json({
+            zarr_format: 3,
+            node_type: 'group',
+            attributes: {},
+            consolidated_metadata: {kind: 'inline', must_understand: false, metadata: v3Metadata}
+          });
+        }
+        const chunkKey = format === 'v3' ? 'c/0' : '0';
+        if (['lat', 'lon', 'month'].some(name => key === `/${name}/${chunkKey}`)) {
+          const values = key.startsWith('/lat/') ? [1.5, 0.5] : [0.5, 1.5];
+          return new Response(new Float64Array(values).buffer);
+        }
+        throw new Error(`Unexpected metadata or coordinate request: ${key}`);
+      });
+
+      const metadata = await getZarrMetadata(url, {signal: new AbortController().signal});
+      expect(metadata.variables.map(variable => variable.path)).toEqual(['climate', 'rain']);
+      for (const variable of metadata.variables) {
+        expect(variable.geoAttrs?.['spatial:transform']).toEqual([1, 0, 0, 0, -1, 2]);
+        expect(variable.nonSpatialDims[0].values).toEqual([0.5, 1.5]);
+      }
+      const requested = fetchMock.mock.calls.map(([request]) => request.url.slice(url.length));
+      const chunkKey = format === 'v3' ? 'c/0' : '0';
+      expect(requested.sort()).toEqual(
+        [
+          '/.zmetadata',
+          ...(format === 'v3' ? ['/zarr.json'] : []),
+          ...['lat', 'lon', 'month'].map(name => `/${name}/${chunkKey}`)
+        ].sort()
+      );
+    }
+  );
+
+  it('reports waiting for coordinate headers instead of processing downloaded metadata', async () => {
+    const controller = new AbortController();
+    let started: () => void;
+    const coordinatesRequested = new Promise<void>(resolve => {
+      started = resolve;
+    });
+    fetchMock.mockImplementation((request: Request) => {
+      if (request.url.endsWith('/month/0')) {
+        started();
+        return pendingUntilAbort(controller.signal);
+      }
+      return Promise.resolve(serve(request));
+    });
+    const onProgress = jest.fn();
+    const pending = getZarrMetadata(url, {signal: controller.signal, onProgress});
+    const rejected = expect(pending).rejects.toMatchObject({name: 'AbortError'});
+    await coordinatesRequested;
+    expect(onProgress.mock.calls[onProgress.mock.calls.length - 1][0]).toMatchObject({
+      phase: 'connecting',
+      loadedBytes: new TextEncoder().encode(JSON.stringify(consolidated)).length
+    });
+    controller.abort();
+    await rejected;
+  });
 
   it.each([
     ['<i8', -9999, -9999],
@@ -502,7 +690,7 @@ describe('parseCfTimeUnits', () => {
   it('keeps years below 100 instead of mapping them into the 1900s', () => {
     const parsed = parseCfTimeUnits('days since 0001-01-01');
     expect(parsed).not.toBeNull();
-    expect(new Date(parsed!.originMs).getUTCFullYear()).toBe(1);
+    expect(parsed && new Date(parsed.originMs).getUTCFullYear()).toBe(1);
   });
 
   it('returns null for units that are not fixed length or not parseable', () => {

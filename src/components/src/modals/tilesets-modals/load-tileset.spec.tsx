@@ -3,7 +3,7 @@
 
 // @ts-nocheck
 import React from 'react';
-import {fireEvent, waitFor} from '@testing-library/react';
+import {act, fireEvent, waitFor} from '@testing-library/react';
 import {DatasetType} from '@kepler.gl/constants';
 import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import {IntlWrapper, renderWithTheme} from 'test/helpers/component-jest-utils';
@@ -62,6 +62,52 @@ describe('Zarr metadata preview', () => {
     expect(signal.aborted).toBe(false);
     fireEvent.click(getByText('Vector Tile'));
     expect(signal.aborted).toBe(true);
+  });
+
+  it('shows download progress and processing until the metadata is ready to add', async () => {
+    let resolveMetadata;
+    getZarrMetadata.mockReturnValue(new Promise(resolve => (resolveMetadata = resolve)));
+    const {container, getByText, getByRole, findByRole, queryByRole} = renderWithTheme(
+      <IntlWrapper>
+        <LoadTilesetTab onTilesetAdded={jest.fn()} isAddingDatasets={false} />
+      </IntlWrapper>
+    );
+    fireEvent.click(getByText('Zarr'));
+    fireEvent.click(getByRole('button', {name: 'Use NOAA HRRR Forecast'}));
+    await waitFor(() => expect(getZarrMetadata).toHaveBeenCalled());
+
+    const bar = await findByRole('progressbar', {name: 'Zarr metadata loading'});
+    expect(bar).not.toHaveAttribute('aria-valuenow');
+    expect(bar).toHaveAttribute('aria-valuetext', expect.stringContaining('Connecting'));
+    const {onProgress} = getZarrMetadata.mock.calls[0][1];
+    act(() => onProgress({phase: 'downloading', loadedBytes: 5_000_000, totalBytes: 10_000_000}));
+    expect(bar).toHaveAttribute('aria-valuenow', '50');
+    expect(bar).toHaveAttribute('aria-valuetext', expect.stringContaining('5.0 MB / 10.0 MB'));
+    expect(container.querySelector('.load-data-footer button')).toBeDisabled();
+
+    act(() => onProgress({phase: 'downloading', loadedBytes: 6_000_000}));
+    expect(bar).not.toHaveAttribute('aria-valuenow');
+    expect(bar).toHaveAttribute(
+      'aria-valuetext',
+      expect.stringContaining('total size unavailable')
+    );
+    act(() => onProgress({phase: 'processing', loadedBytes: 10_000_000}));
+    expect(bar).not.toHaveAttribute('aria-valuenow');
+    expect(bar).toHaveAttribute('aria-valuetext', expect.stringContaining('Reading variables'));
+
+    act(() => onProgress({phase: 'connecting', loadedBytes: 10_000_000}));
+    expect(bar).not.toHaveAttribute('aria-valuenow');
+    expect(bar).toHaveAttribute(
+      'aria-valuetext',
+      expect.stringContaining('Waiting for metadata response')
+    );
+    expect(bar).toHaveAttribute('aria-valuetext', expect.stringContaining('10.0 MB received'));
+
+    await act(async () =>
+      resolveMetadata({variable: 'climate', variables: [], levels: [], nonSpatialDims: []})
+    );
+    expect(queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(getByRole('button', {name: 'Add Tileset'})).toBeEnabled();
   });
 
   it.each([

@@ -72,23 +72,26 @@ describe('TilesetZarrForm', () => {
       'CMIP6 Water Resources',
       'https://data.source.coop/earthblox/cciwr/data/cciwr.zarr',
       /runoff.*groundwater recharge.*evapotranspiration/i,
-      ['season', 'gcm', 'ghm', 'ssp', 'horizon']
+      ['season', 'gcm', 'ghm', 'ssp', 'horizon'],
+      undefined
     ],
     [
       'ECMWF IFS Ensemble',
       'https://data.source.coop/dynamical/ecmwf-ifs-ens-forecast-15-day-0-25-degree/v0.1.0.zarr',
       /temperature.*precipitation.*wind.*pressure/i,
-      ['Valid time', 'init_time', 'lead_time', 'ensemble_member']
+      ['Valid time', 'init_time', 'lead_time', 'ensemble_member'],
+      'dew_point_temperature_2m'
     ],
     [
       'NOAA HRRR Forecast',
       'https://data.source.coop/dynamical/noaa-hrrr-forecast-48-hour/v0.1.0.zarr',
       /temperature.*rain.*snow.*wind.*radar reflectivity/i,
-      ['Valid time', 'init_time', 'lead_time']
+      ['Valid time', 'init_time', 'lead_time'],
+      'relative_humidity_2m'
     ]
   ])(
     'shows details for %s on focus and loads it only when selected',
-    async (name, url, data, axes) => {
+    async (name, url, data, axes, variable) => {
       getZarrMetadata.mockReturnValue(new Promise(noop));
       const {getByRole, getByLabelText} = renderWithTheme(
         <TilesetZarrForm setResponse={jest.fn()} />
@@ -111,7 +114,11 @@ describe('TilesetZarrForm', () => {
       expect(getByLabelText('Zarr store URL')).toHaveValue(url);
       expect(example).toHaveAttribute('aria-pressed', 'true');
       await waitFor(() =>
-        expect(getZarrMetadata).toHaveBeenCalledWith(url, {signal: expect.any(AbortSignal)})
+        expect(getZarrMetadata).toHaveBeenCalledWith(url, {
+          variable,
+          signal: expect.any(AbortSignal),
+          onProgress: expect.any(Function)
+        })
       );
 
       fireEvent.change(getByLabelText('Zarr store URL'), {target: {value: INVALID_URL}});
@@ -148,6 +155,27 @@ describe('TilesetZarrForm', () => {
       return {...view, input, setResponse, signal: getZarrMetadata.mock.calls[0][1].signal};
     }
 
+    it('uses each example default without carrying it to custom stores', async () => {
+      getZarrMetadata.mockImplementation((url, {variable}) =>
+        Promise.resolve({url, variable: variable ?? 'temperature', variables: [], levels: []})
+      );
+      const setResponse = jest.fn();
+      const {getByRole, getByLabelText} = renderWithTheme(
+        <TilesetZarrForm setResponse={setResponse} />
+      );
+      fireEvent.click(getByRole('button', {name: 'Use NOAA HRRR Forecast'}));
+      await act(async () => jest.advanceTimersByTime(500));
+      expect(lastResponse(setResponse).dataset.metadata.variable).toBe('relative_humidity_2m');
+
+      fireEvent.click(getByRole('button', {name: 'Use ECMWF IFS Ensemble'}));
+      await act(async () => jest.advanceTimersByTime(500));
+      expect(lastResponse(setResponse).dataset.metadata.variable).toBe('dew_point_temperature_2m');
+
+      fireEvent.change(getByLabelText('Zarr store URL'), {target: {value: VALID_URL}});
+      await act(async () => jest.advanceTimersByTime(500));
+      expect(lastResponse(setResponse).dataset.metadata.variable).toBe('temperature');
+    });
+
     it('cancels the debounce when the form closes before a request starts', () => {
       const {getByLabelText, unmount} = renderWithTheme(
         <TilesetZarrForm setResponse={jest.fn()} />
@@ -164,11 +192,14 @@ describe('TilesetZarrForm', () => {
       const latest = {variable: 'latest', variables: [], levels: []};
       getZarrMetadata.mockResolvedValueOnce(latest);
       const {input, signal, setResponse} = startRequest();
+      const oldProgress = getZarrMetadata.mock.calls[0][1].onProgress;
 
       fireEvent.change(input, {target: {value: `${VALID_URL}/new`}});
+      act(() => oldProgress({phase: 'downloading', loadedBytes: 100}));
       expect(signal.aborted).toBe(true);
       expect(getZarrMetadata).toHaveBeenCalledTimes(1);
       expect(lastResponse(setResponse).metadata).toBeNull();
+      expect(lastResponse(setResponse).progress).toBeNull();
       await act(async () => jest.advanceTimersByTime(500));
       expect(lastResponse(setResponse).metadata).toBe(latest);
 
@@ -183,7 +214,7 @@ describe('TilesetZarrForm', () => {
       unmount();
       expect(signal.aborted).toBe(true);
       setResponse.mockClear();
-      act(() => jest.advanceTimersByTime(30_000));
+      act(() => jest.advanceTimersByTime(120_000));
       expect(setResponse).not.toHaveBeenCalled();
     });
 
@@ -191,7 +222,7 @@ describe('TilesetZarrForm', () => {
       let resolveLate;
       getZarrMetadata.mockReturnValueOnce(new Promise(resolve => (resolveLate = resolve)));
       const {signal, input, setResponse} = startRequest();
-      act(() => jest.advanceTimersByTime(29_999));
+      act(() => jest.advanceTimersByTime(119_999));
       expect(signal.aborted).toBe(false);
       expect(lastResponse(setResponse).loading).toBe(true);
       act(() => jest.advanceTimersByTime(1));
@@ -210,6 +241,31 @@ describe('TilesetZarrForm', () => {
       expect(lastResponse(setResponse)).toMatchObject({metadata, loading: false, error: null});
     });
 
+    it('continues while bytes arrive and aborts only after 2 minutes without progress', () => {
+      getZarrMetadata.mockReturnValue(new Promise(noop));
+      const {signal, setResponse} = startRequest();
+      const {onProgress} = getZarrMetadata.mock.calls[0][1];
+
+      for (const loadedBytes of [100, 200, 300]) {
+        act(() => jest.advanceTimersByTime(119_000));
+        act(() => onProgress({phase: 'downloading', loadedBytes, totalBytes: 1000}));
+        expect(signal.aborted).toBe(false);
+        expect(lastResponse(setResponse).progress.loadedBytes).toBe(loadedBytes);
+      }
+      act(() => jest.advanceTimersByTime(119_999));
+      // Repeating the same status is not progress and must not extend the deadline.
+      act(() => onProgress({phase: 'downloading', loadedBytes: 300, totalBytes: 1000}));
+      expect(signal.aborted).toBe(false);
+      act(() => jest.advanceTimersByTime(1));
+      expect(signal.aborted).toBe(true);
+      expect(lastResponse(setResponse).loading).toBe(false);
+      expect(lastResponse(setResponse).error.message).toMatch(/2 minutes without progress/);
+
+      const response = lastResponse(setResponse);
+      act(() => onProgress({phase: 'downloading', loadedBytes: 400, totalBytes: 1000}));
+      expect(lastResponse(setResponse)).toBe(response);
+    });
+
     it('clears the deadline after a successful load', async () => {
       const metadata = {variable: 'success', variables: [], levels: []};
       getZarrMetadata.mockResolvedValue(metadata);
@@ -217,7 +273,7 @@ describe('TilesetZarrForm', () => {
       await act(async () => {
         // Flush the already-resolved metadata promise and its state updates.
       });
-      act(() => jest.advanceTimersByTime(30_000));
+      act(() => jest.advanceTimersByTime(120_000));
       expect(signal.aborted).toBe(false);
       expect(lastResponse(setResponse)).toMatchObject({metadata, loading: false, error: null});
     });
@@ -240,7 +296,7 @@ describe('TilesetZarrForm', () => {
         fireEvent.click(example);
         await act(async () => jest.advanceTimersByTime(500));
         if (failure === 'timeout') {
-          act(() => jest.advanceTimersByTime(30_000));
+          act(() => jest.advanceTimersByTime(120_000));
         }
         expect(lastResponse(setResponse).error).toBeInstanceOf(Error);
         expect(lastResponse(setResponse).loading).toBe(false);

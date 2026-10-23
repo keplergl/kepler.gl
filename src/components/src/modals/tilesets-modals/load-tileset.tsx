@@ -30,6 +30,7 @@ import TilesetTile3DForm from './tileset-tile3d-form';
 import TilesetBitmapForm from './tileset-bitmap-form';
 import TilesetZarrForm from './tileset-zarr-form';
 import {getZarrMetadataPreview} from './zarr-metadata-preview';
+import ZarrMetadataLoading from './zarr-metadata-progress';
 
 const WIDTH_ICON = '60px';
 const MemoizedJSONPretty = React.memo(JSONPretty);
@@ -267,7 +268,11 @@ function LoadTilesetTabFactory() {
           <MetaContainer>
             {loading ? (
               <MetaLoading>
-                <LoadingSpinner />
+                {response.progress ? (
+                  <ZarrMetadataLoading progress={response.progress} />
+                ) : (
+                  <LoadingSpinner />
+                )}
               </MetaLoading>
             ) : data && 'imagePreviewUrl' in data ? (
               <BitmapPreviewContainer>

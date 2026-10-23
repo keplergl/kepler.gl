@@ -624,6 +624,7 @@ export default class ZarrLayer extends Layer {
       // Nothing has picked a range, so the first tile has to supply one.
       needsSampling: !isUsableRange(rescale)
     };
+    const effectiveRescale = this._effectiveRescale(rescale);
 
     this._onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
     const common = {
@@ -640,7 +641,7 @@ export default class ZarrLayer extends Layer {
       // Colormap changes only need the cached tiles recolored. The selection
       // is not listed here because it is handled by the id instead.
       updateTriggers: {
-        renderTile: [colors.join(','), rescale?.[0], rescale?.[1], nodataValue]
+        renderTile: [colors.join(','), effectiveRescale[0], effectiveRescale[1], nodataValue]
       }
     };
 
@@ -650,11 +651,11 @@ export default class ZarrLayer extends Layer {
     // slice underneath until the new one has something to show.
     const backdrop =
       this._loadedSelection && this._loadedKey !== selectionKey
-        ? this._renderDeckLayer(common, this._loadedSelection)
+        ? this._renderDeckLayer(this._runtime, common, this._loadedSelection)
         : null;
 
     const current = this._stableSelection(selection);
-    const top = this._renderDeckLayer(common, current, () => {
+    const top = this._renderDeckLayer(this._runtime, common, current, () => {
       // Only the top layer retires the backdrop, and only once it is the one
       // holding tiles. `onViewportLoad` is ignored by deck's prop comparison,
       // so a fresh closure per render costs nothing.
@@ -670,11 +671,11 @@ export default class ZarrLayer extends Layer {
   }
 
   private _renderDeckLayer(
+    {DeckZarrLayer}: ZarrRuntime,
     common: Record<string, any>,
     selection: Record<string, number>,
     onViewportLoad?: () => void
   ) {
-    const {DeckZarrLayer} = this._runtime!;
     return new DeckZarrLayer({
       ...common,
       id: getZarrSublayerId(this.id, selection),
@@ -715,6 +716,11 @@ export default class ZarrLayer extends Layer {
       // -> A, an older request must not set the current source's color range.
       if (this._getTileData === getTileData && !this._sampledRange && needsSampling) {
         this._sampledRange = estimateZarrDataRange(values, nodataValue);
+        if (this._sampledRange) {
+          // Earlier constant tiles may already be colored with the provisional
+          // range. Invalidate their rendered colors without refetching data.
+          this._onRedrawNeeded?.();
+        }
       }
       return {width, height, values, byteLength: getZarrTileByteLength(values, width, height)};
     };

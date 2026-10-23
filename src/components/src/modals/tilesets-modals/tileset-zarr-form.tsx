@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 import {validateUrl} from '@kepler.gl/common-utils';
 import {DatasetType, ZarrDatasetMetadata} from '@kepler.gl/constants';
-import {getZarrMetadata} from '@kepler.gl/table';
+import {getZarrMetadata, ZarrMetadataProgress} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 import {MetaResponse} from './common';
@@ -91,7 +91,7 @@ const ExampleDetails = styled.div`
 
 /** Avoid firing a store read on every keystroke of a long object-storage URL. */
 const URL_DEBOUNCE_MS = 500;
-const METADATA_TIMEOUT_MS = 30_000;
+const METADATA_IDLE_TIMEOUT_MS = 120_000;
 
 /**
  * Public Zarr stores on Source Cooperative. Note the `data.` host: `source.coop`
@@ -116,7 +116,8 @@ const ZARR_EXAMPLES = [
       'Global weather forecasts up to 15 days ahead, including temperature, precipitation, wind, and pressure, across 51 ensemble members.',
     timeline:
       'Choose Valid time (init_time + lead_time) to play one forecast run with a fixed ensemble member. You can also select init_time (run date), lead_time (forecast step), or ensemble_member individually.',
-    url: 'https://data.source.coop/dynamical/ecmwf-ifs-ens-forecast-15-day-0-25-degree/v0.1.0.zarr'
+    url: 'https://data.source.coop/dynamical/ecmwf-ifs-ens-forecast-15-day-0-25-degree/v0.1.0.zarr',
+    defaultVariable: 'dew_point_temperature_2m'
   },
   {
     // https://dynamical.org/catalog/noaa-hrrr-forecast-48-hour/
@@ -126,7 +127,8 @@ const ZARR_EXAMPLES = [
       'Hourly weather forecasts up to 48 hours ahead for the continental US at 3 km resolution, including temperature, rain, snow, wind, and radar reflectivity.',
     timeline:
       'Choose Valid time (init_time + lead_time) to play through one forecast run. You can also select init_time (run date) or lead_time (forecast step) individually.',
-    url: 'https://data.source.coop/dynamical/noaa-hrrr-forecast-48-hour/v0.1.0.zarr'
+    url: 'https://data.source.coop/dynamical/noaa-hrrr-forecast-48-hour/v0.1.0.zarr',
+    defaultVariable: 'relative_humidity_2m'
   }
 ];
 
@@ -139,6 +141,7 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
   const [url, setUrl] = useState<string>('');
   const [metadata, setMetadata] = useState<ZarrDatasetMetadata | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [progress, setProgress] = useState<ZarrMetadataProgress | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
@@ -168,6 +171,7 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
     setMetadata(null);
     setError(null);
     setLoading(false);
+    setProgress(null);
     if (!validateUrl(url.trim())) {
       return;
     }
@@ -175,19 +179,39 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
     const controller = new AbortController();
     let cancelled = false;
     let deadline: ReturnType<typeof setTimeout> | undefined;
-    const debounce = setTimeout(() => {
-      setLoading(true);
+    let previousProgress: ZarrMetadataProgress = {phase: 'connecting', loadedBytes: 0};
+    const resetDeadline = () => {
+      clearTimeout(deadline);
       deadline = setTimeout(() => {
         const timeoutError = new Error(
-          'Zarr metadata loading timed out after 30 seconds. Check the URL or try again.'
+          'Zarr metadata loading timed out after 2 minutes without progress. Check the connection or try again.'
         );
         cancelled = true;
         controller.abort(timeoutError);
         setError(timeoutError);
         setLoading(false);
-      }, METADATA_TIMEOUT_MS);
+      }, METADATA_IDLE_TIMEOUT_MS);
+    };
+    const debounce = setTimeout(() => {
+      setLoading(true);
+      setProgress({phase: 'connecting', loadedBytes: 0});
+      resetDeadline();
 
-      getZarrMetadata(url.trim(), {signal: controller.signal})
+      getZarrMetadata(url.trim(), {
+        variable: ZARR_EXAMPLES.find(example => example.url === url.trim())?.defaultVariable,
+        signal: controller.signal,
+        onProgress: nextProgress => {
+          if (cancelled) return;
+          if (
+            nextProgress.loadedBytes > previousProgress.loadedBytes ||
+            nextProgress.phase !== previousProgress.phase
+          ) {
+            resetDeadline();
+          }
+          previousProgress = nextProgress;
+          setProgress(nextProgress);
+        }
+      })
         .then(zarrMetadata => {
           if (cancelled) {
             return;
@@ -217,7 +241,7 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
 
   useEffect(() => {
     if (!metadata || !datasetName) {
-      setResponse({metadata: null, dataset: null, loading, error});
+      setResponse({metadata: null, dataset: null, loading, error, progress});
       return;
     }
     setResponse({
@@ -228,9 +252,10 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
         metadata
       },
       loading,
-      error
+      error,
+      progress
     });
-  }, [setResponse, datasetName, metadata, loading, error]);
+  }, [setResponse, datasetName, metadata, loading, error, progress]);
 
   // Default the dataset name to the default variable so the Add button is
   // reachable without extra typing.

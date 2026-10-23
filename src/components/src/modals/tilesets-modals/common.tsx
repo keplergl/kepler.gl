@@ -4,7 +4,7 @@
 import type {WMSCapabilities} from '@loaders.gl/wms';
 
 import type {ZarrDatasetMetadata} from '@kepler.gl/constants';
-import type {VectorTileMetadata} from '@kepler.gl/table';
+import type {VectorTileMetadata, ZarrMetadataProgress} from '@kepler.gl/table';
 import type {StacTypes} from '@kepler.gl/types';
 
 export type DatasetCreationAttributes = {
@@ -23,5 +23,6 @@ export type MetaResponse = {
     | null;
   dataset?: DatasetCreationAttributes | null;
   loading?: boolean;
+  progress?: ZarrMetadataProgress | null;
   error?: Error | null;
 };
