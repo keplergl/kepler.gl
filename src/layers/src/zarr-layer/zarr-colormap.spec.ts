@@ -89,6 +89,24 @@ describe('applyZarrColormap', () => {
     expect(pixelAt(data, 0)).toEqual([0, 0, 0, 255]);
     expect(pixelAt(data, 1)).toEqual([255, 255, 255, 255]);
   });
+
+  it.each([
+    new BigInt64Array([-9999n, 4n, 8n]),
+    new BigUint64Array([18446744073709551615n, 4n, 8n])
+  ])('masks BigInt fill cells and excludes them from the automatic range', values => {
+    const nodataValue = Number(values[0]);
+    const range = estimateZarrDataRange(values, nodataValue);
+    expect(range).toEqual([4, 8]);
+    const {data} = applyZarrColormap(values, 3, 1, {
+      rescale: range!,
+      colors: BLACK_TO_WHITE,
+      nodataValue
+    });
+    expect(pixelAt(data, 0)).toEqual([0, 0, 0, 0]);
+    expect(pixelAt(data, 1)).toEqual([0, 0, 0, 255]);
+    expect(pixelAt(data, 2)).toEqual([255, 255, 255, 255]);
+    expect(estimateZarrDataRange(values.subarray(0, 1), nodataValue)).toBeNull();
+  });
 });
 
 describe('estimateZarrDataRange', () => {

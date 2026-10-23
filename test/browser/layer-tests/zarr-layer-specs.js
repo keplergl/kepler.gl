@@ -11,7 +11,7 @@ import {
   getZarrTileByteLength
 } from '@kepler.gl/layers';
 import {DatasetType} from '@kepler.gl/constants';
-import {getZarrAxis} from '@kepler.gl/table';
+import {createNewDataEntry, getZarrAxis, getZarrMetadata} from '@kepler.gl/table';
 import SchemaManager from '@kepler.gl/schemas';
 import {InitialState} from 'test/helpers/mock-state';
 import {
@@ -364,6 +364,48 @@ test('#ZarrLayer -> renderLayer reloads tiles when a dimension changes', async t
   t.end();
 });
 
+test('#ZarrLayer -> renderLayer forwards default and custom map parameters to every slice', async t => {
+  const layer = new ZarrLayer({dataId: 'zarr-dataset'});
+  await layer._loadRuntime();
+  layer._nodeKey = `${MOCK_ZARR_DATASET.metadata.url}#temperature`;
+  layer._node = {shape: TEMPERATURE.shape};
+  const render = mapState =>
+    layer.renderLayer({
+      data: {metadata: MOCK_ZARR_DATASET.metadata, variable: TEMPERATURE},
+      mapState,
+      idx: 0,
+      gpuFilter: null,
+      layerCallbacks: {},
+      visible: true
+    });
+
+  const [first] = render({});
+  t.deepEqual(
+    first.props.parameters,
+    {depthTest: true, depthMask: false},
+    'uses the common 2D depth defaults'
+  );
+  t.deepEqual(
+    render({dragRotate: true})[0].props.parameters,
+    {depthTest: true, depthMask: true},
+    'uses the common 3D depth defaults'
+  );
+  first.props.onViewportLoad();
+  layer.updateLayerVisConfig({dimensionIndexes: {band: 2}});
+
+  const parameters = {depthTest: false, depthMask: true, blend: false};
+  const slices = render({layerParameters: parameters});
+  t.equal(slices.length, 2, 'renders the loaded backdrop and the new slice');
+  for (const slice of slices) {
+    t.deepEqual(
+      slice.props.parameters,
+      parameters,
+      'honors map depth and blending overrides on each slice'
+    );
+  }
+  t.end();
+});
+
 test('#ZarrLayer -> explicit axes fetch source slices independently of the shared clock', async t => {
   const band = {...BAND_DIMENSION, values: ['tavg', 'prec', 'tavg', 'snow'], kind: 'category'};
   const variable = {...TEMPERATURE, nonSpatialDims: [TIME_DIMENSION, band]};
@@ -512,6 +554,123 @@ test('#ZarrLayer -> save/load and duplication retain axes and pins; old maps kee
   t.end();
 });
 
+test('#ZarrLayer -> URL-only saved maps refetch metadata and restore variable and timeline settings', async t => {
+  const originalFetch = globalThis.fetch;
+  const url = 'https://example.com/saved-forecast.zarr';
+  const array = {
+    zarr_format: 2,
+    shape: [3, 4, 2, 2],
+    chunks: [1, 1, 2, 2],
+    dtype: '<f8',
+    compressor: null,
+    fill_value: null,
+    order: 'C',
+    filters: null
+  };
+  const attrs = {
+    _ARRAY_DIMENSIONS: ['time', 'band', 'y', 'x'],
+    'spatial:dimensions': ['y', 'x'],
+    'spatial:transform': [1, 0, 0, 0, -1, 2],
+    'spatial:shape': [2, 2],
+    'proj:code': 'EPSG:4326',
+    actual_range: [0, 100]
+  };
+  const consolidated = {
+    zarr_consolidated_format: 1,
+    metadata: {
+      '.zgroup': {zarr_format: 2},
+      '.zattrs': {},
+      'temperature/.zarray': array,
+      'temperature/.zattrs': attrs,
+      'precipitation/.zarray': array,
+      'precipitation/.zattrs': attrs,
+      'time/.zarray': {...array, shape: [3], chunks: [3]},
+      'time/.zattrs': {_ARRAY_DIMENSIONS: ['time'], units: 'days since 2020-01-27'}
+    }
+  };
+  let metadataRequests = 0;
+  globalThis.fetch = async request => {
+    if (request.url === `${url}/.zmetadata`) {
+      metadataRequests++;
+      return new Response(JSON.stringify(consolidated));
+    }
+    if (request.url === `${url}/time/0`) {
+      return new Response(new Float64Array([0, 1, 2]).buffer);
+    }
+    return new Response(null, {status: 404});
+  };
+  try {
+    const metadata = await getZarrMetadata(url, {variable: 'temperature'});
+    const dataset = {...MOCK_ZARR_DATASET, metadata};
+    const layer = new ZarrLayer({
+      dataId: dataset.id,
+      visConfig: {
+        zarrVariable: 'precipitation',
+        zarrAxis: {kind: 'dimension', dimension: 'time'},
+        zarrFrame: 2,
+        dimensionIndexes: {band: 1},
+        rescale: [10, 80]
+      }
+    });
+    const saved = SchemaManager.save({
+      ...InitialState,
+      visState: {
+        ...InitialState.visState,
+        datasets: {[dataset.id]: dataset},
+        layers: [layer],
+        layerOrder: [layer.id]
+      }
+    });
+    t.deepEqual(
+      saved.datasets[0].data.metadata,
+      {url, variable: 'temperature'},
+      'stores the default source separately from the layer selection'
+    );
+    const loaded = SchemaManager.load(JSON.parse(JSON.stringify(saved)));
+    const task = createNewDataEntry(loaded.datasets[0]);
+    const restoredDataset = await new Promise((resolve, reject) => {
+      task.run((effect, onSuccess, onError) => effect(onSuccess, onError), resolve, reject);
+    });
+    t.equal(
+      metadataRequests,
+      2,
+      'reload fetches fresh metadata instead of relying on the in-memory cache'
+    );
+    t.equal(
+      restoredDataset.metadata.variable,
+      'temperature',
+      'restores the dataset default variable'
+    );
+    t.deepEqual(
+      restoredDataset.metadata.timeDimension.values,
+      TIME_DIMENSION.values,
+      'rebuilds decoded time coordinates'
+    );
+    t.equal(restoredDataset.metadata.variables.length, 2, 'rebuilds the variable picker');
+    const restored = validateLayerWithData(
+      restoredDataset,
+      loaded.config.visState.layers[0],
+      InitialState.visState.layerClasses
+    );
+    const data = restored.formatLayerData({[restoredDataset.id]: restoredDataset});
+    t.equal(data.variable.path, 'precipitation', 'restores the layer variable override');
+    t.deepEqual(restored.config.visConfig.rescale, [10, 80], 'keeps the user color range');
+    t.deepEqual(
+      getZarrSelection({
+        variable: data.variable,
+        axis: getZarrAxis(data.variable, restored.config.visConfig.zarrAxis),
+        frameIndex: restored.config.visConfig.zarrFrame,
+        dimensionIndexes: restored.config.visConfig.dimensionIndexes
+      }),
+      {time: 2, band: 1},
+      'restores the axis, frame and dimension pins against refreshed metadata'
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    t.end();
+  }
+});
+
 test('#ZarrLayer -> switching axes reconciles the global animation domain', t => {
   const layer = new ZarrLayer({dataId: 'zarr-dataset'});
   const datasets = {'zarr-dataset': MOCK_ZARR_DATASET};
@@ -617,6 +776,58 @@ test('#ZarrLayer -> renderLayer caps the level only for a web mercator pyramid',
     'should tie the level to the map zoom for a web mercator pyramid'
   );
 
+  t.end();
+});
+
+test('#ZarrLayer -> variable switches use the selected grid and pyramid zoom limits', async t => {
+  const variable = (path, sizes, webMercatorPyramid) => ({
+    ...PRECIPITATION,
+    path,
+    spatialMetadata: {
+      crs: {code: webMercatorPyramid ? 'EPSG:3857' : 'EPSG:4326'},
+      axes: webMercatorPyramid ? ['y', 'x'] : ['lat', 'lon'],
+      xAxisIndex: 1,
+      yAxisIndex: 0,
+      levels: sizes.map(size => ({path: String(size), shape: [size, size], chunks: [128, 128]})),
+      webMercatorPyramid
+    }
+  });
+  const large = variable('large', [1024, 512, 256, 128], true);
+  const small = variable('small', [512, 256], true);
+  const plain = variable('plain', [256], false);
+  const metadata = {
+    ...MOCK_ZARR_DATASET.metadata,
+    ...large.spatialMetadata,
+    variable: large.path,
+    variables: [large, small, plain]
+  };
+  const datasets = {'zarr-dataset': {...MOCK_ZARR_DATASET, metadata}};
+  const layer = new ZarrLayer({dataId: 'zarr-dataset'});
+  await layer._loadRuntime();
+  const render = selected => {
+    layer.updateLayerVisConfig({zarrVariable: selected.path});
+    const data = layer.formatLayerData(datasets);
+    t.equal(layer.meta.crs, selected.spatialMetadata.crs.code, 'updates the layer CRS');
+    t.deepEqual(
+      data.metadata.levels,
+      selected.spatialMetadata.levels,
+      'updates the resolution levels'
+    );
+    t.deepEqual(data.metadata.axes, selected.spatialMetadata.axes, 'updates the spatial axes');
+    layer._nodeKey = `${metadata.url}#${selected.path}`;
+    layer._node = {shape: selected.shape};
+    return layer.renderLayer({data, mapState: {zoom: 1}, visible: true})[0];
+  };
+  t.equal(render(large).props.maxZoom, 3, 'uses the default pyramid zoom limit');
+  t.equal(render(small).props.maxZoom, 1, 'uses the smaller pyramid zoom limit after switching');
+  t.equal(render(plain).props.maxZoom, null, 'clears the pyramid limit for a plain grid');
+  t.equal(render(large).props.maxZoom, 3, 'restores the original pyramid limit');
+  t.equal(metadata.variable, large.path, 'does not change the shared dataset default');
+  t.deepEqual(
+    metadata.levels,
+    large.spatialMetadata.levels,
+    'does not change the shared dataset grid'
+  );
   t.end();
 });
 

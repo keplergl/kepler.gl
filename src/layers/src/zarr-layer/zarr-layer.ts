@@ -20,6 +20,7 @@ import {
   isExplicitZarrAxis,
   ZarrAxis,
   getZarrVariable,
+  selectZarrVariable,
   openZarrNode
 } from '@kepler.gl/table';
 import {
@@ -453,10 +454,14 @@ export default class ZarrLayer extends Layer {
       this.updateLayerMeta(dataset);
     }
 
-    const metadata = (dataset.metadata || null) as ZarrDatasetMetadata | null;
+    const sourceMetadata = (dataset.metadata || null) as ZarrDatasetMetadata | null;
+    const variable = this._resolveVariable(sourceMetadata);
     return {
-      metadata,
-      variable: this._resolveVariable(metadata)
+      metadata:
+        sourceMetadata && variable
+          ? selectZarrVariable(sourceMetadata, variable.path)
+          : sourceMetadata,
+      variable
     };
   }
 
@@ -464,8 +469,9 @@ export default class ZarrLayer extends Layer {
     if (dataset.type !== DatasetType.ZARR) {
       return;
     }
-    const metadata = (dataset.metadata || {}) as ZarrDatasetMetadata;
-    const variable = this._resolveVariable(metadata);
+    const sourceMetadata = (dataset.metadata || {}) as ZarrDatasetMetadata;
+    const variable = this._resolveVariable(sourceMetadata);
+    const metadata = variable ? selectZarrVariable(sourceMetadata, variable.path) : sourceMetadata;
     const timeDomain = isExplicitZarrAxis(this.config.visConfig.zarrAxis)
       ? null
       : getZarrTimeDomain(variable?.timeDimension);
@@ -629,6 +635,7 @@ export default class ZarrLayer extends Layer {
       metadata: variable?.geoAttrs,
       opacity: visConfig.opacity,
       visible: defaultLayerProps.visible,
+      parameters: defaultLayerProps.parameters,
       ...(metadata.webMercatorPyramid && {
         maxZoom: getZarrMaxZoom(metadata.levels, mapState?.zoom)
       }),

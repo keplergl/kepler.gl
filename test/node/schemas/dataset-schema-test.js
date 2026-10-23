@@ -155,6 +155,68 @@ test('#DatasetSchema -> save externally-hosted dataset without inlining rows', t
   t.end();
 });
 
+test('#DatasetSchema -> Zarr saves its source without embedding metadata or coordinate rows', t => {
+  const values = Array.from({length: 20_000}, (_, index) => index);
+  const dimension = {name: 'time', size: values.length, values};
+  const source = {
+    url: 'https://example.com/forecast.zarr',
+    variable: 'temperature',
+    label: 'Forecast',
+    attribution: 'Weather provider'
+  };
+  const metadata = {
+    ...source,
+    variables: [{path: 'temperature', nonSpatialDims: [dimension]}],
+    nonSpatialDims: [dimension],
+    timeDimension: dimension,
+    levels: [{path: '.', shape: [2048, 2048], chunks: [128, 128]}]
+  };
+  const dataset = {
+    id: 'forecast',
+    label: 'My forecast',
+    type: DatasetType.ZARR,
+    color: [1, 2, 3],
+    disableDataOperation: true,
+    metadata,
+    fields: [{name: 'time', type: 'timestamp'}],
+    dataContainer: {
+      flattenData() {
+        t.fail('must not materialize coordinate rows during export');
+        return values.map(value => [value]);
+      }
+    }
+  };
+
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  t.deepEqual(saved.metadata, source, 'saves only the source, default variable and attribution');
+  t.deepEqual(saved.allData, [], 'does not save coordinate rows');
+  t.deepEqual(saved.fields, [], 'does not save synthetic coordinate fields');
+  t.equal(saved.disableDataOperation, true, 'preserves dataset behavior');
+  t.ok(JSON.stringify(saved).length < 1000, 'export size is independent of large coordinate lists');
+  t.equal(dataset.metadata, metadata, 'does not replace live metadata');
+  t.equal(dataset.metadata.timeDimension.values, values, 'keeps live coordinates available');
+
+  const [loaded] = SchemaManager.parseSavedData([{version: 'v1', data: saved}]);
+  t.deepEqual(loaded.metadata, source, 'retains what the metadata refresh needs');
+  t.equal(loaded.info.id, dataset.id, 'preserves dataset identity');
+  t.equal(loaded.info.label, dataset.label, 'preserves the user label');
+  t.equal(loaded.info.type, DatasetType.ZARR, 'restores the remote dataset type');
+
+  const root = datasetSchema[VERSIONS.v1].save({...dataset, metadata: {...metadata, variable: ''}});
+  t.equal(root.metadata.variable, '', 'retains a root-array variable path');
+  const automatic = datasetSchema[VERSIONS.v1].save({...dataset, metadata: {url: source.url}});
+  t.deepEqual(automatic.metadata, {url: source.url}, 'allows restoring the default variable');
+
+  const legacy = SchemaManager.parseSavedData([
+    {
+      version: 'v1',
+      data: {...saved, metadata}
+    }
+  ])[0];
+  t.deepEqual(legacy.metadata, metadata, 'older maps with embedded metadata still load');
+  t.end();
+});
+
 test('#DatasetSchema -> save externally-hosted dataset refresh interval', t => {
   const dataset = {
     id: 'remote-1',

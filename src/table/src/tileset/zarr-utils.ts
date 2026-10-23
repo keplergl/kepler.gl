@@ -266,6 +266,17 @@ export function selectZarrVariable(
   }
   return {
     ...metadata,
+    ...(variable.spatialMetadata ??
+      (variable.path === metadata.variable
+        ? {}
+        : {
+            crs: undefined,
+            axes: [],
+            xAxisIndex: -1,
+            yAxisIndex: -1,
+            levels: [],
+            webMercatorPyramid: false
+          })),
     variable: variable.path,
     nonSpatialDims: variable.nonSpatialDims,
     timeDimension: variable.timeDimension,
@@ -897,7 +908,11 @@ async function buildVariableInfo(
   path: string,
   geoAttrs: AnyAttrs,
   cache: CoordinateCache,
-  options: {preopened?: zarr.Array<zarr.DataType, zarr.Readable>; nodePath?: string} = {}
+  options: {
+    preopened?: zarr.Array<zarr.DataType, zarr.Readable>;
+    nodePath?: string;
+    webMercatorPyramid?: boolean;
+  } = {}
 ): Promise<ZarrVariableInfo | null> {
   const {zarr, parseGeoZarrMetadata} = await loadZarrRuntime();
   const geo = parseGeoZarrMetadata(geoAttrs);
@@ -954,6 +969,18 @@ async function buildVariableInfo(
     // Qualified later, once every sibling variable is known.
     displayName: name,
     geoAttrs,
+    spatialMetadata: {
+      crs: geo.crs,
+      axes: geo.axes,
+      xAxisIndex: geo.xAxisIndex,
+      yAxisIndex: geo.yAxisIndex,
+      levels: geo.levels.map(level => ({
+        path: level.path,
+        shape: [level.arrayHeight, level.arrayWidth],
+        chunks: arr.chunks.slice(-2)
+      })),
+      webMercatorPyramid: options.webMercatorPyramid ?? false
+    },
     shape: [...arr.shape],
     chunks: [...arr.chunks],
     dtype: String(arr.dtype),
@@ -962,7 +989,7 @@ async function buildVariableInfo(
     dataRange: readDataRange(arrayAttrs) ?? readDataRange(geoAttrs),
     nodataValue:
       readNumber(arrayAttrs, ['_FillValue', 'missing_value', 'nodata']) ??
-      (typeof fillValue === 'number' && Number.isFinite(fillValue) ? fillValue : undefined)
+      readNumber({fillValue}, ['fillValue'])
   };
 }
 
@@ -979,7 +1006,8 @@ async function buildPyramidVariables(
   index: StoreIndex,
   groupPath: string,
   levelPaths: string[],
-  cache: CoordinateCache
+  cache: CoordinateCache,
+  webMercatorPyramid: boolean
 ): Promise<ZarrVariableInfo[]> {
   const {zarr} = await loadZarrRuntime();
   const base = normalizePath(groupPath);
@@ -1039,7 +1067,7 @@ async function buildPyramidVariables(
         ordered.map(({asset: a, transform, shape}) => ({asset: a, transform, shape}))
       ),
       cache,
-      {preopened: finest.arr, nodePath: base}
+      {preopened: finest.arr, nodePath: base, webMercatorPyramid}
     );
     if (variable) {
       variables.push(variable);
@@ -1152,10 +1180,8 @@ export async function getZarrMetadata(
 
   const variables: ZarrVariableInfo[] = [];
   const coordinateCache: CoordinateCache = new Map();
-  const geoByPath = new Map<string, ReturnType<typeof parseGeoZarrMetadata>>();
   const matchedPrefixes: string[] = [];
   const errors: string[] = [];
-  let webMercatorPyramid = false;
 
   for (const path of paths.slice(0, MAX_VARIABLE_CANDIDATES)) {
     throwIfAborted(signal);
@@ -1182,14 +1208,11 @@ export async function getZarrMetadata(
           index,
           path,
           levelPaths,
-          coordinateCache
+          coordinateCache,
+          isWebMercatorPyramid(declared)
         );
         if (pyramid.length) {
-          for (const variable of pyramid) {
-            variables.push(variable);
-            geoByPath.set(variable.path, parseGeoZarrMetadata(variable.geoAttrs as AnyAttrs));
-          }
-          webMercatorPyramid = webMercatorPyramid || isWebMercatorPyramid(declared);
+          variables.push(...pyramid);
           matchedPrefixes.push(childPrefix(path));
           continue;
         }
@@ -1226,7 +1249,6 @@ export async function getZarrMetadata(
       });
       if (variable) {
         variables.push(variable);
-        geoByPath.set(path, parseGeoZarrMetadata(geoAttrs));
         matchedPrefixes.push(childPrefix(path));
       }
     } catch (error) {
@@ -1256,25 +1278,16 @@ export async function getZarrMetadata(
   const active =
     labeled.find(variable => variable.path === options.variable) ??
     (labeled[0] as ZarrVariableInfo);
-  const geo = geoByPath.get(active.path);
-
-  return {
-    url,
-    variable: active.path,
-    crs: geo?.crs,
-    axes: geo?.axes ?? [],
-    xAxisIndex: geo?.xAxisIndex ?? -1,
-    yAxisIndex: geo?.yAxisIndex ?? -1,
-    levels: (geo?.levels ?? []).map(level => ({
-      path: level.path,
-      shape: [level.arrayHeight, level.arrayWidth],
-      chunks: active.chunks.slice(-2)
-    })),
-    variables: labeled,
-    nonSpatialDims: active.nonSpatialDims,
-    timeDimension: active.timeDimension,
-    dataRange: active.dataRange,
-    nodataValue: active.nodataValue,
-    ...(webMercatorPyramid && {webMercatorPyramid})
-  };
+  return selectZarrVariable(
+    {
+      url,
+      axes: [],
+      xAxisIndex: -1,
+      yAxisIndex: -1,
+      levels: [],
+      variables: labeled,
+      nonSpatialDims: []
+    },
+    active.path
+  );
 }

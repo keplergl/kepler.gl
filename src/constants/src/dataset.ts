@@ -300,6 +300,11 @@ export type ZarrVariableInfo = {
    * store when it declares them, otherwise derived from CF/GDAL metadata.
    */
   geoAttrs?: Record<string, unknown>;
+  /** Parsed grid and pyramid settings for this variable, independent of the active variable. */
+  spatialMetadata?: Pick<
+    ZarrDatasetMetadata,
+    'crs' | 'axes' | 'xAxisIndex' | 'yAxisIndex' | 'levels' | 'webMercatorPyramid'
+  >;
   /** Shape of the finest resolution level. */
   shape: number[];
   /** Chunk shape of the finest resolution level. */

@@ -47,7 +47,7 @@ function axisVariable(nonSpatialDims: ZarrVariableInfo['nonSpatialDims']): ZarrV
   };
 }
 
-describe('Zarr metadata cancellation', () => {
+describe('Zarr metadata', () => {
   const url = 'https://example.com/cancellable.zarr';
   const originalGlobals = {
     fetch: globalThis.fetch,
@@ -110,6 +110,109 @@ describe('Zarr metadata cancellation', () => {
     fetchMock.mockReset();
   });
   afterEach(() => clearZarrStoreCache());
+
+  it.each([
+    ['<i8', -9999, -9999],
+    ['<u8', 0, 0],
+    ['<u8', '18446744073709551615', Number(18446744073709551615n)],
+    ['<i8', null, undefined],
+    ['<f8', 'NaN', undefined]
+  ])(
+    'normalizes %s fill value %s for numeric tile rendering',
+    async (dtype, fillValue, expected) => {
+      fetchMock.mockImplementation((request: Request) =>
+        Promise.resolve(
+          request.url.endsWith('/.zmetadata')
+            ? new Response(
+                JSON.stringify({
+                  ...consolidated,
+                  metadata: {
+                    ...consolidated.metadata,
+                    'climate/.zarray': {...array, dtype, fill_value: fillValue}
+                  }
+                })
+              )
+            : serve(request)
+        )
+      );
+      const metadata = await getZarrMetadata(url);
+      expect(metadata.nodataValue).toBe(expected);
+      expect(metadata.variables[0].nodataValue).toBe(expected);
+      expect(() => JSON.stringify(metadata)).not.toThrow();
+    }
+  );
+
+  it('keeps spatial metadata and pyramid zoom settings with each variable', async () => {
+    const contents: Record<string, unknown> = {
+      ...consolidated.metadata,
+      'pyramid/.zgroup': {zarr_format: 2},
+      'pyramid/.zattrs': {
+        multiscales: [
+          {
+            datasets: [128, 256, 512].map((_, level) => ({
+              path: String(level),
+              crs: 'EPSG:3857',
+              pixels_per_tile: 128
+            }))
+          }
+        ]
+      }
+    };
+    [128, 256, 512].forEach((size, level) => {
+      contents[`pyramid/${level}/.zgroup`] = {zarr_format: 2};
+      contents[`pyramid/${level}/rain/.zarray`] = {
+        ...array,
+        shape: [size, size],
+        chunks: [128, 128]
+      };
+      contents[`pyramid/${level}/rain/.zattrs`] = {
+        _ARRAY_DIMENSIONS: ['y', 'x'],
+        grid_mapping: 'spatial_ref'
+      };
+      contents[`pyramid/${level}/spatial_ref/.zarray`] = {
+        ...array,
+        shape: [],
+        chunks: []
+      };
+      contents[`pyramid/${level}/spatial_ref/.zattrs`] = {
+        epsg_code: 3857,
+        GeoTransform: [-20037508, 40075016 / size, 0, 20037508, 0, -40075016 / size].join(' ')
+      };
+    });
+    fetchMock.mockImplementation((request: Request) =>
+      Promise.resolve(
+        request.url.endsWith('/.zmetadata')
+          ? new Response(JSON.stringify({...consolidated, metadata: contents}))
+          : serve(request)
+      )
+    );
+
+    const metadata = await getZarrMetadata(url, {variable: 'climate'});
+    expect(metadata.variables.map(variable => variable.path)).toEqual(['climate', 'pyramid/rain']);
+    expect(metadata.webMercatorPyramid).toBe(false);
+    expect(metadata.crs).toEqual({code: 'EPSG:4326'});
+    expect(metadata.axes).toEqual(['lat', 'lon']);
+    expect(metadata.levels).toEqual([{path: '.', shape: [2, 2], chunks: [2, 2]}]);
+    const requestCount = fetchMock.mock.calls.length;
+
+    // Switching also works after a save/load, without reopening the store.
+    const selected = selectZarrVariable(JSON.parse(JSON.stringify(metadata)), 'pyramid/rain');
+    expect(selected.webMercatorPyramid).toBe(true);
+    expect(selected.crs).toEqual({code: 'EPSG:3857'});
+    expect(selected.axes).toEqual(['y', 'x']);
+    expect(selected.xAxisIndex).toBe(1);
+    expect(selected.yAxisIndex).toBe(0);
+    expect(selected.levels).toEqual(
+      [512, 256, 128].map((size, i) => ({
+        path: `${2 - i}/rain`,
+        shape: [size, size],
+        chunks: [128, 128]
+      }))
+    );
+    expect(selectZarrVariable(selected, 'climate')).toEqual(metadata);
+    expect(fetchMock).toHaveBeenCalledTimes(requestCount);
+    expect(metadata.crs).toEqual({code: 'EPSG:4326'});
+  });
 
   it('does not start requests for an already-aborted load', async () => {
     const controller = new AbortController();
@@ -851,5 +954,16 @@ describe('variable selection', () => {
     expect(selectZarrVariable({...metadata, variables: []}, 'elevation').variable).toBe(
       'temperature'
     );
+  });
+
+  it('does not reuse another variable grid when spatial metadata is missing', () => {
+    const next = selectZarrVariable(
+      {...metadata, crs: {code: 'EPSG:4326'}, webMercatorPyramid: true},
+      'elevation'
+    );
+    expect(next.crs).toBeUndefined();
+    expect(next.axes).toEqual([]);
+    expect(next.levels).toEqual([]);
+    expect(next.webMercatorPyramid).toBe(false);
   });
 });
