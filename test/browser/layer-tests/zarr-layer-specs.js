@@ -14,7 +14,11 @@ import {DatasetType} from '@kepler.gl/constants';
 import {getZarrAxis} from '@kepler.gl/table';
 import SchemaManager from '@kepler.gl/schemas';
 import {InitialState} from 'test/helpers/mock-state';
-import {layerVisConfigChangeUpdater} from '@kepler.gl/reducers';
+import {
+  duplicateLayerUpdater,
+  layerVisConfigChangeUpdater,
+  validateLayerWithData
+} from '@kepler.gl/reducers';
 
 const {ZarrLayer} = KeplerGlLayers;
 
@@ -54,6 +58,7 @@ const MOCK_ZARR_DATASET = {
   id: 'zarr-dataset',
   type: DatasetType.ZARR,
   label: 'Test Zarr Dataset',
+  fields: [],
   metadata: {
     url: 'https://example.com/store.zarr',
     variable: 'temperature',
@@ -64,7 +69,8 @@ const MOCK_ZARR_DATASET = {
     levels: [{path: '0', shape: [3, 4, 256, 256], chunks: [1, 1, 256, 256]}],
     variables: [TEMPERATURE, PRECIPITATION],
     nonSpatialDims: [TIME_DIMENSION, BAND_DIMENSION],
-    timeDimension: TIME_DIMENSION
+    timeDimension: TIME_DIMENSION,
+    dataRange: TEMPERATURE.dataRange
   }
 };
 
@@ -155,6 +161,22 @@ test('#ZarrLayer -> updateLayerMeta points the rescale control at the variable',
     layer.config.visConfig.rescale,
     [0, 1],
     'should not keep the previous variable range after a switch'
+  );
+  t.deepEqual(
+    layer.visConfigSettings.rescale.range,
+    [0, 1],
+    'should not use the dataset default variable statistics as slider bounds'
+  );
+
+  layer.updateLayerVisConfig({rescale: [0, 50]});
+  layer.updateLayerMeta(MOCK_ZARR_DATASET);
+  t.deepEqual(layer.config.visConfig.rescale, [0, 50], 'keeps a custom range for the new variable');
+  layer.updateLayerVisConfig({zarrVariable: 'temperature'});
+  layer.updateLayerMeta(MOCK_ZARR_DATASET);
+  t.deepEqual(
+    layer.config.visConfig.rescale,
+    [250, 320],
+    'restores the selected variable statistics'
   );
 
   t.end();
@@ -419,33 +441,65 @@ test('#ZarrLayer -> a month axis retains year, day and band pins', t => {
   t.end();
 });
 
-test('#ZarrLayer -> axis configuration round trips and old maps keep automatic time', t => {
+test('#ZarrLayer -> save/load and duplication retain axes and pins; old maps keep automatic time', t => {
   const zarrAxis = {kind: 'dimension', dimension: 'time'};
   const layer = new ZarrLayer({
     dataId: 'zarr-dataset',
     visConfig: {
       zarrAxis,
-      zarrFrame: 7,
+      zarrFrame: 1,
       dimensionIndexes: {band: 2}
     }
   });
   const state = {
     ...InitialState,
-    visState: {...InitialState.visState, layers: [layer], layerOrder: [layer.id]}
+    visState: {
+      ...InitialState.visState,
+      datasets: {'zarr-dataset': MOCK_ZARR_DATASET},
+      layers: [layer],
+      layerOrder: [layer.id],
+      layerData: [layer.formatLayerData({'zarr-dataset': MOCK_ZARR_DATASET})]
+    }
   };
   const saved = SchemaManager.getConfigToSave(state);
   const parsed = SchemaManager.parseSavedConfig(saved).visState.layers[0];
-  const restored = new ZarrLayer({...parsed.config, id: parsed.id});
+  const restored = validateLayerWithData(
+    MOCK_ZARR_DATASET,
+    parsed,
+    InitialState.visState.layerClasses
+  );
   t.deepEqual(restored.config.visConfig.zarrAxis, zarrAxis, 'saves the selected dimension axis');
-  t.equal(restored.config.visConfig.zarrFrame, 7, 'restores the selected frame');
+  t.equal(restored.config.visConfig.zarrFrame, 1, 'restores the selected frame');
   t.deepEqual(
     restored.config.visConfig.dimensionIndexes,
     {band: 2},
     'restores other pinned dimensions'
   );
+  const duplicated = duplicateLayerUpdater(state.visState, {id: layer.id});
+  const copy = duplicated.layers.find(candidate => candidate.id !== layer.id);
+  t.deepEqual(copy.config.visConfig.zarrAxis, zarrAxis, 'duplicates the selected axis');
+  t.equal(copy.config.visConfig.zarrFrame, 1, 'duplicates the selected frame');
+  t.deepEqual(copy.config.visConfig.dimensionIndexes, {band: 2}, 'duplicates pinned dimensions');
+  for (const candidate of [restored, copy]) {
+    const {zarrAxis: axisConfig, zarrFrame, dimensionIndexes} = candidate.config.visConfig;
+    t.deepEqual(
+      getZarrSelection({
+        variable: TEMPERATURE,
+        axis: getZarrAxis(TEMPERATURE, axisConfig, dimensionIndexes),
+        frameIndex: zarrFrame,
+        dimensionIndexes
+      }),
+      {time: 1, band: 2},
+      'the restored or duplicated layer selects the original raster slice'
+    );
+  }
   delete parsed.config.visConfig.zarrAxis;
   delete parsed.config.visConfig.zarrFrame;
-  const legacy = new ZarrLayer({...parsed.config, id: parsed.id});
+  const legacy = validateLayerWithData(
+    MOCK_ZARR_DATASET,
+    parsed,
+    InitialState.visState.layerClasses
+  );
   legacy.updateLayerMeta(MOCK_ZARR_DATASET);
   t.equal(legacy.config.animation.enabled, true, 'old configs still enable the shared timeline');
   t.deepEqual(

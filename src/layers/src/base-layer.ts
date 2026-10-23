@@ -819,6 +819,8 @@ class Layer implements KeplerLayer {
       if (
         isPlainObject(currentConfig[key]) &&
         isPlainObject(configToCopy[key]) &&
+        // Object vis settings contain runtime keys absent from their defaults.
+        this.visConfigSettings[key]?.type !== 'object' &&
         !shallowCopy.includes(key) &&
         !notToCopy.includes(key)
       ) {

@@ -502,7 +502,8 @@ export default class ZarrLayer extends Layer {
     variable: ZarrVariableInfo | null,
     metadata: ZarrDatasetMetadata
   ): void {
-    const dataRange = variable?.dataRange ?? metadata.dataRange ?? null;
+    // Dataset-level statistics describe its default variable, not every variable.
+    const dataRange = (variable ? variable.dataRange : metadata.dataRange) ?? null;
     this.visConfigSettings.rescale = {
       ...this.visConfigSettings.rescale,
       range: dataRange ?? DEFAULT_RESCALE,

@@ -155,11 +155,19 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
   const [variable, setVariable] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  const onExampleClick = useCallback((index: number) => {
-    setUrl(ZARR_EXAMPLES[index].url);
-    setDatasetName(ZARR_EXAMPLES[index].name);
-  }, []);
+  const onExampleClick = useCallback(
+    (index: number) => {
+      const example = ZARR_EXAMPLES[index];
+      if (url === example.url && error) {
+        setRetryCount(count => count + 1);
+      }
+      setUrl(example.url);
+      setDatasetName(example.name);
+    },
+    [url, error]
+  );
 
   const onDatasetNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
@@ -222,7 +230,7 @@ const TilesetZarrForm: React.FC<ZarrFormProps> = ({setResponse}) => {
       clearTimeout(deadline);
       controller.abort();
     };
-  }, [url]);
+  }, [url, retryCount]);
 
   const selectedMetadata = useMemo(() => {
     if (!metadata) {

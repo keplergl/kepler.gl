@@ -184,6 +184,56 @@ describe('TilesetZarrForm', () => {
       expect(signal.aborted).toBe(false);
       expect(lastResponse(setResponse)).toMatchObject({metadata, loading: false, error: null});
     });
+
+    it.each(['timeout', 'request error'])(
+      'retries the same example after a %s and ignores the old response',
+      async failure => {
+        let resolveOld;
+        const oldRequest = new Promise(resolve => (resolveOld = resolve));
+        if (failure === 'timeout') {
+          getZarrMetadata.mockReturnValueOnce(oldRequest);
+        } else {
+          getZarrMetadata.mockRejectedValueOnce(new Error('Temporary network failure'));
+        }
+        let resolveRetry;
+        getZarrMetadata.mockReturnValueOnce(new Promise(resolve => (resolveRetry = resolve)));
+        const setResponse = jest.fn();
+        const {getByRole} = renderWithTheme(<TilesetZarrForm setResponse={setResponse} />);
+        const example = getByRole('button', {name: 'Use NOAA HRRR Forecast'});
+        fireEvent.click(example);
+        await act(async () => jest.advanceTimersByTime(500));
+        if (failure === 'timeout') {
+          act(() => jest.advanceTimersByTime(30_000));
+        }
+        expect(lastResponse(setResponse).error).toBeInstanceOf(Error);
+        expect(lastResponse(setResponse).loading).toBe(false);
+        const [url, {signal: oldSignal}] = getZarrMetadata.mock.calls[0];
+
+        fireEvent.click(example);
+        expect(lastResponse(setResponse).error).toBeNull();
+        expect(oldSignal.aborted).toBe(true);
+        act(() => jest.advanceTimersByTime(500));
+        expect(getZarrMetadata).toHaveBeenCalledTimes(2);
+        const [retriedUrl, {signal: retrySignal}] = getZarrMetadata.mock.calls[1];
+        expect(retriedUrl).toBe(url);
+        expect(retrySignal).not.toBe(oldSignal);
+        expect(retrySignal.aborted).toBe(false);
+        expect(lastResponse(setResponse).loading).toBe(true);
+
+        // Clicking a pending request must not restart it or its timeout.
+        fireEvent.click(example);
+        act(() => jest.advanceTimersByTime(500));
+        expect(getZarrMetadata).toHaveBeenCalledTimes(2);
+        const metadata = {variable: 'retry', variables: [], levels: []};
+        await act(async () => resolveRetry(metadata));
+        await act(async () => resolveOld({variable: 'stale', variables: [], levels: []}));
+        expect(lastResponse(setResponse)).toMatchObject({metadata, loading: false, error: null});
+
+        fireEvent.click(example);
+        act(() => jest.advanceTimersByTime(500));
+        expect(getZarrMetadata).toHaveBeenCalledTimes(2);
+      }
+    );
   });
 
   it('reports the error from a store it cannot read', async () => {
