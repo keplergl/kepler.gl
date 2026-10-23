@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 
 import {getRuntimeConfigHref} from '../../../examples/demo-app/src/utils/get-runtime-config-href';
 
@@ -51,4 +52,42 @@ test('getRuntimeConfigHref resolves config.json against <base href>', t => {
     'http://localhost/kepler/config.json'
   );
   t.end();
+});
+
+test('demo runtime config enables Zarr by default and allows disabling it', async t => {
+  const originalConfig = {...getApplicationConfig()};
+  const originalFetch = globalThis.fetch;
+  // Import inside the test so demo startup defaults do not affect other tests.
+  const {loadAndApplyRuntimeConfig, getRuntimeConfig, applyRuntimeConfig} = await import(
+    '../../../examples/demo-app/src/utils/runtime-config'
+  );
+  const originalRuntimeConfig = getRuntimeConfig();
+  try {
+    initApplicationConfig({enableZarrLayer: false});
+    globalThis.fetch = async () => ({ok: false});
+    await loadAndApplyRuntimeConfig();
+    t.equal(
+      getApplicationConfig().enableZarrLayer,
+      true,
+      'demo defaults enable Zarr without config.json'
+    );
+
+    globalThis.fetch = async () => ({
+      ok: true,
+      json: async () => ({applicationConfig: {enableZarrLayer: false}})
+    });
+    await loadAndApplyRuntimeConfig();
+    t.equal(
+      getApplicationConfig().enableZarrLayer,
+      false,
+      'config.json can override the demo default'
+    );
+  } catch (error) {
+    t.fail(error.message);
+  } finally {
+    applyRuntimeConfig(originalRuntimeConfig);
+    initApplicationConfig(originalConfig);
+    globalThis.fetch = originalFetch;
+    t.end();
+  }
 });

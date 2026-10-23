@@ -168,7 +168,8 @@ export type KeplerApplicationConfig = {
   enableWMSLayer?: boolean;
 
   // Zarr layer config -- Experimental
-  // Zarr layer is under development and not ready for production use. Disabled by default.
+  // Enabled by default. Set false to hide Zarr in Add Data and layer type pickers.
+  // Existing Zarr layers in saved maps can still render.
   enableZarrLayer?: boolean;
 
   // Flow layer config
@@ -458,7 +459,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   // WMS layer config
   enableWMSLayer: true,
 
-  // Zarr layer config -- experimental, opt in via initApplicationConfig
+  // Zarr layer config -- experimental, disable via initApplicationConfig
   enableZarrLayer: true,
 
   // Flow layer config

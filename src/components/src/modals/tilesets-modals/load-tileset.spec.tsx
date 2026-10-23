@@ -5,6 +5,7 @@
 import React from 'react';
 import {fireEvent, waitFor} from '@testing-library/react';
 import {DatasetType} from '@kepler.gl/constants';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import {IntlWrapper, renderWithTheme} from 'test/helpers/component-jest-utils';
 import LoadTilesetTabFactory from './load-tileset';
 import {getZarrMetadataPreview} from './zarr-metadata-preview';
@@ -23,7 +24,25 @@ const {getZarrMetadata} = require('@kepler.gl/table');
 const LoadTilesetTab = LoadTilesetTabFactory();
 
 describe('Zarr metadata preview', () => {
-  beforeEach(() => getZarrMetadata.mockReset());
+  let previousZarrFlag;
+  beforeEach(() => {
+    previousZarrFlag = getApplicationConfig().enableZarrLayer;
+    initApplicationConfig({enableZarrLayer: true});
+    getZarrMetadata.mockReset();
+  });
+  afterEach(() => initApplicationConfig({enableZarrLayer: previousZarrFlag}));
+
+  it.each([true, false])('respects enableZarrLayer=%s in Add Data', enabled => {
+    initApplicationConfig({enableZarrLayer: enabled});
+    const {queryByText, getByText} = renderWithTheme(
+      <IntlWrapper>
+        <LoadTilesetTab onTilesetAdded={jest.fn()} isAddingDatasets={false} />
+      </IntlWrapper>
+    );
+    expect(Boolean(queryByText('Zarr'))).toBe(enabled);
+    expect(getByText('Vector Tile')).toBeTruthy();
+    expect(getZarrMetadata).not.toHaveBeenCalled();
+  });
 
   it('aborts metadata requests when switching away from the Zarr tab', async () => {
     getZarrMetadata.mockReturnValue(

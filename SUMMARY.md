@@ -29,6 +29,7 @@
       * [Trip layer](docs/user-guides/c-types-of-layers/k-trip.md)
       * [Vector Tile Layer](docs/user-guides/c-types-of-layers/m-vector-tile-layer.md)
       * [Raster Tile layer](docs/user-guides/c-types-of-layers/n-raster-tile-layer.md)
+      * [Zarr Layer](docs/user-guides/c-types-of-layers/s-zarr-layer.md)
       * [WMS layer](docs/user-guides/c-types-of-layers/o-wms-layer.md)
     * [Layer Attributes](docs/user-guides/d-layer-attributes.md)
     * [Color Palettes](docs/user-guides/l-color-attributes.md)
