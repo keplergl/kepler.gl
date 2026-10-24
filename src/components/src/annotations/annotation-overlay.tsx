@@ -147,22 +147,10 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
           changes = movePoint(draggedAnn, ev.delta, viewport, pickWorldPosition);
           break;
         case 'MOVE_RULER_START':
-          changes = moveRulerEndpoint(
-            draggedAnn,
-            'start',
-            ev.delta,
-            viewport,
-            pickWorldPosition
-          );
+          changes = moveRulerEndpoint(draggedAnn, 'start', ev.delta, viewport, pickWorldPosition);
           break;
         case 'MOVE_RULER_END':
-          changes = moveRulerEndpoint(
-            draggedAnn,
-            'end',
-            ev.delta,
-            viewport,
-            pickWorldPosition
-          );
+          changes = moveRulerEndpoint(draggedAnn, 'end', ev.delta, viewport, pickWorldPosition);
           break;
         case 'MOVE_TEXT':
           changes = moveText(draggedAnn, ev.delta, viewport, pickWorldPosition);

@@ -874,8 +874,16 @@ test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
 
 test('#composerStateReducer - dataset replacement preserves data-independent bookmarks', t => {
   const bookmarks = [
-    {id: 'first', name: 'Home', camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}},
-    {id: 'second', name: 'Away', camera: {longitude: -20, latitude: 30, zoom: 8, bearing: 0, pitch: 0}}
+    {
+      id: 'first',
+      name: 'Home',
+      camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}
+    },
+    {
+      id: 'second',
+      name: 'Away',
+      camera: {longitude: -20, latitude: 30, zoom: 8, bearing: 0, pitch: 0}
+    }
   ];
   for (const [dataId, replacementId] of [
     ['id', 'id'],
@@ -912,7 +920,11 @@ test('#composerStateReducer - dataset replacement preserves data-independent boo
       2,
       `${dataId}: replaces rows`
     );
-    t.deepEqual(result.visState.cameraBookmarks, bookmarks, `${dataId}: preserves every saved view`);
+    t.deepEqual(
+      result.visState.cameraBookmarks,
+      bookmarks,
+      `${dataId}: preserves every saved view`
+    );
     t.deepEqual(
       KeplerGlSchema.getConfigToSave(result).config.visState.cameraBookmarks,
       bookmarks,
@@ -925,7 +937,11 @@ test('#composerStateReducer - dataset replacement preserves data-independent boo
 test('#composerStateReducer - legacy bookmarks do not opt in or reset an explicit host preference', t => {
   const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
   const bookmarks = [
-    {id: 'home', name: 'Home', camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}}
+    {
+      id: 'home',
+      name: 'Home',
+      camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}
+    }
   ];
   const config = KeplerGlSchema.getConfigToSave({
     ...initial,
@@ -951,7 +967,6 @@ test('#composerStateReducer - legacy bookmarks do not opt in or reset an explici
   }
   t.end();
 });
-
 
 test('#composerStateReducer - project JSON bookmark visibility and layout survive file import', t => {
   const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;

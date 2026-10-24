@@ -33,20 +33,14 @@ describe('MapManager', () => {
   test('shows one background color picker for a selected basemap style', () => {
     const {container} = renderWithTheme(<MapManager {...defaultProps} />);
 
-    expect(
-      container.querySelectorAll('[data-for="update-color-Background"]')
-    ).toHaveLength(1);
+    expect(container.querySelectorAll('[data-for="update-color-Background"]')).toHaveLength(1);
   });
 
   test('preserves the existing No Basemap background color picker', () => {
     const mapStyle = {...INITIAL_MAP_STYLE, styleType: NO_MAP_ID};
-    const {container} = renderWithTheme(
-      <MapManager {...defaultProps} mapStyle={mapStyle} />
-    );
+    const {container} = renderWithTheme(<MapManager {...defaultProps} mapStyle={mapStyle} />);
 
-    expect(
-      container.querySelectorAll('[data-for="update-color-Background"]')
-    ).toHaveLength(1);
+    expect(container.querySelectorAll('[data-for="update-color-Background"]')).toHaveLength(1);
   });
 
   test('preserves the separate globe background color picker', () => {
@@ -54,13 +48,11 @@ describe('MapManager', () => {
       ...INITIAL_MAP_STATE,
       globe: {...INITIAL_MAP_STATE.globe, enabled: true}
     };
-    const {container} = renderWithTheme(
-      <MapManager {...defaultProps} mapState={mapState} />
-    );
+    const {container} = renderWithTheme(<MapManager {...defaultProps} mapState={mapState} />);
 
     expect(container.querySelector('[data-for="update-color-Background"]')).toBeNull();
-    expect(
-      container.querySelectorAll('[data-for="update-color-globe-background"]')
-    ).toHaveLength(1);
+    expect(container.querySelectorAll('[data-for="update-color-globe-background"]')).toHaveLength(
+      1
+    );
   });
 });

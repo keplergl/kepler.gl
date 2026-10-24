@@ -322,7 +322,11 @@ test('#visStateReducer -> kind changes preserve rich text, including conversions
     AnnotationKind.TEXT
   ]) {
     state = reducer(state, VisStateActions.updateAnnotation('formatted', {kind}));
-    t.deepEqual(state.annotations[0].editorState, editorState, `${kind} keeps rich-text formatting`);
+    t.deepEqual(
+      state.annotations[0].editorState,
+      editorState,
+      `${kind} keeps rich-text formatting`
+    );
     t.equal(state.annotations[0].label, 'Formatted label', `${kind} keeps the plain text label`);
   }
 

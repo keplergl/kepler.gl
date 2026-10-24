@@ -328,7 +328,8 @@ describe('AnnotationManager selectors', () => {
   });
 
   test.each(['Right', 'Above'])(
-    'keeps %s unchanged when Enter is pressed without choosing an option', current => {
+    'keeps %s unchanged when Enter is pressed without choosing an option',
+    current => {
       const state = makeState(true, true);
       Object.assign(state.visState.annotations[0], {
         kind: AnnotationKind.POINT,
@@ -363,36 +364,39 @@ describe('AnnotationManager selectors', () => {
       next: 'Below',
       changes: {textSide: 'right', textVerticalPosition: 'below', angle: 45}
     }
-  ] as const)('changes $current to $next through a kepler.gl selector', ({current, next, changes}) => {
-    const state = makeState(true, true);
-    const store = mockStore({
-      ...state,
-      visState: {
-        ...state.visState,
-        annotations: [
-          {
-            ...state.visState.annotations[0],
-            kind: AnnotationKind.POINT,
-            armLength: 50,
-            angle: -45
-          }
-        ]
-      }
-    });
-    const {container} = renderWithTheme(
-      <IntlWrapper>
-        <Provider store={store}>
-          <AnnotationManager />
-        </Provider>
-      </IntlWrapper>
-    );
+  ] as const)(
+    'changes $current to $next through a kepler.gl selector',
+    ({current, next, changes}) => {
+      const state = makeState(true, true);
+      const store = mockStore({
+        ...state,
+        visState: {
+          ...state.visState,
+          annotations: [
+            {
+              ...state.visState.annotations[0],
+              kind: AnnotationKind.POINT,
+              armLength: 50,
+              angle: -45
+            }
+          ]
+        }
+      });
+      const {container} = renderWithTheme(
+        <IntlWrapper>
+          <Provider store={store}>
+            <AnnotationManager />
+          </Provider>
+        </IntlWrapper>
+      );
 
-    expect(container.querySelector('select')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText(current));
-    expect(screen.queryByPlaceholderText('Search')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText(next));
+      expect(container.querySelector('select')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByText(current));
+      expect(screen.queryByPlaceholderText('Search')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByText(next));
 
-    expect(store.getActions()).toEqual([VisStateActions.updateAnnotation('ruler-1', changes)]);
-    expect(screen.queryByText(next)).not.toBeInTheDocument();
-  });
+      expect(store.getActions()).toEqual([VisStateActions.updateAnnotation('ruler-1', changes)]);
+      expect(screen.queryByText(next)).not.toBeInTheDocument();
+    }
+  );
 });

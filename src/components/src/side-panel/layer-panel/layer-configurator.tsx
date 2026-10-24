@@ -33,6 +33,7 @@ import ScenegraphModelSelectorFactory, {
 import RasterTileLayerConfiguratorFactory from './raster-tile-layer-configurator';
 import VectorTileLayerConfiguratorFactory from './vector-tile-layer-configurator';
 import LayerApiKeyInput from './layer-api-key-input';
+import ZarrAxisSelector from './zarr-axis-selector';
 
 import {ActionHandler, toggleModal, updateDatasetProps} from '@kepler.gl/actions';
 import {
@@ -50,7 +51,13 @@ import {
   createPointCountLabelField
 } from '@kepler.gl/layers';
 
-import {matchDatasetType, Datasets} from '@kepler.gl/table';
+import {
+  matchDatasetType,
+  Datasets,
+  getZarrAxisDimensions,
+  isExplicitZarrAxis,
+  formatZarrCoordinate
+} from '@kepler.gl/table';
 import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
@@ -1828,6 +1835,106 @@ export default function LayerConfiguratorFactory(
           >
             <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.allowHover} />
           </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
+    _renderZarrLayerConfig({layer, dataset, visConfiguratorProps}) {
+      const {visConfig} = layer.config;
+      const metadata = dataset?.metadata ?? {};
+      const variables = metadata.variables ?? [];
+      const selectedPath = visConfig.zarrVariable ?? metadata.variable;
+      const activeVariable = variables.find(v => v.path === selectedPath) ?? variables[0] ?? null;
+      const animatedDimensions = isExplicitZarrAxis(visConfig.zarrAxis)
+        ? getZarrAxisDimensions(visConfig.zarrAxis)
+        : [activeVariable?.timeDimension?.name];
+      const pinnableDims = (activeVariable?.nonSpatialDims ?? []).filter(
+        dim => !animatedDimensions.includes(dim.name)
+      );
+      const dimensionIndexes = visConfig.dimensionIndexes ?? {};
+
+      return (
+        <StyledLayerVisualConfigurator>
+          {variables.length > 1 ? (
+            <LayerConfigGroup label={'layer.variable'}>
+              <ItemSelector
+                className="zarr-variable-selector"
+                selectedItems={activeVariable}
+                options={variables}
+                displayOption="displayName"
+                getOptionValue="path"
+                multiSelect={false}
+                searchable={variables.length > 10}
+                onChange={value => {
+                  if (typeof value !== 'string') {
+                    return;
+                  }
+                  visConfiguratorProps.onChange({zarrVariable: value, zarrFrame: 0});
+                }}
+              />
+            </LayerConfigGroup>
+          ) : null}
+          <LayerConfigGroup label={'layer.color'} collapsible>
+            <LayerColorRangeSelector {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.rescale}
+                {...visConfiguratorProps}
+                layer={{
+                  ...layer,
+                  config: {
+                    ...layer.config,
+                    visConfig: {
+                      ...visConfig,
+                      rescale: visConfig.rescale ?? layer.visConfigSettings.rescale.range
+                    }
+                  }
+                }}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layer.appearance'}>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layerVisConfigs.zarrAxis'}>
+            <ZarrAxisSelector
+              variable={activeVariable}
+              config={visConfig.zarrAxis}
+              pins={dimensionIndexes}
+              onChange={visConfiguratorProps.onChange}
+            />
+          </LayerConfigGroup>
+          {pinnableDims.length ? (
+            <LayerConfigGroup label={'layer.dimensions'} collapsible>
+              {pinnableDims.map(dim => {
+                const options = Array.from({length: dim.size}, (_, index) => ({
+                  index,
+                  label: formatZarrCoordinate(dim, index)
+                }));
+                const selectedIndex = Math.min(dimensionIndexes[dim.name] ?? 0, dim.size - 1);
+                return (
+                  <div key={dim.name}>
+                    <PanelLabel>{dim.name}</PanelLabel>
+                    <ItemSelector
+                      className="zarr-dimension-selector"
+                      selectedItems={options[selectedIndex] ?? null}
+                      options={options}
+                      displayOption="label"
+                      getOptionValue="index"
+                      multiSelect={false}
+                      searchable={dim.size > 10}
+                      onChange={index =>
+                        visConfiguratorProps.onChange({
+                          dimensionIndexes: {...dimensionIndexes, [dim.name]: index},
+                          zarrFrame: 0
+                        })
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </LayerConfigGroup>
+          ) : null}
         </StyledLayerVisualConfigurator>
       );
     }

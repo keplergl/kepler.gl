@@ -111,9 +111,7 @@ const BrandingPreview = styled.div`
 const DEFAULT_APP_NAME_COLOR = '#1FBAD6';
 
 function getAppNameColorInputValue(value: unknown): string {
-  return typeof value === 'string' && /^#[\da-f]{6}$/i.test(value)
-    ? value
-    : DEFAULT_APP_NAME_COLOR;
+  return typeof value === 'string' && /^#[\da-f]{6}$/i.test(value) ? value : DEFAULT_APP_NAME_COLOR;
 }
 
 function getBrandingURL(value: unknown, fallback: string | null): string | null {

@@ -169,6 +169,17 @@ export class DatasetSchema extends Schema {
   key = 'dataset';
 
   save(dataset: KeplerTable): SavedDatasetV1['data'] {
+    if (dataset.type === DatasetType.ZARR && dataset.metadata?.url) {
+      // Rebuild variable grids and coordinate lists from the store on load,
+      // using the same remote metadata refresh as other tiled datasets.
+      return this.savePropertiesOrApplySchema({
+        ...dataset,
+        allData: [],
+        fields: [],
+        metadata: pick(dataset.metadata, ['url', 'variable', 'label', 'attribution'])
+      })[this.key];
+    }
+
     if (dataset.type === DatasetType.EXTERNALLY_HOSTED && dataset.metadata?.source) {
       // Keep the remote URL instead of inlining rows so shared map configs stay small.
       const sourceFormat = getRemoteSourceFormat(dataset.metadata);

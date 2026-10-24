@@ -1399,7 +1399,10 @@ export function layerVisConfigChangeUpdater(
   if (newLayer.shouldCalculateLayerData(props)) {
     const oldLayerData = nextState.layerData[idx];
     const {layerData, layer} = calculateLayerData(newLayer, nextState, oldLayerData);
-    return updateStateWithLayerAndData(nextState, {layerData, layer, idx});
+    const updatedState = updateStateWithLayerAndData(nextState, {layerData, layer, idx});
+    return newLayer.type === 'zarr' && props.some(p => p === 'zarrAxis' || p === 'zarrVariable')
+      ? updateAnimationDomain(updatedState)
+      : updatedState;
   }
 
   return updateStateWithLayerAndData(nextState, {layer: newLayer, idx});
@@ -1481,11 +1484,7 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
     const filterIndex = state.filters.indexOf(filter);
     return setFilterUpdater(
       state,
-      setFilter(
-        filterIndex,
-        ['animationWindow', 'value'],
-        [animationWindow, nextFilter.value]
-      )
+      setFilter(filterIndex, ['animationWindow', 'value'], [animationWindow, nextFilter.value])
     );
   }
 

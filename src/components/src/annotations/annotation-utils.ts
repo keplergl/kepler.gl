@@ -274,10 +274,7 @@ export function isPointVisibleOnGlobe(
 }
 
 /** A ruler is safe to draw as a DOM overlay only while both endpoints are visible. */
-export function isAnnotationVisibleOnGlobe(
-  annotation: Annotation,
-  viewport: MapViewport
-): boolean {
+export function isAnnotationVisibleOnGlobe(annotation: Annotation, viewport: MapViewport): boolean {
   return (
     isPointVisibleOnGlobe(annotation.anchorPoint, viewport) &&
     (annotation.kind !== AnnotationKind.RULER ||
@@ -303,7 +300,7 @@ function moveCoordinate(
 }
 
 function normalizeRulerLongitude(point: LngLatAltitude): LngLatAltitude {
-  const longitude = (((point[0] + 180) % 360) + 360) % 360 - 180;
+  const longitude = ((((point[0] + 180) % 360) + 360) % 360) - 180;
   return point.length === 3 ? [longitude, point[1], point[2]] : [longitude, point[1]];
 }
 

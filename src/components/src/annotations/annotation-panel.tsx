@@ -293,8 +293,7 @@ const StyledAnnotationTypeButton = styled(Button)<{$active: boolean}>`
   padding: 0;
   background-color: ${props => props.theme.inputBgd};
   color: ${props => (props.$active ? props.theme.switchTrackBgdActive : props.theme.inputColor)};
-  border: 1px solid
-    ${props => (props.$active ? props.theme.switchTrackBgdActive : 'transparent')};
+  border: 1px solid ${props => (props.$active ? props.theme.switchTrackBgdActive : 'transparent')};
 
   &:hover,
   &:focus,

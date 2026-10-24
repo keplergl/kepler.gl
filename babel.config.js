@@ -31,6 +31,9 @@ const getPlugins = isTest => {
         extensions: ['.js', '.ts', '.tsx', '.json'],
         root: ['./src'],
         alias: {
+          // Zarrita exposes an import-only entry. Resolve just this dependency
+          // for Tape's CommonJS loader, preserving other packages' conditions.
+          ...(isTest ? {'^zarrita$': `${nodeModules}/zarrita/dist/src/index.js`} : {}),
           test: './test',
           enzyme: './test/helpers/enzyme-adapter.js',
           '@cfaester/enzyme-adapter-react-18': './test/helpers/enzyme-mock.js',

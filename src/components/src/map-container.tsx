@@ -470,13 +470,7 @@ export default function MapContainerFactory(
       this.globeBackgroundColorSelector,
       this.globeStarsSelector,
       this.transparentBackgroundSelector,
-      (
-        backgroundColor,
-        isGlobeMode,
-        globeBackgroundColor,
-        globeStars,
-        transparentBackground
-      ) => ({
+      (backgroundColor, isGlobeMode, globeBackgroundColor, globeStars, transparentBackground) => ({
         ...MAP_STYLE.container,
         ...(!transparentBackground && !isGlobeMode && backgroundColor
           ? {backgroundColor: rgbToHex(backgroundColor)}
@@ -1230,8 +1224,7 @@ export default function MapContainerFactory(
           mapboxApiAccessToken,
           mapboxApiUrl,
           layersForDeck,
-          isAnnotationMode:
-            Boolean(mapControls?.annotation?.active) && !Boolean(this.props.readOnly),
+          isAnnotationMode: Boolean(mapControls?.annotation?.active) && !this.props.readOnly,
           editorInfo: primaryMap
             ? {
                 editor,
@@ -1759,9 +1752,7 @@ export default function MapContainerFactory(
             }
             selectedAnnotationId={visState.selectedAnnotationId}
             isEditingAnnotationText={visState.isEditingAnnotationText}
-            isAnnotationMode={
-              Boolean(mapControls?.annotation?.active) && !Boolean(this.props.readOnly)
-            }
+            isAnnotationMode={Boolean(mapControls?.annotation?.active) && !this.props.readOnly}
             mapIndex={index || 0}
             viewport={this._getAnnotationViewport(mapState, internalViewState)}
             isGlobeEnabled={Boolean(mapState.globe?.enabled)}

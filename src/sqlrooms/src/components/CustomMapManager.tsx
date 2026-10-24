@@ -199,8 +199,8 @@ export const CustomMapManager: React.FC<CustomMapManagerProps> = ({mapId}) => {
   const editableLayers = keplerState.mapState.globe?.enabled
     ? configuredLayerGroups.filter(({slug}) => slug !== BACKGROUND_LAYER_GROUP_SLUG)
     : configuredLayerGroups.some(({slug}) => slug === BACKGROUND_LAYER_GROUP_SLUG)
-      ? configuredLayerGroups
-      : [...configuredLayerGroups, BACKGROUND_LAYER_GROUP];
+    ? configuredLayerGroups
+    : [...configuredLayerGroups, BACKGROUND_LAYER_GROUP];
 
   return (
     <CustomMapManagerContainer>

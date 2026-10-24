@@ -179,8 +179,7 @@ test('exportUtils -> ExportHtml escapes script terminators in map info', t => {
 test('exportUtils -> ExportHtml safely serializes inline data', t => {
   const datasetValue = '</script><div data-kepler-export-test="dataset"></div>\u2028\u2029';
   const configValue = '</script><div data-kepler-export-test="config"></div>\u2028\u2029';
-  const savedStyleType =
-    '</script><div data-kepler-export-test="style-type"></div>\u2028\u2029';
+  const savedStyleType = '</script><div data-kepler-export-test="style-type"></div>\u2028\u2029';
   const mapboxApiAccessToken =
     '\'</script><div data-kepler-export-test="mapbox-token"></div>\u2028\u2029';
   const version = 'test"></script><div data-kepler-export-test="version"></div>';
@@ -293,7 +292,9 @@ test('exportUtils -> ExportHtml preserves custom branding', t => {
     'the read-only logo should link to the app website'
   );
   t.ok(
-    html.includes('react.createElement("span", {style: {color: branding.appNameColor}}, branding.appName)'),
+    html.includes(
+      'react.createElement("span", {style: {color: branding.appNameColor}}, branding.appName)'
+    ),
     'the exported logo should render the app name using its selected color'
   );
   t.ok(

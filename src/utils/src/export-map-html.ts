@@ -93,9 +93,7 @@ function normalizeAppIcon(value: unknown): string | null {
 }
 
 function normalizeAppNameColor(value: unknown): string {
-  return typeof value === 'string' && /^#[\da-f]{6}$/i.test(value)
-    ? value
-    : DEFAULT_APP_NAME_COLOR;
+  return typeof value === 'string' && /^#[\da-f]{6}$/i.test(value) ? value : DEFAULT_APP_NAME_COLOR;
 }
 
 /**
@@ -618,7 +616,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
                 {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
                 ${
                   options.mode === EXPORT_HTML_MAP_MODES.READ
-                    ? "react.createElement(BrandLogo, {fixed: true}),"
+                    ? 'react.createElement(BrandLogo, {fixed: true}),'
                     : ''
                 }
                 react.createElement(KeplerGlComponent, {

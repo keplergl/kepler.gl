@@ -77,10 +77,7 @@ describe('AnnotationText ruler labels', () => {
     expect(screen.queryByText('Measured span')).not.toBeInTheDocument();
     distanceOnly.unmount();
 
-    const hidden = renderRulerText(
-      makeRuler({showCustomText: false, showDistance: false}),
-      true
-    );
+    const hidden = renderRulerText(makeRuler({showCustomText: false, showDistance: false}), true);
     expect(hidden.container.querySelector('[data-annotation-part="text"]')).toBeNull();
   });
 

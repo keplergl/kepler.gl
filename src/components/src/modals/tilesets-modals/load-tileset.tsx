@@ -12,9 +12,11 @@ import {
   RasterTileIcon,
   WMSLayerIcon,
   Tile3DLayerIcon,
-  BitmapLayerIcon
+  BitmapLayerIcon,
+  ZarrLayerIcon
 } from '@kepler.gl/layers';
 import {getError, getApplicationConfig} from '@kepler.gl/utils';
+import {DatasetType, ZarrDatasetMetadata} from '@kepler.gl/constants';
 
 import LoadingSpinner from '../../common/loading-spinner';
 import {MetaResponse} from './common';
@@ -26,8 +28,12 @@ import TilesetRasterForm from './tileset-raster-form';
 import TilesetWMSForm from './tileset-wms-form';
 import TilesetTile3DForm from './tileset-tile3d-form';
 import TilesetBitmapForm from './tileset-bitmap-form';
+import TilesetZarrForm from './tileset-zarr-form';
+import {getZarrMetadataPreview} from './zarr-metadata-preview';
+import ZarrMetadataLoading from './zarr-metadata-progress';
 
-const WIDTH_ICON = '70px';
+const WIDTH_ICON = '60px';
+const MemoizedJSONPretty = React.memo(JSONPretty);
 
 const LoadTilesetTabContainer = styled.div`
   color: ${props => props.theme.AZURE};
@@ -42,9 +48,14 @@ const Container = styled.div`
 
 const TilesetTypeContainer = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, ${WIDTH_ICON});
-  column-gap: 10px;
+  grid-template-columns: repeat(6, minmax(0, ${WIDTH_ICON}));
+  gap: 6px;
   margin-bottom: 20px;
+
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
 `;
 
 const MetaContainer = styled.div`
@@ -153,6 +164,12 @@ const TILE_TYPES = [
     label: 'Bitmap',
     Icon: BitmapLayerIcon,
     Component: TilesetBitmapForm
+  },
+  {
+    id: 'zarr',
+    label: 'Zarr',
+    Icon: ZarrLayerIcon,
+    Component: TilesetZarrForm
   }
 ];
 
@@ -173,7 +190,16 @@ function LoadTilesetTabFactory() {
     const error = response.error;
     const loading = response.loading;
     const data = response.metadata;
-    const jsonDataText = useMemo(() => JSON.stringify(data, null, 2), [data]);
+    const isZarr = response.dataset?.type === DatasetType.ZARR;
+    const jsonDataText = useMemo(
+      () =>
+        JSON.stringify(
+          data && isZarr ? getZarrMetadataPreview(data as ZarrDatasetMetadata) : data,
+          null,
+          2
+        ),
+      [data, isZarr]
+    );
 
     const createTileDataset = useCallback(() => {
       const {dataset, metadata} = response;
@@ -196,6 +222,7 @@ function LoadTilesetTabFactory() {
     const enableRasterTileLayer = getApplicationConfig().enableRasterTileLayer;
     const enableWMSLayer = getApplicationConfig().enableWMSLayer;
     const enableBitmapLayer = getApplicationConfig().enableBitmapLayer;
+    const enableZarrLayer = getApplicationConfig().enableZarrLayer;
 
     // Filter tile types based on application config
     const tileTypes = useMemo(() => {
@@ -209,10 +236,13 @@ function LoadTilesetTabFactory() {
         if (tileType.id === 'bitmap') {
           return enableBitmapLayer;
         }
+        if (tileType.id === 'zarr') {
+          return enableZarrLayer;
+        }
         return true; // Include all other types by default
       });
       return types;
-    }, [enableRasterTileLayer, enableWMSLayer, enableBitmapLayer]);
+    }, [enableRasterTileLayer, enableWMSLayer, enableBitmapLayer, enableZarrLayer]);
 
     const CurrentForm = tileTypes[typeIndex].Component;
 
@@ -238,7 +268,11 @@ function LoadTilesetTabFactory() {
           <MetaContainer>
             {loading ? (
               <MetaLoading>
-                <LoadingSpinner />
+                {response.progress ? (
+                  <ZarrMetadataLoading progress={response.progress} />
+                ) : (
+                  <LoadingSpinner />
+                )}
               </MetaLoading>
             ) : data && 'imagePreviewUrl' in data ? (
               <BitmapPreviewContainer>
@@ -248,7 +282,8 @@ function LoadTilesetTabFactory() {
               <AutoSizer>
                 {({height, width}) => (
                   <MetaInnerContainer height={height} width={width}>
-                    <JSONPretty id="json-pretty" json={jsonDataText} />
+                    {isZarr ? <p>Metadata summary with coordinate samples.</p> : null}
+                    <MemoizedJSONPretty id="json-pretty" json={jsonDataText} />
                   </MetaInnerContainer>
                 )}
               </AutoSizer>

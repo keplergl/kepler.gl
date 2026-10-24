@@ -126,17 +126,16 @@ function TimelineSliderFactory() {
         return [null, null];
       }
 
-      const valueFormatter = formatValue || (() => {
-        const hasUserFormat = typeof timeFormat === 'string';
-        const currentFormat =
-          (hasUserFormat ? timeFormat : defaultTimeFormat) || DEFAULT_TIME_FORMAT;
-        return datetimeFormatter(timezone)(currentFormat);
-      })();
+      const valueFormatter =
+        formatValue ||
+        (() => {
+          const hasUserFormat = typeof timeFormat === 'string';
+          const currentFormat =
+            (hasUserFormat ? timeFormat : defaultTimeFormat) || DEFAULT_TIME_FORMAT;
+          return datetimeFormatter(timezone)(currentFormat);
+        })();
 
-      return [
-        domain ? valueFormatter(domain[0]) : '',
-        domain ? valueFormatter(domain[1]) : ''
-      ];
+      return [domain ? valueFormatter(domain[0]) : '', domain ? valueFormatter(domain[1]) : ''];
     }, [domain, timezone, timeFormat, defaultTimeFormat, showDomainTimes, formatValue]);
 
     const requiresRangeSlider = isRanged && animationWindow !== ANIMATION_WINDOW.interval;

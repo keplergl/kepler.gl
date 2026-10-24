@@ -336,10 +336,7 @@ test('Components -> FilterAnimationController -> numeric incremental bins stay i
   const AnimationController = AnimationControllerFactory();
   const FilterAnimationController = FilterAnimationControllerFactory(AnimationController);
   let visState = reducer(StateWFilters.visState, setFilter(0, 'name', 'gps_data.lat'));
-  visState = reducer(
-    visState,
-    setFilterPlot(0, {plotType: {numericInterval: 0.01}})
-  );
+  visState = reducer(visState, setFilterPlot(0, {plotType: {numericInterval: 0.01}}));
   visState = reducer(
     visState,
     setFilterAnimationWindow({

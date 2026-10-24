@@ -348,15 +348,8 @@ export default function ModalContainerFactory(
 
     _onExportMap = () => {
       const {uiState} = this._propsWithMapInfoDraft();
-      const {
-        format,
-        includeLayerApiKeys,
-        fileName,
-        appName,
-        appWebsite,
-        appIcon,
-        appNameColor
-      } = uiState.exportMap;
+      const {format, includeLayerApiKeys, fileName, appName, appWebsite, appIcon, appNameColor} =
+        uiState.exportMap;
       (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(
         this._propsWithMapInfoDraft(),
         {

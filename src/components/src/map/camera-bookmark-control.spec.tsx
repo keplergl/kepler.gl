@@ -320,7 +320,10 @@ test.each([INITIAL_UI_STATE.mapControls, legacyMapControls, enabledMapControls])
     const commit = jest.fn();
     const visibility = jest.fn();
     function Harness() {
-      const [uiState, setUiState] = React.useState({...INITIAL_UI_STATE, mapControls: initialControls});
+      const [uiState, setUiState] = React.useState({
+        ...INITIAL_UI_STATE,
+        mapControls: initialControls
+      });
       const setMapControlVisibility: typeof UIStateActions.setMapControlVisibility = (id, show) => {
         visibility(id, show);
         const action = UIStateActions.setMapControlVisibility(id, show);

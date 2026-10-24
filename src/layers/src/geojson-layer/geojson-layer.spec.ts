@@ -228,7 +228,9 @@ describe('GeoJsonLayer default color field', () => {
   });
 
   test('keeps a single-feature dataset uniformly colored', async () => {
-    const {layer} = await initializeGeoJsonLayer([{geometry: polygon(0), properties: {score: 0.5}}]);
+    const {layer} = await initializeGeoJsonLayer([
+      {geometry: polygon(0), properties: {score: 0.5}}
+    ]);
 
     expect(layer.config.colorField).toBeNull();
     expect(layer.config.strokeColorField).toBeNull();

@@ -272,8 +272,7 @@ describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
   });
 
   it('keeps confirmed group and child-layer deletion isolated between map instances', () => {
-    const {container, store, firstMapVisState, secondMapVisState} =
-      renderLayerListForInstances();
+    const {container, store, firstMapVisState, secondMapVisState} = renderLayerListForInstances();
 
     fireEvent.click(container.querySelector('.layer-group__delete svg'));
 
@@ -292,8 +291,9 @@ describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
   });
 
   it('keeps immediate empty-group deletion isolated between map instances', () => {
-    const {container, store, firstMapVisState, secondMapVisState} =
-      renderLayerListForInstances({emptySharedGroup: true});
+    const {container, store, firstMapVisState, secondMapVisState} = renderLayerListForInstances({
+      emptySharedGroup: true
+    });
 
     fireEvent.click(container.querySelector('.layer-group__delete svg'));
 

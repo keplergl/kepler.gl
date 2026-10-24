@@ -147,10 +147,7 @@ describe('dataset export', () => {
   ])(
     'writes $dimension GeoPackage points with matching Z metadata',
     async ({altitudes, expectedZ, expectedCoordinates}) => {
-      const altitudeFields = [
-        ...fields,
-        {name: 'altitude', type: ALL_FIELD_TYPES.real}
-      ] as Field[];
+      const altitudeFields = [...fields, {name: 'altitude', type: ALL_FIELD_TYPES.real}] as Field[];
       const altitudeFieldPairs = [
         {
           defaultName: 'point',

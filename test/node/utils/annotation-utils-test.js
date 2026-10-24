@@ -413,20 +413,10 @@ test('#movePoint -> falls back to ground plane when pick returns no altitude', t
 
 test('#moveRulerEndpoint -> moves endpoints independently using 3D surface picks', t => {
   const ruler = makeRulerAnnotation({anchorPoint: [0, 0, 5], endPoint: [1, 1, 10]});
-  const movedStart = moveRulerEndpoint(
-    ruler,
-    'start',
-    {x: 5, y: 5},
-    mockViewport,
-    () => [2, 3, 40]
-  );
-  const movedEnd = moveRulerEndpoint(
-    ruler,
-    'end',
-    {x: 5, y: 5},
-    mockViewport,
-    () => [4, 5, 80]
-  );
+  const movedStart = moveRulerEndpoint(ruler, 'start', {x: 5, y: 5}, mockViewport, () => [
+    2, 3, 40
+  ]);
+  const movedEnd = moveRulerEndpoint(ruler, 'end', {x: 5, y: 5}, mockViewport, () => [4, 5, 80]);
 
   t.deepEqual(movedStart.anchorPoint, [2, 3, 40], 'start should snap to its picked surface');
   t.notOk('endPoint' in movedStart, 'moving start should not change end');
@@ -454,16 +444,10 @@ test('#moveRulerEndpoint -> drags from the rendered world copy across the dateli
   };
   const ruler = makeRulerAnnotation({anchorPoint: [179, 0], endPoint: [-179, 0]});
   let pickedScreen;
-  const changes = moveRulerEndpoint(
-    ruler,
-    'end',
-    {x: 1, y: 0},
-    wrappingViewport,
-    screen => {
-      pickedScreen = screen;
-      return null;
-    }
-  );
+  const changes = moveRulerEndpoint(ruler, 'end', {x: 1, y: 0}, wrappingViewport, screen => {
+    pickedScreen = screen;
+    return null;
+  });
 
   t.deepEqual(pickedScreen, [182, 0], 'surface pick should start at the visible +181 handle');
   t.deepEqual(changes.endPoint, [-178, 0], 'stored longitude should remain normalized');

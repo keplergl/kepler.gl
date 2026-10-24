@@ -6,11 +6,7 @@ import styled from 'styled-components';
 import {useDraggable} from '@dnd-kit/core';
 import {Annotation} from '@kepler.gl/types';
 import {AnnotationKind} from '@kepler.gl/constants';
-import {
-  getAnnotationTextBoxStyle,
-  getRulerDistanceLabel,
-  MapViewport
-} from './annotation-utils';
+import {getAnnotationTextBoxStyle, getRulerDistanceLabel, MapViewport} from './annotation-utils';
 import {LexicalRichTextEditor, LexicalToolbar} from './lexical-editor';
 import {SerializedEditorState} from 'lexical';
 
@@ -111,8 +107,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
 }) => {
   const isRuler = annotation.kind === AnnotationKind.RULER;
   const showCustomText = !isRuler || annotation.showCustomText;
-  const distanceText =
-    isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
+  const distanceText = isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
   const isDraggable = !isRuler;
   const {attributes, listeners, setNodeRef} = useDraggable({
     id: `${annotation.id}:MOVE_TEXT`,

@@ -74,8 +74,8 @@ function int64Vector(values: unknown[]): arrow.Vector | null {
       typeof value === 'bigint'
         ? value
         : typeof value === 'number' && Number.isSafeInteger(value)
-          ? BigInt(value)
-          : null;
+        ? BigInt(value)
+        : null;
     if (integer === null || integer < MIN_INT64 || integer > MAX_INT64) {
       return null;
     }

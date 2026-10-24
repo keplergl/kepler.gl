@@ -250,9 +250,7 @@ function LineChartFactory() {
 
     const hintFormatter = useMemo(
       () =>
-        isTime
-          ? datetimeFormatter(timezone)(timeFormat)
-          : (value: number) => formatNumber(value),
+        isTime ? datetimeFormatter(timezone)(timeFormat) : (value: number) => formatNumber(value),
       [isTime, timezone, timeFormat]
     );
 

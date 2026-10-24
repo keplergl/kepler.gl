@@ -41,6 +41,7 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [GeoHash](./c-types-of-layers/r-geohash.md)
 * [Vector Tile Layer](./c-types-of-layers/m-vector-tile-layer.md)
 * [Raster Tile Layer](./c-types-of-layers/n-raster-tile-layer.md)
+* [Zarr Layer](./c-types-of-layers/s-zarr-layer.md)
 * [WMS Layer](./c-types-of-layers/o-wms-layer.md)
 
 #### [Layer attributes](./d-layer-attributes.md)
