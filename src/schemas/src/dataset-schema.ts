@@ -112,6 +112,7 @@ export const propertiesV1 = {
  * Prepare a data container for export as part of json / html files.
  * 1) Arrow tables can store Timestamps as BigInts, so convert numbers to ISOStrings compatible with Kepler.gl's TIMESTAMP.
  * 2) Geoarrow binary buffers converted to hex wkb
+ * 3) Int64 values outside the safe integer range saved as exact decimal strings
  * @param dataContainer A data container to flatten.
  * @returns Row based data.
  */
@@ -131,7 +132,16 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
         arrow.DataType.isTime(column.type)
       ) {
         allData.forEach(row => {
-          row[columnIndex] = new Date(row[columnIndex]).toISOString();
+          const value = row[columnIndex];
+          row[columnIndex] = value == null ? null : new Date(value).toISOString();
+        });
+      } else if (arrow.DataType.isInt(column.type) && column.type.bitWidth === 64) {
+        allData.forEach(row => {
+          const value = row[columnIndex];
+          if (typeof value === 'bigint') {
+            const number = Number(value);
+            row[columnIndex] = Number.isSafeInteger(number) ? number : value.toString();
+          }
         });
       } else if (field?.type === ALL_FIELD_TYPES.geoarrow) {
         const formatter = FIELD_DISPLAY_FORMAT[ALL_FIELD_TYPES.geoarrow];
