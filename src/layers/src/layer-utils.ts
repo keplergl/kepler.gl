@@ -378,7 +378,8 @@ export function createGeoArrowPointVector(
     fixedSizeListBuilder.append(getPosition(indexData));
   }
 
-  return arrow.makeVector(numElements > 0 ? [fixedSizeListBuilder.flush()] : []);
+  // Flush even for zero rows so Arrow receives typed Data instead of an untyped empty array.
+  return arrow.makeVector([fixedSizeListBuilder.flush()]);
 }
 
 /**
