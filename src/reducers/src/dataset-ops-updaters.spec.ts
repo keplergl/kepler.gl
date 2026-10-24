@@ -4,8 +4,10 @@
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
 import {KeplerTable} from '@kepler.gl/table';
+import {processCsvData} from '@kepler.gl/processors';
 import SchemaManager, {VisState} from '@kepler.gl/schemas';
 import {drainTasksForTesting, succeedTaskWithValues} from '@kepler.gl/tasks';
+import {Response} from 'node-fetch';
 
 import visStateReducer from './vis-state';
 import {INITIAL_VIS_STATE} from './vis-state-updaters';
@@ -44,6 +46,14 @@ function flushCreateTableTasks(state: VisState) {
 }
 
 describe('dataset ops vis-state', () => {
+  const originalResponse = globalThis.Response;
+  beforeAll(() => {
+    globalThis.Response = Response as any;
+  });
+  afterAll(() => {
+    globalThis.Response = originalResponse;
+  });
+
   beforeEach(() => {
     drainTasksForTesting();
   });
@@ -163,6 +173,47 @@ describe('dataset ops vis-state', () => {
       VisStateActions.setSpatialJoinConfig(op.id, {predicate: 'within'})
     );
     expect(state.joins[0].predicate).toBe('within');
+  });
+
+  test('spatial joins imported WKT after repeated runs and source reloads without changing it', () => {
+    const polygon = 'POLYGON ((-10 -10, 10 -10, 10 10, -10 10, -10 -10))';
+    const polys = makeTable('polys', [], []);
+    const pts = makeTable('pts', [], []);
+    let state: VisState = {...INITIAL_VIS_STATE, datasets: {polys, pts}};
+
+    for (const lng of [0, 0, 30]) {
+      const polygonData = processCsvData(`geom\n"${polygon}"`);
+      const point = `POINT (${lng} 0)`;
+      const pointData = processCsvData(`geom,value\n"${point}",10`);
+      if (!polygonData || !pointData) throw new Error('WKT CSV import failed');
+      polys.updateSchema(polygonData);
+      pts.updateSchema(pointData);
+      expect(polys.fields[0].type).toBe(ALL_FIELD_TYPES.geojson);
+      expect(pts.fields[0].type).toBe(ALL_FIELD_TYPES.geojson);
+
+      state = reduceVisState(state, VisStateActions.addSpatialJoin('polys'));
+      const op = state.joins[0];
+      state = reduceVisState(
+        state,
+        VisStateActions.setSpatialJoinConfig(op.id, {
+          rightDataId: 'pts',
+          leftGeo: {kind: 'geojson', fieldName: 'geom'},
+          rightGeo: {kind: 'geojson', fieldName: 'geom'},
+          aggregations: {value: 'sum'}
+        })
+      );
+      state = reduceVisState(state, VisStateActions.runSpatialJoin(op.id));
+      state = flushCreateTableTasks(state);
+
+      expect(state.joins).toHaveLength(0);
+      expect(state.datasets[op.resultId].dataContainer.rowAsArray(0)).toEqual([
+        polygon,
+        lng === 0 ? 1 : 0,
+        lng === 0 ? 10 : null
+      ]);
+      expect(polys.dataContainer.valueAt(0, 0)).toBe(polygon);
+      expect(pts.dataContainer.valueAt(0, 0)).toBe(point);
+    }
   });
 
   test('delete spatial join source keeps result snapshot', () => {
