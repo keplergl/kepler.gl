@@ -3,10 +3,10 @@
 
 import {h3IsValid, idToPolygonGeo} from '@kepler.gl/common-utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {parseGeoJsonRawFeature} from '@kepler.gl/layers';
 import {parseGeometry} from '@kepler.gl/table';
 import {Field, FieldPair} from '@kepler.gl/types';
 import {DataContainerInterface, parseFieldValue} from '@kepler.gl/utils';
-import {convertWKBToGeometry, convertWKTToGeometry} from '@loaders.gl/gis';
 import type {Feature, FeatureCollection, Geometry, Position} from 'geojson';
 
 type GeometryPlan =
@@ -35,42 +35,6 @@ function geometryPlan(fields: Field[], fieldPairs: FieldPair[] = []): GeometryPl
   return {kind: 'none'};
 }
 
-function geometryFromBinary(raw: ArrayBuffer | ArrayBufferView): Geometry | null {
-  try {
-    const bytes =
-      raw instanceof ArrayBuffer
-        ? raw
-        : raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength);
-    return convertWKBToGeometry(bytes) as Geometry;
-  } catch {
-    return null;
-  }
-}
-
-function geometryFromRaw(raw: unknown, fieldType: string): Geometry | null {
-  if (raw == null) {
-    return null;
-  }
-  if (raw instanceof ArrayBuffer || ArrayBuffer.isView(raw)) {
-    return geometryFromBinary(raw);
-  }
-  const parsed = parseGeometry(raw);
-  if (parsed?.geometry) {
-    return parsed.geometry;
-  }
-  if (fieldType === ALL_FIELD_TYPES.geoarrow && typeof raw === 'string') {
-    const text = raw.trim();
-    if (/^(POINT|LINESTRING|POLYGON|MULTI|GEOMETRYCOLLECTION)\b/i.test(text)) {
-      try {
-        return convertWKTToGeometry(text) as Geometry;
-      } catch {
-        return null;
-      }
-    }
-  }
-  return null;
-}
-
 function attributeValue(value: unknown, field: Field): string | number | boolean | null {
   if (value == null) {
     return null;
@@ -93,8 +57,17 @@ function pointGeometry(
   rowIndex: number,
   pair: FieldPair
 ): Geometry | null {
-  const lat = Number(data.valueAt(rowIndex, pair.pair.lat.fieldIdx));
-  const lng = Number(data.valueAt(rowIndex, pair.pair.lng.fieldIdx));
+  const latValue = data.valueAt(rowIndex, pair.pair.lat.fieldIdx);
+  const lngValue = data.valueAt(rowIndex, pair.pair.lng.fieldIdx);
+  if (
+    ![latValue, lngValue].every(
+      value => typeof value === 'number' || (typeof value === 'string' && value.trim() !== '')
+    )
+  ) {
+    return null;
+  }
+  const lat = Number(latValue);
+  const lng = Number(lngValue);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return null;
   }
@@ -134,10 +107,17 @@ export function datasetToFeatureCollection(
 
     let geometry: Geometry | null = null;
     if (plan.kind === 'geo') {
-      geometry = geometryFromRaw(
-        data.valueAt(rowIndex, plan.fieldIndex),
-        fields[plan.fieldIndex].type
-      );
+      const raw = data.valueAt(rowIndex, plan.fieldIndex);
+      const encoding = fields[plan.fieldIndex].metadata?.get?.('ARROW:extension:name');
+      // Unannotated WKB may use any buffer view; native GeoArrow views contain coordinates.
+      const geometryValue =
+        !encoding && ArrayBuffer.isView(raw)
+          ? new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength)
+          : raw;
+      geometry =
+        parseGeometry(raw)?.geometry ??
+        parseGeoJsonRawFeature(geometryValue, encoding)?.geometry ??
+        null;
     } else if (plan.kind === 'latlng') {
       geometry = pointGeometry(data, rowIndex, plan.pair);
     } else if (plan.kind === 'h3') {
