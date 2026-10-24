@@ -115,6 +115,17 @@ export function aggregateValues(values: unknown[], technique: DatasetOpAggregati
   if (!defined.length) {
     return null;
   }
+  if (
+    technique === DATASET_OPS_AGGREGATIONS.sum ||
+    technique === DATASET_OPS_AGGREGATIONS.average ||
+    technique === DATASET_OPS_AGGREGATIONS.median
+  ) {
+    // D3 arithmetic requires Numbers. Keep raw BigInts for exact extrema/distinct counts
+    // and leave the source data unchanged; arithmetic results use Number precision.
+    return aggregate(defined, technique, value =>
+      typeof value === 'bigint' ? Number(value) : value
+    );
+  }
   return aggregate(defined, technique);
 }
 
