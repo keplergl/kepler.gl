@@ -4,7 +4,12 @@
 import test from 'tape';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
-import {getGeojsonLayerMetaFromArrow, LayerClasses, KeplerGlLayers} from '@kepler.gl/layers';
+import {
+  createGeoArrowPointVector,
+  getGeojsonLayerMetaFromArrow,
+  LayerClasses,
+  KeplerGlLayers
+} from '@kepler.gl/layers';
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY, GEOJSON_FIELDS} from '@kepler.gl/constants';
 import {findDefaultLayer, getLayerHoverProp, getLayerOrderFromLayers} from '@kepler.gl/reducers';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
@@ -20,6 +25,57 @@ import {geoJsonWithStyle} from 'test/fixtures/geojson';
 import {KeplerTable, findPointFieldPairs} from '@kepler.gl/table';
 import {ArrowDataContainer, createDataContainer, findDefaultColorField} from '@kepler.gl/utils';
 import * as arrow from 'apache-arrow';
+
+test('layerUtils -> createGeoArrowPointVector handles empty and nonempty coordinates', t => {
+  for (const coordinates of [
+    [],
+    [
+      [-122.42, 37.77],
+      [0, 0]
+    ],
+    [
+      [-122.42, 37.77, 10],
+      [0, 0, -5]
+    ]
+  ]) {
+    const dataContainer = new ArrowDataContainer({
+      cols: [
+        arrow.vectorFromArray(
+          coordinates.map((_, i) => i),
+          new arrow.Float64()
+        )
+      ],
+      fields: [{name: 'row', type: 'real', fieldIdx: 0}]
+    });
+    let accessorCalls = 0;
+    let vector;
+    t.doesNotThrow(() => {
+      vector = createGeoArrowPointVector(dataContainer, ({index}) => {
+        accessorCalls++;
+        return coordinates[index];
+      });
+    }, 'should create a coordinate vector, including for zero rows');
+    if (vector) {
+      t.equal(vector.length, coordinates.length, 'preserves the row count');
+      t.ok(arrow.DataType.isFixedSizeList(vector.type), 'coordinates have a fixed-size-list type');
+      t.equal(vector.type.listSize, coordinates[0]?.length || 2, 'retains coordinate dimensions');
+      t.equal(
+        String(vector.type.children[0].type),
+        'Float64',
+        'coordinates retain Float64 precision'
+      );
+      t.deepEqual(
+        Array.from({length: vector.length}, (_, i) => Array.from(vector.get(i))),
+        coordinates,
+        'preserves nonempty coordinate values and order'
+      );
+    }
+    if (!coordinates.length) {
+      t.equal(accessorCalls, 0, 'does not read a nonexistent row');
+    }
+  }
+  t.end();
+});
 
 test('layerUtils -> getGeojsonLayerMetaFromArrow uses worker-prepared data', t => {
   const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
