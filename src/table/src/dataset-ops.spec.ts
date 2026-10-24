@@ -3,8 +3,10 @@
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {latLngToCell} from '@kepler.gl/common-utils';
+import {Int64, Table, Uint64, vectorFromArray} from 'apache-arrow';
 
 import KeplerTable from './kepler-table';
+import {aggregateValues} from './dataset-ops/aggregations';
 import {
   DATASET_OPS_AGGREGATIONS,
   aggregationOptionsForField,
@@ -44,6 +46,20 @@ function makeTable({
     rows
   });
   return table;
+}
+
+function makeInt64Data(values: (bigint | null)[], type: Int64 | Uint64 = new Int64()) {
+  const region = vectorFromArray(values.map(value => (value === null ? 'missing' : 'west')));
+  const pop = vectorFromArray(values, type);
+  return {
+    fields: [
+      {name: 'region', type: ALL_FIELD_TYPES.string},
+      {name: 'pop', type: ALL_FIELD_TYPES.integer}
+    ],
+    cols: [region, pop],
+    rows: [],
+    arrowTable: new Table({region, pop})
+  };
 }
 
 const square = (west: number, south: number, east: number, north: number) => ({
@@ -99,6 +115,79 @@ describe('dataset-ops engine', () => {
     const byRegion = Object.fromEntries(result.data.rows.map(row => [row[0], row]));
     expect(byRegion.west).toEqual(['west', 30, 2]);
     expect(byRegion.east).toEqual(['east', 40, 1]);
+  });
+
+  describe.each([new Int64(), new Uint64()])('Arrow %s Group By', arrowType => {
+    test.each([
+      [DATASET_OPS_AGGREGATIONS.sum, 30, 80],
+      [DATASET_OPS_AGGREGATIONS.average, 15, 40],
+      [DATASET_OPS_AGGREGATIONS.median, 15, 40]
+    ] as const)('%s works before and after repeated updates', async (technique, first, next) => {
+      const dataset = new KeplerTable({info: {id: 'int64'}, color: [0, 0, 0]});
+      dataset.updateSchema(makeInt64Data([10n, 20n, null], arrowType));
+      const config = {fieldName: 'region', aggregations: {pop: technique}};
+
+      expect(groupByDataset(dataset, config).data.rows).toEqual([
+        ['west', first],
+        ['missing', null]
+      ]);
+
+      for (let i = 0; i < 2; i++) {
+        const data = makeInt64Data([30n, 50n, null], arrowType);
+        await dataset.update(data);
+        const result = groupByDataset(dataset, config);
+        expect(result.data.rows).toEqual([
+          ['west', next],
+          ['missing', null]
+        ]);
+        expect([0, 1, 2].map(index => dataset.dataContainer.valueAt(index, 1))).toEqual([
+          30n,
+          50n,
+          null
+        ]);
+        expect([0, 1, 2].map(index => data.cols[1].get(index))).toEqual([30n, 50n, null]);
+
+        const reloaded = new KeplerTable({info: result.info, color: [0, 0, 0]});
+        await reloaded.importData({data: result.data});
+        expect(reloaded.dataContainer.valueAt(0, 1)).toBe(next);
+      }
+    });
+  });
+
+  test.each([
+    [DATASET_OPS_AGGREGATIONS.sum, 18014398509481984],
+    [DATASET_OPS_AGGREGATIONS.average, 9007199254740992],
+    [DATASET_OPS_AGGREGATIONS.median, 9007199254740992],
+    [DATASET_OPS_AGGREGATIONS.minimum, 9007199254740992n],
+    [DATASET_OPS_AGGREGATIONS.maximum, 9007199254740993n],
+    [DATASET_OPS_AGGREGATIONS.countUnique, 2],
+    [DATASET_OPS_AGGREGATIONS.count, 2]
+  ] as const)('Int64 %s preserves source precision', (technique, expected) => {
+    const values = [9007199254740992n, 9007199254740993n];
+    const data = makeInt64Data(values);
+    const dataset = new KeplerTable({info: {id: 'int64'}, color: [0, 0, 0]});
+    dataset.updateSchema(data);
+
+    const result = groupByDataset(dataset, {
+      fieldName: 'region',
+      aggregations: {pop: technique}
+    });
+
+    // Arithmetic uses Number precision; extrema and distinct counts retain exact BigInts.
+    expect(result.data.rows).toEqual([['west', expected]]);
+    expect([0, 1].map(index => dataset.dataContainer.valueAt(index, 1))).toEqual(values);
+    expect([0, 1].map(index => data.cols[1].get(index))).toEqual(values);
+  });
+
+  test.each([
+    [DATASET_OPS_AGGREGATIONS.sum, 30, 1],
+    [DATASET_OPS_AGGREGATIONS.average, 15, 0.5],
+    [DATASET_OPS_AGGREGATIONS.median, 15, 0.5]
+  ] as const)('%s handles mixed numbers and missing values', (technique, numeric, boolean) => {
+    expect(aggregateValues([10n, null, 20, undefined], technique)).toBe(numeric);
+    expect(aggregateValues([true, false, null], technique)).toBe(boolean);
+    expect(aggregateValues([], technique)).toBeNull();
+    expect(aggregateValues([null, undefined], technique)).toBeNull();
   });
 
   test('groupByDataset keeps null groups distinct from the string __null__', () => {
