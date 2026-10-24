@@ -108,10 +108,15 @@ export function datasetToFeatureCollection(
     let geometry: Geometry | null = null;
     if (plan.kind === 'geo') {
       const raw = data.valueAt(rowIndex, plan.fieldIndex);
+      const encoding = fields[plan.fieldIndex].metadata?.get?.('ARROW:extension:name');
+      // Unannotated WKB may use any buffer view; native GeoArrow views contain coordinates.
+      const geometryValue =
+        !encoding && ArrayBuffer.isView(raw)
+          ? new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength)
+          : raw;
       geometry =
         parseGeometry(raw)?.geometry ??
-        parseGeoJsonRawFeature(raw, fields[plan.fieldIndex].metadata?.get?.('ARROW:extension:name'))
-          ?.geometry ??
+        parseGeoJsonRawFeature(geometryValue, encoding)?.geometry ??
         null;
     } else if (plan.kind === 'latlng') {
       geometry = pointGeometry(data, rowIndex, plan.pair);

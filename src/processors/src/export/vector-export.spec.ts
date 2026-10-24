@@ -49,6 +49,77 @@ function container() {
 }
 
 describe('dataset export', () => {
+  test.each(['DataView', 'Uint16Array', 'Uint8Array', 'ArrayBuffer'])(
+    'preserves WKB geometry from %s with bounded byte views',
+    async viewType => {
+      const geometry = {
+        type: 'MultiPoint' as const,
+        coordinates: [
+          [-122.4123456789, 37.8123456789],
+          [0, 0],
+          [1, 2]
+        ]
+      };
+      // Three WKB points occupy 72 bytes, so the Uint16Array has no padding inside its view.
+      const bytes = new Uint8Array(convertGeometryToWKB(geometry));
+      const padded = new Uint8Array(bytes.length + 16).fill(255);
+      padded.set(bytes, 8);
+      const value = {
+        DataView: new DataView(padded.buffer, 8, bytes.length),
+        Uint16Array: new Uint16Array(padded.buffer, 8, bytes.length / 2),
+        Uint8Array: padded.subarray(8, 8 + bytes.length),
+        ArrayBuffer: bytes.buffer
+      }[viewType];
+      const shared = {
+        data: createDataContainer([[value, 'p']]),
+        fields: [
+          {name: 'geometry', type: ALL_FIELD_TYPES.geojson},
+          {name: 'id', type: ALL_FIELD_TYPES.string}
+        ] as Field[],
+        layerName: 'views'
+      };
+      const geojson = await encodeDatasetExport({...shared, dataType: EXPORT_DATA_TYPE.GEOJSON});
+      expect(JSON.parse(String(geojson.data)).features).toEqual([
+        {type: 'Feature', geometry, properties: {id: 'p'}}
+      ]);
+
+      const shapefile = await encodeDatasetExport({
+        ...shared,
+        dataType: EXPORT_DATA_TYPE.SHAPEFILE
+      });
+      const files = await ZipLoader.parse(shapefile.data);
+      const shp = new DataView(files['views.shp']);
+      expect(shp.getInt32(108, true)).toBe(8);
+      expect(shp.getInt32(144, true)).toBe(geometry.coordinates.length);
+      expect(
+        geometry.coordinates.map((_, i) => [
+          shp.getFloat64(148 + i * 16, true),
+          shp.getFloat64(156 + i * 16, true)
+        ])
+      ).toEqual(geometry.coordinates);
+    }
+  );
+
+  test('preserves native GeoArrow coordinate views when decoding exports', () => {
+    const coordinates = new Float64Array([999, -122.4123456789, 37.8123456789, 999]);
+    const value = coordinates.subarray(1, 3);
+    const collection = datasetToFeatureCollection(createDataContainer([[value]]), [
+      {
+        name: 'geometry',
+        displayName: 'geometry',
+        type: ALL_FIELD_TYPES.geoarrow,
+        fieldIdx: 0,
+        format: '',
+        valueAccessor: () => value,
+        metadata: new Map([['ARROW:extension:name', 'geoarrow.point']])
+      }
+    ]);
+    expect(collection.features[0].geometry).toEqual({
+      type: 'Point',
+      coordinates: [-122.4123456789, 37.8123456789]
+    });
+  });
+
   test.each(['WKT', 'hex WKB', 'Arrow WKT', 'native GeoArrow point'])(
     'preserves imported %s geometry in GeoJSON and shapefile exports',
     async encoding => {
