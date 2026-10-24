@@ -3,6 +3,7 @@
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {latLngToCell} from '@kepler.gl/common-utils';
+import {Response} from 'node-fetch';
 
 import KeplerTable from './kepler-table';
 import {
@@ -64,6 +65,14 @@ const square = (west: number, south: number, east: number, north: number) => ({
 });
 
 describe('dataset-ops engine', () => {
+  const originalResponse = globalThis.Response;
+  beforeAll(() => {
+    globalThis.Response = Response as any;
+  });
+  afterAll(() => {
+    globalThis.Response = originalResponse;
+  });
+
   test('groupByDataset aggregates numeric and unique string values', () => {
     const dataset = makeTable({
       id: 'cities',
@@ -244,7 +253,24 @@ describe('dataset-ops engine', () => {
     expect(result.data.rows[0]).toEqual(['sf']);
   });
 
-  test('spatialJoinDatasets joins points contained by polygons', () => {
+  test.each([
+    {format: 'GeoJSON', west: square(-10, -10, 10, 10), east: square(20, -10, 40, 10)},
+    {
+      format: 'WKT',
+      west: 'POLYGON ((-10 -10, 10 -10, 10 10, -10 10, -10 -10))',
+      east: 'POLYGON ((20 -10, 40 -10, 40 10, 20 10, 20 -10))'
+    },
+    {
+      format: 'MultiPolygon WKT',
+      west: 'MULTIPOLYGON (((-10 -10, 10 -10, 10 10, -10 10, -10 -10)))',
+      east: 'MULTIPOLYGON (((20 -10, 40 -10, 40 10, 20 10, 20 -10)))'
+    },
+    {
+      format: 'GeoJSON string',
+      west: JSON.stringify(square(-10, -10, 10, 10)),
+      east: JSON.stringify(square(20, -10, 40, 10).geometry)
+    }
+  ])('spatialJoinDatasets joins points contained by $format polygons', ({west, east}) => {
     const polygons = makeTable({
       id: 'polys',
       fields: [
@@ -252,8 +278,8 @@ describe('dataset-ops engine', () => {
         {name: 'geom', type: ALL_FIELD_TYPES.geojson}
       ],
       rows: [
-        ['west', square(-10, -10, 10, 10)],
-        ['east', square(20, -10, 40, 10)]
+        ['west', west],
+        ['east', east]
       ]
     });
     const points = makeTable({
@@ -282,6 +308,9 @@ describe('dataset-ops engine', () => {
     expect(result.data.rows[0][3]).toBe(10);
     expect(result.data.rows[1][2]).toBe(1);
     expect(result.data.rows[1][3]).toBe(5);
+    expect(result.data.rows.map(row => row[1])).toEqual([west, east]);
+    expect(polygons.dataContainer.valueAt(0, 1)).toBe(west);
+    expect(polygons.dataContainer.valueAt(1, 1)).toBe(east);
     expect(result.metadata.derivedDataset.type).toBe('spatialJoin');
   });
 
@@ -608,6 +637,9 @@ describe('dataset-ops engine', () => {
     test.each([
       null,
       'invalid json',
+      '',
+      'POLYGON EMPTY',
+      'POLYGON ((not coordinates))',
       {type: 'Feature', geometry: null, properties: {}},
       {type: 'Polygon', coordinates: []},
       {type: 'Polygon', coordinates: [[]]},

@@ -3,7 +3,12 @@
 
 import {cellToParent, h3GetResolution, h3IsValid, latLngToCell} from '@kepler.gl/common-utils';
 import {isInPolygon} from '@kepler.gl/utils';
+import {parseSync} from '@loaders.gl/core';
+import {WKTLoader} from '@loaders.gl/wkt';
 import type {Feature, Geometry, Position} from 'geojson';
+
+const WKT_PREFIX_RE =
+  /^\s*(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION)\s*[(ZME]/i;
 
 function isLngLat(pos: unknown): pos is Position {
   return (
@@ -32,7 +37,7 @@ export function parseGeometry(raw: unknown): Feature | null {
   }
   if (typeof raw === 'string') {
     try {
-      return parseGeometry(JSON.parse(raw));
+      return parseGeometry(WKT_PREFIX_RE.test(raw) ? parseSync(raw, WKTLoader) : JSON.parse(raw));
     } catch {
       return null;
     }
