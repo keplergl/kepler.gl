@@ -1,13 +1,20 @@
+/** @jest-environment node */
+
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {convertWKBToGeometry} from '@loaders.gl/gis';
+import {convertGeometryToWKB, convertWKBToGeometry} from '@loaders.gl/gis';
 import {convertArrowToSchema} from '@loaders.gl/schema-utils';
 import {DBFLoader} from '@loaders.gl/shapefile';
 import {ALL_FIELD_TYPES, EXPORT_DATA_TYPE} from '@kepler.gl/constants';
 import {Field} from '@kepler.gl/types';
-import {createDataContainer} from '@kepler.gl/utils';
+import {createDataContainer, validateInputData} from '@kepler.gl/utils';
+import {datasetSchema, VERSIONS} from '@kepler.gl/schemas';
+import * as arrow from 'apache-arrow';
 import {tableFromIPC} from 'apache-arrow';
+import {ZipLoader} from '@loaders.gl/zip';
+import {KeplerTable} from '@kepler.gl/table';
+import {arrowSchemaToFields, processArrowTable, processRowObject} from '../data-processor';
 import type {FeatureCollection} from 'geojson';
 
 import {datasetToFeatureCollection, encodeDatasetExport} from './vector-export';
@@ -42,6 +49,116 @@ function container() {
 }
 
 describe('dataset export', () => {
+  test.each(['WKT', 'hex WKB', 'Arrow WKT', 'native GeoArrow point'])(
+    'preserves imported %s geometry in GeoJSON and shapefile exports',
+    async encoding => {
+      const geometry = {type: 'Point' as const, coordinates: [-122.4123456789, 37.8123456789]};
+      let data;
+      if (encoding === 'native GeoArrow point') {
+        const points = arrow.vectorFromArray(
+          [geometry.coordinates, null],
+          new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64()))
+        );
+        const table = new arrow.Table({geometry: points});
+        table.schema.fields[0].metadata.set('ARROW:extension:name', 'geoarrow.point');
+        data = processArrowTable({shape: 'arrow-table', data: table} as any);
+      } else {
+        const value = encoding.endsWith('WKT')
+          ? `POINT (${geometry.coordinates.join(' ')})`
+          : Buffer.from(convertGeometryToWKB(geometry)).toString('hex');
+        if (encoding === 'Arrow WKT') {
+          const column = arrow.vectorFromArray([value, null], new arrow.Utf8());
+          const table = new arrow.Table({geometry: column});
+          data = {
+            fields: arrowSchemaToFields(table, {geometry: 'VARCHAR'}),
+            cols: [column],
+            rows: []
+          };
+        } else {
+          data = processRowObject([{geometry: value}, {geometry: null}]);
+        }
+      }
+      if (!data) throw new Error('Geometry import failed');
+      const dataset = new KeplerTable({color: [1, 2, 3]});
+      await dataset.importData({data});
+      const shared = {
+        data: dataset.dataContainer,
+        fields: dataset.fields,
+        hiddenColumns: ['geometry'],
+        layerName: 'geometry'
+      };
+      const geojson = await encodeDatasetExport({...shared, dataType: EXPORT_DATA_TYPE.GEOJSON});
+      const collection = JSON.parse(String(geojson.data));
+      expect(collection.features.map(feature => feature.geometry)).toEqual([geometry, null]);
+      expect(collection.features[0].properties).not.toHaveProperty('geometry');
+
+      const saved = JSON.parse(JSON.stringify(datasetSchema[VERSIONS.v1].save(dataset)));
+      const loaded = validateInputData(datasetSchema[VERSIONS.v1].load(saved).data);
+      if (!loaded) throw new Error('Saved geometry validation failed');
+      const restored = new KeplerTable({color: [1, 2, 3]}).updateSchema(loaded);
+      expect(datasetToFeatureCollection(restored.dataContainer, restored.fields)).toEqual(
+        collection
+      );
+
+      const shapefile = await encodeDatasetExport({
+        ...shared,
+        dataType: EXPORT_DATA_TYPE.SHAPEFILE
+      });
+      const files = await ZipLoader.parse(shapefile.data);
+      const shp = new DataView(files['geometry.shp']);
+      expect(shp.getInt32(0)).toBe(9994);
+      expect(shp.getInt32(108, true)).toBe(1);
+      expect([shp.getFloat64(112, true), shp.getFloat64(120, true)]).toEqual(geometry.coordinates);
+      expect(shp.getInt32(136, true)).toBe(0);
+    }
+  );
+
+  test.each([[[1, 2]], [['1', '2']], ['[1,2]']])(
+    'preserves numeric point coordinates from %j',
+    value => {
+      const collection = datasetToFeatureCollection(createDataContainer([[value]]), [
+        {name: 'point', type: ALL_FIELD_TYPES.point} as Field
+      ]);
+      expect(collection.features[0].geometry).toEqual({type: 'Point', coordinates: [1, 2]});
+    }
+  );
+
+  test.each([
+    [null, null],
+    ['', ''],
+    ['  ', '\t'],
+    [null, 10],
+    [10, undefined],
+    ['invalid', 10],
+    [Infinity, 10],
+    [false, true]
+  ])('exports missing or invalid coordinates [%s, %s] as null geometry', async (lat, lng) => {
+    const exported = await encodeDatasetExport({
+      data: createDataContainer([['missing', 'secret', lat, lng]]),
+      fields,
+      fieldPairs,
+      dataType: EXPORT_DATA_TYPE.GEOJSON,
+      layerName: 'missing'
+    });
+    expect(JSON.parse(String(exported.data)).features[0].geometry).toBeNull();
+  });
+
+  test.each([
+    [0, 0],
+    ['0', '0'],
+    [' 37.8 ', '-122.4']
+  ])('preserves valid coordinates [%s, %s]', (lat, lng) => {
+    const collection = datasetToFeatureCollection(
+      createDataContainer([['valid', 'secret', lat, lng]]),
+      fields,
+      {fieldPairs}
+    );
+    expect(collection.features[0].geometry).toEqual({
+      type: 'Point',
+      coordinates: [Number(lng), Number(lat)]
+    });
+  });
+
   test('omits columns hidden in the attribute table', () => {
     const collection = datasetToFeatureCollection(container(), fields, {
       hiddenColumns: ['secret'],
