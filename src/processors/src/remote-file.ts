@@ -132,8 +132,8 @@ export function getFileNameForRemoteUrl(
 }
 
 /**
- * Fetch a remote dataset URL. Honors If-None-Match / If-Modified-Since when etag
- * or lastModified are provided so unchanged files can skip a re-parse.
+ * Fetch a remote dataset URL. Uses conditional headers for same-origin requests
+ * (or outside a browser) so unchanged files can skip a re-parse.
  */
 export async function fetchRemoteFile(
   url: string,
@@ -144,10 +144,13 @@ export async function fetchRemoteFile(
     throw new Error('Remote dataset URL must use http or https');
   }
   const headers: Record<string, string> = {};
-  if (etag) {
+  // Conditional headers trigger CORS preflights, which simple file servers may
+  // not support even when they allow cross-origin GET requests.
+  const isCrossOrigin = typeof location !== 'undefined' && new URL(url).origin !== location.origin;
+  if (etag && !isCrossOrigin) {
     headers['If-None-Match'] = etag;
   }
-  if (lastModified) {
+  if (lastModified && !isCrossOrigin) {
     headers['If-Modified-Since'] = lastModified;
   }
   const response = await fetch(url, {
