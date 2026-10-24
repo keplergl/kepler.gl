@@ -4,7 +4,11 @@
 import test from 'tape';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import SchemaManager, {datasetSchema, VERSIONS} from '@kepler.gl/schemas';
-import {DatasetType} from '@kepler.gl/constants';
+import {DatasetType, DATASET_FORMATS} from '@kepler.gl/constants';
+import * as arrow from 'apache-arrow';
+import {KeplerTable} from '@kepler.gl/table';
+import {exportToJsonString, exportMapToHTML, validateInputData} from '@kepler.gl/utils';
+import {processArrowTable, processKeplerglJSON} from '@kepler.gl/processors';
 
 // fixtures
 import {
@@ -267,5 +271,102 @@ test('#DatasetSchema -> save externally-hosted dataset custom refresh interval',
   const loaded = SchemaManager.parseSavedData([{version: 'v1', data: saved}]);
   t.equal(loaded[0].metadata.refreshIntervalMs, 45_000, 'should restore a custom interval');
 
+  t.end();
+});
+
+function arrowDataset(columns) {
+  const table = new arrow.Table(columns);
+  const data = processArrowTable({shape: 'arrow-table', data: table});
+  return new KeplerTable({
+    color: [1, 2, 3],
+    metadata: {format: DATASET_FORMATS.arrow}
+  }).updateSchema(data);
+}
+
+function reloadDataset(saved) {
+  const map = {datasets: [{version: 'v1', data: saved}], config: {version: 'v1', config: {}}};
+  const parsed = processKeplerglJSON(JSON.parse(exportToJsonString(map)));
+  return new KeplerTable({color: [1, 2, 3]}).updateSchema(
+    validateInputData(parsed.datasets[0].data)
+  );
+}
+
+test('#DatasetSchema -> Int64 values survive JSON, HTML and reload without precision loss', t => {
+  const dataset = arrowDataset({
+    signed: arrow.vectorFromArray(
+      [42n, 0n, 9007199254740991n, -9223372036854775808n, null],
+      new arrow.Int64()
+    ),
+    unsigned: arrow.vectorFromArray(
+      [42n, 0n, 9007199254740992n, 18446744073709551615n, null],
+      new arrow.Uint64()
+    )
+  });
+  const originalRows = dataset.dataContainer.flattenData();
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  const expected = [
+    [42, 42],
+    [0, 0],
+    [9007199254740991, '9007199254740992'],
+    ['-9223372036854775808', '18446744073709551615'],
+    [null, null]
+  ];
+  t.deepEqual(
+    saved.allData,
+    expected,
+    'uses numbers in the safe range and exact decimal strings outside it'
+  );
+  t.doesNotThrow(() => {
+    const reloaded = reloadDataset(saved);
+    t.deepEqual(reloaded.dataContainer.flattenData(), expected, 'JSON reload retains exact values');
+    t.deepEqual(
+      datasetSchema[VERSIONS.v1].save(reloaded).allData,
+      expected,
+      'resaving retains exact values'
+    );
+  }, 'JSON export is valid and reloads');
+  t.doesNotThrow(() => {
+    const html = exportMapToHTML({
+      datasets: [{version: 'v1', data: saved}],
+      config: {version: 'v1', config: {}}
+    });
+    const embedded = JSON.parse(html.match(/const datasets = (.*);/)[1]);
+    t.deepEqual(
+      reloadDataset(embedded[0].data).dataContainer.flattenData(),
+      expected,
+      'HTML embedded data reloads exactly'
+    );
+  }, 'HTML export succeeds');
+  t.deepEqual(
+    dataset.dataContainer.flattenData(),
+    originalRows,
+    'saving does not mutate Arrow values'
+  );
+  t.end();
+});
+
+test('#DatasetSchema -> null Arrow timestamps remain null through save and reload', t => {
+  const dataset = arrowDataset({
+    time: arrow.vectorFromArray([null, 0, 1700000000123], new arrow.TimestampMillisecond())
+  });
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  const expected = [[null], ['1970-01-01T00:00:00.000Z'], ['2023-11-14T22:13:20.123Z']];
+  t.deepEqual(saved.allData, expected, 'distinguishes missing timestamps from valid epoch zero');
+  const reloaded = reloadDataset(saved);
+  t.deepEqual(
+    reloaded.dataContainer.flattenData(),
+    expected,
+    'JSON reload preserves missing and nonmissing values'
+  );
+  t.deepEqual(
+    datasetSchema[VERSIONS.v1].save(reloaded).allData,
+    expected,
+    'resaving preserves nulls'
+  );
+  t.deepEqual(
+    dataset.dataContainer.flattenData(),
+    [[null], [0], [1700000000123]],
+    'saving leaves source values unchanged'
+  );
   t.end();
 });
