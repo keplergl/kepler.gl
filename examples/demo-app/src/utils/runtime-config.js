@@ -66,7 +66,6 @@ const CREDENTIAL_TO_CLOUD_KEY = {
  */
 export function applyDemoApplicationDefaults() {
   initApplicationConfig({
-    enableZarrLayer: true,
     customIcons: [
       {
         id: 'custom-star',
