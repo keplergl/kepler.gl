@@ -315,12 +315,23 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
       });
   const fieldOrder = fields.map(f => f.name);
   const meta = getFieldsFromData(sampleData, fieldOrder);
-  const updatedFields = fields.map((f, i) => ({
-    ...f,
-    type: meta[i].type,
-    format: meta[i].format,
-    analyzerType: meta[i].analyzerType
-  }));
+  const updatedFields = fields.map((f, i) => {
+    // A timestamp format correction can re-infer every field. Keep declared integer
+    // semantics for exact decimal strings saved from Int64 despite inference hints.
+    const preserveInteger =
+      f.type === ALL_FIELD_TYPES.integer &&
+      sampleData.every(row => {
+        const value = row[f.name];
+        return (
+          value == null ||
+          Number.isInteger(value) ||
+          (typeof value === 'string' && /^-?\d+$/.test(value))
+        );
+      });
+    return preserveInteger
+      ? {...f, format: f.format || '', analyzerType: f.analyzerType || 'INT'}
+      : {...f, type: meta[i].type, format: meta[i].format, analyzerType: meta[i].analyzerType};
+  });
 
   return {
     fields: updatedFields,

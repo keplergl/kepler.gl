@@ -1007,8 +1007,7 @@ function fieldNamesMatch(current: {name: string}[], incoming: {name: string}[]):
 }
 
 /**
- * Arrow Int64/Uint64 columns yield JS BigInt. Detect from the column type once
- * at bind time so other columns keep the existing accessor with no extra checks.
+ * Detect Arrow Int64/Uint64 columns at bind time, even when the field type differs.
  */
 function isInt64ArrowColumn(dc: DataContainerInterface, fieldIdx: number): boolean {
   const type = (dc.getColumn?.(fieldIdx) as {type?: {bitWidth?: number; isSigned?: boolean}})?.type;
@@ -1025,10 +1024,15 @@ export function getFieldValueAccessor<
     const format = f.format || '';
     return (d: {index: number} | any[]) => timeToUnixMilli(readFieldValue(i, dc, d), format);
   }
-  if (isInt64ArrowColumn(dc, i)) {
+  if (f.type === ALL_FIELD_TYPES.integer || isInt64ArrowColumn(dc, i)) {
     return (d: {index: number} | any[]) => {
       const value = readFieldValue(i, dc, d);
-      return value == null ? value : Number(value);
+      // Saved Int64 values outside the safe range are exact decimal strings.
+      // Calculations use Number precision, as on Arrow, without changing stored values.
+      return typeof value === 'bigint' ||
+        (typeof value === 'string' && /^-?\d+$/.test(value.trim()))
+        ? Number(value)
+        : value;
     };
   }
   return readFieldValue.bind(null, i, dc);

@@ -448,6 +448,41 @@ test('KeplerTable -> Int64 field accessor converts BigInt to number', async t =>
   t.end();
 });
 
+test('KeplerTable -> integer accessors preserve stored values and noninteger fields', t => {
+  const values = [42, '0', ' -42 ', '9007199254740993', null, undefined, '', ' ', 'invalid'];
+  const expected = [42, 0, -42, 9007199254740992, null, undefined, '', ' ', 'invalid'];
+  const rows = values.map(value => [value, value]);
+  const table = new KeplerTable({info: {id: 'integer-rows'}, color: [0, 0, 0]}).updateSchema({
+    fields: [
+      {name: 'count', type: ALL_FIELD_TYPES.integer, analyzerType: 'INT'},
+      {name: 'label', type: ALL_FIELD_TYPES.string, analyzerType: 'STRING'}
+    ],
+    rows
+  });
+
+  t.deepEqual(
+    rows.map((_, index) => table.fields[0].valueAccessor({index})),
+    expected,
+    'only decimal integer strings are converted, preserving missing and invalid values'
+  );
+  t.deepEqual(
+    rows.map(row => table.fields[0].valueAccessor(row)),
+    expected,
+    'materialized rows use the same numeric accessor'
+  );
+  t.deepEqual(
+    rows.map((_, index) => table.fields[1].valueAccessor({index})),
+    values,
+    'string fields keep their original values'
+  );
+  t.deepEqual(
+    table.dataContainer.flattenData(),
+    values.map(value => [value, value]),
+    'raw values are unchanged'
+  );
+  t.end();
+});
+
 test('KeplerTable -> update with arrow cols keeps gpu filter state', async t => {
   const first = arrow.tableFromArrays({
     lat: [1, 2],

@@ -1188,6 +1188,56 @@ test('Processor -> validateInputData', t => {
   t.end();
 });
 
+test('Processor -> validation retains declared integers when another field needs inference', t => {
+  const fields = [
+    ['count', ALL_FIELD_TYPES.integer],
+    ['text', ALL_FIELD_TYPES.string],
+    ['invalid', ALL_FIELD_TYPES.integer],
+    ['fraction', ALL_FIELD_TYPES.integer],
+    ['blank', ALL_FIELD_TYPES.integer],
+    ['missing', ALL_FIELD_TYPES.integer],
+    ['padded', ALL_FIELD_TYPES.integer],
+    ['h3', ALL_FIELD_TYPES.string]
+  ].map(([name, type]) => ({
+    name,
+    type,
+    format: '',
+    analyzerType: type === 'integer' ? 'INT' : 'STRING'
+  }));
+  const rows = [
+    [
+      '10000000000000000',
+      '10000000000000000',
+      'invalid',
+      1.5,
+      '',
+      null,
+      ' 10000000000000000 ',
+      '8928308280fffff'
+    ],
+    [
+      '9007199254740992',
+      '9007199254740992',
+      'text',
+      2.5,
+      ' ',
+      null,
+      ' 9007199254740992 ',
+      '8928308280fffff'
+    ]
+  ];
+  const original = cloneDeep(rows);
+  const result = validateInputData({fields, rows});
+  t.deepEqual(
+    result.fields.map(field => field.type),
+    ['integer', 'string', 'string', 'real', 'string', 'integer', 'integer', 'h3'],
+    'preserves integer declarations only for integer values; repairs stale and H3 fields'
+  );
+  t.equal(result.fields[0].analyzerType, 'INT', 'keeps integer metadata');
+  t.deepEqual(result.rows, original, 'does not coerce or round stored values');
+  t.end();
+});
+
 test('Processor -> processRowObject', t => {
   t.equal(processRowObject({}), null, 'Should return null when rawData is empty');
 

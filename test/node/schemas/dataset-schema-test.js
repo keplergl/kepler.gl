@@ -4,10 +4,15 @@
 import test from 'tape';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import SchemaManager, {datasetSchema, VERSIONS} from '@kepler.gl/schemas';
-import {DatasetType, DATASET_FORMATS} from '@kepler.gl/constants';
+import {DatasetType, DATASET_FORMATS, FILTER_TYPES} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
 import {KeplerTable} from '@kepler.gl/table';
-import {exportToJsonString, exportMapToHTML, validateInputData} from '@kepler.gl/utils';
+import {
+  exportToJsonString,
+  exportMapToHTML,
+  getFilterFunction,
+  validateInputData
+} from '@kepler.gl/utils';
 import {processArrowTable, processKeplerglJSON} from '@kepler.gl/processors';
 
 // fixtures
@@ -369,4 +374,101 @@ test('#DatasetSchema -> null Arrow timestamps remain null through save and reloa
     'saving leaves source values unchanged'
   );
   t.end();
+});
+
+[
+  {
+    name: 'large integers in reverse lexical order',
+    values: [10000000000000000n, 9007199254740992n],
+    sorted: [9007199254740992, 10000000000000000]
+  },
+  {
+    name: 'large integers alongside Arrow timestamps',
+    values: [10000000000000000n, 9007199254740992n, null],
+    times: [1700000000000, 1700000001000, null],
+    sorted: [9007199254740992, 10000000000000000]
+  },
+  {
+    name: 'large integers alongside entirely missing timestamps',
+    values: [10000000000000000n, 9007199254740992n, null],
+    times: [null, null, null],
+    sorted: [9007199254740992, 10000000000000000]
+  },
+  {
+    name: 'integer field with a geometry inference name hint',
+    columnName: '_geojson',
+    values: [10000000000000000n, 9007199254740992n, null],
+    times: [1700000000000, 1700000001000, null],
+    sorted: [9007199254740992, 10000000000000000]
+  },
+  {
+    name: 'mixed safe and large integers with null',
+    values: [10000000000000000n, 42n, 9007199254740992n, null],
+    sorted: [42, 9007199254740992, 10000000000000000]
+  },
+  {
+    name: 'negative extremes and zero',
+    values: [-9223372036854775808n, -9007199254740993n, 0n, 42n, null],
+    // Calculations use Number precision; stored values must remain exact.
+    sorted: [Number(-9223372036854775808n), -9007199254740992, 0, 42]
+  },
+  {
+    name: 'unsigned extremes',
+    values: [18446744073709551615n, 10000000000000000n, 42n, null],
+    type: new arrow.Uint64(),
+    sorted: [42, 10000000000000000, Number(18446744073709551615n)]
+  }
+].forEach(({name, values, times, columnName = 'count', type = new arrow.Int64(), sorted}) => {
+  test(`#DatasetSchema -> reloaded Int64 numeric domains: ${name}`, t => {
+    const dataset = arrowDataset({
+      [columnName]: arrow.vectorFromArray(values, type),
+      ...(times ? {time: arrow.vectorFromArray(times, new arrow.TimestampMillisecond())} : {})
+    });
+    const saved = datasetSchema[VERSIONS.v1].save(dataset);
+    const reloaded = reloadDataset(saved);
+    const domain = [sorted[0], sorted[sorted.length - 1]];
+    const range = {colors: sorted.map(() => '#000000')};
+
+    [dataset, reloaded].forEach((table, index) => {
+      const stage = index ? 'reloaded' : 'original Arrow';
+      const field = table.fields[0];
+      t.deepEqual(table.getColumnFilterDomain(field).domain, domain, `${stage}: filter bounds`);
+      t.deepEqual(table.getColumnLayerDomain(field, 'linear'), domain, `${stage}: linear domain`);
+      t.deepEqual(table.getColumnLayerDomain(field, 'quantile'), sorted, `${stage}: quantiles`);
+      t.deepEqual(
+        table.getColumnLayerDomain(field, 'jenks', range),
+        sorted.slice(1),
+        `${stage}: Jenks includes large integers and excludes nulls`
+      );
+      const filter = getFilterFunction(
+        field,
+        table.id,
+        {
+          type: FILTER_TYPES.range,
+          dataId: [table.id],
+          fieldIdx: [0],
+          value: [domain[1], domain[1]]
+        },
+        [],
+        table.dataContainer
+      );
+      t.deepEqual(
+        table.allIndexes.filter(i => filter({index: i})),
+        values.flatMap((value, i) => (value !== null && Number(value) === domain[1] ? [i] : [])),
+        `${stage}: range filtering selects the numeric maximum`
+      );
+    });
+
+    t.deepEqual(
+      datasetSchema[VERSIONS.v1].save(reloaded).allData,
+      saved.allData,
+      'numeric calculations leave exact stored values unchanged on resave'
+    );
+    t.deepEqual(
+      dataset.dataContainer.flattenData(),
+      values.map((value, i) => (times ? [value, times[i]] : [value])),
+      'numeric calculations leave source BigInts and nulls unchanged'
+    );
+    t.end();
+  });
 });
