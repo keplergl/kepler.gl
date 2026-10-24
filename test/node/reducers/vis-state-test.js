@@ -4,6 +4,7 @@
 /* eslint-disable max-statements */
 import test from 'tape-catch';
 import sinon from 'sinon';
+import * as arrow from 'apache-arrow';
 import {console as Console} from 'global/window';
 
 import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from '@kepler.gl/tasks';
@@ -26,14 +27,19 @@ import {
   calculateLayerData
 } from '@kepler.gl/reducers';
 
-import {processCsvData, processGeojson, remoteDatasetFromUrl} from '@kepler.gl/processors';
+import {
+  processCsvData,
+  processGeojson,
+  processArrowBatches,
+  remoteDatasetFromUrl
+} from '@kepler.gl/processors';
 import {
   Layer,
   KeplerGlLayers,
   COLUMN_MODE_TABLE,
   createPointCountLabelField
 } from '@kepler.gl/layers';
-import {copyTableAndUpdate, maybeToDate} from '@kepler.gl/table';
+import {copyTableAndUpdate, maybeToDate, KeplerTable} from '@kepler.gl/table';
 import {
   createDataContainer,
   applyFilterFieldName,
@@ -6201,6 +6207,196 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
     'Layer Point 2 should show full data because it was removed from filter'
   );
 
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: native GeoArrow MultiPoint membership', async t => {
+  const previousMaxBatches = getApplicationConfig().maxArrowBatches;
+  const polygon = {
+    type: 'Feature',
+    id: 'east',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-98, 39],
+          [-95, 39],
+          [-95, 41],
+          [-98, 41],
+          [-98, 39]
+        ]
+      ]
+    }
+  };
+  const coordinates = [
+    [
+      [-103, 40],
+      [-102, 40]
+    ], // outside
+    [],
+    [
+      [-110, 40],
+      [-97, 40]
+    ], // only the second point is inside
+    [
+      [-97, 40],
+      [-96, 40]
+    ], // both inside, in the later batch
+    [
+      [NaN, 40],
+      [Infinity, 40]
+    ],
+    null
+  ];
+  const values = [10, 50, 20, 90, 30, 40];
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64()));
+  const multiPointType = new arrow.List(new arrow.Field('points', pointType));
+  const makeTable = (rows, numbers, type, extension) => {
+    const table = new arrow.Table({
+      geometry: arrow.vectorFromArray(rows, type),
+      value: arrow.vectorFromArray(numbers, new arrow.Float64())
+    });
+    table.schema.fields[0].metadata.set('ARROW:extension:name', extension);
+    return table;
+  };
+  const multiPointTable = (rows, numbers) =>
+    makeTable(rows, numbers, multiPointType, 'geoarrow.multipoint');
+  const cases = [
+    {
+      name: 'single batch MultiPoint',
+      table: multiPointTable(coordinates, values),
+      batches: [6],
+      expected: [2, 3]
+    },
+    {
+      name: 'multiple batch MultiPoint',
+      table: multiPointTable(coordinates.slice(0, 3), values.slice(0, 3)).concat(
+        multiPointTable(coordinates.slice(3), values.slice(3))
+      ),
+      batches: [3, 3],
+      expected: [2, 3]
+    },
+    {
+      name: 'separated-coordinate MultiPoint',
+      table: makeTable(
+        coordinates.map(points => points?.map(([x, y]) => ({x, y})) ?? null),
+        values,
+        new arrow.List(
+          new arrow.Field(
+            'points',
+            new arrow.Struct([
+              new arrow.Field('x', new arrow.Float64()),
+              new arrow.Field('y', new arrow.Float64())
+            ])
+          )
+        ),
+        'geoarrow.multipoint'
+      ),
+      batches: [6],
+      expected: [2, 3]
+    },
+    {
+      name: 'native Point control',
+      table: makeTable(
+        [
+          [-103, 40],
+          [-97, 40]
+        ],
+        [10, 90],
+        pointType,
+        'geoarrow.point'
+      ),
+      batches: [2],
+      expected: [1]
+    },
+    {
+      name: 'GeoJSON MultiPoint control',
+      data: processGeojson({
+        type: 'FeatureCollection',
+        features: coordinates.slice(0, 4).map((coords, index) => ({
+          type: 'Feature',
+          properties: {value: values[index]},
+          geometry: {type: 'MultiPoint', coordinates: coords}
+        }))
+      }),
+      expected: [2, 3]
+    }
+  ];
+  initApplicationConfig({maxArrowBatches: 2});
+  try {
+    for (const fixture of cases) {
+      const dataset = new KeplerTable({info: {id: 'points'}, color: [0, 0, 0]});
+      // Round-trip IPC, then use the same processor/table import as a file upload.
+      const table = fixture.table && arrow.tableFromIPC(arrow.tableToIPC(fixture.table, 'file'));
+      await dataset.importData({data: table ? processArrowBatches(table.batches) : fixture.data});
+      const columnMode = table ? 'geoarrow' : 'geojson';
+      const layer = new PointLayer({id: 'points-layer', dataId: 'points', columnMode});
+      const geometryField = dataset.fields.find(field => field.type === columnMode);
+      layer.config.columns[columnMode] = {
+        value: geometryField.name,
+        fieldIdx: geometryField.fieldIdx
+      };
+      const datasets = {points: dataset};
+      layer.updateLayerDomain(datasets);
+      const initialData = layer.formatLayerData(datasets);
+      const readSource = () =>
+        table
+          ? Array.from(arrow.tableToIPC(dataset.dataContainer.getTable(), 'file'))
+          : CloneDeep(dataset.dataContainer.flattenData());
+      const originalValues = readSource();
+      const allRows = dataset.dataContainer.getPlainIndex();
+      let state = {
+        ...INITIAL_VIS_STATE,
+        datasets,
+        layers: [layer],
+        layerData: [initialData],
+        layerOrder: [layer.id]
+      };
+      if (table) {
+        t.deepEqual(
+          dataset.dataContainer.getTable().batches.map(batch => batch.numRows),
+          fixture.batches,
+          `${fixture.name}: retains input batches`
+        );
+      }
+      state = reducer(state, VisStateActions.setPolygonFilterLayer(layer, polygon));
+      t.deepEqual(
+        state.datasets.points.filteredIndexByLayer[layer.id],
+        fixture.expected,
+        `${fixture.name}: retains any valid inside point, rejects outside/empty/invalid rows`
+      );
+      t.deepEqual(state.datasets.points.filteredIndex, allRows, 'polygon membership is per layer');
+      if (table) {
+        // Test the layer's row mask independently of the separate #3879 exploded-batch fix.
+        t.deepEqual(
+          Array.from(state.layers[0].filteredIndex),
+          allRows.map(index => Number(fixture.expected.includes(index))),
+          `${fixture.name}: sends matching row mask to the Arrow layer`
+        );
+      } else {
+        t.deepEqual(
+          state.layerData[0].data.map(point => point.index),
+          [2, 2, 3, 3],
+          'GeoJSON control retains both points of a partially matching feature'
+        );
+      }
+      state = reducer(state, VisStateActions.removeFilter(0));
+      t.deepEqual(state.datasets.points.filteredIndexByLayer, {}, 'clearing removes layer filter');
+      if (table) {
+        t.deepEqual(
+          Array.from(state.layers[0].filteredIndex),
+          allRows.map(() => 1),
+          'restores all rows'
+        );
+      } else {
+        t.equal(state.layerData[0].data.length, 6, 'restores all nonempty GeoJSON points');
+      }
+      t.deepEqual(readSource(), originalValues, 'source values are unchanged');
+    }
+  } finally {
+    initApplicationConfig({maxArrowBatches: previousMaxBatches});
+  }
   t.end();
 });
 
