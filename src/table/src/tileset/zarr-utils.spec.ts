@@ -847,8 +847,26 @@ describe('axisSpacingFromValues', () => {
     expect(axisSpacingFromValues([50, 40, 30])).toEqual({first: 50, step: -10});
   });
 
-  it('tolerates the drift float32 coordinates accumulate', () => {
-    expect(axisSpacingFromValues([0, 1, 2.1, 2.9, 4.05])).toEqual({first: 0, step: 1});
+  it.each([
+    {first: -179.95, step: 0.1, count: 3600},
+    {first: 89.95, step: -0.1, count: 1800}
+  ])('accepts a float32-rounded geographic axis with step $step', ({first, step, count}) => {
+    const coordinates = new Float32Array(Array.from({length: count}, (_, i) => first + step * i));
+    const spacing = axisSpacingFromValues(coordinates);
+    expect(spacing).not.toBeNull();
+    if (!spacing) throw new Error('Expected uniform float32 coordinates to be accepted');
+    expect(spacing.first).toBe(coordinates[0]);
+    expect(spacing.step).toBeCloseTo(step, 7);
+    const maxError = Math.max(
+      ...Array.from(coordinates, (value, i) => Math.abs(value - (spacing.first + spacing.step * i)))
+    );
+    expect(maxError).toBeLessThan(0.00002);
+  });
+
+  it('rejects nonuniform spacing beyond floating-point rounding', () => {
+    expect(axisSpacingFromValues([0, 1, 2.1, 2.9, 4.05])).toBeNull();
+    expect(axisSpacingFromValues([0, 1, 2.49, 3.49])).toBeNull();
+    expect(axisSpacingFromValues(new Float32Array([0, 0.9, 2, 3]))).toBeNull();
   });
 
   it('rejects an axis that drifts in the middle but lands on the expected end', () => {
@@ -862,6 +880,9 @@ describe('axisSpacingFromValues', () => {
     expect(axisSpacingFromValues([5])).toBeNull();
     expect(axisSpacingFromValues([5, 5, 5])).toBeNull();
     expect(axisSpacingFromValues([0, 1, NaN, 3])).toBeNull();
+    expect(
+      axisSpacingFromValues(new Float32Array([100_000_000, 100_000_000, 100_000_008]))
+    ).toBeNull();
   });
 });
 
@@ -1138,10 +1159,20 @@ describe('variable selection', () => {
     expect(metadata.variable).toBe('temperature');
   });
 
-  it('is a no-op for an unknown variable path', () => {
+  it('is a no-op when no variables are available', () => {
     expect(selectZarrVariable({...metadata, variables: []}, 'elevation').variable).toBe(
       'temperature'
     );
+  });
+
+  it('falls back to the first available variable when a requested path is missing', () => {
+    const active = selectZarrVariable(metadata, 'elevation');
+    const next = selectZarrVariable(active, 'missing');
+    expect(next.variable).toBe('temperature');
+    expect(next.nonSpatialDims).toEqual(temperature.nonSpatialDims);
+    expect(next.timeDimension).toEqual(temperature.timeDimension);
+    expect(next.dataRange).toEqual(temperature.dataRange);
+    expect(active.variable).toBe('elevation');
   });
 
   it('does not reuse another variable grid when spatial metadata is missing', () => {

@@ -720,18 +720,27 @@ export function axisSpacingFromValues(raw: ArrayLike<number | bigint>): AxisSpac
     return null;
   }
   const first = Number(raw[0]);
-  const step = Number(raw[1]) - first;
+  const last = Number(raw[raw.length - 1]);
+  // Average over the whole axis so rounding the first two float32 coordinates
+  // does not accumulate into a large positional error at the far end.
+  const step = (last - first) / (raw.length - 1);
   if (!Number.isFinite(first) || !Number.isFinite(step) || step === 0) {
     return null;
   }
-  // The tolerance is generous because float32 coordinates accumulate error
-  // across a long axis.
-  const tolerance = Math.abs(step) * 0.5;
-  for (let i = 2; i < raw.length; i++) {
+  // Allow coordinate rounding and affine arithmetic, not a fraction of a cell.
+  const precision = raw instanceof Float32Array ? 2 ** -23 : Number.EPSILON;
+  const tolerance = Math.max(Math.abs(first), Math.abs(last), Math.abs(step)) * precision * 2;
+  let previous = first;
+  for (let i = 1; i < raw.length; i++) {
     const value = Number(raw[i]);
-    if (!Number.isFinite(value) || Math.abs(value - (first + step * i)) > tolerance) {
+    if (
+      !Number.isFinite(value) ||
+      (step > 0 ? value <= previous : value >= previous) ||
+      Math.abs(value - (first + step * i)) > tolerance
+    ) {
       return null;
     }
+    previous = value;
   }
   return {first, step};
 }

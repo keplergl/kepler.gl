@@ -55,6 +55,8 @@ describe('Zarr axis playback', () => {
     expect(onFrameChange).toHaveBeenLastCalledWith(1);
     act(() => jest.advanceTimersByTime(5100));
     expect(onFrameChange).toHaveBeenLastCalledWith(0);
+    act(() => jest.advanceTimersByTime(5100));
+    expect(onFrameChange).toHaveBeenLastCalledWith(1);
     fireEvent.click(buttons[0]);
     const count = onFrameChange.mock.calls.length;
     act(() => jest.advanceTimersByTime(6000));
