@@ -277,6 +277,8 @@ export function histogramFromDomain(
   }));
 }
 
+const timeBinDomains = new WeakMap<TimeBins, number[]>();
+
 /**
  * @param filter
  * @param datasets
@@ -289,7 +291,9 @@ export function getTimeBins(
   plotBaseIndexByDataId?: Record<string, number[]>
 ): TimeBins {
   interval = getTimeBinConfig(interval, filter.domain).interval;
-  let bins = filter.timeBins || {};
+  const cachedDomain = filter.timeBins && timeBinDomains.get(filter.timeBins);
+  // Preserve caller-supplied caches; invalidate a domain change once it is known.
+  let bins = cachedDomain && !isEqual(cachedDomain, filter.domain) ? {} : filter.timeBins || {};
 
   filter.dataId.forEach(dataId => {
     // reuse bins if filterData did not change
@@ -315,6 +319,7 @@ export function getTimeBins(
     };
   });
 
+  timeBinDomains.set(bins, Array.isArray(filter.domain) ? filter.domain.slice(0, 2) : []);
   return bins;
 }
 
@@ -341,10 +346,15 @@ export function binByTime(indexes, dataset, interval, filter) {
 }
 
 export function getBinThresholds(interval: string, domain: number[]): number[] {
-  return getTimeBinConfig(interval, domain).thresholds;
+  return getTimeBinConfig(interval, domain).thresholds.slice();
 }
 
 const MAX_TIME_BINS = 2048;
+// Weak keys keep validation local to live domains without retaining old filters.
+const timeBinConfigs = new WeakMap<
+  number[],
+  {requestedInterval: string; domain: number[]; result: {interval: string; thresholds: number[]}}
+>();
 
 /** Resolve the interval and its complete domain together, never truncating a plot. */
 function getTimeBinConfig(interval: string, domain: number[]) {
@@ -355,6 +365,14 @@ function getTimeBinConfig(interval: string, domain: number[]) {
     domain[1] < domain[0]
   ) {
     return {interval, thresholds: [] as number[]};
+  }
+  const cached = timeBinConfigs.get(domain);
+  if (
+    cached &&
+    isEqual(cached.domain, domain) &&
+    (cached.requestedInterval === interval || cached.result.interval === interval)
+  ) {
+    return cached.result;
   }
 
   const build = (id: string): number[] | null => {
@@ -423,11 +441,17 @@ function getTimeBinConfig(interval: string, domain: number[]) {
     return null;
   };
 
-  const thresholds = build(interval);
-  if (thresholds) return {interval, thresholds};
+  const requestedInterval = interval;
+  let thresholds = build(interval);
   // Domain-only fallback avoids copying/sorting every timestamp on refresh.
-  const fallback = getIntervalByTicks(BINS_LARGE, domain[0], domain[1]);
-  return {interval: fallback, thresholds: build(fallback) || []};
+  // Retry fewer ticks when the nearest interval still exceeds the cap.
+  for (let target = BINS_LARGE; !thresholds && target >= 1; target /= 10) {
+    interval = getIntervalByTicks(target, domain[0], domain[1]);
+    thresholds = build(interval);
+  }
+  const result = {interval, thresholds: thresholds || []};
+  timeBinConfigs.set(domain, {requestedInterval, domain: domain.slice(), result});
+  return result;
 }
 
 function normalizeTimePlotType(
