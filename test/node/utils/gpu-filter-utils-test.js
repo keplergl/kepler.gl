@@ -121,6 +121,36 @@ test('gpuFilterUtils -> assignGpuChannel', t => {
   t.end();
 });
 
+test('gpuFilterUtils -> assignGpuChannel requires a free channel for every shared dataset', t => {
+  const occupied = [0, 1, 2, 3].map(channel => ({
+    id: `occupied-${channel}`,
+    dataId: ['full'],
+    gpu: true,
+    gpuChannel: [channel]
+  }));
+  const cases = [
+    {dataId: ['available', 'full'], gpuChannel: [0]},
+    {dataId: ['full', 'available'], gpuChannel: []},
+    {dataId: ['available', 'full'], gpuChannel: [0, 0]}
+  ];
+
+  cases.forEach(({dataId, gpuChannel}) => {
+    const filter = {id: 'shared', dataId, gpu: true, gpuChannel};
+    const originalChannels = gpuChannel.slice();
+    const result = assignGpuChannel(filter, occupied);
+    t.equal(result.gpu, false, 'falls back for a missing, sparse, or conflicting channel');
+    t.deepEqual(filter.gpuChannel, originalChannels, 'preserves the input filter channels');
+  });
+
+  const available = assignGpuChannel(
+    {id: 'shared', dataId: ['available', 'full'], gpu: true, gpuChannel: [0]},
+    occupied.slice(0, 3)
+  );
+  t.equal(available.gpu, true, 'keeps GPU filtering when every dataset has room');
+  t.deepEqual(available.gpuChannel, [0, 3], 'uses the remaining channel in the second dataset');
+  t.end();
+});
+
 test('gpuFilterUtils -> assignGpuChannels', t => {
   const testCases = [
     {

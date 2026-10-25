@@ -15,7 +15,9 @@ import {
   ANIMATION_WINDOW,
   PLOT_TYPES,
   LAYER_TYPES,
-  FILTER_VIEW_TYPES
+  FILTER_VIEW_TYPES,
+  GEOARROW_EXTENSIONS,
+  GEOARROW_METADATA_KEY
 } from '@kepler.gl/constants';
 // import {VisState} from '@kepler.gl/schemas';
 import * as ScaleUtils from './data-scale-utils';
@@ -562,6 +564,25 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
   switch (layer.type) {
     case LAYER_TYPES.point:
     case LAYER_TYPES.icon:
+      if (
+        layer.config?.columnMode === 'geoarrow' &&
+        dataContainer
+          .getField?.(layer.config.columns.geoarrow.fieldIdx)
+          ?.metadata?.get(GEOARROW_METADATA_KEY) === GEOARROW_EXTENSIONS.MULTIPOINT
+      ) {
+        return data => {
+          const points = dataContainer.valueAt(data.index, layer.config.columns.geoarrow.fieldIdx);
+          // Match GeoJSON MultiPoint semantics: any valid point retains the whole feature.
+          for (const point of points ?? []) {
+            const coord =
+              typeof point?.get === 'function'
+                ? [point.get(0), point.get(1)]
+                : [point?.x, point?.y];
+            if (hasFiniteLngLat(coord) && isInPolygon(coord, filter.value)) return true;
+          }
+          return false;
+        };
+      }
       if (layer.config?.columnMode === 'geojson' && layer.dataToFeature?.length) {
         return data => {
           const coordinates = layer.dataToFeature[data.index];

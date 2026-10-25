@@ -77,7 +77,7 @@ export function assignGpuChannel(filter: Filter, filters: Filter[]) {
     return filter;
   }
 
-  const gpuChannel = filter.gpuChannel || [];
+  const gpuChannel = [...(filter.gpuChannel || [])];
 
   filter.dataId.forEach((dataId, datasetIdx) => {
     const findGpuChannel = channel => f =>
@@ -100,11 +100,13 @@ export function assignGpuChannel(filter: Filter, filters: Filter[]) {
       }
       i++;
     }
+
+    gpuChannel[datasetIdx] = undefined as unknown as number;
   });
 
   // if cannot find channel for all dataid, set gpu back to false
   // TODO: refactor filter to handle same filter different gpu mode
-  if (!gpuChannel.length || !gpuChannel.every(Number.isFinite)) {
+  if (!gpuChannel.length || !filter.dataId.every((_, idx) => Number.isFinite(gpuChannel[idx]))) {
     return {
       ...filter,
       gpu: false

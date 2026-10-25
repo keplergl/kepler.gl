@@ -4,7 +4,7 @@
 /* eslint-disable max-statements */
 import test from 'tape-catch';
 import sinon from 'sinon';
-import {tableFromArrays} from 'apache-arrow';
+import * as arrow from 'apache-arrow';
 import {console as Console} from 'global/window';
 
 import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from '@kepler.gl/tasks';
@@ -27,14 +27,19 @@ import {
   calculateLayerData
 } from '@kepler.gl/reducers';
 
-import {processCsvData, processGeojson, remoteDatasetFromUrl} from '@kepler.gl/processors';
+import {
+  processCsvData,
+  processGeojson,
+  processArrowBatches,
+  remoteDatasetFromUrl
+} from '@kepler.gl/processors';
 import {
   Layer,
   KeplerGlLayers,
   COLUMN_MODE_TABLE,
   createPointCountLabelField
 } from '@kepler.gl/layers';
-import {copyTableAndUpdate, maybeToDate} from '@kepler.gl/table';
+import {copyTableAndUpdate, maybeToDate, KeplerTable} from '@kepler.gl/table';
 import {
   createDataContainer,
   applyFilterFieldName,
@@ -3101,6 +3106,65 @@ test('#visStateReducer -> SET_FILTER.dataId falls back to CPU when GPU channels 
     'applies the replacement filter on CPU'
   );
 
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER shares a filter with a dataset whose GPU channels are full', async t => {
+  const createDataset = id =>
+    createNewDataEntryMock({
+      info: {id, label: id},
+      data: {
+        fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+        rows: [[10], [20]]
+      }
+    });
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {...(await createDataset('first')), ...(await createDataset('second'))}
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [10, 10]));
+  for (let i = 0; i < MAX_GPU_FILTERS; i++) {
+    state = reducer(state, VisStateActions.addFilter('second'));
+    state = reducer(state, VisStateActions.setFilter(i + 1, 'name', 'value'));
+  }
+  t.deepEqual(
+    state.filters.slice(1).map(filter => filter.gpuChannel[0]),
+    [0, 1, 2, 3],
+    'the target dataset has four occupied GPU channels'
+  );
+
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'value'], 1));
+
+  t.equal(state.filters[0].gpu, false, 'falls back to CPU for the whole shared filter');
+  for (const dataId of ['first', 'second']) {
+    const dataset = state.datasets[dataId];
+    const {filterRange, filterValueAccessor} = dataset.gpuFilter;
+    const getFilterValue = filterValueAccessor(dataset.dataContainer)();
+    const visibleRows = dataset.filteredIndex.filter(index =>
+      getFilterValue({index}).every(
+        (value, channel) => value >= filterRange[channel][0] && value <= filterRange[channel][1]
+      )
+    );
+    t.deepEqual(visibleRows, [0], `${dataId}: only row 10 remains visible`);
+    t.ok(
+      dataset.filterRecord.cpu.some(filter => filter.id === state.filters[0].id),
+      `${dataId}: records the shared filter on CPU`
+    );
+    t.deepEqual(dataset.filteredIndex, [0], `${dataId}: updates the cached CPU row indexes`);
+    const cpuDataset = copyTableAndUpdate(dataset).filterTableCPU(state.filters, state.layers);
+    t.deepEqual(visibleRows, cpuDataset.filteredIdxCPU, `${dataId}: matches CPU-only filtering`);
+  }
+
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [20, 20]));
+  t.deepEqual(
+    state.datasets.first.filteredIndex,
+    [1],
+    'updates the original dataset after fallback'
+  );
+  t.deepEqual(state.datasets.second.filteredIndex, [1], 'updates the added dataset after fallback');
   t.end();
 });
 
@@ -6202,6 +6266,196 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
     'Layer Point 2 should show full data because it was removed from filter'
   );
 
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: native GeoArrow MultiPoint membership', async t => {
+  const previousMaxBatches = getApplicationConfig().maxArrowBatches;
+  const polygon = {
+    type: 'Feature',
+    id: 'east',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-98, 39],
+          [-95, 39],
+          [-95, 41],
+          [-98, 41],
+          [-98, 39]
+        ]
+      ]
+    }
+  };
+  const coordinates = [
+    [
+      [-103, 40],
+      [-102, 40]
+    ], // outside
+    [],
+    [
+      [-110, 40],
+      [-97, 40]
+    ], // only the second point is inside
+    [
+      [-97, 40],
+      [-96, 40]
+    ], // both inside, in the later batch
+    [
+      [NaN, 40],
+      [Infinity, 40]
+    ],
+    null
+  ];
+  const values = [10, 50, 20, 90, 30, 40];
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64()));
+  const multiPointType = new arrow.List(new arrow.Field('points', pointType));
+  const makeTable = (rows, numbers, type, extension) => {
+    const table = new arrow.Table({
+      geometry: arrow.vectorFromArray(rows, type),
+      value: arrow.vectorFromArray(numbers, new arrow.Float64())
+    });
+    table.schema.fields[0].metadata.set('ARROW:extension:name', extension);
+    return table;
+  };
+  const multiPointTable = (rows, numbers) =>
+    makeTable(rows, numbers, multiPointType, 'geoarrow.multipoint');
+  const cases = [
+    {
+      name: 'single batch MultiPoint',
+      table: multiPointTable(coordinates, values),
+      batches: [6],
+      expected: [2, 3]
+    },
+    {
+      name: 'multiple batch MultiPoint',
+      table: multiPointTable(coordinates.slice(0, 3), values.slice(0, 3)).concat(
+        multiPointTable(coordinates.slice(3), values.slice(3))
+      ),
+      batches: [3, 3],
+      expected: [2, 3]
+    },
+    {
+      name: 'separated-coordinate MultiPoint',
+      table: makeTable(
+        coordinates.map(points => points?.map(([x, y]) => ({x, y})) ?? null),
+        values,
+        new arrow.List(
+          new arrow.Field(
+            'points',
+            new arrow.Struct([
+              new arrow.Field('x', new arrow.Float64()),
+              new arrow.Field('y', new arrow.Float64())
+            ])
+          )
+        ),
+        'geoarrow.multipoint'
+      ),
+      batches: [6],
+      expected: [2, 3]
+    },
+    {
+      name: 'native Point control',
+      table: makeTable(
+        [
+          [-103, 40],
+          [-97, 40]
+        ],
+        [10, 90],
+        pointType,
+        'geoarrow.point'
+      ),
+      batches: [2],
+      expected: [1]
+    },
+    {
+      name: 'GeoJSON MultiPoint control',
+      data: processGeojson({
+        type: 'FeatureCollection',
+        features: coordinates.slice(0, 4).map((coords, index) => ({
+          type: 'Feature',
+          properties: {value: values[index]},
+          geometry: {type: 'MultiPoint', coordinates: coords}
+        }))
+      }),
+      expected: [2, 3]
+    }
+  ];
+  initApplicationConfig({maxArrowBatches: 2});
+  try {
+    for (const fixture of cases) {
+      const dataset = new KeplerTable({info: {id: 'points'}, color: [0, 0, 0]});
+      // Round-trip IPC, then use the same processor/table import as a file upload.
+      const table = fixture.table && arrow.tableFromIPC(arrow.tableToIPC(fixture.table, 'file'));
+      await dataset.importData({data: table ? processArrowBatches(table.batches) : fixture.data});
+      const columnMode = table ? 'geoarrow' : 'geojson';
+      const layer = new PointLayer({id: 'points-layer', dataId: 'points', columnMode});
+      const geometryField = dataset.fields.find(field => field.type === columnMode);
+      layer.config.columns[columnMode] = {
+        value: geometryField.name,
+        fieldIdx: geometryField.fieldIdx
+      };
+      const datasets = {points: dataset};
+      layer.updateLayerDomain(datasets);
+      const initialData = layer.formatLayerData(datasets);
+      const readSource = () =>
+        table
+          ? Array.from(arrow.tableToIPC(dataset.dataContainer.getTable(), 'file'))
+          : CloneDeep(dataset.dataContainer.flattenData());
+      const originalValues = readSource();
+      const allRows = dataset.dataContainer.getPlainIndex();
+      let state = {
+        ...INITIAL_VIS_STATE,
+        datasets,
+        layers: [layer],
+        layerData: [initialData],
+        layerOrder: [layer.id]
+      };
+      if (table) {
+        t.deepEqual(
+          dataset.dataContainer.getTable().batches.map(batch => batch.numRows),
+          fixture.batches,
+          `${fixture.name}: retains input batches`
+        );
+      }
+      state = reducer(state, VisStateActions.setPolygonFilterLayer(layer, polygon));
+      t.deepEqual(
+        state.datasets.points.filteredIndexByLayer[layer.id],
+        fixture.expected,
+        `${fixture.name}: retains any valid inside point, rejects outside/empty/invalid rows`
+      );
+      t.deepEqual(state.datasets.points.filteredIndex, allRows, 'polygon membership is per layer');
+      if (table) {
+        // Test the layer's row mask independently of the separate #3879 exploded-batch fix.
+        t.deepEqual(
+          Array.from(state.layers[0].filteredIndex),
+          allRows.map(index => Number(fixture.expected.includes(index))),
+          `${fixture.name}: sends matching row mask to the Arrow layer`
+        );
+      } else {
+        t.deepEqual(
+          state.layerData[0].data.map(point => point.index),
+          [2, 2, 3, 3],
+          'GeoJSON control retains both points of a partially matching feature'
+        );
+      }
+      state = reducer(state, VisStateActions.removeFilter(0));
+      t.deepEqual(state.datasets.points.filteredIndexByLayer, {}, 'clearing removes layer filter');
+      if (table) {
+        t.deepEqual(
+          Array.from(state.layers[0].filteredIndex),
+          allRows.map(() => 1),
+          'restores all rows'
+        );
+      } else {
+        t.equal(state.layerData[0].data.length, 6, 'restores all nonempty GeoJSON points');
+      }
+      t.deepEqual(readSource(), originalValues, 'source values are unchanged');
+    }
+  } finally {
+    initApplicationConfig({maxArrowBatches: previousMaxBatches});
+  }
   t.end();
 });
 
@@ -9902,7 +10156,7 @@ test('VisStateUpdater -> refreshDataset reapplies active filters to Arrow snapsh
   drainTasksForTesting();
   const dataId = 'remote-arrow';
   const snapshot = values => {
-    const arrowTable = tableFromArrays({value: new Float64Array(values)});
+    const arrowTable = arrow.tableFromArrays({value: new Float64Array(values)});
     return {
       fields: [{name: 'value', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'}],
       rows: [],
@@ -9944,6 +10198,130 @@ test('VisStateUpdater -> refreshDataset reapplies active filters to Arrow snapsh
     t.equal(state.filters[0].enabled, true, 'refresh keeps the filter enabled');
     t.equal(state.filters[0].inverted, true, 'refresh preserves Filter out');
     t.deepEqual(Array.from(data.arrowTable.getChildAt(0)), values, 'source values are unchanged');
+  }
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset rebuilds filter domains and preserves selections', async t => {
+  drainTasksForTesting();
+  const dataId = 'remote-filter';
+  const datasets = await createNewDataEntryMock({
+    info: {id: dataId, type: DatasetType.EXTERNALLY_HOSTED, label: 'values.csv'},
+    data: processCsvData('value\n10\n20'),
+    metadata: {source: 'https://example.com/values.csv', sourceFormat: 'csv'}
+  });
+  let state = {...INITIAL_VIS_STATE, datasets};
+  state = reducer(state, VisStateActions.addFilter(dataId));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [10, 15]));
+  state = reducer(state, VisStateActions.setFilter(0, 'gpu', false));
+  const filterId = state.filters[0].id;
+  t.deepEqual(state.filters[0].domain, [10, 20], 'starts with the original domain');
+
+  for (const maximum of [50, 30]) {
+    state = reducer(state, VisStateActions.refreshDataset(dataId));
+    state = reducer(state, VisStateActions.refreshDatasetProgress(dataId, 50));
+    const [task] = drainTasksForTesting();
+    const data = processCsvData(`value\n10\n${maximum}`);
+    state = reducer(state, succeedTaskInTest(task, {data, notModified: false}));
+
+    t.equal(state.filters[0].id, filterId, 'keeps the existing filter');
+    t.deepEqual(state.filters[0].domain, [10, maximum], 'rebuilds expanded and contracted domains');
+    t.deepEqual(state.filters[0].value, [10, 15], 'preserves the chosen selection');
+    t.equal(state.filters[0].gpu, false, 'preserves CPU filtering');
+    t.deepEqual(state.datasets[dataId].filteredIndex, [0], 'keeps CPU filtering active');
+    t.deepEqual(
+      state.filters[0].bins[dataId],
+      histogramFromDomain([10, maximum], [0, 1], BINS, index => [10, maximum][index]),
+      'rebuilds the histogram for the refreshed domain and rows'
+    );
+    const table = state.datasets[dataId].filterTableCPU(state.filters, state.layers);
+    t.deepEqual(table.filteredIdxCPU, [0], 'applies the selection to refreshed rows');
+    t.deepEqual(
+      table.dataContainer.rowAsArray(1),
+      [maximum],
+      'keeps the refreshed source value unchanged'
+    );
+  }
+
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [25, 30]));
+  t.deepEqual(state.filters[0].value, [25, 30], 'allows selecting newly available values');
+  t.deepEqual(
+    state.datasets[dataId].filterTableCPU(state.filters, state.layers).filteredIdxCPU,
+    [1],
+    'filters using the newly selected range'
+  );
+
+  for (const result of [{notModified: true}, {notModified: false}]) {
+    const filters = state.filters;
+    state = reducer(state, VisStateActions.refreshDataset(dataId));
+    const [task] = drainTasksForTesting();
+    state = reducer(state, succeedTaskInTest(task, result));
+    t.equal(state.filters, filters, 'keeps filters when refresh has no replacement data');
+  }
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset rebuilds synced and categorical domains in place', async t => {
+  drainTasksForTesting();
+  const remote = await createNewDataEntryMock({
+    info: {id: 'remote-filter', type: DatasetType.EXTERNALLY_HOSTED, label: 'values.csv'},
+    data: processCsvData('value,category\n10,north\n20,south'),
+    metadata: {source: 'https://example.com/values.csv', sourceFormat: 'csv'}
+  });
+  const local = await createNewDataEntryMock({
+    info: {id: 'local-filter', label: 'local'},
+    data: processCsvData('value\n0\n100')
+  });
+  let state = {...INITIAL_VIS_STATE, datasets: {...remote, ...local}};
+  state = reducer(state, VisStateActions.addFilter('local-filter'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.addFilter('remote-filter'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'value'));
+  state = reducer(
+    state,
+    VisStateActions.setFilter(1, ['dataId', 'name'], ['local-filter', 'value'], 1)
+  );
+  state = reducer(state, VisStateActions.setFilter(1, 'value', [10, 15]));
+  state = reducer(state, VisStateActions.addFilter('remote-filter'));
+  state = reducer(state, VisStateActions.setFilter(2, 'name', 'category'));
+  state = reducer(state, VisStateActions.setFilter(2, 'value', ['north']));
+  state = reducer(state, VisStateActions.addFilter('remote-filter'));
+  const unrelated = state.filters[0];
+  const unconfigured = state.filters[3];
+  const filterIds = state.filters.map(filter => filter.id);
+
+  for (const maximum of [150, 50]) {
+    state = reducer(state, VisStateActions.refreshDataset('remote-filter'));
+    const [task] = drainTasksForTesting();
+    state = reducer(
+      state,
+      succeedTaskInTest(task, {
+        data: processCsvData(`value,category\n10,north\n${maximum},east`),
+        notModified: false
+      })
+    );
+    const domain = [0, Math.max(100, maximum)];
+    t.deepEqual(
+      state.filters.map(filter => filter.id),
+      filterIds,
+      'preserves filter order'
+    );
+    t.equal(state.filters[0], unrelated, 'leaves unrelated filters unchanged');
+    t.equal(state.filters[3], unconfigured, 'keeps an unconfigured filter');
+    t.deepEqual(state.filters[1].domain, domain, 'merges current domains from both datasets');
+    t.deepEqual(state.filters[1].value, [10, 15], 'preserves the synced selection');
+    t.deepEqual(
+      state.filters[1].bins['local-filter'],
+      histogramFromDomain(domain, [0, 1], BINS, index => [0, 100][index]),
+      'rebuilds synced histogram bins when the shared domain changes'
+    );
+    t.deepEqual(
+      state.filters[2].domain.slice().sort(),
+      ['east', 'north'],
+      'replaces category options'
+    );
+    t.deepEqual(state.filters[2].value, ['north'], 'preserves the category selection');
   }
   t.end();
 });

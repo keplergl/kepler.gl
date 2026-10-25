@@ -190,6 +190,7 @@ test('#remote-file -> fetchRemoteFileAsKeplerFile uses the default HTTP cache', 
   const origFetch = global.fetch;
   global.fetch = async (url, init) => {
     t.equal(init?.cache, undefined, 'first remote URL load should not set cache: no-store');
+    t.equal(init?.headers, undefined, 'a load without validators should not add headers');
     return new Response('a,b\n1,2', {status: 200, headers: {'content-type': 'text/csv'}});
   };
 
@@ -201,10 +202,60 @@ test('#remote-file -> fetchRemoteFileAsKeplerFile uses the default HTTP cache', 
   t.end();
 });
 
-test('#remote-file -> fetchRemoteFile returns notModified on 304', async t => {
+test('#remote-file -> fetchRemoteFile refreshes cross-origin files without conditional headers', async t => {
   const origFetch = global.fetch;
+  const origLocation = global.location;
+  global.location = {origin: 'http://localhost:8080'};
+  global.fetch = async (url, init) => {
+    t.equal(url, 'http://localhost:8081/refresh.csv', 'should keep the source URL unchanged');
+    t.equal(init.headers, undefined, 'should not add headers that trigger a CORS preflight');
+    t.equal(init.cache, 'no-store', 'should still bypass the HTTP cache');
+    return new Response('a,b\n3,4', {
+      status: 200,
+      headers: {'content-type': 'text/csv', 'last-modified': 'Sat, 24 Oct 2026 20:08:04 GMT'}
+    });
+  };
+
+  try {
+    for (const validators of [
+      {etag: '"abc"'},
+      {lastModified: 'Tue, 20 Oct 2015 07:28:00 GMT'},
+      {etag: '"abc"', lastModified: 'Tue, 20 Oct 2015 07:28:00 GMT'}
+    ]) {
+      const result = await fetchRemoteFile('http://localhost:8081/refresh.csv', {
+        ...validators,
+        bypassCache: true
+      });
+      t.notOk(result.notModified, 'should report a refreshed file');
+      t.equal(await result.file.text(), 'a,b\n3,4', 'should return the fresh file contents');
+      t.equal(
+        result.lastModified,
+        'Sat, 24 Oct 2026 20:08:04 GMT',
+        'should still capture response validators'
+      );
+    }
+  } finally {
+    global.fetch = origFetch;
+    if (origLocation === undefined) {
+      delete global.location;
+    } else {
+      global.location = origLocation;
+    }
+  }
+  t.end();
+});
+
+test('#remote-file -> fetchRemoteFile returns notModified on same-origin 304', async t => {
+  const origFetch = global.fetch;
+  const origLocation = global.location;
+  global.location = {origin: 'https://example.com'};
   global.fetch = async (url, init) => {
     t.equal(init.headers['If-None-Match'], '"abc"', 'should send If-None-Match');
+    t.equal(
+      init.headers['If-Modified-Since'],
+      'Tue, 20 Oct 2015 07:28:00 GMT',
+      'should send If-Modified-Since'
+    );
     t.equal(init.cache, 'no-store', 'refresh fetches should bypass the HTTP cache');
     return new Response(null, {
       status: 304,
@@ -228,6 +279,11 @@ test('#remote-file -> fetchRemoteFile returns notModified on 304', async t => {
     );
   } finally {
     global.fetch = origFetch;
+    if (origLocation === undefined) {
+      delete global.location;
+    } else {
+      global.location = origLocation;
+    }
   }
   t.end();
 });
