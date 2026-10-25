@@ -224,7 +224,8 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
     for (let recordBatchIdx = 0; recordBatchIdx < table.batches.length; recordBatchIdx++) {
       const multiPointData = geometryColumn.data[recordBatchIdx];
       const pointData = ga.child.getMultiPointChild(multiPointData);
-      const geomOffsets = multiPointData.valueOffsets;
+      // Arrow buffers may include alignment padding after the logical offsets.
+      const geomOffsets = multiPointData.valueOffsets.subarray(0, multiPointData.length + 1);
       const flatCoordsData = ga.child.getPointChild(pointData);
       const flatCoordinateArray = flatCoordsData.values;
 
