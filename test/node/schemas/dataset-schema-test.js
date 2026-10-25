@@ -6,7 +6,7 @@ import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import SchemaManager, {datasetSchema, VERSIONS} from '@kepler.gl/schemas';
 import {DatasetType, DATASET_FORMATS} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
-import {KeplerTable} from '@kepler.gl/table';
+import {KeplerTable, joinDatasets} from '@kepler.gl/table';
 import {exportToJsonString, exportMapToHTML, validateInputData} from '@kepler.gl/utils';
 import {processArrowTable, processKeplerglJSON} from '@kepler.gl/processors';
 
@@ -342,6 +342,109 @@ test('#DatasetSchema -> Int64 values survive JSON, HTML and reload without preci
     originalRows,
     'saving does not mutate Arrow values'
   );
+  t.end();
+});
+
+test('#DatasetSchema -> derived Int64 rows save and reload exactly without changing live rows', t => {
+  const values = [
+    0n,
+    10n,
+    20n,
+    -9007199254740991n,
+    9007199254740991n,
+    -9223372036854775808n,
+    9007199254740992n,
+    9007199254740993n,
+    null
+  ];
+  const source = arrowDataset({
+    key: arrow.vectorFromArray(values.map((_, index) => String(index))),
+    signed: arrow.vectorFromArray(values, new arrow.Int64()),
+    unsigned: arrow.vectorFromArray(
+      values.map(value => (value === null ? null : value < 0n ? 18446744073709551615n : value)),
+      new arrow.Uint64()
+    )
+  });
+  const proto = joinDatasets(source, source, {
+    leftField: 'key',
+    rightField: 'key',
+    type: 'LEFT',
+    rightColumns: []
+  });
+  const dataset = new KeplerTable({
+    info: proto.info,
+    metadata: proto.metadata,
+    color: [0, 0, 0]
+  }).updateSchema(proto.data);
+  const original = dataset.dataContainer.flattenData().map(row => [...row]);
+  const expected = [
+    ['0', 0, 0],
+    ['1', 10, 10],
+    ['2', 20, 20],
+    ['3', -9007199254740991, '18446744073709551615'],
+    ['4', 9007199254740991, 9007199254740991],
+    ['5', '-9223372036854775808', '18446744073709551615'],
+    ['6', '9007199254740992', '9007199254740992'],
+    ['7', '9007199254740993', '9007199254740993'],
+    ['8', null, null]
+  ];
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  t.deepEqual(saved.allData, expected, 'safe numbers and exact unsafe decimal strings');
+  t.deepEqual(dataset.dataContainer.flattenData(), original, 'live derived rows are not mutated');
+  t.deepEqual(source.dataContainer.flattenData(), original, 'source Arrow values are not mutated');
+  t.doesNotThrow(() => {
+    const json = exportToJsonString({
+      datasets: [{version: 'v1', data: saved}],
+      config: {version: 'v1', config: {}}
+    });
+    const parsed = processKeplerglJSON(JSON.parse(json)).datasets[0];
+    const reloaded = new KeplerTable({
+      info: parsed.info,
+      metadata: parsed.metadata,
+      color: [0, 0, 0]
+    }).updateSchema(validateInputData(parsed.data));
+    t.deepEqual(reloaded.dataContainer.flattenData(), expected, 'JSON reload retains exact cells');
+    t.equal(
+      reloaded.fields[1].valueAccessor({index: 7}),
+      '9007199254740993',
+      'accepted unsafe-string numeric limitation unchanged'
+    );
+    t.deepEqual(
+      datasetSchema[VERSIONS.v1].save(reloaded).allData,
+      expected,
+      'resave retains exact cells'
+    );
+    const html = exportMapToHTML({
+      datasets: [{version: 'v1', data: saved}],
+      config: {version: 'v1', config: {}}
+    });
+    const embedded = JSON.parse(html.match(/const datasets = (.*);/)[1]);
+    t.deepEqual(embedded[0].data.allData, expected, 'HTML retains the same exact cells');
+    t.deepEqual(
+      reloadDataset(embedded[0].data).dataContainer.flattenData(),
+      expected,
+      'HTML reload retains exact cells'
+    );
+  }, 'JSON and HTML exports are valid');
+  t.end();
+});
+
+test('#DatasetSchema -> derived numeric controls and empty rows remain unchanged', t => {
+  for (const rows of [[], [[null], [null]], [[10], [20], [null]]]) {
+    const dataset = new KeplerTable({
+      color: [0, 0, 0],
+      metadata: {
+        derivedDataset: {
+          type: 'join',
+          sourceDataIds: [],
+          operationId: 'control'
+        }
+      }
+    }).updateSchema({fields: [{name: 'value', type: 'integer', analyzerType: 'INT'}], rows});
+    const saved = datasetSchema[VERSIONS.v1].save(dataset);
+    t.deepEqual(JSON.parse(exportToJsonString(saved)).allData, rows, 'control saves unchanged');
+    t.deepEqual(dataset.dataContainer.flattenData(), rows, 'control source unchanged');
+  }
   t.end();
 });
 

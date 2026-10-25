@@ -268,7 +268,12 @@ class KeplerTable<F extends Field = Field> {
       displayName: f.displayName || f.name,
       analyzerType: f.analyzerType || ALL_FIELD_TYPES.string,
       format: f.format || '',
-      valueAccessor: getFieldValueAccessor(f, i, dataContainer)
+      valueAccessor: getTableFieldValueAccessor(
+        f,
+        i,
+        dataContainer,
+        Boolean(this.metadata?.derivedDataset)
+      )
     }));
 
     const allIndexes = dataContainer.getPlainIndex();
@@ -320,7 +325,12 @@ class KeplerTable<F extends Field = Field> {
         const {filterProps: _filterProps, ...rest} = f;
         return {
           ...rest,
-          valueAccessor: getFieldValueAccessor(f, i, this.dataContainer)
+          valueAccessor: getTableFieldValueAccessor(
+            f,
+            i,
+            this.dataContainer,
+            Boolean(this.metadata?.derivedDataset)
+          )
         };
       }) as F[];
       this.gpuFilter = getGpuFilterProps([], this.id, this.fields, undefined);
@@ -998,6 +1008,27 @@ export function copyTableAndUpdate(
     acc[entry[0]] = entry[1];
     return acc;
   }, copyTable(original));
+}
+
+function getTableFieldValueAccessor(
+  field: {type?: Field['type']; format?: Field['format']},
+  index: number,
+  dataContainer: DataContainerInterface,
+  isDerived: boolean
+) {
+  // Derived rows retain exact integers for joins and saving. Only their numeric
+  // view uses Number precision; saved unsafe decimal strings remain unchanged.
+  // Bind by field type, not sampled values: empty tables may receive BigInts later.
+  if (
+    isDerived &&
+    (field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real)
+  ) {
+    return (row: {index: number} | any[]) => {
+      const value = readFieldValue(index, dataContainer, row);
+      return typeof value === 'bigint' ? Number(value) : value;
+    };
+  }
+  return getFieldValueAccessor(field, index, dataContainer);
 }
 
 function fieldNamesMatch(current: {name: string}[], incoming: {name: string}[]): boolean {

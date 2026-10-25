@@ -116,7 +116,10 @@ export const propertiesV1 = {
  * @param dataContainer A data container to flatten.
  * @returns Row based data.
  */
-const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => {
+const getAllDataForSaving = (
+  dataContainer: DataContainerInterface,
+  isDerived: boolean
+): any[][] => {
   const allData = dataContainer.flattenData();
 
   if (dataContainer instanceof ArrowDataContainer) {
@@ -150,6 +153,23 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
         });
       }
     }
+  } else if (isDerived) {
+    // Row containers expose their live backing rows. Copy only when conversion
+    // is needed, leaving ordinary derived rows and exact stored values intact.
+    let savedData = allData;
+    for (let rowIndex = 0; rowIndex < allData.length; rowIndex++) {
+      const row = allData[rowIndex];
+      let savedRow = row;
+      for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
+        const value = row[columnIndex];
+        if (typeof value !== 'bigint') continue;
+        if (savedData === allData) savedData = allData.slice();
+        if (savedRow === row) savedRow = savedData[rowIndex] = row.slice();
+        const number = Number(value);
+        savedRow[columnIndex] = Number.isSafeInteger(number) ? number : value.toString();
+      }
+    }
+    return savedData;
   }
 
   return allData;
@@ -214,7 +234,10 @@ export class DatasetSchema extends Schema {
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
-          allData: getAllDataForSaving(dataset.dataContainer),
+          allData: getAllDataForSaving(
+            dataset.dataContainer,
+            Boolean(dataset.metadata?.derivedDataset)
+          ),
           fields: getFieldsForSaving(dataset.fields),
           // we use flattenData to save arrow tables,
           // but once flattened it's not an arrow file anymore.

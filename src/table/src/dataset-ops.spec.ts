@@ -5,6 +5,7 @@ import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {latLngToCell} from '@kepler.gl/common-utils';
 import {Int64, Table, Uint64, vectorFromArray} from 'apache-arrow';
 import {Response} from 'node-fetch';
+import {ProtoDataset} from '@kepler.gl/types';
 
 import KeplerTable from './kepler-table';
 import {aggregateValues} from './dataset-ops/aggregations';
@@ -61,6 +62,14 @@ function makeInt64Data(values: (bigint | null)[], type: Int64 | Uint64 = new Int
     rows: [],
     arrowTable: new Table({region, pop})
   };
+}
+
+function importDerived(result: ProtoDataset) {
+  return new KeplerTable({
+    info: result.info,
+    metadata: result.metadata,
+    color: [0, 0, 0]
+  }).updateSchema(result.data);
 }
 
 const square = (west: number, south: number, east: number, north: number) => ({
@@ -340,6 +349,154 @@ describe('dataset-ops engine', () => {
     });
     expect(result.data.fields.map(field => field.name)).toEqual(['city']);
     expect(result.data.rows[0]).toEqual(['sf']);
+  });
+
+  describe.each([new Int64(), new Uint64()])('derived Arrow %s numeric access', arrowType => {
+    test.each(['LEFT', 'INNER', 'FULL'] as const)(
+      '%s join preserves raw values on both sides',
+      type => {
+        const left = new KeplerTable({info: {id: 'left'}, color: [0, 0, 0]}).updateSchema(
+          makeInt64Data([10n, 20n, null], arrowType)
+        );
+        const right = new KeplerTable({
+          info: {id: 'right', label: 'right'},
+          color: [0, 0, 0]
+        }).updateSchema(makeInt64Data([10n, 20n, 30n, null], arrowType));
+        const result = joinDatasets(left, right, {leftField: 'pop', rightField: 'pop', type});
+        const table = importDerived(result);
+        const raw = table.dataContainer.flattenData().map(row => [row[1], row[3]]);
+        expect(raw).toEqual([
+          [10n, 10n],
+          [20n, 20n],
+          ...(type !== 'INNER' ? [[null, null]] : []),
+          ...(type === 'FULL'
+            ? [
+                [null, 30n],
+                [null, null]
+              ]
+            : [])
+        ]);
+        for (const index of [1, 3]) {
+          const field = table.fields[index];
+          expect(table.getColumnFilterProps(field.name)?.domain).toEqual(
+            index === 3 && type === 'FULL' ? [10, 30] : [10, 20]
+          );
+          expect(field.valueAccessor({index: 0})).toBe(10);
+          const accessRow = field.valueAccessor as (row: {index: number} | any[]) => unknown;
+          expect(accessRow(table.dataContainer.rowAsArray(0))).toBe(10);
+          expect(table.getColumnLayerDomain(field, 'linear')).toEqual(
+            index === 3 && type === 'FULL' ? [10, 30] : [10, 20]
+          );
+        }
+        expect(table.dataContainer.flattenData().map(row => [row[1], row[3]])).toEqual(raw);
+        expect([0, 1, 2].map(index => left.dataContainer.valueAt(index, 1))).toEqual([
+          10n,
+          20n,
+          null
+        ]);
+      }
+    );
+  });
+
+  test('derived access keeps adjacent unsafe join keys distinct and raw', () => {
+    const source = new KeplerTable({info: {id: 'large'}, color: [0, 0, 0]}).updateSchema(
+      makeInt64Data([9007199254740992n, 9007199254740993n])
+    );
+    const table = importDerived(
+      joinDatasets(source, source, {
+        leftField: 'pop',
+        rightField: 'pop',
+        type: 'INNER'
+      })
+    );
+    expect(table.dataContainer.numRows()).toBe(2);
+    expect([0, 1].map(index => table.dataContainer.valueAt(index, 1))).toEqual([
+      9007199254740992n,
+      9007199254740993n
+    ]);
+    expect([0, 1].map(index => table.fields[1].valueAccessor({index}))).toEqual([
+      9007199254740992, 9007199254740992
+    ]);
+    expect(
+      joinDatasets(table, source, {leftField: 'pop', rightField: 'pop', type: 'INNER'}).data.rows
+    ).toHaveLength(2);
+  });
+
+  test('derived access survives empty/null rows, append and repeated row updates', async () => {
+    const source = makeTable({id: 'empty', fields: [{name: 'pop', type: 'integer'}], rows: []});
+    const table = importDerived(
+      joinDatasets(source, source, {
+        leftField: 'pop',
+        rightField: 'pop',
+        type: 'LEFT',
+        rightColumns: []
+      })
+    );
+    expect(table.getColumnFilterProps('pop')?.domain).toEqual([0, 1]);
+    expect(table.appendRows([[null], [10n], [20n]])).toBe(true);
+    expect(table.fields[0].valueAccessor({index: 0})).toBeNull();
+    expect(table.fields[0].valueAccessor({index: 1})).toBe(10);
+    for (const rows of [
+      [[null], [30n], [50n]],
+      [[null], [60n], [80n]]
+    ]) {
+      await table.update({fields: table.fields, rows});
+      expect(table.getColumnFilterProps('pop')?.domain).toEqual(
+        rows.slice(1).map(row => Number(row[0]))
+      );
+      expect(table.dataContainer.flattenData()).toEqual(rows);
+    }
+  });
+
+  test('derived Group By and suitability retain exact cells with numeric access', () => {
+    const source = new KeplerTable({info: {id: 'source'}, color: [0, 0, 0]}).updateSchema(
+      makeInt64Data([10n, 20n, null])
+    );
+    const results = [
+      groupByDataset(source, {fieldName: 'pop', aggregations: {region: 'count'}}),
+      groupByDataset(source, {fieldName: 'region', aggregations: {pop: 'maximum'}}),
+      suitabilityDataset(source, {weights: {pop: 1}})
+    ];
+    for (const result of results) {
+      const table = importDerived(result);
+      for (const field of table.fields.filter(
+        field => field.type === 'integer' || field.type === 'real'
+      )) {
+        for (let index = 0; index < table.dataContainer.numRows(); index++) {
+          const raw = table.dataContainer.valueAt(index, field.fieldIdx);
+          expect(field.valueAccessor({index})).toBe(typeof raw === 'bigint' ? Number(raw) : raw);
+        }
+        expect(() => table.getColumnFilterProps(field.name)).not.toThrow();
+      }
+      expect(table.dataContainer.flattenData()).toEqual(result.data.rows);
+    }
+    expect(source.dataContainer.valueAt(1, 1)).toBe(20n);
+  });
+
+  test('spatial join copied integers and extrema retain numeric access', () => {
+    const polygons = makeTable({
+      id: 'polygons',
+      fields: [
+        {name: 'geom', type: 'geojson'},
+        {name: 'pop', type: 'integer'}
+      ],
+      rows: [
+        [square(0, 0, 1, 1), 10n],
+        [square(2, 2, 3, 3), 20n]
+      ]
+    });
+    const result = spatialJoinDatasets(polygons, polygons, {
+      leftGeo: {kind: 'geojson', fieldName: 'geom'},
+      rightGeo: {kind: 'geojson', fieldName: 'geom'},
+      aggregations: {pop: 'maximum'}
+    });
+    const table = importDerived(result);
+    for (const name of ['pop', 'pop_maximum']) {
+      expect(table.getColumnFilterProps(name)?.domain).toEqual([10, 20]);
+      expect(table.getValue(name, 0)).toBe(10);
+      expect(table.dataContainer.valueAt(0, table.getColumnFieldIdx(name))).toBe(10n);
+    }
+    expect(polygons.dataContainer.valueAt(1, 1)).toBe(20n);
   });
 
   test.each([

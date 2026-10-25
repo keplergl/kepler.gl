@@ -448,6 +448,46 @@ test('KeplerTable -> Int64 field accessor converts BigInt to number', async t =>
   t.end();
 });
 
+test('KeplerTable -> derived numeric access does not coerce strings or unrelated fields', t => {
+  const data = {
+    fields: [
+      {name: 'integer', type: 'integer', analyzerType: 'INT'},
+      {name: 'real', type: 'real', analyzerType: 'FLOAT'},
+      {name: 'string', type: 'string', analyzerType: 'STRING'}
+    ],
+    rows: [
+      [10n, 20n, 30n],
+      [42, 0.5, 'name'],
+      ['9007199254740993', null, null]
+    ]
+  };
+  const ordinary = new KeplerTable({color: [0, 0, 0]}).updateSchema(data);
+  const derived = new KeplerTable({
+    color: [0, 0, 0],
+    metadata: {
+      derivedDataset: {
+        type: 'join',
+        sourceDataIds: [],
+        operationId: 'test'
+      }
+    }
+  }).updateSchema(data);
+  t.equal(ordinary.fields[0].valueAccessor({index: 0}), 10n, 'ordinary row accessor unchanged');
+  t.equal(derived.fields[0].valueAccessor({index: 0}), 10, 'derived integer numeric view');
+  t.equal(derived.fields[1].valueAccessor({index: 0}), 20, 'derived real numeric view');
+  t.equal(derived.fields[2].valueAccessor({index: 0}), 30n, 'nonnumeric fields unchanged');
+  t.equal(derived.fields[0].valueAccessor({index: 1}), 42, 'ordinary number unchanged');
+  t.equal(derived.fields[1].valueAccessor({index: 1}), 0.5, 'real unchanged');
+  t.equal(
+    derived.fields[0].valueAccessor({index: 2}),
+    '9007199254740993',
+    'unsafe reload string unchanged'
+  );
+  t.equal(derived.fields[1].valueAccessor({index: 2}), null, 'null unchanged');
+  t.equal(derived.dataContainer.valueAt(0, 0), 10n, 'raw storage unchanged');
+  t.end();
+});
+
 test('KeplerTable -> update with arrow cols keeps gpu filter state', async t => {
   const first = arrow.tableFromArrays({
     lat: [1, 2],
