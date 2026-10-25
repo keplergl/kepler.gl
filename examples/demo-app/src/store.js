@@ -22,6 +22,7 @@ const LEVEL1_ACTIONS = new Set([
   '@@kepler.gl/MOUSE_MOVE',
   '@@kepler.gl/LAYER_HOVER',
   '@@kepler.gl/SET_LOADING_INDICATOR',
+  '@@kepler.gl/SET_LOADING_PROGRESS',
   '@@openassistant/SET_MAP_BOUNDARY'
 ]);
 
@@ -36,9 +37,9 @@ const LEVEL2_ACTIONS = new Set([
 ]);
 
 const SUPPRESSED_BY_LEVEL = [
-  new Set(),          // 0 — log everything
-  LEVEL1_ACTIONS,     // 1 — suppress UI noise (default)
-  LEVEL2_ACTIONS      // 2 — suppress UI noise + map/layer chatter
+  new Set(), // 0 — log everything
+  LEVEL1_ACTIONS, // 1 — suppress UI noise (default)
+  LEVEL2_ACTIONS // 2 — suppress UI noise + map/layer chatter
 ];
 
 if (NODE_ENV === 'local') {

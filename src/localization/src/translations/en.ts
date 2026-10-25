@@ -16,6 +16,7 @@ export default {
     stroke: 'stroke',
     density: 'density',
     height: 'height',
+    elevationOffset: 'elevation offset',
     sum: 'sum',
     pointCount: 'Point Count'
   },
@@ -27,7 +28,8 @@ export default {
     selectValue: 'Select A Value',
     enterValue: 'Enter a value',
     empty: 'empty',
-    selectLayer: 'Select a layer'
+    selectLayer: 'Select a layer',
+    endTimeField: 'Select end time'
   },
   misc: {
     by: '',
@@ -70,7 +72,8 @@ export default {
       alignment: 'Alignment',
       addMoreLabel: 'Add More Label',
       outlineWidth: 'Outline width',
-      outlineColor: 'Outline color'
+      outlineColor: 'Outline color',
+      collisionEnabled: 'Hide overlapping labels'
     }
   },
   sidebar: {
@@ -109,11 +112,26 @@ export default {
     '3DModel': '3D Model',
     '3DModelURL': 'Custom 3D Model URL',
     '3DModelURLDescription': 'URL of a .glb or .glTF file with the 3D model.',
+    '3DModelSourceModel': 'Model',
+    '3DModelSourceUrl': 'URL',
+    '3DModelSourceFile': 'Local file',
+    '3DModelFile': 'Choose file',
     '3DModelOptions': '3D Model Options',
     service: 'Service',
     layer: 'Layer',
     appearance: 'Appearance',
+    apiKey: 'Access Token',
+    apiKeyPlaceholder: 'Enter a new access token',
+    apiKeyHint:
+      'The current token is hidden. Enter a new token and press Enter to reload this layer.',
+    tile3dTokenError:
+      '3D tiles failed to load. The access token may be missing, invalid, or expired. Update it in the layer settings.',
+    tile3dTokenErrorField:
+      '3D tiles failed to load. The access token may be missing, invalid, or expired. Enter a new access token below.',
+    tile3dLoadError: '3D tiles failed to load. Check the tileset URL and try again.',
     bounds: 'Bounds',
+    variable: 'Variable',
+    dimensions: 'Dimensions',
     imageSource: 'Image Source',
     alignment: 'Alignment',
     uniqueIdField: 'Unique ID Field',
@@ -138,11 +156,13 @@ export default {
       geohash: 'GeoHash',
       '3d': '3D',
       flow: 'flow',
+      flowfield: 'Flow Field',
       vectortile: 'vector tile',
       rastertile: 'raster tile',
       wms: 'WMS',
       tile3d: '3D tile',
-      bitmap: 'bitmap'
+      bitmap: 'bitmap',
+      zarr: 'Zarr'
     },
     wms: {
       hover: 'Value:'
@@ -163,13 +183,16 @@ export default {
     radiusRange: 'Radius Range',
     clusterRadius: 'Cluster Radius in Pixels',
     radiusRangePixels: 'Radius Range in pixels',
+    minClusterSize: 'Min Points per Cluster',
+    minClusterSizeDescription:
+      'Hide clusters that contain fewer points than this, e.g. 2 removes single-point clusters',
     billboard: 'Billboard',
     billboardDescription: 'Orient geometry towards the camera',
     fadeTrail: 'Fade trail',
     opacity: 'Opacity',
     imageUrl: 'Image URL',
     showBounds: 'Show Bounds',
-    editBounds: 'Drag corners to resize',
+    editBounds: 'Drag corners to resize, center to move',
     alignMode: 'Align to map',
     boundsWest: 'West',
     boundsSouth: 'South',
@@ -179,10 +202,19 @@ export default {
     coverage: 'Coverage',
     outline: 'Outline',
     colorRange: 'Color range',
+    zarrRescale: 'Value range',
+    zarrVariable: 'Variable',
+    zarrAxis: 'Timeline axis',
+    zarrFrame: 'Timeline frame',
+    zarrDimensionIndexes: 'Dimensions',
     stroke: 'Stroke',
     strokeColor: 'Stroke Color',
     strokeColorRange: 'Stroke Color range',
     targetColor: 'Target Color',
+    targetArrow: 'Target Arrow',
+    targetArrowDescription: 'Draw an arrowhead at the end of each arc or line',
+    targetArrowShape: 'Arrow Shape',
+    targetArrowSize: 'Arrow Size',
     colorAggregation: 'Color Aggregation',
     heightAggregation: 'Height Aggregation',
     weightAggregation: 'Weight Aggregation',
@@ -190,6 +222,9 @@ export default {
     sizeScale: 'Size Scale',
     worldUnitSize: 'World Unit Size',
     elevationScale: 'Elevation Scale',
+    elevationOffset: 'Elevation Offset',
+    elevationOffsetDescription: 'Raise extruded polygons off the ground (same units as height)',
+    elevationOffsetRange: 'Elevation Offset Range',
     enableElevationZoomFactor: 'Use elevation zoom factor',
     enableElevationZoomFactorDescription: 'Adjust height/elevation based on current zoom factor',
     enableHeightZoomFactor: 'Use height zoom factor',
@@ -210,6 +245,10 @@ export default {
     heightMultiplier: 'Height Multiplier',
     fixedHeight: 'Fixed height',
     fixedHeightDescription: 'Use height without modifications',
+    invertHeight: 'Invert height',
+    invertHeightDescription: 'Map the lowest values to the greatest height',
+    fixedElevation: 'Fixed elevation',
+    fixedElevationDescription: 'Use elevation offset without modifications',
     allowHover: 'Allow hover',
     allowHoverDescription: 'Show or hide tooltip when hovering over layer features',
     showNeighborOnHover: 'Highlight Neighbors On Hover',
@@ -253,6 +292,46 @@ export default {
       lineCurviness: 'Curviness',
       locationTotalsEnabled: 'Location Totals',
       maxTopFlowsDisplayNum: 'Max Top Flows'
+    },
+    flowField: {
+      streamlines: 'Streamlines',
+      animation: 'Animation',
+      field: 'Field',
+      colorGroupDescription: 'Single layer color, or a speed palette when Color By Speed is on.',
+      linesPerScreen: 'Lines Per Screen',
+      linesPerScreenDescription:
+        'Target number of streamlines in the current view. Higher is denser.',
+      zoomResponse: 'Zoom Response',
+      zoomResponseDescription:
+        '0 keeps the same number of lines on screen as you zoom. 1 keeps geographic spacing (lines thin out as you zoom in). Values in between mix the two.',
+      strokeWidth: 'Stroke Width',
+      strokeWidthDescription: 'Width of each streamline, in pixels.',
+      colorBySpeed: 'Color By Speed',
+      colorBySpeedDescription:
+        'Color streamlines by speed using the palette. Off uses a single layer color.',
+      opacityDescription: 'Transparency of the streamlines.',
+      trailLength: 'Trail Length',
+      trailLengthDescription: 'Visible trail length as a percent of the animation cycle.',
+      cycle: 'Cycle',
+      cycleDescription: 'Length of one full animation loop, in seconds.',
+      lineLifetime: 'Line Lifetime',
+      lineLifetimeDescription:
+        'How long each trail stays visible, as a fraction of the cycle (1 = the whole cycle).',
+      seamlessLoop: 'Seamless Loop',
+      seamlessLoopDescription: 'Repeat trails so they do not pop off at the end of the cycle.',
+      smoothing: 'Smoothing',
+      smoothingDescription:
+        'Blur u/v over this many neighboring cells. 0 uses raw samples and does not fill empty cells.',
+      gridResolution: 'Grid Resolution',
+      gridResolutionDescription:
+        'Target number of cells along the longer geographic axis of the field. Lower is coarser and faster; higher keeps more detail.',
+      elevationMultiplier: 'Elevation Multiplier',
+      elevationMultiplierDescription:
+        'Scale path height from the altitude/elevation column. 1 is real meters; higher values exaggerate relief in 3D.',
+      customElevation: 'custom elevation',
+      debugGrid: 'Debug Grid',
+      debugGridDescription:
+        'Draw the flow grid and highlight cells that have data. Useful when streamlines look sparse or empty.'
     }
   },
   layerManager: {
@@ -284,7 +363,11 @@ export default {
     addAnnotation: 'Add',
     type: 'Type',
     lineWidth: 'Line Width',
-    color: 'Color'
+    color: 'Color',
+    customText: 'Custom Text',
+    distance: 'Distance',
+    textSide: 'Text Side',
+    textPlacement: 'Placement'
   },
   effectDescription: {
     lightAndShadow:
@@ -334,10 +417,26 @@ export default {
     timeFilterSync: 'Synced datasets',
     timeLayerSync: 'Link with the layer timeline',
     timeLayerUnsync: 'Unlink with the layer timeline',
-    column: 'Column'
+    column: 'Column',
+    timeIntervalEndField: 'End time',
+    timeIntervalEndFieldHint:
+      'Optional. Features stay visible while the playback window overlaps this time span.',
+    filterOut: 'Filter out',
+    filterOutHelp: 'Filter out help',
+    filterOutHint: 'Hide rows that match this filter and keep the rest.',
+    timezone: 'Time Zone',
+    selectTimezone: 'Select display timezone',
+    timeFormat: 'Time Format',
+    groupBy: 'Group By',
+    groupByField: 'Group by field',
+    maxGroups: 'Max number of groups',
+    groupOthers: 'Group others',
+    seriesColors: 'Colors',
+    allGroups: 'All'
   },
   datasetTitle: {
     showDataTable: 'Show data table',
+    moreSettings: 'More settings',
     removeDataset: 'Remove dataset',
     refreshDataset: 'Refresh dataset',
     refreshFailed: 'Refresh failed',
@@ -350,6 +449,110 @@ export default {
     refresh15m: '15 min',
     refreshCustom: 'Custom'
   },
+  datasetOps: {
+    replace: 'Replace',
+    groupBy: 'Group By',
+    groupByHelp:
+      'Create groups to combine data based on a selected field. Result will be added as a new dataset.',
+    groupByField: 'Group by field',
+    groupByFieldHelp: 'Select the field used to create groups.',
+    aggregations: 'Aggregations',
+    aggregationRules: 'Aggregation Rules',
+    aggregationRulesHelp: 'Describe aggregation rules for combining data in each column.',
+    join: 'Join',
+    joinHelp:
+      'Combine rows from two datasets based on a common field. Result will be added as a new dataset.',
+    spatialJoin: 'Spatial Join',
+    spatialJoinHelp:
+      'Combines columns from one dataset to another based on their spatial relationship. To perform spatial join, select geo columns in both datasets and select the type of spatial join operation to perform. The results will be a new joined dataset.',
+    columnsToInclude: 'Columns to include',
+    columnsToIncludeHelp: 'Select and modify columns to be included in the joined dataset.',
+    selectAll: 'Select All',
+    unselectAll: 'Unselect All',
+    resultName: 'Result name',
+    back: 'Back',
+    run: 'Run',
+    cancel: 'Cancel',
+    leftKey: 'Left key',
+    rightKey: 'Right key',
+    leftDataset: 'Left',
+    leftDatasetHelp: 'Select dataset to join on the left',
+    leftFieldHelp: 'Select common field of the left dataset',
+    rightDataset: 'Right',
+    rightDatasetHelp: 'Select dataset to join on the right',
+    rightFieldHelp: 'Select common field of the right dataset',
+    joinTypeLabel: 'Join Type',
+    targetDataset: 'Target Dataset',
+    targetDatasetHelp:
+      'Select the dataset that will keep one output row per feature. Matching features from the join dataset are aggregated onto that row.',
+    joinDataset: 'Join Dataset',
+    joinDatasetHelp:
+      'Select the dataset that will be combined into the target dataset based on the spatial relationship.',
+    joinOperation: 'Join Operation',
+    joinOperationHelp:
+      'Intersects: they share any space. Within: target is completely inside join. Equals: they occupy the same space. Crosses: they share some interior points but not all. Overlaps: they share space and neither contains the other. Touches: they share a boundary but not interiors.',
+    geometryColumn: 'Geometry Column',
+    leftGeometry: 'Left geometry',
+    rightGeometry: 'Right geometry',
+    predicate: 'Predicate',
+    predicateOption: {
+      intersects: 'Intersects',
+      equals: 'Equals',
+      crosses: 'Crosses',
+      overlaps: 'Overlaps',
+      within: 'Within',
+      touches: 'Touches'
+    },
+    predicateHelp: {
+      intersects: 'True when the geometries share any interior or boundary.',
+      equals: 'True when the geometries occupy the same space.',
+      crosses:
+        'True when the geometries share interior space but neither contains the other, typically a line crossing a polygon or another line.',
+      overlaps:
+        'True when the geometries share interior space, have the same dimension, and neither contains the other.',
+      within: 'True when the target geometry is completely inside the join geometry.',
+      touches: 'True when the geometries share a boundary but not their interiors.'
+    },
+    joinType: {
+      left: 'Left',
+      inner: 'Inner',
+      full: 'Full',
+      leftHelp: 'Left Join: Returns all rows from the left, and the matched rows from the right.',
+      innerHelp: 'Inner Join: Returns rows that have matching values in both.',
+      fullHelp: 'Full Join: Returns all rows when there is a match in either left or right.'
+    },
+    aggregation: {
+      count: 'Count',
+      sum: 'Sum',
+      average: 'Mean',
+      maximum: 'Max',
+      minimum: 'Min',
+      median: 'Median',
+      countUnique: 'Unique',
+      merge: 'Merge'
+    },
+    suitability: 'Suitability Analysis',
+    suitabilityHelp:
+      'Rank rows by a weighted combination of numeric columns. The result is added as a new dataset with a score column. The new layer is colored by that column when possible.',
+    suitabilityWeights: 'Fields & Weights',
+    suitabilityWeightsHelp:
+      'Pick the numeric columns that contribute to the score and how much each one matters. A row scores blank when any selected column is missing a value.',
+    suitabilityStandardization: 'Scoring Options',
+    suitabilityStandardizationHelp:
+      'Standardization puts columns measured on different scales onto a comparable footing before they are combined.',
+    weightStandardization: 'Weight standardization',
+    dataStandardization: 'Data standardization',
+    scoreColumn: 'Score column',
+    weightStandardizationOption: {
+      raw: 'Raw',
+      normalize: 'Normalize'
+    },
+    dataStandardizationOption: {
+      raw: 'Raw',
+      range: 'Range',
+      zScore: 'Z-score'
+    }
+  },
   datasetInfo: {
     rowCount: '{rowCount} rows',
     vectorTile: 'Vector tile',
@@ -357,6 +560,7 @@ export default {
     wmsTile: 'WMS tile',
     tile3d: '3D tile',
     bitmap: 'Bitmap image',
+    zarr: 'Zarr',
     remoteFile: '{rowCount} rows (remote)',
     refreshInterval: 'Refresh',
     refreshCustomSeconds: 'Seconds',
@@ -375,6 +579,8 @@ export default {
     zoomToLayer: 'Zoom to layer',
     resetAfterError: 'Try to enable the layer after an error',
     layerSettings: 'Layer settings',
+    moreOptions: 'More options',
+    interactionSettings: 'Interaction settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',
     selectSplitMode: 'Select map view mode',
@@ -382,6 +588,8 @@ export default {
     dualView: 'Dual',
     swipeView: 'Swipe',
     showLegend: 'Show legend',
+    showMapInfo: 'Show map info',
+    hideMapInfo: 'Minimize map info',
     disable3DMap: 'Disable 3D Map',
     globeMap: 'Globe Map',
     disableGlobeMap: 'Disable Globe Map',
@@ -393,6 +601,7 @@ export default {
     selectLocale: 'Select locale',
     switchToLightTheme: 'Switch to light theme',
     switchToDarkTheme: 'Switch to dark theme',
+    switchToSpaceTheme: 'Switch to space theme',
     showAiAssistantPanel: 'Show AI Assistant',
     hideAiAssistantPanel: 'Hide AI Assistant',
     hideLayerPanel: 'Hide layer panel',
@@ -402,11 +611,12 @@ export default {
     removeBaseMapStyle: 'Remove base map style',
     delete: 'Delete',
     timePlayback: 'Time Playback',
-    timeFilterSync: 'Sync with a column from another dataset',
+    timeFilterSync: 'Add synced filter',
     cloudStorage: 'Cloud Storage',
     '3DMap': '3D Map',
     animationByWindow: 'Moving Time Window',
     animationByIncremental: 'Incremental Time Window',
+    animationByInterval: 'Step by Interval',
     speed: 'Speed',
     play: 'Play',
     pause: 'Pause',
@@ -418,6 +628,8 @@ export default {
     syncTimelineEnd: 'End of current filter timeframe',
     showEffectPanel: 'Show effect panel',
     hideEffectPanel: 'Hide effect panel',
+    showChartPanel: 'Show charts',
+    hideChartPanel: 'Hide charts',
     showAnnotationPanel: 'Show annotations',
     hideAnnotationPanel: 'Hide annotations',
     removeAnnotation: 'Remove annotation',
@@ -427,7 +639,19 @@ export default {
     annotationSettings: 'Annotation settings',
     removeEffect: 'Remove effect',
     disableEffect: 'Disable effect',
-    effectSettings: 'Effect settings'
+    effectSettings: 'Effect settings',
+    chartSettings: 'Chart settings',
+    removeChart: 'Remove chart',
+    pinChart: 'Pin chart',
+    unpinChart: 'Unpin chart',
+    showChartCaption: 'Show caption',
+    hideChartCaption: 'Hide caption',
+    editLayerJson: 'Edit layer JSON',
+    editFilterJson: 'Edit filter JSON',
+    editEffectJson: 'Edit effect JSON',
+    editViewportJson: 'Edit viewport JSON',
+    editAnimationJson: 'Edit animation JSON',
+    editChartJson: 'Edit chart JSON'
   },
   toolbar: {
     exportImage: 'Export Image',
@@ -452,12 +676,40 @@ export default {
     filterLayer: 'Filter Layers',
     filterLayerDisabled: 'Non-polygon geometries cannot be used for filtering',
     copyGeometry: 'Copy Geometry',
+    extractData: 'Extract data',
+    extractFromLayer: 'from {layerName} layer',
     editProperties: 'Edit Properties',
     propertyName: 'Property',
     propertyValue: 'Value',
     removeProperty: 'Remove property',
     polygonFilter: 'Polygon filter',
-    noLayersToFilter: 'No layers to filter'
+    noLayersToFilter: 'No layers to filter',
+    noLayersToExtract: 'No layers to extract'
+  },
+
+  chartPanel: {
+    add: 'Add',
+    addChart: 'Add chart',
+    selectType: 'Select chart type',
+    empty: 'Add a chart to summarize the current map data.',
+    dataset: 'Dataset',
+    layer: 'Layer',
+    field: 'Field',
+    xAxis: 'X axis',
+    yAxis: 'Y axis',
+    value: 'Value',
+    idField: 'Feature id field',
+    aggregation: 'Aggregation',
+    period: 'Period',
+    color: 'Color',
+    colorBy: 'Color by',
+    colors: 'Colors',
+    options: 'Options',
+    pinned: 'Pinned',
+    formatTicks: 'Format Ticks',
+    applyFilters: 'Apply map filters',
+    crossFilter: 'Cross-filter map',
+    configure: 'Configure'
   },
 
   exportVideoModal: {
@@ -469,6 +721,7 @@ export default {
     title: {
       deleteDataset: 'Delete Dataset',
       addDataToMap: 'Add Data To Map',
+      replaceDataset: 'Replace Dataset',
       exportImage: 'Export Image',
       exportData: 'Export Data',
       exportMap: 'Export Map',
@@ -484,7 +737,13 @@ export default {
       addStyle: 'Add Style',
       save: 'Save',
       defaultCancel: 'Cancel',
-      defaultConfirm: 'Confirm'
+      defaultConfirm: 'Confirm',
+      replace: 'Replace'
+    },
+    exportFileName: {
+      title: 'File name',
+      subtitle: 'The file type is added automatically.',
+      placeholder: 'kepler.gl'
     },
     exportImage: {
       ratioTitle: 'Ratio',
@@ -496,8 +755,13 @@ export default {
       resolutionTitle: 'Resolution',
       resolutionDescription: 'High resolution is better for prints.',
       resolutionPlaceholder: 'Select resolution...',
+      optionsTitle: 'Options',
+      transparentBackground: 'Transparent background',
+      transparentBackgroundHelp: 'Hide basemap',
       mapLegendTitle: 'Map Legend',
-      mapLegendAdd: 'Add legend on map'
+      mapLegendAdd: 'Add legend on map',
+      chartsTitle: 'Charts',
+      chartsAdd: 'Add charts on map'
     },
     exportVideo: {
       animation: 'Animation',
@@ -516,6 +780,12 @@ export default {
       fileCount: '{fileCount} Files',
       rowCount: '{rowCount} Rows',
       tiledDatasetWarning: "* Export Data for Tiled datasets isn't supported"
+    },
+    dataTable: {
+      show: 'Show',
+      allData: 'All Data',
+      filteredData: 'Filtered Data',
+      rowCount: '{rowCount, plural, one {# row} other {# rows}}'
     },
     deleteData: {
       warning: 'you are going to delete this dataset. It will affect {length} layers'
@@ -565,7 +835,26 @@ export default {
     },
     exportMap: {
       formatTitle: 'Map format',
-      formatSubtitle: 'Choose the format to export your map to',
+      formatSubtitle: 'Choose an export format',
+      formatHelpLabel: 'About HTML and JSON formats',
+      formatHtmlHelp: 'A standalone interactive map you can open in a browser.',
+      formatJsonHelp: 'Map data and configuration you can reopen in kepler.gl.',
+      mapDetailsTitle: 'Map details',
+      nameTitle: 'Name',
+      descriptionTitle: 'Description',
+      appNameTitle: 'Application name',
+      appNameColorTitle: 'Application name color',
+      appWebsiteTitle: 'Website',
+      appIconTitle: 'Icon URL',
+      appIconHelpLabel: 'Icon requirements',
+      appIconHelp:
+        'Use a direct, publicly accessible HTTP(S) URL to an image, such as SVG or PNG. Icons fit within 22 × 15 px and keep their proportions. A transparent background is recommended. Leave blank for the default kepler.gl icon.',
+      brandingPreviewTitle: 'Preview',
+      includeApiKeysTitle: 'Layer API keys',
+      includeApiKeys: 'Include layer API keys',
+      includeApiKeysHelpLabel: 'About layer API keys',
+      includeApiKeysSubtitle:
+        'When unchecked, access tokens stored on layers are removed from the exported file.',
       html: {
         selection: 'Export your map into an interactive html file.',
         tokenTitle: 'Mapbox access token',
@@ -575,14 +864,21 @@ export default {
           '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ',
         tokenSecurityWarning:
           '* Warning: your Mapbox token will be embedded in the exported HTML file. Anyone with access to this file can see and use your token. Use a scoped token with URL restrictions when possible. ',
+        tokenSharedNotice:
+          'If this map uses Mapbox and you do not provide your own token, it may stop displaying when the shared token changes.',
+        tokenEmbeddedNotice:
+          'Your Mapbox token will be visible to anyone with the exported HTML. Use a scoped token with URL restrictions.',
         tokenDisclaimer: 'You can change the Mapbox token later using the following instructions: ',
-        tokenUpdate: 'How to update an existing map token.',
-        modeTitle: 'Map Mode',
-        modeSubtitle1: 'Select the app mode. More ',
-        modeSubtitle2: 'info',
+        tokenUpdate: 'Learn how to update the token.',
+        modeTitle: 'Map mode',
+        modeSubtitle1: 'Choose what viewers can do.',
+        modeSubtitle2: 'Learn more',
+        modeHelpLabel: 'About map modes',
+        modeReadHelp: 'Hides editing controls; viewers can still explore the map.',
+        modeEditHelp: 'Shows editing controls so viewers can change the map.',
         modeDescription: 'Allow users to {mode} the map',
-        read: 'read',
-        edit: 'edit'
+        read: 'View only',
+        edit: 'View and edit'
       },
       json: {
         configTitle: 'Map Config',
@@ -598,10 +894,22 @@ export default {
     loadingDialog: {
       loading: 'Loading...'
     },
+    replaceDataset: {
+      removeOriginal: 'Remove {datasetName}',
+      removeOriginalHint:
+        'Layers and filters move to the new dataset. The original dataset is removed from the map.'
+    },
     loadData: {
       upload: 'Load Files',
       tileset: 'Tileset',
-      storage: 'Load from Storage'
+      storage: 'Load from Storage',
+      autoCreateLayers: 'Auto create layers',
+      autoCreateLayersInfo:
+        'kepler.gl will auto detect layers if the column names in your file follow certain naming conventions.',
+      processingLayers: 'Processing data for layers',
+      readyToAdd: 'Ready to add',
+      copyError: 'Copy error',
+      copied: 'Copied'
     },
     tripInfo: {
       title: 'Create trips from GeoJson',
@@ -718,13 +1026,80 @@ ${'```'}
   header: {
     visibleLayers: 'Visible layers',
     layerLegend: 'Legend',
-    annotations: 'Annotations'
+    annotations: 'Annotations',
+    charts: 'Charts'
   },
   interactions: {
     tooltip: 'Tooltip',
     brush: 'Brush',
     coordinate: 'Coordinates',
-    geocoder: 'Geocoder'
+    annotation: 'Annotations',
+    addAnnotation: 'Add Annotation',
+    showAnnotations: 'Show Annotations',
+    hideAnnotations: 'Hide Annotations',
+    copyCoordinate: 'Copy coordinates',
+    coordinateCopied: 'Copied',
+    geocoder: 'Geocoder',
+    mapInfo: 'Map info',
+    mapInfoHint: 'Name and description are shown in a card on the right side of the map.',
+    mapInfoName: 'Name',
+    mapInfoDescription: 'Description',
+    mapInfoDescriptionHelp: 'Add a link with [label](https://example.com).',
+    legend: 'Legend',
+    legendHint: 'Choose which layers appear in the map legend. Layers stay on the map.',
+    legendEmpty: 'Add a layer to choose what appears in the legend.',
+    legendHiddenByGroup: 'Hidden because a group is excluded from the legend',
+    legendHideInvisible: 'Hide hidden layers in legend',
+    legendAllLayers: 'All Layers',
+    fadeOnZoom: 'Fade on zoom',
+    fadeOnZoomHint: 'Set a zoom range to fade layers and annotations.',
+    fadeOnZoomAdd: 'Add controller',
+    fadeOnZoomLayers: 'Layers and annotations',
+    fadeOnZoomAppear: 'Appear',
+    fadeOnZoomFullStart: 'Full start',
+    fadeOnZoomFullEnd: 'Full end',
+    fadeOnZoomDisappear: 'Disappear',
+    fadeOnZoomDelete: 'Remove controller'
+  },
+  camera: {
+    enableBookmarks: 'Enable bookmarks',
+    copyCoordinates: 'Copy coordinates',
+    copiedCoordinates: 'Coordinates copied',
+    copyFailed: 'Could not copy coordinates',
+    animation: 'Camera animation',
+    animationHint: 'Animate the map between saved views.',
+    enableAnimation: 'Enable camera animation',
+    stop: 'Stop',
+    stopName: 'Stop name',
+    stopTrack: 'Animation stops',
+    holdSegment: 'Hold',
+    travelSegment: 'Travel',
+    pickCurrentLocation: 'Pick current location',
+    currentView: 'Current view',
+    addStop: 'Add stop',
+    endOfTour: 'End of tour',
+    hold: 'Hold (s)',
+    travel: 'Travel to next (s)',
+    duplicate: 'Duplicate',
+    goToStop: 'Go to stop',
+    scrub: 'Camera tour time',
+    elapsed: 'Elapsed time',
+    duration: 'Tour duration',
+    pause: 'Pause',
+    play: 'Play',
+    restart: 'Restart',
+    bookmarks: 'Bookmarks',
+    bookmark: 'Bookmark',
+    bookmarkName: 'Bookmark name',
+    reorderBookmark: 'Reorder bookmark',
+    captureBookmark: 'Add Bookmark',
+    bookmarksHint: 'Save views to revisit later.',
+    singleMap: 'Use a single 2D or 3D map to edit camera views.',
+    goTo: 'Go to',
+    updateView: 'Update view',
+    up: 'Up',
+    down: 'Down',
+    delete: 'Delete'
   },
   layerBlending: {
     title: 'Layer Blending',
@@ -808,20 +1183,33 @@ ${'```'}
   fileUploader: {
     message: 'Drag & Drop Your File(s) Here',
     chromeMessage:
-      '*Chrome user: Limit file size to 250mb, if need to upload larger file, try Safari',
+      '*Files are parsed in your browser. Large files can run out of memory; use a tileset for very large datasets.',
     disclaimer:
       '*kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
       'No information or map data is sent to any server.',
     configUploadMessage:
-      'Upload {fileFormatNames} or saved map **Json**. Read more about [**supported file formats**]',
+      'Upload a supported file or saved map **Json**. Read more about [**supported file formats**]',
+    replaceUploadMessage: 'Upload a supported file. Read more about [**supported file formats**]',
     browseFiles: 'browse your files',
     uploading: 'Uploading',
     downloading: 'Downloading',
     fileNotSupported: 'File {errorFiles} is not supported.',
     or: 'or',
     dropMessage: 'Drag & Drop Your File(s) Here, {browse}, or',
+    toAdd: 'To add to map',
+    includeDataset: 'Include {name}',
+    largeDataset: 'Large',
+    largeDatasetWarning:
+      'This dataset is large. It can run out of memory, layer creation can take a long time, and rendering can be laggy.',
+    readyToAdd: '{size} - Ready to add file to map',
+    readyToAddNoSize: 'Ready to add file to map',
+    loadingProgress: 'Loading ({loaded} / {total})',
+    loading: 'Loading...',
+    unableToLoad: 'Unable to load file',
+    unsupported: 'Unsupported file type or format',
     urlPlaceholder: 'Enter your dataset URL',
     fetch: 'Fetch',
+    addUrl: 'Add',
     format: 'Format',
     formatAuto: 'Auto',
     cors: 'The URL must allow [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).'
@@ -833,7 +1221,8 @@ ${'```'}
   },
   geocoder: {
     title: 'Enter an address or coordinates, ex 37.79,-122.40',
-    limitSearch: 'Limit Search to Viewport'
+    limitSearch: 'Limit Search to Viewport',
+    pinColor: 'Pin Color'
   },
   fieldSelector: {
     clearAll: 'Clear All',
@@ -856,6 +1245,8 @@ ${'```'}
   Save: 'Save',
   Share: 'Share',
   mapLegend: {
+    min: 'Min',
+    max: 'Max',
     layers: {
       line: {
         singleColor: {
@@ -891,5 +1282,13 @@ ${'```'}
         count: 'Count'
       }
     }
+  },
+  jsonEditor: {
+    apply: 'Apply',
+    format: 'Format',
+    reset: 'Reset',
+    configApplied: 'Config applied',
+    applyFailed: "Couldn't apply config",
+    textarea: 'JSON configuration'
   }
 };

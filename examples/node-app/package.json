@@ -23,5 +23,10 @@
     "esbuild-plugin-copy": "^2.1.1",
     "esbuild-plugin-replace": "^1.4.0",
     "typescript": "^5.0.0"
+  },
+  "resolutions": {
+    "fflate@npm:0.7.4": "0.7.5",
+    "proxy-addr": "2.0.8",
+    "source-map-js": "1.2.2"
   }
 }

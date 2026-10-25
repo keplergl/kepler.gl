@@ -6,6 +6,7 @@ import {useEffect, useState} from 'react';
 
 import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
 
+import {withPublicTitilerCorsCacheKey} from '@kepler.gl/common-utils';
 import {VectorTileMetadata} from '@kepler.gl/table';
 import {JsonObjectOrArray, StacTypes} from '@kepler.gl/types';
 import {RasterTileType} from '@kepler.gl/constants';
@@ -51,7 +52,7 @@ export default function useFetchJson({
             const tileSource = PMTilesSource.createDataSource(url, {});
             rawMetadata = await tileSource.metadata;
           } else {
-            const response = await fetch(url, options);
+            const response = await fetch(withPublicTitilerCorsCacheKey(url), options);
             if (!response.ok) {
               throw new Error(`Failed Fetch ${url}`);
             }

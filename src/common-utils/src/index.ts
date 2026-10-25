@@ -7,5 +7,13 @@ export * from './string';
 export * from './url';
 export * from './promise';
 
-export {getCentroid, getHexFields, h3IsValid, idToPolygonGeo} from './h3-utils';
+export {
+  getCentroid,
+  getHexFields,
+  h3IsValid,
+  idToPolygonGeo,
+  latLngToCell,
+  cellToParent,
+  h3GetResolution
+} from './h3-utils';
 export type {Centroid} from './h3-utils';

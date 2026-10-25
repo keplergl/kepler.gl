@@ -15,13 +15,15 @@ type Params = {
   mapWidth?: number;
 };
 
+export type LegendResizeEdge = 'top' | 'bottom';
+
 type ReturnType = {
   positionStyles: Record<string, unknown>;
   updatePosition: () => void;
   contentHeight: number;
   maxContentHeight?: number;
   startResize: () => void;
-  resize: (deltaY: number) => void;
+  resize: (deltaY: number, edge?: LegendResizeEdge) => void;
 };
 
 const MARGIN = {
@@ -98,6 +100,7 @@ export default function useLegendPosition({
   const contentHeight = settings?.contentHeight ?? -1;
   const positionStyles = useMemo(() => ({[pos.anchorX]: pos.x, [pos.anchorY]: pos.y}), [pos]);
   const startHeightRef = useRef(0);
+  const minHeightRef = useRef(MIN_CONTENT_HEIGHT);
   const sidePanelWidth = theme.sidePanel?.width || 0;
 
   // Calculate dynamic max content height based on map root dimensions
@@ -121,31 +124,51 @@ export default function useLegendPosition({
     const content = legendContentRef.current?.querySelector('.map-control__panel-content');
     if (content instanceof HTMLElement) {
       startHeightRef.current = content.offsetHeight;
+      // Keep resizing in sync with each panel's rendered minimum.
+      const minHeight = parseFloat(window.getComputedStyle(content).minHeight);
+      minHeightRef.current =
+        Number.isFinite(minHeight) && minHeight > 0 ? minHeight : MIN_CONTENT_HEIGHT;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const resize = useCallback(
-    deltaY => {
+    (deltaY: number, edge: LegendResizeEdge = 'bottom') => {
       const root = legendContentRef.current?.closest('.kepler-gl');
       const legendContent = legendContentRef.current;
-      if (root instanceof HTMLElement && legendContent) {
-        const mapRootBounds = root.getBoundingClientRect();
-        const legendRect = legendContent.getBoundingClientRect();
-        const remainingHeight =
-          mapRootBounds.bottom - (legendRect.top + MAP_CONTROL_HEADER_FULL_HEIGHT + MARGIN.bottom);
-        // Use maxContentHeight if available, otherwise fall back to viewport-based calculation
-        const maxHeight = maxContentHeight
-          ? Math.min(maxContentHeight, remainingHeight)
-          : remainingHeight;
-        const nextHeight = Math.min(
-          maxHeight,
-          Math.max(MIN_CONTENT_HEIGHT, startHeightRef.current + deltaY)
-        );
-        onChangeSettings({contentHeight: nextHeight});
-        if (contentHeight > 0 && pos.anchorY === 'bottom') {
-          onChangeSettings({position: {...pos, y: pos.y - (nextHeight - contentHeight)}});
+      if (!(root instanceof HTMLElement) || !legendContent) {
+        return;
+      }
+      const mapRootBounds = root.getBoundingClientRect();
+      const legendRect = legendContent.getBoundingClientRect();
+      // Bottom handle grows into space below the legend top; top handle grows
+      // into space above the legend bottom so a cornered legend can still resize.
+      const remainingHeight =
+        edge === 'top'
+          ? legendRect.bottom - MAP_CONTROL_HEADER_FULL_HEIGHT - mapRootBounds.top - MARGIN.top
+          : mapRootBounds.bottom -
+            (legendRect.top + MAP_CONTROL_HEADER_FULL_HEIGHT + MARGIN.bottom);
+      // Use maxContentHeight if available, otherwise fall back to viewport-based calculation
+      const maxHeight = maxContentHeight
+        ? Math.min(maxContentHeight, remainingHeight)
+        : remainingHeight;
+      // Dragging the top handle up (negative deltaY) should grow the legend.
+      const signedDelta = edge === 'top' ? -deltaY : deltaY;
+      const nextHeight = Math.min(
+        maxHeight,
+        Math.max(minHeightRef.current, startHeightRef.current + signedDelta)
+      );
+      const nextSettings: Partial<MapLegendControlSettings> = {contentHeight: nextHeight};
+      // Keep the opposite edge fixed when CSS anchoring would otherwise move it.
+      const heightDelta = nextHeight - contentHeight;
+      if (contentHeight > 0 && heightDelta !== 0) {
+        const shouldShiftAnchor =
+          (edge === 'bottom' && pos.anchorY === 'bottom') ||
+          (edge === 'top' && pos.anchorY === 'top');
+        if (shouldShiftAnchor) {
+          nextSettings.position = {...pos, y: pos.y - heightDelta};
         }
       }
+      onChangeSettings(nextSettings);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [contentHeight, pos, onChangeSettings, maxContentHeight]

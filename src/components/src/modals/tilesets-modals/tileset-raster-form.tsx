@@ -6,12 +6,13 @@ import styled from 'styled-components';
 
 import {PMTilesMetadata} from '@loaders.gl/pmtiles';
 
-import {isPMTilesUrl, validateUrl} from '@kepler.gl/common-utils';
+import {isCOGUrl, isPMTilesUrl, validateUrl} from '@kepler.gl/common-utils';
 import {DatasetType, RasterTileType, PMTilesType} from '@kepler.gl/constants';
 import {JsonObjectOrArray} from '@kepler.gl/types';
 import {parseRasterMetadata, parseVectorMetadata} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
+import {default as useDetectCOGUrl} from '../../hooks/use-detect-cog-url';
 import {default as useFetchJson} from '../../hooks/use-fetch-raster-tile-metadata';
 import {DatasetCreationAttributes, MetaResponse} from './common';
 import {InputLight} from '../../common';
@@ -132,19 +133,23 @@ const RASTER_TILE_DOCUMENTATION_URL =
 
 const TITILER_BASE_URL = 'https://titiler.xyz';
 
-function isCOGUrl(url: string): boolean {
-  if (!url) return false;
-  try {
-    const pathname = new URL(url).pathname.toLowerCase().replace(/\/+$/, '');
-    return pathname.endsWith('.tif') || pathname.endsWith('.tiff');
-  } catch {
-    const cleaned = url.trim().toLowerCase().split(/[?#]/)[0].replace(/\/+$/, '');
-    return cleaned.endsWith('.tif') || cleaned.endsWith('.tiff');
-  }
-}
-
 function getCOGMetadataUrl(cogUrl: string): string {
   return `${TITILER_BASE_URL}/cog/stac?url=${encodeURIComponent(cogUrl)}`;
+}
+
+function getEffectiveRasterMetadataUrl({
+  probing,
+  url,
+  isCOG
+}: {
+  probing: boolean;
+  url: string;
+  isCOG: boolean;
+}): string {
+  if (probing || !url) {
+    return '';
+  }
+  return isCOG ? getCOGMetadataUrl(url) : url;
 }
 
 const RASTER_TILE_EXAMPLES = [
@@ -188,8 +193,12 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
   // Remove trailing slash to prevent issues with raster tile servers
   const clearedMetadataUrl = metadataUrl.endsWith('/') ? metadataUrl.slice(0, -1) : metadataUrl;
 
-  const isCOG = isCOGUrl(clearedMetadataUrl);
-  const effectiveMetadataUrl = isCOG ? getCOGMetadataUrl(clearedMetadataUrl) : clearedMetadataUrl;
+  const {isCOG, probing} = useDetectCOGUrl(clearedMetadataUrl);
+  const effectiveMetadataUrl = getEffectiveRasterMetadataUrl({
+    probing,
+    url: clearedMetadataUrl,
+    isCOG
+  });
   const effectiveRasterTileServerUrls = isCOG ? TITILER_BASE_URL : rasterTileServerUrls;
 
   const defaultServerUrls = (getApplicationConfig().rasterServerUrls || []).join(',');
@@ -243,9 +252,15 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
     [setRasterTileServerUrls]
   );
 
+  useEffect(() => {
+    if (isCOG && !rasterTileServerUrls.trim()) {
+      setRasterTileServerUrls(TITILER_BASE_URL);
+    }
+  }, [isCOG, rasterTileServerUrls]);
+
   const {
     data: metadata,
-    loading,
+    loading: metadataLoading,
     error: metaError
   } = useFetchJson({
     url: effectiveMetadataUrl,
@@ -253,9 +268,23 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
     process: parseMetadataAllowCollections
   });
 
+  const loading = probing || metadataLoading;
+
   useEffect(() => {
+    if (probing) {
+      setResponse({
+        metadata: null,
+        dataset: null,
+        loading: true,
+        error: null
+      });
+      return;
+    }
+
     if (tileName && clearedMetadataUrl) {
       const pmtilesType = metadata?.pmtilesType;
+      // Known from URL before metadata loads; avoids a STAC server error flash on paste.
+      const isPMTiles = Boolean(pmtilesType) || isPMTilesUrl(clearedMetadataUrl);
 
       if (pmtilesType === PMTilesType.MVT) {
         return setResponse({
@@ -282,11 +311,12 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           rasterTileServers.length < 1 ||
           !rasterTileServers.every(server => validateUrl(server))
         ) {
-          if (pmtilesType) {
+          if (isPMTiles) {
             // For raster tiles elevation support is optional
             // TODO display a warning, but not a blocking error
             rasterTileServers = [];
-          } else {
+          } else if (!loading) {
+            // Only show after metadata has settled; avoids a flash while STAC/COG loads.
             error = new Error(
               'Provide valid raster tile server urls to support STAC and elevations.'
             );
@@ -318,6 +348,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
     metadata,
     loading,
     metaError,
+    probing,
     tileName,
     clearedMetadataUrl,
     effectiveMetadataUrl,
@@ -357,7 +388,8 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           onChange={onMetadataUrlChange}
         />
         <TilesetInputDescription>
-          Supports raster .pmtiles, COG (.tif) URLs, STAC Items and Collections.
+          Supports raster .pmtiles, COG URLs (including extensionless endpoints), STAC Items and
+          Collections.
         </TilesetInputDescription>
       </div>
       {showServerInput && (

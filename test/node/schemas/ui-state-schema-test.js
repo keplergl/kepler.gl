@@ -23,8 +23,16 @@ test('#uiStateSchema -> v1 -> save load uiState', t => {
   t.equal(uiToSave.theme, 'dark', 'default theme should be dark');
   t.deepEqual(
     uiToSave.mapControls,
-    {mapLegend: {active: false}},
-    'default mapLegend should be inactive with no settings'
+    {
+      mapLegend: {active: false},
+      chart: {active: false},
+      mapInfo: {active: true, show: true},
+      cameraBookmarks: {
+        show: false,
+        settings: initialState.uiState.mapControls.cameraBookmarks.settings
+      }
+    },
+    'default mapLegend and chart should be inactive and map info open'
   );
 
   t.deepEqual(uiLoaded, uiToSave, 'loaded uiState should match saved uiState');
@@ -65,5 +73,47 @@ test('#uiStateSchema -> v1 -> save load uiState with mapLegend active and locale
   const uiLoaded = SchemaManager.parseSavedConfig(savedState).uiState;
   t.deepEqual(uiLoaded, uiToSave, 'loaded uiState should match saved uiState');
 
+  t.end();
+});
+
+test('#uiStateSchema -> bookmark preferences persist without transient control state', t => {
+  const settings = {
+    position: {x: 42, y: 64, anchorX: 'left', anchorY: 'bottom'},
+    contentHeight: 80
+  };
+  for (const show of [true, false]) {
+    const state = cloneDeep(InitialState);
+    state.uiState.mapControls.cameraBookmarks = {
+      ...state.uiState.mapControls.cameraBookmarks,
+      show,
+      activeMapIndex: 1,
+      disableClose: true,
+      settings: {...settings, temporary: 'not saved'}
+    };
+    const saved = SchemaManager.getConfigToSave(state);
+    t.deepEqual(
+      saved.config.uiState.mapControls.cameraBookmarks,
+      {show, settings},
+      `${show}: saves only visibility and layout`
+    );
+    for (const version of ['v0', 'v1']) {
+      const parsed = SchemaManager.parseSavedConfig({
+        version,
+        config: {uiState: saved.config.uiState}
+      });
+      t.deepEqual(
+        parsed.uiState.mapControls.cameraBookmarks,
+        {show, settings},
+        `${version}: reads preferences`
+      );
+    }
+  }
+  for (const version of ['v0', 'v1']) {
+    const parsed = SchemaManager.parseSavedConfig({version, config: {uiState: {mapControls: {}}}});
+    t.notOk(
+      'cameraBookmarks' in parsed.uiState.mapControls,
+      `${version}: missing legacy preference stays absent`
+    );
+  }
   t.end();
 });

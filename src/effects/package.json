@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/effects",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.3.0-alpha.9",
+  "version": "3.3.0-alpha.18",
   "description": "kepler.gl viaual effects",
   "license": "MIT",
   "main": "dist/cjs/index.js",
@@ -29,10 +29,10 @@
   ],
   "dependencies": {
     "@deck.gl/core": "^9.3.1",
-    "@kepler.gl/common-utils": "3.3.0-alpha.9",
-    "@kepler.gl/constants": "3.3.0-alpha.9",
-    "@kepler.gl/types": "3.3.0-alpha.9",
-    "@kepler.gl/utils": "3.3.0-alpha.9",
+    "@kepler.gl/common-utils": "3.3.0-alpha.18",
+    "@kepler.gl/constants": "3.3.0-alpha.18",
+    "@kepler.gl/types": "3.3.0-alpha.18",
+    "@kepler.gl/utils": "3.3.0-alpha.18",
     "@luma.gl/core": "^9.3.2",
     "@luma.gl/effects": "^9.3.2",
     "@luma.gl/engine": "^9.3.2",
@@ -54,7 +54,7 @@
     "node": ">=20"
   },
   "volta": {
-    "node": "20.19.3",
+    "node": "24.21.0",
     "yarn": "4.4.0"
   },
   "packageManager": "yarn@4.4.0",

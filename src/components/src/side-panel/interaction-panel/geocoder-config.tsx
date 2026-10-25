@@ -4,8 +4,11 @@
 import React from 'react';
 import styled from 'styled-components';
 import Switch from '../../common/switch';
-import {SidePanelSection} from '../../common/styled-components';
+import {PanelLabel, SidePanelSection} from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {GEOCODER_ICON_COLOR} from '@kepler.gl/constants';
+import {RGBColor} from '@kepler.gl/types';
+import ColorSelectorFactory from '../layer-panel/color-selector';
 
 const LimitSwitchWrapper = styled.div`
   color: ${props => props.theme.labelColor};
@@ -19,11 +22,14 @@ const LimitSwitchWrapper = styled.div`
 type GeocoderConfigProps = {
   config: {
     limitSearch: boolean;
+    color?: RGBColor;
   };
-  onChange: (config: {limitSearch: boolean}) => void;
+  onChange: (config: {limitSearch: boolean; color?: RGBColor}) => void;
 };
 
-function GeocoderConfigFactory() {
+GeocoderConfigFactory.deps = [ColorSelectorFactory];
+
+function GeocoderConfigFactory(ColorSelector: ReturnType<typeof ColorSelectorFactory>) {
   const GeocoderConfig = ({config, onChange}: GeocoderConfigProps) => (
     <SidePanelSection>
       <LimitSwitchWrapper>
@@ -40,6 +46,18 @@ function GeocoderConfigFactory() {
           secondary
         />
       </LimitSwitchWrapper>
+      <PanelLabel>
+        <FormattedMessage id="geocoder.pinColor" />
+      </PanelLabel>
+      <ColorSelector
+        colorSets={[
+          {
+            selectedColor: config?.color ?? GEOCODER_ICON_COLOR,
+            setColor: color => onChange({...config, color: color as RGBColor})
+          }
+        ]}
+        inputTheme="secondary"
+      />
     </SidePanelSection>
   );
 

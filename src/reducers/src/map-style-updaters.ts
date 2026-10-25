@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Task, {withTask} from 'react-palm/tasks';
+import Task, {withTask} from '@kepler.gl/tasks';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import Console from 'global/console';
 

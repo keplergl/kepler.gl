@@ -89,6 +89,9 @@ export type TripLayerVisConfig = {
   invertRoll: boolean;
   invertPitch: boolean;
   invertYaw: boolean;
+  fixedRoll: boolean;
+  fixedPitch: boolean;
+  fixedYaw: boolean;
   scenegraphEnabled: boolean;
   scenegraph: string;
   scenegraphColor: RGBColor;
@@ -160,7 +163,9 @@ export const tripVisConfigs: {
     label: 'Stroke Width',
     isRanged: false,
     range: [0, 100],
-    step: 0.1,
+    step: 0.01,
+    focusRange: [0, 1],
+    focusWeight: 0.2,
     group: 'stroke',
     property: 'thickness'
   },
@@ -603,7 +608,10 @@ export default class TripLayer extends Layer {
     });
   }
 
-  _getColumnModeValueAccessor = feature => {
+  // Called from gpu-filter-utils.getFilterValueAccessor(), which passes
+  // (dataContainer, feature, fieldIndex). The trip carries its own materialised
+  // rows in properties.values, so the data container is not needed here.
+  _getColumnModeValueAccessor = (dc, feature) => {
     return field => {
       if (field.fieldIdx === this.config.columns.timestamp?.fieldIdx) {
         return this.dataToTimeStamp[feature.properties.index];
@@ -656,10 +664,12 @@ export default class TripLayer extends Layer {
     // For GEOJSON mode, properties.index is the row index in the data container.
     // For TABLE mode, properties.index is the feature index (not a row index), so
     // read field values from the first row of the trip (properties.values) instead.
-    const dataAccessor = dc => d =>
-      this.config.columnMode === COLUMN_MODE_GEOJSON
-        ? {index: d.properties.index}
-        : d.properties.values[0];
+    let dataAccessor;
+    if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
+      dataAccessor = dc => d => ({index: d.properties.index});
+    } else {
+      dataAccessor = () => d => d.properties.values[0];
+    }
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
     const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
       indexAccessor,
@@ -820,6 +830,8 @@ export default class TripLayer extends Layer {
       layers.push(
         new DeckScenegraphLayer({
           ...baseLayerProps,
+          // gpu data filtering is not supported at the moment in scenegraphLayer https://github.com/visgl/deck.gl/issues/8099
+          extensions: [],
           id: `${layerProps.id}-scenegraph`,
           ...data,
           opacity: 1.0,
@@ -1125,11 +1137,15 @@ function toQuaternion(roll: number, pitch: number, yaw: number): Quaternion {
 
 function getYawFromSpeedVector(prevPoint: number[], nextPoint: number[]) {
   if (!prevPoint || !nextPoint) return 0;
-  const p1 = lngLatToWorld(prevPoint);
-  const p2 = lngLatToWorld(nextPoint);
-  const dx = p2[0] - p1[0];
-  const dy = p2[1] - p1[1];
-  return radiansToDegrees(Math.atan2(dy, dx));
+  try {
+    const p1 = lngLatToWorld(prevPoint);
+    const p2 = lngLatToWorld(nextPoint);
+    const dx = p2[0] - p1[0];
+    const dy = p2[1] - p1[1];
+    return radiansToDegrees(Math.atan2(dy, dx));
+  } catch {
+    return 0;
+  }
 }
 
 function radiansToDegrees(x: number) {

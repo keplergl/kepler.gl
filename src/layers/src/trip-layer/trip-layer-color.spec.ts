@@ -79,6 +79,18 @@ function makeTripLayer(table: KeplerTable) {
   return layer;
 }
 
+describe('TripLayer stroke width slider', () => {
+  it('maps 0–1 onto the first 20% of the track at 0.01 steps', () => {
+    const layer = new TripLayer({id: 'trip_stroke'});
+    expect(layer.visConfigSettings.thickness).toMatchObject({
+      step: 0.01,
+      range: [0, 100],
+      focusRange: [0, 1],
+      focusWeight: 0.2
+    });
+  });
+});
+
 describe('TripLayer TABLE mode color by field', () => {
   it('getColor accessor maps each trip to its own company color', async () => {
     const table = await makeTripTable();

@@ -18,6 +18,9 @@ export * from '@kepler.gl/processors';
 
 // Components
 export * from '@kepler.gl/components';
+// Exported HTML maps load the root UMD bundle and need the optional chart
+// manager without pulling it into the regular components barrel.
+export {ChartManagerFactory} from '@kepler.gl/components/charts';
 
 // Layers
 export * from '@kepler.gl/layers';

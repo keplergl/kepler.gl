@@ -25,11 +25,9 @@ export function loadScript(src) {
         },
         {once: true}
       );
-      existing.addEventListener(
-        'error',
-        () => reject(new Error(`Failed to load script: ${src}`)),
-        {once: true}
-      );
+      existing.addEventListener('error', () => reject(new Error(`Failed to load script: ${src}`)), {
+        once: true
+      });
     });
   }
 

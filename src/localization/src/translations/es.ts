@@ -16,6 +16,7 @@ export default {
     stroke: 'trazo',
     density: 'densidad',
     height: 'altura',
+    elevationOffset: 'desplazamiento de elevación',
     sum: 'suma',
     pointCount: 'Recuento de puntos'
   },
@@ -27,7 +28,8 @@ export default {
     selectValue: 'Selecciona un Valor',
     enterValue: 'Entra un valor',
     empty: 'vacio',
-    selectLayer: 'Selecciona una capa'
+    selectLayer: 'Selecciona una capa',
+    endTimeField: 'Selecciona hora de fin'
   },
   misc: {
     by: '',
@@ -60,7 +62,8 @@ export default {
       alignment: 'Alineación',
       addMoreLabel: 'Añadir más etiquetas',
       outlineWidth: 'Ancho del contorno',
-      outlineColor: 'Color del contorno'
+      outlineColor: 'Color del contorno',
+      collisionEnabled: 'Ocultar etiquetas superpuestas'
     }
   },
   sidebar: {
@@ -121,6 +124,7 @@ export default {
       trip: 'viaje',
       s2: 'S2',
       geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'flow',
       vectortile: 'mosaico vectorial',
@@ -147,6 +151,9 @@ export default {
     radiusRange: 'Rango de radio',
     clusterRadius: 'Radio del cluster en píxeles',
     radiusRangePixels: 'Rango del radio en píxeles',
+    minClusterSize: 'Mínimo de puntos por clúster',
+    minClusterSizeDescription:
+      'Oculta los clústeres con menos puntos que este valor, p. ej. 2 elimina los de un solo punto',
     billboard: 'Modo cartelera',
     billboardDescription: 'Oriente la geometría hacia la cámara',
     fadeTrail: 'Sendero de desvanecimiento',
@@ -166,6 +173,10 @@ export default {
     sizeScale: 'Medida de escala',
     worldUnitSize: 'Medida de la unidad mundial',
     elevationScale: 'Escala de elevación',
+    elevationOffset: 'Desplazamiento de elevación',
+    elevationOffsetDescription:
+      'Eleva los polígonos extruidos del suelo (mismas unidades que la altura)',
+    elevationOffsetRange: 'Rango de desplazamiento de elevación',
     enableElevationZoomFactor: 'Usar factor de zoom de elevación',
     enableElevationZoomFactorDescription:
       'Ajuste la altura / elevación según el factor de zoom actual',
@@ -188,6 +199,8 @@ export default {
     heightMultiplier: 'Multiplicador de altura',
     fixedHeight: 'Altura fija',
     fixedHeightDescription: 'Usar altura sin modificaciones',
+    fixedElevation: 'Elevación fija',
+    fixedElevationDescription: 'Usar el desplazamiento de elevación sin modificaciones',
     allowHover: 'Mostrar descripción emergente',
     allowHoverDescription:
       'Mostrar u ocultar información emergente al pasar el cursor sobre las características de la capa',
@@ -241,7 +254,9 @@ export default {
     addAnnotation: 'Añadir',
     type: 'Tipo',
     lineWidth: 'Ancho de línea',
-    color: 'Color'
+    color: 'Color',
+    textSide: 'Lado del texto',
+    textPlacement: 'Colocación'
   },
   effectDescription: {
     lightAndShadow:
@@ -291,7 +306,12 @@ export default {
     timeFilterSync: 'Conjuntos sincronizados',
     timeLayerSync: 'Vincular con la línea de tiempo de la capa',
     timeLayerUnsync: 'Desvincular de la línea de tiempo de la capa',
-    column: 'Columna'
+    column: 'Columna',
+    timeIntervalEndField: 'Hora de fin',
+    timeIntervalEndFieldHint:
+      'Opcional. Las entidades permanecen visibles mientras la ventana de reproducción se superpone a este intervalo.',
+    timezone: 'Zona horaria',
+    selectTimezone: 'Seleccionar zona horaria de visualización'
   },
   datasetTitle: {
     showDataTable: 'Mostar la tabla de datos',
@@ -345,6 +365,7 @@ export default {
     selectLocale: 'Seleccionar configuración regional',
     switchToLightTheme: 'Cambiar a tema claro',
     switchToDarkTheme: 'Cambiar a tema oscuro',
+    switchToSpaceTheme: 'Cambiar a tema space',
     showAiAssistantPanel: 'Mostrar el panel de AI Assistant',
     hideAiAssistantPanel: 'Ocultar el panel de AI Assistant',
     hideLayerPanel: 'Ocultar la tabla de capas',
@@ -359,6 +380,7 @@ export default {
     '3DMap': 'Mapa 3D',
     animationByWindow: 'Ventana Temporal Móvil',
     animationByIncremental: 'Ventana Temporal Incremental',
+    animationByInterval: 'Paso por intervalo',
     speed: 'velocidad',
     play: 'iniciar',
     pause: 'pausar',
@@ -370,6 +392,8 @@ export default {
     syncTimelineEnd: 'Fin del período de tiempo del filtro actual',
     showEffectPanel: 'Mostrar panel de efectos',
     hideEffectPanel: 'Ocultar panel de efectos',
+    showChartPanel: 'Mostrar gráficos',
+    hideChartPanel: 'Ocultar gráficos',
     showAnnotationPanel: 'Mostrar anotaciones',
     hideAnnotationPanel: 'Ocultar anotaciones',
     removeAnnotation: 'Eliminar anotación',
@@ -379,7 +403,13 @@ export default {
     annotationSettings: 'Configuración de anotación',
     removeEffect: 'Eliminar efecto',
     disableEffect: 'Desactivar efecto',
-    effectSettings: 'Configuración de efecto'
+    effectSettings: 'Configuración de efecto',
+    editLayerJson: 'Editar JSON de la capa',
+    editFilterJson: 'Editar JSON del filtro',
+    editEffectJson: 'Editar JSON del efecto',
+    editViewportJson: 'Editar JSON de la vista',
+    editAnimationJson: 'Editar JSON de la animación',
+    editChartJson: 'Editar JSON del gráfico'
   },
   toolbar: {
     exportImage: 'Exportar imagen',
@@ -404,12 +434,15 @@ export default {
     filterLayer: 'Filtrar capas',
     filterLayerDisabled: 'Las geometrías no poligonales no se pueden usar para filtrar',
     copyGeometry: 'Copiar geometría',
+    extractData: 'Extraer datos',
+    extractFromLayer: 'de la capa {layerName}',
     editProperties: 'Editar propiedades',
     propertyName: 'Propiedad',
     propertyValue: 'Valor',
     removeProperty: 'Quitar propiedad',
     polygonFilter: 'Filtro de polígono',
-    noLayersToFilter: 'No hay capas para filtrar'
+    noLayersToFilter: 'No hay capas para filtrar',
+    noLayersToExtract: 'No hay capas para extraer'
   },
   exportVideoModal: {
     animation: 'Animación',
@@ -447,7 +480,9 @@ export default {
       resolutionDescription: 'Una alta resolución es mejor para las impresiones.',
       resolutionPlaceholder: 'Seleccionar resolución...',
       mapLegendTitle: 'Leyenda del mapa',
-      mapLegendAdd: 'Añadir leyenda al mapa'
+      mapLegendAdd: 'Añadir leyenda al mapa',
+      chartsTitle: 'Gráficos',
+      chartsAdd: 'Añadir gráficos al mapa'
     },
     exportVideo: {
       animation: 'Animación',
@@ -609,13 +644,26 @@ export default {
   header: {
     visibleLayers: 'Capas visibles',
     layerLegend: 'Capa de leyenda',
-    annotations: 'Anotaciones'
+    annotations: 'Anotaciones',
+    charts: 'Gráficos'
   },
   interactions: {
     tooltip: 'Sugerencias',
     brush: 'Pincel',
     coordinate: 'Coordenadas',
-    geocoder: 'Geocodificador'
+    annotation: 'Anotaciones',
+    addAnnotation: 'Añadir anotación',
+    showAnnotations: 'Mostrar anotaciones',
+    hideAnnotations: 'Ocultar anotaciones',
+    copyCoordinate: 'Copiar coordenadas',
+    coordinateCopied: 'Copiado',
+    geocoder: 'Geocodificador',
+    legend: 'Leyenda',
+    legendHint: 'Elige qué capas aparecen en la leyenda. Las capas siguen en el mapa.',
+    legendEmpty: 'Añade una capa para elegir qué aparece en la leyenda.',
+    legendHiddenByGroup: 'Oculta porque un grupo está excluido de la leyenda',
+    legendHideInvisible: 'Ocultar capas ocultas en la leyenda',
+    legendAllLayers: 'Todas las capas'
   },
   layerBlending: {
     title: 'Combinación de capas',
@@ -700,12 +748,12 @@ export default {
   fileUploader: {
     message: 'Arrastra y suelta el archivo aquí',
     chromeMessage:
-      '*usuario de Chrome: la medida máxima son 250mb, si debes cargar un archivo más grande utiliza Safari',
+      '*Los archivos se analizan en el navegador. Los archivos grandes pueden agotar la memoria; use un tileset para conjuntos de datos muy grandes.',
     disclaimer:
       '*kepler.gl es una aplicación al lado cliente que no utiliza ningún servidor. Los datos sólo existen en tu máquina/navegador. ' +
       'No se envian datos ni mapas a ningún servidor.',
     configUploadMessage:
-      'Cargar {fileFormatNames} o un mapa guardado en **Json**. Más información sobre [**supported file formats**]',
+      'Cargar un archivo compatible o un mapa guardado en **Json**. Más información sobre [**supported file formats**]',
     browseFiles: 'navega por tus archivos',
     uploading: 'Cargando',
     downloading: 'Descargando',

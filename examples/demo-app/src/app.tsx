@@ -24,6 +24,7 @@ import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import {CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS} from './constants/default-settings';
 import {messages} from './constants/localization';
+import {getRuntimeConfig} from './utils/runtime-config';
 
 import {
   loadRemoteMap,
@@ -175,6 +176,7 @@ const App = props => {
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapDimensions, setMapDimensions] = useState({width: 0, height: 0});
+  const runtime = getRuntimeConfig();
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -222,10 +224,13 @@ const App = props => {
       dispatch(loadSampleConfigurations(id));
     }
 
-    // Load map using a custom
+    // Load map using a custom URL. Prefer ?mapUrl=; otherwise use runtime config
+    // only when no /demo/:id sample is being loaded (avoids racing two map loads).
     if (query.mapUrl) {
       // TODO?: validate map url
       dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
+    } else if (!id && runtime.mapUrl) {
+      dispatch(loadRemoteMap({dataUrl: runtime.mapUrl}));
     }
 
     if (duckDbPluginEnabled && query.sql) {
@@ -854,9 +859,9 @@ const App = props => {
     // _loadRowData();
     // _loadVectorTileData();
     // _loadFlowData();
-    //_loadWmsLayer();
-    //_loadRasterTileLayer();
-    //_loadBitmapLayer();
+    // _loadWmsLayer();
+    // _loadRasterTileLayer();
+    // _loadBitmapLayer();
     // _loadTile3DLayer();
     // _loadSyncedFilterWTripLayer();
     // _replaceSyncedFilterWTripLayer();
@@ -915,6 +920,12 @@ const App = props => {
                         onLoadCloudMapSuccess={onLoadCloudMapSuccess}
                         featureFlags={DEFAULT_FEATURE_FLAGS}
                         onViewStateChange={onViewStateChange}
+                        {...(Array.isArray(runtime.mapStyles)
+                          ? {
+                              mapStyles: runtime.mapStyles,
+                              mapStylesReplaceDefault: Boolean(runtime.mapStylesReplaceDefault)
+                            }
+                          : {})}
                       />
                     </div>
                   </Panel>

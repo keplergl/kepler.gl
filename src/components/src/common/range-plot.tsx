@@ -36,6 +36,7 @@ interface RangePlotProps {
   timeFormat?: string;
   timezone?: string | null;
   playbackControlWidth?: number;
+  isTime?: boolean;
 
   animationWindow?: string;
   filter?: Filter;
@@ -156,13 +157,19 @@ export default function RangePlotFactory(
     };
 
     return isLineChart(plotType) && lineChart ? (
-      <LineChartPlot lineChart={lineChart} range={range} yAxisAutoRange={plotType.yAxisAutoRange} {...commonProps} />
+      <LineChartPlot
+        lineChart={lineChart}
+        range={range}
+        yAxisAutoRange={plotType.yAxisAutoRange}
+        {...commonProps}
+      />
     ) : (
       <HistogramPlot
         histogramsByGroup={bins}
         colorsByGroup={groupColors}
         range={range}
         {...commonProps}
+        recessed
       />
     );
   };

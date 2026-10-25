@@ -4,12 +4,22 @@
 import pick from 'es-toolkit/compat/pick';
 import {VERSIONS} from './versions';
 import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {colorRangeBackwardCompatibility, isFilterValidToSave, findById, isPlainObject} from '@kepler.gl/utils';
+import {migrateLegacyScenegraphVisConfig} from '@kepler.gl/layers';
+import {
+  colorRangeBackwardCompatibility,
+  normalizeCameraBookmarks,
+  normalizeCameraTour,
+  isFilterValidToSave,
+  findById,
+  isPlainObject
+} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import Schema from './schema';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {
   AddDataToMapOptions,
+  CameraBookmark,
+  CameraTour,
   AnimationConfig,
   Editor,
   FileLoading,
@@ -30,9 +40,10 @@ import {
   SplitMap,
   ValueOf,
   Effect,
-  Annotation
+  Annotation,
+  ChartConfig
 } from '@kepler.gl/types';
-import {Datasets} from '@kepler.gl/table';
+import {Datasets, GroupByOp, JoinOp, SuitabilityOp} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Loader} from '@loaders.gl/loader-utils';
 import KeplerGLSchema from './schema-manager';
@@ -48,9 +59,12 @@ export type modifiedType = {
   strokeColorRange?: any;
   filled?: boolean;
   stroked?: boolean;
+  scenegraph?: string;
 };
 
 export interface VisState {
+  cameraTour: CameraTour | null;
+  cameraBookmarks: CameraBookmark[];
   mapInfo: MapInfo;
   layers: Layer[];
   layerData: any[];
@@ -59,6 +73,8 @@ export interface VisState {
   layerOrderToBeMerged: any[] | null;
   effects: Effect[];
   effectOrder: string[];
+  charts: ChartConfig[];
+  chartsToBeMerged: ChartConfig[];
   annotations: Annotation[];
   annotationsToBeMerged: any[];
   selectedAnnotationId: string | null;
@@ -67,6 +83,9 @@ export interface VisState {
   filterToBeMerged: any[];
   datasets: Datasets;
   editingDataset: string | undefined;
+  groupBys: GroupByOp[];
+  joins: JoinOp[];
+  suitabilities: SuitabilityOp[];
   interactionConfig: InteractionConfig;
   interactionToBeMerged: any;
   layerBlending: string;
@@ -82,7 +101,13 @@ export interface VisState {
   splitMapsToBeMerged: SplitMap[];
   fileLoading: FileLoading | false;
   fileLoadingProgress: FileLoadingProgress;
+  /** Parsed files held until the Add Data button commits them. */
+  stagedToAdd: any[] | null;
   loadingIndicatorValue: number;
+  /** Per-dataset download progress (0–100) while hydrating remote files. */
+  loadingProgress: Record<string, number>;
+  /** Remote datasets whose download finished and whose parse is still running. */
+  loadingProcessing?: Record<string, boolean>;
   loaders: Loader[];
   loadOptions: object;
   initialState?: Partial<VisState>;
@@ -511,6 +536,13 @@ const visConfigModificationV1 = {
     }
 
     return modified;
+  },
+  '3D': visConfig => {
+    const migrated = migrateLegacyScenegraphVisConfig(visConfig);
+    if (!migrated || migrated.scenegraph === visConfig?.scenegraph) {
+      return {};
+    }
+    return {scenegraph: migrated.scenegraph};
   }
 };
 
@@ -555,6 +587,7 @@ export const layerPropsV1 = {
         key: 'columns'
       }),
       isVisible: null,
+      isIncludedInLegend: null,
       visConfig: new VisConfigSchemaV1({
         version: VERSIONS.v1
       }),
@@ -686,7 +719,15 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV1 = [...interactionPropsV0, 'geocoder', 'coordinate'];
+const interactionPropsV1 = [
+  'tooltip',
+  'legend',
+  'brush',
+  'geocoder',
+  'coordinate',
+  'annotation',
+  'zoomOpacity'
+];
 
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
@@ -699,16 +740,21 @@ export class InteractionSchemaV1 extends Schema {
     // save config even if disabled,
     return Array.isArray(this.properties)
       ? {
-          [this.key]: this.properties.reduce(
-            (accu, key) => ({
+          [this.key]: this.properties.reduce((accu, key) => {
+            const interaction = interactionConfig[key as keyof InteractionConfig];
+            // Older saved states may not have annotation or zoomOpacity.
+            if (!interaction) {
+              return accu;
+            }
+            const config = 'config' in interaction ? interaction.config : undefined;
+            return {
               ...accu,
               [key]: {
-                ...interactionConfig[key].config,
-                enabled: interactionConfig[key].enabled
+                ...(config || {}),
+                enabled: interaction.enabled
               }
-            }),
-            {}
-          )
+            };
+          }, {})
         }
       : {};
   }
@@ -814,6 +860,68 @@ export const effectPropsV1 = {
   isEnabled: null,
   parameters: null
 };
+
+export const chartPropsV1 = {
+  id: null,
+  title: null,
+  type: null,
+  dataId: null,
+  applyFilters: null,
+  pinned: null,
+  display: null,
+  crossFilter: null,
+  xAxis: null,
+  yAxis: null,
+  groupBy: null,
+  value: null,
+  axis: null,
+  numGroups: null,
+  groupOthers: null,
+  colorBy: null,
+  chartDisplay: null,
+  layerId: null,
+  layerChartType: null
+};
+
+export class ChartsSchema extends Schema {
+  key = 'charts';
+
+  save(charts) {
+    if (!Array.isArray(charts) || !charts.length) {
+      // Keep saved maps unchanged when the charts panel is unused.
+      return {};
+    }
+    return {
+      [this.key]: charts.map(
+        chart =>
+          this.savePropertiesOrApplySchema({
+            ...chart,
+            display: {
+              ...chart.display,
+              isConfigActive: false,
+              isJsonEditorActive: false
+            }
+          }).charts
+      )
+    };
+  }
+
+  load(charts) {
+    if (!Array.isArray(charts)) {
+      return {[this.key]: []};
+    }
+    return {
+      [this.key]: charts.map(chart => {
+        const loaded = this.loadPropertiesOrApplySchema(chart, charts).charts;
+        // Older saved maps omit `pinned`; keep charts visible like the legend.
+        return {
+          ...loaded,
+          pinned: loaded.pinned !== false
+        };
+      })
+    };
+  }
+}
 export class EffectsSchema extends Schema {
   key = 'effects';
 
@@ -867,9 +975,14 @@ const annotationPropsV1 = {
   textWidth: null,
   textHeight: null,
   textVerticalAlign: null,
+  textSide: null,
+  textVerticalPosition: null,
   armLength: null,
   angle: null,
-  radiusInMeters: null
+  radiusInMeters: null,
+  endPoint: null,
+  showCustomText: null,
+  showDistance: null
 };
 
 export class AnnotationsSchema extends Schema {
@@ -918,9 +1031,13 @@ export const filterPropsV1 = {
   syncTimelineMode: null,
 
   enabled: null,
+  inverted: null,
 
   invertTrendColor: null,
-  timezone: null
+  timezone: null,
+
+  // Optional end timestamp for duration-based time animation (#3198)
+  endName: null
 };
 
 export const propertiesV0 = {
@@ -940,7 +1057,35 @@ export const propertiesV0 = {
   overlayBlending: null
 };
 
+class CameraBookmarksSchema extends Schema {
+  key = 'cameraBookmarks';
+
+  save(value: unknown) {
+    const bookmarks = normalizeCameraBookmarks(value);
+    return bookmarks.length ? {[this.key]: bookmarks} : {};
+  }
+
+  load(value: unknown) {
+    return {[this.key]: normalizeCameraBookmarks(value)};
+  }
+}
+
+class CameraTourSchema extends Schema {
+  key = 'cameraTour';
+
+  save(value: unknown) {
+    const tour = normalizeCameraTour(value);
+    return tour ? {[this.key]: tour} : {};
+  }
+
+  load(value: unknown) {
+    return {[this.key]: normalizeCameraTour(value)};
+  }
+}
+
 export const propertiesV1 = {
+  cameraTour: new CameraTourSchema(),
+  cameraBookmarks: new CameraBookmarksSchema(),
   filters: new FilterSchemaV0({
     version: VERSIONS.v1,
     properties: filterPropsV1
@@ -952,6 +1097,10 @@ export const propertiesV1 = {
   effects: new EffectsSchema({
     version: VERSIONS.v1,
     properties: effectPropsV1
+  }),
+  charts: new ChartsSchema({
+    version: VERSIONS.v1,
+    properties: chartPropsV1
   }),
   annotations: new AnnotationsSchema({
     version: VERSIONS.v1,
@@ -971,7 +1120,9 @@ export const propertiesV1 = {
     version: VERSIONS.v1,
     properties: {
       currentTime: null,
-      speed: null
+      speed: null,
+      timeFormat: null,
+      timezone: null
     },
     key: 'animationConfig'
   }),
@@ -983,7 +1134,11 @@ export const propertiesV1 = {
     },
     key: 'editor'
   }),
-  layerOrder: null
+  layerOrder: null,
+  groupBys: null,
+  joins: null
+  // suitabilities is intentionally absent: the op config is ephemeral and only the
+  // derived dataset is persisted. A `null` entry here would write it to saved maps.
 };
 
 export class VisStateSchemaV1 extends Schema {

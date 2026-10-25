@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {CSSProperties, useState, useCallback, useEffect} from 'react';
+import React, {CSSProperties, useState, useCallback, useEffect, useRef} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import Button from './button';
@@ -85,6 +85,18 @@ const StyledHeaderCell = styled.div<{$hasStats?: boolean; $firstCell?: boolean}>
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+      }
+      .column-rename-input {
+        width: 100%;
+        min-width: 0;
+        font: inherit;
+        font-weight: 500;
+        color: inherit;
+        background: transparent;
+        border: 1px solid currentColor;
+        border-radius: 2px;
+        padding: 2px 4px;
+        box-sizing: border-box;
       }
     }
   }
@@ -185,16 +197,26 @@ function HeaderCellFactory(
     const {columnIndex, key, style} = cellInfo;
     const {
       colMeta,
+      dataContainer,
+      typeChangeDataContainer,
       sortColumn,
       sortTableColumn,
       pinTableColumn,
+      hideTableColumn,
       copyTableColumn,
       setColumnDisplayFormat,
       hasStats,
       dataId,
-      loadColumnStats
+      loadColumnStats,
+      renameTableColumn,
+      changeTableColumnType,
+      deleteTableColumn,
+      createFilterFromColumn
     } = props;
     const [showFormatter, setShowFormatter] = useState(false);
+    const [renaming, setRenaming] = useState(false);
+    const [renameDraft, setRenameDraft] = useState('');
+    const renamingRef = useRef(false);
     const column = columns[columnIndex];
 
     const isGhost = Boolean(column.ghost);
@@ -236,6 +258,9 @@ function HeaderCellFactory(
     const onPin = useCallback(() => {
       if (!isGhost) pinTableColumn(column);
     }, [pinTableColumn, isGhost, column]);
+    const onHide = useCallback(() => {
+      if (!isGhost) hideTableColumn?.(column);
+    }, [hideTableColumn, isGhost, column]);
     const onCopy = useCallback(() => {
       if (!isGhost) copyTableColumn(column);
     }, [copyTableColumn, isGhost, column]);
@@ -249,6 +274,34 @@ function HeaderCellFactory(
     const onToggleDisplayFormat = useCallback(() => {
       setShowFormatter(!showFormatter);
     }, [showFormatter]);
+
+    const startRename = useCallback(() => {
+      if (isGhost || !renameTableColumn) {
+        return;
+      }
+      renamingRef.current = true;
+      setRenameDraft(colMeta[column].name);
+      setRenaming(true);
+    }, [isGhost, renameTableColumn, colMeta, column]);
+
+    const finishRename = useCallback(
+      (commit: boolean) => {
+        if (!renamingRef.current) {
+          return;
+        }
+        renamingRef.current = false;
+        setRenaming(false);
+        if (!commit || !renameTableColumn) {
+          return;
+        }
+        const next = renameDraft.trim();
+        if (!next || next === column || columns.includes(next)) {
+          return;
+        }
+        renameTableColumn(column, next);
+      },
+      [column, columns, renameDraft, renameTableColumn]
+    );
 
     const headerDetails = isGhost ? (
       <div />
@@ -264,7 +317,35 @@ function HeaderCellFactory(
           <FieldToken type={colMeta[column].type} />
           <div className="col-name">
             <div className="col-name__left">
-              <div className="col-name__name">{colMeta[column].name}</div>
+              {renaming ? (
+                <input
+                  className="column-rename-input"
+                  aria-label="Rename column"
+                  value={renameDraft}
+                  autoFocus
+                  onClick={event => event.stopPropagation()}
+                  onDoubleClick={event => event.stopPropagation()}
+                  onChange={event => setRenameDraft(event.target.value)}
+                  onBlur={() => finishRename(renameDraft.trim() !== colMeta[column].name)}
+                  onKeyDown={event => {
+                    event.stopPropagation();
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      finishRename(true);
+                    } else if (event.key === 'Escape') {
+                      event.preventDefault();
+                      finishRename(false);
+                    }
+                  }}
+                  onKeyUp={event => {
+                    if (event.key === 'Enter' || event.key === 'Escape') {
+                      event.stopPropagation();
+                    }
+                  }}
+                />
+              ) : (
+                <div className="col-name__name">{colMeta[column].name}</div>
+              )}
               <Button className="col-name__sort" onClick={onSortTable}>
                 {isSorted ? (
                   isSorted === SORT_ORDER.ASCENDING ? (
@@ -301,8 +382,16 @@ function HeaderCellFactory(
             toggleMoreOptions={toggleMoreOptions}
             sortTableColumn={sortTableColumn ? mode => sortTableColumn(column, mode) : undefined}
             pinTableColumn={onPin}
+            hideTableColumn={hideTableColumn ? onHide : undefined}
             copyTableColumn={onCopy}
             setDisplayFormat={setColumnDisplayFormat ? onSetDisplayFormat : undefined}
+            renameTableColumn={renameTableColumn}
+            changeTableColumnType={changeTableColumnType}
+            typeChangeDataContainer={typeChangeDataContainer ?? dataContainer}
+            columnIndex={colMeta[column]?.colIdx ?? columns.indexOf(column)}
+            deleteTableColumn={deleteTableColumn}
+            createFilterFromColumn={createFilterFromColumn}
+            onStartRename={startRename}
           />
         </section>
       </>

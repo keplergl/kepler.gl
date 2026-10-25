@@ -3,14 +3,23 @@
 
 import {parseUri} from '@kepler.gl/common-utils';
 import {
+  DATASET_FORMATS,
+  DatasetType,
   MIME_TO_REMOTE_FILE_EXTENSION,
   REMOTE_FILE_EXTENSIONS,
   REMOTE_FILE_MIME_TYPES,
   RemoteFileFormat
 } from '@kepler.gl/constants';
 import {ProcessorResult} from '@kepler.gl/types';
+import {generateHashIdFromString} from '@kepler.gl/utils';
 
-import {processFileData, ProcessFileDataContent, readFileInBatches} from './file-handler';
+import {
+  getPersistedRemoteFormat,
+  processFileData,
+  ProcessFileDataContent,
+  readFileInBatches
+} from './file-handler';
+import {FileCacheItem} from './types';
 
 export type KeplerRemoteFile = File & {
   keplerSourceUrl?: string;
@@ -20,9 +29,17 @@ export type KeplerRemoteFile = File & {
   keplerLastModified?: string;
 };
 
+export type RemoteLoadProgress = {
+  loaded: number;
+  total?: number;
+  percent: number;
+  /** Set once the bytes are in memory and parsing is about to block the main thread. */
+  phase?: 'processing';
+};
+
 export type FetchRemoteFileOptions = {
   format?: string | null;
-  onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void;
+  onProgress?: (progress: RemoteLoadProgress) => void;
   etag?: string;
   lastModified?: string;
   /** Bypass the HTTP cache. Used for poll/reload, not the first remote URL load. */
@@ -115,8 +132,8 @@ export function getFileNameForRemoteUrl(
 }
 
 /**
- * Fetch a remote dataset URL. Honors If-None-Match / If-Modified-Since when etag
- * or lastModified are provided so unchanged files can skip a re-parse.
+ * Fetch a remote dataset URL. Uses conditional headers for same-origin requests
+ * (or outside a browser) so unchanged files can skip a re-parse.
  */
 export async function fetchRemoteFile(
   url: string,
@@ -127,10 +144,13 @@ export async function fetchRemoteFile(
     throw new Error('Remote dataset URL must use http or https');
   }
   const headers: Record<string, string> = {};
-  if (etag) {
+  // Conditional headers trigger CORS preflights, which simple file servers may
+  // not support even when they allow cross-origin GET requests.
+  const isCrossOrigin = typeof location !== 'undefined' && new URL(url).origin !== location.origin;
+  if (etag && !isCrossOrigin) {
     headers['If-None-Match'] = etag;
   }
-  if (lastModified) {
+  if (lastModified && !isCrossOrigin) {
     headers['If-Modified-Since'] = lastModified;
   }
   const response = await fetch(url, {
@@ -185,6 +205,34 @@ export async function fetchRemoteFile(
 }
 
 /**
+ * A remote URL to hold until Add Data. Rows stay empty so adding it runs the
+ * externally hosted download instead of parsing a file in the modal.
+ */
+export function remoteDatasetFromUrl(url: string, format?: string | null): FileCacheItem {
+  if (!isRemoteDatasetUrl(url)) {
+    throw new Error('Remote dataset URL must use http or https');
+  }
+  const label = getFileNameForRemoteUrl(url, format);
+  const sourceFormat = getPersistedRemoteFormat(
+    format && format !== 'auto' ? format : undefined,
+    label
+  );
+  return {
+    data: {fields: [], rows: []},
+    info: {
+      id: generateHashIdFromString(url),
+      label,
+      format: DATASET_FORMATS.row,
+      type: DatasetType.EXTERNALLY_HOSTED
+    },
+    metadata: {
+      source: url,
+      ...(sourceFormat ? {sourceFormat} : {})
+    }
+  };
+}
+
+/**
  * Fetch a remote dataset URL and wrap it as a File the existing loadFiles pipeline can parse.
  * Sets File.type from an explicit format or the response Content-Type so extensionless
  * URLs (SAS keys) still select the right loader.
@@ -192,7 +240,7 @@ export async function fetchRemoteFile(
 export async function fetchRemoteFileAsKeplerFile(
   url: string,
   format?: string | null,
-  onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void
+  onProgress?: (progress: RemoteLoadProgress) => void
 ): Promise<KeplerRemoteFile> {
   const result = await fetchRemoteFile(url, {format, onProgress});
   if (!result.file) {
@@ -201,9 +249,48 @@ export async function fetchRemoteFileAsKeplerFile(
   return result.file;
 }
 
+/** Two frames are enough for the processing indicator to paint. */
+const PAINT_WAIT_MS = 100;
+
+function waitForNextPaint(): Promise<void> {
+  // Hidden tabs suspend requestAnimationFrame. A download that finishes in the
+  // background would otherwise wait until the user comes back, and there is
+  // nothing to paint there.
+  if (
+    typeof requestAnimationFrame !== 'function' ||
+    (typeof document !== 'undefined' && document.hidden)
+  ) {
+    return Promise.resolve();
+  }
+  return new Promise(resolve => {
+    let settled = false;
+    const frames: number[] = [];
+    const finish = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      if (typeof cancelAnimationFrame === 'function') {
+        frames.forEach(id => cancelAnimationFrame(id));
+      }
+      resolve();
+    };
+    // The tab can be hidden after this wait starts. Don't sit on frames that will never run.
+    const timer = setTimeout(finish, PAINT_WAIT_MS);
+    frames.push(
+      requestAnimationFrame(() => {
+        if (!settled) {
+          frames.push(requestAnimationFrame(finish));
+        }
+      })
+    );
+  });
+}
+
 async function readResponseBlob(
   response: Response,
-  onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void
+  onProgress?: (progress: RemoteLoadProgress) => void
 ): Promise<Blob> {
   const contentLength = Number(response.headers.get('content-length'));
   const total = Number.isFinite(contentLength) && contentLength > 0 ? contentLength : undefined;
@@ -278,7 +365,7 @@ export async function loadExternallyHostedDataset(metadata: {
   etag?: string;
   lastModified?: string;
   bypassCache?: boolean;
-  onProgress?: (progress: {loaded: number; total?: number; percent: number}) => void;
+  onProgress?: (progress: RemoteLoadProgress) => void;
 }): Promise<LoadExternallyHostedDatasetResult> {
   const {source, format, etag, lastModified, size, bypassCache, onProgress} = metadata;
   const fetched = await fetchRemoteFile(source, {
@@ -297,6 +384,15 @@ export async function loadExternallyHostedDataset(metadata: {
       size
     };
   }
+
+  onProgress?.({
+    loaded: fetched.size ?? fetched.file.size,
+    ...(typeof fetched.size === 'number' ? {total: fetched.size} : {}),
+    percent: 1,
+    phase: 'processing'
+  });
+  // Let the loading indicator paint a processing state before parse blocks the tab.
+  await waitForNextPaint();
 
   const batches = await readFileInBatches({
     file: fetched.file,

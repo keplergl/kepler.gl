@@ -102,6 +102,7 @@ export {
   getVisConfiguratorProps
 } from './side-panel/layer-panel/layer-configurator';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
+export {default as LayerJsonEditorFactory} from './side-panel/layer-panel/layer-json-editor';
 export {default as SingleColorPalette} from './side-panel/layer-panel/single-color-palette';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 export {default as ScenegraphModelSelectorFactory} from './side-panel/layer-panel/scenegraph-model-selector';
@@ -136,6 +137,11 @@ export {default as DatasetInfoFactory} from './side-panel/common/dataset-info';
 export {default as DatasetTagFactory} from './side-panel/common/dataset-tag';
 export {default as DatasetTitleFactory} from './side-panel/common/dataset-title';
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
+export {default as DatasetOpsPanelsFactory} from './side-panel/dataset-ops/dataset-ops-panels';
+export {default as GroupByPanelFactory} from './side-panel/dataset-ops/group-by-panel';
+export {default as JoinPanelFactory} from './side-panel/dataset-ops/join-panel';
+export {default as SpatialJoinPanelFactory} from './side-panel/dataset-ops/spatial-join-panel';
+export {default as SuitabilityPanelFactory} from './side-panel/dataset-ops/suitability-panel';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
 
 export {default as FilterManagerFactory} from './side-panel/filter-manager';
@@ -146,6 +152,9 @@ export {default as InteractionManagerFactory} from './side-panel/interaction-man
 export {default as BrushConfigFactory} from './side-panel/interaction-panel/brush-config';
 export {default as TooltipConfigFactory} from './side-panel/interaction-panel/tooltip-config';
 export {default as GeocoderConfigFactory} from './side-panel/interaction-panel/geocoder-config';
+export {default as LegendConfigFactory} from './side-panel/interaction-panel/legend-config';
+export {default as MapInfoConfigFactory} from './side-panel/interaction-panel/map-info-config';
+export {default as ZoomOpacityConfigFactory} from './side-panel/interaction-panel/zoom-opacity-config';
 
 export {default as DndContextFactory} from './dnd-context';
 export {default as CustomPanelsFactory} from './side-panel/custom-panel';
@@ -160,6 +169,8 @@ export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as LazyTippy} from './map/lazy-tippy';
 export {default as LocalePanelFactory} from './map/locale-panel';
 export {default as ThemeToggleButtonFactory} from './map/theme-toggle-button';
+export {default as ChartControlFactory} from './map/charts/chart-control';
+export {default as ViewportJsonEditorControlFactory} from './map/viewport-json-editor';
 export {default as MapControlFactory} from './map/map-control';
 export {default as MapNavigationControlFactory} from './map/map-navigation-control';
 export {default as MapScaleFactory} from './map/map-scale';
@@ -178,7 +189,11 @@ export {
   VisualChannelMetric
 } from './map/map-legend';
 
+export type {MapLegendProps, MapLegendIcons} from './map/map-legend';
+
 export {default as MapLegendPanelFactory} from './map/map-legend-panel';
+export {default as MapInfoPanelFactory} from './map/map-info-panel';
+export type {MapInfoPanelProps} from './map/map-info-panel';
 export {default as MapPopoverFactory, getSelectedFeature} from './map/map-popover';
 export {default as MapPopoverContentFactory} from './map/map-popover-content';
 export {default as SplitMapButtonFactory} from './map/split-map-button';
@@ -222,6 +237,10 @@ export {default as ResetControlFactory} from './common/animation-control/reset-c
 export {default as SpeedControlFactory} from './common/animation-control/speed-control';
 export {default as ExportVideoControlFactory} from './common/animation-control/export-video-control';
 export {default as WindowActionControlFactory} from './common/animation-control/window-action-control';
+export {
+  default as AnimationJsonEditorControlFactory,
+  AnimationJsonEditorFactory
+} from './common/animation-control/animation-json-editor';
 
 export {default as HistogramPlotFactory, HISTOGRAM_MASK_MODE} from './common/histogram-plot';
 export type {HistogramPlotProps} from './common/histogram-plot';
@@ -262,6 +281,12 @@ export {
 } from './filters/time-range-filter';
 export {default as TimeWidgetFactory} from './filters/time-widget';
 export {default as TimeWidgetTopFactory} from './filters/time-widget-top';
+export {default as TimeWidgetSettingsFactory} from './filters/time-widget-settings';
+export {
+  default as TimezoneSelector,
+  getTimezonesFromMoment,
+  getTimezoneOptions
+} from './filters/timezone-selector';
 
 // // Editor Factory
 export {default as EditorFactory} from './editor/editor';
@@ -275,6 +300,8 @@ export * from './injector';
 
 // Common Components
 export {default as ActionPanel, ActionPanelItem} from './common/action-panel';
+export {default as JsonEditor} from './common/json-editor';
+export * from './common/json-editor-utils';
 export {default as Checkbox} from './common/checkbox';
 export {
   default as ColorLegendFactory,
@@ -348,6 +375,7 @@ export {default as CustomPaletteFactory} from './side-panel/layer-panel/custom-p
 // side pane components
 export {default as StyledDropdownSelect} from './common/item-selector/item-selector';
 export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
+export {default as FilterJsonEditorFactory} from './side-panel/filter-panel/filter-json-editor';
 export {default as ColumnSelectorFactory} from './side-panel/layer-panel/column-selector';
 export {
   ConfigGroupCollapsibleContent,
@@ -365,6 +393,7 @@ export {default as LayerTypeDropdownListFactory} from './side-panel/layer-panel/
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
 
 export {default as EffectConfiguratorFactory} from './effects/effect-configurator';
+export {default as EffectJsonEditorFactory} from './effects/effect-json-editor';
 export {default as SurfaceFogElevationSectionFactory} from './effects/surface-fog-section';
 export {default as EffectListFactory} from './effects/effect-list';
 export {default as EffectManagerFactory} from './effects/effect-manager';
@@ -380,12 +409,27 @@ export {AnnotationText} from './annotations';
 export {
   makeMarker,
   movePoint,
+  moveRulerEndpoint,
   moveText,
   resizeCircle,
   isLeftOriented,
-  isPointVisibleOnGlobe
+  isBelowOriented,
+  getTextPlacement,
+  angleForTextPlacement,
+  textPlacementFromAngle,
+  getAnnotationTextBoxStyle,
+  getRulerDistanceLabel,
+  isAnnotationVisibleOnGlobe,
+  isPointVisibleOnGlobe,
+  normalizeAnchorPoint
 } from './annotations';
-export type {MapViewport, AnnotationMarker} from './annotations';
+export type {
+  MapViewport,
+  AnnotationMarker,
+  RulerAnnotationMarker,
+  PickWorldPosition,
+  LngLatAltitude
+} from './annotations';
 export {default as AnnotationControlFactory} from './map/annotations/annotation-control';
 
 export {default as ColorBreaksPanelFactory} from './side-panel/layer-panel/color-breaks-panel';

@@ -51,7 +51,8 @@ export const DEFAULT_TEXT_LABEL: LayerTextLabel = {
   outlineWidth: 0,
   outlineColor: [255, 0, 0, 255],
   background: false,
-  backgroundColor: [0, 0, 200, 255]
+  backgroundColor: [0, 0, 200, 255],
+  collisionEnabled: false
 };
 
 const DEFAULT_COLOR_PALETTE = KEPLER_COLOR_PALETTES.find(
@@ -99,7 +100,10 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     label: 'layerVisConfigs.strokeWidth',
     isRanged: false,
     range: [0, 100],
-    step: 0.1,
+    step: 0.01,
+    // 0–1 is the useful range for thin strokes; give it the first 20% of the track.
+    focusRange: [0, 1],
+    focusWeight: 0.2,
     group: PROPERTY_GROUPS.stroke,
     property: 'thickness',
     allowCustomValue: true
@@ -169,6 +173,22 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     group: PROPERTY_GROUPS.height,
     property: 'fixedHeight'
   },
+  invertHeight: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.invertHeight',
+    description: 'layerVisConfigs.invertHeightDescription',
+    group: PROPERTY_GROUPS.height,
+    property: 'invertHeight'
+  },
+  fixedElevation: {
+    defaultValue: true,
+    type: 'boolean',
+    label: 'layerVisConfigs.fixedElevation',
+    description: 'layerVisConfigs.fixedElevationDescription',
+    group: PROPERTY_GROUPS.height,
+    property: 'fixedElevation'
+  },
   radiusRange: {
     type: 'number',
     defaultValue: [0, 50],
@@ -201,6 +221,18 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     group: PROPERTY_GROUPS.radius,
     property: 'radiusRange',
     allowCustomValue: true
+  },
+  minClusterSize: {
+    type: 'number',
+    label: 'layerVisConfigs.minClusterSize',
+    description: 'layerVisConfigs.minClusterSizeDescription',
+    defaultValue: 1,
+    isRanged: false,
+    range: [1, 100],
+    step: 1,
+    group: PROPERTY_GROUPS.radius,
+    property: 'minClusterSize',
+    allowCustomValue: false
   },
   opacity: {
     type: 'number',
@@ -369,6 +401,31 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     step: 0.1,
     group: PROPERTY_GROUPS.height,
     property: 'elevationScale',
+    allowCustomValue: true
+  },
+  elevationOffset: {
+    type: 'number',
+    defaultValue: 0,
+    label: 'layerVisConfigs.elevationOffset',
+    description: 'layerVisConfigs.elevationOffsetDescription',
+    isRanged: false,
+    range: [0, 10000],
+    step: 0.01,
+    focusRange: [0, 500],
+    focusWeight: 0.3,
+    group: PROPERTY_GROUPS.height,
+    property: 'elevationOffset',
+    allowCustomValue: true
+  },
+  elevationOffsetRange: {
+    type: 'number',
+    defaultValue: [0, 500],
+    label: 'layerVisConfigs.elevationOffsetRange',
+    isRanged: true,
+    range: [0, 10000],
+    step: 0.1,
+    group: PROPERTY_GROUPS.height,
+    property: 'elevationOffsetRange',
     allowCustomValue: true
   },
   enableElevationZoomFactor: {
@@ -612,11 +669,13 @@ export const LAYER_TYPES = keyMirror({
   a5: null,
   geohash: null,
   flow: null,
+  flowField: null,
   vectorTile: null,
   rasterTile: null,
   wms: null,
   tile3d: null,
-  bitmap: null
+  bitmap: null,
+  zarr: null
 });
 
 export const EDITOR_AVAILABLE_LAYERS: string[] = [

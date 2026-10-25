@@ -4,7 +4,7 @@
 import React, {useState, useCallback} from 'react';
 import styled, {IStyledComponent} from 'styled-components';
 import classnames from 'classnames';
-import {Reset, Play, Pause, Save, Speed, AnchorWindow, FreeWindow} from '../icons';
+import {Reset, Play, Pause, Save, Speed, AnchorWindow, FreeWindow, Interval} from '../icons';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
 import {Filter, TimeRangeFilter} from '@kepler.gl/types';
 import AnimationSpeedSliderFactory from './animation-speed-slider';
@@ -14,6 +14,7 @@ import ResetControlFactory from './reset-control';
 import PlayControlFactory from './play-control';
 import SpeedControlFactory from './speed-control';
 import ExportVideoControlFactory from './export-video-control';
+import AnimationJsonEditorControlFactory from './animation-json-editor';
 import {BaseComponentProps} from '../../types';
 
 const DEFAULT_BUTTON_HEIGHT = '20px';
@@ -44,7 +45,8 @@ const DEFAULT_ICONS = {
   /* eslint-enable react/display-name */
   speed: () => <Speed height="16px" />,
   animationFree: FreeWindow,
-  animationIncremental: AnchorWindow
+  animationIncremental: AnchorWindow,
+  animationInterval: Interval
 };
 
 function nop() {
@@ -61,6 +63,11 @@ const DEFAULT_ANIMATE_ITEMS = {
     id: ANIMATION_WINDOW.incremental,
     icon: DEFAULT_ICONS.animationIncremental,
     tooltip: 'tooltip.animationByIncremental'
+  },
+  [ANIMATION_WINDOW.interval]: {
+    id: ANIMATION_WINDOW.interval,
+    icon: DEFAULT_ICONS.animationInterval,
+    tooltip: 'tooltip.animationByInterval'
   }
 };
 export interface PlaybackControlsProps {
@@ -91,7 +98,8 @@ PlaybackControlsFactory.deps = [
   AnimationWindowControlFactory,
   ResetControlFactory,
   PlayControlFactory,
-  ExportVideoControlFactory
+  ExportVideoControlFactory,
+  AnimationJsonEditorControlFactory
 ];
 
 function PlaybackControlsFactory(
@@ -100,7 +108,8 @@ function PlaybackControlsFactory(
   AnimationWindowControl,
   ResetControl,
   PlayControl,
-  ExportVideoControl
+  ExportVideoControl,
+  AnimationJsonEditorControl
 ) {
   const PLAYBACK_CONTROLS_DEFAULT_ACTION_COMPONENTS = [
     PlayControl,
@@ -108,7 +117,8 @@ function PlaybackControlsFactory(
     ResetControl,
     WindowActionControl,
     AnimationWindowControl,
-    ExportVideoControl
+    ExportVideoControl,
+    AnimationJsonEditorControl
   ];
 
   // eslint-disable-next-line complexity

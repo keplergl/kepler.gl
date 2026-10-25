@@ -122,14 +122,14 @@ function Toggle3dButtonFactory(
             ))}
           </MapControlToolbar>
         ) : null}
-        <MapControlTooltip
-          id="action-3d"
-          message="tooltip.viewMode"
-        >
+        <MapControlTooltip id="action-3d" message="tooltip.viewMode">
           <MapControlButton
             onClick={onClickButton}
             active={is3d || isGlobe}
-            className={classnames('map-control-button', 'toggle-3d', {map3d: is3d, mapGlobe: isGlobe})}
+            className={classnames('map-control-button', 'toggle-3d', {
+              map3d: is3d,
+              mapGlobe: isGlobe
+            })}
           >
             <ActiveIcon height="22px" />
           </MapControlButton>

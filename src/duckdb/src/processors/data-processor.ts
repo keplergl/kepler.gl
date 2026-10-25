@@ -22,6 +22,8 @@ type RowsAsObject = Record<string, unknown>[];
 type RowData = RowsAsArray | RowsAsObject;
 
 export type ProcessorResult = {
+  /** Read an existing table in the configured database without importing it again. */
+  duckdbTableName?: string;
   cols?: arrow.Vector[];
   rows: RowData;
   fields: ProtoDatasetField[];

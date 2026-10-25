@@ -26,8 +26,9 @@ import {
   testCsvDataId,
   testGeoJsonDataId
 } from 'test/helpers/mock-state';
-import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
+import {keplerGlReducerCore as keplerGlReducer, validateLayerWithData} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
+import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 
 const expectedVisStateEntries = [
   'filters',
@@ -40,8 +41,81 @@ const expectedVisStateEntries = [
   'splitMaps',
   'animationConfig',
   'editor',
-  'layerOrder'
+  'layerOrder',
+  'groupBys',
+  'joins'
 ];
+
+test('#visStateSchema -> camera bookmarks are optional and persist only authored fields', t => {
+  const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
+  const bookmarks = [
+    {id: 'second', name: 'Second', camera},
+    {id: 'first', name: 'First', camera: {...camera, zoom: 8}}
+  ];
+  const state = cloneDeep(StateWFilesFiltersLayerColor);
+  const empty = SchemaManager.getConfigToSave(state);
+  t.notOk('cameraBookmarks' in empty.config.visState, 'omits unused bookmarks');
+  t.notOk(
+    'cameraBookmarks' in SchemaManager.parseSavedConfig(empty).visState,
+    'old maps need no bookmarks'
+  );
+  state.visState.cameraBookmarks = bookmarks.map(bookmark => ({
+    ...bookmark,
+    selected: true,
+    camera: {...bookmark.camera, width: 800, transitionDuration: 1000}
+  }));
+  const saved = SchemaManager.getConfigToSave(state);
+  t.deepEqual(
+    saved.config.visState.cameraBookmarks,
+    bookmarks,
+    'saves names/order and only camera values'
+  );
+  t.deepEqual(
+    SchemaManager.parseSavedConfig(saved).visState.cameraBookmarks,
+    bookmarks,
+    'round trips'
+  );
+  saved.config.visState.cameraBookmarks.push(null, {id: 'invalid', camera: {}});
+  t.deepEqual(
+    SchemaManager.parseSavedConfig(saved).visState.cameraBookmarks,
+    bookmarks,
+    'ignores invalid entries'
+  );
+  t.end();
+});
+
+test('#visStateSchema -> camera tour is optional and excludes transient state', t => {
+  const state = cloneDeep(StateWFilesFiltersLayerColor);
+  t.notOk(
+    'cameraTour' in SchemaManager.getConfigToSave(state).config.visState,
+    'omits unused tours'
+  );
+  const stop = {
+    id: 'first',
+    name: 'First',
+    camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45},
+    holdDurationMs: 2000,
+    travelDurationMs: 3000
+  };
+  state.visState.cameraTour = {stops: [{...stop, selected: true}], elapsedMs: 1000, playing: true};
+  const saved = SchemaManager.getConfigToSave(state);
+  t.deepEqual(
+    saved.config.visState.cameraTour,
+    {stops: [stop]},
+    'saves authored stops and timing only'
+  );
+  t.deepEqual(
+    SchemaManager.parseSavedConfig(saved).visState.cameraTour,
+    {stops: [stop]},
+    'round trips the tour'
+  );
+  state.visState.cameraTour = {stops: []};
+  t.notOk(
+    'cameraTour' in SchemaManager.getConfigToSave(state).config.visState,
+    'omits an empty tour'
+  );
+  t.end();
+});
 
 test('#visStateSchema -> v1 -> save layers', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
@@ -86,6 +160,7 @@ test('#visStateSchema -> v1 -> load layers', t => {
 
 test('#visStateSchema -> v1 -> save load filters', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  initialState.visState.filters[0].inverted = true;
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
@@ -101,6 +176,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
       dataId: [testCsvDataId],
       id: 'hjpn8frza',
       enabled: true,
+      inverted: true,
       name: ['time'],
       type: 'timeRange',
       value: [1474606800000, 1474617600000],
@@ -138,6 +214,29 @@ test('#visStateSchema -> v1 -> save load filters', t => {
   t.end();
 });
 
+test('#visStateSchema -> v1 -> persists opt-in numeric timeline configuration', t => {
+  let state = keplerGlReducer(
+    cloneDeep(StateWFilesFiltersLayerColor),
+    VisStateActions.setFilter(0, 'name', 'gps_data.lat')
+  );
+  state = keplerGlReducer(
+    state,
+    VisStateActions.setFilterPlot(0, {plotType: {numericInterval: 0.01}})
+  );
+  state = keplerGlReducer(state, VisStateActions.setFilterView(0, FILTER_VIEW_TYPES.enlarged));
+
+  const savedState = SchemaManager.getConfigToSave(state);
+  const savedFilter = savedState.config.visState.filters[0];
+  const loadedFilter = SchemaManager.parseSavedConfig(savedState).visState.filters[0];
+
+  t.equal(savedFilter.view, FILTER_VIEW_TYPES.enlarged, 'should save numeric timeline enablement');
+  t.equal(savedFilter.plotType.numericInterval, 0.01, 'should save the numeric bin size');
+  t.equal(loadedFilter.view, FILTER_VIEW_TYPES.enlarged, 'should restore numeric enablement');
+  t.equal(loadedFilter.plotType.numericInterval, 0.01, 'should restore numeric binning');
+  t.notOk(loadedFilter.timezone, 'should not load time-only configuration');
+  t.end();
+});
+
 test('#visStateSchema -> v1 -> save and validate filters', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
 
@@ -162,6 +261,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
   const expectedSaved = {
     tooltip: {
       enabled: true,
+      timezone: null,
       compareMode: false,
       compareType: 'absolute',
       fieldsToShow: {
@@ -213,14 +313,26 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     },
     brush: {
       enabled: false,
-      size: 0.5
+      size: 2.5
     },
     coordinate: {
       enabled: false
     },
     geocoder: {
       enabled: false,
-      limitSearch: false
+      limitSearch: false,
+      color: [255, 0, 0]
+    },
+    legend: {
+      enabled: false,
+      hideInvisibleLayers: false
+    },
+    annotation: {
+      enabled: false
+    },
+    zoomOpacity: {
+      enabled: false,
+      controllers: []
     }
   };
 
@@ -231,7 +343,24 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
 });
 
 test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
-  const initialState = cloneDeep(StateWTooltipFormat);
+  const baseState = cloneDeep(StateWTooltipFormat);
+  const tooltip = baseState.visState.interactionConfig.tooltip;
+  const initialState = {
+    ...baseState,
+    visState: {
+      ...baseState.visState,
+      interactionConfig: {
+        ...baseState.visState.interactionConfig,
+        tooltip: {
+          ...tooltip,
+          config: {
+            ...tooltip.config,
+            timezone: 'America/Guayaquil'
+          }
+        }
+      }
+    }
+  };
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
@@ -241,6 +370,7 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
   const expectedSaved = {
     tooltip: {
       enabled: true,
+      timezone: 'America/Guayaquil',
       compareMode: true,
       compareType: 'relative',
       fieldsToShow: {
@@ -271,14 +401,26 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
     },
     brush: {
       enabled: false,
-      size: 0.5
+      size: 2.5
     },
     coordinate: {
       enabled: false
     },
     geocoder: {
       enabled: false,
-      limitSearch: false
+      limitSearch: false,
+      color: [255, 0, 0]
+    },
+    legend: {
+      enabled: false,
+      hideInvisibleLayers: false
+    },
+    annotation: {
+      enabled: false
+    },
+    zoomOpacity: {
+      enabled: false,
+      controllers: []
     }
   };
 
@@ -317,7 +459,12 @@ test('#visStateSchema -> v1 -> save animation', t => {
   );
 
   const expectedSavedLayers = [expectedSavedTripLayer];
-  const expectedAnimationConfig = {currentTime: 1565577261000, speed: 1};
+  const expectedAnimationConfig = {
+    currentTime: 1565577261000,
+    speed: 1,
+    timeFormat: null,
+    timezone: null
+  };
   cmpSavedLayers(t, expectedSavedLayers, vsToSave.layers);
 
   t.deepEqual(vsToSave.animationConfig, expectedAnimationConfig, 'should save animationConfig');
@@ -492,5 +639,114 @@ test('#visStateSchema -> create point and arc layers', t => {
   t.equal(state.visState.layers[0].type, 'point', 'should create point layer');
   t.equal(state.visState.layers[1].type, 'arc', 'should create arc layer');
   t.equal(state.visState.layers[2].type, 'arc', 'should create arc layer');
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> charts are optional', t => {
+  const initialState = cloneDeep(StateWFiles);
+  const vsToSave = SchemaManager.getConfigToSave(initialState).config.visState;
+  t.false('charts' in vsToSave, 'should omit empty charts from saved config');
+
+  const stateWithChart = {
+    ...initialState,
+    visState: {
+      ...initialState.visState,
+      charts: [
+        {
+          id: 'c1',
+          type: 'bigNumber',
+          title: 'Count',
+          dataId: testCsvDataId,
+          applyFilters: true,
+          display: {isConfigActive: true, isJsonEditorActive: true}
+        }
+      ]
+    }
+  };
+  const savedConfig = SchemaManager.getConfigToSave(stateWithChart);
+  const savedWithChart = savedConfig.config.visState;
+  t.equal(savedWithChart.charts.length, 1, 'should persist charts when present');
+  t.equal(savedWithChart.charts[0].id, 'c1');
+  t.equal(
+    savedWithChart.charts[0].display.isConfigActive,
+    false,
+    'should collapse chart config on save'
+  );
+  t.equal(
+    savedWithChart.charts[0].display.isJsonEditorActive,
+    false,
+    'should collapse chart JSON editor on save'
+  );
+
+  const loaded = SchemaManager.parseSavedConfig(savedConfig).visState;
+  t.equal(loaded.charts.length, 1, 'should load saved charts');
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load layer isIncludedInLegend', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  const layer = initialState.visState.layers[0];
+  layer.config.isIncludedInLegend = false;
+
+  const savedState = SchemaManager.getConfigToSave(initialState);
+  const savedLayers = savedState.config.visState.layers;
+  const savedLayer = savedLayers.find(item => item.id === layer.id);
+  t.equal(savedLayer.config.isIncludedInLegend, false, 'should persist legend exclusion');
+
+  const untouched = savedLayers.find(item => item.id !== layer.id);
+  t.equal(
+    Object.prototype.hasOwnProperty.call(untouched.config, 'isIncludedInLegend'),
+    false,
+    'layers left at the default should omit the flag'
+  );
+
+  const loadedLayer = SchemaManager.parseSavedConfig(savedState).visState.layers.find(
+    item => item.id === layer.id
+  );
+  t.equal(loadedLayer.config.isIncludedInLegend, false, 'should load legend exclusion');
+
+  const dataset = initialState.visState.datasets[layer.config.dataId];
+  const instance = validateLayerWithData(dataset, loadedLayer, initialState.visState.layerClasses);
+  t.ok(instance, 'should rebuild the layer');
+  t.equal(instance.config.isIncludedInLegend, false, 'rebuilt layer stays out of the legend');
+  t.equal(instance.config.isVisible, true, 'legend exclusion does not hide the layer on the map');
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load hideInvisibleLayers', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  initialState.visState.interactionConfig.legend.config.hideInvisibleLayers = true;
+
+  const savedState = SchemaManager.getConfigToSave(initialState);
+  t.equal(
+    savedState.config.visState.interactionConfig.legend.hideInvisibleLayers,
+    true,
+    'should persist hideInvisibleLayers'
+  );
+
+  const loaded = SchemaManager.parseSavedConfig(savedState).visState.interactionConfig;
+  t.equal(loaded.legend.hideInvisibleLayers, true, 'should load hideInvisibleLayers');
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load zoomOpacity controllers', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  const layerId = initialState.visState.layers[0].id;
+  const controllers = [
+    {
+      id: 'c1',
+      layerIds: [layerId],
+      stops: {appear: 2, full: 4, fade: 9, gone: 14}
+    }
+  ];
+  initialState.visState.interactionConfig.zoomOpacity.enabled = true;
+  initialState.visState.interactionConfig.zoomOpacity.config.controllers = controllers;
+
+  const savedState = SchemaManager.getConfigToSave(initialState);
+  const savedZoom = savedState.config.visState.interactionConfig.zoomOpacity;
+  t.deepEqual(savedZoom, {enabled: true, controllers}, 'should persist fade-on-zoom controllers');
+
+  const loaded = SchemaManager.parseSavedConfig(savedState).visState.interactionConfig.zoomOpacity;
+  t.deepEqual(loaded, {enabled: true, controllers}, 'should load fade-on-zoom controllers');
   t.end();
 });

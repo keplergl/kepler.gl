@@ -17,15 +17,14 @@ describe('globe-stars-layer', () => {
       fillStyle: ''
     };
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
-    jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function getContext(
-      this: HTMLCanvasElement,
-      type: string
-    ) {
-      if (type === '2d') {
-        return tileCtx as unknown as CanvasRenderingContext2D;
-      }
-      return originalGetContext.call(this, type);
-    });
+    jest
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockImplementation(function getContext(this: HTMLCanvasElement, type: string) {
+        if (type === '2d') {
+          return tileCtx as unknown as CanvasRenderingContext2D;
+        }
+        return originalGetContext.call(this, type);
+      });
 
     const pattern = {id: 'stars-pattern'};
     const destCtx = {

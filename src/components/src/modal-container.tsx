@@ -11,9 +11,11 @@ import {
   exportData,
   getFileFormatNames,
   getFileExtensions,
+  getDisplayedFileExtensions,
   MapStyle,
   ProviderState
 } from '@kepler.gl/reducers';
+import {remoteDatasetFromUrl} from '@kepler.gl/processors';
 import {exportHtml, exportMap, exportJson, exportImage} from '@kepler.gl/utils';
 
 import ModalDialogFactory from './modals/modal-dialog';
@@ -84,10 +86,19 @@ const smallModalCss = css`
 
 const LoadDataModalStyle = css`
   top: 60px;
+  padding-bottom: 0;
+
+  ${media.portable`
+    padding-bottom: 0;
+  `}
 `;
 
 const ExportVideoModalStyle = css`
   max-width: 960px;
+`;
+
+export const ExportMapModalStyle = css`
+  max-width: 728px;
 `;
 
 const DefaultStyle = css`
@@ -96,6 +107,7 @@ const DefaultStyle = css`
 
 export type ModalContainerProps = {
   appName: string;
+  appWebsite?: string;
   rootNode: React.ReactInstance | null | undefined;
   containerW: number;
   containerH: number;
@@ -117,6 +129,35 @@ export type ModalContainerProps = {
   onExportToCloudSuccess?: OnSuccessCallBack;
   onExportToCloudError?: OnErrorCallBack;
 };
+
+type ExportDataModalActions = {
+  exportData: () => Promise<void>;
+  getCurrentModal: () => UiState['currentModal'];
+  closeModal: () => void;
+  addNotification: ModalContainerProps['uiStateActions']['addNotification'];
+};
+
+export async function exportDataFromModal({
+  exportData: runExport,
+  getCurrentModal,
+  closeModal,
+  addNotification
+}: ExportDataModalActions): Promise<void> {
+  try {
+    await runExport();
+    if (getCurrentModal() === EXPORT_DATA_ID) {
+      closeModal();
+    }
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    addNotification({
+      id: 'EXPORT_DATA_ERROR_ID',
+      type: 'error',
+      topic: 'global',
+      message: `Failed to export data: ${detail}`
+    });
+  }
+}
 
 ModalContainerFactory.deps = [
   DeleteDatasetModalFactory,
@@ -164,7 +205,45 @@ export default function ModalContainerFactory(
       }
     };
 
+    _mapInfoDraft: {title: string; description: string} | null = null;
+
+    _onMapInfoDraft = (info: {title: string; description: string}) => {
+      this._mapInfoDraft = info;
+    };
+
+    _propsWithMapInfoDraft = () => {
+      const draft = this._mapInfoDraft;
+      if (!draft) {
+        return this.props;
+      }
+      return {
+        ...this.props,
+        visState: {
+          ...this.props.visState,
+          mapInfo: {
+            ...this.props.visState.mapInfo,
+            title: draft.title,
+            description: draft.description
+          }
+        }
+      };
+    };
+
+    _commitMapInfoDraft = () => {
+      if (!this._mapInfoDraft) {
+        return;
+      }
+      this.props.visStateActions.setMapInfo({
+        title: this._mapInfoDraft.title,
+        description: this._mapInfoDraft.description
+      });
+    };
+
     _closeModal = () => {
+      this._mapInfoDraft = null;
+      if (this.props.uiState.currentModal === ADD_DATA_ID) {
+        this.props.visStateActions.clearStagedLoadedFiles();
+      }
       this.props.uiStateActions.toggleModal(null);
     };
 
@@ -179,12 +258,46 @@ export default function ModalContainerFactory(
     };
 
     _onFileUpload = fileList => {
-      this.props.visStateActions.loadFiles(fileList);
+      this.props.visStateActions.loadFiles(fileList, VisStateActions.stageLoadedFiles, {
+        deferAddToMap: true
+      });
+    };
+
+    _onAddRemoteDataset = ({url, format}: {url: string; format?: string}) => {
+      this.props.visStateActions.appendStagedLoadedFiles([remoteDatasetFromUrl(url, format)]);
+    };
+
+    _onConfirmAddData = ({
+      autoCreateLayers,
+      datasets,
+      deleteOriginalDataset
+    }: {
+      autoCreateLayers?: boolean;
+      datasets?: any[];
+      deleteOriginalDataset?: boolean;
+    } = {}) => {
+      const staged = datasets || this.props.visState.stagedToAdd;
+      if (!staged?.length) {
+        return;
+      }
+      const datasetToReplaceId = this.props.uiState.datasetToReplaceId;
+      if (datasetToReplaceId) {
+        this.props.visStateActions.confirmReplaceDataset({
+          result: staged,
+          datasetToReplaceId,
+          deleteOriginalDataset: deleteOriginalDataset !== false
+        });
+        return;
+      }
+      this.props.visStateActions.loadFilesSuccess(staged, {
+        autoCreateLayers: autoCreateLayers !== false
+      });
     };
 
     _onTilesetAdded = (
       tileset: {name: string; type: string; metadata: Record<string, any>},
-      processedMetadata?: Record<string, any>
+      processedMetadata?: Record<string, any>,
+      options?: {autoCreateLayers?: boolean}
     ) => {
       this.props.visStateActions.updateVisData(
         {
@@ -206,7 +319,7 @@ export default function ModalContainerFactory(
           disableDataOperation: true
         },
         {
-          autoCreateLayers: true,
+          autoCreateLayers: options?.autoCreateLayers !== false,
           centerMap: true
         }
       );
@@ -215,29 +328,47 @@ export default function ModalContainerFactory(
 
     _onExportImage = () => {
       if (!this.props.uiState.exportImage.processing) {
-        exportImage(this.props.uiState.exportImage, `${this.props.appName}.png`);
+        exportImage(
+          this.props.uiState.exportImage,
+          this.props.uiState.exportImage.fileName || `${this.props.appName}.png`
+        );
         this.props.uiStateActions.cleanupExportImage();
         this._closeModal();
       }
     };
 
     _onExportData = () => {
-      exportData(this.props, this.props.uiState.exportData);
-      this._closeModal();
+      return exportDataFromModal({
+        exportData: () => exportData(this.props, this.props.uiState.exportData),
+        getCurrentModal: () => this.props.uiState.currentModal,
+        closeModal: this._closeModal,
+        addNotification: this.props.uiStateActions.addNotification
+      });
     };
 
     _onExportMap = () => {
-      const {uiState} = this.props;
-      const {format} = uiState.exportMap;
+      const {uiState} = this._propsWithMapInfoDraft();
+      const {format, includeLayerApiKeys, fileName, appName, appWebsite, appIcon, appNameColor} =
+        uiState.exportMap;
       (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(
-        this.props,
-        this.props.uiState.exportMap[format] || {}
+        this._propsWithMapInfoDraft(),
+        {
+          ...(uiState.exportMap[format] || {}),
+          includeLayerApiKeys,
+          fileName,
+          appName,
+          appWebsite,
+          appIcon,
+          appNameColor
+        }
       );
+      this._commitMapInfoDraft();
       this._closeModal();
     };
 
     _exportFileToCloud = ({provider, isPublic, overwrite, closeModal}) => {
-      const toSave = exportMap(this.props);
+      const toSave = exportMap(this._propsWithMapInfoDraft());
+      this._commitMapInfoDraft();
 
       this.props.providerActions.exportFileToCloud({
         mapData: toSave,
@@ -245,7 +376,8 @@ export default function ModalContainerFactory(
         options: {
           isPublic,
           overwrite,
-          mapIdToOverwrite: this.props.providerState.savedMapId
+          mapIdToOverwrite: this.props.providerState.savedMapId,
+          fileName: this.props.uiState.exportMap.fileName
         },
         closeModal,
         onSuccess: this.props.onExportToCloudSuccess,
@@ -323,9 +455,18 @@ export default function ModalContainerFactory(
                 showDatasetTable={visStateActions.showDatasetTable}
                 sortTableColumn={visStateActions.sortTableColumn}
                 pinTableColumn={visStateActions.pinTableColumn}
+                toggleTableColumnHidden={visStateActions.toggleTableColumnHidden}
+                showAllTableColumns={visStateActions.showAllTableColumns}
                 copyTableColumn={visStateActions.copyTableColumn}
+                renameTableColumn={visStateActions.renameTableColumn}
+                changeTableColumnType={visStateActions.changeTableColumnType}
+                deleteTableColumn={visStateActions.deleteTableColumn}
+                createFilterFromColumn={(id, column) =>
+                  visStateActions.createOrUpdateFilter(undefined, id, column)
+                }
                 setColumnDisplayFormat={visStateActions.setColumnDisplayFormat}
                 loadColumnStats={visStateActions.loadColumnStats}
+                applyCPUFilter={visStateActions.applyCPUFilter}
                 uiStateActions={uiStateActions}
                 uiState={uiState}
               />
@@ -362,12 +503,16 @@ export default function ModalContainerFactory(
             }
             break; // in case we add a new case after this one
           }
-          case ADD_DATA_ID:
+          case ADD_DATA_ID: {
+            const replaceDatasetId = uiState.datasetToReplaceId;
             template = (
               <LoadDataModal
                 {...providerState}
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
+                onAddRemoteDataset={this._onAddRemoteDataset}
+                onConfirmAddData={this._onConfirmAddData}
+                stagedToAdd={visState.stagedToAdd}
                 onTilesetAdded={this._onTilesetAdded}
                 onLoadCloudMap={this._onLoadCloudMap}
                 loadFiles={uiState.loadFiles}
@@ -375,15 +520,21 @@ export default function ModalContainerFactory(
                 fileLoadingProgress={visState.fileLoadingProgress}
                 fileFormatNames={getFileFormatNames(this.props.visState)}
                 fileExtensions={getFileExtensions(this.props.visState)}
+                displayedFileExtensions={getDisplayedFileExtensions(this.props.visState)}
+                replaceDatasetId={replaceDatasetId}
+                replaceDatasetLabel={
+                  replaceDatasetId ? datasets?.[replaceDatasetId]?.label : undefined
+                }
               />
             );
             modalProps = {
-              title: 'modal.title.addDataToMap',
+              title: replaceDatasetId ? 'modal.title.replaceDataset' : 'modal.title.addDataToMap',
               cssStyle: LoadDataModalStyle,
               footer: false,
               onConfirm: this._closeModal
             };
             break;
+          }
           case EXPORT_IMAGE_ID:
             template = (
               <ExportImageModal
@@ -440,16 +591,23 @@ export default function ModalContainerFactory(
             });
             template = (
               <ExportMapModal
+                appName={this.props.appName}
+                appWebsite={this.props.appWebsite}
                 config={keplerGlConfig}
                 options={uiState.exportMap}
+                mapInfo={visState.mapInfo}
                 onChangeExportMapFormat={uiStateActions.setExportMapFormat}
                 onEditUserMapboxAccessToken={uiStateActions.setUserMapboxAccessToken}
                 onChangeExportMapHTMLMode={uiStateActions.setExportHTMLMapMode}
+                onChangeExportMapBranding={uiStateActions.setExportMapBranding}
+                onChangeExportIncludeLayerApiKeys={uiStateActions.setExportIncludeLayerApiKeys}
+                onChangeExportMapFileName={uiStateActions.setExportMapFileName}
+                onMapInfoDraft={this._onMapInfoDraft}
               />
             );
             modalProps = {
               title: 'modal.title.exportMap',
-              cssStyle: '',
+              cssStyle: ExportMapModalStyle,
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportMap,
@@ -515,6 +673,9 @@ export default function ModalContainerFactory(
                 {...providerState}
                 exportImage={uiState.exportImage}
                 mapInfo={visState.mapInfo}
+                fileName={uiState.exportMap.fileName}
+                onChangeFileName={uiStateActions.setExportMapFileName}
+                onMapInfoDraft={this._onMapInfoDraft}
                 onSetMapInfo={visStateActions.setMapInfo}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
@@ -532,7 +693,7 @@ export default function ModalContainerFactory(
             template = (
               <OverWriteMapModal
                 {...providerState}
-                title={get(visState, ['mapInfo', 'title'])}
+                title={get(visState, ['mapInfo', 'title']) ?? ''}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
                 onConfirm={this._onOverwriteMap}

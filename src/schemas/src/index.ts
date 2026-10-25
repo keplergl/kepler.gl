@@ -23,7 +23,8 @@ export {
   default as visStateSchema,
   layerPropsV1,
   layerPropsV0,
-  effectPropsV1
+  effectPropsV1,
+  chartPropsV1
 } from './vis-state-schema';
 export type {SavedField, ParsedField, SavedDatasetV1, ParsedDataset} from './dataset-schema';
 export {

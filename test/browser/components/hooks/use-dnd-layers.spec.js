@@ -165,7 +165,15 @@ describe('useDndLayers', () => {
     reorderLayerOrder.mockReturnValue(newGroupOrder);
 
     const event = {
-      active: {id: '2', data: {current: {type: SORTABLE_LAYER_TYPE, parent: {id: 'group1', label: 'Group 1', isVisible: true, layerOrder: ['2', '3']}}}},
+      active: {
+        id: '2',
+        data: {
+          current: {
+            type: SORTABLE_LAYER_TYPE,
+            parent: {id: 'group1', label: 'Group 1', isVisible: true, layerOrder: ['2', '3']}
+          }
+        }
+      },
       over: {
         id: '3',
         data: {

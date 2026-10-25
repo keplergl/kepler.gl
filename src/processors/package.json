@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/processors",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.3.0-alpha.9",
+  "version": "3.3.0-alpha.18",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/cjs/index.js",
@@ -29,25 +29,33 @@
   ],
   "dependencies": {
     "@deck.gl-community/editable-layers": "9.3.8",
-    "@kepler.gl/common-utils": "3.3.0-alpha.9",
-    "@kepler.gl/constants": "3.3.0-alpha.9",
-    "@kepler.gl/schemas": "3.3.0-alpha.9",
-    "@kepler.gl/table": "3.3.0-alpha.9",
-    "@kepler.gl/types": "3.3.0-alpha.9",
-    "@kepler.gl/utils": "3.3.0-alpha.9",
+    "@kepler.gl/common-utils": "3.3.0-alpha.18",
+    "@kepler.gl/constants": "3.3.0-alpha.18",
+    "@kepler.gl/layers": "3.3.0-alpha.18",
+    "@kepler.gl/schemas": "3.3.0-alpha.18",
+    "@kepler.gl/table": "3.3.0-alpha.18",
+    "@kepler.gl/types": "3.3.0-alpha.18",
+    "@kepler.gl/utils": "3.3.0-alpha.18",
     "@loaders.gl/arrow": "^4.4.1",
     "@loaders.gl/core": "^4.4.1",
     "@loaders.gl/csv": "^4.4.1",
+    "@loaders.gl/excel": "^4.4.1",
+    "@loaders.gl/flatgeobuf": "^4.4.1",
     "@loaders.gl/gis": "^4.4.1",
     "@loaders.gl/json": "^4.4.1",
+    "@loaders.gl/kml": "^4.4.1",
     "@loaders.gl/loader-utils": "^4.4.1",
     "@loaders.gl/parquet": "^4.4.1",
     "@loaders.gl/schema": "^4.4.1",
+    "@loaders.gl/shapefile": "^4.4.1",
     "@loaders.gl/wkt": "^4.4.1",
+    "@loaders.gl/zip": "^4.4.1",
     "@mapbox/geojson-normalize": "0.0.1",
     "@turf/helpers": "^7.2.0",
     "apache-arrow": ">=15.0.0",
     "d3-dsv": "^2.0.0",
+    "parquet-wasm": "0.6.1",
+    "sql.js": "1.13.0",
     "type-analyzer": "0.4.0"
   },
   "nyc": {
@@ -64,7 +72,7 @@
     "node": ">=20"
   },
   "volta": {
-    "node": "20.19.3",
+    "node": "24.21.0",
     "yarn": "4.4.0"
   },
   "packageManager": "yarn@4.4.0",
@@ -76,5 +84,8 @@
       "require": "./dist/cjs/index.js",
       "default": "./dist/cjs/index.js"
     }
+  },
+  "devDependencies": {
+    "@types/sql.js": "^1"
   }
 }

@@ -23,6 +23,7 @@ const GOOGLE_DRIVE_APP_NAME = 'Kepler.gl';
 
 export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
 
+// Instantiated after main.js applies /config.json credentials (dynamic import).
 export const CLOUD_PROVIDERS = [
   new FoursquareProvider({
     clientId: FOURSQUARE_CLIENT_ID,

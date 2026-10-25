@@ -22,6 +22,36 @@ export const propertiesV1 = {
           })
         },
         key: 'mapLegend'
+      }),
+      chart: new Schema({
+        version: VERSIONS.v1,
+        properties: {
+          active: null
+        },
+        key: 'chart'
+      }),
+      cameraBookmarks: new Schema({
+        version: VERSIONS.v1,
+        properties: {
+          show: null,
+          settings: new Schema({
+            version: VERSIONS.v1,
+            properties: {
+              position: null,
+              contentHeight: null
+            },
+            key: 'settings'
+          })
+        },
+        key: 'cameraBookmarks'
+      }),
+      mapInfo: new Schema({
+        version: VERSIONS.v1,
+        properties: {
+          active: null,
+          show: null
+        },
+        key: 'mapInfo'
       })
     },
     key: 'mapControls'

@@ -154,6 +154,14 @@ Supported URL templates:
 
 For step-by-step instructions, see [Raster Tile Layer — How to add](./n-raster-tile-layer.md).
 
+## Zarr Layer (experimental)
+
+Zarr layers display raster slices from remote climate and weather datasets. Select a variable and use numeric, categorical, or time coordinates as a timeline axis.
+
+Zarr is enabled by default, including in the demo app. Set `enableZarrLayer: false` in the application configuration to hide it from Add Data and the layer type pickers. Existing saved Zarr layers can still render.
+
+For setup, timeline controls, and save/load behavior, see [Zarr Layer](./s-zarr-layer.md).
+
 ## WMS Layer (experimental)
 
 ![WMS layer](https://4sq-studio-public.s3.us-west-2.amazonaws.com/statics/keplergl/documentation/layer-types/wms.png 'WMS Layer')

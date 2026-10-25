@@ -4,7 +4,7 @@
 import test from 'tape';
 import moment from 'moment';
 
-import {getDatasetFieldIndexForFilter} from '@kepler.gl/table';
+import {getDatasetFieldIndexForFilter, KeplerTable} from '@kepler.gl/table';
 
 import {
   isValidFilterValue,
@@ -19,13 +19,36 @@ import {
   getTimestampFieldDomain,
   scaleSourceDomainToDestination,
   mergeFilterWithTimeline,
-  createDataContainer
+  createDataContainer,
+  shouldApplyFilter,
+  isTimeIntervalFilter,
+  timeWindowOverlapsInterval,
+  applyTimeFilterEndFieldName,
+  validateFilterWithData,
+  disableGpuIfInverted,
+  getPlotBaseIndexByDataId,
+  areFilterFieldTypesCompatible,
+  mergeFilterDomainStep
 } from '@kepler.gl/utils';
 
-import {FILTER_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
 
 /* eslint-disable max-statements */
+test('filterUtils -> shouldApplyFilter skips an unselected synced field', t => {
+  const filter = {
+    ...getDefaultFilter({dataId: ['first', 'second']}),
+    type: FILTER_TYPES.range,
+    name: ['value', ''],
+    value: [0, 1]
+  };
+
+  t.equal(shouldApplyFilter(filter, 'first'), true, 'applies the selected dataset field');
+  t.equal(shouldApplyFilter(filter, 'second'), false, 'skips the empty dataset field');
+  t.equal(shouldApplyFilter(filter, 'missing'), false, 'skips an unrelated dataset');
+  t.end();
+});
+
 test('filterUtils -> adjustValueToFilterDomain', t => {
   // TODO: needs id
   const rangeFilter = getDefaultFilter();
@@ -126,6 +149,39 @@ test('filterUtils -> adjustValueToFilterDomain', t => {
     'should return true if nothing matched to select filter'
   );
 
+  t.end();
+});
+
+test('filterUtils -> compatible numeric filter field types', t => {
+  t.ok(
+    areFilterFieldTypesCompatible(ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real),
+    'integer filters accept real fields'
+  );
+  t.ok(
+    areFilterFieldTypesCompatible(ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer),
+    'real filters accept integer fields'
+  );
+  t.notOk(
+    areFilterFieldTypesCompatible(ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.string),
+    'numeric filters reject string fields'
+  );
+
+  const merged = mergeFilterDomainStep(
+    {
+      fieldType: ALL_FIELD_TYPES.real,
+      domain: [0.25, 1.5],
+      step: 0.25
+    },
+    {
+      fieldType: ALL_FIELD_TYPES.integer,
+      domain: [-1, 3],
+      step: 1
+    }
+  );
+
+  t.deepEqual(merged.domain, [-1, 3], 'merges integer and real domains');
+  t.equal(merged.fieldType, ALL_FIELD_TYPES.real, 'keeps the first field type');
+  t.equal(merged.step, 0.25, 'keeps the finest numeric step');
   t.end();
 });
 
@@ -790,16 +846,8 @@ test('filterUtils -> getPolygonFilterFunctor -> aggregation layers (grid/hexagon
     };
 
     const fn2 = getPolygonFilterFunctor(pointLayer, filter, null);
-    t.equal(
-      fn2({position: [0.5, 0.5]}),
-      true,
-      `${type} points: point inside should return true`
-    );
-    t.equal(
-      fn2({position: [10, 10]}),
-      false,
-      `${type} points: point outside should return false`
-    );
+    t.equal(fn2({position: [0.5, 0.5]}), true, `${type} points: point inside should return true`);
+    t.equal(fn2({position: [10, 10]}), false, `${type} points: point outside should return false`);
   });
 
   t.end();
@@ -914,6 +962,398 @@ test('filterUtils -> getPolygonFilterFunctor -> arc layer validates both endpoin
     fn({position: [0.5, 0.5, 0, 10, 10, 0]}),
     false,
     'arc with destination outside should fail'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> timeWindowOverlapsInterval', t => {
+  t.equal(timeWindowOverlapsInterval(0, 10, [2, 8]), true, 'window inside feature interval');
+  t.equal(timeWindowOverlapsInterval(0, 10, [-5, 0]), true, 'window touches start');
+  t.equal(timeWindowOverlapsInterval(0, 10, [10, 15]), true, 'window touches end');
+  t.equal(timeWindowOverlapsInterval(0, 10, [11, 20]), false, 'window after feature');
+  t.equal(timeWindowOverlapsInterval(20, 30, [0, 10]), false, 'window before feature');
+  t.equal(
+    timeWindowOverlapsInterval(5, null, [0, 10]),
+    true,
+    'null end is still active once started'
+  );
+  t.equal(timeWindowOverlapsInterval(20, null, [0, 10]), false, 'null end is hidden before start');
+  t.equal(timeWindowOverlapsInterval(null, 10, [0, 10]), false, 'null start is hidden');
+  t.equal(
+    timeWindowOverlapsInterval(10, 0, [0, 20]),
+    false,
+    'inverted interval (end < start) is hidden'
+  );
+  t.equal(
+    timeWindowOverlapsInterval(5, 5, [0, 10]),
+    true,
+    'zero-length interval at a point overlaps'
+  );
+  t.end();
+});
+
+test('filterUtils -> getFilterFunction time interval overlap', t => {
+  const startMapped = [0, 10, 20, 30];
+  const endMapped = [15, 15, 40, null];
+  const field = {
+    filterProps: {mappedValue: startMapped},
+    valueAccessor: () => null,
+    format: ''
+  };
+  const filter = {
+    type: FILTER_TYPES.timeRange,
+    dataId: ['ds'],
+    value: [12, 18],
+    endName: ['end'],
+    endMappedValue: [endMapped]
+  };
+
+  t.ok(isTimeIntervalFilter(filter, 0), 'should detect interval mode from endName');
+
+  const filterFunction = getFilterFunction(field, 'ds', filter, [], null);
+
+  t.equal(filterFunction({index: 0}), true, '[0, 15] overlaps window [12, 18]');
+  t.equal(filterFunction({index: 1}), true, '[10, 15] overlaps window [12, 18]');
+  t.equal(filterFunction({index: 2}), false, '[20, 40] starts after the window');
+  t.equal(filterFunction({index: 3}), false, '[30, inf] has not started yet');
+
+  const instantFn = getFilterFunction(
+    field,
+    'ds',
+    {
+      type: FILTER_TYPES.timeRange,
+      dataId: ['ds'],
+      value: [12, 18]
+    },
+    [],
+    null
+  );
+  t.equal(instantFn({index: 0}), false, 'instant mode still requires the timestamp in range');
+  t.equal(instantFn({index: 1}), false, 'timestamp 10 is outside [12, 18]');
+  t.end();
+});
+
+test('filterUtils -> applyTimeFilterEndFieldName', t => {
+  const dataset = {
+    id: 'ds',
+    fields: [
+      {
+        name: 'start',
+        type: 'timestamp',
+        filterProps: {
+          fieldType: 'timestamp',
+          mappedValue: [0, 10],
+          domain: [0, 10],
+          step: 1
+        }
+      },
+      {
+        name: 'end',
+        type: 'timestamp',
+        filterProps: {
+          fieldType: 'timestamp',
+          mappedValue: [20, 50],
+          domain: [20, 50],
+          step: 1
+        }
+      },
+      {
+        name: 'other',
+        type: 'real',
+        filterProps: {fieldType: 'real', domain: [0, 1], step: 0.1}
+      }
+    ],
+    getColumnFieldIdx(name) {
+      return this.fields.findIndex(f => f.name === name);
+    },
+    getColumnFilterProps(name) {
+      return this.fields.find(f => f.name === name)?.filterProps || null;
+    }
+  };
+
+  const filter = {
+    type: FILTER_TYPES.timeRange,
+    dataId: ['ds'],
+    name: ['start'],
+    fieldIdx: [0],
+    domain: [0, 10],
+    value: [0, 10],
+    step: 1
+  };
+
+  const {filter: withEnd} = applyTimeFilterEndFieldName(filter, {ds: dataset}, 'ds', 'end', 0);
+  t.ok(withEnd, 'should apply a timestamp end field');
+  t.deepEqual(withEnd.endName, ['end'], 'should store endName');
+  t.deepEqual(withEnd.endFieldIdx, [1], 'should store endFieldIdx');
+  t.deepEqual(withEnd.domain, [0, 50], 'domain should span start min to end max');
+  t.deepEqual(withEnd.value, [0, 50], 'full-range window should expand with domain');
+
+  const {filter: sameAsStart} = applyTimeFilterEndFieldName(
+    filter,
+    {ds: dataset},
+    'ds',
+    'start',
+    0
+  );
+  t.equal(sameAsStart, null, 'should reject using the start field as end');
+
+  const {filter: nonTimestamp} = applyTimeFilterEndFieldName(
+    filter,
+    {ds: dataset},
+    'ds',
+    'other',
+    0
+  );
+  t.equal(nonTimestamp, null, 'should reject a non-timestamp end field');
+
+  const {filter: cleared} = applyTimeFilterEndFieldName(withEnd, {ds: dataset}, 'ds', null, 0);
+  t.notOk(cleared.endName, 'clearing end field should remove endName');
+  t.deepEqual(cleared.domain, [0, 10], 'domain should shrink back to the start field');
+
+  t.end();
+});
+
+test('filterUtils -> getFilterFunction inverted', t => {
+  const field = {valueAccessor: d => d.value};
+  const range = {type: FILTER_TYPES.range, value: [2, 4], enabled: true};
+  const keep = getFilterFunction(field, 'ds', range, [], null);
+  const drop = getFilterFunction(field, 'ds', {...range, inverted: true}, [], null);
+
+  t.equal(keep({value: 3}), true, 'keeps values inside the range');
+  t.equal(keep({value: 5}), false, 'drops values outside the range');
+  t.equal(drop({value: 3}), false, 'filter out hides values inside the range');
+  t.equal(drop({value: 5}), true, 'filter out keeps values outside the range');
+  t.equal(keep({value: null}), false, 'a null is not coerced to zero by a range filter');
+  t.equal(drop({value: null}), true, 'filter out keeps a null that does not match the range');
+  t.equal(keep({value: ''}), false, 'an empty value is not coerced to zero by a range filter');
+  t.equal(drop({value: ''}), true, 'filter out keeps an empty value that does not match the range');
+
+  const disabled = getFilterFunction(
+    field,
+    'ds',
+    {...range, inverted: true, enabled: false},
+    [],
+    null
+  );
+  t.equal(disabled({value: 5}), true, 'a disabled filter still keeps every row');
+
+  const multi = {type: FILTER_TYPES.multiSelect, value: ['a'], enabled: true};
+  const exclude = getFilterFunction(field, 'ds', {...multi, inverted: true}, [], null);
+  t.equal(exclude({value: 'a'}), false, 'filter out hides a selected category');
+  t.equal(exclude({value: 'b'}), true, 'filter out keeps an unselected category');
+
+  const timeField = {
+    valueAccessor: () => null,
+    format: '',
+    filterProps: {mappedValue: [0, 10, 20]}
+  };
+  const time = {
+    type: FILTER_TYPES.timeRange,
+    dataId: ['ds'],
+    value: [12, 18],
+    enabled: true,
+    inverted: true,
+    endName: ['end'],
+    endMappedValue: [[15, 15, 40]]
+  };
+  const timeOut = getFilterFunction(timeField, 'ds', time, [], null);
+  t.equal(timeOut({index: 1}), false, 'filter out hides an interval that overlaps the window');
+  t.equal(timeOut({index: 2}), true, 'filter out keeps an interval outside the window');
+
+  t.end();
+});
+
+test('filterUtils -> disableGpuIfInverted', t => {
+  const inverted = disableGpuIfInverted({
+    inverted: true,
+    gpu: true,
+    gpuChannel: [0],
+    gpuEndChannel: [1],
+    type: FILTER_TYPES.range
+  });
+  t.equal(inverted.gpu, false, 'inverted range filters leave the GPU');
+  t.equal(inverted.gpuChannel, undefined, 'should release the GPU channel');
+  t.equal(inverted.gpuEndChannel, undefined, 'should release the end channel');
+
+  const kept = disableGpuIfInverted({inverted: false, gpu: true, gpuChannel: [0]});
+  t.equal(kept.gpu, true, 'filter in still uses the GPU');
+  t.deepEqual(kept.gpuChannel, [0], 'filter in keeps its channel');
+
+  t.end();
+});
+
+test('filterUtils -> validateFilterWithData rejects unsupported inversion', t => {
+  const dataset = new KeplerTable({
+    info: {id: 'remote'},
+    color: [0, 0, 0],
+    disableDataOperation: true
+  });
+  dataset.updateSchema({
+    fields: [{name: 'value', type: 'real', analyzerType: 'FLOAT'}],
+    rows: []
+  });
+
+  const {filter} = validateFilterWithData(
+    {remote: dataset},
+    'remote',
+    {
+      ...getDefaultFilter({dataId: ['remote']}),
+      name: ['value'],
+      type: FILTER_TYPES.range,
+      value: [0, 10],
+      inverted: true
+    },
+    []
+  );
+
+  t.equal(filter.inverted, false, 'saved filter out is cleared for a GPU-only dataset');
+  t.equal(filter.gpu, true, 'the validated range filter remains on the GPU');
+  t.end();
+});
+
+test('filterUtils -> getPlotBaseIndexByDataId excludes the plotted filter', t => {
+  const values = [1, 5, 9];
+  const dataContainer = createDataContainer(values.map(v => [v]));
+  const field = {valueAccessor: d => dataContainer.valueAt(d.index, 0)};
+  const inverted = {
+    id: 'self',
+    type: FILTER_TYPES.range,
+    dataId: ['ds'],
+    fieldIdx: [0],
+    value: [4, 6],
+    inverted: true,
+    enabled: true
+  };
+  const other = {
+    id: 'other',
+    type: FILTER_TYPES.range,
+    dataId: ['ds'],
+    fieldIdx: [0],
+    value: [0, 8],
+    enabled: true
+  };
+  const dataset = {
+    id: 'ds',
+    fields: [field],
+    dataContainer,
+    allIndexes: [0, 1, 2],
+    filterRecord: {
+      cpu: [inverted, other],
+      gpu: [],
+      dynamicDomain: [],
+      fixedDomain: []
+    }
+  };
+
+  t.deepEqual(
+    getPlotBaseIndexByDataId({ds: dataset}, inverted).ds,
+    [0, 1],
+    'histogram index keeps the other filter and ignores the inverted filter itself'
+  );
+  t.equal(
+    getPlotBaseIndexByDataId({ds: dataset}, {id: 'gpu-only', dataId: ['ds']}),
+    undefined,
+    'GPU filters are already absent from the CPU index'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> getPlotBaseIndexByDataId retains polygon filters', t => {
+  const dataset = new KeplerTable({info: {id: 'ds'}, color: [0, 0, 0]});
+  dataset.updateSchema({
+    fields: [
+      {name: 'value', type: 'real', analyzerType: 'FLOAT'},
+      {name: 'lat', type: 'real', analyzerType: 'FLOAT'},
+      {name: 'lng', type: 'real', analyzerType: 'FLOAT'}
+    ],
+    rows: [
+      [1, 12.25, 30.5],
+      [5, 12.25, 35.5],
+      [9, 14.25, 30.5]
+    ]
+  });
+
+  const layer = {
+    id: 'layer',
+    type: 'point',
+    config: {dataId: 'ds'},
+    getPositionAccessor:
+      dataContainer =>
+      ({index}) =>
+        [dataContainer.valueAt(index, 2), dataContainer.valueAt(index, 1)]
+  };
+  const inverted = {
+    id: 'self',
+    type: FILTER_TYPES.range,
+    dataId: ['ds'],
+    fieldIdx: [0],
+    name: ['value'],
+    value: [4, 6],
+    inverted: true,
+    enabled: true,
+    gpu: false
+  };
+  const other = {
+    id: 'other',
+    type: FILTER_TYPES.range,
+    dataId: ['ds'],
+    fieldIdx: [0],
+    name: ['value'],
+    value: [0, 8],
+    enabled: true,
+    gpu: false
+  };
+  const polygon = {
+    id: 'polygon',
+    type: FILTER_TYPES.polygon,
+    dataId: ['ds'],
+    fieldIdx: [],
+    layerId: ['layer'],
+    value: mockPolygonFeature,
+    enabled: true,
+    fixedDomain: true,
+    gpu: false
+  };
+
+  dataset.filterTable([inverted, other, polygon], [layer]);
+  const customTable = {
+    id: dataset.id,
+    fields: dataset.fields,
+    dataContainer: dataset.dataContainer,
+    allIndexes: dataset.allIndexes,
+    filteredIndex: dataset.filteredIndex,
+    filterRecord: dataset.filterRecord
+  };
+
+  t.deepEqual(
+    getPlotBaseIndexByDataId({ds: customTable}, inverted, [layer]).ds,
+    [0],
+    'custom-table histogram base omits itself while keeping CPU and polygon filters'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> diffFilters notices inverted', t => {
+  const filterRecord = {
+    dynamicDomain: [],
+    fixedDomain: [],
+    cpu: [{id: 'aa', name: 'col', value: ['a'], inverted: true}],
+    gpu: []
+  };
+  const oldFilterRecord = {
+    dynamicDomain: [],
+    fixedDomain: [],
+    cpu: [{id: 'aa', name: 'col', value: ['a'], inverted: false}],
+    gpu: []
+  };
+
+  t.deepEqual(
+    diffFilters(filterRecord, oldFilterRecord).cpu,
+    {aa: 'inverted_changed'},
+    'toggling filter out should recompute CPU filters'
   );
 
   t.end();

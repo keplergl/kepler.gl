@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {bisectLeft, extent, histogram as d3Histogram, ticks} from 'd3-array';
+import {
+  bisectCenter,
+  bisectLeft,
+  bisectRight,
+  extent,
+  histogram as d3Histogram,
+  ticks
+} from 'd3-array';
 import isEqual from 'es-toolkit/compat/isEqual';
 import {getFilterMappedValue, getInitialInterval, intervalToFunction} from './time';
 import moment from 'moment';
@@ -12,21 +19,31 @@ import {
   TimeRangeFilter,
   RangeFilter,
   PlotType,
+  PlotGroupBy,
   Filter,
   LineChart,
+  LineChartGroupBy,
+  LineChartSeries,
   Field,
   ValueOf,
-  LineDatum
+  LineDatum,
+  ColorRange,
+  ColorUI
 } from '@kepler.gl/types';
-import {notNullorUndefined} from '@kepler.gl/common-utils';
+import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
 import {
   ANIMATION_WINDOW,
   BINS,
   durationDay,
+  FILTER_TYPES,
   TIME_AGGREGATION,
   AGGREGATION_TYPES,
   PLOT_TYPES,
-  AggregationTypes
+  AggregationTypes,
+  KEPLER_COLOR_PALETTES,
+  colorPaletteToColorRange,
+  DEFAULT_COLOR_UI,
+  DEFAULT_CUSTOM_PALETTE
 } from '@kepler.gl/constants';
 
 import {isNumber, roundValToStep} from './data-utils';
@@ -159,7 +176,78 @@ export function histogramFromOrdinal(
 }
 
 /**
- *
+ * Bin rows by time interval overlap: a feature [start, end] is counted in every
+ * bin whose range intersects that span. Null/undefined end is treated as still
+ * active through the last threshold (open-ended).
+ */
+export function histogramFromTimeIntervals(
+  thresholds: number[],
+  indexes: number[],
+  startAccessor: (idx: number) => number | null | undefined,
+  endAccessor: (idx: number) => number | null | undefined
+): Bin[] {
+  if (!thresholds || thresholds.length < 2) {
+    return [];
+  }
+
+  const nBins = thresholds.length - 1;
+  const bins: Bin[] = [];
+  for (let i = 0; i < nBins; i++) {
+    bins.push({
+      count: 0,
+      indexes: [],
+      x0: thresholds[i],
+      x1: thresholds[i + 1]
+    });
+  }
+
+  const lastThreshold = thresholds[nBins];
+
+  for (const idx of indexes) {
+    const start = startAccessor(idx);
+    if (!notNullorUndefined(start) || Number.isNaN(start)) {
+      continue;
+    }
+    const rawEnd = endAccessor(idx);
+    if (notNullorUndefined(rawEnd) && !Number.isNaN(rawEnd) && rawEnd < start) {
+      continue;
+    }
+    const end = notNullorUndefined(rawEnd) && !Number.isNaN(rawEnd) ? rawEnd : lastThreshold;
+
+    let startBin = bisectRight(thresholds, start) - 1;
+    let endBin = bisectRight(thresholds, end) - 1;
+
+    if (startBin < 0) startBin = 0;
+    if (startBin >= nBins && start === lastThreshold) startBin = nBins - 1;
+    if (endBin >= nBins) endBin = nBins - 1;
+    if (endBin < 0 || startBin >= nBins || endBin < startBin) {
+      continue;
+    }
+
+    for (let i = startBin; i <= endBin; i++) {
+      bins[i].indexes.push(idx);
+      bins[i].count += 1;
+    }
+  }
+
+  return bins.filter(b => b.count > 0);
+}
+
+function getEndMappedValue(dataset, filter: TimeRangeFilter): (number | null)[] | null {
+  const datasetIdx = toArray(filter.dataId).indexOf(dataset.id);
+  const fromFilter = filter.endMappedValue?.[datasetIdx];
+  if (Array.isArray(fromFilter)) {
+    return fromFilter;
+  }
+  const endName = toArray(filter.endName)[datasetIdx];
+  if (!endName || typeof dataset.getColumnField !== 'function') {
+    return null;
+  }
+  const field = dataset.getColumnField(endName);
+  return field?.filterProps?.mappedValue || null;
+}
+
+/**
  * @param domain
  * @param values
  * @param numBins
@@ -193,7 +281,8 @@ export function histogramFromDomain(
 export function getTimeBins(
   filter: TimeRangeFilter,
   datasets: Datasets,
-  interval: PlotType['interval']
+  interval: PlotType['interval'],
+  plotBaseIndexByDataId?: Record<string, number[]>
 ): TimeBins {
   let bins = filter.timeBins || {};
 
@@ -205,7 +294,12 @@ export function getTimeBins(
     const dataset = datasets[dataId];
 
     // do not apply current filter
-    const indexes = runGpuFilterForPlot(dataset, filter);
+    const indexes = runGpuFilterForPlot(
+      dataset,
+      filter,
+      undefined,
+      plotBaseIndexByDataId?.[dataId]
+    );
 
     bins = {
       ...bins,
@@ -226,6 +320,15 @@ export function binByTime(indexes, dataset, interval, filter) {
     return null;
   }
   const intervalBins = getBinThresholds(interval, filter.domain);
+  const endMapped = getEndMappedValue(dataset, filter);
+  if (Array.isArray(endMapped)) {
+    return histogramFromTimeIntervals(
+      intervalBins,
+      indexes,
+      idx => mappedValue[idx],
+      idx => endMapped[idx]
+    );
+  }
   const valueAccessor = idx => mappedValue[idx];
   const bins = histogramFromThreshold(intervalBins, indexes, valueAccessor);
 
@@ -235,14 +338,14 @@ export function binByTime(indexes, dataset, interval, filter) {
 export function getBinThresholds(interval: string, domain: number[]): number[] {
   const timeInterval = intervalToFunction(interval);
   const [t0, t1] = domain;
-  const floor = timeInterval.floor(t0).getTime();
-  const ceiling = timeInterval.ceil(t1).getTime();
 
   if (!timeInterval) {
     // if time interval is not defined
     // this should not happen
     return [t0, t0 + durationDay];
   }
+  const floor = timeInterval.floor(t0).getTime();
+  const ceiling = timeInterval.ceil(t1).getTime();
   const binThresholds = timeInterval.range(floor, ceiling + 1).map(t => moment.utc(t).valueOf());
   const lastStep = binThresholds[binThresholds.length - 1];
   if (lastStep === t1) {
@@ -253,25 +356,192 @@ export function getBinThresholds(interval: string, domain: number[]): number[] {
   return binThresholds;
 }
 
+const MAX_NUMERIC_BINS = 2048;
+
+function getNumericBinCount(domain: number[], interval: number): number {
+  const [start, end] = domain;
+  const rawCount = (end - start) / interval;
+  const roundedCount = Math.round(rawCount);
+  return Math.abs(rawCount - roundedCount) <= Number.EPSILON * Math.max(1, Math.abs(rawCount)) * 16
+    ? roundedCount
+    : Math.ceil(rawCount);
+}
+
+function normalizeNumericInterval(domain: number[], interval?: number): number | undefined {
+  if (!Number.isFinite(interval) || !(Number(interval) > 0)) {
+    return undefined;
+  }
+  if (
+    Array.isArray(domain) &&
+    domain.length >= 2 &&
+    domain.every(Number.isFinite) &&
+    domain[1] > domain[0] &&
+    getNumericBinCount(domain, Number(interval)) > MAX_NUMERIC_BINS
+  ) {
+    return undefined;
+  }
+  return Number(interval);
+}
+
+/**
+ * Build histogram thresholds in the numeric field's own units.
+ * Unlike time intervals, numeric intervals are anchored to the filter domain
+ * and never pass through calendar conversion.
+ */
+export function getNumericBinThresholds(
+  domain: number[],
+  interval?: number,
+  numBins = BINS
+): number[] {
+  if (!Array.isArray(domain) || domain.length < 2 || !domain.every(Number.isFinite)) {
+    return [];
+  }
+
+  const [start, end] = domain;
+  if (!(end > start)) {
+    return [start, end];
+  }
+
+  if (!Number.isFinite(interval) || !(Number(interval) > 0)) {
+    const numericTicks = ticks(start, end, numBins).filter(value => value > start && value < end);
+    return [start, ...numericTicks, end];
+  }
+
+  const width = Number(interval);
+  const count = getNumericBinCount(domain, width);
+  if (count > MAX_NUMERIC_BINS) {
+    return getNumericBinThresholds(domain, undefined, numBins);
+  }
+
+  const thresholds = [start];
+  for (let index = 1; index < count; index++) {
+    const boundary = start + index * width;
+    if (boundary > thresholds[thresholds.length - 1] && boundary < end) {
+      thresholds.push(boundary);
+    }
+  }
+  if (end > thresholds[thresholds.length - 1]) {
+    thresholds.push(end);
+  }
+  return thresholds;
+}
+
+const float64View = new DataView(new ArrayBuffer(8));
+
+function adjacentFloat(value: number, direction: -1 | 1): number {
+  if (Number.isNaN(value) || value === direction * Infinity) {
+    return value;
+  }
+  if (value === 0) {
+    return direction > 0 ? Number.MIN_VALUE : -Number.MIN_VALUE;
+  }
+
+  float64View.setFloat64(0, value, false);
+  let high = float64View.getUint32(0, false);
+  let low = float64View.getUint32(4, false);
+  const incrementBits = value > 0 === direction > 0;
+
+  if (incrementBits) {
+    low = (low + 1) >>> 0;
+    if (low === 0) {
+      high = (high + 1) >>> 0;
+    }
+  } else if (low === 0) {
+    low = 0xffffffff;
+    high = (high - 1) >>> 0;
+  } else {
+    low = (low - 1) >>> 0;
+  }
+
+  float64View.setUint32(0, high, false);
+  float64View.setUint32(4, low, false);
+  return float64View.getFloat64(0, false);
+}
+
+/** Return the next representable IEEE-754 number above value. */
+export function nextUp(value: number): number {
+  return adjacentFloat(value, 1);
+}
+
+/** Return the next representable IEEE-754 number below value. */
+export function nextDown(value: number): number {
+  return adjacentFloat(value, -1);
+}
+
+/**
+ * Smallest useful range width across a numeric domain. It is large enough to
+ * move either endpoint by one representable value and never exceeds the span.
+ */
+export function getNumericRangeMinimum(domain: number[]): number {
+  if (!Array.isArray(domain) || domain.length < 2 || !domain.every(Number.isFinite)) {
+    return 0;
+  }
+  const [start, end] = domain;
+  const span = end - start;
+  if (!(span > 0)) {
+    return 0;
+  }
+  const startResolution = nextUp(start) - start;
+  const endResolution = end - nextDown(end);
+  return Math.min(span, Math.max(startResolution, endResolution));
+}
+
+/** Infer the regular numeric bin width, ignoring tiny padded edge bins. */
+export function getNumericPlotInterval(filter: RangeFilter): number {
+  if (Number.isFinite(filter.plotType?.numericInterval) && filter.plotType.numericInterval > 0) {
+    return filter.plotType.numericInterval;
+  }
+  const bins = Object.values(filter.bins || {}).find(value => value?.length);
+  const binWidths = (bins || [])
+    .map(bin => bin.x1 - bin.x0)
+    .filter(width => Number.isFinite(width) && width > 0)
+    .sort((a, b) => a - b);
+  const binWidth = binWidths.length ? binWidths[Math.floor(binWidths.length / 2)] : 0;
+  if (binWidth > 0) {
+    return Number(binWidth.toPrecision(10));
+  }
+  const span = filter.domain?.[1] - filter.domain?.[0];
+  return span > 0 ? Number((span / BINS).toPrecision(10)) : filter.step;
+}
+
+/** Return the plotted bin boundaries for either a time or numeric range filter. */
+export function getFilterBinThresholds(filter: TimeRangeFilter | RangeFilter): number[] {
+  if (filter.type === FILTER_TYPES.timeRange) {
+    return getBinThresholds(filter.plotType?.interval, filter.domain);
+  }
+
+  const firstBins = Object.values(filter.bins || {}).find(Boolean) || [];
+  if (firstBins.length) {
+    return [...firstBins.map(bin => bin.x0), firstBins[firstBins.length - 1].x1];
+  }
+  return getNumericBinThresholds(filter.domain, filter.plotType?.numericInterval);
+}
+
 /**
  * Run GPU filter on current filter result to generate indexes for ploting chart
  * Skip ruuning for the same field
  * @param dataset
- * @param filter
+ * @param filter Histogram filter whose dataId-paired column should be skipped
+ * @param skipFieldNames Extra GPU field names to skip (charts cross-filter). Histogram callers omit this.
+ * @param baseIndex CPU base that excludes the plotted filter and already includes polygon filters.
  */
 export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
   dataset: K,
-  filter?: Filter
+  filter?: Filter,
+  skipFieldNames?: string[],
+  baseIndex?: number[]
 ): number[] {
-  const skipIndexes = getSkipIndexes(dataset, filter);
+  const skipIndexes = getSkipIndexes(dataset, filter, skipFieldNames);
 
   const {
     gpuFilter: {filterValueUpdateTriggers, filterRange, filterValueAccessor},
     filteredIndex,
     filteredIndexByLayer
   } = dataset;
-  // Polygon filters are per-layer; plots use the union of targeted layer indices
-  const plotFilteredIndex = mergePolygonLayerIndexes(filteredIndex, filteredIndexByLayer);
+  // Cached polygon indexes were built after the current CPU filter. When that
+  // filter is omitted, use the polygon-filtered base reconstructed by the caller.
+  const plotFilteredIndex =
+    baseIndex ?? mergePolygonLayerIndexes(filteredIndex, filteredIndexByLayer);
   const getFilterValue = filterValueAccessor(dataset.dataContainer)();
 
   const allChannels = Object.keys(filterValueUpdateTriggers)
@@ -292,19 +562,49 @@ export function runGpuFilterForPlot<K extends KeplerTableModel<K, L>, L>(
   return plotFilteredIndex.filter(filterData);
 }
 
-function getSkipIndexes(dataset, filter) {
+function getSkipIndexes(dataset, filter, skipFieldNames?: string[]) {
   // array of gpu filter names
-  if (!filter) {
-    return [];
-  }
   const gpuFilters = Object.values(dataset.gpuFilter.filterValueUpdateTriggers) as ({
     name: string;
   } | null)[];
+
+  // Charts pass extra field names so a cross-filter does not hide its own bins.
+  // Histogram plots never pass this list and keep the original dataId pairing.
+  if (skipFieldNames?.length) {
+    const skipNames = new Set(skipFieldNames.filter((name): name is string => Boolean(name)));
+    return gpuFilters.reduce((accu, item, idx) => {
+      if (item && skipNames.has(item.name)) {
+        accu.push(idx);
+      }
+      return accu;
+    }, [] as number[]);
+  }
+
+  if (!filter) {
+    return [];
+  }
   const valueIndex = filter.dataId.findIndex(id => id === dataset.id);
+  // Channels identify the plotted GPU filter precisely when another filter uses the same field.
+  if (filter.gpu && valueIndex >= 0) {
+    const assignedChannels = [
+      filter.gpuChannel?.[valueIndex],
+      filter.gpuEndChannel?.[valueIndex]
+    ].filter(Number.isFinite) as number[];
+
+    if (assignedChannels.length) {
+      return assignedChannels;
+    }
+  }
+  // CPU filters are already omitted from baseIndex, so every GPU channel remains applicable.
+  if (filter.gpu === false && valueIndex >= 0) {
+    return [];
+  }
+
   const filterColumn = filter.name[valueIndex];
+  const filterEndColumn = filter.endName?.[valueIndex];
 
   return gpuFilters.reduce((accu, item, idx) => {
-    if (item && filterColumn === item.name) {
+    if (item && (filterColumn === item.name || filterEndColumn === item.name)) {
       accu.push(idx);
     }
     return accu;
@@ -328,11 +628,41 @@ export function validBin(b) {
 }
 
 /**
- * Use in slider, given a number and an array of numbers, return the nears number from the array.
- * Takes a value, timesteps and return the actual step.
- * @param value
- * @param marks
+ * Turn a histogram brush or slider position into one bin.
+ * Interval playback steps by bin, and the filter comparison is inclusive.
+ * Time bins preserve their millisecond offset. Numeric bins use the immediate
+ * representable predecessor of the next mark so their membership matches D3's
+ * half-open bins; only the final numeric bin includes its upper boundary.
  */
+export function intervalBinFromMarks(
+  marks: number[],
+  value: number,
+  endOffset = 1
+): [number, number] {
+  if (!marks.length || !Number.isFinite(value)) {
+    return [value, value];
+  }
+  if (marks.length === 1) {
+    return [marks[0], marks[0]];
+  }
+  let idx = bisectCenter(marks, value);
+  if (idx < 0) {
+    idx = 0;
+  }
+  // The last mark closes the final bin. Keep a drag there on that bin.
+  const lastBin = marks.length - 2;
+  if (idx > lastBin) {
+    idx = lastBin;
+  }
+  const start = marks[idx];
+  const end = marks[idx + 1];
+  if (endOffset === 0) {
+    return [start, idx === lastBin ? end : Math.max(start, nextDown(end))];
+  }
+  const offset = Number.isFinite(endOffset) && endOffset > 0 ? Math.min(endOffset, end - start) : 0;
+  return [start, Math.max(start, end - offset)];
+}
+
 export function snapToMarks(value: number, marks: number[]): number {
   // always use bin x0
   if (!marks.length) {
@@ -423,8 +753,8 @@ export const getAggregationOptiosnBasedOnField = field => {
 
 function getDelta(
   bins: LineDatum[],
-  y: number,
-  _interval: PlotType['interval']
+  y: unknown,
+  _interval: PlotType['interval'] | number | null
 ): Partial<LineDatum> & {delta: 'last'; pct: number | null} {
   // if (WOW[interval]) return getWow(bins, y, interval);
   const lastBin = bins[bins.length - 1];
@@ -442,6 +772,332 @@ export function getPctChange(y: unknown, y0: unknown): number | null {
   return null;
 }
 
+export const PLOT_GROUP_OTHERS_NAME = 'Others';
+export const PLOT_NUM_GROUPS_ALL = 'ALL' as const;
+export const DEFAULT_PLOT_NUM_GROUPS = 10;
+/** Qualitative palettes stop at 20. All uses this cap instead of one series per value. */
+export const MAX_PLOT_NUM_GROUPS = 20;
+export const PLOT_NUM_GROUPS_OPTIONS = [1, 3, 5, 7, 10, MAX_PLOT_NUM_GROUPS];
+
+const DEFAULT_PLOT_GROUP_PALETTE = 'Uber Viz Qualitative';
+const FALLBACK_SERIES_COLORS = ['#12939A', '#DDB27C', '#88572C', '#FF991F', '#F15C17', '#223F9A'];
+
+export function plotGroupColorSteps(
+  numGroups: number | typeof PLOT_NUM_GROUPS_ALL | undefined
+): number {
+  if (numGroups === PLOT_NUM_GROUPS_ALL || typeof numGroups !== 'number' || numGroups < 1) {
+    return MAX_PLOT_NUM_GROUPS;
+  }
+  return Math.max(2, Math.min(numGroups, MAX_PLOT_NUM_GROUPS));
+}
+
+export function defaultPlotGroupColorRange(
+  numGroups?: number | typeof PLOT_NUM_GROUPS_ALL
+): ColorRange {
+  const steps = plotGroupColorSteps(numGroups);
+  const palette = KEPLER_COLOR_PALETTES.find(item => item.name === DEFAULT_PLOT_GROUP_PALETTE);
+  if (!palette) {
+    return {
+      name: DEFAULT_PLOT_GROUP_PALETTE,
+      type: 'qualitative',
+      category: 'Uber',
+      colors: FALLBACK_SERIES_COLORS
+    };
+  }
+  return colorPaletteToColorRange(palette, {reversed: false, steps});
+}
+
+function defaultPlotGroupColorUI(
+  numGroups: number | typeof PLOT_NUM_GROUPS_ALL,
+  colorRange: ColorRange
+): ColorUI {
+  return {
+    ...DEFAULT_COLOR_UI,
+    colorRangeConfig: {
+      ...DEFAULT_COLOR_UI.colorRangeConfig,
+      type: 'qualitative',
+      steps: plotGroupColorSteps(numGroups)
+    },
+    customPalette: {
+      ...DEFAULT_CUSTOM_PALETTE,
+      colors: colorRange.colors || []
+    }
+  };
+}
+
+function mergeGroupColorUI(
+  prev: ColorUI | undefined,
+  next: Partial<ColorUI> | null | undefined,
+  numGroups: number | typeof PLOT_NUM_GROUPS_ALL,
+  colorRange: ColorRange
+): ColorUI {
+  const base = prev ?? defaultPlotGroupColorUI(numGroups, colorRange);
+  if (!next) {
+    return base;
+  }
+  return {
+    ...base,
+    ...next,
+    colorRangeConfig: {
+      ...base.colorRangeConfig,
+      ...(next.colorRangeConfig || {})
+    },
+    customPalette: next.customPalette
+      ? {...base.customPalette, ...next.customPalette}
+      : base.customPalette
+  };
+}
+
+/**
+ * Merge a partial timeline group-by onto the previous one.
+ * `null` clears grouping. Missing fields keep the previous value, then defaults.
+ */
+export function mergePlotGroupBy(
+  prev: PlotGroupBy | null | undefined,
+  next: Partial<PlotGroupBy> | null | undefined
+): PlotGroupBy | null {
+  if (next === null) {
+    return null;
+  }
+  if (!next && !prev) {
+    return null;
+  }
+  const source = next || {};
+  const numGroups = source.numGroups ?? prev?.numGroups ?? DEFAULT_PLOT_NUM_GROUPS;
+  const colorRange = source.colorRange ?? prev?.colorRange ?? defaultPlotGroupColorRange(numGroups);
+  return {
+    fieldName: source.fieldName !== undefined ? source.fieldName : prev?.fieldName,
+    numGroups,
+    groupOthers: Boolean(source.groupOthers !== undefined ? source.groupOthers : prev?.groupOthers),
+    colorRange,
+    colorUI: mergeGroupColorUI(prev?.colorUI, source.colorUI, numGroups, colorRange)
+  };
+}
+
+function groupByCacheValue(plotType: Filter['plotType']): LineChartGroupBy | null {
+  const groupBy = plotType?.groupBy as PlotGroupBy | null | undefined;
+  if (!groupBy?.fieldName) {
+    return null;
+  }
+  return {
+    fieldName: groupBy.fieldName,
+    numGroups: groupBy.numGroups ?? DEFAULT_PLOT_NUM_GROUPS,
+    groupOthers: Boolean(groupBy.groupOthers),
+    colors: groupBy.colorRange?.colors ?? null,
+    colorMap: groupBy.colorRange?.colorMap ?? null
+  };
+}
+
+function toGroupKey(value: unknown): string | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+  return String(value);
+}
+
+function mappedSeriesColor(colorRange: ColorRange | undefined, key: string): string | null {
+  const colorMap = colorRange?.colorMap;
+  if (!Array.isArray(colorMap)) {
+    return null;
+  }
+  for (const entry of colorMap) {
+    const domain = entry?.[0];
+    const color = entry?.[1];
+    if (!color) {
+      continue;
+    }
+    if (Array.isArray(domain)) {
+      if (domain.map(item => String(item)).includes(key)) {
+        return color;
+      }
+    } else if (domain !== null && domain !== undefined && String(domain) === key) {
+      return color;
+    }
+  }
+  return null;
+}
+
+function seriesColor(colorRange: ColorRange | undefined, key: string, index: number): string {
+  const mapped = mappedSeriesColor(colorRange, key);
+  if (mapped) {
+    return mapped;
+  }
+  const colors = colorRange?.colors;
+  if (colors?.length) {
+    return colors[index % colors.length];
+  }
+  return FALLBACK_SERIES_COLORS[index % FALLBACK_SERIES_COLORS.length];
+}
+
+const OTHERS_SERIES_COLOR = '#A0A7B4';
+
+function defaultQualitativeColors(): string[] {
+  const palette = KEPLER_COLOR_PALETTES.find(item => item.name === DEFAULT_PLOT_GROUP_PALETTE);
+  if (palette?.type === 'qualitative') {
+    return palette.colors(palette.maxStep);
+  }
+  return FALLBACK_SERIES_COLORS;
+}
+
+/** Others must not wrap onto a color already used by a kept group. */
+function othersSeriesColor(colorRange: ColorRange | undefined, used: string[]): string {
+  const mapped = mappedSeriesColor(colorRange, PLOT_GROUP_OTHERS_NAME);
+  if (mapped) {
+    return mapped;
+  }
+  const usedSet = new Set(used.map(color => color.toLowerCase()));
+  const candidates = [
+    ...(colorRange?.colors ?? []),
+    ...defaultQualitativeColors(),
+    ...FALLBACK_SERIES_COLORS,
+    OTHERS_SERIES_COLOR
+  ];
+  return candidates.find(color => !usedSet.has(color.toLowerCase())) ?? OTHERS_SERIES_COLOR;
+}
+
+function groupValueAccessor(dataset, fieldName: string): ((index: number) => unknown) | null {
+  const field = dataset?.fields?.find(item => item.name === fieldName);
+  if (!field?.valueAccessor) {
+    return null;
+  }
+  return index => field.valueAccessor({index});
+}
+
+function groupLimit(numGroups: number | typeof PLOT_NUM_GROUPS_ALL): number {
+  if (numGroups === PLOT_NUM_GROUPS_ALL) {
+    return MAX_PLOT_NUM_GROUPS;
+  }
+  if (typeof numGroups !== 'number' || !(numGroups > 0)) {
+    return DEFAULT_PLOT_NUM_GROUPS;
+  }
+  return Math.min(numGroups, MAX_PLOT_NUM_GROUPS);
+}
+
+/**
+ * Split time bins into one line per group-by value.
+ * Groups keep first-seen order, then the list is capped at numGroups.
+ * Remaining values fold into an Others series when groupOthers is set.
+ */
+function buildGroupedLineSeries({
+  bins,
+  dataset,
+  plotType,
+  getYValue,
+  interval
+}: {
+  bins: Bin[];
+  dataset: Datasets[string];
+  plotType: Filter['plotType'];
+  getYValue: (bin: Bin) => number;
+  interval: PlotType['interval'] | number | null;
+}): {series: LineChartSeries; points: LineDatum[]} | null {
+  const cache = groupByCacheValue(plotType);
+  if (!cache) {
+    return null;
+  }
+  const getGroup = groupValueAccessor(dataset, cache.fieldName);
+  if (!getGroup) {
+    return null;
+  }
+
+  const order: string[] = [];
+  const seen = new Set<string>();
+  for (const bin of bins) {
+    for (const idx of bin.indexes || []) {
+      const key = toGroupKey(getGroup(idx));
+      if (key === null || seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      order.push(key);
+    }
+  }
+  if (!order.length) {
+    return null;
+  }
+
+  const limit = groupLimit(cache.numGroups);
+  const keep = order.slice(0, limit);
+  const rest = order.slice(keep.length);
+  const includeOthers = Boolean(cache.groupOthers) && rest.length > 0;
+  const colorRange = (plotType?.groupBy as PlotGroupBy | undefined)?.colorRange;
+  const groups = keep.map((key, index) => ({
+    name: key,
+    keys: new Set([key]),
+    color: seriesColor(colorRange, key, index)
+  }));
+  if (includeOthers) {
+    groups.push({
+      name: PLOT_GROUP_OTHERS_NAME,
+      keys: new Set(rest),
+      color: othersSeriesColor(
+        colorRange,
+        groups.map(group => group.color)
+      )
+    });
+  }
+
+  const keyToGroup = new Map<string, number>();
+  groups.forEach((group, index) => {
+    group.keys.forEach(key => keyToGroup.set(key, index));
+  });
+
+  const lines: LineDatum[][] = [];
+  const colors: string[] = [];
+  const names: string[] = [];
+  const points: LineDatum[] = [];
+
+  groups.forEach((group, groupIndex) => {
+    const seriesPoints: LineDatum[] = [];
+    bins.forEach(bin => {
+      const indexes: number[] = [];
+      for (const idx of bin.indexes || []) {
+        const key = toGroupKey(getGroup(idx));
+        if (key !== null && keyToGroup.get(key) === groupIndex) {
+          indexes.push(idx);
+        }
+      }
+      const y = indexes.length ? getYValue({...bin, indexes, count: indexes.length}) : undefined;
+      const delta = getDelta(seriesPoints, y, interval);
+      const point = {
+        x: bin.x0,
+        y,
+        ...delta
+      } as LineDatum;
+      seriesPoints.push(point);
+      points.push(point);
+    });
+
+    const split = splitSeries(seriesPoints);
+    split.lines.forEach(line => {
+      lines.push(line);
+      colors.push(group.color);
+      names.push(group.name);
+    });
+  });
+
+  return {
+    series: {lines, markers: [], colors, names},
+    points
+  };
+}
+
+export function lineChartSeriesLegend(
+  lineChart?: LineChart | null
+): {name: string; color: string}[] {
+  const series = lineChart?.series;
+  if (!series || Array.isArray(series) || !series.names || !series.colors) {
+    return [];
+  }
+  const seen = new Map<string, string>();
+  series.names.forEach((name, index) => {
+    if (name && !seen.has(name)) {
+      seen.set(name, series.colors?.[index] || FALLBACK_SERIES_COLORS[0]);
+    }
+  });
+  return Array.from(seen, ([name, color]) => ({name, color}));
+}
+
 /**
  *
  * @param datasets
@@ -449,15 +1105,22 @@ export function getPctChange(y: unknown, y0: unknown): number | null {
  */
 export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
   const {dataId, yAxis, plotType, lineChart} = filter;
-  const {aggregation, interval} = plotType;
+  const {interval} = plotType;
+  const aggregation = plotType.aggregation || AGGREGATION_TYPES.average;
   const seriesDataId = dataId[0];
-  const bins = (filter as TimeRangeFilter).timeBins?.[seriesDataId]?.[interval];
+  const isNumericFilter = filter.type === FILTER_TYPES.range;
+  const binning = isNumericFilter ? plotType.numericInterval ?? null : interval;
+  const bins = isNumericFilter
+    ? (filter as RangeFilter).bins?.[seriesDataId]
+    : (filter as TimeRangeFilter).timeBins?.[seriesDataId]?.[interval];
+  const groupBy = groupByCacheValue(plotType);
 
   if (
     lineChart &&
     lineChart.aggregation === aggregation &&
-    lineChart.interval === interval &&
+    lineChart.interval === binning &&
     lineChart.yAxis === yAxis?.name &&
+    isEqual(lineChart.groupBy ?? null, groupBy) &&
     // we need to make sure we validate bins because of cross filter data changes
     isEqual(bins, lineChart?.bins)
   ) {
@@ -467,24 +1130,30 @@ export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
 
   const dataset = datasets[seriesDataId];
   const getYValue = getValueAggrFunc(yAxis, aggregation, dataset);
+  const grouped =
+    groupBy && bins?.length
+      ? buildGroupedLineSeries({bins, dataset, plotType, getYValue, interval: binning})
+      : null;
 
   const init: LineDatum[] = [];
-  const series = (bins || []).reduce((accu, bin) => {
-    const y = getYValue(bin);
-    const delta = getDelta(accu, y, interval);
-    accu.push({
-      x: bin.x0,
-      y,
-      ...delta
-    });
-    return accu;
-  }, init);
+  const series = grouped
+    ? grouped.points
+    : (bins || []).reduce((accu, bin) => {
+        const y = getYValue(bin);
+        const delta = getDelta(accu, y, binning);
+        accu.push({
+          x: bin.x0,
+          y,
+          ...delta
+        });
+        return accu;
+      }, init);
 
   const yDomain = extent<{y: any}>(series, d => d.y);
-  const xDomain = bins ? [bins[0].x0, bins[bins.length - 1].x1] : [];
+  const xDomain = bins?.length ? [bins[0].x0, bins[bins.length - 1].x1] : [];
 
   // treat missing data as another series
-  const split = splitSeries(series);
+  const split = grouped ? grouped.series : splitSeries(series);
   const aggrName = AGGREGATION_NAME[aggregation];
 
   return {
@@ -492,7 +1161,7 @@ export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
     yDomain,
     // @ts-ignore
     xDomain,
-    interval,
+    interval: binning,
     aggregation,
     // @ts-ignore
     series: split,
@@ -500,11 +1169,11 @@ export function getLineChart(datasets: Datasets, filter: Filter): LineChart {
     fieldType: yAxis ? yAxis.type : 'integer',
     yAxis: yAxis ? yAxis.name : null,
     allTime: {
-      title: `All Time Average`,
+      title: isNumericFilter ? `All Range Average` : `All Time Average`,
       value: aggregate(series, AGGREGATION_TYPES.average, d => d.y)
     },
-    // @ts-expect-error bins is Bins[], not a Bins map. Refactor to use correct types.
-    bins
+    bins,
+    ...(groupBy ? {groupBy} : {})
   };
 }
 
@@ -538,7 +1207,8 @@ type MinVisStateForAnimationWindow = {
 
 export function adjustValueToAnimationWindow<S extends MinVisStateForAnimationWindow>(
   state: S,
-  filter: TimeRangeFilter
+  filter: TimeRangeFilter | RangeFilter,
+  plotBaseIndexByDataId?: Record<string, number[]>
 ) {
   const {
     plotType,
@@ -546,10 +1216,19 @@ export function adjustValueToAnimationWindow<S extends MinVisStateForAnimationWi
     animationWindow
   } = filter;
 
-  const interval = plotType.interval || getInitialInterval(filter, state.datasets);
-  const bins = getTimeBins(filter, state.datasets, interval);
-  const datasetBins = bins && Object.keys(bins).length && Object.values(bins)[0][interval];
+  const isTimeFilter = filter.type === FILTER_TYPES.timeRange;
+  const interval = isTimeFilter
+    ? plotType.interval || getInitialInterval(filter, state.datasets)
+    : undefined;
+  const bins = isTimeFilter
+    ? getTimeBins(filter, state.datasets, interval, plotBaseIndexByDataId)
+    : getRangeFilterBins(filter, state.datasets, BINS, plotBaseIndexByDataId);
+  const firstBins = bins && Object.keys(bins).length ? Object.values(bins)[0] : null;
+  const datasetBins = isTimeFilter ? firstBins?.[interval] : firstBins;
   const thresholds = (datasetBins || []).map(b => b.x0);
+  const numericIntervalMarks = datasetBins?.length
+    ? [...thresholds, datasetBins[datasetBins.length - 1].x1]
+    : thresholds;
 
   let val0 = value0;
   let val1 = value1;
@@ -557,7 +1236,18 @@ export function adjustValueToAnimationWindow<S extends MinVisStateForAnimationWi
   if (animationWindow === ANIMATION_WINDOW.interval) {
     val0 = snapToMarks(value1, thresholds);
     idx = thresholds.indexOf(val0);
-    val1 = idx > -1 ? datasetBins[idx].x1 : NaN;
+    if (isTimeFilter) {
+      // Time histograms discard empty bins. Use the selected cached bin's
+      // actual end instead of the next non-empty bin's start so sparse
+      // calendar intervals do not absorb the empty gap between them.
+      const binEnd = idx > -1 ? datasetBins?.[idx]?.x1 : NaN;
+      val1 =
+        Number.isFinite(binEnd) && binEnd > val0
+          ? Math.max(val0, binEnd - Math.min(1, binEnd - val0))
+          : binEnd;
+    } else {
+      [, val1] = intervalBinFromMarks(numericIntervalMarks, val0, 0);
+    }
   } else {
     // fit current value to window
     val0 = snapToMarks(value0, thresholds);
@@ -573,17 +1263,16 @@ export function adjustValueToAnimationWindow<S extends MinVisStateForAnimationWi
     }
   }
 
-  const updatedFilter = {
+  return {
     ...filter,
-    plotType: {
-      ...filter.plotType,
-      interval
-    },
-    timeBins: bins,
+    ...(isTimeFilter
+      ? {
+          plotType: {...filter.plotType, interval},
+          timeBins: bins
+        }
+      : {bins}),
     value: [val0, val1]
   };
-
-  return updatedFilter;
 }
 
 /**
@@ -616,7 +1305,8 @@ export function updateTimeFilterPlotType(
   filter: TimeRangeFilter,
   plotType: TimeRangeFilter['plotType'],
   datasets: Datasets,
-  _dataId?: string
+  _dataId?: string,
+  plotBaseIndexByDataId?: Record<string, number[]>
 ): TimeRangeFilter {
   let nextFilter = filter;
   let nextPlotType = plotType;
@@ -635,7 +1325,7 @@ export function updateTimeFilterPlotType(
     plotType: nextPlotType
   };
 
-  const bins = getTimeBins(nextFilter, datasets, nextPlotType.interval);
+  const bins = getTimeBins(nextFilter, datasets, nextPlotType.interval, plotBaseIndexByDataId);
 
   nextFilter = {
     ...nextFilter,
@@ -655,7 +1345,12 @@ export function updateTimeFilterPlotType(
   return nextFilter;
 }
 
-export function getRangeFilterBins(filter, datasets, numBins) {
+export function getRangeFilterBins(
+  filter,
+  datasets,
+  numBins,
+  plotBaseIndexByDataId?: Record<string, number[]>
+) {
   const {domain} = filter;
   if (!filter.dataId) return null;
 
@@ -670,9 +1365,23 @@ export function getRangeFilterBins(filter, datasets, numBins) {
       const dataset = datasets[dataId];
       const field = dataset?.getColumnField(fieldName);
       if (dataset && field) {
-        const indexes = runGpuFilterForPlot(dataset, filter);
+        const indexes = runGpuFilterForPlot(
+          dataset,
+          filter,
+          undefined,
+          plotBaseIndexByDataId?.[dataId]
+        );
         const valueAccessor = index => field.valueAccessor({index});
-        acc[dataId] = histogramFromDomain(domain, indexes, numBins, valueAccessor);
+        const numericInterval = filter.plotType?.numericInterval;
+        acc[dataId] =
+          Number.isFinite(numericInterval) && numericInterval > 0
+            ? histogramFromThreshold(
+                getNumericBinThresholds(domain, numericInterval, numBins),
+                indexes,
+                valueAccessor,
+                false
+              )
+            : histogramFromDomain(domain, indexes, numBins, valueAccessor);
       }
     }
     return acc;
@@ -683,13 +1392,9 @@ export function updateRangeFilterPlotType(
   filter: RangeFilter,
   plotType: RangeFilter['plotType'],
   datasets: Datasets,
-  _dataId?: string
+  _dataId?: string,
+  plotBaseIndexByDataId?: Record<string, number[]>
 ): RangeFilter {
-  const nextFilter = {
-    ...filter,
-    plotType
-  };
-
   // if (dataId) {
   //   // clear bins
   //   nextFilter = {
@@ -701,11 +1406,36 @@ export function updateRangeFilterPlotType(
   //   };
   // }
 
-  return {
+  const configuredNumericInterval = plotType?.numericInterval;
+  const numericInterval = normalizeNumericInterval(filter.domain, configuredNumericInterval);
+  const shouldUseAutomaticBins =
+    configuredNumericInterval !== undefined && numericInterval === undefined;
+  let nextPlotType = plotType;
+  if (shouldUseAutomaticBins) {
+    const {numericInterval: _numericInterval, ...automaticPlotType} = nextPlotType || {};
+    nextPlotType = automaticPlotType;
+  }
+  if (filter.dataId.length > 1) {
+    nextPlotType = {
+      ...nextPlotType,
+      colorsByDataId: getFilterPlotColorsByDataId(filter, datasets, nextPlotType.colorsByDataId)
+    };
+  }
+
+  const nextFilter = {
     ...filter,
-    plotType,
-    bins: getRangeFilterBins(nextFilter, datasets, BINS)
+    ...(shouldUseAutomaticBins ? {bins: undefined, lineChart: undefined} : {}),
+    plotType: nextPlotType
   };
+
+  let updatedFilter = {
+    ...nextFilter,
+    bins: getRangeFilterBins(nextFilter, datasets, BINS, plotBaseIndexByDataId)
+  };
+  if (nextPlotType.type === PLOT_TYPES.lineChart) {
+    updatedFilter = {...updatedFilter, lineChart: getLineChart(datasets, updatedFilter)};
+  }
+  return updatedFilter;
 }
 
 export function getChartTitle(yAxis: Field, plotType: PlotType): string {

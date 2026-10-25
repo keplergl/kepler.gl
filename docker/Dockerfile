@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM node:20-alpine AS builder
+FROM node:24.21.0-alpine AS builder
 
 WORKDIR /app
 
@@ -31,16 +31,21 @@ WORKDIR /app/examples/demo-app
 
 RUN --mount=type=cache,id=kepler-yarn,target=/yarn-cache \
     YARN_CACHE_FOLDER=/yarn-cache yarn install
+# Build without secrets — tokens are injected at runtime via /config.json or KEPLER_* env
 RUN yarn build
 
-FROM node:20-alpine AS runtime
+FROM node:24.21.0-alpine AS runtime
 
 WORKDIR /app
 
 RUN npm install -g serve@14
 
 COPY --from=builder /app/examples/demo-app/dist ./dist
+COPY docker/entrypoint.sh docker/merge-runtime-config.js ./
+COPY docker/config.example.json docker/config.full-example.json ./
+
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8080
 
-CMD ["serve", "-s", "dist", "-l", "8080"]
+ENTRYPOINT ["/app/entrypoint.sh"]

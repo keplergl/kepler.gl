@@ -2,14 +2,19 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useMemo} from 'react';
-import {getBinThresholds, getTimelineFromFilter} from '@kepler.gl/utils';
-import {TimeRangeFilter} from '@kepler.gl/types';
-import {ANIMATION_WINDOW} from '@kepler.gl/constants';
+import {
+  getFilterBinThresholds,
+  getNumericRangeMinimum,
+  getTimelineFromFilter,
+  intervalBinFromMarks
+} from '@kepler.gl/utils';
+import {RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
+import {ANIMATION_WINDOW, FILTER_TYPES} from '@kepler.gl/constants';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
 import {Timeline} from '@kepler.gl/types';
 
 interface FilterAnimationControllerProps {
-  filter: TimeRangeFilter & {animationWindow?: string};
+  filter: TimeRangeFilter | RangeFilter;
   filterIdx: number;
   setFilterAnimationTime: (idx: number, value: string, a: any[]) => void;
   children?: (
@@ -33,8 +38,16 @@ function FilterAnimationControllerFactory(
     children
   }) => {
     const binThresholds = useMemo(() => {
-      return getBinThresholds(filter.plotType?.interval, filter.domain);
-    }, [filter.plotType?.interval, filter.domain]);
+      return getFilterBinThresholds(filter);
+    }, [filter]);
+    const isTimeFilter = filter.type === FILTER_TYPES.timeRange;
+    const intervalEndOffset = isTimeFilter ? 1 : 0;
+    const numericAnimationIncrement = useMemo(() => {
+      if (isTimeFilter) {
+        return undefined;
+      }
+      return getNumericRangeMinimum(filter.domain);
+    }, [filter.domain, isTimeFilter]);
 
     const steps = useMemo(() => {
       if (binThresholds) {
@@ -53,10 +66,11 @@ function FilterAnimationControllerFactory(
           case ANIMATION_WINDOW.interval: {
             const idx = value[1];
             if (idx < binThresholds.length - 1) {
-              setFilterAnimationTime(filterIdx, 'value', [
-                binThresholds[idx],
-                binThresholds[idx + 1] - 1
-              ]);
+              setFilterAnimationTime(
+                filterIdx,
+                'value',
+                intervalBinFromMarks(binThresholds, binThresholds[idx], intervalEndOffset)
+              );
             }
             break;
           }
@@ -65,7 +79,7 @@ function FilterAnimationControllerFactory(
             break;
         }
       },
-      [filterIdx, binThresholds, filter.animationWindow, setFilterAnimationTime]
+      [filterIdx, binThresholds, filter.animationWindow, intervalEndOffset, setFilterAnimationTime]
     );
 
     // if filter is synced merge the filter and animation config
@@ -80,6 +94,7 @@ function FilterAnimationControllerFactory(
         isAnimating={filter.isAnimating}
         animationWindow={filter.animationWindow}
         steps={steps}
+        minimumIncrement={numericAnimationIncrement}
         updateAnimation={updateAnimation}
         // @ts-expect-error different function type, goes to TimeWidget setFilterAnimationTime()
         setTimelineValue={setFilterAnimationTime}

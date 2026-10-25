@@ -2,6 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 // UTILS
+export {getCameraSnapshot, normalizeCameraBookmarks} from './camera-utils';
+export {normalizeCameraTour, getCameraTourDuration, evaluateCameraTour} from './camera-tour';
 
 export {
   colorMaybeToRGB,
@@ -50,13 +52,30 @@ export type {
 export {
   adjustValueToAnimationWindow,
   getBinThresholds,
+  getNumericBinThresholds,
+  getNumericPlotInterval,
+  getNumericRangeMinimum,
+  nextDown,
+  nextUp,
+  getFilterBinThresholds,
+  intervalBinFromMarks,
   histogramFromThreshold,
   histogramFromValues,
   histogramFromDomain,
   histogramFromOrdinal,
+  histogramFromTimeIntervals,
   mergePolygonLayerIndexes,
   runGpuFilterForPlot,
-  updateTimeFilterPlotType
+  updateTimeFilterPlotType,
+  getLineChart,
+  mergePlotGroupBy,
+  lineChartSeriesLegend,
+  defaultPlotGroupColorRange,
+  PLOT_GROUP_OTHERS_NAME,
+  PLOT_NUM_GROUPS_ALL,
+  PLOT_NUM_GROUPS_OPTIONS,
+  DEFAULT_PLOT_NUM_GROUPS,
+  MAX_PLOT_NUM_GROUPS
 } from './plot';
 // eslint-disable-next-line prettier/prettier
 export * from './data-utils';
@@ -67,7 +86,7 @@ export {
   TIMELINE_MODES,
   TIME_INTERVALS_ORDERED,
   LayerToFilterTimeInterval,
-  TileTimeInterval,
+  LayerTimeInterval,
   getTimelineFromAnimationConfig,
   getTimelineFromFilter,
   filterIntervalOptions
@@ -93,14 +112,17 @@ export {
   exportMap,
   exportToJsonString,
   default as exporters,
+  getExportFileName,
+  getExportFileNameBase,
   getMapJSON,
   getScaleFromImageSize,
-  isMSEdge
+  isMSEdge,
+  omitLayerApiKeys
 } from './export-utils';
 export {getFormatValue, getDefaultTimeFormat} from './format';
 export {getLayerBlendingParameters, patchDeckRendererForPostProcessing} from './gl-utils';
 export {flattenMessages, mergeMessages} from './locale-utils';
-export {isValidMapInfo} from './map-info-utils';
+export {isValidMapInfo, optionalMapInfo, optionalMapText} from './map-info-utils';
 export {
   editBottomMapStyle,
   editTopMapStyle,
@@ -144,6 +166,7 @@ export * from './map-utils';
 
 export {
   ArrowDataContainer,
+  createArrowVector,
   compactArrowTable,
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,
@@ -163,12 +186,29 @@ export * from './filter-utils';
 export type {FilterChanged, FilterResult, dataValueAccessor} from './filter-utils';
 export * from './editor-feature-utils';
 export type {EditorFeatureCollection} from './editor-feature-utils';
+export {
+  extractRowsInsideFeature,
+  extractVectorTileFeaturesInsideFeature,
+  extractRasterInsideFeature,
+  isExtractableDataset,
+  isExtractableLayer,
+  isRasterTileExtractLayer,
+  isVectorTileExtractLayer
+} from './extract-dataset-utils';
+export type {
+  ExtractableDataset,
+  ExtractableLayer,
+  ExtractedGeojson,
+  ExtractedTable,
+  ExtractResult
+} from './extract-dataset-utils';
 
 export {
   colorMapToColorBreaks,
   colorBreaksToColorMap,
   getLayerColorScale,
   getLegendOfScale,
+  getJenksDomain,
   getLinearDomain,
   getLogDomain,
   getOrdinalDomain,
@@ -199,8 +239,15 @@ export {DataRow} from './data-row';
 
 // Application config
 export {getApplicationConfig, initApplicationConfig} from './application-config';
+export {
+  getConfiguredThemes,
+  shouldShowThemeSwitcher,
+  getDefaultUiTheme,
+  getNextUiTheme
+} from './theme-utils';
 export type {
   KeplerApplicationConfig,
+  KeplerAcceptedFileFormat,
   BaseMapLibraryConfig,
   MapLibInstance,
   GetMapRef,
@@ -213,6 +260,7 @@ export type {DatabaseAdapter, DatabaseConnection} from './application-config-typ
 export {isAppleDevice} from './browser-utils';
 
 export {default as quickInsertionSort} from './quick-insertion-sort';
+export {default as naturalBreaks} from './jenks';
 
 export type {KeplerTableModel} from './types';
 

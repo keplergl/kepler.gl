@@ -3,17 +3,12 @@
 
 /* eslint-disable complexity */
 import {FormattedMessage} from '@kepler.gl/localization';
-import React, {Component, Fragment, useCallback, useRef, useState} from 'react';
+import React, {Component, useCallback, useRef, useState} from 'react';
+import {useIntl} from 'react-intl';
 import styled from 'styled-components';
 
 import ItemSelector from '../../common/item-selector/item-selector';
-import {
-  Input,
-  InputLight,
-  PanelLabel,
-  PanelLabelWrapper,
-  SidePanelSection
-} from '../../common/styled-components';
+import {InputLight, PanelLabel, SidePanelSection} from '../../common/styled-components';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
 import AggrScaleSelectorFactory from './aggr-scale-selector';
@@ -32,28 +27,37 @@ import TextLabelPanelFactory from './text-label-panel';
 import VisConfigSliderFactory from './vis-config-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
 import ScenegraphModelSelectorFactory, {
-  ScenegraphCustomModelUrlInput
+  SCENEGRAPH_3D_MODEL_OPTIONS
 } from './scenegraph-model-selector';
 
 import RasterTileLayerConfiguratorFactory from './raster-tile-layer-configurator';
 import VectorTileLayerConfiguratorFactory from './vector-tile-layer-configurator';
+import LayerApiKeyInput from './layer-api-key-input';
+import ZarrAxisSelector from './zarr-axis-selector';
 
-import {ActionHandler, toggleModal} from '@kepler.gl/actions';
+import {ActionHandler, toggleModal, updateDatasetProps} from '@kepler.gl/actions';
 import {
   AGGREGATION_TYPE_OPTIONS,
   LAYER_TYPES,
-  CUSTOM_SCENEGRAPH_MODEL_ID,
-  BitmapDatasetMetadata
+  BitmapDatasetMetadata,
+  Tile3DDatasetMetadata
 } from '@kepler.gl/constants';
 import {
   AggregationLayer,
   Layer,
   LayerBaseConfig,
   VisualChannel,
-  COLUMN_MODE_GEOJSON
+  COLUMN_MODE_GEOJSON,
+  createPointCountLabelField
 } from '@kepler.gl/layers';
 
-import {matchDatasetType, Datasets} from '@kepler.gl/table';
+import {
+  matchDatasetType,
+  Datasets,
+  getZarrAxisDimensions,
+  isExplicitZarrAxis,
+  formatZarrCoordinate
+} from '@kepler.gl/table';
 import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
@@ -61,6 +65,12 @@ const FLOW_RENDERING_MODE_LABELS: Record<string, string> = {
   straight: 'Straight',
   curved: 'Curved',
   'animated-straight': 'Animated'
+};
+
+const TARGET_ARROW_SHAPE_LABELS: Record<string, string> = {
+  triangle: 'Triangle',
+  chevron: 'Chevron',
+  stealth: 'Stealth'
 };
 
 type LayerConfiguratorProps = {
@@ -83,6 +93,7 @@ type LayerConfiguratorProps = {
   ) => void;
   updateLayerColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
   updateLayerTextLabel: (idx: number | 'all', prop: string, value: any) => void;
+  updateDatasetProps?: ActionHandler<typeof updateDatasetProps>;
   disableTypeSelect?: boolean;
 };
 
@@ -440,6 +451,18 @@ export default function LayerConfiguratorFactory(
   RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>,
   ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
+  const AggregationTextLabelPanel: React.FC<
+    Omit<React.ComponentProps<typeof TextLabelPanel>, 'fields'>
+  > = props => {
+    const intl = useIntl();
+    return (
+      <TextLabelPanel
+        {...props}
+        fields={[createPointCountLabelField(intl.formatMessage({id: 'property.pointCount'}))]}
+      />
+    );
+  };
+
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
       return this._renderScatterplotLayerConfig(props, true);
@@ -602,8 +625,18 @@ export default function LayerConfiguratorFactory(
             <VisConfigSlider {...layer.visConfigSettings.clusterRadius} {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider {...layer.visConfigSettings.radiusRange} {...visConfiguratorProps} />
+              <VisConfigSlider
+                {...layer.visConfigSettings.minClusterSize}
+                {...visConfiguratorProps}
+              />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
+
+          <AggregationTextLabelPanel
+            id={layer.id}
+            updateLayerTextLabel={this.props.updateLayerTextLabel}
+            textLabel={layer.config.textLabel}
+          />
         </StyledLayerVisualConfigurator>
       );
     }
@@ -771,6 +804,12 @@ export default function LayerConfiguratorFactory(
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}
+
+          <AggregationTextLabelPanel
+            id={layer.id}
+            updateLayerTextLabel={this.props.updateLayerTextLabel}
+            textLabel={layer.config.textLabel}
+          />
         </StyledLayerVisualConfigurator>
       );
     }
@@ -885,6 +924,7 @@ export default function LayerConfiguratorFactory(
                 {...layer.visConfigSettings.sizeRange}
                 {...visConfiguratorProps}
                 label="layerVisConfigs.heightRange"
+                disabled={layer.config.visConfig.fixedHeight}
               />
               <VisConfigSwitch {...layer.visConfigSettings.fixedHeight} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
@@ -911,6 +951,19 @@ export default function LayerConfiguratorFactory(
       layerConfiguratorProps,
       layerChannelConfigProps
     }) {
+      const arrowShapeSetting = layer.visConfigSettings.targetArrowShape as
+        | {options?: string[]}
+        | undefined;
+      const arrowShapeOptions = (
+        arrowShapeSetting?.options || ['chevron', 'triangle', 'stealth']
+      ).map(id => ({
+        id,
+        label: TARGET_ARROW_SHAPE_LABELS[id] || id
+      }));
+      const selectedArrowShape =
+        arrowShapeOptions.find(({id}) => id === layer.config.visConfig.targetArrowShape) ||
+        arrowShapeOptions[0];
+
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
@@ -956,6 +1009,32 @@ export default function LayerConfiguratorFactory(
                 {...layerChannelConfigProps}
               />
             </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            label="layerVisConfigs.targetArrow"
+            description="layerVisConfigs.targetArrowDescription"
+            property="targetArrowEnabled"
+          >
+            <SidePanelSection>
+              <PanelLabel>
+                <FormattedMessage id="layerVisConfigs.targetArrowShape" />
+              </PanelLabel>
+              <ItemSelector
+                selectedItems={selectedArrowShape}
+                options={arrowShapeOptions}
+                displayOption="label"
+                getOptionValue="id"
+                multiSelect={false}
+                searchable={false}
+                onChange={value => visConfiguratorProps.onChange({targetArrowShape: value})}
+              />
+            </SidePanelSection>
+            <VisConfigSlider
+              {...layer.visConfigSettings.targetArrowSize}
+              {...visConfiguratorProps}
+            />
           </LayerConfigGroup>
 
           {/* elevation scale */}
@@ -1068,31 +1147,13 @@ export default function LayerConfiguratorFactory(
           >
             <ScenegraphModelSelector
               selected={layer.config.visConfig.scenegraph}
+              customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
               disabled={!layer.config.visConfig.scenegraphEnabled}
-              onSelect={(scenegraph: {id: string}) =>
-                visConfiguratorProps.onChange({scenegraph: scenegraph.id})
-              }
+              onChange={visConfiguratorProps.onChange}
             />
             {layer.config.visConfig.scenegraphEnabled ? (
               <>
                 <ConfigGroupCollapsibleContent>
-                  {layer.config.visConfig.scenegraph === CUSTOM_SCENEGRAPH_MODEL_ID ? (
-                    <SidePanelSection>
-                      <PanelLabelWrapper>
-                        <PanelLabel>
-                          <FormattedMessage id="layer.3DModelURL" />
-                        </PanelLabel>
-                      </PanelLabelWrapper>
-                      <ScenegraphCustomModelUrlInput
-                        customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
-                        onChange={url =>
-                          visConfiguratorProps.onChange({
-                            scenegraphCustomModelUrl: url
-                          })
-                        }
-                      />
-                    </SidePanelSection>
-                  ) : null}
                   <VisConfigSwitch
                     {...layer.visConfigSettings.scenegraphColorEnabled}
                     {...visConfiguratorProps}
@@ -1198,6 +1259,9 @@ export default function LayerConfiguratorFactory(
         meta: {featureTypes = {}},
         config: {visConfig}
       } = layer;
+      const elevationOffsetActive = Boolean(
+        layer.config.elevationOffsetField || visConfig.elevationOffset > 0
+      );
 
       return (
         <StyledLayerVisualConfigurator>
@@ -1230,6 +1294,7 @@ export default function LayerConfiguratorFactory(
             {...visConfiguratorProps}
             label="layer.strokeColor"
             collapsible
+            disabled={Boolean(featureTypes.polygon && elevationOffsetActive)}
           >
             <ChannelByValueSelector
               channel={layer.visualChannels.strokeColor}
@@ -1258,6 +1323,7 @@ export default function LayerConfiguratorFactory(
             {...(featureTypes.polygon ? layer.visConfigSettings.stroked : {})}
             label="layer.strokeWidth"
             collapsible
+            disabled={Boolean(featureTypes.polygon && elevationOffsetActive)}
           >
             {layer.config.sizeField ? (
               <VisConfigSlider
@@ -1302,7 +1368,35 @@ export default function LayerConfiguratorFactory(
                   {...layer.visConfigSettings.fixedHeight}
                   {...visConfiguratorProps}
                 />
+                <VisConfigSwitch
+                  {...layer.visConfigSettings.invertHeight}
+                  {...visConfiguratorProps}
+                />
                 <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.wireframe} />
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          ) : null}
+
+          {/* Elevation Offset */}
+          {featureTypes.polygon ? (
+            <LayerConfigGroup
+              label={'layerVisConfigs.elevationOffset'}
+              description={'layerVisConfigs.elevationOffsetDescription'}
+              collapsible
+              disabled={!visConfig.filled}
+            >
+              {!layer.config.elevationOffsetField ? (
+                <VisConfigSlider
+                  {...layer.visConfigSettings.elevationOffset}
+                  {...visConfiguratorProps}
+                  label={false}
+                />
+              ) : null}
+              <ConfigGroupCollapsibleContent>
+                <ChannelByValueSelector
+                  channel={layer.visualChannels.elevationOffset}
+                  {...layerChannelConfigProps}
+                />
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}
@@ -1354,20 +1448,25 @@ export default function LayerConfiguratorFactory(
 
     _render3DLayerConfig({layer, visConfiguratorProps}) {
       return (
-        <Fragment>
+        <StyledLayerVisualConfigurator>
           <LayerConfigGroup label={'layer.3DModel'} collapsible>
-            <Input
-              type="file"
-              accept=".glb,.gltf"
-              onChange={e => {
-                if (e.target.files && e.target.files[0]) {
-                  const url = URL.createObjectURL(e.target.files[0]);
-                  visConfiguratorProps.onChange({scenegraph: url});
-                }
-              }}
+            <ScenegraphModelSelector
+              options={SCENEGRAPH_3D_MODEL_OPTIONS}
+              selected={layer.config.visConfig.scenegraph}
+              customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
+              onChange={visConfiguratorProps.onChange}
             />
-          </LayerConfigGroup>
-          <LayerConfigGroup label={'layer.3DModelOptions'} collapsible>
+            <VisConfigSwitch
+              {...layer.visConfigSettings.scenegraphColorEnabled}
+              {...visConfiguratorProps}
+            />
+            {layer.config.visConfig.scenegraphColorEnabled ? (
+              <LayerColorSelector
+                {...visConfiguratorProps}
+                selectedColor={layer.config.visConfig.scenegraphColor}
+                property="scenegraphColor"
+              />
+            ) : null}
             <VisConfigSlider
               {...layer.visConfigSettings.sizeScale}
               {...visConfiguratorProps}
@@ -1389,7 +1488,7 @@ export default function LayerConfiguratorFactory(
               disabled={false}
             />
           </LayerConfigGroup>
-        </Fragment>
+        </StyledLayerVisualConfigurator>
       );
     }
 
@@ -1623,9 +1722,26 @@ export default function LayerConfiguratorFactory(
       );
     }
 
-    _renderTile3dLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
+    _renderTile3dLayerConfig({layer, dataset, visConfiguratorProps, layerConfiguratorProps}) {
+      const metadata = (dataset?.metadata || {}) as Tile3DDatasetMetadata;
+      const {updateDatasetProps: onUpdateDatasetProps} = this.props;
       return (
         <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label={'layer.apiKey'}>
+            <LayerApiKeyInput
+              accessToken={metadata.tile3dAccessToken}
+              loadError={
+                (layer as {tilesetLoadError?: 'token' | 'generic' | null}).tilesetLoadError
+              }
+              onCommit={token => {
+                const dataId = layer.config.dataId;
+                if (!dataId || !onUpdateDatasetProps) {
+                  return;
+                }
+                onUpdateDatasetProps(dataId, {metadata: {tile3dAccessToken: token}});
+              }}
+            />
+          </LayerConfigGroup>
           <LayerConfigGroup label={'layer.appearance'}>
             <LayerColorSelector {...layerConfiguratorProps} />
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
@@ -1711,6 +1827,163 @@ export default function LayerConfiguratorFactory(
               {...visConfiguratorProps}
               property="transparent"
             />
+          </LayerConfigGroup>
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            label={'layer.interaction'}
+            collapsible={false}
+          >
+            <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.allowHover} />
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
+    _renderZarrLayerConfig({layer, dataset, visConfiguratorProps}) {
+      const {visConfig} = layer.config;
+      const metadata = dataset?.metadata ?? {};
+      const variables = metadata.variables ?? [];
+      const selectedPath = visConfig.zarrVariable ?? metadata.variable;
+      const activeVariable = variables.find(v => v.path === selectedPath) ?? variables[0] ?? null;
+      const animatedDimensions = isExplicitZarrAxis(visConfig.zarrAxis)
+        ? getZarrAxisDimensions(visConfig.zarrAxis)
+        : [activeVariable?.timeDimension?.name];
+      const pinnableDims = (activeVariable?.nonSpatialDims ?? []).filter(
+        dim => !animatedDimensions.includes(dim.name)
+      );
+      const dimensionIndexes = visConfig.dimensionIndexes ?? {};
+
+      return (
+        <StyledLayerVisualConfigurator>
+          {variables.length > 1 ? (
+            <LayerConfigGroup label={'layer.variable'}>
+              <ItemSelector
+                className="zarr-variable-selector"
+                selectedItems={activeVariable}
+                options={variables}
+                displayOption="displayName"
+                getOptionValue="path"
+                multiSelect={false}
+                searchable={variables.length > 10}
+                onChange={value => {
+                  if (typeof value !== 'string') {
+                    return;
+                  }
+                  visConfiguratorProps.onChange({zarrVariable: value, zarrFrame: 0});
+                }}
+              />
+            </LayerConfigGroup>
+          ) : null}
+          <LayerConfigGroup label={'layer.color'} collapsible>
+            <LayerColorRangeSelector {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.rescale}
+                {...visConfiguratorProps}
+                layer={{
+                  ...layer,
+                  config: {
+                    ...layer.config,
+                    visConfig: {
+                      ...visConfig,
+                      rescale: visConfig.rescale ?? layer.visConfigSettings.rescale.range
+                    }
+                  }
+                }}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layer.appearance'}>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label={'layerVisConfigs.zarrAxis'}>
+            <ZarrAxisSelector
+              variable={activeVariable}
+              config={visConfig.zarrAxis}
+              pins={dimensionIndexes}
+              onChange={visConfiguratorProps.onChange}
+            />
+          </LayerConfigGroup>
+          {pinnableDims.length ? (
+            <LayerConfigGroup label={'layer.dimensions'} collapsible>
+              {pinnableDims.map(dim => {
+                const options = Array.from({length: dim.size}, (_, index) => ({
+                  index,
+                  label: formatZarrCoordinate(dim, index)
+                }));
+                const selectedIndex = Math.min(dimensionIndexes[dim.name] ?? 0, dim.size - 1);
+                return (
+                  <div key={dim.name}>
+                    <PanelLabel>{dim.name}</PanelLabel>
+                    <ItemSelector
+                      className="zarr-dimension-selector"
+                      selectedItems={options[selectedIndex] ?? null}
+                      options={options}
+                      displayOption="label"
+                      getOptionValue="index"
+                      multiSelect={false}
+                      searchable={dim.size > 10}
+                      onChange={index =>
+                        visConfiguratorProps.onChange({
+                          dimensionIndexes: {...dimensionIndexes, [dim.name]: index},
+                          zarrFrame: 0
+                        })
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </LayerConfigGroup>
+          ) : null}
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
+    _renderFlowFieldLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
+      const colorBySpeed = Boolean(layer.config.visConfig.colorBySpeed);
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label="layer.color">
+            <VisConfigSwitch {...layer.visConfigSettings.colorBySpeed} {...visConfiguratorProps} />
+            {colorBySpeed ? (
+              <LayerColorRangeSelector {...visConfiguratorProps} property="colorRange" />
+            ) : (
+              <LayerColorSelector {...layerConfiguratorProps} />
+            )}
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label="layerVisConfigs.flowField.streamlines" collapsible>
+            <VisConfigSlider
+              {...layer.visConfigSettings.linesPerScreen}
+              {...visConfiguratorProps}
+            />
+            <VisConfigSlider {...layer.visConfigSettings.strokeWidth} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.trailLength} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.zoomResponse}
+                {...visConfiguratorProps}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup label="layerVisConfigs.flowField.animation">
+            <VisConfigSlider {...layer.visConfigSettings.cycleSeconds} {...visConfiguratorProps} />
+            <VisConfigSlider {...layer.visConfigSettings.lineLifetime} {...visConfiguratorProps} />
+            <VisConfigSwitch {...layer.visConfigSettings.seamlessLoop} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label="layerVisConfigs.flowField.field" collapsible>
+            <VisConfigSlider {...layer.visConfigSettings.smoothing} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.gridResolution}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSlider
+                {...layer.visConfigSettings.elevationMultiplier}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSwitch {...layer.visConfigSettings.debugGrid} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );

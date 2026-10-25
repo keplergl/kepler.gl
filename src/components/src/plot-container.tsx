@@ -17,7 +17,7 @@ import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
 import {MapViewStateContextProvider} from './map-view-state-context';
 
-import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
+import {EMPTY_MAPBOX_STYLE, GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {Effect, SplitMap, ExportImage} from '@kepler.gl/types';
 import {
   ActionHandler,
@@ -92,8 +92,9 @@ const StyledPlotContainer = styled.div<StyledPlotContainerProps>`
   top: ${OUT_OF_SCREEN_POSITION}px;
   left: ${OUT_OF_SCREEN_POSITION}px;
 
-  /* Apply zoom to legend panel based on export height */
-  .map-control-panel {
+  /* Apply zoom to legend/chart panels based on export height */
+  .map-control-panel,
+  .chart-manager {
     zoom: ${props => props.$legendZoom || 1} !important;
   }
 `;
@@ -114,6 +115,8 @@ interface PlotContainerProps {
   ratio?: string;
   resolution?: string;
   legend?: boolean;
+  charts?: boolean;
+  transparentBackground?: boolean;
   center?: boolean;
   imageSize: ExportImage['imageSize'];
   escapeXhtmlForWebpack?: boolean;
@@ -144,6 +147,8 @@ export default function PlotContainerFactory(
     ratio,
     resolution,
     legend = false,
+    charts = false,
+    transparentBackground = false,
     center,
     imageSize,
     escapeXhtmlForWebpack,
@@ -172,6 +177,11 @@ export default function PlotContainerFactory(
     const deckLayersLoadingRef = useRef(true);
     const mapStyleLoadedRef = useRef(false);
     const screenshotTakenRef = useRef(false);
+    const captureGenerationRef = useRef(0);
+    const renderedMapStylesRef = useRef<{
+      bottomMapStyle: unknown;
+      topMapStyle: unknown;
+    } | null>(null);
 
     // Memoize the scale calculation
     const scale = useMemo(() => {
@@ -204,29 +214,73 @@ export default function PlotContainerFactory(
     // Memoize the map style
     const scaledMapStyle = useMemo(() => {
       const mapStyle = mapFields.mapStyle;
+
+      if (transparentBackground) {
+        return {
+          ...mapStyle,
+          bottomMapStyle: EMPTY_MAPBOX_STYLE,
+          topMapStyle: undefined
+        };
+      }
+
       return {
         ...mapStyle,
         bottomMapStyle: scaleMapStyleByResolution(mapStyle.bottomMapStyle, scale),
         topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, scale)
       };
-    }, [mapFields.mapStyle, scale]);
+    }, [mapFields.mapStyle, scale, transparentBackground]);
+
+    const isGlobeMode = Boolean(mapState.globe?.enabled);
+    const effectiveBottomMapStyle = isGlobeMode
+      ? EMPTY_MAPBOX_STYLE
+      : scaledMapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE;
+    const effectiveTopMapStyle = isGlobeMode ? undefined : scaledMapStyle.topMapStyle;
+
+    useEffect(() => {
+      const previousMapStyles = renderedMapStylesRef.current;
+      const mapStyleChanged =
+        !previousMapStyles ||
+        previousMapStyles.bottomMapStyle !== effectiveBottomMapStyle ||
+        previousMapStyles.topMapStyle !== effectiveTopMapStyle;
+
+      captureGenerationRef.current += 1;
+      screenshotTakenRef.current = false;
+      deckLayersLoadingRef.current = true;
+      if (mapStyleChanged) {
+        mapStyleLoadedRef.current = false;
+      }
+      renderedMapStylesRef.current = {
+        bottomMapStyle: effectiveBottomMapStyle,
+        topMapStyle: effectiveTopMapStyle
+      };
+    }, [effectiveBottomMapStyle, effectiveTopMapStyle, transparentBackground]);
 
     // Memoize the retrieveNewScreenshot callback
     const debouncedScreenshot = useMemo(
       () =>
-        debounce(() => {
+        debounce((captureGeneration: number) => {
+          if (captureGeneration !== captureGenerationRef.current) {
+            return;
+          }
           if (plottingAreaRef.current) {
             convertToPng(plottingAreaRef.current, {
               filter: DOM_FILTER_FUNC,
               width: imageSize.imageW,
               height: imageSize.imageH,
-              escapeXhtmlForWebpack
+              escapeXhtmlForWebpack,
+              ...(transparentBackground ? {style: {backgroundColor: 'transparent'}} : {})
             })
-              .then(setExportImageDataUri)
+              .then(dataUri => {
+                if (captureGeneration === captureGenerationRef.current) {
+                  setExportImageDataUri(dataUri);
+                }
+              })
               .catch(err => {
-                setExportImageError(err);
-                if (enableErrorNotification) {
-                  addNotification(exportImageError({err}));
+                if (captureGeneration === captureGenerationRef.current) {
+                  setExportImageError(err);
+                  if (enableErrorNotification) {
+                    addNotification(exportImageError({err}));
+                  }
                 }
               });
           }
@@ -235,6 +289,7 @@ export default function PlotContainerFactory(
         imageSize.imageW,
         imageSize.imageH,
         escapeXhtmlForWebpack,
+        transparentBackground,
         setExportImageDataUri,
         setExportImageError,
         enableErrorNotification,
@@ -242,7 +297,12 @@ export default function PlotContainerFactory(
       ]
     );
 
-    const retrieveNewScreenshot = useCallback(debouncedScreenshot, [debouncedScreenshot]);
+    useEffect(() => () => debouncedScreenshot.cancel(), [debouncedScreenshot]);
+
+    const retrieveNewScreenshot = useCallback(
+      () => debouncedScreenshot(captureGenerationRef.current),
+      [debouncedScreenshot]
+    );
 
     const tryScreenshot = useCallback(() => {
       if (mapStyleLoadedRef.current && !deckLayersLoadingRef.current) {
@@ -265,7 +325,10 @@ export default function PlotContainerFactory(
     // Memoize the onMapRender callback
     const debouncedMapRender = useMemo(
       () =>
-        debounce(map => {
+        debounce((map, captureGeneration: number) => {
+          if (captureGeneration !== captureGenerationRef.current) {
+            return;
+          }
           if (map.isStyleLoaded()) {
             mapStyleLoadedRef.current = true;
             tryScreenshot();
@@ -274,7 +337,12 @@ export default function PlotContainerFactory(
       [tryScreenshot]
     );
 
-    const onMapRender = useCallback(debouncedMapRender, [debouncedMapRender]);
+    useEffect(() => () => debouncedMapRender.cancel(), [debouncedMapRender]);
+
+    const onMapRender = useCallback(
+      map => debouncedMapRender(map, captureGenerationRef.current),
+      [debouncedMapRender]
+    );
 
     const deckRenderCallbacks = useMemo(
       () => ({
@@ -299,11 +367,25 @@ export default function PlotContainerFactory(
 
     // Screenshot update effect
     useEffect(() => {
-      if (ratio !== undefined || resolution !== undefined || legend !== undefined) {
+      if (
+        ratio !== undefined ||
+        resolution !== undefined ||
+        legend !== undefined ||
+        charts !== undefined ||
+        transparentBackground !== undefined
+      ) {
         setExportImageSetting({processing: true});
         tryScreenshot();
       }
-    }, [ratio, resolution, legend, setExportImageSetting, tryScreenshot]);
+    }, [
+      ratio,
+      resolution,
+      legend,
+      charts,
+      transparentBackground,
+      setExportImageSetting,
+      tryScreenshot
+    ]);
 
     // Memoize size calculations
     const {size, width, height} = useMemo(() => {
@@ -358,11 +440,16 @@ export default function PlotContainerFactory(
         ...mapFields,
         mapStyle: scaledMapStyle,
         mapState: newMapState,
+        transparentBackground,
         mapControls: {
           mapLegend: {
             show: Boolean(legend),
             active: true,
             settings: mapFields.mapControls?.mapLegend?.settings
+          },
+          chart: {
+            show: false,
+            active: Boolean(charts)
           }
         },
         onMapRender,
@@ -390,6 +477,8 @@ export default function PlotContainerFactory(
         scaledMapStyle,
         newMapState,
         legend,
+        charts,
+        transparentBackground,
         onMapRender,
         deckRenderCallbacks,
         plotEffects,

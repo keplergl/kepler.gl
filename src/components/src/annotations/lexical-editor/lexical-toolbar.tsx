@@ -6,7 +6,11 @@ import styled from 'styled-components';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 
 import {FONT_FAMILY_OPTIONS, FONT_SIZE_OPTIONS} from './lexical-constants';
-import {useLexicalTextStyle, useLexicalTextFormat, useInsertLexicalLink} from './use-lexical-toolbar';
+import {
+  useLexicalTextStyle,
+  useLexicalTextFormat,
+  useInsertLexicalLink
+} from './use-lexical-toolbar';
 import SingleColorPalette from '../../side-panel/layer-panel/single-color-palette';
 
 export type LexicalToolbarProps = {
@@ -155,7 +159,14 @@ const ColorPickerWrapper = styled.div`
   position: relative;
 `;
 
-const ColorPickerButton: FC<ColorPickerButtonProps> = ({color, presets, title, label, renderIcon, onSelectColor}) => {
+const ColorPickerButton: FC<ColorPickerButtonProps> = ({
+  color,
+  presets,
+  title,
+  label,
+  renderIcon,
+  onSelectColor
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -202,16 +213,30 @@ const ColorPickerButton: FC<ColorPickerButtonProps> = ({color, presets, title, l
     <ColorPickerWrapper ref={wrapperRef}>
       <ToolbarButton onClick={handleToggle} title={title}>
         {renderIcon ? renderIcon() : <span style={{fontSize: '10px'}}>{label}</span>}
-        <ColorSwatch $color={color === 'transparent' ? 'rgba(255,255,255,0.1)' : color} style={{marginLeft: 4}} />
+        <ColorSwatch
+          $color={color === 'transparent' ? 'rgba(255,255,255,0.1)' : color}
+          style={{marginLeft: 4}}
+        />
       </ToolbarButton>
       {isOpen && !showCustom && (
         <ColorPickerPopover onMouseDown={e => e.preventDefault()}>
           {presets.map(p => (
             <ColorPresetRow key={p.color} onClick={() => handlePresetSelect(p.color)}>
               <ColorPresetSwatch
-                $color={p.color === 'transparent' ? 'repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 8px 8px' : p.color}
+                $color={
+                  p.color === 'transparent'
+                    ? 'repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 8px 8px'
+                    : p.color
+                }
                 $isSelected={color === p.color}
-                style={p.color === 'transparent' ? {background: 'repeating-conic-gradient(#606060 0% 25%, #404040 0% 50%) 50% / 8px 8px'} : undefined}
+                style={
+                  p.color === 'transparent'
+                    ? {
+                        background:
+                          'repeating-conic-gradient(#606060 0% 25%, #404040 0% 50%) 50% / 8px 8px'
+                      }
+                    : undefined
+                }
               />
               {p.label}
             </ColorPresetRow>
@@ -256,11 +281,10 @@ export const LexicalToolbar: FC<LexicalToolbarProps> = ({
   onChangeTextVerticalAlign
 }) => {
   const [editor] = useLexicalComposerContext();
-  const {fontSize, fontFamily, fontColor, bgColor, handleChangeStyle} =
-    useLexicalTextStyle({
-      editor,
-      isEditingText: Boolean(isEditingText)
-    });
+  const {fontSize, fontFamily, fontColor, bgColor, handleChangeStyle} = useLexicalTextStyle({
+    editor,
+    isEditingText: Boolean(isEditingText)
+  });
   const {isBold, isItalic, isUnderline, handleToggleTextFormat} = useLexicalTextFormat({
     editor,
     isEditingText: Boolean(isEditingText)
@@ -271,10 +295,13 @@ export const LexicalToolbar: FC<LexicalToolbarProps> = ({
   });
 
   return (
-    <ToolbarContainer className="lexical-toolbar" onMouseDown={e => {
-      if (e.target instanceof HTMLSelectElement) return;
-      e.preventDefault();
-    }}>
+    <ToolbarContainer
+      className="lexical-toolbar"
+      onMouseDown={e => {
+        if (e.target instanceof HTMLSelectElement) return;
+        e.preventDefault();
+      }}
+    >
       <ToolbarRow>
         <ToolbarSelect
           value={fontFamily}
@@ -329,7 +356,12 @@ export const LexicalToolbar: FC<LexicalToolbarProps> = ({
           title="Background Color"
           label=""
           renderIcon={() => (
-            <svg viewBox="0 0 16 16" width="12" height="12" style={{fill: 'none', stroke: 'currentColor', strokeWidth: 1.5}}>
+            <svg
+              viewBox="0 0 16 16"
+              width="12"
+              height="12"
+              style={{fill: 'none', stroke: 'currentColor', strokeWidth: 1.5}}
+            >
               <rect x="2" y="2" width="12" height="12" rx="1" strokeDasharray="2 1.5" />
               <line x1="4" y1="14" x2="14" y2="4" />
               <line x1="4" y1="10" x2="10" y2="4" />

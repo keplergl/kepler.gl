@@ -3,3 +3,5 @@
 
 import './file-handler-test';
 import './remote-file-test';
+import './loader-registry-test';
+import './shapefile-files-test';

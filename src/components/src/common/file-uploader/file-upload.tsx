@@ -6,30 +6,33 @@ import styled from 'styled-components';
 import {injectIntl, WrappedComponentProps} from 'react-intl';
 import UploadButton from './upload-button';
 import {DragNDrop, FileType} from '../icons';
-import FileUploadProgress from './file-upload-progress';
 import FileDrop from './file-drop';
+import UploadFileList, {
+  countDatasetRows,
+  isLargeDatasetUpload,
+  UploadFileListItem
+} from './upload-file-list';
 import {FileLoading, FileLoadingProgress} from '@kepler.gl/types';
 
-import {GUIDES_FILE_FORMAT_DOC, REMOTE_FILE_FORMATS} from '@kepler.gl/constants';
+import {GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {
-  fetchRemoteFileAsKeplerFile,
-  getFileNameForRemoteUrl,
-  isRemoteDatasetUrl
-} from '@kepler.gl/processors';
+import {getAcceptedRemoteFileFormats, isRemoteDatasetUrl} from '@kepler.gl/processors';
 import {media} from '@kepler.gl/styles';
-import {isChrome, getApplicationConfig} from '@kepler.gl/utils';
+import {getApplicationConfig, getError} from '@kepler.gl/utils';
 import Markdown from 'markdown-to-jsx';
 
 import {Button, InputLight} from '../styled-components';
 import LinkRenderer from '../link-renderer';
-
 const fileIconColor = '#D3D8E0';
 
 const StyledUploadMessage = styled.div`
   color: ${props => props.theme.textColorLT};
   font-size: 14px;
   margin-bottom: 12px;
+
+  p {
+    margin: 0;
+  }
 
   ${media.portable`
     font-size: 12px;
@@ -54,7 +57,9 @@ const StyledFileDrop = styled.div<StyledFileDropProps>`
   border-color: ${props =>
     props.$dragOver ? props.theme.textColorLT : props.theme.subtextColorLT};
   text-align: center;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  width: auto;
   min-height: 360px;
   padding: 24px 12px 16px;
   display: flex;
@@ -103,12 +108,27 @@ const StyledDragNDropIcon = styled.div`
 
 const StyledFileTypeFow = styled.div`
   width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 12px;
 `;
 
 const StyledFileUpload = styled.div`
   .file-drop {
     position: relative;
   }
+`;
+
+const UploadColumns = styled.div`
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  width: 100%;
+
+  ${media.portable`
+    flex-direction: column;
+  `}
 `;
 
 const StyledMessage = styled.div`
@@ -179,42 +199,6 @@ const StyledRemoteFetchButton = styled(Button)`
   flex-shrink: 0;
 `;
 
-const REMOTE_DOWNLOAD_SHARE = 0.85;
-
-function scaleFileProgress(
-  progress: FileLoadingProgress,
-  start: number,
-  end: number
-): FileLoadingProgress {
-  return Object.keys(progress).reduce<FileLoadingProgress>((accu, key) => {
-    const item = progress[key];
-    accu[key] = {
-      ...item,
-      percent: start + (item.percent || 0) * (end - start)
-    };
-    return accu;
-  }, {});
-}
-
-function getCombinedLoadProgress({
-  fileLoading,
-  fileLoadingProgress,
-  remoteProgress
-}: {
-  fileLoading: FileLoading | false;
-  fileLoadingProgress: FileLoadingProgress;
-  remoteProgress: FileLoadingProgress;
-}): FileLoadingProgress {
-  const isRemoteFetch = Object.keys(remoteProgress).length > 0;
-  if (!isRemoteFetch) {
-    return fileLoadingProgress;
-  }
-  if (fileLoading) {
-    return scaleFileProgress(fileLoadingProgress, REMOTE_DOWNLOAD_SHARE, 1);
-  }
-  return scaleFileProgress(remoteProgress, 0, REMOTE_DOWNLOAD_SHARE);
-}
-
 type FileUploadProps = {
   onFileUpload: (files: File[]) => void;
   fileLoading: FileLoading | false;
@@ -224,8 +208,23 @@ type FileUploadProps = {
   fileFormatNames?: string[];
   /** A list of typically 3 letter extensions (without '.') for file matching */
   fileExtensions?: string[];
+  /** Extensions shown as icons. Defaults to `fileExtensions`. */
+  displayedFileExtensions?: string[];
   /** Set to true if app wants to do its own file filtering */
   disableExtensionFilter?: boolean;
+  /** Parsed files held until Add Data, used if this uploader remounts. */
+  stagedToAdd?: Array<{
+    info?: {label?: string; format?: string};
+    metadata?: {source?: string; size?: number};
+    data?: unknown;
+  }> | null;
+  /** Stage a remote URL without downloading it. Add Data runs the remote load. */
+  onAddRemoteDataset?: (remote: {url: string; format?: string}) => void;
+  /** Keys of datasets the user unchecked. Omitted keys stay selected. */
+  deselectedDatasets?: Record<string, boolean>;
+  onToggleDataset?: (key: string) => void;
+  /** Dataset replace does not accept a saved map. */
+  replaceDataset?: boolean;
 } & WrappedComponentProps;
 
 type FileUploadState = {
@@ -236,9 +235,108 @@ type FileUploadState = {
   remoteUrl: string;
   remoteFormat: string;
   remoteError: {message: string} | null;
-  remoteLoading: boolean;
-  remoteProgress: FileLoadingProgress;
+  deselectedDatasets: Record<string, boolean>;
 };
+
+function formatFileSize(size?: number): string {
+  if (!Number.isFinite(size)) {
+    return '';
+  }
+  const bytes = size as number;
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function stagedByteSize(metadata?: {size?: number}): number | null {
+  return typeof metadata?.size === 'number' ? metadata.size : null;
+}
+
+function rowsForLocalFile(staged: FileUploadProps['stagedToAdd'], fileName: string): number | null {
+  const match = (staged || []).find(
+    item => item?.info?.label === fileName && !item?.metadata?.source
+  );
+  return match ? countDatasetRows(match.data) : null;
+}
+
+function extensionOf(name: string): string {
+  const part = name.includes('.') ? name.split('.').pop() : '';
+  return part && part !== name ? part : '';
+}
+
+/**
+ * A zip is only a dataset when parsing keeps its name (a single shapefile).
+ * Once it has expanded into other files, drop the archive row so those files
+ * are the only lines under "To add to map".
+ */
+function archiveExpandedAway(
+  fileName: string,
+  progress: FileLoadingProgress,
+  stagedToAdd: Array<{info?: {label?: string}; metadata?: {source?: string}}> | null | undefined,
+  fileLoading: unknown,
+  droppedNames: Set<string>
+): boolean {
+  if (extensionOf(fileName).toLowerCase() !== 'zip') {
+    return false;
+  }
+  if (progress[fileName]?.error) {
+    return false;
+  }
+  const keptAsDataset = (stagedToAdd || []).some(
+    item => !item?.metadata?.source && item?.info?.label === fileName
+  );
+  if (keptAsDataset || (fileLoading && progress[fileName])) {
+    return false;
+  }
+  const unpackedName = (name?: string) => Boolean(name && !droppedNames.has(name));
+  const unpackedFile = (stagedToAdd || []).some(
+    item => !item?.metadata?.source && unpackedName(item?.info?.label)
+  );
+  const unpackedProgress = Object.keys(progress).some(unpackedName);
+  return unpackedFile || unpackedProgress;
+}
+
+function fileListStatus(
+  intl,
+  file: {size?: number},
+  progress: FileLoadingProgress[string] | undefined,
+  loading: boolean
+): Pick<UploadFileListItem, 'status' | 'percent' | 'isError' | 'isSuccess'> {
+  if (progress?.error) {
+    return {
+      status: getError(progress.error) || intl.formatMessage({id: 'fileUploader.unableToLoad'}),
+      percent: progress.percent || 0,
+      isError: true,
+      isSuccess: false
+    };
+  }
+  if (!loading) {
+    const size = formatFileSize(file.size);
+    return {
+      status: size
+        ? intl.formatMessage({id: 'fileUploader.readyToAdd'}, {size})
+        : intl.formatMessage({id: 'fileUploader.readyToAddNoSize'}),
+      percent: 1,
+      isError: false,
+      isSuccess: true
+    };
+  }
+  const size = formatFileSize(file.size);
+  const loaded = formatFileSize((progress?.percent || 0) * (file.size || 0));
+  return {
+    status:
+      size && loaded
+        ? intl.formatMessage({id: 'fileUploader.loadingProgress'}, {loaded, total: size})
+        : progress?.message || intl.formatMessage({id: 'fileUploader.loading'}),
+    percent: progress?.percent || 0,
+    isError: false,
+    isSuccess: false
+  };
+}
 
 function FileUploadFactory() {
   /** @augments {Component<FileUploadProps>} */
@@ -251,30 +349,22 @@ function FileUploadFactory() {
       remoteUrl: '',
       remoteFormat: 'auto',
       remoteError: null,
-      remoteLoading: false,
-      remoteProgress: {}
+      deselectedDatasets: {}
     };
 
     static getDerivedStateFromProps(props, state) {
-      if (state.fileLoading && props.fileLoading === false && state.files.length) {
-        return {
-          files: [],
-          fileLoading: props.fileLoading,
-          remoteLoading: false,
-          remoteProgress: {}
-        };
+      if (state.fileLoading !== props.fileLoading) {
+        return {fileLoading: props.fileLoading};
       }
-      return {
-        fileLoading: props.fileLoading,
-        ...(props.fileLoading ? {remoteLoading: false} : {})
-      };
+      return null;
     }
 
     frame = createRef<HTMLDivElement>();
 
     _isValidFileType = filename => {
       const {fileExtensions = []} = this.props;
-      const fileExt = fileExtensions.find(ext => filename.endsWith(ext));
+      const normalizedFilename = filename.toLowerCase();
+      const fileExt = fileExtensions.find(ext => normalizedFilename.endsWith(ext.toLowerCase()));
 
       return Boolean(fileExt);
     };
@@ -300,10 +390,13 @@ function FileUploadFactory() {
         }
       }
 
-      const nextState = {files: filesToLoad, errorFiles, dragOver: false};
-
-      this.setState(nextState, () =>
-        nextState.files.length ? this.props.onFileUpload(nextState.files) : null
+      this.setState(
+        prev => ({
+          files: [...prev.files, ...filesToLoad],
+          errorFiles: [...prev.errorFiles, ...errorFiles],
+          dragOver: false
+        }),
+        () => (filesToLoad.length ? this.props.onFileUpload(filesToLoad) : null)
       );
     };
 
@@ -330,12 +423,27 @@ function FileUploadFactory() {
       }
     };
 
-    _handleLoadRemoteFile = async () => {
+    _toggleDataset = (key: string) => {
+      if (!key) {
+        return;
+      }
+      if (this.props.onToggleDataset) {
+        this.props.onToggleDataset(key);
+        return;
+      }
+      this.setState(prev => ({
+        deselectedDatasets: {
+          ...prev.deselectedDatasets,
+          [key]: !prev.deselectedDatasets[key]
+        }
+      }));
+    };
+
+    _handleLoadRemoteFile = () => {
       const {remoteUrl, remoteFormat, remoteError} = this.state;
-      const {intl} = this.props;
       const showFormatSelector = getApplicationConfig().enableRemoteFileFormatSelector;
       const format = showFormatSelector && remoteFormat !== 'auto' ? remoteFormat : undefined;
-      if (!remoteUrl || remoteError || this.state.remoteLoading) {
+      if (!remoteUrl || remoteError) {
         if (!remoteUrl) {
           this.setState({remoteError: {message: 'Incorrect URL'}});
         }
@@ -346,84 +454,142 @@ function FileUploadFactory() {
         return;
       }
 
-      const fileName = getFileNameForRemoteUrl(remoteUrl, format);
-      const downloading = intl.formatMessage({id: 'fileUploader.downloading'});
-      this.setState({
-        remoteLoading: true,
-        remoteError: null,
-        remoteProgress: {
-          [fileName]: {
-            fileName,
-            percent: 0,
-            message: downloading,
-            error: null
-          }
-        }
-      });
-
-      try {
-        let lastUpdate = 0;
-        const file = await fetchRemoteFileAsKeplerFile(remoteUrl, format, ({percent}) => {
-          const now = Date.now();
-          if (percent < 1 && now - lastUpdate < 100) {
-            return;
-          }
-          lastUpdate = now;
-          this.setState(prev => {
-            const name = Object.keys(prev.remoteProgress)[0] || fileName;
-            return {
-              remoteProgress: {
-                [name]: {
-                  fileName: name,
-                  percent,
-                  message: downloading,
-                  error: null
-                }
-              }
-            };
-          });
-        });
-        this.setState(
-          {
-            files: [file],
-            errorFiles: [],
-            dragOver: false
-          },
-          () => this.props.onFileUpload([file])
-        );
-      } catch (error) {
-        this.setState({
-          remoteLoading: false,
-          remoteProgress: {},
-          remoteError: {
-            message: error instanceof Error ? error.message : `Failed to load ${remoteUrl}`
-          }
-        });
-      }
+      this.props.onAddRemoteDataset?.({url: remoteUrl, ...(format ? {format} : {})});
+      this.setState({remoteUrl: '', remoteError: null});
     };
 
     render() {
+      const {dragOver, files, errorFiles, remoteUrl, remoteFormat, remoteError} = this.state;
       const {
-        dragOver,
-        files,
-        errorFiles,
-        remoteUrl,
-        remoteFormat,
-        remoteError,
-        remoteLoading,
-        remoteProgress
-      } = this.state;
-      const {fileLoading, fileLoadingProgress, theme, intl} = this.props;
-      const {fileExtensions = [], fileFormatNames = []} = this.props;
+        fileLoading,
+        fileLoadingProgress,
+        intl,
+        stagedToAdd,
+        deselectedDatasets: deselectedFromProps
+      } = this.props;
+      const deselected = deselectedFromProps || this.state.deselectedDatasets;
+      const selectionFor = (
+        item: Omit<UploadFileListItem, 'id' | 'selectable' | 'selected' | 'onToggle'>,
+        key: string,
+        selectable: boolean
+      ): UploadFileListItem => ({
+        ...item,
+        id: key,
+        selectable,
+        selected: selectable && !deselected[key],
+        selectionLabel: intl.formatMessage({id: 'fileUploader.includeDataset'}, {name: item.name}),
+        onToggle: selectable ? () => this._toggleDataset(key) : undefined
+      });
+      const {fileExtensions = [], displayedFileExtensions} = this.props;
+      const iconExtensions = displayedFileExtensions?.length
+        ? displayedFileExtensions
+        : fileExtensions;
       const showFormatSelector = getApplicationConfig().enableRemoteFileFormatSelector;
-      const fileUploadInfoText = `${intl.formatMessage(
-        {
-          id: 'fileUploader.configUploadMessage'
-        },
-        {
-          fileFormatNames: fileFormatNames.map(format => `**${format}**`).join(', ')
+      const fileUploadInfoText = `${intl.formatMessage({
+        id: this.props.replaceDataset
+          ? 'fileUploader.replaceUploadMessage'
+          : 'fileUploader.configUploadMessage'
+      })}(${GUIDES_FILE_FORMAT_DOC}).`;
+      const progress = fileLoadingProgress || {};
+      const uploadItems: UploadFileListItem[] = [];
+      const seen = new Set<string>();
+      const localNames = new Set(files.map(file => file.name));
+      (stagedToAdd || []).forEach(item => {
+        const name = item?.info?.label;
+        const source = item?.metadata?.source;
+        if (!name || seen.has(source || name)) {
+          return;
         }
-      )}(${GUIDES_FILE_FORMAT_DOC}).`;
+        if (!source && localNames.has(name)) {
+          return;
+        }
+        const key = source || name;
+        seen.add(key);
+        uploadItems.push(
+          selectionFor(
+            {
+              name,
+              ext: extensionOf(name) || 'url',
+              status: source || intl.formatMessage({id: 'fileUploader.readyToAddNoSize'}),
+              percent: 1,
+              isSuccess: true,
+              isLarge: isLargeDatasetUpload({
+                rows: countDatasetRows(item.data),
+                bytes: stagedByteSize(item.metadata)
+              })
+            },
+            key,
+            true
+          )
+        );
+      });
+      files.forEach(file => {
+        if (
+          seen.has(file.name) ||
+          archiveExpandedAway(file.name, progress, stagedToAdd, fileLoading, localNames)
+        ) {
+          return;
+        }
+        seen.add(file.name);
+        const fileProgress = progress[file.name];
+        const status = fileListStatus(
+          intl,
+          file,
+          fileProgress,
+          Boolean(fileLoading && fileProgress)
+        );
+        uploadItems.push(
+          selectionFor(
+            {
+              name: file.name,
+              ext: extensionOf(file.name),
+              ...status,
+              isLarge:
+                !status.isError &&
+                isLargeDatasetUpload({
+                  rows: rowsForLocalFile(stagedToAdd, file.name),
+                  bytes: file.size
+                })
+            },
+            file.name,
+            !status.isError
+          )
+        );
+      });
+      // Files unpacked from a zip are not in the drop list. Show their progress
+      // until they are staged under their own names.
+      Object.values(progress).forEach(item => {
+        if (!item?.fileName || seen.has(item.fileName)) {
+          return;
+        }
+        seen.add(item.fileName);
+        const status = fileListStatus(intl, {}, item, Boolean(fileLoading));
+        uploadItems.push(
+          selectionFor(
+            {
+              name: item.fileName,
+              ext: extensionOf(item.fileName),
+              ...status
+            },
+            item.fileName,
+            Boolean(status.isSuccess) && !status.isError
+          )
+        );
+      });
+      errorFiles.forEach(name => {
+        if (seen.has(name)) {
+          return;
+        }
+        seen.add(name);
+        uploadItems.push({
+          name,
+          ext: extensionOf(name),
+          status: intl.formatMessage({id: 'fileUploader.unsupported'}),
+          percent: 0,
+          isError: true,
+          isSuccess: false
+        });
+      });
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
           {FileDrop ? (
@@ -447,116 +613,94 @@ function FileUploadFactory() {
                   {fileUploadInfoText}
                 </Markdown>
               </StyledUploadMessage>
-              <StyledFileDrop $dragOver={dragOver}>
-                <StyledDropBody>
-                  <StyledFileTypeFow className="file-type-row">
-                    {fileExtensions.map(ext => (
-                      <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
-                    ))}
-                  </StyledFileTypeFow>
-                  {fileLoading || remoteLoading ? (
-                    <FileUploadProgress
-                      fileLoadingProgress={getCombinedLoadProgress({
-                        fileLoading,
-                        fileLoadingProgress,
-                        remoteProgress
-                      })}
-                      theme={theme}
-                    />
-                  ) : (
-                    <>
-                      <StyledDragNDropIcon
-                        style={{opacity: dragOver ? 0.5 : 1}}
-                        className="file-upload-display-message"
+              <UploadColumns>
+                <StyledFileDrop $dragOver={dragOver}>
+                  <StyledDropBody>
+                    <StyledFileTypeFow className="file-type-row">
+                      {iconExtensions.map(ext => (
+                        <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
+                      ))}
+                    </StyledFileTypeFow>
+                    <StyledDragNDropIcon
+                      style={{opacity: dragOver ? 0.5 : 1}}
+                      className="file-upload-display-message"
+                    >
+                      <DragNDrop height="36px" />
+                    </StyledDragNDropIcon>
+                    <StyledDragFileWrapper>
+                      <StyledActionLine>
+                        <FormattedMessage
+                          id={'fileUploader.dropMessage'}
+                          values={{
+                            browse: (
+                              <UploadButton key="browse" onUpload={this._handleFileInput}>
+                                {intl.formatMessage({id: 'fileUploader.browseFiles'})}
+                              </UploadButton>
+                            )
+                          }}
+                        />
+                      </StyledActionLine>
+                      <StyledRemoteUrlForm
+                        className="file-uploader__remote-url"
+                        onClick={event => event.stopPropagation()}
                       >
-                        <DragNDrop height="36px" />
-                        {errorFiles.length ? (
-                          <WarningMsg>
-                            <FormattedMessage
-                              id={'fileUploader.fileNotSupported'}
-                              values={{errorFiles: errorFiles.join(', ')}}
-                            />
-                          </WarningMsg>
-                        ) : null}
-                      </StyledDragNDropIcon>
-                      {!files.length ? (
-                        <StyledDragFileWrapper>
-                          <StyledActionLine>
-                            <FormattedMessage
-                              id={'fileUploader.dropMessage'}
-                              values={{
-                                browse: (
-                                  <UploadButton key="browse" onUpload={this._handleFileInput}>
-                                    {intl.formatMessage({id: 'fileUploader.browseFiles'})}
-                                  </UploadButton>
-                                )
-                              }}
-                            />
-                          </StyledActionLine>
-                          <StyledRemoteUrlForm
-                            className="file-uploader__remote-url"
-                            onClick={event => event.stopPropagation()}
+                        <StyledRemoteUrlRow>
+                          <StyledRemoteUrlInput
+                            type="url"
+                            value={remoteUrl}
+                            aria-label={intl.formatMessage({
+                              id: 'fileUploader.urlPlaceholder'
+                            })}
+                            placeholder={intl.formatMessage({
+                              id: 'fileUploader.urlPlaceholder'
+                            })}
+                            onChange={this._onRemoteUrlChange}
+                            onKeyDown={this._onRemoteUrlKeyDown}
+                          />
+                          {showFormatSelector ? (
+                            <StyledRemoteFormatSelect
+                              className="file-uploader__remote-format"
+                              aria-label={intl.formatMessage({id: 'fileUploader.format'})}
+                              value={remoteFormat}
+                              onChange={this._onRemoteFormatChange}
+                            >
+                              {getAcceptedRemoteFileFormats().map(format => (
+                                <option key={format} value={format}>
+                                  {format === 'auto'
+                                    ? intl.formatMessage({id: 'fileUploader.formatAuto'})
+                                    : format.toUpperCase()}
+                                </option>
+                              ))}
+                            </StyledRemoteFormatSelect>
+                          ) : null}
+                          <StyledRemoteFetchButton
+                            type="button"
+                            className="file-uploader__remote-add"
+                            cta
+                            small
+                            disabled={!remoteUrl}
+                            onClick={this._handleLoadRemoteFile}
                           >
-                            <StyledRemoteUrlRow>
-                              <StyledRemoteUrlInput
-                                type="url"
-                                value={remoteUrl}
-                                aria-label={intl.formatMessage({
-                                  id: 'fileUploader.urlPlaceholder'
-                                })}
-                                placeholder={intl.formatMessage({
-                                  id: 'fileUploader.urlPlaceholder'
-                                })}
-                                onChange={this._onRemoteUrlChange}
-                                onKeyDown={this._onRemoteUrlKeyDown}
-                                disabled={remoteLoading}
-                              />
-                              {showFormatSelector ? (
-                                <StyledRemoteFormatSelect
-                                  className="file-uploader__remote-format"
-                                  aria-label={intl.formatMessage({id: 'fileUploader.format'})}
-                                  value={remoteFormat}
-                                  onChange={this._onRemoteFormatChange}
-                                  disabled={remoteLoading}
-                                >
-                                  {REMOTE_FILE_FORMATS.map(format => (
-                                    <option key={format} value={format}>
-                                      {format === 'auto'
-                                        ? intl.formatMessage({id: 'fileUploader.formatAuto'})
-                                        : format.toUpperCase()}
-                                    </option>
-                                  ))}
-                                </StyledRemoteFormatSelect>
-                              ) : null}
-                              <StyledRemoteFetchButton
-                                type="button"
-                                cta
-                                small
-                                disabled={!remoteUrl || remoteLoading}
-                                onClick={this._handleLoadRemoteFile}
-                              >
-                                <FormattedMessage id={'fileUploader.fetch'} />
-                              </StyledRemoteFetchButton>
-                            </StyledRemoteUrlRow>
-                            {remoteError ? <WarningMsg>{remoteError.message}</WarningMsg> : null}
-                          </StyledRemoteUrlForm>
-                        </StyledDragFileWrapper>
-                      ) : null}
-                    </>
-                  )}
-                </StyledDropBody>
-                {fileLoading || remoteLoading ? null : (
+                            <FormattedMessage id={'fileUploader.addUrl'} />
+                          </StyledRemoteFetchButton>
+                        </StyledRemoteUrlRow>
+                        {remoteError ? <WarningMsg>{remoteError.message}</WarningMsg> : null}
+                      </StyledRemoteUrlForm>
+                    </StyledDragFileWrapper>
+                  </StyledDropBody>
                   <StyledDisclaimer>
                     <FormattedMessage id={'fileUploader.disclaimer'} />
                   </StyledDisclaimer>
-                )}
-              </StyledFileDrop>
+                </StyledFileDrop>
+                <UploadFileList
+                  title={
+                    uploadItems.length ? intl.formatMessage({id: 'fileUploader.toAdd'}) : undefined
+                  }
+                  items={uploadItems}
+                />
+              </UploadColumns>
             </FileDrop>
           ) : null}
-
-          <WarningMsg>
-            {isChrome() ? <FormattedMessage id={'fileUploader.chromeMessage'} /> : ''}
-          </WarningMsg>
         </StyledFileUpload>
       );
     }

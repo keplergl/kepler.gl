@@ -24,10 +24,7 @@ test('Notification Panel - Show notifications', t => {
   const removeNotification = sinon.spy();
   const $ = mount(
     <ThemeProvider theme={theme}>
-      <NotificationPanel
-        notifications={notifications}
-        removeNotification={removeNotification}
-      />
+      <NotificationPanel notifications={notifications} removeNotification={removeNotification} />
     </ThemeProvider>
   );
 

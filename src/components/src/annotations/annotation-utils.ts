@@ -2,18 +2,37 @@
 // Copyright contributors to the kepler.gl project
 
 import {addMetersToLngLat} from '@math.gl/web-mercator';
-import {Annotation, AnnotationWithArm} from '@kepler.gl/types';
-import {AnnotationKind, isAnnotationWithArm} from '@kepler.gl/constants';
+import {Annotation, AnnotationWithArm, RulerAnnotation} from '@kepler.gl/types';
+import {formatLineLengthLabel} from '@kepler.gl/layers';
+import {point} from '@turf/helpers';
+import distance from '@turf/distance';
+import {
+  AnnotationKind,
+  AnnotationTextSide,
+  AnnotationTextVerticalPosition,
+  ANNOTATION_ANGLE_BY_PLACEMENT,
+  isAnnotationWithArm,
+  isLeftOriented,
+  isBelowOriented,
+  textPlacementFromAngle
+} from '@kepler.gl/constants';
+
+export type LngLatAltitude = [number, number] | [number, number, number];
 
 export type MapViewport = {
-  project: (lngLat: [number, number]) => [number, number];
-  unproject: (xy: [number, number]) => [number, number];
+  project: (lngLat: ReadonlyArray<number>) => number[];
+  unproject: (xy: ReadonlyArray<number>) => number[];
   longitude: number;
   latitude: number;
   width: number;
   height: number;
   zoom: number;
 };
+
+/** Screen-space pick that returns a world position, optionally with altitude. */
+export type PickWorldPosition = (
+  screen: [number, number]
+) => ReadonlyArray<number> | null | undefined;
 
 export type BaseAnnotationMarker = {
   kind: AnnotationKind;
@@ -30,23 +49,60 @@ export type CircleAnnotationMarker = BaseAnnotationMarker & {
   r: number;
 };
 
-export type AnnotationMarker = BaseAnnotationMarker | CircleAnnotationMarker;
+export type RulerAnnotationMarker = BaseAnnotationMarker & {
+  kind: AnnotationKind.RULER;
+  /** Second endpoint and midpoint, relative to x/y. */
+  ex: number;
+  ey: number;
+  mx: number;
+  my: number;
+};
+
+export type AnnotationMarker =
+  | BaseAnnotationMarker
+  | CircleAnnotationMarker
+  | RulerAnnotationMarker;
 
 function degreesToRadians(degree: number): number {
   return degree * (Math.PI / 180);
 }
 
-function calcRadius(
-  viewport: MapViewport,
-  point: [number, number],
-  radiusInMeters: number
-): number {
+function offsetLngLatByMeters(point: LngLatAltitude, eastMeters: number): LngLatAltitude {
+  const shifted = addMetersToLngLat(point, [eastMeters, 0, 0]);
+  // addMetersToLngLat returns [lng, lat]; keep altitude so rim and center
+  // project from the same height.
+  const altitude = point[2];
+  if (altitude !== undefined && Number.isFinite(altitude)) {
+    return [shifted[0], shifted[1], altitude];
+  }
+  return [shifted[0], shifted[1]];
+}
+
+function calcRadius(viewport: MapViewport, point: LngLatAltitude, radiusInMeters: number): number {
   const [x, y] = viewport.project(point);
-  const shifted = addMetersToLngLat(point, [radiusInMeters, 0, 0]) as [number, number];
-  const [x1, y1] = viewport.project(shifted);
+  const [x1, y1] = viewport.project(offsetLngLatByMeters(point, radiusInMeters));
   const dx = x1 - x;
   const dy = y1 - y;
   return Math.sqrt(dx * dx + dy * dy);
+}
+
+/**
+ * Choose the geographically closest wrapped world copy before projecting. A
+ * distant copy can appear closer on screen under perspective projection.
+ */
+function projectClosestEndpoint(
+  viewport: MapViewport,
+  startPoint: LngLatAltitude,
+  endPoint: LngLatAltitude
+): [number, number] {
+  const altitude = endPoint[2];
+  const nearestWrap = Math.round((startPoint[0] - endPoint[0]) / 360);
+  const wrappedPoint = [endPoint[0] + nearestWrap * 360, endPoint[1]];
+  if (altitude !== undefined) wrappedPoint.push(altitude);
+  const [x, y] = viewport.project(wrappedPoint);
+  if (Number.isFinite(x) && Number.isFinite(y)) return [x, y];
+  const [sx, sy] = viewport.project(startPoint);
+  return [sx, sy];
 }
 
 export function makeMarker(annotation: Annotation, viewport: MapViewport): AnnotationMarker {
@@ -68,18 +124,113 @@ export function makeMarker(annotation: Annotation, viewport: MapViewport): Annot
       const [tx, ty] = [Math.cos(angle) * armLength, Math.sin(angle) * armLength];
       return {kind, x, y, tx, ty};
     }
+    case AnnotationKind.RULER: {
+      const [endX, endY] = projectClosestEndpoint(viewport, anchorPoint, annotation.endPoint);
+      const ex = endX - x;
+      const ey = endY - y;
+      const mx = ex / 2;
+      const my = ey / 2;
+      return {kind, x, y, tx: mx, ty: my, ex, ey, mx, my};
+    }
     case AnnotationKind.TEXT:
     default:
       return {kind, x, y, tx: 0, ty: 0};
   }
 }
 
-export function isLeftOriented(angle: number): boolean {
-  return angle > 90 || angle < -90;
+export {isLeftOriented, isBelowOriented, textPlacementFromAngle};
+
+export type AnnotationTextPlacement = {
+  side: AnnotationTextSide;
+  vertical: AnnotationTextVerticalPosition;
+};
+
+export function getTextPlacement(annotation: Annotation): AnnotationTextPlacement {
+  const side: AnnotationTextSide =
+    annotation.textSide ??
+    (isAnnotationWithArm(annotation) && isLeftOriented(annotation.angle) ? 'left' : 'right');
+  const vertical: AnnotationTextVerticalPosition =
+    annotation.textVerticalPosition ??
+    (isAnnotationWithArm(annotation) && isBelowOriented(annotation.angle) ? 'below' : 'above');
+  return {side, vertical};
+}
+
+export function angleForTextPlacement(
+  side: AnnotationTextSide,
+  vertical: AnnotationTextVerticalPosition
+): number {
+  return ANNOTATION_ANGLE_BY_PLACEMENT[`${side}-${vertical}`];
+}
+
+export type AnnotationTextBoxStyle = {
+  minWidth?: number;
+  width?: number;
+  top?: number;
+  bottom?: number;
+  left?: number;
+  right?: number;
+  borderTop?: string;
+  borderBottom?: string;
+  transform?: string;
+};
+
+export function getAnnotationTextBoxStyle(
+  annotation: Annotation,
+  viewport: MapViewport
+): AnnotationTextBoxStyle {
+  const {textWidth, lineColor, lineWidth, autoSize, kind} = annotation;
+  const {x, y, tx, ty} = makeMarker(annotation, viewport);
+  const {side, vertical} = getTextPlacement(annotation);
+  const px = x + tx;
+  const py = y + ty;
+  const style: AnnotationTextBoxStyle = autoSize ? {minWidth: 80} : {width: textWidth || 120};
+
+  if (kind === AnnotationKind.RULER) {
+    style.left = px;
+    style.top = py;
+    style.transform = 'translate(-50%, -50%)';
+    return style;
+  }
+
+  if (vertical === 'below') {
+    style.top = py;
+    if (kind !== AnnotationKind.TEXT) {
+      style.borderTop = `${lineWidth}px solid ${lineColor}`;
+    }
+  } else {
+    style.bottom = viewport.height - py;
+    if (kind !== AnnotationKind.TEXT) {
+      style.borderBottom = `${lineWidth}px solid ${lineColor}`;
+    }
+  }
+
+  if (kind === AnnotationKind.TEXT && side !== 'left') {
+    // TEXT has no leader; keep the box centered on the anchor unless it is
+    // explicitly placed on the left (matches pre-placement TEXT rendering).
+    style.left = px - (textWidth || 80) / 2;
+  } else if (side === 'left') {
+    style.right = viewport.width - px;
+  } else {
+    style.left = px;
+  }
+
+  return style;
+}
+
+export function normalizeAnchorPoint(
+  coord: ReadonlyArray<number> | null | undefined
+): LngLatAltitude | null {
+  if (!coord || coord.length < 2 || !Number.isFinite(coord[0]) || !Number.isFinite(coord[1])) {
+    return null;
+  }
+  if (coord.length >= 3 && Number.isFinite(coord[2])) {
+    return [coord[0], coord[1], coord[2]];
+  }
+  return [coord[0], coord[1]];
 }
 
 /** Great-circle angular distance between two lng/lat points, in degrees. */
-function angularDistanceDeg(a: [number, number], b: [number, number]): number {
+function angularDistanceDeg(a: ReadonlyArray<number>, b: ReadonlyArray<number>): number {
   const toRad = Math.PI / 180;
   const phi1 = a[1] * toRad;
   const phi2 = b[1] * toRad;
@@ -107,7 +258,10 @@ const GLOBE_VISIBILITY_TOLERANCE_DEG = 0.5;
  * first and the point is occluded. This uses the real projection math, so it
  * follows the true horizon and adapts to zoom/altitude automatically.
  */
-export function isPointVisibleOnGlobe(point: [number, number], viewport: MapViewport): boolean {
+export function isPointVisibleOnGlobe(
+  point: ReadonlyArray<number>,
+  viewport: MapViewport
+): boolean {
   const projected = viewport.project(point);
   if (!projected || !Number.isFinite(projected[0]) || !Number.isFinite(projected[1])) {
     return false;
@@ -119,27 +273,91 @@ export function isPointVisibleOnGlobe(point: [number, number], viewport: MapView
   return angularDistanceDeg(point, [roundTrip[0], roundTrip[1]]) < GLOBE_VISIBILITY_TOLERANCE_DEG;
 }
 
+/** A ruler is safe to draw as a DOM overlay only while both endpoints are visible. */
+export function isAnnotationVisibleOnGlobe(annotation: Annotation, viewport: MapViewport): boolean {
+  return (
+    isPointVisibleOnGlobe(annotation.anchorPoint, viewport) &&
+    (annotation.kind !== AnnotationKind.RULER ||
+      isPointVisibleOnGlobe(annotation.endPoint, viewport))
+  );
+}
+
+function moveCoordinate(
+  point: LngLatAltitude,
+  delta: {x: number; y: number},
+  viewport: MapViewport,
+  pickWorldPosition?: PickWorldPosition,
+  projectedPoint?: [number, number]
+): LngLatAltitude {
+  const [px, py] = projectedPoint ?? viewport.project(point);
+  const screen: [number, number] = [px + delta.x, py + delta.y];
+  const picked = normalizeAnchorPoint(pickWorldPosition?.(screen));
+  if (picked) {
+    return picked;
+  }
+  const [lon, lat] = viewport.unproject(screen);
+  return Number.isFinite(lon) && Number.isFinite(lat) ? [lon, lat] : point;
+}
+
+function normalizeRulerLongitude(point: LngLatAltitude): LngLatAltitude {
+  const longitude = ((((point[0] + 180) % 360) + 360) % 360) - 180;
+  return point.length === 3 ? [longitude, point[1], point[2]] : [longitude, point[1]];
+}
+
 export function movePoint(
   annotation: Annotation,
   delta: {x: number; y: number},
-  viewport: MapViewport
+  viewport: MapViewport,
+  pickWorldPosition?: PickWorldPosition
 ): Partial<Annotation> {
-  const {anchorPoint} = annotation;
-  const [px, py] = viewport.project(anchorPoint);
-  const [lon, lat] = viewport.unproject([px + delta.x, py + delta.y]);
-  return {anchorPoint: [lon, lat]};
+  return {
+    anchorPoint: moveCoordinate(annotation.anchorPoint, delta, viewport, pickWorldPosition)
+  };
+}
+
+export function moveRulerEndpoint(
+  annotation: Annotation,
+  endpoint: 'start' | 'end',
+  delta: {x: number; y: number},
+  viewport: MapViewport,
+  pickWorldPosition?: PickWorldPosition
+): Partial<RulerAnnotation> {
+  if (annotation.kind !== AnnotationKind.RULER) return {};
+  if (endpoint === 'start') {
+    return {
+      // The start is the ruler's screen-space origin. Keep its unwrapped
+      // longitude so dragging across the dateline stays on the visible world
+      // copy; makeMarker wraps only the second endpoint relative to it.
+      anchorPoint: moveCoordinate(annotation.anchorPoint, delta, viewport, pickWorldPosition)
+    };
+  }
+  const marker = makeMarker(annotation, viewport) as RulerAnnotationMarker;
+  const projectedEndPoint: [number, number] = [marker.x + marker.ex, marker.y + marker.ey];
+  return {
+    endPoint: normalizeRulerLongitude(
+      moveCoordinate(annotation.endPoint, delta, viewport, pickWorldPosition, projectedEndPoint)
+    )
+  };
+}
+
+/** Existing editor convention: geodesic ground length in kilometers, rounded to 2 decimals. */
+export function getRulerDistanceLabel(annotation: Annotation): string {
+  if (annotation.kind !== AnnotationKind.RULER) return '';
+  const lengthKm = distance(point(annotation.anchorPoint), point(annotation.endPoint));
+  return formatLineLengthLabel(lengthKm);
 }
 
 export function moveText(
   annotation: Annotation,
   delta: {x: number; y: number},
-  viewport: MapViewport
+  viewport: MapViewport,
+  pickWorldPosition?: PickWorldPosition
 ): Partial<Annotation> {
   const marker = makeMarker(annotation, viewport);
   const {kind, tx, ty} = marker;
 
   if (kind === AnnotationKind.TEXT) {
-    return movePoint(annotation, delta, viewport);
+    return movePoint(annotation, delta, viewport, pickWorldPosition);
   }
   if (!isAnnotationWithArm(annotation)) {
     return {};
@@ -147,6 +365,7 @@ export function moveText(
 
   const [tx1, ty1] = [tx + delta.x, ty + delta.y];
   const nextAngle = radiansToDegrees(Math.atan2(ty1, tx1));
+  const {side, vertical} = textPlacementFromAngle(nextAngle);
   let nextArm: number;
 
   switch (kind) {
@@ -160,7 +379,12 @@ export function moveText(
     default:
       nextArm = (annotation as AnnotationWithArm).armLength;
   }
-  return {angle: nextAngle, armLength: nextArm};
+  return {
+    angle: nextAngle,
+    armLength: nextArm,
+    textSide: side,
+    textVerticalPosition: vertical
+  };
 }
 
 export function resizeCircle(
@@ -170,12 +394,13 @@ export function resizeCircle(
 ): Partial<Annotation> {
   if (annotation.kind !== AnnotationKind.CIRCLE) return {};
   const {anchorPoint, radiusInMeters} = annotation;
-  const shifted = addMetersToLngLat(anchorPoint, [radiusInMeters, 0, 0]) as [number, number];
-  const [x] = viewport.project(shifted);
-  const newPoint = viewport.unproject([x + delta.x, viewport.project(anchorPoint)[1]]);
-  const dx = newPoint[0] - anchorPoint[0];
-  const currentRadius = shifted[0] - anchorPoint[0];
-  const ratio = currentRadius !== 0 ? (currentRadius + dx) / currentRadius : 1;
+  // Scale by the on-screen radius at the anchor's altitude. Unprojecting onto
+  // the ground plane would change radius with pitch even when delta.x is 0.
+  const currentScreenRadius = calcRadius(viewport, anchorPoint, radiusInMeters);
+  if (!(currentScreenRadius > 0)) {
+    return {radiusInMeters: Math.max(0, radiusInMeters)};
+  }
+  const ratio = (currentScreenRadius + delta.x) / currentScreenRadius;
   return {radiusInMeters: Math.max(0, radiusInMeters * ratio)};
 }
 

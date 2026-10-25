@@ -10,6 +10,8 @@ import {
   getQuantileDomain,
   getLinearDomain,
   getLogDomain,
+  getJenksDomain,
+  naturalBreaks,
   createDataContainer,
   getThresholdsFromQuantiles,
   getDomainStepsbyZoom,
@@ -19,7 +21,7 @@ import {
   getCategoricalColorMap
 } from '@kepler.gl/utils';
 import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
-import {SCALE_FUNC} from '@kepler.gl/constants';
+import {SCALE_FUNC, SCALE_TYPES} from '@kepler.gl/constants';
 
 function numberSort(a, b) {
   return a - b;
@@ -118,6 +120,72 @@ test('DataScaleUtils -> getLogDomain', t => {
     [0.00001, 1],
     'should have undefined domain for empty set'
   );
+
+  t.end();
+});
+
+test('DataScaleUtils -> naturalBreaks', t => {
+  t.deepEqual(naturalBreaks([], 3), [], 'empty data should return no breaks');
+  t.deepEqual(naturalBreaks([1, 2, 3], 1), [], 'k <= 1 should return no breaks');
+
+  const clustered = [1, 1, 1, 1, 1, 1, 1, 1, 50, 51, 52, 50, 51, 1000, 1001, 1002];
+  const breaks = naturalBreaks(clustered, 3);
+  t.ok(breaks.length >= 2, 'should return thresholds for 3 classes');
+  t.deepEqual(
+    breaks,
+    breaks.slice().sort((a, b) => a - b),
+    'breaks should be sorted'
+  );
+  t.ok(breaks[0] > 1 && breaks[0] < 1000, 'first break should split the low cluster');
+  t.ok(
+    breaks[breaks.length - 1] >= 50,
+    'last break should separate the high cluster from the rest'
+  );
+  t.deepEqual(
+    naturalBreaks(clustered.slice(), 3),
+    breaks,
+    'seeded permutation should be deterministic'
+  );
+  t.ok(
+    breaks.every(b => b > clustered[0]),
+    'should not place a break at the first value'
+  );
+
+  const sequential = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const sequentialBreaks = naturalBreaks(sequential, 3);
+  t.equal(sequentialBreaks.length, 2, 'should return k-1 interior thresholds');
+  t.ok(
+    sequentialBreaks.every(b => b > 0),
+    'should not sample a break at index 0'
+  );
+
+  const padded = naturalBreaks([1, 2, 3], 5);
+  t.equal(padded.length, 4, 'should pad to k-1 thresholds when k exceeds unique values');
+  t.deepEqual(padded, [2, 3, 3, 3], 'padded thresholds should be the inner unique edges');
+
+  t.end();
+});
+
+test('DataScaleUtils -> getJenksDomain', t => {
+  const quanData = [1, 4, 2, 3, 1, undefined, null, 0];
+  function valueAccessor(d) {
+    return d.value;
+  }
+  const values = [{value: 1}, {value: 0}, {value: -3}, {value: 10}];
+
+  const fromArray = getJenksDomain(quanData, undefined, 3);
+  t.ok(Array.isArray(fromArray) && fromArray.length > 0, 'should compute jenks domain from array');
+  t.deepEqual(
+    fromArray,
+    fromArray.filter(n => typeof n === 'number' && Number.isFinite(n)),
+    'jenks domain should contain only finite numbers'
+  );
+
+  const fromAccessor = getJenksDomain(values, valueAccessor, 2);
+  t.ok(fromAccessor.length >= 1, 'should compute jenks domain with a value accessor');
+
+  t.equal(SCALE_TYPES.jenks, 'jenks', 'jenks should be a registered scale type');
+  t.ok(typeof SCALE_FUNC[SCALE_TYPES.jenks] === 'function', 'jenks should use a d3 scale factory');
 
   t.end();
 });

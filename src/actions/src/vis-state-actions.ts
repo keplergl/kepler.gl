@@ -3,10 +3,11 @@
 
 // vis-state-reducer
 import {default as ActionTypes} from './action-types';
-import {FileCacheItem} from '@kepler.gl/processors';
+import {FileCacheItem, ZipArchiveExpansion} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {KeplerTable} from '@kepler.gl/table';
+import {GroupByOp, JoinOp, KeplerTable, SuitabilityOp} from '@kepler.gl/table';
 import {
+  AddDataToMapOptions,
   AddDataToMapPayload,
   ViewportPadding,
   ValueOf,
@@ -29,7 +30,10 @@ import {
   FilterAnimationConfig,
   LayerOrder,
   LayerOrderGroup,
-  ProtoDataset
+  ProtoDataset,
+  ChartConfig,
+  CameraBookmark,
+  CameraTour
 } from '@kepler.gl/types';
 import {createAction} from '@reduxjs/toolkit';
 
@@ -171,22 +175,30 @@ export function layerSetIsValid(
 export type LayerTypeChangeUpdaterAction = {
   oldLayer: Layer;
   newType: string;
+  /**
+   * Fit the map when this is the layer type dropdown assigning a type to an
+   * empty layer. Omitted for programmatic calls and saved-config applies.
+   */
+  fitBounds?: boolean;
 };
 /**
  * Update layer type. Previews layer config will be copied if applicable.
  * @param oldLayer - layer to be updated
  * @param newType - new type
+ * @param options.fitBounds fit the map when the layer type dropdown gives an empty layer its first type
  * @returns action
  * @public
  */
 export function layerTypeChange(
   oldLayer: Layer,
-  newType: string
+  newType: string,
+  options?: {fitBounds?: boolean}
 ): Merge<LayerTypeChangeUpdaterAction, {type: typeof ActionTypes.LAYER_TYPE_CHANGE}> {
   return {
     type: ActionTypes.LAYER_TYPE_CHANGE,
     oldLayer,
-    newType
+    newType,
+    ...(options?.fitBounds ? {fitBounds: true} : {})
   };
 }
 export type LayerVisualChannelConfigChangeUpdaterAction = {
@@ -775,6 +787,78 @@ export function updateEffect(
   };
 }
 
+// Chart Actions
+
+export type AddChartUpdaterAction = {
+  chart: ChartConfig;
+};
+
+/**
+ * Add a chart to the charts panel
+ * @memberof visStateActions
+ * @param chart - chart config
+ * @returns action
+ * @public
+ */
+export function addChart(
+  chart: ChartConfig
+): Merge<AddChartUpdaterAction, {type: typeof ActionTypes.ADD_CHART}> {
+  return {
+    type: ActionTypes.ADD_CHART,
+    chart
+  };
+}
+
+export type UpdateChartUpdaterAction = {
+  id: string;
+  props: Partial<ChartConfig>;
+};
+
+/**
+ * Update a chart
+ * @memberof visStateActions
+ * @param id - chart id
+ * @param props - partial chart config
+ * @returns action
+ * @public
+ */
+export function updateChart(
+  id: string,
+  props: Partial<ChartConfig>
+): Merge<UpdateChartUpdaterAction, {type: typeof ActionTypes.UPDATE_CHART}> {
+  return {
+    type: ActionTypes.UPDATE_CHART,
+    id,
+    props
+  };
+}
+
+export type RemoveChartUpdaterAction = {
+  id: string;
+};
+
+/**
+ * Remove a chart
+ * @memberof visStateActions
+ * @param id - chart id
+ * @returns action
+ * @public
+ */
+export function removeChart(
+  id: string
+): Merge<RemoveChartUpdaterAction, {type: typeof ActionTypes.REMOVE_CHART}> {
+  return {
+    type: ActionTypes.REMOVE_CHART,
+    id
+  };
+}
+
+/** Replace the ordered collection of saved camera bookmarks. */
+export const setCameraBookmarks = createAction<CameraBookmark[]>(ActionTypes.SET_CAMERA_BOOKMARKS);
+
+/** Replace the single authored camera tour; null removes it. */
+export const setCameraTour = createAction<CameraTour | null>(ActionTypes.SET_CAMERA_TOUR);
+
 // Annotation Actions
 
 export type AddAnnotationUpdaterAction = {
@@ -1175,6 +1259,49 @@ export function pinTableColumn(
   };
 }
 
+export type ToggleTableColumnHiddenUpdaterAction = {
+  dataId: string;
+  column: string;
+};
+/**
+ * Hide or show a dataset column in the attribute table and in data export.
+ * @param dataId
+ * @param column
+ * @returns action
+ * @public
+ */
+export function toggleTableColumnHidden(
+  dataId: string,
+  column: string
+): Merge<
+  ToggleTableColumnHiddenUpdaterAction,
+  {type: typeof ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN}
+> {
+  return {
+    type: ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN,
+    dataId,
+    column
+  };
+}
+
+export type ShowAllTableColumnsUpdaterAction = {
+  dataId: string;
+};
+/**
+ * Show every attribute-table column that was hidden.
+ * @param dataId
+ * @returns action
+ * @public
+ */
+export function showAllTableColumns(
+  dataId: string
+): Merge<ShowAllTableColumnsUpdaterAction, {type: typeof ActionTypes.SHOW_ALL_TABLE_COLUMNS}> {
+  return {
+    type: ActionTypes.SHOW_ALL_TABLE_COLUMNS,
+    dataId
+  };
+}
+
 export type CopyTableColumnUpdaterAction = {
   dataId: string;
   column: string;
@@ -1253,6 +1380,7 @@ export type LoadColumnStatsSuccessUpdaterAction = {
   fieldName: string;
   result: any;
   filterProps?: any;
+  fieldType?: string;
 };
 
 /**
@@ -1264,7 +1392,8 @@ export function loadColumnStatsSuccess(
   dataId: string,
   fieldName: string,
   result: any,
-  filterProps?: any
+  filterProps?: any,
+  request?: {fieldType: string}
 ): Merge<
   LoadColumnStatsSuccessUpdaterAction,
   {type: typeof ActionTypes.LOAD_COLUMN_STATS_SUCCESS}
@@ -1274,7 +1403,8 @@ export function loadColumnStatsSuccess(
     dataId,
     fieldName,
     result,
-    filterProps
+    filterProps,
+    ...request
   };
 }
 
@@ -1282,6 +1412,7 @@ export type LoadColumnStatsErrorUpdaterAction = {
   dataId: string;
   fieldName: string;
   error: Error;
+  fieldType?: string;
 };
 
 /**
@@ -1292,13 +1423,15 @@ export type LoadColumnStatsErrorUpdaterAction = {
 export function loadColumnStatsError(
   dataId: string,
   fieldName: string,
-  error: Error
+  error: Error,
+  request?: {fieldType: string}
 ): Merge<LoadColumnStatsErrorUpdaterAction, {type: typeof ActionTypes.LOAD_COLUMN_STATS_ERROR}> {
   return {
     type: ActionTypes.LOAD_COLUMN_STATS_ERROR,
     dataId,
     fieldName,
-    error
+    error,
+    ...request
   };
 }
 
@@ -1433,6 +1566,82 @@ export function updateDataset(
     dataId,
     data,
     renames
+  };
+}
+
+export type RenameTableColumnUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  newName: string;
+};
+/**
+ * Rename a dataset column. The new name becomes the field identity stored in
+ * layers, filters, charts, dataset operations, and saved maps.
+ * @param dataId - dataset id
+ * @param fieldName - current column name
+ * @param newName - next column name
+ * @returns action
+ * @public
+ */
+export function renameTableColumn(
+  dataId: string,
+  fieldName: string,
+  newName: string
+): Merge<RenameTableColumnUpdaterAction, {type: typeof ActionTypes.RENAME_TABLE_COLUMN}> {
+  return {
+    type: ActionTypes.RENAME_TABLE_COLUMN,
+    dataId,
+    fieldName,
+    newName
+  };
+}
+
+export type ChangeTableColumnTypeUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+  newType: string;
+};
+/**
+ * Convert every value in a dataset column and update its field type atomically.
+ * Invalid values leave the dataset unchanged and produce an error notification.
+ * @param dataId - dataset id
+ * @param fieldName - column name
+ * @param newType - target kepler.gl field type
+ * @returns action
+ * @public
+ */
+export function changeTableColumnType(
+  dataId: string,
+  fieldName: string,
+  newType: string
+): Merge<ChangeTableColumnTypeUpdaterAction, {type: typeof ActionTypes.CHANGE_TABLE_COLUMN_TYPE}> {
+  return {
+    type: ActionTypes.CHANGE_TABLE_COLUMN_TYPE,
+    dataId,
+    fieldName,
+    newType
+  };
+}
+
+export type DeleteTableColumnUpdaterAction = {
+  dataId: string;
+  fieldName: string;
+};
+/**
+ * Delete a dataset column and drop references that required it.
+ * @param dataId - dataset id
+ * @param fieldName - column name
+ * @returns action
+ * @public
+ */
+export function deleteTableColumn(
+  dataId: string,
+  fieldName: string
+): Merge<DeleteTableColumnUpdaterAction, {type: typeof ActionTypes.DELETE_TABLE_COLUMN}> {
+  return {
+    type: ActionTypes.DELETE_TABLE_COLUMN,
+    dataId,
+    fieldName
   };
 }
 
@@ -1713,7 +1922,10 @@ export function toggleLayerForMap(
 
 type FilterPlotNewProp = {
   yAxis?: null | Record<string, any>;
-  plotType?: {type: string};
+  plotType?: {
+    type?: string;
+    [key: string]: any;
+  };
 };
 export type SetFilterPlotUpdaterAction = {
   idx: number;
@@ -1761,25 +1973,36 @@ export function setMapInfo(
   };
 }
 
+export type LoadFilesOptions = AddDataToMapOptions & {
+  /** Parse the files, then wait for an explicit add instead of calling `addDataToMap`. */
+  deferAddToMap?: boolean;
+};
+
 export type LoadFilesUpdaterAction = {
   files: File[];
-  onFinish?(result: any): any;
+  onFinish?(result: any, options?: LoadFilesOptions): any;
+  /** Forwarded to `addDataToMap` when loading finishes. Omitted options keep their defaults. */
+  options?: LoadFilesOptions;
 };
 /**
  * Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
  * @memberof visStateActions
  * @param files array of fileblob
+ * @param onFinish called with the processed file cache. Defaults to `loadFilesSuccess`
+ * @param options forwarded to `addDataToMap`. `autoCreateLayers` defaults to true when omitted
  * @returns action
  * @public
  */
 export function loadFiles(
   files: File[],
-  onFinish?: (result: any) => any
+  onFinish?: (result: any, options?: LoadFilesOptions) => any,
+  options?: LoadFilesOptions
 ): Merge<LoadFilesUpdaterAction, {type: typeof ActionTypes.LOAD_FILES}> {
   return {
     type: ActionTypes.LOAD_FILES,
     files,
-    onFinish
+    onFinish,
+    ...(options ? {options} : {})
   };
 }
 
@@ -1789,27 +2012,132 @@ export function loadFiles(
  * @returns action
  * @public
  */
-export function loadNextFile(): {type: typeof ActionTypes.LOAD_NEXT_FILE} {
+export function loadNextFile(loadId?: number): {
+  type: typeof ActionTypes.LOAD_NEXT_FILE;
+  loadId?: number;
+} {
   return {
-    type: ActionTypes.LOAD_NEXT_FILE
+    type: ActionTypes.LOAD_NEXT_FILE,
+    ...(loadId == null ? {} : {loadId})
+  };
+}
+
+export type ExpandZipArchiveSuccessAction = {
+  loadId: number;
+  archiveName: string;
+  expansion: ZipArchiveExpansion;
+};
+/**
+ * A zip in the load queue has been unpacked. The updater either parses a
+ * single shapefile archive or enqueues one dataset per supported member.
+ * @memberof visStateActions
+ */
+export function expandZipArchiveSuccess(
+  payload: ExpandZipArchiveSuccessAction
+): Merge<ExpandZipArchiveSuccessAction, {type: typeof ActionTypes.EXPAND_ZIP_ARCHIVE_SUCCESS}> {
+  return {
+    type: ActionTypes.EXPAND_ZIP_ARCHIVE_SUCCESS,
+    ...payload
   };
 }
 
 export type loadFilesSuccessUpdaterAction = {
   result: FileCacheItem[];
+  options?: AddDataToMapOptions;
+  /** Set when a file-load pause finishes, so a canceled load can be ignored. */
+  loadId?: number;
 };
 /**
  * called when all files are processed and loaded
  * @memberof visStateActions
  * @param result
+ * @param options forwarded to `addDataToMap`
  * @returns action
  */
 export function loadFilesSuccess(
-  result: FileCacheItem[]
+  result: FileCacheItem[],
+  options?: AddDataToMapOptions
 ): Merge<loadFilesSuccessUpdaterAction, {type: typeof ActionTypes.LOAD_FILES_SUCCESS}> {
   return {
     type: ActionTypes.LOAD_FILES_SUCCESS,
+    result,
+    ...(options ? {options} : {})
+  };
+}
+
+export type ConfirmReplaceDatasetUpdaterAction = {
+  result: FileCacheItem[];
+  datasetToReplaceId: string;
+  deleteOriginalDataset?: boolean;
+};
+/**
+ * Confirm a staged upload as a replacement for one dataset.
+ * The first dataset remaps that dataset's layers and filters. Further datasets are added.
+ * @memberof visStateActions
+ * @param payload.result staged file cache the user left checked
+ * @param payload.datasetToReplaceId dataset the menu action selected
+ * @param payload.deleteOriginalDataset drop the original table. Defaults to true
+ * @public
+ */
+export function confirmReplaceDataset(payload: {
+  result: FileCacheItem[];
+  datasetToReplaceId: string;
+  deleteOriginalDataset?: boolean;
+}): Merge<ConfirmReplaceDatasetUpdaterAction, {type: typeof ActionTypes.CONFIRM_REPLACE_DATASET}> {
+  return {
+    type: ActionTypes.CONFIRM_REPLACE_DATASET,
+    result: payload.result,
+    datasetToReplaceId: payload.datasetToReplaceId,
+    deleteOriginalDataset: payload.deleteOriginalDataset
+  };
+}
+
+export type StageLoadedFilesUpdaterAction = {
+  result: FileCacheItem[];
+  /** Set when a file-load pause finishes, so a canceled load can be ignored. */
+  loadId?: number;
+};
+/**
+ * Store processed files without adding them to the map or closing the modal.
+ * @memberof visStateActions
+ * @param result processed file cache
+ * @returns action
+ * @public
+ */
+export function stageLoadedFiles(
+  result: FileCacheItem[]
+): Merge<StageLoadedFilesUpdaterAction, {type: typeof ActionTypes.STAGE_LOADED_FILES}> {
+  return {
+    type: ActionTypes.STAGE_LOADED_FILES,
     result
+  };
+}
+
+/**
+ * Add already-parsed or remote datasets to the Add Data list without starting a file load.
+ * @memberof visStateActions
+ * @param result datasets to keep until Add Data
+ * @returns action
+ * @public
+ */
+export function appendStagedLoadedFiles(
+  result: FileCacheItem[]
+): Merge<StageLoadedFilesUpdaterAction, {type: typeof ActionTypes.APPEND_STAGED_LOADED_FILES}> {
+  return {
+    type: ActionTypes.APPEND_STAGED_LOADED_FILES,
+    result
+  };
+}
+
+/**
+ * Drop files staged for the Add Data button and stop an in-progress modal load.
+ * @memberof visStateActions
+ * @returns action
+ * @public
+ */
+export function clearStagedLoadedFiles(): {type: typeof ActionTypes.CLEAR_STAGED_LOADED_FILES} {
+  return {
+    type: ActionTypes.CLEAR_STAGED_LOADED_FILES
   };
 }
 
@@ -1840,6 +2168,8 @@ export function loadFileStepSuccess({
 export type LoadFilesErrUpdaterAction = {
   fileName: string;
   error: any;
+  /** Set when the failure belongs to one load, so a newer load can ignore it. */
+  loadId?: number;
 };
 /**
  * Trigger loading file error
@@ -1851,12 +2181,14 @@ export type LoadFilesErrUpdaterAction = {
 
 export function loadFilesErr(
   fileName: string,
-  error: any
+  error: any,
+  loadId?: number
 ): Merge<LoadFilesErrUpdaterAction, {type: typeof ActionTypes.LOAD_FILES_ERR}> {
   return {
     type: ActionTypes.LOAD_FILES_ERR,
     fileName,
-    error
+    error,
+    ...(loadId == null ? {} : {loadId})
   };
 }
 
@@ -2069,10 +2401,41 @@ export function convertEditorFeaturesToLayer(): Merge<
   };
 }
 
+export type ExtractDataFromFeatureUpdaterAction = {
+  layerId: string;
+};
+/**
+ * Copy in-memory rows that fall inside the currently selected Draw on Map polygon
+ * into a new local dataset. Vector tile layers extract a snapshot of features
+ * already loaded in the current view. Raster tile layers download a PNG clip and
+ * a GeoJSON file with the export rectangle and zonal stats. No-ops for WMS/3D/bitmap tiles, unsupported layer types,
+ * and non-polygon drawings.
+ * @memberof visStateActions
+ * @param layerId Layer whose dataset should be extracted
+ * @return action
+ * @public
+ * @example
+ * import {extractDataFromFeature} from '@kepler.gl/actions';
+ *
+ * this.props.dispatch(extractDataFromFeature({layerId: 'point-layer-id'}));
+ */
+export function extractDataFromFeature({
+  layerId
+}: ExtractDataFromFeatureUpdaterAction): Merge<
+  ExtractDataFromFeatureUpdaterAction,
+  {type: typeof ActionTypes.EXTRACT_DATA_FROM_FEATURE}
+> {
+  return {
+    type: ActionTypes.EXTRACT_DATA_FROM_FEATURE,
+    layerId
+  };
+}
+
 type FileContent = {
   fileName: string;
   header: string[];
   data: any;
+  prepareProgressiveReplay?: boolean;
 };
 export type NextFileBatchUpdaterAction = {
   payload: {
@@ -2082,6 +2445,8 @@ export type NextFileBatchUpdaterAction = {
     progress?: any;
     accumulated?: any;
     onFinish: (result: any) => any;
+    /** Carried across batches so progressive loads keep the original add-data options. */
+    options?: LoadFilesOptions;
   };
 };
 /**
@@ -2280,15 +2645,194 @@ export function setTimeFilterSyncTimelineMode({
 export type CreateNewDatasetSuccessPayload = {
   results: (PromiseFulfilledResult<KeplerTable> | PromiseRejectedResult)[];
   addToMapOptions: AddDataToMapPayload['options'];
+  /** Dataset ids whose hydrate download progress should be cleared. */
+  progressIds?: string[];
 };
 
-/**
- * Called when a new dataset is created successfully via async table methods
- * @memberof visStateActions
- * @param payload
- * @param payload.results - results of promises.allSettlted
- * @returns
- */
+export type AddGroupByUpdaterAction = {
+  dataId: string;
+};
+
+export function addGroupBy(
+  dataId: string
+): Merge<AddGroupByUpdaterAction, {type: typeof ActionTypes.ADD_GROUP_BY}> {
+  return {
+    type: ActionTypes.ADD_GROUP_BY,
+    dataId
+  };
+}
+
+export type SetGroupByConfigUpdaterAction = {
+  id: string;
+  config: Partial<GroupByOp>;
+};
+
+export function setGroupByConfig(
+  id: string,
+  config: Partial<GroupByOp>
+): Merge<SetGroupByConfigUpdaterAction, {type: typeof ActionTypes.SET_GROUP_BY_CONFIG}> {
+  return {
+    type: ActionTypes.SET_GROUP_BY_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunGroupByUpdaterAction = {
+  id: string;
+};
+
+export function runGroupBy(
+  id: string
+): Merge<RunGroupByUpdaterAction, {type: typeof ActionTypes.RUN_GROUP_BY}> {
+  return {
+    type: ActionTypes.RUN_GROUP_BY,
+    id
+  };
+}
+
+export type AddJoinUpdaterAction = {
+  dataId: string;
+  implementation?: JoinOp['implementation'];
+};
+
+export function addJoin(
+  dataId: string,
+  implementation: JoinOp['implementation'] = 'simple'
+): Merge<AddJoinUpdaterAction, {type: typeof ActionTypes.ADD_JOIN}> {
+  return {
+    type: ActionTypes.ADD_JOIN,
+    dataId,
+    implementation
+  };
+}
+
+export type SetJoinConfigUpdaterAction = {
+  id: string;
+  config: Partial<JoinOp>;
+};
+
+export function setJoinConfig(
+  id: string,
+  config: Partial<JoinOp>
+): Merge<SetJoinConfigUpdaterAction, {type: typeof ActionTypes.SET_JOIN_CONFIG}> {
+  return {
+    type: ActionTypes.SET_JOIN_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunJoinUpdaterAction = {
+  id: string;
+};
+
+export function runJoin(
+  id: string
+): Merge<RunJoinUpdaterAction, {type: typeof ActionTypes.RUN_JOIN}> {
+  return {
+    type: ActionTypes.RUN_JOIN,
+    id
+  };
+}
+
+export type AddSpatialJoinUpdaterAction = {
+  dataId: string;
+};
+
+export function addSpatialJoin(
+  dataId: string
+): Merge<AddSpatialJoinUpdaterAction, {type: typeof ActionTypes.ADD_SPATIAL_JOIN}> {
+  return {
+    type: ActionTypes.ADD_SPATIAL_JOIN,
+    dataId
+  };
+}
+
+export type SetSpatialJoinConfigUpdaterAction = {
+  id: string;
+  config: Partial<JoinOp>;
+};
+
+export function setSpatialJoinConfig(
+  id: string,
+  config: Partial<JoinOp>
+): Merge<SetSpatialJoinConfigUpdaterAction, {type: typeof ActionTypes.SET_SPATIAL_JOIN_CONFIG}> {
+  return {
+    type: ActionTypes.SET_SPATIAL_JOIN_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunSpatialJoinUpdaterAction = {
+  id: string;
+};
+
+export function runSpatialJoin(
+  id: string
+): Merge<RunSpatialJoinUpdaterAction, {type: typeof ActionTypes.RUN_SPATIAL_JOIN}> {
+  return {
+    type: ActionTypes.RUN_SPATIAL_JOIN,
+    id
+  };
+}
+
+export type AddSuitabilityUpdaterAction = {
+  dataId: string;
+};
+
+export function addSuitability(
+  dataId: string
+): Merge<AddSuitabilityUpdaterAction, {type: typeof ActionTypes.ADD_SUITABILITY}> {
+  return {
+    type: ActionTypes.ADD_SUITABILITY,
+    dataId
+  };
+}
+
+export type SetSuitabilityConfigUpdaterAction = {
+  id: string;
+  config: Partial<SuitabilityOp>;
+};
+
+export function setSuitabilityConfig(
+  id: string,
+  config: Partial<SuitabilityOp>
+): Merge<SetSuitabilityConfigUpdaterAction, {type: typeof ActionTypes.SET_SUITABILITY_CONFIG}> {
+  return {
+    type: ActionTypes.SET_SUITABILITY_CONFIG,
+    id,
+    config
+  };
+}
+
+export type RunSuitabilityUpdaterAction = {
+  id: string;
+};
+
+export function runSuitability(
+  id: string
+): Merge<RunSuitabilityUpdaterAction, {type: typeof ActionTypes.RUN_SUITABILITY}> {
+  return {
+    type: ActionTypes.RUN_SUITABILITY,
+    id
+  };
+}
+
+export type RemoveDatasetOpUpdaterAction = {
+  id: string;
+};
+
+export function removeDatasetOp(
+  id: string
+): Merge<RemoveDatasetOpUpdaterAction, {type: typeof ActionTypes.REMOVE_DATASET_OP}> {
+  return {
+    type: ActionTypes.REMOVE_DATASET_OP,
+    id
+  };
+}
+
 export const createNewDatasetSuccess = createAction<CreateNewDatasetSuccessPayload>(
   ActionTypes.CREATE_NEW_DATASET_SUCCESS
 );
@@ -2307,6 +2851,32 @@ export type SetLoadingIndicatorPayload = {
 export const setLoadingIndicator = createAction<SetLoadingIndicatorPayload>(
   ActionTypes.SET_LOADING_INDICATOR
 );
+
+export type SetLoadingProgressUpdaterAction = {
+  id: string;
+  percent: number;
+  /** Download is finished and the file is being parsed into a dataset. */
+  phase?: 'processing';
+};
+
+/**
+ * Update download progress for an in-flight dataset load shown on the map
+ * loading indicator (0–100).
+ * @memberof visStateActions
+ * @returns action
+ */
+export function setLoadingProgress(
+  id: string,
+  percent: number,
+  phase?: 'processing'
+): Merge<SetLoadingProgressUpdaterAction, {type: typeof ActionTypes.SET_LOADING_PROGRESS}> {
+  return {
+    type: ActionTypes.SET_LOADING_PROGRESS,
+    id,
+    percent,
+    ...(phase ? {phase} : {})
+  };
+}
 
 /**
  * This declaration is needed to group actions in docs

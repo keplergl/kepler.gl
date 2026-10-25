@@ -259,14 +259,14 @@ interface GetRowCellProps {
 /*
  * This is an accessor method used to generalize getting a cell from a data row
  */
-const defaultGetRowCell = (
+export const defaultGetRowCell = (
   {dataContainer, columns, column, colMeta, rowIndex, sortOrder}: GetRowCellProps,
   formatter
 ) => {
   const rowIdx = sortOrder && sortOrder.length ? get(sortOrder, rowIndex) : rowIndex;
-  const {type} = colMeta[column];
+  const {type, colIdx} = colMeta[column];
 
-  const value = dataContainer?.valueAt(rowIdx, columns.indexOf(column));
+  const value = dataContainer?.valueAt(rowIdx, colIdx ?? columns.indexOf(column));
   if (value === null || value === undefined || value === '') {
     return '';
   }
@@ -449,13 +449,20 @@ export interface DataTableProps {
   fixedWidth?: number | null;
   theme?: any;
   dataContainer: DataContainerInterface | null;
+  /** Unfiltered source data used to validate whole-column type changes. */
+  typeChangeDataContainer?: DataContainerInterface | null;
   fixedHeight?: number | null;
   colMeta: ColMeta;
   sortColumn: SortColumn;
   sortTableColumn: (column: string, mode?: string) => void;
   pinTableColumn: (column: string) => void;
+  hideTableColumn?: (column: string) => void;
   setColumnDisplayFormat?: (formats: {[key: string]: string}) => void;
   copyTableColumn: (column: string) => void;
+  renameTableColumn?: (column: string, newName: string) => void;
+  changeTableColumnType?: (column: string, newType: string) => void;
+  deleteTableColumn?: (column: string) => void;
+  createFilterFromColumn?: (column: string) => void;
   sortOrder?: number[] | null;
   showStats?: boolean;
   hasCustomScrollBarStyle?: boolean;

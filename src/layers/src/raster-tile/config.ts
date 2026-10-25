@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {RasterTileLayerColorMaps, RasterTileLayerPresets} from './raster-tile-layer-schema';
 import {
   VisConfigBoolean,
   VisConfigNumber,
@@ -9,6 +8,8 @@ import {
   VisConfigObjectSelection,
   VisConfigInput
 } from '@kepler.gl/types';
+
+import {RasterTileLayerColorMaps, RasterTileLayerPresets} from './raster-tile-layer-schema';
 
 import {ColorRescaling, ConfigOption, PresetData, BandCombination} from './types';
 
@@ -738,6 +739,14 @@ export const rasterVisConfigs = {
     step: 0.05,
     type: 'number'
   } as VisConfigNumber,
+  allowHover: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.allowHover',
+    description: 'layerVisConfigs.allowHoverDescription',
+    group: '',
+    property: 'allowHover'
+  } as VisConfigBoolean,
   _stacQuery: {
     defaultValue: null,
     type: 'input'

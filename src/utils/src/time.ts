@@ -14,10 +14,10 @@ import {
   TickInterval
 } from '@kepler.gl/constants';
 import {toArray} from '@kepler.gl/common-utils';
-import {AnimationConfig, Timeline, TimeRangeFilter, Filter} from '@kepler.gl/types';
+import {AnimationConfig, Timeline, TimeRangeFilter, RangeFilter, Filter} from '@kepler.gl/types';
 
 import {getFrequency} from './aggregation';
-import {getBinThresholds} from './plot';
+import {getFilterBinThresholds} from './plot';
 import {KeplerTableModel} from './types';
 
 export const TIMELINE_MODES = {
@@ -25,7 +25,7 @@ export const TIMELINE_MODES = {
   outer: 'outer'
 };
 
-export const TileTimeInterval = {
+export const LayerTimeInterval = {
   YEAR: 'Y',
   MONTH: 'M',
   DAY: 'D',
@@ -34,19 +34,19 @@ export const TileTimeInterval = {
 };
 
 export const TIME_INTERVALS_ORDERED = [
-  TileTimeInterval.MINUTE,
-  TileTimeInterval.HOUR,
-  TileTimeInterval.DAY,
-  TileTimeInterval.MONTH,
-  TileTimeInterval.YEAR
+  LayerTimeInterval.MINUTE,
+  LayerTimeInterval.HOUR,
+  LayerTimeInterval.DAY,
+  LayerTimeInterval.MONTH,
+  LayerTimeInterval.YEAR
 ];
 
 export const LayerToFilterTimeInterval = {
-  [TileTimeInterval.MINUTE]: INTERVAL['1-minute'],
-  [TileTimeInterval.HOUR]: INTERVAL['1-hour'],
-  [TileTimeInterval.DAY]: INTERVAL['1-day'],
-  [TileTimeInterval.MONTH]: INTERVAL['1-month'],
-  [TileTimeInterval.YEAR]: INTERVAL['1-year']
+  [LayerTimeInterval.MINUTE]: INTERVAL['1-minute'],
+  [LayerTimeInterval.HOUR]: INTERVAL['1-hour'],
+  [LayerTimeInterval.DAY]: INTERVAL['1-day'],
+  [LayerTimeInterval.MONTH]: INTERVAL['1-month'],
+  [LayerTimeInterval.YEAR]: INTERVAL['1-year']
 };
 
 export const SAMPLE_TIMELINE = {
@@ -317,7 +317,8 @@ export function filterIntervalOptions(options, domain) {
  * @param filter TimeRangeFilter filter
  * @returns Timeline
  */
-export const getTimelineFromFilter = (filter: TimeRangeFilter): Timeline => {
+export const getTimelineFromFilter = (filter: TimeRangeFilter | RangeFilter): Timeline => {
+  const timeFilter = filter.type === 'timeRange' ? filter : null;
   const {
     value,
     domain,
@@ -326,27 +327,22 @@ export const getTimelineFromFilter = (filter: TimeRangeFilter): Timeline => {
     step,
     // @ts-expect-error
     timeSteps,
-    defaultTimeFormat,
-    timeFormat,
-    timezone,
-    timeBins,
-    animationWindow,
-    plotType
+    animationWindow
   } = filter;
 
   return {
     value,
     enableInteraction: true,
-    domain,
+    domain: domain as [number, number],
     speed,
     isAnimating,
     step,
     timeSteps,
-    defaultTimeFormat,
-    timeFormat,
-    timezone,
-    timeBins,
+    defaultTimeFormat: timeFilter?.defaultTimeFormat,
+    timeFormat: timeFilter?.timeFormat,
+    timezone: timeFilter?.timezone,
+    timeBins: timeFilter?.timeBins,
     animationWindow,
-    marks: getBinThresholds(plotType?.interval, domain)
+    marks: getFilterBinThresholds(filter)
   };
 };

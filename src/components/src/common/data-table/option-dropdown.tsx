@@ -1,20 +1,33 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import Portaled from '../portaled';
 import DropdownList from '../item-selector/dropdown-list';
 import {
+  ALL_FIELD_TYPES,
   SORT_ORDER,
   TABLE_OPTION,
   TABLE_OPTION_LIST,
   TooltipFormat,
   TableOption
 } from '@kepler.gl/constants';
-import {getFieldFormatLabels} from '@kepler.gl/utils';
+import {DataContainerInterface, getFieldFormatLabels} from '@kepler.gl/utils';
 import {ColMeta} from '@kepler.gl/types';
-import {ArrowDown, ArrowUp, Clipboard, Pin, Cancel, Hash} from '../icons';
+import {getCompatibleColumnTypes} from '@kepler.gl/table';
+import {
+  ArrowDown,
+  ArrowUp,
+  Clipboard,
+  Pin,
+  Cancel,
+  Hash,
+  Edit,
+  Trash,
+  FilterFunnel,
+  EyeUnseen
+} from '../icons';
 
 const ListItem = ({value}) => (
   <div>
@@ -28,6 +41,8 @@ const StyledOptionsDropdown = styled.div`
   .list-selector {
     border-top: 0;
     width: max-content;
+    max-height: 320px;
+    overflow-y: auto;
     padding: 8px 0;
   }
 
@@ -52,12 +67,39 @@ const StyledOptionsDropdown = styled.div`
   }
 `;
 
+const StyledDeleteConfirm = styled.div`
+  min-width: 180px;
+  padding: 12px;
+  background: ${props => props.theme.dropdownListBgdLT};
+  color: ${props => props.theme.textColorLT};
+  font-size: 12px;
+
+  .column-delete-confirm__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  button {
+    border: 0;
+    border-radius: 2px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .column-delete-confirm__delete {
+    background: ${props => props.theme.negativeBtnBgd || '#b00'};
+    color: ${props => props.theme.negativeBtnColor || '#fff'};
+  }
+`;
+
 const StyledPopover = styled.div`
   width: 184px;
-  height: 160px;
+  height: 200px;
   z-index: 101;
   .list-selector {
-    max-height: 160px;
+    max-height: 200px;
   }
   .hover:after {
     content: '\\2713';
@@ -119,12 +161,29 @@ export interface OptionDropdownProps {
   toggleMoreOptions: (column: string) => void;
   sortTableColumn?: (sort: string) => void;
   pinTableColumn: () => void;
+  hideTableColumn?: () => void;
   copyTableColumn: () => void;
   setDisplayFormat?: (displayFormat: any) => void;
   sortMode?: string;
   isSorted?: string;
   isPinned?: boolean;
+  renameTableColumn?: (column: string, newName: string) => void;
+  changeTableColumnType?: (column: string, newType: string) => void;
+  typeChangeDataContainer?: DataContainerInterface | null;
+  columnIndex?: number;
+  deleteTableColumn?: (column: string) => void;
+  createFilterFromColumn?: (column: string) => void;
+  onStartRename?: () => void;
 }
+
+const COLUMN_TYPE_OPTIONS = [
+  {type: ALL_FIELD_TYPES.integer, display: 'Integer'},
+  {type: ALL_FIELD_TYPES.real, display: 'Real'},
+  {type: ALL_FIELD_TYPES.string, display: 'String'},
+  {type: ALL_FIELD_TYPES.timestamp, display: 'Timestamp'}
+];
+
+type ColumnTypeOption = (typeof COLUMN_TYPE_OPTIONS)[number];
 
 const OptionDropdown = (props: OptionDropdownProps) => {
   const {
@@ -134,10 +193,33 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     toggleMoreOptions,
     sortTableColumn,
     pinTableColumn,
+    hideTableColumn,
     copyTableColumn,
-    setDisplayFormat
+    setDisplayFormat,
+    changeTableColumnType,
+    typeChangeDataContainer,
+    columnIndex = -1,
+    deleteTableColumn,
+    createFilterFromColumn,
+    onStartRename
   } = props;
   const [showFormatter, setShowFormatter] = useState(false);
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const currentType = colMeta[column]?.type;
+  const columnTypeOptions = useMemo<ColumnTypeOption[]>(() => {
+    if (!COLUMN_TYPE_OPTIONS.some(option => option.type === currentType)) {
+      return [];
+    }
+    if (!showTypeSelector || !changeTableColumnType || !typeChangeDataContainer) {
+      return COLUMN_TYPE_OPTIONS;
+    }
+    const compatibleTypes = new Set(
+      getCompatibleColumnTypes(typeChangeDataContainer, columnIndex, currentType)
+    );
+    return COLUMN_TYPE_OPTIONS.filter(option => compatibleTypes.has(option.type));
+  }, [changeTableColumnType, columnIndex, currentType, showTypeSelector, typeChangeDataContainer]);
+  const hasCompatibleAlternative = columnTypeOptions.some(option => option.type !== currentType);
   const onOptionSelected: (v: TableOption) => void = useCallback(
     ({value}) => {
       switch (value) {
@@ -159,8 +241,23 @@ const OptionDropdown = (props: OptionDropdownProps) => {
         case TABLE_OPTION.COPY:
           copyTableColumn();
           break;
+        case TABLE_OPTION.HIDE:
+          hideTableColumn?.();
+          break;
         case TABLE_OPTION.FORMAT_COLUMN:
           setShowFormatter(true);
+          return;
+        case TABLE_OPTION.RENAME:
+          onStartRename?.();
+          break;
+        case TABLE_OPTION.CHANGE_TYPE:
+          setShowTypeSelector(true);
+          return;
+        case TABLE_OPTION.CREATE_FILTER:
+          createFilterFromColumn?.(column);
+          break;
+        case TABLE_OPTION.DELETE:
+          setConfirmDelete(true);
           return;
         default:
           break;
@@ -168,7 +265,16 @@ const OptionDropdown = (props: OptionDropdownProps) => {
 
       toggleMoreOptions(column);
     },
-    [column, sortTableColumn, pinTableColumn, copyTableColumn, toggleMoreOptions]
+    [
+      column,
+      sortTableColumn,
+      pinTableColumn,
+      hideTableColumn,
+      copyTableColumn,
+      toggleMoreOptions,
+      onStartRename,
+      createFilterFromColumn
+    ]
   );
 
   const TABLE_OPTION_LIST_ICONS = {
@@ -177,7 +283,11 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     ArrowUp,
     Clipboard,
     Cancel,
-    Hash
+    Hash,
+    Edit,
+    Trash,
+    FilterFunnel,
+    EyeUnseen
   };
 
   const formatLabels = getFieldFormatLabels(colMeta[column].type);
@@ -185,7 +295,8 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     // cant use conditions because it creates a circular dependency
     // TODO: move condition clause out of default-settings TABLE_OPTION_LIST
     const validToFormat = op.value !== TABLE_OPTION.FORMAT_COLUMN || formatLabels.length;
-    return (!op.condition || op.condition(props)) && validToFormat;
+    const validToChangeType = op.value !== TABLE_OPTION.CHANGE_TYPE || hasCompatibleAlternative;
+    return (!op.condition || op.condition(props)) && validToFormat && validToChangeType;
   }).map(op => ({
     ...op,
     icon: TABLE_OPTION_LIST_ICONS[op.icon]
@@ -193,19 +304,42 @@ const OptionDropdown = (props: OptionDropdownProps) => {
 
   const onClose = useCallback(() => {
     setShowFormatter(false);
+    setShowTypeSelector(false);
+    setConfirmDelete(false);
     toggleMoreOptions(column);
   }, [column, toggleMoreOptions]);
 
   return (
     <Portaled right={120} top={20} isOpened={isOpened} onClose={onClose}>
       <StyledOptionsDropdown className="more-options">
-        <DropdownList
-          displayOption={d => (d as TableOption).display}
-          options={options}
-          customListItemComponent={ListItem}
-          onOptionSelected={onOptionSelected}
-          light
-        />
+        {confirmDelete ? (
+          <StyledDeleteConfirm className="column-delete-confirm">
+            <div>Delete this column?</div>
+            <div className="column-delete-confirm__actions">
+              <button
+                type="button"
+                className="column-delete-confirm__delete"
+                onClick={() => {
+                  deleteTableColumn?.(column);
+                  toggleMoreOptions(column);
+                }}
+              >
+                Delete
+              </button>
+              <button type="button" onClick={() => setConfirmDelete(false)}>
+                Cancel
+              </button>
+            </div>
+          </StyledDeleteConfirm>
+        ) : (
+          <DropdownList
+            displayOption={d => (d as TableOption).display}
+            options={options}
+            customListItemComponent={ListItem}
+            onOptionSelected={onOptionSelected}
+            light
+          />
+        )}
         <FormatterDropdown
           left={120}
           top={-10}
@@ -215,6 +349,26 @@ const OptionDropdown = (props: OptionDropdownProps) => {
           setDisplayFormat={setDisplayFormat}
           onClose={onClose}
         />
+        <Portaled
+          left={120}
+          top={-10}
+          isOpened={Boolean(isOpened && showTypeSelector)}
+          onClose={onClose}
+        >
+          <StyledPopover className="column-type-popover">
+            <DropdownList
+              options={columnTypeOptions}
+              selectionIndex={columnTypeOptions.findIndex(option => option.type === currentType)}
+              displayOption={option => (option as ColumnTypeOption).display}
+              onOptionSelected={option => {
+                const {type} = option as ColumnTypeOption;
+                if (type !== currentType) changeTableColumnType?.(column, type);
+                onClose();
+              }}
+              light
+            />
+          </StyledPopover>
+        </Portaled>
       </StyledOptionsDropdown>
     </Portaled>
   );

@@ -35,10 +35,7 @@ test('sliderScaleUtils -> valueToPosition boundary values (focus at start)', t =
   // focus boundary value => position equals focusWeight
   // Since focusRange starts at min (0.001), beforeWeight = 0, so focusEnd = 0.6
   const posAtFocusBound = valueToPosition(1, 0.001, 20, config);
-  t.ok(
-    Math.abs(posAtFocusBound - 0.6) < 1e-10,
-    'focus boundary maps to focusWeight position'
-  );
+  t.ok(Math.abs(posAtFocusBound - 0.6) < 1e-10, 'focus boundary maps to focusWeight position');
 
   t.end();
 });
@@ -57,10 +54,7 @@ test('sliderScaleUtils -> valueToPosition distributes space correctly (focus at 
   // A value halfway through rest range should be at ~0.8 (0.6 + half of 0.4)
   const midRest = (1 + 20) / 2; // 10.5
   const posAtMidRest = valueToPosition(midRest, 0.001, 20, config);
-  t.ok(
-    Math.abs(posAtMidRest - 0.8) < 0.01,
-    'midpoint of rest range maps to ~0.8'
-  );
+  t.ok(Math.abs(posAtMidRest - 0.8) < 0.01, 'midpoint of rest range maps to ~0.8');
 
   t.end();
 });
@@ -78,10 +72,7 @@ test('sliderScaleUtils -> positionToValue boundary values (focus at start)', t =
 
   // position at focusWeight => focus boundary
   const valAtWeight = positionToValue(0.6, 0.001, 20, config);
-  t.ok(
-    Math.abs(valAtWeight - 1) < 1e-10,
-    'position at focusWeight maps to focus boundary'
-  );
+  t.ok(Math.abs(valAtWeight - 1) < 1e-10, 'position at focusWeight maps to focus boundary');
 
   t.end();
 });
@@ -93,10 +84,7 @@ test('sliderScaleUtils -> roundtrip: valueToPosition and positionToValue are inv
   testValues.forEach(val => {
     const pos = valueToPosition(val, 0.001, 20, config);
     const recovered = positionToValue(pos, 0.001, 20, config);
-    t.ok(
-      Math.abs(recovered - val) < 1e-10,
-      `roundtrip for value ${val}: got ${recovered}`
-    );
+    t.ok(Math.abs(recovered - val) < 1e-10, `roundtrip for value ${val}: got ${recovered}`);
   });
 
   const testPositions = [0, 0.1, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 1];

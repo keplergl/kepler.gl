@@ -8,10 +8,26 @@ export enum DatasetType {
   RASTER_TILE = 'raster-tile',
   WMS_TILE = 'wms-tile',
   TILE_3D = 'tile-3d',
-  BITMAP = 'bitmap'
+  BITMAP = 'bitmap',
+  ZARR = 'zarr'
 }
 
-export const REMOTE_FILE_FORMATS = ['auto', 'csv', 'geojson', 'json', 'arrow', 'parquet'] as const;
+export const REMOTE_FILE_FORMATS = [
+  'auto',
+  'csv',
+  'geojson',
+  'json',
+  'arrow',
+  'parquet',
+  'geojsonl',
+  'ndjson',
+  'kml',
+  'gpx',
+  'tcx',
+  'shp',
+  'xlsx',
+  'fgb'
+] as const;
 export type RemoteFileFormat = (typeof REMOTE_FILE_FORMATS)[number];
 
 export const REMOTE_FILE_MIME_TYPES: Record<Exclude<RemoteFileFormat, 'auto'>, string> = {
@@ -19,7 +35,15 @@ export const REMOTE_FILE_MIME_TYPES: Record<Exclude<RemoteFileFormat, 'auto'>, s
   geojson: 'application/geo+json',
   json: 'application/json',
   arrow: 'application/vnd.apache.arrow.file',
-  parquet: 'application/vnd.apache.parquet'
+  parquet: 'application/vnd.apache.parquet',
+  geojsonl: 'application/geo+x-ndjson',
+  ndjson: 'application/x-ndjson',
+  kml: 'application/vnd.google-earth.kml+xml',
+  gpx: 'application/gpx+xml',
+  tcx: 'application/vnd.garmin.tcx+xml',
+  shp: 'application/x-esri-shapefile',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  fgb: 'application/x-flatgeobuf'
 };
 
 export const REMOTE_FILE_EXTENSIONS: Record<Exclude<RemoteFileFormat, 'auto'>, string> = {
@@ -27,7 +51,15 @@ export const REMOTE_FILE_EXTENSIONS: Record<Exclude<RemoteFileFormat, 'auto'>, s
   geojson: 'geojson',
   json: 'json',
   arrow: 'arrow',
-  parquet: 'parquet'
+  parquet: 'parquet',
+  geojsonl: 'geojsonl',
+  ndjson: 'ndjson',
+  kml: 'kml',
+  gpx: 'gpx',
+  tcx: 'tcx',
+  shp: 'shp',
+  xlsx: 'xlsx',
+  fgb: 'fgb'
 };
 
 export const MIME_TO_REMOTE_FILE_EXTENSION: Record<string, string> = {
@@ -39,7 +71,21 @@ export const MIME_TO_REMOTE_FILE_EXTENSION: Record<string, string> = {
   'application/vnd.apache.arrow.file': 'arrow',
   'application/vnd.apache.arrow.stream': 'arrow',
   'application/vnd.apache.parquet': 'parquet',
-  'application/x-parquet': 'parquet'
+  'application/x-parquet': 'parquet',
+  'application/geo+x-ndjson': 'geojsonl',
+  'application/geo+x-ldjson': 'geojsonl',
+  'application/geo+json-seq': 'geojsonl',
+  'application/x-ndjson': 'ndjson',
+  'application/jsonlines': 'ndjson',
+  'application/json-seq': 'ndjson',
+  'application/vnd.google-earth.kml+xml': 'kml',
+  'application/gpx+xml': 'gpx',
+  'application/vnd.garmin.tcx+xml': 'tcx',
+  'application/x-esri-shapefile': 'shp',
+  'application/shp': 'shp',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/x-flatgeobuf': 'fgb',
+  'application/flatgeobuf': 'fgb'
 };
 
 export const DATASET_REFRESH_INTERVAL_OPTIONS: {value: number; labelId: string}[] = [
@@ -189,13 +235,115 @@ export type RasterTileMetadataSourceType = {
 export type RasterTileDatasetMetadata = (RasterTileLocalMetadata | RasterTileRemoteMetadata) &
   RasterTileMetadataSourceType;
 
+export type WMSServiceLayer = {
+  name: string;
+  title: string;
+  boundingBox: number[] | null;
+  queryable?: boolean;
+  legendUrl?: string | null;
+};
+
 export type WMSDatasetMetadata = {
   type: typeof REMOTE_TILE;
   remoteTileFormat: RemoteTileFormat.WMS;
   tilesetDataUrl: string;
   tilesetMetadataUrl: string;
   version: string;
-  layers: {name: string; title: string; boundingBox: number[] | null}[];
+  layers: WMSServiceLayer[];
+  label?: string;
+  attribution?: string;
+};
+
+/** A non-spatial dimension of a Zarr variable, e.g. `time`, `band`, `depth`. */
+export type ZarrDimensionInfo = {
+  name: string;
+  size: number;
+  /**
+   * Coordinate values for the dimension, when the store exposes a matching
+   * coordinate array. Time coordinates are decoded to epoch milliseconds.
+   */
+  values?: (number | string | boolean)[];
+  /** Preserve coordinate semantics instead of guessing from its name or dtype. */
+  kind?: 'time' | 'duration' | 'number' | 'category';
+  units?: string;
+  calendar?: string;
+  standardName?: string;
+  /** Original offsets for decoded CF time coordinates. */
+  rawValues?: (number | string | boolean)[];
+};
+
+/** Empty/missing keeps the original automatic layer time axis. */
+export type ZarrAxisConfig =
+  | {kind?: 'auto' | 'off'}
+  | {kind: 'dimension'; dimension: string}
+  | {kind: 'forecast'; referenceTime: string; leadTime: string};
+
+export type ZarrVariableInfo = {
+  /** Path of the variable within the Zarr group. Empty for a root-level array. */
+  path: string;
+  /**
+   * Node to open for rendering, when it differs from `path`. A pyramid keeps
+   * its levels under a shared parent, so the renderer is handed that parent
+   * while each variable keeps its own identity.
+   */
+  nodePath?: string;
+  /** Name of the array itself, i.e. the last path segment. */
+  name: string;
+  /**
+   * Label to show in variable pickers. Equal to `name`, qualified with enough
+   * leading path segments to stay unique when sibling groups hold arrays of the
+   * same name, e.g. `FUTUR/evap_total` and `HISTO/evap_total`.
+   */
+  displayName: string;
+  /**
+   * GeoZarr-convention attributes describing the spatial grid. Taken from the
+   * store when it declares them, otherwise derived from CF/GDAL metadata.
+   */
+  geoAttrs?: Record<string, unknown>;
+  /** Parsed grid and pyramid settings for this variable, independent of the active variable. */
+  spatialMetadata?: Pick<
+    ZarrDatasetMetadata,
+    'crs' | 'axes' | 'xAxisIndex' | 'yAxisIndex' | 'levels' | 'webMercatorPyramid'
+  >;
+  /** Shape of the finest resolution level. */
+  shape: number[];
+  /** Chunk shape of the finest resolution level. */
+  chunks: number[];
+  dtype: string;
+  /** Non-spatial dimensions, in array order. */
+  nonSpatialDims: ZarrDimensionInfo[];
+  /** The non-spatial dimension recognized as time, when present. */
+  timeDimension?: ZarrDimensionInfo;
+  /** Value range advertised by the array attrs, used as the default rescale. */
+  dataRange?: [number, number];
+  /** Fill value advertised by the array attrs or zarr metadata. */
+  nodataValue?: number;
+};
+
+export type ZarrDatasetMetadata = {
+  /** Root URL of the Zarr store. */
+  url: string;
+  /** Path of the selected variable within the store. */
+  variable?: string;
+  crs?: {code?: string; wkt2?: string};
+  /** Axis names of the selected variable, e.g. `['time', 'y', 'x']`. */
+  axes: string[];
+  xAxisIndex: number;
+  yAxisIndex: number;
+  /** Resolution levels, finest first. */
+  levels: {path: string; shape: number[]; chunks: number[]}[];
+  /**
+   * Set when every level is reprojected to EPSG:3857 and spans the whole world,
+   * which is what `ndpyramid`'s `pyramid_reproject` writes. The level to draw
+   * then follows the map zoom rather than the data's own resolution.
+   */
+  webMercatorPyramid?: boolean;
+  /** Every renderable variable in the store, for the variable picker. */
+  variables: ZarrVariableInfo[];
+  nonSpatialDims: ZarrDimensionInfo[];
+  timeDimension?: ZarrDimensionInfo;
+  dataRange?: [number, number];
+  nodataValue?: number;
   label?: string;
   attribution?: string;
 };

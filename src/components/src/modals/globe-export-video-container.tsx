@@ -22,7 +22,11 @@ import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {parseSetCameraType, scaleToVideoExport, getResolutionSetting} from './hubble-utils';
 import {GlobeExportVideoPreview} from './globe-export-video-preview';
 import SwipeExportSettings from './swipe-export-settings';
-import {drawStarsBackground, getGlobeClearColor, getStarsBackgroundImage} from '@kepler.gl/deckgl-layers';
+import {
+  drawStarsBackground,
+  getGlobeClearColor,
+  getStarsBackgroundImage
+} from '@kepler.gl/deckgl-layers';
 
 // No-op for the swipe-specific settings callbacks that this single-map globe
 // exporter doesn't use (the swipe controls are hidden via `hideSwipe`).

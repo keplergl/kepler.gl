@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
+import {drainTasksForTesting, succeedTaskWithValues} from '@kepler.gl/tasks';
 
 import {KeplerTable} from '@kepler.gl/table';
 

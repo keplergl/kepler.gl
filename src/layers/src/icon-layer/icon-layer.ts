@@ -15,6 +15,7 @@ import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {getApplicationConfig, DataContainerInterface} from '@kepler.gl/utils';
 import type {SvgIcon} from '@kepler.gl/utils';
+import GEOCODER_PLACE_ICON from './geocoder-icon';
 import {
   ColorRange,
   VisConfigBoolean,
@@ -174,6 +175,16 @@ export default class IconLayer extends Layer {
     this.iconGeometry = props.iconGeometry || null;
     this.iconGeometryVersion = 0;
 
+    const fallbackIcons = props.id === GEOCODER_LAYER_ID ? [GEOCODER_PLACE_ICON] : [];
+    if (fallbackIcons.length) {
+      this.setSvgIcons(
+        props.svgIcons ? this.mergeIcons(fallbackIcons, props.svgIcons) : fallbackIcons
+      );
+      if (props.svgIcons) {
+        return;
+      }
+    }
+
     if (isTest()) {
       return;
     }
@@ -182,7 +193,7 @@ export default class IconLayer extends Layer {
       this.setSvgIcons(props.svgIcons);
     } else {
       // prepare layer info modal and fetch remote svg icons
-      this.getSvgIcons();
+      this.getSvgIcons(fallbackIcons);
     }
   }
 
@@ -242,7 +253,7 @@ export default class IconLayer extends Layer {
     return Math.pow(2, 14 - zoom + zoomOffset);
   }
 
-  getSvgIcons() {
+  getSvgIcons(fallbackIcons: SvgIcon[] = []) {
     const fetchConfig = {
       method: 'GET',
       mode: 'cors',
@@ -273,7 +284,9 @@ export default class IconLayer extends Layer {
         ? Window.fetch(customIconUrl, fetchConfig)
             .then(response => {
               if (!response.ok) {
-                throw new Error(`Failed to load custom icons from ${customIconUrl}: ${response.status}`);
+                throw new Error(
+                  `Failed to load custom icons from ${customIconUrl}: ${response.status}`
+                );
               }
               return response.json();
             })
@@ -284,12 +297,15 @@ export default class IconLayer extends Layer {
             })
         : Promise.resolve([] as SvgIcon[]);
 
-    Promise.all([cdnPromise, customUrlPromise]).then(([cdnIcons, remoteCustomIcons]) => {
-      const mergedCdnAndRemote = this.mergeIcons(cdnIcons, remoteCustomIcons);
-      this.setSvgIcons(mergedCdnAndRemote);
-    }).catch(() => {
-      this.setSvgIcons([]);
-    });
+    return Promise.all([cdnPromise, customUrlPromise])
+      .then(([cdnIcons, remoteCustomIcons]) => {
+        const iconsWithFallback = this.mergeIcons(fallbackIcons, cdnIcons);
+        const mergedCdnAndRemote = this.mergeIcons(iconsWithFallback, remoteCustomIcons);
+        this.setSvgIcons(mergedCdnAndRemote);
+      })
+      .catch(() => {
+        this.setSvgIcons(fallbackIcons);
+      });
   }
 
   setSvgIcons(svgIcons: SvgIcon[] = []) {

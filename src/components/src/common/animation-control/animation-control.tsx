@@ -83,6 +83,8 @@ export type AnimationControlProps = {
   showControls?: boolean;
   className?: string;
   style?: object;
+  formatTimelineValue?: (value: number) => string;
+  displayLabel?: string;
 };
 
 AnimationControlFactory.deps = [
@@ -115,7 +117,9 @@ function AnimationControlFactory(
     timeline,
     showTimeline = true,
     showControls = true,
-    showTimeDisplay = true
+    showTimeDisplay = true,
+    formatTimelineValue,
+    displayLabel
   }) => {
     if (!timeline) {
       return null;
@@ -134,6 +138,7 @@ function AnimationControlFactory(
               style={TIMELINE_PLAYBACK_STYLE}
               timeline={timeline}
               setTimelineValue={setTimelineValue}
+              formatValue={formatTimelineValue}
             />
           ) : null}
           {showControls ? (
@@ -159,6 +164,8 @@ function AnimationControlFactory(
             defaultTimeFormat={defaultTimeFormat}
             timeFormat={timeFormat}
             timezone={timezone}
+            formatValue={formatTimelineValue}
+            displayLabel={displayLabel}
           />
         ) : null}
       </AnimationControlContainer>

@@ -112,25 +112,21 @@ const StatusText = styled.div`
   margin-top: 4px;
 `;
 
-const PlayIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({style, onClick}) => (
-  <svg
-    className="data-ex-icons-play"
-    viewBox="0 0 24 24"
-    style={style}
-    onClick={onClick}
-  >
+const PlayIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({
+  style,
+  onClick
+}) => (
+  <svg className="data-ex-icons-play" viewBox="0 0 24 24" style={style} onClick={onClick}>
     <path fill="none" d="M0 0h24v24H0z" />
     <path d="M19.376 12.416L8.777 19.482A.5.5 0 0 1 8 19.066V4.934a.5.5 0 0 1 .777-.416l10.599 7.066a.5.5 0 0 1 0 .832z" />
   </svg>
 );
 
-const StopIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({style, onClick}) => (
-  <svg
-    className="data-ex-icons-stop"
-    viewBox="0 0 24 24"
-    style={style}
-    onClick={onClick}
-  >
+const StopIcon: React.FC<{style?: React.CSSProperties; onClick?: () => void}> = ({
+  style,
+  onClick
+}) => (
+  <svg className="data-ex-icons-stop" viewBox="0 0 24 24" style={style} onClick={onClick}>
     <path fill="none" d="M0 0h24v24H0z" />
     <path d="M6 5h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />
   </svg>
@@ -258,14 +254,18 @@ export class SwipeExportVideoPanelContainer extends Component<
 
   getFilterKeyframes() {
     const {
-      mapData: {visState: {filters}},
+      mapData: {
+        visState: {filters}
+      },
       animatableFilters
     } = this.props;
 
     const filterKeyframes = (
       Array.isArray(animatableFilters) && animatableFilters.length
         ? animatableFilters
-        : filters.filter((f: any) => f.type === 'timeRange' && f.view === FILTER_VIEW_TYPES.enlarged)
+        : filters.filter(
+            (f: any) => f.type === 'timeRange' && f.view === FILTER_VIEW_TYPES.enlarged
+          )
     ).map((f: any) => ({
       id: f.id,
       timings: [0, this.state.durationMs]
@@ -279,7 +279,9 @@ export class SwipeExportVideoPanelContainer extends Component<
 
   getTripKeyframes() {
     const {
-      mapData: {visState: {layers, animationConfig}}
+      mapData: {
+        visState: {layers, animationConfig}
+      }
     } = this.props;
 
     const animatableLayer = layers.filter(
@@ -581,15 +583,9 @@ export class SwipeExportVideoPanelContainer extends Component<
             swipeEndPct={swipeEndPct}
             swipeEasing={swipeEasing}
             disabled={isActive}
-            onChangeStartPct={(value: number) =>
-              onSettingsChange({swipeStartPct: value})
-            }
-            onChangeEndPct={(value: number) =>
-              onSettingsChange({swipeEndPct: value})
-            }
-            onChangeEasing={(value: SwipeEasing) =>
-              onSettingsChange({swipeEasing: value})
-            }
+            onChangeStartPct={(value: number) => onSettingsChange({swipeStartPct: value})}
+            onChangeEndPct={(value: number) => onSettingsChange({swipeEndPct: value})}
+            onChangeEasing={(value: SwipeEasing) => onSettingsChange({swipeEasing: value})}
           />
           <TimelineControls className="timeline-controls">
             {isActive ? (

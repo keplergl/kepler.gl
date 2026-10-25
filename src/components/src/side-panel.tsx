@@ -26,21 +26,32 @@ import FilterManagerFactory from './side-panel/filter-manager';
 import InteractionManagerFactory from './side-panel/interaction-manager';
 import MapManagerFactory from './side-panel/map-manager';
 import CustomPanelsFactory from './side-panel/custom-panel';
+import DatasetOpsPanelsFactory, {
+  hasActiveDatasetOp
+} from './side-panel/dataset-ops/dataset-ops-panels';
 
 import styled from 'styled-components';
 import {SidePanelProps, SidePanelItem} from './types';
 
-export const StyledSidePanelContent = styled.div`
+export const StyledSidePanelContent = styled.div<{$fill?: boolean}>`
   ${props => props.theme.sidePanelScrollBar};
   flex-grow: 1;
+  min-width: 0;
+  min-height: 0;
   padding: ${props => props.theme.sidePanelInnerPadding}px;
-  overflow-y: scroll;
+  overflow-y: ${props => (props.$fill ? 'hidden' : 'scroll')};
   overflow-x: hidden;
+  display: ${props => (props.$fill ? 'flex' : 'block')};
+  flex-direction: column;
 
   .side-panel__content__inner {
     display: flex;
     height: 100%;
+    width: 100%;
+    min-width: 0;
     flex-direction: column;
+    flex: ${props => (props.$fill ? '1' : 'initial')};
+    min-height: 0;
   }
 `;
 
@@ -52,7 +63,8 @@ SidePanelFactory.deps = [
   FilterManagerFactory,
   InteractionManagerFactory,
   MapManagerFactory,
-  CustomPanelsFactory
+  CustomPanelsFactory,
+  DatasetOpsPanelsFactory
 ];
 
 /**
@@ -66,7 +78,8 @@ export default function SidePanelFactory(
   FilterManager: ReturnType<typeof FilterManagerFactory>,
   InteractionManager: ReturnType<typeof InteractionManagerFactory>,
   MapManager: ReturnType<typeof MapManagerFactory>,
-  CustomPanels: ReturnType<typeof CustomPanelsFactory>
+  CustomPanels: ReturnType<typeof CustomPanelsFactory>,
+  DatasetOpsPanels: ReturnType<typeof DatasetOpsPanelsFactory>
 ) {
   // inject components
   const SIDEBAR_COMPONENTS = {
@@ -105,6 +118,9 @@ export default function SidePanelFactory(
       datasets,
       filters,
       layers,
+      annotations = [],
+      cameraBookmarks,
+      cameraTour,
       layerBlending,
       overlayBlending,
       layerClasses,
@@ -122,7 +138,10 @@ export default function SidePanelFactory(
       uiStateActions,
       visStateActions,
       version,
-      width
+      width,
+      groupBys,
+      joins,
+      suitabilities
     } = props;
     const {openDeleteModal, toggleModal, toggleSidePanel} = uiStateActions;
     const {activeSidePanel} = uiState;
@@ -173,6 +192,7 @@ export default function SidePanelFactory(
       any
     >;
     const PanelComponent = currentPanel?.component;
+    const datasetOpOpen = hasActiveDatasetOp(groupBys, joins, suitabilities);
 
     return (
       <Sidebar
@@ -200,49 +220,72 @@ export default function SidePanelFactory(
         />
         {/* the next two components should be moved into one */}
         {/* but i am keeping them because of backward compatibility */}
-        <PanelToggle
-          panels={panels}
-          activePanel={activeSidePanel}
-          togglePanel={uiStateActions.toggleSidePanel}
-        />
-        <StyledSidePanelContent className="side-panel__content">
+        {datasetOpOpen ? null : (
+          <PanelToggle
+            panels={panels}
+            activePanel={activeSidePanel}
+            togglePanel={uiStateActions.toggleSidePanel}
+          />
+        )}
+        <StyledSidePanelContent className="side-panel__content" $fill={datasetOpOpen}>
           <div className="side-panel__content__inner">
-            {PanelComponent ? (
-              <PanelComponent
+            {datasetOpOpen ? (
+              <DatasetOpsPanels
                 datasets={datasets}
-                filters={filters}
-                layers={layers}
-                layerClasses={layerClasses}
-                layerOrder={layerOrder}
-                layerBlending={layerBlending}
-                overlayBlending={overlayBlending}
-                mapStyle={mapStyle}
-                mapState={mapState}
-                mapStyleActions={mapStyleActions}
-                mapStateActions={mapStateActions}
-                interactionConfig={interactionConfig}
-                removeDataset={onRemoveDataset}
-                showDatasetTable={onShowDatasetTable}
-                updateTableColor={onUpdateTableColor}
-                showAddDataModal={onShowAddDataModal}
-                showAddMapStyleModal={onShowAddMapStyleModal}
-                uiStateActions={uiStateActions}
+                groupBys={groupBys}
+                joins={joins}
+                suitabilities={suitabilities}
                 visStateActions={visStateActions}
-                panelMetadata={currentPanel}
-                panelListView={
-                  currentPanel?.id === 'layer'
-                    ? uiState.layerPanelListView
-                    : currentPanel?.id === 'filter'
-                    ? uiState.filterPanelListView
-                    : null
-                }
               />
-            ) : null}
-            <CustomPanels
-              {...customPanelProps}
-              activeSidePanel={activeSidePanel}
-              updateTableColor={onUpdateTableColor}
-            />
+            ) : (
+              <>
+                {PanelComponent ? (
+                  <PanelComponent
+                    datasets={datasets}
+                    filters={filters}
+                    layers={layers}
+                    annotations={annotations}
+                    cameraBookmarks={cameraBookmarks}
+                    cameraTour={cameraTour}
+                    layerClasses={layerClasses}
+                    layerOrder={layerOrder}
+                    layerBlending={layerBlending}
+                    overlayBlending={overlayBlending}
+                    mapStyle={mapStyle}
+                    mapState={mapState}
+                    mapStyleActions={mapStyleActions}
+                    mapStateActions={mapStateActions}
+                    interactionConfig={interactionConfig}
+                    removeDataset={onRemoveDataset}
+                    showDatasetTable={onShowDatasetTable}
+                    updateTableColor={onUpdateTableColor}
+                    showAddDataModal={onShowAddDataModal}
+                    showAddMapStyleModal={onShowAddMapStyleModal}
+                    uiStateActions={uiStateActions}
+                    visStateActions={visStateActions}
+                    mapLegendActive={Boolean(uiState.mapControls?.mapLegend?.active)}
+                    mapInfo={mapInfo}
+                    cameraTourEnabled={uiState.mapControls?.cameraTour?.show !== false}
+                    cameraBookmarksEnabled={uiState.mapControls?.cameraBookmarks?.show === true}
+                    mapInfoShow={uiState.mapControls?.mapInfo?.show !== false}
+                    mapInfoActive={uiState.mapControls?.mapInfo?.active !== false}
+                    panelMetadata={currentPanel}
+                    panelListView={
+                      currentPanel?.id === 'layer'
+                        ? uiState.layerPanelListView
+                        : currentPanel?.id === 'filter'
+                        ? uiState.filterPanelListView
+                        : null
+                    }
+                  />
+                ) : null}
+                <CustomPanels
+                  {...customPanelProps}
+                  activeSidePanel={activeSidePanel}
+                  updateTableColor={onUpdateTableColor}
+                />
+              </>
+            )}
           </div>
         </StyledSidePanelContent>
       </Sidebar>

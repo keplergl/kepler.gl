@@ -4,6 +4,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import KeplerGlLogo from '../common/logo';
+import CameraBookmarkControl from './camera-bookmark-control';
 
 // factories
 import SplitMapButtonFactory from './split-map-button';
@@ -14,13 +15,24 @@ import LocalePanelFactory from './locale-panel';
 import ThemeToggleButtonFactory from './theme-toggle-button';
 import MapNavigationControlFactory from './map-navigation-control';
 import {Layer} from '@kepler.gl/layers';
-import {Editor, LayerVisConfig, LayerOrder, MapControls, MapState} from '@kepler.gl/types';
+import {
+  CameraBookmark,
+  Editor,
+  LayerVisConfig,
+  LayerOrder,
+  MapControls,
+  MapInfo,
+  MapState,
+  ChartConfig
+} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
-import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
+import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
 import {getApplicationConfig} from '@kepler.gl/utils';
 import {MapViewMode} from '@kepler.gl/constants';
 
 import AnnotationControlFactory from './annotations/annotation-control';
+import MapInfoPanelFactory from './map-info-panel';
+import ViewportJsonEditorControlFactory from './viewport-json-editor';
 
 interface StyledMapControlProps {
   $top?: number;
@@ -73,6 +85,7 @@ export type MapControlProps = {
   onConvertEditorFeaturesToLayer?: () => void;
   onLayerVisConfigChange: (oldLayer: Layer, newVisConfig: Partial<LayerVisConfig>) => void;
   onToggleLayerVisibility?: (layer: Layer) => void;
+  hideInvisibleLayers?: boolean;
   top: number;
   onSetLocale: typeof UIStateActions.setLocale;
   onSetTheme: typeof UIStateActions.setTheme;
@@ -81,8 +94,10 @@ export type MapControlProps = {
   themeName?: string;
   logoComponent?: React.FC | React.ReactNode;
   isExport?: boolean;
+  cameraBookmarks?: CameraBookmark[];
 
   setMapControlSettings: typeof UIStateActions.setMapControlSettings;
+  setMapControlVisibility?: typeof UIStateActions.setMapControlVisibility;
   activeSidePanel: string | null;
 
   // optional
@@ -96,6 +111,9 @@ export type MapControlProps = {
   mapHeight?: number;
   splitMaps?: {layers: {[key: string]: boolean}}[];
   onToggleLayerForMap?: (mapIndex: number, layerId: string) => void;
+  charts?: ChartConfig[];
+  visStateActions?: typeof VisStateActions;
+  mapInfo?: Partial<MapInfo>;
 };
 
 MapControlFactory.deps = [
@@ -106,7 +124,9 @@ MapControlFactory.deps = [
   LocalePanelFactory,
   ThemeToggleButtonFactory,
   AnnotationControlFactory,
-  MapNavigationControlFactory
+  MapNavigationControlFactory,
+  ViewportJsonEditorControlFactory,
+  MapInfoPanelFactory
 ];
 
 function MapControlFactory(
@@ -117,15 +137,19 @@ function MapControlFactory(
   LocalePanel: ReturnType<typeof LocalePanelFactory>,
   ThemeToggleButton: ReturnType<typeof ThemeToggleButtonFactory>,
   AnnotationControl: ReturnType<typeof AnnotationControlFactory>,
-  MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>
+  MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>,
+  ViewportJsonEditorControl: ReturnType<typeof ViewportJsonEditorControlFactory>,
+  MapInfoPanel: ReturnType<typeof MapInfoPanelFactory>
 ) {
   const DEFAULT_ACTIONS = [
+    MapInfoPanel,
     SplitMapButton,
     Toggle3dButton,
     MapDrawPanel,
     AnnotationControl,
     LocalePanel,
     ThemeToggleButton,
+    ViewportJsonEditorControl,
     MapLegendPanel
   ];
 
@@ -157,6 +181,16 @@ function MapControlFactory(
     };
     return (
       <StyledMapControl className="map-control" $top={top}>
+        <CameraBookmarkControl
+          bookmarks={restProps.cameraBookmarks}
+          mapControls={restProps.mapControls}
+          setMapControlSettings={restProps.setMapControlSettings}
+          setMapControlVisibility={restProps.setMapControlVisibility}
+          activeSidePanel={restProps.activeSidePanel}
+          mapState={mapState}
+          mapStateActions={mapStateActions}
+          isExport={restProps.isExport}
+        />
         {actionComponents.map((ActionComponent, index) => (
           <ActionComponent key={index} className="map-control-action" {...actionComponentProps} />
         ))}

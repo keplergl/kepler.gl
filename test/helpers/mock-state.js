@@ -794,6 +794,17 @@ function mockStateWithLayerStyling() {
   return prepareState;
 }
 
+// Schema stores the label field as {name, type}. New hexagon layers label point counts.
+const SAVED_AGGREGATION_COUNT_TEXT_LABEL = {
+  ...DEFAULT_TEXT_LABEL,
+  field: {name: 'pointCount', type: 'integer'},
+  anchor: 'middle',
+  alignment: 'center',
+  collisionEnabled: true,
+  outlineWidth: 1,
+  outlineColor: [0, 0, 0, 255]
+};
+
 // saved hexagon layer
 export const expectedSavedLayer0 = {
   id: 'hexagon-2',
@@ -826,7 +837,7 @@ export const expectedSavedLayer0 = {
       sizeAggregation: 'count',
       enable3d: false
     },
-    textLabel: [DEFAULT_TEXT_LABEL]
+    textLabel: [SAVED_AGGREGATION_COUNT_TEXT_LABEL]
   },
   visualChannels: {
     colorField: null,
@@ -872,7 +883,7 @@ export const expectedLoadedLayer0 = {
     colorScale: 'quantile',
     sizeField: null,
     sizeScale: 'linear',
-    textLabel: [DEFAULT_TEXT_LABEL]
+    textLabel: [SAVED_AGGREGATION_COUNT_TEXT_LABEL]
   }
 };
 
@@ -1016,8 +1027,12 @@ export const expectedSavedLayer2 = {
       sizeRange: [0, 10],
       radiusRange: [0, 50],
       heightRange: [0, 500],
-      elevationScale: 5,
+      elevationScale: 1,
       fixedHeight: false,
+      invertHeight: false,
+      elevationOffset: 0,
+      elevationOffsetRange: [0, 500],
+      fixedElevation: true,
       stroked: true,
       filled: true,
       enable3d: false,
@@ -1036,6 +1051,8 @@ export const expectedSavedLayer2 = {
     sizeScale: 'linear',
     heightField: null,
     heightScale: 'linear',
+    elevationOffsetField: null,
+    elevationOffsetScale: 'linear',
     radiusField: null,
     radiusScale: 'linear'
   }
@@ -1066,8 +1083,12 @@ export const expectedLoadedLayer2 = {
       sizeRange: [0, 10],
       radiusRange: [0, 50],
       heightRange: [0, 500],
-      elevationScale: 5,
+      elevationScale: 1,
       fixedHeight: false,
+      invertHeight: false,
+      elevationOffset: 0,
+      elevationOffsetRange: [0, 500],
+      fixedElevation: true,
       stroked: true,
       filled: true,
       enable3d: false,
@@ -1082,6 +1103,8 @@ export const expectedLoadedLayer2 = {
     sizeScale: 'linear',
     heightField: null,
     heightScale: 'linear',
+    elevationOffsetField: null,
+    elevationOffsetScale: 'linear',
     radiusField: null,
     radiusScale: 'linear',
     textLabel: [DEFAULT_TEXT_LABEL]

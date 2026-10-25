@@ -17,6 +17,7 @@ import {default as HexagonLayer} from './hexagon-layer/hexagon-layer';
 import {default as GeojsonLayer} from './geojson-layer/geojson-layer';
 export {
   defaultElevation,
+  defaultElevationOffset,
   defaultLineWidth,
   defaultRadius,
   COLUMN_MODE_TABLE
@@ -46,6 +47,9 @@ export {defaultElevation as a5DefaultElevation} from './a5-layer/a5-layer';
 import {default as GeohashGeometryLayer} from './geohash-layer/geohash-layer';
 export {defaultElevation as geohashDefaultElevation} from './geohash-layer/geohash-layer';
 import {default as FlowLayer} from './flow-layer/flow-layer';
+import {default as FlowFieldLayer} from './flow-field-layer/flow-field-layer';
+export {FlowFieldColumnMode, flowFieldVisConfigs} from './flow-field-layer/flow-field-layer';
+export {default as FlowFieldLayerIcon} from './flow-field-layer/flow-field-layer-icon';
 export {getS2Center} from './s2-geometry-layer/s2-utils';
 export {getA5Center} from './a5-layer/a5-utils';
 export {getGeohashCenter} from './geohash-layer/geohash-utils';
@@ -64,20 +68,55 @@ export {
 } from './raster-tile/raster-tile-layer';
 
 import {default as Tile3DLayer} from './tile3d-layer/tile3d-layer';
-export {default as Tile3DLayer} from './tile3d-layer/tile3d-layer';
+export {default as Tile3DLayer, TILE3D_LOAD_ERROR_MESSAGE} from './tile3d-layer/tile3d-layer';
 export {default as Tile3DLayerIcon} from './tile3d-layer/tile3d-layer-icon';
 
 import {default as BitmapOverlayLayer} from './bitmap-layer/bitmap-layer';
 export {default as BitmapOverlayLayer} from './bitmap-layer/bitmap-layer';
 export {default as BitmapLayerIcon} from './bitmap-layer/bitmap-layer-icon';
 export {
+  BitmapBoundsEditMode,
+  BITMAP_MOVE_HANDLE_TYPE
+} from './bitmap-layer/bitmap-bounds-edit-mode';
+
+import {default as ZarrLayer} from './zarr-layer/zarr-layer';
+export {
+  default as ZarrLayer,
+  findNearestTimeIndex,
+  getZarrSelection,
+  getZarrMaxZoom,
+  getZarrSublayerId,
+  getZarrTileByteLength,
+  zarrVisConfigs
+} from './zarr-layer/zarr-layer';
+export {default as ZarrLayerIcon} from './zarr-layer/zarr-layer-icon';
+export {applyZarrColormap, estimateZarrDataRange} from './zarr-layer/zarr-colormap';
+export type {ZarrColormapOptions, ZarrTileImage} from './zarr-layer/zarr-colormap';
+export {
   CATEGORICAL_COLORMAP_ID,
   DATA_SOURCE_COLOR_DEFAULTS,
   RASTER_COLOR_RESET_PARAMS,
   PRESET_OPTIONS
 } from './raster-tile/config';
-export {RasterLayerResources} from './raster-tile/url';
 export {getCategoricalColormapDataUrl} from './raster-tile/image';
+export {
+  computeDerivedValue,
+  computeRasterZonalStats,
+  findBestTileAtLngLat,
+  formatRasterIdentifyRows,
+  formatRasterValue,
+  latToMercatorY,
+  lngLatToTileUV,
+  lngToMercatorX,
+  mercatorPixelSizeForBbox,
+  parseTitilerPointResponse,
+  rasterZonalStatsToSidecar,
+  sampleRasterTileAtLngLat,
+  tilePixelToLngLat,
+  zonalStatsToProperties
+} from './raster-tile/raster-tile-identify';
+export {RasterLayerResources, getTitilerBboxUrl, getTitilerPointUrl} from './raster-tile/url';
+export {polygonToBboxRectangle, isDownloadableImageBlob} from './raster-tile/raster-tile-extract';
 export * from './raster-tile/types';
 export * from './raster-tile/raster-tile-utils';
 
@@ -113,11 +152,13 @@ export const KeplerGlLayers = {
   A5GeometryLayer,
   GeohashGeometryLayer,
   FlowLayer,
+  FlowFieldLayer,
   VectorTileLayer,
   RasterTileLayer,
   WMSLayer,
   Tile3DLayer,
-  BitmapOverlayLayer
+  BitmapOverlayLayer,
+  ZarrLayer
 };
 
 export type LayerClassesType = typeof LayerClasses;
@@ -138,11 +179,13 @@ export const LayerClasses = {
   [LAYER_TYPES.a5]: A5GeometryLayer,
   [LAYER_TYPES.geohash]: GeohashGeometryLayer,
   [LAYER_TYPES.flow]: FlowLayer,
+  [LAYER_TYPES.flowField]: FlowFieldLayer,
   [LAYER_TYPES['vectorTile']]: VectorTileLayer,
   [LAYER_TYPES['rasterTile']]: RasterTileLayer,
   [LAYER_TYPES.wms]: WMSLayer,
   [LAYER_TYPES.tile3d]: Tile3DLayer,
-  [LAYER_TYPES.bitmap]: BitmapOverlayLayer
+  [LAYER_TYPES.bitmap]: BitmapOverlayLayer,
+  [LAYER_TYPES.zarr]: ZarrLayer
 };
 
 export * from './mapbox-utils';
@@ -154,7 +197,9 @@ export {formatCircleRadiusLabel, formatLineLengthLabel} from './editor-layer/edi
 
 export {
   default as ScenegraphLayer,
-  scenegraphVisConfigs
+  scenegraphVisConfigs,
+  toCorsSafeGcsUrl,
+  migrateLegacyScenegraphVisConfig
 } from './scenegraph-layer/scenegraph-layer';
 export {default as ScenegraphLayerIcon} from './scenegraph-layer/scenegraph-layer-icon';
 
@@ -175,6 +220,12 @@ export const EditorLayerUtils = {
 };
 
 export {getFilterDataFunc} from './aggregation-layer';
+export {
+  AGGREGATION_COUNT_LAYER_TYPES,
+  createPointCountLabelField,
+  isPointCountLabel,
+  POINT_COUNT_FIELD_NAME
+} from './aggregation-count-label';
 
 export * from './layer-update';
 export * from './layer-utils';

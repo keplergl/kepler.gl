@@ -4,8 +4,13 @@
 import test from 'tape';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
-import {LayerClasses, KeplerGlLayers} from '@kepler.gl/layers';
-import {GEOJSON_FIELDS} from '@kepler.gl/constants';
+import {
+  createGeoArrowPointVector,
+  getGeojsonLayerMetaFromArrow,
+  LayerClasses,
+  KeplerGlLayers
+} from '@kepler.gl/layers';
+import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY, GEOJSON_FIELDS} from '@kepler.gl/constants';
 import {findDefaultLayer, getLayerHoverProp, getLayerOrderFromLayers} from '@kepler.gl/reducers';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 
@@ -18,7 +23,90 @@ import {createNewDataEntryMock} from 'test/helpers/table-utils';
 import tripGeojson, {timeStampDomain, tripBounds} from 'test/fixtures/trip-geojson';
 import {geoJsonWithStyle} from 'test/fixtures/geojson';
 import {KeplerTable, findPointFieldPairs} from '@kepler.gl/table';
-import {createDataContainer} from '@kepler.gl/utils';
+import {ArrowDataContainer, createDataContainer, findDefaultColorField} from '@kepler.gl/utils';
+import * as arrow from 'apache-arrow';
+
+test('layerUtils -> createGeoArrowPointVector handles empty and nonempty coordinates', t => {
+  for (const coordinates of [
+    [],
+    [
+      [-122.42, 37.77],
+      [0, 0]
+    ],
+    [
+      [-122.42, 37.77, 10],
+      [0, 0, -5]
+    ]
+  ]) {
+    const dataContainer = new ArrowDataContainer({
+      cols: [
+        arrow.vectorFromArray(
+          coordinates.map((_, i) => i),
+          new arrow.Float64()
+        )
+      ],
+      fields: [{name: 'row', type: 'real', fieldIdx: 0}]
+    });
+    let accessorCalls = 0;
+    let vector;
+    t.doesNotThrow(() => {
+      vector = createGeoArrowPointVector(dataContainer, ({index}) => {
+        accessorCalls++;
+        return coordinates[index];
+      });
+    }, 'should create a coordinate vector, including for zero rows');
+    if (vector) {
+      t.equal(vector.length, coordinates.length, 'preserves the row count');
+      t.ok(arrow.DataType.isFixedSizeList(vector.type), 'coordinates have a fixed-size-list type');
+      t.equal(vector.type.listSize, coordinates[0]?.length || 2, 'retains coordinate dimensions');
+      t.equal(
+        String(vector.type.children[0].type),
+        'Float64',
+        'coordinates retain Float64 precision'
+      );
+      t.deepEqual(
+        Array.from({length: vector.length}, (_, i) => Array.from(vector.get(i))),
+        coordinates,
+        'preserves nonempty coordinate values and order'
+      );
+    }
+    if (!coordinates.length) {
+      t.equal(accessorCalls, 0, 'does not read a nonexistent row');
+    }
+  }
+  t.end();
+});
+
+test('layerUtils -> getGeojsonLayerMetaFromArrow uses worker-prepared data', t => {
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
+  const geoColumn = arrow.vectorFromArray([[-122.4, 37.8]], pointType);
+  const metadata = new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT]]);
+  const fields = [{name: 'geometry', type: 'geoarrow', fieldIdx: 0, metadata}];
+  const cachedGeometry = {shape: 'worker-result'};
+  const cached = {
+    binaryGeometries: [cachedGeometry],
+    bounds: [-122.4, 37.8, -122.4, 37.8],
+    featureTypes: {point: true, line: false, polygon: false},
+    meanCenters: [[-122.4, 37.8]]
+  };
+  const dataContainer = new ArrowDataContainer({
+    cols: [geoColumn],
+    fields,
+    geoArrowBinaryData: {0: {0: cached}}
+  });
+
+  const result = getGeojsonLayerMetaFromArrow({
+    dataContainer,
+    geoColumn: dataContainer.getColumn(0),
+    geoField: fields[0],
+    columnIndex: 0
+  });
+
+  t.equal(result.dataToFeature[0], cachedGeometry, 'should reuse the worker binary geometry');
+  t.deepEqual(result.bounds, cached.bounds, 'should reuse worker-computed bounds');
+  t.deepEqual(result.centroids, cached.meanCenters, 'should reuse worker-computed centroids');
+  t.end();
+});
 
 test('layerUtils -> findDefaultLayer.1', t => {
   const inputFields = [
@@ -641,11 +729,13 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
+test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', async t => {
   const {fields, rows} = processCsvData(wktCsv);
 
   const dataId = '0dj3h';
   const label = 'some geometry file';
+  const dataset = new KeplerTable({info: {id: dataId, label}});
+  await dataset.importData({data: {fields, rows}});
 
   const expected1 = new GeojsonLayer({
     dataId: '0dj3h',
@@ -675,13 +765,13 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
     stroked: true,
     strokeColor: strokeColor2
   });
+  const defaultColorField = findDefaultColorField(dataset);
+  expected1.updateLayerConfig({colorField: defaultColorField});
+  expected1.updateLayerVisualChannel(dataset, 'color');
+  expected2.updateLayerConfig({colorField: defaultColorField});
+  expected2.updateLayerVisualChannel(dataset, 'color');
 
-  const dataContainer = createDataContainer(rows, {fields});
-
-  const geojsonLayers = findDefaultLayer(
-    {fields, id: dataId, label, fieldPairs: [], dataContainer},
-    LayerClasses
-  );
+  const geojsonLayers = findDefaultLayer(dataset, LayerClasses);
 
   cmpLayers(t, [expected1, expected2], geojsonLayers);
   t.end();
@@ -882,7 +972,21 @@ test('layerUtils -> findDefaultLayer: TripLayer.1 -> ts as string', async t => {
 });
 
 test('layerUtils -> getLayerHoverProp', t => {
-  const visState = cloneDeep(StateWFiles).visState;
+  const initialVisState = cloneDeep(StateWFiles).visState;
+  const tooltip = initialVisState.interactionConfig.tooltip;
+  const visState = {
+    ...initialVisState,
+    interactionConfig: {
+      ...initialVisState.interactionConfig,
+      tooltip: {
+        ...tooltip,
+        config: {
+          ...tooltip.config,
+          timezone: 'America/Los_Angeles'
+        }
+      }
+    }
+  };
   const layer = visState.layers[0];
   const layerData = visState.layerData[0];
   const layersToRender = {
@@ -919,7 +1023,8 @@ test('layerUtils -> getLayerHoverProp', t => {
     fields: expectedDataset.fields,
     fieldsToShow: visState.interactionConfig.tooltip.config.fieldsToShow[layer.config.dataId],
     layer,
-    currentTime: visState.animationConfig.currentTime
+    currentTime: visState.animationConfig.currentTime,
+    timezone: 'America/Los_Angeles'
   };
 
   t.deepEqual(getLayerHoverProp(args), expected, 'should get correct layerHoverProp');

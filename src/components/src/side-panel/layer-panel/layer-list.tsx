@@ -45,10 +45,7 @@ export type LayerListProps = {
   mapStateActions: typeof MapStateActions;
 };
 
-export type LayerListFactoryDeps = [
-  typeof LayerPanelFactory,
-  typeof LayerGroupHeaderFactory
-];
+export type LayerListFactoryDeps = [typeof LayerPanelFactory, typeof LayerGroupHeaderFactory];
 
 const Container = styled.div`
   display: flex;
@@ -169,7 +166,14 @@ function LayerListFactory(
     </NestedLayerContainer>
   );
 
-  const SortableLayerItem = ({layer, idx, panelProps, layerActions, disabled, parent}: {
+  const SortableLayerItem = ({
+    layer,
+    idx,
+    panelProps,
+    layerActions,
+    disabled,
+    parent
+  }: {
     layer: Layer;
     idx: number;
     panelProps: any;
@@ -218,8 +222,9 @@ function LayerListFactory(
     layers: Layer[];
     panelProps: any;
     layerActions: any;
+    visStateActions: typeof VisStateActions;
     disabled?: boolean;
-  }> = ({layerGroup, layers, panelProps, layerActions, disabled}) => {
+  }> = ({layerGroup, layers, panelProps, layerActions, visStateActions, disabled}) => {
     const {attributes, isDragging, listeners, setNodeRef, transform, transition} = useSortable({
       id: layerGroup.id,
       data: {type: SORTABLE_LAYER_GROUP_TYPE},
@@ -259,6 +264,8 @@ function LayerListFactory(
             layerGroup={layerGroup}
             onToggleLayerGroupContent={onToggle}
             isLayerGroupContentOpen={isSectionOpen}
+            updateLayerGroup={visStateActions.updateLayerGroup}
+            removeLayerGroup={visStateActions.removeLayerGroup}
             listeners={listeners}
           />
         </div>
@@ -360,7 +367,8 @@ function LayerListFactory(
         removeLayer: visStateActions.removeLayer,
         zoomToLayer: mapStateActions.fitBounds,
         duplicateLayer: visStateActions.duplicateLayer,
-        layerSetIsValid: visStateActions.layerSetIsValid
+        layerSetIsValid: visStateActions.layerSetIsValid,
+        updateDatasetProps: visStateActions.updateDatasetProps
       }),
       [visStateActions, mapStateActions]
     );
@@ -401,6 +409,7 @@ function LayerListFactory(
                 layers={layers}
                 panelProps={panelProps}
                 layerActions={layerActions}
+                visStateActions={visStateActions}
                 disabled={!isSortable}
               />
             )

@@ -7,6 +7,9 @@ import flattenDeep from 'es-toolkit/compat/flattenDeep';
 import deepmerge from 'deepmerge';
 import {
   arrayInsert,
+  normalizeCameraBookmarks,
+  normalizeCameraTour,
+  combineSplitMapsByIndex,
   getInitialMapLayersForSplitMap,
   applyFiltersToDatasets,
   validateFiltersUpdateDatasets,
@@ -15,13 +18,21 @@ import {
   isPlainObject
 } from '@kepler.gl/utils';
 
-import {Layer} from '@kepler.gl/layers';
+import {
+  AGGREGATION_COUNT_LAYER_TYPES,
+  Layer,
+  createPointCountLabelField,
+  migrateLegacyScenegraphVisConfig,
+  POINT_COUNT_FIELD_NAME
+} from '@kepler.gl/layers';
 import {createEffect} from '@kepler.gl/effects';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
   AGGREGATION_TYPES,
+  DEFAULT_TEXT_LABEL,
   LAYER_BLENDINGS,
   OVERLAY_BLENDINGS,
+  AnnotationKind,
   isAnnotationKind,
   INITIAL_ANNOTATION_LINE_COLOR,
   INITIAL_ANNOTATION_LINE_WIDTH
@@ -44,11 +55,13 @@ import {
   NestedPartial,
   SavedAnimationConfig,
   LayerOrder,
-  LayerOrderGroup
+  LayerOrderGroup,
+  ChartConfig
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
 import {getLayerOrderFromLayers} from './layer-utils';
+import {combineZoomOpacityControllers} from './interaction-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
@@ -183,7 +196,8 @@ function insertItemBasedOnPreservedOrder(
 
 export function createLayerFromConfig(state: VisState, layerConfig: any): Layer | null {
   // check if the layer config is parsed
-  const parsedLayerConfig = isSavedLayerConfigV1(layerConfig)
+  const savedLayerConfig = isSavedLayerConfigV1(layerConfig);
+  const parsedLayerConfig = savedLayerConfig
     ? parseLayerConfig(state.schema, layerConfig)
     : layerConfig;
 
@@ -195,7 +209,7 @@ export function createLayerFromConfig(state: VisState, layerConfig: any): Layer 
     state.datasets,
     state.layerClasses,
     [parsedLayerConfig],
-    {allowEmptyColumn: true}
+    {allowEmptyColumn: true, keepUnlabeledAggregationTextLabel: savedLayerConfig}
   );
 
   if (failed?.length || !validated.length) {
@@ -289,7 +303,8 @@ export function mergeLayers<S extends VisState>(
   const {validated: mergedLayer, failed} = validateLayersByDatasets(
     state.datasets,
     state.layerClasses,
-    toMerge
+    toMerge,
+    {keepUnlabeledAggregationTextLabel: true}
   );
   unmerged.push(...failed);
   // put new layers in front of current layers
@@ -456,9 +471,7 @@ export function mergeLayerOrder<S extends VisState>(
   collectIds(restoredLayerOrder);
 
   // Add any missing layers at the top
-  const missingLayers = state.layers
-    .filter(l => !layerIdsInRestored.has(l.id))
-    .map(l => l.id);
+  const missingLayers = state.layers.filter(l => !layerIdsInRestored.has(l.id)).map(l => l.id);
 
   return {
     ...state,
@@ -485,7 +498,11 @@ export function mergeInteractions<S extends VisState>(
       }
 
       const currentConfig =
-        key === 'tooltip' || key === 'brush' || key === 'geocoder'
+        key === 'tooltip' ||
+        key === 'brush' ||
+        key === 'geocoder' ||
+        key === 'legend' ||
+        key === 'zoomOpacity'
           ? state.interactionConfig[key].config
           : null;
 
@@ -494,9 +511,10 @@ export function mergeInteractions<S extends VisState>(
       let configToMerge = configSaved;
 
       if (key === 'tooltip') {
+        const savedTooltipConfig = configSaved as SavedInteractionConfig['tooltip'];
         const {mergedTooltip, unmergedTooltip} = mergeInteractionTooltipConfig(
           state,
-          configSaved as SavedInteractionConfig['tooltip']
+          savedTooltipConfig
         );
 
         // merge new dataset tooltips with original dataset tooltips
@@ -504,7 +522,10 @@ export function mergeInteractions<S extends VisState>(
           fieldsToShow: {
             ...(currentConfig as TooltipInfo['config']).fieldsToShow,
             ...mergedTooltip
-          }
+          },
+          ...(savedTooltipConfig.timezone !== undefined
+            ? {timezone: savedTooltipConfig.timezone}
+            : {})
         };
 
         if (Object.keys(unmergedTooltip).length) {
@@ -544,6 +565,20 @@ export function mergeInteractions<S extends VisState>(
 
 function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInteractionConfig {
   const combined = {...configs[0]};
+  // `legend` is optional on older saved maps; seed it so a later config is not dropped.
+  if (!combined.legend) {
+    const withLegend = configs.find(c => c.legend);
+    if (withLegend?.legend) {
+      combined.legend = withLegend.legend;
+    }
+  }
+  // Same for fade-on-zoom: an older config in front must not drop controllers from a later one.
+  if (!combined.zoomOpacity) {
+    const withZoomOpacity = configs.find(c => c.zoomOpacity);
+    if (withZoomOpacity?.zoomOpacity) {
+      combined.zoomOpacity = withZoomOpacity.zoomOpacity;
+    }
+  }
   // handle each property key of an `InteractionConfig`, e.g. tooltip, geocoder, brush, coordinate
   // by combining values for each among all passed in configs
 
@@ -564,6 +599,13 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
       combined[key].compareType = getValueWithHighestOccurrence(
         toBeCombinedProps.map(p => p.compareType)
       );
+
+      const hasTimezone = toBeCombinedProps.some(p => p?.timezone !== undefined);
+      if (hasTimezone) {
+        combined[key].timezone = getValueWithHighestOccurrence(
+          toBeCombinedProps.map(p => p?.timezone)
+        );
+      }
 
       // combine fieldsToShow among all dataset ids
       combined[key].fieldsToShow = toBeCombinedProps
@@ -598,6 +640,18 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
 
     if (key === 'geocoder') {
       combined[key].limitSearch = toBeCombinedProps.some(p => p?.limitSearch);
+      const color = toBeCombinedProps.find(p => p?.color)?.color;
+      if (color) {
+        combined[key].color = color;
+      }
+    }
+
+    if (key === 'legend') {
+      combined[key].hideInvisibleLayers = toBeCombinedProps.some(p => p?.hideInvisibleLayers);
+    }
+
+    if (key === 'zoomOpacity' && combined.zoomOpacity) {
+      combined.zoomOpacity.controllers = combineZoomOpacityControllers(toBeCombinedProps);
     }
   }
 
@@ -642,51 +696,127 @@ function replaceInteractionDatasetIds(interactionConfig, dataId: string, dataIdT
 
 /**
  * Merge splitMaps config with current visStete.
+ * Panels are matched by index: index i of `splitMaps`, `state.splitMaps` and
+ * `state.splitMapsToBeMerged` is the same map panel.
  * 1. if current map is split, but splitMap DOESNOT contain maps
  *    : don't merge anything
  * 2. if current map is NOT split, but splitMaps contain maps
- *    : add to splitMaps, and add current layers to splitMaps
+ *    : add to splitMaps, and add current layers to splitMaps.
+ *      Panels are created once one of them can be merged: it has no layers, or one of its layers exists
+ * 3. layers that don't exist yet
+ *    : save to splitMapsToBeMerged, in the panel at the same index
+ * A layer listed in splitMaps only shows in the panels that list it.
  */
 export function mergeSplitMaps<S extends VisState>(
   state: S,
   splitMaps: NonNullable<ParsedConfig['visState']>['splitMaps'] = []
 ): S {
+  const layerExists = (id: string) => state.layers.some(l => l.id === id);
+  const createPanels =
+    state.splitMaps.length > 0 ||
+    splitMaps.some(sm => {
+      const ids = Object.keys(sm.layers);
+      return !ids.length || ids.some(layerExists);
+    });
+  const currentLayers = getInitialMapLayersForSplitMap(
+    state.layers.filter(l => !splitMaps.some(sm => l.id in sm.layers))
+  );
+
   const merged = [...state.splitMaps];
-  const unmerged = [];
+  const unmerged: typeof splitMaps = [];
   splitMaps.forEach((sm, i) => {
     const entries = Object.entries(sm.layers);
-    if (entries.length > 0) {
-      entries.forEach(([id, value]) => {
-        // check if layer exists
-        const pushTo = state.layers.find(l => l.id === id) ? merged : unmerged;
-
-        // create map panel if current map is not split
-        pushTo[i] = pushTo[i] || {
-          // keep id
-          ...sm,
-          layers: pushTo === merged ? getInitialMapLayersForSplitMap(state.layers) : []
-        };
-        pushTo[i].layers = {
-          ...pushTo[i].layers,
-          [id]: value
-        };
-      });
-    } else {
-      // We are merging if there are no layers in both split map
-      merged.push(sm);
+    if (createPanels) {
+      // create map panel if current map is not split, keep id
+      const panel = merged[i] || {...sm, layers: currentLayers};
+      merged[i] = {
+        ...panel,
+        layers: {...panel.layers, ...Object.fromEntries(entries.filter(([id]) => layerExists(id)))}
+      };
     }
+    unmerged[i] = {...sm, layers: Object.fromEntries(entries.filter(([id]) => !layerExists(id)))};
   });
 
   return {
     ...state,
     splitMaps: merged,
-    splitMapsToBeMerged: [...state.splitMapsToBeMerged, ...unmerged]
+    splitMapsToBeMerged: unmerged.some(sm => Object.keys(sm.layers).length)
+      ? combineSplitMapsByIndex(state.splitMapsToBeMerged, unmerged)
+      : state.splitMapsToBeMerged
   };
 }
 
 /**
- * Merge effects with saved config
+ * Merge charts with saved config. Charts whose dataset is not loaded yet are
+ * parked on `chartsToBeMerged` (same as filters) so dataset replace can remap
+ * `dataId` and restore them after the new table lands.
  */
+export function mergeCharts<S extends VisState>(
+  state: S,
+  charts: ChartConfig[] | undefined,
+  fromConfig?: boolean
+): S {
+  if (!Array.isArray(charts) || !charts.length) {
+    return state;
+  }
+  const incomingIds = new Set(
+    charts.map(chart => chart?.id).filter((id): id is string => Boolean(id))
+  );
+  const existingIds = new Set((state.charts || []).map(chart => chart.id));
+  const nextCharts: ChartConfig[] = [];
+  const failed: ChartConfig[] = [];
+  charts.forEach(chart => {
+    if (!chart || !chart.id || existingIds.has(chart.id)) {
+      return;
+    }
+    const normalized: ChartConfig = fromConfig
+      ? {
+          ...chart,
+          // Older configs omit `pinned`; keep charts visible like the legend.
+          pinned: chart.pinned !== false,
+          display: {
+            ...chart.display,
+            isConfigActive: false,
+            isJsonEditorActive: false
+          }
+        }
+      : chart;
+    if (
+      normalized.dataId &&
+      (!state.datasets[normalized.dataId] || state.isMergingDatasets[normalized.dataId])
+    ) {
+      failed.push(normalized);
+      return;
+    }
+    existingIds.add(normalized.id);
+    nextCharts.push(normalized);
+  });
+  if (!nextCharts.length && !failed.length) {
+    return state;
+  }
+  return {
+    ...state,
+    charts: nextCharts.length ? [...(state.charts || []), ...nextCharts] : state.charts,
+    chartsToBeMerged: [
+      ...(state.chartsToBeMerged || []).filter(chart => !incomingIds.has(chart.id)),
+      ...failed
+    ]
+  };
+}
+
+export function replaceChartDatasetIds(
+  savedCharts: ChartConfig[] | undefined,
+  dataId: string,
+  dataIdToUse: string
+): ChartConfig[] | null {
+  if (!Array.isArray(savedCharts) || !savedCharts.length) {
+    return null;
+  }
+  const replaced = savedCharts
+    .filter(chart => chart?.dataId === dataId)
+    .map(chart => ({...chart, dataId: dataIdToUse}));
+  return replaced.length ? replaced : null;
+}
 export function mergeEffects<S extends VisState>(
   state: S,
   effects: NonNullable<ParsedConfig['visState']>['effects'],
@@ -735,7 +865,12 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
         !existingIds.has(a.id) &&
         isAnnotationKind(a.kind) &&
         Array.isArray(a.anchorPoint) &&
-        a.anchorPoint.length === 2
+        (a.anchorPoint.length === 2 || a.anchorPoint.length === 3) &&
+        a.anchorPoint.every(value => Number.isFinite(value)) &&
+        (a.kind !== AnnotationKind.RULER ||
+          (Array.isArray(a.endPoint) &&
+            (a.endPoint.length === 2 || a.endPoint.length === 3) &&
+            a.endPoint.every(value => Number.isFinite(value))))
     )
     .map(a => ({
       isVisible: true,
@@ -746,7 +881,13 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
       lineWidth: INITIAL_ANNOTATION_LINE_WIDTH,
       textWidth: 0,
       textHeight: 0,
-      ...a
+      ...a,
+      ...(a.kind === AnnotationKind.RULER
+        ? {
+            showCustomText: a.showCustomText ?? true,
+            showDistance: a.showDistance ?? true
+          }
+        : {})
     }));
   if (!validAnnotations.length) {
     return state;
@@ -875,7 +1016,10 @@ function combineAnimationConfigs(configs: SavedAnimationConfig[]): SavedAnimatio
   // get the smallest values of currentTime and speed among all configs
   return {
     currentTime: aggregate(configs, AGGREGATION_TYPES.minimum, c => c.currentTime) ?? null,
-    speed: aggregate(configs, AGGREGATION_TYPES.minimum, c => c.speed) ?? null
+    speed: aggregate(configs, AGGREGATION_TYPES.minimum, c => c.speed) ?? null,
+    // and the most common time format and timezone among the configs that set one
+    timeFormat: getValueWithHighestOccurrence(configs.map(c => c.timeFormat)),
+    timezone: getValueWithHighestOccurrence(configs.map(c => c.timezone))
   };
 }
 
@@ -965,19 +1109,29 @@ export function validateColumn(
  */
 export function validateSavedTextLabel(
   fields,
-  [layerTextLabel],
+  layerTextLabels: any[],
   savedTextLabel,
-  options: {throwOnError?: boolean} = {}
-) {
+  options: {throwOnError?: boolean; layerType?: string | null} = {}
+): any[] {
+  const layerTextLabel = layerTextLabels[0];
   const savedTextLabels = Array.isArray(savedTextLabel) ? savedTextLabel : [savedTextLabel];
+  const countLabelLayer = Boolean(
+    options.layerType && AGGREGATION_COUNT_LAYER_TYPES.has(options.layerType)
+  );
 
   // validate field
   return savedTextLabels.map(textLabel => {
-    const field = textLabel.field
-      ? fields.find(fd =>
-          Object.keys(textLabel.field).every(key => textLabel.field[key] === fd[key])
-        )
-      : null;
+    let field = null;
+    if (textLabel.field) {
+      // Cluster, hexbin, and grid persist a synthetic point-count field that
+      // is not one of the dataset columns.
+      field =
+        countLabelLayer && textLabel.field.name === POINT_COUNT_FIELD_NAME
+          ? createPointCountLabelField()
+          : fields.find(fd =>
+              Object.keys(textLabel.field).every(key => textLabel.field[key] === fd[key])
+            );
+    }
 
     if (field === undefined && options.throwOnError) {
       throw new Error(`Layer has invalid text label field: ${JSON.stringify(textLabel.field)}`);
@@ -986,11 +1140,51 @@ export function validateSavedTextLabel(
     return Object.keys(layerTextLabel).reduce(
       (accu, key) => ({
         ...accu,
-        [key]: key === 'field' ? field : textLabel[key] || layerTextLabel[key]
+        // Keep explicit false / 0. `||` would replace a saved collisionEnabled
+        // of false with the aggregation default of true.
+        [key]: key === 'field' ? field : textLabel[key] ?? layerTextLabel[key]
       }),
       {}
     );
   });
+}
+
+/**
+ * Maps saved before count labels omit `textLabel`. Those cluster, hexbin, and
+ * grid layers stay unlabeled. New layers still get the point-count default
+ * from `getDefaultLayerConfig`.
+ */
+export function fallbackTextLabelForLoadedLayer(
+  layerType: string | null | undefined,
+  newLayerTextLabel: any[]
+): any[] {
+  if (layerType && AGGREGATION_COUNT_LAYER_TYPES.has(layerType)) {
+    return [{...DEFAULT_TEXT_LABEL}];
+  }
+  return newLayerTextLabel;
+}
+
+/**
+ * Saved visual channel field/scale may live in any of:
+ * - `config[key]` after schema parse (VisualChannelSchemaV1 folds channels into config)
+ * - `visualChannels[key]` as a sibling of `config` (unparsed addDataToMap payload)
+ * - `config.visualChannels[key]` (common mistake of nesting visualChannels inside config)
+ *
+ * Without this lookup, programmatic GeoJSON strokeColorField never binds and
+ * strokeColorDomain stays at the default `[0, 1]` (kepler.gl #3061).
+ */
+function getSavedVisualChannelValue(savedLayer: ParsedLayer, key: string): any {
+  const config = savedLayer.config as Record<string, any> | undefined;
+  if (config && config[key] !== undefined) {
+    return config[key];
+  }
+  const channels =
+    (savedLayer as {visualChannels?: Record<string, any>}).visualChannels ||
+    (config && config.visualChannels);
+  if (channels && typeof channels === 'object' && channels[key] !== undefined) {
+    return channels[key];
+  }
+  return undefined;
 }
 
 /**
@@ -1004,28 +1198,26 @@ export function validateSavedVisualChannels(
   options: {throwOnError?: boolean} = {}
 ): null | Layer {
   Object.values(newLayer.visualChannels).forEach(({field, scale, key}) => {
+    const savedField = getSavedVisualChannelValue(savedLayer, field);
+    const savedScale = getSavedVisualChannelValue(savedLayer, scale);
     let foundField;
-    if (savedLayer.config) {
-      if (savedLayer.config[field]) {
-        foundField = fields.find(
-          fd => savedLayer.config && fd.name === savedLayer.config[field].name
-        );
-      }
+    if (savedField?.name) {
+      foundField = fields.find(fd => fd.name === savedField.name);
+    }
 
-      const foundChannel = {
-        ...(foundField ? {[field]: foundField} : {}),
-        ...(savedLayer.config[scale] ? {[scale]: savedLayer.config[scale]} : {})
-      };
-      if (Object.keys(foundChannel).length) {
-        newLayer.updateLayerConfig(foundChannel);
-      }
+    const foundChannel = {
+      ...(foundField ? {[field]: foundField} : {}),
+      ...(savedScale ? {[scale]: savedScale} : {})
+    };
+    if (Object.keys(foundChannel).length) {
+      newLayer.updateLayerConfig(foundChannel);
+    }
 
-      newLayer.validateVisualChannel(key);
-      if (options.throwOnError) {
-        const fieldName = savedLayer.config?.[field]?.name;
-        if (fieldName && fieldName !== newLayer.config[field]?.name) {
-          throw new Error(`Layer has invalid visual channel field: ${field}`);
-        }
+    newLayer.validateVisualChannel(key);
+    if (options.throwOnError) {
+      const fieldName = savedField?.name;
+      if (fieldName && fieldName !== newLayer.config[field]?.name) {
+        throw new Error(`Layer has invalid visual channel field: ${field}`);
       }
     }
   });
@@ -1035,6 +1227,9 @@ export function validateSavedVisualChannels(
 type ValidateLayerOption = {
   allowEmptyColumn?: boolean;
   throwOnError?: boolean;
+  // Saved maps that omit textLabel predate count labels and stay unlabeled.
+  // A new layer config omits it too, and should keep the layer default.
+  keepUnlabeledAggregationTextLabel?: boolean;
 };
 
 export function validateLayersByDatasets(
@@ -1086,17 +1281,26 @@ function _getColumnConfigForValidation(newLayer) {
     : null;
 
   if (colModeConfig) {
-    // only validate columns in column mode
+    // only validate columns in column mode (including tabbed columnGroups)
+    const groupColumns = (colModeConfig.columnGroups || []).flatMap(group => group.columns || []);
+    const requiredKeys = new Set(colModeConfig.requiredColumns || []);
     columnConfig = [
       ...(colModeConfig.requiredColumns || []),
-      ...(colModeConfig.optionalColumns || [])
-    ].reduce(
-      (accu, key) => ({
-        ...accu,
-        [key]: columnConfig[key]
-      }),
-      {}
-    );
+      ...(colModeConfig.optionalColumns || []),
+      ...groupColumns
+    ].reduce((accu, key) => {
+      const col = columnConfig[key];
+      if (!col) {
+        return accu;
+      }
+      // Optionality must follow the active mode: a field optional in another mode
+      // (e.g. altitude in UV) is still required when this mode lists it in requiredColumns.
+      if (requiredKeys.has(key)) {
+        const {optional: _optional, ...requiredCol} = col;
+        return {...accu, [key]: requiredCol};
+      }
+      return {...accu, [key]: {...col, optional: true}};
+    }, {});
   }
 
   return columnConfig;
@@ -1131,6 +1335,7 @@ export function validateLayerWithData(
     color: savedLayer.config.color,
     isVisible: savedLayer.config.isVisible,
     hidden: savedLayer.config.hidden,
+    isIncludedInLegend: savedLayer.config.isIncludedInLegend,
     columnMode: savedLayer.config.columnMode,
     highlightColor: savedLayer.config.highlightColor
   });
@@ -1158,18 +1363,22 @@ export function validateLayerWithData(
 
   const textLabel =
     savedLayer.config.textLabel && newLayer.config.textLabel
-      ? validateSavedTextLabel(
-          fields,
-          newLayer.config.textLabel,
-          savedLayer.config.textLabel,
-          options
-        )
+      ? validateSavedTextLabel(fields, newLayer.config.textLabel, savedLayer.config.textLabel, {
+          ...options,
+          layerType: savedLayer.type
+        })
+      : options.keepUnlabeledAggregationTextLabel
+      ? fallbackTextLabelForLoadedLayer(savedLayer.type, newLayer.config.textLabel)
       : newLayer.config.textLabel;
 
   // copy visConfig over to emptyLayer to make sure it has all the props
+  const savedVisConfig =
+    savedLayer.type === '3D'
+      ? migrateLegacyScenegraphVisConfig(savedLayer.config.visConfig)
+      : savedLayer.config.visConfig;
   const copiedVisConfig = newLayer.copyLayerConfig(
     newLayer.config.visConfig,
-    savedLayer.config.visConfig || {},
+    savedVisConfig || {},
     {
       shallowCopy: ['colorRange', 'strokeColorRange']
     }
@@ -1284,6 +1493,21 @@ function getValueWithHighestOccurrence<T>(arr: T[]): T | null {
 
 export const VIS_STATE_MERGERS: VisStateMergers<any> = [
   {
+    prop: 'cameraTour',
+    merge: (state, tour) =>
+      state.cameraTour ? state : {...state, cameraTour: normalizeCameraTour(tour)}
+  },
+  {
+    prop: 'cameraBookmarks',
+    merge: (state, bookmarks) => ({
+      ...state,
+      cameraBookmarks: normalizeCameraBookmarks([
+        ...(state.cameraBookmarks || []),
+        ...normalizeCameraBookmarks(bookmarks)
+      ])
+    })
+  },
+  {
     merge: mergeLayers,
     prop: 'layers',
     toMergeProp: 'layerToBeMerged',
@@ -1303,6 +1527,12 @@ export const VIS_STATE_MERGERS: VisStateMergers<any> = [
   {
     merge: mergeEffects,
     prop: 'effects'
+  },
+  {
+    merge: mergeCharts,
+    prop: 'charts',
+    toMergeProp: 'chartsToBeMerged',
+    replaceParentDatasetIds: replaceChartDatasetIds
   },
   {
     merge: mergeAnnotations,

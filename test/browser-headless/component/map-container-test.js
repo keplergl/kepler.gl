@@ -21,6 +21,7 @@ import {gl, InteractionTestRunner} from '@deck.gl/test-utils';
 
 import {Provider} from 'react-redux';
 import configureStore from 'redux-mock-store';
+import {NO_MAP_ID} from '@kepler.gl/constants';
 
 import {mockKeplerProps, expectedLayerHoverProp} from '../../helpers/mock-state';
 
@@ -91,6 +92,97 @@ test('MapContainerFactory - display all options', t => {
   instance._onCloseMapPopover();
   t.equal(onLayerClick.called, true, 'Should be calling onLayerClick');
 
+  t.end();
+});
+
+test('MapContainerFactory - selected basemap background color', t => {
+  const store = mockStore(initialState);
+  const containerRef = createRef();
+  const props = {
+    ...initialProps,
+    mapStyle: {
+      ...initialProps.mapStyle,
+      styleType: 'dark-matter',
+      backgroundColor: [12, 34, 56]
+    }
+  };
+
+  const {unmount} = renderWithTheme(
+    <Provider store={store}>
+      <IntlWrapper>
+        <MapViewStateContextProvider mapState={props.mapState}>
+          <MapContainer ref={containerRef} {...props} />
+        </MapViewStateContextProvider>
+      </IntlWrapper>
+    </Provider>
+  );
+
+  t.equal(
+    containerRef.current.styleSelector(containerRef.current.props).backgroundColor,
+    '#0C2238',
+    'should expose the configured background behind a selected basemap render surface'
+  );
+
+  const noBasemapStyle = containerRef.current.styleSelector({
+    ...containerRef.current.props,
+    mapStyle: {...props.mapStyle, styleType: NO_MAP_ID}
+  });
+  t.equal(
+    noBasemapStyle.backgroundColor,
+    '#0C2238',
+    'should preserve the No Basemap background color'
+  );
+
+  const transparentStyle = containerRef.current.styleSelector({
+    ...containerRef.current.props,
+    transparentBackground: true
+  });
+  t.notOk(
+    Object.prototype.hasOwnProperty.call(transparentStyle, 'backgroundColor'),
+    'should preserve transparent exports'
+  );
+
+  const globeStyle = containerRef.current.styleSelector({
+    ...containerRef.current.props,
+    mapState: {
+      ...props.mapState,
+      globe: {
+        ...props.mapState.globe,
+        enabled: true,
+        config: {...props.mapState.globe.config, backgroundColor: [9, 10, 11], stars: false}
+      }
+    }
+  });
+  t.equal(globeStyle.backgroundColor, '#090A0B', 'should preserve the globe background color');
+
+  unmount();
+  t.end();
+});
+
+test('MapContainerFactory - missing background color', t => {
+  const store = mockStore(initialState);
+  const mapStyle = {...initialProps.mapStyle, styleType: 'dark-matter'};
+  delete mapStyle.backgroundColor;
+  const props = {...initialProps, mapStyle};
+
+  const {container, unmount} = renderWithTheme(
+    <Provider store={store}>
+      <IntlWrapper>
+        <MapViewStateContextProvider mapState={props.mapState}>
+          <MapContainer {...props} />
+        </MapViewStateContextProvider>
+      </IntlWrapper>
+    </Provider>
+  );
+
+  t.ok(container.firstElementChild, 'should mount when the background color is missing');
+  t.equal(
+    container.firstElementChild.style.backgroundColor,
+    '',
+    'should leave the container background unset when no color is configured'
+  );
+
+  unmount();
   t.end();
 });
 

@@ -466,11 +466,27 @@ test('KeplerTable -> update with arrow cols keeps gpu filter state', async t => 
     }
   });
 
+  const filters = [
+    {
+      id: 'keep-one',
+      dataId: [table.id],
+      name: ['lat'],
+      fieldIdx: [0],
+      type: FILTER_TYPES.range,
+      domain: [1, 3],
+      value: [1, 1],
+      enabled: true,
+      gpu: true,
+      gpuChannel: [0]
+    }
+  ];
+  table.filterTable(filters, []);
+  table.filterTableCPU(filters, []);
+  t.deepEqual(table.filteredIdxCPU, [0], 'initial CPU evaluation keeps the matching row');
   const gpuFilter = table.gpuFilter;
-  table.filterRecord = {name: 'keep-me'};
 
   const next = arrow.tableFromArrays({
-    lat: [1, 2, 3],
+    lat: [3, 1, 2],
     lng: [3, 4, 5]
   });
   await table.update({
@@ -485,8 +501,12 @@ test('KeplerTable -> update with arrow cols keeps gpu filter state', async t => 
 
   t.equal(table.length, 3, 'arrow incremental update should grow rows');
   t.equal(table.gpuFilter, gpuFilter, 'arrow incremental update should keep gpuFilter');
-  t.equal(table.filterRecord?.name, 'keep-me', 'arrow incremental update should keep filterRecord');
   t.equal(table.dataRevision, 1, 'arrow incremental update should bump dataRevision');
+  table.filterTable(filters, []);
+  table.filterTableCPU(filters, []);
+  t.deepEqual(table.filteredIndex, [0, 1, 2], 'GPU filtering keeps all rows available to the GPU');
+  t.deepEqual(table.filteredIndexForDomain, [1], 'domain filtering uses the refreshed values');
+  t.deepEqual(table.filteredIdxCPU, [1], 'CPU evaluation uses the refreshed matching row');
   t.end();
 });
 

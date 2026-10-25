@@ -11,7 +11,7 @@ import {execSync, spawn} from 'node:child_process';
 import {join} from 'node:path';
 import {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import KeplerPackage from '../../package.json' assert {type: 'json'};
+import KeplerPackage from '../../package.json' with {type: 'json'};
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -45,6 +45,7 @@ const KEPLER_SRC_ALIASES = Object.fromEntries(
     'actions',
     'cloud-providers',
     'common-utils',
+    'charts',
     'components',
     'constants',
     'duckdb',
@@ -65,6 +66,10 @@ const getKeplerAliases = () => ({
   // duckdb ships a components subpath (SqlPanel); esbuild picks the longest
   // matching alias key, so this wins for `@kepler.gl/duckdb/components`.
   '@kepler.gl/duckdb/components': join(SRC_DIR, 'duckdb', 'src', 'components', 'index.tsx'),
+  // Chart factories live on a package subpath so the main components barrel
+  // does not load `@kepler.gl/charts`. The `@kepler.gl/components` alias is a
+  // file (index.ts), so this longer key is required.
+  '@kepler.gl/components/charts': join(SRC_DIR, 'components', 'src', 'charts.ts'),
   // mcp ships the map-management skill markdown as a subpath export; the
   // longer key wins over the `@kepler.gl/mcp` src alias above.
   '@kepler.gl/mcp/skill/kepler/SKILL.md': join(SRC_DIR, 'mcp', 'skill', 'kepler', 'SKILL.md')
@@ -125,7 +130,6 @@ const getThirdPartyLibraryAliases = useKeplerNodePackage => {
     'react-redux': `${nodeModulesDir}/react-redux`,
     'styled-components': `${nodeModulesDir}/styled-components`,
     'react-intl': `${nodeModulesDir}/react-intl`,
-    'react-palm': `${nodeModulesDir}/react-palm`,
     // kepler.gl and loaders.gl need to use same apache-arrow
     'apache-arrow': `${nodeModulesDir}/apache-arrow`
   };
@@ -238,7 +242,6 @@ const config = {
       }
     },
     // styled-components: @hubble.gl/react nests its own copy.
-    // react-palm: several @kepler.gl/* packages nest their own copy.
     // @sqlrooms/room-store: RoomStateProvider is a React context. Nested
     // copies each have their own context, so AI Settings throws
     // "Missing RoomStateProvider in the tree" and unmounts the app.
@@ -248,7 +251,7 @@ const config = {
       name: 'dedupe-singletons',
       setup(build) {
         build.onResolve(
-          {filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$|@sqlrooms\/room-store$)/},
+          {filter: /^(styled-components|react$|react-dom$|@sqlrooms\/room-store$)/},
           async args => {
             if (args.pluginData?.deduped) return;
             const result = await build.resolve(args.path, {

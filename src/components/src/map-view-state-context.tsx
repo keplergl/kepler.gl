@@ -13,6 +13,8 @@ type MapViewState = {
   maxPitch?: number;
   minZoom?: number;
   maxZoom?: number;
+  transitionDuration?: number;
+  transitionInterpolator?: object;
 };
 import {pickViewportPropsFromMapState} from '@kepler.gl/reducers';
 
@@ -61,7 +63,15 @@ export const MapViewStateContextProvider = ({
         setViewStates(mapState.splitMapViewports as MapState[]);
       }
     } else if (hasChanged(primaryState, mapState)) {
-      setViewStates([pickViewportPropsFromMapState(mapState)] as MapState[]);
+      // External navigation carries transient deck.gl options that the viewport picker omits.
+      // Keep them for rendering, but exclude them from equality above so live-view echoes
+      // do not restart an animation.
+      setViewStates([
+        {
+          ...pickViewportPropsFromMapState(mapState),
+          ...pick(mapState, ['transitionDuration', 'transitionInterpolator'])
+        }
+      ] as MapState[]);
     }
     // Only update internalViewState when viewState changes
     // eslint-disable-next-line react-hooks/exhaustive-deps

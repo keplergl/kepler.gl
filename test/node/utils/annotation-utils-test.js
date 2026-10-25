@@ -2,18 +2,26 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import {WebMercatorViewport} from '@deck.gl/core';
 import {AnnotationKind} from '@kepler.gl/constants';
 import {
   makeMarker,
   movePoint,
+  moveRulerEndpoint,
   moveText,
   resizeCircle,
   isLeftOriented,
-  isPointVisibleOnGlobe
+  isBelowOriented,
+  getTextPlacement,
+  getAnnotationTextBoxStyle,
+  getRulerDistanceLabel,
+  isAnnotationVisibleOnGlobe,
+  isPointVisibleOnGlobe,
+  normalizeAnchorPoint
 } from '@kepler.gl/components';
 
 const mockViewport = {
-  project: ([lng, lat]) => [lng * 10 + 500, lat * -10 + 300],
+  project: ([lng, lat, alt = 0]) => [lng * 10 + 500, lat * -10 + 300 - alt],
   unproject: ([x, y]) => [(x - 500) / 10, (y - 300) / -10],
   longitude: 0,
   latitude: 0,
@@ -72,6 +80,24 @@ const makeCircleAnnotation = (overrides = {}) => ({
   ...overrides
 });
 
+const makeRulerAnnotation = (overrides = {}) => ({
+  id: 'test-ruler',
+  kind: AnnotationKind.RULER,
+  isVisible: true,
+  autoSize: true,
+  autoSizeY: true,
+  anchorPoint: [0, 0],
+  endPoint: [1, 0],
+  label: 'Ruler',
+  lineColor: '#FFFFFF',
+  lineWidth: 2,
+  textWidth: 100,
+  textHeight: 30,
+  showCustomText: true,
+  showDistance: true,
+  ...overrides
+});
+
 test('#isLeftOriented', t => {
   t.equal(isLeftOriented(0), false, '0 degrees is right-oriented');
   t.equal(isLeftOriented(45), false, '45 degrees is right-oriented');
@@ -81,6 +107,118 @@ test('#isLeftOriented', t => {
   t.equal(isLeftOriented(-90), false, '-90 degrees is right-oriented');
   t.equal(isLeftOriented(-91), true, '-91 degrees is left-oriented');
   t.equal(isLeftOriented(-180), true, '-180 degrees is left-oriented');
+
+  t.end();
+});
+
+test('#isBelowOriented', t => {
+  t.equal(isBelowOriented(-45), false, 'default -45 is above');
+  t.equal(isBelowOriented(-90), false, '-90 (up) is above');
+  t.equal(isBelowOriented(0), false, '0 (right) is not below');
+  t.equal(isBelowOriented(45), true, '45 is below');
+  t.equal(isBelowOriented(90), true, '90 (down) is below');
+  t.equal(isBelowOriented(135), true, '135 is below');
+  t.equal(isBelowOriented(180), false, '180 (left) is not below');
+
+  t.end();
+});
+
+test('#getTextPlacement -> stored values win over angle', t => {
+  const annotation = makePointAnnotation({
+    angle: 0,
+    textSide: 'left',
+    textVerticalPosition: 'below'
+  });
+  t.deepEqual(
+    getTextPlacement(annotation),
+    {side: 'left', vertical: 'below'},
+    'should use stored placement'
+  );
+  t.end();
+});
+
+test('#getTextPlacement -> derives from arm angle when unset', t => {
+  t.deepEqual(
+    getTextPlacement(makePointAnnotation({angle: -45})),
+    {side: 'right', vertical: 'above'},
+    'default angle is right + above'
+  );
+  t.deepEqual(
+    getTextPlacement(makePointAnnotation({angle: 180})),
+    {side: 'left', vertical: 'above'},
+    '180 degrees is left + above'
+  );
+  t.deepEqual(
+    getTextPlacement(makePointAnnotation({angle: 90})),
+    {side: 'right', vertical: 'below'},
+    '90 degrees is right + below'
+  );
+  t.end();
+});
+
+test('#getAnnotationTextBoxStyle -> right/above uses left + bottom', t => {
+  const annotation = makePointAnnotation({
+    autoSize: false,
+    textWidth: 100,
+    angle: 0,
+    armLength: 50,
+    textSide: 'right',
+    textVerticalPosition: 'above'
+  });
+  const style = getAnnotationTextBoxStyle(annotation, mockViewport);
+
+  t.equal(style.left, 550, 'text starts at arm endpoint x');
+  t.equal(style.bottom, 300, 'text sits above the arm endpoint');
+  t.ok(style.borderBottom, 'connector is on the bottom edge');
+  t.notOk(style.right, 'should not set right when on the right');
+  t.notOk(style.top, 'should not set top when above');
+
+  t.end();
+});
+
+test('#getAnnotationTextBoxStyle -> left/below uses right + top', t => {
+  const annotation = makePointAnnotation({
+    autoSize: false,
+    textWidth: 100,
+    angle: 135,
+    armLength: 50,
+    textSide: 'left',
+    textVerticalPosition: 'below'
+  });
+  const style = getAnnotationTextBoxStyle(annotation, mockViewport);
+
+  t.ok(typeof style.right === 'number', 'text is anchored from the right');
+  t.ok(typeof style.top === 'number', 'text sits below the arm endpoint');
+  t.ok(style.borderTop, 'connector is on the top edge');
+  t.notOk(style.left, 'should not set left when on the left');
+  t.notOk(style.bottom, 'should not set bottom when below');
+
+  t.end();
+});
+
+test('#getAnnotationTextBoxStyle -> TEXT without explicit side stays centered', t => {
+  const annotation = makeTextAnnotation({autoSize: false, textWidth: 100});
+  const style = getAnnotationTextBoxStyle(annotation, mockViewport);
+
+  t.equal(style.left, 450, 'TEXT should be centered on the anchor (x - width/2)');
+  t.equal(style.bottom, 300, 'TEXT should sit above the anchor');
+  t.notOk(style.right, 'should not set right when centered');
+  t.notOk(style.borderBottom, 'TEXT should not draw a leader');
+
+  t.end();
+});
+
+test('#getAnnotationTextBoxStyle -> TEXT left uses right edge at the anchor', t => {
+  const annotation = makeTextAnnotation({
+    autoSize: false,
+    textWidth: 100,
+    textSide: 'left',
+    textVerticalPosition: 'above'
+  });
+  const style = getAnnotationTextBoxStyle(annotation, mockViewport);
+
+  t.equal(style.right, 500, 'left-placed TEXT is anchored from the right');
+  t.notOk(style.left, 'should not set left when on the left');
 
   t.end();
 });
@@ -96,6 +234,100 @@ test('#makeMarker -> POINT annotation', t => {
   t.ok(isFinite(marker.ty), 'should have numeric ty');
   t.equal(marker.tx, 50, 'tx should equal armLength when angle is 0');
   t.ok(Math.abs(marker.ty) < 0.001, 'ty should be ~0 when angle is 0');
+
+  t.end();
+});
+
+test('#makeMarker -> RULER uses projected 3D endpoints and their screen midpoint', t => {
+  const marker = makeMarker(
+    makeRulerAnnotation({anchorPoint: [0, 0, 10], endPoint: [2, 0, 30]}),
+    mockViewport
+  );
+
+  t.equal(marker.kind, AnnotationKind.RULER, 'should return RULER kind');
+  t.equal(marker.x, 500, 'start x should be projected');
+  t.equal(marker.y, 290, 'start altitude should affect projected y');
+  t.equal(marker.ex, 20, 'end x should be relative to the start');
+  t.equal(marker.ey, -20, 'different endpoint altitude should affect the line');
+  t.equal(marker.mx, 10, 'midpoint x should bisect the projected line');
+  t.equal(marker.my, -10, 'midpoint y should bisect the projected line');
+
+  t.end();
+});
+
+test('#makeMarker -> RULER crosses the dateline through the closest world copy', t => {
+  const wrappingViewport = {
+    ...mockViewport,
+    project: ([lng, lat]) => [lng, lat]
+  };
+  const marker = makeMarker(
+    makeRulerAnnotation({anchorPoint: [179, 0], endPoint: [-179, 0]}),
+    wrappingViewport
+  );
+
+  t.equal(marker.ex, 2, 'dateline ruler should span two degrees, not 358');
+  t.equal(marker.mx, 1, 'text midpoint should stay halfway along the short segment');
+
+  t.end();
+});
+
+test('#makeMarker -> RULER follows a start more than one wrapped world away', t => {
+  const wrappingViewport = {
+    ...mockViewport,
+    project: ([lng, lat]) => [lng, lat]
+  };
+  const marker = makeMarker(
+    makeRulerAnnotation({anchorPoint: [541, 0], endPoint: [-178, 0]}),
+    wrappingViewport
+  );
+
+  t.equal(marker.ex, 1, 'end should use the +720 degree world copy nearest the start');
+  t.equal(marker.mx, 0.5, 'midpoint should remain on that short rendered segment');
+
+  t.end();
+});
+
+test('#makeMarker -> RULER keeps the nearest longitude wrap under perspective', t => {
+  const viewport = new WebMercatorViewport({
+    width: 1000,
+    height: 600,
+    longitude: 0,
+    latitude: 0,
+    zoom: 6,
+    pitch: 60,
+    bearing: 90
+  });
+  const ruler = makeRulerAnnotation({anchorPoint: [7.1444, 0], endPoint: [-3.1732, 0]});
+  const start = viewport.project(ruler.anchorPoint);
+  const end = viewport.project(ruler.endPoint);
+  const marker = makeMarker(ruler, viewport);
+  const style = getAnnotationTextBoxStyle(ruler, viewport);
+
+  t.equal(marker.ex, end[0] - start[0], 'end x should use the nearest geographic world copy');
+  t.equal(marker.ey, end[1] - start[1], 'end y should use the nearest geographic world copy');
+  t.equal(style.left, (start[0] + end[0]) / 2, 'label x should bisect the correct endpoints');
+  t.equal(style.top, (start[1] + end[1]) / 2, 'label y should bisect the correct endpoints');
+
+  let pickedScreen;
+  moveRulerEndpoint(ruler, 'end', {x: 3, y: 5}, viewport, screen => {
+    pickedScreen = screen;
+    return null;
+  });
+  t.deepEqual(pickedScreen, [end[0] + 3, end[1] + 5], 'dragging should start at the visible end');
+
+  t.end();
+});
+
+test('#getAnnotationTextBoxStyle -> RULER centers text on the projected midpoint', t => {
+  const style = getAnnotationTextBoxStyle(
+    makeRulerAnnotation({anchorPoint: [0, 0, 10], endPoint: [2, 0, 30]}),
+    mockViewport
+  );
+
+  t.equal(style.left, 510, 'midpoint x should account for both endpoints');
+  t.equal(style.top, 280, 'midpoint y should account for both endpoint altitudes');
+  t.equal(style.transform, 'translate(-50%, -50%)', 'text should be centered on midpoint');
+  t.notOk(style.borderTop, 'ruler text should not draw an annotation leader border');
 
   t.end();
 });
@@ -151,6 +383,121 @@ test('#movePoint -> zero delta returns same position', t => {
   t.end();
 });
 
+test('#movePoint -> uses pickWorldPosition xyz when provided', t => {
+  const annotation = makePointAnnotation({anchorPoint: [0, 0]});
+  const pickWorldPosition = () => [12.3, 45.6, 80];
+
+  const changes = movePoint(annotation, {x: 10, y: -5}, mockViewport, pickWorldPosition);
+
+  t.deepEqual(
+    changes.anchorPoint,
+    [12.3, 45.6, 80],
+    'should persist reconstructed [lng, lat, altitude]'
+  );
+
+  t.end();
+});
+
+test('#movePoint -> falls back to ground plane when pick returns no altitude', t => {
+  const annotation = makePointAnnotation({anchorPoint: [0, 0]});
+  const pickWorldPosition = () => null;
+
+  const changes = movePoint(annotation, {x: 10, y: -5}, mockViewport, pickWorldPosition);
+
+  t.equal(changes.anchorPoint.length, 2, 'fallback should be [lon, lat]');
+  t.equal(changes.anchorPoint[0], 1, 'longitude should use viewport unproject');
+  t.equal(changes.anchorPoint[1], 0.5, 'latitude should use viewport unproject');
+
+  t.end();
+});
+
+test('#moveRulerEndpoint -> moves endpoints independently using 3D surface picks', t => {
+  const ruler = makeRulerAnnotation({anchorPoint: [0, 0, 5], endPoint: [1, 1, 10]});
+  const movedStart = moveRulerEndpoint(ruler, 'start', {x: 5, y: 5}, mockViewport, () => [
+    2, 3, 40
+  ]);
+  const movedEnd = moveRulerEndpoint(ruler, 'end', {x: 5, y: 5}, mockViewport, () => [4, 5, 80]);
+
+  t.deepEqual(movedStart.anchorPoint, [2, 3, 40], 'start should snap to its picked surface');
+  t.notOk('endPoint' in movedStart, 'moving start should not change end');
+  t.deepEqual(movedEnd.endPoint, [4, 5, 80], 'end should snap to its picked surface');
+  t.notOk('anchorPoint' in movedEnd, 'moving end should not change start');
+
+  t.end();
+});
+
+test('#moveRulerEndpoint -> falls back to elevation 0 for either endpoint', t => {
+  const ruler = makeRulerAnnotation({anchorPoint: [0, 0, 5], endPoint: [1, 1, 10]});
+  const changes = moveRulerEndpoint(ruler, 'end', {x: 10, y: -5}, mockViewport, () => null);
+
+  t.equal(changes.endPoint.length, 2, 'ground fallback should omit altitude');
+  t.deepEqual(changes.endPoint, [2, 2.5], 'fallback should use viewport ground unprojection');
+
+  t.end();
+});
+
+test('#moveRulerEndpoint -> drags from the rendered world copy across the dateline', t => {
+  const wrappingViewport = {
+    ...mockViewport,
+    project: ([lng, lat]) => [lng, lat],
+    unproject: ([x, y]) => [x, y]
+  };
+  const ruler = makeRulerAnnotation({anchorPoint: [179, 0], endPoint: [-179, 0]});
+  let pickedScreen;
+  const changes = moveRulerEndpoint(ruler, 'end', {x: 1, y: 0}, wrappingViewport, screen => {
+    pickedScreen = screen;
+    return null;
+  });
+
+  t.deepEqual(pickedScreen, [182, 0], 'surface pick should start at the visible +181 handle');
+  t.deepEqual(changes.endPoint, [-178, 0], 'stored longitude should remain normalized');
+
+  t.end();
+});
+
+test('#moveRulerEndpoint -> keeps the start on its visible world copy across the dateline', t => {
+  const wrappingViewport = {
+    ...mockViewport,
+    project: ([lng, lat]) => [lng, lat],
+    unproject: ([x, y]) => [x, y]
+  };
+  const ruler = makeRulerAnnotation({anchorPoint: [179, 0], endPoint: [-179, 0]});
+  const changes = moveRulerEndpoint(ruler, 'start', {x: 2, y: 0}, wrappingViewport, () => null);
+
+  t.deepEqual(changes.anchorPoint, [181, 0], 'start should remain on the adjacent +181 world copy');
+
+  t.end();
+});
+
+test('#getRulerDistanceLabel -> follows geodesic kilometer measurement convention', t => {
+  t.equal(
+    getRulerDistanceLabel(makeRulerAnnotation({anchorPoint: [0, 0, 10], endPoint: [1, 0, 80]})),
+    'Length: 111.20 km',
+    'distance should use ground geodesic length and existing two-decimal format'
+  );
+  t.end();
+});
+
+test('#normalizeAnchorPoint', t => {
+  t.deepEqual(normalizeAnchorPoint([1, 2]), [1, 2], 'keeps 2D anchors');
+  t.deepEqual(normalizeAnchorPoint([1, 2, 3]), [1, 2, 3], 'keeps 3D anchors');
+  t.deepEqual(normalizeAnchorPoint([1, 2, 0]), [1, 2, 0], 'keeps zero altitude');
+  t.equal(normalizeAnchorPoint([1]), null, 'rejects incomplete coords');
+  t.equal(normalizeAnchorPoint(null), null, 'rejects null');
+
+  t.end();
+});
+
+test('#makeMarker -> projects altitude into screen y', t => {
+  const ground = makeMarker(makePointAnnotation({anchorPoint: [10, 20]}), mockViewport);
+  const raised = makeMarker(makePointAnnotation({anchorPoint: [10, 20, 15]}), mockViewport);
+
+  t.equal(raised.x, ground.x, 'longitude projection is unchanged by altitude');
+  t.equal(raised.y, ground.y - 15, 'altitude should shift screen y');
+
+  t.end();
+});
+
 test('#moveText -> TEXT annotation delegates to movePoint', t => {
   const annotation = makeTextAnnotation({anchorPoint: [0, 0]});
   const delta = {x: 20, y: 10};
@@ -172,6 +519,8 @@ test('#moveText -> POINT annotation changes angle and armLength', t => {
 
   t.ok('angle' in changes, 'should return angle');
   t.ok('armLength' in changes, 'should return armLength');
+  t.ok('textSide' in changes, 'should return textSide');
+  t.ok('textVerticalPosition' in changes, 'should return textVerticalPosition');
   t.notOk('anchorPoint' in changes, 'should not return anchorPoint');
 
   t.end();
@@ -207,6 +556,57 @@ test('#resizeCircle -> radius cannot go below 0', t => {
   const changes = resizeCircle(annotation, delta, mockViewport);
 
   t.ok(changes.radiusInMeters >= 0, 'radius should not be negative');
+
+  t.end();
+});
+
+test('#resizeCircle -> zero delta keeps radius for a 3D anchor', t => {
+  const annotation = makeCircleAnnotation({
+    anchorPoint: [10, 20, 80],
+    radiusInMeters: 1000
+  });
+  const pitchedViewport = {
+    ...mockViewport,
+    // Mimic pitch: altitude shifts y, so ground-plane unproject would drift.
+    project: ([lng, lat, alt = 0]) => [lng * 10 + 500 + alt * 0.2, lat * -10 + 300 - alt]
+  };
+
+  const changes = resizeCircle(annotation, {x: 0, y: 0}, pitchedViewport);
+
+  t.equal(changes.radiusInMeters, 1000, 'zero handle movement should not change radius');
+
+  t.end();
+});
+
+test('#resizeCircle -> scales radius by screen-space handle delta', t => {
+  const annotation = makeCircleAnnotation({
+    anchorPoint: [0, 0, 50],
+    radiusInMeters: 1000
+  });
+  const marker = makeMarker(annotation, mockViewport);
+  t.ok(marker.r > 0, 'circle should have a screen radius');
+
+  const doubled = resizeCircle(annotation, {x: marker.r, y: 0}, mockViewport);
+  t.equal(doubled.radiusInMeters, 2000, 'dragging the handle by one radius should double meters');
+
+  t.end();
+});
+
+test('#makeMarker -> CIRCLE screen radius is independent of altitude', t => {
+  const ground = makeMarker(
+    makeCircleAnnotation({anchorPoint: [10, 20], radiusInMeters: 1000}),
+    mockViewport
+  );
+  const raised = makeMarker(
+    makeCircleAnnotation({anchorPoint: [10, 20, 40], radiusInMeters: 1000}),
+    mockViewport
+  );
+
+  t.equal(
+    Math.round(raised.r * 1000) / 1000,
+    Math.round(ground.r * 1000) / 1000,
+    'raised and ground circles should have the same screen radius in this projection'
+  );
 
   t.end();
 });
@@ -263,6 +663,32 @@ test('#isPointVisibleOnGlobe -> non-finite projection is treated as not visible'
     isPointVisibleOnGlobe([10, 10], nanUnprojectViewport),
     false,
     'non-finite unproject result is not visible'
+  );
+
+  t.end();
+});
+
+test('#isAnnotationVisibleOnGlobe -> RULER requires both endpoints on the visible hemisphere', t => {
+  const viewport = {
+    project: ([lng, lat]) => [lng, lat],
+    unproject: ([x, y]) => (x > 90 ? [0, 0] : [x, y])
+  };
+
+  t.equal(
+    isAnnotationVisibleOnGlobe(
+      makeRulerAnnotation({anchorPoint: [10, 0], endPoint: [120, 0]}),
+      viewport
+    ),
+    false,
+    'ruler should hide rather than render through the globe when one endpoint is occluded'
+  );
+  t.equal(
+    isAnnotationVisibleOnGlobe(
+      makeRulerAnnotation({anchorPoint: [10, 0], endPoint: [20, 0]}),
+      viewport
+    ),
+    true,
+    'ruler should show when both endpoints are visible'
   );
 
   t.end();

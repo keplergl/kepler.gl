@@ -6,12 +6,15 @@
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
+import {fireEvent} from '@testing-library/react';
+import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import {
   LayerConfiguratorFactory,
   LayerColumnModeConfigFactory,
   LayerColumnConfigFactory,
   LayerConfigGroupFactory,
+  TextLabelPanelFactory,
   FieldSelectorFactory,
   ColumnSelectorFactory,
   appInjector,
@@ -20,6 +23,7 @@ import {
   getLayerFields,
   getLayerDataset
 } from '@kepler.gl/components';
+import {LayerClasses} from '@kepler.gl/layers';
 
 import {StateWFiles, StateWTripGeojson, testCsvDataId} from 'test/helpers/mock-state';
 import {
@@ -31,6 +35,7 @@ import {
 } from 'test/helpers/component-utils';
 import {act} from 'react-dom/test-utils';
 import {STYLED_COMPONENTS_DUPLICATED_ENTRIES} from '../../../helpers/utils';
+import {KeplerGlLayers} from '@kepler.gl/layers';
 
 // components
 const LayerConfigurator = appInjector.get(LayerConfiguratorFactory);
@@ -39,6 +44,7 @@ const LayerColumnConfig = appInjector.get(LayerColumnConfigFactory);
 const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
 const ColumnSelector = appInjector.get(ColumnSelectorFactory);
 const FieldSelector = appInjector.get(FieldSelectorFactory);
+const TextLabelPanel = appInjector.get(TextLabelPanelFactory);
 
 // components
 const openModal = () => {};
@@ -139,6 +145,22 @@ test('Components -> LayerConfigurator.mount -> default prop 1', t => {
     args.layerChannelConfigProps,
     expectedArgs.layerChannelConfigProps,
     'render layer method should receive correct layerChannelConfigProps arg'
+  );
+
+  t.end();
+});
+
+test('Components -> LayerConfigurator localizes the aggregation count label', t => {
+  const layer = new KeplerGlLayers.ClusterLayer({id: 'cluster', dataId: testCsvDataId});
+  const wrapper = mountWithTheme(
+    <IntlWrapper locale="es">
+      <LayerConfigurator {...defaultProps} layer={layer} />
+    </IntlWrapper>
+  );
+
+  t.ok(
+    wrapper.find(TextLabelPanel).text().includes('Recuento de puntos'),
+    'should render the localized Point Count field name'
   );
 
   t.end();
@@ -420,6 +442,164 @@ test('Components -> LayerConfigurator -> getLayerDataset', t => {
 
   const expectedDS = datasets.trip_data;
   t.deepEqual(ds, expectedDS, 'should get 1 dataset for the input layer');
+
+  t.end();
+});
+
+const ZARR_DATASET = {
+  id: 'zarr_data',
+  type: 'zarr',
+  label: 'Zarr Dataset',
+  color: [143, 47, 191],
+  fields: [],
+  metadata: {
+    url: 'https://example.com/store.zarr',
+    variable: 'FUTUR/qtot',
+    crs: {code: 'EPSG:4326'},
+    axes: ['lat', 'lon'],
+    xAxisIndex: 1,
+    yAxisIndex: 0,
+    levels: [{path: '.', shape: [360, 720], chunks: [360, 720]}],
+    // Same array name under two scenario groups, so the picker has to show the
+    // qualified display name to tell them apart.
+    variables: [
+      {
+        path: 'FUTUR/qtot',
+        name: 'qtot',
+        displayName: 'FUTUR/qtot',
+        shape: [3, 360, 720],
+        chunks: [1, 360, 720],
+        dtype: 'float32',
+        nonSpatialDims: [{name: 'season', size: 3, values: [0.5, 1.5, 2.5]}]
+      },
+      {
+        path: 'HISTO/qtot',
+        name: 'qtot',
+        displayName: 'HISTO/qtot',
+        shape: [3, 360, 720],
+        chunks: [1, 360, 720],
+        dtype: 'float32',
+        nonSpatialDims: [{name: 'season', size: 3, values: [0.5, 1.5, 2.5]}]
+      }
+    ],
+    nonSpatialDims: [{name: 'season', size: 3, values: [0.5, 1.5, 2.5]}]
+  }
+};
+
+function mountZarrConfigurator(layer, updateLayerVisConfigSpy) {
+  return mountWithTheme(
+    <IntlWrapper>
+      <LayerConfigurator
+        {...defaultProps}
+        layer={layer}
+        datasets={{zarr_data: ZARR_DATASET}}
+        updateLayerVisConfig={updateLayerVisConfigSpy}
+      />
+    </IntlWrapper>
+  );
+}
+
+test('Components -> LayerConfigurator -> automatic Zarr range remains editable', t => {
+  const layer = new LayerClasses.zarr({id: 'zarr-layer', dataId: 'zarr_data'});
+  const updateLayerVisConfigSpy = sinon.spy();
+  const {container, unmount} = renderWithTheme(
+    <IntlWrapper>
+      <LayerConfigurator
+        {...defaultProps}
+        layer={layer}
+        datasets={{zarr_data: ZARR_DATASET}}
+        updateLayerVisConfig={updateLayerVisConfigSpy}
+      />
+    </IntlWrapper>
+  );
+  try {
+    const [minimum, maximum] = container.querySelectorAll('.kg-range-slider__input');
+    t.equal(minimum.value, '0', 'shows the fallback lower bound while automatic');
+    t.equal(maximum.value, '1', 'shows the fallback upper bound while automatic');
+    t.equal(
+      layer.config.visConfig.rescale,
+      null,
+      'displaying fallback bounds does not select them'
+    );
+    fireEvent.change(minimum, {target: {value: '0.25'}});
+    fireEvent.blur(minimum);
+    t.deepEqual(
+      updateLayerVisConfigSpy.lastCall.args[0],
+      {rescale: [0.25, 1]},
+      'editing the slider selects an explicit color range'
+    );
+  } finally {
+    unmount();
+    t.end();
+  }
+});
+
+test('Components -> LayerConfigurator -> zarr variable selector shows the active variable', t => {
+  const ZarrLayer = LayerClasses.zarr;
+  const layer = new ZarrLayer({id: 'zarr-layer', dataId: 'zarr_data'});
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountZarrConfigurator(layer, () => {});
+  }, 'should render the zarr layer config');
+
+  // Regression: selectedItems used to be the variable path string, which the
+  // display accessor could not read, so the dropdown rendered no selection.
+  const value = wrapper
+    .find('.zarr-variable-selector')
+    .find('.item-selector__dropdown__value')
+    .at(0);
+  t.equal(
+    value.text(),
+    'FUTUR/qtot',
+    'should display the dataset variable as the current selection'
+  );
+
+  t.end();
+});
+
+test('Components -> LayerConfigurator -> zarr dimension selector shows the pinned index', t => {
+  const ZarrLayer = LayerClasses.zarr;
+  const layer = new ZarrLayer({id: 'zarr-layer', dataId: 'zarr_data'});
+  layer.updateLayerVisConfig({dimensionIndexes: {season: 2}});
+
+  const wrapper = mountZarrConfigurator(layer, () => {});
+  const value = wrapper
+    .find('.zarr-dimension-selector')
+    .find('.item-selector__dropdown__value')
+    .at(0);
+
+  // Labeled by coordinate value rather than raw index.
+  t.equal(value.text(), '2.5', 'should display the pinned coordinate value');
+
+  t.end();
+});
+
+test('Components -> LayerConfigurator -> zarr variable selector changes the variable and resets its frame', t => {
+  const ZarrLayer = LayerClasses.zarr;
+  const layer = new ZarrLayer({id: 'zarr-layer', dataId: 'zarr_data'});
+  layer.updateLayerVisConfig({zarrFrame: 2});
+  const updateLayerVisConfig = sinon.spy();
+
+  const wrapper = mountZarrConfigurator(layer, updateLayerVisConfig);
+
+  const variableSelector = () => wrapper.find('.zarr-variable-selector').at(0);
+
+  clickItemSelector(variableSelector());
+  wrapper.update();
+  t.deepEqual(
+    getItemSelectorListText(variableSelector(), 1),
+    'HISTO/qtot',
+    'should list variables by their qualified display name'
+  );
+  clickItemSelectList(variableSelector(), 1);
+
+  t.ok(updateLayerVisConfig.calledOnce, 'should call updateLayerVisConfig once');
+  t.deepEqual(
+    updateLayerVisConfig.firstCall.args[0],
+    {zarrVariable: 'HISTO/qtot', zarrFrame: 0},
+    'should emit the selected variable path and start at its first frame'
+  );
 
   t.end();
 });

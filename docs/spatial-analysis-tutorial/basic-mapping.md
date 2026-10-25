@@ -73,6 +73,10 @@ Any time there are ties in the ranking of observations that align with the value
 
 A natural (Jenks) breaks map uses a nonlinear algorithm to group observations such that the within-group homogeneity is maximized, following the pathbreaking work of Fisher ([1958](https://www.jstor.org/stable/2281952)) and Jenks ([1977](https://books.google.com/books/about/Optimal_Data_Classification_for_Chorople.html?id=HvAENQAACAAJ)). In essence, this is a clustering algorithm in one dimension to determine the break points that yield groups with the largest internal similarity.
 
+:::tip
+In Kepler.gl, natural breaks are the **Jenks Natural Breaks** color scale. You can select it from the Color Scale dropdown when coloring a numeric field.
+:::
+
 To create such a map with four categories, you can use the following prompt:
 
 ```

@@ -3,9 +3,14 @@
 
 import React, {FC} from 'react';
 import {useDraggable} from '@dnd-kit/core';
-import {Annotation, AnnotationWithArm} from '@kepler.gl/types';
+import {Annotation, AnnotationWithArm, RulerAnnotation} from '@kepler.gl/types';
 import {AnnotationKind} from '@kepler.gl/constants';
-import {makeMarker, MapViewport, CircleAnnotationMarker} from './annotation-utils';
+import {
+  makeMarker,
+  MapViewport,
+  CircleAnnotationMarker,
+  RulerAnnotationMarker
+} from './annotation-utils';
 
 const HANDLE_RADIUS = 6;
 
@@ -49,12 +54,97 @@ const ResizeHandle: FC<{id: string; x: number; y: number}> = ({id, x, y}) => {
 
 export type AnnotationNodeProps = {
   annotation: Annotation;
+  opacity?: number;
   viewport: MapViewport;
   isEditing: boolean;
   isSelected: boolean;
 };
 
-const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditing, isSelected}) => {
+export type RulerEndpointHandlesProps = {
+  annotation: RulerAnnotation;
+  opacity?: number;
+  viewport: MapViewport;
+  isEditing: boolean;
+  isSelected: boolean;
+};
+
+/**
+ * Ruler handles render in a dedicated SVG above midpoint text so even a short
+ * ruler remains draggable when its label overlaps an endpoint.
+ */
+export const RulerEndpointHandles: FC<RulerEndpointHandlesProps> = ({
+  annotation,
+  opacity = 1,
+  viewport,
+  isEditing,
+  isSelected
+}) => {
+  if (!isEditing) return null;
+  const marker = makeMarker(annotation, viewport) as RulerAnnotationMarker;
+  // Keep both hit targets reachable, including when the endpoints coincide.
+  // Dragging still applies its delta to the geographic endpoint, not this offset.
+  const length = Math.hypot(marker.ex, marker.ey);
+  const offset = Math.max(0, (HANDLE_RADIUS * 2 + 2 - length) / 2);
+  const dx = length > 0 ? marker.ex / length : 1;
+  const dy = length > 0 ? marker.ey / length : 0;
+  const startX = -dx * offset;
+  const startY = -dy * offset;
+  const endX = marker.ex + dx * offset;
+  const endY = marker.ey + dy * offset;
+  return (
+    <g
+      data-annotation-id={annotation.id}
+      data-annotation-part="handles"
+      transform={`translate(${marker.x},${marker.y})`}
+      style={{
+        opacity,
+        display: opacity === 0 ? 'none' : undefined,
+        visibility: opacity === 0 ? 'hidden' : undefined,
+        pointerEvents: opacity === 0 ? 'none' : undefined
+      }}
+    >
+      {offset > 0 ? (
+        <path
+          d={`M${startX},${startY} L0,0 M${marker.ex},${marker.ey} L${endX},${endY}`}
+          fill="none"
+          stroke="rgba(255,255,255,0.6)"
+          strokeWidth={1}
+          style={{pointerEvents: 'none'}}
+        />
+      ) : null}
+      <MoveHandle id={`${annotation.id}:MOVE_RULER_START`} x={startX} y={startY} />
+      <MoveHandle id={`${annotation.id}:MOVE_RULER_END`} x={endX} y={endY} />
+      {isSelected ? (
+        <>
+          <circle
+            cx={startX}
+            cy={startY}
+            r={HANDLE_RADIUS + 2}
+            fill="none"
+            stroke="rgba(64,169,255,0.6)"
+            strokeWidth={2}
+          />
+          <circle
+            cx={endX}
+            cy={endY}
+            r={HANDLE_RADIUS + 2}
+            fill="none"
+            stroke="rgba(64,169,255,0.6)"
+            strokeWidth={2}
+          />
+        </>
+      ) : null}
+    </g>
+  );
+};
+
+const AnnotationNode: FC<AnnotationNodeProps> = ({
+  annotation,
+  opacity = 1,
+  viewport,
+  isEditing,
+  isSelected
+}) => {
   const {lineColor, lineWidth} = annotation;
   const marker = makeMarker(annotation, viewport);
   const {kind, x, y, tx, ty} = marker;
@@ -131,6 +221,19 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditin
         </>
       );
       break;
+    case AnnotationKind.RULER: {
+      const rulerMarker = marker as RulerAnnotationMarker;
+      body = (
+        <path
+          d={`M0,0 L${rulerMarker.ex},${rulerMarker.ey}`}
+          stroke={lineColor}
+          fill="none"
+          strokeWidth={lineWidth}
+          strokeLinecap="round"
+        />
+      );
+      break;
+    }
     default:
       body = (
         <>
@@ -140,7 +243,21 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({annotation, viewport, isEditin
       );
   }
 
-  return <g transform={`translate(${x},${y})`}>{body}</g>;
+  return (
+    <g
+      data-annotation-id={annotation.id}
+      data-annotation-part="shape"
+      transform={`translate(${x},${y})`}
+      style={{
+        opacity,
+        display: opacity === 0 ? 'none' : undefined,
+        visibility: opacity === 0 ? 'hidden' : undefined,
+        pointerEvents: opacity === 0 ? 'none' : undefined
+      }}
+    >
+      {body}
+    </g>
+  );
 };
 
 export default AnnotationNode;

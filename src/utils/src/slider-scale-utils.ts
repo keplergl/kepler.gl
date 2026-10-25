@@ -29,11 +29,7 @@ export type SliderScaleConfig = {
  *   focus zone occupies [beforeEnd, focusEnd]
  *   after zone occupies [focusEnd, 1]
  */
-function getZoneBoundaries(
-  min: number,
-  max: number,
-  config: SliderScaleConfig
-): [number, number] {
+function getZoneBoundaries(min: number, max: number, config: SliderScaleConfig): [number, number] {
   const {focusRange, focusWeight} = config;
   const [focusMin, focusMax] = focusRange;
 

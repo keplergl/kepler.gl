@@ -73,9 +73,10 @@ export function isTripGeoJsonField(dataContainer: DataContainerInterface, field:
  * @param dataToFeature array of geojson feature objects, can be null
  * @returns
  */
-export function parseTripGeoJsonTimestamp(
-  dataToFeature: any[]
-): {dataToTimeStamp: number[][]; animationDomain: [number, number] | null} {
+export function parseTripGeoJsonTimestamp(dataToFeature: any[]): {
+  dataToTimeStamp: number[][];
+  animationDomain: [number, number] | null;
+} {
   // Analyze type based on coordinates of the 1st lineString
   // select a sample trip to analyze time format
   const empty: {dataToTimeStamp: number[][]; animationDomain: null} = {
@@ -115,9 +116,13 @@ function findMinFromSorted(list: number[]) {
   return list?.find(d => notNullorUndefined(d) && Number.isFinite(d)) || null;
 }
 
-function findMaxFromSorted(list: number[] = []) {
+function findMaxFromSorted(list: number[] | null = []) {
+  // Default [] only applies for undefined. Invalid trips are passed as null.
+  if (!list) {
+    return null;
+  }
   let i = list.length - 1;
-  while (i > 0) {
+  while (i >= 0) {
     if (notNullorUndefined(list[i]) && Number.isFinite(list[i])) {
       return list[i];
     }

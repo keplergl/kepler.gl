@@ -6,6 +6,10 @@ import test from 'tape';
 import {testCreateCases, dataId, preparedDataset} from 'test/helpers/layer-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {copyTableAndUpdate} from '@kepler.gl/table';
+import {VisStateActions} from '@kepler.gl/actions';
+import {INITIAL_VIS_STATE, visStateReducer as reducer} from '@kepler.gl/reducers';
+import {processCsvData} from '@kepler.gl/processors';
+import {createNewDataEntryMock} from 'test/helpers/table-utils';
 
 const {FlowLayer} = KeplerGlLayers;
 
@@ -178,6 +182,97 @@ test('#FlowLayer -> formatLayerData', t => {
   t.end();
 });
 
+test('#FlowLayer -> styling preserves filters and invalidates changed data', async t => {
+  const datasets = await createNewDataEntryMock({
+    info: {id: dataId},
+    data: processCsvData('lat,lng,lat_1,lng_1,value\n1,2,3,4,0\n2,3,4,5,10\n3,4,5,6,20')
+  });
+  const layer = new FlowLayer({dataId});
+  layer.updateLayerConfig({
+    columns: {
+      lat0: {value: 'lat', fieldIdx: 0},
+      lng0: {value: 'lng', fieldIdx: 1},
+      lat1: {value: 'lat_1', fieldIdx: 2},
+      lng1: {value: 'lng_1', fieldIdx: 3},
+      count: {value: 'value', fieldIdx: 4}
+    }
+  });
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layer.formatLayerData(datasets, {})],
+    layerOrder: [layer.id]
+  };
+  const setRange = value => {
+    state = reducer(state, VisStateActions.setFilter(0, 'value', value));
+  };
+  const checkStyles = (expected, message) => {
+    const previousFlows = state.layerData[0].layerData.flows;
+    t.deepEqual(
+      previousFlows.map(d => d.index),
+      expected,
+      message
+    );
+    [
+      {flowLineThicknessScale: 2},
+      {flowLinesRenderingMode: 'curved'},
+      {flowLineThicknessScale: 1},
+      {flowLinesRenderingMode: 'straight'}
+    ].forEach(style => {
+      state = reducer(state, VisStateActions.layerVisConfigChange(state.layers[0], style));
+      t.equal(state.layerData[0].layerData.flows, previousFlows, 'styling retains the flow array');
+      t.deepEqual(
+        state.layerData[0].layerData.flows.map(d => d.index),
+        expected,
+        message
+      );
+    });
+  };
+  const addFilter = () => {
+    state = reducer(state, VisStateActions.addFilter(dataId));
+    state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+    setRange([5, 15]);
+  };
+  addFilter();
+  t.equal(state.filters[0].gpu, true, 'exercises GPU-configured filtering on the CPU Flow layer');
+  checkStyles([1], 'range [5,15] retains only the middle flow');
+  t.deepEqual(state.filters[0].value, [5, 15], 'styling keeps the active selection');
+
+  setRange([15, 20]);
+  checkStyles([2], 'a changed range selects the last flow');
+  setRange([11, 15]);
+  checkStyles([], 'an empty filter result stays empty');
+  state = reducer(state, VisStateActions.removeFilter(0));
+  checkStyles([0, 1, 2], 'removing the filter restores all flows');
+  addFilter();
+  checkStyles([1], 'reapplying the same filter does not reuse unfiltered flows');
+
+  state = reducer(state, VisStateActions.setFilter(0, 'gpu', false));
+  checkStyles([1], 'CPU filtering preserves the middle flow');
+  setRange([15, 20]);
+  checkStyles([2], 'CPU filter changes refresh flows');
+  state = reducer(state, VisStateActions.setFilter(0, 'gpu', true));
+  setRange([5, 15]);
+  checkStyles([1], 'switching back to GPU filtering refreshes flows');
+
+  state = reducer(
+    state,
+    VisStateActions.addToDataset(dataId, [
+      [4, 5, 6, 7, 12],
+      [5, 6, 7, 8, 30]
+    ])
+  );
+  checkStyles([1, 3], 'data refresh includes only the matching new flow');
+  const rebuilt = state.layers[0].formatLayerData(state.datasets, {});
+  t.deepEqual(
+    rebuilt.layerData.flows.map(d => d.index),
+    [1, 3],
+    'missing old data is filtered anew'
+  );
+  t.end();
+});
+
 test('#FlowLayer -> getHoverData location', t => {
   const layer = new FlowLayer({
     dataId,
@@ -284,6 +379,65 @@ test('#FlowLayer -> renderLayer returns empty when no data', t => {
 
   t.ok(Array.isArray(result), 'should return an array');
   t.equal(result.length, 0, 'should return empty array when no layerData');
+
+  t.end();
+});
+
+function flowRenderOpts(layer, filteredIndex) {
+  layer.updateLayerConfig({
+    columns: {
+      lat0: {value: 'lat', fieldIdx: 1},
+      lng0: {value: 'lng', fieldIdx: 2},
+      lat1: {value: 'lat_1', fieldIdx: 3},
+      lng1: {value: 'lng_1', fieldIdx: 4}
+    },
+    columnMode: 'LAT_LNG'
+  });
+  const dataset = copyTableAndUpdate(preparedDataset, {filteredIndex});
+  layer.updateLayerMeta(dataset);
+  layer.updateLayerDomain({[dataId]: dataset});
+  return {
+    data: layer.formatLayerData({[dataId]: dataset}, {}),
+    gpuFilter: {},
+    objectHovered: null,
+    mapState: {},
+    layerCallbacks: {onLayerHover: () => {}},
+    idx: 0,
+    visible: true
+  };
+}
+
+test('#FlowLayer -> renderLayer when a new layer replaces the old one', t => {
+  // Replacing a dataset builds a new layer with the same id, and deck matches
+  // the new FlowmapLayer to the old one by that id. FlowmapLayer takes up the
+  // new data provider only when `data` changes, so the new layer must not hand
+  // deck a value the old one already did, or the old flows stay on the map.
+  const before = new FlowLayer({id: 'flows', dataId, label: 'before refresh'});
+  const after = new FlowLayer({id: 'flows', dataId, label: 'after refresh'});
+
+  const [oldDeckLayer] = before.renderLayer(flowRenderOpts(before, [0, 1, 3]));
+  const [newDeckLayer] = after.renderLayer(flowRenderOpts(after, [0, 1, 3, 4, 5]));
+
+  t.equal(newDeckLayer.id, oldDeckLayer.id, 'both deck layers should share the id deck matches by');
+  t.notEqual(
+    newDeckLayer.props.data,
+    oldDeckLayer.props.data,
+    'the new layer should pass a data value the old one never passed'
+  );
+
+  t.end();
+});
+
+test('#FlowLayer -> renderLayer keeps its data value while the flows are unchanged', t => {
+  // Each frame of an animation renders again with the same layer data; a new
+  // value every time would make FlowmapLayer rebuild its data on every frame.
+  const layer = new FlowLayer({id: 'flows', dataId, label: 'stable'});
+  const opts = flowRenderOpts(layer, [0, 1, 3]);
+
+  const [first] = layer.renderLayer(opts);
+  const [second] = layer.renderLayer(opts);
+
+  t.equal(second.props.data, first.props.data, 'the data value should not move without new flows');
 
   t.end();
 });
