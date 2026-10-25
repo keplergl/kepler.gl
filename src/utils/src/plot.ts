@@ -10,8 +10,12 @@ import {
   ticks
 } from 'd3-array';
 import isEqual from 'es-toolkit/compat/isEqual';
-import {getFilterMappedValue, getInitialInterval, intervalToFunction} from './time';
-import moment from 'moment';
+import {
+  getFilterMappedValue,
+  getInitialInterval,
+  getIntervalByTicks,
+  intervalToFunction
+} from './time';
 import {
   Bin,
   TimeBins,
@@ -34,7 +38,7 @@ import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
 import {
   ANIMATION_WINDOW,
   BINS,
-  durationDay,
+  BINS_LARGE,
   FILTER_TYPES,
   TIME_AGGREGATION,
   AGGREGATION_TYPES,
@@ -273,6 +277,8 @@ export function histogramFromDomain(
   }));
 }
 
+const timeBinDomains = new WeakMap<TimeBins, number[]>();
+
 /**
  * @param filter
  * @param datasets
@@ -284,7 +290,10 @@ export function getTimeBins(
   interval: PlotType['interval'],
   plotBaseIndexByDataId?: Record<string, number[]>
 ): TimeBins {
-  let bins = filter.timeBins || {};
+  interval = getTimeBinConfig(interval, filter.domain).interval;
+  const cachedDomain = filter.timeBins && timeBinDomains.get(filter.timeBins);
+  // Preserve caller-supplied caches; invalidate a domain change once it is known.
+  let bins = cachedDomain && !isEqual(cachedDomain, filter.domain) ? {} : filter.timeBins || {};
 
   filter.dataId.forEach(dataId => {
     // reuse bins if filterData did not change
@@ -310,6 +319,7 @@ export function getTimeBins(
     };
   });
 
+  timeBinDomains.set(bins, Array.isArray(filter.domain) ? filter.domain.slice(0, 2) : []);
   return bins;
 }
 
@@ -336,24 +346,122 @@ export function binByTime(indexes, dataset, interval, filter) {
 }
 
 export function getBinThresholds(interval: string, domain: number[]): number[] {
-  const timeInterval = intervalToFunction(interval);
-  const [t0, t1] = domain;
+  return getTimeBinConfig(interval, domain).thresholds.slice();
+}
 
-  if (!timeInterval) {
-    // if time interval is not defined
-    // this should not happen
-    return [t0, t0 + durationDay];
+const MAX_TIME_BINS = 2048;
+// Weak keys keep validation local to live domains without retaining old filters.
+const timeBinConfigs = new WeakMap<
+  number[],
+  {requestedInterval: string; domain: number[]; result: {interval: string; thresholds: number[]}}
+>();
+
+/** Resolve the interval and its complete domain together, never truncating a plot. */
+function getTimeBinConfig(interval: string, domain: number[]) {
+  if (
+    !Array.isArray(domain) ||
+    domain.length !== 2 ||
+    !domain.every(value => Number.isFinite(value) && Number.isFinite(new Date(value).getTime())) ||
+    domain[1] < domain[0]
+  ) {
+    return {interval, thresholds: [] as number[]};
   }
-  const floor = timeInterval.floor(t0).getTime();
-  const ceiling = timeInterval.ceil(t1).getTime();
-  const binThresholds = timeInterval.range(floor, ceiling + 1).map(t => moment.utc(t).valueOf());
-  const lastStep = binThresholds[binThresholds.length - 1];
-  if (lastStep === t1) {
-    // when last step equal to domain max, add one more step
-    binThresholds.push(moment.utc(timeInterval.offset(lastStep)).valueOf());
+  const cached = timeBinConfigs.get(domain);
+  if (
+    cached &&
+    isEqual(cached.domain, domain) &&
+    (cached.requestedInterval === interval || cached.result.interval === interval)
+  ) {
+    return cached.result;
   }
 
-  return binThresholds;
+  const build = (id: string): number[] | null => {
+    const match = /^(\d+)-(millisecond|second|minute|hour|day|week|month|year)$/.exec(id);
+    const step = Number(match?.[1]);
+    if (!match || !Number.isSafeInteger(step) || step <= 0) return null;
+    let timeInterval = intervalToFunction(id);
+    if (!timeInterval) return null;
+    // Filtered D3 intervals can loop internally after Date overflow. Near the
+    // Date limits, walk at most one field cycle using the unfiltered interval.
+    const period = {second: 60, minute: 60, hour: 24, day: 31, month: 12}[match[2]];
+    if (step > 1 && period) {
+      const base = intervalToFunction(`1-${match[2]}`);
+      if (
+        !Number.isFinite(Number(base.offset(domain[0], -period))) ||
+        !Number.isFinite(Number(base.offset(domain[1], period)))
+      ) {
+        const field = {
+          second: (date: Date) => date.getUTCSeconds(),
+          minute: (date: Date) => date.getUTCMinutes(),
+          hour: (date: Date) => date.getUTCHours(),
+          day: (date: Date) => date.getUTCDate() - 1,
+          month: (date: Date) => date.getUTCMonth()
+        }[match[2]];
+        if (!field) return null;
+        const walk = (value: number, direction: number, includeCurrent = false) => {
+          let date = base.floor(value);
+          for (let index = 0; index < period; index++) {
+            if (!includeCurrent || index) date = base.offset(date, direction);
+            if (!Number.isFinite(Number(date))) return date;
+            if (field(date) % step === 0) return date;
+          }
+          return new Date(NaN);
+        };
+        timeInterval = {
+          floor: value => walk(value, -1, true),
+          offset: value => walk(value, 1)
+        };
+      }
+    }
+    if (match[2] === 'week' && step > 1) {
+      // D3's filtered week.offset walks every intervening week. Use the same
+      // epoch alignment without an unbounded scan for large configured steps.
+      const week = intervalToFunction('1-week');
+      timeInterval = {
+        floor(value) {
+          const floor = week.floor(value);
+          const remainder = ((week.count(0, floor) % step) + step) % step;
+          return week.offset(floor, -remainder);
+        },
+        offset: value => week.offset(value, step)
+      };
+    }
+    let boundary = Number(timeInterval.floor(domain[0]));
+    const thresholds: number[] = [];
+    // Include the first boundary strictly after max, even when max is aligned.
+    // This preserves the existing inclusive maximum bin and calendar padding.
+    for (let index = 0; index <= MAX_TIME_BINS; index++) {
+      if (!Number.isFinite(boundary)) return null;
+      thresholds.push(boundary);
+      if (boundary > domain[1]) return thresholds;
+      const next = Number(timeInterval.floor(timeInterval.offset(boundary)));
+      if (!(next > boundary)) return null;
+      boundary = next;
+    }
+    return null;
+  };
+
+  const requestedInterval = interval;
+  let thresholds = build(interval);
+  // Domain-only fallback avoids copying/sorting every timestamp on refresh.
+  // Retry fewer ticks when the nearest interval still exceeds the cap.
+  for (let target = BINS_LARGE; !thresholds && target >= 1; target /= 10) {
+    interval = getIntervalByTicks(target, domain[0], domain[1]);
+    thresholds = build(interval);
+  }
+  const result = {interval, thresholds: thresholds || []};
+  timeBinConfigs.set(domain, {requestedInterval, domain: domain.slice(), result});
+  return result;
+}
+
+function normalizeTimePlotType(
+  plotType: TimeRangeFilter['plotType'],
+  domain: number[]
+): TimeRangeFilter['plotType'] {
+  const {interval} = getTimeBinConfig(plotType.interval, domain);
+  return interval === plotType.interval
+    ? plotType
+    : {...plotType, interval, defaultTimeFormat: getDefaultTimeFormat(interval)};
 }
 
 const MAX_NUMERIC_BINS = 2048;
@@ -1217,9 +1325,13 @@ export function adjustValueToAnimationWindow<S extends MinVisStateForAnimationWi
   } = filter;
 
   const isTimeFilter = filter.type === FILTER_TYPES.timeRange;
-  const interval = isTimeFilter
-    ? plotType.interval || getInitialInterval(filter, state.datasets)
-    : undefined;
+  const timePlotType = isTimeFilter
+    ? normalizeTimePlotType(
+        {...plotType, interval: plotType.interval || getInitialInterval(filter, state.datasets)},
+        filter.domain
+      )
+    : plotType;
+  const interval = isTimeFilter ? timePlotType.interval : undefined;
   const bins = isTimeFilter
     ? getTimeBins(filter, state.datasets, interval, plotBaseIndexByDataId)
     : getRangeFilterBins(filter, state.datasets, BINS, plotBaseIndexByDataId);
@@ -1267,7 +1379,7 @@ export function adjustValueToAnimationWindow<S extends MinVisStateForAnimationWi
     ...filter,
     ...(isTimeFilter
       ? {
-          plotType: {...filter.plotType, interval},
+          plotType: timePlotType,
           timeBins: bins
         }
       : {bins}),
@@ -1313,6 +1425,11 @@ export function updateTimeFilterPlotType(
   if (typeof nextPlotType !== 'object' || !nextPlotType.aggregation || !nextPlotType.interval) {
     nextPlotType = getDefaultPlotType(filter, datasets);
   }
+  const normalizedPlotType = normalizeTimePlotType(nextPlotType, filter.domain);
+  if (normalizedPlotType.interval !== nextPlotType.interval) {
+    nextFilter = {...filter, timeBins: undefined, lineChart: undefined};
+  }
+  nextPlotType = normalizedPlotType;
 
   if (filter.dataId.length > 1) {
     nextPlotType = {
