@@ -3992,7 +3992,29 @@ export function refreshDatasetSuccessUpdater(
     return rebindLayersAndFiltersAfterSchemaChange(state, dataId, datasets);
   }
 
-  return reapplyFiltersAndLayerData({...state, datasets}, dataId);
+  // Rebuild domains from all datasets in a synced filter, keeping its selection
+  // and settings. Revalidating a saved filter would reset its GPU mode.
+  const filters = state.filters.map(filter => {
+    if (!filter.dataId.includes(dataId) || filter.type === FILTER_TYPES.polygon) {
+      return filter;
+    }
+    const domainSteps = mergeFilterDomain(filter, datasets);
+    return domainSteps ? {...filter, domain: domainSteps.domain, step: domainSteps.step} : filter;
+  });
+  const nextState = reapplyFiltersAndLayerData({...state, datasets, filters}, dataId);
+  return {
+    ...nextState,
+    filters: nextState.filters.map(filter =>
+      filter.dataId.includes(dataId)
+        ? updateFilterPlot(
+            nextState.datasets,
+            filter.dataId.reduce(removeFilterPlot, filter),
+            undefined,
+            nextState.layers
+          )
+        : filter
+    )
+  };
 }
 
 function reapplyFiltersAndLayerData(state: VisState, dataId: string): VisState {

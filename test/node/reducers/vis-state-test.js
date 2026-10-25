@@ -9897,6 +9897,130 @@ test('VisStateUpdater -> refreshDataset', async t => {
   t.end();
 });
 
+test('VisStateUpdater -> refreshDataset rebuilds filter domains and preserves selections', async t => {
+  drainTasksForTesting();
+  const dataId = 'remote-filter';
+  const datasets = await createNewDataEntryMock({
+    info: {id: dataId, type: DatasetType.EXTERNALLY_HOSTED, label: 'values.csv'},
+    data: processCsvData('value\n10\n20'),
+    metadata: {source: 'https://example.com/values.csv', sourceFormat: 'csv'}
+  });
+  let state = {...INITIAL_VIS_STATE, datasets};
+  state = reducer(state, VisStateActions.addFilter(dataId));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [10, 15]));
+  state = reducer(state, VisStateActions.setFilter(0, 'gpu', false));
+  const filterId = state.filters[0].id;
+  t.deepEqual(state.filters[0].domain, [10, 20], 'starts with the original domain');
+
+  for (const maximum of [50, 30]) {
+    state = reducer(state, VisStateActions.refreshDataset(dataId));
+    state = reducer(state, VisStateActions.refreshDatasetProgress(dataId, 50));
+    const [task] = drainTasksForTesting();
+    const data = processCsvData(`value\n10\n${maximum}`);
+    state = reducer(state, succeedTaskInTest(task, {data, notModified: false}));
+
+    t.equal(state.filters[0].id, filterId, 'keeps the existing filter');
+    t.deepEqual(state.filters[0].domain, [10, maximum], 'rebuilds expanded and contracted domains');
+    t.deepEqual(state.filters[0].value, [10, 15], 'preserves the chosen selection');
+    t.equal(state.filters[0].gpu, false, 'preserves CPU filtering');
+    t.deepEqual(state.datasets[dataId].filteredIndex, [0], 'keeps CPU filtering active');
+    t.deepEqual(
+      state.filters[0].bins[dataId],
+      histogramFromDomain([10, maximum], [0, 1], BINS, index => [10, maximum][index]),
+      'rebuilds the histogram for the refreshed domain and rows'
+    );
+    const table = state.datasets[dataId].filterTableCPU(state.filters, state.layers);
+    t.deepEqual(table.filteredIdxCPU, [0], 'applies the selection to refreshed rows');
+    t.deepEqual(
+      table.dataContainer.rowAsArray(1),
+      [maximum],
+      'keeps the refreshed source value unchanged'
+    );
+  }
+
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [25, 30]));
+  t.deepEqual(state.filters[0].value, [25, 30], 'allows selecting newly available values');
+  t.deepEqual(
+    state.datasets[dataId].filterTableCPU(state.filters, state.layers).filteredIdxCPU,
+    [1],
+    'filters using the newly selected range'
+  );
+
+  for (const result of [{notModified: true}, {notModified: false}]) {
+    const filters = state.filters;
+    state = reducer(state, VisStateActions.refreshDataset(dataId));
+    const [task] = drainTasksForTesting();
+    state = reducer(state, succeedTaskInTest(task, result));
+    t.equal(state.filters, filters, 'keeps filters when refresh has no replacement data');
+  }
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset rebuilds synced and categorical domains in place', async t => {
+  drainTasksForTesting();
+  const remote = await createNewDataEntryMock({
+    info: {id: 'remote-filter', type: DatasetType.EXTERNALLY_HOSTED, label: 'values.csv'},
+    data: processCsvData('value,category\n10,north\n20,south'),
+    metadata: {source: 'https://example.com/values.csv', sourceFormat: 'csv'}
+  });
+  const local = await createNewDataEntryMock({
+    info: {id: 'local-filter', label: 'local'},
+    data: processCsvData('value\n0\n100')
+  });
+  let state = {...INITIAL_VIS_STATE, datasets: {...remote, ...local}};
+  state = reducer(state, VisStateActions.addFilter('local-filter'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.addFilter('remote-filter'));
+  state = reducer(state, VisStateActions.setFilter(1, 'name', 'value'));
+  state = reducer(
+    state,
+    VisStateActions.setFilter(1, ['dataId', 'name'], ['local-filter', 'value'], 1)
+  );
+  state = reducer(state, VisStateActions.setFilter(1, 'value', [10, 15]));
+  state = reducer(state, VisStateActions.addFilter('remote-filter'));
+  state = reducer(state, VisStateActions.setFilter(2, 'name', 'category'));
+  state = reducer(state, VisStateActions.setFilter(2, 'value', ['north']));
+  state = reducer(state, VisStateActions.addFilter('remote-filter'));
+  const unrelated = state.filters[0];
+  const unconfigured = state.filters[3];
+  const filterIds = state.filters.map(filter => filter.id);
+
+  for (const maximum of [150, 50]) {
+    state = reducer(state, VisStateActions.refreshDataset('remote-filter'));
+    const [task] = drainTasksForTesting();
+    state = reducer(
+      state,
+      succeedTaskInTest(task, {
+        data: processCsvData(`value,category\n10,north\n${maximum},east`),
+        notModified: false
+      })
+    );
+    const domain = [0, Math.max(100, maximum)];
+    t.deepEqual(
+      state.filters.map(filter => filter.id),
+      filterIds,
+      'preserves filter order'
+    );
+    t.equal(state.filters[0], unrelated, 'leaves unrelated filters unchanged');
+    t.equal(state.filters[3], unconfigured, 'keeps an unconfigured filter');
+    t.deepEqual(state.filters[1].domain, domain, 'merges current domains from both datasets');
+    t.deepEqual(state.filters[1].value, [10, 15], 'preserves the synced selection');
+    t.deepEqual(
+      state.filters[1].bins['local-filter'],
+      histogramFromDomain(domain, [0, 1], BINS, index => [0, 100][index]),
+      'rebuilds synced histogram bins when the shared domain changes'
+    );
+    t.deepEqual(
+      state.filters[2].domain.slice().sort(),
+      ['east', 'north'],
+      'replaces category options'
+    );
+    t.deepEqual(state.filters[2].value, ['north'], 'preserves the category selection');
+  }
+  t.end();
+});
+
 test('VisStateUpdater -> refreshDataset rebuilds point layer positions', async t => {
   drainTasksForTesting();
   const initialData = processCsvData('lat,lng\n37.77,-122.42');
