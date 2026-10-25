@@ -4,7 +4,7 @@
 import {Analyzer, DATA_TYPES as AnalyzerDataTypes} from 'type-analyzer';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {Field, ProtoDataset} from '@kepler.gl/types';
-import {createArrowVector, DataContainerInterface} from '@kepler.gl/utils';
+import {createArrowVector, DataContainerInterface, isArrowTable} from '@kepler.gl/utils';
 
 export type ColumnEditDataset = {
   fields: Field[];
@@ -323,10 +323,14 @@ export function projectDatasetColumns(
     schemaField(dataset.fields[sourceIndex], name)
   );
   const dataContainer = dataset.dataContainer;
-  if (typeof dataContainer.getColumn === 'function' && dataContainer.numRows() > 0) {
+  if (typeof dataContainer.getColumn === 'function') {
     const cols = columns.map(({sourceIndex}) => dataContainer.getColumn?.(sourceIndex));
     if (cols.length && cols.every(Boolean)) {
-      return {fields, rows: [], cols};
+      const table = dataContainer.getTable?.();
+      const arrowSchema = isArrowTable(table)
+        ? table.schema.selectAt(columns.map(column => column.sourceIndex))
+        : undefined;
+      return {fields, rows: [], cols, ...(arrowSchema ? {arrowSchema} : {})};
     }
   }
 
@@ -442,7 +446,14 @@ export function buildChangeColumnTypeData(
     const cols = dataset.fields.map((_, index) => dataset.dataContainer.getColumn?.(index));
     if (cols.every(Boolean)) {
       cols[fieldIndex] = createArrowVector(values);
-      return {payload: {data: {fields, rows: [], cols}, renames: {}}};
+      const table = dataset.dataContainer.getTable?.();
+      const arrowSchema = isArrowTable(table) ? table.schema : undefined;
+      return {
+        payload: {
+          data: {fields, rows: [], cols, ...(arrowSchema ? {arrowSchema} : {})},
+          renames: {}
+        }
+      };
     }
   }
 
