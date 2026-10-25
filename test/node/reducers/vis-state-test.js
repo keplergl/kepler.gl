@@ -10213,11 +10213,7 @@ test('VisStateUpdater -> refreshDataset keeps Arrow point layers valid through e
       const expected = values.flatMap((value, index) =>
         !withFilter || value < 2 || value > 3 ? [index] : []
       );
-      t.deepEqual(
-        state.datasets[dataId].filteredIndex,
-        expected,
-        'refresh reapplies active filters'
-      );
+      t.deepEqual(state.datasets[dataId].filteredIndex, expected, 'refresh reapplies active filters');
       t.deepEqual(
         values.flatMap((_, index) => (state.layerData[0].getFiltered({index}) ? [index] : [])),
         expected,
@@ -10266,10 +10262,7 @@ test('VisStateUpdater -> refreshDataset reapplies active filters to Arrow snapsh
   for (const [values, expected] of [
     [[1, 2, 3], [0]],
     [[3, 1, 2], [1]],
-    [
-      [2, 1, 3, 4],
-      [1, 3]
-    ],
+    [[2, 1, 3, 4], [1, 3]],
     [[], []],
     [[3, 2, 1], [2]],
     [[2], []]

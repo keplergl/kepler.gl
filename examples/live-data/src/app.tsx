@@ -564,8 +564,8 @@ function PollSidebar({dataset}: {dataset: LiveDataset | undefined}) {
         Layers panel: dataset refresh is 300ms. Click reload to sample the orbit immediately.
         Switching to <strong>Host rows</strong> or <strong>WebSocket</strong> pauses the poll so the
         next snapshot does not wipe injected rows.
-        <strong>Arrow</strong> / <strong>GeoJSON</strong> drop this Kepler instance and load a fresh
-        table of that type — they do not convert this CSV.
+        <strong>Arrow</strong> / <strong>GeoJSON</strong> drop
+        this Kepler instance and load a fresh table of that type — they do not convert this CSV.
       </p>
     </>
   );
