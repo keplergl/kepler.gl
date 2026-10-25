@@ -6,6 +6,10 @@ import test from 'tape';
 import {testCreateCases, dataId, preparedDataset} from 'test/helpers/layer-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {copyTableAndUpdate} from '@kepler.gl/table';
+import {VisStateActions} from '@kepler.gl/actions';
+import {INITIAL_VIS_STATE, visStateReducer as reducer} from '@kepler.gl/reducers';
+import {processCsvData} from '@kepler.gl/processors';
+import {createNewDataEntryMock} from 'test/helpers/table-utils';
 
 const {FlowLayer} = KeplerGlLayers;
 
@@ -175,6 +179,97 @@ test('#FlowLayer -> formatLayerData', t => {
     t.equal(flow.count, 1, 'count should default to 1 when no count column');
   });
 
+  t.end();
+});
+
+test('#FlowLayer -> styling preserves filters and invalidates changed data', async t => {
+  const datasets = await createNewDataEntryMock({
+    info: {id: dataId},
+    data: processCsvData('lat,lng,lat_1,lng_1,value\n1,2,3,4,0\n2,3,4,5,10\n3,4,5,6,20')
+  });
+  const layer = new FlowLayer({dataId});
+  layer.updateLayerConfig({
+    columns: {
+      lat0: {value: 'lat', fieldIdx: 0},
+      lng0: {value: 'lng', fieldIdx: 1},
+      lat1: {value: 'lat_1', fieldIdx: 2},
+      lng1: {value: 'lng_1', fieldIdx: 3},
+      count: {value: 'value', fieldIdx: 4}
+    }
+  });
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layer.formatLayerData(datasets, {})],
+    layerOrder: [layer.id]
+  };
+  const setRange = value => {
+    state = reducer(state, VisStateActions.setFilter(0, 'value', value));
+  };
+  const checkStyles = (expected, message) => {
+    const previousFlows = state.layerData[0].layerData.flows;
+    t.deepEqual(
+      previousFlows.map(d => d.index),
+      expected,
+      message
+    );
+    [
+      {flowLineThicknessScale: 2},
+      {flowLinesRenderingMode: 'curved'},
+      {flowLineThicknessScale: 1},
+      {flowLinesRenderingMode: 'straight'}
+    ].forEach(style => {
+      state = reducer(state, VisStateActions.layerVisConfigChange(state.layers[0], style));
+      t.equal(state.layerData[0].layerData.flows, previousFlows, 'styling retains the flow array');
+      t.deepEqual(
+        state.layerData[0].layerData.flows.map(d => d.index),
+        expected,
+        message
+      );
+    });
+  };
+  const addFilter = () => {
+    state = reducer(state, VisStateActions.addFilter(dataId));
+    state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+    setRange([5, 15]);
+  };
+  addFilter();
+  t.equal(state.filters[0].gpu, true, 'exercises GPU-configured filtering on the CPU Flow layer');
+  checkStyles([1], 'range [5,15] retains only the middle flow');
+  t.deepEqual(state.filters[0].value, [5, 15], 'styling keeps the active selection');
+
+  setRange([15, 20]);
+  checkStyles([2], 'a changed range selects the last flow');
+  setRange([11, 15]);
+  checkStyles([], 'an empty filter result stays empty');
+  state = reducer(state, VisStateActions.removeFilter(0));
+  checkStyles([0, 1, 2], 'removing the filter restores all flows');
+  addFilter();
+  checkStyles([1], 'reapplying the same filter does not reuse unfiltered flows');
+
+  state = reducer(state, VisStateActions.setFilter(0, 'gpu', false));
+  checkStyles([1], 'CPU filtering preserves the middle flow');
+  setRange([15, 20]);
+  checkStyles([2], 'CPU filter changes refresh flows');
+  state = reducer(state, VisStateActions.setFilter(0, 'gpu', true));
+  setRange([5, 15]);
+  checkStyles([1], 'switching back to GPU filtering refreshes flows');
+
+  state = reducer(
+    state,
+    VisStateActions.addToDataset(dataId, [
+      [4, 5, 6, 7, 12],
+      [5, 6, 7, 8, 30]
+    ])
+  );
+  checkStyles([1, 3], 'data refresh includes only the matching new flow');
+  const rebuilt = state.layers[0].formatLayerData(state.datasets, {});
+  t.deepEqual(
+    rebuilt.layerData.flows.map(d => d.index),
+    [1, 3],
+    'missing old data is filtered anew'
+  );
   t.end();
 });
 
