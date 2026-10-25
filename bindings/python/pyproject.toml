@@ -31,6 +31,11 @@ dev = [
 requires = ["hatchling", "hatch-jupyter-builder>=0.9.0"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build]
+# Included in the sdist even though the repo .gitignore excludes lockfiles,
+# so a wheel built from the sdist resolves the same dependency tree.
+artifacts = ["package-lock.json"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["keplergl"]
 
