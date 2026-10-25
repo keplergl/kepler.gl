@@ -3878,7 +3878,8 @@ function fieldNamesEqual(current: {name: string}[], incoming?: {name: string}[] 
 function rebindLayersAndFiltersAfterSchemaChange(
   state: VisState,
   dataId: string,
-  datasets: VisState['datasets']
+  datasets: VisState['datasets'],
+  preserveCsvSelections = false
 ): VisState {
   const dataset = datasets[dataId];
   const nextLayers: Layer[] = [];
@@ -3917,7 +3918,31 @@ function rebindLayersAndFiltersAfterSchemaChange(
     filtersForDataset
   );
 
-  const nextFilters = [...otherFilters, ...validated];
+  const nextFilters = [
+    ...otherFilters,
+    ...validated.map(filter => {
+      const previous = filtersForDataset.find(candidate => candidate.id === filter.id);
+      if (
+        !preserveCsvSelections ||
+        !previous ||
+        previous.type !== filter.type ||
+        previous.fieldType !== filter.fieldType
+      ) {
+        return filter;
+      }
+      // Empty CSV domains are not evidence that the user's selection is invalid.
+      // Validation has rebound the surviving names; keep their selection/settings.
+      return {
+        ...filter,
+        value: previous.value,
+        enabled: previous.enabled,
+        inverted: previous.inverted,
+        gpu: previous.gpu,
+        gpuChannel: previous.gpuChannel,
+        gpuEndChannel: previous.gpuEndChannel
+      };
+    })
+  ];
   const filteredDatasets = applyFiltersToDatasets(
     [dataId],
     updatedDatasets,
@@ -3964,7 +3989,14 @@ export function refreshDatasetSuccessUpdater(
     ...(typeof result.size === 'number' ? {size: result.size} : {})
   };
 
-  const schemaUnchanged = fieldNamesEqual(dataset.fields, result.data?.fields);
+  const resolvesCsvTypes = dataset.fields.some(
+    (field, i) =>
+      field.metadata?.csvHeaderOnly &&
+      result.data?.fields[i] &&
+      !result.data.fields[i].metadata?.csvHeaderOnly
+  );
+  const headerOnlyCsv = Boolean(result.data?.fields.some(field => field.metadata?.csvHeaderOnly));
+  const schemaUnchanged = fieldNamesEqual(dataset.fields, result.data?.fields) && !resolvesCsvTypes;
 
   // Apply the snapshot to the table currently in the store. Progress may have
   // copied it off the object that started the fetch; the task never mutates it.
@@ -3989,7 +4021,12 @@ export function refreshDatasetSuccessUpdater(
   }
 
   if (!schemaUnchanged) {
-    return rebindLayersAndFiltersAfterSchemaChange(state, dataId, datasets);
+    return rebindLayersAndFiltersAfterSchemaChange(
+      state,
+      dataId,
+      datasets,
+      headerOnlyCsv || resolvesCsvTypes
+    );
   }
 
   // Rebuild domains from all datasets in a synced filter, keeping its selection

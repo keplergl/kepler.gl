@@ -295,7 +295,35 @@ class KeplerTable<F extends Field = Field> {
     // on column updates, but invalidate cached filter results for every snapshot.
     const isRowSnapshot = !data.cols && Array.isArray(data.rows);
 
-    if (data.fields?.length && !fieldNamesMatch(this.fields, data.fields)) {
+    if (isRowSnapshot && !data.rows?.length && data.fields?.some(f => f.metadata?.csvHeaderOnly)) {
+      const previousFields = new Map(this.fields.map(field => [field.name, field]));
+      data = {
+        ...data,
+        fields: data.fields.map(field => {
+          const previous = previousFields.get(field.name);
+          if (!field.metadata?.csvHeaderOnly || !previous || previous.metadata?.csvHeaderOnly) {
+            return field;
+          }
+          // A header establishes names/order, not types. Keep only stable type
+          // information by name; updateSchema must rebuild accessors and caches.
+          return {
+            ...field,
+            type: previous.type,
+            analyzerType: previous.analyzerType,
+            format: previous.format,
+            metadata: undefined
+          };
+        })
+      };
+    }
+
+    const resolvesCsvTypes =
+      isRowSnapshot &&
+      data.fields?.some(
+        (field, i) => this.fields[i]?.metadata?.csvHeaderOnly && !field.metadata?.csvHeaderOnly
+      );
+
+    if (data.fields?.length && (!fieldNamesMatch(this.fields, data.fields) || resolvesCsvTypes)) {
       await this.importData({data});
       this.dataRevision += 1;
       return this;
