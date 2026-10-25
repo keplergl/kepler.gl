@@ -10152,6 +10152,89 @@ test('VisStateUpdater -> refreshDataset', async t => {
   t.end();
 });
 
+test('VisStateUpdater -> refreshDataset keeps Arrow point layers valid through empty snapshots', async t => {
+  const snapshot = values => {
+    const table = arrow.tableFromArrays({
+      value: Float64Array.from(values),
+      lat: Float64Array.from(values, (_, i) => 37.77 + i / 100),
+      lng: Float64Array.from(values, (_, i) => -122.42 - i / 100)
+    });
+    return processArrowBatches(arrow.tableFromIPC(arrow.tableToIPC(table, 'file')).batches);
+  };
+
+  for (const withFilter of [false, true]) {
+    drainTasksForTesting();
+    const dataId = `empty-arrow-${withFilter}`;
+    const datasets = await createNewDataEntryMock({
+      info: {id: dataId, type: DatasetType.EXTERNALLY_HOSTED},
+      data: snapshot([1, 2, 3]),
+      metadata: {source: 'https://example.com/live.arrow', sourceFormat: 'arrow'}
+    });
+    const {props} = PointLayer.findDefaultLayerProps(datasets[dataId]);
+    const point = new PointLayer({id: `point-${dataId}`, dataId, ...props[0]});
+    let state = {...INITIAL_VIS_STATE, datasets, layers: [point], layerData: [{}]};
+    const initial = calculateLayerData(point, state);
+    state = {...state, layers: [initial.layer], layerData: [initial.layerData]};
+    t.equal(state.layers[0].isValid, true, 'initial point layer is valid');
+    if (withFilter) {
+      state = reducer(state, VisStateActions.addFilter(dataId));
+      state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+      state = reducer(state, VisStateActions.setFilter(0, 'value', [2, 3]));
+      state = reducer(state, VisStateActions.setFilter(0, 'inverted', true));
+    }
+    const schema = datasets[dataId].fields.map(({name, type}) => ({name, type}));
+
+    for (const values of [[], [3, 2, 1], [], [1]]) {
+      const loading = reducer(state, VisStateActions.refreshDataset(dataId));
+      const progressed = reducer(loading, VisStateActions.refreshDatasetProgress(dataId, 50));
+      const [task] = drainTasksForTesting();
+      state = reducer(
+        progressed,
+        succeedTaskInTest(task, {data: snapshot(values), notModified: false})
+      );
+      const layer = state.layers[0];
+      t.equal(layer.isValid, true, `refresh to ${values.length} rows keeps the point layer valid`);
+      t.equal(layer.errorMessage, null, 'refresh does not report a layer exception');
+      t.equal(layer.config.isVisible, true, 'refresh keeps the layer visible');
+      t.equal(state.layerData[0].data?.numRows, values.length, 'layer data follows the snapshot');
+      t.equal(layer.geoArrowVector.length, values.length, 'coordinate vector follows the snapshot');
+      t.deepEqual(
+        state.datasets[dataId].fields.map(({name, type}) => ({name, type})),
+        schema,
+        'empty IPC snapshots preserve the schema'
+      );
+      if (values.length) {
+        t.deepEqual(
+          Array.from(layer.geoArrowVector.get(0)),
+          [-122.42, 37.77, 0],
+          'restores positions'
+        );
+      }
+      const expected = values.flatMap((value, index) =>
+        !withFilter || value < 2 || value > 3 ? [index] : []
+      );
+      t.deepEqual(state.datasets[dataId].filteredIndex, expected, 'refresh reapplies active filters');
+      t.deepEqual(
+        values.flatMap((_, index) => (state.layerData[0].getFiltered({index}) ? [index] : [])),
+        expected,
+        'point layer visibility follows the refreshed filter result'
+      );
+      state.datasets[dataId].filterTableCPU(state.filters, state.layers);
+      t.deepEqual(
+        state.datasets[dataId].filteredIdxCPU,
+        expected,
+        'CPU/export evaluation uses the refreshed filtered rows'
+      );
+      if (withFilter) {
+        t.deepEqual(state.filters[0].value, [2, 3], 'refresh preserves the filter selection');
+        t.equal(state.filters[0].enabled, true, 'refresh keeps the filter enabled');
+        t.equal(state.filters[0].inverted, true, 'refresh preserves Filter out mode');
+      }
+    }
+  }
+  t.end();
+});
+
 test('VisStateUpdater -> refreshDataset reapplies active filters to Arrow snapshots', async t => {
   drainTasksForTesting();
   const dataId = 'remote-arrow';
